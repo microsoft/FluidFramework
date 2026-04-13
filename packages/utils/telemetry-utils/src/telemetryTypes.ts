@@ -117,12 +117,14 @@ export interface ITelemetryLoggerExt extends ITelemetryBaseLogger {
 	 * Send an information telemetry event.
 	 * @param event - Event to send.
 	 * @param error - Optional error object to log.
-	 * @param logLevel - Optional level of the log. Default: {@link @fluidframework/core-interfaces#LogLevel.default}.
+	 * @param logLevel - Optional level of the log. Default: {@link @fluidframework/core-interfaces#LogLevel.info}.
+	 *
+	 * @remarks The default value for logLevel will be updated to {@link @fluidframework/core-interfaces#LogLevel.essential} once issue #26910 is resolved.
 	 */
 	sendTelemetryEvent(
 		event: ITelemetryGenericEventExt,
 		error?: unknown,
-		logLevel?: typeof LogLevel.verbose | typeof LogLevel.default,
+		logLevel?: typeof LogLevel.verbose | typeof LogLevel.info,
 	): void;
 
 	/**
@@ -136,11 +138,13 @@ export interface ITelemetryLoggerExt extends ITelemetryBaseLogger {
 	 * Send a performance telemetry event.
 	 * @param event - Event to send
 	 * @param error - Optional error object to log.
-	 * @param logLevel - Optional level of the log. Default: {@link @fluidframework/core-interfaces#LogLevel.default}.
+	 * @param logLevel - Optional level of the log. Default: {@link @fluidframework/core-interfaces#LogLevel.info}.
+	 *
+	 * @remarks The default value for logLevel will be updated to {@link @fluidframework/core-interfaces#LogLevel.essential} once issue #26910 is resolved.
 	 */
 	sendPerformanceEvent(
 		event: ITelemetryPerformanceEventExt,
 		error?: unknown,
-		logLevel?: typeof LogLevel.verbose | typeof LogLevel.default,
+		logLevel?: typeof LogLevel.verbose | typeof LogLevel.info,
 	): void;
 }

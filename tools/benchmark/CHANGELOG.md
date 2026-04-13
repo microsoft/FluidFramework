@@ -2,6 +2,10 @@
 
 ## 0.55.0
 
+-   Added `memoryUseOfValue` and `memoryAddedBy` helper functions for constructing common `MemoryUseBenchmark` cases without hand-writing the callback loop.
+-   Added `Box<T>`, a simple optional-value container useful for controlling object lifetime in memory benchmarks when stack variable lifetimes would otherwise retain memory longer than intended.
+-   `MemoryUseBenchmark.enableAsyncGC` now defaults to `true`. Benchmarks that do not require async GC can set `enableAsyncGC: false` to avoid the small runtime and per-iteration memory overhead it introduces.
+
 ## 0.54.0
 
 -   Fixed `--parentProcess` mode incorrectly matching tests whose full title is a substring of another test's full title. The child process filter now uses an exact-match regex (`--grep ^title$`) instead of substring matching (`--fgrep title`). For example, if a suite contained tests named `foo` and `foobar` in the same suite, running `foo` in a child process with `--fgrep foo` would also match `foobar`, causing both tests to run and assuming both are benchmarks, produce an error (versions prior to 0.53 would produce incorrect results instead of an error).

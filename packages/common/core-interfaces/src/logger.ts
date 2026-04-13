@@ -55,8 +55,36 @@ export interface ITelemetryBaseEvent extends ITelemetryBaseProperties {
  * @public
  */
 export const LogLevel = {
-	verbose: 10, // To log any verbose event for example when you are debugging something.
+	/**
+	 * Chatty logs useful for debugging.
+	 * @remarks They need not be collected in production.
+	 */
+	verbose: 10,
+
+	/**
+	 * Information about the session.
+	 * @remarks These logs could be omitted in some sessions if needed (e.g. to reduce overall telemetry volume).
+	 * If any are collected from a particular session, all should be.
+	 */
+	info: 20,
+
+	/**
+	 * Essential information about the operation of Fluid.
+	 * @remarks  It is recommended that these should always be collected, even in production, for diagnostic purposes.
+	 * If an event does not have a log level specified, it should be treated as if it were LogLevel.essential.
+	 */
+	essential: 30,
+
+	/**
+	 * @deprecated Use {@link (LogLevel:variable).info}. If an event does not have a log level specified, it should be treated as if it were LogLevel.essential.
+	 * See {@link https://github.com/microsoft/FluidFramework/issues/26969} for removal timeline.
+	 */
 	default: 20, // Default log level
+
+	/**
+	 * @deprecated Use {@link (LogLevel:variable).essential}.
+	 * See {@link https://github.com/microsoft/FluidFramework/issues/26969} for removal timeline.
+	 */
 	error: 30, // To log errors.
 } as const;
 

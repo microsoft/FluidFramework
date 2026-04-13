@@ -1,0 +1,11 @@
+{
+	"name": "@fluid-internal/presence-definitions",
+	"type": "commonjs",
+	"exports": {
+		".": "./index.js",
+		"./internal": "./internal.js",
+		"./internal/workspace": "./workspace/workspaceTypes.js",
+		"./internal/workspace-runtime": "./workspace-runtime/presenceStatesTypes.js",
+		"./internal/workspace-states": "./workspace-states/stateDatastoreTypes.js"
+	}
+}

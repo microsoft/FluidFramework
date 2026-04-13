@@ -5,10 +5,12 @@
 
 import { strict as assert } from "node:assert";
 
+import { SchemaFactoryAlpha } from "@fluidframework/tree/alpha";
 import {
 	getSimpleSchema,
 	independentView,
 	SchemaFactory,
+	SchemaFactoryBeta,
 	TreeViewConfiguration,
 	type ImplicitFieldSchema,
 	type InsertableField,
@@ -372,6 +374,100 @@ type MapWithProperty = Map<string, string> & {
 			schemaText.includes("interface Foo_2_2"),
 			"Natural Foo_2 becomes Foo_2_2 since Foo_2 was taken",
 		);
+	});
+
+	describe("handles staged allowed types", () => {
+		const sfBeta = new SchemaFactoryBeta("staged-type-tests");
+		const sfAlpha = new SchemaFactoryAlpha("staged-type-tests");
+
+		it("for object nodes", () => {
+			class ObjWithStagedType extends sfBeta.object("ObjWithStagedType", {
+				foo: SchemaFactoryBeta.types([
+					SchemaFactoryBeta.string,
+					SchemaFactoryBeta.staged(SchemaFactoryBeta.number),
+				]),
+			}) {}
+
+			const objectDomainSchemaString = getDomainSchemaString(ObjWithStagedType, {
+				foo: "test",
+			});
+			assert.deepEqual(
+				objectDomainSchemaString,
+				`interface ObjWithStagedType {
+    get foo(): string | number;
+    set foo(value: string);
+}
+`,
+			);
+		});
+
+		it("for optional object node fields", () => {
+			class ObjWithOptionalStagedType extends sfBeta.object("ObjWithOptionalStagedType", {
+				foo: sfBeta.optional(
+					SchemaFactoryBeta.types([
+						SchemaFactoryBeta.string,
+						SchemaFactoryBeta.staged(SchemaFactoryBeta.number),
+					]),
+				),
+			}) {}
+
+			const objectDomainSchemaString = getDomainSchemaString(ObjWithOptionalStagedType, {
+				foo: "test",
+			});
+			assert.deepEqual(
+				objectDomainSchemaString,
+				`interface ObjWithOptionalStagedType {
+    get foo(): string | number | undefined;
+    set foo(value: string | undefined);
+}
+`,
+			);
+		});
+
+		it("for array nodes", () => {
+			class StagedArray extends sfBeta.array(
+				"StagedArray",
+				SchemaFactoryBeta.types([
+					SchemaFactoryBeta.string,
+					SchemaFactoryBeta.staged(SchemaFactoryBeta.number),
+				]),
+			) {}
+
+			const schemaString = getDomainSchemaString(StagedArray, ["hello"]);
+			assert.deepEqual(
+				schemaString,
+				`type StagedArray = TreeArray<(string | number), string>;\n`,
+			);
+		});
+
+		it("for map nodes", () => {
+			class StagedMap extends sfBeta.map(
+				"StagedMap",
+				SchemaFactoryBeta.types([
+					SchemaFactoryBeta.string,
+					SchemaFactoryBeta.staged(SchemaFactoryBeta.number),
+				]),
+			) {}
+
+			const schemaString = getDomainSchemaString(StagedMap, new Map([["a", "alpha"]]));
+			assert.deepEqual(schemaString, `type StagedMap = TreeMap<(string | number), string>;\n`);
+		});
+
+		it("for record nodes", () => {
+			class StagedRecord extends sfAlpha.recordAlpha(
+				"StagedRecord",
+				SchemaFactoryBeta.types([
+					SchemaFactoryBeta.string,
+					SchemaFactoryBeta.staged(SchemaFactoryBeta.number),
+				]),
+			) {}
+
+			const schemaString = getDomainSchemaString(StagedRecord, { a: "alpha" });
+			assert.deepEqual(
+				schemaString,
+				`// Warning: do not set record values to any of the following types (they are staged and not yet writeable): number\ntype StagedRecord = Record<string, string | number>;\n`,
+			);
+		});
 	});
 });
 

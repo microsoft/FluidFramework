@@ -140,8 +140,6 @@
 	},
 	"pnpm": {
 		"commentsOverrides": [
-			"@types/node is overridden to v18 to ensure all packages are building using the v18 types.",
-			"node types >= 22 are bumped down to 20.x to work around issues with packages using different types.",
 			"mongodb>@aws-sdk/credential-providers: not needed and brings in a large transitive dependency tree (including fast-xml-parser). Dropped with '-'.",
 			"oclif includes some AWS-related features, but we don't use them, so we drop those dependencies with '-'. This helps reduce lockfile churn since the deps release very frequently.",
 			"eslint: Force ESLint 9.x to ensure consistent version across the workspace.",
