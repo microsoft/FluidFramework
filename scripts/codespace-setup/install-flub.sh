@@ -11,13 +11,11 @@ REPO_ROOT="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../.." >/dev/null 2>&1 && 
 
 echo "Installing flub from local build-tools..."
 
-cd "$REPO_ROOT/build-tools"
-pnpm install --frozen-lockfile
-pnpm build:compile
+pnpm -C "$REPO_ROOT/build-tools" install --frozen-lockfile --reporter=default
+pnpm -C "$REPO_ROOT/build-tools" build:compile
 
-cd packages/build-cli
 # Use npm link (not pnpm link) because it handles bin shims correctly.
-npm link
+npm link --prefix "$REPO_ROOT/build-tools/packages/build-cli"
 
 echo "flub installed: $(which flub)"
 flub --version
