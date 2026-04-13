@@ -53,7 +53,7 @@
 		"@fluidframework/build-tools-bin": "npm:@fluidframework/build-tools@~0.63.0",
 		"@microsoft/api-extractor": "^7.55.1",
 		"@types/msgpack-lite": "^0.1.12",
-		"@types/node": "^22.19.1",
+		"@types/node": "~22.19.17",
 		"copyfiles": "^2.4.1",
 		"eslint": "~9.39.2",
 		"rimraf": "^6.1.3"

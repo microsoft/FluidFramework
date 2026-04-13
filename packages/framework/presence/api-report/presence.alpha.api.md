@@ -124,9 +124,9 @@ export namespace InternalPresenceTypes {
 // @alpha @system
 export namespace InternalPresenceUtilityTypes {
     // @system
-    export type IfNotificationParametersSignature<Event, IfParametersValid, Else> = Event extends (...args: infer P) => void ? InternalUtilityTypes.IfSameType<P, JsonSerializable<P>, IfParametersValid, Else> : Else;
+    export type IfNotificationParametersSignature<Event, IfParametersValid, Else> = Event extends (...args: infer P) => void ? InternalCoreInterfacesUtilityTypes.IfSameType<P, JsonSerializable<P>, IfParametersValid, Else> : Else;
     // @system
-    export type IfNotificationSubscriberSignature<Event, IfSubscriber, Else> = Event extends (sender: Attendee, ...args: infer P) => void ? InternalUtilityTypes.IfSameType<P, JsonSerializable<P>, IfSubscriber, Else> : Else;
+    export type IfNotificationSubscriberSignature<Event, IfSubscriber, Else> = Event extends (sender: Attendee, ...args: infer P) => void ? InternalCoreInterfacesUtilityTypes.IfSameType<P, JsonSerializable<P>, IfSubscriber, Else> : Else;
     // @system
     export type JsonDeserializedParameters<T extends (...args: any[]) => unknown> = T extends (...args: infer P) => unknown ? JsonDeserialized<P> : never;
     // @system
