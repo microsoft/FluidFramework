@@ -1097,8 +1097,7 @@ describe("Outbox", () => {
 
 			assert.throws(
 				() => outbox.flush({ batchId: "batchId", staged: false }),
-				(e: Error) =>
-					e.message === "Re-submitting a batch with reentrant ops is not supported",
+				(e: Error) => e.message === "0xcf2",
 			);
 		});
 
