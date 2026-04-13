@@ -87,6 +87,16 @@ export type FieldShape = readonly [FieldKey, TreeShape, number];
  * Maximum topLevelLength value (exclusive) for which {@link TreeShape.withTopLevelLength}
  * caches the resulting {@link ChunkShape}. Values at or above this threshold always
  * create a new instance to prevent unbounded cache growth.
+ *
+ * @remarks
+ * This value is an estimation of the general size needed to cover current workflows,
+ * not a researched constant, and is safe to tune as workloads change.
+ *
+ * Raising this value captures more chunk sizes in the cache, at the cost of
+ * each `TreeShape` retaining up to `chunkShapeCacheLimit - 1` cached entries for the
+ * lifetime of the shape. Lowering it reduces memory held per `TreeShape` but forces
+ * small chunks, where the relative cost of rebuilding `positions` is highest, to pay
+ * the construction cost on every call.
  */
 const chunkShapeCacheLimit = 8;
 
@@ -117,9 +127,9 @@ export class TreeShape {
 	public readonly mayContainCompressedIds: boolean;
 
 	/**
-	 *
 	 * Cache for ChunkShape instances created by {@link withTopLevelLength}.
-	 * Only caches shapes with topLevelLength less than {@link chunkShapeCacheLimit} to prevent unbounded growth.
+	 * `topLevelLength` is always a positive integer (enforced by the {@link ChunkShape} constructor),
+	 * so the cache only ever holds entries for values in `1..chunkShapeCacheLimit - 1` to prevent unbounded growth.
 	 */
 	private readonly chunkShapeCache: Map<number, ChunkShape> = new Map();
 
