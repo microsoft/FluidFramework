@@ -37,10 +37,6 @@
 			"openFiles": [".devcontainer/ai-agent/GETTING_STARTED.md"]
 		}
 	},
-	"mounts": [
-		// Named volume for the pnpm store — avoids slow hardlinking on overlayfs.
-		"source=fluidframework-pnpm-store,target=/pnpm-store,type=volume"
-	],
 	"containerEnv": {
 		"NODE_VERSION_OVERRIDE": "24",
 		"COREPACK_ENABLE_DOWNLOAD_PROMPT": "0"

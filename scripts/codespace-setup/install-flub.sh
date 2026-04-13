@@ -11,16 +11,12 @@ REPO_ROOT="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../.." >/dev/null 2>&1 && 
 
 echo "Installing flub from local build-tools..."
 
-# Use a named volume for the store (mounted at /pnpm-store in the devcontainer)
-# to avoid slow hardlinking on Docker's overlayfs.
-STORE_DIR="${PNPM_STORE_DIR:-}"
-if [ -d /pnpm-store ]; then
-  sudo chown "$(id -u):$(id -g)" /pnpm-store
-  STORE_DIR="/pnpm-store"
-fi
-
-pnpm -C "$REPO_ROOT/build-tools" install --frozen-lockfile --reporter=default \
-  ${STORE_DIR:+--store-dir "$STORE_DIR"}
+# CI=true suppresses pnpm's interactive "purge modules" prompt in non-TTY environments.
+# node-linker=hoisted uses a flat node_modules layout, which is much faster on
+# Docker's overlayfs than pnpm's default hardlink-based approach.
+CI=true pnpm -C "$REPO_ROOT/build-tools" install --frozen-lockfile --reporter=default \
+  --config.node-linker=hoisted \
+  --config.shamefully-hoist=true
 pnpm -C "$REPO_ROOT/build-tools" build:compile
 
 # Use npm link (not pnpm link) because it handles bin shims correctly.
