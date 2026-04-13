@@ -60,7 +60,7 @@ Stack as many as you need (and watch for browser authentication popups).
 copilot --mcp 'kusto --service-uri https://kusto.aria.microsoft.com'
 
 # Claude with an additional MCP server
-claude --mcp 'workiq'
+claude --mcp 'sharepoint'
 ```
 
 > [!IMPORTANT]
