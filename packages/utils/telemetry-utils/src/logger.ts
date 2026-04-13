@@ -183,16 +183,18 @@ export abstract class TelemetryLogger implements ITelemetryLoggerExt {
 	 * @param error - optional error object to log
 	 * @param logLevel - optional level of the log. It category of event is set as error,
 	 * then the logLevel will be upgraded to be an error.
+	 *
+	 * @remarks The default value for logLevel will be updated to {@link @fluidframework/core-interfaces#LogLevel.essential}.
 	 */
 	public sendTelemetryEvent(
 		event: ITelemetryGenericEventExt,
 		error?: unknown,
-		logLevel: typeof LogLevel.verbose | typeof LogLevel.default = LogLevel.default,
+		logLevel: typeof LogLevel.verbose | typeof LogLevel.info = LogLevel.info,
 	): void {
 		this.sendTelemetryEventCore(
 			{ ...event, category: event.category ?? "generic" },
 			error,
-			event.category === "error" ? LogLevel.error : logLevel,
+			event.category === "error" ? LogLevel.essential : logLevel,
 		);
 	}
 
@@ -237,7 +239,7 @@ export abstract class TelemetryLogger implements ITelemetryLoggerExt {
 				category: "error",
 			},
 			error,
-			LogLevel.error,
+			LogLevel.essential,
 		);
 	}
 
@@ -248,11 +250,13 @@ export abstract class TelemetryLogger implements ITelemetryLoggerExt {
 	 * @param error - optional error object to log
 	 * @param logLevel - optional level of the log. It category of event is set as error,
 	 * then the logLevel will be upgraded to be an error.
+	 *
+	 * @remarks The default value for logLevel will be updated to {@link @fluidframework/core-interfaces#LogLevel.essential}.
 	 */
 	public sendPerformanceEvent(
 		event: ITelemetryPerformanceEventExt,
 		error?: unknown,
-		logLevel: typeof LogLevel.verbose | typeof LogLevel.default = LogLevel.default,
+		logLevel: typeof LogLevel.verbose | typeof LogLevel.info = LogLevel.info,
 	): void {
 		const perfEvent = {
 			...event,
@@ -262,7 +266,7 @@ export abstract class TelemetryLogger implements ITelemetryLoggerExt {
 		this.sendTelemetryEventCore(
 			perfEvent,
 			error,
-			perfEvent.category === "error" ? LogLevel.error : logLevel,
+			perfEvent.category === "error" ? LogLevel.essential : logLevel,
 		);
 	}
 
@@ -459,8 +463,9 @@ export class ChildLogger extends TelemetryLogger {
 	}
 
 	private shouldFilterOutEvent(event: ITelemetryBaseEvent, logLevel?: LogLevel): boolean {
-		const eventLogLevel = logLevel ?? LogLevel.default;
-		const configLogLevel = this.baseLogger.minLogLevel ?? LogLevel.default;
+		// The default value for eventLogLevel will be updated to {@link @fluidframework/core-interfaces#LogLevel.essential} once issue #26910 is resolved.
+		const eventLogLevel = logLevel ?? LogLevel.info;
+		const configLogLevel = this.baseLogger.minLogLevel ?? LogLevel.info;
 		// Filter out in case event log level is below what is wanted in config.
 		return eventLogLevel < configLogLevel;
 	}
@@ -559,7 +564,7 @@ export class MultiSinkLogger extends TelemetryLogger {
 
 		super(namespace, realProperties);
 		this.loggers = loggers;
-		this._minLogLevelOfAllLoggers = LogLevel.default;
+		this._minLogLevelOfAllLoggers = LogLevel.info;
 		this.calculateMinLogLevel();
 	}
 
@@ -571,7 +576,7 @@ export class MultiSinkLogger extends TelemetryLogger {
 		if (this.loggers.length > 0) {
 			const logLevels: LogLevel[] = [];
 			for (const logger of this.loggers) {
-				logLevels.push(logger.minLogLevel ?? LogLevel.default);
+				logLevels.push(logger.minLogLevel ?? LogLevel.info);
 			}
 			this._minLogLevelOfAllLoggers = Math.min(...logLevels) as LogLevel;
 		}
