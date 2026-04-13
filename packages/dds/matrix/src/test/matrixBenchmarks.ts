@@ -10,9 +10,12 @@ import {
 	benchmarkIt,
 	benchmarkMemoryUse,
 	BenchmarkType,
+	Box,
 	isInPerformanceTestingMode,
 	type BenchmarkTimer,
 	type BenchmarkTimingOptions,
+	type MemoryUseBenchmark,
+	type MemoryUseModifier,
 } from "@fluid-tools/benchmark";
 import { unreachableCase } from "@fluidframework/core-utils/internal";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
@@ -120,11 +123,13 @@ interface MatrixBenchmarkOptions extends TestMatrixOptions {
 	readonly operation: (matrix: ISharedMatrix, undoRedo: UndoRedoStackManager) => void;
 
 	/**
-	 * Optional action to perform on the matrix after the operation being measured.
+	 * Validation to perform after `operation` is executed.
 	 *
-	 * @remarks In memory benchmarking tests, this is executed after the memory snapshot is taken
-	 * (after {@link MatrixBenchmarkOptions.operation}) but before cleanup, so it does not affect
-	 * the primary memory measurement.
+	 * @remarks
+	 * In duration tests, this is not included in the measurement.
+	 *
+	 * In memory benchmarking tests, this is executed after the memory snapshot is taken
+	 * (after {@link MatrixBenchmarkOptions.operation}) so it does not affect the memory measurement.
 	 */
 	readonly afterOperation?: (
 		matrix: ISharedMatrix,
@@ -205,26 +210,53 @@ function runMemoryBenchmark({
 }: MemoryBenchmarkConfig): Test {
 	return benchmarkIt({
 		title,
-		...benchmarkMemoryUse({
-			benchmarkFn: async (state) => {
-				while (state.continue()) {
-					await state.beforeAllocation();
-					{
-						const { matrix, undoRedoStack, cleanUp } = createTestMatrix({
-							matrixSize,
-							initialCellValue,
-						});
-						beforeOperation?.(matrix, undoRedoStack);
-						operation(matrix, undoRedoStack);
-						await state.whileAllocated();
-						afterOperation?.(matrix, undoRedoStack);
-						cleanUp();
-					}
-					await state.afterDeallocation();
-				}
-			},
-		}),
+		...benchmarkMemoryUse(
+			memoryAddedBy({
+				setup: () => {
+					const result = createTestMatrix({ matrixSize, initialCellValue });
+					beforeOperation?.(result.matrix, result.undoRedoStack);
+					return result;
+				},
+				modify: ({ matrix, undoRedoStack }) => {
+					operation(matrix, undoRedoStack);
+				},
+				after: ({ matrix, undoRedoStack, cleanUp }) => {
+					afterOperation?.(matrix, undoRedoStack);
+					// In practice this does not seem to help reduce memory leaks, but calling it is
+					// good for consistency with other benchmarks.
+					cleanUp();
+				},
+			}),
+		),
 	});
+}
+
+/**
+ * `memoryAddedBy` from benchmark tool extended with an optional `after` callback.
+ *
+ * TODO: remove this after benchamrk tool is updated to support the `after` callback.
+ */
+function memoryAddedBy<TIn extends NonNullable<unknown>>(
+	options: MemoryUseModifier<TIn> & { after?: (input: TIn) => void | Promise<void> },
+): MemoryUseBenchmark {
+	return {
+		enableAsyncGC: false,
+		benchmarkFn: async (state) => {
+			// Allocate box outside of measurement window.
+			const box = Box.empty<TIn>();
+			while (state.continue()) {
+				box.value = await options.setup();
+				await state.beforeAllocation();
+				await options.modify(box.value);
+				await state.whileAllocated();
+				await options.after?.(box.value);
+				box.clear();
+				// afterDeallocation must not be called here:
+				// box.clear() frees the whole object not just what was added by the modifications,
+				// so the freed measurement would not match the allocation, and would thus provide incorrect data.
+			}
+		},
+	};
 }
 
 type BenchmarkOptions =

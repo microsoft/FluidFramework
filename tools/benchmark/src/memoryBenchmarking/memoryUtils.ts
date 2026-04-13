@@ -24,6 +24,12 @@ export interface MemoryUseModifier<TIn> {
 	 * The additional memory retained by `input` after this operation will be measured.
 	 */
 	modify(input: TIn): void | Promise<void>;
+
+	/**
+	 * Optional callback to run after the value has been modified.
+	 * @param input - The value that was created by `setup` and modified by `modify`.
+	 */
+	after?: (input: TIn) => void | Promise<void>;
 }
 
 /**
@@ -111,6 +117,7 @@ export function memoryAddedBy<TIn extends NonNullable<unknown>>(
 				await state.beforeAllocation();
 				await options.modify(box.value);
 				await state.whileAllocated();
+				await options.after?.(box.value);
 				box.clear();
 				// afterDeallocation must not be called here:
 				// box.clear() frees the whole object not just what was added by the modifications,
