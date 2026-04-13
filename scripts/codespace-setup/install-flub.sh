@@ -11,7 +11,15 @@ REPO_ROOT="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../.." >/dev/null 2>&1 && 
 
 echo "Installing flub from local build-tools..."
 
-pnpm -C "$REPO_ROOT/build-tools" install --frozen-lockfile --reporter=default
+# Use a named volume for the store (mounted at /pnpm-store in the devcontainer)
+# to avoid slow hardlinking on Docker's overlayfs.
+STORE_DIR="${PNPM_STORE_DIR:-}"
+if [ -d /pnpm-store ]; then
+  STORE_DIR="/pnpm-store"
+fi
+
+pnpm -C "$REPO_ROOT/build-tools" install --frozen-lockfile --reporter=default \
+  ${STORE_DIR:+--store-dir "$STORE_DIR"}
 pnpm -C "$REPO_ROOT/build-tools" build:compile
 
 # Use npm link (not pnpm link) because it handles bin shims correctly.
