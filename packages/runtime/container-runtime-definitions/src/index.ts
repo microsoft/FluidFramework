@@ -32,6 +32,7 @@ export type {
 } from "./containerExtension.js";
 export type {
 	IContainerRuntime,
+	IContainerRuntimeAlpha,
 	IContainerRuntimeBaseWithCombinedEvents,
 	IContainerRuntimeEvents,
 	IContainerRuntimeInternal,
@@ -41,3 +42,4 @@ export type {
 	ISummarizerObservabilityProps,
 	ISummarizerEvents,
 } from "./containerRuntime.js";
+export { asContainerRuntimeAlpha } from "./containerRuntime.js";

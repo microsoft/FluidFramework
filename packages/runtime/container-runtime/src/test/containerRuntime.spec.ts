@@ -1005,7 +1005,7 @@ describe("Runtime", () => {
 					it("orderSequentially while in StagingMode works", async () => {
 						stubChannelCollection(containerRuntime);
 
-						const stageControls = containerRuntime.enterStagingMode();
+						containerRuntime.enterStagingMode();
 
 						containerRuntime.orderSequentially(() => {
 							submitDataStoreOp(containerRuntime, "1", testDataStoreMessage);
@@ -1016,7 +1016,7 @@ describe("Runtime", () => {
 							"No ops should be submitted in Staging Mode",
 						);
 
-						stageControls.commitChanges();
+						containerRuntime.exitStagingMode("commit");
 
 						assert.strictEqual(
 							submittedOpsCount,
@@ -1030,12 +1030,12 @@ describe("Runtime", () => {
 						it("commitChanges under orderSequentially (happens to fail)", async () => {
 							stubChannelCollection(containerRuntime);
 
-							const stageControls = containerRuntime.enterStagingMode();
+							containerRuntime.enterStagingMode();
 
 							assert.throws(() => {
 								containerRuntime.orderSequentially(() => {
 									submitDataStoreOp(containerRuntime, "1", testDataStoreMessage);
-									stageControls.commitChanges();
+									containerRuntime.exitStagingMode("commit");
 								});
 							});
 						});
@@ -1043,12 +1043,12 @@ describe("Runtime", () => {
 						it("discardChanges under orderSequentially (does not happen to fail)", async () => {
 							stubChannelCollection(containerRuntime);
 
-							const stageControls = containerRuntime.enterStagingMode();
+							containerRuntime.enterStagingMode();
 
 							assert.doesNotThrow(() => {
 								containerRuntime.orderSequentially(() => {
 									submitDataStoreOp(containerRuntime, "1", testDataStoreMessage);
-									stageControls.discardChanges();
+									containerRuntime.exitStagingMode("discard");
 								});
 							});
 						});
@@ -4198,14 +4198,14 @@ describe("Runtime", () => {
 					containerRuntime.attachState === AttachState.Attached,
 					"PRECONDITION: Expected Attached container",
 				);
-				const controls = containerRuntime.enterStagingMode();
+				containerRuntime.enterStagingMode();
 				assert.equal(
 					containerRuntime.inStagingMode,
 					true,
 					"Runtime should be in staging mode after entry",
 				);
 
-				controls.commitChanges();
+				containerRuntime.exitStagingMode("commit");
 				assert.equal(
 					containerRuntime.inStagingMode,
 					false,
@@ -4213,7 +4213,8 @@ describe("Runtime", () => {
 				);
 
 				// Enter / discard as a second exit-path
-				containerRuntime.enterStagingMode().discardChanges();
+				containerRuntime.enterStagingMode();
+				containerRuntime.exitStagingMode("discard");
 				assert.equal(
 					containerRuntime.inStagingMode,
 					false,
@@ -4222,7 +4223,7 @@ describe("Runtime", () => {
 			});
 
 			it("entering staging mode twice not allowed", () => {
-				const controls = containerRuntime.enterStagingMode();
+				containerRuntime.enterStagingMode();
 				assert.throws(
 					() => containerRuntime.enterStagingMode(),
 					(error: Error & IErrorBase) =>
@@ -4230,7 +4231,7 @@ describe("Runtime", () => {
 						error.message === "Already in staging mode",
 					"Should not allow entering staging mode while already in staging mode",
 				);
-				controls.discardChanges();
+				containerRuntime.exitStagingMode("discard");
 				// Now we can enter staging mode again
 				containerRuntime.enterStagingMode();
 				assert.equal(
@@ -4287,7 +4288,7 @@ describe("Runtime", () => {
 				// Won't be resubmitted when exiting staging mode
 				submitDataStoreOp(containerRuntime, "1", genTestDataStoreMessage("pre-staging"));
 
-				const controls = containerRuntime.enterStagingMode();
+				containerRuntime.enterStagingMode();
 				assert(
 					channelCollectionStub.notifyStagingMode.calledOnceWithExactly(true),
 					"Expected notifyStagingMode to be called with true",
@@ -4303,7 +4304,7 @@ describe("Runtime", () => {
 				assert.equal(submittedOps.length, 1, "Only expected the 1 pre-staging op");
 
 				// default options: { squash: false }
-				controls.commitChanges();
+				containerRuntime.exitStagingMode("commit");
 
 				assert(
 					channelCollectionStub.reSubmitContainerMessage.calledOnce,
@@ -4345,7 +4346,7 @@ describe("Runtime", () => {
 					"LOCAL_OP_METADATA",
 				);
 
-				const controls = containerRuntime.enterStagingMode();
+				containerRuntime.enterStagingMode();
 
 				// Entering staging mode triggers a flush, so we should see the pre-staging op sent,
 				// but not the staged op (even with flush)
@@ -4357,7 +4358,7 @@ describe("Runtime", () => {
 				containerRuntime.flush();
 				assert.equal(submittedOps.length, 1, "No more ops expected while staged");
 
-				controls.discardChanges();
+				containerRuntime.exitStagingMode("discard");
 
 				assert.deepEqual(
 					channelCollectionStub.rollbackDataStoreOp.getCalls().map((call) => call.args),
@@ -4384,7 +4385,7 @@ describe("Runtime", () => {
 			it("discardChanges resets isDirty state", () => {
 				stubChannelCollection(containerRuntime);
 
-				const controls = containerRuntime.enterStagingMode();
+				containerRuntime.enterStagingMode();
 
 				submitDataStoreOp(
 					containerRuntime,
@@ -4402,7 +4403,7 @@ describe("Runtime", () => {
 				containerRuntime.flush();
 				assert.equal(containerRuntime.isDirty, true, "Runtime should be dirty (from PSM)");
 
-				controls.discardChanges();
+				containerRuntime.exitStagingMode("discard");
 
 				assert.equal(containerRuntime.isDirty, false, "Runtime should not be dirty anymore");
 			});
@@ -4440,7 +4441,7 @@ describe("Runtime", () => {
 					stubChannelCollection(runtimeWithThreshold);
 					submittedOps.length = 0;
 
-					const controls = runtimeWithThreshold.enterStagingMode();
+					runtimeWithThreshold.enterStagingMode();
 
 					// Submit 5 ops across multiple turns — under the threshold of 10
 					submitDataStoreOp(runtimeWithThreshold, "1", genTestDataStoreMessage("op1"));
@@ -4466,7 +4467,7 @@ describe("Runtime", () => {
 						"All 5 ops should be in the outbox",
 					);
 
-					controls.commitChanges();
+					runtimeWithThreshold.exitStagingMode("commit");
 					assert.equal(
 						submittedOps.length,
 						5,
@@ -4492,7 +4493,7 @@ describe("Runtime", () => {
 					stubChannelCollection(runtimeWithThreshold);
 					submittedOps.length = 0;
 
-					const controls = runtimeWithThreshold.enterStagingMode();
+					runtimeWithThreshold.enterStagingMode();
 
 					// Submit 3 ops — exactly at the threshold
 					submitDataStoreOp(runtimeWithThreshold, "1", genTestDataStoreMessage("op1"));
@@ -4524,7 +4525,7 @@ describe("Runtime", () => {
 					);
 
 					// Exit staging mode and verify perf event includes auto-flush count
-					controls.commitChanges();
+					runtimeWithThreshold.exitStagingMode("commit");
 					logger.assertMatchAny([
 						{
 							eventName: "ContainerRuntime:ExitStagingMode_commit_end",
@@ -4583,14 +4584,14 @@ describe("Runtime", () => {
 					stubChannelCollection(runtimeWithThreshold);
 					submittedOps.length = 0;
 
-					const controls = runtimeWithThreshold.enterStagingMode();
+					runtimeWithThreshold.enterStagingMode();
 
 					submitDataStoreOp(runtimeWithThreshold, "1", genTestDataStoreMessage("op1"));
 					submitDataStoreOp(runtimeWithThreshold, "2", genTestDataStoreMessage("op2"));
 					submitDataStoreOp(runtimeWithThreshold, "3", genTestDataStoreMessage("op3"));
 					assert.equal(submittedOps.length, 0, "No ops submitted while staging");
 
-					controls.commitChanges();
+					runtimeWithThreshold.exitStagingMode("commit");
 
 					assert(submittedOps.length > 0, "Ops should be submitted after commitChanges");
 				});
@@ -4627,7 +4628,7 @@ describe("Runtime", () => {
 					stubChannelCollection(runtimeWithThreshold);
 					submittedOps.length = 0;
 
-					const controls = runtimeWithThreshold.enterStagingMode();
+					runtimeWithThreshold.enterStagingMode();
 
 					// Submit a few ops across turns — well under the default threshold
 					submitDataStoreOp(runtimeWithThreshold, "1", genTestDataStoreMessage("op1"));
@@ -4647,7 +4648,7 @@ describe("Runtime", () => {
 						"Both ops should still be in the outbox (unflushed)",
 					);
 
-					controls.commitChanges();
+					runtimeWithThreshold.exitStagingMode("commit");
 				});
 
 				it("discardChanges flushes outbox before rollback", async () => {
@@ -4655,7 +4656,7 @@ describe("Runtime", () => {
 					const channelCollectionStub = stubChannelCollection(runtimeWithThreshold);
 					submittedOps.length = 0;
 
-					const controls = runtimeWithThreshold.enterStagingMode();
+					runtimeWithThreshold.enterStagingMode();
 
 					submitDataStoreOp(
 						runtimeWithThreshold,
@@ -4676,7 +4677,7 @@ describe("Runtime", () => {
 						"2 ops in outbox before discard",
 					);
 
-					controls.discardChanges();
+					runtimeWithThreshold.exitStagingMode("discard");
 
 					// Outbox should have been drained before rollback
 					assert.equal(
@@ -4858,7 +4859,7 @@ describe("Runtime", () => {
 				assert.equal(submittedOps.length, 0, "Ops not yet flushed");
 
 				// Enter staging mode — should flush pre-staging ops as non-staged
-				const controls = runtime.enterStagingMode();
+				runtime.enterStagingMode();
 				assert.equal(
 					submittedOps.length,
 					2,
@@ -4870,7 +4871,7 @@ describe("Runtime", () => {
 				runtime.flush();
 				assert.equal(submittedOps.length, 2, "Staged ops should NOT be submitted to wire");
 
-				controls.commitChanges();
+				runtime.exitStagingMode("commit");
 				assert.equal(submittedOps.length, 3, "All ops should be submitted after commit");
 				runtime.dispose();
 			});
@@ -4938,7 +4939,7 @@ describe("Runtime", () => {
 				assert.equal(submittedOps.length, 1, "Pre-staging op should be submitted");
 
 				// Enter staging mode and submit more ops
-				const controls = runtime.enterStagingMode();
+				runtime.enterStagingMode();
 				submitDataStoreOp(
 					runtime,
 					"staged1",
@@ -4965,7 +4966,7 @@ describe("Runtime", () => {
 				const opsAfterReconnect = submittedOps.length;
 
 				// Verify we can still commit the staged changes
-				controls.commitChanges();
+				runtime.exitStagingMode("commit");
 				assert(
 					submittedOps.length > opsAfterReconnect,
 					"Staged op should be submitted after commitChanges",

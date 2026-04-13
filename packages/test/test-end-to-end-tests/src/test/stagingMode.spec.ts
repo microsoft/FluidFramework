@@ -102,7 +102,7 @@ describeCompat(
 				"Runtime should not be readonly before entering staging mode.",
 			);
 
-			const controls = containerRuntime.enterStagingMode?.();
+			containerRuntime.enterStagingMode?.();
 
 			assert.equal(
 				dsRuntime.isReadOnly(),
@@ -110,7 +110,7 @@ describeCompat(
 				"Runtime should be readonly after entering staging mode.",
 			);
 
-			controls?.commitChanges();
+			containerRuntime.exitStagingMode?.("commit");
 
 			assert.equal(
 				dsRuntime.isReadOnly(),
@@ -133,7 +133,7 @@ describeCompat(
 				"Runtime should preserve readonly state set before entering staging mode.",
 			);
 
-			const controls = containerRuntime.enterStagingMode?.();
+			containerRuntime.enterStagingMode?.();
 
 			assert.equal(
 				dsRuntime.isReadOnly(),
@@ -141,7 +141,7 @@ describeCompat(
 				"Runtime should be readonly after entering staging mode.",
 			);
 
-			controls?.commitChanges();
+			containerRuntime.exitStagingMode?.("commit");
 
 			assert.equal(
 				dsRuntime.isReadOnly(),
@@ -162,7 +162,7 @@ describeCompat(
 				"Runtime should not be readonly before entering staging mode.",
 			);
 
-			const controls = containerRuntime.enterStagingMode?.();
+			containerRuntime.enterStagingMode?.();
 
 			container.forceReadonly?.(true);
 
@@ -172,7 +172,7 @@ describeCompat(
 				"Runtime should preserve readonly state set during staging mode.",
 			);
 
-			controls?.commitChanges();
+			containerRuntime.exitStagingMode?.("commit");
 
 			assert.equal(
 				dsRuntime.isReadOnly(),
@@ -193,7 +193,7 @@ describeCompat(
 				"Runtime should not be readonly before entering staging mode.",
 			);
 
-			const controls = containerRuntime.enterStagingMode?.();
+			containerRuntime.enterStagingMode?.();
 
 			assert.equal(
 				dsRuntime.isReadOnly(),
@@ -201,7 +201,7 @@ describeCompat(
 				"Runtime should not be readonly when readonlyInStagingMode is false.",
 			);
 
-			controls?.commitChanges();
+			containerRuntime.exitStagingMode?.("commit");
 
 			assert.equal(
 				dsRuntime.isReadOnly(),
@@ -216,11 +216,11 @@ describeCompat(
 				readonlyInStagingMode: false,
 			});
 
-			const controls = containerRuntime.enterStagingMode?.();
+			containerRuntime.enterStagingMode?.();
 
 			shareDir.set("test", "test");
 
-			controls?.commitChanges();
+			containerRuntime.exitStagingMode?.("commit");
 
 			if (container.isDirty) {
 				await timeoutPromise((resolve) => {
@@ -243,11 +243,11 @@ describeCompat(
 					readonlyInStagingMode: true,
 				});
 
-				const controls = containerRuntime.enterStagingMode?.();
+				containerRuntime.enterStagingMode?.();
 
 				shareDir.set("test", "test");
 
-				controls?.commitChanges();
+				containerRuntime.exitStagingMode?.("commit");
 
 				if (container.isDirty) {
 					await timeoutPromise((resolve) => {

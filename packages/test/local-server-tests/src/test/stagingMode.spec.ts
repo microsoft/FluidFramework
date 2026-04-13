@@ -31,7 +31,7 @@ import { SharedMap } from "@fluidframework/map/internal";
 import {
 	asLegacyAlpha,
 	type IContainerRuntimeBase,
-	type StageControlsInternal,
+	type IContainerRuntimeBaseInternal,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	encodeHandleForSerialization,
@@ -117,12 +117,19 @@ class DataObjectWithStagingMode extends DataObject {
 		return state;
 	}
 
-	public enterStagingMode(): StageControlsInternal {
+	public enterStagingMode(): void {
 		assert(
 			this.containerRuntimeExp.enterStagingMode !== undefined,
 			"enterStagingMode must be defined",
 		);
-		return this.containerRuntimeExp.enterStagingMode();
+		this.containerRuntimeExp.enterStagingMode();
+	}
+
+	public exitStagingMode(action: "commit" | "discard", options?: { squash?: boolean }): void {
+		const runtimeInternal = this
+			.containerRuntimeExp as unknown as IContainerRuntimeBaseInternal;
+		assert(runtimeInternal.exitStagingMode !== undefined, "exitStagingMode must be defined");
+		runtimeInternal.exitStagingMode(action, options);
 	}
 }
 
@@ -479,7 +486,7 @@ describe("Staging Mode", () => {
 		const deltaConnectionServer = LocalDeltaConnectionServer.create();
 		const clients = await createClients(deltaConnectionServer);
 
-		const stagingControls = clients.original.dataObject.enterStagingMode();
+		clients.original.dataObject.enterStagingMode();
 		clients.original.dataObject.makeEdit("branch-only");
 		clients.loaded.dataObject.makeEdit("after-branch");
 
@@ -489,7 +496,7 @@ describe("Staging Mode", () => {
 		// Make another change before exiting staging mode
 		clients.original.dataObject.makeEdit("branch-second-batch");
 
-		stagingControls.commitChanges();
+		clients.original.dataObject.exitStagingMode("commit");
 
 		await waitForSave(clients);
 
@@ -506,7 +513,7 @@ describe("Staging Mode", () => {
 		const deltaConnectionServer = LocalDeltaConnectionServer.create();
 		const clients = await createClients(deltaConnectionServer);
 
-		const stagingControls = clients.original.dataObject.enterStagingMode();
+		clients.original.dataObject.enterStagingMode();
 		clients.original.dataObject.makeEdit("branch-only");
 		clients.loaded.dataObject.makeEdit("after-branch");
 
@@ -516,7 +523,7 @@ describe("Staging Mode", () => {
 		// Make another change before exiting staging mode
 		clients.original.dataObject.makeEdit("branch-second-batch");
 
-		stagingControls.discardChanges();
+		clients.original.dataObject.exitStagingMode("discard");
 
 		await waitForSave(clients);
 
@@ -534,7 +541,7 @@ describe("Staging Mode", () => {
 		const deltaConnectionServer = LocalDeltaConnectionServer.create();
 		const clients = await createClients(deltaConnectionServer);
 
-		const branchData = clients.original.dataObject.enterStagingMode();
+		clients.original.dataObject.enterStagingMode();
 		assertConsistent(clients, "states should match after branch");
 
 		clients.original.dataObject.addDDS("branch-only");
@@ -554,7 +561,7 @@ describe("Staging Mode", () => {
 			"Expected mainline change to reach branch",
 		);
 
-		branchData.commitChanges();
+		clients.original.dataObject.exitStagingMode("commit");
 
 		await waitForSave(clients);
 
@@ -565,12 +572,12 @@ describe("Staging Mode", () => {
 		it(`${commit ? "commitChanges" : "discardChanges"} allows subsequent outbound changes to flow`, async () => {
 			const deltaConnectionServer = LocalDeltaConnectionServer.create();
 			const clients = await createClients(deltaConnectionServer);
-			const stagingControls = clients.original.dataObject.enterStagingMode();
+			clients.original.dataObject.enterStagingMode();
 			clients.original.dataObject.makeEdit("branch-only");
 			if (commit) {
-				stagingControls.commitChanges();
+				clients.original.dataObject.exitStagingMode("commit");
 			} else {
-				stagingControls.discardChanges();
+				clients.original.dataObject.exitStagingMode("discard");
 			}
 
 			await waitForSave(clients);
@@ -590,7 +597,7 @@ describe("Staging Mode", () => {
 	it("can be exited while disconnected and functionality is preserved", async () => {
 		const deltaConnectionServer = LocalDeltaConnectionServer.create();
 		const clients = await createClients(deltaConnectionServer);
-		const stagingControls = clients.original.dataObject.enterStagingMode();
+		clients.original.dataObject.enterStagingMode();
 		clients.original.dataObject.makeEdit("branch-only");
 		clients.loaded.dataObject.makeEdit("after-branch");
 
@@ -599,7 +606,7 @@ describe("Staging Mode", () => {
 		await new Promise<void>((resolve) => setTimeout(resolve, 100));
 
 		await ensureDisconnected(clients.original);
-		stagingControls.commitChanges();
+		clients.original.dataObject.exitStagingMode("commit");
 		await ensureConnected(clients.original);
 
 		await waitForSave(clients);
@@ -626,13 +633,13 @@ describe("Staging Mode", () => {
 			const reSubmitSquashedSpy = sinon.spy(rootMap, "reSubmitSquashed" as keyof SharedObject);
 			const reSubmitCoreSpy = sinon.spy(rootMap, "reSubmitCore" as keyof SharedObject);
 
-			const stagingControls = clients.original.dataObject.enterStagingMode();
+			clients.original.dataObject.enterStagingMode();
 			clients.original.dataObject.makeEdit("branch-only");
 
 			if (disconnectBeforeCommit) {
 				await ensureDisconnected(clients.original);
 			}
-			stagingControls.commitChanges({ squash });
+			clients.original.dataObject.exitStagingMode("commit", { squash });
 			if (disconnectBeforeCommit) {
 				await ensureConnected(clients.original);
 			}
