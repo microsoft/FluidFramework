@@ -22,8 +22,8 @@
  * - sharedConfigs: Collection of all shared configs in a config array
  */
 
+import eslintReact from "@eslint-react/eslint-plugin";
 import dependPlugin from "eslint-plugin-depend";
-import reactPlugin from "eslint-plugin-react";
 import reactHooksPlugin from "eslint-plugin-react-hooks";
 import type { ESLint, Linter } from "eslint";
 
@@ -127,13 +127,17 @@ export const internalModulesConfig = {
 } as const satisfies Linter.Config;
 
 /**
- * React rules for ESLint 9 - extends react/recommended and react-hooks/recommended.
+ * React rules - extends @eslint-react recommended-typescript and react-hooks/recommended.
+ *
+ * Uses @eslint-react/eslint-plugin instead of eslint-plugin-react for ESLint 10 compatibility.
+ * eslint-plugin-react-hooks is kept separately because it provides React Compiler rules
+ * and already supports ESLint 10.
  */
 export const reactConfig = [
-	// react/flat.recommended
+	// @eslint-react recommended-typescript preset
 	{
 		files: ["**/*.jsx", "**/*.tsx"],
-		...reactPlugin.configs.flat.recommended,
+		...eslintReact.configs["recommended-typescript"],
 	},
 	// react-hooks/recommended rules
 	{
@@ -143,16 +147,6 @@ export const reactConfig = [
 			"react-hooks": reactHooksPlugin as ESLint.Plugin,
 		},
 		rules: reactHooksPlugin.configs.recommended.rules,
-		settings: {
-			react: {
-				version: "detect",
-			},
-		},
-	},
-	// react/flat["jsx-runtime"]
-	{
-		files: ["**/*.jsx", "**/*.tsx"],
-		...reactPlugin.configs.flat["jsx-runtime"],
 	},
 	// Custom overrides for react-hooks rules
 	{
