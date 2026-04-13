@@ -20,7 +20,7 @@
       "file": "scripts/codespace-setup/agent-aliases.sh",
       "line": 8,
       "title": "Claude Aliases",
-      "description": "These aliases launch Claude Code via agency:\n\n- **`claude`** — Normal Claude Code\n- **`dev`** - Claude Code with Nori overlay\n\nBoth aliases use `agency claude` under the hood, which ensures consistent configuration and context."
+      "description": "These aliases launch Claude Code via agency:\n\n- **`claude`** - Normal Claude Code\n- **`dev`** - Claude Code with Nori overlay\n\nBoth aliases use `agency claude` under the hood, which ensures consistent configuration and context."
     },
     {
       "file": "scripts/codespace-setup/agent-aliases.sh",
@@ -44,7 +44,7 @@
       "file": ".devcontainer/ai-agent/GETTING_STARTED.md",
       "line": 1,
       "title": "Next Steps",
-      "description": "You're all set! Here's what to do:\n\n1. Run `pnpm install:agency` and open a new terminal\n2. Try `claude` or `copilot` to start an AI-assisted session\n3. Check [DEV.md](./DEV.md) for the full development workflow\n\nFor more info, see the [AI-enabled Codespace wiki](https://github.com/microsoft/FluidFramework/wiki/AI%E2%80%90enabled-Codespace)."
+      "description": "You're all set! Here's what to do:\n\n1. Run `pnpm install:agency` and open a new terminal\n2. Try `dev`, `claude`, or `copilot` to start an AI-assisted session\n3. Check [DEV.md](./DEV.md) for the full development workflow\n\nFor more info, see the [AI-enabled Codespace wiki](https://github.com/microsoft/FluidFramework/wiki/AI%E2%80%90enabled-Codespace)."
     }
   ]
 }
