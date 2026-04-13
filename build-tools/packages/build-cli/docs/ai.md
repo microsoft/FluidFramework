@@ -1,0 +1,36 @@
+`flub ai`
+=========
+
+AI-powered assistant for launching the right AI agent.
+
+* [`flub ai`](#flub-ai)
+
+## `flub ai`
+
+AI-powered assistant that helps you launch the right AI agent.
+
+```
+USAGE
+  $ flub ai [-v | --quiet] [--model <value>]
+
+FLAGS
+  --model=<value>  [default: gpt-4.1] The AI model to use for the launcher assistant.
+
+LOGGING FLAGS
+  -v, --verbose  Enable verbose logging.
+      --quiet    Disable all logging.
+
+DESCRIPTION
+  AI-powered assistant that helps you launch the right AI agent.
+
+EXAMPLES
+  Launch the AI assistant to help pick the right agent.
+
+    $ flub ai
+
+  Use a specific model for the launcher assistant.
+
+    $ flub ai --model claude-sonnet-4.5
+```
+
+_See code: [src/commands/ai.ts](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/src/commands/ai.ts)_

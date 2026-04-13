@@ -44,6 +44,7 @@
 		"node-setup": "bash scripts/codespace-setup/on-create.sh"
 	},
 	"postCreateCommand": {
+		"install-flub": "bash scripts/codespace-setup/install-flub.sh",
 		"ai-setup": "bash scripts/codespace-setup/ai-setup.sh"
 	},
 	"postStartCommand": {

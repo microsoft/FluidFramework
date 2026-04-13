@@ -87,6 +87,7 @@
 	"dependencies": {
 		"@andrewbranch/untar.js": "^1.0.3",
 		"@fluid-tools/build-infrastructure": "workspace:~",
+		"@github/copilot-sdk": "^0.2.2",
 		"@fluid-tools/version-tools": "workspace:~",
 		"@fluidframework/build-tools": "workspace:~",
 		"@fluidframework/bundle-size-tools": "workspace:~",
@@ -225,6 +226,9 @@
 		"repositoryPrefix": "<%- repo %>/blob/main/build-tools/packages/build-cli/<%- commandPath %>",
 		"topicSeparator": " ",
 		"topics": {
+			"ai": {
+				"description": "AI-powered assistant for launching the right AI agent."
+			},
 			"build-perf": {
 				"description": "Build performance observability commands for collecting, processing, and analyzing build metrics."
 			},
