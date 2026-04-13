@@ -17,7 +17,7 @@ import type { TreeView } from "./tree.js";
 /**
  * An index that returns tree nodes given their associated identifiers.
  *
- * @alpha
+ * @beta
  */
 export type IdentifierIndex = TreeIndex<string, TreeNode>;
 
@@ -28,7 +28,7 @@ function isStringKey(key: TreeIndexKey): key is string {
 /**
  * Creates an {@link IdentifierIndex} for a given {@link TreeView}.
  *
- * @alpha
+ * @beta
  */
 export function createIdentifierIndex<TSchema extends ImplicitFieldSchema>(
 	view: TreeView<TSchema>,

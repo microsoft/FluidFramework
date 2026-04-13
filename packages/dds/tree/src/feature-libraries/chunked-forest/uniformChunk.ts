@@ -125,11 +125,14 @@ export class TreeShape {
 		public readonly fieldsArray: readonly FieldShape[],
 		maybeCompressedIdLeaf: boolean = false,
 	) {
-		assert(hasValue === false || fieldsArray.length === 0, "only non-leaf can have fields");
+		assert(
+			hasValue === false || fieldsArray.length === 0,
+			0xcef /* only non-leaf can have fields */,
+		);
 		if (maybeCompressedIdLeaf) {
 			assert(
 				hasValue && type === "com.fluidframework.leaf.string",
-				"only strings can opt into maybeCompressedIdLeaf",
+				0xcf0 /* only strings can opt into maybeCompressedIdLeaf */,
 			);
 		}
 		// For non-leaf nodes, derive from whether any child shapes contain compressed ids.
@@ -571,7 +574,7 @@ class Cursor extends SynchronousCursor implements ChunkedCursor {
 				const idCompressor = this.chunk.idCompressor;
 				assert(
 					idCompressor !== undefined,
-					"chunk required idCompressor but did not provide it",
+					0xcf1 /* chunk required idCompressor but did not provide it */,
 				);
 				return idCompressor.decompress(value as SessionSpaceCompressedId);
 			}

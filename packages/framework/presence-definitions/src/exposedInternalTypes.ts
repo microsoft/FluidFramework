@@ -9,7 +9,7 @@ import type { OpaqueJsonDeserialized } from "@fluidframework/core-interfaces/int
  * Collection of value types that are not intended to be used/imported
  * directly outside of this package.
  *
- * @beta
+ * @public
  * @system
  */
 // eslint-disable-next-line @typescript-eslint/no-namespace

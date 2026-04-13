@@ -425,7 +425,7 @@ export class Outbox {
 		if (rawBatch.hasReentrantOps === true) {
 			assert(
 				resubmitInfo === undefined,
-				"Re-submitting a batch with reentrant ops is not supported",
+				0xcf2 /* Re-submitting a batch with reentrant ops is not supported */,
 			);
 			assert(!this.rebasing, 0x6fa /* A rebased batch should never have reentrant ops */);
 			// Rebase the current batch (resubmit the ops one-by-one) and then reinvoke flushInternal.
