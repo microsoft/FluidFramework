@@ -82,7 +82,7 @@
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "catalog:buildTools",
 		"@fluidframework/eslint-config-fluid": "catalog:eslint",
-		"@microsoft/api-extractor": "7.52.11",
+		"@microsoft/api-extractor": "7.58.1",
 		"@types/react": "^18.3.11",
 		"@types/react-dom": "^18.3.0",
 		"copyfiles": "^2.4.1",

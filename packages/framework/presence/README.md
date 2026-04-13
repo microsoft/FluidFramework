@@ -203,7 +203,7 @@ function logOthersCounters(counterTracker: LatestMap<number, string>): void {
 To access Presence APIs, use `getPresence()` with any `IFluidContainer`.
 
 ```typescript
-import { getPresence } from "fluid-framework/beta";
+import { getPresence } from "fluid-framework";
 
 function usePresence(container: IFluidContainer): void {
    const presence = getPresence(container);
@@ -213,8 +213,8 @@ function usePresence(container: IFluidContainer): void {
 #### Schema Definition and Workspace
 
 ```typescript
-import type { Latest, LatestMap, Presence, StatesWorkspaceSchema } from "@fluidframework/presence/beta";
-import { StateFactory } from "@fluidframework/presence/beta";
+import type { Latest, LatestMap, Presence, StatesWorkspaceSchema } from "@fluidframework/presence";
+import { StateFactory } from "@fluidframework/presence";
 
 interface PointXY { x: number; y: number }
 
