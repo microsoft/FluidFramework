@@ -48,6 +48,7 @@ import {
 import { getUnhydratedContext } from "../../../simple-tree/createContext.js";
 import {
 	type ArrayNodeDeltaOp,
+	type ArrayNodeTreeChangedDeltaOp,
 	type InsertableField,
 	type InsertableTreeNodeFromImplicitAllowedTypes,
 	isTreeNode,
@@ -2762,7 +2763,7 @@ describe("treeNodeApi", () => {
 
 				assert.deepEqual(deltas, [
 					[
-						{ type: "retain", count: 3, contentChanged: false },
+						{ type: "retain", count: 3 },
 						{ type: "insert", count: 1 },
 					],
 				]);
@@ -2806,7 +2807,7 @@ describe("treeNodeApi", () => {
 
 				assert.deepEqual(deltas, [
 					[
-						{ type: "retain", count: 2, contentChanged: false },
+						{ type: "retain", count: 2 },
 						{ type: "remove", count: 1 },
 					],
 				]);
@@ -2825,18 +2826,19 @@ describe("treeNodeApi", () => {
 				assert.deepEqual(deltas, [
 					[
 						{ type: "remove", count: 1 },
-						{ type: "retain", count: 2, contentChanged: false },
+						{ type: "retain", count: 2 },
 						{ type: "insert", count: 1 },
 					],
 				]);
 			});
 
-			it(`deep change alongside removal produces a retain op with contentChanged`, () => {
+			it(`deep change alongside removal produces a plain retain op (nodeChanged has no subtree info)`, () => {
 				// When an element's nested properties change (but it is not itself
 				// inserted or removed) AND another element is removed in the same delta,
 				// the marks for the array field include a {fields} mark for the
-				// unchanged-at-array-level element. deltaMarksToArrayOps converts that
-				// to a "retain" op with contentChanged: true.
+				// unchanged-at-array-level element. deltaMarksToArrayOps (for nodeChanged)
+				// converts that to a plain "retain" op — no subtreeChanged flag, since
+				// nodeChanged does not expose subtree information.
 				const sf2 = new SchemaFactory("retain-delta");
 				class RetainItem extends sf2.object("RetainItem", { value: sf2.number }) {}
 				class RetainArray extends sf2.array("RetainArray", [RetainItem]) {}
@@ -2850,8 +2852,8 @@ describe("treeNodeApi", () => {
 
 				// Use a fork to compose two changes into a single delta: modify
 				// element 0's nested property and remove element 1. The merged
-				// delta's marks are [{count:1,fields:{...}}, {count:1,detach:id}],
-				// which produce [retain-with-contentChanged, remove 1].
+				// delta's marks are [{count:1,fields:{...}}, {count:1,detach:id}].
+				// For nodeChanged (no subtreeChanged), this produces [retain, remove 1].
 				const { forkView, forkCheckout } = getViewForForkedBranch(view);
 				forkView.root[0].value = 99;
 				forkView.root.removeAt(1);
@@ -2859,28 +2861,28 @@ describe("treeNodeApi", () => {
 
 				assert.deepEqual(deltas, [
 					[
-						{ type: "retain", count: 1, contentChanged: true },
+						{ type: "retain", count: 1 },
 						{ type: "remove", count: 1 },
 					],
 				]);
 			});
 
-			describe(`unhydrated array — nodeChanged delta`, () => {
+			describeHydration(`nodeChanged delta`, (init) => {
 				it(`insertAtEnd fires nodeChanged with correct delta`, () => {
-					const root = new TestArray([1, 2, 3]);
+					const root = init(TestArray, [1, 2, 3]);
 					const deltas: (readonly ArrayNodeDeltaOp[] | undefined)[] = [];
 					TreeAlpha.on(root, "nodeChanged", ({ delta }) => deltas.push(delta));
 					root.insertAtEnd(4);
 					assert.deepEqual(deltas, [
 						[
-							{ type: "retain", count: 3, contentChanged: false },
+							{ type: "retain", count: 3 },
 							{ type: "insert", count: 1 },
 						],
 					]);
 				});
 
 				it(`removeAt fires nodeChanged with correct delta`, () => {
-					const root = new TestArray([1, 2, 3]);
+					const root = init(TestArray, [1, 2, 3]);
 					const deltas: (readonly ArrayNodeDeltaOp[] | undefined)[] = [];
 					TreeAlpha.on(root, "nodeChanged", ({ delta }) => deltas.push(delta));
 					root.removeAt(0);
@@ -2888,7 +2890,7 @@ describe("treeNodeApi", () => {
 				});
 
 				it(`moveToEnd fires nodeChanged with correct delta`, () => {
-					const root = new TestArray([1, 2, 3]);
+					const root = init(TestArray, [1, 2, 3]);
 					const deltas: (readonly ArrayNodeDeltaOp[] | undefined)[] = [];
 					TreeAlpha.on(root, "nodeChanged", ({ delta }) => deltas.push(delta));
 					// Move first element to end: [1,2,3] → [2,3,1]
@@ -2896,7 +2898,7 @@ describe("treeNodeApi", () => {
 					assert.deepEqual(deltas, [
 						[
 							{ type: "remove", count: 1 },
-							{ type: "retain", count: 2, contentChanged: false },
+							{ type: "retain", count: 2 },
 							{ type: "insert", count: 1 },
 						],
 					]);
@@ -2906,7 +2908,7 @@ describe("treeNodeApi", () => {
 			describe(`'treeChanged' alpha delta payload for array nodes`, () => {
 				// TreeAlpha.on(array, "treeChanged") fires for both shallow changes
 				// (insert/remove/move) and deep changes (a property of an element changed
-				// without any shallow array change). The delta uses contentChanged: true to
+				// without any shallow array change). The delta uses subtreeChanged: true to
 				// flag elements with deep changes.
 				const sfTree = new SchemaFactory("treeChanged-delta-tests");
 				class Item extends sfTree.object("Item", { v: sfTree.number }) {}
@@ -2918,7 +2920,7 @@ describe("treeNodeApi", () => {
 					const root = view.root;
 
 					const nodeChangedFired: unknown[] = [];
-					const treeChangedDeltas: (readonly ArrayNodeDeltaOp[] | undefined)[] = [];
+					const treeChangedDeltas: (readonly ArrayNodeTreeChangedDeltaOp[] | undefined)[] = [];
 					TreeAlpha.on(root, "nodeChanged", (data) => nodeChangedFired.push(data));
 					TreeAlpha.on(root, "treeChanged", ({ delta }) => treeChangedDeltas.push(delta));
 
@@ -2931,7 +2933,7 @@ describe("treeNodeApi", () => {
 						"nodeChanged should not fire for deep change",
 					);
 					assert.deepEqual(treeChangedDeltas, [
-						[{ type: "retain", count: 1, contentChanged: true }],
+						[{ type: "retain", count: 1, subtreeChanged: true }],
 					]);
 				});
 
@@ -2946,7 +2948,7 @@ describe("treeNodeApi", () => {
 					let nodeChangedCount = 0;
 					let treeChangedCount = 0;
 					const nodeChangedDeltas: (readonly ArrayNodeDeltaOp[] | undefined)[] = [];
-					const treeChangedDeltas: (readonly ArrayNodeDeltaOp[] | undefined)[] = [];
+					const treeChangedDeltas: (readonly ArrayNodeTreeChangedDeltaOp[] | undefined)[] = [];
 					TreeAlpha.on(root, "nodeChanged", ({ delta }) => {
 						nodeChangedCount++;
 						nodeChangedDeltas.push(delta);
@@ -2960,23 +2962,29 @@ describe("treeNodeApi", () => {
 
 					assert.equal(nodeChangedCount, 1);
 					assert.equal(treeChangedCount, 1);
-					const expected = [
+					// nodeChanged retain ops have no subtreeChanged field.
+					assert.deepEqual(nodeChangedDeltas, [
 						[
-							{ type: "retain", count: 2, contentChanged: false },
+							{ type: "retain", count: 2 },
 							{ type: "remove", count: 1 },
 						],
-					];
-					assert.deepEqual(nodeChangedDeltas, expected);
-					assert.deepEqual(treeChangedDeltas, expected);
+					]);
+					// treeChanged retain ops carry subtreeChanged: false for unmodified elements.
+					assert.deepEqual(treeChangedDeltas, [
+						[
+							{ type: "retain", count: 2, subtreeChanged: false },
+							{ type: "remove", count: 1 },
+						],
+					]);
 				});
 
-				it(`shallow + deep change fires both nodeChanged and treeChanged with contentChanged`, () => {
+				it(`shallow + deep change fires both nodeChanged and treeChanged`, () => {
 					const view = getView(new TreeViewConfiguration({ schema: ItemArray }));
 					view.initialize([{ v: 1 }, { v: 2 }, { v: 3 }]);
 					const root = view.root;
 
 					const nodeChangedDeltas: (readonly ArrayNodeDeltaOp[] | undefined)[] = [];
-					const treeChangedDeltas: (readonly ArrayNodeDeltaOp[] | undefined)[] = [];
+					const treeChangedDeltas: (readonly ArrayNodeTreeChangedDeltaOp[] | undefined)[] = [];
 					TreeAlpha.on(root, "nodeChanged", ({ delta }) => nodeChangedDeltas.push(delta));
 					TreeAlpha.on(root, "treeChanged", ({ delta }) => treeChangedDeltas.push(delta));
 
@@ -2985,27 +2993,34 @@ describe("treeNodeApi", () => {
 					forkView.root.removeAt(2);
 					view.checkout.merge(forkCheckout);
 
-					const expected = [
+					// nodeChanged retain ops have no subtreeChanged field.
+					assert.deepEqual(nodeChangedDeltas, [
 						[
-							{ type: "retain", count: 1, contentChanged: false },
-							{ type: "retain", count: 1, contentChanged: true },
+							{ type: "retain", count: 1 },
+							{ type: "retain", count: 1 },
 							{ type: "remove", count: 1 },
 						],
-					];
-					assert.deepEqual(nodeChangedDeltas, expected);
-					assert.deepEqual(treeChangedDeltas, expected);
+					]);
+					// treeChanged retain ops carry subtreeChanged reflecting deep changes.
+					assert.deepEqual(treeChangedDeltas, [
+						[
+							{ type: "retain", count: 1, subtreeChanged: false },
+							{ type: "retain", count: 1, subtreeChanged: true },
+							{ type: "remove", count: 1 },
+						],
+					]);
 				});
 
-				it(`multiple elements with deep changes in one transaction each get contentChanged`, () => {
+				it(`multiple elements with deep changes in one transaction each get subtreeChanged: true`, () => {
 					const view = getView(new TreeViewConfiguration({ schema: ItemArray }));
 					view.initialize([{ v: 1 }, { v: 2 }, { v: 3 }]);
 					const root = view.root;
 
-					const treeChangedDeltas: (readonly ArrayNodeDeltaOp[] | undefined)[] = [];
+					const treeChangedDeltas: (readonly ArrayNodeTreeChangedDeltaOp[] | undefined)[] = [];
 					TreeAlpha.on(root, "treeChanged", ({ delta }) => treeChangedDeltas.push(delta));
 
 					// Modify two elements in one transaction — both should appear as separate
-					// retain-with-contentChanged ops, confirming per-element granularity.
+					// retain-with-subtreeChanged ops, confirming per-element granularity.
 					const { forkView, forkCheckout } = getViewForForkedBranch(view);
 					forkView.root[0].v = 10;
 					forkView.root[2].v = 30;
@@ -3013,26 +3028,26 @@ describe("treeNodeApi", () => {
 
 					assert.deepEqual(treeChangedDeltas, [
 						[
-							{ type: "retain", count: 1, contentChanged: true },
-							{ type: "retain", count: 1, contentChanged: false },
-							{ type: "retain", count: 1, contentChanged: true },
+							{ type: "retain", count: 1, subtreeChanged: true },
+							{ type: "retain", count: 1, subtreeChanged: false },
+							{ type: "retain", count: 1, subtreeChanged: true },
 						],
 					]);
 				});
 
-				it(`unmodified elements produce retain ops with contentChanged: false`, () => {
+				it(`unmodified elements produce retain ops with subtreeChanged: false`, () => {
 					const view = getView(new TreeViewConfiguration({ schema: ItemArray }));
 					view.initialize([{ v: 1 }, { v: 2 }, { v: 3 }]);
 					const root = view.root;
 
-					const treeChangedDeltas: (readonly ArrayNodeDeltaOp[] | undefined)[] = [];
+					const treeChangedDeltas: (readonly ArrayNodeTreeChangedDeltaOp[] | undefined)[] = [];
 					TreeAlpha.on(root, "treeChanged", ({ delta }) => treeChangedDeltas.push(delta));
 
 					root.removeAt(2);
 
 					assert.deepEqual(treeChangedDeltas, [
 						[
-							{ type: "retain", count: 2, contentChanged: false },
+							{ type: "retain", count: 2, subtreeChanged: false },
 							{ type: "remove", count: 1 },
 						],
 					]);
@@ -3043,14 +3058,14 @@ describe("treeNodeApi", () => {
 					view.initialize([{ v: 1 }, { v: 2 }]);
 					const root = view.root;
 
-					const treeChangedDeltas: (readonly ArrayNodeDeltaOp[] | undefined)[] = [];
+					const treeChangedDeltas: (readonly ArrayNodeTreeChangedDeltaOp[] | undefined)[] = [];
 					TreeAlpha.on(root, "treeChanged", ({ delta }) => treeChangedDeltas.push(delta));
 
 					root.insertAtEnd({ v: 3 });
 
 					assert.deepEqual(treeChangedDeltas, [
 						[
-							{ type: "retain", count: 2, contentChanged: false },
+							{ type: "retain", count: 2, subtreeChanged: false },
 							{ type: "insert", count: 1 },
 						],
 					]);
@@ -3061,7 +3076,7 @@ describe("treeNodeApi", () => {
 					view.initialize([{ v: 1 }, { v: 2 }]);
 					const root = view.root;
 
-					const treeChangedDeltas: (readonly ArrayNodeDeltaOp[] | undefined)[] = [];
+					const treeChangedDeltas: (readonly ArrayNodeTreeChangedDeltaOp[] | undefined)[] = [];
 					TreeAlpha.on(root, "treeChanged", ({ delta }) => treeChangedDeltas.push(delta));
 
 					root.insertAt(0, { v: 0 });
@@ -3075,13 +3090,15 @@ describe("treeNodeApi", () => {
 					// For shallow changes (insert/remove/move) on unhydrated arrays, delta is
 					// undefined because no field marks are available from the delta pipeline.
 					// For deep changes (a child property changed), the synthetic marks injected
-					// by #emitDeepChangesToAncestorArrays produce a real delta with contentChanged: true.
+					// by #emitDeepChangesToAncestorArrays produce a real delta with subtreeChanged: true.
 
-					it(`deep change fires treeChanged with contentChanged: true, not nodeChanged`, () => {
+					it(`deep change fires treeChanged with subtreeChanged: true, not nodeChanged`, () => {
 						const root = new ItemArray([{ v: 1 }, { v: 2 }, { v: 3 }]);
 
 						const nodeChangedFired: unknown[] = [];
-						const treeChangedDeltas: (readonly ArrayNodeDeltaOp[] | undefined)[] = [];
+
+						const treeChangedDeltas: (readonly ArrayNodeTreeChangedDeltaOp[] | undefined)[] =
+							[];
 						TreeAlpha.on(root, "nodeChanged", (data) => nodeChangedFired.push(data));
 						TreeAlpha.on(root, "treeChanged", ({ delta }) => treeChangedDeltas.push(delta));
 
@@ -3093,24 +3110,25 @@ describe("treeNodeApi", () => {
 							"nodeChanged should not fire for deep change",
 						);
 						assert.deepEqual(treeChangedDeltas, [
-							[{ type: "retain", count: 1, contentChanged: true }],
+							[{ type: "retain", count: 1, subtreeChanged: true }],
 						]);
 					});
 
 					it(`deep change at index > 0 produces correct leading retain`, () => {
 						// Verifies that #emitDeepChangesToAncestorArrays encodes position correctly:
-						// a retain for the elements before the changed one, then contentChanged: true.
+						// a retain for the elements before the changed one, then subtreeChanged: true.
 						const root = new ItemArray([{ v: 1 }, { v: 2 }, { v: 3 }]);
 
-						const treeChangedDeltas: (readonly ArrayNodeDeltaOp[] | undefined)[] = [];
+						const treeChangedDeltas: (readonly ArrayNodeTreeChangedDeltaOp[] | undefined)[] =
+							[];
 						TreeAlpha.on(root, "treeChanged", ({ delta }) => treeChangedDeltas.push(delta));
 
 						root[1].v = 99;
 
 						assert.deepEqual(treeChangedDeltas, [
 							[
-								{ type: "retain", count: 1, contentChanged: false },
-								{ type: "retain", count: 1, contentChanged: true },
+								{ type: "retain", count: 1, subtreeChanged: false },
+								{ type: "retain", count: 1, subtreeChanged: true },
 							],
 						]);
 					});
@@ -3118,14 +3136,15 @@ describe("treeNodeApi", () => {
 					it(`shallow change fires treeChanged with correct delta`, () => {
 						const root = new ItemArray([{ v: 1 }, { v: 2 }]);
 
-						const treeChangedDeltas: (readonly ArrayNodeDeltaOp[] | undefined)[] = [];
+						const treeChangedDeltas: (readonly ArrayNodeTreeChangedDeltaOp[] | undefined)[] =
+							[];
 						TreeAlpha.on(root, "treeChanged", ({ delta }) => treeChangedDeltas.push(delta));
 
 						root.insertAtEnd({ v: 3 });
 
 						assert.deepEqual(treeChangedDeltas, [
 							[
-								{ type: "retain", count: 2, contentChanged: false },
+								{ type: "retain", count: 2, subtreeChanged: false },
 								{ type: "insert", count: 1 },
 							],
 						]);

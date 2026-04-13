@@ -294,16 +294,23 @@ export class UnhydratedFlexTreeNode
 			fieldMarks: marks === undefined ? new Map() : new Map([[key, marks]]),
 		});
 
+		// Emit subtree-changed events for this node and its non-array ancestors first,
+		// so that node.treeChanged fires before any ancestor array.treeChanged.
+		// Array ancestors and the nodes above them are handled by
+		// #emitDeepChangesToAncestorArrays, which propagates subtree events above
+		// each array boundary in the correct order.
+		this.#emitSubtreeChangedEvents();
+
 		// Mirrors the onlyDeepChanges block in anchorSet.ts for unhydrated nodes.
 		this.#emitDeepChangesToAncestorArrays();
-
-		// Also emit subtree changed event for this node and all ancestors.
-		this.#emitSubtreeChangedEvents();
 	}
 
 	/**
 	 * Emit `childrenChangedAfterBatch` on each ancestor array node with synthetic
 	 * marks indicating a deep change at this node's position within the array.
+	 * After emitting on each array ancestor, propagates subtree-changed events
+	 * upward from that array so that ancestor nodes above the array receive their
+	 * `treeChanged` events after the array's own event.
 	 */
 	#emitDeepChangesToAncestorArrays(): void {
 		const location = this.parentField;
@@ -328,18 +335,33 @@ export class UnhydratedFlexTreeNode
 				changedFields: new Set([EmptyKey]),
 				fieldMarks: new Map([[EmptyKey, syntheticMarks]]),
 			});
+
+			// Propagate subtree-changed events from the array upward so that
+			// ancestors above this array receive treeChanged after the array itself.
+			parentNode.#emitSubtreeChangedEvents();
 		}
 
 		parentNode.#emitDeepChangesToAncestorArrays();
 	}
 
 	/**
-	 * Emit subtree changed events for this node and all ancestors.
+	 * Emit `subtreeChangedAfterBatch` on this node and propagate upward to
+	 * ancestors, stopping before the first ancestor array node.
+	 * Propagation stops at an array boundary because
+	 * {@link UnhydratedFlexTreeNode.#emitDeepChangesToAncestorArrays} is
+	 * responsible for emitting on array ancestors and the nodes above them
+	 * in the correct order.
 	 */
 	#emitSubtreeChangedEvents(): void {
 		this._events.emit("subtreeChangedAfterBatch");
 
-		const parent = this.parentField.parent.parent;
+		const parentField = this.parentField.parent;
+		if (parentField.key === EmptyKey) {
+			// This node is an array element; stop here so that array ancestor
+			// events fire in the correct order relative to this node's treeChanged.
+			return;
+		}
+		const parent = parentField.parent;
 		assert(
 			parent === undefined || parent instanceof UnhydratedFlexTreeNode,
 			0xb76 /* Unhydrated node's parent should be an unhydrated node */,
