@@ -306,7 +306,7 @@ export const ForestTypeOptimized: ForestType;
 // @beta
 export const ForestTypeReference: ForestType;
 
-// @beta
+// @public
 export const getPresence: (fluidContainer: IFluidContainer) => Presence;
 
 // @beta @legacy

@@ -23,7 +23,7 @@ import type {
  *
  * @beta
  *
- * @deprecated Import from `fluid-framework/beta` instead. This export will be removed in the 2.110.0 release.
+ * @deprecated Import from `fluid-framework` instead. This export will be removed in the 2.110.0 release.
  * See {@link https://github.com/microsoft/FluidFramework/issues/26397}
  */
 export const getPresence: (fluidContainer: IFluidContainer) => Presence = getPresenceAlpha;

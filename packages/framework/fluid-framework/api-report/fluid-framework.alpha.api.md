@@ -592,7 +592,7 @@ export function generateSchemaFromSimpleSchema(simple: SimpleTreeSchema): TreeSc
 // @alpha
 export function getJsonSchema(schema: ImplicitAllowedTypes, options: Required<TreeSchemaEncodingOptions>): JsonTreeSchema;
 
-// @beta
+// @public
 export const getPresence: (fluidContainer: IFluidContainer) => Presence;
 
 // @alpha
