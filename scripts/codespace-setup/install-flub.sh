@@ -15,6 +15,7 @@ echo "Installing flub from local build-tools..."
 # to avoid slow hardlinking on Docker's overlayfs.
 STORE_DIR="${PNPM_STORE_DIR:-}"
 if [ -d /pnpm-store ]; then
+  sudo chown "$(id -u):$(id -g)" /pnpm-store
   STORE_DIR="/pnpm-store"
 fi
 
