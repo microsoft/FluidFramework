@@ -1,5 +1,8 @@
 # Fluid Framework Cross-Client Compatibility
 
+> [!IMPORTANT]
+> This document reflects a policy that is still under active development. Details are subject to change.
+
 **Suggested pre-read:** The [Fluid Framework Compatibility Considerations](./FluidCompatibilityConsiderations.md) document provides an overview of Fluid's four compatibility dimensions: API compatibility, Layer compatibility, Cross-client compatibility, and Data-at-rest compatibility. This document focuses specifically on Cross-client compatibility — how clients running different versions of Fluid can collaborate on the same document.
 
 ## Overview

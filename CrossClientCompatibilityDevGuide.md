@@ -1,5 +1,8 @@
 # Fluid Framework Cross-Client Compatibility Developer Guide
 
+> [!IMPORTANT]
+> This document reflects a policy that is still under active development. Details are subject to change.
+
 ## Overview
 
 This document describes the mechanics and internals of [Fluid Framework Cross-Client Compatibility](./CrossClientCompatibility.md) for **Fluid Framework contributors** — developers who maintain or extend the framework.
