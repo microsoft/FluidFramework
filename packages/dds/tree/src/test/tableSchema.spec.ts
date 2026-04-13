@@ -2758,25 +2758,25 @@ describe("TableFactory unit tests", () => {
 		});
 	});
 
-	describe("Undo/redo", () => {
-		// Shared setup helper — reduces boilerplate in each undo/redo test.
-		function makeUndoRedoView() {
-			const provider = new TestTreeProviderLite(
-				1,
-				configuredSharedTree({
-					jsonValidator: FormatValidatorBasic,
-					minVersionForCollab: FluidClientVersion.v2_80,
-				}).getFactory(),
-			);
-			const config = new TreeViewConfiguration({
-				schema: Table,
-				enableSchemaValidation: true,
-			});
-			const view = asAlpha(provider.trees[0].viewWith(config));
-			const { undoStack, redoStack, unsubscribe } = createTestUndoRedoStacks(view.events);
-			return { view, undoStack, redoStack, unsubscribe };
-		}
+	// Shared single-client setup helper used by both "Undo/redo" and "Prevents orphan cells" tests.
+	function makeUndoRedoView() {
+		const provider = new TestTreeProviderLite(
+			1,
+			configuredSharedTree({
+				jsonValidator: FormatValidatorBasic,
+				minVersionForCollab: FluidClientVersion.v2_80,
+			}).getFactory(),
+		);
+		const config = new TreeViewConfiguration({
+			schema: Table,
+			enableSchemaValidation: true,
+		});
+		const view = asAlpha(provider.trees[0].viewWith(config));
+		const { undoStack, redoStack, unsubscribe } = createTestUndoRedoStacks(view.events);
+		return { view, undoStack, redoStack, unsubscribe };
+	}
 
+	describe("Undo/redo", () => {
 		it("redo restores a column insertion that was undone", () => {
 			const { view, undoStack, redoStack, unsubscribe } = makeUndoRedoView();
 			view.initialize(Table.create({ columns: [], rows: [] }));
@@ -2974,21 +2974,7 @@ describe("TableFactory unit tests", () => {
 		});
 
 		it("multiple column inserts should be undoable if no concurrent modifications occurred", () => {
-			const provider = new TestTreeProviderLite(
-				1,
-				configuredSharedTree({
-					jsonValidator: FormatValidatorBasic,
-					minVersionForCollab: FluidClientVersion.v2_80,
-				}).getFactory(),
-			);
-
-			const config = new TreeViewConfiguration({
-				schema: Table,
-				enableSchemaValidation: true,
-			});
-			const tree = provider.trees[0];
-			const view = asAlpha(tree.viewWith(config));
-			const { undoStack, unsubscribe } = createTestUndoRedoStacks(view.events);
+			const { view, undoStack, unsubscribe } = makeUndoRedoView();
 			view.initialize(
 				Table.create({
 					columns: [],
@@ -3030,20 +3016,7 @@ describe("TableFactory unit tests", () => {
 		});
 
 		it("multiple row inserts should be undoable if no concurrent modifications occurred", () => {
-			const provider = new TestTreeProviderLite(
-				1,
-				configuredSharedTree({
-					jsonValidator: FormatValidatorBasic,
-					minVersionForCollab: FluidClientVersion.v2_80,
-				}).getFactory(),
-			);
-			const config = new TreeViewConfiguration({
-				schema: Table,
-				enableSchemaValidation: true,
-			});
-			const tree = provider.trees[0];
-			const view = asAlpha(tree.viewWith(config));
-			const { undoStack, unsubscribe } = createTestUndoRedoStacks(view.events);
+			const { view, undoStack, unsubscribe } = makeUndoRedoView();
 			view.initialize(Table.create({ columns: [], rows: [] }));
 
 			view.root.insertRows({ rows: [{ id: "row-0", cells: {} }] });
@@ -3065,20 +3038,7 @@ describe("TableFactory unit tests", () => {
 		});
 
 		it("remove column → remove column → undo → undo", () => {
-			const provider = new TestTreeProviderLite(
-				1,
-				configuredSharedTree({
-					jsonValidator: FormatValidatorBasic,
-					minVersionForCollab: FluidClientVersion.v2_80,
-				}).getFactory(),
-			);
-			const config = new TreeViewConfiguration({
-				schema: Table,
-				enableSchemaValidation: true,
-			});
-			const tree = provider.trees[0];
-			const view = asAlpha(tree.viewWith(config));
-			const { undoStack, unsubscribe } = createTestUndoRedoStacks(view.events);
+			const { view, undoStack, unsubscribe } = makeUndoRedoView();
 			view.initialize(
 				Table.create({
 					columns: [
@@ -3111,20 +3071,7 @@ describe("TableFactory unit tests", () => {
 		});
 
 		it("remove row → remove row → undo → undo", () => {
-			const provider = new TestTreeProviderLite(
-				1,
-				configuredSharedTree({
-					jsonValidator: FormatValidatorBasic,
-					minVersionForCollab: FluidClientVersion.v2_80,
-				}).getFactory(),
-			);
-			const config = new TreeViewConfiguration({
-				schema: Table,
-				enableSchemaValidation: true,
-			});
-			const tree = provider.trees[0];
-			const view = asAlpha(tree.viewWith(config));
-			const { undoStack, unsubscribe } = createTestUndoRedoStacks(view.events);
+			const { view, undoStack, unsubscribe } = makeUndoRedoView();
 			view.initialize(
 				Table.create({
 					columns: [],
@@ -3154,20 +3101,7 @@ describe("TableFactory unit tests", () => {
 		});
 
 		it("insert column → remove different column → undo → undo", () => {
-			const provider = new TestTreeProviderLite(
-				1,
-				configuredSharedTree({
-					jsonValidator: FormatValidatorBasic,
-					minVersionForCollab: FluidClientVersion.v2_80,
-				}).getFactory(),
-			);
-			const config = new TreeViewConfiguration({
-				schema: Table,
-				enableSchemaValidation: true,
-			});
-			const tree = provider.trees[0];
-			const view = asAlpha(tree.viewWith(config));
-			const { undoStack, unsubscribe } = createTestUndoRedoStacks(view.events);
+			const { view, undoStack, unsubscribe } = makeUndoRedoView();
 			view.initialize(
 				Table.create({
 					columns: [new Column({ id: "column-a", props: {} })],
@@ -3199,20 +3133,7 @@ describe("TableFactory unit tests", () => {
 		});
 
 		it("insert row → remove different row → undo → undo", () => {
-			const provider = new TestTreeProviderLite(
-				1,
-				configuredSharedTree({
-					jsonValidator: FormatValidatorBasic,
-					minVersionForCollab: FluidClientVersion.v2_80,
-				}).getFactory(),
-			);
-			const config = new TreeViewConfiguration({
-				schema: Table,
-				enableSchemaValidation: true,
-			});
-			const tree = provider.trees[0];
-			const view = asAlpha(tree.viewWith(config));
-			const { undoStack, unsubscribe } = createTestUndoRedoStacks(view.events);
+			const { view, undoStack, unsubscribe } = makeUndoRedoView();
 			view.initialize(
 				Table.create({
 					columns: [],
@@ -3248,20 +3169,7 @@ describe("TableFactory unit tests", () => {
 		// The below tests are regression tests which reproduce a bug where removing columns with associated cells caused constraints to be incorrectly applied. This caused subsequent undo operations to be dropped.
 		// The existence of cells associated with the first column being removed is what caused the constraints to be applied, so we need to test both with and without cells to ensure the bug is fully fixed and doesn't regress.
 		it("remove column (with cells) → remove column → undo → undo", () => {
-			const provider = new TestTreeProviderLite(
-				1,
-				configuredSharedTree({
-					jsonValidator: FormatValidatorBasic,
-					minVersionForCollab: FluidClientVersion.v2_80,
-				}).getFactory(),
-			);
-			const config = new TreeViewConfiguration({
-				schema: Table,
-				enableSchemaValidation: true,
-			});
-			const tree = provider.trees[0];
-			const view = asAlpha(tree.viewWith(config));
-			const { undoStack, unsubscribe } = createTestUndoRedoStacks(view.events);
+			const { view, undoStack, unsubscribe } = makeUndoRedoView();
 			view.initialize(
 				Table.create({
 					columns: [
@@ -3303,20 +3211,7 @@ describe("TableFactory unit tests", () => {
 		});
 
 		it("remove column (with cells) → insert row → undo → undo", () => {
-			const provider = new TestTreeProviderLite(
-				1,
-				configuredSharedTree({
-					jsonValidator: FormatValidatorBasic,
-					minVersionForCollab: FluidClientVersion.v2_80,
-				}).getFactory(),
-			);
-			const config = new TreeViewConfiguration({
-				schema: Table,
-				enableSchemaValidation: true,
-			});
-			const tree = provider.trees[0];
-			const view = asAlpha(tree.viewWith(config));
-			const { undoStack, unsubscribe } = createTestUndoRedoStacks(view.events);
+			const { view, undoStack, unsubscribe } = makeUndoRedoView();
 			view.initialize(
 				Table.create({
 					columns: [new Column({ id: "column-0", props: {} })],
@@ -3356,20 +3251,7 @@ describe("TableFactory unit tests", () => {
 		});
 
 		it("remove column (with cells) → set cell → undo → undo", () => {
-			const provider = new TestTreeProviderLite(
-				1,
-				configuredSharedTree({
-					jsonValidator: FormatValidatorBasic,
-					minVersionForCollab: FluidClientVersion.v2_80,
-				}).getFactory(),
-			);
-			const config = new TreeViewConfiguration({
-				schema: Table,
-				enableSchemaValidation: true,
-			});
-			const tree = provider.trees[0];
-			const view = asAlpha(tree.viewWith(config));
-			const { undoStack, unsubscribe } = createTestUndoRedoStacks(view.events);
+			const { view, undoStack, unsubscribe } = makeUndoRedoView();
 			view.initialize(
 				Table.create({
 					columns: [
@@ -3471,21 +3353,7 @@ describe("TableFactory unit tests", () => {
 		});
 
 		it("undo of insertColumns is dropped when it would orphan cells in subsequently added rows", () => {
-			const provider = new TestTreeProviderLite(
-				1,
-				configuredSharedTree({
-					jsonValidator: FormatValidatorBasic,
-					minVersionForCollab: FluidClientVersion.v2_80,
-				}).getFactory(),
-			);
-
-			const config = new TreeViewConfiguration({
-				schema: Table,
-				enableSchemaValidation: true,
-			});
-			const tree = provider.trees[0];
-			const view = asAlpha(tree.viewWith(config));
-			const { undoStack, unsubscribe } = createTestUndoRedoStacks(view.events);
+			const { view, undoStack, unsubscribe } = makeUndoRedoView();
 			view.initialize(Table.create({ columns: [], rows: [] }));
 			// Insert a column - this adds a revert constraint to detect row additions before undo
 			view.root.insertColumns({
@@ -3723,21 +3591,7 @@ describe("TableFactory unit tests", () => {
 		});
 
 		it("undo of insertColumns is dropped when it would orphan cells inserted via setCell", () => {
-			const provider = new TestTreeProviderLite(
-				1,
-				configuredSharedTree({
-					jsonValidator: FormatValidatorBasic,
-					minVersionForCollab: FluidClientVersion.v2_80,
-				}).getFactory(),
-			);
-
-			const config = new TreeViewConfiguration({
-				schema: Table,
-				enableSchemaValidation: true,
-			});
-			const tree = provider.trees[0];
-			const view = asAlpha(tree.viewWith(config));
-			const { undoStack, unsubscribe } = createTestUndoRedoStacks(view.events);
+			const { view, undoStack, unsubscribe } = makeUndoRedoView();
 			view.initialize(
 				Table.create({
 					columns: [],
