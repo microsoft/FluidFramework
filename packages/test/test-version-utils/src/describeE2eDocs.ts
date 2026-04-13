@@ -205,10 +205,6 @@ const E2EDefaultDocumentTypes: DescribeE2EDocInfo[] = isInPerformanceTestingMode
 /**
  * @internal
  */
-export type BenchmarkType = "ExecutionTime" | "MemoryUsage";
-/**
- * @internal
- */
 export type BenchmarkTypeDescription = "Runtime benchmarks" | "Memory benchmarks";
 
 /**
@@ -300,13 +296,6 @@ export function assertDocumentTypeInfo(
 		default:
 			throw new Error(`Unexpected DocumentType: ${type}`);
 	}
-}
-
-/**
- * @internal
- */
-export interface DescribeE2EDocInfoWithBenchmarkType extends DescribeE2EDocInfo {
-	benchmarkType: BenchmarkType;
 }
 
 /**
@@ -501,43 +490,4 @@ export const describeE2EDocsRuntime: DescribeE2EDocSuite =
 /**
  * @internal
  */
-export const describeE2EDocsMemory: DescribeE2EDocSuite =
-	createE2EDocsDescribeWithType("Memory benchmarks");
-
-/**
- * Determines whether the current test run is a memory usage test.
- *
- * @internal
- */
-export function isMemoryTest(): boolean {
-	let isMemoryUsageTest: boolean = false;
-	const childArgs = [...process.execArgv, ...process.argv.slice(1)];
-	for (const flag of ["--grep", "--fgrep"]) {
-		const flagIndex = childArgs.indexOf(flag);
-		if (flagIndex > 0) {
-			isMemoryUsageTest = childArgs[flagIndex + 1] === "@MemoryUsage" ? true : false;
-			break;
-		}
-	}
-	const isMemTest: boolean =
-		process.env.FLUID_E2E_MEMORY !== undefined ? true : (isMemoryUsageTest ?? false);
-	return isMemTest;
-}
-
-/**
- * @internal
- */
-export const describeE2EDocRun: DescribeE2EDocSuite = createE2EDocsDescribeRun();
-
-/**
- * Returns the benchmark type based on the test suite being run.
- *
- * @internal
- */
-export const getCurrentBenchmarkType = (currentType: DescribeE2EDocSuite): BenchmarkType => {
-	return currentType === describeE2EDocsMemory ? "MemoryUsage" : "ExecutionTime";
-};
-
-function createE2EDocsDescribeRun(): DescribeE2EDocSuite {
-	return isMemoryTest() === true ? describeE2EDocsMemory : describeE2EDocsRuntime;
-}
+export const describeE2EDocRun: DescribeE2EDocSuite = describeE2EDocsRuntime;

@@ -3,17 +3,12 @@
  * Licensed under the MIT License.
  */
 
+import { DocumentType, DocumentTypeInfo } from "@fluid-private/test-version-utils";
 import {
-	BenchmarkType,
-	DocumentType,
-	DocumentTypeInfo,
-	isMemoryTest,
-} from "@fluid-private/test-version-utils";
-import {
-	BenchmarkTimer,
+	type BenchmarkTimer,
 	MemoryUseCallbacks,
 	Phase,
-	benchmark,
+	benchmarkDuration,
 	benchmarkIt,
 	benchmarkMemoryUse,
 } from "@fluid-tools/benchmark";
@@ -33,7 +28,6 @@ import { DocumentMultipleDds } from "./DocumentMultipleDataStores.js";
 export interface IDocumentCreatorProps {
 	testName: string;
 	provider: ITestObjectProvider;
-	benchmarkType: BenchmarkType;
 	documentType: DocumentType;
 	documentTypeInfo: DocumentTypeInfo;
 }
@@ -74,7 +68,6 @@ export function createDocument(props: IDocumentCreatorProps): IDocumentLoaderAnd
 				namespace: "FFEngineering",
 				driverType: props.provider.driver.type,
 				driverEndpointName: props.provider.driver.endpointName,
-				benchmarkType: props.benchmarkType,
 				testDocument: props.testName,
 				testDocumentType: props.documentType,
 				details: JSON.stringify(props.documentTypeInfo),
@@ -114,38 +107,35 @@ export interface IBenchmarkParameters {
  * @param params - The {@link IBenchmarkParameters} parameters for the test.
  */
 export function benchmarkAll<T extends IBenchmarkParameters>(title: string, obj: T): void {
-	if (isMemoryTest()) {
-		const runMethod = obj.run.bind(obj);
-		const beforeIterationMethod = obj.beforeIteration?.bind(obj);
-		const afterIterationMethod = obj.afterIteration?.bind(obj);
-		const beforeMethod = obj.before?.bind(obj);
-		const afterMethod = obj.after?.bind(obj);
-		benchmarkIt({
-			title,
-			...benchmarkMemoryUse({
-				benchmarkFn: async (state: MemoryUseCallbacks) => {
-					await beforeMethod?.();
-					while (state.continue()) {
-						beforeIterationMethod?.();
-						await state.beforeAllocation();
-						{
-							await runMethod();
-							await state.whileAllocated();
-							afterIterationMethod?.();
-						}
-						await state.afterDeallocation();
+	const runMethod = obj.run.bind(obj);
+	const beforeIterationMethod = obj.beforeIteration?.bind(obj);
+	const afterIterationMethod = obj.afterIteration?.bind(obj);
+	const beforeMethod = obj.before?.bind(obj);
+	const afterMethod = obj.after?.bind(obj);
+
+	benchmarkIt({
+		title,
+		...benchmarkMemoryUse({
+			benchmarkFn: async (state: MemoryUseCallbacks) => {
+				await beforeMethod?.();
+				while (state.continue()) {
+					beforeIterationMethod?.();
+					await state.beforeAllocation();
+					{
+						await runMethod();
+						await state.whileAllocated();
+						afterIterationMethod?.();
 					}
-					await afterMethod?.();
-				},
-			}),
-		});
-	} else {
-		const runMethod = obj.run.bind(obj);
-		const beforeMethod = obj.before?.bind(obj);
-		const afterMethod = obj.after?.bind(obj);
-		benchmark({
-			title,
-			...obj,
+					await state.afterDeallocation();
+				}
+				await afterMethod?.();
+			},
+		}),
+	});
+
+	benchmarkIt({
+		title,
+		...benchmarkDuration({
 			benchmarkFnCustom: async <T1>(state: BenchmarkTimer<T1>) => {
 				let duration: number;
 				do {
@@ -158,14 +148,11 @@ export function benchmarkAll<T extends IBenchmarkParameters>(title: string, obj:
 					// Collect data
 				} while (state.recordBatch(duration));
 			},
-			before: obj.before?.bind(obj),
-			after: obj.after?.bind(obj),
-			beforeEachBatch: obj.beforeEachBatch?.bind(obj),
 			// Force batch size to be always 1
 			minBatchDurationSeconds: 0,
 			...(obj.minSampleCount !== undefined ? { minBatchCount: obj.minSampleCount } : {}),
 			// No need to warm up
 			startPhase: Phase.CollectData,
-		});
-	}
+		}),
+	});
 }

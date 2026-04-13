@@ -62,7 +62,9 @@ describeCompat("Container - memory usage benchmarks", "NoCompat", (getTestObject
 
 	benchmarkIt({
 		title: "Create detached container",
-		...benchmarkMemoryUse(memoryUseOfValue(() => loader.createDetachedContainer(codeDetails))),
+		...benchmarkMemoryUse(
+			memoryUseOfValue(async () => loader.createDetachedContainer(codeDetails)),
+		),
 	});
 
 	benchmarkIt({

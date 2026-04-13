@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 
-import { describeE2EDocRun, getCurrentBenchmarkType } from "@fluid-private/test-version-utils";
+import { describeE2EDocRun } from "@fluid-private/test-version-utils";
 import { isInPerformanceTestingMode } from "@fluid-tools/benchmark";
 import { IContainer } from "@fluidframework/container-definitions/internal";
 import { delay } from "@fluidframework/core-utils/internal";
@@ -21,8 +21,6 @@ import {
 describeE2EDocRun("Load Document", (getTestObjectProvider, getDocumentInfo) => {
 	let documentWrapper: IDocumentLoader;
 	let provider: ITestObjectProvider;
-	const benchmarkType = getCurrentBenchmarkType(describeE2EDocRun);
-
 	before(async () => {
 		provider = getTestObjectProvider();
 		const docData = getDocumentInfo(); // returns the type of document to be processed.
@@ -37,7 +35,6 @@ describeE2EDocRun("Load Document", (getTestObjectProvider, getDocumentInfo) => {
 			provider,
 			documentType: docData.documentType,
 			documentTypeInfo: docData.documentTypeInfo,
-			benchmarkType,
 		});
 		await documentWrapper.initializeDocument();
 	});
