@@ -233,11 +233,11 @@ export interface IContainerRuntimeAlpha extends IContainerRuntime {
 	/**
 	 * Exit staging mode and either commit or discard the staged changes.
 	 *
-	 * @param action - `"commit"` sends the buffered ops to the ordering service.
-	 * `"discard"` rolls back all changes made while in staging mode.
+	 * @param options - `{ action: "commit" }` sends the buffered ops to the ordering service.
+	 * `{ action: "discard" }` rolls back all changes made while in staging mode.
 	 * @throws If not currently in staging mode.
 	 */
-	exitStagingMode(action: "commit" | "discard"): void;
+	exitStagingMode(options: { action: "commit" } | { action: "discard" }): void;
 }
 
 /**

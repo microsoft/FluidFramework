@@ -110,7 +110,7 @@ describeCompat(
 				"Runtime should be readonly after entering staging mode.",
 			);
 
-			containerRuntime.exitStagingMode?.("commit");
+			containerRuntime.exitStagingMode?.({ action: "commit" });
 
 			assert.equal(
 				dsRuntime.isReadOnly(),
@@ -141,7 +141,7 @@ describeCompat(
 				"Runtime should be readonly after entering staging mode.",
 			);
 
-			containerRuntime.exitStagingMode?.("commit");
+			containerRuntime.exitStagingMode?.({ action: "commit" });
 
 			assert.equal(
 				dsRuntime.isReadOnly(),
@@ -172,7 +172,7 @@ describeCompat(
 				"Runtime should preserve readonly state set during staging mode.",
 			);
 
-			containerRuntime.exitStagingMode?.("commit");
+			containerRuntime.exitStagingMode?.({ action: "commit" });
 
 			assert.equal(
 				dsRuntime.isReadOnly(),
@@ -201,7 +201,7 @@ describeCompat(
 				"Runtime should not be readonly when readonlyInStagingMode is false.",
 			);
 
-			containerRuntime.exitStagingMode?.("commit");
+			containerRuntime.exitStagingMode?.({ action: "commit" });
 
 			assert.equal(
 				dsRuntime.isReadOnly(),
@@ -220,7 +220,7 @@ describeCompat(
 
 			shareDir.set("test", "test");
 
-			containerRuntime.exitStagingMode?.("commit");
+			containerRuntime.exitStagingMode?.({ action: "commit" });
 
 			if (container.isDirty) {
 				await timeoutPromise((resolve) => {
@@ -247,7 +247,7 @@ describeCompat(
 
 				shareDir.set("test", "test");
 
-				containerRuntime.exitStagingMode?.("commit");
+				containerRuntime.exitStagingMode?.({ action: "commit" });
 
 				if (container.isDirty) {
 					await timeoutPromise((resolve) => {

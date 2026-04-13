@@ -353,7 +353,7 @@ export class DefaultStressDataObject extends StressDataObject {
 
 	public exitStagingMode(commit: boolean): void {
 		assert(this.containerRuntimeExp.inStagingMode, "must be in staging mode");
-		this.containerRuntimeExp.exitStagingMode(commit ? "commit" : "discard");
+		this.containerRuntimeExp.exitStagingMode({ action: commit ? "commit" : "discard" });
 
 		// Flush any pending containerObjectMap registrations that were deferred during staging mode.
 		// This happens after staging mode exits so the writes won't be rolled back.

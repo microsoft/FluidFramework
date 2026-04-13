@@ -28,6 +28,14 @@ export interface CommitStagedChangesOptionsInternal {
 }
 
 /**
+ * Options for {@link IContainerRuntimeBaseInternal.exitStagingMode}.
+ * @internal
+ */
+export type ExitStagingModeOptionsInternal =
+	| ({ action: "commit" } & Partial<CommitStagedChangesOptionsInternal>)
+	| { action: "discard" };
+
+/**
  * Experimental extension of {@link IContainerRuntimeBase} to support staging mode.
  * @internal
  */
@@ -43,15 +51,11 @@ export interface IContainerRuntimeBaseInternal extends ContainerRuntimeBaseAlpha
 	/**
 	 * Exit staging mode and either commit or discard the staged changes.
 	 *
-	 * @param action - `"commit"` sends the buffered ops to the ordering service.
-	 * `"discard"` rolls back all changes made while in staging mode.
-	 * @param options - Options for the `"commit"` action.
+	 * @param options - `{ action: "commit", squash?: boolean }` sends the buffered ops to the ordering service.
+	 * `{ action: "discard" }` rolls back all changes made while in staging mode.
 	 * @throws Will throw if not currently in staging mode.
 	 */
-	exitStagingMode(
-		action: "commit" | "discard",
-		options?: Partial<CommitStagedChangesOptionsInternal>,
-	): void;
+	exitStagingMode(options: ExitStagingModeOptionsInternal): void;
 }
 
 /**
@@ -72,11 +76,11 @@ export interface ContainerRuntimeBaseAlpha extends IContainerRuntimeBase {
 	/**
 	 * Exit staging mode and either commit or discard the staged changes.
 	 *
-	 * @param action - `"commit"` sends the buffered ops to the ordering service.
-	 * `"discard"` rolls back all changes made while in staging mode.
+	 * @param options - `{ action: "commit" }` sends the buffered ops to the ordering service.
+	 * `{ action: "discard" }` rolls back all changes made while in staging mode.
 	 * @throws Will throw if not currently in staging mode.
 	 */
-	exitStagingMode(action: "commit" | "discard"): void;
+	exitStagingMode(options: { action: "commit" } | { action: "discard" }): void;
 
 	/**
 	 * Indicates whether the container is currently in staging mode.

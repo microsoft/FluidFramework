@@ -307,7 +307,7 @@ describe("Document Dirty", () => {
 				// Dirty due to staged op
 				checkDirtyState("after value set", true, 0);
 
-				asLegacyAlpha(containerRuntime).exitStagingMode("discard");
+				asLegacyAlpha(containerRuntime).exitStagingMode({ action: "discard" });
 				// Not dirty since all that's left is a non-dirtyable op
 				checkDirtyState("after discarding staged changes", false, 1);
 

@@ -96,6 +96,7 @@ export type { MinimumVersionForCollab } from "./compatibilityDefinitions.js";
 
 export {
 	type ContainerRuntimeBaseAlpha,
+	type ExitStagingModeOptionsInternal,
 	type CommitStagedChangesOptionsInternal,
 	type IContainerRuntimeBaseInternal,
 	asLegacyAlpha,

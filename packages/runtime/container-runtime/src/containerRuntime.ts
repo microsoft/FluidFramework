@@ -132,6 +132,7 @@ import type {
 	ContainerExtensionExpectations,
 	ContainerRuntimeBaseAlpha,
 	CommitStagedChangesOptionsInternal,
+	ExitStagingModeOptionsInternal,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	addBlobToSummary,
@@ -3619,7 +3620,7 @@ export class ContainerRuntime
 						);
 						this.updateDocumentDirtyState();
 						if (enteredStagingModeLocally) {
-							this.exitStagingMode("discard");
+							this.exitStagingMode({ action: "discard" });
 							enteredStagingModeLocally = false;
 						}
 					} catch (error_) {
@@ -3654,7 +3655,7 @@ export class ContainerRuntime
 		});
 
 		if (enteredStagingModeLocally) {
-			this.exitStagingMode("commit");
+			this.exitStagingMode({ action: "commit" });
 		}
 
 		// We don't flush on TurnBased since we expect all messages in the same JS turn to be part of the same batch
@@ -3683,19 +3684,16 @@ export class ContainerRuntime
 	/**
 	 * Exit Staging Mode, either committing or discarding any ops buffered since {@link ContainerRuntime.enterStagingMode} was called.
 	 *
-	 * @param action - `"commit"` sends the buffered ops to the ordering service.
-	 * `"discard"` rolls back all changes made while in staging mode.
+	 * @param options - `{ action: "commit", squash?: boolean }` sends the buffered ops to the ordering service.
+	 * `{ action: "discard" }` rolls back all changes made while in staging mode.
 	 * @throws If not currently in staging mode.
 	 */
-	public exitStagingMode(
-		action: "commit" | "discard",
-		options?: Partial<CommitStagedChangesOptionsInternal>,
-	): void {
+	public exitStagingMode(options: ExitStagingModeOptionsInternal): void {
 		if (this.stagingModeExitControls === undefined) {
 			throw new UsageError("Not in staging mode");
 		}
-		if (action === "commit") {
-			this.stagingModeExitControls.commitChanges(options);
+		if (options.action === "commit") {
+			this.stagingModeExitControls.commitChanges({ squash: options.squash });
 		} else {
 			this.stagingModeExitControls.discardChanges();
 		}

@@ -30,6 +30,7 @@ import type { SessionSpaceCompressedId } from "@fluidframework/id-compressor/int
 import { SharedMap } from "@fluidframework/map/internal";
 import {
 	asLegacyAlpha,
+	type ExitStagingModeOptionsInternal,
 	type IContainerRuntimeBase,
 	type IContainerRuntimeBaseInternal,
 } from "@fluidframework/runtime-definitions/internal";
@@ -125,11 +126,11 @@ class DataObjectWithStagingMode extends DataObject {
 		this.containerRuntimeExp.enterStagingMode();
 	}
 
-	public exitStagingMode(action: "commit" | "discard", options?: { squash?: boolean }): void {
+	public exitStagingMode(options: ExitStagingModeOptionsInternal): void {
 		const runtimeInternal = this
 			.containerRuntimeExp as unknown as IContainerRuntimeBaseInternal;
 		assert(runtimeInternal.exitStagingMode !== undefined, "exitStagingMode must be defined");
-		runtimeInternal.exitStagingMode(action, options);
+		runtimeInternal.exitStagingMode(options);
 	}
 }
 
@@ -496,7 +497,7 @@ describe("Staging Mode", () => {
 		// Make another change before exiting staging mode
 		clients.original.dataObject.makeEdit("branch-second-batch");
 
-		clients.original.dataObject.exitStagingMode("commit");
+		clients.original.dataObject.exitStagingMode({ action: "commit" });
 
 		await waitForSave(clients);
 
@@ -523,7 +524,7 @@ describe("Staging Mode", () => {
 		// Make another change before exiting staging mode
 		clients.original.dataObject.makeEdit("branch-second-batch");
 
-		clients.original.dataObject.exitStagingMode("discard");
+		clients.original.dataObject.exitStagingMode({ action: "discard" });
 
 		await waitForSave(clients);
 
@@ -561,7 +562,7 @@ describe("Staging Mode", () => {
 			"Expected mainline change to reach branch",
 		);
 
-		clients.original.dataObject.exitStagingMode("commit");
+		clients.original.dataObject.exitStagingMode({ action: "commit" });
 
 		await waitForSave(clients);
 
@@ -575,9 +576,9 @@ describe("Staging Mode", () => {
 			clients.original.dataObject.enterStagingMode();
 			clients.original.dataObject.makeEdit("branch-only");
 			if (commit) {
-				clients.original.dataObject.exitStagingMode("commit");
+				clients.original.dataObject.exitStagingMode({ action: "commit" });
 			} else {
-				clients.original.dataObject.exitStagingMode("discard");
+				clients.original.dataObject.exitStagingMode({ action: "discard" });
 			}
 
 			await waitForSave(clients);
@@ -606,7 +607,7 @@ describe("Staging Mode", () => {
 		await new Promise<void>((resolve) => setTimeout(resolve, 100));
 
 		await ensureDisconnected(clients.original);
-		clients.original.dataObject.exitStagingMode("commit");
+		clients.original.dataObject.exitStagingMode({ action: "commit" });
 		await ensureConnected(clients.original);
 
 		await waitForSave(clients);
@@ -639,7 +640,7 @@ describe("Staging Mode", () => {
 			if (disconnectBeforeCommit) {
 				await ensureDisconnected(clients.original);
 			}
-			clients.original.dataObject.exitStagingMode("commit", { squash });
+			clients.original.dataObject.exitStagingMode({ action: "commit", squash });
 			if (disconnectBeforeCommit) {
 				await ensureConnected(clients.original);
 			}

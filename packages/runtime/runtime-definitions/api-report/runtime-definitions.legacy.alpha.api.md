@@ -22,7 +22,11 @@ export type AttributionKey = OpAttributionKey | DetachedAttributionKey | LocalAt
 // @alpha @sealed @legacy
 export interface ContainerRuntimeBaseAlpha extends IContainerRuntimeBase {
     enterStagingMode(): void;
-    exitStagingMode(action: "commit" | "discard"): void;
+    exitStagingMode(options: {
+        action: "commit";
+    } | {
+        action: "discard";
+    }): void;
     readonly inStagingMode: boolean;
 }
 

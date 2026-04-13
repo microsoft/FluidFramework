@@ -1016,7 +1016,7 @@ describe("Runtime", () => {
 							"No ops should be submitted in Staging Mode",
 						);
 
-						containerRuntime.exitStagingMode("commit");
+						containerRuntime.exitStagingMode({ action: "commit" });
 
 						assert.strictEqual(
 							submittedOpsCount,
@@ -1035,7 +1035,7 @@ describe("Runtime", () => {
 							assert.throws(() => {
 								containerRuntime.orderSequentially(() => {
 									submitDataStoreOp(containerRuntime, "1", testDataStoreMessage);
-									containerRuntime.exitStagingMode("commit");
+									containerRuntime.exitStagingMode({ action: "commit" });
 								});
 							});
 						});
@@ -1048,7 +1048,7 @@ describe("Runtime", () => {
 							assert.doesNotThrow(() => {
 								containerRuntime.orderSequentially(() => {
 									submitDataStoreOp(containerRuntime, "1", testDataStoreMessage);
-									containerRuntime.exitStagingMode("discard");
+									containerRuntime.exitStagingMode({ action: "discard" });
 								});
 							});
 						});
@@ -4205,7 +4205,7 @@ describe("Runtime", () => {
 					"Runtime should be in staging mode after entry",
 				);
 
-				containerRuntime.exitStagingMode("commit");
+				containerRuntime.exitStagingMode({ action: "commit" });
 				assert.equal(
 					containerRuntime.inStagingMode,
 					false,
@@ -4214,7 +4214,7 @@ describe("Runtime", () => {
 
 				// Enter / discard as a second exit-path
 				containerRuntime.enterStagingMode();
-				containerRuntime.exitStagingMode("discard");
+				containerRuntime.exitStagingMode({ action: "discard" });
 				assert.equal(
 					containerRuntime.inStagingMode,
 					false,
@@ -4231,7 +4231,7 @@ describe("Runtime", () => {
 						error.message === "Already in staging mode",
 					"Should not allow entering staging mode while already in staging mode",
 				);
-				containerRuntime.exitStagingMode("discard");
+				containerRuntime.exitStagingMode({ action: "discard" });
 				// Now we can enter staging mode again
 				containerRuntime.enterStagingMode();
 				assert.equal(
@@ -4304,7 +4304,7 @@ describe("Runtime", () => {
 				assert.equal(submittedOps.length, 1, "Only expected the 1 pre-staging op");
 
 				// default options: { squash: false }
-				containerRuntime.exitStagingMode("commit");
+				containerRuntime.exitStagingMode({ action: "commit" });
 
 				assert(
 					channelCollectionStub.reSubmitContainerMessage.calledOnce,
@@ -4358,7 +4358,7 @@ describe("Runtime", () => {
 				containerRuntime.flush();
 				assert.equal(submittedOps.length, 1, "No more ops expected while staged");
 
-				containerRuntime.exitStagingMode("discard");
+				containerRuntime.exitStagingMode({ action: "discard" });
 
 				assert.deepEqual(
 					channelCollectionStub.rollbackDataStoreOp.getCalls().map((call) => call.args),
@@ -4403,7 +4403,7 @@ describe("Runtime", () => {
 				containerRuntime.flush();
 				assert.equal(containerRuntime.isDirty, true, "Runtime should be dirty (from PSM)");
 
-				containerRuntime.exitStagingMode("discard");
+				containerRuntime.exitStagingMode({ action: "discard" });
 
 				assert.equal(containerRuntime.isDirty, false, "Runtime should not be dirty anymore");
 			});
@@ -4467,7 +4467,7 @@ describe("Runtime", () => {
 						"All 5 ops should be in the outbox",
 					);
 
-					runtimeWithThreshold.exitStagingMode("commit");
+					runtimeWithThreshold.exitStagingMode({ action: "commit" });
 					assert.equal(
 						submittedOps.length,
 						5,
@@ -4525,7 +4525,7 @@ describe("Runtime", () => {
 					);
 
 					// Exit staging mode and verify perf event includes auto-flush count
-					runtimeWithThreshold.exitStagingMode("commit");
+					runtimeWithThreshold.exitStagingMode({ action: "commit" });
 					logger.assertMatchAny([
 						{
 							eventName: "ContainerRuntime:ExitStagingMode_commit_end",
@@ -4591,7 +4591,7 @@ describe("Runtime", () => {
 					submitDataStoreOp(runtimeWithThreshold, "3", genTestDataStoreMessage("op3"));
 					assert.equal(submittedOps.length, 0, "No ops submitted while staging");
 
-					runtimeWithThreshold.exitStagingMode("commit");
+					runtimeWithThreshold.exitStagingMode({ action: "commit" });
 
 					assert(submittedOps.length > 0, "Ops should be submitted after commitChanges");
 				});
@@ -4648,7 +4648,7 @@ describe("Runtime", () => {
 						"Both ops should still be in the outbox (unflushed)",
 					);
 
-					runtimeWithThreshold.exitStagingMode("commit");
+					runtimeWithThreshold.exitStagingMode({ action: "commit" });
 				});
 
 				it("discardChanges flushes outbox before rollback", async () => {
@@ -4677,7 +4677,7 @@ describe("Runtime", () => {
 						"2 ops in outbox before discard",
 					);
 
-					runtimeWithThreshold.exitStagingMode("discard");
+					runtimeWithThreshold.exitStagingMode({ action: "discard" });
 
 					// Outbox should have been drained before rollback
 					assert.equal(
@@ -4871,7 +4871,7 @@ describe("Runtime", () => {
 				runtime.flush();
 				assert.equal(submittedOps.length, 2, "Staged ops should NOT be submitted to wire");
 
-				runtime.exitStagingMode("commit");
+				runtime.exitStagingMode({ action: "commit" });
 				assert.equal(submittedOps.length, 3, "All ops should be submitted after commit");
 				runtime.dispose();
 			});
@@ -4966,7 +4966,7 @@ describe("Runtime", () => {
 				const opsAfterReconnect = submittedOps.length;
 
 				// Verify we can still commit the staged changes
-				runtime.exitStagingMode("commit");
+				runtime.exitStagingMode({ action: "commit" });
 				assert(
 					submittedOps.length > opsAfterReconnect,
 					"Staged op should be submitted after commitChanges",
