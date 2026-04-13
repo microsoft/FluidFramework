@@ -619,6 +619,54 @@ describe("TableFactory unit tests", () => {
 						),
 					);
 				});
+
+				it("Cannot insert columns with duplicate IDs within the same batch", () => {
+					const table = initializeTree(Table, Table.create());
+
+					assert.throws(
+						() =>
+							table.insertColumns({
+								columns: [
+									{ id: "column-0", props: {} },
+									{ id: "column-0", props: {} },
+								],
+							}),
+						validateUsageError(
+							/Attempted to insert multiple columns with ID "column-0". Column IDs must be unique./,
+						),
+					);
+				});
+
+				it("Insert columns at explicit boundary index (index === columns.length)", () => {
+					const table = initializeTree(
+						Table,
+						Table.create({
+							columns: [
+								{ id: "column-a", props: {} },
+								{ id: "column-b", props: {} },
+							],
+							rows: [],
+						}),
+					);
+
+					// index === columns.length is equivalent to appending
+					const inserted = table.insertColumns({
+						index: 2,
+						columns: [{ id: "column-c", props: {} }],
+					});
+					assert.equal(inserted.length, 1);
+					assertEqualTrees(inserted[0], { id: "column-c", props: {} });
+					assertEqualTrees(table, {
+						table: {
+							columns: [
+								{ id: "column-a", props: {} },
+								{ id: "column-b", props: {} },
+								{ id: "column-c", props: {} },
+							],
+							rows: [],
+						},
+					});
+				});
 			});
 
 			describe("insertRows", () => {
@@ -861,6 +909,92 @@ describe("TableFactory unit tests", () => {
 							/Attempted to insert a row containing a cell under column ID "column-1", but the table does not contain a column with that ID./,
 						),
 					);
+				});
+
+				it("Cannot insert rows with duplicate IDs within the same batch", () => {
+					const table = initializeTree(Table, Table.create());
+
+					assert.throws(
+						() =>
+							table.insertRows({
+								rows: [
+									{ id: "row-0", cells: {} },
+									{ id: "row-0", cells: {} },
+								],
+							}),
+						validateUsageError(
+							/Attempted to insert multiple rows with ID "row-0". Row IDs must be unique./,
+						),
+					);
+				});
+
+				it("Insert rows with pre-populated cells", () => {
+					const table = initializeTree(
+						Table,
+						Table.create({
+							columns: [
+								{ id: "column-0", props: {} },
+								{ id: "column-1", props: {} },
+							],
+							rows: [],
+						}),
+					);
+
+					const inserted = table.insertRows({
+						rows: [
+							{
+								id: "row-0",
+								cells: {
+									"column-0": { value: "Hello" },
+									"column-1": { value: "World" },
+								},
+								props: {},
+							},
+						],
+					});
+
+					assert.equal(inserted.length, 1);
+					assertEqualTrees(inserted[0], {
+						id: "row-0",
+						cells: {
+							"column-0": { value: "Hello" },
+							"column-1": { value: "World" },
+						},
+						props: {},
+					});
+					assert.equal(table.getCell({ row: "row-0", column: "column-0" })?.value, "Hello");
+					assert.equal(table.getCell({ row: "row-0", column: "column-1" })?.value, "World");
+				});
+
+				it("Insert rows at explicit boundary index (index === rows.length)", () => {
+					const table = initializeTree(
+						Table,
+						Table.create({
+							columns: [],
+							rows: [
+								{ id: "row-a", cells: {}, props: {} },
+								{ id: "row-b", cells: {}, props: {} },
+							],
+						}),
+					);
+
+					// index === rows.length is equivalent to appending
+					const inserted = table.insertRows({
+						index: 2,
+						rows: [{ id: "row-c", cells: {}, props: {} }],
+					});
+					assert.equal(inserted.length, 1);
+					assertEqualTrees(inserted[0], { id: "row-c", cells: {}, props: {} });
+					assertEqualTrees(table, {
+						table: {
+							columns: [],
+							rows: [
+								{ id: "row-a", cells: {}, props: {} },
+								{ id: "row-b", cells: {}, props: {} },
+								{ id: "row-c", cells: {}, props: {} },
+							],
+						},
+					});
 				});
 			});
 
@@ -1303,6 +1437,70 @@ describe("TableFactory unit tests", () => {
 					// Additionally, no columns should have been removed.
 					assert(table.columns.length === 2);
 				});
+
+				it("Remove by non-existent string ID errors", () => {
+					const table = initializeTree(
+						Table,
+						Table.create({
+							columns: [new Column({ id: "column-0", props: {} })],
+							rows: [],
+						}),
+					);
+
+					assert.throws(
+						() => table.removeColumns(["no-such-column"]),
+						validateUsageError(/No column with ID "no-such-column" exists in the table./),
+					);
+				});
+
+				it("Remove from start index given no count (removes all columns from start index to end)", () => {
+					const table = initializeTree(
+						Table,
+						Table.create({
+							columns: [
+								new Column({ id: "column-0", props: {} }),
+								new Column({ id: "column-1", props: {} }),
+								new Column({ id: "column-2", props: {} }),
+							],
+							rows: [],
+						}),
+					);
+
+					const removed = table.removeColumns(1);
+					assert.equal(removed.length, 2);
+					assertEqualTrees(removed[0], { id: "column-1", props: {} });
+					assertEqualTrees(removed[1], { id: "column-2", props: {} });
+					assertEqualTrees(table, {
+						table: {
+							columns: [{ id: "column-0", props: {} }],
+							rows: [],
+						},
+					});
+				});
+
+				it("Remove all columns (no arguments)", () => {
+					const table = initializeTree(
+						Table,
+						Table.create({
+							columns: [
+								new Column({ id: "column-0", props: {} }),
+								new Column({ id: "column-1", props: {} }),
+							],
+							rows: [],
+						}),
+					);
+
+					const removed = table.removeColumns();
+					assert.equal(removed.length, 2);
+					assertEqualTrees(removed[0], { id: "column-0", props: {} });
+					assertEqualTrees(removed[1], { id: "column-1", props: {} });
+					assertEqualTrees(table, {
+						table: {
+							columns: [],
+							rows: [],
+						},
+					});
+				});
 			});
 
 			describe("removeRows", () => {
@@ -1546,6 +1744,111 @@ describe("TableFactory unit tests", () => {
 
 					// Additionally, no rows should have been removed.
 					assert(table.rows.length === 2);
+				});
+
+				it("Remove by non-existent string ID errors", () => {
+					const table = initializeTree(
+						Table,
+						Table.create({
+							columns: [],
+							rows: [new Row({ id: "row-0", cells: {}, props: {} })],
+						}),
+					);
+
+					assert.throws(
+						() => table.removeRows(["no-such-row"]),
+						validateUsageError(/No row with ID "no-such-row" exists in the table./),
+					);
+				});
+
+				it("Remove from start index given no count (removes all rows from start index to end)", () => {
+					const table = initializeTree(
+						Table,
+						Table.create({
+							columns: [],
+							rows: [
+								new Row({ id: "row-0", cells: {}, props: {} }),
+								new Row({ id: "row-1", cells: {}, props: {} }),
+								new Row({ id: "row-2", cells: {}, props: {} }),
+							],
+						}),
+					);
+
+					const removed = table.removeRows(1);
+					assert.equal(removed.length, 2);
+					assertEqualTrees(removed[0], { id: "row-1", cells: {}, props: {} });
+					assertEqualTrees(removed[1], { id: "row-2", cells: {}, props: {} });
+					assertEqualTrees(table, {
+						table: {
+							columns: [],
+							rows: [{ id: "row-0", cells: {}, props: {} }],
+						},
+					});
+				});
+
+				it("Remove all rows (no arguments)", () => {
+					const table = initializeTree(
+						Table,
+						Table.create({
+							columns: [],
+							rows: [
+								new Row({ id: "row-0", cells: {}, props: {} }),
+								new Row({ id: "row-1", cells: {}, props: {} }),
+							],
+						}),
+					);
+
+					const removed = table.removeRows();
+					assert.equal(removed.length, 2);
+					assertEqualTrees(removed[0], { id: "row-0", cells: {}, props: {} });
+					assertEqualTrees(removed[1], { id: "row-1", cells: {}, props: {} });
+					assertEqualTrees(table, {
+						table: {
+							columns: [],
+							rows: [],
+						},
+					});
+				});
+
+				it("Remove rows with populated cells", () => {
+					const table = initializeTree(
+						Table,
+						Table.create({
+							columns: [new Column({ id: "column-0", props: {} })],
+							rows: [
+								new Row({
+									id: "row-0",
+									cells: { "column-0": { value: "Hello" } },
+									props: {},
+								}),
+								new Row({
+									id: "row-1",
+									cells: { "column-0": { value: "World" } },
+									props: {},
+								}),
+								new Row({ id: "row-2", cells: {}, props: {} }),
+							],
+						}),
+					);
+
+					const removed = table.removeRows(["row-0", "row-1"]);
+					assert.equal(removed.length, 2);
+					assertEqualTrees(removed[0], {
+						id: "row-0",
+						cells: { "column-0": { value: "Hello" } },
+						props: {},
+					});
+					assertEqualTrees(removed[1], {
+						id: "row-1",
+						cells: { "column-0": { value: "World" } },
+						props: {},
+					});
+					assertEqualTrees(table, {
+						table: {
+							columns: [{ id: "column-0", props: {} }],
+							rows: [{ id: "row-2", cells: {}, props: {} }],
+						},
+					});
 				});
 			});
 
