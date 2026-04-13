@@ -30,7 +30,6 @@ describe("FluidAppInsightsLogger", () => {
 		trackEventSpy = spy(appInsightsClient, "trackEvent");
 	});
 
-
 	// AB#69025 - fix the flakiness for this test, if we don't sunset the feature/package before that
 	it.skip("send() routes telemetry events to ApplicationInsights.trackEvent", () => {
 		const logger = createLogger(appInsightsClient);
