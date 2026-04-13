@@ -20,7 +20,8 @@ import {
 import { BaseCommand } from "../library/commands/base.js";
 
 const HARDCODED_DEFAULT_MODEL = "claude-haiku-4-5-20251001";
-const supportedAliases = new Set(["claude", "dev", "copilot", "oce", "ai-reset"]);
+export const supportedAliases = ["claude", "dev", "copilot", "oce", "ai-reset"] as const;
+const supportedAliasSet = new Set<string>(supportedAliases);
 
 export default class AiCommand extends BaseCommand<typeof AiCommand> {
 	static readonly description =
@@ -271,9 +272,9 @@ export default class AiCommand extends BaseCommand<typeof AiCommand> {
 }
 
 export function assertSafeAliasSelection(proposal: AliasProposal): void {
-	if (!supportedAliases.has(proposal.alias)) {
+	if (!supportedAliasSet.has(proposal.alias)) {
 		throw new Error(
-			`Unsupported AI alias selection: ${proposal.alias}. Allowed aliases: ${[...supportedAliases].join(", ")}`,
+			`Unsupported AI alias selection: ${proposal.alias}. Allowed aliases: ${supportedAliases.join(", ")}`,
 		);
 	}
 }
@@ -316,12 +317,29 @@ function createSessionUi(
 				}
 			}
 
-			return rl.question(chalk.gray("\n> "));
+			const answer = await rl.question(chalk.gray("\n> "));
+			return normalizePromptAnswer(answer, choices);
 		},
 		verbose: (message: string) => {
 			verbose(message);
 		},
 	};
+}
+
+export function normalizePromptAnswer(answer: string, choices?: string[]): string {
+	const trimmed = answer.trim();
+	if (choices === undefined || choices.length === 0) {
+		return trimmed;
+	}
+
+	if (/^\d+$/.test(trimmed)) {
+		const selectedIndex = Number.parseInt(trimmed, 10) - 1;
+		if (selectedIndex >= 0 && selectedIndex < choices.length) {
+			return choices[selectedIndex];
+		}
+	}
+
+	return trimmed;
 }
 
 function isUserCancellation(error: unknown): boolean {
