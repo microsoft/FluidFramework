@@ -12,10 +12,15 @@ import { Flags } from "@oclif/core";
 import execa from "execa";
 import matter from "gray-matter";
 import chalk from "picocolors";
-import { type AliasProposal, runAiSession } from "../library/ai/copilotSession.js";
+import {
+	type AiSessionUi,
+	type AliasProposal,
+	runAiSession,
+} from "../library/ai/copilotSession.js";
 import { BaseCommand } from "../library/commands/base.js";
 
 const HARDCODED_DEFAULT_MODEL = "claude-haiku-4-5-20251001";
+const supportedAliases = new Set(["claude", "dev", "copilot", "oce", "ai-reset"]);
 
 export default class AiCommand extends BaseCommand<typeof AiCommand> {
 	static readonly description =
@@ -33,6 +38,17 @@ export default class AiCommand extends BaseCommand<typeof AiCommand> {
 	];
 
 	static readonly flags = {
+		aliasFile: Flags.file({
+			description:
+				"Path to the agent-aliases.sh file. Defaults to the AI-enabled Codespace locations.",
+			exists: true,
+			env: "FLUB_AI_ALIAS_FILE",
+		}),
+		githubToken: Flags.string({
+			description:
+				"GitHub token for the launcher assistant. Defaults to COPILOT_GITHUB_TOKEN, GH_TOKEN, or GITHUB_TOKEN.",
+			env: "COPILOT_GITHUB_TOKEN",
+		}),
 		model: Flags.string({
 			description:
 				"The AI model to use for the launcher assistant. " +
@@ -47,8 +63,8 @@ export default class AiCommand extends BaseCommand<typeof AiCommand> {
 		const repoRoot = await this.tryResolveRepoRoot();
 		this.verbose(`Repo root: ${repoRoot ?? "(not in a Fluid repo)"}`);
 
-		const [aliasFile, gettingStartedContent, promptFile] = await Promise.all([
-			this.resolveAliasFile(repoRoot),
+		const aliasFile = await this.resolveAliasFile(repoRoot, flags.aliasFile);
+		const [gettingStartedContent, promptFile] = await Promise.all([
 			this.readDevcontainerFile(repoRoot, "GETTING_STARTED.md"),
 			this.loadPromptFile(repoRoot),
 		]);
@@ -62,6 +78,7 @@ export default class AiCommand extends BaseCommand<typeof AiCommand> {
 		const prompt = promptFile.template
 			.replaceAll("{{aliasFileContent}}", aliasFile.content)
 			.replaceAll("{{gettingStartedContent}}", gettingStartedContent ?? "");
+		const githubToken = flags.githubToken ?? process.env.GH_TOKEN ?? process.env.GITHUB_TOKEN;
 
 		const rl = readline.createInterface({
 			input: process.stdin,
@@ -70,8 +87,22 @@ export default class AiCommand extends BaseCommand<typeof AiCommand> {
 
 		let proposal: AliasProposal | undefined;
 		try {
-			proposal = await runAiSession({ model, rl, prompt });
-		} catch (error) {
+			proposal = await runAiSession({
+				model,
+				prompt,
+				githubToken,
+				ui: createSessionUi(
+					this.flags.quiet,
+					rl,
+					this.log.bind(this),
+					this.verbose.bind(this),
+				),
+			});
+		} catch (error: unknown) {
+			if (isUserCancellation(error)) {
+				this.log("\nCancelled.");
+				return;
+			}
 			this.error(`AI session failed: ${error}`, { exit: 1 });
 		} finally {
 			rl.close();
@@ -82,12 +113,28 @@ export default class AiCommand extends BaseCommand<typeof AiCommand> {
 			return;
 		}
 
+		try {
+			assertSafeAliasSelection(proposal);
+		} catch (error: unknown) {
+			this.error(error instanceof Error ? error.message : String(error), { exit: 1 });
+		}
 		const formattedCommand = formatAliasCommand(proposal);
 		this.log(`\n${chalk.bold("Recommended:")}`);
 		this.log(`  ${chalk.green(formattedCommand)}`);
 		this.log(`  ${chalk.gray(proposal.explanation)}\n`);
 
-		const proceed = await confirm({ message: "Launch this agent?" });
+		let proceed = false;
+		try {
+			proceed = await confirm({ message: "Launch this agent?" });
+		} catch (error: unknown) {
+			if (isUserCancellation(error)) {
+				this.log("\nCancelled.");
+				return;
+			}
+
+			this.error(`Failed to read confirmation: ${error}`, { exit: 1 });
+		}
+
 		if (!proceed) {
 			this.log("Cancelled.");
 			return;
@@ -102,12 +149,16 @@ export default class AiCommand extends BaseCommand<typeof AiCommand> {
 				stdio: "inherit",
 				cwd: process.cwd(),
 			});
-			this.exit(result.exitCode);
+			this.exit(result.exitCode ?? 0);
 		} catch (error: unknown) {
-			if (error !== null && typeof error === "object" && "exitCode" in error) {
-				this.exit((error as { exitCode: number }).exitCode);
-			}
-			this.exit(1);
+			const exitCode =
+				error !== null &&
+				typeof error === "object" &&
+				"exitCode" in error &&
+				typeof (error as { exitCode?: unknown }).exitCode === "number"
+					? (error as { exitCode: number }).exitCode
+					: 1;
+			this.exit(exitCode);
 		}
 	}
 
@@ -125,8 +176,13 @@ export default class AiCommand extends BaseCommand<typeof AiCommand> {
 	 */
 	private async resolveAliasFile(
 		repoRoot: string | undefined,
+		preferredPath?: string,
 	): Promise<{ path: string; content: string }> {
-		const candidates = ["/usr/local/lib/agent-aliases.sh"];
+		const candidates: string[] = [];
+		if (preferredPath !== undefined) {
+			candidates.push(preferredPath);
+		}
+		candidates.push("/usr/local/lib/agent-aliases.sh");
 		if (repoRoot !== undefined) {
 			candidates.push(resolve(repoRoot, "scripts/codespace-setup/agent-aliases.sh"));
 		}
@@ -189,11 +245,18 @@ export default class AiCommand extends BaseCommand<typeof AiCommand> {
 	): Promise<{ template: string; model?: string }> {
 		const raw = await this.readDevcontainerFile(repoRoot, "launcher-prompt.md");
 		if (raw !== undefined) {
-			const { data, content } = matter(raw);
-			return {
-				template: content.trim(),
-				model: typeof data.model === "string" ? data.model : undefined,
-			};
+			try {
+				const { data, content } = matter(raw);
+				return {
+					template: content.trim(),
+					model: typeof data.model === "string" ? data.model : undefined,
+				};
+			} catch (error) {
+				this.verbose(
+					`Failed to parse launcher-prompt.md frontmatter; using raw file contents instead: ${String(error)}`,
+				);
+				return { template: raw.trim() };
+			}
 		}
 
 		this.verbose("launcher-prompt.md not found; using hardcoded fallback prompt.");
@@ -204,6 +267,14 @@ export default class AiCommand extends BaseCommand<typeof AiCommand> {
 				"## Alias Definitions\n\n```bash\n{{aliasFileContent}}\n```\n\n" +
 				"## Getting Started Guide\n\n{{gettingStartedContent}}",
 		};
+	}
+}
+
+export function assertSafeAliasSelection(proposal: AliasProposal): void {
+	if (!supportedAliases.has(proposal.alias)) {
+		throw new Error(
+			`Unsupported AI alias selection: ${proposal.alias}. Allowed aliases: ${[...supportedAliases].join(", ")}`,
+		);
 	}
 }
 
@@ -225,6 +296,43 @@ function shellQuote(value: string): string {
 	return `'${value.replaceAll("'", "'\\''")}'`;
 }
 
+function createSessionUi(
+	quiet: boolean,
+	rl: readline.Interface,
+	log: (message?: string) => void,
+	verbose: (message: string | Error) => string | Error,
+): AiSessionUi {
+	return {
+		output: (text: string) => {
+			if (!quiet) {
+				process.stdout.write(text);
+			}
+		},
+		prompt: async (question: string, choices?: string[]) => {
+			log(`\n${chalk.cyan(question)}`);
+			if (choices !== undefined && choices.length > 0) {
+				for (const [index, choice] of choices.entries()) {
+					log(`  ${chalk.yellow(`${index + 1}.`)} ${choice}`);
+				}
+			}
+
+			return rl.question(chalk.gray("\n> "));
+		},
+		verbose: (message: string) => {
+			verbose(message);
+		},
+	};
+}
+
+function isUserCancellation(error: unknown): boolean {
+	return (
+		error instanceof Error &&
+		(error.name === "ExitPromptError" ||
+			error.name === "AbortError" ||
+			/cancel|canceled|cancelled|aborted|sigint/i.test(error.message))
+	);
+}
+
 async function tryReadFile(filePath: string): Promise<string | undefined> {
 	try {
 		return await readFile(filePath, "utf8");
@@ -237,6 +345,8 @@ async function tryReadFile(filePath: string): Promise<string | undefined> {
 		) {
 			return undefined;
 		}
-		throw error;
+
+		const message = error instanceof Error ? error.message : String(error);
+		throw new Error(`Failed to read ${filePath}: ${message}`, { cause: error });
 	}
 }

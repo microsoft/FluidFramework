@@ -3,10 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { Interface as ReadlineInterface } from "node:readline/promises";
-
 import { approveAll, CopilotClient, defineTool } from "@github/copilot-sdk";
-import chalk from "picocolors";
 
 /**
  * A proposal from the AI for which alias to launch.
@@ -18,6 +15,15 @@ export interface AliasProposal {
 }
 
 /**
+ * UI hooks used by the interactive launcher session.
+ */
+export interface AiSessionUi {
+	output(text: string): void;
+	prompt(question: string, choices?: string[]): Promise<string>;
+	verbose?(message: string): void;
+}
+
+/**
  * Runs an interactive AI session that determines which agent alias to launch.
  *
  * @param options - Session configuration.
@@ -25,10 +31,11 @@ export interface AliasProposal {
  */
 export async function runAiSession(options: {
 	model: string;
-	rl: ReadlineInterface;
 	prompt: string;
+	githubToken?: string;
+	ui: AiSessionUi;
 }): Promise<AliasProposal | undefined> {
-	const { model, rl, prompt } = options;
+	const { model, prompt, githubToken, ui } = options;
 
 	let proposal: AliasProposal | undefined;
 
@@ -67,35 +74,23 @@ export async function runAiSession(options: {
 		skipPermission: true,
 	});
 
-	// Resolve a GitHub token from environment if available.
-	const githubToken =
-		process.env.COPILOT_GITHUB_TOKEN ?? process.env.GH_TOKEN ?? process.env.GITHUB_TOKEN;
-
 	const client = new CopilotClient({
 		...(githubToken !== undefined ? { githubToken } : {}),
 	});
+
+	let session: Awaited<ReturnType<CopilotClient["createSession"]>> | undefined;
 
 	try {
 		// Preflight: verify the Copilot CLI server starts and auth is valid.
 		await preflight(client);
 
-		const session = await client.createSession({
+		session = await client.createSession({
 			model,
 			streaming: true,
 			tools: [selectAliasTool],
 			onPermissionRequest: approveAll,
 			onUserInputRequest: async (request) => {
-				// Display the AI's question
-				console.log(`\n${chalk.cyan(request.question)}`);
-
-				// Show numbered choices if provided
-				if (request.choices && request.choices.length > 0) {
-					for (const [i, choice] of request.choices.entries()) {
-						console.log(`  ${chalk.yellow(`${i + 1}.`)} ${choice}`);
-					}
-				}
-
-				const answer = await rl.question(chalk.gray("\n> "));
+				const answer = await ui.prompt(request.question, request.choices);
 				const trimmed = answer.trim();
 				return {
 					answer: trimmed,
@@ -106,17 +101,27 @@ export async function runAiSession(options: {
 
 		// Stream any explanatory text from the AI between tool calls
 		session.on("assistant.message_delta", (event) => {
-			process.stdout.write(event.data.deltaContent);
+			ui.output(event.data.deltaContent);
 		});
 
 		// Run the conversation — the AI will ask questions via onUserInputRequest
 		// and eventually call select_alias when it has enough information.
 		await session.sendAndWait({ prompt });
-
-		await session.disconnect();
 		return proposal;
 	} finally {
-		await client.stop();
+		if (session !== undefined) {
+			try {
+				await session.disconnect();
+			} catch (error) {
+				ui.verbose?.(`Failed to disconnect AI session cleanly: ${String(error)}`);
+			}
+		}
+
+		try {
+			await client.stop();
+		} catch (error) {
+			ui.verbose?.(`Failed to stop Copilot client cleanly: ${String(error)}`);
+		}
 	}
 }
 
