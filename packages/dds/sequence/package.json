@@ -108,7 +108,6 @@
 		"pack:tests": "tar -cf ./sequence.test-files.tar ./src/test ./dist/test ./lib/test",
 		"test": "npm run test:mocha",
 		"test:coverage": "c8 npm test",
-		"test:memory": "cross-env FLUID_TEST_PERF_MODE=1 mocha --fgrep @Memory --parentProcess",
 		"test:mocha": "npm run test:mocha:esm && echo skipping cjs to avoid overhead - npm run test:mocha:cjs",
 		"test:mocha:cjs": "cross-env FLUID_TEST_MODULE_SYSTEM=CJS mocha",
 		"test:mocha:esm": "mocha",
