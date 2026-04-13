@@ -19,7 +19,8 @@ CI=true pnpm -C "$REPO_ROOT/build-tools" install --frozen-lockfile --reporter=de
 pnpm -C "$REPO_ROOT/build-tools" build:compile
 
 # Use npm link (not pnpm link) because it handles bin shims correctly.
-npm link --prefix "$REPO_ROOT/build-tools/packages/build-cli"
+# Must cd into the package — npm link --prefix doesn't install global shims.
+(cd "$REPO_ROOT/build-tools/packages/build-cli" && npm link)
 
 echo "flub installed: $(which flub)"
 flub --version
