@@ -47,9 +47,7 @@
 		"bwrap-setup": "sudo mount --make-rshared /",
 		"sandbox-tmpdir": "mkdir -p /tmp/claude"
 	},
-	"postAttachCommand": {
-		"open-getting-started": "code .devcontainer/ai-agent/GETTING_STARTED.md"
-	},
+	"postAttachCommand": {},
 	"remoteUser": "node",
 	"features": {
 		// Enables docker CLI inside the container
