@@ -88,7 +88,7 @@ type UnhydratedFlexTreeNodeEvents = Pick<
 type LocationInField = FlexTreeNode["parentField"];
 
 /**
- * Sentinel `DeltaDetachedNodeId` used as the attach/detach id in synthetic delta marks produced
+ * Placeholder `DeltaDetachedNodeId` used as the attach/detach id in synthetic delta marks produced
  * by the unhydrated sequence-field editor. Only the *presence* of the id is checked by
  * {@link deltaMarksToArrayOps}, so the value itself is arbitrary.
  */
@@ -280,6 +280,14 @@ export class UnhydratedFlexTreeNode
 		return this.data.value;
 	}
 
+	/**
+	 * Emit a `childrenChangedAfterBatch` event for this node, then propagate deep-change
+	 * signals to ancestor array nodes and subtree-changed signals up the entire ancestor chain.
+	 * @param key - The field key that changed.
+	 * @param marks - Optional delta marks describing the change to the field. When provided, they
+	 * are included in the `fieldMarks` payload so that array-node listeners can build a delta.
+	 * When omitted (e.g. for non-sequence fields), `fieldMarks` is empty.
+	 */
 	public emitChangedEvent(key: FieldKey, marks?: readonly DeltaMark[]): void {
 		this._events.emit("childrenChangedAfterBatch", {
 			changedFields: new Set([key]),
@@ -489,6 +497,11 @@ export class UnhydratedFlexTreeField
 	 */
 	protected edit(
 		edit: (mapTrees: UnhydratedFlexTreeNode[]) => void | UnhydratedFlexTreeNode[],
+		/**
+		 * Delta marks describing this edit, forwarded to {@link UnhydratedFlexTreeNode.emitChangedEvent}.
+		 * Sequence-field subclasses pass pre-computed marks so that array-node listeners receive a
+		 * meaningful delta; other field kinds omit this parameter.
+		 */
 		marks?: readonly DeltaMark[],
 	): void {
 		// Clear parents for all old map trees.
@@ -617,24 +630,8 @@ export class UnhydratedSequenceField
 		move: (sourceIndex, count, destIndex, source?): void => {
 			const sourceField = source ?? this;
 			if (sourceField === this) {
-				// Build delta marks for the within-field move before mutating the array.
-				// Forward move (source before dest): [retain(src), detach(n), retain(mid), attach(n)]
-				// Backward move (dest before src): [retain(dst), attach(n), retain(mid), detach(n)]
-				const marks: DeltaMark[] = [];
-				if (sourceIndex < destIndex) {
-					if (sourceIndex > 0) marks.push({ count: sourceIndex });
-					marks.push({ count, detach: syntheticDetachedNodeId });
-					const middle = destIndex - sourceIndex - count;
-					if (middle > 0) marks.push({ count: middle });
-					marks.push({ count, attach: syntheticDetachedNodeId });
-				} else {
-					if (destIndex > 0) marks.push({ count: destIndex });
-					marks.push({ count, attach: syntheticDetachedNodeId });
-					const middle = sourceIndex - destIndex;
-					if (middle > 0) marks.push({ count: middle });
-					marks.push({ count, detach: syntheticDetachedNodeId });
-				}
 				// Within-field move: do both operations in a single edit to emit only one event
+				const marks = buildUnhydratedMoveMarks(sourceIndex, count, destIndex);
 				this.edit((mapTrees) => {
 					const removed = mapTrees.splice(sourceIndex, count);
 					// Adjust destination index if it comes after the source
@@ -673,6 +670,42 @@ export class UnhydratedSequenceField
 }
 
 // #endregion Fields
+
+/**
+ * Builds {@link DeltaMark}s describing a within-field move for use in
+ * {@link UnhydratedFlexTreeNode.emitChangedEvent}.
+ *
+ * @remarks
+ * Forward move (`sourceIndex < destIndex`):
+ * `[retain(src), detach(n), retain(mid), attach(n)]`
+ *
+ * Backward move (`destIndex < sourceIndex`):
+ * `[retain(dst), attach(n), retain(mid), detach(n)]`
+ *
+ * A no-op move (`sourceIndex === destIndex`) returns an empty array; the event
+ * should not fire in that case, but the empty marks are harmless if it does.
+ */
+function buildUnhydratedMoveMarks(
+	sourceIndex: number,
+	count: number,
+	destIndex: number,
+): readonly DeltaMark[] {
+	const marks: DeltaMark[] = [];
+	if (sourceIndex < destIndex) {
+		if (sourceIndex > 0) marks.push({ count: sourceIndex });
+		marks.push({ count, detach: syntheticDetachedNodeId });
+		const between = destIndex - sourceIndex - count;
+		if (between > 0) marks.push({ count: between });
+		marks.push({ count, attach: syntheticDetachedNodeId });
+	} else if (destIndex < sourceIndex) {
+		if (destIndex > 0) marks.push({ count: destIndex });
+		marks.push({ count, attach: syntheticDetachedNodeId });
+		const between = sourceIndex - destIndex;
+		if (between > 0) marks.push({ count: between });
+		marks.push({ count, detach: syntheticDetachedNodeId });
+	}
+	return marks;
+}
 
 /** Creates a field with the given attributes */
 export function createField(
