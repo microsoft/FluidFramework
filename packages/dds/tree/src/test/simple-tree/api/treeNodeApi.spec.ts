@@ -2866,23 +2866,40 @@ describe("treeNodeApi", () => {
 			});
 
 			describe(`unhydrated array — nodeChanged delta`, () => {
-				// For unhydrated arrays the delta pipeline is not available, so nodeChanged
-				// always fires with delta: undefined for shallow mutations.  These tests
-				// document that contract and confirm the event still fires.
-				it(`insertAtEnd fires nodeChanged with delta: undefined`, () => {
+				it(`insertAtEnd fires nodeChanged with correct delta`, () => {
 					const root = new TestArray([1, 2, 3]);
 					const deltas: (readonly ArrayNodeDeltaOp[] | undefined)[] = [];
 					TreeAlpha.on(root, "nodeChanged", ({ delta }) => deltas.push(delta));
 					root.insertAtEnd(4);
-					assert.deepEqual(deltas, [undefined]);
+					assert.deepEqual(deltas, [
+						[
+							{ type: "retain", count: 3, contentChanged: false },
+							{ type: "insert", count: 1 },
+						],
+					]);
 				});
 
-				it(`removeAt fires nodeChanged with delta: undefined`, () => {
+				it(`removeAt fires nodeChanged with correct delta`, () => {
 					const root = new TestArray([1, 2, 3]);
 					const deltas: (readonly ArrayNodeDeltaOp[] | undefined)[] = [];
 					TreeAlpha.on(root, "nodeChanged", ({ delta }) => deltas.push(delta));
 					root.removeAt(0);
-					assert.deepEqual(deltas, [undefined]);
+					assert.deepEqual(deltas, [[{ type: "remove", count: 1 }]]);
+				});
+
+				it(`moveToEnd fires nodeChanged with correct delta`, () => {
+					const root = new TestArray([1, 2, 3]);
+					const deltas: (readonly ArrayNodeDeltaOp[] | undefined)[] = [];
+					TreeAlpha.on(root, "nodeChanged", ({ delta }) => deltas.push(delta));
+					// Move first element to end: [1,2,3] → [2,3,1]
+					root.moveToEnd(0);
+					assert.deepEqual(deltas, [
+						[
+							{ type: "remove", count: 1 },
+							{ type: "retain", count: 2, contentChanged: false },
+							{ type: "insert", count: 1 },
+						],
+					]);
 				});
 			});
 
@@ -3098,9 +3115,7 @@ describe("treeNodeApi", () => {
 						]);
 					});
 
-					it(`shallow change fires treeChanged with delta: undefined`, () => {
-						// On unhydrated arrays the delta pipeline is not available,
-						// so shallow mutations produce delta: undefined.
+					it(`shallow change fires treeChanged with correct delta`, () => {
 						const root = new ItemArray([{ v: 1 }, { v: 2 }]);
 
 						const treeChangedDeltas: (readonly ArrayNodeDeltaOp[] | undefined)[] = [];
@@ -3108,7 +3123,12 @@ describe("treeNodeApi", () => {
 
 						root.insertAtEnd({ v: 3 });
 
-						assert.deepEqual(treeChangedDeltas, [undefined]);
+						assert.deepEqual(treeChangedDeltas, [
+							[
+								{ type: "retain", count: 2, contentChanged: false },
+								{ type: "insert", count: 1 },
+							],
+						]);
 					});
 				});
 			});

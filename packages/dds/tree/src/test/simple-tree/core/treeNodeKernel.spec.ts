@@ -159,11 +159,10 @@ describe("array node delta in nodeChanged", () => {
 	const schemaFactory = new SchemaFactory("test");
 	const MyArray = schemaFactory.array("myArray", schemaFactory.number);
 
-	describeHydration("delta presence", (init, hydrated) => {
-		it("delta is undefined for unhydrated arrays, defined for hydrated arrays", () => {
-			// Unhydrated nodes are not visited by the delta pipeline, so no field marks are
-			// available and delta is always undefined.  Hydrated nodes have marks and delta
-			// is always defined (for a single unbuffered edit).
+	describeHydration("delta presence", (init) => {
+		it("delta is defined for both hydrated and unhydrated arrays", () => {
+			// Both hydrated and unhydrated nodes produce a defined delta for a single
+			// unbuffered insert: the unhydrated sequence-field editor now synthesises marks.
 			const myArray = init(MyArray, [1, 2, 3]);
 
 			const deltas: (readonly ArrayNodeDeltaOp[] | undefined)[] = [];
@@ -174,15 +173,7 @@ describe("array node delta in nodeChanged", () => {
 			myArray.insertAtEnd(4);
 
 			assert.equal(deltas.length, 1);
-			if (hydrated) {
-				assert.notEqual(deltas[0], undefined, "hydrated array should have a defined delta");
-			} else {
-				assert.equal(
-					deltas[0],
-					undefined,
-					"unhydrated array delta should be undefined — no delta pipeline",
-				);
-			}
+			assert.notEqual(deltas[0], undefined, "delta should be defined");
 		});
 	});
 

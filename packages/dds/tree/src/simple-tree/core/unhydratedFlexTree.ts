@@ -12,6 +12,7 @@ import {
 	type AnchorEvents,
 	dummyRoot,
 	EmptyKey,
+	type DeltaDetachedNodeId,
 	type DeltaMark,
 	type FieldKey,
 	type FieldKindIdentifier,
@@ -85,6 +86,13 @@ type UnhydratedFlexTreeNodeEvents = Pick<
 
 /** A node's parent field and its index in that field */
 type LocationInField = FlexTreeNode["parentField"];
+
+/**
+ * Sentinel `DeltaDetachedNodeId` used as the attach/detach id in synthetic delta marks produced
+ * by the unhydrated sequence-field editor. Only the *presence* of the id is checked by
+ * {@link deltaMarksToArrayOps}, so the value itself is arbitrary.
+ */
+const syntheticDetachedNodeId: DeltaDetachedNodeId = { minor: 0 };
 
 /**
  * The {@link Unhydrated} implementation of {@link FlexTreeNode}.
@@ -272,11 +280,10 @@ export class UnhydratedFlexTreeNode
 		return this.data.value;
 	}
 
-	public emitChangedEvent(key: FieldKey): void {
+	public emitChangedEvent(key: FieldKey, marks?: readonly DeltaMark[]): void {
 		this._events.emit("childrenChangedAfterBatch", {
 			changedFields: new Set([key]),
-			// Unhydrated nodes are not visited by the delta pipeline, so no field marks are available.
-			fieldMarks: new Map(),
+			fieldMarks: marks === undefined ? new Map() : new Map([[key, marks]]),
 		});
 
 		// Mirrors the onlyDeepChanges block in anchorSet.ts for unhydrated nodes.
@@ -482,6 +489,7 @@ export class UnhydratedFlexTreeField
 	 */
 	protected edit(
 		edit: (mapTrees: UnhydratedFlexTreeNode[]) => void | UnhydratedFlexTreeNode[],
+		marks?: readonly DeltaMark[],
 	): void {
 		// Clear parents for all old map trees.
 		for (const tree of this.children) {
@@ -495,7 +503,7 @@ export class UnhydratedFlexTreeField
 			tree.adoptBy(this, index);
 		}
 
-		this.parent?.emitChangedEvent(this.key);
+		this.parent?.emitChangedEvent(this.key, marks);
 	}
 
 	public getFieldPath(): NormalizedFieldUpPath {
@@ -578,6 +586,10 @@ export class UnhydratedSequenceField
 				assert(c instanceof UnhydratedFlexTreeNode, 0xbb8 /* Expected unhydrated node */);
 			}
 			const newContentChecked = newContent as readonly UnhydratedFlexTreeNode[];
+			const insertCount = newContentChecked.length;
+			const marks: DeltaMark[] = [];
+			if (index > 0) marks.push({ count: index });
+			marks.push({ count: insertCount, attach: syntheticDetachedNodeId });
 			this.edit((mapTrees) => {
 				if (newContent.length < 1000) {
 					// For "smallish arrays" (`1000` is not empirically derived), the `splice` function is appropriate...
@@ -586,22 +598,42 @@ export class UnhydratedSequenceField
 					// ...but we avoid using `splice` + spread for very large input arrays since there is a limit on how many elements can be spread (too many will overflow the stack).
 					return [...mapTrees.slice(0, index), ...newContentChecked, ...mapTrees.slice(index)];
 				}
-			});
+			}, marks);
 		},
 		remove: (index, count): UnhydratedFlexTreeNode[] => {
 			for (let i = index; i < index + count; i++) {
 				const c = this.children[i];
 				assert(c !== undefined, 0xa0b /* Unexpected sparse array */);
 			}
+			const marks: DeltaMark[] = [];
+			if (index > 0) marks.push({ count: index });
+			marks.push({ count, detach: syntheticDetachedNodeId });
 			let removed: UnhydratedFlexTreeNode[] | undefined;
 			this.edit((mapTrees) => {
 				removed = mapTrees.splice(index, count);
-			});
+			}, marks);
 			return removed ?? fail(0xb4a /* Expected removed to be set by edit */);
 		},
 		move: (sourceIndex, count, destIndex, source?): void => {
 			const sourceField = source ?? this;
 			if (sourceField === this) {
+				// Build delta marks for the within-field move before mutating the array.
+				// Forward move (source before dest): [retain(src), detach(n), retain(mid), attach(n)]
+				// Backward move (dest before src): [retain(dst), attach(n), retain(mid), detach(n)]
+				const marks: DeltaMark[] = [];
+				if (sourceIndex < destIndex) {
+					if (sourceIndex > 0) marks.push({ count: sourceIndex });
+					marks.push({ count, detach: syntheticDetachedNodeId });
+					const middle = destIndex - sourceIndex - count;
+					if (middle > 0) marks.push({ count: middle });
+					marks.push({ count, attach: syntheticDetachedNodeId });
+				} else {
+					if (destIndex > 0) marks.push({ count: destIndex });
+					marks.push({ count, attach: syntheticDetachedNodeId });
+					const middle = sourceIndex - destIndex;
+					if (middle > 0) marks.push({ count: middle });
+					marks.push({ count, detach: syntheticDetachedNodeId });
+				}
 				// Within-field move: do both operations in a single edit to emit only one event
 				this.edit((mapTrees) => {
 					const removed = mapTrees.splice(sourceIndex, count);
@@ -618,7 +650,7 @@ export class UnhydratedSequenceField
 							...mapTrees.slice(adjustedDest),
 						];
 					}
-				});
+				}, marks);
 			} else {
 				// Cross-field move: remove from source, insert into destination
 				// Each field emits one event (correct behavior for different fields)
