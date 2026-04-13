@@ -12,11 +12,10 @@ REPO_ROOT="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../.." >/dev/null 2>&1 && 
 echo "Installing flub from local build-tools..."
 
 # CI=true suppresses pnpm's interactive "purge modules" prompt in non-TTY environments.
-# node-linker=hoisted uses a flat node_modules layout, which is much faster on
-# Docker's overlayfs than pnpm's default hardlink-based approach.
+# --ignore-scripts skips postinstall hooks (which include nested pnpm installs that
+# conflict in a non-TTY environment).
 CI=true pnpm -C "$REPO_ROOT/build-tools" install --frozen-lockfile --reporter=default \
-  --config.node-linker=hoisted \
-  --config.shamefully-hoist=true
+  --ignore-scripts
 pnpm -C "$REPO_ROOT/build-tools" build:compile
 
 # Use npm link (not pnpm link) because it handles bin shims correctly.
