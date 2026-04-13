@@ -69,7 +69,9 @@ function runBenchmark({
 }
 
 describe("SharedTree table APIs memory usage", () => {
-	// This is more because these tests are so slow than to make the data more production like.
+	// configureBenchmarkHooks adjusts tests to run in a more production type mode.
+	// This is not as important for memory tests as duration tests,
+	// but since these tests are so slow, doing this does help reduce the overall test runtime which is nice.
 	configureBenchmarkHooks();
 
 	// The value to be set in the cells of the tree.
