@@ -11,6 +11,8 @@ import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import {
 	type AnchorEvents,
 	dummyRoot,
+	EmptyKey,
+	type DeltaMark,
 	type FieldKey,
 	type FieldKindIdentifier,
 	type ITreeCursorSynchronous,
@@ -277,8 +279,43 @@ export class UnhydratedFlexTreeNode
 			fieldMarks: new Map(),
 		});
 
+		// Mirrors the onlyDeepChanges block in anchorSet.ts for unhydrated nodes.
+		this.#emitDeepChangesToAncestorArrays();
+
 		// Also emit subtree changed event for this node and all ancestors.
 		this.#emitSubtreeChangedEvents();
+	}
+
+	/**
+	 * Emit `childrenChangedAfterBatch` on each ancestor array node with synthetic
+	 * marks indicating a deep change at this node's position within the array.
+	 */
+	#emitDeepChangesToAncestorArrays(): void {
+		const location = this.parentField;
+		const parentField = location.parent;
+		const parentNode = parentField.parent;
+
+		if (parentNode === undefined || !(parentNode instanceof UnhydratedFlexTreeNode)) {
+			return;
+		}
+
+		// Only emit on array ancestors (EmptyKey); object/map ancestors don't carry delta payloads.
+		if (parentField.key === EmptyKey) {
+			const index = location.index;
+			const syntheticMarks: DeltaMark[] = [];
+			if (index > 0) {
+				syntheticMarks.push({ count: index });
+			}
+			// `fields` presence (not content) signals a deep change to deltaMarksToArrayOps.
+			syntheticMarks.push({ count: 1, fields: new Map([[EmptyKey, { marks: [] }]]) });
+
+			parentNode._events.emit("childrenChangedAfterBatch", {
+				changedFields: new Set([EmptyKey]),
+				fieldMarks: new Map([[EmptyKey, syntheticMarks]]),
+			});
+		}
+
+		parentNode.#emitDeepChangesToAncestorArrays();
 	}
 
 	/**

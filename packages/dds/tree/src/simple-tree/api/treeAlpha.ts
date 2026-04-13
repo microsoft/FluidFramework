@@ -47,13 +47,7 @@ export interface NodeChangedDataDelta {
 	 * internal change passes in a single operation (for example, a data change combined with a
 	 * schema upgrade).
 	 *
-	 * For unhydrated array nodes, deep changes on elements do not fire `treeChanged` at all —
-	 * not even with `delta: undefined`. Only direct changes (insert, remove, move) fire the
-	 * event on unhydrated nodes.
-	 *
 	 * See {@link ArrayNodeDeltaOp} for op semantics.
-	 * @privateRemarks
-	 * Unhydrated array node deep change limitation tracked in AB#63261.
 	 */
 	readonly delta: readonly ArrayNodeDeltaOp[] | undefined;
 }
@@ -124,10 +118,6 @@ export interface TreeChangeEventsAlpha<TNode extends TreeNode = TreeNode>
 	 * Ancestor nodes still receive the base (no-payload) `treeChanged` via the normal subtree
 	 * propagation.
 	 *
-	 * For unhydrated array nodes (not yet inserted into a document), only direct changes
-	 * (insert, remove, move) fire this event. Deep changes on elements of unhydrated
-	 * arrays are not detected.
-	 *
 	 * For non-array nodes: same as the base {@link TreeChangeEvents.treeChanged}.
 	 *
 	 * The listener type is conditional on `TNode`. If `TNode` is the base {@link TreeNode} type
@@ -135,8 +125,6 @@ export interface TreeChangeEventsAlpha<TNode extends TreeNode = TreeNode>
 	 * and no delta payload is provided. Use a more specific schema type to get the delta.
 	 *
 	 * This defines a property which is a function instead of using the method syntax to avoid function bi-variance issues with the input data to the callback.
-	 * @privateRemarks
-	 * Unhydrated array node deep change limitation tracked in AB#63261.
 	 */
 	treeChanged: TNode extends WithType<string, NodeKind.Array>
 		? (data: NodeChangedDataDelta) => void

@@ -287,6 +287,17 @@ export const treeNodeApi: TreeNodeApi = {
 				}
 			}
 			case "treeChanged": {
+				if (isArrayNodeSchema(kernel.schema)) {
+					// For array nodes, treeChanged fires via childrenChangedAfterBatch so that a
+					// delta payload can be provided. This covers both shallow changes
+					// (insert/remove/move) and deep element changes. Stable (non-alpha) listeners
+					// typed as () => void will silently ignore the extra argument at runtime.
+					return kernel.events.on("childrenChangedAfterBatch", ({ fieldMarks }) => {
+						const marks = fieldMarks.get(EmptyKey);
+						const delta = marks === undefined ? undefined : deltaMarksToArrayOps(marks);
+						(listener as (data: { readonly delta: typeof delta }) => void)({ delta });
+					});
+				}
 				return kernel.events.on("subtreeChangedAfterBatch", () => listener({}));
 			}
 			default: {
