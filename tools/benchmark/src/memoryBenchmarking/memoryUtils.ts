@@ -26,10 +26,14 @@ export interface MemoryUseModifier<TIn> {
 	modify(input: TIn): void | Promise<void>;
 
 	/**
-	 * Optional callback to run after the value has been modified.
+	 * Optional callback to run after the value has been modified and after the
+	 * `whileAllocated` measurement snapshot has been taken.
+	 * @remarks
+	 * Any allocations or mutations performed here are not reflected in the measured "while allocated" memory usage.
+	 * This hook is intended for cleanup or resetting state between benchmark iterations.
 	 * @param input - The value that was created by `setup` and modified by `modify`.
 	 */
-	after?: (input: TIn) => void | Promise<void>;
+	after?(input: TIn): void | Promise<void>;
 }
 
 /**
