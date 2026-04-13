@@ -133,6 +133,17 @@ class SharedObjectFromKernel<
 	) {
 		super(id, runtime, attributes, telemetryContextPrefix);
 
+		// This cast is needed since IFluidDataStoreRuntimeInternalConfig does not extend IFluidDataStoreRuntime directly. This pattern
+		// allows us to avoid breaking changes to IFluidDataStoreRuntime by hiding internal members in a separate interface, but comes
+		// at the cost of less compile-time enforcement. For example, if the runtime did not implement `minVersionForCollab` and the
+		// member was still optional (e.g., during the deprecation window where backwards-compatibility is maintained), the compiler
+		// would emit an error.
+		const minVersionForCollab: MinimumVersionForCollab | undefined = (
+			runtime as IFluidDataStoreRuntimeInternalConfig
+		).minVersionForCollab;
+
+		assert(minVersionForCollab !== undefined, "minVersionForCollab must be defined");
+
 		this.#kernelArgs = {
 			sharedObject: this,
 			serializer: this.serializer,
@@ -143,14 +154,7 @@ class SharedObjectFromKernel<
 			idCompressor: runtime.idCompressor,
 			lastSequenceNumber: () => this.deltaManager.lastSequenceNumber,
 			initialSequenceNumber: this.deltaManager.initialSequenceNumber,
-
-			// This cast is needed since IFluidDataStoreRuntimeInternalConfig does not extend IFluidDataStoreRuntime directly. This pattern
-			// allows us to avoid breaking changes to IFluidDataStoreRuntime by hiding internal members in a separate interface, but comes
-			// at the cost of less compile-time enforcement. For example, if the runtime did not implement `minVersionForCollab` and the
-			// member was still optional (e.g., during the deprecation window where backwards-compatibility is maintained), the compiler
-			// would emit an error.
-			minVersionForCollab: (runtime as IFluidDataStoreRuntimeInternalConfig)
-				.minVersionForCollab,
+			minVersionForCollab,
 		};
 	}
 
@@ -305,7 +309,7 @@ export interface KernelArgs {
 	 * compatible set of feature flags and formats can be enabled in the SharedObject implementation.
 	 * See {@link @fluidframework/container-runtime#LoadContainerRuntimeParams.minVersionForCollab} for more details.
 	 */
-	readonly minVersionForCollab: MinimumVersionForCollab | undefined;
+	readonly minVersionForCollab: MinimumVersionForCollab;
 }
 
 /**

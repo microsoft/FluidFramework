@@ -1,5 +1,123 @@
 # @fluidframework/tree
 
+## 2.92.0
+
+### Minor Changes
+
+- The deprecated getBranch API has been removed ([#26796](https://github.com/microsoft/FluidFramework/pull/26796)) [e80a48e25e](https://github.com/microsoft/FluidFramework/commit/e80a48e25ebab540ce9a0093edc12b9aa5ab03fb)
+
+  To obtain a branch-like object, create a view from your tree via `viewWith`.
+  Or, use `TreeAlpha.context` to get a view from a `TreeNode`.
+
+- Array node nodeChanged events now include a delta payload (via TreeAlpha) ([#26677](https://github.com/microsoft/FluidFramework/pull/26677)) [bf02e33aed](https://github.com/microsoft/FluidFramework/commit/bf02e33aed74295840ffa5b6ef889860d58f5654)
+
+  The `nodeChanged` event for array nodes (accessed via `TreeAlpha.on`) now provides a `delta` field, a sequence of `ArrayNodeDeltaOp` values that describe exactly what changed in the array. This lets you efficiently sync an external representation with tree changes, without taking a snapshot of the old state or diffing the entire array.
+
+  The delta follows [Quill](https://quilljs.com/docs/)-style semantics: each op covers a contiguous run of positions in the array before the change.
+  - `{ type: "retain", count: N }`—N elements stayed in place. Their positions are unchanged, though their contents may have changed (which would fire separate `nodeChanged` events on those elements).
+  - `{ type: "insert", count: N }`—N elements were inserted; read their values from the current tree at these positions.
+  - `{ type: "remove", count: N }`—N elements were removed.
+
+  Trailing unchanged elements are not represented by a trailing `"retain"` op.
+
+  Use `TreeAlpha.on` to subscribe to the richer alpha events. The data passed to the callback is typed as `NodeChangedDataAlpha<TNode>`:
+  - Object, map, and record nodes receive `NodeChangedDataProperties` (with a required `changedProperties` set).
+  - Array nodes receive `NodeChangedDataDelta` (with a `delta` field).
+
+  `TreeBeta.on` is unchanged and does not include delta information.
+
+  #### Example: Applying a Delta to a Plain Array Mirror
+
+  ```typescript
+  // Walk the delta to keep a plain JS array in sync with an array node.
+  // retain = advance past unchanged elements,
+  // insert = splice in new elements,
+  // remove = splice out removed elements.
+  const mirror: number[] = [1, 2, 3];
+
+  TreeAlpha.on(myArrayNode, "nodeChanged", ({ delta }) => {
+    let readPos = 0; // position in the current (post-change) tree
+    let writePos = 0; // position in the mirror array
+
+    for (const op of delta ?? []) {
+      if (op.type === "retain") {
+        writePos += op.count;
+        readPos += op.count;
+      } else if (op.type === "insert") {
+        const newItems = Array.from(
+          { length: op.count },
+          (_, i) => myArrayNode[readPos + i],
+        );
+        mirror.splice(writePos, 0, ...newItems);
+        writePos += op.count;
+        readPos += op.count;
+      } else if (op.type === "remove") {
+        mirror.splice(writePos, op.count);
+      }
+    }
+  });
+  ```
+
+  #### Example: Narrowing the Union in a Generic Handler
+
+  ```typescript
+  TreeAlpha.on(node as TreeNode, "nodeChanged", (data) => {
+    if ("delta" in data) {
+      // Array node — data is NodeChangedDataDelta
+      console.log("array changed, delta:", data.delta);
+    } else {
+      // Object/map/record node — data is NodeChangedDataProperties
+      console.log("properties changed:", data.changedProperties);
+    }
+  });
+  ```
+
+  > **Note:** The `delta` value may be `undefined` in two cases:
+  >
+  > - The node was created locally and has not yet been inserted into a document tree (a known temporary limitation).
+  > - The document was updated in a way that required multiple internal change passes in a single operation (for example, a data change combined with a schema upgrade).
+
+- Add TreeArrayNodeAlpha with a new splice method ([#26740](https://github.com/microsoft/FluidFramework/pull/26740)) [f2b0cf9176](https://github.com/microsoft/FluidFramework/commit/f2b0cf917609b84952db2b9492867e70e0d57981)
+
+  Adds a `splice` method on `TreeArrayNodeAlpha` that supports removing and inserting items in a single operation to align with JavaScript's Array splice API.
+  Returns the removed items as an array.
+  Supports negative `start` indices (wraps from end).
+  Optional `deleteCount` (omitting removes everything from `start` onward).
+  The alpha API is accessible by an `asAlpha` cast on existing TreeArrayNodes, or using `schemaFactoryAlpha`.
+  `arrayAlpha` nodes are accepted wherever `TreeArrayNode` is expected, but not the reverse.
+  `asAlpha` is bidirectional since it's the same underlying schema.
+
+  #### Usage
+
+  ```typescript
+  import {
+    SchemaFactory,
+    SchemaFactoryAlpha,
+    asAlpha,
+  } from "@fluidframework/tree";
+
+  // Using asAlpha to cast an existing TreeArrayNode
+  const sf = new SchemaFactory("example");
+  const Inventory = sf.array("Inventory", sf.string);
+  const inventory = new Inventory(["Apples", "Bananas", "Pears"]);
+  const inventoryAlpha = asAlpha(inventory);
+
+  // Using SchemaFactoryAlpha so splice is available directly
+  const sf = new SchemaFactoryAlpha("example");
+  const Inventory = sf.arrayAlpha("Inventory", sf.string);
+  const inventoryAlpha = new Inventory(["Apples", "Bananas", "Pears"]);
+
+  // Remove 2 items starting at index 0, insert new items in their place
+  const removed = inventoryAlpha.splice(0, 2, "Oranges", "Grapes");
+  // removed: ["Apples", "Bananas"]
+  // inventory: ["Oranges", "Grapes", "Pears"]
+
+  // Removed everything from index 1 onward (omitting deleteCount)
+  const rest = inventoryAlpha.splice(1);
+  // rest: ["Grapes", "Pears"]
+  // inventory: ["Oranges"]
+  ```
+
 ## 2.91.0
 
 ### Minor Changes

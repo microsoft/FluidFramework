@@ -7,7 +7,7 @@ import type { Mutable } from "../../util/index.js";
 import type { FieldKey } from "../schema-stored/index.js";
 
 import type { TreeChunk } from "./chunk.js";
-import type { DetachedNodeId, FieldChanges, Root } from "./delta.js";
+import type { DetachedNodeId, FieldChanges, FieldMap, Root } from "./delta.js";
 import { rootFieldKey } from "./types.js";
 
 export const emptyDelta: Root = {};
@@ -57,4 +57,40 @@ export function offsetDetachId(
 
 export function areDetachedNodeIdsEqual(a: DetachedNodeId, b: DetachedNodeId): boolean {
 	return a.major === b.major && a.minor === b.minor;
+}
+
+/**
+ * Returns true if a delta field map contains any changes that would be visible in the document (eg, an insert, move, edit)
+ * @param fields - Delta FieldMap to check for visible changes
+ * @returns True if change map contains any changes that would be visible in the document, false otherwise
+ */
+export function deltaFieldMapHasVisibleChanges(fields: FieldMap | undefined): boolean {
+	if (fields === undefined || fields.size === 0) {
+		return false;
+	}
+	for (const [, fieldChanges] of fields) {
+		if (deltaFieldChangesHaveVisibleChanges(fieldChanges)) {
+			return true;
+		}
+	}
+	return false;
+}
+
+/**
+ * Returns true if the given field changes contains any changes that would be visible in the document (eg, an insert, move, edit)
+ * @param fieldChanges - Field changes to check for visible changes
+ * @returns True if the field changes contain any changes that would be visible in the document, false otherwise
+ */
+export function deltaFieldChangesHaveVisibleChanges(fieldChanges: FieldChanges): boolean {
+	for (const mark of fieldChanges.marks) {
+		if (
+			mark.attach !== undefined ||
+			mark.detach !== undefined ||
+			deltaFieldMapHasVisibleChanges(mark.fields)
+		) {
+			return true;
+		}
+	}
+
+	return false;
 }

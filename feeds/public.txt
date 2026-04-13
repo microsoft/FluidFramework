@@ -24,6 +24,7 @@
 @fluidframework/driver-utils
 @fluidframework/container-loader
 @fluidframework/undo-redo
+@fluidframework/type-factory
 @fluidframework/tree-agent-ses
 @fluidframework/tree-agent-langchain
 @fluidframework/tree-agent
@@ -31,6 +32,8 @@
 @fluidframework/request-handler
 @fluidframework/react
 @fluidframework/quill-react
+@fluid-internal/presence-runtime
+@fluid-internal/presence-definitions
 @fluidframework/presence
 @fluid-experimental/oldest-client-observer
 @fluidframework/fluid-static

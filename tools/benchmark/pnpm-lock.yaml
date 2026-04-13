@@ -16,6 +16,8 @@ overrides:
   minimatch@>=9 <10: ^9.0.9
   minimatch@>=10 <11: ^10.2.4
   serialize-javascript@>=6 <7: ^7.0.4
+  picomatch@>=2 <3: ^2.3.2
+  picomatch@>=4 <5: ^4.0.4
 
 importers:
 
@@ -42,13 +44,13 @@ importers:
         version: 2.83.0
       '@microsoft/api-extractor':
         specifier: ^7.52.11
-        version: 7.52.11(@types/node@20.19.35)
+        version: 7.52.11(@types/node@22.19.17)
       '@types/mocha':
         specifier: ^10.0.10
         version: 10.0.10
       '@types/node':
-        specifier: ~20.19.30
-        version: 20.19.35
+        specifier: ~22.19.17
+        version: 22.19.17
       concurrently:
         specifier: ^9.2.1
         version: 9.2.1
@@ -230,8 +232,8 @@ packages:
   '@types/mocha@10.0.10':
     resolution: {integrity: sha512-xPyYSz1cMPnJQhl0CLMH68j3gprKZaTjG3s5Vi+fDgx+uhG9NOXwbVt52eFS8ECyXhyKcjDLCBEqBExKuiZb7Q==}
 
-  '@types/node@20.19.35':
-    resolution: {integrity: sha512-Uarfe6J91b9HAUXxjvSOdiO2UPOKLm07Q1oh0JHxoZ1y8HoqxDAu3gVrsrOHeiio0kSsoVBt4wFrKOm0dKxVPQ==}
+  '@types/node@22.19.17':
+    resolution: {integrity: sha512-wGdMcf+vPYM6jikpS/qhg6WiqSV/OhG+jeeHT/KlVqxYfD40iYJf9/AE1uQxVWFvU7MipKRkRv8NSHiCGgPr8Q==}
 
   '@types/normalize-package-data@2.4.4':
     resolution: {integrity: sha512-37i+OaWTh9qeK4LSHPsyRC7NahnGotNuZvjLSgcPzblpHB3rrCJxAOgI5gCdKm7coonsaX1Of0ILiTcnZjbfxA==}
@@ -735,7 +737,7 @@ packages:
     resolution: {integrity: sha512-tIbYtZbucOs0BRGqPJkshJUYdL+SDH7dVM8gjy+ERp3WAUjLEFJE+02kanyHtwjWOnwrKYBiwAmM0p4kLJAnXg==}
     engines: {node: '>=12.0.0'}
     peerDependencies:
-      picomatch: ^3 || ^4
+      picomatch: ^4.0.4
     peerDependenciesMeta:
       picomatch:
         optional: true
@@ -1117,12 +1119,12 @@ packages:
   picocolors@1.1.1:
     resolution: {integrity: sha512-xceH2snhtb5M9liqDsmEw56le376mTZkEX/jEb/RxNFyegNul7eNslCXP9FDj/Lcu0X8KEyMceP2ntpaHrDEVA==}
 
-  picomatch@2.3.1:
-    resolution: {integrity: sha512-JU3teHTNjmE2VCGFzuY8EXzCDVwEqB2a8fsIvwaStHhAWJEeVd1o1QD80CU6+ZdEXXSLbSsuLwJjkCBWqRQUVA==}
+  picomatch@2.3.2:
+    resolution: {integrity: sha512-V7+vQEJ06Z+c5tSye8S+nHUfI51xoXIXjHQ99cQtKUkQqqO1kO/KCJUfZXuB47h/YBlDhah2H3hdUGXn8ie0oA==}
     engines: {node: '>=8.6'}
 
-  picomatch@4.0.3:
-    resolution: {integrity: sha512-5gTmgEY/sqK6gFXLIsQNH19lWb4ebPDLA4SdLP7dsWkIXHWlG66oPuVvXSGFPppYZz8ZDZq0dYYrbHfBCVUb1Q==}
+  picomatch@4.0.4:
+    resolution: {integrity: sha512-QP88BAKvMam/3NxH6vj2o21R6MjxZUAd6nlwAS/pnGvN9IVLocLHxGYIzFhg6fUQ+5th6P4dv4eW9jX3DSIj7A==}
     engines: {node: '>=12'}
 
   pluralize@8.0.0:
@@ -1538,23 +1540,23 @@ snapshots:
 
   '@humanwhocodes/retry@0.4.3': {}
 
-  '@microsoft/api-extractor-model@7.30.7(@types/node@20.19.35)':
+  '@microsoft/api-extractor-model@7.30.7(@types/node@22.19.17)':
     dependencies:
       '@microsoft/tsdoc': 0.15.1
       '@microsoft/tsdoc-config': 0.17.1
-      '@rushstack/node-core-library': 5.14.0(@types/node@20.19.35)
+      '@rushstack/node-core-library': 5.14.0(@types/node@22.19.17)
     transitivePeerDependencies:
       - '@types/node'
 
-  '@microsoft/api-extractor@7.52.11(@types/node@20.19.35)':
+  '@microsoft/api-extractor@7.52.11(@types/node@22.19.17)':
     dependencies:
-      '@microsoft/api-extractor-model': 7.30.7(@types/node@20.19.35)
+      '@microsoft/api-extractor-model': 7.30.7(@types/node@22.19.17)
       '@microsoft/tsdoc': 0.15.1
       '@microsoft/tsdoc-config': 0.17.1
-      '@rushstack/node-core-library': 5.14.0(@types/node@20.19.35)
+      '@rushstack/node-core-library': 5.14.0(@types/node@22.19.17)
       '@rushstack/rig-package': 0.5.3
-      '@rushstack/terminal': 0.15.4(@types/node@20.19.35)
-      '@rushstack/ts-command-line': 5.0.2(@types/node@20.19.35)
+      '@rushstack/terminal': 0.15.4(@types/node@22.19.17)
+      '@rushstack/ts-command-line': 5.0.2(@types/node@22.19.17)
       lodash: 4.17.21
       minimatch: 10.2.4
       resolve: 1.22.11
@@ -1580,7 +1582,7 @@ snapshots:
       '@tybys/wasm-util': 0.10.1
     optional: true
 
-  '@rushstack/node-core-library@5.14.0(@types/node@20.19.35)':
+  '@rushstack/node-core-library@5.14.0(@types/node@22.19.17)':
     dependencies:
       ajv: 8.13.0
       ajv-draft-04: 1.0.0(ajv@8.13.0)
@@ -1591,23 +1593,23 @@ snapshots:
       resolve: 1.22.11
       semver: 7.5.4
     optionalDependencies:
-      '@types/node': 20.19.35
+      '@types/node': 22.19.17
 
   '@rushstack/rig-package@0.5.3':
     dependencies:
       resolve: 1.22.11
       strip-json-comments: 3.1.1
 
-  '@rushstack/terminal@0.15.4(@types/node@20.19.35)':
+  '@rushstack/terminal@0.15.4(@types/node@22.19.17)':
     dependencies:
-      '@rushstack/node-core-library': 5.14.0(@types/node@20.19.35)
+      '@rushstack/node-core-library': 5.14.0(@types/node@22.19.17)
       supports-color: 8.1.1
     optionalDependencies:
-      '@types/node': 20.19.35
+      '@types/node': 22.19.17
 
-  '@rushstack/ts-command-line@5.0.2(@types/node@20.19.35)':
+  '@rushstack/ts-command-line@5.0.2(@types/node@22.19.17)':
     dependencies:
-      '@rushstack/terminal': 0.15.4(@types/node@20.19.35)
+      '@rushstack/terminal': 0.15.4(@types/node@22.19.17)
       '@types/argparse': 1.0.38
       argparse: 1.0.10
       string-argv: 0.3.2
@@ -1627,7 +1629,7 @@ snapshots:
 
   '@types/mocha@10.0.10': {}
 
-  '@types/node@20.19.35':
+  '@types/node@22.19.17':
     dependencies:
       undici-types: 6.21.0
 
@@ -1829,7 +1831,7 @@ snapshots:
   anymatch@3.1.3:
     dependencies:
       normalize-path: 3.0.0
-      picomatch: 2.3.1
+      picomatch: 2.3.2
 
   argparse@1.0.10:
     dependencies:
@@ -2157,9 +2159,9 @@ snapshots:
 
   fast-levenshtein@2.0.6: {}
 
-  fdir@6.5.0(picomatch@4.0.3):
+  fdir@6.5.0(picomatch@4.0.4):
     optionalDependencies:
-      picomatch: 4.0.3
+      picomatch: 4.0.4
 
   file-entry-cache@8.0.0:
     dependencies:
@@ -2512,9 +2514,9 @@ snapshots:
 
   picocolors@1.1.1: {}
 
-  picomatch@2.3.1: {}
+  picomatch@2.3.2: {}
 
-  picomatch@4.0.3: {}
+  picomatch@4.0.4: {}
 
   pluralize@8.0.0: {}
 
@@ -2558,7 +2560,7 @@ snapshots:
 
   readdirp@3.6.0:
     dependencies:
-      picomatch: 2.3.1
+      picomatch: 2.3.2
 
   regexp-tree@0.1.27: {}
 
@@ -2675,8 +2677,8 @@ snapshots:
 
   tinyglobby@0.2.15:
     dependencies:
-      fdir: 6.5.0(picomatch@4.0.3)
-      picomatch: 4.0.3
+      fdir: 6.5.0(picomatch@4.0.4)
+      picomatch: 4.0.4
 
   to-regex-range@5.0.1:
     dependencies:

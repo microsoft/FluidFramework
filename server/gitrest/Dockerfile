@@ -29,11 +29,6 @@ RUN chmod +x /tini
 
 FROM runnerbase AS base
 
-# Copy the shared ESLint config package. Gitrest has a link dependency on this package
-# (link:../../common/build/eslint-config-fluid) for ESLint flat config support.
-WORKDIR $BUILD_ROOT
-COPY --from=root common/build/eslint-config-fluid common/build/eslint-config-fluid/
-
 # Copy over and build the server. We use the same directory structure as outside of the docker container to ensure flub works smoothly.
 WORKDIR $GITREST_ROOT
 

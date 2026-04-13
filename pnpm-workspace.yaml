@@ -42,3 +42,6 @@ catalogs:
     "@fluidframework/eslint-config-fluid": "^9.0.0"
     "eslint": "~9.39.1"
     "eslint-config-prettier": "~10.1.8"
+  # Type definitions
+  types:
+    "@types/node": "~22.19.17"
