@@ -54,9 +54,10 @@ export default class AiCommand extends BaseCommand<typeof AiCommand> {
 		]);
 		this.verbose(`Alias file: ${aliasFile.path}`);
 
-		const model =
-			flags.model ?? promptFile.model ?? HARDCODED_DEFAULT_MODEL;
-		this.verbose(`Model: ${model} (source: ${flags.model ? "flag" : promptFile.model ? "frontmatter" : "hardcoded default"})`);
+		const model = flags.model ?? promptFile.model ?? HARDCODED_DEFAULT_MODEL;
+		this.verbose(
+			`Model: ${model} (source: ${flags.model ? "flag" : promptFile.model ? "frontmatter" : "hardcoded default"})`,
+		);
 
 		const prompt = promptFile.template
 			.replaceAll("{{aliasFileContent}}", aliasFile.content)
