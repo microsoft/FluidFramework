@@ -36,6 +36,7 @@ import {
 	type DeltaDetachedNodeId,
 } from "../../core/index.js";
 import {
+	assertNonNegativeSafeInteger,
 	brand,
 	getLast,
 	getOrAddEmptyToMap,
@@ -60,6 +61,7 @@ function splitFieldAtIndex(
 	nodeIndex: number,
 	forest: ChunkedForest,
 ): number {
+	assertNonNegativeSafeInteger(nodeIndex);
 	let remaining = nodeIndex;
 	for (let i = 0; i < chunks.length; i++) {
 		if (remaining === 0) {
@@ -90,6 +92,7 @@ function splitFieldAtIndex(
  * Returns the chunk-array index of the isolated single-node chunk.
  */
 function isolateNodeAt(chunks: TreeChunk[], nodeIndex: number, forest: ChunkedForest): number {
+	assertNonNegativeSafeInteger(nodeIndex);
 	let remaining = nodeIndex;
 	for (let i = 0; i < chunks.length; i++) {
 		const chunk = chunks[i] ?? oob();
