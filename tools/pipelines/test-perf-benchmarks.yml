@@ -10,6 +10,26 @@ trigger:
     - main
     - next
     - lts
+  paths:
+    include:
+    - .npmrc
+    - .nvmrc
+    - .pnpmfile.cjs
+    - _buildProject.config.cjs
+    - common/build/build-common
+    - examples
+    - experimental
+    - fluidBuild.config.cjs
+    - package.json
+    - packages
+    - patches/*
+    - pnpm-lock.yaml
+    - pnpm-workspace.yaml
+    - tools/pipelines/test-perf-benchmarks.yml
+    - tools/pipelines/templates/include-install.yml
+    - tools/pipelines/templates/include-upload-npm-logs.yml
+    - tools/pipelines/templates/include-vars-telemetry-generator.yml
+    - tools/pipelines/templates/upload-telemetry
 pr: none
 
 parameters:
