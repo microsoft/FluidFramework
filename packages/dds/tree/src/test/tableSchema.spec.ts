@@ -121,6 +121,55 @@ describe("TableFactory unit tests", () => {
 			const column = new MyColumn({ id: "column-0", props: "Column 0" });
 			assert.equal(column.props, "Column 0");
 		});
+
+		it("Props can be updated after insertion", () => {
+			const column = initializeTree(Column, { id: "column-0", props: {} });
+
+			// Initial props are empty
+			assertEqualTrees(column.props, {});
+
+			// Update props and verify the new value is readable
+			column.props = { label: "Updated label" };
+			assertEqualTrees(column.props, { label: "Updated label" });
+
+			// Clear the label
+			column.props = {};
+			assertEqualTrees(column.props, {});
+		});
+
+		it("Updating props fires nodeChanged on the column but not the column list", () => {
+			const table = initializeTree(
+				Table,
+				Table.create({
+					columns: [
+						new Column({ id: "column-0", props: {} }),
+						new Column({ id: "column-1", props: {} }),
+					],
+					rows: [],
+				}),
+			);
+
+			let columnNodeChangedCount = 0;
+			let columnListChangedCount = 0;
+
+			const column0 = table.columns[0];
+			Tree.on(column0, "nodeChanged", () => {
+				columnNodeChangedCount++;
+			});
+			Tree.on(table.columns, "nodeChanged", () => {
+				columnListChangedCount++;
+			});
+
+			// Update column-0 props — should fire nodeChanged on the column, not the list
+			column0.props = { label: "Updated label" };
+			assert.equal(columnNodeChangedCount, 1);
+			assert.equal(columnListChangedCount, 0);
+
+			// Update column-1 props — should NOT fire for column-0
+			table.columns[1].props = { label: "Other label" };
+			assert.equal(columnNodeChangedCount, 1);
+			assert.equal(columnListChangedCount, 0);
+		});
 	});
 
 	describeHydration("Row Schema", (initializeTree) => {
@@ -149,6 +198,55 @@ describe("TableFactory unit tests", () => {
 
 			const column = initializeTree(MyRow, { id: "row-0", cells: {}, props: "Row 0" });
 			assert.equal(column.props, "Row 0");
+		});
+
+		it("Props can be updated after insertion", () => {
+			const row = initializeTree(Row, { id: "row-0", cells: {}, props: {} });
+
+			// Initial props are empty
+			assertEqualTrees(row.props ?? fail("props undefined"), {});
+
+			// Update props and verify the new value is readable
+			row.props = { selectable: true };
+			assertEqualTrees(row.props ?? fail("props undefined"), { selectable: true });
+
+			// Set props to undefined
+			row.props = undefined;
+			assert.equal(row.props, undefined);
+		});
+
+		it("Updating props fires nodeChanged on the row but not the row list", () => {
+			const table = initializeTree(
+				Table,
+				Table.create({
+					columns: [],
+					rows: [
+						new Row({ id: "row-0", cells: {}, props: {} }),
+						new Row({ id: "row-1", cells: {}, props: {} }),
+					],
+				}),
+			);
+
+			let rowNodeChangedCount = 0;
+			let rowListChangedCount = 0;
+
+			const row0 = table.rows[0];
+			Tree.on(row0, "nodeChanged", () => {
+				rowNodeChangedCount++;
+			});
+			Tree.on(table.rows, "nodeChanged", () => {
+				rowListChangedCount++;
+			});
+
+			// Update row-0 props — should fire nodeChanged on the row, not the list
+			row0.props = { selectable: true };
+			assert.equal(rowNodeChangedCount, 1);
+			assert.equal(rowListChangedCount, 0);
+
+			// Update row-1 props — should NOT fire for row-0
+			table.rows[1].props = { selectable: false };
+			assert.equal(rowNodeChangedCount, 1);
+			assert.equal(rowListChangedCount, 0);
 		});
 	});
 
