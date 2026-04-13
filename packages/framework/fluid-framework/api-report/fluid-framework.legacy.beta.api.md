@@ -306,6 +306,9 @@ export const ForestTypeOptimized: ForestType;
 // @beta
 export const ForestTypeReference: ForestType;
 
+// @beta
+export const getPresence: (fluidContainer: IFluidContainer) => Presence;
+
 // @beta @legacy
 export interface IBranchOrigin {
     id: string;
