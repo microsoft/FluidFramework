@@ -120,21 +120,19 @@ export async function runAiSession(options: {
 	}
 }
 
-/**
- * Verifies that the Copilot CLI server is reachable and the user is authenticated.
- * Throws a descriptive error if either check fails.
- */
+const AUTH_REMEDIATION =
+	"Try one of:\n" +
+	"  • gh auth login          (authenticate the GitHub CLI)\n" +
+	"  • export GH_TOKEN=...    (set a personal access token)";
+
 async function preflight(client: CopilotClient): Promise<void> {
 	try {
 		await client.ping();
 	} catch (cause) {
 		throw new Error(
-			"Failed to connect to the Copilot CLI server.\n" +
-				"Ensure you have a GitHub Copilot subscription and are authenticated.\n\n" +
-				"Try one of:\n" +
-				"  • gh auth login\n" +
-				"  • Set the GH_TOKEN or GITHUB_TOKEN environment variable\n\n" +
-				`Underlying error: ${cause}`,
+			`Failed to connect to the Copilot CLI server.\n` +
+				`Ensure you have a GitHub Copilot subscription and are authenticated.\n\n` +
+				`${AUTH_REMEDIATION}\n\nUnderlying error: ${cause}`,
 		);
 	}
 
@@ -143,22 +141,17 @@ async function preflight(client: CopilotClient): Promise<void> {
 		authStatus = await client.getAuthStatus();
 	} catch (cause) {
 		throw new Error(
-			"GitHub Copilot authentication failed.\n" +
-				"A GitHub Copilot subscription is required to use this command.\n\n" +
-				"Try one of:\n" +
-				"  • gh auth login          (authenticate the GitHub CLI)\n" +
-				"  • export GH_TOKEN=...    (set a personal access token)\n\n" +
-				`Underlying error: ${cause}`,
+			`GitHub Copilot authentication failed.\n` +
+				`A GitHub Copilot subscription is required to use this command.\n\n` +
+				`${AUTH_REMEDIATION}\n\nUnderlying error: ${cause}`,
 		);
 	}
 
 	if (!authStatus.isAuthenticated) {
 		throw new Error(
-			"GitHub Copilot authentication failed.\n" +
-				"A GitHub Copilot subscription is required to use this command.\n\n" +
-				"Try one of:\n" +
-				"  • gh auth login          (authenticate the GitHub CLI)\n" +
-				"  • export GH_TOKEN=...    (set a personal access token)\n",
+			`GitHub Copilot authentication failed.\n` +
+				`A GitHub Copilot subscription is required to use this command.\n\n` +
+				AUTH_REMEDIATION,
 		);
 	}
 }

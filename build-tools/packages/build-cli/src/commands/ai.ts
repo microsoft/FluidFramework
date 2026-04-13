@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { access, readFile } from "node:fs/promises";
+import { readFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import * as readline from "node:readline/promises";
 import { getResolvedFluidRoot } from "@fluidframework/build-tools";
@@ -45,18 +45,22 @@ export default class AiCommand extends BaseCommand<typeof AiCommand> {
 		const { flags } = this;
 
 		const repoRoot = await this.tryResolveRepoRoot();
-		const [aliasFilePath, gettingStartedContent, promptFile] = await Promise.all([
+		this.verbose(`Repo root: ${repoRoot ?? "(not in a Fluid repo)"}`);
+
+		const [aliasFile, gettingStartedContent, promptFile] = await Promise.all([
 			this.resolveAliasFile(repoRoot),
-			this.readGettingStarted(repoRoot),
+			this.readDevcontainerFile(repoRoot, "GETTING_STARTED.md"),
 			this.loadPromptFile(repoRoot),
 		]);
-		const aliasFileContent = await readFile(aliasFilePath, "utf8");
+		this.verbose(`Alias file: ${aliasFile.path}`);
 
 		const model =
 			flags.model ?? promptFile.model ?? HARDCODED_DEFAULT_MODEL;
+		this.verbose(`Model: ${model} (source: ${flags.model ? "flag" : promptFile.model ? "frontmatter" : "hardcoded default"})`);
+
 		const prompt = promptFile.template
-			.replaceAll("{{aliasFileContent}}", aliasFileContent)
-			.replaceAll("{{gettingStartedContent}}", gettingStartedContent);
+			.replaceAll("{{aliasFileContent}}", aliasFile.content)
+			.replaceAll("{{gettingStartedContent}}", gettingStartedContent ?? "");
 
 		const rl = readline.createInterface({
 			input: process.stdin,
@@ -88,7 +92,8 @@ export default class AiCommand extends BaseCommand<typeof AiCommand> {
 			return;
 		}
 
-		const shellCommand = `source '${aliasFilePath}' && ${formattedCommand}`;
+		const shellCommand = `source ${shellQuote(aliasFile.path)} && ${formattedCommand}`;
+		this.verbose(`Shell command: ${shellCommand}`);
 		this.log(`\nLaunching ${chalk.green(proposal.alias)}...\n`);
 
 		try {
@@ -105,9 +110,6 @@ export default class AiCommand extends BaseCommand<typeof AiCommand> {
 		}
 	}
 
-	/**
-	 * Attempts to resolve the Fluid repo root. Returns undefined if not in a Fluid repo.
-	 */
 	private async tryResolveRepoRoot(): Promise<string | undefined> {
 		try {
 			return await getResolvedFluidRoot();
@@ -117,19 +119,22 @@ export default class AiCommand extends BaseCommand<typeof AiCommand> {
 	}
 
 	/**
-	 * Finds the agent-aliases.sh file, checking the system-wide install first
-	 * (codespace), then falling back to the repo-relative path.
+	 * Finds and reads agent-aliases.sh. Checks the system-wide install first
+	 * (codespace), then falls back to the repo-relative path.
 	 */
-	private async resolveAliasFile(repoRoot: string | undefined): Promise<string> {
-		const systemPath = "/usr/local/lib/agent-aliases.sh";
-		if (await fileExists(systemPath)) {
-			return systemPath;
+	private async resolveAliasFile(
+		repoRoot: string | undefined,
+	): Promise<{ path: string; content: string }> {
+		const candidates = ["/usr/local/lib/agent-aliases.sh"];
+		if (repoRoot !== undefined) {
+			candidates.push(resolve(repoRoot, "scripts/codespace-setup/agent-aliases.sh"));
 		}
 
-		if (repoRoot !== undefined) {
-			const repoPath = resolve(repoRoot, "scripts/codespace-setup/agent-aliases.sh");
-			if (await fileExists(repoPath)) {
-				return repoPath;
+		for (const candidate of candidates) {
+			this.verbose(`Checking for alias file: ${candidate}`);
+			const content = await tryReadFile(candidate);
+			if (content !== undefined) {
+				return { path: candidate, content };
 			}
 		}
 
@@ -141,25 +146,37 @@ export default class AiCommand extends BaseCommand<typeof AiCommand> {
 	}
 
 	/**
-	 * Reads the GETTING_STARTED.md file that describes aliases and MCP servers.
-	 * Returns an empty string if the file is not found (non-fatal).
+	 * Reads a file from the devcontainer ai-agent directories, checking
+	 * ai-agent-insiders/ first then ai-agent/ in both cwd and repoRoot.
 	 */
-	private async readGettingStarted(repoRoot: string | undefined): Promise<string> {
-		const candidates = [resolve(process.cwd(), ".devcontainer/ai-agent/GETTING_STARTED.md")];
-
-		if (repoRoot !== undefined) {
-			candidates.push(resolve(repoRoot, ".devcontainer/ai-agent/GETTING_STARTED.md"));
-		}
-
-		for (const candidate of candidates) {
-			const content = await tryReadFile(candidate);
-			if (content !== undefined) {
-				return content;
+	private async readDevcontainerFile(
+		repoRoot: string | undefined,
+		filename: string,
+	): Promise<string | undefined> {
+		const dirs = [".devcontainer/ai-agent-insiders", ".devcontainer/ai-agent"];
+		const candidates: string[] = [];
+		const seen = new Set<string>();
+		for (const base of [process.cwd(), repoRoot]) {
+			if (base === undefined) continue;
+			for (const dir of dirs) {
+				const candidate = resolve(base, dir, filename);
+				if (!seen.has(candidate)) {
+					seen.add(candidate);
+					candidates.push(candidate);
+				}
 			}
 		}
 
-		this.verbose("GETTING_STARTED.md not found; AI will rely on alias script only.");
-		return "";
+		for (const candidate of candidates) {
+			this.verbose(`Looking for ${filename}: ${candidate}`);
+			const content = await tryReadFile(candidate);
+			if (content !== undefined) {
+				this.verbose(`Found ${filename}: ${candidate}`);
+				return content;
+			}
+		}
+		this.verbose(`${filename} not found in any candidate location.`);
+		return undefined;
 	}
 
 	/**
@@ -169,23 +186,13 @@ export default class AiCommand extends BaseCommand<typeof AiCommand> {
 	private async loadPromptFile(
 		repoRoot: string | undefined,
 	): Promise<{ template: string; model?: string }> {
-		const candidates = [
-			resolve(process.cwd(), ".devcontainer/ai-agent/launcher-prompt.md"),
-		];
-
-		if (repoRoot !== undefined) {
-			candidates.push(resolve(repoRoot, ".devcontainer/ai-agent/launcher-prompt.md"));
-		}
-
-		for (const candidate of candidates) {
-			const raw = await tryReadFile(candidate);
-			if (raw !== undefined) {
-				const { data, content } = matter(raw);
-				return {
-					template: content.trim(),
-					model: typeof data.model === "string" ? data.model : undefined,
-				};
-			}
+		const raw = await this.readDevcontainerFile(repoRoot, "launcher-prompt.md");
+		if (raw !== undefined) {
+			const { data, content } = matter(raw);
+			return {
+				template: content.trim(),
+				model: typeof data.model === "string" ? data.model : undefined,
+			};
 		}
 
 		this.verbose("launcher-prompt.md not found; using hardcoded fallback prompt.");
@@ -199,22 +206,24 @@ export default class AiCommand extends BaseCommand<typeof AiCommand> {
 	}
 }
 
-/**
- * Formats an alias proposal into the shell command the user will see.
- */
 function formatAliasCommand(proposal: AliasProposal): string {
-	const parts = [proposal.alias];
+	const parts = [shellQuote(proposal.alias)];
 	if (proposal.extraMcpArgs !== undefined) {
 		for (const arg of proposal.extraMcpArgs) {
-			parts.push("--mcp", `'${arg}'`);
+			parts.push("--mcp", shellQuote(arg));
 		}
 	}
 	return parts.join(" ");
 }
 
 /**
- * Reads a file, returning undefined if it does not exist (ENOENT).
+ * Wraps a value in single quotes with proper escaping for bash.
+ * Embedded single quotes are handled via the '\'' idiom.
  */
+function shellQuote(value: string): string {
+	return `'${value.replaceAll("'", "'\\''")}'`;
+}
+
 async function tryReadFile(filePath: string): Promise<string | undefined> {
 	try {
 		return await readFile(filePath, "utf8");
@@ -228,17 +237,5 @@ async function tryReadFile(filePath: string): Promise<string | undefined> {
 			return undefined;
 		}
 		throw error;
-	}
-}
-
-/**
- * Checks whether a file exists using async fs.access.
- */
-async function fileExists(filePath: string): Promise<boolean> {
-	try {
-		await access(filePath);
-		return true;
-	} catch {
-		return false;
 	}
 }
