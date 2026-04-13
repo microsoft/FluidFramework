@@ -2125,6 +2125,10 @@ describe("TableFactory unit tests", () => {
 					// Remove columns
 					table.removeColumns(["column-0", "column-2"]);
 					assert.equal(eventCount, 5);
+
+					// Remove row
+					table.removeRows(["row-0"]);
+					assert.equal(eventCount, 6);
 				});
 
 				it("Responding to column list changes", () => {
@@ -2162,6 +2166,79 @@ describe("TableFactory unit tests", () => {
 					// Remove column
 					table.removeColumns(["column-0"]);
 					assert.equal(eventCount, 3);
+				});
+
+				it("Responding to row list changes", () => {
+					const table = initializeTree(Table, Table.create());
+
+					let eventCount = 0;
+
+					// Bind listener to the rows list.
+					// "nodeChanged" fires only when the rows list itself changes (inserts, removes, reorders),
+					// not when individual row nodes or their cells are mutated.
+					Tree.on(table.rows, "nodeChanged", () => {
+						eventCount++;
+					});
+
+					// Add rows
+					table.insertRows({
+						rows: [
+							{ id: "row-0", cells: {}, props: {} },
+							{ id: "row-1", cells: {}, props: {} },
+						],
+					});
+					assert.equal(eventCount, 1);
+
+					// Update row props — should NOT fire
+					table.rows[0].props = { selectable: true };
+					assert.equal(eventCount, 1);
+
+					// Insert a column — should NOT fire
+					table.insertColumns({ columns: [{ id: "column-0", props: {} }] });
+					assert.equal(eventCount, 1);
+
+					// Set a cell — should NOT fire
+					table.setCell({
+						key: { row: "row-0", column: "column-0" },
+						cell: { value: "x" },
+					});
+					assert.equal(eventCount, 1);
+
+					// Re-order rows
+					table.rows.moveToEnd(0);
+					assert.equal(eventCount, 2);
+
+					// Remove row
+					table.removeRows(["row-0"]);
+					assert.equal(eventCount, 3);
+				});
+
+				it("Cell changes fire treeChanged on the containing row", () => {
+					const table = create2x2Table();
+					const row0 = table.getRow("row-0") ?? fail("Row not found");
+
+					let eventCount = 0;
+					Tree.on(row0, "treeChanged", () => {
+						eventCount++;
+					});
+
+					// Set a cell in row-0 — should fire
+					table.setCell({
+						key: { row: "row-0", column: "column-0" },
+						cell: { value: "Hello" },
+					});
+					assert.equal(eventCount, 1);
+
+					// Remove the cell from row-0 — should fire
+					table.removeCell({ row: "row-0", column: "column-0" });
+					assert.equal(eventCount, 2);
+
+					// Mutate a cell in a different row — should NOT fire for row-0
+					table.setCell({
+						key: { row: "row-1", column: "column-0" },
+						cell: { value: "World" },
+					});
+					assert.equal(eventCount, 2);
 				});
 			});
 
