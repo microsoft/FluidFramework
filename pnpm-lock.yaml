@@ -2141,8 +2141,8 @@ importers:
         specifier: workspace:~
         version: link:../../../packages/test/mocha-test-setup
       '@fluid-tools/benchmark':
-        specifier: ^0.54.0
-        version: 0.54.0
+        specifier: ^0.55.0
+        version: 0.55.0
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
@@ -7293,8 +7293,8 @@ importers:
         specifier: workspace:~
         version: link:../../../packages/test/test-drivers
       '@fluid-tools/benchmark':
-        specifier: ^0.54.0
-        version: 0.54.0
+        specifier: ^0.55.0
+        version: 0.55.0
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
@@ -7777,8 +7777,8 @@ importers:
         specifier: workspace:~
         version: link:../../test/mocha-test-setup
       '@fluid-tools/benchmark':
-        specifier: ^0.54.0
-        version: 0.54.0
+        specifier: ^0.55.0
+        version: 0.55.0
       '@fluid-tools/build-cli':
         specifier: catalog:buildTools
         version: 0.64.0(@types/node@22.19.17)(encoding@0.1.13)(webpack-cli@5.1.4)
@@ -8341,8 +8341,8 @@ importers:
         specifier: workspace:~
         version: link:../test-dds-utils
       '@fluid-tools/benchmark':
-        specifier: ^0.54.0
-        version: 0.54.0
+        specifier: ^0.55.0
+        version: 0.55.0
       '@fluid-tools/build-cli':
         specifier: catalog:buildTools
         version: 0.64.0(@types/node@22.19.17)(encoding@0.1.13)(webpack-cli@5.1.4)
@@ -8465,8 +8465,8 @@ importers:
         specifier: workspace:~
         version: link:../test-dds-utils
       '@fluid-tools/benchmark':
-        specifier: ^0.54.0
-        version: 0.54.0
+        specifier: ^0.55.0
+        version: 0.55.0
       '@fluid-tools/build-cli':
         specifier: catalog:buildTools
         version: 0.64.0(@types/node@22.19.17)(encoding@0.1.13)(webpack-cli@5.1.4)
@@ -8592,8 +8592,8 @@ importers:
         specifier: workspace:~
         version: link:../../test/test-pairwise-generator
       '@fluid-tools/benchmark':
-        specifier: ^0.54.0
-        version: 0.54.0
+        specifier: ^0.55.0
+        version: 0.55.0
       '@fluid-tools/build-cli':
         specifier: catalog:buildTools
         version: 0.64.0(@types/node@22.19.17)(encoding@0.1.13)(webpack-cli@5.1.4)
@@ -9013,8 +9013,8 @@ importers:
         specifier: workspace:~
         version: link:../test-dds-utils
       '@fluid-tools/benchmark':
-        specifier: ^0.54.0
-        version: 0.54.0
+        specifier: ^0.55.0
+        version: 0.55.0
       '@fluid-tools/build-cli':
         specifier: catalog:buildTools
         version: 0.64.0(@types/node@22.19.17)(encoding@0.1.13)(webpack-cli@5.1.4)
@@ -9140,8 +9140,8 @@ importers:
         specifier: workspace:~
         version: link:../../test/test-pairwise-generator
       '@fluid-tools/benchmark':
-        specifier: ^0.54.0
-        version: 0.54.0
+        specifier: ^0.55.0
+        version: 0.55.0
       '@fluid-tools/build-cli':
         specifier: catalog:buildTools
         version: 0.64.0(@types/node@22.19.17)(encoding@0.1.13)(webpack-cli@5.1.4)
@@ -9585,8 +9585,8 @@ importers:
         specifier: workspace:~
         version: link:../../test/test-drivers
       '@fluid-tools/benchmark':
-        specifier: ^0.54.0
-        version: 0.54.0
+        specifier: ^0.55.0
+        version: 0.55.0
       '@fluid-tools/build-cli':
         specifier: catalog:buildTools
         version: 0.64.0(@types/node@22.19.17)(encoding@0.1.13)(webpack-cli@5.1.4)
@@ -13031,8 +13031,8 @@ importers:
         specifier: workspace:~
         version: link:../../test/test-pairwise-generator
       '@fluid-tools/benchmark':
-        specifier: ^0.54.0
-        version: 0.54.0
+        specifier: ^0.55.0
+        version: 0.55.0
       '@fluid-tools/build-cli':
         specifier: catalog:buildTools
         version: 0.64.0(@types/node@22.19.17)(encoding@0.1.13)(webpack-cli@5.1.4)
@@ -13374,8 +13374,8 @@ importers:
         specifier: workspace:~
         version: link:../../test/stochastic-test-utils
       '@fluid-tools/benchmark':
-        specifier: ^0.54.0
-        version: 0.54.0
+        specifier: ^0.55.0
+        version: 0.55.0
       '@fluid-tools/build-cli':
         specifier: catalog:buildTools
         version: 0.64.0(@types/node@22.19.17)(encoding@0.1.13)(webpack-cli@5.1.4)
@@ -14901,8 +14901,8 @@ importers:
         specifier: workspace:~
         version: link:../mocha-test-setup
       '@fluid-tools/benchmark':
-        specifier: ^0.54.0
-        version: 0.54.0
+        specifier: ^0.55.0
+        version: 0.55.0
       '@fluid-tools/build-cli':
         specifier: catalog:buildTools
         version: 0.64.0(@types/node@22.19.17)(encoding@0.1.13)(webpack-cli@5.1.4)
@@ -15146,8 +15146,8 @@ importers:
         specifier: workspace:~
         version: link:../test-version-utils
       '@fluid-tools/benchmark':
-        specifier: ^0.54.0
-        version: 0.54.0
+        specifier: ^0.55.0
+        version: 0.55.0
       '@fluidframework/agent-scheduler':
         specifier: workspace:~
         version: link:../../framework/agent-scheduler
@@ -15684,8 +15684,8 @@ importers:
         specifier: workspace:~
         version: link:../test-drivers
       '@fluid-tools/benchmark':
-        specifier: ^0.54.0
-        version: 0.54.0
+        specifier: ^0.55.0
+        version: 0.55.0
       '@fluid-tools/version-tools':
         specifier: catalog:buildTools
         version: 0.64.0(@types/node@22.19.17)
@@ -18443,8 +18443,8 @@ packages:
   '@fluid-internal/test-driver-definitions@2.92.0':
     resolution: {integrity: sha512-/BTqacAi5H/lTkA1FucENdZLvM8AKPjLZSGIJq8k2ZzbL567aqWjNJ7hN6SH1B9DQ0bcl9Ztn1SQ60F5X3f7wg==}
 
-  '@fluid-tools/benchmark@0.54.0':
-    resolution: {integrity: sha512-FzlweW8OIC05eq16RdKE9wG5s2tKeRSv8Wc4yzZ4mx1MSugsRLx+xXpig6NXY1+6e1Esc0zgcEsVawsXu80JaA==}
+  '@fluid-tools/benchmark@0.55.0':
+    resolution: {integrity: sha512-SSLQ0U/JgLtydyfQsHkDV0kxMroycZPCd8RuezrhXE0xrtQXWekemW/cW4h9UnOTy4H0d10Ngl8ghh7SjS4U7Q==}
 
   '@fluid-tools/build-cli@0.64.0':
     resolution: {integrity: sha512-MqP8xAATWnvpracHWV2Pbu7zH/jK2Jhcu/tO9UeQfI0B+6d+yROMVMjxJZUZ/uCqEn/1AfP0TCwQwTJMyO4xsA==}
@@ -30324,7 +30324,7 @@ snapshots:
       '@fluidframework/core-interfaces': 2.92.0
       '@fluidframework/driver-definitions': 2.92.0
 
-  '@fluid-tools/benchmark@0.54.0':
+  '@fluid-tools/benchmark@0.55.0':
     dependencies:
       chalk: 4.1.2
       easy-table: 1.2.0
