@@ -2190,14 +2190,29 @@ describe("TableFactory unit tests", () => {
 						props: {},
 					});
 
+					// Get row (last valid index — boundary)
+					const getByLastIndex = table.getRow(1); // rows.length - 1 for a 2-row table
+					assert(getByLastIndex !== undefined);
+					assertEqualTrees(getByLastIndex, {
+						id: "row-1",
+						cells: {
+							"column-0": { value: "1-0" },
+							"column-1": { value: "1-1" },
+						},
+						props: {},
+					});
+
 					// Get row (index out of bounds)
 					assert(table.getRow(5) === undefined);
+
+					// Get row (negative index → undefined)
+					assert(table.getRow(-1) === undefined);
 
 					// Get row (nonexistent ID)
 					assert(table.getRow("foo") === undefined);
 				});
 
-				it("getRow", () => {
+				it("getColumn", () => {
 					const cell00 = new Cell({ value: "0-0" });
 					const cell01 = new Cell({ value: "0-1" });
 					const cell10 = new Cell({ value: "1-0" });
@@ -2242,11 +2257,29 @@ describe("TableFactory unit tests", () => {
 						props: {},
 					});
 
+					// Get column (last valid index — boundary)
+					const getByLastIndex = table.getColumn(1); // columns.length - 1 for a 2-column table
+					assert(getByLastIndex !== undefined);
+					assertEqualTrees(getByLastIndex, {
+						id: "column-1",
+						props: {},
+					});
+
 					// Get column (index out of bounds)
 					assert(table.getColumn(5) === undefined);
 
+					// Get column (negative index → undefined)
+					assert(table.getColumn(-1) === undefined);
+
 					// Get column (nonexistent ID)
 					assert(table.getColumn("foo") === undefined);
+				});
+
+				it("getCell returns undefined for unset cell (sparse table)", () => {
+					// create2x2Table() has 2 columns and 2 rows with no cells set
+					const table = create2x2Table();
+					assert(table.getCell({ row: "row-0", column: "column-0" }) === undefined);
+					assert(table.getCell({ row: 1, column: 1 }) === undefined);
 				});
 			});
 
