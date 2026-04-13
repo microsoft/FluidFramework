@@ -23,7 +23,7 @@ describe("FluidAppInsightsLogger", () => {
 	// Without loadAppInsights(), the first trackEvent call triggers an expensive fallback
 	// initialization path (~250ms locally, potentially much worse in CI). Calling
 	// loadAppInsights() up front avoids that path entirely, reducing first trackEvent to ~1ms.
-	before(() => {
+	before(function initializeAppInsights() {
 		appInsightsClient = new ApplicationInsights({
 			config: {
 				connectionString:
@@ -34,11 +34,11 @@ describe("FluidAppInsightsLogger", () => {
 		appInsightsClient.loadAppInsights();
 	});
 
-	beforeEach(() => {
+	beforeEach(function createTrackEventSpy() {
 		trackEventSpy = spy(appInsightsClient, "trackEvent");
 	});
 
-	afterEach(() => {
+	afterEach(function restoreSpy() {
 		trackEventSpy.restore();
 	});
 
@@ -125,7 +125,7 @@ describe("Telemetry Filter - filter mode", () => {
 	let appInsightsClient: ApplicationInsights;
 	let trackEventSpy: Sinon.SinonSpy;
 
-	before(() => {
+	before(function initializeAppInsights() {
 		appInsightsClient = new ApplicationInsights({
 			config: {
 				connectionString:
@@ -136,11 +136,11 @@ describe("Telemetry Filter - filter mode", () => {
 		appInsightsClient.loadAppInsights();
 	});
 
-	beforeEach(() => {
+	beforeEach(function createTrackEventSpy() {
 		trackEventSpy = spy(appInsightsClient, "trackEvent");
 	});
 
-	afterEach(() => {
+	afterEach(function restoreSpy() {
 		trackEventSpy.restore();
 	});
 
@@ -202,7 +202,7 @@ describe("Telemetry Filter - Category Filtering", () => {
 		},
 	};
 
-	before(() => {
+	before(function initializeAppInsights() {
 		appInsightsClient = new ApplicationInsights({
 			config: {
 				connectionString:
@@ -213,11 +213,11 @@ describe("Telemetry Filter - Category Filtering", () => {
 		appInsightsClient.loadAppInsights();
 	});
 
-	beforeEach(() => {
+	beforeEach(function createTrackEventSpy() {
 		trackEventSpy = spy(appInsightsClient, "trackEvent");
 	});
 
-	afterEach(() => {
+	afterEach(function restoreSpy() {
 		trackEventSpy.restore();
 	});
 
@@ -376,7 +376,7 @@ describe("Telemetry Filter - Namespace Filtering", () => {
 		},
 	};
 
-	before(() => {
+	before(function initializeAppInsights() {
 		appInsightsClient = new ApplicationInsights({
 			config: {
 				connectionString:
@@ -387,11 +387,11 @@ describe("Telemetry Filter - Namespace Filtering", () => {
 		appInsightsClient.loadAppInsights();
 	});
 
-	beforeEach(() => {
+	beforeEach(function createTrackEventSpy() {
 		trackEventSpy = spy(appInsightsClient, "trackEvent");
 	});
 
-	afterEach(() => {
+	afterEach(function restoreSpy() {
 		trackEventSpy.restore();
 	});
 
@@ -614,7 +614,7 @@ describe("Telemetry Filter - Category & Namespace Combination Filtering", () => 
 		},
 	};
 
-	before(() => {
+	before(function initializeAppInsights() {
 		appInsightsClient = new ApplicationInsights({
 			config: {
 				connectionString:
@@ -625,11 +625,11 @@ describe("Telemetry Filter - Category & Namespace Combination Filtering", () => 
 		appInsightsClient.loadAppInsights();
 	});
 
-	beforeEach(() => {
+	beforeEach(function createTrackEventSpy() {
 		trackEventSpy = spy(appInsightsClient, "trackEvent");
 	});
 
-	afterEach(() => {
+	afterEach(function restoreSpy() {
 		trackEventSpy.restore();
 	});
 

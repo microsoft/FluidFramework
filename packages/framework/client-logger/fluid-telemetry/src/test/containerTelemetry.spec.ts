@@ -53,7 +53,7 @@ describe("container telemetry via", () => {
 	// Without loadAppInsights(), the first trackEvent call triggers an expensive fallback
 	// initialization path (~250ms locally, potentially much worse in CI). Calling
 	// loadAppInsights() up front avoids that path entirely, reducing first trackEvent to ~1ms.
-	before(() => {
+	before(function initializeAppInsights() {
 		appInsightsClient = new ApplicationInsights({
 			config: {
 				connectionString:
@@ -64,7 +64,7 @@ describe("container telemetry via", () => {
 		appInsightsClient.loadAppInsights();
 	});
 
-	beforeEach(() => {
+	beforeEach(function createSpiesAndConfig() {
 		trackEventSpy = spy(appInsightsClient, "trackEvent");
 		mockFluidContainer = new MockFluidContainer();
 
@@ -75,7 +75,7 @@ describe("container telemetry via", () => {
 		};
 	});
 
-	afterEach(() => {
+	afterEach(function restoreSpy() {
 		trackEventSpy.restore();
 	});
 
