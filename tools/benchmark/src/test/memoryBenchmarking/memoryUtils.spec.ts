@@ -53,7 +53,7 @@ describe("memoryUtils", () => {
 
 	describe("memoryAddedBy", () => {
 		benchmarkIt({
-			title: "inserting 1000 numbers into an array",
+			title: "sync setup and modify",
 			...benchmarkMemoryUse(
 				memoryAddedBy({
 					setup() {
@@ -87,7 +87,7 @@ describe("memoryUtils", () => {
 
 	describe("memoryUseOfValue", () => {
 		benchmarkIt({
-			title: "array with 1000 numbers",
+			title: "sync factory",
 			...benchmarkMemoryUse(
 				memoryUseOfValue(() => {
 					const arr: number[] = [];
