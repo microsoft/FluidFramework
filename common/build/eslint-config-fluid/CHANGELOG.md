@@ -21,21 +21,21 @@ or per-package rule overrides referencing `react/*` rules must be updated to the
 
 Key rule mapping:
 
-| Old rule (`eslint-plugin-react`) | New rule (`@eslint-react`) |
-|---|---|
-| `react/jsx-key` | `@eslint-react/no-missing-key` |
-| `react/jsx-no-comment-textnodes` | `@eslint-react/jsx-no-comment-textnodes` |
-| `react/jsx-no-target-blank` | `@eslint-react/dom/no-unsafe-target-blank` |
-| `react/no-children-prop` | `@eslint-react/no-children-prop` |
-| `react/no-danger-with-children` | `@eslint-react/dom/no-dangerously-set-innerhtml-with-children` |
-| `react/no-deprecated` | Multiple rules (see below) |
-| `react/no-direct-mutation-state` | `@eslint-react/no-direct-mutation-state` |
-| `react/no-find-dom-node` | `@eslint-react/dom/no-find-dom-node` |
-| `react/no-render-return-value` | `@eslint-react/dom/no-render-return-value` |
-| `react/no-string-refs` | `@eslint-react/no-string-refs` |
-| `react/no-unstable-nested-components` | `@eslint-react/no-nested-component-definitions` |
-| `react/jsx-no-useless-fragment` | `@eslint-react/no-useless-fragment` |
-| `react/prop-types` | `@eslint-react/no-prop-types` (bans PropTypes usage; TypeScript handles prop validation) |
+| Old rule (`eslint-plugin-react`)      | New rule (`@eslint-react`)                                                               |
+| ------------------------------------- | ---------------------------------------------------------------------------------------- |
+| `react/jsx-key`                       | `@eslint-react/no-missing-key`                                                           |
+| `react/jsx-no-comment-textnodes`      | `@eslint-react/jsx-no-comment-textnodes`                                                 |
+| `react/jsx-no-target-blank`           | `@eslint-react/dom/no-unsafe-target-blank`                                               |
+| `react/no-children-prop`              | `@eslint-react/no-children-prop`                                                         |
+| `react/no-danger-with-children`       | `@eslint-react/dom/no-dangerously-set-innerhtml-with-children`                           |
+| `react/no-deprecated`                 | Multiple rules (see below)                                                               |
+| `react/no-direct-mutation-state`      | `@eslint-react/no-direct-mutation-state`                                                 |
+| `react/no-find-dom-node`              | `@eslint-react/dom/no-find-dom-node`                                                     |
+| `react/no-render-return-value`        | `@eslint-react/dom/no-render-return-value`                                               |
+| `react/no-string-refs`                | `@eslint-react/no-string-refs`                                                           |
+| `react/no-unstable-nested-components` | `@eslint-react/no-nested-component-definitions`                                          |
+| `react/jsx-no-useless-fragment`       | `@eslint-react/no-useless-fragment`                                                      |
+| `react/prop-types`                    | `@eslint-react/no-prop-types` (bans PropTypes usage; TypeScript handles prop validation) |
 
 The `react/no-deprecated` rule is replaced by individual rules for each deprecated API:
 `@eslint-react/no-component-will-mount`, `@eslint-react/no-component-will-receive-props`,
