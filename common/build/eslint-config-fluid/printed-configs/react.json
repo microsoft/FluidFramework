@@ -97,6 +97,9 @@
 		"@eslint-react/dom/no-unsafe-iframe-sandbox": [
 			"warn"
 		],
+		"@eslint-react/dom/no-unsafe-target-blank": [
+			"error"
+		],
 		"@eslint-react/dom/no-use-form-state": [
 			"error"
 		],
@@ -110,7 +113,7 @@
 			"warn"
 		],
 		"@eslint-react/jsx-no-comment-textnodes": [
-			"warn"
+			"error"
 		],
 		"@eslint-react/jsx-no-duplicate-props": [
 			"off"
@@ -153,6 +156,9 @@
 		],
 		"@eslint-react/no-children-only": [
 			"warn"
+		],
+		"@eslint-react/no-children-prop": [
+			"error"
 		],
 		"@eslint-react/no-children-to-array": [
 			"warn"
@@ -231,6 +237,13 @@
 		],
 		"@eslint-react/no-useless-forward-ref": [
 			"warn"
+		],
+		"@eslint-react/no-useless-fragment": [
+			"error",
+			{
+				"allowEmptyFragment": false,
+				"allowExpressions": true
+			}
 		],
 		"@eslint-react/prefer-use-state-lazy-initialization": [
 			"warn"

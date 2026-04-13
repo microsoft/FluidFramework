@@ -16,6 +16,7 @@
 
 		// This config is for IDE support only, not compilation
 		"noEmit": true,
+		"allowImportingTsExtensions": true,
 
 		// ESLint plugin types violate this often which affects our own configs
 		"exactOptionalPropertyTypes": false,
