@@ -1,5 +1,82 @@
 # @fluidframework/eslint-config-fluid Changelog
 
+## [10.0.0](https://github.com/microsoft/FluidFramework/releases/tag/eslint-config-fluid_v10.0.0)
+
+### eslint-plugin-react replaced by @eslint-react/eslint-plugin
+
+The `eslint-plugin-react` dependency has been replaced with
+[`@eslint-react/eslint-plugin`](https://eslint-react.xyz/) v2.13.0. This change is required because
+`eslint-plugin-react` 7.37.5 is incompatible with ESLint 10 (it calls the removed `context.getFilename()` API), and the
+upstream fix has been blocked since February 2026.
+
+`@eslint-react/eslint-plugin` v2.13.0 supports ESLint 8, 9, and 10, so this version works with the current ESLint 9
+setup and will not block the future ESLint 10 upgrade.
+
+`eslint-plugin-react-hooks` is unchanged — it already supports ESLint 10 and continues to provide React Compiler rules.
+
+#### Breaking: Rule names changed
+
+All `react/*` rules from `eslint-plugin-react` are replaced by `@eslint-react/*` rules. Any `eslint-disable` comments
+or per-package rule overrides referencing `react/*` rules must be updated to the new names.
+
+Key rule mapping:
+
+| Old rule (`eslint-plugin-react`) | New rule (`@eslint-react`) |
+|---|---|
+| `react/jsx-key` | `@eslint-react/no-missing-key` |
+| `react/jsx-no-comment-textnodes` | `@eslint-react/jsx-no-comment-textnodes` |
+| `react/jsx-no-target-blank` | `@eslint-react/dom/no-unsafe-target-blank` |
+| `react/no-children-prop` | `@eslint-react/no-children-prop` |
+| `react/no-danger-with-children` | `@eslint-react/dom/no-dangerously-set-innerhtml-with-children` |
+| `react/no-deprecated` | Multiple rules (see below) |
+| `react/no-direct-mutation-state` | `@eslint-react/no-direct-mutation-state` |
+| `react/no-find-dom-node` | `@eslint-react/dom/no-find-dom-node` |
+| `react/no-render-return-value` | `@eslint-react/dom/no-render-return-value` |
+| `react/no-string-refs` | `@eslint-react/no-string-refs` |
+| `react/no-unstable-nested-components` | `@eslint-react/no-nested-component-definitions` |
+| `react/jsx-no-useless-fragment` | `@eslint-react/no-useless-fragment` |
+| `react/prop-types` | `@eslint-react/no-prop-types` (bans PropTypes usage; TypeScript handles prop validation) |
+
+The `react/no-deprecated` rule is replaced by individual rules for each deprecated API:
+`@eslint-react/no-component-will-mount`, `@eslint-react/no-component-will-receive-props`,
+`@eslint-react/no-component-will-update`, `@eslint-react/no-create-ref`, `@eslint-react/dom/no-find-dom-node`,
+`@eslint-react/dom/no-hydrate`, `@eslint-react/dom/no-render`, `@eslint-react/dom/no-render-return-value`.
+
+#### Breaking: Rules removed (no equivalent)
+
+The following rules have no `@eslint-react` equivalent and are no longer enforced:
+
+- `react/no-unescaped-entities` — Low priority; JSX transpilation handles this correctly.
+- `react/no-is-mounted` — Legacy class component pattern; TypeScript discourages this.
+- `react/require-render-return` — TypeScript enforces return types.
+
+#### New rules enabled
+
+The `recommended-typescript` preset enables many rules not previously configured. These are set at `warn` severity
+unless otherwise noted:
+
+- `@eslint-react/no-nested-component-definitions` (`error`) — Catches component definitions inside render functions.
+- `@eslint-react/no-array-index-key` — Warns against using array index as key.
+- `@eslint-react/no-clone-element` — Warns against `React.cloneElement`.
+- `@eslint-react/no-context-provider` — Warns against deprecated `Context.Provider` (React 19).
+- `@eslint-react/no-forward-ref` — Warns against deprecated `React.forwardRef` (React 19).
+- `@eslint-react/web-api/no-leaked-event-listener` — Catches leaked event listeners.
+- `@eslint-react/web-api/no-leaked-interval` — Catches leaked `setInterval` calls.
+- `@eslint-react/web-api/no-leaked-timeout` — Catches leaked `setTimeout` calls.
+- `@eslint-react/web-api/no-leaked-resize-observer` — Catches leaked resize observers.
+- `@eslint-react/naming-convention/*` — React naming convention rules.
+
+#### Settings namespace changed
+
+The `@eslint-react` plugin uses `react-x` for its settings namespace instead of `react`. If you have custom
+`settings.react` configuration for React version detection, it should be changed to `settings["react-x"]`. The
+`recommended-typescript` preset configures `react-x.version: "detect"` automatically.
+
+### print-configs script runner changed
+
+The `print-configs` script now uses `jiti` instead of `tsx`. This fixes a CJS resolution issue with ESM-only packages
+like `@eslint-react/eslint-plugin`. `jiti` is already used by ESLint itself for config loading.
+
 ## [9.0.0](https://github.com/microsoft/FluidFramework/releases/tag/eslint-config-fluid_v9.0_0)
 
 ### Native ESLint 9 Flat Config (No FlatCompat)
