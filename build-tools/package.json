@@ -162,7 +162,7 @@
 			"commitizen>lodash: commitizen@4.3.1 (latest and final release) pins lodash to exactly 4.17.21. Override to ^4.18.1 so pnpm can resolve to a newer version."
 		],
 		"overrides": {
-			"commitizen>lodash": "^4.18.1",
+			"lodash": "^4.18.1",
 			"@types/glob>@types/minimatch": "~5.1.2",
 			"diff@>=4 <5": "^4.0.4",
 			"diff@>=7 <8": "^8.0.3",
