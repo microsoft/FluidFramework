@@ -3737,5 +3737,99 @@ describe("TableFactory unit tests", () => {
 
 			unsubscribe();
 		});
+
+		it("undo of removeRows is dropped when its rows had cells in a subsequently removed column", () => {
+			const { view, undoStack, unsubscribe } = makeUndoRedoView();
+			view.initialize(
+				Table.create({
+					columns: [new Column({ id: "column-0", props: {} })],
+					rows: [
+						new Row({
+							id: "row-0",
+							cells: { "column-0": new Cell({ value: "Hello" }) },
+						}),
+					],
+				}),
+			);
+
+			// Remove the row (which has a cell in column-0) — adds a revert constraint on column-0
+			view.root.removeRows(["row-0"]);
+			assert.equal(view.root.rows.length, 0);
+			const revertible = undoStack.pop();
+			assert(revertible !== undefined, "Missing revertible");
+
+			// Now remove column-0 — invalidates the revert constraint
+			view.root.removeColumns(["column-0"]);
+			assert.equal(view.root.columns.length, 0);
+
+			// The undo is dropped because restoring row-0 would recreate its cell under the now-removed column-0
+			revertible.revert();
+			assert.equal(view.root.rows.length, 0);
+
+			unsubscribe();
+		});
+
+		it("insertRows with no cells is not dropped when a column is concurrently removed", () => {
+			const { view, unsubscribe } = makeUndoRedoView();
+			view.initialize(
+				Table.create({
+					columns: [new Column({ id: "column-0", props: {} })],
+					rows: [],
+				}),
+			);
+
+			const fork = view.fork();
+			const branchTable = fork.root;
+
+			// Insert a row with NO cells on the branch — no column constraint should be added
+			branchTable.insertRows({ rows: [{ id: "row-0", cells: {} }] });
+			assert.equal(branchTable.rows.length, 1);
+
+			// Concurrently remove the column on the main view
+			view.root.removeColumns(["column-0"]);
+			assert.equal(view.root.columns.length, 0);
+
+			// The row insertion survives because it had no cells to orphan
+			fork.rebaseOnto(view);
+			assert.equal(branchTable.rows.length, 1);
+			assert.equal(branchTable.rows[0].id, "row-0");
+
+			unsubscribe();
+		});
+
+		it("removeColumns is dropped when concurrent insertRows adds cells for the removed column across multiple rows", () => {
+			const { view, unsubscribe } = makeUndoRedoView();
+			view.initialize(
+				Table.create({
+					columns: [new Column({ id: "column-0", props: {} })],
+					rows: [],
+				}),
+			);
+
+			const fork = view.fork();
+			const branchTable = fork.root;
+
+			// Branch removes the column — adds a noChange constraint on the row array
+			branchTable.removeColumns(["column-0"]);
+			assert.equal(branchTable.columns.length, 0);
+
+			// Main view concurrently inserts multiple rows each with a cell in the removed column
+			view.root.insertRows({
+				rows: [
+					new Row({ id: "row-0", cells: { "column-0": { value: "A" } } }),
+					new Row({ id: "row-1", cells: { "column-0": { value: "B" } } }),
+				],
+			});
+			assert.equal(view.root.rows.length, 2);
+
+			// The column removal is dropped because it would orphan cells in both newly added rows
+			fork.rebaseOnto(view);
+			assert.equal(branchTable.columns.length, 1);
+			assert.equal(branchTable.columns[0].id, "column-0");
+			assert.equal(branchTable.getCell({ row: "row-0", column: "column-0" })?.value, "A");
+			assert.equal(branchTable.getCell({ row: "row-1", column: "column-0" })?.value, "B");
+
+			unsubscribe();
+		});
 	});
 });
