@@ -521,6 +521,7 @@ module.exports = {
 					"@fluid-internal/mocha-test-setup",
 					"@fluid-internal/presence-definitions",
 					"@fluid-internal/presence-runtime",
+					"@fluid-internal/presence-static",
 					"@fluid-internal/test-driver-definitions",
 					"tinylicious",
 				],

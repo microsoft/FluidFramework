@@ -33,6 +33,7 @@
 @fluidframework/request-handler
 @fluidframework/react
 @fluidframework/quill-react
+@fluid-internal/presence-static
 @fluid-internal/presence-runtime
 @fluid-internal/presence-definitions
 @fluidframework/presence

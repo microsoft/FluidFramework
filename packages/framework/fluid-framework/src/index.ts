@@ -14,6 +14,7 @@
 // #region Public, Beta and Alpha (non-legacy) exports
 // #region Basic re-exports
 
+export { getPresence, getPresenceAlpha } from "@fluid-internal/presence-static";
 export type {
 	ConnectionState as ConnectionStateType, // TODO: deduplicate ConnectionState types
 	ICriticalContainerError,
