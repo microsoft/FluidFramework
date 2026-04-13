@@ -1980,6 +1980,101 @@ describe("TableFactory unit tests", () => {
 				});
 			});
 
+			describe("Column / Row Reordering", () => {
+				// Helper: 4-column, 0-row table for column move tests.
+				function create4ColumnTable() {
+					return initializeTree(
+						Table,
+						Table.create({
+							columns: [
+								new Column({ id: "column-0", props: {} }),
+								new Column({ id: "column-1", props: {} }),
+								new Column({ id: "column-2", props: {} }),
+								new Column({ id: "column-3", props: {} }),
+							],
+							rows: [],
+						}),
+					);
+				}
+
+				// Helper: 0-column, 4-row table for row move tests.
+				function create4RowTable() {
+					return initializeTree(
+						Table,
+						Table.create({
+							columns: [],
+							rows: [
+								new Row({ id: "row-0", cells: {}, props: {} }),
+								new Row({ id: "row-1", cells: {}, props: {} }),
+								new Row({ id: "row-2", cells: {}, props: {} }),
+								new Row({ id: "row-3", cells: {}, props: {} }),
+							],
+						}),
+					);
+				}
+
+				it("columns.moveToStart", () => {
+					// [C0, C1, C2, C3] → move C3 to start → [C3, C0, C1, C2]
+					const table = create4ColumnTable();
+					table.columns.moveToStart(3);
+					const ids = [...table.columns].map((c) => c.id);
+					assert.deepEqual(ids, ["column-3", "column-0", "column-1", "column-2"]);
+				});
+
+				it("columns.moveToIndex", () => {
+					// Runtime semantics (TreeArrayNode): moveToIndex(destinationGap, sourceIndex).
+					// moveToIndex(1, 2): move C2 (source index 2) to gap 1 (between C0 and C1).
+					// [C0, C1, C2, C3] → [C0, C2, C1, C3]
+					const table = create4ColumnTable();
+					table.columns.moveToIndex(1, 2);
+					const ids = [...table.columns].map((c) => c.id);
+					assert.deepEqual(ids, ["column-0", "column-2", "column-1", "column-3"]);
+				});
+
+				it("columns.moveRangeToEnd", () => {
+					// [C0, C1, C2, C3] → move [C0, C1] (indices 0–1) to end → [C2, C3, C0, C1]
+					const table = create4ColumnTable();
+					table.columns.moveRangeToEnd(0, 2);
+					const ids = [...table.columns].map((c) => c.id);
+					assert.deepEqual(ids, ["column-2", "column-3", "column-0", "column-1"]);
+				});
+
+				it("columns.moveRangeToStart", () => {
+					// [C0, C1, C2, C3] → move [C2, C3] (indices 2–3) to start → [C2, C3, C0, C1]
+					const table = create4ColumnTable();
+					table.columns.moveRangeToStart(2, 4);
+					const ids = [...table.columns].map((c) => c.id);
+					assert.deepEqual(ids, ["column-2", "column-3", "column-0", "column-1"]);
+				});
+
+				it("columns.moveRangeToIndex", () => {
+					// Runtime semantics (TreeArrayNode): moveRangeToIndex(destinationGap, sourceStart, sourceEnd).
+					// moveRangeToIndex(3, 0, 2): move [C0, C1] (indices 0–1) to gap 3 (between C2 and C3).
+					// [C0, C1, C2, C3] → [C2, C0, C1, C3]
+					const table = create4ColumnTable();
+					table.columns.moveRangeToIndex(3, 0, 2);
+					const ids = [...table.columns].map((c) => c.id);
+					assert.deepEqual(ids, ["column-2", "column-0", "column-1", "column-3"]);
+				});
+
+				it("rows.moveToStart and rows.moveRangeToEnd", () => {
+					// moveToStart: [R0, R1, R2, R3] → move R3 to start → [R3, R0, R1, R2]
+					const table = create4RowTable();
+					table.rows.moveToStart(3);
+					assert.deepEqual(
+						[...table.rows].map((r) => r.id),
+						["row-3", "row-0", "row-1", "row-2"],
+					);
+
+					// moveRangeToEnd: [R3, R0, R1, R2] → move [R3, R0] (indices 0–1) to end → [R1, R2, R3, R0]
+					table.rows.moveRangeToEnd(0, 2);
+					assert.deepEqual(
+						[...table.rows].map((r) => r.id),
+						["row-1", "row-2", "row-3", "row-0"],
+					);
+				});
+			});
+
 			describe("Responding to changes", () => {
 				it("Responding to any changes in the table", () => {
 					const table = initializeTree(Table, Table.create());
