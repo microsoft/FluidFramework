@@ -2759,6 +2759,220 @@ describe("TableFactory unit tests", () => {
 	});
 
 	describe("Undo/redo", () => {
+		// Shared setup helper — reduces boilerplate in each undo/redo test.
+		function makeUndoRedoView() {
+			const provider = new TestTreeProviderLite(
+				1,
+				configuredSharedTree({
+					jsonValidator: FormatValidatorBasic,
+					minVersionForCollab: FluidClientVersion.v2_80,
+				}).getFactory(),
+			);
+			const config = new TreeViewConfiguration({
+				schema: Table,
+				enableSchemaValidation: true,
+			});
+			const view = asAlpha(provider.trees[0].viewWith(config));
+			const { undoStack, redoStack, unsubscribe } = createTestUndoRedoStacks(view.events);
+			return { view, undoStack, redoStack, unsubscribe };
+		}
+
+		it("redo restores a column insertion that was undone", () => {
+			const { view, undoStack, redoStack, unsubscribe } = makeUndoRedoView();
+			view.initialize(Table.create({ columns: [], rows: [] }));
+
+			view.root.insertColumns({ columns: [{ id: "column-0", props: {} }] });
+			assert.equal(view.root.columns.length, 1);
+
+			// Undo
+			undoStack.pop()?.revert();
+			assert.equal(view.root.columns.length, 0);
+
+			// Redo — column should be restored
+			redoStack.pop()?.revert();
+			assert.equal(view.root.columns.length, 1);
+			assert.equal(view.root.columns[0].id, "column-0");
+
+			unsubscribe();
+		});
+
+		it("redo restores a row insertion that was undone", () => {
+			const { view, undoStack, redoStack, unsubscribe } = makeUndoRedoView();
+			view.initialize(Table.create({ columns: [], rows: [] }));
+
+			view.root.insertRows({ rows: [{ id: "row-0", cells: {} }] });
+			assert.equal(view.root.rows.length, 1);
+
+			// Undo
+			undoStack.pop()?.revert();
+			assert.equal(view.root.rows.length, 0);
+
+			// Redo — row should be restored
+			redoStack.pop()?.revert();
+			assert.equal(view.root.rows.length, 1);
+			assert.equal(view.root.rows[0].id, "row-0");
+
+			unsubscribe();
+		});
+
+		it("undo of setCell removes the cell", () => {
+			const { view, undoStack, unsubscribe } = makeUndoRedoView();
+			view.initialize(
+				Table.create({
+					columns: [new Column({ id: "column-0", props: {} })],
+					rows: [new Row({ id: "row-0", cells: {} })],
+				}),
+			);
+
+			view.root.setCell({
+				key: { row: "row-0", column: "column-0" },
+				cell: { value: "Hello" },
+			});
+			assert.equal(
+				view.root.getCell({ row: "row-0", column: "column-0" })?.value,
+				"Hello",
+			);
+
+			undoStack.pop()?.revert();
+			assert.equal(view.root.getCell({ row: "row-0", column: "column-0" }), undefined);
+
+			unsubscribe();
+		});
+
+		it("undo of setCell (overwrite) restores the previous cell value", () => {
+			const { view, undoStack, unsubscribe } = makeUndoRedoView();
+			view.initialize(
+				Table.create({
+					columns: [new Column({ id: "column-0", props: {} })],
+					rows: [
+						new Row({
+							id: "row-0",
+							cells: { "column-0": { value: "original" } },
+						}),
+					],
+				}),
+			);
+
+			view.root.setCell({
+				key: { row: "row-0", column: "column-0" },
+				cell: { value: "updated" },
+			});
+			assert.equal(
+				view.root.getCell({ row: "row-0", column: "column-0" })?.value,
+				"updated",
+			);
+
+			undoStack.pop()?.revert();
+			assert.equal(
+				view.root.getCell({ row: "row-0", column: "column-0" })?.value,
+				"original",
+			);
+
+			unsubscribe();
+		});
+
+		it("undo of removeCell restores the cell", () => {
+			const { view, undoStack, unsubscribe } = makeUndoRedoView();
+			view.initialize(
+				Table.create({
+					columns: [new Column({ id: "column-0", props: {} })],
+					rows: [
+						new Row({
+							id: "row-0",
+							cells: { "column-0": { value: "Hello" } },
+						}),
+					],
+				}),
+			);
+
+			view.root.removeCell({ row: "row-0", column: "column-0" });
+			assert.equal(view.root.getCell({ row: "row-0", column: "column-0" }), undefined);
+
+			undoStack.pop()?.revert();
+			assert.equal(
+				view.root.getCell({ row: "row-0", column: "column-0" })?.value,
+				"Hello",
+			);
+
+			unsubscribe();
+		});
+
+		it("undo of column reorder restores the original order", () => {
+			const { view, undoStack, unsubscribe } = makeUndoRedoView();
+			view.initialize(
+				Table.create({
+					columns: [
+						new Column({ id: "column-0", props: {} }),
+						new Column({ id: "column-1", props: {} }),
+						new Column({ id: "column-2", props: {} }),
+					],
+					rows: [],
+				}),
+			);
+
+			// Move column-0 to the end: [0, 1, 2] → [1, 2, 0]
+			view.root.columns.moveToEnd(0);
+			assert.equal(view.root.columns[0].id, "column-1");
+			assert.equal(view.root.columns[2].id, "column-0");
+
+			undoStack.pop()?.revert();
+			assert.equal(view.root.columns[0].id, "column-0");
+			assert.equal(view.root.columns[1].id, "column-1");
+			assert.equal(view.root.columns[2].id, "column-2");
+
+			unsubscribe();
+		});
+
+		it("undo of row reorder restores the original order", () => {
+			const { view, undoStack, unsubscribe } = makeUndoRedoView();
+			view.initialize(
+				Table.create({
+					columns: [],
+					rows: [
+						new Row({ id: "row-0", cells: {} }),
+						new Row({ id: "row-1", cells: {} }),
+						new Row({ id: "row-2", cells: {} }),
+					],
+				}),
+			);
+
+			// Move row-0 to the end: [0, 1, 2] → [1, 2, 0]
+			view.root.rows.moveToEnd(0);
+			assert.equal(view.root.rows[0].id, "row-1");
+			assert.equal(view.root.rows[2].id, "row-0");
+
+			undoStack.pop()?.revert();
+			assert.equal(view.root.rows[0].id, "row-0");
+			assert.equal(view.root.rows[1].id, "row-1");
+			assert.equal(view.root.rows[2].id, "row-2");
+
+			unsubscribe();
+		});
+
+		it("undo of insertRows with pre-populated cells removes both the row and its cells", () => {
+			const { view, undoStack, unsubscribe } = makeUndoRedoView();
+			view.initialize(
+				Table.create({
+					columns: [new Column({ id: "column-0", props: {} })],
+					rows: [],
+				}),
+			);
+
+			view.root.insertRows({
+				rows: [new Row({ id: "row-0", cells: { "column-0": { value: "Hello" } } })],
+			});
+			assert.equal(view.root.rows.length, 1);
+			assert.equal(
+				view.root.getCell({ row: "row-0", column: "column-0" })?.value,
+				"Hello",
+			);
+
+			undoStack.pop()?.revert();
+			assert.equal(view.root.rows.length, 0);
+
+			unsubscribe();
+		});
+
 		it("multiple column inserts should be undoable if no concurrent modifications occurred", () => {
 			const provider = new TestTreeProviderLite(
 				1,
@@ -3029,6 +3243,8 @@ describe("TableFactory unit tests", () => {
 			unsubscribe();
 		});
 
+		// #region Regression tests for column removal with associated cells
+
 		// The below tests are regression tests which reproduce a bug where removing columns with associated cells caused constraints to be incorrectly applied. This caused subsequent undo operations to be dropped.
 		// The existence of cells associated with the first column being removed is what caused the constraints to be applied, so we need to test both with and without cells to ensure the bug is fully fixed and doesn't regress.
 		it("remove column (with cells) → remove column → undo → undo", () => {
@@ -3199,6 +3415,8 @@ describe("TableFactory unit tests", () => {
 
 			unsubscribe();
 		});
+
+		// #endregion
 	});
 
 	describe("Prevents orphan cells", () => {
