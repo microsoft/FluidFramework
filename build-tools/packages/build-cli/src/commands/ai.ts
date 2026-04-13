@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { existsSync, readFileSync } from "node:fs";
+import { access, readFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import * as readline from "node:readline/promises";
 import { getResolvedFluidRoot } from "@fluidframework/build-tools";
@@ -40,12 +40,13 @@ export default class AiCommand extends BaseCommand<typeof AiCommand> {
 	public async run(): Promise<void> {
 		const { flags } = this;
 
-		// Resolve context files
-		const aliasFilePath = await this.resolveAliasFile();
-		const aliasFileContent = readFileSync(aliasFilePath, "utf8");
-		const gettingStartedContent = await this.readGettingStarted();
+		const repoRoot = await this.tryResolveRepoRoot();
+		const [aliasFilePath, gettingStartedContent] = await Promise.all([
+			this.resolveAliasFile(repoRoot),
+			this.readGettingStarted(repoRoot),
+		]);
+		const aliasFileContent = await readFile(aliasFilePath, "utf8");
 
-		// Create readline interface for AI conversation
 		const rl = readline.createInterface({
 			input: process.stdin,
 			output: process.stdout,
@@ -70,7 +71,6 @@ export default class AiCommand extends BaseCommand<typeof AiCommand> {
 			return;
 		}
 
-		// Display the proposal and ask for confirmation
 		const formattedCommand = formatAliasCommand(proposal);
 		this.log(`\n${chalk.bold("Recommended:")}`);
 		this.log(`  ${chalk.green(formattedCommand)}`);
@@ -82,7 +82,6 @@ export default class AiCommand extends BaseCommand<typeof AiCommand> {
 			return;
 		}
 
-		// Build the shell command and execute
 		const shellCommand = `source '${aliasFilePath}' && ${formattedCommand}`;
 		this.log(`\nLaunching ${chalk.green(proposal.alias)}...\n`);
 
@@ -91,15 +90,23 @@ export default class AiCommand extends BaseCommand<typeof AiCommand> {
 				stdio: "inherit",
 				cwd: process.cwd(),
 			});
-			// eslint-disable-next-line unicorn/no-process-exit
-			process.exit(result.exitCode);
+			this.exit(result.exitCode);
 		} catch (error: unknown) {
 			if (error !== null && typeof error === "object" && "exitCode" in error) {
-				// eslint-disable-next-line unicorn/no-process-exit
-				process.exit((error as { exitCode: number }).exitCode);
+				this.exit((error as { exitCode: number }).exitCode);
 			}
-			// eslint-disable-next-line unicorn/no-process-exit
-			process.exit(1);
+			this.exit(1);
+		}
+	}
+
+	/**
+	 * Attempts to resolve the Fluid repo root. Returns undefined if not in a Fluid repo.
+	 */
+	private async tryResolveRepoRoot(): Promise<string | undefined> {
+		try {
+			return await getResolvedFluidRoot();
+		} catch {
+			return undefined;
 		}
 	}
 
@@ -107,22 +114,17 @@ export default class AiCommand extends BaseCommand<typeof AiCommand> {
 	 * Finds the agent-aliases.sh file, checking the system-wide install first
 	 * (codespace), then falling back to the repo-relative path.
 	 */
-	private async resolveAliasFile(): Promise<string> {
-		// System-wide install (AI-enabled codespace)
+	private async resolveAliasFile(repoRoot: string | undefined): Promise<string> {
 		const systemPath = "/usr/local/lib/agent-aliases.sh";
-		if (existsSync(systemPath)) {
+		if (await fileExists(systemPath)) {
 			return systemPath;
 		}
 
-		// Fall back to repo-relative path
-		try {
-			const repoRoot = await getResolvedFluidRoot();
+		if (repoRoot !== undefined) {
 			const repoPath = resolve(repoRoot, "scripts/codespace-setup/agent-aliases.sh");
-			if (existsSync(repoPath)) {
+			if (await fileExists(repoPath)) {
 				return repoPath;
 			}
-		} catch {
-			// getResolvedFluidRoot may throw if not in a Fluid repo
 		}
 
 		this.error(
@@ -136,19 +138,17 @@ export default class AiCommand extends BaseCommand<typeof AiCommand> {
 	 * Reads the GETTING_STARTED.md file that describes aliases and MCP servers.
 	 * Returns an empty string if the file is not found (non-fatal).
 	 */
-	private async readGettingStarted(): Promise<string> {
+	private async readGettingStarted(repoRoot: string | undefined): Promise<string> {
 		const candidates = [resolve(process.cwd(), ".devcontainer/ai-agent/GETTING_STARTED.md")];
 
-		try {
-			const repoRoot = await getResolvedFluidRoot();
+		if (repoRoot !== undefined) {
 			candidates.push(resolve(repoRoot, ".devcontainer/ai-agent/GETTING_STARTED.md"));
-		} catch {
-			// not in a Fluid repo — skip
 		}
 
 		for (const candidate of candidates) {
-			if (existsSync(candidate)) {
-				return readFileSync(candidate, "utf8");
+			const content = await tryReadFile(candidate);
+			if (content !== undefined) {
+				return content;
 			}
 		}
 
@@ -162,8 +162,41 @@ export default class AiCommand extends BaseCommand<typeof AiCommand> {
  */
 function formatAliasCommand(proposal: AliasProposal): string {
 	const parts = [proposal.alias];
-	for (const arg of proposal.extraMcpArgs) {
-		parts.push("--mcp", `'${arg}'`);
+	if (proposal.extraMcpArgs !== undefined) {
+		for (const arg of proposal.extraMcpArgs) {
+			parts.push("--mcp", `'${arg}'`);
+		}
 	}
 	return parts.join(" ");
+}
+
+/**
+ * Reads a file, returning undefined if it does not exist (ENOENT).
+ */
+async function tryReadFile(filePath: string): Promise<string | undefined> {
+	try {
+		return await readFile(filePath, "utf8");
+	} catch (error: unknown) {
+		if (
+			error !== null &&
+			typeof error === "object" &&
+			"code" in error &&
+			(error as NodeJS.ErrnoException).code === "ENOENT"
+		) {
+			return undefined;
+		}
+		throw error;
+	}
+}
+
+/**
+ * Checks whether a file exists using async fs.access.
+ */
+async function fileExists(filePath: string): Promise<boolean> {
+	try {
+		await access(filePath);
+		return true;
+	} catch {
+		return false;
+	}
 }

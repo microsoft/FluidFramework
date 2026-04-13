@@ -13,7 +13,7 @@ import chalk from "picocolors";
  */
 export interface AliasProposal {
 	alias: string;
-	extraMcpArgs: string[];
+	extraMcpArgs?: string[];
 	explanation: string;
 }
 
@@ -105,7 +105,7 @@ export async function runAiSession(options: {
 		handler: async (args: { alias: string; extraMcpArgs?: string[]; explanation: string }) => {
 			proposal = {
 				alias: args.alias,
-				extraMcpArgs: args.extraMcpArgs ?? [],
+				extraMcpArgs: args.extraMcpArgs,
 				explanation: args.explanation,
 			};
 			return "Alias selection recorded. The user will be asked to confirm.";
@@ -185,15 +185,9 @@ async function preflight(client: CopilotClient): Promise<void> {
 		);
 	}
 
+	let authStatus;
 	try {
-		const authStatus = await client.getAuthStatus();
-		// The shape of GetAuthStatusResponse isn't fully documented.
-		// Treat any truthy response as success; if the status object
-		// has a user/authenticated field, check it explicitly.
-		const status = authStatus as unknown as Record<string, unknown>;
-		if (status.authenticated === false || status.status === "unauthenticated") {
-			throw new Error("not authenticated");
-		}
+		authStatus = await client.getAuthStatus();
 	} catch (cause) {
 		throw new Error(
 			"GitHub Copilot authentication failed.\n" +
@@ -202,6 +196,16 @@ async function preflight(client: CopilotClient): Promise<void> {
 				"  • gh auth login          (authenticate the GitHub CLI)\n" +
 				"  • export GH_TOKEN=...    (set a personal access token)\n\n" +
 				`Underlying error: ${cause}`,
+		);
+	}
+
+	if (!authStatus.isAuthenticated) {
+		throw new Error(
+			"GitHub Copilot authentication failed.\n" +
+				"A GitHub Copilot subscription is required to use this command.\n\n" +
+				"Try one of:\n" +
+				"  • gh auth login          (authenticate the GitHub CLI)\n" +
+				"  • export GH_TOKEN=...    (set a personal access token)\n",
 		);
 	}
 }
