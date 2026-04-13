@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "node:assert";
-
 import {
 	benchmarkIt,
 	benchmarkMemoryUse,
 	isInPerformanceTestingMode,
+	memoryAddedBy,
+	memoryUseOfValue,
 } from "@fluid-tools/benchmark";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
 
@@ -25,19 +25,7 @@ function createLocalMap(id: string): ISharedMap {
 describe("SharedMap memory usage", () => {
 	benchmarkIt({
 		title: "Create empty map",
-		...benchmarkMemoryUse({
-			benchmarkFn: async (state) => {
-				while (state.continue()) {
-					await state.beforeAllocation();
-					{
-						const map = createLocalMap("testMap");
-						await state.whileAllocated();
-						assert(map.id === "testMap");
-					}
-					await state.afterDeallocation();
-				}
-			},
-		}),
+		...benchmarkMemoryUse(memoryUseOfValue(() => createLocalMap("testMap"))),
 	});
 
 	const numbersOfEntriesForTests = isInPerformanceTestingMode
@@ -48,41 +36,31 @@ describe("SharedMap memory usage", () => {
 	for (const x of numbersOfEntriesForTests) {
 		benchmarkIt({
 			title: `Add ${x} integers to a local map`,
-			...benchmarkMemoryUse({
-				benchmarkFn: async (state) => {
-					while (state.continue()) {
-						await state.beforeAllocation();
-						{
-							const map = createLocalMap("testMap");
-							for (let i = 0; i < x; i++) {
-								map.set(i.toString().padStart(6, "0"), i);
-							}
-							await state.whileAllocated();
+			...benchmarkMemoryUse(
+				memoryAddedBy({
+					setup: () => createLocalMap("testMap"),
+					modify: (map) => {
+						for (let i = 0; i < x; i++) {
+							map.set(i.toString().padStart(6, "0"), i);
 						}
-						await state.afterDeallocation();
-					}
-				},
-			}),
+					},
+				}),
+			),
 		});
 
 		benchmarkIt({
 			title: `Add ${x} integers to a local map, clear it`,
-			...benchmarkMemoryUse({
-				benchmarkFn: async (state) => {
-					while (state.continue()) {
-						await state.beforeAllocation();
-						{
-							const map = createLocalMap("testMap");
-							for (let i = 0; i < x; i++) {
-								map.set(i.toString().padStart(6, "0"), i);
-							}
-							map.clear();
-							await state.whileAllocated();
+			...benchmarkMemoryUse(
+				memoryAddedBy({
+					setup: () => createLocalMap("testMap"),
+					modify: (map) => {
+						for (let i = 0; i < x; i++) {
+							map.set(i.toString().padStart(6, "0"), i);
 						}
-						await state.afterDeallocation();
-					}
-				},
-			}),
+						map.clear();
+					},
+				}),
+			),
 		});
 	}
 });

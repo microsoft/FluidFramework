@@ -9,6 +9,8 @@ import {
 	benchmarkIt,
 	benchmarkMemoryUse,
 	isInPerformanceTestingMode,
+	memoryAddedBy,
+	memoryUseOfValue,
 } from "@fluid-tools/benchmark";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
 
@@ -115,23 +117,15 @@ function createLocalSharedTree<TSchema extends ImplicitFieldSchema>(
 describe("SharedTree memory usage", () => {
 	benchmarkIt({
 		title: "Create empty SharedTree",
-		...benchmarkMemoryUse({
-			benchmarkFn: async (state) => {
-				while (state.continue()) {
-					await state.beforeAllocation();
-					{
-						const sharedTree = createLocalSharedTree(
-							"testSharedTree",
-							RootNodeSchema,
-							new RootNodeSchema(initialState),
-						);
-						await state.whileAllocated();
-						assert(sharedTree.root !== undefined);
-					}
-					await state.afterDeallocation();
-				}
-			},
-		}),
+		...benchmarkMemoryUse(
+			memoryUseOfValue(() =>
+				createLocalSharedTree(
+					"testSharedTree",
+					RootNodeSchema,
+					new RootNodeSchema(initialState),
+				),
+			),
+		),
 	});
 
 	const numbersOfEntriesForTests = isInPerformanceTestingMode
@@ -143,85 +137,70 @@ describe("SharedTree memory usage", () => {
 		benchmarkIt({
 			title: `Set an integer property ${numberOfEntries} times in a local SharedTree`,
 			...benchmarkMemoryUse({
+				...memoryAddedBy({
+					setup: () =>
+						createLocalSharedTree(
+							"testSharedTree",
+							RootNodeSchema,
+							new RootNodeSchema(initialState),
+						),
+					modify: (sharedTree) => {
+						assert(sharedTree.root.child !== undefined);
+						for (let i = 0; i < numberOfEntries; i++) {
+							sharedTree.root.child.propertyOne = numberOfEntries;
+						}
+					},
+				}),
 				keepIterations: 4,
 				warmUpIterations: 2,
 				enableAsyncGC: true,
-				benchmarkFn: async (state) => {
-					while (state.continue()) {
-						await state.beforeAllocation();
-						{
-							const sharedTree = createLocalSharedTree(
-								"testSharedTree",
-								RootNodeSchema,
-								new RootNodeSchema(initialState),
-							);
-							assert(sharedTree.root.child !== undefined);
-							for (let i = 0; i < numberOfEntries; i++) {
-								sharedTree.root.child.propertyOne = numberOfEntries;
-							}
-							await state.whileAllocated();
-							sharedTree.dispose();
-						}
-						await state.afterDeallocation();
-					}
-				},
 			}),
 		}).timeout(40000); // Set relatively higher threshold as 100_000 iterations can take a while.
 
 		benchmarkIt({
 			title: `Set a string property ${numberOfEntries} times in a local SharedTree`,
 			...benchmarkMemoryUse({
+				...memoryAddedBy({
+					setup: () =>
+						createLocalSharedTree(
+							"testSharedTree",
+							RootNodeSchema,
+							new RootNodeSchema(initialState),
+						),
+					modify: (sharedTree) => {
+						assert(sharedTree.root.child !== undefined);
+						for (let i = 0; i < numberOfEntries; i++) {
+							sharedTree.root.child.propertyTwo.itemOne = i.toString().padStart(6, "0");
+						}
+					},
+				}),
 				keepIterations: 4,
 				warmUpIterations: 2,
 				enableAsyncGC: true,
-				benchmarkFn: async (state) => {
-					while (state.continue()) {
-						await state.beforeAllocation();
-						{
-							const sharedTree = createLocalSharedTree(
-								"testSharedTree",
-								RootNodeSchema,
-								new RootNodeSchema(initialState),
-							);
-							assert(sharedTree.root.child !== undefined);
-							for (let i = 0; i < numberOfEntries; i++) {
-								sharedTree.root.child.propertyTwo.itemOne = i.toString().padStart(6, "0");
-							}
-							await state.whileAllocated();
-							sharedTree.dispose();
-						}
-						await state.afterDeallocation();
-					}
-				},
 			}),
 		}).timeout(40000); // Set relatively higher threshold as 100_000 iterations can take a while.
 
 		benchmarkIt({
 			title: `Set an optional integer property ${numberOfEntries} times in a local SharedTree, then clear it`,
 			...benchmarkMemoryUse({
+				...memoryAddedBy({
+					setup: () =>
+						createLocalSharedTree(
+							"testSharedTree",
+							RootNodeSchema,
+							new RootNodeSchema(initialState),
+						),
+					modify: (sharedTree) => {
+						assert(sharedTree.root.child !== undefined);
+						for (let i = 0; i < numberOfEntries; i++) {
+							sharedTree.root.child.propertyOne = numberOfEntries;
+						}
+						sharedTree.root.child.propertyOne = undefined; // This is possible since the property is optional.
+					},
+				}),
 				keepIterations: 4,
 				warmUpIterations: 2,
 				enableAsyncGC: true,
-				benchmarkFn: async (state) => {
-					while (state.continue()) {
-						await state.beforeAllocation();
-						{
-							const sharedTree = createLocalSharedTree(
-								"testSharedTree",
-								RootNodeSchema,
-								new RootNodeSchema(initialState),
-							);
-							assert(sharedTree.root.child !== undefined);
-							for (let i = 0; i < numberOfEntries; i++) {
-								sharedTree.root.child.propertyOne = numberOfEntries;
-							}
-							sharedTree.root.child.propertyOne = undefined; // This is possible since the property is optional.
-							await state.whileAllocated();
-							sharedTree.dispose();
-						}
-						await state.afterDeallocation();
-					}
-				},
 			}),
 		}).timeout(40000); // Set relatively higher threshold as 100_000 iterations can take a while.
 	}
@@ -244,28 +223,20 @@ describe("SharedTree memory usage", () => {
 					benchmarkIt({
 						title: `initialize ${numberOfNodes} nodes into tree using ${forestName}`,
 						...benchmarkMemoryUse({
+							...memoryUseOfValue(() =>
+								createLocalSharedTree(
+									"testSharedTree",
+									schema,
+									generateContent(numberOfNodes),
+									{
+										forest: forestType,
+										treeEncodeType: TreeCompressionStrategy.Compressed,
+									},
+								),
+							),
 							keepIterations: 4,
 							warmUpIterations: 2,
 							enableAsyncGC: true,
-							benchmarkFn: async (state) => {
-								while (state.continue()) {
-									await state.beforeAllocation();
-									{
-										const sharedTree = createLocalSharedTree(
-											"testSharedTree",
-											schema,
-											generateContent(numberOfNodes),
-											{
-												forest: forestType,
-												treeEncodeType: TreeCompressionStrategy.Compressed,
-											},
-										);
-										await state.whileAllocated();
-										sharedTree.dispose();
-									}
-									await state.afterDeallocation();
-								}
-							},
 						}),
 					}).timeout(400000);
 				}

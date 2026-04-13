@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "node:assert";
-
 import {
 	benchmarkIt,
 	benchmarkMemoryUse,
 	isInPerformanceTestingMode,
+	memoryAddedBy,
+	memoryUseOfValue,
 } from "@fluid-tools/benchmark";
 import {
 	Marker,
@@ -31,18 +31,7 @@ function createLocalSharedString(id: string): SharedStringClass {
 describe("SharedString memory usage", () => {
 	benchmarkIt({
 		title: "Create empty SharedString",
-		...benchmarkMemoryUse({
-			benchmarkFn: async (state) => {
-				while (state.continue()) {
-					await state.beforeAllocation();
-					{
-						const sharedString = createLocalSharedString("testSharedString");
-						await state.whileAllocated();
-						assert(sharedString.id === "testSharedString");
-					}
-				}
-			},
-		}),
+		...benchmarkMemoryUse(memoryUseOfValue(() => createLocalSharedString("testSharedString"))),
 	});
 
 	const numbersOfEntriesForTests = isInPerformanceTestingMode
@@ -53,109 +42,98 @@ describe("SharedString memory usage", () => {
 	for (const x of numbersOfEntriesForTests) {
 		benchmarkIt({
 			title: `Insert and remove text ${x} times`,
-			...benchmarkMemoryUse({
-				benchmarkFn: async (state) => {
-					while (state.continue()) {
-						const sharedString = createLocalSharedString("testSharedString");
-						await state.beforeAllocation();
-						{
-							for (let i = 0; i < x; i++) {
-								sharedString.insertText(0, "my-test-text");
-								sharedString.removeText(0, 12);
-							}
-							await state.whileAllocated();
+			...benchmarkMemoryUse(
+				memoryAddedBy({
+					setup: () => createLocalSharedString("testSharedString"),
+					modify: (sharedString) => {
+						for (let i = 0; i < x; i++) {
+							sharedString.insertText(0, "my-test-text");
+							sharedString.removeText(0, 12);
 						}
-					}
-				},
-			}),
+					},
+				}),
+			),
 		});
 
 		benchmarkIt({
 			title: `Replace text ${x} times`,
-			...benchmarkMemoryUse({
-				benchmarkFn: async (state) => {
-					while (state.continue()) {
+			...benchmarkMemoryUse(
+				memoryAddedBy({
+					setup: () => {
 						const sharedString = createLocalSharedString("testSharedString");
 						sharedString.insertText(0, "0000");
-						await state.beforeAllocation();
-						{
-							for (let i = 0; i < x; i++) {
-								sharedString.replaceText(0, 4, i.toString().padStart(4, "0"));
-							}
-							await state.whileAllocated();
+						return sharedString;
+					},
+					modify: (sharedString) => {
+						for (let i = 0; i < x; i++) {
+							sharedString.replaceText(0, 4, i.toString().padStart(4, "0"));
 						}
-					}
-				},
-			}),
+					},
+				}),
+			),
 		});
 
 		benchmarkIt({
 			title: `Get text annotation ${x} times`,
-			...benchmarkMemoryUse({
-				benchmarkFn: async (state) => {
-					const text = "hello world";
-					const styleProps = { style: "bold" };
-					while (state.continue()) {
+			...benchmarkMemoryUse(
+				memoryAddedBy({
+					setup: () => {
 						const sharedString = createLocalSharedString("testSharedString");
-						sharedString.insertText(0, text, styleProps);
-						await state.beforeAllocation();
-						{
-							for (let i = 0; i < x; i++) {
-								sharedString.getPropertiesAtPosition(i);
-							}
-							await state.whileAllocated();
+						sharedString.insertText(0, "hello world", { style: "bold" });
+						return sharedString;
+					},
+					modify: (sharedString) => {
+						for (let i = 0; i < x; i++) {
+							sharedString.getPropertiesAtPosition(i);
 						}
-					}
-				},
-			}),
+					},
+				}),
+			),
 		});
 
 		benchmarkIt({
 			title: `Get marker ${x} times`,
-			...benchmarkMemoryUse({
-				benchmarkFn: async (state) => {
-					const markerId = "myMarkerId";
-
-					while (state.continue()) {
+			...benchmarkMemoryUse(
+				memoryAddedBy({
+					setup: () => {
 						const sharedString = createLocalSharedString("testSharedString");
 						sharedString.insertText(0, "my-test-text");
 						sharedString.insertMarker(0, ReferenceType.Simple, {
-							[reservedMarkerIdKey]: markerId,
+							[reservedMarkerIdKey]: "myMarkerId",
 						});
-						await state.beforeAllocation();
-						{
-							for (let i = 0; i < x; i++) {
-								sharedString.getMarkerFromId(markerId);
-							}
-							await state.whileAllocated();
+						return sharedString;
+					},
+					modify: (sharedString) => {
+						for (let i = 0; i < x; i++) {
+							sharedString.getMarkerFromId("myMarkerId");
 						}
-					}
-				},
-			}),
+					},
+				}),
+			),
 		});
 
 		benchmarkIt({
 			title: `Annotate marker ${x} times with same options`,
-			...benchmarkMemoryUse({
-				benchmarkFn: async (state) => {
-					const markerId = "myMarkerId";
-					while (state.continue()) {
+			...benchmarkMemoryUse(
+				memoryAddedBy({
+					setup: () => {
 						const sharedString = createLocalSharedString("testSharedString");
 						sharedString.insertText(0, "my-test-text");
 						sharedString.insertMarker(0, ReferenceType.Simple, {
-							[reservedMarkerIdKey]: markerId,
+							[reservedMarkerIdKey]: "myMarkerId",
 						});
-						const simpleMarker = sharedString.getMarkerFromId(markerId) as Marker;
-						await state.beforeAllocation();
-						{
-							for (let i = 0; i < x; i++) {
-								sharedString.annotateMarker(simpleMarker, { color: "blue" });
-							}
-							await state.whileAllocated();
+						return {
+							sharedString,
+							simpleMarker: sharedString.getMarkerFromId("myMarkerId") as Marker,
+						};
+					},
+					modify: ({ sharedString, simpleMarker }) => {
+						for (let i = 0; i < x; i++) {
+							sharedString.annotateMarker(simpleMarker, { color: "blue" });
 						}
-					}
-				},
-			}),
+					},
+				}),
+			),
 		});
 	}
 });

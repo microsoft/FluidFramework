@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "node:assert";
-
 import {
 	benchmarkIt,
 	benchmarkMemoryUse,
 	isInPerformanceTestingMode,
+	memoryAddedBy,
+	memoryUseOfValue,
 } from "@fluid-tools/benchmark";
 
 import { SubSequence } from "../../sharedSequence.js";
@@ -16,16 +16,7 @@ import { SubSequence } from "../../sharedSequence.js";
 describe("SharedSequence memory usage", () => {
 	benchmarkIt({
 		title: "Create empty SharedSequence",
-		...benchmarkMemoryUse({
-			benchmarkFn: async (state) => {
-				while (state.continue()) {
-					await state.beforeAllocation();
-					const segment = new SubSequence<number>([]);
-					await state.whileAllocated();
-					assert.equal(segment.cachedLength, 0);
-				}
-			},
-		}),
+		...benchmarkMemoryUse(memoryUseOfValue(() => new SubSequence<number>([]))),
 	});
 
 	const numbersOfEntriesForTests = isInPerformanceTestingMode
@@ -36,20 +27,17 @@ describe("SharedSequence memory usage", () => {
 	for (const x of numbersOfEntriesForTests) {
 		benchmarkIt({
 			title: `Append and remove ${x} subsequences`,
-			...benchmarkMemoryUse({
-				benchmarkFn: async (state) => {
-					while (state.continue()) {
-						await state.beforeAllocation();
-						const segment = new SubSequence<number>([]);
+			...benchmarkMemoryUse(
+				memoryAddedBy({
+					setup: () => new SubSequence<number>([]),
+					modify: (segment) => {
 						for (let i = 0; i < x; i++) {
 							segment.append(new SubSequence<number>([i]));
 							segment.removeRange(0, 1);
 						}
-						await state.whileAllocated();
-						assert.equal(segment.cachedLength, 0);
-					}
-				},
-			}),
+					},
+				}),
+			),
 		});
 	}
 });

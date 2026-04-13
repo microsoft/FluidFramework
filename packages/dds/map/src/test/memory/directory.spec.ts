@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "node:assert";
-
 import {
 	benchmarkIt,
 	benchmarkMemoryUse,
 	isInPerformanceTestingMode,
+	memoryAddedBy,
+	memoryUseOfValue,
 } from "@fluid-tools/benchmark";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
 
@@ -25,19 +25,7 @@ function createLocalDirectory(id: string): ISharedDirectory {
 describe("SharedDirectory memory usage", () => {
 	benchmarkIt({
 		title: "Create empty directory",
-		...benchmarkMemoryUse({
-			benchmarkFn: async (state) => {
-				while (state.continue()) {
-					await state.beforeAllocation();
-					{
-						const dir = createLocalDirectory("testDirectory");
-						await state.whileAllocated();
-						assert(dir.id === "testDirectory");
-					}
-					await state.afterDeallocation();
-				}
-			},
-		}),
+		...benchmarkMemoryUse(memoryUseOfValue(() => createLocalDirectory("testDirectory"))),
 	});
 
 	const numbersOfEntriesForTests = isInPerformanceTestingMode
@@ -48,41 +36,31 @@ describe("SharedDirectory memory usage", () => {
 	for (const x of numbersOfEntriesForTests) {
 		benchmarkIt({
 			title: `Add ${x} integers to a local directory`,
-			...benchmarkMemoryUse({
-				benchmarkFn: async (state) => {
-					while (state.continue()) {
-						await state.beforeAllocation();
-						{
-							const dir = createLocalDirectory("testDirectory");
-							for (let i = 0; i < x; i++) {
-								dir.set(i.toString().padStart(6, "0"), i);
-							}
-							await state.whileAllocated();
+			...benchmarkMemoryUse(
+				memoryAddedBy({
+					setup: () => createLocalDirectory("testDirectory"),
+					modify: (dir) => {
+						for (let i = 0; i < x; i++) {
+							dir.set(i.toString().padStart(6, "0"), i);
 						}
-						await state.afterDeallocation();
-					}
-				},
-			}),
+					},
+				}),
+			),
 		});
 
 		benchmarkIt({
 			title: `Add ${x} integers to a local directory, clear it`,
-			...benchmarkMemoryUse({
-				benchmarkFn: async (state) => {
-					while (state.continue()) {
-						await state.beforeAllocation();
-						{
-							const dir = createLocalDirectory("testDirectory");
-							for (let i = 0; i < x; i++) {
-								dir.set(i.toString().padStart(6, "0"), i);
-							}
-							dir.clear();
-							await state.whileAllocated();
+			...benchmarkMemoryUse(
+				memoryAddedBy({
+					setup: () => createLocalDirectory("testDirectory"),
+					modify: (dir) => {
+						for (let i = 0; i < x; i++) {
+							dir.set(i.toString().padStart(6, "0"), i);
 						}
-						await state.afterDeallocation();
-					}
-				},
-			}),
+						dir.clear();
+					},
+				}),
+			),
 		});
 	}
 });

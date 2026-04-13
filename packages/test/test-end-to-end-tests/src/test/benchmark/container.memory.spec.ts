@@ -6,14 +6,9 @@
 import { strict as assert } from "assert";
 
 import { describeCompat } from "@fluid-private/test-version-utils";
-import { benchmarkIt, benchmarkMemoryUse } from "@fluid-tools/benchmark";
-import {
-	IContainer,
-	IFluidCodeDetails,
-	ILoader,
-} from "@fluidframework/container-definitions/internal";
+import { benchmarkIt, benchmarkMemoryUse, memoryUseOfValue } from "@fluid-tools/benchmark";
+import { IFluidCodeDetails } from "@fluidframework/container-definitions/internal";
 import { ILoaderProps, Loader } from "@fluidframework/container-loader/internal";
-import { IRequest } from "@fluidframework/core-interfaces";
 import { IResolvedUrl } from "@fluidframework/driver-definitions/internal";
 import {
 	ITestObjectProvider,
@@ -62,74 +57,32 @@ describeCompat("Container - memory usage benchmarks", "NoCompat", (getTestObject
 
 	benchmarkIt({
 		title: "Create loader",
-		...benchmarkMemoryUse({
-			benchmarkFn: async (state) => {
-				while (state.continue()) {
-					await state.beforeAllocation();
-					{
-						const newLoader: ILoader = createLoader();
-						await state.whileAllocated();
-						assert(newLoader !== undefined);
-					}
-					await state.afterDeallocation();
-				}
-			},
-		}),
+		...benchmarkMemoryUse(memoryUseOfValue(() => createLoader())),
 	});
 
 	benchmarkIt({
 		title: "Create detached container",
-		...benchmarkMemoryUse({
-			benchmarkFn: async (state) => {
-				while (state.continue()) {
-					await state.beforeAllocation();
-					{
-						const container: IContainer = await loader.createDetachedContainer(codeDetails);
-						await state.whileAllocated();
-						assert(container !== undefined);
-					}
-					await state.afterDeallocation();
-				}
-			},
-		}),
+		...benchmarkMemoryUse(memoryUseOfValue(() => loader.createDetachedContainer(codeDetails))),
 	});
 
 	benchmarkIt({
 		title: "Create detached container and attach it",
-		...benchmarkMemoryUse({
-			benchmarkFn: async (state) => {
-				while (state.continue()) {
-					await state.beforeAllocation();
-					{
-						const container: IContainer = await loader.createDetachedContainer(codeDetails);
-						await container.attach(provider.driver.createCreateNewRequest("containerTest"));
-						await state.whileAllocated();
-					}
-					await state.afterDeallocation();
-				}
-			},
-		}),
+		...benchmarkMemoryUse(
+			memoryUseOfValue(async () => {
+				const container = await loader.createDetachedContainer(codeDetails);
+				await container.attach(provider.driver.createCreateNewRequest("containerTest"));
+				return container;
+			}),
+		),
 	});
 
 	benchmarkIt({
 		title: "Load existing container",
-		...benchmarkMemoryUse({
-			benchmarkFn: async (state) => {
-				while (state.continue()) {
-					await state.beforeAllocation();
-					{
-						const requestUrl = await provider.driver.createContainerUrl(
-							fileName,
-							containerUrl,
-						);
-						const testRequest: IRequest = { url: requestUrl };
-						const container = await loader.resolve(testRequest);
-						await state.whileAllocated();
-						assert(container !== undefined);
-					}
-					await state.afterDeallocation();
-				}
-			},
-		}),
+		...benchmarkMemoryUse(
+			memoryUseOfValue(async () => {
+				const requestUrl = await provider.driver.createContainerUrl(fileName, containerUrl);
+				return loader.resolve({ url: requestUrl });
+			}),
+		),
 	});
 });
