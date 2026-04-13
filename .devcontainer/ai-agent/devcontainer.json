@@ -44,12 +44,14 @@
 		"node-setup": "bash scripts/codespace-setup/on-create.sh"
 	},
 	"postCreateCommand": {
-		"ai-setup": "bash scripts/codespace-setup/ai-setup.sh",
-		"welcome-notice": "sudo cp .devcontainer/ai-agent/first-run-notice.txt /usr/local/etc/vscode-dev-containers/first-run-notice.txt"
+		"ai-setup": "bash scripts/codespace-setup/ai-setup.sh"
 	},
 	"postStartCommand": {
 		"bwrap-setup": "sudo mount --make-rshared /",
 		"sandbox-tmpdir": "mkdir -p /tmp/claude"
+	},
+	"postAttachCommand": {
+		"open-getting-started": "code .devcontainer/ai-agent/GETTING_STARTED.md"
 	},
 	"remoteUser": "node",
 	"features": {
