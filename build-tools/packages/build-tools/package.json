@@ -75,13 +75,13 @@
 		"@types/glob": "^7.2.0",
 		"@types/lodash.isequal": "^4.5.8",
 		"@types/mocha": "^10.0.10",
-		"@types/node": "^22.19.1",
+		"@types/node": "~22.19.17",
 		"@types/semver": "^7.7.1",
 		"eslint": "~9.39.2",
 		"json-schema-to-typescript": "^15.0.4",
 		"mocha": "^11.7.5"
 	},
 	"engines": {
-		"node": ">=20.19.0"
+		"node": ">=22.22.2"
 	}
 }

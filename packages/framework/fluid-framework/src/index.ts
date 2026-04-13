@@ -33,6 +33,7 @@ export type {
 	MemberChangedListener,
 	Myself,
 } from "@fluidframework/fluid-static";
+export { getPresence, getPresenceAlpha } from "@fluidframework/fluid-static/internal";
 export type { SharedObjectKind } from "@fluidframework/shared-object-base";
 export type {
 	IErrorBase,

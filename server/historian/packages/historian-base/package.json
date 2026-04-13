@@ -87,7 +87,7 @@
 		"@types/ioredis-mock": "^8.2.6",
 		"@types/mocha": "^10.0.0",
 		"@types/nconf": "0.0.37",
-		"@types/node": "^18.17.1",
+		"@types/node": "~22.19.17",
 		"@types/sinon": "^17.0.3",
 		"@types/supertest": "^2.0.7",
 		"@types/uuid": "^3.4.4",

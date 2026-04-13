@@ -75,7 +75,7 @@
 		"@types/ioredis-mock": "^8.2.6",
 		"@types/lodash": "^4.14.118",
 		"@types/mocha": "^10.0.1",
-		"@types/node": "^22",
+		"@types/node": "~22.19.17",
 		"@types/sinon": "^17.0.3",
 		"@types/string-hash": "^1.1.1",
 		"c8": "^10.1.3",
