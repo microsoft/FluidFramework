@@ -17,7 +17,7 @@
  * - cjsFileConfig: CommonJS file rule overrides
  * - jsNoProject: Disables type-aware parsing for JS and .d.ts files
  * - jsTypeAwareDisable: Disables type-aware rules for JS files
- * - reactRecommendedOverride: React file overrides for recommended config
+ * - reactRecommendedOverride: React file overrides for recommended config factory
  * - testRecommendedOverride: Test file overrides for recommended config
  * - sharedConfigs: Collection of all shared configs in a config array
  */
@@ -139,19 +139,15 @@ export const reactConfig = [
 		files: ["**/*.jsx", "**/*.tsx"],
 		...eslintReact.configs["recommended-typescript"],
 	},
-	// react-hooks/recommended rules
+	// react-hooks/recommended rules with custom overrides
 	{
 		files: ["**/*.jsx", "**/*.tsx"],
 		plugins: {
 			// reactHooksPlugin.configs.flat does not conform. It is not a `ConfigObject`.
 			"react-hooks": reactHooksPlugin as ESLint.Plugin,
 		},
-		rules: reactHooksPlugin.configs.recommended.rules,
-	},
-	// Custom overrides for react-hooks rules
-	{
-		files: ["**/*.jsx", "**/*.tsx"],
 		rules: {
+			...reactHooksPlugin.configs.recommended.rules,
 			"react-hooks/immutability": "warn",
 			"react-hooks/refs": "warn",
 			"react-hooks/rules-of-hooks": "warn",
@@ -246,7 +242,7 @@ export const jsTypeAwareDisable = {
 } as const satisfies Linter.Config;
 
 /**
- * React file overrides for recommended config (from recommended.js).
+ * React file overrides for recommended config factory.
  */
 export const reactRecommendedOverride = {
 	files: ["**/*.jsx", "**/*.tsx"],
@@ -256,7 +252,7 @@ export const reactRecommendedOverride = {
 } as const satisfies Linter.Config;
 
 /**
- * Test file overrides for recommended config (from recommended.js).
+ * Test file overrides for recommended config factory.
  */
 export const testRecommendedOverride = {
 	// Use of spread operator shouldn't really be needed here. Under VS Code, a
