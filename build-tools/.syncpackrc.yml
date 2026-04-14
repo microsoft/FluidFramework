@@ -90,6 +90,8 @@ semverGroups:
       - "minimatch@>=9 <10"
       - "minimatch@>=10 <11"
       - "serialize-javascript@>=6 <7"
+      - "picomatch@>=2 <3"
+      - "picomatch@>=4 <5"
       - "oclif>@aws-sdk/client*"
       - "@types/glob>@types/minimatch"
     packages:
@@ -116,6 +118,14 @@ semverGroups:
       - "typescript"
       - "vue"
       - "webpack-dev-server"
+    packages:
+      - "**"
+    range: "~"
+
+  # `@types` packages should often use `~` to avoid pulling in newer types with more features than the code they are the types for.
+  - label: "Must use tilde dependency ranges"
+    dependencies:
+      - "@types/node"
     packages:
       - "**"
     range: "~"

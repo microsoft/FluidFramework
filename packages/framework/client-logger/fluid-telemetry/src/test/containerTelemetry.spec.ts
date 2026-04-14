@@ -49,7 +49,11 @@ describe("container telemetry via", () => {
 	let trackEventSpy: Sinon.SinonSpy;
 	let telemetryConfig: TelemetryConfig;
 
-	beforeEach(() => {
+	// Create the ApplicationInsights instance once for the suite and eagerly initialize it.
+	// Without loadAppInsights(), the first trackEvent call triggers an expensive fallback
+	// initialization path (~250ms locally, potentially much worse in CI). Calling
+	// loadAppInsights() up front avoids that path entirely, reducing first trackEvent to ~1ms.
+	before(function initializeAppInsights() {
 		appInsightsClient = new ApplicationInsights({
 			config: {
 				connectionString:
@@ -57,7 +61,10 @@ describe("container telemetry via", () => {
 					"InstrumentationKey=abcdefgh-ijkl-mnop-qrst-uvwxyz6ffd9c;IngestionEndpoint=https://westus2-2.in.applicationinsights.azure.com/;LiveEndpoint=https://westus2.livediagnostics.monitor.azure.com/",
 			},
 		});
+		appInsightsClient.loadAppInsights();
+	});
 
+	beforeEach(function createSpiesAndConfig() {
 		trackEventSpy = spy(appInsightsClient, "trackEvent");
 		mockFluidContainer = new MockFluidContainer();
 
@@ -66,6 +73,10 @@ describe("container telemetry via", () => {
 			containerId: mockContainerId,
 			consumers: [new AppInsightsTelemetryConsumer(appInsightsClient)],
 		};
+	});
+
+	afterEach(function restoreSpy() {
+		trackEventSpy.restore();
 	});
 
 	it("Emitting 'connected' container system event produces expected ContainerConnectedTelemetry using Azure App Insights", () => {

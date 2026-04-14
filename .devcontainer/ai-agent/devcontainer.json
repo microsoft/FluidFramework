@@ -5,7 +5,7 @@
 		"dockerfile": "../Dockerfile",
 		"args": {
 			"NODE_VERSION": "24",
-			"INSTALL_AGENCY": "true",
+			// "INSTALL_AGENCY": "true",
 			"INSTALL_REPOVERLAY": "true"
 			// TODO: Figure out the playwright strategy
 			// "INSTALL_PLAYWRIGHT_CLI": "true"
@@ -24,7 +24,6 @@
 				"dbaeumer.vscode-eslint",
 				"esbenp.prettier-vscode",
 				"MAI-EngineeringSystems.mai-ai-telemetry",
-				"ms-codespaces-tools.ado-codespaces-auth",
 				"ms-azure-devops.azure-pipelines",
 				"ms-azuretools.vscode-docker",
 				"mutantdino.resourcemonitor",
@@ -45,12 +44,14 @@
 		"node-setup": "bash scripts/codespace-setup/on-create.sh"
 	},
 	"postCreateCommand": {
-		"ai-setup": "bash scripts/codespace-setup/ai-setup.sh",
-		"welcome-notice": "sudo cp .devcontainer/ai-agent/first-run-notice.txt /usr/local/etc/vscode-dev-containers/first-run-notice.txt"
+		"ai-setup": "bash scripts/codespace-setup/ai-setup.sh"
 	},
 	"postStartCommand": {
 		"bwrap-setup": "sudo mount --make-rshared /",
 		"sandbox-tmpdir": "mkdir -p /tmp/claude"
+	},
+	"postAttachCommand": {
+		"open-getting-started": "code .devcontainer/ai-agent/GETTING_STARTED.md"
 	},
 	"remoteUser": "node",
 	"features": {
@@ -65,10 +66,7 @@
 		// Enables SSH connections into the container using `gh codespace ssh`
 		"ghcr.io/devcontainers/features/sshd:1": {
 			"version": "latest"
-		},
-		// Features needed for the ms-codespaces-tools.ado-codespaces-auth extension
-		"ghcr.io/microsoft/codespace-features/external-repository:4": {},
-		"ghcr.io/microsoft/codespace-features/artifacts-helper:3": {}
+		}
 	},
 	// Setting this so Codespaces default settings use it. It's not really *required*, but a clean build
 	// can be lengthy enough that it's convenient.

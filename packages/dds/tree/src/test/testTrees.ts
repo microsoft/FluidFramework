@@ -586,6 +586,7 @@ export const testDocuments: readonly TestDocument[] = [
 		policy: defaultSchemaPolicy,
 		schemaData: toStoredSchema(NestedMultiStage, {
 			includeStaged: (upgrade) => upgrade === multiStageCUpgrade.metadata.stagedSchemaUpgrade,
+			includeStagedOptional: () => false,
 		}),
 		treeFactory: () =>
 			jsonableTreeFromFieldCursor(
