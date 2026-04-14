@@ -33,6 +33,7 @@ overrides:
   serialize-javascript@>=6 <7: ^7.0.4
   picomatch@>=2 <3: ^2.3.2
   picomatch@>=4 <5: ^4.0.4
+  zookeeper: ^7.2.0
 
 importers:
 
@@ -3529,10 +3530,6 @@ packages:
     resolution: {integrity: sha512-4gd7VpWNQNB4UKKCFFVcp1AVv+FMOgs9NKzjHKusc8jTMhd5eL1NqQqOpE0KzMds804/yHlglp3uxgluOqAPLw==}
     engines: {node: '>= 0.4'}
 
-  interpret@1.4.0:
-    resolution: {integrity: sha512-agE4QfB2Lkp9uICn7BAqoscw4SZP9kTE2hxiFI3jBPmXJfdqiahTbUuKGsMoN2GtqL9AxhYioAcVvgsb1HvRbA==}
-    engines: {node: '>= 0.10'}
-
   ioredis-mock@8.9.0:
     resolution: {integrity: sha512-yIglcCkI1lvhwJVoMsR51fotZVsPsSk07ecTCgRTRlicG0Vq3lke6aAaHklyjmRNRsdYAgswqC2A0bPtQK4LSw==}
     engines: {node: '>=12.22'}
@@ -5044,10 +5041,6 @@ packages:
     resolution: {integrity: sha512-gNva8/6UAe8QYepIQH/jQ2qn91Qj0B9sYjMBBs3QOB8F2CXcKgLxQaJRP76sWVRQt+QU+8fAkCbCvjjMFu7Ycw==}
     engines: {node: '>= 0.8.0'}
 
-  rechoir@0.6.2:
-    resolution: {integrity: sha512-HFM8rkZ+i3zrV+4LQjwQ0W+ez98pApMGM3HUrN04j3CqzPOzl9nmP15Y8YXNm8QHGv/eacOVEjqhmWpkRV0NAw==}
-    engines: {node: '>= 0.10'}
-
   redis-errors@1.2.0:
     resolution: {integrity: sha512-1qny3OExCf0UvUV/5wpYKf2YwPcOqXzkwKKSmKHiE6ZMQs5heeE/c8eXK+PNllPvmjgAbfnsbpkGZWy8cBpn9w==}
     engines: {node: '>=4'}
@@ -5335,10 +5328,9 @@ packages:
     resolution: {integrity: sha512-ObmnIF4hXNg1BqhnHmgbDETF8dLPCggZWBjkQfhZpbszZnYur5DUljTcCHii5LC3J5E0yeO/1LIMyH+UvHQgyw==}
     engines: {node: '>= 0.4'}
 
-  shelljs@0.8.5:
-    resolution: {integrity: sha512-TiwcRcrkhHvbrZbnRcFYMLl30Dfov3HKqzp5tO5b4pt6G/SezKcYhmDg15zXVBswHmctSAQKznqNW2LO5tTDow==}
-    engines: {node: '>=4'}
-    hasBin: true
+  shelljs@0.10.0:
+    resolution: {integrity: sha512-Jex+xw5Mg2qMZL3qnzXIfaxEtBaC4n7xifqaqtrZDdlheR70OGkydrPJWT0V1cA1k3nanC86x9FwAmQl6w3Klw==}
+    engines: {node: '>=18'}
 
   side-channel-list@1.0.0:
     resolution: {integrity: sha512-FCLHtRD/gnpCiCHEiJLOwdmFP+wzCmDEkc9y7NsYxeF4u7Btsn1ZuwgwJGxImImHicJArLP4R0yX4c2KCrMrTA==}
@@ -6209,8 +6201,8 @@ packages:
   zod@4.3.6:
     resolution: {integrity: sha512-rftlrkhHZOcjDwkGlnUtZZkvaPHCsDATp4pGpuOOMDaTdDDXF91wuVDJoWoPsKX/3YPQ5fHuF3STjcYyKr+Qhg==}
 
-  zookeeper@5.6.0:
-    resolution: {integrity: sha512-MNgvcBSdmMMeh77ubcE/lu42BvvFxYlFiJNftc/X9I+tCSJL+jofLize9hNBeJCkSA5NXSn+cz1JB0S/T526Jg==}
+  zookeeper@7.2.0:
+    resolution: {integrity: sha512-4x9yk2HH1lHxLVPIh/3Ll6rkMNHEJACN4TZDI2oI9pkJDvbVEpzvn23qQK/5ctbUvS39+rSrxuAQ9NYFtG0Aig==}
     engines: {node: '>=14.15.4'}
 
   zwitch@2.0.4:
@@ -6744,7 +6736,7 @@ snapshots:
   '@fluidframework/server-services-ordering-zookeeper@8.0.0-347501':
     dependencies:
       '@fluidframework/server-services-core': 8.0.0-347501
-      zookeeper: 5.6.0
+      zookeeper: 7.2.0
     transitivePeerDependencies:
       - supports-color
 
@@ -10305,8 +10297,6 @@ snapshots:
       hasown: 2.0.2
       side-channel: 1.1.0
 
-  interpret@1.4.0: {}
-
   ioredis-mock@8.9.0(@types/ioredis-mock@8.2.6(ioredis@5.6.1))(ioredis@5.6.1):
     dependencies:
       '@ioredis/as-callback': 3.0.0
@@ -11407,7 +11397,8 @@ snapshots:
 
   mute-stream@3.0.0: {}
 
-  nan@2.19.0: {}
+  nan@2.19.0:
+    optional: true
 
   nan@2.23.0: {}
 
@@ -12124,10 +12115,6 @@ snapshots:
 
   readline-sync@1.4.10: {}
 
-  rechoir@0.6.2:
-    dependencies:
-      resolve: 1.22.11
-
   redis-errors@1.2.0: {}
 
   redis-parser@3.0.0:
@@ -12454,11 +12441,10 @@ snapshots:
 
   shell-quote@1.8.3: {}
 
-  shelljs@0.8.5:
+  shelljs@0.10.0:
     dependencies:
-      glob: 7.2.3
-      interpret: 1.4.0
-      rechoir: 0.6.2
+      execa: 5.1.1
+      fast-glob: 3.3.2
 
   side-channel-list@1.0.0:
     dependencies:
@@ -13522,13 +13508,13 @@ snapshots:
 
   zod@4.3.6: {}
 
-  zookeeper@5.6.0:
+  zookeeper@7.2.0:
     dependencies:
       async: 3.2.6
       decompress: 4.2.1
       decompress-targz: 4.1.1
-      nan: 2.19.0
+      nan: 2.23.0
       node-gyp-build: 4.6.0
-      shelljs: 0.8.5
+      shelljs: 0.10.0
 
   zwitch@2.0.4: {}

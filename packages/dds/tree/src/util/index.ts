@@ -66,7 +66,6 @@ export { StackyIterator } from "./stackyIterator.js";
 export {
 	asMutable,
 	balancedReduce,
-	clone,
 	compareSets,
 	getOrAddEmptyToMap,
 	getOrCreate,

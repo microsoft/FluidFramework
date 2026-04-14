@@ -1,13 +1,13 @@
 {
 	// This tsconfig is for IDE support only - the package doesn't compile TypeScript.
-	// Scripts run via tsx which handles ESM/CJS interop automatically.
+	// Scripts run via jiti which handles ESM/CJS interop automatically.
 	"extends": "../build-common/tsconfig.base.json",
 	"compilerOptions": {
 		// Enable Node.js types - base config sets "types": [] which excludes all @types packages
 		"types": ["node"],
 
-		// Use modern module settings for ESM (.mts files) and tsx runtime
-		// Differs from standard Node16 to allow flexible import syntax that tsx handles
+		// Use modern module settings for ESM (.mts files) and jiti runtime
+		// Differs from standard Node16 to allow flexible import syntax that jiti handles
 		"module": "ESNext",
 		"moduleResolution": "Bundler",
 
@@ -16,6 +16,7 @@
 
 		// This config is for IDE support only, not compilation
 		"noEmit": true,
+		"allowImportingTsExtensions": true,
 
 		// ESLint plugin types violate this often which affects our own configs
 		"exactOptionalPropertyTypes": false,

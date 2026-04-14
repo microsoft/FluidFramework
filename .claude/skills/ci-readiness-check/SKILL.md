@@ -74,7 +74,7 @@ cd $PKG && pnpm exec fluid-build . -t eslint:fix
 
 Steps 6 and 7 only run if the public API surface changed. Proceed if: `src/index.ts` or any entry point (`src/alpha.ts`, `src/beta.ts`, `src/legacy.ts`, `src/internal.ts`) was modified; any exported type/interface/class/function signature changed; or `package.json` `exports` changed. Skip if only tests, internal implementation, comments, or function bodies (not signatures) changed.
 
-Running `build:api-reports` when nothing changed can introduce spurious diffs — especially for `@fluidframework/tree` and `fluid-framework`, which have a known API Extractor bug with non-deterministic type ordering.
+Running `build:api-reports` when nothing changed can introduce spurious diffs — specifically for the `@fluidframework/tree` and `fluid-framework` packages, which surface a known incremental TypeScript bug that non-deterministically reorders type unions. If you see only key-reorder diffs with no real API changes, do a clean build of the affected package and regenerate (see `tree-api-checks.md` for details).
 
 # Step 6: API reports and cross-package cascade (Build and Test only)
 

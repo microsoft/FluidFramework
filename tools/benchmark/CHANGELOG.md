@@ -1,6 +1,16 @@
 # @fluid-tools/benchmark
 
+## 0.57.0
+
+## 0.56.0
+
+-   Add `after` to `MemoryUseModifier`.
+
 ## 0.55.0
+
+-   Added `memoryUseOfValue` and `memoryAddedBy` helper functions for constructing common `MemoryUseBenchmark` cases without hand-writing the callback loop.
+-   Added `Box<T>`, a simple optional-value container useful for controlling object lifetime in memory benchmarks when stack variable lifetimes would otherwise retain memory longer than intended.
+-   `MemoryUseBenchmark.enableAsyncGC` now defaults to `true`. Benchmarks that do not require async GC can set `enableAsyncGC: false` to avoid the small runtime and per-iteration memory overhead it introduces.
 
 ## 0.54.0
 
