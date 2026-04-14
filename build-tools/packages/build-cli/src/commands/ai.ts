@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { readFile } from "node:fs/promises";
+import { readFile, writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import * as readline from "node:readline/promises";
 import { getResolvedFluidRoot } from "@fluidframework/build-tools";
@@ -15,7 +15,7 @@ import chalk from "picocolors";
 import { type AliasProposal, runAiSession } from "../library/ai/copilotSession.js";
 import { BaseCommand } from "../library/commands/base.js";
 
-const FALLBACK_MODEL = "claude-haiku-4-5-20251001";
+const FALLBACK_MODEL = "claude-haiku-4.5";
 export const supportedAliases = ["claude", "dev", "copilot", "oce", "ai-reset"] as const;
 const supportedAliasSet = new Set<string>(supportedAliases);
 
@@ -45,6 +45,11 @@ export default class AiCommand extends BaseCommand<typeof AiCommand> {
 			description:
 				"GitHub token for the launcher assistant. Defaults to COPILOT_GITHUB_TOKEN, GH_TOKEN, or GITHUB_TOKEN.",
 			env: "COPILOT_GITHUB_TOKEN",
+		}),
+		launchFile: Flags.file({
+			description:
+				"Write the launch command to this file instead of executing it. " +
+				"Used by shell wrappers to run the alias as a separate process.",
 		}),
 		model: Flags.string({
 			description:
@@ -167,6 +172,15 @@ export default class AiCommand extends BaseCommand<typeof AiCommand> {
 
 		const shellCommand = `source ${shellQuote(aliasFile.path)} && ${formattedCommand}`;
 		this.verbose(`Shell command: ${shellCommand}`);
+
+		// When --launch-file is provided, write the command to that file and exit
+		// so a shell wrapper can run it as a separate, independent process.
+		if (flags.launchFile !== undefined) {
+			await writeFile(flags.launchFile, shellCommand, "utf8");
+			this.log(`\nLaunching ${chalk.green(proposal.alias)}...\n`);
+			return;
+		}
+
 		this.log(`\nLaunching ${chalk.green(proposal.alias)}...\n`);
 
 		try {
