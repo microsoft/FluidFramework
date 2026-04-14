@@ -39,7 +39,9 @@ export interface AiSessionOptions {
  * @param options - Session configuration.
  * @returns The alias proposal from the AI, or undefined if no alias was selected.
  */
-export async function runAiSession(options: AiSessionOptions): Promise<AliasProposal | undefined> {
+export async function runAiSession(
+	options: AiSessionOptions,
+): Promise<AliasProposal | undefined> {
 	const { model, prompt, githubToken, ui } = options;
 
 	let proposal: AliasProposal | undefined;
