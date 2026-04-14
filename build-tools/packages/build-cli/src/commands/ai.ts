@@ -75,7 +75,16 @@ export default class AiCommand extends BaseCommand<typeof AiCommand> {
 		const prompt = promptFile.template
 			.replaceAll("{{aliasFileContent}}", aliasFile.content)
 			.replaceAll("{{gettingStartedContent}}", gettingStartedContent ?? "");
-		const githubToken = flags.githubToken ?? process.env.GH_TOKEN ?? process.env.GITHUB_TOKEN;
+		const githubToken =
+			// Explicit flag or COPILOT_GITHUB_TOKEN env var (via oclif flag config)
+			flags.githubToken ??
+			// GH_TOKEN is the conventional override for GitHub CLI tools
+			process.env.GH_TOKEN ??
+			// The user's OAuth token from `gh auth login` — preferred over GITHUB_TOKEN
+			// because in Codespaces GITHUB_TOKEN is a repo-scoped token that lacks Copilot permissions.
+			(await resolveGhAuthToken()) ??
+			// GITHUB_TOKEN as a last resort (may be the limited Codespace token)
+			process.env.GITHUB_TOKEN;
 
 		const rl = readline.createInterface({
 			input: process.stdin,
@@ -338,6 +347,20 @@ function isUserCancellation(error: unknown): boolean {
 			error.name === "AbortError" ||
 			/cancel|canceled|cancelled|aborted|sigint/i.test(error.message))
 	);
+}
+
+/**
+ * Attempts to resolve a GitHub token from the GitHub CLI (`gh auth token`).
+ * Returns undefined if `gh` is not installed or not authenticated.
+ */
+async function resolveGhAuthToken(): Promise<string | undefined> {
+	try {
+		const { stdout } = await execa("gh", ["auth", "token"]);
+		const token = stdout.trim();
+		return token.length > 0 ? token : undefined;
+	} catch {
+		return undefined;
+	}
 }
 
 async function tryReadFile(filePath: string): Promise<string | undefined> {
