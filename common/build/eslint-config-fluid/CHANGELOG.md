@@ -72,7 +72,7 @@ The `@eslint-react` plugin uses `react-x` for its settings namespace instead of 
 `settings.react` configuration for React version detection, it should be changed to `settings["react-x"]`. The
 `recommended-typescript` preset configures `react-x.version: "detect"` automatically.
 
-## [9.0.0](https://github.com/microsoft/FluidFramework/releases/tag/eslint-config-fluid_v9.0_0)
+## [9.0.0](https://github.com/microsoft/FluidFramework/releases/tag/eslint-config-fluid_v9.0.0)
 
 ### Native ESLint 9 Flat Config (No FlatCompat)
 
@@ -197,7 +197,7 @@ The package now uses rules from [eslint-plugin-import-x](https://github.com/un-t
 eslint-plugin-import. Integrating this change will require renaming eslint disable comments and overrides, but the
 changes are mechanical.
 
-## [7.0.0](https://github.com/microsoft/FluidFramework/releases/tag/eslint-config-fluid_v7.0_0)
+## [7.0.0](https://github.com/microsoft/FluidFramework/releases/tag/eslint-config-fluid_v7.0.0)
 
 ### New Rules
 
@@ -251,14 +251,14 @@ Enables the following new rules as warnings (they will be promoted to errors in 
 - [@typescript-eslint/no-unsafe-function-type](https://typescript-eslint.io/rules/no-unsafe-function-type/)
 - [@typescript-eslint/no-wrapper-object-types](https://typescript-eslint.io/rules/no-wrapper-object-types/)
 
-## [6.0.1](https://github.com/microsoft/FluidFramework/releases/tag/eslint-config-fluid_v6.0_1)
+## [6.0.1](https://github.com/microsoft/FluidFramework/releases/tag/eslint-config-fluid_v6.0.1)
 
 Update dependencies on the following packages:
 
 - `@typescript-eslint/eslint-plugin` (from 7.0.0 to 7.18.0)
 - `@typescript-eslint/parser` (from 7.0.0 to 7.18.0)
 
-## [6.0.0](https://github.com/microsoft/FluidFramework/releases/tag/eslint-config-fluid_v6.0_0)
+## [6.0.0](https://github.com/microsoft/FluidFramework/releases/tag/eslint-config-fluid_v6.0.0)
 
 Adds the following [@typescript-eslint/no-restricted-imports](https://typescript-eslint.io/rules/no-restricted-imports/) rules:
 
@@ -267,7 +267,7 @@ Adds the following [@typescript-eslint/no-restricted-imports](https://typescript
 2. Don't import from parent index file.
     - E.g. prefer `import { Foo } from "./Foo.js";` over `import { Foo } from "./index.js";`
 
-## [5.8.0](https://github.com/microsoft/FluidFramework/releases/tag/eslint-config-fluid_v5.8_0)
+## [5.8.0](https://github.com/microsoft/FluidFramework/releases/tag/eslint-config-fluid_v5.8.0)
 
 Promotes the following rules from the `strict` ruleset to the `recommended` ruleset:
 
