@@ -230,7 +230,7 @@ module.exports = {
 			inputGlobs: [
 				"scripts/print-configs.ts",
 				"flat.mts",
-				"library/**/*.{mts,ts}",
+				"library/**/*.{mts,ts,mjs}",
 				"src/**/*.ts",
 				"src/**/*.tsx",
 				"*.js",
