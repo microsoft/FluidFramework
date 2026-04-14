@@ -67,8 +67,8 @@ SharedTree schema use both of these tools together, using `class`. In this examp
   - The expression `Foo` is the schema. This works well as when the user needs to refer at runtime to a type of node, they use the schema to do so.
   - The type of the schema is `typeof Foo`: this is usually inferred when passing the schema into something, but occasionally explicitly stated.
 - The type `Foo` is the node:
-  - The type named `Foo` is the node type, avoiding the need to add extra declaration.
-  - The runtime type of the Node comes from the non-static members of the class/schema `Foo`, and can easily be customized inline expressing type and runtime data together as class members.
+  - The type named `Foo` is the node type, avoiding the need to add an extra declaration.
+  - This type comes from the non-static members of the class/schema `Foo`, and can be extended with additional class members to express type and runtime data together.
 
 For recursive schema to be possible, occasionally schema are referenced like `() => Foo` so they can be lazy and permit forward references.
 
@@ -117,18 +117,18 @@ To add SharedTree schema to such a setup:
 An exhaustive list of things which can be done to mitigate issues related to use of SharedTree schema with `isolatedDeclarations`.
 The recommendations above use a subset of these approaches.
 
-- Ways to reduce the pain of having to restate types from expressions:
-  - Add types that mirror the runtime APIs, making it practical (and supported — no `@system` types or unnamable types) to express any type explicitly without relying on inferred expression types. SharedTree tries to provide such types, but more may be helpful.
-  - Export fewer types:
-    - Put the code that uses a schema in the same file as the schema (often inside its class as an implementation of an interface for that class)
-    - Type-erase the complex types (which include the actual shared tree fields and such) before exporting them. See `eraseSchemaDetails()`
-    - If using mitigation #2 (below), this changes the applicable scope to module, tsconfig, or package level.
-- Reduce where the rules of `isolatedDeclarations` apply.
-  - Split up packages or add more tsconfig files within them to allow finer-grained scoping of this option.
-  - If the goal of using `isolatedDeclarations` is to reduce the critical path for type checking packages, then realistically this restriction only needs to apply to types transitively reachable from package exports, not all module exports. Find some way to do that:
-    - Use `stripInternal` then mark erroring non-package-exported APIs with `@internal`. Optionally use [API Extractor](https://api-extractor.com/) to ensure types reachable from the non-`@internal` types are not tagged `@internal`.
-    - Get TypeScript to add such an option. It would be nice if TypeScript had a way to restrict the `.d.ts` emission it does to only things reachable from an entry point (or set of entry points) or (as an alternative feature) limit it to types directly in some entry point (and error for referenced types not included in that entry point). If TypeScript had such a feature, it would help with lots of things and would pair well with an option for only applying `isolatedDeclarations` restrictions to types that are included in the entry points. We would also need to confirm the third-party tool being used to generate the `.d.ts` file also could work in these cases.
-    - Use a tool other than TypeScript to enforce `isolatedDeclarations` that reflects your actual needs. For example, whatever tool is actually generating package `.d.ts` files, ensure it does not object to code that violates this rule if it's not package-exported (similar to above), then use that tool itself to enforce the code will work for it rather than also having TypeScript enforce it. Might pair well with a lint rule to flag incompatible exported types (which could be suppressed for non-package-exported ones).
+1. Reduce the pain of having to restate types from expressions:
+    - Add types that mirror the runtime APIs, making it practical (and supported — no `@system` types or unnamable types) to express any type explicitly without relying on inferred expression types. SharedTree tries to provide such types, but more may be helpful.
+    - Export fewer types:
+        - Put the code that uses a schema in the same file as the schema (often inside its class as an implementation of an interface for that class)
+        - Type-erase the complex types (which include the actual shared tree fields and such) before exporting them. See `eraseSchemaDetails()`
+        - If using mitigation #2 (below), that changes the scopes from which these exports should be minimized.
+2. Reduce where the rules of `isolatedDeclarations` apply:
+    - Split up packages or add more tsconfig files within them to allow finer-grained scoping of this option.
+    - If the goal of using `isolatedDeclarations` is to reduce the critical path for type checking packages, then realistically this restriction only needs to apply to types transitively reachable from package exports, not all module exports. Find some way to do that:
+        - Use `stripInternal` then mark erroring non-package-exported APIs with `@internal`. Optionally use [API Extractor](https://api-extractor.com/) to ensure types reachable from the non-`@internal` types are not tagged `@internal`.
+        - Get TypeScript to add such an option. It would be nice if TypeScript had a way to restrict the `.d.ts` emission it does to only things reachable from an entry point (or set of entry points) or (as an alternative feature) limit it to types directly in some entry point (and error for referenced types not included in that entry point). If TypeScript had such a feature, it would help with lots of things and would pair well with an option for only applying `isolatedDeclarations` restrictions to types that are included in the entry points. We would also need to confirm the third-party tool being used to generate the `.d.ts` file also could work in these cases.
+        - Use a tool other than TypeScript to enforce `isolatedDeclarations` that reflects your actual needs. For example, whatever tool is actually generating package `.d.ts` files, ensure it does not object to code that violates this rule if it's not package-exported (similar to above), then use that tool itself to enforce the code will work for it rather than also having TypeScript enforce it. Might pair well with a lint rule to flag incompatible exported types (which could be suppressed for non-package-exported ones).
 
 ### Solutions:
 
@@ -138,7 +138,7 @@ The recommendations above use a subset of these approaches.
 - Don't use `isolatedDeclarations` for the tsconfigs that contain files that export schema.
   - This could be parts of packages, or whole packages. Applying this to portions of packages that contain no package-exported types might handle some use cases well.
   - You can still do a two-pass build, with the first pass just emitting `.d.ts` files. For projects exporting SharedTree schema, do this using TypeScript instead of a third-party tool, and ensure that the dependencies of these projects have their types emitted first (in dependency order). The second type-checking pass can still be fully parallel.
-- Handwrite all those types, duplicating the data expressed in the expressions (ideally paired with the above mitigations to make this suck less).
+- Handwrite all those types, duplicating the data expressed in the expressions (ideally paired with the above mitigations to make this less painful).
 - Use a code generator to generate the needed types. The TypeScript compiler with `emitDeclarationOnly` is such a tool.
   - This can replace whatever tool was being used to emit `.d.ts` files other than TypeScript for these cases.
   - This could generate code that is used by whatever tool would process the TypeScript to emit the `.d.ts`, instead of the developer-written source files.
