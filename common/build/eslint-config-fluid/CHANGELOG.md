@@ -1,6 +1,6 @@
 # @fluidframework/eslint-config-fluid Changelog
 
-## (Unreleased)
+## [10.0.0](https://github.com/microsoft/FluidFramework/releases/tag/eslint-config-fluid_v10.0.0)
 
 - Adds [no-only-tests/no-only-tests](https://github.com/levibuzolic/eslint-plugin-no-only-tests) rule to ensure tests configured with `.only` are not checked in.
 
