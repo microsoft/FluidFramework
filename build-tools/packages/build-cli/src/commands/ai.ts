@@ -275,7 +275,7 @@ export default class AiCommand extends BaseCommand<typeof AiCommand> {
 			}
 		}
 
-		this.verbose("launcher-prompt.md not found; using hardcoded fallback prompt.");
+		this.warn("launcher-prompt.md not found; using hardcoded fallback prompt.");
 		return {
 			template:
 				"You are a launcher assistant. Ask the user what they want to do, " +
