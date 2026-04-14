@@ -31,8 +31,8 @@ import { permittedImports, restrictedImportPaths, testFilePatterns } from "../co
 import type { FlatConfigArray } from "./base.mjs";
 
 const reactFilePatterns = ["**/*.jsx", "**/*.tsx"] as const;
-const reactRecommendedTypeScript = eslintReact.configs["recommended-typescript"] as Linter.Config;
-const reactHooksRecommended = reactHooksPlugin.configs.flat.recommended as Linter.Config;
+const reactRecommendedTypeScript = eslintReact.configs["recommended-typescript"] satisfies Linter.Config;
+const reactHooksRecommended = reactHooksPlugin.configs.flat.recommended satisfies Linter.Config;
 
 /**
  * eslint-plugin-depend configuration.
@@ -144,7 +144,6 @@ export const reactConfig = [
 		files: [...reactFilePatterns],
 		rules: {
 			...reactRecommendedTypeScript.rules,
-			// Preserve important rule coverage that was enforced by eslint-plugin-react.
 			"@eslint-react/dom/no-unsafe-target-blank": "error",
 			"@eslint-react/no-children-prop": "error",
 			"@eslint-react/no-useless-fragment": "error",

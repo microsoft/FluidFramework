@@ -72,11 +72,6 @@ The `@eslint-react` plugin uses `react-x` for its settings namespace instead of 
 `settings.react` configuration for React version detection, it should be changed to `settings["react-x"]`. The
 `recommended-typescript` preset configures `react-x.version: "detect"` automatically.
 
-### print-configs script runner changed
-
-The `print-configs` script now uses `jiti` instead of `tsx`. This fixes a CJS resolution issue with ESM-only packages
-like `@eslint-react/eslint-plugin`. `jiti` is already used by ESLint itself for config loading.
-
 ## [9.0.0](https://github.com/microsoft/FluidFramework/releases/tag/eslint-config-fluid_v9.0_0)
 
 ### Native ESLint 9 Flat Config (No FlatCompat)
