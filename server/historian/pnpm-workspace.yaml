@@ -11,9 +11,6 @@
 packages:
   - "packages/*"
 
-# These entries must be duplicated from package.json due to a pnpm bug where onlyBuiltDependencies
-# in package.json is not respected when the workspace has its own lockfile.
-# See: https://github.com/pnpm/pnpm/issues/9082
 onlyBuiltDependencies:
   - core-js
   - node-rdkafka
@@ -27,3 +24,74 @@ resolutionMode: highest
 blockExoticSubdeps: true
 trustPolicy: no-downgrade
 strictDepBuilds: true
+
+overrides:
+  # express: overridden to ^4.22.1 to resolve a known vulnerability in express 4.21.2.
+  "express@>=4 <5": "^4.22.1"
+
+  # diff: overridden to patched versions to resolve a known ReDoS vulnerability. diff@7.x has no fix
+  # so it is bumped to 8.0.3.
+  "diff@>=5 <6": "^5.2.2"
+  "diff@>=7 <8": "^8.0.3"
+  "diff@>=8 <9": "^8.0.3"
+
+  "@types/node": "~22.19.17"
+
+  # eslint is overridden to v9 for flat config support across all packages.
+  eslint: "~9.39.2"
+
+  jws: "^3.2.3"
+
+  # mongodb>@aws-sdk/credential-providers: not needed and brings in a large transitive dependency tree
+  # (including fast-xml-parser). Dropped with '-'.
+  "mongodb>@aws-sdk/credential-providers": "-"
+
+  nanoid: "^3.3.9"
+
+  # oclif includes some AWS-related features, but we don't use them, so we drop those dependencies
+  # with '-'. This helps reduce lockfile churn since the deps release very frequently.
+  "oclif>@aws-sdk/client-cloudfront": "-"
+  "oclif>@aws-sdk/client-s3": "-"
+
+  # js-yaml: overridden to fix a known vulnerability (prototype pollution via merge keys).
+  "js-yaml@<4": "^3.14.2"
+  "js-yaml@>=4": "^4.1.1"
+
+  # qs: overridden to ^6.15.0 to resolve a known vulnerability in older versions.
+  qs: "^6.15.0"
+
+  # simple-git: overridden to ^3.32.3 to resolve a CG alert.
+  simple-git: "^3.32.3"
+
+  socket.io-parser: "^4.2.6"
+
+  # tar: overridden to ^7.5.11 to resolve multiple security vulnerabilities in tar 6.x (EOL, no
+  # backport).
+  tar: "^7.5.11"
+
+  # sharp <0.32.6 has a vulnerability that Component Governance flags
+  # (https://github.com/advisories/GHSA-54xq-cgqr-rpm3). It's a transitive dependency through
+  # jssm-viz-cli, which hasn't updated to a version with the fix.
+  sharp: "^0.33.2"
+
+  # minimatch: overridden to patched versions to resolve known security vulnerabilities across all
+  # major version ranges.
+  "minimatch@>=3 <4": "^3.1.5"
+  "minimatch@>=5 <6": "^5.1.9"
+  "minimatch@>=6 <7": "^6.2.3"
+  "minimatch@>=7 <8": "^7.4.9"
+  "minimatch@>=8 <9": "^8.0.7"
+  "minimatch@>=9 <10": "^9.0.9"
+  "minimatch@>=10 <11": "^10.2.4"
+
+  # serialize-javascript: overridden to ^7.0.4 to resolve GHSA-5c6j-r48x-rmvq. No 6.x fix exists;
+  # 7.x is API-compatible (only drops Node <20 support).
+  "serialize-javascript@>=6 <7": "^7.0.4"
+
+  # picomatch: overridden to patched versions to resolve a known security vulnerability.
+  "picomatch@>=2 <3": "^2.3.2"
+  "picomatch@>=4 <5": "^4.0.4"
+
+  # zookeeper: pinned to 7.x since earlier versions fail to compile on Node 22 due to deprecated NAN
+  # APIs, and may be brought in transitively.
+  zookeeper: "^7.2.0"
