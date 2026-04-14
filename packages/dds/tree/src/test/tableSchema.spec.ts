@@ -2828,10 +2828,7 @@ describe("TableFactory unit tests", () => {
 				key: { row: "row-0", column: "column-0" },
 				cell: { value: "Hello" },
 			});
-			assert.equal(
-				view.root.getCell({ row: "row-0", column: "column-0" })?.value,
-				"Hello",
-			);
+			assert.equal(view.root.getCell({ row: "row-0", column: "column-0" })?.value, "Hello");
 
 			undoStack.pop()?.revert();
 			assert.equal(view.root.getCell({ row: "row-0", column: "column-0" }), undefined);
@@ -2857,16 +2854,10 @@ describe("TableFactory unit tests", () => {
 				key: { row: "row-0", column: "column-0" },
 				cell: { value: "updated" },
 			});
-			assert.equal(
-				view.root.getCell({ row: "row-0", column: "column-0" })?.value,
-				"updated",
-			);
+			assert.equal(view.root.getCell({ row: "row-0", column: "column-0" })?.value, "updated");
 
 			undoStack.pop()?.revert();
-			assert.equal(
-				view.root.getCell({ row: "row-0", column: "column-0" })?.value,
-				"original",
-			);
+			assert.equal(view.root.getCell({ row: "row-0", column: "column-0" })?.value, "original");
 
 			unsubscribe();
 		});
@@ -2889,10 +2880,7 @@ describe("TableFactory unit tests", () => {
 			assert.equal(view.root.getCell({ row: "row-0", column: "column-0" }), undefined);
 
 			undoStack.pop()?.revert();
-			assert.equal(
-				view.root.getCell({ row: "row-0", column: "column-0" })?.value,
-				"Hello",
-			);
+			assert.equal(view.root.getCell({ row: "row-0", column: "column-0" })?.value, "Hello");
 
 			unsubscribe();
 		});
@@ -2962,10 +2950,7 @@ describe("TableFactory unit tests", () => {
 				rows: [new Row({ id: "row-0", cells: { "column-0": { value: "Hello" } } })],
 			});
 			assert.equal(view.root.rows.length, 1);
-			assert.equal(
-				view.root.getCell({ row: "row-0", column: "column-0" })?.value,
-				"Hello",
-			);
+			assert.equal(view.root.getCell({ row: "row-0", column: "column-0" })?.value, "Hello");
 
 			undoStack.pop()?.revert();
 			assert.equal(view.root.rows.length, 0);
