@@ -120,15 +120,16 @@ class RebaseQueue {
 		private readonly metadata: RevisionMetadataSource,
 		private readonly moveEffects: RebaseNodeManager,
 	) {
-		const queryFunc: NodeRangeQueryFunc = (mark) => {
+		const baseQueryFunc: NodeRangeQueryFunc = (mark) => {
+			let count = mark.count;
 			if (isAttach(mark)) {
-				return moveEffects.getNewChangesForBaseAttach(getAttachedRootId(mark), mark.count)
-					.length;
+				return moveEffects.getNewChangesForBaseAttach(getAttachedRootId(mark), count).length;
 			} else if (isDetach(mark)) {
-				return moveEffects.doesBaseAttachNodes(getDetachedRootId(mark), mark.count).length;
+				const detachId = getDetachedRootId(mark);
+				count = moveEffects.doesBaseAttachNodes(detachId, count).length;
+				return moveEffects.getBaseRename(detachId, count).length;
 			}
 
-			let count = mark.count;
 			if (mark.type === "Rename") {
 				count = moveEffects.getNewRenameForBaseRename(mark.idOverride, count).length;
 			}
@@ -138,7 +139,7 @@ class RebaseQueue {
 				: moveEffects.doesBaseAttachNodes(mark.cellId, count).length;
 		};
 
-		this.baseMarks = new MarkQueue(baseMarks, queryFunc);
+		this.baseMarks = new MarkQueue(baseMarks, baseQueryFunc);
 		this.newMarks = new MarkQueue(newMarks, (mark) => mark.count);
 		this.baseMarksCellSources = cellSourcesFromMarks(baseMarks, getInputCellId);
 		this.newMarksCellSources = cellSourcesFromMarks(newMarks, getInputCellId);
