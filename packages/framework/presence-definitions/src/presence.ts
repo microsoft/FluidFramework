@@ -26,14 +26,14 @@ import type {
  * identify clients in a session. {@link Attendee.attendeeId} will provide
  * the session ID.
  *
- * @beta
+ * @public
  */
 export type AttendeeId = SessionId & { readonly AttendeeId: "AttendeeId" };
 
 /**
  * The connection status of the {@link Attendee}.
  *
- * @beta
+ * @public
  */
 export const AttendeeStatus = {
 	/**
@@ -57,7 +57,7 @@ export const AttendeeStatus = {
  * - State changes are kept locally and communicated to others upon reconnect.
  * - Notification requests are discarded (silently).
  *
- * @beta
+ * @public
  */
 export type AttendeeStatus = (typeof AttendeeStatus)[keyof typeof AttendeeStatus];
 
@@ -77,7 +77,7 @@ export type AttendeeStatus = (typeof AttendeeStatus)[keyof typeof AttendeeStatus
  * Audience, and Quorum representations of clients and users.
  *
  * @sealed
- * @beta
+ * @public
  */
 export interface Attendee<SpecificAttendeeId extends AttendeeId = AttendeeId> {
 	/**
@@ -110,7 +110,7 @@ export interface Attendee<SpecificAttendeeId extends AttendeeId = AttendeeId> {
  * Events from {@link Presence.attendees}.
  *
  * @sealed
- * @beta
+ * @public
  */
 export interface AttendeesEvents {
 	/**
@@ -132,7 +132,7 @@ export interface AttendeesEvents {
  * Events from {@link Presence}.
  *
  * @sealed
- * @beta
+ * @public
  */
 export interface PresenceEvents {
 	/**
@@ -159,7 +159,7 @@ export interface PresenceEvents {
  * under {@link StatesWorkspace}s.
  *
  * @sealed
- * @beta
+ * @public
  */
 export interface Presence {
 	/**

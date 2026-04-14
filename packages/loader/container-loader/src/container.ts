@@ -101,7 +101,6 @@ import {
 	loggerToMonitoringContext,
 	type ITelemetryErrorEventExt,
 } from "@fluidframework/telemetry-utils/internal";
-import structuredClone from "@ungap/structured-clone";
 import { v4 as uuid } from "uuid";
 
 import {
