@@ -8,12 +8,13 @@ import type { PackageJson } from "@fluidframework/build-tools";
 import { Flags } from "@oclif/core";
 import fs from "fs-extra";
 import type { ExportSpecifierStructure, Node } from "ts-morph";
-import { ModuleKind, Project, ScriptKind } from "ts-morph";
+import { ScriptKind } from "ts-morph";
 
 import type { CommandLogger } from "../../logging.js";
 import { ApiLevel, isLegacy } from "../apiLevel.js";
 import type { ExportData, Node10CompatExportData } from "../packageExports.js";
 import { queryTypesResolutionPathsFromPackageExports } from "../packageExports.js";
+import { createNode16TsMorphProject } from "../tsMorphProject.js";
 import { getApiExports, getPackageDocumentationText } from "../typescriptApi.js";
 import { BaseCommand } from "./base.js";
 
@@ -540,19 +541,11 @@ async function generateEntrypoints(
 
 	log.info(`Processing: ${mainEntrypoint}`);
 
-	const project = new Project({
-		skipAddingFilesFromTsConfig: true,
-		// Note: it is likely better to leverage a tsconfig file from package rather than
-		// assume Node16 and no other special setup. However, currently configs are pretty
-		// standard with simple Node16 module specification and using a tsconfig for just
-		// part of its setting may be confusing to document and keep tidy with dual-emit.
-		compilerOptions: {
-			module: ModuleKind.Node16,
-			// Without this, JSX files are not properly handled by ts-morph. "React" is the
-			// value we use in our base config, so it should be a safe value.
-			jsx: 2 /* JSXEmit.React */,
-			customConditions,
-		},
+	const project = createNode16TsMorphProject({
+		// Without this, JSX files are not properly handled by ts-morph. "React" is the
+		// value we use in our base config, so it should be a safe value.
+		jsx: 2 /* JSXEmit.React */,
+		customConditions,
 	});
 	const mainSourceFile = project.addSourceFileAtPath(mainEntrypoint);
 	const exports = getApiExports(mainSourceFile, "throwForMissing", log);

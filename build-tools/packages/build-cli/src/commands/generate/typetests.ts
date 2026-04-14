@@ -20,15 +20,14 @@ import { readJson } from "fs-extra/esm";
 import { major, minor, patch } from "semver";
 import {
 	type JSDoc,
-	ModuleKind,
 	type NameableNodeSpecific,
 	type NamedNodeSpecificBase,
 	Node,
-	Project,
 	type SourceFile,
 	SyntaxKind,
 } from "ts-morph";
 import { PackageCommand } from "../../BasePackageCommand.js";
+import { createNode16TsMorphProject } from "../../library/tsMorphProject.js";
 import { unscopedPackageNameString } from "../../library/commands/constants.js";
 import { ensureDevDependencyExists } from "../../library/package.js";
 import { getTypesPathFromPackage } from "../../library/packageExports.js";
@@ -561,13 +560,7 @@ function getTags(docs: JSDoc[]): ReadonlySet<string> {
  * @returns The loaded source file.
  */
 export function loadTypesSourceFile(typesPath: string): SourceFile {
-	// Note that this does NOT load anything from tsconfig.
-	const project = new Project({
-		skipAddingFilesFromTsConfig: true,
-		compilerOptions: {
-			module: ModuleKind.Node16,
-		},
-	});
+	const project = createNode16TsMorphProject();
 
 	// The typesPath may be a symlink or junction, so resolve the real path
 	// before adding it to the project to ensure correct module resolutions.

@@ -9,8 +9,9 @@ import { existsSync } from "node:fs";
 import { readFile } from "node:fs/promises";
 import { Flags } from "@oclif/core";
 import * as JSON5 from "json5";
-import { type ImportDeclaration, ModuleKind, Project, type SourceFile } from "ts-morph";
+import { type ImportDeclaration, Project, type SourceFile } from "ts-morph";
 import { ApiLevel, isKnownApiLevel } from "../../library/apiLevel.js";
+import { createNode16TsMorphProject } from "../../library/tsMorphProject.js";
 import { BaseCommand } from "../../library/commands/base.js";
 import { getApiExports } from "../../library/typescriptApi.js";
 import type { CommandLogger } from "../../logging.js";
@@ -624,12 +625,7 @@ type NamedExportToPath = Map<string, ExportPath>;
 type MapData = Map<PackageName, NamedExportToPath>;
 
 class ApiLevelReader {
-	private readonly project = new Project({
-		skipAddingFilesFromTsConfig: true,
-		compilerOptions: {
-			module: ModuleKind.Node16,
-		},
-	});
+	private readonly project = createNode16TsMorphProject();
 
 	private readonly tempSource = this.project.createSourceFile("flub-fluid-importer-temp.ts");
 	private readonly map: Map<PackageName, NamedExportToPath | undefined>;
