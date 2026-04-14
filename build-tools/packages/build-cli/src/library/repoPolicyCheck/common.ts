@@ -4,6 +4,7 @@
  */
 
 import fs from "node:fs";
+import type { PackageJson } from "@fluidframework/build-tools";
 
 /**
  * each handler has a name for filtering and a match regex for matching which files it should resolve
@@ -36,4 +37,15 @@ export function readFile(file: string): string {
 
 export function writeFile(file: string, data: string): void {
 	fs.writeFileSync(file, data, { encoding: "utf8" });
+}
+
+/**
+ * Reads and parses a package.json file, returning the parsed JSON or an error string.
+ */
+export function readPackageJson(file: string): { json: PackageJson } | { error: string } {
+	try {
+		return { json: JSON.parse(readFile(file)) as PackageJson };
+	} catch {
+		return { error: `Error parsing JSON file: ${file}` };
+	}
 }

@@ -5,9 +5,8 @@
 
 import fs from "node:fs";
 import path from "node:path";
-import type { PackageJson } from "@fluidframework/build-tools";
 import { getFlubConfig } from "../../config.js";
-import { type Handler, readFile } from "./common.js";
+import { type Handler, readPackageJson } from "./common.js";
 
 const match = /(?:^|\/)pnpm-lock\.yaml$/i;
 export const handlers: Handler[] = [
@@ -20,12 +19,11 @@ export const handlers: Handler[] = [
 			const packageJsonFile = path.join(dirname, "package.json");
 			const manifest = getFlubConfig(root);
 
-			let json: PackageJson;
-			try {
-				json = JSON.parse(readFile(packageJsonFile)) as PackageJson;
-			} catch {
-				return `Error parsing JSON file: ${packageJsonFile}`;
+			const result = readPackageJson(packageJsonFile);
+			if ("error" in result) {
+				return result.error;
 			}
+			const json = result.json;
 
 			// Ignore any paths in the policy configuration.
 			// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions

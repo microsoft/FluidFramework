@@ -26,7 +26,7 @@ import {
 } from "../../config.js";
 import { Repository } from "../git.js";
 import { queryTypesResolutionPathsFromPackageExports } from "../packageExports.js";
-import { type Handler, readFile, writeFile } from "./common.js";
+import { type Handler, readFile, readPackageJson, writeFile } from "./common.js";
 
 const require = createRequire(import.meta.url);
 
@@ -366,9 +366,12 @@ async function ensurePrivatePackagesComputed(): Promise<Set<string>> {
 	const packageJsons = await repo.getFiles("**/package.json");
 
 	for (const filePath of packageJsons) {
-		const packageJson = JSON.parse(readFile(path.resolve(baseDir, filePath))) as PackageJson;
-		if (packageJson.private ?? false) {
-			computedPrivatePackages.add(packageJson.name);
+		const result = readPackageJson(path.resolve(baseDir, filePath));
+		if ("error" in result) {
+			continue;
+		}
+		if (result.json.private ?? false) {
+			computedPrivatePackages.add(result.json.name);
 		}
 	}
 
@@ -773,12 +776,11 @@ export const handlers: Handler[] = [
 		name: "npm-package-metadata-and-sorting",
 		match,
 		handler: async (file: string, gitRoot: string): Promise<string | undefined> => {
-			let json: PackageJson;
-			try {
-				json = JSON.parse(readFile(file)) as PackageJson;
-			} catch {
-				return `Error parsing JSON file: ${file}`;
+			const result = readPackageJson(file);
+			if ("error" in result) {
+				return result.error;
 			}
+			const json = result.json;
 
 			const ret: string[] = [];
 
@@ -868,12 +870,11 @@ export const handlers: Handler[] = [
 		name: "npm-strange-package-name",
 		match,
 		handler: async (file: string, root: string): Promise<string | undefined> => {
-			let json: PackageJson;
-			try {
-				json = JSON.parse(readFile(file)) as PackageJson;
-			} catch {
-				return `Error parsing JSON file: ${file}`;
+			const result = readPackageJson(file);
+			if ("error" in result) {
+				return result.error;
 			}
+			const json = result.json;
 
 			// "root" is the package name for monorepo roots, so ignore them
 			if (!packageIsFluidPackage(json.name, root) && json.name !== "root") {
@@ -891,12 +892,11 @@ export const handlers: Handler[] = [
 		name: "npm-private-packages",
 		match,
 		handler: async (file: string, root: string): Promise<string | undefined> => {
-			let json: PackageJson;
-			try {
-				json = JSON.parse(readFile(file)) as PackageJson;
-			} catch {
-				return `Error parsing JSON file: ${file}`;
+			const result = readPackageJson(file);
+			if ("error" in result) {
+				return result.error;
 			}
+			const json = result.json;
 
 			const privatePackages = await ensurePrivatePackagesComputed();
 			const errors: string[] = [];
@@ -929,12 +929,11 @@ export const handlers: Handler[] = [
 		name: "npm-package-readmes",
 		match,
 		handler: async (file: string): Promise<string | undefined> => {
-			let json: PackageJson;
-			try {
-				json = JSON.parse(readFile(file)) as PackageJson;
-			} catch {
-				return `Error parsing JSON file: ${file}`;
+			const result = readPackageJson(file);
+			if ("error" in result) {
+				return result.error;
 			}
+			const json = result.json;
 
 			const packageName = json.name;
 			const packageDir = path.dirname(file);
@@ -956,12 +955,11 @@ export const handlers: Handler[] = [
 			}
 		},
 		resolver: (file: string): { resolved: boolean; message?: string } => {
-			let json: PackageJson;
-			try {
-				json = JSON.parse(readFile(file)) as PackageJson;
-			} catch {
-				return { resolved: false, message: `Error parsing JSON file: ${file}` };
+			const result = readPackageJson(file);
+			if ("error" in result) {
+				return { resolved: false, message: result.error };
 			}
+			const json = result.json;
 
 			const packageName = json.name;
 			const packageDir = path.dirname(file);
@@ -1001,12 +999,11 @@ export const handlers: Handler[] = [
 		name: "npm-package-folder-name",
 		match,
 		handler: async (file: string): Promise<string | undefined> => {
-			let json: PackageJson;
-			try {
-				json = JSON.parse(readFile(file)) as PackageJson;
-			} catch {
-				return `Error parsing JSON file: ${file}`;
+			const result = readPackageJson(file);
+			if ("error" in result) {
+				return result.error;
 			}
+			const json = result.json;
 
 			const packageName = json.name;
 			const packageDir = path.dirname(file);
@@ -1029,12 +1026,11 @@ export const handlers: Handler[] = [
 		name: "npm-package-license",
 		match,
 		handler: async (file: string, root: string): Promise<string | undefined> => {
-			let json: PackageJson;
-			try {
-				json = JSON.parse(readFile(file)) as PackageJson;
-			} catch {
-				return `Error parsing JSON file: ${file}`;
+			const result = readPackageJson(file);
+			if ("error" in result) {
+				return result.error;
 			}
+			const json = result.json;
 
 			// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
 			if (json.private) {
@@ -1075,13 +1071,11 @@ export const handlers: Handler[] = [
 		name: "npm-package-json-prettier",
 		match,
 		handler: async (file: string): Promise<string | undefined> => {
-			let json: PackageJson;
-
-			try {
-				json = JSON.parse(readFile(file)) as PackageJson;
-			} catch {
-				return `Error parsing JSON file: ${file}`;
+			const result = readPackageJson(file);
+			if ("error" in result) {
+				return result.error;
 			}
+			const json = result.json;
 
 			const hasScriptsField = Object.prototype.hasOwnProperty.call(json, "scripts");
 			const missingScripts: string[] = [];
@@ -1170,13 +1164,11 @@ export const handlers: Handler[] = [
 		name: "npm-package-json-script-clean",
 		match,
 		handler: async (file: string): Promise<string | undefined> => {
-			let json: PackageJson;
-
-			try {
-				json = JSON.parse(readFile(file)) as PackageJson;
-			} catch {
-				return `Error parsing JSON file: ${file}`;
+			const result = readPackageJson(file);
+			if ("error" in result) {
+				return result.error;
 			}
+			const json = result.json;
 
 			const hasScriptsField = Object.prototype.hasOwnProperty.call(json, "scripts");
 			const missingScripts: string[] = [];
@@ -1205,13 +1197,11 @@ export const handlers: Handler[] = [
 				return;
 			}
 			const commandDep = new Map(commandPackages);
-			let json: PackageJson;
-
-			try {
-				json = JSON.parse(readFile(file)) as PackageJson;
-			} catch {
-				return `Error parsing JSON file: ${file}`;
+			const result = readPackageJson(file);
+			if ("error" in result) {
+				return result.error;
 			}
+			const json = result.json;
 
 			const hasScriptsField = Object.prototype.hasOwnProperty.call(json, "scripts");
 			const missingDeps: string[] = [];
@@ -1261,13 +1251,11 @@ export const handlers: Handler[] = [
 		name: "npm-package-json-scripts-args",
 		match,
 		handler: async (file: string): Promise<string | undefined> => {
-			let json: PackageJson;
-
-			try {
-				json = JSON.parse(readFile(file)) as PackageJson;
-			} catch {
-				return `Error parsing JSON file: ${file}`;
+			const result = readPackageJson(file);
+			if ("error" in result) {
+				return result.error;
 			}
+			const json = result.json;
 
 			const hasScriptsField = Object.prototype.hasOwnProperty.call(json, "scripts");
 			if (!hasScriptsField) {
@@ -1309,13 +1297,11 @@ export const handlers: Handler[] = [
 			// This rules enforces that if the package have test files (in 'src/test', excluding 'src/test/types'),
 			// or mocha/jest dependencies, it should have a test scripts so that the pipeline will pick it up
 
-			let json: PackageJson;
-
-			try {
-				json = JSON.parse(readFile(file)) as PackageJson;
-			} catch {
-				return `Error parsing JSON file: ${file}`;
+			const result = readPackageJson(file);
+			if ("error" in result) {
+				return result.error;
 			}
+			const json = result.json;
 
 			const packageDir = path.dirname(file);
 			const { scripts } = json;
@@ -1358,13 +1344,11 @@ export const handlers: Handler[] = [
 			// This rule enforces that because the pipeline split running these test in different steps, each project
 			// has the split set up property (into test:mocha, test:jest and test:realsvc). Release groups that don't
 			// have splits in the pipeline is excluded in the "handlerExclusions" in the fluidBuild.config.cjs
-			let json: PackageJson;
-
-			try {
-				json = JSON.parse(readFile(file)) as PackageJson;
-			} catch {
-				return `Error parsing JSON file: ${file}`;
+			const result = readPackageJson(file);
+			if ("error" in result) {
+				return result.error;
 			}
+			const json = result.json;
 
 			const { scripts } = json;
 			if (scripts === undefined) {
@@ -1404,12 +1388,11 @@ export const handlers: Handler[] = [
 		match,
 		handler: async (file: string): Promise<string | undefined> => {
 			// This rule enforces that mocha will use a config file and setup both the console, json and xml reporters.
-			let json: PackageJson;
-			try {
-				json = JSON.parse(readFile(file)) as PackageJson;
-			} catch {
-				return `Error parsing JSON file: ${file}`;
+			const result = readPackageJson(file);
+			if ("error" in result) {
+				return result.error;
 			}
+			const json = result.json;
 
 			const { scripts } = json;
 			if (scripts === undefined) {
@@ -1441,13 +1424,11 @@ export const handlers: Handler[] = [
 		match,
 		handler: async (file: string): Promise<string | undefined> => {
 			// This rule enforces that jest will use a config file and setup both the default (console) and junit reporters.
-			let json: PackageJson;
-
-			try {
-				json = JSON.parse(readFile(file)) as PackageJson;
-			} catch {
-				return `Error parsing JSON file: ${file}`;
+			const result = readPackageJson(file);
+			if ("error" in result) {
+				return result.error;
 			}
+			const json = result.json;
 
 			const { scripts } = json;
 			if (scripts === undefined) {
@@ -1507,13 +1488,11 @@ export const handlers: Handler[] = [
 			// Note that setting for type is not checked. Presence of the field indicates that
 			// some thought has been put in place. The package might be CJS first and ESM second
 			// with a secondary package.json specifying "type": "module" or use .mjs extensions.
-			let json: PackageJson;
-
-			try {
-				json = JSON.parse(readFile(file)) as PackageJson;
-			} catch {
-				return `Error parsing JSON file: ${file}`;
+			const result = readPackageJson(file);
+			if ("error" in result) {
+				return result.error;
 			}
+			const json = result.json;
 
 			const { scripts } = json;
 			if (scripts === undefined) {
@@ -1542,13 +1521,11 @@ export const handlers: Handler[] = [
 		match,
 		handler: async (file: string): Promise<string | undefined> => {
 			// This rule enforces the "clean" script will delete all the build and test output
-			let json: PackageJson;
-
-			try {
-				json = JSON.parse(readFile(file)) as PackageJson;
-			} catch {
-				return `Error parsing JSON file: ${file}`;
+			const result = readPackageJson(file);
+			if ("error" in result) {
+				return result.error;
 			}
+			const json = result.json;
 
 			const { scripts } = json;
 			if (scripts === undefined) {
@@ -1608,13 +1585,11 @@ export const handlers: Handler[] = [
 		match,
 		handler: async (file: string): Promise<string | undefined> => {
 			// This rule enforces each package has a types field in its package.json
-			let json: PackageJson;
-
-			try {
-				json = JSON.parse(readFile(file)) as PackageJson;
-			} catch {
-				return `Error parsing JSON file: ${file}`;
+			const result = readPackageJson(file);
+			if ("error" in result) {
+				return result.error;
 			}
+			const json = result.json;
 
 			if (
 				// Ignore private packages...
@@ -1638,13 +1613,11 @@ export const handlers: Handler[] = [
 		name: "npm-package-exports-field",
 		match,
 		handler: async (file: string): Promise<string | undefined> => {
-			let json: PackageJson;
-
-			try {
-				json = JSON.parse(readFile(file)) as PackageJson;
-			} catch {
-				return `Error parsing JSON file: ${file}`;
+			const result = readPackageJson(file);
+			if ("error" in result) {
+				return result.error;
 			}
+			const json = result.json;
 
 			if (!shouldCheckExportsField(json)) {
 				return;
@@ -1741,13 +1714,11 @@ export const handlers: Handler[] = [
 		name: "npm-package-exports-apis-linted",
 		match,
 		handler: async (file: string): Promise<string | undefined> => {
-			let packageJson: PackageJson;
-
-			try {
-				packageJson = JSON.parse(readFile(file)) as PackageJson;
-			} catch {
-				return `Error parsing JSON file: ${file}`;
+			const result = readPackageJson(file);
+			if ("error" in result) {
+				return result.error;
 			}
+			const packageJson = result.json;
 
 			// Only public packages' APIs must be linted
 			if (packageJson.private ?? false) {
@@ -1854,12 +1825,11 @@ export const handlers: Handler[] = [
 			packageJsonFilePath: string,
 			rootDirectoryPath: string,
 		): Promise<string | undefined> => {
-			let packageJson: PackageJson;
-			try {
-				packageJson = JSON.parse(readFile(packageJsonFilePath)) as PackageJson;
-			} catch {
-				return `Error parsing JSON file: ${packageJsonFilePath}`;
+			const result = readPackageJson(packageJsonFilePath);
+			if ("error" in result) {
+				return result.error;
 			}
+			const packageJson = result.json;
 
 			// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
 			if (packageJson.private) {

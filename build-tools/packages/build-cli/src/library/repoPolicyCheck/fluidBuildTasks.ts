@@ -21,7 +21,7 @@ import {
 import * as semver from "semver";
 import type { TsConfigJson } from "type-fest";
 import { getFlubConfig } from "../../config.js";
-import { type Handler, readFile } from "./common.js";
+import { type Handler, readPackageJson } from "./common.js";
 import { FluidBuildDatabase } from "./fluidBuildDatabase.js";
 
 /**
@@ -767,12 +767,11 @@ function buildDepsHandler(
 	root: string,
 	check: (context: BuildDepsCallbackContext) => string | undefined,
 ): string | undefined {
-	let json: PackageJson;
-	try {
-		json = JSON.parse(readFile(file)) as PackageJson;
-	} catch {
-		return `Error parsing JSON file: ${file}`;
+	const result = readPackageJson(file);
+	if ("error" in result) {
+		return result.error;
 	}
+	const json = result.json;
 
 	if (!isFluidBuildEnabled(root, json)) {
 		return;
@@ -826,12 +825,11 @@ export const handlers: Handler[] = [
 		name: "fluid-build-tasks-eslint",
 		match,
 		handler: async (file: string, root: string): Promise<string | undefined> => {
-			let json: PackageJson;
-			try {
-				json = JSON.parse(readFile(file)) as PackageJson;
-			} catch {
-				return `Error parsing JSON file: ${file}`;
+			const result = readPackageJson(file);
+			if ("error" in result) {
+				return result.error;
 			}
+			const json = result.json;
 
 			if (!isFluidBuildEnabled(root, json)) {
 				return;
