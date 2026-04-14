@@ -111,72 +111,83 @@ describeCompat(
 		it("handles remain valid across multiple incremental summaries when parent chunks change", async () => {
 			const { container, view } = await createContainerAndTree();
 			const summarizer = await createTestSummarizer(container);
+			let container2: IContainer | undefined;
+			try {
+				await provider.ensureSynchronized();
+				await summarizeNow(summarizer);
 
-			await provider.ensureSynchronized();
-			await summarizeNow(summarizer);
+				// Mutate the "items" map (depth 1) — re-encodes the outer chunk.
+				// The "tags" map (depth 2) is unchanged and becomes a handle.
+				const item1 = view.root.items.get("item1");
+				assert(item1 !== undefined, "item1 not found");
+				item1.itemName = "Item 1 - updated";
 
-			// Mutate the "items" map (depth 1) — re-encodes the outer chunk.
-			// The "tags" map (depth 2) is unchanged and becomes a handle.
-			const item1 = view.root.items.get("item1");
-			assert(item1 !== undefined, "item1 not found");
-			item1.itemName = "Item 1 - updated";
+				await provider.ensureSynchronized();
+				await summarizeNow(summarizer);
 
-			await provider.ensureSynchronized();
-			await summarizeNow(summarizer);
+				// Mutate again — the outer chunk gets a new referenceId. The child "tags"
+				// handle must now point into the second summary. Before the fix the stale
+				// summaryPath caused "Cannot read properties of undefined (reading 'trees')".
+				item1.itemName = "Item 1 - updated again";
 
-			// Mutate again — the outer chunk gets a new referenceId. The child "tags"
-			// handle must now point into the second summary. Before the fix the stale
-			// summaryPath caused "Cannot read properties of undefined (reading 'trees')".
-			item1.itemName = "Item 1 - updated again";
+				await provider.ensureSynchronized();
+				await assert.doesNotReject(
+					summarizeNow(summarizer),
+					"Third summary should succeed — handle paths must be recomputed correctly",
+				);
 
-			await provider.ensureSynchronized();
-			await assert.doesNotReject(
-				summarizeNow(summarizer),
-				"Third summary should succeed — handle paths must be recomputed correctly",
-			);
-
-			const container2 = await provider.loadTestContainer(testContainerConfig);
-			const dataObject2 = await getContainerEntryPointBackCompat<ITestFluidObject>(container2);
-			const tree2 = await dataObject2.getSharedObject<ITree>(treeId);
-			const view2 = tree2.viewWith(new TreeViewConfiguration({ schema: Workspace }));
-			assert.strictEqual(
-				view2.root.items.get("item1")?.itemName,
-				"Item 1 - updated again",
-				"Loaded document should reflect the latest mutation",
-			);
+				container2 = await provider.loadTestContainer(testContainerConfig);
+				const dataObject2 =
+					await getContainerEntryPointBackCompat<ITestFluidObject>(container2);
+				const tree2 = await dataObject2.getSharedObject<ITree>(treeId);
+				const view2 = tree2.viewWith(new TreeViewConfiguration({ schema: Workspace }));
+				assert.strictEqual(
+					view2.root.items.get("item1")?.itemName,
+					"Item 1 - updated again",
+					"Loaded document should reflect the latest mutation",
+				);
+			} finally {
+				container2?.close();
+				summarizer.close();
+				container.close();
+			}
 		});
 
 		it("handles remain valid when depth-0 changes cause copy propagation of tracking entries", async () => {
 			const { container, view } = await createContainerAndTree();
 			const summarizer = await createTestSummarizer(container);
+			try {
+				await provider.ensureSynchronized();
+				await summarizeNow(summarizer);
 
-			await provider.ensureSynchronized();
-			await summarizeNow(summarizer);
+				// Change at depth 1 — re-encodes items chunk, tags becomes a handle.
+				const item1 = view.root.items.get("item1");
+				assert(item1 !== undefined, "item1 not found");
+				item1.itemName = "changed-1";
 
-			// Change at depth 1 — re-encodes items chunk, tags becomes a handle.
-			const item1 = view.root.items.get("item1");
-			assert(item1 !== undefined, "item1 not found");
-			item1.itemName = "changed-1";
+				await provider.ensureSynchronized();
+				await summarizeNow(summarizer);
 
-			await provider.ensureSynchronized();
-			await summarizeNow(summarizer);
+				// Change at depth 0 only — all incremental chunks become handles and
+				// completeSummary copies their tracking entries forward.
+				view.root.label = "v2";
 
-			// Change at depth 0 only — all incremental chunks become handles and
-			// completeSummary copies their tracking entries forward.
-			view.root.label = "v2";
+				await provider.ensureSynchronized();
+				await summarizeNow(summarizer);
 
-			await provider.ensureSynchronized();
-			await summarizeNow(summarizer);
+				// Change at depth 1 again — the parent chunk gets a new referenceId.
+				// Child handles copied forward in the previous summary must still resolve.
+				item1.itemName = "changed-2";
 
-			// Change at depth 1 again — the parent chunk gets a new referenceId.
-			// Child handles copied forward in the previous summary must still resolve.
-			item1.itemName = "changed-2";
-
-			await provider.ensureSynchronized();
-			await assert.doesNotReject(
-				summarizeNow(summarizer),
-				"Summary after copy-propagated tracking entries should succeed",
-			);
+				await provider.ensureSynchronized();
+				await assert.doesNotReject(
+					summarizeNow(summarizer),
+					"Summary after copy-propagated tracking entries should succeed",
+				);
+			} finally {
+				summarizer.close();
+				container.close();
+			}
 		});
 	},
 );
