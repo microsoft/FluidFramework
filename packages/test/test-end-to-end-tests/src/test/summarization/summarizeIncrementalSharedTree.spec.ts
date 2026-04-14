@@ -21,6 +21,7 @@ import type { ITree, TreeView } from "@fluidframework/tree";
 import {
 	configuredSharedTree,
 	FluidClientVersion,
+	ForestTypeOptimized,
 	incrementalEncodingPolicyForAllowedTypes,
 	incrementalSummaryHint,
 	SchemaFactoryAlpha,
@@ -58,6 +59,7 @@ const viewConfig = new TreeViewConfigurationAlpha({ schema: Workspace });
 // Factory configured for incremental summarization
 // ---------------------------------------------------------------------------
 const ConfiguredSharedTree = configuredSharedTree({
+	forest: ForestTypeOptimized,
 	treeEncodeType: TreeCompressionStrategy.CompressedIncremental,
 	minVersionForCollab: FluidClientVersion.v2_74,
 	shouldEncodeIncrementally: incrementalEncodingPolicyForAllowedTypes(viewConfig),
