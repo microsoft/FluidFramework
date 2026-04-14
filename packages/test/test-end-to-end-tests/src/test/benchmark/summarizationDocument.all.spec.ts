@@ -25,7 +25,7 @@ describeE2EDocRun(scenarioTitle, (getTestObjectProvider, getDocumentInfo) => {
 	let provider: ITestObjectProvider;
 	let summaryVersion: string;
 	before(async () => {
-		provider = getTestObjectProvider();
+		provider = getTestObjectProvider({ resetAfterEach: false });
 		const docData = getDocumentInfo(); // returns the type of document to be processed.
 		if (
 			docData.supportedEndpoints &&

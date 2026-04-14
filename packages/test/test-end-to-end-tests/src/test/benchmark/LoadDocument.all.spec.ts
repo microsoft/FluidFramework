@@ -22,7 +22,7 @@ describeE2EDocRun("Load Document", (getTestObjectProvider, getDocumentInfo) => {
 	let documentWrapper: IDocumentLoader;
 	let provider: ITestObjectProvider;
 	before(async () => {
-		provider = getTestObjectProvider();
+		provider = getTestObjectProvider({ resetAfterEach: false });
 		const docData = getDocumentInfo(); // returns the type of document to be processed.
 		if (
 			docData.supportedEndpoints &&
