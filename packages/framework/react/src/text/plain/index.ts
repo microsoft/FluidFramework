@@ -4,4 +4,4 @@
  */
 
 export { MainView as PlainTextMainView } from "./plainTextView.js";
-export { MainView as QuillMainView, type MainViewProps } from "./quillView.js";
+export { syncTextToTree } from "./plainUtils.js";

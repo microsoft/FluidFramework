@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import { AttachState } from "@fluidframework/container-definitions";
 import { IChannelServices } from "@fluidframework/datastore-definitions/internal";
@@ -1193,8 +1193,8 @@ describe("SharedString interval collections", () => {
 			const collection1 = sharedString.getIntervalCollection("test");
 			const collection2 = sharedString2.getIntervalCollection("test");
 			containerRuntimeFactory.processAllMessages();
-			assert.equal(Array.from(collection1).length, 0);
-			assert.equal(Array.from(collection2).length, 0);
+			assert.equal([...collection1].length, 0);
+			assert.equal([...collection2].length, 0);
 		});
 
 		it("doesn't slide references on ack if there are pending remote changes", () => {

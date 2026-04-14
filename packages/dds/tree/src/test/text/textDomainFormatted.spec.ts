@@ -19,7 +19,7 @@ import { suitesWithAndWithoutProduction } from "../utils.js";
 describe("textDomainFormatted", () => {
 	it("compatibility", () => {
 		const currentViewSchema = new TreeViewConfiguration({ schema: FormattedTextAsTree.Tree });
-		testSchemaCompatibilitySnapshots(currentViewSchema, "2.81.0", "formattedText");
+		testSchemaCompatibilitySnapshots(currentViewSchema, "2.92.0", "formattedText");
 	});
 
 	it("basic unformatted use", () => {
@@ -126,6 +126,7 @@ describe("textDomainFormatted", () => {
 			new FormattedTextAsTree.StringAtom({
 				content: new FormattedTextAsTree.StringLineAtom({
 					tag: FormattedTextAsTree.LineTag("h5"),
+					indent: 0,
 				}),
 				format: new FormattedTextAsTree.CharacterFormat({
 					bold: false,

@@ -317,6 +317,18 @@ export interface DeltaVisitor {
 	 * @remarks This should only be called when the "current location" is a Field.
 	 */
 	exitField(key: FieldKey): void;
+
+	/**
+	 * Optional hook for obtaining the complete ordered change description for a field, suitable
+	 * for producing positional deltas for external representations (e.g. a text editor or virtual
+	 * list) without needing to diff the old and new states.
+	 * @remarks
+	 * Called once per field per delta, during the first (detach) pass only, after `enterField` but
+	 * before any `attach`, `detach`, or `enterNode` calls for the field. Firing only during the
+	 * detach pass ensures marks are always relative to the original array positions rather than an
+	 * intermediate partially-transformed state.
+	 */
+	fieldMarks?(marks: readonly Delta.Mark[]): void;
 }
 
 interface PassConfig {
@@ -400,6 +412,7 @@ function detachPass(
 	visitor: DeltaVisitor,
 	config: PassConfig,
 ): void {
+	visitor.fieldMarks?.(fieldChanges.marks);
 	let index = 0;
 	for (const mark of fieldChanges.marks) {
 		if (mark.fields !== undefined) {

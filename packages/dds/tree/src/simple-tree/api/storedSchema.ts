@@ -6,7 +6,7 @@
 import type { MinimumVersionForCollab } from "@fluidframework/runtime-definitions/internal";
 
 import { FormatValidatorNoOp, type ICodecOptions } from "../../codec/index.js";
-import { makeSchemaCodec, schemaCodecBuilder } from "../../feature-libraries/index.js";
+import { schemaCodecBuilder } from "../../feature-libraries/index.js";
 import type { JsonCompatible } from "../../util/index.js";
 import type { SchemaUpgrade } from "../core/index.js";
 import { normalizeFieldSchema, type ImplicitFieldSchema } from "../fieldSchema.js";
@@ -53,8 +53,14 @@ export function extractPersistedSchema(
 	minVersionForCollab: MinimumVersionForCollab,
 	includeStaged: (upgrade: SchemaUpgrade) => boolean,
 ): JsonCompatible {
-	const stored = toStoredSchema(schema, { includeStaged });
-	const codec = makeSchemaCodec({ minVersionForCollab, jsonValidator: FormatValidatorNoOp });
+	const stored = toStoredSchema(schema, {
+		includeStaged,
+		includeStagedOptional: includeStaged,
+	});
+	const codec = schemaCodecBuilder.build({
+		minVersionForCollab,
+		jsonValidator: FormatValidatorNoOp,
+	});
 	return codec.encode(stored) as JsonCompatible;
 }
 

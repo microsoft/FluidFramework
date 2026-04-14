@@ -95,6 +95,7 @@ import { FetchSource, MessageType } from "@fluidframework/driver-definitions/int
 import { readAndParse } from "@fluidframework/driver-utils/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 import type {
+	// eslint-disable-next-line import-x/no-deprecated -- Will be undeprecated in 2.100.0 when it becomes an internal API
 	IIdCompressorCore,
 	IdCreationRange,
 	SerializedIdCompressorWithNoSession,
@@ -130,6 +131,7 @@ import type {
 	IContainerRuntimeBaseInternal,
 	MinimumVersionForCollab,
 	ContainerExtensionExpectations,
+	ContainerRuntimeBaseAlpha,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	addBlobToSummary,
@@ -242,6 +244,7 @@ import {
 	DuplicateBatchDetector,
 	ensureContentsDeserialized,
 	type IBatchCheckpoint,
+	largeBatchThreshold,
 	OpCompressor,
 	OpDecompressor,
 	OpGroupingManager,
@@ -257,6 +260,7 @@ import {
 	type IPendingLocalState,
 	PendingStateManager,
 	type PendingBatchResubmitMetadata,
+	type IPendingMessage,
 } from "./pendingStateManager.js";
 import { BatchRunCounter, RunCounter } from "./runCounter.js";
 import {
@@ -476,6 +480,18 @@ export interface ContainerRuntimeOptions {
 	readonly createBlobPayloadPending: true | undefined;
 
 	/**
+	 * Controls automatic batch flushing during staging mode.
+	 * Normal turn-based/async flush scheduling is suppressed while in staging mode
+	 * until the accumulated batch reaches this many ops, at which point the batch
+	 * is flushed. Incoming ops always break the current batch regardless of this setting.
+	 *
+	 * Set to Infinity to only break batches on system events (incoming ops).
+	 *
+	 * @defaultValue `largeBatchThreshold` (currently 1000)
+	 */
+	readonly stagingModeAutoFlushThreshold: number;
+
+	/**
 	 * When this property is set to true, the runtime will never send DocumentSchemaChange ops
 	 * and will throw an error if any incoming DocumentSchemaChange ops are received.
 	 * This effectively freezes the document schema at whatever state it was in when the document was created.
@@ -612,6 +628,16 @@ const maxConsecutiveReconnectsKey = "Fluid.ContainerRuntime.MaxConsecutiveReconn
 const defaultMaxBatchSizeInBytes = 700 * 1024;
 
 const defaultChunkSizeInBytes = 204800;
+
+/**
+ * Default maximum ops per staging-mode batch before automatic flush scheduling resumes.
+ *
+ * Chosen based on production telemetry: copy-paste operations routinely produce batches
+ * of 1000+ ops (435K instances over 30 days), and receivers on modern Fluid versions
+ * handle them without issues. Uses {@link largeBatchThreshold} to stay aligned with
+ * the existing "large batch" telemetry threshold ({@link OpGroupingManager}).
+ */
+const defaultStagingModeAutoFlushThreshold = largeBatchThreshold;
 
 /**
  * The default time to wait for pending ops to be processed during summarization
@@ -810,6 +836,24 @@ export async function loadContainerRuntime(
 	return ContainerRuntime.loadRuntime(params);
 }
 
+/**
+ * Alpha variant of {@link loadContainerRuntime} that returns the runtime in an
+ * extendable object, allowing additional properties to be added in the future.
+ *
+ * @param params - An object which specifies all required and optional params necessary to instantiate a runtime.
+ * @returns An object containing the runtime.
+ *
+ * @legacy @alpha
+ */
+export async function loadContainerRuntimeAlpha(params: LoadContainerRuntimeParams): Promise<{
+	runtime: IContainerRuntime & ContainerRuntimeBaseAlpha & IRuntime;
+}> {
+	return ContainerRuntime.loadRuntime2({
+		...params,
+		registry: new FluidDataStoreRegistry(params.registryEntries),
+	});
+}
+
 const defaultMaxConsecutiveReconnects = 7;
 
 /**
@@ -885,14 +929,15 @@ export class ContainerRuntime
 		return ContainerRuntime.loadRuntime2({
 			...params,
 			registry: new FluidDataStoreRegistry(params.registryEntries),
-		});
+		}).then((r) => r.runtime);
 	}
 
 	/**
-	 * Load the stores from a snapshot and returns the runtime.
+	 * Load the stores from a snapshot and returns an object containing the runtime.
 	 * @remarks
 	 * Same as {@link ContainerRuntime.loadRuntime},
 	 * but with `registry` instead of `registryEntries` and more `runtimeOptions`.
+	 * Returns `{ runtime }` to allow future extensions (e.g. staging mode controls).
 	 */
 	public static async loadRuntime2(
 		params: Omit<LoadContainerRuntimeParams, "registryEntries" | "runtimeOptions"> & {
@@ -911,7 +956,7 @@ export class ContainerRuntime
 			 */
 			runtimeOptions?: IContainerRuntimeOptionsInternal;
 		},
-	): Promise<ContainerRuntime> {
+	): Promise<{ runtime: ContainerRuntime }> {
 		const {
 			context,
 			registry,
@@ -967,6 +1012,7 @@ export class ContainerRuntime
 			loadSequenceNumberVerification: "close",
 			maxBatchSizeInBytes: defaultMaxBatchSizeInBytes,
 			chunkSizeInBytes: defaultChunkSizeInBytes,
+			stagingModeAutoFlushThreshold: defaultStagingModeAutoFlushThreshold,
 			disableSchemaUpgrade: false,
 		};
 
@@ -993,6 +1039,7 @@ export class ContainerRuntime
 				? disabledCompressionConfig
 				: defaultConfigs.compressionOptions,
 			createBlobPayloadPending = defaultConfigs.createBlobPayloadPending,
+			stagingModeAutoFlushThreshold = defaultConfigs.stagingModeAutoFlushThreshold,
 			disableSchemaUpgrade = defaultConfigs.disableSchemaUpgrade,
 		}: IContainerRuntimeOptionsInternal = runtimeOptions;
 
@@ -1138,6 +1185,7 @@ export class ContainerRuntime
 			idCompressorMode = desiredIdCompressorMode;
 		}
 
+		// eslint-disable-next-line import-x/no-deprecated -- Will be undeprecated in 2.100.0 when it becomes an internal API
 		const createIdCompressorFn = (): IIdCompressor & IIdCompressorCore => {
 			/**
 			 * Because the IdCompressor emits so much telemetry, this function is used to sample
@@ -1223,6 +1271,7 @@ export class ContainerRuntime
 			enableGroupedBatching,
 			explicitSchemaControl,
 			createBlobPayloadPending,
+			stagingModeAutoFlushThreshold,
 			disableSchemaUpgrade,
 		};
 
@@ -1259,7 +1308,7 @@ export class ContainerRuntime
 		// or zero. This must be done before Container replays saved ops.
 		await runtime.pendingStateManager.applyStashedOpsAt(runtimeSequenceNumber ?? 0);
 
-		return runtime;
+		return { runtime };
 	}
 
 	public readonly options: Record<string | number, unknown>;
@@ -1329,6 +1378,7 @@ export class ContainerRuntime
 		return this.documentsSchemaController.sessionSchema.runtime;
 	}
 
+	// eslint-disable-next-line import-x/no-deprecated -- Will be undeprecated in 2.100.0 when it becomes an internal API
 	private _idCompressor: (IIdCompressor & IIdCompressorCore) | undefined;
 
 	// We accumulate Id compressor Ops while Id compressor is not loaded yet (only for "delayed" mode)
@@ -1344,6 +1394,7 @@ export class ContainerRuntime
 	/**
 	 * {@inheritDoc @fluidframework/runtime-definitions#IContainerRuntimeBase.idCompressor}
 	 */
+	// eslint-disable-next-line import-x/no-deprecated -- Will be undeprecated in 2.100.0 when it becomes an internal API
 	public get idCompressor(): (IIdCompressor & IIdCompressorCore) | undefined {
 		// Expose ID Compressor only if it's On from the start.
 		// If container uses delayed mode, then we can only expose generateDocumentUniqueId() and nothing else.
@@ -1402,6 +1453,7 @@ export class ContainerRuntime
 
 	private readonly batchRunner = new BatchRunCounter();
 	private readonly _flushMode: FlushMode;
+	private readonly stagingModeAutoFlushThreshold: number;
 	/**
 	 * BatchId tracking is needed whenever there's a possibility of a "forked Container",
 	 * where the same local state is pending in two different running Containers, each of
@@ -1563,6 +1615,7 @@ export class ContainerRuntime
 
 		blobManagerLoadInfo: IBlobManagerLoadInfo,
 		private readonly _storage: IContainerStorageService,
+		// eslint-disable-next-line import-x/no-deprecated -- Will be undeprecated in 2.100.0 when it becomes an internal API
 		private readonly createIdCompressorFn: () => IIdCompressor & IIdCompressorCore,
 
 		private readonly documentsSchemaController: DocumentsSchemaController,
@@ -1834,6 +1887,10 @@ export class ContainerRuntime
 			this.closeFn(error);
 			throw error;
 		}
+		this.stagingModeAutoFlushThreshold =
+			this.mc.config.getNumber("Fluid.ContainerRuntime.StagingModeAutoFlushThreshold") ??
+			runtimeOptions.stagingModeAutoFlushThreshold ??
+			defaultStagingModeAutoFlushThreshold;
 		this.batchIdTrackingEnabled =
 			this.mc.config.getBoolean("Fluid.Container.enableOfflineFull") ??
 			this.mc.config.getBoolean("Fluid.ContainerRuntime.enableBatchIdTracking") ??
@@ -2012,6 +2069,24 @@ export class ContainerRuntime
 			}),
 			reSubmit: this.reSubmit.bind(this),
 			opReentrancy: () => this.dataModelChangeRunner.running,
+			generateIdAllocationOp: (): LocalBatchMessage | undefined => {
+				if (this._idCompressor === undefined) {
+					return undefined;
+				}
+				const idRange = this._idCompressor.takeNextCreationRange();
+				if (idRange.ids === undefined) {
+					return undefined;
+				}
+				const idAllocationMessage: ContainerRuntimeIdAllocationMessage = {
+					type: ContainerMessageType.IdAllocation,
+					contents: idRange,
+				};
+				return {
+					runtimeOp: idAllocationMessage,
+					referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
+					staged: false,
+				};
+			},
 		});
 
 		this._quorum = quorum;
@@ -2710,12 +2785,10 @@ export class ContainerRuntime
 		this.emitDirtyDocumentEvent = false;
 
 		try {
-			// Any ID Allocation ops that failed to submit after the pending state was queued need to have
-			// the corresponding ranges resubmitted (note this call replaces the typical resubmit flow).
-			// Since we don't submit ID Allocation ops when staged, any outstanding ranges would be from
-			// before staging mode so we can simply say staged: false.
-			this.submitIdAllocationOpIfNeeded({ resubmitOutstandingRanges: true, staged: false });
-			this.scheduleFlush();
+			// Any ID Allocation ops that failed to submit need to have their ranges included
+			// in the next allocation op. Reset the compressor's unfinalized range cursor so that the next
+			// call to takeNextCreationRange (during replay) will include those unfinalized ranges.
+			this._idCompressor?.resetUnfinalizedCreationRange();
 
 			// replay the ops
 			this.pendingStateManager.replayPendingStates();
@@ -3615,20 +3688,36 @@ export class ContainerRuntime
 		// since we mark whole batches as "staged" or not to indicate whether to submit them.
 		this.flush();
 
-		const exitStagingMode = (discardOrCommit: () => void): void => {
+		const exitStagingMode = (
+			discardOrCommit: () => IPendingMessage["batchInfo"][],
+			exitMethod: "commit" | "discard",
+		): void => {
 			try {
-				// Final flush of any last staged changes
-				// NOTE: We can't use this.flush() here, because orderSequentially uses StagingMode and in the rollback case we'll hit assert 0x24c
-				this.outbox.flush();
+				PerformanceEvent.timedExec(
+					this.mc.logger,
+					{
+						eventName: `ExitStagingMode_${exitMethod}`,
+					},
+					(event) => {
+						// Final flush of any last staged changes
+						// NOTE: We can't use this.flush() here, because orderSequentially uses StagingMode and in the rollback case we'll hit assert 0x24c
+						this.outbox.flush();
 
-				this.stageControls = undefined;
+						this.stageControls = undefined;
 
-				// During Staging Mode, we avoid submitting any ID Allocation ops (apart from resubmitting pre-staging ops).
-				// Now that we've exited, we need to submit an ID Allocation op for any IDs that were generated while in Staging Mode.
-				this.submitIdAllocationOpIfNeeded({ staged: false });
-				discardOrCommit();
-
-				this.channelCollection.notifyStagingMode(false);
+						const batchInfos = discardOrCommit();
+						event.reportProgress({
+							details: {
+								autoFlushThreshold: this.stagingModeAutoFlushThreshold,
+								batches: batchInfos.length,
+								batchesAtOrOverThreshold: batchInfos.filter(
+									(b) => b.length >= this.stagingModeAutoFlushThreshold,
+								).length,
+							},
+						});
+						this.channelCollection.notifyStagingMode(false);
+					},
+				);
 			} catch (error) {
 				const normalizedError = normalizeError(error);
 				this.closeFn(normalizedError);
@@ -3640,21 +3729,24 @@ export class ContainerRuntime
 			discardChanges: () =>
 				exitStagingMode(() => {
 					// Pop all staged batches from the PSM and roll them back in LIFO order
-					this.pendingStateManager.popStagedBatches(({ runtimeOp, localOpMetadata }) => {
-						this.rollbackStagedChange(runtimeOp, localOpMetadata);
-					});
+					const batchInfos = this.pendingStateManager.popStagedBatches(
+						({ runtimeOp, localOpMetadata }) => {
+							this.rollbackStagedChange(runtimeOp, localOpMetadata);
+						},
+					);
 					this.updateDocumentDirtyState();
-				}),
+					return batchInfos;
+				}, "discard"),
 			commitChanges: (options) => {
 				const { squash } = { ...defaultStagingCommitOptions, ...options };
 				exitStagingMode(() => {
 					// Replay all staged batches in typical FIFO order.
 					// We'll be out of staging mode so they'll be sent to the service finally.
-					this.pendingStateManager.replayPendingStates({
+					return this.pendingStateManager.replayPendingStates({
 						committingStagedBatches: true,
 						squash,
 					});
-				});
+				}, "commit");
 			},
 		};
 
@@ -4195,7 +4287,6 @@ export class ContainerRuntime
 					outboxLength: this.outbox.messageCount,
 					mainBatchLength: this.outbox.mainBatchMessageCount,
 					blobAttachBatchLength: this.outbox.blobAttachBatchMessageCount,
-					idAllocationBatchLength: this.outbox.idAllocationBatchMessageCount,
 				},
 			);
 		}
@@ -4528,7 +4619,8 @@ export class ContainerRuntime
 
 	/**
 	 * This helper is called during summarization. If the container is dirty, it will return a failed summarize result
-	 * (IBaseSummarizeResult) unless this is the final summarize attempt and SkipFailingIncorrectSummary option is set.
+	 * (IBaseSummarizeResult) unless this is the final summarize attempt, in which case the summary is allowed to
+	 * proceed to make progress in documents where there are consistently pending ops in the summarizer.
 	 * @param logger - The logger to be used for sending telemetry.
 	 * @param referenceSequenceNumber - The reference sequence number of the summary attempt.
 	 * @param minimumSequenceNumber - The minimum sequence number of the summary attempt.
@@ -4547,13 +4639,9 @@ export class ContainerRuntime
 			return;
 		}
 
-		// If "SkipFailingIncorrectSummary" option is true, don't fail the summary in the last attempt.
-		// This is a fallback to make progress in documents where there are consistently pending ops in
-		// the summarizer.
-		if (
-			finalAttempt &&
-			this.mc.config.getBoolean("Fluid.Summarizer.SkipFailingIncorrectSummary") === true
-		) {
+		// Don't fail the summary in the last attempt. This is a fallback to make progress in
+		// documents where there are consistently pending ops in the summarizer.
+		if (finalAttempt) {
 			const error = DataProcessingError.create(
 				"Pending ops during summarization",
 				"submitSummary",
@@ -4562,7 +4650,7 @@ export class ContainerRuntime
 			);
 			logger.sendErrorEvent(
 				{
-					eventName: "SkipFailingIncorrectSummary",
+					eventName: "PendingOpsDuringSummaryFinalAttempt",
 					referenceSequenceNumber,
 					minimumSequenceNumber,
 					beforeGenerate: beforeSummaryGeneration,
@@ -4656,33 +4744,6 @@ export class ContainerRuntime
 		return this.blobManager.lookupTemporaryBlobStorageId(localId);
 	}
 
-	private submitIdAllocationOpIfNeeded({
-		resubmitOutstandingRanges = false,
-		staged,
-	}: {
-		resubmitOutstandingRanges?: boolean;
-		staged: boolean;
-	}): void {
-		if (this._idCompressor) {
-			const idRange = resubmitOutstandingRanges
-				? this._idCompressor.takeUnfinalizedCreationRange()
-				: this._idCompressor.takeNextCreationRange();
-			// Don't include the idRange if there weren't any Ids allocated
-			if (idRange.ids !== undefined) {
-				const idAllocationMessage: ContainerRuntimeIdAllocationMessage = {
-					type: ContainerMessageType.IdAllocation,
-					contents: idRange,
-				};
-				const idAllocationBatchMessage: LocalBatchMessage = {
-					runtimeOp: idAllocationMessage,
-					referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
-					staged,
-				};
-				this.outbox.submitIdAllocation(idAllocationBatchMessage);
-			}
-		}
-	}
-
 	private submit(
 		containerRuntimeMessage: LocalContainerRuntimeMessage,
 		localOpMetadata: unknown = undefined,
@@ -4725,11 +4786,6 @@ export class ContainerRuntime
 				!staged || canStageMessageOfType(type),
 				0xbba /* Unexpected message type submitted in Staging Mode */,
 			);
-
-			// Before submitting any non-staged change, submit the ID Allocation op to cover any compressed IDs included in the op.
-			if (!staged) {
-				this.submitIdAllocationOpIfNeeded({ staged: false });
-			}
 
 			// Allow document schema controller to send a message if it needs to propose change in document schema.
 			// If it needs to send a message, it will call provided callback with payload of such message and rely
@@ -4785,6 +4841,20 @@ export class ContainerRuntime
 	}
 
 	private scheduleFlush(): void {
+		// During staging mode, suppress automatic flush scheduling until the main batch
+		// reaches or exceeds the threshold.
+		// Incoming ops still break the batch via direct this.flush() calls elsewhere
+		// (deltaManager "op" handler, process(), connection changes, getPendingLocalState,
+		// exitStagingMode). Those all bypass scheduleFlush(), so they're unaffected by this check.
+		// Additionally, outbox.outboxSequenceNumberCoherencyCheck() (called on every submit) detects
+		// sequence number changes and throws if unexpected changes are detected.
+		if (
+			this.inStagingMode &&
+			this.outbox.mainBatchMessageCount < this.stagingModeAutoFlushThreshold
+		) {
+			return;
+		}
+
 		if (this.flushScheduled) {
 			return;
 		}
@@ -5180,7 +5250,9 @@ export class ContainerRuntime
 				eventName: "getPendingLocalState",
 			},
 			(event) => {
-				const pending = this.pendingStateManager.getLocalState(props?.snapshotSequenceNumber);
+				const { pending } = this.pendingStateManager.getLocalState(
+					props?.snapshotSequenceNumber,
+				);
 				const sessionExpiryTimerStarted =
 					props?.sessionExpiryTimerStarted ?? this.garbageCollector.sessionExpiryTimerStarted;
 
