@@ -86,8 +86,7 @@ describeCompat(
 			view: TreeView<typeof Workspace>;
 		}> {
 			const container = await provider.makeTestContainer(testContainerConfig);
-			const dataObject =
-				await getContainerEntryPointBackCompat<ITestFluidObject>(container);
+			const dataObject = await getContainerEntryPointBackCompat<ITestFluidObject>(container);
 			const tree = await dataObject.getSharedObject<ITree>(treeId);
 			const view = tree.viewWith(new TreeViewConfiguration({ schema: Workspace }));
 			view.initialize(
@@ -106,14 +105,8 @@ describeCompat(
 			return { container, view };
 		}
 
-		async function createTestSummarizer(
-			container: IContainer,
-		): Promise<ISummarizer> {
-			const { summarizer } = await createSummarizer(
-				provider,
-				container,
-				testContainerConfig,
-			);
+		async function createTestSummarizer(container: IContainer): Promise<ISummarizer> {
+			const { summarizer } = await createSummarizer(provider, container, testContainerConfig);
 			return summarizer;
 		}
 
@@ -121,24 +114,6 @@ describeCompat(
 			provider = getTestObjectProvider({ syncSummarizer: true });
 		});
 
-		/**
-		 * Regression test for the stale incremental summary handle path bug fixed
-		 * in PR #26990.
-		 *
-		 * The bug: when a parent incremental chunk was re-encoded with a new
-		 * referenceId, child chunks that became handles still held a summaryPath
-		 * string referencing the old referenceId. On the next summary those handle
-		 * URLs pointed to keys that no longer existed in the preceding summary tree,
-		 * causing a storage error (e.g. `TypeError: Cannot read properties of
-		 * undefined (reading 'trees')`).
-		 *
-		 * To reproduce we need:
-		 * 1. A schema with incrementalSummaryHint at 2+ levels deep.
-		 * 2. CompressedIncremental encoding + ForestSummaryFormatVersion.v3.
-		 * 3. Multiple summaries where the parent chunk changes but the child does
-		 *    not — the child's handle path must be recomputed against the new parent
-		 *    referenceId each time.
-		 */
 		it("handles remain valid across multiple incremental summaries when parent chunks change", async () => {
 			const { container, view } = await createContainerAndTree();
 			const summarizer = await createTestSummarizer(container);
@@ -172,8 +147,7 @@ describeCompat(
 
 			// 4. Verify the document can still be loaded from the latest summary.
 			const container2 = await provider.loadTestContainer(testContainerConfig);
-			const dataObject2 =
-				await getContainerEntryPointBackCompat<ITestFluidObject>(container2);
+			const dataObject2 = await getContainerEntryPointBackCompat<ITestFluidObject>(container2);
 			const tree2 = await dataObject2.getSharedObject<ITree>(treeId);
 			const view2 = tree2.viewWith(new TreeViewConfiguration({ schema: Workspace }));
 			assert.strictEqual(

@@ -169,10 +169,7 @@ function createGetDataStoreFactoryFunction(
 				throw Error(`Invalid or unimplemented channel factory: ${factory.type}`);
 			}
 			const currentDefaultCtor = currentDefaultFactoryCtors.get(factory.type);
-			if (
-				currentDefaultCtor !== undefined &&
-				factory.constructor === currentDefaultCtor
-			) {
+			if (currentDefaultCtor !== undefined && factory.constructor === currentDefaultCtor) {
 				// Factory matches a known current-version default — convert to compat version.
 				oldRegistry.push([key, oldFactory]);
 			} else {
