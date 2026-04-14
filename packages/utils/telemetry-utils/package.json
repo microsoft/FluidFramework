@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/telemetry-utils",
-	"version": "2.92.0",
+	"version": "2.93.0",
 	"description": "Collection of telemetry relates utilities for Fluid",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -89,8 +89,7 @@
 		"test:mocha:esm": "mocha",
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
 		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ../../../common/build/build-common/src/cjs/package.json ./dist",
-		"typetests:gen": "flub generate typetests --dir . -v",
-		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"
+		"typetests:gen": "flub generate typetests --dir . -v"
 	},
 	"c8": {
 		"all": true,
@@ -130,11 +129,11 @@
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "catalog:buildTools",
 		"@fluidframework/eslint-config-fluid": "catalog:eslint",
-		"@fluidframework/telemetry-utils-previous": "npm:@fluidframework/telemetry-utils@2.91.0",
-		"@microsoft/api-extractor": "7.52.11",
+		"@fluidframework/telemetry-utils-previous": "npm:@fluidframework/telemetry-utils@2.92.0",
+		"@microsoft/api-extractor": "7.58.1",
 		"@types/debug": "^4.1.5",
 		"@types/mocha": "^10.0.10",
-		"@types/node": "~20.19.30",
+		"@types/node": "catalog:types",
 		"@types/sinon": "^17.0.3",
 		"c8": "^10.1.3",
 		"concurrently": "^9.2.1",

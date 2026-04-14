@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-internal/test-service-load",
-	"version": "2.92.0",
+	"version": "2.93.0",
 	"description": "Service load tests",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -50,8 +50,6 @@
 		"test:stress:tinylicious:report": "npm run test:stress:tinylicious",
 		"test:stress:tinylicious:run": "npm run test:stress:run",
 		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ../../../common/build/build-common/src/cjs/package.json ./dist",
-		"typetests:gen": "flub generate typetests --dir . -v",
-		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize",
 		"usePrereleaseDeps": "node ./scripts/usePrereleaseDeps.js"
 	},
 	"c8": {
@@ -112,7 +110,7 @@
 		"@fluidframework/build-tools": "catalog:buildTools",
 		"@fluidframework/eslint-config-fluid": "catalog:eslint",
 		"@types/mocha": "^10.0.10",
-		"@types/node": "~20.19.30",
+		"@types/node": "catalog:types",
 		"c8": "^10.1.3",
 		"copyfiles": "^2.4.1",
 		"cross-env": "^10.1.0",

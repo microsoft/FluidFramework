@@ -20,7 +20,7 @@ import { ESLint } from "eslint";
 import sortJson from "sort-json";
 
 // Import flat configs directly from flat.mjs
-import { recommended, strict, minimalDeprecated } from "../flat.mjs";
+import { recommended, strict } from "../flat.mjs";
 import type { FlatConfigArray } from "../library/configs/base.mjs";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -36,11 +36,6 @@ const configsToPrint = [
 	{
 		name: "default",
 		config: recommended,
-		sourceFilePath: path.join(__dirname, "..", "src", "file.ts"),
-	},
-	{
-		name: "minimal",
-		config: minimalDeprecated,
 		sourceFilePath: path.join(__dirname, "..", "src", "file.ts"),
 	},
 	{

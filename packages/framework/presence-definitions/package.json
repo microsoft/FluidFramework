@@ -1,0 +1,117 @@
+{
+	"name": "@fluid-internal/presence-definitions",
+	"version": "2.93.0",
+	"description": "Core type definitions and interfaces for Fluid Framework presence",
+	"homepage": "https://fluidframework.com",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/microsoft/FluidFramework.git",
+		"directory": "packages/framework/presence-definitions"
+	},
+	"license": "MIT",
+	"author": "Microsoft and contributors",
+	"sideEffects": false,
+	"type": "module",
+	"exports": {
+		".": {
+			"import": {
+				"types": "./lib/index.d.ts",
+				"default": "./lib/index.js"
+			},
+			"require": {
+				"types": "./dist/index.d.ts",
+				"default": "./dist/index.js"
+			}
+		},
+		"./internal": {
+			"import": "./lib/internal.js",
+			"require": "./dist/internal.js"
+		},
+		"./internal/workspace": {
+			"import": "./lib/workspace/workspaceTypes.js",
+			"require": "./dist/workspace/workspaceTypes.js"
+		},
+		"./internal/workspace-runtime": {
+			"import": "./lib/workspace-runtime/presenceStatesTypes.js",
+			"require": "./dist/workspace-runtime/presenceStatesTypes.js"
+		},
+		"./internal/workspace-states": {
+			"import": "./lib/workspace-states/stateDatastoreTypes.js",
+			"require": "./dist/workspace-states/stateDatastoreTypes.js"
+		}
+	},
+	"files": [
+		"dist/**/*",
+		"lib/**/*",
+		"!**/test/**"
+	],
+	"scripts": {
+		"build": "fluid-build . --task build",
+		"build:commonjs": "fluid-build . --task commonjs",
+		"build:compile": "fluid-build . --task compile",
+		"build:docs": "api-extractor run --local",
+		"build:esnext": "tsc --project ./tsconfig.json",
+		"build:test": "npm run build:test:esm && npm run build:test:cjs",
+		"build:test:cjs": "fluid-tsc commonjs --project ./src/test/tsconfig.cjs.json",
+		"build:test:esm": "tsc --project ./src/test/tsconfig.json",
+		"check:are-the-types-wrong": "attw --pack . --profile node16",
+		"check:biome": "biome check .",
+		"check:exports": "concurrently \"npm:check:exports:*\"",
+		"check:exports:bundle-release-tags": "api-extractor run --config api-extractor/api-extractor-lint-bundle.json",
+		"check:exports:cjs:index": "api-extractor run --config api-extractor/api-extractor-lint-index.cjs.json",
+		"check:exports:esm:index": "api-extractor run --config api-extractor/api-extractor-lint-index.esm.json",
+		"check:format": "npm run check:biome",
+		"ci:build:docs": "api-extractor run",
+		"clean": "rimraf --glob dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\" _api-extractor-temp nyc",
+		"eslint": "eslint --quiet --format stylish src",
+		"eslint:fix": "eslint --quiet --format stylish src --fix --fix-type problem,suggestion,layout",
+		"format": "npm run format:biome",
+		"format:biome": "biome check . --write",
+		"lint": "fluid-build . --task lint",
+		"lint:fix": "fluid-build . --task eslint:fix --task format",
+		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ./src/cjs/package.json ./dist",
+		"typetests:gen-disabled": "flub generate typetests --dir . -v"
+	},
+	"dependencies": {
+		"@fluidframework/core-interfaces": "workspace:~",
+		"@fluidframework/id-compressor": "workspace:~"
+	},
+	"devDependencies": {
+		"@arethetypeswrong/cli": "^0.18.2",
+		"@biomejs/biome": "~2.4.5",
+		"@fluid-internal/presence-definitions-previous": "npm:@fluidframework/presence@2.92.0",
+		"@fluid-tools/build-cli": "catalog:buildTools",
+		"@fluidframework/build-common": "^2.0.3",
+		"@fluidframework/build-tools": "catalog:buildTools",
+		"@fluidframework/eslint-config-fluid": "catalog:eslint",
+		"@microsoft/api-extractor": "7.58.1",
+		"concurrently": "^9.2.1",
+		"copyfiles": "^2.4.1",
+		"cross-env": "^10.1.0",
+		"eslint": "catalog:eslint",
+		"jiti": "^2.6.1",
+		"rimraf": "^6.1.3",
+		"typescript": "~5.4.5"
+	},
+	"fluidBuild": {
+		"tasks": {
+			"check:exports:cjs:index": [
+				"tsc"
+			],
+			"check:exports:esm:index": [
+				"build:esnext"
+			]
+		}
+	},
+	"typeValidation": {
+		"entrypoint": "beta",
+		"broken": {
+			"Variable_getPresence": {
+				"backCompat": false
+			},
+			"Variable_StateFactory": {
+				"backCompat": false
+			}
+		}
+	}
+}

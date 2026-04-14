@@ -106,6 +106,10 @@ export {
 	type ChunkedCursor,
 	DetachedFieldIndexFormatVersion,
 	detachedFieldIndexCodecBuilder,
+	areDetachedNodeIdsEqual,
+	deltaFieldMapHasVisibleChanges,
+	deltaFieldChangesHaveVisibleChanges,
+	forEachNodeSubsequence,
 } from "./tree/index.js";
 
 export {

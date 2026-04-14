@@ -40,29 +40,27 @@ export type {
 	Context,
 } from "./api.js";
 export { llmDefault } from "./utils.js";
+export { type BindableSchema } from "./methodBinding.js";
+export { typeFactory } from "./treeAgentTypes.js";
+
+// Re-export APIs that were moved to @fluidframework/type-factory to avoid breaking changes.
 export {
 	buildFunc,
 	exposeMethodsSymbol,
-	type ArgsTuple,
+	isTypeFactoryType,
 	type ExposedMethods,
 	type Arg,
+	type ArgsTuple,
 	type FunctionDef,
 	type MethodKeys,
-	type BindableSchema,
 	type Ctor,
 	type IExposedMethods,
-} from "./methodBinding.js";
-export type {
-	exposePropertiesSymbol,
-	PropertyDef,
-	ExposedProperties,
-	IExposedProperties,
-} from "./propertyBinding.js";
+	type ExposedProperties,
+	type IExposedProperties,
+	type exposePropertiesSymbol,
+} from "@fluidframework/type-factory/alpha";
 
-export {
-	typeFactory,
-	isTypeFactoryType,
-} from "./treeAgentTypes.js";
+export { type PropertyDef } from "./propertyBinding.js";
 
 export type {
 	TypeFactoryType,
@@ -89,4 +87,4 @@ export type {
 	TypeFactoryFunction,
 	TypeFactoryFunctionParameter,
 	TypeFactoryInstanceOf,
-} from "./treeAgentTypes.js";
+} from "@fluidframework/type-factory/alpha";
