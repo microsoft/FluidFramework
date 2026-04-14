@@ -178,7 +178,6 @@
 		"@fluidframework/type-factory": "workspace:~",
 		"@sinclair/typebox": "^0.34.13",
 		"@tylerbu/sorted-btree-es6": "^2.1.1",
-		"@ungap/structured-clone": "^1.2.0",
 		"semver-ts": "^1.0.3",
 		"uuid": "^11.1.0"
 	},
@@ -204,7 +203,6 @@
 		"@types/easy-table": "^0.0.32",
 		"@types/mocha": "^10.0.10",
 		"@types/node": "catalog:types",
-		"@types/ungap__structured-clone": "^1.2.0",
 		"ajv": "^8.17.1",
 		"ajv-formats": "^3.0.1",
 		"c8": "^10.1.3",

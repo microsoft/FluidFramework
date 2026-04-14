@@ -26,17 +26,18 @@ Verify the fix: `grep "from " lib/entrypoints/public.d.ts` should show `../index
 
 ## After running `build:api-reports`: check for phantom key-reorder diffs
 
-There is a known bug in API Extractor that non-deterministically reorders union key strings within `Omit<>` type signatures in this package — e.g. `"keyA" | "keyB"` swapped to `"keyB" | "keyA"` — with no real API change. The ordering is stable within a single fresh compilation (local and CI agree), but it can silently flip between compilations after clearing `tsbuildinfo` or after TypeScript version changes.
+There is a known incremental TypeScript compilation bug that non-deterministically reorders union key strings within `Omit<>` type signatures in this package — e.g. `"keyA" | "keyB"` swapped to `"keyB" | "keyA"` — with no real API change. This is a bug in TypeScript's incremental build and flows downstream to API extractor. It only occurs with incremental builds; clean builds produce deterministic, stable output that matches CI.
 
 A diff is a phantom key-reorder if: only the order of string literal keys in an `Omit<>` changes; nothing is added or removed.
 
-**Always commit the file that `build:api-reports` produces.** Do not manually flip key order or restore from git. The local fresh build and CI agree on the same ordering, so the build output is exactly what CI expects. If you restore the old order, CI will fail.
+**If you see phantom key-reorder diffs, do a clean build and regenerate:**
 
-There are two situations:
+```bash
+cd packages/dds/tree && pnpm exec fluid-build . --task clean && pnpm exec fluid-build . --task compile
+pnpm exec fluid-build . -t build:api-reports
+```
 
-1. **The only diff is key reorderings** (no real API additions/removals): Commit the updated file. The reordering is spurious but CI requires it.
-
-2. **The diff contains both real API changes and key reorderings:** Commit the entire file as-is. Both the real changes and the reorderings match what CI will produce.
+CI always runs clean builds, so a local clean build will produce the same output CI expects. After the clean rebuild, the spurious reorderings will be gone.
 
 ---
 
@@ -51,4 +52,4 @@ cd packages/service-clients/azure-client && pnpm exec fluid-build . -t build:api
 
 If the tree reports are unchanged, skip this — the aggregator reports won't change either.
 
-After running either of these, apply the same phantom key-reorder check above — the same bug affects their reports for the same reason.
+After running either of these, check for phantom key-reorder diffs — the same incremental TypeScript bug can affect their reports. If you see any, do a clean build of the affected aggregator package and regenerate its API reports (same approach as above).

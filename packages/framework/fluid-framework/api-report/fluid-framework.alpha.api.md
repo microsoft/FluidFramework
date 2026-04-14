@@ -269,7 +269,7 @@ export const contentSchemaSymbol: unique symbol;
 // @alpha
 export function createArrayInsertionAnchor(node: TreeArrayNode, currentIndex: number): ArrayPlaceAnchor;
 
-// @alpha
+// @beta
 export function createIdentifierIndex<TSchema extends ImplicitFieldSchema>(view: TreeView<TSchema>): IdentifierIndex;
 
 // @alpha
@@ -286,16 +286,16 @@ export type CreateIndependentTreeAlphaOptions = ForestOptions & ((IndependentVie
 // @beta
 export function createIndependentTreeBeta<const TSchema extends ImplicitFieldSchema>(options?: ForestOptions): ViewableTree;
 
-// @alpha
+// @beta
 export function createTreeIndex<TFieldSchema extends ImplicitFieldSchema, TKey extends TreeIndexKey, TValue>(view: TreeView<TFieldSchema>, indexer: (schema: TreeNodeSchema) => string | undefined, getValue: (nodes: TreeIndexNodes<TreeNode>) => TValue, isKeyValid: (key: TreeIndexKey) => key is TKey): TreeIndex<TKey, TValue>;
 
-// @alpha
+// @beta
 export function createTreeIndex<TFieldSchema extends ImplicitFieldSchema, TKey extends TreeIndexKey, TValue, TSchema extends TreeNodeSchema>(view: TreeView<TFieldSchema>, indexer: (schema: TSchema) => string | undefined, getValue: (nodes: TreeIndexNodes<NodeFromSchema<TSchema>>) => TValue, isKeyValid: (key: TreeIndexKey) => key is TKey, indexableSchema: readonly TSchema[]): TreeIndex<TKey, TValue>;
 
-// @alpha
+// @beta
 export function createTreeIndex<TFieldSchema extends ImplicitFieldSchema, TKey extends TreeIndexKey, TValue>(view: TreeView<TFieldSchema>, indexer: Map<TreeNodeSchema, string>, getValue: (nodes: TreeIndexNodes<TreeNode>) => TValue, isKeyValid: (key: TreeIndexKey) => key is TKey): TreeIndex<TKey, TValue>;
 
-// @alpha
+// @beta
 export function createTreeIndex<TFieldSchema extends ImplicitFieldSchema, TKey extends TreeIndexKey, TValue, TSchema extends TreeNodeSchema>(view: TreeView<TFieldSchema>, indexer: Map<TreeNodeSchema, string>, getValue: (nodes: TreeIndexNodes<NodeFromSchema<TSchema>>) => TValue, isKeyValid: (key: TreeIndexKey) => key is TKey, indexableSchema: readonly TSchema[]): TreeIndex<TKey, TValue>;
 
 // @alpha
@@ -423,6 +423,7 @@ export interface FieldProps<TCustomMetadata = unknown> {
 // @alpha @input
 export interface FieldPropsAlpha<TCustomMetadata = unknown> extends FieldProps<TCustomMetadata> {
     readonly persistedMetadata?: JsonCompatibleReadOnlyObject | undefined;
+    readonly stagedOptionalUpgrade?: SchemaUpgrade;
 }
 
 // @public @sealed
@@ -446,6 +447,8 @@ export class FieldSchemaAlpha<Kind extends FieldKind = FieldKind, Types extends 
     readonly allowedTypesFull: AllowedTypesFull;
     // (undocumented)
     get allowedTypesIdentifiers(): ReadonlySet<string>;
+    // (undocumented)
+    get isStagedOptional(): false | SchemaUpgrade;
     // (undocumented)
     get persistedMetadata(): JsonCompatibleReadOnlyObject | undefined;
     // (undocumented)
@@ -487,12 +490,12 @@ export const FluidClientVersion: {
     readonly v2_80: "2.80.0";
 };
 
-// @alpha @sealed
+// @beta @sealed
 export interface FluidIterable<T> {
     [Symbol.iterator](): FluidIterableIterator<T>;
 }
 
-// @alpha @sealed
+// @beta @sealed
 export interface FluidIterableIterator<T> extends FluidIterable<T> {
     next(): {
         value: T;
@@ -503,7 +506,7 @@ export interface FluidIterableIterator<T> extends FluidIterable<T> {
     };
 }
 
-// @alpha @sealed
+// @beta @sealed
 export interface FluidMap<K, V> extends FluidReadonlyMap<K, V> {
     delete(key: K): void;
     forEach(callbackfn: (value: V, key: K, map: FluidMap<K, V>) => void, thisArg?: any): void;
@@ -518,7 +521,7 @@ export type FluidObject<T = unknown> = {
 // @public
 export type FluidObjectProviderKeys<T, TProp extends keyof T = keyof T> = string extends TProp ? never : number extends TProp ? never : TProp extends keyof Required<T>[TProp] ? Required<T>[TProp] extends Required<Required<T>[TProp]>[TProp] ? TProp : never : never;
 
-// @alpha @sealed
+// @beta @sealed
 export interface FluidReadonlyMap<K, V> {
     [Symbol.iterator](): FluidIterableIterator<[K, V]>;
     readonly [Symbol.toStringTag]: string;
@@ -618,7 +621,7 @@ export interface IConnection {
 // @public
 export type ICriticalContainerError = IErrorBase;
 
-// @alpha
+// @beta
 export type IdentifierIndex = TreeIndex<string, TreeNode>;
 
 // @public @sealed
@@ -1537,6 +1540,8 @@ export class SchemaFactoryAlpha<out TScope extends string | undefined = string |
     static readonly requiredRecursive: <const T extends System_Unsafe.ImplicitAllowedTypesUnsafe, const TCustomMetadata = unknown>(t: T, props?: Omit<FieldPropsAlpha<TCustomMetadata>, "defaultProvider"> | undefined) => FieldSchemaAlphaUnsafe<FieldKind.Required, T, TCustomMetadata, FieldPropsAlpha<TCustomMetadata>>;
     readonly requiredRecursive: <const T extends System_Unsafe.ImplicitAllowedTypesUnsafe, const TCustomMetadata = unknown>(t: T, props?: Omit<FieldPropsAlpha<TCustomMetadata>, "defaultProvider"> | undefined) => FieldSchemaAlphaUnsafe<FieldKind.Required, T, TCustomMetadata, FieldPropsAlpha<TCustomMetadata>>;
     scopedFactoryAlpha<const T extends TName, TNameInner extends number | string = string>(name: T): SchemaFactoryAlpha<ScopedSchemaName<TScope, T>, TNameInner>;
+    readonly stagedOptional: <const T extends ImplicitAllowedTypes, const TCustomMetadata = unknown>(t: T, props?: Omit<FieldPropsAlpha<TCustomMetadata>, "stagedOptionalUpgrade" | "defaultProvider"> | undefined) => FieldSchemaAlpha<FieldKind.Optional, T, TCustomMetadata, FieldPropsAlpha<TCustomMetadata>>;
+    static readonly stagedOptional: <const T extends ImplicitAllowedTypes, const TCustomMetadata = unknown>(t: T, props?: Omit<FieldPropsAlpha<TCustomMetadata>, "stagedOptionalUpgrade" | "defaultProvider"> | undefined) => FieldSchemaAlpha<FieldKind.Optional, T, TCustomMetadata, FieldPropsAlpha<TCustomMetadata>>;
     readonly withDefault: <Kind extends FieldKind, Types extends ImplicitAllowedTypes, TCustomMetadata = unknown>(fieldSchema: FieldSchema<Kind, Types, TCustomMetadata>, defaultValue: NodeProvider<ApplyKindInput<InsertableTreeNodeFromImplicitAllowedTypes<Types>, Kind, true>>) => FieldSchemaAlpha<Kind, Types, TCustomMetadata, FieldPropsAlpha<TCustomMetadata> & {
         defaultProvider: DefaultProvider;
     }>;
@@ -1594,6 +1599,7 @@ export interface SchemaStatics {
 
 // @alpha @sealed @system
 export interface SchemaStaticsAlpha {
+    readonly stagedOptional: <const T extends ImplicitAllowedTypes, const TCustomMetadata = unknown>(t: T, props?: Omit<FieldPropsAlpha<TCustomMetadata>, "defaultProvider" | "stagedOptionalUpgrade">) => FieldSchemaAlpha<FieldKind.Optional, T, TCustomMetadata, FieldPropsAlpha<TCustomMetadata>>;
     readonly withDefault: <Kind extends FieldKind, Types extends ImplicitAllowedTypes, TCustomMetadata = unknown>(fieldSchema: FieldSchema<Kind, Types, TCustomMetadata>, defaultValue: NodeProvider<InsertableTreeFieldFromImplicitField<FieldSchema<Kind, Types>>>) => FieldSchemaAlpha<Kind, Types, TCustomMetadata, FieldPropsAlpha<TCustomMetadata> & {
         defaultProvider: DefaultProvider;
     }>;
@@ -1659,6 +1665,7 @@ export interface SimpleArrayNodeSchema<Type extends SchemaType = SchemaType, out
 
 // @alpha @sealed
 export interface SimpleFieldSchema<Type extends SchemaType = SchemaType> {
+    readonly isStagedOptional?: Type extends SchemaType.Stored ? undefined : false | SchemaUpgrade;
     readonly kind: FieldKind;
     readonly metadata: FieldSchemaMetadata & (Type extends SchemaType.View ? unknown : {
         readonly custom?: undefined;
@@ -2210,15 +2217,15 @@ export interface TreeIdentifierUtils {
     shorten(branch: TreeBranch, nodeIdentifier: string): number | undefined;
 }
 
-// @alpha @sealed
+// @beta @sealed
 export interface TreeIndex<TKey, TValue> extends FluidReadonlyMap<TKey, TValue> {
     dispose(): void;
 }
 
-// @alpha
+// @beta
 export type TreeIndexKey = TreeLeafValue;
 
-// @alpha
+// @beta
 export type TreeIndexNodes<TNode> = readonly [first: TNode, ...rest: TNode[]];
 
 // @public
