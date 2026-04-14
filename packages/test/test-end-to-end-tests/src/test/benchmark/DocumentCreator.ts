@@ -117,14 +117,18 @@ export function benchmarkAll<T extends IBenchmarkParameters>(title: string, obj:
 	// In performance testing mode, the tests are much longer
 	// and the mocharc sets a much longer timeout per test accordingly.
 	// Calling .timeout() on the returned test overrides that,
-	// so we need to provide suitable timouts for both cases here.
+	// so we need to provide suitable timeouts for both cases here.
 	// As some of these tests do lot of operations to rather large data sets,
-	// they are quite slow and need long timouts.
+	// they are quite slow and need long timeouts.
 	const timeout = isInPerformanceTestingMode ? 1_000_000 : 20_000;
 
 	benchmarkIt({
 		title,
 		...benchmarkMemoryUse({
+			// These tests are quite slow, so force a really low iteration count.
+			// If we need better data at some point, we can look into raising it.
+			keepIterations: Math.min(obj.minSampleCount ?? 1, 1),
+			warmUpIterations: (obj.minSampleCount ?? 1 > 1) ? 1 : 0,
 			benchmarkFn: async (state: MemoryUseCallbacks) => {
 				await beforeMethod?.();
 				while (state.continue()) {
