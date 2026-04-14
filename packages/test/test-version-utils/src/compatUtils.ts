@@ -115,7 +115,7 @@ export interface ITestDataObject extends IFluidLoadable {
  * (because `makeChannelFactory` creates a new class per `SharedObjectKind`), so it won't match and
  * will be passed through without conversion.
  */
-const currentDefaultFactoryCtors: Map<string, Function> = new Map();
+const currentDefaultFactoryCtors: Map<string, unknown> = new Map();
 {
 	const currentApi = getDataRuntimeApi(pkgVersion);
 	for (const value of Object.values(currentApi.dds)) {
