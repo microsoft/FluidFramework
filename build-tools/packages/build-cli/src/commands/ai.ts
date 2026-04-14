@@ -188,7 +188,10 @@ export default class AiCommand extends BaseCommand<typeof AiCommand> {
 				stdio: "inherit",
 				cwd: process.cwd(),
 			});
-			this.exit(result.exitCode ?? 0);
+			// Don't use this.exit() here — it throws an EEXIT error that would be
+			// caught by the catch block below and reported as a launch failure.
+			process.exitCode = result.exitCode ?? 0;
+			return;
 		} catch (error: unknown) {
 			const execError = error as execa.ExecaError;
 			const exitCode = execError.exitCode ?? 1;
