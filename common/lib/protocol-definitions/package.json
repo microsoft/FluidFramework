@@ -90,7 +90,7 @@
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.63.0",
 		"@fluidframework/protocol-definitions-previous": "npm:@fluidframework/protocol-definitions@3.2.0",
-		"@microsoft/api-extractor": "7.52.11",
+		"@microsoft/api-extractor": "7.58.1",
 		"@rushstack/eslint-plugin": "~0.22.1",
 		"concurrently": "^9.2.1",
 		"copyfiles": "^2.4.1",
@@ -159,7 +159,7 @@
 			"picomatch@>=4 <5": "^4.0.4"
 		},
 		"patchedDependencies": {
-			"@microsoft/api-extractor@7.52.11": "../../../patches/@microsoft__api-extractor@7.52.11.patch"
+			"@microsoft/api-extractor@7.58.1": "../../../patches/@microsoft__api-extractor@7.58.1.patch"
 		}
 	},
 	"typeValidation": {

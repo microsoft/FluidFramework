@@ -113,7 +113,7 @@
 		"@fluidframework/build-tools": "catalog:buildTools",
 		"@fluidframework/eslint-config-fluid": "catalog:eslint",
 		"@fluidframework/tool-utils-previous": "npm:@fluidframework/tool-utils@2.92.0",
-		"@microsoft/api-extractor": "7.52.11",
+		"@microsoft/api-extractor": "7.58.1",
 		"@types/debug": "^4.1.5",
 		"@types/mocha": "^10.0.10",
 		"@types/node": "catalog:types",

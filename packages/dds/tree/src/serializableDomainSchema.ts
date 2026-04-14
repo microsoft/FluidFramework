@@ -6,6 +6,12 @@
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
 
 import {
+	// #region Unused imports to make d.ts cleaner
+	/* eslint-disable unused-imports/no-unused-imports, @typescript-eslint/no-unused-vars */
+	NodeKind,
+	System_Unsafe,
+	/* eslint-enable unused-imports/no-unused-imports, @typescript-eslint/no-unused-vars */
+	// #endregion
 	SchemaFactory,
 	SchemaFactoryBeta,
 	type FixRecursiveArraySchema,

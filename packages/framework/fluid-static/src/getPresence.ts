@@ -22,7 +22,7 @@ import { isInternalFluidContainer } from "./fluidContainer.js";
  * @param fluidContainer - Fluid Container to acquire the map from
  * @returns the {@link @fluidframework/presence#Presence}
  *
- * @beta
+ * @public
  */
 export const getPresence: (fluidContainer: IFluidContainer) => Presence = getPresenceAlpha;
 

@@ -157,7 +157,7 @@
 		"@fluidframework/eslint-config-fluid": "catalog:eslint",
 		"@fluidframework/map-previous": "npm:@fluidframework/map@2.92.0",
 		"@fluidframework/test-runtime-utils": "workspace:~",
-		"@microsoft/api-extractor": "7.52.11",
+		"@microsoft/api-extractor": "7.58.1",
 		"@types/mocha": "^10.0.10",
 		"@types/node": "catalog:types",
 		"@types/path-browserify": "^1.0.0",

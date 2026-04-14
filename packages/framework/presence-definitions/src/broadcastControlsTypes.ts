@@ -7,7 +7,7 @@
  * Common controls for States objects.
  *
  * @sealed
- * @beta
+ * @public
  */
 export interface BroadcastControls {
 	/**
@@ -40,7 +40,7 @@ export interface BroadcastControls {
 /**
  * Value set to configure {@link BroadcastControls}.
  *
- * @beta
+ * @public
  */
 export interface BroadcastControlSettings {
 	/**

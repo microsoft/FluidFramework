@@ -7,7 +7,7 @@ import { AzureClient, type AzureContainerServices } from "@fluidframework/azure-
 import { createDevtoolsLogger, initializeDevtools } from "@fluidframework/devtools/beta";
 import { createChildLogger } from "@fluidframework/telemetry-utils/legacy";
 import type { IFluidContainer } from "fluid-framework";
-import { getPresence } from "fluid-framework/beta";
+import { getPresence } from "fluid-framework";
 
 import { DiceRollerController, type DieValue } from "./controller.js";
 import {

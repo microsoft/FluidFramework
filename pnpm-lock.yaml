@@ -65,9 +65,9 @@ overrides:
 pnpmfileChecksum: sha256-UgK94jvekjDphs6M2itZJZ9CcCzYY0xcxZhNXJw7D28=
 
 patchedDependencies:
-  '@microsoft/api-extractor@7.52.11':
-    hash: c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069
-    path: patches/@microsoft__api-extractor@7.52.11.patch
+  '@microsoft/api-extractor@7.58.1':
+    hash: 949a26f6cec9ac4e37522f178b8e4982136ccfeb8c6d0835130ef2aa6788f4fa
+    path: patches/@microsoft__api-extractor@7.58.1.patch
 
 importers:
 
@@ -101,8 +101,8 @@ importers:
         specifier: ^2.0.0
         version: 2.0.1
       '@microsoft/api-extractor':
-        specifier: 7.52.11
-        version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@22.19.17)
+        specifier: 7.58.1
+        version: 7.58.1(patch_hash=949a26f6cec9ac4e37522f178b8e4982136ccfeb8c6d0835130ef2aa6788f4fa)(@types/node@22.19.17)
       '@vvago/vale':
         specifier: ^3.12.0
         version: 3.12.0
@@ -172,7 +172,7 @@ importers:
         version: 0.64.0(@types/node@22.19.17)
       '@fluidframework/eslint-config-fluid':
         specifier: catalog:eslint
-        version: 9.0.0(@typescript-eslint/utils@8.56.1(eslint@9.39.1(jiti@2.6.1))(typescript@5.9.3))(eslint@9.39.1(jiti@2.6.1))(typescript@5.9.3)
+        version: 9.0.0(@typescript-eslint/utils@8.56.1(eslint@9.39.1(jiti@2.6.1))(typescript@5.4.5))(eslint@9.39.1(jiti@2.6.1))(typescript@5.4.5)
       eslint:
         specifier: catalog:eslint
         version: 9.39.1(jiti@2.6.1)
@@ -223,8 +223,8 @@ importers:
         specifier: catalog:eslint
         version: 9.0.0(@typescript-eslint/utils@8.56.1(eslint@9.39.1(jiti@2.6.1))(typescript@5.4.5))(eslint@9.39.1(jiti@2.6.1))(typescript@5.4.5)
       '@microsoft/api-extractor':
-        specifier: 7.52.11
-        version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@22.19.17)
+        specifier: 7.58.1
+        version: 7.58.1(patch_hash=949a26f6cec9ac4e37522f178b8e4982136ccfeb8c6d0835130ef2aa6788f4fa)(@types/node@22.19.17)
       '@types/jsrsasign':
         specifier: ^10.5.12
         version: 10.5.15
@@ -3597,8 +3597,8 @@ importers:
         specifier: workspace:~
         version: link:../../../packages/test/test-utils
       '@microsoft/api-extractor':
-        specifier: 7.52.11
-        version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@22.19.17)
+        specifier: 7.58.1
+        version: 7.58.1(patch_hash=949a26f6cec9ac4e37522f178b8e4982136ccfeb8c6d0835130ef2aa6788f4fa)(@types/node@22.19.17)
       '@types/debug':
         specifier: ^4.1.5
         version: 4.1.12
@@ -5072,8 +5072,8 @@ importers:
         specifier: catalog:eslint
         version: 9.0.0(@typescript-eslint/utils@8.56.1(eslint@9.39.1(jiti@2.6.1))(typescript@5.4.5))(eslint@9.39.1(jiti@2.6.1))(typescript@5.4.5)
       '@microsoft/api-extractor':
-        specifier: 7.52.11
-        version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@22.19.17)
+        specifier: 7.58.1
+        version: 7.58.1(patch_hash=949a26f6cec9ac4e37522f178b8e4982136ccfeb8c6d0835130ef2aa6788f4fa)(@types/node@22.19.17)
       '@types/react':
         specifier: ^18.3.11
         version: 18.3.15
@@ -5288,8 +5288,8 @@ importers:
         specifier: catalog:eslint
         version: 9.0.0(@typescript-eslint/utils@8.56.1(eslint@9.39.1(jiti@2.6.1))(typescript@5.4.5))(eslint@9.39.1(jiti@2.6.1))(typescript@5.4.5)
       '@microsoft/api-extractor':
-        specifier: 7.52.11
-        version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@22.19.17)
+        specifier: 7.58.1
+        version: 7.58.1(patch_hash=949a26f6cec9ac4e37522f178b8e4982136ccfeb8c6d0835130ef2aa6788f4fa)(@types/node@22.19.17)
       concurrently:
         specifier: ^9.2.1
         version: 9.2.1
@@ -6521,10 +6521,10 @@ importers:
         version: link:../property-common
       ajv:
         specifier: ^8.17.1
-        version: 8.17.1
+        version: 8.18.0
       ajv-keywords:
         specifier: ^5.1.0
-        version: 5.1.0(ajv@8.17.1)
+        version: 5.1.0(ajv@8.18.0)
       async:
         specifier: ^3.2.2
         version: 3.2.6
@@ -6612,7 +6612,7 @@ importers:
         version: '@types/events@3.0.3'
       ajv:
         specifier: ^8.17.1
-        version: 8.17.1
+        version: 8.18.0
       async:
         specifier: ^3.2.2
         version: 3.2.6
@@ -6648,8 +6648,8 @@ importers:
         specifier: catalog:buildTools
         version: 0.64.0(@types/node@22.19.17)
       '@microsoft/api-extractor':
-        specifier: 7.52.11
-        version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@22.19.17)
+        specifier: 7.58.1
+        version: 7.58.1(patch_hash=949a26f6cec9ac4e37522f178b8e4982136ccfeb8c6d0835130ef2aa6788f4fa)(@types/node@22.19.17)
       '@types/chai':
         specifier: ^4.0.0
         version: 4.3.20
@@ -6814,8 +6814,8 @@ importers:
         specifier: workspace:~
         version: link:../../../../packages/test/test-utils
       '@microsoft/api-extractor':
-        specifier: 7.52.11
-        version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@22.19.17)
+        specifier: 7.58.1
+        version: 7.58.1(patch_hash=949a26f6cec9ac4e37522f178b8e4982136ccfeb8c6d0835130ef2aa6788f4fa)(@types/node@22.19.17)
       '@types/lodash':
         specifier: ^4.14.118
         version: 4.17.13
@@ -6869,7 +6869,7 @@ importers:
         version: link:../property-common
       ajv:
         specifier: ^8.17.1
-        version: 8.17.1
+        version: 8.18.0
       async:
         specifier: ^3.2.2
         version: 3.2.6
@@ -6993,8 +6993,8 @@ importers:
         specifier: workspace:~
         version: link:../../../../packages/runtime/test-runtime-utils
       '@microsoft/api-extractor':
-        specifier: 7.52.11
-        version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@22.19.17)
+        specifier: 7.58.1
+        version: 7.58.1(patch_hash=949a26f6cec9ac4e37522f178b8e4982136ccfeb8c6d0835130ef2aa6788f4fa)(@types/node@22.19.17)
       '@types/mocha':
         specifier: ^10.0.10
         version: 10.0.10
@@ -7087,8 +7087,8 @@ importers:
         specifier: workspace:~
         version: link:../../../../../packages/runtime/test-runtime-utils
       '@microsoft/api-extractor':
-        specifier: 7.52.11
-        version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@22.19.17)
+        specifier: 7.58.1
+        version: 7.58.1(patch_hash=949a26f6cec9ac4e37522f178b8e4982136ccfeb8c6d0835130ef2aa6788f4fa)(@types/node@22.19.17)
       '@types/mocha':
         specifier: ^10.0.10
         version: 10.0.10
@@ -7178,8 +7178,8 @@ importers:
         specifier: workspace:~
         version: link:../../../packages/runtime/test-runtime-utils
       '@microsoft/api-extractor':
-        specifier: 7.52.11
-        version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@22.19.17)
+        specifier: 7.58.1
+        version: 7.58.1(patch_hash=949a26f6cec9ac4e37522f178b8e4982136ccfeb8c6d0835130ef2aa6788f4fa)(@types/node@22.19.17)
       '@types/diff':
         specifier: ^3.5.1
         version: 3.5.8
@@ -7320,8 +7320,8 @@ importers:
         specifier: workspace:~
         version: link:../../../packages/framework/undo-redo
       '@microsoft/api-extractor':
-        specifier: 7.52.11
-        version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@22.19.17)
+        specifier: 7.58.1
+        version: 7.58.1(patch_hash=949a26f6cec9ac4e37522f178b8e4982136ccfeb8c6d0835130ef2aa6788f4fa)(@types/node@22.19.17)
       '@types/chai':
         specifier: ^4.0.0
         version: 4.3.20
@@ -7420,8 +7420,8 @@ importers:
         specifier: catalog:eslint
         version: 9.0.0(@typescript-eslint/utils@8.56.1(eslint@9.39.1(jiti@2.6.1))(typescript@5.4.5))(eslint@9.39.1(jiti@2.6.1))(typescript@5.4.5)
       '@microsoft/api-extractor':
-        specifier: 7.52.11
-        version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@22.19.17)
+        specifier: 7.58.1
+        version: 7.58.1(patch_hash=949a26f6cec9ac4e37522f178b8e4982136ccfeb8c6d0835130ef2aa6788f4fa)(@types/node@22.19.17)
       '@types/node':
         specifier: ~22.19.17
         version: 22.19.17
@@ -7490,8 +7490,8 @@ importers:
         specifier: catalog:eslint
         version: 9.0.0(@typescript-eslint/utils@8.56.1(eslint@9.39.1(jiti@2.6.1))(typescript@5.4.5))(eslint@9.39.1(jiti@2.6.1))(typescript@5.4.5)
       '@microsoft/api-extractor':
-        specifier: 7.52.11
-        version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@22.19.17)
+        specifier: 7.58.1
+        version: 7.58.1(patch_hash=949a26f6cec9ac4e37522f178b8e4982136ccfeb8c6d0835130ef2aa6788f4fa)(@types/node@22.19.17)
       '@types/node':
         specifier: ~22.19.17
         version: 22.19.17
@@ -7563,8 +7563,8 @@ importers:
         specifier: catalog:eslint
         version: 9.0.0(@typescript-eslint/utils@8.56.1(eslint@9.39.1(jiti@2.6.1))(typescript@5.4.5))(eslint@9.39.1(jiti@2.6.1))(typescript@5.4.5)
       '@microsoft/api-extractor':
-        specifier: 7.52.11
-        version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@22.19.17)
+        specifier: 7.58.1
+        version: 7.58.1(patch_hash=949a26f6cec9ac4e37522f178b8e4982136ccfeb8c6d0835130ef2aa6788f4fa)(@types/node@22.19.17)
       '@types/base64-js':
         specifier: ^1.3.2
         version: 1.3.2
@@ -7681,8 +7681,8 @@ importers:
         specifier: catalog:eslint
         version: 9.0.0(@typescript-eslint/utils@8.56.1(eslint@9.39.1(jiti@2.6.1))(typescript@5.4.5))(eslint@9.39.1(jiti@2.6.1))(typescript@5.4.5)
       '@microsoft/api-extractor':
-        specifier: 7.52.11
-        version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@22.19.17)
+        specifier: 7.58.1
+        version: 7.58.1(patch_hash=949a26f6cec9ac4e37522f178b8e4982136ccfeb8c6d0835130ef2aa6788f4fa)(@types/node@22.19.17)
       concurrently:
         specifier: ^9.2.1
         version: 9.2.1
@@ -7726,8 +7726,8 @@ importers:
         specifier: catalog:eslint
         version: 9.0.0(@typescript-eslint/utils@8.56.1(eslint@9.39.1(jiti@2.6.1))(typescript@5.4.5))(eslint@9.39.1(jiti@2.6.1))(typescript@5.4.5)
       '@microsoft/api-extractor':
-        specifier: 7.52.11
-        version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@22.19.17)
+        specifier: 7.58.1
+        version: 7.58.1(patch_hash=949a26f6cec9ac4e37522f178b8e4982136ccfeb8c6d0835130ef2aa6788f4fa)(@types/node@22.19.17)
       '@types/mocha':
         specifier: ^10.0.10
         version: 10.0.10
@@ -7795,8 +7795,8 @@ importers:
         specifier: catalog:eslint
         version: 9.0.0(@typescript-eslint/utils@8.56.1(eslint@9.39.1(jiti@2.6.1))(typescript@5.4.5))(eslint@9.39.1(jiti@2.6.1))(typescript@5.4.5)
       '@microsoft/api-extractor':
-        specifier: 7.52.11
-        version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@22.19.17)
+        specifier: 7.58.1
+        version: 7.58.1(patch_hash=949a26f6cec9ac4e37522f178b8e4982136ccfeb8c6d0835130ef2aa6788f4fa)(@types/node@22.19.17)
       '@types/mocha':
         specifier: ^10.0.10
         version: 10.0.10
@@ -7871,8 +7871,8 @@ importers:
         specifier: catalog:eslint
         version: 9.0.0(@typescript-eslint/utils@8.56.1(eslint@9.39.1(jiti@2.6.1))(typescript@5.4.5))(eslint@9.39.1(jiti@2.6.1))(typescript@5.4.5)
       '@microsoft/api-extractor':
-        specifier: 7.52.11
-        version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@22.19.17)
+        specifier: 7.58.1
+        version: 7.58.1(patch_hash=949a26f6cec9ac4e37522f178b8e4982136ccfeb8c6d0835130ef2aa6788f4fa)(@types/node@22.19.17)
       concurrently:
         specifier: ^9.2.1
         version: 9.2.1
@@ -7950,8 +7950,8 @@ importers:
         specifier: workspace:~
         version: link:../../runtime/test-runtime-utils
       '@microsoft/api-extractor':
-        specifier: 7.52.11
-        version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@22.19.17)
+        specifier: 7.58.1
+        version: 7.58.1(patch_hash=949a26f6cec9ac4e37522f178b8e4982136ccfeb8c6d0835130ef2aa6788f4fa)(@types/node@22.19.17)
       '@types/mocha':
         specifier: ^10.0.10
         version: 10.0.10
@@ -8050,8 +8050,8 @@ importers:
         specifier: workspace:~
         version: link:../../runtime/test-runtime-utils
       '@microsoft/api-extractor':
-        specifier: 7.52.11
-        version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@22.19.17)
+        specifier: 7.58.1
+        version: 7.58.1(patch_hash=949a26f6cec9ac4e37522f178b8e4982136ccfeb8c6d0835130ef2aa6788f4fa)(@types/node@22.19.17)
       '@types/mocha':
         specifier: ^10.0.10
         version: 10.0.10
@@ -8141,8 +8141,8 @@ importers:
         specifier: workspace:~
         version: link:../../runtime/test-runtime-utils
       '@microsoft/api-extractor':
-        specifier: 7.52.11
-        version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@22.19.17)
+        specifier: 7.58.1
+        version: 7.58.1(patch_hash=949a26f6cec9ac4e37522f178b8e4982136ccfeb8c6d0835130ef2aa6788f4fa)(@types/node@22.19.17)
       '@types/mocha':
         specifier: ^10.0.10
         version: 10.0.10
@@ -8247,8 +8247,8 @@ importers:
         specifier: workspace:~
         version: link:../../runtime/test-runtime-utils
       '@microsoft/api-extractor':
-        specifier: 7.52.11
-        version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@22.19.17)
+        specifier: 7.58.1
+        version: 7.58.1(patch_hash=949a26f6cec9ac4e37522f178b8e4982136ccfeb8c6d0835130ef2aa6788f4fa)(@types/node@22.19.17)
       '@types/jest':
         specifier: 29.5.3
         version: 29.5.3
@@ -8365,8 +8365,8 @@ importers:
         specifier: workspace:~
         version: link:../../runtime/test-runtime-utils
       '@microsoft/api-extractor':
-        specifier: 7.52.11
-        version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@22.19.17)
+        specifier: 7.58.1
+        version: 7.58.1(patch_hash=949a26f6cec9ac4e37522f178b8e4982136ccfeb8c6d0835130ef2aa6788f4fa)(@types/node@22.19.17)
       '@types/mocha':
         specifier: ^10.0.10
         version: 10.0.10
@@ -8489,8 +8489,8 @@ importers:
         specifier: workspace:~
         version: link:../../runtime/test-runtime-utils
       '@microsoft/api-extractor':
-        specifier: 7.52.11
-        version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@22.19.17)
+        specifier: 7.58.1
+        version: 7.58.1(patch_hash=949a26f6cec9ac4e37522f178b8e4982136ccfeb8c6d0835130ef2aa6788f4fa)(@types/node@22.19.17)
       '@tiny-calc/micro':
         specifier: 0.0.0-alpha.5
         version: 0.0.0-alpha.5
@@ -8613,8 +8613,8 @@ importers:
         specifier: workspace:~
         version: link:../../runtime/test-runtime-utils
       '@microsoft/api-extractor':
-        specifier: 7.52.11
-        version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@22.19.17)
+        specifier: 7.58.1
+        version: 7.58.1(patch_hash=949a26f6cec9ac4e37522f178b8e4982136ccfeb8c6d0835130ef2aa6788f4fa)(@types/node@22.19.17)
       '@types/diff':
         specifier: ^3.5.1
         version: 3.5.8
@@ -8725,8 +8725,8 @@ importers:
         specifier: workspace:~
         version: link:../../runtime/test-runtime-utils
       '@microsoft/api-extractor':
-        specifier: 7.52.11
-        version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@22.19.17)
+        specifier: 7.58.1
+        version: 7.58.1(patch_hash=949a26f6cec9ac4e37522f178b8e4982136ccfeb8c6d0835130ef2aa6788f4fa)(@types/node@22.19.17)
       '@types/mocha':
         specifier: ^10.0.10
         version: 10.0.10
@@ -8819,8 +8819,8 @@ importers:
         specifier: workspace:~
         version: link:../../runtime/test-runtime-utils
       '@microsoft/api-extractor':
-        specifier: 7.52.11
-        version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@22.19.17)
+        specifier: 7.58.1
+        version: 7.58.1(patch_hash=949a26f6cec9ac4e37522f178b8e4982136ccfeb8c6d0835130ef2aa6788f4fa)(@types/node@22.19.17)
       '@types/mocha':
         specifier: ^10.0.10
         version: 10.0.10
@@ -8919,8 +8919,8 @@ importers:
         specifier: workspace:~
         version: link:../../runtime/test-runtime-utils
       '@microsoft/api-extractor':
-        specifier: 7.52.11
-        version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@22.19.17)
+        specifier: 7.58.1
+        version: 7.58.1(patch_hash=949a26f6cec9ac4e37522f178b8e4982136ccfeb8c6d0835130ef2aa6788f4fa)(@types/node@22.19.17)
       '@types/mocha':
         specifier: ^10.0.10
         version: 10.0.10
@@ -9037,8 +9037,8 @@ importers:
         specifier: workspace:~
         version: link:../../runtime/test-runtime-utils
       '@microsoft/api-extractor':
-        specifier: 7.52.11
-        version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@22.19.17)
+        specifier: 7.58.1
+        version: 7.58.1(patch_hash=949a26f6cec9ac4e37522f178b8e4982136ccfeb8c6d0835130ef2aa6788f4fa)(@types/node@22.19.17)
       '@types/diff':
         specifier: ^3.5.1
         version: 3.5.8
@@ -9161,8 +9161,8 @@ importers:
         specifier: workspace:~
         version: link:../../runtime/test-runtime-utils
       '@microsoft/api-extractor':
-        specifier: 7.52.11
-        version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@22.19.17)
+        specifier: 7.58.1
+        version: 7.58.1(patch_hash=949a26f6cec9ac4e37522f178b8e4982136ccfeb8c6d0835130ef2aa6788f4fa)(@types/node@22.19.17)
       '@types/mocha':
         specifier: ^10.0.10
         version: 10.0.10
@@ -9261,8 +9261,8 @@ importers:
         specifier: workspace:~
         version: link:../../runtime/test-runtime-utils
       '@microsoft/api-extractor':
-        specifier: 7.52.11
-        version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@22.19.17)
+        specifier: 7.58.1
+        version: 7.58.1(patch_hash=949a26f6cec9ac4e37522f178b8e4982136ccfeb8c6d0835130ef2aa6788f4fa)(@types/node@22.19.17)
       '@types/mocha':
         specifier: ^10.0.10
         version: 10.0.10
@@ -9370,8 +9370,8 @@ importers:
         specifier: workspace:~
         version: link:../../test/test-utils
       '@microsoft/api-extractor':
-        specifier: 7.52.11
-        version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@22.19.17)
+        specifier: 7.58.1
+        version: 7.58.1(patch_hash=949a26f6cec9ac4e37522f178b8e4982136ccfeb8c6d0835130ef2aa6788f4fa)(@types/node@22.19.17)
       '@types/mocha':
         specifier: ^10.0.10
         version: 10.0.10
@@ -9473,8 +9473,8 @@ importers:
         specifier: catalog:eslint
         version: 9.0.0(@typescript-eslint/utils@8.56.1(eslint@9.39.1(jiti@2.6.1))(typescript@5.4.5))(eslint@9.39.1(jiti@2.6.1))(typescript@5.4.5)
       '@microsoft/api-extractor':
-        specifier: 7.52.11
-        version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@22.19.17)
+        specifier: 7.58.1
+        version: 7.58.1(patch_hash=949a26f6cec9ac4e37522f178b8e4982136ccfeb8c6d0835130ef2aa6788f4fa)(@types/node@22.19.17)
       '@types/mocha':
         specifier: ^10.0.10
         version: 10.0.10
@@ -9615,8 +9615,8 @@ importers:
         specifier: npm:@fluidframework/tree@2.92.0
         version: '@fluidframework/tree@2.92.0'
       '@microsoft/api-extractor':
-        specifier: 7.52.11
-        version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@22.19.17)
+        specifier: 7.58.1
+        version: 7.58.1(patch_hash=949a26f6cec9ac4e37522f178b8e4982136ccfeb8c6d0835130ef2aa6788f4fa)(@types/node@22.19.17)
       '@types/diff':
         specifier: ^3.5.1
         version: 3.5.8
@@ -9634,10 +9634,10 @@ importers:
         version: 1.2.0
       ajv:
         specifier: ^8.17.1
-        version: 8.17.1
+        version: 8.18.0
       ajv-formats:
         specifier: ^3.0.1
-        version: 3.0.1(ajv@8.17.1)
+        version: 3.0.1(ajv@8.18.0)
       c8:
         specifier: ^10.1.3
         version: 10.1.3
@@ -9721,8 +9721,8 @@ importers:
         specifier: catalog:eslint
         version: 9.0.0(@typescript-eslint/utils@8.56.1(eslint@9.39.1(jiti@2.6.1))(typescript@5.4.5))(eslint@9.39.1(jiti@2.6.1))(typescript@5.4.5)
       '@microsoft/api-extractor':
-        specifier: 7.52.11
-        version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@22.19.17)
+        specifier: 7.58.1
+        version: 7.58.1(patch_hash=949a26f6cec9ac4e37522f178b8e4982136ccfeb8c6d0835130ef2aa6788f4fa)(@types/node@22.19.17)
       '@types/node':
         specifier: ~22.19.17
         version: 22.19.17
@@ -9791,8 +9791,8 @@ importers:
         specifier: catalog:eslint
         version: 9.0.0(@typescript-eslint/utils@8.56.1(eslint@9.39.1(jiti@2.6.1))(typescript@5.4.5))(eslint@9.39.1(jiti@2.6.1))(typescript@5.4.5)
       '@microsoft/api-extractor':
-        specifier: 7.52.11
-        version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@22.19.17)
+        specifier: 7.58.1
+        version: 7.58.1(patch_hash=949a26f6cec9ac4e37522f178b8e4982136ccfeb8c6d0835130ef2aa6788f4fa)(@types/node@22.19.17)
       '@types/mocha':
         specifier: ^10.0.10
         version: 10.0.10
@@ -9876,8 +9876,8 @@ importers:
         specifier: catalog:eslint
         version: 9.0.0(@typescript-eslint/utils@8.56.1(eslint@9.39.1(jiti@2.6.1))(typescript@5.4.5))(eslint@9.39.1(jiti@2.6.1))(typescript@5.4.5)
       '@microsoft/api-extractor':
-        specifier: 7.52.11
-        version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@22.19.17)
+        specifier: 7.58.1
+        version: 7.58.1(patch_hash=949a26f6cec9ac4e37522f178b8e4982136ccfeb8c6d0835130ef2aa6788f4fa)(@types/node@22.19.17)
       '@types/jest':
         specifier: 29.5.3
         version: 29.5.3
@@ -9952,8 +9952,8 @@ importers:
         specifier: npm:@fluidframework/file-driver@2.92.0
         version: '@fluidframework/file-driver@2.92.0'
       '@microsoft/api-extractor':
-        specifier: 7.52.11
-        version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@22.19.17)
+        specifier: 7.58.1
+        version: 7.58.1(patch_hash=949a26f6cec9ac4e37522f178b8e4982136ccfeb8c6d0835130ef2aa6788f4fa)(@types/node@22.19.17)
       '@types/node':
         specifier: ~22.19.17
         version: 22.19.17
@@ -10049,8 +10049,8 @@ importers:
         specifier: npm:@fluidframework/local-driver@2.92.0
         version: '@fluidframework/local-driver@2.92.0'
       '@microsoft/api-extractor':
-        specifier: 7.52.11
-        version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@22.19.17)
+        specifier: 7.58.1
+        version: 7.58.1(patch_hash=949a26f6cec9ac4e37522f178b8e4982136ccfeb8c6d0835130ef2aa6788f4fa)(@types/node@22.19.17)
       '@types/jsrsasign':
         specifier: ^10.5.12
         version: 10.5.15
@@ -10155,8 +10155,8 @@ importers:
         specifier: npm:@fluidframework/odsp-driver@2.92.0
         version: '@fluidframework/odsp-driver@2.92.0(encoding@0.1.13)'
       '@microsoft/api-extractor':
-        specifier: 7.52.11
-        version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@22.19.17)
+        specifier: 7.58.1
+        version: 7.58.1(patch_hash=949a26f6cec9ac4e37522f178b8e4982136ccfeb8c6d0835130ef2aa6788f4fa)(@types/node@22.19.17)
       '@types/mocha':
         specifier: ^10.0.10
         version: 10.0.10
@@ -10228,8 +10228,8 @@ importers:
         specifier: npm:@fluidframework/odsp-driver-definitions@2.92.0
         version: '@fluidframework/odsp-driver-definitions@2.92.0'
       '@microsoft/api-extractor':
-        specifier: 7.52.11
-        version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@22.19.17)
+        specifier: 7.58.1
+        version: 7.58.1(patch_hash=949a26f6cec9ac4e37522f178b8e4982136ccfeb8c6d0835130ef2aa6788f4fa)(@types/node@22.19.17)
       concurrently:
         specifier: ^9.2.1
         version: 9.2.1
@@ -10298,8 +10298,8 @@ importers:
         specifier: npm:@fluidframework/odsp-urlresolver@2.92.0
         version: '@fluidframework/odsp-urlresolver@2.92.0(encoding@0.1.13)'
       '@microsoft/api-extractor':
-        specifier: 7.52.11
-        version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@22.19.17)
+        specifier: 7.58.1
+        version: 7.58.1(patch_hash=949a26f6cec9ac4e37522f178b8e4982136ccfeb8c6d0835130ef2aa6788f4fa)(@types/node@22.19.17)
       '@types/mocha':
         specifier: ^10.0.10
         version: 10.0.10
@@ -10377,8 +10377,8 @@ importers:
         specifier: npm:@fluidframework/replay-driver@2.92.0
         version: '@fluidframework/replay-driver@2.92.0'
       '@microsoft/api-extractor':
-        specifier: 7.52.11
-        version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@22.19.17)
+        specifier: 7.58.1
+        version: 7.58.1(patch_hash=949a26f6cec9ac4e37522f178b8e4982136ccfeb8c6d0835130ef2aa6788f4fa)(@types/node@22.19.17)
       '@types/nock':
         specifier: ^9.3.0
         version: 9.3.1
@@ -10465,8 +10465,8 @@ importers:
         specifier: npm:@fluidframework/routerlicious-driver@2.92.0
         version: '@fluidframework/routerlicious-driver@2.92.0'
       '@microsoft/api-extractor':
-        specifier: 7.52.11
-        version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@22.19.17)
+        specifier: 7.58.1
+        version: 7.58.1(patch_hash=949a26f6cec9ac4e37522f178b8e4982136ccfeb8c6d0835130ef2aa6788f4fa)(@types/node@22.19.17)
       '@types/mocha':
         specifier: ^10.0.10
         version: 10.0.10
@@ -10553,8 +10553,8 @@ importers:
         specifier: npm:@fluidframework/routerlicious-urlresolver@2.92.0
         version: '@fluidframework/routerlicious-urlresolver@2.92.0'
       '@microsoft/api-extractor':
-        specifier: 7.52.11
-        version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@22.19.17)
+        specifier: 7.58.1
+        version: 7.58.1(patch_hash=949a26f6cec9ac4e37522f178b8e4982136ccfeb8c6d0835130ef2aa6788f4fa)(@types/node@22.19.17)
       '@types/mocha':
         specifier: ^10.0.10
         version: 10.0.10
@@ -10641,8 +10641,8 @@ importers:
         specifier: npm:@fluidframework/tinylicious-driver@2.92.0
         version: '@fluidframework/tinylicious-driver@2.92.0'
       '@microsoft/api-extractor':
-        specifier: 7.52.11
-        version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@22.19.17)
+        specifier: 7.58.1
+        version: 7.58.1(patch_hash=949a26f6cec9ac4e37522f178b8e4982136ccfeb8c6d0835130ef2aa6788f4fa)(@types/node@22.19.17)
       '@types/jsrsasign':
         specifier: ^10.5.12
         version: 10.5.15
@@ -10738,8 +10738,8 @@ importers:
         specifier: catalog:eslint
         version: 9.0.0(@typescript-eslint/utils@8.56.1(eslint@9.39.1(jiti@2.6.1))(typescript@5.4.5))(eslint@9.39.1(jiti@2.6.1))(typescript@5.4.5)
       '@microsoft/api-extractor':
-        specifier: 7.52.11
-        version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@22.19.17)
+        specifier: 7.58.1
+        version: 7.58.1(patch_hash=949a26f6cec9ac4e37522f178b8e4982136ccfeb8c6d0835130ef2aa6788f4fa)(@types/node@22.19.17)
       '@types/node':
         specifier: ~22.19.17
         version: 22.19.17
@@ -10838,8 +10838,8 @@ importers:
         specifier: catalog:eslint
         version: 9.0.0(@typescript-eslint/utils@8.56.1(eslint@9.39.1(jiti@2.6.1))(typescript@5.4.5))(eslint@9.39.1(jiti@2.6.1))(typescript@5.4.5)
       '@microsoft/api-extractor':
-        specifier: 7.52.11
-        version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@22.19.17)
+        specifier: 7.58.1
+        version: 7.58.1(patch_hash=949a26f6cec9ac4e37522f178b8e4982136ccfeb8c6d0835130ef2aa6788f4fa)(@types/node@22.19.17)
       '@types/mocha':
         specifier: ^10.0.10
         version: 10.0.10
@@ -10953,8 +10953,8 @@ importers:
         specifier: workspace:~
         version: link:../../runtime/test-runtime-utils
       '@microsoft/api-extractor':
-        specifier: 7.52.11
-        version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@22.19.17)
+        specifier: 7.58.1
+        version: 7.58.1(patch_hash=949a26f6cec9ac4e37522f178b8e4982136ccfeb8c6d0835130ef2aa6788f4fa)(@types/node@22.19.17)
       '@types/mocha':
         specifier: ^10.0.10
         version: 10.0.10
@@ -11026,8 +11026,8 @@ importers:
         specifier: catalog:buildTools
         version: 0.64.0(@types/node@22.19.17)
       '@microsoft/api-extractor':
-        specifier: 7.52.11
-        version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@22.19.17)
+        specifier: 7.58.1
+        version: 7.58.1(patch_hash=949a26f6cec9ac4e37522f178b8e4982136ccfeb8c6d0835130ef2aa6788f4fa)(@types/node@22.19.17)
       '@types/mocha':
         specifier: ^10.0.10
         version: 10.0.10
@@ -11129,8 +11129,8 @@ importers:
         specifier: workspace:~
         version: link:../../../dds/tree
       '@microsoft/api-extractor':
-        specifier: 7.52.11
-        version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@22.19.17)
+        specifier: 7.58.1
+        version: 7.58.1(patch_hash=949a26f6cec9ac4e37522f178b8e4982136ccfeb8c6d0835130ef2aa6788f4fa)(@types/node@22.19.17)
       '@types/chai':
         specifier: ^4.0.0
         version: 4.3.20
@@ -11235,8 +11235,8 @@ importers:
         specifier: catalog:eslint
         version: 9.0.0(@typescript-eslint/utils@8.56.1(eslint@9.39.1(jiti@2.6.1))(typescript@5.4.5))(eslint@9.39.1(jiti@2.6.1))(typescript@5.4.5)
       '@microsoft/api-extractor':
-        specifier: 7.52.11
-        version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@22.19.17)
+        specifier: 7.58.1
+        version: 7.58.1(patch_hash=949a26f6cec9ac4e37522f178b8e4982136ccfeb8c6d0835130ef2aa6788f4fa)(@types/node@22.19.17)
       '@types/node':
         specifier: ~22.19.17
         version: 22.19.17
@@ -11302,8 +11302,8 @@ importers:
         specifier: workspace:~
         version: link:../../runtime/test-runtime-utils
       '@microsoft/api-extractor':
-        specifier: 7.52.11
-        version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@22.19.17)
+        specifier: 7.58.1
+        version: 7.58.1(patch_hash=949a26f6cec9ac4e37522f178b8e4982136ccfeb8c6d0835130ef2aa6788f4fa)(@types/node@22.19.17)
       '@types/diff':
         specifier: ^3.5.1
         version: 3.5.8
@@ -11402,8 +11402,8 @@ importers:
         specifier: catalog:eslint
         version: 9.0.0(@typescript-eslint/utils@8.56.1(eslint@9.39.1(jiti@2.6.1))(typescript@5.4.5))(eslint@9.39.1(jiti@2.6.1))(typescript@5.4.5)
       '@microsoft/api-extractor':
-        specifier: 7.52.11
-        version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@22.19.17)
+        specifier: 7.58.1
+        version: 7.58.1(patch_hash=949a26f6cec9ac4e37522f178b8e4982136ccfeb8c6d0835130ef2aa6788f4fa)(@types/node@22.19.17)
       '@types/node':
         specifier: ~22.19.17
         version: 22.19.17
@@ -11517,8 +11517,8 @@ importers:
         specifier: workspace:~
         version: link:../../dds/sequence
       '@microsoft/api-extractor':
-        specifier: 7.52.11
-        version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@22.19.17)
+        specifier: 7.58.1
+        version: 7.58.1(patch_hash=949a26f6cec9ac4e37522f178b8e4982136ccfeb8c6d0835130ef2aa6788f4fa)(@types/node@22.19.17)
       '@types/mocha':
         specifier: ^10.0.10
         version: 10.0.10
@@ -11596,8 +11596,8 @@ importers:
         specifier: catalog:eslint
         version: 9.0.0(@typescript-eslint/utils@8.56.1(eslint@9.39.1(jiti@2.6.1))(typescript@5.4.5))(eslint@9.39.1(jiti@2.6.1))(typescript@5.4.5)
       '@microsoft/api-extractor':
-        specifier: 7.52.11
-        version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@22.19.17)
+        specifier: 7.58.1
+        version: 7.58.1(patch_hash=949a26f6cec9ac4e37522f178b8e4982136ccfeb8c6d0835130ef2aa6788f4fa)(@types/node@22.19.17)
       '@types/node':
         specifier: ~22.19.17
         version: 22.19.17
@@ -11663,8 +11663,8 @@ importers:
         specifier: catalog:eslint
         version: 9.0.0(@typescript-eslint/utils@8.56.1(eslint@9.39.1(jiti@2.6.1))(typescript@5.4.5))(eslint@9.39.1(jiti@2.6.1))(typescript@5.4.5)
       '@microsoft/api-extractor':
-        specifier: 7.52.11
-        version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@22.19.17)
+        specifier: 7.58.1
+        version: 7.58.1(patch_hash=949a26f6cec9ac4e37522f178b8e4982136ccfeb8c6d0835130ef2aa6788f4fa)(@types/node@22.19.17)
       concurrently:
         specifier: ^9.2.1
         version: 9.2.1
@@ -11718,8 +11718,8 @@ importers:
         specifier: catalog:eslint
         version: 9.0.0(@typescript-eslint/utils@8.56.1(eslint@9.39.1(jiti@2.6.1))(typescript@5.4.5))(eslint@9.39.1(jiti@2.6.1))(typescript@5.4.5)
       '@microsoft/api-extractor':
-        specifier: 7.52.11
-        version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@22.19.17)
+        specifier: 7.58.1
+        version: 7.58.1(patch_hash=949a26f6cec9ac4e37522f178b8e4982136ccfeb8c6d0835130ef2aa6788f4fa)(@types/node@22.19.17)
       concurrently:
         specifier: ^9.2.1
         version: 9.2.1
@@ -11803,8 +11803,8 @@ importers:
         specifier: workspace:~
         version: link:../../test/test-utils
       '@microsoft/api-extractor':
-        specifier: 7.52.11
-        version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@22.19.17)
+        specifier: 7.58.1
+        version: 7.58.1(patch_hash=949a26f6cec9ac4e37522f178b8e4982136ccfeb8c6d0835130ef2aa6788f4fa)(@types/node@22.19.17)
       '@types/mocha':
         specifier: ^10.0.10
         version: 10.0.10
@@ -11897,8 +11897,8 @@ importers:
         specifier: workspace:~
         version: link:../../service-clients/tinylicious-client
       '@microsoft/api-extractor':
-        specifier: 7.52.11
-        version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@22.19.17)
+        specifier: 7.58.1
+        version: 7.58.1(patch_hash=949a26f6cec9ac4e37522f178b8e4982136ccfeb8c6d0835130ef2aa6788f4fa)(@types/node@22.19.17)
       '@testing-library/react':
         specifier: ^16.3.0
         version: 16.3.0(@testing-library/dom@10.4.1)(@types/react-dom@18.3.3(@types/react@18.3.15))(@types/react@18.3.15)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
@@ -12012,8 +12012,8 @@ importers:
         specifier: workspace:~
         version: link:../../service-clients/tinylicious-client
       '@microsoft/api-extractor':
-        specifier: 7.52.11
-        version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@22.19.17)
+        specifier: 7.58.1
+        version: 7.58.1(patch_hash=949a26f6cec9ac4e37522f178b8e4982136ccfeb8c6d0835130ef2aa6788f4fa)(@types/node@22.19.17)
       '@testing-library/react':
         specifier: ^16.3.0
         version: 16.3.0(@testing-library/dom@10.4.1)(@types/react-dom@18.3.3(@types/react@18.3.15))(@types/react@18.3.15)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
@@ -12112,8 +12112,8 @@ importers:
         specifier: npm:@fluidframework/request-handler@2.92.0
         version: '@fluidframework/request-handler@2.92.0'
       '@microsoft/api-extractor':
-        specifier: 7.52.11
-        version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@22.19.17)
+        specifier: 7.58.1
+        version: 7.58.1(patch_hash=949a26f6cec9ac4e37522f178b8e4982136ccfeb8c6d0835130ef2aa6788f4fa)(@types/node@22.19.17)
       '@types/diff':
         specifier: ^3.5.1
         version: 3.5.8
@@ -12197,8 +12197,8 @@ importers:
         specifier: npm:@fluidframework/synthesize@2.92.0
         version: '@fluidframework/synthesize@2.92.0'
       '@microsoft/api-extractor':
-        specifier: 7.52.11
-        version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@22.19.17)
+        specifier: 7.58.1
+        version: 7.58.1(patch_hash=949a26f6cec9ac4e37522f178b8e4982136ccfeb8c6d0835130ef2aa6788f4fa)(@types/node@22.19.17)
       '@types/mocha':
         specifier: ^10.0.10
         version: 10.0.10
@@ -12300,8 +12300,8 @@ importers:
         specifier: ^0.6.12
         version: 0.6.12(@langchain/core@0.3.80(openai@5.12.2(ws@8.19.0)(zod@3.25.76))(ws@8.19.0))(ws@8.19.0)
       '@microsoft/api-extractor':
-        specifier: 7.52.11
-        version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@22.19.17)
+        specifier: 7.58.1
+        version: 7.58.1(patch_hash=949a26f6cec9ac4e37522f178b8e4982136ccfeb8c6d0835130ef2aa6788f4fa)(@types/node@22.19.17)
       '@types/mocha':
         specifier: ^10.0.10
         version: 10.0.10
@@ -12406,8 +12406,8 @@ importers:
         specifier: ^0.6.12
         version: 0.6.12(@langchain/core@0.3.80(openai@5.12.2(ws@8.19.0)(zod@3.25.76))(ws@8.19.0))(ws@8.19.0)
       '@microsoft/api-extractor':
-        specifier: 7.52.11
-        version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@22.19.17)
+        specifier: 7.58.1
+        version: 7.58.1(patch_hash=949a26f6cec9ac4e37522f178b8e4982136ccfeb8c6d0835130ef2aa6788f4fa)(@types/node@22.19.17)
       '@types/mocha':
         specifier: ^10.0.10
         version: 10.0.10
@@ -12485,8 +12485,8 @@ importers:
         specifier: workspace:~
         version: link:../../dds/tree
       '@microsoft/api-extractor':
-        specifier: 7.52.11
-        version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@22.19.17)
+        specifier: 7.58.1
+        version: 7.58.1(patch_hash=949a26f6cec9ac4e37522f178b8e4982136ccfeb8c6d0835130ef2aa6788f4fa)(@types/node@22.19.17)
       '@types/mocha':
         specifier: ^10.0.10
         version: 10.0.10
@@ -12558,8 +12558,8 @@ importers:
         specifier: catalog:eslint
         version: 9.0.0(@typescript-eslint/utils@8.56.1(eslint@9.39.1(jiti@2.6.1))(typescript@5.4.5))(eslint@9.39.1(jiti@2.6.1))(typescript@5.4.5)
       '@microsoft/api-extractor':
-        specifier: 7.52.11
-        version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@22.19.17)
+        specifier: 7.58.1
+        version: 7.58.1(patch_hash=949a26f6cec9ac4e37522f178b8e4982136ccfeb8c6d0835130ef2aa6788f4fa)(@types/node@22.19.17)
       '@types/mocha':
         specifier: ^10.0.10
         version: 10.0.10
@@ -12649,8 +12649,8 @@ importers:
         specifier: npm:@fluidframework/undo-redo@2.92.0
         version: '@fluidframework/undo-redo@2.92.0'
       '@microsoft/api-extractor':
-        specifier: 7.52.11
-        version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@22.19.17)
+        specifier: 7.58.1
+        version: 7.58.1(patch_hash=949a26f6cec9ac4e37522f178b8e4982136ccfeb8c6d0835130ef2aa6788f4fa)(@types/node@22.19.17)
       '@types/diff':
         specifier: ^3.5.1
         version: 3.5.8
@@ -12761,8 +12761,8 @@ importers:
         specifier: catalog:eslint
         version: 9.0.0(@typescript-eslint/utils@8.56.1(eslint@9.39.1(jiti@2.6.1))(typescript@5.4.5))(eslint@9.39.1(jiti@2.6.1))(typescript@5.4.5)
       '@microsoft/api-extractor':
-        specifier: 7.52.11
-        version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@22.19.17)
+        specifier: 7.58.1
+        version: 7.58.1(patch_hash=949a26f6cec9ac4e37522f178b8e4982136ccfeb8c6d0835130ef2aa6788f4fa)(@types/node@22.19.17)
       '@types/debug':
         specifier: ^4.1.5
         version: 4.1.12
@@ -12867,8 +12867,8 @@ importers:
         specifier: catalog:eslint
         version: 9.0.0(@typescript-eslint/utils@8.56.1(eslint@9.39.1(jiti@2.6.1))(typescript@5.4.5))(eslint@9.39.1(jiti@2.6.1))(typescript@5.4.5)
       '@microsoft/api-extractor':
-        specifier: 7.52.11
-        version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@22.19.17)
+        specifier: 7.58.1
+        version: 7.58.1(patch_hash=949a26f6cec9ac4e37522f178b8e4982136ccfeb8c6d0835130ef2aa6788f4fa)(@types/node@22.19.17)
       '@types/lz4js':
         specifier: ^0.2.0
         version: 0.2.2
@@ -12949,8 +12949,8 @@ importers:
         specifier: catalog:eslint
         version: 9.0.0(@typescript-eslint/utils@8.56.1(eslint@9.39.1(jiti@2.6.1))(typescript@5.4.5))(eslint@9.39.1(jiti@2.6.1))(typescript@5.4.5)
       '@microsoft/api-extractor':
-        specifier: 7.52.11
-        version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@22.19.17)
+        specifier: 7.58.1
+        version: 7.58.1(patch_hash=949a26f6cec9ac4e37522f178b8e4982136ccfeb8c6d0835130ef2aa6788f4fa)(@types/node@22.19.17)
       concurrently:
         specifier: ^9.2.1
         version: 9.2.1
@@ -13061,8 +13061,8 @@ importers:
         specifier: workspace:~
         version: link:../test-runtime-utils
       '@microsoft/api-extractor':
-        specifier: 7.52.11
-        version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@22.19.17)
+        specifier: 7.58.1
+        version: 7.58.1(patch_hash=949a26f6cec9ac4e37522f178b8e4982136ccfeb8c6d0835130ef2aa6788f4fa)(@types/node@22.19.17)
       '@types/double-ended-queue':
         specifier: ^2.1.0
         version: 2.1.7
@@ -13152,8 +13152,8 @@ importers:
         specifier: catalog:eslint
         version: 9.0.0(@typescript-eslint/utils@8.56.1(eslint@9.39.1(jiti@2.6.1))(typescript@5.4.5))(eslint@9.39.1(jiti@2.6.1))(typescript@5.4.5)
       '@microsoft/api-extractor':
-        specifier: 7.52.11
-        version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@22.19.17)
+        specifier: 7.58.1
+        version: 7.58.1(patch_hash=949a26f6cec9ac4e37522f178b8e4982136ccfeb8c6d0835130ef2aa6788f4fa)(@types/node@22.19.17)
       concurrently:
         specifier: ^9.2.1
         version: 9.2.1
@@ -13240,8 +13240,8 @@ importers:
         specifier: workspace:~
         version: link:../test-runtime-utils
       '@microsoft/api-extractor':
-        specifier: 7.52.11
-        version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@22.19.17)
+        specifier: 7.58.1
+        version: 7.58.1(patch_hash=949a26f6cec9ac4e37522f178b8e4982136ccfeb8c6d0835130ef2aa6788f4fa)(@types/node@22.19.17)
       '@types/lodash':
         specifier: ^4.14.118
         version: 4.17.13
@@ -13328,8 +13328,8 @@ importers:
         specifier: catalog:eslint
         version: 9.0.0(@typescript-eslint/utils@8.56.1(eslint@9.39.1(jiti@2.6.1))(typescript@5.4.5))(eslint@9.39.1(jiti@2.6.1))(typescript@5.4.5)
       '@microsoft/api-extractor':
-        specifier: 7.52.11
-        version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@22.19.17)
+        specifier: 7.58.1
+        version: 7.58.1(patch_hash=949a26f6cec9ac4e37522f178b8e4982136ccfeb8c6d0835130ef2aa6788f4fa)(@types/node@22.19.17)
       concurrently:
         specifier: ^9.2.1
         version: 9.2.1
@@ -13401,8 +13401,8 @@ importers:
         specifier: npm:@fluidframework/id-compressor@2.92.0
         version: '@fluidframework/id-compressor@2.92.0'
       '@microsoft/api-extractor':
-        specifier: 7.52.11
-        version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@22.19.17)
+        specifier: 7.58.1
+        version: 7.58.1(patch_hash=949a26f6cec9ac4e37522f178b8e4982136ccfeb8c6d0835130ef2aa6788f4fa)(@types/node@22.19.17)
       '@types/mocha':
         specifier: ^10.0.10
         version: 10.0.10
@@ -13483,8 +13483,8 @@ importers:
         specifier: npm:@fluidframework/runtime-definitions@2.92.0
         version: '@fluidframework/runtime-definitions@2.92.0'
       '@microsoft/api-extractor':
-        specifier: 7.52.11
-        version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@22.19.17)
+        specifier: 7.58.1
+        version: 7.58.1(patch_hash=949a26f6cec9ac4e37522f178b8e4982136ccfeb8c6d0835130ef2aa6788f4fa)(@types/node@22.19.17)
       concurrently:
         specifier: ^9.2.1
         version: 9.2.1
@@ -13565,8 +13565,8 @@ importers:
         specifier: npm:@fluidframework/runtime-utils@2.92.0
         version: '@fluidframework/runtime-utils@2.92.0'
       '@microsoft/api-extractor':
-        specifier: 7.52.11
-        version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@22.19.17)
+        specifier: 7.58.1
+        version: 7.58.1(patch_hash=949a26f6cec9ac4e37522f178b8e4982136ccfeb8c6d0835130ef2aa6788f4fa)(@types/node@22.19.17)
       '@types/mocha':
         specifier: ^10.0.10
         version: 10.0.10
@@ -13686,8 +13686,8 @@ importers:
         specifier: npm:@fluidframework/test-runtime-utils@2.92.0
         version: '@fluidframework/test-runtime-utils@2.92.0'
       '@microsoft/api-extractor':
-        specifier: 7.52.11
-        version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@22.19.17)
+        specifier: 7.58.1
+        version: 7.58.1(patch_hash=949a26f6cec9ac4e37522f178b8e4982136ccfeb8c6d0835130ef2aa6788f4fa)(@types/node@22.19.17)
       '@types/jsrsasign':
         specifier: ^10.5.12
         version: 10.5.15
@@ -13789,8 +13789,8 @@ importers:
         specifier: workspace:~
         version: link:../../test/test-utils
       '@microsoft/api-extractor':
-        specifier: 7.52.11
-        version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@22.19.17)
+        specifier: 7.58.1
+        version: 7.58.1(patch_hash=949a26f6cec9ac4e37522f178b8e4982136ccfeb8c6d0835130ef2aa6788f4fa)(@types/node@22.19.17)
       '@types/mocha':
         specifier: ^10.0.10
         version: 10.0.10
@@ -14149,8 +14149,8 @@ importers:
         specifier: workspace:~
         version: link:../../test/test-utils
       '@microsoft/api-extractor':
-        specifier: 7.52.11
-        version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@22.19.17)
+        specifier: 7.58.1
+        version: 7.58.1(patch_hash=949a26f6cec9ac4e37522f178b8e4982136ccfeb8c6d0835130ef2aa6788f4fa)(@types/node@22.19.17)
       '@types/mocha':
         specifier: ^10.0.10
         version: 10.0.10
@@ -14258,8 +14258,8 @@ importers:
         specifier: npm:@fluidframework/tinylicious-client@2.92.0
         version: '@fluidframework/tinylicious-client@2.92.0'
       '@microsoft/api-extractor':
-        specifier: 7.52.11
-        version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@22.19.17)
+        specifier: 7.58.1
+        version: 7.58.1(patch_hash=949a26f6cec9ac4e37522f178b8e4982136ccfeb8c6d0835130ef2aa6788f4fa)(@types/node@22.19.17)
       '@types/mocha':
         specifier: ^10.0.10
         version: 10.0.10
@@ -14743,8 +14743,8 @@ importers:
         specifier: catalog:eslint
         version: 9.0.0(@typescript-eslint/utils@8.56.1(eslint@9.39.1(jiti@2.6.1))(typescript@5.4.5))(eslint@9.39.1(jiti@2.6.1))(typescript@5.4.5)
       '@microsoft/api-extractor':
-        specifier: 7.52.11
-        version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@22.19.17)
+        specifier: 7.58.1
+        version: 7.58.1(patch_hash=949a26f6cec9ac4e37522f178b8e4982136ccfeb8c6d0835130ef2aa6788f4fa)(@types/node@22.19.17)
       '@types/mocha':
         specifier: ^10.0.10
         version: 10.0.10
@@ -14925,8 +14925,8 @@ importers:
         specifier: catalog:eslint
         version: 9.0.0(@typescript-eslint/utils@8.56.1(eslint@9.39.1(jiti@2.6.1))(typescript@5.4.5))(eslint@9.39.1(jiti@2.6.1))(typescript@5.4.5)
       '@microsoft/api-extractor':
-        specifier: 7.52.11
-        version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@22.19.17)
+        specifier: 7.58.1
+        version: 7.58.1(patch_hash=949a26f6cec9ac4e37522f178b8e4982136ccfeb8c6d0835130ef2aa6788f4fa)(@types/node@22.19.17)
       '@types/mocha':
         specifier: ^10.0.10
         version: 10.0.10
@@ -14998,8 +14998,8 @@ importers:
         specifier: catalog:eslint
         version: 9.0.0(@typescript-eslint/utils@8.56.1(eslint@9.39.1(jiti@2.6.1))(typescript@5.4.5))(eslint@9.39.1(jiti@2.6.1))(typescript@5.4.5)
       '@microsoft/api-extractor':
-        specifier: 7.52.11
-        version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@22.19.17)
+        specifier: 7.58.1
+        version: 7.58.1(patch_hash=949a26f6cec9ac4e37522f178b8e4982136ccfeb8c6d0835130ef2aa6788f4fa)(@types/node@22.19.17)
       concurrently:
         specifier: ^9.2.1
         version: 9.2.1
@@ -15098,8 +15098,8 @@ importers:
         specifier: catalog:eslint
         version: 9.0.0(@typescript-eslint/utils@8.56.1(eslint@9.39.1(jiti@2.6.1))(typescript@5.4.5))(eslint@9.39.1(jiti@2.6.1))(typescript@5.4.5)
       '@microsoft/api-extractor':
-        specifier: 7.52.11
-        version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@22.19.17)
+        specifier: 7.58.1
+        version: 7.58.1(patch_hash=949a26f6cec9ac4e37522f178b8e4982136ccfeb8c6d0835130ef2aa6788f4fa)(@types/node@22.19.17)
       '@types/node':
         specifier: ~22.19.17
         version: 22.19.17
@@ -15367,8 +15367,8 @@ importers:
         specifier: catalog:eslint
         version: 9.0.0(@typescript-eslint/utils@8.56.1(eslint@9.39.1(jiti@2.6.1))(typescript@5.4.5))(eslint@9.39.1(jiti@2.6.1))(typescript@5.4.5)
       '@microsoft/api-extractor':
-        specifier: 7.52.11
-        version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@22.19.17)
+        specifier: 7.58.1
+        version: 7.58.1(patch_hash=949a26f6cec9ac4e37522f178b8e4982136ccfeb8c6d0835130ef2aa6788f4fa)(@types/node@22.19.17)
       '@types/mocha':
         specifier: ^10.0.10
         version: 10.0.10
@@ -15630,8 +15630,8 @@ importers:
         specifier: npm:@fluidframework/test-utils@2.92.0
         version: '@fluidframework/test-utils@2.92.0(encoding@0.1.13)'
       '@microsoft/api-extractor':
-        specifier: 7.52.11
-        version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@22.19.17)
+        specifier: 7.58.1
+        version: 7.58.1(patch_hash=949a26f6cec9ac4e37522f178b8e4982136ccfeb8c6d0835130ef2aa6788f4fa)(@types/node@22.19.17)
       '@types/debug':
         specifier: ^4.1.5
         version: 4.1.12
@@ -15802,8 +15802,8 @@ importers:
         specifier: catalog:eslint
         version: 9.0.0(@typescript-eslint/utils@8.56.1(eslint@9.39.1(jiti@2.6.1))(typescript@5.4.5))(eslint@9.39.1(jiti@2.6.1))(typescript@5.4.5)
       '@microsoft/api-extractor':
-        specifier: 7.52.11
-        version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@22.19.17)
+        specifier: 7.58.1
+        version: 7.58.1(patch_hash=949a26f6cec9ac4e37522f178b8e4982136ccfeb8c6d0835130ef2aa6788f4fa)(@types/node@22.19.17)
       '@types/mocha':
         specifier: ^10.0.10
         version: 10.0.10
@@ -15957,8 +15957,8 @@ importers:
         specifier: catalog:eslint
         version: 9.0.0(@typescript-eslint/utils@8.56.1(eslint@9.39.1(jiti@2.6.1))(typescript@5.4.5))(eslint@9.39.1(jiti@2.6.1))(typescript@5.4.5)
       '@microsoft/api-extractor':
-        specifier: 7.52.11
-        version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@22.19.17)
+        specifier: 7.58.1
+        version: 7.58.1(patch_hash=949a26f6cec9ac4e37522f178b8e4982136ccfeb8c6d0835130ef2aa6788f4fa)(@types/node@22.19.17)
       '@types/mocha':
         specifier: ^10.0.10
         version: 10.0.10
@@ -16289,8 +16289,8 @@ importers:
         specifier: workspace:~
         version: link:../../../runtime/test-runtime-utils
       '@microsoft/api-extractor':
-        specifier: 7.52.11
-        version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@22.19.17)
+        specifier: 7.58.1
+        version: 7.58.1(patch_hash=949a26f6cec9ac4e37522f178b8e4982136ccfeb8c6d0835130ef2aa6788f4fa)(@types/node@22.19.17)
       '@types/chai':
         specifier: ^4.0.0
         version: 4.3.20
@@ -16615,8 +16615,8 @@ importers:
         specifier: workspace:~
         version: link:../../../dds/shared-object-base
       '@microsoft/api-extractor':
-        specifier: 7.52.11
-        version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@22.19.17)
+        specifier: 7.58.1
+        version: 7.58.1(patch_hash=949a26f6cec9ac4e37522f178b8e4982136ccfeb8c6d0835130ef2aa6788f4fa)(@types/node@22.19.17)
       '@testing-library/dom':
         specifier: ^10.4.0
         version: 10.4.1
@@ -16860,8 +16860,8 @@ importers:
         specifier: npm:@fluidframework/fluid-runner@2.92.0
         version: '@fluidframework/fluid-runner@2.92.0(encoding@0.1.13)'
       '@microsoft/api-extractor':
-        specifier: 7.52.11
-        version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@22.19.17)
+        specifier: 7.58.1
+        version: 7.58.1(patch_hash=949a26f6cec9ac4e37522f178b8e4982136ccfeb8c6d0835130ef2aa6788f4fa)(@types/node@22.19.17)
       '@types/mocha':
         specifier: ^10.0.10
         version: 10.0.10
@@ -17078,8 +17078,8 @@ importers:
         specifier: npm:@fluidframework/odsp-doclib-utils@2.92.0
         version: '@fluidframework/odsp-doclib-utils@2.92.0(encoding@0.1.13)'
       '@microsoft/api-extractor':
-        specifier: 7.52.11
-        version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@22.19.17)
+        specifier: 7.58.1
+        version: 7.58.1(patch_hash=949a26f6cec9ac4e37522f178b8e4982136ccfeb8c6d0835130ef2aa6788f4fa)(@types/node@22.19.17)
       '@types/mocha':
         specifier: ^10.0.10
         version: 10.0.10
@@ -17163,8 +17163,8 @@ importers:
         specifier: npm:@fluidframework/telemetry-utils@2.92.0
         version: '@fluidframework/telemetry-utils@2.92.0'
       '@microsoft/api-extractor':
-        specifier: 7.52.11
-        version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@22.19.17)
+        specifier: 7.58.1
+        version: 7.58.1(patch_hash=949a26f6cec9ac4e37522f178b8e4982136ccfeb8c6d0835130ef2aa6788f4fa)(@types/node@22.19.17)
       '@types/debug':
         specifier: ^4.1.5
         version: 4.1.12
@@ -17260,8 +17260,8 @@ importers:
         specifier: npm:@fluidframework/tool-utils@2.92.0
         version: '@fluidframework/tool-utils@2.92.0(encoding@0.1.13)'
       '@microsoft/api-extractor':
-        specifier: 7.52.11
-        version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@22.19.17)
+        specifier: 7.58.1
+        version: 7.58.1(patch_hash=949a26f6cec9ac4e37522f178b8e4982136ccfeb8c6d0835130ef2aa6788f4fa)(@types/node@22.19.17)
       '@types/debug':
         specifier: ^4.1.5
         version: 4.1.12
@@ -17589,8 +17589,8 @@ packages:
     peerDependencies:
       '@babel/core': ^7.0.0-0
 
-  '@babel/runtime@7.28.6':
-    resolution: {integrity: sha512-05WQkdpL9COIMz4LjTxGpPNCdlpyimKppYNoJ5Di5EUObifl8t4tuLuUBBZEpoLYOmfvIWrsp9fCl0HoPRVTdA==}
+  '@babel/runtime@7.29.2':
+    resolution: {integrity: sha512-JiDShH45zKHWyGe4ZNVRrCjBz8Nh9TMmZG1kh4QTK8hCBTWBi8Da+i7s1fJw7/lYpM4ccepSNfqzZ/QvABBi5g==}
     engines: {node: '>=6.9.0'}
 
   '@babel/template@7.27.2':
@@ -19321,18 +19321,11 @@ packages:
   '@microsoft/1ds-post-js@3.2.18':
     resolution: {integrity: sha512-Tzjcja4SMyws3UP58kD2edFPNb7BJtx5uCgwf/PWXwDyfbUY1/crsTQdEyR98wy/vorvLDZdQlcL++VMChfYnQ==}
 
-  '@microsoft/api-extractor-model@7.30.7':
-    resolution: {integrity: sha512-TBbmSI2/BHpfR9YhQA7nH0nqVmGgJ0xH0Ex4D99/qBDAUpnhA2oikGmdXanbw9AWWY/ExBYIpkmY8dBHdla3YQ==}
+  '@microsoft/api-extractor-model@7.33.5':
+    resolution: {integrity: sha512-Xh4dXuusndVQqVz4nEN9xOp0DyzsKxeD2FFJkSPg4arAjDSKPcy6cAc7CaeBPA7kF2wV1fuDlo2p/bNMpVr8yg==}
 
-  '@microsoft/api-extractor-model@7.32.1':
-    resolution: {integrity: sha512-u4yJytMYiUAnhcNQcZDTh/tVtlrzKlyKrQnLOV+4Qr/5gV+cpufWzCYAB1Q23URFqD6z2RoL2UYncM9xJVGNKA==}
-
-  '@microsoft/api-extractor@7.52.11':
-    resolution: {integrity: sha512-IKQ7bHg6f/Io3dQds6r9QPYk4q0OlR9A4nFDtNhUt3UUIhyitbxAqRN1CLjUVtk6IBk3xzyCMOdwwtIXQ7AlGg==}
-    hasBin: true
-
-  '@microsoft/api-extractor@7.55.1':
-    resolution: {integrity: sha512-l8Z+8qrLkZFM3HM95Dbpqs6G39fpCa7O5p8A7AkA6hSevxkgwsOlLrEuPv0ADOyj5dI1Af5WVDiwpKG/ya5G3w==}
+  '@microsoft/api-extractor@7.58.1':
+    resolution: {integrity: sha512-kF3GFME4lN22O5zbnXk2RP4y/4PDQdps0xKiYTipMYprkwCmmpsWLZt/N2Fkbil540cSLfJX0BW7LkHzgMVUYg==}
     hasBin: true
 
   '@microsoft/applicationinsights-analytics-js@2.8.18':
@@ -19378,12 +19371,6 @@ packages:
 
   '@microsoft/load-themed-styles@1.10.295':
     resolution: {integrity: sha512-W+IzEBw8a6LOOfRJM02dTT7BDZijxm+Z7lhtOAz1+y9vQm1Kdz9jlAO+qCEKsfxtUOmKilW8DIRqFw2aUgKeGg==}
-
-  '@microsoft/tsdoc-config@0.17.1':
-    resolution: {integrity: sha512-UtjIFe0C6oYgTnad4q1QP4qXwLhe6tIpNTRStJ2RZEPIkqQPREAwE5spzVxsdn9UaEMUqhh0AqSx3X4nWAKXWw==}
-
-  '@microsoft/tsdoc-config@0.18.0':
-    resolution: {integrity: sha512-8N/vClYyfOH+l4fLkkr9+myAoR6M7akc8ntBJ4DJdWH2b09uVfr71+LTMpNyG19fNqWDg8KEDZhx5wxuqHyGjw==}
 
   '@microsoft/tsdoc-config@0.18.1':
     resolution: {integrity: sha512-9brPoVdfN9k9g0dcWkFeA7IH9bbcttzDJlXvkf8b2OBzd5MueR1V2wkKBL0abn0otvmkHJC6aapBOTJDDeMCZg==}
@@ -19750,46 +19737,27 @@ packages:
       '@types/node':
         optional: true
 
-  '@rushstack/node-core-library@5.14.0':
-    resolution: {integrity: sha512-eRong84/rwQUlATGFW3TMTYVyqL1vfW9Lf10PH+mVGfIb9HzU3h5AASNIw+axnBLjnD0n3rT5uQBwu9fvzATrg==}
+  '@rushstack/node-core-library@5.21.0':
+    resolution: {integrity: sha512-LFzN+1lyWROit/P8Md6yxAth7lLYKn37oCKJHirEE2TQB25NDUM7bALf0ar+JAtwFfRCH+D+DGOA7DAzIi2r+g==}
     peerDependencies:
       '@types/node': ~22.19.17
     peerDependenciesMeta:
       '@types/node':
         optional: true
 
-  '@rushstack/node-core-library@5.19.0':
-    resolution: {integrity: sha512-BxAopbeWBvNJ6VGiUL+5lbJXywTdsnMeOS8j57Cn/xY10r6sV/gbsTlfYKjzVCUBZATX2eRzJHSMCchsMTGN6A==}
+  '@rushstack/problem-matcher@0.2.1':
+    resolution: {integrity: sha512-gulfhBs6n+I5b7DvjKRfhMGyUejtSgOHTclF/eONr8hcgF1APEDjhxIsfdUYYMzC3rvLwGluqLjbwCFZ8nxrog==}
     peerDependencies:
       '@types/node': ~22.19.17
     peerDependenciesMeta:
       '@types/node':
         optional: true
 
-  '@rushstack/problem-matcher@0.1.1':
-    resolution: {integrity: sha512-Fm5XtS7+G8HLcJHCWpES5VmeMyjAKaWeyZU5qPzZC+22mPlJzAsOxymHiWIfuirtPckX3aptWws+K2d0BzniJA==}
-    peerDependencies:
-      '@types/node': ~22.19.17
-    peerDependenciesMeta:
-      '@types/node':
-        optional: true
+  '@rushstack/rig-package@0.7.2':
+    resolution: {integrity: sha512-9XbFWuqMYcHUso4mnETfhGVUSaADBRj6HUAAEYk50nMPn8WRICmBuCphycQGNB3duIR6EEZX3Xj3SYc2XiP+9A==}
 
-  '@rushstack/rig-package@0.5.3':
-    resolution: {integrity: sha512-olzSSjYrvCNxUFZowevC3uz8gvKr3WTpHQ7BkpjtRpA3wK+T0ybep/SRUMfr195gBzJm5gaXw0ZMgjIyHqJUow==}
-
-  '@rushstack/rig-package@0.6.0':
-    resolution: {integrity: sha512-ZQmfzsLE2+Y91GF15c65L/slMRVhF6Hycq04D4TwtdGaUAbIXXg9c5pKA5KFU7M4QMaihoobp9JJYpYcaY3zOw==}
-
-  '@rushstack/terminal@0.15.4':
-    resolution: {integrity: sha512-OQSThV0itlwVNHV6thoXiAYZlQh4Fgvie2CzxFABsbO2MWQsI4zOh3LRNigYSTrmS+ba2j0B3EObakPzf/x6Zg==}
-    peerDependencies:
-      '@types/node': ~22.19.17
-    peerDependenciesMeta:
-      '@types/node':
-        optional: true
-
-  '@rushstack/terminal@0.19.4':
-    resolution: {integrity: sha512-f4XQk02CrKfrMgyOfhYd3qWI944dLC21S4I/LUhrlAP23GTMDNG6EK5effQtFkISwUKCgD9vMBrJZaPSUquxWQ==}
+  '@rushstack/terminal@0.22.4':
+    resolution: {integrity: sha512-fhtLjnXCc/4WleVbVl6aoc7jcWnU6yqjS1S8WoaNREG3ycu/viZ9R/9QM7Y/b4CDvcXoiDyMNIay7JMwBptM3g==}
     peerDependencies:
       '@types/node': ~22.19.17
     peerDependenciesMeta:
@@ -19799,11 +19767,8 @@ packages:
   '@rushstack/tree-pattern@0.3.4':
     resolution: {integrity: sha512-9uROnkiHWsQqxW6HirXABfTRlgzhYp6tevbYIGkwKQ09VaayUBkvFvt/urDKMwlo+tGU0iQQLuVige6c48wTgw==}
 
-  '@rushstack/ts-command-line@5.0.2':
-    resolution: {integrity: sha512-+AkJDbu1GFMPIU8Sb7TLVXDv/Q7Mkvx+wAjEl8XiXVVq+p1FmWW6M3LYpJMmoHNckSofeMecgWg5lfMwNAAsEQ==}
-
-  '@rushstack/ts-command-line@5.1.4':
-    resolution: {integrity: sha512-H0I6VdJ6sOUbktDFpP2VW5N29w8v4hRoNZOQz02vtEi6ZTYL1Ju8u+TcFiFawUDrUsx/5MQTUhd79uwZZVwVlA==}
+  '@rushstack/ts-command-line@5.3.4':
+    resolution: {integrity: sha512-MLkVKVEN6/2clKTrjN2B2KqKCuPxRwnNsWY7a+FCAq2EMdkj10cM8YgiBSMeGFfzM0mDMzargpHNnNzaBi9Whg==}
 
   '@sideway/address@4.1.5':
     resolution: {integrity: sha512-IqO/DUQHUkPeixNQ8n0JA6102hT9CmaljNTPmQ1u8MEhBo/R4Q8eKLN/vGZxuebwOroDB4cbpjheD4+/sKFK4Q==}
@@ -20850,12 +20815,6 @@ packages:
   ajv@6.12.6:
     resolution: {integrity: sha512-j3fVLgvTo527anyYyJOGTYJbG+vnnQYvE0m5mmkc1TK+nxAppkCLMIL0aZ4dblVCNoGShhm+kzE4ZUykBoMg4g==}
 
-  ajv@8.12.0:
-    resolution: {integrity: sha512-sRu1kpcO9yLtYxBKvqfTeh9KzZEwO3STyX1HT+4CaDzC6HpTGYhIhPIzj9XuKU7KYDwnaeh5hcOwjy1QuJzBPA==}
-
-  ajv@8.13.0:
-    resolution: {integrity: sha512-PRA911Blj99jR5RMeTunVbNXMF6Lp4vZXnk5GQjcnUWUTsrXtekg/pnmFFI2u/I36Y/2bITGS30GZCXei6uNkA==}
-
   ajv@8.17.1:
     resolution: {integrity: sha512-B/gBuNg5SiMTrPkC+A2+cW0RszwxYmn6VYxB/inlBStS5nx6xHIt/ehKRhIMhqusl7a8LjQoZnjCs5vhwxOQ1g==}
 
@@ -21173,7 +21132,7 @@ packages:
   basic-ftp@5.2.0:
     resolution: {integrity: sha512-VoMINM2rqJwJgfdHq6RiUudKt2BV+FY5ZFezP/ypmwayk68+NzzAQy4XXLlqsGD4MCzq3DrmNFD/uUmBJuGoXw==}
     engines: {node: '>=10.0.0'}
-    deprecated: Security vulnerability fixed in 5.2.0, please upgrade
+    deprecated: Security vulnerability fixed in 5.2.1, please upgrade
 
   batch@0.6.1:
     resolution: {integrity: sha512-x+VAiMRL6UPkx+kudNvxTl6hB2XNNCG2r+7wixVfIYwu/2HKRXimwQyaumLjMveWvT2Hkd/cAJw+QBMfJ/EKVw==}
@@ -23222,7 +23181,7 @@ packages:
 
   glob@7.2.3:
     resolution: {integrity: sha512-nFR0zLpU2YCaRxwoCJvL6UvCH2JFyFVIvwTLsIf21AuHlMskA1hhTdk+LlYJtOlYt9v6dvszD2BGRqBL+iQK9Q==}
-    deprecated: Glob versions prior to v9 are no longer supported
+    deprecated: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
 
   glob@8.1.0:
     resolution: {integrity: sha512-r8hpEjiQEYlF2QU0df3dS+nxxSIreXQS1qRhMJM0Q5NDdR386C7jb7Hwwod8Fgiuex+k0GFjgft18yvxm5XoCQ==}
@@ -24599,9 +24558,6 @@ packages:
 
   lodash.uniqby@4.7.0:
     resolution: {integrity: sha512-e/zcLx6CSbmaEgFHCA7BnoQKyCtKMxnuWrJygbwPs/AIn+IMKl66L8/s+wBUn5LRw2pZx3bUHibiV1b6aTWIww==}
-
-  lodash@4.17.23:
-    resolution: {integrity: sha512-LgVTMpQtIopCi79SJeDiP0TfWi5CNEc/L/aRdTh3yIvmZXTnheWpKjSZhnvMl8iXbC1tFg9gdHHDMLoV7CnG+w==}
 
   lodash@4.18.1:
     resolution: {integrity: sha512-dMInicTPVE8d1e5otfwmmjlxkZoUpiVLwyeTdUsi/Caj/gfzzblBcCE5sRHV/AsjuCmxWrte2TNGSYuCeCq+0Q==}
@@ -27297,7 +27253,6 @@ packages:
   tar@7.5.11:
     resolution: {integrity: sha512-ChjMH33/KetonMTAtpYdgUFr0tbz69Fp2v7zWxQfYZX4g5ZN2nOBXm1R2xyA+lMIKrLKIoKAwFj93jE/avX9cQ==}
     engines: {node: '>=18'}
-    deprecated: Old versions of tar are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
 
   temp@0.9.4:
     resolution: {integrity: sha512-yYrrsWnrXMcdsnu/7YMYAofM1ktpL5By7vZhf15CrXijWWrEYZks5AXBudalfSWJLlnen/QUJUB5aoB0kqZUGA==}
@@ -27676,11 +27631,6 @@ packages:
 
   typescript@5.7.3:
     resolution: {integrity: sha512-84MVSjMEHP+FQRPy3pX9sTVV/INIex71s9TL2Gm5FG/WG1SqXeKyZ0k7/blY/4FdOzI12CBy1vGc4og/eus0fw==}
-    engines: {node: '>=14.17'}
-    hasBin: true
-
-  typescript@5.8.2:
-    resolution: {integrity: sha512-aJn6wq13/afZp/jT9QZmwEjDqqvSGp1VT5GVg+f/t6/oVyrgXM6BY1h9BRh/O5p3PlUPAe+WuiEZOmb/49RqoQ==}
     engines: {node: '>=14.17'}
     hasBin: true
 
@@ -28731,7 +28681,7 @@ snapshots:
       '@babel/core': 7.26.0
       '@babel/helper-plugin-utils': 7.25.9
 
-  '@babel/runtime@7.28.6': {}
+  '@babel/runtime@7.29.2': {}
 
   '@babel/template@7.27.2':
     dependencies:
@@ -29017,7 +28967,7 @@ snapshots:
   '@es-joy/jsdoccomment@0.76.0':
     dependencies:
       '@types/estree': 1.0.8
-      '@typescript-eslint/types': 8.54.0
+      '@typescript-eslint/types': 8.58.0
       comment-parser: 1.4.1
       esquery: 1.6.0
       jsdoc-type-pratt-parser: 6.10.0
@@ -30317,17 +30267,6 @@ snapshots:
       - supports-color
       - typescript
 
-  '@fluid-internal/eslint-plugin-fluid@0.4.1(eslint@9.39.1(jiti@2.6.1))(typescript@5.9.3)':
-    dependencies:
-      '@microsoft/tsdoc': 0.15.1
-      '@typescript-eslint/parser': 8.46.4(eslint@9.39.1(jiti@2.6.1))(typescript@5.9.3)
-      '@typescript-eslint/utils': 8.46.4(eslint@9.39.1(jiti@2.6.1))(typescript@5.9.3)
-      eslint: 9.39.1(jiti@2.6.1)
-      ts-morph: 22.0.0
-    transitivePeerDependencies:
-      - supports-color
-      - typescript
-
   '@fluid-internal/test-driver-definitions@2.92.0':
     dependencies:
       '@fluidframework/core-interfaces': 2.92.0
@@ -30351,7 +30290,7 @@ snapshots:
       '@fluidframework/build-tools': 0.64.0(@types/node@22.19.17)
       '@fluidframework/bundle-size-tools': 0.64.0(webpack-cli@5.1.4)
       '@inquirer/prompts': 8.0.2(@types/node@22.19.17)
-      '@microsoft/api-extractor': 7.55.1(@types/node@22.19.17)
+      '@microsoft/api-extractor': 7.58.1(patch_hash=949a26f6cec9ac4e37522f178b8e4982136ccfeb8c6d0835130ef2aa6788f4fa)(@types/node@22.19.17)
       '@oclif/core': 4.8.0
       '@oclif/plugin-autocomplete': 3.2.39
       '@oclif/plugin-commands': 4.1.38
@@ -30359,7 +30298,7 @@ snapshots:
       '@oclif/plugin-not-found': 3.2.73(@types/node@22.19.17)
       '@octokit/core': 7.0.6
       '@octokit/rest': 22.0.1
-      '@rushstack/node-core-library': 5.19.0(@types/node@22.19.17)
+      '@rushstack/node-core-library': 5.21.0(@types/node@22.19.17)
       async: 3.2.6
       azure-devops-node-api: 11.2.0
       change-case: 5.4.4
@@ -31012,37 +30951,6 @@ snapshots:
       eslint-plugin-unused-imports: 4.3.0(@typescript-eslint/eslint-plugin@8.54.0(@typescript-eslint/parser@8.54.0(eslint@9.39.1(jiti@2.6.1))(typescript@5.4.5))(eslint@9.39.1(jiti@2.6.1))(typescript@5.4.5))(eslint@9.39.1(jiti@2.6.1))
       globals: 14.0.0
       typescript-eslint: 8.54.0(eslint@9.39.1(jiti@2.6.1))(typescript@5.4.5)
-    transitivePeerDependencies:
-      - '@typescript-eslint/utils'
-      - eslint
-      - eslint-import-resolver-node
-      - eslint-plugin-import
-      - supports-color
-      - typescript
-
-  '@fluidframework/eslint-config-fluid@9.0.0(@typescript-eslint/utils@8.56.1(eslint@9.39.1(jiti@2.6.1))(typescript@5.9.3))(eslint@9.39.1(jiti@2.6.1))(typescript@5.9.3)':
-    dependencies:
-      '@eslint-community/eslint-plugin-eslint-comments': 4.5.0(eslint@9.39.1(jiti@2.6.1))
-      '@eslint/eslintrc': 3.3.3
-      '@eslint/js': 9.39.4
-      '@fluid-internal/eslint-plugin-fluid': 0.4.1(eslint@9.39.1(jiti@2.6.1))(typescript@5.9.3)
-      '@rushstack/eslint-plugin': 0.22.1(eslint@9.39.1(jiti@2.6.1))(typescript@5.9.3)
-      '@typescript-eslint/eslint-plugin': 8.54.0(@typescript-eslint/parser@8.54.0(eslint@9.39.1(jiti@2.6.1))(typescript@5.9.3))(eslint@9.39.1(jiti@2.6.1))(typescript@5.9.3)
-      '@typescript-eslint/parser': 8.54.0(eslint@9.39.1(jiti@2.6.1))(typescript@5.9.3)
-      eslint-config-biome: 2.1.3
-      eslint-config-prettier: 10.1.8(eslint@9.39.1(jiti@2.6.1))
-      eslint-import-resolver-typescript: 4.4.4(eslint-plugin-import-x@4.16.2(@typescript-eslint/utils@8.56.1(eslint@9.39.1(jiti@2.6.1))(typescript@5.9.3))(eslint@9.39.1(jiti@2.6.1)))(eslint@9.39.1(jiti@2.6.1))
-      eslint-plugin-depend: 1.4.0
-      eslint-plugin-import-x: 4.16.2(@typescript-eslint/utils@8.56.1(eslint@9.39.1(jiti@2.6.1))(typescript@5.9.3))(eslint@9.39.1(jiti@2.6.1))
-      eslint-plugin-jsdoc: 61.4.2(eslint@9.39.1(jiti@2.6.1))
-      eslint-plugin-promise: 7.2.1(eslint@9.39.1(jiti@2.6.1))
-      eslint-plugin-react: 7.37.5(eslint@9.39.1(jiti@2.6.1))
-      eslint-plugin-react-hooks: 7.0.1(eslint@9.39.1(jiti@2.6.1))
-      eslint-plugin-tsdoc: 0.5.2(eslint@9.39.1(jiti@2.6.1))(typescript@5.9.3)
-      eslint-plugin-unicorn: 54.0.0(eslint@9.39.1(jiti@2.6.1))
-      eslint-plugin-unused-imports: 4.3.0(@typescript-eslint/eslint-plugin@8.54.0(@typescript-eslint/parser@8.54.0(eslint@9.39.1(jiti@2.6.1))(typescript@5.9.3))(eslint@9.39.1(jiti@2.6.1))(typescript@5.9.3))(eslint@9.39.1(jiti@2.6.1))
-      globals: 14.0.0
-      typescript-eslint: 8.54.0(eslint@9.39.1(jiti@2.6.1))(typescript@5.9.3)
     transitivePeerDependencies:
       - '@typescript-eslint/utils'
       - eslint
@@ -32568,7 +32476,7 @@ snapshots:
 
   '@manypkg/find-root@1.1.0':
     dependencies:
-      '@babel/runtime': 7.28.6
+      '@babel/runtime': 7.29.2
       '@types/node': 22.19.17
       find-up: 4.1.0
       fs-extra: 8.1.0
@@ -32579,7 +32487,7 @@ snapshots:
 
   '@manypkg/get-packages@1.1.3':
     dependencies:
-      '@babel/runtime': 7.28.6
+      '@babel/runtime': 7.29.2
       '@changesets/types': 4.1.0
       '@manypkg/find-root': 1.1.0
       fs-extra: 8.1.0
@@ -32613,56 +32521,30 @@ snapshots:
     transitivePeerDependencies:
       - tslib
 
-  '@microsoft/api-extractor-model@7.30.7(@types/node@22.19.17)':
-    dependencies:
-      '@microsoft/tsdoc': 0.15.1
-      '@microsoft/tsdoc-config': 0.17.1
-      '@rushstack/node-core-library': 5.14.0(@types/node@22.19.17)
-    transitivePeerDependencies:
-      - '@types/node'
-
-  '@microsoft/api-extractor-model@7.32.1(@types/node@22.19.17)':
+  '@microsoft/api-extractor-model@7.33.5(@types/node@22.19.17)':
     dependencies:
       '@microsoft/tsdoc': 0.16.0
-      '@microsoft/tsdoc-config': 0.18.0
-      '@rushstack/node-core-library': 5.19.0(@types/node@22.19.17)
+      '@microsoft/tsdoc-config': 0.18.1
+      '@rushstack/node-core-library': 5.21.0(@types/node@22.19.17)
     transitivePeerDependencies:
       - '@types/node'
 
-  '@microsoft/api-extractor@7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@22.19.17)':
+  '@microsoft/api-extractor@7.58.1(patch_hash=949a26f6cec9ac4e37522f178b8e4982136ccfeb8c6d0835130ef2aa6788f4fa)(@types/node@22.19.17)':
     dependencies:
-      '@microsoft/api-extractor-model': 7.30.7(@types/node@22.19.17)
-      '@microsoft/tsdoc': 0.15.1
-      '@microsoft/tsdoc-config': 0.17.1
-      '@rushstack/node-core-library': 5.14.0(@types/node@22.19.17)
-      '@rushstack/rig-package': 0.5.3
-      '@rushstack/terminal': 0.15.4(@types/node@22.19.17)
-      '@rushstack/ts-command-line': 5.0.2(@types/node@22.19.17)
-      lodash: 4.17.23
-      minimatch: 10.2.4
-      resolve: 1.22.11
-      semver: 7.5.4
-      source-map: 0.6.1
-      typescript: 5.8.2
-    transitivePeerDependencies:
-      - '@types/node'
-
-  '@microsoft/api-extractor@7.55.1(@types/node@22.19.17)':
-    dependencies:
-      '@microsoft/api-extractor-model': 7.32.1(@types/node@22.19.17)
+      '@microsoft/api-extractor-model': 7.33.5(@types/node@22.19.17)
       '@microsoft/tsdoc': 0.16.0
-      '@microsoft/tsdoc-config': 0.18.0
-      '@rushstack/node-core-library': 5.19.0(@types/node@22.19.17)
-      '@rushstack/rig-package': 0.6.0
-      '@rushstack/terminal': 0.19.4(@types/node@22.19.17)
-      '@rushstack/ts-command-line': 5.1.4(@types/node@22.19.17)
+      '@microsoft/tsdoc-config': 0.18.1
+      '@rushstack/node-core-library': 5.21.0(@types/node@22.19.17)
+      '@rushstack/rig-package': 0.7.2
+      '@rushstack/terminal': 0.22.4(@types/node@22.19.17)
+      '@rushstack/ts-command-line': 5.3.4(@types/node@22.19.17)
       diff: 8.0.3
-      lodash: 4.17.23
+      lodash: 4.18.1
       minimatch: 10.2.4
       resolve: 1.22.11
       semver: 7.5.4
       source-map: 0.6.1
-      typescript: 5.8.2
+      typescript: 5.9.3
     transitivePeerDependencies:
       - '@types/node'
 
@@ -32728,20 +32610,6 @@ snapshots:
   '@microsoft/dynamicproto-js@1.1.11': {}
 
   '@microsoft/load-themed-styles@1.10.295': {}
-
-  '@microsoft/tsdoc-config@0.17.1':
-    dependencies:
-      '@microsoft/tsdoc': 0.15.1
-      ajv: 8.12.0
-      jju: 1.4.0
-      resolve: 1.22.11
-
-  '@microsoft/tsdoc-config@0.18.0':
-    dependencies:
-      '@microsoft/tsdoc': 0.16.0
-      ajv: 8.12.0
-      jju: 1.4.0
-      resolve: 1.22.11
 
   '@microsoft/tsdoc-config@0.18.1':
     dependencies:
@@ -33206,15 +33074,6 @@ snapshots:
       - supports-color
       - typescript
 
-  '@rushstack/eslint-plugin@0.22.1(eslint@9.39.1(jiti@2.6.1))(typescript@5.9.3)':
-    dependencies:
-      '@rushstack/tree-pattern': 0.3.4
-      '@typescript-eslint/utils': 8.46.4(eslint@9.39.1(jiti@2.6.1))(typescript@5.9.3)
-      eslint: 9.39.1(jiti@2.6.1)
-    transitivePeerDependencies:
-      - supports-color
-      - typescript
-
   '@rushstack/node-core-library@3.66.1(@types/node@22.19.17)':
     dependencies:
       colors: 1.2.5
@@ -33227,11 +33086,11 @@ snapshots:
     optionalDependencies:
       '@types/node': 22.19.17
 
-  '@rushstack/node-core-library@5.14.0(@types/node@22.19.17)':
+  '@rushstack/node-core-library@5.21.0(@types/node@22.19.17)':
     dependencies:
-      ajv: 8.13.0
-      ajv-draft-04: 1.0.0(ajv@8.13.0)
-      ajv-formats: 3.0.1(ajv@8.13.0)
+      ajv: 8.18.0
+      ajv-draft-04: 1.0.0(ajv@8.18.0)
+      ajv-formats: 3.0.1(ajv@8.18.0)
       fs-extra: 11.3.2
       import-lazy: 4.0.0
       jju: 1.4.0
@@ -33240,62 +33099,28 @@ snapshots:
     optionalDependencies:
       '@types/node': 22.19.17
 
-  '@rushstack/node-core-library@5.19.0(@types/node@22.19.17)':
-    dependencies:
-      ajv: 8.13.0
-      ajv-draft-04: 1.0.0(ajv@8.13.0)
-      ajv-formats: 3.0.1(ajv@8.13.0)
-      fs-extra: 11.3.2
-      import-lazy: 4.0.0
-      jju: 1.4.0
-      resolve: 1.22.11
-      semver: 7.5.4
+  '@rushstack/problem-matcher@0.2.1(@types/node@22.19.17)':
     optionalDependencies:
       '@types/node': 22.19.17
 
-  '@rushstack/problem-matcher@0.1.1(@types/node@22.19.17)':
-    optionalDependencies:
-      '@types/node': 22.19.17
-
-  '@rushstack/rig-package@0.5.3':
+  '@rushstack/rig-package@0.7.2':
     dependencies:
       resolve: 1.22.11
       strip-json-comments: 3.1.1
 
-  '@rushstack/rig-package@0.6.0':
+  '@rushstack/terminal@0.22.4(@types/node@22.19.17)':
     dependencies:
-      resolve: 1.22.11
-      strip-json-comments: 3.1.1
-
-  '@rushstack/terminal@0.15.4(@types/node@22.19.17)':
-    dependencies:
-      '@rushstack/node-core-library': 5.14.0(@types/node@22.19.17)
-      supports-color: 8.1.1
-    optionalDependencies:
-      '@types/node': 22.19.17
-
-  '@rushstack/terminal@0.19.4(@types/node@22.19.17)':
-    dependencies:
-      '@rushstack/node-core-library': 5.19.0(@types/node@22.19.17)
-      '@rushstack/problem-matcher': 0.1.1(@types/node@22.19.17)
+      '@rushstack/node-core-library': 5.21.0(@types/node@22.19.17)
+      '@rushstack/problem-matcher': 0.2.1(@types/node@22.19.17)
       supports-color: 8.1.1
     optionalDependencies:
       '@types/node': 22.19.17
 
   '@rushstack/tree-pattern@0.3.4': {}
 
-  '@rushstack/ts-command-line@5.0.2(@types/node@22.19.17)':
+  '@rushstack/ts-command-line@5.3.4(@types/node@22.19.17)':
     dependencies:
-      '@rushstack/terminal': 0.15.4(@types/node@22.19.17)
-      '@types/argparse': 1.0.38
-      argparse: 1.0.10
-      string-argv: 0.3.2
-    transitivePeerDependencies:
-      - '@types/node'
-
-  '@rushstack/ts-command-line@5.1.4(@types/node@22.19.17)':
-    dependencies:
-      '@rushstack/terminal': 0.19.4(@types/node@22.19.17)
+      '@rushstack/terminal': 0.22.4(@types/node@22.19.17)
       '@types/argparse': 1.0.38
       argparse: 1.0.10
       string-argv: 0.3.2
@@ -33430,7 +33255,7 @@ snapshots:
   '@testing-library/dom@10.4.1':
     dependencies:
       '@babel/code-frame': 7.27.1
-      '@babel/runtime': 7.28.6
+      '@babel/runtime': 7.29.2
       '@types/aria-query': 5.0.4
       aria-query: 5.3.0
       dom-accessibility-api: 0.5.16
@@ -33441,7 +33266,7 @@ snapshots:
   '@testing-library/jest-dom@5.17.0':
     dependencies:
       '@adobe/css-tools': 4.4.1
-      '@babel/runtime': 7.28.6
+      '@babel/runtime': 7.29.2
       '@types/testing-library__jest-dom': 5.14.9
       aria-query: 5.3.2
       chalk: 3.0.0
@@ -33452,7 +33277,7 @@ snapshots:
 
   '@testing-library/react@16.3.0(@testing-library/dom@10.4.1)(@types/react-dom@18.3.3(@types/react@18.3.15))(@types/react@18.3.15)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)':
     dependencies:
-      '@babel/runtime': 7.28.6
+      '@babel/runtime': 7.29.2
       '@testing-library/dom': 10.4.1
       react: 18.3.1
       react-dom: 18.3.1(react@18.3.1)
@@ -33970,22 +33795,6 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@typescript-eslint/eslint-plugin@8.54.0(@typescript-eslint/parser@8.54.0(eslint@9.39.1(jiti@2.6.1))(typescript@5.9.3))(eslint@9.39.1(jiti@2.6.1))(typescript@5.9.3)':
-    dependencies:
-      '@eslint-community/regexpp': 4.12.2
-      '@typescript-eslint/parser': 8.54.0(eslint@9.39.1(jiti@2.6.1))(typescript@5.9.3)
-      '@typescript-eslint/scope-manager': 8.54.0
-      '@typescript-eslint/type-utils': 8.54.0(eslint@9.39.1(jiti@2.6.1))(typescript@5.9.3)
-      '@typescript-eslint/utils': 8.54.0(eslint@9.39.1(jiti@2.6.1))(typescript@5.9.3)
-      '@typescript-eslint/visitor-keys': 8.54.0
-      eslint: 9.39.1(jiti@2.6.1)
-      ignore: 7.0.5
-      natural-compare: 1.4.0
-      ts-api-utils: 2.4.0(typescript@5.9.3)
-      typescript: 5.9.3
-    transitivePeerDependencies:
-      - supports-color
-
   '@typescript-eslint/parser@8.46.4(eslint@9.39.1(jiti@2.6.1))(typescript@5.4.5)':
     dependencies:
       '@typescript-eslint/scope-manager': 8.46.4
@@ -33995,18 +33804,6 @@ snapshots:
       debug: 4.4.3(supports-color@8.1.1)
       eslint: 9.39.1(jiti@2.6.1)
       typescript: 5.4.5
-    transitivePeerDependencies:
-      - supports-color
-
-  '@typescript-eslint/parser@8.46.4(eslint@9.39.1(jiti@2.6.1))(typescript@5.9.3)':
-    dependencies:
-      '@typescript-eslint/scope-manager': 8.46.4
-      '@typescript-eslint/types': 8.46.4
-      '@typescript-eslint/typescript-estree': 8.46.4(typescript@5.9.3)
-      '@typescript-eslint/visitor-keys': 8.46.4
-      debug: 4.4.3(supports-color@8.1.1)
-      eslint: 9.39.1(jiti@2.6.1)
-      typescript: 5.9.3
     transitivePeerDependencies:
       - supports-color
 
@@ -34022,69 +33819,30 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@typescript-eslint/parser@8.54.0(eslint@9.39.1(jiti@2.6.1))(typescript@5.9.3)':
-    dependencies:
-      '@typescript-eslint/scope-manager': 8.54.0
-      '@typescript-eslint/types': 8.54.0
-      '@typescript-eslint/typescript-estree': 8.54.0(typescript@5.9.3)
-      '@typescript-eslint/visitor-keys': 8.54.0
-      debug: 4.4.3(supports-color@8.1.1)
-      eslint: 9.39.1(jiti@2.6.1)
-      typescript: 5.9.3
-    transitivePeerDependencies:
-      - supports-color
-
   '@typescript-eslint/project-service@8.46.4(typescript@5.4.5)':
     dependencies:
-      '@typescript-eslint/tsconfig-utils': 8.54.0(typescript@5.4.5)
-      '@typescript-eslint/types': 8.54.0
+      '@typescript-eslint/tsconfig-utils': 8.56.1(typescript@5.4.5)
+      '@typescript-eslint/types': 8.58.0
       debug: 4.4.3(supports-color@8.1.1)
       typescript: 5.4.5
-    transitivePeerDependencies:
-      - supports-color
-
-  '@typescript-eslint/project-service@8.46.4(typescript@5.9.3)':
-    dependencies:
-      '@typescript-eslint/tsconfig-utils': 8.54.0(typescript@5.9.3)
-      '@typescript-eslint/types': 8.54.0
-      debug: 4.4.3(supports-color@8.1.1)
-      typescript: 5.9.3
     transitivePeerDependencies:
       - supports-color
 
   '@typescript-eslint/project-service@8.54.0(typescript@5.4.5)':
     dependencies:
-      '@typescript-eslint/tsconfig-utils': 8.54.0(typescript@5.4.5)
-      '@typescript-eslint/types': 8.54.0
+      '@typescript-eslint/tsconfig-utils': 8.56.1(typescript@5.4.5)
+      '@typescript-eslint/types': 8.58.0
       debug: 4.4.3(supports-color@8.1.1)
       typescript: 5.4.5
-    transitivePeerDependencies:
-      - supports-color
-
-  '@typescript-eslint/project-service@8.54.0(typescript@5.9.3)':
-    dependencies:
-      '@typescript-eslint/tsconfig-utils': 8.54.0(typescript@5.9.3)
-      '@typescript-eslint/types': 8.54.0
-      debug: 4.4.3(supports-color@8.1.1)
-      typescript: 5.9.3
     transitivePeerDependencies:
       - supports-color
 
   '@typescript-eslint/project-service@8.56.1(typescript@5.4.5)':
     dependencies:
       '@typescript-eslint/tsconfig-utils': 8.56.1(typescript@5.4.5)
-      '@typescript-eslint/types': 8.56.1
+      '@typescript-eslint/types': 8.58.0
       debug: 4.4.3(supports-color@8.1.1)
       typescript: 5.4.5
-    transitivePeerDependencies:
-      - supports-color
-
-  '@typescript-eslint/project-service@8.56.1(typescript@5.9.3)':
-    dependencies:
-      '@typescript-eslint/tsconfig-utils': 8.56.1(typescript@5.9.3)
-      '@typescript-eslint/types': 8.56.1
-      debug: 4.4.3(supports-color@8.1.1)
-      typescript: 5.9.3
     transitivePeerDependencies:
       - supports-color
 
@@ -34107,25 +33865,13 @@ snapshots:
     dependencies:
       typescript: 5.4.5
 
-  '@typescript-eslint/tsconfig-utils@8.46.4(typescript@5.9.3)':
-    dependencies:
-      typescript: 5.9.3
-
   '@typescript-eslint/tsconfig-utils@8.54.0(typescript@5.4.5)':
     dependencies:
       typescript: 5.4.5
 
-  '@typescript-eslint/tsconfig-utils@8.54.0(typescript@5.9.3)':
-    dependencies:
-      typescript: 5.9.3
-
   '@typescript-eslint/tsconfig-utils@8.56.1(typescript@5.4.5)':
     dependencies:
       typescript: 5.4.5
-
-  '@typescript-eslint/tsconfig-utils@8.56.1(typescript@5.9.3)':
-    dependencies:
-      typescript: 5.9.3
 
   '@typescript-eslint/type-utils@8.54.0(eslint@9.39.1(jiti@2.6.1))(typescript@5.4.5)':
     dependencies:
@@ -34136,18 +33882,6 @@ snapshots:
       eslint: 9.39.1(jiti@2.6.1)
       ts-api-utils: 2.4.0(typescript@5.4.5)
       typescript: 5.4.5
-    transitivePeerDependencies:
-      - supports-color
-
-  '@typescript-eslint/type-utils@8.54.0(eslint@9.39.1(jiti@2.6.1))(typescript@5.9.3)':
-    dependencies:
-      '@typescript-eslint/types': 8.54.0
-      '@typescript-eslint/typescript-estree': 8.54.0(typescript@5.9.3)
-      '@typescript-eslint/utils': 8.54.0(eslint@9.39.1(jiti@2.6.1))(typescript@5.9.3)
-      debug: 4.4.3(supports-color@8.1.1)
-      eslint: 9.39.1(jiti@2.6.1)
-      ts-api-utils: 2.4.0(typescript@5.9.3)
-      typescript: 5.9.3
     transitivePeerDependencies:
       - supports-color
 
@@ -34175,22 +33909,6 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@typescript-eslint/typescript-estree@8.46.4(typescript@5.9.3)':
-    dependencies:
-      '@typescript-eslint/project-service': 8.46.4(typescript@5.9.3)
-      '@typescript-eslint/tsconfig-utils': 8.46.4(typescript@5.9.3)
-      '@typescript-eslint/types': 8.46.4
-      '@typescript-eslint/visitor-keys': 8.46.4
-      debug: 4.4.3(supports-color@8.1.1)
-      fast-glob: 3.3.3
-      is-glob: 4.0.3
-      minimatch: 9.0.9
-      semver: 7.7.3
-      ts-api-utils: 2.4.0(typescript@5.9.3)
-      typescript: 5.9.3
-    transitivePeerDependencies:
-      - supports-color
-
   '@typescript-eslint/typescript-estree@8.54.0(typescript@5.4.5)':
     dependencies:
       '@typescript-eslint/project-service': 8.54.0(typescript@5.4.5)
@@ -34203,21 +33921,6 @@ snapshots:
       tinyglobby: 0.2.15
       ts-api-utils: 2.4.0(typescript@5.4.5)
       typescript: 5.4.5
-    transitivePeerDependencies:
-      - supports-color
-
-  '@typescript-eslint/typescript-estree@8.54.0(typescript@5.9.3)':
-    dependencies:
-      '@typescript-eslint/project-service': 8.54.0(typescript@5.9.3)
-      '@typescript-eslint/tsconfig-utils': 8.54.0(typescript@5.9.3)
-      '@typescript-eslint/types': 8.54.0
-      '@typescript-eslint/visitor-keys': 8.54.0
-      debug: 4.4.3(supports-color@8.1.1)
-      minimatch: 9.0.9
-      semver: 7.7.3
-      tinyglobby: 0.2.15
-      ts-api-utils: 2.4.0(typescript@5.9.3)
-      typescript: 5.9.3
     transitivePeerDependencies:
       - supports-color
 
@@ -34236,21 +33939,6 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@typescript-eslint/typescript-estree@8.56.1(typescript@5.9.3)':
-    dependencies:
-      '@typescript-eslint/project-service': 8.56.1(typescript@5.9.3)
-      '@typescript-eslint/tsconfig-utils': 8.56.1(typescript@5.9.3)
-      '@typescript-eslint/types': 8.56.1
-      '@typescript-eslint/visitor-keys': 8.56.1
-      debug: 4.4.3(supports-color@8.1.1)
-      minimatch: 10.2.4
-      semver: 7.7.3
-      tinyglobby: 0.2.15
-      ts-api-utils: 2.4.0(typescript@5.9.3)
-      typescript: 5.9.3
-    transitivePeerDependencies:
-      - supports-color
-
   '@typescript-eslint/utils@8.46.4(eslint@9.39.1(jiti@2.6.1))(typescript@5.4.5)':
     dependencies:
       '@eslint-community/eslint-utils': 4.9.1(eslint@9.39.1(jiti@2.6.1))
@@ -34259,17 +33947,6 @@ snapshots:
       '@typescript-eslint/typescript-estree': 8.46.4(typescript@5.4.5)
       eslint: 9.39.1(jiti@2.6.1)
       typescript: 5.4.5
-    transitivePeerDependencies:
-      - supports-color
-
-  '@typescript-eslint/utils@8.46.4(eslint@9.39.1(jiti@2.6.1))(typescript@5.9.3)':
-    dependencies:
-      '@eslint-community/eslint-utils': 4.9.1(eslint@9.39.1(jiti@2.6.1))
-      '@typescript-eslint/scope-manager': 8.46.4
-      '@typescript-eslint/types': 8.46.4
-      '@typescript-eslint/typescript-estree': 8.46.4(typescript@5.9.3)
-      eslint: 9.39.1(jiti@2.6.1)
-      typescript: 5.9.3
     transitivePeerDependencies:
       - supports-color
 
@@ -34284,17 +33961,6 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@typescript-eslint/utils@8.54.0(eslint@9.39.1(jiti@2.6.1))(typescript@5.9.3)':
-    dependencies:
-      '@eslint-community/eslint-utils': 4.9.1(eslint@9.39.1(jiti@2.6.1))
-      '@typescript-eslint/scope-manager': 8.54.0
-      '@typescript-eslint/types': 8.54.0
-      '@typescript-eslint/typescript-estree': 8.54.0(typescript@5.9.3)
-      eslint: 9.39.1(jiti@2.6.1)
-      typescript: 5.9.3
-    transitivePeerDependencies:
-      - supports-color
-
   '@typescript-eslint/utils@8.56.1(eslint@9.39.1(jiti@2.6.1))(typescript@5.4.5)':
     dependencies:
       '@eslint-community/eslint-utils': 4.9.1(eslint@9.39.1(jiti@2.6.1))
@@ -34303,17 +33969,6 @@ snapshots:
       '@typescript-eslint/typescript-estree': 8.56.1(typescript@5.4.5)
       eslint: 9.39.1(jiti@2.6.1)
       typescript: 5.4.5
-    transitivePeerDependencies:
-      - supports-color
-
-  '@typescript-eslint/utils@8.56.1(eslint@9.39.1(jiti@2.6.1))(typescript@5.9.3)':
-    dependencies:
-      '@eslint-community/eslint-utils': 4.9.1(eslint@9.39.1(jiti@2.6.1))
-      '@typescript-eslint/scope-manager': 8.56.1
-      '@typescript-eslint/types': 8.56.1
-      '@typescript-eslint/typescript-estree': 8.56.1(typescript@5.9.3)
-      eslint: 9.39.1(jiti@2.6.1)
-      typescript: 5.9.3
     transitivePeerDependencies:
       - supports-color
 
@@ -34635,29 +34290,25 @@ snapshots:
       clean-stack: 2.2.0
       indent-string: 4.0.0
 
-  ajv-draft-04@1.0.0(ajv@8.13.0):
+  ajv-draft-04@1.0.0(ajv@8.18.0):
     optionalDependencies:
-      ajv: 8.13.0
+      ajv: 8.18.0
 
-  ajv-formats@2.1.1(ajv@8.17.1):
+  ajv-formats@2.1.1(ajv@8.18.0):
     optionalDependencies:
-      ajv: 8.17.1
+      ajv: 8.18.0
 
-  ajv-formats@3.0.1(ajv@8.13.0):
+  ajv-formats@3.0.1(ajv@8.18.0):
     optionalDependencies:
-      ajv: 8.13.0
-
-  ajv-formats@3.0.1(ajv@8.17.1):
-    optionalDependencies:
-      ajv: 8.17.1
+      ajv: 8.18.0
 
   ajv-keywords@3.5.2(ajv@6.12.6):
     dependencies:
       ajv: 6.12.6
 
-  ajv-keywords@5.1.0(ajv@8.17.1):
+  ajv-keywords@5.1.0(ajv@8.18.0):
     dependencies:
-      ajv: 8.17.1
+      ajv: 8.18.0
       fast-deep-equal: 3.1.3
 
   ajv@6.12.6:
@@ -34665,20 +34316,6 @@ snapshots:
       fast-deep-equal: 3.1.3
       fast-json-stable-stringify: 2.1.0
       json-schema-traverse: 0.4.1
-      uri-js: 4.4.1
-
-  ajv@8.12.0:
-    dependencies:
-      fast-deep-equal: 3.1.3
-      json-schema-traverse: 1.0.0
-      require-from-string: 2.0.2
-      uri-js: 4.4.1
-
-  ajv@8.13.0:
-    dependencies:
-      fast-deep-equal: 3.1.3
-      json-schema-traverse: 1.0.0
-      require-from-string: 2.0.2
       uri-js: 4.4.1
 
   ajv@8.17.1:
@@ -34960,7 +34597,7 @@ snapshots:
 
   babel-plugin-macros@3.1.0:
     dependencies:
-      '@babel/runtime': 7.28.6
+      '@babel/runtime': 7.29.2
       cosmiconfig: 7.1.0
       resolve: 1.22.11
     optional: true
@@ -36189,7 +35826,7 @@ snapshots:
 
   dom-helpers@5.2.1:
     dependencies:
-      '@babel/runtime': 7.28.6
+      '@babel/runtime': 7.29.2
       csstype: 3.1.3
 
   dom-serializer@1.4.1:
@@ -36551,21 +36188,6 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  eslint-import-resolver-typescript@4.4.4(eslint-plugin-import-x@4.16.2(@typescript-eslint/utils@8.56.1(eslint@9.39.1(jiti@2.6.1))(typescript@5.9.3))(eslint@9.39.1(jiti@2.6.1)))(eslint@9.39.1(jiti@2.6.1)):
-    dependencies:
-      debug: 4.4.3(supports-color@8.1.1)
-      eslint: 9.39.1(jiti@2.6.1)
-      eslint-import-context: 0.1.9(unrs-resolver@1.11.1)
-      get-tsconfig: 4.13.7
-      is-bun-module: 2.0.0
-      stable-hash-x: 0.2.0
-      tinyglobby: 0.2.15
-      unrs-resolver: 1.11.1
-    optionalDependencies:
-      eslint-plugin-import-x: 4.16.2(@typescript-eslint/utils@8.56.1(eslint@9.39.1(jiti@2.6.1))(typescript@5.9.3))(eslint@9.39.1(jiti@2.6.1))
-    transitivePeerDependencies:
-      - supports-color
-
   eslint-plugin-chai-expect@3.1.0(eslint@9.39.1(jiti@2.6.1)):
     dependencies:
       eslint: 9.39.1(jiti@2.6.1)
@@ -36594,27 +36216,9 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  eslint-plugin-import-x@4.16.2(@typescript-eslint/utils@8.56.1(eslint@9.39.1(jiti@2.6.1))(typescript@5.9.3))(eslint@9.39.1(jiti@2.6.1)):
-    dependencies:
-      '@package-json/types': 0.0.12
-      '@typescript-eslint/types': 8.58.0
-      comment-parser: 1.4.6
-      debug: 4.4.3(supports-color@8.1.1)
-      eslint: 9.39.1(jiti@2.6.1)
-      eslint-import-context: 0.1.9(unrs-resolver@1.11.1)
-      is-glob: 4.0.3
-      minimatch: 9.0.9
-      semver: 7.7.3
-      stable-hash-x: 0.2.0
-      unrs-resolver: 1.11.1
-    optionalDependencies:
-      '@typescript-eslint/utils': 8.56.1(eslint@9.39.1(jiti@2.6.1))(typescript@5.9.3)
-    transitivePeerDependencies:
-      - supports-color
-
   eslint-plugin-jest@29.5.0(@typescript-eslint/eslint-plugin@8.54.0(@typescript-eslint/parser@8.54.0(eslint@9.39.1(jiti@2.6.1))(typescript@5.4.5))(eslint@9.39.1(jiti@2.6.1))(typescript@5.4.5))(eslint@9.39.1(jiti@2.6.1))(jest@29.7.0(@types/node@22.19.17)(babel-plugin-macros@3.1.0)(ts-node@10.9.2(@types/node@22.19.17)(typescript@5.4.5)))(typescript@5.4.5):
     dependencies:
-      '@typescript-eslint/utils': 8.54.0(eslint@9.39.1(jiti@2.6.1))(typescript@5.4.5)
+      '@typescript-eslint/utils': 8.56.1(eslint@9.39.1(jiti@2.6.1))(typescript@5.4.5)
       eslint: 9.39.1(jiti@2.6.1)
     optionalDependencies:
       '@typescript-eslint/eslint-plugin': 8.54.0(@typescript-eslint/parser@8.54.0(eslint@9.39.1(jiti@2.6.1))(typescript@5.4.5))(eslint@9.39.1(jiti@2.6.1))(typescript@5.4.5)
@@ -36691,16 +36295,6 @@ snapshots:
       - supports-color
       - typescript
 
-  eslint-plugin-tsdoc@0.5.2(eslint@9.39.1(jiti@2.6.1))(typescript@5.9.3):
-    dependencies:
-      '@microsoft/tsdoc': 0.16.0
-      '@microsoft/tsdoc-config': 0.18.1
-      '@typescript-eslint/utils': 8.56.1(eslint@9.39.1(jiti@2.6.1))(typescript@5.9.3)
-    transitivePeerDependencies:
-      - eslint
-      - supports-color
-      - typescript
-
   eslint-plugin-unicorn@54.0.0(eslint@9.39.1(jiti@2.6.1)):
     dependencies:
       '@babel/helper-validator-identifier': 7.27.1
@@ -36728,12 +36322,6 @@ snapshots:
       eslint: 9.39.1(jiti@2.6.1)
     optionalDependencies:
       '@typescript-eslint/eslint-plugin': 8.54.0(@typescript-eslint/parser@8.54.0(eslint@9.39.1(jiti@2.6.1))(typescript@5.4.5))(eslint@9.39.1(jiti@2.6.1))(typescript@5.4.5)
-
-  eslint-plugin-unused-imports@4.3.0(@typescript-eslint/eslint-plugin@8.54.0(@typescript-eslint/parser@8.54.0(eslint@9.39.1(jiti@2.6.1))(typescript@5.9.3))(eslint@9.39.1(jiti@2.6.1))(typescript@5.9.3))(eslint@9.39.1(jiti@2.6.1)):
-    dependencies:
-      eslint: 9.39.1(jiti@2.6.1)
-    optionalDependencies:
-      '@typescript-eslint/eslint-plugin': 8.54.0(@typescript-eslint/parser@8.54.0(eslint@9.39.1(jiti@2.6.1))(typescript@5.9.3))(eslint@9.39.1(jiti@2.6.1))(typescript@5.9.3)
 
   eslint-scope@5.1.1:
     dependencies:
@@ -39095,8 +38683,6 @@ snapshots:
 
   lodash.uniqby@4.7.0: {}
 
-  lodash@4.17.23: {}
-
   lodash@4.18.1: {}
 
   log-symbols@4.1.0:
@@ -41292,7 +40878,7 @@ snapshots:
 
   react-transition-group@4.4.5(react-dom@18.3.1(react@18.3.1))(react@18.3.1):
     dependencies:
-      '@babel/runtime': 7.28.6
+      '@babel/runtime': 7.29.2
       dom-helpers: 5.2.1
       loose-envify: 1.4.0
       prop-types: 15.8.1
@@ -41654,7 +41240,7 @@ snapshots:
 
   rtl-css-js@1.16.1:
     dependencies:
-      '@babel/runtime': 7.28.6
+      '@babel/runtime': 7.29.2
 
   run-applescript@7.1.0: {}
 
@@ -41744,9 +41330,9 @@ snapshots:
   schema-utils@4.3.3:
     dependencies:
       '@types/json-schema': 7.0.15
-      ajv: 8.17.1
-      ajv-formats: 2.1.1(ajv@8.17.1)
-      ajv-keywords: 5.1.0(ajv@8.17.1)
+      ajv: 8.18.0
+      ajv-formats: 2.1.1(ajv@8.18.0)
+      ajv-keywords: 5.1.0(ajv@8.18.0)
 
   section-matter@1.0.0:
     dependencies:
@@ -42530,7 +42116,7 @@ snapshots:
 
   table@6.9.0:
     dependencies:
-      ajv: 8.17.1
+      ajv: 8.18.0
       lodash.truncate: 4.4.2
       slice-ansi: 4.0.0
       string-width: 4.2.3
@@ -42817,10 +42403,6 @@ snapshots:
     dependencies:
       typescript: 5.4.5
 
-  ts-api-utils@2.4.0(typescript@5.9.3):
-    dependencies:
-      typescript: 5.9.3
-
   ts-deepmerge@7.0.3: {}
 
   ts-interface-checker@0.1.13: {}
@@ -43020,17 +42602,6 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  typescript-eslint@8.54.0(eslint@9.39.1(jiti@2.6.1))(typescript@5.9.3):
-    dependencies:
-      '@typescript-eslint/eslint-plugin': 8.54.0(@typescript-eslint/parser@8.54.0(eslint@9.39.1(jiti@2.6.1))(typescript@5.9.3))(eslint@9.39.1(jiti@2.6.1))(typescript@5.9.3)
-      '@typescript-eslint/parser': 8.54.0(eslint@9.39.1(jiti@2.6.1))(typescript@5.9.3)
-      '@typescript-eslint/typescript-estree': 8.54.0(typescript@5.9.3)
-      '@typescript-eslint/utils': 8.54.0(eslint@9.39.1(jiti@2.6.1))(typescript@5.9.3)
-      eslint: 9.39.1(jiti@2.6.1)
-      typescript: 5.9.3
-    transitivePeerDependencies:
-      - supports-color
-
   typescript@4.9.5: {}
 
   typescript@5.4.5: {}
@@ -43042,8 +42613,6 @@ snapshots:
   typescript@5.6.3: {}
 
   typescript@5.7.3: {}
-
-  typescript@5.8.2: {}
 
   typescript@5.8.3: {}
 
