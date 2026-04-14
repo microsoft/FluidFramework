@@ -81,11 +81,13 @@ export async function runAiSession(
 		skipPermission: true,
 	});
 
+	type CopilotSession = Awaited<ReturnType<CopilotClient["createSession"]>>;
+
 	const client = new CopilotClient({
 		...(githubToken !== undefined ? { githubToken } : {}),
 	});
 
-	let session: Awaited<ReturnType<CopilotClient["createSession"]>> | undefined;
+	let session: CopilotSession | undefined;
 
 	try {
 		// Preflight: verify the Copilot CLI server starts and auth is valid.

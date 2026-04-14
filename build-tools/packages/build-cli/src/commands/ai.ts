@@ -271,7 +271,7 @@ export default class AiCommand extends BaseCommand<typeof AiCommand> {
 					model: typeof data.model === "string" ? data.model : undefined,
 				};
 			} catch (error) {
-				this.verbose(
+				this.warn(
 					`Failed to parse launcher-prompt.md frontmatter; using raw file contents instead: ${String(error)}`,
 				);
 				return { template: raw.trim() };

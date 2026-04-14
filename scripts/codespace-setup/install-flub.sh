@@ -12,8 +12,8 @@ REPO_ROOT="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../.." >/dev/null 2>&1 && 
 echo "Installing flub from local build-tools..."
 
 # CI=true suppresses pnpm's interactive "purge modules" prompt in non-TTY environments.
-# --ignore-scripts skips postinstall hooks (which include nested pnpm installs that
-# conflict in a non-TTY environment).
+# --ignore-scripts skips postinstall lifecycle hooks that run lint setup and nested pnpm
+# installs — neither is needed here since we only need to compile and link the CLI.
 CI=true pnpm -C "$REPO_ROOT/build-tools" install --frozen-lockfile --reporter=default \
   --ignore-scripts
 pnpm -C "$REPO_ROOT/build-tools" build:compile
