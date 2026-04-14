@@ -268,22 +268,17 @@ export interface TreeAlpha {
 	): () => void;
 
 	/**
-	 * Register an event listener on the given parent (either a TreeNode or ParentObject).
+	 * Register an event listener on the given parent ({@link TreeNode} or {@link ParentObject}).
 	 *
-	 * @param parent - The parent to listen on. Can be a {@link TreeNode} or a {@link ParentObject}.
+	 * @param parent - The parent to listen on.
 	 * @param eventName - The event to listen for (`"nodeChanged"` or `"treeChanged"`).
 	 * @param listener - The callback to invoke when the event fires.
 	 * @returns A function that, when called, removes the listener.
 	 *
 	 * @remarks
-	 * When the parent is a {@link TreeNode}, the listener fires on content changes:
-	 * `nodeChanged` fires for direct property changes; `treeChanged` fires for any change in the subtree.
-	 *
 	 * When the parent is a {@link ParentObject}, the behavior depends on the kind of parent:
 	 *
 	 * - For root parents, the listener fires on content changes to the root node
-	 * (same semantics as subscribing directly on the root {@link TreeNode}).
-	 * `nodeChanged` tracks property changes of whichever node is currently at the root
 	 * and automatically re-subscribes when the root is replaced.
 	 * Root replacement itself only fires `treeChanged`, not `nodeChanged`.
 	 *
@@ -683,43 +678,6 @@ export interface TreeAlpha {
 	 * `TreeAlpha.child(TreeAlpha.parent2(node), TreeAlpha.key2(node)) === node`
 	 */
 	parent2(node: TreeNode): TreeNodeParent;
-
-	/**
-	 * Register an event listener on the given parent (either a TreeNode or ParentObject).
-	 *
-	 * @param parent - The parent to listen on. Can be a {@link TreeNode} or a {@link ParentObject}.
-	 * @param eventName - The event to listen for (`"nodeChanged"` or `"treeChanged"`).
-	 * @param listener - The callback to invoke when the event fires.
-	 * @returns A function that, when called, removes the listener.
-	 *
-	 * @remarks
-	 * When the parent is a {@link TreeNode}, the listener fires on content changes:
-	 * `nodeChanged` fires for direct property changes; `treeChanged` fires for any change in the subtree.
-	 *
-	 * When the parent is a {@link ParentObject}, the behavior depends on the kind of parent:
-	 *
-	 * - For root parents, the listener fires on content changes to the root node
-	 * (same semantics as subscribing directly on the root {@link TreeNode}).
-	 * `nodeChanged` tracks property changes of whichever node is currently at the root
-	 * and automatically re-subscribes when the root is replaced.
-	 * Root replacement itself only fires `treeChanged`, not `nodeChanged`.
-	 *
-	 * - For detached parents and unhydrated parents,
-	 * the listener fires on status transitions regardless of `eventName`.
-	 * This includes the node being re-inserted into the document or hydrated
-	 * (inserted for the first time).
-	 *
-	 * @privateRemarks
-	 * TODO: Consider separating content events and status events into distinct APIs
-	 * (e.g., a dedicated `onStatusChange(parent, listener)` method) so that the same event name
-	 * doesn't have different semantics depending on the parent type. This would also eliminate
-	 * the unsafe casts needed to invoke the listener with no arguments for status events.
-	 */
-	on<K extends keyof TreeChangeEvents>(
-		parent: TreeNodeParent,
-		eventName: K,
-		listener: TreeChangeEvents[K],
-	): () => void;
 }
 
 /**
