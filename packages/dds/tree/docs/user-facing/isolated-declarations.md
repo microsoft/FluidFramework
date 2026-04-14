@@ -22,30 +22,39 @@ Once that is done, all the projects can be type checked in parallel.
 
 This prevents the dependency graph from delaying parts of the build, and can greatly speed up builds with long project dependency chains.
 
-One way to do the first pass, which generates `.d.ts` files, with the TypeScript compiler is using the following options (requiring at least TypeScript 5.6 for these specific options):
+One way to do the first pass (which generates `.d.ts` files) is with the TypeScript compiler, using the following options (requiring at least TypeScript 5.6 for these specific options):
 
-```json
+```jsonc
 {
 	"compilerOptions": {
-		"isolatedDeclarations": true,
+		// Enable `.d.ts` generation.
 		"declaration": true,
-		"skipDefaultLibCheck": true,
-		"skipLibCheck": true,
+		// Skip JavaScript emissions: it can be done later.
 		"emitDeclarationOnly": true,
+		// Skip type checking: this is done in the second pass instead.
 		"noCheck": true,
-        // Optional:
+
+		// Optional: Limit TypeScript to handling simple cases which other tools could also handle.
+		// If compatible with this option,
+		// typically a faster tool than the TypeScript compiler (like oxc) would be used.
+		// If using such a tool, only the second pass would use the TypeScript compiler,
+		// and it would use this option instead.
+		"isolatedDeclarations": true,
+
+		// Optional: Omit `@internal` APIs from `.d.ts` files.
 		"stripInternal": true,
+		// ... Your project will require additional project specific options
 	}
 }
 ```
 
-The second pass can then run full type checking (with `noEmit` if using a separate operation to emit the javascript files).
+The second pass can then run full type checking (with `noEmit` if using a separate operation to emit the JavaScript files).
 
 Such builds can further be sped up by using a faster third-party tool for the first pass like [oxc's isolatedDeclaration API](https://oxc.rs/docs/guide/usage/transformer/isolated-declarations.html).
 
 ## SharedTree schema background
 
-For SharedTree, we require both runtime and compile-time types for schema, and want an easy way to derive the runtime and compile types for the TreeNodes from those.
+For SharedTree, we require both runtime and compile-time types for schema, and want an easy way to derive the runtime and compile-time types for the TreeNodes from those.
 
 TypeScript provides a few ways to declare both at once without having to repeat it in the code (once as an expression, and once as a type).
 
@@ -72,7 +81,7 @@ This also allows injection of common functionality for all schema classes (like 
 
 `isolatedDeclarations` bans exporting values whose types depend on the types of expressions.
 
-This sometimes includes base classes (when the base class expression is not simply a single identifier referring to a value that has an explicit type).
+This includes base classes when the base class expression is not simply a single identifier referring to a value that has an explicit type.
 
 Thus when both runtime and compile-time data are needed about something, the trick of using an expression and its type is no longer valid.
 
@@ -117,7 +126,7 @@ The recommendations above use a subset of these approaches.
 - Reduce where the rules of `isolatedDeclarations` apply.
   - Split up packages or add more tsconfig files within them to allow finer-grained scoping of this option.
   - If the goal of using `isolatedDeclarations` is to reduce the critical path for type checking packages, then realistically this restriction only needs to apply to types transitively reachable from package exports, not all module exports. Find some way to do that:
-    - Use `stripInternal` then mark erroring non-package-exported APIs with `@internal` ([Example](https://office.visualstudio.com/OC/_git/office-bohemia/pullrequest/5056144)). Can add tag validation with API Extractor to ensure types reachable from the entry point are not accidentally tagged. (TODO: provide example API Extractor config for this)
+    - Use `stripInternal` then mark erroring non-package-exported APIs with `@internal`. Optionally use [API Extractor](https://api-extractor.com/) to ensure types reachable from the non-`@internal` types are not tagged `@internal`.
     - Get TypeScript to add such an option. It would be nice if TypeScript had a way to restrict the `.d.ts` emission it does to only things reachable from an entry point (or set of entry points) or (as an alternative feature) limit it to types directly in some entry point (and error for referenced types not included in that entry point). If TypeScript had such a feature, it would help with lots of things and would pair well with an option for only applying `isolatedDeclarations` restrictions to types that are included in the entry points. We would also need to confirm the third-party tool being used to generate the `.d.ts` file also could work in these cases.
     - Use a tool other than TypeScript to enforce `isolatedDeclarations` that reflects your actual needs. For example, whatever tool is actually generating package `.d.ts` files, ensure it does not object to code that violates this rule if it's not package-exported (similar to above), then use that tool itself to enforce the code will work for it rather than also having TypeScript enforce it. Might pair well with a lint rule to flag incompatible exported types (which could be suppressed for non-package-exported ones).
 
@@ -134,4 +143,4 @@ The recommendations above use a subset of these approaches.
   - This can replace whatever tool was being used to emit `.d.ts` files other than TypeScript for these cases.
   - This could generate code that is used by whatever tool would process the TypeScript to emit the `.d.ts`, instead of the developer-written source files.
   - The files emitted could either be generated as needed (possibly slowing down the processing of dependencies), committed as part of the code (similar to if they were handwritten), or published alongside the code through some other mechanism (like via a package that contains them already generated, as is normal for TypeScript packages).
-- Redesign SharedTree's schema language (well, add a new one) that avoids this problem by expressing everything as class members directly without any typed expressions or expression-based inheritance (this would likely be a mess, with many limitations and poor error reporting, but is technically possible).
+- Replace SharedTree's schema language with one that avoids this problem by expressing everything as class members directly without any typed expressions or expression-based inheritance (this would likely be a mess, with many limitations and poor error reporting, but is technically possible).
