@@ -90,6 +90,7 @@
 		"@fluid-tools/version-tools": "workspace:~",
 		"@fluidframework/build-tools": "workspace:~",
 		"@fluidframework/bundle-size-tools": "workspace:~",
+		"@github/copilot-sdk": "^0.2.2",
 		"@inquirer/prompts": "^8.0.1",
 		"@microsoft/api-extractor": "^7.58.1",
 		"@oclif/core": "^4.8.0",
@@ -225,6 +226,9 @@
 		"repositoryPrefix": "<%- repo %>/blob/main/build-tools/packages/build-cli/<%- commandPath %>",
 		"topicSeparator": " ",
 		"topics": {
+			"ai": {
+				"description": "AI-powered assistant for launching the right AI agent."
+			},
 			"build-perf": {
 				"description": "Build performance observability commands for collecting, processing, and analyzing build metrics."
 			},

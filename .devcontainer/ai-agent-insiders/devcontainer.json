@@ -1,6 +1,6 @@
-// Codespaces profile optimized for AI-agent workflows with extra CLI tooling.
+// AI-enabled (Insiders) — everything in AI-enabled, plus the flub AI launcher command.
 {
-	"name": "AI-enabled",
+	"name": "AI-enabled (Insiders)",
 	"build": {
 		"dockerfile": "../Dockerfile",
 		"args": {
@@ -34,14 +34,14 @@
 			}
 		},
 		"codespaces": {
-			"openFiles": [".devcontainer/ai-agent/GETTING_STARTED.md"]
+			"openFiles": [".devcontainer/ai-agent-insiders/GETTING_STARTED.md"]
 		}
 	},
 	"containerEnv": {
 		"NODE_VERSION_OVERRIDE": "24",
 		"COREPACK_ENABLE_DOWNLOAD_PROMPT": "0"
 	},
-	"onCreateCommand": "bash scripts/codespace-setup/on-create.sh",
+	"onCreateCommand": "bash scripts/codespace-setup/on-create.sh && bash scripts/codespace-setup/install-flub.sh",
 	"postCreateCommand": "bash scripts/codespace-setup/ai-setup.sh",
 	"postStartCommand": {
 		"bwrap-setup": "sudo mount --make-rshared /",
