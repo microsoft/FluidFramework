@@ -5,7 +5,7 @@
 
 import { findPackageOrReleaseGroup, packageOrReleaseGroupArg, semverArg } from "../../args.js";
 import { BaseCommand } from "../../library/commands/base.js";
-import { isLatestInMajor } from "../../library/latestVersions.js";
+import { isLatestInMajor, logLatestVersionResult } from "../../library/latestVersions.js";
 
 export default class LatestVersionsCommand extends BaseCommand<typeof LatestVersionsCommand> {
 	static readonly summary =
@@ -48,34 +48,6 @@ export default class LatestVersionsCommand extends BaseCommand<typeof LatestVers
 			versionInput.version,
 		);
 
-		if (result.isLatest) {
-			this.log(
-				`Version ${versionInput.version} is the latest version for major version ${result.majorVersion}`,
-			);
-			this.log(`##vso[task.setvariable variable=shouldDeploy;isoutput=true]true`);
-			this.log(
-				`##vso[task.setvariable variable=majorVersion;isoutput=true]${result.majorVersion}`,
-			);
-			return;
-		}
-
-		if (result.latestVersion !== undefined) {
-			this.log(
-				`##[warning]skipping deployment stage. input version ${versionInput.version} does not match the latest version ${result.latestVersion}`,
-			);
-			this.log(`##vso[task.setvariable variable=shouldDeploy;isoutput=true]false`);
-			this.log(
-				`##vso[task.setvariable variable=majorVersion;isoutput=true]${result.majorVersion}`,
-			);
-			return;
-		}
-
-		this.log(
-			`##[warning]No major version found corresponding to input version ${versionInput.version}`,
-		);
-		this.log(`##vso[task.setvariable variable=shouldDeploy;isoutput=true]false`);
-		this.log(
-			`##vso[task.setvariable variable=majorVersion;isoutput=true]${result.majorVersion}`,
-		);
+		logLatestVersionResult(this.log.bind(this), versionInput.version, result);
 	}
 }

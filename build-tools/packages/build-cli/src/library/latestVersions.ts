@@ -43,3 +43,37 @@ export function isLatestInMajor(
 
 	return { isLatest: false, latestVersion: undefined, majorVersion: inputMajorVersion };
 }
+
+/**
+ * Logs the result of a latest-version check and emits Azure DevOps pipeline
+ * variables (`shouldDeploy`, `majorVersion`) via `##vso` logging commands.
+ *
+ * @param log - A logging function (typically `this.log` from an oclif command).
+ * @param inputVersion - The version string that was checked.
+ * @param result - The result returned by {@link isLatestInMajor}.
+ */
+export function logLatestVersionResult(
+	log: (msg: string) => void,
+	inputVersion: string,
+	result: LatestVersionCheckResult,
+): void {
+	if (result.isLatest) {
+		log(
+			`Version ${inputVersion} is the latest version for major version ${result.majorVersion}`,
+		);
+		log(`##vso[task.setvariable variable=shouldDeploy;isoutput=true]true`);
+		log(`##vso[task.setvariable variable=majorVersion;isoutput=true]${result.majorVersion}`);
+		return;
+	}
+
+	if (result.latestVersion !== undefined) {
+		log(
+			`##[warning]skipping deployment stage. input version ${inputVersion} does not match the latest version ${result.latestVersion}`,
+		);
+	} else {
+		log(`##[warning]No major version found corresponding to input version ${inputVersion}`);
+	}
+
+	log(`##vso[task.setvariable variable=shouldDeploy;isoutput=true]false`);
+	log(`##vso[task.setvariable variable=majorVersion;isoutput=true]${result.majorVersion}`);
+}
