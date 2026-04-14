@@ -13,6 +13,19 @@ import type { BuildPackage } from "../../buildGraph";
 import { globFn, toPosixPath } from "../taskUtils";
 import { LeafTask, LeafWithFileStatDoneFileTask } from "./leafTask";
 
+/**
+ * Check whether content hashing is enabled for a given task via an environment variable.
+ * When enabled, content hashes are used instead of file timestamps for incremental build detection.
+ * Timestamps may signal change without meaningful content modification (e.g., git operations,
+ * file copies).
+ *
+ * @param envVar - The environment variable name to check (e.g., "FLUID_BUILD_ENABLE_COPYFILES_HASH").
+ * Set to "1" to enable hashing. By default, timestamps are used.
+ */
+function isHashingEnabled(envVar: string): boolean {
+	return process.env[envVar] === "1";
+}
+
 function unquote(str: string): string {
 	if (str.length >= 2 && str[0] === '"' && str[str.length - 1] === '"') {
 		return str.substr(1, str.length - 2);
@@ -65,16 +78,8 @@ export class LesscTask extends LeafTask {
 }
 
 export class CopyfilesTask extends LeafWithFileStatDoneFileTask {
-	/**
-	 * Use content hashes instead of file timestamps for incremental build detection.
-	 * Timestamps may signal change without meaningful content modification (e.g., git operations,
-	 * file copies).
-	 *
-	 * Set the FLUID_BUILD_ENABLE_COPYFILES_HASH environment variable to "1" to enable hashing.
-	 * By default, timestamps are used.
-	 */
 	protected override get useHashes(): boolean {
-		return process.env.FLUID_BUILD_ENABLE_COPYFILES_HASH === "1";
+		return isHashingEnabled("FLUID_BUILD_ENABLE_COPYFILES_HASH");
 	}
 
 	private parsed: boolean = false;
@@ -253,16 +258,8 @@ export class GenVerTask extends LeafTask {
 }
 
 export class TypeValidationTask extends LeafWithFileStatDoneFileTask {
-	/**
-	 * Use content hashes instead of file timestamps for incremental build detection.
-	 * Timestamps may signal change without meaningful content modification (e.g., git operations,
-	 * file copies).
-	 *
-	 * Set the FLUID_BUILD_ENABLE_TYPEVALIDATION_HASH environment variable to "1" to enable hashing.
-	 * By default, timestamps are used.
-	 */
 	protected override get useHashes(): boolean {
-		return process.env.FLUID_BUILD_ENABLE_TYPEVALIDATION_HASH === "1";
+		return isHashingEnabled("FLUID_BUILD_ENABLE_TYPEVALIDATION_HASH");
 	}
 
 	private inputFiles: string[] | undefined;
@@ -307,16 +304,8 @@ export class TypeValidationTask extends LeafWithFileStatDoneFileTask {
 }
 
 export class GoodFence extends LeafWithFileStatDoneFileTask {
-	/**
-	 * Use content hashes instead of file timestamps for incremental build detection.
-	 * Timestamps may signal change without meaningful content modification (e.g., git operations,
-	 * file copies).
-	 *
-	 * Set the FLUID_BUILD_ENABLE_GOODFENCE_HASH environment variable to "1" to enable hashing.
-	 * By default, timestamps are used.
-	 */
 	protected override get useHashes(): boolean {
-		return process.env.FLUID_BUILD_ENABLE_GOODFENCE_HASH === "1";
+		return isHashingEnabled("FLUID_BUILD_ENABLE_GOODFENCE_HASH");
 	}
 
 	protected get taskWeight(): number {
@@ -349,16 +338,8 @@ export class GoodFence extends LeafWithFileStatDoneFileTask {
 }
 
 export class DepCruiseTask extends LeafWithFileStatDoneFileTask {
-	/**
-	 * Use content hashes instead of file timestamps for incremental build detection.
-	 * Timestamps may signal change without meaningful content modification (e.g., git operations,
-	 * file copies).
-	 *
-	 * Set the FLUID_BUILD_ENABLE_DEPCRUISE_HASH environment variable to "1" to enable hashing.
-	 * By default, timestamps are used.
-	 */
 	protected override get useHashes(): boolean {
-		return process.env.FLUID_BUILD_ENABLE_DEPCRUISE_HASH === "1";
+		return isHashingEnabled("FLUID_BUILD_ENABLE_DEPCRUISE_HASH");
 	}
 
 	private inputFiles: string[] | undefined;
