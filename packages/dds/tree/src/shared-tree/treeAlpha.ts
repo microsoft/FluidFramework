@@ -268,6 +268,43 @@ export interface TreeAlpha {
 	): () => void;
 
 	/**
+	 * Register an event listener on the given parent (either a TreeNode or ParentObject).
+	 *
+	 * @param parent - The parent to listen on. Can be a {@link TreeNode} or a {@link ParentObject}.
+	 * @param eventName - The event to listen for (`"nodeChanged"` or `"treeChanged"`).
+	 * @param listener - The callback to invoke when the event fires.
+	 * @returns A function that, when called, removes the listener.
+	 *
+	 * @remarks
+	 * When the parent is a {@link TreeNode}, the listener fires on content changes:
+	 * `nodeChanged` fires for direct property changes; `treeChanged` fires for any change in the subtree.
+	 *
+	 * When the parent is a {@link ParentObject}, the behavior depends on the kind of parent:
+	 *
+	 * - For root parents, the listener fires on content changes to the root node
+	 * (same semantics as subscribing directly on the root {@link TreeNode}).
+	 * `nodeChanged` tracks property changes of whichever node is currently at the root
+	 * and automatically re-subscribes when the root is replaced.
+	 * Root replacement itself only fires `treeChanged`, not `nodeChanged`.
+	 *
+	 * - For detached parents and unhydrated parents,
+	 * the listener fires on status transitions regardless of `eventName`.
+	 * This includes the node being re-inserted into the document or hydrated
+	 * (inserted for the first time).
+	 *
+	 * @privateRemarks
+	 * TODO: Consider separating content events and status events into distinct APIs
+	 * (e.g., a dedicated `onStatusChange(parent, listener)` method) so that the same event name
+	 * doesn't have different semantics depending on the parent type. This would also eliminate
+	 * the unsafe casts needed to invoke the listener with no arguments for status events.
+	 */
+	on<K extends keyof TreeChangeEvents>(
+		parent: TreeNodeParent,
+		eventName: K,
+		listener: TreeChangeEvents[K],
+	): () => void;
+
+	/**
 	 * Retrieve the {@link TreeBranch | branch}, if any, for the given node.
 	 * @param node - The node to query
 	 * @remarks If the node has already been inserted into the tree, this will return the branch associated with that node's {@link TreeView | view}.
@@ -901,14 +938,6 @@ function trackObservations<TResult>(
  * @alpha
  */
 export const TreeAlpha: TreeAlpha = {
-	on<K extends keyof TreeChangeEventsAlpha<TNode>, TNode extends TreeNode>(
-		node: TNode,
-		eventName: K,
-		listener: NoInfer<TreeChangeEventsAlpha<TNode>[K]>,
-	): () => void {
-		return treeNodeApi.on(node, eventName, listener);
-	},
-
 	trackObservations<TResult>(
 		onInvalidation: () => void,
 		trackDuring: () => TResult,

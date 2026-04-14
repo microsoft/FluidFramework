@@ -36,7 +36,7 @@ import { SchematizingSimpleTreeView } from "./schematizingTreeView.js";
  * it will have a different parent, and subscriptions on the old parent will be invalidated.
  *
  * This object can be passed to {@link (TreeAlpha:interface).child},
- * {@link (TreeAlpha:interface).children}, and {@link (TreeAlpha:interface).on}.
+ * {@link (TreeAlpha:interface).children}, and `TreeAlpha.on`.
  *
  * @sealed
  * @alpha
@@ -142,7 +142,10 @@ export class DocumentRootParent extends ParentObjectBase {
 		if (!branch.compatibility.canView) {
 			throw new UsageError("Cannot access a DocumentRootParent with incompatible schema");
 		}
-		return branch;
+		// The assert narrows to SchematizingSimpleTreeView<any> because instanceof
+		// loses the generic parameter. This is safe because TreeBranch is always
+		// created as SchematizingSimpleTreeView<ImplicitFieldSchema>.
+		return branch as SchematizingSimpleTreeView<ImplicitFieldSchema>;
 	}
 
 	public override getChild(
