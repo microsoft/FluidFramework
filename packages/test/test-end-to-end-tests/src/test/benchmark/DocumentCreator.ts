@@ -11,6 +11,7 @@ import {
 	benchmarkDuration,
 	benchmarkIt,
 	benchmarkMemoryUse,
+	isInPerformanceTestingMode,
 } from "@fluid-tools/benchmark";
 import { IContainer } from "@fluidframework/container-definitions/internal";
 import { ISummarizer } from "@fluidframework/container-runtime/internal";
@@ -113,6 +114,14 @@ export function benchmarkAll<T extends IBenchmarkParameters>(title: string, obj:
 	const beforeMethod = obj.before?.bind(obj);
 	const afterMethod = obj.after?.bind(obj);
 
+	// In performance testing mode, the tests are much longer
+	// and the mocharc sets a much longer timeout per test accordingly.
+	// Calling .timeout() on the returned test overrides that,
+	// so we need to provide suitable timouts for both cases here.
+	// As some of these tests do lot of operations to rather large data sets,
+	// they are quite slow and need long timouts.
+	const timeout = isInPerformanceTestingMode ? 1_000_000 : 20_000;
+
 	benchmarkIt({
 		title,
 		...benchmarkMemoryUse({
@@ -131,7 +140,7 @@ export function benchmarkAll<T extends IBenchmarkParameters>(title: string, obj:
 				await afterMethod?.();
 			},
 		}),
-	}).timeout(20000);
+	}).timeout(timeout);
 
 	benchmarkIt({
 		title,
@@ -154,5 +163,5 @@ export function benchmarkAll<T extends IBenchmarkParameters>(title: string, obj:
 			// No need to warm up
 			startPhase: Phase.CollectData,
 		}),
-	}).timeout(20000);
+	}).timeout(timeout);
 }
