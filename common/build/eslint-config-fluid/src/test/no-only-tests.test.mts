@@ -14,7 +14,7 @@
  * - `.only()` calls in non-test files produce no errors (rule is test-scoped).
  */
 
-import {strict as assert}  from "node:assert";
+import { strict as assert } from "node:assert";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
