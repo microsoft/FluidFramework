@@ -31,7 +31,9 @@ import { permittedImports, restrictedImportPaths, testFilePatterns } from "../co
 import type { FlatConfigArray } from "./base.mjs";
 
 const reactFilePatterns = ["**/*.jsx", "**/*.tsx"] as const;
-const reactRecommendedTypeScript = eslintReact.configs["recommended-typescript"] satisfies Linter.Config;
+const reactRecommendedTypeScript = eslintReact.configs[
+	"recommended-typescript"
+] satisfies Linter.Config;
 const reactHooksRecommended = reactHooksPlugin.configs.flat.recommended satisfies Linter.Config;
 
 /**
