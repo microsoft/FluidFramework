@@ -11,7 +11,6 @@ import { EOL as newline } from "node:os";
 import path from "node:path";
 import {
 	findGitRootSync,
-	updatePackageJsonFile,
 	updatePackageJsonFileAsync,
 } from "@fluid-tools/build-infrastructure";
 import { getApiExtractorConfigFilePath, type PackageJson } from "@fluidframework/build-tools";
@@ -26,7 +25,7 @@ import {
 } from "../../config.js";
 import { Repository } from "../git.js";
 import { queryTypesResolutionPathsFromPackageExports } from "../packageExports.js";
-import { type Handler, readFile, writeFile } from "./common.js";
+import { type Handler, readFile, resolveByUpdatingPackageJson, writeFile } from "./common.js";
 
 const require = createRequire(import.meta.url);
 
@@ -836,8 +835,8 @@ export const handlers: Handler[] = [
 
 			return undefined;
 		},
-		resolver: (file: string, gitRoot: string): { resolved: boolean } => {
-			updatePackageJsonFile(path.dirname(file), (json) => {
+		resolver: (file: string, gitRoot: string) =>
+			resolveByUpdatingPackageJson(file, (json) => {
 				json.author = author;
 				json.license = licenseId;
 
@@ -857,10 +856,7 @@ export const handlers: Handler[] = [
 							};
 
 				json.homepage = homepage;
-			});
-
-			return { resolved: true };
-		},
+			}),
 	},
 	{
 		// Verify that we're not introducing new scopes or unscoped packages unintentionally.
@@ -1118,8 +1114,8 @@ export const handlers: Handler[] = [
 				? `${file} is missing the following scripts: ${missingScripts.join("\n\t")}`
 				: undefined;
 		},
-		resolver: (file: string): { resolved: boolean; message?: string } => {
-			updatePackageJsonFile(path.dirname(file), (json) => {
+		resolver: (file: string) =>
+			resolveByUpdatingPackageJson(file, (json) => {
 				const hasScriptsField = Object.prototype.hasOwnProperty.call(json, "scripts");
 
 				if (hasScriptsField) {
@@ -1161,10 +1157,7 @@ export const handlers: Handler[] = [
 						}
 					}
 				}
-			});
-
-			return { resolved: true };
-		},
+			}),
 	},
 	{
 		name: "npm-package-json-script-clean",
@@ -1288,19 +1281,15 @@ export const handlers: Handler[] = [
 					)}`
 				: undefined;
 		},
-		resolver: (file: string): { resolved: boolean; message?: string } => {
-			const result: { resolved: boolean; message?: string } = { resolved: true };
-			updatePackageJsonFile(path.dirname(file), (json) => {
+		resolver: (file: string) =>
+			resolveByUpdatingPackageJson(file, (json) => {
 				for (const [scriptName, scriptContent] of Object.entries(json.scripts)) {
 					// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
 					if (scriptContent) {
 						json.scripts[scriptName] = getPreferredScriptLine(scriptContent);
 					}
 				}
-			});
-
-			return result;
-		},
+			}),
 	},
 	{
 		name: "npm-package-json-test-scripts",
@@ -1582,26 +1571,21 @@ export const handlers: Handler[] = [
 				return "'clean' script should double quote the globs and only the globs";
 			}
 		},
-		resolver: (file: string): { resolved: boolean; message?: string } => {
-			const result: { resolved: boolean; message?: string } = { resolved: true };
-			updatePackageJsonFile(path.dirname(file), (json) => {
+		resolver: (file: string) =>
+			resolveByUpdatingPackageJson(file, (json) => {
 				const missing = missingCleanDirectories(json.scripts);
 				let clean: string = json.scripts.clean ?? "rimraf --glob";
 				if (!clean.startsWith("rimraf --glob")) {
-					result.resolved = false;
-					result.message =
-						"Unable to fix 'clean' script that doesn't start with 'rimraf --glob'";
-					return;
+					throw new Error(
+						"Unable to fix 'clean' script that doesn't start with 'rimraf --glob'",
+					);
 				}
 				if (missing.length > 0) {
 					clean += ` ${missing.join(" ")}`;
 				}
 				// clean up for grouping
 				json.scripts.clean = getPreferredScriptLine(clean);
-			});
-
-			return result;
-		},
+			}),
 	},
 	{
 		name: "npm-package-types-field",
@@ -1719,22 +1703,13 @@ export const handlers: Handler[] = [
 				}
 			}
 		},
-		resolver: (file: string): { resolved: boolean; message?: string } => {
-			const result: { resolved: boolean; message?: string } = { resolved: true };
-			updatePackageJsonFile(path.dirname(file), (json) => {
+		resolver: (file: string) =>
+			resolveByUpdatingPackageJson(file, (json) => {
 				if (shouldCheckExportsField(json)) {
-					try {
-						const exportsField = generateExportsField(json);
-						json.exports = exportsField;
-					} catch (error: unknown) {
-						result.resolved = false;
-						result.message = (error as Error).message;
-					}
+					const exportsField = generateExportsField(json);
+					json.exports = exportsField;
 				}
-			});
-
-			return result;
-		},
+			}),
 	},
 	{
 		// This rule enforces each exports type resolution (exported .d.ts file) is linted.
@@ -1912,15 +1887,11 @@ export const handlers: Handler[] = [
 				);
 			}
 		},
-		resolver: (
-			packageJsonFilePath: string,
-			rootDirectoryPath: string,
-		): { resolved: boolean; message?: string } => {
-			const result: { resolved: boolean; message?: string } = { resolved: true };
-			updatePackageJsonFile(path.dirname(packageJsonFilePath), (packageJson) => {
+		resolver: (packageJsonFilePath: string, rootDirectoryPath: string) =>
+			resolveByUpdatingPackageJson(packageJsonFilePath, (packageJson) => {
 				// If the package is private, there is nothing to fix.
 				if (packageJson.private === true) {
-					return result;
+					return;
 				}
 
 				const requirements =
@@ -1963,15 +1934,13 @@ export const handlers: Handler[] = [
 					const devDependencies = Object.keys(packageJson.devDependencies ?? {});
 					for (const requiredDevDependency of requirements.requiredDevDependencies) {
 						if (!devDependencies.includes(requiredDevDependency)) {
-							result.resolved = false;
-							break;
+							throw new Error(
+								"Missing required dev dependencies that must be added manually.",
+							);
 						}
 					}
 				}
-			});
-
-			return result;
-		},
+			}),
 	},
 ];
 

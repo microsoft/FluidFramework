@@ -5,10 +5,7 @@
 
 import fs from "node:fs";
 import path from "node:path";
-import {
-	updatePackageJsonFile,
-	updatePackageJsonFileAsync,
-} from "@fluid-tools/build-infrastructure";
+import { updatePackageJsonFileAsync } from "@fluid-tools/build-infrastructure";
 import {
 	FluidRepo,
 	getFluidBuildConfig,
@@ -21,7 +18,7 @@ import {
 import * as semver from "semver";
 import type { TsConfigJson } from "type-fest";
 import { getFlubConfig } from "../../config.js";
-import { type Handler, readFile } from "./common.js";
+import { type Handler, readFile, resolveByUpdatingPackageJson } from "./common.js";
 import { FluidBuildDatabase } from "./fluidBuildDatabase.js";
 
 /**
@@ -901,9 +898,8 @@ export const handlers: Handler[] = [
 		match,
 		handler: async (file: string, root: string) =>
 			buildDepsHandler(file, root, checkTscDependencies),
-		resolver: (file: string, root: string): { resolved: boolean; message?: string } => {
-			let result: { resolved: boolean; message?: string } = { resolved: true };
-			updatePackageJsonFile(path.dirname(file), (json) => {
+		resolver: (file: string, root: string) =>
+			resolveByUpdatingPackageJson(file, (json) => {
 				if (!isFluidBuildEnabled(root, json)) {
 					return;
 				}
@@ -918,25 +914,18 @@ export const handlers: Handler[] = [
 					for (const commandUntrimmed of scriptCommands.split("&&")) {
 						const command = commandUntrimmed.trim();
 						if (shouldProcessScriptForTsc(script, command, ignore)) {
-							try {
-								const checkDeps = getTscCommandDependencies(
-									packageDir,
-									json,
-									script,
-									command,
-									packageMap,
-								);
-								patchTaskDeps(root, json, script, checkDeps);
-							} catch (error: unknown) {
-								result = { resolved: false, message: (error as Error).message };
-								return;
-							}
+							const checkDeps = getTscCommandDependencies(
+								packageDir,
+								json,
+								script,
+								command,
+								packageMap,
+							);
+							patchTaskDeps(root, json, script, checkDeps);
 						}
 					}
 				}
-			});
-			return result;
-		},
+			}),
 	},
 ];
 
