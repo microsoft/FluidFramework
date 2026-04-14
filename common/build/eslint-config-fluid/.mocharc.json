@@ -2,5 +2,5 @@
 	"import": "tsx/esm",
 	"reporter": "mocha-multi-reporters",
 	"reporter-options": "configFile=mocha-multi-reporter-config.json",
-	"timeout": 60000
+	"timeout": 5000
 }
