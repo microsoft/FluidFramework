@@ -12,14 +12,10 @@ import { Flags } from "@oclif/core";
 import execa from "execa";
 import matter from "gray-matter";
 import chalk from "picocolors";
-import {
-	type AiSessionUi,
-	type AliasProposal,
-	runAiSession,
-} from "../library/ai/copilotSession.js";
+import { type AliasProposal, runAiSession } from "../library/ai/copilotSession.js";
 import { BaseCommand } from "../library/commands/base.js";
 
-const HARDCODED_DEFAULT_MODEL = "claude-haiku-4-5-20251001";
+const FALLBACK_MODEL = "claude-haiku-4-5-20251001";
 export const supportedAliases = ["claude", "dev", "copilot", "oce", "ai-reset"] as const;
 const supportedAliasSet = new Set<string>(supportedAliases);
 
@@ -64,16 +60,16 @@ export default class AiCommand extends BaseCommand<typeof AiCommand> {
 		const repoRoot = await this.tryResolveRepoRoot();
 		this.verbose(`Repo root: ${repoRoot ?? "(not in a Fluid repo)"}`);
 
-		const aliasFile = await this.resolveAliasFile(repoRoot, flags.aliasFile);
-		const [gettingStartedContent, promptFile] = await Promise.all([
+		const [aliasFile, gettingStartedContent, promptFile] = await Promise.all([
+			this.resolveAliasFile(repoRoot, flags.aliasFile),
 			this.readDevcontainerFile(repoRoot, "GETTING_STARTED.md"),
 			this.loadPromptFile(repoRoot),
 		]);
 		this.verbose(`Alias file: ${aliasFile.path}`);
 
-		const model = flags.model ?? promptFile.model ?? HARDCODED_DEFAULT_MODEL;
+		const model = flags.model ?? promptFile.model ?? FALLBACK_MODEL;
 		this.verbose(
-			`Model: ${model} (source: ${flags.model ? "flag" : promptFile.model ? "frontmatter" : "hardcoded default"})`,
+			`Model: ${model} (source: ${flags.model ? "flag" : promptFile.model ? "frontmatter" : "fallback"})`,
 		);
 
 		const prompt = promptFile.template
@@ -86,18 +82,37 @@ export default class AiCommand extends BaseCommand<typeof AiCommand> {
 			output: process.stdout,
 		});
 
+		const quiet = this.flags.quiet;
+		const log = this.log.bind(this);
+		const verbose = this.verbose.bind(this);
+
 		let proposal: AliasProposal | undefined;
 		try {
 			proposal = await runAiSession({
 				model,
 				prompt,
 				githubToken,
-				ui: createSessionUi(
-					this.flags.quiet,
-					rl,
-					this.log.bind(this),
-					this.verbose.bind(this),
-				),
+				ui: {
+					output: (text: string) => {
+						if (!quiet) {
+							process.stdout.write(text);
+						}
+					},
+					prompt: async (question: string, choices?: string[]) => {
+						log(`\n${chalk.cyan(question)}`);
+						if (choices !== undefined && choices.length > 0) {
+							for (const [index, choice] of choices.entries()) {
+								log(`  ${chalk.yellow(`${index + 1}.`)} ${choice}`);
+							}
+						}
+
+						const answer = await rl.question(chalk.gray("\n> "));
+						return normalizePromptAnswer(answer, choices);
+					},
+					verbose: (message: string) => {
+						verbose(message);
+					},
+				},
 			});
 		} catch (error: unknown) {
 			if (isUserCancellation(error)) {
@@ -152,22 +167,10 @@ export default class AiCommand extends BaseCommand<typeof AiCommand> {
 			});
 			this.exit(result.exitCode ?? 0);
 		} catch (error: unknown) {
-			const exitCode =
-				error !== null &&
-				typeof error === "object" &&
-				"exitCode" in error &&
-				typeof (error as { exitCode?: unknown }).exitCode === "number"
-					? (error as { exitCode: number }).exitCode
-					: 1;
+			const execError = error as execa.ExecaError;
+			const exitCode = execError.exitCode ?? 1;
 			const errorMessage =
-				error !== null &&
-				typeof error === "object" &&
-				"shortMessage" in error &&
-				typeof (error as { shortMessage?: unknown }).shortMessage === "string"
-					? (error as { shortMessage: string }).shortMessage
-					: error instanceof Error
-						? error.message
-						: undefined;
+				execError.shortMessage ?? (error instanceof Error ? error.message : undefined);
 
 			this.errorLog(
 				errorMessage === undefined || errorMessage.length === 0
@@ -310,35 +313,6 @@ function formatAliasCommand(proposal: AliasProposal): string {
  */
 function shellQuote(value: string): string {
 	return `'${value.replaceAll("'", "'\\''")}'`;
-}
-
-function createSessionUi(
-	quiet: boolean,
-	rl: readline.Interface,
-	log: (message?: string) => void,
-	verbose: (message: string | Error) => string | Error,
-): AiSessionUi {
-	return {
-		output: (text: string) => {
-			if (!quiet) {
-				process.stdout.write(text);
-			}
-		},
-		prompt: async (question: string, choices?: string[]) => {
-			log(`\n${chalk.cyan(question)}`);
-			if (choices !== undefined && choices.length > 0) {
-				for (const [index, choice] of choices.entries()) {
-					log(`  ${chalk.yellow(`${index + 1}.`)} ${choice}`);
-				}
-			}
-
-			const answer = await rl.question(chalk.gray("\n> "));
-			return normalizePromptAnswer(answer, choices);
-		},
-		verbose: (message: string) => {
-			verbose(message);
-		},
-	};
 }
 
 export function normalizePromptAnswer(answer: string, choices?: string[]): string {
