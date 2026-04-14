@@ -131,7 +131,7 @@ export function benchmarkAll<T extends IBenchmarkParameters>(title: string, obj:
 				await afterMethod?.();
 			},
 		}),
-	});
+	}).timeout(20000);
 
 	benchmarkIt({
 		title,
@@ -154,5 +154,5 @@ export function benchmarkAll<T extends IBenchmarkParameters>(title: string, obj:
 			// No need to warm up
 			startPhase: Phase.CollectData,
 		}),
-	});
+	}).timeout(20000);
 }
