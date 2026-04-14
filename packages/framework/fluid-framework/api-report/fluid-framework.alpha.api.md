@@ -2190,7 +2190,7 @@ export interface TreeChangeEvents {
 // @alpha @sealed
 export interface TreeChangeEventsAlpha<TNode extends TreeNode = TreeNode> extends TreeChangeEvents {
     nodeChanged: (data: NodeChangedDataAlpha<TNode>) => void;
-    treeChanged: TNode extends WithType<string, NodeKind.Array> ? (data: NodeChangedDataTreeDelta) => void : () => void;
+    treeChanged: TNode extends WithType<string, NodeKind.Array> ? (data: NodeChangedDataTreeDelta) => void : TreeChangeEventsBeta<TNode>["treeChanged"];
 }
 
 // @beta @sealed

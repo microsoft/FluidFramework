@@ -5,6 +5,7 @@
 
 import type { NodeKind, TreeNode, WithType } from "../core/index.js";
 
+import type { TreeChangeEventsBeta } from "./treeBeta.js";
 import type { TreeChangeEvents } from "./treeChangeEvents.js";
 import type { ArrayNodeDeltaOp, ArrayNodeTreeChangedDeltaOp } from "./treeNodeApi.js";
 export type {
@@ -152,5 +153,5 @@ export interface TreeChangeEventsAlpha<TNode extends TreeNode = TreeNode>
 	 */
 	treeChanged: TNode extends WithType<string, NodeKind.Array>
 		? (data: NodeChangedDataTreeDelta) => void
-		: () => void;
+		: TreeChangeEventsBeta<TNode>["treeChanged"];
 }
