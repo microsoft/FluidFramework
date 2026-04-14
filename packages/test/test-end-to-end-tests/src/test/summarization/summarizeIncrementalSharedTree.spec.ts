@@ -30,9 +30,6 @@ import {
 	TreeViewConfigurationAlpha,
 } from "@fluidframework/tree/internal";
 
-// ---------------------------------------------------------------------------
-// Schema: 3-depth nested structure with incrementalSummaryHint at depths 1 & 2
-// ---------------------------------------------------------------------------
 const sf = new SchemaFactoryAlpha("incrementalSummaryE2E");
 
 class Tag extends sf.object("Tag", {
@@ -55,9 +52,6 @@ class Workspace extends sf.object("Workspace", {
 
 const viewConfig = new TreeViewConfigurationAlpha({ schema: Workspace });
 
-// ---------------------------------------------------------------------------
-// Factory configured for incremental summarization
-// ---------------------------------------------------------------------------
 const ConfiguredSharedTree = configuredSharedTree({
 	forest: ForestTypeOptimized,
 	treeEncodeType: TreeCompressionStrategy.CompressedIncremental,
@@ -118,13 +112,11 @@ describeCompat(
 			const { container, view } = await createContainerAndTree();
 			const summarizer = await createTestSummarizer(container);
 
-			// 1. Initial summary — everything is encoded as full trees, no handles.
 			await provider.ensureSynchronized();
 			await summarizeNow(summarizer);
 
-			// 2. Mutate the "items" map (depth 1) — this re-encodes the outer chunk.
-			//    The "tags" map (depth 2) is unchanged → becomes a handle pointing into
-			//    the first summary.
+			// Mutate the "items" map (depth 1) — re-encodes the outer chunk.
+			// The "tags" map (depth 2) is unchanged and becomes a handle.
 			const item1 = view.root.items.get("item1");
 			assert(item1 !== undefined, "item1 not found");
 			item1.itemName = "Item 1 - updated";
@@ -132,20 +124,17 @@ describeCompat(
 			await provider.ensureSynchronized();
 			await summarizeNow(summarizer);
 
-			// 3. Mutate the "items" map again — the outer chunk gets a NEW referenceId.
-			//    The child "tags" handle must point into the second summary (not the
-			//    first). Before the fix, the stale summaryPath would cause a failure here.
+			// Mutate again — the outer chunk gets a new referenceId. The child "tags"
+			// handle must now point into the second summary. Before the fix the stale
+			// summaryPath caused "Cannot read properties of undefined (reading 'trees')".
 			item1.itemName = "Item 1 - updated again";
 
 			await provider.ensureSynchronized();
-			// This is the critical summary — it would fail before the fix because the
-			// child handle's path referenced the old parent referenceId.
 			await assert.doesNotReject(
 				summarizeNow(summarizer),
 				"Third summary should succeed — handle paths must be recomputed correctly",
 			);
 
-			// 4. Verify the document can still be loaded from the latest summary.
 			const container2 = await provider.loadTestContainer(testContainerConfig);
 			const dataObject2 = await getContainerEntryPointBackCompat<ITestFluidObject>(container2);
 			const tree2 = await dataObject2.getSharedObject<ITree>(treeId);
@@ -161,11 +150,10 @@ describeCompat(
 			const { container, view } = await createContainerAndTree();
 			const summarizer = await createTestSummarizer(container);
 
-			// 1. Initial summary.
 			await provider.ensureSynchronized();
 			await summarizeNow(summarizer);
 
-			// 2. Change at depth 1 — re-encodes items chunk, tags becomes a handle.
+			// Change at depth 1 — re-encodes items chunk, tags becomes a handle.
 			const item1 = view.root.items.get("item1");
 			assert(item1 !== undefined, "item1 not found");
 			item1.itemName = "changed-1";
@@ -173,17 +161,15 @@ describeCompat(
 			await provider.ensureSynchronized();
 			await summarizeNow(summarizer);
 
-			// 3. Change at depth 0 only (non-incremental root field) — ALL incremental
-			//    chunks become handles. completeSummary copies their tracking entries
-			//    forward, including parentReferenceId values.
+			// Change at depth 0 only — all incremental chunks become handles and
+			// completeSummary copies their tracking entries forward.
 			view.root.label = "v2";
 
 			await provider.ensureSynchronized();
 			await summarizeNow(summarizer);
 
-			// 4. Change at depth 1 again — the parent chunk gets a new referenceId.
-			//    Child handles whose tracking entries were copied forward in step 3 must
-			//    resolve correctly against the latest summary.
+			// Change at depth 1 again — the parent chunk gets a new referenceId.
+			// Child handles copied forward in the previous summary must still resolve.
 			item1.itemName = "changed-2";
 
 			await provider.ensureSynchronized();

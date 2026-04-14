@@ -106,14 +106,11 @@ export interface ITestDataObject extends IFluidLoadable {
 }
 
 /**
- * Map from DDS type string to the constructor of the current package version's default factory
- * for that type. Used by {@link convertRegistry} to distinguish default factories (which should
- * be swapped to the compat version) from custom-configured factories (which should be preserved).
- *
- * For example, `SharedTree.getFactory()` produces an instance whose constructor is recorded here.
- * A factory returned by `configuredSharedTree(options).getFactory()` has a *different* constructor
- * (because `makeChannelFactory` creates a new class per `SharedObjectKind`), so it won't match and
- * will be passed through without conversion.
+ * Maps DDS type string to the constructor of the current version's default factory.
+ * `makeSharedObjectKind` creates a new class per `SharedObjectKind`, so
+ * custom-configured variants have a different constructor than the default. The identity
+ * check in {@link convertRegistry} uses this to let those factories pass through
+ * without being swapped to the compat version.
  */
 const currentDefaultFactoryCtors: Map<string, unknown> = new Map();
 {
@@ -153,14 +150,6 @@ function createGetDataStoreFactoryFunction(
 		registryMapping[value.getFactory().type] = value.getFactory();
 	}
 
-	/**
-	 * Maps user-provided channel factory registry entries to the version-appropriate factories.
-	 *
-	 * Default factories (whose constructor matches the current package version's default for that
-	 * DDS type) are replaced with the compat version's factory so that cross-version tests use the
-	 * correct implementation. Custom-configured factories (e.g. from `configuredSharedTree(options)`)
-	 * have a different constructor and are passed through unchanged, preserving their options.
-	 */
 	function convertRegistry(registry: ChannelFactoryRegistry = []): ChannelFactoryRegistry {
 		const oldRegistry: [string | undefined, IChannelFactory][] = [];
 		for (const [key, factory] of registry) {
