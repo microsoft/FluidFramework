@@ -172,6 +172,7 @@ export interface MemoryUseCallbacks {
 
 // @public @input
 export interface MemoryUseModifier<TIn> {
+    after?(input: TIn): void | Promise<void>;
     modify(input: TIn): void | Promise<void>;
     setup(): TIn | Promise<TIn>;
 }

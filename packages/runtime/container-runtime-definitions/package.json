@@ -92,7 +92,7 @@
 		"@fluidframework/build-tools": "catalog:buildTools",
 		"@fluidframework/container-runtime-definitions-previous": "npm:@fluidframework/container-runtime-definitions@2.92.0",
 		"@fluidframework/eslint-config-fluid": "catalog:eslint",
-		"@microsoft/api-extractor": "7.52.11",
+		"@microsoft/api-extractor": "7.58.1",
 		"concurrently": "^9.2.1",
 		"copyfiles": "^2.4.1",
 		"eslint": "catalog:eslint",

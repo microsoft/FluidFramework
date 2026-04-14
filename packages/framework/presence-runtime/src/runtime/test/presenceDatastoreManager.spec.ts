@@ -797,7 +797,7 @@ describe("Presence/Runtime", () => {
 				// Act & Verify
 				assert.throws(
 					() => processUnrecognizedMessage({ optional: false }),
-					validateAssertionError(/Unrecognized message type in critical message/),
+					validateAssertionError("0xcbc"),
 				);
 
 				// Verify
