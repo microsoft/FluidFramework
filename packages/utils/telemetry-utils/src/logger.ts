@@ -47,12 +47,23 @@ export function toITelemetryLoggerExt(logger: TelemetryLoggerExt): ITelemetryLog
 
 /**
  * Un-type-erase the {@link ITelemetryLoggerExt}.
+ * @remarks
+ * This is the extraction helper as documented by {@link @fluidframework/core-interfaces#BrandedType}.
+ *
+ * @typeParam options - options for the extraction, currently only supports making
+ * the output possibly undefined (when `PossiblyUndefined: true`), which is useful
+ * for cases where we want to allow passing `undefined` through.
+ *
+ * @privateRemarks `ITelemetryLoggerExt` is not currently a branded type, but will
+ * be when the breaking change is made. At that time, use of this helper will be
+ * required.
+ *
  * @internal
  */
 export function extractTelemetryLoggerExt<
 	options extends {
 		PossiblyUndefined?: true;
-	} = // eslint-disable-next-line @typescript-eslint/no-empty-object-type
+	} = // eslint-disable-next-line @typescript-eslint/no-empty-object-type -- empty object without PossiblyUndefined is the correct type
 	{},
 >(
 	input:
