@@ -144,10 +144,6 @@ export interface TreeChangeEventsAlpha<TNode extends TreeNode = TreeNode>
 	 * subtree propagation.
 	 *
 	 * For non-array nodes: same as the base {@link TreeChangeEvents.treeChanged}.
-	 *
-	 * The listener type is conditional on `TNode`. If `TNode` is the base {@link TreeNode} type
-	 * (i.e. the node's schema is not known statically), the listener is typed as `() => void`
-	 * and no delta payload is provided. Use a more specific schema type to get the delta.
 	 * @privateRemarks
 	 * This defines a property which is a function instead of using the method syntax to avoid function bi-variance issues with the input data to the callback.
 	 */
