@@ -20,6 +20,8 @@ import {
 } from "../tablePerformanceTestUtilities.js";
 import { configureBenchmarkHooks } from "../utils.js";
 
+import { iterationSettings, memoryAddedBy } from "./utils.js";
+
 /**
  * Note: These benchmarks are designed to closely match the benchmarks in SharedMatrix.
  * If you modify or add tests here, consider updating the corresponding SharedMatrix benchmarks as well
@@ -43,27 +45,23 @@ function runBenchmark({
 	return benchmarkIt({
 		title,
 		...benchmarkMemoryUse({
-			// These tests are quite slow, so force a lower iteration count.
-			// If we need better data at some point, we can look into raising it.
-			warmUpIterations: 2,
-			keepIterations: 4,
-			enableAsyncGC: true,
-			benchmarkFn: async (state) => {
-				while (state.continue()) {
-					const { table, undoRedoStack, cleanUp } = createTableTree({
-						tableSize,
-						initialCellValue,
-					});
-					beforeOperation?.(table, undoRedoStack);
-					await state.beforeAllocation();
+			...iterationSettings,
+			...memoryAddedBy({
+				setup: () => {
+					const result = createTableTree({ tableSize, initialCellValue });
+					beforeOperation?.(result.table, result.undoRedoStack);
+					return result;
+				},
+				modify: ({ table, undoRedoStack }) => {
 					operation(table, undoRedoStack);
-
-					await state.whileAllocated();
-
+				},
+				after: ({ table, undoRedoStack, cleanUp }) => {
 					afterOperation?.(table, undoRedoStack);
+					// In practice this does not seem to help reduce memory leaks, but calling it is
+					// good for consistency with other benchmarks.
 					cleanUp();
-				}
-			},
+				},
+			}),
 		}),
 	});
 }

@@ -9,7 +9,6 @@ import {
 	benchmarkIt,
 	benchmarkMemoryUse,
 	isInPerformanceTestingMode,
-	memoryAddedBy,
 	memoryUseOfValue,
 } from "@fluid-tools/benchmark";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
@@ -30,6 +29,8 @@ import {
 } from "../../simple-tree/index.js";
 import { configuredSharedTree } from "../../treeFactory.js";
 import { testIdCompressor } from "../utils.js";
+
+import { iterationSettings, memoryAddedBy } from "./utils.js";
 
 const builder = new SchemaFactory("shared-tree-test");
 
@@ -151,9 +152,7 @@ describe("SharedTree memory usage", () => {
 						}
 					},
 				}),
-				keepIterations: 4,
-				warmUpIterations: 2,
-				enableAsyncGC: true,
+				...iterationSettings,
 			}),
 		}).timeout(40000); // Set relatively higher threshold as 100_000 iterations can take a while.
 
@@ -174,9 +173,7 @@ describe("SharedTree memory usage", () => {
 						}
 					},
 				}),
-				keepIterations: 4,
-				warmUpIterations: 2,
-				enableAsyncGC: true,
+				...iterationSettings,
 			}),
 		}).timeout(40000); // Set relatively higher threshold as 100_000 iterations can take a while.
 
@@ -198,9 +195,7 @@ describe("SharedTree memory usage", () => {
 						sharedTree.root.child.propertyOne = undefined; // This is possible since the property is optional.
 					},
 				}),
-				keepIterations: 4,
-				warmUpIterations: 2,
-				enableAsyncGC: true,
+				...iterationSettings,
 			}),
 		}).timeout(40000); // Set relatively higher threshold as 100_000 iterations can take a while.
 	}
@@ -234,9 +229,7 @@ describe("SharedTree memory usage", () => {
 									},
 								),
 							),
-							keepIterations: 4,
-							warmUpIterations: 2,
-							enableAsyncGC: true,
+							...iterationSettings,
 						}),
 					}).timeout(400000);
 				}
