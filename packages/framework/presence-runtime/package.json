@@ -1,0 +1,158 @@
+{
+	"name": "@fluid-internal/presence-runtime",
+	"version": "2.93.0",
+	"description": "Core runtime implementation for Fluid Framework presence",
+	"homepage": "https://fluidframework.com",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/microsoft/FluidFramework.git",
+		"directory": "packages/framework/presence-runtime"
+	},
+	"license": "MIT",
+	"author": "Microsoft and contributors",
+	"sideEffects": false,
+	"type": "module",
+	"exports": {
+		"./states": {
+			"import": {
+				"types": "./lib/states/index.d.ts",
+				"default": "./lib/states/index.js"
+			},
+			"require": {
+				"types": "./dist/states/index.d.ts",
+				"default": "./dist/states/index.js"
+			}
+		},
+		"./extension": {
+			"import": "./lib/runtime/extension/index.js",
+			"require": "./dist/runtime/extension/index.js"
+		},
+		"./utils": {
+			"import": "./lib/utils/index.js",
+			"require": "./dist/utils/index.js"
+		},
+		"./workspace": {
+			"import": "./lib/workspace/index.js",
+			"require": "./dist/workspace/index.js"
+		},
+		"./internal/protocol": {
+			"allow-ff-test-exports": {
+				"types": {
+					"import": "./lib/runtime/protocol.d.ts",
+					"require": "./dist/runtime/protocol.d.ts"
+				}
+			}
+		},
+		"./internal/test": {
+			"allow-ff-test-exports": {
+				"import": "./lib/runtime/test.js",
+				"require": "./dist/runtime/test.js"
+			}
+		},
+		"./internal/test-utils": {
+			"allow-ff-test-exports": {
+				"import": "./lib/test/utils/index.js",
+				"require": "./dist/test/utils/index.js"
+			}
+		}
+	},
+	"files": [
+		"dist/**/*",
+		"lib/**/*",
+		"!**/test/**/*"
+	],
+	"scripts": {
+		"build": "fluid-build . --task build",
+		"build:commonjs": "fluid-build . --task commonjs",
+		"build:compile": "fluid-build . --task compile",
+		"build:esnext": "tsc --project ./tsconfig.esm.json",
+		"build:genver": "gen-version",
+		"build:test": "npm run build:test:esm && npm run build:test:cjs",
+		"build:test:cjs": "fluid-tsc commonjs --project ./tsconfig.test.cjs.json",
+		"build:test:esm": "tsc --project ./tsconfig.test.esm.json",
+		"check:are-the-types-wrong": "attw --pack . --profile node16 --exclude-entrypoints ./internal/protocol ./internal/test ./internal/test-utils",
+		"check:biome": "biome check .",
+		"check:exports": "concurrently \"npm:check:exports:*\"",
+		"check:exports:states:bundle-release-tags": "api-extractor run --config api-extractor/api-extractor-lint-states-bundle.json",
+		"check:exports:states:cjs": "api-extractor run --config api-extractor/api-extractor-lint-states.cjs.json",
+		"check:exports:states:esm": "api-extractor run --config api-extractor/api-extractor-lint-states.esm.json",
+		"check:format": "npm run check:biome",
+		"clean": "rimraf --glob dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\" _api-extractor-temp nyc",
+		"eslint": "eslint --quiet --format stylish src",
+		"eslint:fix": "eslint --quiet --format stylish src --fix --fix-type problem,suggestion,layout",
+		"format": "npm run format:biome",
+		"format:biome": "biome check . --write",
+		"lint": "fluid-build . --task lint",
+		"lint:fix": "fluid-build . --task eslint:fix --task format",
+		"test": "npm run test:mocha",
+		"test:coverage": "c8 npm test",
+		"test:mocha": "npm run test:mocha:esm && echo skipping cjs to avoid overhead - npm run test:mocha:cjs",
+		"test:mocha:cjs": "cross-env FLUID_TEST_MODULE_SYSTEM=CJS \"MOCHA_SPEC=dist/**/*.spec.*js\" mocha",
+		"test:mocha:esm": "cross-env \"MOCHA_SPEC=lib/**/*.spec.*js\" mocha",
+		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
+		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ../../../common/build/build-common/src/cjs/package.json ./dist"
+	},
+	"c8": {
+		"all": true,
+		"cache-dir": "nyc/.cache",
+		"exclude": [
+			"src/**/test/**/*.*ts",
+			"dist/**/test/**/*.*js",
+			"lib/**/test/**/*.*js"
+		],
+		"exclude-after-remap": false,
+		"include": [
+			"src/**/*.*ts",
+			"dist/**/*.*js",
+			"lib/**/*.*js"
+		],
+		"report-dir": "nyc/report",
+		"reporter": [
+			"cobertura",
+			"html",
+			"text"
+		],
+		"temp-directory": "nyc/.nyc_output"
+	},
+	"dependencies": {
+		"@fluid-internal/client-utils": "workspace:~",
+		"@fluid-internal/presence-definitions": "workspace:~",
+		"@fluidframework/container-definitions": "workspace:~",
+		"@fluidframework/container-runtime-definitions": "workspace:~",
+		"@fluidframework/core-interfaces": "workspace:~",
+		"@fluidframework/core-utils": "workspace:~",
+		"@fluidframework/id-compressor": "workspace:~",
+		"@fluidframework/runtime-definitions": "workspace:~",
+		"@fluidframework/telemetry-utils": "workspace:~"
+	},
+	"devDependencies": {
+		"@arethetypeswrong/cli": "^0.18.2",
+		"@biomejs/biome": "~2.4.5",
+		"@fluid-internal/mocha-test-setup": "workspace:~",
+		"@fluid-tools/build-cli": "catalog:buildTools",
+		"@fluidframework/build-common": "^2.0.3",
+		"@fluidframework/build-tools": "catalog:buildTools",
+		"@fluidframework/driver-definitions": "workspace:~",
+		"@fluidframework/eslint-config-fluid": "catalog:eslint",
+		"@fluidframework/test-runtime-utils": "workspace:~",
+		"@fluidframework/test-utils": "workspace:~",
+		"@microsoft/api-extractor": "7.58.1",
+		"@types/mocha": "^10.0.10",
+		"@types/node": "catalog:types",
+		"@types/sinon": "^17.0.3",
+		"c8": "^10.1.3",
+		"concurrently": "^9.2.1",
+		"copyfiles": "^2.4.1",
+		"cross-env": "^10.1.0",
+		"eslint": "catalog:eslint",
+		"jiti": "^2.6.1",
+		"mocha": "^11.7.5",
+		"mocha-multi-reporters": "^1.5.1",
+		"rimraf": "^6.1.3",
+		"sinon": "^18.0.1",
+		"typescript": "~5.4.5"
+	},
+	"typeValidation": {
+		"disabled": true
+	}
+}
