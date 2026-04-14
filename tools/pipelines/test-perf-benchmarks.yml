@@ -28,6 +28,7 @@ trigger:
     - tools/pipelines/test-perf-benchmarks.yml
     - tools/pipelines/templates/include-install.yml
     - tools/pipelines/templates/include-upload-npm-logs.yml
+    - tools/pipelines/templates/include-use-node-version.yml
     - tools/pipelines/templates/include-vars-telemetry-generator.yml
     - tools/pipelines/templates/upload-telemetry
 pr: none
@@ -139,6 +140,8 @@ stages:
               Build Params:
                 SourceBranch=$(Build.SourceBranch)
               "
+
+        - template: /tools/pipelines/templates/include-use-node-version.yml@self
 
         # Install ff_pipeline_host dependencies (provides telemetry-generator and trips-setup/cleanup)
         - template: /tools/pipelines/templates/include-install.yml@self
