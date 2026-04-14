@@ -60,7 +60,7 @@ flub-ai() {
 	local rc=$?
 	if [ $rc -eq 0 ] && [ -s "$launch_file" ]; then
 		local cmd
-		cmd=$(cat "$launch_file")
+		cmd=$(<"$launch_file")
 		rm -f "$launch_file"
 		eval "$cmd"
 	else

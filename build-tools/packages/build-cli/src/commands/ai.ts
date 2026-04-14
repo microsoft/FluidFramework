@@ -81,14 +81,11 @@ export default class AiCommand extends BaseCommand<typeof AiCommand> {
 			.replaceAll("{{aliasFileContent}}", aliasFile.content)
 			.replaceAll("{{gettingStartedContent}}", gettingStartedContent ?? "");
 		const githubToken =
-			// Explicit flag or COPILOT_GITHUB_TOKEN env var (via oclif flag config)
 			flags.githubToken ??
-			// GH_TOKEN is the conventional override for GitHub CLI tools
 			process.env.GH_TOKEN ??
-			// The user's OAuth token from `gh auth login` — preferred over GITHUB_TOKEN
-			// because in Codespaces GITHUB_TOKEN is a repo-scoped token that lacks Copilot permissions.
+			// Preferred over GITHUB_TOKEN because in Codespaces GITHUB_TOKEN is a
+			// repo-scoped token that lacks Copilot permissions.
 			(await resolveGhAuthToken()) ??
-			// GITHUB_TOKEN as a last resort (may be the limited Codespace token)
 			process.env.GITHUB_TOKEN;
 
 		const rl = readline.createInterface({
@@ -173,15 +170,14 @@ export default class AiCommand extends BaseCommand<typeof AiCommand> {
 		const shellCommand = `source ${shellQuote(aliasFile.path)} && ${formattedCommand}`;
 		this.verbose(`Shell command: ${shellCommand}`);
 
+		this.log(`\nLaunching ${chalk.green(proposal.alias)}...\n`);
+
 		// When --launch-file is provided, write the command to that file and exit
 		// so a shell wrapper can run it as a separate, independent process.
 		if (flags.launchFile !== undefined) {
 			await writeFile(flags.launchFile, shellCommand, "utf8");
-			this.log(`\nLaunching ${chalk.green(proposal.alias)}...\n`);
 			return;
 		}
-
-		this.log(`\nLaunching ${chalk.green(proposal.alias)}...\n`);
 
 		try {
 			const result = await execa("bash", ["-c", shellCommand], {
