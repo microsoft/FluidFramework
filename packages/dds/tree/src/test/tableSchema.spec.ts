@@ -2341,34 +2341,36 @@ describe("TableFactory unit tests", () => {
 			});
 
 			describe("Reading values", () => {
-				it("getCell", () => {
-					const cell00 = new Cell({ value: "0-0" });
-					const cell01 = new Cell({ value: "0-1" });
-					const cell10 = new Cell({ value: "1-0" });
-					const cell11 = new Cell({ value: "1-1" });
+				// Creates a fully-populated 2×2 table (column-0/1, row-0/1, all cells set).
+				// Shared by getCell, getRow, and getColumn tests.
+				function create2x2FilledTable() {
 					const column0 = new Column({ id: "column-0", props: {} });
 					const column1 = new Column({ id: "column-1", props: {} });
 					const row0 = new Row({
 						id: "row-0",
 						cells: {
-							"column-0": cell00,
-							"column-1": cell01,
+							"column-0": new Cell({ value: "0-0" }),
+							"column-1": new Cell({ value: "0-1" }),
 						},
 						props: {},
 					});
 					const row1 = new Row({
 						id: "row-1",
-						cells: { "column-0": cell10, "column-1": cell11 },
+						cells: {
+							"column-0": new Cell({ value: "1-0" }),
+							"column-1": new Cell({ value: "1-1" }),
+						},
 						props: {},
 					});
-
 					const table = initializeTree(
 						Table,
-						Table.create({
-							columns: [column0, column1],
-							rows: [row0, row1],
-						}),
+						Table.create({ columns: [column0, column1], rows: [row0, row1] }),
 					);
+					return { table, row0, row1, column0, column1 };
+				}
+
+				it("getCell", () => {
+					const { table, row1, column0, column1 } = create2x2FilledTable();
 
 					// Get cell (by indices)
 					const getByIndices = table.getCell({ row: 1, column: 0 });
@@ -2408,33 +2410,7 @@ describe("TableFactory unit tests", () => {
 				});
 
 				it("getRow", () => {
-					const cell00 = new Cell({ value: "0-0" });
-					const cell01 = new Cell({ value: "0-1" });
-					const cell10 = new Cell({ value: "1-0" });
-					const cell11 = new Cell({ value: "1-1" });
-					const column0 = new Column({ id: "column-0", props: {} });
-					const column1 = new Column({ id: "column-1", props: {} });
-					const row0 = new Row({
-						id: "row-0",
-						cells: {
-							"column-0": cell00,
-							"column-1": cell01,
-						},
-						props: {},
-					});
-					const row1 = new Row({
-						id: "row-1",
-						cells: { "column-0": cell10, "column-1": cell11 },
-						props: {},
-					});
-
-					const table = initializeTree(
-						Table,
-						Table.create({
-							columns: [column0, column1],
-							rows: [row0, row1],
-						}),
-					);
+					const { table } = create2x2FilledTable();
 
 					// Get row (by index)
 					const getByIndex = table.getRow(1);
@@ -2483,33 +2459,7 @@ describe("TableFactory unit tests", () => {
 				});
 
 				it("getColumn", () => {
-					const cell00 = new Cell({ value: "0-0" });
-					const cell01 = new Cell({ value: "0-1" });
-					const cell10 = new Cell({ value: "1-0" });
-					const cell11 = new Cell({ value: "1-1" });
-					const column0 = new Column({ id: "column-0", props: {} });
-					const column1 = new Column({ id: "column-1", props: {} });
-					const row0 = new Row({
-						id: "row-0",
-						cells: {
-							"column-0": cell00,
-							"column-1": cell01,
-						},
-						props: {},
-					});
-					const row1 = new Row({
-						id: "row-1",
-						cells: { "column-0": cell10, "column-1": cell11 },
-						props: {},
-					});
-
-					const table = initializeTree(
-						Table,
-						Table.create({
-							columns: [column0, column1],
-							rows: [row0, row1],
-						}),
-					);
+					const { table } = create2x2FilledTable();
 
 					// Get column (by index)
 					const getByIndex = table.getColumn(1);
@@ -2776,6 +2726,39 @@ describe("TableFactory unit tests", () => {
 		return { view, undoStack, redoStack, unsubscribe };
 	}
 
+	/**
+	 * Pops the top revertible from a stack, asserts it is defined, and immediately reverts it.
+	 */
+	function popAndRevert(stack: { pop(): { revert(): void } | undefined }): void {
+		const revertible = stack.pop();
+		assert(revertible !== undefined, "Missing revertible");
+		revertible.revert();
+	}
+
+	/**
+	 * Creates a two-client table setup for concurrency / orphan-cell prevention tests.
+	 *
+	 * @remarks
+	 * Initializes the primary view with {@link initialContent}, synchronizes both clients,
+	 * then returns both views plus a fork of the primary view for simulating concurrent edits.
+	 */
+	function makeTwoClientTableView(initialContent: ReturnType<(typeof Table)["create"]>) {
+		const provider = new TestTreeProviderLite(
+			2,
+			configuredSharedTree({
+				jsonValidator: FormatValidatorBasic,
+				minVersionForCollab: FluidClientVersion.v2_80,
+			}).getFactory(),
+		);
+		const config = new TreeViewConfiguration({ schema: Table, enableSchemaValidation: true });
+		const view = asAlpha(provider.trees[0].viewWith(config));
+		view.initialize(initialContent);
+		provider.synchronizeMessages();
+		const fork = view.fork();
+		const view2 = asAlpha(provider.trees[1].viewWith(config));
+		return { view, table: view.root, fork, branchTable: fork.root, view2, provider };
+	}
+
 	describe("Undo/redo", () => {
 		it("redo restores a column insertion that was undone", () => {
 			const { view, undoStack, redoStack, unsubscribe } = makeUndoRedoView();
@@ -2785,11 +2768,11 @@ describe("TableFactory unit tests", () => {
 			assert.equal(view.root.columns.length, 1);
 
 			// Undo
-			undoStack.pop()?.revert();
+			popAndRevert(undoStack);
 			assert.equal(view.root.columns.length, 0);
 
 			// Redo — column should be restored
-			redoStack.pop()?.revert();
+			popAndRevert(redoStack);
 			assert.equal(view.root.columns.length, 1);
 			assert.equal(view.root.columns[0].id, "column-0");
 
@@ -2804,11 +2787,11 @@ describe("TableFactory unit tests", () => {
 			assert.equal(view.root.rows.length, 1);
 
 			// Undo
-			undoStack.pop()?.revert();
+			popAndRevert(undoStack);
 			assert.equal(view.root.rows.length, 0);
 
 			// Redo — row should be restored
-			redoStack.pop()?.revert();
+			popAndRevert(redoStack);
 			assert.equal(view.root.rows.length, 1);
 			assert.equal(view.root.rows[0].id, "row-0");
 
@@ -2830,7 +2813,7 @@ describe("TableFactory unit tests", () => {
 			});
 			assert.equal(view.root.getCell({ row: "row-0", column: "column-0" })?.value, "Hello");
 
-			undoStack.pop()?.revert();
+			popAndRevert(undoStack);
 			assert.equal(view.root.getCell({ row: "row-0", column: "column-0" }), undefined);
 
 			unsubscribe();
@@ -2856,7 +2839,7 @@ describe("TableFactory unit tests", () => {
 			});
 			assert.equal(view.root.getCell({ row: "row-0", column: "column-0" })?.value, "updated");
 
-			undoStack.pop()?.revert();
+			popAndRevert(undoStack);
 			assert.equal(view.root.getCell({ row: "row-0", column: "column-0" })?.value, "original");
 
 			unsubscribe();
@@ -2879,7 +2862,7 @@ describe("TableFactory unit tests", () => {
 			view.root.removeCell({ row: "row-0", column: "column-0" });
 			assert.equal(view.root.getCell({ row: "row-0", column: "column-0" }), undefined);
 
-			undoStack.pop()?.revert();
+			popAndRevert(undoStack);
 			assert.equal(view.root.getCell({ row: "row-0", column: "column-0" })?.value, "Hello");
 
 			unsubscribe();
@@ -2903,7 +2886,7 @@ describe("TableFactory unit tests", () => {
 			assert.equal(view.root.columns[0].id, "column-1");
 			assert.equal(view.root.columns[2].id, "column-0");
 
-			undoStack.pop()?.revert();
+			popAndRevert(undoStack);
 			assert.equal(view.root.columns[0].id, "column-0");
 			assert.equal(view.root.columns[1].id, "column-1");
 			assert.equal(view.root.columns[2].id, "column-2");
@@ -2929,7 +2912,7 @@ describe("TableFactory unit tests", () => {
 			assert.equal(view.root.rows[0].id, "row-1");
 			assert.equal(view.root.rows[2].id, "row-0");
 
-			undoStack.pop()?.revert();
+			popAndRevert(undoStack);
 			assert.equal(view.root.rows[0].id, "row-0");
 			assert.equal(view.root.rows[1].id, "row-1");
 			assert.equal(view.root.rows[2].id, "row-2");
@@ -2952,7 +2935,7 @@ describe("TableFactory unit tests", () => {
 			assert.equal(view.root.rows.length, 1);
 			assert.equal(view.root.getCell({ row: "row-0", column: "column-0" })?.value, "Hello");
 
-			undoStack.pop()?.revert();
+			popAndRevert(undoStack);
 			assert.equal(view.root.rows.length, 0);
 
 			unsubscribe();
@@ -2980,21 +2963,12 @@ describe("TableFactory unit tests", () => {
 			});
 
 			// No changes happened concurrently, so we should be able to revert all of these changes.
-			let revertible = undoStack.pop();
-			assert(revertible !== undefined, "Missing revertible");
 			assert.equal(view.root.columns.length, 3);
-			revertible.revert();
-
-			revertible = undoStack.pop();
-			assert(revertible !== undefined, "Missing revertible");
+			popAndRevert(undoStack);
 			assert.equal(view.root.columns.length, 2);
-			revertible.revert();
-
-			revertible = undoStack.pop();
-			assert(revertible !== undefined, "Missing revertible");
+			popAndRevert(undoStack);
 			assert.equal(view.root.columns.length, 1);
-			revertible.revert();
-
+			popAndRevert(undoStack);
 			assert.equal(view.root.columns.length, 0);
 
 			unsubscribe();
@@ -3008,15 +2982,11 @@ describe("TableFactory unit tests", () => {
 			view.root.insertRows({ rows: [{ id: "row-1", cells: {} }] });
 			assert.equal(view.root.rows.length, 2);
 
-			let revertible = undoStack.pop();
-			assert(revertible !== undefined, "Missing revertible");
-			revertible.revert();
+			popAndRevert(undoStack);
 			assert.equal(view.root.rows.length, 1);
 			assert.equal(view.root.rows[0].id, "row-0");
 
-			revertible = undoStack.pop();
-			assert(revertible !== undefined, "Missing revertible");
-			revertible.revert();
+			popAndRevert(undoStack);
 			assert.equal(view.root.rows.length, 0);
 
 			unsubscribe();
@@ -3041,15 +3011,11 @@ describe("TableFactory unit tests", () => {
 			view.root.removeColumns(["column-1"]);
 			assert.equal(view.root.columns.length, 0);
 
-			let revertible = undoStack.pop();
-			assert(revertible !== undefined, "Missing revertible");
-			revertible.revert();
+			popAndRevert(undoStack);
 			assert.equal(view.root.columns.length, 1);
 			assert.equal(view.root.columns[0].id, "column-1");
 
-			revertible = undoStack.pop();
-			assert(revertible !== undefined, "Missing revertible");
-			revertible.revert();
+			popAndRevert(undoStack);
 			assert.equal(view.root.columns.length, 2);
 
 			unsubscribe();
@@ -3071,15 +3037,11 @@ describe("TableFactory unit tests", () => {
 			view.root.removeRows(["row-1"]);
 			assert.equal(view.root.rows.length, 0);
 
-			let revertible = undoStack.pop();
-			assert(revertible !== undefined, "Missing revertible");
-			revertible.revert();
+			popAndRevert(undoStack);
 			assert.equal(view.root.rows.length, 1);
 			assert.equal(view.root.rows[0].id, "row-1");
 
-			revertible = undoStack.pop();
-			assert(revertible !== undefined, "Missing revertible");
-			revertible.revert();
+			popAndRevert(undoStack);
 			assert.equal(view.root.rows.length, 2);
 
 			unsubscribe();
@@ -3102,15 +3064,11 @@ describe("TableFactory unit tests", () => {
 			assert.equal(view.root.columns[0].id, "column-b");
 
 			// Undo the removal
-			let revertible = undoStack.pop();
-			assert(revertible !== undefined, "Missing revertible");
-			revertible.revert();
+			popAndRevert(undoStack);
 			assert.equal(view.root.columns.length, 2);
 
 			// Undo the insertion
-			revertible = undoStack.pop();
-			assert(revertible !== undefined, "Missing revertible");
-			revertible.revert();
+			popAndRevert(undoStack);
 			assert.equal(view.root.columns.length, 1);
 			assert.equal(view.root.columns[0].id, "column-a");
 
@@ -3134,15 +3092,11 @@ describe("TableFactory unit tests", () => {
 			assert.equal(view.root.rows[0].id, "row-b");
 
 			// Undo the removal
-			let revertible = undoStack.pop();
-			assert(revertible !== undefined, "Missing revertible");
-			revertible.revert();
+			popAndRevert(undoStack);
 			assert.equal(view.root.rows.length, 2);
 
 			// Undo the insertion
-			revertible = undoStack.pop();
-			assert(revertible !== undefined, "Missing revertible");
-			revertible.revert();
+			popAndRevert(undoStack);
 			assert.equal(view.root.rows.length, 1);
 			assert.equal(view.root.rows[0].id, "row-a");
 
@@ -3177,14 +3131,10 @@ describe("TableFactory unit tests", () => {
 			// Remove column-1
 			view.root.removeColumns(["column-1"]);
 
-			let revertible = undoStack.pop();
-			assert(revertible !== undefined, "Missing revertible");
-			revertible.revert(); // undo removeColumns
+			popAndRevert(undoStack); // undo removeColumns
 			assert.equal(view.root.columns.length, 1, "column-1 should have been restored");
 
-			revertible = undoStack.pop();
-			assert(revertible !== undefined, "Missing revertible");
-			revertible.revert(); // undo removeColumns
+			popAndRevert(undoStack); // undo removeColumns
 			assert.equal(view.root.columns.length, 2, "column-0 should be restored");
 			assert.equal(
 				view.root.getCell({ row: "row-0", column: "column-0" })?.value,
@@ -3217,14 +3167,10 @@ describe("TableFactory unit tests", () => {
 			// This creates a subsequent commit that will force the removeColumns undo to rebase.
 			view.root.insertRows({ rows: [{ id: "row-1", cells: {} }] });
 
-			let revertible = undoStack.pop();
-			assert(revertible !== undefined, "Missing revertible");
-			revertible.revert(); // undo insertRows
+			popAndRevert(undoStack); // undo insertRows
 			assert.equal(view.root.rows.length, 1, "row-1 should have been removed");
 
-			revertible = undoStack.pop();
-			assert(revertible !== undefined, "Missing revertible");
-			revertible.revert(); // undo removeColumns
+			popAndRevert(undoStack); // undo removeColumns
 			assert.equal(view.root.columns.length, 1, "column-0 should be restored");
 			assert.equal(
 				view.root.getCell({ row: "row-0", column: "column-0" })?.value,
@@ -3261,18 +3207,14 @@ describe("TableFactory unit tests", () => {
 				cell: { value: "World" },
 			});
 
-			let revertible = undoStack.pop();
-			assert(revertible !== undefined, "Missing revertible");
-			revertible.revert(); // undo setCell
+			popAndRevert(undoStack); // undo setCell
 			assert.equal(
 				view.root.getCell({ row: "row-0", column: "column-1" }),
 				undefined,
 				"cell in column-1 should have been removed",
 			);
 
-			revertible = undoStack.pop();
-			assert(revertible !== undefined, "Missing revertible");
-			revertible.revert(); // undo removeColumns
+			popAndRevert(undoStack); // undo removeColumns
 			assert.equal(view.root.columns.length, 2, "both columns should be restored");
 			assert.equal(
 				view.root.getCell({ row: "row-0", column: "column-0" })?.value,
@@ -3288,34 +3230,12 @@ describe("TableFactory unit tests", () => {
 
 	describe("Prevents orphan cells", () => {
 		it("column removal does not orphan cells from concurrently added rows", () => {
-			// Create a provider with minimum version support for noChange constraints
-			const provider = new TestTreeProviderLite(
-				2,
-				configuredSharedTree({
-					jsonValidator: FormatValidatorBasic,
-					minVersionForCollab: FluidClientVersion.v2_80,
-				}).getFactory(),
-			);
-
-			const config = new TreeViewConfiguration({
-				schema: Table,
-				enableSchemaValidation: true,
-			});
-			const tree1 = provider.trees[0];
-			const view = asAlpha(tree1.viewWith(config));
-			view.initialize(
+			const { view, table, fork, branchTable, view2, provider } = makeTwoClientTableView(
 				Table.create({
 					columns: [new Column({ id: "column-0", props: {} })],
 					rows: [],
 				}),
 			);
-			provider.synchronizeMessages();
-
-			const table = view.root;
-			const fork = view.fork();
-			const branchTable = fork.root;
-			const tree2 = provider.trees[1];
-			const view2 = asAlpha(tree2.viewWith(config));
 
 			// Remove a column on the branch - this adds a constraint to detect concurrent row additions
 			branchTable.removeColumns(["column-0"]);
@@ -3367,20 +3287,7 @@ describe("TableFactory unit tests", () => {
 		});
 
 		it("insertRows is dropped when concurrently removed column would orphan its cells", () => {
-			const provider = new TestTreeProviderLite(
-				1,
-				configuredSharedTree({
-					jsonValidator: FormatValidatorBasic,
-					minVersionForCollab: FluidClientVersion.v2_80,
-				}).getFactory(),
-			);
-
-			const config = new TreeViewConfiguration({
-				schema: Table,
-				enableSchemaValidation: true,
-			});
-			const tree = provider.trees[0];
-			const view = asAlpha(tree.viewWith(config));
+			const { view, unsubscribe } = makeUndoRedoView();
 			view.initialize(
 				Table.create({
 					columns: [new Column({ id: "column-0", props: {} })],
@@ -3406,24 +3313,12 @@ describe("TableFactory unit tests", () => {
 			// Row insertion is dropped because its cell would be orphaned
 			fork.rebaseOnto(view);
 			assert.equal(branchTable.rows.length, 0);
+
+			unsubscribe();
 		});
 
 		it("undo of removeRows is dropped when column removal would orphan the restored row's cells", () => {
-			const provider = new TestTreeProviderLite(
-				2,
-				configuredSharedTree({
-					jsonValidator: FormatValidatorBasic,
-					minVersionForCollab: FluidClientVersion.v2_80,
-				}).getFactory(),
-			);
-
-			const config = new TreeViewConfiguration({
-				schema: Table,
-				enableSchemaValidation: true,
-			});
-			const tree1 = provider.trees[0];
-			const view = asAlpha(tree1.viewWith(config));
-			view.initialize(
+			const { view, table, fork, branchTable, view2, provider } = makeTwoClientTableView(
 				Table.create({
 					columns: [new Column({ id: "column-0", props: {} })],
 					rows: [
@@ -3434,22 +3329,12 @@ describe("TableFactory unit tests", () => {
 					],
 				}),
 			);
-			provider.synchronizeMessages();
-
-			const table = view.root;
-			const fork = view.fork();
-			const branchTable = fork.root;
-			const tree2 = provider.trees[1];
-			const view2 = asAlpha(tree2.viewWith(config));
-
 			const { undoStack, unsubscribe } = createTestUndoRedoStacks(fork.events);
 
 			// Remove the row (which has a cell) - this adds a revert constraint on the column
 			branchTable.removeRows(["row-0"]);
 			assert.equal(branchTable.rows.length, 0);
-			const revertible = undoStack.pop();
-			assert(revertible !== undefined, "Missing revertible");
-			revertible.revert();
+			popAndRevert(undoStack);
 
 			// Row should be restored on the branch
 			assert.equal(branchTable.rows.length, 1);
@@ -3468,33 +3353,12 @@ describe("TableFactory unit tests", () => {
 		});
 
 		it("setCell is dropped when concurrently removed column would orphan the cell", () => {
-			const provider = new TestTreeProviderLite(
-				2,
-				configuredSharedTree({
-					jsonValidator: FormatValidatorBasic,
-					minVersionForCollab: FluidClientVersion.v2_80,
-				}).getFactory(),
-			);
-
-			const config = new TreeViewConfiguration({
-				schema: Table,
-				enableSchemaValidation: true,
-			});
-			const tree1 = provider.trees[0];
-			const view = asAlpha(tree1.viewWith(config));
-			view.initialize(
+			const { view, table, fork, branchTable, view2, provider } = makeTwoClientTableView(
 				Table.create({
 					columns: [new Column({ id: "column-0", props: {} })],
 					rows: [new Row({ id: "row-0", cells: {} })],
 				}),
 			);
-			provider.synchronizeMessages();
-
-			const table = view.root;
-			const fork = view.fork();
-			const branchTable = fork.root;
-			const tree2 = provider.trees[1];
-			const view2 = asAlpha(tree2.viewWith(config));
 
 			// Set a cell on the branch - this adds a constraint on the column
 			branchTable.setCell({
@@ -3515,21 +3379,7 @@ describe("TableFactory unit tests", () => {
 		});
 
 		it("undo of removeCell is dropped when column removal would orphan the restored cell", () => {
-			const provider = new TestTreeProviderLite(
-				2,
-				configuredSharedTree({
-					jsonValidator: FormatValidatorBasic,
-					minVersionForCollab: FluidClientVersion.v2_80,
-				}).getFactory(),
-			);
-
-			const config = new TreeViewConfiguration({
-				schema: Table,
-				enableSchemaValidation: true,
-			});
-			const tree1 = provider.trees[0];
-			const view = asAlpha(tree1.viewWith(config));
-			view.initialize(
+			const { view, table, fork, branchTable, view2, provider } = makeTwoClientTableView(
 				Table.create({
 					columns: [new Column({ id: "column-0", props: {} })],
 					rows: [
@@ -3540,21 +3390,12 @@ describe("TableFactory unit tests", () => {
 					],
 				}),
 			);
-			provider.synchronizeMessages();
-
-			const table = view.root;
-			const fork = view.fork();
-			const branchTable = fork.root;
-			const tree2 = provider.trees[1];
-			const view2 = asAlpha(tree2.viewWith(config));
 			const { undoStack, unsubscribe } = createTestUndoRedoStacks(fork.events);
 
 			// Remove a cell on the branch - this adds a revert constraint on the column
 			branchTable.removeCell({ row: "row-0", column: "column-0" });
 			assert.equal(branchTable.getCell({ row: "row-0", column: "column-0" }), undefined);
-			const revertible = undoStack.pop();
-			assert(revertible !== undefined, "Missing revertible");
-			revertible.revert();
+			popAndRevert(undoStack);
 
 			// Cell should be restored on the branch
 			assert.equal(
@@ -3611,34 +3452,12 @@ describe("TableFactory unit tests", () => {
 		});
 
 		it("removeColumns is dropped when concurrently set cell would create orphaned cells", () => {
-			const provider = new TestTreeProviderLite(
-				2,
-				configuredSharedTree({
-					jsonValidator: FormatValidatorBasic,
-					minVersionForCollab: FluidClientVersion.v2_80,
-				}).getFactory(),
-			);
-
-			const config = new TreeViewConfiguration({
-				schema: Table,
-				enableSchemaValidation: true,
-			});
-			const tree1 = provider.trees[0];
-			const view = asAlpha(tree1.viewWith(config));
-			view.initialize(
+			const { view, table, fork, branchTable, view2, provider } = makeTwoClientTableView(
 				Table.create({
 					columns: [{ id: "column-0", props: {} }],
 					rows: [{ id: "row-0", cells: {} }],
 				}),
 			);
-			provider.synchronizeMessages();
-			const table = view.root;
-
-			const fork = view.fork();
-			const branchTable = fork.root;
-
-			const tree2 = provider.trees[1];
-			const view2 = asAlpha(tree2.viewWith(config));
 
 			// Remove a column on the branch - this adds a constraint to detect concurrent cell insertions/replacements
 			branchTable.removeColumns(["column-0"]);
@@ -3661,34 +3480,12 @@ describe("TableFactory unit tests", () => {
 		});
 
 		it("undo of setCell is dropped when column removal would orphan the restored cell", () => {
-			const provider = new TestTreeProviderLite(
-				2,
-				configuredSharedTree({
-					jsonValidator: FormatValidatorBasic,
-					minVersionForCollab: FluidClientVersion.v2_80,
-				}).getFactory(),
-			);
-
-			const config = new TreeViewConfiguration({
-				schema: Table,
-				enableSchemaValidation: true,
-			});
-			const tree1 = provider.trees[0];
-			const view = asAlpha(tree1.viewWith(config));
-			view.initialize(
+			const { view, table, fork, branchTable, view2, provider } = makeTwoClientTableView(
 				Table.create({
 					columns: [{ id: "column-0", props: {} }],
 					rows: [{ id: "row-0", cells: { "column-0": { value: "initial" } } }],
 				}),
 			);
-			provider.synchronizeMessages();
-			const table = view.root;
-
-			const fork = view.fork();
-			const branchTable = fork.root;
-
-			const tree2 = provider.trees[1];
-			const view2 = asAlpha(tree2.viewWith(config));
 			const { undoStack, unsubscribe } = createTestUndoRedoStacks(fork.events);
 
 			// Replace a cell on the branch - this adds a revert constraint on the column
@@ -3700,9 +3497,7 @@ describe("TableFactory unit tests", () => {
 				branchTable.getCell({ row: "row-0", column: "column-0" })?.value,
 				"updated",
 			);
-			const revertible = undoStack.pop();
-			assert(revertible !== undefined, "Missing revertible");
-			revertible.revert();
+			popAndRevert(undoStack);
 
 			// Cell should be restored to initial value on the branch
 			assert.equal(
