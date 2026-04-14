@@ -34,6 +34,7 @@ import {
 	sortVersions,
 } from "../../library/package.js";
 import {
+	generateReportFileName,
 	getRanges,
 	type ReleaseReport,
 	type ReportKind,
@@ -497,53 +498,18 @@ export default class ReleaseReportCommand extends ReleaseReportBaseCommand<
 
 		if (shouldOutputFiles) {
 			this.info(`Writing files to path: ${path.resolve(outputPath)}`);
-			const promises = [
+			const reportKinds: ReportKind[] = ["simple", "full", "caret", "tilde", "legacy-compat"];
+			const promises = reportKinds.map((kind) =>
 				writeReport(
 					context,
 					report,
-					"simple",
+					kind,
 					outputPath,
 					flags.releaseGroup,
 					flags.baseFileName,
 					this.logger,
 				),
-				writeReport(
-					context,
-					report,
-					"full",
-					outputPath,
-					flags.releaseGroup,
-					flags.baseFileName,
-					this.logger,
-				),
-				writeReport(
-					context,
-					report,
-					"caret",
-					outputPath,
-					flags.releaseGroup,
-					flags.baseFileName,
-					this.logger,
-				),
-				writeReport(
-					context,
-					report,
-					"tilde",
-					outputPath,
-					flags.releaseGroup,
-					flags.baseFileName,
-					this.logger,
-				),
-				writeReport(
-					context,
-					report,
-					"legacy-compat",
-					outputPath,
-					flags.releaseGroup,
-					flags.baseFileName,
-					this.logger,
-				),
-			];
+			);
 
 			await Promise.all(promises);
 		}
@@ -685,28 +651,6 @@ export interface RawReleaseData {
 	latestReleaseType?: VersionBumpType;
 	previousReleasedVersion?: VersionDetails;
 	versions: readonly VersionDetails[];
-}
-
-/**
- * Generates a report filename.
- */
-function generateReportFileName(
-	kind: ReportKind,
-	releaseVersion: ReleaseVersion,
-	releaseGroup?: ReleaseGroup,
-	baseFileName?: string,
-): string {
-	if (releaseGroup === undefined && releaseVersion === undefined) {
-		throw new Error(`Both releaseGroup and releaseVersion were undefined.`);
-	}
-
-	if (baseFileName !== undefined) {
-		return `${baseFileName}.${kind}.json`;
-	}
-
-	return `fluid-framework-release-manifest.${releaseGroup ?? "all"}.${
-		releaseVersion ?? DEFAULT_MIN_VERSION
-	}.${kind}.json`;
 }
 
 /**

@@ -6,6 +6,7 @@
 import {
 	detectVersionScheme,
 	getVersionRange,
+	isInternalTestVersion,
 	type ReleaseVersion,
 	type VersionBumpType,
 	type VersionScheme,
@@ -143,49 +144,34 @@ export function toReportKind(
 	report: ReleaseReport,
 	kind: ReportKind,
 ): ReleaseReport | PackageVersion {
-	const toReturn: PackageVersion = {};
-
-	switch (kind) {
-		case "full": {
-			return report;
-		}
-
-		case "simple": {
-			for (const [pkg, details] of Object.entries(report)) {
-				toReturn[pkg] = details.version;
-			}
-
-			break;
-		}
-
-		case "caret": {
-			for (const [pkg, details] of Object.entries(report)) {
-				toReturn[pkg] = details.ranges.caret;
-			}
-
-			break;
-		}
-
-		case "tilde": {
-			for (const [pkg, details] of Object.entries(report)) {
-				toReturn[pkg] = details.ranges.tilde;
-			}
-
-			break;
-		}
-
-		case "legacy-compat": {
-			for (const [pkg, details] of Object.entries(report)) {
-				toReturn[pkg] = details.ranges.legacyCompat;
-			}
-			break;
-		}
-
-		default: {
-			throw new Error(`Unexpected ReportKind: ${kind}`);
-		}
+	if (kind === "full") {
+		return report;
 	}
 
+	const selectValue = (details: ReleaseDetails): string => {
+		switch (kind) {
+			case "simple": {
+				return details.version;
+			}
+			case "caret": {
+				return details.ranges.caret;
+			}
+			case "tilde": {
+				return details.ranges.tilde;
+			}
+			case "legacy-compat": {
+				return details.ranges.legacyCompat;
+			}
+			default: {
+				throw new Error(`Unexpected ReportKind: ${kind}`);
+			}
+		}
+	};
+
+	const toReturn: PackageVersion = {};
+	for (const [pkg, details] of Object.entries(report)) {
+		toReturn[pkg] = selectValue(details);
+	}
 	return toReturn;
 }
 
@@ -253,4 +239,49 @@ export function getLegacyCompatRange(version: string, interval: number): string 
 	}
 
 	return range;
+}
+
+/**
+ * Extracts the build number from a version string.
+ *
+ * @param version - The version string containing the build number.
+ * @returns The extracted build number.
+ *
+ * @example
+ * Returns 260312
+ * extractBuildNumber("2.1.0-260312");
+ */
+export function extractBuildNumber(version: string): number {
+	const versionParts: string[] = version.split("-");
+
+	if (isInternalTestVersion(version)) {
+		return Number.parseInt(versionParts[1], 10);
+	}
+
+	// Extract the last part of the version, which is the number you're looking for
+	return Number.parseInt(versionParts[versionParts.length - 1], 10);
+}
+
+const DEFAULT_REPORT_MIN_VERSION = "0.0.0";
+
+/**
+ * Generates a report filename.
+ *
+ * @param kind - The {@link ReportKind} of the report.
+ * @param releaseVersion - The version of the release.
+ * @param releaseGroup - The release group, if applicable.
+ * @param baseFileName - If provided, the output file will be named using this base name.
+ * @returns A filename string for the report.
+ */
+export function generateReportFileName(
+	kind: ReportKind,
+	releaseVersion: ReleaseVersion,
+	releaseGroup?: ReleaseGroup,
+	baseFileName?: string,
+): string {
+	if (baseFileName !== undefined) {
+		return `${baseFileName}.${kind}.json`;
+	}
+
+	return `fluid-framework-release-manifest.${releaseGroup ?? "all"}.${releaseVersion ?? DEFAULT_REPORT_MIN_VERSION}.${kind}.json`;
 }

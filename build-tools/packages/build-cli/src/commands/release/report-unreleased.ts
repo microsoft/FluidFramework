@@ -5,14 +5,13 @@
 
 import * as fs from "node:fs/promises";
 import path from "node:path";
-import { isInternalTestVersion } from "@fluid-tools/version-tools";
 import type { Logger } from "@fluidframework/build-tools";
 import { Flags } from "@oclif/core";
 import { formatISO } from "date-fns";
 
 import { semverFlag } from "../../flags.js";
 import { BaseCommand } from "../../library/commands/base.js";
-import { type ReleaseReport, toReportKind } from "../../library/release.js";
+import { extractBuildNumber, type ReleaseReport, toReportKind } from "../../library/release.js";
 
 export class UnreleasedReportCommand extends BaseCommand<typeof UnreleasedReportCommand> {
 	static readonly summary =
@@ -83,7 +82,7 @@ async function generateReleaseReport(
 ): Promise<void> {
 	const ignorePackageList = new Set(["@types/jest-environment-puppeteer"]);
 
-	await updateReportVersions(fullReleaseReport, ignorePackageList, version, log);
+	updateReportVersions(fullReleaseReport, ignorePackageList, version, log);
 
 	const caretReportOutput = toReportKind(fullReleaseReport, "caret");
 	const simpleReportOutput = toReportKind(fullReleaseReport, "simple");
@@ -152,12 +151,12 @@ async function writeReport(
  * @param ignorePackageList - The set of package names to ignore during version updating. These packages are not published to internal ADO feed.
  * @param version - The version string to update packages to.
  */
-async function updateReportVersions(
+function updateReportVersions(
 	report: ReleaseReport,
 	ignorePackageList: Set<string>,
 	version: string,
 	log: Logger,
-): Promise<void> {
+): void {
 	const clientPackageName = "fluid-framework";
 
 	const packageReleaseDetails = report[clientPackageName];
@@ -197,26 +196,4 @@ async function updateReportVersions(
 		}
 	}
 	log.log(`Release report updated pointing to version: ${version}`);
-}
-
-/**
- * Extracts the build number from a version string.
- *
- * @param version - The version string containing the build number.
- * @returns The extracted build number.
- *
- * @example
- * Returns 260312
- * extractBuildNumber("2.1.0-260312");
- */
-
-function extractBuildNumber(version: string): number {
-	const versionParts: string[] = version.split("-");
-
-	if (isInternalTestVersion(version)) {
-		return Number.parseInt(versionParts[1], 10);
-	}
-
-	// Extract the last part of the version, which is the number you're looking for
-	return Number.parseInt(versionParts[versionParts.length - 1], 10);
 }
