@@ -101,16 +101,16 @@ To add SharedTree schema to such a setup:
 - For schema that are file-exported but not project-exported, mark them as `@internal` and use `stripInternal`.
   - If inconsistent tagging becomes a problem (package-exported types accidentally referencing tagged types causing type errors that are hard to diagnose), use API Extractor as a linter to validate tagging is done consistently.
 - For projects that still export schema, pick one of:
-  - Simplify the exported types as much as is practical, including using tools like `eraseSchemaDetails`, and specify the simplified types explicitly.
-  (Recommended if this is easy to do)
-  - Remove `isolatedDeclarations`, and do the `.d.ts` emission using the TypeScript compiler, keeping the separate emit and type-check passes.
-  This might require delaying this emission until some or all of the dependencies of the project have had their types emitted.
-  This does not require any new dependencies for the full type-checking phase (that can still be fully parallel), nor delaying `.d.ts` emission for projects that reference this one (assuming they still use `isolatedDeclarations`).
-  If picking this option, you likely also want to refactor the code to minimize the size and dependencies of the impacted package.
-  (Recommended when the first option isn't easy, and the project in question isn't exceptionally slow to do `.d.ts` emissions using TypeScript with all the options listed at the top of this document)
-  - Explicitly pre-generate the `.d.ts` files.
-  As a last resort (other than disabling the optimized build setup), the `.d.ts` files can be generated the same as the above option. However instead of generating them during the emit phase, generate them with a separate command and commit them to the repo. During the type check phase of the build, error if they are out of date.
-  (Recommended when the above options are not suitable)
+    1. Simplify the exported types as much as is practical, including using tools like `eraseSchemaDetails`, and specify the simplified types explicitly.
+       (Recommended if this is easy to do)
+    2. Remove `isolatedDeclarations`, and do the `.d.ts` emission using the TypeScript compiler, keeping the separate emit and type-check passes.
+       This might require delaying this emission until some or all of the dependencies of the project have had their types emitted.
+       This does not require any new dependencies for the full type-checking phase (that can still be fully parallel), nor delaying `.d.ts` emission for projects that reference this one (assuming they still use `isolatedDeclarations`).
+       If picking this option, you likely also want to refactor the code to minimize the size and dependencies of the impacted package.
+       (Recommended when the first option (1) isn't easy, and the project in question isn't exceptionally slow to do `.d.ts` emissions using TypeScript with all the options listed at the top of this document)
+    3. Explicitly pre-generate the `.d.ts` files.
+       As a last resort (other than disabling the optimized build setup), the `.d.ts` files can be generated the same as the above option. However instead of generating them during the emit phase, generate them with a separate command and commit them to the repo. During the type check phase of the build, error if they are out of date.
+       (Recommended when the above options (1 and 2) are not suitable)
 
 ### Mitigations:
 
