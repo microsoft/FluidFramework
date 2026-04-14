@@ -18,11 +18,16 @@ import { ContainerRuntime, getDeviceSpec } from "../containerRuntime.js";
 import { FluidDataStoreRegistry } from "../dataStoreRegistry.js";
 
 // Capture the full property descriptor (not just the value) so we can restore the original getter-backed property after tests override it.
-const originalNavigatorDescriptor = Object.getOwnPropertyDescriptor(globalThis, "navigator");
-assert(
-	originalNavigatorDescriptor !== undefined,
-	"navigator must be defined in the test environment (requires Node 22)",
-);
+// Uses an IIFE so the assert narrows the type to a definite PropertyDescriptor, avoiding
+// non-null assertions in restoreNavigator (TypeScript can't track narrowing across function boundaries).
+const originalNavigatorDescriptor = (() => {
+	const desc = Object.getOwnPropertyDescriptor(globalThis, "navigator");
+	assert(
+		desc !== undefined,
+		"navigator must be defined in the test environment (requires Node 22)",
+	);
+	return desc;
+})();
 
 function setNavigator(navigator: Partial<Navigator & { deviceMemory?: number }>) {
 	// In Node 22+, globalThis.navigator is a read-only getter, so direct
@@ -35,8 +40,7 @@ function setNavigator(navigator: Partial<Navigator & { deviceMemory?: number }>)
 }
 
 function restoreNavigator() {
-	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- narrowed by the assert at module load, but TypeScript can't track narrowing across function boundaries
-	Object.defineProperty(globalThis, "navigator", originalNavigatorDescriptor!);
+	Object.defineProperty(globalThis, "navigator", originalNavigatorDescriptor);
 }
 
 describe("Hardware Stats", () => {
