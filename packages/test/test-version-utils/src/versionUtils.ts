@@ -427,7 +427,7 @@ export const loadPackage = async (
 						? exp.require.default
 						: exp.default;
 			if (typeof primaryExport !== "string") {
-				// eslint-disable-next-line unicorn/prefer-type-error -- this isn't a TypeError really; it is an internal logic short-coming; entry might not be a string
+				// eslint-disable-next-line unicorn/prefer-type-error -- this isn't a TypeError really; it is an internal logic shortcoming; entry might not be a string
 				throw new Error(
 					`Package ${pkg} defined subpath exports but no recognizable ${importPath} entry.`,
 				);

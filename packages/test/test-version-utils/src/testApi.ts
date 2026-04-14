@@ -73,7 +73,7 @@ export interface PackageToInstall {
 	/**
 	 * Entrypoint to load from, if available. Otherwise, root entrypoint will be used.
 	 */
-	preferredEnrypoint?: "." | `./${string}`;
+	preferredEntrypoint?: "." | `./${string}`;
 }
 
 // List of driver API packages to install.
@@ -107,7 +107,7 @@ const dataRuntimePackageEntries = [
 	{ pkgName: "@fluidframework/register-collection", minVersion: "0.56.0" },
 	{ pkgName: "@fluidframework/sequence", minVersion: "0.56.0" },
 	{ pkgName: "@fluidframework/agent-scheduler", minVersion: "0.56.0" },
-	{ pkgName: "@fluidframework/tree", minVersion: "2.0.0", preferredEnrypoint: "./internal" },
+	{ pkgName: "@fluidframework/tree", minVersion: "2.0.0", preferredEntrypoint: "./internal" },
 ] satisfies PackageToInstall[];
 
 /**
@@ -248,7 +248,7 @@ async function loadIfCompatible(
 ): Promise<any> {
 	// Check if the requested version satisfies the minVersion requirement
 	if (semver.gte(versionToInstall, pkgEntry.minVersion)) {
-		return loadPackage(modulePath, pkgEntry.pkgName, pkgEntry.preferredEnrypoint);
+		return loadPackage(modulePath, pkgEntry.pkgName, pkgEntry.preferredEntrypoint);
 	}
 	return undefined;
 }
