@@ -467,7 +467,7 @@ describe("TableFactory unit tests", () => {
 
 					const table = initializeTree(MyTable, MyTable.create());
 					assertEqualTrees(table, { table: { columns: [], rows: [] } });
-					assert(table.customProp === "Hello world!");
+					assert.strictEqual(table.customProp, "Hello world!");
 				});
 
 				it("Non-empty", () => {
