@@ -17,18 +17,24 @@
  * - cjsFileConfig: CommonJS file rule overrides
  * - jsNoProject: Disables type-aware parsing for JS and .d.ts files
  * - jsTypeAwareDisable: Disables type-aware rules for JS files
- * - reactRecommendedOverride: React file overrides for recommended config
+ * - reactRecommendedOverride: React file overrides for recommended config factory
  * - testRecommendedOverride: Test file overrides for recommended config
  * - sharedConfigs: Collection of all shared configs in a config array
  */
 
+import eslintReact from "@eslint-react/eslint-plugin";
 import dependPlugin from "eslint-plugin-depend";
-import reactPlugin from "eslint-plugin-react";
 import reactHooksPlugin from "eslint-plugin-react-hooks";
 import type { ESLint, Linter } from "eslint";
 
 import { permittedImports, restrictedImportPaths, testFilePatterns } from "../constants.mjs";
 import type { FlatConfigArray } from "./base.mjs";
+
+const reactFilePatterns = ["**/*.jsx", "**/*.tsx"] as const;
+const reactRecommendedTypeScript = eslintReact.configs[
+	"recommended-typescript"
+] satisfies Linter.Config;
+const reactHooksRecommended = reactHooksPlugin.configs.flat.recommended satisfies Linter.Config;
 
 /**
  * eslint-plugin-depend configuration.
@@ -127,37 +133,36 @@ export const internalModulesConfig = {
 } as const satisfies Linter.Config;
 
 /**
- * React rules for ESLint 9 - extends react/recommended and react-hooks/recommended.
+ * React rules - extends @eslint-react recommended-typescript and react-hooks/recommended.
+ *
+ * Uses @eslint-react/eslint-plugin instead of eslint-plugin-react for ESLint 10 compatibility.
+ * eslint-plugin-react-hooks is kept separately because it provides React Compiler rules
+ * and already supports ESLint 10.
  */
 export const reactConfig = [
-	// react/flat.recommended
+	// @eslint-react recommended-typescript preset
 	{
-		files: ["**/*.jsx", "**/*.tsx"],
-		...reactPlugin.configs.flat.recommended,
+		...reactRecommendedTypeScript,
+		files: [...reactFilePatterns],
+		rules: {
+			...reactRecommendedTypeScript.rules,
+			"@eslint-react/dom/no-unsafe-target-blank": "error",
+			"@eslint-react/no-children-prop": "error",
+			"@eslint-react/no-useless-fragment": "error",
+			"@eslint-react/jsx-no-comment-textnodes": "error",
+		},
 	},
-	// react-hooks/recommended rules
+	// react-hooks/recommended rules with custom overrides
 	{
-		files: ["**/*.jsx", "**/*.tsx"],
+		...reactHooksRecommended,
+		files: [...reactFilePatterns],
 		plugins: {
+			...reactHooksRecommended.plugins,
 			// reactHooksPlugin.configs.flat does not conform. It is not a `ConfigObject`.
 			"react-hooks": reactHooksPlugin as ESLint.Plugin,
 		},
-		rules: reactHooksPlugin.configs.recommended.rules,
-		settings: {
-			react: {
-				version: "detect",
-			},
-		},
-	},
-	// react/flat["jsx-runtime"]
-	{
-		files: ["**/*.jsx", "**/*.tsx"],
-		...reactPlugin.configs.flat["jsx-runtime"],
-	},
-	// Custom overrides for react-hooks rules
-	{
-		files: ["**/*.jsx", "**/*.tsx"],
 		rules: {
+			...reactHooksRecommended.rules,
 			"react-hooks/immutability": "warn",
 			"react-hooks/refs": "warn",
 			"react-hooks/rules-of-hooks": "warn",
@@ -252,17 +257,17 @@ export const jsTypeAwareDisable = {
 } as const satisfies Linter.Config;
 
 /**
- * React file overrides for recommended config (from recommended.js).
+ * React file overrides for recommended config factory.
  */
 export const reactRecommendedOverride = {
-	files: ["**/*.jsx", "**/*.tsx"],
+	files: [...reactFilePatterns],
 	rules: {
 		"unicorn/consistent-function-scoping": "off",
 	},
 } as const satisfies Linter.Config;
 
 /**
- * Test file overrides for recommended config (from recommended.js).
+ * Test file overrides for recommended config factory.
  */
 export const testRecommendedOverride = {
 	// Use of spread operator shouldn't really be needed here. Under VS Code, a

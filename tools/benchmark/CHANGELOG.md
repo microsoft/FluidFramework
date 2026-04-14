@@ -1,6 +1,10 @@
 # @fluid-tools/benchmark
 
+## 0.57.0
+
 ## 0.56.0
+
+-   Add `after` to `MemoryUseModifier`.
 
 ## 0.55.0
 

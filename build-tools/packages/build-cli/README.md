@@ -32,6 +32,7 @@ USAGE
 <!-- commands -->
 # Command Topics
 
+* [`flub ai`](docs/ai.md) - AI-powered assistant for launching the right AI agent.
 * [`flub autocomplete`](docs/autocomplete.md) - Display autocomplete installation instructions.
 * [`flub build-perf`](docs/build-perf.md) - Build performance observability commands for collecting, processing, and analyzing build metrics.
 * [`flub bump`](docs/bump.md) - Bump the version of packages, release groups, and their dependencies.

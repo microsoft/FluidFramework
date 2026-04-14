@@ -38,21 +38,16 @@
 		}
 	},
 	"containerEnv": {
-		"NODE_VERSION_OVERRIDE": "24"
+		"NODE_VERSION_OVERRIDE": "24",
+		"COREPACK_ENABLE_DOWNLOAD_PROMPT": "0"
 	},
-	"onCreateCommand": {
-		"node-setup": "bash scripts/codespace-setup/on-create.sh"
-	},
-	"postCreateCommand": {
-		"ai-setup": "bash scripts/codespace-setup/ai-setup.sh"
-	},
+	"onCreateCommand": "bash scripts/codespace-setup/on-create.sh",
+	"postCreateCommand": "bash scripts/codespace-setup/ai-setup.sh",
 	"postStartCommand": {
 		"bwrap-setup": "sudo mount --make-rshared /",
 		"sandbox-tmpdir": "mkdir -p /tmp/claude"
 	},
-	"postAttachCommand": {
-		"open-getting-started": "code .devcontainer/ai-agent/GETTING_STARTED.md"
-	},
+	"postAttachCommand": {},
 	"remoteUser": "node",
 	"features": {
 		// Enables docker CLI inside the container
