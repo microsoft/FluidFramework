@@ -159,6 +159,21 @@ export default class AiCommand extends BaseCommand<typeof AiCommand> {
 				typeof (error as { exitCode?: unknown }).exitCode === "number"
 					? (error as { exitCode: number }).exitCode
 					: 1;
+			const errorMessage =
+				error !== null &&
+				typeof error === "object" &&
+				"shortMessage" in error &&
+				typeof (error as { shortMessage?: unknown }).shortMessage === "string"
+					? (error as { shortMessage: string }).shortMessage
+					: error instanceof Error
+						? error.message
+						: undefined;
+
+			this.errorLog(
+				errorMessage === undefined || errorMessage.length === 0
+					? `Failed to launch ${proposal.alias}.`
+					: `Failed to launch ${proposal.alias}: ${errorMessage}`,
+			);
 			this.exit(exitCode);
 		}
 	}
