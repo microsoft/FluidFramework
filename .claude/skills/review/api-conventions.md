@@ -33,7 +33,7 @@
 - **Avoid exposing advanced TypeScript constructs** in public APIs. Complex types create friction and clutter IntelliSense. Developer helpfulness > strict correctness.
 - **Avoid unnecessary generics.** If a generic parameter only appears as input (not preserved across input/output), use simpler typing.
 - **Use function overloading** when an API accepts different argument shapes. Reduces IntelliSense clutter despite implementation inconvenience.
-- **Express data as JSON-compatible types.** Plain objects (string keys), dense arrays, Unicode strings, finite Float64 numbers, booleans, undefined, null.
+- **Express data as plain JavaScript data shapes.** Plain objects (string keys), dense arrays, Unicode strings, finite Float64 numbers, booleans, undefined, null.
 - **Prefer `undefined` over `null`** for uninitialized/missing/empty states. Use `null` only when required for JSON serialization.
 - **Don't distinguish implicit vs. explicit `undefined`.** Interpret both identically.
 
@@ -41,7 +41,7 @@
 
 - **Prefer required parameters for private/internal functions.** Forces developers to consciously consider all aspects.
 - **Named arguments (object literals) for extensible APIs.** Use when: many parameters, optional arguments, or future extensibility. Avoid when: few fixed parameters or established conventions.
-- **Don't mix user data and system properties in the same bag.** Separate user data one level deeper to prevent collisions (e.g., `{ id: string; userData: T }` not `{ id: string, ...userData: T }`).
+- **Don't mix user data and system properties in the same bag.** Separate user data one level deeper to prevent collisions (e.g., `{ id: string; userData: T }` not `{ id: string } & T`).
 - **Minimize required packages.** Ideal is one package for end users.
 
 ## Error Handling

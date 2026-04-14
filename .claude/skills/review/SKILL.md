@@ -1,11 +1,11 @@
 ---
-name: review-swarm
+name: review
 description: "Use when asked to review code, review a branch, or do a code review. Spawns Breaker (correctness) and API Analyst (compatibility/conventions) sub-agents while the orchestrator reviews architecture, tests, performance, and security."
 argument-hint: "[branch-name]"
 ---
 ```text
-/review-swarm                        # review current branch vs main
-/review-swarm my-feature-branch      # review a specific branch vs main
+/review                              # review current branch vs main
+/review my-feature-branch            # review a specific branch vs main
 ```
 
 Spawns dedicated Breaker (correctness) and API Analyst (compatibility/conventions) sub-agents in parallel while the orchestrator performs the Inspector pass (architecture, tests, performance, security). Depth is user-selected.
@@ -98,7 +98,7 @@ No code gate: If no executable logic files remain after exclusions (only docs/co
 Check whether any API report files changed (names only, not content — these are excluded from diff reading in Step 3):
 
 ```bash
-git diff --name-only origin/main...HEAD | grep -E '\.api\.md$'
+git diff --name-only origin/main...HEAD | grep -E '\.api\.md$' || true
 ```
 
 If any matched, flag those packages for the API Analyst (triggers extra scrutiny on release tags, breaking changes, and conventions).
@@ -197,7 +197,7 @@ The API Analyst receives the contents of `api-conventions.md` (in this skill's d
 
 Read `api-conventions.md`:
 ```bash
-cat .claude/skills/review-swarm/api-conventions.md
+cat .claude/skills/review/api-conventions.md
 ```
 
 #### The Inspector (orchestrator)
@@ -245,9 +245,9 @@ Deduplicate on file:line, sort by severity. Drop "looks correct" findings.
 
 Output routing:
 - 5 or fewer findings: Print the full report to the terminal.
-- More than 5 findings: Write the full report to `/tmp/review-swarm-report.md` and print a summary to the terminal: verdict line, finding counts by area, and the file path.
+- More than 5 findings: Write the full report to `/tmp/review-report.md` and print a summary to the terminal: verdict line, finding counts by area, and the file path.
 
-Always print: `Review report written to /tmp/review-swarm-report.md` when writing to file.
+Always print: `Review report written to /tmp/review-report.md` when writing to file.
 
 If zero findings remain after the evidence gate, use the exact summary line:
 `0 CRITICAL, 0 HIGH, 0 MEDIUM — No high-confidence issues found in the current diff.`
@@ -284,7 +284,7 @@ Table of each changed file -> what changed and why.
 Optional, non-blocking improvements. Each must propose a **concrete action** — never just describe what's already there. Omit this section if there are none.
 
 ---
-Generated with review-swarm (mode)
+Generated with review (mode)
 ````
 
 ### Verdict rules
