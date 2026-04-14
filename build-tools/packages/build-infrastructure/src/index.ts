@@ -58,3 +58,8 @@ export type {
 } from "./types.js";
 export { isIPackage, isIReleaseGroup } from "./types.js";
 export { setVersion } from "./versions.js";
+export {
+	type FilterablePackage,
+	filterPackages,
+	type PackageFilterOptions,
+} from "./filter.js";

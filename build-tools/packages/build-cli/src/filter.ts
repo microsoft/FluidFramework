@@ -5,6 +5,11 @@
 
 import path from "node:path";
 import { type MonoRepo, Package } from "@fluidframework/build-tools";
+import {
+	filterPackages,
+	type FilterablePackage,
+	type PackageFilterOptions,
+} from "@fluid-tools/build-infrastructure";
 import type { filterFlags, PackageSelectionDefault, selectionFlags } from "./flags.js";
 import type { Context } from "./library/context.js";
 import { knownReleaseGroups, type ReleaseGroup } from "./releaseGroups.js";
@@ -50,24 +55,7 @@ export const AllPackagesSelectionCriteria: PackageSelectionCriteria = {
 	changedSinceBranch: undefined,
 };
 
-/**
- * The criteria that should be used for filtering package-like objects from a collection.
- */
-export interface PackageFilterOptions {
-	/**
-	 * If set, filters IN packages whose scope matches the strings provided.
-	 */
-	scope?: string[];
-	/**
-	 * If set, filters OUT packages whose scope matches the strings provided.
-	 */
-	skipScope?: string[];
-
-	/**
-	 * If set, filters private packages in/out.
-	 */
-	private: boolean | undefined;
-}
+export type { FilterablePackage, PackageFilterOptions };
 
 /**
  * Parses {@link selectionFlags} into a typed object that is more ergonomic than working with the flag values directly.
@@ -282,58 +270,4 @@ export async function selectAndFilterPackages(
 	return { selected, filtered };
 }
 
-/**
- * Convenience type that extracts only the properties of a package that are needed for filtering.
- */
-type FilterablePackage = Pick<Package, "name" | "private">;
-
-/**
- * Filters a list of packages by the filter criteria.
- *
- * @param packages - An array of packages to be filtered.
- * @param filters - The filter criteria to filter the packages by.
- * @typeParam T - The type of the package-like objects being filtered.
- * @returns An array containing only the filtered items.
- */
-export async function filterPackages<T extends FilterablePackage>(
-	packages: T[],
-	filters: PackageFilterOptions,
-): Promise<T[]> {
-	const filtered = packages.filter((pkg) => {
-		if (filters === undefined) {
-			return true;
-		}
-
-		const isPrivate: boolean = pkg.private ?? false;
-		if (filters.private !== undefined && filters.private !== isPrivate) {
-			return false;
-		}
-
-		const scopeIn = scopesToPrefix(filters?.scope);
-		const scopeOut = scopesToPrefix(filters?.skipScope);
-
-		if (scopeIn !== undefined) {
-			let found = false;
-			for (const scope of scopeIn) {
-				found ||= pkg.name.startsWith(scope);
-			}
-			if (!found) {
-				return false;
-			}
-		}
-		if (scopeOut !== undefined) {
-			for (const scope of scopeOut) {
-				if (pkg.name.startsWith(scope) === true) {
-					return false;
-				}
-			}
-		}
-		return true;
-	});
-
-	return filtered;
-}
-
-function scopesToPrefix(scopes: string[] | undefined): string[] | undefined {
-	return scopes === undefined ? undefined : scopes.map((s) => `${s}/`);
-}
+export { filterPackages };
