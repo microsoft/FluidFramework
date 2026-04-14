@@ -262,7 +262,7 @@ export function extractBuildNumber(version: string): number {
 	return Number.parseInt(versionParts[versionParts.length - 1], 10);
 }
 
-const DEFAULT_REPORT_MIN_VERSION = "0.0.0";
+const DEFAULT_REPORT_FALLBACK_VERSION = "0.0.0";
 
 /**
  * Generates a report filename.
@@ -283,5 +283,5 @@ export function generateReportFileName(
 		return `${baseFileName}.${kind}.json`;
 	}
 
-	return `fluid-framework-release-manifest.${releaseGroup ?? "all"}.${releaseVersion ?? DEFAULT_REPORT_MIN_VERSION}.${kind}.json`;
+	return `fluid-framework-release-manifest.${releaseGroup ?? "all"}.${releaseVersion ?? DEFAULT_REPORT_FALLBACK_VERSION}.${kind}.json`;
 }
