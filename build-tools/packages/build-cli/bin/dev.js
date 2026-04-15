@@ -4,6 +4,10 @@
  * Licensed under the MIT License.
  */
 
-import { execute } from "@oclif/core";
+import { execute, settings } from "@oclif/core";
+
+if (process.env.FLUB_PERF === "1") {
+	settings.performanceEnabled = true;
+}
 
 await execute({ development: true, dir: import.meta.url });
