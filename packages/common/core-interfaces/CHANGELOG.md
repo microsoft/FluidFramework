@@ -1,5 +1,30 @@
 # @fluidframework/core-interfaces
 
+## 2.93.0
+
+### Minor Changes
+
+- Add Fluid-controlled map and iterator interfaces [b6f1adf1a0](https://github.com/microsoft/FluidFramework/commit/b6f1adf1a051dac701c1ee0b3185b7557be9a0bc)
+
+  `TreeIndex` now extends `FluidReadonlyMap` instead of the built-in `ReadonlyMap`, and `TreeMapNodeAlpha` which extends `FluidReadonlyMap` instead of the built-in `ReadonlyMap` has been added.
+  This works to uncouple Fluid's public API surface to the TypeScript standard library's map types, preventing future breakage when those types change.
+
+- Promote tree index APIs from alpha to beta ([#26993](https://github.com/microsoft/FluidFramework/pull/26993)) [37f2f17c11](https://github.com/microsoft/FluidFramework/commit/37f2f17c118baea142b0e842f5b262255d8bb12c)
+
+  The following APIs have been promoted from `@alpha` to `@beta`:
+  - `TreeIndex`
+  - `TreeIndexKey`
+  - `TreeIndexNodes`
+  - `createTreeIndex`
+  - `IdentifierIndex`
+  - `createIdentifierIndex`
+
+  Additionally, the following `@fluidframework/core-interfaces` types have been promoted from `@alpha` to `@beta`:
+  - `FluidReadonlyMap`
+  - `FluidIterable`
+  - `FluidIterableIterator`
+  - `FluidMap`
+
 ## 2.92.0
 
 Dependency updates only.
