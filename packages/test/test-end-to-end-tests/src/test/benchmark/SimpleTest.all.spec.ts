@@ -7,17 +7,10 @@ import { strict as assert } from "assert";
 
 import { describeCompat } from "@fluid-private/test-version-utils";
 import { IContainer } from "@fluidframework/container-definitions/internal";
-import { ITestObjectProvider } from "@fluidframework/test-utils/internal";
 
 import { IBenchmarkParameters, benchmarkAll } from "./DocumentCreator.js";
 
-describeCompat("Simple Scenario Title", "NoCompat", (getTestObjectProvider) => {
-	let provider: ITestObjectProvider;
-
-	before(async () => {
-		provider = getTestObjectProvider();
-	});
-
+describeCompat("Simple Scenario Title", "NoCompat", () => {
 	/**
 	 * The PerformanceTestWrapper class includes 2 functionalities:
 	 * 1) Store any objects that should not be garbage collected during the benchmark execution (specific for memory tests).
@@ -25,9 +18,8 @@ describeCompat("Simple Scenario Title", "NoCompat", (getTestObjectProvider) => {
 	 * a. Benchmark Time tests: {@link https://benchmarkjs.com/docs#options} or  {@link BenchmarkOptions}
 	 * b. Benchmark Memory tests: {@link MemoryTestObjectProps}
 	 */
-	benchmarkAll(
-		"test1",
-		new (class PerformanceTestWrapper implements IBenchmarkParameters {
+	benchmarkAll("test1", () => {
+		return new (class PerformanceTestWrapper implements IBenchmarkParameters {
 			container: IContainer | undefined;
 			iteration = 0;
 
@@ -46,12 +38,11 @@ describeCompat("Simple Scenario Title", "NoCompat", (getTestObjectProvider) => {
 			async after(): Promise<void> {
 				this.iteration = 0;
 			}
-		})(),
-	);
+		})();
+	});
 
-	benchmarkAll(
-		"test2",
-		new (class PerformanceTestWrapper implements IBenchmarkParameters {
+	benchmarkAll("test2", () => {
+		return new (class PerformanceTestWrapper implements IBenchmarkParameters {
 			container: IContainer | undefined;
 			iteration = 0;
 
@@ -70,6 +61,6 @@ describeCompat("Simple Scenario Title", "NoCompat", (getTestObjectProvider) => {
 			async after(): Promise<void> {
 				this.iteration = 0;
 			}
-		})(),
-	);
+		})();
+	});
 });

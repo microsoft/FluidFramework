@@ -31,8 +31,6 @@ export {
 	DocumentType,
 	DocumentTypeInfo,
 	DescribeE2EDocInfo,
-	describeE2EDocsRuntime,
-	describeE2EDocRun,
 	DocumentMapInfo,
 	DocumentMultipleDataStoresInfo,
 	DocumentMatrixInfo,

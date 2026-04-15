@@ -104,16 +104,12 @@ export interface IBenchmarkParameters {
  * In order to share the files between memory and benchmark tests, we need to create a test object that can be passed and used
  * in both tests. This function creates the test object and calls the appropriate test function.
  * @param title - The title of the test.
- * @param obj - The test object that will be persisted across runs (mainly used on Memory runs).
- * @param params - The {@link IBenchmarkParameters} parameters for the test.
+ * @param createObj - Factory that creates a fresh test object for each test type (memory and duration).
  */
-export function benchmarkAll<T extends IBenchmarkParameters>(title: string, obj: T): void {
-	const runMethod = obj.run.bind(obj);
-	const beforeIterationMethod = obj.beforeIteration?.bind(obj);
-	const afterIterationMethod = obj.afterIteration?.bind(obj);
-	const beforeMethod = obj.before?.bind(obj);
-	const afterMethod = obj.after?.bind(obj);
-
+export function benchmarkAll<T extends IBenchmarkParameters>(
+	title: string,
+	createObj: () => T,
+): void {
 	// In performance testing mode, the tests are much longer
 	// and the mocharc sets a much longer timeout per test accordingly.
 	// Calling .timeout() on the returned test overrides that,
@@ -122,50 +118,56 @@ export function benchmarkAll<T extends IBenchmarkParameters>(title: string, obj:
 	// they are quite slow and need long timeouts.
 	const timeout = isInPerformanceTestingMode ? 1_000_000 : 20_000;
 
-	benchmarkIt({
-		title,
-		...benchmarkMemoryUse({
-			// These tests are quite slow, so force a really low iteration count.
-			// If we need better data at some point, we can look into raising it.
-			keepIterations: Math.min(obj.minSampleCount ?? 1, 1),
-			warmUpIterations: (obj.minSampleCount ?? 1 > 1) ? 1 : 0,
-			benchmarkFn: async (state: MemoryUseCallbacks) => {
-				await beforeMethod?.();
-				while (state.continue()) {
-					beforeIterationMethod?.();
-					await state.beforeAllocation();
-					{
-						await runMethod();
-						await state.whileAllocated();
-						afterIterationMethod?.();
+	{
+		const obj = createObj();
+		benchmarkIt({
+			title,
+			...benchmarkMemoryUse({
+				// These tests are quite slow, so force a really low iteration count.
+				// If we need better data at some point, we can look into raising it.
+				keepIterations: Math.min(obj.minSampleCount ?? 1, 1),
+				warmUpIterations: (obj.minSampleCount ?? 1 > 1) ? 1 : 0,
+				benchmarkFn: async (state: MemoryUseCallbacks) => {
+					await obj.before?.();
+					while (state.continue()) {
+						obj.beforeIteration?.();
+						await state.beforeAllocation();
+						{
+							await obj.run();
+							await state.whileAllocated();
+							obj.afterIteration?.();
+						}
+						await state.afterDeallocation();
 					}
-					await state.afterDeallocation();
-				}
-				await afterMethod?.();
-			},
-		}),
-	}).timeout(timeout);
+					await obj.after?.();
+				},
+			}),
+		}).timeout(timeout);
+	}
 
-	benchmarkIt({
-		title,
-		...benchmarkDuration({
-			benchmarkFnCustom: async <T1>(state: BenchmarkTimer<T1>) => {
-				let duration: number;
-				do {
-					await beforeMethod?.();
-					const before = state.timer.now();
-					await runMethod();
-					const after = state.timer.now();
-					duration = state.timer.toSeconds(before, after);
-					await afterMethod?.();
-					// Collect data
-				} while (state.recordBatch(duration));
-			},
-			// Force batch size to be always 1
-			minBatchDurationSeconds: 0,
-			...(obj.minSampleCount !== undefined ? { minBatchCount: obj.minSampleCount } : {}),
-			// No need to warm up
-			startPhase: Phase.CollectData,
-		}),
-	}).timeout(timeout);
+	{
+		const obj = createObj();
+		benchmarkIt({
+			title,
+			...benchmarkDuration({
+				benchmarkFnCustom: async <T1>(state: BenchmarkTimer<T1>) => {
+					let duration: number;
+					do {
+						await obj.before?.();
+						const before = state.timer.now();
+						await obj.run();
+						const after = state.timer.now();
+						duration = state.timer.toSeconds(before, after);
+						await obj.after?.();
+						// Collect data
+					} while (state.recordBatch(duration));
+				},
+				// Force batch size to be always 1
+				minBatchDurationSeconds: 0,
+				...(obj.minSampleCount !== undefined ? { minBatchCount: obj.minSampleCount } : {}),
+				// No need to warm up
+				startPhase: Phase.CollectData,
+			}),
+		}).timeout(timeout);
+	}
 }

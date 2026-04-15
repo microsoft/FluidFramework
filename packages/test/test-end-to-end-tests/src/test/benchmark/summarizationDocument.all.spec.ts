@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 
-import { describeE2EDocRun } from "@fluid-private/test-version-utils";
+import { describeE2EDocs } from "@fluid-private/test-version-utils";
 import { isInPerformanceTestingMode } from "@fluid-tools/benchmark";
 import { IContainer } from "@fluidframework/container-definitions/internal";
 import { delay } from "@fluidframework/core-utils/internal";
@@ -20,12 +20,12 @@ import {
 } from "./DocumentCreator.js";
 
 const scenarioTitle = "Summarize Document";
-describeE2EDocRun(scenarioTitle, (getTestObjectProvider, getDocumentInfo) => {
+describeE2EDocs(scenarioTitle, (getTestObjectProvider, getDocumentInfo) => {
 	let documentWrapper: IDocumentLoaderAndSummarizer;
 	let provider: ITestObjectProvider;
 	let summaryVersion: string;
 	before(async () => {
-		provider = getTestObjectProvider({ resetAfterEach: false });
+		provider = getTestObjectProvider();
 		const docData = getDocumentInfo(); // returns the type of document to be processed.
 		if (
 			docData.supportedEndpoints &&
@@ -66,9 +66,8 @@ describeE2EDocRun(scenarioTitle, (getTestObjectProvider, getDocumentInfo) => {
 	 * b. Benchmark Memory tests: {@link MemoryTestObjectProps}
 	 */
 
-	benchmarkAll(
-		scenarioTitle,
-		new (class PerformanceTestWrapper implements IBenchmarkParameters {
+	benchmarkAll(scenarioTitle, () => {
+		return new (class PerformanceTestWrapper implements IBenchmarkParameters {
 			container: IContainer | undefined;
 			summarizerClient: ISummarizeResult | undefined;
 			minSampleCount = getDocumentInfo().minSampleCount;
@@ -103,6 +102,6 @@ describeE2EDocRun(scenarioTitle, (getTestObjectProvider, getDocumentInfo) => {
 					await delay(2000);
 				}
 			}
-		})(),
-	);
+		})();
+	});
 });

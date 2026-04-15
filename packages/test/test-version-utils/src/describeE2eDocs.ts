@@ -205,11 +205,6 @@ const E2EDefaultDocumentTypes: DescribeE2EDocInfo[] = isInPerformanceTestingMode
 /**
  * @internal
  */
-export type BenchmarkTypeDescription = "Runtime benchmarks" | "Memory benchmarks";
-
-/**
- * @internal
- */
 export interface DescribeE2EDocInfo {
 	testTitle: string;
 	documentType: DocumentType;
@@ -352,24 +347,6 @@ function createE2EDocsDescribe(docTypes?: DescribeE2EDocInfo[]): DescribeE2EDocS
 	return d;
 }
 
-function createE2EDocsDescribeWithType(
-	testType: BenchmarkTypeDescription,
-): DescribeE2EDocSuite {
-	const config = getE2EConfigFile();
-
-	const d: DescribeE2EDocSuite = (title, tests, docTypes) => {
-		describe(
-			`${testType} -`,
-			createE2EDocCompatSuite(
-				title,
-				tests,
-				docTypes ?? config?.documents ?? E2EDefaultDocumentTypes,
-			),
-		);
-	};
-	return d;
-}
-
 function createE2EDocCompatSuite(
 	title: string,
 	tests: (
@@ -480,14 +457,3 @@ function createE2EDocCompatSuite(
  * @internal
  */
 export const describeE2EDocs: DescribeE2EDocSuite = createE2EDocsDescribe();
-
-/**
- * @internal
- */
-export const describeE2EDocsRuntime: DescribeE2EDocSuite =
-	createE2EDocsDescribeWithType("Runtime benchmarks");
-
-/**
- * @internal
- */
-export const describeE2EDocRun: DescribeE2EDocSuite = describeE2EDocsRuntime;

@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 
-import { describeE2EDocRun } from "@fluid-private/test-version-utils";
+import { describeE2EDocs } from "@fluid-private/test-version-utils";
 import { isInPerformanceTestingMode } from "@fluid-tools/benchmark";
 import { IContainer } from "@fluidframework/container-definitions/internal";
 import { delay } from "@fluidframework/core-utils/internal";
@@ -18,11 +18,11 @@ import {
 	createDocument,
 } from "./DocumentCreator.js";
 
-describeE2EDocRun("Load Document", (getTestObjectProvider, getDocumentInfo) => {
+describeE2EDocs("Load Document", (getTestObjectProvider, getDocumentInfo) => {
 	let documentWrapper: IDocumentLoader;
 	let provider: ITestObjectProvider;
 	before(async () => {
-		provider = getTestObjectProvider({ resetAfterEach: false });
+		provider = getTestObjectProvider();
 		const docData = getDocumentInfo(); // returns the type of document to be processed.
 		if (
 			docData.supportedEndpoints &&
@@ -55,9 +55,8 @@ describeE2EDocRun("Load Document", (getTestObjectProvider, getDocumentInfo) => {
 	 * a. Benchmark Time tests: {@link https://benchmarkjs.com/docs#options} or  {@link BenchmarkOptions}
 	 * b. Benchmark Memory tests: {@link MemoryTestObjectProps}
 	 */
-	benchmarkAll(
-		"Load Document",
-		new (class PerformanceTestWrapper implements IBenchmarkParameters {
+	benchmarkAll("Load Document", () => {
+		return new (class PerformanceTestWrapper implements IBenchmarkParameters {
 			container: IContainer | undefined;
 			minSampleCount = getDocumentInfo().minSampleCount;
 			async run(): Promise<void> {
@@ -72,6 +71,6 @@ describeE2EDocRun("Load Document", (getTestObjectProvider, getDocumentInfo) => {
 					await delay(1000);
 				}
 			}
-		})(),
-	);
+		})();
+	});
 });
