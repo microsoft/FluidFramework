@@ -333,7 +333,8 @@ function createE2EDocsDescribe(docTypes?: DescribeE2EDocInfo[]): DescribeE2EDocS
 	const config = getE2EConfigFile();
 
 	const d: DescribeE2EDocSuite = (title, tests) => {
-		describe(title,
+		describe(
+			title,
 			createE2EDocCompatSuite(
 				title,
 				tests,
