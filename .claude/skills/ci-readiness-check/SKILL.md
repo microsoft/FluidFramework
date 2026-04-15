@@ -54,6 +54,8 @@ pnpm clean
 pnpm build
 ```
 
+The full build includes API report generation for all packages (including the `fluid-framework` aggregator), so no separate regeneration step is needed. Check the reports afterward — if only your intended changes appear, you're good.
+
 For other packages, a scoped clean may suffice:
 
 ```bash
