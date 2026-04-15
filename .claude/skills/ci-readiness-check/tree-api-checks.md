@@ -39,6 +39,10 @@ There is a known incremental TypeScript compilation bug that affects `@fluidfram
 
 ### The fix: full clean build from the repo root
 
+**Before starting the clean build, tell the user what you're doing and why.** The build takes several minutes, so the user should not be left wondering. Example message:
+
+> I noticed some unexpected API report changes unrelated to your code. This is caused by a known incremental TypeScript build bug that affects the tree package. I need to do a full clean build from the repo root to get correct API reports — this will take a few minutes.
+
 ```bash
 # From the repo root — no shortcuts, no scoped cleans
 pnpm clean
