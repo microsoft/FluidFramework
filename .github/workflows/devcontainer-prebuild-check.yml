@@ -25,21 +25,21 @@ jobs:
           persist-credentials: false
           fetch-depth: 0
 
-      - name: Check if devcontainer.json was also modified
+      - name: Check if a prebuild-triggering file was also modified
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
         run: |
           CHANGED_FILES=$(git diff --name-only "$BASE_SHA"..."$HEAD_SHA")
 
-          if echo "$CHANGED_FILES" | grep -q 'devcontainer.json'; then
-            echo "A devcontainer.json file was modified — prebuild will be triggered."
+          if echo "$CHANGED_FILES" | grep -qE '(devcontainer\.json|Dockerfile)'; then
+            echo "A devcontainer.json or Dockerfile was modified — prebuild will be triggered."
           else
-            echo "::error::Setup scripts in scripts/codespace-setup/ were modified but no devcontainer.json was updated."
+            echo "::error::Setup scripts in scripts/codespace-setup/ were modified but no devcontainer.json or Dockerfile was updated."
             echo ""
             echo "Codespace prebuilds only trigger on devcontainer.json or Dockerfile changes."
-            echo "Bump the _prebuildVersion field in the relevant devcontainer.json file(s) to"
-            echo "ensure the prebuild is regenerated."
+            echo "Bump the // prebuild-version: N comment in the relevant devcontainer.json"
+            echo "file(s) to ensure the prebuild is regenerated."
             echo ""
             echo "Files to consider:"
             echo "  .devcontainer/devcontainer.json"

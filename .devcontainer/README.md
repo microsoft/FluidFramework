@@ -45,9 +45,9 @@ Prebuilds use the **"on configuration change"** trigger, which only fires when `
 
 ### The `prebuild-version` comment
 
-Each `devcontainer.json` contains a `// prebuild-version: N` comment. **Bump this value whenever you change files in `scripts/codespace-setup/`** — this ensures the devcontainer.json file is modified, which triggers a prebuild rebuild.
+Each `devcontainer.json` contains a `// prebuild-version: N` comment. **Bump this value whenever you change files in `scripts/codespace-setup/`** and your PR doesn't already modify a `devcontainer.json` or the `Dockerfile` — this ensures a prebuild-triggering file is modified, which forces a rebuild.
 
-A CI check (`devcontainer-prebuild-check.yml`) enforces this: PRs that modify `scripts/codespace-setup/**` without also modifying a `devcontainer.json` will fail.
+A CI check (`devcontainer-prebuild-check.yml`) enforces this: PRs that modify `scripts/codespace-setup/**` without also modifying a `devcontainer.json` or the `Dockerfile` will fail.
 
 ## AI-enabled vs. AI-enabled (Insiders)
 
