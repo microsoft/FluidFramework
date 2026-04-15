@@ -9,7 +9,7 @@ import {
 	unwrapPropTreeNode,
 	type UndoRedo,
 } from "@fluidframework/react/internal";
-import { Tree, TreeAlpha, FormattedTextAsTree } from "@fluidframework/tree/internal";
+import { TreeAlpha, FormattedTextAsTree } from "@fluidframework/tree/internal";
 export { FormattedTextAsTree } from "@fluidframework/tree/internal";
 import Quill, { type EmitterSource } from "quill";
 import DeltaPackage from "quill-delta";
@@ -309,6 +309,139 @@ function formatToQuillAttributes(
 }
 
 /**
+ * Convert a CharacterFormat to Quill attributes that fully describe the formatting state.
+ * Unlike {@link formatToQuillAttributes}, this includes `null` for default-valued properties
+ * so that Quill clears any previously-set attributes. Used when applying formatting changes
+ * to retained (already-present) content via `updateContents`.
+ */
+function formatToFullQuillAttributes(
+	format: FormattedTextAsTree.CharacterFormat,
+): Record<string, unknown> {
+	// Quill uses `null` (not `undefined`) to clear attributes, so we must use null
+	// for default-valued properties rather than omitting them.
+	// eslint-disable-next-line unicorn/no-null
+	const off = null;
+
+	const sizeValue =
+		format.size in sizeReverse
+			? sizeReverse[format.size as keyof typeof sizeReverse]
+			: format.size === defaultSize
+				? off
+				: `${format.size}px`;
+
+	return {
+		bold: format.bold ? true : off,
+		italic: format.italic ? true : off,
+		underline: format.underline ? true : off,
+		size: sizeValue,
+		font: format.font === defaultFont ? off : format.font,
+	};
+}
+
+/**
+ * Convert `FormattedTextChangeOp`s into Quill delta ops
+ * that can be applied via `Quill.updateContents()`.
+ *
+ * @remarks
+ * `insert` ops read formatting from the tree atoms at the insertion position.
+ * Consecutive atoms with identical formatting are grouped into a single Quill op
+ * using `getUniformRun` for efficiency.
+ * `remove` ops become Quill `delete` ops.
+ * `retain` ops with `formattingChanged: false` pass through as plain retains.
+ * `retain` ops with `formattingChanged: true` read the current formatting from the
+ * tree and produce Quill retain ops with full attribute sets so that Quill's
+ * display matches the new tree state.
+ */
+function contentOpsToQuillDelta(
+	root: FormattedTextAsTree.Tree,
+	ops: readonly FormattedTextAsTree.FormattedTextChangeOp[],
+): QuillDeltaOp[] {
+	const quillOps: QuillDeltaOp[] = [];
+	// Position in the new tree (post-edit). Advances for retain and insert, not remove.
+	let treePos = 0;
+
+	for (const op of ops) {
+		if (op.type === "retain" && !op.formattingChanged) {
+			// No formatting change — plain retain.
+			quillOps.push({ retain: op.count });
+			treePos += op.count;
+		} else if (op.type === "retain") {
+			// At least one atom in this range had a deep change (e.g. formatting update).
+			// Read current formatting and produce retain ops with full attributes.
+			const retainEnd = treePos + op.count;
+			let i = treePos;
+			while (i < retainEnd) {
+				const atom = root.charactersWithFormatting()[i];
+				if (atom === undefined) break;
+
+				if (atom.content instanceof FormattedTextAsTree.StringLineAtom) {
+					// Line atom: emit retain with character formatting, line tag, and indent.
+					const attributes: Record<string, unknown> = formatToFullQuillAttributes(atom.format);
+					const lineTag = atom.content.tag.value;
+					Object.assign(attributes, lineTagToQuillAttributes[lineTag]);
+					// Always emit indent so Quill clears a previously non-zero value.
+					if (atom.content.indent) {
+						attributes.indent = atom.content.indent;
+					}
+					quillOps.push({ retain: 1, attributes });
+					i++;
+				} else {
+					// Text atom: group consecutive atoms with the same formatting.
+					const runLength = Math.min(root.getUniformRun(i, retainEnd), retainEnd - i);
+					const attributes = formatToFullQuillAttributes(atom.format);
+					quillOps.push({ retain: runLength, attributes });
+					i += runLength;
+				}
+			}
+			treePos = retainEnd;
+		} else if (op.type === "insert") {
+			// New characters inserted — read formatting from the tree.
+			// Codepoint count (spreading the string gives one element per codepoint).
+			const insertEnd = treePos + [...op.text].length;
+			let i = treePos;
+			while (i < insertEnd) {
+				const atom = root.charactersWithFormatting()[i];
+				if (atom === undefined) break;
+
+				if (atom.content instanceof FormattedTextAsTree.StringLineAtom) {
+					// Line atom: insert newline with line tag attributes.
+					const attributes: Record<string, unknown> = {};
+					const lineTag = atom.content.tag.value;
+					Object.assign(attributes, lineTagToQuillAttributes[lineTag]);
+					if (atom.content.indent) {
+						attributes.indent = atom.content.indent;
+					}
+					const quillOp: QuillDeltaOp = { insert: "\n" };
+					if (Object.keys(attributes).length > 0) {
+						quillOp.attributes = attributes;
+					}
+					quillOps.push(quillOp);
+					i++;
+				} else {
+					// Text atom: group consecutive atoms with the same formatting.
+					const runLength = Math.min(root.getUniformRun(i, insertEnd), insertEnd - i);
+					const text = root.getString(i, i + runLength);
+					const attributes = formatToQuillAttributes(atom.format);
+					const quillOp: QuillDeltaOp = { insert: text };
+					if (Object.keys(attributes).length > 0) {
+						quillOp.attributes = attributes;
+					}
+					quillOps.push(quillOp);
+					i += runLength;
+				}
+			}
+			treePos = insertEnd;
+		} else {
+			// remove
+			quillOps.push({ delete: op.count });
+			// treePos does not advance — removed atoms are not in the new tree.
+		}
+	}
+
+	return quillOps;
+}
+
+/**
  * Build a Quill Delta representing the full tree content.
  * Iterates through formatted characters and groups consecutive characters
  * with identical formatting into single insert operations for efficiency.
@@ -371,11 +504,11 @@ export function buildDeltaFromTree(root: FormattedTextAsTree.Tree): QuillDeltaOp
  * Uses FormattedTextAsTree for collaborative rich text storage with formatting.
  *
  * @remarks
- * This component uses event-based synchronization via Tree.on("treeChanged")
- * to efficiently handle external changes without expensive render-time operations.
- * Unlike the plain text version, this component uses Quill's delta operations
- * to make targeted edits (insert at index, delete range, format range) rather
- * than replacing all content on each change.
+ * This component uses event-based synchronization via
+ * {@link FormattedTextAsTree.Members.onContentChanged} to efficiently apply external
+ * changes without rebuilding the full delta from the tree. Structural changes
+ * (insert/remove) and formatting changes are applied incrementally through Quill's
+ * delta operations.
  */
 const FormattedTextEditorView = forwardRef<
 	FormattedEditorHandle,
@@ -575,34 +708,34 @@ const FormattedTextEditorView = forwardRef<
 	}, []);
 
 	// Sync Quill when tree changes externally (e.g., from remote collaborators).
-	// Uses event subscription instead of render-time observation for efficiency.
+	// Subscribes to incremental content-level deltas via onContentChanged which
+	// captures both structural changes (insert/remove) and formatting changes
+	// (via formattingChanged flag on retain ops), replacing the previous approach
+	// of rebuilding the full delta from the tree and diffing on every change.
 	useEffect(() => {
-		return Tree.on(root, "treeChanged", () => {
-			// Skip if we caused the tree change ourselves via the text-change handler
+		return root.onContentChanged((ops) => {
 			if (!quillRef.current || isUpdating.current) return;
 
-			// TODO:Performance: Once SharedTree has better ArrayNode change events,
-			// use those events to construct a delta, instead of rebuilding a new delta then diffing every edit.
-			// After doing the optimization, keep this diffing logic as a way to test for de-sync between the tree and Quill:
-			// Use it in tests and possibly occasionally in debug builds.
-			const treeDelta = buildDeltaFromTree(root);
+			isUpdating.current = true;
 
-			// eslint doesn't seem to be resolving the types correctly here.
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-			const quillDelta: Delta = quillRef.current.getContents();
-
-			// Compute diff between current Quill state and tree state
-			const diff = new Delta(quillDelta).diff(new Delta(treeDelta));
-
-			// Only update if there are actual differences
-			if (diff.ops.length > 0) {
-				isUpdating.current = true;
-
-				// Apply only the diff for surgical updates (better cursor preservation)
-				quillRef.current.updateContents(diff.ops);
-
-				isUpdating.current = false;
+			if (ops === undefined) {
+				// Delta unavailable (e.g. schema upgrade) — fall back to full diff.
+				const treeDelta = buildDeltaFromTree(root);
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+				const quillDelta: Delta = quillRef.current.getContents();
+				const diff = new Delta(quillDelta).diff(new Delta(treeDelta));
+				if (diff.ops.length > 0) {
+					quillRef.current.updateContents(diff.ops);
+				}
+			} else {
+				// Translate FormattedTextChangeOps to Quill delta and apply incrementally.
+				const quillOps = contentOpsToQuillDelta(root, ops);
+				if (quillOps.length > 0) {
+					quillRef.current.updateContents(quillOps, "api");
+				}
 			}
+
+			isUpdating.current = false;
 		});
 	}, [root]);
 

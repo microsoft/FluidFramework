@@ -7,6 +7,7 @@ import type { TextAsTree } from "@fluidframework/tree/internal";
 import { type ChangeEvent, type FC, useCallback, useEffect, useRef } from "react";
 
 import { unwrapPropTreeNode, type PropTreeNode } from "../../propNode.js";
+
 import { syncTextToTree } from "./plainUtils.js";
 
 /**
@@ -73,15 +74,18 @@ const PlainTextEditorView: FC<{ root: TextAsTree.Tree }> = ({ root }) => {
 						newValue += op.text;
 					} else {
 						// remove
-						// Adjust cursor: shift left by how much was removed before cursor.
+						// Adjust each cursor independently by how much of the
+						// removed range falls before that cursor position.
 						const removeEnd = readPos + op.count;
 						if (removeEnd <= selectionStart) {
 							newCursorStart -= op.count;
-							newCursorEnd -= op.count;
 						} else if (readPos < selectionStart) {
-							const overlap = selectionStart - readPos;
-							newCursorStart -= overlap;
-							newCursorEnd -= overlap;
+							newCursorStart -= selectionStart - readPos;
+						}
+						if (removeEnd <= selectionEnd) {
+							newCursorEnd -= op.count;
+						} else if (readPos < selectionEnd) {
+							newCursorEnd -= selectionEnd - readPos;
 						}
 						readPos += op.count;
 					}

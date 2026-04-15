@@ -207,6 +207,40 @@ class TextNode
 		});
 	}
 
+	public onContentChanged(
+		callback: (ops: readonly FormattedTextAsTree.FormattedTextChangeOp[] | undefined) => void,
+	): () => void {
+		return TreeAlpha.on(this.content, "treeChanged", ({ delta }) => {
+			if (delta === undefined) {
+				callback(undefined);
+				return;
+			}
+			let readPos = 0;
+			const ops: FormattedTextAsTree.FormattedTextChangeOp[] = [];
+			for (const op of delta) {
+				if (op.type === "retain") {
+					ops.push({
+						type: "retain",
+						count: op.count,
+						formattingChanged: op.subtreeChanged,
+					});
+					readPos += op.count;
+				} else if (op.type === "insert") {
+					let text = "";
+					for (let i = 0; i < op.count; i++) {
+						const atom = this.content[readPos] as FormattedTextAsTree.StringAtom;
+						text += atom.content.content;
+						readPos++;
+					}
+					ops.push({ type: "insert", text });
+				} else {
+					ops.push(op);
+				}
+			}
+			callback(ops);
+		});
+	}
+
 	public getUniformRun(startIndex: number, endIndex?: number): number {
 		return this.content.getUniformRun(startIndex, endIndex);
 	}
@@ -373,6 +407,25 @@ class StringArray extends sf.array("StringArray", [() => FormattedTextAsTree.Str
  * @internal
  */
 export namespace FormattedTextAsTree {
+	/**
+	 * A single operation in a content-level delta for formatted text, analogous to
+	 * {@link TextAsTree.TextOp} but carrying a `formattingChanged`
+	 * flag on retain ops. Delivered by `onContentChanged`.
+	 * @internal
+	 */
+	export type FormattedTextChangeOp =
+		| {
+				readonly type: "retain";
+				readonly count: number;
+				/**
+				 * `true` when at least one atom in this retained range had a
+				 * formatting change (e.g. bold/italic/size update or line-tag change).
+				 */
+				readonly formattingChanged: boolean;
+		  }
+		| { readonly type: "insert"; readonly text: string }
+		| { readonly type: "remove"; readonly count: number };
+
 	/**
 	 * Formatting options for characters.
 	 * @internal
@@ -559,6 +612,23 @@ export namespace FormattedTextAsTree {
 		 * @param endIndex - Optional ending index (exclusive). Defaults to the end of the text.
 		 */
 		getString(startIndex: number, endIndex?: number): string;
+
+		/**
+		 * Subscribe to all content changes on this text node, including both structural
+		 * changes (inserts/removes) and formatting changes on existing characters.
+		 * @param callback - Called after each change with a sequence of
+		 * `FormattedTextChangeOp`s describing what changed,
+		 * or `undefined` when a delta could not be computed (e.g. during a schema upgrade).
+		 * @returns A cleanup function that unsubscribes the callback when called.
+		 * @remarks
+		 * Unlike {@link TextAsTree.Members.onCharactersChanged} which only fires on
+		 * structural array changes, this method also fires when formatting properties
+		 * of existing characters change, using the `formattingChanged` flag on retain
+		 * ops to indicate which atoms had formatting updates.
+		 */
+		onContentChanged(
+			callback: (ops: readonly FormattedTextChangeOp[] | undefined) => void,
+		): () => void;
 	}
 
 	/**

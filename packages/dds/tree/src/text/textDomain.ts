@@ -280,7 +280,7 @@ class StringArray extends sf.array("StringArray", SchemaFactory.string) {
  */
 export namespace TextAsTree {
 	/**
-	 * A single operation in a character-level delta, analogous to the ops produced by {@link https://quilljs.com/docs/delta/ | Quill Delta}.
+	 * A single operation in a character-level delta describing an insert, remove, or retain of text.
 	 * @remarks
 	 * Inserts carry the actual inserted text (not individual characters), which is more convenient for consumers.
 	 * @alpha

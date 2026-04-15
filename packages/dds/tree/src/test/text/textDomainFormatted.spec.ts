@@ -149,6 +149,89 @@ describe("textDomainFormatted", () => {
 		assert.equal(text.getString(index, index + currentRun), "de");
 	});
 
+	describeHydration("onContentChanged", (_init, hydrated) => {
+		it("fires with insert ops when characters are added", () => {
+			const text = FormattedTextAsTree.Tree.fromString("ab");
+			if (hydrated) {
+				hydrateNode(text);
+			}
+			const received: (readonly FormattedTextAsTree.FormattedTextChangeOp[])[] = [];
+			text.onContentChanged((ops) => {
+				assert(ops !== undefined, "expected delta ops, got undefined");
+				received.push(ops);
+			});
+			text.insertAt(1, "xy");
+			assert.equal(received.length, 1);
+			assert.deepEqual(received[0], [
+				{ type: "retain", count: 1, formattingChanged: false },
+				{ type: "insert", text: "xy" },
+			]);
+		});
+
+		it("fires with remove ops when characters are deleted", () => {
+			const text = FormattedTextAsTree.Tree.fromString("abcde");
+			if (hydrated) {
+				hydrateNode(text);
+			}
+			const received: (readonly FormattedTextAsTree.FormattedTextChangeOp[])[] = [];
+			text.onContentChanged((ops) => {
+				assert(ops !== undefined, "expected delta ops, got undefined");
+				received.push(ops);
+			});
+			text.removeRange(1, 3);
+			assert.equal(received.length, 1);
+			assert.deepEqual(received[0], [
+				{ type: "retain", count: 1, formattingChanged: false },
+				{ type: "remove", count: 2 },
+			]);
+		});
+
+		it("fires with formattingChanged on retain when formatting changes", () => {
+			const text = FormattedTextAsTree.Tree.fromString("abcde");
+			if (hydrated) {
+				hydrateNode(text);
+			}
+			const received: (readonly FormattedTextAsTree.FormattedTextChangeOp[])[] = [];
+			text.onContentChanged((ops) => {
+				assert(ops !== undefined, "expected delta ops, got undefined");
+				received.push(ops);
+			});
+			text.formatRange(1, 3, { bold: true });
+			// At least one callback should have fired with formattingChanged set.
+			assert(received.length > 0, "expected at least one callback invocation");
+			// Flatten all received ops and verify at least one retain has formattingChanged.
+			const allOps = received.flat();
+			const formattingRetains = allOps.filter(
+				(op) => op.type === "retain" && op.formattingChanged,
+			);
+			assert(
+				formattingRetains.length > 0,
+				"expected at least one retain op with formattingChanged",
+			);
+			// No inserts or removes should appear for a format-only change.
+			assert(
+				allOps.every((op) => op.type === "retain"),
+				"expected only retain ops for a formatting change",
+			);
+		});
+
+		it("cleanup function unsubscribes the callback", () => {
+			const text = FormattedTextAsTree.Tree.fromString("ab");
+			if (hydrated) {
+				hydrateNode(text);
+			}
+			let callCount = 0;
+			const cleanup = text.onContentChanged(() => {
+				callCount++;
+			});
+			text.insertAt(1, "x");
+			assert.equal(callCount, 1);
+			cleanup();
+			text.insertAt(1, "y");
+			assert.equal(callCount, 1, "callback should not fire after cleanup");
+		});
+	});
+
 	// Hydrated and unhydrated trees implement cursors differently which impacts observation tracking, so test both.
 	// Specifically unhydrated tree cursors do observation tracking while hydrated ones do not.
 	describeHydration("observation tracking", (init, hydrated) => {
