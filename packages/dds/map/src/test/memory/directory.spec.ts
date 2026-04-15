@@ -4,9 +4,11 @@
  */
 
 import {
-	type IMemoryTestObject,
-	benchmarkMemory,
+	benchmarkIt,
+	benchmarkMemoryUse,
 	isInPerformanceTestingMode,
+	memoryAddedBy,
+	memoryUseOfValue,
 } from "@fluid-tools/benchmark";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
 
@@ -21,36 +23,10 @@ function createLocalDirectory(id: string): ISharedDirectory {
 }
 
 describe("SharedDirectory memory usage", () => {
-	// IMPORTANT: variables scoped to the test suite are a big problem for memory-profiling tests
-	// because they won't be out of scope when we garbage-collect between runs of the same test,
-	// and that will skew measurements. Tests should allocate all the memory they need using local
-	// variables scoped to the test function itself, so several iterations of a given test can
-	// measure from the same baseline (as much as possible).
-
-	beforeEach(async () => {
-		// CAREFUL: usually beforeEach/afterEach hooks are used to initialize or interact with variables
-		// whose scope is the encompasing test suite, but that's a problem for memory-profiling tests.
-		// See the comment at the top of the test suite for more details.
+	benchmarkIt({
+		title: "Create empty directory",
+		...benchmarkMemoryUse(memoryUseOfValue(() => createLocalDirectory("testDirectory"))),
 	});
-
-	afterEach(() => {
-		// CAREFUL: usually beforeEach/afterEach hooks are used to initialize or interact with variables
-		// whose scope is the encompasing test suite, but that's a problem for memory-profiling tests.
-		// See the comment at the top of the test suite for more details.
-	});
-
-	benchmarkMemory(
-		new (class implements IMemoryTestObject {
-			public readonly title = "Create empty directory";
-			public readonly minSampleCount = 500;
-
-			private dir: ISharedDirectory = createLocalDirectory("testDirectory");
-
-			public async run(): Promise<void> {
-				this.dir = createLocalDirectory("testDirectory");
-			}
-		})(),
-	);
 
 	const numbersOfEntriesForTests = isInPerformanceTestingMode
 		? [1000, 10_000, 100_000]
@@ -58,39 +34,33 @@ describe("SharedDirectory memory usage", () => {
 			[10];
 
 	for (const x of numbersOfEntriesForTests) {
-		benchmarkMemory(
-			new (class implements IMemoryTestObject {
-				public readonly title = `Add ${x} integers to a local directory`;
-				private dir: ISharedDirectory = createLocalDirectory("testDirectory");
+		benchmarkIt({
+			title: `Add ${x} integers to a local directory`,
+			...benchmarkMemoryUse(
+				memoryAddedBy({
+					setup: () => createLocalDirectory("testDirectory"),
+					modify: (dir) => {
+						for (let i = 0; i < x; i++) {
+							dir.set(i.toString().padStart(6, "0"), i);
+						}
+					},
+				}),
+			),
+		});
 
-				public async run(): Promise<void> {
-					for (let i = 0; i < x; i++) {
-						this.dir.set(i.toString().padStart(6, "0"), i);
-					}
-				}
-
-				public beforeIteration(): void {
-					this.dir = createLocalDirectory("testDirectory");
-				}
-			})(),
-		);
-
-		benchmarkMemory(
-			new (class implements IMemoryTestObject {
-				public readonly title = `Add ${x} integers to a local directory, clear it`;
-				private dir: ISharedDirectory = createLocalDirectory("testDirectory");
-
-				public async run(): Promise<void> {
-					for (let i = 0; i < x; i++) {
-						this.dir.set(i.toString().padStart(6, "0"), i);
-					}
-					this.dir.clear();
-				}
-
-				public beforeIteration(): void {
-					this.dir = createLocalDirectory("testDirectory");
-				}
-			})(),
-		);
+		benchmarkIt({
+			title: `Add ${x} integers to a local directory, clear it`,
+			...benchmarkMemoryUse(
+				memoryAddedBy({
+					setup: () => createLocalDirectory("testDirectory"),
+					modify: (dir) => {
+						for (let i = 0; i < x; i++) {
+							dir.set(i.toString().padStart(6, "0"), i);
+						}
+						dir.clear();
+					},
+				}),
+			),
+		});
 	}
 });

@@ -2141,8 +2141,8 @@ importers:
         specifier: workspace:~
         version: link:../../../packages/test/mocha-test-setup
       '@fluid-tools/benchmark':
-        specifier: ^0.52.0
-        version: 0.52.0
+        specifier: ^0.55.0
+        version: 0.55.0
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
@@ -4413,7 +4413,7 @@ importers:
         version: 2.1.0
       axios:
         specifier: ^1.15.0
-        version: 1.15.0(debug@4.3.7)
+        version: 1.15.0(debug@4.4.3)
       events_pkg:
         specifier: npm:events@^3.1.0
         version: events@3.3.0
@@ -4564,7 +4564,7 @@ importers:
         version: 2.1.0
       axios:
         specifier: ^1.15.0
-        version: 1.15.0(debug@4.3.7)
+        version: 1.15.0(debug@4.4.3)
       events_pkg:
         specifier: npm:events@^3.1.0
         version: events@3.3.0
@@ -5388,7 +5388,7 @@ importers:
         version: link:../../../packages/utils/tool-utils
       axios:
         specifier: ^1.15.0
-        version: 1.15.0(debug@4.3.7)
+        version: 1.15.0(debug@4.4.3)
       buffer:
         specifier: ^6.0.3
         version: 6.0.3
@@ -6748,7 +6748,7 @@ importers:
         version: link:../../../../packages/dds/shared-object-base
       axios:
         specifier: ^1.15.0
-        version: 1.15.0(debug@4.3.7)
+        version: 1.15.0(debug@4.4.3)
       buffer:
         specifier: ^6.0.3
         version: 6.0.3
@@ -7293,8 +7293,8 @@ importers:
         specifier: workspace:~
         version: link:../../../packages/test/test-drivers
       '@fluid-tools/benchmark':
-        specifier: ^0.52.0
-        version: 0.52.0
+        specifier: ^0.55.0
+        version: 0.55.0
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
@@ -7777,8 +7777,8 @@ importers:
         specifier: workspace:~
         version: link:../../test/mocha-test-setup
       '@fluid-tools/benchmark':
-        specifier: ^0.52.0
-        version: 0.52.0
+        specifier: ^0.55.0
+        version: 0.55.0
       '@fluid-tools/build-cli':
         specifier: catalog:buildTools
         version: 0.64.0(@types/node@22.19.17)(encoding@0.1.13)(webpack-cli@5.1.4)
@@ -8341,8 +8341,8 @@ importers:
         specifier: workspace:~
         version: link:../test-dds-utils
       '@fluid-tools/benchmark':
-        specifier: ^0.52.0
-        version: 0.52.0
+        specifier: ^0.55.0
+        version: 0.55.0
       '@fluid-tools/build-cli':
         specifier: catalog:buildTools
         version: 0.64.0(@types/node@22.19.17)(encoding@0.1.13)(webpack-cli@5.1.4)
@@ -8465,8 +8465,8 @@ importers:
         specifier: workspace:~
         version: link:../test-dds-utils
       '@fluid-tools/benchmark':
-        specifier: ^0.52.0
-        version: 0.52.0
+        specifier: ^0.55.0
+        version: 0.55.0
       '@fluid-tools/build-cli':
         specifier: catalog:buildTools
         version: 0.64.0(@types/node@22.19.17)(encoding@0.1.13)(webpack-cli@5.1.4)
@@ -8592,8 +8592,8 @@ importers:
         specifier: workspace:~
         version: link:../../test/test-pairwise-generator
       '@fluid-tools/benchmark':
-        specifier: ^0.52.0
-        version: 0.52.0
+        specifier: ^0.55.0
+        version: 0.55.0
       '@fluid-tools/build-cli':
         specifier: catalog:buildTools
         version: 0.64.0(@types/node@22.19.17)(encoding@0.1.13)(webpack-cli@5.1.4)
@@ -9013,8 +9013,8 @@ importers:
         specifier: workspace:~
         version: link:../test-dds-utils
       '@fluid-tools/benchmark':
-        specifier: ^0.52.0
-        version: 0.52.0
+        specifier: ^0.55.0
+        version: 0.55.0
       '@fluid-tools/build-cli':
         specifier: catalog:buildTools
         version: 0.64.0(@types/node@22.19.17)(encoding@0.1.13)(webpack-cli@5.1.4)
@@ -9140,8 +9140,8 @@ importers:
         specifier: workspace:~
         version: link:../../test/test-pairwise-generator
       '@fluid-tools/benchmark':
-        specifier: ^0.52.0
-        version: 0.52.0
+        specifier: ^0.55.0
+        version: 0.55.0
       '@fluid-tools/build-cli':
         specifier: catalog:buildTools
         version: 0.64.0(@types/node@22.19.17)(encoding@0.1.13)(webpack-cli@5.1.4)
@@ -9582,8 +9582,8 @@ importers:
         specifier: workspace:~
         version: link:../../test/test-drivers
       '@fluid-tools/benchmark':
-        specifier: ^0.52.0
-        version: 0.52.0
+        specifier: ^0.55.0
+        version: 0.55.0
       '@fluid-tools/build-cli':
         specifier: catalog:buildTools
         version: 0.64.0(@types/node@22.19.17)(encoding@0.1.13)(webpack-cli@5.1.4)
@@ -13022,8 +13022,8 @@ importers:
         specifier: workspace:~
         version: link:../../test/test-pairwise-generator
       '@fluid-tools/benchmark':
-        specifier: ^0.52.0
-        version: 0.52.0
+        specifier: ^0.55.0
+        version: 0.55.0
       '@fluid-tools/build-cli':
         specifier: catalog:buildTools
         version: 0.64.0(@types/node@22.19.17)(encoding@0.1.13)(webpack-cli@5.1.4)
@@ -13365,8 +13365,8 @@ importers:
         specifier: workspace:~
         version: link:../../test/stochastic-test-utils
       '@fluid-tools/benchmark':
-        specifier: ^0.52.0
-        version: 0.52.0
+        specifier: ^0.55.0
+        version: 0.55.0
       '@fluid-tools/build-cli':
         specifier: catalog:buildTools
         version: 0.64.0(@types/node@22.19.17)(encoding@0.1.13)(webpack-cli@5.1.4)
@@ -14892,8 +14892,8 @@ importers:
         specifier: workspace:~
         version: link:../mocha-test-setup
       '@fluid-tools/benchmark':
-        specifier: ^0.52.0
-        version: 0.52.0
+        specifier: ^0.55.0
+        version: 0.55.0
       '@fluid-tools/build-cli':
         specifier: catalog:buildTools
         version: 0.64.0(@types/node@22.19.17)(encoding@0.1.13)(webpack-cli@5.1.4)
@@ -15137,8 +15137,8 @@ importers:
         specifier: workspace:~
         version: link:../test-version-utils
       '@fluid-tools/benchmark':
-        specifier: ^0.52.0
-        version: 0.52.0
+        specifier: ^0.55.0
+        version: 0.55.0
       '@fluidframework/agent-scheduler':
         specifier: workspace:~
         version: link:../../framework/agent-scheduler
@@ -15675,8 +15675,8 @@ importers:
         specifier: workspace:~
         version: link:../test-drivers
       '@fluid-tools/benchmark':
-        specifier: ^0.52.0
-        version: 0.52.0
+        specifier: ^0.55.0
+        version: 0.55.0
       '@fluid-tools/version-tools':
         specifier: catalog:buildTools
         version: 0.64.0(@types/node@22.19.17)
@@ -18430,8 +18430,8 @@ packages:
   '@fluid-internal/test-driver-definitions@2.92.0':
     resolution: {integrity: sha512-/BTqacAi5H/lTkA1FucENdZLvM8AKPjLZSGIJq8k2ZzbL567aqWjNJ7hN6SH1B9DQ0bcl9Ztn1SQ60F5X3f7wg==}
 
-  '@fluid-tools/benchmark@0.52.0':
-    resolution: {integrity: sha512-kBObjiiLuMKgLYgbNjVqLmEL/aZRHCMCJ5TUKIEwoQa3SL1sm/FXFOq4Jl+jkA9MTxfA+JHW1fGynIDgftDeuQ==}
+  '@fluid-tools/benchmark@0.55.0':
+    resolution: {integrity: sha512-SSLQ0U/JgLtydyfQsHkDV0kxMroycZPCd8RuezrhXE0xrtQXWekemW/cW4h9UnOTy4H0d10Ngl8ghh7SjS4U7Q==}
 
   '@fluid-tools/build-cli@0.64.0':
     resolution: {integrity: sha512-MqP8xAATWnvpracHWV2Pbu7zH/jK2Jhcu/tO9UeQfI0B+6d+yROMVMjxJZUZ/uCqEn/1AfP0TCwQwTJMyO4xsA==}
@@ -21004,8 +21004,8 @@ packages:
     resolution: {integrity: sha512-RE3mdQ7P3FRSe7eqCWoeQ/Z9QXrtniSjp1wUjt5nRC3WIpz5rSCve6o3fsZ2aCpJtrZjSZgjwXAoTO5k4tEI0w==}
     engines: {node: '>=4'}
 
-  axios@0.30.2:
-    resolution: {integrity: sha512-0pE4RQ4UQi1jKY6p7u6i1Tkzqmu+d+/tHS7Q7rKunWLB9WyilBTpHHpXzPNMDj5hTbK0B0PTLSz07yqMBiF6xg==}
+  axios@0.30.3:
+    resolution: {integrity: sha512-5/tmEb6TmE/ax3mdXBc/Mi6YdPGxQsv+0p5YlciXWt3PHIn0VamqCXhRMtScnwY3lbgSXLneOuXAKUhgmSRpwg==}
 
   axios@1.15.0:
     resolution: {integrity: sha512-wWyJDlAatxk30ZJer+GeCWS209sA42X+N5jU2jy6oHTp7ufw8uzUTVFBX9+wTfAlhiJXGS0Bq7X6efruWjuK9Q==}
@@ -26430,11 +26430,6 @@ packages:
     resolution: {integrity: sha512-OcXjMsGdhL4XnbShKpAcSqPMzQoYkYyhbEaeSko47MjRP9NfEQMhZkXL1DoFlt9LWQn4YttrdnV6X2OiyzBi+A==}
     engines: {node: '>=10'}
 
-  resolve@1.22.11:
-    resolution: {integrity: sha512-RfqAvLnMl313r7c9oclB1HhUEAezcpLjz95wFH4LVuhk9JF/r22qmVP9AMmOU4vMX7Q8pN8jwNg/CSpdFnMjTQ==}
-    engines: {node: '>= 0.4'}
-    hasBin: true
-
   resolve@1.22.12:
     resolution: {integrity: sha512-TyeJ1zif53BPfHootBGwPRYT1RUt6oGWsaQr8UyZW/eAm9bKoijtvruSDEmZHm92CwS9nj7/fWttqPCgzep8CA==}
     engines: {node: '>= 0.4'}
@@ -30255,7 +30250,7 @@ snapshots:
       '@fluidframework/core-interfaces': 2.92.0
       '@fluidframework/driver-definitions': 2.92.0
 
-  '@fluid-tools/benchmark@0.52.0':
+  '@fluid-tools/benchmark@0.55.0':
     dependencies:
       chalk: 4.1.2
       easy-table: 1.2.0
@@ -30466,7 +30461,7 @@ snapshots:
       '@fluidframework/routerlicious-driver': 1.4.0(encoding@0.1.13)
       '@fluidframework/runtime-utils': 1.4.0
       '@fluidframework/server-services-client': 0.1036.5002
-      axios: 0.30.2(debug@4.4.3)
+      axios: 0.30.3(debug@4.4.3)
       uuid: 8.3.2
     transitivePeerDependencies:
       - bufferutil
@@ -30882,7 +30877,7 @@ snapshots:
       '@fluidframework/protocol-base': 0.1036.5002
       '@fluidframework/protocol-definitions': 0.1028.2000
       '@fluidframework/telemetry-utils': 1.4.0
-      axios: 0.30.2(debug@4.4.3)
+      axios: 0.30.3(debug@4.4.3)
       uuid: 8.3.2
     transitivePeerDependencies:
       - debug
@@ -31401,35 +31396,6 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@fluidframework/server-lambdas@7.0.0':
-    dependencies:
-      '@fluidframework/common-utils': 3.1.0
-      '@fluidframework/gitresources': 7.0.0
-      '@fluidframework/protocol-base': 7.0.0
-      '@fluidframework/protocol-definitions': 3.2.0
-      '@fluidframework/server-lambdas-driver': 7.0.0
-      '@fluidframework/server-services-client': 7.0.0
-      '@fluidframework/server-services-core': 7.0.0
-      '@fluidframework/server-services-telemetry': 7.0.0
-      '@types/semver': 7.7.0
-      assert: 2.1.0
-      async: 3.2.6
-      axios: 1.15.0(debug@4.3.7)
-      buffer: 6.0.3
-      double-ended-queue: 2.1.0-0
-      events: 3.3.0
-      json-stringify-safe: 5.0.1
-      lodash: 4.18.1
-      nconf: 0.12.1
-      opossum: 8.5.0
-      semver: 7.7.3
-      serialize-error: 8.1.0
-      sha.js: 2.4.12
-      uuid: 11.1.0
-    transitivePeerDependencies:
-      - debug
-      - supports-color
-
   '@fluidframework/server-lambdas@7.0.0(debug@4.4.3)':
     dependencies:
       '@fluidframework/common-utils': 3.1.0
@@ -31511,7 +31477,7 @@ snapshots:
       '@fluidframework/gitresources': 0.1036.5002
       '@fluidframework/protocol-base': 0.1036.5002
       '@fluidframework/protocol-definitions': 0.1028.2000
-      axios: 0.30.2(debug@4.4.3)
+      axios: 0.30.3(debug@4.4.3)
       crc-32: 1.2.0
       debug: 4.4.3(supports-color@8.1.1)
       json-stringify-safe: 5.0.1
@@ -32553,7 +32519,7 @@ snapshots:
       diff: 8.0.3
       lodash: 4.18.1
       minimatch: 10.2.4
-      resolve: 1.22.11
+      resolve: 1.22.12
       semver: 7.5.4
       source-map: 0.6.1
       typescript: 5.9.3
@@ -32628,7 +32594,7 @@ snapshots:
       '@microsoft/tsdoc': 0.16.0
       ajv: 8.18.0
       jju: 1.4.0
-      resolve: 1.22.11
+      resolve: 1.22.12
 
   '@microsoft/tsdoc@0.15.1': {}
 
@@ -33092,7 +33058,7 @@ snapshots:
       fs-extra: 7.0.1
       import-lazy: 4.0.0
       jju: 1.4.0
-      resolve: 1.22.11
+      resolve: 1.22.12
       semver: 7.5.4
       z-schema: 5.0.5
     optionalDependencies:
@@ -33106,7 +33072,7 @@ snapshots:
       fs-extra: 11.3.2
       import-lazy: 4.0.0
       jju: 1.4.0
-      resolve: 1.22.11
+      resolve: 1.22.12
       semver: 7.5.4
     optionalDependencies:
       '@types/node': 22.19.17
@@ -33117,7 +33083,7 @@ snapshots:
 
   '@rushstack/rig-package@0.7.2':
     dependencies:
-      resolve: 1.22.11
+      resolve: 1.22.12
       strip-json-comments: 3.1.1
 
   '@rushstack/terminal@0.22.4(@types/node@22.19.17)':
@@ -34116,7 +34082,7 @@ snapshots:
 
   '@vvago/vale@3.12.0':
     dependencies:
-      axios: 1.15.0(debug@4.3.7)
+      axios: 1.15.0(debug@4.4.3)
       rimraf: 5.0.10
       tar: 7.5.11
       unzipper: 0.10.14
@@ -34546,7 +34512,7 @@ snapshots:
 
   axe-core@4.10.2: {}
 
-  axios@0.30.2(debug@4.4.3):
+  axios@0.30.3(debug@4.4.3):
     dependencies:
       follow-redirects: 1.15.11(debug@4.4.3)
       form-data: 4.0.5
@@ -37337,18 +37303,6 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  http-proxy-middleware@2.0.9(@types/express@4.17.21):
-    dependencies:
-      '@types/http-proxy': 1.17.15
-      http-proxy: 1.18.1
-      is-glob: 4.0.3
-      is-plain-obj: 3.0.0
-      micromatch: 4.0.8
-    optionalDependencies:
-      '@types/express': 4.17.21
-    transitivePeerDependencies:
-      - debug
-
   http-proxy-middleware@2.0.9(@types/express@4.17.21)(debug@4.4.3):
     dependencies:
       '@types/http-proxy': 1.17.15
@@ -37358,14 +37312,6 @@ snapshots:
       micromatch: 4.0.8
     optionalDependencies:
       '@types/express': 4.17.21
-    transitivePeerDependencies:
-      - debug
-
-  http-proxy@1.18.1:
-    dependencies:
-      eventemitter3: 4.0.7
-      follow-redirects: 1.15.11(debug@4.3.7)
-      requires-port: 1.0.0
     transitivePeerDependencies:
       - debug
 
@@ -37993,7 +37939,7 @@ snapshots:
       prompts: 2.4.2
       spawnd: 10.1.4
       tree-kill: 1.2.2
-      wait-on: 8.0.1(debug@4.3.7)
+      wait-on: 8.0.1
     transitivePeerDependencies:
       - debug
       - supports-color
@@ -38151,7 +38097,7 @@ snapshots:
       jest-pnp-resolver: 1.2.3(jest-resolve@29.7.0)
       jest-util: 29.7.0
       jest-validate: 29.7.0
-      resolve: 1.22.11
+      resolve: 1.22.12
       resolve.exports: 2.0.3
       slash: 3.0.0
 
@@ -39748,7 +39694,7 @@ snapshots:
   normalize-package-data@2.5.0:
     dependencies:
       hosted-git-info: 2.8.9
-      resolve: 1.22.11
+      resolve: 1.22.12
       semver: 5.7.2
       validate-npm-package-license: 3.0.4
 
@@ -40416,7 +40362,7 @@ snapshots:
       postcss: 8.5.3
       postcss-value-parser: 4.2.0
       read-cache: 1.0.0
-      resolve: 1.22.11
+      resolve: 1.22.12
 
   postcss-js@4.0.1(postcss@8.5.3):
     dependencies:
@@ -41026,7 +40972,7 @@ snapshots:
 
   rechoir@0.8.0:
     dependencies:
-      resolve: 1.22.11
+      resolve: 1.22.12
 
   redent@3.0.0:
     dependencies:
@@ -41183,7 +41129,7 @@ snapshots:
     dependencies:
       debug: 4.4.3(supports-color@8.1.1)
       module-details-from-path: 1.0.3
-      resolve: 1.22.11
+      resolve: 1.22.12
     transitivePeerDependencies:
       - supports-color
 
@@ -41212,19 +41158,12 @@ snapshots:
 
   resolve.exports@2.0.3: {}
 
-  resolve@1.22.11:
-    dependencies:
-      is-core-module: 2.16.1
-      path-parse: 1.0.7
-      supports-preserve-symlinks-flag: 1.0.0
-
   resolve@1.22.12:
     dependencies:
       es-errors: 1.3.0
       is-core-module: 2.16.1
       path-parse: 1.0.7
       supports-preserve-symlinks-flag: 1.0.0
-    optional: true
 
   resolve@2.0.0-next.5:
     dependencies:
@@ -42191,7 +42130,7 @@ snapshots:
       postcss-load-config: 4.0.2(postcss@8.5.3)(ts-node@10.9.2(@types/node@22.19.17)(typescript@5.4.5))
       postcss-nested: 6.2.0(postcss@8.5.3)
       postcss-selector-parser: 6.1.2
-      resolve: 1.22.11
+      resolve: 1.22.12
       sucrase: 3.35.0
     transitivePeerDependencies:
       - ts-node
@@ -42326,7 +42265,7 @@ snapshots:
       '@fluidframework/gitresources': 7.0.0
       '@fluidframework/protocol-base': 7.0.0
       '@fluidframework/protocol-definitions': 3.2.0
-      '@fluidframework/server-lambdas': 7.0.0
+      '@fluidframework/server-lambdas': 7.0.0(debug@4.4.3)
       '@fluidframework/server-local-server': 7.0.0
       '@fluidframework/server-memory-orderer': 7.0.0
       '@fluidframework/server-services-client': 7.0.0
@@ -42336,7 +42275,7 @@ snapshots:
       '@fluidframework/server-services-utils': 7.0.0
       '@fluidframework/server-test-utils': 7.0.0
       agentkeepalive: 4.6.0
-      axios: 1.15.0(debug@4.3.7)
+      axios: 1.15.0(debug@4.4.3)
       body-parser: 1.20.3
       charwise: 3.0.1
       compression: 1.7.5
@@ -43014,6 +42953,16 @@ snapshots:
     dependencies:
       xml-name-validator: 5.0.0
 
+  wait-on@8.0.1:
+    dependencies:
+      axios: 1.15.0(debug@4.4.3)
+      joi: 17.13.3
+      lodash: 4.18.1
+      minimist: 1.2.8
+      rxjs: 7.8.2
+    transitivePeerDependencies:
+      - debug
+
   wait-on@8.0.1(debug@4.3.7):
     dependencies:
       axios: 1.15.0(debug@4.3.7)
@@ -43199,7 +43148,7 @@ snapshots:
       express: 4.22.1
       graceful-fs: 4.2.11
       html-entities: 2.6.0
-      http-proxy-middleware: 2.0.9(@types/express@4.17.21)
+      http-proxy-middleware: 2.0.9(@types/express@4.17.21)(debug@4.4.3)
       ipaddr.js: 2.2.0
       launch-editor: 2.9.1
       open: 8.4.2
