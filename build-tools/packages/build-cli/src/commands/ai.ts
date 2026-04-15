@@ -175,7 +175,14 @@ export default class AiCommand extends BaseCommand<typeof AiCommand> {
 		// When --launch-file is provided, write the command to that file and exit
 		// so a shell wrapper can run it as a separate, independent process.
 		if (flags.launchFile !== undefined) {
-			await writeFile(flags.launchFile, shellCommand, "utf8");
+			try {
+				await writeFile(flags.launchFile, shellCommand, "utf8");
+			} catch (error: unknown) {
+				const message = error instanceof Error ? error.message : String(error);
+				this.error(`Failed to write launch file ${flags.launchFile}: ${message}`, {
+					exit: 1,
+				});
+			}
 			return;
 		}
 

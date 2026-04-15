@@ -55,10 +55,13 @@ ai-reset() {
 # before the alias starts).
 flub-ai() {
 	local launch_file
-	launch_file=$(mktemp "${TMPDIR:-/tmp}/flub-ai-XXXXXX")
+	launch_file=$(mktemp "${TMPDIR:-/tmp}/flub-ai-XXXXXX") || {
+		echo "Failed to create a temporary launch file." >&2
+		return 1
+	}
 	flub ai --launch-file "$launch_file" "$@"
 	local rc=$?
-	if [ $rc -eq 0 ] && [ -s "$launch_file" ]; then
+	if [ "$rc" -eq 0 ] && [ -s "$launch_file" ]; then
 		local cmd
 		cmd=$(<"$launch_file")
 		rm -f "$launch_file"
