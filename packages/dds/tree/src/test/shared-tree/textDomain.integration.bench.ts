@@ -70,7 +70,7 @@ function createMeasurementCollector(): {
 	};
 }
 
-describe.only("TextDomain benchmarks", () => {
+describe("TextDomain benchmarks", () => {
 	configureBenchmarkHooks();
 
 	describe("TextDomain op size benchmarks", () => {
