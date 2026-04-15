@@ -15,7 +15,7 @@
  * - Core plugin registrations (eslint-comments, fluid, rushstack, jsdoc, promise, tsdoc, unicorn, unused-imports)
  * - Prettier config for disabling conflicting formatting rules
  *
- * All higher-level configs (minimal-deprecated, recommended, strict) extend from this base.
+ * All higher-level configs (recommended, strict, strictBiome) extend from this base.
  */
 
 import eslintJs from "@eslint/js";

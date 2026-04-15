@@ -12,9 +12,9 @@
     },
     {
       "file": ".devcontainer/ai-agent/GETTING_STARTED.md",
-      "line": 13,
+      "line": 9,
       "title": "Install Agency",
-      "description": "**Before you can use any AI agents, you must install agency:**\n\n```bash\npnpm install:agency\n```\n\nThen open a **new terminal** for the aliases to take effect.\n\nAgency is the CLI tool that manages AI agent sessions. It wraps Claude Code, GitHub Copilot, and other agents with consistent configuration."
+      "description": "**Before you can use any AI agents, you must install agency.**\n\nRun `pnpm install:agency` in the terminal. This requires Azure authentication — a browser window will open for you to sign in. Then open a **new terminal** for the aliases to take effect.\n\nAgency is the CLI tool that manages AI agent sessions. It wraps Claude Code, GitHub Copilot, and other agents with consistent configuration."
     },
     {
       "file": "scripts/codespace-setup/agent-aliases.sh",
@@ -38,13 +38,13 @@
       "file": "scripts/codespace-setup/agent-aliases.sh",
       "line": 21,
       "title": "Resetting Overlays",
-      "description": "If you need to reset your repoverlay state (remove all overlays and return to a clean repo state), use:\n\n```bash\nai-reset\n```\n\nThis runs `repoverlay remove --all` and is useful when switching between different workflows or troubleshooting overlay issues."
+      "description": "If you need to reset your repoverlay state (remove all overlays and return to a clean repo state), run `ai-reset` in the terminal.\n\nThis runs `repoverlay remove --all` and is useful when switching between different workflows or troubleshooting overlay issues."
     },
     {
       "file": ".devcontainer/ai-agent/devcontainer.json",
       "line": 1,
       "title": "Codespace Configuration",
-      "description": "This devcontainer profile includes several additions beyond the Standard profile:\n\n- **Agency CLI** and **Repoverlay** (installed via build args)\n- **GitHub CLI** (`gh`) for PR workflows and SSH access\n- **SSH daemon** enabling `gh codespace ssh` from your local terminal\n- **ADO Codespaces Auth** for Azure DevOps authentication\n- **32 CPUs / 64 GB RAM** (vs 16 CPUs for Standard)\n\n**Tip:** You can connect to this codespace from your local terminal with `gh codespace ssh` to run AI agents locally while using the codespace's compute."
+      "description": "This devcontainer profile includes several additions beyond the Standard profile:\n\n- **Agency CLI** and **Repoverlay** (installed via build args)\n- **GitHub CLI** (`gh`) for PR workflows and SSH access\n- **SSH daemon** enabling `gh codespace ssh` from your local terminal\n- **32 CPUs / 64 GB RAM** (vs 16 CPUs for Standard)\n\n**Tip:** You can connect to this codespace from your local terminal with `gh codespace ssh` to run AI agents locally while using the codespace's compute."
     },
     {
       "file": ".devcontainer/ai-agent/GETTING_STARTED.md",

@@ -983,6 +983,31 @@ export class AnchorSet implements AnchorLocator {
 							this.parentField,
 							marks,
 						);
+						// Queue childrenChangedAfterBatch for array sequence fields that have
+						// only retain marks with deep changes (no shallow changes such as
+						// insert/remove/move). Only EmptyKey fields are array sequence fields;
+						// object/map fields use string keys and retain the existing contract
+						// that nodeChanged does not fire for deep descendant changes.
+						// Shallow changes (insert/remove/move) already queue it via notifyChildrenChanged.
+						// The alreadyEmitted deduplication in free() prevents double-firing for
+						// transactions that have both shallow and deep changes.
+						if (this.parentField === EmptyKey) {
+							const hasShallowChange = marks.some(
+								(m) => m.attach !== undefined || m.detach !== undefined,
+							);
+							const hasDeepChanges = marks.some(
+								(m) => m.fields !== undefined && m.fields.size > 0,
+							);
+							const onlyDeepChanges = !hasShallowChange && hasDeepChanges;
+							if (onlyDeepChanges) {
+								this.bufferedEvents.push({
+									node: interned,
+									event: "childrenChangedAfterBatch",
+									changedField: this.parentField,
+									fieldMarks: marks,
+								});
+							}
+						}
 					}
 				}
 			},

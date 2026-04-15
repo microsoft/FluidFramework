@@ -6,15 +6,16 @@ This codespace is pre-configured for AI-agent-assisted development of the Fluid 
 
 ## First-time Setup
 
-After creating a new AI-enabled Codespace, expect up to a dozen authentication prompts. This is excessive but anticipated — continue clicking through each prompt until they conclude.
+Agency is installed automatically the first time you run `dev`, `claude`, or any agent alias - watch for a browser authentication popup.
+If automatic installation fails, you can install agency manually via `pnpm install:agency`.
 
-Agency **must** be installed manually after the Codespace starts:
+> [!NOTE]
+> Agency installation is supported in **VS Code** (desktop or SSH).
+> It may not work in a browser-based Codespace because the OAuth redirect requires a local browser and authentication may not complete correctly.
 
-```bash
-pnpm install:agency
-```
-
-Then open a **new terminal** for the agent aliases to be available.
+> [!TIP]
+> After creating a new AI-enabled Codespace you may be prompted to authenticate several times.
+> It may seem excessive, but is expected - just keep clicking through each prompt until they stop.
 
 ## Quick Start
 
@@ -38,49 +39,40 @@ These aliases are available in all terminal sessions (after installing agency):
 
 | Alias | Command | Purpose |
 |---|---|---|
-| `claude` | `agency claude` | Default Claude Code model |
-| `haiku` | `agency claude -- --model haiku` | Fastest, cheapest option |
-| `sonnet` | `agency claude -- --model sonnet` | Balanced capabilities |
-| `opus` | `agency claude -- --model opus` | Most capable model |
-| `nori` | `repoverlay switch nori && agency claude` | Switch to nori overlay and launch Claude |
+| `dev` | `repoverlay switch --copy nori && agency claude ... -- --model opus` | Launch Claude optimized for feature work and debugging |
+| `claude` | `repoverlay remove --all && agency claude ... -- --model opus` | General purpose Claude Code agent |
 
 ### Copilot
 
 | Alias | Command | Purpose |
 |---|---|---|
 | `copilot` | `agency copilot` | Standard GitHub Copilot |
-| `copilot-ado` | `agency copilot --mcp 'ado --org fluidframework'` | Azure DevOps integration |
-| `copilot-kusto` | `agency copilot --mcp 'kusto ...'` | Telemetry queries |
-| `copilot-oce` | `repoverlay switch ff-oce && copilot -- --agent ff-oce` | On-Call Engineer workflows |
-| `copilot-work` | `agency copilot --mcp 'workiq'` | WorkIQ integration |
+| `oce` | `repoverlay switch --copy ff-oce && agency copilot -- --agent ff-oce` | On-Call Engineer workflows |
+
+### Custom MCP Servers
+
+The built-in aliases include at least ADO, WorkIQ, and EngHub MCP servers.
+You can also launch an agent with your own combination of MCP servers using the `--mcp` flag.
+Stack as many as you need (and watch for browser authentication popups).
+
+```bash
+# Copilot with the Kusto MCP server
+copilot --mcp 'kusto --service-uri https://kusto.aria.microsoft.com'
+
+# Claude with an additional MCP server
+claude --mcp 'sharepoint'
+```
+
+> [!IMPORTANT]
+> The **Kusto** MCP server must only be used with **Copilot**, not Claude, for compliance reasons.
+
+> Run `agency mcp --help` to see all available MCP servers and their options.
 
 ### Utility
 
 | Alias | Command | Purpose |
 |---|---|---|
 | `ai-reset` | `repoverlay remove --all` | Remove all repoverlay overlays and reset to clean state |
-
-## Connecting via SSH
-
-Access a running AI-enabled Codespace from your local terminal:
-
-```bash
-gh codespace ssh
-```
-
-This enables running AI agents locally while the Codespace provides computing power and repository context.
-
-## What's Different from Standard?
-
-| Addition | Purpose |
-|---|---|
-| Agency CLI | Run AI agents (Claude, GitHub Copilot) from terminal |
-| Repoverlay | Overlay system for context files (agents, skills) |
-| GitHub CLI (`gh`) | Pre-installed for PR workflows and SSH access |
-| SSH daemon | Enables `gh codespace ssh` connections |
-| ADO Codespaces Auth | Authenticate to Azure DevOps |
-| Agent aliases | Shell shortcuts for common AI commands |
-| Higher compute | 32 CPUs / 64 GB RAM (vs 16 CPUs for Standard) |
 
 ## More Information
 

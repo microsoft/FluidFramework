@@ -45,12 +45,15 @@ export { benchmarkIt } from "./mocha/index.js";
 export {
 	formatResultArrayTable,
 	finishLoggingReport,
+	fullName,
 	recordTestResult,
+	visitSuitesArray,
 	type ReportPath,
 	type ReportSuiteWithPath,
 	type SuiteData,
 } from "./reporterUtilities.js";
 export {
+	isResultError,
 	isSuiteNode,
 	parseBenchmarkResult,
 	parseReport,
@@ -73,6 +76,10 @@ export {
 	type MemoryUseCallbacks,
 	benchmarkMemoryUse,
 	collectMemoryUseData,
+	Box,
+	type MemoryUseModifier,
+	memoryAddedBy,
+	memoryUseOfValue,
 } from "./memoryBenchmarking/index.js";
 
 export { benchmark, benchmarkCustom } from "./legacy.js";

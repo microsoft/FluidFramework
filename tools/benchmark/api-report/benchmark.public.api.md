@@ -70,6 +70,15 @@ export enum BenchmarkType {
 }
 
 // @public
+export class Box<T extends NonNullable<unknown>> {
+    clear(): void;
+    static empty<T extends NonNullable<unknown>>(): Box<T>;
+    static full<T extends NonNullable<unknown>>(item: T): Box<T>;
+    get value(): T;
+    set value(v: T);
+}
+
+// @public
 export function captureResults(f: () => CollectedData | Promise<CollectedData>, durationMeasurementName?: string): Promise<{
     result: BenchmarkResult;
     exception?: Error;
@@ -108,6 +117,9 @@ export function finishLoggingReport(reports: SuiteData, incremental: boolean, ou
 // @public
 export function formatResultArrayTable(data: SuiteData): string | undefined;
 
+// @public
+export function fullName(parent: ReportPath | undefined, benchmarkName?: string): string;
+
 // @public @input
 export interface HookArguments {
     // @deprecated
@@ -123,6 +135,9 @@ export type HookFunction = () => void | Promise<unknown>;
 export const isInPerformanceTestingMode: boolean;
 
 // @public
+export function isResultError(result: BenchmarkResult): result is BenchmarkError;
+
+// @public
 export function isSuiteNode(item: ReportSuite | ReportEntry): item is ReportSuite;
 
 // @public
@@ -134,7 +149,10 @@ export interface Measurement {
     readonly value: number;
 }
 
-// @public @input
+// @public
+export function memoryAddedBy<TIn extends NonNullable<unknown>>(options: MemoryUseModifier<TIn>): MemoryUseBenchmark;
+
+// @public
 export interface MemoryUseBenchmark {
     benchmarkFn(state: MemoryUseCallbacks): Promise<void>;
     enableAsyncGC?: boolean;
@@ -151,6 +169,16 @@ export interface MemoryUseCallbacks {
     continue(): boolean;
     whileAllocated(): Promise<void>;
 }
+
+// @public @input
+export interface MemoryUseModifier<TIn> {
+    after?(input: TIn): void | Promise<void>;
+    modify(input: TIn): void | Promise<void>;
+    setup(): TIn | Promise<TIn>;
+}
+
+// @public
+export function memoryUseOfValue<TOut extends NonNullable<unknown>>(factory: () => TOut | Promise<TOut>): MemoryUseBenchmark;
 
 // @public @input
 export interface MochaExclusiveOptions {
@@ -268,5 +296,8 @@ export enum ValueType {
     // (undocumented)
     SmallerIsBetter = "SmallerIsBetter"
 }
+
+// @public
+export function visitSuitesArray(report: SuiteData, callback: (data: SuiteData) => void): void;
 
 ```
