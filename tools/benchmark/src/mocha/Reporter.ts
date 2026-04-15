@@ -117,7 +117,7 @@ module.exports = class {
 				// If we do not already have an error result, consider setting one:
 				if (benchmark === undefined || !isResultError(benchmark)) {
 					// The mocha test reported an error.
-					// Mocha does not always set test.err when a test failes with an error (for example timeout errors),
+					// Mocha does not always set test.err when a test fails with an error (for example timeout errors),
 					// so we have EVENT_TEST_FAIL as well.
 					if (test.err) {
 						benchmark = { error: test.err.message };
