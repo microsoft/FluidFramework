@@ -4,7 +4,7 @@
  */
 
 import { IRandom, makeRandom } from '@fluid-private/stochastic-test-utils';
-import { BenchmarkType, benchmark } from '@fluid-tools/benchmark';
+import { BenchmarkType, benchmarkIt, collectDurationData } from '@fluid-tools/benchmark';
 
 import { compareFiniteNumbers } from '../Common.js';
 import { AppendOnlySortedMap } from '../id-compressor/AppendOnlySortedMap.js';
@@ -15,7 +15,7 @@ function runAppendOnlyMapPerfTests(mapBuilder: () => AppendOnlySortedMap<number,
 	let rand: IRandom;
 	const keyChoices: number[] = [];
 	let localChoice = 0;
-	const before = (): void => {
+	const setup = (): void => {
 		rand = makeRandom(42);
 		map = mapBuilder();
 		let curKey = 0;
@@ -30,21 +30,29 @@ function runAppendOnlyMapPerfTests(mapBuilder: () => AppendOnlySortedMap<number,
 		localChoice = 0;
 	};
 
-	benchmark({
+	benchmarkIt({
 		type,
 		title: `lookup a key`,
-		before,
-		benchmarkFn: () => {
-			map.get(keyChoices[localChoice++ % keyChoices.length]);
+		run: async () => {
+			setup();
+			return collectDurationData({
+				benchmarkFn: () => {
+					map.get(keyChoices[localChoice++ % keyChoices.length]);
+				},
+			});
 		},
 	});
 
-	benchmark({
+	benchmarkIt({
 		type,
 		title: `lookup a pair or lower`,
-		before,
-		benchmarkFn: () => {
-			map.getPairOrNextLower(keyChoices[localChoice++ % keyChoices.length]);
+		run: async () => {
+			setup();
+			return collectDurationData({
+				benchmarkFn: () => {
+					map.getPairOrNextLower(keyChoices[localChoice++ % keyChoices.length]);
+				},
+			});
 		},
 	});
 }

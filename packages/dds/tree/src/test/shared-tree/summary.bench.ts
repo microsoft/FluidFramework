@@ -9,7 +9,7 @@ import { IsoBuffer } from "@fluid-internal/client-utils";
 import {
 	BenchmarkType,
 	benchmarkIt,
-	benchmark,
+	collectDurationData,
 	ValueType,
 	type CollectedData,
 } from "@fluid-tools/benchmark";
@@ -122,26 +122,27 @@ describe("Summary benchmarks", () => {
 			content: TreeSimpleContentTyped<T>,
 			type: BenchmarkType,
 		) {
-			let summaryTree: ITree;
 			const factory = configuredSharedTree({}).getFactory();
-			benchmark({
+			benchmarkIt({
 				title,
 				type,
-				before: () => {
-					summaryTree = convertSummaryTreeToITree(getSummaryTree(content));
-				},
-				benchmarkFnAsync: async () => {
-					const services: IChannelServices = {
-						deltaConnection: new MockDeltaConnection(
-							() => 0,
-							() => {},
-						),
-						objectStorage: new MockStorage(summaryTree),
-					};
-					const datastoreRuntime = new MockFluidDataStoreRuntime({
-						idCompressor: testIdCompressor,
+				run: async () => {
+					const summaryTree = convertSummaryTreeToITree(getSummaryTree(content));
+					return collectDurationData({
+						benchmarkFnAsync: async () => {
+							const services: IChannelServices = {
+								deltaConnection: new MockDeltaConnection(
+									() => 0,
+									() => {},
+								),
+								objectStorage: new MockStorage(summaryTree),
+							};
+							const datastoreRuntime = new MockFluidDataStoreRuntime({
+								idCompressor: testIdCompressor,
+							});
+							await factory.load(datastoreRuntime, "test", services, factory.attributes);
+						},
 					});
-					await factory.load(datastoreRuntime, "test", services, factory.attributes);
 				},
 			});
 		}
