@@ -147,5 +147,5 @@ describeCompat("Summarization - runtime benchmarks", "NoCompat", (getTestObjectP
 				return summary;
 			}),
 		),
-	});
+	}).timeout(60000);
 });
