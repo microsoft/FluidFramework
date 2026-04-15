@@ -33,7 +33,7 @@ pnpm fluid-build .
 
 ## Not sure which agent to use?
 
-Run `flub ai` — an interactive assistant that asks what you want to do and launches the right agent for you.
+Run `start` — an interactive assistant that asks what you want to do and launches the right agent for you.
 
 ## AI Agent Aliases
 
