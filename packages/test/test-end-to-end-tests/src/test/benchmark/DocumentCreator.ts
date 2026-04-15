@@ -92,13 +92,20 @@ export function createDocument(props: IDocumentCreatorProps): IDocumentLoaderAnd
 }
 
 export interface IBenchmarkParameters {
+	/**
+	 * The minimum number of samples to collect for this benchmark.
+	 * @remarks
+	 * Slow benchmarks can provide a small number here to to speed up the test by opting into allowing noisier results by taking fewer samples.
+	 */
 	readonly minSampleCount?: number;
+	/**
+	 * The main function that will be executed for each benchmark iteration.
+	 */
 	readonly run: () => Promise<void>;
-	readonly beforeIteration?: () => void;
-	readonly afterIteration?: () => void;
+	/**
+	 * Run once before any of the benchmark iterations start.
+	 */
 	readonly before?: () => Promise<void>;
-	readonly after?: () => Promise<void>;
-	readonly beforeEachBatch?: () => void;
 }
 /**
  * In order to share the files between memory and benchmark tests, we need to create a test object that can be passed and used
@@ -130,16 +137,10 @@ export function benchmarkAll<T extends IBenchmarkParameters>(
 				benchmarkFn: async (state: MemoryUseCallbacks) => {
 					await obj.before?.();
 					while (state.continue()) {
-						obj.beforeIteration?.();
 						await state.beforeAllocation();
-						{
-							await obj.run();
-							await state.whileAllocated();
-							obj.afterIteration?.();
-						}
-						await state.afterDeallocation();
+						await obj.run();
+						await state.whileAllocated();
 					}
-					await obj.after?.();
 				},
 			}),
 		}).timeout(timeout);
@@ -151,14 +152,13 @@ export function benchmarkAll<T extends IBenchmarkParameters>(
 			title,
 			...benchmarkDuration({
 				benchmarkFnCustom: async <T1>(state: BenchmarkTimer<T1>) => {
+					await obj.before?.();
 					let duration: number;
 					do {
-						await obj.before?.();
 						const before = state.timer.now();
 						await obj.run();
 						const after = state.timer.now();
 						duration = state.timer.toSeconds(before, after);
-						await obj.after?.();
 						// Collect data
 					} while (state.recordBatch(duration));
 				},

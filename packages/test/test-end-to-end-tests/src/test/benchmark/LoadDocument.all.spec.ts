@@ -55,7 +55,7 @@ describeE2EDocs("Load Document", (getTestObjectProvider, getDocumentInfo) => {
 			async before(): Promise<void> {
 				this.container = undefined;
 				if (isInPerformanceTestingMode) {
-					// TODO: this should be removed, or document why it exists (probably a workaround for memory measurement issues in current version of benchmark).
+					// TODO: this should be removed, or document why it exists
 					await delay(1000);
 				}
 			}
