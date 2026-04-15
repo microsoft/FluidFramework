@@ -205,15 +205,6 @@ const E2EDefaultDocumentTypes: DescribeE2EDocInfo[] = isInPerformanceTestingMode
 /**
  * @internal
  */
-export type BenchmarkType = "ExecutionTime" | "MemoryUsage";
-/**
- * @internal
- */
-export type BenchmarkTypeDescription = "Runtime benchmarks" | "Memory benchmarks";
-
-/**
- * @internal
- */
 export interface DescribeE2EDocInfo {
 	testTitle: string;
 	documentType: DocumentType;
@@ -305,13 +296,6 @@ export function assertDocumentTypeInfo(
 /**
  * @internal
  */
-export interface DescribeE2EDocInfoWithBenchmarkType extends DescribeE2EDocInfo {
-	benchmarkType: BenchmarkType;
-}
-
-/**
- * @internal
- */
 export type DescribeE2EDocSuite = (
 	title: string,
 	tests: (
@@ -320,7 +304,6 @@ export type DescribeE2EDocSuite = (
 		documentType: () => DescribeE2EDocInfo,
 	) => void,
 	docTypes?: DescribeE2EDocInfo[],
-	testType?: string,
 ) => Mocha.Suite | void;
 
 function getE2EConfigFile(): IE2EDocsConfig | undefined {
@@ -349,28 +332,9 @@ function getE2EConfigFile(): IE2EDocsConfig | undefined {
 function createE2EDocsDescribe(docTypes?: DescribeE2EDocInfo[]): DescribeE2EDocSuite {
 	const config = getE2EConfigFile();
 
-	const d: DescribeE2EDocSuite = (title, tests, testType) => {
+	const d: DescribeE2EDocSuite = (title, tests) => {
 		describe(
-			// eslint-disable-next-line @typescript-eslint/no-base-to-string -- testType toString is expected to return meaningful string
-			`${testType} -`,
-			createE2EDocCompatSuite(
-				title,
-				tests,
-				docTypes ?? config?.documents ?? E2EDefaultDocumentTypes,
-			),
-		);
-	};
-	return d;
-}
-
-function createE2EDocsDescribeWithType(
-	testType: BenchmarkTypeDescription,
-): DescribeE2EDocSuite {
-	const config = getE2EConfigFile();
-
-	const d: DescribeE2EDocSuite = (title, tests, docTypes) => {
-		describe(
-			`${testType} -`,
+			title,
 			createE2EDocCompatSuite(
 				title,
 				tests,
@@ -491,53 +455,3 @@ function createE2EDocCompatSuite(
  * @internal
  */
 export const describeE2EDocs: DescribeE2EDocSuite = createE2EDocsDescribe();
-
-/**
- * @internal
- */
-export const describeE2EDocsRuntime: DescribeE2EDocSuite =
-	createE2EDocsDescribeWithType("Runtime benchmarks");
-
-/**
- * @internal
- */
-export const describeE2EDocsMemory: DescribeE2EDocSuite =
-	createE2EDocsDescribeWithType("Memory benchmarks");
-
-/**
- * Determines whether the current test run is a memory usage test.
- *
- * @internal
- */
-export function isMemoryTest(): boolean {
-	let isMemoryUsageTest: boolean = false;
-	const childArgs = [...process.execArgv, ...process.argv.slice(1)];
-	for (const flag of ["--grep", "--fgrep"]) {
-		const flagIndex = childArgs.indexOf(flag);
-		if (flagIndex > 0) {
-			isMemoryUsageTest = childArgs[flagIndex + 1] === "@MemoryUsage" ? true : false;
-			break;
-		}
-	}
-	const isMemTest: boolean =
-		process.env.FLUID_E2E_MEMORY !== undefined ? true : (isMemoryUsageTest ?? false);
-	return isMemTest;
-}
-
-/**
- * @internal
- */
-export const describeE2EDocRun: DescribeE2EDocSuite = createE2EDocsDescribeRun();
-
-/**
- * Returns the benchmark type based on the test suite being run.
- *
- * @internal
- */
-export const getCurrentBenchmarkType = (currentType: DescribeE2EDocSuite): BenchmarkType => {
-	return currentType === describeE2EDocsMemory ? "MemoryUsage" : "ExecutionTime";
-};
-
-function createE2EDocsDescribeRun(): DescribeE2EDocSuite {
-	return isMemoryTest() === true ? describeE2EDocsMemory : describeE2EDocsRuntime;
-}

@@ -5,11 +5,10 @@
 
 import { strict as assert } from "assert";
 
-import { describeE2EDocRun, getCurrentBenchmarkType } from "@fluid-private/test-version-utils";
+import { describeE2EDocs } from "@fluid-private/test-version-utils";
 import { isInPerformanceTestingMode } from "@fluid-tools/benchmark";
 import { IContainer } from "@fluidframework/container-definitions/internal";
 import { delay } from "@fluidframework/core-utils/internal";
-import { ITestObjectProvider } from "@fluidframework/test-utils/internal";
 
 import {
 	IBenchmarkParameters,
@@ -18,38 +17,24 @@ import {
 	createDocument,
 } from "./DocumentCreator.js";
 
-describeE2EDocRun("Load Document", (getTestObjectProvider, getDocumentInfo) => {
+describeE2EDocs("Load Document", (getTestObjectProvider, getDocumentInfo) => {
 	let documentWrapper: IDocumentLoader;
-	let provider: ITestObjectProvider;
-	const benchmarkType = getCurrentBenchmarkType(describeE2EDocRun);
-
-	before(async () => {
-		provider = getTestObjectProvider();
+	beforeEach(async function () {
+		const provider = getTestObjectProvider();
 		const docData = getDocumentInfo(); // returns the type of document to be processed.
-		if (
-			docData.supportedEndpoints &&
-			!docData.supportedEndpoints?.includes(provider.driver.type)
-		) {
-			return;
-		}
-		documentWrapper = createDocument({
-			testName: `Load Document - ${docData.testTitle}`,
-			provider,
-			documentType: docData.documentType,
-			documentTypeInfo: docData.documentTypeInfo,
-			benchmarkType,
-		});
-		await documentWrapper.initializeDocument();
-	});
-
-	beforeEach("conditionalSkip", async function () {
-		const docData = getDocumentInfo();
 		if (
 			docData.supportedEndpoints &&
 			!docData.supportedEndpoints?.includes(provider.driver.type)
 		) {
 			this.skip();
 		}
+		documentWrapper = createDocument({
+			testName: `Load Document - ${docData.testTitle}`,
+			provider,
+			documentType: docData.documentType,
+			documentTypeInfo: docData.documentTypeInfo,
+		});
+		await documentWrapper.initializeDocument();
 	});
 	/**
 	 * The PerformanceTestWrapper class includes 2 functionalities:
@@ -58,9 +43,8 @@ describeE2EDocRun("Load Document", (getTestObjectProvider, getDocumentInfo) => {
 	 * a. Benchmark Time tests: {@link https://benchmarkjs.com/docs#options} or  {@link BenchmarkOptions}
 	 * b. Benchmark Memory tests: {@link MemoryTestObjectProps}
 	 */
-	benchmarkAll(
-		"Load Document",
-		new (class PerformanceTestWrapper implements IBenchmarkParameters {
+	benchmarkAll("Load Document", () => {
+		return new (class PerformanceTestWrapper implements IBenchmarkParameters {
 			container: IContainer | undefined;
 			minSampleCount = getDocumentInfo().minSampleCount;
 			async run(): Promise<void> {
@@ -71,10 +55,10 @@ describeE2EDocRun("Load Document", (getTestObjectProvider, getDocumentInfo) => {
 			async before(): Promise<void> {
 				this.container = undefined;
 				if (isInPerformanceTestingMode) {
-					// TODO: this should be removed, or document why it exists (probably a workaround for memory measurement issues in current version of benchmark).
+					// TODO: this should be removed, or document why it exists
 					await delay(1000);
 				}
 			}
-		})(),
-	);
+		})();
+	});
 });

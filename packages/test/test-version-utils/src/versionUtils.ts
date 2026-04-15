@@ -390,7 +390,11 @@ export function checkInstalled(requested: string): { version: string; modulePath
  *
  * @internal
  */
-export const loadPackage = async (modulePath: string, pkg: string): Promise<any> => {
+export const loadPackage = async (
+	modulePath: string,
+	pkg: string,
+	importPath: "." | `./${string}` = ".",
+): Promise<any> => {
 	const pkgPath = path.join(modulePath, "node_modules", pkg);
 	// Because we put legacy versions in a specific subfolder of node_modules (.legacy/<version>), we need to reimplement
 	// some of Node's module loading logic here.
@@ -415,20 +419,28 @@ export const loadPackage = async (modulePath: string, pkg: string): Promise<any>
 		if (typeof pkgJson.exports === "string") {
 			primaryExport = pkgJson.exports;
 		} else {
-			const exp: any | undefined = pkgJson.exports["."];
+			const exp: any | undefined = pkgJson.exports[importPath] ?? pkgJson.exports["."];
 			primaryExport =
 				typeof exp === "string"
 					? exp
 					: exp.require !== undefined
 						? exp.require.default
 						: exp.default;
-			if (primaryExport === undefined) {
-				throw new Error(`Package ${pkg} defined subpath exports but no '.' entry.`);
+			if (typeof primaryExport !== "string") {
+				// eslint-disable-next-line unicorn/prefer-type-error -- this isn't a TypeError really; it is an internal logic shortcoming; entry might not be a string
+				throw new Error(
+					`Package ${pkg} defined subpath exports but no recognizable ${importPath} entry.`,
+				);
 			}
 		}
 	} else {
 		if (pkgJson.main === undefined) {
 			throw new Error(`No main or exports in package.json for ${pkg}`);
+		}
+		if (importPath !== ".") {
+			console.warn(
+				`Package ${pkg} main used despite request for ${importPath} entry (no "exports" property found).`,
+			);
 		}
 		primaryExport = pkgJson.main;
 	}

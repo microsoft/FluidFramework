@@ -19,6 +19,7 @@ module.exports = {
 		Request: globalThis.Request,
 		Response: globalThis.Response,
 		Headers: globalThis.Headers,
+		structuredClone: globalThis.structuredClone,
 	},
 	moduleNameMapper: {
 		// Remove explicit .js from local paths to allow jest to find the .ts* files
