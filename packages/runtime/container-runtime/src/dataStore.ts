@@ -11,7 +11,6 @@ import {
 	type AliasResult,
 	type IDataStore,
 	type IFluidDataStoreChannel,
-	asLegacyAlpha,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	type ITelemetryLoggerExt,
@@ -81,7 +80,7 @@ class DataStore implements IDataStore {
 		if (alias.includes("/")) {
 			throw new UsageError(`The alias cannot contain slashes: '${alias}'`);
 		}
-		if (asLegacyAlpha(this.parentContext.containerRuntime).inStagingMode === true) {
+		if (this.parentContext.containerRuntime.inStagingMode === true) {
 			throw new UsageError("Cannot set aliases while in staging mode");
 		}
 

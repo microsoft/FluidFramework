@@ -11,11 +11,10 @@ import type { IContainer } from "@fluidframework/container-definitions/internal"
 import type { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions/internal";
 import type { ISharedDirectory } from "@fluidframework/map/internal";
 import {
-	asLegacyAlpha,
-	type ContainerRuntimeBaseAlpha,
 	type IFluidDataStoreChannel,
 	type IFluidDataStoreContext,
 	type IFluidDataStorePolicies,
+	type IContainerRuntimeBase,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	getContainerEntryPointBackCompat,
@@ -35,7 +34,7 @@ describeCompat(
 			readonlyInStagingMode: IFluidDataStorePolicies["readonlyInStagingMode"];
 		}): Promise<{
 			container: IContainer;
-			containerRuntime: ContainerRuntimeBaseAlpha;
+			containerRuntime: IContainerRuntimeBase;
 			dsRuntime: IFluidDataStoreChannel & IFluidDataStoreRuntime;
 			shareDir: ISharedDirectory;
 		}> => {
@@ -81,7 +80,7 @@ describeCompat(
 			const { _context, _runtime, _root } =
 				await getContainerEntryPointBackCompat<ITestDataObject>(container);
 
-			const containerRuntime = asLegacyAlpha(_context.containerRuntime);
+			const containerRuntime = _context.containerRuntime;
 			return {
 				container,
 				containerRuntime,

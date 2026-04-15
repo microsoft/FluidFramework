@@ -342,6 +342,11 @@ export interface IUploadSummaryResult extends Omit<IGenerateSummaryTreeResult, "
 export function loadContainerRuntime(params: LoadContainerRuntimeParams): Promise<IContainerRuntime & IRuntime>;
 
 // @beta @legacy
+export function loadContainerRuntimeBeta(params: LoadContainerRuntimeParams): Promise<{
+    runtime: IContainerRuntime & IRuntime;
+}>;
+
+// @beta @legacy
 export interface LoadContainerRuntimeParams {
     containerScope?: FluidObject;
     context: IContainerContext;

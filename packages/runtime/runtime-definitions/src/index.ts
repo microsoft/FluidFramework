@@ -31,6 +31,7 @@ export type {
 	IFluidDataStoreContextDetached,
 	IPendingMessagesState,
 	PackagePath,
+	StageControls,
 } from "./dataStoreContext.js";
 export { FlushMode, VisibilityState } from "./dataStoreContext.js";
 export type { IProvideFluidDataStoreFactory } from "./dataStoreFactory.js";
@@ -95,10 +96,7 @@ export {
 export type { MinimumVersionForCollab } from "./compatibilityDefinitions.js";
 
 export {
-	type ContainerRuntimeBaseAlpha,
-	type StageControlsAlpha,
 	type CommitStagedChangesOptionsInternal,
 	type IContainerRuntimeBaseInternal,
 	type StageControlsInternal,
-	asLegacyAlpha,
 } from "./stagingMode.js";

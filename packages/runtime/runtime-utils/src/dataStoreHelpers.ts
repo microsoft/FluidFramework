@@ -9,10 +9,7 @@ import type {
 	IFluidDataStoreRuntime,
 	IFluidDataStoreRuntimeAlpha,
 } from "@fluidframework/datastore-definitions/internal";
-import type {
-	ContainerRuntimeBaseAlpha,
-	IContainerRuntimeBase,
-} from "@fluidframework/runtime-definitions/internal";
+import type { IContainerRuntimeBase } from "@fluidframework/runtime-definitions/internal";
 import { generateErrorWithStack } from "@fluidframework/telemetry-utils/internal";
 
 interface IResponseException extends Error {
@@ -140,11 +137,6 @@ export function createResponseError(
 	};
 }
 
-/**
- * Converts types to their alpha counterparts to expose alpha functionality.
- * @legacy @alpha
- */
-export function asLegacyAlpha(runtime: IContainerRuntimeBase): ContainerRuntimeBaseAlpha;
 /**
  * Converts types to their alpha counterparts to expose alpha functionality.
  * @legacy @alpha
