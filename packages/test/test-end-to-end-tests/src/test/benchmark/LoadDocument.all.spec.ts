@@ -9,7 +9,6 @@ import { describeE2EDocs } from "@fluid-private/test-version-utils";
 import { isInPerformanceTestingMode } from "@fluid-tools/benchmark";
 import { IContainer } from "@fluidframework/container-definitions/internal";
 import { delay } from "@fluidframework/core-utils/internal";
-import { ITestObjectProvider } from "@fluidframework/test-utils/internal";
 
 import {
 	IBenchmarkParameters,
@@ -20,15 +19,14 @@ import {
 
 describeE2EDocs("Load Document", (getTestObjectProvider, getDocumentInfo) => {
 	let documentWrapper: IDocumentLoader;
-	let provider: ITestObjectProvider;
-	before(async () => {
-		provider = getTestObjectProvider();
+	beforeEach(async function () {
+		const provider = getTestObjectProvider();
 		const docData = getDocumentInfo(); // returns the type of document to be processed.
 		if (
 			docData.supportedEndpoints &&
 			!docData.supportedEndpoints?.includes(provider.driver.type)
 		) {
-			return;
+			this.skip();
 		}
 		documentWrapper = createDocument({
 			testName: `Load Document - ${docData.testTitle}`,
@@ -37,16 +35,6 @@ describeE2EDocs("Load Document", (getTestObjectProvider, getDocumentInfo) => {
 			documentTypeInfo: docData.documentTypeInfo,
 		});
 		await documentWrapper.initializeDocument();
-	});
-
-	beforeEach("conditionalSkip", async function () {
-		const docData = getDocumentInfo();
-		if (
-			docData.supportedEndpoints &&
-			!docData.supportedEndpoints?.includes(provider.driver.type)
-		) {
-			this.skip();
-		}
 	});
 	/**
 	 * The PerformanceTestWrapper class includes 2 functionalities:

@@ -24,14 +24,15 @@ describeE2EDocs(scenarioTitle, (getTestObjectProvider, getDocumentInfo) => {
 	let documentWrapper: IDocumentLoaderAndSummarizer;
 	let provider: ITestObjectProvider;
 	let summaryVersion: string;
-	before(async () => {
+
+	beforeEach(async function () {
 		provider = getTestObjectProvider();
 		const docData = getDocumentInfo(); // returns the type of document to be processed.
 		if (
 			docData.supportedEndpoints &&
 			!docData.supportedEndpoints?.includes(provider.driver.type)
 		) {
-			return;
+			this.skip();
 		}
 		documentWrapper = createDocument({
 			testName: `${scenarioTitle} - ${docData.testTitle}`,
@@ -49,15 +50,6 @@ describeE2EDocs(scenarioTitle, (getTestObjectProvider, getDocumentInfo) => {
 		summaryVersion = lastSummarizeClient.summaryVersion;
 	});
 
-	beforeEach("conditionalSkip", async function () {
-		const docData = getDocumentInfo();
-		if (
-			docData.supportedEndpoints &&
-			!docData.supportedEndpoints?.includes(provider.driver.type)
-		) {
-			this.skip();
-		}
-	});
 	/**
 	 * The PerformanceTestWrapper class includes 2 functionalities:
 	 * 1) Store any objects that should not be garbage collected during the benchmark execution (specific for memory tests).
