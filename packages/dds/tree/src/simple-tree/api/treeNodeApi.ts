@@ -284,10 +284,10 @@ export const treeNodeApi: TreeNodeApi = {
 						// internal passes), we conservatively fire nodeChanged rather than silently
 						// dropping the event, even though the underlying change may have been
 						// purely deep. This is a known limitation of the current eventing stack.
-						const hasShallowChange =
-							marks === undefined ||
-							marks.some((m) => m.attach !== undefined || m.detach !== undefined);
-						if (!hasShallowChange) {
+						if (
+							marks !== undefined &&
+							!marks.some((m) => m.attach !== undefined || m.detach !== undefined)
+						) {
 							return;
 						}
 						// `marks` is undefined when the field was modified across multiple batches

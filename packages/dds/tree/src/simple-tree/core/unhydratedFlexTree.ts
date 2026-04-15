@@ -289,9 +289,10 @@ export class UnhydratedFlexTreeNode
 	 * When omitted (e.g. for non-sequence fields), `fieldMarks` is empty.
 	 */
 	public emitChangedEvent(key: FieldKey, marks?: readonly DeltaMark[]): void {
+		const fieldMarks = marks === undefined ? new Map() : new Map([[key, marks]]);
 		this._events.emit("childrenChangedAfterBatch", {
 			changedFields: new Set([key]),
-			fieldMarks: marks === undefined ? new Map() : new Map([[key, marks]]),
+			fieldMarks,
 		});
 
 		// Emit subtree-changed events for this node and its non-array ancestors first,
