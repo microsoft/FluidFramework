@@ -919,3 +919,5 @@ extends:
                   # Using 'all' signifies that we will upload all stages
                   stageIdFilter: 'all'
                   pipelineIdentifierForTelemetry: BuildClient
+              - ${{ if eq(parameters.taskBundleAnalysis, true) }}:
+                - template: /tools/pipelines/templates/upload-telemetry/include-steps-upload-bundle-size.yml@self
