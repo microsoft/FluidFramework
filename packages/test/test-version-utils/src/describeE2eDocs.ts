@@ -304,7 +304,6 @@ export type DescribeE2EDocSuite = (
 		documentType: () => DescribeE2EDocInfo,
 	) => void,
 	docTypes?: DescribeE2EDocInfo[],
-	testType?: string,
 ) => Mocha.Suite | void;
 
 function getE2EConfigFile(): IE2EDocsConfig | undefined {
@@ -333,10 +332,8 @@ function getE2EConfigFile(): IE2EDocsConfig | undefined {
 function createE2EDocsDescribe(docTypes?: DescribeE2EDocInfo[]): DescribeE2EDocSuite {
 	const config = getE2EConfigFile();
 
-	const d: DescribeE2EDocSuite = (title, tests, testType) => {
-		describe(
-			// eslint-disable-next-line @typescript-eslint/no-base-to-string -- testType toString is expected to return meaningful string
-			`${testType} -`,
+	const d: DescribeE2EDocSuite = (title, tests) => {
+		describe(title,
 			createE2EDocCompatSuite(
 				title,
 				tests,
