@@ -440,35 +440,6 @@ extends:
                       workingDir: '$(Pipeline.Workspace)/${{ parameters.buildDirectory }}'
                       customCommand: 'run bundle-analysis:run'
 
-                  - ${{ if and(or(eq(variables['Build.Reason'], 'IndividualCI'), eq(variables['Build.Reason'], 'BatchedCI')), eq(variables['System.TeamProject'], 'internal')) }}:
-                      - task: Bash@3
-                        displayName: List report.json
-                        inputs:
-                          targetType: inline
-                          workingDirectory: '$(Pipeline.Workspace)/${{ parameters.buildDirectory }}'
-                          script: |
-                            set -eu -o pipefail
-                            echo "Build Directory is ${{ parameters.buildDirectory }}";
-                            BUNDLE_SIZE_TESTS_DIR="$(Build.ArtifactStagingDirectory)/bundleAnalysis/@fluid-example/bundle-size-tests";
-                            echo "Contents of $BUNDLE_SIZE_TESTS_DIR:";
-                            ls -la $BUNDLE_SIZE_TESTS_DIR;
-
-                      - template: /tools/pipelines/templates/include-telemetry-setup.yml@self
-                        parameters:
-                          pathForTelemetryGeneratorInstall: $(pathToTelemetryGenerator)
-
-                      - task: Bash@3
-                        displayName: Write bundle sizes measurements to Aria/Kusto
-                        inputs:
-                          targetType: inline
-                          workingDirectory: $(pathToTelemetryGenerator)
-                          script: |
-                            set -eu -o pipefail
-                            echo "Writing the following performance tests results to Aria/Kusto"
-                            echo "Report Size:"
-                            ls -la '$(Pipeline.Workspace)/$(FluidFrameworkDirectory)/examples/utils/bundle-size-tests/bundleAnalysis/report.json';
-                            npx telemetry-generator --handlerModule "$(pathToTelemetryGeneratorHandlers)/bundleSizeHandler.js" --dir '$(Build.ArtifactStagingDirectory)/bundleAnalysis/@fluid-example/bundle-size-tests';
-
               # Docs
               - ${{ if ne(parameters.taskBuildDocs, false) }}:
                   - task: Npm@1
