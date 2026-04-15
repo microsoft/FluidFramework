@@ -168,7 +168,7 @@ describe("container telemetry via", () => {
 
 		const containerError: ICriticalContainerError = {
 			errorType: "unknown error",
-			message: "An unknown error occured",
+			message: "An unknown error occurred",
 			stack: "example stack error at line 52 of Container.ts",
 		};
 
