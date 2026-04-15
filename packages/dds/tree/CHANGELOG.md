@@ -4,7 +4,7 @@
 
 ### Minor Changes
 
-- Add Fluid-controlled map and iterator interfaces ([#27014](https://github.com/microsoft/FluidFramework/pull/27014)) [5786d557446](https://github.com/microsoft/FluidFramework/commit/5786d5574462b1deb4815b0be331adc80718e8d0)
+- Add Fluid-controlled map and iterator interfaces ([#26951](https://github.com/microsoft/FluidFramework/pull/26951)) [4735742f157](https://github.com/microsoft/FluidFramework/commit/4735742f15718419e974ead1d5e2e809863d3723)
 
   `TreeIndex` now extends `FluidReadonlyMap` instead of the built-in `ReadonlyMap`, and `TreeMapNodeAlpha` which extends `FluidReadonlyMap` instead of the built-in `ReadonlyMap` has been added.
   This works to uncouple Fluid's public API surface to the TypeScript standard library's map types, preventing future breakage when those types change.

@@ -4,7 +4,7 @@
 
 ### Minor Changes
 
-- `getPresence` from `@fluidframework/presence` is deprecated and will be removed in a future release. ([#27014](https://github.com/microsoft/FluidFramework/pull/27014)) [5786d557446](https://github.com/microsoft/FluidFramework/commit/5786d5574462b1deb4815b0be331adc80718e8d0)
+- `getPresence` from `@fluidframework/presence` is deprecated and will be removed in a future release. ([#26399](https://github.com/microsoft/FluidFramework/pull/26399)) [d533c19c7cb](https://github.com/microsoft/FluidFramework/commit/d533c19c7cb25d48ecab1b742e44dfe560d20534)
 
   Now `getPresence` is available for import from the `fluid-framework` package.
 
@@ -17,7 +17,7 @@
 
   See [issue #26397](https://github.com/microsoft/FluidFramework/issues/26397) for more details.
 
-- Add Fluid-controlled map and iterator interfaces ([#27014](https://github.com/microsoft/FluidFramework/pull/27014)) [5786d557446](https://github.com/microsoft/FluidFramework/commit/5786d5574462b1deb4815b0be331adc80718e8d0)
+- Add Fluid-controlled map and iterator interfaces ([#26951](https://github.com/microsoft/FluidFramework/pull/26951)) [4735742f157](https://github.com/microsoft/FluidFramework/commit/4735742f15718419e974ead1d5e2e809863d3723)
 
   `TreeIndex` now extends `FluidReadonlyMap` instead of the built-in `ReadonlyMap`, and `TreeMapNodeAlpha` which extends `FluidReadonlyMap` instead of the built-in `ReadonlyMap` has been added.
   This works to uncouple Fluid's public API surface to the TypeScript standard library's map types, preventing future breakage when those types change.
