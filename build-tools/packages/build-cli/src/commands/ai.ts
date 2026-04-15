@@ -120,6 +120,9 @@ export default class AiCommand extends BaseCommand<typeof AiCommand> {
 						const answer = await rl.question(chalk.gray("\n> "));
 						return normalizePromptAnswer(answer, choices);
 					},
+					info: (message: string) => {
+						log(chalk.dim(message));
+					},
 					verbose: (message: string) => {
 						verbose(message);
 					},
