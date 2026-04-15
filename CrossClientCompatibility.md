@@ -11,7 +11,14 @@ Cross-client compatibility is Fluid's ability to support collaboration between t
 1. **Rolling upgrades**: During version upgrades, there is an unavoidable transition window when clients running different versions must coexist and collaborate. This compatibility ensures users can continue working together seamlessly, whether or not their application instance has been updated yet.
 2. **Multi-application ecosystems**: Different applications with different deployment schedules may host the same Fluid content. In such ecosystems, all applications integrating Fluid-based experiences must coordinate to respect the cross-client compatibility window. This avoids requiring all applications to be on exactly the same version, which would be impractical.
 
-> **Note:** The cross-client compatibility guarantee applies to all Fluid layers (Driver, Loader, Runtime, and Datastore). However, the enforcement mechanisms described in this document — `minVersionForCollab`, feature gating, and client version checks — are currently implemented only at the **Runtime and Datastore layers**. The Driver layer does not currently have cross-client compatibility concerns because it does not exchange data formats between clients. Enforcement at the Loader layer may be added in the future. See the [Interaction with Layer Compatibility](./FluidCompatibilityConsiderations.md#interaction-with-layer-compatibility) section for more details.
+> **Note:** The cross-client compatibility guarantee applies to all Fluid layers (Driver, Loader, Runtime, and
+> Datastore). However, the enforcement mechanisms described in this document — `minVersionForCollab`, feature
+> gating, and client version checks — are currently implemented only at the **Runtime and Datastore layers**.
+> The Driver layer does not currently have cross-client compatibility concerns because it does not exchange data
+> formats between clients. Enforcement at the Loader layer may be added in the future. See the
+> [Interaction with Layer Compatibility](./FluidCompatibilityConsiderations.md#interaction-with-layer-compatibility)
+> section for more details. How these mechanisms are configured depends on your application model — see
+> [Encapsulated vs Declarative Models](#encapsulated-vs-declarative-models) below.
 
 This document explains:
 
@@ -44,7 +51,9 @@ The Fluid Framework guarantees cross-client compatibility between adjacent major
 
 **Example:** If the most recent public major release (N) is 4.0, a client running 4.x is cross-client compatible with 3.x clients, but not with 2.x or older clients.
 
-## Understanding `minVersionForCollab`
+## Cross-client Compatibility Configuration and Enforcement
+
+### minVersionForCollab
 
 `minVersionForCollab` is the primary mechanism for configuring cross-client compatibility. It is a container runtime load parameter (defined in [containerRuntime.ts](./packages/runtime/container-runtime/src/containerRuntime.ts)) that specifies the minimum Fluid version that is allowed to collaborate on a document. It serves two purposes:
 
@@ -55,15 +64,15 @@ If `minVersionForCollab` is not explicitly set, a default value is used. The def
 
 > **Note:** While `minVersionForCollab` currently operates at the container runtime layer, cross-client compatibility applies across all Fluid layers (Driver, Loader, Runtime, and Datastore). See the [Interaction with Layer Compatibility](./FluidCompatibilityConsiderations.md#interaction-with-layer-compatibility) section in the Fluid Compatibility Considerations document for more on how cross-client and layer compatibility interact.
 
-## What This Means for An Application
+### What This Means for An Application
 
 As an application developer, you need to manage your Fluid version upgrades carefully to ensure uninterrupted collaboration for your users. By configuring `minVersionForCollab` appropriately and monitoring your client version distribution, you can safely upgrade while maintaining compatibility across your user base.
 
-### Encapsulated vs Declarative Models
+#### Encapsulated vs Declarative Models
 
 The cross-client compatibility policy applies to both application models. Both models use the same underlying enforcement and feature-gating mechanisms. They differ only in how you configure them, which is described in the sections below.
 
-### Configuring Cross-Client Compatibility (Declarative Model)
+#### Configuring Cross-Client Compatibility (Declarative Model)
 
 If you are using a service client (i.e. `AzureClient` or `OdspClient`), cross-client compatibility is configured via the `CompatibilityMode` parameter. This is a required argument when creating or loading a container:
 
@@ -84,7 +93,7 @@ Below is the mapping of `CompatibilityMode` values to `minVersionForCollab` at t
 | `"1"` | Supports collaboration with 1.x clients. Uses a conservative set of runtime options. | `"1.0.0"` |
 | `"2"` | Supports collaboration with 2.x clients only. Enables newer features (e.g., runtime ID compressor for SharedTree support). | `"2.0.0"` |
 
-### Configuring Cross-Client Compatibility (Encapsulated Model)
+#### Configuring Cross-Client Compatibility (Encapsulated Model)
 
 If you construct a container runtime directly, cross-client compatibility is configured by setting `minVersionForCollab` in the `LoadContainerRuntimeParams` passed into the `loadContainerRuntime` function:
 
@@ -114,7 +123,7 @@ We recommend maintaining `minVersionForCollab` at the latest version of Fluid th
 1. Older and newer clients can collaborate with each other safely.
 2. Your application can leverage new Fluid features as soon as they become safe for cross-client collaboration.
 
-### Best Practices
+#### Best Practices
 
 We recommend following the below pattern to ensure cross-client compatibility. While these steps are especially important when upgrading major versions of Fluid, keeping your compatibility configuration up-to-date on an ongoing basis ensures you are always within a safe compatibility window.
 
@@ -125,7 +134,7 @@ We recommend following the below pattern to ensure cross-client compatibility. W
 3. Verify that the configured compatibility is within the cross-client compatibility window of the Fluid version you want to upgrade to. If it is, bump your Fluid dependencies and no further action is required. If not, wait for further saturation and return to step 1.
 4. Monitor telemetry for warnings/errors to ensure safe rollout (see [Errors and Warnings to Monitor](#errors-and-warnings-to-monitor) below). At this point any clients that are not saturated may be blocked from accessing the document.
 
-### Errors and Warnings to Monitor
+#### Errors and Warnings to Monitor
 
 The following are errors and telemetry warnings you may see during and following an upgrade. Monitoring these signals will help ensure a safe rollout. For more details on telemetry, see [Logging and telemetry](https://fluidframework.com/docs/testing/telemetry) and [Observing Client Version Distribution](./FluidCompatibilityConsiderations.md#observing-client-version-distribution).
 
