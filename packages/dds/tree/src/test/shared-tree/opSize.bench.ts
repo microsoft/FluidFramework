@@ -7,7 +7,7 @@ import { strict as assert, fail } from "node:assert";
 
 import {
 	BenchmarkType,
-	benchmarkCustom,
+	benchmarkIt,
 	isInPerformanceTestingMode,
 } from "@fluid-tools/benchmark";
 import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
@@ -26,6 +26,7 @@ import { getOrAddEmptyToMap } from "../../util/index.js";
 import {
 	createConnectedTree,
 	getOperationsStats,
+	opStatsToCollectedData,
 	registerOpListener,
 } from "./opBenchmarkUtilities.js";
 
@@ -325,16 +326,13 @@ describe("Op Size", () => {
 		for (const { description, style, extraDescription } of styles) {
 			describe(description, () => {
 				for (const { percentile, word } of sizes) {
-					benchmarkCustom({
+					benchmarkIt({
 						only: false,
 						type: BenchmarkType.Measurement,
 						title: `${BENCHMARK_NODE_COUNT} ${word} nodes in ${extraDescription}`,
-						run: async (reporter) => {
+						run: async () => {
 							benchmarkOps(style, percentile);
-							const opStats = getOperationsStats(currentTestOps);
-							for (const key of Object.keys(opStats)) {
-								reporter.addMeasurement(key, opStats[key]);
-							}
+							return opStatsToCollectedData(getOperationsStats(currentTestOps));
 						},
 					});
 				}
@@ -369,16 +367,13 @@ describe("Op Size", () => {
 							? extraDescription
 							: `1 transactions containing 1 removal of ${BENCHMARK_NODE_COUNT} nodes`
 					}`;
-					benchmarkCustom({
+					benchmarkIt({
 						only: false,
 						type: BenchmarkType.Measurement,
 						title,
-						run: async (reporter) => {
+						run: async () => {
 							benchmarkOps(style, percentile);
-							const opStats = getOperationsStats(currentTestOps);
-							for (const key of Object.keys(opStats)) {
-								reporter.addMeasurement(key, opStats[key]);
-							}
+							return opStatsToCollectedData(getOperationsStats(currentTestOps));
 						},
 					});
 				}
@@ -413,16 +408,13 @@ describe("Op Size", () => {
 					const title = `${BENCHMARK_NODE_COUNT} ${word} changes in ${extraDescription} containing ${
 						style === TransactionStyle.Individual ? "1 edit" : `${BENCHMARK_NODE_COUNT} edits`
 					}`;
-					benchmarkCustom({
+					benchmarkIt({
 						only: false,
 						type: BenchmarkType.Measurement,
 						title,
-						run: async (reporter) => {
+						run: async () => {
 							benchmarkOps(style, percentile);
-							const opStats = getOperationsStats(currentTestOps);
-							for (const key of Object.keys(opStats)) {
-								reporter.addMeasurement(key, opStats[key]);
-							}
+							return opStatsToCollectedData(getOperationsStats(currentTestOps));
 						},
 					});
 				}

@@ -198,7 +198,10 @@ extends:
     interdependencyRange: ${{ parameters.interdependencyRange }}
     packageManagerInstallCommand: 'pnpm i --frozen-lockfile'
     packageManager: pnpm
-    testCoverage: ${{ eq(variables['System.TeamProject'], 'public' ) }} # disabling code coverage for internal project since we don't use it
+    # Disabled: coverage performance regressed in Node 22 and further in Node 24, causing test timeouts
+    # that need mitigation before coverage can be reenabled.
+    # testCoverage: ${{ eq(variables['System.TeamProject'], 'public' ) }} # disabling code coverage for internal project since we don't use it
+    testCoverage: false
     reportCodeCoverageComparison: ${{ eq(variables['Build.Reason'], 'PullRequest') }}
     buildDirectory: ${{ variables.FluidFrameworkDirectory }}
     tagName: client

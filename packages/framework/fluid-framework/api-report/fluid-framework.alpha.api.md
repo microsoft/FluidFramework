@@ -145,6 +145,14 @@ export const ArrayNodeSchema: {
     readonly [Symbol.hasInstance]: (value: TreeNodeSchema) => value is ArrayNodeSchema;
 };
 
+// @alpha
+export type ArrayNodeTreeChangedDeltaOp = ArrayNodeTreeChangedRetainOp | ArrayNodeInsertOp | ArrayNodeRemoveOp;
+
+// @alpha @sealed
+export interface ArrayNodeTreeChangedRetainOp extends ArrayNodeRetainOp {
+    readonly subtreeChanged: boolean;
+}
+
 // @alpha @sealed
 export interface ArrayPlaceAnchor {
     get index(): number;
@@ -1267,6 +1275,11 @@ export interface NodeChangedDataProperties<TNode extends TreeNode = TreeNode> {
     readonly changedProperties: ReadonlySet<TNode extends WithType<string, NodeKind.Object, infer TInfo> ? string & keyof TInfo : string>;
 }
 
+// @alpha @sealed
+export interface NodeChangedDataTreeDelta {
+    readonly delta: readonly ArrayNodeTreeChangedDeltaOp[] | undefined;
+}
+
 // @public
 export type NodeFromSchema<T extends TreeNodeSchema> = T extends TreeNodeSchemaClass<string, NodeKind, infer TNode> ? TNode : T extends TreeNodeSchemaNonClass<string, NodeKind, infer TNode> ? TNode : never;
 
@@ -2177,6 +2190,7 @@ export interface TreeChangeEvents {
 // @alpha @sealed
 export interface TreeChangeEventsAlpha<TNode extends TreeNode = TreeNode> extends TreeChangeEvents {
     nodeChanged: (data: NodeChangedDataAlpha<TNode>) => void;
+    treeChanged: TNode extends WithType<string, NodeKind.Array> ? (data: NodeChangedDataTreeDelta) => void : TreeChangeEventsBeta<TNode>["treeChanged"];
 }
 
 // @beta @sealed

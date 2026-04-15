@@ -141,6 +141,9 @@ const AUTH_REMEDIATION =
 
 async function preflight(client: CopilotClient): Promise<void> {
 	try {
+		// start() must be called before ping() — the connection to the CLI server
+		// is not established until start() runs.
+		await client.start();
 		await client.ping();
 	} catch (cause) {
 		throw new Error(

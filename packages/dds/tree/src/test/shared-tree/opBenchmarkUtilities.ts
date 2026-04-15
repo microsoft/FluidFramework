@@ -5,6 +5,7 @@
 
 import { strict as assert, fail } from "node:assert";
 
+import { ValueType, type CollectedData } from "@fluid-tools/benchmark";
 import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 import {
@@ -37,16 +38,16 @@ export function createConnectedTree(): ITreePrivate {
 interface ITreeWithSubmitLocalMessage extends ITreePrivate {
 	submitLocalMessage: (content: unknown, localOpMetadata?: unknown) => void;
 }
+interface ITreeWithSubmitLocalMessage {
+	submitLocalMessage: (content: unknown, localOpMetadata?: unknown) => void;
+}
 
-/**
- * Hooks into a tree's `submitLocalMessage` to capture all submitted ops into `resultArray`.
- */
-// TODO: better way to hook this up. Needs to detect local ops exactly once.
 export function registerOpListener(
 	tree: ITreePrivate,
 	resultArray: ISequencedDocumentMessage[],
 ): void {
-	const treeInternal = tree as ITreeWithSubmitLocalMessage;
+	// TODO: better way to hook this up. Needs to detect local ops exactly once.
+	const treeInternal = tree as unknown as ITreeWithSubmitLocalMessage;
 	const oldSubmitLocalMessage = treeInternal.submitLocalMessage.bind(tree);
 	function submitLocalMessage(content: unknown, localOpMetadata?: unknown): void {
 		resultArray.push(content as ISequencedDocumentMessage);
@@ -58,24 +59,47 @@ export function registerOpListener(
 export function utf8Length(data: JsonCompatibleReadOnly): number {
 	return new TextEncoder().encode(JSON.stringify(data)).length;
 }
+export interface OperationsStats {
+	"Total Op Size (Bytes)": number;
+	"Max Op Size (Bytes)": number;
+	"Total Ops:": number;
+}
 
-/**
- * Returns total op size in bytes, max individual op size in bytes, and total op count
- * for the given array of ops.
- * @throws Errors if the input list is empty.
- */
-export function getOperationsStats(
-	operations: ISequencedDocumentMessage[],
-): Record<string, number> {
-	if (operations.length === 0) {
-		throw new Error("No operations to calculate stats for.");
-	}
+export function getOperationsStats(operations: ISequencedDocumentMessage[]): OperationsStats {
+	const lengths = operations.map((operation) =>
+		utf8Length(operation as unknown as JsonCompatibleReadOnly),
+	);
+	const totalOpBytes = lengths.reduce((a, b) => a + b, 0);
+	const maxOpSizeBytes = Math.max(...lengths);
 
-	const lengths = operations.map((op) => utf8Length(op as unknown as JsonCompatibleReadOnly));
 	return {
-		"Total Op Size (Bytes)": lengths.reduce((a, b) => a + b, 0),
+		"Total Op Size (Bytes)": totalOpBytes,
+		"Max Op Size (Bytes)": maxOpSizeBytes,
 		"Total Ops:": operations.length,
 	};
+}
+
+export function opStatsToCollectedData(opStats: OperationsStats): CollectedData {
+	return [
+		{
+			name: "Total Op Size",
+			value: opStats["Total Op Size (Bytes)"],
+			units: "bytes",
+			type: ValueType.SmallerIsBetter,
+			significance: "Primary",
+		},
+		{
+			name: "Max Op Size",
+			value: opStats["Max Op Size (Bytes)"],
+			units: "bytes",
+			type: ValueType.SmallerIsBetter,
+		},
+		{
+			name: "Total Ops",
+			value: opStats["Total Ops:"],
+			units: "count",
+		},
+	];
 }
 
 /**

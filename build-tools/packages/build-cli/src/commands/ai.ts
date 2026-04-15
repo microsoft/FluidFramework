@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { readFile } from "node:fs/promises";
+import { readFile, writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import * as readline from "node:readline/promises";
 import { getResolvedFluidRoot } from "@fluidframework/build-tools";
@@ -15,7 +15,7 @@ import chalk from "picocolors";
 import { type AliasProposal, runAiSession } from "../library/ai/copilotSession.js";
 import { BaseCommand } from "../library/commands/base.js";
 
-const FALLBACK_MODEL = "claude-haiku-4-5-20251001";
+const FALLBACK_MODEL = "claude-haiku-4.5";
 export const supportedAliases = ["claude", "dev", "copilot", "oce", "ai-reset"] as const;
 const supportedAliasSet = new Set<string>(supportedAliases);
 
@@ -46,6 +46,11 @@ export default class AiCommand extends BaseCommand<typeof AiCommand> {
 				"GitHub token for the launcher assistant. Defaults to COPILOT_GITHUB_TOKEN, GH_TOKEN, or GITHUB_TOKEN.",
 			env: "COPILOT_GITHUB_TOKEN",
 		}),
+		launchFile: Flags.file({
+			description:
+				"Write the launch command to this file instead of executing it. " +
+				"Used by shell wrappers to run the alias as a separate process.",
+		}),
 		model: Flags.string({
 			description:
 				"The AI model to use for the launcher assistant. " +
@@ -75,7 +80,13 @@ export default class AiCommand extends BaseCommand<typeof AiCommand> {
 		const prompt = promptFile.template
 			.replaceAll("{{aliasFileContent}}", aliasFile.content)
 			.replaceAll("{{gettingStartedContent}}", gettingStartedContent ?? "");
-		const githubToken = flags.githubToken ?? process.env.GH_TOKEN ?? process.env.GITHUB_TOKEN;
+		const githubToken =
+			flags.githubToken ??
+			process.env.GH_TOKEN ??
+			// Preferred over GITHUB_TOKEN because in Codespaces GITHUB_TOKEN is a
+			// repo-scoped token that lacks Copilot permissions.
+			(await resolveGhAuthToken()) ??
+			process.env.GITHUB_TOKEN;
 
 		const rl = readline.createInterface({
 			input: process.stdin,
@@ -158,14 +169,32 @@ export default class AiCommand extends BaseCommand<typeof AiCommand> {
 
 		const shellCommand = `source ${shellQuote(aliasFile.path)} && ${formattedCommand}`;
 		this.verbose(`Shell command: ${shellCommand}`);
+
 		this.log(`\nLaunching ${chalk.green(proposal.alias)}...\n`);
+
+		// When --launch-file is provided, write the command to that file and exit
+		// so a shell wrapper can run it as a separate, independent process.
+		if (flags.launchFile !== undefined) {
+			try {
+				await writeFile(flags.launchFile, shellCommand, "utf8");
+			} catch (error: unknown) {
+				const message = error instanceof Error ? error.message : String(error);
+				this.error(`Failed to write launch file ${flags.launchFile}: ${message}`, {
+					exit: 1,
+				});
+			}
+			return;
+		}
 
 		try {
 			const result = await execa("bash", ["-c", shellCommand], {
 				stdio: "inherit",
 				cwd: process.cwd(),
 			});
-			this.exit(result.exitCode ?? 0);
+			// Don't use this.exit() here — it throws an EEXIT error that would be
+			// caught by the catch block below and reported as a launch failure.
+			process.exitCode = result.exitCode ?? 0;
+			return;
 		} catch (error: unknown) {
 			const execError = error as execa.ExecaError;
 			const exitCode = execError.exitCode ?? 1;
@@ -338,6 +367,20 @@ function isUserCancellation(error: unknown): boolean {
 			error.name === "AbortError" ||
 			/cancel|canceled|cancelled|aborted|sigint/i.test(error.message))
 	);
+}
+
+/**
+ * Attempts to resolve a GitHub token from the GitHub CLI (`gh auth token`).
+ * Returns undefined if `gh` is not installed or not authenticated.
+ */
+async function resolveGhAuthToken(): Promise<string | undefined> {
+	try {
+		const { stdout } = await execa("gh", ["auth", "token"]);
+		const token = stdout.trim();
+		return token.length > 0 ? token : undefined;
+	} catch {
+		return undefined;
+	}
 }
 
 async function tryReadFile(filePath: string): Promise<string | undefined> {

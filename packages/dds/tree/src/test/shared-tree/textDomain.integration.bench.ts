@@ -7,8 +7,12 @@ import { strict as assert } from "node:assert";
 
 import {
 	BenchmarkType,
-	benchmarkCustom,
+	benchmarkIt,
 	isInPerformanceTestingMode,
+	ValueType,
+	type CollectedData,
+	type Measurement,
+	type PrimaryMeasurement,
 } from "@fluid-tools/benchmark";
 import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 
@@ -29,11 +33,66 @@ import {
 	getOperationsStats,
 	registerOpListener,
 	utf8Length,
+	type OperationsStats,
 } from "./opBenchmarkUtilities.js";
 
 const isInCorrectnessTestingMode = !isInPerformanceTestingMode;
 
-describe("TextDomain benchmarks", () => {
+/**
+ * Promotes the first "Total Op Size (Bytes)" stat encountered in a sweep to primary, and
+ * collects everything else as secondary measurements.
+ */
+function buildCollectedData(
+	primary: PrimaryMeasurement,
+	secondary: Measurement[],
+): CollectedData {
+	return [primary, ...secondary];
+}
+
+/**
+ * Returns CollectedData entries for a single config's op stats, designating the "Total Op Size"
+ * as primary if `isPrimary` is true, otherwise returning all as secondary measurements.
+ */
+function opStatsToMeasurements(
+	opStats: OperationsStats,
+	label: string,
+	isPrimary: boolean,
+): { primary?: PrimaryMeasurement; secondary: Measurement[] } {
+	const totalOpSize: Measurement = {
+		name: `Total Op Size (Bytes) [${label}]`,
+		value: opStats["Total Op Size (Bytes)"],
+		units: "bytes",
+		type: ValueType.SmallerIsBetter,
+	};
+	const secondary: Measurement[] = [
+		{
+			name: `Max Op Size (Bytes) [${label}]`,
+			value: opStats["Max Op Size (Bytes)"],
+			units: "bytes",
+			type: ValueType.SmallerIsBetter,
+		},
+		{
+			name: `Total Ops: [${label}]`,
+			value: opStats["Total Ops:"],
+			units: "count",
+		},
+	];
+
+	if (isPrimary) {
+		return {
+			primary: {
+				...totalOpSize,
+				units: "bytes",
+				type: ValueType.SmallerIsBetter,
+				significance: "Primary",
+			},
+			secondary,
+		};
+	}
+	return { secondary: [totalOpSize, ...secondary] };
+}
+
+describe.only("TextDomain benchmarks", () => {
 	configureBenchmarkHooks();
 
 	describe("TextDomain op size benchmarks", () => {
@@ -156,12 +215,15 @@ describe("TextDomain benchmarks", () => {
 		describe("Plain text", () => {
 			describe("Insert characters", () => {
 				describe(`Op size by inserted character count`, () => {
-					benchmarkCustom({
+					benchmarkIt({
 						only: false,
 						type: BenchmarkType.Measurement,
 						title: `Op size by inserted character count`,
-						run: async (reporter) => {
+						run: async () => {
 							const opSizeByCharCount: { x: number; y: number }[] = [];
+							let primary: PrimaryMeasurement | undefined;
+							const secondary: Measurement[] = [];
+
 							for (const { characterCount } of filteredCharacterCountConfigs) {
 								const localOps: ISequencedDocumentMessage[] = [];
 
@@ -182,27 +244,36 @@ describe("TextDomain benchmarks", () => {
 									x: characterCount,
 									y: opStats["Total Op Size (Bytes)"],
 								});
-								for (const statKey of Object.keys(opStats)) {
-									reporter.addMeasurement(
-										`${statKey} [characterCount=${characterCount}]`,
-										opStats[statKey],
-									);
+								const { primary: p, secondary: s } = opStatsToMeasurements(
+									opStats,
+									`characterCount=${characterCount}`,
+									primary === undefined,
+								);
+								if (p !== undefined) {
+									primary = p;
 								}
+								secondary.push(...s);
 							}
 							if (isInCorrectnessTestingMode) {
 								assertLinear({ points: opSizeByCharCount });
 							}
+
+							assert(primary !== undefined);
+							return buildCollectedData(primary, secondary);
 						},
 					});
 				});
 
 				describe(`Op size by tree depth`, () => {
-					benchmarkCustom({
+					benchmarkIt({
 						only: false,
 						type: BenchmarkType.Measurement,
 						title: `Op size by tree depth`,
-						run: async (reporter) => {
+						run: async () => {
 							const opSizeByDepth: { x: number; y: number }[] = [];
+							let primary: PrimaryMeasurement | undefined;
+							const secondary: Measurement[] = [];
+
 							for (const { depth } of filteredDepthConfigs) {
 								const localOps: ISequencedDocumentMessage[] = [];
 
@@ -220,24 +291,36 @@ describe("TextDomain benchmarks", () => {
 
 								const opStats = getOperationsStats(localOps);
 								opSizeByDepth.push({ x: depth, y: opStats["Total Op Size (Bytes)"] });
-								for (const statKey of Object.keys(opStats)) {
-									reporter.addMeasurement(`${statKey} [depth=${depth}]`, opStats[statKey]);
+								const { primary: p, secondary: s } = opStatsToMeasurements(
+									opStats,
+									`depth=${depth}`,
+									primary === undefined,
+								);
+								if (p !== undefined) {
+									primary = p;
 								}
+								secondary.push(...s);
 							}
 							if (isInCorrectnessTestingMode) {
 								assertLinear({ points: opSizeByDepth });
 							}
+
+							assert(primary !== undefined);
+							return buildCollectedData(primary, secondary);
 						},
 					});
 				});
 
 				describe(`Op size by property key length`, () => {
-					benchmarkCustom({
+					benchmarkIt({
 						only: false,
 						type: BenchmarkType.Measurement,
 						title: `Op size by property key length`,
-						run: async (reporter) => {
+						run: async () => {
 							const opSizeByKeyLength: { x: number; y: number }[] = [];
+							let primary: PrimaryMeasurement | undefined;
+							const secondary: Measurement[] = [];
+
 							for (const { keyLength } of filteredKeyConfigs) {
 								const localOps: ISequencedDocumentMessage[] = [];
 
@@ -258,16 +341,22 @@ describe("TextDomain benchmarks", () => {
 									x: keyLength,
 									y: opStats["Total Op Size (Bytes)"],
 								});
-								for (const statKey of Object.keys(opStats)) {
-									reporter.addMeasurement(
-										`${statKey} [keyLength=${keyLength}]`,
-										opStats[statKey],
-									);
+								const { primary: p, secondary: s } = opStatsToMeasurements(
+									opStats,
+									`keyLength=${keyLength}`,
+									primary === undefined,
+								);
+								if (p !== undefined) {
+									primary = p;
 								}
+								secondary.push(...s);
 							}
 							if (isInCorrectnessTestingMode) {
 								assertLinear({ points: opSizeByKeyLength });
 							}
+
+							assert(primary !== undefined);
+							return buildCollectedData(primary, secondary);
 						},
 					});
 				});
@@ -275,12 +364,15 @@ describe("TextDomain benchmarks", () => {
 
 			describe("Remove characters", () => {
 				describe(`Op size by removed character count`, () => {
-					benchmarkCustom({
+					benchmarkIt({
 						only: false,
 						type: BenchmarkType.Measurement,
 						title: `Op size by removed character count`,
-						run: async (reporter) => {
+						run: async () => {
 							const opSizes: number[] = [];
+							let primary: PrimaryMeasurement | undefined;
+							const secondary: Measurement[] = [];
+
 							for (const { characterCount } of filteredCharacterCountConfigs) {
 								const localOps: ISequencedDocumentMessage[] = [];
 
@@ -298,12 +390,15 @@ describe("TextDomain benchmarks", () => {
 
 								const opStats = getOperationsStats(localOps);
 								opSizes.push(opStats["Total Op Size (Bytes)"]);
-								for (const statKey of Object.keys(opStats)) {
-									reporter.addMeasurement(
-										`${statKey} [characterCount=${characterCount}]`,
-										opStats[statKey],
-									);
+								const { primary: p, secondary: s } = opStatsToMeasurements(
+									opStats,
+									`characterCount=${characterCount}`,
+									primary === undefined,
+								);
+								if (p !== undefined) {
+									primary = p;
 								}
+								secondary.push(...s);
 							}
 							// Remove ops encode a (start, count) range, not the removed characters,
 							// so op size should be essentially independent of character count.
@@ -314,17 +409,23 @@ describe("TextDomain benchmarks", () => {
 									maxDeltaBytes: 20,
 								});
 							}
+
+							assert(primary !== undefined);
+							return buildCollectedData(primary, secondary);
 						},
 					});
 				});
 
 				describe(`Op size by tree depth`, () => {
-					benchmarkCustom({
+					benchmarkIt({
 						only: false,
 						type: BenchmarkType.Measurement,
 						title: `Op size by tree depth`,
-						run: async (reporter) => {
+						run: async () => {
 							const opSizeByDepth: { x: number; y: number }[] = [];
+							let primary: PrimaryMeasurement | undefined;
+							const secondary: Measurement[] = [];
+
 							for (const { depth } of filteredDepthConfigs) {
 								const localOps: ISequencedDocumentMessage[] = [];
 
@@ -342,24 +443,36 @@ describe("TextDomain benchmarks", () => {
 
 								const opStats = getOperationsStats(localOps);
 								opSizeByDepth.push({ x: depth, y: opStats["Total Op Size (Bytes)"] });
-								for (const statKey of Object.keys(opStats)) {
-									reporter.addMeasurement(`${statKey} [depth=${depth}]`, opStats[statKey]);
+								const { primary: p, secondary: s } = opStatsToMeasurements(
+									opStats,
+									`depth=${depth}`,
+									primary === undefined,
+								);
+								if (p !== undefined) {
+									primary = p;
 								}
+								secondary.push(...s);
 							}
 							if (isInCorrectnessTestingMode) {
 								assertLinear({ points: opSizeByDepth });
 							}
+
+							assert(primary !== undefined);
+							return buildCollectedData(primary, secondary);
 						},
 					});
 				});
 
 				describe(`Op size by property key length`, () => {
-					benchmarkCustom({
+					benchmarkIt({
 						only: false,
 						type: BenchmarkType.Measurement,
 						title: `Op size by property key length`,
-						run: async (reporter) => {
+						run: async () => {
 							const opSizeByKeyLength: { x: number; y: number }[] = [];
+							let primary: PrimaryMeasurement | undefined;
+							const secondary: Measurement[] = [];
+
 							for (const { keyLength } of filteredKeyConfigs) {
 								const localOps: ISequencedDocumentMessage[] = [];
 
@@ -380,16 +493,22 @@ describe("TextDomain benchmarks", () => {
 									x: keyLength,
 									y: opStats["Total Op Size (Bytes)"],
 								});
-								for (const statKey of Object.keys(opStats)) {
-									reporter.addMeasurement(
-										`${statKey} [keyLength=${keyLength}]`,
-										opStats[statKey],
-									);
+								const { primary: p, secondary: s } = opStatsToMeasurements(
+									opStats,
+									`keyLength=${keyLength}`,
+									primary === undefined,
+								);
+								if (p !== undefined) {
+									primary = p;
 								}
+								secondary.push(...s);
 							}
 							if (isInCorrectnessTestingMode) {
 								assertLinear({ points: opSizeByKeyLength });
 							}
+
+							assert(primary !== undefined);
+							return buildCollectedData(primary, secondary);
 						},
 					});
 				});
@@ -431,12 +550,15 @@ describe("TextDomain benchmarks", () => {
 		const viewConfig = new TreeViewConfiguration({ schema: TextAsTree.Tree });
 
 		describe("TextAsTree.Tree node encoded size", () => {
-			benchmarkCustom({
+			benchmarkIt({
 				only: false,
 				type: BenchmarkType.Measurement,
 				title: `exportVerbose encoded size by string length`,
-				run: async (reporter) => {
+				run: async () => {
 					const encodedSizeByLength: { x: number; y: number }[] = [];
+					let primary: PrimaryMeasurement | undefined;
+					const secondary: Measurement[] = [];
+
 					for (const { stringLength } of filteredConfigs) {
 						const independentTree = createIndependentTreeAlpha({});
 						const view = independentTree.viewWith(viewConfig);
@@ -446,14 +568,30 @@ describe("TextDomain benchmarks", () => {
 						const encodedSize = utf8Length(encoded as JsonCompatibleReadOnly);
 
 						encodedSizeByLength.push({ x: stringLength, y: encodedSize });
-						reporter.addMeasurement(
-							`Encoded Size (Bytes) [stringLength=${stringLength}]`,
-							encodedSize,
-						);
+
+						if (primary === undefined) {
+							primary = {
+								name: `Encoded Size (Bytes) [stringLength=${stringLength}]`,
+								value: encodedSize,
+								units: "bytes",
+								type: ValueType.SmallerIsBetter,
+								significance: "Primary",
+							};
+						} else {
+							secondary.push({
+								name: `Encoded Size (Bytes) [stringLength=${stringLength}]`,
+								value: encodedSize,
+								units: "bytes",
+								type: ValueType.SmallerIsBetter,
+							});
+						}
 					}
 					if (isInCorrectnessTestingMode) {
 						assertLinear({ points: encodedSizeByLength });
 					}
+
+					assert(primary !== undefined);
+					return buildCollectedData(primary, secondary);
 				},
 			});
 		});
