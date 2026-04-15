@@ -164,6 +164,8 @@ export interface RebaseNodeManager {
 	 */
 	doesBaseAttachNodes(id: ChangeAtomId, count: number): RangeQueryResult<boolean>;
 
+	doesNewAttachNodes(detachId: ChangeAtomId, count: number): RangeQueryResult<boolean>;
+
 	/**
 	 * Returns the root ID the base change renames `id` to, if any.
 	 */

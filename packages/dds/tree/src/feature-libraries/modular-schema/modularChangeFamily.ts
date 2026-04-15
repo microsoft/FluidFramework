@@ -3114,6 +3114,17 @@ class RebaseNodeManagerI implements RebaseNodeManager {
 		return { start: id, value: attachEntry.value !== undefined, length: countToProcess };
 	}
 
+	public doesNewAttachNodes(detachId: ChangeAtomId, count: number): RangeQueryResult<boolean> {
+		const attachEntry = getAttachFieldForDetach(
+			this.table.newChange.crossFieldKeys,
+			this.table.newChange.rootNodes,
+			detachId,
+			count,
+		);
+
+		return { value: attachEntry.value !== undefined, length: attachEntry.length };
+	}
+
 	public getBaseRename(
 		id: ChangeAtomId,
 		count: number,

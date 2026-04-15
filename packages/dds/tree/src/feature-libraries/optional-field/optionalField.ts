@@ -86,14 +86,7 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 				inverted.childChange = attachEntry.value;
 			}
 
-			// TODO: Always use nodeDetach instead of valueReplace if not supporting older client versions.
-			if (isPin(change)) {
-				inverted.nodeDetach = detachIdForInverse;
-			} else if (inverted.valueReplace === undefined) {
-				inverted.valueReplace = { isEmpty: false, dst: detachIdForInverse };
-			} else {
-				(inverted.valueReplace as Mutable<Replace>).dst = detachIdForInverse;
-			}
+			inverted.nodeDetach = detachIdForInverse;
 		} else if (detachId === undefined && change.childChange !== undefined) {
 			// This change does not affect which node is in the field, so its child change should remain here.
 			inverted.childChange = change.childChange;
@@ -116,10 +109,14 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 		const rebasedChild = rebaseChild(newChange.childChange, overChange.childChange);
 		const overDetach = getEffectiveDetachId(overChange);
 
-		// Note that composition ignores rebase version, and so will create node detaches even when we are supporting collaboration with older clients.
-		// Therefore, in rebase version 1 we must rebase node detach as if it were a clear, matching the behavior of older clients.
+		// Clients on rebase version 1 do not support node targeting detaches in optional fields, except in the case of pins.
+		// Composition ignores rebase version, and so will create and have to handle
+		// node detaches even when we are supporting collaboration with older clients.
+		// So in rebase version 1 we must rebase node detach (unless it is part of a pin) as if it were a clear.
 		const hasNodeDetachTreatedAsClear =
-			newChange.nodeDetach !== undefined && rebaseVersion < 2 && !isPin(newChange);
+			rebaseVersion < 2 &&
+			newChange.nodeDetach !== undefined &&
+			!nodeManager.doesNewAttachNodes(newChange.nodeDetach, 1).value;
 
 		if (overDetach !== undefined) {
 			const nodeDetach = hasNodeDetachTreatedAsClear ? undefined : newChange.nodeDetach;
@@ -572,13 +569,6 @@ function invertAttachId(
 	}
 
 	return detachId ?? attachId;
-}
-
-function isPin(change: OptionalChangeset): boolean {
-	return (
-		change.nodeDetach !== undefined &&
-		areEqualChangeAtomIdOpts(change.nodeDetach, change.valueReplace?.src)
-	);
 }
 
 interface Optional

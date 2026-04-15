@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils/internal";
+import { assert, fail } from "@fluidframework/core-utils/internal";
 import type { TAnySchema } from "@sinclair/typebox";
 
 import type { IJsonCodec } from "../../codec/index.js";
 import {
-	areEqualChangeAtomIdOpts,
+	areEqualChangeAtomIds,
 	type ChangeAtomId,
 	type ChangeEncodingContext,
 	type EncodedRevisionTag,
@@ -70,23 +70,27 @@ export function makeOptionalFieldCodec(
 
 	return {
 		encode: (change: OptionalChangeset, context: FieldChangeEncodingContext) => {
-			assert(
-				change.nodeDetach === undefined ||
-					areEqualChangeAtomIdOpts(change.valueReplace?.src, change.nodeDetach),
-				"This format only supports node detach when it represents a pin",
-			);
-
 			const encoded: EncodedOptionalChangeset<TAnySchema> = {};
 
-			if (change.valueReplace !== undefined) {
-				encoded.r = {
-					e: change.valueReplace.isEmpty,
-					d: changeAtomIdCodec.encode(change.valueReplace.dst, context.baseContext),
-				};
-				if (change.valueReplace.src !== undefined) {
-					const srcRegister =
-						change.nodeDetach === undefined ? change.valueReplace.src : "self";
+			if (change.valueReplace !== undefined || change.nodeDetach !== undefined) {
+				// If the value replace is undefined, then there must be a node detach, implying that the field is not empty.
+				const isEmpty = change.valueReplace?.isEmpty ?? false;
+				const srcRegister = getSrcRegister(change, context);
 
+				// If this is a not a pin, we treat nodeDetach as if it were the clear ID.
+				const dst =
+					srcRegister === "self"
+						? (change.valueReplace?.dst ?? fail("Value replace should be defined for a pin"))
+						: (change.nodeDetach ??
+							change.valueReplace?.dst ??
+							fail("Either the value replace or node detach should be defined"));
+
+				encoded.r = {
+					e: isEmpty,
+					d: changeAtomIdCodec.encode(dst, context.baseContext),
+				};
+
+				if (srcRegister !== undefined) {
 					encoded.r.s = registerIdCodec.encode(srcRegister, context.baseContext);
 				}
 			}
@@ -184,4 +188,22 @@ export function makeOptionalFieldCodec(
 		},
 		encodedSchema: EncodedOptionalChangeset(EncodedNodeChangeset),
 	};
+}
+
+function getSrcRegister(
+	change: OptionalChangeset,
+	context: FieldChangeEncodingContext,
+): RegisterId | undefined {
+	if (change.valueReplace?.src === undefined) {
+		return undefined;
+	}
+
+	if (change.nodeDetach !== undefined) {
+		const attachId = context.getOutputRootId(change.nodeDetach, 1).value ?? change.nodeDetach;
+		if (areEqualChangeAtomIds(attachId, change.valueReplace.src)) {
+			return "self";
+		}
+	}
+
+	return change.valueReplace.src;
 }
