@@ -1,5 +1,28 @@
 # @fluid-experimental/presence
 
+## 2.93.0
+
+### Minor Changes
+
+- `getPresence` from `@fluidframework/presence` is deprecated and will be removed in a future release. ([#27014](https://github.com/microsoft/FluidFramework/pull/27014)) [5786d557446](https://github.com/microsoft/FluidFramework/commit/5786d5574462b1deb4815b0be331adc80718e8d0)
+
+  Now `getPresence` is available for import from the `fluid-framework` package.
+
+  To prepare, make changes following this pattern:
+
+  ```diff
+  -import { getPresence } from "@fluidframework/presence/beta";
+  +import { getPresence } from "fluid-framework";
+  ```
+
+  See [issue #26397](https://github.com/microsoft/FluidFramework/issues/26397) for more details.
+
+- presence API set now at public support level ([#27014](https://github.com/microsoft/FluidFramework/pull/27014)) [5786d557446](https://github.com/microsoft/FluidFramework/commit/5786d5574462b1deb4815b0be331adc80718e8d0)
+
+  All `@fluidframework/presence` APIs that had been `@beta` have been promoted to `@public` support with the exception of `getPresence` which has been relocated to `fluid-framework`. (See [issue #26397](https://github.com/microsoft/FluidFramework/issues/26397) for more `getPresence` details.)
+
+  See [Presence API overview](https://fluidframework.com/docs/build/presence) and [Presence package API details](https://fluidframework.com/docs/api/presence/) with [getPresence API](https://fluidframework.com/docs/api/fluid-framework/#getPresence) to get started.
+
 ## 2.92.0
 
 Dependency updates only.
