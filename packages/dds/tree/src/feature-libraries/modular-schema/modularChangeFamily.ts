@@ -4910,8 +4910,12 @@ function insertRootRename(
 			table.outputDetachLocations.delete(composedNewId, countProcessed);
 		}
 	} else {
-		// We've renamed the root for this output detach location, so we remove the existing entry.
-		table.outputDetachLocations.delete(oldId, countProcessed);
+		if (!areEqualChangeAtomIds(composedOldId, oldId)) {
+			// We previously had a rename from `composedOldId` to `oldId`,
+			// so there may have been an output detach location for `oldId`,
+			// We remove that entry, since the final output ID for that root is now `composedNewId`.
+			table.outputDetachLocations.delete(oldId, countProcessed);
+		}
 
 		const outputDetachLocationEntry = getOutputDetachLocation(
 			composedOldId,
@@ -4920,8 +4924,6 @@ function insertRootRename(
 		);
 		countProcessed = outputDetachLocationEntry.length;
 
-		// If there is already an output detach location for `composedNewId`,
-		// we should keep that one, since it may reflect a different, later location.
 		if (outputDetachLocationEntry.value !== undefined) {
 			table.outputDetachLocations.set(
 				composedNewId,
