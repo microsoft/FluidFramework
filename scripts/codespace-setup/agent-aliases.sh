@@ -50,7 +50,7 @@ ai-reset() {
 	repoverlay remove --all
 }
 
-fluid() {
+start() {
 	_ensure_agency || return 1
 	flub-ai "$@"
 }
