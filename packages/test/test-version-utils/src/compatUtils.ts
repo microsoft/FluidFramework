@@ -105,24 +105,6 @@ export interface ITestDataObject extends IFluidLoadable {
 	_root: ISharedDirectory;
 }
 
-/**
- * Maps DDS type string to the constructor of the current version's default factory.
- * `makeSharedObjectKind` creates a new class per `SharedObjectKind`, so
- * custom-configured variants have a different constructor than the default. The identity
- * check in {@link convertRegistry} uses this to let those factories pass through
- * without being swapped to the compat version.
- */
-const currentDefaultFactoryCtors: Map<string, unknown> = new Map();
-{
-	const currentApi = getDataRuntimeApi(pkgVersion);
-	for (const value of Object.values(currentApi.dds)) {
-		if (value?.getFactory !== undefined) {
-			const f = value.getFactory();
-			currentDefaultFactoryCtors.set(f.type, f.constructor);
-		}
-	}
-}
-
 function createGetDataStoreFactoryFunction(
 	api: ReturnType<typeof getDataRuntimeApi>,
 ): (containerOptions?: ITestContainerConfig) => IFluidDataStoreFactory {
@@ -151,20 +133,19 @@ function createGetDataStoreFactoryFunction(
 	}
 
 	function convertRegistry(registry: ChannelFactoryRegistry = []): ChannelFactoryRegistry {
+		// No conversion needed when already on the current version — preserves
+		// custom-configured factories that would otherwise be replaced with defaults.
+		if (api.version === pkgVersion) {
+			return registry;
+		}
+
 		const oldRegistry: [string | undefined, IChannelFactory][] = [];
 		for (const [key, factory] of registry) {
 			const oldFactory = registryMapping[factory.type];
 			if (oldFactory === undefined) {
 				throw Error(`Invalid or unimplemented channel factory: ${factory.type}`);
 			}
-			const currentDefaultCtor = currentDefaultFactoryCtors.get(factory.type);
-			if (currentDefaultCtor !== undefined && factory.constructor === currentDefaultCtor) {
-				// Factory matches a known current-version default — convert to compat version.
-				oldRegistry.push([key, oldFactory]);
-			} else {
-				// Custom-configured factory — preserve as-is.
-				oldRegistry.push([key, factory]);
-			}
+			oldRegistry.push([key, oldFactory]);
 		}
 		return oldRegistry;
 	}

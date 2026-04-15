@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 
-import { describeCompat } from "@fluid-private/test-version-utils";
+import { describeCompat, type CompatApis } from "@fluid-private/test-version-utils";
 import type { IContainer } from "@fluidframework/container-definitions/internal";
 import type { ISummarizer } from "@fluidframework/container-runtime/internal";
 import {
@@ -19,7 +19,6 @@ import {
 } from "@fluidframework/test-utils/internal";
 import type { ITree, TreeView } from "@fluidframework/tree";
 import {
-	configuredSharedTree,
 	FluidClientVersion,
 	ForestTypeOptimized,
 	incrementalEncodingPolicyForAllowedTypes,
@@ -52,28 +51,31 @@ class Workspace extends sf.object("Workspace", {
 
 const viewConfig = new TreeViewConfigurationAlpha({ schema: Workspace });
 
-const ConfiguredSharedTree = configuredSharedTree({
-	forest: ForestTypeOptimized,
-	treeEncodeType: TreeCompressionStrategy.CompressedIncremental,
-	minVersionForCollab: FluidClientVersion.v2_74,
-	shouldEncodeIncrementally: incrementalEncodingPolicyForAllowedTypes(viewConfig),
-});
-
 const treeId = "sharedTree";
+
+function buildTestContainerConfig(apis: CompatApis): ITestContainerConfig {
+	const { configuredSharedTree } = apis.dataRuntime.packages.tree;
+	const ConfiguredSharedTree = configuredSharedTree({
+		forest: ForestTypeOptimized,
+		treeEncodeType: TreeCompressionStrategy.CompressedIncremental,
+		minVersionForCollab: FluidClientVersion.v2_74,
+		shouldEncodeIncrementally: incrementalEncodingPolicyForAllowedTypes(viewConfig),
+	});
+	return {
+		fluidDataObjectType: DataObjectFactoryType.Test,
+		runtimeOptions: {
+			enableRuntimeIdCompressor: "on",
+		},
+		registry: [[treeId, ConfiguredSharedTree.getFactory()]],
+	};
+}
 
 describeCompat(
 	"SharedTree incremental summary handle paths",
 	"NoCompat",
-	(getTestObjectProvider) => {
+	(getTestObjectProvider, apis) => {
 		let provider: ITestObjectProvider;
-
-		const testContainerConfig: ITestContainerConfig = {
-			fluidDataObjectType: DataObjectFactoryType.Test,
-			runtimeOptions: {
-				enableRuntimeIdCompressor: "on",
-			},
-			registry: [[treeId, ConfiguredSharedTree.getFactory()]],
-		};
+		const testContainerConfig = buildTestContainerConfig(apis);
 
 		async function createContainerAndTree(): Promise<{
 			container: IContainer;
