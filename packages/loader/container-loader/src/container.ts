@@ -2013,8 +2013,7 @@ export class Container
 					this._canReconnect,
 					createChildLogger({ logger: this.subLogger, namespace: "ConnectionManager" }),
 					props,
-					disableLoadConnectionRetries ? 1 : undefined,
-					!disableLoadConnectionRetries,
+					disableLoadConnectionRetries ? 1 : undefined /* maxInitialConnectionAttempts */,
 				),
 		);
 
