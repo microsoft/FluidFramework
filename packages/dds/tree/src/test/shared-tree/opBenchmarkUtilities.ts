@@ -42,6 +42,10 @@ interface ITreeWithSubmitLocalMessage {
 	submitLocalMessage: (content: unknown, localOpMetadata?: unknown) => void;
 }
 
+/**
+ * Intercepts outgoing ops on `tree` by monkey-patching `submitLocalMessage`, appending each
+ * submitted op to `resultArray` before forwarding it normally.
+ */
 export function registerOpListener(
 	tree: ITreePrivate,
 	resultArray: ISequencedDocumentMessage[],
@@ -56,15 +60,26 @@ export function registerOpListener(
 	treeInternal.submitLocalMessage = submitLocalMessage;
 }
 
+/**
+ * Returns the UTF-8 byte length of `data` after JSON serialization.
+ */
 export function utf8Length(data: JsonCompatibleReadOnly): number {
 	return new TextEncoder().encode(JSON.stringify(data)).length;
 }
+
+/**
+ * Size statistics computed from a sequence of ops by {@link getOperationsStats}.
+ */
 export interface OperationsStats {
 	"Total Op Size (Bytes)": number;
 	"Max Op Size (Bytes)": number;
 	"Total Ops:": number;
 }
 
+/**
+ * Computes size statistics for a sequence of ops: total byte size, maximum single-op byte size,
+ * and total op count.
+ */
 export function getOperationsStats(operations: ISequencedDocumentMessage[]): OperationsStats {
 	const lengths = operations.map((operation) =>
 		utf8Length(operation as unknown as JsonCompatibleReadOnly),
@@ -79,6 +94,10 @@ export function getOperationsStats(operations: ISequencedDocumentMessage[]): Ope
 	};
 }
 
+/**
+ * Converts {@link OperationsStats} into the {@link CollectedData} format expected by `benchmarkIt`.
+ * "Total Op Size" is designated as the primary measurement.
+ */
 export function opStatsToCollectedData(opStats: OperationsStats): CollectedData {
 	return [
 		{
@@ -104,7 +123,7 @@ export function opStatsToCollectedData(opStats: OperationsStats): CollectedData 
 
 /**
  * Asserts that the given (x, y) points lie on a line, using R² ≥ `r2Threshold`.
- * Skipped when fewer than 3 points are provided, since 2 points always define a perfect line.
+ * @throws Throws an error when fewer than 3 points are provided, since 2 points always define a perfect line.
  */
 export function assertLinear({
 	points,
@@ -144,7 +163,7 @@ export function assertLinear({
 
 /**
  * Asserts that op size varies by at most `maxDeltaBytes` across all measurements.
- * Skipped when fewer than 2 values are provided (e.g. in correctness mode).
+ * @throws Throws an error when fewer than 2 values are provided.
  */
 export function assertApproximatelyConstant({
 	sizes,
