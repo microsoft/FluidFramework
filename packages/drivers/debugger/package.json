@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/debugger",
-	"version": "2.92.0",
+	"version": "2.93.0",
 	"description": "Fluid Debugger - a tool to play through history of a file",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -81,8 +81,7 @@
 		"lint": "fluid-build . --task lint",
 		"lint:fix": "fluid-build . --task eslint:fix --task format",
 		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ../../../common/build/build-common/src/cjs/package.json ./dist",
-		"typetests:gen": "flub generate typetests --dir . -v",
-		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"
+		"typetests:gen": "flub generate typetests --dir . -v"
 	},
 	"dependencies": {
 		"@fluidframework/core-utils": "workspace:~",
@@ -97,10 +96,10 @@
 		"@fluid-tools/build-cli": "catalog:buildTools",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "catalog:buildTools",
-		"@fluidframework/debugger-previous": "npm:@fluidframework/debugger@2.91.0",
+		"@fluidframework/debugger-previous": "npm:@fluidframework/debugger@2.92.0",
 		"@fluidframework/eslint-config-fluid": "catalog:eslint",
-		"@microsoft/api-extractor": "7.52.11",
-		"@types/node": "~20.19.30",
+		"@microsoft/api-extractor": "7.58.1",
+		"@types/node": "catalog:types",
 		"concurrently": "^9.2.1",
 		"copyfiles": "^2.4.1",
 		"eslint": "catalog:eslint",

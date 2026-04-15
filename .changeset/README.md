@@ -71,6 +71,11 @@ The sections are configured in [fluidBuild.config.cjs](https://github.com/micros
 > [!NOTE]
 > Client releases with breaking _legacy_ changes should use the `legacy` section, not `breaking`. The `breaking` section is reserved for major releases, which practically means server.
 
+> [!NOTE]
+> For deprecations, follow the [deprecation process](https://github.com/microsoft/FluidFramework/wiki/API-Deprecation).
+> Ensure that both the deprecation changeset and the removal changeset include a link to the GitHub tracking issue, when one exists.
+
+
 ## Changesets that apply to no packages
 
 Sometimes information needs to be in the release notes but doesn't apply to any package (e.g. when deleting a package). To accommodate this, we support changesets that omit package names:
@@ -128,7 +133,8 @@ Each package listed in a changeset will get a changelog entry with the changeset
 ### What NOT to include
 
 - Internal implementation details irrelevant to consumers
-- PR numbers or issue references (added automatically by the changelog generator)
+- PR numbers (the PR which created the changeset is automatically linked by the changelog generator)
+- Internal issue identifiers (for example, `AB#12345`) or links to non-public/internal tracking systems or websites
 - Author attribution
 - Dates (added automatically during release)
 - Changes to test-only or internal-only packages

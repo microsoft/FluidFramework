@@ -5,7 +5,6 @@
 
 "use strict";
 
-const { existsSync } = require("fs");
 const path = require("path");
 
 /**
@@ -20,8 +19,6 @@ const path = require("path");
  * Users desiring exact control over the `spec` from the CLI should delete or replace the spec from the returned config, since mocha's behavior is to extend it, not override it.
  */
 function getFluidTestMochaConfig(packageDir, additionalRequiredModules, testReportPrefix) {
-	const moduleDir = `${packageDir}/node_modules`;
-
 	const requiredModules = [
 		// General mocha setup e.g. suppresses console.log,
 		// This has to be before others (except logger) so that registerMochaTestWrapperFuncs is available
@@ -30,34 +27,9 @@ function getFluidTestMochaConfig(packageDir, additionalRequiredModules, testRepo
 		...(additionalRequiredModules ? additionalRequiredModules : []),
 	];
 
-	// mocha install node_modules directory might not be the same as the module required because of hoisting
-	// We need to give the full path in that case.
-	// TODO: this path mapping might not be necessary once we move to pnpm, since it sets up node_modules differently
-	// from what Lerna does (all dependencies of a given package show up in its own node_modules folder and just symlink
-	// to the actual location of the installed package, instead of common dependencies being hoisted to a parent
-	// node_modules folder and not being present at all in the package's own node_modules).
-	const requiredModulePaths = requiredModules.map((mod) => {
-		// Just return if it is path already
-		if (existsSync(mod) || existsSync(`${mod}.js`)) {
-			return mod;
-		}
-
-		// Try to find it in the test package's directory
-		const modulePath = path.join(moduleDir, mod);
-		if (existsSync(modulePath)) {
-			return modulePath;
-		}
-
-		// Otherwise keep it as is
-		return mod;
-	});
-
 	if (process.env.FLUID_TEST_LOGGER_PKG_SPECIFIER) {
-		const modulePath = path.join(moduleDir, process.env.FLUID_TEST_LOGGER_PKG_SPECIFIER);
 		// Inject implementation of createTestLogger, put it first before mocha-test-setup
-		if (existsSync(modulePath)) {
-			requiredModulePaths.unshift(modulePath);
-		}
+		requiredModules.unshift(process.env.FLUID_TEST_LOGGER_PKG_SPECIFIER);
 	}
 
 	let defaultSpec = "lib/test";
@@ -70,7 +42,7 @@ function getFluidTestMochaConfig(packageDir, additionalRequiredModules, testRepo
 
 	const config = {
 		"recursive": true,
-		"require": requiredModulePaths,
+		"require": requiredModules,
 		"unhandled-rejections": "strict",
 		// Fail the test run if no tests are found/run. This catches cases where test files fail to
 		// load silently (e.g. due to broken imports), which would otherwise produce a green "0 passing"
@@ -92,29 +64,56 @@ function getFluidTestMochaConfig(packageDir, additionalRequiredModules, testRepo
 		spec: process.env.MOCHA_SPEC ?? defaultSpec,
 	};
 
+	// This approach to checking for this flag is consistant with some (buyt not all) others in this file,
+	// but not with tools/benchmark/src/Configuration.ts.
+	// For now, undefined, "1" and "true" should work consistantly across all known use, and "1" is the main form we explicitly use.
+	// All these should be made to match, see AB#69054.
+	if (process.env.FLUID_TEST_PERF_MODE !== undefined) {
+		if (!process.env.SILENT_TEST_OUTPUT) {
+			console.log(`Running performance tests...`);
+		}
+
+		// Some perf tests are often quite slow, and we don't want to lose the data by hitting a timeout.
+		// This is 1000 seconds, so ~16 minutes.
+		// This can be overridden by setting FLUID_TEST_TIMEOUT to a different value if desired.
+		config["timeout"] = 1_000_000;
+
+		// If there is no filter specified, limit to benchmarks.
+		// If mocha allowed multiple filters to all be applied to further narrow results, we would do this unconditionally.
+		if (!(process.argv.includes("--fgrep") || process.argv.includes("--grep"))) {
+			config["fgrep"] = ["@Benchmark"];
+		}
+
+		config["reporter"] = "@fluid-tools/benchmark/dist/mocha/Reporter.js";
+		if (!process.argv.includes("--reporterOptions")) {
+			// If report options were not specified, default to:
+			config["reporterOptions"] = ["reportFile=./benchmarkOutput.json"];
+		}
+	} else {
+		const packageJson = require(`${packageDir}/package.json`);
+		config["reporter"] = `mocha-multi-reporters`;
+		// See https://www.npmjs.com/package/mocha-multi-reporters#cmroutput-option
+		const outputFilePrefix = testReportPrefix !== undefined ? `${testReportPrefix}-` : "";
+		if (!process.env.SILENT_TEST_OUTPUT) {
+			console.log(
+				`Writing test results relative to package to nyc/${outputFilePrefix}junit-report.xml`,
+			);
+		}
+		const suiteName =
+			testReportPrefix !== undefined
+				? `${packageJson.name} - ${testReportPrefix}`
+				: packageJson.name;
+		config["reporter-options"] = [
+			`configFile=${path.join(
+				__dirname,
+				"test-config.json",
+			)},cmrOutput=xunit+output+${outputFilePrefix}:xunit+suiteName+${suiteName}`,
+		];
+	}
+
 	if (process.env.FLUID_TEST_TIMEOUT !== undefined) {
 		config["timeout"] = process.env.FLUID_TEST_TIMEOUT;
 	}
-
-	const packageJson = require(`${packageDir}/package.json`);
-	config["reporter"] = `mocha-multi-reporters`;
-	// See https://www.npmjs.com/package/mocha-multi-reporters#cmroutput-option
-	const outputFilePrefix = testReportPrefix !== undefined ? `${testReportPrefix}-` : "";
-	if (!process.env.SILENT_TEST_OUTPUT) {
-		console.log(
-			`Writing test results relative to package to nyc/${outputFilePrefix}junit-report.xml`,
-		);
-	}
-	const suiteName =
-		testReportPrefix !== undefined
-			? `${packageJson.name} - ${testReportPrefix}`
-			: packageJson.name;
-	config["reporter-options"] = [
-		`configFile=${path.join(
-			__dirname,
-			"test-config.json",
-		)},cmrOutput=xunit+output+${outputFilePrefix}:xunit+suiteName+${suiteName}`,
-	];
 
 	if (process.env.FLUID_TEST_FORBID_ONLY !== undefined) {
 		config["forbid-only"] = true;

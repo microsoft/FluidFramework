@@ -8,6 +8,13 @@ export type { BrandedType } from "./brandedType.js";
 export type { IDisposable } from "./disposable.js";
 
 export type {
+	FluidIterable,
+	FluidIterableIterator,
+	FluidMap,
+	FluidReadonlyMap,
+} from "./fluidMap.js";
+
+export type {
 	IErrorBase,
 	IGenericError,
 	IUsageError,
@@ -30,8 +37,8 @@ export type {
 	TransformedEvent,
 } from "./events.js";
 
-export type { IProvideFluidLoadable, IProvideFluidRunnable } from "./fluidLoadable.js";
-export { IFluidLoadable, IFluidRunnable } from "./fluidLoadable.js";
+export type { IProvideFluidLoadable } from "./fluidLoadable.js";
+export { IFluidLoadable } from "./fluidLoadable.js";
 
 // TypeScript forgets the index signature when customers augment IRequestHeader if we export *.
 // So we export the explicit members as a workaround:

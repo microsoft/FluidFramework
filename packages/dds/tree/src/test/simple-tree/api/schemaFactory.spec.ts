@@ -39,7 +39,7 @@ import {
 	treeNodeApi as Tree,
 	TreeViewConfiguration,
 	type TreeArrayNode,
-	type TreeMapNode,
+	type TreeMapNodeAlpha,
 	type TreeView,
 	typeSchemaSymbol,
 	type NodeFromSchema,
@@ -1849,7 +1849,7 @@ function getKeys(node: TreeNode): string[] | number[] {
 			return keys;
 		}
 		case NodeKind.Map: {
-			return [...(node as TreeMapNode).keys()];
+			return [...(node as TreeMapNodeAlpha).keys()];
 		}
 		case NodeKind.Object: {
 			return Object.keys(node);

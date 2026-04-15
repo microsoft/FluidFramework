@@ -39,7 +39,7 @@ import { treeNodeApi } from "./treeNodeApi.js";
  * @remarks
  * This supports values which have value semantics and are compared by value, just like {@link TreeLeafValue}.
  * This allows using any tree value as a key (for example in an index tracking where those values occur in the tree).
- * @alpha
+ * @beta
  */
 export type TreeIndexKey = TreeLeafValue;
 
@@ -52,7 +52,7 @@ export type TreeIndexKey = TreeLeafValue;
  * @param getValue - given at least one {@link TreeNode}, returns an associated value
  * @param isKeyValid - function for verifying the validity of the key retrieved based on the information given by the indexer
  *
- * @alpha
+ * @beta
  */
 export function createTreeIndex<
 	TFieldSchema extends ImplicitFieldSchema,
@@ -75,7 +75,7 @@ export function createTreeIndex<
  * @param isKeyValid - function for verifying the validity of the key retrieved based on the information given by the indexer
  * @param indexableSchema - a list of all the schema types that can be indexed
  *
- * @alpha
+ * @beta
  */
 export function createTreeIndex<
 	TFieldSchema extends ImplicitFieldSchema,
@@ -99,7 +99,7 @@ export function createTreeIndex<
  * @param getValue - given at least one {@link TreeNode}, returns an associated value
  * @param isKeyValid - function for verifying the validity of the key retrieved based on the information given by the indexer
  *
- * @alpha
+ * @beta
  */
 export function createTreeIndex<
 	TFieldSchema extends ImplicitFieldSchema,
@@ -122,7 +122,7 @@ export function createTreeIndex<
  * @param isKeyValid - function for verifying the validity of the key retrieved based on the information given by the indexer
  * @param indexableSchema - a list of all the schema types that can be indexed
  *
- * @alpha
+ * @beta
  */
 export function createTreeIndex<
 	TFieldSchema extends ImplicitFieldSchema,
@@ -140,7 +140,7 @@ export function createTreeIndex<
 /**
  * Creates a {@link TreeIndex} with a specified indexer.
  *
- * @alpha
+ * @beta
  */
 export function createTreeIndex<
 	TFieldSchema extends ImplicitFieldSchema,
