@@ -11,8 +11,7 @@ import {
 	getDataRuntimeApi,
 } from "@fluid-private/test-version-utils";
 import { IContainer } from "@fluidframework/container-definitions/internal";
-// TODO:AB#6558: This should be provided based on the compatibility configuration.
-import { type ISharedMap, SharedMap } from "@fluidframework/map/internal";
+import type { ISharedMap } from "@fluidframework/map/internal";
 import { FlushMode } from "@fluidframework/runtime-definitions/internal";
 import {
 	ChannelFactoryRegistry,
@@ -30,7 +29,7 @@ describeInstallVersions(
 		requestAbsoluteVersions: [versionWithChunking],
 	},
 	/* timeoutMs: 3 minutes */ 180000,
-)("Legacy chunking", (getTestObjectProvider) => {
+)("Legacy chunking", (getTestObjectProvider, apis) => {
 	let provider: ITestObjectProvider;
 	let oldMap: ISharedMap;
 	let newMap: ISharedMap;
@@ -40,7 +39,7 @@ describeInstallVersions(
 	afterEach(async () => provider.reset());
 
 	const mapId = "map";
-	const registry: ChannelFactoryRegistry = [[mapId, SharedMap.getFactory()]];
+	const registry: ChannelFactoryRegistry = [[mapId, apis.dds.SharedMap.getFactory()]];
 	const testContainerConfig: ITestContainerConfig = {
 		fluidDataObjectType: DataObjectFactoryType.Test,
 		registry,

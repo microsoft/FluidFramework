@@ -107,6 +107,7 @@ export interface ITestDataObject extends IFluidLoadable {
 
 function createGetDataStoreFactoryFunction(
 	api: ReturnType<typeof getDataRuntimeApi>,
+	isCrossClientLoadPath = false,
 ): (containerOptions?: ITestContainerConfig) => IFluidDataStoreFactory {
 	class TestDataObject extends api.DataObject implements ITestDataObject {
 		public get _context(): IFluidDataStoreContext {
@@ -133,9 +134,10 @@ function createGetDataStoreFactoryFunction(
 	}
 
 	function convertRegistry(registry: ChannelFactoryRegistry = []): ChannelFactoryRegistry {
-		// No conversion needed when already on the current version — preserves
-		// custom-configured factories that would otherwise be replaced with defaults.
-		if (api.version === pkgVersion) {
+		// When the api already matches pkg version, the registry needs no remap; short-circuit
+		// to preserve custom-configured factories (e.g. configuredSharedTree). The cross-client
+		// load path bypasses this — its registry is from the create version and must be remapped.
+		if (!isCrossClientLoadPath && api.version === pkgVersion) {
 			return registry;
 		}
 
@@ -144,6 +146,16 @@ function createGetDataStoreFactoryFunction(
 			const oldFactory = registryMapping[factory.type];
 			if (oldFactory === undefined) {
 				throw Error(`Invalid or unimplemented channel factory: ${factory.type}`);
+			}
+			// On the cross-client load path, factories legitimately come from the create version,
+			// so a ctor mismatch is by design rather than a test author mistake.
+			if (!isCrossClientLoadPath && factory.constructor !== oldFactory.constructor) {
+				throw Error(
+					`Non-default factory for "${factory.type}" cannot run in cross-version compat ` +
+						`(api=${api.version}, pkg=${pkgVersion}) — its configuration would be silently ` +
+						`dropped. Use the default factory, or pull the factory from apis.dds (or ` +
+						`apis.dataRuntime.dds) provided by describeCompat instead of importing it directly.`,
+				);
 			}
 			oldRegistry.push([key, oldFactory]);
 		}
@@ -282,8 +294,11 @@ export async function getCompatVersionedTestObjectProviderFromApis(
 		).IFluidHandleContext.resolveHandle(request);
 
 	const getDataStoreFactoryFn = createGetDataStoreFactoryFunction(apis.dataRuntime);
+	// Cross-client load path: the registry comes from the create version's apis.dds, so
+	// factories must be remapped to the load version's equivalents even at pkgVersion.
 	const getDataStoreFactoryFnForLoading = createGetDataStoreFactoryFunction(
 		apis.dataRuntimeForLoading,
+		true,
 	);
 
 	// We want to ensure that we are testing all latest runtime features, but only if both runtimes

@@ -11,14 +11,14 @@ import {
 	describeCompat,
 	describeInstallVersions,
 	getVersionedTestObjectProvider,
+	type CompatApis,
 } from "@fluid-private/test-version-utils";
 import {
 	CompressionAlgorithms,
 	type IContainerRuntimeOptions,
 	type IContainerRuntimeOptionsInternal,
 } from "@fluidframework/container-runtime/internal";
-// TODO:AB#6558: This should be provided based on the compatibility configuration.
-import { ISharedMap, SharedMap } from "@fluidframework/map/internal";
+import type { ISharedMap } from "@fluidframework/map/internal";
 import type { MinimumVersionForCollab } from "@fluidframework/runtime-definitions/internal";
 import {
 	DataObjectFactoryType,
@@ -30,7 +30,10 @@ import {
 
 import { pkgVersion } from "../packageVersion.js";
 
-const compressionSuite = (getProvider, apis?): void => {
+const compressionSuite = (
+	getProvider: () => Promise<ITestObjectProvider>,
+	apis: Pick<CompatApis, "dds" | "containerRuntime" | "containerRuntimeForLoading">,
+): void => {
 	describe("Compression", () => {
 		let provider: ITestObjectProvider;
 		let localDataObject: ITestFluidObject;
@@ -51,7 +54,7 @@ const compressionSuite = (getProvider, apis?): void => {
 			// If the runtime version for the local or remote container runtime is 1.4.0, then we need to skip the tests as a lot of the options being tested fail in this version.
 			if (provider.type === "TestObjectProviderWithVersionedLoad") {
 				compatLocalVersionIsOld = apis.containerRuntime.version === "1.4.0";
-				compatOldRemoteVersionIsOld = apis.containerRuntimeForLoading.version === "1.4.0";
+				compatOldRemoteVersionIsOld = apis.containerRuntimeForLoading?.version === "1.4.0";
 			}
 		});
 
@@ -59,6 +62,7 @@ const compressionSuite = (getProvider, apis?): void => {
 			runtimeOptions: IContainerRuntimeOptionsInternal = defaultRuntimeOptions,
 			minVersionForCollab: MinimumVersionForCollab | undefined = undefined,
 		): Promise<void> {
+			const { SharedMap } = apis.dds;
 			const containerConfig: ITestContainerConfig = {
 				registry: [["mapKey", SharedMap.getFactory()]],
 				runtimeOptions,
@@ -178,7 +182,7 @@ describeInstallVersions(
 		requestAbsoluteVersions: [loaderWithoutCompressionField],
 	},
 	/* timeoutMs: 3 minutes */ 180000,
-)("Op Compression self-healing with old loader", (getProvider) =>
+)("Op Compression self-healing with old loader", (getProvider, apis) =>
 	compressionSuite(async () => {
 		const provider = getProvider();
 		// Ensure support for endpoint names for r11s driver. ODSP might need similar help at some point if we have
@@ -200,7 +204,7 @@ describeInstallVersions(
 			pkgVersion, // runtime version
 			pkgVersion, // datastore runtime version
 		);
-	}),
+	}, apis),
 );
 
 const generateRandomStringOfSize = (sizeInBytes: number): string =>

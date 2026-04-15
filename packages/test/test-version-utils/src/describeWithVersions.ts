@@ -13,7 +13,15 @@ import { driver, odspEndpointName, r11sEndpointName, tenantIndex } from "./compa
 import { getVersionedTestObjectProvider } from "./compatUtils.js";
 import { ITestObjectProviderOptions } from "./describeCompat.js";
 import { pkgVersion } from "./packageVersion.js";
-import { ensurePackageInstalled, InstalledPackage } from "./testApi.js";
+import {
+	type CompatApis,
+	ensurePackageInstalled,
+	getContainerRuntimeApi,
+	getDataRuntimeApi,
+	getDriverApi,
+	getLoaderApi,
+	InstalledPackage,
+} from "./testApi.js";
 
 /**
  * Interface to hold the requested versions which should be installed
@@ -69,13 +77,22 @@ const defaultTimeoutMs = 180000; // 3 minutes
 const defaultRequestedVersions: IRequestedFluidVersions = { requestRelativeVersions: -2 };
 
 function createTestSuiteWithInstalledVersion(
-	tests: (this: Mocha.Suite, provider: () => ITestObjectProvider) => void,
+	tests: (this: Mocha.Suite, provider: () => ITestObjectProvider, apis: CompatApis) => void,
 	requiredVersions: IRequestedFluidVersions = defaultRequestedVersions,
 	timeoutMs: number = defaultTimeoutMs,
 ) {
 	return function (this: Mocha.Suite) {
 		let provider: TestObjectProvider | undefined;
 		let resetAfterEach: boolean;
+		const dataRuntime = getDataRuntimeApi(pkgVersion);
+		const apis: CompatApis = {
+			mode: "None",
+			containerRuntime: getContainerRuntimeApi(pkgVersion),
+			dataRuntime,
+			dds: dataRuntime.dds,
+			driver: getDriverApi(pkgVersion),
+			loader: getLoaderApi(pkgVersion),
+		};
 		before("Create TestObjectProvider", async function () {
 			this.timeout(Math.max(defaultTimeoutMs, timeoutMs));
 
@@ -112,7 +129,7 @@ function createTestSuiteWithInstalledVersion(
 			}
 
 			return provider;
-		});
+		}, apis);
 
 		afterEach("Reset TestObjectProvider", () => {
 			if (provider === undefined) {
@@ -162,6 +179,7 @@ export type DescribeSuiteWithVersions = (
 	tests: (
 		this: Mocha.Suite,
 		provider: (options?: ITestObjectProviderOptions) => ITestObjectProvider,
+		apis: CompatApis,
 	) => void,
 ) => Mocha.Suite | void;
 
