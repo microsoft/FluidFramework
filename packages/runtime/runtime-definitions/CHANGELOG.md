@@ -4,7 +4,7 @@
 
 ### Minor Changes
 
-- minVersionForCollab is now non-optional [b6f1adf1a0](https://github.com/microsoft/FluidFramework/commit/b6f1adf1a051dac701c1ee0b3185b7557be9a0bc)
+- minVersionForCollab is now non-optional ([#25331](https://github.com/microsoft/FluidFramework/pull/25331)) [9a0d0272df](https://github.com/microsoft/FluidFramework/commit/9a0d0272df6ae1a521cff00292dd159ea3b5e270)
 
   This change is a follow-up for [pull request 25130](https://github.com/microsoft/FluidFramework/pull/25130)
   which was released as part of [2.61.0](https://github.com/microsoft/FluidFramework/releases/tag/client_v2.61.0).
