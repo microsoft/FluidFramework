@@ -260,7 +260,6 @@ extends:
                       consistentSourcesDirectory=$(consistentSourcesDirectory)
                       FluidFrameworkDirectory=$(FluidFrameworkDirectory)
                       FFPipelineHostDirectory=$(FFPipelineHostDirectory)
-                      pathToTelemetryGenerator=$(pathToTelemetryGenerator)
                       BuildReason=${{ variables['Build.Reason'] }}
 
                     Publish Parameters:
