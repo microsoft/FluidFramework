@@ -4309,6 +4309,12 @@ function rebaseRename(
 
 	count = baseAttachEntry.length;
 
+	const intermediateRenameEntry = newRoots.firstIntermediateRenames.getFirst(
+		renameEntry.start,
+		count,
+	);
+	count = intermediateRenameEntry.length;
+
 	if (baseAttachEntry.value === undefined) {
 		const baseOutputDetachLocation = base.rootNodes.outputDetachLocations.getFirst(
 			baseRenameEntry.value,
@@ -4333,6 +4339,14 @@ function rebaseRename(
 			count,
 			detachLocation,
 		);
+
+		if (intermediateRenameEntry.value !== undefined) {
+			rebasedRoots.firstIntermediateRenames.set(
+				baseRenameEntry.value,
+				count,
+				intermediateRenameEntry.value,
+			);
+		}
 	} else {
 		// The renamed nodes are attached in the input context of the rebased change.
 		// This rename represents an intention to detach these nodes.
@@ -4340,12 +4354,6 @@ function rebaseRename(
 		// so we need to ensure that field is processed.
 		const fieldId = normalizeFieldId(baseAttachEntry.value, base.nodeAliases);
 		affectedBaseFields.set(fieldIdKeyFromFieldId(fieldId), true);
-
-		const intermediateRenameEntry = newRoots.firstIntermediateRenames.getFirst(
-			renameEntry.start,
-			count,
-		);
-		count = intermediateRenameEntry.length;
 
 		if (intermediateRenameEntry.value !== undefined) {
 			// The rebased change will detach these nodes with `intermediateRenameEntry.value` as the ID.
