@@ -7,6 +7,7 @@ import { assert, unreachableCase, fail } from "@fluidframework/core-utils/intern
 
 import {
 	areEqualChangeAtomIdOpts,
+	areEqualChangeAtomIds,
 	type ChangeAtomId,
 	type RevisionMetadataSource,
 	type RevisionTag,
@@ -151,10 +152,12 @@ function composeMarksIgnoreChild(
 		// A pin is treated as a detach and attach, so we call `composeAttachDetach` in either case.
 		const baseAttachId = getAttachedRootId(baseMark);
 		const baseDetachId = baseMark.detachId ?? baseAttachId;
-		moveEffects.composeAttachDetach(baseAttachId, getMovedNodeId(newMark), baseMark.count);
 
 		switch (newMark.type) {
 			case "Detach": {
+				const newDetachId = getDetachedRootId(newMark);
+				moveEffects.composeAttachDetach(baseAttachId, newDetachId, baseMark.count);
+
 				// The attach from the base pin cancels with the new detach,
 				// and we are left with the detach portion of the base pin, plus
 				// a rename to the output cell ID of the new detach.
@@ -168,10 +171,17 @@ function composeMarksIgnoreChild(
 			}
 			case "Attach": {
 				// Note that `newMark` is a pin.
-				return {
-					...newMark,
-					detachId: baseDetachId,
-				};
+				const newAttachId = getAttachedRootId(newMark);
+				const newDetachId = newMark.detachId ?? newAttachId;
+				moveEffects.composeAttachDetach(baseAttachId, newDetachId, baseMark.count);
+				const composed = { ...newMark };
+				if (areEqualChangeAtomIds(baseDetachId, newAttachId)) {
+					delete composed.detachId;
+				} else {
+					composed.detachId = baseDetachId;
+				}
+
+				return composed;
 			}
 			default: {
 				fail("Expected a mark type which can have a cell effect");
@@ -220,9 +230,8 @@ function composeMarksIgnoreChild(
 
 		moveEffects.composeDetachAttach(detachId, attachId, baseMark.count);
 
-		// The composition has no net effect but we preserve the intention to pin the nodes here.
-		// We use the ID from the first mark.
-		const composedMark = { ...newMark, id: baseMark.id, revision: baseMark.revision };
+		// The composition has no net effect, but we preserve the intention to pin the nodes here.
+		const composedMark = { ...newMark, detachId };
 		delete composedMark.cellId;
 		return composedMark;
 	}

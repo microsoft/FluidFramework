@@ -3396,23 +3396,6 @@ class ComposeNodeManagerI implements ComposeNodeManager {
 		newAttachId: ChangeAtomId,
 		count: number,
 	): void {
-		if (!areEqualChangeAtomIds(baseDetachId, newAttachId)) {
-			// The pin will have `baseDetachId` as both its detach and attach ID.
-			// So we remove `newAttachId` unless that is equal to the pin's detach ID.
-			this.table.removedCrossFieldKeys.set(
-				{ target: NodeMoveType.Attach, ...newAttachId },
-				count,
-				true,
-			);
-		}
-
-		// We add `baseDetachId` as an attach ID.
-		this.table.addedCrossFieldKeys.set(
-			{ target: NodeMoveType.Attach, ...baseDetachId },
-			count,
-			this.fieldId,
-		);
-
 		// In the case where `baseDetachId` is part of a rollback of a move in change2,
 		// change2 will also have a detach with `baseDetachId`.
 		// We make sure that `baseDetachId` is registered in this field in the composed change.
@@ -3422,9 +3405,6 @@ class ComposeNodeManagerI implements ComposeNodeManager {
 			count,
 			this.fieldId,
 		);
-
-		// We remove any rename from `baseDetachId`, since it is now reattached with the same ID.
-		this.table.deletedRenames.set(baseDetachId, count, true);
 	}
 
 	private invalidateBaseFields(fields: FieldId[]): void {
