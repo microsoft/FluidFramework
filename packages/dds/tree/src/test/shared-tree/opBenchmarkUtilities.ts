@@ -122,43 +122,62 @@ export function opStatsToCollectedData(opStats: OperationsStats): CollectedData 
 }
 
 /**
- * Asserts that the given (x, y) points lie on a line, using R² ≥ `r2Threshold`.
- * @throws Throws an error when fewer than 3 points are provided, since 2 points always define a perfect line.
+ * Asserts that the given (x, y) points lie on a line using exact equality.
+ * @returns The slope and intercept of the line defined by the first two distinct x-values.
+ * @throws Throws when fewer than 3 points are provided, since 2 points always define a line.
+ * @throws Throws when two points share an x-value but have different y-values.
+ * @throws Throws when all points share the same x-value (no unique line can be determined).
+ * @throws Throws when any point does not lie exactly on the line defined by the first two distinct x-values.
+ * @remarks
+ * This is intended for use with deterministic data (e.g., integer byte counts produced by a fixed
+ * encoding). Because exact equality is used, any measurement noise or non-determinism will cause
+ * spurious failures — do not use this with randomly-varying measurements.
  */
 export function assertLinear({
 	points,
-	r2Threshold = 0.999,
 }: {
 	/**
-	 * The data points to test, where `x` is the axis value and `y` is the measured op size.
+	 * The data points to test, where `x` is the axis value and `y` is the measured output size.
 	 */
 	readonly points: readonly { x: number; y: number }[];
-	/**
-	 * The minimum acceptable R² value.
-	 * @defaultValue 0.999
-	 */
-	readonly r2Threshold?: number;
-}): void {
+}): { slope: number; intercept: number } {
 	if (points.length <= 2) {
 		fail("Expected at least 3 data points to assert linear relationship.");
 	}
-	const n = points.length;
-	const meanX = points.reduce((s, p) => s + p.x, 0) / n;
-	const meanY = points.reduce((s, p) => s + p.y, 0) / n;
-	const ssXX = points.reduce((s, p) => s + (p.x - meanX) ** 2, 0);
-	const ssXY = points.reduce((s, p) => s + (p.x - meanX) * (p.y - meanY), 0);
-	const ssYY = points.reduce((s, p) => s + (p.y - meanY) ** 2, 0);
-	if (ssYY === 0) {
-		return; // All y values equal — trivially linear.
+
+	// Collect unique (x, y) pairs, asserting same-x points are consistent.
+	const yByX = new Map<number, number>();
+	for (const { x, y } of points) {
+		const existing = yByX.get(x);
+		if (existing === undefined) {
+			yByX.set(x, y);
+		} else {
+			assert(existing === y, `Ambiguous data: x=${x} maps to both y=${existing} and y=${y}.`);
+		}
 	}
-	const slope = ssXY / ssXX;
-	const intercept = meanY - slope * meanX;
-	const ssRes = points.reduce((s, p) => s + (p.y - (intercept + slope * p.x)) ** 2, 0);
-	const r2 = 1 - ssRes / ssYY;
-	assert(
-		r2 >= r2Threshold,
-		`Expected a linear relationship between axis and op size (R² ≥ ${r2Threshold}), got R² = ${r2.toFixed(6)}.`,
-	);
+
+	if (yByX.size < 2) {
+		fail("Expected at least 2 distinct x-values to determine a line.");
+	}
+
+	// Form the reference line from the first two distinct-x points.
+	const uniquePoints = [...yByX.entries()];
+	const [x0, y0] = uniquePoints[0];
+	const [x1, y1] = uniquePoints[1];
+	const dx = x1 - x0;
+	const dy = y1 - y0;
+
+	// Assert each remaining unique point lies exactly on the line.
+	// Rearranging y - y0 = (dy/dx)(x - x0) to avoid floating-point division:
+	// (y - y0) * dx === dy * (x - x0)
+	for (const [x, y] of uniquePoints.slice(2)) {
+		assert(
+			(y - y0) * dx === dy * (x - x0),
+			`Expected (x=${x}, y=${y}) to lie exactly on the line through (${x0}, ${y0}) and (${x1}, ${y1}).`,
+		);
+	}
+
+	return { slope: dy / dx, intercept: y0 - (dy / dx) * x0 };
 }
 
 /**
