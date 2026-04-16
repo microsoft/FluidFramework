@@ -60,16 +60,22 @@ jobs:
           echo "Generated diff: $(wc -l < pr-diff.patch) lines"
 
       # ── Prepare the prompt ──
+      # Read the prompt from the BASE branch, not the PR HEAD, to prevent
+      # prompt injection via malicious changes to prompt files in the PR.
       - name: Prepare reviewer prompt
         id: prompt
         env:
           REVIEWER: ${{ matrix.reviewer }}
           REPO: ${{ github.repository }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
+          BASE_REF: ${{ github.base_ref }}
         run: |
-          PROMPT_FILE=".github/prompts/reviewers/${REVIEWER}.md"
-          if [ ! -f "$PROMPT_FILE" ]; then
-            echo "::error::Prompt file not found: $PROMPT_FILE"
+          PROMPT_PATH=".github/prompts/reviewers/${REVIEWER}.md"
+          PROMPT_FILE="/tmp/prompt-${REVIEWER}.md"
+
+          # Extract the prompt from the base branch, not the PR checkout
+          if ! git show "origin/${BASE_REF}:${PROMPT_PATH}" > "$PROMPT_FILE" 2>/dev/null; then
+            echo "::error::Prompt file not found on base branch: ${PROMPT_PATH}"
             exit 1
           fi
 
@@ -174,6 +180,7 @@ jobs:
           CRITICAL_COUNT=0
           HIGH_COUNT=0
           MEDIUM_COUNT=0
+          UNIQUE_IDX=0
 
           # Process CRITICAL first, then HIGH, then MEDIUM (highest severity wins on de-dup)
           for severity in CRITICAL HIGH MEDIUM; do
@@ -184,8 +191,9 @@ jobs:
               area=$(echo "$line" | sed 's/.*|AREA://')
               finding=$(echo "$line" | sed 's/|AREA:.*//')
 
-              # Extract file:line for de-duplication
-              file_line=$(echo "$finding" | grep -oP '(?<=\] )\S+:\d+' || echo "unknown")
+              # Extract file:line for de-duplication; use a unique key if no file:line present
+              UNIQUE_IDX=$((UNIQUE_IDX + 1))
+              file_line=$(echo "$finding" | grep -oP '(?<=\] )\S+:\d+' || echo "noloc-${UNIQUE_IDX}")
 
               # Skip duplicates (same file:line already reported at equal or higher severity)
               if [ -n "${SEEN_LOCATIONS[$file_line]+x}" ]; then
@@ -214,7 +222,7 @@ jobs:
               # Use awk to split on ' — ' delimiter (handles descriptions containing other chars)
               file_ref=$(echo "$finding" | sed 's/^\[.*\] //' | awk -F' — ' '{print $1}')
               description=$(echo "$finding" | awk -F' — ' '{print $2}')
-              fix=$(echo "$finding" | awk -F' — ' '{print $3}' | head -c 200)
+              fix=$(echo "$finding" | awk -F' — ' '{print $3}' | cut -c 1-200)
 
               TABLE_ROWS="${TABLE_ROWS}| ${sev_emoji} | ${sev_label} | ${area} | \`${file_ref}\` | ${description} | ${fix} |"$'\n'
             done < <(echo "$ALL_FINDINGS" | grep "^\[${severity}\]" || true)
