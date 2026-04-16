@@ -3,6 +3,9 @@
  * Licensed under the MIT License.
  */
 
+import { existsSync, rmSync } from "node:fs";
+import * as nodePath from "node:path";
+
 import * as sequenceDeprecated from "@fluid-experimental/sequence-deprecated";
 import { SparseMatrix } from "@fluid-experimental/sequence-deprecated";
 import { DriverApi } from "@fluid-private/test-drivers";
@@ -44,77 +47,24 @@ import * as semver from "semver";
 export type _fakeUsage = ISharedObjectKind<unknown>;
 
 import { CompatKind } from "./compatOptions.js";
+import {
+	containerRuntimePackageEntries,
+	dataRuntimePackageEntries,
+	driverPackageEntries,
+	loaderPackageEntries,
+	versionHasMovedSparsedMatrix,
+} from "./compatPackageList.js";
+export type { PackageToInstall } from "./compatPackageList.js";
 import { pkgVersion } from "./packageVersion.js";
 import {
 	checkInstalled,
-	ensureInstalled,
+	ensureWorkspaceInstalled,
+	fullWorkspaceDir,
 	getRequestedVersion,
 	loadPackage,
-	versionHasMovedSparsedMatrix,
+	standardWorkspaceDir,
+	tryReadVersionsManifest,
 } from "./versionUtils.js";
-
-/**
- * The details of a package to install for compatibility testing.
- */
-export interface PackageToInstall {
-	/** The name of the package to install. */
-	pkgName: string;
-	/**
-	 * The minimum version where the package should be installed.
-	 * If the requested version is lower than this, the package will not be installed. This enables certain level of
-	 * compatibility testing for packages which were not yet part of the Fluid Framework at certain versions.
-	 * Tests are responsible to not use APIs from packages which are not installed for the requested version.
-	 * For example, the "\@fluidframework/tree" package was only introduced in version 2.0.0, so for testing
-	 * versions prior to that, the package will not be installed and the test should skip testing these versions.
-	 */
-	minVersion: string;
-}
-
-// List of driver API packages to install.
-const driverPackageEntries: PackageToInstall[] = [
-	{ pkgName: "@fluidframework/local-driver", minVersion: "0.56.0" },
-	{ pkgName: "@fluidframework/odsp-driver", minVersion: "0.56.0" },
-	{ pkgName: "@fluidframework/routerlicious-driver", minVersion: "0.56.0" },
-];
-
-// List of loader API packages to install.
-const loaderPackageEntries: PackageToInstall[] = [
-	{ pkgName: "@fluidframework/container-loader", minVersion: "0.56.0" },
-];
-
-// List of container runtime API packages to install.
-const containerRuntimePackageEntries: PackageToInstall[] = [
-	{ pkgName: "@fluidframework/container-runtime", minVersion: "0.56.0" },
-	{ pkgName: "@fluidframework/aqueduct", minVersion: "0.56.0" },
-];
-
-// List of data runtime API packages to install.
-const dataRuntimePackageEntries: PackageToInstall[] = [
-	{ pkgName: "@fluidframework/aqueduct", minVersion: "0.56.0" },
-	{ pkgName: "@fluidframework/datastore", minVersion: "0.56.0" },
-	{ pkgName: "@fluidframework/test-utils", minVersion: "0.56.0" },
-	{ pkgName: "@fluidframework/cell", minVersion: "0.56.0" },
-	{ pkgName: "@fluidframework/counter", minVersion: "0.56.0" },
-	{ pkgName: "@fluidframework/map", minVersion: "0.56.0" },
-	{ pkgName: "@fluidframework/matrix", minVersion: "0.56.0" },
-	{ pkgName: "@fluidframework/ordered-collection", minVersion: "0.56.0" },
-	{ pkgName: "@fluidframework/register-collection", minVersion: "0.56.0" },
-	{ pkgName: "@fluidframework/sequence", minVersion: "0.56.0" },
-	{ pkgName: "@fluidframework/agent-scheduler", minVersion: "0.56.0" },
-	{ pkgName: "@fluidframework/tree", minVersion: "2.0.0" },
-];
-
-/**
- * The list of all the packages to install for compatibility testing.
- * If this list is changed, the {@link revision} in `versionUtils.ts`should be incremented to force re-installation. If
- * not, the pipelines that run the compatibility tests may fail as the packages may be fetched from the cache.
- */
-const packageListToInstall: PackageToInstall[] = [
-	...driverPackageEntries,
-	...loaderPackageEntries,
-	...containerRuntimePackageEntries,
-	...dataRuntimePackageEntries,
-];
 
 /**
  * @internal
@@ -125,7 +75,11 @@ export interface InstalledPackage {
 }
 
 /**
- * Ensures a specific package version is installed and returns its installation information.
+ * Ensures the workspace for the requested version is installed and all layer APIs are loaded.
+ *
+ * Installation uses `pnpm install --frozen-lockfile` against the committed lockfile in
+ * `compat-workspaces/standard/` or `compat-workspaces/full/` as appropriate. No registry
+ * queries are made at test time when the versions manifest is present.
  *
  * @internal
  */
@@ -134,22 +88,67 @@ export const ensurePackageInstalled = async (
 	version: number | string,
 	force: boolean,
 ): Promise<InstalledPackage | undefined> => {
-	const pkg = await ensureInstalled(
-		getRequestedVersion(baseVersion, version),
-		packageListToInstall,
-		force,
-	);
+	const requestedStr = getRequestedVersion(baseVersion, version);
+	if (semver.satisfies(pkgVersion, requestedStr)) {
+		return undefined;
+	}
+
+	// Determine which workspace contains this version and install it if needed.
+	await ensureCompatWorkspaceForVersion(requestedStr, force);
+
 	await Promise.all([
 		loadContainerRuntime(baseVersion, version),
 		loadDataRuntime(baseVersion, version),
 		loadLoader(baseVersion, version),
 		loadDriver(baseVersion, version),
 	]);
-	return pkg;
+
+	const { version: resolvedVersion, modulePath } = checkInstalled(requestedStr);
+	return { version: resolvedVersion, modulePath };
 };
 
-// This module supports synchronous functions to import packages once their install has been completed.
-// Since dynamic import is async, we thus cache the modules based on their package version.
+/**
+ * Installs the workspace that contains `requestedStr`. Determines the correct workspace (standard
+ * or full) by checking the versions manifest and whether the version directory exists.
+ */
+async function ensureCompatWorkspaceForVersion(
+	requestedStr: string,
+	force: boolean,
+): Promise<void> {
+	const manifest = tryReadVersionsManifest();
+
+	// Determine tier: if the version is in the full array (not in standard), use full workspace
+	let workspaceDir = standardWorkspaceDir;
+	if (manifest !== undefined) {
+		const standardVersions = new Set([
+			manifest.standard["n-1"],
+			manifest.standard["n-2"],
+			manifest.standard.ocv,
+			...(manifest.standard["cross-client"] ?? []),
+		]);
+		if (!standardVersions.has(requestedStr) && manifest.full.includes(requestedStr)) {
+			workspaceDir = fullWorkspaceDir;
+		}
+	} else {
+		// No manifest: check which workspace directory contains the version dir, fall back to standard
+		const { version } = checkInstalled(requestedStr);
+		const inFull = !existsSync(nodePath.join(standardWorkspaceDir, version));
+		if (inFull) workspaceDir = fullWorkspaceDir;
+	}
+
+	if (force) {
+		// Remove node_modules to force reinstall
+		const nodeModulesPath = nodePath.join(workspaceDir, "node_modules");
+		if (existsSync(nodeModulesPath)) {
+			rmSync(nodeModulesPath, { recursive: true });
+		}
+	}
+
+	await ensureWorkspaceInstalled(workspaceDir);
+}
+
+// This module supports synchronous functions to import packages once their install has been
+// completed. Since dynamic import is async, we cache the modules by package version.
 const loaderCache = new Map<string, typeof LoaderApi>();
 const containerRuntimeCache = new Map<string, typeof ContainerRuntimeApi>();
 const dataRuntimeCache = new Map<string, typeof DataRuntimeApi>();
@@ -231,17 +230,12 @@ export const DataRuntimeApi = {
 
 /**
  * Helper to load a package if the requested version is compatible.
- * @param pkgEntry - The package entry to check and load.
- * @param versionToInstall - The version of the package to install.
- * @param modulePath - The path to the module.
- * @returns The loaded package or undefined if not compatible.
  */
 async function loadIfCompatible(
-	pkgEntry: PackageToInstall,
+	pkgEntry: { pkgName: string; minVersion: string },
 	versionToInstall: string,
 	modulePath: string,
 ): Promise<any> {
-	// Check if the requested version satisfies the minVersion requirement
 	if (semver.gte(versionToInstall, pkgEntry.minVersion)) {
 		return loadPackage(modulePath, pkgEntry.pkgName);
 	}
@@ -250,17 +244,13 @@ async function loadIfCompatible(
 
 /**
  * Helper to load multiple packages if their requested versions are compatible.
- * @param packageEntries - The package entries to check and load.
- * @param version - The version of the packages to install.
- * @param modulePath - The path to the module.
- * @returns An object containing the loaded packages.
  */
 async function loadPackages(
-	packageEntries: PackageToInstall[],
+	packageEntries: { pkgName: string; minVersion: string }[],
 	version: string,
 	modulePath: string,
 ): Promise<any> {
-	const loadedPackages = {};
+	const loadedPackages: Record<string, any> = {};
 	for (const pkgEntry of packageEntries) {
 		loadedPackages[pkgEntry.pkgName] = await loadIfCompatible(pkgEntry, version, modulePath);
 	}
@@ -419,9 +409,8 @@ async function loadDriver(baseVersion: string, requested?: number | string): Pro
 			loadedPackages["@fluidframework/routerlicious-driver"],
 		];
 
-		// Load the "@fluidframework/server-local-server" package directly without checking for version compatibility.
-		// This is because the server packages have different versions that client packages and the versions requested
-		// do not apply to server packages.
+		// Load the "@fluidframework/server-local-server" package directly without checking for
+		// version compatibility. Server packages have different versioning from client packages.
 		const { LocalDeltaConnectionServer } = await loadPackage(
 			modulePath,
 			"@fluidframework/server-local-server",
@@ -464,12 +453,6 @@ function throwNotFound(layer: string, version: string): never {
 /**
  * Used to fetch a given version of the Loader API.
  *
- * @param baseVersion - The version of the package prior to being adjusted.
- * @param requested - How many major versions to go back from the baseVersion. For example, -1 would indicate we want
- * to use the most recent major release prior to the baseVersion. 0 would indicate we want to use the baseVersion.
- * @param adjustMajorPublic - Indicates if we should ignore internal versions when adjusting the baseVersion. For example,
- * if `baseVersion` is 2.0.0-internal.7.4.0 and `requested` is -1, then we would return ^1.0.
- *
  * @internal
  */
 export function getLoaderApi(requestedStr: string): typeof LoaderApi {
@@ -486,12 +469,6 @@ export function getLoaderApi(requestedStr: string): typeof LoaderApi {
 /**
  * Used to fetch a given version of the Container Runtime API.
  *
- * @param baseVersion - The version of the package prior to being adjusted.
- * @param requested - How many major versions to go back from the baseVersion. For example, -1 would indicate we want
- * to use the most recent major release prior to the baseVersion. 0 would indicate we want to use the baseVersion.
- * @param adjustMajorPublic - Indicates if we should ignore internal versions when adjusting the baseVersion. For example,
- * if `baseVersion` is 2.0.0-internal.7.4.0 and `requested` is -1, then we would return ^1.0.
- *
  * @internal
  */
 export function getContainerRuntimeApi(requestedStr: string): typeof ContainerRuntimeApi {
@@ -504,12 +481,6 @@ export function getContainerRuntimeApi(requestedStr: string): typeof ContainerRu
 
 /**
  * Used to fetch a given version of the Data Runtime API.
- *
- * @param baseVersion - The version of the package prior to being adjusted.
- * @param requested - How many major versions to go back from the baseVersion. For example, -1 would indicate we want
- * to use the most recent major release prior to the baseVersion. 0 would indicate we want to use the baseVersion.
- * @param adjustMajorPublic - Indicates if we should ignore internal versions when adjusting the baseVersion. For example,
- * if `baseVersion` is 2.0.0-internal.7.4.0 and `requested` is -1, then we would return ^1.0.
  *
  * @internal
  */
@@ -524,12 +495,6 @@ export function getDataRuntimeApi(requestedStr: string): typeof DataRuntimeApi {
 /**
  * Used to fetch a given version of the Driver API.
  *
- * @param baseVersion - The version of the package prior to being adjusted.
- * @param requested - How many major versions to go back from the baseVersion. For example, -1 would indicate we want
- * to use the most recent major release prior to the baseVersion. 0 would indicate we want to use the baseVersion.
- * @param adjustMajorPublic - Indicates if we should ignore internal versions when adjusting the baseVersion. For example,
- * if `baseVersion` is 2.0.0-internal.7.4.0 and `requested` is -1, then we would return ^1.0.
- *
  * @internal
  */
 export function getDriverApi(requestedStr: string): typeof DriverApi {
@@ -543,10 +508,7 @@ export function getDriverApi(requestedStr: string): typeof DriverApi {
 }
 
 /**
- * The compatibility mode that a test is running in. That can be useful in scenarios where the tests
- * want to alter their behavior based on the compat mode.
- * For example, some tests may want to run in "LayerCompat" mode but skip running in "CrossClientCompat" mode
- * because they are the feature they are testing was not available in versions that cross client compat requires.
+ * The compatibility mode that a test is running in.
  *
  * @internal
  */
@@ -554,9 +516,6 @@ export type CompatMode = "None" | "LayerCompat" | "CrossClientCompat";
 
 /**
  * Returns the CompatMode for a given CompatKind.
- * @param kind - The CompatKind to convert.
- * @returns The corresponding CompatMode.
- *
  * @internal
  */
 export function getCompatModeFromKind(kind: CompatKind): CompatMode {

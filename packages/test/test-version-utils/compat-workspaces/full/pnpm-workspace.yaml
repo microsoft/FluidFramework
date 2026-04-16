@@ -1,0 +1,9 @@
+# This file is scaffolded by scripts/updateCompatVersions.ts.
+# The security settings below are intentional — do not relax them.
+minimumReleaseAge: 1440
+
+# See: https://github.com/orgs/pnpm/discussions/11084
+trustPolicy: off
+
+packages:
+  - '*'

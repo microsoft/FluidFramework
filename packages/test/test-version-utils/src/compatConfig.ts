@@ -24,7 +24,13 @@ import {
 } from "./compatOptions.js";
 import { pkgVersion } from "./packageVersion.js";
 import { ensurePackageInstalled } from "./testApi.js";
-import { getRequestedVersion, resolveVersion } from "./versionUtils.js";
+import {
+	ensureWorkspaceInstalled,
+	fullWorkspaceDir,
+	getRequestedVersion,
+	resolveVersion,
+	standardWorkspaceDir,
+} from "./versionUtils.js";
 
 /**
  * Represents a previous major release of a package based on the provided delta. For example, if the base version is 2.X and
@@ -505,12 +511,26 @@ export const configList = new Lazy<readonly CompatConfig[]>(() => {
  * @internal
  */
 export async function mochaGlobalSetup(): Promise<void> {
-	const versions = new Set(configList.value.map((value) => value.compatVersion));
-	if (versions.size === 0) {
+	const configs = configList.value;
+	if (configs.length === 0) {
 		return;
 	}
 
-	// Make sure we wait for all before returning, even if one of them has error.
+	// Pre-install the required compat workspaces before loading any packages.
+	// Installing upfront (rather than lazily inside ensurePackageInstalled) means all parallel
+	// test workers see the workspace as installed and skip the install step themselves.
+	const needsFull = configs.some(
+		(config) => typeof config.compatVersion === "number" && config.compatVersion <= -3,
+	);
+
+	const workspaceInstalls: Promise<void>[] = [ensureWorkspaceInstalled(standardWorkspaceDir)];
+	if (needsFull) {
+		workspaceInstalls.push(ensureWorkspaceInstalled(fullWorkspaceDir));
+	}
+	await Promise.all(workspaceInstalls);
+
+	// Now load all versioned packages concurrently.
+	const versions = new Set(configs.map((value) => value.compatVersion));
 	const installP = Array.from(versions.values()).map(async (value) => {
 		const version = testBaseVersion(value);
 		return ensurePackageInstalled(version, value, reinstall);
