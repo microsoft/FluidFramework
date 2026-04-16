@@ -118,7 +118,7 @@ describe("mocha integration", () => {
 			},
 		);
 
-		// The table in stdout and the message in std error should both have the test name and message:
+		// The table in stdout and the message in stderr should both have the test name and message:
 		assert.match(stderr, /Timeout of 1ms exceeded/);
 		assert.match(stdout, /Timeout of 1ms exceeded/);
 
