@@ -31,6 +31,16 @@ export type Arg<T extends TypeFactoryType = TypeFactoryType> = readonly [
 ];
 
 /**
+ * A utility type that extracts the argument types from a function definition.
+ * @alpha
+ */
+export type ArgsTuple<T extends readonly Arg[]> = T extends readonly [infer Single extends Arg]
+	? [Single[1]]
+	: T extends readonly [infer Head extends Arg, ...infer Tail extends readonly Arg[]]
+		? [Head[1], ...ArgsTuple<Tail>]
+		: never;
+
+/**
  * A function definition interface that describes the structure of a function.
  * @alpha
  */
@@ -86,6 +96,15 @@ export interface ExposedMethods {
 	 * Expose a method with type factory types.
 	 */
 	exposeMethod<
+		const K extends string & keyof MethodKeys<InstanceType<S>>,
+		S extends Ctor & IExposedMethods,
+		Z extends FunctionDef<readonly Arg[], TypeFactoryType, TypeFactoryType | null>,
+	>(constructor: S, methodName: K, tfFunction: Z): void;
+
+	/**
+	 * Expose a method with type factory types.
+	 */
+	expose<
 		const K extends string & keyof MethodKeys<InstanceType<S>>,
 		S extends Ctor & IExposedMethods,
 		Z extends FunctionDef<readonly Arg[], TypeFactoryType, TypeFactoryType | null>,

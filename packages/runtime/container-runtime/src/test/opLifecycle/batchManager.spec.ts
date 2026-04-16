@@ -12,12 +12,17 @@ import {
 } from "../../messageTypes.js";
 import type { IBatchMetadata } from "../../metadata.js";
 import {
+	addBatchMetadata,
 	BatchManager,
 	estimateSocketSize,
 	generateBatchId,
 	localBatchToOutboundBatch,
 } from "../../opLifecycle/index.js";
-import type { IBatchManagerOptions, LocalBatchMessage } from "../../opLifecycle/index.js";
+import type {
+	IBatchManagerOptions,
+	LocalBatch,
+	LocalBatchMessage,
+} from "../../opLifecycle/index.js";
 
 // Make a mock op with distinguishable contents
 function op(data: string = "Some Data"): LocalContainerRuntimeMessage {
@@ -47,49 +52,39 @@ const smallMessage = (size: number = 100): LocalBatchMessage => {
 };
 
 describe("BatchManager", () => {
-	const defaultOptions: IBatchManagerOptions = {
-		canRebase: true,
-	};
+	const defaultOptions: IBatchManagerOptions = { disableGroupedBatching: false };
 
-	for (const includeBatchId of [true, false])
-		it(`Batch metadata is set correctly [${includeBatchId ? "with" : "without"} batchId]`, () => {
-			const batchManager = new BatchManager(defaultOptions);
-			const batchId = includeBatchId ? "BATCH_ID" : undefined;
-			batchManager.push(
-				{ runtimeOp: op(), referenceSequenceNumber: 0 },
-				/* reentrant */ false,
-			);
-			batchManager.push(
-				{ runtimeOp: op(), referenceSequenceNumber: 1 },
-				/* reentrant */ false,
-			);
-			batchManager.push(
-				{ runtimeOp: op(), referenceSequenceNumber: 2 },
-				/* reentrant */ false,
-			);
-
-			const batch = batchManager.popBatch(batchId);
-			assert.deepEqual(
-				batch.messages.map((m) => m.metadata as IBatchMetadata),
-				[
-					{ batch: true, ...(includeBatchId ? { batchId } : undefined) }, // batchId propertly should be omitted (v. set to undefined) if not provided
-					undefined, // metadata not touched for intermediate messages
-					{ batch: false },
-				],
-			);
-
-			batchManager.push(
-				{ runtimeOp: op(), referenceSequenceNumber: 0 },
-				/* reentrant */ false,
-			);
-			const singleOpBatch = batchManager.popBatch(batchId);
-			assert.deepEqual(
-				singleOpBatch.messages.map((m) => m.metadata as IBatchMetadata),
-				[
-					includeBatchId ? { batchId } : undefined, // batchId propertly should be omitted (v. set to undefined) if not provided
-				],
-			);
+	describe("addBatchMetadata", () => {
+		const makeLocalBatch = (...ops: string[]): LocalBatch => ({
+			messages: ops.map((data, i) => ({ runtimeOp: op(data), referenceSequenceNumber: i })),
+			referenceSequenceNumber: ops.length - 1,
 		});
+
+		for (const includeBatchId of [true, false])
+			it(`sets metadata correctly [${includeBatchId ? "with" : "without"} batchId]`, () => {
+				const batchId = includeBatchId ? "BATCH_ID" : undefined;
+
+				// Multi-message batch: first gets batch:true, last gets batch:false, middle untouched
+				const batch = addBatchMetadata(makeLocalBatch("a", "b", "c"), batchId);
+				assert.deepEqual(
+					batch.messages.map((m) => m.metadata as IBatchMetadata),
+					[
+						{ batch: true, ...(includeBatchId ? { batchId } : undefined) }, // batchId should be omitted (not set to undefined) if not provided
+						undefined, // metadata not touched for intermediate messages
+						{ batch: false },
+					],
+				);
+
+				// Single-message batch: no batch flag, only batchId if provided
+				const singleOpBatch = addBatchMetadata(makeLocalBatch("a"), batchId);
+				assert.deepEqual(
+					singleOpBatch.messages.map((m) => m.metadata as IBatchMetadata),
+					[
+						includeBatchId ? { batchId } : undefined, // batchId should be omitted (not set to undefined) if not provided
+					],
+				);
+			});
+	});
 
 	it("BatchId Format", () => {
 		const clientId = "3627a2a9-963f-4e3b-a4d2-a31b1267ef29";
@@ -129,6 +124,17 @@ describe("BatchManager", () => {
 		assert.equal(
 			estimateSocketSize(localBatchToOutboundBatch({ messages, referenceSequenceNumber: 0 })),
 			2400,
+		);
+	});
+
+	it("disableGroupedBatching is accessible via options", () => {
+		assert.equal(
+			new BatchManager({ disableGroupedBatching: true }).options.disableGroupedBatching,
+			true,
+		);
+		assert.equal(
+			new BatchManager({ disableGroupedBatching: false }).options.disableGroupedBatching,
+			false,
 		);
 	});
 

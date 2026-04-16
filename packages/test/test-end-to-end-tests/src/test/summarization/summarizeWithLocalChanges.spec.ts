@@ -498,7 +498,7 @@ describeCompat(
 		).timeout(standardTimeout * 2);
 
 		itExpects(
-			"All heuristics summary attempts should fail when ops are sent during summarize",
+			"Final summary attempt should succeed despite pending ops when ops are sent during summarize",
 			[
 				{
 					eventName: "fluid:telemetry:Summarizer:Running:Summarize_cancel",
@@ -529,101 +529,13 @@ describeCompat(
 					error: "PendingOpsWhileSummarizing",
 				},
 				{
-					eventName: "fluid:telemetry:Summarizer:Running:Summarize_cancel",
-					clientType: "noninteractive/summarizer",
-					summaryAttempts: 5,
-					finalAttempt: true,
-					error: "PendingOpsWhileSummarizing",
-				},
-				{
-					eventName: "fluid:telemetry:Summarizer:Running:SummarizeFailed",
-					clientType: "noninteractive/summarizer",
-					error: "PendingOpsWhileSummarizing",
-				},
-			],
-			async () => {
-				const container = await createContainer(provider, false /* disableSummary */);
-				await waitForContainerConnection(container);
-
-				const rootDataObject = (await container.getEntryPoint()) as RootTestDataObject;
-				const containerRuntime = rootDataObject.containerRuntime as ContainerRuntime;
-
-				const summarizePromiseP = new Promise<ISummarizeEventProps>((resolve) => {
-					const handler = (eventProps: ISummarizeEventProps): void => {
-						if (eventProps.result !== "failure") {
-							containerRuntime.off("summarize", handler);
-							resolve(eventProps);
-						} else {
-							assert(
-								eventProps.error?.message === "PendingOpsWhileSummarizing",
-								"Unexpected summarization failure",
-							);
-							if (eventProps.currentAttempt === eventProps.maxAttempts) {
-								containerRuntime.off("summarize", handler);
-								resolve(eventProps);
-							}
-						}
-					};
-					containerRuntime.on("summarize", handler);
-				});
-
-				const dataObject2 = await dataStoreFactory2.createInstance(
-					rootDataObject.containerRuntime,
-				);
-				rootDataObject._root.set("dataStore2", dataObject2.handle);
-				dataObject2._root.set("op", "value");
-				await provider.ensureSynchronized();
-
-				const props = await summarizePromiseP;
-				assert.strictEqual(props.result, "failure", "Summarization did not fail as expected");
-				assert.strictEqual(
-					props.maxAttempts,
-					defaultMaxAttemptsForSubmitFailures,
-					`Unexpected summarize attempts`,
-				);
-			},
-		);
-
-		itExpects(
-			"SkipFailingIncorrectSummary = true. Final summary attempt should pass when ops are sent during summarize",
-			[
-				{
-					eventName: "fluid:telemetry:Summarizer:Running:Summarize_cancel",
-					clientType: "noninteractive/summarizer",
-					summaryAttempts: 1,
-					finalAttempt: false,
-					error: "PendingOpsWhileSummarizing",
-				},
-				{
-					eventName: "fluid:telemetry:Summarizer:Running:Summarize_cancel",
-					clientType: "noninteractive/summarizer",
-					summaryAttempts: 2,
-					finalAttempt: false,
-					error: "PendingOpsWhileSummarizing",
-				},
-				{
-					eventName: "fluid:telemetry:Summarizer:Running:Summarize_cancel",
-					clientType: "noninteractive/summarizer",
-					summaryAttempts: 3,
-					finalAttempt: false,
-					error: "PendingOpsWhileSummarizing",
-				},
-				{
-					eventName: "fluid:telemetry:Summarizer:Running:Summarize_cancel",
-					clientType: "noninteractive/summarizer",
-					summaryAttempts: 4,
-					finalAttempt: false,
-					error: "PendingOpsWhileSummarizing",
-				},
-				{
-					eventName: "fluid:telemetry:Summarizer:Running:SkipFailingIncorrectSummary",
+					eventName: "fluid:telemetry:Summarizer:Running:PendingOpsDuringSummaryFinalAttempt",
 					summaryAttempts: 5,
 					finalAttempt: true,
 					error: "Pending ops during summarization",
 				},
 			],
 			async () => {
-				configProvider.set("Fluid.Summarizer.SkipFailingIncorrectSummary", true);
 				configProvider.set("Fluid.Summarizer.PendingOpsRetryDelayMs", 5);
 				const container = await createContainer(provider, false /* disableSummary */);
 				await waitForContainerConnection(container);

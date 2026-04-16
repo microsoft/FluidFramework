@@ -11,6 +11,9 @@ type: T
 ];
 
 // @alpha
+export type ArgsTuple<T extends readonly Arg[]> = T extends readonly [infer Single extends Arg] ? [Single[1]] : T extends readonly [infer Head extends Arg, ...infer Tail extends readonly Arg[]] ? [Head[1], ...ArgsTuple<Tail>] : never;
+
+// @alpha
 export function buildFunc<const Return extends TypeFactoryType, const Args extends readonly Arg[], const Rest extends TypeFactoryType | null = null>(def: {
     description?: string;
     returns: Return;
@@ -22,6 +25,7 @@ export type Ctor<T = any> = new (...args: any[]) => T;
 
 // @alpha
 export interface ExposedMethods {
+    expose<const K extends string & keyof MethodKeys<InstanceType<S>>, S extends Ctor & IExposedMethods, Z extends FunctionDef<readonly Arg[], TypeFactoryType, TypeFactoryType | null>>(constructor: S, methodName: K, tfFunction: Z): void;
     exposeMethod<const K extends string & keyof MethodKeys<InstanceType<S>>, S extends Ctor & IExposedMethods, Z extends FunctionDef<readonly Arg[], TypeFactoryType, TypeFactoryType | null>>(constructor: S, methodName: K, tfFunction: Z): void;
 }
 

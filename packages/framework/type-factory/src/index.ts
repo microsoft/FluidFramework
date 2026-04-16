@@ -14,6 +14,7 @@ export {
 	exposeMethodsSymbol,
 	type ExposedMethods,
 	type Arg,
+	type ArgsTuple,
 	type FunctionDef,
 	type MethodKeys,
 	type Ctor,
