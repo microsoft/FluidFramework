@@ -35,8 +35,19 @@ The devcontainer lifecycle hooks are structured for prebuild optimization:
 | --- | --- | --- |
 | `onCreateCommand` | Node.js setup (nvm install, corepack enable) | Yes |
 | `postCreateCommand` | Welcome notice (all profiles); AI tooling setup (AI-enabled profiles) | Yes |
+| `postStartCommand` | bwrap/sandbox setup (AI profiles only) | No |
 
 Heavy setup work runs in `onCreateCommand` so it is captured by Codespace prebuilds, making the user-connect experience faster.
+
+## Prebuild configuration
+
+Prebuilds use the **"on configuration change"** trigger, which only fires when `devcontainer.json` or the referenced `Dockerfile` changes. It does **not** detect changes to files those configs depend on, such as scripts in `scripts/codespace-setup/`.
+
+### The `prebuild-version` comment
+
+Each `devcontainer.json` contains a `// prebuild-version: N` comment. **Bump this value whenever you change files in `scripts/codespace-setup/`** and your PR doesn't already modify a `devcontainer.json` or the `Dockerfile` — this ensures a prebuild-triggering file is modified, which forces a rebuild.
+
+A CI check (`devcontainer-prebuild-check.yml`) enforces this: PRs that modify `scripts/codespace-setup/**` without also modifying a `devcontainer.json` or the `Dockerfile` will fail.
 
 ## AI-enabled vs. AI-enabled (Insiders)
 

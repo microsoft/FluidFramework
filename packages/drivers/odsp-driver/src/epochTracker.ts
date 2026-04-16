@@ -137,7 +137,7 @@ export class EpochTracker implements IPersistedFileCache {
 			const value = (await this.cache.get(
 				this.fileEntryFromEntry(entry),
 			)) as IVersionedValueWithEpoch;
-			// Version mismatch between what the runtime expects and what it recieved.
+			// Version mismatch between what the runtime expects and what it received.
 			// The cached value should not be used
 			// eslint-disable-next-line @typescript-eslint/prefer-optional-chain -- using ?. could change behavior
 			if (value === undefined || value.version !== persistedCacheValueVersion) {
