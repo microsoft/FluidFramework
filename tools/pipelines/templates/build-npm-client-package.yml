@@ -879,8 +879,7 @@ extends:
               - ${{ if eq(parameters.isReleaseGroup, true) }}:
                 - publish_npm_internal_dev
               - upload_manifests
-            # Using 'all' signifies that we will upload all stages
-            stageIdFilter: 'all'
+            telemetryDescription: 'stage_timing'
             telemetry_upload_steps:
               - template: /tools/pipelines/templates/upload-telemetry/include-steps-upload-stage-timing.yml@self
                 parameters:
@@ -894,6 +893,8 @@ extends:
       - ${{ if and(eq(parameters.telemetry, true), eq(parameters.taskBundleAnalysis, true), ne(variables['Build.Reason'], 'PullRequest'), eq(variables['System.TeamProject'], 'internal')) }}:
         - template: /tools/pipelines/templates/upload-telemetry/include-stage-upload-telemetry.yml@self
           parameters:
-            stageIdFilter: 'build'
+            telemetryDescription: 'bundle_size'
+            dependsOn:
+              - build
             telemetry_upload_steps:
               - template: /tools/pipelines/templates/upload-telemetry/include-steps-upload-bundle-size.yml@self

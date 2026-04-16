@@ -630,8 +630,7 @@ extends:
               # 'condition:', and update this bit to always depend on publish_npm_internal_dev, since it will always exist.
               - ${{ if eq(parameters.isReleaseGroup, true) }}:
                 - publish_npm_internal_dev
-            # Using 'all' signifies that we will upload all stages
-            stageIdFilter: 'all'
+            telemetryDescription: 'stage_timing'
             telemetry_upload_steps:
               - template: /tools/pipelines/templates/upload-telemetry/include-steps-upload-stage-timing.yml@self
                 parameters:
