@@ -1,4 +1,4 @@
-# Internal entrypoint source structure for `@fluidframework/telemetery-utils`
+# Internal entrypoint source structure for `@fluidframework/telemetry-utils`
 
 Note: index.ts is avoided as the external and internal entrypoints are reasonably different.
 
