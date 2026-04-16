@@ -4,10 +4,8 @@ name: "PR Review Fleet"
 # Each reviewer focuses on a different axis (correctness, security, performance, etc.)
 # and posts its findings as a PR comment.
 #
-# Setup requirements:
-#   1. Create a PAT with "Copilot Requests" permission
-#   2. Store it as a repository secret named COPILOT_GITHUB_TOKEN
-#   See: https://docs.github.com/en/copilot/how-tos/copilot-cli/automate-copilot-cli/automate-with-actions
+# Authentication: Uses the existing COPILOT_GITHUB_TOKEN repository secret.
+# See: https://docs.github.com/en/copilot/how-tos/copilot-cli/automate-copilot-cli/automate-with-actions
 
 on:
   pull_request:
