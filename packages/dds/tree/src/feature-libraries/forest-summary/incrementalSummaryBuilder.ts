@@ -393,14 +393,16 @@ export class ForestIncrementalSummaryBuilder implements IncrementalEncoderDecode
 		const pathSegments: string[] = [];
 		let current: ChunkSummaryProperties | undefined = chunkProperties;
 		while (current !== undefined) {
-			pathSegments.unshift(`${current.referenceId}`);
+			pathSegments.push(`${current.referenceId}`);
 			if (current.parentReferenceId === undefined) {
 				break;
 			}
 			current = latestSummaryRefIdMap.get(current.parentReferenceId);
 			assert(current !== undefined, "Parent chunk not found in latest summary tracking");
 		}
-		return pathSegments.join("/");
+		// Segments are collected leaf-to-root and then reversed. The alternative would be to use unshift
+		// instead of push and reverse. However, using push and reverse is O(n) whereas using unshift would be O(n²).
+		return pathSegments.reverse().join("/");
 	}
 
 	/**
