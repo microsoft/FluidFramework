@@ -286,6 +286,26 @@ export interface SimpleFieldSchema<Type extends SchemaType = SchemaType> {
 	 * Set via {@link FieldPropsAlpha.persistedMetadata}.
 	 */
 	readonly persistedMetadata?: JsonCompatibleReadOnlyObject | undefined;
+
+	/**
+	 * Indicates that this field is a {@link SchemaStaticsAlpha.stagedOptional | staged optional} field,
+	 * allowing the view schema to be compatible with stored schema where the field is required (pre-upgrade) or optional (post-upgrade).
+	 * New documents and schema upgrades will keep the field as required in the stored schema.
+	 *
+	 * `false` if this is a view schema field that is not staged optional.
+	 * Absent (`undefined`) if derived from a stored schema (where staged optional has no meaning).
+	 *
+	 * `false` and `undefined` are both "not staged optional," but distinct: `false` means "view schema field, not staged
+	 * optional" while `undefined` means "stored schema field." Consumers that need to check for staged optional should
+	 * compare against `false` (e.g., `!== false`) rather than checking truthiness.
+	 *
+	 * @privateRemarks
+	 * Analogous to {@link SimpleAllowedTypeAttributes.isStaged} for allowed types.
+	 * Optional (`?`) so that existing code constructing `SimpleFieldSchema` object literals does not need to be updated.
+	 */
+	readonly isStagedOptional?: Type extends SchemaType.Stored
+		? undefined
+		: false | SchemaUpgrade;
 }
 
 /**

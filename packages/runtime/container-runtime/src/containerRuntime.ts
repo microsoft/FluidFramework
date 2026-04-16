@@ -4619,7 +4619,8 @@ export class ContainerRuntime
 
 	/**
 	 * This helper is called during summarization. If the container is dirty, it will return a failed summarize result
-	 * (IBaseSummarizeResult) unless this is the final summarize attempt and SkipFailingIncorrectSummary option is set.
+	 * (IBaseSummarizeResult) unless this is the final summarize attempt, in which case the summary is allowed to
+	 * proceed to make progress in documents where there are consistently pending ops in the summarizer.
 	 * @param logger - The logger to be used for sending telemetry.
 	 * @param referenceSequenceNumber - The reference sequence number of the summary attempt.
 	 * @param minimumSequenceNumber - The minimum sequence number of the summary attempt.
@@ -4638,13 +4639,9 @@ export class ContainerRuntime
 			return;
 		}
 
-		// If "SkipFailingIncorrectSummary" option is true, don't fail the summary in the last attempt.
-		// This is a fallback to make progress in documents where there are consistently pending ops in
-		// the summarizer.
-		if (
-			finalAttempt &&
-			this.mc.config.getBoolean("Fluid.Summarizer.SkipFailingIncorrectSummary") === true
-		) {
+		// Don't fail the summary in the last attempt. This is a fallback to make progress in
+		// documents where there are consistently pending ops in the summarizer.
+		if (finalAttempt) {
 			const error = DataProcessingError.create(
 				"Pending ops during summarization",
 				"submitSummary",
@@ -4653,7 +4650,7 @@ export class ContainerRuntime
 			);
 			logger.sendErrorEvent(
 				{
-					eventName: "SkipFailingIncorrectSummary",
+					eventName: "PendingOpsDuringSummaryFinalAttempt",
 					referenceSequenceNumber,
 					minimumSequenceNumber,
 					beforeGenerate: beforeSummaryGeneration,

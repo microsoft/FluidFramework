@@ -75,7 +75,7 @@
  * @sealed
  * @public
  */
-export abstract class ErasedType<out Name = unknown> {
+export declare abstract class ErasedType<out Name = unknown> {
 	/**
 	 * Compile time only marker to make type checking more strict.
 	 * This method will not exist at runtime and accessing it is invalid.
@@ -88,18 +88,15 @@ export abstract class ErasedType<out Name = unknown> {
 	/**
 	 * This class should never exist at runtime, so make it un-constructable.
 	 */
-	private constructor() {}
+	private constructor();
 
 	/**
 	 * Since this class is a compile time only type brand, `instanceof` will never work with it.
-	 * This `Symbol.hasInstance` implementation ensures that `instanceof` will error if used,
-	 * and in TypeScript 5.3 and newer will produce a compile time error if used.
+	 * This `Symbol.hasInstance` declaration (no definition) ensures that `instanceof` will
+	 * produce `ReferenceError` if used at runtime. And in TypeScript 5.3 and newer will produce
+	 * a compile time error if used.
 	 */
-	public static [Symbol.hasInstance](value: never): value is never {
-		throw new Error(
-			"ErasedType is a compile time type brand not a real class that can be used with `instanceof` at runtime.",
-		);
-	}
+	public static [Symbol.hasInstance](value: never): value is never;
 }
 
 /**
@@ -117,6 +114,8 @@ export abstract class ErasedType<out Name = unknown> {
  * Implement interfaces which extend this by sub-classing {@link ErasedTypeImplementation}.
  *
  * This class should only be a `type` package export, preventing users from extending it directly.
+ * But since {@link ErasedTypeImplementation} does extend it, an implementation
+ * of the constructor must be provided, unlike {@link ErasedType}.
  *
  * Since {@link ErasedTypeImplementation} is exported as `@internal`, this restricts implementations of the sealed interfaces to users of `@internal` APIs, which should be anything within this release group.
  * Any finer grained restrictions can be done as documentation, but not type enforced.
