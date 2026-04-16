@@ -245,7 +245,7 @@ jobs:
 
           # Build the comment
           {
-            echo "## :robot: PR Review Fleet Report"
+            echo "## :telescope: PR Review Fleet Report"
             echo ""
             echo "**Verdict:** ${VERDICT_EMOJI} ${VERDICT}"
             echo ""
