@@ -170,7 +170,8 @@ export class RiddlerResourcesFactory implements IResourcesFactory<RiddlerResourc
 							);
 							await new Promise((resolve) => setTimeout(resolve, retryDelayMs));
 						} else {
-							// This is okay to fail since the repos are already created in production.
+							// Production (e.g. AFR) doesn't hit this path because tenantConfig
+							// is empty. This repo creation is only used in local/test environments.
 							winston.error(
 								`Error creating repos after ${attempt} attempts, giving up`,
 							);
