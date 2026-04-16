@@ -134,7 +134,7 @@ const minimumReleaseAgeMinutes = 1 * 24 * 60;
 // We exclude our own scopes/packages so the installation of older FF versions for compat testing doesn't
 // fail due to young versions immediately after we ship a new release.
 // Ideally we shouldn't be installing the older versions "dynamically", but while we figure out an alternative
-// approach this is 
+// approach we can do this to make things a bit better.
 // See https://pnpm.io/supply-chain-security for context on the flags used here.
 const pnpmWorkspaceYamlContent = `
 minimumReleaseAge: ${minimumReleaseAgeMinutes}
