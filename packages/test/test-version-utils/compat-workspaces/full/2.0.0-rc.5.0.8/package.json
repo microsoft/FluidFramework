@@ -1,24 +1,24 @@
 {
-  "name": "compat-2.0.0-rc.5.0.8",
-  "version": "1.0.0",
-  "private": true,
-  "dependencies": {
-    "@fluidframework/local-driver": "2.0.0-rc.5.0.8",
-    "@fluidframework/odsp-driver": "2.0.0-rc.5.0.8",
-    "@fluidframework/routerlicious-driver": "2.0.0-rc.5.0.8",
-    "@fluidframework/container-loader": "2.0.0-rc.5.0.8",
-    "@fluidframework/container-runtime": "2.0.0-rc.5.0.8",
-    "@fluidframework/aqueduct": "2.0.0-rc.5.0.8",
-    "@fluidframework/datastore": "2.0.0-rc.5.0.8",
-    "@fluidframework/test-utils": "2.0.0-rc.5.0.8",
-    "@fluidframework/cell": "2.0.0-rc.5.0.8",
-    "@fluidframework/counter": "2.0.0-rc.5.0.8",
-    "@fluidframework/map": "2.0.0-rc.5.0.8",
-    "@fluidframework/matrix": "2.0.0-rc.5.0.8",
-    "@fluidframework/ordered-collection": "2.0.0-rc.5.0.8",
-    "@fluidframework/register-collection": "2.0.0-rc.5.0.8",
-    "@fluidframework/sequence": "2.0.0-rc.5.0.8",
-    "@fluidframework/agent-scheduler": "2.0.0-rc.5.0.8",
-    "@fluid-experimental/sequence-deprecated": "2.0.0-rc.5.0.8"
-  }
+	"name": "compat-2.0.0-rc.5.0.8",
+	"version": "1.0.0",
+	"private": true,
+	"dependencies": {
+		"@fluidframework/local-driver": "2.0.0-rc.5.0.8",
+		"@fluidframework/odsp-driver": "2.0.0-rc.5.0.8",
+		"@fluidframework/routerlicious-driver": "2.0.0-rc.5.0.8",
+		"@fluidframework/container-loader": "2.0.0-rc.5.0.8",
+		"@fluidframework/container-runtime": "2.0.0-rc.5.0.8",
+		"@fluidframework/aqueduct": "2.0.0-rc.5.0.8",
+		"@fluidframework/datastore": "2.0.0-rc.5.0.8",
+		"@fluidframework/test-utils": "2.0.0-rc.5.0.8",
+		"@fluidframework/cell": "2.0.0-rc.5.0.8",
+		"@fluidframework/counter": "2.0.0-rc.5.0.8",
+		"@fluidframework/map": "2.0.0-rc.5.0.8",
+		"@fluidframework/matrix": "2.0.0-rc.5.0.8",
+		"@fluidframework/ordered-collection": "2.0.0-rc.5.0.8",
+		"@fluidframework/register-collection": "2.0.0-rc.5.0.8",
+		"@fluidframework/sequence": "2.0.0-rc.5.0.8",
+		"@fluidframework/agent-scheduler": "2.0.0-rc.5.0.8",
+		"@fluid-experimental/sequence-deprecated": "2.0.0-rc.5.0.8"
+	}
 }

@@ -158,7 +158,7 @@ function buildVersionPackageJson(version: string): string {
 	if (versionHasMovedSparsedMatrix(version)) {
 		deps["@fluid-experimental/sequence-deprecated"] = version;
 	}
-	return JSON.stringify(
+	return `${JSON.stringify(
 		{
 			name: `compat-${version}`,
 			version: "1.0.0",
@@ -167,7 +167,7 @@ function buildVersionPackageJson(version: string): string {
 		},
 		undefined,
 		2,
-	);
+	)}\n`;
 }
 
 function ensureWorkspaceScaffold(workspaceDir: string, registry: string): void {
@@ -196,7 +196,9 @@ function syncVersionDirectory(workspaceDir: string, version: string): boolean {
 
 	mkdirSync(versionDir, { recursive: true });
 	writeFileSync(pkgJsonPath, newContent, "utf8");
-	console.log(`  ${existsSync(pkgJsonPath) ? "Updated" : "Created"} ${path.relative(pkgRoot, pkgJsonPath)}`);
+	console.log(
+		`  ${existsSync(pkgJsonPath) ? "Updated" : "Created"} ${path.relative(pkgRoot, pkgJsonPath)}`,
+	);
 	return true;
 }
 
@@ -304,7 +306,12 @@ async function main(): Promise<void> {
 
 	// Write versions.json
 	const manifest = {
-		standard: { "n-1": nMinus1, "n-2": nMinus2, ocv: OCV, "cross-client": crossClientVersions },
+		standard: {
+			"n-1": nMinus1,
+			"n-2": nMinus2,
+			ocv: OCV,
+			"cross-client": crossClientVersions,
+		},
 		full: fullAdditional,
 	};
 	writeFileSync(versionsJsonPath, JSON.stringify(manifest, undefined, 2) + "\n", "utf8");
