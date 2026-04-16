@@ -32,7 +32,7 @@ steps:
       set -eu -o pipefail
 
       echo "Listing files in '$WORK_FOLDER'"
-      ls -laR $WORK_FOLDER;
+      ls -laR "$WORK_FOLDER";
 
       echo "pnpm exec telemetry-generator --handlerModule \"$(pathToTelemetryGeneratorHandlersNew)/bundleSizeHandler.js\" --dir \"$WORK_FOLDER\""
       pnpm exec telemetry-generator --handlerModule "$(pathToTelemetryGeneratorHandlersNew)/bundleSizeHandler.js" --dir "$WORK_FOLDER"
