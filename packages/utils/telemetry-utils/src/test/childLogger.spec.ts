@@ -260,7 +260,7 @@ describe("ChildLogger", () => {
 			minLogLevel: LogLevel.info,
 		};
 		const multiSinkLogger = createMultiSinkLogger({
-			loggers: [logger1, new MockLogger(LogLevel.info)],
+			loggers: [logger1, new MockLogger(LogLevel.essential)],
 		});
 		const childLogger1 = createChildLogger({
 			logger: multiSinkLogger,

@@ -76,19 +76,16 @@ export interface LogLevelConst {
 	/**
 	 * Essential information about the operation of Fluid.
 	 * @remarks It is recommended that these should always be collected, even in production, for diagnostic purposes.
-	 * If an event does not have a log level specified, it should be treated as if it were LogLevel.essential.
 	 */
 	readonly essential: 30;
 
 	/**
-	 * @deprecated Use {@link  (LogLevel:variable) | LogLevel.info}. If an event does not have a log level specified, it should be treated as if it were LogLevel.essential.
-	 * See {@link https://github.com/microsoft/FluidFramework/issues/26969} for removal timeline.
+	 * Default LogLevel
 	 */
 	readonly default: 20;
 
 	/**
-	 * @deprecated Use {@link  (LogLevel:variable) | LogLevel.essential}.
-	 * See {@link https://github.com/microsoft/FluidFramework/issues/26969} for removal timeline.
+	 * To log errors.
 	 */
 	readonly error: 30;
 }
