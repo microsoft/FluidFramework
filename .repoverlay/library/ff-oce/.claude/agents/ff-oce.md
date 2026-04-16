@@ -194,11 +194,11 @@ This section covers the tasks you may perform. You are not limited to these — 
 
 - **Escalate to FRS**: For FRS performance/reliability issues, help create a Sev3 IcM ticket via `https://aka.ms/frs/escalate` with description, Tenant ID, Document ID, and approximate time.
 
-- **Finding FRS test tenant IDs for escalation**: The stress test FRS credentials are stored as JSON secrets in `prague-key-vault` with the prefix `automation-fluid-driver-frs-*`. The JSON shape is `{ "discoveryEndpoint", "host", "tenantId", "tenantSecret", "driverPolicies" }`. The `tenantId` field is what the FRS team needs.
-  - **`tools/getkeys` does NOT fetch these.** It explicitly skips secrets prefixed with `automation-` (line 89 of `tools/getkeys/index.js`).
+- **Finding FRS test tenant IDs for escalation**: The stress test FRS credentials are stored as JSON secrets in `prague-key-vault`. Each secret is a JSON object with fields `discoveryEndpoint`, `host`, `tenantId`, `tenantSecret`, and `driverPolicies`. The `tenantId` field is what the FRS team needs.
+  - **`tools/getkeys` does NOT fetch these.** It explicitly skips secrets whose names start with `automation` (line 89 of `tools/getkeys/index.js`).
   - To retrieve the tenant ID, someone with Key Vault access must run: `az keyvault secret show --vault-name prague-key-vault --name automation-fluid-driver-frs-canary-stress-test --query value -o tsv` (or use the Azure Portal). Parse the `tenantId` field from the returned JSON.
   - The tenant ID is NOT logged in Kusto automation telemetry — you cannot extract it from queries.
-  - Key secrets: `automation-fluid-test-driver-frs-stress-test` (FRS prod), `automation-fluid-driver-frs-canary-stress-test` (FRS canary).
+  - Key secrets: `automation-fluid-test-driver-frs-stress-test` (FRS prod), `automation-fluid-driver-frs-canary-stress-test` (FRS canary). Note: the naming convention is inconsistent between the two secrets.
 
 - **Update TSGs**: After resolution, help draft or update the relevant TSG on EngineeringHub.
 

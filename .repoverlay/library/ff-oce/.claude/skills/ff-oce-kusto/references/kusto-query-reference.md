@@ -1428,7 +1428,7 @@ office_fluid_ffautomation_error
 ```kusto
 // CompareBuildHealth: Compare event volume, duration, and errors across builds per stage
 // Use to diagnose "pipeline suddenly started failing" — shows which stage regressed
-union office_fluid_ffautomation_error, office_fluid_ffautomation_performance, office_fluid_ffautomation_generic
+union withsource=TableName office_fluid_ffautomation_error, office_fluid_ffautomation_performance, office_fluid_ffautomation_generic
 | where Event_Time between(datetime(2026-04-10) .. datetime(2026-04-17)) // adjust range
     and Data_hostName == "@fluid-internal/test-service-load"
     and Data_buildId in ("392069", "392243") // passing vs failing build IDs
@@ -1438,7 +1438,7 @@ union office_fluid_ffautomation_error, office_fluid_ffautomation_performance, of
     MaxTime=max(Event_Time),
     Duration_minutes=datetime_diff('minute', max(Event_Time), min(Event_Time)),
     DistinctDocs=dcount(Data_docId),
-    ErrorCount=countif(Event_Name has "Error")
+    ErrorCount=countif(TableName == "office_fluid_ffautomation_error")
     by Data_buildId, Data_driverType, Data_driverEndpointName
 | order by Data_buildId asc, Data_driverType asc
 ```
@@ -1457,14 +1457,14 @@ office_fluid_ffautomation_error
 
 ```kusto
 // StageHealthTrend: Track a specific stage's health across all recent builds
-union office_fluid_ffautomation_error, office_fluid_ffautomation_performance, office_fluid_ffautomation_generic
+union withsource=TableName office_fluid_ffautomation_error, office_fluid_ffautomation_performance, office_fluid_ffautomation_generic
 | where Event_Time > ago(7d)
     and Data_hostName == "@fluid-internal/test-service-load"
     and Data_driverEndpointName == "frsCanary" // change to stage of interest
 | summarize
     TotalEvents=count(),
     Duration_minutes=datetime_diff('minute', max(Event_Time), min(Event_Time)),
-    ErrorCount=countif(Event_Name has "Error"),
+    ErrorCount=countif(TableName == "office_fluid_ffautomation_error"),
     DistinctDocs=dcount(Data_docId)
     by Data_buildId
 | order by TotalEvents asc
