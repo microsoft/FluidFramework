@@ -161,8 +161,10 @@ export class RiddlerResourcesFactory implements IResourcesFactory<RiddlerResourc
 							tenant.storage.repository,
 						);
 						break;
-					} catch (err) {
-						if (attempt < maxAttempts) {
+					} catch (err: unknown) {
+						const isConnectionRefusedError =
+							err instanceof Error && "code" in err && err.code === "ECONNREFUSED";
+						if (isConnectionRefusedError && attempt < maxAttempts) {
 							winston.info(
 								`Error creating repos, retrying in ${retryDelayMs}ms (attempt ${attempt}/${maxAttempts})`,
 							);
@@ -170,13 +172,14 @@ export class RiddlerResourcesFactory implements IResourcesFactory<RiddlerResourc
 						} else {
 							// This is okay to fail since the repos are already created in production.
 							winston.error(
-								`Error creating repos after ${maxAttempts} attempts, giving up`,
+								`Error creating repos after ${attempt} attempts, giving up`,
 							);
 							Lumberjack.error(
 								`Error creating repos`,
 								{ [BaseTelemetryProperties.tenantId]: tenant._id },
 								err,
 							);
+							break;
 						}
 					}
 				}
