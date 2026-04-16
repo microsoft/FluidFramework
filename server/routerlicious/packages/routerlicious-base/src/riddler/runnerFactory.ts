@@ -171,7 +171,7 @@ export class RiddlerResourcesFactory implements IResourcesFactory<RiddlerResourc
 							);
 						} else {
 							// This is okay to fail since the repos are already created in production.
-							winston.error(`Error creating repos after ${maxAttempts} retries, giving up`);
+							winston.error(`Error creating repos after ${maxAttempts} attempts, giving up`);
 							Lumberjack.error(
 								`Error creating repos`,
 								{ [BaseTelemetryProperties.tenantId]: tenant._id },
