@@ -14,9 +14,13 @@ import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/in
 import { FluidClientVersion, type CodecWriteOptions } from "../../../codec/index.js";
 import {
 	type ChangesetLocalId,
+	type DeltaFieldMap,
+	type DeltaMark,
+	EmptyKey,
 	type FieldKey,
 	type JsonableTree,
 	mapCursorField,
+	moveToDetachedField,
 	RevisionTagCodec,
 	rootFieldKey,
 	type TaggedChange,
@@ -24,6 +28,8 @@ import {
 	TreeStoredSchemaRepository,
 } from "../../../core/index.js";
 import { FormatValidatorBasic } from "../../../external-utilities/index.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import { BasicChunk } from "../../../feature-libraries/chunked-forest/basicChunk.js";
 import {
 	Chunker,
 	defaultChunkPolicy,
@@ -80,15 +86,19 @@ import {
 } from "../../../simple-tree/index.js";
 import { configuredSharedTree } from "../../../treeFactory.js";
 import { brand } from "../../../util/index.js";
+import { fieldJsonCursor } from "../../json/index.js";
 import { jsonSequenceRootSchema } from "../../sequenceRootUtils.js";
 import {
+	applyTestDelta,
 	MockTreeCheckout,
 	checkoutWithContent,
 	forestWithContent,
 	getView,
 	mintRevisionTag,
 	testIdCompressor,
+	testRevisionTagCodec,
 } from "../../utils.js";
+import { initializeForest } from "../initializeForest.js";
 
 const options: CodecWriteOptions = {
 	jsonValidator: FormatValidatorBasic,
@@ -182,6 +192,78 @@ describe("End to end chunked encoding", () => {
 		const insertedChunk = insertedChange.builds.get([revision, 0 as ChangesetLocalId]);
 		assert.equal(insertedChunk, chunk);
 		assert(chunk.isShared());
+	});
+
+	it("detach from the middle of a multi-node uniform chunk splits it correctly", () => {
+		const treeSchema = new TreeStoredSchemaRepository(jsonSequenceRootSchema);
+		const chunker = new Chunker(
+			treeSchema,
+			defaultSchemaPolicy,
+			Number.POSITIVE_INFINITY,
+			Number.POSITIVE_INFINITY,
+			4,
+			(type: TreeNodeSchemaIdentifier, shapes: Map<TreeNodeSchemaIdentifier, ShapeInfo>) =>
+				tryShapeFromNodeSchema(
+					{
+						schema: treeSchema,
+						policy: defaultSchemaPolicy,
+						shouldEncodeIncrementally: defaultIncrementalEncodingPolicy,
+						shapes,
+					},
+					type,
+				),
+		);
+		const forest = buildChunkedForest(chunker);
+
+		// Initialize with a single JsonAsTree.Array node whose contents are [1, 2, 3, 4].
+		// newBasicChunkTree walks the Array's inner field via chunkField, which batches the
+		// four numbers into a single UniformChunk(4). That multi-node chunk lives inside the
+		// Array BasicChunk's fields map, which is the scenario splitFieldAtIndex handles.
+		initializeForest(
+			forest,
+			fieldJsonCursor([[1, 2, 3, 4]]),
+			testRevisionTagCodec,
+			testIdCompressor,
+		);
+
+		// Precondition: the Array node's inner field contains a single 4-node uniform chunk.
+		// If this fails, the chunker setup no longer produces a multi-node inner chunk and the
+		// test is no longer exercising splitFieldAtIndex in detachEdit.
+		const arrayChunks = forest.roots.fields.get(rootFieldKey);
+		assert(arrayChunks !== undefined);
+		assert.equal(arrayChunks.length, 1);
+		const arrayChunk = arrayChunks[0];
+		assert(arrayChunk instanceof BasicChunk);
+		const innerField = arrayChunk.fields.get(EmptyKey);
+		assert(innerField !== undefined);
+		assert.equal(innerField.length, 1);
+		assert(innerField[0] instanceof UniformChunk);
+		assert.equal(innerField[0].topLevelLength, 4);
+
+		// Detach the node at index 1 (value 2) from the Array's inner field.
+		// This nests inside the root field: modify the Array node, then detach inside its EmptyKey field.
+		const detachId = { minor: 99 };
+		const innerDetach: DeltaMark = { count: 1, detach: detachId };
+		const modifyArray: DeltaMark = {
+			count: 1,
+			fields: new Map([[EmptyKey, { marks: [{ count: 1 }, innerDetach] }]]),
+		};
+		const delta: DeltaFieldMap = new Map([[rootFieldKey, { marks: [modifyArray] }]]);
+		applyTestDelta(delta, forest, { destroy: [{ id: detachId, count: 1 }] });
+
+		// Reading back should see [[1, 3, 4]].
+		const reader = forest.allocateCursor();
+		moveToDetachedField(forest, reader);
+		assert(reader.firstNode());
+		reader.enterField(EmptyKey);
+		assert(reader.firstNode());
+		assert.equal(reader.value, 1);
+		assert(reader.nextNode());
+		assert.equal(reader.value, 3);
+		assert(reader.nextNode());
+		assert.equal(reader.value, 4);
+		assert.equal(reader.nextNode(), false);
+		reader.free();
 	});
 
 	// This test (and the one below) are testing for an optimization in the decoding logic to save a copy of the data array.

@@ -86,36 +86,6 @@ function splitFieldAtIndex(
 	return chunks.length;
 }
 
-/**
- * Isolate the node at `nodeIndex` into its own single-node chunk.
- * Only the chunk containing that node is split; all other chunks are untouched.
- * Returns the chunk-array index of the isolated single-node chunk.
- */
-function isolateNodeAt(chunks: TreeChunk[], nodeIndex: number, forest: ChunkedForest): number {
-	assertNonNegativeSafeInteger(nodeIndex);
-	let remaining = nodeIndex;
-	for (let i = 0; i < chunks.length; i++) {
-		const chunk = chunks[i] ?? oob();
-		if (remaining < chunk.topLevelLength) {
-			if (chunk.topLevelLength === 1) {
-				return i;
-			}
-			const expanded = mapCursorField(chunk.cursor(), (cursor) =>
-				basicChunkTree(cursor, {
-					policy: forest.chunker,
-					idCompressor: forest.idCompressor,
-				}),
-			);
-			// TODO: this could fail for really long chunks being split (due to argument count limits).
-			chunks.splice(i, 1, ...expanded);
-			chunk.referenceRemoved();
-			return i + remaining;
-		}
-		remaining -= chunk.topLevelLength;
-	}
-	fail("missing edited node");
-}
-
 interface StackNode {
 	mutableChunk: BasicChunk;
 	key: FieldKey;
@@ -238,9 +208,13 @@ export class ChunkedForest implements IEditableForest {
 
 				const parent = this.getParent();
 				const destinationField = getOrAddEmptyToMap(parent.mutableChunk.fields, parent.key);
-				const destChunkIndex = splitFieldAtIndex(destinationField, destination, this.forest);
+				const destinationChunkIndex = splitFieldAtIndex(
+					destinationField,
+					destination,
+					this.forest,
+				);
 				// TODO: this will fail for very large moves due to argument limits.
-				destinationField.splice(destChunkIndex, 0, ...sourceField);
+				destinationField.splice(destinationChunkIndex, 0, ...sourceField);
 			},
 			/**
 			 * Detaches the range from the current field and transfers it to the given destination if any.
@@ -289,7 +263,10 @@ export class ChunkedForest implements IEditableForest {
 				const parent = this.getParent();
 				const chunks =
 					parent.mutableChunk.fields.get(parent.key) ?? fail(0xaf6 /* missing edited field */);
-				const chunkIndex = isolateNodeAt(chunks, index, this.forest);
+				// Split on both sides of the target node so the chunk at chunkIndex holds only that node.
+				// Split the end boundary first so it isn't shifted by the earlier split.
+				splitFieldAtIndex(chunks, index + 1, this.forest);
+				const chunkIndex = splitFieldAtIndex(chunks, index, this.forest);
 				let found: BasicChunk;
 				const chunk = chunks[chunkIndex] ?? oob();
 				if (chunk instanceof BasicChunk) {

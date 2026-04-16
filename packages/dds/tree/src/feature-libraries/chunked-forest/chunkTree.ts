@@ -5,6 +5,7 @@
 
 import { assert, debugAssert, oob, fail } from "@fluidframework/core-utils/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import {
 	CursorLocationType,
@@ -149,8 +150,15 @@ export class Chunker implements IChunker {
 	): boolean {
 		try {
 			return this.shouldEncodeIncrementally(parentType, fieldKey);
-		} catch {
-			return false;
+		} catch (error) {
+			// The policy throws UsageError when called with a fieldKey on a node kind that doesn't
+			// accept one (map, record, leaf). That's a valid "not incremental" answer at the call
+			// site in newBasicChunkTree, which iterates all fields generically. Any other error
+			// indicates a real problem and should propagate.
+			if (error instanceof UsageError) {
+				return false;
+			}
+			throw error;
 		}
 	}
 
@@ -196,14 +204,13 @@ export function chunkTree(cursor: ITreeCursorSynchronous, policy: ChunkCompresso
 export function chunkField(
 	cursor: ITreeCursorSynchronous,
 	policy: ChunkCompressor,
-	maxNodesPerChunk?: number,
 ): TreeChunk[] {
 	const length = cursor.getFieldLength();
 	const started = cursor.firstNode();
 	debugAssert(
 		() => started === (length !== 0) || "only 0 length fields should not have nodes",
 	);
-	return chunkRange(cursor, policy, length, false, maxNodesPerChunk);
+	return chunkRange(cursor, policy, length, false);
 }
 
 /**
@@ -438,7 +445,9 @@ export interface ChunkPolicy {
 
 	/**
 	 * Returns true if the given field should produce single-node chunks
-	 * for incremental summary tracking.
+	 * for incremental summary tracking. If the field is incremental, the chunker will force all chunks
+	 * to contain one top-level node for that field. If the field is not incremental, the chunker may produce
+	 * chunks with multiple top-level nodes for that field.
 	 */
 	isFieldIncremental?(parentType: TreeNodeSchemaIdentifier, fieldKey: FieldKey): boolean;
 }
@@ -464,9 +473,16 @@ function newBasicChunkTree(
 		new Map(
 			mapCursorFields(cursor, () => {
 				const fieldKey = cursor.getFieldKey();
-				const maxPerChunk =
-					policy.policy.isFieldIncremental?.(parentType, fieldKey) === true ? 1 : undefined;
-				return [fieldKey, chunkField(cursor, policy, maxPerChunk)];
+				// Incremental fields need one chunk per top-level node so per-node summary reuse works.
+				// Produce single-node chunks directly instead of going through chunkField's batching logic.
+				if (policy.policy.isFieldIncremental?.(parentType, fieldKey) === true) {
+					const chunks: TreeChunk[] = [];
+					for (let inNode = cursor.firstNode(); inNode; inNode = cursor.nextNode()) {
+						chunks.push(chunkTree(cursor, policy));
+					}
+					return [fieldKey, chunks];
+				}
+				return [fieldKey, chunkField(cursor, policy)];
 			}),
 		),
 		cursor.value,
@@ -486,7 +502,6 @@ export function chunkRange(
 	chunkCompressor: ChunkCompressor,
 	length: number,
 	skipLastNavigation: boolean,
-	maxNodesPerChunk?: number,
 ): TreeChunk[] {
 	assert(
 		!(skipLastNavigation && length === 0),
@@ -496,8 +511,7 @@ export function chunkRange(
 		(cursor.mode === CursorLocationType.Nodes) === length > 0,
 		0xb59 /* Should be in nodes mode if not past end */,
 	);
-	const effectiveMaxPerChunk =
-		maxNodesPerChunk ?? chunkCompressor.policy.uniformChunkNodeCount;
+	const uniformChunkNodeCount = chunkCompressor.policy.uniformChunkNodeCount;
 	let output: TreeChunk[] = [];
 	let remaining = length;
 	while (remaining > 0) {
@@ -508,10 +522,7 @@ export function chunkRange(
 		// return existing chunk with a increased ref count if possible.
 		if (start === cursor.fieldIndex) {
 			const chunkLength = cursor.chunkLength;
-			if (
-				chunkLength <= remaining &&
-				(chunkLength <= effectiveMaxPerChunk || chunkLength === 1)
-			) {
+			if (chunkLength <= remaining) {
 				const chunk = tryGetChunk(cursor);
 				if (chunk !== undefined) {
 					if (
@@ -547,7 +558,7 @@ export function chunkRange(
 				const nodesPerTopLevelNode = shape.positions.length;
 				const maxTopLevelLength = Math.max(
 					1,
-					Math.floor(effectiveMaxPerChunk / nodesPerTopLevelNode),
+					Math.floor(uniformChunkNodeCount / nodesPerTopLevelNode),
 				);
 				const maxLength = Math.min(maxTopLevelLength, remaining);
 				const newChunk = uniformChunkFromCursor(
