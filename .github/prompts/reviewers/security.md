@@ -58,9 +58,10 @@ Write your findings to `review-security.md` using this format:
 - **Low**: N issues (defense-in-depth improvements)
 ```
 
-If no issues are found, write:
+If no issues are found, write exactly this (the marker is used by CI to skip posting):
 
 ```markdown
+<!-- NO_ISSUES_FOUND -->
 ## Security Review
 
 No security vulnerabilities found in this PR. The changes follow secure coding practices.

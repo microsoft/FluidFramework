@@ -118,11 +118,19 @@ jobs:
           REVIEWER: ${{ matrix.reviewer }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          REPO: ${{ github.repository }}
         run: |
           REVIEW_FILE="review-${REVIEWER}.md"
 
           if [ ! -f "$REVIEW_FILE" ]; then
             echo "No review output found ($REVIEW_FILE). Skipping comment."
+            exit 0
+          fi
+
+          # Skip posting if the reviewer found no issues (clean bill of health).
+          # Each prompt writes a "NO_ISSUES_FOUND" marker when nothing significant was found.
+          if grep -q "NO_ISSUES_FOUND" "$REVIEW_FILE"; then
+            echo "Reviewer ${REVIEWER} found no significant issues. Skipping comment."
             exit 0
           fi
 
@@ -141,38 +149,5 @@ jobs:
             echo "*Automated review by PR Review Fleet — [${REVIEWER}](${RUN_URL})*"
           } > comment-body.md
 
-          gh pr comment "${PR_NUMBER}" --body-file comment-body.md
+          gh pr comment "${PR_NUMBER}" --repo "${REPO}" --body-file comment-body.md
 
-  # ──────────────────────────────────────────────────────────────
-  # Fan-in: post a summary comment after all reviewers complete
-  # ──────────────────────────────────────────────────────────────
-  summary:
-    name: "Review Summary"
-    needs: review
-    if: always()
-    runs-on: ubuntu-latest
-    steps:
-      - name: Post summary
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          PR_NUMBER: ${{ github.event.pull_request.number }}
-          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
-        run: |
-          cat <<EOF > summary-body.md
-          ### :clipboard: PR Review Fleet Summary
-
-          All review agents have completed. See individual comments above for details.
-
-          | Reviewer | Focus |
-          |----------|-------|
-          | **correctness** | Bugs, logic errors, race conditions |
-          | **security** | Vulnerabilities, injection, secrets exposure |
-          | **api-compatibility** | Breaking changes, export modifications |
-          | **performance** | Algorithmic regressions, memory concerns |
-          | **testing** | Coverage gaps, missing test scenarios |
-
-          ---
-          *[View workflow run](${RUN_URL})*
-          EOF
-
-          gh pr comment "${PR_NUMBER}" --body-file summary-body.md

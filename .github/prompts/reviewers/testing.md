@@ -78,9 +78,10 @@ it("should handle empty input gracefully", () => {
 - **Nice to have**: N gaps (edge cases worth covering)
 ```
 
-If no issues are found, write:
+If no issues are found, write exactly this (the marker is used by CI to skip posting):
 
 ```markdown
+<!-- NO_ISSUES_FOUND -->
 ## Testing Review
 
 Test coverage looks thorough. The PR includes appropriate tests for new and changed functionality.

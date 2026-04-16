@@ -73,9 +73,10 @@ Write your findings to `review-performance.md` using this format:
 - **Info**: N issues (minor optimizations worth considering)
 ```
 
-If no issues are found, write:
+If no issues are found, write exactly this (the marker is used by CI to skip posting):
 
 ```markdown
+<!-- NO_ISSUES_FOUND -->
 ## Performance Review
 
 No performance concerns found. The changes look efficient and appropriate for the use case.

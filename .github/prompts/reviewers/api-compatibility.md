@@ -75,9 +75,10 @@ Write your findings to `review-api-compatibility.md` using this format:
 - **Patch**: N changes (bug fixes, no API impact)
 ```
 
-If no issues are found, write:
+If no issues are found, write exactly this (the marker is used by CI to skip posting):
 
 ```markdown
+<!-- NO_ISSUES_FOUND -->
 ## API Compatibility Review
 
 No API compatibility concerns found. Changes are internal or backwards-compatible.
