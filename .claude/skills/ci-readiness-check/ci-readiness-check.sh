@@ -48,16 +48,20 @@ get_pkg_name() {
 
 # ---------- Phase 0: Detect changed files and packages ----------
 
-# Verify the base branch exists. Try the bare name first, then origin/<name>.
+# Verify the base branch exists. Prefer upstream/<name> over the local branch
+# and origin/<name>, because local branches and fork origins may be stale while
+# upstream tracks the authoritative repo.
 # BASE_BRANCH_NAME stays as the bare name (for flub, which prepends origin/ internally).
 # BASE_BRANCH_REF is the resolved git ref (for git diff/merge-base).
 BASE_BRANCH_NAME="${BASE_BRANCH}"
-if git rev-parse --verify "${BASE_BRANCH}" &>/dev/null; then
+if git rev-parse --verify "upstream/${BASE_BRANCH}" &>/dev/null; then
+    BASE_BRANCH_REF="upstream/${BASE_BRANCH}"
+elif git rev-parse --verify "${BASE_BRANCH}" &>/dev/null; then
     BASE_BRANCH_REF="${BASE_BRANCH}"
 elif git rev-parse --verify "origin/${BASE_BRANCH}" &>/dev/null; then
     BASE_BRANCH_REF="origin/${BASE_BRANCH}"
 else
-    fail "Base branch '${BASE_BRANCH}' not found locally or as origin/${BASE_BRANCH}"
+    fail "Base branch '${BASE_BRANCH}' not found as upstream/${BASE_BRANCH}, locally, or as origin/${BASE_BRANCH}"
     exit 1
 fi
 

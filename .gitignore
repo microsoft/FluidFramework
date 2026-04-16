@@ -63,3 +63,6 @@ CLAUDE.local.md
 **/.claude/todos/
 # Git worktrees created by Claude Code
 **/.claude/worktrees/
+
+# Output from benchmarks
+**/benchmark*Output.json
