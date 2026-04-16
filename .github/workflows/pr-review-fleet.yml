@@ -10,7 +10,6 @@ name: "PR Review Fleet"
 on:
   pull_request:
     types:
-      - opened
       - labeled
     branches:
       - main
@@ -32,10 +31,8 @@ jobs:
   # ──────────────────────────────────────────────────────────────
   review:
     name: "Review: ${{ matrix.reviewer }}"
-    # Run on PR open, or when the 'fleet-review' label is added
-    if: >-
-      github.event.action == 'opened' ||
-      (github.event.action == 'labeled' && github.event.label.name == 'fleet-review')
+    # Only run when the 'fleet-review' label is added
+    if: github.event.label.name == 'fleet-review'
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false # Let all reviewers finish even if one fails
