@@ -55,7 +55,7 @@ describe('Forest Perf', () => {
 			type,
 			title: `insert ${count} nodes into Forest`,
 			run: async () => {
-				let forest = Forest.create(true);
+				const forest = Forest.create(true);
 				const nodes: ForestNode[] = [];
 				for (let i = 0; i < count; i++) {
 					nodes.push(makeTestForestNode(testTree));

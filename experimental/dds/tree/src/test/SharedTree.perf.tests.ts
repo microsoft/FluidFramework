@@ -6,10 +6,8 @@
 import { strict as assert } from 'assert';
 
 import { BenchmarkType, benchmarkIt, collectDurationData } from '@fluid-tools/benchmark';
-import { MockContainerRuntimeFactory } from '@fluidframework/test-runtime-utils/internal';
 
 import { EditLog } from '../EditLog.js';
-import { SharedTree } from '../SharedTree.js';
 
 import { runSummaryLoadPerfTests } from './utilities/SummaryLoadPerfTests.js';
 import { createStableEdits, setUpTestSharedTree } from './utilities/TestUtilities.js';
