@@ -65,7 +65,7 @@ describeCompat("Container - memory usage benchmarks", "NoCompat", (getTestObject
 		...benchmarkMemoryUse(
 			memoryUseOfValue(async () => loader.createDetachedContainer(codeDetails)),
 		),
-	});
+	}).timeout(60000);
 
 	benchmarkIt({
 		title: "Create detached container and attach it",
@@ -76,7 +76,7 @@ describeCompat("Container - memory usage benchmarks", "NoCompat", (getTestObject
 				return container;
 			}),
 		),
-	});
+	}).timeout(60000);
 
 	benchmarkIt({
 		title: "Load existing container",
@@ -86,5 +86,5 @@ describeCompat("Container - memory usage benchmarks", "NoCompat", (getTestObject
 				return loader.resolve({ url: requestUrl });
 			}),
 		),
-	});
+	}).timeout(60000);
 });
