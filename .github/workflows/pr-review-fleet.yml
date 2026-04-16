@@ -135,141 +135,44 @@ jobs:
     if: always() && needs.review.result != 'skipped'
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout scripts
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # ratchet:actions/checkout@v6
+        with:
+          sparse-checkout: .github/scripts
+          persist-credentials: false
+
       - name: Download all review artifacts
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # ratchet:actions/download-artifact@v8
         with:
+          path: reviews
           pattern: review-*
           merge-multiple: true
 
-      - name: Consolidate findings and post report
+      - name: Consolidate findings
+        id: consolidate
+        env:
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          set +e
+          python3 .github/scripts/consolidate_reviews.py reviews "$RUN_URL" -o report.md
+          exit_code=$?
+          set -e
+          if [ $exit_code -eq 2 ]; then
+            echo "has_findings=false" >> "$GITHUB_OUTPUT"
+          elif [ $exit_code -eq 0 ]; then
+            echo "has_findings=true" >> "$GITHUB_OUTPUT"
+          else
+            exit $exit_code
+          fi
+
+      - name: Post or update PR comment
+        if: steps.consolidate.outputs.has_findings == 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
           REPO: ${{ github.repository }}
-          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
-          REVIEWERS=("correctness" "security" "api-compatibility" "performance" "testing")
-          AREAS=("Correctness" "Security" "API Compat" "Performance" "Testing")
-
-          # Collect all findings, skipping NO_ISSUES_FOUND files
-          ALL_FINDINGS=""
-          for i in "${!REVIEWERS[@]}"; do
-            reviewer="${REVIEWERS[$i]}"
-            area="${AREAS[$i]}"
-            file="review-${reviewer}.md"
-
-            if [ ! -f "$file" ]; then
-              echo "No output from ${reviewer} reviewer."
-              continue
-            fi
-
-            if grep -q "NO_ISSUES_FOUND" "$file"; then
-              echo "${reviewer}: no issues found."
-              continue
-            fi
-
-            # Extract findings lines matching [SEVERITY] at start of line only
-            while IFS= read -r line; do
-              ALL_FINDINGS="${ALL_FINDINGS}${line}|AREA:${area}"$'\n'
-            done < <(grep -E '^\[(CRITICAL|HIGH|MEDIUM)\]' "$file" || true)
-          done
-
-          # Build findings table, de-duplicated by file:line
-          declare -A SEEN_LOCATIONS
-          TABLE_ROWS=""
-          CRITICAL_COUNT=0
-          HIGH_COUNT=0
-          MEDIUM_COUNT=0
-          UNIQUE_IDX=0
-
-          # Process CRITICAL first, then HIGH, then MEDIUM (highest severity wins on de-dup)
-          for severity in CRITICAL HIGH MEDIUM; do
-            while IFS= read -r line; do
-              [ -z "$line" ] && continue
-
-              # Extract the area tag
-              area=$(echo "$line" | sed 's/.*|AREA://')
-              finding=$(echo "$line" | sed 's/|AREA:.*//')
-
-              # Extract file:line for de-duplication; use a unique key if no file:line present
-              UNIQUE_IDX=$((UNIQUE_IDX + 1))
-              file_line=$(echo "$finding" | grep -oP '(?<=\] )\S+:\d+' || echo "noloc-${UNIQUE_IDX}")
-
-              # Skip duplicates (same file:line already reported at equal or higher severity)
-              if [ -n "${SEEN_LOCATIONS[$file_line]+x}" ]; then
-                echo "De-duplicated: ${file_line} (already reported)"
-                continue
-              fi
-              SEEN_LOCATIONS[$file_line]=1
-
-              # Count after de-duplication
-              case "$severity" in
-                CRITICAL) CRITICAL_COUNT=$((CRITICAL_COUNT + 1)) ;;
-                HIGH)     HIGH_COUNT=$((HIGH_COUNT + 1)) ;;
-                MEDIUM)   MEDIUM_COUNT=$((MEDIUM_COUNT + 1)) ;;
-              esac
-
-              FINDING_NUM=$((CRITICAL_COUNT + HIGH_COUNT + MEDIUM_COUNT))
-
-              # Map severity to emoji and label
-              case "$severity" in
-                CRITICAL) sev_emoji=":red_circle:" ; sev_label="C${CRITICAL_COUNT}" ;;
-                HIGH)     sev_emoji=":orange_circle:" ; sev_label="H${HIGH_COUNT}" ;;
-                MEDIUM)   sev_emoji=":yellow_circle:" ; sev_label="M${MEDIUM_COUNT}" ;;
-              esac
-
-              # Parse finding: [SEVERITY] file:line — description — fix
-              # Use awk to split on ' — ' delimiter (handles descriptions containing other chars)
-              file_ref=$(echo "$finding" | sed 's/^\[.*\] //' | awk -F' — ' '{print $1}')
-              description=$(echo "$finding" | awk -F' — ' '{print $2}')
-              fix=$(echo "$finding" | awk -F' — ' '{print $3}' | cut -c 1-200)
-
-              TABLE_ROWS="${TABLE_ROWS}| ${sev_emoji} | ${sev_label} | ${area} | \`${file_ref}\` | ${description} | ${fix} |"$'\n'
-            done < <(echo "$ALL_FINDINGS" | grep "^\[${severity}\]" || true)
-          done
-
-          TOTAL=$((CRITICAL_COUNT + HIGH_COUNT + MEDIUM_COUNT))
-
-          # If no findings across all reviewers, skip posting
-          if [ "$TOTAL" -eq 0 ]; then
-            echo "All reviewers passed with no findings. Skipping PR comment."
-            exit 0
-          fi
-
-          # Determine verdict
-          if [ "$CRITICAL_COUNT" -gt 0 ]; then
-            VERDICT="Request Changes"
-            VERDICT_EMOJI=":red_circle:"
-          elif [ "$HIGH_COUNT" -gt 0 ]; then
-            VERDICT="Request Changes"
-            VERDICT_EMOJI=":red_circle:"
-          elif [ "$MEDIUM_COUNT" -gt 0 ]; then
-            VERDICT="Approve with Suggestions"
-            VERDICT_EMOJI=":yellow_circle:"
-          else
-            VERDICT="Approve"
-            VERDICT_EMOJI=":green_circle:"
-          fi
-
-          # Build the comment with a hidden marker for find-and-update
           MARKER="<!-- pr-review-fleet -->"
-          {
-            echo "$MARKER"
-            echo "## :telescope: PR Review Fleet Report"
-            echo ""
-            echo "**Verdict:** ${VERDICT_EMOJI} ${VERDICT}"
-            echo ""
-            echo "${CRITICAL_COUNT} CRITICAL, ${HIGH_COUNT} HIGH, ${MEDIUM_COUNT} MEDIUM"
-            echo ""
-            echo "### Findings"
-            echo ""
-            echo "| Sev | # | Area | File | What | Fix |"
-            echo "|-----|---|------|------|------|-----|"
-            echo -n "$TABLE_ROWS"
-            echo ""
-            echo "---"
-            echo "*[View workflow run](${RUN_URL})*"
-          } > report.md
 
           # Find existing comment with our marker and update it, or create a new one
           EXISTING_COMMENT_ID=$(gh api "repos/${REPO}/issues/${PR_NUMBER}/comments" \
