@@ -243,8 +243,10 @@ jobs:
             VERDICT_EMOJI=":green_circle:"
           fi
 
-          # Build the comment
+          # Build the comment with a hidden marker for find-and-update
+          MARKER="<!-- pr-review-fleet -->"
           {
+            echo "$MARKER"
             echo "## :telescope: PR Review Fleet Report"
             echo ""
             echo "**Verdict:** ${VERDICT_EMOJI} ${VERDICT}"
@@ -261,4 +263,15 @@ jobs:
             echo "*[View workflow run](${RUN_URL})*"
           } > report.md
 
-          gh pr comment "${PR_NUMBER}" --repo "${REPO}" --body-file report.md
+          # Find existing comment with our marker and update it, or create a new one
+          EXISTING_COMMENT_ID=$(gh api "repos/${REPO}/issues/${PR_NUMBER}/comments" \
+            --paginate --jq ".[] | select(.body | startswith(\"${MARKER}\")) | .id" | head -1)
+
+          if [ -n "$EXISTING_COMMENT_ID" ]; then
+            gh api "repos/${REPO}/issues/comments/${EXISTING_COMMENT_ID}" \
+              --method PATCH --field "body=@report.md"
+            echo "Updated existing comment ${EXISTING_COMMENT_ID}"
+          else
+            gh pr comment "${PR_NUMBER}" --repo "${REPO}" --body-file report.md
+            echo "Posted new comment"
+          fi
