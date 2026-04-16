@@ -162,16 +162,64 @@ jobs:
               continue
             fi
 
-            # Extract findings lines matching [SEVERITY] pattern
+            # Extract findings lines matching [SEVERITY] at start of line only
             while IFS= read -r line; do
               ALL_FINDINGS="${ALL_FINDINGS}${line}|AREA:${area}"$'\n'
-            done < <(grep -E '^\[CRITICAL\]|\[HIGH\]|\[MEDIUM\]' "$file" || true)
+            done < <(grep -E '^\[(CRITICAL|HIGH|MEDIUM)\]' "$file" || true)
           done
 
-          # Count findings by severity
-          CRITICAL_COUNT=$(echo "$ALL_FINDINGS" | grep -c '^\[CRITICAL\]' || true)
-          HIGH_COUNT=$(echo "$ALL_FINDINGS" | grep -c '^\[HIGH\]' || true)
-          MEDIUM_COUNT=$(echo "$ALL_FINDINGS" | grep -c '^\[MEDIUM\]' || true)
+          # Build findings table, de-duplicated by file:line
+          declare -A SEEN_LOCATIONS
+          TABLE_ROWS=""
+          CRITICAL_COUNT=0
+          HIGH_COUNT=0
+          MEDIUM_COUNT=0
+
+          # Process CRITICAL first, then HIGH, then MEDIUM (highest severity wins on de-dup)
+          for severity in CRITICAL HIGH MEDIUM; do
+            while IFS= read -r line; do
+              [ -z "$line" ] && continue
+
+              # Extract the area tag
+              area=$(echo "$line" | sed 's/.*|AREA://')
+              finding=$(echo "$line" | sed 's/|AREA:.*//')
+
+              # Extract file:line for de-duplication
+              file_line=$(echo "$finding" | grep -oP '(?<=\] )\S+:\d+' || echo "unknown")
+
+              # Skip duplicates (same file:line already reported at equal or higher severity)
+              if [ -n "${SEEN_LOCATIONS[$file_line]+x}" ]; then
+                echo "De-duplicated: ${file_line} (already reported)"
+                continue
+              fi
+              SEEN_LOCATIONS[$file_line]=1
+
+              # Count after de-duplication
+              case "$severity" in
+                CRITICAL) CRITICAL_COUNT=$((CRITICAL_COUNT + 1)) ;;
+                HIGH)     HIGH_COUNT=$((HIGH_COUNT + 1)) ;;
+                MEDIUM)   MEDIUM_COUNT=$((MEDIUM_COUNT + 1)) ;;
+              esac
+
+              FINDING_NUM=$((CRITICAL_COUNT + HIGH_COUNT + MEDIUM_COUNT))
+
+              # Map severity to emoji and label
+              case "$severity" in
+                CRITICAL) sev_emoji=":red_circle:" ; sev_label="C${CRITICAL_COUNT}" ;;
+                HIGH)     sev_emoji=":orange_circle:" ; sev_label="H${HIGH_COUNT}" ;;
+                MEDIUM)   sev_emoji=":yellow_circle:" ; sev_label="M${MEDIUM_COUNT}" ;;
+              esac
+
+              # Parse finding: [SEVERITY] file:line — description — fix
+              # Use awk to split on ' — ' delimiter (handles descriptions containing other chars)
+              file_ref=$(echo "$finding" | sed 's/^\[.*\] //' | awk -F' — ' '{print $1}')
+              description=$(echo "$finding" | awk -F' — ' '{print $2}')
+              fix=$(echo "$finding" | awk -F' — ' '{print $3}' | head -c 200)
+
+              TABLE_ROWS="${TABLE_ROWS}| ${sev_emoji} | ${sev_label} | ${area} | \`${file_ref}\` | ${description} | ${fix} |"$'\n'
+            done < <(echo "$ALL_FINDINGS" | grep "^\[${severity}\]" || true)
+          done
+
           TOTAL=$((CRITICAL_COUNT + HIGH_COUNT + MEDIUM_COUNT))
 
           # If no findings across all reviewers, skip posting
@@ -194,51 +242,6 @@ jobs:
             VERDICT="Approve"
             VERDICT_EMOJI=":green_circle:"
           fi
-
-          # Build findings table, de-duplicated by file:line
-          declare -A SEEN_LOCATIONS
-          TABLE_ROWS=""
-          FINDING_NUM=0
-
-          # Process CRITICAL first, then HIGH, then MEDIUM
-          for severity in CRITICAL HIGH MEDIUM; do
-            while IFS= read -r line; do
-              [ -z "$line" ] && continue
-
-              # Extract the area tag
-              area=$(echo "$line" | sed 's/.*|AREA://')
-              finding=$(echo "$line" | sed 's/|AREA:.*//')
-
-              # Extract file:line for de-duplication
-              file_line=$(echo "$finding" | grep -oP '(?<=\] )\S+:\d+' || echo "unknown")
-
-              # Skip duplicates (same file:line already reported at equal or higher severity)
-              if [ -n "${SEEN_LOCATIONS[$file_line]+x}" ]; then
-                echo "De-duplicated: ${file_line} (already reported)"
-                continue
-              fi
-              SEEN_LOCATIONS[$file_line]=1
-
-              FINDING_NUM=$((FINDING_NUM + 1))
-
-              # Map severity to emoji
-              case "$severity" in
-                CRITICAL) sev_emoji=":red_circle:" ; sev_label="C${FINDING_NUM}" ;;
-                HIGH)     sev_emoji=":orange_circle:" ; sev_label="H${FINDING_NUM}" ;;
-                MEDIUM)   sev_emoji=":yellow_circle:" ; sev_label="M${FINDING_NUM}" ;;
-              esac
-
-              # Parse finding: [SEVERITY] file:line — description — fix
-              file_ref=$(echo "$finding" | sed 's/^\[.*\] //' | cut -d' ' -f1)
-              description=$(echo "$finding" | sed 's/^\[.*\] [^ ]* — //' | sed 's/ — .*//')
-              fix=$(echo "$finding" | sed 's/.* — //' | head -c 200)
-
-              TABLE_ROWS="${TABLE_ROWS}| ${sev_emoji} | ${sev_label} | ${area} | \`${file_ref}\` | ${description} | ${fix} |"$'\n'
-            done < <(echo "$ALL_FINDINGS" | grep "^\[${severity}\]" || true)
-          done
-
-          # Recount after de-duplication
-          DEDUPED_TOTAL=$(echo "$TABLE_ROWS" | grep -c '|' || true)
 
           # Build the comment
           {
