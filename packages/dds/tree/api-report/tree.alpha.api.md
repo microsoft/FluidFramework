@@ -442,7 +442,7 @@ export const FluidClientVersion: {
     readonly v2_73: "2.73.0";
     readonly v2_74: "2.74.0";
     readonly v2_80: "2.80.0";
-    readonly v2_90: "2.90.0";
+    readonly v2_100: "2.100.0";
 };
 
 // @beta

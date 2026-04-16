@@ -70,7 +70,7 @@ function minVersionToEditManagerSummaryFormatVersion(
 ): EditManagerSummaryFormatVersion {
 	return getConfigForMinVersionForCollab(version, {
 		[lowestMinVersionForCollab]: EditManagerSummaryFormatVersion.v2,
-		[FluidClientVersion.v2_90]: EditManagerSummaryFormatVersion.v3,
+		[FluidClientVersion.v2_100]: EditManagerSummaryFormatVersion.v3,
 	});
 }
 

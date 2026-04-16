@@ -66,7 +66,7 @@ function minVersionToDetachedFieldIndexSummaryFormatVersion(
 ): DetachedFieldIndexSummaryFormatVersion {
 	return getConfigForMinVersionForCollab(version, {
 		[lowestMinVersionForCollab]: DetachedFieldIndexSummaryFormatVersion.v2,
-		[FluidClientVersion.v2_90]: DetachedFieldIndexSummaryFormatVersion.v3,
+		[FluidClientVersion.v2_100]: DetachedFieldIndexSummaryFormatVersion.v3,
 	});
 }
 
