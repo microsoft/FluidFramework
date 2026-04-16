@@ -166,12 +166,12 @@ export class RiddlerResourcesFactory implements IResourcesFactory<RiddlerResourc
 							winston.info(
 								`Error creating repos, retrying in ${retryDelayMs}ms (attempt ${attempt}/${maxAttempts})`,
 							);
-							await new Promise((resolve) =>
-								setTimeout(resolve, retryDelayMs),
-							);
+							await new Promise((resolve) => setTimeout(resolve, retryDelayMs));
 						} else {
 							// This is okay to fail since the repos are already created in production.
-							winston.error(`Error creating repos after ${maxAttempts} attempts, giving up`);
+							winston.error(
+								`Error creating repos after ${maxAttempts} attempts, giving up`,
+							);
 							Lumberjack.error(
 								`Error creating repos`,
 								{ [BaseTelemetryProperties.tenantId]: tenant._id },
