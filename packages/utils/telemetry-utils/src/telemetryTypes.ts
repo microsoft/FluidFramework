@@ -113,11 +113,19 @@ export interface ITelemetryPerformanceEventExt extends ITelemetryGenericEventExt
 }
 
 /**
- * An extended {@link @fluidframework/core-interfaces#ITelemetryBaseLogger} which allows for more lenient event types.
+ * This is the externally facing type for a FluidFramework internal telemetry logger wrapper.
  *
  * @remarks
- * `ITelemetryBaseLogger` should be used when loggers are passed between layers. This interface exists
- * to patch cases where `ITelemetryLoggerExt` leaked out.
+ * The methods if this interface are not to be used directly by consumers and are all
+ * deprecated to removed without replacement. This type is not deprecated and will
+ * transition to an erased type to handle cases where "internal" `ITelemetryLoggerExt`
+ * previously leaked out.
+ *
+ * @see {@link https://github.com/microsoft/FluidFramework/issues/26910 | Issue #26910} for deprecation and breaking change details.
+ *
+ * @privateRemarks
+ * External APIs taking in an `ITelemetryLoggerExt` ideally should be updated to
+ * accept `ITelemetryBaseLogger` instead.
  *
  * @sealed
  * @legacy
