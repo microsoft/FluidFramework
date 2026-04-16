@@ -5,12 +5,7 @@
 
 import { strict as assert } from "node:assert";
 
-import {
-	BenchmarkType,
-	benchmarkDuration,
-	benchmarkIt,
-	collectDurationData,
-} from "@fluid-tools/benchmark";
+import { BenchmarkType, benchmarkIt, collectDurationData } from "@fluid-tools/benchmark";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 
 import { EmptyKey, type ITreeCursorSynchronous } from "../../../core/index.js";
