@@ -581,7 +581,7 @@ extends:
                 - ${{ if eq(parameters.taskBundleAnalysis, true) }}:
                     - output: pipelineArtifact
                       displayName: Publish Artifacts - bundle-analysis
-                      condition: and( succeeded(), ne(variables['Build.Reason'], 'PullRequest') )
+                      condition: and( succeeded(), ne(variables['Build.Reason'], 'PullRequest'), eq(${{ parameters.isBundleSizeArtifactsPipeline }}, true) )
                       targetPath: $(Build.ArtifactStagingDirectory)/bundleAnalysis
                       artifactName: bundleAnalysis
                       sbomEnabled: false
@@ -638,5 +638,3 @@ extends:
                   # Using 'all' signifies that we will upload all stages
                   stageIdFilter: 'all'
                   pipelineIdentifierForTelemetry: BuildClient
-              - ${{ if and(eq(parameters.taskBundleAnalysis, true), ne(variables['Build.Reason'], 'PullRequest')) }}:
-                - template: /tools/pipelines/templates/upload-telemetry/include-steps-upload-bundle-size.yml@self

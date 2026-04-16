@@ -887,5 +887,13 @@ extends:
                   # Using 'all' signifies that we will upload all stages
                   stageIdFilter: 'all'
                   pipelineIdentifierForTelemetry: BuildClient
-              - ${{ if and(eq(parameters.taskBundleAnalysis, true), ne(variables['Build.Reason'], 'PullRequest')) }}:
-                - template: /tools/pipelines/templates/upload-telemetry/include-steps-upload-bundle-size.yml@self
+
+      # Upload bundle size telemetry in a separate stage that only depends on the build stage,
+      # so it isn't blocked by publish stage failures. Only runs on the internal project where
+      # ff_pipeline_host is available.
+      - ${{ if and(eq(parameters.telemetry, true), eq(parameters.taskBundleAnalysis, true), ne(variables['Build.Reason'], 'PullRequest'), eq(variables['System.TeamProject'], 'internal')) }}:
+        - template: /tools/pipelines/templates/upload-telemetry/include-stage-upload-telemetry.yml@self
+          parameters:
+            stageIdFilter: 'build'
+            telemetry_upload_steps:
+              - template: /tools/pipelines/templates/upload-telemetry/include-steps-upload-bundle-size.yml@self
