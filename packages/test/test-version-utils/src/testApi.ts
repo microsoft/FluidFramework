@@ -187,7 +187,6 @@ export const DataRuntimeApi = {
 	DataObjectFactory,
 	FluidDataStoreRuntime,
 	TestFluidObjectFactory,
-	// TODO: SharedTree is not included included here. Perhaps it should be added?
 	dds: {
 		SharedCell,
 		SharedCounter,

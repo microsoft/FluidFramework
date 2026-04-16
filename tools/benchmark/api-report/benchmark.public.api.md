@@ -70,6 +70,15 @@ export enum BenchmarkType {
 }
 
 // @public
+export class Box<T extends NonNullable<unknown>> {
+    clear(): void;
+    static empty<T extends NonNullable<unknown>>(): Box<T>;
+    static full<T extends NonNullable<unknown>>(item: T): Box<T>;
+    get value(): T;
+    set value(v: T);
+}
+
+// @public
 export function captureResults(f: () => CollectedData | Promise<CollectedData>, durationMeasurementName?: string): Promise<{
     result: BenchmarkResult;
     exception?: Error;
@@ -140,7 +149,10 @@ export interface Measurement {
     readonly value: number;
 }
 
-// @public @input
+// @public
+export function memoryAddedBy<TIn extends NonNullable<unknown>>(options: MemoryUseModifier<TIn>): MemoryUseBenchmark;
+
+// @public
 export interface MemoryUseBenchmark {
     benchmarkFn(state: MemoryUseCallbacks): Promise<void>;
     enableAsyncGC?: boolean;
@@ -157,6 +169,16 @@ export interface MemoryUseCallbacks {
     continue(): boolean;
     whileAllocated(): Promise<void>;
 }
+
+// @public @input
+export interface MemoryUseModifier<TIn> {
+    after?(input: TIn): void | Promise<void>;
+    modify(input: TIn): void | Promise<void>;
+    setup(): TIn | Promise<TIn>;
+}
+
+// @public
+export function memoryUseOfValue<TOut extends NonNullable<unknown>>(factory: () => TOut | Promise<TOut>): MemoryUseBenchmark;
 
 // @public @input
 export interface MochaExclusiveOptions {

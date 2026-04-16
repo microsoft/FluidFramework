@@ -1,0 +1,43 @@
+diff --git a/lib-commonjs/enhancers/ValidationEnhancer.js b/lib-commonjs/enhancers/ValidationEnhancer.js
+index 881b85e..f2515dd 100644
+--- a/lib-commonjs/enhancers/ValidationEnhancer.js
++++ b/lib-commonjs/enhancers/ValidationEnhancer.js
+@@ -197,7 +197,8 @@ class ValidationEnhancer {
+             else {
+                 continue;
+             }
+-            if (collectorEntity && collectorEntity.consumable) {
++            // BUG MITIGATION: Always check release tag compatibility.
++            {
+                 if (api_extractor_model_1.ReleaseTag.compare(declarationReleaseTag, referencedReleaseTag) > 0) {
+                     collector.messageRouter.addAnalyzerIssue(ExtractorMessageId_1.ExtractorMessageId.IncompatibleReleaseTags, `The symbol "${astDeclaration.astSymbol.localName}"` +
+                         ` is marked as ${api_extractor_model_1.ReleaseTag.getTagName(declarationReleaseTag)},` +
+@@ -205,7 +206,7 @@ class ValidationEnhancer {
+                         ` which is marked as ${api_extractor_model_1.ReleaseTag.getTagName(referencedReleaseTag)}`, astDeclaration);
+                 }
+             }
+-            else {
++            if (!(collectorEntity === null || collectorEntity === void 0 ? void 0 : collectorEntity.consumable)) {
+                 const entryPointFilename = path.basename(collector.workingPackage.entryPointSourceFile.fileName);
+                 if (!alreadyWarnedEntities.has(referencedEntity)) {
+                     alreadyWarnedEntities.add(referencedEntity);
+diff --git a/lib-commonjs/generators/ApiReportGenerator.js b/lib-commonjs/generators/ApiReportGenerator.js
+index d60ca38..127c6d9 100644
+--- a/lib-commonjs/generators/ApiReportGenerator.js
++++ b/lib-commonjs/generators/ApiReportGenerator.js
+@@ -96,13 +96,8 @@ class ApiReportGenerator {
+             writer.writeLine(`/// <reference lib="${libDirectiveReference}" />`);
+         }
+         writer.ensureSkippedLine();
+-        // Emit the imports
+-        for (const entity of collector.entities) {
+-            if (entity.astEntity instanceof AstImport_1.AstImport) {
+-                DtsEmitHelpers_1.DtsEmitHelpers.emitImport(writer, entity, entity.astEntity);
+-            }
+-        }
+-        writer.ensureSkippedLine();
++        // PATCH: Don't emit imports
++
+         const context = {
+             collector,
+             reportVariant,
