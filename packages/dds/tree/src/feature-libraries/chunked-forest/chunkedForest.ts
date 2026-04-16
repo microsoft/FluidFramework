@@ -45,7 +45,13 @@ import {
 } from "../../util/index.js";
 
 import { BasicChunk, BasicChunkCursor, type SiblingsOrKey } from "./basicChunk.js";
-import { type IChunker, basicChunkTree, chunkField, chunkTree } from "./chunkTree.js";
+import {
+	type ChunkCompressor,
+	type IChunker,
+	basicChunkTree,
+	chunkField,
+	chunkTree,
+} from "./chunkTree.js";
 
 function makeRoot(): BasicChunk {
 	return new BasicChunk(aboveRootPlaceholder, new Map());
@@ -59,7 +65,7 @@ function makeRoot(): BasicChunk {
 function splitFieldAtIndex(
 	chunks: TreeChunk[],
 	nodeIndex: number,
-	forest: ChunkedForest,
+	policy: ChunkCompressor,
 ): number {
 	assertNonNegativeSafeInteger(nodeIndex);
 	let remaining = nodeIndex;
@@ -70,10 +76,7 @@ function splitFieldAtIndex(
 		const chunk = chunks[i] ?? oob();
 		if (remaining < chunk.topLevelLength) {
 			const expanded = mapCursorField(chunk.cursor(), (cursor) =>
-				basicChunkTree(cursor, {
-					policy: forest.chunker,
-					idCompressor: forest.idCompressor,
-				}),
+				basicChunkTree(cursor, policy),
 			);
 			// TODO: this could fail for really long chunks being split (due to argument count limits).
 			chunks.splice(i, 1, ...expanded);
@@ -208,11 +211,10 @@ export class ChunkedForest implements IEditableForest {
 
 				const parent = this.getParent();
 				const destinationField = getOrAddEmptyToMap(parent.mutableChunk.fields, parent.key);
-				const destinationChunkIndex = splitFieldAtIndex(
-					destinationField,
-					destination,
-					this.forest,
-				);
+				const destinationChunkIndex = splitFieldAtIndex(destinationField, destination, {
+					policy: this.forest.chunker,
+					idCompressor: this.forest.idCompressor,
+				});
 				// TODO: this will fail for very large moves due to argument limits.
 				destinationField.splice(destinationChunkIndex, 0, ...sourceField);
 			},
@@ -235,8 +237,12 @@ export class ChunkedForest implements IEditableForest {
 				const sourceField = parent.mutableChunk.fields.get(parent.key) ?? [];
 				assert(source.start <= source.end, "detach range start must not exceed end");
 
-				const endChunkIndex = splitFieldAtIndex(sourceField, source.end, this.forest);
-				const startChunkIndex = splitFieldAtIndex(sourceField, source.start, this.forest);
+				const policy: ChunkCompressor = {
+					policy: this.forest.chunker,
+					idCompressor: this.forest.idCompressor,
+				};
+				const endChunkIndex = splitFieldAtIndex(sourceField, source.end, policy);
+				const startChunkIndex = splitFieldAtIndex(sourceField, source.start, policy);
 				const newField = sourceField.splice(startChunkIndex, endChunkIndex - startChunkIndex);
 
 				if (destination === undefined) {
@@ -265,8 +271,12 @@ export class ChunkedForest implements IEditableForest {
 					parent.mutableChunk.fields.get(parent.key) ?? fail(0xaf6 /* missing edited field */);
 				// Split on both sides of the target node so the chunk at chunkIndex holds only that node.
 				// Split the end boundary first so it isn't shifted by the earlier split.
-				splitFieldAtIndex(chunks, index + 1, this.forest);
-				const chunkIndex = splitFieldAtIndex(chunks, index, this.forest);
+				const policy: ChunkCompressor = {
+					policy: this.forest.chunker,
+					idCompressor: this.forest.idCompressor,
+				};
+				splitFieldAtIndex(chunks, index + 1, policy);
+				const chunkIndex = splitFieldAtIndex(chunks, index, policy);
 				let found: BasicChunk;
 				const chunk = chunks[chunkIndex] ?? oob();
 				if (chunk instanceof BasicChunk) {
