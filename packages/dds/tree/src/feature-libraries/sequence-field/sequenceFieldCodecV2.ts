@@ -464,16 +464,26 @@ function encodeRename(
 ): Encoded.MarkEffect {
 	assert(mark.cellId !== undefined, "Rename should target empty cell");
 
-	const inputDetachId = context.getInputRootId(mark.idOverride, mark.count).value;
+	const inputRootId = context.getInputRootId(mark.idOverride, mark.count).value;
+
+	// XXX: Refactor and comment
 	const isMoveInAndDetach =
 		!context.isAttachId(mark.idOverride, mark.count).value &&
 		(context.isDetachId(mark.idOverride, mark.count).value ||
-			(inputDetachId !== undefined && !areEqualChangeAtomIds(inputDetachId, mark.cellId)));
+			(inputRootId !== undefined && !areEqualChangeAtomIds(inputRootId, mark.cellId)));
 
 	if (isMoveInAndDetach) {
 		// These cells are the final detach location of moved nodes.
 		const encodedRevision = encodeRevision(mark.idOverride.revision);
-		const endpoint = context.getInputRootId(mark.idOverride, mark.count).value;
+
+		// XXX: Splitting
+		const endpoint =
+			inputRootId === undefined
+				? undefined
+				: context.isDetachId(inputRootId, mark.count).value
+					? inputRootId
+					: (context.getFirstRenameId(inputRootId, mark.count).value ?? inputRootId);
+
 		const encodedEndpoint =
 			endpoint === undefined
 				? undefined
