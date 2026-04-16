@@ -1,8 +1,8 @@
 name: "PR Review Fleet"
 
 # Triggers a fleet of parallel Copilot CLI reviewer agents on every PR.
-# Each reviewer focuses on a different axis (correctness, security, performance, etc.)
-# and posts its findings as a PR comment.
+# Each reviewer focuses on a different axis with an adversarial persona.
+# A consolidation job merges, de-duplicates, and posts one structured report.
 #
 # Authentication: Uses the existing COPILOT_GITHUB_TOKEN repository secret.
 # See: https://docs.github.com/en/copilot/how-tos/copilot-cli/automate-copilot-cli/automate-with-actions
@@ -52,7 +52,6 @@ jobs:
       - name: Checkout PR head
         uses: actions/checkout@v4
         with:
-          # Fetch enough history to generate a meaningful diff against the base
           fetch-depth: 0
 
       # ── Prepare the diff ──
@@ -65,6 +64,7 @@ jobs:
 
       # ── Prepare the prompt ──
       - name: Prepare reviewer prompt
+        id: prompt
         env:
           REVIEWER: ${{ matrix.reviewer }}
           REPO: ${{ github.repository }}
@@ -81,7 +81,6 @@ jobs:
           sed -i "s|__PR_NUMBER__|${PR_NUMBER}|g" "$PROMPT_FILE"
 
           echo "prompt_file=$PROMPT_FILE" >> "$GITHUB_OUTPUT"
-        id: prompt
 
       # ── Install Copilot CLI ──
       - name: Set up Node.js
@@ -114,44 +113,152 @@ jobs:
             --allow-tool=write \
             --no-ask-user
 
-      # ── Collect and post results ──
-      - name: Post review comment
+      # ── Upload results as artifact ──
+      - name: Upload review output
         if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: review-${{ matrix.reviewer }}
+          path: review-${{ matrix.reviewer }}.md
+          if-no-files-found: ignore
+          retention-days: 1
+
+  # ──────────────────────────────────────────────────────────────
+  # Fan-in: consolidate, de-duplicate, and post one report
+  # ──────────────────────────────────────────────────────────────
+  consolidate:
+    name: "Consolidate Review"
+    needs: review
+    if: always() && needs.review.result != 'skipped'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download all review artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: review-*
+          merge-multiple: true
+
+      - name: Consolidate findings and post report
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          REVIEWER: ${{ matrix.reviewer }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
-          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
           REPO: ${{ github.repository }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
-          REVIEW_FILE="review-${REVIEWER}.md"
+          REVIEWERS=("correctness" "security" "api-compatibility" "performance" "testing")
+          AREAS=("Correctness" "Security" "API Compat" "Performance" "Testing")
 
-          if [ ! -f "$REVIEW_FILE" ]; then
-            echo "No review output found ($REVIEW_FILE). Skipping comment."
+          # Collect all findings, skipping NO_ISSUES_FOUND files
+          ALL_FINDINGS=""
+          for i in "${!REVIEWERS[@]}"; do
+            reviewer="${REVIEWERS[$i]}"
+            area="${AREAS[$i]}"
+            file="review-${reviewer}.md"
+
+            if [ ! -f "$file" ]; then
+              echo "No output from ${reviewer} reviewer."
+              continue
+            fi
+
+            if grep -q "NO_ISSUES_FOUND" "$file"; then
+              echo "${reviewer}: no issues found."
+              continue
+            fi
+
+            # Extract findings lines matching [SEVERITY] pattern
+            while IFS= read -r line; do
+              ALL_FINDINGS="${ALL_FINDINGS}${line}|AREA:${area}"$'\n'
+            done < <(grep -E '^\[CRITICAL\]|\[HIGH\]|\[MEDIUM\]' "$file" || true)
+          done
+
+          # Count findings by severity
+          CRITICAL_COUNT=$(echo "$ALL_FINDINGS" | grep -c '^\[CRITICAL\]' || true)
+          HIGH_COUNT=$(echo "$ALL_FINDINGS" | grep -c '^\[HIGH\]' || true)
+          MEDIUM_COUNT=$(echo "$ALL_FINDINGS" | grep -c '^\[MEDIUM\]' || true)
+          TOTAL=$((CRITICAL_COUNT + HIGH_COUNT + MEDIUM_COUNT))
+
+          # If no findings across all reviewers, skip posting
+          if [ "$TOTAL" -eq 0 ]; then
+            echo "All reviewers passed with no findings. Skipping PR comment."
             exit 0
           fi
 
-          # Skip posting if the reviewer found no issues (clean bill of health).
-          # Each prompt writes a "NO_ISSUES_FOUND" marker when nothing significant was found.
-          if grep -q "NO_ISSUES_FOUND" "$REVIEW_FILE"; then
-            echo "Reviewer ${REVIEWER} found no significant issues. Skipping comment."
-            exit 0
+          # Determine verdict
+          if [ "$CRITICAL_COUNT" -gt 0 ]; then
+            VERDICT="Request Changes"
+            VERDICT_EMOJI=":red_circle:"
+          elif [ "$HIGH_COUNT" -gt 0 ]; then
+            VERDICT="Request Changes"
+            VERDICT_EMOJI=":red_circle:"
+          elif [ "$MEDIUM_COUNT" -gt 0 ]; then
+            VERDICT="Approve with Suggestions"
+            VERDICT_EMOJI=":yellow_circle:"
+          else
+            VERDICT="Approve"
+            VERDICT_EMOJI=":green_circle:"
           fi
 
-          # Build the comment body with a collapsible section
+          # Build findings table, de-duplicated by file:line
+          declare -A SEEN_LOCATIONS
+          TABLE_ROWS=""
+          FINDING_NUM=0
+
+          # Process CRITICAL first, then HIGH, then MEDIUM
+          for severity in CRITICAL HIGH MEDIUM; do
+            while IFS= read -r line; do
+              [ -z "$line" ] && continue
+
+              # Extract the area tag
+              area=$(echo "$line" | sed 's/.*|AREA://')
+              finding=$(echo "$line" | sed 's/|AREA:.*//')
+
+              # Extract file:line for de-duplication
+              file_line=$(echo "$finding" | grep -oP '(?<=\] )\S+:\d+' || echo "unknown")
+
+              # Skip duplicates (same file:line already reported at equal or higher severity)
+              if [ -n "${SEEN_LOCATIONS[$file_line]+x}" ]; then
+                echo "De-duplicated: ${file_line} (already reported)"
+                continue
+              fi
+              SEEN_LOCATIONS[$file_line]=1
+
+              FINDING_NUM=$((FINDING_NUM + 1))
+
+              # Map severity to emoji
+              case "$severity" in
+                CRITICAL) sev_emoji=":red_circle:" ; sev_label="C${FINDING_NUM}" ;;
+                HIGH)     sev_emoji=":orange_circle:" ; sev_label="H${FINDING_NUM}" ;;
+                MEDIUM)   sev_emoji=":yellow_circle:" ; sev_label="M${FINDING_NUM}" ;;
+              esac
+
+              # Parse finding: [SEVERITY] file:line — description — fix
+              file_ref=$(echo "$finding" | sed 's/^\[.*\] //' | cut -d' ' -f1)
+              description=$(echo "$finding" | sed 's/^\[.*\] [^ ]* — //' | sed 's/ — .*//')
+              fix=$(echo "$finding" | sed 's/.* — //' | head -c 200)
+
+              TABLE_ROWS="${TABLE_ROWS}| ${sev_emoji} | ${sev_label} | ${area} | \`${file_ref}\` | ${description} | ${fix} |"$'\n'
+            done < <(echo "$ALL_FINDINGS" | grep "^\[${severity}\]" || true)
+          done
+
+          # Recount after de-duplication
+          DEDUPED_TOTAL=$(echo "$TABLE_ROWS" | grep -c '|' || true)
+
+          # Build the comment
           {
-            echo "### :robot: ${REVIEWER} review"
+            echo "## :robot: PR Review Fleet Report"
             echo ""
-            echo "<details>"
-            echo "<summary>Click to expand</summary>"
+            echo "**Verdict:** ${VERDICT_EMOJI} ${VERDICT}"
             echo ""
-            cat "$REVIEW_FILE"
+            echo "${CRITICAL_COUNT} CRITICAL, ${HIGH_COUNT} HIGH, ${MEDIUM_COUNT} MEDIUM"
             echo ""
-            echo "</details>"
+            echo "### Findings"
+            echo ""
+            echo "| Sev | # | Area | File | What | Fix |"
+            echo "|-----|---|------|------|------|-----|"
+            echo -n "$TABLE_ROWS"
             echo ""
             echo "---"
-            echo "*Automated review by PR Review Fleet — [${REVIEWER}](${RUN_URL})*"
-          } > comment-body.md
+            echo "*[View workflow run](${RUN_URL})*"
+          } > report.md
 
-          gh pr comment "${PR_NUMBER}" --repo "${REPO}" --body-file comment-body.md
-
+          gh pr comment "${PR_NUMBER}" --repo "${REPO}" --body-file report.md
