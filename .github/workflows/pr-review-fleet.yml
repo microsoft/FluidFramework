@@ -1,0 +1,180 @@
+name: "PR Review Fleet"
+
+# Triggers a fleet of parallel Copilot CLI reviewer agents on every PR.
+# Each reviewer focuses on a different axis (correctness, security, performance, etc.)
+# and posts its findings as a PR comment.
+#
+# Setup requirements:
+#   1. Create a PAT with "Copilot Requests" permission
+#   2. Store it as a repository secret named COPILOT_GITHUB_TOKEN
+#   See: https://docs.github.com/en/copilot/how-tos/copilot-cli/automate-copilot-cli/automate-with-actions
+
+on:
+  pull_request:
+    types:
+      - opened
+      - synchronize
+      - reopened
+    branches:
+      - main
+      - next
+      - release/**/*
+
+permissions:
+  contents: read
+  pull-requests: write
+
+# Cancel in-progress runs for the same PR when new commits are pushed.
+concurrency:
+  group: pr-review-fleet-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  # ──────────────────────────────────────────────────────────────
+  # Fan-out: run each reviewer in parallel via matrix strategy
+  # ──────────────────────────────────────────────────────────────
+  review:
+    name: "Review: ${{ matrix.reviewer }}"
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false # Let all reviewers finish even if one fails
+      matrix:
+        reviewer:
+          - correctness
+          - security
+          - api-compatibility
+          - performance
+          - testing
+
+    steps:
+      # ── Checkout ──
+      - name: Checkout PR head
+        uses: actions/checkout@v4
+        with:
+          # Fetch enough history to generate a meaningful diff against the base
+          fetch-depth: 0
+
+      # ── Prepare the diff ──
+      - name: Generate PR diff
+        env:
+          BASE_REF: ${{ github.base_ref }}
+        run: |
+          git diff "origin/${BASE_REF}...HEAD" > pr-diff.patch
+          echo "Generated diff: $(wc -l < pr-diff.patch) lines"
+
+      # ── Prepare the prompt ──
+      - name: Prepare reviewer prompt
+        env:
+          REVIEWER: ${{ matrix.reviewer }}
+          REPO: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          PROMPT_FILE=".github/prompts/reviewers/${REVIEWER}.md"
+          if [ ! -f "$PROMPT_FILE" ]; then
+            echo "::error::Prompt file not found: $PROMPT_FILE"
+            exit 1
+          fi
+
+          # Substitute context placeholders
+          sed -i "s|__REPO__|${REPO}|g" "$PROMPT_FILE"
+          sed -i "s|__PR_NUMBER__|${PR_NUMBER}|g" "$PROMPT_FILE"
+
+          echo "prompt_file=$PROMPT_FILE" >> "$GITHUB_OUTPUT"
+        id: prompt
+
+      # ── Install Copilot CLI ──
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install Copilot CLI
+        run: npm install -g @github/copilot
+
+      # ── Run the reviewer agent ──
+      - name: Run reviewer
+        env:
+          COPILOT_GITHUB_TOKEN: ${{ secrets.COPILOT_GITHUB_TOKEN }}
+          PROMPT_FILE: ${{ steps.prompt.outputs.prompt_file }}
+        timeout-minutes: 15
+        run: |
+          PROMPT=$(cat "$PROMPT_FILE")
+          copilot \
+            -p "$PROMPT" \
+            --allow-tool='shell(git:*)' \
+            --allow-tool='shell(cat:*)' \
+            --allow-tool='shell(head:*)' \
+            --allow-tool='shell(tail:*)' \
+            --allow-tool='shell(grep:*)' \
+            --allow-tool='shell(wc:*)' \
+            --allow-tool='shell(ls:*)' \
+            --allow-tool=read \
+            --allow-tool=write \
+            --no-ask-user
+
+      # ── Collect and post results ──
+      - name: Post review comment
+        if: always()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REVIEWER: ${{ matrix.reviewer }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          REVIEW_FILE="review-${REVIEWER}.md"
+
+          if [ ! -f "$REVIEW_FILE" ]; then
+            echo "No review output found ($REVIEW_FILE). Skipping comment."
+            exit 0
+          fi
+
+          # Build the comment body with a collapsible section
+          {
+            echo "### :robot: ${REVIEWER} review"
+            echo ""
+            echo "<details>"
+            echo "<summary>Click to expand</summary>"
+            echo ""
+            cat "$REVIEW_FILE"
+            echo ""
+            echo "</details>"
+            echo ""
+            echo "---"
+            echo "*Automated review by PR Review Fleet — [${REVIEWER}](${RUN_URL})*"
+          } > comment-body.md
+
+          gh pr comment "${PR_NUMBER}" --body-file comment-body.md
+
+  # ──────────────────────────────────────────────────────────────
+  # Fan-in: post a summary comment after all reviewers complete
+  # ──────────────────────────────────────────────────────────────
+  summary:
+    name: "Review Summary"
+    needs: review
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Post summary
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          cat <<EOF > summary-body.md
+          ### :clipboard: PR Review Fleet Summary
+
+          All review agents have completed. See individual comments above for details.
+
+          | Reviewer | Focus |
+          |----------|-------|
+          | **correctness** | Bugs, logic errors, race conditions |
+          | **security** | Vulnerabilities, injection, secrets exposure |
+          | **api-compatibility** | Breaking changes, export modifications |
+          | **performance** | Algorithmic regressions, memory concerns |
+          | **testing** | Coverage gaps, missing test scenarios |
+
+          ---
+          *[View workflow run](${RUN_URL})*
+          EOF
+
+          gh pr comment "${PR_NUMBER}" --body-file summary-body.md
