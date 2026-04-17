@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Tests for consolidate-reviews.py."""
+"""Tests for consolidate_reviews.py."""
 
 from __future__ import annotations
 

@@ -6,7 +6,7 @@ Reads review-*.md files from a directory, extracts findings in the format
 and outputs a consolidated markdown report.
 
 Usage:
-    python consolidate-reviews.py <reviews-dir> <run-url> [-o report.md]
+    python consolidate_reviews.py <reviews-dir> <run-url> [-o report.md]
 
 Exit codes:
     0 — report generated (findings found)

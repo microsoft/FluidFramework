@@ -31,7 +31,7 @@ Fluid Framework is a real-time collaboration library where latency and memory ma
 ## What to Ignore
 
 - Micro-optimizations that don't affect real-world performance
-- Performance of test code
+- Performance of test code unless critical
 - One-time initialization code (startup cost is usually fine)
 - Style or naming preferences
 - Hypothetical perf concerns without a concrete hot path
