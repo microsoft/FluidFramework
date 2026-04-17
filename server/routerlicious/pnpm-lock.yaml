@@ -2362,10 +2362,6 @@ packages:
     resolution: {integrity: sha512-ooWCrlZP11i8GImSjTHYHLkvFDP48nS4+204nGb1RiX/WXYHmJA2III9/e2DWVabCESdW7hBAEzHRqUn9OUVvQ==}
     engines: {node: '>=0.1.90'}
 
-  '@colors/colors@1.6.0':
-    resolution: {integrity: sha512-Ir+AOibqzrIsL6ajt3Rz3LskB7OiMVHqltZmspbW/TJuTVuyOMirVqAkjfY6JISiLHgyNqicAC8AyHHGzNd/dA==}
-    engines: {node: '>=0.1.90'}
-
   '@dabh/diagnostics@2.0.3':
     resolution: {integrity: sha512-hrlQOIi7hAfzsMqlGSFyVucrx38O+j6wiGOf//H2ecvIEqYN4ADBSS2iLMh5UFyDunCNniUIPk/q3riFv45xRA==}
 
@@ -3289,9 +3285,6 @@ packages:
   '@types/double-ended-queue@2.1.2':
     resolution: {integrity: sha512-iAjbBa3X4UQtYxcCsAr0YaZMRwyC79q4KHui0XtEN7GGLJA4fzD116KUYXXZKskaOYSchnaOFT/a8zSlEx3P9Q==}
 
-  '@types/double-ended-queue@2.1.7':
-    resolution: {integrity: sha512-OVbdb2iOJakEg/Ou6dVZsH0LLxlO+GFjc1FB2W8/jT7bnhoFVJwnZOqi/H26ospeMBaEbGiX3Qy2a7r6pfZKXQ==}
-
   '@types/eslint-scope@3.7.7':
     resolution: {integrity: sha512-MzMFlSLBqNF2gcHWO0G1vP/YQyfvrxZ0bF+u7mzUdZ1/xK4A4sru+nraZz5i3iEIk1l1uyicaDVTB4QbbEkAYg==}
 
@@ -3345,9 +3338,6 @@ packages:
   '@types/lodash@4.14.199':
     resolution: {integrity: sha512-Vrjz5N5Ia4SEzWWgIVwnHNEnb1UE1XMkvY5DGXrAeOGE9imk0hgTHh5GyDjLDJi9OTCn9oo9dXH1uToK1VRfrg==}
 
-  '@types/lodash@4.14.202':
-    resolution: {integrity: sha512-OvlIYQK9tNneDlS0VN54LLd5uiPCBOp7gS5Z0f1mjoJYBrtStzgmJBxONW3U6OZqdtNzZPmn9BS/7WI7BFFcFQ==}
-
   '@types/lru-cache@5.1.1':
     resolution: {integrity: sha512-ssE3Vlrys7sdIzs5LOxCzTVMsU7i9oa/IaW92wF32JFb3CVczqOkru2xspuKczHEbG3nvmPY7IFqVmGGHdNbYw==}
 
@@ -3389,9 +3379,6 @@ packages:
 
   '@types/nconf@0.10.4':
     resolution: {integrity: sha512-6IBSPamvlKHm8tVHdDLzvwaETL1ThpNB/aGWo/vXHFYwQEezHbi4uJHf60OOu2kmJqhmCp4Vq/2JD408ljCdBw==}
-
-  '@types/nconf@0.10.6':
-    resolution: {integrity: sha512-nzmiF6CdR2MNa73WRSerRsJ0KLUWonZD0Iti0Tq3CIn09HLAVnSXqwoITLw8TsLQ3JvmRJ/T0t/HDlYiM4pFjA==}
 
   '@types/nock@9.3.1':
     resolution: {integrity: sha512-eOVHXS5RnWOjTVhu3deCM/ruy9E6JCgeix2g7wpFiekQh3AaEAK1cz43tZDukKmtSmQnwvSySq7ubijCA32I7Q==}
@@ -3923,9 +3910,6 @@ packages:
 
   assert@2.0.0:
     resolution: {integrity: sha512-se5Cd+js9dXJnu6Ag2JFc00t+HmHOen+8Q+L7O9zI0PqQXr20uk2J0XQqMxZEeo5U50o8Nvmmx7dZrl+Ufr35A==}
-
-  assert@2.1.0:
-    resolution: {integrity: sha512-eLHpSK/Y4nhMJ07gDaAzoX/XAKS8PSaojml3M0DM4JpV1LAi5JOJ/p6H/XWrl8L+DzVEvVCW1z3vWAaB9oTsQw==}
 
   ast-types@0.13.4:
     resolution: {integrity: sha512-x1FCFnFifvYDDzTaLII71vG5uvDwgtmDTEVWAxrgeiR8VjMONcCXJx7E+USjDtHlwFmt9MysbqgF9b9Vjr6w+w==}
@@ -6312,10 +6296,6 @@ packages:
   logform@2.5.1:
     resolution: {integrity: sha512-9FyqAm9o9NKKfiAKfZoYo9bGXXuwMkxQiQttkT4YjjVtQVIQtK6LmVtlxmCaFswo6N4AfEkHqZTV0taDtPotNg==}
 
-  logform@2.6.0:
-    resolution: {integrity: sha512-1ulHeNPp6k/LD8H91o7VYFBng5i1BDE7HoKxVbZiGFidS1Rj65qcywLxX+pVfAPoQJEjRdvKcusKwOupHCVOVQ==}
-    engines: {node: '>= 12.0.0'}
-
   long@1.1.2:
     resolution: {integrity: sha512-pjR3OP1X2VVQhCQlrq3s8UxugQsuoucwMOn9Yj/kN/61HMc+lDFJS5bvpNEHneZ9NVaSm8gNWxZvtGS7lqHb3Q==}
     engines: {node: '>=0.6'}
@@ -6744,10 +6724,6 @@ packages:
 
   nconf@0.12.0:
     resolution: {integrity: sha512-T3fZPw3c7Dfrz8JBQEbEcZJ2s8f7cUMpKuyBtsGQe0b71pcXx6gNh4oti2xh5dxB+gO9ufNfISBlGvvWtfyMcA==}
-    engines: {node: '>= 0.4.0'}
-
-  nconf@0.12.1:
-    resolution: {integrity: sha512-p2cfF+B3XXacQdswUYWZ0w6Vld0832A/tuqjLBu3H1sfUcby4N2oVbGhyuCkZv+t3iY3aiFEj7gZGqax9Q2c1w==}
     engines: {node: '>= 0.4.0'}
 
   needle@2.4.0:
@@ -8686,10 +8662,6 @@ packages:
     resolution: {integrity: sha512-YpZzcUzBedhlTAfJg6vJDlyEai/IFMIVcaEZZyl3UXIl4gmqRpU7AE89AHLkbzLUsv0NVmw7ts+iztqKxxPW1Q==}
     engines: {node: '>= 6.4.0'}
 
-  winston-transport@4.6.0:
-    resolution: {integrity: sha512-wbBA9PbPAHxKiygo7ub7BYRiKxms0tpfU2ljtWzb3SjRjv5yl6Ozuy/TkXf00HTAt+Uylo3gSkNwzc4ME0wiIg==}
-    engines: {node: '>= 12.0.0'}
-
   winston@3.9.0:
     resolution: {integrity: sha512-jW51iW/X95BCW6MMtZWr2jKQBP4hV5bIDq9QrIjfDk6Q9QuxvTKEAlpUNAzP+HYHFFCeENhph16s0zEunu4uuQ==}
     engines: {node: '>= 12.0.0'}
@@ -9458,8 +9430,6 @@ snapshots:
 
   '@colors/colors@1.5.0': {}
 
-  '@colors/colors@1.6.0': {}
-
   '@dabh/diagnostics@2.0.3':
     dependencies:
       colorspace: 1.1.4
@@ -10019,11 +9989,11 @@ snapshots:
       '@fluidframework/server-services-client': 7.0.0
       '@fluidframework/server-services-core': 7.0.0
       '@fluidframework/server-services-telemetry': 7.0.0
-      assert: 2.1.0
+      assert: 2.0.0
       async: 3.2.6
       events: 3.3.0
       lodash: 4.17.21
-      nconf: 0.12.1
+      nconf: 0.12.0
       serialize-error: 8.1.0
     transitivePeerDependencies:
       - supports-color
@@ -10039,7 +10009,7 @@ snapshots:
       '@fluidframework/server-services-core': 7.0.0
       '@fluidframework/server-services-telemetry': 7.0.0
       '@types/semver': 7.7.0
-      assert: 2.1.0
+      assert: 2.0.0
       async: 3.2.6
       axios: 1.8.4
       buffer: 6.0.3
@@ -10047,7 +10017,7 @@ snapshots:
       events: 3.3.0
       json-stringify-safe: 5.0.1
       lodash: 4.17.21
-      nconf: 0.12.1
+      nconf: 0.12.0
       opossum: 8.1.4
       semver: 7.7.2
       serialize-error: 8.1.0
@@ -10068,7 +10038,7 @@ snapshots:
       '@fluidframework/server-services-core': 7.0.0
       '@fluidframework/server-services-telemetry': 7.0.0
       '@types/semver': 7.7.0
-      assert: 2.1.0
+      assert: 2.0.0
       async: 3.2.6
       axios: 1.8.4(debug@4.4.1)
       buffer: 6.0.3
@@ -10076,7 +10046,7 @@ snapshots:
       events: 3.3.0
       json-stringify-safe: 5.0.1
       lodash: 4.17.21
-      nconf: 0.12.1
+      nconf: 0.12.0
       opossum: 8.1.4
       semver: 7.7.2
       serialize-error: 8.1.0
@@ -10115,11 +10085,11 @@ snapshots:
       '@fluidframework/server-services-core': 7.0.0
       '@fluidframework/server-services-telemetry': 7.0.0
       '@types/debug': 4.1.12
-      '@types/double-ended-queue': 2.1.7
-      '@types/lodash': 4.14.202
+      '@types/double-ended-queue': 2.1.2
+      '@types/lodash': 4.14.199
       '@types/node': 18.19.39
       '@types/ws': 6.0.4
-      assert: 2.1.0
+      assert: 2.0.0
       debug: 4.4.1
       double-ended-queue: 2.1.0-0
       events: 3.3.0
@@ -10161,7 +10131,7 @@ snapshots:
       json-stringify-safe: 5.0.1
       jsonwebtoken: 9.0.2
       lodash: 4.17.21
-      nconf: 0.12.1
+      nconf: 0.12.0
       serialize-error: 8.1.0
       sha.js: 2.4.11
       sillyname: 0.1.0
@@ -10199,11 +10169,11 @@ snapshots:
       '@fluidframework/protocol-definitions': 3.2.0
       '@fluidframework/server-services-client': 7.0.0
       '@fluidframework/server-services-telemetry': 7.0.0
-      '@types/nconf': 0.10.6
+      '@types/nconf': 0.10.4
       '@types/node': 18.19.39
       debug: 4.4.1
       events: 3.3.0
-      nconf: 0.12.1
+      nconf: 0.12.0
     transitivePeerDependencies:
       - supports-color
 
@@ -10215,7 +10185,7 @@ snapshots:
       '@fluidframework/server-services-telemetry': 7.0.0
       events_pkg: events@3.3.0
       kafka-node: 5.0.0
-      nconf: 0.12.1
+      nconf: 0.12.0
       sillyname: 0.1.0
     transitivePeerDependencies:
       - supports-color
@@ -10228,7 +10198,7 @@ snapshots:
       '@fluidframework/server-services-telemetry': 7.0.0
       '@fluidframework/server-services-utils': 7.0.0
       events_pkg: events@3.3.0
-      nconf: 0.12.1
+      nconf: 0.12.0
       node-rdkafka: 3.4.0
       sillyname: 0.1.0
     transitivePeerDependencies:
@@ -10260,7 +10230,7 @@ snapshots:
       fast-redact: 3.3.0
       ioredis: 5.6.1
       lodash: 4.17.21
-      nconf: 0.12.1
+      nconf: 0.12.0
       notepack.io: 2.3.0
       serialize-error: 8.1.0
       socket.io: 4.8.0
@@ -10293,13 +10263,13 @@ snapshots:
       json-stringify-safe: 5.0.1
       jsonwebtoken: 9.0.2
       morgan: 1.10.0
-      nconf: 0.12.1
+      nconf: 0.12.0
       serialize-error: 8.1.0
       sillyname: 0.1.0
       split: 1.0.1
       uuid: 11.1.0
       winston: 3.9.0
-      winston-transport: 4.6.0
+      winston-transport: 4.5.0
     transitivePeerDependencies:
       - supports-color
 
@@ -10315,7 +10285,7 @@ snapshots:
       '@fluidframework/server-services-telemetry': 7.0.0
       '@fluidframework/server-services-utils': 7.0.0
       '@socket.io/redis-emitter': 4.1.1
-      '@types/lodash': 4.14.202
+      '@types/lodash': 4.14.199
       amqplib: 0.10.3
       axios: 1.8.4(debug@4.4.1)
       debug: 4.4.1
@@ -10324,7 +10294,7 @@ snapshots:
       lodash: 4.17.21
       lru-cache: 6.0.0
       mongodb: 4.17.1
-      nconf: 0.12.1
+      nconf: 0.12.0
       socket.io: 4.8.0
       telegrafjs: 0.1.3
       uuid: 11.1.0
@@ -10345,7 +10315,7 @@ snapshots:
       '@fluidframework/server-services-core': 7.0.0
       '@fluidframework/server-services-telemetry': 7.0.0
       '@types/ioredis-mock': 8.2.6(ioredis@5.6.1)
-      assert: 2.1.0
+      assert: 2.0.0
       debug: 4.4.1
       events: 3.3.0
       ioredis: 5.6.1
@@ -11825,8 +11795,6 @@ snapshots:
 
   '@types/double-ended-queue@2.1.2': {}
 
-  '@types/double-ended-queue@2.1.7': {}
-
   '@types/eslint-scope@3.7.7':
     dependencies:
       '@types/eslint': 9.6.1
@@ -11884,8 +11852,6 @@ snapshots:
 
   '@types/lodash@4.14.199': {}
 
-  '@types/lodash@4.14.202': {}
-
   '@types/lru-cache@5.1.1': {}
 
   '@types/mdast@4.0.4':
@@ -11919,8 +11885,6 @@ snapshots:
   '@types/nconf@0.10.3': {}
 
   '@types/nconf@0.10.4': {}
-
-  '@types/nconf@0.10.6': {}
 
   '@types/nock@9.3.1':
     dependencies:
@@ -12575,14 +12539,6 @@ snapshots:
       es6-object-assign: 1.1.0
       is-nan: 1.3.2
       object-is: 1.1.5
-      util: 0.12.5
-
-  assert@2.1.0:
-    dependencies:
-      call-bind: 1.0.7
-      is-nan: 1.3.2
-      object-is: 1.1.5
-      object.assign: 4.1.5
       util: 0.12.5
 
   ast-types@0.13.4:
@@ -15272,15 +15228,6 @@ snapshots:
       safe-stable-stringify: 2.4.3
       triple-beam: 1.4.1
 
-  logform@2.6.0:
-    dependencies:
-      '@colors/colors': 1.6.0
-      '@types/triple-beam': 1.3.5
-      fecha: 4.2.3
-      ms: 2.1.3
-      safe-stable-stringify: 2.4.3
-      triple-beam: 1.4.1
-
   long@1.1.2: {}
 
   longest-streak@3.1.0: {}
@@ -15903,13 +15850,6 @@ snapshots:
   nconf@0.12.0:
     dependencies:
       async: 3.2.4
-      ini: 2.0.0
-      secure-keys: 1.0.0
-      yargs: 16.2.0
-
-  nconf@0.12.1:
-    dependencies:
-      async: 3.2.6
       ini: 2.0.0
       secure-keys: 1.0.0
       yargs: 16.2.0
@@ -18323,12 +18263,6 @@ snapshots:
       logform: 2.5.1
       readable-stream: 3.6.2
       triple-beam: 1.3.0
-
-  winston-transport@4.6.0:
-    dependencies:
-      logform: 2.6.0
-      readable-stream: 3.6.2
-      triple-beam: 1.4.1
 
   winston@3.9.0:
     dependencies:
