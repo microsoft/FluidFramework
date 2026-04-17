@@ -136,6 +136,7 @@ export function create(
 				enableJwtTokenCache,
 				jwtTokenCache,
 				revokedTokenChecker,
+				[ScopeType.DocRead, ScopeType.DocWrite],
 			);
 			handleResponse(
 				validP.then(() => undefined),
@@ -309,6 +310,7 @@ const verifyRequest = async (
 	tokenCacheEnabled: boolean,
 	tokenCache?: core.ICache,
 	revokedTokenChecker?: core.IRevokedTokenChecker,
+	requiredScopes?: ScopeType[],
 ) =>
 	Promise.all([
 		verifyTokenWrapper(
@@ -319,6 +321,7 @@ const verifyRequest = async (
 			tokenCacheEnabled,
 			tokenCache,
 			revokedTokenChecker,
+			requiredScopes,
 		),
 		checkDocumentExistence(request, storage),
 	]);
@@ -331,6 +334,7 @@ async function verifyTokenWrapper(
 	tokenCacheEnabled: boolean,
 	tokenCache?: core.ICache,
 	revokedTokenChecker?: core.IRevokedTokenChecker,
+	requiredScopes?: ScopeType[],
 ): Promise<void> {
 	const token = request.headers["access-token"] as string;
 	if (!token) {
@@ -355,7 +359,7 @@ async function verifyTokenWrapper(
 		tokenCache,
 		revokedTokenChecker,
 	};
-	return verifyToken(tenantId, documentId, token, tenantManager, options);
+	return verifyToken(tenantId, documentId, token, tenantManager, options, requiredScopes);
 }
 
 async function checkDocumentExistence(
