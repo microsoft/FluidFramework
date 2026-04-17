@@ -7,13 +7,17 @@ import { strict as assert } from "node:assert";
 
 import {
 	EmptyKey,
+	type FieldKey,
 	type ITreeCursor,
 	type ITreeCursorSynchronous,
 	type JsonableTree,
 	type ChunkedCursor,
 } from "../../../core/index.js";
-// eslint-disable-next-line import-x/no-internal-modules
-import { BasicChunk } from "../../../feature-libraries/chunked-forest/basicChunk.js";
+import {
+	BasicChunk,
+	BasicChunkCursor,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "../../../feature-libraries/chunked-forest/basicChunk.js";
 import {
 	basicChunkTree,
 	basicOnlyChunkPolicy,
@@ -22,9 +26,14 @@ import {
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/chunked-forest/chunkTree.js";
 // eslint-disable-next-line import-x/no-internal-modules
-import { uniformChunk } from "../../../feature-libraries/chunked-forest/index.js";
+import { dummyRoot, uniformChunk } from "../../../feature-libraries/chunked-forest/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { SequenceChunk } from "../../../feature-libraries/chunked-forest/sequenceChunk.js";
+import {
+	TreeShape,
+	UniformChunk,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "../../../feature-libraries/chunked-forest/uniformChunk.js";
 import {
 	type TreeChunk,
 	chunkTree,
@@ -153,6 +162,75 @@ describe("basic chunk", () => {
 		assert(cursor.atChunkRoot());
 		cursor.enterField(EmptyKey);
 		assert(!cursor.atChunkRoot());
+	});
+
+	it("getField resolves parent via chunk array index when preceded by a multi-node chunk", () => {
+		// A root field with 3 logical nodes split across 2 chunks:
+		// chunks[0]: UniformChunk with 2 number nodes.
+		// chunks[1]: BasicChunk holding a single subField leaf.
+		const numberShape = new TreeShape(brand(numberSchema.identifier), true, []);
+		const uniform = new UniformChunk(numberShape.withTopLevelLength(2), [10, 20]);
+
+		const subField: FieldKey = brand("subField");
+		const subLeaf = new BasicChunk(brand(numberSchema.identifier), new Map(), 42);
+		const trailingBasic = new BasicChunk(brand("Trailing"), new Map([[subField, [subLeaf]]]));
+
+		const cursor = new BasicChunkCursor(
+			[uniform, trailingBasic],
+			// siblingStack, indexStack, indexOfChunkStack, indexWithinChunkStack
+			[],
+			[],
+			[],
+			[],
+			[dummyRoot],
+			// index, indexOfChunk, indexWithinChunk
+			0,
+			0,
+			0,
+			undefined,
+		);
+
+		// Logical node index 2 maps to chunk array index 1 (the trailing BasicChunk).
+		cursor.enterNode(2);
+
+		// enterField drives getField, which on main looks up the parent at the
+		// logical node index (2) instead of the chunk array index (1). siblings[2]
+		// is out of bounds in the 2-chunk array, so the cast returns undefined and
+		// the subsequent field read throws.
+		cursor.enterField(subField);
+		assert.doesNotThrow(() => cursor.getFieldLength());
+	});
+
+	it("getField resolves parent via chunk array index when preceded by two multi-node chunks", () => {
+		// Root field with 5 logical nodes across 3 chunks:
+		// chunks[0]: UniformChunk with 2 number nodes.
+		// chunks[1]: UniformChunk with 2 number nodes.
+		// chunks[2]: BasicChunk with a single subField leaf.
+		const numberShape = new TreeShape(brand(numberSchema.identifier), true, []);
+		const uniformA = new UniformChunk(numberShape.withTopLevelLength(2), [10, 20]);
+		const uniformB = new UniformChunk(numberShape.withTopLevelLength(2), [30, 40]);
+
+		const subField: FieldKey = brand("subField");
+		const subLeaf = new BasicChunk(brand(numberSchema.identifier), new Map(), 99);
+		const trailingBasic = new BasicChunk(brand("Trailing"), new Map([[subField, [subLeaf]]]));
+
+		const cursor = new BasicChunkCursor(
+			[uniformA, uniformB, trailingBasic],
+			[],
+			[],
+			[],
+			[],
+			[dummyRoot],
+			0,
+			0,
+			0,
+			undefined,
+		);
+
+		// Logical node index 4 maps to chunk array index 2 (the trailing BasicChunk).
+		cursor.enterNode(4);
+		cursor.enterField(subField);
+		assert.doesNotThrow(() => cursor.getFieldLength());
 	});
 
 	describe("SequenceChunk", () => {
