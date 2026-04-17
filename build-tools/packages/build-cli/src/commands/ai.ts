@@ -332,7 +332,7 @@ export function assertSafeAliasSelection(
 ): void {
 	if (!allowedAliases.has(proposal.alias)) {
 		throw new Error(
-			`Unsupported AI alias selection: ${proposal.alias}. Allowed aliases: ${[...allowedAliases].join(", ")}`,
+			`Unsupported AI alias selection: ${proposal.alias}. Allowed aliases: ${[...allowedAliases].sort().join(", ")}`,
 		);
 	}
 }
