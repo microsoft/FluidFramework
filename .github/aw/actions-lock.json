@@ -1,19 +1,39 @@
 {
-	"entries": {
-		"actions/github-script@v8": {
-			"repo": "actions/github-script",
-			"version": "v8",
-			"sha": "ed597411d8f924073f98dfc5c65a23a2325f34cd"
-		},
-		"github/gh-aw/actions/setup@v0.42.17": {
-			"repo": "github/gh-aw/actions/setup",
-			"version": "v0.42.17",
-			"sha": "7a970851c1090295e55a16e549c61ba1ce227f16"
-		},
-		"github/gh-aw/actions/setup@v0.53.2": {
-			"repo": "github/gh-aw/actions/setup",
-			"version": "v0.53.2",
-			"sha": "bd9c0ca491e6334a2797ef56ad6ee89958d54ab9"
-		}
-	}
+  "entries": {
+    "actions/github-script@v8": {
+      "repo": "actions/github-script",
+      "version": "v8",
+      "sha": "ed597411d8f924073f98dfc5c65a23a2325f34cd"
+    },
+    "actions/github-script@v9": {
+      "repo": "actions/github-script",
+      "version": "v9",
+      "sha": "373c709c69115d41ff229c7e5df9f8788daa9553"
+    },
+    "azure/login@v2": {
+      "repo": "azure/login",
+      "version": "v2",
+      "sha": "1384c340ab2dda50fed2bee3041d1d87018aa5e8"
+    },
+    "github/gh-aw-actions/setup@v0.68.3": {
+      "repo": "github/gh-aw-actions/setup",
+      "version": "v0.68.3",
+      "sha": "ba90f2186d7ad780ec640f364005fa24e797b360"
+    },
+    "github/gh-aw/actions/setup@v0.42.17": {
+      "repo": "github/gh-aw/actions/setup",
+      "version": "v0.42.17",
+      "sha": "7a970851c1090295e55a16e549c61ba1ce227f16"
+    },
+    "github/gh-aw/actions/setup@v0.53.2": {
+      "repo": "github/gh-aw/actions/setup",
+      "version": "v0.53.2",
+      "sha": "bd9c0ca491e6334a2797ef56ad6ee89958d54ab9"
+    },
+    "pnpm/action-setup@v4": {
+      "repo": "pnpm/action-setup",
+      "version": "v4",
+      "sha": "f40ffcd9367d9f12939873eb1018b921a783ffaa"
+    }
+  }
 }

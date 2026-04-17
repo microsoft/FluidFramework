@@ -26,9 +26,13 @@ PROJECT_ID="235294da-091d-4c29-84fc-cdfc3d90890b"
 REPO_ID="17385"   # CG registration ID for this repo
 BRANCH="main"
 
-TOKEN=$(az account get-access-token --query accessToken -o tsv 2>/dev/null)
+if [[ -n "${ADO_TOKEN:-}" ]]; then
+  TOKEN="$ADO_TOKEN"
+else
+  TOKEN=$(az account get-access-token --query accessToken -o tsv 2>/dev/null)
+fi
 if [[ -z "$TOKEN" ]]; then
-  echo "ERROR: Could not acquire access token. Is the az shim configured?" >&2
+  echo "ERROR: Could not acquire access token. Set ADO_TOKEN env or configure the az shim." >&2
   exit 1
 fi
 
