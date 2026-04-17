@@ -1313,6 +1313,125 @@ describe("Routerlicious", () => {
 					});
 				});
 			});
+
+			describe("patchRoot feature flag", () => {
+				let spyProducerSend;
+
+				beforeEach(() => {
+					spyProducerSend = Sinon.spy(defaultProducer, "send");
+				});
+
+				afterEach(() => {
+					Sinon.restore();
+				});
+
+				const createAppWithPatchRootConfig = (patchRootEnabled: boolean | undefined) => {
+					const provider = new nconf.Provider({}).defaults({
+						alfred: {
+							restJsonSize: 1000000,
+							api: {
+								patchRoot: patchRootEnabled,
+							},
+						},
+						auth: {
+							maxTokenLifetimeSec: 1000000,
+							enableTokenExpiration: false,
+						},
+						logger: {
+							morganFormat: "json",
+						},
+						mongo: {
+							collectionNames: {
+								deltas: deltasCollectionName,
+								rawDeltas: rawDeltasCollectionName,
+							},
+						},
+						worker: {
+							blobStorageUrl: "http://localhost:3001",
+							deltaStreamUrl: "http://localhost:3005",
+							serverUrl: "http://localhost:3003",
+						},
+					});
+
+					Sinon.stub(defaultStorage, "getDocument").resolves({} as IDocument);
+
+					const restTenantThrottlers = new Map<string, TestThrottler>();
+
+					const restClusterThrottlers = new Map<string, TestThrottler>();
+
+					const startupCheck = new StartupCheck();
+					testFluidAccessTokenGenerator = new TestFluidAccessTokenGenerator();
+					return alfredApp.create(
+						provider,
+						defaultTenantManager,
+						restTenantThrottlers,
+						restClusterThrottlers,
+						defaultSingleUseTokenCache,
+						defaultStorage,
+						defaultAppTenants,
+						defaultDeltaService,
+						defaultProducer,
+						defaultDocumentRepository,
+						defaultDocumentDeleteService,
+						startupCheck,
+						undefined,
+						undefined,
+						defaultCollaborationSessionEventEmitter,
+						undefined,
+						undefined,
+						undefined,
+						testFluidAccessTokenGenerator,
+					);
+				};
+
+				it("should reject doc:read-only token with 403", async () => {
+					const readOnlyToken = `Basic ${generateToken(
+						appTenant1.id,
+						document1._id,
+						appTenant1.key,
+						[ScopeType.DocRead],
+					)}`;
+					const testApp = createAppWithPatchRootConfig(true);
+					const testSupertest = request(testApp);
+
+					await testSupertest
+						.patch(`/api/v1/${appTenant1.id}/${document1._id}/root`)
+						.set("Authorization", readOnlyToken)
+						.set("access-token", readOnlyToken.split(" ")[1])
+						.send([{ op: "testOp", path: "/testPath", value: "testValue" }])
+						.expect(403)
+						.expect(() => {
+							assert(
+								spyProducerSend.notCalled,
+								"Producer should not be called for read-only token",
+							);
+						});
+				});
+
+				it("should reject doc:write-only token (missing doc:read) with 403", async () => {
+					const writeOnlyToken = `Basic ${generateToken(
+						appTenant1.id,
+						document1._id,
+						appTenant1.key,
+						[ScopeType.DocWrite],
+					)}`;
+					const testApp = createAppWithPatchRootConfig(true);
+					const testSupertest = request(testApp);
+
+					await testSupertest
+						.patch(`/api/v1/${appTenant1.id}/${document1._id}/root`)
+						.set("Authorization", writeOnlyToken)
+						.set("access-token", writeOnlyToken.split(" ")[1])
+						.send([{ op: "testOp", path: "/testPath", value: "testValue" }])
+						.expect(403)
+						.expect(() => {
+							assert(
+								spyProducerSend.notCalled,
+								"Producer should not be called for write-only token",
+							);
+						});
+				});
+			});
 		});
 	});
 });
