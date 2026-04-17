@@ -15,33 +15,19 @@ import {
 } from "../../commands/ai.js";
 
 describe("ai command", () => {
-	it("allows fallback aliases when no custom set provided", () => {
-		for (const alias of FALLBACK_ALIASES) {
-			expect(() =>
-				assertSafeAliasSelection({ alias, explanation: `launch ${alias}` }),
-			).to.not.throw();
-		}
-	});
-
-	it("rejects unsupported aliases when no custom set provided", () => {
+	it("allows aliases present in the provided set", () => {
+		const aliasSet = new Set(["my-alias", "other-alias"]);
 		expect(() =>
-			assertSafeAliasSelection({ alias: "bash", explanation: "definitely not safe" }),
-		).to.throw(/Unsupported AI alias selection: bash/);
-	});
-
-	it("accepts aliases in a custom set", () => {
-		const customSet = new Set(["my-alias", "other-alias"]);
-		expect(() =>
-			assertSafeAliasSelection({ alias: "my-alias", explanation: "custom alias" }, customSet),
+			assertSafeAliasSelection({ alias: "my-alias", explanation: "custom alias" }, aliasSet),
 		).to.not.throw();
 	});
 
-	it("rejects aliases not in a custom set", () => {
-		const customSet = new Set(["my-alias", "other-alias"]);
+	it("rejects aliases not in the provided set", () => {
+		const aliasSet = new Set(["my-alias", "other-alias"]);
 		expect(() =>
 			assertSafeAliasSelection(
-				{ alias: "claude", explanation: "not in custom set" },
-				customSet,
+				{ alias: "claude", explanation: "not in set" },
+				aliasSet,
 			),
 		).to.throw(/Unsupported AI alias selection: claude/);
 	});
@@ -72,17 +58,6 @@ describe("ai command", () => {
 
 		expect(prompt).to.include("- `copilot`");
 		expect(prompt).to.not.include("{{allowedAliasesContent}}");
-	});
-
-	it("appends the configured alias list when the template lacks a placeholder", () => {
-		const prompt = buildLauncherPrompt({
-			template: "## Alias Definitions\n{{aliasFileContent}}",
-			aliasFileContent: "dev() {}",
-			allowedAliases: ["dev"],
-		});
-
-		expect(prompt).to.include("## Allowed Aliases for This Session");
-		expect(prompt).to.include("- `dev`");
 	});
 
 	it("maps numbered prompt selections to the selected choice", () => {

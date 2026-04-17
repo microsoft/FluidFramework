@@ -17,7 +17,6 @@ import { BaseCommand } from "../library/commands/base.js";
 
 const FALLBACK_MODEL = "claude-haiku-4.5";
 export const FALLBACK_ALIASES = ["claude", "dev", "copilot", "oce", "ai-reset"] as const;
-const FALLBACK_ALIAS_SET = new Set<string>(FALLBACK_ALIASES);
 const SELECTABLE_ALIASES_FUNCTION = "list_aliases_json";
 
 export default class AiCommand extends BaseCommand<typeof AiCommand> {
@@ -329,10 +328,6 @@ export default class AiCommand extends BaseCommand<typeof AiCommand> {
 		};
 	}
 
-	/**
-	 * Reads the machine-readable alias manifest from agent-aliases.sh.
-	 * This keeps the shell script as the source of truth without scraping bash.
-	 */
 	private async loadAllowedAliases(
 		aliasFilePath: string,
 	): Promise<{ aliases: string[]; source: "agent-aliases.sh" | "fallback" }> {
@@ -357,12 +352,11 @@ export default class AiCommand extends BaseCommand<typeof AiCommand> {
 
 export function assertSafeAliasSelection(
 	proposal: AliasProposal,
-	allowedAliases?: Set<string>,
+	allowedAliases: Set<string>,
 ): void {
-	const aliasSet = allowedAliases ?? FALLBACK_ALIAS_SET;
-	if (!aliasSet.has(proposal.alias)) {
+	if (!allowedAliases.has(proposal.alias)) {
 		throw new Error(
-			`Unsupported AI alias selection: ${proposal.alias}. Allowed aliases: ${[...aliasSet].join(", ")}`,
+			`Unsupported AI alias selection: ${proposal.alias}. Allowed aliases: ${[...allowedAliases].join(", ")}`,
 		);
 	}
 }
@@ -390,16 +384,10 @@ export function buildLauncherPrompt({
 	allowedAliases: readonly string[];
 }): string {
 	const allowedAliasesContent = allowedAliases.map((alias) => `- \`${alias}\``).join("\n");
-	const prompt = template
+	return template
 		.replaceAll("{{aliasFileContent}}", aliasFileContent)
 		.replaceAll("{{gettingStartedContent}}", gettingStartedContent ?? "")
 		.replaceAll("{{allowedAliasesContent}}", allowedAliasesContent);
-
-	if (template.includes("{{allowedAliasesContent}}")) {
-		return prompt;
-	}
-
-	return `${prompt}\n\n## Allowed Aliases for This Session\n\nOnly recommend aliases from this list derived from agent-aliases.sh for the current session.\n\n${allowedAliasesContent}`;
 }
 
 function formatAliasCommand(proposal: AliasProposal): string {
@@ -443,10 +431,10 @@ function parseSelectableAliasesJson(raw: string): string[] | undefined {
 			return undefined;
 		}
 
-		const aliases = parsed.filter(
-			(alias): alias is string => typeof alias === "string" && alias.trim().length > 0,
+		const strings = parsed.filter(
+			(alias): alias is string => typeof alias === "string",
 		);
-		return resolveAllowedAliases(aliases);
+		return resolveAllowedAliases(strings);
 	} catch {
 		return undefined;
 	}
