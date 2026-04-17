@@ -138,15 +138,24 @@ bash .claude/skills/agentic-cg-override/scripts/fetch-cg-alerts.sh
 
 ## Inputs
 
-Before starting the override workflow, confirm you have all three of these from the user:
+Before starting the override workflow, you need all three of these:
 
 1. **Package name** — the npm package with the vulnerability (e.g., `tar`)
 2. **Vulnerable versions** — the version(s) to eliminate (e.g., `<7.5.11`, or `6.2.0, 6.1.15`, or `all versions before 4.0.0`)
 3. **Fixed version** — the minimum safe version to override to (e.g., `^7.5.11`)
 
-If any input is missing or ambiguous, ask the user before proceeding. If the user hasn't provided
-these but has named a package or CVE, use the alert-details script to look up the actionItems field
-which usually contains the recommended fix version.
+**If the user did not specify a CVE or package, run `pnpm cg-triage` first** to pick the next
+unclaimed CVE from the active backlog. The command fetches alerts, summarizes the backlog,
+and emits a JSON object for the top CVE (package, vulnerable versions, fix version, advisory,
+severity) — those are your inputs. Parse that JSON and proceed.
+
+```bash
+pnpm cg-triage           # default: picks 1 CVE
+```
+
+If the user named a package or CVE but did not give version info, use `alert-details.py` to
+look up the `actionItems` field for the recommended fix version. If inputs are still
+ambiguous after that, ask the user before proceeding.
 
 ## Step 1: Find affected lockfiles
 
