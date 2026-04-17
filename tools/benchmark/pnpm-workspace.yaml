@@ -35,7 +35,7 @@ trustPolicyExclude:
   # and also used by other workspaces in this repo, so allowing it seems like a minimal risk.
   - "undici-types@6.21.0"
   # semver@5.7.2 is a transitive dependency. The trust downgrade fires because this version
-  # lacks provenance attestation while earlier releases of higher major versions had it (attestation was not back ported to the 5 branch).
+  # lacks provenance attestation while earlier releases of higher major versions had it (attestation was not backported to the 5 branch).
   # No supply chain incident is known.
   # This version is heavily used (~60 million downloads) and 3 years old at this point,
   # and also used by other workspaces in this repo, so allowing it seems like a minimal risk.
