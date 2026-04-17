@@ -345,34 +345,138 @@ reordering, other entries), revert them: the formatter should have produced a mi
 diff. If the comment block was rewritten to a different style, match the file's existing
 pattern.
 
-## Step 8: Summary
+## Step 8: Package as a PR
 
-After processing all affected lockfiles, provide a final summary:
+If Step 7 passed cleanly (no suspicious lockfile churn, no unexpected package.json
+edits), commit the fix on a fresh branch off `main` and open a PR.
+
+**If Step 7 flagged anything suspicious, STOP here.** Do not open a PR. Report the
+flagged items to the user and wait for guidance.
+
+**8a. Branch off the latest `main`:**
+
+```bash
+# Save the edits before switching branches
+git stash push -u -m "cg-fixer-wip"
+
+# Refresh main and branch from it
+git fetch origin main
+git checkout main
+git merge --ff-only origin/main
+BRANCH="cg-fixer/<CVE-ID>"
+git checkout -b "$BRANCH"
+
+# Restore the edits
+git stash pop
+```
+
+**8b. Commit:**
+
+```bash
+git add -A
+git commit -m "[cg-fixer] <CVE-ID>: bump <package> to <fixed-version>"
+```
+
+The `[cg-fixer]` title prefix is required — `select-next-alerts.py` uses it to
+detect in-flight CVEs so other OCEs don't duplicate work.
+
+**8c. Push and open the PR:**
+
+```bash
+git push -u origin "$BRANCH"
+```
+
+Then create the PR with `gh pr create`. Use the template below for the body — fill
+in the bracketed fields from the Step 7 sanity check and the remediation results.
+Run the `gh pr create` command directly; do not open it in the editor.
+
+```bash
+gh pr create --repo microsoft/FluidFramework \
+  --base main \
+  --title "[cg-fixer] <CVE-ID>: bump <package> to <fixed-version>" \
+  --body "$(cat <<'BODY'
+## Vulnerability
+
+- **CVE / Advisory:** `<CVE-ID>` ([advisory](<advisory-url>))
+- **Severity:** `<severity>`
+- **Package:** `<package>`
+- **Vulnerable version detected:** `<version>`
+- **Fixed version:** `<fixed-version>`
+
+## Fix
+
+<One paragraph: override strategy (single-major / multi-major / cross-major),
+whether the override was kept or removed, and the per-workspace outcome.>
+
+### Lockfiles changed
+
+- `<path/to/pnpm-lock.yaml>` — +N/-M lines, scoped to `<package>` resolution
+- ...
+
+### Overrides
+
+<One of:>
+- **Removed** — `pnpm install` after dropping the override kept the graph safe in every workspace.
+- **Kept in `<path/to/package.json>`** — removal re-introduced the vulnerable version. Root cause: `<parent packages that pin the old version>`.
+
+## Sanity check
+
+- Lockfile churn scoped to target: yes (<N> other packages had patch/minor bumps)
+- Suspicious version changes: none
+
+## Verification
+
+- `pnpm install --no-frozen-lockfile` succeeds in each affected workspace.
+- Grep for `<package>@` in each lockfile shows only safe versions.
+
+---
+
+Generated via the \`agentic-cg-override\` skill.
+BODY
+)"
+```
+
+**8d. Return the PR URL to the user.** Capture the URL `gh pr create` prints and
+show it as the final line of the agent's output:
+
+```
+✅ Opened PR: https://github.com/microsoft/FluidFramework/pull/<n>
+```
+
+If any step in 8a–8c fails (branch already exists on the remote, merge conflict,
+push rejected, `gh pr create` errors), **do not retry blindly**. Report the error
+to the user and wait for guidance.
+
+## Step 9: Summary
+
+After opening the PR (or declining to because Step 7 found issues), print a short
+summary:
 
 ```
 ## CG Override Summary
 
 **Package:** <name>
-**Vulnerable versions:** <versions>
+**Vulnerable version:** <version>
 **Fixed version:** <fixed-version>
+**CVE:** <CVE-ID> ([advisory](<advisory-url>))
 
-### Results by lockfile:
+### Results by lockfile
 
 | Lockfile | Status | Override needed? |
 |----------|--------|-----------------|
-| ./pnpm-lock.yaml | ✅ Fixed | Yes — kept |
-| ./build-tools/pnpm-lock.yaml | ✅ Fixed | No — removed |
+| ./pnpm-lock.yaml | ✅ Fixed | No — removed |
+| ./docs/pnpm-lock.yaml | ✅ Fixed | No — removed |
 | ./server/routerlicious/pnpm-lock.yaml | ⬜ Not affected | — |
 | ... | ... | ... |
 
-### Overrides applied:
-- `./package.json`: `"<package>": ">= <fixed-version>"`
+### Overrides applied
+- None — dependency graph naturally resolves after lockfile regeneration.
+  (or: `./package.json`: `"<package>": ">= <fixed-version>"` — kept)
 
-### Sanity check:
-- Lockfile churn scoped to target: <yes / yes + minor incidentals / no — flagged items>
-- Suspicious version changes: <none / list them>
+### Sanity check
+- Lockfile churn scoped to target: yes
+- Suspicious version changes: none
 
-### Next steps:
-- Review the changes to package.json and pnpm-lock.yaml files
-- Commit the changes on a dedicated branch (one PR per CVE)
+### PR
+- <PR URL, or "not opened — Step 7 flagged: <reason>">
 ```
