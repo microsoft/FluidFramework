@@ -306,7 +306,7 @@ export default class AiCommand extends BaseCommand<typeof AiCommand> {
 				return {
 					template: content.trim(),
 					model: typeof data.model === "string" ? data.model : undefined,
-					aliases: parseAliasesFromFrontmatter(data.aliases),
+					aliases: Array.isArray(data.aliases) ? (data.aliases as string[]) : undefined,
 				};
 			} catch (error) {
 				this.warn(
@@ -396,17 +396,6 @@ async function resolveGhAuthToken(): Promise<string | undefined> {
 	}
 }
 
-/**
- * Parses and validates the `aliases` field from launcher-prompt.md frontmatter.
- * Returns undefined if the field is missing or not a valid string array.
- */
-function parseAliasesFromFrontmatter(value: unknown): string[] | undefined {
-	if (!Array.isArray(value)) {
-		return undefined;
-	}
-	const strings = value.filter((item): item is string => typeof item === "string");
-	return strings.length > 0 ? strings : undefined;
-}
 
 async function tryReadFile(filePath: string): Promise<string | undefined> {
 	try {
