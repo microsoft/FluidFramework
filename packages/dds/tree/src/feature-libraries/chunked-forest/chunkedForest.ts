@@ -50,6 +50,7 @@ import {
 	type IChunker,
 	basicChunkTree,
 	chunkField,
+	chunkRange,
 	chunkTree,
 } from "./chunkTree.js";
 
@@ -60,7 +61,8 @@ function makeRoot(): BasicChunk {
 /**
  * Split the chunk containing `nodeIndex` so that the node falls at a chunk boundary.
  * Only the single chunk that spans the boundary is split; all other chunks are untouched.
- * Returns the chunk-array index where `nodeIndex` starts.
+ * Each half is re-chunked via `chunkRange` so the chunker's policy decides the shapes:
+ * Returns the splice index corresponding to `nodeIndex`.
  */
 function splitFieldAtIndex(
 	chunks: TreeChunk[],
@@ -75,13 +77,15 @@ function splitFieldAtIndex(
 		}
 		const chunk = chunks[i] ?? oob();
 		if (remaining < chunk.topLevelLength) {
-			const expanded = mapCursorField(chunk.cursor(), (cursor) =>
-				basicChunkTree(cursor, policy),
-			);
+			const total = chunk.topLevelLength;
+			const cursor = chunk.cursor();
+			cursor.firstNode();
+			const before = chunkRange(cursor, policy, remaining, false);
+			const after = chunkRange(cursor, policy, total - remaining, true);
 			// TODO: this could fail for really long chunks being split (due to argument count limits).
-			chunks.splice(i, 1, ...expanded);
+			chunks.splice(i, 1, ...before, ...after);
 			chunk.referenceRemoved();
-			return i + remaining;
+			return i + before.length;
 		}
 		remaining -= chunk.topLevelLength;
 	}
@@ -241,8 +245,11 @@ export class ChunkedForest implements IEditableForest {
 					policy: this.forest.chunker,
 					idCompressor: this.forest.idCompressor,
 				};
-				const endChunkIndex = splitFieldAtIndex(sourceField, source.end, policy);
+				// Split start first: splitting end later only expands chunks at positions >= startChunkIndex,
+				// which leaves startChunkIndex valid. The reverse order would shift endChunkIndex when
+				// source.start and source.end land in different chunks.
 				const startChunkIndex = splitFieldAtIndex(sourceField, source.start, policy);
+				const endChunkIndex = splitFieldAtIndex(sourceField, source.end, policy);
 				const newField = sourceField.splice(startChunkIndex, endChunkIndex - startChunkIndex);
 
 				if (destination === undefined) {

@@ -24,6 +24,7 @@ import {
 	RevisionTagCodec,
 	rootFieldKey,
 	type TaggedChange,
+	type TreeChunk,
 	type TreeNodeSchemaIdentifier,
 	TreeStoredSchemaRepository,
 } from "../../../core/index.js";
@@ -264,6 +265,99 @@ describe("End to end chunked encoding", () => {
 		assert.equal(reader.value, 4);
 		assert.equal(reader.nextNode(), false);
 		reader.free();
+	});
+
+	it("splitFieldAtIndex preserves uniformChunks during detach", () => {
+		const treeSchema = new TreeStoredSchemaRepository(jsonSequenceRootSchema);
+		const chunker = new Chunker(
+			treeSchema,
+			defaultSchemaPolicy,
+			Number.POSITIVE_INFINITY,
+			Number.POSITIVE_INFINITY,
+			10,
+			(type: TreeNodeSchemaIdentifier, shapes: Map<TreeNodeSchemaIdentifier, ShapeInfo>) =>
+				tryShapeFromNodeSchema(
+					{
+						schema: treeSchema,
+						policy: defaultSchemaPolicy,
+						shouldEncodeIncrementally: defaultIncrementalEncodingPolicy,
+						shapes,
+					},
+					type,
+				),
+		);
+		const forest = buildChunkedForest(chunker);
+
+		initializeForest(
+			forest,
+			fieldJsonCursor([[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]]),
+			testRevisionTagCodec,
+			testIdCompressor,
+		);
+
+		// Re-read the Array node's inner field from forest.roots each time.
+		// The forest is copy-on-write: edits may clone the Array BasicChunk, so a captured
+		// reference from before the edit would point at the stale pre-edit state.
+		function getInnerField(): readonly TreeChunk[] {
+			const rootChunks = forest.roots.fields.get(rootFieldKey);
+			assert(rootChunks !== undefined);
+			const array = rootChunks[0];
+			assert(array instanceof BasicChunk);
+			const inner = array.fields.get(EmptyKey);
+			assert(inner !== undefined);
+			return inner;
+		}
+
+		// Precondition: the Array's inner field contains a single 10-node uniform chunk.
+		const initial = getInnerField();
+		assert.equal(initial.length, 1);
+		assert(initial[0] instanceof UniformChunk);
+		assert.equal(initial[0].topLevelLength, 10);
+
+		// First detach: node at index 4 (5th element, middle of UC(10)).
+		// Expected layout after: [UC(4), UC(5)] — both pieces stay as uniform chunks.
+		// This depends on the chunker policy re-chunking the split halves as uniform chunks.
+		// If the policy changes to intentionally produce different chunk types, update the test.
+		const detachId1 = { minor: 98 };
+		const modify1: DeltaMark = {
+			count: 1,
+			fields: new Map([
+				[EmptyKey, { marks: [{ count: 4 }, { count: 1, detach: detachId1 }] }],
+			]),
+		};
+		applyTestDelta(new Map([[rootFieldKey, { marks: [modify1] }]]), forest, {
+			destroy: [{ id: detachId1, count: 1 }],
+		});
+
+		const afterFirst = getInnerField();
+		assert.equal(afterFirst.length, 2);
+		assert(afterFirst[0] instanceof UniformChunk);
+		assert.equal(afterFirst[0].topLevelLength, 4);
+		assert(afterFirst[1] instanceof UniformChunk);
+		assert.equal(afterFirst[1].topLevelLength, 5);
+
+		// Second detach: node at index 7 (2nd-to-last of current 9-node field).
+		// This falls inside the UC(5), 1 from its end.
+		// Expected layout after: [UC(4), UC(3), UC(1)] — last piece is a single node, and stays a UniformChunk.
+		const detachId2 = { minor: 99 };
+		const modify2: DeltaMark = {
+			count: 1,
+			fields: new Map([
+				[EmptyKey, { marks: [{ count: 7 }, { count: 1, detach: detachId2 }] }],
+			]),
+		};
+		applyTestDelta(new Map([[rootFieldKey, { marks: [modify2] }]]), forest, {
+			destroy: [{ id: detachId2, count: 1 }],
+		});
+
+		const afterSecond = getInnerField();
+		assert.equal(afterSecond.length, 3);
+		assert(afterSecond[0] instanceof UniformChunk);
+		assert.equal(afterSecond[0].topLevelLength, 4);
+		assert(afterSecond[1] instanceof UniformChunk);
+		assert.equal(afterSecond[1].topLevelLength, 3);
+		assert(afterSecond[2] instanceof UniformChunk);
+		assert.equal(afterSecond[2].topLevelLength, 1);
 	});
 
 	// This test (and the one below) are testing for an optimization in the decoding logic to save a copy of the data array.
