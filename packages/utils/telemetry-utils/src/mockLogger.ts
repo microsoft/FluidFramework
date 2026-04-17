@@ -41,7 +41,7 @@ export class MockLogger implements ITelemetryBaseLogger {
 	public readonly minLogLevel: LogLevel;
 
 	public constructor(minLogLevel?: LogLevel) {
-		this.minLogLevel = minLogLevel ?? LogLevel.info;
+		this.minLogLevel = minLogLevel ?? LogLevel.default;
 	}
 
 	/**
@@ -59,8 +59,7 @@ export class MockLogger implements ITelemetryBaseLogger {
 	 * {@inheritDoc @fluidframework/core-interfaces#ITelemetryBaseLogger.send}
 	 */
 	public send(event: ITelemetryBaseEvent, logLevel?: LogLevel): void {
-		// The default value for eventLogLevel will be updated to LogLevel.essential in the future, see work item #68968 for more information.
-		if ((logLevel ?? LogLevel.info) >= this.minLogLevel) {
+		if ((logLevel ?? LogLevel.default) >= this.minLogLevel) {
 			this._events.push(event);
 		}
 	}
