@@ -112,15 +112,14 @@ jobs:
         timeout-minutes: 15
         run: |
           PROMPT=$(cat "$PROMPT_FILE")
+          # File inspection is done via the workspace-scoped `read` tool.
+          # Only `shell(git:*)` is granted so the agent can run diff/log/etc.
+          # Broader shell grants (cat/head/tail/grep/ls/wc) would let a
+          # prompt-injected agent read env vars or credential files and
+          # exfiltrate them via the generated report.
           copilot \
             -p "$PROMPT" \
             --allow-tool='shell(git:*)' \
-            --allow-tool='shell(cat:*)' \
-            --allow-tool='shell(head:*)' \
-            --allow-tool='shell(tail:*)' \
-            --allow-tool='shell(grep:*)' \
-            --allow-tool='shell(wc:*)' \
-            --allow-tool='shell(ls:*)' \
             --allow-tool=read \
             --allow-tool=write \
             --no-ask-user
@@ -173,6 +172,26 @@ jobs:
           else
             exit $exit_code
           fi
+
+      # Defense in depth: scrub GitHub token patterns from the report before
+      # posting. Even with the agent sandboxed to `shell(git:*)` + `read`, a
+      # leaked token in the generated report would be a critical failure.
+      - name: Scrub secrets from report
+        if: steps.consolidate.outputs.has_findings == 'true'
+        run: |
+          python3 -c '
+          import re, sys
+          patterns = [
+              r"gh[pousr]_[A-Za-z0-9_]{16,}",
+              r"github_pat_[A-Za-z0-9_]{16,}",
+          ]
+          with open("report.md", "r") as f:
+              text = f.read()
+          for p in patterns:
+              text = re.sub(p, "[REDACTED]", text)
+          with open("report.md", "w") as f:
+              f.write(text)
+          '
 
       - name: Post or update PR comment
         if: steps.consolidate.outputs.has_findings == 'true'

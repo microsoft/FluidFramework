@@ -83,7 +83,7 @@ No high-confidence API quality concerns found in the current diff.
 ## Instructions
 
 1. Read the PR diff from `pr-diff.patch` in the current directory
-2. Check if any `*.api.md` files changed: `git diff --name-only origin/$BASE_REF...HEAD | grep '\.api\.md$'` — if so, give those packages extra scrutiny
+2. Check if any `*.api.md` files changed: `git diff --name-only origin/$BASE_REF...HEAD -- '*.api.md'` — if so, give those packages extra scrutiny
 3. For files that export public APIs, read the full file and any related `index.ts` barrel exports
 4. Apply the high-confidence gate to every finding before including it
 5. Write your review to `review-api-compatibility.md`
