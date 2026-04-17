@@ -131,10 +131,6 @@ export class UndoRedoStacks implements UndoRedo {
  * independent undo/redo stacks to coexist on the same branch — for example, one per text editor —
  * without interfering with each other.
  *
- * Undo and redo commits (produced by calling {@link UndoRedo.undo} or {@link UndoRedo.redo}) are
- * not labeled, but are correctly attributed to this stack via an internal pending-operation flag
- * that is set synchronously around the `revert()` call.
- *
  * @sealed @internal
  */
 export class LabeledUndoRedoStacks implements UndoRedo {
