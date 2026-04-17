@@ -17,6 +17,7 @@ import { BaseCommand } from "../library/commands/base.js";
 
 const FALLBACK_MODEL = "claude-haiku-4.5";
 export const FALLBACK_ALIASES = ["claude", "dev", "copilot", "oce", "ai-reset"] as const;
+const FALLBACK_ALIAS_SET = new Set<string>(FALLBACK_ALIASES);
 
 export default class AiCommand extends BaseCommand<typeof AiCommand> {
 	static readonly description =
@@ -76,7 +77,7 @@ export default class AiCommand extends BaseCommand<typeof AiCommand> {
 			`Model: ${model} (source: ${flags.model ? "flag" : promptFile.model ? "frontmatter" : "fallback"})`,
 		);
 
-		const aliases = promptFile.aliases ?? [...FALLBACK_ALIASES];
+		const aliases = promptFile.aliases ?? FALLBACK_ALIASES;
 		const allowedAliasSet = new Set(aliases);
 		this.verbose(
 			`Aliases: ${aliases.join(", ")} (source: ${promptFile.aliases ? "frontmatter" : "fallback"})`,
@@ -309,14 +310,14 @@ export default class AiCommand extends BaseCommand<typeof AiCommand> {
 					aliases: Array.isArray(data.aliases) ? (data.aliases as string[]) : undefined,
 				};
 			} catch (error) {
-				this.warn(
+				this.warning(
 					`Failed to parse launcher-prompt.md frontmatter; using raw file contents instead: ${String(error)}`,
 				);
 				return { template: raw.trim() };
 			}
 		}
 
-		this.warn("launcher-prompt.md not found; using hardcoded fallback prompt.");
+		this.warning("launcher-prompt.md not found; using hardcoded fallback prompt.");
 		return {
 			template:
 				"You are a launcher assistant. Ask the user what they want to do, " +
@@ -331,7 +332,7 @@ export function assertSafeAliasSelection(
 	proposal: AliasProposal,
 	allowedAliases?: Set<string>,
 ): void {
-	const aliasSet = allowedAliases ?? new Set<string>(FALLBACK_ALIASES);
+	const aliasSet = allowedAliases ?? FALLBACK_ALIAS_SET;
 	if (!aliasSet.has(proposal.alias)) {
 		throw new Error(
 			`Unsupported AI alias selection: ${proposal.alias}. Allowed aliases: ${[...aliasSet].join(", ")}`,
@@ -395,7 +396,6 @@ async function resolveGhAuthToken(): Promise<string | undefined> {
 		return undefined;
 	}
 }
-
 
 async function tryReadFile(filePath: string): Promise<string | undefined> {
 	try {
