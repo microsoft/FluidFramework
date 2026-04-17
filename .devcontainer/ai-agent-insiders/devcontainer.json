@@ -63,7 +63,11 @@
 		// Enables SSH connections into the container using `gh codespace ssh`
 		"ghcr.io/devcontainers/features/sshd:1": {
 			"version": "latest"
-		}
+		},
+		// Install the Azure CLI
+		"ghcr.io/devcontainers/features/azure-cli:1": {},
+		// Install mise (polyglot tool/version manager)
+		"ghcr.io/devcontainers-extra/features/mise:1": {}
 	},
 	// Setting this so Codespaces default settings use it. It's not really *required*, but a clean build
 	// can be lengthy enough that it's convenient.
