@@ -59,6 +59,7 @@ import {
 export interface PackageToInstall {
 	/** The name of the package to install. */
 	pkgName: string;
+
 	/**
 	 * The minimum version where the package should be installed.
 	 * If the requested version is lower than this, the package will not be installed. This enables certain level of
@@ -68,28 +69,33 @@ export interface PackageToInstall {
 	 * versions prior to that, the package will not be installed and the test should skip testing these versions.
 	 */
 	minVersion: string;
+
+	/**
+	 * Entrypoint to load from, if available. Otherwise, root entrypoint will be used.
+	 */
+	preferredEntrypoint?: "." | `./${string}`;
 }
 
 // List of driver API packages to install.
-const driverPackageEntries: PackageToInstall[] = [
+const driverPackageEntries = [
 	{ pkgName: "@fluidframework/local-driver", minVersion: "0.56.0" },
 	{ pkgName: "@fluidframework/odsp-driver", minVersion: "0.56.0" },
 	{ pkgName: "@fluidframework/routerlicious-driver", minVersion: "0.56.0" },
-];
+] satisfies PackageToInstall[];
 
 // List of loader API packages to install.
-const loaderPackageEntries: PackageToInstall[] = [
+const loaderPackageEntries = [
 	{ pkgName: "@fluidframework/container-loader", minVersion: "0.56.0" },
-];
+] satisfies PackageToInstall[];
 
 // List of container runtime API packages to install.
-const containerRuntimePackageEntries: PackageToInstall[] = [
+const containerRuntimePackageEntries = [
 	{ pkgName: "@fluidframework/container-runtime", minVersion: "0.56.0" },
 	{ pkgName: "@fluidframework/aqueduct", minVersion: "0.56.0" },
-];
+] satisfies PackageToInstall[];
 
 // List of data runtime API packages to install.
-const dataRuntimePackageEntries: PackageToInstall[] = [
+const dataRuntimePackageEntries = [
 	{ pkgName: "@fluidframework/aqueduct", minVersion: "0.56.0" },
 	{ pkgName: "@fluidframework/datastore", minVersion: "0.56.0" },
 	{ pkgName: "@fluidframework/test-utils", minVersion: "0.56.0" },
@@ -101,20 +107,20 @@ const dataRuntimePackageEntries: PackageToInstall[] = [
 	{ pkgName: "@fluidframework/register-collection", minVersion: "0.56.0" },
 	{ pkgName: "@fluidframework/sequence", minVersion: "0.56.0" },
 	{ pkgName: "@fluidframework/agent-scheduler", minVersion: "0.56.0" },
-	{ pkgName: "@fluidframework/tree", minVersion: "2.0.0" },
-];
+	{ pkgName: "@fluidframework/tree", minVersion: "2.0.0", preferredEntrypoint: "./internal" },
+] satisfies PackageToInstall[];
 
 /**
  * The list of all the packages to install for compatibility testing.
  * If this list is changed, the {@link revision} in `versionUtils.ts`should be incremented to force re-installation. If
  * not, the pipelines that run the compatibility tests may fail as the packages may be fetched from the cache.
  */
-const packageListToInstall: PackageToInstall[] = [
+const packageListToInstall = [
 	...driverPackageEntries,
 	...loaderPackageEntries,
 	...containerRuntimePackageEntries,
 	...dataRuntimePackageEntries,
-];
+] satisfies PackageToInstall[];
 
 /**
  * @internal
@@ -188,7 +194,6 @@ export const DataRuntimeApi = {
 	DataObjectFactory,
 	FluidDataStoreRuntime,
 	TestFluidObjectFactory,
-	// TODO: SharedTree is not included included here. Perhaps it should be added?
 	dds: {
 		SharedCell,
 		SharedCounter,
@@ -243,7 +248,7 @@ async function loadIfCompatible(
 ): Promise<any> {
 	// Check if the requested version satisfies the minVersion requirement
 	if (semver.gte(versionToInstall, pkgEntry.minVersion)) {
-		return loadPackage(modulePath, pkgEntry.pkgName);
+		return loadPackage(modulePath, pkgEntry.pkgName, pkgEntry.preferredEntrypoint);
 	}
 	return undefined;
 }

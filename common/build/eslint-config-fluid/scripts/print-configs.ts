@@ -133,7 +133,7 @@ async function generateConfig(filePath: string, config: FlatConfigArray): Promis
 	const args = process.argv.slice(2);
 
 	if (args.length !== 1) {
-		console.error("Usage: tsx print-configs.ts <output-directory>");
+		console.error("Usage: jiti scripts/print-configs.ts <output-directory>");
 		process.exit(1);
 	}
 

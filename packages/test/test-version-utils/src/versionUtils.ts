@@ -131,9 +131,20 @@ const pnpmCmd = process.platform === "win32" ? "pnpm.cmd" : "pnpm";
 const minimumReleaseAgeMinutes = 1 * 24 * 60;
 
 // Enforce reasonable security settings on compat package installs to mitigate risk of supply-chain attacks.
+// We exclude our own scopes/packages so the installation of older FF versions for compat testing doesn't
+// fail due to young versions immediately after we ship a new release.
+// Ideally we shouldn't be installing the older versions "dynamically", but while we figure out an alternative
+// approach we can do this to make things a bit better.
 // See https://pnpm.io/supply-chain-security for context on the flags used here.
 const pnpmWorkspaceYamlContent = `
 minimumReleaseAge: ${minimumReleaseAgeMinutes}
+minimumReleaseAgeExclude:
+- '@fluidframework/*'
+- '@fluid-experimental/*'
+- '@fluid-internal/*'
+- '@fluid-private/*'
+- '@fluid-tools/*'
+- 'fluid-framework'
 
 # See: https://github.com/orgs/pnpm/discussions/11084 for some discussion.
 # Enabling this is additionally more complicated than coming up with a reasonable allow-list of packages, as Azure Artifact feeds don't seem to preserve trusted provenance metadata
@@ -390,7 +401,11 @@ export function checkInstalled(requested: string): { version: string; modulePath
  *
  * @internal
  */
-export const loadPackage = async (modulePath: string, pkg: string): Promise<any> => {
+export const loadPackage = async (
+	modulePath: string,
+	pkg: string,
+	importPath: "." | `./${string}` = ".",
+): Promise<any> => {
 	const pkgPath = path.join(modulePath, "node_modules", pkg);
 	// Because we put legacy versions in a specific subfolder of node_modules (.legacy/<version>), we need to reimplement
 	// some of Node's module loading logic here.
@@ -415,20 +430,28 @@ export const loadPackage = async (modulePath: string, pkg: string): Promise<any>
 		if (typeof pkgJson.exports === "string") {
 			primaryExport = pkgJson.exports;
 		} else {
-			const exp: any | undefined = pkgJson.exports["."];
+			const exp: any | undefined = pkgJson.exports[importPath] ?? pkgJson.exports["."];
 			primaryExport =
 				typeof exp === "string"
 					? exp
 					: exp.require !== undefined
 						? exp.require.default
 						: exp.default;
-			if (primaryExport === undefined) {
-				throw new Error(`Package ${pkg} defined subpath exports but no '.' entry.`);
+			if (typeof primaryExport !== "string") {
+				// eslint-disable-next-line unicorn/prefer-type-error -- this isn't a TypeError really; it is an internal logic shortcoming; entry might not be a string
+				throw new Error(
+					`Package ${pkg} defined subpath exports but no recognizable ${importPath} entry.`,
+				);
 			}
 		}
 	} else {
 		if (pkgJson.main === undefined) {
 			throw new Error(`No main or exports in package.json for ${pkg}`);
+		}
+		if (importPath !== ".") {
+			console.warn(
+				`Package ${pkg} main used despite request for ${importPath} entry (no "exports" property found).`,
+			);
 		}
 		primaryExport = pkgJson.main;
 	}

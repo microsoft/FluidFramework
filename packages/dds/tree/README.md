@@ -193,6 +193,12 @@ class Holder extends schemaFactory.object("Holder", { item: itemTypes }) {}
 const holder = new Holder({ item: new ItemA({ a: 42 }) });
 ```
 
+### How do I effectively use SharedTree when using TypeScript's `isolatedDeclarations`?
+
+SharedTree schema heavily use expression types and class expressions as base classes, both of which `isolatedDeclarations` disallows.
+
+See [isolated-declarations.md](docs/user-facing/isolated-declarations.md) for an explanation of the problem and recommended approaches for using SharedTree schema in a project that requires `isolatedDeclarations`.
+
 ## Architecture
 
 This section covers the internal structure of the Tree DDS.
@@ -502,7 +508,7 @@ When making such a request please include if the configuration already works (an
 
 ### Supported Runtimes
 
--   NodeJs ^20.10.0 except that we will drop support for it [when NodeJs 20 loses its upstream support on 2026-04-30](https://github.com/nodejs/release#release-schedule), and will support a newer LTS version of NodeJS (22) at least 1 year before 20 is end-of-life. This same policy applies to NodeJS 22 when it is end of life (2027-04-30).
+-   NodeJs ^22.22.2 except that we will drop support for it [when NodeJs 22 loses its upstream support on 2027-04-30](https://github.com/nodejs/release#release-schedule), and will support a newer LTS version of NodeJS at least 1 year before 22 is end-of-life.
     -   Running Fluid in a Node.js environment with the `--no-experimental-fetch` flag is not supported.
 -   Modern browsers supporting the es2022 standard library: in response to asks we can add explicit support for using babel to polyfill to target specific standards or runtimes (meaning we can avoid/remove use of things that don't polyfill robustly, but otherwise target modern standards).
 

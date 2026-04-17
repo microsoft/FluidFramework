@@ -19,10 +19,8 @@ Maps with different number of entries are dynamically added to the document and 
 ## How to execute the performance E2E tests and visualize the results
 
 In order to run the performance E2E tests, simply choose one of the following commands from the test-end-to-end-tests folder:
-`npm run test:benchmark:report` for time measurements against the local service.
-`npm run test:benchmark:report:odsp` for time measurements against the ODSP service.
-
-`npm run test:memory-profiling:report` for memory measurements against the local service.
-`npm run test:memory-profiling:report:ODSP` for memory measurements against the ODSP service.
+`npm run test:benchmark:local` for benchmarks against the local service.
+`npm run test:benchmark:odsp` for benchmarks against the ODSP service.
+`npm run test:benchmark:frs` for benchmarks against the FRS service.
 
 Notice that every run will generate its output on the console window and, also, json files on the same folder.

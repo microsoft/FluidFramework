@@ -93,9 +93,7 @@ Cross-client compatibility implies that clients within a supported set of versio
 
 ### Motivation
 
-1. **Rolling upgrades**: During version upgrades, there is an unavoidable transition window when clients running different versions must coexist and collaborate. This compatibility ensures users can continue working together seamlessly, whether or not their application instance has been updated yet.
-
-2. **Multi-application ecosystems**: Different applications with different deployment schedules may host the same Fluid content. In such ecosystems, all applications integrating Fluid-based experiences must coordinate to respect the cross-client compatibility window. This avoids requiring all applications to be on exactly the same version, which would be impractical.
+See [Fluid Framework Cross-Client Compatibility](./CrossClientCompatibility.md) for motivation and other details about cross-client compatibility.
 
 ### Architecture diagram
 
@@ -159,6 +157,14 @@ This diagram shows two clients collaborating on the same document:
 ### Interaction with Layer Compatibility
 
 Note that each client here may have a different set of versions on each layer.  Cross-client compatibility actually applies between like layers. So the version of each layer must satisfy layer-compat requirements with the other layers on that client, _and_ cross-client compat requirements with the other clients that may join the collaboration session.
+
+## Observing Client Version Distribution
+
+Understanding which Fluid versions are active across your user base is important for managing all types of compatibility. For cross-client compatibility, it tells you when clients have reached [saturation](./CrossClientCompatibility.md#terminology) on a given version so you can safely update your compatibility configuration. For layer compatibility, it helps you verify that the combination of layer versions deployed across your clients remains within the supported compatibility window.
+
+Fluid Framework attaches version information to telemetry events automatically. Each layer includes its package version on the telemetry events it emits (e.g., `runtimeVersion` from the container runtime, `loaderVersion` from the loader, etc.). By collecting and aggregating these properties, you can build a picture of which Fluid versions are in use across your clients.
+
+For more information on telemetry, see [Logging and telemetry](https://fluidframework.com/docs/testing/telemetry).
 
 ## Data-at-rest compatibility
 

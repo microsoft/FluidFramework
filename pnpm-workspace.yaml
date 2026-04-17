@@ -28,6 +28,13 @@ minimumReleaseAgeExclude: [
 resolutionMode: highest
 blockExoticSubdeps: true
 trustPolicy: no-downgrade
+trustPolicyExclude:
+  # axios@0.30.3 is the last legitimate 0.30.x release (published 2026-02-18). The trust
+  # downgrade fires because 0.30.x was published via direct CLI rather than the OIDC/GitHub
+  # Actions provenance pipeline used by earlier versions. The compromised versions were
+  # 0.30.4 and 1.14.1 (supply chain attack on 2026-03-31, attributed to Sapphire Sleet).
+  # See: https://www.microsoft.com/en-us/security/blog/2026/04/01/mitigating-the-axios-npm-supply-chain-compromise/
+  - "axios@0.30.3"
 strictDepBuilds: true
 
 catalogs:
@@ -42,3 +49,6 @@ catalogs:
     "@fluidframework/eslint-config-fluid": "^9.0.0"
     "eslint": "~9.39.1"
     "eslint-config-prettier": "~10.1.8"
+  # Type definitions
+  types:
+    "@types/node": "~22.19.17"

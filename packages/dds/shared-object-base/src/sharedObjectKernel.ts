@@ -142,7 +142,7 @@ class SharedObjectFromKernel<
 			runtime as IFluidDataStoreRuntimeInternalConfig
 		).minVersionForCollab;
 
-		assert(minVersionForCollab !== undefined, "minVersionForCollab must be defined");
+		assert(minVersionForCollab !== undefined, 0xcee /* minVersionForCollab must be defined */);
 
 		this.#kernelArgs = {
 			sharedObject: this,

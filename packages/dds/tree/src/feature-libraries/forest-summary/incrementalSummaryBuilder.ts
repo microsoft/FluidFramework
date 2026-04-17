@@ -50,10 +50,12 @@ interface ChunkLoadProperties {
 	 */
 	readonly encodedContents: EncodedFieldBatchV2;
 	/**
-	 * The path for this chunk's contents in the summary tree relative to the forest's summary tree.
-	 * This path is used to generate a summary handle for the chunk if it doesn't change between summaries.
+	 * The reference ID of this chunk's parent in the summary tree, or `undefined` if this chunk is
+	 * at the top level (directly under the forest summary tree).
+	 * Stored here so that {@link ForestIncrementalSummaryBuilder.decodeIncrementalChunk} can
+	 * reconstruct the correct {@link ChunkSummaryProperties} without re-parsing a path string.
 	 */
-	readonly summaryPath: string;
+	readonly parentReferenceId: ChunkReferenceId | undefined;
 }
 
 /**
@@ -68,10 +70,20 @@ interface ChunkSummaryProperties {
 	 */
 	readonly referenceId: ChunkReferenceId;
 	/**
-	 * The path for this chunk's summary in the summary tree relative to the forest's summary tree.
-	 * This path is used to generate a summary handle for the chunk if it doesn't change between summaries.
+	 * The reference ID of this chunk's parent in the summary tree, or `undefined` if this chunk
+	 * is at the top level (has no incremental parent).
+	 *
+	 * @remarks
+	 * Storing only the immediate parent (rather than the full path string) keeps every chunk's
+	 * tracking entry correct even when an ancestor is re-encoded and receives a new reference ID.
+	 * The full summary path is computed on demand by {@link ForestIncrementalSummaryBuilder.computeHandlePathInLatestSummary}
+	 * by walking up the parent chain through {@link TrackedSummaryProperties.latestSummaryRefIdMap}.
+	 *
+	 * If a parent chunk is encoded as a handle in the current summary its reference ID is unchanged,
+	 * so its children's `parentReferenceId` values copied forward by `completeSummary` remain valid
+	 * without any additional update.
 	 */
-	readonly summaryPath: string;
+	readonly parentReferenceId: ChunkReferenceId | undefined;
 }
 
 /**
@@ -109,6 +121,13 @@ interface TrackedSummaryProperties {
 	 * Serializes content (including {@link (IFluidHandle:interface)}s) for adding to a summary blob.
 	 */
 	stringify: SummaryElementStringifier;
+	/**
+	 * Reverse lookup map for the latest summary: maps each chunk's {@link ChunkReferenceId} to its
+	 * {@link ChunkSummaryProperties}.
+	 * Used by {@link ForestIncrementalSummaryBuilder.computeHandlePathInLatestSummary} to traverse
+	 * the parent chain when generating handle paths.
+	 */
+	readonly latestSummaryRefIdMap: Map<ChunkReferenceId, ChunkSummaryProperties>;
 }
 
 /**
@@ -177,6 +196,16 @@ export class ForestIncrementalSummaryBuilder implements IncrementalEncoderDecode
 	/**
 	 * For a given summary sequence number, keeps track of a chunk's properties that will be used to generate
 	 * a summary handle for the chunk if it does not change between summaries.
+	 *
+	 * @remarks
+	 * `chunk` (the TreeChunk object) is used as the map key by object identity.
+	 * This assumes each chunk appears at exactly one position in the forest — an invariant that holds because every
+	 * node in a tree has a single parent.
+	 * If the forest ever introduced structural sharing (two positions backed by the same TreeChunk object),
+	 * a second call here would silently overwrite the first entry, causing the first position's handle to point
+	 * to the second position's parent in subsequent summaries. In theory, this should be fine from summary perspective
+	 * because the chunk contents are the same. But, it could lead to confusing handle paths in the summary tree and
+	 * may lead to other unexpected behavior. Adequate tests should be added if structural sharing is introduced.
 	 */
 	private readonly chunkTrackingPropertiesMap: NestedMap<
 		number,
@@ -249,12 +278,14 @@ export class ForestIncrementalSummaryBuilder implements IncrementalEncoderDecode
 		// the contents of incremental chunks in any sub-trees.
 		const downloadChunkContentsInTree = async (
 			snapshotTree: ISnapshotTree,
-			parentTreeKey: string,
+			parentPathSegments: string[],
+			parentReferenceId: ChunkReferenceId | undefined,
 		): Promise<void> => {
 			// All trees in the snapshot tree are for incremental chunks. The key is the chunk's reference ID
 			// and the value is the snapshot tree for the chunk.
 			for (const [chunkReferenceId, chunkSnapshotTree] of Object.entries(snapshotTree.trees)) {
-				const chunkSubTreePath = `${parentTreeKey}${chunkReferenceId}`;
+				const chunkSubTreeSegments = [...parentPathSegments, chunkReferenceId];
+				const chunkSubTreePath = chunkSubTreeSegments.join("/");
 				const chunkContentsPath = `${chunkSubTreePath}/${summaryContentBlobKey}`;
 				if (!(await args.services.contains(chunkContentsPath))) {
 					throw new LoggingError(
@@ -266,7 +297,7 @@ export class ForestIncrementalSummaryBuilder implements IncrementalEncoderDecode
 				)) as EncodedFieldBatchV2; // TODO: this should use a codec to validate the data instead of just type casting.
 				this.loadedChunksMap.set(chunkReferenceId, {
 					encodedContents: chunkContents,
-					summaryPath: chunkSubTreePath,
+					parentReferenceId,
 				});
 
 				const chunkReferenceIdNumber = Number(chunkReferenceId);
@@ -275,10 +306,15 @@ export class ForestIncrementalSummaryBuilder implements IncrementalEncoderDecode
 				);
 
 				// Recursively download the contents of chunks in this chunk's sub tree.
-				await downloadChunkContentsInTree(chunkSnapshotTree, `${chunkSubTreePath}/`);
+				await downloadChunkContentsInTree(
+					chunkSnapshotTree,
+					chunkSubTreeSegments,
+					brand(chunkReferenceIdNumber),
+				);
 			}
 		};
-		await downloadChunkContentsInTree(forestTree, "");
+		// parentReferenceId is undefined for the root of the forest tree.
+		await downloadChunkContentsInTree(forestTree, [], undefined /* parentReferenceId */);
 	}
 
 	/**
@@ -319,6 +355,19 @@ export class ForestIncrementalSummaryBuilder implements IncrementalEncoderDecode
 		}
 
 		this.latestSummarySequenceNumber = incrementalSummaryContext.latestSummarySequenceNumber;
+
+		// Build a reverse lookup map (referenceId → properties) for the latest summary so that
+		// computeHandlePathInLatestSummary can traverse the parent chain without iterating the whole map.
+		const latestSummaryRefIdMap: Map<ChunkReferenceId, ChunkSummaryProperties> = new Map();
+		const latestTracking = this.chunkTrackingPropertiesMap.get(
+			this.latestSummarySequenceNumber,
+		);
+		if (latestTracking !== undefined) {
+			for (const properties of latestTracking.values()) {
+				latestSummaryRefIdMap.set(properties.referenceId, properties);
+			}
+		}
+
 		this.trackedSummaryProperties = {
 			summarySequenceNumber: incrementalSummaryContext.summarySequenceNumber,
 			latestSummaryBasePath: incrementalSummaryContext.summaryPath,
@@ -326,8 +375,34 @@ export class ForestIncrementalSummaryBuilder implements IncrementalEncoderDecode
 			parentSummaryBuilder: builder,
 			fullTree,
 			stringify,
+			latestSummaryRefIdMap,
 		};
 		return ForestIncrementalSummaryBehavior.Incremental;
+	}
+
+	/**
+	 * Computes a chunk's path in the latest summary by traversing up the parent chain via
+	 * {@link latestSummaryRefIdMap}.
+	 *
+	 * Each {@link ChunkSummaryProperties.parentReferenceId} points to the chunk's parent as it
+	 * appeared in the summary where the entry was last written. Walking up the chain from the
+	 * chunk to the root produces the full path that can be used in a summary handle path.
+	 */
+	private computeHandlePathInLatestSummary(chunkProperties: ChunkSummaryProperties): string {
+		const { latestSummaryRefIdMap } = this.requireTrackingSummary();
+		const pathSegments: string[] = [];
+		let current: ChunkSummaryProperties | undefined = chunkProperties;
+		while (current !== undefined) {
+			pathSegments.push(`${current.referenceId}`);
+			if (current.parentReferenceId === undefined) {
+				break;
+			}
+			current = latestSummaryRefIdMap.get(current.parentReferenceId);
+			assert(current !== undefined, "Parent chunk not found in latest summary tracking");
+		}
+		// Segments are collected leaf-to-root and then reversed. The alternative would be to use unshift
+		// instead of push and reverse. However, using push and reverse is O(n) whereas using unshift would be O(n²).
+		return pathSegments.reverse().join("/");
 	}
 
 	/**
@@ -344,8 +419,6 @@ export class ForestIncrementalSummaryBuilder implements IncrementalEncoderDecode
 		const chunkReferenceIds: ChunkReferenceId[] = [];
 		const chunks = this.getChunkAtCursor(cursor);
 		for (const chunk of chunks) {
-			let chunkProperties: ChunkSummaryProperties;
-
 			// Try and get the properties of the chunk from the latest successful summary.
 			// If it exists and the summary is not a full tree, use the properties to generate a summary handle.
 			// If it does not exist, encode the chunk and generate new properties for it.
@@ -354,27 +427,28 @@ export class ForestIncrementalSummaryBuilder implements IncrementalEncoderDecode
 				this.latestSummarySequenceNumber,
 				chunk,
 			);
+			let chunkReferenceId: ChunkReferenceId;
 			if (previousChunkProperties !== undefined && !trackedSummaryProperties.fullTree) {
-				chunkProperties = previousChunkProperties;
+				chunkReferenceId = previousChunkProperties.referenceId;
+				// Compute this chunk's path in the latest summary by traversing the parent chain.
+				// Using parentReferenceId traversal (rather than a stored path string) ensures the
+				// path is correct even when an ancestor was re-encoded in a prior summary and
+				// received a new referenceId — the stored summaryPath would have been stale in
+				// that case.
+				const handlePath = this.computeHandlePathInLatestSummary(previousChunkProperties);
 				trackedSummaryProperties.parentSummaryBuilder.addHandle(
-					`${chunkProperties.referenceId}`,
+					`${chunkReferenceId}`,
 					SummaryType.Tree,
-					`${trackedSummaryProperties.latestSummaryBasePath}/${chunkProperties.summaryPath}`,
+					`${trackedSummaryProperties.latestSummaryBasePath}/${handlePath}`,
 				);
 			} else {
 				// Generate a new reference ID for the chunk.
 				const newReferenceId: ChunkReferenceId = brand(this.nextReferenceId++);
+				chunkReferenceId = newReferenceId;
 
-				// Add the reference ID of this chunk to the chunk summary path and use the path as the summary path
-				// for the chunk in its summary properties.
-				// This is done before encoding the chunk so that the summary path is updated correctly when encoding
-				// any incremental chunks that are under this chunk.
+				// Add the reference ID of this chunk to the chunk summary path before encoding so
+				// that any incremental chunks in the subtree use the correct parent path.
 				trackedSummaryProperties.chunkSummaryPath.push(newReferenceId);
-
-				chunkProperties = {
-					referenceId: newReferenceId,
-					summaryPath: trackedSummaryProperties.chunkSummaryPath.join("/"),
-				};
 
 				const parentSummaryBuilder = trackedSummaryProperties.parentSummaryBuilder;
 				// Create a new summary builder for this chunk to build its summary tree which will be stored in the
@@ -400,13 +474,21 @@ export class ForestIncrementalSummaryBuilder implements IncrementalEncoderDecode
 				trackedSummaryProperties.chunkSummaryPath.pop();
 			}
 
+			// Get the parent reference ID from the current chunk summary path.
+			// For the root of the forest tree, the parent reference ID is undefined.
+			// For all other chunks, the parent reference ID is the last element in the current chunk summary path.
+			const chunkSummaryPathLength = trackedSummaryProperties.chunkSummaryPath.length;
+			const parentReferenceId: ChunkReferenceId | undefined =
+				chunkSummaryPathLength > 0
+					? trackedSummaryProperties.chunkSummaryPath[chunkSummaryPathLength - 1]
+					: undefined;
 			setInNestedMap(
 				this.chunkTrackingPropertiesMap,
 				trackedSummaryProperties.summarySequenceNumber,
 				chunk,
-				chunkProperties,
+				{ referenceId: chunkReferenceId, parentReferenceId },
 			);
-			chunkReferenceIds.push(chunkProperties.referenceId);
+			chunkReferenceIds.push(chunkReferenceId);
 		}
 		return chunkReferenceIds;
 	}
@@ -480,9 +562,9 @@ export class ForestIncrementalSummaryBuilder implements IncrementalEncoderDecode
 		referenceId: ChunkReferenceId,
 		chunkDecoder: (encoded: EncodedFieldBatchV2) => TreeChunk,
 	): TreeChunk {
-		const ChunkLoadProperties = this.loadedChunksMap.get(`${referenceId}`);
-		assert(ChunkLoadProperties !== undefined, 0xc86 /* Encoded incremental chunk not found */);
-		const chunk = chunkDecoder(ChunkLoadProperties.encodedContents);
+		const chunkLoadProperties = this.loadedChunksMap.get(`${referenceId}`);
+		assert(chunkLoadProperties !== undefined, 0xc86 /* Encoded incremental chunk not found */);
+		const chunk = chunkDecoder(chunkLoadProperties.encodedContents);
 
 		// Account for the reference about to be added in `chunkTrackingPropertiesMap`
 		// to ensure that no other users of this chunk think they have unique ownership.
@@ -493,7 +575,7 @@ export class ForestIncrementalSummaryBuilder implements IncrementalEncoderDecode
 		// when a new client starts to summarize.
 		setInNestedMap(this.chunkTrackingPropertiesMap, this.initialSequenceNumber, chunk, {
 			referenceId,
-			summaryPath: ChunkLoadProperties.summaryPath,
+			parentReferenceId: chunkLoadProperties.parentReferenceId,
 		});
 		return chunk;
 	}

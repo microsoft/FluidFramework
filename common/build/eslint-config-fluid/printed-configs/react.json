@@ -5,11 +5,7 @@
 		"parser": "typescript-eslint/parser@8.54.0",
 		"parserOptions": {
 			"project": null,
-			"projectService": true,
-			"ecmaFeatures": {
-				"jsx": true
-			},
-			"jsxPragma": null
+			"projectService": true
 		},
 		"sourceType": "module"
 	},
@@ -29,7 +25,12 @@
 		"unicorn:eslint-plugin-unicorn@54.0.0",
 		"unused-imports:unused-imports",
 		"depend:eslint-plugin-depend@1.4.0",
-		"react",
+		"@eslint-react:eslint-plugin-react-x@2.13.0",
+		"@eslint-react/rsc:eslint-plugin-react-rsc@2.13.0",
+		"@eslint-react/dom:eslint-plugin-react-dom@2.13.0",
+		"@eslint-react/web-api:eslint-plugin-react-web-api@2.13.0",
+		"@eslint-react/hooks-extra:eslint-plugin-react-hooks-extra@2.13.0",
+		"@eslint-react/naming-convention:eslint-plugin-react-naming-convention@2.13.0",
 		"react-hooks:eslint-plugin-react-hooks@7.0.0"
 	],
 	"rules": {
@@ -58,6 +59,208 @@
 			"error"
 		],
 		"@eslint-community/eslint-comments/require-description": [
+			"warn"
+		],
+		"@eslint-react/dom/no-dangerously-set-innerhtml": [
+			"warn"
+		],
+		"@eslint-react/dom/no-dangerously-set-innerhtml-with-children": [
+			"error"
+		],
+		"@eslint-react/dom/no-find-dom-node": [
+			"error"
+		],
+		"@eslint-react/dom/no-flush-sync": [
+			"error"
+		],
+		"@eslint-react/dom/no-hydrate": [
+			"error"
+		],
+		"@eslint-react/dom/no-namespace": [
+			"error"
+		],
+		"@eslint-react/dom/no-render": [
+			"error"
+		],
+		"@eslint-react/dom/no-render-return-value": [
+			"error"
+		],
+		"@eslint-react/dom/no-script-url": [
+			"warn"
+		],
+		"@eslint-react/dom/no-string-style-prop": [
+			"off"
+		],
+		"@eslint-react/dom/no-unknown-property": [
+			"off"
+		],
+		"@eslint-react/dom/no-unsafe-iframe-sandbox": [
+			"warn"
+		],
+		"@eslint-react/dom/no-unsafe-target-blank": [
+			"error"
+		],
+		"@eslint-react/dom/no-use-form-state": [
+			"error"
+		],
+		"@eslint-react/dom/no-void-elements-with-children": [
+			"error"
+		],
+		"@eslint-react/hooks-extra/no-direct-set-state-in-use-effect": [
+			"warn"
+		],
+		"@eslint-react/jsx-key-before-spread": [
+			"warn"
+		],
+		"@eslint-react/jsx-no-comment-textnodes": [
+			"error"
+		],
+		"@eslint-react/jsx-no-duplicate-props": [
+			"off"
+		],
+		"@eslint-react/jsx-no-undef": [
+			"off"
+		],
+		"@eslint-react/jsx-uses-react": [
+			"off"
+		],
+		"@eslint-react/jsx-uses-vars": [
+			"off"
+		],
+		"@eslint-react/naming-convention/context-name": [
+			"warn"
+		],
+		"@eslint-react/naming-convention/id-name": [
+			"warn"
+		],
+		"@eslint-react/naming-convention/ref-name": [
+			"warn"
+		],
+		"@eslint-react/naming-convention/use-state": [
+			"warn"
+		],
+		"@eslint-react/no-access-state-in-setstate": [
+			"error"
+		],
+		"@eslint-react/no-array-index-key": [
+			"warn"
+		],
+		"@eslint-react/no-children-count": [
+			"warn"
+		],
+		"@eslint-react/no-children-for-each": [
+			"warn"
+		],
+		"@eslint-react/no-children-map": [
+			"warn"
+		],
+		"@eslint-react/no-children-only": [
+			"warn"
+		],
+		"@eslint-react/no-children-prop": [
+			"error"
+		],
+		"@eslint-react/no-children-to-array": [
+			"warn"
+		],
+		"@eslint-react/no-clone-element": [
+			"warn"
+		],
+		"@eslint-react/no-component-will-mount": [
+			"error"
+		],
+		"@eslint-react/no-component-will-receive-props": [
+			"error"
+		],
+		"@eslint-react/no-component-will-update": [
+			"error"
+		],
+		"@eslint-react/no-context-provider": [
+			"warn"
+		],
+		"@eslint-react/no-create-ref": [
+			"error"
+		],
+		"@eslint-react/no-default-props": [
+			"error"
+		],
+		"@eslint-react/no-direct-mutation-state": [
+			"error"
+		],
+		"@eslint-react/no-forward-ref": [
+			"warn"
+		],
+		"@eslint-react/no-missing-key": [
+			"error"
+		],
+		"@eslint-react/no-nested-component-definitions": [
+			"error"
+		],
+		"@eslint-react/no-nested-lazy-component-declarations": [
+			"error"
+		],
+		"@eslint-react/no-prop-types": [
+			"error"
+		],
+		"@eslint-react/no-redundant-should-component-update": [
+			"error"
+		],
+		"@eslint-react/no-set-state-in-component-did-mount": [
+			"warn"
+		],
+		"@eslint-react/no-set-state-in-component-did-update": [
+			"warn"
+		],
+		"@eslint-react/no-set-state-in-component-will-update": [
+			"warn"
+		],
+		"@eslint-react/no-string-refs": [
+			"error"
+		],
+		"@eslint-react/no-unnecessary-use-prefix": [
+			"warn"
+		],
+		"@eslint-react/no-unsafe-component-will-mount": [
+			"warn"
+		],
+		"@eslint-react/no-unsafe-component-will-receive-props": [
+			"warn"
+		],
+		"@eslint-react/no-unsafe-component-will-update": [
+			"warn"
+		],
+		"@eslint-react/no-unused-class-component-members": [
+			"warn"
+		],
+		"@eslint-react/no-use-context": [
+			"warn"
+		],
+		"@eslint-react/no-useless-forward-ref": [
+			"warn"
+		],
+		"@eslint-react/no-useless-fragment": [
+			"error",
+			{
+				"allowEmptyFragment": false,
+				"allowExpressions": true
+			}
+		],
+		"@eslint-react/prefer-use-state-lazy-initialization": [
+			"warn"
+		],
+		"@eslint-react/rsc/function-definition": [
+			"error"
+		],
+		"@eslint-react/web-api/no-leaked-event-listener": [
+			"warn"
+		],
+		"@eslint-react/web-api/no-leaked-interval": [
+			"warn"
+		],
+		"@eslint-react/web-api/no-leaked-resize-observer": [
+			"warn"
+		],
+		"@eslint-react/web-api/no-leaked-timeout": [
 			"warn"
 		],
 		"@fluid-internal/fluid/no-file-path-links-in-jsdoc": [
@@ -1231,6 +1434,7 @@
 				"allow": [
 					"@fluidframework/*/internal{,/**}",
 					"@fluid-experimental/**",
+					"@fluid-internal/**",
 					"*/index.js"
 				]
 			}
@@ -1913,9 +2117,6 @@
 		"react-hooks/use-memo": [
 			"error"
 		],
-		"react/display-name": [
-			"error"
-		],
 		"react/jsx-child-element-spacing": [
 			"off"
 		],
@@ -1943,26 +2144,11 @@
 		"react/jsx-indent-props": [
 			"off"
 		],
-		"react/jsx-key": [
-			"error"
-		],
 		"react/jsx-max-props-per-line": [
 			"off"
 		],
 		"react/jsx-newline": [
 			"off"
-		],
-		"react/jsx-no-comment-textnodes": [
-			"error"
-		],
-		"react/jsx-no-duplicate-props": [
-			"error"
-		],
-		"react/jsx-no-target-blank": [
-			"error"
-		],
-		"react/jsx-no-undef": [
-			"error"
 		],
 		"react/jsx-one-expression-per-line": [
 			"off"
@@ -1976,56 +2162,8 @@
 		"react/jsx-tag-spacing": [
 			"off"
 		],
-		"react/jsx-uses-react": [
-			"off"
-		],
-		"react/jsx-uses-vars": [
-			"error"
-		],
 		"react/jsx-wrap-multilines": [
 			"off"
-		],
-		"react/no-children-prop": [
-			"error"
-		],
-		"react/no-danger-with-children": [
-			"error"
-		],
-		"react/no-deprecated": [
-			"error"
-		],
-		"react/no-direct-mutation-state": [
-			"error"
-		],
-		"react/no-find-dom-node": [
-			"error"
-		],
-		"react/no-is-mounted": [
-			"error"
-		],
-		"react/no-render-return-value": [
-			"error"
-		],
-		"react/no-string-refs": [
-			"error"
-		],
-		"react/no-unescaped-entities": [
-			"error"
-		],
-		"react/no-unknown-property": [
-			"error"
-		],
-		"react/no-unsafe": [
-			"off"
-		],
-		"react/prop-types": [
-			"error"
-		],
-		"react/react-in-jsx-scope": [
-			"off"
-		],
-		"react/require-render-return": [
-			"error"
 		],
 		"require-atomic-updates": [
 			"error",
@@ -2700,8 +2838,10 @@
 			},
 			"mode": "typescript"
 		},
-		"react": {
-			"version": "detect"
+		"react-x": {
+			"version": "detect",
+			"importSource": "react",
+			"polymorphicPropName": "as"
 		}
 	}
 }
