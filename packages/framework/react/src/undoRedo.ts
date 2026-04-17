@@ -11,10 +11,7 @@ import {
 	type RevertibleFactory,
 	type TreeViewEvents,
 } from "@fluidframework/tree";
-import type {
-	RevertibleAlpha,
-	TreeBranchAlpha,
-} from "@fluidframework/tree/internal";
+import type { RevertibleAlpha, TreeBranchAlpha } from "@fluidframework/tree/internal";
 
 /**
  * Interface for undo/redo stack operations.
@@ -139,6 +136,11 @@ export class LabeledUndoRedoStacks implements UndoRedo {
 	readonly #listeners = new Set<() => void>();
 	readonly #unsubscribe: () => void;
 	readonly #label: unknown;
+	// Set synchronously around revert() calls so the handler can attribute the
+	// resulting unlabeled commit to this stack's undo or redo action.
+	// `revert` cannot be called inside runTransaction, so we cannot leverage labels to filter undo/redo commits.
+	// If support is added that enables labeled undo/redo commits, this flag may no longer be necessary.
+	#pendingKind: CommitKind.Undo | CommitKind.Redo | undefined = undefined;
 
 	public constructor(
 		/**
@@ -157,20 +159,29 @@ export class LabeledUndoRedoStacks implements UndoRedo {
 				return;
 			}
 
+			if (this.#pendingKind !== undefined) {
+				// This commit was produced by our own undo/redo call. Route it to the
+				// opposite stack, bypassing the label filter (undo/redo commits carry
+				// no label).
+				if (this.#pendingKind === CommitKind.Undo) {
+					this.#redoStack.push(getRevertible());
+				} else {
+					this.#undoStack.push(getRevertible());
+				}
+				this.#notifyListeners();
+				return;
+			}
+
 			if (!data.labels.has(this.#label)) {
 				return;
 			}
 
-			if (data.kind === CommitKind.Undo) {
-				this.#redoStack.push(getRevertible());
-			} else if (data.kind === CommitKind.Redo) {
-				this.#undoStack.push(getRevertible());
-			} else {
-				// CommitKind.Default: a new edit tagged with our label. Clear the redo stack.
-				for (const r of this.#redoStack) r.dispose();
-				this.#redoStack.length = 0;
-				this.#undoStack.push(getRevertible());
+			// New user edit tagged with our label: push to undo, clear redo.
+			for (const r of this.#redoStack) {
+				r.dispose();
 			}
+			this.#redoStack.length = 0;
+			this.#undoStack.push(getRevertible());
 			this.#notifyListeners();
 		});
 	}
@@ -184,7 +195,9 @@ export class LabeledUndoRedoStacks implements UndoRedo {
 		if (revertible === undefined) {
 			throw new Error("Cannot undo: undo stack is empty.");
 		}
+		this.#pendingKind = CommitKind.Undo;
 		revertible.revert();
+		this.#pendingKind = undefined;
 		this.#notifyListeners();
 	}
 
@@ -197,7 +210,9 @@ export class LabeledUndoRedoStacks implements UndoRedo {
 		if (revertible === undefined) {
 			throw new Error("Cannot redo: redo stack is empty.");
 		}
+		this.#pendingKind = CommitKind.Redo;
 		revertible.revert();
+		this.#pendingKind = undefined;
 		this.#notifyListeners();
 	}
 
