@@ -20,6 +20,21 @@ _ensure_agency() {
 	fi
 }
 
+# Machine-readable source of truth for the aliases that `flub ai` may recommend.
+# Keep this side-effect free and in sync with the user-selectable shell functions
+# below. Helpers like `start`, `obiwan`, and `flub-ai` are intentionally omitted.
+alias_manifest() {
+	cat <<'JSON'
+["claude","dev","copilot","oce","ai-reset"]
+JSON
+}
+
+# Emit just the selectable alias list so tooling can safely parse it without
+# scraping bash function bodies.
+list_aliases_json() {
+	alias_manifest
+}
+
 # Agent launcher functions. Extra args (e.g. --mcp 'kusto ...') are inserted
 # before the -- separator so they reach agency, not Claude/Copilot directly.
 claude() {

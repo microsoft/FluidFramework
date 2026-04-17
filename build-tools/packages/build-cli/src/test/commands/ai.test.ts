@@ -32,10 +32,7 @@ describe("ai command", () => {
 	it("accepts aliases in a custom set", () => {
 		const customSet = new Set(["my-alias", "other-alias"]);
 		expect(() =>
-			assertSafeAliasSelection(
-				{ alias: "my-alias", explanation: "custom alias" },
-				customSet,
-			),
+			assertSafeAliasSelection({ alias: "my-alias", explanation: "custom alias" }, customSet),
 		).to.not.throw();
 	});
 
@@ -55,6 +52,13 @@ describe("ai command", () => {
 
 	it("uses the configured aliases when provided", () => {
 		expect(resolveAllowedAliases(["copilot", "oce"])).to.deep.equal(["copilot", "oce"]);
+	});
+
+	it("normalizes parsed alias lists", () => {
+		expect(resolveAllowedAliases(["dev", "copilot", "dev", ""])).to.deep.equal([
+			"dev",
+			"copilot",
+		]);
 	});
 
 	it("renders the configured alias list into the launcher prompt", () => {

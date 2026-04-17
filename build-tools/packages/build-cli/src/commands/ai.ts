@@ -18,6 +18,7 @@ import { BaseCommand } from "../library/commands/base.js";
 const FALLBACK_MODEL = "claude-haiku-4.5";
 export const FALLBACK_ALIASES = ["claude", "dev", "copilot", "oce", "ai-reset"] as const;
 const FALLBACK_ALIAS_SET = new Set<string>(FALLBACK_ALIASES);
+const SELECTABLE_ALIASES_FUNCTION = "list_aliases_json";
 
 export default class AiCommand extends BaseCommand<typeof AiCommand> {
 	static readonly description =
@@ -77,11 +78,9 @@ export default class AiCommand extends BaseCommand<typeof AiCommand> {
 			`Model: ${model} (source: ${flags.model ? "flag" : promptFile.model ? "frontmatter" : "fallback"})`,
 		);
 
-		const aliases = resolveAllowedAliases(promptFile.aliases);
+		const { aliases, source } = await this.loadAllowedAliases(aliasFile.path);
 		const allowedAliasSet = new Set(aliases);
-		this.verbose(
-			`Aliases: ${aliases.join(", ")} (source: ${promptFile.aliases ? "frontmatter" : "fallback"})`,
-		);
+		this.verbose(`Aliases: ${aliases.join(", ")} (source: ${source})`);
 
 		const prompt = buildLauncherPrompt({
 			template: promptFile.template,
@@ -302,7 +301,7 @@ export default class AiCommand extends BaseCommand<typeof AiCommand> {
 	 */
 	private async loadPromptFile(
 		repoRoot: string | undefined,
-	): Promise<{ template: string; model?: string; aliases?: string[] }> {
+	): Promise<{ template: string; model?: string }> {
 		const raw = await this.readDevcontainerFile(repoRoot, "launcher-prompt.md");
 		if (raw !== undefined) {
 			try {
@@ -310,7 +309,6 @@ export default class AiCommand extends BaseCommand<typeof AiCommand> {
 				return {
 					template: content.trim(),
 					model: typeof data.model === "string" ? data.model : undefined,
-					aliases: normalizeFrontmatterAliases(data.aliases),
 				};
 			} catch (error) {
 				this.warning(
@@ -326,8 +324,34 @@ export default class AiCommand extends BaseCommand<typeof AiCommand> {
 				"You are a launcher assistant. Ask the user what they want to do, " +
 				"then call select_alias with the best alias from the alias definitions.\n\n" +
 				"## Alias Definitions\n\n```bash\n{{aliasFileContent}}\n```\n\n" +
+				"## Allowed Aliases for This Session\n\n{{allowedAliasesContent}}\n\n" +
 				"## Getting Started Guide\n\n{{gettingStartedContent}}",
 		};
+	}
+
+	/**
+	 * Reads the machine-readable alias manifest from agent-aliases.sh.
+	 * This keeps the shell script as the source of truth without scraping bash.
+	 */
+	private async loadAllowedAliases(
+		aliasFilePath: string,
+	): Promise<{ aliases: string[]; source: "agent-aliases.sh" | "fallback" }> {
+		try {
+			const { stdout } = await execa("bash", [
+				"-c",
+				`source ${shellQuote(aliasFilePath)} && ${SELECTABLE_ALIASES_FUNCTION}`,
+			]);
+			const aliases = parseSelectableAliasesJson(stdout);
+			if (aliases !== undefined) {
+				return { aliases, source: "agent-aliases.sh" };
+			}
+			this.verbose(`Alias manifest from ${aliasFilePath} was not valid JSON.`);
+		} catch (error: unknown) {
+			const message = error instanceof Error ? error.message : String(error);
+			this.verbose(`Failed to load aliases from ${aliasFilePath}: ${message}`);
+		}
+
+		return { aliases: [...FALLBACK_ALIASES], source: "fallback" };
 	}
 }
 
@@ -343,10 +367,15 @@ export function assertSafeAliasSelection(
 	}
 }
 
-export function resolveAllowedAliases(configuredAliases?: readonly string[]): string[] {
-	return configuredAliases !== undefined && configuredAliases.length > 0
-		? [...configuredAliases]
-		: [...FALLBACK_ALIASES];
+export function resolveAllowedAliases(allowedAliases?: readonly string[]): string[] {
+	if (allowedAliases === undefined || allowedAliases.length === 0) {
+		return [...FALLBACK_ALIASES];
+	}
+
+	const normalizedAliases = Array.from(
+		new Set(allowedAliases.filter((alias) => alias.trim().length > 0)),
+	);
+	return normalizedAliases.length > 0 ? normalizedAliases : [...FALLBACK_ALIASES];
 }
 
 export function buildLauncherPrompt({
@@ -370,7 +399,7 @@ export function buildLauncherPrompt({
 		return prompt;
 	}
 
-	return `${prompt}\n\n## Allowed Aliases for This Session\n\nOnly recommend aliases from this configured allowlist. If an alias exists in the shell script but is not listed here, treat it as unavailable.\n\n${allowedAliasesContent}`;
+	return `${prompt}\n\n## Allowed Aliases for This Session\n\nOnly recommend aliases from this list derived from agent-aliases.sh for the current session.\n\n${allowedAliasesContent}`;
 }
 
 function formatAliasCommand(proposal: AliasProposal): string {
@@ -407,14 +436,20 @@ export function normalizePromptAnswer(answer: string, choices?: string[]): strin
 	return trimmed;
 }
 
-function normalizeFrontmatterAliases(aliases: unknown): string[] | undefined {
-	if (!Array.isArray(aliases)) {
+function parseSelectableAliasesJson(raw: string): string[] | undefined {
+	try {
+		const parsed: unknown = JSON.parse(raw);
+		if (!Array.isArray(parsed)) {
+			return undefined;
+		}
+
+		const aliases = parsed.filter(
+			(alias): alias is string => typeof alias === "string" && alias.trim().length > 0,
+		);
+		return resolveAllowedAliases(aliases);
+	} catch {
 		return undefined;
 	}
-
-	return aliases.filter(
-		(alias): alias is string => typeof alias === "string" && alias.length > 0,
-	);
 }
 
 function isUserCancellation(error: unknown): boolean {
