@@ -57,6 +57,12 @@ If the user opens with a specific question or task, skip the dashboard offer and
 
 ## Quick Reference
 
+### Service Tree
+
+Used for IcM incident routing, EngineeringHub scoped searches, and incident ownership assessment.
+
+**Service Tree ID:** `3841020f-2a95-498a-9b5a-934676b350a9`
+
 ### IcM Teams (OCE Rotation)
 
 The OCE rotation covers **three IcM teams**. Always search all three when looking up active incidents, on-call schedules, or shift activity.
