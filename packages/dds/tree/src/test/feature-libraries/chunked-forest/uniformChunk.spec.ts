@@ -66,6 +66,27 @@ describe("uniformChunk", () => {
 				validateShape(tree.dataFactory().shape);
 			});
 		}
+
+		it("withTopLevelLength caches ChunkShapes for small topLevelLength values", () => {
+			const shape = new TreeShape(brand(numberSchema.identifier), true, []);
+			// Small values (< 8) should return the same cached instance
+			const a1 = shape.withTopLevelLength(1);
+			const a2 = shape.withTopLevelLength(1);
+			assert.equal(a1, a2);
+
+			const b1 = shape.withTopLevelLength(7);
+			const b2 = shape.withTopLevelLength(7);
+			assert.equal(b1, b2);
+
+			// Different topLevelLength values should return different instances
+			assert.notEqual(a1, b1);
+
+			// Large values (>= 8) should not be cached
+			const c1 = shape.withTopLevelLength(8);
+			const c2 = shape.withTopLevelLength(8);
+			assert.notEqual(c1, c2);
+		});
+
 		it("shape with mayContainCompressedIds flag set to true fails if it is not a string leaf node.", () => {
 			const validShapeWithFlag = new TreeShape(brand(stringSchema.identifier), true, [], true);
 			// Test that a non string leaf node shape with mayContainCompressedIds set to true fails.
