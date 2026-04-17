@@ -305,7 +305,49 @@ grep '<package>@' <lockfile>
   ```
 - Report: "Override is necessary and has been kept in place. The dependency graph would otherwise resolve to vulnerable version(s)."
 
-## Step 7: Summary
+## Step 7: Sanity check the lockfile diff
+
+**Before writing the summary**, verify that the lockfile diffs are scoped to the target
+package and don't carry incidental churn that would bloat the PR or sneak in unrelated
+version changes.
+
+For each affected lockfile, diff against the version on `main` and inspect what changed:
+
+```bash
+# List the packages whose versions changed, excluding the target.
+# Works with lockfile v9 — keys look like "<name>@<version>:"
+git diff origin/main -- <lockfile> \
+  | grep -E '^[-+][[:space:]]+[^@]+@[0-9]' \
+  | sort -u
+```
+
+Classify every version change into one of three buckets:
+
+1. **Expected** — the target package moving from the vulnerable version to the fix version
+   (and the transitive closure pinned by the fix; e.g. a newer `@types/path-to-regexp`).
+2. **Acceptable incidental** — patch/minor bumps of unrelated packages that the lockfile
+   regeneration picked up because they were published since the lockfile was last written.
+   These are normal and do not need to block the PR.
+3. **Suspicious** — any of the following warrants stopping and re-investigating:
+   - A **major-version** bump on any package other than the target.
+   - A package that disappears from the lockfile that the workspace actually depends on.
+   - New top-level packages introduced that were not previously present.
+   - A version change on a security-sensitive package (`express`, `minimatch`,
+     `serialize-javascript`, auth / crypto packages, etc.) that is not the target of the
+     current fix.
+
+Report any suspicious change to the user before continuing. If unsure whether a change is
+acceptable, **ask** rather than commit. The agent should not attempt to "clean up" the
+lockfile by hand — if the diff is wrong, the fix is to unwind `pnpm install` and retry with
+a tighter override scope.
+
+Also cross-check the `package.json` diff — only the target package's override entry and
+its matching comment should have changed. If there are unrelated edits (whitespace,
+reordering, other entries), revert them: the formatter should have produced a minimal
+diff. If the comment block was rewritten to a different style, match the file's existing
+pattern.
+
+## Step 8: Summary
 
 After processing all affected lockfiles, provide a final summary:
 
@@ -328,7 +370,11 @@ After processing all affected lockfiles, provide a final summary:
 ### Overrides applied:
 - `./package.json`: `"<package>": ">= <fixed-version>"`
 
+### Sanity check:
+- Lockfile churn scoped to target: <yes / yes + minor incidentals / no — flagged items>
+- Suspicious version changes: <none / list them>
+
 ### Next steps:
 - Review the changes to package.json and pnpm-lock.yaml files
-- Commit the changes
+- Commit the changes on a dedicated branch (one PR per CVE)
 ```
