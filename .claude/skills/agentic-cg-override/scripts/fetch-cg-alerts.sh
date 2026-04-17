@@ -2,7 +2,9 @@
 # Fetches Component Governance alerts from the ADO API and saves the raw JSON to files.
 #
 # Usage: bash fetch-cg-alerts.sh [output-dir]
-#   output-dir: directory to write JSON files (default: ${HOME}/.cg-alerts)
+#   output-dir: directory to write JSON files.
+#     Default: $TMPDIR/cg-alerts when TMPDIR is set (Claude Code sandbox — $HOME is
+#     read-only there), otherwise $HOME/.cg-alerts.
 #
 # Produces two files:
 #   <output-dir>/production.json       — alerts from production pipelines (pipelinesTrackingFilter=0)
@@ -17,7 +19,12 @@
 
 set -euo pipefail
 
-OUTPUT_DIR="${1:-${HOME}/.cg-alerts}"
+# Default cache dir: prefer $TMPDIR/cg-alerts so the script works inside the Claude Code
+# sandbox (where $HOME is typically read-only but $TMPDIR is writable). Fall back to
+# $HOME/.cg-alerts for plain terminal use where TMPDIR may be unset.
+DEFAULT_OUTPUT_DIR="${TMPDIR:+${TMPDIR%/}/cg-alerts}"
+DEFAULT_OUTPUT_DIR="${DEFAULT_OUTPUT_DIR:-${HOME}/.cg-alerts}"
+OUTPUT_DIR="${1:-${DEFAULT_OUTPUT_DIR}}"
 mkdir -p "$OUTPUT_DIR"
 
 # ADO org/project constants for FluidFramework
@@ -29,7 +36,10 @@ BRANCH="main"
 if [[ -n "${ADO_TOKEN:-}" ]]; then
   TOKEN="$ADO_TOKEN"
 else
-  TOKEN=$(az account get-access-token --query accessToken -o tsv 2>/dev/null)
+  # Note: the Claude Code sandbox mounts $HOME read-only, which breaks the `az`
+  # CLI (it writes session files to ~/.azure). In that environment, export
+  # ADO_TOKEN before running this script.
+  TOKEN=$(az account get-access-token --query accessToken -o tsv)
 fi
 if [[ -z "$TOKEN" ]]; then
   echo "ERROR: Could not acquire access token. Set ADO_TOKEN env or configure the az shim." >&2

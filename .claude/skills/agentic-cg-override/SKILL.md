@@ -24,8 +24,10 @@ the Component Governance SPA API directly.
 bash .claude/skills/agentic-cg-override/scripts/fetch-cg-alerts.sh [output-dir]
 ```
 
-Downloads all CG alerts for the `main` branch to `~/.cg-alerts/` (or a custom directory). Produces
-two files:
+Downloads all CG alerts for the `main` branch to the default cache directory (or a custom
+directory passed as the argument). The default is `$TMPDIR/cg-alerts` when `TMPDIR` is set —
+which is the case inside the Claude Code sandbox, where `$HOME` is read-only — and
+`~/.cg-alerts` otherwise. Produces two files:
 - `production.json` — alerts from production pipelines (`pipelinesTrackingFilter=0`)
 - `non-production.json` — alerts from non-production/stale pipelines (`pipelinesTrackingFilter=1`)
 
@@ -135,6 +137,11 @@ export ADO_TOKEN=$(az account get-access-token \
   --query accessToken -o tsv)
 bash .claude/skills/agentic-cg-override/scripts/fetch-cg-alerts.sh
 ```
+
+**Inside the Claude Code sandbox,** the `az` fallback will not work — the sandbox mounts
+`$HOME` read-only, and `az` tries to write a session file to `~/.azure/az.sess`. Always
+export `ADO_TOKEN` before invoking this skill from Claude Code. The cache directory also
+defaults to `$TMPDIR/cg-alerts` in the sandbox (since `~/.cg-alerts` is unwritable there).
 
 ## Inputs
 

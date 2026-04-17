@@ -26,6 +26,15 @@ CVE_PATTERN = re.compile(r"CVE-\d{4}-\d+", re.IGNORECASE)
 GHSA_PATTERN = re.compile(r"GHSA-[a-z0-9]{4}-[a-z0-9]{4}-[a-z0-9]{4}", re.IGNORECASE)
 
 
+def default_cache_dir():
+    """Match fetch-cg-alerts.sh: prefer $TMPDIR/cg-alerts in the Claude Code sandbox
+    (where $HOME is typically read-only), fall back to ~/.cg-alerts elsewhere."""
+    tmp = os.environ.get("TMPDIR")
+    if tmp:
+        return os.path.join(tmp.rstrip("/"), "cg-alerts")
+    return os.path.expanduser("~/.cg-alerts")
+
+
 def is_active_on_main(alert):
     if alert.get("isDismissed", False):
         return False
@@ -105,8 +114,9 @@ def get_in_flight_ids(repo):
 def main():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--max", type=int, default=5, help="Maximum CVEs to return (default: 5)")
-    parser.add_argument("--input-dir", default=os.path.expanduser("~/.cg-alerts"),
-                        help="Directory containing production.json (default: ~/.cg-alerts)")
+    parser.add_argument("--input-dir", default=default_cache_dir(),
+                        help="Directory containing production.json "
+                             "(default: $TMPDIR/cg-alerts when TMPDIR is set, else ~/.cg-alerts)")
     parser.add_argument("--repo", default=os.environ.get("GH_REPO", ""),
                         help="owner/repo for `gh pr list` (default: $GH_REPO or current repo)")
     args = parser.parse_args()

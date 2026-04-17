@@ -6,7 +6,8 @@ Usage:
 
   query: a package name (e.g. "tar") or CVE ID (e.g. "CVE-2025-7783")
   input-dir: directory containing production.json and non-production.json
-             fetched by fetch-cg-alerts.sh (default: ~/.cg-alerts)
+             fetched by fetch-cg-alerts.sh. Default mirrors fetch-cg-alerts.sh:
+             $TMPDIR/cg-alerts when TMPDIR is set, else ~/.cg-alerts.
 
 Shows only active (non-dismissed, non-fixed) alerts on the main branch.
 Prints component details, recommended action, advisory links, and pipeline info,
@@ -18,6 +19,14 @@ import os
 import sys
 
 SEVERITY_ORDER = {"critical": 0, "high": 1, "medium": 2, "low": 3}
+
+def default_cache_dir():
+    """Match fetch-cg-alerts.sh: prefer $TMPDIR/cg-alerts in the Claude Code sandbox
+    (where $HOME is typically read-only), fall back to ~/.cg-alerts elsewhere."""
+    tmp = os.environ.get("TMPDIR")
+    if tmp:
+        return os.path.join(tmp.rstrip("/"), "cg-alerts")
+    return os.path.expanduser("~/.cg-alerts")
 
 def load_alerts(path):
     with open(path) as f:
@@ -104,7 +113,7 @@ def main():
         sys.exit(1)
 
     query = sys.argv[1]
-    input_dir = sys.argv[2] if len(sys.argv) > 2 else os.path.expanduser("~/.cg-alerts")
+    input_dir = sys.argv[2] if len(sys.argv) > 2 else default_cache_dir()
 
     prod_path = os.path.join(input_dir, "production.json")
     nonprod_path = os.path.join(input_dir, "non-production.json")
