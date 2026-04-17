@@ -29,12 +29,23 @@ def _default_cache_dir():
         root = os.getcwd()
     return os.path.join(root, ".cg-alerts")
 
+
+def _is_main_branch(moniker):
+    """branchMoniker is typically `refs/heads/main` but can also be a bare `main`.
+    Accept either, exact match. Do not substring-match — `refs/heads/maintenance`
+    would falsely match `'main' in moniker`."""
+    if not isinstance(moniker, str):
+        return False
+    tail = moniker[len("refs/heads/"):] if moniker.startswith("refs/heads/") else moniker
+    return tail == "main"
+
+
 SEVERITY_ORDER = {"critical": 0, "high": 1, "medium": 2, "low": 3}
 
 def load_alerts(path):
     with open(path) as f:
         data = json.load(f)
-    return data["value"]
+    return data.get("value", [])
 
 def is_active_on_main(alert):
     if alert.get("isDismissed", False):
@@ -45,7 +56,7 @@ def is_active_on_main(alert):
     return any(
         isinstance(d, dict)
         and d.get("alertState") == "active"
-        and "main" in d.get("branchMoniker", "")
+        and _is_main_branch(d.get("branchMoniker", ""))
         for d in details
     )
 
@@ -75,7 +86,7 @@ def print_alert(a):
 
     sources = a.get("sources", {})
     if isinstance(sources, dict):
-        for source_name, source_info in sources.items():
+        for source_info in sources.values():
             if isinstance(source_info, dict):
                 url = source_info.get("url", "")
                 identifier = source_info.get("identifier", "")
@@ -86,7 +97,7 @@ def print_alert(a):
     seen_pipelines = set()
     if isinstance(details, list):
         for d in details:
-            if isinstance(d, dict) and d.get("alertState") == "active" and "main" in d.get("branchMoniker", ""):
+            if isinstance(d, dict) and d.get("alertState") == "active" and _is_main_branch(d.get("branchMoniker", "")):
                 snap = d.get("snapshotType", {})
                 pipeline = snap.get("buildDisplayType", "")
                 phase = snap.get("phaseDisplayName", "")

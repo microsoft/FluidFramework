@@ -26,16 +26,26 @@ def _default_cache_dir():
         root = os.getcwd()
     return os.path.join(root, ".cg-alerts")
 
+
+def _is_main_branch(moniker):
+    """Exact match on `main` (or `refs/heads/main`). Substring-matching `main` would
+    false-positive on branches like `maintenance`, `mainline`."""
+    if not isinstance(moniker, str):
+        return False
+    tail = moniker[len("refs/heads/"):] if moniker.startswith("refs/heads/") else moniker
+    return tail == "main"
+
+
 SEVERITY_ORDER = {"critical": 0, "high": 1, "medium": 2, "low": 3}
 
 def load_alerts(path):
     with open(path) as f:
         data = json.load(f)
-    return data["value"]
+    return data.get("value", [])
 
 def is_active_on_main(alert):
     """An alert is active on main if it is not dismissed and has an 'active' stateDetails
-    entry whose branchMoniker contains 'main'."""
+    entry whose branchMoniker resolves to the main branch."""
     if alert.get("isDismissed", False):
         return False
     details = alert.get("stateDetails", [])
@@ -44,7 +54,7 @@ def is_active_on_main(alert):
     return any(
         isinstance(d, dict)
         and d.get("alertState") == "active"
-        and "main" in d.get("branchMoniker", "")
+        and _is_main_branch(d.get("branchMoniker", ""))
         for d in details
     )
 

@@ -34,8 +34,18 @@ def _default_cache_dir():
         root = os.getcwd()
     return os.path.join(root, ".cg-alerts")
 
+
+def _is_main_branch(moniker):
+    """Exact match on `main` (or `refs/heads/main`). Substring-matching `main` would
+    false-positive on branches like `maintenance`, `mainline`."""
+    if not isinstance(moniker, str):
+        return False
+    tail = moniker[len("refs/heads/"):] if moniker.startswith("refs/heads/") else moniker
+    return tail == "main"
+
+
 SEVERITY_ORDER = {"critical": 0, "high": 1, "medium": 2, "low": 3}
-CVE_PATTERN = re.compile(r"CVE-\d{4}-\d+", re.IGNORECASE)
+CVE_PATTERN = re.compile(r"CVE-\d{4}-\d{4,7}", re.IGNORECASE)
 GHSA_PATTERN = re.compile(r"GHSA-[a-z0-9]{4}-[a-z0-9]{4}-[a-z0-9]{4}", re.IGNORECASE)
 
 
@@ -48,7 +58,7 @@ def is_active_on_main(alert):
     return any(
         isinstance(detail, dict)
         and detail.get("alertState") == "active"
-        and "main" in detail.get("branchMoniker", "")
+        and _is_main_branch(detail.get("branchMoniker", ""))
         for detail in details
     )
 
@@ -88,23 +98,23 @@ def get_advisory_url(alert):
 
 
 def get_in_flight_ids(repo):
-    """Return the set of CVE/GHSA IDs already covered by open [cg-fixer] PRs."""
+    """Return the set of CVE/GHSA IDs already covered by open [cg-fixer] PRs.
+
+    Fails hard if `gh` cannot answer — picking CVEs that might already be in flight
+    would cause duplicate PRs, which is worse than stopping and asking the user to
+    investigate.
+    """
     cmd = ["gh", "pr", "list", "--search", "[cg-fixer] in:title", "--state", "open",
            "--json", "title", "--limit", "100"]
     if repo:
         cmd.extend(["--repo", repo])
-    try:
-        result = subprocess.run(cmd, capture_output=True, text=True, check=True, timeout=30)
-    except (subprocess.CalledProcessError, subprocess.TimeoutExpired, FileNotFoundError) as err:
-        print(f"WARN: could not query open PRs ({err}); assuming none are in-flight.",
-              file=sys.stderr)
-        return set()
+    result = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
+    if result.returncode != 0:
+        print(f"ERROR: `gh pr list` failed (exit {result.returncode}): "
+              f"{result.stderr.strip() or '(no stderr)'}", file=sys.stderr)
+        sys.exit(2)
 
-    try:
-        prs = json.loads(result.stdout or "[]")
-    except json.JSONDecodeError:
-        return set()
-
+    prs = json.loads(result.stdout or "[]")
     ids = set()
     for pull_request in prs:
         title = pull_request.get("title", "")
@@ -112,17 +122,24 @@ def get_in_flight_ids(repo):
             ids.add(match.upper())
         for match in GHSA_PATTERN.findall(title):
             ids.add(match.upper())
+    if len(prs) == 100:
+        print("WARN: `gh pr list --limit 100` returned exactly 100 results — "
+              "in-flight CVEs beyond the first 100 open [cg-fixer] PRs may be missed.",
+              file=sys.stderr)
     return ids
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("--max", type=int, default=5, help="Maximum CVEs to return (default: 5)")
+    parser.add_argument("--max", type=int, default=1, help="Maximum CVEs to return (default: 1)")
     parser.add_argument("--input-dir", default=_default_cache_dir(),
                         help="Directory containing production.json (default: <repo-root>/.cg-alerts)")
     parser.add_argument("--repo", default=os.environ.get("GH_REPO", ""),
                         help="owner/repo for `gh pr list` (default: $GH_REPO or current repo)")
     args = parser.parse_args()
+
+    if args.max < 1:
+        parser.error("--max must be >= 1")
 
     prod_path = os.path.join(args.input_dir, "production.json")
     if not os.path.exists(prod_path):

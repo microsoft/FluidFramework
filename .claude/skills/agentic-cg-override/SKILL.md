@@ -14,9 +14,21 @@ reason to look inside `node_modules` during this workflow.
 
 ## Fetching CG alerts
 
-Helper scripts in `.claude/skills/agentic-cg-override/scripts/` can fetch and parse the live CG alert
-data from ADO. The scripts use the `az` shim available in codespaces to get a Bearer token, then call
-the Component Governance SPA API directly.
+Helper scripts in `.claude/skills/agentic-cg-override/scripts/` fetch and parse the live CG alert
+data from ADO. They read the Bearer token from the `$ADO_TOKEN` env var and call the Component
+Governance SPA API directly. **The caller is responsible for setting `$ADO_TOKEN`** — the scripts
+do not attempt any interactive auth and fail fast if the env var is unset.
+
+On a workstation with the Azure CLI logged into the Microsoft tenant:
+
+```bash
+export ADO_TOKEN=$(az account get-access-token \
+  --resource 499b84ac-1321-427f-aa17-267ca6975798 \
+  --query accessToken -o tsv)
+```
+
+In a Fluid Framework codespace, the pre-configured `az` shim works the same way. Tokens expire
+after about an hour, so re-run the command when a fetch starts failing with HTTP 401.
 
 ### Fetch the raw alert data
 
@@ -72,7 +84,7 @@ For this repo:
 - org: `fluidframework`
 - project-id: `235294da-091d-4c29-84fc-cdfc3d90890b`
 - repo-id: `17385` (CG registration ID)
-- Auth: Bearer token from `az account get-access-token`
+- Auth: Bearer token via `$ADO_TOKEN` env var (obtained out-of-band; see "Fetching CG alerts" above)
 
 The response JSON has shape `{ count: number, value: Alert[] }`. Each alert has:
 - `id`, `title`, `severity` (critical/high/medium/low), `type` (security/legal)
@@ -84,7 +96,9 @@ The response JSON has shape `{ count: number, value: Alert[] }`. Each alert has:
   `branchMoniker`, and `snapshotType.buildDisplayType` (pipeline name)
 
 An alert is considered **active on main** when: `isDismissed` is false AND at least one
-`stateDetails` entry has `alertState == "active"` and `branchMoniker` contains `"main"`.
+`stateDetails` entry has `alertState == "active"` and `branchMoniker` equals `"main"` (or
+`"refs/heads/main"`) — exact match, not substring, to avoid collisions with branches like
+`maintenance` or `mainline`.
 
 ### Presenting alerts to the user
 
@@ -123,18 +137,6 @@ severity, and advisory URL — the exact inputs the override workflow below need
 Once you have picked a CVE, fall through to the override workflow in the rest of this skill.
 Commit the fix on a dedicated branch (one PR per CVE) with a title starting `[cg-fixer]` so
 the picker recognises it as in-flight.
-
-### Running outside GitHub codespaces
-
-`fetch-cg-alerts.sh` honors `$ADO_TOKEN` if set, otherwise falls back to the codespaces `az`
-shim. If you are running from a regular workstation with `az` logged into the Microsoft tenant:
-
-```bash
-export ADO_TOKEN=$(az account get-access-token \
-  --resource 499b84ac-1321-427f-aa17-267ca6975798 \
-  --query accessToken -o tsv)
-bash .claude/skills/agentic-cg-override/scripts/fetch-cg-alerts.sh
-```
 
 ## Inputs
 
@@ -346,12 +348,17 @@ version changes.
 For each affected lockfile, diff against the version on `main` and inspect what changed:
 
 ```bash
-# List the packages whose versions changed, excluding the target.
-# Works with lockfile v9 — keys look like "<name>@<version>:"
+# List the packages whose versions changed. Lockfile v9 keys look like
+# `<name>@<version>:` (unquoted) or `'@scope/<name>@<version>':` (quoted, for scoped
+# packages). The regex handles both forms.
 git diff origin/main -- <lockfile> \
-  | grep -E '^[-+][[:space:]]+[^@]+@[0-9]' \
+  | grep -E "^[-+][[:space:]]+'?[@a-zA-Z0-9_./-]+@[0-9]" \
   | sort -u
 ```
+
+If the lockfile is large and the grep misses something, fall through to reading the raw
+`git diff origin/main -- <lockfile>` output directly — the regex is a summary, not a
+decision rule.
 
 Classify every version change into one of three buckets:
 
@@ -403,6 +410,11 @@ git checkout -b "$BRANCH"
 # Restore the edits
 git stash pop
 ```
+
+If `git stash pop` reports merge conflicts, do not try to resolve them by hand — the
+branch has diverged from `main` in a way the override alone cannot account for. Abort
+with `git stash drop` (after copying the patch somewhere safe if you want to inspect it)
+and report the conflict to the user.
 
 **8b. Commit:**
 
@@ -465,7 +477,7 @@ whether the override was kept or removed, and the per-workspace outcome.>
 
 ---
 
-Generated via the \`agentic-cg-override\` skill.
+Generated via the `agentic-cg-override` skill.
 BODY
 )"
 ```
