@@ -77,15 +77,18 @@ export default class AiCommand extends BaseCommand<typeof AiCommand> {
 			`Model: ${model} (source: ${flags.model ? "flag" : promptFile.model ? "frontmatter" : "fallback"})`,
 		);
 
-		const aliases = promptFile.aliases ?? FALLBACK_ALIASES;
+		const aliases = resolveAllowedAliases(promptFile.aliases);
 		const allowedAliasSet = new Set(aliases);
 		this.verbose(
 			`Aliases: ${aliases.join(", ")} (source: ${promptFile.aliases ? "frontmatter" : "fallback"})`,
 		);
 
-		const prompt = promptFile.template
-			.replaceAll("{{aliasFileContent}}", aliasFile.content)
-			.replaceAll("{{gettingStartedContent}}", gettingStartedContent ?? "");
+		const prompt = buildLauncherPrompt({
+			template: promptFile.template,
+			aliasFileContent: aliasFile.content,
+			gettingStartedContent,
+			allowedAliases: aliases,
+		});
 		const githubToken =
 			flags.githubToken ??
 			process.env.GH_TOKEN ??
@@ -307,7 +310,7 @@ export default class AiCommand extends BaseCommand<typeof AiCommand> {
 				return {
 					template: content.trim(),
 					model: typeof data.model === "string" ? data.model : undefined,
-					aliases: Array.isArray(data.aliases) ? (data.aliases as string[]) : undefined,
+					aliases: normalizeFrontmatterAliases(data.aliases),
 				};
 			} catch (error) {
 				this.warning(
@@ -338,6 +341,36 @@ export function assertSafeAliasSelection(
 			`Unsupported AI alias selection: ${proposal.alias}. Allowed aliases: ${[...aliasSet].join(", ")}`,
 		);
 	}
+}
+
+export function resolveAllowedAliases(configuredAliases?: readonly string[]): string[] {
+	return configuredAliases !== undefined && configuredAliases.length > 0
+		? [...configuredAliases]
+		: [...FALLBACK_ALIASES];
+}
+
+export function buildLauncherPrompt({
+	template,
+	aliasFileContent,
+	gettingStartedContent,
+	allowedAliases,
+}: {
+	template: string;
+	aliasFileContent: string;
+	gettingStartedContent?: string;
+	allowedAliases: readonly string[];
+}): string {
+	const allowedAliasesContent = allowedAliases.map((alias) => `- \`${alias}\``).join("\n");
+	const prompt = template
+		.replaceAll("{{aliasFileContent}}", aliasFileContent)
+		.replaceAll("{{gettingStartedContent}}", gettingStartedContent ?? "")
+		.replaceAll("{{allowedAliasesContent}}", allowedAliasesContent);
+
+	if (template.includes("{{allowedAliasesContent}}")) {
+		return prompt;
+	}
+
+	return `${prompt}\n\n## Allowed Aliases for This Session\n\nOnly recommend aliases from this configured allowlist. If an alias exists in the shell script but is not listed here, treat it as unavailable.\n\n${allowedAliasesContent}`;
 }
 
 function formatAliasCommand(proposal: AliasProposal): string {
@@ -372,6 +405,16 @@ export function normalizePromptAnswer(answer: string, choices?: string[]): strin
 	}
 
 	return trimmed;
+}
+
+function normalizeFrontmatterAliases(aliases: unknown): string[] | undefined {
+	if (!Array.isArray(aliases)) {
+		return undefined;
+	}
+
+	return aliases.filter(
+		(alias): alias is string => typeof alias === "string" && alias.length > 0,
+	);
 }
 
 function isUserCancellation(error: unknown): boolean {

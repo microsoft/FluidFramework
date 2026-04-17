@@ -8,8 +8,10 @@ import { describe, it } from "mocha";
 
 import {
 	assertSafeAliasSelection,
+	buildLauncherPrompt,
 	FALLBACK_ALIASES,
 	normalizePromptAnswer,
+	resolveAllowedAliases,
 } from "../../commands/ai.js";
 
 describe("ai command", () => {
@@ -45,6 +47,38 @@ describe("ai command", () => {
 				customSet,
 			),
 		).to.throw(/Unsupported AI alias selection: claude/);
+	});
+
+	it("falls back to the default aliases when the configured list is empty", () => {
+		expect(resolveAllowedAliases([])).to.deep.equal([...FALLBACK_ALIASES]);
+	});
+
+	it("uses the configured aliases when provided", () => {
+		expect(resolveAllowedAliases(["copilot", "oce"])).to.deep.equal(["copilot", "oce"]);
+	});
+
+	it("renders the configured alias list into the launcher prompt", () => {
+		const prompt = buildLauncherPrompt({
+			template:
+				"## Alias Definitions\n{{aliasFileContent}}\n\n## Allowed Aliases\n{{allowedAliasesContent}}\n\n## Getting Started\n{{gettingStartedContent}}",
+			aliasFileContent: "dev() {}",
+			gettingStartedContent: "start here",
+			allowedAliases: ["copilot"],
+		});
+
+		expect(prompt).to.include("- `copilot`");
+		expect(prompt).to.not.include("{{allowedAliasesContent}}");
+	});
+
+	it("appends the configured alias list when the template lacks a placeholder", () => {
+		const prompt = buildLauncherPrompt({
+			template: "## Alias Definitions\n{{aliasFileContent}}",
+			aliasFileContent: "dev() {}",
+			allowedAliases: ["dev"],
+		});
+
+		expect(prompt).to.include("## Allowed Aliases for This Session");
+		expect(prompt).to.include("- `dev`");
 	});
 
 	it("maps numbered prompt selections to the selected choice", () => {

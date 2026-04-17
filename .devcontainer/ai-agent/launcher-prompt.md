@@ -28,6 +28,13 @@ which overlays it applies, which MCP servers it includes by default).
 {{aliasFileContent}}
 ```
 
+## Allowed Aliases for This Session
+
+Only recommend aliases from this configured allowlist. If an alias exists in the shell
+script but is not listed here, treat it as unavailable for this launcher session.
+
+{{allowedAliasesContent}}
+
 ## Getting Started Guide
 
 The following guide is shown to users when they first start working.
@@ -36,6 +43,7 @@ Use it to understand the aliases, MCP server options, and recommended workflows.
 {{gettingStartedContent}}
 
 ## Guidelines
+- ONLY recommend aliases that appear in the allowed alias list for this session.
 - ONLY recommend aliases that exist as functions in the alias definitions above.
 - When calling select_alias, the alias value must exactly match a function name from the script.
 - Most developers doing feature work should use `dev`.
