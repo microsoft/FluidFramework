@@ -103,6 +103,41 @@ production alerts are the primary focus. Within each group:
 When the user asks about a specific package or CVE, use the `alert-details.py` script to show full
 details including the recommended action and advisory links.
 
+### Triage workflow for OCE / on-call use
+
+When triaging the CG alert backlog from an on-call rotation, the typical flow is:
+
+```bash
+# 1. Refresh the alert cache (once per session)
+bash .claude/skills/agentic-cg-override/scripts/fetch-cg-alerts.sh
+
+# 2. See the full active list, grouped by type and severity
+python3 .claude/skills/agentic-cg-override/scripts/summarize-alerts.py
+
+# 3. Pick the next CVE to work on — filters to fixable security alerts
+#    and drops anything already covered by an open [cg-fixer] PR
+python3 .claude/skills/agentic-cg-override/scripts/select-next-alerts.py --max 1
+```
+
+`select-next-alerts.py` prints a JSON object with the CVE ID, package, vulnerable versions, fix
+version, severity, and advisory URL — the exact inputs the override workflow below needs. It
+queries open PRs via `gh pr list --search '[cg-fixer] in:title'` to avoid picking a CVE someone
+else is already working on, so OCEs rotating through the backlog do not duplicate effort.
+
+Once you have picked a CVE, fall through to the override workflow in the rest of this skill.
+
+### Running outside GitHub codespaces
+
+`fetch-cg-alerts.sh` honors `$ADO_TOKEN` if set, otherwise falls back to the codespaces `az`
+shim. If you are running from a regular workstation with `az` logged into the Microsoft tenant:
+
+```bash
+export ADO_TOKEN=$(az account get-access-token \
+  --resource 499b84ac-1321-427f-aa17-267ca6975798 \
+  --query accessToken -o tsv)
+bash .claude/skills/agentic-cg-override/scripts/fetch-cg-alerts.sh
+```
+
 ## Inputs
 
 Before starting the override workflow, confirm you have all three of these from the user:
