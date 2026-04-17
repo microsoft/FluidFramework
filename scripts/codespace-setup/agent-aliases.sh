@@ -50,6 +50,15 @@ ai-reset() {
 	repoverlay remove --all
 }
 
+start() {
+	_ensure_agency || return 1
+	flub-ai "$@"
+}
+
+obiwan() {
+	start "$@"
+}
+
 # Interactive launcher: runs `flub ai` to pick an alias, then executes it as a
 # separate top-level process (flub and the Copilot CLI server are fully stopped
 # before the alias starts).

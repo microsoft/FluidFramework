@@ -39,7 +39,7 @@ describe("mocha integration", () => {
 		const args = [...testArgs, "--fgrep", testName, "--color"];
 		const result = childProcess.spawnSync("mocha", args, {
 			encoding: "utf8",
-			env: options?.env,
+			env: { ...process.env, ...options?.env },
 		});
 		assert.equal(result.status, shouldFail ? 1 : 0);
 		return { stdout: result.stdout, stderr: result.stderr };
@@ -67,11 +67,22 @@ describe("mocha integration", () => {
 			});
 
 			it("perf with error", () => {
-				const { stdout } = integrationTest([...args, "--integrationFail"], true);
+				const { stdout, stderr } = integrationTest([...args, "--integrationFail"], true, {
+					// FLUID_TEST_VERBOSE prevents @fluid-internal/mocha-test-setup from suppressing
+					// console.error during test execution, so the error output reaches stderr.
+					env: { FLUID_TEST_VERBOSE: "1" },
+				});
 				// From suite table:
 				assert.match(stdout, /×.+mocha-integration-inner.+Example Error/);
 				// From summary table:
 				assert.match(stdout, /×.+mocha integration.+0 out of 1/);
+
+				// From stderr:
+				assert.match(
+					stderr,
+					/mocha integration \/ @Benchmark @Measurement mocha-integration-inner" failed:/,
+				);
+				assert.match(stderr, /Example Error/);
 			});
 		});
 	}
@@ -90,7 +101,7 @@ describe("mocha integration", () => {
 	it("timeout message", () => {
 		// Run the timeout inner test (registered only when --integrationTimeout is passed)
 		// with a 1ms mocha timeout so it always times out before emitting benchmark data.
-		const { stderr } = integrationTest(
+		const { stdout, stderr } = integrationTest(
 			[
 				...perfModeArgs,
 				"--integrationTimeout",
@@ -103,11 +114,20 @@ describe("mocha integration", () => {
 				testName: "timeout-integration-inner",
 				// FLUID_TEST_VERBOSE prevents @fluid-internal/mocha-test-setup from suppressing
 				// console.error during test execution, so the timeout error reaches stderr.
-				env: { ...process.env, FLUID_TEST_VERBOSE: "1" },
+				env: { FLUID_TEST_VERBOSE: "1" },
 			},
 		);
-		// The table in stdout truncates the error, so check stderr:
+
+		// The table in stdout and the message in stderr should both have the test name and message:
 		assert.match(stderr, /Timeout of 1ms exceeded/);
+		assert.match(stdout, /Timeout of 1ms exceeded/);
+
+		assert.match(
+			stderr,
+			/mocha integration \/ @Benchmark @Measurement timeout-integration-inner" failed:/,
+		);
+		assert.match(stdout, /mocha integration/);
+		assert.match(stdout, /timeout-integration-inner/);
 	});
 
 	// Test run by the "timeout message" integration test above.

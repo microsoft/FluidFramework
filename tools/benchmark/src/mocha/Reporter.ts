@@ -97,18 +97,20 @@ module.exports = class {
 
 				let benchmark: BenchmarkResult | undefined = this.testData.get(test.id)?.data;
 
-				if (!("on" in test)) {
-					// In parallel mode, we can not subscribe to events on the test,
-					// but the event we are in is delayed until after the test ran so we can get the results off of it.
-					// To make this work, the emit code (emitResultsMocha) crammed the results in the test body, so parse that.
+				if (benchmark === undefined) {
+					if (!("on" in test)) {
+						// In parallel mode, we can not subscribe to events on the test,
+						// but the event we are in is delayed until after the test ran so we can get the results off of it.
+						// To make this work, the emit code (emitResultsMocha) crammed the results in the test body, so parse that.
 
-					// The if above narrows test to `never` here, so undo that:
-					const test2 = test as Test;
-					const body = test2.body;
-					try {
-						benchmark = parseBenchmarkResult(body);
-					} catch {
-						// If the body isn't json, then the event was not put into the body, and so treat it like no data was reported.
+						// The if above narrows test to `never` here, so undo that:
+						const test2 = test as Test;
+						const body = test2.body;
+						try {
+							benchmark = parseBenchmarkResult(body);
+						} catch {
+							// If the body isn't json, then the event was not put into the body, and so treat it like no data was reported.
+						}
 					}
 				}
 
@@ -125,12 +127,10 @@ module.exports = class {
 				}
 
 				if (benchmark === undefined) {
-					// Mocha test completed without emitting benchmark data and without a recorded failure.
+					// Mocha test completed without emitting benchmark data and without a recorded error.
 					// This can happen if the test passed without calling emitResultsMocha.
 					benchmark = {
-						error: `Test ${test.fullTitle()} completed with status '${
-							test.state
-						}' without reporting any data or an error.`,
+						error: `Test completed with status '${test.state}' without reporting any data or an error.`,
 					};
 				}
 

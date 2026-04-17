@@ -36,8 +36,10 @@ This document is a comprehensive reference for Fluid Framework telemetry investi
 | `Office_Fluid_Video_Activity_GetPersonalOdbUrl` | ODB URL fetch events. `Activity_Success == false` signals failures. `Data_isExpected` marks expected failures (e.g. 404 for users without ODB). |
 | `Office_Fluid_Video_Activity_CreateRedeemableSharingLink` | Sharing link creation events for video. `Activity_Success == 'false'` for failures. |
 | `Office_Fluid_Video_Generic_Request` | Raw HTTP request events from the video component. Fields: `Data_status` (HTTP status code), `Data_clientRequestId`, `Data_requestId`, `Data_spRequestGuid`. |
-| `office_fluid_ffautomation_error` | Errors from stress test / automation runs. Fields: `Data_buildId`, `Data_driverType`, `Data_driverEndpointName`, `Data_profile`, `Data_branch`. Key field: `Data_hostName == "@fluid-internal/test-service-load"`. |
-| `union office_fluid_ffautomation*` | All automation tables — used for summarizer investigation in stress test runs (`DidSummarizerRecover`, `SummarizerView` queries). |
+| `office_fluid_ffautomation_error` | **Database: "Office Fluid Test" (ID `742fa5a288b045e5beab1a2b8e445a71`)** — NOT in the primary "Office Fluid" database. Errors from stress test / automation runs. Key columns: `Data_buildId`, `Data_driverType`, `Data_driverEndpointName` (values: `frs`, `frsCanary`, `odsp`, `odsp-df`, `local`), `Data_profile`, `Data_branch`, `Data_docId`, `Data_containerId`, `Data_eventName`, `Data_error`, `Data_errorType`, `Data_message`, `Data_stack`. Filter: `Data_hostName == "@fluid-internal/test-service-load"`. Note: tenant ID and service endpoint URLs are NOT logged in telemetry. |
+| `office_fluid_ffautomation_performance` | Same database as above. Performance/timing events from automation runs. Same key columns as `_error`. |
+| `office_fluid_ffautomation_generic` | Same database as above. Informational events from automation runs. Same key columns as `_error`. |
+| `union office_fluid_ffautomation_error, office_fluid_ffautomation_performance, office_fluid_ffautomation_generic` | All automation tables. **Do NOT use wildcard `office_fluid_ffautomation*`** — the wildcard syntax does not resolve in this database. Always enumerate the three tables explicitly. |
 | `cluster('https://stream.eastus2.kusto.windows.net').database("OnePlayer").*` | OnePlayer (Stream video player) telemetry. Key fields: `playbackSessionId`, `userId`, `odspItemId`, `hostComponent`, `hostApp`, `result` (`"Fatal"` = error), `name`, `message`. EU cluster: `cluster('https://streameu.northeurope.kusto.windows.net')`. |
 
 **Shorthand for all FluidRuntime tables:**
@@ -1397,7 +1399,13 @@ union Office_Fluid_FluidRuntime_*
 
 ### 4.6 Stress Test Automation Queries
 
-**Source:** `summaryinvestigations` page, EngineeringHub. These queries run against `office_fluid_ffautomation*` tables (not `Office_Fluid_FluidRuntime_*`).
+**Database:** `Office Fluid Test` (ID `742fa5a288b045e5beab1a2b8e445a71`). These tables are **NOT** in the primary "Office Fluid" database.
+
+**Tables:** `office_fluid_ffautomation_error`, `office_fluid_ffautomation_performance`, `office_fluid_ffautomation_generic`. The wildcard `office_fluid_ffautomation*` does **NOT** resolve — always enumerate tables explicitly.
+
+**Key columns** (shared across all three tables): `Data_buildId`, `Data_driverType` (`odsp`, `routerlicious`, `tinylicious`), `Data_driverEndpointName` (`odsp`, `odsp-df`, `frs`, `frsCanary`, `local`), `Data_profile`, `Data_branch`, `Data_hostName`, `Data_docId`, `Data_containerId`, `Data_eventName`. Error table additionally has: `Data_error`, `Data_errorType`, `Data_message`, `Data_stack`.
+
+**Note:** Tenant IDs and service endpoint URLs are **not** logged in automation telemetry. To find the FRS Canary tenant ID, you must read the Key Vault secret `automation-fluid-driver-frs-canary-stress-test` from `prague-key-vault` (see OCE agent prompt for details).
 
 ```kusto
 // FindBuildErrors: All errors for a specific stress test run
@@ -1418,9 +1426,55 @@ office_fluid_ffautomation_error
 *Get the RunId from the failing ADO pipeline run. The pipeline logs show the buildId, driverType, and profile used.*
 
 ```kusto
+// CompareBuildHealth: Compare event volume, duration, and errors across builds per stage
+// Use to diagnose "pipeline suddenly started failing" — shows which stage regressed
+union withsource=TableName office_fluid_ffautomation_error, office_fluid_ffautomation_performance, office_fluid_ffautomation_generic
+| where Event_Time between(datetime(2026-04-10) .. datetime(2026-04-17)) // adjust range
+    and Data_hostName == "@fluid-internal/test-service-load"
+    and Data_buildId in ("392069", "392243") // passing vs failing build IDs
+| summarize
+    TotalEvents=count(),
+    MinTime=min(Event_Time),
+    MaxTime=max(Event_Time),
+    Duration_minutes=datetime_diff('minute', max(Event_Time), min(Event_Time)),
+    DistinctDocs=dcount(Data_docId),
+    ErrorCount=countif(TableName == "office_fluid_ffautomation_error")
+    by Data_buildId, Data_driverType, Data_driverEndpointName
+| order by Data_buildId asc, Data_driverType asc
+```
+*Healthy stages typically show 100K–800K events in 20–45 min. A degraded stage shows dramatically fewer events (e.g. 6K) over a much longer duration (60+ min) with many errors.*
+
+```kusto
+// CompareBuildErrors: Side-by-side error breakdown for passing vs failing builds
+office_fluid_ffautomation_error
+| where Event_Time between(datetime(2026-04-10) .. datetime(2026-04-17)) // adjust range
+    and Data_hostName == "@fluid-internal/test-service-load"
+    and Data_buildId in ("392069", "392243") // passing vs failing build IDs
+| summarize ErrorCount=count(), DistinctDocs=dcount(Data_docId)
+    by Data_buildId, Data_eventName, Data_error, Data_errorType
+| order by Data_buildId asc, ErrorCount desc
+```
+
+```kusto
+// StageHealthTrend: Track a specific stage's health across all recent builds
+union withsource=TableName office_fluid_ffautomation_error, office_fluid_ffautomation_performance, office_fluid_ffautomation_generic
+| where Event_Time > ago(7d)
+    and Data_hostName == "@fluid-internal/test-service-load"
+    and Data_driverEndpointName == "frsCanary" // change to stage of interest
+| summarize
+    TotalEvents=count(),
+    Duration_minutes=datetime_diff('minute', max(Event_Time), min(Event_Time)),
+    ErrorCount=countif(TableName == "office_fluid_ffautomation_error"),
+    DistinctDocs=dcount(Data_docId)
+    by Data_buildId
+| order by TotalEvents asc
+```
+*Sort by TotalEvents ascending to quickly spot degraded builds (low event count = test couldn't make progress).*
+
+```kusto
 // DidSummarizerRecover: Determine if the summarizer recovered after errors
 // Returns "true" if a successful summarize_end happened after the last error
-union office_fluid_ffautomation*
+union office_fluid_ffautomation_error, office_fluid_ffautomation_performance, office_fluid_ffautomation_generic
 | where Data_docId == "<docId>"
 | where Data_eventName in (
     "fluid:telemetry:Summarizer:Running:Summarize_end",
@@ -1440,7 +1494,7 @@ union office_fluid_ffautomation*
 
 ```kusto
 // SummarizerView: Full timeline of summarizer events for a document
-union office_fluid_ffautomation*
+union office_fluid_ffautomation_error, office_fluid_ffautomation_performance, office_fluid_ffautomation_generic
 | where Event_Time > ago(30d)
     and Data_clientType == 'noninteractive/summarizer'
     and Data_eventName contains "Summarizer:Running:"
@@ -1453,7 +1507,7 @@ union office_fluid_ffautomation*
 
 ```kusto
 // SummarizerLaunchRunView: Full summarizer manager + runner timeline
-union office_fluid_ffautomation*
+union office_fluid_ffautomation_error, office_fluid_ffautomation_performance, office_fluid_ffautomation_generic
 | where Event_Time > ago(30d)
     and (Data_eventName contains "fluid:telemetry:SummaryManager:"
         or Data_eventName contains "fluid:telemetry:Summarizer:Running")

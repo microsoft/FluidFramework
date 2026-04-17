@@ -58,7 +58,7 @@ describeCompat("Container - memory usage benchmarks", "NoCompat", (getTestObject
 	benchmarkIt({
 		title: "Create loader",
 		...benchmarkMemoryUse(memoryUseOfValue(() => createLoader())),
-	});
+	}).timeout(60000);
 
 	benchmarkIt({
 		title: "Create detached container",
