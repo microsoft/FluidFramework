@@ -105,8 +105,8 @@ def get_in_flight_ids(repo):
 def main():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--max", type=int, default=5, help="Maximum CVEs to return (default: 5)")
-    parser.add_argument("--input-dir", default="/tmp/cg-alerts",
-                        help="Directory containing production.json (default: /tmp/cg-alerts)")
+    parser.add_argument("--input-dir", default=os.path.expanduser("~/.cg-alerts"),
+                        help="Directory containing production.json (default: ~/.cg-alerts)")
     parser.add_argument("--repo", default=os.environ.get("GH_REPO", ""),
                         help="owner/repo for `gh pr list` (default: $GH_REPO or current repo)")
     args = parser.parse_args()

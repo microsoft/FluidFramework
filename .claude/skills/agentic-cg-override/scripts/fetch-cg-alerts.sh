@@ -2,7 +2,7 @@
 # Fetches Component Governance alerts from the ADO API and saves the raw JSON to files.
 #
 # Usage: bash fetch-cg-alerts.sh [output-dir]
-#   output-dir: directory to write JSON files (default: /tmp/cg-alerts)
+#   output-dir: directory to write JSON files (default: ${HOME}/.cg-alerts)
 #
 # Produces two files:
 #   <output-dir>/production.json       — alerts from production pipelines (pipelinesTrackingFilter=0)
@@ -17,7 +17,7 @@
 
 set -euo pipefail
 
-OUTPUT_DIR="${1:-/tmp/cg-alerts}"
+OUTPUT_DIR="${1:-${HOME}/.cg-alerts}"
 mkdir -p "$OUTPUT_DIR"
 
 # ADO org/project constants for FluidFramework
