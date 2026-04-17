@@ -120,14 +120,20 @@ The script outputs a JSON array to stdout. Each item has `cve`, `package`, `vers
 
 ## Phase 1 — Per-CVE remediation loop
 
+**Before the loop**, capture the initial HEAD as the base for every per-CVE branch:
+
+```bash
+BASE_SHA=$(git rev-parse HEAD)
+echo "BASE_SHA=$BASE_SHA"  # remember this — every CVE branches from here
+```
+
 For each CVE in the working list (in order), do the following. Track successes and
 skips in memory; **never let one CVE's failure abort the loop**.
 
-### 1. Start from a clean `main`
+### 1. Reset to the clean base
 
 ```bash
-git checkout main
-git reset --hard HEAD
+git reset --hard "$BASE_SHA"
 git clean -fdx -e node_modules -e .pnpm-store
 ```
 
@@ -138,7 +144,7 @@ store is not tracked by git anyway.)
 
 ```bash
 BRANCH="cg-fixer/<CVE-ID>"
-git checkout -b "$BRANCH"
+git checkout -B "$BRANCH" "$BASE_SHA"
 ```
 
 ### 3. Run the remediation workflow
@@ -176,8 +182,10 @@ When you skip, record the CVE ID and the reason in a running "skipped" list for 
 final summary. Restore the working tree:
 
 ```bash
-git checkout main
+git checkout "$BASE_SHA" --detach
 git branch -D "$BRANCH" 2>/dev/null || true
+git reset --hard "$BASE_SHA"
+git clean -fdx -e node_modules -e .pnpm-store
 ```
 
 ### 5. Commit on success
@@ -249,14 +257,13 @@ retrigger the workflow for this single CVE via `workflow_dispatch` with `single-
 
 ### 7. Reset the worktree
 
-After the `create_pull_request` call (or the dry-run log), reset:
+After the `create_pull_request` call (or the dry-run log), detach and reset to the base.
+The pre-committed branch has already been captured by the safe-output machinery, so it
+is fine to leave the local branch around.
 
 ```bash
-git checkout main
+git checkout "$BASE_SHA" --detach
 ```
-
-The pre-committed branch has already been captured by the safe-output machinery, so
-it's fine to leave the local branch around or delete it — pick one and be consistent.
 
 ## Phase 2 — Final summary
 
