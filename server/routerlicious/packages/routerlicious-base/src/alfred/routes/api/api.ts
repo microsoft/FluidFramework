@@ -125,6 +125,14 @@ export function create(
 		denyListMiddleware(denyList),
 		// eslint-disable-next-line @typescript-eslint/no-misused-promises
 		async (request, response) => {
+			const patchRootEnabled = config.get("alfred:api:patchRoot") !== false;
+			if (!patchRootEnabled) {
+				response.status(501).json({
+					error: "patchRoot API is not implemented",
+					message: "The PATCH /root endpoint is disabled on this server",
+				});
+				return;
+			}
 			const maxTokenLifetimeSec = config.get("auth:maxTokenLifetimeSec") as number;
 			const isTokenExpiryEnabled = config.get("auth:enableTokenExpiration") as boolean;
 			const validP = verifyRequest(
