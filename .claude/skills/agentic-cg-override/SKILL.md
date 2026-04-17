@@ -144,18 +144,43 @@ Before starting the override workflow, you need all three of these:
 2. **Vulnerable versions** — the version(s) to eliminate (e.g., `<7.5.11`, or `6.2.0, 6.1.15`, or `all versions before 4.0.0`)
 3. **Fixed version** — the minimum safe version to override to (e.g., `^7.5.11`)
 
-**If the user did not specify a CVE or package, run `pnpm cg-triage` first** to pick the next
-unclaimed CVE from the active backlog. The command fetches alerts, summarizes the backlog,
-and emits a JSON object for the top CVE (package, vulnerable versions, fix version, advisory,
-severity) — those are your inputs. Parse that JSON and proceed.
+**If the user did not specify a CVE or package, run `pnpm cg-triage` first** to pick the
+next unclaimed CVEs from the active backlog. The command fetches alerts, summarizes the
+backlog, and emits a JSON array of CVEs — each element has the package, vulnerable
+versions, fix version, advisory, and severity. Those are your inputs.
 
 ```bash
 pnpm cg-triage           # default: picks 1 CVE
+pnpm cg-triage --max 3   # pick the top 3
 ```
 
 If the user named a package or CVE but did not give version info, use `alert-details.py` to
 look up the `actionItems` field for the recommended fix version. If inputs are still
 ambiguous after that, ask the user before proceeding.
+
+### Multi-CVE runs — one PR per CVE
+
+If `pnpm cg-triage` returns more than one CVE, or the user asks you to process several,
+**run the entire Steps 1–9 loop once per CVE**. Never bundle multiple CVEs into one PR.
+
+Before starting the next CVE, reset the working tree to the commit the workflow started
+from so each PR has a clean, independent diff:
+
+```bash
+BASE_SHA=$(git rev-parse origin/main)    # capture once, at the very start of the run
+# ... between CVEs:
+git checkout "$BASE_SHA" --detach
+git reset --hard "$BASE_SHA"
+git clean -fdx -e node_modules -e .pnpm-store
+```
+
+If one CVE fails mid-flow (unfixable, sanity check flagged something, push rejected),
+**skip it and continue with the next** — don't let one bad CVE abort the whole run.
+Record the reason in a running "skipped" list.
+
+When every CVE is processed (successful or skipped), emit a final roll-up (see Step 9):
+one line per PR opened, plus a "skipped" block listing reasons. Hand all PR URLs to the
+user in that roll-up; don't print them individually as you go.
 
 ## Step 1: Find affected lockfiles
 
@@ -459,7 +484,25 @@ to the user and wait for guidance.
 ## Step 9: Summary
 
 After opening the PR (or declining to because Step 7 found issues), print a short
-summary:
+summary. When running multiple CVEs in a single invocation, accumulate per-CVE
+results and emit **one final roll-up** at the very end of the run covering every
+CVE — do not print a summary between CVEs.
+
+**Multi-CVE roll-up format:**
+
+```
+## CG Fixer run — <N> CVE(s) processed
+
+### PRs opened
+- [cg-fixer] CVE-YYYY-NNNNN: <pkg> → <fix> — https://github.com/microsoft/FluidFramework/pull/<n>
+- [cg-fixer] CVE-YYYY-NNNNN: <pkg> → <fix> — https://github.com/microsoft/FluidFramework/pull/<n>
+
+### Skipped
+- CVE-YYYY-NNNNN — <reason>  (e.g. sanity check flagged major bump on unrelated package)
+- CVE-YYYY-NNNNN — <reason>  (e.g. fix requires major-version jump that breaks repo peerDeps)
+```
+
+**Single-CVE summary format:**
 
 ```
 ## CG Override Summary
