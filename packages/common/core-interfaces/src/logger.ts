@@ -81,13 +81,13 @@ export interface LogLevelConst {
 
 	/**
 	 * Default LogLevel
-	 * @remarks Prefer {@link LogLevelConst.info} when selecting a level explicitly;
+	 * @remarks Prefer {@link LogLevelConst.info} when selecting a level explicitly since this will be deprecated and removed in a future release.
 	 */
 	readonly default: 20;
 
 	/**
 	 * To log errors.
-	 * @remarks Prefer {@link LogLevelConst.essential} when selecting a level.
+	 * @remarks Prefer {@link LogLevelConst.essential} when selecting a level since this will be deprecated and removed in a future release.
 	 */
 	readonly error: 30;
 }
