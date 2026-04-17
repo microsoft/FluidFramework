@@ -24,7 +24,7 @@ the Component Governance SPA API directly.
 bash .claude/skills/agentic-cg-override/scripts/fetch-cg-alerts.sh [output-dir]
 ```
 
-Downloads all CG alerts for the `main` branch to `~/.cg-alerts/` (or a custom directory). Produces
+Downloads all CG alerts for the `main` branch to `<repo-root>/.cg-alerts/` (or a custom directory). Produces
 two files:
 - `production.json` — alerts from production pipelines (`pipelinesTrackingFilter=0`)
 - `non-production.json` — alerts from non-production/stale pipelines (`pipelinesTrackingFilter=1`)

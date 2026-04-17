@@ -1,4 +1,5 @@
 .cache-loader
+.cg-alerts
 node_modules
 dist
 lib

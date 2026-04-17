@@ -6,7 +6,7 @@ Usage:
 
   query: a package name (e.g. "tar") or CVE ID (e.g. "CVE-2025-7783")
   input-dir: directory containing production.json and non-production.json
-             fetched by fetch-cg-alerts.sh (default: ~/.cg-alerts)
+             fetched by fetch-cg-alerts.sh (default: <repo-root>/.cg-alerts)
 
 Shows only active (non-dismissed, non-fixed) alerts on the main branch.
 Prints component details, recommended action, advisory links, and pipeline info,
@@ -15,7 +15,19 @@ grouped by production vs non-production.
 
 import json
 import os
+import subprocess
 import sys
+
+
+def _default_cache_dir():
+    try:
+        root = subprocess.check_output(
+            ["git", "rev-parse", "--show-toplevel"],
+            stderr=subprocess.DEVNULL, text=True,
+        ).strip()
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        root = os.getcwd()
+    return os.path.join(root, ".cg-alerts")
 
 SEVERITY_ORDER = {"critical": 0, "high": 1, "medium": 2, "low": 3}
 
@@ -104,7 +116,7 @@ def main():
         sys.exit(1)
 
     query = sys.argv[1]
-    input_dir = sys.argv[2] if len(sys.argv) > 2 else os.path.expanduser("~/.cg-alerts")
+    input_dir = sys.argv[2] if len(sys.argv) > 2 else _default_cache_dir()
 
     prod_path = os.path.join(input_dir, "production.json")
     nonprod_path = os.path.join(input_dir, "non-production.json")

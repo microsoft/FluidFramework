@@ -21,6 +21,19 @@ import re
 import subprocess
 import sys
 
+
+def _default_cache_dir():
+    """Cache dir defaults to <repo-root>/.cg-alerts; the repo root is guaranteed writable
+    even inside Claude Code's bash sandbox."""
+    try:
+        root = subprocess.check_output(
+            ["git", "rev-parse", "--show-toplevel"],
+            stderr=subprocess.DEVNULL, text=True,
+        ).strip()
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        root = os.getcwd()
+    return os.path.join(root, ".cg-alerts")
+
 SEVERITY_ORDER = {"critical": 0, "high": 1, "medium": 2, "low": 3}
 CVE_PATTERN = re.compile(r"CVE-\d{4}-\d+", re.IGNORECASE)
 GHSA_PATTERN = re.compile(r"GHSA-[a-z0-9]{4}-[a-z0-9]{4}-[a-z0-9]{4}", re.IGNORECASE)
@@ -105,8 +118,8 @@ def get_in_flight_ids(repo):
 def main():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--max", type=int, default=5, help="Maximum CVEs to return (default: 5)")
-    parser.add_argument("--input-dir", default=os.path.expanduser("~/.cg-alerts"),
-                        help="Directory containing production.json (default: ~/.cg-alerts)")
+    parser.add_argument("--input-dir", default=_default_cache_dir(),
+                        help="Directory containing production.json (default: <repo-root>/.cg-alerts)")
     parser.add_argument("--repo", default=os.environ.get("GH_REPO", ""),
                         help="owner/repo for `gh pr list` (default: $GH_REPO or current repo)")
     args = parser.parse_args()

@@ -3,7 +3,7 @@
 
 Usage: python3 summarize-alerts.py [input-dir]
   input-dir: directory containing production.json and non-production.json
-             fetched by fetch-cg-alerts.sh (default: ~/.cg-alerts)
+             fetched by fetch-cg-alerts.sh (default: <repo-root>/.cg-alerts)
 
 Prints a summary table of all active (non-dismissed, non-fixed) alerts on the main branch,
 grouped by production vs non-production, then by legal vs security, sorted by severity.
@@ -11,8 +11,20 @@ grouped by production vs non-production, then by legal vs security, sorted by se
 
 import json
 import os
+import subprocess
 import sys
 from collections import Counter
+
+
+def _default_cache_dir():
+    try:
+        root = subprocess.check_output(
+            ["git", "rev-parse", "--show-toplevel"],
+            stderr=subprocess.DEVNULL, text=True,
+        ).strip()
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        root = os.getcwd()
+    return os.path.join(root, ".cg-alerts")
 
 SEVERITY_ORDER = {"critical": 0, "high": 1, "medium": 2, "low": 3}
 
@@ -107,7 +119,7 @@ def print_section(seen, heading):
     print(f"Total unique (CVE/title, package) pairs: {len(seen)} ({len(legal_items)} legal, {len(security_items)} security)")
 
 def main():
-    input_dir = sys.argv[1] if len(sys.argv) > 1 else os.path.expanduser("~/.cg-alerts")
+    input_dir = sys.argv[1] if len(sys.argv) > 1 else _default_cache_dir()
 
     prod_path = os.path.join(input_dir, "production.json")
     nonprod_path = os.path.join(input_dir, "non-production.json")
