@@ -105,26 +105,24 @@ details including the recommended action and advisory links.
 
 ### Triage workflow for OCE / on-call use
 
-When triaging the CG alert backlog from an on-call rotation, the typical flow is:
+One command to refresh, summarize, and pick the next CVE:
 
 ```bash
-# 1. Refresh the alert cache (once per session)
-bash .claude/skills/agentic-cg-override/scripts/fetch-cg-alerts.sh
-
-# 2. See the full active list, grouped by type and severity
-python3 .claude/skills/agentic-cg-override/scripts/summarize-alerts.py
-
-# 3. Pick the next CVE to work on — filters to fixable security alerts
-#    and drops anything already covered by an open [cg-fixer] PR
-python3 .claude/skills/agentic-cg-override/scripts/select-next-alerts.py --max 1
+pnpm cg-triage           # fetch + summarize + print the top unfixed CVE
+pnpm cg-triage --max 3   # same, but print the top 3
 ```
 
-`select-next-alerts.py` prints a JSON object with the CVE ID, package, vulnerable versions, fix
-version, severity, and advisory URL — the exact inputs the override workflow below needs. It
-queries open PRs via `gh pr list --search '[cg-fixer] in:title'` to avoid picking a CVE someone
-else is already working on, so OCEs rotating through the backlog do not duplicate effort.
+`pnpm cg-triage` is a thin wrapper around `fetch-cg-alerts.sh`, `summarize-alerts.py`, and
+`select-next-alerts.py`. The picker excludes any CVE already covered by an open `[cg-fixer]`
+PR (queried via `gh pr list --search '[cg-fixer] in:title'`), so two OCEs triaging at the
+same time will not pick the same CVE.
+
+The picker prints a JSON object with the CVE ID, package, vulnerable versions, fix version,
+severity, and advisory URL — the exact inputs the override workflow below needs.
 
 Once you have picked a CVE, fall through to the override workflow in the rest of this skill.
+Commit the fix on a dedicated branch (one PR per CVE) with a title starting `[cg-fixer]` so
+the picker recognises it as in-flight.
 
 ### Running outside GitHub codespaces
 
