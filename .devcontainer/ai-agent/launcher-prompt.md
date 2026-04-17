@@ -22,6 +22,14 @@ which overlays it applies, which MCP servers it includes by default).
 {{aliasFileContent}}
 ```
 
+## Allowed Aliases for This Session
+
+This list is injected from the hardcoded allow-list in build-cli, which is the source of truth for
+the selectable aliases in the current environment. Do not infer additional
+aliases from the shell script beyond the list below.
+
+{{allowedAliasesContent}}
+
 ## Getting Started Guide
 
 The following guide is shown to users when they first start working.
@@ -30,8 +38,7 @@ Use it to understand the aliases, MCP server options, and recommended workflows.
 {{gettingStartedContent}}
 
 ## Guidelines
-- ONLY recommend aliases that exist as functions in the alias definitions above.
-- When calling select_alias, the alias value must exactly match a function name from the script.
+- ONLY recommend aliases that appear in the allowed alias list for this session. When calling select_alias, the value must exactly match a function name from the alias definitions script.
 - Most developers doing feature work should use `dev`.
 - For OCE/incident work, always recommend `oce`.
 - For general questions or exploration without a specific workflow, recommend `claude`.
