@@ -89,21 +89,44 @@ class TestDeduplicate:
 
 class TestDetermineVerdict:
     def test_critical_means_request_changes(self) -> None:
-        text, emoji = determine_verdict(1, 0, 0)
+        findings = [Finding("CRITICAL", "src/a.ts:10", "d", "f", "Security")]
+        text, emoji = determine_verdict(findings)
         assert text == "Request Changes"
         assert "red" in emoji
 
-    def test_high_means_request_changes(self) -> None:
-        text, _ = determine_verdict(0, 2, 0)
+    def test_high_in_promoted_area_means_request_changes(self) -> None:
+        findings = [Finding("HIGH", "src/a.ts:10", "d", "f", "Correctness")]
+        text, _ = determine_verdict(findings)
+        assert text == "Request Changes"
+
+    def test_high_in_api_compat_means_request_changes(self) -> None:
+        findings = [Finding("HIGH", "src/a.ts:10", "d", "f", "API Compat")]
+        text, _ = determine_verdict(findings)
+        assert text == "Request Changes"
+
+    def test_high_in_non_promoted_area_means_approve_with_suggestions(self) -> None:
+        findings = [Finding("HIGH", "src/a.ts:10", "d", "f", "Performance")]
+        text, emoji = determine_verdict(findings)
+        assert text == "Approve with Suggestions"
+        assert "yellow" in emoji
+
+    def test_three_high_in_non_promoted_means_request_changes(self) -> None:
+        findings = [
+            Finding("HIGH", "src/a.ts:10", "d", "f", "Performance"),
+            Finding("HIGH", "src/b.ts:20", "d", "f", "Testing"),
+            Finding("HIGH", "src/c.ts:30", "d", "f", "Performance"),
+        ]
+        text, _ = determine_verdict(findings)
         assert text == "Request Changes"
 
     def test_medium_only_means_approve_with_suggestions(self) -> None:
-        text, emoji = determine_verdict(0, 0, 3)
+        findings = [Finding("MEDIUM", "src/a.ts:10", "d", "f", "Testing")]
+        text, emoji = determine_verdict(findings)
         assert text == "Approve with Suggestions"
         assert "yellow" in emoji
 
     def test_zero_means_approve(self) -> None:
-        text, emoji = determine_verdict(0, 0, 0)
+        text, emoji = determine_verdict([])
         assert text == "Approve"
         assert "green" in emoji
 

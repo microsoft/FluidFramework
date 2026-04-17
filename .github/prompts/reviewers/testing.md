@@ -33,6 +33,10 @@ You are NOT here to check boxes. You are here to find the holes.
 - Already well-tested code that wasn't changed in this PR
 - Minor coverage gaps for trivial getters/setters
 
+## File Exclusions
+
+Skip non-reviewable files: `.d.ts`, lockfiles, images, fonts, binaries, `.map` files, `*.api.md`
+
 ## High-Confidence Gate
 
 Before reporting ANY finding, verify ALL of these:
@@ -45,7 +49,7 @@ If the production code is trivial (simple delegation, type-only changes) or alre
 
 ## Severity Levels
 
-Testing findings are capped at HIGH:
+Testing findings are **capped at HIGH**:
 
 - **HIGH**: Core new functionality has no test coverage — bugs will ship undetected
 - **MEDIUM**: Edge cases or error paths missing — partial coverage exists but gaps are risky
@@ -56,12 +60,6 @@ Write your findings to `review-testing.md`. Use this exact format for each findi
 
 ```
 [SEVERITY] path/to/source-file.ts:LINE — Description of the coverage gap and what bug could go undetected — Concrete test scenario to add
-```
-
-Example:
-
-```
-[HIGH] src/core/tree.ts:142 — New `detachNode()` method has no test but silently corrupts parent references when called on an already-detached node — Add test: call detachNode() twice on same node, verify parent ref is null and no exception is thrown
 ```
 
 If you find NO high-confidence issues, write exactly this:

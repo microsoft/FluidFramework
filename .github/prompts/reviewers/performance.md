@@ -26,6 +26,7 @@ Fluid Framework is a real-time collaboration library where latency and memory ma
 3. **Async/concurrency**: Sequential awaits that could be parallel, blocking operations in event handlers
 4. **Unnecessary work**: Computing values never used, re-creating objects per call when they could be cached, redundant deep clones
 5. **Data structure misuse**: Array where Set/Map would be appropriate for lookups, repeated `array.includes()` on large collections
+6. **Telemetry correctness**: Are telemetry events firing with the right data? Missing or incorrect measurements
 
 ## What to Ignore
 
@@ -34,6 +35,10 @@ Fluid Framework is a real-time collaboration library where latency and memory ma
 - One-time initialization code (startup cost is usually fine)
 - Style or naming preferences
 - Hypothetical perf concerns without a concrete hot path
+
+## File Exclusions
+
+Skip: `.d.ts`, lockfiles, images, fonts, binaries, `.map` files, `*.api.md`
 
 ## High-Confidence Gate
 
@@ -48,7 +53,7 @@ If the code only runs once during initialization or the collection is bounded to
 
 ## Severity Levels
 
-Performance findings are capped at HIGH:
+Performance findings are **capped at HIGH**:
 
 - **HIGH**: Will cause noticeable degradation at production scale (O(n^2) on hot path, unbounded memory growth)
 - **MEDIUM**: May cause issues at scale or under load (unnecessary allocations in frequent path, sequential awaits)
@@ -59,12 +64,6 @@ Write your findings to `review-performance.md`. Use this exact format for each f
 
 ```
 [SEVERITY] path/to/file.ts:LINE — Description of the performance concern and expected impact — Suggested optimization
-```
-
-Example:
-
-```
-[HIGH] src/core/tree.ts:305 — `findNode()` iterates entire node array on every edit operation, making per-edit cost O(n) where n is tree size — Replace `nodes.find()` with a Map<id, node> lookup initialized once on tree load
 ```
 
 If you find NO high-confidence issues, write exactly this:

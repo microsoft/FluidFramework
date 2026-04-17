@@ -104,13 +104,30 @@ def deduplicate(findings: list[Finding]) -> list[Finding]:
     return result
 
 
-def determine_verdict(
-    critical: int, high: int, medium: int
-) -> tuple[str, str]:
-    """Return (verdict_text, verdict_emoji)."""
-    if critical > 0 or high > 0:
+PROMOTED_AREAS = {"Correctness", "API Compat"}
+
+
+def determine_verdict(findings: list[Finding]) -> tuple[str, str]:
+    """Return (verdict_text, verdict_emoji).
+
+    Verdict rules (aligned with local /review skill):
+    - Request Changes: 1+ CRITICAL, or 1+ HIGH in Correctness/API Compat,
+      or 3+ HIGH across other areas
+    - Approve with Suggestions: some HIGH/MEDIUM but none in promoted areas
+    - Approve: 0 CRITICAL, 0 HIGH
+    """
+    critical = sum(1 for f in findings if f.severity == "CRITICAL")
+    high_promoted = sum(
+        1 for f in findings if f.severity == "HIGH" and f.area in PROMOTED_AREAS
+    )
+    high_other = sum(
+        1 for f in findings if f.severity == "HIGH" and f.area not in PROMOTED_AREAS
+    )
+    high_total = high_promoted + high_other
+
+    if critical > 0 or high_promoted > 0 or high_other >= 3:
         return "Request Changes", ":red_circle:"
-    if medium > 0:
+    if high_total > 0 or any(f.severity == "MEDIUM" for f in findings):
         return "Approve with Suggestions", ":yellow_circle:"
     return "Approve", ":green_circle:"
 
@@ -122,9 +139,7 @@ def build_report(findings: list[Finding], run_url: str) -> str:
     for f in findings:
         counts[f.severity] += 1
 
-    verdict_text, verdict_emoji = determine_verdict(
-        counts["CRITICAL"], counts["HIGH"], counts["MEDIUM"]
-    )
+    verdict_text, verdict_emoji = determine_verdict(findings)
 
     # Build findings table rows with per-severity numbering
     severity_counters = {s: 0 for s in SEVERITY_ORDER}

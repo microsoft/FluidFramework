@@ -83,6 +83,15 @@ jobs:
           sed -i "s|__REPO__|${REPO}|g" "$PROMPT_FILE"
           sed -i "s|__PR_NUMBER__|${PR_NUMBER}|g" "$PROMPT_FILE"
 
+          # Inject API conventions into the api-compatibility reviewer prompt
+          if [ "$REVIEWER" = "api-compatibility" ]; then
+            CONVENTIONS_PATH=".claude/skills/review/api-conventions.md"
+            CONVENTIONS=$(git show "origin/${BASE_REF}:${CONVENTIONS_PATH}" 2>/dev/null || echo "(api-conventions.md not found on base branch)")
+            # Use awk to replace the placeholder since conventions contain special chars
+            awk -v conv="$CONVENTIONS" '{gsub(/__API_CONVENTIONS__/, conv); print}' "$PROMPT_FILE" > "${PROMPT_FILE}.tmp"
+            mv "${PROMPT_FILE}.tmp" "$PROMPT_FILE"
+          fi
+
           echo "prompt_file=$PROMPT_FILE" >> "$GITHUB_OUTPUT"
 
       # ── Install Copilot CLI ──
