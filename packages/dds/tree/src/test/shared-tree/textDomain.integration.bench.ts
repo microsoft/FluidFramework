@@ -347,13 +347,13 @@ describe("TextDomain benchmarks", () => {
 
 								const tree = createConnectedTree();
 								const view = tree.viewWith(viewConfig);
-								view.initialize(makeTree(defaultTreeDepth, key, "a".repeat(1000)));
+								view.initialize(makeTree(defaultTreeDepth, key, "a".repeat(characterCount)));
 
 								registerOpListener(tree, localOps);
 
 								const textNode = getLeaf(view.root, key);
 								textNode.removeRange(0, characterCount);
-								assert.equal(textNode.characterCount(), 1000 - characterCount);
+								assert.equal(textNode.characterCount(), 0);
 
 								const opStats = getOperationsStats(localOps);
 								opSizes.push(opStats["Total Op Size (Bytes)"]);
@@ -390,13 +390,13 @@ describe("TextDomain benchmarks", () => {
 
 								const tree = createConnectedTree();
 								const view = tree.viewWith(viewConfig);
-								view.initialize(makeTree(depth, key, "a".repeat(1000)));
+								view.initialize(makeTree(depth, key, "a".repeat(defaultCharacterCount)));
 
 								registerOpListener(tree, localOps);
 
 								const textNode = getLeaf(view.root, key);
 								textNode.removeRange(0, defaultCharacterCount);
-								assert.equal(textNode.characterCount(), 1000 - defaultCharacterCount);
+								assert.equal(textNode.characterCount(), 0);
 
 								const opStats = getOperationsStats(localOps);
 								opSizeByDepth.push({ x: depth, y: opStats["Total Op Size (Bytes)"] });
@@ -427,13 +427,13 @@ describe("TextDomain benchmarks", () => {
 
 								const tree = createConnectedTree();
 								const view = tree.viewWith(viewConfig);
-								view.initialize(makeTree(defaultTreeDepth, key, "a".repeat(1000)));
+								view.initialize(makeTree(defaultTreeDepth, key, "a".repeat(defaultCharacterCount)));
 
 								registerOpListener(tree, localOps);
 
 								const textNode = getLeaf(view.root, key);
 								textNode.removeRange(0, defaultCharacterCount);
-								assert.equal(textNode.characterCount(), 1000 - defaultCharacterCount);
+								assert.equal(textNode.characterCount(), 0);
 
 								const opStats = getOperationsStats(localOps);
 								opSizeByKeyLength.push({
