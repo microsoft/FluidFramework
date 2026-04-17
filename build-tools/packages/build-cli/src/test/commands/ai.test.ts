@@ -8,23 +8,43 @@ import { describe, it } from "mocha";
 
 import {
 	assertSafeAliasSelection,
+	FALLBACK_ALIASES,
 	normalizePromptAnswer,
-	supportedAliases,
 } from "../../commands/ai.js";
 
 describe("ai command", () => {
-	it("allows known agent aliases", () => {
-		for (const alias of supportedAliases) {
+	it("allows fallback aliases when no custom set provided", () => {
+		for (const alias of FALLBACK_ALIASES) {
 			expect(() =>
 				assertSafeAliasSelection({ alias, explanation: `launch ${alias}` }),
 			).to.not.throw();
 		}
 	});
 
-	it("rejects unsupported aliases", () => {
+	it("rejects unsupported aliases when no custom set provided", () => {
 		expect(() =>
 			assertSafeAliasSelection({ alias: "bash", explanation: "definitely not safe" }),
 		).to.throw(/Unsupported AI alias selection: bash/);
+	});
+
+	it("accepts aliases in a custom set", () => {
+		const customSet = new Set(["my-alias", "other-alias"]);
+		expect(() =>
+			assertSafeAliasSelection(
+				{ alias: "my-alias", explanation: "custom alias" },
+				customSet,
+			),
+		).to.not.throw();
+	});
+
+	it("rejects aliases not in a custom set", () => {
+		const customSet = new Set(["my-alias", "other-alias"]);
+		expect(() =>
+			assertSafeAliasSelection(
+				{ alias: "claude", explanation: "not in custom set" },
+				customSet,
+			),
+		).to.throw(/Unsupported AI alias selection: claude/);
 	});
 
 	it("maps numbered prompt selections to the selected choice", () => {

@@ -16,8 +16,7 @@ import { type AliasProposal, runAiSession } from "../library/ai/copilotSession.j
 import { BaseCommand } from "../library/commands/base.js";
 
 const FALLBACK_MODEL = "claude-haiku-4.5";
-export const supportedAliases = ["claude", "dev", "copilot", "oce", "ai-reset"] as const;
-const supportedAliasSet = new Set<string>(supportedAliases);
+export const FALLBACK_ALIASES = ["claude", "dev", "copilot", "oce", "ai-reset"] as const;
 
 export default class AiCommand extends BaseCommand<typeof AiCommand> {
 	static readonly description =
@@ -75,6 +74,12 @@ export default class AiCommand extends BaseCommand<typeof AiCommand> {
 		const model = flags.model ?? promptFile.model ?? FALLBACK_MODEL;
 		this.verbose(
 			`Model: ${model} (source: ${flags.model ? "flag" : promptFile.model ? "frontmatter" : "fallback"})`,
+		);
+
+		const aliases = promptFile.aliases ?? [...FALLBACK_ALIASES];
+		const allowedAliasSet = new Set(aliases);
+		this.verbose(
+			`Aliases: ${aliases.join(", ")} (source: ${promptFile.aliases ? "frontmatter" : "fallback"})`,
 		);
 
 		const prompt = promptFile.template
@@ -144,7 +149,7 @@ export default class AiCommand extends BaseCommand<typeof AiCommand> {
 		}
 
 		try {
-			assertSafeAliasSelection(proposal);
+			assertSafeAliasSelection(proposal, allowedAliasSet);
 		} catch (error: unknown) {
 			this.error(error instanceof Error ? error.message : String(error), { exit: 1 });
 		}
@@ -293,7 +298,7 @@ export default class AiCommand extends BaseCommand<typeof AiCommand> {
 	 */
 	private async loadPromptFile(
 		repoRoot: string | undefined,
-	): Promise<{ template: string; model?: string }> {
+	): Promise<{ template: string; model?: string; aliases?: string[] }> {
 		const raw = await this.readDevcontainerFile(repoRoot, "launcher-prompt.md");
 		if (raw !== undefined) {
 			try {
@@ -301,6 +306,7 @@ export default class AiCommand extends BaseCommand<typeof AiCommand> {
 				return {
 					template: content.trim(),
 					model: typeof data.model === "string" ? data.model : undefined,
+					aliases: parseAliasesFromFrontmatter(data.aliases),
 				};
 			} catch (error) {
 				this.warn(
@@ -321,10 +327,14 @@ export default class AiCommand extends BaseCommand<typeof AiCommand> {
 	}
 }
 
-export function assertSafeAliasSelection(proposal: AliasProposal): void {
-	if (!supportedAliasSet.has(proposal.alias)) {
+export function assertSafeAliasSelection(
+	proposal: AliasProposal,
+	allowedAliases?: Set<string>,
+): void {
+	const aliasSet = allowedAliases ?? new Set<string>(FALLBACK_ALIASES);
+	if (!aliasSet.has(proposal.alias)) {
 		throw new Error(
-			`Unsupported AI alias selection: ${proposal.alias}. Allowed aliases: ${supportedAliases.join(", ")}`,
+			`Unsupported AI alias selection: ${proposal.alias}. Allowed aliases: ${[...aliasSet].join(", ")}`,
 		);
 	}
 }
@@ -384,6 +394,18 @@ async function resolveGhAuthToken(): Promise<string | undefined> {
 	} catch {
 		return undefined;
 	}
+}
+
+/**
+ * Parses and validates the `aliases` field from launcher-prompt.md frontmatter.
+ * Returns undefined if the field is missing or not a valid string array.
+ */
+function parseAliasesFromFrontmatter(value: unknown): string[] | undefined {
+	if (!Array.isArray(value)) {
+		return undefined;
+	}
+	const strings = value.filter((item): item is string => typeof item === "string");
+	return strings.length > 0 ? strings : undefined;
 }
 
 async function tryReadFile(filePath: string): Promise<string | undefined> {
