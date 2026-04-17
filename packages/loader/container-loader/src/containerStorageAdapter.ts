@@ -104,7 +104,7 @@ export class ContainerStorageAdapter
 		this.disposed = true;
 	}
 
-	public connectToService(service: IDocumentService): void {
+	public connectToService(service: IDocumentService, maxRetries?: number): void {
 		if (!(this._storageService instanceof BlobOnlyStorage)) {
 			return;
 		}
@@ -113,6 +113,7 @@ export class ContainerStorageAdapter
 		const retriableStorage = (this._storageService = new RetriableDocumentStorageService(
 			storageServiceP,
 			this.logger,
+			maxRetries,
 		));
 
 		// A storage service wrapper which intercept calls to uploadSummaryWithContext and ensure they include

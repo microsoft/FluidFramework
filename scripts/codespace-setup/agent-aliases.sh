@@ -9,6 +9,7 @@ _ensure_agency() {
 		echo "Agency is not installed. Installing now..."
 		echo "  A browser window will open for authentication!"
 		pnpm install:agency || return 1
+		echo "Please wait..."
 	fi
 	if [[ ! -x "$AGENCY_DIR/agency" ]]; then
 		echo "Agency is still not available at $AGENCY_DIR/agency after installation." >&2
@@ -48,6 +49,15 @@ oce() {
 
 ai-reset() {
 	repoverlay remove --all
+}
+
+start() {
+	_ensure_agency || return 1
+	flub-ai "$@"
+}
+
+obiwan() {
+	start "$@"
 }
 
 # Interactive launcher: runs `flub ai` to pick an alias, then executes it as a
