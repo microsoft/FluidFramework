@@ -76,6 +76,10 @@ export {
 	type MemoryUseCallbacks,
 	benchmarkMemoryUse,
 	collectMemoryUseData,
+	Box,
+	type MemoryUseModifier,
+	memoryAddedBy,
+	memoryUseOfValue,
 } from "./memoryBenchmarking/index.js";
 
 export { benchmark, benchmarkCustom } from "./legacy.js";

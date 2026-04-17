@@ -5,9 +5,13 @@
 
 import { strict as assert } from "node:assert";
 
-import { TypedEventEmitter } from "@fluid-internal/client-utils";
+import {
+	TypedEventEmitter,
+	type IProvideLayerCompatDetails,
+} from "@fluid-internal/client-utils";
 import type { AttachState, IAudience } from "@fluidframework/container-definitions/";
 import type {
+	ICriticalContainerError,
 	IContainer,
 	IContainerEvents,
 	IDeltaManager,
@@ -16,15 +20,24 @@ import type {
 } from "@fluidframework/container-definitions/internal";
 import type { IClient } from "@fluidframework/driver-definitions";
 import type {
+	IDocumentServiceFactory,
 	IResolvedUrl,
 	IDocumentMessage,
 	ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
+import {
+	GenericError,
+	MockLogger,
+	createChildLogger,
+} from "@fluidframework/telemetry-utils/internal";
 
 import { Audience } from "../audience.js";
 import { ConnectionState } from "../connectionState.js";
-import { waitContainerToCatchUp } from "../container.js";
+import { Container, waitContainerToCatchUp } from "../container.js";
 import { ProtocolHandler } from "../protocol.js";
+
+import { AbsentProperty, failProxy, failSometimeProxy } from "./failProxy.js";
+import { createTestCodeLoaderProxy } from "./testProxies.js";
 
 class MockDeltaManager
 	extends TypedEventEmitter<IDeltaManagerEvents>
@@ -65,6 +78,101 @@ class MockContainer
 		this.emit("connected");
 	}
 }
+
+const documentServiceFactoryProxy = failSometimeProxy<
+	IDocumentServiceFactory & IProvideLayerCompatDetails
+>({
+	ILayerCompatDetails: AbsentProperty,
+});
+
+function createTestContainer(mockLogger: MockLogger): Container {
+	return new Container({
+		urlResolver: failProxy(),
+		documentServiceFactory: documentServiceFactoryProxy,
+		codeLoader: createTestCodeLoaderProxy(),
+		options: {},
+		scope: {},
+		subLogger: createChildLogger({ logger: mockLogger }),
+	});
+}
+
+describe("Container close/dispose telemetry", () => {
+	it("ContainerClose is logged as error when close is called with an error during loading", () => {
+		const mockLogger = new MockLogger();
+		const container = createTestContainer(mockLogger);
+		const testError = new GenericError(
+			"test load failure",
+		) as unknown as ICriticalContainerError;
+
+		container.close(testError);
+
+		const closeEvent = mockLogger.events.find(
+			(e) => typeof e.eventName === "string" && e.eventName.endsWith("ContainerClose"),
+		);
+		assert(closeEvent !== undefined, "ContainerClose event should be logged");
+		assert.strictEqual(
+			closeEvent.category,
+			"error",
+			"ContainerClose should be category 'error' when closed with an error during loading",
+		);
+	});
+
+	it("ContainerDispose is logged as generic when dispose is called with an error after close", () => {
+		const mockLogger = new MockLogger();
+		const container = createTestContainer(mockLogger);
+		const testError = new GenericError(
+			"test load failure",
+		) as unknown as ICriticalContainerError;
+
+		container.close(testError);
+		container.dispose(testError);
+
+		const disposeEvent = mockLogger.events.find(
+			(e) => typeof e.eventName === "string" && e.eventName.endsWith("ContainerDispose"),
+		);
+		assert(disposeEvent !== undefined, "ContainerDispose event should be logged");
+		assert.strictEqual(
+			disposeEvent.category,
+			"generic",
+			"ContainerDispose should be category 'generic' when disposed with an error after close",
+		);
+	});
+
+	it("ContainerClose is logged as generic when close is called without an error", () => {
+		const mockLogger = new MockLogger();
+		const container = createTestContainer(mockLogger);
+
+		container.close();
+
+		const closeEvent = mockLogger.events.find(
+			(e) => typeof e.eventName === "string" && e.eventName.endsWith("ContainerClose"),
+		);
+		assert(closeEvent !== undefined, "ContainerClose event should be logged");
+		assert.strictEqual(
+			closeEvent.category,
+			"generic",
+			"ContainerClose should be category 'generic' when closed without an error",
+		);
+	});
+
+	it("ContainerDispose is logged as generic when dispose is called without an error", () => {
+		const mockLogger = new MockLogger();
+		const container = createTestContainer(mockLogger);
+
+		container.close();
+		container.dispose();
+
+		const disposeEvent = mockLogger.events.find(
+			(e) => typeof e.eventName === "string" && e.eventName.endsWith("ContainerDispose"),
+		);
+		assert(disposeEvent !== undefined, "ContainerDispose event should be logged");
+		assert.strictEqual(
+			disposeEvent.category,
+			"generic",
+			"ContainerDispose should be category 'generic' when disposed without an error",
+		);
+	});
+});
 
 describe("Container", () => {
 	describe("waitContainerToCatchUp", () => {

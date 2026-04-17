@@ -8,7 +8,6 @@ import type {
 	ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
 import type { ApplicationInsights } from "@microsoft/applicationinsights-web";
-import structuredClone from "@ungap/structured-clone";
 
 /**
  * The categories FF uses when instrumenting the code.

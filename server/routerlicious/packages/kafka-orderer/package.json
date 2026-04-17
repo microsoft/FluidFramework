@@ -36,7 +36,7 @@
 		"@fluidframework/build-tools": "^0.63.0",
 		"@fluidframework/eslint-config-fluid": "^9.0.0",
 		"@fluidframework/server-kafka-orderer-previous": "npm:@fluidframework/server-kafka-orderer@7.0.0",
-		"@types/node": "^22",
+		"@types/node": "~22.19.17",
 		"concurrently": "^9.2.1",
 		"eslint": "~8.57.0",
 		"prettier": "~3.0.3",

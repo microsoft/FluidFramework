@@ -46,7 +46,7 @@
 		"@fluidframework/build-tools": "catalog:buildTools",
 		"@fluidframework/eslint-config-fluid": "catalog:eslint",
 		"@types/mocha": "^10.0.10",
-		"@types/node": "~20.19.30",
+		"@types/node": "catalog:types",
 		"cross-env": "^10.1.0",
 		"eslint": "catalog:eslint",
 		"jiti": "^2.6.1",
