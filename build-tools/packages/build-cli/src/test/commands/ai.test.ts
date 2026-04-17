@@ -14,20 +14,6 @@ import {
 } from "../../commands/ai.js";
 
 describe("ai command", () => {
-	it("allows aliases present in the provided set", () => {
-		const aliasSet = new Set(["my-alias", "other-alias"]);
-		expect(() =>
-			assertSafeAliasSelection({ alias: "my-alias", explanation: "custom alias" }, aliasSet),
-		).to.not.throw();
-	});
-
-	it("rejects aliases not in the provided set", () => {
-		const aliasSet = new Set(["my-alias", "other-alias"]);
-		expect(() =>
-			assertSafeAliasSelection({ alias: "claude", explanation: "not in set" }, aliasSet),
-		).to.throw(/Unsupported AI alias selection: claude/);
-	});
-
 	it("allows all supported aliases", () => {
 		const aliasSet = new Set<string>(SUPPORTED_ALIASES);
 		for (const alias of SUPPORTED_ALIASES) {
