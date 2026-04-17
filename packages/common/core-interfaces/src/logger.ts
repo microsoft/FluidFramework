@@ -81,17 +81,20 @@ export interface LogLevelConst {
 
 	/**
 	 * Default LogLevel
+	 * @remarks Prefer {@link LogLevelConst.info} when selecting a level explicitly;
 	 */
 	readonly default: 20;
 
 	/**
 	 * To log errors.
+	 * @remarks Prefer {@link LogLevelConst.essential} when selecting a level.
 	 */
 	readonly error: 30;
 }
 
 /**
- * {@inheritDoc LogLevelConst}
+ * Provides runtime {@link (LogLevel:type)} values via symbolic names
+ * @see {@link LogLevelConst} type.
  * @public
  */
 export const LogLevel: LogLevelConst = {
@@ -117,13 +120,13 @@ export interface ITelemetryBaseLogger {
 	/**
 	 * Log a telemetry event, if it meets the appropriate log-level threshold (see {@link ITelemetryBaseLogger.minLogLevel}).
 	 * @param event - The event to log.
-	 * @param logLevel - The log level of the event. Default: {@link (LogLevel:variable) | LogLevel.info}.
+	 * @param logLevel - The log level of the event. Default: {@link LogLevelConst.default}.
 	 */
 	send(event: ITelemetryBaseEvent, logLevel?: LogLevel): void;
 
 	/**
 	 * Minimum log level to be logged.
-	 * @defaultValue {@link (LogLevel:variable) | LogLevel.info}
+	 * @defaultValue {@link LogLevelConst.default}.
 	 */
 	minLogLevel?: LogLevel;
 }
