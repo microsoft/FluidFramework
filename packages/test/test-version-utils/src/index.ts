@@ -9,6 +9,7 @@ export {
 	getDataStoreFactory,
 	getVersionedTestObjectProvider,
 	getVersionedTestObjectProviderFromApis,
+	type ICompatTestContainerConfig,
 	ITestDataObject,
 	TestDataObjectType,
 } from "./compatUtils.js";

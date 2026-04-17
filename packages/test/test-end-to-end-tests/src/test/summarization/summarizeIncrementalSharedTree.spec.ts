@@ -5,13 +5,15 @@
 
 import { strict as assert } from "assert";
 
-import { describeCompat, type CompatApis } from "@fluid-private/test-version-utils";
+import {
+	describeCompat,
+	type ICompatTestContainerConfig,
+} from "@fluid-private/test-version-utils";
 import type { IContainer } from "@fluidframework/container-definitions/internal";
 import type { ISummarizer } from "@fluidframework/container-runtime/internal";
 import {
 	DataObjectFactoryType,
 	getContainerEntryPointBackCompat,
-	type ITestContainerConfig,
 	type ITestFluidObject,
 	type ITestObjectProvider,
 	createSummarizer,
@@ -53,29 +55,27 @@ const viewConfig = new TreeViewConfigurationAlpha({ schema: Workspace });
 
 const treeId = "sharedTree";
 
-function buildTestContainerConfig(apis: CompatApis): ITestContainerConfig {
-	const { configuredSharedTree } = apis.dataRuntime.packages.tree;
-	const ConfiguredSharedTree = configuredSharedTree({
-		forest: ForestTypeOptimized,
-		treeEncodeType: TreeCompressionStrategy.CompressedIncremental,
-		minVersionForCollab: FluidClientVersion.v2_74,
-		shouldEncodeIncrementally: incrementalEncodingPolicyForAllowedTypes(viewConfig),
-	});
-	return {
-		fluidDataObjectType: DataObjectFactoryType.Test,
-		runtimeOptions: {
-			enableRuntimeIdCompressor: "on",
-		},
-		registry: [[treeId, ConfiguredSharedTree.getFactory()]],
-	};
-}
+const testContainerConfig: ICompatTestContainerConfig = {
+	fluidDataObjectType: DataObjectFactoryType.Test,
+	runtimeOptions: {
+		enableRuntimeIdCompressor: "on",
+	},
+	buildRegistry: (dataRuntime) => {
+		const ConfiguredSharedTree = dataRuntime.packages.tree.configuredSharedTree({
+			forest: ForestTypeOptimized,
+			treeEncodeType: TreeCompressionStrategy.CompressedIncremental,
+			minVersionForCollab: FluidClientVersion.v2_74,
+			shouldEncodeIncrementally: incrementalEncodingPolicyForAllowedTypes(viewConfig),
+		});
+		return [[treeId, ConfiguredSharedTree.getFactory()]];
+	},
+};
 
 describeCompat(
 	"SharedTree incremental summary handle paths",
 	"NoCompat",
-	(getTestObjectProvider, apis) => {
+	(getTestObjectProvider) => {
 		let provider: ITestObjectProvider;
-		const testContainerConfig = buildTestContainerConfig(apis);
 
 		async function createContainerAndTree(): Promise<{
 			container: IContainer;

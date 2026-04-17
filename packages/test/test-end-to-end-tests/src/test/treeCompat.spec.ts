@@ -5,12 +5,15 @@
 
 import { strict as assert } from "assert";
 
-import { describeCompat, type CompatApis } from "@fluid-private/test-version-utils";
+import {
+	describeCompat,
+	type CompatApis,
+	type ICompatTestContainerConfig,
+} from "@fluid-private/test-version-utils";
 import type { IContainer } from "@fluidframework/container-definitions/internal";
 import {
 	DataObjectFactoryType,
 	getContainerEntryPointBackCompat,
-	type ITestContainerConfig,
 	type ITestFluidObject,
 	type ITestObjectProvider,
 } from "@fluidframework/test-utils/internal";
@@ -18,11 +21,12 @@ import type { ITree } from "@fluidframework/tree";
 import { lt } from "semver";
 
 const treeId = "sharedTree";
-const baseTestContainerConfig: ITestContainerConfig = {
+const testContainerConfig: ICompatTestContainerConfig = {
 	fluidDataObjectType: DataObjectFactoryType.Test,
 	runtimeOptions: {
 		enableRuntimeIdCompressor: "on",
 	},
+	buildRegistry: (dataRuntime) => [[treeId, dataRuntime.dds.SharedTree.getFactory()]],
 };
 
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type -- TODO: extract schema definition and provide explicit return type
@@ -45,12 +49,6 @@ async function createTreeView(
 
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type -- TODO: extract schema definition and provide explicit return type
 async function createContainerAndGetTreeView(provider: ITestObjectProvider, apis: CompatApis) {
-	const { SharedTree } = apis.dataRuntime.dds;
-	const testContainerConfig: ITestContainerConfig = {
-		...baseTestContainerConfig,
-		registry: [[treeId, SharedTree.getFactory()]],
-	};
-
 	const container = await provider.makeTestContainer(testContainerConfig);
 	return createTreeView(container, apis.dataRuntime);
 }
@@ -58,12 +56,6 @@ async function createContainerAndGetTreeView(provider: ITestObjectProvider, apis
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type -- TODO: extract schema definition and provide explicit return type
 async function loadContainerAndGetTreeView(provider: ITestObjectProvider, apis: CompatApis) {
 	const dataRuntimeApi = apis.dataRuntimeForLoading ?? apis.dataRuntime;
-	const { SharedTree } = dataRuntimeApi.dds;
-	const testContainerConfig: ITestContainerConfig = {
-		...baseTestContainerConfig,
-		registry: [[treeId, SharedTree.getFactory()]],
-	};
-
 	const container = await provider.loadTestContainer(testContainerConfig);
 	return createTreeView(container, dataRuntimeApi);
 }
