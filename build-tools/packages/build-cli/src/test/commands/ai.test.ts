@@ -25,10 +25,7 @@ describe("ai command", () => {
 	it("rejects aliases not in the provided set", () => {
 		const aliasSet = new Set(["my-alias", "other-alias"]);
 		expect(() =>
-			assertSafeAliasSelection(
-				{ alias: "claude", explanation: "not in set" },
-				aliasSet,
-			),
+			assertSafeAliasSelection({ alias: "claude", explanation: "not in set" }, aliasSet),
 		).to.throw(/Unsupported AI alias selection: claude/);
 	});
 

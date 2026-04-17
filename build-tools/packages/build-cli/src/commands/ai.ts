@@ -328,6 +328,10 @@ export default class AiCommand extends BaseCommand<typeof AiCommand> {
 		};
 	}
 
+	/**
+	 * Reads the machine-readable alias manifest from agent-aliases.sh.
+	 * This keeps the shell script as the source of truth without scraping bash.
+	 */
 	private async loadAllowedAliases(
 		aliasFilePath: string,
 	): Promise<{ aliases: string[]; source: "agent-aliases.sh" | "fallback" }> {
@@ -431,9 +435,7 @@ function parseSelectableAliasesJson(raw: string): string[] | undefined {
 			return undefined;
 		}
 
-		const strings = parsed.filter(
-			(alias): alias is string => typeof alias === "string",
-		);
+		const strings = parsed.filter((alias): alias is string => typeof alias === "string");
 		return resolveAllowedAliases(strings);
 	} catch {
 		return undefined;
