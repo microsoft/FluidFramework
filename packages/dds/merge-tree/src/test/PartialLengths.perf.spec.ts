@@ -3,7 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { BenchmarkType, benchmarkIt, collectDurationData } from "@fluid-tools/benchmark";
+import {
+	BenchmarkType,
+	TestType,
+	benchmarkIt,
+	collectDurationData,
+} from "@fluid-tools/benchmark";
 
 import { MergeTree } from "../mergeTree.js";
 import { MergeTreeDeltaType } from "../ops.js";
@@ -15,6 +20,7 @@ describe("MergeTree partial lengths", () => {
 	for (const incremental of [true, false]) {
 		benchmarkIt({
 			type: BenchmarkType.Measurement,
+			testType: TestType.ExecutionTime,
 			title: `incremental updates = ${incremental}`,
 			category: "partial lengths",
 			run: async () => {

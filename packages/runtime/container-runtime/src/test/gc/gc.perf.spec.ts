@@ -3,7 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { BenchmarkType, benchmarkIt, collectDurationData } from "@fluid-tools/benchmark";
+import {
+	BenchmarkType,
+	TestType,
+	benchmarkIt,
+	collectDurationData,
+} from "@fluid-tools/benchmark";
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 
 import {
@@ -116,6 +121,7 @@ describe("GC benchmark tests", () => {
 		 * setting of timers, it takes a long time and can cause slow downs.
 		 */
 		benchmarkIt({
+			testType: TestType.ExecutionTime,
 			title: "5000 unref nodes",
 			type: BenchmarkType.Measurement,
 			run: async () => {
@@ -131,6 +137,7 @@ describe("GC benchmark tests", () => {
 		});
 
 		benchmarkIt({
+			testType: TestType.ExecutionTime,
 			title: "15000 unref nodes",
 			type: BenchmarkType.Measurement,
 			run: async () => {
@@ -146,6 +153,7 @@ describe("GC benchmark tests", () => {
 		});
 
 		benchmarkIt({
+			testType: TestType.ExecutionTime,
 			title: "30000 unref nodes",
 			type: BenchmarkType.Measurement,
 			run: async () => {

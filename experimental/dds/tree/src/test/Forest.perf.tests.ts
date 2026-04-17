@@ -5,7 +5,13 @@
 
 import { strict as assert } from 'assert';
 
-import { BenchmarkType, benchmarkIt, collectDurationData, isInPerformanceTestingMode } from '@fluid-tools/benchmark';
+import {
+	BenchmarkType,
+	TestType,
+	benchmarkIt,
+	collectDurationData,
+	isInPerformanceTestingMode,
+} from '@fluid-tools/benchmark';
 import { v4 } from 'uuid';
 
 import { Forest, ForestNode } from '../Forest.js';
@@ -28,6 +34,7 @@ describe('Forest Perf', () => {
 
 		benchmarkIt({
 			type,
+			testType: TestType.ExecutionTime,
 			title: `${count} random inserts in TreeView`,
 			run: async () =>
 				collectDurationData({
@@ -39,6 +46,7 @@ describe('Forest Perf', () => {
 
 		benchmarkIt({
 			type,
+			testType: TestType.ExecutionTime,
 			title: `walk ${count} node TreeView`,
 			run: async () => {
 				const [built, rootId] = buildRandomTree(testTree, count);
@@ -53,6 +61,7 @@ describe('Forest Perf', () => {
 
 		benchmarkIt({
 			type,
+			testType: TestType.ExecutionTime,
 			title: `insert ${count} nodes into Forest`,
 			run: async () => {
 				const forest = Forest.create(true);

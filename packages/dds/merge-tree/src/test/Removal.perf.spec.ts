@@ -3,7 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { BenchmarkType, benchmarkIt, collectDurationData } from "@fluid-tools/benchmark";
+import {
+	BenchmarkType,
+	TestType,
+	benchmarkIt,
+	collectDurationData,
+} from "@fluid-tools/benchmark";
 
 import { MergeTreeDeltaType } from "../ops.js";
 import { PriorPerspective } from "../perspective.js";
@@ -69,6 +74,7 @@ describe("MergeTree remove", () => {
 	for (const length of [10, 100, 1000]) {
 		benchmarkIt({
 			type: BenchmarkType.Measurement,
+			testType: TestType.ExecutionTime,
 			title: `remove range of length ${length} from large tree with undo-redo`,
 			category: "remove",
 			run: async () => {

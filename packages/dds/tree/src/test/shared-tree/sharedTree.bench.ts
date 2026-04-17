@@ -8,6 +8,7 @@ import { strict as assert } from "node:assert";
 import {
 	type BenchmarkTimer,
 	BenchmarkType,
+	TestType,
 	benchmarkDuration,
 	benchmarkIt,
 	collectDurationData,
@@ -94,6 +95,7 @@ describe("SharedTree benchmarks", () => {
 			let tree: JSDeepTree;
 			benchmarkIt({
 				type: benchmarkType,
+				testType: TestType.ExecutionTime,
 				title: `Deep Tree as JS Object: reads with ${numberOfNodes} nodes`,
 				run: async () => {
 					tree = makeJsDeepTree(numberOfNodes, 1) as JSDeepTree;
@@ -112,6 +114,7 @@ describe("SharedTree benchmarks", () => {
 			let expected = 0;
 			benchmarkIt({
 				type: benchmarkType,
+				testType: TestType.ExecutionTime,
 				title: `Wide Tree as JS Object: reads with ${numberOfNodes} nodes`,
 				run: async () => {
 					tree = makeJsWideTreeWithEndValue(numberOfNodes, numberOfNodes - 1);
@@ -135,6 +138,7 @@ describe("SharedTree benchmarks", () => {
 				let currentNode: JSDeepTree;
 				benchmarkIt({
 					type: benchmarkType,
+					testType: TestType.ExecutionTime,
 					title: `Update value at leaf of ${numberOfNodes} deep tree`,
 					run: async () => {
 						tree = makeJsDeepTree(numberOfNodes, 1) as JSDeepTree;
@@ -160,6 +164,7 @@ describe("SharedTree benchmarks", () => {
 				let tree: JSWideTree;
 				benchmarkIt({
 					type: benchmarkType,
+					testType: TestType.ExecutionTime,
 					title: `Update value at leaf of ${numberOfNodes} Wide tree`,
 					run: async () => {
 						tree = makeJsWideTreeWithEndValue(numberOfNodes, numberOfNodes - 1);
@@ -181,6 +186,7 @@ describe("SharedTree benchmarks", () => {
 			let tree: Context;
 			benchmarkIt({
 				type: benchmarkType,
+				testType: TestType.ExecutionTime,
 				title: `Deep Tree with cursor: reads with ${numberOfNodes} nodes`,
 				run: async () => {
 					tree = flexTreeViewWithContent(makeDeepContentSimple(numberOfNodes));
@@ -199,6 +205,7 @@ describe("SharedTree benchmarks", () => {
 			let expected = 0;
 			benchmarkIt({
 				type: benchmarkType,
+				testType: TestType.ExecutionTime,
 				title: `Wide Tree with cursor: reads with ${numberOfNodes} nodes`,
 				run: async () => {
 					const numbers = [];
@@ -226,6 +233,7 @@ describe("SharedTree benchmarks", () => {
 			let tree: Context;
 			benchmarkIt({
 				type: benchmarkType,
+				testType: TestType.ExecutionTime,
 				title: `Deep Tree with Flex Tree: reads with ${numberOfNodes} nodes`,
 				run: async () => {
 					tree = flexTreeViewWithContent(makeDeepContentSimple(numberOfNodes));
@@ -244,6 +252,7 @@ describe("SharedTree benchmarks", () => {
 			let expected: number = 0;
 			benchmarkIt({
 				type: benchmarkType,
+				testType: TestType.ExecutionTime,
 				title: `Wide Tree with Flex Tree: reads with ${numberOfNodes} nodes`,
 				run: async () => {
 					expected = ((numberOfNodes - 1) * numberOfNodes) / 2; // Arithmetic sum of [0, numberOfNodes)

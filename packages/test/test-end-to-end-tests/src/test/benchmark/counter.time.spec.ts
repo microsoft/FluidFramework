@@ -4,7 +4,7 @@
  */
 
 import { describeCompat } from "@fluid-private/test-version-utils";
-import { benchmarkIt, collectDurationData } from "@fluid-tools/benchmark";
+import { TestType, benchmarkIt, collectDurationData } from "@fluid-tools/benchmark";
 import { ISharedCounter, SharedCounter } from "@fluidframework/counter/internal";
 import {
 	ChannelFactoryRegistry,
@@ -50,6 +50,7 @@ describeCompat("SharedCounter - runtime benchmarks", "NoCompat", (getTestObjectP
 
 	benchmarkIt({
 		title: "increment value in 3 containers",
+		testType: TestType.ExecutionTime,
 		run: async () => {
 			const { provider, counters } = await setup();
 			return collectDurationData({

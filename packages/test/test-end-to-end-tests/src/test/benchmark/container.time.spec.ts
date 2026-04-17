@@ -6,7 +6,7 @@
 import { strict as assert } from "assert";
 
 import { describeCompat } from "@fluid-private/test-version-utils";
-import { benchmarkIt, collectDurationData } from "@fluid-tools/benchmark";
+import { TestType, benchmarkIt, collectDurationData } from "@fluid-tools/benchmark";
 import { IFluidCodeDetails } from "@fluidframework/container-definitions/internal";
 import { ILoaderProps, Loader } from "@fluidframework/container-loader/internal";
 import { IRequest } from "@fluidframework/core-interfaces";
@@ -40,6 +40,7 @@ describeCompat("Container - runtime benchmarks", "NoCompat", (getTestObjectProvi
 	});
 
 	benchmarkIt({
+		testType: TestType.ExecutionTime,
 		title: "Create loader",
 		run: async () => {
 			const provider = getTestObjectProvider();
@@ -52,6 +53,7 @@ describeCompat("Container - runtime benchmarks", "NoCompat", (getTestObjectProvi
 	});
 
 	benchmarkIt({
+		testType: TestType.ExecutionTime,
 		title: "Create detached container",
 		run: async () => {
 			const provider = getTestObjectProvider();
@@ -66,6 +68,7 @@ describeCompat("Container - runtime benchmarks", "NoCompat", (getTestObjectProvi
 	});
 
 	benchmarkIt({
+		testType: TestType.ExecutionTime,
 		title: "Create detached container and attach it",
 		run: async () => {
 			const provider = getTestObjectProvider();
@@ -86,6 +89,7 @@ describeCompat("Container - runtime benchmarks", "NoCompat", (getTestObjectProvi
 	});
 
 	benchmarkIt({
+		testType: TestType.ExecutionTime,
 		title: "Load existing container",
 		run: async () => {
 			const provider = getTestObjectProvider();

@@ -7,6 +7,7 @@ import { strict as assert } from "node:assert";
 
 import {
 	BenchmarkType,
+	TestType,
 	benchmarkIt,
 	collectDurationData,
 	isInPerformanceTestingMode,
@@ -94,6 +95,7 @@ function bench(
 
 					benchmarkIt({
 						type: BenchmarkType.Perspective,
+						testType: TestType.ExecutionTime,
 						title: "Clone JS Object",
 						run: async () => {
 							const cloned = clone(json);
@@ -193,6 +195,7 @@ function bench(
 									type: emulateProduction
 										? BenchmarkType.Measurement
 										: BenchmarkType.Perspective,
+									testType: TestType.ExecutionTime,
 									title: `${consumerName}(${factoryName})`,
 									run: async () => {
 										cursor = factory();

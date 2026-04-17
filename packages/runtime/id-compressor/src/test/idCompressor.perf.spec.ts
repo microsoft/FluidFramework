@@ -4,7 +4,12 @@
  */
 
 import { take } from "@fluid-private/stochastic-test-utils";
-import { BenchmarkType, benchmarkIt, collectDurationData } from "@fluid-tools/benchmark";
+import {
+	BenchmarkType,
+	TestType,
+	benchmarkIt,
+	collectDurationData,
+} from "@fluid-tools/benchmark";
 import { assert } from "@fluidframework/core-utils/internal";
 
 import { IdCompressor } from "../idCompressor.js";
@@ -109,6 +114,7 @@ describe("IdCompressor Perf", () => {
 
 	benchmarkIt({
 		type,
+		testType: TestType.ExecutionTime,
 		title: `allocate local ID`,
 		run: async () => {
 			const { perfCompressor } = setupCompressors(initialClusterCapacity, true, true);
@@ -122,6 +128,7 @@ describe("IdCompressor Perf", () => {
 
 	benchmarkIt({
 		type,
+		testType: TestType.ExecutionTime,
 		title: "take an ID creation range",
 		run: async () => {
 			const { perfCompressor } = setupCompressors(initialClusterCapacity, true, true);
@@ -275,6 +282,7 @@ describe("IdCompressor Perf", () => {
 
 	benchmarkIt({
 		type,
+		testType: TestType.ExecutionTime,
 		title: `normalize an unacked local ID from the local session to op space`,
 		run: async () => {
 			const { network, perfCompressor } = setupCompressors(
@@ -351,6 +359,7 @@ describe("IdCompressor Perf", () => {
 
 	benchmarkIt({
 		type,
+		testType: TestType.ExecutionTime,
 		title: `decompress a local ID into a stable ID`,
 		run: async () => {
 			const { network, perfCompressor } = setupCompressors(initialClusterCapacity, true, true);

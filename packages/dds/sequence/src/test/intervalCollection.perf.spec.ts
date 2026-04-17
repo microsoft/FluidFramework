@@ -3,7 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { BenchmarkType, benchmarkIt, collectDurationData } from "@fluid-tools/benchmark";
+import {
+	BenchmarkType,
+	TestType,
+	benchmarkIt,
+	collectDurationData,
+} from "@fluid-tools/benchmark";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
 
 import type { ISequenceIntervalCollection } from "../intervalCollection.js";
@@ -58,6 +63,7 @@ function runFindOverlappingIntervalsBenchmark({
 	};
 
 	benchmarkIt({
+		testType: TestType.ExecutionTime,
 		title: `findOverlappingIntervals on string of length ${
 			segmentCount * segmentLength
 		} with ${intervalCount} equally spaced intervals and ${segmentCount} segments`,
@@ -77,6 +83,7 @@ function runFindOverlappingIntervalsBenchmark({
 	// Note: this test would likely be covered by a suite of local reference perf tests. In lieu of that,
 	// it simulates flows that some consumers might use involving resolving the endpoints of their sequence intervals.
 	benchmarkIt({
+		testType: TestType.ExecutionTime,
 		title: `findOverlappingIntervals on string of length ${
 			segmentCount * segmentLength
 		} with ${intervalCount} equally spaced intervals and ${segmentCount} segments with endpoint resolution`,

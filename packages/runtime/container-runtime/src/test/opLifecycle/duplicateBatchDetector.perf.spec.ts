@@ -5,6 +5,7 @@
 
 import {
 	BenchmarkType,
+	TestType,
 	benchmarkDuration,
 	benchmarkIt,
 	collectDurationData,
@@ -83,6 +84,7 @@ describe("DuplicateBatchDetector benchmark", () => {
 			benchmarkIt({
 				title: `processInboundBatch - no cleanup (${trackedBatchCount} tracked)`,
 				type: BenchmarkType.Measurement,
+				testType: TestType.ExecutionTime,
 				run: async () => {
 					entries = generateSnapshotEntries(trackedBatchCount);
 					detector = new DuplicateBatchDetector(entries);

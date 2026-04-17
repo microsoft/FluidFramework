@@ -8,6 +8,7 @@ import { strict as assert } from "node:assert";
 import { IsoBuffer } from "@fluid-internal/client-utils";
 import {
 	BenchmarkType,
+	TestType,
 	benchmarkIt,
 	collectDurationData,
 	ValueType,
@@ -125,6 +126,7 @@ describe("Summary benchmarks", () => {
 			benchmarkIt({
 				title,
 				type,
+				testType: TestType.ExecutionTime,
 				run: async () => {
 					const summaryTree = convertSummaryTreeToITree(getSummaryTree(content));
 					return collectDurationData({

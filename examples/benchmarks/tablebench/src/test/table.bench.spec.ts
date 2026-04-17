@@ -5,6 +5,7 @@
 
 import {
 	BenchmarkType,
+	TestType,
 	type CollectedData,
 	ValueType,
 	benchmarkIt,
@@ -47,6 +48,7 @@ describe("Table", () => {
 
 		benchmarkIt({
 			type: BenchmarkType.Measurement,
+			testType: TestType.ExecutionTime,
 			title: `SharedMatrix`,
 			run: async () => {
 				({ channel, processAllMessages } = create(SharedMatrix.getFactory()));
@@ -84,6 +86,7 @@ describe("Table", () => {
 
 		benchmarkIt({
 			type: BenchmarkType.Measurement,
+			testType: TestType.ExecutionTime,
 			title: `SharedTree`,
 			run: async () => {
 				({ channel, processAllMessages } = create(SharedTree.getFactory()));

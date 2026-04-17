@@ -7,6 +7,7 @@ import { strict as assert, fail } from "node:assert";
 
 import {
 	BenchmarkType,
+	TestType,
 	benchmarkIt,
 	collectDurationData,
 	isInPerformanceTestingMode,
@@ -59,6 +60,7 @@ describe("SimpleTree benchmarks", () => {
 
 			benchmarkIt({
 				type: benchmarkType,
+				testType: TestType.ExecutionTime,
 				title: `Deep Tree as SimpleTree: reads with ${numberOfNodes} nodes`,
 				run: async () => {
 					// Setup
@@ -84,6 +86,7 @@ describe("SimpleTree benchmarks", () => {
 			let actualSum = 0;
 			benchmarkIt({
 				type: benchmarkType,
+				testType: TestType.ExecutionTime,
 				title: `Wide Tree as SimpleTree: reads with ${numberOfNodes} nodes`,
 				run: async () => {
 					// Setup
@@ -121,6 +124,7 @@ describe("SimpleTree benchmarks", () => {
 					let readNumber: number | undefined;
 					benchmarkIt({
 						type: BenchmarkType.Measurement,
+						testType: TestType.ExecutionTime,
 						title: `${title} (${doHydration ? "hydrated" : "unhydrated"} node)`,
 						run: async () => {
 							tree = unhydratedNodeInitFunction();
@@ -393,6 +397,7 @@ describe("SimpleTree benchmarks", () => {
 			let tree: DeepTreeNode;
 			benchmarkIt({
 				type: benchmarkType,
+				testType: TestType.ExecutionTime,
 				title: `Update value at leaf of ${numberOfNodes} deep tree`,
 				run: async () => {
 					// Setup
@@ -413,6 +418,7 @@ describe("SimpleTree benchmarks", () => {
 			let tree: WideTreeNode;
 			benchmarkIt({
 				type: benchmarkType,
+				testType: TestType.ExecutionTime,
 				title: `Remove and insert end value at leaf of ${numberOfNodes} Wide tree`,
 				run: async () => {
 					// Setup
@@ -433,6 +439,7 @@ describe("SimpleTree benchmarks", () => {
 			let tree: WideTreeNode;
 			benchmarkIt({
 				type: benchmarkType,
+				testType: TestType.ExecutionTime,
 				title: `Remove and insert first value at leaf of ${numberOfNodes} Wide tree`,
 				run: async () => {
 					// Setup
@@ -453,6 +460,7 @@ describe("SimpleTree benchmarks", () => {
 			let tree: WideTreeNode;
 			benchmarkIt({
 				type: benchmarkType,
+				testType: TestType.ExecutionTime,
 				title: `Move second leaf to begining of ${numberOfNodes} Wide tree`,
 				run: async () => {
 					// Setup
@@ -475,6 +483,7 @@ describe("SimpleTree benchmarks", () => {
 			let tree: WideTreeNode;
 			benchmarkIt({
 				type: benchmarkType,
+				testType: TestType.ExecutionTime,
 				title: `Move next-to-last leaf to end of ${numberOfNodes} Wide tree`,
 				run: async () => {
 					// Setup

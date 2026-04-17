@@ -4,7 +4,7 @@
  */
 
 import { take } from '@fluid-private/stochastic-test-utils';
-import { BenchmarkType, benchmarkIt, collectDurationData } from '@fluid-tools/benchmark';
+import { BenchmarkType, TestType, benchmarkIt, collectDurationData } from '@fluid-tools/benchmark';
 
 import { Mutable, fail } from '../Common.js';
 import { CompressedId, LocalCompressedId, OpSpaceCompressedId, SessionId } from '../Identifiers.js';
@@ -99,6 +99,7 @@ describe('IdCompressor Perf', () => {
 		let overrideIndex = 0;
 		benchmarkIt({
 			type,
+			testType: TestType.ExecutionTime,
 			title: `allocate local ID (${override ? 'override' : 'sequential'})`,
 			run: async () => {
 				const { network } = setupCompressors(defaultClusterCapacity, true, false);
@@ -246,6 +247,7 @@ describe('IdCompressor Perf', () => {
 	benchmarkWithIdTypes((local, override, titleSuffix) => {
 		benchmarkIt({
 			type,
+			testType: TestType.ExecutionTime,
 			title: `compress a stable ID to a ${local ? 'local' : 'final'} ID${titleSuffix}`,
 			run: async () => {
 				const { network, compressor, id: idAdded } = setupCompressorWithId(local, override, true);
@@ -327,6 +329,7 @@ describe('IdCompressor Perf', () => {
 		const titleSuffix = ` (${overrideInClusters ? 'with' : 'without'} overrides)`;
 		benchmarkIt({
 			type,
+			testType: TestType.ExecutionTime,
 			title: `serialize an IdCompressor${titleSuffix}`,
 			run: async () => {
 				const { network } = setupCompressors(defaultClusterCapacity, false, overrideInClusters);
@@ -342,6 +345,7 @@ describe('IdCompressor Perf', () => {
 		const overrideRemoteSessionId = createSessionId();
 		benchmarkIt({
 			type,
+			testType: TestType.ExecutionTime,
 			title: `deserialize an IdCompressor${titleSuffix}`,
 			run: async () => {
 				const { compressor } = setupCompressors(defaultClusterCapacity, false, overrideInClusters);

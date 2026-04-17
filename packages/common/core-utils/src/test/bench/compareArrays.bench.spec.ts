@@ -5,6 +5,7 @@
 
 import {
 	BenchmarkType,
+	TestType,
 	benchmarkDuration,
 	benchmarkIt,
 	collectDurationData,
@@ -115,6 +116,7 @@ describe("compareArrays()", () => {
 		for (const [title, left, right] of comparisons) {
 			benchmarkIt({
 				type: BenchmarkType.Measurement,
+				testType: TestType.ExecutionTime,
 				title: `${title}`,
 				run: async () => {
 					const result = await collectDurationData({

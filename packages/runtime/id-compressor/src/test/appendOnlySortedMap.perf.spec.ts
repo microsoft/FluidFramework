@@ -4,7 +4,12 @@
  */
 
 import { makeRandom } from "@fluid-private/stochastic-test-utils";
-import { BenchmarkType, benchmarkIt, collectDurationData } from "@fluid-tools/benchmark";
+import {
+	BenchmarkType,
+	TestType,
+	benchmarkIt,
+	collectDurationData,
+} from "@fluid-tools/benchmark";
 
 import { AppendOnlySortedMap } from "../appendOnlySortedMap.js";
 import { compareFiniteNumbers } from "../utilities.js";
@@ -32,6 +37,7 @@ function runAppendOnlyMapPerfTests(
 
 	benchmarkIt({
 		type,
+		testType: TestType.ExecutionTime,
 		title: `lookup a key`,
 		run: async () => {
 			const { map, keyChoices } = setup();
@@ -46,6 +52,7 @@ function runAppendOnlyMapPerfTests(
 
 	benchmarkIt({
 		type,
+		testType: TestType.ExecutionTime,
 		title: `lookup a pair or lower`,
 		run: async () => {
 			const { map, keyChoices } = setup();

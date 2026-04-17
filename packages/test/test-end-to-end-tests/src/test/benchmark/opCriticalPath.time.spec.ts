@@ -7,6 +7,7 @@ import { strict as assert } from "assert";
 
 import { ITestDataObject, describeCompat } from "@fluid-private/test-version-utils";
 import {
+	TestType,
 	benchmarkDuration,
 	benchmarkIt,
 	collectDurationData,
@@ -108,6 +109,7 @@ describeCompat(
 
 		benchmarkIt({
 			title: `Submit+Flush a single batch of ${batchSize} ops`,
+			testType: TestType.ExecutionTime,
 			run: async () => {
 				const { defaultDataStore, containerRuntime } = await setup();
 				// We could use the defaults for this one, but this way the measurement is symmetrical with the "Process" benchmark below.

@@ -7,7 +7,7 @@ import { strict as assert } from "assert";
 
 import { bufferToString } from "@fluid-internal/client-utils";
 import { ITestDataObject, describeCompat } from "@fluid-private/test-version-utils";
-import { benchmarkIt, collectDurationData } from "@fluid-tools/benchmark";
+import { TestType, benchmarkIt, collectDurationData } from "@fluid-tools/benchmark";
 import { IContainer } from "@fluidframework/container-definitions/internal";
 import {
 	ContainerRuntime,
@@ -51,6 +51,7 @@ async function setupContainer(getTestObjectProvider: () => ITestObjectProvider):
 describeCompat("Summarization - runtime benchmarks", "NoCompat", (getTestObjectProvider) => {
 	benchmarkIt({
 		title: "Generate summary tree",
+		testType: TestType.ExecutionTime,
 		run: async () => {
 			const { provider, mainContainer } = await setupContainer(getTestObjectProvider);
 			return collectDurationData({
