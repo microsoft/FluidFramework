@@ -490,6 +490,12 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 	 * logger for SharedTree events.
 	 */
 	public readonly logger: ITelemetryLoggerExt;
+	/**
+	 * Internal and only viable logger for SharedTree events.
+	 * @privateRemarks
+	 * `logger` is public and remains typed for external use with mostly deprecated methods.
+	 * Internally, only loggerInternal should be used and it provides the full set of logging methods.
+	 */
 	private readonly loggerInternal: TelemetryLoggerExt & ITelemetryLoggerExt;
 	private readonly sequencedEditAppliedLogger: ITelemetryLoggerExt;
 
