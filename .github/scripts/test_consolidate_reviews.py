@@ -143,8 +143,12 @@ class TestBuildReport:
             Finding("CRITICAL", "src/a.ts:10", "critical bug", "fix it", "Security"),
             Finding("MEDIUM", "src/b.ts:20", "minor issue", "tweak it", "Testing"),
         ]
-        report = build_report(findings, "https://example.com/run/1")
-        assert "1 Spicy, 0 Pungent, 1 Smelly" in report
+        pr_number = 27071
+        critical_title = severity_labels_for_pr(pr_number)["CRITICAL"]["title"]
+        high_title = severity_labels_for_pr(pr_number)["HIGH"]["title"]
+        medium_title = severity_labels_for_pr(pr_number)["MEDIUM"]["title"]
+        report = build_report(findings, "https://example.com/run/1", pr_number=pr_number)
+        assert f"1 {critical_title}, 0 {high_title}, 1 {medium_title}" in report
         assert "critical bug" in report
         assert "minor issue" in report
         assert "Request Changes" in report

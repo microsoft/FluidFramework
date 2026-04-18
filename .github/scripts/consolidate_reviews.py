@@ -21,12 +21,17 @@ import re
 import sys
 from dataclasses import dataclass
 from pathlib import Path
+from typing import TypedDict
 
 MARKER = "<!-- pr-review-fleet -->"
 EMOJI_KEY = "emoji"
 TITLE_KEY = "title"
 
-SeverityLevelLabel = dict[str, str]
+class SeverityLevelLabel(TypedDict):
+    emoji: str
+    title: str
+
+
 SeverityLabelSet = dict[str, SeverityLevelLabel]
 
 REVIEWERS = {
