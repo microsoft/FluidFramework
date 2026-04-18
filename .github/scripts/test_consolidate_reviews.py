@@ -16,7 +16,7 @@ from consolidate_reviews import (
     determine_verdict,
     main,
     parse_review_file,
-    severity_emoji_for_pr,
+    severity_labels_for_pr,
 )
 
 
@@ -144,7 +144,7 @@ class TestBuildReport:
             Finding("MEDIUM", "src/b.ts:20", "minor issue", "tweak it", "Testing"),
         ]
         report = build_report(findings, "https://example.com/run/1")
-        assert "1 CRITICAL, 0 HIGH, 1 MEDIUM" in report
+        assert "1 Spicy, 0 Pungent, 1 Smelly" in report
         assert "critical bug" in report
         assert "minor issue" in report
         assert "Request Changes" in report
@@ -160,12 +160,18 @@ class TestBuildReport:
 
     def test_uses_pr_hashed_emoji_set(self) -> None:
         findings = [Finding("CRITICAL", "src/a.ts:10", "desc", "fix", "Security")]
-        emoji = severity_emoji_for_pr(27071)["CRITICAL"]
+        level = severity_labels_for_pr(27071)["CRITICAL"]
         report = build_report(findings, "https://example.com/run/1", pr_number=27071)
-        assert f"| {emoji} | C1 |" in report
+        assert f"| {level['emoji']} {level['title']} | C1 |" in report
 
     def test_same_pr_number_yields_same_emoji_set(self) -> None:
-        assert severity_emoji_for_pr(12345) == severity_emoji_for_pr(12345)
+        assert severity_labels_for_pr(12345) == severity_labels_for_pr(12345)
+
+    def test_summary_uses_selected_set_titles(self) -> None:
+        findings = [Finding("CRITICAL", "src/a.ts:10", "desc", "fix", "Security")]
+        critical_title = severity_labels_for_pr(27071)["CRITICAL"]["title"]
+        report = build_report(findings, "https://example.com/run/1", pr_number=27071)
+        assert f"1 {critical_title}" in report
 
 
 class TestMain:

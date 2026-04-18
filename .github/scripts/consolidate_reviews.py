@@ -35,11 +35,27 @@ REVIEWERS = {
 # Severity ordering (highest first) and display config
 SEVERITY_ORDER = ["CRITICAL", "HIGH", "MEDIUM"]
 
-SEVERITY_EMOJI_SETS = [
-    {"CRITICAL": "🌶️", "HIGH": "🧄", "MEDIUM": "🧅"},
-    {"CRITICAL": "🦖", "HIGH": "🐊", "MEDIUM": "🐍"},
-    {"CRITICAL": "🪳", "HIGH": "🦟", "MEDIUM": "🐜"},
-    {"CRITICAL": "🚨", "HIGH": "🛑", "MEDIUM": "🚧"},
+SEVERITY_LABEL_SETS = [
+    {
+        "CRITICAL": {"emoji": "🌶️", "title": "Spicy"},
+        "HIGH": {"emoji": "🧄", "title": "Pungent"},
+        "MEDIUM": {"emoji": "🧅", "title": "Smelly"},
+    },
+    {
+        "CRITICAL": {"emoji": "🦖", "title": "Disastrous"},
+        "HIGH": {"emoji": "🐊", "title": "Dangerous"},
+        "MEDIUM": {"emoji": "🐍", "title": "Disagreeable"},
+    },
+    {
+        "CRITICAL": {"emoji": "🪳", "title": "Exterminate"},
+        "HIGH": {"emoji": "🦟", "title": "Squash"},
+        "MEDIUM": {"emoji": "🐜", "title": "Investigate"},
+    },
+    {
+        "CRITICAL": {"emoji": "🚨", "title": "Alert"},
+        "HIGH": {"emoji": "🛑", "title": "Stop"},
+        "MEDIUM": {"emoji": "🚧", "title": "Caution"},
+    },
 ]
 
 # Pattern: [SEVERITY] file:line — description — fix
@@ -134,12 +150,12 @@ def determine_verdict(findings: list[Finding]) -> tuple[str, str]:
     return "Approve", ":green_circle:"
 
 
-def severity_emoji_for_pr(pr_number: int | None) -> dict[str, str]:
-    """Pick a deterministic severity emoji set using the PR number hash."""
+def severity_labels_for_pr(pr_number: int | None) -> dict[str, dict[str, str]]:
+    """Pick a deterministic severity label set using the PR number hash."""
     if pr_number is None:
-        return SEVERITY_EMOJI_SETS[0]
+        return SEVERITY_LABEL_SETS[0]
     hash_byte = hashlib.sha256(str(pr_number).encode("utf-8")).digest()[0]
-    return SEVERITY_EMOJI_SETS[hash_byte % len(SEVERITY_EMOJI_SETS)]
+    return SEVERITY_LABEL_SETS[hash_byte % len(SEVERITY_LABEL_SETS)]
 
 
 def build_report(findings: list[Finding], run_url: str, pr_number: int | None = None) -> str:
@@ -150,7 +166,7 @@ def build_report(findings: list[Finding], run_url: str, pr_number: int | None = 
         counts[f.severity] += 1
 
     verdict_text, verdict_emoji = determine_verdict(findings)
-    severity_emoji = severity_emoji_for_pr(pr_number)
+    severity_labels = severity_labels_for_pr(pr_number)
 
     # Build findings table rows with per-severity numbering
     severity_counters = {s: 0 for s in SEVERITY_ORDER}
@@ -159,13 +175,16 @@ def build_report(findings: list[Finding], run_url: str, pr_number: int | None = 
         severity_counters[f.severity] += 1
         prefix = f.severity[0]  # C, H, or M
         label = f"{prefix}{severity_counters[f.severity]}"
-        emoji = severity_emoji[f.severity]
+        level = severity_labels[f.severity]
+        sev_display = f"{level['emoji']} {level['title']}"
         rows.append(
-            f"| {emoji} | {label} | {f.area} | `{f.location}` | {f.description} | {f.fix} |"
+            f"| {sev_display} | {label} | {f.area} | `{f.location}` | {f.description} | {f.fix} |"
         )
 
     table = "\n".join(rows)
-    summary = f"{counts['CRITICAL']} CRITICAL, {counts['HIGH']} HIGH, {counts['MEDIUM']} MEDIUM"
+    summary = ", ".join(
+        f"{counts[severity]} {severity_labels[severity]['title']}" for severity in SEVERITY_ORDER
+    )
 
     return f"""{MARKER}
 ## :telescope: PR Review Fleet Report
