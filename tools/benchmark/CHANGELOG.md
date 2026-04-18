@@ -3,6 +3,16 @@
 ## 0.57.0
 
 -   Error messages from Mocha, including timeouts, are now included in the console and output files properly.
+-   Default value for `BenchmarkDescription.type` is now documented to be `BenchmarkType.Measurement` (no functional change: just added missing documentation).
+-   Added `timeBatchAsync` and `timeAllBatchesAsync` methods to `BenchmarkTimer` for benchmarking async operations via `DurationBenchmarkCustom`.
+-   Recommend use of `benchmarkDuration` instead in dcoumentation for `collectDurationData`, and suggest setting `testType: TestType.ExecutionTime` if using `collectDurationData` if using it in a `BenchmarkFunction`.
+
+### ⚠ BREAKING CHANGES
+
+-   Removed deprecated `benchmark` and `benchmarkCustom` functions. Use `benchmarkIt` with `benchmarkDuration` instead.
+-   Removed deprecated `HookArguments` interface and its `before`/`after` fields from `DurationBenchmarkSync` and `DurationBenchmarkAsync`. Use `DurationBenchmarkCustom` or call `collectDurationData` directly from a wrapper function containing setup/teardown.
+-   Removed deprecated `OnBatch` interface and its `beforeEachBatch` field from `DurationBenchmarkSync` and `DurationBenchmarkAsync`. Use `DurationBenchmarkCustom` for per-batch setup.
+-   Removed deprecated `HookFunction` type.
 
 ## 0.56.0
 
