@@ -58,11 +58,7 @@ export default defineConfig({
 			reportsDirectory: "nyc/report-vitest",
 			reportOnFailure: true,
 			include: ["src/**/*.ts"],
-			exclude: [
-				"src/test/**",
-				"src/**/*.d.ts",
-				"src/**/index.ts",
-			],
+			exclude: ["src/test/**", "src/**/*.d.ts", "src/**/index.ts"],
 			all: true,
 			clean: true,
 		},

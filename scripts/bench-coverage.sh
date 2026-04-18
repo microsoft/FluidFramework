@@ -33,6 +33,10 @@ ARGS=(
 	--runs "$RUNS"
 	--setup "pnpm --filter '$PKG' run build"
 	--prepare "rm -rf '$PKG_DIR/nyc/report' '$PKG_DIR/nyc/report-vitest' '$PKG_DIR/nyc/.nyc_output'"
+	# Several pilot packages have known non-zero-exit test failures (real
+	# assertion gaps, documented in the PR). We still want timing data for
+	# those runs — `-i`/`--ignore-failure` lets hyperfine proceed.
+	-i
 	--export-markdown "$OUTDIR/bench-$SLUG.md"
 	--export-json "$OUTDIR/bench-$SLUG.json"
 )
