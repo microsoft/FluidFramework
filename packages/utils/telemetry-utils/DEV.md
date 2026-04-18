@@ -1,6 +1,8 @@
 # Internal entrypoint source structure for `@fluidframework/telemetry-utils`
 
-Note: index.ts is avoided as the external and internal entrypoints are reasonably different.
+Note: index.ts is avoided as the external (see [src/api.ts](#srcapits) and internal (see [src/internal.ts](#srcinternalts) entrypoints are reasonably different.
+There is no way in which a single file can act as source for both use cases as there are exports common to both that have different attributes or even definitions.
+Even if those conflicts were removed isolating internals provides clarity and offers ability to stage deprecations and refactors cleanly.
 
 ## src/main.ts
 
