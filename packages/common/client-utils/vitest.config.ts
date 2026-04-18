@@ -7,11 +7,13 @@
  * Vitest configuration — coverage pilot for packages/common/client-utils.
  * See packages/dds/tree/vitest.config.ts for the longer rationale.
  *
- *   pnpm --filter @fluid-internal/client-utils run build           # required
  *   pnpm --filter @fluid-internal/client-utils run test:coverage:vitest
  *
- * This package has a separate jest suite under `lib/test/jest/**`; vitest
- * only covers the mocha suite under `lib/test/mocha/**`. Jest coverage is
+ * Vitest runs directly on source TypeScript via its esbuild transform — no
+ * prior build step required.
+ *
+ * This package has a separate jest suite under `src/test/jest/**`; vitest
+ * only covers the mocha suite under `src/test/mocha/**`. Jest coverage is
  * out of scope for this pilot.
  */
 
@@ -34,29 +36,26 @@ export default defineConfig({
 		testTimeout: 60_000,
 		hookTimeout: 60_000,
 		// Only the mocha suite; jest tests use their own harness.
-		include: ["lib/test/mocha/**/*.{test,spec}.js"],
+		include: ["src/test/mocha/**/*.{test,spec}.ts"],
 		exclude: [
 			"**/node_modules/**",
-			"src/**",
+			"lib/**",
 			"dist/**",
-			"lib/test/jest/**",
-			"lib/test/**/*.fuzz.spec.js",
-			"lib/test/**/*.perf.spec.js",
-			"lib/test/**/*.bench.js",
+			"src/test/jest/**",
+			"src/test/**/*.fuzz.spec.ts",
+			"src/test/**/*.perf.spec.ts",
+			"src/test/**/*.bench.ts",
 		],
 		coverage: {
 			provider: "v8",
 			reporter: ["text", "html", "cobertura"],
 			reportsDirectory: "nyc/report-vitest",
 			reportOnFailure: true,
-			include: ["src/**/*.ts", "lib/**/*.js"],
+			include: ["src/**/*.ts"],
 			exclude: [
 				"src/test/**",
-				"lib/test/**",
 				"src/**/*.d.ts",
-				"lib/**/*.d.ts",
 				"src/**/index.ts",
-				"lib/**/index.js",
 			],
 			all: true,
 			clean: true,

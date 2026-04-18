@@ -7,8 +7,10 @@
  * Vitest configuration — coverage pilot for packages/dds/merge-tree.
  * See packages/dds/tree/vitest.config.ts for the longer rationale.
  *
- *   pnpm --filter @fluidframework/merge-tree run build           # required
  *   pnpm --filter @fluidframework/merge-tree run test:coverage:vitest
+ *
+ * Vitest runs directly on source TypeScript via its esbuild transform — no
+ * prior build step required.
  */
 
 import { defineConfig } from "vitest/config";
@@ -29,33 +31,30 @@ export default defineConfig({
 		isolate: true,
 		testTimeout: 60_000,
 		hookTimeout: 60_000,
-		include: ["lib/test/**/*.{test,spec}.js"],
+		include: ["src/test/**/*.{test,spec}.ts"],
 		exclude: [
 			"**/node_modules/**",
-			"src/**",
+			"lib/**",
 			"dist/**",
-			// Perf suite: @fluid-tools/benchmark needs mocha test context.
-			"lib/test/**/*.perf.spec.js",
+			// Perf suite: @fluid-tools/benchmark needs mocha's test context.
+			"src/test/**/*.perf.spec.ts",
 			// Farm suites chain `.timeout(...)` on `it()`, which vitest doesn't support.
-			"lib/test/**/*Farm.spec.js",
+			"src/test/**/*Farm.spec.ts",
 			// Property-based test that uses mocha-context APIs.
-			"lib/test/beastTest.spec.js",
-			"lib/test/**/*.fuzz.spec.js",
-			"lib/test/**/*.bench.js",
+			"src/test/beastTest.spec.ts",
+			"src/test/**/*.fuzz.spec.ts",
+			"src/test/**/*.bench.ts",
 		],
 		coverage: {
 			provider: "v8",
 			reporter: ["text", "html", "cobertura"],
 			reportsDirectory: "nyc/report-vitest",
 			reportOnFailure: true,
-			include: ["src/**/*.ts", "lib/**/*.js"],
+			include: ["src/**/*.ts"],
 			exclude: [
 				"src/test/**",
-				"lib/test/**",
 				"src/**/*.d.ts",
-				"lib/**/*.d.ts",
 				"src/**/index.ts",
-				"lib/**/index.js",
 			],
 			all: true,
 			clean: true,

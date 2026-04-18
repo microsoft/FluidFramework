@@ -7,8 +7,10 @@
  * Vitest configuration — coverage pilot for packages/runtime/id-compressor.
  * See packages/dds/tree/vitest.config.ts for the longer rationale.
  *
- *   pnpm --filter @fluidframework/id-compressor run build           # required
  *   pnpm --filter @fluidframework/id-compressor run test:coverage:vitest
+ *
+ * Vitest runs directly on source TypeScript via its esbuild transform — no
+ * prior build step required.
  */
 
 import { defineConfig } from "vitest/config";
@@ -29,28 +31,32 @@ export default defineConfig({
 		isolate: true,
 		testTimeout: 60_000,
 		hookTimeout: 60_000,
-		include: ["lib/test/**/*.{test,spec}.js"],
+		include: ["src/test/**/*.{test,spec}.ts"],
 		exclude: [
 			"**/node_modules/**",
-			"src/**",
+			"lib/**",
 			"dist/**",
-			"lib/test/**/*.fuzz.spec.js",
-			"lib/test/**/*.perf.spec.js",
-			"lib/test/**/*.bench.js",
+			"src/test/**/*.fuzz.spec.ts",
+			"src/test/**/*.perf.spec.ts",
+			"src/test/**/*.bench.ts",
+			// Snapshot tests assert on build-output paths that don't exist
+			// when running directly against source.
+			"src/test/snapshots/**",
+			// Main suite chains `.timeout(10000)` on `it()` (idCompressor.spec.ts:1575),
+			// which vitest doesn't support. Excluding the whole file is unfortunate
+			// but the surgical alternative would mean editing the test.
+			"src/test/idCompressor.spec.ts",
 		],
 		coverage: {
 			provider: "v8",
 			reporter: ["text", "html", "cobertura"],
 			reportsDirectory: "nyc/report-vitest",
 			reportOnFailure: true,
-			include: ["src/**/*.ts", "lib/**/*.js"],
+			include: ["src/**/*.ts"],
 			exclude: [
 				"src/test/**",
-				"lib/test/**",
 				"src/**/*.d.ts",
-				"lib/**/*.d.ts",
 				"src/**/index.ts",
-				"lib/**/index.js",
 			],
 			all: true,
 			clean: true,

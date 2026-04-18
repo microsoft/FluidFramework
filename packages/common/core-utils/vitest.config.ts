@@ -7,8 +7,10 @@
  * Vitest configuration — coverage pilot for packages/common/core-utils.
  * See packages/dds/tree/vitest.config.ts for the longer rationale.
  *
- *   pnpm --filter @fluidframework/core-utils run build           # required
  *   pnpm --filter @fluidframework/core-utils run test:coverage:vitest
+ *
+ * Vitest runs directly on source TypeScript via its esbuild transform — no
+ * prior build step required.
  */
 
 import { defineConfig } from "vitest/config";
@@ -29,31 +31,28 @@ export default defineConfig({
 		isolate: true,
 		testTimeout: 60_000,
 		hookTimeout: 60_000,
-		include: ["lib/test/**/*.{test,spec}.js"],
+		include: ["src/test/**/*.{test,spec}.ts"],
 		exclude: [
 			"**/node_modules/**",
-			"src/**",
+			"lib/**",
 			"dist/**",
 			// @fluid-tools/benchmark suites need mocha's test context.
-			"lib/test/bench/**",
-			"lib/test/**/*.bench.spec.js",
-			"lib/test/**/*.fuzz.spec.js",
-			"lib/test/**/*.perf.spec.js",
-			"lib/test/**/*.bench.js",
+			"src/test/bench/**",
+			"src/test/**/*.bench.spec.ts",
+			"src/test/**/*.fuzz.spec.ts",
+			"src/test/**/*.perf.spec.ts",
+			"src/test/**/*.bench.ts",
 		],
 		coverage: {
 			provider: "v8",
 			reporter: ["text", "html", "cobertura"],
 			reportsDirectory: "nyc/report-vitest",
 			reportOnFailure: true,
-			include: ["src/**/*.ts", "lib/**/*.js"],
+			include: ["src/**/*.ts"],
 			exclude: [
 				"src/test/**",
-				"lib/test/**",
 				"src/**/*.d.ts",
-				"lib/**/*.d.ts",
 				"src/**/index.ts",
-				"lib/**/index.js",
 			],
 			all: true,
 			clean: true,

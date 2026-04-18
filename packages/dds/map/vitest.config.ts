@@ -13,25 +13,17 @@
  * regressed on Node 22/24 and caused it to be disabled in CI (see
  * tools/pipelines/build-client.yml, testCoverage: false).
  *
- * Run with:
- *   pnpm --filter @fluidframework/map run build   # required before each run
  *   pnpm --filter @fluidframework/map run test:coverage:vitest
- * Output lands in `nyc/report-vitest/` (the existing `clean` script rimrafs
- * the whole `nyc` directory, so no clean-script change is needed).
  *
- * We run the compiled `lib/**` output rather than `src/**` TypeScript for
- * consistency with the tree pilot (see packages/dds/tree/vitest.config.ts for
- * the longer rationale). The v8 coverage provider follows source maps back
- * to `src/**` for line-accurate reporting.
+ * Vitest runs directly on source TypeScript via its esbuild transform — no
+ * prior build step required. (The `tree` pilot uniquely runs against `lib/**`
+ * because OXC currently lacks lowering for the `@breakingClass`/`@breakingMethod`
+ * decorators used there; see packages/dds/tree/vitest.config.ts.)
  */
 
 import { defineConfig } from "vitest/config";
 
 export default defineConfig({
-	// FF test-only subpath exports (e.g. `./internal/test`) are gated behind the
-	// `allow-ff-test-exports` export condition. Mocha enables this via Node's
-	// --conditions flag; vite has its own resolver, so we declare the condition
-	// explicitly at both top-level and under `ssr`.
 	resolve: {
 		conditions: ["allow-ff-test-exports"],
 	},
@@ -42,8 +34,6 @@ export default defineConfig({
 	},
 	test: {
 		globals: true,
-		// Shared mocha-compat shim — see file for details. Lives in build-common
-		// because it's re-used across every FF coverage-pilot package.
 		setupFiles: ["../../../common/build/build-common/vitest-test-setup.mjs"],
 
 		pool: "forks",
@@ -52,19 +42,23 @@ export default defineConfig({
 		testTimeout: 60_000,
 		hookTimeout: 60_000,
 
-		include: ["lib/test/**/*.{test,spec}.js"],
+		include: ["src/test/**/*.{test,spec}.ts"],
 		exclude: [
 			"**/node_modules/**",
-			"src/**",
+			"lib/**",
 			"dist/**",
-			// Perf/memory suites need FLUID_TEST_PERF_MODE + the benchmark mocha
-			// reporter; not applicable under vitest.
-			"lib/test/memory/**",
-			// Fuzz suites use describeStress/describeFuzz, which call
-			// `this.timeout(...)` at suite scope — unfixable under strict-ESM
-			// vitest, see tree's pilot config for details.
-			"lib/test/**/*.fuzz.spec.js",
-			"lib/test/**/*.bench.js",
+			// Perf/memory suites need FLUID_TEST_PERF_MODE and the benchmark
+			// mocha reporter; not applicable under vitest.
+			"src/test/memory/**",
+			// Snapshot comparison infrastructure is mocha-specific.
+			"src/test/snapshots/**",
+			// `directory.snapshot.spec.ts` asserts that `_dirname` ends with
+			// `(dist|lib)/test/mocha`, which fails when run against source.
+			"src/test/**/*.snapshot.spec.ts",
+			// directoryFuzzTests uses createDDSFuzzSuite (describe-scope this.timeout).
+			"src/test/**/*FuzzTests.spec.ts",
+			"src/test/**/*.fuzz.spec.ts",
+			"src/test/**/*.bench.ts",
 		],
 
 		coverage: {
@@ -72,14 +66,11 @@ export default defineConfig({
 			reporter: ["text", "html", "cobertura"],
 			reportsDirectory: "nyc/report-vitest",
 			reportOnFailure: true,
-			include: ["src/**/*.ts", "lib/**/*.js"],
+			include: ["src/**/*.ts"],
 			exclude: [
 				"src/test/**",
-				"lib/test/**",
 				"src/**/*.d.ts",
-				"lib/**/*.d.ts",
 				"src/**/index.ts",
-				"lib/**/index.js",
 			],
 			all: true,
 			clean: true,

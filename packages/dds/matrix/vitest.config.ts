@@ -7,8 +7,10 @@
  * Vitest configuration — coverage pilot for packages/dds/matrix.
  * See packages/dds/tree/vitest.config.ts for the longer rationale.
  *
- *   pnpm --filter @fluidframework/matrix run build           # required
  *   pnpm --filter @fluidframework/matrix run test:coverage:vitest
+ *
+ * Vitest runs directly on source TypeScript via its esbuild transform — no
+ * prior build step required.
  */
 
 import { defineConfig } from "vitest/config";
@@ -29,36 +31,33 @@ export default defineConfig({
 		isolate: true,
 		testTimeout: 60_000,
 		hookTimeout: 60_000,
-		include: ["lib/test/**/*.{test,spec}.js"],
+		include: ["src/test/**/*.{test,spec}.ts"],
 		exclude: [
 			"**/node_modules/**",
-			"src/**",
+			"lib/**",
 			"dist/**",
 			// Stress/fuzz/big suites use mocha-context APIs and/or
 			// describeFuzz-style helpers that don't work under vitest.
-			"lib/test/**/*.stress.spec.js",
-			"lib/test/**/*.fuzz.spec.js",
-			"lib/test/**/*.big.spec.js",
-			"lib/test/**/*.perf.spec.js",
-			"lib/test/**/*.bench.js",
+			"src/test/**/*.stress.spec.ts",
+			"src/test/**/*.fuzz.spec.ts",
+			"src/test/**/*.big.spec.ts",
+			"src/test/**/*.perf.spec.ts",
+			"src/test/**/*.bench.ts",
 			// Memory and time benchmarks use @fluid-tools/benchmark, which
 			// needs mocha's test context.
-			"lib/test/memory/**",
-			"lib/test/time/**",
+			"src/test/memory/**",
+			"src/test/time/**",
 		],
 		coverage: {
 			provider: "v8",
 			reporter: ["text", "html", "cobertura"],
 			reportsDirectory: "nyc/report-vitest",
 			reportOnFailure: true,
-			include: ["src/**/*.ts", "lib/**/*.js"],
+			include: ["src/**/*.ts"],
 			exclude: [
 				"src/test/**",
-				"lib/test/**",
 				"src/**/*.d.ts",
-				"lib/**/*.d.ts",
 				"src/**/index.ts",
-				"lib/**/index.js",
 			],
 			all: true,
 			clean: true,
