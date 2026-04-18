@@ -23,6 +23,11 @@ from dataclasses import dataclass
 from pathlib import Path
 
 MARKER = "<!-- pr-review-fleet -->"
+EMOJI_KEY = "emoji"
+TITLE_KEY = "title"
+
+SeverityLevelLabel = dict[str, str]
+SeverityLabelSet = dict[str, SeverityLevelLabel]
 
 REVIEWERS = {
     "correctness": "Correctness",
@@ -35,26 +40,26 @@ REVIEWERS = {
 # Severity ordering (highest first) and display config
 SEVERITY_ORDER = ["CRITICAL", "HIGH", "MEDIUM"]
 
-SEVERITY_LABEL_SETS = [
+SEVERITY_LABEL_SETS: list[SeverityLabelSet] = [
     {
-        "CRITICAL": {"emoji": "🌶️", "title": "Spicy"},
-        "HIGH": {"emoji": "🧄", "title": "Pungent"},
-        "MEDIUM": {"emoji": "🧅", "title": "Smelly"},
+        "CRITICAL": {EMOJI_KEY: "🌶️", TITLE_KEY: "Spicy"},
+        "HIGH": {EMOJI_KEY: "🧄", TITLE_KEY: "Pungent"},
+        "MEDIUM": {EMOJI_KEY: "🧅", TITLE_KEY: "Smelly"},
     },
     {
-        "CRITICAL": {"emoji": "🦖", "title": "Disastrous"},
-        "HIGH": {"emoji": "🐊", "title": "Dangerous"},
-        "MEDIUM": {"emoji": "🐍", "title": "Disagreeable"},
+        "CRITICAL": {EMOJI_KEY: "🦖", TITLE_KEY: "Disastrous"},
+        "HIGH": {EMOJI_KEY: "🐊", TITLE_KEY: "Dangerous"},
+        "MEDIUM": {EMOJI_KEY: "🐍", TITLE_KEY: "Disagreeable"},
     },
     {
-        "CRITICAL": {"emoji": "🪳", "title": "Exterminate"},
-        "HIGH": {"emoji": "🦟", "title": "Squash"},
-        "MEDIUM": {"emoji": "🐜", "title": "Investigate"},
+        "CRITICAL": {EMOJI_KEY: "🪳", TITLE_KEY: "Exterminate"},
+        "HIGH": {EMOJI_KEY: "🦟", TITLE_KEY: "Squash"},
+        "MEDIUM": {EMOJI_KEY: "🐜", TITLE_KEY: "Investigate"},
     },
     {
-        "CRITICAL": {"emoji": "🚨", "title": "Alert"},
-        "HIGH": {"emoji": "🛑", "title": "Stop"},
-        "MEDIUM": {"emoji": "🚧", "title": "Caution"},
+        "CRITICAL": {EMOJI_KEY: "🚨", TITLE_KEY: "Alert"},
+        "HIGH": {EMOJI_KEY: "🛑", TITLE_KEY: "Stop"},
+        "MEDIUM": {EMOJI_KEY: "🚧", TITLE_KEY: "Caution"},
     },
 ]
 
@@ -150,8 +155,14 @@ def determine_verdict(findings: list[Finding]) -> tuple[str, str]:
     return "Approve", ":green_circle:"
 
 
-def severity_labels_for_pr(pr_number: int | None) -> dict[str, dict[str, str]]:
-    """Pick a deterministic severity label set using the PR number hash."""
+def severity_labels_for_pr(pr_number: int | None) -> SeverityLabelSet:
+    """Pick a deterministic severity label set using the PR number hash.
+
+    The returned map is keyed by canonical severity (CRITICAL/HIGH/MEDIUM),
+    with display metadata at each level:
+    - emoji: icon shown in the findings table
+    - title: human-readable level name shown in report summaries/table
+    """
     if pr_number is None:
         return SEVERITY_LABEL_SETS[0]
     hash_byte = hashlib.sha256(str(pr_number).encode("utf-8")).digest()[0]
@@ -176,14 +187,14 @@ def build_report(findings: list[Finding], run_url: str, pr_number: int | None = 
         prefix = f.severity[0]  # C, H, or M
         label = f"{prefix}{severity_counters[f.severity]}"
         level = severity_labels[f.severity]
-        sev_display = f"{level['emoji']} {level['title']}"
+        sev_display = f"{level[EMOJI_KEY]} {level[TITLE_KEY]}"
         rows.append(
             f"| {sev_display} | {label} | {f.area} | `{f.location}` | {f.description} | {f.fix} |"
         )
 
     table = "\n".join(rows)
     summary = ", ".join(
-        f"{counts[severity]} {severity_labels[severity]['title']}" for severity in SEVERITY_ORDER
+        f"{counts[severity]} {severity_labels[severity][TITLE_KEY]}" for severity in SEVERITY_ORDER
     )
 
     return f"""{MARKER}
