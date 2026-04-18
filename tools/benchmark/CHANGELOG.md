@@ -2,6 +2,8 @@
 
 ## 0.57.0
 
+-   Error messages from Mocha, including timeouts, are now included in the console and output files properly.
+
 ## 0.56.0
 
 -   Add `after` to `MemoryUseModifier`.
