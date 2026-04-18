@@ -39,6 +39,9 @@ legacy.d.ts
 # Bundle analysis artifacts
 bundleAnalysis
 
+# hyperfine output from scripts/bench-coverage.sh
+.benchmarks/
+
 # Misc pipeline artifacts
 artifacts
 
