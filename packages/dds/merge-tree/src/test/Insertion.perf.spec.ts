@@ -3,12 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import {
-	type BenchmarkTimer,
-	BenchmarkType,
-	benchmarkDuration,
-	benchmarkIt,
-} from "@fluid-tools/benchmark";
+import { BenchmarkType, benchmarkDuration, benchmarkIt } from "@fluid-tools/benchmark";
 
 import { MergeTree } from "../mergeTree.js";
 import { MergeTreeDeltaType } from "../ops.js";
@@ -52,7 +47,7 @@ describe("MergeTree insertion", () => {
 		type: BenchmarkType.Measurement,
 		title: "insert at start of large tree",
 		...benchmarkDuration({
-			benchmarkFnCustom: async <T>(state: BenchmarkTimer<T>) => {
+			benchmarkFnCustom: async (state) => {
 				let startTree = constructTree(TREE_SIZE);
 				let running: boolean;
 				do {
@@ -77,7 +72,7 @@ describe("MergeTree insertion", () => {
 		type: BenchmarkType.Measurement,
 		title: "insert at middle of large tree",
 		...benchmarkDuration({
-			benchmarkFnCustom: async <T>(state: BenchmarkTimer<T>) => {
+			benchmarkFnCustom: async (state) => {
 				let middleTree = constructTree(TREE_SIZE);
 				let running: boolean;
 				do {
@@ -102,7 +97,7 @@ describe("MergeTree insertion", () => {
 		type: BenchmarkType.Measurement,
 		title: "insert at end of large tree",
 		...benchmarkDuration({
-			benchmarkFnCustom: async <T>(state: BenchmarkTimer<T>) => {
+			benchmarkFnCustom: async (state) => {
 				let endTree = constructTree(TREE_SIZE);
 				let running: boolean;
 				do {

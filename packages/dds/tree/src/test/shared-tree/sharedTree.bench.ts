@@ -6,7 +6,6 @@
 import { strict as assert } from "node:assert";
 
 import {
-	type BenchmarkTimer,
 	BenchmarkType,
 	TestType,
 	benchmarkDuration,
@@ -276,7 +275,7 @@ describe("SharedTree benchmarks", () => {
 				type: benchmarkType,
 				title: `Update value at leaf of ${numberOfNodes} deep tree ${setCount} times`,
 				...benchmarkDuration({
-					benchmarkFnCustom: async <T>(state: BenchmarkTimer<T>) => {
+					benchmarkFnCustom: async (state) => {
 						let duration: number;
 						do {
 							// Since this setup one collects data from one iteration, assert that this is what is expected.
@@ -319,7 +318,7 @@ describe("SharedTree benchmarks", () => {
 				type: benchmarkType,
 				title: `Update value at leaf of ${numberOfNodes} wide tree ${setCount} times`,
 				...benchmarkDuration({
-					benchmarkFnCustom: async <T>(state: BenchmarkTimer<T>) => {
+					benchmarkFnCustom: async (state) => {
 						let duration: number;
 						do {
 							// Since this setup one collects data from one iteration, assert that this is what is expected.
@@ -378,7 +377,7 @@ describe("SharedTree benchmarks", () => {
 				type: BenchmarkType.Measurement,
 				title: `for ${size} local commit${size === 1 ? "" : "s"}`,
 				...benchmarkDuration({
-					benchmarkFnCustom: async <T>(state: BenchmarkTimer<T>) => {
+					benchmarkFnCustom: async (state) => {
 						let duration: number;
 						do {
 							// Since this setup one collects data from one iteration, assert that this is what is expected.
@@ -428,7 +427,7 @@ describe("SharedTree benchmarks", () => {
 					type: BenchmarkType.Measurement,
 					title: `for ${commitCount} commits per peer for ${peerCount} peers`,
 					...benchmarkDuration({
-						benchmarkFnCustom: async <T>(state: BenchmarkTimer<T>) => {
+						benchmarkFnCustom: async (state) => {
 							let duration: number;
 							do {
 								// Since this setup one collects data from one iteration, assert that this is what is expected.
@@ -559,7 +558,7 @@ describe("SharedTree benchmarks", () => {
 						type: BenchmarkType.Measurement,
 						title: `Rebase ${localBranchSize} local commits over ${bunchSize} inbound commits`,
 						...benchmarkDuration({
-							benchmarkFnCustom: async <T>(state: BenchmarkTimer<T>) => {
+							benchmarkFnCustom: async (state) => {
 								let duration: number;
 								do {
 									// Since this setup collects data from one iteration, assert that this is what is expected.
@@ -607,7 +606,7 @@ describe("SharedTree benchmarks", () => {
 						type: BenchmarkType.Measurement,
 						title: `Rebase ${bunchSize} inbound commits over ${localTrunkSize} trunk commits`,
 						...benchmarkDuration({
-							benchmarkFnCustom: async <T>(state: BenchmarkTimer<T>) => {
+							benchmarkFnCustom: async (state) => {
 								let duration: number;
 								do {
 									// Since this setup collects data from one iteration, assert that this is what is expected.
@@ -660,7 +659,7 @@ describe("SharedTree benchmarks", () => {
 				type: BenchmarkType.Measurement,
 				title: `Compose ${editCount} sequence edits into a single transaction`,
 				...benchmarkDuration({
-					benchmarkFnCustom: async <T>(state: BenchmarkTimer<T>) => {
+					benchmarkFnCustom: async (state) => {
 						let duration: number;
 						do {
 							// Since this setup one collects data from one iteration, assert that this is what is expected.

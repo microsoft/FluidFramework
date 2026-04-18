@@ -5,12 +5,7 @@
 
 import { strict as assert } from "node:assert";
 
-import {
-	type BenchmarkTimer,
-	BenchmarkType,
-	benchmarkDuration,
-	benchmarkIt,
-} from "@fluid-tools/benchmark";
+import { BenchmarkType, benchmarkDuration, benchmarkIt } from "@fluid-tools/benchmark";
 
 import {
 	type ChangeFamily,
@@ -111,7 +106,7 @@ describe("EditManager - Bench", () => {
 						type,
 						title: `Rebase ${rebasedEditCount} local commits over ${trunkEditCount} trunk commits`,
 						...benchmarkDuration({
-							benchmarkFnCustom: async <T>(state: BenchmarkTimer<T>) => {
+							benchmarkFnCustom: async (state) => {
 								let duration: number;
 								do {
 									// Since this setup one collects data from one iteration, assert that this is what is expected.
@@ -150,7 +145,7 @@ describe("EditManager - Bench", () => {
 						type,
 						title: `Receive ${peerEditCount} peer commits that need to be rebased over ${trunkEditCount} trunk commits`,
 						...benchmarkDuration({
-							benchmarkFnCustom: async <T>(state: BenchmarkTimer<T>) => {
+							benchmarkFnCustom: async (state) => {
 								let duration: number;
 								do {
 									// Since this setup one collects data from one iteration, assert that this is what is expected.
@@ -193,7 +188,7 @@ describe("EditManager - Bench", () => {
 						type,
 						title: `for ${editCount} peer commits and ${editCount} trunk commits`,
 						...benchmarkDuration({
-							benchmarkFnCustom: async <T>(state: BenchmarkTimer<T>) => {
+							benchmarkFnCustom: async (state) => {
 								let duration: number;
 								do {
 									// Since this setup one collects data from one iteration, assert that this is what is expected.
@@ -243,7 +238,7 @@ describe("EditManager - Bench", () => {
 						type,
 						title: `Rebase edits from ${peerCount} peers each sending ${editsPerPeerCount} commits`,
 						...benchmarkDuration({
-							benchmarkFnCustom: async <T>(state: BenchmarkTimer<T>) => {
+							benchmarkFnCustom: async (state) => {
 								let duration: number;
 								do {
 									// Since this setup one collects data from one iteration, assert that this is what is expected.
@@ -288,7 +283,7 @@ describe("EditManager - Bench", () => {
 					type,
 					title: `Process the sequencing of ${count} local commits`,
 					...benchmarkDuration({
-						benchmarkFnCustom: async <T>(state: BenchmarkTimer<T>) => {
+						benchmarkFnCustom: async (state) => {
 							let duration: number;
 							do {
 								// Since this setup one collects data from one iteration, assert that this is what is expected.

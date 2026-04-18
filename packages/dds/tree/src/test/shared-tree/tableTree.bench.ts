@@ -10,7 +10,6 @@ import {
 	benchmarkIt,
 	BenchmarkType,
 	isInPerformanceTestingMode,
-	type BenchmarkTimer,
 	type BenchmarkTimingOptions,
 } from "@fluid-tools/benchmark";
 
@@ -54,7 +53,7 @@ function runBenchmark({
 		type: BenchmarkType.Measurement,
 		title,
 		...benchmarkDuration({
-			benchmarkFnCustom: async <T>(state: BenchmarkTimer<T>) => {
+			benchmarkFnCustom: async (state) => {
 				let duration: number;
 				do {
 					// Since this setup one collects data from one iteration, assert that this is what is expected.

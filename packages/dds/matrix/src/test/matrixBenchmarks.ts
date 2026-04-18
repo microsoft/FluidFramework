@@ -12,7 +12,6 @@ import {
 	BenchmarkType,
 	Box,
 	isInPerformanceTestingMode,
-	type BenchmarkTimer,
 	type BenchmarkTimingOptions,
 	type MemoryUseBenchmark,
 	type MemoryUseModifier,
@@ -161,7 +160,7 @@ function runExecutionTimeBenchmark({
 		type: BenchmarkType.Measurement,
 		title,
 		...benchmarkDuration({
-			benchmarkFnCustom: async <T>(state: BenchmarkTimer<T>) => {
+			benchmarkFnCustom: async (state) => {
 				let duration: number;
 				do {
 					assert.equal(
