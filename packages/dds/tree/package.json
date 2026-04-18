@@ -126,6 +126,7 @@
 		"pack:tests": "tar -cf ./tree.test-files.tar ./src/test ./dist/test ./lib/test",
 		"test": "npm run test:mocha",
 		"test:coverage": "c8 npm test",
+		"test:coverage:vitest": "vitest run --coverage",
 		"test:memory": "cross-env FLUID_TEST_PERF_MODE=1 mocha --fgrep @Memory --parallel --jobs 6",
 		"test:mocha": "echo skipping non-smoke cjs to avoid overhead && npm run test:mocha:cjs -- --fgrep @Smoke && npm run test:mocha:prod -- --fgrep @Smoke && npm run test:mocha:esm",
 		"test:mocha:cjs": "cross-env FLUID_TEST_MODULE_SYSTEM=CJS mocha",
@@ -200,6 +201,7 @@
 		"@types/easy-table": "^0.0.32",
 		"@types/mocha": "^10.0.10",
 		"@types/node": "catalog:types",
+		"@vitest/coverage-v8": "^4.1.4",
 		"ajv": "^8.17.1",
 		"ajv-formats": "^3.0.1",
 		"c8": "^10.1.3",
@@ -215,7 +217,8 @@
 		"mocha": "^11.7.5",
 		"mocha-multi-reporters": "^1.5.1",
 		"rimraf": "^6.1.3",
-		"typescript": "~5.4.5"
+		"typescript": "~5.4.5",
+		"vitest": "^4.1.4"
 	},
 	"fluidBuild": {
 		"tasks": {
