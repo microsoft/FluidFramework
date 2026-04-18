@@ -16,6 +16,7 @@ from consolidate_reviews import (
     determine_verdict,
     main,
     parse_review_file,
+    severity_emoji_for_pr,
 )
 
 
@@ -156,6 +157,15 @@ class TestBuildReport:
         report = build_report(findings, "https://example.com/run/1")
         assert "H1" in report
         assert "H2" in report
+
+    def test_uses_pr_hashed_emoji_set(self) -> None:
+        findings = [Finding("CRITICAL", "src/a.ts:10", "desc", "fix", "Security")]
+        emoji = severity_emoji_for_pr(27071)["CRITICAL"]
+        report = build_report(findings, "https://example.com/run/1", pr_number=27071)
+        assert f"| {emoji} | C1 |" in report
+
+    def test_same_pr_number_yields_same_emoji_set(self) -> None:
+        assert severity_emoji_for_pr(12345) == severity_emoji_for_pr(12345)
 
 
 class TestMain:

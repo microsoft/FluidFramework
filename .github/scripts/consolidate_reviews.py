@@ -16,6 +16,7 @@ Exit codes:
 from __future__ import annotations
 
 import argparse
+import hashlib
 import re
 import sys
 from dataclasses import dataclass
@@ -34,11 +35,12 @@ REVIEWERS = {
 # Severity ordering (highest first) and display config
 SEVERITY_ORDER = ["CRITICAL", "HIGH", "MEDIUM"]
 
-SEVERITY_EMOJI = {
-    "CRITICAL": ":red_circle:",
-    "HIGH": ":orange_circle:",
-    "MEDIUM": ":yellow_circle:",
-}
+SEVERITY_EMOJI_SETS = [
+    {"CRITICAL": "🌶️", "HIGH": "🧄", "MEDIUM": "🧅"},
+    {"CRITICAL": "🦖", "HIGH": "🐊", "MEDIUM": "🐍"},
+    {"CRITICAL": "🪳", "HIGH": "🦟", "MEDIUM": "🐜"},
+    {"CRITICAL": "🚨", "HIGH": "🛑", "MEDIUM": "🚧"},
+]
 
 # Pattern: [SEVERITY] file:line — description — fix
 FINDING_RE = re.compile(
@@ -132,7 +134,15 @@ def determine_verdict(findings: list[Finding]) -> tuple[str, str]:
     return "Approve", ":green_circle:"
 
 
-def build_report(findings: list[Finding], run_url: str) -> str:
+def severity_emoji_for_pr(pr_number: int | None) -> dict[str, str]:
+    """Pick a deterministic severity emoji set using the PR number hash."""
+    if pr_number is None:
+        return SEVERITY_EMOJI_SETS[0]
+    hash_byte = hashlib.sha256(str(pr_number).encode("utf-8")).digest()[0]
+    return SEVERITY_EMOJI_SETS[hash_byte % len(SEVERITY_EMOJI_SETS)]
+
+
+def build_report(findings: list[Finding], run_url: str, pr_number: int | None = None) -> str:
     """Build the consolidated markdown report."""
     # Count by severity
     counts = {s: 0 for s in SEVERITY_ORDER}
@@ -140,6 +150,7 @@ def build_report(findings: list[Finding], run_url: str) -> str:
         counts[f.severity] += 1
 
     verdict_text, verdict_emoji = determine_verdict(findings)
+    severity_emoji = severity_emoji_for_pr(pr_number)
 
     # Build findings table rows with per-severity numbering
     severity_counters = {s: 0 for s in SEVERITY_ORDER}
@@ -148,7 +159,7 @@ def build_report(findings: list[Finding], run_url: str) -> str:
         severity_counters[f.severity] += 1
         prefix = f.severity[0]  # C, H, or M
         label = f"{prefix}{severity_counters[f.severity]}"
-        emoji = SEVERITY_EMOJI[f.severity]
+        emoji = severity_emoji[f.severity]
         rows.append(
             f"| {emoji} | {label} | {f.area} | `{f.location}` | {f.description} | {f.fix} |"
         )
@@ -179,6 +190,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("reviews_dir", type=Path, help="Directory containing review-*.md files")
     parser.add_argument("run_url", help="URL to the workflow run")
     parser.add_argument("-o", "--output", type=Path, default=Path("report.md"), help="Output file path")
+    parser.add_argument("--pr-number", type=int, help="Pull request number for deterministic emoji set selection")
     args = parser.parse_args(argv)
 
     # Collect findings from all reviewer files
@@ -205,7 +217,7 @@ def main(argv: list[str] | None = None) -> int:
         print("All reviewers passed with no findings.")
         return 2
 
-    report = build_report(all_findings, args.run_url)
+    report = build_report(all_findings, args.run_url, args.pr_number)
     args.output.write_text(report, encoding="utf-8")
     print(f"Report written to {args.output} ({len(all_findings)} findings)")
     return 0

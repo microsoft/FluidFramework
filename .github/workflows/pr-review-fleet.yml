@@ -159,10 +159,11 @@ jobs:
       - name: Consolidate findings
         id: consolidate
         env:
+          PR_NUMBER: ${{ github.event.pull_request.number }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
           set +e
-          python3 .github/scripts/consolidate_reviews.py reviews "$RUN_URL" -o report.md
+          python3 .github/scripts/consolidate_reviews.py reviews "$RUN_URL" --pr-number "$PR_NUMBER" -o report.md
           exit_code=$?
           set -e
           if [ $exit_code -eq 2 ]; then
