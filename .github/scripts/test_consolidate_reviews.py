@@ -176,13 +176,10 @@ class TestBuildReport:
 
     def test_commit_count_affects_selection(self) -> None:
         """Commit count must actually change the hash input, not be silently ignored."""
-        import hashlib
         for pr in range(1, 200):
+            labels_without_commit_count = severity_labels_for_pr(pr)
             for cc in range(1, 10):
-                no_cc = hashlib.sha256(str(pr).encode()).digest()[0] % 4
-                with_cc = hashlib.sha256(f"{pr}:{cc}".encode()).digest()[0] % 4
-                if no_cc != with_cc:
-                    assert severity_labels_for_pr(pr) != severity_labels_for_pr(pr, commit_count=cc)
+                if labels_without_commit_count != severity_labels_for_pr(pr, commit_count=cc):
                     return
         pytest.fail("Could not find PR/commit combination that changes emoji set")
 
