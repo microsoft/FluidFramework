@@ -17,7 +17,7 @@ jobs:
     steps:
       - name: Download results
         # release notes: https://github.com/dawidd6/action-download-artifact/releases/tag/v11
-        uses: dawidd6/action-download-artifact@ac66b43f0e6a346234dd65d4d0c8fbb31cb316e5 # ratchet:dawidd6/action-download-artifact@v11
+        uses: dawidd6/action-download-artifact@8305c0f1062bb0d184d09ef4493ecb9288447732 # ratchet:dawidd6/action-download-artifact@v20
         with:
           workflow: website-validation.yml
           # workflow_conclusion: completed

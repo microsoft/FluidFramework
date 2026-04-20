@@ -1,6 +1,8 @@
 // Lightweight Codespaces profile for docs, API review, and focused package edits.
 {
 	"name": "Lightweight (Review/Docs)",
+	// Bump this version to force a codespace prebuild rebuild. See .devcontainer/README.md.
+	// prebuild-version: 1
 	"build": {
 		"dockerfile": "../Dockerfile",
 		"args": {

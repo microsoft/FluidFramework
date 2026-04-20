@@ -147,7 +147,7 @@ for (const testOpts of testMatrix) {
 		 * Scenario: Client sends a signal and connected clients receive it.
 		 *
 		 * Expected behavior: While 2 clients are connected to a container,
-		 * a signal sent by 1 client should be recieved by both clients.
+		 * a signal sent by 1 client should be received by both clients.
 		 */
 		it("can send and receive signals", async () => {
 			const { signaler, containerId } = await getOrCreateSignalerContainer(undefined, user1);
@@ -189,7 +189,7 @@ for (const testOpts of testMatrix) {
 		 * Scenario: Read and Write clients send signals and connected clients receive them.
 		 *
 		 * Expected behavior: While 2 clients are connected (1 writer, 2 readers) to a container,
-		 * a signal sent by any 1 client should be recieved by all 3 clients, regardless of read/write permissions.
+		 * a signal sent by any 1 client should be received by all 3 clients, regardless of read/write permissions.
 		 */
 		it("can send and receive read-only client signals", async function () {
 			const { signaler: writeSignaler, containerId } = await getOrCreateSignalerContainer(

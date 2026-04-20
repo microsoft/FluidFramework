@@ -9,7 +9,7 @@
  * @privateRemarks
  * This exists to be unaffected by TypeScript's version and configuration options.
  *
- * @sealed @alpha
+ * @sealed @beta
  */
 export interface FluidIterable<T> {
 	/**
@@ -30,7 +30,7 @@ export interface FluidIterable<T> {
  * Thus `any` is not particularly harmful here, and the unsafety is worth it as
  * it interacts better with the existing TypeScript `IteratorResult` interfaces where `TReturn` defaults to any.
  *
- * @sealed @alpha
+ * @sealed @beta
  */
 export interface FluidIterableIterator<T> extends FluidIterable<T> {
 	/**
@@ -55,7 +55,7 @@ export interface FluidIterableIterator<T> extends FluidIterable<T> {
  * but it may lack some of the newer APIs,
  * and might express the type slightly different from how TypeScript does in its `ReadonlyMap` type.
  *
- * @sealed @alpha
+ * @sealed @beta
  */
 export interface FluidReadonlyMap<K, V> {
 	/**
@@ -119,7 +119,7 @@ export interface FluidReadonlyMap<K, V> {
  * but it may lack some of the newer APIs,
  * and might express the type slightly different from how TypeScript does in its `Map` type.
  *
- * @sealed @alpha
+ * @sealed @beta
  */
 export interface FluidMap<K, V> extends FluidReadonlyMap<K, V> {
 	/**

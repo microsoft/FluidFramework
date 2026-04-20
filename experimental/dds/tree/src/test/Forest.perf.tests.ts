@@ -5,7 +5,14 @@
 
 import { strict as assert } from 'assert';
 
-import { BenchmarkType, benchmark, isInPerformanceTestingMode } from '@fluid-tools/benchmark';
+import {
+	BenchmarkType,
+	TestType,
+	benchmarkDuration,
+	benchmarkIt,
+	collectDurationData,
+	isInPerformanceTestingMode,
+} from '@fluid-tools/benchmark';
 import { v4 } from 'uuid';
 
 import { Forest, ForestNode } from '../Forest.js';
@@ -26,63 +33,54 @@ describe('Forest Perf', () => {
 		// Pick a single representative size for the 'Measurement' suite to keep it small.
 		const type = count === 10_000 ? BenchmarkType.Measurement : BenchmarkType.Perspective;
 
-		benchmark({
+		benchmarkIt({
 			type,
 			title: `${count} random inserts in TreeView`,
-			benchmarkFn: () => {
-				buildRandomTree(testTree, count);
-			},
+			...benchmarkDuration({ benchmarkFn: () => buildRandomTree(testTree, count) }),
 		});
 
-		let built: RevisionView | undefined;
-		let rootId: NodeId | undefined;
-		benchmark({
+		benchmarkIt({
 			type,
+			testType: TestType.ExecutionTime,
 			title: `walk ${count} node TreeView`,
-			before: () => {
-				[built, rootId] = buildRandomTree(testTree, count);
-			},
-			benchmarkFn: () => {
-				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-				const nodes = walk(built!, rootId!);
-				assert(nodes === count);
-			},
-			after: () => {
-				built = undefined;
-				rootId = undefined;
+			run: async () => {
+				const [built, rootId] = buildRandomTree(testTree, count);
+				return collectDurationData({
+					benchmarkFn: () => {
+						const nodes = walk(built, rootId);
+						assert(nodes === count);
+					},
+				});
 			},
 		});
 
-		let forest: Forest | undefined;
-		let nodes: ForestNode[];
-		benchmark({
+		benchmarkIt({
 			type,
+			testType: TestType.ExecutionTime,
 			title: `insert ${count} nodes into Forest`,
-			before: () => {
-				forest = Forest.create(true);
-				nodes = [];
+			run: async () => {
+				const forest = Forest.create(true);
+				const nodes: ForestNode[] = [];
 				for (let i = 0; i < count; i++) {
 					nodes.push(makeTestForestNode(testTree));
 				}
-			},
-			benchmarkFn: () => {
-				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-				forest!.add(nodes);
-			},
-			after: () => {
-				forest = undefined;
+				return collectDurationData({
+					benchmarkFn: () => {
+						forest.add(nodes);
+					},
+				});
 			},
 		});
 
-		let otherForest: Forest | undefined;
 		for (const otherCount of sizes) {
-			benchmark({
+			benchmarkIt({
 				type,
+				testType: TestType.ExecutionTime,
 				title: `invoke delta on Forest with ${count} nodes against Forest with ${otherCount} nodes`,
-				before: () => {
-					forest = Forest.create(true);
-					otherForest = Forest.create(true);
-					nodes = [];
+				run: async () => {
+					let forest = Forest.create(true);
+					let otherForest = Forest.create(true);
+					const nodes: ForestNode[] = [];
 					for (let i = 0; i < count; i++) {
 						nodes.push(makeTestForestNode(testTree));
 					}
@@ -93,14 +91,11 @@ describe('Forest Perf', () => {
 						otherNodes.push(makeTestForestNode(testTree));
 					}
 					otherForest = otherForest.add(otherNodes);
-				},
-				benchmarkFn: () => {
-					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-					forest!.delta(otherForest!);
-				},
-				after: () => {
-					forest = undefined;
-					otherForest = undefined;
+					return collectDurationData({
+						benchmarkFn: () => {
+							forest.delta(otherForest);
+						},
+					});
 				},
 			});
 		}

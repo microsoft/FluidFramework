@@ -4,7 +4,7 @@
  */
 
 import { describeCompat } from "@fluid-private/test-version-utils";
-import { benchmark } from "@fluid-tools/benchmark";
+import { TestType, benchmarkIt, collectDurationData } from "@fluid-tools/benchmark";
 import { ISharedCounter, SharedCounter } from "@fluidframework/counter/internal";
 import {
 	ChannelFactoryRegistry,
@@ -22,11 +22,12 @@ const testContainerConfig: ITestContainerConfig = {
 };
 
 describeCompat("SharedCounter - runtime benchmarks", "NoCompat", (getTestObjectProvider) => {
-	let provider: ITestObjectProvider;
-	const counters: ISharedCounter[] = [];
-
-	beforeEach("setup", async () => {
-		provider = getTestObjectProvider();
+	async function setup(): Promise<{
+		provider: ITestObjectProvider;
+		counters: ISharedCounter[];
+	}> {
+		const provider = getTestObjectProvider();
+		const counters: ISharedCounter[] = [];
 
 		// Create a Container for the first client.
 		const container1 = await provider.makeTestContainer(testContainerConfig);
@@ -44,16 +45,23 @@ describeCompat("SharedCounter - runtime benchmarks", "NoCompat", (getTestObjectP
 		counters[2] = await dataStore3.getSharedObject<SharedCounter>(counterId);
 
 		await provider.ensureSynchronized();
-	});
+		return { provider, counters };
+	}
 
-	benchmark({
+	benchmarkIt({
 		title: "increment value in 3 containers",
-		benchmarkFnAsync: async () => {
-			counters[0].increment(1);
-			await provider.ensureSynchronized();
-			// Something in the way the benchmark tool works makes it so we can't try to verify values;
-			// the check might pass the first time, but at some point during the samples/iterations the
-			// validation will fail and we'll see a (supposedly) successful test but an exit status 1.
+		testType: TestType.ExecutionTime,
+		run: async () => {
+			const { provider, counters } = await setup();
+			return collectDurationData({
+				benchmarkFnAsync: async () => {
+					counters[0].increment(1);
+					await provider.ensureSynchronized();
+					// Something in the way the benchmark tool works makes it so we can't try to verify values;
+					// the check might pass the first time, but at some point during the samples/iterations the
+					// validation will fail and we'll see a (supposedly) successful test but an exit status 1.
+				},
+			});
 		},
 	});
 });
