@@ -49,10 +49,10 @@ describe("MergeTree insertion", () => {
 		...benchmarkDuration({
 			benchmarkFnCustom: async (state) => {
 				let startTree = constructTree(TREE_SIZE);
-				let running: boolean;
+				let keepRunning: boolean;
 				do {
 					startTree = constructTree(TREE_SIZE);
-					running = state.timeBatch(() => {
+					keepRunning = state.timeBatch(() => {
 						for (let i = TREE_SIZE; i < TREE_SIZE + 25; i++) {
 							startTree.insertSegments(
 								0,
@@ -63,7 +63,7 @@ describe("MergeTree insertion", () => {
 							);
 						}
 					});
-				} while (running);
+				} while (keepRunning);
 			},
 		}),
 	});
@@ -74,10 +74,10 @@ describe("MergeTree insertion", () => {
 		...benchmarkDuration({
 			benchmarkFnCustom: async (state) => {
 				let middleTree = constructTree(TREE_SIZE);
-				let running: boolean;
+				let keepRunning: boolean;
 				do {
 					middleTree = constructTree(TREE_SIZE);
-					running = state.timeBatch(() => {
+					keepRunning = state.timeBatch(() => {
 						for (let i = TREE_SIZE; i < TREE_SIZE + 25; i++) {
 							middleTree.insertSegments(
 								TREE_SIZE / 2,
@@ -88,7 +88,7 @@ describe("MergeTree insertion", () => {
 							);
 						}
 					});
-				} while (running);
+				} while (keepRunning);
 			},
 		}),
 	});
@@ -99,10 +99,10 @@ describe("MergeTree insertion", () => {
 		...benchmarkDuration({
 			benchmarkFnCustom: async (state) => {
 				let endTree = constructTree(TREE_SIZE);
-				let running: boolean;
+				let keepRunning: boolean;
 				do {
 					endTree = constructTree(TREE_SIZE);
-					running = state.timeBatch(() => {
+					keepRunning = state.timeBatch(() => {
 						for (let i = TREE_SIZE; i < TREE_SIZE + 25; i++) {
 							endTree.insertSegments(
 								i,
@@ -113,7 +113,7 @@ describe("MergeTree insertion", () => {
 							);
 						}
 					});
-				} while (running);
+				} while (keepRunning);
 			},
 		}),
 	});
