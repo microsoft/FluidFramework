@@ -667,9 +667,9 @@ describe("FluidAppInsightsLogger", () => {
 				);
 				const actualSentEvent5 = trackEventSpy.getCalls().filter((call) =>
 					call.calledWithExactly({
-						name: event4.eventName,
+						name: event5.eventName,
 						properties: {
-							...event4,
+							...event5,
 						},
 					}),
 				);
