@@ -283,7 +283,9 @@ stages:
 
     - template: /tools/pipelines/templates/upload-telemetry/include-stage-upload-telemetry.yml@self
       parameters:
-        stageIdFilter: ${{ job.stageName }}
+        telemetryDescription: ${{ job.stageName }}
+        dependsOn:
+          - ${{ job.stageName }}
         telemetry_upload_steps:
           - template: /tools/pipelines/templates/upload-telemetry/include-steps-upload-stage-timing.yml@self
             parameters:

@@ -2,6 +2,7 @@
 
 ## 0.57.0
 
+-   Mocha dependency updated from v10 to v11.
 -   Error messages from Mocha, including timeouts, are now included in the console and output files properly.
 -   Default value for `BenchmarkDescription.type` is now documented to be `BenchmarkType.Measurement` (no functional change: just added missing documentation).
 -   Added `timeBatchAsync` and `timeAllBatchesAsync` methods to `BenchmarkTimer` for benchmarking async operations via `DurationBenchmarkCustom`.
