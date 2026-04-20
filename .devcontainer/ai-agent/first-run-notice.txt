@@ -7,6 +7,7 @@
   \_/       \________/   \______/   /_____( (______/         \__\/\__\/\________\/
 
 GET STARTED: Run one of the commands below:
+  start                  Not sure? An AI assistant picks the right agent for you
   dev                    Launch an agent for feature work/testing/debugging
   claude                 Launch an agent for general purpose work
 

@@ -31,6 +31,10 @@ pnpm build
 pnpm fluid-build .
 ```
 
+## Not sure which agent to use?
+
+Run `start` — an interactive assistant that asks what you want to do and launches the right agent for you.
+
 ## AI Agent Aliases
 
 These aliases are available in all terminal sessions (after installing agency):

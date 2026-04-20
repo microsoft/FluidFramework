@@ -1,6 +1,8 @@
 // For format details, see https://aka.ms/vscode-remote/devcontainer.json
 {
 	"name": "Standard",
+	// Bump this version to force a codespace prebuild rebuild. See .devcontainer/README.md.
+	// prebuild-version: 1
 	"build": {
 		"dockerfile": "Dockerfile",
 		// Update 'NODE_VERSION' to pick the desired Node.js version (default: 24)
@@ -30,7 +32,6 @@
 	"postCreateCommand": {
 		"welcome-notice": "sudo cp .devcontainer/first-run-notice.txt /usr/local/etc/vscode-dev-containers/first-run-notice.txt"
 	},
-
 	// Forward port for Tinylicious
 	"forwardPorts": [7070],
 
