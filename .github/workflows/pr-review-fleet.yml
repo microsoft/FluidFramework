@@ -13,7 +13,7 @@ name: "PR Review Fleet"
 
 on:
   workflow_run:
-    workflows: ["PR Review Fleet Dispatcher"]
+    workflows: ["PR Review Fleet Dispatcher", "PR Review Auto Router"]
     types:
       - completed
   workflow_dispatch:
