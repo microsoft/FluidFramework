@@ -166,10 +166,19 @@ export class BasicChunkCursor extends SynchronousCursor implements ChunkedCursor
 		if (this.nestedCursor !== undefined) {
 			return this.nestedCursor.mode;
 		}
-		// Compute the number of nodes deep the current depth is.
-		// We want the floor of the result, which can computed using a bitwise shift assuming the depth is less than 2^31, which seems safe.
-		// eslint-disable-next-line no-bitwise
-		const halfHeight = this.siblingStack.length >> 1;
+		this.assertChunkStacksMatchNodeDepth();
+		return this.siblingStack.length % 2 === 0
+			? CursorLocationType.Fields
+			: CursorLocationType.Nodes;
+	}
+
+	/**
+	 * Asserts that the node-only stacks (`indexOfChunkStack` and `indexWithinChunkStack`) are in sync with `siblingStack`.
+	 * Since `siblingStack` interleaves field and node levels while the node-only stacks are pushed/popped only on node-level transitions,
+	 * their length should always equal the number of node levels traversed.
+	 */
+	private assertChunkStacksMatchNodeDepth(): void {
+		const halfHeight = this.getNodeOnlyHeightFromHeight();
 		assert(
 			this.indexOfChunkStack.length === halfHeight,
 			0x51c /* unexpected indexOfChunkStack */,
@@ -178,9 +187,6 @@ export class BasicChunkCursor extends SynchronousCursor implements ChunkedCursor
 			this.indexWithinChunkStack.length === halfHeight,
 			0x51d /* unexpected indexWithinChunkStack */,
 		);
-		return this.siblingStack.length % 2 === 0
-			? CursorLocationType.Fields
-			: CursorLocationType.Nodes;
 	}
 
 	public getFieldKey(): FieldKey {
@@ -206,13 +212,19 @@ export class BasicChunkCursor extends SynchronousCursor implements ChunkedCursor
 	private getStackedChunkIndex(height: number): number {
 		assert(height % 2 === 1, "must be node height");
 		assert(height >= 0, "must not be above root");
-		// eslint-disable-next-line no-bitwise
-		return this.indexOfChunkStack[height >> 1] ?? oob();
+		return this.indexOfChunkStack[this.getNodeOnlyHeightFromHeight(height)] ?? oob();
 	}
 
 	private getStackedChunk(height: number): BasicChunk {
 		const index = this.getStackedChunkIndex(height);
 		return (this.siblingStack[height] as readonly TreeChunk[])[index] as BasicChunk;
+	}
+
+	// Returns the floor of half the height passed in, or half of `siblingStack.length` if no height is provided.
+	private getNodeOnlyHeightFromHeight(height: number = this.siblingStack.length): number {
+		// The bitwise shift computes the floor, which is valid assuming the depth is less than 2^31, which seems safe.
+		// eslint-disable-next-line no-bitwise
+		return height >> 1;
 	}
 
 	public getFieldLength(): number {
@@ -342,6 +354,7 @@ export class BasicChunkCursor extends SynchronousCursor implements ChunkedCursor
 		// at the cost of an allocation here.
 		this.index = 0;
 		this.siblings = [key];
+		this.assertChunkStacksMatchNodeDepth();
 	}
 
 	public nextField(): boolean {
@@ -371,6 +384,7 @@ export class BasicChunkCursor extends SynchronousCursor implements ChunkedCursor
 		this.indexWithinChunkStack.push(this.indexWithinChunk);
 		this.index = 0;
 		this.siblings = [...fields.keys()]; // TODO: avoid this copy
+		this.assertChunkStacksMatchNodeDepth();
 		return true;
 	}
 
@@ -440,6 +454,7 @@ export class BasicChunkCursor extends SynchronousCursor implements ChunkedCursor
 		this.siblings = siblings;
 		this.indexOfChunk = 0;
 		this.indexWithinChunk = 0;
+		this.assertChunkStacksMatchNodeDepth();
 		this.initNestedCursor();
 		return true;
 	}
@@ -502,6 +517,7 @@ export class BasicChunkCursor extends SynchronousCursor implements ChunkedCursor
 			this.indexOfChunkStack.pop() ?? fail("Unexpected indexOfChunkStack.length");
 		this.indexWithinChunk =
 			this.indexWithinChunkStack.pop() ?? fail("Unexpected indexWithinChunkStack.length");
+		this.assertChunkStacksMatchNodeDepth();
 	}
 
 	public exitNode(): void {
@@ -522,6 +538,7 @@ export class BasicChunkCursor extends SynchronousCursor implements ChunkedCursor
 		// (so a fully-iterated cursor matches a fresh cursor at the same logical position).
 		this.indexOfChunk = 0;
 		this.indexWithinChunk = 0;
+		this.assertChunkStacksMatchNodeDepth();
 	}
 
 	private getNode(): BasicChunk {

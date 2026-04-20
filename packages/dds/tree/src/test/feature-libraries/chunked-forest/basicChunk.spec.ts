@@ -190,15 +190,21 @@ describe("basic chunk", () => {
 			undefined,
 		);
 
-		// Logical node index 2 maps to chunk array index 1 (the trailing BasicChunk).
+		// Transitions from field to firstNode and then increments to nodeIndex 2,
+		// which maps to chunk array index 1 (the trailing BasicChunk).
 		cursor.enterNode(2);
 
-		// enterField drives getField, which on main looks up the parent at the
-		// logical node index (2) instead of the chunk array index (1). siblings[2]
-		// is out of bounds in the 2-chunk array, so the cast returns undefined and
-		// the subsequent field read throws.
+		// Entering the subfield of the trailing BasicChunk calls enterField, which is followed by
+		// getField, which looks up the current node (whose field we should get). This must
+		// handle the case where the index of the node does not match the index of the chunk
+		// containing the node in the siblings array held at the top of `siblingStack`.
+		// In this test, the node index is 2 and the chunk index is 1.
 		cursor.enterField(subField);
-		assert.doesNotThrow(() => cursor.getFieldLength());
+		// Validates the cursor is positioned on the subField holding the subLeaf,
+		// then enters it to confirm its value (42).
+		assert.equal(cursor.getFieldLength(), 1);
+		cursor.firstNode();
+		assert.equal(cursor.value, 42);
 	});
 
 	it("getField resolves parent via chunk array index when preceded by two multi-node chunks", () => {
@@ -227,10 +233,21 @@ describe("basic chunk", () => {
 			undefined,
 		);
 
-		// Logical node index 4 maps to chunk array index 2 (the trailing BasicChunk).
+		// Transitions from field to firstNode and then increments to nodeIndex 4,
+		// which maps to chunk array index 2 (the trailing BasicChunk).
 		cursor.enterNode(4);
+
+		// Entering the subfield of the trailing BasicChunk calls enterField, which is followed by
+		// getField, which looks up the current node (whose field we should get). This must
+		// handle the case where the index of the node does not match the index of the chunk
+		// containing the node in the siblings array held at the top of `siblingStack`.
+		// In this test, the node index is 4 and the chunk index is 2.
 		cursor.enterField(subField);
-		assert.doesNotThrow(() => cursor.getFieldLength());
+		// Validates the cursor is positioned on the subField holding the subLeaf,
+		// then enters it to confirm its value (99).
+		assert.equal(cursor.getFieldLength(), 1);
+		cursor.firstNode();
+		assert.equal(cursor.value, 99);
 	});
 
 	describe("SequenceChunk", () => {
