@@ -106,7 +106,7 @@ export interface ITestDataObject extends IFluidLoadable {
 }
 
 /**
- * Extension of {@link ITestContainerConfig} that lets a test build its channel factory registry
+ * Extension of `ITestContainerConfig` that lets a test build its channel factory registry
  * from a per-side data-runtime api rather than passing a pre-built one.
  *
  * @remarks
