@@ -53,7 +53,9 @@
 	color: var(--ifm-attr-name-color) !important;
 }
 
-// Applies text-decoration to all links in markdown/MDX content
-main a {
+// Applies text-decoration to all links in markdown/MDX content.
+// Breadcrumb links are excluded because underlines clash with their
+// own separator styling.
+main a:not(.breadcrumbs__link) {
 	text-decoration: underline;
 }

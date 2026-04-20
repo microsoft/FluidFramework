@@ -1,0 +1,408 @@
+.ffcom-playground-container {
+	display: flex;
+	flex-direction: column;
+	gap: 24px;
+}
+
+.ffcom-playground-intro {
+	color: var(--ifm-color-content-secondary);
+	font-size: 1.05rem;
+	margin-bottom: 8px;
+}
+
+/* Module Selector */
+.ffcom-playground-module-selector {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+	gap: 16px;
+}
+
+.ffcom-playground-module-card {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	text-align: left;
+	background: var(--ifm-card-background-color);
+	border: 1px solid var(--ifm-color-emphasis-300);
+	border-radius: 8px;
+	padding: 20px;
+	cursor: pointer;
+	transition:
+		border-color 0.2s,
+		box-shadow 0.2s;
+	font-family: inherit;
+	font-size: inherit;
+	color: inherit;
+	text-decoration: none !important;
+}
+
+.ffcom-playground-module-card:hover {
+	border-color: var(--ifm-color-primary);
+	box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+}
+
+.ffcom-playground-module-card-header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	width: 100%;
+	margin-bottom: 8px;
+}
+
+.ffcom-playground-module-title {
+	margin: 0;
+	font-size: 1.15rem;
+}
+
+.ffcom-playground-difficulty-badge {
+	font-size: 0.75rem;
+	font-weight: 600;
+	padding: 2px 8px;
+	border-radius: 10px;
+	text-transform: uppercase;
+}
+
+.ffcom-playground-difficulty-beginner {
+	background: #e6f4ea;
+	color: #1e7e34;
+}
+
+.ffcom-playground-difficulty-intermediate {
+	background: #fff3e0;
+	color: #e65100;
+}
+
+.ffcom-playground-difficulty-advanced {
+	background: #fce4ec;
+	color: #c62828;
+}
+
+.ffcom-playground-module-description {
+	color: var(--ifm-color-content-secondary);
+	font-size: 0.9rem;
+	margin: 0 0 12px;
+	line-height: 1.5;
+}
+
+.ffcom-playground-module-meta {
+	font-size: 0.8rem;
+	color: var(--ifm-color-content-secondary);
+	margin-top: auto;
+}
+
+/* Workspace */
+.ffcom-playground-workspace {
+	border-radius: 8px;
+	overflow: hidden;
+	border: 1px solid var(--ifm-color-emphasis-300);
+}
+
+/* Step Guide */
+.ffcom-playground-guide {
+	background: var(--ifm-card-background-color);
+	border: 1px solid var(--ifm-color-emphasis-300);
+	border-radius: 8px;
+	padding: 20px;
+}
+
+.ffcom-playground-step-title {
+	margin: 12px 0 8px;
+	font-size: 1.2rem;
+}
+
+.ffcom-playground-step-description {
+	color: var(--ifm-color-content-secondary);
+	line-height: 1.6;
+	margin: 0 0 16px;
+}
+
+.ffcom-playground-step-description code {
+	background: var(--ifm-color-emphasis-200);
+	padding: 1px 5px;
+	border-radius: 3px;
+	font-size: 0.9em;
+}
+
+/* Step Indicator */
+.ffcom-playground-step-indicator {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+}
+
+.ffcom-playground-step-text {
+	font-size: 0.85rem;
+	font-weight: 600;
+	color: var(--ifm-color-content-secondary);
+	white-space: nowrap;
+}
+
+.ffcom-playground-step-bar {
+	display: flex;
+	gap: 6px;
+	flex: 1;
+}
+
+.ffcom-playground-step-dot {
+	height: 6px;
+	flex: 1;
+	border-radius: 3px;
+	background: var(--ifm-color-emphasis-200);
+	transition: background 0.2s;
+}
+
+.ffcom-playground-step-done {
+	background: var(--ifm-color-primary);
+}
+
+.ffcom-playground-step-active {
+	background: var(--ifm-color-primary-light);
+}
+
+/* Hints */
+.ffcom-playground-hints {
+	margin-bottom: 16px;
+}
+
+.ffcom-playground-hints-title,
+.ffcom-playground-validation-title {
+	font-size: 0.9rem;
+	font-weight: 600;
+	margin: 0 0 8px;
+	color: var(--ifm-color-content-secondary);
+}
+
+.ffcom-playground-hint {
+	margin-bottom: 4px;
+}
+
+.ffcom-playground-hint-toggle {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	background: none;
+	border: none;
+	cursor: pointer;
+	font-size: 0.85rem;
+	padding: 4px 0;
+	color: var(--ifm-color-primary);
+	font-family: inherit;
+}
+
+.ffcom-playground-hint-toggle:hover {
+	text-decoration: underline;
+}
+
+.ffcom-playground-hint-arrow {
+	font-size: 0.7rem;
+	width: 12px;
+}
+
+.ffcom-playground-hint-content {
+	padding: 8px 12px 8px 18px;
+	margin: 4px 0;
+	background: var(--ifm-color-emphasis-100);
+	border-radius: 4px;
+}
+
+.ffcom-playground-hint-content code {
+	font-size: 0.82rem;
+	white-space: pre-wrap;
+	word-break: break-word;
+}
+
+/* Validation */
+.ffcom-playground-validation {
+	margin-bottom: 16px;
+}
+
+.ffcom-playground-validation-item {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	padding: 3px 0;
+	font-size: 0.85rem;
+}
+
+.ffcom-playground-validation-icon {
+	font-weight: bold;
+	width: 16px;
+	text-align: center;
+}
+
+.ffcom-playground-validation-pass {
+	color: #1e7e34;
+}
+
+.ffcom-playground-validation-fail {
+	color: #c62828;
+}
+
+.ffcom-playground-validation-label {
+	color: var(--ifm-color-content);
+}
+
+.ffcom-playground-step-complete {
+	margin-top: 8px;
+	padding: 8px 12px;
+	background: #e6f4ea;
+	color: #1e7e34;
+	border-radius: 6px;
+	font-size: 0.85rem;
+	font-weight: 600;
+}
+
+/* Navigation */
+.ffcom-playground-nav {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	margin-top: 16px;
+	padding-top: 16px;
+	border-top: 1px solid var(--ifm-color-emphasis-200);
+	gap: 8px;
+}
+
+.ffcom-playground-nav-arrow {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 36px;
+	height: 36px;
+	flex-shrink: 0;
+	border-radius: 50%;
+	border: 1px solid var(--ifm-color-emphasis-300);
+	background: transparent;
+	font-size: 1.4rem;
+	line-height: 1;
+	cursor: pointer;
+	color: var(--ifm-color-content);
+	transition:
+		background 0.2s,
+		border-color 0.2s;
+}
+
+.ffcom-playground-nav-arrow:hover:not(:disabled) {
+	background: var(--ifm-color-emphasis-100);
+}
+
+.ffcom-playground-nav-arrow:disabled {
+	opacity: 0.35;
+	cursor: not-allowed;
+}
+
+.ffcom-playground-nav-arrow--placeholder {
+	visibility: hidden;
+}
+
+.ffcom-playground-nav-group {
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: center;
+	gap: 8px;
+	flex: 1;
+	min-width: 0;
+}
+
+.ffcom-playground-nav-button {
+	padding: 8px 16px;
+	border-radius: 6px;
+	font-size: 0.85rem;
+	font-weight: 500;
+	cursor: pointer;
+	border: 1px solid var(--ifm-color-emphasis-300);
+	transition:
+		background 0.2s,
+		border-color 0.2s;
+	font-family: inherit;
+	text-decoration: none !important;
+}
+
+.ffcom-playground-nav-primary,
+.ffcom-playground-nav-active {
+	background: var(--ifm-color-primary);
+	color: white;
+	border-color: var(--ifm-color-primary);
+}
+
+.ffcom-playground-nav-primary:hover,
+.ffcom-playground-nav-active:hover {
+	background: var(--ifm-color-primary-dark);
+	color: white;
+}
+
+.ffcom-playground-nav-secondary {
+	background: transparent;
+	color: var(--ifm-color-content);
+}
+
+.ffcom-playground-nav-secondary:hover {
+	background: var(--ifm-color-emphasis-100);
+}
+
+.ffcom-playground-nav-disabled {
+	background: var(--ifm-color-emphasis-200);
+	color: var(--ifm-color-emphasis-500);
+	border-color: var(--ifm-color-emphasis-300);
+	cursor: not-allowed;
+	opacity: 0.7;
+}
+
+/* Dark mode */
+[data-theme="dark"] .ffcom-playground-difficulty-beginner {
+	background: #1b3a26;
+	color: #6fcf97;
+}
+
+[data-theme="dark"] .ffcom-playground-difficulty-intermediate {
+	background: #3e2a0e;
+	color: #ffb74d;
+}
+
+[data-theme="dark"] .ffcom-playground-difficulty-advanced {
+	background: #3e1418;
+	color: #ef9a9a;
+}
+
+[data-theme="dark"] .ffcom-playground-step-complete {
+	background: #1b3a26;
+	color: #6fcf97;
+}
+
+[data-theme="dark"] .ffcom-playground-validation-pass {
+	color: #6fcf97;
+}
+
+[data-theme="dark"] .ffcom-playground-validation-fail {
+	color: #ef9a9a;
+}
+
+/* Break out of Docusaurus content wrapper for full width */
+.ffcom-playground-container {
+	margin-left: calc(-1 * var(--ifm-spacing-horizontal));
+	margin-right: calc(-1 * var(--ifm-spacing-horizontal));
+	width: calc(100% + 2 * var(--ifm-spacing-horizontal));
+}
+
+/* Wide screen: side-by-side layout */
+@media (min-width: 997px) {
+	.ffcom-playground-container {
+		flex-direction: row;
+		align-items: flex-start;
+	}
+
+	.ffcom-playground-workspace {
+		flex: 5;
+		min-width: 0;
+	}
+
+	.ffcom-playground-guide {
+		flex: 2;
+		min-width: 260px;
+		max-width: 340px;
+		position: sticky;
+		top: calc(var(--ifm-navbar-height) + 16px);
+		max-height: calc(100vh - var(--ifm-navbar-height) - 32px);
+		overflow-y: auto;
+	}
+}
