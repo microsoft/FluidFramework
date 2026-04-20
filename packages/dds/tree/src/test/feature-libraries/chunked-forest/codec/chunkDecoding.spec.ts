@@ -25,6 +25,7 @@ import {
 	IncrementalChunkDecoder,
 	NestedArrayDecoder,
 	NodeDecoder,
+	SpecializedNodeDecoder,
 	aggregateChunks,
 	anyDecoder,
 	deaggregateChunks,
@@ -42,6 +43,8 @@ import {
 } from "../../../../feature-libraries/chunked-forest/codec/codecs.js";
 import {
 	type EncodedChunkShapeV1,
+	type EncodedChunkShape,
+	type EncodedChunkShapeVTextExperimental,
 	type EncodedFieldBatchV1OrV2,
 	type EncodedNodeShape,
 	FieldBatchFormatVersion,
@@ -574,6 +577,580 @@ describe("chunkDecoding", () => {
 				},
 			]);
 			assert.deepEqual(log, ["l1"]);
+		});
+	});
+
+	describe("SpecializedNodeDecoder", () => {
+		function makeContext(
+			identifiers: string[],
+			shapes: EncodedChunkShapeVTextExperimental[],
+		): DecoderContext<EncodedChunkShape> {
+			return new DecoderContext(
+				identifiers,
+				shapes as unknown as EncodedChunkShape[],
+				idDecodingContext,
+				undefined,
+			);
+		}
+
+		it("delegates to base when f is empty", () => {
+			const shapes: EncodedChunkShapeVTextExperimental[] = [
+				{ c: { type: "MyNode", value: false, fields: [] } },
+			];
+			const context = makeContext([], shapes);
+			const decoder = new SpecializedNodeDecoder({ base: 0, fields: [] }, context);
+			const stream = { data: [], offset: 0 };
+			const result = decoder.decode([], stream);
+			assertChunkCursorEquals(result, [{ type: brand("MyNode") }]);
+			assert.equal(stream.offset, 0);
+		});
+
+		it("overrides a field with a constant-value shape", () => {
+			// shapes[0]: base FormatNode with two variable-value fields
+			// shapes[1]: variable boolean (bold base shape — not used after override)
+			// shapes[2]: variable number (size)
+			// shapes[3]: constant false boolean (bold override — contributes 0 stream tokens)
+			const shapes: EncodedChunkShapeVTextExperimental[] = [
+				{
+					c: {
+						type: "FormatNode",
+						value: false,
+						fields: [
+							["bold", 1],
+							["size", 2],
+						],
+					},
+				},
+				{ c: { type: "boolean", value: true } },
+				{ c: { type: "number", value: true } },
+				{ c: { type: "boolean", value: [false] } },
+			];
+			const context = makeContext([], shapes);
+			const decoders = shapes.map((s) => new NodeDecoder(s.c as EncodedNodeShape, context));
+			const decoder = new SpecializedNodeDecoder({ base: 0, fields: [["bold", 3]] }, context);
+
+			// Only size=12 is in the stream; bold contributes no tokens (constant).
+			const stream = { data: [12], offset: 0 };
+			const result = decoder.decode(decoders, stream);
+
+			assertChunkCursorEquals(result, [
+				{
+					type: brand("FormatNode"),
+					fields: {
+						bold: [{ type: brand("boolean"), value: false }],
+						size: [{ type: brand("number"), value: 12 }],
+					},
+				},
+			]);
+			assert.equal(stream.offset, 1);
+		});
+
+		it("appends a field not present in the base", () => {
+			// shapes[0]: base with only "a"
+			// shapes[1]: leaf shape for "a"
+			// shapes[2]: constant leaf shape for new field "b"
+			const shapes: EncodedChunkShapeVTextExperimental[] = [
+				{ c: { type: "MyNode", value: false, fields: [["a", 1]] } },
+				{ c: { type: "leaf", value: true } },
+				{ c: { type: "leaf", value: ["extra"] } },
+			];
+			const context = makeContext([], shapes);
+			const decoders = shapes.map((s) => new NodeDecoder(s.c as EncodedNodeShape, context));
+			const decoder = new SpecializedNodeDecoder({ base: 0, fields: [["b", 2]] }, context);
+
+			const stream = { data: [99], offset: 0 };
+			const result = decoder.decode(decoders, stream);
+
+			assertChunkCursorEquals(result, [
+				{
+					type: brand("MyNode"),
+					fields: {
+						a: [{ type: brand("leaf"), value: 99 }],
+						b: [{ type: brand("leaf"), value: "extra" }],
+					},
+				},
+			]);
+			assert.equal(stream.offset, 1);
+		});
+
+		it("chains through an intermediate f shape", () => {
+			// shapes[0]: base c-shape with two variable fields
+			// shapes[1]: variable leaf
+			// shapes[2]: constant leaf
+			// shapes[3]: intermediate f — overrides "a" with constant
+			// spec: {base:3, fields:[["b", 2]]} — further overrides "b" with constant
+			const shapes: EncodedChunkShapeVTextExperimental[] = [
+				{
+					c: {
+						type: "MyNode",
+						value: false,
+						fields: [
+							["a", 1],
+							["b", 1],
+						],
+					},
+				},
+				{ c: { type: "leaf", value: true } },
+				{ c: { type: "leaf", value: ["const"] } },
+				{ f: { base: 0, fields: [["a", 2]] } },
+			];
+			const context = makeContext([], shapes);
+			const decoders = [
+				new NodeDecoder(shapes[0].c as EncodedNodeShape, context),
+				new NodeDecoder(shapes[1].c as EncodedNodeShape, context),
+				new NodeDecoder(shapes[2].c as EncodedNodeShape, context),
+				// decoders[3] is never called since SpecializedNodeDecoder resolves f chains at construction
+				new NodeDecoder(shapes[1].c as EncodedNodeShape, context),
+			];
+			const decoder = new SpecializedNodeDecoder({ base: 3, fields: [["b", 2]] }, context);
+
+			// Both fields are now constant — stream is empty.
+			const stream = { data: [], offset: 0 };
+			const result = decoder.decode(decoders, stream);
+
+			assertChunkCursorEquals(result, [
+				{
+					type: brand("MyNode"),
+					fields: {
+						a: [{ type: brand("leaf"), value: "const" }],
+						b: [{ type: brand("leaf"), value: "const" }],
+					},
+				},
+			]);
+			assert.equal(stream.offset, 0);
+		});
+
+		it("preserves base order when spec lists overrides in different order", () => {
+			// base lists fields [a, b]; spec overrides both but lists them as [b, a].
+			// Stream consumption follows merged-fields order, which the implementation
+			// derives from base order — so a is read first, then b. Both end up using
+			// shape 2 (the override target), producing type "after".
+			const shapes: EncodedChunkShapeVTextExperimental[] = [
+				{
+					c: {
+						type: "MyNode",
+						value: false,
+						fields: [
+							["a", 1],
+							["b", 1],
+						],
+					},
+				},
+				{ c: { type: "before", value: true } },
+				{ c: { type: "after", value: true } },
+			];
+			const context = makeContext([], shapes);
+			const decoders = shapes.map((s) => new NodeDecoder(s.c as EncodedNodeShape, context));
+			const decoder = new SpecializedNodeDecoder(
+				{
+					base: 0,
+					fields: [
+						["b", 2],
+						["a", 2],
+					],
+				},
+				context,
+			);
+
+			const stream = { data: [10, 20], offset: 0 };
+			const result = decoder.decode(decoders, stream);
+
+			assertChunkCursorEquals(result, [
+				{
+					type: brand("MyNode"),
+					fields: {
+						a: [{ type: brand("after"), value: 10 }],
+						b: [{ type: brand("after"), value: 20 }],
+					},
+				},
+			]);
+			assert.equal(stream.offset, 2);
+		});
+
+		it("appends new keys in spec order, after base fields", () => {
+			// base: [[a, 1]]. spec: [[x, 1], [y, 1]] — two new keys.
+			// Merged order is base-then-spec: [a, x, y]. The stream is consumed
+			// in that order, so a=10, x=20, y=30.
+			const shapes: EncodedChunkShapeVTextExperimental[] = [
+				{ c: { type: "MyNode", value: false, fields: [["a", 1]] } },
+				{ c: { type: "leaf", value: true } },
+			];
+			const context = makeContext([], shapes);
+			const decoders = shapes.map((s) => new NodeDecoder(s.c as EncodedNodeShape, context));
+			const decoder = new SpecializedNodeDecoder(
+				{
+					base: 0,
+					fields: [
+						["x", 1],
+						["y", 1],
+					],
+				},
+				context,
+			);
+
+			const stream = { data: [10, 20, 30], offset: 0 };
+			const result = decoder.decode(decoders, stream);
+
+			assertChunkCursorEquals(result, [
+				{
+					type: brand("MyNode"),
+					fields: {
+						a: [{ type: brand("leaf"), value: 10 }],
+						x: [{ type: brand("leaf"), value: 20 }],
+						y: [{ type: brand("leaf"), value: 30 }],
+					},
+				},
+			]);
+			assert.equal(stream.offset, 3);
+		});
+
+		it("interleaved spec entries: overrides land at base positions, new keys append in spec order", () => {
+			// base.fields = [[a, 1], [b, 1]]
+			// spec.fields = [[x, 1], [b, 2], [y, 1], [a, 2]] — interleaves new x, override
+			//   b, new y, override a. Merged order should be base-overrides-in-place then
+			//   new-keys-in-spec-order: [[a, 2], [b, 2], [x, 1], [y, 1]].
+			//
+			// Stream layout follows the merged order: a, b, x, y. If the implementation
+			// followed spec order instead, x would land where a should be, etc.
+			const shapes: EncodedChunkShapeVTextExperimental[] = [
+				{
+					c: {
+						type: "MyNode",
+						value: false,
+						fields: [
+							["a", 1],
+							["b", 1],
+						],
+					},
+				},
+				{ c: { type: "before", value: true } },
+				{ c: { type: "after", value: true } },
+			];
+			const context = makeContext([], shapes);
+			const decoders = shapes.map((s) => new NodeDecoder(s.c as EncodedNodeShape, context));
+			const decoder = new SpecializedNodeDecoder(
+				{
+					base: 0,
+					fields: [
+						["x", 1],
+						["b", 2],
+						["y", 1],
+						["a", 2],
+					],
+				},
+				context,
+			);
+
+			const stream = { data: [10, 20, 30, 40], offset: 0 };
+			const result = decoder.decode(decoders, stream);
+
+			// a (override → shape 2 "after") reads 10
+			// b (override → shape 2 "after") reads 20
+			// x (new, shape 1 "before") reads 30
+			// y (new, shape 1 "before") reads 40
+			assertChunkCursorEquals(result, [
+				{
+					type: brand("MyNode"),
+					fields: {
+						a: [{ type: brand("after"), value: 10 }],
+						b: [{ type: brand("after"), value: 20 }],
+						x: [{ type: brand("before"), value: 30 }],
+						y: [{ type: brand("before"), value: 40 }],
+					},
+				},
+			]);
+			assert.equal(stream.offset, 4);
+		});
+
+		it("chain: outer f extends and overrides keys added by inner f", () => {
+			// shapes[0]: base with [a].
+			// shapes[1]: variable leaf "before".
+			// shapes[2]: variable leaf "after" (the override target).
+			// shapes[3]: inner f — adds x with shape 1.
+			// outer spec: { base: 3, fields: [[x, 2], [y, 1]] }
+			//   - overrides x (added by inner) to shape 2
+			//   - adds y as a brand new key
+			// Merged order: [a (base), x (inner-added), y (outer-added)]. The outer's
+			// override of x is applied at x's existing position, not at the end.
+			const shapes: EncodedChunkShapeVTextExperimental[] = [
+				{ c: { type: "MyNode", value: false, fields: [["a", 1]] } },
+				{ c: { type: "before", value: true } },
+				{ c: { type: "after", value: true } },
+				{ f: { base: 0, fields: [["x", 1]] } },
+			];
+			const context = makeContext([], shapes);
+			const decoders = [
+				new NodeDecoder(shapes[0].c as EncodedNodeShape, context),
+				new NodeDecoder(shapes[1].c as EncodedNodeShape, context),
+				new NodeDecoder(shapes[2].c as EncodedNodeShape, context),
+				// decoders[3] is never invoked — f-chains are resolved at construction.
+				new NodeDecoder(shapes[1].c as EncodedNodeShape, context),
+			];
+			const decoder = new SpecializedNodeDecoder(
+				{
+					base: 3,
+					fields: [
+						["x", 2],
+						["y", 1],
+					],
+				},
+				context,
+			);
+
+			const stream = { data: [10, 20, 30], offset: 0 };
+			const result = decoder.decode(decoders, stream);
+
+			// a (base, shape 1) reads 10 → "before".
+			// x (inner-added, outer overrode to shape 2) reads 20 → "after".
+			// y (outer-added, shape 1) reads 30 → "before".
+			assertChunkCursorEquals(result, [
+				{
+					type: brand("MyNode"),
+					fields: {
+						a: [{ type: brand("before"), value: 10 }],
+						x: [{ type: brand("after"), value: 20 }],
+						y: [{ type: brand("before"), value: 30 }],
+					},
+				},
+			]);
+			assert.equal(stream.offset, 3);
+		});
+
+		it("overrides value to a constant", () => {
+			// Base declares value as variable (`true`). Spec pins it to a constant
+			// ["bold"], so per-occurrence the value contributes 0 stream tokens.
+			const shapes: EncodedChunkShapeVTextExperimental[] = [
+				{ c: { type: "FormatNode", value: true, fields: [] } },
+			];
+			const context = makeContext([], shapes);
+			const decoder = new SpecializedNodeDecoder({ base: 0, value: ["bold"] }, context);
+
+			const stream = { data: [], offset: 0 };
+			const result = decoder.decode([], stream);
+
+			assertChunkCursorEquals(result, [{ type: brand("FormatNode"), value: "bold" }]);
+			assert.equal(stream.offset, 0);
+		});
+
+		it("overrides value to false to narrow from variable to no-value", () => {
+			// Base declares value as variable (`true`). Spec pins it to `false` (no value).
+			// Discriminates "value" in spec semantics from a `??` fallback — `false ?? base`
+			// would incorrectly inherit from the base.
+			const shapes: EncodedChunkShapeVTextExperimental[] = [
+				{ c: { type: "FormatNode", value: true, fields: [] } },
+			];
+			const context = makeContext([], shapes);
+			const decoder = new SpecializedNodeDecoder({ base: 0, value: false }, context);
+
+			const stream = { data: [], offset: 0 };
+			const result = decoder.decode([], stream);
+
+			assertChunkCursorEquals(result, [{ type: brand("FormatNode") }]);
+			assert.equal(stream.offset, 0);
+		});
+
+		it("overrides extraFields to enable extra-field decoding", () => {
+			// Base has no extraFields. Spec adds extraFields pointing at a leaf shape.
+			// Stream carries one nested array — the extra-fields tape — containing one
+			// [key, ...data] pair: ["x", 99]. The leaf decoder reads 99.
+			const shapes: EncodedChunkShapeVTextExperimental[] = [
+				{ c: { type: "MyNode", value: false, fields: [] } },
+				{ c: { type: "leaf", value: true } },
+			];
+			const context = makeContext([], shapes);
+			const decoders = shapes.map((s) => new NodeDecoder(s.c as EncodedNodeShape, context));
+			const decoder = new SpecializedNodeDecoder({ base: 0, extraFields: 1 }, context);
+
+			const stream = { data: [["x", 99]], offset: 0 };
+			const result = decoder.decode(decoders, stream);
+
+			assertChunkCursorEquals(result, [
+				{
+					type: brand("MyNode"),
+					fields: { x: [{ type: brand("leaf"), value: 99 }] },
+				},
+			]);
+			assert.equal(stream.offset, 1);
+		});
+
+		it("inherits value, extraFields, and fields from base when spec omits them", () => {
+			// Base declares value as a constant ["base-val"], extraFields pointing at shape 1,
+			// and a single fixed field "a". Spec is `{ base: 0 }` — no overrides.
+			// All three should pass through unchanged.
+			const shapes: EncodedChunkShapeVTextExperimental[] = [
+				{
+					c: {
+						type: "MyNode",
+						value: ["base-val"],
+						fields: [["a", 1]],
+						extraFields: 1,
+					},
+				},
+				{ c: { type: "leaf", value: true } },
+			];
+			const context = makeContext([], shapes);
+			const decoders = shapes.map((s) => new NodeDecoder(s.c as EncodedNodeShape, context));
+			const decoder = new SpecializedNodeDecoder({ base: 0 }, context);
+
+			// Stream layout: a's value (10), then the extraFields nested array (one pair k=7).
+			const stream = { data: [10, ["k", 7]], offset: 0 };
+			const result = decoder.decode(decoders, stream);
+
+			assertChunkCursorEquals(result, [
+				{
+					type: brand("MyNode"),
+					value: "base-val",
+					fields: {
+						a: [{ type: brand("leaf"), value: 10 }],
+						k: [{ type: brand("leaf"), value: 7 }],
+					},
+				},
+			]);
+			assert.equal(stream.offset, 2);
+		});
+
+		it("asserts when base index is out of bounds", () => {
+			const context = makeContext([], []);
+			assert.throws(
+				() => new SpecializedNodeDecoder({ base: 0, fields: [] }, context),
+				validateAssertionError("base shape index out of bounds"),
+			);
+		});
+
+		it("asserts when base resolves to a non-node shape", () => {
+			const shapes: EncodedChunkShapeVTextExperimental[] = [
+				{ a: 0 }, // NestedArray shape, not a node shape
+			];
+			const context = makeContext([], shapes);
+			assert.throws(
+				() => new SpecializedNodeDecoder({ base: 0, fields: [] }, context),
+				validateAssertionError("specialized node shape base must resolve to a node shape"),
+			);
+		});
+
+		it("asserts on a cyclic f-chain", () => {
+			const shapes: EncodedChunkShapeVTextExperimental[] = [
+				{ f: { base: 1, fields: [] } },
+				{ f: { base: 0, fields: [] } },
+			];
+			const context = makeContext([], shapes);
+			assert.throws(
+				() => new SpecializedNodeDecoder({ base: 0, fields: [] }, context),
+				validateAssertionError("cyclic specialized node shape chain"),
+			);
+		});
+
+		it("asserts on a self-referential f-chain", () => {
+			const shapes: EncodedChunkShapeVTextExperimental[] = [{ f: { base: 0, fields: [] } }];
+			const context = makeContext([], shapes);
+			assert.throws(
+				() => new SpecializedNodeDecoder({ base: 0, fields: [] }, context),
+				validateAssertionError("cyclic specialized node shape chain"),
+			);
+		});
+
+		it("asserts on duplicate keys in spec.fields", () => {
+			const shapes: EncodedChunkShapeVTextExperimental[] = [
+				{ c: { type: "MyNode", value: false, fields: [] } },
+			];
+			const context = makeContext([], shapes);
+			assert.throws(
+				() =>
+					new SpecializedNodeDecoder(
+						{
+							base: 0,
+							fields: [
+								["k", 1],
+								["k", 2],
+							],
+						},
+						context,
+					),
+				validateAssertionError("duplicate field key in specialized node shape"),
+			);
+		});
+
+		it("asserts on duplicate resolved keys in spec.fields (string vs identifier index)", () => {
+			// Both ["k", 1] and [0, 2] resolve to the FieldKey "k" once context.identifier runs,
+			// because identifiers[0] === "k". Without the resolved-key check, both entries would
+			// silently be pushed into mergedFields.
+			const shapes: EncodedChunkShapeVTextExperimental[] = [
+				{ c: { type: "MyNode", value: false, fields: [] } },
+			];
+			const context = makeContext(["k"], shapes);
+			assert.throws(
+				() =>
+					new SpecializedNodeDecoder(
+						{
+							base: 0,
+							fields: [
+								["k", 1],
+								[0, 2],
+							],
+						},
+						context,
+					),
+				validateAssertionError("duplicate field key in specialized node shape"),
+			);
+		});
+
+		it("asserts on duplicate keys in base.fields", () => {
+			const shapes: EncodedChunkShapeVTextExperimental[] = [
+				{
+					c: {
+						type: "MyNode",
+						value: false,
+						fields: [
+							["k", 1],
+							["k", 2],
+						],
+					},
+				},
+			];
+			const context = makeContext([], shapes);
+			assert.throws(
+				() => new SpecializedNodeDecoder({ base: 0, fields: [] }, context),
+				validateAssertionError("duplicate field key in base node shape"),
+			);
+		});
+
+		it("dispatches through top-level decode() when f shape is in the batch", () => {
+			// shapes[0]: base FormatNode with one variable-boolean field "bold"
+			// shapes[1]: variable boolean
+			// shapes[2]: constant false boolean (0 stream tokens)
+			// shapes[3]: f — overrides bold to always-false
+			//
+			// data: [[3]] — anyDecoder reads shape index 3, dispatching to the f decoder.
+			// Bold is constant so nothing else is consumed; stream is fully exhausted.
+			//
+			// decode() does not inspect the version field at runtime, so v2 is used.
+			// The value is already a branded type from strictEnum, so brand() is not needed here
+			// (and would fail to infer T without contextual typing through the as unknown cast).
+			const batch = {
+				version: FieldBatchFormatVersion.v2,
+				identifiers: [],
+				shapes: [
+					{ c: { type: "FormatNode", value: false, fields: [["bold", 1]] } },
+					{ c: { type: "boolean", value: true } },
+					{ c: { type: "boolean", value: [false] } },
+					{ f: { base: 0, fields: [["bold", 2]] } },
+				],
+				data: [[3]],
+			} as unknown as EncodedFieldBatchV1OrV2;
+
+			const result = decode(batch, idDecodingContext);
+
+			assert(result.length === 1);
+			const chunk = result[0];
+			assert(chunk !== undefined);
+			assertChunkCursorEquals(chunk, [
+				{
+					type: brand("FormatNode"),
+					fields: {
+						bold: [{ type: brand("boolean"), value: false }],
+					},
+				},
+			]);
 		});
 	});
 

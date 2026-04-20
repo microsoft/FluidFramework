@@ -25,7 +25,7 @@ import {
 	encodeValue,
 } from "./compressedEncode.js";
 import type {
-	EncodedChunkShapeV1OrV2,
+	EncodedChunkShape,
 	EncodedFieldShape,
 	EncodedValueShape,
 } from "./format/index.js";
@@ -36,10 +36,7 @@ import type {
  * The fact this is also a Shape is an implementation detail of the encoder: that allows the shape it uses to be itself,
  * which is an easy way to keep all the related code together without extra objects.
  */
-export class NodeShapeBasedEncoder
-	extends Shape<EncodedChunkShapeV1OrV2>
-	implements NodeEncoder
-{
+export class NodeShapeBasedEncoder extends Shape<EncodedChunkShape> implements NodeEncoder {
 	/**
 	 * Set of keys for fields that are encoded using {@link NodeShapeBasedEncoder.specializedFieldEncoders}.
 	 * TODO: Ensure uniform chunks, encoding and identifier generation sort fields the same.
@@ -95,7 +92,7 @@ export class NodeShapeBasedEncoder
 	public encodeNode(
 		cursor: ITreeCursorSynchronous,
 		context: EncoderContext,
-		outputBuffer: BufferFormat<EncodedChunkShapeV1OrV2>,
+		outputBuffer: BufferFormat<EncodedChunkShape>,
 	): void {
 		if (this.type === undefined) {
 			outputBuffer.push(new IdentifierToken(cursor.type));
@@ -109,7 +106,7 @@ export class NodeShapeBasedEncoder
 			cursor.exitField();
 		}
 
-		const otherFieldsBuffer: BufferFormat<EncodedChunkShapeV1OrV2> = [];
+		const otherFieldsBuffer: BufferFormat<EncodedChunkShape> = [];
 
 		forEachField(cursor, () => {
 			const key = cursor.getFieldKey();
@@ -130,8 +127,8 @@ export class NodeShapeBasedEncoder
 
 	public encodeShape(
 		identifiers: DeduplicationTable<string>,
-		shapes: DeduplicationTable<Shape<EncodedChunkShapeV1OrV2>>,
-	): EncodedChunkShapeV1OrV2 {
+		shapes: DeduplicationTable<Shape<EncodedChunkShape>>,
+	): EncodedChunkShape {
 		return {
 			c: {
 				type: encodeOptionalIdentifier(this.type, identifiers),
@@ -144,7 +141,7 @@ export class NodeShapeBasedEncoder
 
 	public countReferencedShapesAndIdentifiers(
 		identifiers: Counter<string>,
-		shapeDiscovered: (shape: Shape<EncodedChunkShapeV1OrV2>) => void,
+		shapeDiscovered: (shape: Shape<EncodedChunkShape>) => void,
 	): void {
 		if (this.type !== undefined) {
 			identifiers.add(this.type);
@@ -160,7 +157,7 @@ export class NodeShapeBasedEncoder
 		}
 	}
 
-	public get shape(): Shape<EncodedChunkShapeV1OrV2> {
+	public get shape(): Shape<EncodedChunkShape> {
 		return this;
 	}
 }
@@ -168,7 +165,7 @@ export class NodeShapeBasedEncoder
 export function encodeFieldShapes(
 	fieldEncoders: readonly KeyedFieldEncoder[],
 	identifiers: DeduplicationTable<string>,
-	shapes: DeduplicationTable<Shape<EncodedChunkShapeV1OrV2>>,
+	shapes: DeduplicationTable<Shape<EncodedChunkShape>>,
 ): EncodedFieldShape[] | undefined {
 	if (fieldEncoders.length === 0) {
 		return undefined;
@@ -197,14 +194,14 @@ function encodeOptionalIdentifier(
 
 function encodeOptionalFieldShape(
 	encoder: FieldEncoder | undefined,
-	shapes: DeduplicationTable<Shape<EncodedChunkShapeV1OrV2>>,
+	shapes: DeduplicationTable<Shape<EncodedChunkShape>>,
 ): number | undefined {
 	return encoder === undefined ? undefined : dedupShape(encoder.shape, shapes);
 }
 
 function dedupShape(
-	shape: Shape<EncodedChunkShapeV1OrV2>,
-	shapes: DeduplicationTable<Shape<EncodedChunkShapeV1OrV2>>,
+	shape: Shape<EncodedChunkShape>,
+	shapes: DeduplicationTable<Shape<EncodedChunkShape>>,
 ): number {
 	return shapes.valueToIndex.get(shape) ?? fail(0xb51 /* missing shape */);
 }

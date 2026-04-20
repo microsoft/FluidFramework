@@ -42,14 +42,17 @@ import {
 import type { FieldBatchEncodingContext, IncrementalDecoder } from "./codecs.js";
 import {
 	type EncodedAnyShape,
-	type EncodedChunkShapeV1OrV2,
+	type EncodedChunkShape,
 	type EncodedChunkShapeV2,
+	type EncodedChunkShapeVTextExperimental,
 	type EncodedFieldBatchV1OrV2,
 	type EncodedFieldBatchV2,
+	type EncodedFieldShape,
 	type EncodedIncrementalChunkShape,
 	type EncodedInlineArrayShape,
 	type EncodedNestedArrayShape,
 	type EncodedNodeShape,
+	type EncodedSpecializedNodeShape,
 	type EncodedValueShape,
 	SpecialField,
 	supportsIncrementalEncoding,
@@ -97,9 +100,109 @@ export function decode(
 	);
 }
 
+/**
+ * Walks a chain of specialized node shapes (`f`) back to the concrete `c` node shape they are
+ * ultimately based on.
+ */
+function resolveToNodeShape(
+	shapeIndex: number,
+	context: DecoderContext<EncodedChunkShape>,
+	visited: Set<number> = new Set(),
+): EncodedNodeShape {
+	assert(!visited.has(shapeIndex), "cyclic specialized node shape chain");
+	visited.add(shapeIndex);
+	const encoded = context.shapes[shapeIndex];
+	assert(encoded !== undefined, "base shape index out of bounds");
+	if (encoded.c !== undefined) {
+		return encoded.c;
+	}
+	assert(
+		"f" in encoded && encoded.f !== undefined,
+		"specialized node shape base must resolve to a node shape",
+	);
+	return applySpecialization(
+		resolveToNodeShape(encoded.f.base, context, visited),
+		encoded.f,
+		context,
+	);
+}
+
+/**
+ * Produces a merged {@link EncodedNodeShape} by overlaying `spec` onto `base`.
+ *
+ * `type` is always inherited from `base`. `value` and `extraFields` are inherited from `base`
+ * unless `spec` includes them as own properties (regardless of value), in which case `spec`'s
+ * value wins.
+ *
+ * For `fields`, override entries whose key matches a key in `base.fields` replace that entry's
+ * shape index in place; override entries with keys not present in `base` are appended at the end
+ * in `spec.fields` order. Field order from `base` is preserved.
+ */
+function applySpecialization(
+	base: EncodedNodeShape,
+	spec: EncodedSpecializedNodeShape,
+	context: DecoderContext<EncodedChunkShape>,
+): EncodedNodeShape {
+	const overrides = new Map<FieldKey, number>();
+	for (const [keyEncoded, shapeIndex] of spec.fields ?? []) {
+		const key = context.identifier<FieldKey>(keyEncoded);
+		assert(!overrides.has(key), "duplicate field key in specialized node shape");
+		overrides.set(key, shapeIndex);
+	}
+
+	const mergedFields: EncodedFieldShape[] = [];
+	const overriddenKeys = new Set<FieldKey>();
+	const baseKeys = new Set<FieldKey>();
+	for (const [keyEncoded, shapeIndex] of base.fields ?? []) {
+		const key = context.identifier<FieldKey>(keyEncoded);
+		assert(!baseKeys.has(key), "duplicate field key in base node shape");
+		baseKeys.add(key);
+		const overrideShape = overrides.get(key);
+		if (overrideShape === undefined) {
+			mergedFields.push([keyEncoded, shapeIndex]);
+		} else {
+			overriddenKeys.add(key);
+			mergedFields.push([keyEncoded, overrideShape]);
+		}
+	}
+	for (const [keyEncoded, shapeIndex] of spec.fields ?? []) {
+		if (!overriddenKeys.has(context.identifier<FieldKey>(keyEncoded))) {
+			mergedFields.push([keyEncoded, shapeIndex]);
+		}
+	}
+
+	return {
+		type: base.type,
+		value: "value" in spec ? spec.value : base.value,
+		fields: mergedFields.length > 0 ? mergedFields : undefined,
+		extraFields: "extraFields" in spec ? spec.extraFields : base.extraFields,
+	};
+}
+
+/**
+ * Decoder for {@link EncodedSpecializedNodeShape}s.
+ * Merges the specialization's field overrides with the resolved base node shape, then delegates
+ * to a {@link NodeDecoder} built from the merged shape.
+ */
+export class SpecializedNodeDecoder implements ChunkDecoder {
+	private readonly inner: NodeDecoder;
+	public constructor(
+		shape: EncodedSpecializedNodeShape,
+		context: DecoderContext<EncodedChunkShape>,
+	) {
+		this.inner = new NodeDecoder(
+			applySpecialization(resolveToNodeShape(shape.base, context), shape, context),
+			context,
+		);
+	}
+	public decode(decoders: readonly ChunkDecoder[], stream: StreamCursor): TreeChunk {
+		return this.inner.decode(decoders, stream);
+	}
+}
+
 const decoderLibrary = new DiscriminatedUnionDispatcher<
-	EncodedChunkShapeV1OrV2,
-	[context: DecoderContext<EncodedChunkShapeV1OrV2>],
+	EncodedChunkShapeVTextExperimental,
+	[context: DecoderContext<EncodedChunkShape>],
 	ChunkDecoder
 >({
 	a(shape: EncodedNestedArrayShape, context): ChunkDecoder {
@@ -119,6 +222,9 @@ const decoderLibrary = new DiscriminatedUnionDispatcher<
 		context: DecoderContext<EncodedChunkShapeV2>,
 	): ChunkDecoder {
 		return new IncrementalChunkDecoder(context);
+	},
+	f(shape: EncodedSpecializedNodeShape, context): ChunkDecoder {
+		return new SpecializedNodeDecoder(shape, context);
 	},
 });
 
@@ -349,7 +455,7 @@ type BasicFieldDecoder = (
  * Get a decoder for fields of a provided (via `shape` and `context`).
  */
 function fieldDecoder(
-	context: DecoderContext<EncodedChunkShapeV1OrV2>,
+	context: DecoderContext<EncodedChunkShape>,
 	key: FieldKey,
 	shape: number,
 ): BasicFieldDecoder {
@@ -368,7 +474,7 @@ export class NodeDecoder implements ChunkDecoder {
 	private readonly fieldDecoders: readonly BasicFieldDecoder[];
 	public constructor(
 		private readonly shape: EncodedNodeShape,
-		private readonly context: DecoderContext<EncodedChunkShapeV1OrV2>,
+		private readonly context: DecoderContext<EncodedChunkShape>,
 	) {
 		this.type = shape.type === undefined ? undefined : context.identifier(shape.type);
 
