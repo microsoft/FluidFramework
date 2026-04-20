@@ -46,7 +46,7 @@ permissions:
   actions: read # Required to download artifacts from triggering workflow run
 
 concurrency:
-  group: pr-review-fleet-${{ github.event.workflow_run.id || inputs.pr_number }}
+  group: pr-review-fleet-${{ (github.event_name == 'workflow_run' && github.event.workflow_run.pull_requests[0].number) || inputs.pr_number }}
   cancel-in-progress: true
 
 jobs:
