@@ -7,7 +7,7 @@ import { strict as assert } from "assert";
 
 import { bufferToString, stringToBuffer } from "@fluid-internal/client-utils";
 import {
-	captureContainerPendingState,
+	captureFullContainerState,
 	createDetachedContainer,
 	loadFrozenContainerFromPendingState,
 	asLegacyAlpha,
@@ -64,7 +64,7 @@ const initialize = async (): Promise<{
 	};
 };
 
-describe("captureContainerPendingState", () => {
+describe("captureFullContainerState", () => {
 	it("captures state that can rehydrate a frozen container with matching data", async () => {
 		const { container, testFluidObject, urlResolver, codeLoader, documentServiceFactory } =
 			await initialize();
@@ -83,7 +83,7 @@ describe("captureContainerPendingState", () => {
 		const url = await container.getAbsoluteUrl("");
 		assert(url !== undefined, "Expected container to provide a valid absolute URL");
 
-		const pendingLocalState = await captureContainerPendingState({
+		const pendingLocalState = await captureFullContainerState({
 			urlResolver,
 			documentServiceFactory,
 			request: { url },
@@ -154,7 +154,7 @@ describe("captureContainerPendingState", () => {
 		const url = await container.getAbsoluteUrl("");
 		assert(url !== undefined, "Expected container to provide a valid absolute URL");
 
-		const pendingLocalState = await captureContainerPendingState({
+		const pendingLocalState = await captureFullContainerState({
 			urlResolver,
 			documentServiceFactory,
 			request: { url },
@@ -212,7 +212,7 @@ describe("captureContainerPendingState", () => {
 		const url = await container.getAbsoluteUrl("");
 		assert(url !== undefined, "Expected container to provide a valid absolute URL");
 
-		const pendingLocalState = await captureContainerPendingState({
+		const pendingLocalState = await captureFullContainerState({
 			urlResolver,
 			documentServiceFactory,
 			request: { url },
@@ -259,7 +259,7 @@ describe("captureContainerPendingState", () => {
 		const url = await container.getAbsoluteUrl("");
 		assert(url !== undefined, "Expected container to provide a valid absolute URL");
 
-		const pendingLocalState = await captureContainerPendingState({
+		const pendingLocalState = await captureFullContainerState({
 			urlResolver,
 			documentServiceFactory,
 			request: { url },

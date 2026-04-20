@@ -259,10 +259,10 @@ export async function loadFrozenContainerFromPendingState(
 }
 
 /**
- * Properties for {@link captureContainerPendingState}.
+ * Properties for {@link captureFullContainerState}.
  * @legacy @alpha
  */
-export interface ICaptureContainerPendingStateProps {
+export interface ICaptureFullContainerStateProps {
 	/**
 	 * The url resolver used to resolve the request into a Fluid resolved url.
 	 */
@@ -314,8 +314,8 @@ export interface ICaptureContainerPendingStateProps {
  * internally consistent: ops are anchored to the snapshot that was captured.
  * @legacy @alpha
  */
-export async function captureContainerPendingState(
-	props: ICaptureContainerPendingStateProps,
+export async function captureFullContainerState(
+	props: ICaptureFullContainerStateProps,
 ): Promise<string> {
 	const { urlResolver, documentServiceFactory, request, logger } = props;
 
@@ -335,7 +335,7 @@ export async function captureContainerPendingState(
 		// eslint-disable-next-line unicorn/no-null
 		null,
 		1,
-		"captureContainerPendingState",
+		"captureFullContainerState",
 		FetchSource.noCache,
 	);
 	const version = versions[0];
@@ -344,10 +344,10 @@ export async function captureContainerPendingState(
 			? ((await storage.getSnapshotTree(version)) ?? undefined)
 			: await storage.getSnapshot({
 					versionId: version?.id,
-					scenarioName: "captureContainerPendingState",
+					scenarioName: "captureFullContainerState",
 				});
 	if (snapshot === undefined) {
-		throw new GenericError("Failed to fetch snapshot for captureContainerPendingState");
+		throw new GenericError("Failed to fetch snapshot for captureFullContainerState");
 	}
 
 	const baseSnapshot = getSnapshotTree(snapshot);
@@ -356,12 +356,7 @@ export async function captureContainerPendingState(
 	const [structuralBlobs, attachmentBlobs, loadedGroupIdSnapshots] = await Promise.all([
 		readReferencedSnapshotBlobs(snapshot, storage),
 		captureReferencedAttachmentBlobs(baseSnapshot, storage, gcData),
-		captureGroupIdSnapshots(
-			baseSnapshot,
-			storage,
-			version?.id,
-			"captureContainerPendingState",
-		),
+		captureGroupIdSnapshots(baseSnapshot, storage, version?.id, "captureFullContainerState"),
 	]);
 	const snapshotBlobs = { ...structuralBlobs, ...attachmentBlobs };
 
@@ -371,7 +366,7 @@ export async function captureContainerPendingState(
 		undefined,
 		undefined,
 		false,
-		"captureContainerPendingState",
+		"captureFullContainerState",
 	);
 	const savedOps: ISequencedDocumentMessage[] = [];
 	let opsResult = await opsStream.read();

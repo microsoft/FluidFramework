@@ -8,7 +8,7 @@
 export function asLegacyAlpha(base: IContainer): ContainerAlpha;
 
 // @alpha @legacy
-export function captureContainerPendingState(props: ICaptureContainerPendingStateProps): Promise<string>;
+export function captureFullContainerState(props: ICaptureFullContainerStateProps): Promise<string>;
 
 // @public
 export enum ConnectionState {
@@ -48,7 +48,7 @@ export interface IBaseProtocolHandler {
 }
 
 // @alpha @legacy
-export interface ICaptureContainerPendingStateProps {
+export interface ICaptureFullContainerStateProps {
     readonly documentServiceFactory: IDocumentServiceFactory;
     readonly logger?: ITelemetryBaseLogger | undefined;
     readonly request: IRequest;
