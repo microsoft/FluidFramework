@@ -99,7 +99,7 @@ If the release notes PR has already merged but needs to be redone (e.g., new cha
 
 2. For each affected changeset, find the original commit that introduced it:
    ```bash
-   git log upstream/main --oneline --diff-filter=A -- ".changeset/<name>.md" | head -1
+   git log upstream/main --reverse --oneline --diff-filter=A -- ".changeset/<name>.md" | head -1
    ```
 
 3. Replace the incorrect PR number and commit hash with the correct ones from step 2. Match the SHA display length used by existing entries in the file (typically 10 characters) for consistency.
