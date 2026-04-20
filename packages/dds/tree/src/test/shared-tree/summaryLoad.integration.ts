@@ -67,7 +67,7 @@ async function generateOldSummaries(): Promise<void> {
 	}
 }
 
-describe.only("Summary load regression tests", () => {
+describe("Summary load regression tests", () => {
 	before(async () => {
 		await generateOldSummaries();
 	});
