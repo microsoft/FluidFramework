@@ -8,7 +8,13 @@ name: "PR Review Fleet"
 # See: https://docs.github.com/en/copilot/how-tos/copilot-cli/automate-copilot-cli/automate-with-actions
 
 on:
-  pull_request:
+  # pull_request_target runs in the base-repo context so COPILOT_GITHUB_TOKEN
+  # is available even when the PR comes from a fork. The usual risk (executing
+  # untrusted PR code with elevated permissions) is mitigated here because:
+  # 1. Prompt files are read from the base branch, not the PR HEAD.
+  # 2. The checkout below uses the PR HEAD SHA explicitly for diffing only.
+  # 3. The Copilot agent is sandboxed to shell(git:*) + read + write.
+  pull_request_target:
     types:
       - labeled
     branches:
@@ -46,9 +52,13 @@ jobs:
 
     steps:
       # ── Checkout ──
+      # Explicitly check out the PR HEAD SHA so we diff the PR content.
+      # With pull_request_target, the default ref is the base branch — without
+      # this, the diff would always be empty.
       - name: Checkout PR head
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # ratchet:actions/checkout@v6
         with:
+          ref: ${{ github.event.pull_request.head.sha }}
           fetch-depth: 0
 
       # ── Prepare the diff ──
