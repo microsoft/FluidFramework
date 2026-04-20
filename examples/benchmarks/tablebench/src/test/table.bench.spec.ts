@@ -5,10 +5,11 @@
 
 import {
 	BenchmarkType,
+	TestType,
 	type CollectedData,
 	ValueType,
-	benchmark,
 	benchmarkIt,
+	collectDurationData,
 	isInPerformanceTestingMode,
 } from "@fluid-tools/benchmark";
 import { IChannel } from "@fluidframework/datastore-definitions/legacy";
@@ -45,10 +46,11 @@ describe("Table", () => {
 		const totalCostColumn = columnNames.indexOf("Total Cost");
 		const totalProfitColumn = columnNames.indexOf("Total Profit");
 
-		benchmark({
+		benchmarkIt({
 			type: BenchmarkType.Measurement,
+			testType: TestType.ExecutionTime,
 			title: `SharedMatrix`,
-			before: () => {
+			run: async () => {
 				({ channel, processAllMessages } = create(SharedMatrix.getFactory()));
 				matrix = channel as SharedMatrix;
 				matrix.insertCols(0, columnNames.length);
@@ -61,29 +63,32 @@ describe("Table", () => {
 					}
 				}
 				processAllMessages();
-			},
-			benchmarkFn: () => {
-				for (let r = 0; r < matrix.rowCount; r++) {
-					const unitsSold = matrix.getCell(r, unitsSoldColumn) as number;
-					const unitPrice = matrix.getCell(r, unitPriceColumn) as number;
-					const unitCost = matrix.getCell(r, unitCostColumn) as number;
+				return collectDurationData({
+					benchmarkFn: () => {
+						for (let r = 0; r < matrix.rowCount; r++) {
+							const unitsSold = matrix.getCell(r, unitsSoldColumn) as number;
+							const unitPrice = matrix.getCell(r, unitPriceColumn) as number;
+							const unitCost = matrix.getCell(r, unitCostColumn) as number;
 
-					const totalRevenue = unitsSold * unitPrice;
-					const totalCost = unitsSold * unitCost;
-					const totalProfit = totalRevenue - totalCost;
+							const totalRevenue = unitsSold * unitPrice;
+							const totalCost = unitsSold * unitCost;
+							const totalProfit = totalRevenue - totalCost;
 
-					matrix.setCell(r, totalRevenueColumn, totalRevenue);
-					matrix.setCell(r, totalCostColumn, totalCost);
-					matrix.setCell(r, totalProfitColumn, totalProfit);
-				}
-				processAllMessages();
+							matrix.setCell(r, totalRevenueColumn, totalRevenue);
+							matrix.setCell(r, totalCostColumn, totalCost);
+							matrix.setCell(r, totalProfitColumn, totalProfit);
+						}
+						processAllMessages();
+					},
+				});
 			},
 		});
 
-		benchmark({
+		benchmarkIt({
 			type: BenchmarkType.Measurement,
+			testType: TestType.ExecutionTime,
 			title: `SharedTree`,
-			before: () => {
+			run: async () => {
 				({ channel, processAllMessages } = create(SharedTree.getFactory()));
 				const tree = channel as unknown as ITree;
 
@@ -92,25 +97,27 @@ describe("Table", () => {
 				table = view.root;
 
 				processAllMessages();
-			},
-			benchmarkFn: () => {
-				// Batching these updates in a transaction gives a about a 3x performance boost
-				TreeAlpha.context(table).runTransaction(() => {
-					for (const row of table) {
-						const unitsSold = row["Units Sold"];
-						const unitPrice = row["Unit Price"];
-						const unitCost = row["Unit Cost"];
+				return collectDurationData({
+					benchmarkFn: () => {
+						// Batching these updates in a transaction gives a about a 3x performance boost
+						TreeAlpha.context(table).runTransaction(() => {
+							for (const row of table) {
+								const unitsSold = row["Units Sold"];
+								const unitPrice = row["Unit Price"];
+								const unitCost = row["Unit Cost"];
 
-						const totalRevenue = unitsSold * unitPrice;
-						const totalCost = unitsSold * unitCost;
-						const totalProfit = totalRevenue - totalCost;
+								const totalRevenue = unitsSold * unitPrice;
+								const totalCost = unitsSold * unitCost;
+								const totalProfit = totalRevenue - totalCost;
 
-						row["Total Revenue"] = totalRevenue;
-						row["Total Cost"] = totalCost;
-						row["Total Profit"] = totalProfit;
-					}
+								row["Total Revenue"] = totalRevenue;
+								row["Total Cost"] = totalCost;
+								row["Total Profit"] = totalProfit;
+							}
+						});
+						processAllMessages();
+					},
 				});
-				processAllMessages();
 			},
 		});
 	});
