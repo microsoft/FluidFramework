@@ -21,6 +21,7 @@ import {
 // loadAppInsights() up front avoids that path entirely, reducing first trackEvent to ~1ms.
 describe("fluidAppInsightsLogger tests", () => {
 	let appInsightsClient: ApplicationInsights;
+	let trackEventSpy: Sinon.SinonSpy;
 
 	before(function initializeAppInsights() {
 		appInsightsClient = new ApplicationInsights({
@@ -33,17 +34,15 @@ describe("fluidAppInsightsLogger tests", () => {
 		appInsightsClient.loadAppInsights();
 	});
 
+	beforeEach(function createTrackEventSpy() {
+		trackEventSpy = spy(appInsightsClient, "trackEvent");
+	});
+
+	afterEach(function restoreSpy() {
+		trackEventSpy.restore();
+	});
+
 	describe("FluidAppInsightsLogger", () => {
-		let trackEventSpy: Sinon.SinonSpy;
-
-		beforeEach(function createTrackEventSpy() {
-			trackEventSpy = spy(appInsightsClient, "trackEvent");
-		});
-
-		afterEach(function restoreSpy() {
-			trackEventSpy.restore();
-		});
-
 		it("send() routes telemetry events to ApplicationInsights.trackEvent", () => {
 			const logger = createLogger(appInsightsClient);
 
@@ -124,16 +123,6 @@ describe("fluidAppInsightsLogger tests", () => {
 	});
 
 	describe("Telemetry Filter - filter mode", () => {
-		let trackEventSpy: Sinon.SinonSpy;
-
-		beforeEach(function createTrackEventSpy() {
-			trackEventSpy = spy(appInsightsClient, "trackEvent");
-		});
-
-		afterEach(function restoreSpy() {
-			trackEventSpy.restore();
-		});
-
 		it("exclusive filter mode sends all events when no filters are defined", () => {
 			const logger = createLogger(appInsightsClient, {
 				filtering: {
@@ -172,7 +161,6 @@ describe("fluidAppInsightsLogger tests", () => {
 	});
 
 	describe("Telemetry Filter - Category Filtering", () => {
-		let trackEventSpy: Sinon.SinonSpy;
 		const configFilters: TelemetryFilter[] = [
 			{
 				categories: ["performance", "generic"],
@@ -190,14 +178,6 @@ describe("fluidAppInsightsLogger tests", () => {
 				filters: configFilters,
 			},
 		};
-
-		beforeEach(function createTrackEventSpy() {
-			trackEventSpy = spy(appInsightsClient, "trackEvent");
-		});
-
-		afterEach(function restoreSpy() {
-			trackEventSpy.restore();
-		});
 
 		it("exclusive filtering mode DOES NOT SEND events that DO MATCH with atleast one category within a single filter containing multiple categories", () => {
 			const logger = createLogger(appInsightsClient, {
@@ -325,7 +305,6 @@ describe("fluidAppInsightsLogger tests", () => {
 	});
 
 	describe("Telemetry Filter - Namespace Filtering", () => {
-		let trackEventSpy: Sinon.SinonSpy;
 		const namespaceFilterPattern1 = "perf:latency";
 		const namespaceFilterPattern2 = "perf:memory";
 		const namespaceFilterPattern1Exception = `${namespaceFilterPattern1}:ops`;
@@ -352,14 +331,6 @@ describe("fluidAppInsightsLogger tests", () => {
 				filters: configFilters,
 			},
 		};
-
-		beforeEach(function createTrackEventSpy() {
-			trackEventSpy = spy(appInsightsClient, "trackEvent");
-		});
-
-		afterEach(function restoreSpy() {
-			trackEventSpy.restore();
-		});
 
 		it("exclusive filter mode DOES NOT SEND events that MATCH with one of multiple namespace filters", () => {
 			const logger = createLogger(appInsightsClient, exclusiveLoggerFilterConfig);
@@ -558,7 +529,6 @@ describe("fluidAppInsightsLogger tests", () => {
 	});
 
 	describe("Telemetry Filter - Category & Namespace Combination Filtering", () => {
-		let trackEventSpy: Sinon.SinonSpy;
 		const configFilters: TelemetryFilter[] = [
 			{
 				categories: ["performance"],
@@ -578,14 +548,6 @@ describe("fluidAppInsightsLogger tests", () => {
 				filters: configFilters,
 			},
 		};
-
-		beforeEach(function createTrackEventSpy() {
-			trackEventSpy = spy(appInsightsClient, "trackEvent");
-		});
-
-		afterEach(function restoreSpy() {
-			trackEventSpy.restore();
-		});
 
 		it("exclusive filter mode DOES NOT SEND events that match combination category and namespace filters unless they match a namespace exception", () => {
 			const logger = createLogger(appInsightsClient, exclusiveLoggerFilterConfig);
