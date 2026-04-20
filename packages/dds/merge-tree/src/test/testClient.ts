@@ -427,7 +427,6 @@ export class TestClient extends Client {
 		return this.findReconnectionPosition(segoff.segment, localSeq) + segoff.offset;
 	}
 
-
 	/**
 	 * Validates segments either all have attribution information or none of them.
 	 * If no segment has attribution information, returns undefined.
