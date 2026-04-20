@@ -20,7 +20,7 @@ import {
 	cursorChunk,
 	dummyRoot,
 } from "../../core/index.js";
-import { ReferenceCountedBase, hasSome } from "../../util/index.js";
+import { ReferenceCountedBase, getOrCreate, hasSome } from "../../util/index.js";
 import { SynchronousCursor, prefixFieldPath, prefixPath } from "../treeCursorUtils.js";
 
 /**
@@ -84,6 +84,23 @@ export class UniformChunk extends ReferenceCountedBase implements TreeChunk {
 export type FieldShape = readonly [FieldKey, TreeShape, number];
 
 /**
+ * Maximum topLevelLength value (exclusive) for which {@link TreeShape.withTopLevelLength}
+ * caches the resulting {@link ChunkShape}. Values at or above this threshold always
+ * create a new instance to prevent unbounded cache growth.
+ *
+ * @remarks
+ * This value is an estimation of the general size needed to cover current workflows,
+ * not a researched constant, and is safe to tune as workloads change.
+ *
+ * Raising this value captures more chunk sizes in the cache, at the cost of
+ * each `TreeShape` retaining up to `chunkShapeCacheLimit - 1` cached entries for the
+ * lifetime of the shape. Lowering it reduces memory held per `TreeShape` but forces
+ * small chunks, where the relative cost of rebuilding `positions` is highest, to pay
+ * the construction cost on every call.
+ */
+const chunkShapeCacheLimit = 8;
+
+/**
  * The "shape" of a tree.
  * Does not contain the actual values from  the tree, but describes everything else,
  * including where the values would be found in a flat values array.
@@ -110,7 +127,13 @@ export class TreeShape {
 	public readonly mayContainCompressedIds: boolean;
 
 	/**
-	 *
+	 * Cache for ChunkShape instances created by {@link withTopLevelLength}.
+	 * `topLevelLength` is always a positive integer (enforced by the {@link ChunkShape} constructor),
+	 * so the cache only ever holds entries for values in `1..chunkShapeCacheLimit - 1` to prevent unbounded growth.
+	 */
+	private readonly chunkShapeCache: Map<number, ChunkShape> = new Map();
+
+	/**
 	 * @param type - {@link TreeNodeSchemaIdentifier} used to compare shapes.
 	 * @param hasValue - whether or not the TreeShape has a value.
 	 * @param fieldsArray - an array of {@link FieldShape} values, which contains a TreeShape for each FieldKey.
@@ -125,11 +148,14 @@ export class TreeShape {
 		public readonly fieldsArray: readonly FieldShape[],
 		maybeCompressedIdLeaf: boolean = false,
 	) {
-		assert(hasValue === false || fieldsArray.length === 0, "only non-leaf can have fields");
+		assert(
+			hasValue === false || fieldsArray.length === 0,
+			0xcef /* only non-leaf can have fields */,
+		);
 		if (maybeCompressedIdLeaf) {
 			assert(
 				hasValue && type === "com.fluidframework.leaf.string",
-				"only strings can opt into maybeCompressedIdLeaf",
+				0xcf0 /* only strings can opt into maybeCompressedIdLeaf */,
 			);
 		}
 		// For non-leaf nodes, derive from whether any child shapes contain compressed ids.
@@ -176,6 +202,13 @@ export class TreeShape {
 	}
 
 	public withTopLevelLength(topLevelLength: number): ChunkShape {
+		if (topLevelLength < chunkShapeCacheLimit) {
+			return getOrCreate(
+				this.chunkShapeCache,
+				topLevelLength,
+				() => new ChunkShape(this, topLevelLength),
+			);
+		}
 		return new ChunkShape(this, topLevelLength);
 	}
 }
@@ -571,7 +604,7 @@ class Cursor extends SynchronousCursor implements ChunkedCursor {
 				const idCompressor = this.chunk.idCompressor;
 				assert(
 					idCompressor !== undefined,
-					"chunk required idCompressor but did not provide it",
+					0xcf1 /* chunk required idCompressor but did not provide it */,
 				);
 				return idCompressor.decompress(value as SessionSpaceCompressedId);
 			}

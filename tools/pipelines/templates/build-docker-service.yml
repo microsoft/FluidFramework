@@ -22,6 +22,11 @@ parameters:
     type: string
     default:
 
+  # Indicates if tests should be run with code coverage analysis.
+  - name: testCoverage
+    type: boolean
+    default: false
+
   - name: docs
     type: boolean
     default: false
@@ -441,7 +446,7 @@ extends:
           - ${{ if ne(parameters.test, '') }}:
 
             # Test - With coverage
-            - ${{ if and(eq(parameters.test, 'ci:test'), ne(variables['Build.Reason'], 'PullRequest')) }}:
+            - ${{ if eq(parameters.testCoverage, true) }}:
               - task: Docker@1
                 displayName: npm run ci:test:coverage
                 inputs:

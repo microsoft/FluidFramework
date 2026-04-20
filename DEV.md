@@ -155,6 +155,7 @@ All workspace `pnpm-workspace.yaml` files include security-hardening settings to
 | `resolutionMode` | highest | Use highest matching version (see explanation below) |
 | `blockExoticSubdeps` | true | Block transitive deps from using git/tarball sources |
 | `trustPolicy` | no-downgrade | Fail if package trust/verification level decreases |
+| `trustPolicyExclude` | [] | Packages excluded from `trustPolicy` enforcement (see note below) |
 | `strictDepBuilds` | true | Require explicit approval for dependency build scripts |
 
 ### Why `resolutionMode: highest` instead of `time-based`
@@ -171,6 +172,12 @@ However, with `resolutionMode: time-based`, the "anchor" time for a transitive d
 This behavior is desired. However, pnpm does NOT attempt downward resolution to find a version that works (e.g., 1.0.0). Instead, it throws an error with no automatic fallback.
 
 With `resolutionMode: highest`, we still get protection from `minimumReleaseAge: 1440`, which blocks any package published within the last 24 hours. This provides supply chain protection without the transitive dependency resolution issues.
+
+### Trust Policy Exclusions (`trustPolicyExclude`)
+
+`trustPolicyExclude` lists packages that are exempt from `trustPolicy: no-downgrade` enforcement. This is needed for packages that are known to be safe but were published at a date after another version of the same package (including later major versions) that had better provenance information — causing pnpm to incorrectly treat the newer version as a trust downgrade.
+
+**This list must be reviewed carefully before adding any entry.** Only add a package here after confirming it is safe and understanding why its publication order triggers the policy.
 
 ### Build Script Approval (`strictDepBuilds`)
 

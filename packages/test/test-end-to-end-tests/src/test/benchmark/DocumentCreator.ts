@@ -3,19 +3,15 @@
  * Licensed under the MIT License.
  */
 
+import { DocumentType, DocumentTypeInfo } from "@fluid-private/test-version-utils";
 import {
-	BenchmarkType,
-	DocumentType,
-	DocumentTypeInfo,
-	isMemoryTest,
-} from "@fluid-private/test-version-utils";
-import {
-	BenchmarkArguments,
-	BenchmarkTimer,
-	IMemoryTestObject,
+	type BenchmarkTimer,
+	MemoryUseCallbacks,
 	Phase,
-	benchmark,
-	benchmarkMemory,
+	benchmarkDuration,
+	benchmarkIt,
+	benchmarkMemoryUse,
+	isInPerformanceTestingMode,
 } from "@fluid-tools/benchmark";
 import { IContainer } from "@fluidframework/container-definitions/internal";
 import { ISummarizer } from "@fluidframework/container-runtime/internal";
@@ -33,7 +29,6 @@ import { DocumentMultipleDds } from "./DocumentMultipleDataStores.js";
 export interface IDocumentCreatorProps {
 	testName: string;
 	provider: ITestObjectProvider;
-	benchmarkType: BenchmarkType;
 	documentType: DocumentType;
 	documentTypeInfo: DocumentTypeInfo;
 }
@@ -74,7 +69,6 @@ export function createDocument(props: IDocumentCreatorProps): IDocumentLoaderAnd
 				namespace: "FFEngineering",
 				driverType: props.provider.driver.type,
 				driverEndpointName: props.provider.driver.endpointName,
-				benchmarkType: props.benchmarkType,
 				testDocument: props.testName,
 				testDocumentType: props.documentType,
 				details: JSON.stringify(props.documentTypeInfo),
@@ -98,63 +92,82 @@ export function createDocument(props: IDocumentCreatorProps): IDocumentLoaderAnd
 }
 
 export interface IBenchmarkParameters {
+	/**
+	 * The minimum number of samples to collect for this benchmark.
+	 * @remarks
+	 * Slow benchmarks can provide a small number here to to speed up the test by opting into allowing noisier results by taking fewer samples.
+	 */
 	readonly minSampleCount?: number;
+	/**
+	 * The main function that will be executed for each benchmark iteration.
+	 */
 	readonly run: () => Promise<void>;
-	readonly beforeIteration?: () => void;
-	readonly afterIteration?: () => void;
+	/**
+	 * Run once before any of the benchmark iterations start.
+	 */
 	readonly before?: () => Promise<void>;
-	readonly after?: () => Promise<void>;
-	readonly beforeEachBatch?: () => void;
 }
 /**
  * In order to share the files between memory and benchmark tests, we need to create a test object that can be passed and used
  * in both tests. This function creates the test object and calls the appropriate test function.
  * @param title - The title of the test.
- * @param obj - The test object that will be persisted across runs (mainly used on Memory runs).
- * @param params - The {@link IBenchmarkParameters} parameters for the test.
+ * @param createObj - Factory that creates a fresh test object for each test type (memory and duration).
  */
-export function benchmarkAll<T extends IBenchmarkParameters>(title: string, obj: T): void {
-	if (isMemoryTest()) {
-		const t: IMemoryTestObject = {
+export function benchmarkAll<T extends IBenchmarkParameters>(
+	title: string,
+	createObj: () => T,
+): void {
+	// In performance testing mode, the tests are much longer
+	// and the mocharc sets a much longer timeout per test accordingly.
+	// Calling .timeout() on the returned test overrides that,
+	// so we need to provide suitable timeouts for both cases here.
+	// As some of these tests do lot of operations to rather large data sets,
+	// they are quite slow and need long timeouts.
+	const timeout = isInPerformanceTestingMode ? 1_000_000 : 20_000;
+
+	{
+		const obj = createObj();
+		benchmarkIt({
 			title,
-			...obj,
-			run: obj.run.bind(obj),
-			beforeIteration: obj.beforeIteration?.bind(obj),
-			afterIteration: obj.afterIteration?.bind(obj),
-			before: obj.before?.bind(obj),
-			after: obj.after?.bind(obj),
-		};
-		benchmarkMemory(t);
-	} else {
-		const runMethod = obj.run.bind(obj);
-		const beforeMethod = obj.before?.bind(obj);
-		const afterMethod = obj.after?.bind(obj);
-		const t1: BenchmarkArguments = {
+			...benchmarkMemoryUse({
+				// These tests are quite slow, so force a really low iteration count.
+				// If we need better data at some point, we can look into raising it.
+				keepIterations: Math.min(obj.minSampleCount ?? 1, 1),
+				warmUpIterations: (obj.minSampleCount ?? 1) > 1 ? 1 : 0,
+				benchmarkFn: async (state: MemoryUseCallbacks) => {
+					await obj.before?.();
+					while (state.continue()) {
+						await state.beforeAllocation();
+						await obj.run();
+						await state.whileAllocated();
+					}
+				},
+			}),
+		}).timeout(timeout);
+	}
+
+	{
+		const obj = createObj();
+		benchmarkIt({
 			title,
-			...obj,
-			benchmarkFnCustom: async <T1>(state: BenchmarkTimer<T1>) => {
-				let duration: number;
-				do {
-					await beforeMethod?.();
-					const before = state.timer.now();
-					await runMethod();
-					const after = state.timer.now();
-					duration = state.timer.toSeconds(before, after);
-					await afterMethod?.();
-					// Collect data
-				} while (state.recordBatch(duration));
-			},
-			before: obj.before?.bind(obj),
-			after: obj.after?.bind(obj),
-			beforeEachBatch: obj.beforeEachBatch?.bind(obj),
-		};
-		// Force batch size to be always 1
-		t1.minBatchDurationSeconds = 0;
-		if (obj.minSampleCount !== undefined) {
-			t1.minBatchCount = obj.minSampleCount;
-		}
-		// No need to warm up
-		t1.startPhase = Phase.CollectData;
-		benchmark(t1);
+			...benchmarkDuration({
+				benchmarkFnCustom: async <T1>(state: BenchmarkTimer<T1>) => {
+					await obj.before?.();
+					let duration: number;
+					do {
+						const before = state.timer.now();
+						await obj.run();
+						const after = state.timer.now();
+						duration = state.timer.toSeconds(before, after);
+						// Collect data
+					} while (state.recordBatch(duration));
+				},
+				// Force batch size to be always 1
+				minBatchDurationSeconds: 0,
+				...(obj.minSampleCount !== undefined ? { minBatchCount: obj.minSampleCount } : {}),
+				// No need to warm up
+				startPhase: Phase.CollectData,
+			}),
+		}).timeout(timeout);
 	}
 }

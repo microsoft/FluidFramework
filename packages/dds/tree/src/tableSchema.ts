@@ -8,13 +8,13 @@ import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import { EmptyKey } from "./core/index.js";
 import { TreeAlpha } from "./shared-tree/index.js";
-import type { SchemaFactoryBeta } from "./simple-tree/index.js";
 import {
 	type FieldHasDefault,
 	type ImplicitAllowedTypes,
 	type InsertableObjectFromSchemaRecord,
 	type InsertableTreeNodeFromImplicitAllowedTypes,
 	type NodeKind,
+	type SchemaFactoryBeta,
 	type ScopedSchemaName,
 	TreeArrayNode,
 	type TreeNode,
@@ -32,8 +32,12 @@ import {
 	type TreeRecordNode,
 	objectSchema,
 	eraseSchemaDetailsSubclassable,
-	// eslint-disable-next-line @typescript-eslint/no-unused-vars, unused-imports/no-unused-imports -- This makes the API report slightly cleaner.
+	// #region Unused imports to make d.ts cleaner
+	/* eslint-disable unused-imports/no-unused-imports, @typescript-eslint/no-unused-vars */
 	TreeNodeSchemaCore,
+	FieldKind,
+	/* eslint-enable unused-imports/no-unused-imports, @typescript-eslint/no-unused-vars */
+	// #endregion
 	type TransactionConstraintAlpha,
 	createCustomizedFluidFrameworkScopedFactory,
 } from "./simple-tree/index.js";
