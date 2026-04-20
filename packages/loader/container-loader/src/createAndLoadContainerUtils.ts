@@ -38,8 +38,12 @@ import {
 } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
-import { captureReferencedAttachmentBlobs } from "./captureAttachmentBlobs.js";
-import { getBlobContentsFromTree } from "./containerStorageAdapter.js";
+import {
+	captureGroupIdSnapshots,
+	captureReferencedAttachmentBlobs,
+	parseGcSnapshotData,
+	readReferencedSnapshotBlobs,
+} from "./captureReferencedContents.js";
 import { DebugLogger } from "./debugLogger.js";
 import { createFrozenDocumentServiceFactory } from "./frozenServices.js";
 import { Loader } from "./loader.js";
@@ -285,22 +289,25 @@ export interface ICaptureContainerPendingStateProps {
  * format produced by a live container's pending-state serialization, and can
  * be handed to {@link loadExistingContainer} as `pendingLocalState`.
  *
- * The captured state consists of the latest snapshot (with inlined structural
- * blobs and attachment blob contents), the container url, and all ops with
- * sequence numbers after the snapshot's sequence number (as read from the
- * snapshot's attributes blob).
+ * The output is a self-contained view of the container's referenced graph:
+ * the latest snapshot, pre-fetched snapshots for every loading-group
+ * declared by datastores, inlined contents of every blob reachable through
+ * referenced subtrees, inlined contents of every referenced attachment blob
+ * keyed by storage id, and all ops with sequence numbers after the base
+ * snapshot's sequence number (as read from its attributes blob).
  *
- * Attachment blob contents are pre-fetched and inlined keyed by storage ID so
- * the state is self-contained — reads replay through the cache in
- * `ContainerStorageAdapter` without needing a live storage service at load
- * time. Attachment blobs that GC has marked unreferenced, tombstoned, or
- * deleted are dropped; if the snapshot has no GC tree, every attachment blob
- * referenced by the blob manager is included.
+ * Reachability respects GC. Snapshot subtrees flagged `unreferenced: true`
+ * are skipped (their contents are not inlined). Attachment blobs that GC has
+ * marked unreferenced, tombstoned, or deleted are skipped. When the snapshot
+ * has no GC tree (GC disabled or pre-GC document), no filtering is applied.
  *
- * It does not include runtime-level pending state — `pendingRuntimeState` is
- * `undefined`, since no runtime is instantiated — so it cannot carry
- * DDS-level in-flight changes. It is intended for state relay, inspection,
- * and durable-state snapshot use cases.
+ * Blob reads on load hit the `ContainerStorageAdapter` cache populated from
+ * the captured `snapshotBlobs` map, so a frozen loader can serve the full
+ * referenced graph without a live storage service.
+ *
+ * `pendingRuntimeState` is `undefined` — no runtime is instantiated — so the
+ * output cannot carry DDS-level in-flight changes. It is intended for state
+ * relay, inspection, and durable-state snapshot use cases.
  *
  * Note: if a new snapshot lands between the snapshot fetch and the ops fetch,
  * the returned state may not reflect the very latest snapshot, but remains
@@ -345,9 +352,16 @@ export async function captureContainerPendingState(
 
 	const baseSnapshot = getSnapshotTree(snapshot);
 	const attributes = await getDocumentAttributes(storage, baseSnapshot);
-	const [structuralBlobs, attachmentBlobs] = await Promise.all([
-		getBlobContentsFromTree(snapshot, storage),
-		captureReferencedAttachmentBlobs(baseSnapshot, storage),
+	const gcData = await parseGcSnapshotData(baseSnapshot, storage);
+	const [structuralBlobs, attachmentBlobs, loadedGroupIdSnapshots] = await Promise.all([
+		readReferencedSnapshotBlobs(snapshot, storage),
+		captureReferencedAttachmentBlobs(baseSnapshot, storage, gcData),
+		captureGroupIdSnapshots(
+			baseSnapshot,
+			storage,
+			version?.id,
+			"captureContainerPendingState",
+		),
 	]);
 	const snapshotBlobs = { ...structuralBlobs, ...attachmentBlobs };
 
@@ -370,6 +384,8 @@ export async function captureContainerPendingState(
 		attached: true,
 		baseSnapshot,
 		snapshotBlobs,
+		loadedGroupIdSnapshots:
+			Object.keys(loadedGroupIdSnapshots).length > 0 ? loadedGroupIdSnapshots : undefined,
 		pendingRuntimeState: undefined,
 		savedOps,
 		url: resolvedUrl.url,
