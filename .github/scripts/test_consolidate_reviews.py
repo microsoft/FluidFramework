@@ -16,6 +16,7 @@ from consolidate_reviews import (
     determine_verdict,
     main,
     parse_review_file,
+    severity_labels_for_pr,
 )
 
 
@@ -142,8 +143,12 @@ class TestBuildReport:
             Finding("CRITICAL", "src/a.ts:10", "critical bug", "fix it", "Security"),
             Finding("MEDIUM", "src/b.ts:20", "minor issue", "tweak it", "Testing"),
         ]
-        report = build_report(findings, "https://example.com/run/1")
-        assert "1 CRITICAL, 0 HIGH, 1 MEDIUM" in report
+        pr_number = 27071
+        critical_title = severity_labels_for_pr(pr_number)["CRITICAL"]["title"]
+        high_title = severity_labels_for_pr(pr_number)["HIGH"]["title"]
+        medium_title = severity_labels_for_pr(pr_number)["MEDIUM"]["title"]
+        report = build_report(findings, "https://example.com/run/1", pr_number=pr_number)
+        assert f"1 {critical_title}, 0 {high_title}, 1 {medium_title}" in report
         assert "critical bug" in report
         assert "minor issue" in report
         assert "Request Changes" in report
@@ -156,6 +161,21 @@ class TestBuildReport:
         report = build_report(findings, "https://example.com/run/1")
         assert "H1" in report
         assert "H2" in report
+
+    def test_uses_pr_hashed_emoji_set(self) -> None:
+        findings = [Finding("CRITICAL", "src/a.ts:10", "desc", "fix", "Security")]
+        level = severity_labels_for_pr(27071)["CRITICAL"]
+        report = build_report(findings, "https://example.com/run/1", pr_number=27071)
+        assert f"| {level['emoji']} {level['title']} | C1 |" in report
+
+    def test_same_pr_number_yields_same_emoji_set(self) -> None:
+        assert severity_labels_for_pr(12345) == severity_labels_for_pr(12345)
+
+    def test_summary_uses_selected_set_titles(self) -> None:
+        findings = [Finding("CRITICAL", "src/a.ts:10", "desc", "fix", "Security")]
+        critical_title = severity_labels_for_pr(27071)["CRITICAL"]["title"]
+        report = build_report(findings, "https://example.com/run/1", pr_number=27071)
+        assert f"1 {critical_title}" in report
 
 
 class TestMain:
