@@ -16,8 +16,7 @@ import { type AliasProposal, runAiSession } from "../library/ai/copilotSession.j
 import { BaseCommand } from "../library/commands/base.js";
 
 const FALLBACK_MODEL = "claude-haiku-4.5";
-export const supportedAliases = ["claude", "dev", "copilot", "oce", "ai-reset"] as const;
-const supportedAliasSet = new Set<string>(supportedAliases);
+export const SUPPORTED_ALIASES = ["claude", "dev", "copilot", "oce", "ai-reset"] as const;
 
 export default class AiCommand extends BaseCommand<typeof AiCommand> {
 	static readonly description =
@@ -77,9 +76,14 @@ export default class AiCommand extends BaseCommand<typeof AiCommand> {
 			`Model: ${model} (source: ${flags.model ? "flag" : promptFile.model ? "frontmatter" : "fallback"})`,
 		);
 
-		const prompt = promptFile.template
-			.replaceAll("{{aliasFileContent}}", aliasFile.content)
-			.replaceAll("{{gettingStartedContent}}", gettingStartedContent ?? "");
+		const allowedAliasSet = new Set<string>(SUPPORTED_ALIASES);
+
+		const prompt = buildLauncherPrompt({
+			template: promptFile.template,
+			aliasFileContent: aliasFile.content,
+			gettingStartedContent,
+			allowedAliases: [...SUPPORTED_ALIASES],
+		});
 		const githubToken =
 			flags.githubToken ??
 			process.env.GH_TOKEN ??
@@ -120,6 +124,9 @@ export default class AiCommand extends BaseCommand<typeof AiCommand> {
 						const answer = await rl.question(chalk.gray("\n> "));
 						return normalizePromptAnswer(answer, choices);
 					},
+					info: (message: string) => {
+						log(chalk.dim(message));
+					},
 					verbose: (message: string) => {
 						verbose(message);
 					},
@@ -141,7 +148,7 @@ export default class AiCommand extends BaseCommand<typeof AiCommand> {
 		}
 
 		try {
-			assertSafeAliasSelection(proposal);
+			assertSafeAliasSelection(proposal, allowedAliasSet);
 		} catch (error: unknown) {
 			this.error(error instanceof Error ? error.message : String(error), { exit: 1 });
 		}
@@ -300,30 +307,52 @@ export default class AiCommand extends BaseCommand<typeof AiCommand> {
 					model: typeof data.model === "string" ? data.model : undefined,
 				};
 			} catch (error) {
-				this.warn(
+				this.warning(
 					`Failed to parse launcher-prompt.md frontmatter; using raw file contents instead: ${String(error)}`,
 				);
 				return { template: raw.trim() };
 			}
 		}
 
-		this.warn("launcher-prompt.md not found; using hardcoded fallback prompt.");
+		this.warning("launcher-prompt.md not found; using hardcoded fallback prompt.");
 		return {
 			template:
 				"You are a launcher assistant. Ask the user what they want to do, " +
 				"then call select_alias with the best alias from the alias definitions.\n\n" +
 				"## Alias Definitions\n\n```bash\n{{aliasFileContent}}\n```\n\n" +
+				"## Allowed Aliases for This Session\n\n{{allowedAliasesContent}}\n\n" +
 				"## Getting Started Guide\n\n{{gettingStartedContent}}",
 		};
 	}
 }
 
-export function assertSafeAliasSelection(proposal: AliasProposal): void {
-	if (!supportedAliasSet.has(proposal.alias)) {
+export function assertSafeAliasSelection(
+	proposal: AliasProposal,
+	allowedAliases: Set<string>,
+): void {
+	if (!allowedAliases.has(proposal.alias)) {
 		throw new Error(
-			`Unsupported AI alias selection: ${proposal.alias}. Allowed aliases: ${supportedAliases.join(", ")}`,
+			`Unsupported AI alias selection: ${proposal.alias}. Allowed aliases: ${[...allowedAliases].sort().join(", ")}`,
 		);
 	}
+}
+
+export function buildLauncherPrompt({
+	template,
+	aliasFileContent,
+	gettingStartedContent,
+	allowedAliases,
+}: {
+	template: string;
+	aliasFileContent: string;
+	gettingStartedContent?: string;
+	allowedAliases: readonly string[];
+}): string {
+	const allowedAliasesContent = allowedAliases.map((alias) => `- \`${alias}\``).join("\n");
+	return template
+		.replaceAll("{{aliasFileContent}}", aliasFileContent)
+		.replaceAll("{{gettingStartedContent}}", gettingStartedContent ?? "")
+		.replaceAll("{{allowedAliasesContent}}", allowedAliasesContent);
 }
 
 function formatAliasCommand(proposal: AliasProposal): string {

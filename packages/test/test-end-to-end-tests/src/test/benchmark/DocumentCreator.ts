@@ -133,7 +133,7 @@ export function benchmarkAll<T extends IBenchmarkParameters>(
 				// These tests are quite slow, so force a really low iteration count.
 				// If we need better data at some point, we can look into raising it.
 				keepIterations: Math.min(obj.minSampleCount ?? 1, 1),
-				warmUpIterations: (obj.minSampleCount ?? 1 > 1) ? 1 : 0,
+				warmUpIterations: (obj.minSampleCount ?? 1) > 1 ? 1 : 0,
 				benchmarkFn: async (state: MemoryUseCallbacks) => {
 					await obj.before?.();
 					while (state.continue()) {
