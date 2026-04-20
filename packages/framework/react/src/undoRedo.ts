@@ -128,6 +128,53 @@ export class UndoRedoStacks implements UndoRedo {
  * independent undo/redo stacks to coexist on the same branch — for example, one per text editor —
  * without interfering with each other.
  *
+ * @example Basic undo/redo for a single editor
+ * ```typescript
+ * const sf = new SchemaFactory("my-app");
+ * class Doc extends sf.object("Doc", { text: sf.string }) {}
+ * const view = independentView(new TreeViewConfiguration({ schema: Doc }));
+ * view.initialize({ text: "" });
+ *
+ * // A unique label per editor ensures this stack only tracks that editor's commits.
+ * const editorLabel = Symbol("text-editor");
+ * const stacks = new LabeledUndoRedoStacks(view, editorLabel);
+ *
+ * // Keep UI button state in sync with the stack.
+ * stacks.onStateChange(() => {
+ *   undoButton.disabled = !stacks.canUndo();
+ *   redoButton.disabled = !stacks.canRedo();
+ * });
+ *
+ * // Wrap edits in a labeled transaction so this stack tracks them.
+ * view.runTransaction(() => { view.root.text = "Hello"; }, { label: editorLabel });
+ *
+ * stacks.canUndo(); // true
+ * stacks.undo();    // view.root.text === ""
+ * stacks.canRedo(); // true
+ * stacks.redo();    // view.root.text === "Hello"
+ *
+ * stacks.dispose();
+ * ```
+ *
+ * @example Two independent stacks on the same branch
+ * ```typescript
+ * const labelA = Symbol("editor-a");
+ * const labelB = Symbol("editor-b");
+ * const stackA = new LabeledUndoRedoStacks(view, labelA);
+ * const stackB = new LabeledUndoRedoStacks(view, labelB);
+ *
+ * view.runTransaction(() => { view.root.valueA = 1; }, { label: labelA });
+ * view.runTransaction(() => { view.root.valueB = 2; }, { label: labelB });
+ *
+ * // Undoing stackA does not affect stackB.
+ * stackA.undo();
+ * stackA.canRedo(); // true
+ * stackB.canRedo(); // false — stackB is unaffected
+ *
+ * stackA.dispose();
+ * stackB.dispose();
+ * ```
+ *
  * @sealed @internal
  */
 export class LabeledUndoRedoStacks implements UndoRedo {
