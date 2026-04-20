@@ -15,10 +15,10 @@ import {
 } from "../reporterUtilities.js";
 import {
 	type BenchmarkResult,
-	type BenchmarkError,
 	parseBenchmarkResult,
 	type ReportArray,
 	type ReportEntry,
+	isResultError,
 } from "../reportTypes.js";
 import { assert } from "../assert.js";
 import { isChildProcess } from "../Configuration.js";
@@ -47,6 +47,19 @@ module.exports = class {
 	public constructor(runner: Runner, options?: { reporterOptions?: ReporterOptions }) {
 		this.reportFile = options?.reporterOptions?.reportFile;
 		runner
+			.on(Runner.constants.EVENT_TEST_FAIL, (test: Test, err: unknown) => {
+				const existing = this.testData.get(test.id);
+				if (existing !== undefined && isResultError(existing.data)) {
+					// If benchmark already reported an error, don't overwrite it.
+					return;
+				}
+				// Store the failure as a BenchmarkError in testData so EVENT_TEST_END can use it.
+				// EVENT_TEST_FAIL always fires before EVENT_TEST_END, so this is always set in time.
+				// Checking for test.err in EVENT_TEST_END does not appear to work, so we do this instead.
+
+				const error = err instanceof Error ? err.message : String(err);
+				this.testData.set(test.id, { benchmarkName: test.title, data: { error } });
+			})
 			.on(Runner.constants.EVENT_SUITE_BEGIN, (suite: Suite) => {
 				const parent = suite.parent;
 				if (parent === undefined || parent === null) {
@@ -84,39 +97,41 @@ module.exports = class {
 
 				let benchmark: BenchmarkResult | undefined = this.testData.get(test.id)?.data;
 
-				if (!("on" in test)) {
-					// In parallel mode, we can not subscribe to events on the test,
-					// but the event we are in is delayed until after the test ran so we can get the results off of it.
-					// To make this work, the emit code (emitResultsMocha) crammed the results in the test body, so parse that.
+				if (benchmark === undefined) {
+					if (!("on" in test)) {
+						// In parallel mode, we can not subscribe to events on the test,
+						// but the event we are in is delayed until after the test ran so we can get the results off of it.
+						// To make this work, the emit code (emitResultsMocha) crammed the results in the test body, so parse that.
 
-					// The if above narrows test to `never` here, so undo that:
-					const test2 = test as Test;
-					const body = test2.body;
-					try {
-						benchmark = parseBenchmarkResult(body);
-					} catch {
-						// If the body isn't json, then the event was not put into the body, and so treat it like no data was reported.
+						// The if above narrows test to `never` here, so undo that:
+						const test2 = test as Test;
+						const body = test2.body;
+						try {
+							benchmark = parseBenchmarkResult(body);
+						} catch {
+							// If the body isn't json, then the event was not put into the body, and so treat it like no data was reported.
+						}
 					}
 				}
 
 				const suiteData = this.getSuiteData(test.parent);
 
+				// If we do not already have an error result, consider setting one:
+				if (benchmark === undefined || !isResultError(benchmark)) {
+					// The mocha test reported an error.
+					// Mocha does not always set test.err when a test fails with an error (for example timeout errors),
+					// so we have EVENT_TEST_FAIL as well.
+					if (test.err) {
+						benchmark = { error: test.err.message };
+					}
+				}
+
 				if (benchmark === undefined) {
-					// Mocha test completed without reporting data.
-					// This is an error, so report it as such.
-					const error = `Test ${test.fullTitle()} completed with status '${
-						test.state
-					}' without reporting any data.`;
-					benchmark = { error };
-				} else if (test.state !== "passed") {
-					// The mocha test failed after reporting benchmark data.
-					// This may indicate the benchmark did not measure what was intended, so mark as aborted.
-					const error =
-						(benchmark as BenchmarkError).error ??
-						`Test ${test.fullTitle()} completed with status '${
-							test.state
-						}' after reporting data.`;
-					benchmark = { error };
+					// Mocha test completed without emitting benchmark data and without a recorded error.
+					// This can happen if the test passed without calling emitResultsMocha.
+					benchmark = {
+						error: `Test completed with status '${test.state}' without reporting any data or an error.`,
+					};
 				}
 
 				const report: ReportEntry = { benchmarkName: test.title, data: benchmark };

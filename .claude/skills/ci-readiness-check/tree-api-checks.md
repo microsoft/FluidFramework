@@ -1,6 +1,6 @@
 # Tree-specific API check guidance
 
-This document is read by the `ci-readiness-check` skill when `@fluidframework/tree` is among the changed packages. Follow these instructions **in addition to** the general steps in `SKILL.md`.
+Guidance for working with API reports in `@fluidframework/tree` and its downstream aggregators (`fluid-framework`). Read this whenever you encounter unexpected API report diffs in these packages.
 
 ---
 
@@ -24,32 +24,31 @@ Verify the fix: `grep "from " lib/entrypoints/public.d.ts` should show `../index
 
 ---
 
-## After running `build:api-reports`: check for phantom key-reorder diffs
+## Handling unexpected API report diffs
 
-There is a known incremental TypeScript compilation bug that non-deterministically reorders union key strings within `Omit<>` type signatures in this package — e.g. `"keyA" | "keyB"` swapped to `"keyB" | "keyA"` — with no real API change. This is a bug in TypeScript's incremental build and flows downstream to API extractor. It only occurs with incremental builds; clean builds produce deterministic, stable output that matches CI.
+There is a known incremental TypeScript compilation bug that affects `@fluidframework/tree` and its downstream aggregator packages (`fluid-framework`). It non-deterministically reorders union key strings within `Omit<>` type signatures — e.g. `"keyA" | "keyB"` swapped to `"keyB" | "keyA"` — and can also cause spurious additions or removals of unrelated API entries. This is a bug in TypeScript's incremental build that flows downstream to API Extractor. It **only** occurs with incremental builds; full clean builds produce deterministic, stable output that matches CI.
 
-A diff is a phantom key-reorder if: only the order of string literal keys in an `Omit<>` changes; nothing is added or removed.
+**The golden rule: if you see ANY unexpected API report changes that are not directly related to your code changes, you must do a full clean build from the repo root.** Do not attempt to fix API reports by hand-editing, by checking them out from another branch, or by doing scoped per-package cleans. These approaches are unreliable because stale artifacts in *dependency* packages can cause wrong output even if the target package itself is clean.
 
-**If you see phantom key-reorder diffs, do a clean build and regenerate:**
+### What "unexpected" looks like
 
-```bash
-cd packages/dds/tree && pnpm exec fluid-build . --task clean && pnpm exec fluid-build . --task compile
-pnpm exec fluid-build . -t build:api-reports
-```
+- Union member reordering (e.g. `A | B` changed to `B | A`) with nothing added or removed
+- Entire APIs appearing or disappearing from reports for packages you didn't change
+- Beta/legacy.beta reports changing when you only made alpha-level changes
+- Aggregator package reports (`fluid-framework`) picking up unrelated diffs
 
-CI always runs clean builds, so a local clean build will produce the same output CI expects. After the clean rebuild, the spurious reorderings will be gone.
+### The fix: full clean build from the repo root
 
----
+**Before starting the clean build, tell the user what you're doing and why.** The build takes several minutes, so the user should not be left wondering. Example message:
 
-## After tree reports updated: cascade to aggregator packages
-
-If `@fluidframework/tree`'s API reports actually changed (check `git diff` on `packages/dds/tree/api-report/`), also regenerate the reports for packages that re-export from it:
+> I noticed some unexpected API report changes unrelated to your code. This is caused by a known incremental TypeScript build bug that affects the tree package. I need to do a full clean build from the repo root to get correct API reports — this will take a few minutes.
 
 ```bash
-cd packages/framework/fluid-framework && pnpm exec fluid-build . -t build:api-reports
-cd packages/service-clients/azure-client && pnpm exec fluid-build . -t build:api-reports
+# From the repo root — no shortcuts, no scoped cleans
+pnpm clean
+pnpm build
 ```
 
-If the tree reports are unchanged, skip this — the aggregator reports won't change either.
+This takes longer but is the **only** reliable way to produce API reports that match CI. The full build includes API report generation for all packages (including the `fluid-framework` aggregator), so no separate regeneration step is needed. Check the reports afterward — if only your intended changes appear, you're good.
 
-After running either of these, check for phantom key-reorder diffs — the same incremental TypeScript bug can affect their reports. If you see any, do a clean build of the affected aggregator package and regenerate its API reports (same approach as above).
+**Never hand-edit `*.api.md` files** — they are generated artifacts. If they're wrong, the fix is always to rebuild and regenerate, not to edit them directly.

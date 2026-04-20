@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-private/stochastic-test-utils",
-	"version": "2.93.0",
+	"version": "2.100.0",
 	"description": "Utilities for stochastic tests",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -37,7 +37,7 @@
 	"main": "lib/index.js",
 	"types": "lib/index.d.ts",
 	"scripts": {
-		"bench": "mocha --recursive dist/test --timeout 999999 --perfMode --parentProcess --fgrep @Benchmark --fgrep @ExecutionTime --reporter @fluid-tools/benchmark/dist/MochaReporter.js",
+		"bench": "cross-env FLUID_TEST_PERF_MODE=1 mocha --parentProcess",
 		"build": "fluid-build . --task build",
 		"build:compile": "fluid-build . --task compile",
 		"build:compile:min": "npm run build:compile",
@@ -99,7 +99,7 @@
 		"@arethetypeswrong/cli": "^0.18.2",
 		"@biomejs/biome": "~2.4.5",
 		"@fluid-internal/mocha-test-setup": "workspace:~",
-		"@fluid-tools/benchmark": "^0.52.0",
+		"@fluid-tools/benchmark": "^0.55.0",
 		"@fluid-tools/build-cli": "catalog:buildTools",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "catalog:buildTools",

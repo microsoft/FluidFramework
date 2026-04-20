@@ -3,7 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { BenchmarkType, benchmark, type BenchmarkTimingOptions } from "@fluid-tools/benchmark";
+import {
+	BenchmarkType,
+	TestType,
+	benchmarkDuration,
+	benchmarkIt,
+	collectDurationData,
+	type BenchmarkTimingOptions,
+} from "@fluid-tools/benchmark";
 import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 
 // eslint-disable-next-line import-x/no-internal-modules
@@ -74,72 +81,79 @@ describe("DuplicateBatchDetector benchmark", () => {
 			// Scenario 1: No cleanup needed (MSN=0 → early exit in clearOldBatchIds)
 			// This can use benchmarkFn (tight loop) since MSN=0 never triggers cleanup,
 			// so detector state remains valid across iterations.
-			benchmark({
+			benchmarkIt({
 				title: `processInboundBatch - no cleanup (${trackedBatchCount} tracked)`,
 				type: BenchmarkType.Measurement,
-				before: () => {
+				testType: TestType.ExecutionTime,
+				run: async () => {
 					entries = generateSnapshotEntries(trackedBatchCount);
 					detector = new DuplicateBatchDetector(entries);
-				},
-				benchmarkFn: () => {
-					// MSN=0 means clearOldBatchIds hits the early exit (msn <= minSeqNum).
-					// This measures: early-exit check + getEffectiveBatchId + map lookup + map insert.
-					// Note: detector grows by 1 entry per iteration, but that doesn't affect the
-					// early-exit path since minSeqNum remains 1.
-					const nextSeqNum = trackedBatchCount + 1;
-					const batch = makeBatch(nextSeqNum, 0, `new-batch-${nextSeqNum}`);
-					detector.processInboundBatch(batch);
+					return collectDurationData({
+						benchmarkFn: () => {
+							// MSN=0 means clearOldBatchIds hits the early exit (msn <= minSeqNum).
+							// This measures: early-exit check + getEffectiveBatchId + map lookup + map insert.
+							// Note: detector grows by 1 entry per iteration, but that doesn't affect the
+							// early-exit path since minSeqNum remains 1.
+							const nextSeqNum = trackedBatchCount + 1;
+							const batch = makeBatch(nextSeqNum, 0, `new-batch-${nextSeqNum}`);
+							detector.processInboundBatch(batch);
+						},
+					});
 				},
 			});
 
 			// Scenario 2: Partial cleanup (MSN advances past half the entries)
-			benchmark({
+			benchmarkIt({
 				title: `processInboundBatch - 50% cleanup (${trackedBatchCount} tracked)`,
 				type: BenchmarkType.Measurement,
-				...customExecutionOptions,
-				async benchmarkFnCustom(state) {
-					let running = true;
-					do {
-						// Fresh detector for each measurement
-						entries = generateSnapshotEntries(trackedBatchCount);
-						detector = new DuplicateBatchDetector(entries);
+				...benchmarkDuration({
+					...customExecutionOptions,
+					async benchmarkFnCustom(state) {
+						let running = true;
+						do {
+							// Fresh detector for each measurement
+							entries = generateSnapshotEntries(trackedBatchCount);
+							detector = new DuplicateBatchDetector(entries);
 
-						const nextSeqNum = trackedBatchCount + 1;
-						const msn = Math.floor(trackedBatchCount / 2);
-						const batch = makeBatch(nextSeqNum, msn, `new-batch-${nextSeqNum}`);
+							const nextSeqNum = trackedBatchCount + 1;
+							const msn = Math.floor(trackedBatchCount / 2);
+							const batch = makeBatch(nextSeqNum, msn, `new-batch-${nextSeqNum}`);
 
-						const start = state.timer.now();
-						detector.processInboundBatch(batch);
-						const end = state.timer.now();
+							const start = state.timer.now();
+							detector.processInboundBatch(batch);
+							const end = state.timer.now();
 
-						running = state.recordBatch(state.timer.toSeconds(start, end));
-					} while (running);
-				},
+							running = state.recordBatch(state.timer.toSeconds(start, end));
+						} while (running);
+					},
+				}),
 			});
 
 			// Scenario 3: Full cleanup (MSN advances past all entries)
-			benchmark({
+			benchmarkIt({
 				title: `processInboundBatch - 100% cleanup (${trackedBatchCount} tracked)`,
 				type: BenchmarkType.Measurement,
-				...customExecutionOptions,
-				async benchmarkFnCustom(state) {
-					let running = true;
-					do {
-						// Fresh detector for each measurement
-						entries = generateSnapshotEntries(trackedBatchCount);
-						detector = new DuplicateBatchDetector(entries);
+				...benchmarkDuration({
+					...customExecutionOptions,
+					async benchmarkFnCustom(state) {
+						let running = true;
+						do {
+							// Fresh detector for each measurement
+							entries = generateSnapshotEntries(trackedBatchCount);
+							detector = new DuplicateBatchDetector(entries);
 
-						const nextSeqNum = trackedBatchCount + 1;
-						const msn = trackedBatchCount + 1;
-						const batch = makeBatch(nextSeqNum, msn, `new-batch-${nextSeqNum}`);
+							const nextSeqNum = trackedBatchCount + 1;
+							const msn = trackedBatchCount + 1;
+							const batch = makeBatch(nextSeqNum, msn, `new-batch-${nextSeqNum}`);
 
-						const start = state.timer.now();
-						detector.processInboundBatch(batch);
-						const end = state.timer.now();
+							const start = state.timer.now();
+							detector.processInboundBatch(batch);
+							const end = state.timer.now();
 
-						running = state.recordBatch(state.timer.toSeconds(start, end));
-					} while (running);
-				},
+							running = state.recordBatch(state.timer.toSeconds(start, end));
+						} while (running);
+					},
+				}),
 			});
 		});
 	}

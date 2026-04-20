@@ -3,7 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { BenchmarkType, benchmark, isInPerformanceTestingMode } from "@fluid-tools/benchmark";
+import {
+	BenchmarkType,
+	benchmarkDuration,
+	benchmarkIt,
+	isInPerformanceTestingMode,
+} from "@fluid-tools/benchmark";
 import { FluidObjectHandle } from "@fluidframework/datastore/internal";
 
 import { FluidSerializer } from "../serializer.js";
@@ -44,52 +49,62 @@ const parseCases: [string, string][] = [
 describe("FluidSerializer", () => {
 	describe("encode Handles", () => {
 		for (const [name, value] of encodeHandlesCases) {
-			benchmark({
+			benchmarkIt({
 				type: BenchmarkType.Measurement,
 				title: `encode - ${name}`,
-				benchmarkFn: () => {
-					serializer.encode(value, handle);
-				},
+				...benchmarkDuration({
+					benchmarkFn: () => {
+						serializer.encode(value, handle);
+					},
+				}),
 			});
 
-			benchmark({
+			benchmarkIt({
 				type: BenchmarkType.Measurement,
 				title: `parse(stringify) - ${name}`,
-				benchmarkFn: () => {
-					serializer.parse(serializer.stringify(value, handle));
-				},
+				...benchmarkDuration({
+					benchmarkFn: () => {
+						serializer.parse(serializer.stringify(value, handle));
+					},
+				}),
 			});
 		}
 	});
 
 	describe("stringify", () => {
 		for (const [name, value] of stringifyCases) {
-			benchmark({
+			benchmarkIt({
 				type: BenchmarkType.Measurement,
 				title: `JSON.stringify(encode) - ${name}`,
-				benchmarkFn: () => {
-					JSON.stringify(serializer.encode(value, handle));
-				},
+				...benchmarkDuration({
+					benchmarkFn: () => {
+						JSON.stringify(serializer.encode(value, handle));
+					},
+				}),
 			});
 
-			benchmark({
+			benchmarkIt({
 				type: BenchmarkType.Measurement,
 				title: `stringify - ${name}`,
-				benchmarkFn: () => {
-					serializer.stringify(value, handle);
-				},
+				...benchmarkDuration({
+					benchmarkFn: () => {
+						serializer.stringify(value, handle);
+					},
+				}),
 			});
 		}
 	});
 
 	describe("parse", () => {
 		for (const [name, value] of parseCases) {
-			benchmark({
+			benchmarkIt({
 				type: BenchmarkType.Measurement,
 				title: `parse - ${name}`,
-				benchmarkFn: () => {
-					serializer.parse(value);
-				},
+				...benchmarkDuration({
+					benchmarkFn: () => {
+						serializer.parse(value);
+					},
+				}),
 			});
 		}
 	});

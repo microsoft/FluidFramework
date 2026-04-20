@@ -20,6 +20,7 @@ export interface AliasProposal {
 export interface AiSessionUi {
 	output(text: string): void;
 	prompt(question: string, choices?: string[]): Promise<string>;
+	info?(message: string): void;
 	verbose?(message: string): void;
 }
 
@@ -85,14 +86,25 @@ export async function runAiSession(
 
 	const client = new CopilotClient({
 		...(githubToken !== undefined ? { githubToken } : {}),
+		// Suppress Node's "ExperimentalWarning: SQLite is an experimental feature"
+		// that the bundled Copilot CLI subprocess emits on stderr.
+		env: {
+			...process.env,
+			NODE_OPTIONS: [process.env.NODE_OPTIONS, "--disable-warning=ExperimentalWarning"]
+				.filter(Boolean)
+				.join(" "),
+		},
 	});
 
 	let session: CopilotSession | undefined;
 
 	try {
 		// Preflight: verify the Copilot CLI server starts and auth is valid.
+		ui.info?.("Connecting to GitHub Copilot...");
 		await preflight(client);
+		ui.info?.("Authenticated.");
 
+		ui.info?.(`Starting session (model: ${model})...`);
 		session = await client.createSession({
 			model,
 			streaming: true,
@@ -107,6 +119,7 @@ export async function runAiSession(
 				};
 			},
 		});
+		ui.info?.("Session ready.\n");
 
 		// Stream any explanatory text from the AI between tool calls
 		session.on("assistant.message_delta", (event) => {
@@ -141,6 +154,9 @@ const AUTH_REMEDIATION =
 
 async function preflight(client: CopilotClient): Promise<void> {
 	try {
+		// start() must be called before ping() — the connection to the CLI server
+		// is not established until start() runs.
+		await client.start();
 		await client.ping();
 	} catch (cause) {
 		throw new Error(

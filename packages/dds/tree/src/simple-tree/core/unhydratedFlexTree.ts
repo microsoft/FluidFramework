@@ -11,6 +11,9 @@ import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import {
 	type AnchorEvents,
 	dummyRoot,
+	EmptyKey,
+	type DeltaDetachedNodeId,
+	type DeltaMark,
 	type FieldKey,
 	type FieldKindIdentifier,
 	type ITreeCursorSynchronous,
@@ -83,6 +86,13 @@ type UnhydratedFlexTreeNodeEvents = Pick<
 
 /** A node's parent field and its index in that field */
 type LocationInField = FlexTreeNode["parentField"];
+
+/**
+ * Placeholder `DeltaDetachedNodeId` used as the attach/detach id in synthetic delta marks produced
+ * by the unhydrated sequence-field editor. Only the *presence* of the id is checked by
+ * {@link deltaMarksToArrayOps}, so the value itself is arbitrary.
+ */
+const syntheticDetachedNodeId: DeltaDetachedNodeId = { minor: 0 };
 
 /**
  * The {@link Unhydrated} implementation of {@link FlexTreeNode}.
@@ -270,24 +280,88 @@ export class UnhydratedFlexTreeNode
 		return this.data.value;
 	}
 
-	public emitChangedEvent(key: FieldKey): void {
+	/**
+	 * Emit a `childrenChangedAfterBatch` event for this node, then propagate deep-change
+	 * signals to ancestor array nodes and subtree-changed signals up the entire ancestor chain.
+	 * @param key - The field key that changed.
+	 * @param marks - Optional delta marks describing the change to the field. When provided, they
+	 * are included in the `fieldMarks` payload so that array-node listeners can build a delta.
+	 * When omitted (e.g. for non-sequence fields), `fieldMarks` is empty.
+	 */
+	public emitChangedEvent(key: FieldKey, marks?: readonly DeltaMark[]): void {
 		this._events.emit("childrenChangedAfterBatch", {
 			changedFields: new Set([key]),
-			// Unhydrated nodes are not visited by the delta pipeline, so no field marks are available.
-			fieldMarks: new Map(),
+			fieldMarks: marks === undefined ? new Map() : new Map([[key, marks]]),
 		});
 
-		// Also emit subtree changed event for this node and all ancestors.
+		// Emit subtree-changed events for this node and its non-array ancestors first,
+		// so that node.treeChanged fires before any ancestor array.treeChanged.
+		// Array ancestors and the nodes above them are handled by
+		// #emitDeepChangesToAncestorArrays, which propagates subtree events above
+		// each array boundary in the correct order.
 		this.#emitSubtreeChangedEvents();
+
+		// Mirrors the onlyDeepChanges block in anchorSet.ts for unhydrated nodes.
+		this.#emitDeepChangesToAncestorArrays();
 	}
 
 	/**
-	 * Emit subtree changed events for this node and all ancestors.
+	 * Emit `childrenChangedAfterBatch` on each ancestor array node with synthetic
+	 * marks indicating a deep change at this node's position within the array.
+	 * After emitting on each array ancestor, propagates subtree-changed events
+	 * upward from that array so that ancestor nodes above the array receive their
+	 * `treeChanged` events after the array's own event.
+	 */
+	#emitDeepChangesToAncestorArrays(): void {
+		const location = this.parentField;
+		const parentField = location.parent;
+		const parentNode = parentField.parent;
+
+		if (parentNode === undefined || !(parentNode instanceof UnhydratedFlexTreeNode)) {
+			return;
+		}
+
+		// Only emit on array ancestors (EmptyKey); object/map ancestors don't carry delta payloads.
+		if (parentField.key === EmptyKey) {
+			const index = location.index;
+			const syntheticMarks: DeltaMark[] = [];
+			if (index > 0) {
+				syntheticMarks.push({ count: index });
+			}
+			// `fields` presence (not content) signals a deep change to deltaMarksToArrayOps.
+			syntheticMarks.push({ count: 1, fields: new Map([[EmptyKey, { marks: [] }]]) });
+
+			parentNode._events.emit("childrenChangedAfterBatch", {
+				changedFields: new Set([EmptyKey]),
+				fieldMarks: new Map([[EmptyKey, syntheticMarks]]),
+			});
+
+			// Propagate subtree-changed events from the array upward so that
+			// ancestors above this array receive treeChanged after the array itself.
+			parentNode.#emitSubtreeChangedEvents();
+		}
+
+		parentNode.#emitDeepChangesToAncestorArrays();
+	}
+
+	/**
+	 * Emit `subtreeChangedAfterBatch` on this node and propagate upward to
+	 * ancestors, stopping before the first ancestor array node.
+	 * Propagation stops at an array boundary because
+	 * {@link UnhydratedFlexTreeNode.#emitDeepChangesToAncestorArrays} is
+	 * responsible for emitting on array ancestors and the nodes above them
+	 * in the correct order.
 	 */
 	#emitSubtreeChangedEvents(): void {
 		this._events.emit("subtreeChangedAfterBatch");
 
-		const parent = this.parentField.parent.parent;
+		const parentField = this.parentField.parent;
+		if (parentField.key === EmptyKey) {
+			// This node is an array element; stop here so that array ancestor
+			// events fire in the correct order relative to this node's treeChanged.
+			return;
+		}
+		const parent = parentField.parent;
 		assert(
 			parent === undefined || parent instanceof UnhydratedFlexTreeNode,
 			0xb76 /* Unhydrated node's parent should be an unhydrated node */,
@@ -445,6 +519,12 @@ export class UnhydratedFlexTreeField
 	 */
 	protected edit(
 		edit: (mapTrees: UnhydratedFlexTreeNode[]) => void | UnhydratedFlexTreeNode[],
+		/**
+		 * Delta marks describing this edit, forwarded to {@link UnhydratedFlexTreeNode.emitChangedEvent}.
+		 * Sequence-field subclasses pass pre-computed marks so that array-node listeners receive a
+		 * meaningful delta; other field kinds omit this parameter.
+		 */
+		marks?: readonly DeltaMark[],
 	): void {
 		// Clear parents for all old map trees.
 		for (const tree of this.children) {
@@ -458,7 +538,7 @@ export class UnhydratedFlexTreeField
 			tree.adoptBy(this, index);
 		}
 
-		this.parent?.emitChangedEvent(this.key);
+		this.parent?.emitChangedEvent(this.key, marks);
 	}
 
 	public getFieldPath(): NormalizedFieldUpPath {
@@ -541,6 +621,10 @@ export class UnhydratedSequenceField
 				assert(c instanceof UnhydratedFlexTreeNode, 0xbb8 /* Expected unhydrated node */);
 			}
 			const newContentChecked = newContent as readonly UnhydratedFlexTreeNode[];
+			const insertCount = newContentChecked.length;
+			const marks: DeltaMark[] = [];
+			if (index > 0) marks.push({ count: index });
+			marks.push({ count: insertCount, attach: syntheticDetachedNodeId });
 			this.edit((mapTrees) => {
 				if (newContent.length < 1000) {
 					// For "smallish arrays" (`1000` is not empirically derived), the `splice` function is appropriate...
@@ -549,23 +633,27 @@ export class UnhydratedSequenceField
 					// ...but we avoid using `splice` + spread for very large input arrays since there is a limit on how many elements can be spread (too many will overflow the stack).
 					return [...mapTrees.slice(0, index), ...newContentChecked, ...mapTrees.slice(index)];
 				}
-			});
+			}, marks);
 		},
 		remove: (index, count): UnhydratedFlexTreeNode[] => {
 			for (let i = index; i < index + count; i++) {
 				const c = this.children[i];
 				assert(c !== undefined, 0xa0b /* Unexpected sparse array */);
 			}
+			const marks: DeltaMark[] = [];
+			if (index > 0) marks.push({ count: index });
+			marks.push({ count, detach: syntheticDetachedNodeId });
 			let removed: UnhydratedFlexTreeNode[] | undefined;
 			this.edit((mapTrees) => {
 				removed = mapTrees.splice(index, count);
-			});
+			}, marks);
 			return removed ?? fail(0xb4a /* Expected removed to be set by edit */);
 		},
 		move: (sourceIndex, count, destIndex, source?): void => {
 			const sourceField = source ?? this;
 			if (sourceField === this) {
 				// Within-field move: do both operations in a single edit to emit only one event
+				const marks = buildUnhydratedMoveMarks(sourceIndex, count, destIndex);
 				this.edit((mapTrees) => {
 					const removed = mapTrees.splice(sourceIndex, count);
 					// Adjust destination index if it comes after the source
@@ -581,7 +669,7 @@ export class UnhydratedSequenceField
 							...mapTrees.slice(adjustedDest),
 						];
 					}
-				});
+				}, marks);
 			} else {
 				// Cross-field move: remove from source, insert into destination
 				// Each field emits one event (correct behavior for different fields)
@@ -604,6 +692,42 @@ export class UnhydratedSequenceField
 }
 
 // #endregion Fields
+
+/**
+ * Builds {@link DeltaMark}s describing a within-field move for use in
+ * {@link UnhydratedFlexTreeNode.emitChangedEvent}.
+ *
+ * @remarks
+ * Forward move (`sourceIndex < destIndex`):
+ * `[retain(src), detach(n), retain(mid), attach(n)]`
+ *
+ * Backward move (`destIndex < sourceIndex`):
+ * `[retain(dst), attach(n), retain(mid), detach(n)]`
+ *
+ * A no-op move (`sourceIndex === destIndex`) returns an empty array; the event
+ * should not fire in that case, but the empty marks are harmless if it does.
+ */
+function buildUnhydratedMoveMarks(
+	sourceIndex: number,
+	count: number,
+	destIndex: number,
+): readonly DeltaMark[] {
+	const marks: DeltaMark[] = [];
+	if (sourceIndex < destIndex) {
+		if (sourceIndex > 0) marks.push({ count: sourceIndex });
+		marks.push({ count, detach: syntheticDetachedNodeId });
+		const between = destIndex - sourceIndex - count;
+		if (between > 0) marks.push({ count: between });
+		marks.push({ count, attach: syntheticDetachedNodeId });
+	} else if (destIndex < sourceIndex) {
+		if (destIndex > 0) marks.push({ count: destIndex });
+		marks.push({ count, attach: syntheticDetachedNodeId });
+		const between = sourceIndex - destIndex;
+		if (between > 0) marks.push({ count: between });
+		marks.push({ count, detach: syntheticDetachedNodeId });
+	}
+	return marks;
+}
 
 /** Creates a field with the given attributes */
 export function createField(

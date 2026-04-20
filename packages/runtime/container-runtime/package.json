@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/container-runtime",
-	"version": "2.93.0",
+	"version": "2.100.0",
 	"description": "Fluid container runtime",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -100,6 +100,7 @@
 		"api": "fluid-build . --task api",
 		"api-extractor:commonjs": "flub generate entrypoints --resolutionConditions require --outFileLegacyBeta legacy --outDir ./dist",
 		"api-extractor:esnext": "flub generate entrypoints --outFileLegacyBeta legacy --outDir ./lib --node10TypeCompat",
+		"bench": "cross-env FLUID_TEST_PERF_MODE=1 mocha --parentProcess",
 		"build": "fluid-build . --task build",
 		"build:api-reports": "concurrently \"npm:build:api-reports:*\"",
 		"build:api-reports:current": "api-extractor run --local --config api-extractor/api-extractor.current.json",
@@ -135,7 +136,6 @@
 		"pack:tests": "tar -cf ./container-runtime.test-files.tar ./src/test ./dist/test ./lib/test",
 		"place:cjs:package-stub": "copyfiles -f ../../../common/build/build-common/src/cjs/package.json ./dist",
 		"test": "npm run test:mocha",
-		"test:benchmark:report": "cross-env \"MOCHA_SPEC=dist/**/*.perf.spec.*js\" mocha --timeout 10s --perfMode --parentProcess --fgrep @Benchmark --fgrep @ExecutionTime --reporter @fluid-tools/benchmark/dist/MochaReporter.js",
 		"test:coverage": "c8 npm test",
 		"test:mocha": "npm run test:mocha:esm && echo skipping cjs to avoid overhead - npm run test:mocha:cjs",
 		"test:mocha:cjs": "cross-env FLUID_TEST_MODULE_SYSTEM=CJS mocha",
@@ -192,7 +192,7 @@
 		"@fluid-internal/mocha-test-setup": "workspace:~",
 		"@fluid-private/stochastic-test-utils": "workspace:~",
 		"@fluid-private/test-pairwise-generator": "workspace:~",
-		"@fluid-tools/benchmark": "^0.52.0",
+		"@fluid-tools/benchmark": "^0.55.0",
 		"@fluid-tools/build-cli": "catalog:buildTools",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "catalog:buildTools",
