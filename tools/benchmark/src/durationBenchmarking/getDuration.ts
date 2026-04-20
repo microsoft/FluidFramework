@@ -12,7 +12,7 @@ import {
 import { stripUndefined } from "../benchmarkAuthoringUtilities.js";
 import { ValueType, type CollectedData } from "../reportTypes.js";
 import { getArrayStatistics } from "../sampling.js";
-import { type Timer, timer, timerWithResolution } from "../timer.js";
+import { type Timer, timer as defaultTimer, timerWithResolution } from "../timer.js";
 import {
 	isCustomBenchmark,
 	validateBenchmarkArguments,
@@ -79,7 +79,7 @@ export async function collectDurationData(args: DurationBenchmark): Promise<Coll
 		: correctnessTestTimingOptions;
 
 	if (isCustomBenchmark(args)) {
-		const state = new BenchmarkState(timer, timingArgs);
+		const state = new BenchmarkState(defaultTimer, timingArgs);
 		await args.benchmarkFnCustom(state);
 		return state.computeData();
 	}
@@ -270,7 +270,7 @@ export class BenchmarkState<T> implements BenchmarkTimer<T> {
  * @public
  */
 export function runBenchmarkSync(args: DurationBenchmarkSync): CollectedData {
-	const state = new BenchmarkState(timer, args);
+	const state = new BenchmarkState(defaultTimer, args);
 	state.timeAllBatches(args.benchmarkFn);
 	return state.computeData();
 }
@@ -279,7 +279,7 @@ export function runBenchmarkSync(args: DurationBenchmarkSync): CollectedData {
  * Runs an asynchronous duration benchmark and returns the collected timing measurements.
  */
 export async function runBenchmarkAsync(args: DurationBenchmarkAsync): Promise<CollectedData> {
-	const state = new BenchmarkState(timer, args);
+	const state = new BenchmarkState(defaultTimer, args);
 	await state.timeAllBatchesAsync(args.benchmarkFnAsync);
 	return state.computeData();
 }
