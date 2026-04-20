@@ -124,7 +124,7 @@ jobs:
       - name: Install gh-aw
         uses: github/gh-aw/actions/setup-cli@ce1794953e0ec42adc41b6fca05e02ab49ee21c3 # ratchet:github/gh-aw/actions/setup-cli@v0.68.3
         with:
-          version: v0.53.2
+          version: v0.68.3
 
       - name: Run operation
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # ratchet:actions/github-script@v9.0.0
