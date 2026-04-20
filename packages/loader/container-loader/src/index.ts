@@ -7,11 +7,13 @@ export { ConnectionState } from "./connectionState.js";
 export { type ContainerAlpha, waitContainerToCatchUp, asLegacyAlpha } from "./container.js";
 export { createFrozenDocumentServiceFactory } from "./frozenServices.js";
 export {
+	captureContainerPendingState,
 	createDetachedContainer,
 	loadExistingContainer,
 	rehydrateDetachedContainer,
 	loadFrozenContainerFromPendingState,
 	loadSummarizerContainerAndMakeSummary,
+	type ICaptureContainerPendingStateProps,
 	type ICreateAndLoadContainerProps,
 	type ICreateDetachedContainerProps,
 	type ILoadExistingContainerProps,

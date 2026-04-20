@@ -19,11 +19,16 @@ import type {
 import type { IClientDetails } from "@fluidframework/driver-definitions";
 import type {
 	IDocumentServiceFactory,
+	ISequencedDocumentMessage,
+	ISnapshot,
+	ISnapshotTree,
 	IUrlResolver,
 } from "@fluidframework/driver-definitions/internal";
-import { DriverHeader } from "@fluidframework/driver-definitions/internal";
+import { DriverHeader, FetchSource } from "@fluidframework/driver-definitions/internal";
+import { getSnapshotTree } from "@fluidframework/driver-utils/internal";
 import {
 	GenericError,
+	UsageError,
 	normalizeError,
 	createChildMonitoringContext,
 	mixinMonitoringContext,
@@ -33,11 +38,14 @@ import {
 } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
+import { getBlobContentsFromTree } from "./containerStorageAdapter.js";
 import { DebugLogger } from "./debugLogger.js";
 import { createFrozenDocumentServiceFactory } from "./frozenServices.js";
 import { Loader } from "./loader.js";
 import { pkgVersion } from "./packageVersion.js";
 import type { ProtocolHandlerBuilder } from "./protocol.js";
+import type { IPendingContainerState } from "./serializedStateManager.js";
+import { getDocumentAttributes } from "./utils.js";
 import type {
 	LoadSummarizerSummaryResult,
 	OnDemandSummaryResults,
@@ -243,6 +251,116 @@ export async function loadFrozenContainerFromPendingState(
 		...props,
 		documentServiceFactory: createFrozenDocumentServiceFactory(props.documentServiceFactory),
 	});
+}
+
+/**
+ * Properties for {@link captureContainerPendingState}.
+ * @legacy @alpha
+ */
+export interface ICaptureContainerPendingStateProps {
+	/**
+	 * The url resolver used to resolve the request into a Fluid resolved url.
+	 */
+	readonly urlResolver: IUrlResolver;
+	/**
+	 * The document service factory used to construct the driver services
+	 * against which the state is captured.
+	 */
+	readonly documentServiceFactory: IDocumentServiceFactory;
+	/**
+	 * The request identifying the container whose state is to be captured.
+	 */
+	readonly request: IRequest;
+	/**
+	 * Optional logger for driver-side telemetry.
+	 */
+	readonly logger?: ITelemetryBaseLogger | undefined;
+}
+
+/**
+ * Captures the current state of an attached container using only driver-level
+ * services, without instantiating a runtime or loading a full container. The
+ * returned string is a serialized pending container state in the same wire
+ * format produced by a live container's pending-state serialization, and can
+ * be handed to {@link loadExistingContainer} as `pendingLocalState`.
+ *
+ * The captured state consists of the latest snapshot (with inlined blobs),
+ * the container url, and all ops with sequence numbers after the snapshot's
+ * sequence number (as read from the snapshot's attributes blob). It does not
+ * include runtime-level pending state — `pendingRuntimeState` is `undefined`,
+ * since no runtime is instantiated — so it cannot carry DDS-level in-flight
+ * changes. It is intended for state relay, inspection, and durable-state
+ * snapshot use cases.
+ *
+ * Note: if a new snapshot lands between the snapshot fetch and the ops fetch,
+ * the returned state may not reflect the very latest snapshot, but remains
+ * internally consistent: ops are anchored to the snapshot that was captured.
+ * @legacy @alpha
+ */
+export async function captureContainerPendingState(
+	props: ICaptureContainerPendingStateProps,
+): Promise<string> {
+	const { urlResolver, documentServiceFactory, request, logger } = props;
+
+	const resolvedUrl = await urlResolver.resolve(request);
+	if (resolvedUrl === undefined) {
+		throw new UsageError("Failed to resolve request to a Fluid url");
+	}
+
+	const documentService = await documentServiceFactory.createDocumentService(
+		resolvedUrl,
+		logger,
+	);
+	const storage = await documentService.connectToStorage();
+
+	const versions = await storage.getVersions(
+		// `null` signals "latest"
+		// eslint-disable-next-line unicorn/no-null
+		null,
+		1,
+		"captureContainerPendingState",
+		FetchSource.noCache,
+	);
+	const version = versions[0];
+	const snapshot: ISnapshot | ISnapshotTree | undefined =
+		storage.getSnapshot === undefined
+			? ((await storage.getSnapshotTree(version)) ?? undefined)
+			: await storage.getSnapshot({
+					versionId: version?.id,
+					scenarioName: "captureContainerPendingState",
+				});
+	if (snapshot === undefined) {
+		throw new GenericError("Failed to fetch snapshot for captureContainerPendingState");
+	}
+
+	const baseSnapshot = getSnapshotTree(snapshot);
+	const attributes = await getDocumentAttributes(storage, baseSnapshot);
+	const snapshotBlobs = await getBlobContentsFromTree(snapshot, storage);
+
+	const deltaStorage = await documentService.connectToDeltaStorage();
+	const opsStream = deltaStorage.fetchMessages(
+		attributes.sequenceNumber + 1,
+		undefined,
+		undefined,
+		false,
+		"captureContainerPendingState",
+	);
+	const savedOps: ISequencedDocumentMessage[] = [];
+	let opsResult = await opsStream.read();
+	while (!opsResult.done) {
+		savedOps.push(...opsResult.value);
+		opsResult = await opsStream.read();
+	}
+
+	const pendingState: IPendingContainerState = {
+		attached: true,
+		baseSnapshot,
+		snapshotBlobs,
+		pendingRuntimeState: undefined,
+		savedOps,
+		url: resolvedUrl.url,
+	};
+	return JSON.stringify(pendingState);
 }
 
 /**
