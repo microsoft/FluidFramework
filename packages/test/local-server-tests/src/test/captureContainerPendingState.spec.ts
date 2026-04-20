@@ -5,6 +5,7 @@
 
 import { strict as assert } from "assert";
 
+import { bufferToString, stringToBuffer } from "@fluid-internal/client-utils";
 import {
 	captureContainerPendingState,
 	createDetachedContainer,
@@ -235,5 +236,62 @@ describe("captureContainerPendingState", () => {
 			.get()) as ISharedMap;
 		assert(retrieved !== undefined, "Expected to retrieve nested SharedMap from frozen state");
 		assert.strictEqual(retrieved.get("nestedKey"), "nestedValue");
+	});
+
+	it("inlines attachment blob contents so reads don't go back to storage", async () => {
+		const { container, testFluidObject, urlResolver, codeLoader, documentServiceFactory } =
+			await initialize();
+
+		// Upload before attach so the attach summary carries the blob in the
+		// `.blobs` subtree. Local tests run without a summarizer, so this is
+		// the only way to get attachment blobs into a fetched snapshot.
+		const blobPayload = "attachment-blob-payload";
+		const blobHandle = await testFluidObject.runtime.uploadBlob(
+			stringToBuffer(blobPayload, "utf8"),
+		);
+		testFluidObject.root.set("blobHandle", blobHandle);
+
+		await container.attach(urlResolver.createCreateNewRequest("test"));
+		if (container.isDirty) {
+			await timeoutPromise((resolve) => container.once("saved", () => resolve()));
+		}
+
+		const url = await container.getAbsoluteUrl("");
+		assert(url !== undefined, "Expected container to provide a valid absolute URL");
+
+		const pendingLocalState = await captureContainerPendingState({
+			urlResolver,
+			documentServiceFactory,
+			request: { url },
+		});
+		const parsed = JSON.parse(pendingLocalState) as {
+			snapshotBlobs: Record<string, string>;
+		};
+		const inlinedPayloads = Object.values(parsed.snapshotBlobs);
+		assert(
+			inlinedPayloads.includes(blobPayload),
+			"Expected captured state to inline attachment blob contents by storage ID",
+		);
+
+		// Round-trip: the frozen container reads the blob through the cached
+		// snapshotBlobs entry, confirming the inlined copy is used on load.
+		const frozenContainer = await loadFrozenContainerFromPendingState({
+			codeLoader,
+			documentServiceFactory,
+			urlResolver,
+			request: { url },
+			pendingLocalState,
+		});
+		const frozenEntryPoint: FluidObject<TestFluidObject> =
+			await frozenContainer.getEntryPoint();
+		assert(
+			frozenEntryPoint.ITestFluidObject !== undefined,
+			"Expected frozen container entrypoint to be a valid TestFluidObject",
+		);
+		const retrievedBlob = await frozenEntryPoint.ITestFluidObject.root
+			.get("blobHandle")
+			.get();
+		assert(retrievedBlob !== undefined, "Expected blob handle to resolve in frozen container");
+		assert.strictEqual(bufferToString(retrievedBlob, "utf8"), blobPayload);
 	});
 });
