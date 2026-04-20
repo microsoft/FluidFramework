@@ -288,9 +288,7 @@ describe("captureFullContainerState", () => {
 			frozenEntryPoint.ITestFluidObject !== undefined,
 			"Expected frozen container entrypoint to be a valid TestFluidObject",
 		);
-		const retrievedBlob = await frozenEntryPoint.ITestFluidObject.root
-			.get("blobHandle")
-			.get();
+		const retrievedBlob = await frozenEntryPoint.ITestFluidObject.root.get("blobHandle").get();
 		assert(retrievedBlob !== undefined, "Expected blob handle to resolve in frozen container");
 		assert.strictEqual(bufferToString(retrievedBlob, "utf8"), blobPayload);
 	});
