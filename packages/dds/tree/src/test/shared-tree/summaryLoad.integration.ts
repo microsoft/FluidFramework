@@ -77,9 +77,9 @@ describe("Summary load regression tests", () => {
 		TreeCompressionStrategy.Uncompressed,
 	]) {
 		const treeEncodeKey = TreeCompressionStrategy[treeEncodeType];
-		for (const versionKey of Object.keys(FluidClientVersion)) {
-			describe(`Using TreeCompressionStrategy.${treeEncodeKey} and FluidClientVersion.${versionKey}`, () => {
-				it("loads singleTree summary with current minVersionForCollab", async () => {
+		describe(`Load singleTree summary with current minVersionForCollab and TreeCompressionStrategy.${treeEncodeKey}`, () => {
+			for (const versionKey of Object.keys(FluidClientVersion)) {
+				it(`using summary version FluidClientVersion.${versionKey}`, async () => {
 					const summaryPath = path.join(
 						outputDir,
 						treeEncodeKey,
@@ -104,7 +104,7 @@ describe("Summary load regression tests", () => {
 					);
 					assert(tree !== undefined, "Loaded tree should not be undefined");
 				});
-			});
-		}
+			}
+		});
 	}
 });
