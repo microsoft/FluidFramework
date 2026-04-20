@@ -59,6 +59,13 @@ type BlobReader = (id: string) => Promise<ArrayBufferLike>;
 const maxReadConcurrency = 32;
 
 /**
+ * Upper bound on concurrent whole-snapshot fetches (for loading groups).
+ * Each `getSnapshot` call pulls a full tree's worth of metadata, so the limit
+ * is deliberately lower than the per-blob limit.
+ */
+const maxSnapshotFetchConcurrency = 4;
+
+/**
  * Runs `fn` over `items` with at most `limit` promises in flight. Preserves
  * input order on output (not that any caller depends on it today).
  */
@@ -331,28 +338,23 @@ export async function captureGroupIdSnapshots(
 		return {};
 	}
 	const result: Record<string, SerializedSnapshotInfo> = {};
-	await Promise.all(
-		[...groupIds].map(async (groupId) => {
-			const groupSnapshot = await getSnapshot({
-				versionId,
-				loadingGroupIds: [groupId],
-				scenarioName: `${scenarioName}.group`,
-			});
-			const snapshotBlobs = await readReferencedSnapshotBlobs(groupSnapshot, storage);
-			let sequenceNumber = groupSnapshot.sequenceNumber;
-			if (sequenceNumber === undefined) {
-				const groupAttributes = await getDocumentAttributes(
-					storage,
-					groupSnapshot.snapshotTree,
-				);
-				sequenceNumber = groupAttributes.sequenceNumber;
-			}
-			result[groupId] = {
-				baseSnapshot: groupSnapshot.snapshotTree,
-				snapshotBlobs,
-				snapshotSequenceNumber: sequenceNumber,
-			};
-		}),
-	);
+	await mapWithConcurrency([...groupIds], maxSnapshotFetchConcurrency, async (groupId) => {
+		const groupSnapshot = await getSnapshot({
+			versionId,
+			loadingGroupIds: [groupId],
+			scenarioName: `${scenarioName}.group`,
+		});
+		const snapshotBlobs = await readReferencedSnapshotBlobs(groupSnapshot, storage);
+		let sequenceNumber = groupSnapshot.sequenceNumber;
+		if (sequenceNumber === undefined) {
+			const groupAttributes = await getDocumentAttributes(storage, groupSnapshot.snapshotTree);
+			sequenceNumber = groupAttributes.sequenceNumber;
+		}
+		result[groupId] = {
+			baseSnapshot: groupSnapshot.snapshotTree,
+			snapshotBlobs,
+			snapshotSequenceNumber: sequenceNumber,
+		};
+	});
 	return result;
 }
