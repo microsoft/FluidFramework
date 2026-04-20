@@ -9,12 +9,9 @@
 #   <output-dir>/non-production.json   — alerts from non-production/stale pipelines (pipelinesTrackingFilter=1)
 #
 # Prerequisites:
-#   $ADO_TOKEN env var must be set to a Bearer token for the ADO Component Governance
-#   resource (499b84ac-1321-427f-aa17-267ca6975798). On a workstation with the Azure CLI:
-#
-#     export ADO_TOKEN=$(az account get-access-token \
-#       --resource 499b84ac-1321-427f-aa17-267ca6975798 \
-#       --query accessToken -o tsv)
+#   Azure CLI is installed and signed in (`az login`). The script acquires an ADO bearer
+#   token directly via `az account get-access-token`. Matches the pattern used by the
+#   published `component-governance-alerts` marketplace plugin.
 #
 # The API endpoint is the same one the CG SPA uses. Each response is large (20-60MB)
 # because it includes all alerts (active, fixed, dismissed) with full descriptions.
@@ -31,14 +28,20 @@ PROJECT_ID="235294da-091d-4c29-84fc-cdfc3d90890b"
 REPO_ID="17385"   # CG registration ID for this repo
 BRANCH="main"
 
-if [[ -z "${ADO_TOKEN:-}" ]]; then
-  echo "ERROR: \$ADO_TOKEN is not set." >&2
-  echo "Set it to a Bearer token for ADO CG resource 499b84ac-1321-427f-aa17-267ca6975798." >&2
-  echo "On a workstation with the Azure CLI:" >&2
-  echo "  export ADO_TOKEN=\$(az account get-access-token --resource 499b84ac-1321-427f-aa17-267ca6975798 --query accessToken -o tsv)" >&2
+# ADO Component Governance resource ID — constant across all ADO orgs.
+ADO_CG_RESOURCE="499b84ac-1321-427f-aa17-267ca6975798"
+
+if ! command -v az >/dev/null 2>&1; then
+  echo "ERROR: \`az\` (Azure CLI) is not on PATH." >&2
+  echo "Install it: https://learn.microsoft.com/cli/azure/install-azure-cli" >&2
   exit 1
 fi
-TOKEN="$ADO_TOKEN"
+
+TOKEN=$(az account get-access-token --resource "$ADO_CG_RESOURCE" --query accessToken -o tsv)
+if [[ -z "$TOKEN" ]]; then
+  echo "ERROR: \`az account get-access-token\` returned no token. Run \`az login\` first." >&2
+  exit 1
+fi
 
 BASE_URL="https://governance.dev.azure.com/${ORG}/${PROJECT_ID}/_apis/ComponentGovernance/GovernedRepositories/${REPO_ID}/Branches/${BRANCH}/Alerts?includeHistory=false&includeDevelopmentDependencies=true"
 

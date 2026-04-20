@@ -14,21 +14,13 @@ reason to look inside `node_modules` during this workflow.
 
 ## Fetching CG alerts
 
-Helper scripts in `.claude/skills/agentic-cg-override/scripts/` fetch and parse the live CG alert
-data from ADO. They read the Bearer token from the `$ADO_TOKEN` env var and call the Component
-Governance SPA API directly. **The caller is responsible for setting `$ADO_TOKEN`** — the scripts
-do not attempt any interactive auth and fail fast if the env var is unset.
+Helper scripts in `.claude/skills/agentic-cg-override/scripts/` fetch and parse the live CG
+alert data from ADO. `fetch-cg-alerts.sh` acquires an ADO bearer token via
+`az account get-access-token` and calls the Component Governance SPA API directly.
 
-On a workstation with the Azure CLI logged into the Microsoft tenant:
-
-```bash
-export ADO_TOKEN=$(az account get-access-token \
-  --resource 499b84ac-1321-427f-aa17-267ca6975798 \
-  --query accessToken -o tsv)
-```
-
-In a Fluid Framework codespace, the pre-configured `az` shim works the same way. Tokens expire
-after about an hour, so re-run the command when a fetch starts failing with HTTP 401.
+**Prerequisite:** Azure CLI installed and signed in (`az login`). No env var dance — the
+script matches the pattern used by the published `component-governance-alerts` marketplace
+plugin. The token is acquired fresh on each invocation, so expiry (≈1 hour) is not a concern.
 
 ### Fetch the raw alert data
 
@@ -84,7 +76,7 @@ For this repo:
 - org: `fluidframework`
 - project-id: `235294da-091d-4c29-84fc-cdfc3d90890b`
 - repo-id: `17385` (CG registration ID)
-- Auth: Bearer token via `$ADO_TOKEN` env var (obtained out-of-band; see "Fetching CG alerts" above)
+- Auth: Bearer token via `az account get-access-token --resource 499b84ac-1321-427f-aa17-267ca6975798` (handled by `fetch-cg-alerts.sh`)
 
 The response JSON has shape `{ count: number, value: Alert[] }`. Each alert has:
 - `id`, `title`, `severity` (critical/high/medium/low), `type` (security/legal)
@@ -544,3 +536,17 @@ CVE — do not print a summary between CVEs.
 ### PR
 - <PR URL, or "not opened — Step 7 flagged: <reason>">
 ```
+
+## See also
+
+Microsoft's published [`component-governance-alerts`](https://github.com/oxo-microsoft/bohemia-marketplace/tree/main/plugins/component-governance-alerts)
+marketplace plugin covers adjacent CG operations this skill does not implement:
+
+- **Dismissing stale alerts** via the CG PATCH API (`/Alerts/{id}` with `dismissedReasonId`).
+- **Extending SLA deadlines** on alerts that cannot be fixed immediately.
+- **Cross-ecosystem correlation** for npm, NuGet, Maven, pip.
+
+Install with `claude plugin install component-governance-alerts` or the Copilot CLI
+equivalent. The stale-alert filter in `select-next-alerts.py` is adapted from that plugin's
+Step 6 correlation logic; the plugin is npm-only today, so FluidFramework's pnpm lockfile
+parsing lives here. Contributing pnpm support back upstream is a follow-up task.
