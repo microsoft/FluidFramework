@@ -265,6 +265,8 @@ export class BenchmarkState<T> implements BenchmarkTimer<T> {
 
 /**
  * Runs a synchronous duration benchmark and returns the collected timing measurements.
+ * @remarks
+ * A more limited, synchronous, version of {@link collectDurationData}.
  * @public
  */
 export function runBenchmarkSync(args: DurationBenchmarkSync): CollectedData {
@@ -275,8 +277,6 @@ export function runBenchmarkSync(args: DurationBenchmarkSync): CollectedData {
 
 /**
  * Runs an asynchronous duration benchmark and returns the collected timing measurements.
- * @remarks
- * A more limited, synchronous, version of {@link collectDurationData}.
  */
 export async function runBenchmarkAsync(args: DurationBenchmarkAsync): Promise<CollectedData> {
 	const state = new BenchmarkState(timer, args);
