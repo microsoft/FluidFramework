@@ -1,0 +1,64 @@
+name: "PR Review Fleet Dispatcher"
+
+# Watches for fleet-review label additions and saves PR context as an artifact.
+# The fleet workflow (pr-review-fleet.yml) picks it up via workflow_run.
+#
+# Label → reviewer count mapping:
+#   fleet-review-small  → 1 (correctness only)
+#   fleet-review        → 3 (correctness, security, api-compatibility)
+#   fleet-review-large  → 5 (all reviewers)
+
+on:
+  pull_request:
+    types:
+      - labeled
+    branches:
+      - main
+      - next
+      - release/**/*
+
+permissions:
+  contents: read
+
+# Only one dispatcher per PR at a time; cancel stale runs when labels are applied rapidly.
+concurrency:
+  group: pr-review-dispatch-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  dispatch:
+    name: "Determine fleet size"
+    if: |
+      github.event.label.name == 'fleet-review-small' ||
+      github.event.label.name == 'fleet-review' ||
+      github.event.label.name == 'fleet-review-large'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Map label to reviewer count
+        id: count
+        run: |
+          case "${{ github.event.label.name }}" in
+            fleet-review-small) COUNT=1 ;;
+            fleet-review-large) COUNT=5 ;;
+            *)                  COUNT=3 ;;
+          esac
+          echo "reviewer_count=$COUNT" >> "$GITHUB_OUTPUT"
+          echo "Label '${{ github.event.label.name }}' → ${COUNT} reviewer(s)"
+
+      - name: Save dispatch params
+        run: |
+          mkdir -p dispatch
+          printf '{\n  "pr_number": %s,\n  "reviewer_count": %s,\n  "head_sha": "%s",\n  "base_ref": "%s"\n}\n' \
+            "${{ github.event.pull_request.number }}" \
+            "${{ steps.count.outputs.reviewer_count }}" \
+            "${{ github.event.pull_request.head.sha }}" \
+            "${{ github.base_ref }}" \
+            > dispatch/params.json
+          cat dispatch/params.json
+
+      - name: Upload dispatch params
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # ratchet:actions/upload-artifact@v7
+        with:
+          name: dispatch-params
+          path: dispatch/params.json
+          retention-days: 1
