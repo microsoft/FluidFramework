@@ -52,6 +52,50 @@ describe("memoryUtils", () => {
 	});
 
 	describe("memoryAddedBy", () => {
+		it("everything called in expected order", async () => {
+			const log: string[] = [];
+			const benchmark = memoryAddedBy({
+				setup() {
+					log.push("setup");
+					return {};
+				},
+				modify() {
+					log.push("modify");
+				},
+				after() {
+					log.push("after");
+				},
+			});
+			const iterations = 2;
+			let count = 0;
+			await benchmark.benchmarkFn({
+				continue() {
+					return count++ < iterations;
+				},
+				async beforeAllocation() {
+					log.push("beforeAllocation");
+				},
+				async whileAllocated() {
+					log.push("whileAllocated");
+				},
+				async afterDeallocation() {
+					log.push("afterDeallocation");
+				},
+			});
+			assert.deepEqual(log, [
+				"setup",
+				"beforeAllocation",
+				"modify",
+				"whileAllocated",
+				"after",
+				"setup",
+				"beforeAllocation",
+				"modify",
+				"whileAllocated",
+				"after",
+			]);
+		});
+
 		benchmarkIt({
 			title: "sync setup and modify",
 			...benchmarkMemoryUse(

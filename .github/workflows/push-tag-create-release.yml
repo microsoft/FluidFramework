@@ -30,16 +30,16 @@ jobs:
     name: Create GitHub release
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # ratchet:actions/checkout@v3
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # ratchet:actions/checkout@v6
         with:
           fetch-depth: "0" # all history, including tags
           persist-credentials: false
 
       # release notes: https://github.com/pnpm/action-setup/releases/tag/v4.2.0
-      - uses: pnpm/action-setup@41ff72655975bd51cab0327fa583b6e92b6d3061 # ratchet:pnpm/action-setup@v4
+      - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # ratchet:pnpm/action-setup@v5
 
       # release notes: https://github.com/actions/setup-node/releases/tag/v6.0.0
-      - uses: actions/setup-node@2028fbc5c25fe9cf00d9f06a71cc4710d4507903 # ratchet:actions/setup-node@v6
+      - uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # ratchet:actions/setup-node@v6
         with:
           node-version-file: .nvmrc
           cache: "pnpm"
@@ -77,7 +77,7 @@ jobs:
           flub release fromTag $TAG_NAME --json | jq -c > release-metadata.json
       - name: Upload release metadata JSON
         # release notes: https://github.com/actions/upload-artifact/releases/tag/v5.0.0
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # ratchet:actions/upload-artifact@v5
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # ratchet:actions/upload-artifact@v7
         with:
           name: release-metadata
           path: release-metadata.json
@@ -93,7 +93,7 @@ jobs:
 
       - name: Check out tag from push
         if: github.event_name == 'push'
-        uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # ratchet:actions/checkout@v3
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # ratchet:actions/checkout@v6
         with:
           ref: ${{ env.TAG_NAME }}
           fetch-depth: 0 # all history
@@ -103,7 +103,7 @@ jobs:
         if: github.event_name == 'workflow_dispatch'
         env:
           TAG: ${{ github.event.inputs.tag }}
-        uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # ratchet:actions/checkout@v3
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # ratchet:actions/checkout@v6
         with:
           ref: ${{ env.TAG_NAME }}
           fetch-depth: 0 # all history
@@ -117,7 +117,7 @@ jobs:
           flub release report -g ${{ fromJson(env.RELEASE_JSON).packageOrReleaseGroup }} -o reports
       - name: Upload release reports
         # release notes: https://github.com/actions/upload-artifact/releases/tag/v5.0.0
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # ratchet:actions/upload-artifact@v5
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # ratchet:actions/upload-artifact@v7
         with:
           name: release-reports
           path: reports
@@ -153,7 +153,7 @@ jobs:
       - name: Create GH release
         if: fromJson(env.RELEASE_JSON).packageOrReleaseGroup == 'client' || fromJson(env.RELEASE_JSON).packageOrReleaseGroup == 'build-tools' || fromJson(env.RELEASE_JSON).packageOrReleaseGroup == 'server'
         # release notes: https://github.com/ncipollo/release-action/releases/tag/v1.20.0
-        uses: ncipollo/release-action@b7eabc95ff50cbeeedec83973935c8f306dfcd0b # ratchet:ncipollo/release-action@v1
+        uses: ncipollo/release-action@339a81892b84b4eeb0f6e744e4574d79d0d9b8dd # ratchet:ncipollo/release-action@v1
         with:
           # Allow updates to existing releases.
           allowUpdates: true

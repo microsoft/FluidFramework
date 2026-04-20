@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 
-import { describeE2EDocRun, getCurrentBenchmarkType } from "@fluid-private/test-version-utils";
+import { describeE2EDocs } from "@fluid-private/test-version-utils";
 import { isInPerformanceTestingMode } from "@fluid-tools/benchmark";
 import { IContainer } from "@fluidframework/container-definitions/internal";
 import { delay } from "@fluidframework/core-utils/internal";
@@ -20,27 +20,25 @@ import {
 } from "./DocumentCreator.js";
 
 const scenarioTitle = "Summarize Document";
-describeE2EDocRun(scenarioTitle, (getTestObjectProvider, getDocumentInfo) => {
+describeE2EDocs(scenarioTitle, (getTestObjectProvider, getDocumentInfo) => {
 	let documentWrapper: IDocumentLoaderAndSummarizer;
 	let provider: ITestObjectProvider;
 	let summaryVersion: string;
-	const benchmarkType = getCurrentBenchmarkType(describeE2EDocRun);
 
-	before(async () => {
+	beforeEach(async function () {
 		provider = getTestObjectProvider();
 		const docData = getDocumentInfo(); // returns the type of document to be processed.
 		if (
 			docData.supportedEndpoints &&
 			!docData.supportedEndpoints?.includes(provider.driver.type)
 		) {
-			return;
+			this.skip();
 		}
 		documentWrapper = createDocument({
 			testName: `${scenarioTitle} - ${docData.testTitle}`,
 			provider,
 			documentType: docData.documentType,
 			documentTypeInfo: docData.documentTypeInfo,
-			benchmarkType,
 		});
 		await documentWrapper.initializeDocument();
 		// Summarize the first time.
@@ -52,15 +50,6 @@ describeE2EDocRun(scenarioTitle, (getTestObjectProvider, getDocumentInfo) => {
 		summaryVersion = lastSummarizeClient.summaryVersion;
 	});
 
-	beforeEach("conditionalSkip", async function () {
-		const docData = getDocumentInfo();
-		if (
-			docData.supportedEndpoints &&
-			!docData.supportedEndpoints?.includes(provider.driver.type)
-		) {
-			this.skip();
-		}
-	});
 	/**
 	 * The PerformanceTestWrapper class includes 2 functionalities:
 	 * 1) Store any objects that should not be garbage collected during the benchmark execution (specific for memory tests).
@@ -69,9 +58,8 @@ describeE2EDocRun(scenarioTitle, (getTestObjectProvider, getDocumentInfo) => {
 	 * b. Benchmark Memory tests: {@link MemoryTestObjectProps}
 	 */
 
-	benchmarkAll(
-		scenarioTitle,
-		new (class PerformanceTestWrapper implements IBenchmarkParameters {
+	benchmarkAll(scenarioTitle, () => {
+		return new (class PerformanceTestWrapper implements IBenchmarkParameters {
 			container: IContainer | undefined;
 			summarizerClient: ISummarizeResult | undefined;
 			minSampleCount = getDocumentInfo().minSampleCount;
@@ -102,10 +90,10 @@ describeE2EDocRun(scenarioTitle, (getTestObjectProvider, getDocumentInfo) => {
 				this.container = undefined;
 				this.summarizerClient = undefined;
 				if (isInPerformanceTestingMode) {
-					// TODO: this should be removed, or document why it exists (probably a workaround for memory measurement issues in current version of benchmark).
+					// TODO: this should be removed, or document why it exists
 					await delay(2000);
 				}
 			}
-		})(),
-	);
+		})();
+	});
 });

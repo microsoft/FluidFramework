@@ -6,9 +6,11 @@
 import { strict as assert } from "node:assert";
 
 import {
-	type BenchmarkTimer,
 	BenchmarkType,
-	benchmark,
+	TestType,
+	benchmarkDuration,
+	benchmarkIt,
+	collectDurationData,
 	isInPerformanceTestingMode,
 } from "@fluid-tools/benchmark";
 import { FlushMode } from "@fluidframework/runtime-definitions/internal";
@@ -90,35 +92,42 @@ describe("SharedTree benchmarks", () => {
 	describe("Direct JS Object", () => {
 		for (const [numberOfNodes, benchmarkType] of nodesCountDeep) {
 			let tree: JSDeepTree;
-			benchmark({
+			benchmarkIt({
 				type: benchmarkType,
+				testType: TestType.ExecutionTime,
 				title: `Deep Tree as JS Object: reads with ${numberOfNodes} nodes`,
-				before: () => {
+				run: async () => {
 					tree = makeJsDeepTree(numberOfNodes, 1) as JSDeepTree;
-				},
-				benchmarkFn: () => {
-					const { depth, value } = readDeepTreeAsJSObject(tree);
-					assert.equal(depth, numberOfNodes);
-					assert.equal(value, 1);
+					return collectDurationData({
+						benchmarkFn: () => {
+							const { depth, value } = readDeepTreeAsJSObject(tree);
+							assert.equal(depth, numberOfNodes);
+							assert.equal(value, 1);
+						},
+					});
 				},
 			});
 		}
 		for (const [numberOfNodes, benchmarkType] of nodesCountWide) {
 			let tree: JSWideTree;
 			let expected = 0;
-			benchmark({
+			benchmarkIt({
 				type: benchmarkType,
+				testType: TestType.ExecutionTime,
 				title: `Wide Tree as JS Object: reads with ${numberOfNodes} nodes`,
-				before: () => {
+				run: async () => {
 					tree = makeJsWideTreeWithEndValue(numberOfNodes, numberOfNodes - 1);
+					expected = 0;
 					for (let i = 0; i < numberOfNodes; i++) {
 						expected += i;
 					}
-				},
-				benchmarkFn: () => {
-					const { nodesCount, sum } = readWideTreeAsJSObject(tree);
-					assert.equal(nodesCount, numberOfNodes);
-					assert.equal(sum, expected);
+					return collectDurationData({
+						benchmarkFn: () => {
+							const { nodesCount, sum } = readWideTreeAsJSObject(tree);
+							assert.equal(nodesCount, numberOfNodes);
+							assert.equal(sum, expected);
+						},
+					});
 				},
 			});
 		}
@@ -126,10 +135,11 @@ describe("SharedTree benchmarks", () => {
 			for (const [numberOfNodes, benchmarkType] of nodesCountDeep) {
 				let tree: JSDeepTree;
 				let currentNode: JSDeepTree;
-				benchmark({
+				benchmarkIt({
 					type: benchmarkType,
+					testType: TestType.ExecutionTime,
 					title: `Update value at leaf of ${numberOfNodes} deep tree`,
-					before: () => {
+					run: async () => {
 						tree = makeJsDeepTree(numberOfNodes, 1) as JSDeepTree;
 						currentNode = tree;
 						while (typeof currentNode !== "number") {
@@ -138,30 +148,33 @@ describe("SharedTree benchmarks", () => {
 							}
 							currentNode = currentNode.foo;
 						}
-					},
-					benchmarkFn: () => {
-						currentNode.foo = -1;
-					},
-					after: () => {
+						const result = await collectDurationData({
+							benchmarkFn: () => {
+								currentNode.foo = -1;
+							},
+						});
 						const expected = makeJsDeepTree(numberOfNodes, -1);
 						assert.deepEqual(tree, expected);
+						return result;
 					},
 				});
 			}
 			for (const [numberOfNodes, benchmarkType] of nodesCountWide) {
 				let tree: JSWideTree;
-				benchmark({
+				benchmarkIt({
 					type: benchmarkType,
+					testType: TestType.ExecutionTime,
 					title: `Update value at leaf of ${numberOfNodes} Wide tree`,
-					before: () => {
+					run: async () => {
 						tree = makeJsWideTreeWithEndValue(numberOfNodes, numberOfNodes - 1);
-					},
-					benchmarkFn: () => {
-						tree[numberOfNodes - 1] = -1;
-					},
-					after: () => {
+						const result = await collectDurationData({
+							benchmarkFn: () => {
+								tree[numberOfNodes - 1] = -1;
+							},
+						});
 						const expected = makeJsWideTreeWithEndValue(numberOfNodes, -1);
 						assert.deepEqual(tree, expected);
+						return result;
 					},
 				});
 			}
@@ -170,27 +183,32 @@ describe("SharedTree benchmarks", () => {
 	describe("Cursors", () => {
 		for (const [numberOfNodes, benchmarkType] of nodesCountDeep) {
 			let tree: Context;
-			benchmark({
+			benchmarkIt({
 				type: benchmarkType,
+				testType: TestType.ExecutionTime,
 				title: `Deep Tree with cursor: reads with ${numberOfNodes} nodes`,
-				before: () => {
+				run: async () => {
 					tree = flexTreeViewWithContent(makeDeepContentSimple(numberOfNodes));
-				},
-				benchmarkFn: () => {
-					const { depth, value } = readDeepCursorTree(tree);
-					assert.equal(value, 1);
-					assert.equal(depth, numberOfNodes);
+					return collectDurationData({
+						benchmarkFn: () => {
+							const { depth, value } = readDeepCursorTree(tree);
+							assert.equal(value, 1);
+							assert.equal(depth, numberOfNodes);
+						},
+					});
 				},
 			});
 		}
 		for (const [numberOfNodes, benchmarkType] of nodesCountWide) {
 			let tree: Context;
 			let expected = 0;
-			benchmark({
+			benchmarkIt({
 				type: benchmarkType,
+				testType: TestType.ExecutionTime,
 				title: `Wide Tree with cursor: reads with ${numberOfNodes} nodes`,
-				before: () => {
+				run: async () => {
 					const numbers = [];
+					expected = 0;
 					for (let index = 0; index < numberOfNodes; index++) {
 						numbers.push(index);
 						expected += index;
@@ -198,11 +216,13 @@ describe("SharedTree benchmarks", () => {
 					tree = flexTreeViewWithContent(
 						makeWideContentWithEndValueSimple(numberOfNodes, numberOfNodes - 1),
 					);
-				},
-				benchmarkFn: () => {
-					const { nodesCount, sum } = readWideCursorTree(tree);
-					assert.equal(sum, expected);
-					assert.equal(nodesCount, numberOfNodes);
+					return collectDurationData({
+						benchmarkFn: () => {
+							const { nodesCount, sum } = readWideCursorTree(tree);
+							assert.equal(sum, expected);
+							assert.equal(nodesCount, numberOfNodes);
+						},
+					});
 				},
 			});
 		}
@@ -210,34 +230,40 @@ describe("SharedTree benchmarks", () => {
 	describe("FlexTree bench", () => {
 		for (const [numberOfNodes, benchmarkType] of nodesCountDeep) {
 			let tree: Context;
-			benchmark({
+			benchmarkIt({
 				type: benchmarkType,
+				testType: TestType.ExecutionTime,
 				title: `Deep Tree with Flex Tree: reads with ${numberOfNodes} nodes`,
-				before: () => {
+				run: async () => {
 					tree = flexTreeViewWithContent(makeDeepContentSimple(numberOfNodes));
-				},
-				benchmarkFn: () => {
-					const { depth, value } = readDeepFlexTree(tree);
-					assert.equal(depth, numberOfNodes);
-					assert.equal(value, 1);
+					return collectDurationData({
+						benchmarkFn: () => {
+							const { depth, value } = readDeepFlexTree(tree);
+							assert.equal(depth, numberOfNodes);
+							assert.equal(value, 1);
+						},
+					});
 				},
 			});
 		}
 		for (const [numberOfNodes, benchmarkType] of nodesCountWide) {
 			let tree: Context;
 			let expected: number = 0;
-			benchmark({
+			benchmarkIt({
 				type: benchmarkType,
+				testType: TestType.ExecutionTime,
 				title: `Wide Tree with Flex Tree: reads with ${numberOfNodes} nodes`,
-				before: () => {
+				run: async () => {
 					expected = ((numberOfNodes - 1) * numberOfNodes) / 2; // Arithmetic sum of [0, numberOfNodes)
 					tree = flexTreeViewWithContent(makeWideContentWithEndValueSimple(numberOfNodes));
-				},
-				benchmarkFn: () => {
-					const { nodesCount, sum } = readWideFlexTree(tree);
-					assert.equal(sum, expected);
-					assert.equal(nodesCount, numberOfNodes);
-					readWideCursorTree(tree);
+					return collectDurationData({
+						benchmarkFn: () => {
+							const { nodesCount, sum } = readWideFlexTree(tree);
+							assert.equal(sum, expected);
+							assert.equal(nodesCount, numberOfNodes);
+							readWideCursorTree(tree);
+						},
+					});
 				},
 			});
 		}
@@ -245,95 +271,101 @@ describe("SharedTree benchmarks", () => {
 	describe("Edit with editor", () => {
 		const setCount = 100;
 		for (const [numberOfNodes, benchmarkType] of nodesCountDeep) {
-			benchmark({
+			benchmarkIt({
 				type: benchmarkType,
 				title: `Update value at leaf of ${numberOfNodes} deep tree ${setCount} times`,
-				benchmarkFnCustom: async <T>(state: BenchmarkTimer<T>) => {
-					let duration: number;
-					do {
-						// Since this setup one collects data from one iteration, assert that this is what is expected.
-						assert.equal(state.iterationsPerBatch, 1);
+				...benchmarkDuration({
+					benchmarkFnCustom: async (state) => {
+						let duration: number;
+						do {
+							// Since this setup one collects data from one iteration, assert that this is what is expected.
+							assert.equal(state.iterationsPerBatch, 1);
 
-						// Setup
-						const tree = checkoutWithContent(makeDeepStoredContent(numberOfNodes));
-						const path = deepPath(numberOfNodes);
+							// Setup
+							const tree = checkoutWithContent(makeDeepStoredContent(numberOfNodes));
+							const path = deepPath(numberOfNodes);
 
-						// Measure
-						const before = state.timer.now();
-						for (let value = 1; value <= setCount; value++) {
-							tree.editor
-								.valueField({ parent: path, field: localFieldKey })
-								.set(chunkFromJsonTrees([value]));
-						}
-						const after = state.timer.now();
-						duration = state.timer.toSeconds(before, after);
+							// Measure
+							const before = state.timer.now();
+							for (let value = 1; value <= setCount; value++) {
+								tree.editor
+									.valueField({ parent: path, field: localFieldKey })
+									.set(chunkFromJsonTrees([value]));
+							}
+							const after = state.timer.now();
+							duration = state.timer.toSeconds(before, after);
 
-						// Cleanup + validation
-						const expected = jsonableTreeFromFieldCursor(
-							fieldCursorFromInsertable(
-								LinkedList,
-								makeJsDeepTree(numberOfNodes, setCount) as LinkedList,
-							),
-						);
-						const actual = toJsonableTree(tree);
-						assert.deepEqual(actual, expected);
+							// Cleanup + validation
+							const expected = jsonableTreeFromFieldCursor(
+								fieldCursorFromInsertable(
+									LinkedList,
+									makeJsDeepTree(numberOfNodes, setCount) as LinkedList,
+								),
+							);
+							const actual = toJsonableTree(tree);
+							assert.deepEqual(actual, expected);
 
-						// Collect data
-					} while (state.recordBatch(duration));
-				},
-				// Force batch size of 1
-				minBatchDurationSeconds: 0,
+							// Collect data
+						} while (state.recordBatch(duration));
+					},
+					// Force batch size of 1
+					minBatchDurationSeconds: 0,
+				}),
 			});
 		}
 		for (const [numberOfNodes, benchmarkType] of nodesCountWide) {
-			benchmark({
+			benchmarkIt({
 				type: benchmarkType,
 				title: `Update value at leaf of ${numberOfNodes} wide tree ${setCount} times`,
-				benchmarkFnCustom: async <T>(state: BenchmarkTimer<T>) => {
-					let duration: number;
-					do {
-						// Since this setup one collects data from one iteration, assert that this is what is expected.
-						assert.equal(state.iterationsPerBatch, 1);
+				...benchmarkDuration({
+					benchmarkFnCustom: async (state) => {
+						let duration: number;
+						do {
+							// Since this setup one collects data from one iteration, assert that this is what is expected.
+							assert.equal(state.iterationsPerBatch, 1);
 
-						// Setup
-						const tree = checkoutWithContent(makeWideStoredContentWithEndValue(numberOfNodes));
+							// Setup
+							const tree = checkoutWithContent(
+								makeWideStoredContentWithEndValue(numberOfNodes),
+							);
 
-						const rootPath: NormalizedUpPath = {
-							detachedNodeId: undefined,
-							parent: undefined,
-							parentField: rootFieldKey,
-							parentIndex: 0,
-						};
-						const nodeIndex = numberOfNodes - 1;
-						const editor = tree.editor.sequenceField({
-							parent: rootPath,
-							field: EmptyKey,
-						});
+							const rootPath: NormalizedUpPath = {
+								detachedNodeId: undefined,
+								parent: undefined,
+								parentField: rootFieldKey,
+								parentIndex: 0,
+							};
+							const nodeIndex = numberOfNodes - 1;
+							const editor = tree.editor.sequenceField({
+								parent: rootPath,
+								field: EmptyKey,
+							});
 
-						// Measure
-						const before = state.timer.now();
-						for (let value = 1; value <= setCount; value++) {
-							editor.remove(nodeIndex, 1);
-							editor.insert(nodeIndex, chunkFromJsonTrees([value]));
-						}
-						const after = state.timer.now();
-						duration = state.timer.toSeconds(before, after);
+							// Measure
+							const before = state.timer.now();
+							for (let value = 1; value <= setCount; value++) {
+								editor.remove(nodeIndex, 1);
+								editor.insert(nodeIndex, chunkFromJsonTrees([value]));
+							}
+							const after = state.timer.now();
+							duration = state.timer.toSeconds(before, after);
 
-						// Cleanup + validation
-						const expected = jsonableTreeFromFieldCursor(
-							fieldCursorFromInsertable(
-								WideRoot,
-								makeJsWideTreeWithEndValue(numberOfNodes, setCount),
-							),
-						);
-						const actual = toJsonableTree(tree);
-						assert.deepEqual(actual, expected);
+							// Cleanup + validation
+							const expected = jsonableTreeFromFieldCursor(
+								fieldCursorFromInsertable(
+									WideRoot,
+									makeJsWideTreeWithEndValue(numberOfNodes, setCount),
+								),
+							);
+							const actual = toJsonableTree(tree);
+							assert.deepEqual(actual, expected);
 
-						// Collect data
-					} while (state.recordBatch(duration));
-				},
-				// Force batch size of 1
-				minBatchDurationSeconds: 0,
+							// Collect data
+						} while (state.recordBatch(duration));
+					},
+					// Force batch size of 1
+					minBatchDurationSeconds: 0,
+				}),
 			});
 		}
 	});
@@ -341,33 +373,35 @@ describe("SharedTree benchmarks", () => {
 	describe("acking local commits", () => {
 		const localCommitSize = [1, 25, 100, 500, 1000];
 		for (const size of localCommitSize) {
-			benchmark({
+			benchmarkIt({
 				type: BenchmarkType.Measurement,
 				title: `for ${size} local commit${size === 1 ? "" : "s"}`,
-				benchmarkFnCustom: async <T>(state: BenchmarkTimer<T>) => {
-					let duration: number;
-					do {
-						// Since this setup one collects data from one iteration, assert that this is what is expected.
-						assert.equal(state.iterationsPerBatch, 1);
+				...benchmarkDuration({
+					benchmarkFnCustom: async (state) => {
+						let duration: number;
+						do {
+							// Since this setup one collects data from one iteration, assert that this is what is expected.
+							assert.equal(state.iterationsPerBatch, 1);
 
-						// Setup
-						const provider = new TestTreeProviderLite(1, factory);
-						// TODO: specify a schema for these trees.
-						const [tree] = provider.trees;
-						for (let i = 0; i < size; i++) {
-							insert(tree.kernel.checkout, i, "test");
-						}
+							// Setup
+							const provider = new TestTreeProviderLite(1, factory);
+							// TODO: specify a schema for these trees.
+							const [tree] = provider.trees;
+							for (let i = 0; i < size; i++) {
+								insert(tree.kernel.checkout, i, "test");
+							}
 
-						// Measure
-						const before = state.timer.now();
-						provider.synchronizeMessages();
-						const after = state.timer.now();
-						duration = state.timer.toSeconds(before, after);
-						// Collect data
-					} while (state.recordBatch(duration));
-				},
-				// Force batch size of 1
-				minBatchDurationSeconds: 0,
+							// Measure
+							const before = state.timer.now();
+							provider.synchronizeMessages();
+							const after = state.timer.now();
+							duration = state.timer.toSeconds(before, after);
+							// Collect data
+						} while (state.recordBatch(duration));
+					},
+					// Force batch size of 1
+					minBatchDurationSeconds: 0,
+				}),
 			});
 		}
 	});
@@ -389,62 +423,64 @@ describe("SharedTree benchmarks", () => {
 		const commitCounts = isInPerformanceTestingMode ? [1, 5, 10] : [1, 2];
 		for (const peerCount of peerCounts) {
 			for (const commitCount of commitCounts) {
-				const test = benchmark({
+				const test = benchmarkIt({
 					type: BenchmarkType.Measurement,
 					title: `for ${commitCount} commits per peer for ${peerCount} peers`,
-					benchmarkFnCustom: async <T>(state: BenchmarkTimer<T>) => {
-						let duration: number;
-						do {
-							// Since this setup one collects data from one iteration, assert that this is what is expected.
-							assert.equal(state.iterationsPerBatch, 1);
-							const provider = new TestTreeProviderLite(peerCount, factory);
+					...benchmarkDuration({
+						benchmarkFnCustom: async (state) => {
+							let duration: number;
+							do {
+								// Since this setup one collects data from one iteration, assert that this is what is expected.
+								assert.equal(state.iterationsPerBatch, 1);
+								const provider = new TestTreeProviderLite(peerCount, factory);
 
-							// This is the start of the stream of commits.
-							// Earlier commits are less out of date and therefore not representative.
-							for (let iCommit = 0; iCommit < commitCount; iCommit++) {
-								for (let iPeer = 0; iPeer < peerCount; iPeer++) {
-									const peer = provider.trees[iPeer];
-									insert(peer.kernel.checkout, 0, `p${iPeer}c${iCommit}`);
+								// This is the start of the stream of commits.
+								// Earlier commits are less out of date and therefore not representative.
+								for (let iCommit = 0; iCommit < commitCount; iCommit++) {
+									for (let iPeer = 0; iPeer < peerCount; iPeer++) {
+										const peer = provider.trees[iPeer];
+										insert(peer.kernel.checkout, 0, `p${iPeer}c${iCommit}`);
+									}
 								}
-							}
 
-							// This block generates commits that are all out of date to the same degree
-							for (let iCommit = 0; iCommit < commitCount; iCommit++) {
-								for (let iPeer = 0; iPeer < peerCount; iPeer++) {
-									provider.synchronizeMessages({
-										count: opsPerCommit,
-									});
+								// This block generates commits that are all out of date to the same degree
+								for (let iCommit = 0; iCommit < commitCount; iCommit++) {
+									for (let iPeer = 0; iPeer < peerCount; iPeer++) {
+										provider.synchronizeMessages({
+											count: opsPerCommit,
+										});
 
-									const peer = provider.trees[iPeer];
-									insert(peer.kernel.checkout, 0, `p${iPeer}c${iCommit}`);
+										const peer = provider.trees[iPeer];
+										insert(peer.kernel.checkout, 0, `p${iPeer}c${iCommit}`);
+									}
 								}
-							}
 
-							// This block measures commits that are all out of date to the same degree.
-							// We could theoretically measure the time it takes for a single commit to be processed,
-							// but averaging over multiple commits gives a more stable result.
-							let timeSum = 0;
-							for (let iCommit = 0; iCommit < sampleSize; iCommit++) {
-								for (let iPeer = 0; iPeer < peerCount; iPeer++) {
-									const before = state.timer.now();
-									provider.synchronizeMessages({
-										count: opsPerCommit,
-									});
+								// This block measures commits that are all out of date to the same degree.
+								// We could theoretically measure the time it takes for a single commit to be processed,
+								// but averaging over multiple commits gives a more stable result.
+								let timeSum = 0;
+								for (let iCommit = 0; iCommit < sampleSize; iCommit++) {
+									for (let iPeer = 0; iPeer < peerCount; iPeer++) {
+										const before = state.timer.now();
+										provider.synchronizeMessages({
+											count: opsPerCommit,
+										});
 
-									const after = state.timer.now();
-									timeSum += state.timer.toSeconds(before, after);
-									// We still generate commits because it affects local branch rebasing
-									const peer = provider.trees[iPeer];
-									insert(peer.kernel.checkout, 0, `p${iPeer}c${iCommit}`);
+										const after = state.timer.now();
+										timeSum += state.timer.toSeconds(before, after);
+										// We still generate commits because it affects local branch rebasing
+										const peer = provider.trees[iPeer];
+										insert(peer.kernel.checkout, 0, `p${iPeer}c${iCommit}`);
+									}
 								}
-							}
 
-							// We want the average time it would take one peer to process one incoming edit
-							duration = timeSum / (peerCount * peerCount * sampleSize);
-						} while (state.recordBatch(duration));
-					},
-					// Force batch size of 1
-					minBatchDurationSeconds: 0,
+								// We want the average time it would take one peer to process one incoming edit
+								duration = timeSum / (peerCount * peerCount * sampleSize);
+							} while (state.recordBatch(duration));
+						},
+						// Force batch size of 1
+						minBatchDurationSeconds: 0,
+					}),
 				});
 
 				if (!isInPerformanceTestingMode) {
@@ -518,37 +554,39 @@ describe("SharedTree benchmarks", () => {
 			// Therefore, if op bunching is used, then t4 should be roughly equal to t3 + t2 - t1.
 			for (const bunchSize of bunchSizes) {
 				for (const localBranchSize of localBranchSizes) {
-					const test = benchmark({
+					const test = benchmarkIt({
 						type: BenchmarkType.Measurement,
 						title: `Rebase ${localBranchSize} local commits over ${bunchSize} inbound commits`,
-						benchmarkFnCustom: async <T>(state: BenchmarkTimer<T>) => {
-							let duration: number;
-							do {
-								// Since this setup collects data from one iteration, assert that this is what is expected.
-								assert.equal(state.iterationsPerBatch, 1);
+						...benchmarkDuration({
+							benchmarkFnCustom: async (state) => {
+								let duration: number;
+								do {
+									// Since this setup collects data from one iteration, assert that this is what is expected.
+									assert.equal(state.iterationsPerBatch, 1);
 
-								const { provider, sender, receiver } = setupSenderAndReceiver();
-								// Send local commits from the receiver but don't sequence them because we want them to be
-								// in the local branch.
-								sendLocalCommits(receiver, localBranchSize, "r");
-								// Send and sequence local commits from the sender. These are the commits that should be
-								// bunched together.
-								sendLocalCommits(sender, bunchSize, "s");
-								sender.containerRuntime.flush();
+									const { provider, sender, receiver } = setupSenderAndReceiver();
+									// Send local commits from the receiver but don't sequence them because we want them to be
+									// in the local branch.
+									sendLocalCommits(receiver, localBranchSize, "r");
+									// Send and sequence local commits from the sender. These are the commits that should be
+									// bunched together.
+									sendLocalCommits(sender, bunchSize, "s");
+									sender.containerRuntime.flush();
 
-								// Resume the receiver so it can process the bunched commits from the sender.
-								receiver.containerRuntime.resumeInboundProcessing();
+									// Resume the receiver so it can process the bunched commits from the sender.
+									receiver.containerRuntime.resumeInboundProcessing();
 
-								const before = state.timer.now();
-								// Synchronize the bunched commits. This should force the local branch to be rebased over the bunch.
-								// The receiver will not process its local commits since they were never flushed.
-								provider.synchronizeMessages({ flush: false });
-								const after = state.timer.now();
-								duration = state.timer.toSeconds(before, after);
-							} while (state.recordBatch(duration));
-						},
-						// Force batch size of 1
-						minBatchDurationSeconds: 0,
+									const before = state.timer.now();
+									// Synchronize the bunched commits. This should force the local branch to be rebased over the bunch.
+									// The receiver will not process its local commits since they were never flushed.
+									provider.synchronizeMessages({ flush: false });
+									const after = state.timer.now();
+									duration = state.timer.toSeconds(before, after);
+								} while (state.recordBatch(duration));
+							},
+							// Force batch size of 1
+							minBatchDurationSeconds: 0,
+						}),
 					});
 					if (!isInPerformanceTestingMode) {
 						test.timeout(5000);
@@ -564,45 +602,47 @@ describe("SharedTree benchmarks", () => {
 			const localTrunkSizes = isInPerformanceTestingMode ? [1, 10, 100] : [2];
 			for (const bunchSize of bunchSizes) {
 				for (const localTrunkSize of localTrunkSizes) {
-					const test = benchmark({
+					const test = benchmarkIt({
 						type: BenchmarkType.Measurement,
 						title: `Rebase ${bunchSize} inbound commits over ${localTrunkSize} trunk commits`,
-						benchmarkFnCustom: async <T>(state: BenchmarkTimer<T>) => {
-							let duration: number;
-							do {
-								// Since this setup collects data from one iteration, assert that this is what is expected.
-								assert.equal(state.iterationsPerBatch, 1);
+						...benchmarkDuration({
+							benchmarkFnCustom: async (state) => {
+								let duration: number;
+								do {
+									// Since this setup collects data from one iteration, assert that this is what is expected.
+									assert.equal(state.iterationsPerBatch, 1);
 
-								const { provider, sender, receiver } = setupSenderAndReceiver();
-								// Send local commits from the receiver and flush them so they are sequenced. These are
-								// the commits that will be in the trunk.
-								sendLocalCommits(receiver, localTrunkSize, "r");
-								receiver.containerRuntime.flush();
-								// Send local commits from the sender but don't sequence them yet. We want them to be
-								// sequenced after the receiver has received its local commits and they are in its trunk.
-								// These are sent before the receiver's commits are processed so that their reference
-								// sequence number is older the receiver's commits.
-								sendLocalCommits(sender, bunchSize, "s");
+									const { provider, sender, receiver } = setupSenderAndReceiver();
+									// Send local commits from the receiver and flush them so they are sequenced. These are
+									// the commits that will be in the trunk.
+									sendLocalCommits(receiver, localTrunkSize, "r");
+									receiver.containerRuntime.flush();
+									// Send local commits from the sender but don't sequence them yet. We want them to be
+									// sequenced after the receiver has received its local commits and they are in its trunk.
+									// These are sent before the receiver's commits are processed so that their reference
+									// sequence number is older the receiver's commits.
+									sendLocalCommits(sender, bunchSize, "s");
 
-								// Synchronize the messages. The receiver will receive its local commits and they will
-								// be in the trunk.
-								receiver.containerRuntime.resumeInboundProcessing();
-								provider.synchronizeMessages({ flush: false });
+									// Synchronize the messages. The receiver will receive its local commits and they will
+									// be in the trunk.
+									receiver.containerRuntime.resumeInboundProcessing();
+									provider.synchronizeMessages({ flush: false });
 
-								// Flush the sender's local commits now to sequence them. These will be rebased by the
-								// receiver over its trunk when it receives them.
-								sender.containerRuntime.flush();
+									// Flush the sender's local commits now to sequence them. These will be rebased by the
+									// receiver over its trunk when it receives them.
+									sender.containerRuntime.flush();
 
-								const before = state.timer.now();
-								// Synchronize the message. The receiver will received the bunched commits from the
-								// sender which will be rebased over the trunk.
-								provider.synchronizeMessages({ flush: false });
-								const after = state.timer.now();
-								duration = state.timer.toSeconds(before, after);
-							} while (state.recordBatch(duration));
-						},
-						// Force batch size of 1
-						minBatchDurationSeconds: 0,
+									const before = state.timer.now();
+									// Synchronize the message. The receiver will received the bunched commits from the
+									// sender which will be rebased over the trunk.
+									provider.synchronizeMessages({ flush: false });
+									const after = state.timer.now();
+									duration = state.timer.toSeconds(before, after);
+								} while (state.recordBatch(duration));
+							},
+							// Force batch size of 1
+							minBatchDurationSeconds: 0,
+						}),
 					});
 					if (!isInPerformanceTestingMode) {
 						test.timeout(5000);
@@ -615,45 +655,47 @@ describe("SharedTree benchmarks", () => {
 	describe("big transaction composition", () => {
 		const editCounts = isInPerformanceTestingMode ? [10, 100, 1000] : [5];
 		for (const editCount of editCounts) {
-			const test = benchmark({
+			const test = benchmarkIt({
 				type: BenchmarkType.Measurement,
 				title: `Compose ${editCount} sequence edits into a single transaction`,
-				benchmarkFnCustom: async <T>(state: BenchmarkTimer<T>) => {
-					let duration: number;
-					do {
-						// Since this setup one collects data from one iteration, assert that this is what is expected.
-						assert.equal(state.iterationsPerBatch, 1);
-						const provider = new TestTreeProviderLite(
-							1,
-							factory,
-							undefined /* useDeterministicSessionIds */,
-							FlushMode.TurnBased,
-						);
-						const tree = provider.trees[0];
-						tree.containerRuntime.connected = true;
-						const view = tree.viewWith(
-							new TreeViewConfiguration({
-								schema: StringArray,
-							}),
-						);
-						view.initialize([]);
+				...benchmarkDuration({
+					benchmarkFnCustom: async (state) => {
+						let duration: number;
+						do {
+							// Since this setup one collects data from one iteration, assert that this is what is expected.
+							assert.equal(state.iterationsPerBatch, 1);
+							const provider = new TestTreeProviderLite(
+								1,
+								factory,
+								undefined /* useDeterministicSessionIds */,
+								FlushMode.TurnBased,
+							);
+							const tree = provider.trees[0];
+							tree.containerRuntime.connected = true;
+							const view = tree.viewWith(
+								new TreeViewConfiguration({
+									schema: StringArray,
+								}),
+							);
+							view.initialize([]);
 
-						const before = state.timer.now();
-						Tree.runTransaction(view, () => {
-							for (let iEdit = 0; iEdit < editCount; iEdit++) {
-								view.root.insertAtEnd(`${iEdit}`);
-							}
-						});
-						const after = state.timer.now();
-						duration = state.timer.toSeconds(before, after);
+							const before = state.timer.now();
+							Tree.runTransaction(view, () => {
+								for (let iEdit = 0; iEdit < editCount; iEdit++) {
+									view.root.insertAtEnd(`${iEdit}`);
+								}
+							});
+							const after = state.timer.now();
+							duration = state.timer.toSeconds(before, after);
 
-						const actual = [...view.root];
-						const expected = makeArray(editCount, (index) => `${index}`);
-						assert.deepEqual(actual, expected);
-					} while (state.recordBatch(duration));
-				},
-				// Force batch size of 1
-				minBatchDurationSeconds: 0,
+							const actual = [...view.root];
+							const expected = makeArray(editCount, (index) => `${index}`);
+							assert.deepEqual(actual, expected);
+						} while (state.recordBatch(duration));
+					},
+					// Force batch size of 1
+					minBatchDurationSeconds: 0,
+				}),
 			});
 			if (!isInPerformanceTestingMode) {
 				test.timeout(5000);

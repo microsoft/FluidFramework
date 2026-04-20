@@ -1,5 +1,9 @@
 # @fluid-example/multiview-slider-coordinate-view
 
+## 2.93.0
+
+Dependency updates only.
+
 ## 2.92.0
 
 Dependency updates only.

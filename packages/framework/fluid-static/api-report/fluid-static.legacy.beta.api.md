@@ -25,7 +25,7 @@ export function createTreeContainerRuntimeFactory(props: {
     readonly minVersionForCollabOverride?: MinimumVersionForCollab;
 }): IRuntimeFactory;
 
-// @beta
+// @public
 export const getPresence: (fluidContainer: IFluidContainer) => Presence;
 
 // @public
