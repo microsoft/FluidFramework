@@ -2,6 +2,7 @@
 
 ## 0.57.0
 
+-   Mocha dependency updated from v10 to v11.
 -   Error messages from Mocha, including timeouts, are now included in the console and output files properly.
 
 ## 0.56.0

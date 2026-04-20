@@ -116,7 +116,9 @@ trigger:
     - tools/pipelines/templates/include-use-node-version.yml
     - tools/pipelines/templates/include-process-test-results.yml
     - tools/pipelines/templates/include-policy-check.yml
+    - tools/pipelines/templates/include-vars-telemetry-generator.yml
     - tools/pipelines/templates/upload-dev-manifest.yml
+    - tools/pipelines/templates/upload-telemetry/*
 
 pr:
   branches:
@@ -179,7 +181,9 @@ pr:
     - tools/pipelines/templates/include-install-pnpm.yml
     - tools/pipelines/templates/include-use-node-version.yml
     - tools/pipelines/templates/include-process-test-results.yml
+    - tools/pipelines/templates/include-vars-telemetry-generator.yml
     - tools/pipelines/templates/upload-dev-manifest.yml
+    - tools/pipelines/templates/upload-telemetry/*
 
 variables:
   - template: /tools/pipelines/templates/include-vars.yml@self

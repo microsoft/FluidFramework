@@ -560,7 +560,9 @@ stages:
 
 - template: /tools/pipelines/templates/upload-telemetry/include-stage-upload-telemetry.yml@self
   parameters:
-    stageIdFilter: ${{ parameters.stageId }}
+    telemetryDescription: ${{ parameters.stageId }}
+    dependsOn:
+      - ${{ parameters.stageId }}
     telemetry_upload_steps:
       - template: /tools/pipelines/templates/upload-telemetry/include-steps-upload-stage-timing.yml@self
         parameters:
