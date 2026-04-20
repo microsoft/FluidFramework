@@ -328,64 +328,68 @@ export async function captureFullContainerState(
 		resolvedUrl,
 		logger,
 	);
-	const storage = await documentService.connectToStorage();
+	try {
+		const storage = await documentService.connectToStorage();
 
-	const versions = await storage.getVersions(
-		// `null` signals "latest"
-		// eslint-disable-next-line unicorn/no-null
-		null,
-		1,
-		"captureFullContainerState",
-		FetchSource.noCache,
-	);
-	const version = versions[0];
-	const snapshot: ISnapshot | ISnapshotTree | undefined =
-		storage.getSnapshot === undefined
-			? ((await storage.getSnapshotTree(version)) ?? undefined)
-			: await storage.getSnapshot({
-					versionId: version?.id,
-					scenarioName: "captureFullContainerState",
-				});
-	if (snapshot === undefined) {
-		throw new GenericError("Failed to fetch snapshot for captureFullContainerState");
+		const versions = await storage.getVersions(
+			// `null` signals "latest"
+			// eslint-disable-next-line unicorn/no-null
+			null,
+			1,
+			"captureFullContainerState",
+			FetchSource.noCache,
+		);
+		const version = versions[0];
+		const snapshot: ISnapshot | ISnapshotTree | undefined =
+			storage.getSnapshot === undefined
+				? ((await storage.getSnapshotTree(version)) ?? undefined)
+				: await storage.getSnapshot({
+						versionId: version?.id,
+						scenarioName: "captureFullContainerState",
+					});
+		if (snapshot === undefined) {
+			throw new GenericError("Failed to fetch snapshot for captureFullContainerState");
+		}
+
+		const baseSnapshot = getSnapshotTree(snapshot);
+		const attributes = await getDocumentAttributes(storage, baseSnapshot);
+		const gcData = await parseGcSnapshotData(baseSnapshot, storage);
+		const [structuralBlobs, attachmentBlobs, loadedGroupIdSnapshots] = await Promise.all([
+			readReferencedSnapshotBlobs(snapshot, storage),
+			captureReferencedAttachmentBlobs(baseSnapshot, storage, gcData),
+			captureGroupIdSnapshots(baseSnapshot, storage, version?.id, "captureFullContainerState"),
+		]);
+		const snapshotBlobs = { ...structuralBlobs, ...attachmentBlobs };
+
+		const deltaStorage = await documentService.connectToDeltaStorage();
+		const opsStream = deltaStorage.fetchMessages(
+			attributes.sequenceNumber + 1,
+			undefined,
+			undefined,
+			false,
+			"captureFullContainerState",
+		);
+		const savedOps: ISequencedDocumentMessage[] = [];
+		let opsResult = await opsStream.read();
+		while (!opsResult.done) {
+			savedOps.push(...opsResult.value);
+			opsResult = await opsStream.read();
+		}
+
+		const pendingState: IPendingContainerState = {
+			attached: true,
+			baseSnapshot,
+			snapshotBlobs,
+			loadedGroupIdSnapshots:
+				Object.keys(loadedGroupIdSnapshots).length > 0 ? loadedGroupIdSnapshots : undefined,
+			pendingRuntimeState: undefined,
+			savedOps,
+			url: resolvedUrl.url,
+		};
+		return JSON.stringify(pendingState);
+	} finally {
+		documentService.dispose();
 	}
-
-	const baseSnapshot = getSnapshotTree(snapshot);
-	const attributes = await getDocumentAttributes(storage, baseSnapshot);
-	const gcData = await parseGcSnapshotData(baseSnapshot, storage);
-	const [structuralBlobs, attachmentBlobs, loadedGroupIdSnapshots] = await Promise.all([
-		readReferencedSnapshotBlobs(snapshot, storage),
-		captureReferencedAttachmentBlobs(baseSnapshot, storage, gcData),
-		captureGroupIdSnapshots(baseSnapshot, storage, version?.id, "captureFullContainerState"),
-	]);
-	const snapshotBlobs = { ...structuralBlobs, ...attachmentBlobs };
-
-	const deltaStorage = await documentService.connectToDeltaStorage();
-	const opsStream = deltaStorage.fetchMessages(
-		attributes.sequenceNumber + 1,
-		undefined,
-		undefined,
-		false,
-		"captureFullContainerState",
-	);
-	const savedOps: ISequencedDocumentMessage[] = [];
-	let opsResult = await opsStream.read();
-	while (!opsResult.done) {
-		savedOps.push(...opsResult.value);
-		opsResult = await opsStream.read();
-	}
-
-	const pendingState: IPendingContainerState = {
-		attached: true,
-		baseSnapshot,
-		snapshotBlobs,
-		loadedGroupIdSnapshots:
-			Object.keys(loadedGroupIdSnapshots).length > 0 ? loadedGroupIdSnapshots : undefined,
-		pendingRuntimeState: undefined,
-		savedOps,
-		url: resolvedUrl.url,
-	};
-	return JSON.stringify(pendingState);
 }
 
 /**

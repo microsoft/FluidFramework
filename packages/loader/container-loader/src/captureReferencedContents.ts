@@ -51,6 +51,39 @@ export interface IGcSnapshotData {
 type BlobReader = (id: string) => Promise<ArrayBufferLike>;
 
 /**
+ * Upper bound on concurrent `readBlob` calls. Driver/service back-pressure is
+ * real for large documents, and unbounded `Promise.all` can trigger throttling
+ * or spike memory. The value is a pragmatic middle ground — high enough to
+ * keep a typical driver's request pipeline full, low enough to avoid storms.
+ */
+const maxReadConcurrency = 32;
+
+/**
+ * Runs `fn` over `items` with at most `limit` promises in flight. Preserves
+ * input order on output (not that any caller depends on it today).
+ */
+async function mapWithConcurrency<T, R>(
+	items: readonly T[],
+	limit: number,
+	fn: (item: T) => Promise<R>,
+): Promise<R[]> {
+	const results: R[] = Array.from({ length: items.length });
+	let cursor = 0;
+	const workerCount = Math.min(limit, items.length);
+	const workers = Array.from({ length: workerCount }, async () => {
+		while (cursor < items.length) {
+			const index = cursor++;
+			const item = items[index];
+			if (item !== undefined) {
+				results[index] = await fn(item);
+			}
+		}
+	});
+	await Promise.all(workers);
+	return results;
+}
+
+/**
  * Parses the `gc` subtree of a base snapshot. Returns `undefined` if the
  * snapshot has no GC tree (GC disabled or pre-GC document).
  */
@@ -100,47 +133,44 @@ export async function readReferencedSnapshotBlobs(
 	storage: Pick<IDocumentStorageService, "readBlob">,
 ): Promise<ISerializableBlobContents> {
 	const { tree, read } = toTreeAndReader(snapshot, storage);
+	const ids = new Set<string>();
+	collectReferencedBlobIds(tree, true, ids);
 	const blobs: ISerializableBlobContents = {};
-	await walkForBlobs(tree, true, blobs, read);
+	await mapWithConcurrency([...ids], maxReadConcurrency, async (id) => {
+		const data = await read(id);
+		blobs[id] = bufferToString(data, "utf8");
+	});
 	return blobs;
 }
 
-async function walkForBlobs(
+/**
+ * Synchronously walks the snapshot tree and gathers the set of blob ids that
+ * should be inlined. Subtrees flagged `unreferenced: true` are skipped
+ * entirely. The root-level `.blobs` subtree is special-cased: only its
+ * `.redirectTable` id is collected, because attachment blob contents are
+ * captured separately via {@link captureReferencedAttachmentBlobs}.
+ */
+function collectReferencedBlobIds(
 	tree: ISnapshotTree,
 	isRoot: boolean,
-	blobs: ISerializableBlobContents,
-	read: BlobReader,
-): Promise<void> {
+	ids: Set<string>,
+): void {
 	if (tree.unreferenced === true) {
 		return;
 	}
-	const promises: Promise<unknown>[] = [];
 	for (const blobId of Object.values(tree.blobs)) {
-		promises.push(readAndStore(blobId, blobs, read));
+		ids.add(blobId);
 	}
 	for (const [key, subTree] of Object.entries(tree.trees)) {
 		if (isRoot && key === blobsTreeName) {
-			// Attachment blob contents are captured separately; only inline
-			// the redirect table so BlobManager can rehydrate identity
-			// mappings.
 			const tableBlobId = subTree.blobs[redirectTableBlobName];
 			if (tableBlobId !== undefined) {
-				promises.push(readAndStore(tableBlobId, blobs, read));
+				ids.add(tableBlobId);
 			}
 		} else {
-			promises.push(walkForBlobs(subTree, false, blobs, read));
+			collectReferencedBlobIds(subTree, false, ids);
 		}
 	}
-	await Promise.all(promises);
-}
-
-async function readAndStore(
-	blobId: string,
-	blobs: ISerializableBlobContents,
-	read: BlobReader,
-): Promise<void> {
-	const data = await read(blobId);
-	blobs[blobId] = bufferToString(data, "utf8");
 }
 
 function toTreeAndReader(
@@ -192,12 +222,10 @@ export async function captureReferencedAttachmentBlobs(
 	}
 
 	const contents: ISerializableBlobContents = {};
-	await Promise.all(
-		[...storageIdsToFetch].map(async (storageId) => {
-			const buffer = await storage.readBlob(storageId);
-			contents[storageId] = bufferToString(buffer, "utf8");
-		}),
-	);
+	await mapWithConcurrency([...storageIdsToFetch], maxReadConcurrency, async (storageId) => {
+		const buffer = await storage.readBlob(storageId);
+		contents[storageId] = bufferToString(buffer, "utf8");
+	});
 	return contents;
 }
 
@@ -227,21 +255,24 @@ async function readRedirectTable(
 }
 
 /**
- * Extracts the set of blob localIds that GC has explicitly marked as
- * unreferenced, tombstoned, or deleted.
+ * Collects the set of blob localIds that GC has explicitly marked as
+ * unreferenced (via `unreferencedTimestampMs` on a gc node), tombstoned, or
+ * deleted. Tombstones and deletedNodes are applied regardless of whether
+ * `gcState` is present — they are authoritative on their own and must not
+ * be silently dropped when gc state is absent but tombstone/deleted lists
+ * exist.
  */
-function collectUnreferencedBlobLocalIds(gcData: IGcSnapshotData): Set<string> | undefined {
-	if (gcData.gcState === undefined) {
-		return undefined;
-	}
+function collectUnreferencedBlobLocalIds(gcData: IGcSnapshotData): Set<string> {
 	const blobPathPrefix = `/${blobManagerBasePath}/`;
 	const unreferenced = new Set<string>();
-	for (const [nodePath, nodeData] of Object.entries(gcData.gcState.gcNodes)) {
-		if (
-			nodePath.startsWith(blobPathPrefix) &&
-			nodeData.unreferencedTimestampMs !== undefined
-		) {
-			unreferenced.add(nodePath.slice(blobPathPrefix.length));
+	if (gcData.gcState !== undefined) {
+		for (const [nodePath, nodeData] of Object.entries(gcData.gcState.gcNodes)) {
+			if (
+				nodePath.startsWith(blobPathPrefix) &&
+				nodeData.unreferencedTimestampMs !== undefined
+			) {
+				unreferenced.add(nodePath.slice(blobPathPrefix.length));
+			}
 		}
 	}
 	for (const nodePath of [...(gcData.tombstones ?? []), ...(gcData.deletedNodes ?? [])]) {

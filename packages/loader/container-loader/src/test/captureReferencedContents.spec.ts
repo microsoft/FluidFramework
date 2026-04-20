@@ -237,6 +237,28 @@ describe("captureReferencedContents", () => {
 			assert.deepStrictEqual(result, { "ok-storage": "OK" });
 		});
 
+		it("still applies tombstones and deletedNodes when gcState is undefined", async () => {
+			const { snapshot, storage } = attachmentsOnly(
+				[
+					["tomb", "tomb-storage"],
+					["del", "del-storage"],
+					["ok", "ok-storage"],
+				],
+				{ "tomb-storage": "x", "del-storage": "y", "ok-storage": "OK" },
+			);
+			const gcData: IGcSnapshotData = {
+				gcState: undefined,
+				tombstones: ["/_blobs/tomb"],
+				deletedNodes: ["/_blobs/del"],
+			};
+			const result = await captureReferencedAttachmentBlobs(snapshot, storage, gcData);
+			assert.deepStrictEqual(
+				result,
+				{ "ok-storage": "OK" },
+				"tombstones and deletedNodes are authoritative even without gcState",
+			);
+		});
+
 		it("keeps blobs that are absent from the gc graph (gc lag tolerance)", async () => {
 			const { snapshot, storage } = attachmentsOnly([["recent", "recent-storage"]], {
 				"recent-storage": "R",
