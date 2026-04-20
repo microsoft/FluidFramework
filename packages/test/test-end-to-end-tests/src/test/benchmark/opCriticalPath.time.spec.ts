@@ -6,7 +6,13 @@
 import { strict as assert } from "assert";
 
 import { ITestDataObject, describeCompat } from "@fluid-private/test-version-utils";
-import { benchmark, type BenchmarkTimingOptions } from "@fluid-tools/benchmark";
+import {
+	TestType,
+	benchmarkDuration,
+	benchmarkIt,
+	collectDurationData,
+	type BenchmarkTimingOptions,
+} from "@fluid-tools/benchmark";
 import { IContainer } from "@fluidframework/container-definitions/internal";
 import {
 	CompressionAlgorithms,
@@ -48,37 +54,40 @@ type Patch<T, U> = Omit<T, keyof U> & U;
 
 type ContainerRuntime_WithPrivates = Patch<ContainerRuntime, { flush: () => void }>;
 
+interface SetupResult {
+	provider: ITestObjectProvider;
+	mainContainer: IContainer;
+	defaultDataStore: ITestDataObject;
+	containerRuntime: ContainerRuntime_WithPrivates;
+}
+
 describeCompat(
 	"Op Critical Paths - runtime benchmarks",
 	"NoCompat",
 	(getTestObjectProvider) => {
-		let provider: ITestObjectProvider;
-		let mainContainer: IContainer;
-		let defaultDataStore: ITestDataObject;
-		let containerRuntime: ContainerRuntime_WithPrivates;
-
 		let testId = 0;
 
 		beforeEach("check driver compatibility", function () {
-			provider = getTestObjectProvider();
-			if (provider.driver.type === "r11s" || provider.driver.type === "routerlicious") {
+			const p = getTestObjectProvider();
+			if (p.driver.type === "r11s" || p.driver.type === "routerlicious") {
 				this.skip(); // This test triggers 504 errors on AFR occasionally. The test intentionally ignores server interactions anyway.
 			}
 		});
 
-		const setup = async (): Promise<void> => {
+		const setup = async (): Promise<SetupResult> => {
 			testId++;
-			provider = getTestObjectProvider();
+			const provider = getTestObjectProvider();
 			const loader = provider.makeTestLoader(testContainerConfig);
-			mainContainer = await loader.createDetachedContainer(provider.defaultCodeDetails);
+			const mainContainer = await loader.createDetachedContainer(provider.defaultCodeDetails);
 
 			await mainContainer.attach(provider.driver.createCreateNewRequest(`test-${testId}`));
-			defaultDataStore = (await mainContainer.getEntryPoint()) as ITestDataObject;
-			containerRuntime = defaultDataStore._context
+			const defaultDataStore = (await mainContainer.getEntryPoint()) as ITestDataObject;
+			const containerRuntime = defaultDataStore._context
 				.containerRuntime as ContainerRuntime_WithPrivates;
 
 			defaultDataStore._root.set("force", "write connection");
 			await provider.ensureSynchronized();
+			return { provider, mainContainer, defaultDataStore, containerRuntime };
 		};
 
 		const executionOptions: BenchmarkTimingOptions = {
@@ -86,7 +95,11 @@ describeCompat(
 			minBatchCount: 100, // Since we're only running one iteration per batch, we need to run a lot of batches to get a good sample (even if it takes longer than default 5s)
 		};
 
-		function sendOps(label: string): void {
+		function sendOps(
+			label: string,
+			defaultDataStore: ITestDataObject,
+			containerRuntime: ContainerRuntime_WithPrivates,
+		): void {
 			Array.from({ length: batchSize }).forEach((_, i) => {
 				defaultDataStore._root.set(`key-${i}-${label}`, `value-${label}`);
 			});
@@ -94,59 +107,69 @@ describeCompat(
 			containerRuntime.flush();
 		}
 
-		benchmark({
+		benchmarkIt({
 			title: `Submit+Flush a single batch of ${batchSize} ops`,
-			...executionOptions, // We could use the defaults for this one, but this way the measurement is symmetrical with the "Process" benchmark below.
-			before: async () => {
-				await setup();
-			},
-			// eslint-disable-next-line object-shorthand
-			benchmarkFnAsync: async function () {
-				sendOps("A");
-				// There's no event fired for "flush" so the simplest thing is to wait for the outbound queue to be idle.
-				// This should not add much time, and is part of the real flow so it's ok to include it in the benchmark.
-				const opsSent = await timeoutPromise<number>(
-					(resolve) => {
-						toIDeltaManagerFull(containerRuntime.deltaManager).outbound.once("idle", resolve);
+			testType: TestType.ExecutionTime,
+			run: async () => {
+				const { defaultDataStore, containerRuntime } = await setup();
+				// We could use the defaults for this one, but this way the measurement is symmetrical with the "Process" benchmark below.
+				return collectDurationData({
+					...executionOptions,
+					// eslint-disable-next-line object-shorthand
+					benchmarkFnAsync: async function () {
+						sendOps("A", defaultDataStore, containerRuntime);
+						// There's no event fired for "flush" so the simplest thing is to wait for the outbound queue to be idle.
+						// This should not add much time, and is part of the real flow so it's ok to include it in the benchmark.
+						const opsSent = await timeoutPromise<number>(
+							(resolve) => {
+								toIDeltaManagerFull(containerRuntime.deltaManager).outbound.once(
+									"idle",
+									resolve,
+								);
+							},
+							{ errorMsg: "container's outbound queue never reached idle state" },
+						);
+						assert(opsSent === 1, "Expecting the single grouped batch op to be sent.");
 					},
-					{ errorMsg: "container's outbound queue never reached idle state" },
-				);
-				assert(opsSent === 1, "Expecting the single grouped batch op to be sent.");
+				});
 			},
 		});
 
-		benchmark({
+		benchmarkIt({
 			title: `Process a single batch of ${batchSize} Inbound ops (local)`,
-			...executionOptions,
-			async benchmarkFnCustom(state): Promise<void> {
-				let running = true;
-				let batchId = 0;
-				do {
-					await setup();
+			...benchmarkDuration({
+				...executionOptions,
+				async benchmarkFnCustom(state): Promise<void> {
+					let running = true;
+					let batchId = 0;
+					do {
+						const { provider, mainContainer, defaultDataStore, containerRuntime } =
+							await setup();
 
-					// (This is about benchmark's "batch", not the batch of ops we are measuring)
-					assert(state.iterationsPerBatch === 1, "Expecting only one iteration per batch");
+						// (This is about benchmark's "batch", not the batch of ops we are measuring)
+						assert(state.iterationsPerBatch === 1, "Expecting only one iteration per batch");
 
-					// This will get the batch of ops roundtripped and into the inbound queue, but the inbound queue will remain paused
-					await provider.opProcessingController.pauseProcessing();
-					sendOps(`[Batch-${batchId++}]`);
-					await provider.opProcessingController.processOutgoing();
+						// This will get the batch of ops roundtripped and into the inbound queue, but the inbound queue will remain paused
+						await provider.opProcessingController.pauseProcessing();
+						sendOps(`[Batch-${batchId++}]`, defaultDataStore, containerRuntime);
+						await provider.opProcessingController.processOutgoing();
 
-					// Now process the batch of ops that's sitting in the inbound queue.
-					// This is the precise duration we want to measure.
-					const start = state.timer.now();
-					// Note that process is synchronous, but this waits for the queue to become idle so it's async. Shouldn't affect measurement though.
-					await provider.opProcessingController.processIncoming();
-					const end = state.timer.now();
+						// Now process the batch of ops that's sitting in the inbound queue.
+						// This is the precise duration we want to measure.
+						const start = state.timer.now();
+						// Note that process is synchronous, but this waits for the queue to become idle so it's async. Shouldn't affect measurement though.
+						await provider.opProcessingController.processIncoming();
+						const end = state.timer.now();
 
-					// Record the result
-					const duration = state.timer.toSeconds(start, end);
-					running = state.recordBatch(duration);
+						// Record the result
+						const duration = state.timer.toSeconds(start, end);
+						running = state.recordBatch(duration);
 
-					// Tear down this container, we start fresh for each measurement
-					mainContainer.dispose();
-				} while (running);
-			},
+						// Tear down this container, we start fresh for each measurement
+						mainContainer.dispose();
+					} while (running);
+				},
+			}),
 		});
 	},
 );

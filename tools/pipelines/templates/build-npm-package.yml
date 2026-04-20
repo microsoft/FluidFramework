@@ -43,7 +43,7 @@ parameters:
   type: boolean
   default: false
 
-- name: taskPublishBundleSizeArtifacts
+- name: isBundleSizeArtifactsPipeline
   type: boolean
   default: false
 
@@ -260,7 +260,6 @@ extends:
                       consistentSourcesDirectory=$(consistentSourcesDirectory)
                       FluidFrameworkDirectory=$(FluidFrameworkDirectory)
                       FFPipelineHostDirectory=$(FFPipelineHostDirectory)
-                      pathToTelemetryGenerator=$(pathToTelemetryGenerator)
                       BuildReason=${{ variables['Build.Reason'] }}
 
                     Publish Parameters:
@@ -327,11 +326,9 @@ extends:
                   buildDirectory: '${{ parameters.buildDirectory }}'
                   packageManagerInstallCommand: '${{ parameters.packageManagerInstallCommand }}'
 
-              # This check is a workaround. We don't want to set versions for the build-bundle-size-and-code-coverage-artifacts
-              # pipeline because it is special - it runs a client build but doesn't publish anything. Working around this properly is
-              # challenging and would create a much bigger change. Since this is the only pipeline that sets these variables to
-              # true, we use that to determine whether to set versions.
-              - ${{ if eq(parameters.taskPublishBundleSizeArtifacts, false) }}:
+              # The bundle-size-artifacts pipeline runs a client build but doesn't publish packages,
+              # so we skip version setting for it.
+              - ${{ if eq(parameters.isBundleSizeArtifactsPipeline, false) }}:
                   - template: /tools/pipelines/templates/include-set-package-version.yml@self
                     parameters:
                       buildDirectory: '${{ parameters.buildDirectory }}'
@@ -505,35 +502,6 @@ extends:
                       workingDir: '$(Pipeline.Workspace)/${{ parameters.buildDirectory }}'
                       customCommand: 'run bundle-analysis:run'
 
-                  - ${{ if and(or(eq(variables['Build.Reason'], 'IndividualCI'), eq(variables['Build.Reason'], 'BatchedCI')), eq(variables['System.TeamProject'], 'internal')) }}:
-                      - task: Bash@3
-                        displayName: List report.json
-                        inputs:
-                          targetType: inline
-                          workingDirectory: '$(Pipeline.Workspace)/${{ parameters.buildDirectory }}'
-                          script: |
-                            set -eu -o pipefail
-                            echo "Build Directory is ${{ parameters.buildDirectory }}";
-                            BUNDLE_SIZE_TESTS_DIR="$(Build.ArtifactStagingDirectory)/bundleAnalysis/@fluid-example/bundle-size-tests";
-                            echo "Contents of $BUNDLE_SIZE_TESTS_DIR:";
-                            ls -la $BUNDLE_SIZE_TESTS_DIR;
-
-                      - template: /tools/pipelines/templates/include-telemetry-setup.yml@self
-                        parameters:
-                          pathForTelemetryGeneratorInstall: $(pathToTelemetryGenerator)
-
-                      - task: Bash@3
-                        displayName: Write bundle sizes measurements to Aria/Kusto
-                        inputs:
-                          targetType: inline
-                          workingDirectory: $(pathToTelemetryGenerator)
-                          script: |
-                            set -eu -o pipefail
-                            echo "Writing the following performance tests results to Aria/Kusto"
-                            echo "Report Size:"
-                            ls -la '$(Pipeline.Workspace)/$(FluidFrameworkDirectory)/examples/utils/bundle-size-tests/bundleAnalysis/report.json';
-                            npx telemetry-generator --handlerModule "$(pathToTelemetryGeneratorHandlers)/bundleSizeHandler.js" --dir '$(Build.ArtifactStagingDirectory)/bundleAnalysis/@fluid-example/bundle-size-tests';
-
               # Docs
               - ${{ if ne(parameters.taskBuildDocs, false) }}:
                   - task: Npm@1
@@ -613,7 +581,7 @@ extends:
                 - ${{ if eq(parameters.taskBundleAnalysis, true) }}:
                     - output: pipelineArtifact
                       displayName: Publish Artifacts - bundle-analysis
-                      condition: and( succeeded(), ne(variables['Build.Reason'], 'PullRequest'), eq(${{ parameters.taskPublishBundleSizeArtifacts }}, true) )
+                      condition: and( succeeded(), ne(variables['Build.Reason'], 'PullRequest'), eq(${{ parameters.isBundleSizeArtifactsPipeline }}, true) )
                       targetPath: $(Build.ArtifactStagingDirectory)/bundleAnalysis
                       artifactName: bundleAnalysis
                       sbomEnabled: false
@@ -662,8 +630,7 @@ extends:
               # 'condition:', and update this bit to always depend on publish_npm_internal_dev, since it will always exist.
               - ${{ if eq(parameters.isReleaseGroup, true) }}:
                 - publish_npm_internal_dev
-            # Using 'all' signifies that we will upload all stages
-            stageIdFilter: 'all'
+            telemetryDescription: 'stage_timing'
             telemetry_upload_steps:
               - template: /tools/pipelines/templates/upload-telemetry/include-steps-upload-stage-timing.yml@self
                 parameters:

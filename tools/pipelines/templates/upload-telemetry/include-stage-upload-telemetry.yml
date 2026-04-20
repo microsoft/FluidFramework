@@ -8,31 +8,28 @@
 
 parameters:
 
+# Short description of the telemetry being uploaded. Used as a suffix in the stage ID
+# (upload_telemetry_<telemetryDescription>) and shown in the stage display name.
+# Must be a valid ADO stage ID component (no spaces or special characters).
+- name: telemetryDescription
+  type: string
+
 # Stages that must be completed before telemetry can be uploaded.
-# If a stageIdFilter is specified, it will automatically be depended on without
-# needing to specify it here.
 - name: dependsOn
   type: object
   default: []
-
-# Id for the stage whose telemetry will be uploaded to Kusto.
-# Other stages will be filtered out. If set to 'all', all stages will be uploaded.
-- name: stageIdFilter
-  type: string
 
 # The steps to take after configuring for telemetry upload
 - name: telemetry_upload_steps
   type: stepList
 
 stages:
-- stage: upload_telemetry_${{ parameters.stageIdFilter }}
-  displayName: Upload telemetry to Kusto ('${{ parameters.stageIdFilter }}')
+- stage: upload_telemetry_${{ parameters.telemetryDescription }}
+  displayName: Upload telemetry to Kusto ('${{ parameters.telemetryDescription }}')
   # Run for all possible pipeline triggers except manual
   # (manual runs tend to be for testing and can fail repeatedly, we don't want that creating incidents)
   condition: and(succeededOrFailed(), ne(variables['Build.Reason'], 'Manual'))
   dependsOn:
-    - ${{ if ne(parameters.stageIdFilter, 'all') }}:
-      - ${{ parameters.stageIdFilter }}
     - ${{ each stage in parameters.dependsOn }}:
       - ${{ stage }}
   jobs:

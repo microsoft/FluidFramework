@@ -3,7 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { BenchmarkType, benchmark } from "@fluid-tools/benchmark";
+import {
+	BenchmarkType,
+	TestType,
+	benchmarkIt,
+	collectDurationData,
+} from "@fluid-tools/benchmark";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
 
 import type { ISequenceIntervalCollection } from "../intervalCollection.js";
@@ -57,35 +62,48 @@ function runFindOverlappingIntervalsBenchmark({
 		intervalCollection.attachIndex(overlappingIntervalsIndex);
 	};
 
-	benchmark({
+	benchmarkIt({
+		testType: TestType.ExecutionTime,
 		title: `findOverlappingIntervals on string of length ${
 			segmentCount * segmentLength
 		} with ${intervalCount} equally spaced intervals and ${segmentCount} segments`,
 		type,
-		benchmarkFn: () => {
-			const start = (segmentLength * segmentCount) / 2;
-			const end = start + segmentLength;
-			overlappingIntervalsIndex.findOverlappingIntervals(start, end);
+		run: async () => {
+			setupSharedString();
+			return collectDurationData({
+				benchmarkFn: () => {
+					const start = (segmentLength * segmentCount) / 2;
+					const end = start + segmentLength;
+					overlappingIntervalsIndex.findOverlappingIntervals(start, end);
+				},
+			});
 		},
-		before: setupSharedString,
 	});
 
 	// Note: this test would likely be covered by a suite of local reference perf tests. In lieu of that,
 	// it simulates flows that some consumers might use involving resolving the endpoints of their sequence intervals.
-	benchmark({
+	benchmarkIt({
+		testType: TestType.ExecutionTime,
 		title: `findOverlappingIntervals on string of length ${
 			segmentCount * segmentLength
 		} with ${intervalCount} equally spaced intervals and ${segmentCount} segments with endpoint resolution`,
 		type: BenchmarkType.Perspective,
-		benchmarkFn: () => {
-			const start = (segmentLength * segmentCount) / 2;
-			const end = start + segmentLength;
-			for (const interval of overlappingIntervalsIndex.findOverlappingIntervals(start, end)) {
-				sharedString.localReferencePositionToPosition(interval.start);
-				sharedString.localReferencePositionToPosition(interval.end);
-			}
+		run: async () => {
+			setupSharedString();
+			return collectDurationData({
+				benchmarkFn: () => {
+					const start = (segmentLength * segmentCount) / 2;
+					const end = start + segmentLength;
+					for (const interval of overlappingIntervalsIndex.findOverlappingIntervals(
+						start,
+						end,
+					)) {
+						sharedString.localReferencePositionToPosition(interval.start);
+						sharedString.localReferencePositionToPosition(interval.end);
+					}
+				},
+			});
 		},
-		before: setupSharedString,
 	});
 }
 

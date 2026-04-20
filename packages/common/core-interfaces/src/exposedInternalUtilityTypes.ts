@@ -27,7 +27,7 @@ const RecursionMarkerSymbol: unique symbol = Symbol("recursion here");
  * @privateRemarks
  * WeakRef should be added when lib is updated to ES2021 or later.
  *
- * @beta
+ * @public
  */
 export type ReadonlySupportedGenerics =
 	| IFluidHandle
@@ -46,7 +46,7 @@ export type ReadonlySupportedGenerics =
  * depth limit when a recursive type is found. Use of `0` will stop applying
  * `DeepReadonly` at the first point recursion is detected.
  *
- * @beta
+ * @public
  * @system
  */
 export type DeepReadonlyRecursionLimit = "NoLimit" | 0 | `+${string}`;
@@ -67,7 +67,7 @@ export type DeepReadonlyRecursionLimit = "NoLimit" | 0 | `+${string}`;
  * exported anyway. All in namespace are left exported to avoid api-extractor
  * potentially failing to validate other modules correctly.
  *
- * @beta
+ * @public
  * @system
  */
 // eslint-disable-next-line @typescript-eslint/no-namespace

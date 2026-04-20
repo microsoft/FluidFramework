@@ -31,6 +31,10 @@ pnpm build
 pnpm fluid-build .
 ```
 
+## Not sure which agent to use?
+
+Run `start` — an interactive assistant that asks what you want to do and launches the right agent for you.
+
 ## AI Agent Aliases
 
 These aliases are available in all terminal sessions (after installing agency):
@@ -56,12 +60,15 @@ You can also launch an agent with your own combination of MCP servers using the 
 Stack as many as you need (and watch for browser authentication popups).
 
 ```bash
-# Claude with an additional Kusto MCP server (ADO, WorkIQ, and EngHub are always included)
-claude --mcp 'kusto --service-uri https://kusto.aria.microsoft.com'
+# Copilot with the Kusto MCP server
+copilot --mcp 'kusto --service-uri https://kusto.aria.microsoft.com'
 
-# Copilot with an additional MCP server
-copilot --mcp 'workiq'
+# Claude with an additional MCP server
+claude --mcp 'sharepoint'
 ```
+
+> [!IMPORTANT]
+> The **Kusto** MCP server must only be used with **Copilot**, not Claude, for compliance reasons.
 
 > Run `agency mcp --help` to see all available MCP servers and their options.
 
