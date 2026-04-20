@@ -140,6 +140,9 @@ jobs:
   consolidate:
     name: "Consolidate Review"
     needs: review
+    # always() is required so this job runs even when individual reviewers fail.
+    # Without it, a single crashed reviewer would prevent the report from posting.
+    # needs.review.result != 'skipped' prevents running when the label gate filtered the job.
     if: always() && needs.review.result != 'skipped'
     runs-on: ubuntu-latest
     steps:
@@ -160,10 +163,11 @@ jobs:
         id: consolidate
         env:
           PR_NUMBER: ${{ github.event.pull_request.number }}
+          COMMIT_COUNT: ${{ github.event.pull_request.commits }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
           set +e
-          python3 .github/scripts/consolidate_reviews.py reviews "$RUN_URL" --pr-number "$PR_NUMBER" -o report.md
+          python3 .github/scripts/consolidate_reviews.py reviews "$RUN_URL" --pr-number "$PR_NUMBER" --commit-count "$COMMIT_COUNT" -o report.md
           exit_code=$?
           set -e
           if [ $exit_code -eq 2 ]; then
@@ -195,23 +199,31 @@ jobs:
           '
 
       - name: Post or update PR comment
-        if: steps.consolidate.outputs.has_findings == 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
           REPO: ${{ github.repository }}
+          HAS_FINDINGS: ${{ steps.consolidate.outputs.has_findings }}
         run: |
           MARKER="<!-- pr-review-fleet -->"
 
-          # Find existing comment with our marker and update it, or create a new one
+          if [ "$HAS_FINDINGS" = "true" ]; then
+            COMMENT_FILE=report.md
+          else
+            COMMENT_FILE=$(mktemp)
+            printf '%s\n## :telescope: PR Review Fleet Report\n\n**Verdict:** ✔️ Approve\n\nAll reviewers passed — no findings.\n' "$MARKER" > "$COMMENT_FILE"
+          fi
+
+          # Update existing fleet comment if present, otherwise create one.
+          # Always runs (even on no-findings) so prior comments don't go stale.
           EXISTING_COMMENT_ID=$(gh api "repos/${REPO}/issues/${PR_NUMBER}/comments" \
             --paginate --jq ".[] | select(.body | startswith(\"${MARKER}\")) | .id" | head -1)
 
           if [ -n "$EXISTING_COMMENT_ID" ]; then
             gh api "repos/${REPO}/issues/comments/${EXISTING_COMMENT_ID}" \
-              --method PATCH --field "body=@report.md"
+              --method PATCH --field "body=@${COMMENT_FILE}"
             echo "Updated existing comment ${EXISTING_COMMENT_ID}"
           else
-            gh pr comment "${PR_NUMBER}" --repo "${REPO}" --body-file report.md
+            gh pr comment "${PR_NUMBER}" --repo "${REPO}" --body-file "$COMMENT_FILE"
             echo "Posted new comment"
           fi
