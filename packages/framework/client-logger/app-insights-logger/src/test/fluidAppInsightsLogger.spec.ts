@@ -527,7 +527,7 @@ describe("FluidAppInsightsLogger", () => {
 			});
 		});
 
-		describe("category + namespace combination", () => {
+		describe("category + namespace combination filtering", () => {
 			const configFilters: TelemetryFilter[] = [
 				{
 					categories: ["performance"],
