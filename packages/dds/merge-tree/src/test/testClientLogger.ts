@@ -152,6 +152,10 @@ export class TestClientLogger {
 		for (const [i, c] of clients.entries()) {
 			logHeaders.push("op", `client ${c.longClientId}`);
 			const callback = (deltaArgs: IMergeTreeDeltaOpArgs | undefined): void => {
+				// Skip per-op history when not in incremental mode to avoid O(n*clients) overhead per op.
+				// toString() will compute current state on demand in the (rare) error path.
+				if (!this.incrementalLog) return;
+
 				if (
 					this.lastDeltaArgs?.sequencedMessage !== deltaArgs?.sequencedMessage ||
 					this.lastDeltaArgs?.op !== deltaArgs?.op
@@ -328,6 +332,11 @@ export class TestClientLogger {
 			if (this.title) {
 				str += `${this.title}\n`;
 			}
+		}
+		if (!this.incrementalLog) {
+			// Per-op history was not recorded; show current state of all clients.
+			str += TestClientLogger.toString(this.clients);
+			return str;
 		}
 		str += this.roundLogLines
 			.filter((line) => line.some((c) => c.trim().length > 0))

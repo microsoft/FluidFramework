@@ -427,42 +427,6 @@ export class TestClient extends Client {
 		return this.findReconnectionPosition(segoff.segment, localSeq) + segoff.offset;
 	}
 
-	public findReconnectionPosition(segment: ISegmentPrivate, localSeq: number): number {
-		const fasterComputedPosition = super.findReconnectionPosition(segment, localSeq);
-
-		const perspective = new LocalReconnectingPerspective(
-			Number.MAX_SAFE_INTEGER,
-			this.getCollabWindow().clientId,
-			localSeq,
-		);
-		let segmentPosition = 0;
-
-		/*
-            Walk the segments up to the current segment, and calculate its
-            position taking into account local segments that were modified,
-            after the current segment.
-        */
-		walkAllChildSegments(this.mergeTree.root, (seg) => {
-			// If we've found the desired segment, terminate the walk and return 'segmentPosition'.
-			if (seg === segment) {
-				return false;
-			}
-
-			// Otherwise, advance segmentPosition if the segment is visible at the given perspective.
-			if (perspective.isSegmentPresent(seg)) {
-				segmentPosition += seg.cachedLength;
-			}
-
-			return true;
-		});
-
-		assert.equal(
-			fasterComputedPosition,
-			segmentPosition,
-			"Expected fast-path computation to match result from walk all segments",
-		);
-		return segmentPosition;
-	}
 
 	/**
 	 * Validates segments either all have attribution information or none of them.
