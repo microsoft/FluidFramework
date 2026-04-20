@@ -22,6 +22,7 @@ import { TestString, loadSnapshot } from "./snapshot.utils.js";
 describe("MergeTree remove", () => {
 	benchmarkIt({
 		type: BenchmarkType.Measurement,
+		testType: TestType.ExecutionTime,
 		// baseline summary benchmark to compare to other remove tests. such a
 		// comparison should give a (rough) sense of overhead caused by summary
 		// loading
@@ -44,6 +45,7 @@ describe("MergeTree remove", () => {
 
 	benchmarkIt({
 		type: BenchmarkType.Measurement,
+		testType: TestType.ExecutionTime,
 		title: "remove large range of large tree",
 		category: "remove",
 		run: async () => {
@@ -112,6 +114,7 @@ describe("MergeTree remove", () => {
 
 	benchmarkIt({
 		type: BenchmarkType.Measurement,
+		testType: TestType.ExecutionTime,
 		title: "remove start of large tree",
 		category: "remove",
 		run: async () => {
@@ -141,6 +144,7 @@ describe("MergeTree remove", () => {
 
 	benchmarkIt({
 		type: BenchmarkType.Measurement,
+		testType: TestType.ExecutionTime,
 		title: "remove middle of large tree",
 		category: "remove",
 		run: async () => {
@@ -170,6 +174,7 @@ describe("MergeTree remove", () => {
 
 	benchmarkIt({
 		type: BenchmarkType.Measurement,
+		testType: TestType.ExecutionTime,
 		title: "remove end of large tree",
 		category: "remove",
 		run: async () => {

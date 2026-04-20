@@ -127,6 +127,7 @@ describe('IdCompressor Perf', () => {
 			let overrideIndex = 0;
 			benchmarkIt({
 				type,
+				testType: TestType.ExecutionTime,
 				title: `finalize a range of IDs (cluster size =${clusterSize}${override ? ', overrides present' : ''})`,
 				run: async () => {
 					const { network } = setupCompressors(clusterSize, false, false);
@@ -178,6 +179,7 @@ describe('IdCompressor Perf', () => {
 
 	benchmarkIt({
 		type,
+		testType: TestType.ExecutionTime,
 		title: `take an ID creation range`,
 		run: async () => {
 			const { network } = setupCompressors(defaultClusterCapacity, true, false);
@@ -195,6 +197,7 @@ describe('IdCompressor Perf', () => {
 		if (local) {
 			benchmarkIt({
 				type,
+				testType: TestType.ExecutionTime,
 				title: `decompress local ID into stable IDs${titleSuffix}`,
 				run: async () => {
 					const { network, id: idToDecompress } = setupCompressorWithId(local, override, true);
@@ -211,6 +214,7 @@ describe('IdCompressor Perf', () => {
 			if (override) {
 				benchmarkIt({
 					type,
+					testType: TestType.ExecutionTime,
 					title: titleBase + titleSuffix,
 					run: async () => {
 						const { network, id: idToDecompress } = setupCompressorWithId(local, override, true);
@@ -226,6 +230,7 @@ describe('IdCompressor Perf', () => {
 				for (const clusterHasOverride of [true, false]) {
 					benchmarkIt({
 						type,
+						testType: TestType.ExecutionTime,
 						title: `${titleBase} (sequential, overrides ${
 							clusterHasOverride ? 'present' : 'not present'
 						} in owning cluster)`,
@@ -264,6 +269,7 @@ describe('IdCompressor Perf', () => {
 
 	benchmarkIt({
 		type,
+		testType: TestType.ExecutionTime,
 		title: `normalize a final ID from the local session to session space`,
 		run: async () => {
 			const { network, compressor } = setupCompressors(defaultClusterCapacity, true, true);
@@ -294,6 +300,7 @@ describe('IdCompressor Perf', () => {
 
 	benchmarkIt({
 		type,
+		testType: TestType.ExecutionTime,
 		title: `normalize a local ID from the local session to session space`,
 		run: async () => {
 			const { network } = setupCompressors(defaultClusterCapacity, true, true);
@@ -311,6 +318,7 @@ describe('IdCompressor Perf', () => {
 	const remoteSessionId = sessionIds.get(remoteClient);
 	benchmarkIt({
 		type,
+		testType: TestType.ExecutionTime,
 		title: `normalize a local ID from a remote session to session space`,
 		run: async () => {
 			const { network } = setupCompressors(defaultClusterCapacity, true, true);

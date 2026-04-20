@@ -222,6 +222,7 @@ describe("uniformChunk", () => {
 
 			benchmarkIt({
 				type: BenchmarkType.Measurement,
+				testType: TestType.ExecutionTime,
 				title: "Polygon access",
 				run: async () => {
 					cursor = polygonTree.dataFactory().cursor();

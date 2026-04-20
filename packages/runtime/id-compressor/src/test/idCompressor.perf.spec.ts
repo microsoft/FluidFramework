@@ -147,6 +147,7 @@ describe("IdCompressor Perf", () => {
 		const session2 = "f2ded886-92da-4248-967b-eb96ee04cf51" as SessionId;
 		benchmarkIt({
 			type,
+			testType: TestType.ExecutionTime,
 			title: `finalize a range of IDs (cluster size = ${clusterSize})`,
 			run: async () => {
 				const { perfCompressor } = setupCompressors(clusterSize, false, true);
@@ -191,6 +192,7 @@ describe("IdCompressor Perf", () => {
 		const remoteSessionId = sessionIds.get(remoteClient);
 		benchmarkIt({
 			type,
+			testType: TestType.ExecutionTime,
 			title: `normalize a ${
 				isLocal ? "local" : "final"
 			} ID from a remote session to session space`,
@@ -218,6 +220,7 @@ describe("IdCompressor Perf", () => {
 	benchmarkWithFlag((eagerFinal) => {
 		benchmarkIt({
 			type,
+			testType: TestType.ExecutionTime,
 			title: `normalize a final ID corresponding to a ${
 				eagerFinal ? "eager final" : "local"
 			} ID from op space to the local session`,
@@ -245,6 +248,7 @@ describe("IdCompressor Perf", () => {
 		const remoteSessionId = sessionIds.get(remoteClient);
 		benchmarkIt({
 			type,
+			testType: TestType.ExecutionTime,
 			title: `normalize a final ID from a ${
 				isLocalOriginator ? "local" : "remote"
 			} session to a small session space (common case)`,
@@ -312,6 +316,7 @@ describe("IdCompressor Perf", () => {
 	benchmarkWithFlag((eagerFinal) => {
 		benchmarkIt({
 			type,
+			testType: TestType.ExecutionTime,
 			title: `normalize an acked ${
 				eagerFinal ? "eager final" : "local"
 			} ID from the local session to op space`,
@@ -334,6 +339,7 @@ describe("IdCompressor Perf", () => {
 	benchmarkWithFlag((local) => {
 		benchmarkIt({
 			type,
+			testType: TestType.ExecutionTime,
 			title: `decompress a final ID from a ${
 				local ? "local" : "remote"
 			} client into a stable ID`,
@@ -375,6 +381,7 @@ describe("IdCompressor Perf", () => {
 	benchmarkWithFlag((eagerFinal) => {
 		benchmarkIt({
 			type,
+			testType: TestType.ExecutionTime,
 			title: `recompress a stable ID to a ${eagerFinal ? "local" : "final"} ID`,
 			run: async () => {
 				const { network, perfCompressor } = setupCompressors(
@@ -397,6 +404,7 @@ describe("IdCompressor Perf", () => {
 	benchmarkWithFlag((manySessions) => {
 		benchmarkIt({
 			type,
+			testType: TestType.ExecutionTime,
 			title: `serialize an IdCompressor (${manySessions ? "many sessions" : "many clusters"})`,
 			run: async () => {
 				const perfCompressor = manySessions
@@ -415,6 +423,7 @@ describe("IdCompressor Perf", () => {
 		const overrideRemoteSessionId = createSessionId();
 		benchmarkIt({
 			type,
+			testType: TestType.ExecutionTime,
 			title: `deserialize an IdCompressor (${
 				manySessions ? "many sessions" : "many clusters"
 			})`,

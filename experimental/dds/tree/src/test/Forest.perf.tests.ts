@@ -8,6 +8,7 @@ import { strict as assert } from 'assert';
 import {
 	BenchmarkType,
 	TestType,
+	benchmarkDuration,
 	benchmarkIt,
 	collectDurationData,
 	isInPerformanceTestingMode,
@@ -34,14 +35,8 @@ describe('Forest Perf', () => {
 
 		benchmarkIt({
 			type,
-			testType: TestType.ExecutionTime,
 			title: `${count} random inserts in TreeView`,
-			run: async () =>
-				collectDurationData({
-					benchmarkFn: () => {
-						buildRandomTree(testTree, count);
-					},
-				}),
+			...benchmarkDuration({ benchmarkFn: () => buildRandomTree(testTree, count) }),
 		});
 
 		benchmarkIt({
@@ -80,6 +75,7 @@ describe('Forest Perf', () => {
 		for (const otherCount of sizes) {
 			benchmarkIt({
 				type,
+				testType: TestType.ExecutionTime,
 				title: `invoke delta on Forest with ${count} nodes against Forest with ${otherCount} nodes`,
 				run: async () => {
 					let forest = Forest.create(true);
