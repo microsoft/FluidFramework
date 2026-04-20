@@ -3,12 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import * as util from "util";
-
 import nconf from "nconf";
-import rimrafCallback from "rimraf";
+import { rimraf } from "rimraf";
 
-import { IStorageDirectoryConfig } from "../utils";
+import type { IStorageDirectoryConfig } from "../utils";
 
 export type gitLibType = "isomorphic-git";
 export interface IRouteTestMode {
@@ -63,12 +61,12 @@ export const defaultProvider = new nconf.Provider({}).use("memory").defaults({
 	},
 });
 
-const rimraf = util.promisify(rimrafCallback);
-
 export function initializeBeforeAfterTestHooks(provider: nconf.Provider) {
 	afterEach(async () => {
 		const storageDirConfig: IStorageDirectoryConfig = provider.get("storageDir");
-		return rimraf(storageDirConfig.baseDir);
+		if (storageDirConfig.baseDir !== undefined) {
+			await rimraf(storageDirConfig.baseDir);
+		}
 	});
 }
 
@@ -86,7 +84,7 @@ export function convertAllUtf8ToBase64<T>(obj: Record<string, any>): T {
 				const newValue = {
 					content: Buffer.from(value.content, "utf-8").toString("base64"),
 					encoding: "base64",
-					size: undefined,
+					size: undefined as number | undefined,
 				};
 				if (originalValue.size !== undefined) {
 					newValue.size = newValue.content.length;

@@ -16,11 +16,6 @@ describe("IntervalCollection fuzz testing", () => {
 
 	createDDSFuzzSuite(model, {
 		...defaultFuzzOptions,
-		forceGlobalSeed: true,
-		skip: [79],
-		// Note: there are some known eventual consistency issues which the tests don't currently reproduce.
-		// Search this package for AB#6552 (or look at that work item) for a skipped test and further details.
-		// Other relevant work items are AB#7806 and #7807.
 		// Uncomment this line to replay a specific seed from its failure file:
 		// replay: 0,
 	});
@@ -39,9 +34,6 @@ describe("IntervalCollection with stashing", () => {
 			maxNumberOfClients: Number.MAX_SAFE_INTEGER,
 			stashableClientProbability: 0.2,
 		},
-		// AB#7220
-		forceGlobalSeed: true,
-		skip: [79],
 		// Uncomment this line to replay a specific seed from its failure file:
 		// replay: 0,
 	});
@@ -55,12 +47,10 @@ describe("IntervalCollection no reconnect fuzz testing", () => {
 
 	const options = {
 		...defaultFuzzOptions,
-		forceGlobalSeed: true,
-		skip: [79],
-		reconnectProbability: 0.0,
+		reconnectProbability: 0,
 		clientJoinOptions: {
 			maxNumberOfClients: 3,
-			clientAddProbability: 0.0,
+			clientAddProbability: 0,
 		},
 	} as const;
 
@@ -84,18 +74,16 @@ describe("IntervalCollection fuzz testing with rebased batches", () => {
 		// but any additional fixes necessary are tracked by AB#31001.
 		// These cases should be somewhat rare in practice and the issue occurs at resubmission time, meaning they don't
 		// result in data corruption, just data loss.
-		reconnectProbability: 0.0,
+		reconnectProbability: 0,
 		clientJoinOptions: {
 			maxNumberOfClients: 3,
-			clientAddProbability: 0.0,
+			clientAddProbability: 0,
 		},
 		rebaseProbability: 0.2,
 		containerRuntimeOptions: {
 			flushMode: FlushMode.TurnBased,
 			enableGroupedBatching: true,
 		},
-		forceGlobalSeed: true,
-		skip: [79],
 		// Uncomment this line to replay a specific seed from its failure file:
 	});
 });

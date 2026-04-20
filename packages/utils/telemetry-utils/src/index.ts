@@ -21,6 +21,8 @@ export {
 	GenericError,
 	UsageError,
 	validatePrecondition,
+	LayerIncompatibilityError,
+	type MessageLike,
 } from "./error.js";
 export {
 	extractLogSafeErrorProperties,
@@ -45,7 +47,12 @@ export {
 	raiseConnectedEvent,
 	safeRaiseEvent,
 } from "./events.js";
-export { hasErrorInstanceId, type IFluidErrorBase, isFluidError } from "./fluidErrorBase.js";
+export {
+	hasErrorInstanceId,
+	type IFluidErrorBase,
+	isFluidError,
+	isLayerIncompatibilityError,
+} from "./fluidErrorBase.js";
 export {
 	eventNamespaceSeparator,
 	createChildLogger,
@@ -92,3 +99,4 @@ export type {
 	TelemetryEventCategory,
 } from "./telemetryTypes.js";
 export { TelemetryEventBatcher } from "./telemetryEventBatcher.js";
+export { allowIncompatibleLayersKey, validateLayerCompatibility } from "./layerCompatError.js";

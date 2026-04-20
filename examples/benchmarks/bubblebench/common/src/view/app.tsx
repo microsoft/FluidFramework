@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import React, { useEffect, useState } from "react";
+import { type FC, useEffect, useState } from "react";
 
 import { Stats } from "../stats.js";
-import { IAppState, IBubble } from "../types.js";
+import type { IAppState, IBubble } from "../types.js";
 
 import { StageView } from "./stage.js";
 import { useResizeObserver } from "./useResizeObserver.cjs";
@@ -78,7 +78,7 @@ function collide(left: IBubble, right: IBubble): void {
 /**
  * @internal
  */
-export const AppView: React.FC<IAppProps> = ({ app }: IAppProps) => {
+export const AppView: FC<IAppProps> = ({ app }: IAppProps) => {
 	const [stats] = useState<Stats>(new Stats());
 	const [, setFrame] = useState<number>(0);
 

@@ -3,29 +3,14 @@
  * Licensed under the MIT License.
  */
 
+import type { Off } from "@fluidframework/core-interfaces";
 import { assert, oob, fail, unreachableCase } from "@fluidframework/core-utils/internal";
-
-import { EmptyKey, rootFieldKey } from "../../core/index.js";
-import { type TreeStatus, isTreeValue, FieldKinds } from "../../feature-libraries/index.js";
-import { extractFromOpaque } from "../../util/index.js";
-import {
-	type TreeLeafValue,
-	type ImplicitFieldSchema,
-	FieldSchema,
-	type ImplicitAllowedTypes,
-	type TreeNodeFromImplicitAllowedTypes,
-	normalizeAllowedTypes,
-} from "../schemaTypes.js";
-import {
-	booleanSchema,
-	handleSchema,
-	nullSchema,
-	numberSchema,
-	stringSchema,
-} from "../leafNodeSchema.js";
 import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
-import type { Off } from "@fluidframework/core-interfaces";
+
+import { EmptyKey, rootFieldKey, type DeltaMark } from "../../core/index.js";
+import { type TreeStatus, isTreeValue, FieldKinds } from "../../feature-libraries/index.js";
+import { extractFromOpaque } from "../../util/index.js";
 import {
 	getKernel,
 	isTreeNode,
@@ -35,11 +20,104 @@ import {
 	tryGetTreeNodeSchema,
 	getOrCreateNodeFromInnerNode,
 	typeSchemaSymbol,
-	getOrCreateInnerNode,
+	getInnerNode,
+	type TreeLeafValue,
+	type ImplicitAllowedTypes,
+	type TreeNodeFromImplicitAllowedTypes,
+	normalizeAllowedTypes,
 } from "../core/index.js";
+import { type ImplicitFieldSchema, FieldSchema } from "../fieldSchema.js";
+import { tryGetTreeNodeForField } from "../getTreeNodeForField.js";
+import {
+	booleanSchema,
+	handleSchema,
+	nullSchema,
+	numberSchema,
+	stringSchema,
+} from "../leafNodeSchema.js";
+import { isArrayNodeSchema, isObjectNodeSchema } from "../node-kinds/index.js";
+
 import type { TreeChangeEvents } from "./treeChangeEvents.js";
-import { isObjectNodeSchema } from "../node-kinds/index.js";
-import { getTreeNodeForField } from "../getTreeNodeForField.js";
+
+/**
+ * A `"retain"` op in an {@link ArrayNodeDeltaOp} sequence.
+ * Represents elements that were neither inserted into nor removed from the array.
+ * @sealed @alpha
+ */
+export interface ArrayNodeRetainOp {
+	readonly type: "retain";
+	readonly count: number;
+}
+
+/**
+ * A `"retain"` op in an {@link ArrayNodeTreeChangedDeltaOp} sequence, used in
+ * {@link NodeChangedDataTreeDelta} payloads delivered to
+ * {@link TreeChangeEventsAlpha.treeChanged} on array nodes.
+ *
+ * Extends {@link ArrayNodeRetainOp} with a {@link ArrayNodeTreeChangedRetainOp.subtreeChanged}
+ * flag that indicates whether any descendant of the retained element changed.
+ * @sealed @alpha
+ */
+export interface ArrayNodeTreeChangedRetainOp extends ArrayNodeRetainOp {
+	/**
+	 * Whether any descendant of this retained element changed.
+	 * `true` if the element's subtree changed; `false` if nothing changed within it.
+	 * @remarks
+	 * Subscribe to `nodeChanged` or `treeChanged` on the element node itself for details.
+	 */
+	readonly subtreeChanged: boolean;
+}
+
+/**
+ * A single operation in an array-node delta delivered by {@link TreeChangeEventsAlpha.treeChanged}.
+ * Extends {@link ArrayNodeDeltaOp}: retain ops carry a {@link ArrayNodeTreeChangedRetainOp.subtreeChanged}
+ * flag indicating whether any descendant of the retained element changed.
+ * @alpha
+ */
+export type ArrayNodeTreeChangedDeltaOp =
+	| ArrayNodeTreeChangedRetainOp
+	| ArrayNodeInsertOp
+	| ArrayNodeRemoveOp;
+
+/**
+ * An `"insert"` op in an {@link ArrayNodeDeltaOp} sequence.
+ * Represents elements added to the array.
+ * Read the new element values from the current tree at the positions described by this op.
+ * @sealed @alpha
+ */
+export interface ArrayNodeInsertOp {
+	readonly type: "insert";
+	readonly count: number;
+}
+
+/**
+ * A `"remove"` op in an {@link ArrayNodeDeltaOp} sequence.
+ * Represents elements removed from the array.
+ * @sealed @alpha
+ */
+export interface ArrayNodeRemoveOp {
+	readonly type: "remove";
+	readonly count: number;
+}
+
+/**
+ * A single operation in an array node change delta. Used to efficiently sync an external
+ * representation of an array (e.g. a text editor or virtual list) with tree changes without
+ * needing to snapshot the old state or diff the entire array. Each op describes a contiguous run
+ * of positions in the array before the change. For inserts, read the new element values from the
+ * current tree at those positions.
+ *
+ * @remarks
+ * There is no dedicated `"move"` op. Moves are represented as `"remove"` + `"insert"`.
+ * When an element is moved within the same array it appears
+ * as a `"remove"` at the source position followed by an `"insert"` at the destination position.
+ * When an element is moved across two different arrays, the source array's delta contains a
+ * `"remove"` and the destination array's delta contains an `"insert"` — they cannot be
+ * correlated without additional bookkeeping on the caller's side.
+ *
+ * @sealed @alpha
+ */
+export type ArrayNodeDeltaOp = ArrayNodeRetainOp | ArrayNodeInsertOp | ArrayNodeRemoveOp;
 
 /**
  * Provides various functions for analyzing {@link TreeNode}s.
@@ -83,6 +161,9 @@ export interface TreeNodeApi {
 	 * Return the node under which this node resides in the tree (or undefined if this is a root node of the tree).
 	 *
 	 * @throws A {@link @fluidframework/telemetry-utils#UsageError} if the node has been {@link TreeStatus.Deleted | deleted}.
+	 *
+	 * @see {@link (TreeAlpha:interface).child}
+	 * @see {@link (TreeAlpha:interface).children}
 	 */
 	parent(node: TreeNode): TreeNode | undefined;
 
@@ -104,6 +185,9 @@ export interface TreeNodeApi {
 	 * @param listener - The callback to trigger for the event. The tree can be read during the callback, but it is invalid to modify the tree during this callback.
 	 * @returns A callback function which will deregister the event.
 	 * This callback should be called only once.
+	 * @remarks
+	 * The returned unsubscribe function should be called any time the need for the `listener` callback ends before the node is {@link TreeStatus.Deleted | deleted} (Not just {@link TreeStatus.Removed | removed}).
+	 * Doing so removes the overhead of tracking and triggering the event, and also avoids leaking any memory retained by the callback.
 	 */
 	on<K extends keyof TreeChangeEvents>(
 		node: TreeNode,
@@ -141,7 +225,7 @@ export interface TreeNodeApi {
  */
 export const treeNodeApi: TreeNodeApi = {
 	parent(node: TreeNode): TreeNode | undefined {
-		const editNode = getOrCreateInnerNode(node).parentField.parent.parent;
+		const editNode = getInnerNode(node).parentField.parent.parent;
 		if (editNode === undefined) {
 			return undefined;
 		}
@@ -190,9 +274,30 @@ export const treeNodeApi: TreeNodeApi = {
 						);
 						listener({ changedProperties });
 					});
-				} else if (nodeSchema.kind === NodeKind.Array) {
-					return kernel.events.on("childrenChangedAfterBatch", () => {
-						listener({ changedProperties: undefined });
+				} else if (isArrayNodeSchema(nodeSchema)) {
+					return kernel.events.on("childrenChangedAfterBatch", ({ fieldMarks }) => {
+						const marks = fieldMarks.get(EmptyKey);
+						// nodeChanged fires only for shallow changes (insert, remove, move).
+						// Deep changes (e.g. a property of an element changed) are
+						// surfaced via TreeChangeEventsAlpha.treeChanged with a delta payload instead.
+						// When marks are undefined (marks could not be composed across multiple
+						// internal passes), we conservatively fire nodeChanged rather than silently
+						// dropping the event, even though the underlying change may have been
+						// purely deep. This is a known limitation of the current eventing stack.
+						const hasShallowChange =
+							marks === undefined ||
+							marks.some((m) => m.attach !== undefined || m.detach !== undefined);
+						if (!hasShallowChange) {
+							return;
+						}
+						// `marks` is undefined when the field was modified across multiple batches
+						// within a single flush (e.g. due to an interleaved schema change) and the
+						// marks could not be composed. Emit `undefined` so callers know the delta is
+						// unavailable rather than receiving stale marks from only the first batch.
+						// TODO: Once the eventing stack is rewritten to walk the composed delta at
+						// flush time, `marks` will always be defined. Remove the `undefined` fallback.
+						const delta = marks === undefined ? undefined : deltaMarksToArrayOps(marks);
+						listener({ delta });
 					});
 				} else {
 					return kernel.events.on("childrenChangedAfterBatch", ({ changedFields }) => {
@@ -201,10 +306,23 @@ export const treeNodeApi: TreeNodeApi = {
 				}
 			}
 			case "treeChanged": {
+				if (isArrayNodeSchema(kernel.schema)) {
+					// For array nodes, treeChanged fires via childrenChangedAfterBatch so that a
+					// delta payload can be provided. This covers both shallow changes
+					// (insert/remove/move) and deep element changes. Stable (non-alpha) listeners
+					// typed as () => void will silently ignore the extra argument at runtime.
+					return kernel.events.on("childrenChangedAfterBatch", ({ fieldMarks }) => {
+						const marks = fieldMarks.get(EmptyKey);
+						const delta =
+							marks === undefined ? undefined : deltaMarksToArrayOpsForTreeChanged(marks);
+						(listener as (data: { readonly delta: typeof delta }) => void)({ delta });
+					});
+				}
 				return kernel.events.on("subtreeChangedAfterBatch", () => listener({}));
 			}
-			default:
+			default: {
 				throw new UsageError(`No event named ${JSON.stringify(eventName)}.`);
+			}
 		}
 	},
 	status(node: TreeNode): TreeStatus {
@@ -222,7 +340,7 @@ export const treeNodeApi: TreeNodeApi = {
 		if (actualSchema === undefined) {
 			return false;
 		}
-		return normalizeAllowedTypes(schema).has(actualSchema);
+		return normalizeAllowedTypes(schema).evaluateSet().has(actualSchema);
 	},
 	schema(node: TreeNode | TreeLeafValue): TreeNodeSchema {
 		return tryGetSchema(node) ?? fail(0xb37 /* Not a tree node */);
@@ -233,17 +351,90 @@ export const treeNodeApi: TreeNodeApi = {
 };
 
 /**
+ * Converts an array of internal {@link DeltaMark}s for a sequence field into sequential
+ * array delta ops suitable for inclusion in {@link NodeChangedDataDelta.delta}.
+ *
+ * Each mark in the delta describes a contiguous run of positions in the original array:
+ * - A mark with only `count` (no attach/detach) → `"retain"` with no subtree information
+ * - A mark with only `attach` → `"insert"` (new elements added)
+ * - A mark with only `detach` → `"remove"` (elements removed)
+ * - A mark with both `attach` and `detach` → `"remove"` + `"insert"`
+ *
+ * @param marks - The low-level delta marks for the array's sequence field.
+ *
+ * @privateRemarks
+ * The case where both `attach` and `detach` are set is unreachable today: the sequence-field
+ * encoder never emits such marks for array (EmptyKey) fields. It is handled defensively.
+ */
+export function deltaMarksToArrayOps(marks: readonly DeltaMark[]): ArrayNodeDeltaOp[] {
+	const ops: ArrayNodeDeltaOp[] = [];
+	for (const mark of marks) {
+		if (mark.detach !== undefined) {
+			ops.push({ type: "remove", count: mark.count });
+		}
+		if (mark.attach !== undefined) {
+			ops.push({ type: "insert", count: mark.count });
+		} else if (mark.detach === undefined) {
+			// Retain: elements were not added or removed.
+			ops.push({ type: "retain", count: mark.count });
+		}
+	}
+	return ops;
+}
+
+/**
+ * Converts an array of internal {@link DeltaMark}s for a sequence field into sequential
+ * {@link ArrayNodeTreeChangedDeltaOp}s suitable for inclusion in
+ * {@link NodeChangedDataTreeDelta.delta} (delivered to {@link TreeChangeEventsAlpha.treeChanged}).
+ *
+ * Same conversion rules as {@link deltaMarksToArrayOps}, but retain ops additionally carry a
+ * {@link ArrayNodeTreeChangedRetainOp.subtreeChanged} flag derived from whether the mark has
+ * a `fields` property (indicating a descendant changed).
+ *
+ * @param marks - The low-level delta marks for the array's sequence field.
+ *
+ * @privateRemarks
+ * The case where both `attach` and `detach` are set is unreachable today: the sequence-field
+ * encoder never emits such marks for array (EmptyKey) fields. It is handled defensively.
+ */
+export function deltaMarksToArrayOpsForTreeChanged(
+	marks: readonly DeltaMark[],
+): ArrayNodeTreeChangedDeltaOp[] {
+	const ops: ArrayNodeTreeChangedDeltaOp[] = [];
+	for (const mark of marks) {
+		if (mark.detach !== undefined) {
+			ops.push({ type: "remove", count: mark.count });
+		}
+		if (mark.attach !== undefined) {
+			ops.push({ type: "insert", count: mark.count });
+		} else if (mark.detach === undefined) {
+			// Retain: elements were not added or removed (but may have deep changes).
+			// When `fields` is set, `count` is guaranteed to be 1 (DeltaMark invariant).
+			ops.push({
+				type: "retain",
+				count: mark.count,
+				subtreeChanged: mark.fields !== undefined,
+			});
+		}
+	}
+	return ops;
+}
+
+/**
  * Returns a schema for a value if the value is a {@link TreeNode} or a {@link TreeLeafValue}.
  * Returns undefined for other values.
  */
 export function tryGetSchema(value: unknown): undefined | TreeNodeSchema {
 	switch (typeof value) {
-		case "string":
+		case "string": {
 			return stringSchema;
-		case "number":
+		}
+		case "number": {
 			return numberSchema;
-		case "boolean":
+		}
+		case "boolean": {
 			return booleanSchema;
+		}
 		case "object": {
 			if (isTreeNode(value)) {
 				// TODO: This case could be optimized, for example by placing the simple schema in a symbol on tree nodes.
@@ -256,8 +447,9 @@ export function tryGetSchema(value: unknown): undefined | TreeNodeSchema {
 				return handleSchema;
 			}
 		}
-		default:
+		default: {
 			return undefined;
+		}
 	}
 }
 
@@ -306,17 +498,18 @@ export function getIdentifierFromNode(
 		return undefined;
 	}
 
-	const flexNode = getOrCreateInnerNode(node);
+	const flexNode = getInnerNode(node);
 	const identifierFieldKeys = schema.identifierFieldKeys;
 
 	switch (identifierFieldKeys.length) {
-		case 0:
+		case 0: {
 			return undefined;
+		}
 		case 1: {
 			const key = identifierFieldKeys[0] ?? oob();
 			const identifierField = flexNode.tryGetField(key);
 			assert(identifierField !== undefined, 0xbb5 /* missing identifier field */);
-			const identifierValue = getTreeNodeForField(identifierField);
+			const identifierValue = tryGetTreeNodeForField(identifierField);
 			assert(typeof identifierValue === "string", 0xbb6 /* identifier not a string */);
 
 			const context = flexNode.context;
@@ -325,9 +518,9 @@ export function getIdentifierFromNode(
 					if (context.isHydrated()) {
 						const localNodeKey =
 							context.nodeKeyManager.tryLocalizeNodeIdentifier(identifierValue);
-						return localNodeKey !== undefined
-							? extractFromOpaque(localNodeKey)
-							: identifierValue;
+						return localNodeKey === undefined
+							? identifierValue
+							: extractFromOpaque(localNodeKey);
 					} else {
 						return identifierValue;
 					}
@@ -336,7 +529,7 @@ export function getIdentifierFromNode(
 					if (context.isHydrated()) {
 						const localNodeKey =
 							context.nodeKeyManager.tryLocalizeNodeIdentifier(identifierValue);
-						return localNodeKey !== undefined ? extractFromOpaque(localNodeKey) : undefined;
+						return localNodeKey === undefined ? undefined : extractFromOpaque(localNodeKey);
 					} else {
 						return undefined;
 					}
@@ -344,14 +537,16 @@ export function getIdentifierFromNode(
 				case "uncompressed": {
 					return identifierValue;
 				}
-				default:
+				default: {
 					unreachableCase(compression);
+				}
 			}
 		}
-		default:
+		default: {
 			throw new UsageError(
-				"shortId() may not be called on a node with more than one identifier. Consider converting extraneous identifier fields to string fields.",
+				"The node has more than one identifier. Retrieve identifiers individually via their fields instead.",
 			);
+		}
 	}
 }
 
@@ -361,7 +556,7 @@ export function getIdentifierFromNode(
 export function getStoredKey(node: TreeNode): string | number {
 	// Note: the flex domain strictly works with "stored keys", and knows nothing about the developer-facing
 	// "property keys".
-	const parentField = getOrCreateInnerNode(node).parentField;
+	const parentField = getInnerNode(node).parentField;
 	if (parentField.parent.schema === FieldKinds.sequence.identifier) {
 		// The parent of `node` is an array node
 		assert(

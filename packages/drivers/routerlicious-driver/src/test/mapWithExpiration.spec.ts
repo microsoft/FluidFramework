@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import { SinonFakeTimers, useFakeTimers } from "sinon";
 
@@ -28,7 +28,7 @@ describe("MapWithExpiration", () => {
 		actual: MapWithExpiration<number, string>,
 		expected: Map<number, string>,
 		message: string,
-	) {
+	): void {
 		assert.equal(actual.size, expected.size, `'size' mismatch (${message})`);
 	}
 
@@ -36,15 +36,15 @@ describe("MapWithExpiration", () => {
 		actual: MapWithExpiration<number, string>,
 		expected: Map<number, string>,
 		message: string,
-	) {
+	): void {
 		const actualValues: string[] = [];
 		const expectedValues: string[] = [];
-		actual.forEach((value, key) => {
+		for (const [key, value] of actual.entries()) {
 			actualValues[key] = value;
-		});
-		expected.forEach((value, key) => {
+		}
+		for (const [key, value] of expected.entries()) {
 			expectedValues[key] = value;
-		});
+		}
 		assert.equal(
 			actualValues.join(","),
 			expectedValues.join(","),
@@ -56,7 +56,7 @@ describe("MapWithExpiration", () => {
 	function assertHas(
 		actual: MapWithExpiration<number, string>,
 		expected: Map<number, string>,
-	) {
+	): void {
 		for (const k of expected.keys()) {
 			assert(actual.has(k), "'has' mismatch");
 		}
@@ -67,7 +67,7 @@ describe("MapWithExpiration", () => {
 		actual: MapWithExpiration<number, string>,
 		expected: Map<number, string>,
 		message: string,
-	) {
+	): void {
 		for (const k of expected.keys()) {
 			assert.equal(actual.get(k), expected.get(k), `'get' mismatch (${message})`);
 		}
@@ -105,8 +105,8 @@ describe("MapWithExpiration", () => {
 	 * This generates a test case per function to validate.
 	 * They need to be tested independently since these all have side effects
 	 */
-	function test(testName: string, testCallback: (assertFn) => void) {
-		[
+	function test(testName: string, testCallback: (assertFn) => void): void {
+		for (const [assertFn, caseName] of [
 			[assertSize, "check size"] as const,
 			[assertForEach, "check forEach"] as const,
 			[assertEntries, "check entries"] as const,
@@ -116,11 +116,11 @@ describe("MapWithExpiration", () => {
 			[assertIterator, "check Iterator"] as const,
 			[assertHas, "check has"] as const,
 			[assertGet, "check get"] as const,
-		].forEach(([assertFn, caseName]) => {
+		]) {
 			it(`${testName} (${caseName})`, () => {
 				testCallback(assertFn);
 			});
-		});
+		}
 	}
 
 	test("Basic expiry", (assertMatches: (
@@ -200,7 +200,7 @@ describe("MapWithExpiration", () => {
 		function testForEachCases(
 			testName: string,
 			testFn: (maps: Map<any, any>[], thisArgs: any[]) => void,
-		) {
+		): void {
 			it(testName, () => {
 				testFn(
 					[new Map(), new MapWithExpiration(10)], // We run plain Map and MapWithExpiration through to ensure matching behavior
@@ -246,7 +246,7 @@ describe("MapWithExpiration", () => {
 		);
 
 		class Foo {
-			cb(this: any, valueWhichIsExpectedThis, k, m) {
+			cb(this: any, valueWhichIsExpectedThis, k, m): void {
 				assert(
 					!(this instanceof Foo),
 					"'this' should not be a Foo, it should have been overridden",
@@ -283,7 +283,7 @@ describe("MapWithExpiration", () => {
 
 		testForEachCases("Arrow functions don't pick up thisArg", (maps, thisArgs) => {
 			const testCaseRunner = new (class {
-				runTestCase(map: Map<any, any>, thisArg: any) {
+				runTestCase(map: Map<any, any>, thisArg: any): void {
 					map.set(1, "one");
 
 					// eslint-disable-next-line @typescript-eslint/no-this-alias
@@ -305,7 +305,6 @@ describe("MapWithExpiration", () => {
 
 	it("toString", () => {
 		const map = new MapWithExpiration<number, string>(0);
-		// eslint-disable-next-line @typescript-eslint/no-base-to-string
 		assert.equal(map.toString(), "[object Map]");
 	});
 });

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import { AttachState } from "@fluidframework/container-definitions";
 import { IChannelServices } from "@fluidframework/datastore-definitions/internal";
@@ -1193,8 +1193,8 @@ describe("SharedString interval collections", () => {
 			const collection1 = sharedString.getIntervalCollection("test");
 			const collection2 = sharedString2.getIntervalCollection("test");
 			containerRuntimeFactory.processAllMessages();
-			assert.equal(Array.from(collection1).length, 0);
-			assert.equal(Array.from(collection2).length, 0);
+			assert.equal([...collection1].length, 0);
+			assert.equal([...collection2].length, 0);
 		});
 
 		it("doesn't slide references on ack if there are pending remote changes", () => {
@@ -2365,6 +2365,11 @@ describe("the start and end positions of intervals are updated in response to ed
 					expectedTextAfterRemoval,
 					"unexpected text",
 				);
+				assert.strictEqual(
+					initial,
+					collection.getIntervalById(intervalId),
+					"the interval instance should survive reconnect",
+				);
 
 				// Verify that the interval was updated correctly in response to removal.
 				assertInterval(clients[0].sharedString, intervalId, expected);
@@ -2388,6 +2393,11 @@ describe("the start and end positions of intervals are updated in response to ed
 				clients[0].containerRuntime.connected = true;
 				containerRuntimeFactory.processAllMessages();
 				await assertConsistent(clients);
+				assert.strictEqual(
+					initial,
+					collection.getIntervalById(intervalId),
+					"the interval instance should survive reconnect",
+				);
 
 				// Verify that the interval was updated correctly in response to removal.
 				assertInterval(clients[0].sharedString, intervalId, expected);
@@ -2411,6 +2421,11 @@ describe("the start and end positions of intervals are updated in response to ed
 				clients[1].containerRuntime.connected = true;
 				containerRuntimeFactory.processAllMessages();
 				await assertConsistent(clients);
+				assert.strictEqual(
+					initial,
+					collection.getIntervalById(intervalId),
+					"the interval instance should survive reconnect",
+				);
 
 				// Verify that the interval was updated correctly in response to removal.
 				assertInterval(clients[0].sharedString, intervalId, expected);

@@ -13,7 +13,11 @@ import {
 	rootFieldKey,
 	type ChangeFamilyEditor,
 } from "../../../core/index.js";
-import { DefaultChangeFamily } from "../../../feature-libraries/index.js";
+import {
+	DefaultChangeFamily,
+	DefaultRevisionReplacer,
+} from "../../../feature-libraries/index.js";
+import { FluidClientVersion, FormatValidatorBasic } from "../../../index.js";
 import type { Commit } from "../../../shared-tree-core/index.js";
 import { brand } from "../../../util/index.js";
 import { type Editor, makeEditMinter } from "../../editMinter.js";
@@ -53,7 +57,10 @@ describe("EditManager - Bench", () => {
 		readonly maxEditCount: number;
 	}
 
-	const defaultFamily = new DefaultChangeFamily(failCodecFamily);
+	const defaultFamily = new DefaultChangeFamily(failCodecFamily, {
+		jsonValidator: FormatValidatorBasic,
+		minVersionForCollab: FluidClientVersion.v2_0,
+	});
 	const sequencePrepend: Editor = (builder) => {
 		builder
 			.sequenceField({ parent: undefined, field: rootFieldKey })
@@ -75,9 +82,15 @@ describe("EditManager - Bench", () => {
 			changeFamily: defaultFamily,
 			mintChange: (revision) => {
 				const change = makeEditMinter(defaultFamily, sequencePrepend)();
-				return revision !== undefined
-					? defaultFamily.rebaser.changeRevision(change, revision)
-					: change;
+				return revision === undefined
+					? change
+					: defaultFamily.rebaser.changeRevision(
+							change,
+							new DefaultRevisionReplacer(
+								revision,
+								defaultFamily.rebaser.getRevisions(change),
+							),
+						);
 			},
 			maxEditCount: 350,
 		},
@@ -271,11 +284,13 @@ describe("EditManager - Bench", () => {
 							const family = testChangeFamilyFactory(new NoOpChangeRebaser());
 							const manager = editManagerFactory(family);
 							// Subscribe to the local branch to emulate the behavior of SharedTree
-							manager.localBranch.events.on("afterChange", ({ change }) => {});
+							manager.getLocalBranch("main").events.on("afterChange", ({ change }) => {});
 							const sequencedEdits: Commit<TestChange>[] = [];
 							for (let iChange = 0; iChange < count; iChange++) {
 								const revision = mintRevisionTag();
-								manager.localBranch.apply({ change: TestChange.emptyChange, revision });
+								manager
+									.getLocalBranch("main")
+									.apply({ change: TestChange.emptyChange, revision });
 								sequencedEdits.push({
 									change: TestChange.emptyChange,
 									revision,
@@ -292,6 +307,7 @@ describe("EditManager - Bench", () => {
 									commit.sessionId,
 									brand(iChange + 1),
 									brand(0),
+									"main",
 								);
 							}
 							const after = state.timer.now();

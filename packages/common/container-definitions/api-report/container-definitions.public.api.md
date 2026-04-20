@@ -13,10 +13,14 @@ export enum AttachState {
 
 // @public
 export namespace ConnectionState {
-    export type CatchingUp = 1;
-    export type Connected = 2;
-    export type Disconnected = 0;
-    export type EstablishingConnection = 3;
+    const Disconnected = 0;
+    export type CatchingUp = typeof CatchingUp;
+    const EstablishingConnection = 3;
+    export type Connected = typeof Connected;
+    const CatchingUp = 1;
+    export type Disconnected = typeof Disconnected;
+    const Connected = 2;
+    export type EstablishingConnection = typeof EstablishingConnection;
 }
 
 // @public
@@ -39,9 +43,16 @@ export interface IAudienceEvents extends IEvent {
 }
 
 // @public
-export type ICriticalContainerError = IErrorBase_2;
+export type ICriticalContainerError = IErrorBase;
 
-export { IErrorBase }
+// @public
+export interface IErrorBase extends Partial<Error> {
+    readonly errorType: string;
+    getTelemetryProperties?(): ITelemetryBaseProperties;
+    readonly message: string;
+    readonly name?: string;
+    readonly stack?: string;
+}
 
 // @public
 export interface ISelf {

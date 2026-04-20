@@ -171,9 +171,11 @@ export class SetProperty extends IndexedCollectionBaseProperty {
 	/**
 	 * Removes the given property from the set
 	 *
+	 * Note: If the entry does not exist, a warning is logged and no error is thrown.
+	 * This is intentional to support idempotent operations in collaborative editing scenarios.
+	 *
 	 * @param {property-properties.NamedProperty|string} in_entry - The property or its URN to remove from the set
-	 * @return {property-properties.NamedProperty} the property that was removed.
-	 * @throws if trying to remove an entry that does not exist
+	 * @return {property-properties.NamedProperty} the property that was removed, or undefined if not found
 	 */
 	remove(in_entry) {
 		if (_.isString(in_entry)) {

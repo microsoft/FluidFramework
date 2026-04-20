@@ -29,6 +29,7 @@ describe("CollaborationSessionTracker", () => {
 			addOrUpdateSession: sinon.stub(),
 			removeSession: sinon.stub(),
 			getAllSessions: sinon.stub(),
+			iterateAllSessions: sinon.stub(),
 		} as unknown as sinon.SinonStubbedInstance<ICollaborationSessionManager>;
 
 		sessionTracker = new CollaborationSessionTracker(clientManager, sessionManager);
@@ -137,6 +138,7 @@ describe("CollaborationSessionTracker", () => {
 
 			try {
 				await sessionTracker.endClientSession(client, sessionId);
+				assert.fail("Expected error to be thrown");
 			} catch (error) {
 				assert.equal((error as Error).message, "Test error");
 			}
@@ -203,7 +205,7 @@ describe("CollaborationSessionTracker", () => {
 				},
 			};
 
-			sessionManager.getAllSessions.resolves([session]);
+			sessionManager.iterateAllSessions.callsArgWithAsync(0, session);
 			clientManager.getClients.resolves([]);
 
 			await sessionTracker.pruneInactiveSessions();
@@ -215,7 +217,7 @@ describe("CollaborationSessionTracker", () => {
 		});
 
 		it("should handle errors during pruning", async () => {
-			sessionManager.getAllSessions.rejects(new Error("Test error"));
+			sessionManager.iterateAllSessions.rejects(new Error("Test error"));
 			clientManager.getClients.resolves([]);
 
 			try {

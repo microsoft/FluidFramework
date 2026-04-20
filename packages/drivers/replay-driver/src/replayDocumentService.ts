@@ -4,8 +4,8 @@
  */
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import { IClient } from "@fluidframework/driver-definitions";
-import {
+import type { IClient } from "@fluidframework/driver-definitions";
+import type {
 	IDocumentServiceEvents,
 	IDocumentService,
 	IDocumentStorageService,
@@ -15,7 +15,7 @@ import {
 } from "@fluidframework/driver-definitions/internal";
 
 import { EmptyDeltaStorageService } from "./emptyDeltaStorageService.js";
-import { ReplayController } from "./replayController.js";
+import type { ReplayController } from "./replayController.js";
 import { ReplayDocumentDeltaConnection } from "./replayDocumentDeltaConnection.js";
 
 /**
@@ -51,7 +51,7 @@ export class ReplayDocumentService
 		super();
 	}
 
-	public dispose() {}
+	public dispose(): void {}
 
 	// TODO: Issue-2109 Implement detach container api or put appropriate comment.
 	public get resolvedUrl(): IResolvedUrl {

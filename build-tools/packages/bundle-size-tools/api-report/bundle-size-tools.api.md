@@ -6,14 +6,13 @@
 
 /// <reference types="node" />
 
-import { Build } from 'azure-devops-node-api/interfaces/BuildInterfaces';
-import { CommentThreadStatus } from 'azure-devops-node-api/interfaces/GitInterfaces';
+import type { Build } from 'azure-devops-node-api/interfaces/BuildInterfaces';
+import type { CommentThreadStatus } from 'azure-devops-node-api/interfaces/GitInterfaces';
 import { Compiler } from 'webpack';
-import JSZip from 'jszip';
-import { jszip } from 'jszip';
-import { StatsCompilation } from 'webpack';
+import type JSZip from 'jszip';
+import type { StatsCompilation } from 'webpack';
 import { WebApi } from 'azure-devops-node-api';
-import Webpack from 'webpack';
+import type Webpack from 'webpack';
 
 // @public (undocumented)
 export class ADOSizeComparator {
@@ -296,7 +295,7 @@ export interface TotalSizeStatsProcessorOptions {
 }
 
 // @public (undocumented)
-export function unzipStream(stream: NodeJS.ReadableStream): Promise<jszip>;
+export function unzipStream(stream: NodeJS.ReadableStream): Promise<JSZip>;
 
 // @public
 export type WebpackStatsProcessor = (stats: StatsCompilation, config: BundleBuddyConfig | undefined) => BundleMetricSet | undefined;

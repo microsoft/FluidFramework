@@ -5,15 +5,15 @@
 
 import {
 	isNetworkError,
-	IWholeFlatSummary,
-	IWholeSummaryPayload,
-	IWriteSummaryResponse,
+	type IWholeFlatSummary,
+	type IWholeSummaryPayload,
+	type IWriteSummaryResponse,
 	NetworkError,
 } from "@fluidframework/server-services-client";
 import { handleResponse } from "@fluidframework/server-services-shared";
 import { getGlobalTelemetryContext, Lumberjack } from "@fluidframework/server-services-telemetry";
 import { Router } from "express";
-import { Provider } from "nconf";
+import type { Provider } from "nconf";
 
 import {
 	BaseGitRestTelemetryProperties,
@@ -25,12 +25,12 @@ import {
 	getRepoManagerFromWriteAPI,
 	getRepoManagerParamsFromRequest,
 	GitWholeSummaryManager,
-	IExternalWriterConfig,
-	IFileSystemManager,
-	IFileSystemManagerFactories,
-	IRepoManagerParams,
-	IRepositoryManager,
-	IRepositoryManagerFactory,
+	type IExternalWriterConfig,
+	type IFileSystemManager,
+	type IFileSystemManagerFactories,
+	type IRepoManagerParams,
+	type IRepositoryManager,
+	type IRepositoryManagerFactory,
 	isContainerSummary,
 	isIStorageRoutingId,
 	latestSummarySha,

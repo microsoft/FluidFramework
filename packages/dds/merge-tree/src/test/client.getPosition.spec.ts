@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable @typescript-eslint/no-non-null-assertion */
-
 import { strict as assert } from "node:assert";
 
 import { segmentIsRemoved, type ISegmentPrivate } from "../mergeTreeNodes.js";
@@ -25,7 +23,8 @@ describe("client.getPosition", () => {
 		client.startOrUpdateCollaboration(localUserLongId);
 
 		const segOff = client.getContainingSegment<ISegmentPrivate>(segPos);
-		assert(TextSegment.is(segOff.segment!));
+		assert(segOff);
+		assert(TextSegment.is(segOff.segment));
 		assert.strictEqual(segOff.offset, 0);
 		assert.strictEqual(segOff.segment.text, "o");
 		segment = segOff.segment;

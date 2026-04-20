@@ -3,15 +3,44 @@
  * Licensed under the MIT License.
  */
 
-import { assert, fail } from "@fluidframework/core-utils/internal";
-import { createIdCompressor } from "@fluidframework/id-compressor/internal";
-import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
-import type { IIdCompressor } from "@fluidframework/id-compressor";
+import {
+	assert,
+	debugAssert,
+	fail,
+	unreachableCase,
+} from "@fluidframework/core-utils/internal";
+import type { IIdCompressor, SessionSpaceCompressedId } from "@fluidframework/id-compressor";
+import { createIdCompressor } from "@fluidframework/id-compressor/internal";
+import { isFluidHandle } from "@fluidframework/runtime-utils";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import {
+	FluidClientVersion,
+	type ICodecOptions,
+	type CodecWriteOptions,
+	FormatValidatorNoOp,
+} from "../codec/index.js";
+import { EmptyKey, type FieldKey, type ITreeCursorSynchronous } from "../core/index.js";
+import {
+	cursorForMapTreeField,
+	defaultSchemaPolicy,
+	isTreeValue,
+	fieldBatchCodecBuilder,
+	mapTreeFromCursor,
+	TreeCompressionStrategy,
+	type FieldBatch,
+	type FieldBatchEncodingContext,
+	type LocalNodeIdentifier,
+	type FlexTreeSequenceField,
+	type FlexTreeNode,
+	type Observer,
+	withObservation,
+} from "../feature-libraries/index.js";
+import {
+	asIndex,
 	getKernel,
-	type TreeNode,
+	TreeNode,
 	type Unhydrated,
 	TreeBeta,
 	tryGetSchema,
@@ -23,14 +52,11 @@ import {
 	type TreeFieldFromImplicitField,
 	type TreeLeafValue,
 	type UnsafeUnknownSchema,
-	conciseFromCursor,
-	type ConciseTree,
 	applySchemaToParserOptions,
 	cursorFromVerbose,
 	verboseFromCursor,
 	type TreeEncodingOptions,
 	type VerboseTree,
-	toStoredSchema,
 	extractPersistedSchema,
 	type TreeBranch,
 	TreeViewConfigurationAlpha,
@@ -40,47 +66,54 @@ import {
 	getIdentifierFromNode,
 	unhydratedFlexTreeFromInsertable,
 	getOrCreateNodeFromInnerNode,
+	getOrCreateNodeFromInnerUnboxedNode,
+	getInnerNode,
+	NodeKind,
+	tryGetTreeNodeForField,
+	isObjectNodeSchema,
+	isTreeNode,
+	toInitialSchema,
+	type TreeParsingOptions,
+	type NodeChangedData,
+	type TreeChangeEventsAlpha,
+	type ConciseTree,
+	importConcise,
+	exportConcise,
+	borrowCursorFromTreeNodeOrValue,
+	contentSchemaSymbol,
+	type TreeContextAlpha,
+	type TreeNodeSchema,
+	getUnhydratedContext,
+	type TreeBranchAlpha,
 } from "../simple-tree/index.js";
-import { extractFromOpaque, type JsonCompatible } from "../util/index.js";
-import type { CodecWriteOptions, ICodecOptions } from "../codec/index.js";
-import type { ITreeCursorSynchronous } from "../core/index.js";
-import {
-	cursorForMapTreeField,
-	defaultSchemaPolicy,
-	isTreeValue,
-	makeFieldBatchCodec,
-	mapTreeFromCursor,
-	TreeCompressionStrategy,
-	type FieldBatch,
-	type FieldBatchEncodingContext,
-	fluidVersionToFieldBatchCodecWriteVersion,
-	type LocalNodeIdentifier,
-} from "../feature-libraries/index.js";
+import { brand, extractFromOpaque, type JsonCompatible } from "../util/index.js";
+
 import { independentInitializedView, type ViewContent } from "./independentView.js";
 import { SchematizingSimpleTreeView, ViewSlot } from "./schematizingTreeView.js";
-import { currentVersion, noopValidator } from "../codec/index.js";
+import { UnhydratedTreeContext } from "./unhydratedTreeContext.js";
 
 const identifier: TreeIdentifierUtils = (node: TreeNode): string | undefined => {
-	const nodeIdentifier = getIdentifierFromNode(node, "uncompressed");
-	if (typeof nodeIdentifier === "number") {
-		throw new TypeError("identifier should be uncompressed.");
-	}
-	return nodeIdentifier;
+	return getIdentifierFromNode(node, "uncompressed");
 };
 
 identifier.shorten = (branch: TreeBranch, nodeIdentifier: string): number | undefined => {
-	const nodeKeyManager = (branch as SchematizingSimpleTreeView<ImplicitFieldSchema>)
-		.nodeKeyManager;
+	assert(
+		branch instanceof SchematizingSimpleTreeView,
+		0xcac /* Unexpected branch implementation */,
+	);
+	const { nodeKeyManager } = branch;
 	const localNodeKey = nodeKeyManager.tryLocalizeNodeIdentifier(nodeIdentifier);
-	return localNodeKey !== undefined ? extractFromOpaque(localNodeKey) : undefined;
+	return localNodeKey === undefined ? undefined : extractFromOpaque(localNodeKey);
 };
 
 identifier.lengthen = (branch: TreeBranch, nodeIdentifier: number): string => {
-	const nodeKeyManager = (branch as SchematizingSimpleTreeView<ImplicitFieldSchema>)
-		.nodeKeyManager;
-	return nodeKeyManager.stabilizeNodeIdentifier(
-		nodeIdentifier as unknown as LocalNodeIdentifier,
+	assert(
+		branch instanceof SchematizingSimpleTreeView,
+		0xcad /* Unexpected branch implementation */,
 	);
+	const { nodeKeyManager } = branch;
+	const local = brand<LocalNodeIdentifier>(nodeIdentifier as SessionSpaceCompressedId);
+	return nodeKeyManager.stabilizeNodeIdentifier(local);
 };
 
 identifier.getShort = (node: TreeNode): number | undefined => {
@@ -97,64 +130,70 @@ identifier.create = (branch: TreeBranch): string => {
 Object.freeze(identifier);
 
 /**
- * A utility interface for retrieving or converting node identifiers.
- *
+ * A utility interface for manipulating node identifiers.
  * @remarks
  * This provides methods to:
  *
- * - Retrieve long or short identifiers from nodes
- *
- * - Convert between long identifiers and short identifiers
- *
- * - Generates long identifiers
+ * - Retrieve identifiers from nodes
+ * - Generate identifiers
+ * - Convert between short numeric identifiers and long string identifiers
  *
  * @alpha @sealed
  */
 export interface TreeIdentifierUtils {
 	/**
-	 * Returns the contents of a node's {@link SchemaFactory.identifier} field as a stable identifier.
-	 * If the identifier field does not exist, returns undefined.
+	 * Returns the identifier of a node.
+	 * @remarks
+	 * This returns the node's UUID if and only if it has exactly one {@link SchemaFactory.identifier | identifier field}.
+	 * If it has no identifier field, this returns undefined.
+	 * If it has more than one identifier field, this throws an error.
+	 * In that case, query the identifier fields directly instead.
 	 *
 	 * @param node - The TreeNode you want to get the identifier from,
 	 */
 	(node: TreeNode): string | undefined;
 
 	/**
-	 * Returns the shortened identifier as a number given long identifier known by the id compressor on the branch if possible.
-	 * Otherwise, it will return the original string identifier provided.
-	 * If the id does not exist, or is unknown by the id compressor, it returns undefined.
+	 * Returns the shortened identifier as a number given a UUID known by the id compressor on the branch.
+	 * @remarks
+	 * If the given string is not a valid identifier and/or was not generated by the SharedTree, this will return `undefined`.
 	 *
-	 * This method is the inverse of {@link TreeIdentifierUtils.lengthen}. If you shorten an identifier
-	 * and then immediately pass it to {@link TreeIdentifierUtils.lengthen}, you will get the original string back.
+	 * See {@link TreeIdentifierUtils.getShort} for additional details about shortened identifiers.
 	 *
-	 * @param branch - TreeBranch from where you get the idCompressor to do the decompression.
-	 * @param nodeIdentifier - the stable identifier that needs to be shortened.
+	 * This method is the inverse of {@link TreeIdentifierUtils.lengthen}.
+	 * If you shorten an identifier and then immediately pass it to {@link TreeIdentifierUtils.lengthen}, you will get the original string back.
+	 *
+	 * @param branch - The branch (and/or view) of the SharedTree that will perform the compression.
+	 * @param nodeIdentifier - the stable identifier to be shortened.
 	 */
 	shorten(branch: TreeBranch, nodeIdentifier: string): number | undefined;
 
 	/**
-	 * Returns the stable id as a string if the identifier is decompressible and known by the id compressor. Otherwise, it will throw an error.
+	 * Returns the stable id as a string if the identifier is decompressible and known by the id compressor.
+	 * @remarks
+	 * If the given number does not correspond to a valid identifier generated by the SharedTree, this will return `undefined`.
 	 *
-	 * This method is the inverse of {@link TreeIdentifierUtils.shorten}. If you lengthen an identifier
-	 * and then immediately pass it to {@link TreeIdentifierUtils.shorten}, you will get the original short identifier back.
+	 * This method is the inverse of {@link TreeIdentifierUtils.shorten}.
+	 * If you lengthen an identifier and then immediately pass it to {@link TreeIdentifierUtils.shorten}, you will get the original short identifier back.
 	 *
-	 * @param branch - TreeBranch from where you want to get the id compressor to do the decompression.
-	 * @param nodeIdentifier - The local identifier that needs to be expanded.
+	 * @param branch - The branch (and/or view) of the SharedTree that will perform the decompression.
+	 * @param nodeIdentifier - The local identifier to be lengthened.
 	 */
 	lengthen(branch: TreeBranch, nodeIdentifier: number): string;
 
 	/**
-	 * Returns the {@link SchemaFactory.identifier | identifier} of the given node in the most compressed form possible.
+	 * Returns the {@link TreeIdentifierUtils.shorten | shortened} form of the identifier {@link SchemaFactory.identifier | identifier} for the given node.
 	 * @remarks
 	 * If the node is {@link Unhydrated | hydrated} and its identifier is a valid UUID that was automatically generated by the SharedTree it is part of (or something else using the same {@link @fluidframework/id-compressor#IIdCompressor}), then this will return a process-unique integer corresponding to that identifier.
 	 * This is useful for performance-sensitive scenarios involving many nodes with identifiers that need to be compactly retained in memory or used for efficient lookup.
-	 * Note that automatically generated identifiers that were accessed before the node was hydrated will return the generated UUID, not the process-unique integer.
+	 * Note that automatically generated identifiers that were accessed before the node was hydrated will not yield a short identifier until after hydration.
 	 *
-	 * If the node's identifier is any other user-provided string, then this will return undefined.
+	 * If the node's identifier is any other user-provided string, then this will return `undefined`.
 	 *
 	 * If the node has no identifier (that is, it has no {@link SchemaFactory.identifier | identifier} field), then this returns `undefined`.
 	 *
 	 * If the node has more than one identifier, then this will throw an error.
+	 * In that case, retrieve the identifiers individually via their fields instead.
 	 *
 	 * The returned integer should not be serialized or preserved outside of the current process.
 	 * Its lifetime is that of the current in-memory instance of the FF container for this client, and it is not guaranteed to be unique or stable outside of that context.
@@ -163,10 +202,11 @@ export interface TreeIdentifierUtils {
 	getShort(node: TreeNode): number | undefined;
 
 	/**
-	 * Creates and returns a long identifier.
-	 * The long identifier is a compressible, stable identifier generated by the tree's ID compressor.
+	 * Creates a new identifier.
+	 * @remarks
+	 * The returned UUID string can be {@link TreeIdentifierUtils.shorten | shortened} for high-performance scenarios.
 	 *
-	 * @param branch - TreeBranch from where you want to get the id compressor to generate the identifier from.
+	 * @param branch - The branch (and/or view) of the SharedTree that will generate and manage the identifier.
 	 */
 	create(branch: TreeBranch): string;
 }
@@ -175,9 +215,44 @@ export interface TreeIdentifierUtils {
  * Extensions to {@link (Tree:interface)} and {@link (TreeBeta:interface)} which are not yet stable.
  * @remarks
  * Use via the {@link (TreeAlpha:variable)} singleton.
- * @system @sealed @alpha
+ *
+ * The unhydrated node creation APIs in this interface do not support {@link ObjectSchemaOptions.allowUnknownOptionalFields | unknown optional fields}.
+ * This is because unknown optional fields still must have a schema: its just that the schema may come from the document's stored schema.
+ * Unhydrated nodes created via this interface are not associated with any document, so there is nowhere for them to get schema for unknown optional fields.
+ * Note that {@link (TreeBeta:interface).clone} can create an unhydrated node with unknown optional fields, as it uses the source node's stored schema (if any).
+ *
+ * Export APIs in this interface include {@link ObjectSchemaOptions.allowUnknownOptionalFields | unknown optional fields}
+ * if they are using {@link KeyEncodingOptions.allStoredKeys}.
+ *
+ * @privateRemarks
+ * TODO:
+ * There should be a way to provide a source for defaulted identifiers for unhydrated node creation, either via these APIs or some way to add them to its output later.
+ * If an option were added to these APIs, it could also be used to enable unknown optional fields.
+ *
+ * @sealed @alpha
  */
 export interface TreeAlpha {
+	/**
+	 * Register an event listener on the given node.
+	 * @param node - The node whose events should be subscribed to.
+	 * @param eventName - Which event to subscribe to.
+	 * @param listener - The callback to trigger for the event. The tree can be read during the callback, but it is invalid to modify the tree during this callback.
+	 * @returns A callback function which will deregister the event.
+	 * This callback should be called only once.
+	 * @remarks
+	 * Provides richer events than {@link (TreeBeta:interface).on} for array nodes:
+	 * - `nodeChanged` includes a {@link NodeChangedDataDelta.delta | delta} payload for direct
+	 * changes (insert, remove, move).
+	 * - `treeChanged` also includes a {@link NodeChangedDataDelta.delta | delta} payload and fires
+	 * for both shallow changes and deep changes (e.g. a property of an element changed without
+	 * any direct array change).
+	 */
+	on<K extends keyof TreeChangeEventsAlpha<TNode>, TNode extends TreeNode>(
+		node: TNode,
+		eventName: K,
+		listener: NoInfer<TreeChangeEventsAlpha<TNode>[K]>,
+	): () => void;
+
 	/**
 	 * Retrieve the {@link TreeBranch | branch}, if any, for the given node.
 	 * @param node - The node to query
@@ -186,8 +261,16 @@ export interface TreeAlpha {
 	 *
 	 * This does not fork a new branch, but rather retrieves the _existing_ branch for the node.
 	 * To create a new branch, use e.g. {@link TreeBranch.fork | `myBranch.fork()`}.
+	 *
+	 * @deprecated To obtain a {@link TreeBranchAlpha | branch }, use `TreeAlpha.context(node)` to obtain a {@link TreeContextAlpha | context} and then check {@link TreeContextAlpha.isBranch | isBranch()}.
 	 */
-	branch(node: TreeNode): TreeBranch | undefined;
+	branch(node: TreeNode): TreeBranchAlpha | undefined;
+
+	/**
+	 * Retrieve the {@link TreeContextAlpha | context} for the given node.
+	 * @param node - The node to query
+	 */
+	context(node: TreeNode): TreeContextAlpha;
 
 	/**
 	 * Construct tree content that is compatible with the field defined by the provided `schema`.
@@ -197,8 +280,6 @@ export interface TreeAlpha {
 	 * When providing a {@link TreeNodeSchemaClass}, this is the same as invoking its constructor except that an unhydrated node can also be provided.
 	 * This function exists as a generalization that can be used in other cases as well,
 	 * such as when `undefined` might be allowed (for an optional field), or when the type should be inferred from the data when more than one type is possible.
-	 * @privateRemarks
-	 * There should be a way to provide a source for defaulted identifiers, either via this API or some way to add them to its output later.
 	 */
 	create<const TSchema extends ImplicitFieldSchema | UnsafeUnknownSchema>(
 		schema: UnsafeUnknownSchema extends TSchema
@@ -212,19 +293,7 @@ export interface TreeAlpha {
 	>;
 
 	/**
-	 * Less type safe version of {@link (TreeAlpha:interface).create}, suitable for importing data.
-	 * @remarks
-	 * Due to {@link ConciseTree} relying on type inference from the data, its use is somewhat limited.
-	 * This does not support {@link ConciseTree|ConciseTrees} with customized handle encodings or using persisted keys.
-	 * Use "compressed" or "verbose" formats for more flexibility.
-	 *
-	 * When using this function,
-	 * it is recommend to ensure your schema is unambiguous with {@link ITreeConfigurationOptions.preventAmbiguity}.
-	 * If the schema is ambiguous, consider using {@link (TreeAlpha:interface).create} and {@link Unhydrated} nodes where needed,
-	 * or using {@link (TreeAlpha:interface).(importVerbose:1)} and specify all types.
-	 *
-	 * Documented (and thus recoverable) error handling/reporting for this is not yet implemented,
-	 * but for now most invalid inputs will throw a recoverable error.
+	 * {@inheritDoc (TreeBeta:interface).importConcise}
 	 */
 	importConcise<const TSchema extends ImplicitFieldSchema | UnsafeUnknownSchema>(
 		schema: UnsafeUnknownSchema extends TSchema
@@ -238,23 +307,16 @@ export interface TreeAlpha {
 	>;
 
 	/**
-	 * Construct tree content compatible with a field defined by the provided `schema`.
-	 * @param schema - The schema for what to construct. As this is an {@link ImplicitFieldSchema}, a {@link FieldSchema}, {@link TreeNodeSchema} or {@link AllowedTypes} array can be provided.
-	 * @param data - The data used to construct the field content. See {@link (TreeAlpha:interface).(exportVerbose:1)}.
-	 */
-	importVerbose<const TSchema extends ImplicitFieldSchema>(
-		schema: TSchema,
-		data: VerboseTree | undefined,
-		options?: Partial<TreeEncodingOptions>,
-	): Unhydrated<TreeFieldFromImplicitField<TSchema>>;
-
-	/**
-	 * Copy a snapshot of the current version of a TreeNode into a {@link ConciseTree}.
+	 * {@inheritDoc (TreeBeta:interface).(exportConcise:1)}
+	 * @privateRemarks Note: this was retained on this interface because {@link (TreeAlpha:interface).importConcise} exists.
+	 * It should be removed if/when that is removed from this interface.
 	 */
 	exportConcise(node: TreeNode | TreeLeafValue, options?: TreeEncodingOptions): ConciseTree;
 
 	/**
-	 * Copy a snapshot of the current version of a TreeNode into a {@link ConciseTree}, allowing undefined.
+	 * {@inheritDoc (TreeBeta:interface).(exportConcise:2)}
+	 * @privateRemarks Note: this was retained on this interface because {@link (TreeAlpha:interface).importConcise} exists.
+	 * It should be removed if/when that is removed from this interface.
 	 */
 	exportConcise(
 		node: TreeNode | TreeLeafValue | undefined,
@@ -262,11 +324,28 @@ export interface TreeAlpha {
 	): ConciseTree | undefined;
 
 	/**
+	 * Construct tree content compatible with a field defined by the provided `schema`.
+	 * @param schema - The schema for what to construct. As this is an {@link ImplicitFieldSchema}, a {@link FieldSchema}, {@link TreeNodeSchema} or {@link AllowedTypes} array can be provided.
+	 * @param data - The data used to construct the field content. See {@link (TreeAlpha:interface).(exportVerbose:1)}.
+	 * @remarks
+	 * This currently does not support input containing
+	 * {@link ObjectSchemaOptions.allowUnknownOptionalFields| unknown optional fields} but does support
+	 * {@link SchemaStaticsBeta.staged | staged} allowed types.
+	 * Non-empty default values for fields are currently not supported (must be provided in the input).
+	 * The content will be validated against the schema and an error will be thrown if out of schema.
+	 */
+	importVerbose<const TSchema extends ImplicitFieldSchema>(
+		schema: TSchema,
+		data: VerboseTree | undefined,
+		options?: TreeParsingOptions,
+	): Unhydrated<TreeFieldFromImplicitField<TSchema>>;
+
+	/**
 	 * Copy a snapshot of the current version of a TreeNode into a JSON compatible plain old JavaScript Object (except for {@link @fluidframework/core-interfaces#IFluidHandle|IFluidHandles}).
 	 * Uses the {@link VerboseTree} format, with an explicit type on every node.
 	 *
 	 * @remarks
-	 * There are several cases this may be preferred to {@link (TreeAlpha:interface).(exportConcise:1)}:
+	 * There are several cases this may be preferred to {@link (TreeBeta:interface).(exportConcise:1)}:
 	 *
 	 * 1. When not using {@link ITreeConfigurationOptions.preventAmbiguity} (or when using `useStableFieldKeys`), `exportConcise` can produce ambiguous data (the type may be unclear on some nodes).
 	 * `exportVerbose` will always be unambiguous and thus lossless.
@@ -283,7 +362,7 @@ export interface TreeAlpha {
 	 * If an `idCompressor` is provided, it will be used to compress identifiers and thus will be needed to decompress the data.
 	 *
 	 * Always uses "stored" keys.
-	 * See {@link TreeEncodingOptions.useStoredKeys} for details.
+	 * See {@link KeyEncodingOptions.allStoredKeys} for details.
 	 * @privateRemarks
 	 * TODO: It is currently not clear how to work with the idCompressors correctly in the package API.
 	 * Better APIs should probably be provided as there is currently no way to associate an un-hydrated tree with an idCompressor,
@@ -295,10 +374,7 @@ export interface TreeAlpha {
 	 */
 	exportCompressed(
 		tree: TreeNode | TreeLeafValue,
-		options: { idCompressor?: IIdCompressor } & Pick<
-			CodecWriteOptions,
-			"oldestCompatibleClient"
-		>,
+		options: { idCompressor?: IIdCompressor } & Pick<CodecWriteOptions, "minVersionForCollab">,
 	): JsonCompatible<IFluidHandle>;
 
 	/**
@@ -339,6 +415,392 @@ export interface TreeAlpha {
 	 * Otherwise, this returns the key of the field that it is under (a `string`).
 	 */
 	key2(node: TreeNode): string | number | undefined;
+
+	/**
+	 * Gets the child of the given node with the given property key if a child exists under that key.
+	 *
+	 * @remarks {@link ObjectSchemaOptions.allowUnknownOptionalFields | Unknown optional fields} of Object nodes will not be returned by this method.
+	 *
+	 * @param node - The parent node whose child is being requested.
+	 * @param key - The property key under the node under which the child is being requested.
+	 * For Object nodes, this is the developer-facing "property key", not the "{@link SimpleObjectFieldSchema.storedKey | stored keys}".
+	 *
+	 * @returns The child node or leaf value under the given key, or `undefined` if no such child exists.
+	 *
+	 * @see {@link (TreeAlpha:interface).key2}
+	 * @see {@link (TreeNodeApi:interface).parent}
+	 */
+	child(node: TreeNode, key: string | number): TreeNode | TreeLeafValue | undefined;
+
+	/**
+	 * Gets the children of the provided node, paired with their property keys under the node.
+	 *
+	 * @remarks
+	 * No guarantees are made regarding the order of the children in the returned array.
+	 *
+	 * Optional properties of Object nodes with no value are not included in the result.
+	 *
+	 * {@link ObjectSchemaOptions.allowUnknownOptionalFields | Unknown optional fields} of Object nodes are not included in the result.
+	 *
+	 * @param node - The node whose children are being requested.
+	 *
+	 * @returns
+	 * An array of pairs of the form `[propertyKey, child]`.
+	 *
+	 * For Array nodes, the `propertyKey` is the index of the child in the array.
+	 *
+	 * For Object nodes, the returned `propertyKey`s are the developer-facing "property keys", not the "{@link SimpleObjectFieldSchema.storedKey | stored keys}".
+	 *
+	 * @see {@link (TreeAlpha:interface).key2}
+	 * @see {@link (TreeNodeApi:interface).parent}
+	 */
+	children(
+		node: TreeNode,
+	): Iterable<[propertyKey: string | number, child: TreeNode | TreeLeafValue]>;
+
+	/**
+	 * Track observations of any TreeNode content.
+	 * @remarks
+	 * This subscribes to changes to any nodes content observed during `trackDuring`.
+	 *
+	 * Currently this does not support tracking parentage (see {@link (TreeAlpha:interface).trackObservationsOnce} for a version which does):
+	 * if accessing parentage during `trackDuring`, this will throw a usage error.
+	 *
+	 * This also does not track node status changes (e.g. whether a node is attached to a view or not).
+	 * The current behavior of checking status is unspecified: future versions may track it, error, or ignore it.
+	 *
+	 * These subscriptions remain active until `unsubscribe` is called: `onInvalidation` may be called multiple times.
+	 * See {@link (TreeAlpha:interface).trackObservationsOnce} for a version which automatically unsubscribes on the first invalidation.
+	 * @privateRemarks
+	 * This version, while more general than {@link (TreeAlpha:interface).trackObservationsOnce}, might be unnecessary.
+	 * Maybe this should be removed and only `trackObservationsOnce` kept.
+	 * Reevaluate this before stabilizing.
+	 */
+	trackObservations<TResult>(
+		onInvalidation: () => void,
+		trackDuring: () => TResult,
+	): ObservationResults<TResult>;
+
+	/**
+	 * {@link (TreeAlpha:interface).trackObservations} except automatically unsubscribes when the first invalidation occurs.
+	 * @remarks
+	 * This also supports tracking parentage, unlike {@link (TreeAlpha:interface).trackObservations}, as long as the parent is not undefined.
+	 *
+	 * @example Simple cached value invalidation
+	 * ```typescript
+	 * // Compute and cache this "foo" value, and clear the cache when the fields read in the callback to compute it change.
+	 * cachedFoo ??= TreeAlpha.trackObservationsOnce(
+	 * 	() => {
+	 * 		cachedFoo = undefined;
+	 * 	},
+	 * 	() => nodeA.someChild.bar + nodeB.someChild.baz,
+	 * ).result;
+	 * ```
+	 *
+	 * That is equivalent to doing the following:
+	 * ```typescript
+	 * if (cachedFoo === undefined) {
+	 * 	cachedFoo = nodeA.someChild.bar + nodeB.someChild.baz;
+	 * 	const invalidate = (): void => {
+	 * 		cachedFoo = undefined;
+	 * 		for (const u of unsubscribe) {
+	 * 			u();
+	 * 		}
+	 * 	};
+	 * 	const unsubscribe: (() => void)[] = [
+	 * 		TreeBeta.on(nodeA, "nodeChanged", (data) => {
+	 * 			if (data.changedProperties.has("someChild")) {
+	 * 				invalidate();
+	 * 			}
+	 * 		}),
+	 * 		TreeBeta.on(nodeB, "nodeChanged", (data) => {
+	 * 			if (data.changedProperties.has("someChild")) {
+	 * 				invalidate();
+	 * 			}
+	 * 		}),
+	 * 		TreeBeta.on(nodeA.someChild, "nodeChanged", (data) => {
+	 * 			if (data.changedProperties.has("bar")) {
+	 * 				invalidate();
+	 * 			}
+	 * 		}),
+	 * 		TreeBeta.on(nodeB.someChild, "nodeChanged", (data) => {
+	 * 			if (data.changedProperties.has("baz")) {
+	 * 				invalidate();
+	 * 			}
+	 * 		}),
+	 * 	];
+	 * }
+	 * ```
+	 * @example Cached derived schema property
+	 * ```typescript
+	 * const factory = new SchemaFactory("com.example");
+	 * class Vector extends factory.object("Vector", {
+	 * 	x: SchemaFactory.number,
+	 * 	y: SchemaFactory.number,
+	 * }) {
+	 * 	#length: number | undefined = undefined;
+	 * 	public length(): number {
+	 * 		if (this.#length === undefined) {
+	 * 			const result = TreeAlpha.trackObservationsOnce(
+	 * 				() => {
+	 * 					this.#length = undefined;
+	 * 				},
+	 * 				() => Math.hypot(this.x, this.y),
+	 * 			);
+	 * 			this.#length = result.result;
+	 * 		}
+	 * 		return this.#length;
+	 * 	}
+	 * }
+	 * const vec = new Vector({ x: 3, y: 4 });
+	 * assert.equal(vec.length(), 5);
+	 * vec.x = 0;
+	 * assert.equal(vec.length(), 4);
+	 * ```
+	 */
+	trackObservationsOnce<TResult>(
+		onInvalidation: () => void,
+		trackDuring: () => TResult,
+	): ObservationResults<TResult>;
+
+	/**
+	 * Ensures that the provided content will be interpreted as the given schema when inserting into the tree.
+	 * @returns `content`, for convenience.
+	 * @remarks
+	 * If applicable, this will tag the given content with a {@link contentSchemaSymbol | special property} that indicates its intended schema.
+	 * The `content` will be interpreted as the given `schema` when later inserted into the tree.
+	 *
+	 * This does not validate that the content actually conforms to the given schema (such validation will be done at insert time).
+	 * If the content is not compatible with the tagged schema, an error will be thrown when the content is inserted.
+	 *
+	 * This is particularly useful when the content's schema cannot be inferred from its structure alone because it is compatible with multiple schemas.
+	 * @example
+	 * ```typescript
+	 * const sf = new SchemaFactory("example");
+	 * class Dog extends sf.object("Dog", { name: sf.string() }) {}
+	 * class Cat extends sf.object("Cat", { name: sf.string() }) {}
+	 * class Root extends sf.object("Root", { pet: [Dog, Cat] }) {}
+	 * // ...
+	 * const pet = { name: "Max" };
+	 * view.root.pet = pet; // Error: ambiguous schema - is it a Dog or a Cat?
+	 * TreeAlpha.ensureSchema(Dog, pet); // Tags `pet` as a Dog.
+	 * view.root.pet = pet; // No error - it's a Dog.
+	 * ```
+	 */
+	tagContentSchema<TSchema extends TreeNodeSchema, TContent extends InsertableField<TSchema>>(
+		schema: TSchema,
+		content: TContent,
+	): TContent;
+}
+
+/**
+ * Results from an operation with tracked observations.
+ * @remarks
+ * Results from {@link (TreeAlpha:interface).trackObservations} or {@link (TreeAlpha:interface).trackObservationsOnce}.
+ * @sealed @alpha
+ */
+export interface ObservationResults<TResult> {
+	/**
+	 * The result of the operation which had its observations tracked.
+	 */
+	readonly result: TResult;
+
+	/**
+	 * Call to unsubscribe from further invalidations.
+	 */
+	readonly unsubscribe: () => void;
+}
+
+/**
+ * Subscription to changes on a single node.
+ * @remarks
+ * Either tracks some set of fields, or all fields and can be updated to track more fields.
+ */
+class NodeSubscription {
+	/**
+	 * If undefined, subscribes to all keys.
+	 * If "deep", subscribes to all changes in the subtree.
+	 * Otherwise only subscribes to the keys in the set.
+	 */
+	private keys: Set<FieldKey> | undefined | "deep";
+	private readonly unsubscribe: () => void;
+	private constructor(
+		private readonly onInvalidation: () => void,
+		flexNode: FlexTreeNode,
+	) {
+		// TODO:Performance: It is possible to optimize this to not use the public TreeNode API.
+		const node = getOrCreateNodeFromInnerNode(flexNode);
+		assert(node instanceof TreeNode, 0xc54 /* Unexpected leaf value */);
+
+		const handler = (data: NodeChangedData): void => {
+			if (this.keys === "deep") {
+				return;
+			}
+			if (this.keys === undefined || data.changedProperties === undefined) {
+				this.onInvalidation();
+			} else {
+				let keyMap: ReadonlyMap<FieldKey, string> | undefined;
+				const schema = treeNodeApi.schema(node);
+				if (isObjectNodeSchema(schema)) {
+					keyMap = schema.storedKeyToPropertyKey;
+				}
+				// TODO:Performance: Ideally this would use Set.prototype.isDisjointFrom when available.
+				for (const flexKey of this.keys) {
+					// TODO:Performance: doing everything at the flex tree layer could avoid this translation
+					const key = keyMap?.get(flexKey) ?? flexKey;
+
+					if (data.changedProperties.has(key)) {
+						this.onInvalidation();
+						return;
+					}
+				}
+			}
+		};
+
+		// TODO:Performance: It would be better to defer subscribing to events so that this can subscribe to the correct one instead of both.
+		const shallow = TreeBeta.on(node, "nodeChanged", handler);
+		const deep = TreeBeta.on(node, "treeChanged", () => {
+			if (this.keys === "deep") {
+				this.onInvalidation();
+			}
+		});
+		this.unsubscribe = () => {
+			shallow();
+			deep();
+		};
+	}
+
+	/**
+	 * Create an {@link Observer} which subscribes to what was observed in {@link NodeSubscription}s.
+	 */
+	public static createObserver(
+		invalidate: () => void,
+		onlyOnce = false,
+	): { observer: Observer; unsubscribe: () => void } {
+		const subscriptions = new Map<FlexTreeNode, NodeSubscription>();
+		const observer: Observer = {
+			observeNodeDeep(flexNode: FlexTreeNode): void {
+				if (flexNode.value !== undefined) {
+					// Leaf value: the set of fields (and thus their content) is always empty, and cannot change, so no need to subscribe.
+					return;
+				}
+
+				const subscription = subscriptions.get(flexNode);
+				if (subscription === undefined) {
+					const newSubscription = new NodeSubscription(invalidate, flexNode);
+					newSubscription.keys = "deep";
+					subscriptions.set(flexNode, newSubscription);
+				} else {
+					// Already subscribed to this node.
+					subscription.keys = "deep"; // Now subscribed to subtree changes (deep observation).
+				}
+			},
+			observeNodeFields(flexNode: FlexTreeNode): void {
+				if (flexNode.value !== undefined) {
+					// Leaf value: the set of fields is always empty, and cannot change, so no need to subscribe.
+					return;
+				}
+
+				// Subscribe to any change to any field to ensure that any change which empties or fills a field will invalidate.
+				// This could be more targeted by detecting specifically edits which change the emptiness of fields if desired.
+				const subscription = subscriptions.get(flexNode);
+				if (subscription === undefined) {
+					const newSubscription = new NodeSubscription(invalidate, flexNode);
+					subscriptions.set(flexNode, newSubscription);
+				} else {
+					// Already subscribed to this node.
+					if (subscription.keys instanceof Set) {
+						subscription.keys = undefined; // Now subscribed to all keys.
+					}
+				}
+			},
+			observeNodeField(flexNode: FlexTreeNode, key: FieldKey): void {
+				if (flexNode.value !== undefined) {
+					// Leaf value, nothing to observe.
+					return;
+				}
+				const subscription = subscriptions.get(flexNode);
+				if (subscription === undefined) {
+					const newSubscription = new NodeSubscription(invalidate, flexNode);
+					newSubscription.keys = new Set([key]);
+					subscriptions.set(flexNode, newSubscription);
+				} else {
+					// Already subscribed to this node: if not subscribed to all keys or "deep", subscribe to this one.
+					if (subscription.keys instanceof Set) {
+						// TODO:Performance: due to how JavaScript set ordering works,
+						// it might be faster to check `has` and only add if not present in case the same field is viewed many times.
+						subscription.keys.add(key);
+					}
+				}
+			},
+			observeParentOf(node: FlexTreeNode): void {
+				// Supporting parent tracking is more difficult that it might seem at first.
+				// There are two main complicating factors:
+				// 1. The parent may be undefined (the node is a root).
+				// 2. If tracking this by subscribing to the parent's changes, then which events are subscribed to needs to be updated after the parent changes.
+				//
+				// If not supporting the first case (undefined parents), the second case gets problematic: edits which un-parent a node could error due to being unable to update the event subscription.
+				// For now this is mitigated by only supporting one of tracking (non-undefined) parents or maintaining event subscriptions across edits.
+
+				if (!onlyOnce) {
+					// TODO: better APIS should be provided which make handling this case practical.
+					throw new UsageError("Observation tracking for parents is currently not supported.");
+				}
+
+				const parent = withObservation(undefined, () => node.parentField.parent);
+
+				if (parent.parent === undefined) {
+					// TODO: better APIS should be provided which make handling this case practical.
+					throw new UsageError(
+						"Observation tracking for parents is currently not supported when parent is undefined.",
+					);
+				}
+				observer.observeNodeField(parent.parent, parent.key);
+			},
+		};
+
+		let subscribed = true;
+
+		return {
+			observer,
+			unsubscribe: () => {
+				if (!subscribed) {
+					throw new UsageError("Already unsubscribed");
+				}
+				subscribed = false;
+				for (const subscription of subscriptions.values()) {
+					subscription.unsubscribe();
+				}
+			},
+		};
+	}
+}
+
+/**
+ * Handles both {@link (TreeAlpha:interface).trackObservations} and {@link (TreeAlpha:interface).trackObservationsOnce}.
+ */
+function trackObservations<TResult>(
+	onInvalidation: () => void,
+	trackDuring: () => TResult,
+	onlyOnce = false,
+): ObservationResults<TResult> {
+	let observing = true;
+
+	const invalidate = (): void => {
+		if (observing) {
+			throw new UsageError("Cannot invalidate while tracking observations");
+		}
+		onInvalidation();
+	};
+
+	const { observer, unsubscribe } = NodeSubscription.createObserver(invalidate, onlyOnce);
+	const result = withObservation(observer, trackDuring);
+	observing = false;
+
+	return {
+		result,
+		unsubscribe,
+	};
 }
 
 /**
@@ -347,7 +809,43 @@ export interface TreeAlpha {
  * @alpha
  */
 export const TreeAlpha: TreeAlpha = {
-	branch(node: TreeNode): TreeBranch | undefined {
+	on<K extends keyof TreeChangeEventsAlpha<TNode>, TNode extends TreeNode>(
+		node: TNode,
+		eventName: K,
+		listener: NoInfer<TreeChangeEventsAlpha<TNode>[K]>,
+	): () => void {
+		return treeNodeApi.on(node, eventName, listener);
+	},
+
+	trackObservations<TResult>(
+		onInvalidation: () => void,
+		trackDuring: () => TResult,
+	): ObservationResults<TResult> {
+		return trackObservations(onInvalidation, trackDuring);
+	},
+
+	trackObservationsOnce<TResult>(
+		onInvalidation: () => void,
+		trackDuring: () => TResult,
+	): ObservationResults<TResult> {
+		const result = trackObservations(
+			() => {
+				// trackObservations ensures no invalidation occurs while its running,
+				// so this callback can only run after trackObservations has returns and thus result is defined.
+				result.unsubscribe();
+				onInvalidation();
+			},
+			trackDuring,
+			true,
+		);
+		return result;
+	},
+
+	context(node: TreeNode): TreeContextAlpha {
+		return this.branch(node) ?? UnhydratedTreeContext.instance;
+	},
+
+	branch(node: TreeNode): TreeBranchAlpha | undefined {
 		const kernel = getKernel(node);
 		if (!kernel.isHydrated()) {
 			return undefined;
@@ -382,7 +880,7 @@ export const TreeAlpha: TreeAlpha = {
 		>;
 	},
 
-	importConcise<TSchema extends ImplicitFieldSchema | UnsafeUnknownSchema>(
+	importConcise<const TSchema extends ImplicitFieldSchema | UnsafeUnknownSchema>(
 		schema: UnsafeUnknownSchema extends TSchema
 			? ImplicitFieldSchema
 			: TSchema & ImplicitFieldSchema,
@@ -392,16 +890,15 @@ export const TreeAlpha: TreeAlpha = {
 			? TreeFieldFromImplicitField<TSchema>
 			: TreeNode | TreeLeafValue | undefined
 	> {
-		// `importConcise` does not need to support all the formats that `create` does.
-		// Perhaps it should error instead of hydrating nodes for example.
-		// For now however, it is a simple wrapper around `create`.
-		return this.create(schema, data as InsertableField<TSchema>);
+		return importConcise(schema, data);
 	},
+
+	exportConcise,
 
 	importVerbose<const TSchema extends ImplicitFieldSchema>(
 		schema: TSchema,
 		data: VerboseTree | undefined,
-		options?: TreeEncodingOptions,
+		options?: TreeParsingOptions,
 	): Unhydrated<TreeFieldFromImplicitField<TSchema>> {
 		const config: TreeEncodingOptions = { ...options };
 		// Create a config which is standalone, and thus can be used without having to refer back to the schema.
@@ -414,44 +911,53 @@ export const TreeAlpha: TreeAlpha = {
 			return undefined as Unhydrated<TreeFieldFromImplicitField<TSchema>>;
 		}
 		const cursor = cursorFromVerbose(data, schemalessConfig);
-		return createFromCursor(schema, cursor);
+		return createFromCursor(
+			schema,
+			cursor,
+			getUnhydratedContext(schema).flexContext.schema.rootFieldSchema,
+		);
 	},
 
-	exportConcise,
-
 	exportVerbose(node: TreeNode | TreeLeafValue, options?: TreeEncodingOptions): VerboseTree {
+		if (isTreeValue(node)) {
+			return node;
+		}
 		const config: TreeEncodingOptions = { ...options };
 
 		const cursor = borrowCursorFromTreeNodeOrValue(node);
-		return verboseFromCursor(
-			cursor,
-			tryGetSchema(node) ?? fail(0xace /* invalid input */),
-			config,
-		);
+		const kernel = getKernel(node);
+		return verboseFromCursor(cursor, kernel.context, config);
 	},
 
 	exportCompressed(
 		node: TreeNode | TreeLeafValue,
-		options: { idCompressor?: IIdCompressor } & Pick<
-			CodecWriteOptions,
-			"oldestCompatibleClient"
-		>,
+		options: { idCompressor?: IIdCompressor } & Pick<CodecWriteOptions, "minVersionForCollab">,
 	): JsonCompatible<IFluidHandle> {
 		const schema = tryGetSchema(node) ?? fail(0xacf /* invalid input */);
-		const format = fluidVersionToFieldBatchCodecWriteVersion(options.oldestCompatibleClient);
-		const codec = makeFieldBatchCodec({ jsonValidator: noopValidator }, format);
+		const codec = fieldBatchCodecBuilder.build({
+			jsonValidator: FormatValidatorNoOp,
+			minVersionForCollab: options.minVersionForCollab,
+		});
 		const cursor = borrowFieldCursorFromTreeNodeOrValue(node);
 		const batch: FieldBatch = [cursor];
 		// If none provided, create a compressor which will not compress anything.
 		const idCompressor = options.idCompressor ?? createIdCompressor();
+
+		// Grabbing an existing stored schema from the node is important to ensure that unknown optional fields can be preserved.
+		// Note that if the node is unhydrated, this can result in all staged allowed types being included in the schema, which might be undesired.
+		const storedSchema = isTreeNode(node)
+			? getKernel(node).context.flexContext.schema
+			: toInitialSchema(schema);
+
 		const context: FieldBatchEncodingContext = {
 			encodeType: TreeCompressionStrategy.Compressed,
 			idCompressor,
 			originatorId: idCompressor.localSessionId, // TODO: Why is this needed?
-			schema: { schema: toStoredSchema(schema), policy: defaultSchemaPolicy },
+			schema: { schema: storedSchema, policy: defaultSchemaPolicy },
 		};
 		const result = codec.encode(batch, context);
-		return result;
+		// TODO: codecs should better track which ones can contain handles, and which cannot. When done properly, casts like this can be removed.
+		return result as JsonCompatible<IFluidHandle>;
 	},
 
 	importCompressed<const TSchema extends ImplicitFieldSchema>(
@@ -459,11 +965,13 @@ export const TreeAlpha: TreeAlpha = {
 		compressedData: JsonCompatible<IFluidHandle>,
 		options: {
 			idCompressor?: IIdCompressor;
-		} & ICodecOptions,
+		} & CodecWriteOptions,
 	): Unhydrated<TreeFieldFromImplicitField<TSchema>> {
 		const config = new TreeViewConfigurationAlpha({ schema });
 		const content: ViewContent = {
-			schema: extractPersistedSchema(config, currentVersion),
+			// Always use a v1 schema codec for consistency.
+			// TODO: reevaluate how staged schema should behave in schema import/export APIs before stabilizing this.
+			schema: extractPersistedSchema(config.schema, FluidClientVersion.v2_0, () => true),
 			tree: compressedData,
 			idCompressor: options.idCompressor ?? createIdCompressor(),
 		};
@@ -487,50 +995,156 @@ export const TreeAlpha: TreeAlpha = {
 		const parentSchema = treeNodeApi.schema(parent);
 		return getPropertyKeyFromStoredKey(parentSchema, storedKey);
 	},
+
+	child: (
+		node: TreeNode,
+		propertyKey: string | number,
+	): TreeNode | TreeLeafValue | undefined => {
+		const flexNode = getInnerNode(node);
+		debugAssert(
+			() => !flexNode.context.isDisposed() || "The provided tree node has been disposed.",
+		);
+
+		const schema = treeNodeApi.schema(node);
+
+		switch (schema.kind) {
+			case NodeKind.Array: {
+				const sequence = flexNode.tryGetField(EmptyKey) as FlexTreeSequenceField | undefined;
+
+				// Empty sequence - cannot have children.
+				if (sequence === undefined) {
+					return undefined;
+				}
+
+				const index =
+					typeof propertyKey === "number"
+						? propertyKey
+						: asIndex(propertyKey, Number.POSITIVE_INFINITY);
+
+				// If the key is not a valid index, then there is no corresponding child.
+				if (index === undefined) {
+					return undefined;
+				}
+
+				const childFlexTree = sequence.at(index);
+
+				// No child at the given index.
+				if (childFlexTree === undefined) {
+					return undefined;
+				}
+
+				return getOrCreateNodeFromInnerUnboxedNode(childFlexTree);
+			}
+			case NodeKind.Map: {
+				if (typeof propertyKey !== "string") {
+					// Map nodes only support string keys.
+					return undefined;
+				}
+			}
+			// Fall through
+			case NodeKind.Record:
+			case NodeKind.Object: {
+				let storedKey: string | number = propertyKey;
+				if (isObjectNodeSchema(schema)) {
+					const fieldSchema = schema.fields.get(String(propertyKey));
+					if (fieldSchema === undefined) {
+						return undefined;
+					}
+
+					storedKey = fieldSchema.storedKey;
+				}
+
+				const field = flexNode.tryGetField(brand(String(storedKey)));
+				if (field !== undefined) {
+					return tryGetTreeNodeForField(field);
+				}
+
+				return undefined;
+			}
+			case NodeKind.Leaf: {
+				fail(0xbc3 /* Leaf schema associated with non-leaf tree node. */);
+			}
+			default: {
+				unreachableCase(schema.kind);
+			}
+		}
+	},
+
+	children(node: TreeNode): [propertyKey: string | number, child: TreeNode | TreeLeafValue][] {
+		const flexNode = getInnerNode(node);
+		debugAssert(
+			() => !flexNode.context.isDisposed() || "The provided tree node has been disposed.",
+		);
+
+		const schema = treeNodeApi.schema(node);
+
+		const result: [string | number, TreeNode | TreeLeafValue][] = [];
+		switch (schema.kind) {
+			case NodeKind.Array: {
+				const sequence = flexNode.tryGetField(EmptyKey) as FlexTreeSequenceField | undefined;
+				if (sequence === undefined) {
+					break;
+				}
+
+				for (let index = 0; index < sequence.length; index++) {
+					const childFlexTree = sequence.at(index);
+					assert(childFlexTree !== undefined, 0xbc4 /* Sequence child was undefined. */);
+					const childTree = getOrCreateNodeFromInnerUnboxedNode(childFlexTree);
+					result.push([index, childTree]);
+				}
+				break;
+			}
+			case NodeKind.Map:
+			case NodeKind.Record: {
+				for (const [key, flexField] of flexNode.fields) {
+					const childTreeNode = tryGetTreeNodeForField(flexField);
+					if (childTreeNode !== undefined) {
+						result.push([key, childTreeNode]);
+					}
+				}
+				break;
+			}
+			case NodeKind.Object: {
+				assert(isObjectNodeSchema(schema), 0xbc5 /* Expected object schema. */);
+				for (const [propertyKey, fieldSchema] of schema.fields) {
+					const storedKey = fieldSchema.storedKey;
+					const flexField = flexNode.tryGetField(brand(String(storedKey)));
+					if (flexField !== undefined) {
+						const childTreeNode = tryGetTreeNodeForField(flexField);
+						assert(
+							childTreeNode !== undefined,
+							0xbc6 /* Expected child tree node for field. */,
+						);
+						result.push([propertyKey, childTreeNode]);
+					}
+				}
+				break;
+			}
+			case NodeKind.Leaf: {
+				fail(0xbc7 /* Leaf schema associated with non-leaf tree node. */);
+			}
+			default: {
+				unreachableCase(schema.kind);
+			}
+		}
+		return result;
+	},
+
+	tagContentSchema<TSchema extends TreeNodeSchema, TNode extends InsertableField<TSchema>>(
+		schema: TSchema,
+		node: TNode,
+	): TNode {
+		if (typeof node === "object" && node !== null && !isFluidHandle(node)) {
+			Reflect.defineProperty(node, contentSchemaSymbol, {
+				configurable: false,
+				enumerable: false,
+				writable: true,
+				value: schema.identifier,
+			});
+		}
+		return node;
+	},
 };
-
-function exportConcise(
-	node: TreeNode | TreeLeafValue,
-	options?: TreeEncodingOptions,
-): ConciseTree;
-
-function exportConcise(
-	node: TreeNode | TreeLeafValue | undefined,
-	options?: TreeEncodingOptions,
-): ConciseTree | undefined;
-
-function exportConcise(
-	node: TreeNode | TreeLeafValue | undefined,
-	options?: TreeEncodingOptions,
-): ConciseTree | undefined {
-	if (node === undefined) {
-		return undefined;
-	}
-	const config: TreeEncodingOptions = { ...options };
-
-	const cursor = borrowCursorFromTreeNodeOrValue(node);
-	return conciseFromCursor(
-		cursor,
-		tryGetSchema(node) ?? fail(0xacd /* invalid input */),
-		config,
-	);
-}
-
-/**
- * Borrow a cursor from a node.
- * @remarks
- * The cursor must be put back to its original location before the node is used again.
- */
-function borrowCursorFromTreeNodeOrValue(
-	node: TreeNode | TreeLeafValue,
-): ITreeCursorSynchronous {
-	if (isTreeValue(node)) {
-		return cursorFromVerbose(node, {});
-	}
-	const kernel = getKernel(node);
-	const cursor = kernel.getOrCreateInnerNode().borrowCursor();
-	return cursor;
-}
 
 /**
  * Borrow a cursor from a field.

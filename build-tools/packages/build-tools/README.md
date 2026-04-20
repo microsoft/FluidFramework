@@ -159,6 +159,54 @@ For example:
 }
 ```
 
+#### Extending Task Handler Config Files
+
+For known task handlers like `eslint`, `tsc`, `api-extractor`, etc., `fluid-build` automatically tracks their configuration files (like `.eslintrc`, `tsconfig.json`, `api-extractor.json`). However, you may want to track additional configuration files that affect the task but aren't automatically discovered.
+
+You can specify additional configuration files to track using the `additionalConfigFiles` property in the task's `files` configuration. File paths can be relative to the package directory or use the special token `${repoRoot}` to reference files at the repository root.
+
+Global configuration example (`fluidBuild.config.cjs`):
+
+```js
+module.exports = {
+   tasks: {
+      "eslint": {
+         files: {
+            additionalConfigFiles: ["${repoRoot}/common/build/eslint-config-fluid/flat.mts"]
+         }
+      }
+   }
+}
+```
+
+Package-level extension example (`package.json`):
+
+```jsonc
+{
+   "fluidBuild": {
+      "tasks": {
+         "eslint": {
+            "files": {
+               "additionalConfigFiles": ["...", ".eslintrc.local.json"]  // Extends global additionalConfigFiles
+            }
+         }
+      }
+   }
+}
+```
+
+In this example:
+- The global configuration uses `${repoRoot}` to reference files at the repository root, eliminating the need for relative paths like `../../`
+- The `${repoRoot}` token works the same for all packages regardless of their depth in the directory structure
+- A specific package extends this list by adding `.eslintrc.local.json` using the `"..."` syntax
+- The task will rebuild if any of these files change, in addition to the `eslint.config.mts` file that eslint automatically discovers
+
+The `"..."` syntax works the same way as for task dependencies - it includes the inherited configuration from the global definition. Without `"..."`, the package-level configuration completely replaces the global configuration.
+
+The `${repoRoot}` token can also be used in `inputGlobs` and `outputGlobs` for declarative tasks to reference files at the repository root.
+
+For more examples and use cases, see [Additional Config Files Example](./docs/additional-config-files-example.md).
+
 When building release group, by default, it will trigger the task on all the packages within the release group. That also mean
 that scripts at the release group root are not considered.
 
@@ -189,13 +237,33 @@ when incremental build option is enabled. While `tsc` also make use of this info
 still takes longer to detect that when invoked. `fluid-build` bypass that and read the incremental build to get all the
 input files it depends on and compare the before and after file hash to check if the input files are changed.
 
-#### Tslint/Eslint/ApiExtractor Task
+#### Eslint/ApiExtractor Task
 
-`tslint`, `eslint` and `api-extractor` are all "tsc-dependent" tasks, and have similar incremental rules. It will
+`eslint` and `api-extractor` are all "tsc-dependent" tasks, and have similar incremental rules. It will
 detect whether the task needs to run based on any `tsc` dependent task declared in the build graph (filtered to
 within the package if possible). It then copy the content of the `tsc` build info of these dependent task along with the
-the version and config for `tslint`, `eslint` and `api-extractor` and generate a "done" file. Compare the content of
+the version and config for `eslint` and `api-extractor` and generate a "done" file. Compare the content of
 the current state and previous build will determine whether the task needs to be invoked.
+
+### Environment Variables
+
+The following environment variables can be used to control incremental build behavior. By default, some tasks use
+file timestamps for incremental detection. Setting these variables to `"1"` enables content-based hashing instead,
+which avoids false rebuilds when timestamps change without meaningful content modification (e.g., after git operations
+or file copies).
+
+| Variable | Task | Description |
+|----------|------|-------------|
+| `FLUID_BUILD_ENABLE_COPYFILES_HASH` | CopyfilesTask | Enables content hashing for copyfiles tasks |
+| `FLUID_BUILD_ENABLE_TYPEVALIDATION_HASH` | TypeValidationTask | Enables content hashing for type validation tasks |
+| `FLUID_BUILD_ENABLE_GOODFENCE_HASH` | GoodFence | Enables content hashing for good-fence tasks |
+| `FLUID_BUILD_ENABLE_DEPCRUISE_HASH` | DepCruiseTask | Enables content hashing for dependency-cruiser tasks |
+
+Example:
+
+```sh
+FLUID_BUILD_ENABLE_COPYFILES_HASH=1 fluid-build
+```
 
 ### Worker mode (Experimental)
 

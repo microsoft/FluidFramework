@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-example/migration-tools",
-	"version": "2.43.0",
+	"version": "2.100.0",
 	"private": true,
 	"description": "Tools for migrating data",
 	"homepage": "https://fluidframework.com",
@@ -36,7 +36,7 @@
 		}
 	},
 	"scripts": {
-		"api-extractor:commonjs": "flub generate entrypoints --outDir ./dist",
+		"api-extractor:commonjs": "flub generate entrypoints --resolutionConditions require --outDir ./dist",
 		"api-extractor:esnext": "flub generate entrypoints --outDir ./lib",
 		"build": "fluid-build . --task build",
 		"build:compile": "fluid-build . --task compile",
@@ -51,8 +51,8 @@
 		"check:format": "npm run check:biome",
 		"ci:build:docs": "api-extractor run",
 		"clean": "rimraf --glob dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\" _api-extractor-temp",
-		"eslint": "eslint --format stylish src",
-		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
+		"eslint": "eslint --quiet --format stylish src",
+		"eslint:fix": "eslint --quiet --format stylish src --fix --fix-type problem,suggestion,layout",
 		"format": "npm run format:biome",
 		"format:biome": "biome check . --write",
 		"lint": "fluid-build . --task lint",
@@ -75,28 +75,26 @@
 		"@fluidframework/register-collection": "workspace:~",
 		"@fluidframework/routerlicious-driver": "workspace:~",
 		"@fluidframework/runtime-definitions": "workspace:~",
-		"@fluidframework/server-local-server": "^5.0.0",
+		"@fluidframework/server-local-server": "^7.0.0",
 		"@fluidframework/tinylicious-driver": "workspace:~",
-		"uuid": "^9.0.0"
+		"uuid": "^11.1.0"
 	},
 	"devDependencies": {
-		"@arethetypeswrong/cli": "^0.17.1",
-		"@biomejs/biome": "~1.9.3",
-		"@fluid-tools/build-cli": "^0.55.0",
+		"@arethetypeswrong/cli": "^0.18.2",
+		"@biomejs/biome": "~2.4.5",
+		"@fluid-tools/build-cli": "catalog:buildTools",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.55.0",
-		"@fluidframework/eslint-config-fluid": "^5.7.4",
-		"@microsoft/api-extractor": "7.52.8",
-		"@types/uuid": "^9.0.2",
-		"concurrently": "^8.2.1",
+		"@fluidframework/build-tools": "catalog:buildTools",
+		"@fluidframework/eslint-config-fluid": "catalog:eslint",
+		"@microsoft/api-extractor": "7.58.1",
+		"concurrently": "^9.2.1",
 		"copyfiles": "^2.4.1",
-		"eslint": "~8.55.0",
-		"rimraf": "^4.4.0",
+		"eslint": "catalog:eslint",
+		"jiti": "^2.6.1",
+		"rimraf": "^6.1.3",
 		"typescript": "~5.4.5"
 	},
 	"typeValidation": {
-		"disabled": true,
-		"broken": {},
-		"entrypoint": "internal"
+		"disabled": true
 	}
 }

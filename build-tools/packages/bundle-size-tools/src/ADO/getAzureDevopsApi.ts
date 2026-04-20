@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { WebApi, getPersonalAccessTokenHandler } from "azure-devops-node-api";
+import { getPersonalAccessTokenHandler, WebApi } from "azure-devops-node-api";
 
-export function getAzureDevopsApi(accessToken: string, orgUrl: string) {
+export function getAzureDevopsApi(accessToken: string, orgUrl: string): WebApi {
 	const authHandler = getPersonalAccessTokenHandler(accessToken);
 	return new WebApi(orgUrl, authHandler);
 }

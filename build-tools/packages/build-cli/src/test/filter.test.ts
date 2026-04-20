@@ -5,18 +5,19 @@
 
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { type Package, getResolvedFluidRoot } from "@fluidframework/build-tools";
-import chai, { expect } from "chai";
+import { getResolvedFluidRoot, type Package } from "@fluidframework/build-tools";
+import * as chai from "chai";
+import { expect } from "chai";
 import assertArrays from "chai-arrays";
 import {
 	AllPackagesSelectionCriteria,
-	PackageFilterOptions,
-	PackageSelectionCriteria,
 	filterPackages,
+	type PackageFilterOptions,
+	type PackageSelectionCriteria,
 	selectAndFilterPackages,
 	selectPackagesFromContext,
 } from "../filter.js";
-import { Context } from "../library/index.js";
+import { Context } from "../library/context.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -182,7 +183,8 @@ describe("selectAndFilterPackages", () => {
 		const names = selected.map((p) => p.name);
 		expect(names).to.be.containingAllOf([
 			"@fluidframework/build-common",
-			"@fluidframework/eslint-config-fluid",
+			// TODO: Re-enable once eslint-config-fluid is no longer in the client release group
+			// "@fluidframework/eslint-config-fluid",
 			"@fluid-internal/eslint-plugin-fluid",
 			"@fluidframework/protocol-definitions",
 			"@fluid-tools/api-markdown-documenter",

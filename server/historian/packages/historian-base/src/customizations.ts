@@ -3,13 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import {
+import type {
 	IStorageNameRetriever,
 	IRevokedTokenChecker,
 	IReadinessCheck,
 } from "@fluidframework/server-services-core";
-import { IRedisClientConnectionManager } from "@fluidframework/server-services-utils";
-import { ISimplifiedCustomDataRetriever } from "./services";
+import type { IRedisClientConnectionManager } from "@fluidframework/server-services-utils";
+
+import type { IPostEphemeralContainerChecker, ISimplifiedCustomDataRetriever } from "./services";
 
 export interface IHistorianResourcesCustomizations {
 	storageNameRetriever?: IStorageNameRetriever;
@@ -19,4 +20,5 @@ export interface IHistorianResourcesCustomizations {
 	redisClientConnectionManagerForInvalidTokenCache?: IRedisClientConnectionManager;
 	readinessCheck?: IReadinessCheck;
 	simplifiedCustomDataRetriever?: ISimplifiedCustomDataRetriever;
+	postEphemeralContainerChecker?: IPostEphemeralContainerChecker;
 }

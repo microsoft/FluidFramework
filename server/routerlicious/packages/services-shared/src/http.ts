@@ -5,7 +5,8 @@
 
 import { parse } from "path";
 
-import { NetworkError } from "@fluidframework/server-services-client";
+import { NetworkError, getNetworkInformationFromIP } from "@fluidframework/server-services-client";
+import { ITenantManager, type ITenantConfig } from "@fluidframework/server-services-core";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
 import type { RequestHandler, Response } from "express";
 
@@ -34,6 +35,113 @@ export function validateRequestParams(...paramNames: (string | number)[]): Reque
 					Promise.reject(new NetworkError(400, `Invalid ${paramName}: ${param}`)),
 					res,
 				);
+			}
+		}
+		next();
+	};
+}
+
+/**
+ * Validate private link.
+ * @internal
+ */
+export function validatePrivateLink(
+	tenantManager: ITenantManager,
+	enablePrivateLinkNetworkCheck: boolean = false,
+): RequestHandler {
+	return async (req, res, next) => {
+		if (enablePrivateLinkNetworkCheck) {
+			const tenantId = req.params.tenantId;
+			if (!tenantId) {
+				next();
+			}
+			const tenantInfo: ITenantConfig = await tenantManager.getTenantfromRiddler(tenantId);
+			const privateLinkEnable =
+				tenantInfo?.customData?.privateEndpoints &&
+				Array.isArray(tenantInfo.customData.privateEndpoints) &&
+				tenantInfo.customData.privateEndpoints?.length > 0 &&
+				tenantInfo.customData.privateEndpoints[0]?.privateEndpointConnectionProxy
+					?.properties?.remotePrivateEndpoint?.connectionDetails &&
+				Array.isArray(
+					tenantInfo.customData.privateEndpoints[0]?.privateEndpointConnectionProxy
+						?.properties?.remotePrivateEndpoint?.connectionDetails,
+				) &&
+				tenantInfo.customData.privateEndpoints[0]?.privateEndpointConnectionProxy
+					?.properties?.remotePrivateEndpoint?.connectionDetails[0]
+					? true
+					: false;
+			const clientIPAddress = req.ip ?? "";
+			if (privateLinkEnable && (!clientIPAddress || clientIPAddress.trim() === "")) {
+				return handleResponse(
+					Promise.reject(
+						new NetworkError(
+							400,
+							`Client ip address is required for private link in req.ip`,
+						),
+					),
+					res,
+				);
+			}
+			const networkInfo = getNetworkInformationFromIP(clientIPAddress);
+			if (networkInfo.isPrivateLink) {
+				if (privateLinkEnable) {
+					const connectionDetail =
+						tenantInfo?.customData?.privateEndpoints[0]?.privateEndpointConnectionProxy
+							?.properties?.remotePrivateEndpoint?.connectionDetails[0];
+					const accountLinkId = connectionDetail?.linkIdentifier;
+					if (networkInfo.privateLinkId === accountLinkId) {
+						Lumberjack.info(`This is a private link request with matching link id.`, {
+							tenantId,
+						});
+					} else {
+						return handleResponse(
+							Promise.reject(
+								new NetworkError(
+									400,
+									`This private link should not be connected since the link id mismatch`,
+								),
+							),
+							res,
+						);
+					}
+				} else {
+					return handleResponse(
+						Promise.reject(
+							new NetworkError(
+								400,
+								`This private link should not be connected since the tenant is not private link enabled`,
+							),
+						),
+						res,
+					);
+				}
+			} else {
+				if (
+					tenantInfo?.customData &&
+					tenantInfo.customData.publicNetworkAccessEnabled !== undefined &&
+					tenantInfo.customData.publicNetworkAccessEnabled === false
+				) {
+					return handleResponse(
+						Promise.reject(
+							new NetworkError(
+								400,
+								`The public network access is disabled for tenant ${tenantId}`,
+							),
+						),
+						res,
+					);
+				}
+				if (privateLinkEnable) {
+					return handleResponse(
+						Promise.reject(
+							new NetworkError(
+								400,
+								`This is the public network called from the private link tenant ${tenantId}`,
+							),
+						),
+						res,
+					);
+				}
 			}
 		}
 		next();

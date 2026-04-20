@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidHandle } from "@fluidframework/core-interfaces";
+import type { IFluidHandle, IFluidLoadable } from "@fluidframework/core-interfaces";
 import {
 	FluidDataStoreRuntime,
-	ISharedObjectRegistry,
+	type ISharedObjectRegistry,
 } from "@fluidframework/datastore/internal";
-import {
+import type {
 	IChannel,
 	IChannelAttributes,
 	IChannelFactory,
@@ -16,12 +16,12 @@ import {
 	IChannelServices,
 } from "@fluidframework/datastore-definitions/internal";
 import { SummaryType } from "@fluidframework/driver-definitions";
-import {
+import type {
 	ITelemetryContext,
 	IGarbageCollectionData,
 	ISummaryTreeWithStats,
 	IFluidDataStoreContext,
-	type IRuntimeMessageCollection,
+	IRuntimeMessageCollection,
 } from "@fluidframework/runtime-definitions/internal";
 
 class UnknownChannel implements IChannel {
@@ -39,7 +39,7 @@ class UnknownChannel implements IChannel {
 		});
 	}
 
-	get IFluidLoadable() {
+	get IFluidLoadable(): IFluidLoadable {
 		return this;
 	}
 	get handle(): IFluidHandle {
@@ -74,7 +74,7 @@ class UnknownChannel implements IChannel {
 		return this.getAttachSummary(fullTree, trackState, telemetryContext);
 	}
 
-	public isAttached() {
+	public isAttached(): boolean {
 		return true;
 	}
 
@@ -129,7 +129,7 @@ class ObjectRegistryWithUnknownChannels implements ISharedObjectRegistry {
 
 export function mixinDataStoreWithAnyChannel(
 	Base: typeof FluidDataStoreRuntime = FluidDataStoreRuntime,
-) {
+): typeof FluidDataStoreRuntime {
 	return class RuntimeWithRequestHandler extends Base {
 		constructor(
 			dataStoreContext: IFluidDataStoreContext,

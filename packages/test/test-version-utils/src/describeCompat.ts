@@ -5,7 +5,7 @@
 
 import type { OdspTestDriver } from "@fluid-private/test-drivers";
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
-import type { IPersistedCache } from "@fluidframework/odsp-driver-definitions/internal";
+import type { IPersistedCache } from "@fluidframework/driver-definitions/internal";
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import {
 	getUnexpectedLogErrorException,
@@ -30,6 +30,7 @@ import {
 import {
 	getVersionedTestObjectProviderFromApis,
 	getCompatVersionedTestObjectProviderFromApis,
+	getDriverInformationWhenNoProviderIsAvailable,
 } from "./compatUtils.js";
 import {
 	getContainerRuntimeApi,
@@ -37,6 +38,7 @@ import {
 	getLoaderApi,
 	CompatApis,
 	getDriverApi,
+	getCompatModeFromKind,
 } from "./testApi.js";
 import { getRequestedVersion } from "./versionUtils.js";
 
@@ -99,8 +101,14 @@ function createCompatSuite(
 						});
 						logger.sendErrorEvent(
 							{
+								// Note: TestObjectProvider already adds driverType and driverEndpointName to logs that go through it.
+								// In this code path we could not create the provider so we have to do things by hand.
+								...getDriverInformationWhenNoProviderIsAvailable(
+									driver,
+									odspEndpointName,
+									r11sEndpointName,
+								),
 								eventName: "TestObjectProviderLoadFailed",
-								driverType: driver,
 							},
 							error,
 						);
@@ -190,6 +198,7 @@ function createCompatSuite(
  * Get versioned APIs for the given config.
  */
 function getVersionedApis(config: CompatConfig): CompatApis {
+	const mode = getCompatModeFromKind(config.kind);
 	// If this is cross-clients compat scenario, make sure we use the correct versions
 	if (config.kind === CompatKind.CrossClient) {
 		assert(
@@ -204,6 +213,7 @@ function getVersionedApis(config: CompatConfig): CompatApis {
 		const dataRuntime = getDataRuntimeApi(config.createVersion);
 		const dataRuntimeForLoading = getDataRuntimeApi(config.loadVersion);
 		return {
+			mode,
 			containerRuntime: getContainerRuntimeApi(config.createVersion),
 			containerRuntimeForLoading: getContainerRuntimeApi(config.loadVersion),
 			dataRuntime,
@@ -221,6 +231,7 @@ function getVersionedApis(config: CompatConfig): CompatApis {
 		getRequestedVersion(testBaseVersion(config.dataRuntime), config.dataRuntime),
 	);
 	return {
+		mode,
 		containerRuntime: getContainerRuntimeApi(
 			getRequestedVersion(testBaseVersion(config.containerRuntime), config.containerRuntime),
 		),
@@ -287,7 +298,7 @@ function createCompatDescribe(): DescribeCompat {
 	const createCompatSuiteWithDefault = (
 		tests: (this: Mocha.Suite, provider: () => ITestObjectProvider, apis: CompatApis) => void,
 		compatVersion: CompatType,
-	) => {
+	): ((this: Mocha.Suite) => void) => {
 		switch (compatVersion) {
 			case "FullCompat":
 				return createCompatSuite(tests, undefined);

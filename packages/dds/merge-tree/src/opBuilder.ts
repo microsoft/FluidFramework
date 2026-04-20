@@ -3,22 +3,22 @@
  * Licensed under the MIT License.
  */
 
-import { ISegment, Marker } from "./mergeTreeNodes.js";
+import type { ISegment, Marker } from "./mergeTreeNodes.js";
 import {
-	IMergeTreeAnnotateMsg,
-	IMergeTreeDeltaOp,
-	// eslint-disable-next-line import/no-deprecated
-	IMergeTreeGroupMsg,
-	IMergeTreeInsertMsg,
-	// eslint-disable-next-line import/no-deprecated
-	IMergeTreeObliterateMsg,
-	IMergeTreeRemoveMsg,
+	type IMergeTreeAnnotateMsg,
+	type IMergeTreeDeltaOp,
+	// eslint-disable-next-line import-x/no-deprecated
+	type IMergeTreeGroupMsg,
+	type IMergeTreeInsertMsg,
+	// eslint-disable-next-line import-x/no-deprecated
+	type IMergeTreeObliterateMsg,
+	type IMergeTreeRemoveMsg,
 	MergeTreeDeltaType,
 	type AdjustParams,
 	type IMergeTreeAnnotateAdjustMsg,
 	type IMergeTreeObliterateSidedMsg,
 } from "./ops.js";
-import { PropertySet, type MapLike } from "./properties.js";
+import type { PropertySet, MapLike } from "./properties.js";
 import { normalizePlace, Side, type SequencePlace } from "./sequencePlace.js";
 
 /**
@@ -114,7 +114,7 @@ export function createRemoveRangeOp(start: number, end: number): IMergeTreeRemov
  *
  * @internal
  */
-// eslint-disable-next-line import/no-deprecated
+// eslint-disable-next-line import-x/no-deprecated
 export function createObliterateRangeOp(start: number, end: number): IMergeTreeObliterateMsg {
 	return {
 		pos1: start,
@@ -186,7 +186,7 @@ export function createInsertOp(pos: number, segSpec: unknown): IMergeTreeInsertM
  *
  * @internal
  */
-// eslint-disable-next-line import/no-deprecated
+// eslint-disable-next-line import-x/no-deprecated
 export function createGroupOp(...ops: IMergeTreeDeltaOp[]): IMergeTreeGroupMsg {
 	return {
 		ops,

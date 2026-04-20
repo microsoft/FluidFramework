@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ISnapshotOptions } from "@fluidframework/odsp-driver-definitions/internal";
+import type { ISnapshotOptions } from "@fluidframework/odsp-driver-definitions/internal";
 
 /**
  * Generates query string from the given query parameters.

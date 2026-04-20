@@ -4,20 +4,20 @@
  */
 
 import {
-	IDocumentAttributes,
-	IClientJoin,
-	ICommittedProposal,
-	IProcessMessageResult,
-	IProposal,
-	IQuorum,
-	ISequencedClient,
-	ISequencedDocumentMessage,
-	ISequencedDocumentSystemMessage,
-	ISequencedProposal,
+	type IDocumentAttributes,
+	type IClientJoin,
+	type ICommittedProposal,
+	type IProcessMessageResult,
+	type IProposal,
+	type IQuorum,
+	type ISequencedClient,
+	type ISequencedDocumentMessage,
+	type ISequencedDocumentSystemMessage,
+	type ISequencedProposal,
 	MessageType,
 } from "@fluidframework/protocol-definitions";
 
-import { IQuorumSnapshot, Quorum } from "./quorum";
+import { type IQuorumSnapshot, Quorum } from "./quorum";
 
 /**
  * @alpha

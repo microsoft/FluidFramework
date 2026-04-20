@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+import type { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { assert, LazyPromise } from "@fluidframework/core-utils/internal";
-import {
+import type {
 	IGarbageCollectionData,
 	CreateChildSummarizerNodeParam,
 	IGarbageCollectionDetailsBase,
@@ -23,7 +23,7 @@ import {
 import { cloneGCData, unpackChildNodesGCDetails } from "../../gc/index.js";
 
 import { SummarizerNode } from "./summarizerNode.js";
-import {
+import type {
 	ICreateChildDetails,
 	IStartSummaryResult,
 	ISummarizerNodeRootContract,
@@ -415,6 +415,7 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
 			// If the child route used routes are not defined, initialize it now and it can be used for all child nodes
 			// created until this summarization process is completed. This is an optimization to unpack the used routes
 			// only when needed.
+			// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- using ??= could change behavior if value is falsy
 			if (this.wipChildNodesUsedRoutes === undefined) {
 				this.wipChildNodesUsedRoutes = unpackChildNodesUsedRoutes(this.usedRoutes);
 			}

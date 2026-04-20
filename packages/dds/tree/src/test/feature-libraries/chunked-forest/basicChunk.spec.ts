@@ -12,18 +12,18 @@ import {
 	type JsonableTree,
 	type ChunkedCursor,
 } from "../../../core/index.js";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import { BasicChunk } from "../../../feature-libraries/chunked-forest/basicChunk.js";
 import {
 	basicChunkTree,
 	basicOnlyChunkPolicy,
 	chunkField,
 	type ChunkCompressor,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/chunked-forest/chunkTree.js";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import { uniformChunk } from "../../../feature-libraries/chunked-forest/index.js";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import { SequenceChunk } from "../../../feature-libraries/chunked-forest/sequenceChunk.js";
 import {
 	type TreeChunk,
@@ -31,16 +31,17 @@ import {
 	cursorForJsonableTreeNode,
 	jsonableTreeFromCursor,
 } from "../../../feature-libraries/index.js";
+import { JsonAsTree } from "../../../jsonDomainSchema.js";
+import { numberSchema } from "../../../simple-tree/index.js";
 import { ReferenceCountedBase, brand } from "../../../util/index.js";
 import {
 	type TestField,
 	testGeneralPurposeTreeCursor,
 	testSpecializedFieldCursor,
 } from "../../cursorTestSuite.js";
+
 import { numberSequenceField, validateChunkCursor } from "./fieldCursorTestUtilities.js";
 import { emptyShape, testData } from "./uniformChunkTestData.js";
-import { JsonAsTree } from "../../../jsonDomainSchema.js";
-import { numberSchema } from "../../../simple-tree/index.js";
 
 const basicOnlyChunkCompressor: ChunkCompressor = {
 	policy: basicOnlyChunkPolicy,

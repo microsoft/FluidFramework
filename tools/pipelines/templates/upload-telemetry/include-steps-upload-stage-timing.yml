@@ -1,0 +1,58 @@
+# Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+# Licensed under the MIT License.
+
+# include-steps-upload-stage-timing
+
+# Steps that can be added to the upload-telemetry stage (`include-stage-upload-telemetry.yml`) to include the upload of stage timing.
+
+parameters:
+
+# Id for the stage whose telemetry will be uploaded to Kusto.
+# Other stages will be filtered out. If set to 'all', all stages will be uploaded.
+- name: stageIdFilter
+  type: string
+
+# Unique identifier for the pipeline that is including this template.
+# Used to identify telemetry data in Kusto for this pipeline.
+- name: pipelineIdentifierForTelemetry
+  type: string
+
+steps:
+- task: Bash@3
+  displayName: Get stage timing and result data from ADO
+  env:
+    BUILD_ID: $(Build.BuildId)
+    ADO_API_TOKEN: $(System.AccessToken)
+    WORK_FOLDER: $(Agent.TempDirectory)/stageTimingAndResult
+  inputs:
+    targetType: 'inline'
+    script: |
+      set -eu -o pipefail
+
+      echo "Creating output folder '$WORK_FOLDER'"
+      mkdir -p $WORK_FOLDER
+
+      echo "Retrieving data from ADO API";
+      echo "curl -u \":<REDACTED>\" \"https://dev.azure.com/fluidframework/internal/_apis/build/builds/$BUILD_ID/timeline?api-version=7.1-preview.2\""
+      curl -u ":$ADO_API_TOKEN" "https://dev.azure.com/fluidframework/internal/_apis/build/builds/$BUILD_ID/timeline?api-version=7.1-preview.2" > $WORK_FOLDER/output.json
+
+- task: Bash@3
+  displayName: Submit telemetry for stage timing and result
+  env:
+    BUILD_ID: $(Build.BuildId)
+    # The script interprets undefined STAGE_ID as meaning to include all stages
+    ${{ if ne(parameters.stageIdFilter, 'all') }}:
+      STAGE_ID: ${{ parameters.stageIdFilter }}
+    PIPELINE: ${{ parameters.pipelineIdentifierForTelemetry }}
+    WORK_FOLDER: $(Agent.TempDirectory)/stageTimingAndResult
+  inputs:
+    targetType: 'inline'
+    workingDirectory: $(Pipeline.Workspace)/$(FFPipelineHostDirectory)
+    script: |
+      set -eu -o pipefail
+
+      echo "Listing files in '$WORK_FOLDER'"
+      ls -laR $WORK_FOLDER;
+
+      echo "pnpm exec telemetry-generator --handlerModule \"$(pathToTelemetryGeneratorHandlersNew)/stageTimingRetriever.js\" --dir \"$WORK_FOLDER\""
+      pnpm exec telemetry-generator --handlerModule "$(pathToTelemetryGeneratorHandlersNew)/stageTimingRetriever.js" --dir "$WORK_FOLDER"

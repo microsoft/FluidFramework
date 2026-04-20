@@ -18,7 +18,7 @@ import { isInternalFluidContainer } from "@fluidframework/fluid-static/internal"
 import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils/internal";
 import { timeoutPromise } from "@fluidframework/test-utils/internal";
 import { SchemaFactory, SharedTree, TreeViewConfiguration } from "fluid-framework";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import { SharedMap } from "fluid-framework/legacy";
 import { v4 as uuid } from "uuid";
 
@@ -26,10 +26,7 @@ import { AzureClient } from "../AzureClient.js";
 import type { AzureLocalConnectionConfig } from "../interfaces.js";
 
 function createAzureClient(
-	props: {
-		scopes?: ScopeType[];
-		configProvider?: IConfigProviderBase;
-	} = {},
+	props: { scopes?: ScopeType[]; configProvider?: IConfigProviderBase } = {},
 ): AzureClient {
 	const connectionProperties: AzureLocalConnectionConfig = {
 		tokenProvider: new InsecureTokenProvider(
@@ -141,6 +138,7 @@ for (const compatibilityMode of ["1", "2"] as const) {
 			const { container } = await client.createContainer(schema, compatibilityMode);
 			const containerId = await container.attach();
 
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison -- container.connectionState is typed as ConnectionState but test doesn't type it precisely
 			if (container.connectionState !== ConnectionState.Connected) {
 				await timeoutPromise((resolve) => container.once("connected", () => resolve()), {
 					durationMs: connectTimeoutMs,
@@ -166,6 +164,7 @@ for (const compatibilityMode of ["1", "2"] as const) {
 			const { container } = await client.createContainer(schema, compatibilityMode);
 			const containerId = await container.attach();
 
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison -- container.connectionState is typed as ConnectionState but test doesn't type it precisely
 			if (container.connectionState !== ConnectionState.Connected) {
 				await timeoutPromise((resolve) => container.once("connected", () => resolve()), {
 					durationMs: connectTimeoutMs,
@@ -199,6 +198,7 @@ for (const compatibilityMode of ["1", "2"] as const) {
 			);
 			const containerId = await newContainer.attach();
 
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison -- container.connectionState is typed as ConnectionState but test doesn't type it precisely
 			if (newContainer.connectionState !== ConnectionState.Connected) {
 				await timeoutPromise((resolve) => newContainer.once("connected", () => resolve()), {
 					durationMs: connectTimeoutMs,
@@ -415,6 +415,8 @@ for (const compatibilityMode of ["1", "2"] as const) {
 					enableGroupedBatching: false,
 					explicitSchemaControl: false,
 					createBlobPayloadPending: undefined,
+					disableSchemaUpgrade: false,
+					stagingModeAutoFlushThreshold: 1000,
 				} as const satisfies ContainerRuntimeOptionsInternal;
 				const expectedRuntimeOptions2 = {
 					summaryOptions: {},
@@ -431,6 +433,8 @@ for (const compatibilityMode of ["1", "2"] as const) {
 					enableGroupedBatching: true,
 					explicitSchemaControl: true,
 					createBlobPayloadPending: undefined,
+					disableSchemaUpgrade: false,
+					stagingModeAutoFlushThreshold: 1000,
 				} as const satisfies ContainerRuntimeOptionsInternal;
 
 				const expectedRuntimeOptions =

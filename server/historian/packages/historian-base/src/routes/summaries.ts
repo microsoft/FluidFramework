@@ -3,30 +3,39 @@
  * Licensed under the MIT License.
  */
 
-import {
+import { ScopeType } from "@fluidframework/protocol-definitions";
+import type {
 	IWholeFlatSummary,
 	IWholeSummaryPayload,
 	IWriteSummaryResponse,
 } from "@fluidframework/server-services-client";
-import {
+import type {
 	IStorageNameRetriever,
 	IThrottler,
 	IRevokedTokenChecker,
 	IDocumentManager,
-	type IDenyList,
+	IDenyList,
 } from "@fluidframework/server-services-core";
+import { validateRequestParams } from "@fluidframework/server-services-shared";
+import { BaseTelemetryProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
 import {
 	denyListMiddleware,
-	IThrottleMiddlewareOptions,
+	type IThrottleMiddlewareOptions,
 	throttle,
 } from "@fluidframework/server-services-utils";
-import { validateRequestParams } from "@fluidframework/server-services-shared";
-import { Router } from "express";
-import * as nconf from "nconf";
+import type { Router } from "express";
+import type { Query } from "express-serve-static-core";
+import type * as nconf from "nconf";
 import winston from "winston";
-import { BaseTelemetryProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
-import { ICache, ITenantService, ISimplifiedCustomDataRetriever } from "../services";
+
+import type {
+	ICache,
+	ITenantService,
+	ISimplifiedCustomDataRetriever,
+	IPostEphemeralContainerChecker,
+} from "../services";
 import { parseToken, Constants } from "../utils";
+
 import * as utils from "./utils";
 
 export function create(
@@ -41,17 +50,15 @@ export function create(
 	denyList?: IDenyList,
 	ephemeralDocumentTTLSec?: number,
 	simplifiedCustomDataRetriever?: ISimplifiedCustomDataRetriever,
+	postEphemeralContainerChecker?: IPostEphemeralContainerChecker,
 ): Router {
-	const router: Router = Router();
+	const {
+		router,
+		maxTokenLifetimeSec,
+		tenantThrottleOptions: tenantGeneralThrottleOptions,
+		restTenantGeneralThrottler,
+	} = utils.createRouteContext(config, restTenantThrottlers);
 	const ignoreIsEphemeralFlag: boolean = config.get("ignoreEphemeralFlag") ?? true;
-
-	const tenantGeneralThrottleOptions: Partial<IThrottleMiddlewareOptions> = {
-		throttleIdPrefix: (req) => req.params.tenantId,
-		throttleIdSuffix: Constants.historianRestThrottleIdSuffix,
-	};
-	const restTenantGeneralThrottler = restTenantThrottlers.get(
-		Constants.generalRestCallThrottleIdPrefix,
-	);
 
 	// Throttling logic for creating summary to provide per-tenant rate-limiting at the HTTP route level
 	const createSummaryPerTenantThrottleOptions: Partial<IThrottleMiddlewareOptions> = {
@@ -94,6 +101,7 @@ export function create(
 		authorization: string | undefined,
 		sha: string,
 		useCache: boolean,
+		query?: Query,
 	): Promise<IWholeFlatSummary> {
 		const service = await utils.createGitService({
 			config,
@@ -104,6 +112,8 @@ export function create(
 			documentManager,
 			cache,
 			ephemeralDocumentTTLSec,
+			postEphemeralContainerChecker,
+			query,
 		});
 		return service.getSummary(sha, useCache);
 	}
@@ -116,6 +126,7 @@ export function create(
 		storageName?: string,
 		isEphemeralContainer?: boolean,
 		ignoreEphemeralFlag?: boolean,
+		query?: Query,
 	): Promise<IWriteSummaryResponse> {
 		const service = await utils.createGitService({
 			config,
@@ -130,6 +141,8 @@ export function create(
 			isEphemeralContainer,
 			ephemeralDocumentTTLSec,
 			simplifiedCustomDataRetriever,
+			postEphemeralContainerChecker,
+			query,
 		});
 		return service.createSummary(params, initial);
 	}
@@ -165,7 +178,7 @@ export function create(
 		validateRequestParams("tenantId", "sha"),
 		throttle(restClusterGetSummaryThrottler, winston, getSummaryPerClusterThrottleOptions),
 		throttle(restTenantGetSummaryThrottler, winston, getSummaryPerTenantThrottleOptions),
-		utils.verifyToken(revokedTokenChecker),
+		utils.verifyToken(revokedTokenChecker, [ScopeType.DocRead], maxTokenLifetimeSec),
 		denyListMiddleware(denyList),
 		(request, response, next) => {
 			const useCache = !("disableCache" in request.query);
@@ -174,6 +187,7 @@ export function create(
 				request.get("Authorization"),
 				request.params.sha,
 				useCache,
+				request.query,
 			);
 
 			utils.handleResponse(
@@ -194,7 +208,11 @@ export function create(
 			createSummaryPerClusterThrottleOptions,
 		),
 		throttle(restTenantCreateSummaryThrottler, winston, createSummaryPerTenantThrottleOptions),
-		utils.verifyToken(revokedTokenChecker),
+		utils.verifyToken(
+			revokedTokenChecker,
+			[ScopeType.DocRead, ScopeType.DocWrite, ScopeType.SummaryWrite],
+			maxTokenLifetimeSec,
+		),
 		denyListMiddleware(denyList),
 		(request, response, next) => {
 			// request.query type is { [string]: string } but it's actually { [string]: any }
@@ -235,6 +253,7 @@ export function create(
 				request.get("StorageName"),
 				isEphemeralContainer,
 				ignoreIsEphemeralFlag,
+				request.query,
 			);
 
 			utils.handleResponse(summaryP, response, false, undefined, 201);
@@ -245,7 +264,11 @@ export function create(
 		"/repos/:ignored?/:tenantId/git/summaries",
 		validateRequestParams("tenantId"),
 		throttle(restTenantGeneralThrottler, winston, tenantGeneralThrottleOptions),
-		utils.verifyToken(revokedTokenChecker),
+		utils.verifyToken(
+			revokedTokenChecker,
+			[ScopeType.DocRead, ScopeType.DocWrite, ScopeType.SummaryWrite],
+			maxTokenLifetimeSec,
+		),
 		// Skip documentDenyListCheck, as it is not needed for delete operations
 		denyListMiddleware(denyList, true /* skipDocumentDenyListCheck */),
 		(request, response, next) => {

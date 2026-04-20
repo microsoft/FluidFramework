@@ -3,25 +3,22 @@
  * Licensed under the MIT License.
  */
 
-import {
+import { ScopeType } from "@fluidframework/protocol-definitions";
+import type {
 	IStorageNameRetriever,
 	IThrottler,
 	IRevokedTokenChecker,
 	IDocumentManager,
-	type IDenyList,
+	IDenyList,
 } from "@fluidframework/server-services-core";
-import {
-	denyListMiddleware,
-	IThrottleMiddlewareOptions,
-	throttle,
-} from "@fluidframework/server-services-utils";
 import { validateRequestParams } from "@fluidframework/server-services-shared";
-import { Router } from "express";
-import * as nconf from "nconf";
+import { denyListMiddleware, throttle } from "@fluidframework/server-services-utils";
+import type { Router } from "express";
+import type * as nconf from "nconf";
 import winston from "winston";
-import { ICache, ITenantService, ISimplifiedCustomDataRetriever } from "../../services";
+
+import type { ICache, ITenantService, ISimplifiedCustomDataRetriever } from "../../services";
 import * as utils from "../utils";
-import { Constants } from "../../utils";
 
 export function create(
 	config: nconf.Provider,
@@ -36,15 +33,8 @@ export function create(
 	ephemeralDocumentTTLSec?: number,
 	simplifiedCustomDataRetriever?: ISimplifiedCustomDataRetriever,
 ): Router {
-	const router: Router = Router();
-
-	const tenantThrottleOptions: Partial<IThrottleMiddlewareOptions> = {
-		throttleIdPrefix: (req) => req.params.tenantId,
-		throttleIdSuffix: Constants.historianRestThrottleIdSuffix,
-	};
-	const restTenantGeneralThrottler = restTenantThrottlers.get(
-		Constants.generalRestCallThrottleIdPrefix,
-	);
+	const { router, maxTokenLifetimeSec, tenantThrottleOptions, restTenantGeneralThrottler } =
+		utils.createRouteContext(config, restTenantThrottlers);
 
 	async function getContent(
 		tenantId: string,
@@ -69,7 +59,7 @@ export function create(
 		"/repos/:ignored?/:tenantId/contents/*",
 		validateRequestParams("tenantId", 0),
 		throttle(restTenantGeneralThrottler, winston, tenantThrottleOptions),
-		utils.verifyToken(revokedTokenChecker),
+		utils.verifyToken(revokedTokenChecker, [ScopeType.DocRead], maxTokenLifetimeSec),
 		denyListMiddleware(denyList),
 		(request, response, next) => {
 			const contentP = getContent(

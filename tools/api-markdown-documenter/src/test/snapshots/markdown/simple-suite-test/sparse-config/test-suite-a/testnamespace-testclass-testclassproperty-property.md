@@ -2,7 +2,7 @@
 
 Test interface property
 
-### Signature {#testclassproperty-signature}
+<h3 id="testclassproperty-signature">Signature</h3>
 
 ```typescript
 readonly testClassProperty: string;

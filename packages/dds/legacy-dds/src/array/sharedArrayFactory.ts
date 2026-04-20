@@ -9,11 +9,16 @@ import type {
 	IFluidDataStoreRuntime,
 	IChannelFactory,
 } from "@fluidframework/datastore-definitions/internal";
+import {
+	createSharedObjectKind,
+	type ISharedObjectKind,
+	type SharedObjectKind,
+} from "@fluidframework/shared-object-base/internal";
 
 import { pkgVersion } from "../packageVersion.js";
 
 import type { ISharedArray, SerializableTypeForSharedArray } from "./interfaces.js";
-import { SharedArray } from "./sharedArray.js";
+import { SharedArrayClass } from "./sharedArray.js";
 
 /**
  * @internal
@@ -21,6 +26,9 @@ import { SharedArray } from "./sharedArray.js";
 export class SharedArrayFactory<T extends SerializableTypeForSharedArray>
 	implements IChannelFactory
 {
+	// New type string, to be activated once the migration has been fully shipped dark and is safe to flip.
+	// See LegacyTypeAwareRegistry in packages/runtime/datastore/src/dataStoreRuntime.ts.
+	// public static readonly Type = "SharedArray";
 	public static readonly Type = "https://graph.microsoft.com/types/SharedArray";
 
 	public static readonly Attributes: IChannelAttributes = {
@@ -46,7 +54,7 @@ export class SharedArrayFactory<T extends SerializableTypeForSharedArray>
 		/**
 		 * * The SharedArray
 		 */
-		const sharedArray = new SharedArray<T>(id, runtime, attributes);
+		const sharedArray = new SharedArrayClass<T>(id, runtime, attributes);
 		await sharedArray.load(services);
 		return sharedArray;
 	}
@@ -55,8 +63,27 @@ export class SharedArrayFactory<T extends SerializableTypeForSharedArray>
 		/**
 		 * * The SharedArray
 		 */
-		const sharedArray = new SharedArray<T>(id, document, this.attributes);
+		const sharedArray = new SharedArrayClass<T>(id, document, this.attributes);
 		sharedArray.initializeLocal();
 		return sharedArray;
 	}
 }
+
+/**
+ * Entrypoint for {@link ISharedArray} creation.
+ * @legacy @beta
+ */
+export const SharedArray: ISharedObjectKind<ISharedArray<SerializableTypeForSharedArray>> &
+	SharedObjectKind<ISharedArray<SerializableTypeForSharedArray>> =
+	createSharedObjectKind<ISharedArray<SerializableTypeForSharedArray>>(SharedArrayFactory);
+
+/**
+ * Entrypoint for {@link ISharedArray} creation.
+ * @legacy @beta
+ */
+export const SharedArrayBuilder = <
+	T extends SerializableTypeForSharedArray,
+>(): ISharedObjectKind<ISharedArray<T>> & SharedObjectKind<ISharedArray<T>> => {
+	const factory = SharedArrayFactory<T>;
+	return createSharedObjectKind<ISharedArray<T>>(factory);
+};

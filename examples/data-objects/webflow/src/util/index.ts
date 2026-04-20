@@ -20,10 +20,4 @@ export { getSegmentRange } from "./segment.js";
 export { areStringsEquivalent } from "./string.js";
 export { hasTagName, isElementNode, isTextNode, TagName } from "./tagName.js";
 export { findToken, TokenList } from "./tokenlist.js";
-
-export const done = Promise.resolve();
-export const emptyObject = Object.freeze({});
-export const emptyArray = Object.freeze([] as any[]);
-
-export const clamp = (min: number, value: number, max: number) =>
-	Math.min(Math.max(min, value), max);
+export { clamp, done, emptyArray, emptyObject } from "./utilities.js";

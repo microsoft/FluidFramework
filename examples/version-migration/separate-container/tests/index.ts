@@ -16,7 +16,7 @@ import {
 	loadExistingContainer,
 	type ILoaderProps,
 } from "@fluidframework/container-loader/legacy";
-// eslint-disable-next-line import/no-internal-modules -- #26987: `local-driver` internal LocalSessionStorageDbFactory used in examples
+// eslint-disable-next-line import-x/no-internal-modules -- #26987: `local-driver` internal LocalSessionStorageDbFactory used in examples
 import { LocalSessionStorageDbFactory } from "@fluidframework/local-driver/internal";
 import {
 	createLocalResolverCreateNewRequest,
@@ -113,7 +113,9 @@ const getModelFromContainer = async <ModelType>(container: IContainer): Promise<
  * This is a helper function for loading the page. It's required because getting the Fluid Container
  * requires making async calls.
  */
-export async function createContainerAndRenderInElement(element: HTMLDivElement) {
+export async function createContainerAndRenderInElement(
+	element: HTMLDivElement,
+): Promise<void> {
 	let id: string;
 	let container: IContainer | undefined;
 
@@ -211,7 +213,7 @@ export async function createContainerAndRenderInElement(element: HTMLDivElement)
 /**
  * For local testing we have two div's that we are rendering into independently.
  */
-async function setup() {
+async function setup(): Promise<void> {
 	const leftElement = document.getElementById("sbs-left") as HTMLDivElement;
 	if (leftElement === null) {
 		throw new Error("sbs-left does not exist");

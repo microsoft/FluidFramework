@@ -258,10 +258,7 @@ describe("CustomEventEmitter", () => {
 		let count = 0;
 		const listener = (): number => (count += 1);
 		emitter.on("open", listener);
-		assert.throws(
-			() => emitter.on("open", listener),
-			(e: Error) => validateAssertionError(e, /register.*twice.*open/),
-		);
+		assert.throws(() => emitter.on("open", listener), validateError(/register.*twice.*open/));
 		// If error is caught, the listener should still fire once for the first registration
 		emitter.emit("open");
 		assert.strictEqual(count, 1);
@@ -276,7 +273,7 @@ describe("CustomEventEmitter", () => {
 		emitter.emit(eventSymbol);
 		assert.throws(
 			() => emitter.on(eventSymbol, listener),
-			(e: Error) => validateAssertionError(e, /register.*twice.*TestEvent/),
+			validateError(/register.*twice.*TestEvent/),
 		);
 	});
 });
@@ -358,29 +355,28 @@ export class MyExposingClass {
 }
 
 /**
- * Validates that an error thrown by assert() function has the expected message.
+ * Validates that an error has the expected message.
  *
- * @param error - The error object thrown by `assert()` function.
  * @param expectedErrorMessage - The message that the error object should match.
- * @returns `true` if the message in the error object that was passed in matches the expected
- * message. Otherwise it throws an error.
+ * @returns an error validation function suitable for use with NodeJS's `assert.throws()`.
  *
  * @remarks
- * Similar to {@link @fluidframework/test-runtime-utils#validateAssertionError}.
- *
- * @internal
+ * This does not work for asserts that get "tagging" see {@link @fluidframework/test-runtime-utils#validateAssertionError} for that.
+ * This function exists here to avoid a dependency on `@fluidframework/test-runtime-utils` since this package cannot use it.
  */
-function validateAssertionError(error: Error, expectedErrorMsg: string | RegExp): boolean {
-	const actualMsg = error.message;
-	if (
-		typeof expectedErrorMsg === "string"
-			? actualMsg !== expectedErrorMsg
-			: !expectedErrorMsg.test(actualMsg)
-	) {
-		// This throws an Error instead of an AssertionError because AssertionError would require a dependency on the
-		// node assert library, which we don't want to do for this library because it's used in the browser.
-		const message = `Unexpected assertion thrown\nActual: ${error.message}\nExpected: ${expectedErrorMsg}`;
-		throw new Error(message);
-	}
-	return true;
+function validateError(expectedErrorMsg: string | RegExp): (error: Error) => true {
+	return (error: Error) => {
+		const actualMsg = error.message;
+		if (
+			typeof expectedErrorMsg === "string"
+				? actualMsg !== expectedErrorMsg
+				: !expectedErrorMsg.test(actualMsg)
+		) {
+			// This throws an Error instead of an AssertionError because AssertionError would require a dependency on the
+			// node assert library, which we don't want to do for this library because it's used in the browser.
+			const message = `Unexpected assertion thrown\nActual: ${error.message}\nExpected: ${expectedErrorMsg}`;
+			throw new Error(message);
+		}
+		return true;
+	};
 }

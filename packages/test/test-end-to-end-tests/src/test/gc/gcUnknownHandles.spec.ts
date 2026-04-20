@@ -8,12 +8,11 @@ import { strict as assert } from "assert";
 import { ITestDataObject, describeCompat } from "@fluid-private/test-version-utils";
 import { IContainer } from "@fluidframework/container-definitions/internal";
 import { ContainerRuntime } from "@fluidframework/container-runtime/internal";
-import { IFluidHandle, IRequest, IResponse } from "@fluidframework/core-interfaces";
+import { IRequest, IResponse } from "@fluidframework/core-interfaces";
 import { IFluidHandleContext } from "@fluidframework/core-interfaces/internal";
 import type { IFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
 // This test doesn't care to test compat of the Fluid handle implementation, it's just used for convenience
 // to simulate an unknown object.
-// eslint-disable-next-line @typescript-eslint/no-restricted-imports
 import { FluidObjectHandle } from "@fluidframework/datastore/internal";
 import { FluidHandleBase } from "@fluidframework/runtime-utils/internal";
 import {
@@ -34,13 +33,6 @@ export class TestFluidHandle extends FluidHandleBase<unknown> {
 	public isAttached: boolean = false;
 
 	public async get(): Promise<any> {
-		throw new Error("Method not implemented.");
-	}
-
-	/**
-	 * @deprecated No replacement provided. Arbitrary handles may not serve as a bind source.
-	 */
-	public bind(handle: IFluidHandle): void {
 		throw new Error("Method not implemented.");
 	}
 
@@ -79,7 +71,7 @@ describeCompat("GC unknown handles", "FullCompat", (getTestObjectProvider) => {
 	/**
 	 * Submits a summary and returns the paths of all GC nodes in the GC data in summary.
 	 */
-	async function getGCNodesFromSummary() {
+	async function getGCNodesFromSummary(): Promise<Set<string>> {
 		await provider.ensureSynchronized();
 		const { summary } = await summarizerRuntime.summarize({
 			runGC: true,

@@ -47,7 +47,7 @@ export function determineNodeKind(nodeKind: VisualNodeKind): VisualNodeKind {
 /**
  * Returns allowed types of the non-leaf nodes in the tree.
  * @param allowedTypes - a string if array node, `Record<string, string>` for non-array nodes.
- * @returns - a VisualChildNode with the allowed type.
+ * @returns a VisualChildNode with the allowed type.
  */
 function createAllowedTypesVisualTree(
 	allowedTypes: string | Record<string, string>,
@@ -101,7 +101,7 @@ function createToolTipContents(schema: SharedTreeSchemaNode): VisualTreeNode {
 /**
  * Converts the visual representation from {@link visualizeNodeBySchema} to a visual tree compatible with the devtools-view.
  * @param tree - the visual representation of the SharedTree.
- * @returns - the visual representation of type {@link VisualChildNode}
+ * @returns the visual representation of type {@link VisualChildNode}
  */
 export function toVisualTree(tree: VisualSharedTreeNode): VisualChildNode {
 	if (tree.kind === VisualSharedTreeNodeKind.LeafNode) {
@@ -223,7 +223,7 @@ async function visualizeObjectNode(
 	const objectNodeSchemaProperties: Record<string, FieldSchemaProperties> = {};
 	for (const [fieldKey, treeFieldSimpleSchema] of schema.fields) {
 		objectNodeSchemaProperties[fieldKey] = {
-			allowedTypes: treeFieldSimpleSchema.allowedTypesIdentifiers,
+			allowedTypes: new Set(treeFieldSimpleSchema.simpleAllowedTypes.keys()),
 			isRequired: treeFieldSimpleSchema.kind === FieldKind.Required ? true : false,
 		};
 	}
@@ -257,7 +257,7 @@ async function visualizeMapNode(
 	const mapNodeSchemaProperties: Record<string, FieldSchemaProperties> = {};
 	for (const key of Object.keys(tree.fields)) {
 		mapNodeSchemaProperties[key] = {
-			allowedTypes: schema.allowedTypesIdentifiers,
+			allowedTypes: new Set(schema.simpleAllowedTypes.keys()),
 			// Map values are always required. Don't display field requirement information, since that information is redundant.
 			isRequired: undefined,
 		};
@@ -297,7 +297,7 @@ async function visualizeArrayNode(
 	const arrayNodeSchemaProperties: Record<string, FieldSchemaProperties> = {};
 	for (const [i] of children.entries()) {
 		arrayNodeSchemaProperties[i] = {
-			allowedTypes: schema.allowedTypesIdentifiers,
+			allowedTypes: new Set(schema.simpleAllowedTypes.keys()),
 			// Array values are always required. Don't display field requirement information, since that information is redundant.
 			isRequired: undefined,
 		};

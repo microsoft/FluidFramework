@@ -2,19 +2,19 @@
 
 Test Namespace
 
-### Signature {#testnamespace-signature}
+<h3 id="testnamespace-signature">Signature</h3>
 
 ```typescript
 export declare namespace TestNamespace
 ```
 
-### Remarks {#testnamespace-remarks}
+<h3 id="testnamespace-remarks">Remarks</h3>
 
 Here are some remarks about the namespace
 
-### Examples {#testnamespace-examples}
+<h3 id="testnamespace-examples">Examples</h3>
 
-#### Example: TypeScript Example {#testnamespace-example1}
+<h4 id="testnamespace-example1">Example: TypeScript Example</h4>
 
 ```typescript
 const foo: Foo = {
@@ -23,7 +23,7 @@ const foo: Foo = {
 };
 ```
 
-#### Example: JavaScript Example {#testnamespace-example2}
+<h4 id="testnamespace-example2">Example: JavaScript Example</h4>
 
 ```javascript
 const foo = {

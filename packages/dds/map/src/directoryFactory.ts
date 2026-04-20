@@ -20,13 +20,15 @@ import { pkgVersion } from "./packageVersion.js";
  * @privateRemarks
  * TODO: AB#35245: Deprecate and stop exporting this class.
  * @sealed
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export class DirectoryFactory implements IChannelFactory<ISharedDirectory> {
 	/**
 	 * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory."type"}
 	 */
+	// New type string, to be activated once the migration has been fully shipped dark and is safe to flip.
+	// See LegacyTypeAwareRegistry in packages/runtime/datastore/src/dataStoreRuntime.ts.
+	// public static readonly Type = "directory";
 	public static readonly Type = "https://graph.microsoft.com/types/directory";
 
 	/**
@@ -80,15 +82,13 @@ export class DirectoryFactory implements IChannelFactory<ISharedDirectory> {
 
 /**
  * Entrypoint for {@link ISharedDirectory} creation.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export const SharedDirectory = createSharedObjectKind<ISharedDirectory>(DirectoryFactory);
 
 /**
  * Entrypoint for {@link ISharedDirectory} creation.
- * @legacy
- * @alpha
+ * @legacy @beta
  * @privateRemarks
  * This alias is for legacy compat from when the SharedDirectory class was exported as public.
  */

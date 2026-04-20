@@ -19,7 +19,7 @@ A few implementations are included which make different choices here:
 
 -   [uncompressedEncode.ts](uncompressedEncode.ts): the simplest implementation, which captures nothing in the shape and does no Dictionary Coding of identifiers.
     This makes for more human readable data as well as a simple reference implementation.
--   [compressedEncode.ts](compressedEncode.ts): some utilities for actual compressed encoding, but does not contain any advanced strategies (instead they must be provided to it via the `EncoderCache`)
+-   [compressedEncode.ts](compressedEncode.ts): some utilities for actual compressed encoding, but does not contain any advanced strategies (instead they must be provided to it via the `EncoderContext`)
 -   [schemaBasedEncode.ts](schemaBasedEncode.ts): a strategy for compressedEncode using schema to infer commonly used shapes.
 
 ### Future Optimizations

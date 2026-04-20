@@ -4,7 +4,7 @@
  */
 
 import CodeBlock from "@theme/CodeBlock";
-import React from "react";
+import type { CSSProperties, ReactElement } from "react";
 
 import { CardWithBlur } from "../card";
 import { MockDiceRollerSample } from "../mockDiceRoller";
@@ -112,8 +112,8 @@ const renderDiceRoller = (dice, elem) => {
 /**
  * Homepage "How it works" section component.
  */
-export function HowItWorksSection(): React.ReactElement {
-	const backgroundStyle: React.CSSProperties = {
+export function HowItWorksSection(): ReactElement {
+	const backgroundStyle: CSSProperties = {
 		background: `linear-gradient(to bottom, rgba(255, 253, 251, 0.8) 10%, rgba(255, 253, 251, 0.8)), url(${servicesSectionBackgroundImageSource})`,
 		backgroundPosition: "center",
 		backgroundRepeat: "no-repeat",

@@ -9,7 +9,7 @@ import type { ISummaryTree } from "@fluidframework/driver-definitions";
 import { MergeTreeDeltaType } from "../ops.js";
 import { PriorPerspective } from "../perspective.js";
 import {
-	MergeTreeDeltaRevertible,
+	type MergeTreeDeltaRevertible,
 	appendToMergeTreeDeltaRevertibles,
 } from "../revertibles.js";
 
@@ -70,7 +70,7 @@ describe("MergeTree remove", () => {
 	for (const length of [10, 100, 1000]) {
 		benchmark({
 			type: BenchmarkType.Measurement,
-			title: "remove large range of large tree with undo-redo",
+			title: `remove range of length ${length} from large tree with undo-redo`,
 			category: "remove",
 			before: () => {
 				const str = new TestString("id", {});

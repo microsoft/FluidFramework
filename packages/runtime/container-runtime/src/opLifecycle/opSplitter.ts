@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { IBatchMessage } from "@fluidframework/container-definitions/internal";
-import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+import type { IBatchMessage } from "@fluidframework/container-definitions/internal";
+import type { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
-import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
+import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import {
 	DataCorruptionError,
 	createChildLogger,
@@ -14,12 +14,15 @@ import {
 	type ITelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
 
-import { ContainerMessageType, ContainerRuntimeChunkedOpMessage } from "../messageTypes.js";
-
 import {
+	ContainerMessageType,
+	type ContainerRuntimeChunkedOpMessage,
+} from "../messageTypes.js";
+
+import type {
 	IChunkedOp,
-	type OutboundBatchMessage,
-	type OutboundSingletonBatch,
+	OutboundBatchMessage,
+	OutboundSingletonBatch,
 } from "./definitions.js";
 import { estimateSocketSize } from "./outbox.js";
 
@@ -115,7 +118,7 @@ export class OpSplitter {
 	 * To illustrate the current functionality, if the input is `[largeOp]`, `largeOp` will be split into `[chunk1, chunk2, chunk3, chunk4]`.
 	 * `chunk1`, `chunk2` and `chunk3` will be sent individually and `[chunk4]` will be returned.
 	 *
-	 * @remarks - A side effect here is that 1 or more chunks are queued immediately for sending in next JS turn.
+	 * @remarks A side effect here is that 1 or more chunks are queued immediately for sending in next JS turn.
 	 *
 	 * @privateRemarks
 	 * This maintains support for splitting a compressed batch with multiple messages (empty placeholders after the first),

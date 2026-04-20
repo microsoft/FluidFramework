@@ -24,20 +24,20 @@ import {
 	type IMockContainerRuntimeOptions,
 	MockContainerRuntimeFactoryForReconnection,
 	MockContainerRuntimeForReconnection,
-	MockFluidDataStoreRuntime,
+	type MockFluidDataStoreRuntime,
 } from "@fluidframework/test-runtime-utils/internal";
 import { v4 as uuid } from "uuid";
 
-import { type ISummaryConfiguration } from "../../index.js";
+import type { ISummaryConfiguration } from "../../index.js";
 import {
-	IConnectableRuntime,
+	type IConnectableRuntime,
 	type IConnectedEvents,
 	type IConnectedState,
 	type IGeneratedSummaryStats,
 	type IRefreshSummaryAckOptions,
 	type ISubmitSummaryOptions,
-	ISummarizerClientElection,
-	ISummarizerClientElectionEvents,
+	type ISummarizerClientElection,
+	type ISummarizerClientElectionEvents,
 	type ISummarizerInternalsProvider,
 	type ISummarizerRuntime,
 	RunWhileConnectedCoordinator,

@@ -3,12 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { IResolvedUrl } from "@fluidframework/driver-definitions/internal";
+import type { IResolvedUrl } from "@fluidframework/driver-definitions/internal";
 
 /**
  * Socket storage discovery api response
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface ISocketStorageDiscovery {
 	// The id of the web socket
@@ -45,14 +44,39 @@ export interface ISocketStorageDiscovery {
 	 * response will contain empty labels when the file has no labels, so this field will be there
 	 * even if file has no labels when the service will implement this contract.
 	 */
-	sensitivityLabelsInfo?: string;
+	sensitivityLabelsInfo?: ISensitivityLabelsInfo;
+}
+
+/**
+ * Sensitivity labels information for a file, part of the socket storage discovery response.
+ * @legacy @beta
+ */
+export interface ISensitivityLabelsInfo {
+	/** Unix timestamp in milliseconds when the label info snapshot was generated. */
+	timestamp: number;
+	/** List of applied sensitivity labels. Empty if none. */
+	labels: ISensitivityLabel[];
+}
+
+/**
+ * A single sensitivity label applied to a document, part of the socket storage discovery response.
+ * @legacy @beta
+ */
+export interface ISensitivityLabel {
+	/** Unique identifier of the sensitivity label. */
+	sensitivityLabelId: string;
+	/** Tenant under which the label is defined. */
+	tenantId: string;
+	/** How the label was assigned, for example "standard". */
+	assignmentMethod: string;
+	/** Email of the user who applied the label. */
+	appliedByUserEmail: string;
 }
 
 /**
  * An interface that allows a concrete instance of a driver factory to interrogate itself
  * to find out if it is session aware.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IProvideSessionAwareDriverFactory {
 	readonly IRelaySessionAwareDriverFactory: IRelaySessionAwareDriverFactory;
@@ -61,8 +85,7 @@ export interface IProvideSessionAwareDriverFactory {
 /**
  * An interface that allows a concrete instance of a driver factory to call the `getRelayServiceSessionInfo`
  * function if it session aware.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IRelaySessionAwareDriverFactory extends IProvideSessionAwareDriverFactory {
 	getRelayServiceSessionInfo(

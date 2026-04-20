@@ -83,6 +83,8 @@ export {
 	CursorMarker,
 	isCursor,
 	DetachedFieldIndex,
+	type ReadOnlyDetachedFieldIndex,
+	type DetachedFieldIndexCheckpoint,
 	type ForestRootId,
 	getDetachedFieldContainingPath,
 	aboveRootPlaceholder,
@@ -102,6 +104,12 @@ export {
 	cursorChunk,
 	tryGetChunk,
 	type ChunkedCursor,
+	DetachedFieldIndexFormatVersion,
+	detachedFieldIndexCodecBuilder,
+	areDetachedNodeIdsEqual,
+	deltaFieldMapHasVisibleChanges,
+	deltaFieldChangesHaveVisibleChanges,
+	forEachNodeSubsequence,
 } from "./tree/index.js";
 
 export {
@@ -138,16 +146,18 @@ export {
 	storedEmptyFieldSchema,
 	type StoredSchemaCollection,
 	schemaFormatV1,
+	schemaFormatV2,
 	LeafNodeStoredSchema,
 	ObjectNodeStoredSchema,
 	MapNodeStoredSchema,
 	decodeFieldSchema,
-	encodeFieldSchema,
+	encodeFieldSchemaV1,
+	encodeFieldSchemaV2,
 	storedSchemaDecodeDispatcher,
 	type SchemaAndPolicy,
 	Multiplicity,
 	type SchemaPolicy,
-	SchemaVersion,
+	SchemaFormatVersion,
 } from "./schema-stored/index.js";
 
 export {
@@ -169,6 +179,11 @@ export {
 	type GraphCommit,
 	CommitKind,
 	type CommitMetadata,
+	type LocalChangeMetadata,
+	type RemoteChangeMetadata,
+	type ChangeMetadata,
+	type LabelTree,
+	type TransactionLabels,
 	type RevisionTag,
 	RevisionTagSchema,
 	RevisionTagCodec,
@@ -190,26 +205,25 @@ export {
 	revisionMetadataSourceFromInfo,
 	type RevisionInfo,
 	type EncodedRevisionTag,
+	type EncodedStableId,
 	type EncodedChangeAtomId,
 	taggedAtomId,
 	taggedOptAtomId,
 	offsetChangeAtomId,
+	StableIdSchema,
 	subtractChangeAtomIds,
-	replaceAtomRevisions,
 	replaceChange,
 	type RebaseStats,
 	type RebaseStatsWithDuration,
 	isAncestor,
 	type ChangeAtomIdRangeMap,
 	newChangeAtomIdRangeMap,
-	compareRevisions,
+	comparePartialRevisions,
+	compareChangesetLocalIds,
+	comparePartialChangesetLocalIds,
+	diffHistories,
+	type RevisionReplacer,
 } from "./rebase/index.js";
-
-export {
-	type Adapters,
-	AdaptedViewSchema,
-	type TreeAdapter,
-} from "./schema-view/index.js";
 
 export {
 	type Revertible,

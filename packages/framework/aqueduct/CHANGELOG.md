@@ -1,5 +1,124 @@
 # @fluidframework/aqueduct
 
+## 2.93.0
+
+### Minor Changes
+
+- minVersionForCollab is now non-optional ([#25331](https://github.com/microsoft/FluidFramework/pull/25331)) [9a0d0272df](https://github.com/microsoft/FluidFramework/commit/9a0d0272df6ae1a521cff00292dd159ea3b5e270)
+
+  This change is a follow-up for [pull request 25130](https://github.com/microsoft/FluidFramework/pull/25130)
+  which was released as part of [2.61.0](https://github.com/microsoft/FluidFramework/releases/tag/client_v2.61.0).
+
+  The `minVersionForCollab` property has been made non-optional in the following `@beta` `@legacy` interfaces in the Runtime layer:
+  - `IFluidParentContext.minVersionForCollab` in `@fluidframework/runtime-definitions`.
+  - `IFluidDataStoreContext.minVersionForCollab` in `@fluidframework/runtime-definitions`.
+  - `IFluidDataStoreContextDetached.minVersionForCollab` in `@fluidframework/runtime-definitions`.
+
+  Consumers of Fluid aren't expected to implement these interfaces directly, so no impact is expected.
+
+  Additionally the following properties now always return a value, rather than possibly returning `undefined`:
+  - `FluidDataStoreRuntime.minVersionForCollab` in `@fluidframework/datastore`.
+    Note that API Extractor shows this as a breaking change since FluidDataStoreRuntime is beta + legacy and non-sealed.
+    However, FluidDataStoreRuntime is not intended to be extended directly outside of a known legacy use-case.
+  - `IDataObjectProps.context.minVersionForCollab` in `@fluidframework/aqueduct`.
+  - `ITestFluidObject.context.minVersionForCollab` in `@fluidframework/test-utils`
+  - `IProvideTestFluidObject.ITestFluidObject.context.minVersionForCollab` in `@fluidframework/test-utils`
+
+## 2.92.0
+
+Dependency updates only.
+
+## 2.91.0
+
+Dependency updates only.
+
+## 2.90.0
+
+Dependency updates only.
+
+## 2.83.0
+
+Dependency updates only.
+
+## 2.82.0
+
+Dependency updates only.
+
+## 2.81.0
+
+Dependency updates only.
+
+## 2.80.0
+
+Dependency updates only.
+
+## 2.74.0
+
+Dependency updates only.
+
+## 2.73.0
+
+Dependency updates only.
+
+## 2.72.0
+
+Dependency updates only.
+
+## 2.71.0
+
+Dependency updates only.
+
+## 2.70.0
+
+### Minor Changes
+
+- Removed deprecated export of MinimumVersionForCollab from @fluidframework/container-runtime ([#25309](https://github.com/microsoft/FluidFramework/pull/25309)) [776cb1ce31](https://github.com/microsoft/FluidFramework/commit/776cb1ce31176e1eb07ba2723c2d51e6f4cc379f)
+
+  Removed the deprecated re-export of MinimumVersionForCollab from @fluidframework/container-runtime.
+  This type should now be imported from @fluidframework/runtime-definitions.
+  See the [Fluid Framework 2.52.0 release notes](https://github.com/microsoft/FluidFramework/releases/tag/client_v2.52.0) for details.
+
+## 2.63.0
+
+Dependency updates only.
+
+## 2.62.0
+
+Dependency updates only.
+
+## 2.61.0
+
+Dependency updates only.
+
+## 2.60.0
+
+Dependency updates only.
+
+## 2.53.0
+
+Dependency updates only.
+
+## 2.52.0
+
+Dependency updates only.
+
+## 2.51.0
+
+### Minor Changes
+
+- New "PureDataObject" implementation "TreeDataObject" added ([#25025](https://github.com/microsoft/FluidFramework/pull/25025)) [f4fbd2f582c](https://github.com/microsoft/FluidFramework/commit/f4fbd2f582c22e0b6fd06986b9b5dbb6b73396a4)
+
+  A new implementation of `PureDataObject` has been added: `TreeDataObject`.
+  Where `DataObject` stores its contents in a `SharedDirectory`, `TreeDataObject` stores its contents in a `SharedTree`.
+
+## 2.50.0
+
+Dependency updates only.
+
+## 2.43.0
+
+Dependency updates only.
+
 ## 2.42.0
 
 Dependency updates only.
@@ -62,7 +181,6 @@ Dependency updates only.
   parameter.
 
   These changes were originally announced in version 0.25.0. See the following issues for more details:
-
   - [#1537](https://github.com/microsoft/FluidFramework/issues/1537)
   - [#2931](https://github.com/microsoft/FluidFramework/pull/2931)
 
@@ -79,12 +197,10 @@ Dependency updates only.
   The class `ContainerRuntime` is deprecated and will no longer be exported starting in version 2.20.0.
 
   There are two possible migration paths to stop using `ContainerRuntime`:
-
   - When using it as a type, replace it with an interface like `IContainerRuntime`
   - When using the static function `ContainerRuntime.loadRuntime` replace it with the free function `loadContainerRuntime`.
 
   `BaseContainerRuntimeFactory` has some changes as well, since it exposed `ContainerRuntime` in several function signatures:
-
   - `instantiateFirstTime` - Takes the wider type `IContainerRuntime` instead of `ContainerRuntime`
   - `instantiateFromExisting` - Takes the wider type `IContainerRuntime` instead of `ContainerRuntime`
   - `preInitialize` - deprecated as well, since it returns `ContainerRuntime`
@@ -108,7 +224,6 @@ Dependency updates only.
   Similarly, `IDeltaManager.outbound` contained functionality that could break core runtime features such as generation of batches and chunking. Data loss or corruption could occur when `IDeltaManger.inbound.pause()` or `IDeltaManager.inbound.resume()` were called.
 
   #### Alternatives
-
   - Alternatives to `IDeltaManager.inbound.on("op", ...)` are `IDeltaManager.on("op", ...)`
   - Alternatives to calling `IDeltaManager.inbound.pause`, `IDeltaManager.outbound.pause` for `IContainer` disconnect use `IContainer.disconnect`.
   - Alternatives to calling `IDeltaManager.inbound.resume`, `IDeltaManager.outbound.resume` for `IContainer` reconnect use `IContainer.connect`.
@@ -156,7 +271,6 @@ Dependency updates only.
   TypeScript types and implementation code.
 
   This means that using Fluid Framework packages require the following TypeScript settings in tsconfig.json:
-
   - `"moduleResolution": "Node16"` with `"module": "Node16"`
   - `"moduleResolution": "Bundler"` with `"module": "ESNext"`
 
@@ -217,7 +331,6 @@ Dependency updates only.
 - data-object-base: Removed IFluidRouter from DataObject interfaces and classes [9a451d4946](https://github.com/microsoft/FluidFramework/commits/9a451d4946b5c51a52e4d1ab5bf51e7b285b0d74)
 
   The `IFluidRouter` property has been removed from a number of DataObject related classes:
-
   - `PureDataObject`
   - `LazyLoadedDataObject`
   - `TestFluidObject`
@@ -235,7 +348,6 @@ Dependency updates only.
 - aqueduct: Removed requestHandler utilities [9a451d4946](https://github.com/microsoft/FluidFramework/commits/9a451d4946b5c51a52e4d1ab5bf51e7b285b0d74)
 
   The following `requestHandler` utilities have been removed:
-
   - `makeModelRequestHandler`
   - `defaultFluidObjectRequestHandler`
   - `defaultRouteRequestHandler`
@@ -277,7 +389,6 @@ Dependency updates only.
 - aqueduct: ContainerRuntimeFactory constructors have changed [871b3493dd](https://github.com/microsoft/FluidFramework/commits/871b3493dd0d7ea3a89be64998ceb6cb9021a04e)
 
   The following class constructors have been changed to allow for better flexible in arguments passed:
-
   - `BaseContainerRuntimeFactory`
   - `ContainerRuntimeFactoryWithDefaultDataStore`
   - `RuntimeFactory`
@@ -307,7 +418,6 @@ Dependency updates only.
 - DEPRECATED: container-runtime: requestHandlers are deprecated [871b3493dd](https://github.com/microsoft/FluidFramework/commits/871b3493dd0d7ea3a89be64998ceb6cb9021a04e)
 
   The concept of `requestHandlers` has been deprecated. Please migrate all usage of the following APIs to the new `entryPoint` pattern:
-
   - `requestHandler` property in `ContainerRuntime.loadRuntime(...)`
   - `RuntimeRequestHandler`
   - `RuntimeRequestHandlerBuilder`
@@ -324,7 +434,6 @@ Dependency updates only.
 - DEPRECATED: container-loader: Various request related APIs have been deprecated [871b3493dd](https://github.com/microsoft/FluidFramework/commits/871b3493dd0d7ea3a89be64998ceb6cb9021a04e)
 
   Please remove all calls to the following functions and instead use the new `entryPoint` pattern:
-
   - `requestFluidObject`
   - `requestResolvedObjectFromContainer`
   - `getDefaultObjectFromContainer`
@@ -342,7 +451,6 @@ Dependency updates only.
 - test-utils: provideEntryPoint is required [871b3493dd](https://github.com/microsoft/FluidFramework/commits/871b3493dd0d7ea3a89be64998ceb6cb9021a04e)
 
   The optional `provideEntryPoint` method has become required on a number of constructors. A value will need to be provided to the following classes:
-
   - `BaseContainerRuntimeFactory`
   - `RuntimeFactory`
   - `ContainerRuntime` (constructor and `loadRuntime`)
@@ -393,7 +501,6 @@ Dependency updates only.
 
   The **@fluidframework/common-definitions** package is being deprecated, so the following interfaces and types are now
   imported from the **@fluidframework/core-interfaces** package:
-
   - interface IDisposable
   - interface IErrorEvent
   - interface IErrorEvent
@@ -427,7 +534,6 @@ Dependency updates only.
 - `initializeEntryPoint` will become required [8abce8cdb4](https://github.com/microsoft/FluidFramework/commits/8abce8cdb4e2832fb6405fb44e393bef03d5648a)
 
   The optional `initializeEntryPoint` method has been added to a number of constructors. **This method argument will become required in an upcoming release** and a value will need to be provided to the following classes:
-
   - `BaseContainerRuntimeFactory`
   - `ContainerRuntimeFactoryWithDefaultDataStore`
   - `RuntimeFactory`
@@ -471,7 +577,6 @@ Dependency updates only.
 ### Major Changes
 
 - The following functions and classes were deprecated in previous releases and have been removed: [8b242fdc79](https://github.com/microsoft/FluidFramework/commits/8b242fdc796714cf1da9ad3f90d02efb122af0c2)
-
   - `PureDataObject.getFluidObjectFromDirectory`
   - `IProvideContainerRuntime` and its `IContainerRuntime` member.
   - `ContainerRuntime`'s `IProvideContainerRuntime` has also been removed.

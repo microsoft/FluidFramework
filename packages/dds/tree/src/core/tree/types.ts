@@ -18,8 +18,6 @@ import type {
 	ValueSchema,
 } from "../schema-stored/index.js";
 
-/**
- */
 export type TreeType = TreeNodeSchemaIdentifier;
 
 /**
@@ -43,8 +41,6 @@ export const EmptyKey: FieldKey = brand("");
  */
 export const rootFieldKey: FieldKey = brand("rootFieldKey");
 
-/**
- */
 export const rootField = keyAsDetachedField(rootFieldKey);
 
 /**

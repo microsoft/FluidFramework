@@ -6,12 +6,12 @@ Test Constant
 
 **WARNING: This API is provided as a beta preview and may change without notice. Use at your own risk.**
 
-## Signature {#testconst-signature}
+<h2 id="testconst-signature">Signature</h2>
 
 ```typescript
 testConst = 42
 ```
 
-## Remarks {#testconst-remarks}
+<h2 id="testconst-remarks">Remarks</h2>
 
 Here are some remarks about the variable

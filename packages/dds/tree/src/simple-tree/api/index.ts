@@ -4,7 +4,6 @@
  */
 
 export type {
-	TreeSchema,
 	ITreeViewConfiguration,
 	ITreeConfigurationOptions,
 } from "./configuration.js";
@@ -19,19 +18,40 @@ export type {
 	TreeViewEvents,
 	SchemaCompatibilityStatus,
 	TreeViewAlpha,
+	TreeViewBeta,
 	TreeBranch,
+	TreeBranchAlpha,
 	TreeBranchEvents,
+	TreeContextAlpha,
 	ITreeAlpha,
 } from "./tree.js";
 export { asTreeViewAlpha } from "./tree.js";
+export { type SchemaStatics, schemaStatics } from "./schemaStatics.js";
 export {
 	SchemaFactory,
+	scoped,
 	type ScopedSchemaName,
-	type SchemaFactoryObjectOptions,
-	type SchemaStatics,
-	schemaStatics,
+	type ObjectSchemaOptionsAlpha,
+	type ObjectSchemaOptions,
+	type NodeSchemaOptions,
+	type NodeSchemaOptionsAlpha,
+	type SchemaFactory_base,
 } from "./schemaFactory.js";
-export { SchemaFactoryAlpha } from "./schemaFactoryAlpha.js";
+export { SchemaFactoryBeta, type SchemaStaticsBeta } from "./schemaFactoryBeta.js";
+export {
+	SchemaFactoryAlpha,
+	type SchemaStaticsAlpha,
+	type NodeProvider,
+} from "./schemaFactoryAlpha.js";
+export {
+	eraseSchemaDetails,
+	eraseSchemaDetailsSubclassable,
+} from "./eraseSchemaDetails.js";
+export type {
+	ErasedSchema,
+	ErasedNode,
+	ErasedSchemaSubclassable,
+} from "./eraseSchemaDetails.js";
 export type {
 	ValidateRecursiveSchema,
 	FixRecursiveArraySchema,
@@ -43,16 +63,23 @@ export {
 	adaptEnum,
 	enumFromStrings,
 	singletonSchema,
+	createCustomizedFluidFrameworkScopedFactory,
 } from "./schemaCreationUtilities.js";
 export {
+	deltaMarksToArrayOps,
+	getIdentifierFromNode,
+	getPropertyKeyFromStoredKey,
+	getStoredKey,
 	treeNodeApi,
 	type TreeNodeApi,
 	tryGetSchema,
-	getStoredKey,
-	getPropertyKeyFromStoredKey,
-	getIdentifierFromNode,
 } from "./treeNodeApi.js";
 export { createFromCursor } from "./create.js";
+export {
+	type DirtyTreeStatus,
+	trackDirtyNodes,
+	type DirtyTreeMap,
+} from "./dirtyIndex.js";
 export {
 	type JsonSchemaId,
 	type JsonSchemaType,
@@ -67,6 +94,8 @@ export {
 	type JsonTreeSchema,
 	type JsonFieldSchema,
 	type JsonLeafSchemaType,
+	type JsonRecordNodeSchema,
+	type JsonStringKeyPatternProperties,
 } from "./jsonSchema.js";
 export type { TreeSchemaEncodingOptions } from "./getJsonSchema.js";
 export { getJsonSchema } from "./getJsonSchema.js";
@@ -78,6 +107,16 @@ export type {
 	ArrayNodeCustomizableSchemaUnsafe,
 	MapNodeCustomizableSchemaUnsafe,
 	System_Unsafe,
+	TreeRecordNodeUnsafe,
+	UnannotateAllowedTypeUnsafe,
+	AnnotatedAllowedTypeUnsafe,
+	AnnotatedAllowedTypesUnsafe,
+	AllowedTypesFullUnsafe,
+	AllowedTypesFullFromMixedUnsafe,
+	UnannotateAllowedTypesListUnsafe,
+	AnnotateAllowedTypesListUnsafe,
+	FieldHasDefaultAlphaUnsafe,
+	InsertableObjectFromSchemaRecordAlphaUnsafe,
 } from "./typesUnsafe.js";
 
 export {
@@ -97,6 +136,8 @@ export {
 	tryStoredSchemaAsArray,
 	replaceHandles,
 	type HandleConverter,
+	KeyEncodingOptions,
+	type TreeParsingOptions,
 } from "./customTree.js";
 
 export {
@@ -105,8 +146,28 @@ export {
 	replaceConciseTreeHandles,
 } from "./conciseTree.js";
 
-export { TreeBeta, type NodeChangedData, type TreeChangeEventsBeta } from "./treeBeta.js";
-export { createSimpleTreeIndex, type SimpleTreeIndex } from "./simpleTreeIndex.js";
+export {
+	borrowCursorFromTreeNodeOrValue,
+	exportConcise,
+	importConcise,
+	type NodeChangedData,
+	TreeBeta,
+	type TreeChangeEventsBeta,
+} from "./treeBeta.js";
+export {
+	type ArrayNodeDeltaOp,
+	type ArrayNodeInsertOp,
+	type ArrayNodeRemoveOp,
+	type ArrayNodeRetainOp,
+	type ArrayNodeTreeChangedDeltaOp,
+	type ArrayNodeTreeChangedRetainOp,
+	type NodeChangedDataAlpha,
+	type NodeChangedDataDelta,
+	type NodeChangedDataProperties,
+	type NodeChangedDataTreeDelta,
+	type TreeChangeEventsAlpha,
+} from "./treeAlpha.js";
+export { createTreeIndex, type TreeIndexKey } from "./simpleTreeIndex.js";
 export {
 	createIdentifierIndex,
 	type IdentifierIndex,
@@ -119,7 +180,9 @@ export {
 
 export {
 	type TransactionConstraint,
+	type TransactionConstraintAlpha,
 	type NodeInDocumentConstraint,
+	type NoChangeConstraint,
 	type RunTransactionParams,
 	type VoidTransactionCallbackStatus,
 	type TransactionCallbackStatus,
@@ -127,9 +190,25 @@ export {
 	type TransactionResultExt,
 	type TransactionResultSuccess,
 	type TransactionResultFailed,
+	type WithValue,
 	rollback,
 } from "./transactionTypes.js";
 
 export { generateSchemaFromSimpleSchema } from "./schemaFromSimple.js";
-export { toSimpleTreeSchema } from "./viewSchemaToSimpleSchema.js";
 export type { TreeChangeEvents } from "./treeChangeEvents.js";
+export {
+	incrementalEncodingPolicyForAllowedTypes,
+	incrementalSummaryHint,
+} from "./incrementalAllowedTypes.js";
+export {
+	encodeSchemaCompatibilitySnapshot,
+	decodeSchemaCompatibilitySnapshot,
+} from "./simpleSchemaCodec.js";
+export {
+	exportCompatibilitySchemaSnapshot,
+	importCompatibilitySchemaSnapshot,
+	checkCompatibility,
+	snapshotSchemaCompatibility,
+	type SnapshotFileSystem,
+	type SnapshotSchemaCompatibilityOptions,
+} from "./snapshotCompatibilityChecker.js";

@@ -5,9 +5,9 @@
 
 import fs from "node:fs";
 import path from "node:path";
-import { PackageJson } from "@fluidframework/build-tools";
+import type { PackageJson } from "@fluidframework/build-tools";
 import { getFlubConfig } from "../../config.js";
-import { Handler, readFile } from "./common.js";
+import { type Handler, readFile } from "./common.js";
 
 const match = /(?:^|\/)pnpm-lock\.yaml$/i;
 export const handlers: Handler[] = [

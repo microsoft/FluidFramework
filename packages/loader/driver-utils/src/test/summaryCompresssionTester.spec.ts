@@ -9,7 +9,7 @@
 
 /* eslint-disable @typescript-eslint/dot-notation */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
@@ -35,6 +35,7 @@ import {
 	ICreateBlobResponse,
 	ISnapshotTree,
 	IVersion,
+	type SummaryObject,
 } from "@fluidframework/driver-definitions/internal";
 
 import {
@@ -61,7 +62,7 @@ function cloneSummary(): ISummaryTree {
  * The content is stored in the header of the summary.
  * @param contentSize - The size of the content to be generated.
  */
-function generateSummaryWithContent(contentSize: number) {
+function generateSummaryWithContent(contentSize: number): ISummaryTree {
 	const summary = cloneSummary();
 	const header = (
 		(
@@ -73,7 +74,7 @@ function generateSummaryWithContent(contentSize: number) {
 	let contentString = "";
 	while (contentString.length < contentSize) {
 		if (contentString.length + 10 > contentSize) {
-			contentString += "0123456789".substring(0, contentSize - contentString.length);
+			contentString += "0123456789".slice(0, contentSize - contentString.length);
 			break;
 		} else {
 			contentString += "0123456789";
@@ -83,7 +84,10 @@ function generateSummaryWithContent(contentSize: number) {
 	return summary;
 }
 
-function generateSummaryWithBinaryContent(startsWith: number, contentSize: number) {
+function generateSummaryWithBinaryContent(
+	startsWith: number,
+	contentSize: number,
+): ISummaryTree {
 	const summary = cloneSummary();
 	const header = (
 		(
@@ -115,10 +119,12 @@ class InternalTestStorage implements IDocumentStorageService {
 	async getSnapshotTree(
 		version?: IVersion | undefined,
 		scenarioName?: string | undefined,
+		// eslint-disable-next-line @rushstack/no-new-null
 	): Promise<ISnapshotTree | null> {
 		return JSON.parse(JSON.stringify(snapshotTree));
 	}
 	async getVersions(
+		// eslint-disable-next-line @rushstack/no-new-null
 		versionId: string | null,
 		count: number,
 		scenarioName?: string | undefined,
@@ -167,7 +173,7 @@ class InternalTestDocumentService
 	constructor() {
 		super();
 	}
-	resolvedUrl: IResolvedUrl = {} as any;
+	resolvedUrl = {} as unknown as IResolvedUrl;
 	policies?: IDocumentServicePolicies | undefined;
 	storage: IDocumentStorageService = new InternalTestStorage();
 	async connectToStorage(): Promise<IDocumentStorageService> {
@@ -179,7 +185,7 @@ class InternalTestDocumentService
 	async connectToDeltaStream(client: IClient): Promise<IDocumentDeltaConnection> {
 		throw new Error("Method not implemented.");
 	}
-	dispose(error?: any): void {
+	dispose(error?: unknown): void {
 		throw new Error("Method not implemented.");
 	}
 }
@@ -215,7 +221,10 @@ async function buildCompressionStorage(
 			new InternalTestDocumentServiceFactory(),
 			config,
 		);
-		const documentService = await factory.createContainer(undefined, {} as any);
+		const documentService = await factory.createContainer(
+			undefined,
+			{} as unknown as IResolvedUrl,
+		);
 		const storage = await documentService.connectToStorage();
 		return storage;
 	}
@@ -226,9 +235,12 @@ const prefixForLZ4 = 0xb1;
 describe("Summary Compression Test", () => {
 	it("Verify Proper Summary Generation", async () => {
 		const summary = generateSummaryWithContent(1000000);
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 		const content = getHeaderContent(summary);
 		assert(
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 			content.length === 1000000 + 11,
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 			`The content size is ${content.length} and should be 1000011`,
 		);
 	});
@@ -238,13 +250,13 @@ describe("Summary Compression Test", () => {
 	});
 	it("Verify Config False", async () => {
 		const storage = await buildCompressionStorage(false);
-		const config = (storage as any)._config;
+		const config = (storage as { _config?: ICompressionStorageConfig })._config;
 		assert(config === undefined, "The storage has compression");
 		assert(isOriginalStorage(storage), "The storage is not the original storage");
 	});
 	it("Verify Config Empty", async () => {
 		const storage = await buildCompressionStorage();
-		const config = (storage as any)._config;
+		const config = (storage as { _config?: ICompressionStorageConfig })._config;
 		assert(config === undefined, "The storage has compression");
 		assert(isOriginalStorage(storage), "The storage is not the original storage");
 	});
@@ -269,7 +281,8 @@ describe("Summary Compression Test", () => {
 			proposalHandle: "test",
 			ackHandle: "test",
 		});
-		const uploadedSummary = ((storage as any).service as InternalTestStorage).uploadedSummary;
+		const uploadedSummary = (storage as unknown as { service: InternalTestStorage }).service
+			.uploadedSummary;
 		assert(
 			uploadedSummary?.tree[blobHeadersBlobName] !== undefined,
 			"The summary-blob markup is not added",
@@ -320,6 +333,7 @@ describe("Summary Compression Test", () => {
 			proposalHandle: "test",
 			ackHandle: "test",
 		});
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 		const originalContent = getHeaderContent(summary);
 		const content = new TextDecoder().decode(await storage.readBlob("1234"));
 		assert(
@@ -340,7 +354,9 @@ describe("Summary Compression Test", () => {
 			contentSize,
 			config,
 		);
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 		const firstByte = uploadedContent[0];
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 		const secondByte = uploadedContent[1];
 		assert(
 			firstByte === prefixForUncompressed,
@@ -364,6 +380,7 @@ describe("Summary Compression Test", () => {
 			contentSize,
 			config,
 		);
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 		const firstByte = uploadedContent[0];
 		assert(
 			firstByte === prefixForLZ4,
@@ -443,7 +460,10 @@ describe("Summary Compression Test", () => {
 		await testEncDecBinaryLoop(contentSize, config);
 	});
 });
-async function testNoPrefix(contentSize: number, config: ICompressionStorageConfig) {
+async function testNoPrefix(
+	contentSize: number,
+	config: ICompressionStorageConfig,
+): Promise<void> {
 	for (let i = 0; i < 256; i++) {
 		if (i >= 0xb0 && i <= 0xbf) {
 			continue;
@@ -455,6 +475,7 @@ async function testNoPrefix(contentSize: number, config: ICompressionStorageConf
 			contentSize,
 			config,
 		);
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 		const firstByte = uploadedContent[0];
 		assert(
 			firstByte === firstOriginalByte,
@@ -469,7 +490,7 @@ async function testPrefix(
 	from: number = 0,
 	to: number = 256,
 	prefix: number = prefixForLZ4,
-) {
+): Promise<void> {
 	for (let i = from; i < to; i++) {
 		const firstOriginalByte = i;
 		const uploadedContent: ArrayBufferLike = await uploadSummaryWithBinaryContent(
@@ -477,6 +498,7 @@ async function testPrefix(
 			contentSize,
 			config,
 		);
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 		const firstByte = uploadedContent[0];
 		assert(firstByte === prefix, `The first byte should be ${prefix} but is  ${firstByte}`);
 	}
@@ -486,7 +508,7 @@ async function uploadSummaryWithBinaryContent(
 	firstOriginalByte: number,
 	contentSize: number,
 	config: ICompressionStorageConfig,
-) {
+): Promise<ArrayBufferLike> {
 	const storage = (await buildCompressionStorage(config)) as DocumentStorageServiceProxy;
 	const summary = generateSummaryWithBinaryContent(firstOriginalByte, contentSize);
 	await storage.uploadSummaryWithContext(summary, {
@@ -494,7 +516,9 @@ async function uploadSummaryWithBinaryContent(
 		proposalHandle: "test",
 		ackHandle: "test",
 	});
-	const uploadedSummary = ((storage as any).service as InternalTestStorage).uploadedSummary;
+	const uploadedSummary = (storage as unknown as { service: InternalTestStorage }).service
+		.uploadedSummary;
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 	const uploadedContent: ArrayBufferLike = getHeaderContent(uploadedSummary!);
 	return uploadedContent;
 }
@@ -504,6 +528,7 @@ async function checkUploadDownloadSummary(
 ): Promise<ISummaryTree> {
 	const storage = (await buildCompressionStorage(config)) as DocumentStorageServiceProxy;
 	const summary = generateSummaryWithContent(1000);
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 	const originBlobContent = getHeaderContent(summary);
 	await storage.uploadSummaryWithContext(summary, {
 		referenceSequenceNumber: 0,
@@ -517,8 +542,9 @@ async function checkUploadDownloadSummary(
 		handle: "test",
 	};
 	const downloadedSummary: ISummaryTree = await storage.downloadSummary(summaryHandle);
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 	const downloadedBlobContentBin = getHeaderContent(downloadedSummary);
-	// const blobStr = new TextDecoder().decode(blob);
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
 	const downloadedBlobContent = new TextDecoder().decode(downloadedBlobContentBin);
 	assert(
 		originBlobContent === downloadedBlobContent,
@@ -529,7 +555,7 @@ async function checkUploadDownloadSummary(
 	return downloadedSummary;
 }
 
-async function checkEncDec(config: ICompressionStorageConfig) {
+async function checkEncDec(config: ICompressionStorageConfig): Promise<void> {
 	const summary = generateSummaryWithContent(1000);
 	await checkEncDecConfigurable(summary, config);
 }
@@ -538,7 +564,7 @@ async function checkEncDecBinary(
 	config: ICompressionStorageConfig,
 	startsWith: number,
 	contentSize: number,
-) {
+): Promise<void> {
 	const summary = generateSummaryWithBinaryContent(startsWith, contentSize);
 	await checkEncDecConfigurable(summary, config, startsWith);
 }
@@ -548,7 +574,7 @@ async function testEncDecBinaryLoop(
 	config: ICompressionStorageConfig,
 	from: number = 0,
 	to: number = 256,
-) {
+): Promise<void> {
 	for (let i = from; i < to; i++) {
 		const firstOriginalByte = i;
 		await checkEncDecBinary(config, firstOriginalByte, contentSize);
@@ -573,7 +599,7 @@ async function checkEncDecConfigurable(
 	summary: ISummaryTree,
 	config: ICompressionStorageConfig,
 	startsWith = -1,
-) {
+): Promise<void> {
 	const storage = (await buildCompressionStorage(config)) as DocumentStorageServiceProxy;
 	const originHeaderHolder: ISummaryTree = getHeaderHolder(summary);
 	const originBlob = (originHeaderHolder.tree.header as ISummaryBlob).content;
@@ -603,28 +629,29 @@ function checkCompressionConfig(
 	storage: IDocumentStorageService,
 	expectedMinSizeToCompress: number,
 	expectedAlgorithm: SummaryCompressionAlgorithm,
-) {
-	const config = (storage as any)._config;
+): void {
+	const config = (storage as { _config?: ICompressionStorageConfig })._config;
 	assert(config !== undefined, "The storage has no compression");
 	assert(
-		(config.minSizeToCompress === expectedMinSizeToCompress,
-		`Unexpected minSizeToCompress config ${config.minSizeToCompress}`),
+		config.minSizeToCompress === expectedMinSizeToCompress,
+		`Unexpected minSizeToCompress config ${config.minSizeToCompress}`,
 	);
 	assert(
-		(config.algorithmm === expectedAlgorithm,
-		`Unexpected minSizeToCompress config ${config.algorithmm}`),
+		config.algorithm === expectedAlgorithm,
+		`Unexpected algorithm config ${config.algorithm}`,
 	);
 }
 
-function getHeaderContent(summary: ISummaryTree) {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO: Use a real type
+function getHeaderContent(summary: ISummaryTree): any {
 	return getHeader(summary)["content"];
 }
 
-function getHeader(summary: ISummaryTree) {
+function getHeader(summary: ISummaryTree): SummaryObject {
 	return getHeaderHolder(summary).tree.header;
 }
 
-function getHeaderHolder(summary: ISummaryTree) {
+function getHeaderHolder(summary: ISummaryTree): ISummaryTree {
 	return (
 		((summary.tree[".channels"] as ISummaryTree).tree.rootDOId as ISummaryTree).tree[
 			".channels"

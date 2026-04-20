@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import assert from "assert";
+import { strict as assert } from "assert";
 
 import { Deferred } from "@fluidframework/common-utils";
-import { IConsumer, IQueuedMessage } from "@fluidframework/server-services-core";
+import type { IConsumer, IQueuedMessage } from "@fluidframework/server-services-core";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
 
 export class CheckpointManager {
@@ -122,7 +122,7 @@ export class CheckpointManager {
 	 */
 	public async flush(): Promise<void> {
 		if (this.lastCheckpoint) {
-			Lumberjack.info(`Checkpointing last recieved offset: ${this.lastCheckpoint.offset}`, {
+			Lumberjack.info(`Checkpointing last received offset: ${this.lastCheckpoint.offset}`, {
 				offset: this.lastCheckpoint.offset,
 				partition: this.lastCheckpoint.partition,
 			});

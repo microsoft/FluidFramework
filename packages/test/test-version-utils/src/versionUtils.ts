@@ -5,7 +5,7 @@
 
 /* Utilities to manage finding, installing and loading legacy versions */
 
-import { ExecOptions, execFileSync, execFile } from "node:child_process";
+import { execFileSync, execFile, type ExecFileOptions } from "node:child_process";
 import {
 	existsSync,
 	mkdirSync,
@@ -23,17 +23,19 @@ import { lock } from "proper-lockfile";
 import * as semver from "semver";
 
 import { pkgVersion } from "./packageVersion.js";
-import { InstalledPackage } from "./testApi.js";
+import { InstalledPackage, type PackageToInstall } from "./testApi.js";
 
 // Assuming this file is in `lib`, so go to `..\node_modules\.legacy` as the install location
 const baseModulePath = fileURLToPath(new URL("../node_modules/.legacy", import.meta.url));
 const installedJsonPath = path.join(baseModulePath, "installed.json");
-const getModulePath = (version: string) => path.join(baseModulePath, version);
+const getModulePath = (version: string): string => path.join(baseModulePath, version);
 
 const resolutionCache = new Map<string, string>();
 
 // Increment the revision if we want to force installation (e.g. package list changed)
-const revision = 3;
+// Bumped to 5: switched from npm to pnpm with node-linker=hoisted; cached installs with the
+// old npm flat layout or the pnpm isolated layout must be reinstalled.
+export const revision = 5;
 
 interface InstalledJson {
 	revision: number;
@@ -41,12 +43,12 @@ interface InstalledJson {
 }
 
 let cachedInstalledJson: InstalledJson | undefined;
-function writeAndUpdateInstalledJson(data: InstalledJson) {
+function writeAndUpdateInstalledJson(data: InstalledJson): void {
 	cachedInstalledJson = data;
 	writeFileSync(installedJsonPath, JSON.stringify(data, undefined, 2), { encoding: "utf8" });
 }
 
-async function ensureInstalledJson() {
+async function ensureInstalledJson(): Promise<void> {
 	if (existsSync(installedJsonPath)) {
 		return;
 	}
@@ -92,9 +94,9 @@ async function getInstalledJson(): Promise<InstalledJson> {
 	return cachedInstalledJson ?? (await readInstalledJsonLazy);
 }
 
-const isInstalled = async (version: string) =>
+const isInstalled = async (version: string): Promise<boolean> =>
 	(await getInstalledJson()).installed.includes(version);
-async function addInstalled(version: string) {
+async function addInstalled(version: string): Promise<void> {
 	await ensureInstalledJsonLazy;
 	const release = await lock(installedJsonPath, { retries: { forever: true } });
 	try {
@@ -108,7 +110,7 @@ async function addInstalled(version: string) {
 	}
 }
 
-async function removeInstalled(version: string) {
+async function removeInstalled(version: string): Promise<void> {
 	await ensureInstalledJsonLazy;
 	const release = await lock(installedJsonPath, { retries: { forever: true } });
 	try {
@@ -122,13 +124,56 @@ async function removeInstalled(version: string) {
 
 // See https://github.com/nodejs/node-v0.x-archive/issues/2318.
 // Note that execFile and execFileSync are used to avoid command injection vulnerability flagging from CodeQL.
-const npmCmd =
-	process.platform.includes("win") && !process.platform.includes("darwin") ? "npm.cmd" : "npm";
+// pnpm is used instead of npm for package installation to enable security flags (--ignore-scripts, --prefer-offline).
+const pnpmCmd = process.platform === "win32" ? "pnpm.cmd" : "pnpm";
+
+// Minimum age (in minutes) a package version must have before pnpm will install it.
+const minimumReleaseAgeMinutes = 1 * 24 * 60;
+
+// Enforce reasonable security settings on compat package installs to mitigate risk of supply-chain attacks.
+// We exclude our own scopes/packages so the installation of older FF versions for compat testing doesn't
+// fail due to young versions immediately after we ship a new release.
+// Ideally we shouldn't be installing the older versions "dynamically", but while we figure out an alternative
+// approach we can do this to make things a bit better.
+// See https://pnpm.io/supply-chain-security for context on the flags used here.
+const pnpmWorkspaceYamlContent = `
+minimumReleaseAge: ${minimumReleaseAgeMinutes}
+minimumReleaseAgeExclude:
+- '@fluidframework/*'
+- '@fluid-experimental/*'
+- '@fluid-internal/*'
+- '@fluid-private/*'
+- '@fluid-tools/*'
+- 'fluid-framework'
+
+# See: https://github.com/orgs/pnpm/discussions/11084 for some discussion.
+# Enabling this is additionally more complicated than coming up with a reasonable allow-list of packages, as Azure Artifact feeds don't seem to preserve trusted provenance metadata
+# depending on how packages are ingested. Note the "off" here is the default as well.
+trustPolicy: off
+
+packages:
+  - '.'
+`;
+
+// Queries the registry that pnpm is currently configured to use, so that the isolated install
+// directory can be explicitly pinned to the same registry. In CI, pnpm is configured via
+// NPM_CONFIG_USERCONFIG to use the Azure Artifacts feed; locally it falls back to the public registry.
+let cachedPnpmRegistry: string | undefined;
+function getPnpmRegistry(): string {
+	cachedPnpmRegistry ??= execFileSync(pnpmCmd, ["config", "get", "registry"], {
+		encoding: "utf8",
+		// When using pnpm.cmd shell must be true: https://nodejs.org/en/blog/vulnerability/april-2024-security-releases-2
+		shell: true,
+	}).trim();
+	return cachedPnpmRegistry;
+}
 
 /**
+ * Resolves a version range or alias to a specific version number.
+ *
  * @internal
  */
-export function resolveVersion(requested: string, installed: boolean) {
+export function resolveVersion(requested: string, installed: boolean): string {
 	const cachedVersion = resolutionCache.get(requested);
 	if (cachedVersion) {
 		return cachedVersion;
@@ -164,18 +209,18 @@ export function resolveVersion(requested: string, installed: boolean) {
 		let result: string | undefined;
 		try {
 			result = execFileSync(
-				npmCmd,
-				["v", `"@fluidframework/container-loader@${requested}"`, "version", "--json"],
+				pnpmCmd,
+				["view", `"@fluidframework/container-loader@${requested}"`, "version", "--json"],
 				{
 					encoding: "utf8",
-					// When using npm.cmd shell must be true: https://nodejs.org/en/blog/vulnerability/april-2024-security-releases-2
+					// When using pnpm.cmd shell must be true: https://nodejs.org/en/blog/vulnerability/april-2024-security-releases-2
 					shell: true,
 				},
 			);
 		} catch (error: any) {
 			debugger;
 			throw new Error(
-				`Error while running: ${npmCmd} v "@fluidframework/container-loader@${requested}" version --json`,
+				`Error while running: ${pnpmCmd} view "@fluidframework/container-loader@${requested}" version --json`,
 			);
 		}
 		if (result === "" || result === undefined) {
@@ -197,7 +242,7 @@ export function resolveVersion(requested: string, installed: boolean) {
 	}
 }
 
-async function ensureModulePath(version: string, modulePath: string) {
+async function ensureModulePath(version: string, modulePath: string): Promise<void> {
 	const release = await lock(baseModulePath, { retries: { forever: true } });
 	try {
 		console.log(`Installing version ${version} at ${modulePath}`);
@@ -211,11 +256,13 @@ async function ensureModulePath(version: string, modulePath: string) {
 }
 
 /**
+ * Ensures the requested package version is installed locally.
+ *
  * @internal
  */
 export async function ensureInstalled(
 	requested: string,
-	packageList: string[],
+	packageList: PackageToInstall[],
 	force: boolean,
 ): Promise<InstalledPackage | undefined> {
 	if (requested === pkgVersion) {
@@ -230,7 +277,12 @@ export async function ensureInstalled(
 
 	await ensureModulePath(version, modulePath);
 
-	const adjustedPackageList = [...packageList];
+	// Adjust package list based on the minVersion for each package. If the requested version is
+	// less than the minVersion, skip that package.
+	const adjustedPackageList = packageList
+		.filter((entry) => semver.gte(version, entry.minVersion))
+		.map((entry) => entry.pkgName);
+
 	if (versionHasMovedSparsedMatrix(version)) {
 		adjustedPackageList.push("@fluid-experimental/sequence-deprecated");
 	}
@@ -243,9 +295,9 @@ export async function ensureInstalled(
 			await removeInstalled(version);
 		}
 
-		// Check installed status again under lock the modulePath lock
+		// Check installed status again under the modulePath lock
 		if (force || !(await isInstalled(version))) {
-			const options: ExecOptions = {
+			const options: ExecFileOptions = {
 				cwd: modulePath,
 				env: {
 					...process.env,
@@ -253,43 +305,44 @@ export async function ensureInstalled(
 					// will otherwise propagate to these commands but fail to resolve.
 					NODE_OPTIONS: "",
 				},
-				// When using npm.cmd shell must be true: https://nodejs.org/en/blog/vulnerability/april-2024-security-releases-2
-				// @ts-expect-error ExecOptions does not acknowledge boolean for `shell` as a valid option (at least as of @types/node@18.19.1)
+				// When using pnpm.cmd shell must be true: https://nodejs.org/en/blog/vulnerability/april-2024-security-releases-2
 				shell: true,
 			};
-			// Install the packages
-			await new Promise<void>((resolve, reject) =>
-				execFile(
-					npmCmd,
-					// Added --verbose to try to troubleshoot AB#6195.
-					// We should probably remove it if when find the root cause and fix for that.
-					["init", "--yes", "--verbose"],
-					options,
-					(error, stdout, stderr) => {
-						if (error) {
-							const errorString =
-								error instanceof Error
-									? `${error.message}\n${error.stack}`
-									: JSON.stringify(error);
-							reject(
-								new Error(
-									`Failed to initialize install directory ${modulePath}\nError:${errorString}\nStdOut:${stdout}\nStdErr:${stderr}`,
-								),
-							);
-						}
-						resolve();
-					},
-				),
+
+			// Pin the isolated install directory to the same registry pnpm is using in the parent
+			// process and enforce a minimum package age. Writing pnpm-workspace.yaml here
+			// makes pnpm treat modulePath as a workspace root so the settings are scoped here only.
+			const registry = getPnpmRegistry();
+			writeFileSync(
+				path.join(modulePath, ".npmrc"),
+				// node-linker=hoisted gives a flat node_modules layout (npm-compatible), which
+				// loadPackage() requires to resolve both direct and transitive dependencies by
+				// their package name. Without this, pnpm's default isolated layout places
+				// transitive deps under node_modules/.pnpm/ and they cannot be found.
+				`registry=${registry}\nnode-linker=hoisted\n`,
+				{ encoding: "utf8" },
+			);
+			writeFileSync(path.join(modulePath, "pnpm-workspace.yaml"), pnpmWorkspaceYamlContent, {
+				encoding: "utf8",
+			});
+
+			// Write a minimal package.json so pnpm add has a manifest to update.
+			// Done with writeFileSync rather than `pnpm init` so that it is idempotent:
+			// `pnpm init` fails if package.json already exists (e.g. force=true on a previously
+			// installed version, or a revision bump that clears installed.json but leaves the dir).
+			writeFileSync(
+				path.join(modulePath, "package.json"),
+				JSON.stringify({ name: "legacy-compat-install", version: "1.0.0" }, undefined, 2),
+				{ encoding: "utf8" },
 			);
 			await new Promise<void>((resolve, reject) =>
 				execFile(
-					npmCmd,
-					// Added --verbose to try to troubleshoot AB#6195.
-					// We should probably remove it when we find the root cause and fix for that.
+					pnpmCmd,
 					[
-						"i",
-						"--no-package-lock",
-						"--verbose",
+						"add",
+						// Use the pnpm content-addressable store cache when available, reducing
+						// exposure to packages published since the cache was last populated.
+						"--prefer-offline",
 						...adjustedPackageList.map((pkg) => `${pkg}@${version}`),
 					],
 					options,
@@ -315,11 +368,11 @@ export async function ensureInstalled(
 		}
 		return { version, modulePath };
 	} catch (e) {
-		// rmdirSync recursive flags introduced in Node v12.10
-		// Remove the `as any` cast once node typing is updated.
 		try {
-			(rmdirSync as any)(modulePath, { recursive: true });
-		} catch (ex) {}
+			rmdirSync(modulePath, { recursive: true });
+		} catch (ex) {
+			// TODO: document why we are ignoring the error here
+		}
 		throw new Error(`Unable to install version ${version}\n${e}`);
 	} finally {
 		release();
@@ -327,9 +380,11 @@ export async function ensureInstalled(
 }
 
 /**
+ * Checks if a requested version is installed and returns its path.
+ *
  * @internal
  */
-export function checkInstalled(requested: string) {
+export function checkInstalled(requested: string): { version: string; modulePath: string } {
 	const version = resolveVersion(requested, true);
 	const modulePath = getModulePath(version);
 	if (existsSync(modulePath)) {
@@ -342,9 +397,15 @@ export function checkInstalled(requested: string) {
 }
 
 /**
+ * Dynamically loads a package from the specified module path.
+ *
  * @internal
  */
-export const loadPackage = async (modulePath: string, pkg: string): Promise<any> => {
+export const loadPackage = async (
+	modulePath: string,
+	pkg: string,
+	importPath: "." | `./${string}` = ".",
+): Promise<any> => {
 	const pkgPath = path.join(modulePath, "node_modules", pkg);
 	// Because we put legacy versions in a specific subfolder of node_modules (.legacy/<version>), we need to reimplement
 	// some of Node's module loading logic here.
@@ -369,20 +430,28 @@ export const loadPackage = async (modulePath: string, pkg: string): Promise<any>
 		if (typeof pkgJson.exports === "string") {
 			primaryExport = pkgJson.exports;
 		} else {
-			const exp: any | undefined = pkgJson.exports["."];
+			const exp: any | undefined = pkgJson.exports[importPath] ?? pkgJson.exports["."];
 			primaryExport =
 				typeof exp === "string"
 					? exp
 					: exp.require !== undefined
 						? exp.require.default
 						: exp.default;
-			if (primaryExport === undefined) {
-				throw new Error(`Package ${pkg} defined subpath exports but no '.' entry.`);
+			if (typeof primaryExport !== "string") {
+				// eslint-disable-next-line unicorn/prefer-type-error -- this isn't a TypeError really; it is an internal logic shortcoming; entry might not be a string
+				throw new Error(
+					`Package ${pkg} defined subpath exports but no recognizable ${importPath} entry.`,
+				);
 			}
 		}
 	} else {
 		if (pkgJson.main === undefined) {
 			throw new Error(`No main or exports in package.json for ${pkg}`);
+		}
+		if (importPath !== ".") {
+			console.warn(
+				`Package ${pkg} main used despite request for ${importPath} entry (no "exports" property found).`,
+			);
 		}
 		primaryExport = pkgJson.main;
 	}
@@ -623,6 +692,8 @@ function internalSchema(
 }
 
 /**
+ * Checks if the given version has the SparseMatrix moved to sequence-deprecated.
+ *
  * @internal
  */
 export function versionHasMovedSparsedMatrix(version: string): boolean {
@@ -633,6 +704,8 @@ export function versionHasMovedSparsedMatrix(version: string): boolean {
 }
 
 /**
+ * Converts a version string to a numeric value for comparison purposes.
+ *
  * @internal
  */
 export function versionToComparisonNumber(version: string): number {

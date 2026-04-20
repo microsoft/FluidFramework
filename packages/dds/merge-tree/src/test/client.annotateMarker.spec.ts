@@ -5,7 +5,7 @@
 
 import { strict as assert } from "node:assert";
 
-import { Marker, reservedMarkerIdKey, type ISegmentPrivate } from "../mergeTreeNodes.js";
+import { type Marker, reservedMarkerIdKey, type ISegmentPrivate } from "../mergeTreeNodes.js";
 import { ReferenceType } from "../ops.js";
 import { TextSegment } from "../textSegment.js";
 
@@ -34,7 +34,7 @@ describe("TestClient", () => {
 			});
 			assert(insertOp);
 			const markerInfo = client.getContainingSegment<ISegmentPrivate>(0);
-			const marker = markerInfo.segment as Marker;
+			const marker = markerInfo?.segment as Marker;
 			const annotateOp = client.annotateMarker(marker, { foo: "bar" });
 			assert(annotateOp);
 			assert(marker.properties);

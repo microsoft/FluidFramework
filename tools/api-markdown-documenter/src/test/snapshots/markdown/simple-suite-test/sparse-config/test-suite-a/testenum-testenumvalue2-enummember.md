@@ -2,12 +2,12 @@
 
 Test enum value 2 (number)
 
-### Signature {#testenumvalue2-signature}
+<h3 id="testenumvalue2-signature">Signature</h3>
 
 ```typescript
 TestEnumValue2 = 3
 ```
 
-### Remarks {#testenumvalue2-remarks}
+<h3 id="testenumvalue2-remarks">Remarks</h3>
 
 Here are some remarks about the enum value

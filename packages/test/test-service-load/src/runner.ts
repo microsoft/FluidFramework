@@ -12,7 +12,7 @@ import { makeRandom } from "@fluid-private/stochastic-test-utils";
 import { IContainer, LoaderHeader } from "@fluidframework/container-definitions/internal";
 import { ConnectionState } from "@fluidframework/container-loader";
 import {
-	IContainerExperimental,
+	asLegacyAlpha,
 	loadExistingContainer,
 	type ILoaderProps,
 } from "@fluidframework/container-loader/internal";
@@ -46,7 +46,7 @@ import {
 	printStatus,
 } from "./utils.js";
 
-async function main() {
+async function main(): Promise<void> {
 	const parseIntArg = (value: any): number => {
 		if (isNaN(parseInt(value, 10))) {
 			throw new commander.InvalidArgumentError("Not a number.");
@@ -108,9 +108,27 @@ async function main() {
 	// https://v8.dev/docs/stack-trace-api
 	Error.stackTraceLimit = Infinity;
 
-	process.on("uncaughtExceptionMonitor", (error, origin) => {
+	// We need to install an uncaughtException monitor to prevent Node from killing our process
+	// for not handling exceptions, otherwise we don't get a chance to flush the logger and will
+	// simply lose the telemetry that led up to the uncaught exception.
+	process.on("uncaughtException", (error, origin) => {
 		try {
-			logger.sendErrorEvent({ eventName: "uncaughtExceptionMonitor", origin }, error);
+			logger.sendErrorEvent({ eventName: "uncaughtException", origin }, error);
+			// Since flush is async, it's possible that more telemetry may be added and sent after the
+			// uncaught exception occurs. It's probably best to ignore telemetry after the above
+			// "uncaughtException" event, since we are now in an undefined state and the process
+			// is about to die.
+			flush()
+				.then(() => {
+					// Using exit code -2 to denote this "handled" unhandled exception exit, which
+					// can later be detected via "Runner Exited" telemetry in stressTest.ts.
+					// This sets it apart from a truly unhandled exception, which exits with code 1.
+					process.exit(-2);
+				})
+				.catch(() => {
+					// If flush errors, exit with code -3.
+					process.exit(-3);
+				});
 		} catch (e) {
 			console.error("Error during logging unhandled exception: ", e);
 		}
@@ -161,7 +179,12 @@ async function main() {
 	}
 }
 
-function* factoryPermutations<T extends IDocumentServiceFactory>(create: () => T) {
+function* factoryPermutations<T extends IDocumentServiceFactory>(
+	create: () => T,
+): Generator<{
+	documentServiceFactory: T;
+	headers: IRequestHeader;
+}> {
 	let counter = 0;
 	const factoryReused = create();
 
@@ -219,7 +242,6 @@ async function runnerProcess(
 		endpoint,
 		seed,
 		runConfig.runId,
-		false, // supportsBrowserAuth
 	);
 
 	// Cycle between creating new factory vs. reusing factory.
@@ -373,8 +395,8 @@ function scheduleFaultInjection(
 	runConfig: IRunConfig,
 	faultInjectionMinMs: number,
 	faultInjectionMaxMs: number,
-) {
-	const schedule = () => {
+): void {
+	const schedule = (): void => {
 		const { random } = runConfig;
 		const injectionTime = random.integer(faultInjectionMinMs, faultInjectionMaxMs);
 		printStatus(
@@ -428,7 +450,7 @@ function scheduleContainerClose(
 	runConfig: IRunConfig,
 	faultInjectionMinMs: number,
 	faultInjectionMaxMs: number,
-) {
+): void {
 	new Promise<void>((resolve) => {
 		// wait for the container to connect write
 		container.once("closed", () => resolve());
@@ -443,7 +465,7 @@ function scheduleContainerClose(
 				return;
 			}
 			const quorum = container.getQuorum();
-			const scheduleLeave = () => {
+			const scheduleLeave = (): void => {
 				const clientId = container.clientId;
 				if (clientId !== undefined && quorum.getMembers().has(clientId)) {
 					// calculate the clients quorum position
@@ -488,7 +510,7 @@ function scheduleContainerClose(
 
 async function scheduleOffline(
 	dsf: FaultInjectionDocumentServiceFactory,
-	container: IContainerExperimental,
+	container: IContainer,
 	runConfig: IRunConfig,
 	offlineDelayMinMs: number,
 	offlineDelayMaxMs: number,
@@ -530,11 +552,12 @@ async function scheduleOffline(
 				}
 				if (
 					runConfig.loaderConfig?.enableOfflineLoad === true &&
-					random.real() < stashPercent &&
-					container.closeAndGetPendingLocalState
+					random.real() < stashPercent
 				) {
 					printStatus(runConfig, "closing offline container!");
-					return container.closeAndGetPendingLocalState();
+					const pendingState = await asLegacyAlpha(container).getPendingLocalState();
+					container.close();
+					return pendingState;
 				}
 				printStatus(runConfig, "going online!");
 				ds.goOnline();
@@ -559,11 +582,11 @@ async function setupOpsMetrics(
 	logger: ITelemetryLoggerExt,
 	progressIntervalMs: number,
 	testRuntime: IFluidDataStoreRuntime,
-) {
+): Promise<() => void> {
 	// Use map to cache userName instead of recomputing.
 	const clientIdUserNameMap: { [clientId: string]: string } = {};
 
-	const getUserName = (userContainer: IContainer) => {
+	const getUserName = (userContainer: IContainer): string | undefined => {
 		const clientId = userContainer.clientId;
 		if (clientId !== undefined && clientId.length > 0) {
 			const maybeUserName = clientIdUserNameMap[clientId];
@@ -613,7 +636,7 @@ async function setupOpsMetrics(
 	});
 
 	let t: NodeJS.Timeout | undefined;
-	const sendMetrics = () => {
+	const sendMetrics = (): void => {
 		if (submittedOps > 0) {
 			logger.send({
 				category: "metric",

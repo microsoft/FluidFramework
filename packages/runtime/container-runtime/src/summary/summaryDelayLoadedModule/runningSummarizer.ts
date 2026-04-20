@@ -10,15 +10,15 @@ import type {
 	ISummarizerObservabilityProps,
 	SummarizerStopReason,
 } from "@fluidframework/container-runtime-definitions/internal";
-import { IDisposable, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+import type { IDisposable, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { assert, Deferred, PromiseTimer, delay } from "@fluidframework/core-utils/internal";
 import {
 	DriverErrorTypes,
 	MessageType,
-	ISequencedDocumentMessage,
+	type ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
 import {
-	MonitoringContext,
+	type MonitoringContext,
 	UsageError,
 	createChildLogger,
 	createChildMonitoringContext,
@@ -44,7 +44,7 @@ import type {
 	SubmitSummaryResult,
 } from "../summarizerTypes.js";
 import { raceTimer, RetriableSummaryError, type SummarizeReason } from "../summarizerUtils.js";
-import {
+import type {
 	IAckedSummary,
 	IClientSummaryWatcher,
 	SummaryCollection,
@@ -177,11 +177,6 @@ export class RunningSummarizer
 	private totalSuccessfulAttempts = 0;
 	private initialized = false;
 
-	private readonly runtimeListener: (
-		op: ISequencedDocumentMessage,
-		runtimeMessage?: boolean,
-	) => void;
-
 	/**
 	 * The maximum number of summary attempts to do when submit summary fails.
 	 */
@@ -227,14 +222,12 @@ export class RunningSummarizer
 			},
 		});
 
-		if (configuration.state !== "disableHeuristics") {
-			assert(
-				this.configuration.state === "enabled",
-				0x2ea /* "Configuration state should be enabled" */,
-			);
+		// Only create heuristics when in 'enabled' mode.
+		// This bypasses heuristics for 'disableHeuristics' and 'summaryOnRequest' configurations.
+		if (configuration.state === "enabled") {
 			this.heuristicRunner = new SummarizeHeuristicRunner(
 				heuristicData,
-				this.configuration,
+				configuration,
 				(reason) => this.trySummarize(reason),
 				this.mc.logger,
 			);
@@ -297,12 +290,6 @@ export class RunningSummarizer
 			this.mc.logger,
 		);
 
-		// Listen to runtime for ops
-		this.runtimeListener = (op: ISequencedDocumentMessage, runtimeMessage?: boolean) => {
-			this.handleOp(op, runtimeMessage === true);
-		};
-		this.runtime.on("op", this.runtimeListener);
-
 		// The max attempts for submit failures can be overridden via a feature flag. This allows us to
 		// tweak this as per telemetry data until we arrive at a stable number.
 		// If its set to a number higher than `defaultMaxAttemptsForSubmitFailures`, it will be ignored.
@@ -310,9 +297,12 @@ export class RunningSummarizer
 			"Fluid.Summarizer.AttemptsForSubmitFailures",
 		);
 		this.maxAttemptsForSubmitFailures =
-			overrideMaxAttempts && overrideMaxAttempts < defaultMaxAttemptsForSubmitFailures
+			overrideMaxAttempts !== undefined &&
+			overrideMaxAttempts < defaultMaxAttemptsForSubmitFailures
 				? overrideMaxAttempts
 				: defaultMaxAttemptsForSubmitFailures;
+
+		this.setupEventListeners();
 	}
 
 	private async handleSummaryAck(ack: IAckedSummary): Promise<void> {
@@ -398,7 +388,7 @@ export class RunningSummarizer
 	}
 
 	public dispose(): void {
-		this.runtime.off("op", this.runtimeListener);
+		this.cleanupEventListeners();
 		this.summaryWatcher.dispose();
 		this.heuristicRunner?.dispose();
 		this.heuristicRunner = undefined;
@@ -407,6 +397,33 @@ export class RunningSummarizer
 		this.disposeEnqueuedSummary();
 		this._disposed = true;
 		this.stopping = true;
+	}
+
+	private readonly eventsCleanup: (() => void)[] = [];
+
+	private setupEventListeners(): void {
+		const runtimeListener: (op: ISequencedDocumentMessage, runtimeMessage?: boolean) => void =
+			(op: ISequencedDocumentMessage, runtimeMessage?: boolean) => {
+				this.handleOp(op, runtimeMessage === true);
+			};
+		this.runtime.on("op", runtimeListener);
+		this.eventsCleanup.push(() => this.runtime.off("op", runtimeListener));
+
+		// Forward events
+		for (const event of ["summarizeTimeout"] as const) {
+			const listener = (...args: unknown[]): void => {
+				this.emit(event, ...args);
+			};
+			this.generator.on(event, listener);
+			this.eventsCleanup.push(() => this.generator.off(event, listener));
+		}
+	}
+
+	private cleanupEventListeners(): void {
+		for (const cleanup of this.eventsCleanup) {
+			cleanup();
+		}
+		this.eventsCleanup.length = 0;
 	}
 
 	/**
@@ -502,7 +519,7 @@ export class RunningSummarizer
 		// This will try to run lastSummary if needed.
 		if (
 			allowLastSummary &&
-			this.heuristicRunner?.shouldRunLastSummary() &&
+			this.heuristicRunner?.shouldRunLastSummary() === true &&
 			this.summarizingLock === undefined
 		) {
 			this.trySummarizeOnce(
@@ -656,11 +673,12 @@ export class RunningSummarizer
 						numUnsummarizedNonRuntimeOps: this.heuristicData.numNonRuntimeOps,
 						isLastSummary,
 					});
-					this.mc.logger.sendErrorEvent(
+					summaryLogger.sendErrorEvent(
 						{
 							eventName: "SummarizeFailed",
 							maxAttempts: 1,
 							summaryAttempts: 1,
+							isLastSummary,
 						},
 						result.error,
 					);
@@ -709,7 +727,10 @@ export class RunningSummarizer
 				this.afterSummaryAction();
 			},
 		).catch((error) => {
-			this.mc.logger.sendErrorEvent({ eventName: "UnexpectedSummarizeError" }, error);
+			this.mc.logger.sendErrorEvent(
+				{ eventName: "UnexpectedSummarizeError", summarizeReason: reason },
+				error,
+			);
 		});
 	}
 
@@ -719,6 +740,7 @@ export class RunningSummarizer
 	 */
 	private async trySummarizeWithRetries(
 		reason: SummarizeReason,
+		summarizeOptions: ISummarizeOptions = {},
 	): Promise<ISummarizeResults | undefined> {
 		// Helper to set summarize options, telemetry properties and call summarize.
 		const attemptSummarize = (
@@ -728,13 +750,13 @@ export class RunningSummarizer
 			summarizeProps: ISummarizeTelemetryProperties;
 			summarizeResult: ISummarizeResults;
 		} => {
-			const summarizeOptions: ISummarizeOptions = {
-				fullTree: false,
+			const attemptSummarizeOptions: ISummarizeOptions = {
+				fullTree: summarizeOptions.fullTree ?? false,
 			};
 			const summarizeProps: ISummarizeTelemetryProperties = {
 				summarizeReason: reason,
 				summaryAttempts: attemptNumber,
-				...summarizeOptions,
+				...attemptSummarizeOptions,
 				finalAttempt,
 			};
 			const summaryLogger = createChildLogger({
@@ -743,7 +765,7 @@ export class RunningSummarizer
 			});
 
 			const summaryOptions: ISubmitSummaryOptions = {
-				...summarizeOptions,
+				...attemptSummarizeOptions,
 				summaryLogger,
 				cancellationToken: this.cancellationToken,
 				finalAttempt,
@@ -873,6 +895,8 @@ export class RunningSummarizer
 					eventName: "SummarizeFailed",
 					maxAttempts,
 					summaryAttempts: currentAttempt,
+					summarizeReason: reason,
+					isLastSummary: reason === "lastSummary",
 				},
 				error,
 			);
@@ -894,8 +918,9 @@ export class RunningSummarizer
 	private async summarizeOnDemandWithRetries(
 		reason: SummarizeReason,
 		resultsBuilder: SummarizeResultBuilder,
+		summarizeOptions: ISummarizeOptions = {},
 	): Promise<ISummarizeResults> {
-		const results = await this.trySummarizeWithRetries(reason);
+		const results = await this.trySummarizeWithRetries(reason, summarizeOptions);
 		if (results === undefined) {
 			resultsBuilder.fail(
 				"Summarization was canceled",
@@ -933,13 +958,15 @@ export class RunningSummarizer
 			throw new UsageError("Attempted to run an already-running summarizer on demand");
 		}
 
-		const { reason, ...summarizeOptions } = options;
-		if (options.retryOnFailure === true) {
-			this.summarizeOnDemandWithRetries(`onDemand;${reason}`, resultsBuilder).catch(
-				(error: IRetriableFailureError) => {
-					resultsBuilder.fail("summarize failed", error);
-				},
-			);
+		const { reason, retryOnFailure, ...summarizeOptions } = options;
+		if (retryOnFailure === true) {
+			this.summarizeOnDemandWithRetries(
+				`onDemand;${reason}`,
+				resultsBuilder,
+				summarizeOptions,
+			).catch((error: IRetriableFailureError) => {
+				resultsBuilder.fail("summarize failed", error);
+			});
 		} else {
 			this.trySummarizeOnce(
 				{ summarizeReason: `onDemand/${reason}` },

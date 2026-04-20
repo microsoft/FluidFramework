@@ -5,9 +5,9 @@
 
 import {
 	ADOSizeComparator,
-	BundleComparison,
-	BundleComparisonResult,
-	BundleMetric,
+	type BundleComparison,
+	type BundleComparisonResult,
+	type BundleMetric,
 	bundlesContainNoChanges,
 	getAzureDevopsApi,
 	totalSizeMetricName,

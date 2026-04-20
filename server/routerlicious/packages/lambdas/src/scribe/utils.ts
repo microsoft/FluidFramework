@@ -4,15 +4,15 @@
  */
 
 import { ProtocolOpHandler } from "@fluidframework/protocol-base";
-import {
+import type {
 	IDocumentMessage,
 	IDocumentSystemMessage,
 	IProtocolState,
 	IUser,
 } from "@fluidframework/protocol-definitions";
 import {
-	IProducer,
-	IRawOperationMessage,
+	type IProducer,
+	type IRawOperationMessage,
 	RawOperationType,
 	type IScribe,
 } from "@fluidframework/server-services-core";

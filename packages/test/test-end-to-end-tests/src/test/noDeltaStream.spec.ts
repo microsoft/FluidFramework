@@ -98,7 +98,10 @@ describeCompat(
 			provider: ITestObjectProvider,
 			waitForSummary: boolean,
 			timeout: number,
-		) {
+		): Promise<{
+			containerUrl: string;
+			lastKnownSeqNum: number;
+		}> {
 			const scenario = JSON.stringify(waitForSummary ?? "undefined");
 			if (!scenarioToContainerUrl.has(scenario)) {
 				let containerResolvedUrl: IResolvedUrl | undefined;

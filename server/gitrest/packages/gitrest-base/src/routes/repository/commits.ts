@@ -5,15 +5,15 @@
 
 import { handleResponse } from "@fluidframework/server-services-shared";
 import { Router } from "express";
-import nconf from "nconf";
+import type nconf from "nconf";
 
 import {
 	checkSoftDeleted,
 	getExternalWriterParams,
 	getFilesystemManagerFactory,
 	getRepoManagerParamsFromRequest,
-	IFileSystemManagerFactories,
-	IRepositoryManagerFactory,
+	type IFileSystemManagerFactories,
+	type IRepositoryManagerFactory,
 	logAndThrowApiError,
 } from "../../utils";
 

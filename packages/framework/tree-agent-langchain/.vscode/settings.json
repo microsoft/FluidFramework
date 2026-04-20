@@ -1,0 +1,21 @@
+{
+	"search.exclude": {
+		"**/node_modules": true,
+		"**/dist": true,
+		"**/lib": true,
+	},
+	"mochaExplorer.files": ["dist/test/**/*.*js"],
+	"mochaExplorer.require": [
+		"node_modules/@fluid-internal/mocha-test-setup",
+		"source-map-support/register",
+	],
+	"mochaExplorer.configFile": ".mocharc.cjs",
+	"mochaExplorer.timeout": 999999,
+	"mochaExplorer.nodeArgv": ["--conditions", "allow-ff-test-exports"],
+	"cSpell.words": ["fluidframework"],
+	"editor.defaultFormatter": "biomejs.biome",
+	"editor.insertSpaces": false,
+	"[json]": { "editor.defaultFormatter": "biomejs.biome" },
+	"[javascript]": { "editor.defaultFormatter": "biomejs.biome" },
+	"[typescript]": { "editor.defaultFormatter": "biomejs.biome" },
+}

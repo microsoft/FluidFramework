@@ -3,26 +3,25 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+import type { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
-import {
-	ICacheEntry,
-	IFileEntry,
+import type {
 	IPersistedCache,
+	IFileEntry,
+	ICacheEntry,
+} from "@fluidframework/driver-definitions/internal";
+import {
+	getKeyForCacheEntry,
 	maximumCacheDurationMs,
-} from "@fluidframework/odsp-driver-definitions/internal";
-import {
-	ITelemetryLoggerExt,
-	UsageError,
-	createChildLogger,
-} from "@fluidframework/telemetry-utils/internal";
-import { IDBPDatabase } from "idb";
+} from "@fluidframework/driver-utils/internal";
+import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
+import { UsageError, createChildLogger } from "@fluidframework/telemetry-utils/internal";
+import type { IDBPDatabase } from "idb";
 
+import type { FluidCacheDBSchema } from "./FluidCacheIndexedDb.js";
 import {
-	FluidCacheDBSchema,
 	FluidDriverObjectStoreName,
 	getFluidCacheIndexedDbInstance,
-	getKeyForCacheEntry,
 } from "./FluidCacheIndexedDb.js";
 import {
 	FluidCacheErrorEvent,
@@ -39,8 +38,7 @@ interface StorageQuotaUsageDetails {
 }
 
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface FluidCacheConfig {
 	/**
@@ -73,8 +71,7 @@ export interface FluidCacheConfig {
 
 /**
  * A cache that can be used by the Fluid ODSP driver to cache data for faster performance.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export class FluidCache implements IPersistedCache {
 	private readonly logger: ITelemetryLoggerExt;
@@ -154,10 +151,10 @@ export class FluidCache implements IPersistedCache {
 				const index = transaction.store.index("createdTimeMs");
 				// Get items which were cached before the maxCacheItemAge.
 				const keysToDelete = await index.getAllKeys(
-					IDBKeyRange.upperBound(new Date().getTime() - this.maxCacheItemAge),
+					IDBKeyRange.upperBound(Date.now() - this.maxCacheItemAge),
 				);
 
-				await Promise.all(keysToDelete.map((key) => transaction.store.delete(key)));
+				await Promise.all(keysToDelete.map(async (key) => transaction.store.delete(key)));
 				await transaction.done;
 			} catch (error: any) {
 				this.logger.sendErrorEvent(
@@ -173,7 +170,7 @@ export class FluidCache implements IPersistedCache {
 		});
 	}
 
-	private async openDb() {
+	private async openDb(): Promise<IDBPDatabase<FluidCacheDBSchema>> {
 		if (this.closeDbImmediately) {
 			return getFluidCacheIndexedDbInstance(this.logger);
 		}
@@ -213,7 +210,7 @@ export class FluidCache implements IPersistedCache {
 		return this.db;
 	}
 
-	private closeDb(db?: IDBPDatabase<FluidCacheDBSchema>) {
+	private closeDb(db?: IDBPDatabase<FluidCacheDBSchema>): void {
 		if (this.closeDbImmediately) {
 			db?.close();
 		}
@@ -229,12 +226,32 @@ export class FluidCache implements IPersistedCache {
 
 			const keysToDelete = await index.getAllKeys(file.docId);
 
-			await Promise.all(keysToDelete.map((key) => transaction.store.delete(key)));
+			await Promise.all(keysToDelete.map(async (key) => transaction.store.delete(key)));
 			await transaction.done;
 		} catch (error: any) {
 			this.logger.sendErrorEvent(
 				{
 					eventName: FluidCacheErrorEvent.FluidCacheDeleteOldEntriesError,
+					pkgVersion,
+				},
+				error,
+			);
+		} finally {
+			this.closeDb(db);
+		}
+	}
+
+	public async removeEntry(entry: ICacheEntry): Promise<void> {
+		let db: IDBPDatabase<FluidCacheDBSchema> | undefined;
+		try {
+			db = await this.openDb();
+
+			const key = getKeyForCacheEntry(entry);
+			await db.delete(FluidDriverObjectStoreName, key);
+		} catch (error: any) {
+			this.logger.sendErrorEvent(
+				{
+					eventName: FluidCacheErrorEvent.FluidCacheDeleteSingleEntryError,
 					pkgVersion,
 				},
 				error,
@@ -260,11 +277,10 @@ export class FluidCache implements IPersistedCache {
 		});
 
 		// Value will contain metadata like the expiry time, we just want to return the object we were asked to cache
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 		return cachedItem?.cachedObject;
 	}
 
-	private async getItemFromCache(cacheEntry: ICacheEntry) {
+	private async getItemFromCache(cacheEntry: ICacheEntry): Promise<any> {
 		let db: IDBPDatabase<FluidCacheDBSchema> | undefined;
 		try {
 			const key = getKeyForCacheEntry(cacheEntry);
@@ -291,7 +307,7 @@ export class FluidCache implements IPersistedCache {
 				return undefined;
 			}
 
-			const currentTime = new Date().getTime();
+			const currentTime = Date.now();
 
 			// If too much time has passed since this cache entry was used, we will also return undefined
 			if (currentTime - value.createdTimeMs > this.maxCacheItemAge) {
@@ -318,7 +334,7 @@ export class FluidCache implements IPersistedCache {
 		try {
 			db = await this.openDb();
 
-			const currentTime = new Date().getTime();
+			const currentTime = Date.now();
 
 			await db.put(
 				FluidDriverObjectStoreName,

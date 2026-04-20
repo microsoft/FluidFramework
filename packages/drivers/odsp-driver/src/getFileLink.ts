@@ -7,14 +7,14 @@ import type { ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import { NonRetryableError, runWithRetry } from "@fluidframework/driver-utils/internal";
 import {
-	IOdspUrlParts,
+	type IOdspUrlParts,
 	OdspErrorTypes,
-	OdspResourceTokenFetchOptions,
-	TokenFetcher,
+	type OdspResourceTokenFetchOptions,
+	type TokenFetcher,
 	type IOdspResolvedUrl,
 } from "@fluidframework/odsp-driver-definitions/internal";
 import {
-	ITelemetryLoggerExt,
+	type ITelemetryLoggerExt,
 	PerformanceEvent,
 	isFluidError,
 } from "@fluidframework/telemetry-utils/internal";
@@ -115,7 +115,7 @@ export const getFileLink = mockify(
  * @param logger - logger to send events.
  * @returns Response from the API call.
  * @legacy
- * @alpha
+ * @beta
  */
 async function getFileLinkWithLocationRedirectionHandling(
 	getToken: TokenFetcher<OdspResourceTokenFetchOptions>,
@@ -194,7 +194,7 @@ async function getFileLinkCore(
 				}/_api/web/GetFileById(@a1)/ListItemAllFields/GetSharingInformation?@a1=guid${encodeURIComponent(
 					`'${fileItem.sharepointIds.listItemUniqueId}'`,
 				)}`;
-				const method = "POST";
+				const method = "GET";
 				const authHeader = await getAuthHeader(
 					{ ...options, request: { url, method } },
 					"GetFileLinkCore",

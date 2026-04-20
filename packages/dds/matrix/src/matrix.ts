@@ -3,41 +3,46 @@
  * Licensed under the MIT License.
  */
 
-import {
+import type {
 	IEvent,
 	IEventThisPlaceHolder,
-	type IEventProvider,
+	IEventProvider,
 } from "@fluidframework/core-interfaces";
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
-import {
+import type {
 	IChannelAttributes,
 	IFluidDataStoreRuntime,
-	type IChannel,
+	IChannel,
 	IChannelStorageService,
 } from "@fluidframework/datastore-definitions/internal";
-import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
+import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import {
-	Client,
-	IJSONSegment,
-	IMergeTreeOp,
+	type Client,
+	type IJSONSegment,
+	type IMergeTreeOp,
 	type ISegmentInternal,
 	type LocalReferencePosition,
 	MergeTreeDeltaType,
 	ReferenceType,
 	segmentIsRemoved,
 } from "@fluidframework/merge-tree/internal";
-import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions/internal";
+import type {
+	ISummaryTreeWithStats,
+	IRuntimeMessageCollection,
+	IRuntimeMessagesContent,
+	ISequencedMessageEnvelope,
+} from "@fluidframework/runtime-definitions/internal";
 import {
 	ObjectStoragePartition,
 	SummaryTreeBuilder,
 } from "@fluidframework/runtime-utils/internal";
 import {
-	IFluidSerializer,
-	ISharedObjectEvents,
+	type IFluidSerializer,
+	type ISharedObjectEvents,
 	SharedObject,
 } from "@fluidframework/shared-object-base/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
-import {
+import type {
 	IMatrixConsumer,
 	IMatrixProducer,
 	IMatrixReader,
@@ -46,20 +51,20 @@ import {
 import Deque from "double-ended-queue";
 
 import type { HandleCache } from "./handlecache.js";
-import { Handle, isHandleValid } from "./handletable.js";
+import { type Handle, isHandleValid } from "./handletable.js";
 import {
-	ISetOp,
-	MatrixItem,
+	type ISetOp,
+	type MatrixItem,
 	MatrixOp,
-	MatrixSetOrVectorOp,
+	type MatrixSetOrVectorOp,
 	SnapshotPath,
-	VectorOp,
+	type VectorOp,
 } from "./ops.js";
 import { PermutationVector, reinsertSegmentIntoVector } from "./permutationvector.js";
 import { ensureRange } from "./range.js";
 import { deserializeBlob } from "./serialization.js";
 import { SparseArray2D, type RecurArray } from "./sparsearray2d.js";
-import { IUndoConsumer } from "./types.js";
+import type { IUndoConsumer } from "./types.js";
 import { MatrixUndoProvider } from "./undoprovider.js";
 
 interface ISetOpMetadata {
@@ -73,8 +78,7 @@ interface ISetOpMetadata {
 
 /**
  * Events emitted by Shared Matrix.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface ISharedMatrixEvents<T> extends IEvent {
 	/**
@@ -117,8 +121,7 @@ interface CellLastWriteTrackerItem {
 }
 
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 // Changing this to `unknown` would be a breaking change.
 // TODO: if possible, transition ISharedMatrix to not use `any`.
@@ -240,8 +243,7 @@ interface PendingCellChanges<T> {
  * matrix data and physically stores data in Z-order to leverage CPU caches and
  * prefetching when reading in either row or column major order.  (See README.md
  * for more details.)
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 // Changing this to `unknown` would be a breaking change.
 // TODO: if possible, transition SharedMatrix to not use `any`.
@@ -465,10 +467,7 @@ export class SharedMatrix<T = any>
 		localSeq: number,
 	): LocalReferencePosition {
 		const segoff = vector.getContainingSegment(pos, undefined, localSeq);
-		assert(
-			segoff.segment !== undefined && segoff.offset !== undefined,
-			0x8b3 /* expected valid position */,
-		);
+		assert(segoff !== undefined, 0x8b3 /* expected valid position */);
 		return vector.createLocalReferencePosition(
 			segoff.segment,
 			segoff.offset,
@@ -1002,11 +1001,25 @@ export class SharedMatrix<T = any>
 		);
 	}
 
-	protected processCore(
-		msg: ISequencedDocumentMessage,
+	protected override processMessagesCore(messagesCollection: IRuntimeMessageCollection): void {
+		const { envelope, local, messagesContent } = messagesCollection;
+		for (const messageContent of messagesContent) {
+			this.processMessage(envelope, messageContent, local);
+		}
+	}
+
+	private processMessage(
+		messageEnvelope: ISequencedMessageEnvelope,
+		messageContent: IRuntimeMessagesContent,
 		local: boolean,
-		localOpMetadata: unknown,
 	): void {
+		// Reconstruct the ISequencedDocumentMessage which is needed by merge tree client.
+		const msg: ISequencedDocumentMessage = {
+			...messageEnvelope,
+			contents: messageContent.contents,
+			clientSequenceNumber: messageContent.clientSequenceNumber,
+		};
+		const localOpMetadata = messageContent.localOpMetadata;
 		if (local) {
 			const recordedRefSeq = this.inFlightRefSeqs.shift();
 			assert(recordedRefSeq !== undefined, 0x8ba /* No pending recorded refSeq found */);
@@ -1019,7 +1032,7 @@ export class SharedMatrix<T = any>
 			// assert(recordedRefSeq <= message.referenceSequenceNumber, "RefSeq mismatch");
 		}
 
-		const contents = msg.contents as MatrixSetOrVectorOp<T>;
+		const contents = messageContent.contents as MatrixSetOrVectorOp<T>;
 		const target = contents.target;
 
 		switch (target) {

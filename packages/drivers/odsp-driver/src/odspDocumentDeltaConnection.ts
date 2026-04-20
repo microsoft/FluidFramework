@@ -4,11 +4,11 @@
  */
 
 import { TypedEventEmitter, performanceNow } from "@fluid-internal/client-utils";
-import { IEvent } from "@fluidframework/core-interfaces";
+import type { IEvent } from "@fluidframework/core-interfaces";
 import { assert, Deferred } from "@fluidframework/core-utils/internal";
 import { DocumentDeltaConnection } from "@fluidframework/driver-base/internal";
-import { IClient } from "@fluidframework/driver-definitions";
-import {
+import type { IClient } from "@fluidframework/driver-definitions";
+import type {
 	IAnyDriverError,
 	IConnect,
 	IDocumentMessage,
@@ -18,17 +18,17 @@ import {
 	ISignalMessage,
 } from "@fluidframework/driver-definitions/internal";
 import { createGenericNetworkError } from "@fluidframework/driver-utils/internal";
-import { OdspError } from "@fluidframework/odsp-driver-definitions/internal";
+import type { OdspError } from "@fluidframework/odsp-driver-definitions/internal";
 import {
-	IFluidErrorBase,
-	ITelemetryLoggerExt,
+	type IFluidErrorBase,
+	type ITelemetryLoggerExt,
 	loggerToMonitoringContext,
 } from "@fluidframework/telemetry-utils/internal";
-import { Socket } from "socket.io-client";
+import type { Socket } from "socket.io-client";
 import { v4 as uuid } from "uuid";
 
-import { IFlushOpsResponse, IGetOpsResponse, IOdspSocketError } from "./contracts.js";
-import { EpochTracker } from "./epochTracker.js";
+import type { IFlushOpsResponse, IGetOpsResponse, IOdspSocketError } from "./contracts.js";
+import type { EpochTracker } from "./epochTracker.js";
 import { errorObjectFromSocketError } from "./odspError.js";
 import { pkgVersion } from "./packageVersion.js";
 import { SocketIOClientStatic } from "./socketModule.js";
@@ -391,7 +391,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 		documentId: string,
 		logger: ITelemetryLoggerExt,
 	): SocketReference {
-		// eslint-disable-next-line unicorn/no-array-callback-reference, unicorn/no-array-method-this-argument
+		// eslint-disable-next-line unicorn/no-array-method-this-argument
 		const existingSocketReference = SocketReference.find(key, logger);
 		if (existingSocketReference) {
 			return existingSocketReference;
@@ -749,7 +749,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 	public get disposed(): boolean {
 		if (!(this._disposed || this.socket.connected)) {
 			// Send error event if this connection is not yet disposed after socket is disconnected for 15s.
-			// eslint-disable-next-line unicorn/no-lonely-if
+			// eslint-disable-next-line unicorn/no-lonely-if, @typescript-eslint/prefer-nullish-coalescing -- using ??= could change behavior if value is falsy
 			if (this.connectionNotYetDisposedTimeout === undefined) {
 				this.connectionNotYetDisposedTimeout = setTimeout(() => {
 					if (!this._disposed) {

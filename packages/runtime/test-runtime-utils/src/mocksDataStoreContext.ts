@@ -12,12 +12,12 @@ import {
 } from "@fluidframework/core-interfaces/internal";
 import { IClientDetails, IQuorumClients } from "@fluidframework/driver-definitions";
 import {
-	IDocumentStorageService,
 	IDocumentMessage,
 	ISnapshotTree,
 	ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
+// eslint-disable-next-line import-x/no-deprecated -- Will be undeprecated in 2.100.0 when it becomes an internal API
 import type { IIdCompressorCore } from "@fluidframework/id-compressor/internal";
 import {
 	CreateChildSummarizerNodeFn,
@@ -26,7 +26,10 @@ import {
 	IFluidDataStoreContext,
 	IFluidDataStoreRegistry,
 	IGarbageCollectionDetailsBase,
+	type IRuntimeStorageService,
+	type MinimumVersionForCollab,
 } from "@fluidframework/runtime-definitions/internal";
+import { defaultMinVersionForCollab } from "@fluidframework/runtime-utils/internal";
 import {
 	ITelemetryLoggerExt,
 	createChildLogger,
@@ -36,8 +39,7 @@ import { v4 as uuid } from "uuid";
 import { MockDeltaManager } from "./mockDeltas.js";
 
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export class MockFluidDataStoreContext implements IFluidDataStoreContext {
 	public isLocalDataStore: boolean = true;
@@ -53,9 +55,10 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
 		new MockDeltaManager(() => this.clientId);
 
 	public containerRuntime: IContainerRuntimeBase = undefined as any;
-	public storage: IDocumentStorageService = undefined as any;
+	public storage: IRuntimeStorageService = undefined as any;
 	public IFluidDataStoreRegistry: IFluidDataStoreRegistry = undefined as any;
 	public IFluidHandleContext: IFluidHandleContext = undefined as any;
+	// eslint-disable-next-line import-x/no-deprecated -- Will be undeprecated in 2.100.0 when it becomes an internal API
 	public idCompressor: IIdCompressorCore & IIdCompressor = undefined as any;
 	public readonly gcThrowOnTombstoneUsage = false;
 	public readonly gcTombstoneEnforcementAllowed = false;
@@ -75,6 +78,11 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
 	 */
 	public createProps?: any;
 	public scope: FluidObject = undefined as any;
+
+	/**
+	 * {@inheritdoc @fluidframework/runtime-definitions#IFluidDataStoreContext.minVersionForCollab}
+	 */
+	public minVersionForCollab: MinimumVersionForCollab = defaultMinVersionForCollab;
 
 	constructor(
 		public readonly id: string = uuid(),
@@ -113,11 +121,11 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
 		return undefined as any as IAudience;
 	}
 
-	public submitMessage(type: string, content: any, localOpMetadata: unknown): void {
+	public submitMessage(): void {
 		// No-op for mock context
 	}
 
-	public submitSignal(type: string, content: any): void {
+	public submitSignal(): void {
 		throw new Error("Method not implemented.");
 	}
 
@@ -154,7 +162,11 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
 		throw new Error("Method not implemented.");
 	}
 
-	public addedGCOutboundRoute(fromPath: string, toPath: string, messageTimestampMs?: number) {
+	public addedGCOutboundRoute(
+		fromPath: string,
+		toPath: string,
+		messageTimestampMs?: number,
+	): void {
 		throw new Error("Method not implemented.");
 	}
 }

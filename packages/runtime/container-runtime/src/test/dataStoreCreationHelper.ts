@@ -5,10 +5,7 @@
 
 import type { ILayerCompatDetails } from "@fluid-internal/client-utils";
 import type { FluidObject, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
-import type {
-	IClientDetails,
-	IDocumentStorageService,
-} from "@fluidframework/driver-definitions/internal";
+import type { IClientDetails } from "@fluidframework/driver-definitions/internal";
 import {
 	CreateSummarizerNodeSource,
 	type CreateChildSummarizerNodeFn,
@@ -16,6 +13,7 @@ import {
 	type IFluidDataStoreFactory,
 	type IFluidDataStoreRegistry,
 	type IGarbageCollectionData,
+	type IRuntimeStorageService,
 	type ISummarizerNodeWithGC,
 	type SummarizeInternalFn,
 } from "@fluidframework/runtime-definitions/internal";
@@ -102,7 +100,7 @@ export function createSummarizerNodeAndGetCreateFn(dataStoreId: string): {
 const defaultCreateProps = {
 	id: "dataStoreId",
 	pkg: ["dataStorePkg"],
-	storage: {} as unknown as IDocumentStorageService,
+	storage: {} as unknown as IRuntimeStorageService,
 	scope: {} as unknown as FluidObject,
 	snapshotTree: undefined,
 	makeLocallyVisibleFn: () => {},

@@ -12,7 +12,6 @@ import { IContainerRuntime } from "@fluidframework/container-runtime-definitions
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
 import { Serializable } from "@fluidframework/datastore-definitions/internal";
 import type { SharedDirectory, ISharedMap, IValueChanged } from "@fluidframework/map/internal";
-import type { IContainerRuntimeBaseExperimental } from "@fluidframework/runtime-definitions/internal";
 import type {
 	ISharedString,
 	SequenceDeltaEvent,
@@ -177,7 +176,7 @@ describeCompat("Multiple DDS orderSequentially", "NoCompat", (getTestObjectProvi
 		async () => {
 			sharedMap.set("key", "BEFORE");
 
-			try {
+			assert.throws(() => {
 				containerRuntime.orderSequentially(() => {
 					sharedMap.set("key", "SHOULD BE ROLLED BACK");
 
@@ -186,12 +185,8 @@ describeCompat("Multiple DDS orderSequentially", "NoCompat", (getTestObjectProvi
 						type: "rejoin",
 					});
 				});
-			} catch (err) {
-				error = err as Error;
-			}
+			}, validateAssertionError("Unexpected message type submitted in Staging Mode"));
 
-			assert(error !== undefined, "No error");
-			validateAssertionError(error, "Unexpected message type submitted in Staging Mode");
 			assert.equal(
 				changedEventData.length,
 				3,
@@ -232,6 +227,7 @@ describeCompat("Multiple DDS orderSequentially", "NoCompat", (getTestObjectProvi
 			if (i >= 2 && i < 5) {
 				assert.equal(props?.foo, "old");
 			} else {
+				// eslint-disable-next-line @typescript-eslint/prefer-optional-chain -- using ?. could change behavior
 				assert(props === undefined || props.foo === undefined);
 			}
 		}
@@ -426,33 +422,5 @@ describeCompat("Multiple DDS orderSequentially", "NoCompat", (getTestObjectProvi
 		assert.deepEqual(changedEventData[6].event, { key: "key", previousValue: undefined });
 
 		assert.deepEqual(changedEventData[7].event, { key: "key", previousValue: 0 });
-	});
-
-	it("Should support orderSequentially while in StagingMode", () => {
-		(containerRuntime as IContainerRuntimeBaseExperimental).enterStagingMode?.();
-
-		sharedMap.set("key", 1);
-
-		try {
-			containerRuntime.orderSequentially(() => {
-				sharedMap.set("key", 0);
-				throw new Error("callback failure");
-			});
-		} catch (err) {
-			error = err as Error;
-		}
-
-		assert.notEqual(error, undefined, "No error");
-		assert.equal(error?.message, errorMessage, "Unexpected error message");
-		assert.equal(containerRuntime.disposed, false, "Container disposed");
-		assert.equal(sharedMap.size, 1);
-		assert.equal(sharedMap.has("key"), true);
-		assert.equal(sharedMap.get("key"), 1);
-
-		assert.equal(changedEventData.length, 3);
-
-		assert.deepEqual(changedEventData[0].event, { key: "key", previousValue: undefined }); // Set to 1 before orderSequentially
-		assert.deepEqual(changedEventData[1].event, { key: "key", previousValue: 1 }); // Set to 0 in orderSequentially
-		assert.deepEqual(changedEventData[2].event, { key: "key", previousValue: 0 }); // Rollback
 	});
 });

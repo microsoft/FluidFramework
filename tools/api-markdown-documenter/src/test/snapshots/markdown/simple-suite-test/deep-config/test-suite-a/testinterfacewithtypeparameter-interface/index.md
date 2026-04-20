@@ -4,7 +4,7 @@
 
 Test interface with generic type parameter
 
-## Signature {#testinterfacewithtypeparameter-signature}
+<h2 id="testinterfacewithtypeparameter-signature">Signature</h2>
 
 ```typescript
 export interface TestInterfaceWithTypeParameter<T>
@@ -16,7 +16,7 @@ export interface TestInterfaceWithTypeParameter<T>
 | - | - |
 | T | A type parameter |
 
-## Remarks {#testinterfacewithtypeparameter-remarks}
+<h2 id="testinterfacewithtypeparameter-remarks">Remarks</h2>
 
 Here are some remarks about the interface
 

@@ -4,9 +4,9 @@
  */
 
 import { ContainerViewRuntimeFactory } from "@fluid-example/example-utils";
-import React from "react";
 
-import { TableDataObject, TableView } from "./Table/index.js";
+import { TableDataObject } from "./dataObject.js";
+import { TableView } from "./react/index.js";
 
 export const fluidExport = new ContainerViewRuntimeFactory<TableDataObject>(
 	TableDataObject.factory,

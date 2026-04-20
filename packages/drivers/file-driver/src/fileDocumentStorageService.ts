@@ -7,25 +7,22 @@ import fs from "fs";
 
 import { bufferToString } from "@fluid-internal/client-utils";
 import { assert } from "@fluidframework/core-utils/internal";
-import { ISummaryTree } from "@fluidframework/driver-definitions";
-import {
+import type { ISummaryTree } from "@fluidframework/driver-definitions";
+import type {
 	IDocumentStorageService,
 	ISummaryContext,
 	ISnapshotTree,
 	IVersion,
 	ITree,
-	FileMode,
-	TreeEntry,
 	IBlob,
 } from "@fluidframework/driver-definitions/internal";
+import { FileMode, TreeEntry } from "@fluidframework/driver-definitions/internal";
 import {
 	buildSnapshotTree,
 	convertSummaryTreeToSnapshotITree,
 } from "@fluidframework/driver-utils/internal";
-import {
-	IFileSnapshot,
-	ReadDocumentStorageServiceBase,
-} from "@fluidframework/replay-driver/internal";
+import type { IFileSnapshot } from "@fluidframework/replay-driver/internal";
+import { ReadDocumentStorageServiceBase } from "@fluidframework/replay-driver/internal";
 
 // This ID is used by replay tool as Document Id.
 // We leverage it to figure out when container is asking for root document tree.
@@ -139,20 +136,25 @@ export interface ISnapshotWriterStorage extends IDocumentStorageService {
 }
 
 /**
+ * Constructor type for creating {@link @fluidframework/driver-definitions#IDocumentStorageService} instances.
+ *
  * @internal
  */
 export type ReaderConstructor = new (...args: any[]) => IDocumentStorageService;
+
 /**
  * @internal
  */
-export const FileSnapshotWriterClassFactory = <TBase extends ReaderConstructor>(Base: TBase) =>
+export const FileSnapshotWriterClassFactory = <TBase extends ReaderConstructor>(
+	Base: TBase,
+): TBase & (new (...args: any[]) => ISnapshotWriterStorage) =>
 	class extends Base implements ISnapshotWriterStorage {
 		// Note: if variable name has same name as in base class, it overrides it!
 		public blobsWriter = new Map<string, ArrayBufferLike>();
 		public latestWriterTree?: ISnapshotTree;
 		public docId?: string;
 
-		public reset() {
+		public reset(): void {
 			this.blobsWriter = new Map<string, ArrayBufferLike>();
 			this.latestWriterTree = undefined;
 			this.docId = undefined;
@@ -245,7 +247,7 @@ export const FileSnapshotWriterClassFactory = <TBase extends ReaderConstructor>(
 		}
 	};
 
-function removeNullTreeIds(tree: ITree) {
+function removeNullTreeIds(tree: ITree): void {
 	for (const node of tree.entries) {
 		if (node.type === TreeEntry.Tree) {
 			removeNullTreeIds(node.value);

@@ -13,18 +13,18 @@ import fs from "node:fs";
 import path from "node:path";
 
 import { Trace } from "@fluid-internal/client-utils";
-import { IRandom, makeRandom } from "@fluid-private/stochastic-test-utils";
-import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
+import { type IRandom, makeRandom } from "@fluid-private/stochastic-test-utils";
+import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import JsDiff from "diff";
 
 import { MergeTreeTextHelper } from "../MergeTreeTextHelper.js";
 import {
-	KeyComparer,
-	Property,
-	PropertyAction,
+	type KeyComparer,
+	type Property,
+	type PropertyAction,
 	RedBlackTree,
-	SortedDictionary,
+	type SortedDictionary,
 } from "../collections/index.js";
 import {
 	LocalClientId,
@@ -32,21 +32,21 @@ import {
 	UniversalSequenceNumber,
 } from "../constants.js";
 import { MergeTree } from "../mergeTree.js";
-import { IMergeTreeDeltaOpArgs } from "../mergeTreeDeltaCallback.js";
+import type { IMergeTreeDeltaOpArgs } from "../mergeTreeDeltaCallback.js";
 import {
-	IJSONMarkerSegment,
+	type IJSONMarkerSegment,
 	compareNumbers,
 	compareStrings,
 	reservedMarkerIdKey,
 	type ISegmentPrivate,
 } from "../mergeTreeNodes.js";
 import { createRemoveRangeOp } from "../opBuilder.js";
-import { IMergeTreeOp, MergeTreeDeltaType, ReferenceType } from "../ops.js";
+import { type IMergeTreeOp, MergeTreeDeltaType, ReferenceType } from "../ops.js";
 import { LocalDefaultPerspective } from "../perspective.js";
 import { reservedRangeLabelsKey, reservedTileLabelsKey } from "../referencePositions.js";
-import { JsonSegmentSpecs } from "../snapshotChunks.js";
+import type { JsonSegmentSpecs } from "../snapshotChunks.js";
 import { SnapshotLegacy } from "../snapshotlegacy.js";
-import { IJSONTextSegment, TextSegment } from "../textSegment.js";
+import { type IJSONTextSegment, TextSegment } from "../textSegment.js";
 
 import { _dirname } from "./dirname.cjs";
 import { TestClient, getStats, specToSegment } from "./testClient.js";
@@ -72,9 +72,11 @@ function LinearDictionary<TKey, TData>(
 			return;
 		}
 
+		// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- using ??= could change behavior if value is falsy
 		if (_start === undefined) {
 			_start = min()!.key;
 		}
+		// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- using ??= could change behavior if value is falsy
 		if (_end === undefined) {
 			_end = max()!.key;
 		}
@@ -270,6 +272,7 @@ export function fileTest1(): void {
 				if (prop) {
 					// printStringNumProperty(prop);
 					if (
+						// eslint-disable-next-line @typescript-eslint/prefer-optional-chain -- TODO: ADO#58520 Code owners should verify if this code change is safe and make it if so or update this comment otherwise
 						linProp === undefined ||
 						prop.key !== linProp.key ||
 						prop.data !== linProp.data
@@ -374,7 +377,7 @@ export function mergeTreeTest1(): void {
 	checkInsertMergeTree(mergeTree, 4, makeCollabTextSegment("fi"));
 	mergeTree.mapRange(printTextSegment, localPerspective, undefined);
 	const segoff = mergeTree.getContainingSegment(4, mergeTree.localPerspective);
-	log(mergeTree.getPosition(segoff.segment!, mergeTree.localPerspective));
+	log(mergeTree.getPosition(segoff!.segment, mergeTree.localPerspective));
 	log(new MergeTreeTextHelper(mergeTree).getText(mergeTree.localPerspective));
 	log(mergeTree.toString());
 	TestPack().firstTest();
@@ -1502,7 +1505,7 @@ function findReplacePerf(filename: string): void {
 		const curSegOff = client.getContainingSegment<ISegmentPrivate>(pos);
 		cFetches++;
 
-		const curSeg = curSegOff.segment;
+		const curSeg = curSegOff?.segment;
 		const textSeg = <TextSegment>curSeg;
 		if (textSeg !== null) {
 			const text = textSeg.text;

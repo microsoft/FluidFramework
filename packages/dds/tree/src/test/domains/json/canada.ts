@@ -88,15 +88,14 @@ export function generateCanada(segmentLengths = originalSegmentLengths, seed = 1
 		// adding a very small amount of noise.
 		const noise = (x: number) => Math.trunc(x * 1000000) / 1000000 + noiseDist();
 
-		return new Array(len)
-			.fill(0)
-			.map(
-				() =>
-					[
-						(last_x = noise(clamp(-141, last_x + vxDist(), -52))),
-						(last_y = noise(clamp(41, last_y + vyDist(), 83))),
-					] as [number, number],
-			);
+		return Array.from(
+			{ length: len },
+			() =>
+				[
+					(last_x = noise(clamp(-141, last_x + vxDist(), -52))),
+					(last_y = noise(clamp(41, last_y + vyDist(), 83))),
+				] as [number, number],
+		);
 	});
 
 	return {

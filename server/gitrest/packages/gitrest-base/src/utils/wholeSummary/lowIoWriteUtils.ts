@@ -3,16 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import { IRef } from "@fluidframework/gitresources";
+import type { IRef } from "@fluidframework/gitresources";
 import {
-	IWholeSummaryPayload,
+	type IWholeSummaryPayload,
 	NetworkError,
-	WholeSummaryTreeEntry,
+	type WholeSummaryTreeEntry,
 } from "@fluidframework/server-services-client";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
 
 import { NullExternalStorageManager } from "../../externalStorageManager";
-import { IRepositoryManager } from "../definitions";
+import type { IRepositoryManager } from "../definitions";
 import { MemFsManagerFactory } from "../filesystems";
 import { IsomorphicGitManagerFactory } from "../isomorphicgitManager";
 
@@ -22,11 +22,11 @@ import {
 	convertFullSummaryToWholeSummaryEntries,
 } from "./conversions";
 import {
-	IWriteSummaryTreeOptions,
+	type IWriteSummaryTreeOptions,
 	writeFullGitTreeAsSummaryTree,
 	writeSummaryTree,
 } from "./coreWriteUtils";
-import { IFullGitTree, IWholeSummaryOptions } from "./definitions";
+import type { IFullGitTree, IWholeSummaryOptions } from "./definitions";
 import { readSummary } from "./readWholeSummary";
 
 /**

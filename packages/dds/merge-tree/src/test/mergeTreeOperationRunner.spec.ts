@@ -6,7 +6,7 @@
 import { strict as assert } from "node:assert";
 
 import {
-	IConfigRange,
+	type IConfigRange,
 	doOverRange,
 	doOverRanges,
 	resolveRange,

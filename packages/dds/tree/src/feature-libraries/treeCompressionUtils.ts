@@ -20,4 +20,9 @@ export enum TreeCompressionStrategy {
 	 * Use this when debugging or testing and needing to inspect encoded tree content.
 	 */
 	Uncompressed = 1,
+	/**
+	 * Optimized for encoded size, same as TreeCompressionStrategy.Compressed but it enables incremental encoding
+	 * of the data.
+	 */
+	CompressedIncremental = 2,
 }

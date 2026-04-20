@@ -10,8 +10,6 @@ import {
 import "@testing-library/jest-dom";
 import { render, screen } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
-import React from "react";
-import { act } from "react-dom/test-utils";
 
 import { MessageRelayContext } from "../MessageRelayContext.js";
 import { TelemetryView } from "../components/index.js";
@@ -74,7 +72,7 @@ describe("TelemetryView Accessibility Check", () => {
 		const refreshButton = screen.getByRole("button", { name: /Refresh Telemetry/ });
 		expect(refreshButton).toHaveFocus();
 
-		await act(async () => userEvent.click(refreshButton));
+		await user.click(refreshButton);
 		const filterCategory = screen.getByRole("combobox", {
 			name: /Category Filter/,
 		});

@@ -4,27 +4,29 @@
  */
 
 import { assert, Deferred } from "@fluidframework/core-utils/internal";
+import type {
+	ICacheEntry,
+	IEntry,
+	IFileEntry,
+	IPersistedCache,
+} from "@fluidframework/driver-definitions/internal";
 import {
 	LocationRedirectionError,
+	maximumCacheDurationMs,
 	NonRetryableError,
 	RateLimiter,
 	ThrottlingError,
 } from "@fluidframework/driver-utils/internal";
 import {
-	ICacheEntry,
-	IEntry,
-	IFileEntry,
-	IOdspError,
-	IOdspErrorAugmentations,
-	IOdspResolvedUrl,
-	IPersistedCache,
+	type IOdspError,
+	type IOdspErrorAugmentations,
+	type IOdspResolvedUrl,
 	OdspErrorTypes,
-	maximumCacheDurationMs,
 	snapshotKey,
 	snapshotWithLoadingGroupIdKey,
 } from "@fluidframework/odsp-driver-definitions/internal";
 import {
-	ITelemetryLoggerExt,
+	type ITelemetryLoggerExt,
 	PerformanceEvent,
 	isFluidError,
 	loggerToMonitoringContext,
@@ -33,12 +35,12 @@ import {
 } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
-import { IVersionedValueWithEpoch, persistedCacheValueVersion } from "./contracts.js";
+import { type IVersionedValueWithEpoch, persistedCacheValueVersion } from "./contracts.js";
 import { ClpCompliantAppHeader } from "./contractsPublic.js";
-import { INonPersistentCache, IOdspCache, IPersistedFileCache } from "./odspCache.js";
+import type { INonPersistentCache, IOdspCache, IPersistedFileCache } from "./odspCache.js";
 import { patchOdspResolvedUrl } from "./odspLocationRedirection.js";
 import {
-	IOdspResponse,
+	type IOdspResponse,
 	fetchAndParseAsJSONHelper,
 	fetchArray,
 	fetchHelper,
@@ -48,7 +50,7 @@ import { pkgVersion as driverVersion } from "./packageVersion.js";
 
 /**
  * @legacy
- * @alpha
+ * @beta
  */
 export type FetchType =
 	| "blob"
@@ -66,7 +68,7 @@ export type FetchType =
 
 /**
  * @legacy
- * @alpha
+ * @beta
  */
 export type FetchTypeInternal = FetchType | "cache";
 
@@ -87,7 +89,7 @@ export const Odsp409Error = "Odsp409Error";
  * It also validates the epoch value received in response of fetch calls. If the epoch does not match,
  * then it also clears all the cached entries for the given container.
  * @legacy
- * @alpha
+ * @beta
  */
 export class EpochTracker implements IPersistedFileCache {
 	private _fluidEpoch: string | undefined;
@@ -132,12 +134,12 @@ export class EpochTracker implements IPersistedFileCache {
 	public async get(entry: IEntry): Promise<any> {
 		try {
 			// Return undefined so that the ops/snapshots are grabbed from the server instead of the cache
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-			const value: IVersionedValueWithEpoch = await this.cache.get(
+			const value = (await this.cache.get(
 				this.fileEntryFromEntry(entry),
-			);
-			// Version mismatch between what the runtime expects and what it recieved.
+			)) as IVersionedValueWithEpoch;
+			// Version mismatch between what the runtime expects and what it received.
 			// The cached value should not be used
+			// eslint-disable-next-line @typescript-eslint/prefer-optional-chain -- using ?. could change behavior
 			if (value === undefined || value.version !== persistedCacheValueVersion) {
 				return undefined;
 			}
@@ -168,7 +170,6 @@ export class EpochTracker implements IPersistedFileCache {
 					return undefined;
 				}
 			}
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 			return value.value;
 		} catch (error) {
 			this.logger.sendErrorEvent({ eventName: "cacheFetchError", type: entry.type }, error);
@@ -293,13 +294,14 @@ export class EpochTracker implements IPersistedFileCache {
 			.catch(async (error) => {
 				// Get the server epoch from error in case we don't have it as if undefined we won't be able
 				// to mark it as epoch error.
+				// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- using ??= could change behavior if value is falsy
 				if (epochFromResponse === undefined) {
 					epochFromResponse = (error as IOdspError).serverEpoch;
 				}
 				await this.checkForEpochError(error, epochFromResponse, fetchType);
 				throw error;
 			})
-			.catch((error) => {
+			.catch(async (error) => {
 				// If the error is about location redirection, then we need to generate new resolved url with correct
 				// location info.
 				if (
@@ -318,6 +320,9 @@ export class EpochTracker implements IPersistedFileCache {
 							{ driverVersion, redirectLocation },
 						);
 						locationRedirectionError.addTelemetryProperties(error.getTelemetryProperties());
+						// Clear the cache for this file entry since the site/geo has moved.
+						// The cached snapshot was stored under the old siteUrl and is no longer valid.
+						await this.removeEntries();
 						throw locationRedirectionError;
 					}
 				}
@@ -619,7 +624,7 @@ export class EpochTrackerWithRedemption extends EpochTracker {
 
 /**
  * @legacy
- * @alpha
+ * @beta
  */
 export interface ICacheAndTracker {
 	cache: IOdspCache;

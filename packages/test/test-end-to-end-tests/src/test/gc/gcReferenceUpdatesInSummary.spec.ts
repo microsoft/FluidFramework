@@ -13,12 +13,14 @@ import {
 } from "@fluidframework/container-runtime/internal";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { ISummaryTree, SummaryType } from "@fluidframework/driver-definitions";
+import type { ISharedDirectory } from "@fluidframework/map/internal";
 import type { SharedMatrix } from "@fluidframework/matrix/internal";
 import {
 	Marker,
 	ReferenceType,
 	reservedMarkerIdKey,
 } from "@fluidframework/merge-tree/internal";
+import type { IFluidDataStoreContext } from "@fluidframework/runtime-definitions/internal";
 import type { SharedString } from "@fluidframework/sequence/internal";
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import {
@@ -43,11 +45,11 @@ describeCompat(
 		const { SharedMatrix, SharedString } = apis.dds;
 
 		class TestDataObject extends apis.dataRuntime.DataObject {
-			public get _root() {
+			public get _root(): ISharedDirectory {
 				return this.root;
 			}
 
-			public get _context() {
+			public get _context(): IFluidDataStoreContext {
 				return this.context;
 			}
 
@@ -58,7 +60,7 @@ describeCompat(
 			private readonly sharedStringKey = "sharedString";
 			public sharedString!: SharedString;
 
-			protected async initializingFirstTime() {
+			protected async initializingFirstTime(): Promise<void> {
 				const sharedMatrix = SharedMatrix.create(this.runtime);
 				this.root.set(this.matrixKey, sharedMatrix.handle);
 
@@ -66,7 +68,7 @@ describeCompat(
 				this.root.set(this.sharedStringKey, sharedString.handle);
 			}
 
-			protected async hasInitialized() {
+			protected async hasInitialized(): Promise<void> {
 				const matrixHandle = this.root.get<IFluidHandle<SharedMatrix>>(this.matrixKey);
 				assert(matrixHandle !== undefined, "SharedMatrix not found");
 				this.matrix = await matrixHandle.get();
@@ -122,7 +124,10 @@ describeCompat(
 		 *
 		 * - The unreferenced property in its entry in the summary should be true.
 		 */
-		async function validateDataStoreInSummary(dataStoreId: string, referenced: boolean) {
+		async function validateDataStoreInSummary(
+			dataStoreId: string,
+			referenced: boolean,
+		): Promise<void> {
 			await provider.ensureSynchronized();
 			const { summary } = await containerRuntime.summarize({
 				runGC: true,

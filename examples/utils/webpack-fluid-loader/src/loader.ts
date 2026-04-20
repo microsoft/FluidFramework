@@ -23,6 +23,7 @@ import { IUser } from "@fluidframework/driver-definitions";
 import {
 	IDocumentServiceFactory,
 	IResolvedUrl,
+	type IPersistedCache,
 } from "@fluidframework/driver-definitions/internal";
 import { InsecureUrlResolver } from "@fluidframework/driver-utils/internal";
 import {
@@ -30,10 +31,7 @@ import {
 	LocalResolver,
 } from "@fluidframework/local-driver/internal";
 import { prefetchLatestSnapshot } from "@fluidframework/odsp-driver/internal";
-import {
-	HostStoragePolicy,
-	IPersistedCache,
-} from "@fluidframework/odsp-driver-definitions/internal";
+import { HostStoragePolicy } from "@fluidframework/odsp-driver-definitions/internal";
 import { RequestParser } from "@fluidframework/runtime-utils/internal";
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import sillyname from "sillyname";
@@ -103,7 +101,7 @@ export type RouteOptions =
 	| IOdspRouteOptions;
 
 // Invoked by `start()` when the 'double' option is enabled to create the side-by-side panes.
-function makeSideBySideDiv(divId: string) {
+function makeSideBySideDiv(divId: string): HTMLDivElement {
 	const div = document.createElement("div");
 	div.style.flexGrow = "1";
 	div.style.width = "50%"; // ensure the divs don't encroach on each other
@@ -324,7 +322,7 @@ async function getFluidObjectAndRender(
 	container: IContainer,
 	url: string,
 	div: HTMLDivElement,
-) {
+): Promise<void> {
 	const entryPoint = await container.getEntryPoint();
 
 	let fluidObject: FluidObject<IFluidMountableView>;
@@ -371,9 +369,9 @@ async function attachContainer(
 	manualAttach: boolean,
 	testOrderer: boolean,
 	shouldUseContainerId: boolean,
-) {
+): Promise<IContainer> {
 	// This is called once loading is complete to replace the url in the address bar with the new `url`.
-	const replaceUrl = (resolvedUrl: IResolvedUrl | undefined) => {
+	const replaceUrl = (resolvedUrl: IResolvedUrl | undefined): void => {
 		let [docUrl, title] = [url, documentId];
 		if (shouldUseContainerId) {
 			// for a r11s and t9s container we need to use the actual ID

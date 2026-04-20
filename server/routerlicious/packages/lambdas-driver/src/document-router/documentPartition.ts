@@ -6,17 +6,17 @@
 import { inspect } from "util";
 
 import {
-	IContextErrorData,
-	IPartitionLambda,
-	IPartitionLambdaConfig,
-	IPartitionLambdaFactory,
-	IQueuedMessage,
+	type IContextErrorData,
+	type IPartitionLambda,
+	type IPartitionLambdaConfig,
+	type IPartitionLambdaFactory,
+	type IQueuedMessage,
 	LambdaCloseType,
 } from "@fluidframework/server-services-core";
 import { getLumberBaseProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
-import { QueueObject, queue } from "async";
+import { type QueueObject, queue } from "async";
 
-import { DocumentContext } from "./documentContext";
+import type { DocumentContext } from "./documentContext";
 
 export class DocumentPartition {
 	private readonly q: QueueObject<IQueuedMessage>;

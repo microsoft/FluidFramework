@@ -5,62 +5,65 @@
 
 import { strict as assert } from "node:assert";
 
-import { ICriticalContainerError } from "@fluidframework/container-definitions";
+import type { ICriticalContainerError } from "@fluidframework/container-definitions";
 import { ContainerErrorTypes } from "@fluidframework/container-definitions/internal";
-import { IErrorBase, ITelemetryBaseEvent } from "@fluidframework/core-interfaces";
-import { Timer } from "@fluidframework/core-utils/internal";
+import type { IErrorBase, ITelemetryBaseEvent } from "@fluidframework/core-interfaces";
+import type { Timer } from "@fluidframework/core-utils/internal";
 import { SummaryType } from "@fluidframework/driver-definitions";
-import { ISnapshotTree } from "@fluidframework/driver-definitions/internal";
+import type {
+	ISnapshotTree,
+	SummaryObject,
+} from "@fluidframework/driver-definitions/internal";
 import {
-	IGarbageCollectionDetailsBase,
-	ISummarizeResult,
+	type IGarbageCollectionDetailsBase,
+	type ISummarizeResult,
 	channelsTreeName,
 	gcBlobPrefix,
 	gcDeletedBlobKey,
 	gcTombstoneBlobKey,
 	gcTreeKey,
-	IGarbageCollectionData,
+	type IGarbageCollectionData,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	MockLogger,
-	MonitoringContext,
+	type MonitoringContext,
 	createChildLogger,
 	mixinMonitoringContext,
 	tagCodeArtifacts,
 } from "@fluidframework/telemetry-utils/internal";
-import { SinonFakeTimers, spy, useFakeTimers } from "sinon";
+import { type SinonFakeTimers, spy, useFakeTimers } from "sinon";
 
 import {
 	GCNodeType,
-	GCSummaryStateTracker,
-	GCTelemetryTracker,
-	GCVersion,
-	GarbageCollectionMessage,
+	type GCSummaryStateTracker,
+	type GCTelemetryTracker,
+	type GCVersion,
+	type GarbageCollectionMessage,
 	GarbageCollectionMessageType,
 	GarbageCollector,
-	IGCMetadata,
-	IGCStats,
-	IGCSummaryTrackingData,
-	IGarbageCollectionNodeData,
-	IGarbageCollectionRuntime,
-	IGarbageCollectionSnapshotData,
-	IGarbageCollectionState,
-	IGarbageCollectionSummaryDetailsLegacy,
-	IGarbageCollector,
-	IGarbageCollectorConfigs,
-	IGarbageCollectorCreateParams,
+	type IGCMetadata,
+	type IGCStats,
+	type IGCSummaryTrackingData,
+	type IGarbageCollectionNodeData,
+	type IGarbageCollectionRuntime,
+	type IGarbageCollectionSnapshotData,
+	type IGarbageCollectionState,
+	type IGarbageCollectionSummaryDetailsLegacy,
+	type IGarbageCollector,
+	type IGarbageCollectorConfigs,
+	type IGarbageCollectorCreateParams,
 	UnreferencedState,
-	UnreferencedStateTracker,
+	type UnreferencedStateTracker,
 	concatGarbageCollectionStates,
 	defaultSessionExpiryDurationMs,
 	defaultSweepGracePeriodMs,
 	oneDayMs,
 	stableGCVersion,
 } from "../../gc/index.js";
-import { ContainerMessageType, ContainerRuntimeGCMessage } from "../../messageTypes.js";
+import { ContainerMessageType, type ContainerRuntimeGCMessage } from "../../messageTypes.js";
 import { pkgVersion } from "../../packageVersion.js";
 import {
-	IContainerRuntimeMetadata,
+	type IContainerRuntimeMetadata,
 	dataStoreAttributesBlobName,
 	metadataBlobName,
 } from "../../summary/index.js";
@@ -474,7 +477,7 @@ describe("Garbage Collection Tests", () => {
 			gc = createGarbageCollector({
 				createParams: { gcOptions: { enableGCSweep: true } }, // Required to run AutoRecovery
 				getGCData: async (fullGC?: boolean) => {
-					return fullGC ? defaultGCData : corruptedGCData;
+					return fullGC === true ? defaultGCData : corruptedGCData;
 				},
 			});
 
@@ -1511,9 +1514,10 @@ describe("Garbage Collection Tests", () => {
 			assert(summaryTree?.summary.type === SummaryType.Tree, "The summary should be a tree");
 
 			// Get the deleted node ids from summary and validate that its the same as the one GC loaded from.
-			const deletedNodesBlob = summaryTree.summary.tree[gcDeletedBlobKey];
+			const deletedNodesBlob: SummaryObject | undefined =
+				summaryTree.summary.tree[gcDeletedBlobKey];
 			assert(
-				deletedNodesBlob.type === SummaryType.Blob,
+				deletedNodesBlob?.type === SummaryType.Blob,
 				"Deleted blob not present in summary",
 			);
 			const deletedNodeIdsInSummary = JSON.parse(
@@ -1560,9 +1564,10 @@ describe("Garbage Collection Tests", () => {
 			assert(gcSummary?.summary.type === SummaryType.Tree, "The summary should be a tree");
 
 			// Get the deleted node ids from summary and validate that its the same as the one GC loaded from.
-			const deletedNodesBlob = gcSummary.summary.tree[gcDeletedBlobKey];
+			const deletedNodesBlob: SummaryObject | undefined =
+				gcSummary.summary.tree[gcDeletedBlobKey];
 			assert(
-				deletedNodesBlob.type === SummaryType.Handle,
+				deletedNodesBlob?.type === SummaryType.Handle,
 				"Deleted nodes state should be a handle",
 			);
 
@@ -1955,6 +1960,8 @@ describe("Garbage Collection Tests", () => {
 				defaultGCData.gcNodes[nodeE] = [nodeA];
 
 				// 4. Add reference from A to D with calling addedOutboundReference
+				// TODO: Fix this violation and remove the disable
+				// eslint-disable-next-line @fluid-internal/fluid/no-unchecked-record-access
 				defaultGCData.gcNodes[nodeA].push(nodeD);
 				garbageCollector.addedOutboundReference(nodeA, nodeD, Date.now());
 

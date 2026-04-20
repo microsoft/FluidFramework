@@ -3,12 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { IRequest, IRequestHeader } from "@fluidframework/core-interfaces";
+import type { IRequest, IRequestHeader } from "@fluidframework/core-interfaces";
 
 /**
  * The Request Parser takes an IRequest provides parsing and sub request creation
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export class RequestParser implements IRequest {
 	/**
@@ -17,21 +16,22 @@ export class RequestParser implements IRequest {
 	 */
 	public static getPathParts(url: string): readonly string[] {
 		const queryStartIndex = url.indexOf("?");
-		return url
-			.substring(0, queryStartIndex < 0 ? url.length : queryStartIndex)
-			.split("/")
-			.reduce<string[]>((pv, cv) => {
-				if (cv !== undefined && cv.length > 0) {
-					pv.push(decodeURIComponent(cv));
-				}
-				return pv;
-			}, []);
+		const pathParts: string[] = [];
+		const urlPath = url.slice(0, queryStartIndex < 0 ? url.length : queryStartIndex);
+
+		for (const part of urlPath.split("/")) {
+			if (part !== undefined && part.length > 0) {
+				pathParts.push(decodeURIComponent(part));
+			}
+		}
+
+		return pathParts;
 	}
 
 	private requestPathParts: readonly string[] | undefined;
 	public readonly query: string;
 
-	public static create(request: Readonly<IRequest>) {
+	public static create(request: Readonly<IRequest>): RequestParser {
 		// Perf optimizations.
 		if (request instanceof RequestParser) {
 			return request;
@@ -41,7 +41,7 @@ export class RequestParser implements IRequest {
 
 	protected constructor(private readonly request: Readonly<IRequest>) {
 		const queryStartIndex = this.request.url.indexOf("?");
-		this.query = queryStartIndex >= 0 ? this.request.url.substring(queryStartIndex) : "";
+		this.query = queryStartIndex >= 0 ? this.request.url.slice(queryStartIndex) : "";
 		if (request.headers !== undefined) {
 			this.headers = request.headers;
 		}
@@ -57,6 +57,7 @@ export class RequestParser implements IRequest {
 	 * Returns the decoded path parts of the request's url
 	 */
 	public get pathParts(): readonly string[] {
+		// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- using ??= could change behavior if value is falsy
 		if (this.requestPathParts === undefined) {
 			this.requestPathParts = RequestParser.getPathParts(this.url);
 		}
@@ -67,7 +68,7 @@ export class RequestParser implements IRequest {
 	 * Returns true if it's a terminating path, i.e. no more elements after `elements` entries and empty query.
 	 * @param elements - number of elements in path
 	 */
-	public isLeaf(elements: number) {
+	public isLeaf(elements: number): boolean {
 		return this.query === "" && this.pathParts.length === elements;
 	}
 

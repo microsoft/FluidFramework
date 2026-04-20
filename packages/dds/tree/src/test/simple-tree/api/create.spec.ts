@@ -5,26 +5,41 @@
 
 import { strict as assert } from "node:assert";
 
+import { validateUsageError } from "@fluidframework/test-runtime-utils/internal";
+
 import {
 	createFromCursor,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../simple-tree/api/create.js";
-
-import { SchemaFactory } from "../../../simple-tree/index.js";
-import { validateUsageError } from "../../utils.js";
+import {
+	restrictiveStoredSchemaGenerationOptions,
+	SchemaFactory,
+	toStoredSchema,
+} from "../../../simple-tree/index.js";
 import { singleJsonCursor } from "../../json/index.js";
 
 describe("simple-tree create", () => {
 	describe("createFromCursor", () => {
 		it("Success", () => {
 			const cursor = singleJsonCursor("Hello world");
-			createFromCursor(SchemaFactory.string, cursor);
+			createFromCursor(
+				SchemaFactory.string,
+				cursor,
+				toStoredSchema(SchemaFactory.string, restrictiveStoredSchemaGenerationOptions)
+					.rootFieldSchema,
+			);
 		});
 
 		it("Failure: unknown schema", () => {
 			const cursor = singleJsonCursor("Hello world");
 			assert.throws(
-				() => createFromCursor(SchemaFactory.number, cursor),
+				() =>
+					createFromCursor(
+						SchemaFactory.number,
+						cursor,
+						toStoredSchema(SchemaFactory.number, restrictiveStoredSchemaGenerationOptions)
+							.rootFieldSchema,
+					),
 				validateUsageError(
 					`Failed to parse tree due to occurrence of type "com.fluidframework.leaf.string" which is not defined in this context.`,
 				),
@@ -36,7 +51,12 @@ describe("simple-tree create", () => {
 			class Obj extends factory.object("Obj", { x: SchemaFactory.string }) {}
 			const cursor = singleJsonCursor("Hello world");
 			assert.throws(
-				() => createFromCursor(Obj, cursor),
+				() =>
+					createFromCursor(
+						Obj,
+						cursor,
+						toStoredSchema(Obj, restrictiveStoredSchemaGenerationOptions).rootFieldSchema,
+					),
 				validateUsageError(/does not conform to schema/),
 			);
 		});

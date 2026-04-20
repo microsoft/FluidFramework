@@ -5,17 +5,17 @@
 
 import { strict as assert } from "node:assert";
 
-import { FluidObject } from "@fluidframework/core-interfaces";
-import { IDocumentStorageService } from "@fluidframework/driver-definitions/internal";
+import type { FluidObject } from "@fluidframework/core-interfaces";
 import {
-	CreateChildSummarizerNodeFn,
+	type CreateChildSummarizerNodeFn,
 	CreateSummarizerNodeSource,
-	FluidDataStoreRegistryEntry,
-	IFluidDataStoreContext,
-	IFluidDataStoreFactory,
-	IFluidDataStoreRegistry,
-	NamedFluidDataStoreRegistryEntries,
-	SummarizeInternalFn,
+	type FluidDataStoreRegistryEntry,
+	type IFluidDataStoreContext,
+	type IFluidDataStoreFactory,
+	type IFluidDataStoreRegistry,
+	type NamedFluidDataStoreRegistryEntries,
+	type SummarizeInternalFn,
+	type IRuntimeStorageService,
 } from "@fluidframework/runtime-definitions/internal";
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import {
@@ -44,7 +44,7 @@ describe("Data Store Creation Tests", () => {
 		 * ```
 		 */
 
-		let storage: IDocumentStorageService;
+		let storage: IRuntimeStorageService;
 		let scope: FluidObject;
 		const makeLocallyVisibleFn = () => {};
 		let parentContext: IFluidParentContextPrivate;

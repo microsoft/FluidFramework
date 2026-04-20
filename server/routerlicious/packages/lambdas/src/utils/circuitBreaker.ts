@@ -3,8 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { IContext } from "@fluidframework/server-services-core";
-import { Lumberjack, Lumber, LumberEventName } from "@fluidframework/server-services-telemetry";
+import type { IContext } from "@fluidframework/server-services-core";
+import {
+	Lumberjack,
+	type Lumber,
+	LumberEventName,
+} from "@fluidframework/server-services-telemetry";
 import CircuitBreaker from "opossum";
 import { serializeError } from "serialize-error";
 

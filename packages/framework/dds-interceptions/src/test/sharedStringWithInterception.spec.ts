@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
-import { PropertySet } from "@fluidframework/merge-tree/internal";
-import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions/internal";
+import type { PropertySet } from "@fluidframework/merge-tree/internal";
+import type { IFluidDataStoreContext } from "@fluidframework/runtime-definitions/internal";
 import { SharedString } from "@fluidframework/sequence/internal";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
 
@@ -41,7 +41,7 @@ describe("Shared String with Interception", () => {
 			text: string,
 			props: PropertySet,
 			position: number,
-		) {
+		): void {
 			assert.equal(ss.getText(), text, "The retrieved text should match the inserted text");
 			assert.deepEqual(
 				{ ...ss.getPropertiesAtPosition(position) },
@@ -172,7 +172,7 @@ describe("Shared String with Interception", () => {
 			// If useWrapper above is true, this interception callback calls a method on the wrapped object
 			// causing an infinite recursion.
 			// If useWrapper is false, it uses the passed shared string which does not cause recursion.
-			function recursiveInterceptionCb(properties?: PropertySet) {
+			function recursiveInterceptionCb(properties?: PropertySet): PropertySet {
 				const ss = useWrapper ? sharedStringWithInterception : sharedString;
 				ss.annotateRange(0, 1, propsInRecursiveCb);
 				return { ...properties, ...userAttributes };
@@ -197,9 +197,9 @@ describe("Shared String with Interception", () => {
 				text = "abc";
 				// Try to replace text.
 				sharedStringWithInterception.replaceText(1, 2, text);
-			} catch (error: any) {
+			} catch (error: unknown) {
 				assert.strictEqual(
-					error.message,
+					(error as Error).message,
 					"0x0c8",
 					"We should have caught an assert in replaceText because it detects an infinite recursion",
 				);

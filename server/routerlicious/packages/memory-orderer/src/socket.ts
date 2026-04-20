@@ -5,7 +5,7 @@
 
 import { EventEmitter } from "events";
 
-import { IsoBuffer } from "@fluidframework/common-utils";
+import type { IsoBuffer } from "@fluidframework/common-utils";
 import ws from "ws";
 
 import { debug } from "./debug";

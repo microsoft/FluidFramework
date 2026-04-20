@@ -4,12 +4,16 @@
  */
 
 import {
-	checkLayerCompatibility,
+	generation,
+	LayerCompatibilityPolicyWindowMonths,
 	type ILayerCompatDetails,
 	type ILayerCompatSupportRequirements,
 } from "@fluid-internal/client-utils";
 import type { ICriticalContainerError } from "@fluidframework/container-definitions";
-import { UsageError } from "@fluidframework/telemetry-utils/internal";
+import {
+	validateLayerCompatibility,
+	type MonitoringContext,
+} from "@fluidframework/telemetry-utils/internal";
 
 import { pkgVersion } from "./packageVersion.js";
 
@@ -25,8 +29,8 @@ export const loaderCoreCompatDetails = {
 	/**
 	 * The current generation of the Loader layer.
 	 */
-	generation: 1,
-};
+	generation,
+} as const;
 
 /**
  * Loader's compatibility details that is exposed to the Runtime layer.
@@ -44,12 +48,17 @@ export const loaderCompatDetailsForRuntime: ILayerCompatDetails = {
  * The requirements that the Runtime layer must meet to be compatible with this Loader.
  * @internal
  */
-export const runtimeSupportRequirements: ILayerCompatSupportRequirements = {
+export const runtimeSupportRequirementsForLoader: ILayerCompatSupportRequirements = {
 	/**
-	 * Minimum generation that Runtime must be at to be compatible with Loader. Note that 0 is used here for
-	 * Runtime layers before the introduction of the layer compatibility enforcement.
+	 * Minimum generation that Runtime must be at to be compatible with this Loader. This is calculated
+	 * based on the LayerCompatibilityPolicyWindowMonths.LoaderRuntime value which defines how many months old can
+	 * the Runtime layer be compared to the Loader layer for them to still be considered compatible.
+	 * The minimum valid generation value is 0.
 	 */
-	minSupportedGeneration: 0,
+	minSupportedGeneration: Math.max(
+		0,
+		loaderCoreCompatDetails.generation - LayerCompatibilityPolicyWindowMonths.LoaderRuntime,
+	),
 	/**
 	 * The features that the Runtime must support to be compatible with Loader.
 	 */
@@ -60,12 +69,17 @@ export const runtimeSupportRequirements: ILayerCompatSupportRequirements = {
  * The requirements that the Driver layer must meet to be compatible with this Loader.
  * @internal
  */
-export const driverSupportRequirements: ILayerCompatSupportRequirements = {
+export const driverSupportRequirementsForLoader: ILayerCompatSupportRequirements = {
 	/**
-	 * Minimum generation that Driver must be at to be compatible with Loader. Note that 0 is used here for
-	 * Driver layers before the introduction of the layer compatibility enforcement.
+	 * Minimum generation that Driver must be at to be compatible with this Loader. This is calculated
+	 * based on the LayerCompatibilityPolicyWindowMonths.LoaderDriver value which defines how many months old can
+	 * the Driver layer be compared to the Loader layer for them to still be considered compatible.
+	 * The minimum valid generation value is 0.
 	 */
-	minSupportedGeneration: 0,
+	minSupportedGeneration: Math.max(
+		0,
+		loaderCoreCompatDetails.generation - LayerCompatibilityPolicyWindowMonths.LoaderDriver,
+	),
 	/**
 	 * The features that the Driver must support to be compatible with Loader.
 	 */
@@ -73,32 +87,22 @@ export const driverSupportRequirements: ILayerCompatSupportRequirements = {
 };
 
 /**
- * Validates that the Runtime layer is compatible with the Loader.
+ * Validates that the Runtime layer is compatible with the Loader. *
  * @internal
  */
 export function validateRuntimeCompatibility(
 	maybeRuntimeCompatDetails: ILayerCompatDetails | undefined,
-	disposeFn: (error?: ICriticalContainerError) => void,
+	mc: MonitoringContext,
 ): void {
-	const layerCheckResult = checkLayerCompatibility(
-		runtimeSupportRequirements,
+	validateLayerCompatibility(
+		"loader",
+		"runtime",
+		loaderCompatDetailsForRuntime,
+		runtimeSupportRequirementsForLoader,
 		maybeRuntimeCompatDetails,
+		() => {} /* disposeFn - no op. This will be handled by the caller */,
+		mc,
 	);
-	if (!layerCheckResult.isCompatible) {
-		const error = new UsageError("Loader is not compatible with Runtime", {
-			errorDetails: JSON.stringify({
-				loaderVersion: loaderCompatDetailsForRuntime.pkgVersion,
-				runtimeVersion: maybeRuntimeCompatDetails?.pkgVersion,
-				loaderGeneration: loaderCompatDetailsForRuntime.generation,
-				runtimeGeneration: maybeRuntimeCompatDetails?.generation,
-				minSupportedGeneration: runtimeSupportRequirements.minSupportedGeneration,
-				isGenerationCompatible: layerCheckResult.isGenerationCompatible,
-				unsupportedFeatures: layerCheckResult.unsupportedFeatures,
-			}),
-		});
-		disposeFn(error);
-		throw error;
-	}
 }
 
 /**
@@ -108,24 +112,15 @@ export function validateRuntimeCompatibility(
 export function validateDriverCompatibility(
 	maybeDriverCompatDetails: ILayerCompatDetails | undefined,
 	disposeFn: (error?: ICriticalContainerError) => void,
+	mc: MonitoringContext,
 ): void {
-	const layerCheckResult = checkLayerCompatibility(
-		driverSupportRequirements,
+	validateLayerCompatibility(
+		"loader",
+		"driver",
+		loaderCompatDetailsForRuntime,
+		driverSupportRequirementsForLoader,
 		maybeDriverCompatDetails,
+		disposeFn,
+		mc,
 	);
-	if (!layerCheckResult.isCompatible) {
-		const error = new UsageError("Loader is not compatible with Driver", {
-			errorDetails: JSON.stringify({
-				loaderVersion: loaderCoreCompatDetails.pkgVersion,
-				driverVersion: maybeDriverCompatDetails?.pkgVersion,
-				loaderGeneration: loaderCoreCompatDetails.generation,
-				driverGeneration: maybeDriverCompatDetails?.generation,
-				minSupportedGeneration: driverSupportRequirements.minSupportedGeneration,
-				isGenerationCompatible: layerCheckResult.isGenerationCompatible,
-				unsupportedFeatures: layerCheckResult.unsupportedFeatures,
-			}),
-		});
-		disposeFn(error);
-		throw error;
-	}
 }

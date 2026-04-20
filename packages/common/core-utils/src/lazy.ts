@@ -41,8 +41,7 @@ export class Lazy<T> {
  * the promise is used, e.g. await, then, catch ...
  * The execute function is only called once.
  * All calls are then proxied to the promise returned by the execute method.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export class LazyPromise<T> implements Promise<T> {
 	// eslint-disable-next-line @typescript-eslint/class-literal-property-style
@@ -82,6 +81,7 @@ export class LazyPromise<T> implements Promise<T> {
 	}
 
 	private async getPromise(): Promise<T> {
+		// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- using ??= could change behavior if result is a falsy value
 		if (this.result === undefined) {
 			this.result = this.execute();
 		}

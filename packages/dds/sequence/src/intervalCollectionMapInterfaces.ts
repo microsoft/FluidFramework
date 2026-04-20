@@ -3,17 +3,19 @@
  * Licensed under the MIT License.
  */
 
-import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
-import { IMergeTreeOptions, ListNode } from "@fluidframework/merge-tree/internal";
+import type { ListNode } from "@fluidframework/core-utils/internal";
+import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
+import type { IMergeTreeOptions } from "@fluidframework/merge-tree/internal";
 
 import type {
 	IntervalCollection,
 	ISerializedIntervalCollectionV1,
 	ISerializedIntervalCollectionV2,
 } from "./intervalCollection.js";
-import {
+import type {
 	ISerializedInterval,
 	IntervalDeltaOpType,
+	SequenceIntervalClass,
 	SerializedIntervalDelta,
 } from "./intervals/index.js";
 
@@ -21,22 +23,19 @@ export interface IntervalAddLocalMetadata {
 	type: typeof IntervalDeltaOpType.ADD;
 	localSeq: number;
 	endpointChangesNode?: ListNode<IntervalAddLocalMetadata | IntervalChangeLocalMetadata>;
-	rebased?: ISerializedInterval;
-	original: ISerializedInterval;
+	interval: SequenceIntervalClass;
 }
 export interface IntervalChangeLocalMetadata {
 	type: typeof IntervalDeltaOpType.CHANGE;
 	localSeq: number;
-	previous: ISerializedInterval;
 	endpointChangesNode?: ListNode<IntervalChangeLocalMetadata | IntervalChangeLocalMetadata>;
-	rebased?: SerializedIntervalDelta;
-	original: SerializedIntervalDelta;
+	interval: SequenceIntervalClass;
 }
 export interface IntervalDeleteLocalMetadata {
 	type: typeof IntervalDeltaOpType.DELETE;
 	localSeq: number;
-	previous: ISerializedInterval;
 	endpointChangesNode?: undefined;
+	interval?: undefined;
 }
 export type IntervalMessageLocalMetadata =
 	| IntervalAddLocalMetadata

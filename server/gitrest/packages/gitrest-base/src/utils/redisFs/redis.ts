@@ -5,7 +5,7 @@
 
 import { runWithRetry } from "@fluidframework/server-services-core";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
-import {
+import type {
 	IRedisParameters,
 	IRedisClientConnectionManager,
 } from "@fluidframework/server-services-utils";

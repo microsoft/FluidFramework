@@ -3,47 +3,96 @@
  * Licensed under the MIT License.
  */
 
-import { StaticCodeLoader, TinyliciousModelLoader } from "@fluid-example/example-utils";
+import {
+	createExampleDriver,
+	getSpecifiedServiceFromWebpack,
+} from "@fluid-example/example-driver";
+import type { IFluidMountableViewEntryPoint } from "@fluid-example/example-utils";
+import type {
+	ICodeDetailsLoader,
+	IContainer,
+	IFluidCodeDetails,
+	IFluidModuleWithDetails,
+} from "@fluidframework/container-definitions/legacy";
+import {
+	createDetachedContainer,
+	loadExistingContainer,
+} from "@fluidframework/container-loader/legacy";
 
-import { DiceRollerContainerRuntimeFactory, IMountableViewAppModel } from "./containerCode.js";
+import { fluidExport } from "./container/index.js";
 
-/**
- * Start the app and render.
- *
- * @remarks We wrap this in an async function so we can await Fluid's async calls.
- */
-async function start() {
-	const tinyliciousModelLoader = new TinyliciousModelLoader<IMountableViewAppModel>(
-		new StaticCodeLoader(new DiceRollerContainerRuntimeFactory()),
-	);
+const service = getSpecifiedServiceFromWebpack();
+const {
+	urlResolver,
+	documentServiceFactory,
+	createCreateNewRequest,
+	createLoadExistingRequest,
+} = await createExampleDriver(service);
 
-	let id: string;
-	let model: IMountableViewAppModel;
+const codeLoader: ICodeDetailsLoader = {
+	load: async (details: IFluidCodeDetails): Promise<IFluidModuleWithDetails> => {
+		return {
+			module: { fluidExport },
+			details,
+		};
+	},
+};
 
-	if (location.hash.length === 0) {
-		// Normally our code loader is expected to match up with the version passed here.
-		// But since we're using a StaticCodeLoader that always loads the same runtime factory regardless,
-		// the version doesn't actually matter.
-		const createResponse = await tinyliciousModelLoader.createDetached("1.0");
-		model = createResponse.model;
-		id = await createResponse.attach();
-	} else {
-		id = location.hash.substring(1);
-		model = await tinyliciousModelLoader.loadExisting(id);
+let id: string;
+let container: IContainer;
+
+if (location.hash.length === 0) {
+	// Some services support or require specifying the container id at attach time (local, odsp). For
+	// services that do not (t9s), the passed id will be ignored.
+	id = Date.now().toString();
+	const createNewRequest = createCreateNewRequest(id);
+	container = await createDetachedContainer({
+		codeDetails: { package: "1.0" },
+		urlResolver,
+		documentServiceFactory,
+		codeLoader,
+	});
+	await container.attach(createNewRequest);
+	// For most services, the id on the resolvedUrl is the authoritative source for the container id
+	// (regardless of whether the id passed in createCreateNewRequest is respected or not). However,
+	// for odsp the id is a hashed combination of drive and container ID which we can't use. Instead,
+	// we retain the id we generated above.
+	if (service !== "odsp") {
+		if (container.resolvedUrl === undefined) {
+			throw new Error("Resolved Url unexpectedly missing!");
+		}
+		id = container.resolvedUrl.id;
 	}
-
-	// update the browser URL and the window title with the actual container ID
-	location.hash = id;
-	document.title = id;
-
-	const contentDiv = document.getElementById("content") as HTMLDivElement;
-	// In a production app, we should probably be retaining a reference to mountableView long-term so we can call
-	// unmount() on it to correctly remove it from the DOM if needed.
-	model.mountableView.mount(contentDiv);
-
-	// Setting "fluidStarted" is just for our test automation
-	// eslint-disable-next-line @typescript-eslint/dot-notation
-	window["fluidStarted"] = true;
+} else {
+	id = location.hash.slice(1);
+	container = await loadExistingContainer({
+		request: await createLoadExistingRequest(id),
+		urlResolver,
+		documentServiceFactory,
+		codeLoader,
+	});
 }
 
-start().catch((error) => console.error(error));
+// The key difference from external-views: the container entry point provides a mountable view
+const { getMountableDefaultView } =
+	(await container.getEntryPoint()) as IFluidMountableViewEntryPoint;
+const mountableView = await getMountableDefaultView();
+
+// Render view
+const appDiv = document.createElement("div");
+document.body.append(appDiv);
+mountableView.mount(appDiv);
+
+// Update url and tab title
+location.hash = id;
+document.title = id;
+
+// For testing purposes, we expose a way to load an additional instance of the container in the same page
+globalThis.loadAdditionalContainer = async () => {
+	return loadExistingContainer({
+		request: await createLoadExistingRequest(id),
+		urlResolver,
+		documentServiceFactory,
+		codeLoader,
+	});
+};

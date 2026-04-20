@@ -4,16 +4,16 @@
  */
 
 import {
-	ReleaseVersion,
-	VersionBumpType,
-	VersionScheme,
 	detectVersionScheme,
 	getVersionRange,
+	type ReleaseVersion,
+	type VersionBumpType,
+	type VersionScheme,
 } from "@fluid-tools/version-tools";
 import * as semver from "semver";
 
 import type { ReleaseReportConfig } from "../config.js";
-import { ReleaseGroup } from "../releaseGroups.js";
+import type { ReleaseGroup } from "../releaseGroups.js";
 
 /**
  * A map of package names to full release reports. This is the format of the "full" release report.

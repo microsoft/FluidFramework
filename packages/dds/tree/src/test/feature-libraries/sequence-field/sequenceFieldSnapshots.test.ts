@@ -6,13 +6,15 @@
 import path from "node:path";
 
 import { RevisionTagCodec } from "../../../core/index.js";
-import { SequenceField } from "../../../feature-libraries/index.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import { sequenceFieldChangeCodecFactory } from "../../../feature-libraries/sequence-field/sequenceFieldCodecs.js";
 import { takeJsonSnapshot, useSnapshotDirectory } from "../../snapshots/index.js";
 import { TestNodeId } from "../../testNodeId.js";
 import { createSnapshotCompressor, testIdCompressor } from "../../utils.js";
+
 import { generatePopulatedMarks } from "./populatedMarks.js";
 
-export function testSnapshots() {
+export function testSnapshots(): void {
 	describe("Snapshots", () => {
 		const compressor = createSnapshotCompressor();
 		const baseContext = {
@@ -21,26 +23,24 @@ export function testSnapshots() {
 			idCompressor: testIdCompressor,
 		};
 
-		const family = SequenceField.sequenceFieldChangeCodecFactory(
-			new RevisionTagCodec(compressor),
-		);
+		const family = sequenceFieldChangeCodecFactory(new RevisionTagCodec(compressor));
 		const marks = generatePopulatedMarks(compressor);
 		for (const version of family.getSupportedFormats()) {
 			describe(`version ${version}`, () => {
 				const dir = path.join("sequence-field", `V${version}`);
 				useSnapshotDirectory(dir);
 				const codec = family.resolve(version);
-				marks.forEach((mark, index) => {
+				for (const [index, mark] of marks.entries()) {
 					it(`${index} - ${"type" in mark ? mark.type : "NoOp"}`, () => {
 						const changeset = [mark];
-						const encoded = codec.json.encode(changeset, {
+						const encoded = codec.encode(changeset, {
 							baseContext,
 							encodeNode: (node) => TestNodeId.encode(node, baseContext),
 							decodeNode: (node) => TestNodeId.decode(node, baseContext),
 						});
 						takeJsonSnapshot(encoded);
 					});
-				});
+				}
 			});
 		}
 	});

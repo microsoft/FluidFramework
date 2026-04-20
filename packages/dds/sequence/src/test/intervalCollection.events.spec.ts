@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert, fail } from "assert";
+import { strict as assert, fail } from "node:assert";
 
 import { AttachState } from "@fluidframework/container-definitions";
 import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
@@ -14,7 +14,7 @@ import {
 	MockStorage,
 } from "@fluidframework/test-runtime-utils/internal";
 
-import { type ISequenceIntervalCollection } from "../intervalCollection.js";
+import type { ISequenceIntervalCollection } from "../intervalCollection.js";
 import { SequenceInterval } from "../intervals/index.js";
 import { SharedStringFactory } from "../sequenceFactory.js";
 import { SharedStringClass, ISharedString } from "../sharedString.js";

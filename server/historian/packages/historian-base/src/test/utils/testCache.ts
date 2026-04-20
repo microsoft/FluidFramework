@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ICache } from "../../services";
+import type { ICache } from "../../services";
 
 export class TestCache implements ICache {
 	private readonly dictionary = new Map<string, any>();

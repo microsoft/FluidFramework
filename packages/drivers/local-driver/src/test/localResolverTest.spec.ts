@@ -58,4 +58,34 @@ describe("Local Driver Resolver", () => {
 			assert.equal(resolvedUrl.url, expectedUrl, "The resolved container url should match");
 		});
 	});
+
+	describe("getAbsoluteUrl with empty relativeUrl", () => {
+		beforeEach(() => {
+			resolver = new LocalResolver();
+		});
+
+		it("should return container URL without trailing slash when relativeUrl is empty", async () => {
+			const request = resolver.createCreateNewRequest(documentId);
+			const resolvedUrl = await resolver.resolve(request);
+			const response = await resolver.getAbsoluteUrl(resolvedUrl, "");
+			const expectedUrl = `http://localhost:3000/${documentId}`;
+			assert.equal(
+				response,
+				expectedUrl,
+				"The requestUrl should not have a trailing slash when relativeUrl is empty",
+			);
+		});
+
+		it("should return container URL without trailing slash when relativeUrl is just a slash", async () => {
+			const request = resolver.createCreateNewRequest(documentId);
+			const resolvedUrl = await resolver.resolve(request);
+			const response = await resolver.getAbsoluteUrl(resolvedUrl, "/");
+			const expectedUrl = `http://localhost:3000/${documentId}`;
+			assert.equal(
+				response,
+				expectedUrl,
+				"The requestUrl should not have a trailing slash when relativeUrl is a single slash",
+			);
+		});
+	});
 });

@@ -6,7 +6,7 @@
 import { strict as assert } from "node:assert";
 
 import { ContainerErrorTypes } from "@fluidframework/container-definitions/internal";
-import { NamedFluidDataStoreRegistryEntries } from "@fluidframework/runtime-definitions/internal";
+import type { NamedFluidDataStoreRegistryEntries } from "@fluidframework/runtime-definitions/internal";
 import { isFluidError } from "@fluidframework/telemetry-utils/internal";
 
 import { FluidDataStoreRegistry } from "../dataStoreRegistry.js";

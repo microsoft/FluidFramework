@@ -1,5 +1,103 @@
 # @fluidframework/driver-web-cache
 
+## 2.93.0
+
+Dependency updates only.
+
+## 2.92.0
+
+Dependency updates only.
+
+## 2.91.0
+
+Dependency updates only.
+
+## 2.90.0
+
+Dependency updates only.
+
+## 2.83.0
+
+Dependency updates only.
+
+## 2.82.0
+
+Dependency updates only.
+
+## 2.81.0
+
+Dependency updates only.
+
+## 2.80.0
+
+Dependency updates only.
+
+## 2.74.0
+
+Dependency updates only.
+
+## 2.73.0
+
+Dependency updates only.
+
+## 2.72.0
+
+Dependency updates only.
+
+## 2.71.0
+
+Dependency updates only.
+
+## 2.70.0
+
+Dependency updates only.
+
+## 2.63.0
+
+Dependency updates only.
+
+## 2.62.0
+
+### Minor Changes
+
+- Move IPersistedCache types to driver-definitions ([#25518](https://github.com/microsoft/FluidFramework/pull/25518)) [54fca68d91](https://github.com/microsoft/FluidFramework/commit/54fca68d91aeb40bdef14b1fe8b8f3c28168b6de)
+
+  In an effort to decouple the driver web cache from the odsp driver a number of types have been moved from `@fluidframework/odsp-driver-definitions` to `@fluidframework/driver-definitions`. The moved types have been deprecated in `@fluidframework/odsp-driver-definitions`, and any usages should be moved to `@fluidframework/driver-definitions`.
+
+  The moved types are:
+  - `IEntry`
+  - `IFileEntry`
+  - `ICacheEntry`
+  - `IPersistedCache`
+
+## 2.61.0
+
+Dependency updates only.
+
+## 2.60.0
+
+Dependency updates only.
+
+## 2.53.0
+
+Dependency updates only.
+
+## 2.52.0
+
+Dependency updates only.
+
+## 2.51.0
+
+Dependency updates only.
+
+## 2.50.0
+
+Dependency updates only.
+
+## 2.43.0
+
+Dependency updates only.
+
 ## 2.42.0
 
 Dependency updates only.
@@ -103,7 +201,6 @@ Dependency updates only.
   TypeScript types and implementation code.
 
   This means that using Fluid Framework packages require the following TypeScript settings in tsconfig.json:
-
   - `"moduleResolution": "Node16"` with `"module": "Node16"`
   - `"moduleResolution": "Bundler"` with `"module": "ESNext"`
 

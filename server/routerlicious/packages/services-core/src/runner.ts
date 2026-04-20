@@ -5,7 +5,7 @@
 
 import type nconf from "nconf";
 
-import { ILogger } from "./lambdas";
+import type { ILogger } from "./lambdas";
 
 /**
  * A runner represents a task that starts once start is called. And ends when either start completes

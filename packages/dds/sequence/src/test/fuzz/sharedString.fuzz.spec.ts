@@ -66,11 +66,12 @@ describe("SharedString fuzz with obliterate", () => {
 			...defaultFuzzOptions,
 			// Uncomment this line to replay a specific seed from its failure file:
 			// replay: 0,
-
+			rollbackProbability: 0,
 			forceGlobalSeed: true,
 			skip: [
 				51, // AB#7220: This seed should be enabled. The failure here is unrelated to obliterate.
 				71, // AB#35446: Different number of intervals found in C and summarizer at collection comments
+				68, // AB#45138 : Enable rollbackProbability: sequence
 			],
 		},
 	);
@@ -81,11 +82,11 @@ describe("SharedString fuzz testing with rebased batches", () => {
 		{ ...baseSharedStringModel, workloadName: "SharedString with rebasing" },
 		{
 			...defaultFuzzOptions,
-			reconnectProbability: 0.0,
+			reconnectProbability: 0,
 			numberOfClients: 3,
 			clientJoinOptions: {
 				maxNumberOfClients: 3,
-				clientAddProbability: 0.0,
+				clientAddProbability: 0,
 			},
 			rebaseProbability: 0.2,
 			containerRuntimeOptions: {
@@ -110,7 +111,7 @@ describe("SharedString fuzz testing with rebased batches and reconnect", () => {
 			numberOfClients: 3,
 			clientJoinOptions: {
 				maxNumberOfClients: 3,
-				clientAddProbability: 0.0,
+				clientAddProbability: 0,
 			},
 			rebaseProbability: 0.2,
 			containerRuntimeOptions: {

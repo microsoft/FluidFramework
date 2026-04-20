@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { SharedSummaryBlock } from "@fluidframework/shared-summary-block/internal";
+import type { SharedSummaryBlock } from "@fluidframework/shared-summary-block/internal";
 
-import { IFluidLastEditedTracker, ILastEditDetails } from "./interfaces.js";
+import type { IFluidLastEditedTracker, ILastEditDetails } from "./interfaces.js";
 
 /**
  * Tracks the last edit details such as the last edited user details and the last edited timestamp. The last edited

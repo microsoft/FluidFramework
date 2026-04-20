@@ -42,7 +42,7 @@ const loaderOptionsMatrix: OptionsMatrix<ILoaderOptionsExperimental> = {
 export function applyOverrides<T extends Record<string, any>>(
 	options: OptionsMatrix<T>,
 	optionsOverrides: Partial<OptionsMatrix<T>> | undefined,
-) {
+): OptionsMatrix<T> {
 	const realOptions: OptionsMatrix<T> = { ...options };
 	if (optionsOverrides !== undefined) {
 		// The cast is required because TS5 infers that 'key' must be in the set 'keyof T' and
@@ -88,7 +88,7 @@ const summaryOptionsMatrix: OptionsMatrix<ISummaryRuntimeOptions> = {
 export function generateRuntimeOptions(
 	seed: number,
 	overrides: Partial<OptionsMatrix<ContainerRuntimeOptionsInternal>> | undefined,
-) {
+): IContainerRuntimeOptionsInternal[] {
 	const gcOptions = generatePairwiseOptions(
 		applyOverrides(gcOptionsMatrix, overrides?.gcOptions as any),
 		seed,
@@ -118,6 +118,8 @@ export function generateRuntimeOptions(
 		enableGroupedBatching: [true, false],
 		createBlobPayloadPending: [true, undefined],
 		explicitSchemaControl: [true, false],
+		disableSchemaUpgrade: [false],
+		stagingModeAutoFlushThreshold: [undefined],
 	};
 
 	const pairwiseOptions = generatePairwiseOptions<IContainerRuntimeOptionsInternal>(
@@ -141,6 +143,18 @@ export function generateRuntimeOptions(
 		}
 	});
 
+	// Override explicitSchemaControl to enabled if createBlobPayloadPending is enabled
+	pairwiseOptions.map((options) => {
+		if (options.createBlobPayloadPending) {
+			(
+				options as {
+					// Remove readonly modifier to allow overriding
+					-readonly [P in keyof ContainerRuntimeOptionsInternal]: ContainerRuntimeOptionsInternal[P];
+				}
+			).explicitSchemaControl = true;
+		}
+	});
+
 	return pairwiseOptions;
 }
 
@@ -155,6 +169,7 @@ export function generateConfigurations(
 }
 
 /**
+ * Extracts the appropriate option override from test configuration based on driver type and endpoint.
  *
  * @param testConfig - the ILoadTestConfig to extract the Option Override from
  * @param driverType - the DriverType being used in the test, used to determine which option override to pick

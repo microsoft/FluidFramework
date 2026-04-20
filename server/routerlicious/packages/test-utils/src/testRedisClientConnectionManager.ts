@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as Redis from "ioredis";
+import type * as Redis from "ioredis";
 import RedisMock from "ioredis-mock";
 
 /**

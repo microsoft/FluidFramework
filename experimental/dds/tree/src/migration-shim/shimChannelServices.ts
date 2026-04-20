@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import {
-	type IChannelServices,
-	type IChannelStorageService,
-	type IDeltaConnection,
+import type {
+	IChannelServices,
+	IChannelStorageService,
+	IDeltaConnection,
 } from '@fluidframework/datastore-definitions/internal';
 
 /**

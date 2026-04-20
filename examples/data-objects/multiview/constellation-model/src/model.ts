@@ -3,11 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { IConstellation, ICoordinate } from "@fluid-example/multiview-coordinate-interface";
+import type {
+	IConstellation,
+	ICoordinate,
+} from "@fluid-example/multiview-coordinate-interface";
 import { Coordinate } from "@fluid-example/multiview-coordinate-model";
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/legacy";
-import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { IValueChanged } from "@fluidframework/map/legacy";
+import type { IFluidHandle } from "@fluidframework/core-interfaces";
+import type { IValueChanged } from "@fluidframework/map/legacy";
 
 const starListKey = "stars";
 const constellationName = "@fluid-example/constellation";
@@ -35,11 +38,11 @@ export class Constellation extends DataObject implements IConstellation {
 
 	protected async hasInitialized(): Promise<void> {
 		await this.updateStarsFromRoot();
-		this.root.on("valueChanged", (changed: IValueChanged) => {
+		this.root.on("valueChanged", (changed: IValueChanged): void => {
 			if (changed.key === starListKey) {
 				this.updateStarsFromRoot()
-					.then(() => this.emit("constellationChanged"))
-					.catch((error) => console.error(error));
+					.then((): boolean => this.emit("constellationChanged"))
+					.catch((error): void => console.error(error));
 			}
 		});
 	}

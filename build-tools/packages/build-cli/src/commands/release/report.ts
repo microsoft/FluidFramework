@@ -7,15 +7,15 @@ import { strict as assert } from "node:assert";
 import path from "node:path";
 
 import {
-	ReleaseVersion,
-	VersionBumpType,
 	detectBumpType,
 	detectVersionScheme,
 	getPreviousVersions,
 	isVersionBumpType,
+	type ReleaseVersion,
+	type VersionBumpType,
 } from "@fluid-tools/version-tools";
 import { rawlist } from "@inquirer/prompts";
-import { Command, Flags, ux } from "@oclif/core";
+import { type Command, Flags, ux } from "@oclif/core";
 import { differenceInBusinessDays, formatDistanceToNow } from "date-fns";
 import { writeJson } from "fs-extra/esm";
 import chalk from "picocolors";
@@ -23,24 +23,28 @@ import sortJson from "sort-json";
 import { table } from "table";
 
 import { releaseGroupFlag } from "../../flags.js";
+import { BaseCommand } from "../../library/commands/base.js";
+import type { Context, VersionDetails } from "../../library/context.js";
+import { getDisplayDate, getDisplayDateRelative } from "../../library/dates.js";
+import type { Repository } from "../../library/git.js";
 import {
-	BaseCommand,
-	Context,
-	PackageVersionMap,
-	ReleaseReport,
-	ReportKind,
-	type Repository,
-	VersionDetails,
 	filterVersionsOlderThan,
-	getDisplayDate,
-	getDisplayDateRelative,
 	getFluidDependencies,
-	getRanges,
+	type PackageVersionMap,
 	sortVersions,
+} from "../../library/package.js";
+import {
+	getRanges,
+	type ReleaseReport,
+	type ReportKind,
 	toReportKind,
-} from "../../library/index.js";
-import { CommandLogger } from "../../logging.js";
-import { ReleaseGroup, ReleasePackage, isReleaseGroup } from "../../releaseGroups.js";
+} from "../../library/release.js";
+import type { CommandLogger } from "../../logging.js";
+import {
+	isReleaseGroup,
+	type ReleaseGroup,
+	type ReleasePackage,
+} from "../../releaseGroups.js";
 
 /**
  * Controls behavior when there is a list of releases and one needs to be selected.
@@ -115,7 +119,7 @@ export abstract class ReleaseReportBaseCommand<
 	 *
 	 * @param context - The {@link Context}.
 	 * @param mode - The {@link ReleaseSelectionMode} to use to determine the release to report on.
-	 * @param releaseGroup - If provided, the release data collected will be limited to only the pakages in this release
+	 * @param releaseGroupOrPackage - If provided, the release data collected will be limited to only the packages in this release
 	 * group and its direct Fluid dependencies.
 	 * @param includeDependencies - If true, the release data will include the Fluid dependencies of the release group.
 	 */
@@ -201,7 +205,7 @@ export abstract class ReleaseReportBaseCommand<
 	/**
 	 * Collects the releases of a given release group or package.
 	 *
-	 * @param context - The {@link Context}.
+	 * @param repo - The {@link Repository}.
 	 * @param releaseGroupOrPackage - The release group or package to collect release data for.
 	 * @param repoVersion - The version of the release group or package in the repo.
 	 * @param latestReleaseChooseMode - Controls which release is considered the latest.
@@ -730,5 +734,6 @@ async function writeReport(
 	const reportOutput = toReportKind(report, kind);
 
 	await writeJson(reportPath, reportOutput, { spaces: 2 });
+	// eslint-disable-next-line import-x/no-named-as-default-member -- sortJson.overwrite is the correct usage
 	sortJson.overwrite(reportPath);
 }

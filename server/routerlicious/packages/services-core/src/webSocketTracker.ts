@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IWebSocket } from "./http";
+import type { IWebSocket } from "./http";
 
 /**
  * Interface of web socket tracker
@@ -12,7 +12,7 @@ import { IWebSocket } from "./http";
  */
 export interface IWebSocketTracker {
 	// Add a token to socket mapping
-	addSocketForToken(compositeTokenId: string, webSocket: IWebSocket);
+	addSocketForToken(compositeTokenId: string, webSocket: IWebSocket): Promise<void>;
 
 	// Get the socket objects with the given token
 	getSocketsForToken(compositeTokenId: string): IWebSocket[];

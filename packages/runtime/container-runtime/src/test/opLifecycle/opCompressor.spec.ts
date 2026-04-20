@@ -10,7 +10,7 @@ import { validateAssertionError } from "@fluidframework/test-runtime-utils/inter
 
 import { ContainerMessageType } from "../../index.js";
 import {
-	OutboundBatchMessage,
+	type OutboundBatchMessage,
 	OpCompressor,
 	type OutboundBatch,
 	type OutboundSingletonBatch,
@@ -81,13 +81,9 @@ describe("OpCompressor", () => {
 					() => {
 						compressor.compressBatch(batch as OutboundSingletonBatch); // The need to cast indicates this is not going to work
 					},
-					(error: Error) => {
-						validateAssertionError(
-							error,
-							"Batch should not be empty and should contain a single message",
-						); // 0x5a4
-						return true;
-					},
+					validateAssertionError(
+						"Batch should not be empty and should contain a single message", // 0x5a4
+					),
 					"Expected error was not thrown",
 				);
 			});

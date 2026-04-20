@@ -1,0 +1,15 @@
+{
+	"$schema": "../../../../../../node_modules/@biomejs/biome/configuration_schema.json",
+	"root": true,
+	"files": {
+		"includes": ["src/**"]
+	},
+	"formatter": {
+		"includes": ["format-only/**"],
+		"lineWidth": 80
+	},
+	"linter": {
+		"includes": ["lint-only/**"],
+		"enabled": true
+	}
+}

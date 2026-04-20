@@ -7,7 +7,7 @@ import { strict as assert } from "node:assert";
 
 import { MergeTree } from "../mergeTree.js";
 import { walkAllChildSegments } from "../mergeTreeNodeWalk.js";
-import { MergeBlock, MaxNodesInBlock } from "../mergeTreeNodes.js";
+import { type MergeBlock, MaxNodesInBlock } from "../mergeTreeNodes.js";
 import { TextSegment } from "../textSegment.js";
 
 describe("MergeTree walks", () => {

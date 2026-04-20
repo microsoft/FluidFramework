@@ -6,12 +6,22 @@
 import { strict as assert, fail } from "node:assert";
 
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
+import { validateUsageError } from "@fluidframework/test-runtime-utils/internal";
 
-import { MockNodeIdentifierManager } from "../../feature-libraries/index.js";
+import type { TransactionLabels } from "../../core/index.js";
+import { MockNodeIdentifierManager, TreeStatus } from "../../feature-libraries/index.js";
+import {
+	ForestTypeExpensiveDebug,
+	ForestTypeReference,
+	Tree,
+	type TreeCheckout,
+} from "../../shared-tree/index.js";
 import {
 	SchematizingSimpleTreeView,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../shared-tree/schematizingTreeView.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import { UnhydratedFlexTreeNode } from "../../simple-tree/core/unhydratedFlexTree.js";
 import {
 	SchemaFactory,
 	SchemaFactoryAlpha,
@@ -22,31 +32,27 @@ import {
 	type UnsafeUnknownSchema,
 	type TransactionResult,
 	type TransactionResultExt,
-	toStoredSchema,
 	getKernel,
+	toInitialSchema,
+	toUpgradeSchema,
+	SchemaFactoryBeta,
 } from "../../simple-tree/index.js";
+import type { Mutable } from "../../util/index.js";
+import { brand } from "../../util/index.js";
+import { fieldJsonCursor } from "../json/index.js";
+import { insert, makeTreeFromJsonSequence } from "../sequenceRootUtils.js";
+import { testDocumentIndependentView } from "../testTrees.js";
 import {
 	checkoutWithContent,
 	createTestUndoRedoStacks,
 	fieldCursorFromInsertable,
 	getView,
 	TestTreeProviderLite,
-	validateUsageError,
+	validateViewConsistency,
+	type TreeStoredContentStrict,
 } from "../utils.js";
-import { insert, makeTreeFromJsonSequence } from "../sequenceRootUtils.js";
-import {
-	CheckoutFlexTreeView,
-	ForestTypeExpensiveDebug,
-	ForestTypeReference,
-	type TreeCheckout,
-	type TreeStoredContent,
-} from "../../shared-tree/index.js";
-import type { Mutable } from "../../util/index.js";
-import { brand } from "../../util/index.js";
-// eslint-disable-next-line import/no-internal-modules
-import { UnhydratedFlexTreeNode } from "../../simple-tree/core/unhydratedFlexTree.js";
 
-const schema = new SchemaFactory("com.example");
+const schema = new SchemaFactoryAlpha("com.example");
 const config = new TreeViewConfiguration({ schema: schema.number });
 const configGeneralized = new TreeViewConfiguration({
 	schema: [schema.number, schema.string],
@@ -63,15 +69,15 @@ function checkoutWithInitialTree(
 		viewConfig.schema,
 		unhydratedInitialTree,
 	);
-	const treeContent: TreeStoredContent = {
-		schema: toStoredSchema(viewConfig.schema),
+	const treeContent: TreeStoredContentStrict = {
+		schema: toInitialSchema(viewConfig.schema),
 		initialTree,
 	};
 	return checkoutWithContent(treeContent);
 }
 
 // Schema for tree that must always be empty.
-const emptySchema = toStoredSchema(schema.optional([]));
+const emptySchema = toInitialSchema(schema.optional([]));
 
 describe("SchematizingSimpleTreeView", () => {
 	describe("initialize", () => {
@@ -87,10 +93,9 @@ describe("SchematizingSimpleTreeView", () => {
 				new MockNodeIdentifierManager(),
 			);
 
-			const { compatibility } = view;
-			assert.equal(compatibility.canView, false);
-			assert.equal(compatibility.canUpgrade, false);
-			assert.equal(compatibility.canInitialize, true);
+			assert.equal(view.compatibility.canView, false);
+			assert.equal(view.compatibility.canUpgrade, false);
+			assert.equal(view.compatibility.canInitialize, true);
 
 			view.initialize(5);
 			assert.equal(view.root, 5);
@@ -100,6 +105,49 @@ describe("SchematizingSimpleTreeView", () => {
 				validateUsageError(/initialized more than once/),
 			);
 		});
+		{
+			const emptyContent = {
+				schema: emptySchema,
+				initialTree: undefined,
+			};
+			class SimpleTestObject extends schema.object("TestObject", {
+				content: schema.number,
+			}) {}
+			const configNode = new TreeViewConfiguration({ schema: SimpleTestObject });
+			it("Initialize node", () => {
+				const checkout = checkoutWithContent(emptyContent);
+				const view = new SchematizingSimpleTreeView(
+					checkout,
+					configNode,
+					new MockNodeIdentifierManager(),
+				);
+
+				assert.equal(view.compatibility.canView, false);
+				assert.equal(view.compatibility.canUpgrade, false);
+				assert.equal(view.compatibility.canInitialize, true);
+
+				view.initialize({ content: 5 });
+				assert.equal(view.root.content, 5);
+			});
+			it("Initialize node with hydration", () => {
+				const checkout = checkoutWithContent(emptyContent);
+				const view = new SchematizingSimpleTreeView(
+					checkout,
+					configNode,
+					new MockNodeIdentifierManager(),
+				);
+
+				assert.equal(view.compatibility.canView, false);
+				assert.equal(view.compatibility.canUpgrade, false);
+				assert.equal(view.compatibility.canInitialize, true);
+
+				const node = new SimpleTestObject({ content: 5 });
+				assert.equal(Tree.status(node), TreeStatus.New);
+				view.initialize(node);
+				assert.equal(view.root, node);
+				assert.equal(Tree.status(node), TreeStatus.InDocument);
+			});
+		}
 
 		for (const additionalAsserts of [true, false]) {
 			for (const enableSchemaValidation of [true, false]) {
@@ -119,33 +167,57 @@ describe("SchematizingSimpleTreeView", () => {
 
 					const root = new Root({ content: 5 });
 
-					const inner = getKernel(root).getOrCreateInnerNode();
+					const inner = getKernel(root).getInnerNode();
 					const field = inner.getBoxed(brand("content"));
 					const child = field.boxedAt(0) ?? assert.fail("Expected child");
 					assert(child instanceof UnhydratedFlexTreeNode);
 
 					// Modify the tree so that it is out of schema.
-					// The public API is supposed to prevent out of schema trees,
+					// The public API is supposed to prevent out of schema trees (other than staged allowed types),
 					// so this hack using internal APIs is needed a workaround to test the additional schema validation layer.
 					// In production cases this extra validation exists to help prevent corruption when bugs
 					// allow invalid data through the public API.
 					(child.data as Mutable<typeof child.data>).value = "invalid value";
 
-					// Attempt to initialize with invalid content
-					if (enableSchemaValidation || additionalAsserts) {
-						assert.throws(
-							() => view.initialize(root),
-							validateUsageError(/Tree does not conform to schema./),
-						);
+					// Attempt to initialize with invalid content.
+					// Currently src/simple-tree/prepareForInsertion.ts has `validateSchema` unconditionally enabled, so this is detected regardless of the value of `enableSchemaValidation`.
+					assert.throws(
+						() => view.initialize(root),
+						validateUsageError(/Tree does not conform to schema./),
+					);
 
-						assert.throws(
-							() => view.root,
-							validateUsageError(/invalid state by another error/),
-						);
-					} else {
-						view.initialize(root);
-						assert.equal(view.root.content, "invalid value");
-					}
+					assert.throws(() => view.root, validateUsageError(/invalid state by another error/));
+				});
+
+				it(`Initialize invalid content: staged allowed type with enableSchemaValidation: ${enableSchemaValidation}, additionalAsserts: ${additionalAsserts}`, () => {
+					class StagedSchema extends schema.arrayAlpha(
+						"TestArray",
+						SchemaFactoryAlpha.types([
+							SchemaFactoryAlpha.number,
+							SchemaFactoryAlpha.staged(SchemaFactoryAlpha.string),
+						]),
+					) {}
+
+					const emptyContent = {
+						schema: emptySchema,
+						initialTree: undefined,
+					};
+					const checkout = checkoutWithContent(emptyContent);
+					const view = new SchematizingSimpleTreeView(
+						checkout,
+						new TreeViewConfiguration({ schema: StagedSchema }),
+						new MockNodeIdentifierManager(),
+					);
+
+					const { compatibility } = view;
+					assert.equal(compatibility.canView, false);
+					assert.equal(compatibility.canUpgrade, false);
+					assert.equal(compatibility.canInitialize, true);
+
+					assert.throws(
+						() => view.initialize([5, "test"]),
+						validateUsageError(/Tree does not conform to schema./),
+					);
 				});
 			}
 		}
@@ -235,6 +307,26 @@ describe("SchematizingSimpleTreeView", () => {
 		assert.deepEqual(log, [["rootChanged", 6]]);
 	});
 
+	it("Modify root to undefined", () => {
+		const config2 = new TreeViewConfiguration({
+			schema: SchemaFactory.optional(schema.number),
+		});
+		const checkout = checkoutWithInitialTree(config2, 5);
+		const view = new SchematizingSimpleTreeView(
+			checkout,
+			config2,
+			new MockNodeIdentifierManager(),
+		);
+		view.events.on("schemaChanged", () => log.push(["schemaChanged", getChangeData(view)]));
+		view.events.on("rootChanged", () => log.push(["rootChanged", getChangeData(view)]));
+		assert.equal(view.root, 5);
+		const log: [string, unknown][] = [];
+
+		view.root = undefined;
+
+		assert.deepEqual(log, [["rootChanged", undefined]]);
+	});
+
 	it("Schema becomes un-upgradeable then exact match again", () => {
 		const checkout = checkoutWithInitialTree(config, 5);
 		const view = new SchematizingSimpleTreeView(
@@ -247,7 +339,7 @@ describe("SchematizingSimpleTreeView", () => {
 		view.events.on("schemaChanged", () => log.push(["schemaChanged", getChangeData(view)]));
 
 		// Modify schema to invalidate view
-		checkout.updateSchema(toStoredSchema([schema.number, schema.string]));
+		checkout.updateSchema(toUpgradeSchema([schema.number, schema.string]));
 
 		assert.deepEqual(log, [
 			["schemaChanged", "SchemaCompatibilityStatus canView: false canUpgrade: false"],
@@ -263,7 +355,7 @@ describe("SchematizingSimpleTreeView", () => {
 		);
 		view.breaker.clearError();
 		// Modify schema to be compatible again
-		checkout.updateSchema(toStoredSchema([schema.number]));
+		checkout.updateSchema(toUpgradeSchema([schema.number]), true);
 		assert.equal(view.compatibility.isEquivalent, true);
 		assert.equal(view.compatibility.canUpgrade, true);
 		assert.equal(view.compatibility.canView, true);
@@ -277,13 +369,13 @@ describe("SchematizingSimpleTreeView", () => {
 		// This sort of scenario might be reasonably encountered when an "older" version of an application opens
 		// up a document that has been created and/or edited by a "newer" version of an application (which has
 		// expanded the schema to include more information).
-		const factory = new SchemaFactoryAlpha(undefined);
-		class PersonGeneralized extends factory.objectAlpha("Person", {
+		const factory = new SchemaFactoryBeta(undefined);
+		class PersonGeneralized extends factory.object("Person", {
 			name: factory.string,
 			age: factory.number,
 			address: factory.optional(factory.string),
 		}) {}
-		class PersonSpecific extends factory.objectAlpha(
+		class PersonSpecific extends factory.object(
 			"Person",
 			{
 				name: factory.string,
@@ -340,14 +432,14 @@ describe("SchematizingSimpleTreeView", () => {
 	});
 
 	it("Calling moveToEnd on a more specific schema preserves a node's optional fields that were unknown to that schema", () => {
-		const factorySpecific = new SchemaFactoryAlpha(undefined);
-		const factoryGeneral = new SchemaFactoryAlpha(undefined);
-		class PersonGeneralized extends factorySpecific.objectAlpha("Person", {
+		const factorySpecific = new SchemaFactoryBeta(undefined);
+		const factoryGeneral = new SchemaFactoryBeta(undefined);
+		class PersonGeneralized extends factorySpecific.object("Person", {
 			name: factoryGeneral.string,
 			age: factoryGeneral.number,
 			address: factoryGeneral.optional(factoryGeneral.string),
 		}) {}
-		class PersonSpecific extends factorySpecific.objectAlpha(
+		class PersonSpecific extends factorySpecific.object(
 			"Person",
 			{
 				name: factorySpecific.string,
@@ -405,6 +497,92 @@ describe("SchematizingSimpleTreeView", () => {
 		assert.equal(viewGeneralized.root[1].name, "Alice");
 		assert.equal(viewGeneralized.root[1].age, 42);
 		assert.equal(viewGeneralized.root[1].address, "123 Main St");
+	});
+
+	describe("upgradeSchema", () => {
+		const builder = new SchemaFactory("test");
+		const root = builder.number;
+
+		const schemaGeneralized = builder.optional([root, builder.string]);
+		const schemaValueRoot = [root, builder.string];
+
+		// Schema for tree that must always be empty.
+		const emptyViewSchema = builder.optional([]);
+
+		it("compatible empty schema", () => {
+			const view = testDocumentIndependentView({
+				ambiguous: false,
+				schema: emptyViewSchema,
+				schemaData: emptySchema,
+				treeFactory: () => [],
+			});
+
+			view.events.on("rootChanged", () => assert.fail());
+			view.events.on("schemaChanged", () => assert.fail());
+
+			assert(view.compatibility.isEquivalent);
+			assert(view.compatibility.canUpgrade);
+			view.upgradeSchema();
+		});
+
+		it("compatible: upgrade optional root", () => {
+			const view = testDocumentIndependentView({
+				ambiguous: false,
+				schema: schemaGeneralized,
+				schemaData: emptySchema,
+				treeFactory: () => [],
+			});
+
+			view.upgradeSchema();
+			const reference = checkoutWithContent({
+				schema: toInitialSchema(schemaGeneralized),
+				initialTree: fieldJsonCursor([]),
+			});
+			validateViewConsistency(reference, view.checkout);
+		});
+
+		it("incompatible: empty to required root", () => {
+			const view = testDocumentIndependentView({
+				ambiguous: false,
+				schema: schemaValueRoot,
+				schemaData: emptySchema,
+				treeFactory: () => [],
+			});
+
+			assert(!view.compatibility.isEquivalent);
+			assert(!view.compatibility.canUpgrade);
+
+			// Case which doesn't update due to root being required
+			assert.throws(() => view.upgradeSchema(), validateUsageError(/cannot be upgraded/));
+
+			const reference = checkoutWithContent({
+				schema: emptySchema,
+				initialTree: fieldJsonCursor([]),
+			});
+			validateViewConsistency(reference, view.checkout);
+		});
+
+		it("update non-empty", () => {
+			const view = testDocumentIndependentView({
+				ambiguous: false,
+				schema: schemaGeneralized,
+				schemaData: toInitialSchema(builder.number),
+				treeFactory: () => [
+					{ type: brand(SchemaFactory.number.identifier), value: 5, fields: {} },
+				],
+			});
+
+			const updatedCheckout = checkoutWithContent({
+				schema: toInitialSchema(schemaGeneralized),
+				initialTree: fieldJsonCursor([5]),
+			});
+
+			assert(!view.compatibility.isEquivalent);
+			assert(view.compatibility.canUpgrade);
+
+			view.upgradeSchema();
+			validateViewConsistency(view.checkout, updatedCheckout);
+		});
 	});
 
 	it("Open upgradable document, then upgrade schema", () => {
@@ -533,7 +711,7 @@ describe("SchematizingSimpleTreeView", () => {
 	describe("events", () => {
 		it("schemaChanged", () => {
 			const content = {
-				schema: toStoredSchema(SchemaFactory.optional([])),
+				schema: toInitialSchema(SchemaFactory.optional([])),
 				initialTree: undefined,
 			};
 			const checkout = checkoutWithContent(content);
@@ -568,7 +746,7 @@ describe("SchematizingSimpleTreeView", () => {
 
 		it("does not emit changed events for rebases", () => {
 			const stringArraySchema = schema.array([schema.string]);
-			const stringArrayStoredSchema = toStoredSchema(stringArraySchema);
+			const stringArrayStoredSchema = toInitialSchema(stringArraySchema);
 			const stringArrayContent = {
 				schema: stringArrayStoredSchema,
 				initialTree: fieldCursorFromInsertable(stringArraySchema, ["a", "b", "c"]),
@@ -769,11 +947,7 @@ describe("SchematizingSimpleTreeView", () => {
 
 			it("undoes and redoes entire transaction", () => {
 				const view = getTestObjectView();
-				const checkoutView = view.getView();
-				assert(checkoutView instanceof CheckoutFlexTreeView);
-				const { undoStack, redoStack } = createTestUndoRedoStacks(
-					checkoutView.checkout.events,
-				);
+				const { undoStack, redoStack } = createTestUndoRedoStacks(view.checkout.events);
 
 				const runTransactionResult = view.runTransaction(() => {
 					view.root.content = 43;
@@ -940,6 +1114,373 @@ describe("SchematizingSimpleTreeView", () => {
 
 				stack.unsubscribe();
 			});
+		});
+	});
+
+	describe("transaction labels", () => {
+		it("exposes label via CommitMetadataAlpha during commitApplied", () => {
+			const view = getTestObjectView();
+
+			const labels: unknown[] = [];
+
+			view.checkout.events.on("changed", (meta) => {
+				labels.push(meta.label);
+			});
+
+			const testLabel = "testLabel";
+			const runTransactionResult = view.runTransaction(
+				() => {
+					view.root.content = 0;
+				},
+				{ label: testLabel },
+			);
+
+			// Check that transaction was applied.
+			assert.equal(runTransactionResult.success, true);
+
+			// Check that correct label was exposed.
+			assert.deepEqual(labels, [testLabel]);
+		});
+
+		it("CommitMetadataAlpha.label is undefined for unlabeled transactions", () => {
+			const view = getTestObjectView();
+
+			const labels: unknown[] = [];
+
+			view.checkout.events.on("changed", (meta) => {
+				labels.push(meta.label);
+			});
+
+			const runTransactionResult = view.runTransaction(() => {
+				view.root.content = 0;
+			});
+
+			// Check that transaction was applied.
+			assert.equal(runTransactionResult.success, true);
+			assert.equal(view.root.content, 0);
+
+			// Check that correct label was exposed.
+			assert.deepEqual(labels, [undefined]);
+		});
+
+		it("exposes the correct labels for multiple transactions", () => {
+			const view = getTestObjectView();
+
+			const labels: unknown[] = [];
+
+			view.checkout.events.on("changed", (meta) => {
+				labels.push(meta.label);
+			});
+
+			const testLabel1 = "testLabel1";
+			const runTransactionResult1 = view.runTransaction(
+				() => {
+					view.root.content = 0;
+				},
+				{ label: testLabel1 },
+			);
+
+			// run second transaction with no label
+			const runTransactionResult2 = view.runTransaction(() => {
+				view.root.content = 1;
+			});
+
+			const testLabel3 = "testLabel3";
+			const runTransactionResult3 = view.runTransaction(
+				() => {
+					view.root.content = 2;
+				},
+				{ label: testLabel3 },
+			);
+			// Check that transactions were applied.
+			assert.equal(runTransactionResult1.success, true);
+			assert.equal(runTransactionResult2.success, true);
+			assert.equal(runTransactionResult3.success, true);
+
+			// Check that correct label was exposed.
+			assert.deepEqual(labels, [testLabel1, undefined, testLabel3]);
+		});
+
+		it("nested transactions only expose outer label", () => {
+			const view = getTestObjectView();
+
+			const labels: unknown[] = [];
+
+			view.checkout.events.on("changed", (meta) => {
+				labels.push(meta.label);
+			});
+
+			const outerLabel = "outerLabel";
+			const innerLabel1 = "innerLabel1";
+			const innerLabel2 = "innerLabel2";
+
+			const runTransactionResult = view.runTransaction(
+				() => {
+					view.root.content = 1;
+
+					// Nested transaction with different label
+					view.runTransaction(
+						() => {
+							view.root.content = 2;
+						},
+						{ label: innerLabel1 },
+					);
+
+					view.root.content = 3;
+
+					// Another nested transaction with different label
+					view.runTransaction(
+						() => {
+							view.root.content = 4;
+						},
+						{ label: innerLabel2 },
+					);
+				},
+				{ label: outerLabel },
+			);
+
+			// Check that transaction was applied.
+			assert.equal(runTransactionResult.success, true);
+			assert.equal(view.root.content, 4);
+
+			// Check that only the outer label was exposed, not the inner labels
+			assert.deepEqual(labels, [outerLabel]);
+		});
+
+		it("separate views maintain independent transaction labels", () => {
+			const view1 = getTestObjectView();
+			const view2 = getTestObjectView();
+
+			const labels1: unknown[] = [];
+			const labels2: unknown[] = [];
+
+			view1.checkout.events.on("changed", (meta) => {
+				labels1.push(meta.label);
+			});
+
+			view2.checkout.events.on("changed", (meta) => {
+				labels2.push(meta.label);
+			});
+
+			const label1 = "view1Label";
+			const label2 = "view2Label";
+
+			// Start a transaction in view1 with label1
+			view1.runTransaction(
+				() => {
+					view1.root.content = 1;
+
+					// Nested transaction in view2 with label2 (within view1's transaction)
+					view2.runTransaction(
+						() => {
+							view2.root.content = 100;
+						},
+						{ label: label2 },
+					);
+
+					view1.root.content = 2;
+				},
+				{ label: label1 },
+			);
+
+			// Check that view1 only shows its label
+			assert.deepEqual(labels1, [label1]);
+
+			// Check that view2 shows its own label (not view1's label)
+			assert.deepEqual(labels2, [label2]);
+		});
+
+		it("composes a LabelTree from nested transaction labels", () => {
+			const view = getTestObjectView();
+
+			let receivedLabels: TransactionLabels | undefined;
+			view.checkout.events.on("changed", (meta) => {
+				if (meta.isLocal) {
+					receivedLabels = meta.labels;
+				}
+			});
+
+			view.runTransaction(
+				() => {
+					view.runTransaction(
+						() => {
+							view.runTransaction(
+								() => {
+									view.root.content = 1;
+								},
+								{ label: "deep" },
+							);
+						},
+						{ label: "middle1" },
+					);
+					view.runTransaction(
+						() => {
+							view.root.content = 2;
+						},
+						{ label: "middle2" },
+					);
+				},
+				{ label: "outer" },
+			);
+
+			assert(receivedLabels !== undefined, "labels should be captured");
+			// Set-based lookups
+			assert.equal(receivedLabels.has("outer"), true);
+			assert.equal(receivedLabels.has("middle1"), true);
+			assert.equal(receivedLabels.has("deep"), true);
+			assert.equal(receivedLabels.has("middle2"), true);
+			assert.equal(receivedLabels.size, 4);
+			// Tree structure
+			assert(receivedLabels.tree !== undefined, "tree should be defined");
+			assert.equal(receivedLabels.tree.label, "outer");
+			assert.equal(receivedLabels.tree.sublabels.length, 2);
+			assert.equal(receivedLabels.tree.sublabels[0]?.label, "middle1");
+			assert.equal(receivedLabels.tree.sublabels[0]?.sublabels.length, 1);
+			assert.equal(receivedLabels.tree.sublabels[0]?.sublabels[0]?.label, "deep");
+			assert.equal(receivedLabels.tree.sublabels[1]?.label, "middle2");
+			assert.equal(receivedLabels.tree.sublabels[1]?.sublabels.length, 0);
+		});
+
+		it("creates a single-node LabelTree for a non-nested labeled transaction", () => {
+			const view = getTestObjectView();
+
+			let receivedLabels: TransactionLabels | undefined;
+			view.checkout.events.on("changed", (meta) => {
+				if (meta.isLocal) {
+					receivedLabels = meta.labels;
+				}
+			});
+
+			view.runTransaction(
+				() => {
+					view.root.content = 42;
+				},
+				{ label: "single" },
+			);
+
+			assert(receivedLabels !== undefined, "labels should be captured");
+			assert.equal(receivedLabels.has("single"), true);
+			assert.equal(receivedLabels.size, 1);
+			assert(receivedLabels.tree !== undefined, "tree should be defined");
+			assert.equal(receivedLabels.tree.label, "single");
+			assert.equal(receivedLabels.tree.sublabels.length, 0);
+		});
+
+		it("labels is an empty set with no tree when no labels are provided", () => {
+			const view = getTestObjectView();
+
+			let receivedLabels: TransactionLabels | undefined;
+			view.checkout.events.on("changed", (meta) => {
+				if (meta.isLocal) {
+					receivedLabels = meta.labels;
+				}
+			});
+
+			view.runTransaction(() => {
+				view.runTransaction(() => {
+					view.root.content = 99;
+				});
+			});
+
+			assert(receivedLabels !== undefined, "labels should be captured");
+			assert.equal(receivedLabels.size, 0);
+			assert.equal(receivedLabels.tree, undefined);
+		});
+
+		it("aborted transaction labels are excluded and subsequent siblings are correctly placed", () => {
+			const view = getTestObjectView();
+
+			let receivedLabels: TransactionLabels | undefined;
+			view.checkout.events.on("changed", (meta) => {
+				if (meta.isLocal) {
+					receivedLabels = meta.labels;
+				}
+			});
+
+			view.runTransaction(
+				() => {
+					// Committed nested transactions — closes happen at multiple levels.
+					view.runTransaction(
+						() => {
+							view.runTransaction(
+								() => {
+									view.root.content = 1;
+								},
+								{ label: "deep" },
+							);
+						},
+						{ label: "middle" },
+					);
+					// Aborted subtree with its own nested commits.
+					// After abort, the previously-closed "middle" node is re-exposed on the right spine.
+					view.runTransaction(
+						() => {
+							view.runTransaction(
+								() => {
+									view.root.content = 2;
+								},
+								{ label: "abortedInner" },
+							);
+							return { rollback: true };
+						},
+						{ label: "abortedOuter" },
+					);
+					// This transaction runs after the abort. It should be a sibling of "middle"
+					// under "outer", not a descendant of "deep".
+					view.runTransaction(
+						() => {
+							view.root.content = 3;
+						},
+						{ label: "after" },
+					);
+				},
+				{ label: "outer" },
+			);
+
+			assert(receivedLabels !== undefined, "labels should be captured");
+			// Set-based lookups
+			assert.equal(receivedLabels.has("middle"), true);
+			assert.equal(receivedLabels.has("deep"), true);
+			assert.equal(receivedLabels.has("after"), true);
+			assert.equal(receivedLabels.has("abortedOuter"), false);
+			assert.equal(receivedLabels.has("abortedInner"), false);
+			// Tree structure
+			assert(receivedLabels.tree !== undefined, "tree should be defined");
+			assert.equal(receivedLabels.tree.label, "outer");
+			assert.equal(receivedLabels.tree.sublabels.length, 2);
+			assert.equal(receivedLabels.tree.sublabels[0]?.label, "middle");
+			assert.equal(receivedLabels.tree.sublabels[0]?.sublabels.length, 1);
+			assert.equal(receivedLabels.tree.sublabels[0]?.sublabels[0]?.label, "deep");
+			assert.equal(receivedLabels.tree.sublabels[1]?.label, "after");
+		});
+
+		it("inner labels are surfaced with undefined root when outer transaction has no label", () => {
+			const view = getTestObjectView();
+
+			let receivedLabels: TransactionLabels | undefined;
+			view.checkout.events.on("changed", (meta) => {
+				if (meta.isLocal) {
+					receivedLabels = meta.labels;
+				}
+			});
+
+			view.runTransaction(() => {
+				view.runTransaction(
+					() => {
+						view.root.content = 1;
+					},
+					{ label: "inner" },
+				);
+			});
+
+			// When outer has no label but inner labels exist, the tree is present
+			// with an undefined root to surface the inner labels.
+			assert(receivedLabels !== undefined, "labels should be captured");
+			assert.equal(receivedLabels.has("inner"), true);
+			assert(receivedLabels.tree !== undefined, "tree should be defined");
+			assert.equal(receivedLabels.tree.label, undefined);
+			assert.equal(receivedLabels.tree.sublabels.length, 1);
+			assert.equal(receivedLabels.tree.sublabels[0]?.label, "inner");
 		});
 	});
 });

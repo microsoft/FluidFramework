@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { MongoManager } from "@fluidframework/server-services-core";
+import type { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import type { MongoManager } from "@fluidframework/server-services-core";
 import { Router } from "express";
-import { Provider } from "nconf";
+import type { Provider } from "nconf";
 
 import { queryParamToNumber } from "../../utils";
 

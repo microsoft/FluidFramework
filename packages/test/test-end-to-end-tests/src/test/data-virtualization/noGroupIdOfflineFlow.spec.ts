@@ -6,15 +6,13 @@
 import { strict as assert } from "assert";
 
 import { describeCompat } from "@fluid-private/test-version-utils";
-import type { IContainerExperimental } from "@fluidframework/container-loader/internal";
-import { type IContainerRuntimeOptions } from "@fluidframework/container-runtime/internal";
-import { type IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
+import { asLegacyAlpha, type ContainerAlpha } from "@fluidframework/container-loader/internal";
+import type { IContainerRuntimeOptions } from "@fluidframework/container-runtime/internal";
+import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import { SharedCounter } from "@fluidframework/counter/internal";
-import {
-	type ITestObjectProvider,
-	createTestConfigProvider,
-} from "@fluidframework/test-utils/internal";
+import type { ISharedDirectory } from "@fluidframework/map/internal";
+import type { ITestObjectProvider } from "@fluidframework/test-utils/internal";
 
 describeCompat("Offline Attach Ops", "NoCompat", (getTestObjectProvider, apis) => {
 	const { DataObjectFactory, DataObject } = apis.dataRuntime;
@@ -22,11 +20,11 @@ describeCompat("Offline Attach Ops", "NoCompat", (getTestObjectProvider, apis) =
 
 	// A Test Data Object that exposes some basic functionality.
 	class TestDataObject extends DataObject {
-		public get _root() {
+		public get _root(): ISharedDirectory {
 			return this.root;
 		}
 
-		public get containerRuntime() {
+		public get containerRuntime(): IContainerRuntime {
 			return this.context.containerRuntime as IContainerRuntime;
 		}
 
@@ -66,17 +64,14 @@ describeCompat("Offline Attach Ops", "NoCompat", (getTestObjectProvider, apis) =
 	});
 
 	let provider: ITestObjectProvider;
-	const configProvider = createTestConfigProvider({
-		"Fluid.Container.enableOfflineLoad": true,
-	});
 	beforeEach("setup", async function () {
 		provider = getTestObjectProvider();
 	});
 
 	it("Can create loadingGroupId", async () => {
-		const container: IContainerExperimental = await provider.createContainer(runtimeFactory, {
-			configProvider,
-		});
+		const container: ContainerAlpha = asLegacyAlpha(
+			await provider.createContainer(runtimeFactory),
+		);
 		const mainObject = (await container.getEntryPoint()) as TestDataObject;
 
 		// Disconnect and create child object attached stashed ops
@@ -85,15 +80,11 @@ describeCompat("Offline Attach Ops", "NoCompat", (getTestObjectProvider, apis) =
 		const childObject = await dataObjectFactory.createInstance(mainObject.containerRuntime);
 		mainObject._root.set("testObject2", childObject.handle);
 
-		const serializedState = await container.closeAndGetPendingLocalState?.();
+		const serializedState = await container.getPendingLocalState();
+		container.close();
 		assert(serializedState !== undefined, "serializedState should not be undefined");
 
 		// This should not hang
-		await provider.loadContainer(
-			runtimeFactory,
-			{ configProvider },
-			undefined,
-			serializedState,
-		);
+		await provider.loadContainer(runtimeFactory, undefined, undefined, serializedState);
 	});
 });

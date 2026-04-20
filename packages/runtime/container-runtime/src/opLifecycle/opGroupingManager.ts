@@ -3,19 +3,26 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+import type { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
-import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
+import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import {
 	createChildLogger,
 	type ITelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
 
-import {
-	type LocalEmptyBatchPlaceholder,
-	type OutboundBatch,
-	type OutboundSingletonBatch,
+import type {
+	LocalEmptyBatchPlaceholder,
+	OutboundBatch,
+	OutboundSingletonBatch,
 } from "./definitions.js";
+
+/**
+ * The number of ops in a batch above which the batch is considered "large"
+ * for telemetry purposes. Used by both {@link OpGroupingManager} (GroupLargeBatch event)
+ * and as the default staging-mode auto-flush threshold.
+ */
+export const largeBatchThreshold = 1000;
 
 /**
  * Grouping makes assumptions about the shape of message contents. This interface codifies those assumptions, but does not validate them.
@@ -53,7 +60,7 @@ export interface OpGroupingManagerConfig {
  */
 export interface EmptyGroupedBatch {
 	type: typeof OpGroupingManager.groupedBatchOp;
-	contents: readonly unknown[];
+	contents: readonly [];
 }
 
 export class OpGroupingManager {
@@ -72,7 +79,7 @@ export class OpGroupingManager {
 	 * This is needed as a placeholder if a batch becomes empty on resubmit, but we are tracking batch IDs.
 	 * @param resubmittingBatchId - batch ID of the resubmitting batch
 	 * @param referenceSequenceNumber - reference sequence number
-	 * @returns - The outbound batch as well as the interior placeholder message
+	 * @returns The outbound batch as well as the interior placeholder message
 	 */
 	public createEmptyGroupedBatch(
 		resubmittingBatchId: string,
@@ -112,7 +119,7 @@ export class OpGroupingManager {
 	 *
 	 * If the batch already has only 1 message, it is returned as-is.
 	 *
-	 * @remarks - Remember that a BatchMessage has its content JSON serialized, so the incoming batch message contents
+	 * @remarks Remember that a BatchMessage has its content JSON serialized, so the incoming batch message contents
 	 * must be parsed first, and then the type and contents mentioned above are hidden in that JSON serialization.
 	 */
 	public groupBatch(batch: OutboundBatch): OutboundSingletonBatch {
@@ -123,7 +130,10 @@ export class OpGroupingManager {
 			return batch as OutboundSingletonBatch;
 		}
 
-		if (batch.messages.length >= 1000) {
+		// Use > (not >=) so that batches flushed exactly at the staging-mode
+		// auto-flush threshold (which defaults to largeBatchThreshold) don't
+		// trigger this event. Only genuinely oversized batches are logged.
+		if (batch.messages.length > largeBatchThreshold) {
 			this.logger.sendTelemetryEvent({
 				eventName: "GroupLargeBatch",
 				length: batch.messages.length,
@@ -132,11 +142,11 @@ export class OpGroupingManager {
 			});
 		}
 		// We expect this will be on the first message, if present at all.
-		let groupedBatchId;
+		let groupedBatchId: unknown;
 		for (const message of batch.messages) {
-			if (message.metadata) {
+			if (message.metadata !== undefined) {
 				const { batch: _batch, batchId, ...rest } = message.metadata;
-				if (batchId) {
+				if (batchId !== undefined) {
 					groupedBatchId = batchId;
 				}
 				assert(Object.keys(rest).length === 0, 0x5dd /* cannot group ops with metadata */);
@@ -146,7 +156,10 @@ export class OpGroupingManager {
 		const serializedContent = JSON.stringify({
 			type: OpGroupingManager.groupedBatchOp,
 			contents: batch.messages.map<IGroupedMessage>((message) => ({
-				contents: message.contents === undefined ? undefined : JSON.parse(message.contents),
+				contents:
+					message.contents === undefined
+						? undefined
+						: (JSON.parse(message.contents) as unknown),
 				metadata: message.metadata,
 				compression: message.compression,
 			})),

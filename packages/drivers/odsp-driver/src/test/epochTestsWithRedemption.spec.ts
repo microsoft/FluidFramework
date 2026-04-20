@@ -6,9 +6,9 @@
 import { strict as assert } from "node:assert";
 
 import { Deferred } from "@fluidframework/core-utils/internal";
+import type { IEntry } from "@fluidframework/driver-definitions/internal";
 import {
-	IEntry,
-	IOdspResolvedUrl,
+	type IOdspResolvedUrl,
 	OdspErrorTypes,
 	snapshotKey,
 } from "@fluidframework/odsp-driver-definitions/internal";
@@ -19,7 +19,7 @@ import { LocalPersistentCache } from "../odspCache.js";
 import { getHashedDocumentId } from "../odspPublicUtils.js";
 
 import {
-	MockResponse,
+	type MockResponse,
 	mockFetchMultiple,
 	mockFetchSingle,
 	notFound,
@@ -68,6 +68,7 @@ describe("Tests for Epoch Tracker With Redemption", () => {
 			{
 				docId: hashedDocumentId,
 				resolvedUrl,
+				fileVersion: undefined,
 			},
 			logger.toTelemetryLogger(),
 		);

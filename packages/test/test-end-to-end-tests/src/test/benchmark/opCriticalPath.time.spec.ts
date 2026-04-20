@@ -59,7 +59,14 @@ describeCompat(
 
 		let testId = 0;
 
-		const setup = async () => {
+		beforeEach("check driver compatibility", function () {
+			provider = getTestObjectProvider();
+			if (provider.driver.type === "r11s" || provider.driver.type === "routerlicious") {
+				this.skip(); // This test triggers 504 errors on AFR occasionally. The test intentionally ignores server interactions anyway.
+			}
+		});
+
+		const setup = async (): Promise<void> => {
 			testId++;
 			provider = getTestObjectProvider();
 			const loader = provider.makeTestLoader(testContainerConfig);
@@ -79,7 +86,7 @@ describeCompat(
 			minBatchCount: 100, // Since we're only running one iteration per batch, we need to run a lot of batches to get a good sample (even if it takes longer than default 5s)
 		};
 
-		function sendOps(label: string) {
+		function sendOps(label: string): void {
 			Array.from({ length: batchSize }).forEach((_, i) => {
 				defaultDataStore._root.set(`key-${i}-${label}`, `value-${label}`);
 			});
@@ -93,7 +100,8 @@ describeCompat(
 			before: async () => {
 				await setup();
 			},
-			benchmarkFnAsync: async () => {
+			// eslint-disable-next-line object-shorthand
+			benchmarkFnAsync: async function () {
 				sendOps("A");
 				// There's no event fired for "flush" so the simplest thing is to wait for the outbound queue to be idle.
 				// This should not add much time, and is part of the real flow so it's ok to include it in the benchmark.

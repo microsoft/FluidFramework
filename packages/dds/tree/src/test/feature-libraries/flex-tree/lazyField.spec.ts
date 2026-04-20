@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable import/no-internal-modules */
+/* eslint-disable import-x/no-internal-modules */
 
 import { strict as assert } from "node:assert";
 
@@ -35,7 +35,17 @@ import {
 	isFlexTreeNode,
 	mapTreeFromCursor,
 } from "../../../feature-libraries/index.js";
+import { JsonAsTree } from "../../../jsonDomainSchema.js";
+import {
+	numberSchema,
+	SchemaFactory,
+	stringSchema,
+	toInitialSchema,
+	restrictiveStoredSchemaGenerationOptions,
+	toStoredSchema,
+} from "../../../simple-tree/index.js";
 import { brand, disposeSymbol } from "../../../util/index.js";
+import { singleJsonCursor } from "../../json/index.js";
 import {
 	fieldCursorFromInsertable,
 	flexTreeViewWithContent,
@@ -49,10 +59,6 @@ import {
 	readonlyTreeWithContent,
 	rootFieldAnchor,
 } from "./utils.js";
-import { numberSchema, SchemaFactory, stringSchema } from "../../../simple-tree/index.js";
-import { getStoredSchema, toStoredSchema } from "../../../simple-tree/toStoredSchema.js";
-import { singleJsonCursor } from "../../json/index.js";
-import { JsonAsTree } from "../../../jsonDomainSchema.js";
 
 const detachedField: FieldKey = brand("detached");
 const detachedFieldAnchor: FieldAnchor = { parent: undefined, fieldKey: detachedField };
@@ -64,7 +70,7 @@ class TestLazyField extends LazyField {}
 
 describe("LazyField", () => {
 	it("LazyField implementations do not allow edits to detached trees", () => {
-		const schema = toStoredSchema(JsonAsTree.JsonObject);
+		const schema = toInitialSchema(JsonAsTree.JsonObject);
 		const forest = forestWithContent({
 			schema,
 			initialTree: singleJsonCursor({}),
@@ -87,13 +93,11 @@ describe("LazyField", () => {
 		cursor.free();
 		assert.throws(
 			() => optionalField.editor.set(undefined, optionalField.length === undefined),
-			(e: Error) =>
-				validateAssertionError(e, /only allowed on fields with TreeStatus.InDocument status/),
+			validateAssertionError(/only allowed on fields with TreeStatus.InDocument status/),
 		);
 		assert.throws(
 			() => valueField.editor.set(mapTreeFromCursor(singleJsonCursor({}))),
-			(e: Error) =>
-				validateAssertionError(e, /only allowed on fields with TreeStatus.InDocument status/),
+			validateAssertionError(/only allowed on fields with TreeStatus.InDocument status/),
 		);
 	});
 
@@ -132,7 +136,7 @@ describe("LazyField", () => {
 		class Struct extends factory.object("Struct", {
 			foo: factory.number,
 		}) {}
-		const schema = toStoredSchema(Struct);
+		const schema = toInitialSchema(Struct);
 
 		const { context, cursor } = readonlyTreeWithContent({
 			schema: Struct,
@@ -167,7 +171,7 @@ describe("LazyField", () => {
 
 	it("Disposes when context is disposed", () => {
 		const factory = new SchemaFactory("LazyField");
-		const schema = toStoredSchema(factory.number);
+		const schema = toInitialSchema(factory.number);
 		const forest = forestWithContent({
 			schema,
 			initialTree: fieldCursorFromInsertable(SchemaFactory.number, 5),
@@ -190,7 +194,7 @@ describe("LazyField", () => {
 	it("Disposes when parent is disposed", () => {
 		const factory = new SchemaFactory("LazyField");
 		class Holder extends factory.object("holder", { f: factory.number }) {}
-		const schema = toStoredSchema(Holder);
+		const schema = toInitialSchema(Holder);
 		const forest = forestWithContent({
 			schema,
 			initialTree: fieldCursorFromInsertable(Holder, { f: 5 }),
@@ -214,7 +218,7 @@ describe("LazyField", () => {
 	it("Disposes when context then parent is disposed", () => {
 		const factory = new SchemaFactory("LazyField");
 		class Holder extends factory.object("holder", { f: factory.number }) {}
-		const schema = toStoredSchema(Holder);
+		const schema = toInitialSchema(Holder);
 		const forest = forestWithContent({
 			schema,
 			initialTree: fieldCursorFromInsertable(Holder, { f: 5 }),
@@ -300,7 +304,7 @@ describe("LazyField", () => {
 	describe("LazyOptionalField", () => {
 		const builder = new SchemaFactory("test");
 		const schema = builder.optional(builder.number);
-		const storedSchema = toStoredSchema(schema);
+		const storedSchema = toInitialSchema(schema);
 		const rootSchema = storedSchema.rootFieldSchema;
 
 		describe("Field with value", () => {
@@ -365,32 +369,29 @@ describe("LazyField", () => {
 				schema: SchemaFactory.optional(JsonAsTree.Tree),
 				initialTree: 5,
 			});
-			assert(view.flexTree.is(FieldKinds.optional));
-			assert.equal(view.flexTree.content, 5);
-			view.flexTree.editor.set(
-				mapTreeFromCursor(singleJsonCursor(6)),
-				view.flexTree.length === 0,
-			);
-			assert.equal(view.flexTree.content, 6);
-			view.flexTree.editor.set(undefined, view.flexTree.length === 0);
-			assert.equal(view.flexTree.content, undefined);
-			view.flexTree.editor.set(
+			assert(view.root.is(FieldKinds.optional));
+			assert.equal(view.root.content, 5);
+			view.root.editor.set(mapTreeFromCursor(singleJsonCursor(6)), view.root.length === 0);
+			assert.equal(view.root.content, 6);
+			view.root.editor.set(undefined, view.root.length === 0);
+			assert.equal(view.root.content, undefined);
+			view.root.editor.set(
 				mapTreeFromCursor(
 					cursorForJsonableTreeNode({
 						type: brand(numberSchema.identifier),
 						value: 7,
 					}),
 				),
-				view.flexTree.length === 0,
+				view.root.length === 0,
 			);
-			assert.equal(view.flexTree.content, 7);
+			assert.equal(view.root.content, 7);
 		});
 	});
 
 	describe("LazyValueField", () => {
 		const builder = new SchemaFactory("test");
 		const schema = builder.required(builder.string);
-		const schemaStored = toStoredSchema(schema);
+		const schemaStored = toInitialSchema(schema);
 		const rootSchema = schemaStored.rootFieldSchema;
 		const initialTree = "Hello world";
 
@@ -427,16 +428,16 @@ describe("LazyField", () => {
 				schema,
 				initialTree: "X",
 			});
-			assert(view.flexTree.is(FieldKinds.required));
-			assert.equal(view.flexTree.content, "X");
-			view.flexTree.editor.set(mapTreeFromCursor(singleJsonCursor("Y")));
-			assert.equal(view.flexTree.content, "Y");
+			assert(view.root.is(FieldKinds.required));
+			assert.equal(view.root.content, "X");
+			view.root.editor.set(mapTreeFromCursor(singleJsonCursor("Y")));
+			assert.equal(view.root.content, "Y");
 			const zCursor = cursorForJsonableTreeNode({
 				type: brand(stringSchema.identifier),
 				value: "Z",
 			});
-			view.flexTree.editor.set(mapTreeFromCursor(zCursor));
-			assert.equal(view.flexTree.content, "Z");
+			view.root.editor.set(mapTreeFromCursor(zCursor));
+			assert.equal(view.root.content, "Z");
 		});
 	});
 
@@ -447,8 +448,8 @@ describe("LazyField", () => {
 			persistedMetadata: undefined,
 		};
 		const schema: TreeStoredSchema = {
+			...toStoredSchema(numberSchema, restrictiveStoredSchemaGenerationOptions),
 			rootFieldSchema: rootSchema,
-			nodeSchema: new Map([[brand(numberSchema.identifier), getStoredSchema(numberSchema)]]),
 		};
 
 		/**

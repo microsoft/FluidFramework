@@ -18,13 +18,14 @@ resources:
       - release/*
       - main
       - next
-      - lts
+  repositories:
+  - repository: ff_pipeline_host
+    type: git
+    name: ff_pipeline_host
 
 variables:
 - template: /tools/pipelines/templates/include-vars-telemetry-generator.yml@self
 - group: prague-key-vault
-- name: testWorkspace
-  value: $(Pipeline.Workspace)/test
 - name: testPackage
   value: "@fluid-internal/test-service-load"
   readonly: true
@@ -32,29 +33,25 @@ variables:
   value: 'RealStressService'
   readonly: true
 # This is a test pipeline, not a build one, so we don't need to run CodeQL tasks
-- name: DisableCodeQL
+# Note that using this variable only works for non-1ES-template pipelines.
+- name: Codeql.SkipTaskAutoInjection
   value: true
 
-lockBehavior: sequential
 stages:
   # stress tests odsp
   - template: /tools/pipelines/templates/include-test-real-service.yml@self
     parameters:
       stageId: stress_tests_odsp
       stageDisplayName: Stress tests - Odsp
+      odspTenantType: prod
       poolBuild: Large-eastus2
       testPackage: ${{ variables.testPackage }}
-      testWorkspace: ${{ variables.testWorkspace }}
       artifactBuildId: $(resources.pipeline.client.runID)
       timeoutInMinutes: 120
       testCommand: start:odsp
       skipTestResultPublishing: true
       pipelineIdentifierForTelemetry: ${{ variables.pipelineIdentifierForTelemetry }}
-      stageVariables:
-        - group: stress-odsp-lock
       env:
-        login__microsoft__clientId: $(login-microsoft-clientId)
-        login__odsp__test__tenants: $(automation-stress-login-odsp-test-tenants)
         FLUID_TEST_LOGGER_PKG_SPECIFIER: '@ff-internal/aria-logger' # Contains getTestLogger impl to inject
         FLUID_LOGGER_PROPS: '{ "displayName": "${{variables.pipelineIdentifierForTelemetry}}"}'
 
@@ -63,19 +60,15 @@ stages:
     parameters:
       stageId: stress_tests_odspdf
       stageDisplayName: Stress tests - Odspdf
+      odspTenantType: dogfood
       poolBuild: Large-eastus2
       testPackage: ${{ variables.testPackage }}
-      testWorkspace: ${{ variables.testWorkspace }}
       artifactBuildId: $(resources.pipeline.client.runID)
       timeoutInMinutes: 120
       testCommand: start:odspdf
       skipTestResultPublishing: true
       pipelineIdentifierForTelemetry: ${{ variables.pipelineIdentifierForTelemetry }}
-      stageVariables:
-        - group: stress-odspdf-lock
       env:
-        login__microsoft__clientId: $(login-microsoft-clientId)
-        login__odspdf__test__tenants: $(automation-stress-login-odspdf-test-tenants)
         FLUID_TEST_LOGGER_PKG_SPECIFIER: '@ff-internal/aria-logger' # Contains getTestLogger impl to inject
         FLUID_LOGGER_PROPS: '{ "displayName": "${{variables.pipelineIdentifierForTelemetry}}"}'
 
@@ -86,7 +79,6 @@ stages:
       stageDisplayName: Stress tests - tinylicious
       poolBuild: Large-eastus2
       testPackage: ${{ variables.testPackage }}
-      testWorkspace: ${{ variables.testWorkspace }}
       artifactBuildId: $(resources.pipeline.client.runID)
       timeoutInMinutes: 120
       testCommand: start:t9s
@@ -106,10 +98,10 @@ stages:
       stageDisplayName: Stress tests - AFR
       poolBuild: Large-eastus2
       testPackage: ${{ variables.testPackage }}
-      testWorkspace: ${{ variables.testWorkspace }}
       artifactBuildId: $(resources.pipeline.client.runID)
       timeoutInMinutes: 120
       testCommand: start:frs
+      lockBehavior: sequential
       skipTestResultPublishing: true
       pipelineIdentifierForTelemetry: ${{ variables.pipelineIdentifierForTelemetry }}
       stageVariables:
@@ -126,10 +118,10 @@ stages:
       stageDisplayName: Stress tests - AFR canary
       poolBuild: Large-eastus2
       testPackage: ${{ variables.testPackage }}
-      testWorkspace: ${{ variables.testWorkspace }}
       artifactBuildId: $(resources.pipeline.client.runID)
       timeoutInMinutes: 120
       testCommand: start:frs:canary
+      lockBehavior: sequential
       skipTestResultPublishing: true
       pipelineIdentifierForTelemetry: ${{ variables.pipelineIdentifierForTelemetry }}
       stageVariables:

@@ -17,7 +17,7 @@ const testSentences = [
 	["my"],
 ];
 
-const wordArrayToWordCount = (words: string[]) => {
+const wordArrayToWordCount = (words: string[]): Record<string, number> => {
 	const result: Record<string, number> = {};
 	words.forEach((word) => {
 		if (result[word]) {

@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { ISharedMap, IValueChanged } from "@fluidframework/map/internal";
+import type { ISharedMap, IValueChanged } from "@fluidframework/map/internal";
 
-import { IRevertible, UndoRedoStackManager } from "./undoRedoStackManager.js";
+import type { IRevertible, UndoRedoStackManager } from "./undoRedoStackManager.js";
 
 /**
  * A shared map undo redo handler that will add all local map changes to the provided

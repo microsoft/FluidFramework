@@ -12,6 +12,8 @@
 		"types": ["node", "mocha"],
 		"noUncheckedIndexedAccess": false,
 		"exactOptionalPropertyTypes": false,
+		"declaration": true,
+		"declarationMap": true,
 	},
 	"include": ["./**/*"],
 	"references": [

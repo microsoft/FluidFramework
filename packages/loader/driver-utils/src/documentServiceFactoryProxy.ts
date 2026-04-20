@@ -3,9 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
-import { ISummaryTree } from "@fluidframework/driver-definitions";
-import {
+import type { ILayerCompatDetails } from "@fluid-internal/client-utils";
+import type { ITelemetryBaseLogger, FluidObject } from "@fluidframework/core-interfaces";
+import type { ISummaryTree } from "@fluidframework/driver-definitions";
+import type {
 	IDocumentService,
 	IDocumentServiceFactory,
 	IResolvedUrl,
@@ -21,6 +22,14 @@ export abstract class DocumentServiceFactoryProxy implements IDocumentServiceFac
 
 	public get serviceFactory(): IDocumentServiceFactory {
 		return this._serviceFactory;
+	}
+
+	/**
+	 * The compatibility details of the base Driver layer that is exposed to the Loader layer
+	 * for validating Loader-Driver compatibility.
+	 */
+	public get ILayerCompatDetails(): ILayerCompatDetails | undefined {
+		return (this._serviceFactory as FluidObject<ILayerCompatDetails>).ILayerCompatDetails;
 	}
 
 	public async createContainer(

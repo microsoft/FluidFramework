@@ -13,6 +13,9 @@ import {
 	OdspTestDriver,
 	createFluidTestDriver,
 	generateOdspHostStoragePolicy,
+	type LocalServerTestDriver,
+	type RouterliciousTestDriver,
+	type TinyliciousTestDriver,
 } from "@fluid-private/test-drivers";
 import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions/internal";
 import {
@@ -24,6 +27,7 @@ import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interface
 import { assert } from "@fluidframework/core-utils/internal";
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 import { LocalCodeLoader } from "@fluidframework/test-utils/internal";
+import { OdspTokenManager } from "@fluidframework/tool-utils/internal";
 
 import { createFluidExport, type ILoadTest, type IRunConfig } from "./loadTestDataStore.js";
 import {
@@ -42,8 +46,9 @@ const codeDetails: IFluidCodeDetails = {
 	config: {},
 };
 
-export const createCodeLoader = (options?: IContainerRuntimeOptions | undefined) =>
-	new LocalCodeLoader([[codeDetails, createFluidExport(options)]]);
+export const createCodeLoader = (
+	options?: IContainerRuntimeOptions | undefined,
+): LocalCodeLoader => new LocalCodeLoader([[codeDetails, createFluidExport(options)]]);
 
 export async function initialize(
 	testDriver: ITestDriver,
@@ -52,7 +57,7 @@ export async function initialize(
 	verbose: boolean,
 	logger: ITelemetryLoggerExt,
 	requestedTestId?: string,
-) {
+): Promise<string> {
 	const random = makeRandom(seed);
 	const optionsOverride = getOptionOverride(
 		testConfig,
@@ -122,15 +127,18 @@ export async function createTestDriver(
 	endpointName: DriverEndpoint | undefined,
 	seed: number,
 	runId: number | undefined,
-	supportsBrowserAuth: boolean,
-) {
+): Promise<
+	LocalServerTestDriver | TinyliciousTestDriver | RouterliciousTestDriver | OdspTestDriver
+> {
 	const options = generateOdspHostStoragePolicy(seed);
 	return createFluidTestDriver(driver, {
 		odsp: {
 			directory: "stress",
 			options: options[(runId ?? seed) % options.length],
-			supportsBrowserAuth,
 			odspEndpointName: endpointName,
+			// Use a memory-only token manager to avoid cross-process file lock contention
+			// when many stress test workers run simultaneously.
+			tokenManager: new OdspTokenManager(),
 		},
 		r11s: {
 			r11sEndpointName: endpointName,
@@ -154,7 +162,7 @@ export const globalConfigurations: Record<string, ConfigTypes> = {
  * in the global test configuration {@link globalConfigurations}.
  *
  * @param configs - the supplied configs
- * @returns - an instance of a config provider
+ * @returns an instance of a config provider
  */
 export const configProvider = (configs: Record<string, ConfigTypes>): IConfigProviderBase => {
 	return {
@@ -162,7 +170,7 @@ export const configProvider = (configs: Record<string, ConfigTypes>): IConfigPro
 	};
 };
 
-export function printStatus(runConfig: IRunConfig, message: string) {
+export function printStatus(runConfig: IRunConfig, message: string): void {
 	if (runConfig.verbose) {
 		console.log(`${runConfig.runId.toString().padStart(3)}> ${message}`);
 	}

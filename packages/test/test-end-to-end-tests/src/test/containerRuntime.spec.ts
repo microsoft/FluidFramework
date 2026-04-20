@@ -8,14 +8,15 @@ import { strict as assert } from "assert";
 import { describeCompat, ITestDataObject } from "@fluid-private/test-version-utils";
 import { IContainer } from "@fluidframework/container-definitions/internal";
 import { CompressionAlgorithms } from "@fluidframework/container-runtime/internal";
+import type { ISharedDirectory } from "@fluidframework/map/internal";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 import {
 	type ITestContainerConfig,
 	ITestObjectProvider,
 	getContainerEntryPointBackCompat,
 } from "@fluidframework/test-utils/internal";
-// eslint-disable-next-line import/no-internal-modules
-import semverGte from "semver/functions/gte.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import semverGt from "semver/functions/gt.js";
 
 import { pkgVersion } from "../packageVersion.js";
 
@@ -27,20 +28,20 @@ describeCompat(
 		let entry: TestDataObject;
 
 		class TestDataObject extends apis.dataRuntime.DataObject {
-			public get root() {
+			public get root(): ISharedDirectory {
 				return super.root;
 			}
 		}
 
-		function generateStringOfSize(sizeInBytes: number) {
+		function generateStringOfSize(sizeInBytes: number): string {
 			return new Array(sizeInBytes + 1).join("0");
 		}
 
-		async function loadContainer(options: ITestContainerConfig) {
+		async function loadContainer(options: ITestContainerConfig): Promise<IContainer> {
 			return provider.loadTestContainer(options);
 		}
 
-		async function getEntryPoint(container: IContainer) {
+		async function getEntryPoint(container: IContainer): Promise<TestDataObject> {
 			return getContainerEntryPointBackCompat<TestDataObject>(container);
 		}
 
@@ -52,7 +53,7 @@ describeCompat(
 			explicitSchemaControl: boolean,
 			compression: boolean,
 			chunking: boolean,
-		) {
+		): Promise<void> {
 			let crash = false;
 			let crash2 = false;
 			if (provider.type === "TestObjectProviderWithVersionedLoad") {
@@ -128,6 +129,9 @@ describeCompat(
 					enableGroupedBatching: compression, // Compression w/o grouping is not supported
 					chunkSizeInBytes: chunking ? 200 : Infinity,
 				},
+				// We set minVersionForCollab to 2.0.0 so we can test schema control with older clients
+				// in cross-client compat tests.
+				minVersionForCollab: "2.0.0",
 			};
 			const container = await provider.makeTestContainer(options);
 			entry = await getEntryPoint(container);
@@ -198,11 +202,11 @@ describeCompat(
 describeCompat("Id Compressor Schema change", "NoCompat", (getTestObjectProvider, apis) => {
 	let provider: ITestObjectProvider;
 
-	async function loadContainer(options: ITestContainerConfig) {
+	async function loadContainer(options: ITestContainerConfig): Promise<IContainer> {
 		return provider.loadTestContainer(options);
 	}
 
-	async function getEntryPoint(container: IContainer) {
+	async function getEntryPoint(container: IContainer): Promise<ITestDataObject> {
 		return getContainerEntryPointBackCompat<ITestDataObject>(container);
 	}
 
@@ -218,7 +222,7 @@ describeCompat("Id Compressor Schema change", "NoCompat", (getTestObjectProvider
 		await testUpgrade(true);
 	});
 
-	async function testUpgrade(explicitSchemaControl: boolean) {
+	async function testUpgrade(explicitSchemaControl: boolean): Promise<void> {
 		const options: ITestContainerConfig = {
 			runtimeOptions: {
 				explicitSchemaControl: true,
@@ -302,17 +306,13 @@ describeCompat(
 		 * we detect that a client tries to connect to a document that has a
 		 * minVersionForCollab that is greater than that clients's runtime version.
 		 *
-		 *
-		 * TODO: This test should be unskipped after the next release. We need to wait
-		 * because we need two different runtime versions that both have the
-		 * minVersionForCollab warning logic.
-		 * See ADO:41353
+		 * TODO: Test will be enabled when AB#50563 is resolved.
 		 */
 		it.skip("sends a warning telemetry event for clients less than minVersionForCollab", async function () {
 			const releaseMinVersionForCollabWarningAdded = "2.43.0";
 			if (
 				apis.containerRuntimeForLoading === undefined ||
-				semverGte(
+				semverGt(
 					releaseMinVersionForCollabWarningAdded,
 					apis.containerRuntimeForLoading.version,
 				) ||
@@ -356,9 +356,9 @@ describeCompat(
 			logger.assertMatchAny(
 				[
 					{
-						eventName: "fluid:telemetry:ContainerRuntime:MinVersionForCollabWarning",
+						eventName: "fluid:telemetry:MinVersionForCollabWarning",
 						category: "generic",
-						msg: `WARNING: The version of Fluid Framework used by this client (${pkgVersion}) is not supported by this document! Please upgrade to version ${apis.containerRuntimeForLoading.version} or later to ensure compatibility.`,
+						message: `WARNING: The version of Fluid Framework used by this client (${apis.containerRuntimeForLoading.version}) is not supported by this document! Please upgrade to version ${pkgVersion} or later to ensure compatibility.`,
 					},
 				],
 				"MinVersionForCollabWarning should be logged",

@@ -6,26 +6,25 @@
 import { strict as assert } from "node:assert";
 
 import type {
+	FluidLayer,
 	ILayerCompatDetails,
 	ILayerCompatSupportRequirements,
 } from "@fluid-internal/client-utils";
 import type { ICriticalContainerError } from "@fluidframework/container-definitions/internal";
+import type { ITelemetryBaseProperties } from "@fluidframework/core-interfaces/internal";
+import type { IResolvedUrl, IUrlResolver } from "@fluidframework/driver-definitions/internal";
 import {
-	FluidErrorTypes,
-	type ITelemetryBaseProperties,
-} from "@fluidframework/core-interfaces/internal";
-import {
-	type IResolvedUrl,
-	type IUrlResolver,
-} from "@fluidframework/driver-definitions/internal";
-import { UsageError } from "@fluidframework/telemetry-utils/internal";
+	createChildLogger,
+	createChildMonitoringContext,
+	isLayerIncompatibilityError,
+} from "@fluidframework/telemetry-utils/internal";
 import Sinon from "sinon";
 
 import { Loader } from "../loader.js";
 import {
-	driverSupportRequirements,
+	driverSupportRequirementsForLoader,
 	loaderCoreCompatDetails,
-	runtimeSupportRequirements,
+	runtimeSupportRequirementsForLoader,
 	validateDriverCompatibility,
 	validateRuntimeCompatibility,
 } from "../loaderLayerCompatState.js";
@@ -47,56 +46,62 @@ type ILayerCompatSupportRequirementsOverride = Omit<
 function validateFailureProperties(
 	error: Error,
 	isGenerationCompatible: boolean,
-	layerGeneration: number,
-	layerType: "Runtime" | "Driver",
+	incompatibleLayerGeneration: number,
+	incompatibleLayer: FluidLayer,
 	unsupportedFeatures?: string[],
 ): boolean {
-	assert(error instanceof UsageError, "The error should be a UsageError");
+	assert(isLayerIncompatibilityError(error), "Error should be a layerIncompatibilityError");
+	assert(typeof error.details === "string", "Error details should be present");
+	const detailedProperties = JSON.parse(error.details) as ITelemetryBaseProperties;
 	assert.strictEqual(
-		error.errorType,
-		FluidErrorTypes.usageError,
-		"Error type should be usageError",
-	);
-	const telemetryProps = error.getTelemetryProperties();
-	assert(typeof telemetryProps.errorDetails === "string", "Error details should be present");
-	const properties = JSON.parse(telemetryProps.errorDetails) as ITelemetryBaseProperties;
-	assert.strictEqual(
-		properties.isGenerationCompatible,
+		detailedProperties.isGenerationCompatible,
 		isGenerationCompatible,
 		"Generation compatibility not as expected",
 	);
-	assert.strictEqual(properties.loaderVersion, pkgVersion, "Loader version not as expected");
+
+	assert.strictEqual(error.layer, "loader", "Layer type not as expected");
 	assert.strictEqual(
-		properties.loaderGeneration,
+		error.incompatibleLayer,
+		incompatibleLayer,
+		"Incompatible layer type not as expected",
+	);
+
+	assert.strictEqual(error.layerVersion, pkgVersion, "Loader version not as expected");
+	assert.strictEqual(
+		detailedProperties.layerGeneration,
 		loaderCoreCompatDetails.generation,
 		"Loader generation not as expected",
 	);
 	assert.deepStrictEqual(
-		properties.unsupportedFeatures,
+		detailedProperties.unsupportedFeatures,
 		unsupportedFeatures,
 		"Unsupported features not as expected",
 	);
 
-	if (layerType === "Runtime") {
-		assert.strictEqual(
-			properties.runtimeVersion,
-			pkgVersion,
-			"Runtime version not as expected",
-		);
-		assert.strictEqual(
-			properties.runtimeGeneration,
-			layerGeneration,
-			"Runtime generation not as expected",
-		);
-	} else {
-		assert.strictEqual(properties.driverVersion, pkgVersion, "Driver version not as expected");
-		assert.strictEqual(
-			properties.driverGeneration,
-			layerGeneration,
-			"Driver generation not as expected",
-		);
-	}
+	assert.strictEqual(
+		error.incompatibleLayerVersion,
+		pkgVersion,
+		`${incompatibleLayer} version not as expected`,
+	);
+	assert.strictEqual(
+		detailedProperties.incompatibleLayerGeneration,
+		incompatibleLayerGeneration,
+		`${incompatibleLayer} generation not as expected`,
+	);
 	return true;
+}
+
+function validateDisposeCall(
+	layerType: "runtime" | "driver",
+	disposeFn: Sinon.SinonSpy,
+): void {
+	if (layerType === "runtime") {
+		// In case of "Runtime", the dispose is not called during validation. It is called as part of the overall
+		// container creation / load.
+		assert(disposeFn.notCalled, `Dispose should not be called for ${layerType} layer`);
+	} else {
+		assert(disposeFn.calledOnce, `Dispose should be called for ${layerType} layer`);
+	}
 }
 
 describe("Loader Layer compatibility", () => {
@@ -105,8 +110,9 @@ describe("Loader Layer compatibility", () => {
 	 * and has the correct error / properties.
 	 */
 	describe("Validation error and properties", () => {
+		const mc = createChildMonitoringContext({ logger: createChildLogger() });
 		const testCases: {
-			layerType: "Runtime" | "Driver";
+			layerType: "runtime" | "driver";
 			layerSupportRequirements: ILayerCompatSupportRequirementsOverride;
 			validateCompatibility: (
 				maybeCompatDetails: ILayerCompatDetails | undefined,
@@ -114,16 +120,18 @@ describe("Loader Layer compatibility", () => {
 			) => void;
 		}[] = [
 			{
-				layerType: "Runtime",
-				validateCompatibility: validateRuntimeCompatibility,
+				layerType: "runtime",
+				validateCompatibility: (maybeCompatDetails, disposeFn) =>
+					validateRuntimeCompatibility(maybeCompatDetails, mc),
 				layerSupportRequirements:
-					runtimeSupportRequirements as ILayerCompatSupportRequirementsOverride,
+					runtimeSupportRequirementsForLoader as ILayerCompatSupportRequirementsOverride,
 			},
 			{
-				layerType: "Driver",
-				validateCompatibility: validateDriverCompatibility,
+				layerType: "driver",
+				validateCompatibility: (maybeCompatDetails, disposeFn) =>
+					validateDriverCompatibility(maybeCompatDetails, disposeFn, mc),
 				layerSupportRequirements:
-					driverSupportRequirements as ILayerCompatSupportRequirementsOverride,
+					driverSupportRequirementsForLoader as ILayerCompatSupportRequirementsOverride,
 			},
 		];
 
@@ -131,7 +139,7 @@ describe("Loader Layer compatibility", () => {
 			const layerSupportRequirements = testCase.layerSupportRequirements;
 			let originalRequiredFeatures: readonly string[];
 			beforeEach(() => {
-				originalRequiredFeatures = layerSupportRequirements.requiredFeatures;
+				originalRequiredFeatures = [...layerSupportRequirements.requiredFeatures];
 			});
 
 			afterEach(() => {
@@ -186,7 +194,7 @@ describe("Loader Layer compatibility", () => {
 							),
 						`Loader should be incompatible with ${testCase.layerType} layer`,
 					);
-					assert(disposeFn.calledOnce, "Dispose should be called");
+					validateDisposeCall(testCase.layerType, disposeFn);
 				});
 
 				it(`Loader features are incompatible with ${testCase.layerType}`, () => {
@@ -213,7 +221,7 @@ describe("Loader Layer compatibility", () => {
 							),
 						`Loader should be incompatible with ${testCase.layerType} layer`,
 					);
-					assert(disposeFn.calledOnce, "Dispose should be called");
+					validateDisposeCall(testCase.layerType, disposeFn);
 				});
 
 				it(`Loader generation and features are both incompatible with ${testCase.layerType}`, () => {
@@ -240,7 +248,7 @@ describe("Loader Layer compatibility", () => {
 							),
 						`Loader should be incompatible with ${testCase.layerType} layer`,
 					);
-					assert(disposeFn.calledOnce, "Dispose should be called");
+					validateDisposeCall(testCase.layerType, disposeFn);
 				});
 			});
 		}
@@ -251,18 +259,18 @@ describe("Loader Layer compatibility", () => {
 	 */
 	describe("Validation during load / initialization", () => {
 		const testCases: {
-			layerType: "Runtime" | "Driver";
+			layerType: "runtime" | "driver";
 			layerSupportRequirements: ILayerCompatSupportRequirementsOverride;
 		}[] = [
 			{
-				layerType: "Runtime",
+				layerType: "runtime",
 				layerSupportRequirements:
-					runtimeSupportRequirements as ILayerCompatSupportRequirementsOverride,
+					runtimeSupportRequirementsForLoader as ILayerCompatSupportRequirementsOverride,
 			},
 			{
-				layerType: "Driver",
+				layerType: "driver",
 				layerSupportRequirements:
-					driverSupportRequirements as ILayerCompatSupportRequirementsOverride,
+					driverSupportRequirementsForLoader as ILayerCompatSupportRequirementsOverride,
 			},
 		];
 
@@ -304,11 +312,11 @@ describe("Loader Layer compatibility", () => {
 					};
 					const loader = new Loader({
 						codeLoader: createTestCodeLoaderProxy(
-							testCase.layerType === "Runtime" ? { layerCompatDetails } : {},
+							testCase.layerType === "runtime" ? { layerCompatDetails } : {},
 						),
 						documentServiceFactory: createTestDocumentServiceFactoryProxy(
 							resolvedUrl,
-							testCase.layerType === "Driver" ? layerCompatDetails : undefined,
+							testCase.layerType === "driver" ? layerCompatDetails : undefined,
 						),
 						urlResolver,
 					});
@@ -328,11 +336,11 @@ describe("Loader Layer compatibility", () => {
 					};
 					const loader = new Loader({
 						codeLoader: createTestCodeLoaderProxy(
-							testCase.layerType === "Runtime" ? { layerCompatDetails } : {},
+							testCase.layerType === "runtime" ? { layerCompatDetails } : {},
 						),
 						documentServiceFactory: createTestDocumentServiceFactoryProxy(
 							resolvedUrl,
-							testCase.layerType === "Driver" ? layerCompatDetails : undefined,
+							testCase.layerType === "driver" ? layerCompatDetails : undefined,
 						),
 						urlResolver,
 					});

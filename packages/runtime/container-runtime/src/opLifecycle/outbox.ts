@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { IBatchMessage } from "@fluidframework/container-definitions/internal";
-import {
+import type { IBatchMessage } from "@fluidframework/container-definitions/internal";
+import type {
 	ITelemetryBaseLogger,
-	type ITelemetryBaseProperties,
+	ITelemetryBaseProperties,
 } from "@fluidframework/core-interfaces";
 import { assert, Lazy } from "@fluidframework/core-utils/internal";
 import {
@@ -17,27 +17,31 @@ import {
 	type ITelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
 
-import { ICompressionRuntimeOptions } from "../compressionDefinitions.js";
-import { PendingMessageResubmitData, PendingStateManager } from "../pendingStateManager.js";
+import type { ICompressionRuntimeOptions } from "../compressionDefinitions.js";
+import type {
+	PendingMessageResubmitData,
+	PendingStateManager,
+} from "../pendingStateManager.js";
 
 import {
 	BatchManager,
-	BatchSequenceNumbers,
+	type BatchSequenceNumbers,
 	sequenceNumbersMatch,
 	type BatchId,
+	addBatchMetadata,
 } from "./batchManager.js";
-import {
+import type {
 	LocalBatchMessage,
 	IBatchCheckpoint,
-	type OutboundBatchMessage,
-	type OutboundSingletonBatch,
-	type LocalBatch,
-	type OutboundBatch,
+	OutboundBatchMessage,
+	OutboundSingletonBatch,
+	LocalBatch,
+	OutboundBatch,
 } from "./definitions.js";
-import { OpCompressor } from "./opCompressor.js";
-import { OpGroupingManager } from "./opGroupingManager.js";
+import type { OpCompressor } from "./opCompressor.js";
+import type { OpGroupingManager } from "./opGroupingManager.js";
 import { serializeOp } from "./opSerialization.js";
-import { OpSplitter } from "./opSplitter.js";
+import type { OpSplitter } from "./opSplitter.js";
 
 export interface IOutboxConfig {
 	readonly compressionOptions: ICompressionRuntimeOptions;
@@ -45,12 +49,6 @@ export interface IOutboxConfig {
 	 * The maximum size of a batch that we can send over the wire.
 	 */
 	readonly maxBatchSizeInBytes: number;
-	/**
-	 * If true, maybeFlushPartialBatch will flush the batch if the reference sequence number changed
-	 * since the batch started. Otherwise, it will throw in this case (apart from reentrancy which is handled elsewhere).
-	 * Once the new throw-based flow is proved in a production environment, this option will be removed.
-	 */
-	readonly flushPartialBatches: boolean;
 }
 
 export interface IOutboxParameters {
@@ -68,6 +66,13 @@ export interface IOutboxParameters {
 	readonly getCurrentSequenceNumbers: () => BatchSequenceNumbers;
 	readonly reSubmit: (message: PendingMessageResubmitData, squash: boolean) => void;
 	readonly opReentrancy: () => boolean;
+	/**
+	 * JIT callback to generate an ID allocation op at flush time.
+	 * Called after rebase (if any), so the returned message has the correct refSeq.
+	 *
+	 * @returns A LocalBatchMessage for the ID allocation op, or undefined if no IDs need allocating.
+	 */
+	readonly generateIdAllocationOp: () => LocalBatchMessage | undefined;
 }
 
 /**
@@ -139,7 +144,7 @@ export function localBatchToOutboundBatch({
 	// Shallow copy each message as we switch types
 	const outboundMessages = localBatch.messages.map<OutboundBatchMessage>(
 		({ runtimeOp, ...message }) => ({
-			contents: serializeOp(runtimeOp),
+			contents: serializeOp(runtimeOp).content,
 			...message,
 		}),
 	);
@@ -192,7 +197,6 @@ export class Outbox {
 	private readonly logger: ITelemetryLoggerExt;
 	private readonly mainBatch: BatchManager;
 	private readonly blobAttachBatch: BatchManager;
-	private readonly idAllocationBatch: BatchManager;
 	private batchRebasesToReport = 5;
 	private rebasing = false;
 
@@ -208,16 +212,12 @@ export class Outbox {
 	constructor(private readonly params: IOutboxParameters) {
 		this.logger = createChildLogger({ logger: params.logger, namespace: "Outbox" });
 
-		this.mainBatch = new BatchManager({ canRebase: true });
-		this.blobAttachBatch = new BatchManager({ canRebase: true });
-		this.idAllocationBatch = new BatchManager({
-			canRebase: false,
-			ignoreBatchId: true,
-		});
+		this.mainBatch = new BatchManager({ disableGroupedBatching: false });
+		this.blobAttachBatch = new BatchManager({ disableGroupedBatching: true });
 	}
 
 	public get messageCount(): number {
-		return this.mainBatch.length + this.blobAttachBatch.length + this.idAllocationBatch.length;
+		return this.mainBatch.length + this.blobAttachBatch.length;
 	}
 
 	public get mainBatchMessageCount(): number {
@@ -228,19 +228,12 @@ export class Outbox {
 		return this.blobAttachBatch.length;
 	}
 
-	public get idAllocationBatchMessageCount(): number {
-		return this.idAllocationBatch.length;
-	}
-
 	public get isEmpty(): boolean {
 		return this.messageCount === 0;
 	}
 
 	public containsUserChanges(): boolean {
-		return (
-			this.mainBatch.containsUserChanges() || this.blobAttachBatch.containsUserChanges()
-			// ID Allocation ops are not user changes
-		);
+		return this.mainBatch.containsUserChanges() || this.blobAttachBatch.containsUserChanges();
 	}
 
 	/**
@@ -249,18 +242,16 @@ export class Outbox {
 	 * message as the first message. If flushing partial batch is not enabled, we will throw (except for reentrant ops).
 	 * This would indicate we expected this case to be precluded by logic elsewhere.
 	 *
-	 * @remarks - To detect batch interruption, we compare both the reference sequence number
+	 * @remarks To detect batch interruption, we compare both the reference sequence number
 	 * (i.e. last message processed by DeltaManager) and the client sequence number of the
 	 * last message processed by the ContainerRuntime. In the absence of op reentrancy, this
 	 * pair will remain stable during a single JS turn during which the batch is being built up.
 	 */
-	private maybeFlushPartialBatch(): void {
+	private outboxSequenceNumberCoherencyCheck(): void {
 		const mainBatchSeqNums = this.mainBatch.sequenceNumbers;
 		const blobAttachSeqNums = this.blobAttachBatch.sequenceNumbers;
-		const idAllocSeqNums = this.idAllocationBatch.sequenceNumbers;
 		assert(
-			sequenceNumbersMatch(mainBatchSeqNums, blobAttachSeqNums) &&
-				sequenceNumbersMatch(mainBatchSeqNums, idAllocSeqNums),
+			sequenceNumbersMatch(mainBatchSeqNums, blobAttachSeqNums),
 			0x58d /* Reference sequence numbers from both batches must be in sync */,
 		);
 
@@ -268,8 +259,7 @@ export class Outbox {
 
 		if (
 			sequenceNumbersMatch(mainBatchSeqNums, currentSequenceNumbers) &&
-			sequenceNumbersMatch(blobAttachSeqNums, currentSequenceNumbers) &&
-			sequenceNumbersMatch(idAllocSeqNums, currentSequenceNumbers)
+			sequenceNumbersMatch(blobAttachSeqNums, currentSequenceNumbers)
 		) {
 			// The reference sequence numbers are stable, there is nothing to do
 			return;
@@ -292,10 +282,7 @@ export class Outbox {
 			this.logger.sendTelemetryEvent(
 				{
 					// Only log error if this is truly unexpected
-					category:
-						expectedDueToReentrancy || this.params.config.flushPartialBatches
-							? "generic"
-							: "error",
+					category: expectedDueToReentrancy ? "generic" : "error",
 					eventName: "ReferenceSequenceNumberMismatch",
 					details: {
 						expectedDueToReentrancy,
@@ -311,12 +298,6 @@ export class Outbox {
 			);
 		}
 
-		// If we're configured to flush partial batches, do that now and return (don't throw)
-		if (this.params.config.flushPartialBatches) {
-			this.flushAll();
-			return;
-		}
-
 		// If we are in a reentrant context, we know this can happen without causing any harm.
 		if (expectedDueToReentrancy) {
 			return;
@@ -326,21 +307,15 @@ export class Outbox {
 	}
 
 	public submit(message: LocalBatchMessage): void {
-		this.maybeFlushPartialBatch();
+		this.outboxSequenceNumberCoherencyCheck();
 
 		this.addMessageToBatchManager(this.mainBatch, message);
 	}
 
 	public submitBlobAttach(message: LocalBatchMessage): void {
-		this.maybeFlushPartialBatch();
+		this.outboxSequenceNumberCoherencyCheck();
 
 		this.addMessageToBatchManager(this.blobAttachBatch, message);
-	}
-
-	public submitIdAllocation(message: LocalBatchMessage): void {
-		this.maybeFlushPartialBatch();
-
-		this.addMessageToBatchManager(this.idAllocationBatch, message);
 	}
 
 	private addMessageToBatchManager(
@@ -362,6 +337,17 @@ export class Outbox {
 	 * @param resubmitInfo - Key information when flushing a resubmitted batch. Undefined means this is not resubmit.
 	 */
 	public flush(resubmitInfo?: BatchResubmitInfo): void {
+		// We have nothing to flush if all batchManagers are empty, and we we're not needing to resubmit an empty batch placeholder
+		if (
+			this.blobAttachBatch.empty &&
+			this.mainBatch.empty &&
+			resubmitInfo?.batchId === undefined
+		) {
+			// Note that it's possible that there are unfinalized ranges in the ID Compressor,
+			// but there's no urgency to flush those if they're not referenced in any messages.
+			return;
+		}
+
 		assert(
 			!this.isContextReentrant(),
 			0xb7b /* Flushing must not happen while incoming changes are being processed */,
@@ -370,8 +356,7 @@ export class Outbox {
 	}
 
 	private flushAll(resubmitInfo?: BatchResubmitInfo): void {
-		const allBatchesEmpty =
-			this.idAllocationBatch.empty && this.blobAttachBatch.empty && this.mainBatch.empty;
+		const allBatchesEmpty = this.blobAttachBatch.empty && this.mainBatch.empty;
 		if (allBatchesEmpty) {
 			// If we're resubmitting with a batchId and all batches are empty, we need to flush an empty batch.
 			// Note that we currently resubmit one batch at a time, so on resubmit, 1 of the 2 batches will *always* be empty.
@@ -384,22 +369,8 @@ export class Outbox {
 			return;
 		}
 
-		// Don't use resubmittingBatchId for idAllocationBatch.
-		// ID Allocation messages are not directly resubmitted so don't pass the resubmitInfo
-		this.flushInternal({
-			batchManager: this.idAllocationBatch,
-			// Note: For now, we will never stage ID Allocation messages.
-			// They won't contain personal info and no harm in extra allocations in case of discarding the staged changes
-		});
-		this.flushInternal({
-			batchManager: this.blobAttachBatch,
-			disableGroupedBatching: true,
-			resubmitInfo,
-		});
-		this.flushInternal({
-			batchManager: this.mainBatch,
-			resubmitInfo,
-		});
+		this.flushInternal(this.blobAttachBatch, resubmitInfo);
+		this.flushInternal(this.mainBatch, resubmitInfo);
 	}
 
 	private flushEmptyBatch(
@@ -431,17 +402,15 @@ export class Outbox {
 		return;
 	}
 
-	private flushInternal(params: {
-		batchManager: BatchManager;
-		disableGroupedBatching?: boolean;
-		resubmitInfo?: BatchResubmitInfo; // undefined if not resubmitting
-	}): void {
-		const { batchManager, disableGroupedBatching = false, resubmitInfo } = params;
+	private flushInternal(
+		batchManager: BatchManager,
+		resubmitInfo?: BatchResubmitInfo, // undefined if not resubmitting
+	): void {
 		if (batchManager.empty) {
 			return;
 		}
 
-		const rawBatch = batchManager.popBatch(resubmitInfo?.batchId);
+		let rawBatch = batchManager.popBatch();
 
 		// On resubmit we use the original batch's staged state, so these should match as well.
 		const staged = rawBatch.staged === true;
@@ -451,31 +420,41 @@ export class Outbox {
 		);
 
 		const groupingEnabled =
-			!disableGroupedBatching && this.params.groupingManager.groupedBatchingEnabled();
-		if (
-			batchManager.options.canRebase &&
-			rawBatch.hasReentrantOps === true &&
-			// NOTE: This is too restrictive. We should rebase for any reentrant op, not just if it's going to be a grouped batch
-			// However there is some test that is depending on this behavior so we haven't removed these conditions yet. See AB#33427
-			groupingEnabled &&
-			rawBatch.messages.length > 1
-		) {
+			!batchManager.options.disableGroupedBatching &&
+			this.params.groupingManager.groupedBatchingEnabled();
+		if (rawBatch.hasReentrantOps === true) {
+			assert(
+				resubmitInfo === undefined,
+				0xcf2 /* Re-submitting a batch with reentrant ops is not supported */,
+			);
 			assert(!this.rebasing, 0x6fa /* A rebased batch should never have reentrant ops */);
+			// Rebase the current batch (resubmit the ops one-by-one) and then reinvoke flushInternal.
 			// If a batch contains reentrant ops (ops created as a result from processing another op)
 			// it needs to be rebased so that we can ensure consistent reference sequence numbers
 			// and eventual consistency at the DDS level.
 			// Note: Since this is happening in the same turn the ops were originally created with,
 			// and they haven't gone to PendingStateManager yet, we can just let them respect
-			// ContainerRuntime.inStagingMode
+			// ContainerRuntime.inStagingMode.  So we do not plumb local 'staged' variable through here.
 			this.rebase(rawBatch, batchManager);
 			return;
 		}
 
-		let clientSequenceNumber: number | undefined;
 		// Did we disconnect? (i.e. is shouldSend false?)
 		// If so, do nothing, as pending state manager will resubmit it correctly on reconnect.
 		// Because flush() is a task that executes async (on clean stack), we can get here in disconnected state.
-		if (this.params.shouldSend() && !staged) {
+		const shouldSendNow = this.params.shouldSend() && !staged;
+		let clientSequenceNumber: number | undefined;
+		if (shouldSendNow) {
+			// Generate ID Allocation op just-in-time, after rebase (if any), and before addBatchMetadata,
+			// so that the prepended idAllocMsg is correctly marked as the first op in the batch.
+			// This ensures the refSeq is correct (matching the rest of the batch) and that
+			// ID ranges aren't lost during rebase (since reSubmit drops IdAllocation ops).
+			// Only generate for non-staged batches — ID alloc ops are always non-staged.
+			const idAllocMsg = this.params.generateIdAllocationOp();
+			if (idAllocMsg !== undefined) {
+				rawBatch = { ...rawBatch, messages: [idAllocMsg, ...rawBatch.messages] };
+			}
+			addBatchMetadata(rawBatch, resubmitInfo?.batchId);
 			const virtualizedBatch = this.virtualizeBatch(rawBatch, groupingEnabled);
 
 			clientSequenceNumber = this.sendBatch(virtualizedBatch);
@@ -483,13 +462,14 @@ export class Outbox {
 				clientSequenceNumber === undefined || clientSequenceNumber >= 0,
 				0x9d2 /* unexpected negative clientSequenceNumber (empty batch should yield undefined) */,
 			);
+		} else {
+			addBatchMetadata(rawBatch, resubmitInfo?.batchId);
 		}
 
 		this.params.pendingStateManager.onFlushBatch(
 			rawBatch.messages,
 			clientSequenceNumber,
 			staged,
-			batchManager.options.ignoreBatchId,
 		);
 	}
 
@@ -501,7 +481,6 @@ export class Outbox {
 	 */
 	private rebase(rawBatch: LocalBatch, batchManager: BatchManager): void {
 		assert(!this.rebasing, 0x6fb /* Reentrancy */);
-		assert(batchManager.options.canRebase, 0x9a7 /* BatchManager does not support rebase */);
 
 		this.rebasing = true;
 		const squash = false;
@@ -528,7 +507,7 @@ export class Outbox {
 			this.batchRebasesToReport--;
 		}
 
-		this.flushInternal({ batchManager });
+		this.flushInternal(batchManager);
 		this.rebasing = false;
 	}
 
@@ -539,7 +518,7 @@ export class Outbox {
 	/**
 	 * As necessary and enabled, groups / compresses / chunks the given batch.
 	 *
-	 * @remarks - If chunking happens, a side effect here is that 1 or more chunks are queued immediately for sending in next JS turn.
+	 * @remarks If chunking happens, a side effect here is that 1 or more chunks are queued immediately for sending in next JS turn.
 	 *
 	 * @param localBatch - Local Batch to be virtualized - i.e. transformed into an Outbound Batch
 	 * @param groupingEnabled - If true, Grouped batching is enabled.
@@ -669,7 +648,6 @@ export class Outbox {
 	 */
 	public getBatchCheckpoints(): {
 		mainBatch: IBatchCheckpoint;
-		idAllocationBatch: IBatchCheckpoint;
 		blobAttachBatch: IBatchCheckpoint;
 	} {
 		// This variable is declared with a specific type so that we have a standard import of the IBatchCheckpoint type.
@@ -677,7 +655,6 @@ export class Outbox {
 		const mainBatch: IBatchCheckpoint = this.mainBatch.checkpoint();
 		return {
 			mainBatch,
-			idAllocationBatch: this.idAllocationBatch.checkpoint(),
 			blobAttachBatch: this.blobAttachBatch.checkpoint(),
 		};
 	}

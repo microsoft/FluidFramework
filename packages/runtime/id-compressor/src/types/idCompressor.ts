@@ -3,13 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import {
+import type {
 	OpSpaceCompressedId,
 	SessionId,
 	SessionSpaceCompressedId,
 	StableId,
 } from "./identifiers.js";
-import {
+import type {
 	IdCreationRange,
 	SerializedIdCompressorWithNoSession,
 	SerializedIdCompressorWithOngoingSession,
@@ -75,8 +75,20 @@ import {
  *
  * These two spaces naturally define a rule: consumers of compressed IDs should use session-space IDs, but serialized forms such as ops
  * should use op-space IDs.
- * @legacy
- * @alpha
+ *
+ * @privateremarks To be made internal in 2.100.0
+ *
+ * @deprecated `IIdCompressorCore` will be removed from the public API in 2.100.0.
+ *
+ * - If you use `serialize()`, use the free function
+ * {@link (serializeIdCompressor:1) | serializeIdCompressor(compressor, withSession)} instead.
+ *
+ * - `takeNextCreationRange`, `takeUnfinalizedCreationRange`, `finalizeCreationRange`, and
+ * `beginGhostSession` are internal runtime operations. External consumers should not call
+ * them directly. If you depend on these APIs, please file an issue on the FluidFramework
+ * repository describing your use case.
+ *
+ * @legacy @beta
  */
 export interface IIdCompressorCore {
 	/**
@@ -97,6 +109,22 @@ export interface IIdCompressorCore {
 	 * will result in an error.
 	 */
 	takeUnfinalizedCreationRange(): IdCreationRange;
+
+	/**
+	 * Resets the next creation range to include all unfinalized IDs.
+	 *
+	 * @remarks
+	 * IMPORTANT: This must only be called if it's CERTAIN that the unfinalized range will never be finalized as-is (e.g. by in-flight ops).
+	 *
+	 * After calling this, the next call to {@link IIdCompressorCore.takeNextCreationRange} will produce a range
+	 * covering all unfinalized IDs (equivalent to what {@link IIdCompressorCore.takeUnfinalizedCreationRange} would
+	 * have returned) plus any IDs generated after this call.
+	 *
+	 * Unlike {@link IIdCompressorCore.takeUnfinalizedCreationRange}, this method does not produce or return a range,
+	 * and does not advance the internal range counter. It is useful when the caller wants to
+	 * defer the actual range submission to the next natural {@link IIdCompressorCore.takeNextCreationRange} call.
+	 */
+	resetUnfinalizedCreationRange(): void;
 
 	/**
 	 * Finalizes the supplied range of IDs (which may be from either a remote or local session).

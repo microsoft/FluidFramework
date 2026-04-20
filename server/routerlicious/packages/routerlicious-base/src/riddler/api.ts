@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { ITokenClaims } from "@fluidframework/protocol-definitions";
+import type { ITokenClaims } from "@fluidframework/protocol-definitions";
 import { handleResponse } from "@fluidframework/server-services";
 import { getRandomName } from "@fluidframework/server-services-client";
-import {
+import type {
 	ISecretManager,
 	ITenantStorage,
 	ITenantOrderer,
@@ -14,11 +14,11 @@ import {
 	ICache,
 } from "@fluidframework/server-services-core";
 import { getGlobalTelemetryContext } from "@fluidframework/server-services-telemetry";
-import { ITenantKeyGenerator } from "@fluidframework/server-services-utils";
+import type { ITenantKeyGenerator } from "@fluidframework/server-services-utils";
 import { Router } from "express";
 import { decode } from "jsonwebtoken";
 
-import { ITenantRepository } from "./mongoTenantRepository";
+import type { ITenantRepository } from "./mongoTenantRepository";
 import { TenantManager } from "./tenantManager";
 
 export function create(
@@ -31,6 +31,7 @@ export function create(
 	riddlerStorageRequestMetricInterval: number,
 	tenantKeyGenerator: ITenantKeyGenerator,
 	cache?: ICache,
+	bypassCache: boolean = false,
 ): Router {
 	const router: Router = Router();
 	const manager = new TenantManager(
@@ -61,6 +62,7 @@ export function create(
 					tenantId,
 					request.body.token,
 					includeDisabledTenant,
+					bypassCache,
 				);
 				handleResponse(validP, response);
 			},
@@ -113,7 +115,7 @@ export function create(
 	router.get("/tenants/:id/keys", (request, response) => {
 		const tenantId = request.params.id;
 		const includeDisabledTenant = getIncludeDisabledFlag(request);
-		const tenantP = manager.getTenantKeys(tenantId, includeDisabledTenant);
+		const tenantP = manager.getTenantKeys(tenantId, includeDisabledTenant, bypassCache);
 		handleResponse(tenantP, response);
 	});
 

@@ -3,28 +3,32 @@
  * Licensed under the MIT License.
  */
 
-import { Abortable } from "events";
+import type { Abortable } from "events";
 import type {
 	BigIntStats,
 	BufferEncodingOption,
-	Dirent,
 	MakeDirectoryOptions,
 	Mode,
+	ObjectEncodingOptions,
 	OpenMode,
 	PathLike,
 	RmDirOptions,
 	RmOptions,
 	StatOptions,
 	Stats,
-	ObjectEncodingOptions,
 } from "fs";
-import { FileHandle } from "fs/promises";
-import { Stream } from "stream";
+import type fsPromises from "fs/promises";
+import type { FileHandle } from "fs/promises";
+import type { Stream } from "stream";
 
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
 import type { IRedisClientConnectionManager } from "@fluidframework/server-services-utils";
 
-import { IFileSystemManager, IFileSystemManagerParams, IFileSystemPromises } from "../definitions";
+import type {
+	IFileSystemManager,
+	IFileSystemManagerParams,
+	IFileSystemPromises,
+} from "../definitions";
 import { FsPromisesBase } from "../fileSystemBase";
 import { getStats, packedRefsFileName, SystemErrors } from "../fileSystemHelper";
 
@@ -34,7 +38,7 @@ import {
 	RedisFSConstants,
 	RedisFsError,
 } from "./helpers";
-import { HashMapRedis, IRedis, Redis, RedisParams } from "./redis";
+import { HashMapRedis, type IRedis, Redis, type RedisParams } from "./redis";
 
 export interface RedisFsConfig {
 	enableRedisFsMetrics: boolean;
@@ -221,36 +225,15 @@ export class RedisFs extends FsPromisesBase {
 	 * isomorphic-git never provides options, and always expects string[] results.
 	 */
 	public async readdirCore(
-		folderpath: PathLike,
-		options?:
-			| (ObjectEncodingOptions & { withFileTypes?: false | undefined })
-			| BufferEncoding
-			// eslint-disable-next-line @rushstack/no-new-null
-			| null,
-	): Promise<string[]>;
-	public async readdirCore(
-		folderpath: PathLike,
-		options: { encoding: "buffer"; withFileTypes?: false | undefined } | "buffer",
-	): Promise<Buffer[]>;
-	public async readdirCore(
-		folderpath: PathLike,
-		options?:
-			| (ObjectEncodingOptions & { withFileTypes?: false | undefined })
-			| BufferEncoding
-			// eslint-disable-next-line @rushstack/no-new-null
-			| null,
-	): Promise<string[] | Buffer[]>;
-	public async readdirCore(
-		folderpath: PathLike,
-		options: ObjectEncodingOptions & { withFileTypes: true },
-	): Promise<Dirent[]>;
-	public async readdirCore(
-		folderpath: PathLike,
-		options?: any,
-	): Promise<string[] | Buffer[] | Dirent[]> {
+		...args: Parameters<typeof fsPromises.readdir>
+	): ReturnType<typeof fsPromises.readdir> {
+		const [folderpath] = args;
 		const folderpathString = folderpath.toString();
 
-		const result = await executeRedisFsApiWithMetric(
+		// Cast through unknown because keysByPrefix returns string[], which doesn't
+		// overlap with Dirent<Buffer>[] (a return type variant added in @types/node@22).
+		// This is safe because isomorphic-git always expects string[] results from readdir.
+		return executeRedisFsApiWithMetric(
 			async () => this.redisFsClient.keysByPrefix(folderpathString),
 			RedisFsApis.Readdir,
 			this.redisFsConfig.enableRedisFsMetrics,
@@ -258,9 +241,7 @@ export class RedisFs extends FsPromisesBase {
 			{
 				folderpathString,
 			},
-		);
-
-		return result;
+		) as unknown as ReturnType<typeof fsPromises.readdir>;
 	}
 
 	/**

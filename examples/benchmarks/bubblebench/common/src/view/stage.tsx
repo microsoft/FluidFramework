@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import React from "react";
+import type { FC } from "react";
 
-import { IAppState } from "../types.js";
+import type { IAppState } from "../types.js";
 
 import { BubbleView } from "./bubble.js";
 
@@ -18,7 +18,7 @@ export interface IStageProps {
 	app: IAppState;
 }
 
-export const StageView: React.FC<IStageProps> = ({ app }: IStageProps) => {
+export const StageView: FC<IStageProps> = ({ app }: IStageProps) => {
 	const groups: JSX.Element[] = [];
 
 	for (const client of app.clients) {

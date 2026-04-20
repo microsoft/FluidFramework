@@ -5,6 +5,6 @@
 
 import { AzureClient } from "@fluidframework/azure-client";
 
-export function apisToBundle() {
+export function apisToBundle(): void {
 	new AzureClient({} as any);
 }

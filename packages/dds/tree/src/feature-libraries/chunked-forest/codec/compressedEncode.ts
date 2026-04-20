@@ -9,15 +9,16 @@ import type { IIdCompressor } from "@fluidframework/id-compressor";
 import {
 	CursorLocationType,
 	type FieldKey,
+	type FieldKindData,
 	type FieldKindIdentifier,
 	type ITreeCursorSynchronous,
+	type TreeChunk,
 	type TreeFieldStoredSchema,
 	type TreeNodeSchemaIdentifier,
 	type Value,
 	forEachNode,
 } from "../../../core/index.js";
 import { getOrCreate } from "../../../util/index.js";
-import type { FlexFieldKind } from "../../modular-schema/index.js";
 
 import type { Counter, DeduplicationTable } from "./chunkCodecUtilities.js";
 import {
@@ -25,41 +26,44 @@ import {
 	Shape as ShapeGeneric,
 	updateShapesAndIdentifiersEncoding,
 } from "./chunkEncodingGeneric.js";
+import type { IncrementalEncoder } from "./codecs.js";
 import type { FieldBatch } from "./fieldBatch.js";
 import {
 	type EncodedAnyShape,
-	type EncodedChunkShape,
-	type EncodedFieldBatch,
-	type EncodedNestedArray,
+	type EncodedChunkShapeV1,
+	type EncodedChunkShapeV1OrV2,
+	type EncodedChunkShapeV2,
+	type EncodedFieldBatchV1OrV2,
+	type EncodedNestedArrayShape,
 	type EncodedValueShape,
+	FieldBatchFormatVersion,
 	SpecialField,
-	version,
-} from "./format.js";
+} from "./format/index.js";
 
 /**
- * Encode data from `FieldBatch` into an `EncodedChunk`.
+ * Encode data from `FieldBatch` into an `EncodedFieldBatch`.
  *
  * Optimized for encoded size and encoding performance.
  *
- * Most of the compression strategy comes from the policy provided via `cache`.
+ * Most of the compression strategy comes from the policy provided via `context`.
  */
 export function compressedEncode(
 	fieldBatch: FieldBatch,
-	cache: EncoderCache,
-): EncodedFieldBatch {
+	context: EncoderContext,
+): EncodedFieldBatchV1OrV2 {
 	const batchBuffer: BufferFormat[] = [];
 
 	// Populate buffer, including shape and identifier references
 	for (const cursor of fieldBatch) {
 		const buffer: BufferFormat = [];
-		anyFieldEncoder.encodeField(cursor, cache, buffer);
+		anyFieldEncoder.encodeField(cursor, context, buffer);
 		batchBuffer.push(buffer);
 	}
-	return updateShapesAndIdentifiersEncoding(version, batchBuffer);
+	return updateShapesAndIdentifiersEncoding(context.version, batchBuffer);
 }
 
-export type BufferFormat = BufferFormatGeneric<EncodedChunkShape>;
-export type Shape = ShapeGeneric<EncodedChunkShape>;
+export type BufferFormat = BufferFormatGeneric<EncodedChunkShapeV1OrV2>;
+export type Shape = ShapeGeneric<EncodedChunkShapeV1OrV2>;
 
 /**
  * Like {@link FieldEncoder}, except data will be prefixed with the key.
@@ -91,7 +95,7 @@ export interface NodeEncoder extends Encoder {
 	 */
 	encodeNode(
 		cursor: ITreeCursorSynchronous,
-		cache: EncoderCache,
+		context: EncoderContext,
 		outputBuffer: BufferFormat,
 	): void;
 }
@@ -105,7 +109,7 @@ export interface NodesEncoder extends Encoder {
 	 */
 	encodeNodes(
 		cursor: ITreeCursorSynchronous,
-		cache: EncoderCache,
+		context: EncoderContext,
 		outputBuffer: BufferFormat,
 	): void;
 }
@@ -119,7 +123,7 @@ export interface FieldEncoder extends Encoder {
 	 */
 	encodeField(
 		cursor: ITreeCursorSynchronous,
-		cache: EncoderCache,
+		context: EncoderContext,
 		outputBuffer: BufferFormat,
 	): void;
 }
@@ -132,10 +136,10 @@ export function asFieldEncoder(encoder: NodeEncoder): FieldEncoder {
 	return {
 		encodeField(
 			cursor: ITreeCursorSynchronous,
-			shapes: EncoderCache,
+			context: EncoderContext,
 			outputBuffer: BufferFormat,
 		): void {
-			forEachNode(cursor, () => encoder.encodeNode(cursor, shapes, outputBuffer));
+			forEachNode(cursor, () => encoder.encodeNode(cursor, context, outputBuffer));
 		},
 		shape: encoder.shape,
 	};
@@ -148,10 +152,10 @@ export function asNodesEncoder(encoder: NodeEncoder): NodesEncoder {
 	return {
 		encodeNodes(
 			cursor: ITreeCursorSynchronous,
-			shapes: EncoderCache,
+			context: EncoderContext,
 			outputBuffer: BufferFormat,
 		): void {
-			encoder.encodeNode(cursor, shapes, outputBuffer);
+			encoder.encodeNode(cursor, context, outputBuffer);
 			cursor.nextNode();
 		},
 		shape: encoder.shape,
@@ -161,7 +165,7 @@ export function asNodesEncoder(encoder: NodeEncoder): NodesEncoder {
 /**
  * Encodes a chunk with {@link EncodedAnyShape} by prefixing the data with its shape.
  */
-export class AnyShape extends ShapeGeneric<EncodedChunkShape> {
+export class AnyShape extends ShapeGeneric<EncodedChunkShapeV1OrV2> {
 	private constructor() {
 		super();
 	}
@@ -170,7 +174,7 @@ export class AnyShape extends ShapeGeneric<EncodedChunkShape> {
 	public encodeShape(
 		identifiers: DeduplicationTable<string>,
 		shapes: DeduplicationTable<Shape>,
-	): EncodedChunkShape {
+	): EncodedChunkShapeV1 {
 		const encodedAnyShape: EncodedAnyShape = 0;
 		return { d: encodedAnyShape };
 	}
@@ -182,32 +186,32 @@ export class AnyShape extends ShapeGeneric<EncodedChunkShape> {
 
 	public static encodeField(
 		cursor: ITreeCursorSynchronous,
-		cache: EncoderCache,
+		context: EncoderContext,
 		outputBuffer: BufferFormat,
-		shape: FieldEncoder,
+		encoder: FieldEncoder,
 	): void {
-		outputBuffer.push(shape.shape);
-		shape.encodeField(cursor, cache, outputBuffer);
+		outputBuffer.push(encoder.shape);
+		encoder.encodeField(cursor, context, outputBuffer);
 	}
 
 	public static encodeNode(
 		cursor: ITreeCursorSynchronous,
-		cache: EncoderCache,
+		context: EncoderContext,
 		outputBuffer: BufferFormat,
-		shape: NodeEncoder,
+		encoder: NodeEncoder,
 	): void {
-		outputBuffer.push(shape.shape);
-		shape.encodeNode(cursor, cache, outputBuffer);
+		outputBuffer.push(encoder.shape);
+		encoder.encodeNode(cursor, context, outputBuffer);
 	}
 
 	public static encodeNodes(
 		cursor: ITreeCursorSynchronous,
-		cache: EncoderCache,
+		context: EncoderContext,
 		outputBuffer: BufferFormat,
-		shape: NodesEncoder,
+		encoder: NodesEncoder,
 	): void {
-		outputBuffer.push(shape.shape);
-		shape.encodeNodes(cursor, cache, outputBuffer);
+		outputBuffer.push(encoder.shape);
+		encoder.encodeNodes(cursor, context, outputBuffer);
 	}
 }
 
@@ -217,12 +221,12 @@ export class AnyShape extends ShapeGeneric<EncodedChunkShape> {
 export const anyNodeEncoder: NodeEncoder = {
 	encodeNode(
 		cursor: ITreeCursorSynchronous,
-		cache: EncoderCache,
+		context: EncoderContext,
 		outputBuffer: BufferFormat,
 	): void {
 		// TODO: Fast path uniform chunk content.
-		const shape = cache.shapeFromTree(cursor.type);
-		AnyShape.encodeNode(cursor, cache, outputBuffer, shape);
+		const nodeEncoder = context.nodeEncoderFromSchema(cursor.type);
+		AnyShape.encodeNode(cursor, context, outputBuffer, nodeEncoder);
 	},
 
 	shape: AnyShape.instance,
@@ -234,25 +238,25 @@ export const anyNodeEncoder: NodeEncoder = {
 export const anyFieldEncoder: FieldEncoder = {
 	encodeField(
 		cursor: ITreeCursorSynchronous,
-		cache: EncoderCache,
+		context: EncoderContext,
 		outputBuffer: BufferFormat,
 	): void {
 		// TODO: Fast path uniform chunks.
 
 		if (cursor.getFieldLength() === 0) {
-			const shape = InlineArrayShape.empty;
-			AnyShape.encodeField(cursor, cache, outputBuffer, shape);
+			const shape = InlineArrayEncoder.empty;
+			AnyShape.encodeField(cursor, context, outputBuffer, shape);
 		} else if (cursor.getFieldLength() === 1) {
 			// Fast path chunk of size one size one at least: skip nested array.
 			cursor.enterNode(0);
-			anyNodeEncoder.encodeNode(cursor, cache, outputBuffer);
+			anyNodeEncoder.encodeNode(cursor, context, outputBuffer);
 			cursor.exitNode();
 		} else {
 			// TODO: more efficient encoding for common cases.
 			// Could try to find more specific shape compatible with all children than `anyNodeEncoder`.
 
-			const shape = cache.nestedArray(anyNodeEncoder);
-			AnyShape.encodeField(cursor, cache, outputBuffer, shape);
+			const shape = context.nestedArrayEncoder(anyNodeEncoder);
+			AnyShape.encodeField(cursor, context, outputBuffer, shape);
 		}
 	},
 
@@ -260,20 +264,23 @@ export const anyFieldEncoder: FieldEncoder = {
 };
 
 /**
- * Encodes a chunk using {@link EncodedInlineArray}.
+ * Encodes a chunk using {@link EncodedInlineArrayShape}.
+ * @remarks
+ * The fact this is also a Shape is an implementation detail of the encoder: that allows the shape it uses to be itself,
+ * which is an easy way to keep all the related code together without extra objects.
  */
-export class InlineArrayShape
-	extends ShapeGeneric<EncodedChunkShape>
+export class InlineArrayEncoder
+	extends ShapeGeneric<EncodedChunkShapeV1OrV2>
 	implements NodesEncoder, FieldEncoder
 {
-	public static readonly empty: InlineArrayShape = new InlineArrayShape(0, {
+	public static readonly empty: InlineArrayEncoder = new InlineArrayEncoder(0, {
 		get shape() {
 			// Not actually used, makes count work without adding an additional shape.
-			return InlineArrayShape.empty;
+			return InlineArrayEncoder.empty;
 		},
 		encodeNodes(
 			cursor: ITreeCursorSynchronous,
-			shapes: EncoderCache,
+			context: EncoderContext,
 			outputBuffer: BufferFormat,
 		): void {
 			fail(0xb4d /* Empty array should not encode any nodes */);
@@ -292,19 +299,19 @@ export class InlineArrayShape
 
 	public encodeNodes(
 		cursor: ITreeCursorSynchronous,
-		shapes: EncoderCache,
+		context: EncoderContext,
 		outputBuffer: BufferFormat,
 	): void {
 		// Linter is wrong about this loop being for-of compatible.
 		// eslint-disable-next-line @typescript-eslint/prefer-for-of
 		for (let index = 0; index < this.length; index++) {
-			this.inner.encodeNodes(cursor, shapes, outputBuffer);
+			this.inner.encodeNodes(cursor, context, outputBuffer);
 		}
 	}
 
 	public encodeField(
 		cursor: ITreeCursorSynchronous,
-		shapes: EncoderCache,
+		context: EncoderContext,
 		outputBuffer: BufferFormat,
 	): void {
 		// Its possible individual items from this array encode multiple nodes, so don't assume === here.
@@ -313,7 +320,7 @@ export class InlineArrayShape
 			0x73c /* unexpected length for fixed length array */,
 		);
 		cursor.firstNode();
-		this.encodeNodes(cursor, shapes, outputBuffer);
+		this.encodeNodes(cursor, context, outputBuffer);
 		assert(
 			cursor.mode === CursorLocationType.Fields,
 			0x73d /* should return to fields mode when finished encoding */,
@@ -323,7 +330,7 @@ export class InlineArrayShape
 	public encodeShape(
 		identifiers: DeduplicationTable<string>,
 		shapes: DeduplicationTable<Shape>,
-	): EncodedChunkShape {
+	): EncodedChunkShapeV1 {
 		return {
 			b: {
 				length: this.length,
@@ -345,19 +352,51 @@ export class InlineArrayShape
 }
 
 /**
- * Encodes a field as a nested array with the {@link EncodedNestedArray} shape.
+ * Encodes the shape for a nested array as {@link EncodedNestedArrayShape} shape.
  */
-export class NestedArrayShape extends ShapeGeneric<EncodedChunkShape> implements FieldEncoder {
-	public readonly shape: Shape;
-
-	public constructor(public readonly inner: NodeEncoder) {
+export class NestedArrayShape extends ShapeGeneric<EncodedChunkShapeV1OrV2> {
+	/**
+	 * @param innerShape - The shape of each item in this nested array.
+	 */
+	public constructor(public readonly innerShape: Shape) {
 		super();
-		this.shape = this;
 	}
+
+	public encodeShape(
+		identifiers: DeduplicationTable<string>,
+		shapes: DeduplicationTable<Shape>,
+	): EncodedChunkShapeV1OrV2 {
+		const shape: EncodedNestedArrayShape =
+			shapes.valueToIndex.get(this.innerShape) ??
+			fail(0xb4f /* index for shape not found in table */);
+		return {
+			a: shape,
+		};
+	}
+
+	public countReferencedShapesAndIdentifiers(
+		identifiers: Counter<string>,
+		shapeDiscovered: (shape: Shape) => void,
+	): void {
+		shapeDiscovered(this.innerShape);
+	}
+}
+
+/**
+ * Encodes a field as a nested array with the {@link EncodedNestedArrayShape} shape.
+ * @remarks
+ * The fact this is also exposes a Shape is an implementation detail: it allows the shape it uses to be itself
+ * which is an easy way to keep all the related code together without extra objects.
+ */
+export class NestedArrayEncoder implements FieldEncoder {
+	public constructor(
+		public readonly innerEncoder: NodeEncoder,
+		public readonly shape: NestedArrayShape = new NestedArrayShape(innerEncoder.shape),
+	) {}
 
 	public encodeField(
 		cursor: ITreeCursorSynchronous,
-		cache: EncoderCache,
+		context: EncoderContext,
 		outputBuffer: BufferFormat,
 	): void {
 		const buffer: BufferFormat = [];
@@ -365,7 +404,7 @@ export class NestedArrayShape extends ShapeGeneric<EncodedChunkShape> implements
 		const length = cursor.getFieldLength();
 		forEachNode(cursor, () => {
 			const before = buffer.length;
-			this.inner.encodeNode(cursor, cache, buffer);
+			this.innerEncoder.encodeNode(cursor, context, buffer);
 			allNonZeroSize &&= buffer.length - before !== 0;
 		});
 		if (buffer.length === 0) {
@@ -380,26 +419,61 @@ export class NestedArrayShape extends ShapeGeneric<EncodedChunkShape> implements
 			outputBuffer.push(buffer);
 		}
 	}
+}
 
+/**
+ * Encodes the shape for an incremental chunk as {@link EncodedIncrementalChunkShape} shape.
+ */
+export class IncrementalChunkShape extends ShapeGeneric<EncodedChunkShapeV2> {
 	public encodeShape(
 		identifiers: DeduplicationTable<string>,
 		shapes: DeduplicationTable<Shape>,
-	): EncodedChunkShape {
-		const shape: EncodedNestedArray =
-			shapes.valueToIndex.get(this.inner.shape) ??
-			fail(0xb4f /* index for shape not found in table */);
+	): EncodedChunkShapeV2 {
 		return {
-			a: shape,
+			e: 0 /* EncodedIncrementalChunkShape */,
 		};
 	}
 
 	public countReferencedShapesAndIdentifiers(
 		identifiers: Counter<string>,
 		shapeDiscovered: (shape: Shape) => void,
-	): void {
-		shapeDiscovered(this.inner.shape);
+	): void {}
+
+	public get shape(): this {
+		return this;
 	}
 }
+
+/**
+ * Encodes an incremental field whose tree chunks are encoded separately and referenced by their {@link ChunkReferenceId}.
+ * The shape of the content of this field is {@link NestedArrayShape}.
+ * The inner items of the array have shape {@link IncrementalChunkShape} and are {@link ChunkReferenceId}s
+ * of the encoded chunks.
+ */
+export const incrementalFieldEncoder: FieldEncoder = {
+	encodeField(
+		cursor: ITreeCursorSynchronous,
+		context: EncoderContext,
+		outputBuffer: BufferFormat,
+	): void {
+		assert(
+			context.incrementalEncoder !== undefined,
+			0xc88 /* incremental encoder must be defined to use incrementalFieldEncoder */,
+		);
+		assert(
+			context.version >= FieldBatchFormatVersion.v2,
+			0xca1 /* Unsupported FieldBatchFormatVersion for incremental encoding; must be v2 or higher */,
+		);
+
+		const chunkReferenceIds = context.incrementalEncoder.encodeIncrementalField(
+			cursor,
+			(chunk: TreeChunk) => compressedEncode([chunk.cursor()], context),
+		);
+		outputBuffer.push(chunkReferenceIds);
+	},
+
+	shape: new NestedArrayShape(new IncrementalChunkShape() /* innerShape */),
+};
 
 /**
  * Encode `value` with `shape` into `outputBuffer`.
@@ -412,10 +486,10 @@ export function encodeValue(
 	outputBuffer: BufferFormat,
 ): void {
 	if (shape === undefined) {
-		if (value !== undefined) {
-			outputBuffer.push(true, value);
-		} else {
+		if (value === undefined) {
 			outputBuffer.push(false);
+		} else {
+			outputBuffer.push(true, value);
 		}
 	} else {
 		if (shape === true) {
@@ -436,46 +510,68 @@ export function encodeValue(
 	}
 }
 
-export class EncoderCache implements TreeShaper, FieldShaper {
-	private readonly shapesFromSchema: Map<TreeNodeSchemaIdentifier, NodeEncoder> = new Map();
-	private readonly nestedArrays: Map<NodeEncoder, NestedArrayShape> = new Map();
+/**
+ * Provides common contextual information during encoding, like schema and policy settings.
+ * Also, provides a cache to avoid duplicating equivalent shapes during a batch of encode operations.
+ * @remarks
+ * To avoid Shape duplication, any Shapes used in the encoding should either be:
+ * - Singletons defined in a static scope.
+ * - Cached in this object for future reuse such that all equivalent Shapes are deduplicated.
+ */
+export class EncoderContext implements NodeEncodeBuilder, FieldEncodeBuilder {
+	private readonly nodeEncodersFromSchema: Map<TreeNodeSchemaIdentifier, NodeEncoder> =
+		new Map();
+	private readonly nestedArrayEncoders: Map<NodeEncoder, NestedArrayEncoder> = new Map();
 	public constructor(
-		private readonly treeEncoder: TreeShapePolicy,
-		private readonly fieldEncoder: FieldShapePolicy,
-		public readonly fieldShapes: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
+		private readonly nodeEncoderFromPolicy: NodeEncoderPolicy,
+		private readonly fieldEncoderFromPolicy: FieldEncoderPolicy,
+		public readonly fieldShapes: ReadonlyMap<FieldKindIdentifier, FieldKindData>,
 		public readonly idCompressor: IIdCompressor,
+		/**
+		 * To be used to encode incremental chunks, if any.
+		 * @remarks
+		 * See {@link IncrementalEncoder} for more information.
+		 */
+		public readonly incrementalEncoder: IncrementalEncoder | undefined,
+		public readonly version: FieldBatchFormatVersion,
 	) {}
 
-	public shapeFromTree(schemaName: TreeNodeSchemaIdentifier): NodeEncoder {
-		return getOrCreate(this.shapesFromSchema, schemaName, () =>
-			this.treeEncoder(this, schemaName),
+	public nodeEncoderFromSchema(schemaName: TreeNodeSchemaIdentifier): NodeEncoder {
+		return getOrCreate(this.nodeEncodersFromSchema, schemaName, () =>
+			this.nodeEncoderFromPolicy(this, schemaName),
 		);
 	}
 
-	public nestedArray(inner: NodeEncoder): NestedArrayShape {
-		return getOrCreate(this.nestedArrays, inner, () => new NestedArrayShape(inner));
+	public fieldEncoderFromSchema(fieldSchema: TreeFieldStoredSchema): FieldEncoder {
+		return new LazyFieldEncoder(this, fieldSchema, this.fieldEncoderFromPolicy);
 	}
 
-	public shapeFromField(field: TreeFieldStoredSchema): FieldEncoder {
-		return new LazyFieldEncoder(this, field, this.fieldEncoder);
+	public nestedArrayEncoder(inner: NodeEncoder): NestedArrayEncoder {
+		return getOrCreate(this.nestedArrayEncoders, inner, () => new NestedArrayEncoder(inner));
 	}
 }
 
-export interface TreeShaper {
-	shapeFromTree(schemaName: TreeNodeSchemaIdentifier): NodeEncoder;
+export interface NodeEncodeBuilder {
+	nodeEncoderFromSchema(schemaName: TreeNodeSchemaIdentifier): NodeEncoder;
 }
 
-export interface FieldShaper {
-	shapeFromField(field: TreeFieldStoredSchema): FieldEncoder;
+export interface FieldEncodeBuilder {
+	fieldEncoderFromSchema(schema: TreeFieldStoredSchema): FieldEncoder;
 }
 
-export type FieldShapePolicy = (
-	treeShaper: TreeShaper,
-	field: TreeFieldStoredSchema,
+/**
+ * The policy for building a {@link FieldEncoder} for a field.
+ */
+export type FieldEncoderPolicy = (
+	nodeBuilder: NodeEncodeBuilder,
+	schema: TreeFieldStoredSchema,
 ) => FieldEncoder;
 
-export type TreeShapePolicy = (
-	fieldShaper: FieldShaper,
+/**
+ * The policy for building a {@link NodeEncoder} for a node.
+ */
+export type NodeEncoderPolicy = (
+	fieldBuilder: FieldEncodeBuilder,
 	schemaName: TreeNodeSchemaIdentifier,
 ) => NodeEncoder;
 
@@ -483,21 +579,22 @@ class LazyFieldEncoder implements FieldEncoder {
 	private encoderLazy: FieldEncoder | undefined;
 
 	public constructor(
-		public readonly cache: TreeShaper,
-		public readonly field: TreeFieldStoredSchema,
-		private readonly fieldEncoder: FieldShapePolicy,
+		public readonly nodeBuilder: NodeEncodeBuilder,
+		public readonly fieldSchema: TreeFieldStoredSchema,
+		private readonly fieldEncoderFromPolicy: FieldEncoderPolicy,
 	) {}
 	public encodeField(
 		cursor: ITreeCursorSynchronous,
-		cache: EncoderCache,
+		context: EncoderContext,
 		outputBuffer: BufferFormat,
 	): void {
-		this.encoder.encodeField(cursor, cache, outputBuffer);
+		this.encoder.encodeField(cursor, context, outputBuffer);
 	}
 
 	private get encoder(): FieldEncoder {
+		// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- using ??= could change behavior if value is falsy
 		if (this.encoderLazy === undefined) {
-			this.encoderLazy = this.fieldEncoder(this.cache, this.field);
+			this.encoderLazy = this.fieldEncoderFromPolicy(this.nodeBuilder, this.fieldSchema);
 		}
 		return this.encoderLazy;
 	}

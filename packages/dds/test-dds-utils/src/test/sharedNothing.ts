@@ -27,7 +27,7 @@ import type { ChangeConnectionState, DDSFuzzModel } from "../ddsFuzzHarness.js";
  * This avoids the need to spy on various harness methods/implementation details.
  */
 class SharedNothing extends SharedObject {
-	public processCoreCalls = 0;
+	public processMessagesCoreCalls = 0;
 	public summarizeCoreCalls = 0;
 	public applyStashedOpCalls = 0;
 	public loadCoreCalls = 0;
@@ -51,9 +51,9 @@ class SharedNothing extends SharedObject {
 		this.applyStashedOpCalls++;
 		this.methodCalls.push("applyStashedOp");
 	}
-	protected processCore(): void {
-		this.processCoreCalls++;
-		this.methodCalls.push("processCore");
+	protected processMessagesCore(): void {
+		this.processMessagesCoreCalls++;
+		this.methodCalls.push("processMessagesCore");
 	}
 	protected summarizeCore(): ReturnType<SummaryTreeBuilder["getSummaryTree"]> {
 		this.summarizeCoreCalls++;

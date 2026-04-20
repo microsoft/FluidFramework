@@ -3,11 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import {
+import type {
 	IRedisParameters,
 	IRedisClientConnectionManager,
 } from "@fluidframework/server-services-utils";
-import { ICache } from "./definitions";
+
+import type { ICache } from "./definitions";
 
 /**
  * Redis based cache client

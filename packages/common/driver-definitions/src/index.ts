@@ -4,6 +4,13 @@
  */
 
 export type {
+	ICacheEntry,
+	IEntry,
+	IFileEntry,
+	IPersistedCache,
+} from "./cacheDefinitions.js";
+
+export type {
 	DriverError,
 	IAnyDriverError,
 	IAuthorizationError,

@@ -10,18 +10,18 @@ import {
 	Uint8ArrayToString,
 	unreachableCase,
 } from "@fluidframework/common-utils";
-import { ICreateTreeEntry } from "@fluidframework/gitresources";
+import type { ICreateTreeEntry } from "@fluidframework/gitresources";
 import { getGitMode, getGitType } from "@fluidframework/protocol-base";
 import {
 	FileMode,
-	ISnapshotTreeEx,
-	ISummaryTree,
-	SummaryObject,
+	type ISnapshotTreeEx,
+	type ISummaryTree,
+	type SummaryObject,
 	SummaryType,
 } from "@fluidframework/protocol-definitions";
 
-import { ISummaryUploadManager, IGitManager } from "./storage";
-import { IWholeSummaryPayloadType } from "./storageContracts";
+import type { ISummaryUploadManager, IGitManager } from "./storage";
+import type { IWholeSummaryPayloadType } from "./storageContracts";
 
 /**
  * Recursively writes summary tree as individual summary blobs.
@@ -42,6 +42,7 @@ export class SummaryTreeUploadManager implements ISummaryUploadManager {
 		summaryType: IWholeSummaryPayloadType,
 		sequenceNumber?: number,
 		initial?: boolean,
+		summaryTimeStr?: string,
 	): Promise<string> {
 		const previousFullSnapshot = await this.getPreviousFullSnapshot(parentHandle);
 		return this.writeSummaryTreeCore(summaryTree, previousFullSnapshot ?? undefined);

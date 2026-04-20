@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { ITrace } from "@fluidframework/protocol-definitions";
-import { DefaultMetricClient, IMetricClient } from "@fluidframework/server-services-core";
+import type { ITrace } from "@fluidframework/protocol-definitions";
+import { DefaultMetricClient, type IMetricClient } from "@fluidframework/server-services-core";
 import * as telegraf from "telegrafjs";
 
 class TelegrafClient implements IMetricClient {

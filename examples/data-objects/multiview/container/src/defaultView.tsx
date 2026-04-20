@@ -4,13 +4,16 @@
  */
 
 import { ConstellationView } from "@fluid-example/multiview-constellation-view";
-import { IConstellation, ICoordinate } from "@fluid-example/multiview-coordinate-interface";
+import type {
+	IConstellation,
+	ICoordinate,
+} from "@fluid-example/multiview-coordinate-interface";
 import { PlotCoordinateView } from "@fluid-example/multiview-plot-coordinate-view";
 import { SliderCoordinateView } from "@fluid-example/multiview-slider-coordinate-view";
 import { TriangleView } from "@fluid-example/multiview-triangle-view";
-import * as React from "react";
+import type { FC } from "react";
 
-// eslint-disable-next-line import/no-unassigned-import
+// eslint-disable-next-line import-x/no-unassigned-import
 import "./style.css";
 
 /**
@@ -29,7 +32,7 @@ interface IDefaultViewProps {
  * component views together.  We could have alternatively built a "base" component to do this composition if we had
  * preferred - either works fine.
  */
-export const DefaultView: React.FC<IDefaultViewProps> = (props: IDefaultViewProps) => {
+export const DefaultView: FC<IDefaultViewProps> = (props: IDefaultViewProps) => {
 	return (
 		<div>
 			<div>

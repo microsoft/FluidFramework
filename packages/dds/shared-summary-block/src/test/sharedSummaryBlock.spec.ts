@@ -6,13 +6,13 @@
 import { strict as assert } from "node:assert";
 
 import { AttachState } from "@fluidframework/container-definitions";
-import { ISummaryBlob } from "@fluidframework/driver-definitions";
+import type { ISummaryBlob } from "@fluidframework/driver-definitions";
 import {
 	MockFluidDataStoreRuntime,
 	MockSharedObjectServices,
 } from "@fluidframework/test-runtime-utils/internal";
 
-import { ISharedSummaryBlock } from "../interfaces.js";
+import type { ISharedSummaryBlock } from "../interfaces.js";
 import { SharedSummaryBlockFactory } from "../sharedSummaryBlockFactory.js";
 
 interface ITestInterface {
@@ -35,7 +35,7 @@ describe("SharedSummaryBlock", () => {
 
 	describe("Api", () => {
 		it("can create a shared summary block", () => {
-			assert.ok(sharedSummaryBlock);
+			assert(sharedSummaryBlock !== undefined);
 		});
 
 		it("can set and get shared summary block data", async () => {

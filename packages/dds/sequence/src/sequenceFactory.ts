@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import {
+import type {
 	IChannelAttributes,
 	IChannelFactory,
 	IFluidDataStoreRuntime,
@@ -13,12 +13,13 @@ import { Marker, TextSegment } from "@fluidframework/merge-tree/internal";
 import { createSharedObjectKind } from "@fluidframework/shared-object-base/internal";
 
 import { pkgVersion } from "./packageVersion.js";
-// eslint-disable-next-line import/no-deprecated
-import { SharedStringClass, SharedStringSegment, type ISharedString } from "./sharedString.js";
+import type { ISharedString, SharedStringSegment } from "./sharedString.js";
+import { SharedStringClass } from "./sharedString.js";
 
 export class SharedStringFactory implements IChannelFactory<ISharedString> {
-	// TODO rename back to https://graph.microsoft.com/types/mergeTree/string once paparazzi is able to dynamically
-	// load code (UPDATE: paparazzi is gone... anything to do here?)
+	// New type string, to be activated once the migration has been fully shipped dark and is safe to flip.
+	// See LegacyTypeAwareRegistry in packages/runtime/datastore/src/dataStoreRuntime.ts.
+	// public static Type = "mergeTree";
 	public static Type = "https://graph.microsoft.com/types/mergeTree";
 
 	public static readonly Attributes: IChannelAttributes = {
@@ -57,9 +58,7 @@ export class SharedStringFactory implements IChannelFactory<ISharedString> {
 		id: string,
 		services: IChannelServices,
 		attributes: IChannelAttributes,
-		// eslint-disable-next-line import/no-deprecated
 	): Promise<SharedStringClass> {
-		// eslint-disable-next-line import/no-deprecated
 		const sharedString = new SharedStringClass(runtime, id, attributes);
 		await sharedString.load(services);
 		return sharedString;
@@ -68,9 +67,7 @@ export class SharedStringFactory implements IChannelFactory<ISharedString> {
 	/**
 	 * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory.create}
 	 */
-	// eslint-disable-next-line import/no-deprecated
 	public create(document: IFluidDataStoreRuntime, id: string): SharedStringClass {
-		// eslint-disable-next-line import/no-deprecated
 		const sharedString = new SharedStringClass(document, id, this.attributes);
 		sharedString.initializeLocal();
 		return sharedString;
@@ -79,14 +76,12 @@ export class SharedStringFactory implements IChannelFactory<ISharedString> {
 
 /**
  * Entrypoint for {@link ISharedString} creation.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export const SharedString = createSharedObjectKind<ISharedString>(SharedStringFactory);
 
 /**
  * Alias for {@link ISharedString} for compatibility.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export type SharedString = ISharedString;

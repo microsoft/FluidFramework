@@ -8,8 +8,7 @@ import { isFluidPackage } from "./fluidPackage.js";
 
 /**
  * A specific Fluid package environment for browsers
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IFluidBrowserPackageEnvironment extends IFluidPackageEnvironment {
 	/**
@@ -33,8 +32,7 @@ export interface IFluidBrowserPackageEnvironment extends IFluidPackageEnvironmen
 
 /**
  * A Fluid package for specification for browser environments
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IFluidBrowserPackage extends IFluidPackage {
 	/**
@@ -55,8 +53,7 @@ export interface IFluidBrowserPackage extends IFluidPackage {
 /**
  * Determines if any object is an IFluidBrowserPackage
  * @param maybePkg - The object to check for compatibility with IFluidBrowserPackage
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export const isFluidBrowserPackage = (
 	maybePkg: unknown,

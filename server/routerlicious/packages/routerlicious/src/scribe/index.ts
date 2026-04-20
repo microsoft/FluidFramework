@@ -3,7 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { ScribeLambdaFactory } from "@fluidframework/server-lambdas";
+import {
+	ISummaryWriterFactory,
+	ScribeLambdaFactory,
+	SummaryWriterFactory,
+} from "@fluidframework/server-lambdas";
 import { createDocumentRouter } from "@fluidframework/server-routerlicious-base";
 import {
 	createProducer,
@@ -14,17 +18,17 @@ import {
 import * as core from "@fluidframework/server-services-core";
 import {
 	DefaultServiceConfiguration,
-	ICheckpointHeuristicsServerConfiguration,
-	ICheckpoint,
-	IDb,
-	IDocument,
-	IPartitionLambdaFactory,
-	ISequencedOperationMessage,
-	IServiceConfiguration,
+	type ICheckpointHeuristicsServerConfiguration,
+	type ICheckpoint,
+	type IDb,
+	type IDocument,
+	type IPartitionLambdaFactory,
+	type ISequencedOperationMessage,
+	type IServiceConfiguration,
 	MongoDocumentRepository,
 	MongoManager,
 } from "@fluidframework/server-services-core";
-import { Provider } from "nconf";
+import type { Provider } from "nconf";
 
 export async function scribeCreate(
 	config: Provider,
@@ -180,6 +184,9 @@ export async function scribeCreate(
 		localCheckpointEnabled,
 	);
 
+	const summaryWriterFactory: ISummaryWriterFactory =
+		customizations?.summaryWriterFactory ?? new SummaryWriterFactory();
+
 	return new ScribeLambdaFactory(
 		operationsDbManager,
 		documentRepository,
@@ -198,6 +205,7 @@ export async function scribeCreate(
 		kafkaCheckpointOnReprocessingOp,
 		maxLogtailLength,
 		maxPendingCheckpointMessagesLength,
+		summaryWriterFactory,
 	);
 }
 

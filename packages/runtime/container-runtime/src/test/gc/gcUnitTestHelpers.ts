@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { ConfigTypes } from "@fluidframework/core-interfaces";
-import { ReadAndParseBlob } from "@fluidframework/runtime-utils/internal";
+import type { ConfigTypes } from "@fluidframework/core-interfaces";
+import type { ReadAndParseBlob } from "@fluidframework/runtime-utils/internal";
 
 /**
  * Creates a test config provider with the ability to set configs values and clear all config values.

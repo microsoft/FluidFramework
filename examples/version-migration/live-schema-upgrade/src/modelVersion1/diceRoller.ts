@@ -42,7 +42,7 @@ export class DiceRoller extends DataObject implements IDiceRoller {
 	 * initializingFirstTime is run only once by the first client to create the DataObject.  Here we use it to
 	 * initialize the state of the DataObject.
 	 */
-	protected async initializingFirstTime() {
+	protected async initializingFirstTime(): Promise<void> {
 		this.root.set(diceValueKey, 1);
 	}
 
@@ -50,8 +50,8 @@ export class DiceRoller extends DataObject implements IDiceRoller {
 	 * hasInitialized is run by each client as they load the DataObject.  Here we use it to set up usage of the
 	 * DataObject, by registering an event listener for dice rolls.
 	 */
-	protected async hasInitialized() {
-		this.root.on("valueChanged", (changed) => {
+	protected async hasInitialized(): Promise<void> {
+		this.root.on("valueChanged", (changed): void => {
 			if (changed.key === diceValueKey) {
 				// When we see the dice value change, we'll emit the diceRolled event we specified in our interface.
 				this.emit("diceRolled");
@@ -59,17 +59,16 @@ export class DiceRoller extends DataObject implements IDiceRoller {
 		});
 	}
 
-	public get value() {
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-return
-		return this.root.get(diceValueKey);
+	public get value(): number {
+		return this.root.get(diceValueKey) as number;
 	}
 
-	public readonly roll = () => {
+	public readonly roll = (): void => {
 		const rollValue = Math.floor(Math.random() * 6) + 1;
 		this.root.set(diceValueKey, rollValue);
 	};
 
-	public readonly close = () => {
+	public readonly close = (): void => {
 		this.emit("closed");
 	};
 }

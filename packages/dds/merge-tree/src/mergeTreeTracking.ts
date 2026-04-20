@@ -3,19 +3,17 @@
  * Licensed under the MIT License.
  */
 
-import { LocalReferencePosition } from "./localReference.js";
-import { ISegment } from "./mergeTreeNodes.js";
+import type { LocalReferencePosition } from "./localReference.js";
+import type { ISegment } from "./mergeTreeNodes.js";
 import { SortedSegmentSet } from "./sortedSegmentSet.js";
 
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export type Trackable = ISegment | LocalReferencePosition;
 
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface ITrackingGroup {
 	tracked: readonly Trackable[];
@@ -26,8 +24,7 @@ export interface ITrackingGroup {
 }
 
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export class TrackingGroup implements ITrackingGroup {
 	private readonly trackedSet: SortedSegmentSet<Trackable>;
@@ -104,8 +101,7 @@ export class UnorderedTrackingGroup implements ITrackingGroup {
 
 /**
  * A collection of {@link ITrackingGroup}.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export class TrackingGroupCollection {
 	private readonly _trackingGroups: Set<ITrackingGroup>;
@@ -157,6 +153,7 @@ export class TrackingGroupCollection {
 
 	public matches(trackingCollection: TrackingGroupCollection): boolean {
 		if (
+			// eslint-disable-next-line @typescript-eslint/prefer-optional-chain -- TODO: ADO#58520 Code owners should verify if this code change is safe and make it if so or update this comment otherwise
 			!trackingCollection ||
 			this._trackingGroups.size !== trackingCollection._trackingGroups.size
 		) {

@@ -140,6 +140,7 @@ export class SparseNode<TData> implements UpPath {
 	 * Allowed when dangling (but not when disposed).
 	 */
 	private disposeThis(): void {
+		// eslint-disable-next-line unicorn/prefer-dom-node-remove -- Custom tree structure, not DOM
 		this.parentPath?.removeChild(this);
 	}
 }

@@ -4,18 +4,18 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
-import {
+import type {
 	ISnapshot,
 	ISnapshotTree,
 	ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
+import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 
 import { ReadBuffer } from "./ReadBufferUtils.js";
 import { measure } from "./odspUtils.js";
 import {
-	NodeCore,
-	NodeTypes,
+	type NodeCore,
+	type NodeTypes,
 	TreeBuilder,
 	assertBlobCoreInstance,
 	assertBoolInstance,

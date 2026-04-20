@@ -3,31 +3,33 @@
  * Licensed under the MIT License.
  */
 
-import type { RawAxiosRequestHeaders } from "axios";
-import * as git from "@fluidframework/gitresources";
+import type * as git from "@fluidframework/gitresources";
 import {
-	IGetRefParamsExternal,
-	ICreateRefParamsExternal,
-	IPatchRefParamsExternal,
-	IWholeSummaryPayload,
-	IWriteSummaryResponse,
+	type IGetRefParamsExternal,
+	type ICreateRefParamsExternal,
+	type IPatchRefParamsExternal,
+	type IWholeSummaryPayload,
+	type IWriteSummaryResponse,
 	BasicRestWrapper,
-	RestWrapper,
-	IWholeFlatSummary,
-	IWholeSummaryPayloadType,
+	type RestWrapper,
+	type IWholeFlatSummary,
+	type IWholeSummaryPayloadType,
 	LatestSummaryId,
 } from "@fluidframework/server-services-client";
-import { ITenantStorage, runWithRetry } from "@fluidframework/server-services-core";
-import { v4 as uuid } from "uuid";
-import * as winston from "winston";
+import { type ITenantStorage, runWithRetry } from "@fluidframework/server-services-core";
 import {
 	BaseTelemetryProperties,
 	Lumberjack,
 	getGlobalTelemetryContext,
 } from "@fluidframework/server-services-telemetry";
-import { Constants, getRequestErrorTranslator } from "../utils";
-import { ICache } from "./definitions";
 import { logHttpMetrics } from "@fluidframework/server-services-utils";
+import type { RawAxiosRequestHeaders } from "axios";
+import { v4 as uuid } from "uuid";
+import * as winston from "winston";
+
+import { Constants, getRequestErrorTranslator } from "../utils";
+
+import type { ICache } from "./definitions";
 
 // We include the historian version in the user-agent string
 // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
@@ -129,9 +131,10 @@ export class RestGitService {
 		);
 	}
 
-	public async getBlob(sha: string, useCache: boolean): Promise<git.IBlob> {
+	public async getBlob(tenantId: string, sha: string, useCache: boolean): Promise<git.IBlob> {
+		const cacheKey = `${tenantId}:${sha}`;
 		return this.resolve(
-			sha,
+			cacheKey,
 			async () =>
 				this.get<git.IBlob>(
 					`/repos/${this.getRepoPath()}/git/blobs/${encodeURIComponent(sha)}`,
@@ -147,7 +150,7 @@ export class RestGitService {
 		);
 
 		// Fetch the full blob so we can have it in cache
-		this.getBlob(createResults.sha, true).catch((error) => {
+		this.getBlob(this.tenantId, createResults.sha, true).catch((error) => {
 			winston.error(`Error fetching blob ${createResults.sha}`);
 			Lumberjack.error(`Error fetching blob: ${createResults.sha}`, this.lumberProperties);
 		});
@@ -292,7 +295,7 @@ export class RestGitService {
 	/**
 	 * Retrieve a summary from cache or storage.
 	 * @param sha - version id for the requested summary. When using Git, this is the commit sha for the summary.
-	 * @param _useCache - Ignored. See [#14623](https://github.com/microsoft/FluidFramework/issues/14623) for more details.
+	 * @param _useCache - Ignored. See {@link https://github.com/microsoft/FluidFramework/issues/14623 | #14623}) for more details.
 	 */
 	public async getSummary(sha: string, _useCache: boolean): Promise<IWholeFlatSummary> {
 		// Fetch a summary requested by sha
@@ -448,7 +451,7 @@ export class RestGitService {
 
 				const blobsP = Promise.all(
 					quorumValuesSha.map(async (quorumSha) => {
-						const blob = await this.getBlob(quorumSha, useCache);
+						const blob = await this.getBlob(this.tenantId, quorumSha, useCache);
 						blobs.set(blob.sha, blob);
 					}),
 				);
@@ -487,7 +490,7 @@ export class RestGitService {
 		const blobsP: Promise<git.IBlob>[] = [];
 		for (const entry of tree.tree) {
 			if (entry.type === "blob" && endsWith(entry.path, includeBlobs)) {
-				const blobP = this.getBlob(entry.sha, useCache);
+				const blobP = this.getBlob(this.tenantId, entry.sha, useCache);
 				blobsP.push(blobP);
 			}
 		}

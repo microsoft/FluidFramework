@@ -4,7 +4,7 @@
  */
 
 export { BlobCollectionFactory } from "./blobCollection.js";
-export {
+export type {
 	IBlobCollection,
 	IBlobCollectionEvents,
 	IBlobRecord,

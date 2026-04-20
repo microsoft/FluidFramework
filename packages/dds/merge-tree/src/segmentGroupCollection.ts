@@ -3,8 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { DoublyLinkedList, walkList } from "./collections/index.js";
-import { SegmentGroup, type ISegmentLeaf } from "./mergeTreeNodes.js";
+import { DoublyLinkedList, walkList } from "@fluidframework/core-utils/internal";
+
+import type { SegmentGroup, ISegmentLeaf } from "./mergeTreeNodes.js";
 
 export class SegmentGroupCollection {
 	private readonly segmentGroups: DoublyLinkedList<SegmentGroup>;

@@ -4,18 +4,18 @@
  */
 
 import { bufferToString } from "@fluid-internal/client-utils";
-import { IDeltaManager } from "@fluidframework/container-definitions/internal";
+import type { IDeltaManager } from "@fluidframework/container-definitions/internal";
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
-import {
+import type {
 	IDocumentMessage,
-	type ISnapshotTree,
+	ISnapshotTree,
 	ISequencedDocumentMessage,
 	IQuorumClients,
 } from "@fluidframework/driver-definitions/internal";
-import {
-	type AttributionInfo,
-	type AttributionKey,
-	type ISummaryTreeWithStats,
+import type {
+	AttributionInfo,
+	AttributionKey,
+	ISummaryTreeWithStats,
 } from "@fluidframework/runtime-definitions/internal";
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
 

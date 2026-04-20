@@ -4,7 +4,43 @@
  */
 
 import type { InterdependencyRange } from "@fluid-tools/version-tools";
-import { TaskDefinitionsOnDisk } from "./fluidTaskDefinitions";
+import type {
+	GitIgnoreSetting,
+	TaskDefinitionsOnDisk,
+	TaskFileDependencies,
+} from "./fluidTaskDefinitions";
+
+/**
+ * Token that can be used in file paths and globs to represent the repository root directory.
+ * This allows configs to reference root-level files without hardcoding relative paths like "../../".
+ *
+ * Example: "${repoRoot}/.eslintrc.cjs" will resolve to the .eslintrc.cjs file at the repository root.
+ */
+export const REPO_ROOT_TOKEN = "${repoRoot}";
+
+const REPO_ROOT_REGEX = /\$\{repoRoot\}/g;
+
+/**
+ * Replace the {@link REPO_ROOT_TOKEN} in a path or glob with the actual repository root path.
+ *
+ * @remarks
+ * The repo root is normalized to forward slashes and trailing separators are removed, so the
+ * result is safe for globbing libraries (fast-glob treats backslashes as escape characters).
+ */
+export function replaceRepoRootToken(pathOrGlob: string, repoRoot: string): string {
+	const normalized = repoRoot.replace(/\\/g, "/").replace(/\/+$/, "");
+	return pathOrGlob.replace(REPO_ROOT_REGEX, normalized);
+}
+
+/**
+ * Replace the {@link REPO_ROOT_TOKEN} in an array of paths or globs.
+ */
+export function replaceRepoRootTokens(
+	pathsOrGlobs: readonly string[],
+	repoRoot: string,
+): string[] {
+	return pathsOrGlobs.map((p) => replaceRepoRootToken(p, repoRoot));
+}
 
 /**
  * The version of the fluidBuild configuration currently used.
@@ -99,39 +135,7 @@ export interface IFluidBuildDirs {
  * Note that by default, gitignored files are treated differently for input globs vs. output globs. This can be
  * changed using the `gitignore` property on the task. See the documentation for that property for details.
  */
-export interface DeclarativeTask {
-	/**
-	 * An array of globs that will be used to identify input files for the task. The globs are interpreted relative to the
-	 * package the task belongs to.
-	 *
-	 * By default, inputGlobs **will not** match files ignored by git. This can be changed using the `gitignore` property
-	 * on the task. See the documentation for that property for details.
-	 */
-	inputGlobs: string[];
-
-	/**
-	 * An array of globs that will be used to identify output files for the task. The globs are interpreted relative to
-	 * the package the task belongs to.
-	 *
-	 * By default, outputGlobs **will** match files ignored by git, because build output is often gitignored. This can be
-	 *   changed using the `gitignore` property on the task. See the documentation for that property for details.
-	 */
-	outputGlobs: string[];
-
-	/**
-	 * Configures how gitignore rules are applied. "input" applies gitignore rules to the input, "output" applies them to
-	 * the output, and including both values will apply the gitignore rules to both the input and output globs.
-	 *
-	 * The default value, `["input"]` applies gitignore rules to the input, but not the output. This is the right behavior
-	 * for many tasks since most tasks use source-controlled files as input but generate gitignored build output. However,
-	 * it can be adjusted on a per-task basis depending on the needs of the task.
-	 *
-	 * @defaultValue `["input"]`
-	 */
-	gitignore?: GitIgnoreSetting;
-}
-
-export type GitIgnoreSetting = ("input" | "output")[];
+export interface DeclarativeTask extends TaskFileDependencies {}
 
 /**
  * Valid values that can be used in the `gitignore` array setting of a DeclarativeTask.

@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { IAlfredTenant } from "@fluidframework/server-services-client";
-import {
+import type { IAlfredTenant } from "@fluidframework/server-services-client";
+import type {
 	IDeltaService,
 	IDocumentStorage,
 	IProducer,
@@ -17,13 +17,13 @@ import {
 	IClusterDrainingChecker,
 	IFluidAccessTokenGenerator,
 	IReadinessCheck,
-	type IDenyList,
+	IDenyList,
 } from "@fluidframework/server-services-core";
 import type { Emitter as RedisEmitter } from "@socket.io/redis-emitter";
-import { Router } from "express";
-import { Provider } from "nconf";
+import type { Router } from "express";
+import type { Provider } from "nconf";
 
-import { IDocumentDeleteService } from "../services";
+import type { IDocumentDeleteService } from "../services";
 
 import * as api from "./api";
 
@@ -40,7 +40,7 @@ export function create(
 	singleUseTokenCache: ICache,
 	deltaService: IDeltaService,
 	storage: IDocumentStorage,
-	producer: IProducer,
+	producer: IProducer | undefined,
 	appTenants: IAlfredTenant[],
 	documentRepository: IDocumentRepository,
 	documentDeleteService: IDocumentDeleteService,

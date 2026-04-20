@@ -194,6 +194,7 @@ export function generateErrorWithStack(stackTraceLimit?: number): Error {
 	}
 	const err = new Error("<<generated stack>>");
 
+	// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- using ??= could change behavior if value is falsy
 	if (stackPopulatedOnCreation === undefined) {
 		stackPopulatedOnCreation = err.stack !== undefined;
 	}
@@ -241,6 +242,8 @@ export function wrapError<T extends LoggingError>(
 	);
 
 	const newError = newErrorFn(message);
+
+	newError.cause = innerError;
 
 	if (stack !== undefined) {
 		overwriteStack(newError, stack);
@@ -394,6 +397,8 @@ export class LoggingError
 	extends Error
 	implements ILoggingError, Omit<IFluidErrorBase, "errorType">
 {
+	public cause?: unknown;
+
 	private _errorInstanceId = uuid();
 	public get errorInstanceId(): string {
 		return this._errorInstanceId;
@@ -418,6 +423,9 @@ export class LoggingError
 		// Don't log this list itself, or the private _errorInstanceId
 		omitPropsFromLogging.add("omitPropsFromLogging");
 		omitPropsFromLogging.add("_errorInstanceId");
+		// Nor log the unknown cause property, which could be anything.
+		// Core elements of "cause" are already promoted by wrapError.
+		omitPropsFromLogging.add("cause");
 
 		if (props) {
 			this.addTelemetryProperties(props);

@@ -6,13 +6,12 @@
 // inspiration for this example taken from https://github.com/agentcooper/typescript-play
 import {
 	MergeTreeDeltaType,
-	SequenceDeltaEvent,
-	SharedString,
+	type SequenceDeltaEvent,
+	type SharedString,
 	TextSegment,
 } from "@fluidframework/sequence/legacy";
 import * as monaco from "monaco-editor";
-import React, { useEffect, useRef } from "react";
-
+import { type FC, useEffect, useRef } from "react";
 /**
  * Compilation options for Monaco to use on TypeScript
  */
@@ -53,7 +52,7 @@ export interface IMonacoViewProps {
 	sharedString: SharedString;
 }
 
-export const MonacoView: React.FC<IMonacoViewProps> = (props: IMonacoViewProps) => {
+export const MonacoView: FC<IMonacoViewProps> = (props: IMonacoViewProps) => {
 	const { sharedString } = props;
 	const viewElementRef = useRef<HTMLDivElement>(null);
 

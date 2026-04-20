@@ -171,11 +171,11 @@ describe("obliterate", () => {
 			);
 			assert.equal(client.getText(), "");
 
-			startSeg.segment?.localRefs?.walkReferences((ref) => {
+			startSeg?.segment.localRefs?.walkReferences((ref) => {
 				const oblProps = ref.properties?.obliterate as ObliterateInfo;
 				assert(oblProps?.start !== undefined, "start ref should NOT be removed");
 			});
-			endSeg.segment?.localRefs?.walkReferences((ref) => {
+			endSeg?.segment.localRefs?.walkReferences((ref) => {
 				const oblProps = ref.properties?.obliterate as ObliterateInfo;
 				assert(oblProps?.end !== undefined, "end ref should NOT be removed");
 			});
@@ -192,11 +192,11 @@ describe("obliterate", () => {
 			}
 
 			// want to check that the start and end segment don't have the obliterate refs on them
-			startSeg.segment?.localRefs?.walkReferences((ref) => {
+			startSeg?.segment.localRefs?.walkReferences((ref) => {
 				const oblProps = ref.properties?.obliterate as ObliterateInfo;
 				assert(oblProps.start === undefined, "start ref should be removed");
 			});
-			endSeg.segment?.localRefs?.walkReferences((ref) => {
+			endSeg?.segment.localRefs?.walkReferences((ref) => {
 				const oblProps = ref.properties?.obliterate as ObliterateInfo;
 				assert(oblProps.end === undefined, "end ref should be removed");
 			});

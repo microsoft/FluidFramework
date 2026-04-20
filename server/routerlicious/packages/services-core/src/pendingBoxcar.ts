@@ -5,7 +5,7 @@
 
 import { Deferred } from "@fluidframework/common-utils";
 
-import { IPendingBoxcar } from "./queue";
+import type { IPendingBoxcar } from "./queue";
 
 // 1MB batch size / (16KB max message size + overhead)
 /**

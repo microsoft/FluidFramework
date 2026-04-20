@@ -3,20 +3,57 @@
  * Licensed under the MIT License.
  */
 
+import type { FieldKey } from "../../../core/index.js";
 import type { RestrictiveStringRecord } from "../../../util/index.js";
+import {
+	NodeKind,
+	type TreeNodeSchemaClass,
+	type TreeNodeSchema,
+	type TreeNodeSchemaCorePrivate,
+} from "../../core/index.js";
+import type { FieldSchemaAlpha, ImplicitFieldSchema } from "../../fieldSchema.js";
+import type {
+	SchemaType,
+	SimpleObjectFieldSchema,
+	SimpleObjectNodeSchema,
+} from "../../simpleSchema.js";
+
 import type {
 	TreeObjectNode,
 	SimpleKeyMap,
-	InsertableObjectFromAnnotatedSchemaRecord,
+	InsertableObjectFromSchemaRecordAlpha,
 } from "./objectNode.js";
-import type {
-	FieldSchemaAlpha,
-	ImplicitAnnotatedFieldSchema,
-	UnannotateSchemaRecord,
-} from "../../schemaTypes.js";
-import { NodeKind, type TreeNodeSchemaClass, type TreeNodeSchema } from "../../core/index.js";
-import type { FieldKey } from "../../../core/index.js";
-import type { SimpleObjectFieldSchema, SimpleObjectNodeSchema } from "../../simpleSchema.js";
+
+/**
+ * {@link (ObjectNodeSchema:interface)} with a workaround to avoid a specific known TypeScript issue which causes it to not be assignable to itself in some cases.
+ * @remarks
+ * If dealing with a schema whose inferred type includes this workaround (because it was produced by a schema factory API which uses it),
+ * if you need to explicitly state that type (for example when using {@link https://www.typescriptlang.org/tsconfig/#isolatedDeclarations | isolatedDeclarations}), it is best to keep this workaround.
+ * No other case should need to refer to this workaround type directly.
+ * See {@link ObjectNodeSchemaWorkaround.createFromInsertable} for details.
+ * @sealed
+ * @alpha
+ */
+export type ObjectNodeSchemaWorkaround<
+	TName extends string = string,
+	T extends
+		RestrictiveStringRecord<ImplicitFieldSchema> = RestrictiveStringRecord<ImplicitFieldSchema>,
+	ImplicitlyConstructable extends boolean = boolean,
+	TCustomMetadata = unknown,
+> = ObjectNodeSchema<TName, T, ImplicitlyConstructable, TCustomMetadata> & {
+	/**
+	 * Typing checking workaround: not for for actual use.
+	 * @remarks
+	 * This API collides with {@link TreeNodeSchemaCore.createFromInsertable} to disable a type checking optimization which produces different and undesired results.
+	 * See {@link https://github.com/microsoft/TypeScript/issues/59049#issuecomment-2773459693} for more details.
+	 *
+	 * The specific issue here is non-empty POJO mode object schema not being assignable to `ObjectNodeSchema`,
+	 * @privateRemarks
+	 * See the above link and the tests in objectNode.spec.ts which reference it.
+	 * @system
+	 */
+	readonly createFromInsertable: unknown;
+};
 
 /**
  * A schema for {@link TreeObjectNode}s.
@@ -26,20 +63,20 @@ import type { SimpleObjectFieldSchema, SimpleObjectNodeSchema } from "../../simp
 export interface ObjectNodeSchema<
 	out TName extends string = string,
 	in out T extends
-		RestrictiveStringRecord<ImplicitAnnotatedFieldSchema> = RestrictiveStringRecord<ImplicitAnnotatedFieldSchema>,
+		RestrictiveStringRecord<ImplicitFieldSchema> = RestrictiveStringRecord<ImplicitFieldSchema>,
 	ImplicitlyConstructable extends boolean = boolean,
 	out TCustomMetadata = unknown,
 > extends TreeNodeSchemaClass<
 			TName,
 			NodeKind.Object,
-			TreeObjectNode<UnannotateSchemaRecord<T>, TName>,
-			InsertableObjectFromAnnotatedSchemaRecord<T>,
+			TreeObjectNode<T, TName>,
+			object & InsertableObjectFromSchemaRecordAlpha<T>,
 			ImplicitlyConstructable,
 			T,
 			never,
 			TCustomMetadata
 		>,
-		SimpleObjectNodeSchema<TCustomMetadata> {
+		SimpleObjectNodeSchema<SchemaType.View, TCustomMetadata> {
 	/**
 	 * From property keys to the associated schema.
 	 */
@@ -49,7 +86,7 @@ export interface ObjectNodeSchema<
 /**
  * Extra data provided on all {@link ObjectNodeSchema} that is not included in the (soon possibly public) ObjectNodeSchema type.
  */
-export interface ObjectNodeSchemaInternalData {
+export interface ObjectNodeSchemaInternalData extends TreeNodeSchemaCorePrivate {
 	/**
 	 * {@inheritdoc SimpleKeyMap}
 	 */
@@ -83,8 +120,13 @@ export const ObjectNodeSchema = {
 	},
 } as const;
 
-export function isObjectNodeSchema(
-	schema: TreeNodeSchema,
-): schema is ObjectNodeSchema & ObjectNodeSchemaInternalData {
+/**
+ * {@link ObjectNodeSchema} with data that is not part of the package-exported API surface.
+ */
+export type ObjectNodeSchemaPrivate = ObjectNodeSchema &
+	ObjectNodeSchemaInternalData &
+	TreeNodeSchemaCorePrivate;
+
+export function isObjectNodeSchema(schema: TreeNodeSchema): schema is ObjectNodeSchemaPrivate {
 	return schema.kind === NodeKind.Object;
 }

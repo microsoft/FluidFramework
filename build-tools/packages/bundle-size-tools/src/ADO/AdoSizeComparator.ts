@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { join } from "path";
-import { WebApi } from "azure-devops-node-api";
+import type { WebApi } from "azure-devops-node-api";
 import { BuildResult, BuildStatus } from "azure-devops-node-api/interfaces/BuildInterfaces";
-import JSZip from "jszip";
+import type JSZip from "jszip";
+import { join } from "path";
 
-import { BundleComparison, BundleComparisonResult } from "../BundleBuddyTypes";
+import type { BundleComparison, BundleComparisonResult } from "../BundleBuddyTypes";
 import { compareBundles } from "../compareBundles";
 import { getBaselineCommit, getBuilds, getPriorCommit } from "../utilities";
 import {
@@ -16,7 +16,7 @@ import {
 	getStatsFileFromZip,
 	getZipObjectFromArtifact,
 } from "./AdoArtifactFileProvider";
-import { IADOConstants } from "./Constants";
+import type { IADOConstants } from "./Constants";
 import { DefaultStatsProcessors } from "./DefaultStatsProcessors";
 import {
 	getBundleBuddyConfigFromFileSystem,

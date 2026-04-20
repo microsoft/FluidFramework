@@ -4,11 +4,11 @@
  */
 
 import { getAzureDevopsApi } from "@fluidframework/bundle-size-tools";
-import { type IAzureDevopsBuildCoverageConstants } from "../library/azureDevops/constants.js";
+import type { IAzureDevopsBuildCoverageConstants } from "../library/azureDevops/constants.js";
 import {
-	type IBuildMetrics,
 	getBaselineBuildMetrics,
 	getBuildArtifactForSpecificBuild,
+	type IBuildMetrics,
 } from "../library/azureDevops/getBaselineBuildMetrics.js";
 import type { CommandLogger } from "../logging.js";
 import { type CodeCoverageComparison, compareCodeCoverage } from "./compareCodeCoverage.js";

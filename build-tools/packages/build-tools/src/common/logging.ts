@@ -91,7 +91,7 @@ export const defaultLogger: Logger = {
 	verbose,
 };
 
-function logWithTime(msg: string | Error, logFunc: ErrorLoggingFunction) {
+function logWithTime(msg: string | Error, logFunc: ErrorLoggingFunction): void {
 	if (!commonOptions.logtime) {
 		logFunc(msg);
 		return;

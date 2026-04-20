@@ -13,15 +13,12 @@ import { expect } from 'chai';
 import { assertNotUndefined, compareFiniteNumbers } from '../Common.js';
 import { AppendOnlyDoublySortedMap, AppendOnlySortedMap } from '../id-compressor/AppendOnlySortedMap.js';
 
-function runAppendOnlyMapTests(mapBuilder: () => AppendOnlySortedMap<number, number>) {
+function runAppendOnlyMapTests(mapBuilder: () => AppendOnlySortedMap<number, number>): void {
 	it('detects out-of-order keys', () => {
 		const map = mapBuilder();
 		map.append(0, 0);
 		const exception = 'Inserted key must be > all others in the map.';
-		assert.throws(
-			() => map.append(-1, 1),
-			(e: Error) => validateAssertionError(e, exception)
-		);
+		assert.throws(() => map.append(-1, 1), validateAssertionError(exception));
 		map.append(1, 2);
 	});
 
@@ -188,7 +185,7 @@ describe('AppendOnlySortedMap', () => {
 });
 
 describe('AppendOnlyDoublySortedMap', () => {
-	const mapBuilder = () =>
+	const mapBuilder = (): AppendOnlyDoublySortedMap<number, number, number> =>
 		new AppendOnlyDoublySortedMap<number, number, number>(compareFiniteNumbers, (value) => value, compareFiniteNumbers);
 	runAppendOnlyMapTests(mapBuilder);
 
@@ -196,10 +193,7 @@ describe('AppendOnlyDoublySortedMap', () => {
 		const map = mapBuilder();
 		map.append(0, 0);
 		const exception = 'Inserted value must be > all others in the map.';
-		assert.throws(
-			() => map.append(1, -1),
-			(e: Error) => validateAssertionError(e, exception)
-		);
+		assert.throws(() => map.append(1, -1), validateAssertionError(exception));
 		map.append(2, 1);
 	});
 
@@ -242,9 +236,6 @@ describe('AppendOnlyDoublySortedMap', () => {
 		map.append([0], [0]);
 		map.append([1], [1]);
 		assertNotUndefined(map.get([1]))[0] = -1; // mutate value
-		assert.throws(
-			() => map.assertValid(),
-			(e: Error) => validateAssertionError(e, 'Values in map must be sorted.')
-		);
+		assert.throws(() => map.assertValid(), validateAssertionError('Values in map must be sorted.'));
 	});
 });

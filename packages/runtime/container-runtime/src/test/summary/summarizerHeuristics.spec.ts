@@ -9,13 +9,13 @@ import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 import sinon from "sinon";
 
 import {
-	ISummarizeAttempt,
-	ISummarizeHeuristicData,
-	ISummaryConfiguration,
-	ISummaryConfigurationHeuristics,
+	type ISummarizeAttempt,
+	type ISummarizeHeuristicData,
+	type ISummaryConfiguration,
+	type ISummaryConfigurationHeuristics,
 	SummarizeHeuristicData,
 	SummarizeHeuristicRunner,
-	SummarizeReason,
+	type SummarizeReason,
 } from "../../summary/index.js";
 
 describe("Runtime", () => {

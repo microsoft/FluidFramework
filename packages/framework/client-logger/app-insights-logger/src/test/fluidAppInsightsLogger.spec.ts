@@ -19,7 +19,11 @@ describe("FluidAppInsightsLogger", () => {
 	let appInsightsClient: ApplicationInsights;
 	let trackEventSpy: Sinon.SinonSpy;
 
-	beforeEach(() => {
+	// Create the ApplicationInsights instance once for the suite and eagerly initialize it.
+	// Without loadAppInsights(), the first trackEvent call triggers an expensive fallback
+	// initialization path (~250ms locally, potentially much worse in CI). Calling
+	// loadAppInsights() up front avoids that path entirely, reducing first trackEvent to ~1ms.
+	before(function initializeAppInsights() {
 		appInsightsClient = new ApplicationInsights({
 			config: {
 				connectionString:
@@ -27,7 +31,15 @@ describe("FluidAppInsightsLogger", () => {
 					"InstrumentationKey=abcdefgh-ijkl-mnop-qrst-uvwxyz6ffd9c;IngestionEndpoint=https://westus2-2.in.applicationinsights.azure.com/;LiveEndpoint=https://westus2.livediagnostics.monitor.azure.com/",
 			},
 		});
+		appInsightsClient.loadAppInsights();
+	});
+
+	beforeEach(function createTrackEventSpy() {
 		trackEventSpy = spy(appInsightsClient, "trackEvent");
+	});
+
+	afterEach(function restoreSpy() {
+		trackEventSpy.restore();
 	});
 
 	it("send() routes telemetry events to ApplicationInsights.trackEvent", () => {
@@ -113,7 +125,7 @@ describe("Telemetry Filter - filter mode", () => {
 	let appInsightsClient: ApplicationInsights;
 	let trackEventSpy: Sinon.SinonSpy;
 
-	beforeEach(() => {
+	before(function initializeAppInsights() {
 		appInsightsClient = new ApplicationInsights({
 			config: {
 				connectionString:
@@ -121,7 +133,15 @@ describe("Telemetry Filter - filter mode", () => {
 					"InstrumentationKey=abcdefgh-ijkl-mnop-qrst-uvwxyz6ffd9c;IngestionEndpoint=https://westus2-2.in.applicationinsights.azure.com/;LiveEndpoint=https://westus2.livediagnostics.monitor.azure.com/",
 			},
 		});
+		appInsightsClient.loadAppInsights();
+	});
+
+	beforeEach(function createTrackEventSpy() {
 		trackEventSpy = spy(appInsightsClient, "trackEvent");
+	});
+
+	afterEach(function restoreSpy() {
+		trackEventSpy.restore();
 	});
 
 	it("exclusive filter mode sends all events when no filters are defined", () => {
@@ -182,7 +202,7 @@ describe("Telemetry Filter - Category Filtering", () => {
 		},
 	};
 
-	beforeEach(() => {
+	before(function initializeAppInsights() {
 		appInsightsClient = new ApplicationInsights({
 			config: {
 				connectionString:
@@ -190,7 +210,15 @@ describe("Telemetry Filter - Category Filtering", () => {
 					"InstrumentationKey=abcdefgh-ijkl-mnop-qrst-uvwxyz6ffd9c;IngestionEndpoint=https://westus2-2.in.applicationinsights.azure.com/;LiveEndpoint=https://westus2.livediagnostics.monitor.azure.com/",
 			},
 		});
+		appInsightsClient.loadAppInsights();
+	});
+
+	beforeEach(function createTrackEventSpy() {
 		trackEventSpy = spy(appInsightsClient, "trackEvent");
+	});
+
+	afterEach(function restoreSpy() {
+		trackEventSpy.restore();
 	});
 
 	it("exclusive filtering mode DOES NOT SEND events that DO MATCH with atleast one category within a single filter containing multiple categories", () => {
@@ -348,7 +376,7 @@ describe("Telemetry Filter - Namespace Filtering", () => {
 		},
 	};
 
-	beforeEach(() => {
+	before(function initializeAppInsights() {
 		appInsightsClient = new ApplicationInsights({
 			config: {
 				connectionString:
@@ -356,7 +384,15 @@ describe("Telemetry Filter - Namespace Filtering", () => {
 					"InstrumentationKey=abcdefgh-ijkl-mnop-qrst-uvwxyz6ffd9c;IngestionEndpoint=https://westus2-2.in.applicationinsights.azure.com/;LiveEndpoint=https://westus2.livediagnostics.monitor.azure.com/",
 			},
 		});
+		appInsightsClient.loadAppInsights();
+	});
+
+	beforeEach(function createTrackEventSpy() {
 		trackEventSpy = spy(appInsightsClient, "trackEvent");
+	});
+
+	afterEach(function restoreSpy() {
+		trackEventSpy.restore();
 	});
 
 	it("exclusive filter mode DOES NOT SEND events that MATCH with one of multiple namespace filters", () => {
@@ -578,7 +614,7 @@ describe("Telemetry Filter - Category & Namespace Combination Filtering", () => 
 		},
 	};
 
-	beforeEach(() => {
+	before(function initializeAppInsights() {
 		appInsightsClient = new ApplicationInsights({
 			config: {
 				connectionString:
@@ -586,7 +622,15 @@ describe("Telemetry Filter - Category & Namespace Combination Filtering", () => 
 					"InstrumentationKey=abcdefgh-ijkl-mnop-qrst-uvwxyz6ffd9c;IngestionEndpoint=https://westus2-2.in.applicationinsights.azure.com/;LiveEndpoint=https://westus2.livediagnostics.monitor.azure.com/",
 			},
 		});
+		appInsightsClient.loadAppInsights();
+	});
+
+	beforeEach(function createTrackEventSpy() {
 		trackEventSpy = spy(appInsightsClient, "trackEvent");
+	});
+
+	afterEach(function restoreSpy() {
+		trackEventSpy.restore();
 	});
 
 	it("exclusive filter mode DOES NOT SEND events that match combination category and namespace filters unless they match a namespace exception", () => {

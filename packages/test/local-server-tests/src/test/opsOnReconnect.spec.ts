@@ -24,14 +24,18 @@ import {
 	LocalResolver,
 } from "@fluidframework/local-driver/internal";
 import { SharedDirectory, type ISharedMap, SharedMap } from "@fluidframework/map/internal";
-import { FlushMode, IEnvelope } from "@fluidframework/runtime-definitions/internal";
+import {
+	type FluidDataStoreMessage,
+	FlushMode,
+	IEnvelope,
+} from "@fluidframework/runtime-definitions/internal";
 import { SharedString } from "@fluidframework/sequence/internal";
 import {
 	ILocalDeltaConnectionServer,
 	LocalDeltaConnectionServer,
 } from "@fluidframework/server-local-server";
-import { createDataStoreFactory } from "@fluidframework/test-utils/internal";
 import {
+	createDataStoreFactory,
 	createAndAttachContainerUsingProps,
 	ITestFluidObject,
 	LoaderContainerTracker,
@@ -107,7 +111,7 @@ describe("Ops on Reconnect", () => {
 
 	async function setupFirstContainer(
 		runtimeOptions: IContainerRuntimeOptionsInternal = { flushMode: FlushMode.Immediate },
-	) {
+	): Promise<void> {
 		// Create the first container, dataObject and DDSes.
 		container1 = await createContainer(runtimeOptions);
 		container1Object1 = (await container1.getEntryPoint()) as ITestFluidObject;
@@ -135,19 +139,22 @@ describe("Ops on Reconnect", () => {
 			"op",
 			(message: ISequencedDocumentMessage) => {
 				if (message.type === ContainerMessageType.FluidDataStoreOp) {
-					const envelope = message.contents as IEnvelope;
-					const address = envelope.contents.content.address;
-					const content = envelope.contents.content.contents;
+					const envelope = message.contents as IEnvelope<FluidDataStoreMessage>;
+					// The processing here appears far into the weeds. It is unclear if
+					// there is value using less `any`. Typing seems wrong even if the
+					// SharedString message, for example, is an IMergeTreeInsertMsg.
+					// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-arguments -- explicitly using `any` even if IEnvelope default is later changed to unknown
+					const { address, contents } = envelope.contents.content as IEnvelope<any>;
 					const batch = (message.metadata as { batch?: unknown } | undefined)?.batch;
 					let value1: string | number;
 					let value2: string;
 					// Add special handling for SharedString. SharedMap and SharedDirectory content structure is same.
 					if (address === stringId) {
-						value1 = content.pos1;
-						value2 = content.seg;
+						value1 = contents.pos1;
+						value2 = contents.seg;
 					} else {
-						value1 = content.key;
-						value2 = content.value.value;
+						value1 = contents.key;
+						value2 = contents.value.value;
 					}
 					receivedValues.push([value1, value2, batch]);
 				}
@@ -252,6 +259,89 @@ describe("Ops on Reconnect", () => {
 				expectedValues,
 				"Did not receive the ops that were sent in Nack'd state",
 			);
+		});
+
+		it("ID Allocations properly finalized across reconnect", async () => {
+			// Setup with idCompressor enabled
+			await setupFirstContainer({ enableRuntimeIdCompressor: "on" });
+			await setupSecondContainersDataObject();
+
+			const compressor1 = container1Object1.context.idCompressor;
+			assert(compressor1 !== undefined, "IdCompressor must be enabled");
+
+			// Capture any container-closing error so we can surface it as the test failure.
+			// Without resetUnfinalizedCreationRange, finalizeCreationRange throws
+			// "Ranges finalized out of order" during op processing, which closes the
+			// container. ensureSynchronized filters out closed containers and returns
+			// normally, so we need to re-throw the closing error ourselves.
+			let containerCloseError: unknown;
+			container1.on("closed", (error) => {
+				containerCloseError = error;
+			});
+
+			// Round-trip a first ID so the compressor has a finalized cluster.
+			// This ensures the failure path exercises the contiguity check
+			// (lastCluster.baseLocalId - lastCluster.count !== rangeBaseLocal)
+			// rather than the first-cluster check (rangeBaseLocal !== -1).
+			const id1 = compressor1.generateCompressedId();
+			container1Object1Map1.set("first-op", id1);
+			await loaderContainerTracker.ensureSynchronized();
+
+			// Generate a second ID and submit a DDS op while connected.
+			// submit() calls submitIdAllocationOpIfNeeded -> takeNextCreationRange,
+			// which advances nextRangeBaseGenCount past id2's range and queues the
+			// IdAllocation + DDS op in the outbox batch managers. Because the flush
+			// mode is TurnBased, the actual flush is deferred to a microtask.
+			const id2 = compressor1.generateCompressedId();
+			container1Object1Map1.set("pre-disconnect", id2);
+
+			// Disconnect synchronously, before the TurnBased microtask flush fires.
+			// The IdAllocation and DDS ops are still sitting in the outbox.
+			assert(container1.clientId);
+			documentServiceFactory.disconnectClient(container1.clientId, "Disconnected for testing");
+			assert.equal(container1.connectionState, ConnectionState.Disconnected);
+
+			// Reconnect. During setConnectionStateCore:
+			//   1. flush() moves the outbox batches (including the IdAllocation
+			//      created at submit time) into PendingStateManager.
+			//      canSendOps is still false so nothing goes to the server.
+			//   2. canSendOps becomes true.
+			//   3. replayPendingStates() replays from PendingStateManager:
+			//		- resetUnfinalizedCreationRange is called, which releases the range for id2
+			// 		  back to the compressor to be included in the next creation range.
+			//      - IdAllocation ops are skipped during resubmit (by design).
+			//      - The DDS op is resubmitted, which calls submitIdAllocationOpIfNeeded
+			//        -> takeNextCreationRange. This range includes id2 (even though id2 itself may be unused).
+			//        NOTE: Without resetUnfinalizedCreationRange, nextRangeBaseGenCount is already
+			//        past id2 so count=0 and NO IdAllocation is emitted for the replayed batch.
+			await waitForContainerConnection(container1);
+
+			// Generate a third ID after reconnect and submit a DDS op.
+			// takeNextCreationRange produces a range starting at genCount 3. When the server
+			// sequences this IdAllocation, finalizeCreationRange checks that ranges are
+			// contiguous. Without resetUnfinalizedCreationRange the genCount-2 range
+			// was never re-sent, so finalizing the genCount-3 range throws
+			// "Ranges finalized out of order".
+			const id3 = compressor1.generateCompressedId();
+			container1Object1Map1.set("post-reconnect", id3);
+
+			await loaderContainerTracker.ensureSynchronized();
+
+			// If the container closed during op processing, surface its error as the
+			// test failure. This is what makes the test fail with "Ranges finalized
+			// out of order" when resetUnfinalizedCreationRange is commented out.
+			if (containerCloseError !== undefined) {
+				throw containerCloseError as Error;
+			}
+			assert(!container1.closed, "Container should not have closed");
+
+			// Verify all IDs are finalized and usable.
+			const opSpaceId1 = compressor1.normalizeToOpSpace(id1);
+			assert(opSpaceId1 >= 0, "First ID should be finalized");
+			const opSpaceId2 = compressor1.normalizeToOpSpace(id2);
+			assert(opSpaceId2 >= 0, "Second ID should be finalized after reconnect");
+			const opSpaceId3 = compressor1.normalizeToOpSpace(id3);
+			assert(opSpaceId3 >= 0, "Third ID should be finalized after reconnect");
 		});
 	});
 

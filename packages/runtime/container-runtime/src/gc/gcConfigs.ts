@@ -4,19 +4,19 @@
  */
 
 import {
-	MonitoringContext,
+	type MonitoringContext,
 	UsageError,
 	validatePrecondition,
 } from "@fluidframework/telemetry-utils/internal";
 
-import { IContainerRuntimeMetadata } from "../summary/index.js";
+import type { IContainerRuntimeMetadata } from "../summary/index.js";
 
 import {
-	GCFeatureMatrix,
-	GCVersion,
-	IGCMetadata_Deprecated,
-	IGCRuntimeOptions,
-	IGarbageCollectorConfigs,
+	type GCFeatureMatrix,
+	type GCVersion,
+	type IGCMetadata_Deprecated,
+	type IGCRuntimeOptions,
+	type IGarbageCollectorConfigs,
 	defaultInactiveTimeoutMs,
 	defaultSessionExpiryDurationMs,
 	defaultSweepGracePeriodMs,
@@ -178,7 +178,7 @@ export function computeTombstoneTimeout(
 	sessionExpiryTimeoutMs: number | undefined,
 ): number | undefined {
 	const bufferMs = oneDayMs;
-	return (
-		sessionExpiryTimeoutMs && sessionExpiryTimeoutMs + maxSnapshotCacheExpiryMs + bufferMs
-	);
+	return sessionExpiryTimeoutMs === undefined
+		? undefined
+		: sessionExpiryTimeoutMs + maxSnapshotCacheExpiryMs + bufferMs;
 }

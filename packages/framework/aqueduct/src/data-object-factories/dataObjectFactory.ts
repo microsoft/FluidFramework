@@ -29,7 +29,7 @@ import {
  * @typeParam TObj - DataObject (concrete type)
  * @typeParam I - The input types for the DataObject
  * @legacy
- * @alpha
+ * @beta
  */
 export class DataObjectFactory<
 	TObj extends DataObject<I>,

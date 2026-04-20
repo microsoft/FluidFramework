@@ -24,6 +24,9 @@ export class CounterFactory implements IChannelFactory<ISharedCounter> {
 	/**
 	 * Static value for {@link CounterFactory."type"}.
 	 */
+	// New type string, to be activated once the migration has been fully shipped dark and is safe to flip.
+	// See LegacyTypeAwareRegistry in packages/runtime/datastore/src/dataStoreRuntime.ts.
+	// public static readonly Type = "counter";
 	public static readonly Type = "https://graph.microsoft.com/types/counter";
 
 	/**
@@ -75,14 +78,12 @@ export class CounterFactory implements IChannelFactory<ISharedCounter> {
 
 /**
  * Entrypoint for {@link ISharedCounter} creation.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export const SharedCounter = createSharedObjectKind<ISharedCounter>(CounterFactory);
 
 /**
  * Alias for {@link ISharedCounter} for compatibility.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export type SharedCounter = ISharedCounter;

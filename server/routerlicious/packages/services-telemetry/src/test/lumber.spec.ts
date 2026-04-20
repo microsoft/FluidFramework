@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import assert from "assert";
+import { strict as assert } from "assert";
 import Sinon from "sinon";
 import { Lumber } from "../lumber";
 import { LumberEventName } from "../lumberEventNames";

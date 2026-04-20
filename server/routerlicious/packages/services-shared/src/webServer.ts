@@ -3,16 +3,17 @@
  * Licensed under the MIT License.
  */
 
-import cluster, { Worker } from "cluster";
+import cluster, { type Worker } from "cluster";
 // Note: `availableParallelism` Node 18 is required for this functionality
 import * as http from "http";
-import { AddressInfo } from "net";
+import type { AddressInfo } from "net";
 import { availableParallelism } from "os";
 import * as util from "util";
 
-import * as core from "@fluidframework/server-services-core";
+import type * as core from "@fluidframework/server-services-core";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
-import { IRedisClientConnectionManager } from "@fluidframework/server-services-utils";
+import type { IRedisClientConnectionManager } from "@fluidframework/server-services-utils";
+import { Server } from "socket.io";
 import { setupMaster, setupWorker } from "@socket.io/sticky";
 
 import * as socketIo from "./socketIoServer";
@@ -102,6 +103,7 @@ export class SocketIoWebServerFactory implements core.IWebServerFactory {
 		private readonly httpServerConfig?: IHttpServerConfig,
 		private readonly socketIoConfig?: socketIo.ISocketIoServerConfig,
 		private readonly customCreateAdapter?: socketIo.SocketIoAdapterCreator,
+		private readonly customIoSetupFunction?: (io: Server) => void,
 	) {}
 
 	public create(requestListener: RequestListener): core.IWebServer {
@@ -115,7 +117,7 @@ export class SocketIoWebServerFactory implements core.IWebServerFactory {
 			server,
 			this.socketIoAdapterConfig,
 			this.socketIoConfig,
-			undefined /* ioSetup */,
+			this.customIoSetupFunction,
 			this.customCreateAdapter,
 		);
 

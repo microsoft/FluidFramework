@@ -4,6 +4,51 @@
  */
 
 /**
+ * The different Fluid layers in a client.
+ * @internal
+ */
+export type FluidLayer = "loader" | "driver" | "runtime" | "dataStore";
+
+/**
+ * The policy for compatibility windows that a layer uses to validate compatibility with another layer.
+ * The other layer must be within this window relative to the layer to be compatible.
+ * Note that the policy is defined in terms of months, but the actual compatibility check is done using generations.
+ * Generations are updated every 1+ months depending on the release cadence so they are mostly 1-to-1 with months,
+ * but they are always higher than months since releases are not exactly every month.
+ *
+ * IMPORTANT: When changing these policy values, update the documentation in "Layer Compatibility Policy" section of
+ * LayerCompatibility.md at the root of the repository.
+ *
+ * @internal
+ */
+export const LayerCompatibilityPolicyWindowMonths = {
+	/**
+	 * Driver is compatible with Loader versions up to 12 months (or generations) older.
+	 */
+	DriverLoader: 12,
+	/**
+	 * Loader is compatible with Driver versions up to 12 months (or generations) older.
+	 */
+	LoaderDriver: 12,
+	/**
+	 * Runtime is compatible with Loader versions up to 12 months (or generations) older.
+	 */
+	RuntimeLoader: 12,
+	/**
+	 * Loader is compatible with Runtime versions up to 3 months (or generations) older.
+	 */
+	LoaderRuntime: 3,
+	/**
+	 * Runtime is compatible with DataStore versions up to 3 months (or generations) older.
+	 */
+	RuntimeDataStore: 3,
+	/**
+	 * DataStore is compatible with Runtime versions up to 3 months (or generations) older.
+	 */
+	DataStoreRuntime: 3,
+} as const;
+
+/**
  * Result of a layer compatibility check - whether a layer is compatible with another layer.
  * @internal
  */
@@ -47,6 +92,13 @@ export interface ILayerCompatDetails extends Partial<IProvideLayerCompatDetails>
 	/**
 	 * The generation of the layer. The other layer at the layer boundary uses this to check if this satisfies
 	 * the minimum generation it requires to be compatible.
+	 *
+	 * @remarks Generation is updated on a regular cadence, say, monthly. This will allow us to determine how
+	 * far apart two layers are in terms of time and whether they are compatible.
+	 * For example, say generation is updated every month and the compatibility window between layer1 and layer2 is
+	 * 6 months. Now, if layer1 is at generation 1 and layer2 is at generation 5, then they are 4 months apart and are
+	 * compatible. But if layer1 is at generation 1 and layer2 is at generation 8, then they are 7 months apart and
+	 * are not compatible.
 	 */
 	readonly generation: number;
 	/**

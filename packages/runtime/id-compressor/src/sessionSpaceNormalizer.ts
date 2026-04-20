@@ -6,7 +6,7 @@
 import { assert } from "@fluidframework/core-utils/internal";
 
 import { AppendOnlySortedMap } from "./appendOnlySortedMap.js";
-import { LocalCompressedId } from "./identifiers.js";
+import type { LocalCompressedId } from "./identifiers.js";
 import { compareFiniteNumbers, genCountFromLocalId } from "./utilities.js";
 
 /**

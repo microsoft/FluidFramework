@@ -3,16 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { bufferToString } from "@fluid-internal/client-utils";
 import { assert } from "@fluidframework/core-utils/internal";
 import type { IChannelStorageService } from "@fluidframework/datastore-definitions/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 import type {
 	IExperimentalIncrementalSummaryContext,
-	ISummaryTreeWithStats,
 	ITelemetryContext,
 } from "@fluidframework/runtime-definitions/internal";
-import { createSingleBlobSummary } from "@fluidframework/shared-object-base/internal";
+import type { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
 
 import type { CodecWriteOptions } from "../../codec/index.js";
 import {
@@ -28,30 +26,52 @@ import {
 	forEachField,
 	makeDetachedFieldIndex,
 } from "../../core/index.js";
-import type {
-	Summarizable,
-	SummaryElementParser,
-	SummaryElementStringifier,
+import {
+	VersionedSummarizer,
+	type Summarizable,
+	type SummaryElementParser,
+	type SummaryElementStringifier,
 } from "../../shared-tree-core/index.js";
-import { idAllocatorFromMaxId } from "../../util/index.js";
-// eslint-disable-next-line import/no-internal-modules
+import {
+	idAllocatorFromMaxId,
+	readAndParseSnapshotBlob,
+	type JsonCompatibleReadOnly,
+} from "../../util/index.js";
+// eslint-disable-next-line import-x/no-internal-modules
 import { chunkFieldSingle, defaultChunkPolicy } from "../chunked-forest/chunkTree.js";
-import type { FieldBatchCodec, FieldBatchEncodingContext } from "../chunked-forest/index.js";
+import {
+	defaultIncrementalEncodingPolicy,
+	type FieldBatchEncodingContext,
+	type IncrementalEncodingPolicy,
+} from "../chunked-forest/index.js";
+import { TreeCompressionStrategy } from "../treeCompressionUtils.js";
 
-import { type ForestCodec, makeForestSummarizerCodec } from "./codec.js";
-import type { Format } from "./format.js";
-/**
- * The storage key for the blob in the summary containing tree data
- */
-const treeBlobKey = "ForestTree";
+import { forestCodecBuilder, type ForestCodec } from "./codec.js";
+import {
+	ForestIncrementalSummaryBehavior,
+	ForestIncrementalSummaryBuilder,
+} from "./incrementalSummaryBuilder.js";
+import {
+	ForestSummaryFormatVersion,
+	forestSummaryKey,
+	supportedForestSummaryFormatVersions,
+} from "./summaryFormatCommon.js";
+import {
+	minVersionToForestSummaryFormatVersion,
+	getForestRootSummaryContentKey,
+} from "./summaryTypes.js";
 
 /**
  * Provides methods for summarizing and loading a forest.
  */
-export class ForestSummarizer implements Summarizable {
-	public readonly key = "Forest";
-
+export class ForestSummarizer
+	extends VersionedSummarizer<ForestSummaryFormatVersion>
+	implements Summarizable
+{
 	private readonly codec: ForestCodec;
+
+	private readonly incrementalSummaryBuilder: ForestIncrementalSummaryBuilder;
+	private readonly forestRootSummaryContentKey: string;
 
 	/**
 	 * @param encoderContext - The schema if provided here must be mutated by the caller to keep it up to date.
@@ -59,23 +79,62 @@ export class ForestSummarizer implements Summarizable {
 	public constructor(
 		private readonly forest: IEditableForest,
 		private readonly revisionTagCodec: RevisionTagCodec,
-		fieldBatchCodec: FieldBatchCodec,
 		private readonly encoderContext: FieldBatchEncodingContext,
 		options: CodecWriteOptions,
 		private readonly idCompressor: IIdCompressor,
+		initialSequenceNumber: number,
+		shouldEncodeIncrementally: IncrementalEncodingPolicy = defaultIncrementalEncodingPolicy,
 	) {
-		// TODO: this should take in CodecWriteOptions, and use it to pick the write version.
-		this.codec = makeForestSummarizerCodec(options, fieldBatchCodec);
+		super(
+			forestSummaryKey,
+			minVersionToForestSummaryFormatVersion(options.minVersionForCollab),
+			supportedForestSummaryFormatVersions,
+			true /* supportPreVersioningFormat */,
+		);
+
+		this.codec = forestCodecBuilder.build(options);
+
+		const summaryFormatWriteVersion = minVersionToForestSummaryFormatVersion(
+			options.minVersionForCollab,
+		);
+		this.forestRootSummaryContentKey = getForestRootSummaryContentKey(
+			summaryFormatWriteVersion,
+		);
+
+		// Incremental summary is supported in ForestSummaryFormatVersion.v3 onwards.
+		// Note that even in versions that support it, it is possible that the
+		// FieldBatchCodec will not use incremental encoding (for example if using its v1 formats which does not support it).
+		const enableIncrementalSummary =
+			summaryFormatWriteVersion >= ForestSummaryFormatVersion.v3 &&
+			encoderContext.encodeType === TreeCompressionStrategy.CompressedIncremental;
+		this.incrementalSummaryBuilder = new ForestIncrementalSummaryBuilder(
+			enableIncrementalSummary,
+			(cursor: ITreeCursorSynchronous) => this.forest.chunkField(cursor),
+			shouldEncodeIncrementally,
+			initialSequenceNumber,
+		);
 	}
 
 	/**
-	 * Synchronous monolithic summarization of tree content.
+	 * Summarization of the forest's tree content.
+	 * @returns a summary tree containing the forest's tree content.
+	 * @remarks
+	 * If incremental summary is disabled, all the content will be added to a single summary blob.
+	 * If incremental summary is enabled, the summary will be a tree.
+	 * See {@link ForestIncrementalSummaryBuilder} for details of what this tree looks like.
 	 *
 	 * TODO: when perf matters, this should be replaced with a chunked async version using a binary format.
-	 *
-	 * @returns a snapshot of the forest's tree as a string.
 	 */
-	private getTreeString(stringify: SummaryElementStringifier): string {
+	protected summarizeInternal(props: {
+		stringify: SummaryElementStringifier;
+		fullTree?: boolean;
+		trackState?: boolean;
+		telemetryContext?: ITelemetryContext;
+		incrementalSummaryContext?: IExperimentalIncrementalSummaryContext;
+		builder: SummaryTreeBuilder;
+	}): void {
+		const { stringify, fullTree = false, incrementalSummaryContext, builder } = props;
+
 		const rootCursor = this.forest.getCursorAboveDetachedFields();
 		const fieldMap: Map<FieldKey, ITreeCursorSynchronous & ITreeSubscriptionCursor> =
 			new Map();
@@ -90,55 +149,99 @@ export class ForestSummarizer implements Summarizable {
 			);
 			fieldMap.set(key, innerCursor as ITreeCursorSynchronous & ITreeSubscriptionCursor);
 		});
-		const encoded = this.codec.encode(fieldMap, this.encoderContext);
 
-		fieldMap.forEach((value) => value.free());
-		return stringify(encoded);
+		// Let the incremental summary builder know that we are starting a new summary.
+		// It returns whether incremental encoding is enabled.
+		const incrementalSummaryBehavior = this.incrementalSummaryBuilder.startSummary({
+			fullTree,
+			incrementalSummaryContext,
+			stringify,
+			builder,
+		});
+		const encoderContext: FieldBatchEncodingContext = {
+			...this.encoderContext,
+			incrementalEncoderDecoder:
+				incrementalSummaryBehavior === ForestIncrementalSummaryBehavior.Incremental
+					? this.incrementalSummaryBuilder
+					: undefined,
+		};
+		const encoded = this.codec.encode(fieldMap, encoderContext);
+		for (const value of fieldMap.values()) {
+			value.free();
+		}
+
+		this.incrementalSummaryBuilder.completeSummary({
+			incrementalSummaryContext,
+			forestSummaryRootContent: stringify(encoded),
+			forestSummaryRootContentKey: this.forestRootSummaryContentKey,
+			builder,
+		});
 	}
 
-	public summarize(props: {
-		stringify: SummaryElementStringifier;
-		fullTree?: boolean;
-		trackState?: boolean;
-		telemetryContext?: ITelemetryContext;
-		incrementalSummaryContext?: IExperimentalIncrementalSummaryContext;
-	}): ISummaryTreeWithStats {
-		return createSingleBlobSummary(treeBlobKey, this.getTreeString(props.stringify));
-	}
-
-	public async load(
+	protected async loadInternal(
 		services: IChannelStorageService,
 		parse: SummaryElementParser,
+		version: ForestSummaryFormatVersion | undefined,
 	): Promise<void> {
-		if (await services.contains(treeBlobKey)) {
-			const treeBuffer = await services.readBlob(treeBlobKey);
-			const treeBufferString = bufferToString(treeBuffer, "utf8");
-			// TODO: this code is parsing data without an optional validator, this should be defined in a typebox schema as part of the
-			// forest summary format.
-			const fields = this.codec.decode(parse(treeBufferString) as Format, this.encoderContext);
-			const allocator = idAllocatorFromMaxId();
-			const fieldChanges: [FieldKey, DeltaFieldChanges][] = [];
-			const build: DeltaDetachedNodeBuild[] = [];
-			for (const [fieldKey, field] of fields) {
-				const chunked = chunkFieldSingle(field, {
-					policy: defaultChunkPolicy,
-					idCompressor: this.idCompressor,
-				});
-				const buildId = { minor: allocator.allocate(chunked.topLevelLength) };
-				build.push({
-					id: buildId,
-					trees: chunked,
-				});
-				fieldChanges.push([fieldKey, [{ count: chunked.topLevelLength, attach: buildId }]]);
-			}
+		// Get the key of the summary blob where the top-level forest content is stored based on the summary format version.
+		// If the summary was generated as `ForestIncrementalSummaryBehavior.SingleBlob`, this blob will contain all
+		// of forest's contents.
+		// If the summary was generated as `ForestIncrementalSummaryBehavior.Incremental`, this blob will contain only
+		// the top-level forest node's contents.
+		// The contents of the incremental chunks will be in separate tree nodes and will be read later during decoding.
+		const forestSummaryRootContentKey = getForestRootSummaryContentKey(version);
+		assert(
+			await services.contains(forestSummaryRootContentKey),
+			0xc21 /* Forest summary content missing in snapshot */,
+		);
 
-			assert(this.forest.isEmpty, 0x797 /* forest must be empty */);
-			applyDelta(
-				{ build, fields: new Map(fieldChanges) },
-				undefined,
-				this.forest,
-				makeDetachedFieldIndex("init", this.revisionTagCodec, this.idCompressor),
-			);
+		// Load the incremental summary builder so that it can download any incremental chunks in the
+		// snapshot.
+		await this.incrementalSummaryBuilder.load({
+			services,
+			readAndParseChunk: async (chunkBlobPath: string) =>
+				readAndParseSnapshotBlob(chunkBlobPath, services, parse),
+		});
+
+		// TODO: this code is parsing data without an optional validator, this should be defined in a typebox schema as part of the
+		// forest summary format.
+		const fields = this.codec.decode(
+			(await readAndParseSnapshotBlob(
+				forestSummaryRootContentKey,
+				services,
+				parse,
+				// TODO: this type cast assumes there are no handles, which should probably be enforced at runtime or the need for this cast should be removed altogether.
+			)) as JsonCompatibleReadOnly,
+			{
+				...this.encoderContext,
+				incrementalEncoderDecoder: this.incrementalSummaryBuilder,
+			},
+		);
+		const allocator = idAllocatorFromMaxId();
+		const fieldChanges: [FieldKey, DeltaFieldChanges][] = [];
+		const build: DeltaDetachedNodeBuild[] = [];
+		for (const [fieldKey, field] of fields) {
+			const chunked = chunkFieldSingle(field, {
+				policy: defaultChunkPolicy,
+				idCompressor: this.idCompressor,
+			});
+			const buildId = { minor: allocator.allocate(chunked.topLevelLength) };
+			build.push({
+				id: buildId,
+				trees: chunked,
+			});
+			fieldChanges.push([
+				fieldKey,
+				{ marks: [{ count: chunked.topLevelLength, attach: buildId }] },
+			]);
 		}
+
+		assert(this.forest.isEmpty, 0x797 /* forest must be empty */);
+		applyDelta(
+			{ build, fields: new Map(fieldChanges) },
+			undefined,
+			this.forest,
+			makeDetachedFieldIndex("init", this.revisionTagCodec, this.idCompressor),
+		);
 	}
 }

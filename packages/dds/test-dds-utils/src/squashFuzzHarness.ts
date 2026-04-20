@@ -17,7 +17,7 @@ import { done } from "@fluid-private/stochastic-test-utils";
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import type { IChannelFactory } from "@fluidframework/datastore-definitions/internal";
 
-import { type Client } from "./clientLoading.js";
+import type { Client } from "./clientLoading.js";
 import { PoisonedDDSFuzzHandle } from "./ddsFuzzHandle.js";
 import {
 	setupClientContext,
@@ -93,7 +93,7 @@ export interface SquashFuzzModel<
 	 * Invoked whenever a client is about to exit squash mode (and therefore reconnect).
 	 * DDS model authors should use this to validate that the client has already undergone edits which should remove all poisoned content from this
 	 * client's view.
-	 * @throws - if the provided client has poisoned content still in its view of the document
+	 * @throws if the provided client has poisoned content still in its view of the document
 	 * @remarks
 	 * When a DDS does not correctly squash edits that insert and remove a piece of poisoned content, this generates the same sort of error
 	 * as if the edits removing the content had never been generated.

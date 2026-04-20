@@ -6,15 +6,12 @@
 import { Flags } from "@oclif/core";
 
 import { githubActionsFlag, githubTokenFlag } from "../../flags.js";
-
+import { BaseCommand } from "../../library/commands/base.js";
 import {
 	type GitHubProps,
 	isPrApprovedByTeam,
 	isPrApprovedByUsers,
-	// We are slowly moving away from barrel files and these APIs are only used here.
-	// eslint-disable-next-line import/no-internal-modules
 } from "../../library/githubRest.js";
-import { BaseCommand } from "../../library/index.js";
 
 /**
  * This command class is used to merge two branches based on the batch size provided.

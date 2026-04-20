@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { ICacheEntry } from "@fluidframework/odsp-driver-definitions/internal";
+import type { ICacheEntry } from "@fluidframework/driver-definitions/internal";
+import { getKeyForCacheEntry } from "@fluidframework/driver-utils/internal";
 import { openDB } from "idb";
 
 import { FluidCache } from "../FluidCache.js";
@@ -11,10 +12,9 @@ import {
 	FluidDriverCacheDBName,
 	FluidDriverObjectStoreName,
 	getFluidCacheIndexedDbInstance,
-	getKeyForCacheEntry,
 } from "../FluidCacheIndexedDb.js";
 
-// eslint-disable-next-line import/no-unassigned-import, @typescript-eslint/no-require-imports, import/no-internal-modules
+// eslint-disable-next-line import-x/no-unassigned-import, @typescript-eslint/no-require-imports, import-x/no-internal-modules
 require("fake-indexeddb/auto");
 
 const mockPartitionKey = "FAKEPARTITIONKEY";
@@ -23,17 +23,17 @@ class DateMock {
 	// The current time being used by the mock
 	public static mockTimeMs: number = 0;
 
-	public static now() {
+	public static now(): number {
 		return DateMock.mockTimeMs;
 	}
 
-	public getTime() {
+	public getTime(): number {
 		return DateMock.mockTimeMs;
 	}
 }
 
 // Sets up a mock date time for the current test. Returns a function that should be called to reset the environment
-function setupDateMock(startMockTime: number) {
+function setupDateMock(startMockTime: number): () => void {
 	const realDate = window.Date;
 	DateMock.mockTimeMs = startMockTime;
 	(window.Date as any) = DateMock;
@@ -59,12 +59,12 @@ function getMockCacheEntry(itemKey: string, options?: { docId: string }): ICache
 	};
 }
 
-[true, false].forEach((immediateClose) => {
+for (const immediateClose of [true, false]) {
 	function getFluidCache(config?: {
 		maxCacheItemAge?: number;
 
 		partitionKey?: string | null;
-	}) {
+	}): FluidCache {
 		return new FluidCache({
 			partitionKey: config?.partitionKey ?? mockPartitionKey,
 			maxCacheItemAge: config?.maxCacheItemAge ?? 3 * 24 * 60 * 60 * 1000,
@@ -74,7 +74,7 @@ function getMockCacheEntry(itemKey: string, options?: { docId: string }): ICache
 	describe(`Fluid Cache tests: immediateClose: ${immediateClose}`, () => {
 		beforeEach(() => {
 			// Reset the indexed db before each test so that it starts off in an empty state
-			// eslint-disable-next-line import/no-internal-modules, @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
+			// eslint-disable-next-line import-x/no-internal-modules, @typescript-eslint/no-require-imports
 			const FDBFactory = require("fake-indexeddb/lib/FDBFactory");
 			(window.indexedDB as any) = new FDBFactory();
 		});
@@ -184,6 +184,37 @@ function getMockCacheEntry(itemKey: string, options?: { docId: string }): ICache
 			expect(await fluidCache.get(docId1Entry2)).toBeUndefined();
 		});
 
+		it("removes a specific entry without affecting other entries for the same document", async () => {
+			const fluidCache = getFluidCache();
+
+			const docId1Entry1 = getMockCacheEntry("docId1Entry1", {
+				docId: "docId1",
+			});
+			const docId1Entry2 = getMockCacheEntry("docId1Entry2", {
+				docId: "docId1",
+			});
+			const docId2Entry1 = getMockCacheEntry("docId2Entry1", {
+				docId: "docId2",
+			});
+
+			await fluidCache.put(docId1Entry1, { data: "entry1" });
+			await fluidCache.put(docId1Entry2, { data: "entry2" });
+			await fluidCache.put(docId2Entry1, { data: "entry3" });
+
+			// Verify all entries exist
+			expect(await fluidCache.get(docId1Entry1)).toEqual({ data: "entry1" });
+			expect(await fluidCache.get(docId1Entry2)).toEqual({ data: "entry2" });
+			expect(await fluidCache.get(docId2Entry1)).toEqual({ data: "entry3" });
+
+			// Remove only one specific entry from docId1
+			await fluidCache.removeEntry(docId1Entry1);
+
+			// Verify only the specified entry was removed
+			expect(await fluidCache.get(docId1Entry1)).toBeUndefined();
+			expect(await fluidCache.get(docId1Entry2)).toEqual({ data: "entry2" }); // Still exists
+			expect(await fluidCache.get(docId2Entry1)).toEqual({ data: "entry3" }); // Still exists
+		});
+
 		// The tests above test the public API of Fluid Cache.
 		//  Those tests should not break if we changed the implementation.
 		// The tests below test implementation details of the Fluid Cache, such as the usage of indexedDB.
@@ -265,4 +296,4 @@ function getMockCacheEntry(itemKey: string, options?: { docId: string }): ICache
 			expect(result).toEqual(undefined);
 		});
 	});
-});
+}

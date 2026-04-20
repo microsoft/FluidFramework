@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { takeAsync } from "@fluid-private/stochastic-test-utils";
 import {
 	type DDSFuzzHarnessEvents,
@@ -28,7 +29,6 @@ import {
 	populatedInitialState,
 } from "./fuzzUtils.js";
 import type { Operation } from "./operationTypes.js";
-import { TypedEventEmitter } from "@fluid-internal/client-utils";
 
 describe("Fuzz - move", () => {
 	const runsPerBatch = 50;
@@ -78,12 +78,13 @@ describe("Fuzz - move", () => {
 		},
 		detachedStartOptions: {
 			numOpsBeforeAttach: 5,
-			rehydrateDisabled: true,
+			// AB#43127: fully allowing rehydrate after attach is currently not supported in tests (but should be in prod) due to limitations in the test mocks.
+			attachingBeforeRehydrateDisable: true,
 		},
 		reconnectProbability: 0.1,
 		idCompressorFactory: deterministicIdCompressorFactory(0xdeadbeef),
 		// TODO: AB#31176 tracks failing seeds when trying to synchronize with move edits.
-		skip: [37],
+		skip: [38],
 	};
 	createDDSFuzzSuite(model, options);
 });

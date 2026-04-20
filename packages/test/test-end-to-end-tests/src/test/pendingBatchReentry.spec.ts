@@ -60,7 +60,7 @@ describeCompat(
 			provider = getTestObjectProvider();
 		});
 
-		const setupContainers = async () => {
+		const setupContainers = async (): Promise<void> => {
 			const configWithFeatureGates = {
 				...testContainerConfig,
 				runtimeOptions: { enableGroupedBatching: true, flushMode: FlushMode.Immediate },

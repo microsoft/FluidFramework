@@ -3,11 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import { IRandom } from "@fluid-private/stochastic-test-utils";
-import { type SequencePlace, Side } from "@fluidframework/merge-tree/internal";
-import type { TestClient } from "@fluidframework/merge-tree/internal/test";
+import {
+	Client,
+	DetachedReferencePosition,
+	type SequencePlace,
+	Side,
+} from "@fluidframework/merge-tree/internal";
 
 import {
 	createSequenceInterval,
@@ -30,7 +34,7 @@ export interface RandomIntervalOptions {
  * @param expectedEndpoints - The expected start and end points or intervals.
  */
 export function assertOrderedSequenceIntervals(
-	client: TestClient,
+	sharedString: ISharedString,
 	results: SequenceInterval[],
 	expectedEndpoints: { start: number; end: number }[] | SequenceInterval[],
 ): void {
@@ -40,14 +44,14 @@ export function assertOrderedSequenceIntervals(
 		const { start, end } = expectedEndpoints[i];
 		assert.strictEqual(
 			typeof start === "number"
-				? client.localReferencePositionToPosition(results[i].start)
+				? sharedString.localReferencePositionToPosition(results[i].start)
 				: results[i].start,
 			start,
 			"mismatched start",
 		);
 		assert.strictEqual(
 			typeof end === "number"
-				? client.localReferencePositionToPosition(results[i].end)
+				? sharedString.localReferencePositionToPosition(results[i].end)
 				: results[i].end,
 			end,
 			"mismatched end",
@@ -62,8 +66,13 @@ let currentId = 0;
  * @param end - The end value of the interval.
  * @returns The created Interval object.
  */
-export function createTestSequenceInterval(client: TestClient, p1: number, p2: number) {
+export function createTestSequenceInterval(
+	sharedString: ISharedString,
+	p1: number,
+	p2: number,
+) {
 	const id = `${currentId++}`;
+	const client = (sharedString as unknown as { client: Client }).client;
 	const interval = createSequenceInterval(
 		"test",
 		id,
@@ -80,14 +89,20 @@ export function createTestSequenceInterval(client: TestClient, p1: number, p2: n
  * @param options - The options for generating random intervals.
  * @returns An array of generated Interval objects.
  */
-export function generateRandomIntervals(client: TestClient, options: RandomIntervalOptions) {
+export function generateRandomIntervals(
+	sharedString: ISharedString,
+	options: RandomIntervalOptions,
+) {
 	const intervals: SequenceInterval[] = [];
 	const { random, count, min, max } = options;
 
 	for (let i = 0; i < count; ++i) {
-		const start = random.integer(Math.max(min, 0), Math.min(max, client.getLength() - 1));
-		const end = random.integer(start, Math.min(max, client.getLength() - 1));
-		const interval = createTestSequenceInterval(client, start, end);
+		const start = random.integer(
+			Math.max(min, 0),
+			Math.min(max, sharedString.getLength() - 1),
+		);
+		const end = random.integer(start, Math.min(max, sharedString.getLength() - 1));
+		const interval = createTestSequenceInterval(sharedString, start, end);
 		intervals.push(interval);
 	}
 
@@ -130,7 +145,7 @@ export function expectedPositionFromSequencePlace(
 }
 
 /**
- * @returns the index to be used with methods such as substring, taking side into account.
+ * Gets the index to be used with methods such as substring, taking side into account.
  */
 export function expectedIndexFromSequencePlace(
 	place: SequencePlace,
@@ -207,7 +222,14 @@ export function assertInterval(
 		"unexpected start side",
 	);
 	const actualStart = sharedString.localReferencePositionToPosition(actual.start);
-	assert.equal(actualStart, expectedPositionFromSequencePlace(expectedStart, -1));
+	assert.equal(
+		actualStart,
+		expectedPositionFromSequencePlace(
+			expectedStart,
+			actual.start.canSlideToEndpoint ? sharedString.getLength() : DetachedReferencePosition,
+		),
+		`unexpected start position(${sharedString.getLength()})`,
+	);
 	assert.equal(
 		actual.endSide,
 		typeof expectedEnd === "object" ? expectedEnd.side : Side.Before,

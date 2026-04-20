@@ -6,7 +6,7 @@
 import { LazyPromise } from "@fluidframework/core-utils/internal";
 
 import { IFluidDependencySynthesizer } from "./IFluidDependencySynthesizer.js";
-import {
+import type {
 	AsyncFluidObjectProvider,
 	AsyncOptionalFluidObjectProvider,
 	AsyncRequiredFluidObjectProvider,
@@ -18,7 +18,7 @@ import {
  * DependencyContainer is similar to a IoC Container. It takes providers and will
  * synthesize an object based on them when requested.
  * @legacy
- * @alpha
+ * @beta
  */
 export class DependencyContainer<TMap> implements IFluidDependencySynthesizer {
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO: use a real type here
@@ -36,7 +36,7 @@ export class DependencyContainer<TMap> implements IFluidDependencySynthesizer {
 	 * Add a new provider
 	 * @param type - Name of the Type T being provided
 	 * @param provider - A provider that will resolve the T correctly when asked
-	 * @throws - If passing a type that's already registered
+	 * @throws If passing a type that's already registered
 	 */
 	public register<T extends keyof TMap = keyof TMap>(
 		type: T,
@@ -107,7 +107,6 @@ export class DependencyContainer<TMap> implements IFluidDependencySynthesizer {
 					return parent.getProvider(provider);
 				} else {
 					// older implementations of the IFluidDependencySynthesizer exposed getProvider
-					// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 					const maybeGetProvider = parent as { getProvider?(provider: string & keyof TMap) };
 					if (maybeGetProvider?.getProvider !== undefined) {
 						return maybeGetProvider.getProvider(provider);

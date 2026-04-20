@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { Server } from "node:http";
+import type { Server } from "node:http";
 
 import cors from "cors";
 import express from "express";
 
-import { ITaskData, assertValidTaskData } from "../model-interface/index.js";
+import { type ITaskData, assertValidTaskData } from "../model-interface/index.js";
 import { ClientManager } from "../utilities/index.js";
 
 /**

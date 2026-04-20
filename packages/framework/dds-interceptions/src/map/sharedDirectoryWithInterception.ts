@@ -4,8 +4,8 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
-import { IDirectory } from "@fluidframework/map/internal";
-import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions/internal";
+import type { IDirectory } from "@fluidframework/map/internal";
+import type { IFluidDataStoreContext } from "@fluidframework/runtime-definitions/internal";
 
 /**
  * - Create a new object from the passed subDirectory.
@@ -36,15 +36,15 @@ function createSubDirectoryWithInterception<T extends IDirectory>(
 		baseDirectory: IDirectory,
 		subDirectory: IDirectory,
 		key: string,
-		value: any,
+		value: unknown,
 	) => void,
 ): T {
-	const subDirectoryWithInterception = Object.create(subDirectory);
+	const subDirectoryWithInterception = Object.create(subDirectory) as T;
 
 	// executingCallback keeps track of whether set is called recursively from the setInterceptionCallback.
 	let executingCallback: boolean = false;
 
-	subDirectoryWithInterception.set = (key: string, value: any) => {
+	subDirectoryWithInterception.set = (key: string, value: unknown) => {
 		let directory;
 		// Set should not be called on the wrapped object from the interception callback as this will lead to
 		// infinite recursion.
@@ -130,7 +130,6 @@ function createSubDirectoryWithInterception<T extends IDirectory>(
 				);
 	};
 
-	// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 	return subDirectoryWithInterception;
 }
 
@@ -162,7 +161,7 @@ export function createDirectoryWithInterception<T extends IDirectory>(
 		baseDirectory: IDirectory,
 		subDirectory: IDirectory,
 		key: string,
-		value: any,
+		value: unknown,
 	) => void,
 ): T {
 	return createSubDirectoryWithInterception(

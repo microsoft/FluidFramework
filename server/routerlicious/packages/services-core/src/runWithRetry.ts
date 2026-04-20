@@ -4,10 +4,10 @@
  */
 
 import { delay } from "@fluidframework/common-utils";
-import { isNetworkError, NetworkError } from "@fluidframework/server-services-client";
+import { isNetworkError, type NetworkError } from "@fluidframework/server-services-client";
 import {
 	LogLevel,
-	Lumber,
+	type Lumber,
 	LumberEventName,
 	Lumberjack,
 } from "@fluidframework/server-services-telemetry";

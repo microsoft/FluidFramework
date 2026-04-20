@@ -4,17 +4,17 @@
  */
 
 import { EmptyKey, type FieldKey, type JsonableTree } from "../../../core/index.js";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import { dummyRoot } from "../../../feature-libraries/chunked-forest/index.js";
 import {
 	TreeShape,
 	UniformChunk,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/chunked-forest/uniformChunk.js";
+import { JsonAsTree } from "../../../jsonDomainSchema.js";
 import { numberSchema } from "../../../simple-tree/index.js";
 import { brand, makeArray } from "../../../util/index.js";
 import { type TestField, EmptyObject } from "../../cursorTestSuite.js";
-import { JsonAsTree } from "../../../jsonDomainSchema.js";
 
 export const emptyShape = new TreeShape(brand(EmptyObject.identifier), false, []);
 

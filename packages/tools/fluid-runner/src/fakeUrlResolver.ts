@@ -3,13 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { IRequest } from "@fluidframework/core-interfaces";
-import {
+import type { IRequest } from "@fluidframework/core-interfaces";
+import type {
 	IContainerPackageInfo,
 	IResolvedUrl,
 	IUrlResolver,
 } from "@fluidframework/driver-definitions/internal";
-import { IOdspResolvedUrl } from "@fluidframework/odsp-driver-definitions/internal";
+import type { IOdspResolvedUrl } from "@fluidframework/odsp-driver-definitions/internal";
 
 const fakeId = "FakeUrlResolver";
 const fakeUrl = "https://examplehost.com/FakeUrlResolver/";

@@ -14,7 +14,7 @@ import {
 	type DeduplicationTable,
 	jsonMinimizingFilter,
 } from "./chunkCodecUtilities.js";
-import type { EncodedFieldBatchGeneric } from "./formatGeneric.js";
+import type { FieldBatchFormatVersion, EncodedFieldBatchGeneric } from "./format/index.js";
 
 /**
  * An identifier which can be compressed using {@link Counter}.
@@ -51,7 +51,7 @@ export type BufferFormat<TEncodedShape> = (
  * Note that this modifies `buffer` to avoid having to copy it.
  */
 export function updateShapesAndIdentifiersEncoding<TEncodedShape>(
-	version: number,
+	version: FieldBatchFormatVersion,
 	buffer: BufferFormat<TEncodedShape>[],
 	identifierFilter: CounterFilter<string> = jsonMinimizingFilter,
 ): EncodedFieldBatchGeneric<TEncodedShape> {

@@ -5,13 +5,13 @@
 
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
-import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { IFluidSerializer } from "@fluidframework/shared-object-base/internal";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
+import type { IFluidHandle } from "@fluidframework/core-interfaces";
+import type { IFluidSerializer } from "@fluidframework/shared-object-base/internal";
+import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 
-import { SerializedAttributionCollection } from "./attributionCollection.js";
-import { IJSONSegment } from "./ops.js";
-import { PropertySet } from "./properties.js";
+import type { SerializedAttributionCollection } from "./attributionCollection.js";
+import type { IJSONSegment } from "./ops.js";
+import type { PropertySet } from "./properties.js";
 import { SnapshotLegacy } from "./snapshotlegacy.js";
 
 export interface VersionedMergeTreeChunk {

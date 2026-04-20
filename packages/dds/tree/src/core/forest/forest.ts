@@ -6,6 +6,7 @@
 import type { Listenable } from "@fluidframework/core-interfaces/internal";
 import { assert } from "@fluidframework/core-utils/internal";
 
+import type { Breakable } from "../../util/index.js";
 import type { FieldKey, TreeStoredSchemaSubscription } from "../schema-stored/index.js";
 import {
 	type Anchor,
@@ -77,22 +78,23 @@ export interface IForestSubscription {
 	readonly anchors: AnchorSet;
 
 	/**
-	 * Create an independent copy of this forest, that uses the provided schema and anchors.
+	 * Create an independent copy of this forest, that uses the provided schema.
 	 *
 	 * The new copy will not invalidate observers (dependents) of the old one.
+	 * @param breaker - If provided, the cloned forest will use this breaker instead of inheriting the original's.
+	 * This is useful when creating a fork that should have fault isolation from the original.
 	 */
-	clone(schema: TreeStoredSchemaSubscription, anchors: AnchorSet): IEditableForest;
+	clone(schema: TreeStoredSchemaSubscription, breaker?: Breakable): IEditableForest;
 
 	/**
-	 * Generate a TreeChunk for the content in the given field cursor.
+	 * Generate a TreeChunk[] for the current field (and its children) of cursor.
 	 * This can be used to chunk data that is then inserted into the forest.
 	 *
 	 * @remarks
-	 * Like {@link chunkField}, but forces the results into a single TreeChunk.
-	 * While any TreeChunk is compatible with any forest, this method creates one optimized for this specific forest.
+	 * Similar to {@link chunkField} but it creates chunks optimized for this specific forest by using its compression policy.
 	 * The provided data must be compatible with the forest's current schema.
 	 */
-	chunkField(cursor: ITreeCursorSynchronous): TreeChunk;
+	chunkField(cursor: ITreeCursorSynchronous): TreeChunk[];
 
 	/**
 	 * Allocates a cursor in the "cleared" state.
@@ -252,8 +254,6 @@ export interface ITreeSubscriptionCursor extends ITreeCursor {
 	// getParentInfo(id: NodeId): TreeLocation;
 }
 
-/**
- */
 export enum ITreeSubscriptionCursorState {
 	/**
 	 * On the current revision of the forest.
@@ -269,8 +269,6 @@ export enum ITreeSubscriptionCursorState {
 	Freed,
 }
 
-/**
- */
 export const enum TreeNavigationResult {
 	/**
 	 * Attempt to navigate cursor to a key or index that is outside the client's view.

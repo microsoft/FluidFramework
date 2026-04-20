@@ -1,5 +1,93 @@
 # @fluid-experimental/sequence-deprecated
 
+## 2.93.0
+
+Dependency updates only.
+
+## 2.92.0
+
+Dependency updates only.
+
+## 2.91.0
+
+Dependency updates only.
+
+## 2.90.0
+
+Dependency updates only.
+
+## 2.83.0
+
+Dependency updates only.
+
+## 2.82.0
+
+Dependency updates only.
+
+## 2.81.0
+
+Dependency updates only.
+
+## 2.80.0
+
+Dependency updates only.
+
+## 2.74.0
+
+Dependency updates only.
+
+## 2.73.0
+
+Dependency updates only.
+
+## 2.72.0
+
+Dependency updates only.
+
+## 2.71.0
+
+Dependency updates only.
+
+## 2.70.0
+
+Dependency updates only.
+
+## 2.63.0
+
+Dependency updates only.
+
+## 2.62.0
+
+Dependency updates only.
+
+## 2.61.0
+
+Dependency updates only.
+
+## 2.60.0
+
+Dependency updates only.
+
+## 2.53.0
+
+Dependency updates only.
+
+## 2.52.0
+
+Dependency updates only.
+
+## 2.51.0
+
+Dependency updates only.
+
+## 2.50.0
+
+Dependency updates only.
+
+## 2.43.0
+
+Dependency updates only.
+
 ## 2.42.0
 
 Dependency updates only.
@@ -80,7 +168,6 @@ Dependency updates only.
 
   The `PropertyManager` class, along with the `propertyManager` properties and `addProperties` functions on segments and intervals, are not intended for external use.
   These elements will be removed in a future release for the following reasons:
-
   - There are no scenarios where they need to be used directly.
   - Using them directly will cause eventual consistency problems.
   - Upcoming features will require modifications to these mechanisms.
@@ -121,7 +208,6 @@ Dependency updates only.
   TypeScript types and implementation code.
 
   This means that using Fluid Framework packages require the following TypeScript settings in tsconfig.json:
-
   - `"moduleResolution": "Node16"` with `"module": "Node16"`
   - `"moduleResolution": "Bundler"` with `"module": "ESNext"`
 

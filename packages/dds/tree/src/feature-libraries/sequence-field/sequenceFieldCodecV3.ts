@@ -5,15 +5,21 @@
 
 import type { TAnySchema } from "@sinclair/typebox";
 
-import { DiscriminatedUnionDispatcher, type IJsonCodec } from "../../codec/index.js";
+import {
+	DiscriminatedUnionDispatcher,
+	type IJsonCodec,
+	type JsonCodecPart,
+} from "../../codec/index.js";
 import type {
 	ChangeEncodingContext,
-	EncodedRevisionTag,
 	RevisionTag,
+	RevisionTagSchema,
 } from "../../core/index.js";
 import type { JsonCompatibleReadOnly } from "../../util/index.js";
-import type { FieldChangeEncodingContext } from "../index.js";
-import { EncodedNodeChangeset } from "../modular-schema/index.js";
+import {
+	EncodedNodeChangeset,
+	type FieldChangeEncodingContext,
+} from "../modular-schema/index.js";
 
 import { Changeset as ChangesetSchema, type Encoded } from "./formatV3.js";
 import { makeV2CodecHelpers } from "./sequenceFieldCodecV2.js";
@@ -21,10 +27,9 @@ import type { Changeset, Mark, MarkEffect, Rename } from "./types.js";
 import { isNoopMark } from "./utils.js";
 
 export function makeV3Codec(
-	revisionTagCodec: IJsonCodec<
+	revisionTagCodec: JsonCodecPart<
 		RevisionTag,
-		EncodedRevisionTag,
-		EncodedRevisionTag,
+		typeof RevisionTagSchema,
 		ChangeEncodingContext
 	>,
 ): IJsonCodec<
@@ -48,14 +53,16 @@ export function makeV3Codec(
 		encode(effect: MarkEffect, context: ChangeEncodingContext): Encoded.MarkEffect {
 			const type = effect.type;
 			switch (type) {
-				case "Rename":
+				case "Rename": {
 					return {
 						rename: {
 							idOverride: atomIdCodec.encode(effect.idOverride, context),
 						},
 					};
-				default:
+				}
+				default: {
 					return markEffectV2Codec.encode(effect, context);
+				}
 			}
 		},
 		decode(encoded: Encoded.MarkEffect, context: ChangeEncodingContext): MarkEffect {

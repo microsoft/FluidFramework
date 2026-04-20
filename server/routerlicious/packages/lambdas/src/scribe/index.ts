@@ -4,15 +4,16 @@
  */
 
 export { CheckpointManager } from "./checkpointManager";
-export {
+export type {
 	ICheckpointManager,
 	ILatestSummaryState,
 	IPendingMessageReader,
 	ISummaryReader,
 	ISummaryWriter,
+	ISummaryWriterFactory,
 	ISummaryWriteResponse,
 } from "./interfaces";
 export { ScribeLambda } from "./lambda";
 export { ScribeLambdaFactory } from "./lambdaFactory";
 export { SummaryReader } from "./summaryReader";
-export { SummaryWriter } from "./summaryWriter";
+export { SummaryWriter, SummaryWriterFactory } from "./summaryWriter";

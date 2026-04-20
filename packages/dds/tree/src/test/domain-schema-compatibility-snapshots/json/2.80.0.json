@@ -1,0 +1,102 @@
+{
+  "version": 1,
+  "root": {
+    "kind": 1,
+    "simpleAllowedTypes": {
+      "com.fluidframework.leaf.null": {
+        "isStaged": false
+      },
+      "com.fluidframework.leaf.number": {
+        "isStaged": false
+      },
+      "com.fluidframework.leaf.string": {
+        "isStaged": false
+      },
+      "com.fluidframework.leaf.boolean": {
+        "isStaged": false
+      },
+      "com.fluidframework.json.object": {
+        "isStaged": false
+      },
+      "com.fluidframework.json.array": {
+        "isStaged": false
+      }
+    }
+  },
+  "definitions": {
+    "com.fluidframework.leaf.null": {
+      "leaf": {
+        "kind": 3,
+        "leafKind": 4
+      }
+    },
+    "com.fluidframework.leaf.number": {
+      "leaf": {
+        "kind": 3,
+        "leafKind": 0
+      }
+    },
+    "com.fluidframework.leaf.string": {
+      "leaf": {
+        "kind": 3,
+        "leafKind": 1
+      }
+    },
+    "com.fluidframework.leaf.boolean": {
+      "leaf": {
+        "kind": 3,
+        "leafKind": 2
+      }
+    },
+    "com.fluidframework.json.array": {
+      "array": {
+        "kind": 1,
+        "simpleAllowedTypes": {
+          "com.fluidframework.leaf.null": {
+            "isStaged": false
+          },
+          "com.fluidframework.leaf.number": {
+            "isStaged": false
+          },
+          "com.fluidframework.leaf.string": {
+            "isStaged": false
+          },
+          "com.fluidframework.leaf.boolean": {
+            "isStaged": false
+          },
+          "com.fluidframework.json.object": {
+            "isStaged": false
+          },
+          "com.fluidframework.json.array": {
+            "isStaged": false
+          }
+        }
+      }
+    },
+    "com.fluidframework.json.object": {
+      "record": {
+        "kind": 4,
+        "simpleAllowedTypes": {
+          "com.fluidframework.leaf.null": {
+            "isStaged": false
+          },
+          "com.fluidframework.leaf.number": {
+            "isStaged": false
+          },
+          "com.fluidframework.leaf.string": {
+            "isStaged": false
+          },
+          "com.fluidframework.leaf.boolean": {
+            "isStaged": false
+          },
+          "com.fluidframework.json.object": {
+            "isStaged": false
+          },
+          "com.fluidframework.json.array": {
+            "isStaged": false
+          }
+        }
+      }
+    }
+  }
+}

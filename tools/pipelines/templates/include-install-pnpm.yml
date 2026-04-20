@@ -27,16 +27,23 @@ parameters:
   type: string
   default: $(Agent.TempDirectory)/.npmrc
 
+- name: primaryRegistry
+  type: string
+  default: $(ado-feeds-primary-registry)
+
 steps:
 - ${{ if eq(parameters.enableCache, true) }}:
   - task: Cache@2
     displayName: Cache pnpm store
-    timeoutInMinutes: 3
+    # The timeout applies to both the pre-job restore and post-job save operations.
+    # 3 minutes was insufficient for the post-job cache upload of the pnpm store, causing
+    # intermittent "The task has timed out" errors that mark builds as Partially Succeeded.
+    timeoutInMinutes: 5
     continueOnError: true
     inputs:
       # Caches are already scoped to individual pipelines, so no need to include the release group name or tag
       # in the cache key
-      key: 'pnpm-store | "$(Agent.OS)" | ${{ parameters.buildDirectory }}/pnpm-lock.yaml'
+      key: 'pnpm-store | "$(Agent.OS)" | $(Pipeline.Workspace)/${{ parameters.buildDirectory }}/pnpm-lock.yaml'
       path: ${{ parameters.pnpmStorePath }}
       restoreKeys: |
         pnpm-store | "$(Agent.OS)"
@@ -48,7 +55,7 @@ steps:
   condition: or(succeeded(), canceled())
   inputs:
     targetType: 'inline'
-    workingDirectory: ${{ parameters.buildDirectory }}
+    workingDirectory: '$(Pipeline.Workspace)/${{ parameters.buildDirectory }}'
     # workspace-concurrency 0 means use use the CPU core count. This is better than the default (4) for larger agents.
     script: |
       set -eu -o pipefail
@@ -69,13 +76,13 @@ steps:
         echo "##vso[task.setvariable variable=registryType]private"
       fi
   env:
-    NPM_REGISTRY: $(ado-feeds-primary-registry)
+    NPM_REGISTRY: ${{ parameters.primaryRegistry }}
     NPM_CONFIG_USERCONFIG: ${{ parameters.userNpmrcPath}}
     # We should leverage the primary npm registry to install pnpm as well. However, ADO artifacts feeds do not implement
     # the full npm registry API including a route that corepack uses to get package metadata--the version route here:
     # https://github.com/nodejs/corepack/blob/bc13d40037d0b1bfd386e260ae741f55505b5c7c/sources/npmRegistryUtils.ts#L32
     # Thus installing pnpm from an ADO feed using corepack is not possible at time of writing.
-    # COREPACK_NPM_REGISTRY: $(ado-feeds-primary-registry)
+    # COREPACK_NPM_REGISTRY: ${{ parameters.primaryRegistry }}
 
 # Authenticate to npm feed if required
 - task: npmAuthenticate@0

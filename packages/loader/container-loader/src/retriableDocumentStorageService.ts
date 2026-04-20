@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { IDisposable } from "@fluidframework/core-interfaces";
+import type { IDisposable } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
-import { ISummaryHandle, ISummaryTree } from "@fluidframework/driver-definitions";
-import {
+import type { ISummaryHandle, ISummaryTree } from "@fluidframework/driver-definitions";
+import type {
 	FetchSource,
 	IDocumentStorageService,
 	IDocumentStorageServicePolicies,
@@ -19,7 +19,7 @@ import {
 } from "@fluidframework/driver-definitions/internal";
 import { runWithRetry } from "@fluidframework/driver-utils/internal";
 import {
-	ITelemetryLoggerExt,
+	type ITelemetryLoggerExt,
 	GenericError,
 	UsageError,
 } from "@fluidframework/telemetry-utils/internal";
@@ -30,6 +30,7 @@ export class RetriableDocumentStorageService implements IDocumentStorageService,
 	constructor(
 		private readonly internalStorageServiceP: Promise<IDocumentStorageService>,
 		private readonly logger: ITelemetryLoggerExt,
+		private readonly maxRetries?: number,
 	) {
 		this.internalStorageServiceP
 			.then((s) => (this.internalStorageService = s))
@@ -167,9 +168,15 @@ export class RetriableDocumentStorageService implements IDocumentStorageService,
 	}
 
 	private async runWithRetry<T>(api: () => Promise<T>, callName: string): Promise<T> {
-		return runWithRetry(api, callName, this.logger, {
-			onRetry: (_delayInMs: number, error: unknown) =>
-				this.checkStorageDisposed(callName, error),
-		});
+		return runWithRetry(
+			api,
+			callName,
+			this.logger,
+			{
+				onRetry: (_delayInMs: number, error: unknown) =>
+					this.checkStorageDisposed(callName, error),
+			},
+			this.maxRetries,
+		);
 	}
 }

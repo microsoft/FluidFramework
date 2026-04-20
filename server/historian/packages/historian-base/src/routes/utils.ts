@@ -3,12 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import { RequestHandler } from "express";
-import { decode } from "jsonwebtoken";
-import * as nconf from "nconf";
-import { ITokenClaims } from "@fluidframework/protocol-definitions";
+import type { ITokenClaims } from "@fluidframework/protocol-definitions";
 import { NetworkError } from "@fluidframework/server-services-client";
-import { validateTokenClaims } from "@fluidframework/server-services-utils";
+import {
+	runWithRetry,
+	type IStorageNameRetriever,
+	type IRevokedTokenChecker,
+	type IDocumentManager,
+	type IThrottler,
+	type IDenyList,
+} from "@fluidframework/server-services-core";
 import { handleResponse } from "@fluidframework/server-services-shared";
 import {
 	Lumberjack,
@@ -16,21 +20,25 @@ import {
 	getLumberBaseProperties,
 } from "@fluidframework/server-services-telemetry";
 import {
-	runWithRetry,
-	IStorageNameRetriever,
-	IRevokedTokenChecker,
-	IDocumentManager,
-	IThrottler,
-	type IDenyList,
-} from "@fluidframework/server-services-core";
+	type IThrottleMiddlewareOptions,
+	validateTokenClaims,
+} from "@fluidframework/server-services-utils";
+import type { RequestHandler } from "express";
+import { Router } from "express";
+import { decode } from "jsonwebtoken";
+import type * as nconf from "nconf";
+
 import {
-	ICache,
-	ITenantService,
+	type ICache,
+	type ITenantService,
 	RestGitService,
-	ITenantCustomDataExternal,
-	ISimplifiedCustomDataRetriever,
+	type ITenantCustomDataExternal,
+	type ISimplifiedCustomDataRetriever,
+	type ICreateGitServiceArgs,
 } from "../services";
-import { containsPathTraversal, parseToken } from "../utils";
+import { Constants, containsPathTraversal, parseToken } from "../utils";
+
+const MAX_TOKEN_LENGTH = 1000; // Maximum allowed token length in characters
 
 export { handleResponse } from "@fluidframework/server-services-shared";
 
@@ -47,22 +55,6 @@ export type CommonRouteParams = [
 	ephemeralDocumentTTLSec?: number,
 	simplifiedCustomDataRetriever?: ISimplifiedCustomDataRetriever,
 ];
-
-export interface ICreateGitServiceArgs {
-	config: nconf.Provider;
-	tenantId: string;
-	authorization: string | undefined;
-	tenantService: ITenantService;
-	storageNameRetriever?: IStorageNameRetriever;
-	documentManager: IDocumentManager;
-	cache?: ICache;
-	initialUpload?: boolean;
-	storageName?: string;
-	allowDisabledTenant?: boolean;
-	isEphemeralContainer?: boolean;
-	ephemeralDocumentTTLSec?: number; // 24 hours
-	simplifiedCustomDataRetriever?: ISimplifiedCustomDataRetriever;
-}
 
 function getEphemeralContainerCacheKey(documentId: string): string {
 	return `isEphemeralContainer:${documentId}`;
@@ -263,6 +255,7 @@ export async function createGitService(createArgs: ICreateGitServiceArgs): Promi
 		isEphemeralContainer,
 		ephemeralDocumentTTLSec,
 		simplifiedCustomDataRetriever,
+		postEphemeralContainerChecker,
 	} = { ...createArgs };
 	if (!authorization) {
 		throw new NetworkError(403, "Authorization header is missing.");
@@ -300,6 +293,16 @@ export async function createGitService(createArgs: ICreateGitServiceArgs): Promi
 		Lumberjack.info(`Document is ephemeral.`, getLumberBaseProperties(documentId, tenantId));
 	}
 
+	let postIsEphemeral: boolean = isEphemeral;
+	if (postEphemeralContainerChecker !== undefined) {
+		postIsEphemeral = await postEphemeralContainerChecker.postEphemeralContainerCheck(
+			tenantId,
+			documentId,
+			isEphemeral,
+			createArgs,
+		);
+	}
+
 	const calculatedStorageName =
 		initialUpload && storageName
 			? storageName
@@ -312,7 +315,7 @@ export async function createGitService(createArgs: ICreateGitServiceArgs): Promi
 		cache,
 		calculatedStorageName,
 		storageUrl,
-		isEphemeral,
+		postIsEphemeral,
 		maxCacheableSummarySize,
 		simplifiedCustomData,
 	);
@@ -342,10 +345,47 @@ export function queryParamToString(value: any): string | undefined {
 	return value;
 }
 
-export function verifyToken(revokedTokenChecker: IRevokedTokenChecker | undefined): RequestHandler {
+/**
+ * Common context created once per route module's `create()` call,
+ * encapsulating the router instance and shared throttle/token configuration.
+ */
+export interface IHistorianRouteContext {
+	router: Router;
+	maxTokenLifetimeSec: number | undefined;
+	tenantThrottleOptions: Partial<IThrottleMiddlewareOptions>;
+	restTenantGeneralThrottler: IThrottler | undefined;
+}
+
+/**
+ * Creates common route context values shared by all Historian REST route modules.
+ * @param config - The application configuration provider.
+ * @param restTenantThrottlers - Map of per-tenant throttlers, keyed by throttle ID prefix.
+ */
+export function createRouteContext(
+	config: nconf.Provider,
+	restTenantThrottlers: Map<string, IThrottler>,
+): IHistorianRouteContext {
+	const router: Router = Router();
+	const maxTokenLifetimeSec = config.get("maxTokenLifetimeSec") as number | undefined;
+	const tenantThrottleOptions: Partial<IThrottleMiddlewareOptions> = {
+		throttleIdPrefix: (req) => req.params.tenantId,
+		throttleIdSuffix: Constants.historianRestThrottleIdSuffix,
+	};
+	const restTenantGeneralThrottler = restTenantThrottlers.get(
+		Constants.generalRestCallThrottleIdPrefix,
+	);
+	return { router, maxTokenLifetimeSec, tenantThrottleOptions, restTenantGeneralThrottler };
+}
+
+export function verifyToken(
+	revokedTokenChecker: IRevokedTokenChecker | undefined,
+	requiredScopes: string[],
+	maxTokenLifetimeSec: number | undefined,
+): RequestHandler {
 	// eslint-disable-next-line @typescript-eslint/no-misused-promises
 	return async (request, response, next) => {
 		try {
+			// eslint-disable-next-line @fluid-internal/fluid/no-unchecked-record-access
 			const reqTenantId = request.params.tenantId;
 			const authorization = request.get("Authorization");
 			if (!authorization) {
@@ -355,6 +395,10 @@ export function verifyToken(revokedTokenChecker: IRevokedTokenChecker | undefine
 			if (!token) {
 				throw new NetworkError(403, "Authorization token is missing.");
 			}
+			if (token.length > MAX_TOKEN_LENGTH) {
+				// Prevent excessively long tokens that could lead to performance issues.
+				throw new NetworkError(403, "Invalid token. Token is too long.");
+			}
 			const claims = validateTokenClaims(token, "documentId", reqTenantId, false);
 			const documentId = claims.documentId;
 			const tenantId = claims.tenantId;
@@ -362,14 +406,14 @@ export function verifyToken(revokedTokenChecker: IRevokedTokenChecker | undefine
 				// Prevent attempted directory traversal.
 				throw new NetworkError(400, `Invalid document id: ${documentId}`);
 			}
+
 			// Verify token not revoked if JTI claim is present
 			if (revokedTokenChecker && claims.jti) {
 				const isTokenRevoked = await revokedTokenChecker.isTokenRevoked(
 					tenantId,
-					claims.documentId,
+					documentId,
 					claims.jti,
 				);
-
 				if (isTokenRevoked) {
 					throw new NetworkError(
 						403,
@@ -378,6 +422,32 @@ export function verifyToken(revokedTokenChecker: IRevokedTokenChecker | undefine
 						true /* isFatal */,
 					);
 				}
+			}
+
+			if (requiredScopes) {
+				const hasAllRequiredScopes = requiredScopes.every((scope) =>
+					claims.scopes.includes(scope),
+				);
+				if (!hasAllRequiredScopes) {
+					throw new NetworkError(
+						403,
+						`Permission denied. Insufficient scopes. Required scopes: ${requiredScopes}`,
+					);
+				}
+			}
+
+			if (!claims.exp || !claims.iat) {
+				throw new NetworkError(403, "Invalid token expiry");
+			}
+			if (
+				maxTokenLifetimeSec !== undefined &&
+				claims.exp - claims.iat > maxTokenLifetimeSec
+			) {
+				throw new NetworkError(403, "Invalid token expiry");
+			}
+			const lifeTimeMSec = claims.exp * 1000 - new Date().getTime();
+			if (lifeTimeMSec < 0) {
+				throw new NetworkError(401, "Expired token");
 			}
 			// eslint-disable-next-line @typescript-eslint/return-await
 			return getGlobalTelemetryContext().bindPropertiesAsync(

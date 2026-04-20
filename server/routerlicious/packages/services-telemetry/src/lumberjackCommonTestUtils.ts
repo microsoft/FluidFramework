@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { Lumber } from "./lumber";
+import type { Lumber } from "./lumber";
 import { Lumberjack } from "./lumberjack";
-import {
+import type {
 	ILumberjackEngine,
 	ILumberjackSchemaValidator,
 	ILumberjackSchemaValidationResult,

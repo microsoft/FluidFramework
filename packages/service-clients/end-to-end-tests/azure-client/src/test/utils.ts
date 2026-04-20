@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { AzureMember, IAzureAudience } from "@fluidframework/azure-client";
+import type { AzureMember, IAzureAudience } from "@fluidframework/azure-client";
 import type { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
-import { IMember } from "@fluidframework/fluid-static";
-import { ISharedMap, IValueChanged } from "@fluidframework/map/internal";
+import type { IMember } from "@fluidframework/fluid-static";
+import type { ISharedMap, IValueChanged } from "@fluidframework/map/legacy";
 
 export const waitForMember = async (
 	audience: IAzureAudience,
@@ -59,7 +59,7 @@ export const configProvider = (
  * Currently, there is only a test-set for Durable containers and one for Ephemeral containers.
  * The Ephemeral container tests will not run for local tests.
  *
- * @returns - The test matrix
+ * @returns The test matrix
  */
 export function getTestMatrix(): { variant: string; options: { isEphemeral: boolean } }[] {
 	const testMatrix = [

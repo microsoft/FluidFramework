@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import { isObject } from "@fluidframework/core-utils/internal";
 import { isFluidHandle, toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
@@ -11,6 +11,7 @@ import { MockContainerRuntimeForReconnection } from "@fluidframework/test-runtim
 
 import { ISequenceIntervalCollection } from "../intervalCollection.js";
 import { createOverlappingIntervalsIndex } from "../intervalIndex/index.js";
+import { SequenceIntervalClass } from "../intervals/index.js";
 import { SharedString } from "../sequenceFactory.js";
 
 export interface Client {
@@ -42,13 +43,13 @@ export async function assertEquivalentSharedStrings(a: SharedString, b: SharedSt
 	);
 	assert.equal(a.getLength(), b.getLength());
 	await assertPropertiesEqual(a, b);
-	const firstLabels = Array.from(a.getIntervalCollectionLabels()).sort();
-	const otherLabels = Array.from(b.getIntervalCollectionLabels()).sort();
+	const firstLabels = [...a.getIntervalCollectionLabels()].sort();
+	const otherLabels = [...b.getIntervalCollectionLabels()].sort();
 	for (let i = 0; i < firstLabels.length; i++) {
 		const collection1 = a.getIntervalCollection(firstLabels[i]);
 		const collection2 = b.getIntervalCollection(otherLabels[i]);
-		const intervals1 = Array.from(collection1);
-		const intervals2 = Array.from(collection2);
+		const intervals1 = [...collection1];
+		const intervals2 = [...collection2];
 		assert.equal(
 			intervals1.length,
 			intervals2.length,
@@ -148,14 +149,18 @@ export const assertSequenceIntervals = (
 	expected: readonly { start: number; end: number }[],
 	validateOverlapping: boolean = true,
 ) => {
-	const actual = Array.from(intervalCollection);
+	const actual = [...intervalCollection];
 	if (validateOverlapping && sharedString.getLength() > 0) {
 		const overlappingIntervalsIndex = createOverlappingIntervalsIndex(sharedString);
 		intervalCollection.attachIndex(overlappingIntervalsIndex);
 		const overlapping = overlappingIntervalsIndex.findOverlappingIntervals("start", "end");
 		assert.deepEqual(
-			actual.map((i) => i.serialize()),
-			overlapping.map((i) => i.serialize()),
+			actual
+				.filter((i): i is SequenceIntervalClass => i instanceof SequenceIntervalClass)
+				.map((i) => i.serialize()),
+			overlapping
+				.filter((i): i is SequenceIntervalClass => i instanceof SequenceIntervalClass)
+				.map((i) => i.serialize()),
 			"Interval search returned inconsistent results",
 		);
 		intervalCollection.detachIndex(overlappingIntervalsIndex);

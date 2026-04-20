@@ -19,21 +19,16 @@ import {
 	IFluidCodeDetails,
 	LoaderHeader,
 } from "@fluidframework/container-definitions/internal";
-import { ConnectionState } from "@fluidframework/container-loader";
 import {
-	IContainerExperimental,
-	ILoaderProps,
+	asLegacyAlpha,
+	ConnectionState,
+	type ContainerAlpha,
+	type ILoaderProps,
 	Loader,
 	waitContainerToCatchUp,
 } from "@fluidframework/container-loader/internal";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
-import {
-	ConfigTypes,
-	IConfigProviderBase,
-	IErrorBase,
-	IRequest,
-	IRequestHeader,
-} from "@fluidframework/core-interfaces";
+import { IErrorBase, IRequest, IRequestHeader } from "@fluidframework/core-interfaces";
 import { Deferred } from "@fluidframework/core-utils/internal";
 import { IClient } from "@fluidframework/driver-definitions";
 import {
@@ -54,7 +49,6 @@ import {
 } from "@fluidframework/driver-utils/internal";
 import { DataCorruptionError } from "@fluidframework/telemetry-utils/internal";
 import {
-	ITestContainerConfig,
 	ITestObjectProvider,
 	LoaderContainerTracker,
 	LocalCodeLoader,
@@ -101,7 +95,10 @@ describeCompat("Container", "NoCompat", (getTestObjectProvider) => {
 	afterEach(() => {
 		loaderContainerTracker.reset();
 	});
-	async function loadContainer(props?: Partial<ILoaderProps>, headers?: IRequestHeader) {
+	async function loadContainer(
+		props?: Partial<ILoaderProps>,
+		headers?: IRequestHeader,
+	): Promise<IContainer> {
 		const loader = new Loader({
 			...props,
 			logger: provider.logger,
@@ -300,6 +297,7 @@ describeCompat("Container", "NoCompat", (getTestObjectProvider) => {
 	});
 
 	it("Delta manager receives readonly event when calling container.forceReadonly()", async () => {
+		// eslint-disable-next-line @typescript-eslint/explicit-function-return-type -- Intentionally implicit type returned from constructor
 		const runtimeFactory = (_?: unknown) =>
 			new TestContainerRuntimeFactory(TestDataObjectType, getDataStoreFactory(), {});
 
@@ -324,19 +322,8 @@ describeCompat("Container", "NoCompat", (getTestObjectProvider) => {
 		assert.strictEqual(runCount, 1);
 	});
 
-	it("closeAndGetPendingLocalState() called on container", async () => {
-		const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
-			getRawConfig: (name: string): ConfigTypes => settings[name],
-		});
-
-		const testContainerConfig: ITestContainerConfig = {
-			loaderProps: {
-				configProvider: configProvider({
-					"Fluid.Container.enableOfflineLoad": true,
-				}),
-			},
-		};
-
+	it("getPendingLocalState() called on container", async () => {
+		// eslint-disable-next-line @typescript-eslint/explicit-function-return-type -- Intentionally implicit type returned from constructor
 		const runtimeFactory = (_?: unknown) =>
 			new TestContainerRuntimeFactory(TestDataObjectType, getDataStoreFactory());
 
@@ -346,9 +333,11 @@ describeCompat("Container", "NoCompat", (getTestObjectProvider) => {
 			runtimeFactory,
 		);
 
-		const container: IContainerExperimental =
-			await localTestObjectProvider.makeTestContainer(testContainerConfig);
-		const pendingString = await container.closeAndGetPendingLocalState?.();
+		const container: ContainerAlpha = asLegacyAlpha(
+			await localTestObjectProvider.makeTestContainer(),
+		);
+		const pendingString = await container.getPendingLocalState();
+		container.close();
 		assert.ok(pendingString);
 		const pendingLocalState: { url?: string } = JSON.parse(pendingString);
 		assert.strictEqual(container.closed, true);
@@ -386,6 +375,7 @@ describeCompat("Container", "NoCompat", (getTestObjectProvider) => {
 	});
 
 	it("can control op processing with connect() and disconnect()", async () => {
+		// eslint-disable-next-line @typescript-eslint/explicit-function-return-type -- Intentionally implicit type returned from constructor
 		const runtimeFactory = (_?: unknown) =>
 			new TestContainerRuntimeFactory(TestDataObjectType, getDataStoreFactory(), {});
 
@@ -904,7 +894,7 @@ describeCompat("Container connections", "NoCompat", (getTestObjectProvider) => {
 	async function loadContainer(
 		documentServiceFactory?: IDocumentServiceFactory,
 		deltaConnection?: "delayed" | "none",
-	) {
+	): Promise<IContainer> {
 		const headers: IRequestHeader = {
 			[LoaderHeader.cache]: false,
 			[LoaderHeader.loadMode]: { deltaConnection },
@@ -1009,7 +999,7 @@ describeCompat("Container connections", "NoCompat", (getTestObjectProvider) => {
 	function wrapFactory(
 		deltaStreamHandler: (v: IDocumentDeltaConnection) => Promise<void>,
 		snapshotHandler: (v: ISnapshotTree | null) => Promise<void>,
-	) {
+	): IDocumentServiceFactory {
 		return wrapObjectAndOverride<IDocumentServiceFactory>(provider.documentServiceFactory, {
 			createDocumentService:
 				(factory) =>
@@ -1036,7 +1026,10 @@ describeCompat("Container connections", "NoCompat", (getTestObjectProvider) => {
 		});
 	}
 
-	async function finishLoadingTestContainers(container: IContainer, container2: IContainer) {
+	async function finishLoadingTestContainers(
+		container: IContainer,
+		container2: IContainer,
+	): Promise<void> {
 		container2.connect();
 		await waitForContainerConnection(container2);
 
@@ -1137,7 +1130,7 @@ describeCompat("Container connections", "NoCompat", (getTestObjectProvider) => {
 		assert(connectionCount === 3, "initial connect, reconnect, `write` reconnect");
 	}).timeout(62000); // this is actual 2 second timeout, 60 seconds are fake
 
-	async function testEarlySnapshot(deltaConnection?: "delayed" | "none") {
+	async function testEarlySnapshot(deltaConnection?: "delayed" | "none"): Promise<void> {
 		// Create container
 		const container = await provider.makeTestContainer();
 		await waitForContainerConnection(container);

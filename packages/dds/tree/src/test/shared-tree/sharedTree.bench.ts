@@ -14,13 +14,16 @@ import {
 import { FlushMode } from "@fluidframework/runtime-definitions/internal";
 
 import { EmptyKey, rootFieldKey, type NormalizedUpPath } from "../../core/index.js";
-// eslint-disable-next-line import/no-internal-modules
-import { typeboxValidator } from "../../external-utilities/typeboxValidator.js";
+import { FormatValidatorBasic } from "../../external-utilities/index.js";
 import {
 	TreeCompressionStrategy,
 	jsonableTreeFromFieldCursor,
+	type Context,
 } from "../../feature-libraries/index.js";
-import { Tree, type CheckoutFlexTreeView } from "../../shared-tree/index.js";
+import { Tree } from "../../shared-tree/index.js";
+import { TreeViewConfiguration } from "../../simple-tree/index.js";
+import { configuredSharedTree } from "../../treeFactory.js";
+import { makeArray } from "../../util/index.js";
 import {
 	type JSDeepTree,
 	type JSWideTree,
@@ -41,6 +44,7 @@ import {
 	readWideFlexTree,
 	readWideTreeAsJSObject,
 } from "../scalableTestTrees.js";
+import { insert } from "../sequenceRootUtils.js";
 import {
 	StringArray,
 	TestTreeProviderLite,
@@ -52,27 +56,31 @@ import {
 	type SharedTreeWithContainerRuntime,
 	fieldCursorFromInsertable,
 } from "../utils.js";
-import { insert } from "../sequenceRootUtils.js";
-import { TreeViewConfiguration } from "../../simple-tree/index.js";
-import { configuredSharedTree } from "../../treeFactory.js";
-import { makeArray } from "../../util/index.js";
 
 // number of nodes in test for wide trees
 const nodesCountWide = [
 	[1, BenchmarkType.Measurement],
-	[100, BenchmarkType.Perspective],
-	[500, BenchmarkType.Measurement],
+	...(isInPerformanceTestingMode
+		? [
+				[100, BenchmarkType.Perspective],
+				[500, BenchmarkType.Measurement],
+			]
+		: []),
 ];
 // number of nodes in test for deep trees
 const nodesCountDeep = [
 	[1, BenchmarkType.Measurement],
-	[10, BenchmarkType.Perspective],
-	[100, BenchmarkType.Measurement],
+	...(isInPerformanceTestingMode
+		? [
+				[10, BenchmarkType.Perspective],
+				[100, BenchmarkType.Measurement],
+			]
+		: []),
 ];
 
 // TODO: ADO#7111 Schema should be fixed to enable schema based encoding.
 const factory = configuredSharedTree({
-	jsonValidator: typeboxValidator,
+	jsonValidator: FormatValidatorBasic,
 	treeEncodeType: TreeCompressionStrategy.Uncompressed,
 }).getFactory();
 
@@ -161,7 +169,7 @@ describe("SharedTree benchmarks", () => {
 	});
 	describe("Cursors", () => {
 		for (const [numberOfNodes, benchmarkType] of nodesCountDeep) {
-			let tree: CheckoutFlexTreeView;
+			let tree: Context;
 			benchmark({
 				type: benchmarkType,
 				title: `Deep Tree with cursor: reads with ${numberOfNodes} nodes`,
@@ -176,7 +184,7 @@ describe("SharedTree benchmarks", () => {
 			});
 		}
 		for (const [numberOfNodes, benchmarkType] of nodesCountWide) {
-			let tree: CheckoutFlexTreeView;
+			let tree: Context;
 			let expected = 0;
 			benchmark({
 				type: benchmarkType,
@@ -201,7 +209,7 @@ describe("SharedTree benchmarks", () => {
 	});
 	describe("FlexTree bench", () => {
 		for (const [numberOfNodes, benchmarkType] of nodesCountDeep) {
-			let tree: CheckoutFlexTreeView;
+			let tree: Context;
 			benchmark({
 				type: benchmarkType,
 				title: `Deep Tree with Flex Tree: reads with ${numberOfNodes} nodes`,
@@ -216,7 +224,7 @@ describe("SharedTree benchmarks", () => {
 			});
 		}
 		for (const [numberOfNodes, benchmarkType] of nodesCountWide) {
-			let tree: CheckoutFlexTreeView;
+			let tree: Context;
 			let expected: number = 0;
 			benchmark({
 				type: benchmarkType,

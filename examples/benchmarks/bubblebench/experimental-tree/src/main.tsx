@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { IClient } from "@fluid-example/bubblebench-common";
+import type { IClient } from "@fluid-example/bubblebench-common";
 import { SharedTree, WriteFormat } from "@fluid-experimental/tree";
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/legacy";
-import { IFluidHandle } from "@fluidframework/core-interfaces";
+import type { IFluidHandle } from "@fluidframework/core-interfaces";
 
 import { TreeObjectProxy } from "./proxy/index.js";
 import { AppState } from "./state.js";

@@ -25,9 +25,12 @@ export function isSummariesDisabled(
 	return config.state === "disabled";
 }
 
+export function isSummaryOnRequest(config: { state?: string }): boolean {
+	return config.state === "summaryOnRequest";
+}
+
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export const DefaultSummaryConfiguration: ISummaryConfiguration = {
 	state: "enabled",

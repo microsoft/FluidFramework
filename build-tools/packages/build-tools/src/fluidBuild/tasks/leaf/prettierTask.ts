@@ -9,7 +9,7 @@ import * as path from "node:path";
 import ignore from "ignore";
 
 import type { BuildContext } from "../../buildContext";
-import { BuildPackage } from "../../buildGraph";
+import type { BuildPackage } from "../../buildGraph";
 import { getInstalledPackageVersion, getRecursiveFiles, globFn } from "../taskUtils";
 import { LeafWithDoneFileTask } from "./leafTask";
 
@@ -50,12 +50,12 @@ export class PrettierTask extends LeafWithDoneFileTask {
 		}
 		this.parsed = this.entries.length !== 0;
 	}
-	protected get configFileFullPath() {
+	protected get configFileFullPath(): string {
 		// Currently there's no package-level config file, so just use tsconfig.json
 		return this.getPackageFileFullPath(".prettierrc.json");
 	}
 
-	protected async getDoneFileContent() {
+	protected async getDoneFileContent(): Promise<string | undefined> {
 		if (!this.parsed) {
 			this.traceError(`error generating done file content, unable to understand command line`);
 			return undefined;

@@ -8,18 +8,18 @@ import type {
 	ISummarizerEvents,
 	SummarizerStopReason,
 } from "@fluidframework/container-runtime-definitions/internal";
-import { IFluidHandleContext } from "@fluidframework/core-interfaces/internal";
-import { Deferred } from "@fluidframework/core-utils/internal";
+import type { IFluidHandleContext } from "@fluidframework/core-interfaces/internal";
+import { assert, Deferred } from "@fluidframework/core-utils/internal";
 import {
-	IFluidErrorBase,
-	ITelemetryLoggerExt,
+	type IFluidErrorBase,
+	type ITelemetryLoggerExt,
 	LoggingError,
 	UsageError,
 	createChildLogger,
 	wrapErrorAndLog,
 } from "@fluidframework/telemetry-utils/internal";
 
-import {
+import type {
 	IConnectableRuntime,
 	IEnqueueSummarizeOptions,
 	IOnDemandSummarizeOptions,
@@ -28,12 +28,12 @@ import {
 	ISummarizerInternalsProvider,
 	ISummarizerRuntime,
 	ISummarizingWarning,
-	type IRetriableFailureError,
-	type ISummaryConfiguration,
+	IRetriableFailureError,
+	ISummaryConfiguration,
 } from "../summarizerTypes.js";
-import { SummaryCollection } from "../summaryCollection.js";
+import type { SummaryCollection } from "../summaryCollection.js";
 
-import { ICancellableSummarizerController } from "./runWhileConnectedCoordinator.js";
+import type { ICancellableSummarizerController } from "./runWhileConnectedCoordinator.js";
 import { RunningSummarizer } from "./runningSummarizer.js";
 import { SummarizeHeuristicData } from "./summarizerHeuristics.js";
 import { SummarizeResultBuilder } from "./summaryResultBuilder.js";
@@ -165,9 +165,40 @@ export class Summarizer extends TypedEventEmitter<ISummarizerEvents> implements 
 	}
 
 	private async runCore(onBehalfOf: string): Promise<SummarizerStopReason> {
-		const runCoordinator: ICancellableSummarizerController = await this.runCoordinatorCreateFn(
-			this.runtime,
+		// Race coordinator creation against a timeout to ensure we don't hang indefinitely
+		// if the summarizer container fails to connect.
+		let coordinatorTimedOut = false;
+		const coordinatorTimeoutMs = 2 * 60 * 1000; // 2 minutes
+		const coordinatorResult = await Promise.race([
+			this.runCoordinatorCreateFn(this.runtime).then((coordinator) => {
+				if (coordinatorTimedOut) {
+					coordinator.stop("summarizerClientDisconnected");
+				}
+				return coordinator;
+			}),
+			new Promise<undefined>((resolve) =>
+				setTimeout(() => {
+					coordinatorTimedOut = true;
+					resolve(undefined);
+				}, coordinatorTimeoutMs),
+			),
+		]);
+
+		// If we timed out before coordinator was created, exit early
+		if (coordinatorTimedOut) {
+			this.logger.sendTelemetryEvent({
+				eventName: "CreateRunCoordinatorTimeout",
+				onBehalfOf,
+				timeoutMs: coordinatorTimeoutMs,
+			});
+			return "summarizerClientDisconnected";
+		}
+
+		assert(
+			coordinatorResult !== undefined,
+			0xcd6 /* Expect coordinatorResult to be defined */,
 		);
+		const runCoordinator = coordinatorResult;
 
 		// Wait for either external signal to cancel, or loss of connectivity.
 		const stopP = Promise.race([runCoordinator.waitCancelled, this.stopDeferred.promise]);
@@ -216,10 +247,22 @@ export class Summarizer extends TypedEventEmitter<ISummarizerEvents> implements 
 		// summarizer client to not be created until current summarizer fully moves to exit, and that would reduce
 		// cons of #2 substantially.
 
-		// Cleanup after running
-		await runningSummarizer.waitStop(
+		// Cleanup after running with a timeout to prevent hanging
+		const waitStopPromise = runningSummarizer.waitStop(
 			!runCoordinator.cancelled && Summarizer.stopReasonCanRunLastSummary(stopReason),
 		);
+		const summarizerStopTimeoutMs = 2 * 60 * 1000; // 2 minutes
+		const timeoutPromise = new Promise<"timeout">((resolve) =>
+			setTimeout(() => resolve("timeout"), summarizerStopTimeoutMs),
+		);
+		const waitStopResult = await Promise.race([waitStopPromise, timeoutPromise]);
+		if (waitStopResult === "timeout") {
+			this.logger.sendTelemetryEvent({
+				eventName: "SummarizerStopTimeout",
+				onBehalfOf,
+				timeoutMs: summarizerStopTimeoutMs,
+			});
+		}
 
 		// Propagate reason and ensure that if someone is waiting for cancellation token, they are moving to exit
 		runCoordinator.stop(stopReason);
@@ -301,7 +344,7 @@ export class Summarizer extends TypedEventEmitter<ISummarizerEvents> implements 
 			this.runtime,
 		);
 		this.runningSummarizer = runningSummarizer;
-		this.setupForwardedEvents();
+		this.setupForwardedEvents(runningSummarizer);
 		this.starting = false;
 		return runningSummarizer;
 	}
@@ -326,7 +369,7 @@ export class Summarizer extends TypedEventEmitter<ISummarizerEvents> implements 
 
 	public summarizeOnDemand(options: IOnDemandSummarizeOptions): ISummarizeResults {
 		try {
-			if (this._disposed || this.runningSummarizer?.disposed) {
+			if (this._disposed || this.runningSummarizer?.disposed === true) {
 				throw new UsageError("Summarizer is already disposed.");
 			}
 			if (
@@ -399,24 +442,26 @@ export class Summarizer extends TypedEventEmitter<ISummarizerEvents> implements 
 		this._heuristicData?.recordAttempt(summaryRefSeqNum);
 	}
 
-	private readonly forwardedEvents = new Map<string, () => void>();
+	private readonly forwardedEventsCleanup: (() => void)[] = [];
 
-	private setupForwardedEvents(): void {
-		for (const event of ["summarize", "summarizeAllAttemptsFailed"]) {
+	private setupForwardedEvents(runningSummarizer: RunningSummarizer): void {
+		for (const event of [
+			"summarize",
+			"summarizeAllAttemptsFailed",
+			"summarizeTimeout",
+		] as const) {
 			const listener = (...args: unknown[]): void => {
 				this.emit(event, ...args);
 			};
-			// TODO: better typing here
-			// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
-			this.runningSummarizer?.on(event as any, listener);
-			this.forwardedEvents.set(event, listener);
+			runningSummarizer.on(event, listener);
+			this.forwardedEventsCleanup.push(() => runningSummarizer.off(event, listener));
 		}
 	}
 
 	private cleanupForwardedEvents(): void {
-		for (const [event, listener] of this.forwardedEvents.entries()) {
-			this.runningSummarizer?.off(event, listener);
+		for (const cleanup of this.forwardedEventsCleanup) {
+			cleanup();
 		}
-		this.forwardedEvents.clear();
+		this.forwardedEventsCleanup.length = 0;
 	}
 }

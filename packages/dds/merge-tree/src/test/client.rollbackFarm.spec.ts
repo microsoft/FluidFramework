@@ -8,7 +8,7 @@
 import { makeRandom } from "@fluid-private/stochastic-test-utils";
 
 import {
-	TestOperation,
+	type TestOperation,
 	annotateRange,
 	applyMessages,
 	doOverRanges,

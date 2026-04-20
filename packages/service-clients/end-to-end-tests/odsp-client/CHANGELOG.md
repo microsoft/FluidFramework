@@ -1,5 +1,93 @@
 # @fluid-experimental/odsp-end-to-end-tests
 
+## 2.93.0
+
+Dependency updates only.
+
+## 2.92.0
+
+Dependency updates only.
+
+## 2.91.0
+
+Dependency updates only.
+
+## 2.90.0
+
+Dependency updates only.
+
+## 2.83.0
+
+Dependency updates only.
+
+## 2.82.0
+
+Dependency updates only.
+
+## 2.81.0
+
+Dependency updates only.
+
+## 2.80.0
+
+Dependency updates only.
+
+## 2.74.0
+
+Dependency updates only.
+
+## 2.73.0
+
+Dependency updates only.
+
+## 2.72.0
+
+Dependency updates only.
+
+## 2.71.0
+
+Dependency updates only.
+
+## 2.70.0
+
+Dependency updates only.
+
+## 2.63.0
+
+Dependency updates only.
+
+## 2.62.0
+
+Dependency updates only.
+
+## 2.61.0
+
+Dependency updates only.
+
+## 2.60.0
+
+Dependency updates only.
+
+## 2.53.0
+
+Dependency updates only.
+
+## 2.52.0
+
+Dependency updates only.
+
+## 2.51.0
+
+Dependency updates only.
+
+## 2.50.0
+
+Dependency updates only.
+
+## 2.43.0
+
+Dependency updates only.
+
 ## 2.42.0
 
 Dependency updates only.
@@ -93,7 +181,6 @@ Dependency updates only.
 ### Minor Changes
 
 - Rename `AzureMember.userName` to `AzureMember.name` and `IMember.userId` to `IMember.id` [96872186d0](https://github.com/microsoft/FluidFramework/commit/96872186d0d0f245c1fece7d19b3743e501679b6)
-
   1. Renamed `AzureMember.userName` to `AzureMember.name` to establish uniform naming across odsp-client and azure-client.
   2. Renamed `IMember.userId` to `IMember.id` to align with the properties received from AFR.
 
@@ -108,7 +195,6 @@ Dependency updates only.
   TypeScript types and implementation code.
 
   This means that using Fluid Framework packages require the following TypeScript settings in tsconfig.json:
-
   - `"moduleResolution": "Node16"` with `"module": "Node16"`
   - `"moduleResolution": "Bundler"` with `"module": "ESNext"`
 

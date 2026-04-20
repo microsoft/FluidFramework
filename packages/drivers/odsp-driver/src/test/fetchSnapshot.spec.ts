@@ -8,9 +8,13 @@
 import { strict as assert } from "node:assert";
 
 import { stringToBuffer } from "@fluid-internal/client-utils";
-import { ISnapshot, ISnapshotTree } from "@fluidframework/driver-definitions/internal";
 import {
-	IOdspResolvedUrl,
+	DriverErrorTypes,
+	type ISnapshot,
+	type ISnapshotTree,
+} from "@fluidframework/driver-definitions/internal";
+import {
+	type IOdspResolvedUrl,
 	OdspErrorTypes,
 } from "@fluidframework/odsp-driver-definitions/internal";
 import {
@@ -22,16 +26,23 @@ import {
 import { stub } from "sinon";
 
 import { convertToCompactSnapshot } from "../compactSnapshotWriter.js";
-import { HostStoragePolicyInternal } from "../contracts.js";
+import type { HostStoragePolicyInternal } from "../contracts.js";
 import { createOdspUrl } from "../createOdspUrl.js";
 import { EpochTracker } from "../epochTracker.js";
-import { downloadSnapshot, ISnapshotRequestAndResponseOptions } from "../fetchSnapshot.js";
+import {
+	downloadSnapshot,
+	type ISnapshotRequestAndResponseOptions,
+} from "../fetchSnapshot.js";
 import { mockify } from "../mockify.js";
 import { LocalPersistentCache, NonPersistentCache } from "../odspCache.js";
 import { OdspDocumentStorageService } from "../odspDocumentStorageManager.js";
 import { OdspDriverUrlResolver } from "../odspDriverUrlResolver.js";
 import { getHashedDocumentId } from "../odspPublicUtils.js";
-import { INewFileInfo, IOdspResponse, createCacheSnapshotKey } from "../odspUtils.js";
+import {
+	type INewFileInfo,
+	type IOdspResponse,
+	createCacheSnapshotKey,
+} from "../odspUtils.js";
 
 import {
 	createResponse,
@@ -109,6 +120,7 @@ describe("Tests1 for snapshot fetch", () => {
 			{
 				docId: hashedDocumentId,
 				resolvedUrl,
+				fileVersion: undefined,
 			},
 			logger,
 		);
@@ -561,10 +573,195 @@ describe("Tests1 for snapshot fetch", () => {
 		assert(
 			mockLogger.matchEvents([
 				{ eventName: "TreesLatest_cancel", shareLinkPresent: true },
-				{ eventName: "RedeemShareLink_end" },
+				{
+					eventName: "RedeemShareLink_end",
+					details:
+						'{"shareLinkUrlLength":45,"queryParamsLength":0,"useHeaders":true,"isRedemptionNonDurable":false}',
+				},
 				{ eventName: "RedeemFallback", errorType: "fileNotFoundOrAccessDeniedError" },
 				{ eventName: "TreesLatest_end" },
 			]),
+		);
+	});
+
+	it("nonDurableRedeem header is set during RedeemFallback behavior", async () => {
+		resolved.shareLinkInfo = {
+			sharingLinkToRedeem: "https://microsoft.sharepoint-df.com/sharelink",
+			isRedemptionNonDurable: true,
+		};
+		hostPolicy.enableRedeemFallback = true;
+
+		const snapshot: ISnapshot = {
+			blobContents,
+			snapshotTree: snapshotTreeWithGroupId,
+			ops: [],
+			latestSequenceNumber: 0,
+			sequenceNumber: 0,
+			snapshotFormatV: 1,
+		};
+		const response = (await createResponse(
+			{ "x-fluid-epoch": "epoch1", "content-type": "application/ms-fluid" },
+			convertToCompactSnapshot(snapshot),
+			200,
+		)) as unknown as Response;
+
+		await assert.doesNotReject(
+			async () =>
+				mockFetchMultiple(
+					async () => service.getSnapshot({}),
+					[
+						notFound,
+						async (): Promise<MockResponse> => okResponse({}, {}),
+						async (): Promise<Response> => {
+							return response;
+						},
+					],
+				),
+			"Should succeed",
+		);
+		assert(
+			mockLogger.matchEvents([
+				{ eventName: "TreesLatest_cancel", shareLinkPresent: true },
+				{
+					eventName: "RedeemShareLink_end",
+					details:
+						'{"shareLinkUrlLength":45,"queryParamsLength":0,"useHeaders":true,"isRedemptionNonDurable":true}',
+				},
+				{ eventName: "RedeemFallback", errorType: "fileNotFoundOrAccessDeniedError" },
+				{ eventName: "TreesLatest_end" },
+			]),
+		);
+	});
+
+	it("Redeem sharing link on location redirection error", async () => {
+		resolved.shareLinkInfo = {
+			sharingLinkToRedeem: "https://microsoft.sharepoint-df.com/sharelink",
+		};
+
+		const newSiteUrl = "https://microsoft.sharepoint.com/siteUrl";
+
+		try {
+			await mockFetchMultiple(
+				async () => service.getSnapshot({}),
+				[
+					// First fetch (trees/latest) returns 404 with redirectLocation
+					async (): Promise<MockResponse> =>
+						createResponse(
+							{ "x-fluid-epoch": "epoch1" },
+							{
+								error: {
+									"message": "locationMoved",
+									"@error.redirectLocation": newSiteUrl,
+								},
+							},
+							404,
+						),
+					// Second fetch is the redeem /shares API call
+					async (): Promise<MockResponse> => okResponse({}, {}),
+				],
+			);
+			assert.fail("Should have thrown a locationRedirection error");
+		} catch (error: unknown) {
+			assert.strictEqual(
+				(error as Partial<IFluidErrorBase>).errorType,
+				DriverErrorTypes.locationRedirection,
+				"Error should be a locationRedirection error",
+			);
+		}
+		assert(
+			mockLogger.matchEvents([
+				{ eventName: "TreesLatest_cancel" },
+				{ eventName: "RedirectRedeemFallback" },
+				{
+					eventName: "RedeemShareLink_end",
+					details:
+						'{"shareLinkUrlLength":45,"queryParamsLength":0,"useHeaders":true,"isRedemptionNonDurable":false}',
+				},
+			]),
+			"Should have redeemed sharing link before re-throwing the redirection error",
+		);
+	});
+
+	it("Location redirection error without shareLink skips redeem", async () => {
+		// No shareLinkInfo set on resolved URL
+		resolved.shareLinkInfo = undefined;
+
+		const newSiteUrl = "https://microsoft.sharepoint.com/siteUrl";
+
+		try {
+			await mockFetchMultiple(
+				async () => service.getSnapshot({}),
+				[
+					async (): Promise<MockResponse> =>
+						createResponse(
+							{ "x-fluid-epoch": "epoch1" },
+							{
+								error: {
+									"message": "locationMoved",
+									"@error.redirectLocation": newSiteUrl,
+								},
+							},
+							404,
+						),
+				],
+			);
+			assert.fail("Should have thrown a locationRedirection error");
+		} catch (error: unknown) {
+			assert.strictEqual(
+				(error as Partial<IFluidErrorBase>).errorType,
+				DriverErrorTypes.locationRedirection,
+				"Error should be a locationRedirection error",
+			);
+		}
+		assert(
+			!mockLogger.matchAnyEvent([{ eventName: "RedeemShareLink_end" }]),
+			"Should not have attempted redeem without a shareLink",
+		);
+		assert(
+			!mockLogger.matchAnyEvent([{ eventName: "RedirectRedeemFallback" }]),
+			"Should not have logged redirect redeem fallback without a shareLink",
+		);
+	});
+
+	it("Location redirection error still throws when redeem fails", async () => {
+		resolved.shareLinkInfo = {
+			sharingLinkToRedeem: "https://microsoft.sharepoint-df.com/sharelink",
+		};
+
+		const newSiteUrl = "https://microsoft.sharepoint.com/siteUrl";
+
+		try {
+			await mockFetchMultiple(
+				async () => service.getSnapshot({}),
+				[
+					// First fetch (trees/latest) returns 404 with redirectLocation
+					async (): Promise<MockResponse> =>
+						createResponse(
+							{ "x-fluid-epoch": "epoch1" },
+							{
+								error: {
+									"message": "locationMoved",
+									"@error.redirectLocation": newSiteUrl,
+								},
+							},
+							404,
+						),
+					// Second fetch is the redeem /shares API call - returns failure
+					async (): Promise<MockResponse> =>
+						createResponse({}, { error: "redeemFailed" }, 500),
+				],
+			);
+			assert.fail("Should have thrown a locationRedirection error");
+		} catch (error: unknown) {
+			assert.strictEqual(
+				(error as Partial<IFluidErrorBase>).errorType,
+				DriverErrorTypes.locationRedirection,
+				"Original redirection error should be thrown even when redeem fails",
+			);
+		}
+		assert(
+			mockLogger.matchAnyEvent([{ eventName: "RedirectRedeemFallbackError" }]),
+			"Should have logged redeem failure telemetry",
 		);
 	});
 });

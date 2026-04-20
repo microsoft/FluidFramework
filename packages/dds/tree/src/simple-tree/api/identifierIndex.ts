@@ -4,20 +4,22 @@
  */
 
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
-import type { TreeIndexKey } from "../../feature-libraries/index.js";
-import { FieldKind, type ImplicitFieldSchema } from "../schemaTypes.js";
+
+import type { TreeIndex } from "../../feature-libraries/index.js";
 import type { TreeNode } from "../core/index.js";
+import { FieldKind, type ImplicitFieldSchema } from "../fieldSchema.js";
 import { ObjectNodeSchema } from "../node-kinds/index.js";
-import type { TreeView } from "./tree.js";
 import { walkFieldSchema } from "../walkFieldSchema.js";
-import { createSimpleTreeIndex, type SimpleTreeIndex } from "./simpleTreeIndex.js";
+
+import { createTreeIndex, type TreeIndexKey } from "./simpleTreeIndex.js";
+import type { TreeView } from "./tree.js";
 
 /**
  * An index that returns tree nodes given their associated identifiers.
  *
- * @alpha
+ * @beta
  */
-export type IdentifierIndex = SimpleTreeIndex<string, TreeNode>;
+export type IdentifierIndex = TreeIndex<string, TreeNode>;
 
 function isStringKey(key: TreeIndexKey): key is string {
 	return typeof key === "string";
@@ -26,7 +28,7 @@ function isStringKey(key: TreeIndexKey): key is string {
 /**
  * Creates an {@link IdentifierIndex} for a given {@link TreeView}.
  *
- * @alpha
+ * @beta
  */
 export function createIdentifierIndex<TSchema extends ImplicitFieldSchema>(
 	view: TreeView<TSchema>,
@@ -47,7 +49,7 @@ export function createIdentifierIndex<TSchema extends ImplicitFieldSchema>(
 		},
 	});
 
-	return createSimpleTreeIndex(
+	return createTreeIndex(
 		view,
 		(schemus) => identifierFields.get(schemus.identifier),
 		(nodes) => {

@@ -3,24 +3,24 @@
  * Licensed under the MIT License.
  */
 
-import { ICriticalContainerError } from "@fluidframework/container-definitions";
-import { IRequest } from "@fluidframework/core-interfaces";
-import { ISnapshotTree } from "@fluidframework/driver-definitions/internal";
-import {
+import type { ICriticalContainerError } from "@fluidframework/container-definitions";
+import type { IRequest } from "@fluidframework/core-interfaces";
+import type { ISnapshotTree } from "@fluidframework/driver-definitions/internal";
+import type {
 	ITelemetryContext,
 	IGarbageCollectionData,
 	IGarbageCollectionDetailsBase,
 	ISummarizeResult,
 } from "@fluidframework/runtime-definitions/internal";
-import { ReadAndParseBlob } from "@fluidframework/runtime-utils/internal";
-import {
+import type { ReadAndParseBlob } from "@fluidframework/runtime-utils/internal";
+import type {
 	ITelemetryLoggerExt,
-	type ITelemetryPropertiesExt,
+	ITelemetryPropertiesExt,
 } from "@fluidframework/telemetry-utils/internal";
 
-import { RuntimeHeaderData } from "../containerRuntime.js";
-import { ContainerRuntimeGCMessage } from "../messageTypes.js";
-import {
+import type { RuntimeHeaderData } from "../containerRuntime.js";
+import type { ContainerRuntimeGCMessage } from "../messageTypes.js";
+import type {
 	IContainerRuntimeMetadata,
 	ICreateContainerMetadata,
 	IRefreshSummaryResult,
@@ -374,6 +374,10 @@ export interface IGarbageCollectionRuntime {
  */
 export interface IGarbageCollector {
 	/**
+	 * The GC configurations serialized as a JSON string for telemetry.
+	 */
+	readonly serializedConfigs: string;
+	/**
 	 * Tells the time at which session expiry timer started in a previous container.
 	 * This is only set when loading from a stashed container and will be equal to the
 	 * original container's local client time when it was loaded (and started the session expiry timer).
@@ -510,8 +514,7 @@ export interface IGarbageCollectorCreateParams {
 }
 
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IGCRuntimeOptions {
 	/**

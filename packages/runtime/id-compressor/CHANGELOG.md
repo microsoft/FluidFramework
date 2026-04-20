@@ -1,5 +1,102 @@
 # @fluidframework/id-compressor
 
+## 2.93.0
+
+Dependency updates only.
+
+## 2.92.0
+
+### Minor Changes
+
+- Deprecate IIdCompressorCore interface ([#26865](https://github.com/microsoft/FluidFramework/pull/26865)) [2e890f6416](https://github.com/microsoft/FluidFramework/commit/2e890f64160736b4e5efda0791f91bea96c5a011)
+
+  The `IIdCompressorCore` interface is deprecated and will be removed from the public API surface in 2.100.0. This also affects the return types of `createIdCompressor` and `deserializeIdCompressor`, which currently return `IIdCompressor & IIdCompressorCore` but will be narrowed to `IIdCompressor`.
+
+  #### Migration
+  - **`serialize()`**: Use the new `serializeIdCompressor(compressor, withSession)` free function instead of calling `compressor.serialize(withSession)` directly.
+  - **`takeNextCreationRange()`, `takeUnfinalizedCreationRange()`, `finalizeCreationRange()`, `beginGhostSession()`**: These are internal runtime operations that should not be called by external consumers. If you depend on these APIs, please file an issue on the FluidFramework repository describing your use case.
+  - **Return types of `createIdCompressor` / `deserializeIdCompressor`**: Stop relying on the `IIdCompressorCore` portion of the intersection type. Type your variables as `IIdCompressor` instead of `IIdCompressor & IIdCompressorCore`.
+
+## 2.91.0
+
+Dependency updates only.
+
+## 2.90.0
+
+Dependency updates only.
+
+## 2.83.0
+
+Dependency updates only.
+
+## 2.82.0
+
+Dependency updates only.
+
+## 2.81.0
+
+Dependency updates only.
+
+## 2.80.0
+
+Dependency updates only.
+
+## 2.74.0
+
+Dependency updates only.
+
+## 2.73.0
+
+Dependency updates only.
+
+## 2.72.0
+
+Dependency updates only.
+
+## 2.71.0
+
+Dependency updates only.
+
+## 2.70.0
+
+Dependency updates only.
+
+## 2.63.0
+
+Dependency updates only.
+
+## 2.62.0
+
+Dependency updates only.
+
+## 2.61.0
+
+Dependency updates only.
+
+## 2.60.0
+
+Dependency updates only.
+
+## 2.53.0
+
+Dependency updates only.
+
+## 2.52.0
+
+Dependency updates only.
+
+## 2.51.0
+
+Dependency updates only.
+
+## 2.50.0
+
+Dependency updates only.
+
+## 2.43.0
+
+Dependency updates only.
+
 ## 2.42.0
 
 Dependency updates only.
@@ -103,7 +200,6 @@ Dependency updates only.
   TypeScript types and implementation code.
 
   This means that using Fluid Framework packages require the following TypeScript settings in tsconfig.json:
-
   - `"moduleResolution": "Node16"` with `"module": "Node16"`
   - `"moduleResolution": "Bundler"` with `"module": "ESNext"`
 

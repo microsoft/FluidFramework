@@ -22,14 +22,13 @@ import {
 
 /**
  * Mock implementation of IDeltaQueue for testing that does nothing
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export class MockDeltaQueue<T> extends EventEmitter implements IDeltaQueue<T> {
 	protected readonly queue: T[] = [];
 	protected pauseCount = 0;
 
-	public processCallback: (el: T) => void = () => {};
+	public processCallback: (el: T) => void = (): void => {};
 
 	public get disposed(): any {
 		return undefined;
@@ -39,7 +38,7 @@ export class MockDeltaQueue<T> extends EventEmitter implements IDeltaQueue<T> {
 		return this.pauseCount !== 0;
 	}
 
-	public get length() {
+	public get length(): number {
 		return this.queue.length;
 	}
 
@@ -47,7 +46,7 @@ export class MockDeltaQueue<T> extends EventEmitter implements IDeltaQueue<T> {
 		return this.queue.length === 0;
 	}
 
-	protected process() {
+	protected process(): void {
 		void Promise.resolve().then(() => {
 			while (this.pauseCount === 0 && this.length > 0) {
 				const el = this.pop();
@@ -57,13 +56,13 @@ export class MockDeltaQueue<T> extends EventEmitter implements IDeltaQueue<T> {
 		});
 	}
 
-	public push(el: T) {
+	public push(el: T): void {
 		this.queue.push(el);
 		this.emit("push", el);
 		this.process();
 	}
 
-	public pop() {
+	public pop(): T | undefined {
 		return this.queue.shift();
 	}
 
@@ -85,7 +84,7 @@ export class MockDeltaQueue<T> extends EventEmitter implements IDeltaQueue<T> {
 		return this.queue;
 	}
 
-	public dispose() {}
+	public dispose(): void {}
 
 	public async waitTillProcessingDone(): Promise<{ count: number; duration: number }> {
 		throw new Error("NYI");
@@ -98,8 +97,7 @@ export class MockDeltaQueue<T> extends EventEmitter implements IDeltaQueue<T> {
 
 /**
  * Mock implementation of IDeltaManager for testing that creates mock DeltaQueues for testing
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export class MockDeltaManager
 	extends TypedEventEmitter<IDeltaManagerEvents>
@@ -112,7 +110,7 @@ export class MockDeltaManager
 	public readOnlyInfo: ReadOnlyInfo = { readonly: false };
 	public readonly clientType: string = undefined as any;
 	public readonly clientDetails: IClientDetails = {} as any;
-	public get IDeltaSender() {
+	public get IDeltaSender(): this {
 		return this;
 	}
 
@@ -157,7 +155,7 @@ export class MockDeltaManager
 
 	public submitSignal(content: any): void {}
 
-	public flush() {}
+	public flush(): void {}
 
 	public submit(
 		type: MessageType,
@@ -168,7 +166,7 @@ export class MockDeltaManager
 		return 0;
 	}
 
-	public dispose() {
+	public dispose(): void {
 		this.removeAllListeners();
 	}
 

@@ -56,6 +56,7 @@ trigger:
   paths:
     include:
     - .prettierignore
+    - common/build/eslint-config-fluid
     - fluidBuild.config.cjs
     - server/routerlicious
     - tools/pipelines/server-routerlicious.yml
@@ -84,6 +85,7 @@ pr:
   paths:
     include:
     - .prettierignore
+    - common/build/eslint-config-fluid
     - fluidBuild.config.cjs
     - server/routerlicious
     - tools/pipelines/server-routerlicious.yml
@@ -121,7 +123,7 @@ extends:
     releaseKind: ${{ parameters.releaseKind }}
     buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
     interdependencyRange: ${{ parameters.interdependencyRange }}
-    buildDirectory: server/routerlicious
+    buildDirectory: ${{ variables.FluidFrameworkDirectory }}/server/routerlicious
     containerName: fluidframework/routerlicious/server
     buildNumberInPatch: false
     dockerBuildBumpsVersion: true
@@ -141,5 +143,5 @@ extends:
     - prettier
     - check:versions
     - generate:packageList
-    additionalBuildArguments: --build-context root=$(Build.SourcesDirectory)
+    additionalBuildArguments: --build-context root=$(Pipeline.Workspace)/${{ variables.FluidFrameworkDirectory }}
     enableDockerImagePull: false

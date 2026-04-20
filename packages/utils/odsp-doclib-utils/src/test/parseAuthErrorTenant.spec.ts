@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import assert from "assert";
+import { strict as assert } from "node:assert";
 
 import { parseAuthErrorTenant } from "../parseAuthErrorTenant.js";
 
@@ -18,8 +18,8 @@ const validWwwAuthenticateHeaderForMsa =
 
 describe("parseAuthErrorTenant", () => {
 	it("returns undefined if headers does not have expected entry", () => {
-		const headers = { get: (_name: string) => undefined };
-		const result = parseAuthErrorTenant(headers as any);
+		const headers = { get: (_name: string) => undefined } as unknown as Headers;
+		const result = parseAuthErrorTenant(headers);
 		assert.strictEqual(result, undefined);
 	});
 
@@ -29,8 +29,8 @@ describe("parseAuthErrorTenant", () => {
 				name.toLowerCase() === "www-authenticate"
 					? invalidWwwAuthenticateHeaderWithoutBearerScheme
 					: undefined,
-		};
-		const result = parseAuthErrorTenant(headers as any);
+		} as unknown as Headers;
+		const result = parseAuthErrorTenant(headers);
 		assert.strictEqual(result, undefined);
 	});
 
@@ -40,8 +40,8 @@ describe("parseAuthErrorTenant", () => {
 				name.toLowerCase() === "www-authenticate"
 					? invalidWwwAuthenticateHeaderWithoutRealm
 					: undefined,
-		};
-		const result = parseAuthErrorTenant(headers as any);
+		} as unknown as Headers;
+		const result = parseAuthErrorTenant(headers);
 		assert.strictEqual(result, undefined);
 	});
 
@@ -51,8 +51,8 @@ describe("parseAuthErrorTenant", () => {
 				name.toLowerCase() === "www-authenticate"
 					? validWwwAuthenticateHeaderForOrgId
 					: undefined,
-		};
-		const result = parseAuthErrorTenant(headers as any);
+		} as unknown as Headers;
+		const result = parseAuthErrorTenant(headers);
 		assert.strictEqual(result, "6c482541-f706-4168-9e58-8e35a9992f58");
 	});
 
@@ -62,8 +62,8 @@ describe("parseAuthErrorTenant", () => {
 				name.toLowerCase() === "www-authenticate"
 					? validWwwAuthenticateHeaderForMsa
 					: undefined,
-		};
-		const result = parseAuthErrorTenant(headers as any);
+		} as unknown as Headers;
+		const result = parseAuthErrorTenant(headers);
 		assert.strictEqual(result, "9188040d-6c67-4c5b-b112-36a304b66dad");
 	});
 });

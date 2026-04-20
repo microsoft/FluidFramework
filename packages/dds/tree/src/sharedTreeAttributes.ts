@@ -9,14 +9,17 @@ import { pkgVersion } from "./packageVersion.js";
 
 /**
  * {@inheritDoc @fluidframework/shared-object-base#ISharedObjectFactory."type"}
- * @alpha
+ * @beta
  * @legacy
  */
+// New type string, to be activated once the migration has been fully shipped dark and is safe to flip.
+// See LegacyTypeAwareRegistry in packages/runtime/datastore/src/dataStoreRuntime.ts.
+// export const SharedTreeFactoryType = "tree";
 export const SharedTreeFactoryType = "https://graph.microsoft.com/types/tree";
 
 /**
  * {@inheritDoc @fluidframework/shared-object-base#ISharedObjectFactory.attributes}
- * @alpha
+ * @beta
  * @legacy
  */
 export const SharedTreeAttributes: IChannelAttributes = {

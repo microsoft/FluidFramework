@@ -13,8 +13,7 @@ import type { ITelemetryBaseLogger, LogLevel, Tagged } from "@fluidframework/cor
  * error - Error log event, ideally 0 of these are logged during a session
  *
  * performance - Includes duration, and often has _start, _end, or _cancel suffixes for activity tracking
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export type TelemetryEventCategory = "generic" | "error" | "performance";
 
@@ -24,8 +23,7 @@ export type TelemetryEventCategory = "generic" | "error" | "performance";
  * @remarks
  * Includes extra types beyond {@link @fluidframework/core-interfaces#TelemetryBaseEventPropertyType}, which must be
  * converted before sending to a base logger.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export type TelemetryEventPropertyTypeExt =
 	| string
@@ -37,8 +35,7 @@ export type TelemetryEventPropertyTypeExt =
 
 /**
  * JSON-serializable properties, which will be logged with telemetry.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export type ITelemetryPropertiesExt = Record<
 	string,
@@ -68,8 +65,7 @@ export interface ITelemetryEventExt extends ITelemetryPropertiesExt {
 /**
  * Informational (non-error) telemetry event
  * @remarks Maps to category = "generic"
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface ITelemetryGenericEventExt extends ITelemetryPropertiesExt {
 	/**
@@ -87,8 +83,7 @@ export interface ITelemetryGenericEventExt extends ITelemetryPropertiesExt {
 /**
  * Error telemetry event.
  * @remarks Maps to category = "error"
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface ITelemetryErrorEventExt extends ITelemetryPropertiesExt {
 	/**
@@ -100,8 +95,7 @@ export interface ITelemetryErrorEventExt extends ITelemetryPropertiesExt {
 /**
  * Performance telemetry event.
  * @remarks Maps to category = "performance"
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface ITelemetryPerformanceEventExt extends ITelemetryGenericEventExt {
 	/**
@@ -116,8 +110,7 @@ export interface ITelemetryPerformanceEventExt extends ITelemetryGenericEventExt
  * @remarks
  * This interface is meant to be used internally within the Fluid Framework,
  * and `ITelemetryBaseLogger` should be used when loggers are passed between layers.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface ITelemetryLoggerExt extends ITelemetryBaseLogger {
 	/**

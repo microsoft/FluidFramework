@@ -9,9 +9,9 @@ import {
 	dataStoreNodePathOnly,
 	shouldAllowGcSweep,
 	urlToGCNodePath,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../gc/gcHelpers.js";
-import { GCFeatureMatrix } from "../../gc/index.js";
+import type { GCFeatureMatrix } from "../../gc/index.js";
 
 describe("Garbage Collection Helpers Tests", () => {
 	describe("[TEMP] shouldAllowGcTombstoneEnforcement - Show behavior change as it's replaced by shouldAllowGcSweep", () => {

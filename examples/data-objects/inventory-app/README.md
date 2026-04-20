@@ -16,6 +16,7 @@ You can run this example using the following steps:
     - For an even faster build, you can add the package name to the build command, like this:
       `pnpm run build:fast --nolint @fluid-example/inventory-app`
 1. Run `pnpm start` from this directory and open <http://localhost:8080> in a web browser to see the app running.
+1. If you want to run the app against SharePoint, follow the instructions in [webpack-fluid-loader](https://github.com/microsoft/FluidFramework/blob/main/examples/utils/webpack-fluid-loader/README.md#sharepoint) to get auth credentials. Then run `pnpm start:spo` or `pnpm start:spo-df` and open <http://localhost:8080> like above.
 
 <!-- prettier-ignore-end -->
 
@@ -24,17 +25,7 @@ You can run this example using the following steps:
 ## Testing
 
 ```bash
-    npm run test:jest
-```
-
-For in browser testing update `./jest-puppeteer.config.js` to:
-
-```javascript
-  launch: {
-    dumpio: true, // output browser console to cmd line
-    slowMo: 500,
-    headless: false,
-  },
+npm run test
 ```
 
 ## Trademark

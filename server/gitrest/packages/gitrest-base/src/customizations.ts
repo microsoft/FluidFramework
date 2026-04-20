@@ -4,7 +4,7 @@
  */
 
 import type { IReadinessCheck } from "@fluidframework/server-services-core";
-import { IRedisClientConnectionManager } from "@fluidframework/server-services-utils";
+import type { IRedisClientConnectionManager } from "@fluidframework/server-services-utils";
 
 export interface IGitrestResourcesCustomizations {
 	redisClientConnectionManagerForDefaultFileSystem?: IRedisClientConnectionManager;

@@ -7,15 +7,15 @@
 
 import { strict as assert } from "node:assert";
 
-import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
+import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 
 import {
 	Marker,
-	SegmentGroup,
+	type SegmentGroup,
 	reservedMarkerIdKey,
 	type ISegmentPrivate,
 } from "../mergeTreeNodes.js";
-import { IMergeTreeOp, ReferenceType } from "../ops.js";
+import { type IMergeTreeOp, ReferenceType } from "../ops.js";
 import { clone } from "../properties.js";
 import { TextSegment } from "../textSegment.js";
 
@@ -123,7 +123,7 @@ describe("resetPendingSegmentsToOp", () => {
 			assert(client.mergeTree.pendingSegments?.empty);
 
 			opList.push({
-				op: client.removeRangeLocal(0, client.getLength())!,
+				op: client.removeRangeLocal(0, client.getLength()),
 				refSeq: client.getCurrentSeq(),
 			});
 			applyOpList(client);
@@ -135,7 +135,7 @@ describe("resetPendingSegmentsToOp", () => {
 			assert(client.mergeTree.pendingSegments?.empty);
 
 			opList.push({
-				op: client.removeRangeLocal(0, client.getLength())!,
+				op: client.removeRangeLocal(0, client.getLength()),
 				refSeq: client.getCurrentSeq(),
 			});
 
@@ -157,7 +157,7 @@ describe("resetPendingSegmentsToOp", () => {
 
 		it("nacked insertSegment and removeRange", async () => {
 			opList.push({
-				op: client.removeRangeLocal(0, client.getLength())!,
+				op: client.removeRangeLocal(0, client.getLength()),
 				refSeq: client.getCurrentSeq(),
 			});
 			const oldops = opList;
@@ -240,7 +240,7 @@ describe("resetPendingSegmentsToOp", () => {
 				prop1: "foo",
 			});
 			assert(insertOp);
-			const { segment } = client.getContainingSegment<ISegmentPrivate>(0);
+			const { segment } = client.getContainingSegment<ISegmentPrivate>(0) ?? {};
 			assert(segment !== undefined && Marker.is(segment));
 			client.annotateMarker(segment, { prop2: "bar" });
 
@@ -253,7 +253,8 @@ describe("resetPendingSegmentsToOp", () => {
 			);
 			otherClient.applyMsg(client.makeOpMessage(regeneratedInsert, 1), false);
 
-			const { segment: otherSegment } = otherClient.getContainingSegment<ISegmentPrivate>(0);
+			const { segment: otherSegment } =
+				otherClient.getContainingSegment<ISegmentPrivate>(0) ?? {};
 			assert(otherSegment !== undefined && Marker.is(otherSegment));
 			// `clone` here is because properties use a Object.create(null); to compare strict equal the prototype chain
 			// should therefore not include Object.
@@ -277,7 +278,8 @@ describe("resetPendingSegmentsToOp", () => {
 			);
 			otherClient.applyMsg(client.makeOpMessage(regeneratedInsert, 1), false);
 
-			const { segment: otherSegment } = otherClient.getContainingSegment<ISegmentPrivate>(0);
+			const { segment: otherSegment } =
+				otherClient.getContainingSegment<ISegmentPrivate>(0) ?? {};
 			assert(otherSegment !== undefined && TextSegment.is(otherSegment));
 			assert.deepStrictEqual(otherSegment.properties, clone({ prop1: "foo" }));
 		});
@@ -296,7 +298,8 @@ describe("resetPendingSegmentsToOp", () => {
 			);
 			otherClient.applyMsg(client.makeOpMessage(regeneratedInsert, 1), false);
 
-			const { segment: otherSegment } = otherClient.getContainingSegment<ISegmentPrivate>(0);
+			const { segment: otherSegment } =
+				otherClient.getContainingSegment<ISegmentPrivate>(0) ?? {};
 			assert(otherSegment !== undefined && TextSegment.is(otherSegment));
 			assert.deepStrictEqual(otherSegment.properties, undefined);
 		});

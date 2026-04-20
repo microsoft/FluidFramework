@@ -5,7 +5,8 @@
 
 import fs from "node:fs";
 import path from "node:path";
-import { Handler, readFile, writeFile } from "./common.js";
+import { TscUtils } from "@fluidframework/build-tools";
+import { type Handler, readFile, writeFile } from "./common.js";
 
 const serverPath = "server/routerlicious/";
 
@@ -28,8 +29,11 @@ export const handler: Handler = {
 	match: /^(server\/routerlicious\/packages)\/.*\/package\.json/i,
 	handler: async (file: string, gitRoot: string): Promise<string | undefined> => {
 		// strip server path since all paths are relative to server directory
+		// Additionally, we normalize slashes here to ensure that the path is consistent across different OSes.
+		// This matters because the Dockerfile is checked in with POSIX-style slashes, and the Node path APIs return
+		// OS-specific file separators.
 		const dockerfileCopyText = getDockerfileCopyText(
-			path.relative(gitRoot, file).replace(serverPath, ""),
+			TscUtils.normalizeSlashes(path.relative(gitRoot, file)).replace(serverPath, ""),
 		);
 		const dockerFilePath = path.join(
 			path.relative(process.cwd(), path.join(gitRoot, serverPath)),

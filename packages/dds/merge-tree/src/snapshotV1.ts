@@ -4,33 +4,33 @@
  */
 
 import { bufferToString } from "@fluid-internal/client-utils";
-import { IFluidHandle } from "@fluidframework/core-interfaces";
+import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
-import { IChannelStorageService } from "@fluidframework/datastore-definitions/internal";
-import {
+import type { IChannelStorageService } from "@fluidframework/datastore-definitions/internal";
+import type {
 	ISummaryTreeWithStats,
 	AttributionKey,
 } from "@fluidframework/runtime-definitions/internal";
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
-import { IFluidSerializer } from "@fluidframework/shared-object-base/internal";
+import type { IFluidSerializer } from "@fluidframework/shared-object-base/internal";
 import {
-	ITelemetryLoggerExt,
+	type ITelemetryLoggerExt,
 	createChildLogger,
 } from "@fluidframework/telemetry-utils/internal";
 
-import { IAttributionCollection } from "./attributionCollection.js";
+import type { IAttributionCollection } from "./attributionCollection.js";
 import { NonCollabClient } from "./constants.js";
-import { MergeTree } from "./mergeTree.js";
+import type { MergeTree } from "./mergeTree.js";
 import { walkAllChildSegments } from "./mergeTreeNodeWalk.js";
-import { ISegmentPrivate } from "./mergeTreeNodes.js";
+import type { ISegmentPrivate } from "./mergeTreeNodes.js";
 import type { IJSONSegment } from "./ops.js";
-import { PropertySet, matchProperties } from "./properties.js";
+import { type PropertySet, matchProperties } from "./properties.js";
 import { assertInserted, isRemoved } from "./segmentInfos.js";
 import {
-	IJSONSegmentWithMergeInfo,
-	JsonSegmentSpecs,
-	MergeTreeChunkV1,
-	MergeTreeHeaderMetadata,
+	type IJSONSegmentWithMergeInfo,
+	type JsonSegmentSpecs,
+	type MergeTreeChunkV1,
+	type MergeTreeHeaderMetadata,
 	serializeAsMaxSupportedVersion,
 	toLatestVersion,
 	type VersionedMergeTreeChunk,

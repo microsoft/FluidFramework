@@ -7,7 +7,7 @@ import { strict as assert } from "node:assert";
 
 import * as semver from "semver";
 
-import { VersionBumpTypeExtended, isVersionBumpType } from "./bumpTypes";
+import { isVersionBumpType, type VersionBumpTypeExtended } from "./bumpTypes";
 import {
 	bumpInternalVersion,
 	isInternalVersionRange,

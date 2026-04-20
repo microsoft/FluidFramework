@@ -89,7 +89,7 @@ describe("MergeTree.markRangeRemoved", () => {
 			"remote",
 		);
 		const segmentExpectedRemovedSeq = seq;
-		const { segment } = client.getContainingSegment<ISegmentPrivate>(0);
+		const { segment } = client.getContainingSegment<ISegmentPrivate>(0) ?? {};
 		assert(segment !== undefined, "expected to find segment");
 		const localDeleteMessage = client.makeOpMessage(
 			client.removeRangeLocal(0, client.getLength()),

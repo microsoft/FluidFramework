@@ -3,9 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
-import * as path from "path";
+import { strict as assert } from "node:assert";
+import * as path from "node:path";
 
+import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import {
 	AcceptanceCondition,
 	AsyncGenerator,
@@ -18,6 +19,8 @@ import {
 	DDSFuzzModel,
 	DDSFuzzSuiteOptions,
 	DDSFuzzTestState,
+	registerOracle,
+	type DDSFuzzHarnessEvents,
 } from "@fluid-private/test-dds-utils";
 import {
 	IChannelAttributes,
@@ -46,6 +49,9 @@ import { SharedStringFactory } from "../../sequenceFactory.js";
 import { ISharedString, type SharedStringClass } from "../../sharedString.js";
 import { _dirname } from "../dirname.cjs";
 import { assertEquivalentSharedStrings } from "../intervalTestUtils.js";
+
+import { hasSharedStringOracle, type IChannelWithOracles } from "./oracleUtils.js";
+import { SharedStringOracle } from "./sharedStringOracle.js";
 
 export type RevertibleSharedString = ISharedString & {
 	revertibles: SharedStringRevertible[];
@@ -224,7 +230,7 @@ function logCurrentState(state: FuzzTestState, loggingInfo: LoggingInfo): void {
 		const { channel } = state.clients.find((s) => s.containerRuntime.clientId === id) ?? {};
 		assert(channel);
 		const labels = channel.getIntervalCollectionLabels();
-		const interval = Array.from(labels)
+		const interval = [...labels]
 			.map((label) =>
 				channel.getIntervalCollection(label).getIntervalById(loggingInfo.intervalId),
 			)
@@ -326,7 +332,7 @@ export function makeReducer<TState extends FuzzTestState>(
 export function createSharedStringGeneratorOperations(
 	optionsParam?: SharedStringOperationGenerationConfig,
 ) {
-	const options = { ...defaultSharedStringOperationGenerationConfig, ...(optionsParam ?? {}) };
+	const options = { ...defaultSharedStringOperationGenerationConfig, ...optionsParam };
 
 	// All subsequent helper functions are generators; note that they don't actually apply any operations.
 	function startPosition({ random, client }: ClientOpState): number {
@@ -465,7 +471,17 @@ export const baseModel: Omit<
 		// makeReducer supports a param for logging output which tracks the provided intervalId over time:
 		// { intervalId: "00000000-0000-0000-0000-000000000000", clientIds: ["A", "B", "C"] }
 		makeReducer(),
-	validateConsistency: async (a, b) => assertEquivalentSharedStrings(a.channel, b.channel),
+	validateConsistency: async (a, b) => {
+		if (hasSharedStringOracle(a.channel)) {
+			a.channel.sharedStringOracle.validate();
+		}
+
+		if (hasSharedStringOracle(b.channel)) {
+			b.channel.sharedStringOracle.validate();
+		}
+
+		void assertEquivalentSharedStrings(a.channel, b.channel);
+	},
 	factory: new SharedStringFuzzFactory(),
 	minimizationTransforms: [
 		(op) => {
@@ -476,13 +492,22 @@ export const baseModel: Omit<
 		},
 		(op) => {
 			switch (op.type) {
-				case "addText":
+				case "addText": {
 					if (op.index > 0) {
 						op.index -= 1;
 					}
 					break;
+				}
 				case "removeRange":
-				case "annotateRange":
+				case "annotateRange": {
+					if (op.start > 0) {
+						op.start--;
+					}
+					if (op.end > 0) {
+						op.end--;
+					}
+					break;
+				}
 				case "addInterval":
 				case "changeInterval": {
 					const { startPos, endPos, startSide, endSide } = endpointPosAndSide(
@@ -497,27 +522,37 @@ export const baseModel: Omit<
 					}
 					break;
 				}
-				default:
+				default: {
 					break;
+				}
 			}
 		},
 		(op) => {
-			if (
-				op.type !== "removeRange" &&
-				op.type !== "annotateRange" &&
-				op.type !== "addInterval" &&
-				op.type !== "changeInterval"
-			) {
-				return;
-			}
-			const { endPos, endSide } = endpointPosAndSide(op.start, op.end);
+			if (op.type === "removeRange" || op.type === "annotateRange") {
+				if (op.end > 0) {
+					op.end--;
+				}
+			} else if (op.type === "addInterval" || op.type === "changeInterval") {
+				const { endPos, endSide } = endpointPosAndSide(op.start, op.end);
 
-			if (typeof endPos === "number" && endPos > 0) {
-				op.end = toSequencePlace(endPos - 1, endSide);
+				if (typeof endPos === "number" && endPos > 0) {
+					op.end = toSequencePlace(endPos - 1, endSide);
+				}
 			}
 		},
 	],
 };
+
+const oracleEmitter = new TypedEventEmitter<DDSFuzzHarnessEvents>();
+
+oracleEmitter.on("clientCreate", (client) => {
+	const channel = client.channel as IChannelWithOracles;
+
+	// Attach SharedString oracle
+	const sharedStringOracle = new SharedStringOracle(channel);
+	channel.sharedStringOracle = sharedStringOracle;
+	registerOracle(sharedStringOracle);
+});
 
 export const defaultFuzzOptions: Partial<DDSFuzzSuiteOptions> = {
 	validationStrategy: { type: "fixedInterval", interval: 10 },
@@ -530,6 +565,7 @@ export const defaultFuzzOptions: Partial<DDSFuzzSuiteOptions> = {
 	defaultTestCount: 100,
 	saveFailures: { directory: path.join(_dirname, "../../src/test/fuzz/results") },
 	testSquashResubmit: true,
+	emitter: oracleEmitter,
 };
 
 export function makeIntervalOperationGenerator(
@@ -548,7 +584,7 @@ export function makeIntervalOperationGenerator(
 		isShorterThanMaxLength,
 	} = createSharedStringGeneratorOperations(optionsParam);
 
-	const options = { ...defaultIntervalOperationGenerationConfig, ...(optionsParam ?? {}) };
+	const options = { ...defaultIntervalOperationGenerationConfig, ...optionsParam };
 
 	function isNonEmpty(collection: ISequenceIntervalCollection): boolean {
 		for (const _ of collection) {
@@ -592,7 +628,7 @@ export function makeIntervalOperationGenerator(
 	}
 
 	function nonEmptyIntervalCollection({ client, random }: ClientOpState): string {
-		const nonEmptyLabels = Array.from(client.channel.getIntervalCollectionLabels()).filter(
+		const nonEmptyLabels = [...client.channel.getIntervalCollectionLabels()].filter(
 			(label) => {
 				const collection = client.channel.getIntervalCollection(label);
 				return isNonEmpty(collection);
@@ -603,7 +639,7 @@ export function makeIntervalOperationGenerator(
 
 	function interval(state: ClientOpState): { collectionName: string; id: string } {
 		const collectionName = nonEmptyIntervalCollection(state);
-		const intervals = Array.from(state.client.channel.getIntervalCollection(collectionName));
+		const intervals = [...state.client.channel.getIntervalCollection(collectionName)];
 		const id = state.random.pick(intervals)?.getIntervalId();
 		assert(id);
 
@@ -650,7 +686,7 @@ export function makeIntervalOperationGenerator(
 	}
 
 	const hasAnInterval = ({ client }: ClientOpState): boolean =>
-		Array.from(client.channel.getIntervalCollectionLabels()).some((label) => {
+		[...client.channel.getIntervalCollectionLabels()].some((label) => {
 			const collection = client.channel.getIntervalCollection(label);
 			return isNonEmpty(collection);
 		});

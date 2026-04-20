@@ -3,14 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import {
-	TypedEventEmitter,
-	type ILayerCompatDetails,
-	type IProvideLayerCompatDetails,
-} from "@fluid-internal/client-utils";
-import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
-import { IClient } from "@fluidframework/driver-definitions";
-import {
+import { TypedEventEmitter } from "@fluid-internal/client-utils";
+import type { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+import type { IClient } from "@fluidframework/driver-definitions";
+import type {
 	IDocumentDeltaConnection,
 	IDocumentDeltaStorageService,
 	IDocumentService,
@@ -19,15 +15,14 @@ import {
 	IDocumentStorageService,
 	IResolvedUrl,
 } from "@fluidframework/driver-definitions/internal";
-import { ITokenProvider } from "@fluidframework/routerlicious-driver";
-import { ILocalDeltaConnectionServer } from "@fluidframework/server-local-server";
+import type { ITokenProvider } from "@fluidframework/routerlicious-driver";
+import type { ILocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import { GitManager } from "@fluidframework/server-services-client";
 import { TestHistorian } from "@fluidframework/server-test-utils";
 
 import { LocalDeltaStorageService } from "./localDeltaStorageService.js";
 import { LocalDocumentDeltaConnection } from "./localDocumentDeltaConnection.js";
 import { LocalDocumentStorageService } from "./localDocumentStorageService.js";
-import { localDriverCompatDetailsForLoader } from "./localRuntimeLayerCompatState.js";
 
 /**
  * Basic implementation of a document service for local use.
@@ -35,7 +30,7 @@ import { localDriverCompatDetailsForLoader } from "./localRuntimeLayerCompatStat
  */
 export class LocalDocumentService
 	extends TypedEventEmitter<IDocumentServiceEvents>
-	implements IDocumentService, IProvideLayerCompatDetails
+	implements IDocumentService
 {
 	/**
 	 * @param localDeltaConnectionServer - delta connection server for ops
@@ -57,15 +52,7 @@ export class LocalDocumentService
 		super();
 	}
 
-	/**
-	 * The compatibility details of the Local Driver layer that is exposed to the Loader layer
-	 * for validating Loader-Driver compatibility.
-	 */
-	public get ILayerCompatDetails(): ILayerCompatDetails {
-		return localDriverCompatDetailsForLoader;
-	}
-
-	public dispose() {}
+	public dispose(): void {}
 
 	/**
 	 * Creates and returns a document storage service for local use.

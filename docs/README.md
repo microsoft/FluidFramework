@@ -36,40 +36,19 @@ Then, run:
 npm start
 ```
 
-#### Limitations
+##### Typesense Search
 
-The following functionality will not work in this mode.
-Instead, you will need to [build](#build) and [serve](#serve)
+The search function on the website is implemented with Typesense.
+To test search locally, you must first build and then use either:
 
-##### Search
+-   `pnpm run start`
+-   `pnpm run serve`
 
-Our current offline search implementation does not work in this mode.
-It requires running a full build to run its indexing.
-To test search, you will need to use the [`build` and `serve`](#build-and-serve) workflow instead.
-
-### `build` and `serve`
-
-The second option, which is substantially slower, leverages the same build that our build pipelines use to generate our production site.
-First, run:
-
-```shell
-npm run build
-```
-
-This command generates static content into the `build` directory and can be served using any static contents hosting service.
-This includes the generation of API documentation contents.
-
-To _just_ run content generation steps, run `build:generate-content`.
-To _just_ build the static site (without rebuilding the API documentation), run `build:site`.
-
-Then, run:
-
-```shell
-npm run serve
-```
+Both commands work as long a you have the appropriate values set in your `.env` file (for example: TYPESENSE_HOST and TYPESENSE_API_KEY).
+Note: This setup and the required API keys are limited to Microsoft internal employees; detailed instructions can be found on the internal wiki.
 
 Note: the Docusaurus build is fairly slow.
-If you don't need to test search, it is recommended to run `npm start` instead.
+If you don't need to test search, it is recommended to run `pnpm run start` instead.
 This is faster, and will watch for content changes and update automatically.
 You will still need to build the API documentation first.
 
@@ -258,11 +237,21 @@ Note: generating the API documentation for the new "current" version will fail i
 
 ##### Links
 
-Generally, it is recommended to include file extensions in links when possible.
-E.g., prefer `[foo](./foo.mdx)` over `[foo](./foo)`.
+As a general rule, links between documents on the site should:
 
--   Docusaurus applies a different resolution strategy for relative _file path_ links than it does for URL links.
-    See: <https://docusaurus.io/docs/markdown-features/links>
+-   Use relative file paths
+    -   Enhances the IDE experience.
+    -   Gives us better / earlier broken link detection.
+-   Specify the `.md`/`.mdx` file extension
+    -   Docusaurus applies a different resolution strategy for relative _file path_ links than it does for URL links. See: <https://docusaurus.io/docs/markdown-features/links>
+
+**Avoid** using fully qualified URLs (e.g., `[foo](https://fluidframework.com/docs/foo)`).
+
+-   Docusaurus will treat such links as _external_, which will result in new windows/tabs being opened in the user's browser when clicked.
+
+**Avoid** using _absolute_ document paths relative to the site root (e.g., `[foo](/docs/foo.mdx)`)
+
+-   While these work just fine as far as Docusaurus is concerned, they break the ability to navigate through links in an IDE.
 
 #### Assets
 

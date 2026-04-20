@@ -4,7 +4,10 @@
  */
 
 import type { IUser, ScopeType } from "@fluidframework/protocol-definitions";
-import { IGitManager } from "@fluidframework/server-services-client";
+import type {
+	IGitManager,
+	GitManagerConfigDecorator,
+} from "@fluidframework/server-services-client";
 
 /**
  * @internal
@@ -156,6 +159,11 @@ export interface ITenantManager {
 	createTenant(tenantId?: string): Promise<ITenantConfig & { key: string }>;
 
 	/**
+	 * Retrieves details for the given tenant from Riddler.
+	 */
+	getTenantfromRiddler(tenantId?: string): Promise<ITenantConfig>;
+
+	/**
 	 * Retrieves details for the given tenant
 	 */
 	getTenant(tenantId: string, documentId: string): Promise<ITenant>;
@@ -169,6 +177,7 @@ export interface ITenantManager {
 		storageName?: string,
 		includeDisabledTenant?: boolean,
 		isEphemeralContainer?: boolean,
+		configDecorator?: GitManagerConfigDecorator,
 	): Promise<IGitManager>;
 
 	/**

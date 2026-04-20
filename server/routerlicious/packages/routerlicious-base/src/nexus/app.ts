@@ -4,7 +4,7 @@
  */
 
 import { CallingServiceHeaderName } from "@fluidframework/server-services-client";
-import { IReadinessCheck } from "@fluidframework/server-services-core";
+import type { IReadinessCheck } from "@fluidframework/server-services-core";
 import { createHealthCheckEndpoints } from "@fluidframework/server-services-shared";
 import {
 	BaseTelemetryProperties,
@@ -37,8 +37,10 @@ export function create(
 	if (loggerFormat === "json") {
 		app.use(
 			jsonMorganLoggerMiddleware("nexus", (tokens, req, res) => {
+				const tenantId = getTenantIdFromRequest(req.params);
+				res.locals.tenantId = tenantId;
 				return {
-					[BaseTelemetryProperties.tenantId]: getTenantIdFromRequest(req.params),
+					[BaseTelemetryProperties.tenantId]: tenantId,
 					[CommonProperties.callingServiceName]:
 						req.headers[CallingServiceHeaderName] ?? "",
 				};
@@ -47,9 +49,9 @@ export function create(
 	} else {
 		app.use(alternativeMorganLoggerMiddleware(loggerFormat));
 	}
-	// eslint-disable-next-line import/namespace
+	// eslint-disable-next-line import-x/namespace
 	app.use(bodyParser.json());
-	// eslint-disable-next-line import/namespace
+	// eslint-disable-next-line import-x/namespace
 	app.use(bodyParser.urlencoded({ extended: false }));
 
 	const healthEndpoints = createHealthCheckEndpoints("nexus", startupCheck, readinessCheck);

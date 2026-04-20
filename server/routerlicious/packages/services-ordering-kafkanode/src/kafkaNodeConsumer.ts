@@ -5,7 +5,7 @@
 
 import * as util from "util";
 
-import {
+import type {
 	IConsumer,
 	IPartition,
 	IQueuedMessage,
