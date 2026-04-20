@@ -210,7 +210,7 @@ extends:
     buildDirectory: ${{ variables.FluidFrameworkDirectory }}
     tagName: client
     isReleaseGroup: true
-    poolBuild: Large-eastus2
+    poolBuild: Large-tests-eastus2
     checkoutSubmodules: true
     taskBundleAnalysis: true
     taskLint: false # Linting is captured by `ci:build` via fluid-build

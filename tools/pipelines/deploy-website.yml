@@ -121,7 +121,7 @@ stages:
 
     - job: build_site
       displayName: 'Build website'
-      pool: Large-eastus2
+      pool: Large-tests-eastus2
       steps:
         - checkout: self
           path: ${{ variables.FluidFrameworkDirectory }}
@@ -190,7 +190,7 @@ stages:
 - stage: guardian
   displayName: Guardian
   dependsOn: [] # run in parallel
-  pool: Large-eastus2
+  pool: Large-tests-eastus2
   jobs:
     - job: guardian_tasks
       displayName: Guardian tasks
@@ -256,7 +256,7 @@ stages:
 - stage: link_check
   displayName: 'Website Link Check'
   dependsOn: [] # run in parallel
-  pool: Large-eastus2
+  pool: Large-tests-eastus2
   jobs:
     - job: link_check
       displayName: 'Website Link Check'

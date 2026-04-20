@@ -36,7 +36,7 @@ pr: none
 parameters:
 - name: poolBuild
   type: object
-  default: Large-eastus2
+  default: Large-tests-eastus2
 
 # Each entry generates a stage that checks out the repo, builds, runs the specified test script,
 # collects results with test:benchmark:copyresults, uploads telemetry, and publishes artifacts.

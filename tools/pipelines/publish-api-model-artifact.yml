@@ -146,7 +146,7 @@ stages:
       displayName: 'Combine api-extractor JSON'
       dependsOn: check_branch_version
       environment: 'fluid-docs-env'
-      pool: Large-eastus2
+      pool: Large-tests-eastus2
       variables:
         isLatestMinorOfMajorTrain: $[ dependencies.check_branch_version.outputs['SetShouldDeploy.shouldDeploy'] ]
         majorVersion: $[ dependencies.check_branch_version.outputs['SetShouldDeploy.majorVersion'] ]
