@@ -28,6 +28,9 @@ legacy.d.ts
 # c8 code coverage temporary files
 /coverage/tmp/
 
+# Lighthouse CI temporary files
+.lighthouseci
+
 # Temporary api-extractor build artifacts
 **/_api-extractor-temp/**
 

@@ -1,0 +1,3 @@
+# Auto-generated ballast modules (created by scripts/generateBallast.ts).
+# Only used during sweep runs; not needed for the base-case build.
+_generated/
