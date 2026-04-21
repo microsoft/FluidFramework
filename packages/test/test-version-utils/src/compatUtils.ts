@@ -129,6 +129,7 @@ export interface ICompatTestContainerConfig extends ITestContainerConfig {
 
 function createGetDataStoreFactoryFunction(
 	api: ReturnType<typeof getDataRuntimeApi>,
+	otherApi?: ReturnType<typeof getDataRuntimeApi>,
 ): (containerOptions?: ITestContainerConfig) => IFluidDataStoreFactory {
 	class TestDataObject extends api.DataObject implements ITestDataObject {
 		public get _context(): IFluidDataStoreContext {
@@ -142,17 +143,26 @@ function createGetDataStoreFactoryFunction(
 		}
 	}
 
-	const registryMapping = {};
-	for (const value of Object.values(api.dds)) {
-		/**
-		 * Skip dds that may not be available in this version of the api.
-		 * Not all versions have all dds. See {@link PackageToInstall} for details.
-		 */
-		if (value?.getFactory === undefined) {
-			continue;
+	const buildRegistryMapping = (
+		a: ReturnType<typeof getDataRuntimeApi>,
+	): Record<string, IChannelFactory> => {
+		const mapping: Record<string, IChannelFactory> = {};
+		for (const value of Object.values(a.dds)) {
+			/**
+			 * Skip dds that may not be available in this version of the api.
+			 * Not all versions have all dds. See {@link PackageToInstall} for details.
+			 */
+			if (value?.getFactory === undefined) {
+				continue;
+			}
+			mapping[value.getFactory().type] = value.getFactory();
 		}
-		registryMapping[value.getFactory().type] = value.getFactory();
-	}
+		return mapping;
+	};
+
+	const registryMapping = buildRegistryMapping(api);
+	const otherRegistryMapping =
+		otherApi === undefined ? undefined : buildRegistryMapping(otherApi);
 
 	function convertRegistry(registry: ChannelFactoryRegistry = []): ChannelFactoryRegistry {
 		const oldRegistry: [string | undefined, IChannelFactory][] = [];
@@ -161,10 +171,11 @@ function createGetDataStoreFactoryFunction(
 			if (oldFactory === undefined) {
 				throw Error(`Invalid or unimplemented channel factory: ${factory.type}`);
 			}
-			// The factory must be a default factory. A custom wrapper (e.g.
-			// configuredSharedTree) would have its config silently dropped by the remap
-			// below.
-			if (factory.constructor !== oldFactory.constructor) {
+			// Reject custom wrappers (e.g. configuredSharedTree) — the remap below would drop their config.
+			const matchesOwnDefault = factory.constructor === oldFactory.constructor;
+			const matchesOtherDefault =
+				otherRegistryMapping?.[factory.type]?.constructor === factory.constructor;
+			if (!matchesOwnDefault && !matchesOtherDefault) {
 				throw Error(
 					`Custom factory for "${factory.type}" would lose its configuration during compat ` +
 						`remap. Use buildRegistry or pull the factory from apis.dds instead.`,
@@ -320,9 +331,13 @@ export async function getCompatVersionedTestObjectProviderFromApis(
 			runtime as any as Required<FluidObject<IFluidHandleContext>>
 		).IFluidHandleContext.resolveHandle(request);
 
-	const getDataStoreFactoryFn = createGetDataStoreFactoryFunction(apis.dataRuntime);
+	const getDataStoreFactoryFn = createGetDataStoreFactoryFunction(
+		apis.dataRuntime,
+		apis.dataRuntimeForLoading,
+	);
 	const getDataStoreFactoryFnForLoading = createGetDataStoreFactoryFunction(
 		apis.dataRuntimeForLoading,
+		apis.dataRuntime,
 	);
 
 	// We want to ensure that we are testing all latest runtime features, but only if both runtimes
