@@ -16,7 +16,7 @@ import {
 	performFuzzActions,
 	take,
 } from '@fluid-private/stochastic-test-utils';
-import { BenchmarkType, benchmark } from '@fluid-tools/benchmark';
+import { BenchmarkType, TestType, benchmarkIt, collectDurationData } from '@fluid-tools/benchmark';
 import { validateAssertionError } from '@fluidframework/test-runtime-utils/internal';
 import { expect } from 'chai';
 
@@ -255,22 +255,32 @@ describe('SessionIdNormalizer Perf', () => {
 	};
 
 	let localChoice = 0;
-	benchmark({
+	benchmarkIt({
 		type,
+		testType: TestType.ExecutionTime,
 		title: `normalize a local ID to a final ID`,
-		before,
-		benchmarkFn: () => {
-			normalizer.getFinalId(localChoices[localChoice++ % localChoices.length]);
+		run: async () => {
+			before();
+			return collectDurationData({
+				benchmarkFn: () => {
+					normalizer.getFinalId(localChoices[localChoice++ % localChoices.length]);
+				},
+			});
 		},
 	});
 
 	let finalChoice = 0;
-	benchmark({
+	benchmarkIt({
 		type,
+		testType: TestType.ExecutionTime,
 		title: `normalize a final ID to session space`,
-		before,
-		benchmarkFn: () => {
-			normalizer.getSessionSpaceId(finalChoices[finalChoice++ % finalChoices.length]);
+		run: async () => {
+			before();
+			return collectDurationData({
+				benchmarkFn: () => {
+					normalizer.getSessionSpaceId(finalChoices[finalChoice++ % finalChoices.length]);
+				},
+			});
 		},
 	});
 });

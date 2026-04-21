@@ -3,7 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { BenchmarkType, benchmark } from "@fluid-tools/benchmark";
+import {
+	BenchmarkType,
+	TestType,
+	benchmarkDuration,
+	benchmarkIt,
+	collectDurationData,
+} from "@fluid-tools/benchmark";
 
 import { compareArrays } from "@fluidframework/core-utils/internal";
 
@@ -49,39 +55,42 @@ describe("compareArrays()", () => {
 	describe.skip("baseline", () => {
 		describe("using for-loop", () => {
 			for (const [title, left, right] of comparisons) {
-				benchmark({
+				benchmarkIt({
 					type: BenchmarkType.Measurement,
 					title: `${title}`,
-					before: () => {},
-					benchmarkFn: () => {
-						compareWithFor(left, right);
-					},
+					...benchmarkDuration({
+						benchmarkFn: () => {
+							compareWithFor(left, right);
+						},
+					}),
 				});
 			}
 		});
 
 		describe("using Array.every()", () => {
 			for (const [title, left, right] of comparisons) {
-				benchmark({
+				benchmarkIt({
 					type: BenchmarkType.Measurement,
 					title: `${title}`,
-					before: () => {},
-					benchmarkFn: () => {
-						compareWithEvery(left, right);
-					},
+					...benchmarkDuration({
+						benchmarkFn: () => {
+							compareWithEvery(left, right);
+						},
+					}),
 				});
 			}
 		});
 
 		describe("using Object.is()", () => {
 			for (const [title, left, right] of comparisons) {
-				benchmark({
+				benchmarkIt({
 					type: BenchmarkType.Measurement,
 					title: `${title}`,
-					before: () => {},
-					benchmarkFn: () => {
-						compareWithObjectIs(left, right);
-					},
+					...benchmarkDuration({
+						benchmarkFn: () => {
+							compareWithObjectIs(left, right);
+						},
+					}),
 				});
 			}
 		});
@@ -89,13 +98,14 @@ describe("compareArrays()", () => {
 
 	describe("no callback", () => {
 		for (const [title, left, right] of comparisons) {
-			benchmark({
+			benchmarkIt({
 				type: BenchmarkType.Measurement,
 				title: `${title}`,
-				before: () => {},
-				benchmarkFn: () => {
-					compareArrays(left, right);
-				},
+				...benchmarkDuration({
+					benchmarkFn: () => {
+						compareArrays(left, right);
+					},
+				}),
 			});
 		}
 	});
@@ -104,20 +114,22 @@ describe("compareArrays()", () => {
 		let sum = 0;
 
 		for (const [title, left, right] of comparisons) {
-			benchmark({
+			benchmarkIt({
 				type: BenchmarkType.Measurement,
+				testType: TestType.ExecutionTime,
 				title: `${title}`,
-
-				benchmarkFn: () => {
-					compareArrays(left, right, (leftItem, rightItem, index) => {
-						sum += index;
-						return Object.is(leftItem, rightItem);
+				run: async () => {
+					const result = await collectDurationData({
+						benchmarkFn: () => {
+							compareArrays(left, right, (leftItem, rightItem, index) => {
+								sum += index;
+								return Object.is(leftItem, rightItem);
+							});
+						},
 					});
-				},
-
-				after: () => {
 					// Paranoid usage of 'sum' to prevent dead code optimization.
 					console.log(`after: ${sum}`);
+					return result;
 				},
 			});
 		}

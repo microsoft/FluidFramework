@@ -132,8 +132,8 @@ export function reportTable(heading: string, reports: readonly ReportEntry[]): s
 		if (isResultError(result)) {
 			table.cell("Status", status(0, 1));
 			table.cell("Name", name);
-			// Full error should be included outside of table, so limit text in table to avoid breaking formatting.
-			const errorColumns = 50;
+			// Full error should be included outside of table (in standard error), so limit text in table to avoid breaking formatting.
+			const errorColumns = 60;
 			const message =
 				result.error.length > errorColumns
 					? `${result.error.slice(0, errorColumns - 1)}…`

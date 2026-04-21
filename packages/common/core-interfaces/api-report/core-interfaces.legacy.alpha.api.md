@@ -4,7 +4,7 @@
 
 ```ts
 
-// @beta
+// @public
 export class BrandedType<out Brand> {
     static [Symbol.hasInstance](value: never): value is never;
     protected constructor();
@@ -58,12 +58,12 @@ export type FluidErrorTypesAlpha = (typeof FluidErrorTypesAlpha)[keyof typeof Fl
 // @public
 export const fluidHandleSymbol: unique symbol;
 
-// @alpha @sealed
+// @beta @sealed
 export interface FluidIterable<T> {
     [Symbol.iterator](): FluidIterableIterator<T>;
 }
 
-// @alpha @sealed
+// @beta @sealed
 export interface FluidIterableIterator<T> extends FluidIterable<T> {
     next(): {
         value: T;
@@ -74,7 +74,7 @@ export interface FluidIterableIterator<T> extends FluidIterable<T> {
     };
 }
 
-// @alpha @sealed
+// @beta @sealed
 export interface FluidMap<K, V> extends FluidReadonlyMap<K, V> {
     delete(key: K): void;
     forEach(callbackfn: (value: V, key: K, map: FluidMap<K, V>) => void, thisArg?: any): void;
@@ -92,7 +92,7 @@ export type FluidObjectKeys<T> = keyof FluidObject<T>;
 // @public
 export type FluidObjectProviderKeys<T, TProp extends keyof T = keyof T> = string extends TProp ? never : number extends TProp ? never : TProp extends keyof Required<T>[TProp] ? Required<T>[TProp] extends Required<Required<T>[TProp]>[TProp] ? TProp : never : never;
 
-// @alpha @sealed
+// @beta @sealed
 export interface FluidReadonlyMap<K, V> {
     [Symbol.iterator](): FluidIterableIterator<[K, V]>;
     readonly [Symbol.toStringTag]: string;
@@ -471,14 +471,19 @@ export type Listeners<T extends object> = {
 };
 
 // @public
-export const LogLevel: {
-    readonly verbose: 10;
-    readonly default: 20;
-    readonly error: 30;
-};
+export const LogLevel: LogLevelConst;
 
 // @public
 export type LogLevel = (typeof LogLevel)[keyof typeof LogLevel];
+
+// @public
+export interface LogLevelConst {
+    readonly default: 20;
+    readonly error: 30;
+    readonly essential: 30;
+    readonly info: 20;
+    readonly verbose: 10;
+}
 
 // @public
 export type Off = () => void;

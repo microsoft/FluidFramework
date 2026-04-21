@@ -6,10 +6,12 @@
 import { strict as assert } from "node:assert";
 import { collectDurationData } from "../../durationBenchmarking/index.js";
 import {
+	BenchmarkState,
 	Phase,
 	runBenchmarkAsync,
 	runBenchmarkSync,
 } from "../../durationBenchmarking/getDuration.js";
+import { timer } from "../../timer.js";
 import * as Configuration from "../../Configuration.js";
 import type { CollectedData } from "../../reportTypes.js";
 
@@ -164,6 +166,22 @@ describe("getDuration", () => {
 				value: 423.5333333333333,
 			},
 		]);
+	});
+
+	describe("BenchmarkState", () => {
+		it("timeAllBatches", () => {
+			let count = 0;
+			const state = new BenchmarkState(timer, {
+				maxBenchmarkDurationSeconds: 0.1,
+				minBatchCount: 2,
+				minBatchDurationSeconds: 0,
+			});
+			state.timeAllBatches(() => {
+				count++;
+			});
+			// At least run one call per batch, 2 batches + warmup.
+			assert(count >= 3);
+		});
 	});
 });
 

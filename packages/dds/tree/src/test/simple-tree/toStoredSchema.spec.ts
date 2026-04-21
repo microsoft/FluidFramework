@@ -186,12 +186,14 @@ describe("toStoredSchema", () => {
 							generateSchemaFromSimpleSchema(simpleFromRestrictive).root,
 							{
 								includeStaged: () => assert.fail(),
+								includeStagedOptional: () => assert.fail(),
 							},
 						);
 						const permissive3 = toStoredSchema(
 							generateSchemaFromSimpleSchema(simpleFromPermissive).root,
 							{
 								includeStaged: () => assert.fail(),
+								includeStagedOptional: () => assert.fail(),
 							},
 						);
 

@@ -3,64 +3,84 @@
 
 name: $(Build.BuildId)
 
-trigger: none
+trigger:
+  branches:
+    include:
+    - release/*
+    - main
+    - next
+    - lts
+  paths:
+    include:
+    - .npmrc
+    - .nvmrc
+    - .pnpmfile.cjs
+    - _buildProject.config.cjs
+    - common/build/build-common
+    - examples
+    - experimental
+    - fluidBuild.config.cjs
+    - package.json
+    - packages
+    - patches/*
+    - pnpm-lock.yaml
+    - pnpm-workspace.yaml
+    - tools/pipelines/test-perf-benchmarks.yml
+    - tools/pipelines/templates/include-install.yml
+    - tools/pipelines/templates/include-upload-npm-logs.yml
+    - tools/pipelines/templates/include-use-node-version.yml
+    - tools/pipelines/templates/include-vars-telemetry-generator.yml
+    - tools/pipelines/templates/upload-telemetry
 pr: none
 
-resources:
-  pipelines:
-  - pipeline: client   # Name of the pipeline resource
-    source: Build - client packages
-    branch: main # Default branch for manual/scheduled triggers if none is selected
-    trigger:
-      branches:
-      - release/*
-      - main
-      - next
-      - lts
-  repositories:
-  - repository: ff_pipeline_host
-    type: git
-    name: ff_pipeline_host
-
-
 parameters:
-
 - name: poolBuild
   type: object
   default: Large-eastus2
 
-- name: memoryTestPackages
+# Each entry generates a stage that checks out the repo, builds, runs the specified test script,
+# collects results with test:benchmark:copyresults, uploads telemetry, and publishes artifacts.
+- name: benchmarkJobs
   type: object
   default:
-    - "@fluidframework/sequence"
-    - "@fluidframework/map"
-    - "@fluidframework/matrix"
-
-- name: executionTestPackages
-  type: object
-  default:
-    - "@fluidframework/tree"
-    - "@fluidframework/matrix"
-    - "@fluid-experimental/tree"
-    - "@fluidframework/merge-tree"
-    - "@fluidframework/container-runtime"
-
-# List of packages running custom benchmark tests.
-- name: customBenchmarkTestPackages
-  type: object
-  default:
-    - "@fluidframework/tree"
-
-# Performance e2e tests
-- name: endpoints
-  type: object
-  default:
-  - endpointName: 'local'
-  - endpointName: 'odsp'
+  - stageName: perf_benchmark_duration
+    displayName: Perf benchmarks - duration
+    testScript: test:benchmark:duration:report
+    artifactName: duration
+    testPackageDir: '.'
+  - stageName: perf_benchmark_other
+    displayName: Perf benchmarks - other
+    testScript: test:benchmark:other:report
+    artifactName: other
+    testPackageDir: '.'
+  - stageName: perf_e2e_local
+    displayName: Perf e2e benchmarks - local
+    testScript: test:benchmark:local
+    artifactName: e2e-local
+    testPackageDir: packages/test/test-end-to-end-tests
+    endpointName: local
+  - stageName: perf_e2e_frs
+    displayName: Perf e2e benchmarks - FRS
+    testScript: test:benchmark:frs
+    artifactName: e2e-frs
+    testPackageDir: packages/test/test-end-to-end-tests
+    endpointName: frs
+    lockVariableGroupName: perf-frs-lock
     timeoutInMinutes: 360
-  - endpointName: 'frs'
-    lockVariableGroupName: 'perf-frs-lock'
+  - stageName: perf_e2e_odsp
+    displayName: Perf e2e benchmarks - ODSP
+    testScript: test:benchmark:odsp
+    artifactName: e2e-odsp
+    testPackageDir: packages/test/test-end-to-end-tests
+    endpointName: odsp
     timeoutInMinutes: 360
+
+resources:
+  repositories:
+  - repository: ff_pipeline_host
+    type: git
+    name: ff_pipeline_host
+    ref: main
 
 variables:
   - template: /tools/pipelines/templates/include-vars-telemetry-generator.yml@self
@@ -70,20 +90,6 @@ variables:
   - name: FORCE_COLOR
     value: 1
     readonly: true
-  - name: testWorkspace
-    value: $(Pipeline.Workspace)/$(FFPipelineHostDirectory)
-    readonly: true
-  - name: testFilesPath
-    value: $(Pipeline.Workspace)/test-files
-    readonly: true
-  - name: artifactPipeline
-    value: $(resources.pipeline.client.pipelineName)
-    readonly: true
-  - name: artifactBuildId
-    value: $(resources.pipeline.client.runID)
-    readonly: true
-  - group: prague-key-vault
-  - group: ado-feeds
   - name: pipelineIdentifierForTelemetry
     value: 'PerformanceBenchmark'
     readonly: true
@@ -91,526 +97,162 @@ variables:
   # Note that using this variable only works for non-1ES-template pipelines.
   - name: Codeql.SkipTaskAutoInjection
     value: true
+  - group: prague-key-vault
+  - group: ado-feeds
 
 stages:
-  # Performance unit tests - runtime
-  - stage: perf_unit_tests_runtime
-    displayName: Perf unit tests - runtime
-    dependsOn: []
-    variables:
-      - name: consolidatedTestsOutputFolder
-        value: ${{ variables.testWorkspace }}/benchmarkOutput
-        readonly: true
-    jobs:
-    - job: perf_unit_tests_runtime
-      displayName: Perf unit tests - runtime
-      pool: ${{ parameters.poolBuild }}
-      timeoutInMinutes: 120
-      steps:
-      - template: /tools/pipelines/templates/include-test-perf-benchmarks.yml@self
-        parameters:
-          artifactBuildId: $(artifactBuildId)
-          artifactPipeline: $(artifactPipeline)
-          testFilesPath: $(testFilesPath)
+  - ${{ each job in parameters.benchmarkJobs }}:
 
-      # Run tests for each package that has them
-      - ${{ each testPackage in parameters.executionTestPackages }}:
+    - stage: ${{ job.stageName }}
+      displayName: ${{ job.displayName }}
+      dependsOn: []
+      ${{ if ne(coalesce(job.lockVariableGroupName, ''), '') }}:
+        lockBehavior: sequential
+        variables:
+          - group: ${{ job.lockVariableGroupName }}
+      jobs:
+      - job: run
+        displayName: ${{ job.displayName }}
+        pool: ${{ parameters.poolBuild }}
+        timeoutInMinutes: ${{ coalesce(job.timeoutInMinutes, 180) }}
+        steps:
+        # Checkout the FluidFramework repo (for workspace scripts and source code)
+        - checkout: self
+          path: $(FluidFrameworkDirectory)
 
-        # Download and install package with performance tests
-        - template: /tools/pipelines/templates/include-test-perf-benchmarks-install-package.yml@self
-          parameters:
-            artifactBuildId: $(artifactBuildId)
-            artifactPipeline: $(artifactPipeline)
-            testPackageName: ${{ testPackage }}
-            installPath: $(testWorkspace)
+        # Checkout ff_pipeline_host (provides telemetry-generator and trips-setup/cleanup)
+        - checkout: ff_pipeline_host
+          path: $(FFPipelineHostDirectory)
 
-        # The "npm pack"-ed package that we install doesn't have the test files.
-        # Unpack them "on top" of the package, where it was installed, so we can run its tests.
         - task: Bash@3
-          displayName: Unpack test files - ${{ testPackage }}
+          displayName: Print parameter/variable values for troubleshooting
           inputs:
             targetType: 'inline'
             script: |
               set -eu -o pipefail
-              TAR_FILENAME=${{ replace(replace(replace(replace(testPackage, '@fluidframework/', '' ), '@fluid-internal/', '' ),'@fluid-', '' ), '/', '-') }}
-              TAR_PATH=$(testFilesPath)/$TAR_FILENAME.test-files.tar
-              cd ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}
-              echo "Unpacking test files for ${{ testPackage }} from file '$TAR_PATH' in '$(pwd)'"
-              # Note: we could skip the last argument and have it unpack everything at once, but if we later change
-              # the structure/contents of the tests tar file, the extraction could overwrite things we didn't intend to,
-              # so keeping the paths to extract explicit.
-              # Also, extracting is finicky with the exact format of the last argument, it needs to match how the
-              # tarfile was created (e.g. './lib/test' works here but 'lib/test' does not).
-              tar --extract --verbose --file $TAR_PATH ./lib/test
-              tar --extract --verbose --file $TAR_PATH ./dist/test
-              tar --extract --verbose --file $TAR_PATH ./src/test
+              echo "
+              Test configuration:
+                testScript=${{ job.testScript }}
+                testPackageDir=${{ job.testPackageDir }}
+                endpointName=${{ coalesce(job.endpointName, '(none)') }}
 
-        # Install package dependencies (this gets devDependencies installed so we can then run the package's tests).
-        - template: /tools/pipelines/templates/include-copy-dev-dependencies.yml@self
-          parameters:
-            sourcePackageLocation: ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}
-            destPackageLocation: $(Pipeline.Workspace)/$(FFPipelineHostDirectory)
-
-        # Run tests
-        - task: Npm@1
-          displayName: Run execution-time tests - ${{ testPackage }}
-          inputs:
-            command: 'custom'
-            workingDir: ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}
-            customCommand: 'run test:benchmark:report'
-
-        - task: Bash@3
-          displayName: Compute benchmark output folder - ${{ testPackage }}
-          inputs:
-            targetType: 'inline'
-            workingDirectory: ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}
-            script: |
-              set -eu -o pipefail
-              node --input-type=module -e "
-                  const benchmarkIndexUrl = await import.meta.resolve('@fluid-tools/benchmark');
-                  const absolutePath = new URL(benchmarkIndexUrl.replace('index.js', '.output')).pathname;
-                  console.log('Resolved @fluid-tools/benchmark output folder to ' + absolutePath);
-                  console.log('##vso[task.setvariable variable=benchmarkOutputFolder]' + absolutePath);
+              Build Params:
+                SourceBranch=$(Build.SourceBranch)
               "
 
-        # Consolidate output files
-        - task: CopyFiles@2
-          displayName: Consolidate output files - ${{ testPackage }}
-          inputs:
-            sourceFolder: $(benchmarkOutputFolder)
-            contents: '**'
-            targetFolder: ${{ variables.consolidatedTestsOutputFolder }}/${{ testPackage }}
+        - template: /tools/pipelines/templates/include-use-node-version.yml@self
 
-        # Cleanup package
+        # Install ff_pipeline_host dependencies (provides telemetry-generator and trips-setup/cleanup)
+        - template: /tools/pipelines/templates/include-install.yml@self
+          parameters:
+            packageManager: pnpm
+            buildDirectory: $(FFPipelineHostDirectory)
+            packageManagerInstallCommand: pnpm install
+            primaryRegistry: $(ado-feeds-ff-download-only)
+
+        # Install FluidFramework dependencies
+        - template: /tools/pipelines/templates/include-install.yml@self
+          parameters:
+            packageManager: pnpm
+            buildDirectory: $(FluidFrameworkDirectory)
+            packageManagerInstallCommand: pnpm install
+            primaryRegistry: $(ado-feeds-ff-download-only)
+
+        # Build the workspace so compiled test code is available for benchmarks
         - task: Bash@3
-          displayName: Cleanup package - ${{ testPackage }}
+          displayName: Build workspace
           inputs:
             targetType: 'inline'
-            workingDirectory: ${{ variables.testWorkspace }}/node_modules/
+            workingDirectory: $(Pipeline.Workspace)/$(FluidFrameworkDirectory)
             script: |
               set -eu -o pipefail
-              echo "Cleanup package ${{ testPackage }} from ${{ variables.testWorkspace }}/node_modules/"
-              rm -rf ${{ testPackage }};
+              pnpm exec fluid-build --nolint --task build:test:esm --worker
 
-      - task: Bash@3
-        displayName: Write measurements to Aria/Kusto
-        inputs:
-          targetType: 'inline'
-          script: |
-            set -eu -o pipefail
-            echo "Write the following benchmark output to Aria/Kusto"
-            ls -laR ${{ variables.consolidatedTestsOutputFolder }};
-            pnpm exec telemetry-generator --handlerModule $(pathToTelemetryGeneratorHandlersNew)/executionTimeTestHandler.js --dir '${{ variables.consolidatedTestsOutputFolder }}';
+        # ODSP tenant setup
+        - ${{ if eq(job.endpointName, 'odsp') }}:
+          - task: AzureCLI@2
+            displayName: 'Log in to retrieve tenant credentials'
+            inputs:
+              azureSubscription: 'FF Pipeline Authentication'
+              addSpnToEnvironment: true
+              scriptType: 'bash'
+              scriptLocation: 'inlineScript'
+              inlineScript: |
+                set -eu -o pipefail
+                az login --service-principal -u $servicePrincipalId -p $idToken --tenant $tenantId
 
-      - task: PublishPipelineArtifact@1
-        displayName: Publish Artifact - Perf tests output - execution time
-        inputs:
-          targetPath: '${{ variables.consolidatedTestsOutputFolder }}'
-          artifactName: 'perf-test-outputs_execution-time_attempt-$(System.JobAttempt)'
-        condition: succeededOrFailed()
-
-      - template: /tools/pipelines/templates/include-upload-npm-logs.yml@self
-
-  - template: /tools/pipelines/templates/upload-telemetry/include-stage-upload-telemetry.yml@self
-    parameters:
-      stageIdFilter: perf_unit_tests_runtime
-      telemetry_upload_steps:
-        - template: /tools/pipelines/templates/upload-telemetry/include-steps-upload-stage-timing.yml@self
-          parameters:
-            stageIdFilter: perf_unit_tests_runtime
-            pipelineIdentifierForTelemetry: ${{ variables.pipelineIdentifierForTelemetry }}
-
-  # Performance unit tests - memory
-  - stage: perf_unit_tests_memory
-    displayName: Perf unit tests - memory
-    dependsOn: []
-    variables:
-      - name: consolidatedTestsOutputFolder
-        value: ${{ variables.testWorkspace }}/memoryTestsOutput
-        readonly: true
-    jobs:
-    - job: perf_unit_tests_memory
-      displayName: Perf unit tests - memory
-      pool: ${{ parameters.poolBuild }}
-      timeoutInMinutes: 90
-      steps:
-      - template: /tools/pipelines/templates/include-test-perf-benchmarks.yml@self
-        parameters:
-          artifactBuildId: $(artifactBuildId)
-          artifactPipeline: $(artifactPipeline)
-          testFilesPath: $(testFilesPath)
-
-      # Run tests for each package that has them
-      - ${{ each testPackage in parameters.memoryTestPackages }}:
-
-        # Download and install package with performance tests
-        - template: /tools/pipelines/templates/include-test-perf-benchmarks-install-package.yml@self
-          parameters:
-            artifactBuildId: $(artifactBuildId)
-            artifactPipeline: $(artifactPipeline)
-            testPackageName: ${{ testPackage }}
-            installPath: $(testWorkspace)
-
-        # The "npm pack"-ed package that we install doesn't have the test files.
-        # Unpack them "on top" of the package, where it was installed, so we can run its tests.
-        - task: Bash@3
-          displayName: Unpack test files - ${{ testPackage }}
-          inputs:
-            targetType: 'inline'
-            script: |
-              set -eu -o pipefail
-              TAR_FILENAME=${{ replace(replace(replace(replace(testPackage, '@fluidframework/', '' ), '@fluid-internal/', '' ),'@fluid-', '' ), '/', '-') }}
-              TAR_PATH=$(testFilesPath)/$TAR_FILENAME.test-files.tar
-              cd ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}
-              echo "Unpacking test files for ${{ testPackage }} from file '$TAR_PATH' in '$(pwd)'"
-              # Note: we could skip the last argument and have it unpack everything at once, but if we later change
-              # the structure/contents of the tests tar file, the extraction could overwrite things we didn't intend to,
-              # so keeping the paths to extract explicit.
-              # Also, extracting is finicky with the exact format of the last argument, it needs to match how the
-              # tarfile was created (e.g. './lib/test' works here but 'lib/test' does not).
-              tar --extract --verbose --file $TAR_PATH ./lib/test
-              tar --extract --verbose --file $TAR_PATH ./dist/test
-              tar --extract --verbose --file $TAR_PATH ./src/test
-
-        # Install package dependencies (this gets devDependencies installed so we can then run the package's tests).
-        - template: /tools/pipelines/templates/include-copy-dev-dependencies.yml@self
-          parameters:
-            sourcePackageLocation: ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}
-            destPackageLocation: $(Pipeline.Workspace)/$(FFPipelineHostDirectory)
-
-        # Run tests
-        - task: Npm@1
-          displayName: Run memory usage tests - ${{ testPackage }}
-          inputs:
-            command: 'custom'
-            workingDir: ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}
-            customCommand: 'run test:memory-profiling:report'
-
-        # Consolidate output files
-        - task: CopyFiles@2
-          displayName: Consolidate output files - ${{ testPackage }}
-          inputs:
-            sourceFolder: ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}/.memoryTestsOutput
-            contents: '**'
-            targetFolder: ${{ variables.consolidatedTestsOutputFolder }}/${{ testPackage }}
-
-        # Cleanup package
-        - task: Bash@3
-          displayName: Cleanup package - ${{ testPackage }}
-          inputs:
-            targetType: 'inline'
-            workingDirectory: ${{ variables.testWorkspace }}/node_modules/
-            script: |
-              set -eu -o pipefail
-              echo "Cleanup package ${{ testPackage }} from ${{ variables.testWorkspace }}/node_modules/"
-              rm -rf ${{ testPackage }};
-
-      - task: Bash@3
-        displayName: Write measurements to Aria/Kusto
-        inputs:
-          targetType: 'inline'
-          script: |
-            set -eu -o pipefail
-            echo "Write the following benchmark output to Aria/Kusto";
-            ls -laR ${{ variables.consolidatedTestsOutputFolder }};
-            pnpm exec telemetry-generator --handlerModule $(pathToTelemetryGeneratorHandlersNew)/memoryUsageTestHandler.js --dir ${{ variables.consolidatedTestsOutputFolder }};
-
-      - task: PublishPipelineArtifact@1
-        displayName: Publish Artifact - Perf tests output - memory usage
-        inputs:
-          targetPath: '${{ variables.consolidatedTestsOutputFolder }}'
-          artifactName: 'perf-test-outputs_memory-usage_attempt-$(System.JobAttempt)'
-        condition: succeededOrFailed()
-
-      - template: /tools/pipelines/templates/include-upload-npm-logs.yml@self
-
-  - template: /tools/pipelines/templates/upload-telemetry/include-stage-upload-telemetry.yml@self
-    parameters:
-      stageIdFilter: perf_unit_tests_memory
-      telemetry_upload_steps:
-        - template: /tools/pipelines/templates/upload-telemetry/include-steps-upload-stage-timing.yml@self
-          parameters:
-            stageIdFilter: perf_unit_tests_memory
-            pipelineIdentifierForTelemetry: ${{ variables.pipelineIdentifierForTelemetry }}
-
-  # Performance unit tests - customBenchmark
-  - stage: perf_unit_tests_customBenchmark
-    displayName: Perf unit tests - customBenchmark
-    dependsOn: []
-    variables:
-      - name: consolidatedTestsOutputFolder
-        value: ${{ variables.testWorkspace }}/customBenchmarksOutput
-        readonly: true
-    jobs:
-    - job: perf_unit_tests_customBenchmark
-      displayName: Perf unit tests - customBenchmark
-      pool: ${{ parameters.poolBuild }}
-      steps:
-      - template: /tools/pipelines/templates/include-test-perf-benchmarks.yml@self
-        parameters:
-          artifactBuildId: $(artifactBuildId)
-          artifactPipeline: $(artifactPipeline)
-          testFilesPath: $(testFilesPath)
-
-      # Run tests for each package that has them
-      - ${{ each testPackage in parameters.customBenchmarkTestPackages }}:
-
-        # Download and install package with performance tests
-        - template: /tools/pipelines/templates/include-test-perf-benchmarks-install-package.yml@self
-          parameters:
-            artifactBuildId: $(artifactBuildId)
-            artifactPipeline: $(artifactPipeline)
-            testPackageName: ${{ testPackage }}
-            installPath: $(testWorkspace)
-
-        # The "npm pack"-ed package that we install doesn't have the test files.
-        # Unpack them "on top" of the package, where it was installed, so we can run its tests.
-        - task: Bash@3
-          displayName: Unpack test files - ${{ testPackage }}
-          inputs:
-            targetType: 'inline'
-            script: |
-              set -eu -o pipefail
-              TAR_FILENAME=${{ replace(replace(replace(replace(testPackage, '@fluidframework/', '' ), '@fluid-internal/', '' ),'@fluid-', '' ), '/', '-') }}
-              TAR_PATH=$(testFilesPath)/$TAR_FILENAME.test-files.tar
-              cd ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}
-              echo "Unpacking test files for ${{ testPackage }} from file '$TAR_PATH' in '$(pwd)'"
-              # Note: we could skip the last argument and have it unpack everything at once, but if we later change
-              # the structure/contents of the tests tar file, the extraction could overwrite things we didn't intend to,
-              # so keeping the paths to extract explicit.
-              # Also, extracting is finicky with the exact format of the last argument, it needs to match how the
-              # tarfile was created (e.g. './lib/test' works here but 'lib/test' does not).
-              tar --extract --verbose --file $TAR_PATH ./lib/test
-              tar --extract --verbose --file $TAR_PATH ./dist/test
-              tar --extract --verbose --file $TAR_PATH ./src/test
-
-        # Install package dependencies (this gets devDependencies installed so we can then run the package's tests).
-        - template: /tools/pipelines/templates/include-copy-dev-dependencies.yml@self
-          parameters:
-            sourcePackageLocation: ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}
-            destPackageLocation: $(Pipeline.Workspace)/$(FFPipelineHostDirectory)
-
-        - task: Npm@1
-          displayName: Run custom data performance tests - ${{ testPackage }}
-          inputs:
-            command: 'custom'
-            workingDir: ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}
-            customCommand: 'run test:customBenchmarks'
-
-        # Consolidate output files
-        - task: CopyFiles@2
-          displayName: Consolidate output files - ${{ testPackage }}
-          inputs:
-            sourceFolder: ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}/.customBenchmarksOutput
-            contents: '**'
-            targetFolder: ${{ variables.consolidatedTestsOutputFolder }}/${{ testPackage }}
-
-        # Cleanup package
-        - task: Bash@3
-          displayName: Cleanup package - ${{ testPackage }}
-          inputs:
-            targetType: 'inline'
-            workingDirectory: ${{ variables.testWorkspace }}/node_modules/
-            script: |
-              set -eu -o pipefail
-              echo "Cleanup package ${{ testPackage }} from ${{ variables.testWorkspace }}/node_modules/"
-              rm -rf ${{ testPackage }};
-
-      - task: Bash@3
-        displayName: Write measurements to Aria/Kusto
-        inputs:
-          targetType: 'inline'
-          script: |
-            set -eu -o pipefail
-            echo "Write the following benchmark output to Aria/Kusto";
-            ls -laR ${{ variables.consolidatedTestsOutputFolder }};
-            pnpm exec telemetry-generator --handlerModule $(pathToTelemetryGeneratorHandlersNew)/customBenchmarkHandler.js --dir ${{ variables.consolidatedTestsOutputFolder }};
-
-      - task: PublishPipelineArtifact@1
-        displayName: Publish Artifact - Perf tests output - custom data usage
-        inputs:
-          targetPath: '${{ variables.consolidatedTestsOutputFolder }}'
-          artifactName: 'perf-test-outputs_custom-data_attempt-$(System.JobAttempt)'
-        condition: succeededOrFailed()
-
-      - template: /tools/pipelines/templates/include-upload-npm-logs.yml@self
-
-  - template: /tools/pipelines/templates/upload-telemetry/include-stage-upload-telemetry.yml@self
-    parameters:
-      stageIdFilter: perf_unit_tests_customBenchmark
-      telemetry_upload_steps:
-        - template: /tools/pipelines/templates/upload-telemetry/include-steps-upload-stage-timing.yml@self
-          parameters:
-            stageIdFilter: perf_unit_tests_customBenchmark
-            pipelineIdentifierForTelemetry: ${{ variables.pipelineIdentifierForTelemetry }}
-
-  - ${{ each endpointObject in parameters.endpoints }}:
-
-    - stage: perf_e2e_tests_${{ endpointObject.endpointName }}
-      displayName: Perf e2e tests - ${{ endpointObject.endpointName }}
-      dependsOn: []
-      # If the stage needs locking, configure the lock behavior. Note that null gets coalesced into an empty string.
-      ${{ if and(ne(endpointObject.lockVariableGroupName, ''), ne(endpointObject.endpointName, 'odsp')) }}:
-        lockBehavior: sequential
-      variables:
-        # Use contention-lock variable groups when appropriate. Note that null gets coalesced into an empty string.
-        - ${{ if ne(endpointObject.lockVariableGroupName, '') }}:
-          - group: ${{ endpointObject.lockVariableGroupName }}
-
-        # The following two paths are defined by the npm scripts invocations in @fluid-private/test-end-to-end-tests
-        - name: executionTimeTestOutputFolder
-          value: ${{ variables.testWorkspace }}/node_modules/@fluid-private/test-end-to-end-tests/.timeTestsOutput
-          readonly: true
-        - name: memoryUsageTestOutputFolder
-          value: ${{ variables.testWorkspace }}/node_modules/@fluid-private/test-end-to-end-tests/.memoryTestsOutput
-          readonly: true
-        - name: testPackage
-          value: '@fluid-private/test-end-to-end-tests'
-          readonly: true
-      jobs:
-      - job: perf_e2e_tests
-        displayName: Perf e2e tests
-        pool: ${{ parameters.poolBuild }}
-        timeoutInMinutes: ${{ coalesce(endpointObject.timeoutInMinutes, 60) }}
-        steps:
-        - template: /tools/pipelines/templates/include-test-perf-benchmarks.yml@self
-          parameters:
-            artifactBuildId: $(artifactBuildId)
-            artifactPipeline: $(artifactPipeline)
-            testFilesPath: $(testFilesPath)
-            endpointName: ${{ endpointObject.endpointName }}
-
-        # Download and install package with performance tests
-        - template: /tools/pipelines/templates/include-test-perf-benchmarks-install-package.yml@self
-          parameters:
-            artifactBuildId: $(artifactBuildId)
-            artifactPipeline: $(artifactPipeline)
-            testPackageName: $(testPackage)
-            installPath: $(testWorkspace)
-
-        # Install package dependencies (this gets devDependencies installed so we can then run the package's tests).
-        - template: /tools/pipelines/templates/include-copy-dev-dependencies.yml@self
-          parameters:
-            sourcePackageLocation: ${{ variables.testWorkspace }}/node_modules/$(testPackage)
-            destPackageLocation: $(Pipeline.Workspace)/$(FFPipelineHostDirectory)
-
-        # We run both types of tests in the same bash step so we can make sure to run the second set even if the first
-        # one fails.
-        # Doing this with separate ADO steps is not easy.
-        # This step reports failure if either of the test runs reports failure.
-        - task: Bash@3
-          displayName: Run tests ${{ endpointObject.endpointName }}
-          inputs:
-            targetType: 'inline'
-            workingDirectory: ${{ variables.testWorkspace }}/node_modules/${{ variables.testPackage }}
-            script: |
-              # Note: we explicitly do not use 'set -eu -o pipefail' here because we want to run both sets of tests
-              # no matter what. Probably should be refactored later to use separate steps for each set of tests.
-
-              echo "FLUID_LOGGER_PROPS = $FLUID_LOGGER_PROPS"
-
-              # Run execution time tests
-              echo "FLUID_ENDPOINTNAME = $FLUID_ENDPOINTNAME"
-              if [[ '${{ endpointObject.endpointName }}' == 'local' ]]; then
-                npm run test:benchmark:report;
-              else
-                npm run test:benchmark:report:${{ endpointObject.endpointName }};
-              fi
-              executionTimeTestsExitCode=$?;
-
-              echo "FLUID_ENDPOINTNAME = $FLUID_ENDPOINTNAME"
-              # Run memory tests
-              if [[ '${{ endpointObject.endpointName }}' == 'local' ]]; then
-                npm run test:memory-profiling:report;
-              else
-                npm run test:memory-profiling:report:${{ endpointObject.endpointName }};
-              fi
-
-              memoryTestsExitCode=$?;
-
-              if [[ $executionTimeTestsExitCode -ne 0 ]]; then
-                echo "##vso[task.logissue type=error]Exit code for runtime tests execution = $executionTimeTestsExitCode ${{ endpointObject.endpointName }}"
-              fi
-
-              if [[ $memoryTestsExitCode -ne 0 ]]; then
-                echo "##vso[task.logissue type=error]Exit code for memory tests execution = $memoryTestsExitCode ${{ endpointObject.endpointName }}"
-              fi
-
-              if [[ $executionTimeTestsExitCode -ne 0 ]] || [[ $memoryTestsExitCode -ne 0 ]]; then
-                exit 1;
-              fi
-          env:
-            FLUID_TEST_LOGGER_PKG_SPECIFIER: '@ff-internal/aria-logger' # Contains createTestLogger impl to inject
-            FLUID_BUILD_ID: $(Build.BuildId)
-            FLUID_ENDPOINTNAME: ${{ endpointObject.endpointName }}
-            FLUID_LOGGER_PROPS: '{ "hostName": "Benchmark", "displayName": "${{variables.pipelineIdentifierForTelemetry}}" }'
-            ${{ if eq(endpointObject.endpointName, 'odsp') }}:
-              token__package__import__location: $(token__package__import__location)
-              login__odsp__fic__test__users: $(login__odsp__fic__test__users)
+          - task: Bash@3
+            displayName: 'Run tenant setup script'
+            env:
               SYSTEM_ACCESSTOKEN: $(System.AccessToken)
+            inputs:
+              targetType: 'inline'
+              workingDirectory: $(Pipeline.Workspace)/$(FFPipelineHostDirectory)
+              script: |
+                set -eu -o pipefail
+                # Increase the maximum time to wait for a tenant to 1 hour to accommodate multiple test runs at the same time.
+                pnpm exec trips-setup --waitTime=3600 --accessToken=$SYSTEM_ACCESSTOKEN --useFic
+                echo "##vso[task.setvariable variable=tenantSetupSuccess;]true"
+
+        # Run benchmark tests
+        - task: Bash@3
+          displayName: Run ${{ job.testScript }}
+          inputs:
+            targetType: 'inline'
+            workingDirectory: $(Pipeline.Workspace)/$(FluidFrameworkDirectory)/${{ job.testPackageDir }}
+            script: |
+              set -eu -o pipefail
+              npm run ${{ job.testScript }}
+          ${{ if ne(coalesce(job.endpointName, ''), '') }}:
+            env:
+              FLUID_BUILD_ID: $(Build.BuildId)
+              FLUID_ENDPOINTNAME: ${{ job.endpointName }}
+              FLUID_LOGGER_PROPS: '{ "hostName": "Benchmark", "displayName": "${{ variables.pipelineIdentifierForTelemetry }}" }'
               login__microsoft__clientId: $(login-microsoft-clientId)
-            ${{ else }}:
-              login__microsoft__clientId: $(login-microsoft-clientId)
-            ${{ if eq( endpointObject.endpointName, 'frs' ) }}:
-              fluid__test__driver__frs: $(automation-fluid-test-driver-frs-perf-test)
+              ${{ if eq(job.endpointName, 'odsp') }}:
+                token__package__import__location: $(token__package__import__location)
+                login__odsp__fic__test__users: $(login__odsp__fic__test__users)
+                SYSTEM_ACCESSTOKEN: $(System.AccessToken)
+              ${{ if eq(job.endpointName, 'frs') }}:
+                fluid__test__driver__frs: $(automation-fluid-test-driver-frs-perf-test)
 
+        # Collect benchmark results into a single output directory
         - task: Bash@3
-          displayName: Write measurements to Aria/Kusto - execution time ${{ endpointObject.endpointName }}
+          displayName: Collect benchmark results
           condition: succeededOrFailed()
           inputs:
             targetType: 'inline'
+            workingDirectory: $(Pipeline.Workspace)/$(FluidFrameworkDirectory)
             script: |
               set -eu -o pipefail
-              echo "Writing the following performance tests results to Aria/Kusto - ${{ endpointObject.endpointName }}"
-              ls -la ${{ variables.executionTimeTestOutputFolder }};
-              pnpm exec telemetry-generator --handlerModule $(pathToTelemetryGeneratorHandlersNew)/executionTimeTestHandler.js --dir ${{ variables.executionTimeTestOutputFolder }};
-          env:
-            FLUID_ENDPOINTNAME: ${{ endpointObject.endpointName }}
+              npm run test:benchmark:copyresults
+              echo "Collected benchmark results:"
+              ls -laR benchmarkOutput || echo "No benchmark output found"
 
+        # Write measurements to Aria/Kusto
         - task: Bash@3
-          displayName: Write measurements to Aria/Kusto - memory usage ${{ endpointObject.endpointName }}
+          displayName: Write measurements to Aria/Kusto
           condition: succeededOrFailed()
           inputs:
             targetType: 'inline'
+            workingDirectory: $(Pipeline.Workspace)/$(FFPipelineHostDirectory)
             script: |
               set -eu -o pipefail
-              echo "Writing the following performance tests results to Aria/Kusto - ${{ endpointObject.endpointName }}"
-              ls -la ${{ variables.memoryUsageTestOutputFolder }};
-              pnpm exec telemetry-generator --handlerModule $(pathToTelemetryGeneratorHandlersNew)/memoryUsageTestHandler.js --dir ${{ variables.memoryUsageTestOutputFolder }};
-          env:
-            FLUID_ENDPOINTNAME: ${{ endpointObject.endpointName }}
+              pnpm exec telemetry-generator --handlerModule $(pathToTelemetryGeneratorHandlersNew)/benchmarkHandler.js --dir '$(Pipeline.Workspace)/$(FluidFrameworkDirectory)/benchmarkOutput'
+          ${{ if ne(coalesce(job.endpointName, ''), '') }}:
+            env:
+              FLUID_ENDPOINTNAME: ${{ job.endpointName }}
 
+        # Publish benchmark output as pipeline artifact
         - task: PublishPipelineArtifact@1
-          displayName: Publish Artifact - E2E perf tests output - execution time {{ $stage }}
-          condition: succeededOrFailed()
-
-          inputs:
-            targetPath: '${{ variables.executionTimeTestOutputFolder }}'
-            artifactName: 'perf-test-outputs-e2e_execution-time-${{ endpointObject.endpointName }}_attempt-$(System.JobAttempt)'
-
-        - task: PublishPipelineArtifact@1
-          displayName: Publish Artifact - E2E perf tests output - memory usage {{ $stage }}
+          displayName: Publish Artifact - ${{ job.artifactName }}
           condition: succeededOrFailed()
           inputs:
-            targetPath: '${{ variables.memoryUsageTestOutputFolder }}'
-            artifactName: 'perf-test-outputs-e2e_memory-usage-${{ endpointObject.endpointName }}_attempt-$(System.JobAttempt)'
+            targetPath: '$(Pipeline.Workspace)/$(FluidFrameworkDirectory)/benchmarkOutput'
+            artifactName: 'perf-test-outputs_${{ job.artifactName }}_attempt-$(System.JobAttempt)'
 
-        - task: Bash@3
-          displayName: Remove Output Folders from local server run ${{ endpointObject.endpointName }}
-          inputs:
-            targetType: 'inline'
-            workingDirectory: $(pathToTelemetryGeneratorNew)
-            script: |
-              set -eu -o pipefail
-              ls -laR ${{ variables.executionTimeTestOutputFolder }};
-              echo "Cleanup  ${{ variables.executionTimeTestOutputFolder }}"
-              rm -rf ${{ variables.executionTimeTestOutputFolder }};
-              ls -laR ${{ variables.memoryUsageTestOutputFolder }};
-              echo "Cleanup  ${{ variables.memoryUsageTestOutputFolder }}"
-              rm -rf ${{ variables.memoryUsageTestOutputFolder }};
-
-        # Cleanup of tenant credentials for odsp tests
-        - ${{ if eq( endpointObject.endpointName, 'odsp' ) }}:
+        # ODSP tenant cleanup
+        - ${{ if eq(job.endpointName, 'odsp') }}:
           - task: AzureCLI@2
             displayName: 'Log in to release tenant credentials'
             inputs:
@@ -620,11 +262,9 @@ stages:
               scriptLocation: 'inlineScript'
               inlineScript: |
                 set -eu -o pipefail
-
                 az login --service-principal -u $servicePrincipalId -p $idToken --tenant $tenantId
             condition: eq(variables['tenantSetupSuccess'], 'true')
 
-          # Release the tenant back to the tenant pool
           - task: Bash@3
             displayName: 'Release tenant credentials'
             env:
@@ -632,9 +272,9 @@ stages:
               SYSTEM_ACCESSTOKEN: $(System.AccessToken)
             inputs:
               targetType: 'inline'
+              workingDirectory: $(Pipeline.Workspace)/$(FFPipelineHostDirectory)
               script: |
                 set -eu -o pipefail
-
                 pnpm exec trips-cleanup --useFic
             condition: eq(variables['tenantSetupSuccess'], 'true')
 
@@ -642,9 +282,11 @@ stages:
 
     - template: /tools/pipelines/templates/upload-telemetry/include-stage-upload-telemetry.yml@self
       parameters:
-        stageIdFilter: perf_e2e_tests_${{ endpointObject.endpointName }}
+        telemetryDescription: ${{ job.stageName }}
+        dependsOn:
+          - ${{ job.stageName }}
         telemetry_upload_steps:
           - template: /tools/pipelines/templates/upload-telemetry/include-steps-upload-stage-timing.yml@self
             parameters:
-              stageIdFilter: perf_e2e_tests_${{ endpointObject.endpointName }}
+              stageIdFilter: ${{ job.stageName }}
               pipelineIdentifierForTelemetry: ${{ variables.pipelineIdentifierForTelemetry }}

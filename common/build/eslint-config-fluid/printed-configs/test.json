@@ -24,7 +24,8 @@
 		"tsdoc",
 		"unicorn:eslint-plugin-unicorn@54.0.0",
 		"unused-imports:unused-imports",
-		"depend:eslint-plugin-depend@1.4.0"
+		"depend:eslint-plugin-depend@1.4.0",
+		"no-only-tests"
 	],
 	"rules": {
 		"@babel/object-curly-spacing": [
@@ -1592,6 +1593,9 @@
 			"error"
 		],
 		"no-octal-escape": [
+			"error"
+		],
+		"no-only-tests/no-only-tests": [
 			"error"
 		],
 		"no-param-reassign": [

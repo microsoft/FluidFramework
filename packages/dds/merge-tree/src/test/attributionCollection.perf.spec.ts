@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { BenchmarkType, benchmark } from "@fluid-tools/benchmark";
+import { BenchmarkType, benchmarkDuration, benchmarkIt } from "@fluid-tools/benchmark";
 import type { AttributionKey } from "@fluidframework/runtime-definitions/internal";
 
 import {
@@ -62,68 +62,74 @@ function runAttributionCollectionSuite(
 	for (const { name, collection, type } of collectionTestCases) {
 		describe(`using a collection with ${name}`, () => {
 			const { length } = collection;
-			benchmark({
+			benchmarkIt({
 				title: "getAtOffset at the start",
-				benchmarkFn: () => collection.getAtOffset(0),
+				...benchmarkDuration({ benchmarkFn: () => collection.getAtOffset(0) }),
 				type,
 			});
 
-			benchmark({
+			benchmarkIt({
 				title: "getAtOffset at the end",
-				benchmarkFn: () => collection.getAtOffset(length - 1),
+				...benchmarkDuration({ benchmarkFn: () => collection.getAtOffset(length - 1) }),
 				type,
 			});
 
-			benchmark({
+			benchmarkIt({
 				title: "getAtOffset in the middle",
-				benchmarkFn: () => collection.getAtOffset(length / 2),
+				...benchmarkDuration({ benchmarkFn: () => collection.getAtOffset(length / 2) }),
 				type: BenchmarkType.Diagnostic,
 			});
 
-			benchmark({
+			benchmarkIt({
 				title: "getKeysInOffsetRange from start to end",
-				benchmarkFn: () => collection.getKeysInOffsetRange(0),
+				...benchmarkDuration({ benchmarkFn: () => collection.getKeysInOffsetRange(0) }),
 				type,
 			});
 
-			benchmark({
+			benchmarkIt({
 				title: "getKeysInOffsetRange from start to mid",
-				benchmarkFn: () => collection.getKeysInOffsetRange(0, length / 2),
+				...benchmarkDuration({
+					benchmarkFn: () => collection.getKeysInOffsetRange(0, length / 2),
+				}),
 				type,
 			});
 
-			benchmark({
+			benchmarkIt({
 				title: "getKeysInOffsetRange from mid to end",
-				benchmarkFn: () => collection.getKeysInOffsetRange(length / 2, length - 1),
+				...benchmarkDuration({
+					benchmarkFn: () => collection.getKeysInOffsetRange(length / 2, length - 1),
+				}),
 				type,
 			});
 
-			benchmark({
+			benchmarkIt({
 				title: "getAll",
-				benchmarkFn: () => collection.getAll(),
+				...benchmarkDuration({ benchmarkFn: () => collection.getAll() }),
 				type,
 			});
 
-			benchmark({
+			benchmarkIt({
 				title: "clone",
-				benchmarkFn: () => collection.clone(),
+				...benchmarkDuration({ benchmarkFn: () => collection.clone() }),
 				type,
 			});
 
-			benchmark({
+			benchmarkIt({
 				title: "split + append in the middle",
-				benchmarkFn: () => {
-					const split = collection.splitAt(length / 2);
-					collection.append(split);
-				},
+				...benchmarkDuration({
+					benchmarkFn: () => {
+						const split = collection.splitAt(length / 2);
+						collection.append(split);
+					},
+				}),
 				type,
 			});
 		});
 	}
 
-	benchmark({
+	benchmarkIt({
 		title: "construction",
-		benchmarkFn: () => new ctor(42, { type: "op", seq: 5 }),
+		...benchmarkDuration({ benchmarkFn: () => new ctor(42, { type: "op", seq: 5 }) }),
 		type: suiteBaseType,
 	});
 
@@ -132,9 +138,11 @@ function runAttributionCollectionSuite(
 		cachedLength: collection.length,
 	}));
 
-	benchmark({
+	benchmarkIt({
 		title: "serializing",
-		benchmarkFn: () => ctor.serializeAttributionCollections(segmentsToSerialize),
+		...benchmarkDuration({
+			benchmarkFn: () => ctor.serializeAttributionCollections(segmentsToSerialize),
+		}),
 		type: suiteBaseType,
 	});
 
@@ -145,11 +153,13 @@ function runAttributionCollectionSuite(
 	segments.push({
 		cachedLength: summary.length - 9 * Math.floor(summary.length / 10),
 	} satisfies Partial<ISegment>);
-	benchmark({
+	benchmarkIt({
 		title: "deserialize into 10 segments",
-		benchmarkFn: () => {
-			ctor.populateAttributionCollections(segments, summary);
-		},
+		...benchmarkDuration({
+			benchmarkFn: () => {
+				ctor.populateAttributionCollections(segments, summary);
+			},
+		}),
 		type: suiteBaseType,
 	});
 }
