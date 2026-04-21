@@ -5,6 +5,7 @@
 
 import fs from "node:fs";
 import type { PackageJson } from "@fluidframework/build-tools";
+import { type Result, err, ok } from "true-myth/result";
 
 /**
  * each handler has a name for filtering and a match regex for matching which files it should resolve
@@ -40,12 +41,12 @@ export function writeFile(file: string, data: string): void {
 }
 
 /**
- * Reads and parses a package.json file, returning the parsed JSON or an error string.
+ * Reads and parses a package.json file, returning Ok with the parsed JSON or Err with an error message.
  */
-export function readPackageJson(file: string): { json: PackageJson } | { error: string } {
+export function readPackageJson(file: string): Result<PackageJson, string> {
 	try {
-		return { json: JSON.parse(readFile(file)) as PackageJson };
+		return ok(JSON.parse(readFile(file)) as PackageJson);
 	} catch {
-		return { error: `Error parsing JSON file: ${file}` };
+		return err(`Error parsing JSON file: ${file}`);
 	}
 }

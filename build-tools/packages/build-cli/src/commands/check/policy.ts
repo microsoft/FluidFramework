@@ -243,10 +243,15 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy> {
 					return true;
 				})
 				.map(async (handler): Promise<{ handler: Handler; result: string | undefined }> => {
-					const result = await runWithPerf(handler.name, "handle", async () => {
+					let result: string | undefined;
+					try {
 						// Pass the handler the absolute file path and the absolute path to the git root
-						return handler.handler(file, gitRoot);
-					});
+						result = await runWithPerf(handler.name, "handle", () =>
+							handler.handler(file, gitRoot),
+						);
+					} catch (error: unknown) {
+						result = error instanceof Error ? error.message : String(error);
+					}
 					return { handler, result };
 				}),
 		);
@@ -260,11 +265,19 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy> {
 				if (this.flags.fix && resolver) {
 					output += `${newline}attempting to resolve: ${relPath}`;
 					// Resolvers are expected to be run serially to avoid any conflicts.
-					// eslint-disable-next-line no-await-in-loop
-					const resolveResult = await runWithPerf(handler.name, "resolve", async () =>
-						// Pass the resolver the absolute file path and the absolute path to the git root
-						resolver(file, gitRoot),
-					);
+					let resolveResult: { resolved: boolean; message?: string };
+					try {
+						// eslint-disable-next-line no-await-in-loop
+						resolveResult = await runWithPerf(handler.name, "resolve", () =>
+							// Pass the resolver the absolute file path and the absolute path to the git root
+							resolver(file, gitRoot),
+						);
+					} catch (error: unknown) {
+						resolveResult = {
+							resolved: false,
+							message: error instanceof Error ? error.message : String(error),
+						};
+					}
 
 					if (resolveResult?.message !== undefined) {
 						output += newline + resolveResult.message;

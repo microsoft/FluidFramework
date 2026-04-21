@@ -768,10 +768,10 @@ function buildDepsHandler(
 	check: (context: BuildDepsCallbackContext) => string | undefined,
 ): string | undefined {
 	const result = readPackageJson(file);
-	if ("error" in result) {
+	if (result.isErr) {
 		return result.error;
 	}
-	const json = result.json;
+	const json = result.value;
 
 	if (!isFluidBuildEnabled(root, json)) {
 		return;
@@ -826,10 +826,10 @@ export const handlers: Handler[] = [
 		match,
 		handler: async (file: string, root: string): Promise<string | undefined> => {
 			const result = readPackageJson(file);
-			if ("error" in result) {
+			if (result.isErr) {
 				return result.error;
 			}
-			const json = result.json;
+			const json = result.value;
 
 			if (!isFluidBuildEnabled(root, json)) {
 				return;

@@ -367,11 +367,11 @@ async function ensurePrivatePackagesComputed(): Promise<Set<string>> {
 
 	for (const filePath of packageJsons) {
 		const result = readPackageJson(path.resolve(baseDir, filePath));
-		if ("error" in result) {
+		if (result.isErr) {
 			continue;
 		}
-		if (result.json.private ?? false) {
-			computedPrivatePackages.add(result.json.name);
+		if (result.value.private ?? false) {
+			computedPrivatePackages.add(result.value.name);
 		}
 	}
 
@@ -777,10 +777,10 @@ export const handlers: Handler[] = [
 		match,
 		handler: async (file: string, gitRoot: string): Promise<string | undefined> => {
 			const result = readPackageJson(file);
-			if ("error" in result) {
+			if (result.isErr) {
 				return result.error;
 			}
-			const json = result.json;
+			const json = result.value;
 
 			const ret: string[] = [];
 
@@ -871,10 +871,10 @@ export const handlers: Handler[] = [
 		match,
 		handler: async (file: string, root: string): Promise<string | undefined> => {
 			const result = readPackageJson(file);
-			if ("error" in result) {
+			if (result.isErr) {
 				return result.error;
 			}
-			const json = result.json;
+			const json = result.value;
 
 			// "root" is the package name for monorepo roots, so ignore them
 			if (!packageIsFluidPackage(json.name, root) && json.name !== "root") {
@@ -893,10 +893,10 @@ export const handlers: Handler[] = [
 		match,
 		handler: async (file: string, root: string): Promise<string | undefined> => {
 			const result = readPackageJson(file);
-			if ("error" in result) {
+			if (result.isErr) {
 				return result.error;
 			}
-			const json = result.json;
+			const json = result.value;
 
 			const privatePackages = await ensurePrivatePackagesComputed();
 			const errors: string[] = [];
@@ -930,10 +930,10 @@ export const handlers: Handler[] = [
 		match,
 		handler: async (file: string): Promise<string | undefined> => {
 			const result = readPackageJson(file);
-			if ("error" in result) {
+			if (result.isErr) {
 				return result.error;
 			}
-			const json = result.json;
+			const json = result.value;
 
 			const packageName = json.name;
 			const packageDir = path.dirname(file);
@@ -956,10 +956,10 @@ export const handlers: Handler[] = [
 		},
 		resolver: (file: string): { resolved: boolean; message?: string } => {
 			const result = readPackageJson(file);
-			if ("error" in result) {
+			if (result.isErr) {
 				return { resolved: false, message: result.error };
 			}
-			const json = result.json;
+			const json = result.value;
 
 			const packageName = json.name;
 			const packageDir = path.dirname(file);
@@ -1000,10 +1000,10 @@ export const handlers: Handler[] = [
 		match,
 		handler: async (file: string): Promise<string | undefined> => {
 			const result = readPackageJson(file);
-			if ("error" in result) {
+			if (result.isErr) {
 				return result.error;
 			}
-			const json = result.json;
+			const json = result.value;
 
 			const packageName = json.name;
 			const packageDir = path.dirname(file);
@@ -1027,10 +1027,10 @@ export const handlers: Handler[] = [
 		match,
 		handler: async (file: string, root: string): Promise<string | undefined> => {
 			const result = readPackageJson(file);
-			if ("error" in result) {
+			if (result.isErr) {
 				return result.error;
 			}
-			const json = result.json;
+			const json = result.value;
 
 			// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
 			if (json.private) {
@@ -1072,10 +1072,10 @@ export const handlers: Handler[] = [
 		match,
 		handler: async (file: string): Promise<string | undefined> => {
 			const result = readPackageJson(file);
-			if ("error" in result) {
+			if (result.isErr) {
 				return result.error;
 			}
-			const json = result.json;
+			const json = result.value;
 
 			const hasScriptsField = Object.prototype.hasOwnProperty.call(json, "scripts");
 			const missingScripts: string[] = [];
@@ -1165,10 +1165,10 @@ export const handlers: Handler[] = [
 		match,
 		handler: async (file: string): Promise<string | undefined> => {
 			const result = readPackageJson(file);
-			if ("error" in result) {
+			if (result.isErr) {
 				return result.error;
 			}
-			const json = result.json;
+			const json = result.value;
 
 			const hasScriptsField = Object.prototype.hasOwnProperty.call(json, "scripts");
 			const missingScripts: string[] = [];
@@ -1198,10 +1198,10 @@ export const handlers: Handler[] = [
 			}
 			const commandDep = new Map(commandPackages);
 			const result = readPackageJson(file);
-			if ("error" in result) {
+			if (result.isErr) {
 				return result.error;
 			}
-			const json = result.json;
+			const json = result.value;
 
 			const hasScriptsField = Object.prototype.hasOwnProperty.call(json, "scripts");
 			const missingDeps: string[] = [];
@@ -1252,10 +1252,10 @@ export const handlers: Handler[] = [
 		match,
 		handler: async (file: string): Promise<string | undefined> => {
 			const result = readPackageJson(file);
-			if ("error" in result) {
+			if (result.isErr) {
 				return result.error;
 			}
-			const json = result.json;
+			const json = result.value;
 
 			const hasScriptsField = Object.prototype.hasOwnProperty.call(json, "scripts");
 			if (!hasScriptsField) {
@@ -1298,10 +1298,10 @@ export const handlers: Handler[] = [
 			// or mocha/jest dependencies, it should have a test scripts so that the pipeline will pick it up
 
 			const result = readPackageJson(file);
-			if ("error" in result) {
+			if (result.isErr) {
 				return result.error;
 			}
-			const json = result.json;
+			const json = result.value;
 
 			const packageDir = path.dirname(file);
 			const { scripts } = json;
@@ -1345,10 +1345,10 @@ export const handlers: Handler[] = [
 			// has the split set up property (into test:mocha, test:jest and test:realsvc). Release groups that don't
 			// have splits in the pipeline is excluded in the "handlerExclusions" in the fluidBuild.config.cjs
 			const result = readPackageJson(file);
-			if ("error" in result) {
+			if (result.isErr) {
 				return result.error;
 			}
-			const json = result.json;
+			const json = result.value;
 
 			const { scripts } = json;
 			if (scripts === undefined) {
@@ -1389,10 +1389,10 @@ export const handlers: Handler[] = [
 		handler: async (file: string): Promise<string | undefined> => {
 			// This rule enforces that mocha will use a config file and setup both the console, json and xml reporters.
 			const result = readPackageJson(file);
-			if ("error" in result) {
+			if (result.isErr) {
 				return result.error;
 			}
-			const json = result.json;
+			const json = result.value;
 
 			const { scripts } = json;
 			if (scripts === undefined) {
@@ -1425,10 +1425,10 @@ export const handlers: Handler[] = [
 		handler: async (file: string): Promise<string | undefined> => {
 			// This rule enforces that jest will use a config file and setup both the default (console) and junit reporters.
 			const result = readPackageJson(file);
-			if ("error" in result) {
+			if (result.isErr) {
 				return result.error;
 			}
-			const json = result.json;
+			const json = result.value;
 
 			const { scripts } = json;
 			if (scripts === undefined) {
@@ -1489,10 +1489,10 @@ export const handlers: Handler[] = [
 			// some thought has been put in place. The package might be CJS first and ESM second
 			// with a secondary package.json specifying "type": "module" or use .mjs extensions.
 			const result = readPackageJson(file);
-			if ("error" in result) {
+			if (result.isErr) {
 				return result.error;
 			}
-			const json = result.json;
+			const json = result.value;
 
 			const { scripts } = json;
 			if (scripts === undefined) {
@@ -1522,10 +1522,10 @@ export const handlers: Handler[] = [
 		handler: async (file: string): Promise<string | undefined> => {
 			// This rule enforces the "clean" script will delete all the build and test output
 			const result = readPackageJson(file);
-			if ("error" in result) {
+			if (result.isErr) {
 				return result.error;
 			}
-			const json = result.json;
+			const json = result.value;
 
 			const { scripts } = json;
 			if (scripts === undefined) {
@@ -1586,10 +1586,10 @@ export const handlers: Handler[] = [
 		handler: async (file: string): Promise<string | undefined> => {
 			// This rule enforces each package has a types field in its package.json
 			const result = readPackageJson(file);
-			if ("error" in result) {
+			if (result.isErr) {
 				return result.error;
 			}
-			const json = result.json;
+			const json = result.value;
 
 			if (
 				// Ignore private packages...
@@ -1614,10 +1614,10 @@ export const handlers: Handler[] = [
 		match,
 		handler: async (file: string): Promise<string | undefined> => {
 			const result = readPackageJson(file);
-			if ("error" in result) {
+			if (result.isErr) {
 				return result.error;
 			}
-			const json = result.json;
+			const json = result.value;
 
 			if (!shouldCheckExportsField(json)) {
 				return;
@@ -1715,10 +1715,10 @@ export const handlers: Handler[] = [
 		match,
 		handler: async (file: string): Promise<string | undefined> => {
 			const result = readPackageJson(file);
-			if ("error" in result) {
+			if (result.isErr) {
 				return result.error;
 			}
-			const packageJson = result.json;
+			const packageJson = result.value;
 
 			// Only public packages' APIs must be linted
 			if (packageJson.private ?? false) {
@@ -1826,10 +1826,10 @@ export const handlers: Handler[] = [
 			rootDirectoryPath: string,
 		): Promise<string | undefined> => {
 			const result = readPackageJson(packageJsonFilePath);
-			if ("error" in result) {
+			if (result.isErr) {
 				return result.error;
 			}
-			const packageJson = result.json;
+			const packageJson = result.value;
 
 			// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
 			if (packageJson.private) {
