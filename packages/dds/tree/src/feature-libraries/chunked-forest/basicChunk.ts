@@ -555,14 +555,16 @@ export class BasicChunkCursor extends SynchronousCursor implements ChunkedCursor
 	}
 
 	/**
-	 * Returns the chunks that make up the field the cursor is currently in.
+	 * Resolves the chunks that make up the field the cursor is currently in. At the root, this is
+	 * {@link root} directly. Otherwise, the cursor must be in {@link CursorLocationType.Fields} mode,
+	 * and the result is looked up on the parent node using the current field key.
 	 *
-	 * @remarks At the root, this is {@link root} directly. Otherwise, the cursor must be in
-	 * {@link CursorLocationType.Fields} mode, and the result is looked up on the parent node using
-	 * the current field key. The parent node is the {@link BasicChunk} in the node array at the top
-	 * of {@link siblingStack} while we are in {@link CursorLocationType.Fields} mode. We need the
-	 * parent since a field's chunks are stored on the parent node's {@link BasicChunk.fields} map,
-	 * not on the cursor itself.
+	 * @remarks The parent node is the {@link BasicChunk} in the node array at the top of
+	 * {@link siblingStack} while we are in {@link CursorLocationType.Fields} mode. We need the parent
+	 * since a field's chunks are stored on the parent node's {@link BasicChunk.fields} map, not on
+	 * the cursor itself.
+	 *
+	 * @returns The chunks that make up the field the cursor is currently in.
 	 */
 	private getField(): readonly TreeChunk[] {
 		if (this.siblingStack.length === 0) {
