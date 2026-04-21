@@ -23,7 +23,8 @@ import type {
 	IRuntimeMessageCollection,
 	MinimumVersionForCollab,
 } from "@fluidframework/runtime-definitions/internal";
-import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
+import type { TelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
+import { extractTelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 
 import type { IFluidSerializer } from "./serializer.js";
 import {
@@ -150,7 +151,7 @@ class SharedObjectFromKernel<
 			submitLocalMessage: (op, localOpMetadata) =>
 				this.submitLocalMessage(op, localOpMetadata),
 			eventEmitter: this,
-			logger: this.logger,
+			logger: extractTelemetryLoggerExt(this.logger),
 			idCompressor: runtime.idCompressor,
 			lastSequenceNumber: () => this.deltaManager.lastSequenceNumber,
 			initialSequenceNumber: this.deltaManager.initialSequenceNumber,
@@ -291,7 +292,7 @@ export interface KernelArgs {
 	/**
 	 * {@inheritdoc SharedObjectCore.logger}
 	 */
-	readonly logger: ITelemetryLoggerExt;
+	readonly logger: TelemetryLoggerExt;
 	/**
 	 * {@inheritdoc @fluidframework/datastore-definitions#IFluidDataStoreRuntime.idCompressor}
 	 */

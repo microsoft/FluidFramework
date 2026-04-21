@@ -8,10 +8,7 @@ export type {
 	DurationBenchmarkAsync,
 	BenchmarkTimingOptions,
 	DurationBenchmark,
-	OnBatch,
 	BenchmarkTimer,
 	DurationBenchmarkCustom,
-	HookFunction,
-	HookArguments,
 } from "./configuration.js";
 export { Phase, benchmarkDuration, collectDurationData, runBenchmarkSync } from "./getDuration.js";
