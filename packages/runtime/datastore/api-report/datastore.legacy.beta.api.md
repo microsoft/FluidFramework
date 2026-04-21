@@ -64,10 +64,10 @@ export class FluidDataStoreRuntime extends TypedEventEmitter<IFluidDataStoreRunt
     // (undocumented)
     get IFluidHandleContext(): this;
     readonly ILayerCompatDetails?: unknown;
-    get inStagingMode(): IFluidDataStoreRuntime["inStagingMode"];
+    get inStagingMode(): boolean;
     // (undocumented)
     get isAttached(): boolean;
-    get isDirty(): IFluidDataStoreRuntime["isDirty"];
+    get isDirty(): boolean;
     readonly isReadOnly: () => boolean;
     // (undocumented)
     get logger(): ITelemetryLoggerExt;

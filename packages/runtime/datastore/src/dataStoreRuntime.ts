@@ -542,14 +542,14 @@ export class FluidDataStoreRuntime
 	/**
 	 * Implementation of IFluidDataStoreRuntime.inStagingMode
 	 */
-	public get inStagingMode(): IFluidDataStoreRuntime["inStagingMode"] {
+	public get inStagingMode(): boolean {
 		return this.dataStoreContext.containerRuntime?.inStagingMode;
 	}
 
 	/**
 	 * Implementation of IFluidDataStoreRuntime.isDirty
 	 */
-	public get isDirty(): IFluidDataStoreRuntime["isDirty"] {
+	public get isDirty(): boolean {
 		return this.pendingOpCount.value > 0;
 	}
 
