@@ -25,6 +25,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import TypedDict
 
+from pr_review_confirm import REVIEWERS as _REVIEWER_DEFS
+
 MARKER = "<!-- pr-review-fleet -->"
 EMOJI_KEY = "emoji"
 TITLE_KEY = "title"
@@ -36,13 +38,7 @@ class SeverityLevelLabel(TypedDict):
 
 SeverityLabelSet = dict[str, SeverityLevelLabel]
 
-REVIEWERS = {
-    "correctness": "Correctness",
-    "security": "Security",
-    "api-compatibility": "API Compat",
-    "performance": "Performance",
-    "testing": "Testing",
-}
+REVIEWERS: dict[str, str] = {r.id: r.label for r in _REVIEWER_DEFS}
 
 # Severity ordering (highest first) and display config
 SEVERITY_ORDER = ["CRITICAL", "HIGH", "MEDIUM"]
@@ -142,14 +138,14 @@ def deduplicate(findings: list[Finding]) -> list[Finding]:
     return result
 
 
-PROMOTED_AREAS = {"Correctness", "API Compat"}
+PROMOTED_AREAS = {"Correctness", "API Compatibility"}
 
 
 def determine_verdict(findings: list[Finding]) -> tuple[str, str]:
     """Return (verdict_text, verdict_emoji).
 
     Verdict rules (aligned with local /review skill):
-    - Request Changes: 1+ CRITICAL, or 1+ HIGH in Correctness/API Compat,
+    - Request Changes: 1+ CRITICAL, or 1+ HIGH in Correctness/API Compatibility,
       or 3+ HIGH across other areas
     - Approve with Suggestions: some HIGH/MEDIUM but none in promoted areas
     - Approve: 0 CRITICAL, 0 HIGH

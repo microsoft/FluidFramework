@@ -155,7 +155,7 @@ class TestDetermineVerdict:
         assert text == "Request Changes"
 
     def test_high_in_api_compat_means_request_changes(self) -> None:
-        findings = [Finding("HIGH", "src/a.ts:10", "d", "f", "API Compat")]
+        findings = [Finding("HIGH", "src/a.ts:10", "d", "f", "API Compatibility")]
         text, _ = determine_verdict(findings)
         assert text == "Request Changes"
 

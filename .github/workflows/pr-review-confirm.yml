@@ -1,0 +1,233 @@
+name: "PR Review Confirm"
+
+# Listens for comments on PRs that have a pending review confirmation.
+# When the author (or a collaborator) replies with an affirmative, triggers
+# the review fleet with the reviewer set selected via the comment checkboxes.
+# When they ask a question, answers via Copilot CLI and keeps waiting.
+#
+# Activation guard: looks for a pr-review-pending artifact from the most
+# recent successful auto-route run for this PR. If none exists, this workflow
+# exits immediately without taking any action.
+
+on:
+  issue_comment:
+    types: [created]
+
+permissions:
+  contents: read
+  pull-requests: write
+  actions: write
+
+# Serialize per-PR so rapid-fire comments don't race to trigger the fleet or
+# spawn parallel Copilot installs. Don't cancel in-progress runs — each comment
+# deserves a reply.
+concurrency:
+  group: pr-review-confirm-${{ github.event.issue.number }}
+  cancel-in-progress: false
+
+jobs:
+  handle-reply:
+    name: "Handle reply"
+    # Only process PR comments from non-bot users.
+    if: |
+      github.event.issue.pull_request != null &&
+      github.event.sender.type != 'Bot'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout scripts
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # ratchet:actions/checkout@v6
+        with:
+          sparse-checkout: .github/scripts
+          persist-credentials: false
+
+      # ── Find the auto-route run for this PR and download pending metadata ──
+      - name: Find auto-route run for this PR
+        id: find-run
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.issue.number }}
+        run: |
+          RUN_ID=$(gh api \
+            "repos/${REPO}/actions/workflows/pr-review-auto-route.yml/runs?event=pull_request&status=completed&per_page=50" \
+            --jq "[.workflow_runs[] | select(.conclusion == \"success\") | select(.pull_requests | map(.number) | contains([${PR_NUMBER}]))] | first | .id // empty")
+
+          if [ -z "$RUN_ID" ]; then
+            echo "No successful auto-route run found for PR #${PR_NUMBER} — skipping"
+            echo "run_id=" >> "$GITHUB_OUTPUT"
+          else
+            echo "Found auto-route run ${RUN_ID} for PR #${PR_NUMBER}"
+            echo "run_id=$RUN_ID" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Download pending metadata
+        if: steps.find-run.outputs.run_id != ''
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # ratchet:actions/download-artifact@v8
+        with:
+          name: pr-review-pending
+          run-id: ${{ steps.find-run.outputs.run_id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: pending
+
+      - name: Parse pending metadata
+        id: pending
+        if: steps.find-run.outputs.run_id != ''
+        run: |
+          PR_NUMBER=$(jq -r '.pr_number' pending/pending.json)
+          HEAD_SHA=$(jq  -r '.head_sha'  pending/pending.json)
+          BASE_REF=$(jq  -r '.base_ref'  pending/pending.json)
+
+          echo "pr_number=$PR_NUMBER" >> "$GITHUB_OUTPUT"
+          echo "head_sha=$HEAD_SHA"   >> "$GITHUB_OUTPUT"
+          echo "base_ref=$BASE_REF"   >> "$GITHUB_OUTPUT"
+
+          echo "PR #${PR_NUMBER} | head=${HEAD_SHA} | base=${BASE_REF}"
+
+      # ── Find confirmation comment and parse checkbox state ────────────────
+      - name: Find confirmation comment
+        id: find-confirm
+        if: steps.find-run.outputs.run_id != ''
+        uses: peter-evans/find-comment@v3 # ratchet:peter-evans/find-comment@v3
+        with:
+          issue-number: ${{ github.event.issue.number }}
+          body-includes: "<!-- pr-review-confirm -->"
+          comment-author: "github-actions[bot]"
+
+      - name: Parse checkbox state
+        id: checkboxes
+        if: |
+          steps.find-run.outputs.run_id != '' &&
+          steps.find-confirm.outputs.comment-id != ''
+        env:
+          CONFIRM_BODY: ${{ steps.find-confirm.outputs.comment-body }}
+        run: |
+          echo "$CONFIRM_BODY" > /tmp/confirm-body.txt
+          SELECTED=$(python3 .github/scripts/pr_review_confirm.py parse-checkboxes /tmp/confirm-body.txt)
+          echo "selected=$SELECTED" >> "$GITHUB_OUTPUT"
+          echo "Selected reviewers: ${SELECTED}"
+
+      # ── Classify the reply intent ─────────────────────────────────────────
+      - name: Classify intent
+        id: intent
+        if: |
+          steps.find-run.outputs.run_id != '' &&
+          steps.find-confirm.outputs.comment-id != ''
+        env:
+          REPLY: ${{ github.event.comment.body }}
+        run: |
+          # Affirmative: short phrase matching common yes-patterns
+          if echo "$REPLY" | grep -qiP \
+            '^\s*(yes|yeah|yep|sure|go ahead|ok|okay|please|start|run|do it|kick it off|lgtm|sounds good|let.s go|yup|absolutely|affirmative|roger)\s*[.!]?\s*$'; then
+            echo "intent=affirm" >> "$GITHUB_OUTPUT"
+          # Question: contains a question mark or starts with a question word
+          elif echo "$REPLY" | grep -qiP '\?|(^|\s)(what|why|how|when|can you|will you|which|where|does|is it|would)'; then
+            echo "intent=question" >> "$GITHUB_OUTPUT"
+          else
+            echo "intent=other" >> "$GITHUB_OUTPUT"
+          fi
+
+          echo "Intent: $(grep 'intent=' "$GITHUB_OUTPUT" | tail -1)"
+
+      # ── Affirm: trigger the review fleet ─────────────────────────────────
+      - name: Trigger review fleet
+        if: |
+          steps.find-run.outputs.run_id != '' &&
+          steps.intent.outputs.intent == 'affirm'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          PR_NUMBER: ${{ steps.pending.outputs.pr_number }}
+          HEAD_SHA: ${{ steps.pending.outputs.head_sha }}
+          BASE_REF: ${{ steps.pending.outputs.base_ref }}
+          SELECTED: ${{ steps.checkboxes.outputs.selected }}
+        run: |
+          gh workflow run pr-review-fleet.yml \
+            --repo "${REPO}" \
+            --field "pr_number=${PR_NUMBER}" \
+            --field "reviewers=${SELECTED}" \
+            --field "head_sha=${HEAD_SHA}" \
+            --field "base_ref=${BASE_REF}"
+
+          echo "Triggered fleet for PR #${PR_NUMBER} with reviewers: ${SELECTED}"
+
+      - name: Post acknowledgement
+        if: |
+          steps.find-run.outputs.run_id != '' &&
+          steps.intent.outputs.intent == 'affirm'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          PR_NUMBER: ${{ steps.pending.outputs.pr_number }}
+          SELECTED: ${{ steps.checkboxes.outputs.selected }}
+        run: |
+          NAMES=$(python3 .github/scripts/pr_review_confirm.py format-names "$SELECTED")
+          gh pr comment "${PR_NUMBER}" --repo "${REPO}" \
+            --body "On it! Starting review with: ${NAMES}"
+
+      # ── Question: answer via Copilot CLI ─────────────────────────────────
+      - name: Set up Node.js
+        if: |
+          steps.find-run.outputs.run_id != '' &&
+          steps.intent.outputs.intent == 'question'
+        uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # ratchet:actions/setup-node@v6
+        with:
+          node-version: 22
+
+      - name: Install Copilot CLI
+        if: |
+          steps.find-run.outputs.run_id != '' &&
+          steps.intent.outputs.intent == 'question'
+        run: npm install -g @github/copilot
+
+      - name: Answer question
+        if: |
+          steps.find-run.outputs.run_id != '' &&
+          steps.intent.outputs.intent == 'question'
+        env:
+          COPILOT_GITHUB_TOKEN: ${{ secrets.COPILOT_GITHUB_TOKEN }}
+          COPILOT_MODEL: claude-sonnet-4-6
+          REPLY: ${{ github.event.comment.body }}
+          SELECTED: ${{ steps.checkboxes.outputs.selected }}
+        run: |
+          REVIEWER_CONTEXT=$(python3 .github/scripts/pr_review_confirm.py build-qa-context "$SELECTED")
+
+          cat > /tmp/qa-prompt.md <<'PROMPT_EOF'
+You are a helpful PR review assistant. A developer opened a pull request and you proposed
+to run an automated code review. The review plan is:
+
+PROMPT_EOF
+          echo "${REVIEWER_CONTEXT}" >> /tmp/qa-prompt.md
+          cat >> /tmp/qa-prompt.md <<'PROMPT_EOF'
+
+(✓ = queued, ○ = not queued)
+
+The developer asked:
+PROMPT_EOF
+          echo "${REPLY}" >> /tmp/qa-prompt.md
+          cat >> /tmp/qa-prompt.md <<'PROMPT_EOF'
+
+Answer in 1-3 sentences. End with a brief reminder that they can reply "yes" to start
+or toggle the checkboxes in the proposal comment to adjust which reviewers run.
+Write plain text only — no code blocks, no headers. Output the answer to answer.txt.
+PROMPT_EOF
+
+          copilot \
+            -p "$(cat /tmp/qa-prompt.md)" \
+            --allow-tool=write \
+            --no-ask-user
+
+      - name: Post answer
+        if: |
+          steps.find-run.outputs.run_id != '' &&
+          steps.intent.outputs.intent == 'question'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          PR_NUMBER: ${{ steps.pending.outputs.pr_number }}
+        run: |
+          if [ -f answer.txt ]; then
+            gh pr comment "${PR_NUMBER}" --repo "${REPO}" --body-file answer.txt
+          else
+            gh pr comment "${PR_NUMBER}" --repo "${REPO}" \
+              --body "I wasn't able to generate an answer. Reply **yes** to start the review, or ask another question!"
+          fi

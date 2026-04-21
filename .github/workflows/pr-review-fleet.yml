@@ -13,7 +13,7 @@ name: "PR Review Fleet"
 
 on:
   workflow_run:
-    workflows: ["PR Review Fleet Dispatcher", "PR Review Auto Router"]
+    workflows: ["PR Review Fleet Dispatcher"]
     types:
       - completed
   workflow_dispatch:
@@ -23,14 +23,19 @@ on:
         required: true
         type: number
       reviewer_count:
-        description: "Number of reviewers to spawn (1, 3, or 5)"
-        required: true
+        description: "Number of reviewers to spawn (ignored when 'reviewers' is provided)"
+        required: false
         type: choice
         options:
           - "1"
           - "3"
           - "5"
         default: "3"
+      reviewers:
+        description: "JSON array of reviewer names (overrides reviewer_count when provided, e.g. [\"correctness\",\"security\"])"
+        required: false
+        type: string
+        default: ""
       head_sha:
         description: "PR head SHA to review"
         required: true
@@ -78,6 +83,7 @@ jobs:
           EVENT_NAME: ${{ github.event_name }}
           INPUT_PR_NUMBER: ${{ inputs.pr_number }}
           INPUT_REVIEWER_COUNT: ${{ inputs.reviewer_count }}
+          INPUT_REVIEWERS: ${{ inputs.reviewers }}
           INPUT_HEAD_SHA: ${{ inputs.head_sha }}
           INPUT_BASE_REF: ${{ inputs.base_ref }}
         run: |
@@ -93,9 +99,16 @@ jobs:
             BASE_REF="$INPUT_BASE_REF"
           fi
 
-          # Priority-ordered reviewer list; take the first REVIEWER_COUNT entries.
-          ALL='["correctness","security","api-compatibility","performance","testing"]'
-          REVIEWERS=$(echo "$ALL" | jq --argjson n "$REVIEWER_COUNT" '.[:$n]')
+          # If an explicit reviewer list was provided (e.g. from the confirm workflow
+          # after the user toggled checkboxes), use it directly. Otherwise fall back
+          # to taking the first REVIEWER_COUNT entries from the priority-ordered list.
+          if [ -n "$INPUT_REVIEWERS" ] && [ "$INPUT_REVIEWERS" != "" ]; then
+            REVIEWERS="$INPUT_REVIEWERS"
+            REVIEWER_COUNT=$(echo "$REVIEWERS" | jq 'length')
+          else
+            ALL='["correctness","security","api-compatibility","performance","testing"]'
+            REVIEWERS=$(echo "$ALL" | jq --argjson n "$REVIEWER_COUNT" '.[:$n]')
+          fi
 
           echo "pr_number=$PR_NUMBER"   >> "$GITHUB_OUTPUT"
           echo "head_sha=$HEAD_SHA"     >> "$GITHUB_OUTPUT"

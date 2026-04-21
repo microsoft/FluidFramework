@@ -1,8 +1,11 @@
 name: "PR Review Auto Router"
 
 # Automatically determines fleet size when a PR is opened, based on diff
-# size and complexity. Saves dispatch params as an artifact; the fleet
-# workflow (pr-review-fleet.yml) triggers via workflow_run.
+# size and complexity. Posts a confirmation comment with pre-checked reviewer
+# checkboxes so the author can review and confirm before the fleet runs.
+# Routing metadata (pr_number, head_sha, base_ref) is saved as an artifact
+# for the confirm workflow to retrieve; nothing machine-readable is embedded
+# in the comment body.
 #
 # Sizing thresholds:
 #   small  (1 reviewer) — ≤ 100 lines AND ≤ 5 files AND ≤ 1 package
@@ -26,6 +29,7 @@ on:
 
 permissions:
   contents: read
+  pull-requests: write
 
 concurrency:
   group: pr-review-auto-route-${{ github.event.pull_request.number }}
@@ -49,15 +53,14 @@ jobs:
         env:
           BASE_REF: ${{ github.base_ref }}
         run: |
-          # Lines changed: insertions + deletions, ignoring binary files (shown as '-' in numstat)
-          LINES=$(git diff "origin/${BASE_REF}...HEAD" --numstat \
-            | awk '$1 ~ /^[0-9]+$/ && $2 ~ /^[0-9]+$/ {sum+=$1+$2} END{print sum+0}')
+          git diff "origin/${BASE_REF}...HEAD" --numstat > /tmp/numstat.txt
 
-          # Total files changed
-          FILES=$(git diff --name-only "origin/${BASE_REF}...HEAD" | wc -l | tr -d ' ')
+          # Lines changed: insertions + deletions, ignoring binary files (shown as '-' in numstat)
+          LINES=$(awk '$1 ~ /^[0-9]+$/ && $2 ~ /^[0-9]+$/ {sum+=$1+$2} END{print sum+0}' /tmp/numstat.txt)
+          FILES=$(wc -l < /tmp/numstat.txt | tr -d ' ')
 
           # Distinct packages touched (top-level dirs under packages/, experimental/, examples/)
-          PACKAGES=$(git diff --name-only "origin/${BASE_REF}...HEAD" \
+          PACKAGES=$(awk '{print $3}' /tmp/numstat.txt \
             | grep -E '^(packages|experimental|examples)/' \
             | cut -d/ -f2 | sort -u | wc -l | tr -d ' ')
 
@@ -86,20 +89,42 @@ jobs:
           echo "reviewer_count=$COUNT" >> "$GITHUB_OUTPUT"
           echo "Routing to ${TIER} fleet (${COUNT} reviewer(s))"
 
-      - name: Save dispatch params
+      - name: Build confirmation comment
+        env:
+          REVIEWER_COUNT: ${{ steps.size.outputs.reviewer_count }}
+          LINES: ${{ steps.metrics.outputs.lines }}
+          FILES: ${{ steps.metrics.outputs.files }}
         run: |
-          mkdir -p dispatch
-          printf '{\n  "pr_number": %s,\n  "reviewer_count": %s,\n  "head_sha": "%s",\n  "base_ref": "%s"\n}\n' \
-            "${{ github.event.pull_request.number }}" \
-            "${{ steps.size.outputs.reviewer_count }}" \
-            "${{ github.event.pull_request.head.sha }}" \
-            "${{ github.base_ref }}" \
-            > dispatch/params.json
-          cat dispatch/params.json
+          python3 .github/scripts/pr_review_confirm.py build-comment \
+            --reviewer-count "$REVIEWER_COUNT" \
+            --lines "$LINES" \
+            --files "$FILES" \
+            > /tmp/confirm-body.md
+          echo "Comment body:"
+          cat /tmp/confirm-body.md
 
-      - name: Upload dispatch params
+      - name: Post confirmation comment
+        uses: marocchino/sticky-pull-request-comment@v2 # ratchet:marocchino/sticky-pull-request-comment@v2
+        with:
+          header: pr-review-confirm
+          path: /tmp/confirm-body.md
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Save pending metadata
+        env:
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          BASE_REF: ${{ github.base_ref }}
+        run: |
+          mkdir -p pending
+          printf '{\n  "pr_number": %s,\n  "head_sha": "%s",\n  "base_ref": "%s"\n}\n' \
+            "$PR_NUMBER" "$HEAD_SHA" "$BASE_REF" \
+            > pending/pending.json
+          cat pending/pending.json
+
+      - name: Upload pending metadata
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # ratchet:actions/upload-artifact@v7
         with:
-          name: dispatch-params
-          path: dispatch/params.json
-          retention-days: 1
+          name: pr-review-pending
+          path: pending/pending.json
+          retention-days: 14
