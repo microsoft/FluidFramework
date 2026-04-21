@@ -341,6 +341,49 @@ describe("captureReferencedContents", () => {
 			assert.strictEqual(result.g1?.baseSnapshot.id, "g1-tree");
 			assert.strictEqual(result.g2?.baseSnapshot.id, "g2-tree");
 		});
+
+		it("preserves `this` binding when getSnapshot references instance state", async () => {
+			// Real driver implementations reference `this` (e.g.
+			// LocalDocumentStorageService.getSnapshot uses this.id). If
+			// captureGroupIdSnapshots extracts the method without binding,
+			// calling it detached would TypeError. Use a class-based stub so
+			// the bug would surface.
+			class StorageStub {
+				public readonly idPrefix = "bound";
+				public async readBlob(_id: string): Promise<ArrayBufferLike> {
+					throw new Error("no readBlob in this test");
+				}
+				public async getSnapshot(_opts: ISnapshotFetchOptions): Promise<ISnapshot> {
+					// Touch `this` — throws TypeError if the method was detached.
+					return emptyGroupSnapshot(`${this.idPrefix}-tree`, 7);
+				}
+			}
+			const snapshot = tree({ trees: { a: tree({ groupId: "g1" }) } });
+			const result = await captureGroupIdSnapshots(
+				snapshot,
+				new StorageStub(),
+				"v",
+				"scenario",
+			);
+			assert.strictEqual(result.g1?.baseSnapshot.id, "bound-tree");
+			assert.strictEqual(result.g1?.snapshotSequenceNumber, 7);
+		});
+
+		it("asks the driver not to cache the fetched group snapshot", async () => {
+			const snapshot = tree({ trees: { a: tree({ groupId: "g1" }) } });
+			const seenOpts: ISnapshotFetchOptions[] = [];
+			const storage = mockStorage({}, async (opts) => {
+				assert(opts !== undefined);
+				seenOpts.push(opts);
+				return emptyGroupSnapshot("g1-tree", 3);
+			});
+			await captureGroupIdSnapshots(snapshot, storage, "v", "scenario");
+			assert.strictEqual(
+				seenOpts[0]?.cacheSnapshot,
+				false,
+				"cacheSnapshot: false avoids polluting the driver cache with transient fetches",
+			);
+		});
 	});
 });
 

@@ -329,7 +329,11 @@ export async function captureGroupIdSnapshots(
 	versionId: string | undefined,
 	scenarioName: string,
 ): Promise<Record<string, SerializedSnapshotInfo>> {
-	const getSnapshot = storage.getSnapshot;
+	// Bind to preserve `this` when the method is extracted — real driver
+	// implementations (e.g. LocalDocumentStorageService.getSnapshot)
+	// reference `this`, and detaching the method would TypeError in strict
+	// mode. Matches the pattern used by protocolTreeDocumentStorageService.
+	const getSnapshot = storage.getSnapshot?.bind(storage);
 	if (getSnapshot === undefined) {
 		return {};
 	}
@@ -340,6 +344,7 @@ export async function captureGroupIdSnapshots(
 	const result: Record<string, SerializedSnapshotInfo> = {};
 	await mapWithConcurrency([...groupIds], maxSnapshotFetchConcurrency, async (groupId) => {
 		const groupSnapshot = await getSnapshot({
+			cacheSnapshot: false,
 			versionId,
 			loadingGroupIds: [groupId],
 			scenarioName: `${scenarioName}.group`,

@@ -344,6 +344,7 @@ export async function captureFullContainerState(
 			storage.getSnapshot === undefined
 				? ((await storage.getSnapshotTree(version)) ?? undefined)
 				: await storage.getSnapshot({
+						cacheSnapshot: false,
 						versionId: version?.id,
 						scenarioName: "captureFullContainerState",
 					});
