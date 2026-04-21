@@ -9,4 +9,4 @@
 
 Node 22 is now the minimum supported Node.js version
 
-All Fluid Framework build-tools packages now require Node.js 22 or later. This aligns with our standing Node upgrade policy as Node 20 reaches end-of-life on April 30, 2026. The minimum version is enforced via the `engines` field in package.json (`>=22.22.2`).
+All Fluid Framework build-tools packages now require Node.js 22 or later. This aligns with the standing Node upgrade policy as Node 20 reaches end-of-life on April 30, 2026.
