@@ -134,6 +134,8 @@ resources:
       type: git
       # Specify internal project, since this pipeline runs in both the public and internal projects
       name: internal/ff_pipeline_host
+      ref: '11f135dcc8dfa42519157bb460fdcb345c19a477'
+
   # Listing a pipeline as a resource makes its artifacts available for download in any job
   pipelines:
     # Access to this pipelines artifacts allows 1ES deployment jobs to install build tools without checking out out a repo.

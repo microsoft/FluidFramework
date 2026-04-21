@@ -80,7 +80,7 @@ resources:
   - repository: ff_pipeline_host
     type: git
     name: ff_pipeline_host
-    ref: main
+    ref: '11f135dcc8dfa42519157bb460fdcb345c19a477'
 
 variables:
   - template: /tools/pipelines/templates/include-vars-telemetry-generator.yml@self
