@@ -18,6 +18,7 @@ from __future__ import annotations
 
 import argparse
 import hashlib
+import json
 import re
 import sys
 from dataclasses import dataclass
@@ -69,15 +70,7 @@ SEVERITY_LABEL_SETS: list[SeverityLabelSet] = [
     },
 ]
 
-# Pattern: [SEVERITY] file:line — description — fix
-FINDING_RE = re.compile(
-    r"^\[(CRITICAL|HIGH|MEDIUM)\]\s+"  # severity
-    r"(\S+)"  # file:line (or just file)
-    r"\s+—\s+"  # separator
-    r"(.+?)"  # description (non-greedy)
-    r"\s+—\s+"  # separator
-    r"(.+)$"  # fix
-)
+VALID_SEVERITIES = frozenset({"CRITICAL", "HIGH", "MEDIUM"})
 
 
 @dataclass
@@ -89,27 +82,43 @@ class Finding:
     area: str
 
 
-def parse_review_file(path: Path, area: str) -> list[Finding]:
-    """Parse a single review file and extract findings."""
+def parse_review_file(path: Path, area: str) -> list[Finding] | None:
+    """Parse a single review file and extract findings from its JSON content.
+
+    Returns None when the file is not valid JSON or has an unexpected shape,
+    so callers can distinguish a broken reviewer from a clean empty run.
+    """
     text = path.read_text(encoding="utf-8")
 
-    if "NO_ISSUES_FOUND" in text:
-        return []
+    try:
+        data = json.loads(text)
+    except json.JSONDecodeError as exc:
+        print(f"Warning: {path.name}: invalid JSON ({exc}), skipping")
+        return None
+
+    if not isinstance(data, dict):
+        print(f"Warning: {path.name}: expected a JSON object, got {type(data).__name__}, skipping")
+        return None
 
     findings: list[Finding] = []
-    for line in text.splitlines():
-        m = FINDING_RE.match(line.strip())
-        if m:
-            findings.append(
-                Finding(
-                    severity=m.group(1),
-                    location=m.group(2),
-                    description=m.group(3),
-                    fix=m.group(4)[:200],
-                    area=area,
-                )
-            )
+    for item in data.get("findings") or []:
+        if not isinstance(item, dict):
+            continue
+        severity = item.get("severity", "")
+        if severity not in VALID_SEVERITIES:
+            continue
+        location = item.get("location", "")
+        description = item.get("description", "")
+        fix = item.get("fix", "")
+        if not location or not description or not fix:
+            continue
+        findings.append(Finding(severity=severity, location=location, description=description, fix=fix, area=area))
     return findings
+
+
+def _sanitize_cell(text: str) -> str:
+    """Normalize text for a markdown table cell: collapse newlines, escape pipes."""
+    return text.replace("\r\n", " ").replace("\r", " ").replace("\n", " ").replace("|", "\\|")
 
 
 def deduplicate(findings: list[Finding]) -> list[Finding]:
@@ -194,7 +203,7 @@ def build_report(findings: list[Finding], run_url: str, pr_number: int | None = 
         level = severity_labels[f.severity]
         sev_display = f"{level[EMOJI_KEY]} {level[TITLE_KEY]}"
         rows.append(
-            f"| {sev_display} | {label} | {f.area} | `{f.location}` | {f.description} | {f.fix} |"
+            f"| {sev_display} | {label} | {f.area} | `{f.location}` | {_sanitize_cell(f.description)} | {_sanitize_cell(f.fix)} |"
         )
 
     table = "\n".join(rows)
@@ -234,18 +243,22 @@ def main(argv: list[str] | None = None) -> int:
 
     # Collect findings from all reviewer files
     all_findings: list[Finding] = []
+    skipped_count = 0
     for reviewer_key, area_name in REVIEWERS.items():
-        path = args.reviews_dir / f"review-{reviewer_key}.md"
+        path = args.reviews_dir / f"review-{reviewer_key}.json"
         if not path.exists():
             print(f"{reviewer_key}: no output file")
             continue
 
         findings = parse_review_file(path, area_name)
-        if not findings:
+        if findings is None:
+            print(f"{reviewer_key}: skipped (invalid output)")
+            skipped_count += 1
+        elif not findings:
             print(f"{reviewer_key}: no issues found")
         else:
             print(f"{reviewer_key}: {len(findings)} finding(s)")
-        all_findings.extend(findings)
+            all_findings.extend(findings)
 
     # Sort by severity order, then de-duplicate
     severity_rank = {s: i for i, s in enumerate(SEVERITY_ORDER)}
@@ -253,6 +266,9 @@ def main(argv: list[str] | None = None) -> int:
     all_findings = deduplicate(all_findings)
 
     if not all_findings:
+        if skipped_count > 0:
+            print(f"{skipped_count} reviewer(s) produced invalid output — cannot confirm clean run.")
+            return 1
         print("All reviewers passed with no findings.")
         return 2
 

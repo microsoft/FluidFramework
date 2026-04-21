@@ -66,17 +66,30 @@ Severity levels:
 
 ## Output Format
 
-Write your findings to `review-security.md`. Use this exact format for each finding:
+Write your findings to `review-security.json` as raw JSON. Do not wrap output in a markdown code block or include any other text — the file must be valid JSON and nothing else.
 
-```
-[SEVERITY] path/to/file.ts:LINE — Description of the vulnerability and attack scenario — Remediation
+```json
+{
+  "findings": [
+    {
+      "severity": "HIGH",
+      "location": "src/server/handler.ts:88",
+      "description": "User-supplied `path` is passed to `fs.readFile` without sanitization, allowing directory traversal to read arbitrary files",
+      "fix": "Resolve the path against a trusted base directory and verify it stays within bounds before reading"
+    }
+  ]
+}
 ```
 
-If you find NO high-confidence issues, write exactly this:
+- `severity`: `"CRITICAL"`, `"HIGH"`, or `"MEDIUM"`
+- `location`: `path/to/file.ts:LINE`
+- `description`: the vulnerability and its concrete attack scenario
+- `fix`: specific remediation
 
-```
-<!-- NO_ISSUES_FOUND -->
-No high-confidence security vulnerabilities found in the current diff.
+If you find NO high-confidence issues:
+
+```json
+{ "findings": [] }
 ```
 
 ## Instructions
@@ -85,4 +98,4 @@ No high-confidence security vulnerabilities found in the current diff.
 2. For files with security-sensitive changes, read the full file to understand the complete security context
 3. Focus on changes that handle user input, file system access, or token handling
 4. Apply the high-confidence gate to every finding before including it
-5. Write your review to `review-security.md`
+5. Write your review to `review-security.json`
