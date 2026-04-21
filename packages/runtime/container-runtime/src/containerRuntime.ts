@@ -1638,6 +1638,9 @@ export class ContainerRuntime
 	) {
 		super();
 
+		// DO NOT MERGE: Dummy log to perturb bundle size for CI testing.
+		console.log("ContainerRuntime: bundle size test");
+
 		const {
 			options,
 			clientDetails,
