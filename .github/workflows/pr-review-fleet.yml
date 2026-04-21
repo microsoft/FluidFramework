@@ -88,10 +88,11 @@ jobs:
           INPUT_BASE_REF: ${{ inputs.base_ref }}
         run: |
           if [ "$EVENT_NAME" = "workflow_run" ]; then
+            # Label-based dispatch always uses the default fleet size.
             PR_NUMBER=$(jq -r '.pr_number' params.json)
-            REVIEWER_COUNT=$(jq -r '.reviewer_count' params.json)
             HEAD_SHA=$(jq -r '.head_sha' params.json)
             BASE_REF=$(jq -r '.base_ref' params.json)
+            REVIEWER_COUNT=3
           else
             PR_NUMBER="$INPUT_PR_NUMBER"
             REVIEWER_COUNT="$INPUT_REVIEWER_COUNT"

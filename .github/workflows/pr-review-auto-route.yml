@@ -14,7 +14,7 @@ name: "PR Review Auto Router"
 #
 # "Packages" = distinct top-level dirs under packages/, experimental/, examples/.
 #
-# If the PR already has a fleet-review* label when it opens, this workflow
+# If the PR already has the fleet-review label when it opens, this workflow
 # skips — the label dispatcher (pr-review-dispatch.yml) takes precedence.
 
 on:
@@ -38,8 +38,8 @@ concurrency:
 jobs:
   route:
     name: "Compute fleet size"
-    # Yield to manual dispatch if a fleet-review* label is already on the PR.
-    if: "!contains(toJson(github.event.pull_request.labels.*.name), 'fleet-review')"
+    # Yield to manual dispatch if the fleet-review label is already on the PR.
+    if: "!contains(github.event.pull_request.labels.*.name, 'fleet-review')"
     runs-on: ubuntu-latest
     steps:
       - name: Checkout PR head
