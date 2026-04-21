@@ -51,6 +51,7 @@ stages:
       poolBuild: Large-eastus2
       testPackage: ${{ variables.testPackage }}
       testCommand: test:realsvc:azure
+      passRateThreshold: 95
       artifactBuildId: $(resources.pipeline.client.runID)
       pipelineIdentifierForTelemetry: ${{ variables.pipelineIdentifierForTelemetry }}
       env:
@@ -87,6 +88,7 @@ stages:
       poolBuild: Small-eastus2
       testPackage: ${{ variables.testOdspPackage }}
       testCommand: test:realsvc:odsp
+      passRateThreshold: 95
       artifactBuildId: $(resources.pipeline.client.runID)
       pipelineIdentifierForTelemetry: ${{ variables.pipelineIdentifierForTelemetry }}
       env:
