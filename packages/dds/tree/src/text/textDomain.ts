@@ -23,7 +23,7 @@ import {
 	TreeArrayNode,
 } from "../simple-tree/index.js";
 // eslint-disable-next-line import-x/no-duplicates
-import type { TreeNode, WithType } from "../simple-tree/index.js";
+import type { ArrayNodeDeltaOp, TreeNode, WithType } from "../simple-tree/index.js";
 // Add some unused imports which show up in the generated d.ts file.
 // This prevents them from getting inline imports generated, cleaning up the d.ts file and API reports.
 // eslint-disable-next-line @typescript-eslint/no-unused-vars, unused-imports/no-unused-imports, import-x/no-duplicates
@@ -148,30 +148,9 @@ class TextNode
 	public onCharactersChanged(
 		callback: (ops: readonly TextAsTree.TextOp[] | undefined) => void,
 	): () => void {
-		return TreeAlpha.on(this.content, "nodeChanged", ({ delta }) => {
-			if (delta === undefined) {
-				callback(undefined);
-				return;
-			}
-			let readPos = 0;
-			const ops: TextAsTree.TextOp[] = [];
-			for (const op of delta) {
-				if (op.type === "retain") {
-					ops.push(op);
-					readPos += op.count;
-				} else if (op.type === "insert") {
-					let text = "";
-					for (let i = 0; i < op.count; i++) {
-						text += this.content[readPos] as string;
-						readPos++;
-					}
-					ops.push({ type: "insert", text });
-				} else {
-					ops.push(op);
-				}
-			}
-			callback(ops);
-		});
+		return TreeAlpha.on(this.content, "nodeChanged", ({ delta }) =>
+			processCharactersChangedDelta(delta, (i) => this.content[i] as string, callback),
+		);
 	}
 
 	public static fromString(value: string): TextNode {
@@ -214,6 +193,43 @@ class StringArray extends sf.array("StringArray", SchemaFactory.string) {
 	public fullString(): string {
 		return this.charactersCopy().join("");
 	}
+}
+
+/**
+ * Processes an `ArrayNodeDeltaOp[]` delta into `TextAsTree.TextOp[]` and calls `callback`.
+ * Shared by both plain and formatted `TextNode.onCharactersChanged` implementations.
+ * @param delta - The raw array-node delta, or `undefined` when no delta is available.
+ * @param getChar - Returns the character string at the given array index (varies by node type).
+ * @param callback - The user-supplied callback to invoke with the translated ops.
+ * @internal
+ */
+export function processCharactersChangedDelta(
+	delta: readonly ArrayNodeDeltaOp[] | undefined,
+	getChar: (index: number) => string,
+	callback: (ops: readonly TextAsTree.TextOp[] | undefined) => void,
+): void {
+	if (delta === undefined) {
+		callback(undefined);
+		return;
+	}
+	let readPos = 0;
+	const ops: TextAsTree.TextOp[] = [];
+	for (const op of delta) {
+		if (op.type === "retain") {
+			ops.push(op);
+			readPos += op.count;
+		} else if (op.type === "insert") {
+			let text = "";
+			for (let i = 0; i < op.count; i++) {
+				text += getChar(readPos);
+				readPos++;
+			}
+			ops.push({ type: "insert", text });
+		} else {
+			ops.push(op);
+		}
+	}
+	callback(ops);
 }
 
 /**
@@ -280,15 +296,44 @@ class StringArray extends sf.array("StringArray", SchemaFactory.string) {
  */
 export namespace TextAsTree {
 	/**
-	 * A single operation in a character-level delta describing an insert, remove, or retain of text.
-	 * @remarks
-	 * Inserts carry the actual inserted text (not individual characters), which is more convenient for consumers.
+	 * A retain op in a character-level delta.
+	 * @sealed
 	 * @alpha
 	 */
-	export type TextOp =
-		| { readonly type: "retain"; readonly count: number }
-		| { readonly type: "insert"; readonly text: string }
-		| { readonly type: "remove"; readonly count: number };
+	export interface TextRetainOp {
+		readonly type: "retain";
+		/** The number of Unicode code points to retain. */
+		readonly count: number;
+	}
+
+	/**
+	 * An insert op in a character-level delta.
+	 * @remarks
+	 * Carries the actual inserted text as a string, which is more convenient for consumers than individual characters.
+	 * @sealed
+	 * @alpha
+	 */
+	export interface TextInsertOp {
+		readonly type: "insert";
+		readonly text: string;
+	}
+
+	/**
+	 * A remove op in a character-level delta.
+	 * @sealed
+	 * @alpha
+	 */
+	export interface TextRemoveOp {
+		readonly type: "remove";
+		/** The number of Unicode code points removed. */
+		readonly count: number;
+	}
+
+	/**
+	 * A single operation in a character-level delta describing an insert, remove, or retain of text.
+	 * @alpha
+	 */
+	export type TextOp = TextRetainOp | TextInsertOp | TextRemoveOp;
 
 	/**
 	 * Statics for text nodes.
@@ -304,6 +349,7 @@ export namespace TextAsTree {
 
 	/**
 	 * Interface for a text node.
+	 * @sealed
 	 * @remarks
 	 * The string is broken up into substrings which are referred to as 'characters'.
 	 * Unlike with JavaScript strings, all indexes are by character, not UTF-16 code unit.
@@ -368,13 +414,18 @@ export namespace TextAsTree {
 		removeRange(startIndex: number | undefined, endIndex: number | undefined): void;
 
 		/**
-		 * Subscribe to incremental character-level changes on this text node.
+		 * Subscribe to shallow character-level changes on this text node — inserts and removes only.
 		 * @param callback - Called after each change with a sequence of {@link TextAsTree.TextOp}s describing what changed,
 		 * or `undefined` when a delta could not be computed (e.g. during a schema upgrade).
 		 * @returns A cleanup function that unsubscribes the callback when called.
 		 * @remarks
-		 * Prefer this over re-reading {@link TextAsTree.Members.fullString} on every change when incremental
-		 * application is possible (e.g. updating an editor's content model).
+		 * Only fires on shallow changes — inserts and removes.
+		 * It does not fire on deep changes such as formatting property updates on existing characters.
+		 * To also receive deep changes, use `FormattedTextAsTree.Members.onContentChanged`.
+		 *
+		 * All counts in the delivered ops are in Unicode code points, not UTF-16 code units.
+		 * For characters outside the Basic Multilingual Plane (e.g. emoji), one code point
+		 * corresponds to two UTF-16 code units — convert before using the counts as string indices.
 		 */
 		onCharactersChanged(callback: (ops: readonly TextOp[] | undefined) => void): () => void;
 	}

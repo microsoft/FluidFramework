@@ -5,4 +5,9 @@
 
 export { type PropTreeNode } from "../propNode.js";
 export { type UndoRedo } from "../undoRedo.js";
-export { PlainTextMainView, syncTextToTree } from "./plain/index.js";
+export {
+	codepointCount,
+	cpCountToUtf16,
+	PlainTextMainView,
+	syncTextToTree,
+} from "./plain/index.js";

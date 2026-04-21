@@ -45,5 +45,10 @@ export {
 	withMemoizedTreeObservations,
 } from "./useTree.js";
 export { objectIdNumber } from "./simpleIdentifier.js";
-export { syncTextToTree, PlainTextMainView } from "./text/index.js";
+export {
+	codepointCount,
+	cpCountToUtf16,
+	syncTextToTree,
+	PlainTextMainView,
+} from "./text/index.js";
 export { UndoRedoStacks, type UndoRedo } from "./undoRedo.js";

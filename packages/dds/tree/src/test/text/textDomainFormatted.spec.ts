@@ -197,22 +197,36 @@ describe("textDomainFormatted", () => {
 				received.push(ops);
 			});
 			text.formatRange(1, 3, { bold: true });
-			// At least one callback should have fired with formattingChanged set.
-			assert(received.length > 0, "expected at least one callback invocation");
-			// Flatten all received ops and verify at least one retain has formattingChanged.
-			const allOps = received.flat();
-			const formattingRetains = allOps.filter(
-				(op) => op.type === "retain" && op.formattingChanged,
-			);
-			assert(
-				formattingRetains.length > 0,
-				"expected at least one retain op with formattingChanged",
-			);
-			// No inserts or removes should appear for a format-only change.
-			assert(
-				allOps.every((op) => op.type === "retain"),
-				"expected only retain ops for a formatting change",
-			);
+
+			if (hydrated) {
+				// Hydrated: formatRange updates each character's format node individually,
+				// so treeChanged fires once per character in the range (2 events for indices 1..3).
+				assert.equal(received.length, 2);
+				assert.deepEqual(received[0], [
+					{ type: "retain", count: 1, formattingChanged: false },
+					{ type: "retain", count: 1, formattingChanged: true },
+				]);
+				assert.deepEqual(received[1], [
+					{ type: "retain", count: 2, formattingChanged: false },
+					{ type: "retain", count: 1, formattingChanged: true },
+				]);
+			} else {
+				// Unhydrated: fires one event per character because formatRange
+				// updates each character individually, producing N separate nodeChanged events.
+				assert(received.length > 0, "expected at least one callback invocation");
+				const allOps = received.flat();
+				const formattingRetains = allOps.filter(
+					(op) => op.type === "retain" && op.formattingChanged,
+				);
+				assert(
+					formattingRetains.length > 0,
+					"expected at least one retain op with formattingChanged",
+				);
+				assert(
+					allOps.every((op) => op.type === "retain"),
+					"expected only retain ops for a formatting change",
+				);
+			}
 		});
 
 		it("cleanup function unsubscribes the callback", () => {

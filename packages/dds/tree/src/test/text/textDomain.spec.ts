@@ -80,6 +80,132 @@ describe("textDomain", () => {
 		});
 	});
 
+	describeHydration("onCharactersChanged", (_init, hydrated) => {
+		it("fires with insert ops when characters are added", () => {
+			const text = TextAsTree.Tree.fromString("ab");
+			if (hydrated) {
+				hydrateNode(text);
+			}
+			const received: (readonly TextAsTree.TextOp[])[] = [];
+			text.onCharactersChanged((ops) => {
+				assert(ops !== undefined, "expected delta ops, got undefined");
+				received.push(ops);
+			});
+			text.insertAt(1, "xy");
+			assert.equal(received.length, 1);
+			assert.deepEqual(received[0], [
+				{ type: "retain", count: 1 },
+				{ type: "insert", text: "xy" },
+			]);
+		});
+
+		it("fires with remove ops when characters are deleted", () => {
+			const text = TextAsTree.Tree.fromString("abcde");
+			if (hydrated) {
+				hydrateNode(text);
+			}
+			const received: (readonly TextAsTree.TextOp[])[] = [];
+			text.onCharactersChanged((ops) => {
+				assert(ops !== undefined, "expected delta ops, got undefined");
+				received.push(ops);
+			});
+			text.removeRange(1, 3);
+			assert.equal(received.length, 1);
+			assert.deepEqual(received[0], [
+				{ type: "retain", count: 1 },
+				{ type: "remove", count: 2 },
+			]);
+		});
+
+		it("fires with insert and remove ops for a replace", () => {
+			const text = TextAsTree.Tree.fromString("abcde");
+			if (hydrated) {
+				hydrateNode(text);
+			}
+			const received: (readonly TextAsTree.TextOp[])[] = [];
+			text.onCharactersChanged((ops) => {
+				assert(ops !== undefined, "expected delta ops, got undefined");
+				received.push(ops);
+			});
+			text.removeRange(1, 3);
+			text.insertAt(1, "XY");
+			// Two separate edits → two callbacks.
+			assert.equal(received.length, 2);
+			assert.deepEqual(received[0], [
+				{ type: "retain", count: 1 },
+				{ type: "remove", count: 2 },
+			]);
+			assert.deepEqual(received[1], [
+				{ type: "retain", count: 1 },
+				{ type: "insert", text: "XY" },
+			]);
+		});
+
+		it("fires for insert at start", () => {
+			const text = TextAsTree.Tree.fromString("abc");
+			if (hydrated) {
+				hydrateNode(text);
+			}
+			const received: (readonly TextAsTree.TextOp[])[] = [];
+			text.onCharactersChanged((ops) => {
+				assert(ops !== undefined, "expected delta ops, got undefined");
+				received.push(ops);
+			});
+			text.insertAt(0, "X");
+			assert.equal(received.length, 1);
+			assert.deepEqual(received[0], [{ type: "insert", text: "X" }]);
+		});
+
+		it("fires for insert at end", () => {
+			const text = TextAsTree.Tree.fromString("abc");
+			if (hydrated) {
+				hydrateNode(text);
+			}
+			const received: (readonly TextAsTree.TextOp[])[] = [];
+			text.onCharactersChanged((ops) => {
+				assert(ops !== undefined, "expected delta ops, got undefined");
+				received.push(ops);
+			});
+			text.insertAt(3, "X");
+			assert.equal(received.length, 1);
+			assert.deepEqual(received[0], [
+				{ type: "retain", count: 3 },
+				{ type: "insert", text: "X" },
+			]);
+		});
+
+		it("fires for remove all", () => {
+			const text = TextAsTree.Tree.fromString("abc");
+			if (hydrated) {
+				hydrateNode(text);
+			}
+			const received: (readonly TextAsTree.TextOp[])[] = [];
+			text.onCharactersChanged((ops) => {
+				assert(ops !== undefined, "expected delta ops, got undefined");
+				received.push(ops);
+			});
+			text.removeRange(0, 3);
+			assert.equal(received.length, 1);
+			assert.deepEqual(received[0], [{ type: "remove", count: 3 }]);
+		});
+
+		it("cleanup function unsubscribes the callback", () => {
+			const text = TextAsTree.Tree.fromString("ab");
+			if (hydrated) {
+				hydrateNode(text);
+			}
+			let callCount = 0;
+			const cleanup = text.onCharactersChanged(() => {
+				callCount++;
+			});
+			text.insertAt(1, "x");
+			assert.equal(callCount, 1);
+			cleanup();
+			text.insertAt(1, "y");
+			assert.equal(callCount, 1, "callback should not fire after cleanup");
+		});
+	});
+
 	// TODO: Add tests for:
 	// - inserting at invalid indices (negative, beyond length),
 	// - removing with invalid indices or lengths,

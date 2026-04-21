@@ -8,7 +8,7 @@ import { type ChangeEvent, type FC, useCallback, useEffect, useRef } from "react
 
 import { unwrapPropTreeNode, type PropTreeNode } from "../../propNode.js";
 
-import { syncTextToTree } from "./plainUtils.js";
+import { cpCountToUtf16, syncTextToTree } from "./plainUtils.js";
 
 /**
  * A React component for plain text editing.
@@ -54,6 +54,8 @@ const PlainTextEditorView: FC<{ root: TextAsTree.Tree }> = ({ root }) => {
 				const selectionEnd = textarea.selectionEnd;
 
 				let newValue = "";
+				// readPos is a UTF-16 code-unit index into oldValue.
+				// op.count is in Unicode code points; we convert via cpCountToUtf16.
 				let readPos = 0;
 				const oldValue = textarea.value;
 				let newCursorStart = selectionStart;
@@ -61,10 +63,12 @@ const PlainTextEditorView: FC<{ root: TextAsTree.Tree }> = ({ root }) => {
 
 				for (const op of ops) {
 					if (op.type === "retain") {
-						newValue += oldValue.slice(readPos, readPos + op.count);
-						readPos += op.count;
+						// Convert atom count to UTF-16 units by scanning the actual characters.
+						const utf16Count = cpCountToUtf16(oldValue, readPos, op.count);
+						newValue += oldValue.slice(readPos, readPos + utf16Count);
+						readPos += utf16Count;
 					} else if (op.type === "insert") {
-						// Adjust cursor: shift right if insert is before or at cursor.
+						// op.text is a JS string; use its UTF-16 length for cursor adjustment.
 						if (readPos <= selectionStart) {
 							newCursorStart += op.text.length;
 						}
@@ -74,20 +78,20 @@ const PlainTextEditorView: FC<{ root: TextAsTree.Tree }> = ({ root }) => {
 						newValue += op.text;
 					} else {
 						// remove
-						// Adjust each cursor independently by how much of the
-						// removed range falls before that cursor position.
-						const removeEnd = readPos + op.count;
+						// Convert atom count to UTF-16 units before adjusting cursors.
+						const utf16Count = cpCountToUtf16(oldValue, readPos, op.count);
+						const removeEnd = readPos + utf16Count;
 						if (removeEnd <= selectionStart) {
-							newCursorStart -= op.count;
+							newCursorStart -= utf16Count;
 						} else if (readPos < selectionStart) {
 							newCursorStart -= selectionStart - readPos;
 						}
 						if (removeEnd <= selectionEnd) {
-							newCursorEnd -= op.count;
+							newCursorEnd -= utf16Count;
 						} else if (readPos < selectionEnd) {
 							newCursorEnd -= selectionEnd - readPos;
 						}
-						readPos += op.count;
+						readPos += utf16Count;
 					}
 				}
 

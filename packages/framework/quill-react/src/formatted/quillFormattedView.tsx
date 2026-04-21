@@ -5,6 +5,8 @@
 
 import { assert } from "@fluidframework/core-utils/internal";
 import {
+	codepointCount,
+	cpCountToUtf16,
 	type PropTreeNode,
 	unwrapPropTreeNode,
 	type UndoRedo,
@@ -351,22 +353,32 @@ function formatToFullQuillAttributes(
  * `retain` ops with `formattingChanged: true` read the current formatting from the
  * tree and produce Quill retain ops with full attribute sets so that Quill's
  * display matches the new tree state.
+ *
+ * `preEditContent` is the Quill document text (via `quill.getText()`) captured
+ * before applying these ops. It is needed to compute the UTF-16 width of removed
+ * atoms, which are no longer present in the tree after the edit.
  */
 function contentOpsToQuillDelta(
 	root: FormattedTextAsTree.Tree,
 	ops: readonly FormattedTextAsTree.FormattedTextChangeOp[],
+	preEditContent: string,
 ): QuillDeltaOp[] {
 	const quillOps: QuillDeltaOp[] = [];
-	// Position in the new tree (post-edit). Advances for retain and insert, not remove.
+	// treePos: atom index in the post-edit tree. Advances for retain and insert, not remove.
 	let treePos = 0;
+	// quillPos: UTF-16 index in preEditContent. Advances for retain and remove, not insert.
+	let quillPos = 0;
 
 	for (const op of ops) {
 		if (op.type === "retain" && !op.formattingChanged) {
 			// No formatting change — plain retain.
-			quillOps.push({ retain: op.count });
+			// Use getString to get the actual UTF-16 width of these atoms.
+			const text = root.getString(treePos, treePos + op.count);
+			quillOps.push({ retain: text.length });
 			treePos += op.count;
+			quillPos += text.length;
 		} else if (op.type === "retain") {
-			// At least one atom in this range had a deep change (e.g. formatting update).
+			// At least one character in this range had a deep change (e.g. formatting update).
 			// Read current formatting and produce retain ops with full attributes.
 			const retainEnd = treePos + op.count;
 			let i = treePos;
@@ -375,29 +387,30 @@ function contentOpsToQuillDelta(
 				if (atom === undefined) break;
 
 				if (atom.content instanceof FormattedTextAsTree.StringLineAtom) {
-					// Line atom: emit retain with character formatting, line tag, and indent.
+					// Line atom is always "\n" — 1 UTF-16 unit.
 					const attributes: Record<string, unknown> = formatToFullQuillAttributes(atom.format);
 					const lineTag = atom.content.tag.value;
 					Object.assign(attributes, lineTagToQuillAttributes[lineTag]);
-					// Always emit indent so Quill clears a previously non-zero value.
-					if (atom.content.indent) {
-						attributes.indent = atom.content.indent;
-					}
+					// Emit indent (including 0) so Quill clears a previously non-zero value.
+					// eslint-disable-next-line unicorn/no-null
+					attributes.indent = atom.content.indent > 0 ? atom.content.indent : null;
 					quillOps.push({ retain: 1, attributes });
 					i++;
+					quillPos++;
 				} else {
 					// Text atom: group consecutive atoms with the same formatting.
 					const runLength = Math.min(root.getUniformRun(i, retainEnd), retainEnd - i);
+					const text = root.getString(i, i + runLength);
 					const attributes = formatToFullQuillAttributes(atom.format);
-					quillOps.push({ retain: runLength, attributes });
+					quillOps.push({ retain: text.length, attributes });
 					i += runLength;
+					quillPos += text.length;
 				}
 			}
 			treePos = retainEnd;
 		} else if (op.type === "insert") {
 			// New characters inserted — read formatting from the tree.
-			// Codepoint count (spreading the string gives one element per codepoint).
-			const insertEnd = treePos + [...op.text].length;
+			const insertEnd = treePos + codepointCount(op.text);
 			let i = treePos;
 			while (i < insertEnd) {
 				const atom = root.charactersWithFormatting()[i];
@@ -431,9 +444,12 @@ function contentOpsToQuillDelta(
 				}
 			}
 			treePos = insertEnd;
+			// quillPos does not advance: inserts are new content not in preEditContent.
 		} else {
-			// remove
-			quillOps.push({ delete: op.count });
+			// remove: atoms are gone from the tree; use preEditContent to get UTF-16 width.
+			const utf16Count = cpCountToUtf16(preEditContent, quillPos, op.count);
+			quillOps.push({ delete: utf16Count });
+			quillPos += utf16Count;
 			// treePos does not advance — removed atoms are not in the new tree.
 		}
 	}
@@ -555,7 +571,7 @@ const FormattedTextEditorView = forwardRef<
 					["blockquote", "code-block"],
 					["clean"],
 				],
-				clipboard: [Node.ELEMENT_NODE, clipboardFormatMatcher],
+				clipboard: { matchers: [[Node.ELEMENT_NODE, clipboardFormatMatcher]] },
 			},
 		});
 
@@ -564,7 +580,7 @@ const FormattedTextEditorView = forwardRef<
 
 		// Listen to local Quill changes and apply them to the tree.
 		// We process delta operations to make targeted edits, preserving collaboration integrity.
-		// Note: Quill uses UTF-16 code units for positions, but the tree uses Unicode codepoints.
+		// Note: Quill uses UTF-16 code units for positions, but the tree uses Unicode code points.
 		// We must convert between them to handle emoji and other non-BMP characters correctly.
 		//
 		// The typing here is very fragile: if no parameter types are given,
@@ -579,14 +595,11 @@ const FormattedTextEditorView = forwardRef<
 			// If the node is not part of a branch (e.g. unhydrated), apply edits directly.
 			const branch = TreeAlpha.branch(root);
 			const applyDelta = (): void => {
-				// Helper to count Unicode codepoints in a string
-				const codepointCount = (s: string): number => [...s].length;
-
-				// Get current content for UTF-16 to codepoint position mapping
+				// Get current content for UTF-16 to code point position mapping
 				// We update this as we process operations to keep positions accurate
 				let content = root.fullString();
 				let utf16Pos = 0; // Position in UTF-16 code units (Quill's view)
-				let cpPos = 0; // Position in codepoints (tree's view)
+				let cpPos = 0; // Position in code points (tree's view)
 
 				for (const op of delta.ops) {
 					if (op.retain !== undefined) {
@@ -597,7 +610,7 @@ const FormattedTextEditorView = forwardRef<
 							typeof op.retain === "number",
 							0xcdf /* Expected retain count to be a number */,
 						);
-						// Convert UTF-16 retain count to codepoint count
+						// Convert UTF-16 retain count to code point count
 						const retainedStr = content.slice(utf16Pos, utf16Pos + op.retain);
 						const cpCount = codepointCount(retainedStr);
 
@@ -656,7 +669,7 @@ const FormattedTextEditorView = forwardRef<
 						utf16Pos += op.retain;
 						cpPos += cpCount;
 					} else if (op.delete !== undefined) {
-						// Convert UTF-16 delete count to codepoint count
+						// Convert UTF-16 delete count to code point count
 						const deletedStr = content.slice(utf16Pos, utf16Pos + op.delete);
 						const cpCount = codepointCount(deletedStr);
 
@@ -709,7 +722,7 @@ const FormattedTextEditorView = forwardRef<
 
 	// Sync Quill when tree changes externally (e.g., from remote collaborators).
 	// Subscribes to incremental content-level deltas via onContentChanged which
-	// captures both structural changes (insert/remove) and formatting changes
+	// captures both shallow changes (insert/remove) and deep changes (formatting updates)
 	// (via formattingChanged flag on retain ops), replacing the previous approach
 	// of rebuilding the full delta from the tree and diffing on every change.
 	useEffect(() => {
@@ -729,7 +742,9 @@ const FormattedTextEditorView = forwardRef<
 				}
 			} else {
 				// Translate FormattedTextChangeOps to Quill delta and apply incrementally.
-				const quillOps = contentOpsToQuillDelta(root, ops);
+				// Capture Quill's pre-edit content for remove op UTF-16 width calculation.
+				const preEditContent = quillRef.current.getText();
+				const quillOps = contentOpsToQuillDelta(root, ops, preEditContent);
 				if (quillOps.length > 0) {
 					quillRef.current.updateContents(quillOps, "api");
 				}

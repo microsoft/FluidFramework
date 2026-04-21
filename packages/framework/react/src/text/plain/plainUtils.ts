@@ -6,6 +6,31 @@
 import type { TextAsTree } from "@fluidframework/tree/internal";
 
 /**
+ * Returns the number of Unicode code points in `str`.
+ * Used to convert a JS string length (UTF-16) to tree atom counts (code points).
+ * @internal
+ */
+export function codepointCount(str: string): number {
+	return [...str].length;
+}
+
+/**
+ * Returns the number of UTF-16 code units occupied by the first `cpCount` Unicode
+ * code points in `str`, starting at UTF-16 index `start`.
+ * Used to convert tree atom counts (code points) to string positions (UTF-16).
+ * @internal
+ */
+export function cpCountToUtf16(str: string, start: number, cpCount: number): number {
+	let utf16 = 0;
+	let counted = 0;
+	while (counted < cpCount && start + utf16 < str.length) {
+		utf16 += (str.codePointAt(start + utf16) ?? 0) > 0xffff ? 2 : 1;
+		counted++;
+	}
+	return utf16;
+}
+
+/**
  * Sync `newText` into the provided `root` tree.
  * @internal
  */

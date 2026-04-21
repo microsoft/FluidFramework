@@ -4,4 +4,4 @@
  */
 
 export { MainView as PlainTextMainView } from "./plainTextView.js";
-export { syncTextToTree } from "./plainUtils.js";
+export { codepointCount, cpCountToUtf16, syncTextToTree } from "./plainUtils.js";

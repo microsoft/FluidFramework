@@ -31,7 +31,11 @@ import type {
 } from "../simple-tree/index.js";
 import { brand, mapIterable, validateIndex, validateIndexRange } from "../util/index.js";
 
-import { charactersFromString, type TextAsTree } from "./textDomain.js";
+import {
+	charactersFromString,
+	processCharactersChangedDelta,
+	type TextAsTree,
+} from "./textDomain.js";
 
 const sf = new SchemaFactoryAlpha("com.fluidframework.text.formatted");
 
@@ -169,6 +173,11 @@ class TextNode
 			// If this node does not have a corresponding branch, then it is unhydrated.
 			// I.e., it is not part of a collaborative session yet.
 			// Therefore, we don't need to run the edits as a transaction.
+			// Note: for unhydrated nodes each atom edit fires a separate `treeChanged` event,
+			// so formatting N atoms will produce N callbacks on `onContentChanged` subscribers
+			// instead of the single callback that hydrated (transacted) edits produce.
+			// This is a known limitation of unhydrated nodes; use `runTransaction` on a
+			// hydrated node (i.e. after inserting into the document) if batched events matter.
 			applyFormatting();
 		} else {
 			// Wrap all formatting operations in a single transaction for atomicity.
@@ -180,31 +189,13 @@ class TextNode
 	public onCharactersChanged(
 		callback: (ops: readonly TextAsTree.TextOp[] | undefined) => void,
 	): () => void {
-		return TreeAlpha.on(this.content, "nodeChanged", ({ delta }) => {
-			if (delta === undefined) {
-				callback(undefined);
-				return;
-			}
-			let readPos = 0;
-			const ops: TextAsTree.TextOp[] = [];
-			for (const op of delta) {
-				if (op.type === "retain") {
-					ops.push(op);
-					readPos += op.count;
-				} else if (op.type === "insert") {
-					let text = "";
-					for (let i = 0; i < op.count; i++) {
-						const atom = this.content[readPos] as FormattedTextAsTree.StringAtom;
-						text += atom.content.content;
-						readPos++;
-					}
-					ops.push({ type: "insert", text });
-				} else {
-					ops.push(op);
-				}
-			}
-			callback(ops);
-		});
+		return TreeAlpha.on(this.content, "nodeChanged", ({ delta }) =>
+			processCharactersChangedDelta(
+				delta,
+				(i) => (this.content[i] as FormattedTextAsTree.StringAtom).content.content,
+				callback,
+			),
+		);
 	}
 
 	public onContentChanged(
@@ -408,23 +399,31 @@ class StringArray extends sf.array("StringArray", [() => FormattedTextAsTree.Str
  */
 export namespace FormattedTextAsTree {
 	/**
-	 * A single operation in a content-level delta for formatted text, analogous to
-	 * {@link TextAsTree.TextOp} but carrying a `formattingChanged`
-	 * flag on retain ops. Delivered by `onContentChanged`.
+	 * A retain op in a content-level delta for formatted text.
+	 * @remarks
+	 * Extends {@link TextAsTree.TextRetainOp} with a `formattingChanged` flag indicating
+	 * that at least one character in the retained range had a formatting change
+	 * (e.g. a bold/italic/size update or line-tag change).
+	 * Consumers can use this flag to selectively re-read formatting for only the affected characters.
+	 * @sealed
+	 * @internal
+	 */
+	export interface FormattedTextRetainOp extends TextAsTree.TextRetainOp {
+		readonly formattingChanged: boolean;
+	}
+
+	/**
+	 * Describes a single change within an `onContentChanged` delta for a formatted text node.
+	 * @remarks
+	 * The `retain` variant is {@link FormattedTextAsTree.FormattedTextRetainOp}, which extends {@link TextAsTree.TextRetainOp}
+	 * with a `formattingChanged` flag. The `insert` and `remove` variants are shared with
+	 * {@link TextAsTree.TextOp}.
 	 * @internal
 	 */
 	export type FormattedTextChangeOp =
-		| {
-				readonly type: "retain";
-				readonly count: number;
-				/**
-				 * `true` when at least one atom in this retained range had a
-				 * formatting change (e.g. bold/italic/size update or line-tag change).
-				 */
-				readonly formattingChanged: boolean;
-		  }
-		| { readonly type: "insert"; readonly text: string }
-		| { readonly type: "remove"; readonly count: number };
+		| FormattedTextRetainOp
+		| TextAsTree.TextInsertOp
+		| TextAsTree.TextRemoveOp;
 
 	/**
 	 * Formatting options for characters.
@@ -446,7 +445,7 @@ export namespace FormattedTextAsTree {
 		/**
 		 * The underlying text content of this atom.
 		 * @remarks
-		 * This is typically a single unicode codepoint, and thus may contain multiple utf-16 surrogate pair code units.
+		 * This is typically a single Unicode code point, and thus may contain multiple UTF-16 surrogate pair code units.
 		 * Using longer strings is still valid. For example, so users might store whole grapheme clusters here, or even longer sections of text.
 		 * Anything combined into a single atom will be treated atomically, and can not be partially selected or formatted.
 		 * Using larger atoms and splitting them as needed is NOT a recommended approach, since this will result in poor merge behavior for concurrent edits.
@@ -614,17 +613,21 @@ export namespace FormattedTextAsTree {
 		getString(startIndex: number, endIndex?: number): string;
 
 		/**
-		 * Subscribe to all content changes on this text node, including both structural
-		 * changes (inserts/removes) and formatting changes on existing characters.
+		 * Subscribe to all content changes on this text node, including both shallow
+		 * changes (inserts/removes) and deep changes (formatting updates on existing characters).
 		 * @param callback - Called after each change with a sequence of
 		 * `FormattedTextChangeOp`s describing what changed,
 		 * or `undefined` when a delta could not be computed (e.g. during a schema upgrade).
 		 * @returns A cleanup function that unsubscribes the callback when called.
 		 * @remarks
 		 * Unlike {@link TextAsTree.Members.onCharactersChanged} which only fires on
-		 * structural array changes, this method also fires when formatting properties
-		 * of existing characters change, using the `formattingChanged` flag on retain
-		 * ops to indicate which atoms had formatting updates.
+		 * shallow changes (inserts and removes), this method also fires on deep changes —
+		 * formatting property updates on existing characters.
+		 * The `formattingChanged` flag on retain ops indicates which character ranges had formatting updates.
+		 *
+		 * All counts in the delivered ops are in Unicode code points, not UTF-16 code units.
+		 * For characters outside the Basic Multilingual Plane (e.g. emoji), one code point
+		 * corresponds to two UTF-16 code units — convert before using the counts as string indices.
 		 */
 		onContentChanged(
 			callback: (ops: readonly FormattedTextChangeOp[] | undefined) => void,
