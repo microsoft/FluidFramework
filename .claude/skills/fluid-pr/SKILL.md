@@ -55,3 +55,15 @@ EOF
 ```
 
 After creating the PR, output the PR URL so the user can navigate to it.
+
+# Updating an existing PR description
+
+You do not have permissions to edit PRs on the upstream `microsoft/FluidFramework` repo via the API. If you need to update an existing PR's title or body, write the new content to a temp file and tell the user to copy-paste it into GitHub:
+
+```bash
+cat <<'EOF' > "$TMPDIR/pr-body.md"
+<new body content>
+EOF
+```
+
+Then tell the user: "I can't edit the PR directly — I've written the updated description to `$TMPDIR/pr-body.md`. Please copy-paste it into the PR on GitHub."

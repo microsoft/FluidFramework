@@ -7,7 +7,7 @@ import * as fs from 'fs';
 import { join } from 'path';
 
 import { takeAsync } from '@fluid-private/stochastic-test-utils';
-import { BenchmarkType, benchmark } from '@fluid-tools/benchmark';
+import { BenchmarkType, benchmarkDuration, benchmarkIt } from '@fluid-tools/benchmark';
 
 import { areRevisionViewsSemanticallyEqual } from '../../EditUtilities.js';
 import { SharedTree } from '../../SharedTree.js';
@@ -47,13 +47,15 @@ export function runSummaryLoadPerfTests(title: string): void {
 		];
 
 		for (const { title, file } of tests) {
-			benchmark({
+			benchmarkIt({
 				type: BenchmarkType.Measurement,
 				title,
-				benchmarkFn: () => {
-					const { tree } = setUpTestSharedTree({ writeFormat: WriteFormat.v0_0_2 });
-					tree.loadSerializedSummary(file);
-				},
+				...benchmarkDuration({
+					benchmarkFn: () => {
+						const { tree } = setUpTestSharedTree({ writeFormat: WriteFormat.v0_0_2 });
+						tree.loadSerializedSummary(file);
+					},
+				}),
 			});
 		}
 	});

@@ -93,7 +93,7 @@ class TestDetermineVerdict:
         findings = [Finding("CRITICAL", "src/a.ts:10", "d", "f", "Security")]
         text, emoji = determine_verdict(findings)
         assert text == "Request Changes"
-        assert "red" in emoji
+        assert emoji == "❌"
 
     def test_high_in_promoted_area_means_request_changes(self) -> None:
         findings = [Finding("HIGH", "src/a.ts:10", "d", "f", "Correctness")]
@@ -109,7 +109,7 @@ class TestDetermineVerdict:
         findings = [Finding("HIGH", "src/a.ts:10", "d", "f", "Performance")]
         text, emoji = determine_verdict(findings)
         assert text == "Approve with Suggestions"
-        assert "yellow" in emoji
+        assert emoji == "⚠️"
 
     def test_three_high_in_non_promoted_means_request_changes(self) -> None:
         findings = [
@@ -124,12 +124,12 @@ class TestDetermineVerdict:
         findings = [Finding("MEDIUM", "src/a.ts:10", "d", "f", "Testing")]
         text, emoji = determine_verdict(findings)
         assert text == "Approve with Suggestions"
-        assert "yellow" in emoji
+        assert emoji == "⚠️"
 
     def test_zero_means_approve(self) -> None:
         text, emoji = determine_verdict([])
         assert text == "Approve"
-        assert "green" in emoji
+        assert emoji == "✔️"
 
 
 class TestBuildReport:
@@ -170,6 +170,18 @@ class TestBuildReport:
 
     def test_same_pr_number_yields_same_emoji_set(self) -> None:
         assert severity_labels_for_pr(12345) == severity_labels_for_pr(12345)
+
+    def test_commit_count_is_deterministic(self) -> None:
+        assert severity_labels_for_pr(42, commit_count=7) == severity_labels_for_pr(42, commit_count=7)
+
+    def test_commit_count_affects_selection(self) -> None:
+        """Commit count must actually change the hash input, not be silently ignored."""
+        for pr in range(1, 200):
+            labels_without_commit_count = severity_labels_for_pr(pr)
+            for cc in range(1, 10):
+                if labels_without_commit_count != severity_labels_for_pr(pr, commit_count=cc):
+                    return
+        pytest.fail("Could not find PR/commit combination that changes emoji set")
 
     def test_summary_uses_selected_set_titles(self) -> None:
         findings = [Finding("CRITICAL", "src/a.ts:10", "desc", "fix", "Security")]
@@ -212,6 +224,15 @@ class TestMain:
         # CRITICAL should win (sorted first), HIGH de-duped away
         assert "Same spot from security" in content
         assert "Bug from correctness" not in content
+
+    def test_commit_count_arg_accepted(self, tmp_path: Path) -> None:
+        (tmp_path / "review-correctness.md").write_text(
+            "[HIGH] src/foo.ts:10 — Bug — Fix it\n"
+        )
+        output = tmp_path / "report.md"
+        result = main([str(tmp_path), "https://example.com/run/1", "--pr-number", "123", "--commit-count", "5", "-o", str(output)])
+        assert result == 0
+        assert output.exists()
 
     def test_missing_review_files_skipped(self, tmp_path: Path) -> None:
         # Only one reviewer has output

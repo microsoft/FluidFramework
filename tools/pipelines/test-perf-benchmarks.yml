@@ -80,8 +80,7 @@ resources:
   - repository: ff_pipeline_host
     type: git
     name: ff_pipeline_host
-     # After this pipeline is merged, the staging branch below can be merged, and this can be set to default to "main".
-    ref: 'crmacomb/stagedBenchmarkUpgrade'
+    ref: main
 
 variables:
   - template: /tools/pipelines/templates/include-vars-telemetry-generator.yml@self
