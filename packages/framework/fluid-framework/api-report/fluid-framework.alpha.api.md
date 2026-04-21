@@ -2013,6 +2013,7 @@ export type TelemetryBaseEventPropertyType = string | number | boolean | undefin
 
 // @alpha
 export namespace TextAsTree {
+    // @sealed
     export interface Members {
         characterCount(): number;
         characters(): Iterable<string>;
@@ -2025,16 +2026,26 @@ export namespace TextAsTree {
     export interface Statics {
         fromString(value: string): Tree;
     }
-    export type TextOp = {
-        readonly type: "retain";
-        readonly count: number;
-    } | {
-        readonly type: "insert";
+    // @sealed
+    export interface TextInsertOp {
+        // (undocumented)
         readonly text: string;
-    } | {
-        readonly type: "remove";
+        // (undocumented)
+        readonly type: "insert";
+    }
+    export type TextOp = TextRetainOp | TextInsertOp | TextRemoveOp;
+    // @sealed
+    export interface TextRemoveOp {
         readonly count: number;
-    };
+        // (undocumented)
+        readonly type: "remove";
+    }
+    // @sealed
+    export interface TextRetainOp {
+        readonly count: number;
+        // (undocumented)
+        readonly type: "retain";
+    }
     const Tree: Statics & TreeNodeSchema<"com.fluidframework.text.Text", NodeKind, Members & TreeNode & WithType<"com.fluidframework.text.Text", NodeKind, unknown>, never, false>;
     export type Tree = Members & TreeNode & WithType<"com.fluidframework.text.Text">;
 }
