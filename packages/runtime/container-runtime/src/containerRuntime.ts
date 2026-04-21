@@ -129,9 +129,9 @@ import type {
 	ISummarizerNodeWithGC,
 	StageControlsInternal,
 	IContainerRuntimeBaseInternal,
+	IContainerRuntimeBase,
 	MinimumVersionForCollab,
 	ContainerExtensionExpectations,
-	ContainerRuntimeBaseAlpha,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	addBlobToSummary,
@@ -846,7 +846,7 @@ export async function loadContainerRuntime(
  * @legacy @alpha
  */
 export async function loadContainerRuntimeAlpha(params: LoadContainerRuntimeParams): Promise<{
-	runtime: IContainerRuntime & ContainerRuntimeBaseAlpha & IRuntime;
+	runtime: IContainerRuntime & IContainerRuntimeBase & IRuntime;
 }> {
 	return ContainerRuntime.loadRuntime2({
 		...params,

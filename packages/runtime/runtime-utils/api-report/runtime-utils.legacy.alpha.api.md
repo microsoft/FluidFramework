@@ -4,12 +4,6 @@
 
 ```ts
 
-// @alpha @legacy
-export function asLegacyAlpha(runtime: IContainerRuntimeBase): ContainerRuntimeBaseAlpha;
-
-// @alpha @legacy
-export function asLegacyAlpha(runtime: IFluidDataStoreRuntime): IFluidDataStoreRuntimeAlpha;
-
 // @public
 export function compareFluidHandles(a: IFluidHandle, b: IFluidHandle): boolean;
 

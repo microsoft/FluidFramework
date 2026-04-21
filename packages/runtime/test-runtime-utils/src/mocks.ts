@@ -925,6 +925,8 @@ export class MockFluidDataStoreRuntime
 		return this;
 	}
 
+	public readonly inStagingMode: boolean = false;
+	public readonly isDirty: boolean = false;
 	public readonly documentId: string = undefined as any;
 	public readonly id: string;
 	public readonly existing: boolean = undefined as any;

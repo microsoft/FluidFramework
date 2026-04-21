@@ -181,6 +181,27 @@ export interface IDataStore {
 }
 
 /**
+ * Controls for managing staged changes in staging mode.
+ *
+ * Provides methods to either commit or discard changes made while in staging mode.
+ *
+ * @legacy @beta
+ * @sealed
+ */
+export interface StageControls {
+	/**
+	 * Exit staging mode and commit to any changes made while in staging mode.
+	 * This will cause them to be sent to the ordering service, and subsequent changes
+	 * made by this container will additionally flow freely to the ordering service.
+	 */
+	readonly commitChanges: () => void;
+	/**
+	 * Exit staging mode and discard any changes made while in staging mode.
+	 */
+	readonly discardChanges: () => void;
+}
+
+/**
  * A reduced set of functionality of {@link @fluidframework/container-runtime-definitions#IContainerRuntime} that a data store context/data store runtime will need.
  * @privateRemarks
  * TODO: this should be merged into IFluidDataStoreContext
@@ -290,6 +311,16 @@ export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeB
 		loadingGroupIds: string[],
 		pathParts: string[],
 	): Promise<{ snapshotTree: ISnapshotTree; sequenceNumber: number }>;
+
+	/**
+	 * Enters staging mode, allowing changes to be staged before being committed or discarded.
+	 * @returns Controls for committing or discarding staged changes.
+	 */
+	enterStagingMode(): StageControls;
+	/**
+	 * Indicates whether the container is currently in staging mode.
+	 */
+	readonly inStagingMode: boolean;
 }
 
 /**
