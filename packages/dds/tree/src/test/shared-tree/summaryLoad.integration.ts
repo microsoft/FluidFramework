@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "node:assert";
-import { mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import path from "node:path";
 
 import { cleanedPackageVersion } from "@fluidframework/runtime-utils/internal";
@@ -22,6 +22,7 @@ import {
 	TreeViewConfiguration,
 	type SharedTreeOptions,
 } from "../../index.js";
+import { regenerateSnapshots } from "../snapshots/index.js";
 import { testSrcPath } from "../testSrcPath.cjs";
 
 const outputDir = path.join(testSrcPath, "shared-tree", "summary-load-snapshots");
@@ -32,9 +33,12 @@ class TestSchema extends sf.object("parent", {
 	child: sf.array("nodes", sf.object("child", { count: sf.number })),
 }) {}
 
-async function generateOldSummaries(): Promise<void> {
-	// Clean and recreate the output directory each run
-	rmSync(outputDir, { recursive: true, force: true });
+async function regenerateOldSummaries(): Promise<void> {
+	if (existsSync(outputDir)) {
+		console.log(`removing snapshot directory: ${outputDir}`);
+		rmSync(outputDir, { recursive: true, force: true });
+	}
+	mkdirSync(outputDir, { recursive: true });
 
 	for (const treeEncodeType of [
 		TreeCompressionStrategy.Compressed,
@@ -62,14 +66,19 @@ async function generateOldSummaries(): Promise<void> {
 			view.root.child.push({ count: 2 });
 
 			const { summary } = await tree.summarize(true);
-			writeFileSync(path.join(dir, "singleTree.json"), JSON.stringify(summary, undefined, 2));
+			writeFileSync(
+				path.join(dir, `singleTree-${treeEncodeKey}-${versionKey}.json`),
+				JSON.stringify(summary, undefined, 2),
+			);
 		}
 	}
 }
 
 describe("Summary load regression tests", () => {
 	before(async () => {
-		await generateOldSummaries();
+		if (regenerateSnapshots) {
+			await regenerateOldSummaries();
+		}
 	});
 
 	for (const treeEncodeType of [
@@ -84,7 +93,7 @@ describe("Summary load regression tests", () => {
 						outputDir,
 						treeEncodeKey,
 						versionKey,
-						"singleTree.json",
+						`singleTree-${treeEncodeKey}-${versionKey}.json`,
 					);
 					const summaryJson = readFileSync(summaryPath, "utf8");
 
