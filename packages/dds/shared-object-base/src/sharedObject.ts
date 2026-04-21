@@ -213,7 +213,6 @@ export abstract class SharedObjectCore<
 				["local", { localOp: true }],
 				["remote", { localOp: false }],
 			]),
-			// Add Info Here
 		);
 		const callbacksHelper = new SampledTelemetryHelper<boolean>(
 			{
@@ -223,7 +222,6 @@ export abstract class SharedObjectCore<
 			this.logger,
 			this.mc.config.getNumber("Fluid.SharedObject.DdsCallbacksTelemetrySampling") ?? 1000,
 			true,
-			// Add Info here
 		);
 
 		this.runtime.once("dispose", () => {

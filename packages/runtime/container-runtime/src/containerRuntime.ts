@@ -2140,14 +2140,6 @@ export class ContainerRuntime
 		// (We have to call flush _before_ processing a runtime op, but after is ok for non-runtime op)
 		this.deltaManager.on("op", () => this.flush());
 
-		// logging hardware telemetry
-		this.baseLogger.send({
-			category: "generic",
-			eventName: "DeviceSpec",
-			...getDeviceSpec(),
-			// Add info here or maybe move into container loadStats
-		});
-
 		this.mc.logger.sendTelemetryEvent({
 			eventName: "ContainerLoadStats",
 			...this.createContainerMetadata,
@@ -2170,6 +2162,8 @@ export class ContainerRuntime
 			groupedBatchingEnabled: this.groupedBatchingEnabled,
 			initialSequenceNumber: this.deltaManager.initialSequenceNumber,
 			minVersionForCollab: this.minVersionForCollab,
+			// logging hardware telemetry
+			deviceSpec: { ...getDeviceSpec() },
 		});
 
 		ReportOpPerfTelemetry(this.clientId, this._deltaManager, this, this.baseLogger);

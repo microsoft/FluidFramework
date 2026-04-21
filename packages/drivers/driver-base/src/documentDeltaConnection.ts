@@ -413,14 +413,17 @@ export class DocumentDeltaConnection
 	 * indicating an error-triggered disconnect. If not provided, the connection will be closed cleanly.
 	 */
 	public dispose(error?: Error): void {
-		this.logger.sendTelemetryEvent({
-			eventName: "ClientClosingDeltaConnection",
-			driverVersion,
-			details: JSON.stringify({
-				...this.getConnectionDetailsProps(),
-			}),
-			// Add info here
-		});
+		this.logger.sendTelemetryEvent(
+			{
+				eventName: "ClientClosingDeltaConnection",
+				driverVersion,
+				details: JSON.stringify({
+					...this.getConnectionDetailsProps(),
+				}),
+			},
+			undefined, // error
+			LogLevel.info, // logLevel
+		);
 		if (isFluidError(error)) {
 			const fluidError = normalizeError(error, {
 				props: { driverVersion },

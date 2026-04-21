@@ -567,7 +567,7 @@ export function requestOps(
 		eventName: "GetDeltas",
 		...propsTotal,
 		reason: scenarioName,
-		// make info here
+		// Make info here
 	});
 
 	const manager = new ParallelRequests<ISequencedDocumentMessage>(

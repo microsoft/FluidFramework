@@ -2160,9 +2160,9 @@ export class Container
 				audienceSize: this._protocolHandler?.audience.getMembers().size,
 				isDirty: this.isDirty,
 				...this._deltaManager.connectionProps,
-				// Make this info somehow?
 			},
 			reason?.error,
+			LogLevel.info,
 		);
 
 		if (value === ConnectionState.Connected) {
