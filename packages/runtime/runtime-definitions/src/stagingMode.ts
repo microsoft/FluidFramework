@@ -44,7 +44,8 @@ export interface StageControlsInternal extends StageControls {
 }
 
 /**
- * Experimental extension of {@link IContainerRuntimeBase} to support staging mode.
+ * Internal extension of {@link IContainerRuntimeBase} whose {@link IContainerRuntimeBaseInternal.enterStagingMode}
+ * returns {@link StageControlsInternal} (which exposes internal commit options such as squash)
  * @internal
  */
 export interface IContainerRuntimeBaseInternal extends IContainerRuntimeBase {
