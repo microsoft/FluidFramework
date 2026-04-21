@@ -1,5 +1,7 @@
 # @fluid-tools/benchmark
 
+## 0.58.0
+
 ## 0.57.0
 
 -   Mocha dependency updated from v10 to v11.
