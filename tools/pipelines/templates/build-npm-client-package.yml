@@ -129,6 +129,12 @@ parameters:
   type: boolean
   default: false
 
+# The commit SHA to use for the ff_pipeline_host repository resource.
+# Individual pipelines can override this to pin to a different commit.
+- name: ff_pipeline_host_ref
+  type: string
+  default: '11f135dcc8dfa42519157bb460fdcb345c19a477'
+
 # The `resources` specify the location and version of the 1ES Pipeline Template.
 resources:
   repositories:
@@ -140,7 +146,7 @@ resources:
       type: git
       # Specify internal project, since this pipeline runs in both the public and internal projects
       name: internal/ff_pipeline_host
-      ref: '11f135dcc8dfa42519157bb460fdcb345c19a477'
+      ref: ${{ parameters.ff_pipeline_host_ref }}
 
   # Listing a pipeline as a resource makes its artifacts available for download in any job
   pipelines:

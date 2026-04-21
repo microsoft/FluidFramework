@@ -22,6 +22,7 @@ resources:
   - repository: ff_pipeline_host
     type: git
     name: ff_pipeline_host
+    # Keep this ref in sync with ff_pipeline_host_ref default in tools/pipelines/templates/build-npm-package.yml
     ref: '11f135dcc8dfa42519157bb460fdcb345c19a477'
 
 
