@@ -220,7 +220,15 @@ export class BasicChunkCursor extends SynchronousCursor implements ChunkedCursor
 		return (this.siblingStack[height] as readonly TreeChunk[])[index] as BasicChunk;
 	}
 
-	// Returns the floor of half the height passed in, or half of `siblingStack.length` if no height is provided.
+	/**
+	 * Converts a {@link height}, which contains field and node levels, into the corresponding depth/index
+	 * for the node-only stacks ({@link indexOfChunkStack} and {@link indexWithinChunkStack}), which are
+	 * only pushed on node-level transitions.
+	 *
+	 * @param height - A depth in {@link siblingStack} to convert. Defaults to {@link siblingStack}'s
+	 * current length, which gives the current depth of the node-only stacks.
+	 * @returns `floor(height / 2)` — the number of node levels at or below the given stack height.
+	 */
 	private getNodeOnlyHeightFromHeight(height: number = this.siblingStack.length): number {
 		// The bitwise shift computes the floor, which is valid assuming the depth is less than 2^31, which seems safe.
 		// eslint-disable-next-line no-bitwise
@@ -546,6 +554,16 @@ export class BasicChunkCursor extends SynchronousCursor implements ChunkedCursor
 		return (this.siblings as TreeChunk[])[this.indexOfChunk] as BasicChunk;
 	}
 
+	/**
+	 * Returns the chunks that make up the field the cursor is currently in.
+	 *
+	 * @remarks At the root, this is {@link root} directly. Otherwise, the cursor must be in
+	 * {@link CursorLocationType.Fields} mode, and the result is looked up on the parent node using
+	 * the current field key. The parent node is the {@link BasicChunk} in the node array at the top
+	 * of {@link siblingStack} while we are in {@link CursorLocationType.Fields} mode. We need the
+	 * parent since a field's chunks are stored on the parent node's {@link BasicChunk.fields} map,
+	 * not on the cursor itself.
+	 */
 	private getField(): readonly TreeChunk[] {
 		if (this.siblingStack.length === 0) {
 			return this.root;
