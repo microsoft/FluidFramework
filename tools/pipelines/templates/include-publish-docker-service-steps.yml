@@ -9,7 +9,7 @@ parameters:
 
 - name: pool
   type: object
-  default: Small-1ES
+  default: Small-eastus2
 
 - name: containerRegistry
   type: string
