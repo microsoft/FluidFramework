@@ -654,6 +654,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 			this.logger.sendTelemetryEvent({
 				eventName: "ConnectionAttemptInfo",
 				...this.getConnectionDetailsProps(),
+				// Make info here
 			});
 		});
 	}

@@ -61,6 +61,7 @@ export const toRedirectTable = (
 		eventName: "AttachmentBlobsLoaded",
 		count: blobManagerLoadInfo.ids?.length ?? 0,
 		redirectTable: blobManagerLoadInfo.redirectTable?.length,
+		// Add info here
 	});
 	const redirectTable = new Map<string, string>(blobManagerLoadInfo.redirectTable);
 	if (blobManagerLoadInfo.ids !== undefined) {

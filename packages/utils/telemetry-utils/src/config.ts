@@ -253,6 +253,7 @@ export class CachedConfigProvider implements IConfigProvider {
 							configName: name,
 							configValue: JSON.stringify(parsed),
 						}),
+						// Add info here
 					});
 					return parsed;
 				}

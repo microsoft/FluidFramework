@@ -312,6 +312,7 @@ class OpPerfTelemetry {
 				? formatTick(this.connectionStartTime - this.bootTime)
 				: undefined,
 			firstConnection: this.firstConnection,
+			// Make info somehow
 		});
 	}
 

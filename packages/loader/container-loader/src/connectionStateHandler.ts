@@ -694,6 +694,7 @@ export class ConnectionStateHandler implements IConnectionStateHandler {
 						inQuorum: currentClientInQuorum,
 						waitingForLeaveOp: this.waitingForLeaveOp,
 						hadOutstandingOps: this.handler.shouldClientJoinWrite(),
+						// make info somehow
 					}),
 				});
 			}

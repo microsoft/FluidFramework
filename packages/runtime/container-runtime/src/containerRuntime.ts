@@ -2145,6 +2145,7 @@ export class ContainerRuntime
 			category: "generic",
 			eventName: "DeviceSpec",
 			...getDeviceSpec(),
+			// Add info here or maybe move into container loadStats
 		});
 
 		this.mc.logger.sendTelemetryEvent({

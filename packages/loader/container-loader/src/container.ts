@@ -2160,6 +2160,7 @@ export class Container
 				audienceSize: this._protocolHandler?.audience.getMembers().size,
 				isDirty: this.isDirty,
 				...this._deltaManager.connectionProps,
+				// Make this info somehow?
 			},
 			reason?.error,
 		);
@@ -2393,6 +2394,7 @@ export class Container
 				this.subLogger,
 				{ eventName: "CodeLoad" },
 				async () => this.codeLoader.load(codeDetails),
+				// Make this info somehow?
 			);
 
 			this._loadedModule = {

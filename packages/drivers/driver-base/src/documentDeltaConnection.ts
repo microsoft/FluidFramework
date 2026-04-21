@@ -419,6 +419,7 @@ export class DocumentDeltaConnection
 			details: JSON.stringify({
 				...this.getConnectionDetailsProps(),
 			}),
+			// Add info here
 		});
 		if (isFluidError(error)) {
 			const fluidError = normalizeError(error, {
