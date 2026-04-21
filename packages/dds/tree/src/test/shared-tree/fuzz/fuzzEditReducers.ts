@@ -482,7 +482,7 @@ function navigateToNode(tree: FuzzView, path: KeyDownPath): TreeNode {
 	for (const pathStep of path) {
 		if (typeof pathStep === "number") {
 			currentNode = (currentNode as ArrayChildren).at(pathStep) as TreeNode;
-			break;
+			continue;
 		}
 
 		switch (pathStep) {
