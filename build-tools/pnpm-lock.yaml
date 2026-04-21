@@ -292,6 +292,9 @@ importers:
       table:
         specifier: ^6.9.0
         version: 6.9.0
+      true-myth:
+        specifier: ^9.3.1
+        version: 9.3.1
       ts-morph:
         specifier: ^22.0.0
         version: 22.0.0
@@ -5666,6 +5669,10 @@ packages:
 
   trough@2.2.0:
     resolution: {integrity: sha512-tmMpK00BjZiUyVyvrBK7knerNgmgvcV/KLVyuma/SC+TQN167GrMRciANTz09+k3zW8L8t60jWO1GpfkZdjTaw==}
+
+  true-myth@9.3.1:
+    resolution: {integrity: sha512-a+u2L3y6XF3HLBJrSox8pRmod2o/3k28hpXX8OD56mLnffmXOwzQFBDBT0gy8ROIReLvdVvMPtQYtCsgFldfMw==}
+    engines: {node: 18.* || >= 20.*}
 
   ts-deepmerge@7.0.3:
     resolution: {integrity: sha512-Du/ZW2RfwV/D4cmA5rXafYjBQVuvu4qGiEEla4EmEHVHgRdx68Gftx7i66jn2bzHPwSVZY36Ae6OuDn9el4ZKA==}
@@ -11867,6 +11874,8 @@ snapshots:
   trim-lines@3.0.1: {}
 
   trough@2.2.0: {}
+
+  true-myth@9.3.1: {}
 
   ts-deepmerge@7.0.3: {}
 
