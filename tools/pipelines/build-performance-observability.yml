@@ -77,7 +77,7 @@ extends:
     customBuildTags:
     - ES365AIMigrationTooling
     pool:
-      name: Small-eastus2
+      name: Large-tests-eastus2
       os: linux
     sdl:
       sourceAnalysisPool:

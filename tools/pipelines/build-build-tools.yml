@@ -117,7 +117,7 @@ extends:
     - test:copyresults
     taskLint: true
     taskLintName: ci:eslint
-    poolBuild: Large-tests-eastus2
+    poolBuild: Large-eastus2
     checkoutSubmodules: true
     taskBundleAnalysis: false
     checks:

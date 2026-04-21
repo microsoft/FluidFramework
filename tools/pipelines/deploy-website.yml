@@ -88,7 +88,7 @@ stages:
     - job: debug_variables
       displayName: Show Variables
       dependsOn: [] # run in parallel
-      pool: Small-eastus2
+      pool: Large-tests-eastus2
       steps:
         - checkout: none
         - script: |
@@ -109,7 +109,7 @@ stages:
     - job: component_detection
       displayName: Component Detection
       dependsOn: [] # run in parallel
-      pool: Small-eastus2
+      pool: Large-tests-eastus2
       steps:
         - task: ComponentGovernanceComponentDetection@0
           displayName: Component Detection
@@ -121,7 +121,7 @@ stages:
 
     - job: build_site
       displayName: 'Build website'
-      pool: Large-tests-eastus2
+      pool: Large-eastus2
       steps:
         - checkout: self
           path: ${{ variables.FluidFrameworkDirectory }}
@@ -190,7 +190,7 @@ stages:
 - stage: guardian
   displayName: Guardian
   dependsOn: [] # run in parallel
-  pool: Large-tests-eastus2
+  pool: Large-eastus2
   jobs:
     - job: guardian_tasks
       displayName: Guardian tasks
@@ -256,7 +256,7 @@ stages:
 - stage: link_check
   displayName: 'Website Link Check'
   dependsOn: [] # run in parallel
-  pool: Large-tests-eastus2
+  pool: Large-eastus2
   jobs:
     - job: link_check
       displayName: 'Website Link Check'
@@ -301,7 +301,7 @@ stages:
 
 - stage: deploy
   displayName: 'Deploy website'
-  pool: Small-eastus2
+  pool: Large-tests-eastus2
   dependsOn: ['build', 'guardian']
   variables:
     deployOverrideVar: ${{ parameters.deployOverride }}

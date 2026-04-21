@@ -53,7 +53,7 @@ parameters:
 
 - name: poolBuild
   type: object
-  default: Small-eastus2
+  default: Large-tests-eastus2
 
 - name: checkoutSubmodules
   type: boolean

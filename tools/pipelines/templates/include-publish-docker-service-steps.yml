@@ -9,7 +9,7 @@ parameters:
 
 - name: pool
   type: object
-  default: Small-eastus2
+  default: Large-tests-eastus2
 
 - name: containerTag
   type: string
