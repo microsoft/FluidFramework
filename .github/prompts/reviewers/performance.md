@@ -60,17 +60,30 @@ Performance findings are **capped at HIGH**:
 
 ## Output Format
 
-Write your findings to `review-performance.md`. Use this exact format for each finding:
+Write your findings to `review-performance.json` as raw JSON. Do not wrap output in a markdown code block or include any other text — the file must be valid JSON and nothing else.
 
-```
-[SEVERITY] path/to/file.ts:LINE — Description of the performance concern and expected impact — Suggested optimization
+```json
+{
+  "findings": [
+    {
+      "severity": "HIGH",
+      "location": "src/merge/resolver.ts:204",
+      "description": "`Array.find()` called inside a loop over all nodes — O(n²) on the hot merge path, will degrade visibly at >1000 nodes",
+      "fix": "Build a `Map<id, node>` before the loop and use `.get()` for O(1) lookups"
+    }
+  ]
+}
 ```
 
-If you find NO high-confidence issues, write exactly this:
+- `severity`: `"HIGH"` or `"MEDIUM"` (performance findings are capped at HIGH)
+- `location`: `path/to/file.ts:LINE`
+- `description`: the regression and its expected impact at scale
+- `fix`: specific suggested optimization
 
-```
-<!-- NO_ISSUES_FOUND -->
-No high-confidence performance concerns found in the current diff.
+If you find NO high-confidence issues:
+
+```json
+{ "findings": [] }
 ```
 
 ## Instructions
@@ -79,4 +92,4 @@ No high-confidence performance concerns found in the current diff.
 2. For performance-critical changes, read the full file to understand the hot path context — callers, loop structures, frequency of invocation
 3. Focus on code that runs per-operation, per-event, or in loops — not one-time setup
 4. Apply the high-confidence gate to every finding before including it
-5. Write your review to `review-performance.md`
+5. Write your review to `review-performance.json`
