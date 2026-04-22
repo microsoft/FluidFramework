@@ -5,7 +5,13 @@
 
 import { strict as assert } from "node:assert";
 
-import { BenchmarkType, benchmark, isInPerformanceTestingMode } from "@fluid-tools/benchmark";
+import {
+	BenchmarkType,
+	TestType,
+	benchmarkIt,
+	collectDurationData,
+	isInPerformanceTestingMode,
+} from "@fluid-tools/benchmark";
 import { emulateProductionBuild } from "@fluidframework/core-utils/internal";
 
 import {
@@ -87,16 +93,19 @@ function bench(
 						});
 					}
 
-					benchmark({
+					benchmarkIt({
 						type: BenchmarkType.Perspective,
+						testType: TestType.ExecutionTime,
 						title: "Clone JS Object",
-						before: () => {
+						run: async () => {
 							const cloned = clone(json);
 							assert.deepEqual(cloned, json, "clone() must return an equivalent tree.");
 							assert.notEqual(cloned, json, "clone() must not return the same tree instance.");
-						},
-						benchmarkFn: () => {
-							clone(json);
+							return collectDurationData({
+								benchmarkFn: () => {
+									clone(json);
+								},
+							});
 						},
 					});
 
@@ -182,20 +191,23 @@ function bench(
 						describe(factoryName, () => {
 							for (const [consumerName, consumer] of consumers) {
 								let cursor: ITreeCursor;
-								benchmark({
+								benchmarkIt({
 									type: emulateProduction
 										? BenchmarkType.Measurement
 										: BenchmarkType.Perspective,
+									testType: TestType.ExecutionTime,
 									title: `${consumerName}(${factoryName})`,
-									before: () => {
+									run: async () => {
 										cursor = factory();
 										// TODO: validate behavior
 										// assert.deepEqual(cursorToJsonObject(cursor), json, "data should round trip through json");
 										// assert.deepEqual(
 										//     jsonableTreeFromCursor(cursor), encodedTree, "data should round trip through jsonable");
-									},
-									benchmarkFn: () => {
-										consumer(cursor, dataConsumer);
+										return collectDurationData({
+											benchmarkFn: () => {
+												consumer(cursor, dataConsumer);
+											},
+										});
 									},
 								});
 							}

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { readFile } from "node:fs/promises";
+import { readFile, writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import * as readline from "node:readline/promises";
 import { getResolvedFluidRoot } from "@fluidframework/build-tools";
@@ -15,9 +15,8 @@ import chalk from "picocolors";
 import { type AliasProposal, runAiSession } from "../library/ai/copilotSession.js";
 import { BaseCommand } from "../library/commands/base.js";
 
-const FALLBACK_MODEL = "claude-haiku-4-5-20251001";
-export const supportedAliases = ["claude", "dev", "copilot", "oce", "ai-reset"] as const;
-const supportedAliasSet = new Set<string>(supportedAliases);
+const FALLBACK_MODEL = "claude-haiku-4.5";
+export const SUPPORTED_ALIASES = ["claude", "dev", "copilot", "oce", "ai-reset"] as const;
 
 export default class AiCommand extends BaseCommand<typeof AiCommand> {
 	static readonly description =
@@ -46,6 +45,11 @@ export default class AiCommand extends BaseCommand<typeof AiCommand> {
 				"GitHub token for the launcher assistant. Defaults to COPILOT_GITHUB_TOKEN, GH_TOKEN, or GITHUB_TOKEN.",
 			env: "COPILOT_GITHUB_TOKEN",
 		}),
+		launchFile: Flags.file({
+			description:
+				"Write the launch command to this file instead of executing it. " +
+				"Used by shell wrappers to run the alias as a separate process.",
+		}),
 		model: Flags.string({
 			description:
 				"The AI model to use for the launcher assistant. " +
@@ -72,10 +76,21 @@ export default class AiCommand extends BaseCommand<typeof AiCommand> {
 			`Model: ${model} (source: ${flags.model ? "flag" : promptFile.model ? "frontmatter" : "fallback"})`,
 		);
 
-		const prompt = promptFile.template
-			.replaceAll("{{aliasFileContent}}", aliasFile.content)
-			.replaceAll("{{gettingStartedContent}}", gettingStartedContent ?? "");
-		const githubToken = flags.githubToken ?? process.env.GH_TOKEN ?? process.env.GITHUB_TOKEN;
+		const allowedAliasSet = new Set<string>(SUPPORTED_ALIASES);
+
+		const prompt = buildLauncherPrompt({
+			template: promptFile.template,
+			aliasFileContent: aliasFile.content,
+			gettingStartedContent,
+			allowedAliases: [...SUPPORTED_ALIASES],
+		});
+		const githubToken =
+			flags.githubToken ??
+			process.env.GH_TOKEN ??
+			// Preferred over GITHUB_TOKEN because in Codespaces GITHUB_TOKEN is a
+			// repo-scoped token that lacks Copilot permissions.
+			(await resolveGhAuthToken()) ??
+			process.env.GITHUB_TOKEN;
 
 		const rl = readline.createInterface({
 			input: process.stdin,
@@ -109,6 +124,9 @@ export default class AiCommand extends BaseCommand<typeof AiCommand> {
 						const answer = await rl.question(chalk.gray("\n> "));
 						return normalizePromptAnswer(answer, choices);
 					},
+					info: (message: string) => {
+						log(chalk.dim(message));
+					},
 					verbose: (message: string) => {
 						verbose(message);
 					},
@@ -130,7 +148,7 @@ export default class AiCommand extends BaseCommand<typeof AiCommand> {
 		}
 
 		try {
-			assertSafeAliasSelection(proposal);
+			assertSafeAliasSelection(proposal, allowedAliasSet);
 		} catch (error: unknown) {
 			this.error(error instanceof Error ? error.message : String(error), { exit: 1 });
 		}
@@ -158,14 +176,32 @@ export default class AiCommand extends BaseCommand<typeof AiCommand> {
 
 		const shellCommand = `source ${shellQuote(aliasFile.path)} && ${formattedCommand}`;
 		this.verbose(`Shell command: ${shellCommand}`);
+
 		this.log(`\nLaunching ${chalk.green(proposal.alias)}...\n`);
+
+		// When --launchFile is provided, write the command to that file and exit
+		// so a shell wrapper can run it as a separate, independent process.
+		if (flags.launchFile !== undefined) {
+			try {
+				await writeFile(flags.launchFile, shellCommand, "utf8");
+			} catch (error: unknown) {
+				const message = error instanceof Error ? error.message : String(error);
+				this.error(`Failed to write launch file ${flags.launchFile}: ${message}`, {
+					exit: 1,
+				});
+			}
+			return;
+		}
 
 		try {
 			const result = await execa("bash", ["-c", shellCommand], {
 				stdio: "inherit",
 				cwd: process.cwd(),
 			});
-			this.exit(result.exitCode ?? 0);
+			// Don't use this.exit() here — it throws an EEXIT error that would be
+			// caught by the catch block below and reported as a launch failure.
+			process.exitCode = result.exitCode ?? 0;
+			return;
 		} catch (error: unknown) {
 			const execError = error as execa.ExecaError;
 			const exitCode = execError.exitCode ?? 1;
@@ -271,30 +307,52 @@ export default class AiCommand extends BaseCommand<typeof AiCommand> {
 					model: typeof data.model === "string" ? data.model : undefined,
 				};
 			} catch (error) {
-				this.warn(
+				this.warning(
 					`Failed to parse launcher-prompt.md frontmatter; using raw file contents instead: ${String(error)}`,
 				);
 				return { template: raw.trim() };
 			}
 		}
 
-		this.warn("launcher-prompt.md not found; using hardcoded fallback prompt.");
+		this.warning("launcher-prompt.md not found; using hardcoded fallback prompt.");
 		return {
 			template:
 				"You are a launcher assistant. Ask the user what they want to do, " +
 				"then call select_alias with the best alias from the alias definitions.\n\n" +
 				"## Alias Definitions\n\n```bash\n{{aliasFileContent}}\n```\n\n" +
+				"## Allowed Aliases for This Session\n\n{{allowedAliasesContent}}\n\n" +
 				"## Getting Started Guide\n\n{{gettingStartedContent}}",
 		};
 	}
 }
 
-export function assertSafeAliasSelection(proposal: AliasProposal): void {
-	if (!supportedAliasSet.has(proposal.alias)) {
+export function assertSafeAliasSelection(
+	proposal: AliasProposal,
+	allowedAliases: Set<string>,
+): void {
+	if (!allowedAliases.has(proposal.alias)) {
 		throw new Error(
-			`Unsupported AI alias selection: ${proposal.alias}. Allowed aliases: ${supportedAliases.join(", ")}`,
+			`Unsupported AI alias selection: ${proposal.alias}. Allowed aliases: ${[...allowedAliases].sort().join(", ")}`,
 		);
 	}
+}
+
+export function buildLauncherPrompt({
+	template,
+	aliasFileContent,
+	gettingStartedContent,
+	allowedAliases,
+}: {
+	template: string;
+	aliasFileContent: string;
+	gettingStartedContent?: string;
+	allowedAliases: readonly string[];
+}): string {
+	const allowedAliasesContent = allowedAliases.map((alias) => `- \`${alias}\``).join("\n");
+	return template
+		.replaceAll("{{aliasFileContent}}", aliasFileContent)
+		.replaceAll("{{gettingStartedContent}}", gettingStartedContent ?? "")
+		.replaceAll("{{allowedAliasesContent}}", allowedAliasesContent);
 }
 
 function formatAliasCommand(proposal: AliasProposal): string {
@@ -338,6 +396,20 @@ function isUserCancellation(error: unknown): boolean {
 			error.name === "AbortError" ||
 			/cancel|canceled|cancelled|aborted|sigint/i.test(error.message))
 	);
+}
+
+/**
+ * Attempts to resolve a GitHub token from the GitHub CLI (`gh auth token`).
+ * Returns undefined if `gh` is not installed or not authenticated.
+ */
+async function resolveGhAuthToken(): Promise<string | undefined> {
+	try {
+		const { stdout } = await execa("gh", ["auth", "token"]);
+		const token = stdout.trim();
+		return token.length > 0 ? token : undefined;
+	} catch {
+		return undefined;
+	}
 }
 
 async function tryReadFile(filePath: string): Promise<string | undefined> {

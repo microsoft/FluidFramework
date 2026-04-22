@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { BenchmarkType, benchmark } from '@fluid-tools/benchmark';
+import { BenchmarkType, benchmarkDuration, benchmarkIt } from '@fluid-tools/benchmark';
 
 import { assertIsStableId, generateStableId } from '../UuidUtilities.js';
 import { defaultClusterCapacity } from '../id-compressor/IdCompressor.js';
@@ -23,53 +23,67 @@ describe('NumericUuid Perf', () => {
 	const uuid3 = numericUuidFromStableId(stableId3);
 	const deltaMax = 2 ** 52 - 1;
 	const type = BenchmarkType.Measurement;
-	benchmark({
+	benchmarkIt({
 		type,
 		title: `convert uuid string to numeric uuid`,
-		benchmarkFn: () => {
-			numericUuidFromStableId(stableId);
-		},
+		...benchmarkDuration({
+			benchmarkFn: () => {
+				numericUuidFromStableId(stableId);
+			},
+		}),
 	});
-	benchmark({
+	benchmarkIt({
 		type,
 		title: `incrementing a uuid`,
-		benchmarkFn: () => {
-			incrementUuid(uuid, defaultClusterCapacity);
-		},
+		...benchmarkDuration({
+			benchmarkFn: () => {
+				incrementUuid(uuid, defaultClusterCapacity);
+			},
+		}),
 	});
-	benchmark({
+	benchmarkIt({
 		type,
 		title: `convert a uuid string into a session uuid`,
-		benchmarkFn: () => {
-			numericUuidFromStableId(stableId);
-		},
+		...benchmarkDuration({
+			benchmarkFn: () => {
+				numericUuidFromStableId(stableId);
+			},
+		}),
 	});
-	benchmark({
+	benchmarkIt({
 		type,
 		title: `convert an numeric uuid into a uuid string`,
-		benchmarkFn: () => {
-			stableIdFromNumericUuid(uuid);
-		},
+		...benchmarkDuration({
+			benchmarkFn: () => {
+				stableIdFromNumericUuid(uuid);
+			},
+		}),
 	});
-	benchmark({
+	benchmarkIt({
 		type,
 		title: `compute the delta between two distant numeric uuids`,
-		benchmarkFn: () => {
-			getPositiveDelta(uuid, uuid2, deltaMax);
-		},
+		...benchmarkDuration({
+			benchmarkFn: () => {
+				getPositiveDelta(uuid, uuid2, deltaMax);
+			},
+		}),
 	});
-	benchmark({
+	benchmarkIt({
 		type,
 		title: `compute the delta between two close numeric uuids`,
-		benchmarkFn: () => {
-			getPositiveDelta(uuid2, uuid3, deltaMax);
-		},
+		...benchmarkDuration({
+			benchmarkFn: () => {
+				getPositiveDelta(uuid2, uuid3, deltaMax);
+			},
+		}),
 	});
-	benchmark({
+	benchmarkIt({
 		type,
 		title: `generate a random v4 uuid string`,
-		benchmarkFn: () => {
-			generateStableId();
-		},
+		...benchmarkDuration({
+			benchmarkFn: () => {
+				generateStableId();
+			},
+		}),
 	});
 });

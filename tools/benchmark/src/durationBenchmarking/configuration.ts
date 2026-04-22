@@ -24,7 +24,7 @@ export type DurationBenchmark =
  * @public
  * @input
  */
-export interface DurationBenchmarkSync extends HookArguments, BenchmarkTimingOptions, OnBatch {
+export interface DurationBenchmarkSync extends BenchmarkTimingOptions {
 	/**
 	 * The (synchronous) function to benchmark.
 	 */
@@ -36,7 +36,7 @@ export interface DurationBenchmarkSync extends HookArguments, BenchmarkTimingOpt
  * @public
  * @input
  */
-export interface DurationBenchmarkAsync extends HookArguments, BenchmarkTimingOptions, OnBatch {
+export interface DurationBenchmarkAsync extends BenchmarkTimingOptions {
 	/**
 	 * The asynchronous function to benchmark. The time measured includes all time spent until the returned promise is
 	 * resolved. This includes the event loop or processing other events. For example, a test which calls `setTimeout`
@@ -60,6 +60,21 @@ export interface BenchmarkTimer<T> {
 	 * Records the duration of a completed batch and advances internal state.
 	 * @param duration - The elapsed time for the batch in seconds. Compute this using {@link Timer.toSeconds}.
 	 * @returns `true` if another batch should be run, `false` if data collection is complete.
+	 * @example
+	 * ```typescript
+	 * benchmarkFnCustom: async (state) => {
+	 * 	let duration: number;
+	 * 	do {
+	 * 		// Per-batch setup (not timed)
+	 * 		const before = state.timer.now();
+	 * 		for (let i = 0; i < state.iterationsPerBatch; i++) {
+	 * 			// operation
+	 * 		}
+	 * 		const after = state.timer.now();
+	 * 		duration = state.timer.toSeconds(before, after);
+	 * 	} while (state.recordBatch(duration));
+	 * },
+	 * ```
 	 */
 	recordBatch(duration: number): boolean;
 
@@ -68,8 +83,70 @@ export interface BenchmarkTimer<T> {
 	 * @remarks
 	 * Use this when no per-batch setup or teardown is needed outside the measured callback.
 	 * Implemented in terms of the other public APIs on this interface.
+	 * @example
+	 * ```typescript
+	 * benchmarkFnCustom: async (state) => {
+	 * 	let running: boolean;
+	 * 	do {
+	 * 		// Per-batch setup (not timed)
+	 * 		running = state.timeBatch(() => { /* operation *\/ });
+	 * 		// Per-batch teardown (not timed)
+	 * 	} while (running);
+	 * },
+	 * ```
 	 */
 	timeBatch(callback: () => void): boolean;
+
+	/**
+	 * Async variant of {@link BenchmarkTimer.timeBatch}: times `callback` running `iterationsPerBatch` times, records the batch, and returns the result of {@link BenchmarkTimer.recordBatch}.
+	 * @remarks
+	 * Use this when no per-batch setup or teardown is needed outside the measured async callback.
+	 * Implemented in terms of the other public APIs on this interface.
+	 * @example
+	 * ```typescript
+	 * benchmarkFnCustom: async (state) => {
+	 * 	let running: boolean;
+	 * 	do {
+	 * 		// Per-batch setup (not timed)
+	 * 		running = await state.timeBatchAsync(async () => { /* operation *\/ });
+	 * 		// Per-batch teardown (not timed)
+	 * 	} while (running);
+	 * },
+	 * ```
+	 */
+	timeBatchAsync(callback: () => Promise<unknown>): Promise<boolean>;
+
+	/**
+	 * Convenience method: runs {@link BenchmarkTimer.timeBatch} in a loop until data collection is complete.
+	 * @remarks
+	 * Use this when no per-batch setup or teardown is needed outside the measured callback.
+	 * Implemented in terms of the other public APIs on this interface.
+	 * @example
+	 * ```typescript
+	 * benchmarkFnCustom: async (state) => {
+	 * 	// One time setup (not timed)
+	 * 	state.timeAllBatches(() => { /* operation *\/ });
+	 * 	// One time teardown (not timed)
+	 * },
+	 * ```
+	 */
+	timeAllBatches(callback: () => void): void;
+
+	/**
+	 * Async variant of {@link BenchmarkTimer.timeAllBatches}: runs {@link BenchmarkTimer.timeBatchAsync} in a loop until data collection is complete.
+	 * @remarks
+	 * Use this when no per-batch setup or teardown is needed outside the measured async callback.
+	 * Implemented in terms of the other public APIs on this interface.
+	 * @example
+	 * ```typescript
+	 * benchmarkFnCustom: async (state) => {
+	 * 	// One time setup (not timed)
+	 * 	await state.timeAllBatchesAsync(async () => { /* operation *\/ });
+	 * 	// One time teardown (not timed)
+	 * },
+	 * ```
+	 */
+	timeAllBatchesAsync(callback: () => Promise<unknown>): Promise<void>;
 }
 
 /**
@@ -83,7 +160,7 @@ export interface DurationBenchmarkCustom extends BenchmarkTimingOptions {
 	 * Use `state` to measure and report the performance of batches.
 	 * @example
 	 * ```typescript
-	 * benchmarkFnCustom: async <T>(state: BenchmarkTimer<T>) => {
+	 * benchmarkFnCustom: async (state) => {
 	 * 	let duration: number;
 	 * 	do {
 	 * 		let counter = state.iterationsPerBatch;
@@ -100,7 +177,7 @@ export interface DurationBenchmarkCustom extends BenchmarkTimingOptions {
 	 *
 	 * @example
 	 * ```typescript
-	 * benchmarkFnCustom: async <T>(state: BenchmarkTimer<T>) => {
+	 * benchmarkFnCustom: async (state) => {
 	 * 	let running: boolean;
 	 * 	do {
 	 * 		running = state.timeBatch(() => {});
@@ -169,59 +246,6 @@ export interface BenchmarkTimingOptions {
 	 * to save time by skipping warmup and using all iterations for data collection.
 	 */
 	startPhase?: Phase;
-}
-
-/**
- * Optional hook to run before each batch of iterations.
- * @public
- * @input
- */
-export interface OnBatch {
-	/**
-	 * Executes before the start of each batch.
-	 *
-	 * @remarks
-	 * Each batch runs `benchmarkFn` many times (a typical micro-benchmark may run 10k iterations per batch),
-	 * so this callback runs far fewer times than `benchmarkFn`.
-	 *
-	 * @deprecated Use {@link DurationBenchmarkCustom} instead of {@link DurationBenchmarkSync} or {@link DurationBenchmarkAsync}.
-	 * It offers much more control and avoids the challenges of passing state between this callback and the rest of the benchmark.
-	 */
-	beforeEachBatch?: () => void;
-}
-
-/**
- * Convenience type for a hook function supported by `HookArguments`. Supports synchronous and asynchronous functions.
- * @deprecated All usages of this type have been deprecated. See their documentation for details and recommended alternatives.
- * @public
- */
-export type HookFunction = () => void | Promise<unknown>;
-
-/**
- * Optional one-time setup/teardown hooks for a benchmark.
- * @remarks
- * Any exception thrown from a hook or the benchmarked function will cause test failure
- * and abort subsequent operations.
- * @public
- * @input
- */
-export interface HookArguments {
-	/**
-	 * Executes once, before the test body it's declared for.
-	 *
-	 * @remarks
-	 * This does *not* execute on each iteration or batch.
-	 * @deprecated Use {@link DurationBenchmarkCustom} or directly call {@link collectDurationData} from a function containing the setup code.
-	 */
-	before?: HookFunction | undefined;
-	/**
-	 * Executes once, after the test body it's declared for.
-	 *
-	 * @remarks
-	 * This does *not* execute on each iteration or batch.
-	 * @deprecated Use {@link DurationBenchmarkCustom} or directly call {@link collectDurationData} from a function containing the teardown code.
-	 */
-	after?: HookFunction | undefined;
 }
 
 /**

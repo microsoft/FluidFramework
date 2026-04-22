@@ -1,0 +1,239 @@
+name: "PR Review Fleet"
+
+# Triggers a fleet of parallel Copilot CLI reviewer agents on every PR.
+# Each reviewer focuses on a different axis with an adversarial persona.
+# A consolidation job merges, de-duplicates, and posts one structured report.
+#
+# Authentication: Uses the existing COPILOT_GITHUB_TOKEN repository secret.
+# See: https://docs.github.com/en/copilot/how-tos/copilot-cli/automate-copilot-cli/automate-with-actions
+
+on:
+  # pull_request_target runs in the base-repo context so COPILOT_GITHUB_TOKEN
+  # is available even when the PR comes from a fork. The usual risk (executing
+  # untrusted PR code with elevated permissions) is mitigated here because:
+  # 1. Prompt files are read from the base branch, not the PR HEAD.
+  # 2. The checkout below uses the PR HEAD SHA explicitly for diffing only.
+  # 3. The Copilot agent is sandboxed to shell(git:*) + read + write.
+  pull_request_target:
+    types:
+      - labeled
+    branches:
+      - main
+      - next
+      - release/**/*
+
+permissions:
+  contents: read
+  pull-requests: write
+
+# Cancel in-progress runs for the same PR when new commits are pushed.
+concurrency:
+  group: pr-review-fleet-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  # ──────────────────────────────────────────────────────────────
+  # Fan-out: run each reviewer in parallel via matrix strategy
+  # ──────────────────────────────────────────────────────────────
+  review:
+    name: "Review: ${{ matrix.reviewer }}"
+    # Only run when the 'fleet-review' label is added
+    if: github.event.label.name == 'fleet-review'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false # Let all reviewers finish even if one fails
+      matrix:
+        reviewer:
+          - correctness
+          - security
+          - api-compatibility
+          - performance
+          - testing
+
+    steps:
+      # ── Checkout ──
+      # Explicitly check out the PR HEAD SHA so we diff the PR content.
+      # With pull_request_target, the default ref is the base branch — without
+      # this, the diff would always be empty.
+      - name: Checkout PR head
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # ratchet:actions/checkout@v6
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+
+      # ── Prepare the diff ──
+      - name: Generate PR diff
+        env:
+          BASE_REF: ${{ github.base_ref }}
+        run: |
+          git diff "origin/${BASE_REF}...HEAD" > pr-diff.patch
+          echo "Generated diff: $(wc -l < pr-diff.patch) lines"
+
+      # ── Prepare the prompt ──
+      # Read the prompt from the BASE branch, not the PR HEAD, to prevent
+      # prompt injection via malicious changes to prompt files in the PR.
+      - name: Prepare reviewer prompt
+        id: prompt
+        env:
+          REVIEWER: ${{ matrix.reviewer }}
+          REPO: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          BASE_REF: ${{ github.base_ref }}
+        run: |
+          PROMPT_PATH=".github/prompts/reviewers/${REVIEWER}.md"
+          PROMPT_FILE="/tmp/prompt-${REVIEWER}.md"
+
+          # Extract the prompt from the base branch, not the PR checkout
+          if ! git show "origin/${BASE_REF}:${PROMPT_PATH}" > "$PROMPT_FILE" 2>/dev/null; then
+            echo "::error::Prompt file not found on base branch: ${PROMPT_PATH}"
+            exit 1
+          fi
+
+          # Substitute context placeholders
+          sed -i "s|__REPO__|${REPO}|g" "$PROMPT_FILE"
+          sed -i "s|__PR_NUMBER__|${PR_NUMBER}|g" "$PROMPT_FILE"
+
+          # Inject API conventions into the api-compatibility reviewer prompt
+          if [ "$REVIEWER" = "api-compatibility" ]; then
+            CONVENTIONS_PATH=".claude/skills/review/api-conventions.md"
+            CONVENTIONS=$(git show "origin/${BASE_REF}:${CONVENTIONS_PATH}" 2>/dev/null || echo "(api-conventions.md not found on base branch)")
+            # Use awk to replace the placeholder since conventions contain special chars
+            awk -v conv="$CONVENTIONS" '{gsub(/__API_CONVENTIONS__/, conv); print}' "$PROMPT_FILE" > "${PROMPT_FILE}.tmp"
+            mv "${PROMPT_FILE}.tmp" "$PROMPT_FILE"
+          fi
+
+          echo "prompt_file=$PROMPT_FILE" >> "$GITHUB_OUTPUT"
+
+      # ── Install Copilot CLI ──
+      - name: Set up Node.js
+        uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # ratchet:actions/setup-node@v6
+        with:
+          node-version: 22
+
+      - name: Install Copilot CLI
+        run: npm install -g @github/copilot
+
+      # ── Run the reviewer agent ──
+      - name: Run reviewer
+        env:
+          COPILOT_GITHUB_TOKEN: ${{ secrets.COPILOT_GITHUB_TOKEN }}
+          COPILOT_MODEL: claude-sonnet-4-6
+          PROMPT_FILE: ${{ steps.prompt.outputs.prompt_file }}
+        timeout-minutes: 15
+        run: |
+          PROMPT=$(cat "$PROMPT_FILE")
+          # File inspection is done via the workspace-scoped `read` tool.
+          # Only `shell(git:*)` is granted so the agent can run diff/log/etc.
+          # Broader shell grants (cat/head/tail/grep/ls/wc) would let a
+          # prompt-injected agent read env vars or credential files and
+          # exfiltrate them via the generated report.
+          copilot \
+            -p "$PROMPT" \
+            --allow-tool='shell(git:*)' \
+            --allow-tool=read \
+            --allow-tool=write \
+            --no-ask-user
+
+      # ── Upload results as artifact ──
+      - name: Upload review output
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # ratchet:actions/upload-artifact@v7
+        with:
+          name: review-${{ matrix.reviewer }}
+          path: review-${{ matrix.reviewer }}.json
+          if-no-files-found: ignore
+          retention-days: 1
+
+  # ──────────────────────────────────────────────────────────────
+  # Fan-in: consolidate, de-duplicate, and post one report
+  # ──────────────────────────────────────────────────────────────
+  consolidate:
+    name: "Consolidate Review"
+    needs: review
+    # always() is required so this job runs even when individual reviewers fail.
+    # Without it, a single crashed reviewer would prevent the report from posting.
+    # needs.review.result != 'skipped' prevents running when the label gate filtered the job.
+    if: always() && needs.review.result != 'skipped'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout scripts
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # ratchet:actions/checkout@v6
+        with:
+          sparse-checkout: .github/scripts
+          persist-credentials: false
+
+      - name: Download all review artifacts
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # ratchet:actions/download-artifact@v8
+        with:
+          path: reviews
+          pattern: review-*
+          merge-multiple: true
+
+      - name: Consolidate findings
+        id: consolidate
+        env:
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          COMMIT_COUNT: ${{ github.event.pull_request.commits }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          set +e
+          python3 .github/scripts/consolidate_reviews.py reviews "$RUN_URL" --pr-number "$PR_NUMBER" --commit-count "$COMMIT_COUNT" -o report.md
+          exit_code=$?
+          set -e
+          if [ $exit_code -eq 2 ]; then
+            echo "has_findings=false" >> "$GITHUB_OUTPUT"
+          elif [ $exit_code -eq 0 ]; then
+            echo "has_findings=true" >> "$GITHUB_OUTPUT"
+          else
+            exit $exit_code
+          fi
+
+      # Defense in depth: scrub GitHub token patterns from the report before
+      # posting. Even with the agent sandboxed to `shell(git:*)` + `read`, a
+      # leaked token in the generated report would be a critical failure.
+      - name: Scrub secrets from report
+        if: steps.consolidate.outputs.has_findings == 'true'
+        run: |
+          python3 -c '
+          import re, sys
+          patterns = [
+              r"gh[pousr]_[A-Za-z0-9_]{16,}",
+              r"github_pat_[A-Za-z0-9_]{16,}",
+          ]
+          with open("report.md", "r") as f:
+              text = f.read()
+          for p in patterns:
+              text = re.sub(p, "[REDACTED]", text)
+          with open("report.md", "w") as f:
+              f.write(text)
+          '
+
+      - name: Post or update PR comment
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          REPO: ${{ github.repository }}
+          HAS_FINDINGS: ${{ steps.consolidate.outputs.has_findings }}
+        run: |
+          MARKER="<!-- pr-review-fleet -->"
+
+          if [ "$HAS_FINDINGS" = "true" ]; then
+            COMMENT_FILE=report.md
+          else
+            COMMENT_FILE=$(mktemp)
+            printf '%s\n## :telescope: PR Review Fleet Report\n\n**Verdict:** ✔️ Approve\n\nAll reviewers passed — no findings.\n' "$MARKER" > "$COMMENT_FILE"
+          fi
+
+          # Update existing fleet comment if present, otherwise create one.
+          # Always runs (even on no-findings) so prior comments don't go stale.
+          EXISTING_COMMENT_ID=$(gh api "repos/${REPO}/issues/${PR_NUMBER}/comments" \
+            --paginate --jq ".[] | select(.body | startswith(\"${MARKER}\")) | .id" | head -1)
+
+          if [ -n "$EXISTING_COMMENT_ID" ]; then
+            gh api "repos/${REPO}/issues/comments/${EXISTING_COMMENT_ID}" \
+              --method PATCH --field "body=@${COMMENT_FILE}"
+            echo "Updated existing comment ${EXISTING_COMMENT_ID}"
+          else
+            gh pr comment "${PR_NUMBER}" --repo "${REPO}" --body-file "$COMMENT_FILE"
+            echo "Posted new comment"
+          fi

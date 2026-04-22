@@ -1,6 +1,25 @@
 # @fluid-tools/benchmark
 
+## 0.59.0
+
+## 0.58.0
+
+-   Default value for `BenchmarkDescription.type` is now documented to be `BenchmarkType.Measurement` (no functional change: just added missing documentation).
+-   Added `timeBatchAsync` and `timeAllBatchesAsync` methods to `BenchmarkTimer` for benchmarking async operations via `DurationBenchmarkCustom`.
+-   Recommend use of `benchmarkDuration` in dcoumentation for `collectDurationData`.
+-   Suggest setting `testType: TestType.ExecutionTime` when using `collectDurationData` in a `BenchmarkFunction`.
+
+### ⚠ BREAKING CHANGES
+
+-   Removed deprecated `benchmark` and `benchmarkCustom` functions. Use `benchmarkIt` with `benchmarkDuration` instead.
+-   Removed deprecated `HookArguments` interface and its `before`/`after` fields from `DurationBenchmarkSync` and `DurationBenchmarkAsync`. Use `DurationBenchmarkCustom` or call `collectDurationData` directly from a wrapper function containing setup/teardown.
+-   Removed deprecated `OnBatch` interface and its `beforeEachBatch` field from `DurationBenchmarkSync` and `DurationBenchmarkAsync`. Use `DurationBenchmarkCustom` for per-batch setup.
+-   Removed deprecated `HookFunction` type.
+
 ## 0.57.0
+
+-   Mocha dependency updated from v10 to v11.
+-   Error messages from Mocha, including timeouts, are now included in the console and output files properly.
 
 ## 0.56.0
 

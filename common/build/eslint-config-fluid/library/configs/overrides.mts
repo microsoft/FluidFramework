@@ -24,6 +24,7 @@
 
 import eslintReact from "@eslint-react/eslint-plugin";
 import dependPlugin from "eslint-plugin-depend";
+import noOnlyTestsPlugin from "eslint-plugin-no-only-tests";
 import reactHooksPlugin from "eslint-plugin-react-hooks";
 import type { ESLint, Linter } from "eslint";
 
@@ -80,7 +81,17 @@ export const useProjectService = {
  */
 export const testProjectConfig = {
 	files: ["src/test/**", ...testFilePatterns],
+	plugins: {
+		"no-only-tests": noOnlyTestsPlugin,
+	},
 	rules: {
+		/**
+		 * Disallow .only() in tests (e.g. describe.only, it.only) to prevent accidentally
+		 * committing focused tests that would skip the rest of the suite in CI.
+		 *
+		 * @see https://github.com/levibuzolic/eslint-plugin-no-only-tests
+		 */
+		"no-only-tests/no-only-tests": "error",
 		"@typescript-eslint/no-invalid-this": "off",
 		"@typescript-eslint/unbound-method": "off",
 		"import-x/no-nodejs-modules": "off",

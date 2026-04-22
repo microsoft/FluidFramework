@@ -137,6 +137,9 @@ extends:
     pack: true
     lint: true
     test: ci:test
+    # Disabled: coverage performance regressed in Node 22, causing test timeouts
+    # that need mitigation before coverage can be reenabled.
+    # testCoverage: ${{ ne(variables['Build.Reason'], 'PullRequest') }}
     docs: true
     containerBaseDir: /usr/FluidFramework/server/routerlicious
     checks:

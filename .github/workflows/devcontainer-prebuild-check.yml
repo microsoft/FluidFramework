@@ -1,0 +1,50 @@
+name: "Devcontainer prebuild check"
+
+# Codespace prebuilds in "on configuration change" mode only trigger when
+# devcontainer.json or the Dockerfile change. This job catches PRs that modify
+# the setup scripts the devcontainer depends on WITHOUT also bumping a
+# devcontainer.json file, which would leave prebuilds stale.
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - "scripts/codespace-setup/**"
+
+permissions:
+  contents: read
+
+jobs:
+  check-prebuild-version:
+    name: Check prebuild version bump
+    runs-on: ubuntu-latest
+    steps:
+      # release notes: https://github.com/actions/checkout/releases/tag/v6.0.0
+      - uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # ratchet:actions/checkout@v6
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+
+      - name: Check if a prebuild-triggering file was also modified
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          CHANGED_FILES=$(git diff --name-only "$BASE_SHA"..."$HEAD_SHA")
+
+          if echo "$CHANGED_FILES" | grep -qE '(devcontainer\.json|Dockerfile)'; then
+            echo "A devcontainer.json or Dockerfile was modified — prebuild will be triggered."
+          else
+            echo "::error::Setup scripts in scripts/codespace-setup/ were modified but no devcontainer.json or Dockerfile was updated."
+            echo ""
+            echo "Codespace prebuilds only trigger on devcontainer.json or Dockerfile changes."
+            echo "Bump the // prebuild-version: N comment in the relevant devcontainer.json"
+            echo "file(s) to ensure the prebuild is regenerated."
+            echo ""
+            echo "Files to consider:"
+            echo "  .devcontainer/devcontainer.json"
+            echo "  .devcontainer/lightweight/devcontainer.json"
+            echo "  .devcontainer/ai-agent/devcontainer.json"
+            echo "  .devcontainer/ai-agent-insiders/devcontainer.json"
+            exit 1
+          fi
