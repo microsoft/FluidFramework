@@ -44,9 +44,10 @@ steps:
   - checkout: self
     path: $(FluidFrameworkDirectory)
     clean: true
-    # Full history is required for `git merge-base HEAD origin/<target>` to
-    # produce a meaningful ancestor on a PR branch.
-    fetchDepth: 0
+    # Shallow clone; the bash step below unshallows on demand if the
+    # merge-base can't be resolved within this depth. Most PRs merge-base
+    # within a few hundred commits, so this is cheap in the common case.
+    fetchDepth: 200
 
   - task: Bash@3
     name: setChangedPackages
@@ -79,7 +80,17 @@ steps:
           emit_and_exit
         fi
 
+        # Try to resolve the merge-base in the shallow clone first. If the
+        # PR diverged further back than the shallow boundary, unshallow and
+        # retry once. The presence of a `shallow` file under `.git` is how
+        # git marks a shallow repo; skip the unshallow on a full clone
+        # (which would error with "--unshallow on a complete repository").
         MERGE_BASE="$(git merge-base HEAD "origin/${TARGET_BRANCH}" 2>/dev/null || true)"
+        if [ -z "${MERGE_BASE}" ] && [ -f "$(git rev-parse --git-dir)/shallow" ]; then
+          echo "Merge-base not found in shallow clone; unshallowing and retrying."
+          git fetch --unshallow origin "${TARGET_BRANCH}" 2>/dev/null || true
+          MERGE_BASE="$(git merge-base HEAD "origin/${TARGET_BRANCH}" 2>/dev/null || true)"
+        fi
         if [ -z "${MERGE_BASE}" ]; then
           echo "##vso[task.logissue type=warning]No merge-base with origin/${TARGET_BRANCH}; falling back to full test run."
           emit_and_exit
@@ -99,6 +110,14 @@ steps:
         # across the whole workspace).
         # Keep this list conservative — it's the safety net for changes that
         # could plausibly invalidate assumptions across the entire workspace.
+        #
+        # This list partially overlaps with `pr: paths: include:` in
+        # tools/pipelines/build-client.yml (which decides whether the pipeline
+        # runs at all). The concepts differ — one gates the pipeline, the
+        # other gates scoping within a pipeline that's already running — but
+        # adding a new cross-cutting root-level file generally warrants
+        # updating both. There's no programmatic link, so keep them in sync
+        # by convention.
         FULL_RUN_PATTERNS=(
           '^package\.json$'
           '^pnpm-lock\.yaml$'
