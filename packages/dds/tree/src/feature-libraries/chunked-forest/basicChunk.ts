@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert, oob, fail } from "@fluidframework/core-utils/internal";
+import { assert, oob, fail, debugAssert } from "@fluidframework/core-utils/internal";
 
 import {
 	CursorLocationType,
@@ -217,7 +217,9 @@ export class BasicChunkCursor extends SynchronousCursor implements ChunkedCursor
 
 	private getStackedChunk(height: number): BasicChunk {
 		const index = this.getStackedChunkIndex(height);
-		return (this.siblingStack[height] as readonly TreeChunk[])[index] as BasicChunk;
+		const chunk = (this.siblingStack[height] as readonly TreeChunk[])[index];
+		debugAssert(() => chunk instanceof BasicChunk || "only basic chunks are expected");
+		return chunk as BasicChunk;
 	}
 
 	/**
@@ -551,18 +553,15 @@ export class BasicChunkCursor extends SynchronousCursor implements ChunkedCursor
 
 	private getNode(): BasicChunk {
 		assert(this.mode === CursorLocationType.Nodes, 0x52f /* can only get node when in node */);
-		return (this.siblings as TreeChunk[])[this.indexOfChunk] as BasicChunk;
+		const chunk = (this.siblings as TreeChunk[])[this.indexOfChunk];
+		debugAssert(() => chunk instanceof BasicChunk || "only basic chunks are expected");
+		return chunk as BasicChunk;
 	}
 
 	/**
 	 * Resolves the chunks that make up the field the cursor is currently in. At the root, this is
 	 * {@link root} directly. Otherwise, the cursor must be in {@link CursorLocationType.Fields} mode,
 	 * and the result is looked up on the parent node using the current field key.
-	 *
-	 * @remarks The parent node is the {@link BasicChunk} in the node array at the top of
-	 * {@link siblingStack} while we are in {@link CursorLocationType.Fields} mode. We need the parent
-	 * since a field's chunks are stored on the parent node's {@link BasicChunk.fields} map, not on
-	 * the cursor itself.
 	 *
 	 * @returns The chunks that make up the field the cursor is currently in.
 	 */
@@ -574,6 +573,10 @@ export class BasicChunkCursor extends SynchronousCursor implements ChunkedCursor
 			this.mode === CursorLocationType.Fields,
 			0x530 /* can only get field when in fields */,
 		);
+		// The parent node is the `BasicChunk` in the node array at the top of
+		// `siblingStack` while we are in `CursorLocationType.Fields` mode. We need the parent
+		// since a field's chunks are stored on the parent node's `BasicChunk.fields` map, not on
+		// the cursor itself.
 		const parent = this.getStackedChunk(this.siblingStack.length - 1);
 		const key: FieldKey = this.getFieldKey();
 		const field = parent.fields.get(key) ?? [];
