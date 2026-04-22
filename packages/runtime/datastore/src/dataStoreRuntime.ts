@@ -545,16 +545,10 @@ export class FluidDataStoreRuntime
 		this.minVersionForCollab = this.dataStoreContext.minVersionForCollab;
 	}
 
-	/**
-	 * Implementation of IFluidDataStoreRuntime.inStagingMode
-	 */
 	public get inStagingMode(): boolean {
 		return this.dataStoreContext.containerRuntime.inStagingMode;
 	}
 
-	/**
-	 * Implementation of IFluidDataStoreRuntime.isDirty
-	 */
 	public get isDirty(): boolean {
 		return this.pendingOpCount.value > 0;
 	}

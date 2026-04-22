@@ -185,6 +185,8 @@ export interface IDataStore {
  *
  * Provides methods to either commit or discard changes made while in staging mode.
  *
+ * @see {@link IContainerRuntimeBase.enterStagingMode}
+ *
  * @legacy @beta
  * @sealed
  */
@@ -313,12 +315,17 @@ export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeB
 	): Promise<{ snapshotTree: ISnapshotTree; sequenceNumber: number }>;
 
 	/**
-	 * Enters staging mode, allowing changes to be staged before being committed or discarded.
+	 * Enter Staging Mode, such that ops submitted to the ContainerRuntime will not be sent to the ordering service.
+	 * To exit Staging Mode, call either discardChanges or commitChanges on the Stage Controls returned from this method.
+	 *
 	 * @returns Controls for committing or discarding staged changes.
 	 */
 	enterStagingMode(): StageControls;
 	/**
-	 * Indicates whether the container is currently in staging mode.
+	 * If true, the ContainerRuntime is not submitting any new ops to the ordering service.
+	 * Ops submitted to the ContainerRuntime while in Staging Mode will be queued in the PendingStateManager,
+	 * either to be discarded or committed later (via the Stage Controls returned from enterStagingMode).
+	 * @see {@link IContainerRuntimeBase.enterStagingMode}
 	 */
 	readonly inStagingMode: boolean;
 }
@@ -341,6 +348,8 @@ export interface IFluidDataStorePolicies {
 	 * (e.g., `ConsensusRegisterCollection`, `ConsensusQueue`, `TaskManager`) won't resolve their promises until
 	 * staging mode exits. Set this to `true` for data stores that depend on consensus acknowledgments
 	 * to prevent modifications that would leave the data store in an unresponsive state.
+	 *
+	 * @see {@link IContainerRuntimeBase.enterStagingMode}
 	 */
 	readonly readonlyInStagingMode: boolean;
 }

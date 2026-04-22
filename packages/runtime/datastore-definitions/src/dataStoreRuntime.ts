@@ -193,6 +193,7 @@ export interface IFluidDataStoreRuntime
 
 	/**
 	 * Indicates whether the container is currently in staging mode.
+	 * @see {@link @fluidframework/runtime-definitions#IContainerRuntimeBase.enterStagingMode}
 	 */
 	readonly inStagingMode: boolean;
 

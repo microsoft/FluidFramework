@@ -64,9 +64,11 @@ export class FluidDataStoreRuntime extends TypedEventEmitter<IFluidDataStoreRunt
     // (undocumented)
     get IFluidHandleContext(): this;
     readonly ILayerCompatDetails?: unknown;
+    // (undocumented)
     get inStagingMode(): boolean;
     // (undocumented)
     get isAttached(): boolean;
+    // (undocumented)
     get isDirty(): boolean;
     readonly isReadOnly: () => boolean;
     // (undocumented)
