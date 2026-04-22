@@ -601,7 +601,11 @@ extends:
             # packages were affected — saves agent allocation, checkout, and
             # install on scoped PRs. Empty (detect_changes was skipped) still
             # runs. See include-detect-changed-packages.yml for the invariants.
-            condition: and(succeeded(), ne(dependencies.detect_changes.outputs['setChangedPackages.shouldRunTests'], 'false'))
+            #
+            # We check `build.result` directly instead of using `succeeded()`
+            # because the latter treats a Skipped `detect_changes` dependency
+            # as non-success and false-skips this job on non-opt-in PR builds.
+            condition: and(in(dependencies.build.result, 'Succeeded', 'SucceededWithIssues'), ne(dependencies.detect_changes.outputs['setChangedPackages.shouldRunTests'], 'false'))
             variables:
               - ${{ if eq(variables['Build.Reason'], 'PullRequest') }}:
                 - name: targetBranchName
@@ -776,7 +780,11 @@ extends:
               # packages were affected — saves agent allocation, checkout, and
               # install on scoped PRs. Empty (detect_changes was skipped) still
               # runs. See include-detect-changed-packages.yml for the invariants.
-              condition: and(succeeded(), ne(dependencies.detect_changes.outputs['setChangedPackages.shouldRunTests'], 'false'))
+              #
+              # We check `build.result` directly instead of using `succeeded()`
+              # because the latter treats a Skipped `detect_changes` dependency
+              # as non-success and false-skips this job on non-opt-in PR builds.
+              condition: and(in(dependencies.build.result, 'Succeeded', 'SucceededWithIssues'), ne(dependencies.detect_changes.outputs['setChangedPackages.shouldRunTests'], 'false'))
               variables:
                 - ${{ if eq(variables['Build.Reason'], 'PullRequest') }}:
                   - name: targetBranchName
