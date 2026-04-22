@@ -6,7 +6,6 @@
 import { strict as assert } from "node:assert";
 
 import {
-	BenchmarkType,
 	TestType,
 	benchmarkDuration,
 	benchmarkIt,
@@ -35,7 +34,6 @@ export function jsObjectBench<T extends JsonCompatibleReadOnlyObject>(
 		const json = getJson();
 
 		benchmarkIt({
-			type: BenchmarkType.Measurement,
 			testType: TestType.ExecutionTime,
 			title: `clone JS Object: '${name}'`,
 			run: async () => {
@@ -51,7 +49,6 @@ export function jsObjectBench<T extends JsonCompatibleReadOnlyObject>(
 		});
 
 		benchmarkIt({
-			type: BenchmarkType.Measurement,
 			title: `sum JS Object: '${name}'`,
 			...benchmarkDuration({
 				benchmarkFn: () => {
@@ -61,7 +58,6 @@ export function jsObjectBench<T extends JsonCompatibleReadOnlyObject>(
 		});
 
 		benchmarkIt({
-			type: BenchmarkType.Measurement,
 			title: `averageValues JS Object: '${name}'`,
 			...benchmarkDuration({
 				benchmarkFn: () => {

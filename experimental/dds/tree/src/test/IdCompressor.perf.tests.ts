@@ -4,7 +4,7 @@
  */
 
 import { take } from '@fluid-private/stochastic-test-utils';
-import { BenchmarkType, TestType, benchmarkIt, collectDurationData } from '@fluid-tools/benchmark';
+import { TestType, benchmarkIt, collectDurationData } from '@fluid-tools/benchmark';
 
 import { Mutable, fail } from '../Common.js';
 import { CompressedId, LocalCompressedId, OpSpaceCompressedId, SessionId } from '../Identifiers.js';
@@ -31,7 +31,6 @@ interface SetupWithIdResult extends SetupResult {
 }
 
 describe('IdCompressor Perf', () => {
-	const type = BenchmarkType.Measurement;
 	const localClient = Client.Client1;
 	const remoteClient = Client.Client2;
 
@@ -98,7 +97,6 @@ describe('IdCompressor Perf', () => {
 		const numericSource = numericUuidFromStableId(createSessionId());
 		let overrideIndex = 0;
 		benchmarkIt({
-			type,
 			testType: TestType.ExecutionTime,
 			title: `allocate local ID (${override ? 'override' : 'sequential'})`,
 			run: async () => {
@@ -126,7 +124,6 @@ describe('IdCompressor Perf', () => {
 			let lastFinalizedLocalId2 = 0 as LocalCompressedId;
 			let overrideIndex = 0;
 			benchmarkIt({
-				type,
 				testType: TestType.ExecutionTime,
 				title: `finalize a range of IDs (cluster size =${clusterSize}${override ? ', overrides present' : ''})`,
 				run: async () => {
@@ -178,7 +175,6 @@ describe('IdCompressor Perf', () => {
 	});
 
 	benchmarkIt({
-		type,
 		testType: TestType.ExecutionTime,
 		title: `take an ID creation range`,
 		run: async () => {
@@ -196,7 +192,6 @@ describe('IdCompressor Perf', () => {
 	benchmarkWithIdTypes((local, override, titleSuffix) => {
 		if (local) {
 			benchmarkIt({
-				type,
 				testType: TestType.ExecutionTime,
 				title: `decompress local ID into stable IDs${titleSuffix}`,
 				run: async () => {
@@ -213,7 +208,6 @@ describe('IdCompressor Perf', () => {
 			const titleBase = 'decompress final ID into stable IDs';
 			if (override) {
 				benchmarkIt({
-					type,
 					testType: TestType.ExecutionTime,
 					title: titleBase + titleSuffix,
 					run: async () => {
@@ -229,7 +223,6 @@ describe('IdCompressor Perf', () => {
 			} else {
 				for (const clusterHasOverride of [true, false]) {
 					benchmarkIt({
-						type,
 						testType: TestType.ExecutionTime,
 						title: `${titleBase} (sequential, overrides ${
 							clusterHasOverride ? 'present' : 'not present'
@@ -251,7 +244,6 @@ describe('IdCompressor Perf', () => {
 
 	benchmarkWithIdTypes((local, override, titleSuffix) => {
 		benchmarkIt({
-			type,
 			testType: TestType.ExecutionTime,
 			title: `compress a stable ID to a ${local ? 'local' : 'final'} ID${titleSuffix}`,
 			run: async () => {
@@ -268,7 +260,6 @@ describe('IdCompressor Perf', () => {
 	});
 
 	benchmarkIt({
-		type,
 		testType: TestType.ExecutionTime,
 		title: `normalize a final ID from the local session to session space`,
 		run: async () => {
@@ -299,7 +290,6 @@ describe('IdCompressor Perf', () => {
 	}
 
 	benchmarkIt({
-		type,
 		testType: TestType.ExecutionTime,
 		title: `normalize a local ID from the local session to session space`,
 		run: async () => {
@@ -317,7 +307,6 @@ describe('IdCompressor Perf', () => {
 
 	const remoteSessionId = sessionIds.get(remoteClient);
 	benchmarkIt({
-		type,
 		testType: TestType.ExecutionTime,
 		title: `normalize a local ID from a remote session to session space`,
 		run: async () => {
@@ -336,7 +325,6 @@ describe('IdCompressor Perf', () => {
 	for (const overrideInClusters of [true, false]) {
 		const titleSuffix = ` (${overrideInClusters ? 'with' : 'without'} overrides)`;
 		benchmarkIt({
-			type,
 			testType: TestType.ExecutionTime,
 			title: `serialize an IdCompressor${titleSuffix}`,
 			run: async () => {
@@ -352,7 +340,6 @@ describe('IdCompressor Perf', () => {
 
 		const overrideRemoteSessionId = createSessionId();
 		benchmarkIt({
-			type,
 			testType: TestType.ExecutionTime,
 			title: `deserialize an IdCompressor${titleSuffix}`,
 			run: async () => {

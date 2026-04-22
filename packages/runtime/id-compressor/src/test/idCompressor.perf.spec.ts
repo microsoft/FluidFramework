@@ -4,12 +4,7 @@
  */
 
 import { take } from "@fluid-private/stochastic-test-utils";
-import {
-	BenchmarkType,
-	TestType,
-	benchmarkIt,
-	collectDurationData,
-} from "@fluid-tools/benchmark";
+import { TestType, benchmarkIt, collectDurationData } from "@fluid-tools/benchmark";
 import { assert } from "@fluidframework/core-utils/internal";
 
 import { IdCompressor } from "../idCompressor.js";
@@ -42,7 +37,6 @@ import {
 const initialClusterCapacity = 512;
 
 describe("IdCompressor Perf", () => {
-	const type = BenchmarkType.Measurement;
 	const localClient = Client.Client1;
 	const remoteClient = Client.Client2;
 
@@ -113,7 +107,6 @@ describe("IdCompressor Perf", () => {
 	}
 
 	benchmarkIt({
-		type,
 		testType: TestType.ExecutionTime,
 		title: `allocate local ID`,
 		run: async () => {
@@ -127,7 +120,6 @@ describe("IdCompressor Perf", () => {
 	});
 
 	benchmarkIt({
-		type,
 		testType: TestType.ExecutionTime,
 		title: "take an ID creation range",
 		run: async () => {
@@ -146,7 +138,6 @@ describe("IdCompressor Perf", () => {
 		const session1 = "8150a099-5302-4672-b5f3-7a4492b59418" as SessionId;
 		const session2 = "f2ded886-92da-4248-967b-eb96ee04cf51" as SessionId;
 		benchmarkIt({
-			type,
 			testType: TestType.ExecutionTime,
 			title: `finalize a range of IDs (cluster size = ${clusterSize})`,
 			run: async () => {
@@ -191,7 +182,6 @@ describe("IdCompressor Perf", () => {
 	benchmarkWithFlag((isLocal) => {
 		const remoteSessionId = sessionIds.get(remoteClient);
 		benchmarkIt({
-			type,
 			testType: TestType.ExecutionTime,
 			title: `normalize a ${
 				isLocal ? "local" : "final"
@@ -219,7 +209,6 @@ describe("IdCompressor Perf", () => {
 
 	benchmarkWithFlag((eagerFinal) => {
 		benchmarkIt({
-			type,
 			testType: TestType.ExecutionTime,
 			title: `normalize a final ID corresponding to a ${
 				eagerFinal ? "eager final" : "local"
@@ -247,7 +236,6 @@ describe("IdCompressor Perf", () => {
 	benchmarkWithFlag((isLocalOriginator) => {
 		const remoteSessionId = sessionIds.get(remoteClient);
 		benchmarkIt({
-			type,
 			testType: TestType.ExecutionTime,
 			title: `normalize a final ID from a ${
 				isLocalOriginator ? "local" : "remote"
@@ -285,7 +273,6 @@ describe("IdCompressor Perf", () => {
 	});
 
 	benchmarkIt({
-		type,
 		testType: TestType.ExecutionTime,
 		title: `normalize an unacked local ID from the local session to op space`,
 		run: async () => {
@@ -315,7 +302,6 @@ describe("IdCompressor Perf", () => {
 
 	benchmarkWithFlag((eagerFinal) => {
 		benchmarkIt({
-			type,
 			testType: TestType.ExecutionTime,
 			title: `normalize an acked ${
 				eagerFinal ? "eager final" : "local"
@@ -338,7 +324,6 @@ describe("IdCompressor Perf", () => {
 
 	benchmarkWithFlag((local) => {
 		benchmarkIt({
-			type,
 			testType: TestType.ExecutionTime,
 			title: `decompress a final ID from a ${
 				local ? "local" : "remote"
@@ -364,7 +349,6 @@ describe("IdCompressor Perf", () => {
 	});
 
 	benchmarkIt({
-		type,
 		testType: TestType.ExecutionTime,
 		title: `decompress a local ID into a stable ID`,
 		run: async () => {
@@ -380,7 +364,6 @@ describe("IdCompressor Perf", () => {
 
 	benchmarkWithFlag((eagerFinal) => {
 		benchmarkIt({
-			type,
 			testType: TestType.ExecutionTime,
 			title: `recompress a stable ID to a ${eagerFinal ? "local" : "final"} ID`,
 			run: async () => {
@@ -403,7 +386,6 @@ describe("IdCompressor Perf", () => {
 
 	benchmarkWithFlag((manySessions) => {
 		benchmarkIt({
-			type,
 			testType: TestType.ExecutionTime,
 			title: `serialize an IdCompressor (${manySessions ? "many sessions" : "many clusters"})`,
 			run: async () => {
@@ -422,7 +404,6 @@ describe("IdCompressor Perf", () => {
 	benchmarkWithFlag((manySessions) => {
 		const overrideRemoteSessionId = createSessionId();
 		benchmarkIt({
-			type,
 			testType: TestType.ExecutionTime,
 			title: `deserialize an IdCompressor (${
 				manySessions ? "many sessions" : "many clusters"

@@ -374,7 +374,6 @@ describe("SharedTree benchmarks", () => {
 		const localCommitSize = [1, 25, 100, 500, 1000];
 		for (const size of localCommitSize) {
 			benchmarkIt({
-				type: BenchmarkType.Measurement,
 				title: `for ${size} local commit${size === 1 ? "" : "s"}`,
 				...benchmarkDuration({
 					benchmarkFnCustom: async (state) => {
@@ -424,7 +423,6 @@ describe("SharedTree benchmarks", () => {
 		for (const peerCount of peerCounts) {
 			for (const commitCount of commitCounts) {
 				const test = benchmarkIt({
-					type: BenchmarkType.Measurement,
 					title: `for ${commitCount} commits per peer for ${peerCount} peers`,
 					...benchmarkDuration({
 						benchmarkFnCustom: async (state) => {
@@ -555,7 +553,6 @@ describe("SharedTree benchmarks", () => {
 			for (const bunchSize of bunchSizes) {
 				for (const localBranchSize of localBranchSizes) {
 					const test = benchmarkIt({
-						type: BenchmarkType.Measurement,
 						title: `Rebase ${localBranchSize} local commits over ${bunchSize} inbound commits`,
 						...benchmarkDuration({
 							benchmarkFnCustom: async (state) => {
@@ -603,7 +600,6 @@ describe("SharedTree benchmarks", () => {
 			for (const bunchSize of bunchSizes) {
 				for (const localTrunkSize of localTrunkSizes) {
 					const test = benchmarkIt({
-						type: BenchmarkType.Measurement,
 						title: `Rebase ${bunchSize} inbound commits over ${localTrunkSize} trunk commits`,
 						...benchmarkDuration({
 							benchmarkFnCustom: async (state) => {
@@ -656,7 +652,6 @@ describe("SharedTree benchmarks", () => {
 		const editCounts = isInPerformanceTestingMode ? [10, 100, 1000] : [5];
 		for (const editCount of editCounts) {
 			const test = benchmarkIt({
-				type: BenchmarkType.Measurement,
 				title: `Compose ${editCount} sequence edits into a single transaction`,
 				...benchmarkDuration({
 					benchmarkFnCustom: async (state) => {

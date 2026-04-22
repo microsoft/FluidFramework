@@ -3,12 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import {
-	BenchmarkType,
-	TestType,
-	benchmarkIt,
-	collectDurationData,
-} from "@fluid-tools/benchmark";
+import { TestType, benchmarkIt, collectDurationData } from "@fluid-tools/benchmark";
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 
 import {
@@ -123,7 +118,6 @@ describe("GC benchmark tests", () => {
 		benchmarkIt({
 			testType: TestType.ExecutionTime,
 			title: "5000 unref nodes",
-			type: BenchmarkType.Measurement,
 			run: async () => {
 				const gc = await setup(5000 /* unrefNodeCount */);
 				const result = await collectDurationData({
@@ -139,7 +133,6 @@ describe("GC benchmark tests", () => {
 		benchmarkIt({
 			testType: TestType.ExecutionTime,
 			title: "15000 unref nodes",
-			type: BenchmarkType.Measurement,
 			run: async () => {
 				const gc = await setup(15000 /* unrefNodeCount */);
 				const result = await collectDurationData({
@@ -155,7 +148,6 @@ describe("GC benchmark tests", () => {
 		benchmarkIt({
 			testType: TestType.ExecutionTime,
 			title: "30000 unref nodes",
-			type: BenchmarkType.Measurement,
 			run: async () => {
 				const gc = await setup(30000 /* unrefNodeCount */);
 				const result = await collectDurationData({

@@ -3,12 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import {
-	BenchmarkType,
-	TestType,
-	benchmarkIt,
-	collectDurationData,
-} from "@fluid-tools/benchmark";
+import { TestType, benchmarkIt, collectDurationData } from "@fluid-tools/benchmark";
 import type { ISummaryTree } from "@fluidframework/driver-definitions";
 
 import { TestString, loadSnapshot } from "./snapshot.utils.js";
@@ -16,7 +11,6 @@ import { TestString, loadSnapshot } from "./snapshot.utils.js";
 describe("MergeTree snapshots", () => {
 	for (const summarySize of [10, 50, 100, 500, 1000, 5000, 10_000]) {
 		const test = benchmarkIt({
-			type: BenchmarkType.Measurement,
 			testType: TestType.ExecutionTime,
 			title: `load snapshot with ${summarySize} segments`,
 			category: "snapshot loading",

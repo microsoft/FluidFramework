@@ -3,12 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import {
-	BenchmarkType,
-	TestType,
-	benchmarkIt,
-	collectDurationData,
-} from "@fluid-tools/benchmark";
+import { TestType, benchmarkIt, collectDurationData } from "@fluid-tools/benchmark";
 
 import { MergeTreeDeltaType } from "../ops.js";
 import { PriorPerspective } from "../perspective.js";
@@ -21,7 +16,6 @@ import { TestString, loadSnapshot } from "./snapshot.utils.js";
 
 describe("MergeTree remove", () => {
 	benchmarkIt({
-		type: BenchmarkType.Measurement,
 		testType: TestType.ExecutionTime,
 		// baseline summary benchmark to compare to other remove tests. such a
 		// comparison should give a (rough) sense of overhead caused by summary
@@ -44,7 +38,6 @@ describe("MergeTree remove", () => {
 	});
 
 	benchmarkIt({
-		type: BenchmarkType.Measurement,
 		testType: TestType.ExecutionTime,
 		title: "remove large range of large tree",
 		category: "remove",
@@ -75,7 +68,6 @@ describe("MergeTree remove", () => {
 
 	for (const length of [10, 100, 1000]) {
 		benchmarkIt({
-			type: BenchmarkType.Measurement,
 			testType: TestType.ExecutionTime,
 			title: `remove range of length ${length} from large tree with undo-redo`,
 			category: "remove",
@@ -113,7 +105,6 @@ describe("MergeTree remove", () => {
 	}
 
 	benchmarkIt({
-		type: BenchmarkType.Measurement,
 		testType: TestType.ExecutionTime,
 		title: "remove start of large tree",
 		category: "remove",
@@ -143,7 +134,6 @@ describe("MergeTree remove", () => {
 	});
 
 	benchmarkIt({
-		type: BenchmarkType.Measurement,
 		testType: TestType.ExecutionTime,
 		title: "remove middle of large tree",
 		category: "remove",
@@ -173,7 +163,6 @@ describe("MergeTree remove", () => {
 	});
 
 	benchmarkIt({
-		type: BenchmarkType.Measurement,
 		testType: TestType.ExecutionTime,
 		title: "remove end of large tree",
 		category: "remove",

@@ -47,7 +47,6 @@ describe("Table", () => {
 		const totalProfitColumn = columnNames.indexOf("Total Profit");
 
 		benchmarkIt({
-			type: BenchmarkType.Measurement,
 			testType: TestType.ExecutionTime,
 			title: `SharedMatrix`,
 			run: async () => {
@@ -85,7 +84,6 @@ describe("Table", () => {
 		});
 
 		benchmarkIt({
-			type: BenchmarkType.Measurement,
 			testType: TestType.ExecutionTime,
 			title: `SharedTree`,
 			run: async () => {
@@ -166,22 +164,18 @@ describe("Table", () => {
 			}
 
 			benchmarkIt({
-				only: false,
 				type: BenchmarkType.Perspective,
 				title: `Row-major JSON (Typical Database Baseline)`,
 				run: () => summarySizeResult(rowMajorJsonBytes),
 			});
 
 			benchmarkIt({
-				only: false,
 				type: BenchmarkType.Perspective,
 				title: `Column-major JSON (Compact REST Baseline)`,
 				run: () => summarySizeResult(colMajorJsonBytes),
 			});
 
 			benchmarkIt({
-				only: false,
-				type: BenchmarkType.Measurement,
 				title: `SharedMatrix`,
 				run: () => {
 					const columnNames = Object.keys(data[0]);
@@ -204,8 +198,6 @@ describe("Table", () => {
 			});
 
 			benchmarkIt({
-				only: false,
-				type: BenchmarkType.Measurement,
 				title: `SharedTree`,
 				run: () => {
 					const { channel, processAllMessages } = create(SharedTree.getFactory());

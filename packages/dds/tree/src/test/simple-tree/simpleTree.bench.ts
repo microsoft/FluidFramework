@@ -123,7 +123,6 @@ describe("SimpleTree benchmarks", () => {
 					let tree: RootNode | undefined;
 					let readNumber: number | undefined;
 					benchmarkIt({
-						type: BenchmarkType.Measurement,
 						testType: TestType.ExecutionTime,
 						title: `${title} (${doHydration ? "hydrated" : "unhydrated"} node)`,
 						run: async () => {

@@ -5,12 +5,7 @@
 
 import { strict as assert } from "node:assert";
 
-import {
-	BenchmarkType,
-	TestType,
-	benchmarkIt,
-	collectDurationData,
-} from "@fluid-tools/benchmark";
+import { TestType, benchmarkIt, collectDurationData } from "@fluid-tools/benchmark";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 
 import { EmptyKey, type ITreeCursorSynchronous } from "../../../core/index.js";
@@ -206,7 +201,6 @@ describe("uniformChunk", () => {
 			let cursor: ITreeCursorSynchronous;
 			for (const { name, dataFactory: data } of testData) {
 				benchmarkIt({
-					type: BenchmarkType.Measurement,
 					testType: TestType.ExecutionTime,
 					title: `Sum: '${name}'`,
 					run: async () => {
@@ -221,7 +215,6 @@ describe("uniformChunk", () => {
 			}
 
 			benchmarkIt({
-				type: BenchmarkType.Measurement,
 				testType: TestType.ExecutionTime,
 				title: "Polygon access",
 				run: async () => {

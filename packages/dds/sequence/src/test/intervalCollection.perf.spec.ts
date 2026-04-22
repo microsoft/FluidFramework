@@ -29,12 +29,12 @@ function runFindOverlappingIntervalsBenchmark({
 	intervalCount,
 	segmentCount,
 	segmentLength,
-	type,
+	type = BenchmarkType.Measurement,
 }: {
 	intervalCount: number;
 	segmentCount: number;
 	segmentLength: number;
-	type: BenchmarkType;
+	type?: BenchmarkType;
 }) {
 	let sharedString: SharedString;
 	let intervalCollection: ISequenceIntervalCollection;
@@ -113,7 +113,6 @@ describe("IntervalCollection perf", () => {
 			intervalCount: 200,
 			segmentCount: 100,
 			segmentLength: 250,
-			type: BenchmarkType.Measurement,
 		});
 
 		runFindOverlappingIntervalsBenchmark({

@@ -4,7 +4,6 @@
  */
 
 import {
-	BenchmarkType,
 	TestType,
 	benchmarkDuration,
 	benchmarkIt,
@@ -83,7 +82,6 @@ describe("DuplicateBatchDetector benchmark", () => {
 			// so detector state remains valid across iterations.
 			benchmarkIt({
 				title: `processInboundBatch - no cleanup (${trackedBatchCount} tracked)`,
-				type: BenchmarkType.Measurement,
 				testType: TestType.ExecutionTime,
 				run: async () => {
 					entries = generateSnapshotEntries(trackedBatchCount);
@@ -105,7 +103,6 @@ describe("DuplicateBatchDetector benchmark", () => {
 			// Scenario 2: Partial cleanup (MSN advances past half the entries)
 			benchmarkIt({
 				title: `processInboundBatch - 50% cleanup (${trackedBatchCount} tracked)`,
-				type: BenchmarkType.Measurement,
 				...benchmarkDuration({
 					...customExecutionOptions,
 					async benchmarkFnCustom(state) {
@@ -132,7 +129,6 @@ describe("DuplicateBatchDetector benchmark", () => {
 			// Scenario 3: Full cleanup (MSN advances past all entries)
 			benchmarkIt({
 				title: `processInboundBatch - 100% cleanup (${trackedBatchCount} tracked)`,
-				type: BenchmarkType.Measurement,
 				...benchmarkDuration({
 					...customExecutionOptions,
 					async benchmarkFnCustom(state) {

@@ -4,7 +4,6 @@
  */
 
 import {
-	BenchmarkType,
 	TestType,
 	benchmarkDuration,
 	benchmarkIt,
@@ -56,7 +55,6 @@ describe("compareArrays()", () => {
 		describe("using for-loop", () => {
 			for (const [title, left, right] of comparisons) {
 				benchmarkIt({
-					type: BenchmarkType.Measurement,
 					title: `${title}`,
 					...benchmarkDuration({
 						benchmarkFn: () => {
@@ -70,7 +68,6 @@ describe("compareArrays()", () => {
 		describe("using Array.every()", () => {
 			for (const [title, left, right] of comparisons) {
 				benchmarkIt({
-					type: BenchmarkType.Measurement,
 					title: `${title}`,
 					...benchmarkDuration({
 						benchmarkFn: () => {
@@ -84,7 +81,6 @@ describe("compareArrays()", () => {
 		describe("using Object.is()", () => {
 			for (const [title, left, right] of comparisons) {
 				benchmarkIt({
-					type: BenchmarkType.Measurement,
 					title: `${title}`,
 					...benchmarkDuration({
 						benchmarkFn: () => {
@@ -99,7 +95,6 @@ describe("compareArrays()", () => {
 	describe("no callback", () => {
 		for (const [title, left, right] of comparisons) {
 			benchmarkIt({
-				type: BenchmarkType.Measurement,
 				title: `${title}`,
 				...benchmarkDuration({
 					benchmarkFn: () => {
@@ -115,7 +110,6 @@ describe("compareArrays()", () => {
 
 		for (const [title, left, right] of comparisons) {
 			benchmarkIt({
-				type: BenchmarkType.Measurement,
 				testType: TestType.ExecutionTime,
 				title: `${title}`,
 				run: async () => {

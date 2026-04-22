@@ -9,7 +9,6 @@ import {
 	benchmarkDuration,
 	benchmarkIt,
 	benchmarkMemoryUse,
-	BenchmarkType,
 	Box,
 	isInPerformanceTestingMode,
 	type BenchmarkTimingOptions,
@@ -157,7 +156,6 @@ function runExecutionTimeBenchmark({
 	maxBenchmarkDurationSeconds,
 }: ExecutionTimeBenchmarkConfig): Test {
 	return benchmarkIt({
-		type: BenchmarkType.Measurement,
 		title,
 		...benchmarkDuration({
 			benchmarkFnCustom: async (state) => {

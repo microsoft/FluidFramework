@@ -86,8 +86,6 @@ describe("Summary benchmarks", () => {
 
 		for (const [numberOfNodes, minLength, maxLength] of nodesCountWide) {
 			benchmarkIt({
-				only: false,
-				type: BenchmarkType.Measurement,
 				title: `a wide tree with ${numberOfNodes} nodes.`,
 				run: async () => {
 					const summaryTree = getSummaryTree({
@@ -100,8 +98,6 @@ describe("Summary benchmarks", () => {
 		}
 		for (const [numberOfNodes, minLength, maxLength] of nodesCountDeep) {
 			benchmarkIt({
-				only: false,
-				type: BenchmarkType.Measurement,
 				title: `a deep tree with ${numberOfNodes} nodes.`,
 				run: async () => {
 					const summaryTree = getSummaryTree({

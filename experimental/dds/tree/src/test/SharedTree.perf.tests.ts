@@ -5,7 +5,7 @@
 
 import { strict as assert } from 'assert';
 
-import { BenchmarkType, TestType, benchmarkIt, collectDurationData } from '@fluid-tools/benchmark';
+import { TestType, benchmarkIt, collectDurationData } from '@fluid-tools/benchmark';
 
 import { EditLog } from '../EditLog.js';
 
@@ -15,7 +15,6 @@ import { createStableEdits, setUpTestSharedTree } from './utilities/TestUtilitie
 describe('SharedTree Perf', () => {
 	for (const count of [1, 1_000]) {
 		benchmarkIt({
-			type: BenchmarkType.Measurement,
 			testType: TestType.ExecutionTime,
 			title: `get currentView with ${count} sequenced edit(s)`,
 			run: async () => {
