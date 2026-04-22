@@ -420,7 +420,10 @@ export class FluidDataStoreRuntime
 			namespace: "FluidDataStoreRuntime",
 			properties: {
 				all: { dataStoreId: uuid(), dataStoreVersion: pkgVersion },
-				error: { inStagingMode: () => this.inStagingMode, isDirty: () => this.isDirty },
+				error: {
+					inStagingMode: () => this.dataStoreContext.containerRuntime?.inStagingMode,
+					isDirty: () => this.isDirty,
+				},
 			},
 		});
 
@@ -543,7 +546,7 @@ export class FluidDataStoreRuntime
 	 * Implementation of IFluidDataStoreRuntime.inStagingMode
 	 */
 	public get inStagingMode(): boolean {
-		return this.dataStoreContext.containerRuntime?.inStagingMode;
+		return this.dataStoreContext.containerRuntime.inStagingMode;
 	}
 
 	/**
