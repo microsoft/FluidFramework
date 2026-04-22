@@ -173,6 +173,7 @@ import {
 	wrapError,
 	tagCodeArtifacts,
 	normalizeError,
+	toITelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
 import { gt } from "semver-ts";
 import { v4 as uuid } from "uuid";
@@ -1199,7 +1200,7 @@ export class ContainerRuntime
 			if (pendingLocalState?.pendingIdCompressorState !== undefined) {
 				return deserializeIdCompressor(
 					pendingLocalState.pendingIdCompressorState,
-					compressorLogger,
+					toITelemetryLoggerExt(compressorLogger),
 				);
 			} else if (serializedIdCompressor === undefined) {
 				return createIdCompressor(compressorLogger);
@@ -1207,7 +1208,7 @@ export class ContainerRuntime
 				return deserializeIdCompressor(
 					serializedIdCompressor,
 					createSessionId(),
-					compressorLogger,
+					toITelemetryLoggerExt(compressorLogger),
 				);
 			}
 		};
