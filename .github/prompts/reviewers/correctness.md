@@ -72,23 +72,30 @@ Correctness findings are **promoted +1 level**:
 
 ## Output Format
 
-Write your findings to `review-correctness.md`. Use this exact format for each finding:
+Write your findings to `review-correctness.json` as raw JSON. Do not wrap output in a markdown code block or include any other text — the file must be valid JSON and nothing else.
 
-```
-[SEVERITY] path/to/file.ts:LINE — Description of the bug and concrete failure scenario — Suggested fix
+```json
+{
+  "findings": [
+    {
+      "severity": "HIGH",
+      "location": "src/core/tree.ts:142",
+      "description": "`getNode()` returns undefined when parent is detached but caller assumes non-null, causing TypeError on line 145 when accessing `.children`",
+      "fix": "Add undefined check before accessing children, or throw with a descriptive error if the node must always be present at this call site"
+    }
+  ]
+}
 ```
 
-Example:
+- `severity`: `"CRITICAL"`, `"HIGH"`, or `"MEDIUM"`
+- `location`: `path/to/file.ts:LINE`
+- `description`: the bug and its concrete failure scenario
+- `fix`: specific suggested fix
 
-```
-[HIGH] src/core/tree.ts:142 — `getNode()` returns undefined when parent is detached but caller assumes non-null, causing TypeError on line 145 when accessing `.children` — Add undefined check before accessing children, or throw with descriptive error
-```
+If you find NO high-confidence issues:
 
-If you find NO high-confidence issues, write exactly this:
-
-```
-<!-- NO_ISSUES_FOUND -->
-No high-confidence correctness issues found in the current diff.
+```json
+{ "findings": [] }
 ```
 
 ## Instructions
@@ -97,4 +104,4 @@ No high-confidence correctness issues found in the current diff.
 2. For files with complex changes, read the full file to understand context — especially shared state, callers, and adjacent logic
 3. Focus only on changed lines and their immediate context
 4. Apply the high-confidence gate to every finding before including it
-5. Write your review to `review-correctness.md`
+5. Write your review to `review-correctness.json`

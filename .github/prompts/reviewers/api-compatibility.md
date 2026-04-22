@@ -67,17 +67,30 @@ API Quality findings are **promoted +1 level**:
 
 ## Output Format
 
-Write your findings to `review-api-compatibility.md`. Use this exact format for each finding:
+Write your findings to `review-api-compatibility.json` as raw JSON. Do not wrap output in a markdown code block or include any other text — the file must be valid JSON and nothing else.
 
-```
-[SEVERITY] path/to/file.ts:LINE — Description of the API issue and consumer impact — Recommended action
+```json
+{
+  "findings": [
+    {
+      "severity": "CRITICAL",
+      "location": "src/index.ts:12",
+      "description": "`TreeNode` was removed from the public barrel export with no deprecation — any consumer importing it by name will get a compile error after upgrading",
+      "fix": "Restore the export and add `@deprecated` with a migration path to the replacement type before removing in a future release"
+    }
+  ]
+}
 ```
 
-If you find NO high-confidence issues, write exactly this:
+- `severity`: `"CRITICAL"`, `"HIGH"`, or `"MEDIUM"` (API findings are promoted +1 level)
+- `location`: `path/to/file.ts:LINE`
+- `description`: the API issue and its concrete consumer impact
+- `fix`: specific recommended action
 
-```
-<!-- NO_ISSUES_FOUND -->
-No high-confidence API quality concerns found in the current diff.
+If you find NO high-confidence issues:
+
+```json
+{ "findings": [] }
 ```
 
 ## Instructions
@@ -86,4 +99,4 @@ No high-confidence API quality concerns found in the current diff.
 2. Check if any `*.api.md` files changed: `git diff --name-only origin/$BASE_REF...HEAD -- '*.api.md'` — if so, give those packages extra scrutiny
 3. For files that export public APIs, read the full file and any related `index.ts` barrel exports
 4. Apply the high-confidence gate to every finding before including it
-5. Write your review to `review-api-compatibility.md`
+5. Write your review to `review-api-compatibility.json`

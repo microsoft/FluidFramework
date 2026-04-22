@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils/internal';
+import type { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
 
 import { assertNotUndefined, fail } from './Common.js';
 import { PlaceValidationResult, RangeValidationResultKind } from './EditUtilities.js';
@@ -210,7 +210,7 @@ export interface MergeHealthStats {
  */
 export class SharedTreeMergeHealthTelemetryHeartbeat {
 	private heartbeatTimerId = 0;
-	private readonly treeData = new Map<SharedTree, { tally: MergeHealthStats; logger?: ITelemetryLoggerExt }>();
+	private readonly treeData = new Map<SharedTree, { tally: MergeHealthStats; logger?: ITelemetryBaseLogger }>();
 
 	/**
 	 * Adds a tree to the set of tree to log merge health telemetry for.

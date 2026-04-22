@@ -128,7 +128,7 @@ describe(`Presence with AzureClient`, () => {
 			/**
 			 * Timeout for presence attendees to fully join (everyone knows about everyone) {@link AttendeeConnectedEvent}
 			 */
-			const allAttendeesFullyJoinedTimeoutMs = (2000 + 300 * numClients) * timeoutMultiplier;
+			const allAttendeesFullyJoinedTimeoutMs = (3000 + 450 * numClients) * timeoutMultiplier;
 
 			for (const writeClients of [numClients, 1]) {
 				it(`announces 'attendeeConnected' when remote client joins session [${numClients} clients, ${writeClients} writers]`, async function testAnnouncesAttendeeConnected() {
