@@ -129,17 +129,6 @@ parameters:
   type: boolean
   default: false
 
-# Feature flag: when true, PR builds scope test execution to packages
-# affected by the PR diff (plus transitive dependents) via pnpm's native
-# `--filter "...[<merge-base>]"`. Also activates when the PR source branch
-# name contains 'test/filtered-ci/' — a rollout opt-in for exercising the
-# behavior from an auto-triggered PR build without flipping a parameter at
-# queue time. Non-opt-in runs remain effectively byte-identical to today.
-# See include-detect-changed-packages.yml for the full filter semantics.
-- name: enableChangedPackageTestScoping
-  type: boolean
-  default: false
-
 # The `resources` specify the location and version of the 1ES Pipeline Template.
 resources:
   repositories:
@@ -218,17 +207,16 @@ extends:
         dependsOn: [] # this stage doesn't depend on preceding stage
         jobs:
           # Detect packages changed by this PR; publishes output variables that
-          # scope downstream test jobs. Skipped for non-PR builds and non-opt-in
-          # PRs; see include-detect-changed-packages.yml for the full semantics.
+          # scope downstream test jobs. Activated only for PR builds whose
+          # source branch name contains 'test/filtered-ci/' — a rollout opt-in
+          # to be broadened once the feature has soaked. See
+          # include-detect-changed-packages.yml for the full semantics.
           - job: detect_changes
             displayName: Detect changed packages
             condition: >-
               and(
                 eq(variables['Build.Reason'], 'PullRequest'),
-                or(
-                  eq('${{ parameters.enableChangedPackageTestScoping }}', 'True'),
-                  contains(variables['System.PullRequest.SourceBranch'], 'test/filtered-ci/')
-                )
+                contains(variables['System.PullRequest.SourceBranch'], 'test/filtered-ci/')
               )
             variables:
               - name: targetBranchName

@@ -50,12 +50,6 @@ parameters:
   displayName: Fluid build tools version (default = installs version in repo)
   type: string
   default: repo
-# Rollout switch for scoping PR test execution to changed packages.
-# See build-npm-client-package.yml for the full activation rules.
-- name: enableChangedPackageTestScoping
-  displayName: Scope tests to changed packages (PR builds only)
-  type: boolean
-  default: false
 
 trigger:
   branches:
@@ -205,7 +199,6 @@ extends:
     releaseBuildOverride: ${{ parameters.releaseBuildOverride }}
     packageTypesOverride: ${{ parameters.packageTypesOverride }}
     buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
-    enableChangedPackageTestScoping: ${{ parameters.enableChangedPackageTestScoping }}
     interdependencyRange: ${{ parameters.interdependencyRange }}
     packageManagerInstallCommand: 'pnpm i --frozen-lockfile'
     packageManager: pnpm
