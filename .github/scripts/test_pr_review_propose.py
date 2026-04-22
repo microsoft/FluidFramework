@@ -12,7 +12,6 @@ import pytest
 
 from pr_review_propose import (
     REVIEWERS,
-    Reviewer,
     _ID_TO_LABEL,
     _LABEL_TO_ID,
     cmd_build_comment,
