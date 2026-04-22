@@ -91,9 +91,12 @@ jobs:
         run: |
           if [ "$EVENT_NAME" = "workflow_run" ]; then
             # Label-based dispatch always uses the default fleet size.
-            PR_NUMBER=$(jq -r '.pr_number' params.json)
-            HEAD_SHA=$(jq -r '.head_sha' params.json)
-            BASE_REF=$(jq -r '.base_ref' params.json)
+            # The dispatcher uploads `dispatch/params.json`; upload-artifact
+            # preserves the directory structure relative to the workspace, so
+            # the file lands at `dispatch/params.json` after download too.
+            PR_NUMBER=$(jq -r '.pr_number' dispatch/params.json)
+            HEAD_SHA=$(jq -r '.head_sha' dispatch/params.json)
+            BASE_REF=$(jq -r '.base_ref' dispatch/params.json)
             REVIEWER_COUNT=3
           else
             PR_NUMBER="$INPUT_PR_NUMBER"
