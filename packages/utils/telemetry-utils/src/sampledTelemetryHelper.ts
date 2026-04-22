@@ -300,7 +300,7 @@ export class SampledTelemetryHelper<
 			this.logger.sendPerformanceEvent(
 				telemetryEvent,
 				undefined, // error
-				LogLevel.info, // logLevel
+				LogLevel.info,
 			);
 			this.measurementsMap.delete(bucket);
 		}

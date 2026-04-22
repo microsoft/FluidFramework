@@ -256,7 +256,7 @@ export class OdspDeltaStorageWithCache implements IDocumentDeltaStorageService {
 						reason: fetchReason,
 					},
 					undefined, // error
-					LogLevel.info, // logLevel
+					LogLevel.info,
 				);
 			}
 		});

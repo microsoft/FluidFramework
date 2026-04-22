@@ -658,7 +658,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 					...this.getConnectionDetailsProps(),
 				},
 				undefined, // error
-				LogLevel.info, // logLevel
+				LogLevel.info,
 			);
 		});
 	}

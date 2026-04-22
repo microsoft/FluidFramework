@@ -422,7 +422,7 @@ export class DocumentDeltaConnection
 				}),
 			},
 			undefined, // error
-			LogLevel.info, // logLevel
+			LogLevel.info,
 		);
 		if (isFluidError(error)) {
 			const fluidError = normalizeError(error, {

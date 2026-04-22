@@ -316,7 +316,7 @@ class OpPerfTelemetry {
 				firstConnection: this.firstConnection,
 			},
 			undefined, // error
-			LogLevel.info, // logLevel
+			LogLevel.info,
 		);
 	}
 
