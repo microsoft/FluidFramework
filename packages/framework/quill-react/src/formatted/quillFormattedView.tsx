@@ -5,13 +5,17 @@
 
 import { assert } from "@fluidframework/core-utils/internal";
 import {
-	codepointCount,
-	cpCountToUtf16,
 	type PropTreeNode,
 	unwrapPropTreeNode,
 	type UndoRedo,
 } from "@fluidframework/react/internal";
-import { TreeAlpha, FormattedTextAsTree } from "@fluidframework/tree/internal";
+import {
+	codePointCount,
+	FormattedTextAsTree,
+	type TextAsTree,
+	TreeAlpha,
+	utf16LengthForCodePoints,
+} from "@fluidframework/tree/internal";
 export { FormattedTextAsTree } from "@fluidframework/tree/internal";
 import Quill, { type EmitterSource } from "quill";
 import DeltaPackage from "quill-delta";
@@ -341,7 +345,7 @@ function formatToFullQuillAttributes(
 }
 
 /**
- * Convert `FormattedTextChangeOp`s into Quill delta ops
+ * Convert {@link TextAsTree.TextOp}s from `onContentChanged` into Quill delta ops
  * that can be applied via `Quill.updateContents()`.
  *
  * @remarks
@@ -349,7 +353,7 @@ function formatToFullQuillAttributes(
  * Consecutive atoms with identical formatting are grouped into a single Quill op
  * using `getUniformRun` for efficiency.
  * `remove` ops become Quill `delete` ops.
- * `retain` ops with `formattingChanged: false` pass through as plain retains.
+ * `retain` ops without `formattingChanged` pass through as plain retains.
  * `retain` ops with `formattingChanged: true` read the current formatting from the
  * tree and produce Quill retain ops with full attribute sets so that Quill's
  * display matches the new tree state.
@@ -357,20 +361,29 @@ function formatToFullQuillAttributes(
  * `preEditContent` is the Quill document text (via `quill.getText()`) captured
  * before applying these ops. It is needed to compute the UTF-16 width of removed
  * atoms, which are no longer present in the tree after the edit.
+ *
+ * Returns `undefined` when the tree is out of sync with the delta (e.g., a concurrent edit raced with event delivery).
+ * The caller should fall back to a full diff in that case.
  */
 function contentOpsToQuillDelta(
 	root: FormattedTextAsTree.Tree,
-	ops: readonly FormattedTextAsTree.FormattedTextChangeOp[],
+	ops: readonly TextAsTree.TextOp[],
 	preEditContent: string,
-): QuillDeltaOp[] {
+): QuillDeltaOp[] | undefined {
 	const quillOps: QuillDeltaOp[] = [];
 	// treePos: atom index in the post-edit tree. Advances for retain and insert, not remove.
 	let treePos = 0;
 	// quillPos: UTF-16 index in preEditContent. Advances for retain and remove, not insert.
 	let quillPos = 0;
+	// Cache the atoms array so we don't pay tree-traversal cost on every index read.
+	const atoms = root.charactersWithFormatting();
 
 	for (const op of ops) {
-		if (op.type === "retain" && !op.formattingChanged) {
+		if (op.type === "retain" && op.formattingChanged !== true) {
+			if (treePos + op.count > atoms.length) {
+				// Tree is out of sync with the delta. Signal the caller to fall back.
+				return undefined;
+			}
 			// No formatting change — plain retain.
 			// Use getString to get the actual UTF-16 width of these atoms.
 			const text = root.getString(treePos, treePos + op.count);
@@ -383,8 +396,11 @@ function contentOpsToQuillDelta(
 			const retainEnd = treePos + op.count;
 			let i = treePos;
 			while (i < retainEnd) {
-				const atom = root.charactersWithFormatting()[i];
-				if (atom === undefined) break;
+				const atom = atoms[i];
+				if (atom === undefined) {
+					// Tree is out of sync with the delta. Signal the caller to fall back.
+					return undefined;
+				}
 
 				if (atom.content instanceof FormattedTextAsTree.StringLineAtom) {
 					// Line atom is always "\n" — 1 UTF-16 unit.
@@ -410,11 +426,14 @@ function contentOpsToQuillDelta(
 			treePos = retainEnd;
 		} else if (op.type === "insert") {
 			// New characters inserted — read formatting from the tree.
-			const insertEnd = treePos + codepointCount(op.text);
+			const insertEnd = treePos + codePointCount(op.text);
 			let i = treePos;
 			while (i < insertEnd) {
-				const atom = root.charactersWithFormatting()[i];
-				if (atom === undefined) break;
+				const atom = atoms[i];
+				if (atom === undefined) {
+					// Tree is out of sync with the delta. Signal the caller to fall back.
+					return undefined;
+				}
 
 				if (atom.content instanceof FormattedTextAsTree.StringLineAtom) {
 					// Line atom: insert newline with line tag attributes.
@@ -447,7 +466,7 @@ function contentOpsToQuillDelta(
 			// quillPos does not advance: inserts are new content not in preEditContent.
 		} else {
 			// remove: atoms are gone from the tree; use preEditContent to get UTF-16 width.
-			const utf16Count = cpCountToUtf16(preEditContent, quillPos, op.count);
+			const utf16Count = utf16LengthForCodePoints(preEditContent, quillPos, op.count);
 			quillOps.push({ delete: utf16Count });
 			quillPos += utf16Count;
 			// treePos does not advance — removed atoms are not in the new tree.
@@ -590,121 +609,122 @@ const FormattedTextEditorView = forwardRef<
 		quill.on("text-change", (delta: Delta, _oldDelta: Delta, source: EmitterSource) => {
 			if (source !== "user" || isUpdating.current) return;
 			isUpdating.current = true;
+			try {
+				// Wrap all tree mutations in a transaction so they undo/redo as one atomic unit.
+				// If the node is not part of a branch (e.g. unhydrated), apply edits directly.
+				const branch = TreeAlpha.branch(root);
+				const applyDelta = (): void => {
+					// Get current content for UTF-16 to code point position mapping
+					// We update this as we process operations to keep positions accurate
+					let content = root.fullString();
+					let utf16Pos = 0; // Position in UTF-16 code units (Quill's view)
+					let cpPos = 0; // Position in code points (tree's view)
 
-			// Wrap all tree mutations in a transaction so they undo/redo as one atomic unit.
-			// If the node is not part of a branch (e.g. unhydrated), apply edits directly.
-			const branch = TreeAlpha.branch(root);
-			const applyDelta = (): void => {
-				// Get current content for UTF-16 to code point position mapping
-				// We update this as we process operations to keep positions accurate
-				let content = root.fullString();
-				let utf16Pos = 0; // Position in UTF-16 code units (Quill's view)
-				let cpPos = 0; // Position in code points (tree's view)
+					for (const op of delta.ops) {
+						if (op.retain !== undefined) {
+							// The docs for retain imply this is always a number, but the type definitions allow a record here.
+							// It is unknown why the type definitions allow a record as they have no doc comments.
+							// For now this assert seems to be passing, so we just assume its always a number.
+							assert(
+								typeof op.retain === "number",
+								0xcdf /* Expected retain count to be a number */,
+							);
+							// Convert UTF-16 retain count to code point count
+							const retainedStr = content.slice(utf16Pos, utf16Pos + op.retain);
+							const cpCount = codePointCount(retainedStr);
 
-				for (const op of delta.ops) {
-					if (op.retain !== undefined) {
-						// The docs for retain imply this is always a number, but the type definitions allow a record here.
-						// It is unknown why the type definitions allow a record as they have no doc comments.
-						// For now this assert seems to be passing, so we just assume its always a number.
-						assert(
-							typeof op.retain === "number",
-							0xcdf /* Expected retain count to be a number */,
-						);
-						// Convert UTF-16 retain count to code point count
-						const retainedStr = content.slice(utf16Pos, utf16Pos + op.retain);
-						const cpCount = codepointCount(retainedStr);
+							if (op.attributes) {
+								const lineTag = parseLineTag(op.attributes);
+								const indent =
+									typeof op.attributes.indent === "number" ? op.attributes.indent : undefined;
+								// Case 1: Applying line formatting (header/list) to an existing newline in the document.
+								if (lineTag !== undefined && content[utf16Pos] === "\n") {
+									// Swap existing newline atom to StringLineAtom
+									root.removeRange(cpPos, cpPos + 1);
+									root.insertWithFormattingAt(cpPos, [createLineAtom(lineTag, indent)]);
+									// Case 2: Applying line formatting past the end of content. Quill's implicit trailing newline.
+								} else if (lineTag !== undefined && utf16Pos >= content.length) {
+									// Quill's implicit trailing newline — insert a new line atom
+									root.insertWithFormattingAt(cpPos, [createLineAtom(lineTag, indent)]);
+									content += "\n";
+									// Case 3: indent-only change on existing line atom
+								} else if (
+									lineTag === undefined &&
+									"indent" in op.attributes &&
+									!("header" in op.attributes) &&
+									!("list" in op.attributes) &&
+									!("blockquote" in op.attributes) &&
+									!("code-block" in op.attributes) &&
+									content[utf16Pos] === "\n"
+								) {
+									// Indent only change on an existing line atom
+									const lineAtom = root.charactersWithFormatting()[cpPos]?.content;
+									if (lineAtom instanceof FormattedTextAsTree.StringLineAtom) {
+										lineAtom.indent = indent ?? 0;
+									}
+									// Case 4: clearing line formatting. Deletes StringLineAtom and inserts a plain
+									// StringTextAtom("\n") in its place.
+								} else if (
+									lineTag === undefined &&
+									content[utf16Pos] === "\n" &&
+									root.charactersWithFormatting()[cpPos]?.content instanceof
+										FormattedTextAsTree.StringLineAtom
+								) {
+									// Quill is clearing line formatting (e.g. { retain: 1, attributes: { header: null } }).
+									// StringLineAtom and StringTextAtom are distinct schema types in the tree,
+									// so we can't convert between them via formatRange — we must delete the
+									// StringLineAtom and insert a plain StringTextAtom("\n") in its place.
+									root.removeRange(cpPos, cpPos + 1);
+									root.insertAt(cpPos, "\n");
+									// Case 5: Normal character formatting (bold, italic, size, etc...)
+								} else {
+									root.formatRange(
+										cpPos,
+										cpPos + cpCount,
+										quillAttributesToPartial(op.attributes),
+									);
+								}
+							}
+							utf16Pos += op.retain;
+							cpPos += cpCount;
+						} else if (op.delete !== undefined) {
+							// Convert UTF-16 delete count to code point count
+							const deletedStr = content.slice(utf16Pos, utf16Pos + op.delete);
+							const cpCount = codePointCount(deletedStr);
 
-						if (op.attributes) {
+							root.removeRange(cpPos, cpPos + cpCount);
+							// Update content to reflect deletion for future position calculations
+							content = content.slice(0, utf16Pos) + content.slice(utf16Pos + op.delete);
+							// Don't advance positions - next op starts at same position
+						} else if (typeof op.insert === "string") {
 							const lineTag = parseLineTag(op.attributes);
 							const indent =
-								typeof op.attributes.indent === "number" ? op.attributes.indent : undefined;
-							// Case 1: Applying line formatting (header/list) to an existing newline in the document.
-							if (lineTag !== undefined && content[utf16Pos] === "\n") {
-								// Swap existing newline atom to StringLineAtom
-								root.removeRange(cpPos, cpPos + 1);
+								typeof op.attributes?.indent === "number" ? op.attributes.indent : undefined;
+							if (lineTag !== undefined && op.insert === "\n") {
 								root.insertWithFormattingAt(cpPos, [createLineAtom(lineTag, indent)]);
-								// Case 2: Applying line formatting past the end of content. Quill's implicit trailing newline.
-							} else if (lineTag !== undefined && utf16Pos >= content.length) {
-								// Quill's implicit trailing newline — insert a new line atom
-								root.insertWithFormattingAt(cpPos, [createLineAtom(lineTag, indent)]);
-								content += "\n";
-								// Case 3: indent-only change on existing line atom
-							} else if (
-								lineTag === undefined &&
-								"indent" in op.attributes &&
-								!("header" in op.attributes) &&
-								!("list" in op.attributes) &&
-								!("blockquote" in op.attributes) &&
-								!("code-block" in op.attributes) &&
-								content[utf16Pos] === "\n"
-							) {
-								// Indent only change on an existing line atom
-								const lineAtom = root.charactersWithFormatting()[cpPos]?.content;
-								if (lineAtom instanceof FormattedTextAsTree.StringLineAtom) {
-									lineAtom.indent = indent ?? 0;
-								}
-								// Case 4: clearing line formatting. Deletes StringLineAtom and inserts a plain
-								// StringTextAtom("\n") in its place.
-							} else if (
-								lineTag === undefined &&
-								content[utf16Pos] === "\n" &&
-								root.charactersWithFormatting()[cpPos]?.content instanceof
-									FormattedTextAsTree.StringLineAtom
-							) {
-								// Quill is clearing line formatting (e.g. { retain: 1, attributes: { header: null } }).
-								// StringLineAtom and StringTextAtom are distinct schema types in the tree,
-								// so we can't convert between them via formatRange — we must delete the
-								// StringLineAtom and insert a plain StringTextAtom("\n") in its place.
-								root.removeRange(cpPos, cpPos + 1);
-								root.insertAt(cpPos, "\n");
-								// Case 5: Normal character formatting (bold, italic, size, etc...)
 							} else {
-								root.formatRange(
-									cpPos,
-									cpPos + cpCount,
-									quillAttributesToPartial(op.attributes),
+								// Insert: add new text with formatting at current position
+								root.defaultFormat = new FormattedTextAsTree.CharacterFormat(
+									quillAttributesToFormat(op.attributes),
 								);
+								root.insertAt(cpPos, op.insert);
 							}
+							// Update content to reflect insertion
+							content = content.slice(0, utf16Pos) + op.insert + content.slice(utf16Pos);
+							// Advance by inserted content length
+							utf16Pos += op.insert.length;
+							cpPos += codePointCount(op.insert);
 						}
-						utf16Pos += op.retain;
-						cpPos += cpCount;
-					} else if (op.delete !== undefined) {
-						// Convert UTF-16 delete count to code point count
-						const deletedStr = content.slice(utf16Pos, utf16Pos + op.delete);
-						const cpCount = codepointCount(deletedStr);
-
-						root.removeRange(cpPos, cpPos + cpCount);
-						// Update content to reflect deletion for future position calculations
-						content = content.slice(0, utf16Pos) + content.slice(utf16Pos + op.delete);
-						// Don't advance positions - next op starts at same position
-					} else if (typeof op.insert === "string") {
-						const lineTag = parseLineTag(op.attributes);
-						const indent =
-							typeof op.attributes?.indent === "number" ? op.attributes.indent : undefined;
-						if (lineTag !== undefined && op.insert === "\n") {
-							root.insertWithFormattingAt(cpPos, [createLineAtom(lineTag, indent)]);
-						} else {
-							// Insert: add new text with formatting at current position
-							root.defaultFormat = new FormattedTextAsTree.CharacterFormat(
-								quillAttributesToFormat(op.attributes),
-							);
-							root.insertAt(cpPos, op.insert);
-						}
-						// Update content to reflect insertion
-						content = content.slice(0, utf16Pos) + op.insert + content.slice(utf16Pos);
-						// Advance by inserted content length
-						utf16Pos += op.insert.length;
-						cpPos += codepointCount(op.insert);
 					}
+				};
+				if (branch === undefined) {
+					applyDelta();
+				} else {
+					branch.runTransaction(applyDelta);
 				}
-			};
-			if (branch === undefined) {
-				applyDelta();
-			} else {
-				branch.runTransaction(applyDelta);
+			} finally {
+				isUpdating.current = false;
 			}
-
-			isUpdating.current = false;
 		});
 
 		quillRef.current = quill;
@@ -730,27 +750,29 @@ const FormattedTextEditorView = forwardRef<
 			if (!quillRef.current || isUpdating.current) return;
 
 			isUpdating.current = true;
-
-			if (ops === undefined) {
-				// Delta unavailable (e.g. schema upgrade) — fall back to full diff.
-				const treeDelta = buildDeltaFromTree(root);
-				// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-				const quillDelta: Delta = quillRef.current.getContents();
-				const diff = new Delta(quillDelta).diff(new Delta(treeDelta));
-				if (diff.ops.length > 0) {
-					quillRef.current.updateContents(diff.ops);
+			try {
+				let quillOps: QuillDeltaOp[] | undefined;
+				if (ops !== undefined) {
+					// Try incremental delta translation first.
+					// Capture Quill's pre-edit content for remove op UTF-16 width calculation.
+					quillOps = contentOpsToQuillDelta(root, ops, quillRef.current.getText());
 				}
-			} else {
-				// Translate FormattedTextChangeOps to Quill delta and apply incrementally.
-				// Capture Quill's pre-edit content for remove op UTF-16 width calculation.
-				const preEditContent = quillRef.current.getText();
-				const quillOps = contentOpsToQuillDelta(root, ops, preEditContent);
-				if (quillOps.length > 0) {
+
+				if (quillOps === undefined) {
+					// Delta unavailable or tree out-of-sync — fall back to full diff.
+					const treeDelta = buildDeltaFromTree(root);
+					// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+					const quillDelta: Delta = quillRef.current.getContents();
+					const diff = new Delta(quillDelta).diff(new Delta(treeDelta));
+					if (diff.ops.length > 0) {
+						quillRef.current.updateContents(diff.ops);
+					}
+				} else if (quillOps.length > 0) {
 					quillRef.current.updateContents(quillOps, "api");
 				}
+			} finally {
+				isUpdating.current = false;
 			}
-
-			isUpdating.current = false;
 		});
 	}, [root]);
 

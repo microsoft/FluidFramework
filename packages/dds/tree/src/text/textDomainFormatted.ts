@@ -190,46 +190,16 @@ class TextNode
 		callback: (ops: readonly TextAsTree.TextOp[] | undefined) => void,
 	): () => void {
 		return TreeAlpha.on(this.content, "nodeChanged", ({ delta }) =>
-			processCharactersChangedDelta(
-				delta,
-				(i) => (this.content[i] as FormattedTextAsTree.StringAtom).content.content,
-				callback,
-			),
+			processCharactersChangedDelta(delta, (i) => this.content[i]?.content.content, callback),
 		);
 	}
 
 	public onContentChanged(
-		callback: (ops: readonly FormattedTextAsTree.FormattedTextChangeOp[] | undefined) => void,
+		callback: (ops: readonly TextAsTree.TextOp[] | undefined) => void,
 	): () => void {
-		return TreeAlpha.on(this.content, "treeChanged", ({ delta }) => {
-			if (delta === undefined) {
-				callback(undefined);
-				return;
-			}
-			let readPos = 0;
-			const ops: FormattedTextAsTree.FormattedTextChangeOp[] = [];
-			for (const op of delta) {
-				if (op.type === "retain") {
-					ops.push({
-						type: "retain",
-						count: op.count,
-						formattingChanged: op.subtreeChanged,
-					});
-					readPos += op.count;
-				} else if (op.type === "insert") {
-					let text = "";
-					for (let i = 0; i < op.count; i++) {
-						const atom = this.content[readPos] as FormattedTextAsTree.StringAtom;
-						text += atom.content.content;
-						readPos++;
-					}
-					ops.push({ type: "insert", text });
-				} else {
-					ops.push(op);
-				}
-			}
-			callback(ops);
-		});
+		return TreeAlpha.on(this.content, "treeChanged", ({ delta }) =>
+			processCharactersChangedDelta(delta, (i) => this.content[i]?.content.content, callback),
+		);
 	}
 
 	public getUniformRun(startIndex: number, endIndex?: number): number {
@@ -398,33 +368,6 @@ class StringArray extends sf.array("StringArray", [() => FormattedTextAsTree.Str
  * @internal
  */
 export namespace FormattedTextAsTree {
-	/**
-	 * A retain op in a content-level delta for formatted text.
-	 * @remarks
-	 * Extends {@link TextAsTree.TextRetainOp} with a `formattingChanged` flag indicating
-	 * that at least one character in the retained range had a formatting change
-	 * (e.g. a bold/italic/size update or line-tag change).
-	 * Consumers can use this flag to selectively re-read formatting for only the affected characters.
-	 * @sealed
-	 * @internal
-	 */
-	export interface FormattedTextRetainOp extends TextAsTree.TextRetainOp {
-		readonly formattingChanged: boolean;
-	}
-
-	/**
-	 * Describes a single change within an `onContentChanged` delta for a formatted text node.
-	 * @remarks
-	 * The `retain` variant is {@link FormattedTextAsTree.FormattedTextRetainOp}, which extends {@link TextAsTree.TextRetainOp}
-	 * with a `formattingChanged` flag. The `insert` and `remove` variants are shared with
-	 * {@link TextAsTree.TextOp}.
-	 * @internal
-	 */
-	export type FormattedTextChangeOp =
-		| FormattedTextRetainOp
-		| TextAsTree.TextInsertOp
-		| TextAsTree.TextRemoveOp;
-
 	/**
 	 * Formatting options for characters.
 	 * @internal
@@ -615,22 +558,22 @@ export namespace FormattedTextAsTree {
 		/**
 		 * Subscribe to all content changes on this text node, including both shallow
 		 * changes (inserts/removes) and deep changes (formatting updates on existing characters).
-		 * @param callback - Called after each change with a sequence of
-		 * `FormattedTextChangeOp`s describing what changed,
+		 * @param callback - Called after each change with a sequence of {@link TextAsTree.TextOp}s describing what changed,
 		 * or `undefined` when a delta could not be computed (e.g. during a schema upgrade).
 		 * @returns A cleanup function that unsubscribes the callback when called.
 		 * @remarks
 		 * Unlike {@link TextAsTree.Members.onCharactersChanged} which only fires on
 		 * shallow changes (inserts and removes), this method also fires on deep changes —
 		 * formatting property updates on existing characters.
-		 * The `formattingChanged` flag on retain ops indicates which character ranges had formatting updates.
+		 * The {@link TextAsTree.TextRetainOp.formattingChanged} flag on retain ops
+		 * indicates which character ranges had formatting updates.
 		 *
 		 * All counts in the delivered ops are in Unicode code points, not UTF-16 code units.
 		 * For characters outside the Basic Multilingual Plane (e.g. emoji), one code point
 		 * corresponds to two UTF-16 code units — convert before using the counts as string indices.
 		 */
 		onContentChanged(
-			callback: (ops: readonly FormattedTextChangeOp[] | undefined) => void,
+			callback: (ops: readonly TextAsTree.TextOp[] | undefined) => void,
 		): () => void;
 	}
 
