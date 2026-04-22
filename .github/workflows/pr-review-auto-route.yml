@@ -16,9 +16,20 @@ name: "PR Review Auto Router"
 #
 # If the PR already has the fleet-review label when it opens, this workflow
 # skips — the label dispatcher (pr-review-dispatch.yml) takes precedence.
+#
+# ── Security invariant ────────────────────────────────────────────────────────
+# This workflow runs on `pull_request_target` so the workflow definition comes
+# from the BASE branch (trusted) even for fork PRs. That means fork PRs get a
+# write token + secrets, which is ONLY safe if no PR-authored code is executed.
+# Preserve that invariant:
+#   - Do NOT set `ref: pull_request.head.sha` on actions/checkout — keep the
+#     default base-branch checkout so the working tree is trusted.
+#   - Fetch the PR head SHA for `git diff`, but consume only data (line counts,
+#     filenames) — never source or run anything from it.
+#   - Scripts invoked here must live under .github/scripts on the base branch.
 
 on:
-  pull_request:
+  pull_request_target:
     types:
       - opened
       - reopened
@@ -42,18 +53,28 @@ jobs:
     if: "!contains(github.event.pull_request.labels.*.name, 'fleet-review')"
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout PR head
+      - name: Checkout base branch
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # ratchet:actions/checkout@v6
         with:
-          ref: ${{ github.event.pull_request.head.sha }}
+          # Default ref under pull_request_target is the base branch — trusted.
+          # Do NOT change to pull_request.head.sha (see security invariant above).
           fetch-depth: 0
+
+      - name: Fetch PR head for diff
+        env:
+          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          # Fetch the PR head commit without checking it out so we can diff
+          # against it without bringing PR-authored files into the working tree.
+          git fetch --no-tags origin "${PR_HEAD_SHA}"
 
       - name: Compute PR metrics
         id: metrics
         env:
           BASE_REF: ${{ github.base_ref }}
+          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
         run: |
-          git diff "origin/${BASE_REF}...HEAD" --numstat > /tmp/numstat.txt
+          git diff "origin/${BASE_REF}...${PR_HEAD_SHA}" --numstat > /tmp/numstat.txt
 
           # Lines changed: insertions + deletions, ignoring binary files (shown as '-' in numstat)
           LINES=$(awk '$1 ~ /^[0-9]+$/ && $2 ~ /^[0-9]+$/ {sum+=$1+$2} END{print sum+0}' /tmp/numstat.txt)
@@ -95,7 +116,7 @@ jobs:
           LINES: ${{ steps.metrics.outputs.lines }}
           FILES: ${{ steps.metrics.outputs.files }}
         run: |
-          python3 .github/scripts/pr_review_confirm.py build-comment \
+          python3 .github/scripts/pr_review_propose.py build-comment \
             --reviewer-count "$REVIEWER_COUNT" \
             --lines "$LINES" \
             --files "$FILES" \

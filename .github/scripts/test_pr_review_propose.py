@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Tests for pr_review_confirm.py."""
+"""Tests for pr_review_propose.py."""
 
 from __future__ import annotations
 
@@ -10,7 +10,7 @@ from pathlib import Path
 
 import pytest
 
-from pr_review_confirm import (
+from pr_review_propose import (
     REVIEWERS,
     Reviewer,
     _ID_TO_LABEL,
@@ -19,10 +19,12 @@ from pr_review_confirm import (
     cmd_build_qa_context,
     cmd_format_names,
     cmd_parse_checkboxes,
+    get_selected,
 )
 
 
 # ── Module-level invariants ──────────────────────────────────────────────────
+
 
 class TestReviewerRegistry:
     def test_every_reviewer_has_all_fields(self) -> None:
@@ -49,14 +51,34 @@ class TestReviewerRegistry:
             assert _ID_TO_LABEL[r.id] == r.label
 
 
+# ── get_selected ─────────────────────────────────────────────────────────────
+
+
+class TestGetSelected:
+    def test_zero_selects_nothing(self) -> None:
+        assert get_selected(0) == set()
+
+    def test_count_below_registry_picks_priority_prefix(self) -> None:
+        assert get_selected(2) == {REVIEWERS[0].id, REVIEWERS[1].id}
+
+    def test_count_equal_to_registry_selects_all(self) -> None:
+        assert get_selected(len(REVIEWERS)) == {r.id for r in REVIEWERS}
+
+    def test_count_beyond_registry_is_capped_at_all(self) -> None:
+        assert get_selected(len(REVIEWERS) + 5) == {r.id for r in REVIEWERS}
+
+
 # ── build-comment ────────────────────────────────────────────────────────────
+
 
 def _ns(**kwargs: object) -> argparse.Namespace:
     return argparse.Namespace(**kwargs)
 
 
 class TestBuildComment:
-    def test_includes_marker_and_metrics(self, capsys: pytest.CaptureFixture[str]) -> None:
+    def test_includes_marker_and_metrics(
+        self, capsys: pytest.CaptureFixture[str]
+    ) -> None:
         cmd_build_comment(_ns(reviewer_count=3, lines=247, files=8))
         out = capsys.readouterr().out
         assert "<!-- pr-review-confirm -->" in out
@@ -74,14 +96,18 @@ class TestBuildComment:
         for r in REVIEWERS[2:]:
             assert f"- [ ] **{r.label}**" in out
 
-    def test_count_zero_checks_nothing(self, capsys: pytest.CaptureFixture[str]) -> None:
+    def test_count_zero_checks_nothing(
+        self, capsys: pytest.CaptureFixture[str]
+    ) -> None:
         cmd_build_comment(_ns(reviewer_count=0, lines=0, files=0))
         out = capsys.readouterr().out
         assert "[x]" not in out
         for r in REVIEWERS:
             assert f"- [ ] **{r.label}**" in out
 
-    def test_count_beyond_registry_checks_all(self, capsys: pytest.CaptureFixture[str]) -> None:
+    def test_count_beyond_registry_checks_all(
+        self, capsys: pytest.CaptureFixture[str]
+    ) -> None:
         cmd_build_comment(_ns(reviewer_count=len(REVIEWERS) + 2, lines=1000, files=50))
         out = capsys.readouterr().out
         assert "[ ]" not in out
@@ -100,6 +126,7 @@ class TestBuildComment:
 
 # ── parse-checkboxes ─────────────────────────────────────────────────────────
 
+
 def _write_body(tmp_path: Path, body: str) -> Path:
     path = tmp_path / "body.txt"
     path.write_text(body)
@@ -110,7 +137,9 @@ class TestParseCheckboxes:
     def test_parses_checked_boxes(
         self, tmp_path: Path, capsys: pytest.CaptureFixture[str]
     ) -> None:
-        body = _write_body(tmp_path, "- [x] **Correctness** — desc\n- [ ] **Security** — desc\n")
+        body = _write_body(
+            tmp_path, "- [x] **Correctness** — desc\n- [ ] **Security** — desc\n"
+        )
         cmd_parse_checkboxes(_ns(body_file=str(body)))
         assert json.loads(capsys.readouterr().out) == ["correctness"]
 
@@ -139,28 +168,36 @@ class TestParseCheckboxes:
     def test_deduplicates_repeated_entries(
         self, tmp_path: Path, capsys: pytest.CaptureFixture[str]
     ) -> None:
-        body = _write_body(tmp_path, "- [x] **Correctness** — a\n- [x] **Correctness** — b\n")
+        body = _write_body(
+            tmp_path, "- [x] **Correctness** — a\n- [x] **Correctness** — b\n"
+        )
         cmd_parse_checkboxes(_ns(body_file=str(body)))
         assert json.loads(capsys.readouterr().out) == ["correctness"]
 
     def test_preserves_order_of_first_occurrence(
         self, tmp_path: Path, capsys: pytest.CaptureFixture[str]
     ) -> None:
-        body = _write_body(tmp_path, "- [x] **Security** — a\n- [x] **Correctness** — b\n")
+        body = _write_body(
+            tmp_path, "- [x] **Security** — a\n- [x] **Correctness** — b\n"
+        )
         cmd_parse_checkboxes(_ns(body_file=str(body)))
         assert json.loads(capsys.readouterr().out) == ["security", "correctness"]
 
     def test_ignores_unchecked(
         self, tmp_path: Path, capsys: pytest.CaptureFixture[str]
     ) -> None:
-        body = _write_body(tmp_path, "- [ ] **Correctness** — desc\n- [ ] **Security** — desc\n")
+        body = _write_body(
+            tmp_path, "- [ ] **Correctness** — desc\n- [ ] **Security** — desc\n"
+        )
         cmd_parse_checkboxes(_ns(body_file=str(body)))
         assert json.loads(capsys.readouterr().out) == []
 
     def test_ignores_unknown_labels(
         self, tmp_path: Path, capsys: pytest.CaptureFixture[str]
     ) -> None:
-        body = _write_body(tmp_path, "- [x] **Unknown** — desc\n- [x] **Correctness** — desc\n")
+        body = _write_body(
+            tmp_path, "- [x] **Unknown** — desc\n- [x] **Correctness** — desc\n"
+        )
         cmd_parse_checkboxes(_ns(body_file=str(body)))
         assert json.loads(capsys.readouterr().out) == ["correctness"]
 
@@ -182,6 +219,7 @@ class TestParseCheckboxes:
 
 
 # ── format-names ─────────────────────────────────────────────────────────────
+
 
 class TestFormatNames:
     def test_single_id(self, capsys: pytest.CaptureFixture[str]) -> None:
@@ -206,21 +244,28 @@ class TestFormatNames:
         cmd_format_names(_ns(reviewers_json="[]"))
         assert capsys.readouterr().out.strip() == ""
 
-    def test_unknown_id_passes_through(self, capsys: pytest.CaptureFixture[str]) -> None:
+    def test_unknown_id_passes_through(
+        self, capsys: pytest.CaptureFixture[str]
+    ) -> None:
         cmd_format_names(_ns(reviewers_json=json.dumps(["unknown-reviewer"])))
         assert capsys.readouterr().out.strip() == "unknown-reviewer"
 
 
 # ── build-qa-context ─────────────────────────────────────────────────────────
 
+
 class TestBuildQAContext:
-    def test_selected_marked_with_check(self, capsys: pytest.CaptureFixture[str]) -> None:
+    def test_selected_marked_with_check(
+        self, capsys: pytest.CaptureFixture[str]
+    ) -> None:
         cmd_build_qa_context(_ns(selected_json=json.dumps(["correctness", "security"])))
         out = capsys.readouterr().out
         assert "✓ Correctness" in out
         assert "✓ Security" in out
 
-    def test_unselected_marked_with_circle(self, capsys: pytest.CaptureFixture[str]) -> None:
+    def test_unselected_marked_with_circle(
+        self, capsys: pytest.CaptureFixture[str]
+    ) -> None:
         cmd_build_qa_context(_ns(selected_json=json.dumps(["correctness"])))
         out = capsys.readouterr().out
         assert "○ Security" in out

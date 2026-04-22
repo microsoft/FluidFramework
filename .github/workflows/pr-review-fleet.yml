@@ -281,8 +281,24 @@ jobs:
               f.write(text)
           '
 
+      # Write a clean-verdict body when consolidation found no issues. This step
+      # and the one below run unconditionally so a subsequent clean run always
+      # overwrites a prior findings comment (rather than leaving it stale).
+      - name: Write clean-run body
+        if: steps.consolidate.outputs.has_findings == 'false'
+        env:
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          cat > report.md <<EOF
+          <!-- pr-review-fleet -->
+          ## Fleet Review — Clean
+
+          No issues found across the reviewer fleet for this run.
+
+          [View run](${RUN_URL})
+          EOF
+
       - name: Post or update PR comment
-        if: steps.consolidate.outputs.has_findings == 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR_NUMBER: ${{ needs.setup.outputs.pr_number }}
