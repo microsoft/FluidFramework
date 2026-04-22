@@ -69,7 +69,7 @@ jobs:
       head_sha: ${{ steps.params.outputs.head_sha }}
       base_ref: ${{ steps.params.outputs.base_ref }}
       reviewers: ${{ steps.params.outputs.reviewers }}
-      check_run_id: ${{ steps.check.outputs.check_run_id }}
+      check_run_id: ${{ steps.check.outputs.check_id }}
     steps:
       - name: Download dispatch params
         if: github.event_name == 'workflow_run'
@@ -126,36 +126,24 @@ jobs:
       # surfaces this run in the PR UI with a link back to the workflow logs.
       - name: Create check run
         id: check
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          REPO: ${{ github.repository }}
-          HEAD_SHA: ${{ steps.params.outputs.head_sha }}
-          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
-        run: |
-          CHECK_ID=$(gh api "repos/${REPO}/check-runs" --method POST \
-            -f name="Fleet Review" \
-            -f head_sha="${HEAD_SHA}" \
-            -f status="in_progress" \
-            -f "details_url=${RUN_URL}" \
-            --jq '.id')
-          echo "check_run_id=${CHECK_ID}" >> "$GITHUB_OUTPUT"
-          echo "Created check run ${CHECK_ID} for ${HEAD_SHA}"
+        uses: LouisBrunner/checks-action@937cbbcde3259005b50746dc91cde29098aac2ff # ratchet:LouisBrunner/checks-action@v3.1.0
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          name: "Fleet Review"
+          sha: ${{ steps.params.outputs.head_sha }}
+          status: "in_progress"
+          details_url: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
 
       # ── Post an in-progress sticky comment with a run link ────────────────
-      # Uses the same <!-- pr-review-fleet --> marker as the final report, so
-      # the consolidate job's post/update step overwrites this body in place.
-      - name: Post in-progress comment
+      # Sticky keeps a single comment per `header` — the consolidate job posts
+      # the final body using the same header, overwriting this in place.
+      - name: Write in-progress body
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          REPO: ${{ github.repository }}
-          PR_NUMBER: ${{ steps.params.outputs.pr_number }}
           REVIEWERS: ${{ steps.params.outputs.reviewers }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
-          MARKER="<!-- pr-review-fleet -->"
           NAMES=$(echo "$REVIEWERS" | jq -r 'join(", ")')
           cat > body.md <<EOF
-          ${MARKER}
           ## Fleet Review — In progress
 
           Running reviewers: ${NAMES}
@@ -163,14 +151,13 @@ jobs:
           [View run](${RUN_URL})
           EOF
 
-          EXISTING=$(gh api "repos/${REPO}/issues/${PR_NUMBER}/comments" \
-            --paginate --jq ".[] | select(.body | startswith(\"${MARKER}\")) | .id" | head -1)
-          if [ -n "$EXISTING" ]; then
-            gh api "repos/${REPO}/issues/comments/${EXISTING}" \
-              --method PATCH --field "body=@body.md"
-          else
-            gh pr comment "${PR_NUMBER}" --repo "${REPO}" --body-file body.md
-          fi
+      - name: Post in-progress comment
+        uses: marocchino/sticky-pull-request-comment@v2 # ratchet:marocchino/sticky-pull-request-comment@v2
+        with:
+          header: pr-review-fleet
+          number: ${{ steps.params.outputs.pr_number }}
+          path: body.md
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   # ──────────────────────────────────────────────────────────────
   # Fan-out: run each reviewer in parallel via matrix strategy
@@ -353,51 +340,42 @@ jobs:
           EOF
 
       - name: Post or update PR comment
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          PR_NUMBER: ${{ needs.setup.outputs.pr_number }}
-          REPO: ${{ github.repository }}
-        run: |
-          MARKER="<!-- pr-review-fleet -->"
-
-          # Find existing comment with our marker and update it, or create a new one
-          EXISTING_COMMENT_ID=$(gh api "repos/${REPO}/issues/${PR_NUMBER}/comments" \
-            --paginate --jq ".[] | select(.body | startswith(\"${MARKER}\")) | .id" | head -1)
-
-          if [ -n "$EXISTING_COMMENT_ID" ]; then
-            gh api "repos/${REPO}/issues/comments/${EXISTING_COMMENT_ID}" \
-              --method PATCH --field "body=@report.md"
-            echo "Updated existing comment ${EXISTING_COMMENT_ID}"
-          else
-            gh pr comment "${PR_NUMBER}" --repo "${REPO}" --body-file report.md
-            echo "Posted new comment"
-          fi
+        uses: marocchino/sticky-pull-request-comment@v2 # ratchet:marocchino/sticky-pull-request-comment@v2
+        with:
+          header: pr-review-fleet
+          number: ${{ needs.setup.outputs.pr_number }}
+          path: report.md
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       # Finalize the check run created in setup. Always runs so a failure in
       # an earlier step doesn't leave the check stuck in "in_progress".
       # Conclusions: success = clean run, neutral = findings posted (advisory,
       # not gating), failure = consolidation itself errored.
-      - name: Finalize check run
+      - name: Compute check conclusion
+        id: conclusion
         if: always() && needs.setup.outputs.check_run_id != ''
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          REPO: ${{ github.repository }}
-          CHECK_ID: ${{ needs.setup.outputs.check_run_id }}
           HAS_FINDINGS: ${{ steps.consolidate.outputs.has_findings }}
           CONSOLIDATE_OUTCOME: ${{ steps.consolidate.outcome }}
         run: |
           if [ "$CONSOLIDATE_OUTCOME" != "success" ]; then
-            CONCLUSION="failure"
-            SUMMARY="Fleet run failed. See workflow logs."
+            echo "conclusion=failure" >> "$GITHUB_OUTPUT"
+            echo "summary=Fleet run failed. See workflow logs." >> "$GITHUB_OUTPUT"
           elif [ "$HAS_FINDINGS" = "true" ]; then
-            CONCLUSION="neutral"
-            SUMMARY="Findings posted to the PR comment."
+            echo "conclusion=neutral" >> "$GITHUB_OUTPUT"
+            echo "summary=Findings posted to the PR comment." >> "$GITHUB_OUTPUT"
           else
-            CONCLUSION="success"
-            SUMMARY="No issues found across the reviewer fleet."
+            echo "conclusion=success" >> "$GITHUB_OUTPUT"
+            echo "summary=No issues found across the reviewer fleet." >> "$GITHUB_OUTPUT"
           fi
-          jq -n \
-            --arg conclusion "$CONCLUSION" \
-            --arg summary "$SUMMARY" \
-            '{status: "completed", conclusion: $conclusion, output: {title: "Fleet Review", summary: $summary}}' \
-            | gh api "repos/${REPO}/check-runs/${CHECK_ID}" --method PATCH --input -
+
+      - name: Finalize check run
+        if: always() && needs.setup.outputs.check_run_id != ''
+        uses: LouisBrunner/checks-action@937cbbcde3259005b50746dc91cde29098aac2ff # ratchet:LouisBrunner/checks-action@v3.1.0
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          check_id: ${{ needs.setup.outputs.check_run_id }}
+          status: "completed"
+          conclusion: ${{ steps.conclusion.outputs.conclusion }}
+          output: |
+            {"title": "Fleet Review", "summary": "${{ steps.conclusion.outputs.summary }}"}
