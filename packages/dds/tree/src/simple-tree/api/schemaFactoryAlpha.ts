@@ -52,6 +52,7 @@ import {
 	type ScopedSchemaName,
 } from "./schemaFactory.js";
 import { SchemaFactoryBeta } from "./schemaFactoryBeta.js";
+import type { SchemaFactoryAlphaOptions } from "./schemaFactoryOptions.js";
 import { schemaStatics } from "./schemaStatics.js";
 import { TreeBeta } from "./treeBeta.js";
 import type {
@@ -299,6 +300,34 @@ export class SchemaFactoryAlpha<
 	out TScope extends string | undefined = string | undefined,
 	TName extends number | string = string,
 > extends SchemaFactoryBeta<TScope, TName> {
+	readonly #settings: SchemaFactoryAlphaOptions;
+
+	/**
+	 * The settings this factory was constructed with.
+	 *
+	 * @remarks
+	 * Useful with {@link composeSchemaFactoryAlphaOptions} and
+	 * {@link SchemaFactoryAlpha.withOptionsAlpha} to extend a factory's settings
+	 * without discarding existing ones.
+	 */
+	public readonly settings: SchemaFactoryAlphaOptions;
+
+	public constructor(
+		scopeOrOptions: TScope | (SchemaFactoryAlphaOptions & { readonly scope: TScope }),
+	) {
+		const isOptionsBag = typeof scopeOrOptions === "object" && scopeOrOptions !== null;
+		const settings: SchemaFactoryAlphaOptions = isOptionsBag
+			? (scopeOrOptions as SchemaFactoryAlphaOptions)
+			: {};
+		super(
+			isOptionsBag
+				? (scopeOrOptions as SchemaFactoryAlphaOptions & { scope: TScope }).scope
+				: scopeOrOptions,
+		);
+		this.#settings = settings;
+		this.settings = settings;
+	}
+
 	/**
 	 * Define a {@link TreeNodeSchemaClass} for a {@link TreeObjectNode}.
 	 *
@@ -315,9 +344,11 @@ export class SchemaFactoryAlpha<
 		fields: T,
 		options?: ObjectSchemaOptionsAlpha<TCustomMetadata>,
 	): ObjectNodeSchemaWorkaround<ScopedSchemaName<TScope, Name>, T, true, TCustomMetadata> {
+		const resolvedOptions =
+			this.#settings.objectOptionDefaults?.(name, fields, options) ?? options;
 		return objectSchema(scoped<TScope, TName, Name>(this, name), fields, true, {
 			...defaultSchemaFactoryObjectOptions,
-			...options,
+			...resolvedOptions,
 		});
 	}
 
@@ -697,12 +728,47 @@ export class SchemaFactoryAlpha<
 	}
 
 	/**
-	 * {@inheritDoc SchemaFactoryBeta.scopedFactory}
+	 * Create a {@link SchemaFactoryAlpha} with a {@link SchemaFactory.scope|scope} which is a combination of this factory's scope and the provided name.
+	 *
+	 * @remarks
+	 * The main use-case for this is when creating a collection of related schema (for example using a function that creates multiple schema).
+	 * Creating such related schema using a sub-scope helps ensure they won't collide with other schema in the parent scope.
+	 *
+	 * The returned factory inherits this factory's {@link SchemaFactoryAlpha.settings}.
+	 * Use {@link composeSchemaFactoryAlphaOptions} with {@link SchemaFactoryAlpha.withOptionsAlpha}
+	 * on the result if you need different settings for the sub-scope.
 	 */
 	public scopedFactoryAlpha<
 		const T extends TName,
 		TNameInner extends number | string = string,
 	>(name: T): SchemaFactoryAlpha<ScopedSchemaName<TScope, T>, TNameInner> {
-		return new SchemaFactoryAlpha(scoped<TScope, TName, T>(this, name));
+		return new SchemaFactoryAlpha({ scope: scoped<TScope, TName, T>(this, name), ...this.#settings });
+	}
+
+	/**
+	 * Creates a new {@link SchemaFactoryAlpha} with the same scope as this factory but with the
+	 * provided settings, replacing any existing settings.
+	 *
+	 * @remarks
+	 * To layer new settings on top of the existing ones rather than replacing them entirely,
+	 * pass the result of {@link composeSchemaFactoryAlphaOptions} with this factory's
+	 * {@link SchemaFactoryAlpha.settings} as the base:
+	 *
+	 * @example
+	 * ```typescript
+	 * const extended = sf.withOptionsAlpha(
+	 *     composeSchemaFactoryAlphaOptions(sf.settings, {
+	 *         objectOptionDefaults: (_name, _fields, options) => ({
+	 *             allowUnknownOptionalFields: true,
+	 *             ...options,
+	 *         }),
+	 *     }),
+	 * );
+	 * ```
+	 */
+	public withOptionsAlpha(
+		settings: SchemaFactoryAlphaOptions,
+	): SchemaFactoryAlpha<TScope, TName> {
+		return new SchemaFactoryAlpha({ scope: this.scope, ...settings });
 	}
 }

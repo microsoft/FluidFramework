@@ -104,6 +104,8 @@ export {
 	SchemaFactoryBeta,
 	type SchemaStaticsBeta,
 	SchemaFactoryAlpha,
+	type SchemaFactoryAlphaOptions,
+	composeSchemaFactoryAlphaOptions,
 	type ObjectSchemaOptionsAlpha,
 	type ObjectSchemaOptions,
 	type ImplicitFieldSchema,

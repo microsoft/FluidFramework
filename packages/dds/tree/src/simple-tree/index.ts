@@ -79,6 +79,8 @@ export {
 	SchemaFactoryBeta,
 	type SchemaStaticsBeta,
 	SchemaFactoryAlpha,
+	type SchemaFactoryAlphaOptions,
+	composeSchemaFactoryAlphaOptions,
 	type SchemaStaticsAlpha,
 	type NodeProvider,
 	type ObjectSchemaOptionsAlpha,
