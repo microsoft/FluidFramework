@@ -4,6 +4,7 @@
  */
 
 import { fromUtf8ToBase64 } from "@fluid-internal/client-utils";
+import { LogLevel } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import { getW3CData } from "@fluidframework/driver-base/internal";
 import {
@@ -731,6 +732,7 @@ export const downloadSnapshot = mockify(
 		tokenFetchOptions: TokenFetchOptionsEx,
 		loadingGroupIds: string[] | undefined,
 		snapshotOptions: ISnapshotOptions | undefined,
+		logger?: TelemetryLoggerExt,
 		snapshotFormatFetchType?: SnapshotFormatSupportType,
 		controller?: AbortController,
 		epochTracker?: EpochTracker,
@@ -786,6 +788,7 @@ export const downloadSnapshot = mockify(
 			{ ...tokenFetchOptions, request: { url, method } },
 			"downloadSnapshot",
 		);
+		logger?.send({ category: "generic", eventName: "SnapshotAuthHeaderObtained" }, LogLevel.info);
 		assert(authHeader !== null, 0x1e5 /* "Storage token should not be null" */);
 		const { body, headers } = getFormBodyAndHeaders(odspResolvedUrl, authHeader, header);
 		const fetchOptions = {
@@ -813,6 +816,7 @@ export const downloadSnapshot = mockify(
 			true,
 			scenarioName,
 		) ?? fetchHelper(url, fetchOptions));
+		logger?.send({ category: "generic", eventName: "SnapshotFetchResponseReceived" }, LogLevel.info);
 
 		return {
 			odspResponse,

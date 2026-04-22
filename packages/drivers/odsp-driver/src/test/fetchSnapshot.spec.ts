@@ -8,6 +8,7 @@
 import { strict as assert } from "node:assert";
 
 import { stringToBuffer } from "@fluid-internal/client-utils";
+import { LogLevel } from "@fluidframework/core-interfaces";
 import {
 	DriverErrorTypes,
 	type ISnapshot,
@@ -721,6 +722,88 @@ describe("Tests1 for snapshot fetch", () => {
 			!mockLogger.matchAnyEvent([{ eventName: "RedirectRedeemFallback" }]),
 			"Should not have logged redirect redeem fallback without a shareLink",
 		);
+	});
+
+	it("SnapshotAuthHeaderObtained and SnapshotFetchResponseReceived events are emitted at info log level", async () => {
+		const snapshot: ISnapshot = {
+			blobContents,
+			snapshotTree: snapshotTreeWithGroupId,
+			ops: [],
+			latestSequenceNumber: 0,
+			sequenceNumber: 0,
+			snapshotFormatV: 1,
+		};
+		const response = (await createResponse(
+			{ "x-fluid-epoch": "epoch1", "content-type": "application/ms-fluid" },
+			convertToCompactSnapshot(snapshot),
+			200,
+		)) as unknown as Response;
+
+		await mockFetchMultiple(async () => service.getSnapshot({}), [
+			async (): Promise<Response> => response,
+		]);
+
+		assert(
+			mockLogger.matchAnyEvent([{ eventName: "SnapshotAuthHeaderObtained", category: "generic" }], false, false),
+			"SnapshotAuthHeaderObtained event should be emitted after auth header is obtained",
+		);
+		assert(
+			mockLogger.matchAnyEvent([{ eventName: "SnapshotFetchResponseReceived", category: "generic" }]),
+			"SnapshotFetchResponseReceived event should be emitted after ODSP fetch response is received",
+		);
+	});
+
+	it("SnapshotAuthHeaderObtained and SnapshotFetchResponseReceived events are filtered at essential log level", async () => {
+		const essentialMockLogger = new MockLogger(LogLevel.essential);
+		const essentialLogger = createChildLogger({ logger: essentialMockLogger });
+		const essentialEpochTracker = new EpochTracker(
+			localCache,
+			{ docId: hashedDocumentId, resolvedUrl, fileVersion: undefined },
+			essentialLogger,
+		);
+		essentialEpochTracker.setEpoch("epoch1", true, "test");
+		const essentialService = new OdspDocumentStorageService(
+			resolved,
+			async (_options) => "token",
+			essentialLogger,
+			true,
+			{ ...nonPersistentCache, persistedCache: essentialEpochTracker },
+			hostPolicy,
+			essentialEpochTracker,
+			async () => {
+				return {};
+			},
+			() => "tenantid/id",
+		);
+
+		const snapshot: ISnapshot = {
+			blobContents,
+			snapshotTree: snapshotTreeWithGroupId,
+			ops: [],
+			latestSequenceNumber: 0,
+			sequenceNumber: 0,
+			snapshotFormatV: 1,
+		};
+		const response = (await createResponse(
+			{ "x-fluid-epoch": "epoch1", "content-type": "application/ms-fluid" },
+			convertToCompactSnapshot(snapshot),
+			200,
+		)) as unknown as Response;
+
+		await mockFetchMultiple(async () => essentialService.getSnapshot({}), [
+			async (): Promise<Response> => response,
+		]);
+
+		assert(
+			!essentialMockLogger.matchAnyEvent([{ eventName: "SnapshotAuthHeaderObtained", category: "generic" }], false, false),
+			"SnapshotAuthHeaderObtained event should be filtered out at essential log level",
+		);
+		assert(
+			!essentialMockLogger.matchAnyEvent([{ eventName: "SnapshotFetchResponseReceived", category: "generic" }]),
+			"SnapshotFetchResponseReceived event should be filtered out at essential log level",
+		);
+
+		await essentialEpochTracker.removeEntries().catch(() => {});
 	});
 
 	it("Location redirection error still throws when redeem fails", async () => {
