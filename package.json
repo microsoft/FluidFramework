@@ -39,6 +39,7 @@
 		"build:readme": "markdown-magic --files \"**/*.md\" !docs",
 		"bundle-analysis:collect": "npm run webpack:profile && flub generate bundleStats",
 		"bundle-analysis:run": "flub run bundleStats --dangerfile build-tools/packages/build-cli/lib/library/dangerfile.cjs",
+		"cg-triage": "bash .claude/skills/agentic-cg-override/scripts/cg-triage.sh",
 		"changeset": "flub changeset add --releaseGroup client",
 		"check:are-the-types-wrong": "fluid-build --task check:are-the-types-wrong",
 		"check:assertTags": "flub generate assertTags --all --validate",
