@@ -5,20 +5,22 @@
 
 import { strict as assert } from "node:assert";
 
-import { toPropTreeNode, UndoRedoStacks } from "@fluidframework/react/internal";
-import { TreeViewConfiguration, type TreeView } from "@fluidframework/tree";
-import { TreeAlpha } from "@fluidframework/tree/alpha";
+import {
+	toPropTreeNode,
+	UndoRedoManager,
+	UndoRedoContext,
+} from "@fluidframework/react/internal";
+import { TreeViewConfiguration } from "@fluidframework/tree";
+import { TreeAlpha, type TreeViewAlpha } from "@fluidframework/tree/alpha";
 import { independentView, TextAsTree } from "@fluidframework/tree/internal";
 import { render } from "@testing-library/react";
 import globalJsdom from "global-jsdom";
 import DeltaPackage from "quill-delta";
-import { createRef } from "react";
 
 import {
 	clipboardFormatMatcher,
 	FormattedTextAsTree,
 	FormattedMainView,
-	type FormattedEditorHandle,
 	parseCssFontFamily,
 	parseCssFontSize,
 	parseLineTag,
@@ -54,7 +56,7 @@ function createFormattedTreeView(initialValue = ""): {
  */
 function createFormattedTreeViewWithEvents(
 	initialValue = "",
-): TreeView<typeof FormattedTextAsTree.Tree> {
+): TreeViewAlpha<typeof FormattedTextAsTree.Tree> {
 	const treeView = independentView(formattedTreeConfig);
 	treeView.initialize(FormattedTextAsTree.Tree.fromString(initialValue));
 	return treeView;
@@ -691,14 +693,11 @@ describe("textEditor", () => {
 					it("insert character, undo removes it, redo restores it", () => {
 						const treeView = createFormattedTreeViewWithEvents();
 						const text = treeView.root;
-						const undoRedo = new UndoRedoStacks(treeView.events);
-						const editorRef = createRef<FormattedEditorHandle>();
+						const manager = new UndoRedoManager(treeView);
 						const content = (
-							<FormattedMainView
-								ref={editorRef}
-								root={toPropTreeNode(text)}
-								undoRedo={undoRedo}
-							/>
+							<UndoRedoContext.Provider value={manager}>
+								<FormattedMainView root={toPropTreeNode(text)} />
+							</UndoRedoContext.Provider>
 						);
 						const rendered = render(content, { reactStrictMode });
 
@@ -708,13 +707,13 @@ describe("textEditor", () => {
 						assert.match(rendered.baseElement.textContent ?? "", /A/);
 
 						// Undo - character should be removed
-						editorRef.current?.undo();
+						manager.undo();
 						rendered.rerender(content);
 						assert(rendered.baseElement.textContent !== null);
 						assert.doesNotMatch(rendered.baseElement.textContent, /A/);
 
 						// Redo - character should be restored
-						editorRef.current?.redo();
+						manager.redo();
 						rendered.rerender(content);
 						assert.match(rendered.baseElement.textContent ?? "", /A/);
 					});
@@ -722,14 +721,11 @@ describe("textEditor", () => {
 					it("insert character, make bold, undo removes bold but keeps character", () => {
 						const treeView = createFormattedTreeViewWithEvents();
 						const text = treeView.root;
-						const undoRedo = new UndoRedoStacks(treeView.events);
-						const editorRef = createRef<FormattedEditorHandle>();
+						const manager = new UndoRedoManager(treeView);
 						const content = (
-							<FormattedMainView
-								ref={editorRef}
-								root={toPropTreeNode(text)}
-								undoRedo={undoRedo}
-							/>
+							<UndoRedoContext.Provider value={manager}>
+								<FormattedMainView root={toPropTreeNode(text)} />
+							</UndoRedoContext.Provider>
 						);
 						const rendered = render(content, { reactStrictMode });
 
@@ -748,7 +744,7 @@ describe("textEditor", () => {
 						);
 
 						// Undo - bold should be removed, character should remain
-						editorRef.current?.undo();
+						manager.undo();
 						rendered.rerender(content);
 						assert.match(rendered.baseElement.textContent ?? "", /B/);
 						assert.ok(
@@ -760,14 +756,11 @@ describe("textEditor", () => {
 					it("multiple operations in transaction undo together as one unit", () => {
 						const treeView = createFormattedTreeViewWithEvents();
 						const text = treeView.root;
-						const undoRedo = new UndoRedoStacks(treeView.events);
-						const editorRef = createRef<FormattedEditorHandle>();
+						const manager = new UndoRedoManager(treeView);
 						const content = (
-							<FormattedMainView
-								ref={editorRef}
-								root={toPropTreeNode(text)}
-								undoRedo={undoRedo}
-							/>
+							<UndoRedoContext.Provider value={manager}>
+								<FormattedMainView root={toPropTreeNode(text)} />
+							</UndoRedoContext.Provider>
 						);
 						const rendered = render(content, { reactStrictMode });
 
@@ -780,14 +773,14 @@ describe("textEditor", () => {
 						assert.match(rendered.baseElement.textContent ?? "", /AB/);
 
 						// Single undo should remove both characters
-						editorRef.current?.undo();
+						manager.undo();
 						rendered.rerender(content);
 						assert(rendered.baseElement.textContent !== null);
 						assert.doesNotMatch(rendered.baseElement.textContent, /A/);
 						assert.doesNotMatch(rendered.baseElement.textContent, /B/);
 
 						// Single redo should restore both characters
-						editorRef.current?.redo();
+						manager.redo();
 						rendered.rerender(content);
 						assert.match(rendered.baseElement.textContent ?? "", /AB/);
 					});

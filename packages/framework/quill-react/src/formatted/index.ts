@@ -7,5 +7,5 @@ export {
 	FormattedTextAsTree,
 	FormattedMainView,
 	type FormattedMainViewProps,
-	type FormattedEditorHandle,
+	quillFormattedViewTransactionLabel,
 } from "./quillFormattedView.js";

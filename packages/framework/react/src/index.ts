@@ -45,5 +45,11 @@ export {
 	withMemoizedTreeObservations,
 } from "./useTree.js";
 export { objectIdNumber } from "./simpleIdentifier.js";
-export { syncTextToTree, PlainTextMainView } from "./text/index.js";
-export { UndoRedoStacks, LabeledUndoRedoStacks, type UndoRedo } from "./undoRedo.js";
+export {
+	syncTextToTree,
+	PlainTextMainView,
+	plainTextViewTransactionLabel,
+} from "./text/index.js";
+export { UndoRedoManager, type LabeledUndoRedo, type UndoRedo } from "./undoRedo.js";
+export { UndoRedoContext } from "./undoRedoContext.js";
+export { useUndoRedo } from "./useUndoRedo.js";

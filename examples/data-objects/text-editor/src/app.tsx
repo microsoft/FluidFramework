@@ -10,13 +10,13 @@ import {
 	QuillMainView as PlainQuillView,
 	// TODO: These imports use /internal entrypoints because the underlying APIs
 	// haven't been promoted to public yet. Update to public entrypoints as the
-	// APIs are stabalized.
+	// APIs are stabilized.
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "@fluidframework/quill-react/internal";
 import {
 	toPropTreeNode,
-	UndoRedoStacks,
-	type UndoRedo,
+	UndoRedoManager,
+	UndoRedoContext,
 	PlainTextMainView,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "@fluidframework/react/internal";
@@ -26,7 +26,8 @@ import {
  */
 // eslint-disable-next-line import-x/no-internal-modules
 import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils/internal";
-import { SchemaFactory, TreeViewConfiguration, type TreeView } from "@fluidframework/tree";
+import { SchemaFactory, TreeViewConfiguration } from "@fluidframework/tree";
+import { asAlpha, type TreeViewAlpha } from "@fluidframework/tree/alpha";
 // eslint-disable-next-line import-x/no-internal-modules
 import { FormattedTextAsTree, TextAsTree } from "@fluidframework/tree/internal";
 import { SharedTree } from "@fluidframework/tree/legacy";
@@ -86,19 +87,21 @@ function getConnectionConfig(userId: string): AzureLocalConnectionConfig {
 type ViewType = "plainTextarea" | "plainQuill" | "formatted";
 
 interface DualUserViews {
-	user1: TreeView<typeof TextEditorRoot>;
-	user2: TreeView<typeof TextEditorRoot>;
+	user1: TreeViewAlpha<typeof TextEditorRoot>;
+	user2: TreeViewAlpha<typeof TextEditorRoot>;
 	containerId: string;
 }
 
 async function createAndAttachNewContainer(client: AzureClient): Promise<{
 	container: IFluidContainer<typeof containerSchema>;
 	containerId: string;
-	treeView: TreeView<typeof TextEditorRoot>;
+	treeView: TreeViewAlpha<typeof TextEditorRoot>;
 }> {
 	const { container } = await client.createContainer(containerSchema, "2");
 
-	const treeView = container.initialObjects.tree.viewWith(treeConfig);
+	const treeView = asAlpha<typeof TextEditorRoot>(
+		container.initialObjects.tree.viewWith(treeConfig),
+	);
 
 	// Initialize tree with root containing both plain and formatted text
 	treeView.initialize(
@@ -122,10 +125,10 @@ async function loadExistingContainer(
 	containerId: string,
 ): Promise<{
 	container: IFluidContainer<typeof containerSchema>;
-	treeView: TreeView<typeof TextEditorRoot>;
+	treeView: TreeViewAlpha<typeof TextEditorRoot>;
 }> {
 	const { container } = await client.getContainer(containerId, containerSchema, "2");
-	const treeView = container.initialObjects.tree.viewWith(treeConfig);
+	const treeView = asAlpha(container.initialObjects.tree.viewWith(treeConfig));
 	return {
 		container,
 		treeView,
@@ -149,7 +152,7 @@ async function initFluid(): Promise<DualUserViews> {
 
 	let containerId: string;
 	let user1Container: IFluidContainer;
-	let user1View: TreeView<typeof TextEditorRoot>;
+	let user1View: TreeViewAlpha<typeof TextEditorRoot>;
 	if (location.hash) {
 		// Load existing document for both users
 		const rawContainerId = location.hash.slice(1);
@@ -223,27 +226,21 @@ async function initFluid(): Promise<DualUserViews> {
 const viewLabels = {
 	plainTextarea: {
 		description: "Plain Textarea",
-		component: (
-			root: TextEditorRoot,
-			_treeView: TreeView<typeof TextEditorRoot>,
-			_undoRedo?: UndoRedo,
-		) => <PlainTextMainView root={toPropTreeNode(root.plainText)} />,
+		component: (root: TextEditorRoot) => (
+			<PlainTextMainView root={toPropTreeNode(root.plainText)} />
+		),
 	},
 	plainQuill: {
 		description: "Plain Quill Editor",
-		component: (
-			root: TextEditorRoot,
-			_treeView: TreeView<typeof TextEditorRoot>,
-			_undoRedo?: UndoRedo,
-		) => <PlainQuillView root={toPropTreeNode(root.plainText)} />,
+		component: (root: TextEditorRoot) => (
+			<PlainQuillView root={toPropTreeNode(root.plainText)} />
+		),
 	},
 	formatted: {
 		description: "Formatted Quill Editor",
-		component: (
-			root: TextEditorRoot,
-			_treeView: TreeView<typeof TextEditorRoot>,
-			undoRedo?: UndoRedo,
-		) => <FormattedMainView root={toPropTreeNode(root.formattedText)} undoRedo={undoRedo} />,
+		component: (root: TextEditorRoot) => (
+			<FormattedMainView root={toPropTreeNode(root.formattedText)} />
+		),
 	},
 } as const;
 
@@ -251,20 +248,26 @@ const UserPanel: FC<{
 	label: string;
 	color: string;
 	viewType: ViewType;
-	treeView: TreeView<typeof TextEditorRoot>;
+	treeView: TreeViewAlpha<typeof TextEditorRoot>;
 }> = ({ label, color, viewType, treeView }) => {
-	// Create undo/redo stack for this user's tree view
-	const undoRedo = useMemo(() => new UndoRedoStacks(treeView.events), [treeView.events]);
+	// A single manager per user subscribes to the branch's changed events and handles
+	// all labeled undo/redo. Each editor component reads from context and scopes
+	// operations to its own label.
+	const manager = useMemo(() => new UndoRedoManager(treeView), [treeView]);
 
-	// Cleanup on unmount
+	// Cleanup manager on unmount
 	useEffect(() => {
-		return () => undoRedo.dispose();
-	}, [undoRedo]);
+		return () => manager.dispose();
+	}, [manager]);
 
 	// TODO: handle root invalidation, schema upgrades and out of schema documents.
 	const renderView = (): JSX.Element => {
 		const root = treeView.root;
-		return viewLabels[viewType].component(root, treeView, undoRedo);
+		return (
+			<UndoRedoContext.Provider value={manager}>
+				{viewLabels[viewType].component(root)}
+			</UndoRedoContext.Provider>
+		);
 	};
 
 	return (
@@ -279,15 +282,7 @@ const UserPanel: FC<{
 				flexDirection: "column",
 			}}
 		>
-			<div
-				style={{
-					marginBottom: "10px",
-					fontWeight: "bold",
-					color,
-				}}
-			>
-				{label}
-			</div>
+			<div style={{ marginBottom: "10px", fontWeight: "bold", color }}>{label}</div>
 			<div style={{ flex: 1 }}>{renderView()}</div>
 		</div>
 	);

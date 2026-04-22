@@ -3,34 +3,51 @@
  * Licensed under the MIT License.
  */
 
+import { TreeAlpha } from "@fluidframework/tree/internal";
 import type { TextAsTree } from "@fluidframework/tree/internal";
 import { type ChangeEvent, type FC, useCallback, useRef } from "react";
 
 import type { PropTreeNode } from "../../propNode.js";
+import type { LabeledUndoRedo } from "../../undoRedo.js";
 import { withMemoizedTreeObservations } from "../../useTree.js";
 
 import { syncTextToTree } from "./plainUtils.js";
 
 /**
+ * Props for the MainView component.
+ * @internal
+ */
+export interface MainViewProps {
+	/** The plain text tree to edit. */
+	readonly root: PropTreeNode<TextAsTree.Tree>;
+	/**
+	 * Optional undo/redo manager and transaction label.
+	 * @remarks
+	 * When provided, undo/redo buttons are rendered and each user edit is
+	 * committed under `label` so it can be undone/redone independently of edits
+	 * made by other components sharing the same {@link LabeledUndoRedo} manager.
+	 */
+	readonly undoRedo?: {
+		/** The undo/redo manager shared across editors. */
+		readonly manager: LabeledUndoRedo;
+		/** Symbol that identifies this editor's commits within the shared manager. */
+		readonly transactionLabel: symbol;
+	};
+}
+
+/**
  * A React component for plain text editing.
  * @remarks
  * Uses {@link @fluidframework/tree#TextAsTree.Tree} for the data-model and an HTML textarea for the UI.
+ * Pass an `undoRedo` prop to enable undo/redo buttons scoped to this editor's transactions.
  * @internal
  */
-export const MainView: FC<{ root: PropTreeNode<TextAsTree.Tree> }> = ({ root }) => {
-	return <PlainTextEditorView root={root} />;
+export const MainView: FC<MainViewProps> = ({ root, undoRedo }) => {
+	return <PlainTextEditorView root={root} undoRedo={undoRedo} />;
 };
 
-/**
- * A plain text editor view component using a native HTML textarea.
- * Uses TextAsTree for collaborative plain text storage.
- *
- * @remarks
- * This uses withMemoizedTreeObservations to automatically re-render
- * when the tree changes.
- */
 const PlainTextEditorView = withMemoizedTreeObservations(
-	({ root }: { root: TextAsTree.Tree }) => {
+	({ root, undoRedo }: MainViewProps) => {
 		// Reference to the textarea element
 		const textareaRef = useRef<HTMLTextAreaElement>(null);
 		// Guards against update loops between textarea and the tree
@@ -50,11 +67,18 @@ const PlainTextEditorView = withMemoizedTreeObservations(
 				isUpdatingRef.current = true;
 
 				const newText = event.target.value;
-				syncTextToTree(root, newText);
+				const context = TreeAlpha.context(root);
+				if (context.isBranch()) {
+					context.runTransaction(() => syncTextToTree(root, newText), {
+						label: undoRedo?.transactionLabel,
+					});
+				} else {
+					syncTextToTree(root, newText);
+				}
 
 				isUpdatingRef.current = false;
 			},
-			[root],
+			[root, undoRedo],
 		);
 
 		// Sync textarea when tree changes externally.
@@ -88,6 +112,24 @@ const PlainTextEditorView = withMemoizedTreeObservations(
 				style={{ height: "100%", display: "flex", flexDirection: "column" }}
 			>
 				<h2 style={{ margin: "10px 0" }}>Collaborative Text Editor</h2>
+				{undoRedo !== undefined && (
+					<div style={{ display: "flex", gap: "8px", marginBottom: "8px" }}>
+						<button
+							type="button"
+							disabled={!undoRedo.manager.canUndo(undoRedo.transactionLabel)}
+							onClick={() => undoRedo.manager.undo(undoRedo.transactionLabel)}
+						>
+							↶ Undo
+						</button>
+						<button
+							type="button"
+							disabled={!undoRedo.manager.canRedo(undoRedo.transactionLabel)}
+							onClick={() => undoRedo.manager.redo(undoRedo.transactionLabel)}
+						>
+							↷ Redo
+						</button>
+					</div>
+				)}
 				<textarea
 					ref={textareaRef}
 					defaultValue={currentText}

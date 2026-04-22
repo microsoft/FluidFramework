@@ -6,4 +6,5 @@
 export {
 	MainView as QuillMainView,
 	type MainViewProps as QuillMainViewProps,
+	quillPlainViewTransactionLabel,
 } from "./quillView.js";

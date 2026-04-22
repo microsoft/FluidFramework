@@ -3,5 +3,8 @@
  * Licensed under the MIT License.
  */
 
-export { MainView as PlainTextMainView } from "./plainTextView.js";
+export {
+	MainView as PlainTextMainView,
+	plainTextViewTransactionLabel,
+} from "./plainTextView.js";
 export { syncTextToTree } from "./plainUtils.js";

@@ -5,4 +5,8 @@
 
 export { type PropTreeNode } from "../propNode.js";
 export { type UndoRedo } from "../undoRedo.js";
-export { PlainTextMainView, syncTextToTree } from "./plain/index.js";
+export {
+	PlainTextMainView,
+	plainTextViewTransactionLabel,
+	syncTextToTree,
+} from "./plain/index.js";

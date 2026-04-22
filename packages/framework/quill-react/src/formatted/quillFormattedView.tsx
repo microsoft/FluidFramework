@@ -6,21 +6,14 @@
 import { assert } from "@fluidframework/core-utils/internal";
 import {
 	type PropTreeNode,
-	unwrapPropTreeNode,
-	type UndoRedo,
+	withMemoizedTreeObservations,
+	type LabeledUndoRedo,
 } from "@fluidframework/react/internal";
-import { Tree, TreeAlpha, FormattedTextAsTree } from "@fluidframework/tree/internal";
+import { TreeAlpha, FormattedTextAsTree } from "@fluidframework/tree/internal";
 export { FormattedTextAsTree } from "@fluidframework/tree/internal";
 import Quill, { type EmitterSource } from "quill";
 import DeltaPackage from "quill-delta";
-import {
-	forwardRef,
-	useEffect,
-	useImperativeHandle,
-	useReducer,
-	useRef,
-	useState,
-} from "react";
+import { type FC, useEffect, useRef, useState } from "react";
 import * as ReactDOM from "react-dom";
 
 // Workaround for quill-delta's export style not working well with node16 module resolution.
@@ -33,28 +26,33 @@ const Delta = DeltaPackage.default;
  * @input @internal
  */
 export interface FormattedMainViewProps {
+	/** The formatted text tree to edit. */
 	readonly root: PropTreeNode<FormattedTextAsTree.Tree>;
-	/** Optional undo/redo stack for the editor. */
-	readonly undoRedo?: UndoRedo;
+	/**
+	 * Optional undo/redo manager and transaction label.
+	 * @remarks
+	 * When provided, undo/redo toolbar buttons are rendered and each user edit is
+	 * committed under `label` so it can be undone/redone independently of edits
+	 * made by other components sharing the same {@link LabeledUndoRedo} manager.
+	 */
+	readonly undoRedo?: {
+		/** The undo/redo manager shared across editors. */
+		readonly manager: LabeledUndoRedo;
+		/** Symbol that identifies this editor's commits within the shared manager. */
+		readonly transactionLabel: symbol;
+	};
 }
-
-/**
- * Ref handle exposing undo/redo methods for the formatted editor.
- * @input @internal
- */
-export type FormattedEditorHandle = Pick<UndoRedo, "undo" | "redo">;
 
 /**
  * A React component for formatted text editing.
  * @remarks
  * Uses {@link @fluidframework/tree#FormattedTextAsTree.Tree} for the data-model and Quill for the rich text editor UI.
+ * Pass an `undoRedo` prop to enable undo/redo buttons scoped to this editor's transactions.
  * @internal
  */
-export const FormattedMainView = forwardRef<FormattedEditorHandle, FormattedMainViewProps>(
-	({ root, undoRedo }, ref) => {
-		return <FormattedTextEditorView root={root} undoRedo={undoRedo} ref={ref} />;
-	},
-);
+export const FormattedMainView: FC<FormattedMainViewProps> = ({ root, undoRedo }) => {
+	return <FormattedTextEditorView root={root} undoRedo={undoRedo} />;
+};
 FormattedMainView.displayName = "FormattedMainView";
 
 /** Quill size names mapped to pixel values for tree storage. */
@@ -104,6 +102,7 @@ const lineTagToQuillAttributes = {
  * Parse CSS font-size from a pasted HTML element's inline style.
  * Returns a Quill size name if the pixel value matches a supported size, undefined otherwise.
  * 12px is the default size and returns undefined (no Quill attribute needed).
+ * @param node - The HTML element whose inline `font-size` style to inspect.
  */
 export function parseCssFontSize(node: HTMLElement): string | undefined {
 	const style = node.style.fontSize;
@@ -128,6 +127,7 @@ export function parseCssFontSize(node: HTMLElement): string | undefined {
  * Parse CSS font-family from a pasted HTML element's inline style.
  * Tries fonts in priority order (first to last per CSS spec) and returns
  * the first recognized Quill font value.
+ * @param node - The HTML element whose inline `font-family` style to inspect.
  */
 export function parseCssFontFamily(node: HTMLElement): string | undefined {
 	const style = node.style.fontFamily;
@@ -154,6 +154,8 @@ export function parseCssFontFamily(node: HTMLElement): string | undefined {
  * from pasted HTML elements. Applies each format independently via
  * compose/retain so new attributes can be added without risk of an
  * early return skipping them.
+ * @param node - The pasted DOM node being matched.
+ * @param delta - The Quill delta produced for the pasted content so far.
  * @see https://quilljs.com/docs/modules/clipboard#addmatcher
  */
 export function clipboardFormatMatcher(node: Node, delta: Delta): Delta {
@@ -190,7 +192,11 @@ function parseSize(size: unknown): number {
 	return defaultSize;
 }
 
-/** Extract a LineTag from Quill attributes, or undefined if none present. Quill only supports one LineTag at a time. */
+/**
+ * Extract a LineTag from Quill attributes, or undefined if none present.
+ * Quill only supports one LineTag at a time.
+ * @param attributes - The Quill delta attributes object to inspect.
+ */
 export function parseLineTag(
 	attributes?: Record<string, unknown>,
 ): FormattedTextAsTree.LineTag | undefined {
@@ -313,6 +319,7 @@ function formatToQuillAttributes(
  * Iterates through formatted characters and groups consecutive characters
  * with identical formatting into single insert operations for efficiency.
  *
+ * @param root - The formatted text tree to convert.
  * @remarks
  * This is used to sync Quill's display when the tree changes externally
  * (e.g., from a remote collaborator's edit).
@@ -377,15 +384,14 @@ export function buildDeltaFromTree(root: FormattedTextAsTree.Tree): QuillDeltaOp
  * to make targeted edits (insert at index, delete range, format range) rather
  * than replacing all content on each change.
  */
-const FormattedTextEditorView = forwardRef<
-	FormattedEditorHandle,
-	{
-		root: PropTreeNode<FormattedTextAsTree.Tree>;
-		undoRedo?: UndoRedo;
-	}
->(({ root: propRoot, undoRedo }, ref) => {
-	// Unwrap the PropTreeNode to get the actual tree node
-	const root = unwrapPropTreeNode(propRoot);
+const FormattedTextEditorView = withMemoizedTreeObservations(
+	({
+		root,
+		undoRedo,
+	}: {
+		root: FormattedTextAsTree.Tree;
+		undoRedo?: { manager: LabeledUndoRedo; transactionLabel: symbol };
+	}) => {
 	// DOM element where Quill will mount its editor
 	const editorRef = useRef<HTMLDivElement>(null);
 	// Quill instance, persisted across renders to avoid re-initialization
@@ -396,14 +402,9 @@ const FormattedTextEditorView = forwardRef<
 	const [undoRedoContainer, setUndoRedoContainer] = useState<HTMLElement | undefined>(
 		undefined,
 	);
-	// Force re-render when undo/redo state changes
-	const [, forceUpdate] = useReducer((x: number) => x + 1, 0);
-
-	// Expose undo/redo methods via ref
-	useImperativeHandle(ref, () => ({
-		undo: () => undoRedo?.undo(),
-		redo: () => undoRedo?.redo(),
-	}));
+	// Ref so the one-time Quill setup effect always sees the current undoRedo value.
+	const undoRedoRef = useRef(undoRedo);
+	undoRedoRef.current = undoRedo;
 
 	// Initialize Quill editor with formatting toolbar using Quill provided CSS
 	useEffect(() => {
@@ -444,7 +445,7 @@ const FormattedTextEditorView = forwardRef<
 
 			// Wrap all tree mutations in a transaction so they undo/redo as one atomic unit.
 			// If the node is not part of a branch (e.g. unhydrated), apply edits directly.
-			const branch = TreeAlpha.branch(root);
+			const context = TreeAlpha.context(root);
 			const applyDelta = (): void => {
 				// Helper to count Unicode codepoints in a string
 				const codepointCount = (s: string): number => [...s].length;
@@ -552,10 +553,10 @@ const FormattedTextEditorView = forwardRef<
 					}
 				}
 			};
-			if (branch === undefined) {
-				applyDelta();
+			if (context.isBranch()) {
+				context.runTransaction(applyDelta, { label: undoRedoRef.current?.transactionLabel });
 			} else {
-				branch.runTransaction(applyDelta);
+				applyDelta();
 			}
 
 			isUpdating.current = false;
@@ -574,45 +575,30 @@ const FormattedTextEditorView = forwardRef<
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, []);
 
-	// Sync Quill when tree changes externally (e.g., from remote collaborators).
-	// Uses event subscription instead of render-time observation for efficiency.
-	useEffect(() => {
-		return Tree.on(root, "treeChanged", () => {
-			// Skip if we caused the tree change ourselves via the text-change handler
-			if (!quillRef.current || isUpdating.current) return;
+	// Sync Quill when tree changes externally.
+	// Accessing buildDeltaFromTree(root) during render establishes observation via the HOC,
+	// which re-renders this component whenever the tree content changes.
+	// We skip the sync if isUpdating is true, meaning we caused the tree change ourselves
+	// via the text-change handler — in that case Quill already has the correct content.
+	if (quillRef.current && !isUpdating.current) {
+		// TODO:Performance: Once SharedTree has better ArrayNode change events,
+		// use those events to construct a delta, instead of rebuilding a new delta then diffing every edit.
+		// After doing the optimization, keep this diffing logic as a way to test for de-sync between the tree and Quill:
+		// Use it in tests and possibly occasionally in debug builds.
+		const treeDelta = buildDeltaFromTree(root);
 
-			// TODO:Performance: Once SharedTree has better ArrayNode change events,
-			// use those events to construct a delta, instead of rebuilding a new delta then diffing every edit.
-			// After doing the optimization, keep this diffing logic as a way to test for de-sync between the tree and Quill:
-			// Use it in tests and possibly occasionally in debug builds.
-			const treeDelta = buildDeltaFromTree(root);
+		// eslint doesn't seem to be resolving the types correctly here.
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+		const quillDelta: Delta = quillRef.current.getContents();
 
-			// eslint doesn't seem to be resolving the types correctly here.
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-			const quillDelta: Delta = quillRef.current.getContents();
+		const diff = new Delta(quillDelta).diff(new Delta(treeDelta));
 
-			// Compute diff between current Quill state and tree state
-			const diff = new Delta(quillDelta).diff(new Delta(treeDelta));
-
-			// Only update if there are actual differences
-			if (diff.ops.length > 0) {
-				isUpdating.current = true;
-
-				// Apply only the diff for surgical updates (better cursor preservation)
-				quillRef.current.updateContents(diff.ops);
-
-				isUpdating.current = false;
-			}
-		});
-	}, [root]);
-
-	// Subscribe to undo/redo state changes to update button disabled state
-	useEffect(() => {
-		if (!undoRedo) return;
-		return undoRedo.onStateChange(() => {
-			forceUpdate();
-		});
-	}, [undoRedo]);
+		if (diff.ops.length > 0) {
+			isUpdating.current = true;
+			quillRef.current.updateContents(diff.ops);
+			isUpdating.current = false;
+		}
+	}
 
 	// Render undo/redo buttons via portal into Quill toolbar
 	const undoRedoButtons = undoRedoContainer
@@ -621,14 +607,14 @@ const FormattedTextEditorView = forwardRef<
 					<button
 						type="button"
 						className="ql-undo"
-						disabled={undoRedo?.canUndo() !== true}
-						onClick={() => undoRedo?.undo()}
+						disabled={undoRedo?.manager.canUndo(undoRedo.transactionLabel) !== true}
+						onClick={() => undoRedo?.manager.undo(undoRedo.transactionLabel)}
 					/>
 					<button
 						type="button"
 						className="ql-redo"
-						disabled={undoRedo?.canRedo() !== true}
-						onClick={() => undoRedo?.redo()}
+						disabled={undoRedo?.manager.canRedo(undoRedo.transactionLabel) !== true}
+						onClick={() => undoRedo?.manager.redo(undoRedo.transactionLabel)}
 					/>
 				</>,
 				undoRedoContainer,
@@ -665,5 +651,5 @@ const FormattedTextEditorView = forwardRef<
 			{undoRedoButtons}
 		</div>
 	);
-});
-FormattedTextEditorView.displayName = "FormattedTextEditorView";
+},
+);

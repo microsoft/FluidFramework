@@ -12,7 +12,7 @@ import {
 	TreeViewConfiguration,
 } from "@fluidframework/tree/alpha";
 
-import { LabeledUndoRedoStacks, UndoRedoStacks } from "../undoRedo.js";
+import { UndoRedoManager } from "../undoRedo.js";
 
 // ---------------------------------------------------------------------------
 // Shared test schema and tree factory
@@ -30,324 +30,332 @@ function createTree(): TreeViewAlpha<typeof TestRoot> {
 
 // ---------------------------------------------------------------------------
 
-describe("UndoRedoStacks", () => {
-	it("undo reverts the most recent change", () => {
-		const view = createTree();
-		const stacks = new UndoRedoStacks(view.events);
+describe("UndoRedoManager", () => {
+	describe("global undo/redo (no label)", () => {
+		it("undo reverts the most recent change", () => {
+			const view = createTree();
+			const manager = new UndoRedoManager(view);
 
-		view.runTransaction(() => {
-			view.root.value = 1;
-		});
-		assert.equal(view.root.value, 1);
-
-		stacks.undo();
-		assert.equal(view.root.value, 0);
-		stacks.dispose();
-	});
-
-	it("redo re-applies an undone change", () => {
-		const view = createTree();
-		const stacks = new UndoRedoStacks(view.events);
-
-		view.runTransaction(() => {
-			view.root.value = 1;
-		});
-		stacks.undo();
-		stacks.redo();
-		assert.equal(view.root.value, 1);
-		stacks.dispose();
-	});
-
-	it("commit, undo, and redo notify listeners", () => {
-		const view = createTree();
-		const stacks = new UndoRedoStacks(view.events);
-		let notifyCount = 0;
-		stacks.onStateChange(() => {
-			notifyCount++;
-		});
-
-		view.runTransaction(() => {
-			view.root.value = 1;
-		});
-		assert.equal(notifyCount, 1);
-
-		// undo() notifies via commitApplied handler + directly from undo()
-		stacks.undo();
-		assert.equal(notifyCount, 3);
-
-		// redo() similarly notifies twice
-		stacks.redo();
-		assert.equal(notifyCount, 5);
-		stacks.dispose();
-	});
-
-	it("canUndo/canRedo reflect stack state", () => {
-		const view = createTree();
-		const stacks = new UndoRedoStacks(view.events);
-
-		assert.equal(stacks.canUndo(), false);
-		assert.equal(stacks.canRedo(), false);
-
-		view.runTransaction(() => {
-			view.root.value = 1;
-		});
-		assert.equal(stacks.canUndo(), true);
-		assert.equal(stacks.canRedo(), false);
-
-		stacks.undo();
-		assert.equal(stacks.canUndo(), false);
-		assert.equal(stacks.canRedo(), true);
-		stacks.dispose();
-	});
-});
-
-describe("LabeledUndoRedoStacks", () => {
-	const label = Symbol("test-label");
-	const otherLabel = Symbol("other-label");
-
-	it("ignores commits with no label", () => {
-		const view = createTree();
-		const stacks = new LabeledUndoRedoStacks(view, label);
-
-		view.runTransaction(() => {
-			view.root.value = 1;
-		});
-		assert.equal(stacks.canUndo(), false);
-		stacks.dispose();
-	});
-
-	it("ignores commits tagged with a different label", () => {
-		const view = createTree();
-		const stacks = new LabeledUndoRedoStacks(view, label);
-
-		view.runTransaction(
-			() => {
+			view.runTransaction(() => {
 				view.root.value = 1;
-			},
-			{ label: otherLabel },
-		);
-		assert.equal(stacks.canUndo(), false);
-		stacks.dispose();
-	});
+			});
+			assert.equal(view.root.value, 1);
 
-	it("tracks commits tagged with the matching label", () => {
-		const view = createTree();
-		const stacks = new LabeledUndoRedoStacks(view, label);
+			manager.undo();
+			assert.equal(view.root.value, 0);
+			manager.dispose();
+		});
 
-		view.runTransaction(
-			() => {
+		it("redo re-applies an undone change", () => {
+			const view = createTree();
+			const manager = new UndoRedoManager(view);
+
+			view.runTransaction(() => {
 				view.root.value = 1;
-			},
-			{ label },
-		);
-		assert.equal(stacks.canUndo(), true);
-		assert.equal(stacks.canRedo(), false);
-		stacks.dispose();
-	});
+			});
+			manager.undo();
+			manager.redo();
+			assert.equal(view.root.value, 1);
+			manager.dispose();
+		});
 
-	it("undo reverts the change and makes it available to redo", () => {
-		const view = createTree();
-		const stacks = new LabeledUndoRedoStacks(view, label);
+		it("canUndo/canRedo reflect stack state", () => {
+			const view = createTree();
+			const manager = new UndoRedoManager(view);
 
-		view.runTransaction(
-			() => {
+			assert.equal(manager.canUndo(), false);
+			assert.equal(manager.canRedo(), false);
+
+			view.runTransaction(() => {
 				view.root.value = 1;
-			},
-			{ label },
-		);
-		stacks.undo();
-		assert.equal(view.root.value, 0);
-		assert.equal(stacks.canUndo(), false);
-		assert.equal(stacks.canRedo(), true);
-		stacks.dispose();
-	});
+			});
+			assert.equal(manager.canUndo(), true);
+			assert.equal(manager.canRedo(), false);
 
-	it("redo re-applies an undone change", () => {
-		const view = createTree();
-		const stacks = new LabeledUndoRedoStacks(view, label);
+			manager.undo();
+			assert.equal(manager.canUndo(), false);
+			assert.equal(manager.canRedo(), true);
+			manager.dispose();
+		});
 
-		view.runTransaction(
-			() => {
+		it("new commit after undo clears redo stack", () => {
+			const view = createTree();
+			const manager = new UndoRedoManager(view);
+
+			view.runTransaction(() => {
 				view.root.value = 1;
-			},
-			{ label },
-		);
-		stacks.undo();
-		stacks.redo();
-		assert.equal(view.root.value, 1);
-		assert.equal(stacks.canUndo(), true);
-		assert.equal(stacks.canRedo(), false);
-		stacks.dispose();
-	});
+			});
+			manager.undo();
+			assert.equal(manager.canRedo(), true);
 
-	it("multiple undo/redo preserves stack order", () => {
-		const view = createTree();
-		const stacks = new LabeledUndoRedoStacks(view, label);
-
-		view.runTransaction(
-			() => {
-				view.root.value = 1;
-			},
-			{ label },
-		);
-		view.runTransaction(
-			() => {
+			view.runTransaction(() => {
 				view.root.value = 2;
-			},
-			{ label },
-		);
+			});
+			assert.equal(manager.canRedo(), false);
+			manager.dispose();
+		});
 
-		stacks.undo();
-		assert.equal(view.root.value, 1);
-		stacks.undo();
-		assert.equal(view.root.value, 0);
-		assert.equal(stacks.canUndo(), false);
-		assert.equal(stacks.canRedo(), true);
+		it("undo and redo are silent no-ops when stack is empty", () => {
+			const view = createTree();
+			const manager = new UndoRedoManager(view);
 
-		stacks.redo();
-		assert.equal(view.root.value, 1);
-		stacks.redo();
-		assert.equal(view.root.value, 2);
-		assert.equal(stacks.canRedo(), false);
-		stacks.dispose();
-	});
+			// Should not throw
+			manager.undo();
+			manager.redo();
+			assert.equal(view.root.value, 0);
+			manager.dispose();
+		});
 
-	it("new labeled edit after undo clears the redo stack", () => {
-		const view = createTree();
-		const stacks = new LabeledUndoRedoStacks(view, label);
+		it("multiple undo/redo preserves stack order", () => {
+			const view = createTree();
+			const manager = new UndoRedoManager(view);
 
-		view.runTransaction(
-			() => {
+			view.runTransaction(() => {
 				view.root.value = 1;
-			},
-			{ label },
-		);
-		stacks.undo();
-		assert.equal(stacks.canRedo(), true);
-
-		view.runTransaction(
-			() => {
+			});
+			view.runTransaction(() => {
 				view.root.value = 2;
-			},
-			{ label },
-		);
-		assert.equal(stacks.canRedo(), false);
-		stacks.dispose();
+			});
+
+			manager.undo();
+			assert.equal(view.root.value, 1);
+			manager.undo();
+			assert.equal(view.root.value, 0);
+
+			manager.redo();
+			assert.equal(view.root.value, 1);
+			manager.redo();
+			assert.equal(view.root.value, 2);
+			manager.dispose();
+		});
 	});
 
-	it("two stacks with different labels do not interfere", () => {
-		const view = createTree();
-		const stackA = new LabeledUndoRedoStacks(view, label);
-		const stackB = new LabeledUndoRedoStacks(view, otherLabel);
+	describe("labeled undo/redo", () => {
+		const labelA = Symbol("label-a");
+		const labelB = Symbol("label-b");
 
-		view.runTransaction(
-			() => {
-				view.root.value = 10;
-			},
-			{ label },
-		);
-		view.runTransaction(
-			() => {
-				view.root.value = 20;
-			},
-			{ label: otherLabel },
-		);
+		it("canUndo(label) returns false when stack has no matching commit", () => {
+			const view = createTree();
+			const manager = new UndoRedoManager(view);
 
-		assert.equal(stackA.canUndo(), true);
-		assert.equal(stackB.canUndo(), true);
+			view.runTransaction(
+				() => {
+					view.root.value = 1;
+				},
+				{ label: labelB },
+			);
 
-		stackA.undo();
-		assert.equal(stackA.canRedo(), true);
-		assert.equal(stackB.canRedo(), false);
-
-		stackA.dispose();
-		stackB.dispose();
-	});
-
-	it("commit, undo, and redo notify listeners", () => {
-		const view = createTree();
-		const stacks = new LabeledUndoRedoStacks(view, label);
-		let notifyCount = 0;
-		stacks.onStateChange(() => {
-			notifyCount++;
+			assert.equal(manager.canUndo(labelA), false);
+			assert.equal(manager.canUndo(labelB), true);
+			manager.dispose();
 		});
 
-		view.runTransaction(
-			() => {
-				view.root.value = 1;
-			},
-			{ label },
-		);
-		assert.equal(notifyCount, 1);
+		it("undo(label) undoes the most recent matching commit and leaves others in the stack", () => {
+			const view = createTree();
+			const manager = new UndoRedoManager(view);
 
-		// Unlabeled commit should not notify
-		view.runTransaction(() => {
-			view.root.value = 2;
+			view.runTransaction(
+				() => {
+					view.root.value = 1;
+				},
+				{ label: labelA },
+			);
+			view.runTransaction(
+				() => {
+					view.root.value = 2;
+				},
+				{ label: labelB },
+			);
+
+			// labelB is on top; undo(labelA) should skip labelB and undo labelA
+			manager.undo(labelA);
+
+			// labelB was skipped — it remains undoable
+			assert.equal(manager.canUndo(labelB), true);
+			// labelA moved to redo stack
+			assert.equal(manager.canRedo(labelA), true);
+			// labelB has nothing to redo
+			assert.equal(manager.canRedo(labelB), false);
+
+			manager.dispose();
 		});
-		assert.equal(notifyCount, 1);
 
-		stacks.undo(); // notifies once from undo(), once from the undo commit arriving
-		assert.equal(notifyCount, 3);
+		it("undo(label) is a silent no-op when no matching commit exists", () => {
+			const view = createTree();
+			const manager = new UndoRedoManager(view);
 
-		stacks.redo(); // notifies once from redo(), once from the redo commit arriving
-		assert.equal(notifyCount, 5);
-		stacks.dispose();
-	});
+			view.runTransaction(
+				() => {
+					view.root.value = 1;
+				},
+				{ label: labelB },
+			);
 
-	it("onStateChange returns an unsubscribe function", () => {
-		const view = createTree();
-		const stacks = new LabeledUndoRedoStacks(view, label);
-		let notifyCount = 0;
-		const unsubscribe = stacks.onStateChange(() => {
-			notifyCount++;
+			// Should not throw, should not change value
+			manager.undo(labelA);
+			assert.equal(view.root.value, 1);
+			manager.dispose();
 		});
 
-		view.runTransaction(
-			() => {
-				view.root.value = 1;
-			},
-			{ label },
-		);
-		assert.equal(notifyCount, 1);
+		it("labeled commit invalidates only redo entries with the same label", () => {
+			const view = createTree();
+			const manager = new UndoRedoManager(view);
 
-		unsubscribe();
-		view.runTransaction(
-			() => {
+			view.runTransaction(
+				() => {
+					view.root.value = 1;
+				},
+				{ label: labelA },
+			);
+			view.runTransaction(
+				() => {
+					view.root.value = 2;
+				},
+				{ label: labelB },
+			);
+
+			manager.undo(labelA);
+			manager.undo(labelB);
+			assert.equal(manager.canRedo(labelA), true);
+			assert.equal(manager.canRedo(labelB), true);
+
+			// New labelA commit should clear only labelA redo entries
+			view.runTransaction(
+				() => {
+					view.root.value = 3;
+				},
+				{ label: labelA },
+			);
+			assert.equal(manager.canRedo(labelA), false);
+			assert.equal(manager.canRedo(labelB), true);
+			manager.dispose();
+		});
+
+		it("anonymous commit clears only anonymous redo entries, preserving labeled redo entries", () => {
+			const view = createTree();
+			const manager = new UndoRedoManager(view);
+
+			view.runTransaction(
+				() => {
+					view.root.value = 1;
+				},
+				{ label: labelA },
+			);
+			view.runTransaction(() => {
 				view.root.value = 2;
-			},
-			{ label },
-		);
-		assert.equal(notifyCount, 1);
-		stacks.dispose();
+			});
+
+			manager.undo(); // Global undo: pops anonymous commit → redo stack has {anonymous}
+			manager.undo(labelA); // Labeled undo: pops labelA commit → redo stack has {anonymous, labelA}
+			assert.equal(manager.canRedo(), true);
+			assert.equal(manager.canRedo(labelA), true);
+
+			// New anonymous commit — should clear only the anonymous redo entry
+			view.runTransaction(() => {
+				view.root.value = 3;
+			});
+			// labelA redo is preserved; global canRedo() is still true because labelA is there
+			assert.equal(manager.canRedo(labelA), true);
+			assert.equal(manager.canRedo(), true);
+
+			// Consuming the labelA redo entry leaves nothing
+			manager.redo(labelA);
+			assert.equal(manager.canRedo(labelA), false);
+			assert.equal(manager.canRedo(), false); // anonymous redo was already cleared
+
+			manager.dispose();
+		});
+
+		it("two labels do not interfere with each other's undo stacks", () => {
+			const view = createTree();
+			const manager = new UndoRedoManager(view);
+
+			view.runTransaction(
+				() => {
+					view.root.value = 10;
+				},
+				{ label: labelA },
+			);
+			view.runTransaction(
+				() => {
+					view.root.value = 20;
+				},
+				{ label: labelB },
+			);
+
+			assert.equal(manager.canUndo(labelA), true);
+			assert.equal(manager.canUndo(labelB), true);
+
+			manager.undo(labelA);
+			assert.equal(manager.canRedo(labelA), true);
+			assert.equal(manager.canRedo(labelB), false);
+			manager.dispose();
+		});
 	});
 
-	it("throws when undo stack is empty", () => {
-		const view = createTree();
-		const stacks = new LabeledUndoRedoStacks(view, label);
-		assert.throws(() => stacks.undo(), /undo stack is empty/);
-		stacks.dispose();
-	});
+	describe("onStateChange", () => {
+		it("commit, undo, and redo notify listeners", () => {
+			const view = createTree();
+			const manager = new UndoRedoManager(view);
+			let notifyCount = 0;
+			manager.onStateChange(() => {
+				notifyCount++;
+			});
 
-	it("throws when redo stack is empty", () => {
-		const view = createTree();
-		const stacks = new LabeledUndoRedoStacks(view, label);
-		assert.throws(() => stacks.redo(), /redo stack is empty/);
-		stacks.dispose();
-	});
-
-	it("dispose clears both stacks", () => {
-		const view = createTree();
-		const stacks = new LabeledUndoRedoStacks(view, label);
-
-		view.runTransaction(
-			() => {
+			view.runTransaction(() => {
 				view.root.value = 1;
-			},
-			{ label },
-		);
-		stacks.dispose();
+			});
+			assert.equal(notifyCount, 1);
 
-		assert.equal(stacks.canUndo(), false);
-		assert.equal(stacks.canRedo(), false);
+			manager.undo();
+			assert.equal(notifyCount, 2);
+
+			manager.redo();
+			assert.equal(notifyCount, 3);
+			manager.dispose();
+		});
+
+		it("onStateChange returns an unsubscribe function", () => {
+			const view = createTree();
+			const manager = new UndoRedoManager(view);
+			let notifyCount = 0;
+			const unsubscribe = manager.onStateChange(() => {
+				notifyCount++;
+			});
+
+			view.runTransaction(() => {
+				view.root.value = 1;
+			});
+			assert.equal(notifyCount, 1);
+
+			unsubscribe();
+			view.runTransaction(() => {
+				view.root.value = 2;
+			});
+			assert.equal(notifyCount, 1);
+			manager.dispose();
+		});
+	});
+
+	describe("dispose", () => {
+		it("dispose clears both stacks and unsubscribes", () => {
+			const view = createTree();
+			const manager = new UndoRedoManager(view);
+
+			view.runTransaction(() => {
+				view.root.value = 1;
+			});
+			assert.equal(manager.canUndo(), true);
+
+			manager.dispose();
+			assert.equal(manager.canUndo(), false);
+			assert.equal(manager.canRedo(), false);
+
+			// New commits after dispose should not be tracked
+			view.runTransaction(() => {
+				view.root.value = 2;
+			});
+			assert.equal(manager.canUndo(), false);
+		});
 	});
 });
