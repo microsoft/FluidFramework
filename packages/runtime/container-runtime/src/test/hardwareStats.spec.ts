@@ -6,7 +6,6 @@
 import { strict as assert } from "node:assert";
 
 import type { IContainerContext } from "@fluidframework/container-definitions/internal";
-import type { ITelemetryBaseEvent } from "@fluidframework/core-interfaces";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 import {
 	MockDeltaManager,
@@ -53,8 +52,20 @@ describe("Hardware Stats", () => {
 		getLoadedFromVersion: () => undefined,
 	};
 
-	const getDeviceSpecEvents = (): ITelemetryBaseEvent[] =>
-		mockLogger.events.filter((event) => event.eventName === "DeviceSpec");
+	const getDeviceSpecEvents = () =>
+		mockLogger.events
+			.filter(
+				(event) =>
+					event.eventName === "ContainerRuntime:ContainerLoadStats" &&
+					event.deviceSpec !== undefined,
+			)
+			.map(
+				(event) =>
+					JSON.parse(event.deviceSpec as string) as {
+						deviceMemory?: number;
+						hardwareConcurrency?: number;
+					},
+			);
 
 	const loadContainer = async () =>
 		ContainerRuntime.loadRuntime2({
@@ -103,13 +114,9 @@ describe("Hardware Stats", () => {
 
 		// checking telemetry
 		const events = getDeviceSpecEvents();
-		assert(events !== undefined, "No deviceSpec event found");
+		assert(events.length > 0, "No ContainerLoadStats event with deviceSpec found");
 		assert.strictEqual(events[0].deviceMemory, 10, "incorrect deviceMemory logged");
-		assert.strictEqual(
-			events[0].hardwareConcurrency,
-			8,
-			"incorrect hardwareConcurrency logged",
-		);
+		assert.strictEqual(events[0].hardwareConcurrency, 8, "incorrect hardwareConcurrency logged");
 	});
 
 	it("should generate correct hardware stats with null navigator", async () => {
@@ -125,7 +132,7 @@ describe("Hardware Stats", () => {
 
 		// checking telemetry
 		const events = getDeviceSpecEvents();
-		assert(events !== undefined, "No deviceSpec event found");
+		assert(events.length > 0, "No ContainerLoadStats event with deviceSpec found");
 		assert.strictEqual(events[0].deviceMemory, undefined, "incorrect deviceMemory logged");
 		assert.strictEqual(
 			events[0].hardwareConcurrency,
@@ -146,7 +153,7 @@ describe("Hardware Stats", () => {
 
 		// checking telemetry
 		const events = getDeviceSpecEvents();
-		assert(events !== undefined, "No deviceSpec event found");
+		assert(events.length > 0, "No ContainerLoadStats event with deviceSpec found");
 		assert.strictEqual(events[0].deviceMemory, undefined, "incorrect deviceMemory logged");
 		assert.strictEqual(
 			events[0].hardwareConcurrency,
