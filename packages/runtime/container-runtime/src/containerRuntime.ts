@@ -173,6 +173,7 @@ import {
 	wrapError,
 	tagCodeArtifacts,
 	normalizeError,
+	toITelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
 import { gt } from "semver-ts";
 import { v4 as uuid } from "uuid";
@@ -675,18 +676,11 @@ export function getDeviceSpec(): {
 	deviceMemory?: number | undefined;
 	hardwareConcurrency?: number | undefined;
 } {
-	try {
-		if (typeof navigator === "object" && navigator !== null) {
-			return {
-				// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment
-				deviceMemory: (navigator as any).deviceMemory,
-				hardwareConcurrency: navigator.hardwareConcurrency,
-			};
-		}
-	} catch {
-		// Eat the error
-	}
-	return {};
+	return {
+		// deviceMemory is only available in browsers and is not part of the Navigator type definition. In Node 22 it is undefined.
+		deviceMemory: (navigator as Navigator & { deviceMemory?: number }).deviceMemory,
+		hardwareConcurrency: navigator.hardwareConcurrency,
+	};
 }
 
 /**
@@ -1206,7 +1200,7 @@ export class ContainerRuntime
 			if (pendingLocalState?.pendingIdCompressorState !== undefined) {
 				return deserializeIdCompressor(
 					pendingLocalState.pendingIdCompressorState,
-					compressorLogger,
+					toITelemetryLoggerExt(compressorLogger),
 				);
 			} else if (serializedIdCompressor === undefined) {
 				return createIdCompressor(compressorLogger);
@@ -1214,7 +1208,7 @@ export class ContainerRuntime
 				return deserializeIdCompressor(
 					serializedIdCompressor,
 					createSessionId(),
-					compressorLogger,
+					toITelemetryLoggerExt(compressorLogger),
 				);
 			}
 		};
@@ -4619,7 +4613,8 @@ export class ContainerRuntime
 
 	/**
 	 * This helper is called during summarization. If the container is dirty, it will return a failed summarize result
-	 * (IBaseSummarizeResult) unless this is the final summarize attempt and SkipFailingIncorrectSummary option is set.
+	 * (IBaseSummarizeResult) unless this is the final summarize attempt, in which case the summary is allowed to
+	 * proceed to make progress in documents where there are consistently pending ops in the summarizer.
 	 * @param logger - The logger to be used for sending telemetry.
 	 * @param referenceSequenceNumber - The reference sequence number of the summary attempt.
 	 * @param minimumSequenceNumber - The minimum sequence number of the summary attempt.
@@ -4638,13 +4633,9 @@ export class ContainerRuntime
 			return;
 		}
 
-		// If "SkipFailingIncorrectSummary" option is true, don't fail the summary in the last attempt.
-		// This is a fallback to make progress in documents where there are consistently pending ops in
-		// the summarizer.
-		if (
-			finalAttempt &&
-			this.mc.config.getBoolean("Fluid.Summarizer.SkipFailingIncorrectSummary") === true
-		) {
+		// Don't fail the summary in the last attempt. This is a fallback to make progress in
+		// documents where there are consistently pending ops in the summarizer.
+		if (finalAttempt) {
 			const error = DataProcessingError.create(
 				"Pending ops during summarization",
 				"submitSummary",
@@ -4653,7 +4644,7 @@ export class ContainerRuntime
 			);
 			logger.sendErrorEvent(
 				{
-					eventName: "SkipFailingIncorrectSummary",
+					eventName: "PendingOpsDuringSummaryFinalAttempt",
 					referenceSequenceNumber,
 					minimumSequenceNumber,
 					beforeGenerate: beforeSummaryGeneration,

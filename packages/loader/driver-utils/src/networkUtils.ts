@@ -5,7 +5,7 @@
 
 import type {
 	ITelemetryErrorEventExt,
-	ITelemetryLoggerExt,
+	TelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
 
 import { OnlineStatus, canRetryOnError, isOnline } from "./network.js";
@@ -16,7 +16,7 @@ import { OnlineStatus, canRetryOnError, isOnline } from "./network.js";
  * @internal
  */
 export function logNetworkFailure(
-	logger: ITelemetryLoggerExt,
+	logger: TelemetryLoggerExt,
 	event: ITelemetryErrorEventExt,
 	error?: unknown,
 ): void {

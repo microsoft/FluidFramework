@@ -6,12 +6,6 @@
 
 import type { Test } from 'mocha';
 
-// @public @deprecated
-export function benchmark(args: Titled & DurationBenchmark & BenchmarkDescription & MochaExclusiveOptions): Test;
-
-// @public @deprecated
-export const benchmarkCustom: typeof benchmarkIt;
-
 // @public @input
 export interface BenchmarkDescription {
     readonly category?: string;
@@ -49,7 +43,10 @@ export type BenchmarkResult = BenchmarkError | CollectedData;
 export interface BenchmarkTimer<T> {
     readonly iterationsPerBatch: number;
     recordBatch(duration: number): boolean;
+    timeAllBatches(callback: () => void): void;
+    timeAllBatchesAsync(callback: () => Promise<unknown>): Promise<void>;
     timeBatch(callback: () => void): boolean;
+    timeBatchAsync(callback: () => Promise<unknown>): Promise<boolean>;
     readonly timer: Timer<T>;
 }
 
@@ -67,6 +64,15 @@ export enum BenchmarkType {
     Measurement = 1,
     OwnCorrectness = 3,
     Perspective = 0
+}
+
+// @public
+export class Box<T extends NonNullable<unknown>> {
+    clear(): void;
+    static empty<T extends NonNullable<unknown>>(): Box<T>;
+    static full<T extends NonNullable<unknown>>(item: T): Box<T>;
+    get value(): T;
+    set value(v: T);
 }
 
 // @public
@@ -88,7 +94,7 @@ export function collectMemoryUseData(argsIn: MemoryUseBenchmark): Promise<Collec
 export type DurationBenchmark = DurationBenchmarkSync | DurationBenchmarkAsync | DurationBenchmarkCustom;
 
 // @public @input
-export interface DurationBenchmarkAsync extends HookArguments, BenchmarkTimingOptions, OnBatch {
+export interface DurationBenchmarkAsync extends BenchmarkTimingOptions {
     readonly benchmarkFnAsync: () => Promise<unknown>;
 }
 
@@ -98,7 +104,7 @@ export interface DurationBenchmarkCustom extends BenchmarkTimingOptions {
 }
 
 // @public @input
-export interface DurationBenchmarkSync extends HookArguments, BenchmarkTimingOptions, OnBatch {
+export interface DurationBenchmarkSync extends BenchmarkTimingOptions {
     readonly benchmarkFn: () => void;
 }
 
@@ -110,17 +116,6 @@ export function formatResultArrayTable(data: SuiteData): string | undefined;
 
 // @public
 export function fullName(parent: ReportPath | undefined, benchmarkName?: string): string;
-
-// @public @input
-export interface HookArguments {
-    // @deprecated
-    after?: HookFunction | undefined;
-    // @deprecated
-    before?: HookFunction | undefined;
-}
-
-// @public @deprecated
-export type HookFunction = () => void | Promise<unknown>;
 
 // @public
 export const isInPerformanceTestingMode: boolean;
@@ -140,7 +135,10 @@ export interface Measurement {
     readonly value: number;
 }
 
-// @public @input
+// @public
+export function memoryAddedBy<TIn extends NonNullable<unknown>>(options: MemoryUseModifier<TIn>): MemoryUseBenchmark;
+
+// @public
 export interface MemoryUseBenchmark {
     benchmarkFn(state: MemoryUseCallbacks): Promise<void>;
     enableAsyncGC?: boolean;
@@ -159,14 +157,18 @@ export interface MemoryUseCallbacks {
 }
 
 // @public @input
-export interface MochaExclusiveOptions {
-    readonly only?: boolean;
+export interface MemoryUseModifier<TIn> {
+    after?(input: TIn): void | Promise<void>;
+    modify(input: TIn): void | Promise<void>;
+    setup(): TIn | Promise<TIn>;
 }
 
+// @public
+export function memoryUseOfValue<TOut extends NonNullable<unknown>>(factory: () => TOut | Promise<TOut>): MemoryUseBenchmark;
+
 // @public @input
-export interface OnBatch {
-    // @deprecated
-    beforeEachBatch?: () => void;
+export interface MochaExclusiveOptions {
+    readonly only?: boolean;
 }
 
 // @public

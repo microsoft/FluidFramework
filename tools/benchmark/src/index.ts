@@ -31,9 +31,6 @@ export {
 	type DurationBenchmarkAsync,
 	type DurationBenchmark,
 	type BenchmarkTimingOptions,
-	type OnBatch,
-	type HookFunction,
-	type HookArguments,
 	type BenchmarkTimer,
 	type DurationBenchmarkCustom,
 	Phase,
@@ -76,6 +73,8 @@ export {
 	type MemoryUseCallbacks,
 	benchmarkMemoryUse,
 	collectMemoryUseData,
+	Box,
+	type MemoryUseModifier,
+	memoryAddedBy,
+	memoryUseOfValue,
 } from "./memoryBenchmarking/index.js";
-
-export { benchmark, benchmarkCustom } from "./legacy.js";

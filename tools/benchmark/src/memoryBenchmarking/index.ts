@@ -5,3 +5,4 @@
 
 export { type MemoryUseCallbacks, type MemoryUseBenchmark } from "./configuration.js";
 export { collectMemoryUseData, benchmarkMemoryUse } from "./getMemoryUse.js";
+export { Box, type MemoryUseModifier, memoryAddedBy, memoryUseOfValue } from "./memoryUtils.js";
