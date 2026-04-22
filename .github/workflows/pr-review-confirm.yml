@@ -16,6 +16,9 @@ on:
 permissions:
   contents: read
   pull-requests: write
+  # `actions: write` is required for `gh workflow run` below to dispatch
+  # pr-review-fleet.yml. GITHUB_TOKEN can dispatch workflows in its own repo
+  # only when this permission is granted — without it, the dispatch call 403s.
   actions: write
 
 # Serialize per-PR so rapid-fire comments don't race to trigger the fleet or

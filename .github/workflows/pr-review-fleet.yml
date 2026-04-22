@@ -49,6 +49,7 @@ permissions:
   contents: read
   pull-requests: write
   actions: read # Required to download artifacts from triggering workflow run
+  checks: write # Required to create/update the "Fleet Review" check run surfaced on the PR's Checks tab
 
 concurrency:
   group: pr-review-fleet-${{ github.event.workflow_run.id || inputs.pr_number }}
@@ -68,6 +69,7 @@ jobs:
       head_sha: ${{ steps.params.outputs.head_sha }}
       base_ref: ${{ steps.params.outputs.base_ref }}
       reviewers: ${{ steps.params.outputs.reviewers }}
+      check_run_id: ${{ steps.check.outputs.check_run_id }}
     steps:
       - name: Download dispatch params
         if: github.event_name == 'workflow_run'
@@ -117,6 +119,58 @@ jobs:
           echo "reviewers=$REVIEWERS"   >> "$GITHUB_OUTPUT"
 
           echo "PR #${PR_NUMBER} | ${REVIEWER_COUNT} reviewer(s): ${REVIEWERS}"
+
+      # ── Create a check run on the PR head ─────────────────────────────────
+      # workflow_dispatch runs are free-standing — they don't appear on the
+      # PR's Checks tab on their own. Creating a check run against the PR head
+      # surfaces this run in the PR UI with a link back to the workflow logs.
+      - name: Create check run
+        id: check
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          HEAD_SHA: ${{ steps.params.outputs.head_sha }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          CHECK_ID=$(gh api "repos/${REPO}/check-runs" --method POST \
+            -f name="Fleet Review" \
+            -f head_sha="${HEAD_SHA}" \
+            -f status="in_progress" \
+            -f "details_url=${RUN_URL}" \
+            --jq '.id')
+          echo "check_run_id=${CHECK_ID}" >> "$GITHUB_OUTPUT"
+          echo "Created check run ${CHECK_ID} for ${HEAD_SHA}"
+
+      # ── Post an in-progress sticky comment with a run link ────────────────
+      # Uses the same <!-- pr-review-fleet --> marker as the final report, so
+      # the consolidate job's post/update step overwrites this body in place.
+      - name: Post in-progress comment
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          PR_NUMBER: ${{ steps.params.outputs.pr_number }}
+          REVIEWERS: ${{ steps.params.outputs.reviewers }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          MARKER="<!-- pr-review-fleet -->"
+          NAMES=$(echo "$REVIEWERS" | jq -r 'join(", ")')
+          cat > body.md <<EOF
+          ${MARKER}
+          ## Fleet Review — In progress
+
+          Running reviewers: ${NAMES}
+
+          [View run](${RUN_URL})
+          EOF
+
+          EXISTING=$(gh api "repos/${REPO}/issues/${PR_NUMBER}/comments" \
+            --paginate --jq ".[] | select(.body | startswith(\"${MARKER}\")) | .id" | head -1)
+          if [ -n "$EXISTING" ]; then
+            gh api "repos/${REPO}/issues/comments/${EXISTING}" \
+              --method PATCH --field "body=@body.md"
+          else
+            gh pr comment "${PR_NUMBER}" --repo "${REPO}" --body-file body.md
+          fi
 
   # ──────────────────────────────────────────────────────────────
   # Fan-out: run each reviewer in parallel via matrix strategy
@@ -318,3 +372,32 @@ jobs:
             gh pr comment "${PR_NUMBER}" --repo "${REPO}" --body-file report.md
             echo "Posted new comment"
           fi
+
+      # Finalize the check run created in setup. Always runs so a failure in
+      # an earlier step doesn't leave the check stuck in "in_progress".
+      # Conclusions: success = clean run, neutral = findings posted (advisory,
+      # not gating), failure = consolidation itself errored.
+      - name: Finalize check run
+        if: always() && needs.setup.outputs.check_run_id != ''
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          CHECK_ID: ${{ needs.setup.outputs.check_run_id }}
+          HAS_FINDINGS: ${{ steps.consolidate.outputs.has_findings }}
+          CONSOLIDATE_OUTCOME: ${{ steps.consolidate.outcome }}
+        run: |
+          if [ "$CONSOLIDATE_OUTCOME" != "success" ]; then
+            CONCLUSION="failure"
+            SUMMARY="Fleet run failed. See workflow logs."
+          elif [ "$HAS_FINDINGS" = "true" ]; then
+            CONCLUSION="neutral"
+            SUMMARY="Findings posted to the PR comment."
+          else
+            CONCLUSION="success"
+            SUMMARY="No issues found across the reviewer fleet."
+          fi
+          jq -n \
+            --arg conclusion "$CONCLUSION" \
+            --arg summary "$SUMMARY" \
+            '{status: "completed", conclusion: $conclusion, output: {title: "Fleet Review", summary: $summary}}' \
+            | gh api "repos/${REPO}/check-runs/${CHECK_ID}" --method PATCH --input -
