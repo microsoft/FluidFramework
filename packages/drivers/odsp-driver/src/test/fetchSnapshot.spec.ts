@@ -744,12 +744,11 @@ describe("Tests1 for snapshot fetch", () => {
 		]);
 
 		assert(
-			mockLogger.matchAnyEvent([{ eventName: "SnapshotAuthHeaderObtained", category: "generic" }], false, false),
-			"SnapshotAuthHeaderObtained event should be emitted after auth header is obtained",
-		);
-		assert(
-			mockLogger.matchAnyEvent([{ eventName: "SnapshotFetchResponseReceived", category: "generic" }]),
-			"SnapshotFetchResponseReceived event should be emitted after ODSP fetch response is received",
+			mockLogger.matchEvents([
+				{ eventName: "SnapshotAuthHeaderObtained", category: "generic" },
+				{ eventName: "SnapshotFetchResponseReceived", category: "generic" },
+			]),
+			"SnapshotAuthHeaderObtained and SnapshotFetchResponseReceived events should be emitted at info log level",
 		);
 	});
 
@@ -795,12 +794,11 @@ describe("Tests1 for snapshot fetch", () => {
 		]);
 
 		assert(
-			!essentialMockLogger.matchAnyEvent([{ eventName: "SnapshotAuthHeaderObtained", category: "generic" }], false, false),
-			"SnapshotAuthHeaderObtained event should be filtered out at essential log level",
-		);
-		assert(
-			!essentialMockLogger.matchAnyEvent([{ eventName: "SnapshotFetchResponseReceived", category: "generic" }]),
-			"SnapshotFetchResponseReceived event should be filtered out at essential log level",
+			!essentialMockLogger.matchAnyEvent([
+				{ eventName: "SnapshotAuthHeaderObtained", category: "generic" },
+				{ eventName: "SnapshotFetchResponseReceived", category: "generic" },
+			]),
+			"SnapshotAuthHeaderObtained and SnapshotFetchResponseReceived events should be filtered out at essential log level",
 		);
 
 		await essentialEpochTracker.removeEntries().catch(() => {});

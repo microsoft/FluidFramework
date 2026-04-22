@@ -788,8 +788,8 @@ export const downloadSnapshot = mockify(
 			{ ...tokenFetchOptions, request: { url, method } },
 			"downloadSnapshot",
 		);
-		logger?.send({ category: "generic", eventName: "SnapshotAuthHeaderObtained" }, LogLevel.info);
 		assert(authHeader !== null, 0x1e5 /* "Storage token should not be null" */);
+		logger?.send({ category: "generic", eventName: "SnapshotAuthHeaderObtained" }, LogLevel.info);
 		const { body, headers } = getFormBodyAndHeaders(odspResolvedUrl, authHeader, header);
 		const fetchOptions = {
 			body,
