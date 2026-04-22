@@ -150,6 +150,7 @@ export type ArrayNodeTreeChangedDeltaOp = ArrayNodeTreeChangedRetainOp | ArrayNo
 
 // @alpha @sealed
 export interface ArrayNodeTreeChangedRetainOp extends ArrayNodeRetainOp {
+    readonly changedProperties?: ReadonlySet<string>;
     readonly subtreeChanged: boolean;
 }
 
@@ -874,6 +875,11 @@ export interface NodeChangedDataProperties<TNode extends TreeNode = TreeNode> {
 // @alpha @sealed
 export interface NodeChangedDataTreeDelta {
     readonly delta: readonly ArrayNodeTreeChangedDeltaOp[] | undefined;
+}
+
+// @alpha @sealed
+export interface NodeChangedDataTreeProperties<TNode extends TreeNode = TreeNode> {
+    readonly changedProperties: ReadonlySet<TNode extends WithType<string, NodeKind.Object, infer TInfo> ? string & keyof TInfo : string> | undefined;
 }
 
 // @public
@@ -1756,7 +1762,7 @@ export interface TreeChangeEvents {
 // @alpha @sealed
 export interface TreeChangeEventsAlpha<TNode extends TreeNode = TreeNode> extends TreeChangeEvents {
     nodeChanged: (data: NodeChangedDataAlpha<TNode>) => void;
-    treeChanged: TNode extends WithType<string, NodeKind.Array> ? (data: NodeChangedDataTreeDelta) => void : TreeChangeEventsBeta<TNode>["treeChanged"];
+    treeChanged: TNode extends WithType<string, NodeKind.Array> ? (data: NodeChangedDataTreeDelta) => void : TNode extends WithType<string, NodeKind.Map | NodeKind.Object | NodeKind.Record> ? (data: NodeChangedDataTreeProperties<TNode>) => void : TreeChangeEventsBeta<TNode>["treeChanged"];
 }
 
 // @beta @sealed
