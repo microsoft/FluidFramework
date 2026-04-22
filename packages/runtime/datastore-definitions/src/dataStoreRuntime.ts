@@ -204,6 +204,12 @@ export interface IFluidDataStoreRuntime
 }
 
 /**
+ * @legacy @alpha
+ * @sealed
+ */
+export interface IFluidDataStoreRuntimeAlpha extends IFluidDataStoreRuntime {}
+
+/**
  * Internal configs possibly implemented by IFuidDataStoreRuntimes, for use only within the runtime layer.
  * For example, temporary layer compatibility details
  *

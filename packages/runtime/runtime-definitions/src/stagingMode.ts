@@ -55,3 +55,31 @@ export interface IContainerRuntimeBaseInternal extends IContainerRuntimeBase {
 	 */
 	enterStagingMode(): StageControlsInternal;
 }
+
+/**
+ * Controls for managing staged changes in alpha staging mode.
+ *
+ * Provides methods to either commit or discard changes made while in staging mode.
+ *
+ * @deprecated Use {@link StageControls} (beta) instead.
+ * @legacy @alpha
+ * @sealed
+ */
+export interface StageControlsAlpha extends StageControls {}
+
+/**
+ * Alpha interface for container runtime base supporting staging mode.
+ *
+ * @legacy @alpha
+ * @sealed
+ */
+export interface ContainerRuntimeBaseAlpha extends IContainerRuntimeBase {}
+
+/**
+ * Converts types to their alpha counterparts to expose alpha functionality.
+ * @legacy @alpha
+ * @sealed
+ */
+export function asLegacyAlpha(base: IContainerRuntimeBase): ContainerRuntimeBaseAlpha {
+	return base as ContainerRuntimeBaseAlpha;
+}

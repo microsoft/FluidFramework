@@ -7,6 +7,9 @@
 // @beta @legacy
 export type AliasResult = "Success" | "Conflict" | "AlreadyAliased";
 
+// @alpha @sealed @legacy
+export function asLegacyAlpha(base: IContainerRuntimeBase): ContainerRuntimeBaseAlpha;
+
 // @beta @legacy
 export interface AttributionInfo {
     timestamp: number;
@@ -15,6 +18,10 @@ export interface AttributionInfo {
 
 // @beta @legacy
 export type AttributionKey = OpAttributionKey | DetachedAttributionKey | LocalAttributionKey;
+
+// @alpha @sealed @legacy
+export interface ContainerRuntimeBaseAlpha extends IContainerRuntimeBase {
+}
 
 // @beta @legacy (undocumented)
 export type CreateChildSummarizerNodeFn = (summarizeInternal: SummarizeInternalFn, getGCDataFn: (fullGC?: boolean) => Promise<IGarbageCollectionData>,
@@ -418,6 +425,10 @@ export type PackagePath = readonly string[];
 export interface StageControls {
     readonly commitChanges: () => void;
     readonly discardChanges: () => void;
+}
+
+// @alpha @sealed @deprecated @legacy
+export interface StageControlsAlpha extends StageControls {
 }
 
 // @beta @legacy (undocumented)
