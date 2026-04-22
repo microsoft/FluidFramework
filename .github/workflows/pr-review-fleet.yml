@@ -108,12 +108,15 @@ jobs:
           # If an explicit reviewer list was provided (e.g. from the confirm workflow
           # after the user toggled checkboxes), use it directly. Otherwise fall back
           # to taking the first REVIEWER_COUNT entries from the priority-ordered list.
+          # `jq -c` is required: pretty-printed (multi-line) JSON written via plain
+          # `echo key=value >> $GITHUB_OUTPUT` truncates at the first newline,
+          # which would silently break `fromJson(needs.setup.outputs.reviewers)`.
           if [ -n "$INPUT_REVIEWERS" ] && [ "$INPUT_REVIEWERS" != "" ]; then
-            REVIEWERS="$INPUT_REVIEWERS"
+            REVIEWERS=$(echo "$INPUT_REVIEWERS" | jq -c .)
             REVIEWER_COUNT=$(echo "$REVIEWERS" | jq 'length')
           else
             ALL='["correctness","security","api-compatibility","performance","testing"]'
-            REVIEWERS=$(echo "$ALL" | jq --argjson n "$REVIEWER_COUNT" '.[:$n]')
+            REVIEWERS=$(echo "$ALL" | jq -c --argjson n "$REVIEWER_COUNT" '.[:$n]')
           fi
 
           echo "pr_number=$PR_NUMBER"   >> "$GITHUB_OUTPUT"
@@ -273,6 +276,9 @@ jobs:
     needs: [setup, review]
     if: always() && needs.review.result != 'skipped'
     runs-on: ubuntu-latest
+    outputs:
+      has_findings: ${{ steps.consolidate.outputs.has_findings }}
+      consolidate_outcome: ${{ steps.consolidate.outcome }}
     steps:
       - name: Checkout scripts
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # ratchet:actions/checkout@v6
@@ -350,18 +356,36 @@ jobs:
           path: report.md
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      # Finalize the check run created in setup. Always runs so a failure in
-      # an earlier step doesn't leave the check stuck in "in_progress".
-      # Conclusions: success = clean run, neutral = findings posted (advisory,
-      # not gating), failure = consolidation itself errored.
+  # ──────────────────────────────────────────────────────────────
+  # Always-runs teardown: finalize the check run created in setup.
+  # Lives in its own job (not inside `consolidate`) so it still
+  # runs when `review`/`consolidate` are skipped — e.g., when
+  # `setup` fails after the check has already been created.
+  # Without this, a failed setup would leave the PR's "Fleet
+  # Review" check stuck in "in_progress" forever.
+  # ──────────────────────────────────────────────────────────────
+  teardown:
+    name: "Finalize check run"
+    needs: [setup, review, consolidate]
+    if: always() && needs.setup.outputs.check_run_id != ''
+    runs-on: ubuntu-latest
+    steps:
       - name: Compute check conclusion
         id: conclusion
-        if: always() && needs.setup.outputs.check_run_id != ''
         env:
-          HAS_FINDINGS: ${{ steps.consolidate.outputs.has_findings }}
-          CONSOLIDATE_OUTCOME: ${{ steps.consolidate.outcome }}
+          SETUP_RESULT: ${{ needs.setup.result }}
+          REVIEW_RESULT: ${{ needs.review.result }}
+          CONSOLIDATE_RESULT: ${{ needs.consolidate.result }}
+          CONSOLIDATE_OUTCOME: ${{ needs.consolidate.outputs.consolidate_outcome }}
+          HAS_FINDINGS: ${{ needs.consolidate.outputs.has_findings }}
         run: |
-          if [ "$CONSOLIDATE_OUTCOME" != "success" ]; then
+          # Failure modes (any of these → check fails):
+          #   - setup didn't succeed (check was created but downstream never ran)
+          #   - consolidate ran but the script itself errored
+          #   - consolidate was skipped because review was skipped
+          if [ "$SETUP_RESULT" != "success" ] \
+             || [ "$CONSOLIDATE_RESULT" = "skipped" ] \
+             || { [ "$CONSOLIDATE_RESULT" = "success" ] && [ "$CONSOLIDATE_OUTCOME" != "success" ]; }; then
             echo "conclusion=failure" >> "$GITHUB_OUTPUT"
             echo "summary=Fleet run failed. See workflow logs." >> "$GITHUB_OUTPUT"
           elif [ "$HAS_FINDINGS" = "true" ]; then
@@ -373,7 +397,6 @@ jobs:
           fi
 
       - name: Finalize check run
-        if: always() && needs.setup.outputs.check_run_id != ''
         uses: LouisBrunner/checks-action@937cbbcde3259005b50746dc91cde29098aac2ff # ratchet:LouisBrunner/checks-action@v3.1.0
         with:
           token: ${{ secrets.GITHUB_TOKEN }}

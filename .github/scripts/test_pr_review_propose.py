@@ -296,3 +296,96 @@ class TestBuildQAContext:
         out = capsys.readouterr().out
         for r in REVIEWERS:
             assert r.description in out
+
+
+# ── CLI wiring ───────────────────────────────────────────────────────────────
+# These tests round-trip through `main()` so a bug in `_build_parser`'s
+# `set_defaults(func=...)` wiring (e.g., a subcommand pointing at the wrong
+# handler) would surface here, where unit tests on `cmd_*` directly cannot
+# catch it.
+
+
+class TestCLI:
+    def test_build_comment_via_cli(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+        capsys: pytest.CaptureFixture[str],
+    ) -> None:
+        from pr_review_propose import main
+
+        monkeypatch.setattr(
+            "sys.argv",
+            [
+                "pr_review_propose.py",
+                "build-comment",
+                "--reviewer-count",
+                "3",
+                "--lines",
+                "120",
+                "--files",
+                "4",
+            ],
+        )
+        main()
+        out = capsys.readouterr().out
+        assert "<!-- pr-review-confirm -->" in out
+        assert "120 lines, 4 files" in out
+        # 3 boxes checked, the rest unchecked
+        assert out.count("- [x]") == 3
+        assert out.count("- [ ]") == len(REVIEWERS) - 3
+
+    def test_parse_checkboxes_via_cli(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+        capsys: pytest.CaptureFixture[str],
+        tmp_path: Path,
+    ) -> None:
+        from pr_review_propose import main
+
+        body = tmp_path / "body.md"
+        body.write_text("- [x] **Correctness** — foo\n- [ ] **Security** — bar\n")
+        monkeypatch.setattr(
+            "sys.argv", ["pr_review_propose.py", "parse-checkboxes", str(body)]
+        )
+        main()
+        out = capsys.readouterr().out.strip()
+        assert json.loads(out) == ["correctness"]
+
+    def test_format_names_via_cli(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+        capsys: pytest.CaptureFixture[str],
+    ) -> None:
+        from pr_review_propose import main
+
+        monkeypatch.setattr(
+            "sys.argv",
+            [
+                "pr_review_propose.py",
+                "format-names",
+                json.dumps(["correctness", "security"]),
+            ],
+        )
+        main()
+        out = capsys.readouterr().out.strip()
+        assert out == "Correctness, Security"
+
+    def test_build_qa_context_via_cli(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+        capsys: pytest.CaptureFixture[str],
+    ) -> None:
+        from pr_review_propose import main
+
+        monkeypatch.setattr(
+            "sys.argv",
+            [
+                "pr_review_propose.py",
+                "build-qa-context",
+                json.dumps(["correctness"]),
+            ],
+        )
+        main()
+        out = capsys.readouterr().out
+        assert "✓ Correctness" in out
+        assert "○ Security" in out

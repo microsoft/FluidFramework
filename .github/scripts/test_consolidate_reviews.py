@@ -497,3 +497,30 @@ class TestMain:
         assert result == 0
         content = output.read_text()
         assert "O(n^2)" in content
+
+    def test_high_in_api_compat_file_promotes_to_request_changes(
+        self, tmp_path: Path
+    ) -> None:
+        # Pins the full file-stem → REVIEWERS lookup → PROMOTED_AREAS chain.
+        # If the label in pr_review_propose.REVIEWERS for the api-compatibility
+        # entry diverges from PROMOTED_AREAS in consolidate_reviews, a HIGH
+        # finding here would silently downgrade to "Approve with Suggestions".
+        (tmp_path / "review-api-compatibility.json").write_text(
+            json.dumps(
+                {
+                    "findings": [
+                        {
+                            "severity": "HIGH",
+                            "location": "packages/foo/src/index.ts:1",
+                            "description": "Removed exported function",
+                            "fix": "Restore or deprecate",
+                        },
+                    ]
+                }
+            )
+        )
+        output = tmp_path / "report.md"
+        result = main([str(tmp_path), "https://example.com/run/1", "-o", str(output)])
+        assert result == 0
+        content = output.read_text()
+        assert "Request Changes" in content
