@@ -701,7 +701,13 @@ export class PerformanceEvent {
 		emitLogs: boolean = true,
 		endLogLevel?: typeof LogLevel.verbose | typeof LogLevel.default,
 	): PerformanceEvent {
-		return new PerformanceEvent(extractTelemetryLoggerExt(logger), event, markers, emitLogs, endLogLevel);
+		return new PerformanceEvent(
+			extractTelemetryLoggerExt(logger),
+			event,
+			markers,
+			emitLogs,
+			endLogLevel,
+		);
 	}
 
 	/**
