@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 """Consolidate review fleet findings into a single PR report.
 
-Reads review-*.md files from a directory, extracts findings in the format
-[SEVERITY] file:line — description — fix, de-duplicates by file:line,
-and outputs a consolidated markdown report.
+Reads review-*.json files from a directory and extracts findings from the
+`{"findings": [{"severity", "location", "description", "fix"}]}` structure.
+Findings are de-duplicated by location (file:line) and emitted as a consolidated
+markdown report.
 
 Usage:
     python consolidate_reviews.py <reviews-dir> <run-url> [-o report.md]
@@ -234,7 +235,7 @@ def build_report(findings: list[Finding], run_url: str, pr_number: int | None = 
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("reviews_dir", type=Path, help="Directory containing review-*.md files")
+    parser.add_argument("reviews_dir", type=Path, help="Directory containing review-*.json files")
     parser.add_argument("run_url", help="URL to the workflow run")
     parser.add_argument("-o", "--output", type=Path, default=Path("report.md"), help="Output file path")
     parser.add_argument("--pr-number", type=int, help="Pull request number for deterministic emoji set selection")

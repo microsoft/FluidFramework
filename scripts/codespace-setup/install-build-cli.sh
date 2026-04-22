@@ -9,5 +9,6 @@ set -euo pipefail
 echo "Installing @fluid-tools/build-cli globally..."
 pnpm add -g @fluid-tools/build-cli
 
-echo "flub installed: $(which flub)"
+flub_path="$(command -v flub)"
+echo "flub installed: ${flub_path}"
 flub --version
