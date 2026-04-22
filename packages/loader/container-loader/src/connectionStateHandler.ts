@@ -699,7 +699,7 @@ export class ConnectionStateHandler implements IConnectionStateHandler {
 						}),
 					},
 					undefined, // error
-					LogLevel.info, //
+					LogLevel.info,
 				);
 			}
 		}
