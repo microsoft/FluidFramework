@@ -84,16 +84,19 @@ import {
 	encodeCompactIdToString,
 } from "@fluidframework/runtime-utils/internal";
 import {
-	type ITelemetryLoggerExt,
 	DataProcessingError,
 	LoggingError,
 	type MonitoringContext,
 	UsageError,
 	createChildMonitoringContext,
+	extractTelemetryLoggerExt,
 	generateStack,
 	raiseConnectedEvent,
 	tagCodeArtifacts,
+	toITelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
+// eslint-disable-next-line import-x/no-internal-modules -- Needed to avoid specialized /internal ITelemetryLoggerExt
+import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/legacy";
 import { v4 as uuid } from "uuid";
 
 import { type IChannelContext, summarizeChannel } from "./channelContext.js";
@@ -352,7 +355,7 @@ export class FluidDataStoreRuntime
 	private readonly audience: IAudience;
 	private readonly mc: MonitoringContext;
 	public get logger(): ITelemetryLoggerExt {
-		return this.mc.logger;
+		return toITelemetryLoggerExt(this.mc.logger);
 	}
 
 	/**
@@ -726,7 +729,7 @@ export class FluidDataStoreRuntime
 			this,
 			this.dataStoreContext,
 			this.dataStoreContext.storage,
-			this.logger,
+			extractTelemetryLoggerExt(this.logger),
 			(content, localOpMetadata) => this.submitChannelOp(channel.id, content, localOpMetadata),
 			(address: string) => this.setChannelDirty(address),
 		);
@@ -744,7 +747,7 @@ export class FluidDataStoreRuntime
 			this,
 			this.dataStoreContext,
 			this.dataStoreContext.storage,
-			this.logger,
+			extractTelemetryLoggerExt(this.logger),
 			(content, localOpMetadata) => this.submitChannelOp(id, content, localOpMetadata),
 			(address: string) => this.setChannelDirty(address),
 			tree,
@@ -835,7 +838,7 @@ export class FluidDataStoreRuntime
 			object.setConnectionState(connected, clientId);
 		}
 
-		raiseConnectedEvent(this.logger, this, connected, clientId);
+		raiseConnectedEvent(extractTelemetryLoggerExt(this.logger), this, connected, clientId);
 	}
 
 	private _readonly: boolean;
