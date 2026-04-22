@@ -5,6 +5,7 @@
 
 import { performanceNow } from "@fluid-internal/client-utils";
 import type { ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
+import { LogLevel } from "@fluidframework/core-interfaces";
 import { assert, Deferred } from "@fluidframework/core-utils/internal";
 import type {
 	IDeltasFetchResult,
@@ -563,12 +564,17 @@ export function requestOps(
 		toTotal,
 	};
 
-	const telemetryEvent = PerformanceEvent.start(logger, {
-		eventName: "GetDeltas",
-		...propsTotal,
-		reason: scenarioName,
-		// Make info here
-	});
+	const telemetryEvent = PerformanceEvent.start(
+		logger,
+		{
+			eventName: "GetDeltas",
+			...propsTotal,
+			reason: scenarioName,
+		},
+		undefined, // markers
+		undefined, // emitLogs
+		LogLevel.info,
+	);
 
 	const manager = new ParallelRequests<ISequencedDocumentMessage>(
 		fromTotal,

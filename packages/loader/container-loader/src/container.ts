@@ -2394,7 +2394,9 @@ export class Container
 				this.subLogger,
 				{ eventName: "CodeLoad" },
 				async () => this.codeLoader.load(codeDetails),
-				// Make this info somehow?
+				undefined, // markers
+				undefined, // sampleThreshold
+				LogLevel.info,
 			);
 
 			this._loadedModule = {

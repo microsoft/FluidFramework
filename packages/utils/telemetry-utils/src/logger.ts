@@ -640,8 +640,9 @@ export class PerformanceEvent {
 		event: ITelemetryGenericEventExt,
 		markers?: IPerformanceEventMarkers,
 		emitLogs: boolean = true,
+		endLogLevel?: typeof LogLevel.verbose | typeof LogLevel.default,
 	): PerformanceEvent {
-		return new PerformanceEvent(logger, event, markers, emitLogs);
+		return new PerformanceEvent(logger, event, markers, emitLogs, endLogLevel);
 	}
 
 	/**
@@ -665,12 +666,14 @@ export class PerformanceEvent {
 		callback: (event: PerformanceEvent) => T,
 		markers?: IPerformanceEventMarkers,
 		sampleThreshold: number = 1,
+		endLogLevel?: typeof LogLevel.verbose | typeof LogLevel.default,
 	): T {
 		const perfEvent = PerformanceEvent.start(
 			logger,
 			event,
 			markers,
 			PerformanceEvent.shouldReport(event, sampleThreshold),
+			endLogLevel,
 		);
 		try {
 			const ret = callback(perfEvent);
@@ -704,12 +707,14 @@ export class PerformanceEvent {
 		callback: (event: PerformanceEvent) => Promise<T>,
 		markers?: IPerformanceEventMarkers,
 		sampleThreshold: number = 1,
+		endLogLevel?: typeof LogLevel.verbose | typeof LogLevel.default,
 	): Promise<T> {
 		const perfEvent = PerformanceEvent.start(
 			logger,
 			event,
 			markers,
 			PerformanceEvent.shouldReport(event, sampleThreshold),
+			endLogLevel,
 		);
 		try {
 			const ret = await callback(perfEvent);
@@ -734,6 +739,7 @@ export class PerformanceEvent {
 		event: ITelemetryGenericEventExt,
 		private readonly markers: IPerformanceEventMarkers = { end: true, cancel: "generic" },
 		private readonly emitLogs: boolean = true,
+		private readonly endLogLevel?: typeof LogLevel.verbose | typeof LogLevel.default,
 	) {
 		this.event = { ...event };
 		if (this.markers.start) {
@@ -818,7 +824,11 @@ export class PerformanceEvent {
 			event.duration = this.duration;
 		}
 
-		this.logger.sendPerformanceEvent(event, error);
+		this.logger.sendPerformanceEvent(
+			event,
+			error,
+			eventNameSuffix === "end" ? this.endLogLevel : undefined,
+		);
 	}
 
 	private static readonly eventHits = new Map<string, number>();
