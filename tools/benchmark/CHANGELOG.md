@@ -1,5 +1,7 @@
 # @fluid-tools/benchmark
 
+## 0.59.0
+
 ## 0.58.0
 
 -   Default value for `BenchmarkDescription.type` is now documented to be `BenchmarkType.Measurement` (no functional change: just added missing documentation).
