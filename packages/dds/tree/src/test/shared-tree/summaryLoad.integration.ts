@@ -167,7 +167,14 @@ describe("Summary load regression tests", () => {
 						MockSharedObjectServices.createFromSummary(JSON.parse(summaryJson)),
 						stFactory.attributes,
 					);
-					assert(tree !== undefined, "Loaded tree should not be undefined");
+					// If changes are made to the test summary content, this assertion may need to be updated.
+					// The important thing is that the content is loaded and can be read without error, not the specific values.
+					const view = tree.viewWith(new TreeViewConfiguration({ schema: TestSchema }));
+					assert.equal(view.root.label, "foo");
+					assert.deepEqual(
+						Array.from(view.root.child, (child) => child.count),
+						[1, 2],
+					);
 				});
 			}
 		});
