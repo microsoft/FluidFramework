@@ -129,6 +129,28 @@ parameters:
   type: boolean
   default: false
 
+# Feature flag: when true, PR builds run a `detect_changes` job up front
+# and scope subsequent test execution to packages affected by the PR diff
+# (plus their transitive dependents). Scoping is applied natively by pnpm
+# via `npm_config_filter="...[<merge-base>]"`, so no wrapper scripts or
+# package.json changes are needed.
+#
+# The detect_changes job is always compiled into the pipeline but runs
+# conditionally at build time. It executes when all of these are true:
+#   (1) Build.Reason == 'PullRequest' (scoping only makes sense for PRs)
+#   (2) this parameter is true,
+#       OR the PR source branch name contains 'test/filtered-ci/' — a magic
+#       branch-name prefix that lets contributors exercise the scoped
+#       behavior from an auto-triggered PR build without flipping a
+#       parameter at queue time.
+# When the condition is false the job is skipped; its output variables
+# resolve to empty strings, and downstream test jobs interpret that as
+# "no filter — run every package" (the historical behavior). So the
+# pipeline remains effectively byte-identical for non-opt-in runs.
+- name: enableChangedPackageTestScoping
+  type: boolean
+  default: false
+
 # The `resources` specify the location and version of the 1ES Pipeline Template.
 resources:
   repositories:
@@ -206,6 +228,33 @@ extends:
         displayName: Build Stage
         dependsOn: [] # this stage doesn't depend on preceding stage
         jobs:
+          # Detect packages changed by this PR so downstream test jobs can
+          # scope via pnpm's `--filter "...[<sha>]"` selector (set as
+          # `npm_config_filter`). Always compiled in, but skipped at runtime
+          # for non-PR builds and for PR builds that haven't opted into
+          # scoping (neither the parameter set nor the magic branch name).
+          # When skipped, the output variables resolve to empty strings,
+          # which downstream jobs interpret as "run every package" — the
+          # historical behavior.
+          - job: detect_changes
+            displayName: Detect changed packages
+            condition: >-
+              and(
+                eq(variables['Build.Reason'], 'PullRequest'),
+                or(
+                  eq('${{ parameters.enableChangedPackageTestScoping }}', 'True'),
+                  contains(variables['System.PullRequest.SourceBranch'], 'test/filtered-ci/')
+                )
+              )
+            variables:
+              - name: targetBranchName
+                value: $(System.PullRequest.TargetBranch)
+            steps:
+              - template: /tools/pipelines/templates/include-detect-changed-packages.yml@self
+                parameters:
+                  buildDirectory: ${{ parameters.buildDirectory }}
+                  targetBranchName: $(targetBranchName)
+
           # Job - Build
           - job: build
             displayName: Build
@@ -561,7 +610,9 @@ extends:
 
           - job: Coverage_tests
             displayName: "Coverage tests"
-            dependsOn: build
+            dependsOn:
+              - build
+              - detect_changes
             variables:
               - ${{ if eq(variables['Build.Reason'], 'PullRequest') }}:
                 - name: targetBranchName
@@ -577,6 +628,14 @@ extends:
                 value: 'false'
               - name: COMMIT_SHA
                 value: $[ dependencies.build.outputs['setCommitSHA.COMMIT_SHA'] ]
+              # Outputs from the detect_changes job. Empty when the job was
+              # skipped (non-PR builds, or PR builds that didn't opt into
+              # scoping) — downstream steps interpret that as "run every
+              # package", matching the historical behavior.
+              - name: shouldRunTests
+                value: $[ dependencies.detect_changes.outputs['setChangedPackages.shouldRunTests'] ]
+              - name: scopedPnpmFilter
+                value: $[ dependencies.detect_changes.outputs['setChangedPackages.scopedPnpmFilter'] ]
 
             steps:
               # Setup
@@ -619,9 +678,14 @@ extends:
 
               # Set variable startTest if everything is good so far and we'll start running tests,
               # so that the steps to process/upload test coverage results only run if we got to the point of actually running tests.
+              # The extra `ne(shouldRunTests, 'false')` guard skips test execution
+              # when the detect job explicitly concluded no packages were affected.
+              # An empty `shouldRunTests` (the job was skipped entirely) still lets
+              # tests run — matching the historical "no scoping" behavior.
               - script: |
                   echo "##vso[task.setvariable variable=startTest]true"
                 displayName: Start Test
+                condition: and(succeeded(), ne(variables['shouldRunTests'], 'false'))
 
               - ${{ each test in parameters.coverageTests }}:
                 - template: /tools/pipelines/templates/include-test-task.yml@self
@@ -629,6 +693,7 @@ extends:
                     taskTestStep: '${{ test.name }}'
                     buildDirectory: '${{ parameters.buildDirectory }}'
                     testCoverage: '${{ parameters.testCoverage }}'
+                    pnpmFilter: $(scopedPnpmFilter)
 
               - task: Npm@1
                 displayName: 'npm run test:copyresults'
@@ -722,7 +787,9 @@ extends:
           - ${{ each test in parameters.taskTest }}:
             - job: Test_${{ test.jobName }}
               displayName: "Run Task Test ${{ test.jobName }}"
-              dependsOn: build
+              dependsOn:
+                - build
+                - detect_changes
               variables:
                 - ${{ if eq(variables['Build.Reason'], 'PullRequest') }}:
                   - name: targetBranchName
@@ -738,6 +805,14 @@ extends:
                   value: 'false'
                 - name: COMMIT_SHA
                   value: $[ dependencies.build.outputs['setCommitSHA.COMMIT_SHA'] ]
+                # Outputs from the detect_changes job. Empty when the job was
+                # skipped (non-PR builds, or PR builds that didn't opt into
+                # scoping) — downstream steps interpret that as "run every
+                # package", matching the historical behavior.
+                - name: shouldRunTests
+                  value: $[ dependencies.detect_changes.outputs['setChangedPackages.shouldRunTests'] ]
+                - name: scopedPnpmFilter
+                  value: $[ dependencies.detect_changes.outputs['setChangedPackages.scopedPnpmFilter'] ]
               steps:
                 # Setup
                 - checkout: self
@@ -774,15 +849,21 @@ extends:
 
                 # Set variable startTest if everything is good so far and we'll start running tests,
                 # so that the steps to process/upload test coverage results only run if we got to the point of actually running tests.
+                # The extra `ne(shouldRunTests, 'false')` guard skips test execution
+                # when the detect job explicitly concluded no packages were affected.
+                # An empty `shouldRunTests` (the job was skipped entirely) still lets
+                # tests run — matching the historical "no scoping" behavior.
                 - script: |
                     echo "##vso[task.setvariable variable=startTest]true"
                   displayName: Start Test
+                  condition: and(succeeded(), ne(variables['shouldRunTests'], 'false'))
 
                 - template: /tools/pipelines/templates/include-test-task.yml@self
                   parameters:
                     taskTestStep: '${{ test.name }}'
                     buildDirectory: '${{ parameters.buildDirectory }}'
                     testCoverage: 'false'
+                    pnpmFilter: $(scopedPnpmFilter)
 
                 - task: Npm@1
                   displayName: 'npm run test:copyresults'
