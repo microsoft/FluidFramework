@@ -30,9 +30,10 @@ import {
 	type MinimumVersionForCollab,
 } from "@fluidframework/runtime-definitions/internal";
 import { defaultMinVersionForCollab } from "@fluidframework/runtime-utils/internal";
-import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
-// eslint-disable-next-line import-x/no-internal-modules -- Needed to avoid specialized /internal ITelemetryLoggerExt
-import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/legacy";
+import {
+	ITelemetryLoggerExt,
+	createChildLogger,
+} from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
 import { MockDeltaManager } from "./mockDeltas.js";
