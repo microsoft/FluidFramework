@@ -14,6 +14,13 @@ parameters:
   type: boolean
   default: false
 
+# Optional pnpm filter expression consumed by scripts/pnpm-run-scoped.cjs.
+# Empty string (the default) makes the wrapper fall back to `-r`, preserving
+# historical "run in every workspace package" behavior.
+- name: pnpmFilter
+  type: string
+  default: ''
+
 steps:
 # Test - With coverage
 - ${{ if and(parameters.testCoverage, startsWith(parameters.taskTestStep, 'ci:test')) }}:
@@ -25,6 +32,7 @@ steps:
       customCommand: 'run ${{ parameters.taskTestStep }}:coverage'
     condition: and(succeededOrFailed(), eq(variables['startTest'], 'true'))
     env:
+      FLUID_PNPM_FILTER: ${{ parameters.pnpmFilter }}
       # Tests can use this environment variable to behave differently when running from a test branch
       ${{ if contains(parameters.taskTestStep, 'tinylicious') }}:
         # Disable colorization for tinylicious logs (not useful when printing to a file)
@@ -41,6 +49,7 @@ steps:
       customCommand: 'run ${{ parameters.taskTestStep }}'
     condition: and(succeededOrFailed(), eq(variables['startTest'], 'true'))
     env:
+      FLUID_PNPM_FILTER: ${{ parameters.pnpmFilter }}
       # Tests can use this environment variable to behave differently when running from a test branch
       ${{ if contains(parameters.taskTestStep, 'tinylicious') }}:
         # Disable colorization for tinylicious logs (not useful when printing to a file)

@@ -129,6 +129,23 @@ parameters:
   type: boolean
   default: false
 
+# Feature flag: when true, PR builds run the detect_changes job and scope the
+# test execution to packages affected by the PR diff (plus their dependents).
+# When false, every test job runs every package as before. Intended default is
+# false during rollout so the feature can be enabled per-pipeline for
+# comparison before flipping the overall default.
+- name: enableChangedPackageTestScoping
+  type: boolean
+  default: false
+
+# Version of @fluid-tools/build-cli to install in the detect_changes job. Kept
+# as a separate knob from `buildToolsVersionToInstall` because the detect job
+# sits on the critical path of every test job and should therefore use the
+# fast registry-install path, independent of what the build stages do.
+- name: changedPackageDetectionBuildToolsVersion
+  type: string
+  default: 'latest'
+
 # The `resources` specify the location and version of the 1ES Pipeline Template.
 resources:
   repositories:
@@ -206,6 +223,27 @@ extends:
         displayName: Build Stage
         dependsOn: [] # this stage doesn't depend on preceding stage
         jobs:
+          # Detect which packages changed in this PR so downstream test jobs
+          # can scope their work. Only compiled into the pipeline when the
+          # feature flag is on — otherwise test jobs run every package as before.
+          - ${{ if eq(parameters.enableChangedPackageTestScoping, true) }}:
+            - job: detect_changes
+              displayName: Detect changed packages
+              # Skip the detection work entirely outside of PR builds. Downstream
+              # jobs that depend on this one still proceed (a skipped dep is
+              # treated as Succeeded by ADO) and read empty output variables,
+              # which the test steps interpret as "run everything".
+              condition: eq(variables['Build.Reason'], 'PullRequest')
+              variables:
+                - name: targetBranchName
+                  value: $(System.PullRequest.TargetBranch)
+              steps:
+                - template: /tools/pipelines/templates/include-detect-changed-packages.yml@self
+                  parameters:
+                    buildDirectory: ${{ parameters.buildDirectory }}
+                    targetBranchName: $(targetBranchName)
+                    buildToolsVersionToInstall: ${{ parameters.changedPackageDetectionBuildToolsVersion }}
+
           # Job - Build
           - job: build
             displayName: Build
@@ -561,7 +599,12 @@ extends:
 
           - job: Coverage_tests
             displayName: "Coverage tests"
-            dependsOn: build
+            ${{ if eq(parameters.enableChangedPackageTestScoping, true) }}:
+              dependsOn:
+                - build
+                - detect_changes
+            ${{ else }}:
+              dependsOn: build
             variables:
               - ${{ if eq(variables['Build.Reason'], 'PullRequest') }}:
                 - name: targetBranchName
@@ -577,6 +620,14 @@ extends:
                 value: 'false'
               - name: COMMIT_SHA
                 value: $[ dependencies.build.outputs['setCommitSHA.COMMIT_SHA'] ]
+              # When changed-package scoping is enabled, pull the detect_changes outputs through.
+              # Empty values (e.g. when detect_changes was skipped on a non-PR build) are treated
+              # as "run everything" by downstream tasks.
+              - ${{ if eq(parameters.enableChangedPackageTestScoping, true) }}:
+                - name: shouldRunTests
+                  value: $[ dependencies.detect_changes.outputs['setChangedPackages.shouldRunTests'] ]
+                - name: changedPackagesPnpmFilter
+                  value: $[ dependencies.detect_changes.outputs['setChangedPackages.changedPackagesPnpmFilter'] ]
 
             steps:
               # Setup
@@ -619,9 +670,14 @@ extends:
 
               # Set variable startTest if everything is good so far and we'll start running tests,
               # so that the steps to process/upload test coverage results only run if we got to the point of actually running tests.
+              # When changed-package scoping is enabled, leave startTest unset if the detect job
+              # concluded no packages were affected — downstream test steps then short-circuit
+              # via their `eq(variables['startTest'], 'true')` condition.
               - script: |
                   echo "##vso[task.setvariable variable=startTest]true"
                 displayName: Start Test
+                ${{ if eq(parameters.enableChangedPackageTestScoping, true) }}:
+                  condition: and(succeeded(), ne(variables['shouldRunTests'], 'false'))
 
               - ${{ each test in parameters.coverageTests }}:
                 - template: /tools/pipelines/templates/include-test-task.yml@self
@@ -629,6 +685,8 @@ extends:
                     taskTestStep: '${{ test.name }}'
                     buildDirectory: '${{ parameters.buildDirectory }}'
                     testCoverage: '${{ parameters.testCoverage }}'
+                    ${{ if eq(parameters.enableChangedPackageTestScoping, true) }}:
+                      pnpmFilter: $(changedPackagesPnpmFilter)
 
               - task: Npm@1
                 displayName: 'npm run test:copyresults'
@@ -722,7 +780,12 @@ extends:
           - ${{ each test in parameters.taskTest }}:
             - job: Test_${{ test.jobName }}
               displayName: "Run Task Test ${{ test.jobName }}"
-              dependsOn: build
+              ${{ if eq(parameters.enableChangedPackageTestScoping, true) }}:
+                dependsOn:
+                  - build
+                  - detect_changes
+              ${{ else }}:
+                dependsOn: build
               variables:
                 - ${{ if eq(variables['Build.Reason'], 'PullRequest') }}:
                   - name: targetBranchName
@@ -738,6 +801,14 @@ extends:
                   value: 'false'
                 - name: COMMIT_SHA
                   value: $[ dependencies.build.outputs['setCommitSHA.COMMIT_SHA'] ]
+                # When changed-package scoping is enabled, pull the detect_changes outputs through.
+                # Empty values (e.g. when detect_changes was skipped on a non-PR build) are treated
+                # as "run everything" by downstream tasks.
+                - ${{ if eq(parameters.enableChangedPackageTestScoping, true) }}:
+                  - name: shouldRunTests
+                    value: $[ dependencies.detect_changes.outputs['setChangedPackages.shouldRunTests'] ]
+                  - name: changedPackagesPnpmFilter
+                    value: $[ dependencies.detect_changes.outputs['setChangedPackages.changedPackagesPnpmFilter'] ]
               steps:
                 # Setup
                 - checkout: self
@@ -774,15 +845,22 @@ extends:
 
                 # Set variable startTest if everything is good so far and we'll start running tests,
                 # so that the steps to process/upload test coverage results only run if we got to the point of actually running tests.
+                # When changed-package scoping is enabled, leave startTest unset if the detect job
+                # concluded no packages were affected — downstream test steps then short-circuit
+                # via their `eq(variables['startTest'], 'true')` condition.
                 - script: |
                     echo "##vso[task.setvariable variable=startTest]true"
                   displayName: Start Test
+                  ${{ if eq(parameters.enableChangedPackageTestScoping, true) }}:
+                    condition: and(succeeded(), ne(variables['shouldRunTests'], 'false'))
 
                 - template: /tools/pipelines/templates/include-test-task.yml@self
                   parameters:
                     taskTestStep: '${{ test.name }}'
                     buildDirectory: '${{ parameters.buildDirectory }}'
                     testCoverage: 'false'
+                    ${{ if eq(parameters.enableChangedPackageTestScoping, true) }}:
+                      pnpmFilter: $(changedPackagesPnpmFilter)
 
                 - task: Npm@1
                   displayName: 'npm run test:copyresults'

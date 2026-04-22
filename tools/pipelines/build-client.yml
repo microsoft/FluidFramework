@@ -50,6 +50,14 @@ parameters:
   displayName: Fluid build tools version (default = installs version in repo)
   type: string
   default: repo
+# Rollout switch for the "scope tests to changed packages" behavior. When true
+# AND the run is a PR build, the pipeline detects packages affected by the PR
+# diff (plus their dependents) and limits the test jobs to that subset. When
+# false, every test job runs every workspace package as before.
+- name: enableChangedPackageTestScoping
+  displayName: Scope tests to changed packages (PR builds only)
+  type: boolean
+  default: false
 
 trigger:
   branches:
@@ -199,6 +207,7 @@ extends:
     releaseBuildOverride: ${{ parameters.releaseBuildOverride }}
     packageTypesOverride: ${{ parameters.packageTypesOverride }}
     buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
+    enableChangedPackageTestScoping: ${{ parameters.enableChangedPackageTestScoping }}
     interdependencyRange: ${{ parameters.interdependencyRange }}
     packageManagerInstallCommand: 'pnpm i --frozen-lockfile'
     packageManager: pnpm

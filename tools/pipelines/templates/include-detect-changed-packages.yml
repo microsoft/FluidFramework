@@ -1,0 +1,165 @@
+# Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+# Licensed under the MIT License.
+
+# include-detect-changed-packages
+#
+# Detects which workspace packages changed vs a target branch and publishes
+# output variables that downstream test jobs read to decide whether to run
+# tests across every package (the historical behavior) or a scoped subset.
+#
+# Output variables (from the `setChangedPackages` step):
+#   - shouldRunTests            "true" | "false"  — whether any test work is needed at all
+#   - changedPackagesPnpmFilter  the pnpm filter expression for scoped runs, or
+#                               empty string when a full run is required. An
+#                               empty string is intentional: the
+#                               scripts/pnpm-run-scoped.cjs wrapper treats an
+#                               empty FLUID_PNPM_FILTER as `-r` (= every package).
+#
+# On any error path (missing merge-base, flub failure, unsupported ref format)
+# this template degrades safely to a full-run outcome, never to a skip.
+
+parameters:
+- name: buildDirectory
+  type: string
+
+- name: targetBranchName
+  type: string
+
+# Version of @fluid-tools/build-cli to install. Defaults to a published
+# registry version so this job does not block on building build-tools from
+# source — the detect job gates every downstream job on the critical path,
+# so install time matters here.
+- name: buildToolsVersionToInstall
+  type: string
+  default: 'latest'
+
+steps:
+  - checkout: self
+    path: $(FluidFrameworkDirectory)
+    clean: true
+    # Full history is required for `git merge-base HEAD origin/<target>` to be
+    # meaningful on a PR branch.
+    fetchDepth: 0
+
+  - template: /tools/pipelines/templates/include-use-node-version.yml@self
+
+  - template: /tools/pipelines/templates/include-install-build-tools.yml@self
+    parameters:
+      buildDirectory: ${{ parameters.buildDirectory }}
+      buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
+
+  - task: Bash@3
+    name: setChangedPackages
+    displayName: Detect changed packages
+    inputs:
+      targetType: inline
+      workingDirectory: '$(Pipeline.Workspace)/${{ parameters.buildDirectory }}'
+      script: |
+        set -eu -o pipefail
+
+        # Normalize the target branch: ADO returns "refs/heads/main" on Azure
+        # Repos, just "main" on GitHub.
+        TARGET_BRANCH="${{ parameters.targetBranchName }}"
+        TARGET_BRANCH="${TARGET_BRANCH#refs/heads/}"
+        echo "Target branch: ${TARGET_BRANCH}"
+
+        # Defaults — safe fallback is always a full run.
+        SHOULD_RUN="true"
+        FILTER=""
+
+        emit_and_exit() {
+          echo "shouldRunTests=${SHOULD_RUN}"
+          echo "changedPackagesPnpmFilter=${FILTER}"
+          echo "##vso[task.setvariable variable=shouldRunTests;isOutput=true]${SHOULD_RUN}"
+          echo "##vso[task.setvariable variable=changedPackagesPnpmFilter;isOutput=true]${FILTER}"
+          exit 0
+        }
+
+        if ! git fetch origin "${TARGET_BRANCH}"; then
+          echo "##vso[task.logissue type=warning]Could not fetch origin/${TARGET_BRANCH}; falling back to full test run."
+          emit_and_exit
+        fi
+
+        MERGE_BASE="$(git merge-base HEAD "origin/${TARGET_BRANCH}" 2>/dev/null || true)"
+        if [ -z "${MERGE_BASE}" ]; then
+          echo "##vso[task.logissue type=warning]No merge-base with origin/${TARGET_BRANCH}; falling back to full test run."
+          emit_and_exit
+        fi
+        echo "Merge base: ${MERGE_BASE}"
+
+        CHANGED_FILES="$(git diff --name-only "${MERGE_BASE}" || true)"
+        FILE_COUNT="$(printf '%s\n' "${CHANGED_FILES}" | grep -c . || true)"
+        echo "Changed files (${FILE_COUNT}):"
+        printf '%s\n' "${CHANGED_FILES}" | head -30
+        if [ "${FILE_COUNT}" -gt 30 ]; then
+          echo "... and $((FILE_COUNT - 30)) more"
+        fi
+
+        # Full-run trigger patterns. Any match forces running every package's
+        # tests (FILTER left empty, which the wrapper treats as -r).
+        # Keep this list conservative — it's the safety net when a change could
+        # plausibly invalidate assumptions across the entire workspace.
+        FULL_RUN_PATTERNS=(
+          '^package\.json$'
+          '^pnpm-lock\.yaml$'
+          '^pnpm-workspace\.yaml$'
+          '^fluidBuild\.config\.cjs$'
+          '^tsconfig[^/]*\.json$'
+          '^biome\.'
+          '^tools/'
+          '^common/'
+          '^scripts/'
+          '^\.changeset/config\.json$'
+        )
+        for pattern in "${FULL_RUN_PATTERNS[@]}"; do
+          if printf '%s\n' "${CHANGED_FILES}" | grep -Eq "${pattern}"; then
+            echo "Match for full-run pattern '${pattern}' — forcing full test run."
+            emit_and_exit
+          fi
+        done
+
+        # Ask flub which client-release-group packages changed. --json emits an
+        # array of { name, version, path, private, tarball } (see the return
+        # type of ListCommand.run in build-tools/packages/build-cli/src/commands/list.ts).
+        # oclif's --json flag suppresses log output, so stdout is pure JSON.
+        # Non-zero exit means fall back to a full run.
+        if ! CHANGED_JSON="$(flub list client --changed --branch "${TARGET_BRANCH}" --json --no-private)"; then
+          echo "##vso[task.logissue type=warning]flub list --changed failed; falling back to full test run."
+          emit_and_exit
+        fi
+
+        PKG_NAMES="$(node -e '
+          try {
+            const arr = JSON.parse(process.argv[1] || "[]");
+            if (!Array.isArray(arr)) process.exit(0);
+            for (const p of arr) if (p && p.name) console.log(p.name);
+          } catch (e) {
+            process.stderr.write("flub output was not JSON: " + e.message + "\n");
+            process.exit(2);
+          }
+        ' "${CHANGED_JSON}")" || {
+          echo "##vso[task.logissue type=warning]Could not parse flub output; falling back to full test run."
+          emit_and_exit
+        }
+
+        if [ -z "${PKG_NAMES}" ]; then
+          echo "No changed packages detected — skipping test execution."
+          SHOULD_RUN="false"
+          FILTER=""
+          emit_and_exit
+        fi
+
+        echo "Changed packages:"
+        printf '  - %s\n' ${PKG_NAMES}
+
+        # Build the pnpm filter. Trailing `...` selects transitive dependents
+        # so consumers of a changed package also get their tests re-run.
+        FILTER=""
+        while IFS= read -r name; do
+          [ -z "${name}" ] && continue
+          FILTER="${FILTER}--filter \"${name}...\" "
+        done <<< "${PKG_NAMES}"
+        FILTER="${FILTER% }"
+
+        echo "Computed pnpm filter: ${FILTER}"
+        emit_and_exit
