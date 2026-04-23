@@ -90,7 +90,7 @@ The OCE rotation covers **three IcM teams**. Always search all three when lookin
 | Stress tests | 63 | `fluidframework/internal` | `ado` | `stress_tests_odsp`, `stress_tests_odspdf`, `stress_tests_tinylicious`, `stress_tests_frs`, `stress_tests_frs_canary` |
 | Loop-FF integration | 29163 | `office/OC` | `ado-office` | `Build And Run E2E Tests`, `Build And Run Unit Tests`, `Lint and Type Check` |
 
-**Pipeline YAML files:** All test pipelines are defined at `tools/pipelines/test-*.yml`; build pipelines at `tools/pipelines/build-*.yml`. To find which pipeline owns a stage, grep `tools/pipelines/` for the `stageId` (e.g., `grep -l e2e_azure_client_frs tools/pipelines/test-*.yml`). **Do not assume a stage is in a particular pipeline based on its name** — `e2e_frs` is in def 56 but `e2e_azure_client_frs` is in def 80.
+**Pipeline YAML files:** All test pipelines are defined at `tools/pipelines/test-*.yml`; client build pipelines are typically at `tools/pipelines/build-*.yml` (note that `tools/pipelines/` also contains server, deploy, and policy-check pipelines). To find which pipeline owns a stage, grep `tools/pipelines/` for the `stageId` (e.g., `grep -l e2e_azure_client_frs tools/pipelines/test-*.yml`). **Do not assume a stage is in a particular pipeline based on its name** — `e2e_frs` is in def 56 but `e2e_azure_client_frs` is in def 80.
 
 **ADO MCP servers:** Two ADO MCP servers are configured — `ado` (for `fluidframework` org) and `ado-office` (for `office` org). When querying pipelines in `office/OC` (e.g., Loop-FF integration pipeline def 29163), use the `ado-office` MCP server tools. All other pipelines use the default `ado` tools.
 
