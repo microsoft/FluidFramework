@@ -173,6 +173,7 @@ import {
 	wrapError,
 	tagCodeArtifacts,
 	normalizeError,
+	toITelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
 import { gt } from "semver-ts";
 import { v4 as uuid } from "uuid";
@@ -675,18 +676,11 @@ export function getDeviceSpec(): {
 	deviceMemory?: number | undefined;
 	hardwareConcurrency?: number | undefined;
 } {
-	try {
-		if (typeof navigator === "object" && navigator !== null) {
-			return {
-				// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment
-				deviceMemory: (navigator as any).deviceMemory,
-				hardwareConcurrency: navigator.hardwareConcurrency,
-			};
-		}
-	} catch {
-		// Eat the error
-	}
-	return {};
+	return {
+		// deviceMemory is only available in browsers and is not part of the Navigator type definition. In Node 22 it is undefined.
+		deviceMemory: (navigator as Navigator & { deviceMemory?: number }).deviceMemory,
+		hardwareConcurrency: navigator.hardwareConcurrency,
+	};
 }
 
 /**
@@ -1206,7 +1200,7 @@ export class ContainerRuntime
 			if (pendingLocalState?.pendingIdCompressorState !== undefined) {
 				return deserializeIdCompressor(
 					pendingLocalState.pendingIdCompressorState,
-					compressorLogger,
+					toITelemetryLoggerExt(compressorLogger),
 				);
 			} else if (serializedIdCompressor === undefined) {
 				return createIdCompressor(compressorLogger);
@@ -1214,7 +1208,7 @@ export class ContainerRuntime
 				return deserializeIdCompressor(
 					serializedIdCompressor,
 					createSessionId(),
-					compressorLogger,
+					toITelemetryLoggerExt(compressorLogger),
 				);
 			}
 		};

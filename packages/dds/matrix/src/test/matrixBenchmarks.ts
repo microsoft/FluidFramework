@@ -6,13 +6,12 @@
 import { strict as assert } from "node:assert";
 
 import {
-	benchmark,
+	benchmarkDuration,
 	benchmarkIt,
 	benchmarkMemoryUse,
 	BenchmarkType,
 	Box,
 	isInPerformanceTestingMode,
-	type BenchmarkTimer,
 	type BenchmarkTimingOptions,
 	type MemoryUseBenchmark,
 	type MemoryUseModifier,
@@ -157,38 +156,44 @@ function runExecutionTimeBenchmark({
 	minBatchDurationSeconds = 0,
 	maxBenchmarkDurationSeconds,
 }: ExecutionTimeBenchmarkConfig): Test {
-	return benchmark({
+	return benchmarkIt({
 		type: BenchmarkType.Measurement,
 		title,
-		benchmarkFnCustom: async <T>(state: BenchmarkTimer<T>) => {
-			let duration: number;
-			do {
-				assert.equal(state.iterationsPerBatch, 1, "Expected exactly one iteration per batch");
+		...benchmarkDuration({
+			benchmarkFnCustom: async (state) => {
+				let duration: number;
+				do {
+					assert.equal(
+						state.iterationsPerBatch,
+						1,
+						"Expected exactly one iteration per batch",
+					);
 
-				// Create matrix
-				const { matrix, undoRedoStack, cleanUp } = createTestMatrix({
-					matrixSize,
-					initialCellValue,
-				});
+					// Create matrix
+					const { matrix, undoRedoStack, cleanUp } = createTestMatrix({
+						matrixSize,
+						initialCellValue,
+					});
 
-				beforeOperation?.(matrix, undoRedoStack);
+					beforeOperation?.(matrix, undoRedoStack);
 
-				// Operation
-				const before = state.timer.now();
-				operation(matrix, undoRedoStack);
-				const after = state.timer.now();
+					// Operation
+					const before = state.timer.now();
+					operation(matrix, undoRedoStack);
+					const after = state.timer.now();
 
-				// Measure
-				duration = state.timer.toSeconds(before, after);
+					// Measure
+					duration = state.timer.toSeconds(before, after);
 
-				afterOperation?.(matrix, undoRedoStack);
+					afterOperation?.(matrix, undoRedoStack);
 
-				// Cleanup
-				cleanUp();
-			} while (state.recordBatch(duration));
-		},
-		minBatchDurationSeconds,
-		maxBenchmarkDurationSeconds,
+					// Cleanup
+					cleanUp();
+				} while (state.recordBatch(duration));
+			},
+			minBatchDurationSeconds,
+			maxBenchmarkDurationSeconds,
+		}),
 	});
 }
 
