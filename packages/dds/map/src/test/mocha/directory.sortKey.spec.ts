@@ -680,6 +680,69 @@ describe("SharedDirectory sort keys", () => {
 			const names = [...sharedDirectory.subdirectoriesByOrder()].map(([n]) => n);
 			assert.deepStrictEqual(names, ["other", "sub"]);
 		});
+
+		it("T33: rollback of delete restores the key AND its sort key", () => {
+			const { sharedDirectory, containerRuntime, containerRuntimeFactory } = setupTest();
+			sharedDirectory.set("a", 1);
+			sharedDirectory.setSortKey("a", "M");
+			sharedDirectory.set("b", 2);
+			sharedDirectory.setSortKey("b", "Z");
+			containerRuntime.flush();
+			containerRuntimeFactory.processAllMessages();
+
+			// Start a pending delete; "a" is optimistically removed before the delete is acked.
+			sharedDirectory.delete("a");
+			assert.strictEqual(
+				sharedDirectory.get("a"),
+				undefined,
+				"Pending delete should hide 'a' optimistically",
+			);
+
+			// Rollback the pending delete. The sort-key cleanup only happens on ack, so "a" should
+			// come back with its sort key intact and still land in the sort-keyed bucket.
+			containerRuntime.rollback?.();
+
+			assert.strictEqual(sharedDirectory.get("a"), 1, "Value should be restored");
+			assert.deepStrictEqual([...sharedDirectory.keysByOrder()], ["a", "b"]);
+		});
+
+		it("T34: clear while a setSortKey is pending leaves no leftover sequenced sort key", () => {
+			const { sharedDirectory, containerRuntime, containerRuntimeFactory } = setupTest();
+			sharedDirectory.set("a", 1);
+			sharedDirectory.setSortKey("a", "M");
+			containerRuntime.flush();
+			containerRuntimeFactory.processAllMessages();
+
+			// Queue a setSortKey but don't flush yet.
+			sharedDirectory.setSortKey("a", "Z");
+
+			// A local clear while the setSortKey is still pending. Both ops are then flushed and
+			// processed in submission order (setSortKey, then clear). The clear's ack wipes the
+			// sequenced sort keys map, so the pending "Z" must not outlive the clear.
+			sharedDirectory.clear();
+
+			let eventsAfterFlush = 0;
+			sharedDirectory.on("sortKeyChanged", () => {
+				eventsAfterFlush++;
+			});
+
+			containerRuntime.flush();
+			containerRuntimeFactory.processAllMessages();
+
+			// The ack of the local ops should not fire any additional sortKeyChanged events.
+			assert.strictEqual(eventsAfterFlush, 0);
+
+			// Reinsert "a" and "b" with only "b" sort-keyed. If a stale "Z" for "a" survived the
+			// clear, "a" would land in the sort-keyed bucket (ordering ["a", "b"]); with a clean
+			// sequencedSortKeys, "a" is unkeyed and trails "b" (ordering ["b", "a"]).
+			sharedDirectory.set("a", 2);
+			sharedDirectory.set("b", 3);
+			sharedDirectory.setSortKey("b", "X");
+			containerRuntime.flush();
+			containerRuntimeFactory.processAllMessages();
+
+			assert.deepStrictEqual([...sharedDirectory.keysByOrder()], ["b", "a"]);
+		});
 	});
 
 	describe("Subdirectory sort keys", () => {
@@ -791,6 +854,37 @@ describe("SharedDirectory sort keys", () => {
 				previousSortKey: undefined,
 			});
 		});
+
+		it("T42: deleting one subdir leaves sibling subdirectorySortKeys intact", () => {
+			const { sharedDirectory, containerRuntime, containerRuntimeFactory } = setupTest();
+			sharedDirectory.createSubDirectory("a");
+			sharedDirectory.createSubDirectory("b");
+			sharedDirectory.createSubDirectory("c");
+			containerRuntime.flush();
+			containerRuntimeFactory.processAllMessages();
+
+			sharedDirectory.setSubDirectorySortKey("a", "1");
+			sharedDirectory.setSubDirectorySortKey("b", "2");
+			sharedDirectory.setSubDirectorySortKey("c", "3");
+			containerRuntime.flush();
+			containerRuntimeFactory.processAllMessages();
+
+			sharedDirectory.deleteSubDirectory("b");
+			containerRuntime.flush();
+			containerRuntimeFactory.processAllMessages();
+
+			// "a" and "c" retain their sort keys; "b" is gone so its entry doesn't appear.
+			const names = [...sharedDirectory.subdirectoriesByOrder()].map(([n]) => n);
+			assert.deepStrictEqual(names, ["a", "c"]);
+
+			// Recreate "b" with no sort key — it should land in the unkeyed bucket after "a" and
+			// "c", confirming that "a"/"c" sort keys survived the delete of "b".
+			sharedDirectory.createSubDirectory("b");
+			containerRuntime.flush();
+			containerRuntimeFactory.processAllMessages();
+			const namesAfter = [...sharedDirectory.subdirectoriesByOrder()].map(([n]) => n);
+			assert.deepStrictEqual(namesAfter, ["a", "c", "b"]);
+		});
 	});
 
 	describe("Concurrent / eventual consistency", () => {
@@ -812,6 +906,76 @@ describe("SharedDirectory sort keys", () => {
 
 			assert.deepStrictEqual([...sharedDirectory.keysByOrder()], ["a", "b"]);
 			assert.deepStrictEqual([...sharedDirectory2.keysByOrder()], ["a", "b"]);
+		});
+
+		it("T45a: delete sequenced before setSortKey — both clients converge; sort key acts as pre-registration", () => {
+			// When the delete is sequenced first, the subsequent setSortKey from the other client
+			// is applied to a currently-non-existent key. That matches T46 pre-registration
+			// semantics: the sort key waits for a future set() to attach to. Both clients must
+			// converge on the same state.
+			const { sharedDirectory, containerRuntime, containerRuntimeFactory } = setupTest();
+			const { sharedDirectory: sharedDirectory2, containerRuntime: containerRuntime2 } =
+				createAdditionalClient(containerRuntimeFactory);
+
+			sharedDirectory.set("a", 1);
+			containerRuntime.flush();
+			containerRuntimeFactory.processAllMessages();
+
+			sharedDirectory.delete("a");
+			sharedDirectory2.setSortKey("a", "M");
+			// Flushing sharedDirectory first sequences the delete ahead of the remote setSortKey.
+			containerRuntime.flush();
+			containerRuntime2.flush();
+			containerRuntimeFactory.processAllMessages();
+
+			assert.strictEqual(sharedDirectory.get("a"), undefined);
+			assert.strictEqual(sharedDirectory2.get("a"), undefined);
+			assert.deepStrictEqual([...sharedDirectory.keysByOrder()], []);
+			assert.deepStrictEqual([...sharedDirectory2.keysByOrder()], []);
+
+			// Rebirth: re-set "a" and add a new sort-keyed "b". "a" inherits the sort key "M" (the
+			// sequenced setSortKey effectively pre-registered for this new lifetime), so with b at
+			// "Z" the lex order is "a" ("M") < "b" ("Z").
+			sharedDirectory.set("a", 2);
+			sharedDirectory.set("b", 3);
+			sharedDirectory.setSortKey("b", "Z");
+			containerRuntime.flush();
+			containerRuntimeFactory.processAllMessages();
+
+			assert.deepStrictEqual([...sharedDirectory.keysByOrder()], ["a", "b"]);
+			assert.deepStrictEqual([...sharedDirectory2.keysByOrder()], ["a", "b"]);
+		});
+
+		it("T45b: setSortKey sequenced before delete — delete clears the freshly-set sort key", () => {
+			const { sharedDirectory, containerRuntime, containerRuntimeFactory } = setupTest();
+			const { sharedDirectory: sharedDirectory2, containerRuntime: containerRuntime2 } =
+				createAdditionalClient(containerRuntimeFactory);
+
+			sharedDirectory.set("a", 1);
+			containerRuntime.flush();
+			containerRuntimeFactory.processAllMessages();
+
+			sharedDirectory2.setSortKey("a", "M");
+			sharedDirectory.delete("a");
+			// Flushing sharedDirectory2 first puts the setSortKey ahead of the delete.
+			containerRuntime2.flush();
+			containerRuntime.flush();
+			containerRuntimeFactory.processAllMessages();
+
+			// "a" is deleted on both clients; delete was sequenced after setSortKey, so it clears
+			// the freshly-set sort key too (same invariant as T29).
+			assert.strictEqual(sharedDirectory.get("a"), undefined);
+			assert.strictEqual(sharedDirectory2.get("a"), undefined);
+
+			// Rebirth: with the sort key cleared, re-setting "a" puts it in the unkeyed bucket
+			// (trailing "b" which has sort key "Z").
+			sharedDirectory.set("a", 2);
+			sharedDirectory.set("b", 3);
+			sharedDirectory.setSortKey("b", "Z");
+			containerRuntime.flush();
+			containerRuntimeFactory.processAllMessages();
+			assert.deepStrictEqual([...sharedDirectory.keysByOrder()], ["b", "a"]);
+			assert.deepStrictEqual([...sharedDirectory2.keysByOrder()], ["b", "a"]);
 		});
 
 		it("T44: Two clients set sort keys on same key — LWW by server order", () => {
@@ -1045,6 +1209,52 @@ describe("SharedDirectory sort keys", () => {
 
 			assert.deepStrictEqual([...directory1.keysByOrder()], ["a"]);
 			assert.deepStrictEqual([...directory2.keysByOrder()], ["a"]);
+		});
+
+		it("T56: pending setSortKey whose subdir was remotely deleted during disconnect is dropped", () => {
+			const runtimeFactory = new MockContainerRuntimeFactoryForReconnection();
+			const dataStoreRuntime1 = new MockFluidDataStoreRuntime();
+			const containerRuntime1 = runtimeFactory.createContainerRuntime(dataStoreRuntime1);
+			const directory1 = directoryFactory.create(dataStoreRuntime1, "dir1");
+			directory1.connect({
+				deltaConnection: dataStoreRuntime1.createDeltaConnection(),
+				objectStorage: new MockStorage(),
+			});
+
+			const dataStoreRuntime2 = new MockFluidDataStoreRuntime();
+			runtimeFactory.createContainerRuntime(dataStoreRuntime2);
+			const directory2 = directoryFactory.create(dataStoreRuntime2, "dir2");
+			directory2.connect({
+				deltaConnection: dataStoreRuntime2.createDeltaConnection(),
+				objectStorage: new MockStorage(),
+			});
+
+			directory1.createSubDirectory("sub");
+			runtimeFactory.processAllMessages();
+			const sub1 = directory1.getSubDirectory("sub");
+			assert.ok(sub1 !== undefined);
+			sub1.set("x", 1);
+			runtimeFactory.processAllMessages();
+			assert.ok(directory2.getSubDirectory("sub") !== undefined);
+
+			// Disconnect client 1, then queue a pending setSortKey targeting the subdir.
+			containerRuntime1.connected = false;
+			sub1.setSortKey("x", "M");
+
+			// While client 1 is offline, client 2 deletes the subdir and the op reaches the server.
+			directory2.deleteSubDirectory("sub");
+			runtimeFactory.processAllMessages();
+
+			// Client 1 reconnects. The remote delete arrives; its local pending setSortKey is
+			// resubmitted, but because the subdir is now disposed the resubmit path short-circuits
+			// (messageHandlers.setSortKey.resubmit checks targetSubdir.disposed).
+			assert.doesNotThrow(() => {
+				containerRuntime1.connected = true;
+				runtimeFactory.processAllMessages();
+			});
+
+			assert.strictEqual(directory1.getSubDirectory("sub"), undefined);
+			assert.strictEqual(directory2.getSubDirectory("sub"), undefined);
 		});
 
 		it("T57: applyStashedOp for setSortKey restores state (detached-style, no submit)", () => {

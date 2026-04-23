@@ -2,8 +2,8 @@
 
 ## Implementation status (as of 2026-04-23)
 
-**Landed on branch `directory-iteration-order`.** 967 mocha tests pass,
-including 47 new tests in `directory.sortKey.spec.ts`. Build, lint,
+**Landed on branch `directory-iteration-order`.** 973 mocha tests pass,
+including 54 new tests in `directory.sortKey.spec.ts`. Build, lint,
 api-reports, api-extractor docs, and type-tests are all green.
 
 ### Deviations from the plan
@@ -42,24 +42,34 @@ api-reports, api-extractor docs, and type-tests are all green.
 | API — single client | T1–T14 | ✅ all in test file | `directory.sortKey.spec.ts` |
 | Iteration semantics | T15–T22 | ✅ all in test file | `directory.sortKey.spec.ts` |
 | Events | T23–T28 | ✅ all in test file | `directory.sortKey.spec.ts` |
-| Delete / clear propagation | T29–T32 | ✅ in test file | `directory.sortKey.spec.ts` |
-| Delete / clear propagation | T33 (rollback of delete) | ⏭ not yet written | would go in `directory.rollback.spec.ts` |
-| Delete / clear propagation | T34 (clear with pending sort-key) | ⏭ not yet written | implementation handles; test deferred |
-| Subdirectory sort keys | T35–T38, T40, T41 | ✅ in test file | `directory.sortKey.spec.ts` |
-| Subdirectory sort keys | T39, T42 | ⏭ not yet written | `directory.sortKey.spec.ts` |
-| Concurrent / eventual consistency | T43, T44, T46, T47, T48, T49 | ✅ in test file | `directory.sortKey.spec.ts` |
-| Concurrent / eventual consistency | T45 (concurrent delete + setSortKey) | ⏭ not yet written | |
+| Delete / clear propagation | T29–T34 | ✅ all in test file | `directory.sortKey.spec.ts` |
+| Subdirectory sort keys | T35–T38, T40, T41, T42 | ✅ in test file | `directory.sortKey.spec.ts` |
+| Subdirectory sort keys | T39 | ⏭ not yet written | `directory.sortKey.spec.ts` |
+| Concurrent / eventual consistency | T43, T44, T45, T46, T47, T48, T49 | ✅ in test file | `directory.sortKey.spec.ts` |
 | Rollback | T50–T54 | ⏭ not yet written | would go in `directory.rollback.spec.ts` — implementation landed |
-| Reconnect & resubmit | T55 | ✅ in test file | `directory.sortKey.spec.ts` |
-| Reconnect & resubmit | T56 | ⏭ not yet written | |
+| Reconnect & resubmit | T55, T56 | ✅ in test file | `directory.sortKey.spec.ts` |
 | Reconnect & resubmit | T57 | ⚠ simplified: asserts state after stashed-op application, not `localOpMetadata` identity. The plan's metadata assertion requires wiring a live container runtime, which is beyond what existing `TestSharedDirectory` tests do. | `directory.sortKey.spec.ts` |
 | Snapshot round-trip | T58–T62 | ⏭ not yet written | would go in `directory.snapshot.spec.ts` — implementation landed |
 | Detached state | T63–T65 | ✅ in test file | `directory.sortKey.spec.ts` |
 | Back-compat dark-ship guards | T66, T67 | ✅ in test file (shape asserts only, since there is no dark-ship mode — see deviation #2) | `directory.sortKey.spec.ts` |
 
-**47 of 67 planned tests landed.** The 20 deferred tests are follow-on
-hardening; each corresponds to code paths that are already implemented
+**54 of 67 planned tests landed** (T45 split into T45a/T45b, so 55 `it`s).
+The 13 still-deferred tests are follow-on hardening in rollback, snapshot,
+and fuzz specs; each corresponds to code paths that are already implemented
 and partially exercised by other tests in the suite.
+
+### T45 clarification
+
+The plan's original T45 assertion ("no lingering `sequencedSortKeys` entry"
+after a delete + remote setSortKey race) conflicts with T46's
+pre-registration semantics: when a setSortKey sequences on a non-existent
+key (whether never-existed or just-deleted), the server can't distinguish
+the two — so the sort key is accepted as pre-registration for a future
+set(). T45 is split into two sub-cases that document actual observable
+behavior: if the delete sequences first, the remote setSortKey acts as
+pre-registration for the next rebirth of that key; if the setSortKey
+sequences first, the delete clears the freshly-set sort key (consistent
+with T29). Both preserve cross-client eventual consistency.
 
 ### Slice-by-slice status
 
@@ -75,17 +85,15 @@ and partially exercised by other tests in the suite.
 | 8 — Snapshot round-trip | ✅ implementation done; round-trip spec tests deferred |
 | 9 — Detached state | ✅ done |
 | 10 — Back-compat dark-ship | ⚠ skipped per deviation #2; no Release-N branch needed |
-| 11 — Fuzz | ⏭ not done; the 47-test deterministic suite covers core invariants |
+| 11 — Fuzz | ⏭ not done; the 54-test deterministic suite covers core invariants |
 | 12 — Documentation + changelog + api-reports | ✅ done — ARCHITECTURE.md §9.4 added, §11 subtlety added, changeset `.changeset/sharedirectory-sort-keys.md` created, api-reports regenerated, type-tests regenerated |
 
 ### Follow-up work (to land in subsequent PRs)
 
-1. Add T33, T34 to `directory.sortKey.spec.ts`.
-2. Add T42, T45 to `directory.sortKey.spec.ts`.
-3. Add T50–T54 rollback tests to `directory.rollback.spec.ts`.
-4. Add T56 reconnect + subdir-delete race test.
-5. Add T58–T62 snapshot round-trip tests to `directory.snapshot.spec.ts`.
-6. Slice 11 fuzz extension to `directoryFuzzTests.spec.ts` +
+1. ✅ T33, T34, T42, T45a/T45b, T56 landed in `directory.sortKey.spec.ts`.
+2. Add T50–T54 rollback tests to `directory.rollback.spec.ts`.
+3. Add T58–T62 snapshot round-trip tests to `directory.snapshot.spec.ts`.
+4. Slice 11 fuzz extension to `directoryFuzzTests.spec.ts` +
    `directoryOracle.ts`.
 
 ### Resuming work in a fresh session
