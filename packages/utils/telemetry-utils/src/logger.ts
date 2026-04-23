@@ -692,6 +692,8 @@ export class PerformanceEvent {
 	 * @param recordHeapSize - whether or not to also record memory performance
 	 * @param emitLogs - should this instance emit logs. If set to false, logs will not be emitted to the logger,
 	 * but measurements will still be performed and any specified markers will be generated.
+	 * @param endLogLevel - optional {@link LogLevel} applied only to the `_end` event emitted when the
+	 * performance event completes successfully. `start`, `cancel`, and `update` events are unaffected.
 	 * @returns An instance of {@link PerformanceEvent}
 	 */
 	public static start(
@@ -718,6 +720,8 @@ export class PerformanceEvent {
 	 * @param markers - See {@link IPerformanceEventMarkers}
 	 * @param sampleThreshold - events with the same name and category will be sent to the logger
 	 * only when we hit this many executions of the task. If unspecified, all events will be sent.
+	 * @param endLogLevel - optional {@link LogLevel} applied only to the `_end` event emitted when the
+	 * performance event completes successfully. `start`, `cancel`, and `update` events are unaffected.
 	 * @returns The results of the executed task
 	 *
 	 * @remarks Note that if the "same" event (category + eventName) would be emitted by different
@@ -759,6 +763,8 @@ export class PerformanceEvent {
 	 * @param recordHeapSize - whether or not to also record memory performance
 	 * @param sampleThreshold - events with the same name and category will be sent to the logger
 	 * only when we hit this many executions of the task. If unspecified, all events will be sent.
+	 * @param endLogLevel - optional {@link LogLevel} applied only to the `_end` event emitted when the
+	 * performance event completes successfully. `start`, `cancel`, and `update` events are unaffected.
 	 * @returns The results of the executed task
 	 *
 	 * @remarks Note that if the "same" event (category + eventName) would be emitted by different
