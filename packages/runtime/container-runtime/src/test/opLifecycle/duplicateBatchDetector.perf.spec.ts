@@ -84,13 +84,13 @@ describe("DuplicateBatchDetector benchmark", () => {
 					benchmarkFnCustom: async (state) => {
 						entries = generateSnapshotEntries(trackedBatchCount);
 						detector = new DuplicateBatchDetector(entries);
-						// MSN=0 means clearOldBatchIds hits the early exit (msn <= minSeqNum).
-						// This measures: early-exit check + getEffectiveBatchId + map lookup + map insert.
-						// Note: detector grows by 1 entry per iteration, but that doesn't affect the
-						// early-exit path since minSeqNum remains 1.
-						const nextSeqNum = trackedBatchCount + 1;
-						const batch = makeBatch(nextSeqNum, 0, `new-batch-${nextSeqNum}`);
 						state.timeAllBatches(() => {
+							// MSN=0 means clearOldBatchIds hits the early exit (msn <= minSeqNum).
+							// This measures: early-exit check + getEffectiveBatchId + map lookup + map insert.
+							// Note: detector grows by 1 entry per iteration, but that doesn't affect the
+							// early-exit path since minSeqNum remains 1.
+							const nextSeqNum = trackedBatchCount + 1;
+							const batch = makeBatch(nextSeqNum, 0, `new-batch-${nextSeqNum}`);
 							detector.processInboundBatch(batch);
 						});
 					},

@@ -430,7 +430,7 @@ describe("SimpleTree benchmarks", () => {
 		for (const [numberOfNodes, benchmarkType] of nodesCountWide) {
 			benchmarkIt({
 				type: benchmarkType,
-				title: `Move second leaf to begining of ${numberOfNodes} Wide tree`,
+				title: `Move second leaf to beginning of ${numberOfNodes} Wide tree`,
 				...benchmarkDuration({
 					benchmarkFnCustom: async (state) => {
 						const tree = generateWideSimpleTree(numberOfNodes, leafValue);
