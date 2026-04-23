@@ -16,6 +16,7 @@ import type {
 import type {
 	ISnapshot,
 	IDocumentMessage,
+	IResolvedUrl,
 	ISnapshotTree,
 	ISummaryContent,
 	IVersion,
@@ -405,6 +406,18 @@ export interface IContainerContext {
 	 * TODO: Optional for backwards compatibility. Make non-optional in version 0.19
 	 */
 	getAbsoluteUrl?(relativeUrl: string): Promise<string | undefined>;
+
+	/**
+	 * Represents the resolved url to the Container.
+	 * Will be undefined only when the container is in the {@link AttachState.Detached | detached} state.
+	 *
+	 * @remarks
+	 * Exposes the same value as `IContainer.resolvedUrl` to the runtime layer so
+	 * that runtime code can read document identity (including driver-specific
+	 * fields carried on the driver's resolved URL subtype) without routing
+	 * through {@link IContainerContext.getAbsoluteUrl} and the URL resolver.
+	 */
+	readonly resolvedUrl?: IResolvedUrl | undefined;
 
 	/**
 	 * Indicates the attachment state of the container to a host service.
