@@ -68,7 +68,9 @@ export interface IContainerRuntimeBaseInternal extends IContainerRuntimeBase {
 export interface StageControlsAlpha extends StageControls {}
 
 /**
- * Alpha interface for container runtime base supporting staging mode.
+ * Alpha extension of {@link IContainerRuntimeBase} that exposes alpha-level APIs.
+ *
+ * @remarks Use {@link asLegacyAlpha} to obtain an instance from an {@link IContainerRuntimeBase}.
  *
  * @legacy @alpha
  * @sealed
