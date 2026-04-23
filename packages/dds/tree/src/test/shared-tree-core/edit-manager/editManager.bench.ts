@@ -46,8 +46,8 @@ describe("EditManager - Bench", () => {
 
 	const scenarios: Scenario[] = [
 		{ type: BenchmarkType.Perspective, rebasedEditCount: 1, trunkEditCount: 1 },
-		// These tests, even in correctness mode, are a bit slow, and occasionally timeout,
-		// so run a smaller set  with smaller sizes in correctness mode.
+		// These tests, even in correctness mode, are a bit slow, and occasionally time out,
+		// so run a smaller set with smaller sizes in correctness mode.
 		...(isInPerformanceTestingMode
 			? [
 					{ type: BenchmarkType.Perspective, rebasedEditCount: 10, trunkEditCount: 1 },
