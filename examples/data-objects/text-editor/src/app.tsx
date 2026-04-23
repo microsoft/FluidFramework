@@ -305,6 +305,8 @@ const UserPanel: FC<{
 					>
 						<button
 							type="button"
+							aria-expanded={isExpanded}
+							aria-controls={`${viewType}-panel`}
 							onClick={() => toggleCollapsed(viewType)}
 							style={{
 								display: "flex",
@@ -323,12 +325,12 @@ const UserPanel: FC<{
 							}}
 						>
 							<span>{viewLabels[viewType].description}</span>
-							<span style={{ fontSize: "11px", color: "#666" }}>
+							<span aria-hidden="true" style={{ fontSize: "11px", color: "#666" }}>
 								{isExpanded ? "▲" : "▼"}
 							</span>
 						</button>
 						{isExpanded && (
-							<div style={{ padding: "12px" }}>
+							<div id={`${viewType}-panel`} style={{ padding: "12px" }}>
 								{viewLabels[viewType].component(root, treeView, undoRedo)}
 							</div>
 						)}
