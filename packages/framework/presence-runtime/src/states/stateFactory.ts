@@ -18,7 +18,7 @@ import { latest } from "./latestValueManager.js";
  * @public
  *
  * @privateRemarks
- * Explicit typing is used here to workaround limitation in TypeScript (and fully support
+ * Explicit typing is used here to work around a limitation in TypeScript (and fully support
  * {@link https://www.typescriptlang.org/tsconfig/#isolatedDeclarations | isolatedDeclarations}).
  */
 export const StateFactory: {
