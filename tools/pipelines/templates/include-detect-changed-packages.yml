@@ -85,8 +85,12 @@ steps:
         # retry once. The presence of a `shallow` file under `.git` is how
         # git marks a shallow repo; skip the unshallow on a full clone
         # (which would error with "--unshallow on a complete repository").
+        # Capture `git rev-parse --git-dir` into a variable with a fallback
+        # so a rev-parse failure degrades to "skip the unshallow check" under
+        # `set -eu` instead of aborting the whole script.
         MERGE_BASE="$(git merge-base HEAD "origin/${TARGET_BRANCH}" 2>/dev/null || true)"
-        if [ -z "${MERGE_BASE}" ] && [ -f "$(git rev-parse --git-dir)/shallow" ]; then
+        GIT_DIR="$(git rev-parse --git-dir 2>/dev/null || true)"
+        if [ -z "${MERGE_BASE}" ] && [ -n "${GIT_DIR}" ] && [ -f "${GIT_DIR}/shallow" ]; then
           echo "Merge-base not found in shallow clone; unshallowing and retrying."
           git fetch --unshallow origin "${TARGET_BRANCH}" 2>/dev/null || true
           MERGE_BASE="$(git merge-base HEAD "origin/${TARGET_BRANCH}" 2>/dev/null || true)"
@@ -97,7 +101,13 @@ steps:
         fi
         echo "Merge base: ${MERGE_BASE}"
 
-        CHANGED_FILES="$(git diff --name-only "${MERGE_BASE}" || true)"
+        # On diff failure, fall back to a full run rather than swallowing the
+        # error — an empty CHANGED_FILES would bypass the full-run patterns
+        # and the package-change check, silently suppressing all test jobs.
+        if ! CHANGED_FILES="$(git diff --name-only "${MERGE_BASE}")"; then
+          echo "##vso[task.logissue type=warning]git diff against merge-base ${MERGE_BASE} failed; falling back to full test run."
+          emit_and_exit
+        fi
         FILE_COUNT="$(printf '%s\n' "${CHANGED_FILES}" | grep -c . || true)"
         echo "Changed files (${FILE_COUNT}):"
         printf '%s\n' "${CHANGED_FILES}" | head -30
