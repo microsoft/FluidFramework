@@ -897,10 +897,7 @@ describe("Routerlicious", () => {
 					const restTenantCreateDocThrottler = new TestThrottler(maxThrottlerLimit);
 					const restTenantGetSessionThrottler = new TestThrottler(maxThrottlerLimit);
 					const throttlers = new Map<string, TestThrottler>();
-					throttlers.set(
-						Constants.generalRestCallThrottleIdPrefix,
-						restTenantThrottler,
-					);
+					throttlers.set(Constants.generalRestCallThrottleIdPrefix, restTenantThrottler);
 					throttlers.set(
 						Constants.getDeltasThrottleIdPrefix,
 						restTenantGetDeltasThrottler,

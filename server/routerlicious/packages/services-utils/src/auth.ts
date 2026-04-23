@@ -186,8 +186,8 @@ export async function verifyToken(
 		const claims = validateTokenClaims(token, documentId, tenantId, options.requireDocumentId);
 
 		if (options.requiredScopes && options.requiredScopes.length > 0) {
-			const hasAllScopes = options.requiredScopes.every((scope) =>
-				claims.scopes?.includes(scope),
+			const hasAllScopes = options.requiredScopes.every(
+				(scope) => claims.scopes?.includes(scope),
 			);
 			if (!hasAllScopes) {
 				throw new NetworkError(403, "Insufficient token scopes.");
