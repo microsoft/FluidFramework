@@ -164,7 +164,12 @@ steps:
         done <<< "${CHANGED_FILES}"
 
         if [ "${HAS_PACKAGE_CHANGE}" = "false" ]; then
-          echo "No changed files mapped to a workspace package — skipping test execution."
+          # This is the most aggressive skip path: no test jobs run at all.
+          # Surface it as a pipeline warning (not a plain echo) and dump the
+          # file list so an accidental silent-suppression bug is auditable
+          # from the pipeline summary without needing to re-run the build.
+          echo "##vso[task.logissue type=warning]No changed files mapped to a workspace package — skipping all test execution. Files considered (${FILE_COUNT}):"
+          printf '%s\n' "${CHANGED_FILES}" | sed 's/^/  /'
           SHOULD_RUN="false"
           FILTER=""
           emit_and_exit
