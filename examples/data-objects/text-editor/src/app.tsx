@@ -331,7 +331,7 @@ const UserPanel: FC<{
 						</button>
 						{/*
 						  * Note: we are intentionally forcing the editor components to be unmounted when their respective cards are collapsed.
-						  * We are doing this to make it possible to do use this app to do performance analysis on individual editor components in isolation.
+						  * We are doing this to make it possible to use this app to do performance analysis on individual editor components in isolation.
 						  */}
 						{isExpanded && (
 							<div id={`${viewType}-panel`} style={{ padding: "12px" }}>
