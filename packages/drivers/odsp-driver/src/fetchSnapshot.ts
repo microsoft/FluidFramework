@@ -4,7 +4,6 @@
  */
 
 import { fromUtf8ToBase64 } from "@fluid-internal/client-utils";
-import { LogLevel } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import { getW3CData } from "@fluidframework/driver-base/internal";
 import {
@@ -714,15 +713,18 @@ function getTreeStatsCore(snapshotTree: ISnapshotTree, stats: ITreeStats): void 
 /**
  * This function fetches the snapshot and parse it according to what is mentioned in response headers.
  * @param odspResolvedUrl - resolved odsp url.
- * @param storageToken - token to do the auth for network request.
- * @param snapshotOptions - Options used to specify how and what to fetch in the snapshot.
+ * @param getAuthHeader - function to fetch the auth header for the network request.
+ * @param tokenFetchOptions - options for fetching the token.
  * @param loadingGroupIds - loadingGroupIds for which snapshot needs to be downloaded. Note:
  * 1.) If undefined, then legacy trees latest call will be used where no groupId query param would be specified.
  * 2.) If [] is passed, then snapshot with all ungrouped data will be fetched.
  * 3.) If any groupId is specified like ["g1"], then snapshot for g1 group will be fetched.
+ * @param snapshotOptions - Options used to specify how and what to fetch in the snapshot.
+ * @param logger - logger for sending telemetry events.
  * @param snapshotFormatFetchType - Snapshot format to fetch.
  * @param controller - abort controller if caller needs to abort the network call.
  * @param epochTracker - epoch tracker used to add/validate epoch in the network call.
+ * @param scenarioName - scenario name for telemetry.
  * @returns fetched snapshot.
  */
 export const downloadSnapshot = mockify(
@@ -789,7 +791,7 @@ export const downloadSnapshot = mockify(
 			"downloadSnapshot",
 		);
 		assert(authHeader !== null, 0x1e5 /* "Storage token should not be null" */);
-		logger?.send({ category: "generic", eventName: "SnapshotAuthHeaderObtained" }, LogLevel.info);
+		logger?.sendTelemetryEvent({ eventName: "SnapshotAuthHeaderObtained" });
 		const { body, headers } = getFormBodyAndHeaders(odspResolvedUrl, authHeader, header);
 		const fetchOptions = {
 			body,
@@ -816,7 +818,7 @@ export const downloadSnapshot = mockify(
 			true,
 			scenarioName,
 		) ?? fetchHelper(url, fetchOptions));
-		logger?.send({ category: "generic", eventName: "SnapshotFetchResponseReceived" }, LogLevel.info);
+		logger?.sendTelemetryEvent({ eventName: "SnapshotFetchResponseReceived" });
 
 		return {
 			odspResponse,
