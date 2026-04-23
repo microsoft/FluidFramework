@@ -86,6 +86,7 @@ const PlainTextEditorView = withMemoizedTreeObservations(
 			<div
 				className="text-editor-container"
 				style={{ height: "100%", display: "flex", flexDirection: "column" }}
+				onClick={() => textareaRef.current?.focus()}
 			>
 				<textarea
 					ref={textareaRef}

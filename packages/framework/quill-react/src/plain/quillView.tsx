@@ -116,6 +116,7 @@ const TextEditorView = withMemoizedTreeObservations(({ root }: { root: TextAsTre
 		<div
 			className="text-editor-container"
 			style={{ height: "100%", display: "flex", flexDirection: "column" }}
+			onClick={() => quillRef.current?.focus()}
 		>
 			<style>
 				{`
@@ -141,6 +142,7 @@ const TextEditorView = withMemoizedTreeObservations(({ root }: { root: TextAsTre
 					border: "1px solid #ccc",
 					borderRadius: "4px",
 					padding: "8px",
+					cursor: "text",
 				}}
 			/>
 		</div>

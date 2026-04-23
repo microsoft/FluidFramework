@@ -636,7 +636,10 @@ const FormattedTextEditorView = forwardRef<
 		: undefined;
 
 	return (
-		<div style={{ height: "100%", display: "flex", flexDirection: "column" }}>
+		<div
+			style={{ height: "100%", display: "flex", flexDirection: "column" }}
+			onClick={() => quillRef.current?.focus()}
+		>
 			<style>{`
 				.ql-container { height: 100%; font-size: 14px; }
 				.ql-editor { height: 100%; outline: none; }
@@ -659,6 +662,7 @@ const FormattedTextEditorView = forwardRef<
 					minHeight: "300px",
 					border: "1px solid #ccc",
 					borderRadius: "4px",
+					cursor: "text",
 				}}
 			/>
 			{undoRedoButtons}
