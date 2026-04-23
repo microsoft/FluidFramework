@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """Consolidate review fleet findings into a single PR report.
 
-Reads review-*.md files from a directory, extracts findings in the format
-[SEVERITY] file:line — description — fix, de-duplicates by file:line,
+Reads review-*.json files from a directory, extracts findings in the format
+{"findings": [{"severity": "...", "location": "...", "description": "...", "fix": "..."}]},
+de-duplicates by location,
 and outputs a consolidated markdown report.
 
 Usage:
@@ -273,15 +274,29 @@ def main(argv: list[str] | None = None) -> int:
         type=int,
         help="Number of commits on the PR; combined with --pr-number to vary emoji set per push",
     )
+    parser.add_argument(
+        "--reviewers",
+        help="JSON array of reviewer IDs that were run. Used to detect silent crashes. If not provided, assumes all reviewers.",
+    )
     args = parser.parse_args(argv)
+
+    # Determine which reviewers were expected
+    expected_reviewers = REVIEWERS.keys()
+    if args.reviewers:
+        try:
+            expected_reviewers = json.loads(args.reviewers)
+        except json.JSONDecodeError:
+            print("Warning: --reviewers must be a valid JSON array, ignoring", file=sys.stderr)
 
     # Collect findings from all reviewer files
     all_findings: list[Finding] = []
     skipped_count = 0
-    for reviewer_key, area_name in REVIEWERS.items():
+    for reviewer_key in expected_reviewers:
+        area_name = REVIEWERS.get(reviewer_key, reviewer_key.title())
         path = args.reviews_dir / f"review-{reviewer_key}.json"
         if not path.exists():
-            print(f"{reviewer_key}: no output file")
+            print(f"{reviewer_key}: no output file (crashed or skipped)")
+            skipped_count += 1
             continue
 
         findings = parse_review_file(path, area_name)

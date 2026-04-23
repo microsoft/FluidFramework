@@ -340,7 +340,7 @@ class TestMain:
         review = tmp_path / "review-correctness.json"
         review.write_text(json.dumps({"findings": []}))
         output = tmp_path / "report.md"
-        result = main([str(tmp_path), "https://example.com/run/1", "-o", str(output)])
+        result = main([str(tmp_path), "https://example.com/run/1", "-o", str(output), "--reviewers", '["correctness"]'])
         assert result == 2
         assert not output.exists()
 

@@ -76,6 +76,7 @@ jobs:
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # ratchet:actions/download-artifact@v8
         with:
           name: dispatch-params
+          path: dispatch
           run-id: ${{ github.event.workflow_run.id }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
@@ -182,7 +183,7 @@ jobs:
       - name: Checkout PR head
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # ratchet:actions/checkout@v6
         with:
-          ref: ${{ needs.setup.outputs.head_sha }}
+          ref: refs/pull/${{ needs.setup.outputs.pr_number }}/head
           fetch-depth: 0
 
       # ── Prepare the diff ──
@@ -298,9 +299,10 @@ jobs:
         env:
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
           PR_NUMBER: ${{ needs.setup.outputs.pr_number }}
+          REVIEWERS: ${{ needs.setup.outputs.reviewers }}
         run: |
           set +e
-          python3 .github/scripts/consolidate_reviews.py reviews "$RUN_URL" -o report.md --pr-number "$PR_NUMBER"
+          python3 .github/scripts/consolidate_reviews.py reviews "$RUN_URL" -o report.md --pr-number "$PR_NUMBER" --reviewers "$REVIEWERS"
           exit_code=$?
           set -e
           if [ $exit_code -eq 2 ]; then
@@ -384,6 +386,7 @@ jobs:
           #   - consolidate ran but the script itself errored
           #   - consolidate was skipped because review was skipped
           if [ "$SETUP_RESULT" != "success" ] \
+             || [ "$REVIEW_RESULT" != "success" ] \
              || [ "$CONSOLIDATE_RESULT" = "skipped" ] \
              || { [ "$CONSOLIDATE_RESULT" = "success" ] && [ "$CONSOLIDATE_OUTCOME" != "success" ]; }; then
             echo "conclusion=failure" >> "$GITHUB_OUTPUT"
