@@ -232,7 +232,6 @@ function runMemoryBenchmark({
 	});
 }
 
-
 type BenchmarkOptions =
 	| (ExecutionTimeBenchmarkConfig & { mode: "execution-time" })
 	| (MemoryBenchmarkConfig & { mode: "memory" });

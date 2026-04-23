@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { TestType, benchmarkIt, collectDurationData } from "@fluid-tools/benchmark";
+import { benchmarkDuration, benchmarkIt } from "@fluid-tools/benchmark";
 
 import { MergeTree } from "../mergeTree.js";
 import { MergeTreeDeltaType } from "../ops.js";
@@ -14,15 +14,14 @@ import { TextSegment } from "../textSegment.js";
 describe("MergeTree partial lengths", () => {
 	for (const incremental of [true, false]) {
 		benchmarkIt({
-			testType: TestType.ExecutionTime,
 			title: `incremental updates = ${incremental}`,
 			category: "partial lengths",
-			run: async () => {
-				const originalIncrementalUpdate: boolean = MergeTree.options.incrementalUpdate;
-				MergeTree.options.incrementalUpdate = incremental;
-				try {
-					return await collectDurationData({
-						benchmarkFn: () => {
+			...benchmarkDuration({
+				benchmarkFnCustom: async (state) => {
+					const originalIncrementalUpdate: boolean = MergeTree.options.incrementalUpdate;
+					MergeTree.options.incrementalUpdate = incremental;
+					try {
+						state.timeAllBatches(() => {
 							const mergeTree = new MergeTree();
 
 							const clientId = 0;
@@ -74,14 +73,12 @@ describe("MergeTree partial lengths", () => {
 									},
 								);
 							}
-						},
-					});
-				} finally {
-					// It is unclear why this lint rule is getting triggered here, but this logic seems correct and necessary.
-					// eslint-disable-next-line require-atomic-updates
-					MergeTree.options.incrementalUpdate = originalIncrementalUpdate;
-				}
-			},
+						});
+					} finally {
+						MergeTree.options.incrementalUpdate = originalIncrementalUpdate;
+					}
+				},
+			}),
 		});
 	}
 });

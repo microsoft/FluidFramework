@@ -5,11 +5,10 @@
 
 import {
 	BenchmarkType,
-	TestType,
 	type CollectedData,
 	ValueType,
+	benchmarkDuration,
 	benchmarkIt,
-	collectDurationData,
 	isInPerformanceTestingMode,
 } from "@fluid-tools/benchmark";
 import { IChannel } from "@fluidframework/datastore-definitions/legacy";
@@ -47,23 +46,22 @@ describe("Table", () => {
 		const totalProfitColumn = columnNames.indexOf("Total Profit");
 
 		benchmarkIt({
-			testType: TestType.ExecutionTime,
 			title: `SharedMatrix`,
-			run: async () => {
-				({ channel, processAllMessages } = create(SharedMatrix.getFactory()));
-				matrix = channel as SharedMatrix;
-				matrix.insertCols(0, columnNames.length);
-				matrix.insertRows(0, data.length);
+			...benchmarkDuration({
+				benchmarkFnCustom: async (state) => {
+					({ channel, processAllMessages } = create(SharedMatrix.getFactory()));
+					matrix = channel as SharedMatrix;
+					matrix.insertCols(0, columnNames.length);
+					matrix.insertRows(0, data.length);
 
-				for (let r = 0; r < data.length; r++) {
-					for (const [c, key] of columnNames.entries()) {
-						// eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access -- TODO: Use real types
-						matrix.setCell(r, c, (data as any)[r][key]);
+					for (let r = 0; r < data.length; r++) {
+						for (const [c, key] of columnNames.entries()) {
+							// eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access -- TODO: Use real types
+							matrix.setCell(r, c, (data as any)[r][key]);
+						}
 					}
-				}
-				processAllMessages();
-				return collectDurationData({
-					benchmarkFn: () => {
+					processAllMessages();
+					state.timeAllBatches(() => {
 						for (let r = 0; r < matrix.rowCount; r++) {
 							const unitsSold = matrix.getCell(r, unitsSoldColumn) as number;
 							const unitPrice = matrix.getCell(r, unitPriceColumn) as number;
@@ -78,25 +76,24 @@ describe("Table", () => {
 							matrix.setCell(r, totalProfitColumn, totalProfit);
 						}
 						processAllMessages();
-					},
-				});
-			},
+					});
+				},
+			}),
 		});
 
 		benchmarkIt({
-			testType: TestType.ExecutionTime,
 			title: `SharedTree`,
-			run: async () => {
-				({ channel, processAllMessages } = create(SharedTree.getFactory()));
-				const tree = channel as unknown as ITree;
+			...benchmarkDuration({
+				benchmarkFnCustom: async (state) => {
+					({ channel, processAllMessages } = create(SharedTree.getFactory()));
+					const tree = channel as unknown as ITree;
 
-				const view = tree.viewWith(new TreeViewConfiguration({ schema: Table }));
-				view.initialize(data);
-				table = view.root;
+					const view = tree.viewWith(new TreeViewConfiguration({ schema: Table }));
+					view.initialize(data);
+					table = view.root;
 
-				processAllMessages();
-				return collectDurationData({
-					benchmarkFn: () => {
+					processAllMessages();
+					state.timeAllBatches(() => {
 						// Batching these updates in a transaction gives a about a 3x performance boost
 						TreeAlpha.context(table).runTransaction(() => {
 							for (const row of table) {
@@ -114,9 +111,9 @@ describe("Table", () => {
 							}
 						});
 						processAllMessages();
-					},
-				});
-			},
+					});
+				},
+			}),
 		});
 	});
 

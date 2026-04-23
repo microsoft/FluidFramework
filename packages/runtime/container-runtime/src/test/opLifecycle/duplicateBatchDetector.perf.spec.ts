@@ -4,10 +4,8 @@
  */
 
 import {
-	TestType,
 	benchmarkDuration,
 	benchmarkIt,
-	collectDurationData,
 	type BenchmarkTimingOptions,
 } from "@fluid-tools/benchmark";
 import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
@@ -82,22 +80,21 @@ describe("DuplicateBatchDetector benchmark", () => {
 			// so detector state remains valid across iterations.
 			benchmarkIt({
 				title: `processInboundBatch - no cleanup (${trackedBatchCount} tracked)`,
-				testType: TestType.ExecutionTime,
-				run: async () => {
-					entries = generateSnapshotEntries(trackedBatchCount);
-					detector = new DuplicateBatchDetector(entries);
-					return collectDurationData({
-						benchmarkFn: () => {
-							// MSN=0 means clearOldBatchIds hits the early exit (msn <= minSeqNum).
-							// This measures: early-exit check + getEffectiveBatchId + map lookup + map insert.
-							// Note: detector grows by 1 entry per iteration, but that doesn't affect the
-							// early-exit path since minSeqNum remains 1.
-							const nextSeqNum = trackedBatchCount + 1;
-							const batch = makeBatch(nextSeqNum, 0, `new-batch-${nextSeqNum}`);
+				...benchmarkDuration({
+					benchmarkFnCustom: async (state) => {
+						entries = generateSnapshotEntries(trackedBatchCount);
+						detector = new DuplicateBatchDetector(entries);
+						// MSN=0 means clearOldBatchIds hits the early exit (msn <= minSeqNum).
+						// This measures: early-exit check + getEffectiveBatchId + map lookup + map insert.
+						// Note: detector grows by 1 entry per iteration, but that doesn't affect the
+						// early-exit path since minSeqNum remains 1.
+						const nextSeqNum = trackedBatchCount + 1;
+						const batch = makeBatch(nextSeqNum, 0, `new-batch-${nextSeqNum}`);
+						state.timeAllBatches(() => {
 							detector.processInboundBatch(batch);
-						},
-					});
-				},
+						});
+					},
+				}),
 			});
 
 			// Scenario 2: Partial cleanup (MSN advances past half the entries)

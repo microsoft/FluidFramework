@@ -6,10 +6,8 @@
 import { strict as assert } from "node:assert";
 
 import {
-	TestType,
 	benchmarkDuration,
 	benchmarkIt,
-	collectDurationData,
 	isInPerformanceTestingMode,
 } from "@fluid-tools/benchmark";
 
@@ -34,18 +32,17 @@ export function jsObjectBench<T extends JsonCompatibleReadOnlyObject>(
 		const json = getJson();
 
 		benchmarkIt({
-			testType: TestType.ExecutionTime,
 			title: `clone JS Object: '${name}'`,
-			run: async () => {
-				const cloned = clone(json);
-				assert.deepEqual(cloned, json, "clone() must return an equivalent tree.");
-				assert.notEqual(cloned, json, "clone() must not return the same tree instance.");
-				return collectDurationData({
-					benchmarkFn: () => {
+			...benchmarkDuration({
+				benchmarkFnCustom: async (state) => {
+					const cloned = clone(json);
+					assert.deepEqual(cloned, json, "clone() must return an equivalent tree.");
+					assert.notEqual(cloned, json, "clone() must not return the same tree instance.");
+					state.timeAllBatches(() => {
 						clone(json);
-					},
-				});
-			},
+					});
+				},
+			}),
 		});
 
 		benchmarkIt({
