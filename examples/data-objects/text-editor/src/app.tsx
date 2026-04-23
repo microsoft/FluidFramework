@@ -248,9 +248,10 @@ const viewLabels = {
 } as const;
 
 const UserPanel: FC<{
+	label: string;
 	color: string;
 	treeView: TreeView<typeof TextEditorRoot>;
-}> = ({ color, treeView }) => {
+}> = ({ label, color, treeView }) => {
 	// Create undo/redo stack for this user's tree view
 	const undoRedo: UndoRedo = useMemo(
 		() => new UndoRedoStacks(treeView.events),
@@ -288,6 +289,7 @@ const UserPanel: FC<{
 				overflowY: "auto",
 			}}
 		>
+			<div style={{ marginBottom: "10px", fontWeight: "bold", color }}>{label}</div>
 			{(Object.keys(viewLabels) as ViewType[]).map((viewType) => {
 				const isExpanded = !collapsed[viewType];
 				return (
@@ -356,8 +358,8 @@ export const App: FC<{ views: DualUserViews }> = ({ views }) => {
 					alignItems: "stretch",
 				}}
 			>
-				<UserPanel color="#4a90d9" treeView={views.user1} />
-				<UserPanel color="#28a745" treeView={views.user2} />
+				<UserPanel label="User 1" color="#4a90d9" treeView={views.user1} />
+				<UserPanel label="User 2" color="#28a745" treeView={views.user2} />
 			</div>
 		</div>
 	);
