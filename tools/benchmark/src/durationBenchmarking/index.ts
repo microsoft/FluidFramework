@@ -8,7 +8,11 @@ export type {
 	DurationBenchmarkAsync,
 	BenchmarkTimingOptions,
 	DurationBenchmark,
-	BenchmarkTimer,
+	BatchedDurationTimer,
 	DurationBenchmarkCustom,
 } from "./configuration.js";
 export { Phase, benchmarkDuration, collectDurationData, runBenchmarkSync } from "./getDuration.js";
+export {
+	type BatchlessDurationTimer,
+	benchmarkDurationBatchless,
+} from "./getDurationBatchless.js";

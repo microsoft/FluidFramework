@@ -31,12 +31,14 @@ export {
 	type DurationBenchmarkAsync,
 	type DurationBenchmark,
 	type BenchmarkTimingOptions,
-	type BenchmarkTimer,
+	type BatchedDurationTimer,
 	type DurationBenchmarkCustom,
 	Phase,
 	collectDurationData,
 	runBenchmarkSync,
 	benchmarkDuration,
+	type BatchlessDurationTimer,
+	benchmarkDurationBatchless,
 } from "./durationBenchmarking/index.js";
 export { benchmarkIt } from "./mocha/index.js";
 export {

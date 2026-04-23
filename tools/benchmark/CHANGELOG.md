@@ -2,6 +2,10 @@
 
 ## 0.59.0
 
+-   `BenchmarkTimer` has been renamed to `BatchedDurationTimer`.
+-   Added `benchmarkDurationBatchless` and the `BatchlessDurationTimer` interface for benchmarks that require per-iteration setup and/or teardown, making batching impractical. Each timed sample covers exactly one invocation of the operation. Prefer `benchmarkDuration` with batching when possible, as batchless measurements have significantly higher noise and measurement bias.
+Tests previously using `minBatchDurationSeconds: 0` to force a single iteration per batch should migrate to this API.
+
 ## 0.58.0
 
 -   Default value for `BenchmarkDescription.type` is now documented to be `BenchmarkType.Measurement` (no functional change: just added missing documentation).

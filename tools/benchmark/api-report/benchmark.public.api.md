@@ -6,6 +6,17 @@
 
 import type { Test } from 'mocha';
 
+// @public @sealed
+export interface BatchedDurationTimer<T> {
+    readonly iterationsPerBatch: number;
+    recordBatch(duration: number): boolean;
+    timeAllBatches(callback: () => void): void;
+    timeAllBatchesAsync(callback: () => Promise<unknown>): Promise<void>;
+    timeBatch(callback: () => void): boolean;
+    timeBatchAsync(callback: () => Promise<unknown>): Promise<boolean>;
+    readonly timer: Timer<T>;
+}
+
 // @public @input
 export interface BenchmarkDescription {
     readonly category?: string;
@@ -38,17 +49,6 @@ export interface BenchmarkOptions extends Titled, BenchmarkDescription, MochaExc
 
 // @public @sealed
 export type BenchmarkResult = BenchmarkError | CollectedData;
-
-// @public @sealed
-export interface BenchmarkTimer<T> {
-    readonly iterationsPerBatch: number;
-    recordBatch(duration: number): boolean;
-    timeAllBatches(callback: () => void): void;
-    timeAllBatchesAsync(callback: () => Promise<unknown>): Promise<void>;
-    timeBatch(callback: () => void): boolean;
-    timeBatchAsync(callback: () => Promise<unknown>): Promise<boolean>;
-    readonly timer: Timer<T>;
-}
 
 // @public @input
 export interface BenchmarkTimingOptions {
@@ -100,7 +100,7 @@ export interface DurationBenchmarkAsync extends BenchmarkTimingOptions {
 
 // @public @input
 export interface DurationBenchmarkCustom extends BenchmarkTimingOptions {
-    benchmarkFnCustom<T>(state: BenchmarkTimer<T>): Promise<void>;
+    benchmarkFnCustom<T>(state: BatchedDurationTimer<T>): Promise<void>;
 }
 
 // @public @input

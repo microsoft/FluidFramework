@@ -17,7 +17,7 @@ import {
 	isCustomBenchmark,
 	validateBenchmarkArguments,
 	type DurationBenchmark,
-	type BenchmarkTimer,
+	type BatchedDurationTimer,
 	type BenchmarkTimingOptions,
 	type DurationBenchmarkSync,
 	type DurationBenchmarkAsync,
@@ -104,12 +104,12 @@ export async function collectDurationData(args: DurationBenchmark): Promise<Coll
 	return data;
 }
 
-export class BenchmarkState<T> implements BenchmarkTimer<T> {
+export class BenchmarkState<T> implements BatchedDurationTimer<T> {
 	/**
 	 * Duration for each batch, in seconds.
 	 */
 	private readonly samples: number[];
-	private readonly options: Readonly<Required<BenchmarkTimingOptions>>;
+	public readonly options: Readonly<Required<BenchmarkTimingOptions>>;
 	private readonly startTime: T;
 	private phase: Phase;
 	public iterationsPerBatch: number;
