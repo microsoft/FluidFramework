@@ -42,7 +42,7 @@ const TextEditorView = withMemoizedTreeObservations(({ root }: { root: TextAsTre
 	// DOM element where Quill will mount its editor
 	const editorRef = useRef<HTMLDivElement>(null);
 	// Quill instance, persisted across renders to avoid re-initialization
-	const quillRef = useRef<Quill | null>(null);
+	const quillRef = useRef<Quill | undefined>(undefined);
 	// Guards against update loops between Quill and the tree
 	const isUpdatingRef = useRef<boolean>(false);
 
@@ -52,37 +52,48 @@ const TextEditorView = withMemoizedTreeObservations(({ root }: { root: TextAsTre
 
 	// Initialize Quill editor
 	useEffect(() => {
-		if (editorRef.current && !quillRef.current) {
-			const quill = new Quill(editorRef.current, {
-				placeholder: "Start typing...",
-			});
-
-			// Set initial content from tree (add trailing newline to match Quill's convention)
-			const initialText = root.fullString();
-			if (initialText.length > 0) {
-				const textWithNewline = initialText.endsWith("\n") ? initialText : `${initialText}\n`;
-				quill.setText(textWithNewline);
-			}
-
-			// Listen to local Quill changes
-			quill.on("text-change", (_delta, _oldDelta, source) => {
-				if (source === "user" && !isUpdatingRef.current) {
-					isUpdatingRef.current = true;
-
-					// Get plain text from Quill and preserve trailing newline
-					const newText = quill.getText();
-					// TODO: Consider using delta from Quill to compute a more minimal update,
-					// and maybe add a debugAssert that the delta actually gets the strings synchronized.
-					syncTextToTree(root, newText);
-
-					isUpdatingRef.current = false;
-				}
-			});
-
-			quillRef.current = quill;
+		if (!editorRef.current || quillRef.current) {
+			return;
 		}
-		// In React strict mode, effects run twice. The `!quillRef.current` check above
-		// makes the second call a no-op, preventing double-initialization of Quill.
+
+		const quill = new Quill(editorRef.current, {
+			placeholder: "Start typing...",
+		});
+
+		// Set initial content from tree (add trailing newline to match Quill's convention)
+		const initialText = root.fullString();
+		if (initialText.length > 0) {
+			const textWithNewline = initialText.endsWith("\n") ? initialText : `${initialText}\n`;
+			quill.setText(textWithNewline);
+		}
+
+		// Listen to local Quill changes
+		const handleTextChange = (_delta: unknown, _oldDelta: unknown, source: string): void => {
+			if (source === "user" && !isUpdatingRef.current) {
+				isUpdatingRef.current = true;
+
+				// Get plain text from Quill and preserve trailing newline
+				const newText = quill.getText();
+				// TODO: Consider using delta from Quill to compute a more minimal update,
+				// and maybe add a debugAssert that the delta actually gets the strings synchronized.
+				syncTextToTree(root, newText);
+
+				isUpdatingRef.current = false;
+			}
+		};
+
+		quill.on("text-change", handleTextChange);
+		quillRef.current = quill;
+
+		// Capture for cleanup — editorRef.current may have changed by then.
+		const editor = editorRef.current;
+		return () => {
+			quill.off("text-change", handleTextChange);
+			quillRef.current = undefined;
+			// Clear Quill's DOM modifications so the container is clean for any remount.
+			editor.innerHTML = "";
+			editor.className = "";
+		};
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, []);
 
