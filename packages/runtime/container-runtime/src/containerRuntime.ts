@@ -127,11 +127,12 @@ import type {
 	IInboundSignalMessage,
 	IRuntimeMessagesContent,
 	ISummarizerNodeWithGC,
-	StageControlsInternal,
 	IContainerRuntimeBaseInternal,
 	MinimumVersionForCollab,
 	ContainerExtensionExpectations,
 	ContainerRuntimeBaseAlpha,
+	CommitStagedChangesOptionsInternal,
+	ExitStagingModeOptionsInternal,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	addBlobToSummary,
@@ -3589,10 +3590,11 @@ export class ContainerRuntime
 	 */
 	public orderSequentially<T>(callback: () => T): T {
 		let checkpoint: IBatchCheckpoint | undefined;
-		let stageControls: StageControlsInternal | undefined;
+		let enteredStagingModeLocally = false;
 		if (this.mc.config.getBoolean("Fluid.ContainerRuntime.EnableRollback") === true) {
 			if (!this.batchRunner.running && !this.inStagingMode) {
-				stageControls = this.enterStagingMode();
+				this.enterStagingMode();
+				enteredStagingModeLocally = true;
 			}
 			// Note: we are not touching any batches other than mainBatch here, for two reasons:
 			// 1. It would not help, as other batches are flushed independently from main batch.
@@ -3611,8 +3613,10 @@ export class ContainerRuntime
 							this.rollbackStagedChange(message.runtimeOp, message.localOpMetadata),
 						);
 						this.updateDocumentDirtyState();
-						stageControls?.discardChanges();
-						stageControls = undefined;
+						if (enteredStagingModeLocally) {
+							this.exitStagingMode({ action: "discard" });
+							enteredStagingModeLocally = false;
+						}
 					} catch (error_) {
 						const error2 = wrapError(error_, (message) => {
 							return DataProcessingError.create(
@@ -3644,7 +3648,9 @@ export class ContainerRuntime
 			}
 		});
 
-		stageControls?.commitChanges({ squash: false });
+		if (enteredStagingModeLocally) {
+			this.exitStagingMode({ action: "commit" });
+		}
 
 		// We don't flush on TurnBased since we expect all messages in the same JS turn to be part of the same batch
 		if (this.flushMode !== FlushMode.TurnBased && !this.batchRunner.running) {
@@ -3653,25 +3659,48 @@ export class ContainerRuntime
 		return result;
 	}
 
-	private stageControls: StageControlsInternal | undefined;
+	private stagingModeExitControls:
+		| {
+				commitChanges(options?: Partial<CommitStagedChangesOptionsInternal>): void;
+				discardChanges(): void;
+		  }
+		| undefined;
 
 	/**
 	 * If true, the ContainerRuntime is not submitting any new ops to the ordering service.
 	 * Ops submitted to the ContainerRuntime while in Staging Mode will be queued in the PendingStateManager,
-	 * either to be discarded or committed later (via the Stage Controls returned from enterStagingMode).
+	 * either to be discarded or committed later via {@link ContainerRuntime.exitStagingMode}.
 	 */
 	public get inStagingMode(): boolean {
-		return this.stageControls !== undefined;
+		return this.stagingModeExitControls !== undefined;
+	}
+
+	/**
+	 * Exit Staging Mode, either committing or discarding any ops buffered since {@link ContainerRuntime.enterStagingMode} was called.
+	 *
+	 * @param options - `{ action: "commit", squash?: boolean }` sends the buffered ops to the ordering service.
+	 * `{ action: "discard" }` rolls back all changes made while in staging mode.
+	 * @throws If not currently in staging mode.
+	 */
+	public exitStagingMode(options: ExitStagingModeOptionsInternal): void {
+		if (this.stagingModeExitControls === undefined) {
+			throw new UsageError("Not in staging mode");
+		}
+		if (options.action === "commit") {
+			this.stagingModeExitControls.commitChanges({ squash: options.squash });
+		} else {
+			this.stagingModeExitControls.discardChanges();
+		}
 	}
 
 	/**
 	 * Enter Staging Mode, such that ops submitted to the ContainerRuntime will not be sent to the ordering service.
-	 * To exit Staging Mode, call either discardChanges or commitChanges on the Stage Controls returned from this method.
+	 * To exit Staging Mode, call {@link ContainerRuntime.exitStagingMode}.
 	 *
-	 * @returns Controls for exiting Staging Mode.
+	 * @throws If already in staging mode or if the container is detached.
 	 */
-	public enterStagingMode = (): StageControlsInternal => {
-		if (this.stageControls !== undefined) {
+	public enterStagingMode = (): void => {
+		if (this.stagingModeExitControls !== undefined) {
 			throw new UsageError("Already in staging mode");
 		}
 		if (this.attachState === AttachState.Detached) {
@@ -3697,7 +3726,7 @@ export class ContainerRuntime
 						// NOTE: We can't use this.flush() here, because orderSequentially uses StagingMode and in the rollback case we'll hit assert 0x24c
 						this.outbox.flush();
 
-						this.stageControls = undefined;
+						this.stagingModeExitControls = undefined;
 
 						const batchInfos = discardOrCommit();
 						event.reportProgress({
@@ -3719,7 +3748,7 @@ export class ContainerRuntime
 			}
 		};
 
-		const stageControls: StageControlsInternal = {
+		this.stagingModeExitControls = {
 			discardChanges: () =>
 				exitStagingMode(() => {
 					// Pop all staged batches from the PSM and roll them back in LIFO order
@@ -3744,10 +3773,7 @@ export class ContainerRuntime
 			},
 		};
 
-		this.stageControls = stageControls;
 		this.channelCollection.notifyStagingMode(true);
-
-		return this.stageControls;
 	};
 
 	/**

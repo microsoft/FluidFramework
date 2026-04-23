@@ -205,6 +205,51 @@ export interface IContainerRuntime
 }
 
 /**
+ * Alpha variant of {@link IContainerRuntime} with a flat staging mode API.
+ *
+ * @remarks
+ * Use {@link asContainerRuntimeAlpha} to cast an {@link IContainerRuntime} to this interface.
+ *
+ * Staging mode buffers ops locally so they can either be committed (sent to the ordering service)
+ * or discarded (rolled back) as a unit.
+ *
+ * @legacy @alpha
+ * @sealed
+ */
+export interface IContainerRuntimeAlpha extends IContainerRuntime {
+	/**
+	 * Indicates whether the container is currently in staging mode.
+	 */
+	readonly inStagingMode: boolean;
+
+	/**
+	 * Enter staging mode. While in staging mode, ops are buffered locally
+	 * and not sent to the ordering service until {@link IContainerRuntimeAlpha.exitStagingMode} is called.
+	 *
+	 * @throws If already in staging mode or if the container is detached.
+	 */
+	enterStagingMode(): void;
+
+	/**
+	 * Exit staging mode and either commit or discard the staged changes.
+	 *
+	 * @param options - `{ action: "commit" }` sends the buffered ops to the ordering service.
+	 * `{ action: "discard" }` rolls back all changes made while in staging mode.
+	 * @throws If not currently in staging mode.
+	 */
+	exitStagingMode(options: { action: "commit" } | { action: "discard" }): void;
+}
+
+/**
+ * Converts an {@link IContainerRuntime} to {@link IContainerRuntimeAlpha} to access alpha staging mode APIs.
+ *
+ * @legacy @alpha
+ */
+export function asContainerRuntimeAlpha(runtime: IContainerRuntime): IContainerRuntimeAlpha {
+	return runtime as IContainerRuntimeAlpha;
+}
+
+/**
  * Represents the internal version of the runtime of the container.
  *
  * @internal

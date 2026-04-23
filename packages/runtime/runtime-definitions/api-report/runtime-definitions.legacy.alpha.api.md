@@ -21,7 +21,12 @@ export type AttributionKey = OpAttributionKey | DetachedAttributionKey | LocalAt
 
 // @alpha @sealed @legacy
 export interface ContainerRuntimeBaseAlpha extends IContainerRuntimeBase {
-    enterStagingMode(): StageControlsAlpha;
+    enterStagingMode(): void;
+    exitStagingMode(options: {
+        action: "commit";
+    } | {
+        action: "discard";
+    }): void;
     readonly inStagingMode: boolean;
 }
 
@@ -420,12 +425,6 @@ export interface OpAttributionKey {
 
 // @beta @legacy
 export type PackagePath = readonly string[];
-
-// @alpha @sealed @legacy
-export interface StageControlsAlpha {
-    readonly commitChanges: () => void;
-    readonly discardChanges: () => void;
-}
 
 // @beta @legacy (undocumented)
 export type SummarizeInternalFn = (fullTree: boolean, trackState: boolean, telemetryContext?: ITelemetryContext, incrementalSummaryContext?: IExperimentalIncrementalSummaryContext) => Promise<ISummarizeInternalResult>;
