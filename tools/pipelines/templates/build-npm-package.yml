@@ -53,11 +53,11 @@ parameters:
 
 - name: poolCG
   type: object
-  default: Small-1ES
+  default: Small-eastus2
 
 - name: poolBuild
   type: object
-  default: Small-1ES
+  default: Small-eastus2
 
 - name: preCG
   type: stepList
@@ -642,7 +642,7 @@ extends:
           jobs:
             - job: upload_run_telemetry
               displayName: Upload pipeline run telemetry to Kusto
-              pool: Small-1ES
+              pool: Small-eastus2
               variables:
               - group: ado-feeds
               - name: pipelineTelemetryWorkdir
