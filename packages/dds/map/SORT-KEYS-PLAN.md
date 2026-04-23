@@ -91,7 +91,9 @@ with T29). Both preserve cross-client eventual consistency.
 ### Follow-up work (to land in subsequent PRs)
 
 1. ✅ T33, T34, T42, T45a/T45b, T56 landed in `directory.sortKey.spec.ts`.
-2. Add T50–T54 rollback tests to `directory.rollback.spec.ts`.
+2. ✅ T50, T51, T52, T53, T54a, T54b, T54c landed in `directory.rollback.spec.ts`
+   (new "Sort-key operations" describe block). T54 was split into three
+   sub-cases to mirror T50-T52 as the plan's "mirrors T50-52" language intends.
 3. Add T58–T62 snapshot round-trip tests to `directory.snapshot.spec.ts`.
 4. Slice 11 fuzz extension to `directoryFuzzTests.spec.ts` +
    `directoryOracle.ts`.

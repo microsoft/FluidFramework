@@ -15,6 +15,8 @@ import {
 
 import { DirectoryFactory } from "../../directoryFactory.js";
 import type {
+	IDirectorySortKeyChanged,
+	IDirectorySubDirectorySortKeyChanged,
 	IDirectoryValueChanged,
 	ISharedDirectory,
 	IValueChanged,
@@ -1082,6 +1084,304 @@ describe("SharedDirectory rollback", () => {
 			assert(
 				sharedDirectory1.getSubDirectory("subdirA")?.getSubDirectory("subdirD") !== undefined,
 			);
+		});
+	});
+
+	describe("Sort-key operations", () => {
+		it("T50: rollback of setSortKey with no prior sort key reverts to unset", () => {
+			const { sharedDirectory, containerRuntimeFactory, containerRuntime } =
+				setupRollbackTest();
+			sharedDirectory.set("a", 1);
+			sharedDirectory.set("b", 2);
+			sharedDirectory.setSortKey("b", "Z");
+			containerRuntime.flush();
+			containerRuntimeFactory.processAllMessages();
+
+			const events: IDirectorySortKeyChanged[] = [];
+			sharedDirectory.on("sortKeyChanged", (changed: IDirectorySortKeyChanged) => {
+				events.push(changed);
+			});
+
+			sharedDirectory.setSortKey("a", "M");
+			assert.deepStrictEqual(
+				[...sharedDirectory.keysByOrder()],
+				["a", "b"],
+				"Pre-rollback: 'M' < 'Z', so sort-keyed a precedes sort-keyed b",
+			);
+			assert.strictEqual(events.length, 1, "One sortKeyChanged event pre-rollback");
+			assert.deepStrictEqual(events[0], {
+				key: "a",
+				sortKey: "M",
+				previousSortKey: undefined,
+				path: "/",
+			});
+
+			containerRuntime.rollback?.();
+
+			assert.deepStrictEqual(
+				[...sharedDirectory.keysByOrder()],
+				["b", "a"],
+				"Post-rollback: a falls to the unkeyed bucket after sort-keyed b",
+			);
+			assert.strictEqual(events.length, 2, "Rollback fires a reverting sortKeyChanged event");
+			assert.deepStrictEqual(events[1], {
+				key: "a",
+				sortKey: undefined,
+				previousSortKey: "M",
+				path: "/",
+			});
+		});
+
+		it("T51: rollback of setSortKey that replaced a prior sort key reverts to the prior value", () => {
+			const { sharedDirectory, containerRuntimeFactory, containerRuntime } =
+				setupRollbackTest();
+			sharedDirectory.set("a", 1);
+			sharedDirectory.set("b", 2);
+			sharedDirectory.setSortKey("a", "M");
+			sharedDirectory.setSortKey("b", "X");
+			containerRuntime.flush();
+			containerRuntimeFactory.processAllMessages();
+
+			const events: IDirectorySortKeyChanged[] = [];
+			sharedDirectory.on("sortKeyChanged", (changed: IDirectorySortKeyChanged) => {
+				events.push(changed);
+			});
+
+			sharedDirectory.setSortKey("a", "Z");
+			assert.deepStrictEqual(
+				[...sharedDirectory.keysByOrder()],
+				["b", "a"],
+				"Pre-rollback: 'X' < 'Z'",
+			);
+			assert.deepStrictEqual(events[0], {
+				key: "a",
+				sortKey: "Z",
+				previousSortKey: "M",
+				path: "/",
+			});
+
+			containerRuntime.rollback?.();
+
+			assert.deepStrictEqual(
+				[...sharedDirectory.keysByOrder()],
+				["a", "b"],
+				"Post-rollback: 'M' < 'X' again",
+			);
+			assert.strictEqual(events.length, 2);
+			assert.deepStrictEqual(events[1], {
+				key: "a",
+				sortKey: "M",
+				previousSortKey: "Z",
+				path: "/",
+			});
+		});
+
+		it("T52: rollback removes pending sort-key entries by reference identity, not by key", () => {
+			// Submit two pending setSortKey ops on the same key. Ack only the first one, then
+			// rollback. The ack must splice only the first pending entry (by identity). Rolling
+			// back the second must not also wipe the acked value.
+			const { sharedDirectory, containerRuntimeFactory, containerRuntime } =
+				setupRollbackTest();
+			sharedDirectory.set("a", 1);
+			containerRuntime.flush();
+			containerRuntimeFactory.processAllMessages();
+
+			const events: IDirectorySortKeyChanged[] = [];
+			sharedDirectory.on("sortKeyChanged", (changed: IDirectorySortKeyChanged) => {
+				events.push(changed);
+			});
+
+			sharedDirectory.setSortKey("a", "M");
+			sharedDirectory.setSortKey("a", "Z");
+			assert.strictEqual(events.length, 2, "Both setSortKey calls fire optimistic events");
+			assert.deepStrictEqual(events[0], {
+				key: "a",
+				sortKey: "M",
+				previousSortKey: undefined,
+				path: "/",
+			});
+			assert.deepStrictEqual(events[1], {
+				key: "a",
+				sortKey: "Z",
+				previousSortKey: "M",
+				path: "/",
+			});
+
+			// Flush and ack only the first op ("M"); the "Z" op stays pending.
+			containerRuntime.flushSomeMessages(1);
+			containerRuntimeFactory.processOneMessage();
+			assert.strictEqual(events.length, 2, "Local ack does not re-fire sortKeyChanged");
+
+			containerRuntime.rollback?.();
+
+			assert.strictEqual(events.length, 3, "Rollback fires one reverting event");
+			assert.deepStrictEqual(events[2], {
+				key: "a",
+				sortKey: "M",
+				previousSortKey: "Z",
+				path: "/",
+			});
+		});
+
+		it("T53: setSortKey while detached applies directly with no pending state to roll back", () => {
+			// Detached directories bypass the pending-state path — setSortKey writes straight to
+			// sequenced state. No containerRuntime exists, so rollback is trivially a no-op for
+			// anything done pre-attach.
+			const dataStoreRuntime = new MockFluidDataStoreRuntime();
+			const detached = directoryFactory.create(dataStoreRuntime, "detached-rollback-test");
+			detached.set("a", 1);
+			detached.set("b", 2);
+
+			const events: IDirectorySortKeyChanged[] = [];
+			detached.on("sortKeyChanged", (changed: IDirectorySortKeyChanged) => {
+				events.push(changed);
+			});
+
+			detached.setSortKey("a", "M");
+			assert.deepStrictEqual([...detached.keysByOrder()], ["a", "b"]);
+			assert.strictEqual(events.length, 1);
+			assert.deepStrictEqual(events[0], {
+				key: "a",
+				sortKey: "M",
+				previousSortKey: undefined,
+				path: "/",
+			});
+
+			detached.setSortKey("a", undefined);
+			assert.deepStrictEqual([...detached.keysByOrder()], ["a", "b"]);
+			assert.strictEqual(events.length, 2);
+			assert.deepStrictEqual(events[1], {
+				key: "a",
+				sortKey: undefined,
+				previousSortKey: "M",
+				path: "/",
+			});
+		});
+
+		it("T54a: rollback of setSubDirectorySortKey with no prior sort key reverts to unset", () => {
+			const { sharedDirectory, containerRuntimeFactory, containerRuntime } =
+				setupRollbackTest();
+			sharedDirectory.createSubDirectory("a");
+			sharedDirectory.createSubDirectory("b");
+			sharedDirectory.createSubDirectory("c");
+			sharedDirectory.setSubDirectorySortKey("c", "Z");
+			containerRuntime.flush();
+			containerRuntimeFactory.processAllMessages();
+
+			const events: IDirectorySubDirectorySortKeyChanged[] = [];
+			sharedDirectory.on(
+				"subDirectorySortKeyChanged",
+				(changed: IDirectorySubDirectorySortKeyChanged) => {
+					events.push(changed);
+				},
+			);
+
+			sharedDirectory.setSubDirectorySortKey("a", "M");
+			assert.deepStrictEqual(
+				[...sharedDirectory.subdirectoriesByOrder()].map(([name]) => name),
+				["a", "c", "b"],
+				"Pre-rollback: a (M) then c (Z) then unkeyed b",
+			);
+			assert.deepStrictEqual(events[0], {
+				subdirName: "a",
+				sortKey: "M",
+				previousSortKey: undefined,
+				path: "/",
+			});
+
+			containerRuntime.rollback?.();
+
+			assert.deepStrictEqual(
+				[...sharedDirectory.subdirectoriesByOrder()].map(([name]) => name),
+				["c", "a", "b"],
+				"Post-rollback: c (Z) then unkeyed a, b in seq-data order",
+			);
+			assert.strictEqual(events.length, 2);
+			assert.deepStrictEqual(events[1], {
+				subdirName: "a",
+				sortKey: undefined,
+				previousSortKey: "M",
+				path: "/",
+			});
+		});
+
+		it("T54b: rollback of setSubDirectorySortKey that replaced a prior sort key reverts to the prior value", () => {
+			const { sharedDirectory, containerRuntimeFactory, containerRuntime } =
+				setupRollbackTest();
+			sharedDirectory.createSubDirectory("a");
+			sharedDirectory.createSubDirectory("b");
+			sharedDirectory.setSubDirectorySortKey("a", "M");
+			sharedDirectory.setSubDirectorySortKey("b", "X");
+			containerRuntime.flush();
+			containerRuntimeFactory.processAllMessages();
+
+			const events: IDirectorySubDirectorySortKeyChanged[] = [];
+			sharedDirectory.on(
+				"subDirectorySortKeyChanged",
+				(changed: IDirectorySubDirectorySortKeyChanged) => {
+					events.push(changed);
+				},
+			);
+
+			sharedDirectory.setSubDirectorySortKey("a", "Z");
+			assert.deepStrictEqual(
+				[...sharedDirectory.subdirectoriesByOrder()].map(([name]) => name),
+				["b", "a"],
+				"Pre-rollback: 'X' < 'Z'",
+			);
+
+			containerRuntime.rollback?.();
+
+			assert.deepStrictEqual(
+				[...sharedDirectory.subdirectoriesByOrder()].map(([name]) => name),
+				["a", "b"],
+				"Post-rollback: 'M' < 'X' again",
+			);
+			assert.strictEqual(events.length, 2);
+			assert.deepStrictEqual(events[1], {
+				subdirName: "a",
+				sortKey: "M",
+				previousSortKey: "Z",
+				path: "/",
+			});
+		});
+
+		it("T54c: subdir sort-key rollback removes pending entries by reference identity", () => {
+			const { sharedDirectory, containerRuntimeFactory, containerRuntime } =
+				setupRollbackTest();
+			sharedDirectory.createSubDirectory("a");
+			containerRuntime.flush();
+			containerRuntimeFactory.processAllMessages();
+
+			const events: IDirectorySubDirectorySortKeyChanged[] = [];
+			sharedDirectory.on(
+				"subDirectorySortKeyChanged",
+				(changed: IDirectorySubDirectorySortKeyChanged) => {
+					events.push(changed);
+				},
+			);
+
+			sharedDirectory.setSubDirectorySortKey("a", "M");
+			sharedDirectory.setSubDirectorySortKey("a", "Z");
+			assert.strictEqual(events.length, 2);
+
+			containerRuntime.flushSomeMessages(1);
+			containerRuntimeFactory.processOneMessage();
+			assert.strictEqual(
+				events.length,
+				2,
+				"Local ack does not re-fire subDirectorySortKeyChanged",
+			);
+
+			containerRuntime.rollback?.();
+
+			assert.strictEqual(events.length, 3);
+			assert.deepStrictEqual(events[2], {
+				subdirName: "a",
+				sortKey: "M",
+				previousSortKey: "Z",
+				path: "/",
+			});
 		});
 	});
 
