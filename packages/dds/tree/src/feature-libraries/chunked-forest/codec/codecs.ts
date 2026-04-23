@@ -30,6 +30,7 @@ import {
 	EncodedFieldBatchV1,
 	EncodedFieldBatchV2,
 	FieldBatchFormatVersion,
+	supportsIncrementalEncoding,
 	type EncodedFieldBatchV1OrV2,
 } from "./format/index.js";
 import type { IncrementalEncodingPolicy } from "./incrementalEncodingPolicy.js";
@@ -147,7 +148,7 @@ function makeFieldBatchCodecForVersion(
 				}
 				case TreeCompressionStrategy.CompressedIncremental: {
 					assert(
-						version >= FieldBatchFormatVersion.v2,
+						supportsIncrementalEncoding(version),
 						0xca0 /* Unsupported FieldBatchFormatVersion for incremental encoding; must be v2 or higher */,
 					);
 					// Incremental encoding is only supported for CompressedIncremental.

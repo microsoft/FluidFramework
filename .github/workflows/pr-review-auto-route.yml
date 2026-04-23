@@ -1,0 +1,152 @@
+name: "PR Review Auto Router"
+
+# Automatically determines fleet size when a PR is opened, based on diff
+# size and complexity. Posts a confirmation comment with pre-checked reviewer
+# checkboxes so the author can review and confirm before the fleet runs.
+# Routing metadata (pr_number, head_sha, base_ref) is saved as an artifact
+# for the confirm workflow to retrieve; nothing machine-readable is embedded
+# in the comment body.
+#
+# Sizing thresholds:
+#   small  (1 reviewer) — ≤ 100 lines AND ≤ 5 files AND ≤ 1 package
+#   large  (5 reviewers) — > 500 lines OR > 30 files OR > 5 packages
+#   medium (3 reviewers) — everything else
+#
+# "Packages" = distinct top-level dirs under packages/, experimental/, examples/.
+#
+# If the PR already has the fleet-review label when it opens, this workflow
+# skips — the label dispatcher (pr-review-dispatch.yml) takes precedence.
+#
+# ── Security invariant ────────────────────────────────────────────────────────
+# This workflow runs on `pull_request_target` so the workflow definition comes
+# from the BASE branch (trusted) even for fork PRs. That means fork PRs get a
+# write token + secrets, which is ONLY safe if no PR-authored code is executed.
+# Preserve that invariant:
+#   - Do NOT set `ref: pull_request.head.sha` on actions/checkout — keep the
+#     default base-branch checkout so the working tree is trusted.
+#   - Fetch the PR head SHA for `git diff`, but consume only data (line counts,
+#     filenames) — never source or run anything from it.
+#   - Scripts invoked here must live under .github/scripts on the base branch.
+
+on:
+  pull_request_target:
+    types:
+      - opened
+      - reopened
+    branches:
+      - main
+      - next
+      - release/**/*
+
+permissions:
+  contents: read
+  pull-requests: write
+
+concurrency:
+  group: pr-review-auto-route-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  route:
+    name: "Compute fleet size"
+    # Yield to manual dispatch if the fleet-review label is already on the PR.
+    if: "!contains(github.event.pull_request.labels.*.name, 'fleet-review')"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout base branch
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # ratchet:actions/checkout@v6
+        with:
+          # Default ref under pull_request_target is the base branch — trusted.
+          # Do NOT change to pull_request.head.sha (see security invariant above).
+          fetch-depth: 0
+
+      - name: Fetch PR head for diff
+        env:
+          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          # Fetch the PR head commit without checking it out so we can diff
+          # against it without bringing PR-authored files into the working tree.
+          git fetch --no-tags origin "${PR_HEAD_SHA}"
+
+      - name: Compute PR metrics
+        id: metrics
+        env:
+          BASE_REF: ${{ github.base_ref }}
+          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          git diff "origin/${BASE_REF}...${PR_HEAD_SHA}" --numstat > /tmp/numstat.txt
+
+          # Lines changed: insertions + deletions, ignoring binary files (shown as '-' in numstat)
+          LINES=$(awk '$1 ~ /^[0-9]+$/ && $2 ~ /^[0-9]+$/ {sum+=$1+$2} END{print sum+0}' /tmp/numstat.txt)
+          FILES=$(wc -l < /tmp/numstat.txt | tr -d ' ')
+
+          # Distinct packages touched (top-level dirs under packages/, experimental/, examples/)
+          PACKAGES=$(awk '{print $3}' /tmp/numstat.txt \
+            | grep -E '^(packages|experimental|examples)/' \
+            | cut -d/ -f2 | sort -u | wc -l | tr -d ' ')
+
+          echo "lines=$LINES"       >> "$GITHUB_OUTPUT"
+          echo "files=$FILES"       >> "$GITHUB_OUTPUT"
+          echo "packages=$PACKAGES" >> "$GITHUB_OUTPUT"
+          echo "Metrics: lines=${LINES} files=${FILES} packages=${PACKAGES}"
+
+      - name: Determine fleet size
+        id: size
+        env:
+          LINES: ${{ steps.metrics.outputs.lines }}
+          FILES: ${{ steps.metrics.outputs.files }}
+          PACKAGES: ${{ steps.metrics.outputs.packages }}
+        run: |
+          if [ "$LINES" -le 100 ] && [ "$FILES" -le 5 ] && [ "$PACKAGES" -le 1 ]; then
+            COUNT=1
+            TIER=small
+          elif [ "$LINES" -gt 500 ] || [ "$FILES" -gt 30 ] || [ "$PACKAGES" -gt 5 ]; then
+            COUNT=5
+            TIER=large
+          else
+            COUNT=3
+            TIER=medium
+          fi
+          echo "reviewer_count=$COUNT" >> "$GITHUB_OUTPUT"
+          echo "Routing to ${TIER} fleet (${COUNT} reviewer(s))"
+
+      - name: Build confirmation comment
+        env:
+          REVIEWER_COUNT: ${{ steps.size.outputs.reviewer_count }}
+          LINES: ${{ steps.metrics.outputs.lines }}
+          FILES: ${{ steps.metrics.outputs.files }}
+        run: |
+          python3 .github/scripts/pr_review_propose.py build-comment \
+            --reviewer-count "$REVIEWER_COUNT" \
+            --lines "$LINES" \
+            --files "$FILES" \
+            > /tmp/confirm-body.md
+          echo "Comment body:"
+          cat /tmp/confirm-body.md
+
+      - name: Post confirmation comment
+        # release notes: https://github.com/marocchino/sticky-pull-request-comment/releases/tag/v2.9.4
+        uses: marocchino/sticky-pull-request-comment@773744901bac0e8cbb5a0dc842800d45e9b2b405 # ratchet:marocchino/sticky-pull-request-comment@v2
+        with:
+          header: pr-review-confirm
+          path: /tmp/confirm-body.md
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Save pending metadata
+        env:
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          BASE_REF: ${{ github.base_ref }}
+        run: |
+          mkdir -p pending
+          printf '{\n  "pr_number": %s,\n  "head_sha": "%s",\n  "base_ref": "%s"\n}\n' \
+            "$PR_NUMBER" "$HEAD_SHA" "$BASE_REF" \
+            > pending/pending.json
+          cat pending/pending.json
+
+      - name: Upload pending metadata
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # ratchet:actions/upload-artifact@v7
+        with:
+          name: pr-review-pending
+          path: pending/pending.json
+          retention-days: 14
