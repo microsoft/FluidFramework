@@ -145,7 +145,6 @@ export function createResponseError(
  * @legacy @alpha
  */
 export function asLegacyAlpha(runtime: IContainerRuntimeBase): ContainerRuntimeBaseAlpha;
-
 /**
  * Converts types to their alpha counterparts to expose alpha functionality.
  * @legacy @alpha

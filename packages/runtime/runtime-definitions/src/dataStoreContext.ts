@@ -195,10 +195,16 @@ export interface StageControls {
 	 * Exit staging mode and commit to any changes made while in staging mode.
 	 * This will cause them to be sent to the ordering service, and subsequent changes
 	 * made by this container will additionally flow freely to the ordering service.
+	 *
+	 * @remarks
+	 * Squash-rebase semantics during commit are not yet fully specified.
 	 */
 	readonly commitChanges: () => void;
 	/**
 	 * Exit staging mode and discard any changes made while in staging mode.
+	 *
+	 * @remarks
+	 * DDS rollback support may be incomplete — this may throw for some DDS implementations.
 	 */
 	readonly discardChanges: () => void;
 }
@@ -318,9 +324,15 @@ export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeB
 	 * Enter Staging Mode, such that ops submitted to the ContainerRuntime will not be sent to the ordering service.
 	 * To exit Staging Mode, call either discardChanges or commitChanges on the Stage Controls returned from this method.
 	 *
+	 * @remarks
+	 * Known limitations:
+	 * - DDS rollback support may be incomplete — {@link StageControls.discardChanges} may throw for some DDS implementations.
+	 * - Squash-rebase semantics during {@link StageControls.commitChanges} are not yet fully specified.
+	 *
 	 * @returns Controls for committing or discarding staged changes.
 	 */
 	enterStagingMode(): StageControls;
+
 	/**
 	 * If true, the ContainerRuntime is not submitting any new ops to the ordering service.
 	 * Ops submitted to the ContainerRuntime while in Staging Mode will be queued in the PendingStateManager,
@@ -348,6 +360,8 @@ export interface IFluidDataStorePolicies {
 	 * (e.g., `ConsensusRegisterCollection`, `ConsensusQueue`, `TaskManager`) won't resolve their promises until
 	 * staging mode exits. Set this to `true` for data stores that depend on consensus acknowledgments
 	 * to prevent modifications that would leave the data store in an unresponsive state.
+	 *
+	 * This provides a best-effort readonly appearance, but no strict enforcement.
 	 *
 	 * @see {@link IContainerRuntimeBase.enterStagingMode}
 	 */

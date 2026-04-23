@@ -424,9 +424,7 @@ export class FluidDataStoreRuntime
 			properties: {
 				all: { dataStoreId: uuid(), dataStoreVersion: pkgVersion },
 				error: {
-					// MonitoringContext accesses inStagingMode when containerRuntime is undefined,
-					// causing a TypeError. Adding optional chaining prevents this
-					inStagingMode: () => this.dataStoreContext.containerRuntime?.inStagingMode,
+					inStagingMode: () => this.inStagingMode,
 					isDirty: () => this.isDirty,
 				},
 			},
