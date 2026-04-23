@@ -145,7 +145,7 @@ describe("generate:buildVersion", () => {
 			"--build",
 			"12345",
 			"--fileVersion",
-			"0.5.2002",
+			"0.5.2003",
 			"--tag",
 			"build-tools",
 			"--release",
@@ -154,7 +154,7 @@ describe("generate:buildVersion", () => {
 			...test_tags,
 		])
 		.it("outputs isLatest=true when release is release", (ctx) => {
-			stdoutLineEquals(ctx.stdout, 0, "version=0.5.2002");
+			stdoutLineEquals(ctx.stdout, 0, "version=0.5.2003");
 			stdoutLineEquals(ctx.stdout, 3, "isLatest=true");
 		});
 
@@ -165,7 +165,7 @@ describe("generate:buildVersion", () => {
 			"--build",
 			"12345",
 			"--fileVersion",
-			"0.5.2002",
+			"0.5.2003",
 			"--tag",
 			"build-tools",
 			"--release",
@@ -174,7 +174,7 @@ describe("generate:buildVersion", () => {
 			...test_tags,
 		])
 		.it("outputs isLatest=false when release is prerelease", (ctx) => {
-			stdoutLineEquals(ctx.stdout, 0, "version=0.5.2002-12345");
+			stdoutLineEquals(ctx.stdout, 0, "version=0.5.2003-12345");
 			stdoutLineEquals(ctx.stdout, 3, "isLatest=false");
 		});
 
@@ -188,14 +188,14 @@ describe("generate:buildVersion", () => {
 			"--build",
 			"12345",
 			"--fileVersion",
-			"0.5.2002",
+			"0.5.2003",
 			"--tag",
 			"build-tools",
 			"--tags",
 			...test_tags,
 		])
 		.it("reads release setting from env variable", (ctx) => {
-			stdoutLineEquals(ctx.stdout, 0, "version=0.5.2002");
+			stdoutLineEquals(ctx.stdout, 0, "version=0.5.2003");
 			stdoutLineEquals(ctx.stdout, 3, "isLatest=true");
 		});
 
@@ -209,14 +209,14 @@ describe("generate:buildVersion", () => {
 			"--build",
 			"12345",
 			"--fileVersion",
-			"0.5.2002",
+			"0.5.2003",
 			"--release",
 			"release",
 			"--tags",
 			...test_tags,
 		])
 		.it("reads tag name from env variable", (ctx) => {
-			stdoutLineEquals(ctx.stdout, 0, "version=0.5.2002");
+			stdoutLineEquals(ctx.stdout, 0, "version=0.5.2003");
 			stdoutLineEquals(ctx.stdout, 3, "isLatest=true");
 		});
 
@@ -375,6 +375,7 @@ describe("generate:buildVersion", () => {
 			"client_v1.2.5",
 			"client_v1.2.6",
 			"client_v1.2.7",
+			"client_v1.3.0",
 			"client_v2.0.0-internal.1.0.0",
 			"client_v2.0.0-internal.1.0.1",
 			"client_v2.0.0-internal.1.1.0",
@@ -470,9 +471,9 @@ describe("generate:buildVersion", () => {
 			VERSION_INCLUDE_INTERNAL_VERSIONS: "False",
 		})
 		.stdout()
-		.command(["generate:buildVersion", "--fileVersion", "2.0.0", "--tags", ...test_tags])
+		.command(["generate:buildVersion", "--fileVersion", "2.0.3", "--tags", ...test_tags])
 		.it("2.0 version, release", (ctx) => {
-			stdoutLineEquals(ctx.stdout, 0, "version=2.0.0");
+			stdoutLineEquals(ctx.stdout, 0, "version=2.0.3");
 			stdoutLineEquals(ctx.stdout, 3, "isLatest=false");
 		});
 
@@ -485,9 +486,9 @@ describe("generate:buildVersion", () => {
 			VERSION_INCLUDE_INTERNAL_VERSIONS: "False",
 		})
 		.stdout()
-		.command(["generate:buildVersion", "--fileVersion", "2.0.0", "--tags", ...test_tags])
+		.command(["generate:buildVersion", "--fileVersion", "2.0.3", "--tags", ...test_tags])
 		.it("2.0 version, prerelease", (ctx) => {
-			stdoutLineEquals(ctx.stdout, 0, "version=2.0.0-212045");
+			stdoutLineEquals(ctx.stdout, 0, "version=2.0.3-212045");
 			stdoutLineEquals(ctx.stdout, 3, "isLatest=false");
 		});
 
@@ -500,7 +501,7 @@ describe("generate:buildVersion", () => {
 			VERSION_INCLUDE_INTERNAL_VERSIONS: "False",
 		})
 		.stdout()
-		.command(["generate:buildVersion", "--fileVersion", "2.0.0", "--tags", ...test_tags])
+		.command(["generate:buildVersion", "--fileVersion", "2.0.3", "--tags", ...test_tags])
 		.it("2.0 version, test", (ctx) => {
 			stdoutLineEquals(ctx.stdout, 2, "version=0.0.0-212045-test");
 			stdoutLineEquals(ctx.stdout, 5, "isLatest=false");

@@ -141,6 +141,7 @@ interface IVerifyTokenOptions {
 	enableTokenCache: boolean;
 	tokenCache: ICache | undefined;
 	revokedTokenChecker: IRevokedTokenChecker | undefined;
+	requiredScopes?: ScopeType[];
 }
 
 /**
@@ -183,6 +184,15 @@ export async function verifyToken(
 	const logProperties = getLumberBaseProperties(documentId, tenantId);
 	try {
 		const claims = validateTokenClaims(token, documentId, tenantId, options.requireDocumentId);
+
+		if (options.requiredScopes && options.requiredScopes.length > 0) {
+			const hasAllScopes = options.requiredScopes.every(
+				(scope) => claims.scopes?.includes(scope),
+			);
+			if (!hasAllScopes) {
+				throw new NetworkError(403, "Insufficient token scopes.");
+			}
+		}
 		if (options.requireTokenExpiryCheck) {
 			let maxTokenLifetimeSec = options.maxTokenLifetimeSec;
 			if (!maxTokenLifetimeSec) {

@@ -103,8 +103,12 @@ export default class GenerateBuildVersionCommand extends BaseCommand<
 
 		if (!useSimplePatchVersion && flags.tag !== undefined) {
 			const tagName = `${flags.tag}_v${fileVersion}`;
-			const out = childProcess.execSync(`git tag -l ${tagName}`, { encoding: "utf8" });
-			if (out.trim() === tagName) {
+			const tagExists =
+				flags.tags === undefined
+					? childProcess.execSync(`git tag -l ${tagName}`, { encoding: "utf8" }).trim() ===
+						tagName
+					: flags.tags.includes(tagName);
+			if (tagExists) {
 				if (isRelease) {
 					this.error(`Tag ${tagName} already exists.`);
 				}
