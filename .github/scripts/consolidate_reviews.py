@@ -284,9 +284,14 @@ def main(argv: list[str] | None = None) -> int:
     expected_reviewers = REVIEWERS.keys()
     if args.reviewers:
         try:
-            expected_reviewers = json.loads(args.reviewers)
+            parsed = json.loads(args.reviewers)
         except json.JSONDecodeError:
             print("Warning: --reviewers must be a valid JSON array, ignoring", file=sys.stderr)
+        else:
+            if isinstance(parsed, list):
+                expected_reviewers = parsed
+            else:
+                print("Warning: --reviewers must be a JSON array, ignoring", file=sys.stderr)
 
     # Collect findings from all reviewer files
     all_findings: list[Finding] = []

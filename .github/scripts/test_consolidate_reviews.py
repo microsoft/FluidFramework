@@ -461,6 +461,39 @@ class TestMain:
         assert output.exists()
         assert "Bug" in output.read_text()
 
+    def test_reviewers_flag_rejects_non_array(self, tmp_path: Path) -> None:
+        # A bare JSON string (e.g. forgotten brackets: --reviewers '"correctness"')
+        # must not be iterated char-by-char. Fall back to the default reviewer set.
+        review = tmp_path / "review-correctness.json"
+        review.write_text(
+            json.dumps(
+                {
+                    "findings": [
+                        {
+                            "severity": "HIGH",
+                            "location": "src/foo.ts:10",
+                            "description": "Bug",
+                            "fix": "Fix it",
+                        },
+                    ]
+                }
+            )
+        )
+        output = tmp_path / "report.md"
+        result = main(
+            [
+                str(tmp_path),
+                "https://example.com/run/1",
+                "-o",
+                str(output),
+                "--reviewers",
+                '"correctness"',
+            ]
+        )
+        assert result == 0
+        assert output.exists()
+        assert "Bug" in output.read_text()
+
     def test_all_skipped_exits_1_not_2(self, tmp_path: Path) -> None:
         # All files present but all invalid — must not look like a clean run
         for reviewer in [
