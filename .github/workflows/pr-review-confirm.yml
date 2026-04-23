@@ -211,16 +211,8 @@ jobs:
         run: |
           REVIEWER_CONTEXT=$(python3 .github/scripts/pr_review_propose.py build-qa-context "$SELECTED")
           export REVIEWER_CONTEXT
-
-          # Substitute placeholders via python — safe for multi-line values
-          # and arbitrary special characters in the user's reply.
-          python3 -c '
-          import os, sys
-          tmpl = open(sys.argv[1]).read()
-          tmpl = tmpl.replace("__REVIEWER_CONTEXT__", os.environ["REVIEWER_CONTEXT"])
-          tmpl = tmpl.replace("__REPLY__", os.environ["REPLY"])
-          sys.stdout.write(tmpl)
-          ' .github/prompts/pr-review-qa.md > /tmp/qa-prompt.md
+          python3 .github/scripts/pr_review_propose.py render-qa-prompt \
+            .github/prompts/pr-review-qa.md > /tmp/qa-prompt.md
 
           copilot \
             -p "$(cat /tmp/qa-prompt.md)" \

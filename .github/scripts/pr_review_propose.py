@@ -6,18 +6,21 @@ Subcommands:
   parse-checkboxes Read a comment body file and emit the checked reviewer IDs as JSON.
   format-names     Convert a JSON reviewer-ID array to a display-name string.
   build-qa-context Build the reviewer-plan context string for Copilot Q&A.
+  render-qa-prompt Render the Q&A prompt template with REVIEWER_CONTEXT/REPLY from env.
 
 Usage:
   python pr_review_propose.py build-comment --reviewer-count 3 --lines 247 --files 8
   python pr_review_propose.py parse-checkboxes comment.txt
   python pr_review_propose.py format-names '["correctness","security"]'
   python pr_review_propose.py build-qa-context '["correctness","security"]'
+  REVIEWER_CONTEXT=... REPLY=... python pr_review_propose.py render-qa-prompt path/to/qa.md
 """
 
 from __future__ import annotations
 
 import argparse
 import json
+import os
 import re
 import sys
 from typing import NamedTuple
@@ -117,6 +120,19 @@ def cmd_build_qa_context(args: argparse.Namespace) -> None:
     print("\n".join(lines))
 
 
+def cmd_render_qa_prompt(args: argparse.Namespace) -> None:
+    """Substitute __REVIEWER_CONTEXT__ and __REPLY__ in a template and write to stdout.
+
+    Values are read from the REVIEWER_CONTEXT and REPLY environment variables,
+    which safely carry multi-line content and arbitrary special characters.
+    """
+    with open(args.template, encoding="utf-8") as f:
+        rendered = f.read()
+    rendered = rendered.replace("__REVIEWER_CONTEXT__", os.environ.get("REVIEWER_CONTEXT", ""))
+    rendered = rendered.replace("__REPLY__", os.environ.get("REPLY", ""))
+    sys.stdout.write(rendered)
+
+
 # ── CLI wiring ────────────────────────────────────────────────────────────────
 
 
@@ -152,6 +168,13 @@ def _build_parser() -> argparse.ArgumentParser:
         "selected_json", help="JSON array of currently selected reviewer IDs"
     )
     p.set_defaults(func=cmd_build_qa_context)
+
+    p = sub.add_parser(
+        "render-qa-prompt",
+        help="Render Q&A prompt template (REVIEWER_CONTEXT and REPLY read from env)",
+    )
+    p.add_argument("template", help="Path to the Q&A prompt template file")
+    p.set_defaults(func=cmd_render_qa_prompt)
 
     return parser
 

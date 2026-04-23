@@ -18,6 +18,7 @@ from pr_review_propose import (
     cmd_build_qa_context,
     cmd_format_names,
     cmd_parse_checkboxes,
+    cmd_render_qa_prompt,
     get_selected,
 )
 
@@ -298,6 +299,76 @@ class TestBuildQAContext:
             assert r.description in out
 
 
+# ── render-qa-prompt ─────────────────────────────────────────────────────────
+
+
+class TestRenderQAPrompt:
+    def test_substitutes_both_placeholders(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+        capsys: pytest.CaptureFixture[str],
+        tmp_path: Path,
+    ) -> None:
+        tmpl = tmp_path / "qa.md"
+        tmpl.write_text("ctx=__REVIEWER_CONTEXT__\nreply=__REPLY__\n")
+        monkeypatch.setenv("REVIEWER_CONTEXT", "ctx-value")
+        monkeypatch.setenv("REPLY", "reply-value")
+        cmd_render_qa_prompt(_ns(template=str(tmpl)))
+        out = capsys.readouterr().out
+        assert out == "ctx=ctx-value\nreply=reply-value\n"
+
+    def test_preserves_multiline_reviewer_context(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+        capsys: pytest.CaptureFixture[str],
+        tmp_path: Path,
+    ) -> None:
+        tmpl = tmp_path / "qa.md"
+        tmpl.write_text("before\n__REVIEWER_CONTEXT__\nafter\n")
+        monkeypatch.setenv("REVIEWER_CONTEXT", "line1\nline2\nline3")
+        monkeypatch.setenv("REPLY", "")
+        cmd_render_qa_prompt(_ns(template=str(tmpl)))
+        out = capsys.readouterr().out
+        assert out == "before\nline1\nline2\nline3\nafter\n"
+
+    def test_preserves_special_characters_in_reply(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+        capsys: pytest.CaptureFixture[str],
+        tmp_path: Path,
+    ) -> None:
+        tmpl = tmp_path / "qa.md"
+        tmpl.write_text("__REPLY__")
+        reply = 'quotes " \' backtick ` backslash \\ pipe | amp & dollar $ ✓'
+        monkeypatch.setenv("REVIEWER_CONTEXT", "")
+        monkeypatch.setenv("REPLY", reply)
+        cmd_render_qa_prompt(_ns(template=str(tmpl)))
+        assert capsys.readouterr().out == reply
+
+    def test_missing_env_vars_substitute_empty_string(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+        capsys: pytest.CaptureFixture[str],
+        tmp_path: Path,
+    ) -> None:
+        tmpl = tmp_path / "qa.md"
+        tmpl.write_text("[__REVIEWER_CONTEXT__][__REPLY__]")
+        monkeypatch.delenv("REVIEWER_CONTEXT", raising=False)
+        monkeypatch.delenv("REPLY", raising=False)
+        cmd_render_qa_prompt(_ns(template=str(tmpl)))
+        assert capsys.readouterr().out == "[][]"
+
+    def test_missing_template_raises_file_not_found(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+        tmp_path: Path,
+    ) -> None:
+        monkeypatch.setenv("REVIEWER_CONTEXT", "")
+        monkeypatch.setenv("REPLY", "")
+        with pytest.raises(FileNotFoundError):
+            cmd_render_qa_prompt(_ns(template=str(tmp_path / "does-not-exist.md")))
+
+
 # ── CLI wiring ───────────────────────────────────────────────────────────────
 # These tests round-trip through `main()` so a bug in `_build_parser`'s
 # `set_defaults(func=...)` wiring (e.g., a subcommand pointing at the wrong
@@ -389,3 +460,21 @@ class TestCLI:
         out = capsys.readouterr().out
         assert "✓ Correctness" in out
         assert "○ Security" in out
+
+    def test_render_qa_prompt_via_cli(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+        capsys: pytest.CaptureFixture[str],
+        tmp_path: Path,
+    ) -> None:
+        from pr_review_propose import main
+
+        tmpl = tmp_path / "qa.md"
+        tmpl.write_text("ctx=__REVIEWER_CONTEXT__ reply=__REPLY__")
+        monkeypatch.setenv("REVIEWER_CONTEXT", "C")
+        monkeypatch.setenv("REPLY", "R")
+        monkeypatch.setattr(
+            "sys.argv", ["pr_review_propose.py", "render-qa-prompt", str(tmpl)]
+        )
+        main()
+        assert capsys.readouterr().out == "ctx=C reply=R"
