@@ -4,4 +4,78 @@
 
 ```ts
 
+export { Arg }
+
+export { ArgsTuple }
+
+export { buildFunc }
+
+export { Ctor }
+
+export { ExposedMethods }
+
+export { ExposedProperties }
+
+export { exposeMethodsSymbol }
+
+export { exposePropertiesSymbol }
+
+export { FunctionDef }
+
+export { IExposedMethods }
+
+export { IExposedProperties }
+
+export { isTypeFactoryType }
+
+export { MethodKeys }
+
+export { TypeFactoryArray }
+
+export { TypeFactoryBoolean }
+
+export { TypeFactoryDate }
+
+export { TypeFactoryFunction }
+
+export { TypeFactoryFunctionParameter }
+
+export { TypeFactoryInstanceOf }
+
+export { TypeFactoryIntersection }
+
+export { TypeFactoryLiteral }
+
+export { TypeFactoryMap }
+
+export { TypeFactoryNull }
+
+export { TypeFactoryNumber }
+
+export { TypeFactoryObject }
+
+export { TypeFactoryOptional }
+
+export { TypeFactoryPromise }
+
+export { TypeFactoryReadonly }
+
+export { TypeFactoryRecord }
+
+export { TypeFactoryString }
+
+export { TypeFactoryTuple }
+
+export { TypeFactoryType }
+
+export { TypeFactoryTypeKind }
+
+export { TypeFactoryUndefined }
+
+export { TypeFactoryUnion }
+
+export { TypeFactoryUnknown }
+
+export { TypeFactoryVoid }
+
 ```

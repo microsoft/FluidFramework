@@ -186,11 +186,23 @@ class TextNode
 			});
 		}
 	}
+	/**
+	 * Returns the character string at the given atom index, or `undefined` if out of bounds.
+	 * Line atoms expand to `"\n"`; text atoms return their underlying code point(s).
+	 */
+	private atomChar(i: number): string | undefined {
+		const atom = this.content[i];
+		if (atom === undefined) return undefined;
+		return atom.content instanceof FormattedTextAsTree.StringLineAtom
+			? "\n"
+			: atom.content.content;
+	}
+
 	public onCharactersChanged(
 		callback: (ops: readonly TextAsTree.TextOp[] | undefined) => void,
 	): () => void {
 		return TreeAlpha.on(this.content, "nodeChanged", ({ delta }) =>
-			processCharactersChangedDelta(delta, (i) => this.content[i]?.content.content, callback),
+			processCharactersChangedDelta(delta, (i) => this.atomChar(i), callback),
 		);
 	}
 
@@ -198,7 +210,7 @@ class TextNode
 		callback: (ops: readonly TextAsTree.TextOp[] | undefined) => void,
 	): () => void {
 		return TreeAlpha.on(this.content, "treeChanged", ({ delta }) =>
-			processCharactersChangedDelta(delta, (i) => this.content[i]?.content.content, callback),
+			processCharactersChangedDelta(delta, (i) => this.atomChar(i), callback),
 		);
 	}
 

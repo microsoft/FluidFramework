@@ -234,7 +234,9 @@ export function processCharactersChangedDelta(
 			);
 			readPos += op.count;
 		} else if (op.type === "insert") {
-			let text = "";
+			// Accumulate into an array and join at the end to keep this O(n) for large inserts
+			// (paste of long text) instead of O(n^2) from repeated string concatenation.
+			const chars: string[] = [];
 			for (let i = 0; i < op.count; i++) {
 				const ch = getChar(readPos);
 				if (ch === undefined) {
@@ -242,10 +244,10 @@ export function processCharactersChangedDelta(
 					callback(undefined);
 					return;
 				}
-				text += ch;
+				chars.push(ch);
 				readPos++;
 			}
-			ops.push({ type: "insert", text });
+			ops.push({ type: "insert", text: chars.join("") });
 		} else {
 			// Construct explicit remove op so internal fields on the source op don't leak.
 			ops.push({ type: "remove", count: op.count });
