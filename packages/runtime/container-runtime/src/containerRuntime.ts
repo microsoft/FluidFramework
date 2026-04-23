@@ -671,14 +671,16 @@ export function isUnpackedRuntimeMessage(message: ISequencedDocumentMessage): bo
  */
 export const agentSchedulerId = "_scheduler";
 
-// safely check navigator and get the hardware spec value
+// Get hardware spec values from the runtime environment. Requires `navigator` (browser or Node 22+).
 export function getDeviceSpec(): {
 	deviceMemory?: number | undefined;
 	hardwareConcurrency?: number | undefined;
 } {
+	// `deviceMemory` is only available in browsers and isn't part of the `Navigator` type definition.
+	// In Node 22+ it is `undefined`.
+	const navigatorWithDeviceMemory = navigator as Navigator & { deviceMemory?: number };
 	return {
-		// deviceMemory is only available in browsers and is not part of the Navigator type definition. In Node 22 it is undefined.
-		deviceMemory: (navigator as Navigator & { deviceMemory?: number }).deviceMemory,
+		deviceMemory: navigatorWithDeviceMemory.deviceMemory,
 		hardwareConcurrency: navigator.hardwareConcurrency,
 	};
 }

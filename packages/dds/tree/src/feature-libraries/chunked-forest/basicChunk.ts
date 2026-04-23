@@ -178,13 +178,13 @@ export class BasicChunkCursor extends SynchronousCursor implements ChunkedCursor
 	 * their length should always equal the number of node levels traversed.
 	 */
 	private assertChunkStacksMatchNodeDepth(): void {
-		const halfHeight = this.getNodeOnlyHeightFromHeight();
+		const nodeDepth = this.getNodeOnlyHeightFromHeight();
 		assert(
-			this.indexOfChunkStack.length === halfHeight,
+			this.indexOfChunkStack.length === nodeDepth,
 			0x51c /* unexpected indexOfChunkStack */,
 		);
 		assert(
-			this.indexWithinChunkStack.length === halfHeight,
+			this.indexWithinChunkStack.length === nodeDepth,
 			0x51d /* unexpected indexWithinChunkStack */,
 		);
 	}
@@ -199,8 +199,9 @@ export class BasicChunkCursor extends SynchronousCursor implements ChunkedCursor
 
 	private getStackedFieldKey(height: number): FieldKey {
 		assert(height % 2 === 0, 0x51f /* must field height */);
-		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		return this.siblingStack[height]![this.indexStack[height]!] as FieldKey;
+		const siblingsAtHeight = this.siblingStack[height] ?? oob();
+		const indexAtHeight = this.indexStack[height] ?? oob();
+		return (siblingsAtHeight as readonly FieldKey[])[indexAtHeight] ?? oob();
 	}
 
 	private getStackedNodeIndex(height: number): number {
