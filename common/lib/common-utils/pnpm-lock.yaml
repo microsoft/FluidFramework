@@ -50,7 +50,7 @@ importers:
         specifier: ^3.1.0
         version: 3.3.0
       lodash:
-        specifier: ^4.17.21
+        specifier: ^4.18.1
         version: 4.18.1
       sha.js:
         specifier: ^2.4.12
@@ -749,7 +749,7 @@ packages:
     resolution: {integrity: sha512-cae7mzluplsjSdgFA6ACLygb5jC8alO0UUnFPyu0E7tNRPrL+q/f8VcSXp+cjZQ7l5CMpDpi2G1+IQvkOiL1Lw==}
     engines: {node: '>=23.5.0 || ^22.13.0 || ^21.7.0 || ^20.12.0'}
     peerDependencies:
-      '@types/node': ~20.19.30
+      '@types/node': '>=18'
     peerDependenciesMeta:
       '@types/node':
         optional: true

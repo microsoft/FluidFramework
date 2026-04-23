@@ -6529,7 +6529,7 @@ importers:
         specifier: ^3.2.2
         version: 3.2.6
       lodash:
-        specifier: ^4.17.21
+        specifier: ^4.18.1
         version: 4.18.1
       semver:
         specifier: ^7.7.1
@@ -6623,7 +6623,7 @@ importers:
         specifier: npm:events@^3.1.0
         version: events@3.3.0
       lodash:
-        specifier: ^4.17.21
+        specifier: ^4.18.1
         version: 4.18.1
       murmurhash3js:
         specifier: 3.0.1
@@ -6753,7 +6753,7 @@ importers:
         specifier: ^6.0.3
         version: 6.0.3
       lodash:
-        specifier: ^4.17.21
+        specifier: ^4.18.1
         version: 4.18.1
       lz4js:
         specifier: ^0.2.0
@@ -6874,7 +6874,7 @@ importers:
         specifier: ^3.2.2
         version: 3.2.6
       lodash:
-        specifier: ^4.17.21
+        specifier: ^4.18.1
         version: 4.18.1
       semver:
         specifier: ^7.7.1
