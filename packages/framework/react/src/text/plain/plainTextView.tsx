@@ -44,22 +44,25 @@ const PlainTextEditorView: FC<{ root: TextAsTree.Tree }> = ({ root }) => {
 
 			isUpdatingRef.current = true;
 			try {
+				const textarea = textareaRef.current;
+				let newValue: string;
+				let newCursorStart: number | undefined;
+				let newCursorEnd: number | undefined;
 				if (ops === undefined) {
 					// Delta unavailable — fall back to full re-read.
-					textareaRef.current.value = root.fullString();
+					newValue = root.fullString();
 				} else {
 					// Apply ops incrementally to avoid a full O(N) re-read.
-					const textarea = textareaRef.current;
 					const selectionStart = textarea.selectionStart;
 					const selectionEnd = textarea.selectionEnd;
 
-					let newValue = "";
 					// readPos is a UTF-16 code-unit index into oldValue.
 					// op.count is in Unicode code points; we convert via utf16LengthForCodePoints.
 					let readPos = 0;
 					const oldValue = textarea.value;
-					let newCursorStart = selectionStart;
-					let newCursorEnd = selectionEnd;
+					newValue = "";
+					newCursorStart = selectionStart;
+					newCursorEnd = selectionEnd;
 
 					for (const op of ops) {
 						if (op.type === "retain") {
@@ -97,8 +100,13 @@ const PlainTextEditorView: FC<{ root: TextAsTree.Tree }> = ({ root }) => {
 
 					// Append any tail not covered by ops (e.g. trailing retained content).
 					newValue += oldValue.slice(readPos);
-
-					textarea.value = newValue;
+				}
+				textarea.value = newValue;
+				// Keep the DOM's child text node in sync with `.value` so queries like
+				// `element.textContent` (used in tests / by external observers) reflect current
+				// content rather than the initial value baked in from `defaultValue`.
+				textarea.textContent = newValue;
+				if (newCursorStart !== undefined && newCursorEnd !== undefined) {
 					const clampedStart = Math.min(newCursorStart, newValue.length);
 					const clampedEnd = Math.min(newCursorEnd, newValue.length);
 					textarea.setSelectionRange(clampedStart, clampedEnd);
