@@ -235,6 +235,7 @@ export async function verifyToken(
 	token: string,
 	tenantManager: ITenantManager,
 	options: IVerifyTokenOptions,
+	requiredScopes?: string[],
 ): Promise<void> {
 	if (options.requireDocumentId && !documentId) {
 		throw new NetworkError(403, "Missing documentId.");
@@ -265,6 +266,18 @@ export async function verifyToken(
 			);
 			if (isTokenRevoked) {
 				throw new NetworkError(403, "Permission denied. Access token has been revoked.");
+			}
+		}
+
+		if (requiredScopes) {
+			const hasAllRequiredScopes = requiredScopes.every((scope) =>
+				claims.scopes.includes(scope),
+			);
+			if (!hasAllRequiredScopes) {
+				throw new NetworkError(
+					403,
+					`Permission denied. Insufficient scopes. Required scopes: ${requiredScopes}`,
+				);
 			}
 		}
 
