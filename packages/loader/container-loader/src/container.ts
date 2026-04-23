@@ -1104,6 +1104,8 @@ export class Container
 						eventName: "ContainerDispose",
 						// Only log error if container isn't closed
 						category: !this.closed && error !== undefined ? "error" : "generic",
+						isDirty: this.isDirty,
+						lastSequenceNumber: this._deltaManager.lastSequenceNumber,
 					},
 					error,
 				);

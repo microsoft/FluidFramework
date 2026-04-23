@@ -57,6 +57,7 @@ import type {
 	ITelemetryBaseLogger,
 	Listenable,
 } from "@fluidframework/core-interfaces";
+import { LogLevel } from "@fluidframework/core-interfaces";
 import type {
 	IFluidHandleContext,
 	IFluidHandleInternal,
@@ -2405,6 +2406,7 @@ export class ContainerRuntime
 				attachState: this.attachState,
 			},
 			error,
+			LogLevel.info,
 		);
 
 		if (this.summaryManager !== undefined) {
