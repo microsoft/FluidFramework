@@ -131,7 +131,6 @@ import type {
 	IContainerRuntimeBaseInternal,
 	MinimumVersionForCollab,
 	ContainerExtensionExpectations,
-	ContainerRuntimeBaseAlpha,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	addBlobToSummary,
@@ -840,7 +839,7 @@ export async function loadContainerRuntime(
  * @legacy @alpha
  */
 export async function loadContainerRuntimeAlpha(params: LoadContainerRuntimeParams): Promise<{
-	runtime: IContainerRuntime & ContainerRuntimeBaseAlpha & IRuntime;
+	runtime: IContainerRuntime & IRuntime;
 }> {
 	return ContainerRuntime.loadRuntime2({
 		...params,

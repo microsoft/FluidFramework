@@ -386,6 +386,8 @@ export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDat
         attachState?: AttachState;
         registry?: readonly IChannelFactory[];
         minVersionForCollab?: MinimumVersionForCollab;
+        inStagingMode?: boolean;
+        isDirty?: boolean;
     });
     // (undocumented)
     get absolutePath(): string;
@@ -454,7 +456,11 @@ export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDat
     // (undocumented)
     ILayerCompatDetails?: unknown;
     // (undocumented)
+    readonly inStagingMode: boolean;
+    // (undocumented)
     get isAttached(): boolean;
+    // (undocumented)
+    readonly isDirty: boolean;
     // (undocumented)
     readonly isReadOnly: () => boolean;
     // (undocumented)

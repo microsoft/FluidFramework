@@ -6,7 +6,7 @@
 import type { IFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
 import { FluidObjectHandle } from "@fluidframework/datastore/internal";
 import type { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions/internal";
-import { isFluidHandle, asLegacyAlpha } from "@fluidframework/runtime-utils/internal";
+import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
 
 import type { ISharedObject } from "./types.js";
 
@@ -123,7 +123,7 @@ export class SharedObjectHandle
 		// We don't bind handles in staging mode to defer the attachment of any new objects
 		// until we've exited staging mode. This way if we discard changes or a new handle is not present in the final
 		// committed state, we will never end up attaching the discarded object.
-		if (asLegacyAlpha(this.runtime).inStagingMode === true) {
+		if (this.runtime.inStagingMode === true) {
 			return;
 		}
 
