@@ -407,7 +407,7 @@ const FormattedTextEditorView = forwardRef<
 
 	// Initialize Quill editor with formatting toolbar using Quill provided CSS
 	useEffect(() => {
-		if (!editorRef.current || quillRef.current){
+		if (!editorRef.current || quillRef.current) {
 			return;
 		}
 
