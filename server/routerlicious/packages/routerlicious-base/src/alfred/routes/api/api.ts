@@ -325,8 +325,9 @@ async function verifyTokenWrapper(
 		enableTokenCache: tokenCacheEnabled,
 		tokenCache,
 		revokedTokenChecker,
+		requiredScopes,
 	};
-	return verifyToken(tenantId, documentId, token, tenantManager, options, requiredScopes);
+	return verifyToken(tenantId, documentId, token, tenantManager, options);
 }
 
 async function checkDocumentExistence(

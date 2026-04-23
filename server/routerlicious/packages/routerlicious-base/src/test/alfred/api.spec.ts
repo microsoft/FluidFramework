@@ -883,6 +883,93 @@ describe("Routerlicious", () => {
 					supertest = request(app);
 				});
 
+				const spyProducerSend = Sinon.spy(defaultProducer, "send");
+
+				afterEach(() => {
+					spyProducerSend.resetHistory();
+				});
+
+				function createAppWithPatchRootConfig(
+					enableTokenExpiration: boolean,
+				): express.Application {
+					const restTenantThrottler = new TestThrottler(maxThrottlerLimit);
+					const restTenantGetDeltasThrottler = new TestThrottler(maxThrottlerLimit);
+					const restTenantCreateDocThrottler = new TestThrottler(maxThrottlerLimit);
+					const restTenantGetSessionThrottler = new TestThrottler(maxThrottlerLimit);
+					const throttlers = new Map<string, TestThrottler>();
+					throttlers.set(
+						Constants.generalRestCallThrottleIdPrefix,
+						restTenantThrottler,
+					);
+					throttlers.set(
+						Constants.getDeltasThrottleIdPrefix,
+						restTenantGetDeltasThrottler,
+					);
+					throttlers.set(
+						Constants.createDocThrottleIdPrefix,
+						restTenantCreateDocThrottler,
+					);
+					throttlers.set(
+						Constants.getSessionThrottleIdPrefix,
+						restTenantGetSessionThrottler,
+					);
+
+					const clusterThrottlers = new Map<string, TestThrottler>();
+					clusterThrottlers.set(
+						Constants.createDocThrottleIdPrefix,
+						new TestThrottler(maxThrottlerLimit),
+					);
+					clusterThrottlers.set(
+						Constants.getDeltasThrottleIdPrefix,
+						new TestThrottler(maxThrottlerLimit),
+					);
+					clusterThrottlers.set(
+						Constants.getSessionThrottleIdPrefix,
+						new TestThrottler(maxThrottlerLimit),
+					);
+
+					const provider = new nconf.Provider({}).defaults({
+						alfred: {
+							restJsonSize: 1000000,
+						},
+						auth: {
+							maxTokenLifetimeSec: 1000000,
+							enableTokenExpiration,
+						},
+						logger: {
+							morganFormat: "json",
+						},
+						mongo: {
+							collectionNames: {
+								deltas: deltasCollectionName,
+								rawDeltas: rawDeltasCollectionName,
+							},
+						},
+						worker: {
+							blobStorageUrl: "http://localhost:3001",
+							deltaStreamUrl: "http://localhost:3005",
+							serverUrl: "http://localhost:3003",
+						},
+					});
+
+					return alfredApp.create(
+						provider,
+						defaultTenantManager,
+						throttlers,
+						clusterThrottlers,
+						defaultSingleUseTokenCache,
+						defaultStorage,
+						defaultAppTenants,
+						defaultDeltaService,
+						defaultProducer,
+						defaultDocumentRepository,
+						defaultDocumentDeleteService,
+						null,
+						null,
+						defaultCollaborationSessionEventEmitter,
+					);
+				}
+
 				describe("/api/v1/:tenantId/:id/broadcast-signal", () => {
 					it("Successful request", async () => {
 						const body = {
