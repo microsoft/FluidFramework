@@ -133,7 +133,6 @@ const TextEditorView = withMemoizedTreeObservations(({ root }: { root: TextAsTre
 					}
 				`}
 			</style>
-			<h2 style={{ margin: "10px 0" }}>Collaborative Text Editor</h2>
 			<div
 				ref={editorRef}
 				style={{

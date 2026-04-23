@@ -652,7 +652,6 @@ const FormattedTextEditorView = forwardRef<
 				li[data-list="bullet"] { display: flex; align-items: center; }
 				li[data-list="bullet"] .ql-ui { align-self: center; }
 			`}</style>
-			<h2 style={{ margin: "10px 0" }}>Collaborative Formatted Text Editor</h2>
 			<div
 				ref={editorRef}
 				style={{

@@ -87,7 +87,6 @@ const PlainTextEditorView = withMemoizedTreeObservations(
 				className="text-editor-container"
 				style={{ height: "100%", display: "flex", flexDirection: "column" }}
 			>
-				<h2 style={{ margin: "10px 0" }}>Collaborative Text Editor</h2>
 				<textarea
 					ref={textareaRef}
 					defaultValue={currentText}
