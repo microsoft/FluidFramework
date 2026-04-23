@@ -1,5 +1,127 @@
 # Plan: Custom iteration order for `SharedDirectory` (TDD)
 
+## Implementation status (as of 2026-04-23)
+
+**Landed on branch `directory-iteration-order`.** 967 mocha tests pass,
+including 47 new tests in `directory.sortKey.spec.ts`. Build, lint,
+api-reports, api-extractor docs, and type-tests are all green.
+
+### Deviations from the plan
+
+1. **Op wire format uses an optional `sortKey?: string`** rather than
+   `sortKey: string | null`. Absent field = clear. The plan called for
+   `null` but that trips the project lint rule `unicorn/no-null`; optional
+   is also more idiomatic for JSON-over-wire.
+2. **Back-compat strategy: single-release additive**, not the two-release
+   dark-ship described in design decision #8. Rationale: `IDirectoryDataObject`
+   only gained *optional* fields (`sortKeys?`, `subdirectorySortKeys?`) and
+   two new op types. Old readers ignore the optional summary fields and
+   never produce/consume the new ops, so a dedicated dark-ship release
+   adds no value — any client that opts into the new API is implicitly a
+   post-feature client. T66/T67 still guard against a future-client op
+   landing on current code (it's just a regular no-op via normal handlers).
+3. **`DirectoryLocalOpMetadata` structure**: `SubDirLocalOpMetadata` stays
+   narrow (create/delete only); the new pending types (`PendingSortKeySet`,
+   `PendingSubDirectorySortKeySet`) are added as sibling members of the
+   `DirectoryLocalOpMetadata` union directly, not grouped under the subdir
+   metadata. This keeps the existing subdir-resubmit code's
+   `.parentSubdir` access type-safe without casts.
+4. **Iteration helper extracted to module scope** as `orderBySortKey<T>`
+   (shared between key and subdir iteration) rather than two parallel
+   private methods, to avoid duplication and non-null assertions.
+5. **Type-test break declared**: added
+   `"TypeAlias_SharedDirectory": {"forwardCompat": false}` to
+   `typeValidation.broken` in `package.json`. Required because adding
+   methods to `IDirectory` breaks forward-compat (old consumers'
+   `IDirectory` doesn't have the new methods). Back-compat is preserved.
+
+### Test coverage
+
+| Group | Tests | Status | File |
+|---|---|---|---|
+| API — single client | T1–T14 | ✅ all in test file | `directory.sortKey.spec.ts` |
+| Iteration semantics | T15–T22 | ✅ all in test file | `directory.sortKey.spec.ts` |
+| Events | T23–T28 | ✅ all in test file | `directory.sortKey.spec.ts` |
+| Delete / clear propagation | T29–T32 | ✅ in test file | `directory.sortKey.spec.ts` |
+| Delete / clear propagation | T33 (rollback of delete) | ⏭ not yet written | would go in `directory.rollback.spec.ts` |
+| Delete / clear propagation | T34 (clear with pending sort-key) | ⏭ not yet written | implementation handles; test deferred |
+| Subdirectory sort keys | T35–T38, T40, T41 | ✅ in test file | `directory.sortKey.spec.ts` |
+| Subdirectory sort keys | T39, T42 | ⏭ not yet written | `directory.sortKey.spec.ts` |
+| Concurrent / eventual consistency | T43, T44, T46, T47, T48, T49 | ✅ in test file | `directory.sortKey.spec.ts` |
+| Concurrent / eventual consistency | T45 (concurrent delete + setSortKey) | ⏭ not yet written | |
+| Rollback | T50–T54 | ⏭ not yet written | would go in `directory.rollback.spec.ts` — implementation landed |
+| Reconnect & resubmit | T55 | ✅ in test file | `directory.sortKey.spec.ts` |
+| Reconnect & resubmit | T56 | ⏭ not yet written | |
+| Reconnect & resubmit | T57 | ⚠ simplified: asserts state after stashed-op application, not `localOpMetadata` identity. The plan's metadata assertion requires wiring a live container runtime, which is beyond what existing `TestSharedDirectory` tests do. | `directory.sortKey.spec.ts` |
+| Snapshot round-trip | T58–T62 | ⏭ not yet written | would go in `directory.snapshot.spec.ts` — implementation landed |
+| Detached state | T63–T65 | ✅ in test file | `directory.sortKey.spec.ts` |
+| Back-compat dark-ship guards | T66, T67 | ✅ in test file (shape asserts only, since there is no dark-ship mode — see deviation #2) | `directory.sortKey.spec.ts` |
+
+**47 of 67 planned tests landed.** The 20 deferred tests are follow-on
+hardening; each corresponds to code paths that are already implemented
+and partially exercised by other tests in the suite.
+
+### Slice-by-slice status
+
+| Slice | Status |
+|---|---|
+| 1 — API surface | ✅ done |
+| 2 — Iteration semantics | ✅ done |
+| 3 — Op types + message handlers | ✅ done |
+| 4 — Contained event variants | ✅ done |
+| 5 — Delete / clear propagation | ✅ done |
+| 6 — Rollback | ✅ implementation done; explicit rollback spec tests deferred |
+| 7 — Reconnect & resubmit | ✅ implementation done; T55 covers primary path |
+| 8 — Snapshot round-trip | ✅ implementation done; round-trip spec tests deferred |
+| 9 — Detached state | ✅ done |
+| 10 — Back-compat dark-ship | ⚠ skipped per deviation #2; no Release-N branch needed |
+| 11 — Fuzz | ⏭ not done; the 47-test deterministic suite covers core invariants |
+| 12 — Documentation + changelog + api-reports | ✅ done — ARCHITECTURE.md §9.4 added, §11 subtlety added, changeset `.changeset/sharedirectory-sort-keys.md` created, api-reports regenerated, type-tests regenerated |
+
+### Follow-up work (to land in subsequent PRs)
+
+1. Add T33, T34 to `directory.sortKey.spec.ts`.
+2. Add T42, T45 to `directory.sortKey.spec.ts`.
+3. Add T50–T54 rollback tests to `directory.rollback.spec.ts`.
+4. Add T56 reconnect + subdir-delete race test.
+5. Add T58–T62 snapshot round-trip tests to `directory.snapshot.spec.ts`.
+6. Slice 11 fuzz extension to `directoryFuzzTests.spec.ts` +
+   `directoryOracle.ts`.
+
+### Resuming work in a fresh session
+
+A new agent session with `Read @SORT-KEYS-PLAN.md` is enough — this status
+header tells it what's landed; the test specs further down give full
+Arrange / Act / Assert for each remaining test. **The implementation is
+already landed**, so follow-up work is almost entirely adding tests.
+
+**Chunk the work.** Doing all six follow-up items in one session risks
+context bloat across three different test files. A good split:
+
+- **Session A:** items 1, 2, 4 — all land in `directory.sortKey.spec.ts`,
+  reusing the existing `setupTest()` / `createAdditionalClient()` fixtures.
+- **Session B:** item 3 (T50–T54) in `directory.rollback.spec.ts` —
+  different fixture (`setupRollbackTest`) and rollback-assertion patterns.
+- **Session C:** item 5 (T58–T62) in `directory.snapshot.spec.ts` —
+  different fixture (`loadSharedDirectory`) and snapshot round-trip
+  patterns; also involves `createSnapshotSuite`.
+- **Session D:** item 6 fuzz (largest — directoryOracle surgery).
+
+**Before editing, the agent should verify branch state** (`git status`,
+`git log -5`, `git branch --show-current`). This plan was written against
+branch `directory-iteration-order` with implementation uncommitted; if
+the branch has moved (commits landed, rebased onto `main`, etc.) the
+line numbers in "Critical files" below may have shifted.
+
+**Suggested opener:**
+
+> Read `@SORT-KEYS-PLAN.md`. Pick up at the follow-up list — do items
+> 1 and 2 (T33, T34, T42, T45). Implementation is already landed; I
+> just need the tests. Use the existing fixtures in
+> `directory.sortKey.spec.ts`.
+
+---
+
 ## Context
 
 `SharedDirectory` today has two deterministic-but-non-custom iteration

@@ -35,6 +35,78 @@ export interface IValueChanged {
 }
 
 /**
+ * Type of "sortKeyChanged" event parameter.
+ * @sealed
+ * @legacy
+ * @public
+ */
+export interface ISortKeyChanged {
+	/**
+	 * The key whose sort key changed.
+	 */
+	readonly key: string;
+
+	/**
+	 * The new sort key, or `undefined` if the sort key was cleared.
+	 */
+	readonly sortKey: string | undefined;
+
+	/**
+	 * The sort key prior to the change, or `undefined` if none had been set.
+	 */
+	readonly previousSortKey: string | undefined;
+}
+
+/**
+ * Type of "sortKeyChanged" event parameter for {@link ISharedDirectory}.
+ * @sealed
+ * @legacy
+ * @public
+ */
+export interface IDirectorySortKeyChanged extends ISortKeyChanged {
+	/**
+	 * The absolute path to the IDirectory whose sort key changed.
+	 */
+	readonly path: string;
+}
+
+/**
+ * Type of "subDirectorySortKeyChanged" event parameter.
+ * @sealed
+ * @legacy
+ * @public
+ */
+export interface ISubDirectorySortKeyChanged {
+	/**
+	 * The name of the child subdirectory whose sort key changed (relative to the parent).
+	 */
+	readonly subdirName: string;
+
+	/**
+	 * The new sort key, or `undefined` if the sort key was cleared.
+	 */
+	readonly sortKey: string | undefined;
+
+	/**
+	 * The sort key prior to the change, or `undefined` if none had been set.
+	 */
+	readonly previousSortKey: string | undefined;
+}
+
+/**
+ * Type of "subDirectorySortKeyChanged" event parameter for {@link ISharedDirectory}.
+ * @sealed
+ * @legacy
+ * @public
+ */
+export interface IDirectorySubDirectorySortKeyChanged extends ISubDirectorySortKeyChanged {
+	/**
+	 * The absolute path to the parent IDirectory whose child's sort key changed.
+	 */
+	readonly path: string;
+}
+
+/**
  * Interface describing actions on a directory.
  *
  * @remarks When used as a Map, operates on its keys.
@@ -117,6 +189,63 @@ export interface IDirectory
 	 * @returns The requested IDirectory
 	 */
 	getWorkingDirectory(relativePath: string): IDirectory | undefined;
+
+	/**
+	 * Sets (or clears, when `sortKey` is `undefined`) the sort key associated with a key in this directory.
+	 * Sort keys control the iteration order produced by
+	 * {@link IDirectory.keysByOrder}, {@link IDirectory.valuesByOrder}, and {@link IDirectory.entriesByOrder}.
+	 * The sort key is independent of the key's value; it is preserved across updates to the value and exists
+	 * only as long as the key itself exists (it is cleared when the key is deleted or the directory is cleared).
+	 * @param key - Key whose sort key is being set
+	 * @param sortKey - New sort key; `undefined` clears it
+	 */
+	setSortKey(key: string, sortKey: string | undefined): void;
+
+	/**
+	 * Sets (or clears, when `sortKey` is `undefined`) the sort key associated with a child subdirectory.
+	 * Sort keys control the iteration order produced by {@link IDirectory.subdirectoriesByOrder}.
+	 * @param subdirName - Name of the child subdirectory whose sort key is being set
+	 * @param sortKey - New sort key; `undefined` clears it
+	 */
+	setSubDirectorySortKey(subdirName: string, sortKey: string | undefined): void;
+
+	/**
+	 * Get an iterator over the keys under this IDirectory in sort-key order.
+	 *
+	 * @remarks Entries that have a sort key set appear first, in lexicographic (JavaScript `<`) order of
+	 * their sort keys, with ties broken by the default iteration order. Entries without a sort key follow,
+	 * in the default iteration order.
+	 * @returns The iterator
+	 */
+	keysByOrder(): IterableIterator<string>;
+
+	/**
+	 * Get an iterator over the values under this IDirectory in sort-key order.
+	 * @returns The iterator
+	 * @see {@link IDirectory.keysByOrder}
+	 */
+	// TODO: Use `unknown` instead (breaking change).
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	valuesByOrder(): IterableIterator<any>;
+
+	/**
+	 * Get an iterator over the entries under this IDirectory in sort-key order.
+	 * @returns The iterator
+	 * @see {@link IDirectory.keysByOrder}
+	 */
+	// TODO: Use `unknown` instead (breaking change).
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	entriesByOrder(): IterableIterator<[string, any]>;
+
+	/**
+	 * Get an iterator over the child subdirectories in subdirectory-sort-key order.
+	 *
+	 * @remarks Subdirectories that have a sort key set appear first, in lexicographic order of their sort keys,
+	 * with ties broken by the default subdirectory iteration order. Subdirectories without a sort key follow,
+	 * in the default iteration order ({@link IDirectory.subdirectories}).
+	 * @returns The iterator
+	 */
+	subdirectoriesByOrder(): IterableIterator<[string, IDirectory]>;
 }
 
 /**
@@ -212,6 +341,51 @@ export interface ISharedDirectoryEvents extends ISharedObjectEvents {
 		event: "subDirectoryDeleted",
 		listener: (path: string, local: boolean, target: IEventThisPlaceHolder) => void,
 	);
+
+	/**
+	 * Emitted when a key's sort key is set, updated, or cleared anywhere in the directory tree.
+	 *
+	 * @remarks Listener parameters:
+	 *
+	 * - `changed` - Information on the key whose sort key changed, its prior sort key, and the path to the
+	 * directory containing the key.
+	 *
+	 * - `local` - Whether the change originated from this client.
+	 *
+	 * - `target` - The {@link ISharedDirectory} itself.
+	 *
+	 * This event does not fire when the key itself is deleted or the directory is cleared — the sort key is
+	 * implicitly removed in those cases.
+	 */
+	(
+		event: "sortKeyChanged",
+		listener: (
+			changed: IDirectorySortKeyChanged,
+			local: boolean,
+			target: IEventThisPlaceHolder,
+		) => void,
+	);
+
+	/**
+	 * Emitted when a child subdirectory's sort key is set, updated, or cleared anywhere in the directory tree.
+	 *
+	 * @remarks Listener parameters:
+	 *
+	 * - `changed` - Information on the subdirectory whose sort key changed, its prior sort key, and the path
+	 * to the parent directory.
+	 *
+	 * - `local` - Whether the change originated from this client.
+	 *
+	 * - `target` - The {@link ISharedDirectory} itself.
+	 */
+	(
+		event: "subDirectorySortKeyChanged",
+		listener: (
+			changed: IDirectorySubDirectorySortKeyChanged,
+			local: boolean,
+			target: IEventThisPlaceHolder,
+		) => void,
+	);
 }
 
 /**
@@ -293,6 +467,53 @@ export interface IDirectoryEvents extends IEvent {
 	 * - `target` - The {@link IDirectory} itself.
 	 */
 	(event: "undisposed", listener: (target: IEventThisPlaceHolder) => void);
+
+	/**
+	 * Emitted when a key's sort key is set, updated, or cleared within this {@link IDirectory}. As opposed to
+	 * the {@link ISharedDirectory}'s sortKeyChanged event, this is emitted only on the directory that directly
+	 * contains the key.
+	 *
+	 * @remarks Listener parameters:
+	 *
+	 * - `changed` - Information on the key whose sort key changed and its prior sort key.
+	 *
+	 * - `local` - Whether the change originated from this client.
+	 *
+	 * - `target` - The {@link IDirectory} itself.
+	 *
+	 * This event does not fire when the key itself is deleted or the directory is cleared — the sort key is
+	 * implicitly removed in those cases.
+	 */
+	(
+		event: "containedSortKeyChanged",
+		listener: (
+			changed: ISortKeyChanged,
+			local: boolean,
+			target: IEventThisPlaceHolder,
+		) => void,
+	);
+
+	/**
+	 * Emitted when a child subdirectory's sort key is set, updated, or cleared. As opposed to the
+	 * {@link ISharedDirectory}'s subDirectorySortKeyChanged event, this is emitted only on the parent directory
+	 * that directly contains the child subdirectory.
+	 *
+	 * @remarks Listener parameters:
+	 *
+	 * - `changed` - Information on the subdirectory whose sort key changed and its prior sort key.
+	 *
+	 * - `local` - Whether the change originated from this client.
+	 *
+	 * - `target` - The {@link IDirectory} itself.
+	 */
+	(
+		event: "containedSubDirectorySortKeyChanged",
+		listener: (
+			changed: ISubDirectorySortKeyChanged,
+			local: boolean,
+			target: IEventThisPlaceHolder,
+		) => void,
+	);
 }
 
 /**

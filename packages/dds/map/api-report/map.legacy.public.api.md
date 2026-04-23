@@ -10,12 +10,18 @@ export interface IDirectory extends Map<string, any>, IEventProvider<IDirectoryE
     countSubDirectory?(): number;
     createSubDirectory(subdirName: string): IDirectory;
     deleteSubDirectory(subdirName: string): boolean;
+    entriesByOrder(): IterableIterator<[string, any]>;
     get<T = any>(key: string): T | undefined;
     getSubDirectory(subdirName: string): IDirectory | undefined;
     getWorkingDirectory(relativePath: string): IDirectory | undefined;
     hasSubDirectory(subdirName: string): boolean;
+    keysByOrder(): IterableIterator<string>;
     set<T = unknown>(key: string, value: T): this;
+    setSortKey(key: string, sortKey: string | undefined): void;
+    setSubDirectorySortKey(subdirName: string, sortKey: string | undefined): void;
     subdirectories(): IterableIterator<[string, IDirectory]>;
+    subdirectoriesByOrder(): IterableIterator<[string, IDirectory]>;
+    valuesByOrder(): IterableIterator<any>;
 }
 
 // @public @sealed @legacy
@@ -25,11 +31,37 @@ export interface IDirectoryEvents extends IEvent {
     (event: "subDirectoryDeleted", listener: (path: string, local: boolean, target: IEventThisPlaceHolder) => void): any;
     (event: "disposed", listener: (target: IEventThisPlaceHolder) => void): any;
     (event: "undisposed", listener: (target: IEventThisPlaceHolder) => void): any;
+    (event: "containedSortKeyChanged", listener: (changed: ISortKeyChanged, local: boolean, target: IEventThisPlaceHolder) => void): any;
+    (event: "containedSubDirectorySortKeyChanged", listener: (changed: ISubDirectorySortKeyChanged, local: boolean, target: IEventThisPlaceHolder) => void): any;
+}
+
+// @public @sealed @legacy
+export interface IDirectorySortKeyChanged extends ISortKeyChanged {
+    readonly path: string;
+}
+
+// @public @sealed @legacy
+export interface IDirectorySubDirectorySortKeyChanged extends ISubDirectorySortKeyChanged {
+    readonly path: string;
 }
 
 // @public @sealed @legacy
 export interface IDirectoryValueChanged extends IValueChanged {
     path: string;
+}
+
+// @public @sealed @legacy
+export interface ISortKeyChanged {
+    readonly key: string;
+    readonly previousSortKey: string | undefined;
+    readonly sortKey: string | undefined;
+}
+
+// @public @sealed @legacy
+export interface ISubDirectorySortKeyChanged {
+    readonly previousSortKey: string | undefined;
+    readonly sortKey: string | undefined;
+    readonly subdirName: string;
 }
 
 // @public @sealed @legacy

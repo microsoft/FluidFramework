@@ -18,11 +18,15 @@
 export type {
 	IDirectory,
 	IDirectoryEvents,
+	IDirectorySortKeyChanged,
+	IDirectorySubDirectorySortKeyChanged,
 	IDirectoryValueChanged,
 	ISharedDirectory,
 	ISharedDirectoryEvents,
 	ISharedMap,
 	ISharedMapEvents,
+	ISortKeyChanged,
+	ISubDirectorySortKeyChanged,
 	IValueChanged,
 } from "./interfaces.js";
 export { SharedMap } from "./mapFactory.js";

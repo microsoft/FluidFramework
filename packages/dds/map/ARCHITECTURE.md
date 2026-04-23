@@ -554,6 +554,89 @@ not guarantee key iteration order; the implementation happens to be
 insertion-order-preserving. Any change to these semantics is a de facto (if
 not de jure) API change and should be treated accordingly.
 
+### 9.4 `SharedDirectory` sort keys (opt-in custom order)
+
+`SharedDirectory` exposes a parallel iteration order driven by replicated
+string "sort keys" attached to each entry and each child subdirectory:
+
+- `setSortKey(key, sortKey | undefined)` / `setSubDirectorySortKey(name,
+  sortKey | undefined)` writes (or clears) the sort key. Clearing uses
+  `undefined`; the wire representation is an optional field (absent = clear).
+- `keysByOrder()` / `valuesByOrder()` / `entriesByOrder()` /
+  `subdirectoriesByOrder()` produce iteration in sort-key order.
+- Events `sortKeyChanged` / `subDirectorySortKeyChanged` (with `path` on
+  `ISharedDirectory`) and their `containedSortKeyChanged` /
+  `containedSubDirectorySortKeyChanged` counterparts on `IDirectoryEvents`
+  follow the same path/contained pair pattern as `valueChanged`.
+
+**State layout (per `SubDirectory`).**
+
+- `sequencedSortKeys: Map<string, string>` — acked sort keys by key name.
+- `pendingSortKeyData: PendingSortKeySet[]` — pending local `setSortKey`
+  entries in submit order. The pending entry is the `localOpMetadata` for
+  the submitted op; matching at ack (and rollback) is by reference
+  identity, following the existing pending-state pattern (§6.2).
+- `sequencedSubDirectorySortKeys` / `pendingSubDirectorySortKeyData` —
+  same two-tier structure for child-subdirectory sort keys.
+
+Sort keys are completely independent from values. No lifetime aggregation is
+needed (unlike `PendingKeySet` where ordering required folding multiple sets
+into one lifetime), because sort-key order is derived from the sort key
+itself, not from pending-entry position.
+
+**Optimistic reads.** `getOptimisticSortKey(key)` walks the pending list
+tail-first: the last pending entry for a key wins, otherwise fall through to
+`sequencedSortKeys`. `collectOptimisticSortKeys()` materializes the full
+optimistic view for iteration.
+
+**Iteration contract (`keysByOrder` / `entriesByOrder` / `valuesByOrder`).**
+Two phases over the *default* iteration order (`internalIterator`, §9.2):
+
+1. Entries whose key has an optimistic sort key, sorted by sort key using
+   JavaScript `<`/`>` (UTF-16 code-point order — deterministic across
+   locales). Ties break by the default-order position.
+2. Entries without a sort key, in default (first-insertion) order.
+
+`subdirectoriesByOrder` follows the same shape against
+`subdirectories()` / `seqDataComparator` as the fallback order. The shared
+partitioning helper is `orderBySortKey` (module scope).
+
+**Delete / clear propagation.** Sort keys do not outlive the identity they
+annotate:
+
+- `processDeleteMessage` (local + remote) and the detached `delete()` path
+  remove the key from `sequencedSortKeys`.
+- `processClearMessage` (local + remote) and detached `clear()` call
+  `sequencedSortKeys.clear()`.
+- `processDeleteSubDirectoryMessage` removes the subdir name from
+  `sequencedSubDirectorySortKeys`.
+- `clearSubDirectorySequencedData()` (called when disposing a subdir tree)
+  clears both sort-key maps.
+
+Note that `clear()` / `delete()` do *not* fire a `sortKeyChanged` event for
+the cleared sort keys — consumers should treat the companion `valueChanged`
+/ `cleared` event as implicitly cleaning up associated sort-key state.
+
+**Event suppression.** Remote `processSetSortKeyMessage` updates
+`sequencedSortKeys` silently when a local pending entry exists for the same
+key (mirrors §6.4 for values). Local ack of a pending sort-key op never
+re-fires the event (§6.4 analog for the single-event-per-change rule,
+mirrored from `valueChanged`).
+
+**Rollback.** `SubDirectory.rollback()` has matching branches for
+`"setSortKey"` and `"setSubDirectorySortKey"`: splice the pending entry by
+reference identity, recompute the restored value via `getOptimisticSortKey`,
+and emit the `sortKeyChanged` event with the restored value as the new
+`sortKey` and the rolled-back value as the `previousSortKey`.
+
+**Snapshot.** `IDirectoryDataObject` gains optional `sortKeys?: Record<string,
+string>` and `subdirectorySortKeys?: Record<string, string>`. Both are
+written only when non-empty (via `getSerializableSortKeys` /
+`getSerializableSubDirectorySortKeys`), and silently ignored when absent on
+load. This is an additive field; the directory snapshot format stays at
+`"0.1"` (see comment at `directoryFactory.ts:39`). Older readers lose the
+sort keys but otherwise load cleanly.
+
 ## 10. Garbage collection & attribution
 
 No explicit `getGCData()` override is present in either DDS. Handles embedded
@@ -605,6 +688,10 @@ directory values, if required, would need to be added.
 - **Legacy wire values (`ValueType.Shared`) still land in the load path.**
   Remove at your own risk — there is no telemetry proving every production
   snapshot has been migrated.
+- **Sort-key cleanup on delete / clear is implicit.** `delete(k)` and
+  `clear()` remove any sort keys associated with the affected names without
+  emitting a `sortKeyChanged` event (see §9.4). Consumers must not rely on
+  explicit sort-key events to release associated state.
 
 ## 12. File-by-file pointers
 
