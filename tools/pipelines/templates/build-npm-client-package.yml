@@ -358,12 +358,19 @@ extends:
 
               - template: /tools/pipelines/templates/include-use-node-version.yml@self
 
+              - template: /tools/pipelines/templates/include-install.yml@self
+                parameters:
+                  packageManager: '${{ parameters.packageManager }}'
+                  buildDirectory: '${{ parameters.buildDirectory }}'
+                  packageManagerInstallCommand: '${{ parameters.packageManagerInstallCommand }}'
+
               # Unit tests for helper scripts under scripts/. detect-changed-packages.ts
               # gates whether the Coverage_tests / Test_* jobs run at all (see
               # include-detect-changed-packages.yml); a regression in the change
-              # detection logic could silently suppress every package test, so we
-              # run its tests early in the build job — before install — so they
-              # fail fast and independently of package dependencies.
+              # detection logic could silently suppress every package test, so
+              # we run its tests here in the build job — right after install so
+              # tsx (a root devDep) is resolvable via `pnpm exec` — before any
+              # heavy build work, so they fail fast.
               - task: Bash@3
                 displayName: Scripts unit tests
                 inputs:
@@ -371,13 +378,7 @@ extends:
                   workingDirectory: $(Pipeline.Workspace)/${{ parameters.buildDirectory }}
                   script: |
                     set -eu -o pipefail
-                    npx --yes tsx@4.19.4 --test scripts/test/*.test.ts
-
-              - template: /tools/pipelines/templates/include-install.yml@self
-                parameters:
-                  packageManager: '${{ parameters.packageManager }}'
-                  buildDirectory: '${{ parameters.buildDirectory }}'
-                  packageManagerInstallCommand: '${{ parameters.packageManagerInstallCommand }}'
+                    pnpm exec tsx --test scripts/test/*.test.ts
 
               # The bundle-size-artifacts pipeline runs a client build but doesn't publish packages,
               # so we skip version setting for it.

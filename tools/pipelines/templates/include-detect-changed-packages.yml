@@ -21,10 +21,11 @@
 # On any error path (missing merge-base, unsupported ref format) the script
 # degrades safely to a full-run outcome, never to a silent skip.
 #
-# Why tsx (and not a pre-compiled .js or global install): tsx is invoked via
-# `npx --yes tsx@<pinned>` so this step needs zero prior install — no pnpm
-# install, no root deps — keeping the gate as close to "git + node" fast as
-# possible. npx caches the download per-agent across runs.
+# The script is invoked via `pnpm exec tsx` after a workspace-root-only
+# install; tsx is a root devDep so its version is pinned in pnpm-lock.yaml.
+# The workspace-root install path mirrors repo-policy-check.yml and
+# deliberately skips the full workspace install, keeping the gate close to
+# "git + node + tsx" fast.
 
 parameters:
 - name: buildDirectory
@@ -44,6 +45,20 @@ steps:
 
   - template: /tools/pipelines/templates/include-use-node-version.yml@self
 
+  - template: /tools/pipelines/templates/include-install-pnpm.yml@self
+    parameters:
+      buildDirectory: ${{ parameters.buildDirectory }}
+
+  - task: Bash@3
+    displayName: Install root dependencies
+    inputs:
+      targetType: 'inline'
+      workingDirectory: $(Pipeline.Workspace)/${{ parameters.buildDirectory }}
+      script: |
+        set -eu -o pipefail
+        # Workspace-root only — we just need tsx and its transitive deps.
+        pnpm install --workspace-root --frozen-lockfile
+
   - task: Bash@3
     name: setChangedPackages
     displayName: Detect changed packages
@@ -54,4 +69,4 @@ steps:
       workingDirectory: '$(Pipeline.Workspace)/${{ parameters.buildDirectory }}'
       script: |
         set -eu -o pipefail
-        npx --yes tsx@4.19.4 scripts/detect-changed-packages.ts
+        pnpm exec tsx scripts/detect-changed-packages.ts
