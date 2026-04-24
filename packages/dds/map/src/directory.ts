@@ -373,29 +373,21 @@ export interface IDirectoryNewStorageFormat {
 }
 
 /**
- * The comparator essentially performs the following procedure to determine the order of subdirectory creation:
- * 1. If subdirectory A has a non-negative 'seq' and subdirectory B has a negative 'seq', subdirectory A is always placed first due to
- * the policy that acknowledged subdirectories precede locally created ones that have not been committed yet.
- *
- * 2. When both subdirectories A and B have a non-negative 'seq', they are compared as follows:
- * - If A and B have different 'seq', they are ordered based on 'seq', and the one with the lower 'seq' will be positioned ahead. Notably this rule
- * should not be applied in the directory ordering, since the lowest 'seq' is -1, when the directory is created locally but not acknowledged yet.
- * - In the case where A and B have equal 'seq', the one with the lower 'clientSeq' will be positioned ahead. This scenario occurs when grouped
- * batching is enabled, and a lower 'clientSeq' indicates that it was processed earlier after the batch was ungrouped.
- *
- * 3. When both subdirectories A and B have a negative 'seq', they are compared as follows:
- * - If A and B have different 'seq', the one with lower 'seq' will be positioned ahead, which indicates the corresponding creation message was
- * acknowledged by the server earlier.
- * - If A and B have equal 'seq', the one with lower 'clientSeq' will be placed at the front. This scenario suggests that both subdirectories A
- * and B were created locally and not acknowledged yet, with the one possessing the lower 'clientSeq' being created earlier.
- *
- * 4. A 'seq' value of zero indicates that the subdirectory was created in detached state, and it is considered acknowledged for the
- * purpose of ordering.
- */
-/**
  * Compares two SequenceData values considering only their own seq/clientSeq fields
- * (ignoring afterParent). Acknowledged (seq >= 0) sorts before pending (seq = -1); within a
- * category, ascending by seq, then by clientSeq.
+ * (ignoring afterParent). Ordering rules:
+ *
+ * 1. Acknowledged subdirectories (seq \>= 0) always precede locally-created-but-not-yet-acknowledged
+ * ones (seq = -1).
+ *
+ * 2. Within acknowledged, the lower seq is positioned first. When seqs are equal, the lower
+ * clientSeq is positioned first (grouped batching scenario, where lower clientSeq indicates earlier
+ * processing within the ungrouped batch).
+ *
+ * 3. Within the unacknowledged group, lower seq is positioned first for consistency, and ties break
+ * by lower clientSeq (indicates locally-earlier creation).
+ *
+ * 4. A seq of zero indicates the subdirectory was created in detached state, considered
+ * acknowledged for ordering.
  */
 function compareOwnSeqData(a: SequenceData, b: SequenceData): number {
 	const aAckd = isAcknowledgedOrDetached(a);
@@ -870,9 +862,7 @@ export class SharedDirectory
 							seqData = { seq: createInfo.csn, clientSeq: fakeClientSeq };
 							tempSeqNums.set(createInfo.csn, ++fakeClientSeq);
 							if (createInfo.afterParent !== undefined) {
-								seqData.afterParent = afterParentInfoToSequenceData(
-									createInfo.afterParent,
-								);
+								seqData.afterParent = afterParentInfoToSequenceData(createInfo.afterParent);
 							}
 						} else {
 							/**
@@ -1502,7 +1492,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 					subdirName,
 					path: this.absolutePath,
 					type: "createSubDirectory",
-					...(afterSubdirName !== undefined ? { afterSubdirName } : {}),
+					...(afterSubdirName === undefined ? {} : { afterSubdirName }),
 				};
 				this.submitCreateSubDirectoryMessage(op);
 			} else {

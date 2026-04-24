@@ -16,6 +16,7 @@ export class DirectoryFactory implements IChannelFactory<ISharedDirectory> {
 
 // @beta @deprecated @legacy
 export interface ICreateInfo {
+    afterParent?: IAfterParentInfo;
     ccIds: string[];
     csn: number;
 }
@@ -25,6 +26,7 @@ export interface IDirectory extends Map<string, any>, IEventProvider<IDirectoryE
     readonly absolutePath: string;
     countSubDirectory?(): number;
     createSubDirectory(subdirName: string): IDirectory;
+    createSubDirectoryOrderedAfter(newSubdirName: string, afterSubdirName: string): IDirectory;
     deleteSubDirectory(subdirName: string): boolean;
     get<T = any>(key: string): T | undefined;
     getSubDirectory(subdirName: string): IDirectory | undefined;

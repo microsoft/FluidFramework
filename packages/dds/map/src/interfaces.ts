@@ -94,10 +94,7 @@ export interface IDirectory
 	 * @param afterSubdirName - Name of the sibling directory to order the new child directory after
 	 * @returns The IDirectory child that was created or retrieved
 	 */
-	createSubDirectoryOrderedAfter(
-		newSubdirName: string,
-		afterSubdirName: string,
-	): IDirectory;
+	createSubDirectoryOrderedAfter(newSubdirName: string, afterSubdirName: string): IDirectory;
 
 	/**
 	 * Gets an IDirectory child of this IDirectory, if it exists.
