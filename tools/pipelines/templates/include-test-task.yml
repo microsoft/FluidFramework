@@ -42,9 +42,6 @@ steps:
       customCommand: 'run ${{ parameters.taskTestStep }}:coverage'
     condition: and(succeededOrFailed(), eq(variables['startTest'], 'true'))
     env:
-      # Only emit npm_config_filter when a filter is actually set. pnpm 10
-      # happens to treat an empty value the same as unset, but the conditional
-      # keeps the contract explicit and avoids relying on that behavior.
       ${{ if ne(parameters.pnpmFilter, '') }}:
         npm_config_filter: ${{ parameters.pnpmFilter }}
       # Tests can use this environment variable to behave differently when running from a test branch
@@ -63,9 +60,6 @@ steps:
       customCommand: 'run ${{ parameters.taskTestStep }}'
     condition: and(succeededOrFailed(), eq(variables['startTest'], 'true'))
     env:
-      # Only emit npm_config_filter when a filter is actually set. pnpm 10
-      # happens to treat an empty value the same as unset, but the conditional
-      # keeps the contract explicit and avoids relying on that behavior.
       ${{ if ne(parameters.pnpmFilter, '') }}:
         npm_config_filter: ${{ parameters.pnpmFilter }}
       # Tests can use this environment variable to behave differently when running from a test branch

@@ -36,7 +36,6 @@ import posixpath
 import re
 import subprocess
 import sys
-from pathlib import Path
 from typing import Callable, Iterable
 
 # Full-run trigger patterns. A diff touching any of these paths forces running
@@ -96,9 +95,8 @@ def build_package_dir_set(
 ) -> set[str]:
     """Build the set of directories that hold (or held, at ``merge_base``) a package.json.
 
-    Unions the merge-base tree with the working tree so a package DELETED on
-    this branch still maps correctly — the reviewer-flagged case the bash
-    implementation missed.
+    Unions the merge-base tree with HEAD so a package deleted on this branch
+    still maps correctly.
 
     ``list_historical_packages`` and ``list_current_packages`` are injected so
     tests can drive this logic without spinning up a real git repo.
@@ -164,28 +162,28 @@ def _git(args: list[str]) -> str | None:
     return result.stdout
 
 
+_PACKAGE_JSON_RE = re.compile(r"(^|/)package\.json$")
+
+
 def _git_historical_packages(ref: str) -> list[str]:
     """Git-backed implementation of ``list_historical_packages``."""
     out = _git(["ls-tree", "-r", "--name-only", ref])
     if out is None:
         return []
-    pattern = re.compile(r"(^|/)package\.json$")
-    return [f for f in out.split("\n") if pattern.search(f)]
+    return [f for f in out.split("\n") if _PACKAGE_JSON_RE.search(f)]
 
 
-def _current_packages(cwd: str | None = None) -> list[str]:
-    """Walk the working tree for package.json files, skipping node_modules."""
-    root = Path(cwd) if cwd is not None else Path.cwd()
-    results: list[str] = []
-    for dirpath, dirnames, filenames in os.walk(root):
-        # Mutate dirnames in place to prune traversal.
-        dirnames[:] = [
-            d for d in dirnames if d != "node_modules" and not d.startswith(".git")
-        ]
-        if "package.json" in filenames:
-            rel = os.path.relpath(os.path.join(dirpath, "package.json"), root)
-            results.append(rel.replace(os.sep, "/"))
-    return results
+def _current_packages() -> list[str]:
+    """Git-backed implementation of ``list_current_packages``.
+
+    ``git ls-files`` honors ``.gitignore`` and the workspace's tracked-file
+    set, which is what we want — pnpm-workspace.yaml's globs operate over the
+    same set, and node_modules is gitignored.
+    """
+    out = _git(["ls-files", "--", "package.json", "*/package.json"])
+    if out is None:
+        return []
+    return [f for f in out.split("\n") if _PACKAGE_JSON_RE.search(f)]
 
 
 def _emit_vso_outputs(should_run_tests: bool, scoped_pnpm_filter: str) -> None:
@@ -202,54 +200,57 @@ def _log_warning(message: str) -> None:
     print(f"##vso[task.logissue type=warning]{message}")
 
 
+def _fallback_full_run(reason: str) -> None:
+    """Warn and emit a full-run outcome. Use for any safe-fallback path."""
+    _log_warning(f"{reason} Falling back to full test run.")
+    _emit_vso_outputs(True, "")
+
+
+def _resolve_merge_base(target_branch: str) -> str | None:
+    """Resolve the merge-base of HEAD with origin/<target_branch>.
+
+    On a shallow clone, deepen incrementally before retrying. ``--unshallow``
+    is avoided because pulling full history is expensive and rarely needed —
+    most PRs merge-base within a few thousand commits. Returns None on miss.
+    """
+    mb = _git(["merge-base", "HEAD", f"origin/{target_branch}"])
+    if mb and mb.strip():
+        return mb.strip()
+    is_shallow = _git(["rev-parse", "--is-shallow-repository"])
+    if not (is_shallow and is_shallow.strip() == "true"):
+        return None
+    print("Merge-base not found in shallow clone; deepening and retrying.")
+    _git(["fetch", "--deepen", "1000", "origin", target_branch])
+    mb = _git(["merge-base", "HEAD", f"origin/{target_branch}"])
+    return mb.strip() if mb and mb.strip() else None
+
+
 def main() -> None:
     """Pipeline entry point. Reads TARGET_BRANCH from env, writes vso outputs."""
     raw = os.environ.get("TARGET_BRANCH", "")
     target_branch = normalize_target_branch(raw)
     if not target_branch:
-        _log_warning("TARGET_BRANCH not set; falling back to full test run.")
-        _emit_vso_outputs(True, "")
+        _fallback_full_run("TARGET_BRANCH not set;")
         return
     print(f"Target branch: {target_branch}")
 
     if _git(["fetch", "origin", target_branch]) is None:
-        _log_warning(
-            f"Could not fetch origin/{target_branch}; falling back to full test run."
-        )
-        _emit_vso_outputs(True, "")
+        _fallback_full_run(f"Could not fetch origin/{target_branch};")
         return
 
-    # Try to resolve the merge-base in the shallow clone first. If the PR
-    # diverged further back than the shallow boundary, unshallow and retry
-    # once. `.git/shallow` is how git marks a shallow repo; skip the
-    # unshallow on a full clone (which would error with "--unshallow on a
-    # complete repository").
-    mb = _git(["merge-base", "HEAD", f"origin/{target_branch}"])
-    merge_base = mb.strip() if mb else ""
-    git_dir_out = _git(["rev-parse", "--git-dir"])
-    git_dir = git_dir_out.strip() if git_dir_out else ""
-    if not merge_base and git_dir and (Path(git_dir) / "shallow").exists():
-        print("Merge-base not found in shallow clone; unshallowing and retrying.")
-        _git(["fetch", "--unshallow", "origin", target_branch])
-        mb = _git(["merge-base", "HEAD", f"origin/{target_branch}"])
-        merge_base = mb.strip() if mb else ""
+    merge_base = _resolve_merge_base(target_branch)
     if not merge_base:
-        _log_warning(
-            f"No merge-base with origin/{target_branch}; falling back to full test run."
-        )
-        _emit_vso_outputs(True, "")
+        _fallback_full_run(f"No merge-base with origin/{target_branch};")
         return
     print(f"Merge base: {merge_base}")
 
-    # On diff failure, fall back to a full run rather than swallowing the
-    # error — an empty changed-files list would bypass the full-run patterns
-    # and the package-change check, silently suppressing all test jobs.
-    diff_out = _git(["diff", "--name-only", merge_base])
+    # Diff merge_base..HEAD (commit-only, immune to working-tree mutations
+    # from any future pre-step). On diff failure, fall back to a full run —
+    # an empty changed-files list would bypass full-run patterns and the
+    # package-change check, silently suppressing all test jobs.
+    diff_out = _git(["diff", "--name-only", merge_base, "HEAD"])
     if diff_out is None:
-        _log_warning(
-            f"git diff against merge-base {merge_base} failed; falling back to full test run."
-        )
-        _emit_vso_outputs(True, "")
+        _fallback_full_run(f"git diff against merge-base {merge_base} failed;")
         return
     changed_files = [f for f in diff_out.split("\n") if f]
     print(f"Changed files ({len(changed_files)}):")

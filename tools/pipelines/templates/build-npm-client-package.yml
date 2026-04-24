@@ -601,14 +601,9 @@ extends:
             dependsOn:
               - build
               - detect_changes
-            # Skip the job entirely when detect_changes explicitly concluded no
-            # packages were affected — saves agent allocation, checkout, and
-            # install on scoped PRs. Empty (detect_changes was skipped) still
-            # runs. See include-detect-changed-packages.yml for the invariants.
-            #
-            # We check `build.result` directly instead of using `succeeded()`
-            # because the latter treats a Skipped `detect_changes` dependency
-            # as non-success and false-skips this job on non-opt-in PR builds.
+            # Skip when detect_changes explicitly returned shouldRunTests=false.
+            # Use `build.result` (not `succeeded()`) so a Skipped detect_changes
+            # on non-opt-in PR builds doesn't false-skip this job.
             condition: and(in(dependencies.build.result, 'Succeeded', 'SucceededWithIssues'), ne(dependencies.detect_changes.outputs['setChangedPackages.shouldRunTests'], 'false'))
             variables:
               - ${{ if eq(variables['Build.Reason'], 'PullRequest') }}:
@@ -625,10 +620,7 @@ extends:
                 value: 'false'
               - name: COMMIT_SHA
                 value: $[ dependencies.build.outputs['setCommitSHA.COMMIT_SHA'] ]
-              # Output from detect_changes; empty when that job was skipped
-              # (interpreted downstream as "full run" — the historical behavior).
-              # `shouldRunTests` is consumed via the job-level condition above,
-              # so only `scopedPnpmFilter` needs a job-scoped variable here.
+              # Empty when detect_changes was skipped — pnpm treats that as no filter.
               - name: scopedPnpmFilter
                 value: $[ dependencies.detect_changes.outputs['setChangedPackages.scopedPnpmFilter'] ]
 
@@ -804,10 +796,7 @@ extends:
                   value: 'false'
                 - name: COMMIT_SHA
                   value: $[ dependencies.build.outputs['setCommitSHA.COMMIT_SHA'] ]
-                # Output from detect_changes; empty when that job was skipped
-                # (interpreted downstream as "full run" — the historical behavior).
-                # `shouldRunTests` is consumed via the job-level condition above,
-                # so only `scopedPnpmFilter` needs a job-scoped variable here.
+                # Empty when detect_changes was skipped — pnpm treats that as no filter.
                 - name: scopedPnpmFilter
                   value: $[ dependencies.detect_changes.outputs['setChangedPackages.scopedPnpmFilter'] ]
               steps:
