@@ -693,7 +693,7 @@ extends:
                     echo "Running code coverage comparison"
                     flub report codeCoverage --verbose
 
-            # Process test result, include publishing and logging
+              # Process test result, include publishing and logging
               - task: PublishTestResults@2
                 displayName: Publish Test Results
                 inputs:
