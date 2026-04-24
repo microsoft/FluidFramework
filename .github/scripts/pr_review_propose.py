@@ -4,13 +4,11 @@
 Subcommands:
   build-comment    Build the markdown proposal comment body.
   parse-checkboxes Read a comment body file and emit the checked reviewer IDs as JSON.
-  parse-start-flag Read a comment body file and print "true"/"false" for the Start review checkbox.
   format-names     Convert a JSON reviewer-ID array to a display-name string.
 
 Usage:
   python pr_review_propose.py build-comment --reviewer-count 3 --lines 247 --files 8
   python pr_review_propose.py parse-checkboxes comment.txt
-  python pr_review_propose.py parse-start-flag comment.txt
   python pr_review_propose.py format-names '["correctness","security"]'
 """
 
@@ -46,10 +44,10 @@ REVIEWERS: list[Reviewer] = [
 _LABEL_TO_ID: dict[str, str] = {r.label.lower(): r.id for r in REVIEWERS}
 _ID_TO_LABEL: dict[str, str] = {r.id: r.label for r in REVIEWERS}
 
+# The confirm workflow matches the rendered line `- [x] **Start review**` as a
+# literal substring — if this label changes, update the `contains()` checks in
+# .github/workflows/pr-review-confirm.yml to match.
 START_LABEL = "Start review"
-_START_RE = re.compile(
-    r"- \[(?P<state>[ xX])\] \*\*" + re.escape(START_LABEL) + r"\*\*"
-)
 
 
 def get_selected(reviewer_count: int) -> set[str]:
@@ -60,13 +58,6 @@ def get_selected(reviewer_count: int) -> set[str]:
     """
     priority_ids = [r.id for r in REVIEWERS]
     return set(priority_ids[:reviewer_count])
-
-
-def _read_body(path: str) -> str:
-    if path == "-":
-        return sys.stdin.read()
-    with open(path) as f:
-        return f.read()
 
 
 # ── Subcommand implementations ────────────────────────────────────────────────
@@ -98,7 +89,12 @@ def cmd_build_comment(args: argparse.Namespace) -> None:
 
 def cmd_parse_checkboxes(args: argparse.Namespace) -> None:
     """Read a comment body file and print a JSON array of checked reviewer IDs."""
-    body = _read_body(args.body_file)
+    path = args.body_file
+    if path == "-":
+        body = sys.stdin.read()
+    else:
+        with open(path) as f:
+            body = f.read()
 
     checked: list[str] = []
     for m in re.finditer(r"- \[x\] \*\*(.+?)\*\*", body, re.IGNORECASE):
@@ -107,14 +103,6 @@ def cmd_parse_checkboxes(args: argparse.Namespace) -> None:
         if rid and rid not in checked:
             checked.append(rid)
     print(json.dumps(checked))
-
-
-def cmd_parse_start_flag(args: argparse.Namespace) -> None:
-    """Print "true" if the Start review checkbox is ticked, else "false"."""
-    body = _read_body(args.body_file)
-    m = _START_RE.search(body)
-    ticked = bool(m and m.group("state").lower() == "x")
-    print("true" if ticked else "false")
 
 
 def cmd_format_names(args: argparse.Namespace) -> None:
@@ -149,13 +137,6 @@ def _build_parser() -> argparse.ArgumentParser:
     )
     p.add_argument("body_file", help="Path to comment body file, or - for stdin")
     p.set_defaults(func=cmd_parse_checkboxes)
-
-    p = sub.add_parser(
-        "parse-start-flag",
-        help="Print true/false for whether the Start review checkbox is ticked",
-    )
-    p.add_argument("body_file", help="Path to comment body file, or - for stdin")
-    p.set_defaults(func=cmd_parse_start_flag)
 
     p = sub.add_parser("format-names", help="Format reviewer IDs as display names")
     p.add_argument("reviewers_json", help="JSON array of reviewer IDs")
