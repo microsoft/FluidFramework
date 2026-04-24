@@ -16,7 +16,6 @@ import {
 import {
 	toPropTreeNode,
 	UndoRedoManager,
-	UndoRedoContext,
 	PlainTextMainView,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "@fluidframework/react/internal";
@@ -286,59 +285,57 @@ const UserPanel: FC<{
 			}}
 		>
 			<div style={{ marginBottom: "10px", fontWeight: "bold", color }}>{label}</div>
-			<UndoRedoContext.Provider value={manager}>
-				{(Object.keys(viewLabels) as ViewType[]).map((viewType) => {
-					const isExpanded = !collapsed[viewType];
-					return (
-						<div
-							key={viewType}
+			{(Object.keys(viewLabels) as ViewType[]).map((viewType) => {
+				const isExpanded = !collapsed[viewType];
+				return (
+					<div
+						key={viewType}
+						style={{
+							border: "1px solid #ddd",
+							borderRadius: "6px",
+							marginBottom: "12px",
+							boxShadow: "0 1px 3px rgba(0,0,0,0.06)",
+							overflow: "hidden",
+						}}
+					>
+						<button
+							type="button"
+							aria-expanded={isExpanded}
+							aria-controls={`${viewType}-panel`}
+							onClick={() => toggleCollapsed(viewType)}
 							style={{
-								border: "1px solid #ddd",
-								borderRadius: "6px",
-								marginBottom: "12px",
-								boxShadow: "0 1px 3px rgba(0,0,0,0.06)",
-								overflow: "hidden",
+								display: "flex",
+								justifyContent: "space-between",
+								alignItems: "center",
+								width: "100%",
+								padding: "10px 14px",
+								background: "#f5f5f5",
+								border: "none",
+								borderBottom: isExpanded ? "1px solid #ddd" : "none",
+								cursor: "pointer",
+								fontWeight: "600",
+								fontSize: "16px",
+								textAlign: "left",
+								color: "#333",
 							}}
 						>
-							<button
-								type="button"
-								aria-expanded={isExpanded}
-								aria-controls={`${viewType}-panel`}
-								onClick={() => toggleCollapsed(viewType)}
-								style={{
-									display: "flex",
-									justifyContent: "space-between",
-									alignItems: "center",
-									width: "100%",
-									padding: "10px 14px",
-									background: "#f5f5f5",
-									border: "none",
-									borderBottom: isExpanded ? "1px solid #ddd" : "none",
-									cursor: "pointer",
-									fontWeight: "600",
-									fontSize: "16px",
-									textAlign: "left",
-									color: "#333",
-								}}
-							>
-								<span>{viewLabels[viewType].description}</span>
-								<span aria-hidden="true" style={{ fontSize: "11px", color: "#666" }}>
-									{isExpanded ? "▲" : "▼"}
-								</span>
-							</button>
-							{/*
-							 * Note: we are intentionally forcing the editor components to be unmounted when their respective cards are collapsed.
-							 * We are doing this to make it possible to use this app to do performance analysis on individual editor components in isolation.
-							 */}
-							{isExpanded && (
-								<div id={`${viewType}-panel`} style={{ padding: "12px" }}>
-									{viewLabels[viewType].component(root)}
-								</div>
-							)}
-						</div>
-					);
-				})}
-			</UndoRedoContext.Provider>
+							<span>{viewLabels[viewType].description}</span>
+							<span aria-hidden="true" style={{ fontSize: "11px", color: "#666" }}>
+								{isExpanded ? "▲" : "▼"}
+							</span>
+						</button>
+						{/*
+						 * Note: we are intentionally forcing the editor components to be unmounted when their respective cards are collapsed.
+						 * We are doing this to make it possible to use this app to do performance analysis on individual editor components in isolation.
+						 */}
+						{isExpanded && (
+							<div id={`${viewType}-panel`} style={{ padding: "12px" }}>
+								{viewLabels[viewType].component(root)}
+							</div>
+						)}
+					</div>
+				);
+			})}
 		</div>
 	);
 };

@@ -392,254 +392,258 @@ const FormattedTextEditorView = withMemoizedTreeObservations(
 		root: FormattedTextAsTree.Tree;
 		undoRedo?: { manager: LabeledUndoRedo; transactionLabel: symbol };
 	}) => {
-	// DOM element where Quill will mount its editor
-	const editorRef = useRef<HTMLDivElement>(null);
-	// Quill instance, persisted across renders to avoid re-initialization
-	const quillRef = useRef<Quill | undefined>(undefined);
-	// Guards against update loops between Quill and the tree
-	const isUpdating = useRef(false);
-	// Container element for undo/redo button portal
-	const [undoRedoContainer, setUndoRedoContainer] = useState<HTMLElement | undefined>(
-		undefined,
-	);
-	// Ref so the one-time Quill setup effect always sees the current undoRedo value.
-	const undoRedoRef = useRef(undoRedo);
-	undoRedoRef.current = undoRedo;
+		// DOM element where Quill will mount its editor
+		const editorRef = useRef<HTMLDivElement>(null);
+		// Quill instance, persisted across renders to avoid re-initialization
+		const quillRef = useRef<Quill | undefined>(undefined);
+		// Guards against update loops between Quill and the tree
+		const isUpdating = useRef(false);
+		// Container element for undo/redo button portal
+		const [undoRedoContainer, setUndoRedoContainer] = useState<HTMLElement | undefined>(
+			undefined,
+		);
+		// Ref so the one-time Quill setup effect always sees the current undoRedo value.
+		const undoRedoRef = useRef(undoRedo);
+		undoRedoRef.current = undoRedo;
 
-	// Initialize Quill editor with formatting toolbar using Quill provided CSS
-	useEffect(() => {
-		if (!editorRef.current || quillRef.current) {
-			return;
-		}
-
-		const quill = new Quill(editorRef.current, {
-			theme: "snow",
-			placeholder: "Start typing with formatting...",
-			modules: {
-				history: false, // Disable Quill's built-in undo/redo
-				toolbar: [
-					["bold", "italic", "underline"],
-					[{ size: ["small", false, "large", "huge"] }],
-					[{ font: [] }],
-					[{ header: [1, 2, 3, 4, 5, false] }],
-					[{ list: "bullet" }, { list: "ordered" }, { list: "check" }],
-					["blockquote", "code-block"],
-					["clean"],
-				],
-				clipboard: [Node.ELEMENT_NODE, clipboardFormatMatcher],
-			},
-		});
-
-		// Set initial content from tree
-		quill.setContents(buildDeltaFromTree(root));
-
-		// Listen to local Quill changes and apply them to the tree.
-		// We process delta operations to make targeted edits, preserving collaboration integrity.
-		// Note: Quill uses UTF-16 code units for positions, but the tree uses Unicode codepoints.
-		// We must convert between them to handle emoji and other non-BMP characters correctly.
-		//
-		// The typing here is very fragile: if no parameter types are given,
-		// the inference for this event is strongly typed, but the types are wrong (The wrong "Delta" type is provided).
-		// This is likely related to the node16 module resolution issues with quill-delta.
-		// If we break that inference by adding types, `any` is inferred for all of them, so incorrect types here would still compile.
-		const handleTextChange = (delta: Delta, _oldDelta: Delta, source: EmitterSource): void => {
-			if (source !== "user" || isUpdating.current) return;
-			isUpdating.current = true;
-
-			// Wrap all tree mutations in a transaction so they undo/redo as one atomic unit.
-			// If the node is not part of a branch (e.g. unhydrated), apply edits directly.
-			const context = TreeAlpha.context(root);
-			const applyDelta = (): void => {
-				// Helper to count Unicode codepoints in a string
-				const codepointCount = (s: string): number => [...s].length;
-
-				// Get current content for UTF-16 to codepoint position mapping
-				// We update this as we process operations to keep positions accurate
-				let content = root.fullString();
-				let utf16Pos = 0; // Position in UTF-16 code units (Quill's view)
-				let cpPos = 0; // Position in codepoints (tree's view)
-
-				for (const op of delta.ops) {
-					if (op.retain !== undefined) {
-						// The docs for retain imply this is always a number, but the type definitions allow a record here.
-						// It is unknown why the type definitions allow a record as they have no doc comments.
-						// For now this assert seems to be passing, so we just assume its always a number.
-						assert(
-							typeof op.retain === "number",
-							0xcdf /* Expected retain count to be a number */,
-						);
-						// Convert UTF-16 retain count to codepoint count
-						const retainedStr = content.slice(utf16Pos, utf16Pos + op.retain);
-						const cpCount = codepointCount(retainedStr);
-
-						if (op.attributes) {
-							const lineTag = parseLineTag(op.attributes);
-							const indent =
-								typeof op.attributes.indent === "number" ? op.attributes.indent : undefined;
-							// Case 1: Applying line formatting (header/list) to an existing newline in the document.
-							if (lineTag !== undefined && content[utf16Pos] === "\n") {
-								// Swap existing newline atom to StringLineAtom
-								root.removeRange(cpPos, cpPos + 1);
-								root.insertWithFormattingAt(cpPos, [createLineAtom(lineTag, indent)]);
-								// Case 2: Applying line formatting past the end of content. Quill's implicit trailing newline.
-							} else if (lineTag !== undefined && utf16Pos >= content.length) {
-								// Quill's implicit trailing newline — insert a new line atom
-								root.insertWithFormattingAt(cpPos, [createLineAtom(lineTag, indent)]);
-								content += "\n";
-								// Case 3: indent-only change on existing line atom
-							} else if (
-								lineTag === undefined &&
-								"indent" in op.attributes &&
-								!("header" in op.attributes) &&
-								!("list" in op.attributes) &&
-								!("blockquote" in op.attributes) &&
-								!("code-block" in op.attributes) &&
-								content[utf16Pos] === "\n"
-							) {
-								// Indent only change on an existing line atom
-								const lineAtom = root.charactersWithFormatting()[cpPos]?.content;
-								if (lineAtom instanceof FormattedTextAsTree.StringLineAtom) {
-									lineAtom.indent = indent ?? 0;
-								}
-								// Case 4: clearing line formatting. Deletes StringLineAtom and inserts a plain
-								// StringTextAtom("\n") in its place.
-							} else if (
-								lineTag === undefined &&
-								content[utf16Pos] === "\n" &&
-								root.charactersWithFormatting()[cpPos]?.content instanceof
-									FormattedTextAsTree.StringLineAtom
-							) {
-								// Quill is clearing line formatting (e.g. { retain: 1, attributes: { header: null } }).
-								// StringLineAtom and StringTextAtom are distinct schema types in the tree,
-								// so we can't convert between them via formatRange — we must delete the
-								// StringLineAtom and insert a plain StringTextAtom("\n") in its place.
-								root.removeRange(cpPos, cpPos + 1);
-								root.insertAt(cpPos, "\n");
-								// Case 5: Normal character formatting (bold, italic, size, etc...)
-							} else {
-								root.formatRange(
-									cpPos,
-									cpPos + cpCount,
-									quillAttributesToPartial(op.attributes),
-								);
-							}
-						}
-						utf16Pos += op.retain;
-						cpPos += cpCount;
-					} else if (op.delete !== undefined) {
-						// Convert UTF-16 delete count to codepoint count
-						const deletedStr = content.slice(utf16Pos, utf16Pos + op.delete);
-						const cpCount = codepointCount(deletedStr);
-
-						root.removeRange(cpPos, cpPos + cpCount);
-						// Update content to reflect deletion for future position calculations
-						content = content.slice(0, utf16Pos) + content.slice(utf16Pos + op.delete);
-						// Don't advance positions - next op starts at same position
-					} else if (typeof op.insert === "string") {
-						const lineTag = parseLineTag(op.attributes);
-						const indent =
-							typeof op.attributes?.indent === "number" ? op.attributes.indent : undefined;
-						if (lineTag !== undefined && op.insert === "\n") {
-							root.insertWithFormattingAt(cpPos, [createLineAtom(lineTag, indent)]);
-						} else {
-							// Insert: add new text with formatting at current position
-							root.defaultFormat = new FormattedTextAsTree.CharacterFormat(
-								quillAttributesToFormat(op.attributes),
-							);
-							root.insertAt(cpPos, op.insert);
-						}
-						// Update content to reflect insertion
-						content = content.slice(0, utf16Pos) + op.insert + content.slice(utf16Pos);
-						// Advance by inserted content length
-						utf16Pos += op.insert.length;
-						cpPos += codepointCount(op.insert);
-					}
-				}
-			};
-			if (context.isBranch()) {
-				context.runTransaction(applyDelta, { label: undoRedoRef.current?.transactionLabel });
-			} else {
-				applyDelta();
+		// Initialize Quill editor with formatting toolbar using Quill provided CSS
+		useEffect(() => {
+			if (!editorRef.current || quillRef.current) {
+				return;
 			}
 
-			isUpdating.current = false;
-		};
+			const quill = new Quill(editorRef.current, {
+				theme: "snow",
+				placeholder: "Start typing with formatting...",
+				modules: {
+					history: false, // Disable Quill's built-in undo/redo
+					toolbar: [
+						["bold", "italic", "underline"],
+						[{ size: ["small", false, "large", "huge"] }],
+						[{ font: [] }],
+						[{ header: [1, 2, 3, 4, 5, false] }],
+						[{ list: "bullet" }, { list: "ordered" }, { list: "check" }],
+						["blockquote", "code-block"],
+						["clean"],
+					],
+					clipboard: [Node.ELEMENT_NODE, clipboardFormatMatcher],
+				},
+			});
 
-		quill.on("text-change", handleTextChange);
-		quillRef.current = quill;
+			// Set initial content from tree
+			quill.setContents(buildDeltaFromTree(root));
 
-		// Create container for React-controlled undo/redo buttons and prepend to toolbar
-		const editor = editorRef.current;
-		const toolbar = editor.previousElementSibling as HTMLElement;
-		const container = document.createElement("span");
-		container.className = "ql-formats";
-		toolbar.prepend(container);
-		setUndoRedoContainer(container);
+			// Listen to local Quill changes and apply them to the tree.
+			// We process delta operations to make targeted edits, preserving collaboration integrity.
+			// Note: Quill uses UTF-16 code units for positions, but the tree uses Unicode codepoints.
+			// We must convert between them to handle emoji and other non-BMP characters correctly.
+			//
+			// The typing here is very fragile: if no parameter types are given,
+			// the inference for this event is strongly typed, but the types are wrong (The wrong "Delta" type is provided).
+			// This is likely related to the node16 module resolution issues with quill-delta.
+			// If we break that inference by adding types, `any` is inferred for all of them, so incorrect types here would still compile.
+			const handleTextChange = (
+				delta: Delta,
+				_oldDelta: Delta,
+				source: EmitterSource,
+			): void => {
+				if (source !== "user" || isUpdating.current) return;
+				isUpdating.current = true;
 
-		return () => {
-			quill.off("text-change", handleTextChange);
-			quillRef.current = undefined;
-			setUndoRedoContainer(undefined);
-			// Clear Quill's DOM modifications so the container is clean for any remount.
-			toolbar.remove();
-			editor.innerHTML = "";
-			editor.className = "";
-		};
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, []);
+				// Wrap all tree mutations in a transaction so they undo/redo as one atomic unit.
+				// If the node is not part of a branch (e.g. unhydrated), apply edits directly.
+				const context = TreeAlpha.context(root);
+				const applyDelta = (): void => {
+					// Helper to count Unicode codepoints in a string
+					const codepointCount = (s: string): number => [...s].length;
 
-	// Sync Quill when tree changes externally.
-	// Accessing buildDeltaFromTree(root) during render establishes observation via the HOC,
-	// which re-renders this component whenever the tree content changes.
-	// We skip the sync if isUpdating is true, meaning we caused the tree change ourselves
-	// via the text-change handler — in that case Quill already has the correct content.
-	if (quillRef.current && !isUpdating.current) {
-		// TODO:Performance: Once SharedTree has better ArrayNode change events,
-		// use those events to construct a delta, instead of rebuilding a new delta then diffing every edit.
-		// After doing the optimization, keep this diffing logic as a way to test for de-sync between the tree and Quill:
-		// Use it in tests and possibly occasionally in debug builds.
-		const treeDelta = buildDeltaFromTree(root);
+					// Get current content for UTF-16 to codepoint position mapping
+					// We update this as we process operations to keep positions accurate
+					let content = root.fullString();
+					let utf16Pos = 0; // Position in UTF-16 code units (Quill's view)
+					let cpPos = 0; // Position in codepoints (tree's view)
 
-		// eslint doesn't seem to be resolving the types correctly here.
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-		const quillDelta: Delta = quillRef.current.getContents();
+					for (const op of delta.ops) {
+						if (op.retain !== undefined) {
+							// The docs for retain imply this is always a number, but the type definitions allow a record here.
+							// It is unknown why the type definitions allow a record as they have no doc comments.
+							// For now this assert seems to be passing, so we just assume its always a number.
+							assert(
+								typeof op.retain === "number",
+								0xcdf /* Expected retain count to be a number */,
+							);
+							// Convert UTF-16 retain count to codepoint count
+							const retainedStr = content.slice(utf16Pos, utf16Pos + op.retain);
+							const cpCount = codepointCount(retainedStr);
 
-		const diff = new Delta(quillDelta).diff(new Delta(treeDelta));
+							if (op.attributes) {
+								const lineTag = parseLineTag(op.attributes);
+								const indent =
+									typeof op.attributes.indent === "number" ? op.attributes.indent : undefined;
+								// Case 1: Applying line formatting (header/list) to an existing newline in the document.
+								if (lineTag !== undefined && content[utf16Pos] === "\n") {
+									// Swap existing newline atom to StringLineAtom
+									root.removeRange(cpPos, cpPos + 1);
+									root.insertWithFormattingAt(cpPos, [createLineAtom(lineTag, indent)]);
+									// Case 2: Applying line formatting past the end of content. Quill's implicit trailing newline.
+								} else if (lineTag !== undefined && utf16Pos >= content.length) {
+									// Quill's implicit trailing newline — insert a new line atom
+									root.insertWithFormattingAt(cpPos, [createLineAtom(lineTag, indent)]);
+									content += "\n";
+									// Case 3: indent-only change on existing line atom
+								} else if (
+									lineTag === undefined &&
+									"indent" in op.attributes &&
+									!("header" in op.attributes) &&
+									!("list" in op.attributes) &&
+									!("blockquote" in op.attributes) &&
+									!("code-block" in op.attributes) &&
+									content[utf16Pos] === "\n"
+								) {
+									// Indent only change on an existing line atom
+									const lineAtom = root.charactersWithFormatting()[cpPos]?.content;
+									if (lineAtom instanceof FormattedTextAsTree.StringLineAtom) {
+										lineAtom.indent = indent ?? 0;
+									}
+									// Case 4: clearing line formatting. Deletes StringLineAtom and inserts a plain
+									// StringTextAtom("\n") in its place.
+								} else if (
+									lineTag === undefined &&
+									content[utf16Pos] === "\n" &&
+									root.charactersWithFormatting()[cpPos]?.content instanceof
+										FormattedTextAsTree.StringLineAtom
+								) {
+									// Quill is clearing line formatting (e.g. { retain: 1, attributes: { header: null } }).
+									// StringLineAtom and StringTextAtom are distinct schema types in the tree,
+									// so we can't convert between them via formatRange — we must delete the
+									// StringLineAtom and insert a plain StringTextAtom("\n") in its place.
+									root.removeRange(cpPos, cpPos + 1);
+									root.insertAt(cpPos, "\n");
+									// Case 5: Normal character formatting (bold, italic, size, etc...)
+								} else {
+									root.formatRange(
+										cpPos,
+										cpPos + cpCount,
+										quillAttributesToPartial(op.attributes),
+									);
+								}
+							}
+							utf16Pos += op.retain;
+							cpPos += cpCount;
+						} else if (op.delete !== undefined) {
+							// Convert UTF-16 delete count to codepoint count
+							const deletedStr = content.slice(utf16Pos, utf16Pos + op.delete);
+							const cpCount = codepointCount(deletedStr);
 
-		if (diff.ops.length > 0) {
-			isUpdating.current = true;
-			quillRef.current.updateContents(diff.ops);
-			isUpdating.current = false;
+							root.removeRange(cpPos, cpPos + cpCount);
+							// Update content to reflect deletion for future position calculations
+							content = content.slice(0, utf16Pos) + content.slice(utf16Pos + op.delete);
+							// Don't advance positions - next op starts at same position
+						} else if (typeof op.insert === "string") {
+							const lineTag = parseLineTag(op.attributes);
+							const indent =
+								typeof op.attributes?.indent === "number" ? op.attributes.indent : undefined;
+							if (lineTag !== undefined && op.insert === "\n") {
+								root.insertWithFormattingAt(cpPos, [createLineAtom(lineTag, indent)]);
+							} else {
+								// Insert: add new text with formatting at current position
+								root.defaultFormat = new FormattedTextAsTree.CharacterFormat(
+									quillAttributesToFormat(op.attributes),
+								);
+								root.insertAt(cpPos, op.insert);
+							}
+							// Update content to reflect insertion
+							content = content.slice(0, utf16Pos) + op.insert + content.slice(utf16Pos);
+							// Advance by inserted content length
+							utf16Pos += op.insert.length;
+							cpPos += codepointCount(op.insert);
+						}
+					}
+				};
+				if (context.isBranch()) {
+					context.runTransaction(applyDelta, { label: undoRedoRef.current?.transactionLabel });
+				} else {
+					applyDelta();
+				}
+
+				isUpdating.current = false;
+			};
+
+			quill.on("text-change", handleTextChange);
+			quillRef.current = quill;
+
+			// Create container for React-controlled undo/redo buttons and prepend to toolbar
+			const editor = editorRef.current;
+			const toolbar = editor.previousElementSibling as HTMLElement;
+			const container = document.createElement("span");
+			container.className = "ql-formats";
+			toolbar.prepend(container);
+			setUndoRedoContainer(container);
+
+			return () => {
+				quill.off("text-change", handleTextChange);
+				quillRef.current = undefined;
+				setUndoRedoContainer(undefined);
+				// Clear Quill's DOM modifications so the container is clean for any remount.
+				toolbar.remove();
+				editor.innerHTML = "";
+				editor.className = "";
+			};
+			// eslint-disable-next-line react-hooks/exhaustive-deps
+		}, []);
+
+		// Sync Quill when tree changes externally.
+		// Accessing buildDeltaFromTree(root) during render establishes observation via the HOC,
+		// which re-renders this component whenever the tree content changes.
+		// We skip the sync if isUpdating is true, meaning we caused the tree change ourselves
+		// via the text-change handler — in that case Quill already has the correct content.
+		if (quillRef.current && !isUpdating.current) {
+			// TODO:Performance: Once SharedTree has better ArrayNode change events,
+			// use those events to construct a delta, instead of rebuilding a new delta then diffing every edit.
+			// After doing the optimization, keep this diffing logic as a way to test for de-sync between the tree and Quill:
+			// Use it in tests and possibly occasionally in debug builds.
+			const treeDelta = buildDeltaFromTree(root);
+
+			// eslint doesn't seem to be resolving the types correctly here.
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+			const quillDelta: Delta = quillRef.current.getContents();
+
+			const diff = new Delta(quillDelta).diff(new Delta(treeDelta));
+
+			if (diff.ops.length > 0) {
+				isUpdating.current = true;
+				quillRef.current.updateContents(diff.ops);
+				isUpdating.current = false;
+			}
 		}
-	}
 
-	// Render undo/redo buttons via portal into Quill toolbar
-	const undoRedoButtons = undoRedoContainer
-		? ReactDOM.createPortal(
-				<>
-					<button
-						type="button"
-						className="ql-undo"
-						disabled={undoRedo?.manager.canUndo(undoRedo.transactionLabel) !== true}
-						onClick={() => undoRedo?.manager.undo(undoRedo.transactionLabel)}
-					/>
-					<button
-						type="button"
-						className="ql-redo"
-						disabled={undoRedo?.manager.canRedo(undoRedo.transactionLabel) !== true}
-						onClick={() => undoRedo?.manager.redo(undoRedo.transactionLabel)}
-					/>
-				</>,
-				undoRedoContainer,
-			)
-		: undefined;
+		// Render undo/redo buttons via portal into Quill toolbar
+		const undoRedoButtons = undoRedoContainer
+			? ReactDOM.createPortal(
+					<>
+						<button
+							type="button"
+							className="ql-undo"
+							disabled={undoRedo?.manager.canUndo(undoRedo.transactionLabel) !== true}
+							onClick={() => undoRedo?.manager.undo(undoRedo.transactionLabel)}
+						/>
+						<button
+							type="button"
+							className="ql-redo"
+							disabled={undoRedo?.manager.canRedo(undoRedo.transactionLabel) !== true}
+							onClick={() => undoRedo?.manager.redo(undoRedo.transactionLabel)}
+						/>
+					</>,
+					undoRedoContainer,
+				)
+			: undefined;
 
-	return (
-		<div
-			style={{ height: "100%", display: "flex", flexDirection: "column" }}
-			onClick={() => quillRef.current?.focus()}
-		>
-			<style>{`
+		return (
+			<div
+				style={{ height: "100%", display: "flex", flexDirection: "column" }}
+				onClick={() => quillRef.current?.focus()}
+			>
+				<style>{`
 				.ql-container { height: 100%; font-size: 14px; }
 				.ql-editor { height: 100%; outline: none; }
 				.ql-editor.ql-blank::before { color: #999; font-style: italic; }
@@ -654,18 +658,18 @@ const FormattedTextEditorView = withMemoizedTreeObservations(
 				li[data-list="bullet"] { display: flex; align-items: center; }
 				li[data-list="bullet"] .ql-ui { align-self: center; }
 			`}</style>
-			<div
-				ref={editorRef}
-				style={{
-					flex: 1,
-					minHeight: "300px",
-					border: "1px solid #ccc",
-					borderRadius: "4px",
-					cursor: "text",
-				}}
-			/>
-			{undoRedoButtons}
-		</div>
-	);
-},
+				<div
+					ref={editorRef}
+					style={{
+						flex: 1,
+						minHeight: "300px",
+						border: "1px solid #ccc",
+						borderRadius: "4px",
+						cursor: "text",
+					}}
+				/>
+				{undoRedoButtons}
+			</div>
+		);
+	},
 );
