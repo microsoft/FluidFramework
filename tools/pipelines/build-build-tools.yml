@@ -124,5 +124,6 @@ extends:
     - checks
     sparseCheckoutDirectories: |
       build-tools
+      common/build/eslint-config-fluid
       patches
       scripts

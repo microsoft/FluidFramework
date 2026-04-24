@@ -106,5 +106,6 @@ extends:
     sparseCheckoutDirectories: |
       common/lib/common-utils
       build-tools
+      common/build/eslint-config-fluid
       patches
       scripts
