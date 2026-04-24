@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/server-routerlicious-base",
-	"version": "6.0.1",
+	"version": "6.0.2",
 	"description": "Fluid server base classes for routerlicious",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -110,7 +110,7 @@
 		"@types/sinon": "^17.0.3",
 		"@types/split": "^0.3.28",
 		"@types/supertest": "^2.0.5",
-		"@types/ws": "^6.0.1",
+		"@types/ws": "^6.0.2",
 		"c8": "^8.0.1",
 		"concurrently": "^8.2.1",
 		"eslint": "~8.55.0",

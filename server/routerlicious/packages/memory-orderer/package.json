@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/server-memory-orderer",
-	"version": "6.0.1",
+	"version": "6.0.2",
 	"description": "Fluid server in memory orderer",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -67,7 +67,7 @@
 		"@types/double-ended-queue": "^2.1.0",
 		"@types/lodash": "^4.14.118",
 		"@types/node": "^18.19.39",
-		"@types/ws": "^6.0.1",
+		"@types/ws": "^6.0.2",
 		"assert": "^2.0.0",
 		"debug": "^4.3.4",
 		"double-ended-queue": "^2.1.0-0",
