@@ -99,4 +99,5 @@ extends:
     sparseCheckoutDirectories: |
       tools/test-tools
       build-tools
+      patches
       scripts

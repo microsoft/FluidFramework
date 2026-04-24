@@ -104,4 +104,5 @@ extends:
     sparseCheckoutDirectories: |
       common/build/build-common
       build-tools
+      patches
       scripts

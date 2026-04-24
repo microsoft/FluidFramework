@@ -103,4 +103,5 @@ extends:
     sparseCheckoutDirectories: |
       tools/benchmark
       build-tools
+      patches
       scripts
