@@ -101,7 +101,7 @@ extends:
     taskTest: [] # no tests
     checks:
     - prettier
+    taskSetVersion: false
     sparseCheckoutDirectories: |
       common/build/build-common
-      build-tools
       scripts

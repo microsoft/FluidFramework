@@ -96,7 +96,7 @@ extends:
     taskLint: false
     taskTest:
     - test
+    taskSetVersion: false
     sparseCheckoutDirectories: |
       tools/test-tools
-      build-tools
       scripts

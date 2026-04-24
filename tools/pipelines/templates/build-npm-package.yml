@@ -47,6 +47,12 @@ parameters:
   type: boolean
   default: false
 
+# Set to false to skip the version-setting step entirely (flub generate buildVersion + package.json bump).
+# Useful for pipelines that use sparse checkouts and don't need a CI-stamped version (e.g. independent packages).
+- name: taskSetVersion
+  type: boolean
+  default: true
+
 - name: taskPack
   type: boolean
   default: true
@@ -337,8 +343,9 @@ extends:
                   packageManagerInstallCommand: '${{ parameters.packageManagerInstallCommand }}'
 
               # The bundle-size-artifacts pipeline runs a client build but doesn't publish packages,
-              # so we skip version setting for it.
-              - ${{ if eq(parameters.isBundleSizeArtifactsPipeline, false) }}:
+              # so we skip version setting for it. taskSetVersion can also be set to false to skip
+              # this step for other pipelines (e.g. independent packages with sparse checkouts).
+              - ${{ if and(eq(parameters.isBundleSizeArtifactsPipeline, false), eq(parameters.taskSetVersion, true)) }}:
                   - template: /tools/pipelines/templates/include-set-package-version.yml@self
                     parameters:
                       buildDirectory: '${{ parameters.buildDirectory }}'

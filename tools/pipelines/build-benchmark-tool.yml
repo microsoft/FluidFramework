@@ -100,7 +100,7 @@ extends:
     taskLint: true
     taskTest:
     - test
+    taskSetVersion: false
     sparseCheckoutDirectories: |
       tools/benchmark
-      build-tools
       scripts

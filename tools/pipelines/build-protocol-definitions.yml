@@ -105,8 +105,8 @@ extends:
     tagName: protocol-definitions
     testCoverage: false
     taskTest: [] # no tests
+    taskSetVersion: false
     sparseCheckoutDirectories: |
       common/lib/protocol-definitions
-      build-tools
       patches
       scripts
