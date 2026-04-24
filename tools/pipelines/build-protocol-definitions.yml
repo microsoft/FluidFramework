@@ -107,5 +107,6 @@ extends:
     taskTest: [] # no tests
     sparseCheckoutDirectories: |
       common/lib/protocol-definitions
+      build-tools
       patches
       scripts

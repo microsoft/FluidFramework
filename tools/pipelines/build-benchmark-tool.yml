@@ -102,4 +102,5 @@ extends:
     - test
     sparseCheckoutDirectories: |
       tools/benchmark
+      build-tools
       scripts
