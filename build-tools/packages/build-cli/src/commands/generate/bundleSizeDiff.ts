@@ -11,7 +11,6 @@ import {
 	type BundleMetric,
 	bundlesContainNoChanges,
 	getAzureDevopsApi,
-	type SizeComparison,
 	totalSizeMetricName,
 } from "@fluidframework/bundle-size-tools";
 import { Flags } from "@oclif/core";
@@ -139,23 +138,7 @@ export default class GenerateBundleSizeDiff extends BaseCommand<
 			undefined,
 			ADOSizeComparator.naiveFallbackCommitGenerator,
 		);
-		// `getSizeComparison` is documented to return a structured `SizeComparison` rather
-		// than throw, but it can still propagate unexpected exceptions from underlying ADO
-		// API calls (transient network failures, unexpected HTTP responses). Catch those
-		// here and synthesize an `error` variant so the command always produces a valid
-		// output file — this keeps the pipeline step non-blocking for issues unrelated to
-		// the PR under test.
-		let comparisonResult: SizeComparison;
-		try {
-			comparisonResult = await sizeComparator.getSizeComparison(false);
-		} catch (e) {
-			const errorMessage = e instanceof Error ? e.message : String(e);
-			comparisonResult = {
-				kind: "error",
-				baselineCommit: undefined,
-				error: `Unexpected failure from getSizeComparison: ${errorMessage}`,
-			};
-		}
+		const comparisonResult = await sizeComparator.getSizeComparison(false);
 
 		const outputDir = path.resolve(process.cwd(), flags.outputDir);
 		mkdirSync(outputDir, { recursive: true });
