@@ -131,54 +131,12 @@ interface StackEntry {
 }
 
 /**
- * A single undo/redo manager for a tree branch that supports both global and per-label operations.
+ * Concrete implementation of {@link LabeledUndoRedo} for a SharedTree branch.
  *
  * @remarks
- * A single instance should be created per tree branch, as multiple revertible listeners on the same branch is not supported.
- *
- * **Redo invalidation:** when a new user commit arrives with labels `{A, B}`, all redo entries
- * whose label sets intersect `{A, B}` are cleared. An anonymous commit (no labels) clears only
- * anonymous redo entries. Entries with no label overlap are preserved.
- *
- * **Nested-transaction labels:** only root-level symbol labels are extracted from each commit.
- * Labels from inner nested transactions are ignored. See {@link LabeledUndoRedo} for details.
- *
- * @example Typical React setup — one manager per user, shared via context
- * ```tsx
- * function UserPanel({ treeView }: { treeView: TreeViewAlpha<typeof MySchema> }) {
- *     const manager = useMemo(() => new UndoRedoManager(treeView), [treeView]);
- *     useEffect(() => () => manager.dispose(), [manager]);
- *
- *     return (
- *         <UndoRedoContext.Provider value={manager}>
- *             <MyEditor />
- *         </UndoRedoContext.Provider>
- *     );
- * }
- *
- * // In a child editor — use the hook to access the manager and stay reactive:
- * const editorLabel = Symbol("my-editor");
- *
- * function MyEditor() {
- *     const manager = useUndoRedo();
- *     return (
- *         <>
- *             <button
- *                 disabled={manager?.canUndo(editorLabel) !== true}
- *                 onClick={() => manager?.undo(editorLabel)}
- *             >
- *                 Undo
- *             </button>
- *             <button
- *                 disabled={manager?.canRedo(editorLabel) !== true}
- *                 onClick={() => manager?.redo(editorLabel)}
- *             >
- *                 Redo
- *             </button>
- *         </>
- *     );
- * }
- * ```
+ * A single instance must be created per tree branch. Multiple instances on the same branch
+ * will each attempt to call `getRevertible()` on the `changed` event, and the second call
+ * will throw.
  *
  * @sealed @internal
  */
