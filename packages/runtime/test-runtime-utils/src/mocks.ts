@@ -50,8 +50,7 @@ import {
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 import {
 	createIdCompressor,
-	// eslint-disable-next-line import-x/no-deprecated -- Will be undeprecated in 2.100.0 when it becomes an internal API
-	type IIdCompressorCore,
+	toIdCompressorWithCore,
 	type IdCreationRange,
 } from "@fluidframework/id-compressor/internal";
 import {
@@ -259,7 +258,7 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
 			this.dataStoreRuntime.idCompressor !== undefined,
 			"Shouldn't try to finalize IdRanges without an IdCompressor",
 		);
-		this.dataStoreRuntime.idCompressor.finalizeCreationRange(range);
+		toIdCompressorWithCore(this.dataStoreRuntime.idCompressor).finalizeCreationRange(range);
 	}
 
 	// This enables manual control over flush mode, allowing operations like rollback to be executed in a controlled environment.
@@ -456,7 +455,10 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
 	}
 
 	private generateIdAllocationOp(): IInternalMockRuntimeMessage | undefined {
-		const idRange = this.dataStoreRuntime.idCompressor?.takeNextCreationRange();
+		const idRange =
+			this.dataStoreRuntime.idCompressor === undefined
+				? undefined
+				: toIdCompressorWithCore(this.dataStoreRuntime.idCompressor).takeNextCreationRange();
 		if (idRange?.ids !== undefined) {
 			const allocationOp: IMockContainerRuntimeIdAllocationMessage = {
 				type: "idAllocation",
@@ -871,8 +873,7 @@ export class MockFluidDataStoreRuntime
 		entryPoint?: IFluidHandle<FluidObject>;
 		id?: string;
 		logger?: ITelemetryBaseLogger;
-		// eslint-disable-next-line import-x/no-deprecated -- Will be undeprecated in 2.100.0 when it becomes an internal API
-		idCompressor?: IIdCompressor & IIdCompressorCore;
+		idCompressor?: IIdCompressor;
 		attachState?: AttachState;
 		registry?: readonly IChannelFactory[];
 		minVersionForCollab?: MinimumVersionForCollab;
@@ -947,8 +948,7 @@ export class MockFluidDataStoreRuntime
 	public quorum = new MockQuorumClients();
 	private readonly audience = new MockAudience();
 	public containerRuntime?: MockContainerRuntime;
-	// eslint-disable-next-line import-x/no-deprecated -- Will be undeprecated in 2.100.0 when it becomes an internal API
-	public idCompressor: (IIdCompressor & IIdCompressorCore) | undefined;
+	public idCompressor: IIdCompressor | undefined;
 	private readonly deltaConnections: MockDeltaConnection[] = [];
 	private readonly registry?: ReadonlyMap<string, IChannelFactory>;
 

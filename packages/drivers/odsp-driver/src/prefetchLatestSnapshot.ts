@@ -110,6 +110,7 @@ export async function prefetchLatestSnapshot(
 			tokenFetchOptions,
 			loadingGroupId,
 			snapshotOptions,
+			odspLogger,
 			undefined,
 			controller,
 		);
