@@ -272,6 +272,13 @@ const UserPanel: FC<{
 		return () => manager.dispose();
 	}, [manager]);
 
+	// Re-render when undo/redo availability changes (branch emits "changed" on every commit)
+	const [, setVersion] = useState(0);
+	useEffect(() => {
+		const off = treeView.events.on("changed", () => setVersion((v) => v + 1));
+		return () => off();
+	}, [treeView]);
+
 	const [collapsed, setCollapsed] = useState<Record<ViewType, boolean>>({
 		plainTextarea: false,
 		plainQuill: false,
@@ -298,7 +305,62 @@ const UserPanel: FC<{
 				overflowY: "auto",
 			}}
 		>
-			<div style={{ marginBottom: "10px", fontWeight: "bold", color }}>{label}</div>
+			<div
+				style={{
+					marginBottom: "10px",
+					display: "flex",
+					justifyContent: "space-between",
+					alignItems: "center",
+				}}
+			>
+				<span style={{ fontWeight: "bold", color }}>{label}</span>
+				<div style={{ display: "flex", gap: "4px" }}>
+					<button
+						type="button"
+						disabled={!manager.canUndo()}
+						onClick={() => manager.undo()}
+						title="Undo"
+						style={{
+							width: "28px",
+							height: "28px",
+							padding: 0,
+							background: "none",
+							border: "1px solid #ccc",
+							borderRadius: "4px",
+							cursor: manager.canUndo() ? "pointer" : "not-allowed",
+							fontSize: "18px",
+							display: "flex",
+							alignItems: "center",
+							justifyContent: "center",
+							opacity: manager.canUndo() ? 1 : 0.3,
+						}}
+					>
+						↶
+					</button>
+					<button
+						type="button"
+						disabled={!manager.canRedo()}
+						onClick={() => manager.redo()}
+						title="Redo"
+						style={{
+							width: "28px",
+							height: "28px",
+							padding: 0,
+							background: "none",
+							border: "1px solid #ccc",
+							borderRadius: "4px",
+							cursor: manager.canRedo() ? "pointer" : "not-allowed",
+							fontSize: "18px",
+							display: "flex",
+							alignItems: "center",
+							justifyContent: "center",
+							opacity: manager.canRedo() ? 1 : 0.3,
+						}}
+					>
+						↷
+					</button>
+				</div>
+			</div>
 			{(Object.keys(viewLabels) as ViewType[]).map((viewType) => {
 				const isExpanded = !collapsed[viewType];
 				return (
