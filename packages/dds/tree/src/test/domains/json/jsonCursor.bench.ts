@@ -5,7 +5,12 @@
 
 import { strict as assert } from "node:assert";
 
-import { BenchmarkType, benchmark, isInPerformanceTestingMode } from "@fluid-tools/benchmark";
+import {
+	BenchmarkType,
+	benchmarkDuration,
+	benchmarkIt,
+	isInPerformanceTestingMode,
+} from "@fluid-tools/benchmark";
 import { emulateProductionBuild } from "@fluidframework/core-utils/internal";
 
 import {
@@ -87,17 +92,23 @@ function bench(
 						});
 					}
 
-					benchmark({
+					benchmarkIt({
 						type: BenchmarkType.Perspective,
 						title: "Clone JS Object",
-						before: () => {
-							const cloned = clone(json);
-							assert.deepEqual(cloned, json, "clone() must return an equivalent tree.");
-							assert.notEqual(cloned, json, "clone() must not return the same tree instance.");
-						},
-						benchmarkFn: () => {
-							clone(json);
-						},
+						...benchmarkDuration({
+							benchmarkFnCustom: async (state) => {
+								const cloned = clone(json);
+								assert.deepEqual(cloned, json, "clone() must return an equivalent tree.");
+								assert.notEqual(
+									cloned,
+									json,
+									"clone() must not return the same tree instance.",
+								);
+								state.timeAllBatches(() => {
+									clone(json);
+								});
+							},
+						}),
 					});
 
 					const cursorFactories: [string, () => ITreeCursor][] = [
@@ -181,22 +192,23 @@ function bench(
 					for (const [factoryName, factory] of cursorFactories) {
 						describe(factoryName, () => {
 							for (const [consumerName, consumer] of consumers) {
-								let cursor: ITreeCursor;
-								benchmark({
+								benchmarkIt({
 									type: emulateProduction
 										? BenchmarkType.Measurement
 										: BenchmarkType.Perspective,
 									title: `${consumerName}(${factoryName})`,
-									before: () => {
-										cursor = factory();
-										// TODO: validate behavior
-										// assert.deepEqual(cursorToJsonObject(cursor), json, "data should round trip through json");
-										// assert.deepEqual(
-										//     jsonableTreeFromCursor(cursor), encodedTree, "data should round trip through jsonable");
-									},
-									benchmarkFn: () => {
-										consumer(cursor, dataConsumer);
-									},
+									...benchmarkDuration({
+										benchmarkFnCustom: async (state) => {
+											const cursor = factory();
+											// TODO: validate behavior
+											// assert.deepEqual(cursorToJsonObject(cursor), json, "data should round trip through json");
+											// assert.deepEqual(
+											//     jsonableTreeFromCursor(cursor), encodedTree, "data should round trip through jsonable");
+											state.timeAllBatches(() => {
+												consumer(cursor, dataConsumer);
+											});
+										},
+									}),
 								});
 							}
 						});

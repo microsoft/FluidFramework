@@ -6,11 +6,22 @@
 
 import type { Test } from 'mocha';
 
-// @public @deprecated
-export function benchmark(args: Titled & DurationBenchmark & BenchmarkDescription & MochaExclusiveOptions): Test;
+// @public @sealed
+export interface BatchedDurationTimer<T> {
+    readonly iterationsPerBatch: number;
+    recordBatch(duration: number): boolean;
+    timeAllBatches(callback: () => void): void;
+    timeAllBatchesAsync(callback: () => Promise<unknown>): Promise<void>;
+    timeBatch(callback: () => void): boolean;
+    timeBatchAsync(callback: () => Promise<unknown>): Promise<boolean>;
+    readonly timer: Timer<T>;
+}
 
-// @public @deprecated
-export const benchmarkCustom: typeof benchmarkIt;
+// @public @sealed
+export interface BatchlessDurationTimer {
+    time(callback: () => void): boolean;
+    timeAsync(callback: () => Promise<unknown>): Promise<boolean>;
+}
 
 // @public @input
 export interface BenchmarkDescription {
@@ -21,6 +32,9 @@ export interface BenchmarkDescription {
 
 // @public
 export function benchmarkDuration(args: DurationBenchmark): BenchmarkDescription & BenchmarkFunction;
+
+// @public
+export function benchmarkDurationBatchless(args: DurationBenchmarkBatchless): BenchmarkDescription & BenchmarkFunction;
 
 // @public @sealed
 export interface BenchmarkError {
@@ -44,14 +58,6 @@ export interface BenchmarkOptions extends Titled, BenchmarkDescription, MochaExc
 
 // @public @sealed
 export type BenchmarkResult = BenchmarkError | CollectedData;
-
-// @public @sealed
-export interface BenchmarkTimer<T> {
-    readonly iterationsPerBatch: number;
-    recordBatch(duration: number): boolean;
-    timeBatch(callback: () => void): boolean;
-    readonly timer: Timer<T>;
-}
 
 // @public @input
 export interface BenchmarkTimingOptions {
@@ -97,17 +103,25 @@ export function collectMemoryUseData(argsIn: MemoryUseBenchmark): Promise<Collec
 export type DurationBenchmark = DurationBenchmarkSync | DurationBenchmarkAsync | DurationBenchmarkCustom;
 
 // @public @input
-export interface DurationBenchmarkAsync extends HookArguments, BenchmarkTimingOptions, OnBatch {
+export interface DurationBenchmarkAsync extends BenchmarkTimingOptions {
     readonly benchmarkFnAsync: () => Promise<unknown>;
 }
 
 // @public @input
-export interface DurationBenchmarkCustom extends BenchmarkTimingOptions {
-    benchmarkFnCustom<T>(state: BenchmarkTimer<T>): Promise<void>;
+export interface DurationBenchmarkBatchless {
+    readonly benchmarkFn: (state: BatchlessDurationTimer) => void | Promise<void>;
+    maxBenchmarkDurationSeconds?: number;
+    minSampleCount?: number;
+    startPhase?: Phase.CollectData | Phase.WarmUp;
 }
 
 // @public @input
-export interface DurationBenchmarkSync extends HookArguments, BenchmarkTimingOptions, OnBatch {
+export interface DurationBenchmarkCustom extends BenchmarkTimingOptions {
+    benchmarkFnCustom<T>(state: BatchedDurationTimer<T>): Promise<void>;
+}
+
+// @public @input
+export interface DurationBenchmarkSync extends BenchmarkTimingOptions {
     readonly benchmarkFn: () => void;
 }
 
@@ -119,17 +133,6 @@ export function formatResultArrayTable(data: SuiteData): string | undefined;
 
 // @public
 export function fullName(parent: ReportPath | undefined, benchmarkName?: string): string;
-
-// @public @input
-export interface HookArguments {
-    // @deprecated
-    after?: HookFunction | undefined;
-    // @deprecated
-    before?: HookFunction | undefined;
-}
-
-// @public @deprecated
-export type HookFunction = () => void | Promise<unknown>;
 
 // @public
 export const isInPerformanceTestingMode: boolean;
@@ -183,12 +186,6 @@ export function memoryUseOfValue<TOut extends NonNullable<unknown>>(factory: () 
 // @public @input
 export interface MochaExclusiveOptions {
     readonly only?: boolean;
-}
-
-// @public @input
-export interface OnBatch {
-    // @deprecated
-    beforeEachBatch?: () => void;
 }
 
 // @public

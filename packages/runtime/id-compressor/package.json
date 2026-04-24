@@ -141,7 +141,7 @@
 		"@biomejs/biome": "~2.4.5",
 		"@fluid-internal/mocha-test-setup": "workspace:~",
 		"@fluid-private/stochastic-test-utils": "workspace:~",
-		"@fluid-tools/benchmark": "^0.55.0",
+		"@fluid-tools/benchmark": "^0.58.0",
 		"@fluid-tools/build-cli": "catalog:buildTools",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "catalog:buildTools",
@@ -162,7 +162,12 @@
 		"typescript": "~5.4.5"
 	},
 	"typeValidation": {
-		"broken": {},
+		"broken": {
+			"Interface_IIdCompressorCore": {
+				"forwardCompat": false,
+				"backCompat": false
+			}
+		},
 		"entrypoint": "legacy"
 	}
 }

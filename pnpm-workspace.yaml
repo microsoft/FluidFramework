@@ -40,10 +40,10 @@ strictDepBuilds: true
 catalogs:
   # Build-tools packages
   buildTools:
-    "@fluid-tools/build-cli": ^0.64.0
-    "@fluid-tools/version-tools": ^0.64.0
-    "@fluidframework/build-tools": ^0.64.0
-    "@fluidframework/bundle-size-tools": ^0.64.0
+    "@fluid-tools/build-cli": ^0.65.0
+    "@fluid-tools/version-tools": ^0.65.0
+    "@fluidframework/build-tools": ^0.65.0
+    "@fluidframework/bundle-size-tools": ^0.65.0
   # eslint and related packages
   eslint:
     "@fluidframework/eslint-config-fluid": "^9.0.0"

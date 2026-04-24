@@ -31,15 +31,15 @@ export {
 	type DurationBenchmarkAsync,
 	type DurationBenchmark,
 	type BenchmarkTimingOptions,
-	type OnBatch,
-	type HookFunction,
-	type HookArguments,
-	type BenchmarkTimer,
+	type BatchedDurationTimer,
 	type DurationBenchmarkCustom,
 	Phase,
 	collectDurationData,
 	runBenchmarkSync,
 	benchmarkDuration,
+	type BatchlessDurationTimer,
+	type DurationBenchmarkBatchless,
+	benchmarkDurationBatchless,
 } from "./durationBenchmarking/index.js";
 export { benchmarkIt } from "./mocha/index.js";
 export {
@@ -81,5 +81,3 @@ export {
 	memoryAddedBy,
 	memoryUseOfValue,
 } from "./memoryBenchmarking/index.js";
-
-export { benchmark, benchmarkCustom } from "./legacy.js";

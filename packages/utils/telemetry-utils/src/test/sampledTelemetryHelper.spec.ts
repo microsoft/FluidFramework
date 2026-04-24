@@ -15,9 +15,9 @@ import { SampledTelemetryHelper } from "../sampledTelemetryHelper.js";
 import type {
 	ITelemetryErrorEventExt,
 	ITelemetryGenericEventExt,
-	ITelemetryLoggerExt,
+	TelemetryLoggerExt,
 	ITelemetryPerformanceEventExt,
-} from "../telemetryTypes.js";
+} from "../telemetryTypesUndeprecated.js";
 
 /**
  * @remarks Initialized in advance to extract its keys for type checking.
@@ -33,7 +33,7 @@ interface TestTelemetryProperties {
  * Test logger with only the necessary functionality used by the SampledTelemetryHelper
  * so we can test it.
  */
-class TestLogger implements ITelemetryLoggerExt {
+class TestLogger implements TelemetryLoggerExt {
 	public events: ITelemetryPerformanceEventExt[] = [];
 
 	public sendPerformanceEvent(event: ITelemetryPerformanceEventExt, error?: unknown): void {

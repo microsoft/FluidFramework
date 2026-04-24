@@ -56,8 +56,9 @@ Insiders is a superset of the base AI-enabled profile. The only differences in t
 - **`name`** — `"AI-enabled (Insiders)"`
 - **`onCreateCommand`** — chains `install-flub.sh` after `on-create.sh` to build and link the `flub` CLI
 - **`codespaces.openFiles`** — points to the insiders copy of `GETTING_STARTED.md`
+- **`features`** *(temporary)* — insiders includes `azure-cli` and `mise` as a preview. Promote to the base profile (or remove) once we decide whether they belong by default.
 
-Everything else (Dockerfile, runArgs, extensions, features, setup scripts, host requirements) is identical.
+Everything else (Dockerfile, runArgs, extensions, setup scripts, host requirements) is identical.
 
 ### Shared vs. duplicated files
 

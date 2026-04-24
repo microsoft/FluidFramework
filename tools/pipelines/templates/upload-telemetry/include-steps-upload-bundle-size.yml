@@ -1,0 +1,38 @@
+# Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+# Licensed under the MIT License.
+
+# include-steps-upload-bundle-size
+
+# Steps that can be added to the upload-telemetry stage (`include-stage-upload-telemetry.yml`) to include the upload of bundle size data.
+
+steps:
+- task: DownloadPipelineArtifact@2
+  displayName: Download bundleAnalysis artifact
+  inputs:
+    artifact: bundleAnalysis
+    path: $(Agent.TempDirectory)/bundleAnalysis
+
+- task: Bash@3
+  displayName: List bundleAnalysis artifact contents
+  inputs:
+    targetType: 'inline'
+    script: |
+      set -eu -o pipefail
+      echo "Contents of $(Agent.TempDirectory)/bundleAnalysis:"
+      ls -laR $(Agent.TempDirectory)/bundleAnalysis
+
+- task: Bash@3
+  displayName: Submit telemetry for bundle sizes
+  env:
+    WORK_FOLDER: $(Agent.TempDirectory)/bundleAnalysis/@fluid-example/bundle-size-tests
+  inputs:
+    targetType: 'inline'
+    workingDirectory: $(Pipeline.Workspace)/$(FFPipelineHostDirectory)
+    script: |
+      set -eu -o pipefail
+
+      echo "Listing files in '$WORK_FOLDER'"
+      ls -laR "$WORK_FOLDER";
+
+      echo "pnpm exec telemetry-generator --handlerModule \"$(pathToTelemetryGeneratorHandlersNew)/bundleSizeHandler.js\" --dir \"$WORK_FOLDER\""
+      pnpm exec telemetry-generator --handlerModule "$(pathToTelemetryGeneratorHandlersNew)/bundleSizeHandler.js" --dir "$WORK_FOLDER"

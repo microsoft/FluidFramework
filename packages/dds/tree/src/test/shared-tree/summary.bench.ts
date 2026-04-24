@@ -8,14 +8,13 @@ import { strict as assert } from "node:assert";
 import { IsoBuffer } from "@fluid-internal/client-utils";
 import {
 	BenchmarkType,
+	benchmarkDuration,
 	benchmarkIt,
-	benchmark,
 	ValueType,
 	type CollectedData,
 } from "@fluid-tools/benchmark";
 import type { IChannelServices } from "@fluidframework/datastore-definitions/internal";
 import type { ISummaryTree } from "@fluidframework/driver-definitions";
-import type { ITree } from "@fluidframework/driver-definitions/internal";
 import { convertSummaryTreeToITree } from "@fluidframework/runtime-utils/internal";
 import {
 	MockDeltaConnection,
@@ -86,8 +85,6 @@ describe("Summary benchmarks", () => {
 
 		for (const [numberOfNodes, minLength, maxLength] of nodesCountWide) {
 			benchmarkIt({
-				only: false,
-				type: BenchmarkType.Measurement,
 				title: `a wide tree with ${numberOfNodes} nodes.`,
 				run: async () => {
 					const summaryTree = getSummaryTree({
@@ -100,8 +97,6 @@ describe("Summary benchmarks", () => {
 		}
 		for (const [numberOfNodes, minLength, maxLength] of nodesCountDeep) {
 			benchmarkIt({
-				only: false,
-				type: BenchmarkType.Measurement,
 				title: `a deep tree with ${numberOfNodes} nodes.`,
 				run: async () => {
 					const summaryTree = getSummaryTree({
@@ -122,27 +117,28 @@ describe("Summary benchmarks", () => {
 			content: TreeSimpleContentTyped<T>,
 			type: BenchmarkType,
 		) {
-			let summaryTree: ITree;
 			const factory = configuredSharedTree({}).getFactory();
-			benchmark({
+			benchmarkIt({
 				title,
 				type,
-				before: () => {
-					summaryTree = convertSummaryTreeToITree(getSummaryTree(content));
-				},
-				benchmarkFnAsync: async () => {
-					const services: IChannelServices = {
-						deltaConnection: new MockDeltaConnection(
-							() => 0,
-							() => {},
-						),
-						objectStorage: new MockStorage(summaryTree),
-					};
-					const datastoreRuntime = new MockFluidDataStoreRuntime({
-						idCompressor: testIdCompressor,
-					});
-					await factory.load(datastoreRuntime, "test", services, factory.attributes);
-				},
+				...benchmarkDuration({
+					benchmarkFnCustom: async (state) => {
+						const summaryTree = convertSummaryTreeToITree(getSummaryTree(content));
+						await state.timeAllBatchesAsync(async () => {
+							const services: IChannelServices = {
+								deltaConnection: new MockDeltaConnection(
+									() => 0,
+									() => {},
+								),
+								objectStorage: new MockStorage(summaryTree),
+							};
+							const datastoreRuntime = new MockFluidDataStoreRuntime({
+								idCompressor: testIdCompressor,
+							});
+							await factory.load(datastoreRuntime, "test", services, factory.attributes);
+						});
+					},
+				}),
 			});
 		}
 

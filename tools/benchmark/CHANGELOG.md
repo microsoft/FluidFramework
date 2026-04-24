@@ -1,7 +1,29 @@
 # @fluid-tools/benchmark
 
+## 0.59.0
+
+-   `BenchmarkTimer` has been renamed to `BatchedDurationTimer`.
+-   Added `benchmarkDurationBatchless` and the `BatchlessDurationTimer` interface for benchmarks that require per-iteration setup and/or teardown, making batching impractical. Each timed sample covers exactly one invocation of the operation. Prefer `benchmarkDuration` with batching when possible, as batchless measurements have significantly higher noise and measurement bias.
+    Tests previously using `minBatchDurationSeconds: 0` to force a single iteration per batch should migrate to this API.
+-   Improved error reporting: if a benchmark function exits before data collection is complete (e.g. by never recording timing data via the relevant API, such as `state.timeBatch()`/`state.recordBatch()` for custom duration benchmarks or `time()`/`timeAsync()` for batchless benchmarks, or by breaking out of the timing loop while it is still returning `true`), an error is now thrown with a descriptive message.
+
+## 0.58.0
+
+-   Default value for `BenchmarkDescription.type` is now documented to be `BenchmarkType.Measurement` (no functional change: just added missing documentation).
+-   Added `timeBatchAsync` and `timeAllBatchesAsync` methods to `BenchmarkTimer` for benchmarking async operations via `DurationBenchmarkCustom`.
+-   Recommend use of `benchmarkDuration` in dcoumentation for `collectDurationData`.
+-   Suggest setting `testType: TestType.ExecutionTime` when using `collectDurationData` in a `BenchmarkFunction`.
+
+### ⚠ BREAKING CHANGES
+
+-   Removed deprecated `benchmark` and `benchmarkCustom` functions. Use `benchmarkIt` with `benchmarkDuration` instead.
+-   Removed deprecated `HookArguments` interface and its `before`/`after` fields from `DurationBenchmarkSync` and `DurationBenchmarkAsync`. Use `DurationBenchmarkCustom` or call `collectDurationData` directly from a wrapper function containing setup/teardown.
+-   Removed deprecated `OnBatch` interface and its `beforeEachBatch` field from `DurationBenchmarkSync` and `DurationBenchmarkAsync`. Use `DurationBenchmarkCustom` for per-batch setup.
+-   Removed deprecated `HookFunction` type.
+
 ## 0.57.0
 
+-   Mocha dependency updated from v10 to v11.
 -   Error messages from Mocha, including timeouts, are now included in the console and output files properly.
 
 ## 0.56.0

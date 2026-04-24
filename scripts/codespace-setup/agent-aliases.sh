@@ -9,6 +9,7 @@ _ensure_agency() {
 		echo "Agency is not installed. Installing now..."
 		echo "  A browser window will open for authentication!"
 		pnpm install:agency || return 1
+		echo "Please wait..."
 	fi
 	if [[ ! -x "$AGENCY_DIR/agency" ]]; then
 		echo "Agency is still not available at $AGENCY_DIR/agency after installation." >&2
@@ -68,7 +69,7 @@ flub-ai() {
 		echo "Failed to create a temporary launch file." >&2
 		return 1
 	}
-	flub ai --launch-file "$launch_file" "$@"
+	pnpm exec flub ai --launchFile "$launch_file" "$@"
 	local rc=$?
 	if [ "$rc" -eq 0 ] && [ -s "$launch_file" ]; then
 		local cmd

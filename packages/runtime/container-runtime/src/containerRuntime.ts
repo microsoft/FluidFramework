@@ -95,7 +95,6 @@ import { FetchSource, MessageType } from "@fluidframework/driver-definitions/int
 import { readAndParse } from "@fluidframework/driver-utils/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 import type {
-	// eslint-disable-next-line import-x/no-deprecated -- Will be undeprecated in 2.100.0 when it becomes an internal API
 	IIdCompressorCore,
 	IdCreationRange,
 	SerializedIdCompressorWithNoSession,
@@ -105,6 +104,7 @@ import {
 	createIdCompressor,
 	createSessionId,
 	deserializeIdCompressor,
+	toIdCompressorWithCore,
 } from "@fluidframework/id-compressor/internal";
 import {
 	FlushMode,
@@ -131,7 +131,6 @@ import type {
 	IContainerRuntimeBaseInternal,
 	MinimumVersionForCollab,
 	ContainerExtensionExpectations,
-	ContainerRuntimeBaseAlpha,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	addBlobToSummary,
@@ -173,6 +172,7 @@ import {
 	wrapError,
 	tagCodeArtifacts,
 	normalizeError,
+	toITelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
 import { gt } from "semver-ts";
 import { v4 as uuid } from "uuid";
@@ -675,18 +675,11 @@ export function getDeviceSpec(): {
 	deviceMemory?: number | undefined;
 	hardwareConcurrency?: number | undefined;
 } {
-	try {
-		if (typeof navigator === "object" && navigator !== null) {
-			return {
-				// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment
-				deviceMemory: (navigator as any).deviceMemory,
-				hardwareConcurrency: navigator.hardwareConcurrency,
-			};
-		}
-	} catch {
-		// Eat the error
-	}
-	return {};
+	return {
+		// deviceMemory is only available in browsers and is not part of the Navigator type definition. In Node 22 it is undefined.
+		deviceMemory: (navigator as Navigator & { deviceMemory?: number }).deviceMemory,
+		hardwareConcurrency: navigator.hardwareConcurrency,
+	};
 }
 
 /**
@@ -846,7 +839,7 @@ export async function loadContainerRuntime(
  * @legacy @alpha
  */
 export async function loadContainerRuntimeAlpha(params: LoadContainerRuntimeParams): Promise<{
-	runtime: IContainerRuntime & ContainerRuntimeBaseAlpha & IRuntime;
+	runtime: IContainerRuntime & IRuntime;
 }> {
 	return ContainerRuntime.loadRuntime2({
 		...params,
@@ -1185,7 +1178,6 @@ export class ContainerRuntime
 			idCompressorMode = desiredIdCompressorMode;
 		}
 
-		// eslint-disable-next-line import-x/no-deprecated -- Will be undeprecated in 2.100.0 when it becomes an internal API
 		const createIdCompressorFn = (): IIdCompressor & IIdCompressorCore => {
 			/**
 			 * Because the IdCompressor emits so much telemetry, this function is used to sample
@@ -1204,17 +1196,21 @@ export class ContainerRuntime
 			const pendingLocalState = context.pendingLocalState as IPendingRuntimeState;
 
 			if (pendingLocalState?.pendingIdCompressorState !== undefined) {
-				return deserializeIdCompressor(
-					pendingLocalState.pendingIdCompressorState,
-					compressorLogger,
+				return toIdCompressorWithCore(
+					deserializeIdCompressor(
+						pendingLocalState.pendingIdCompressorState,
+						toITelemetryLoggerExt(compressorLogger),
+					),
 				);
 			} else if (serializedIdCompressor === undefined) {
-				return createIdCompressor(compressorLogger);
+				return toIdCompressorWithCore(createIdCompressor(compressorLogger));
 			} else {
-				return deserializeIdCompressor(
-					serializedIdCompressor,
-					createSessionId(),
-					compressorLogger,
+				return toIdCompressorWithCore(
+					deserializeIdCompressor(
+						serializedIdCompressor,
+						createSessionId(),
+						toITelemetryLoggerExt(compressorLogger),
+					),
 				);
 			}
 		};
@@ -1378,7 +1374,6 @@ export class ContainerRuntime
 		return this.documentsSchemaController.sessionSchema.runtime;
 	}
 
-	// eslint-disable-next-line import-x/no-deprecated -- Will be undeprecated in 2.100.0 when it becomes an internal API
 	private _idCompressor: (IIdCompressor & IIdCompressorCore) | undefined;
 
 	// We accumulate Id compressor Ops while Id compressor is not loaded yet (only for "delayed" mode)
@@ -1394,7 +1389,6 @@ export class ContainerRuntime
 	/**
 	 * {@inheritDoc @fluidframework/runtime-definitions#IContainerRuntimeBase.idCompressor}
 	 */
-	// eslint-disable-next-line import-x/no-deprecated -- Will be undeprecated in 2.100.0 when it becomes an internal API
 	public get idCompressor(): (IIdCompressor & IIdCompressorCore) | undefined {
 		// Expose ID Compressor only if it's On from the start.
 		// If container uses delayed mode, then we can only expose generateDocumentUniqueId() and nothing else.
@@ -1615,7 +1609,6 @@ export class ContainerRuntime
 
 		blobManagerLoadInfo: IBlobManagerLoadInfo,
 		private readonly _storage: IContainerStorageService,
-		// eslint-disable-next-line import-x/no-deprecated -- Will be undeprecated in 2.100.0 when it becomes an internal API
 		private readonly createIdCompressorFn: () => IIdCompressor & IIdCompressorCore,
 
 		private readonly documentsSchemaController: DocumentsSchemaController,

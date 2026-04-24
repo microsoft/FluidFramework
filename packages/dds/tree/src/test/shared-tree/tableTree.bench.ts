@@ -6,10 +6,9 @@
 import { strict as assert } from "node:assert";
 
 import {
-	benchmark,
-	BenchmarkType,
+	benchmarkDuration,
+	benchmarkIt,
 	isInPerformanceTestingMode,
-	type BenchmarkTimer,
 	type BenchmarkTimingOptions,
 } from "@fluid-tools/benchmark";
 
@@ -49,39 +48,44 @@ function runBenchmark({
 	minBatchDurationSeconds = 0,
 	maxBenchmarkDurationSeconds,
 }: BenchmarkConfig): void {
-	benchmark({
-		type: BenchmarkType.Measurement,
+	benchmarkIt({
 		title,
-		benchmarkFnCustom: async <T>(state: BenchmarkTimer<T>) => {
-			let duration: number;
-			do {
-				// Since this setup one collects data from one iteration, assert that this is what is expected.
-				assert.equal(state.iterationsPerBatch, 1, "Expected exactly one iteration per batch");
+		...benchmarkDuration({
+			benchmarkFnCustom: async (state) => {
+				let duration: number;
+				do {
+					// Since this setup one collects data from one iteration, assert that this is what is expected.
+					assert.equal(
+						state.iterationsPerBatch,
+						1,
+						"Expected exactly one iteration per batch",
+					);
 
-				// Create table tree
-				const { table, undoRedoStack, cleanUp } = createTableTree({
-					tableSize,
-					initialCellValue,
-				});
+					// Create table tree
+					const { table, undoRedoStack, cleanUp } = createTableTree({
+						tableSize,
+						initialCellValue,
+					});
 
-				beforeOperation?.(table, undoRedoStack);
+					beforeOperation?.(table, undoRedoStack);
 
-				// Operation
-				const before = state.timer.now();
-				operation(table, undoRedoStack);
-				const after = state.timer.now();
+					// Operation
+					const before = state.timer.now();
+					operation(table, undoRedoStack);
+					const after = state.timer.now();
 
-				// Measure
-				duration = state.timer.toSeconds(before, after);
+					// Measure
+					duration = state.timer.toSeconds(before, after);
 
-				afterOperation?.(table, undoRedoStack);
+					afterOperation?.(table, undoRedoStack);
 
-				// Clean up
-				cleanUp();
-			} while (state.recordBatch(duration));
-		},
-		minBatchDurationSeconds,
-		maxBenchmarkDurationSeconds,
+					// Clean up
+					cleanUp();
+				} while (state.recordBatch(duration));
+			},
+			minBatchDurationSeconds,
+			maxBenchmarkDurationSeconds,
+		}),
 	});
 }
 

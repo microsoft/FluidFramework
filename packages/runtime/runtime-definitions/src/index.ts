@@ -31,6 +31,7 @@ export type {
 	IFluidDataStoreContextDetached,
 	IPendingMessagesState,
 	PackagePath,
+	StageControls,
 } from "./dataStoreContext.js";
 export { FlushMode, VisibilityState } from "./dataStoreContext.js";
 export type { IProvideFluidDataStoreFactory } from "./dataStoreFactory.js";
