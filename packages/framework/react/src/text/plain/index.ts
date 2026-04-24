@@ -6,5 +6,6 @@
 export {
 	MainView as PlainTextMainView,
 	type MainViewProps as PlainTextMainViewProps,
+	type UndoRedoProp,
 } from "./plainTextView.js";
 export { syncTextToTree } from "./plainUtils.js";

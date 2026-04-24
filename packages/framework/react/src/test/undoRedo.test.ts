@@ -427,7 +427,11 @@ describe("createUndoRedo", () => {
 
 			// New user commit must land on the undo stack, not the redo stack.
 			fireChanged(true, () => ({ revert() {}, dispose() {} }));
-			assert.equal(manager.canRedo(), false, "pendingOperation was cleared after redo failure");
+			assert.equal(
+				manager.canRedo(),
+				false,
+				"pendingOperation was cleared after redo failure",
+			);
 			manager.dispose();
 		});
 	});

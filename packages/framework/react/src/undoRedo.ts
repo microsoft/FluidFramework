@@ -209,7 +209,7 @@ class UndoRedoManager implements UndoRedo {
 	}
 
 	public undo(label?: symbol): void {
-		if (this.#disposed){
+		if (this.#disposed) {
 			return;
 		}
 		const index =

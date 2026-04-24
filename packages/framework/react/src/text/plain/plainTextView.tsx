@@ -14,6 +14,30 @@ import { withMemoizedTreeObservations } from "../../useTree.js";
 import { syncTextToTree } from "./plainUtils.js";
 
 /**
+ * The `undoRedo` prop shape shared by all editor components that integrate with {@link UndoRedo}.
+ *
+ * @example
+ * ```tsx
+ * const titleLabel = Symbol("title-editor");
+ * const prop: UndoRedoProp = { manager, transactionLabel: titleLabel };
+ * <PlainTextMainView root={root} undoRedo={prop} />
+ * ```
+ *
+ * @internal
+ */
+export interface UndoRedoProp {
+	/**
+	 * The undo/redo manager used by this editor.
+	 */
+	readonly manager: UndoRedo;
+	/**
+	 * Symbol that identifies this editor's commits within the shared manager.
+	 * Only edits stamped with this label will be considered part of this editor's undo/redo history.
+	 */
+	readonly transactionLabel: symbol;
+}
+
+/**
  * Props for the MainView component.
  * @internal
  */
@@ -25,14 +49,9 @@ export interface MainViewProps {
 	 * @remarks
 	 * When provided, undo/redo buttons are rendered and each user edit is
 	 * committed under `label` so it can be undone/redone independently of edits
-	 * made by other components sharing the same {@link UndoRedo} manager.
+	 * made by other components sharing the same {@link UndoRedoProp.manager}.
 	 */
-	readonly undoRedo?: {
-		/** The undo/redo manager shared across editors. */
-		readonly manager: UndoRedo;
-		/** Symbol that identifies this editor's commits within the shared manager. */
-		readonly transactionLabel: symbol;
-	};
+	readonly undoRedo?: UndoRedoProp;
 }
 
 type MainViewPropsInner = Omit<MainViewProps, "root"> & {

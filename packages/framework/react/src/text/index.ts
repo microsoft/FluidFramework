@@ -6,5 +6,6 @@
 export {
 	PlainTextMainView,
 	type PlainTextMainViewProps,
+	type UndoRedoProp,
 	syncTextToTree,
 } from "./plain/index.js";
