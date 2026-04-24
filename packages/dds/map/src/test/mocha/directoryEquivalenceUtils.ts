@@ -97,4 +97,23 @@ async function assertEventualConsistencyCore(
 	const firstSubdirNames = [...first.subdirectories()].map(([dirName, _]) => dirName);
 	const secondSubdirNames = [...second.subdirectories()].map(([dirName, _]) => dirName);
 	assert.deepStrictEqual(firstSubdirNames, secondSubdirNames);
+
+	// Check for consistency of sort-keyed iteration across clients.
+	const firstKeysByOrder = [...first.keysByOrder()];
+	const secondKeysByOrder = [...second.keysByOrder()];
+	assert.deepStrictEqual(
+		firstKeysByOrder,
+		secondKeysByOrder,
+		`keysByOrder() disagree at ${first.absolutePath}: ` +
+			`first=${JSON.stringify(firstKeysByOrder)}, second=${JSON.stringify(secondKeysByOrder)}`,
+	);
+
+	const firstSubdirByOrder = [...first.subdirectoriesByOrder()].map(([name]) => name);
+	const secondSubdirByOrder = [...second.subdirectoriesByOrder()].map(([name]) => name);
+	assert.deepStrictEqual(
+		firstSubdirByOrder,
+		secondSubdirByOrder,
+		`subdirectoriesByOrder() disagree at ${first.absolutePath}: ` +
+			`first=${JSON.stringify(firstSubdirByOrder)}, second=${JSON.stringify(secondSubdirByOrder)}`,
+	);
 }

@@ -5,8 +5,9 @@
 **Landed on branch `directory-iteration-order`.** 985 mocha tests pass,
 covering all deterministic tests T1–T67 across `directory.sortKey.spec.ts`,
 `directory.rollback.spec.ts` (T50–T54), and `directory.snapshot.spec.ts`
-(T58–T62). Build, lint, api-reports, api-extractor docs, and type-tests
-are all green. Slice 11 (fuzz) is the only remaining follow-up.
+(T58–T62), plus Slice 11 fuzz extension. Build, lint, api-reports,
+api-extractor docs, and type-tests are all green. Stress-tested at
+FUZZ_TEST_COUNT=500 (3735 passing).
 
 ### Deviations from the plan
 
@@ -85,7 +86,7 @@ with T29). Both preserve cross-client eventual consistency.
 | 8 — Snapshot round-trip | ✅ implementation done; round-trip spec tests deferred |
 | 9 — Detached state | ✅ done |
 | 10 — Back-compat dark-ship | ⚠ skipped per deviation #2; no Release-N branch needed |
-| 11 — Fuzz | ⏭ not done; the 54-test deterministic suite covers core invariants |
+| 11 — Fuzz | ✅ done — `setSortKey` / `setSubDirectorySortKey` actions added to `fuzzUtils.ts`, equivalence check extended to compare `keysByOrder` / `subdirectoriesByOrder` across clients |
 | 12 — Documentation + changelog + api-reports | ✅ done — ARCHITECTURE.md §9.4 added, §11 subtlety added, changeset `.changeset/sharedirectory-sort-keys.md` created, api-reports regenerated, type-tests regenerated |
 
 ### Follow-up work (to land in subsequent PRs)
@@ -99,8 +100,13 @@ with T29). Both preserve cross-client eventual consistency.
    T59 hand-constructs an old-format header; T62 uses an inline
    `stripSortKeys` helper that recursively deletes `sortKeys` /
    `subdirectorySortKeys` from the serialized `IDirectoryDataObject` tree.
-4. Slice 11 fuzz extension to `directoryFuzzTests.spec.ts` +
-   `directoryOracle.ts`.
+4. ✅ Slice 11 fuzz extension landed in `fuzzUtils.ts` (two new action
+   types + generators/reducers), `directoryFuzzTests.spec.ts`
+   (subdir-concentrated suite opts in to `setSubDirectorySortKey`),
+   `directoryEquivalenceUtils.ts` (cross-client `keysByOrder` /
+   `subdirectoriesByOrder` convergence check), and `directoryOracle.ts`
+   (sort-key state tracking via `sortKeyChanged` /
+   `subDirectorySortKeyChanged` event listeners).
 
 ### Resuming work in a fresh session
 

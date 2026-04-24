@@ -7,8 +7,12 @@ import { strict as assert } from "node:assert";
 
 import type {
 	IDirectory,
+	IDirectorySortKeyChanged,
+	IDirectorySubDirectorySortKeyChanged,
 	IDirectoryValueChanged,
 	ISharedDirectory,
+	ISortKeyChanged,
+	ISubDirectorySortKeyChanged,
 	IValueChanged,
 } from "../interfaces.js";
 
@@ -25,6 +29,15 @@ interface DirectoryNode {
 	 * Subdirectories of this directory
 	 */
 	subdirectories: Map<string, DirectoryNode>;
+	/**
+	 * Sort keys for keys directly contained in this directory.
+	 * Only populated for entries with a sort key set; absence = unkeyed.
+	 */
+	sortKeys: Map<string, string>;
+	/**
+	 * Sort keys for child subdirectories of this directory.
+	 */
+	subdirectorySortKeys: Map<string, string>;
 }
 
 /**
@@ -36,12 +49,16 @@ export class SharedDirectoryOracle {
 	private readonly modelFromValueChanged: DirectoryNode = {
 		keys: new Map(),
 		subdirectories: new Map(),
+		sortKeys: new Map(),
+		subdirectorySortKeys: new Map(),
 	};
 
 	// Model updated via containedValueChanged events (nested structure)
 	private readonly modelFromContainedValueChanged: DirectoryNode = {
 		keys: new Map(),
 		subdirectories: new Map(),
+		sortKeys: new Map(),
+		subdirectorySortKeys: new Map(),
 	};
 
 	// Track all directories we've attached listeners to for proper cleanup
@@ -57,6 +74,8 @@ export class SharedDirectoryOracle {
 		this.sharedDir.on("cleared", this.onCleared);
 		this.sharedDir.on("subDirectoryCreated", this.onSubDirCreated);
 		this.sharedDir.on("subDirectoryDeleted", this.onSubDirDeleted);
+		this.sharedDir.on("sortKeyChanged", this.onSortKeyChanged);
+		this.sharedDir.on("subDirectorySortKeyChanged", this.onSubDirectorySortKeyChanged);
 
 		this.attachToAllDirectories(sharedDir);
 	}
@@ -77,6 +96,8 @@ export class SharedDirectoryOracle {
 				current.subdirectories.set(part, {
 					keys: new Map(),
 					subdirectories: new Map(),
+					sortKeys: new Map(),
+					subdirectorySortKeys: new Map(),
 				});
 			}
 			const next = current.subdirectories.get(part);
@@ -137,6 +158,8 @@ export class SharedDirectoryOracle {
 
 		this.attachedDirectories.add(dir);
 		dir.on("containedValueChanged", this.onContainedValueChanged);
+		dir.on("containedSortKeyChanged", this.onContainedSortKeyChanged);
+		dir.on("containedSubDirectorySortKeyChanged", this.onContainedSubDirectorySortKeyChanged);
 		dir.on("disposed", this.onDisposed);
 		dir.on("undisposed", this.onUndisposed);
 
@@ -184,6 +207,8 @@ export class SharedDirectoryOracle {
 			dirNode.keys.set(key, value);
 		} else {
 			dirNode.keys.delete(key);
+			// Deleting a key implicitly clears its sort key (no sortKeyChanged fires).
+			dirNode.sortKeys.delete(key);
 		}
 	};
 
@@ -195,9 +220,11 @@ export class SharedDirectoryOracle {
 
 		if (dirNode1) {
 			dirNode1.keys.clear();
+			dirNode1.sortKeys.clear();
 		}
 		if (dirNode2) {
 			dirNode2.keys.clear();
+			dirNode2.sortKeys.clear();
 		}
 	};
 
@@ -222,9 +249,29 @@ export class SharedDirectoryOracle {
 
 	private readonly onSubDirDeleted = (path: string): void => {
 		const absPath = path.startsWith("/") ? path : `/${path}`;
+		this.clearSubDirectorySortKeyOnParent(this.modelFromValueChanged, absPath);
+		this.clearSubDirectorySortKeyOnParent(this.modelFromContainedValueChanged, absPath);
 		this.deleteSubDirectory(this.modelFromValueChanged, absPath);
 		this.deleteSubDirectory(this.modelFromContainedValueChanged, absPath);
 	};
+
+	/**
+	 * When a subdirectory is deleted, its sort-key entry on the parent is implicitly
+	 * cleared (no subDirectorySortKeyChanged event fires).
+	 */
+	private clearSubDirectorySortKeyOnParent(model: DirectoryNode, path: string): void {
+		if (path === "/" || path === "") {
+			return;
+		}
+		const parts = path.split("/").filter((p) => p.length > 0);
+		if (parts.length === 0) {
+			return;
+		}
+		const parentPath = parts.slice(0, -1).join("/");
+		const dirName = parts[parts.length - 1];
+		const parentNode = this.getDirNode(model, parentPath);
+		parentNode?.subdirectorySortKeys.delete(dirName);
+	}
 
 	private readonly onContainedValueChanged = (
 		change: IValueChanged,
@@ -253,10 +300,106 @@ export class SharedDirectoryOracle {
 
 		if (newValue === undefined) {
 			dirNode.keys.delete(key);
+			dirNode.sortKeys.delete(key);
 		} else {
 			dirNode.keys.set(key, newValue);
 		}
 	};
+
+	private readonly onSortKeyChanged = (
+		change: IDirectorySortKeyChanged,
+		local: boolean,
+		target: ISharedDirectory,
+	): void => {
+		assert(
+			target === this.sharedDir,
+			"sortKeyChanged event should be emitted from root SharedDirectory",
+		);
+
+		const { key, sortKey } = change;
+		const path = change.path ?? "/";
+		const absPath = path.startsWith("/") ? path : `/${path}`;
+
+		this.applySortKeyChange(this.modelFromValueChanged, absPath, key, sortKey);
+	};
+
+	private readonly onSubDirectorySortKeyChanged = (
+		change: IDirectorySubDirectorySortKeyChanged,
+		local: boolean,
+		target: ISharedDirectory,
+	): void => {
+		assert(
+			target === this.sharedDir,
+			"subDirectorySortKeyChanged event should be emitted from root SharedDirectory",
+		);
+
+		const { subdirName, sortKey } = change;
+		const path = change.path ?? "/";
+		const absPath = path.startsWith("/") ? path : `/${path}`;
+
+		this.applySubDirectorySortKeyChange(
+			this.modelFromValueChanged,
+			absPath,
+			subdirName,
+			sortKey,
+		);
+	};
+
+	private readonly onContainedSortKeyChanged = (
+		change: ISortKeyChanged,
+		local: boolean,
+		target: IDirectory,
+	): void => {
+		const { key, sortKey } = change;
+		this.applySortKeyChange(
+			this.modelFromContainedValueChanged,
+			target.absolutePath,
+			key,
+			sortKey,
+		);
+	};
+
+	private readonly onContainedSubDirectorySortKeyChanged = (
+		change: ISubDirectorySortKeyChanged,
+		local: boolean,
+		target: IDirectory,
+	): void => {
+		const { subdirName, sortKey } = change;
+		this.applySubDirectorySortKeyChange(
+			this.modelFromContainedValueChanged,
+			target.absolutePath,
+			subdirName,
+			sortKey,
+		);
+	};
+
+	private applySortKeyChange(
+		model: DirectoryNode,
+		absPath: string,
+		key: string,
+		sortKey: string | undefined,
+	): void {
+		const dirNode = this.createDirNode(model, absPath);
+		if (sortKey === undefined) {
+			dirNode.sortKeys.delete(key);
+		} else {
+			dirNode.sortKeys.set(key, sortKey);
+		}
+	}
+
+	private applySubDirectorySortKeyChange(
+		model: DirectoryNode,
+		absPath: string,
+		subdirName: string,
+		sortKey: string | undefined,
+	): void {
+		const dirNode = this.createDirNode(model, absPath);
+		if (sortKey === undefined) {
+			dirNode.subdirectorySortKeys.delete(subdirName);
+		} else {
+			dirNode.subdirectorySortKeys.set(subdirName, sortKey);
+		}
+	}
 
 	private readonly onDisposed = (target: IDirectory): void => {
 		const absPath = target.absolutePath;
@@ -264,9 +407,15 @@ export class SharedDirectoryOracle {
 		if (absPath === "/") {
 			this.modelFromValueChanged.keys.clear();
 			this.modelFromValueChanged.subdirectories.clear();
+			this.modelFromValueChanged.sortKeys.clear();
+			this.modelFromValueChanged.subdirectorySortKeys.clear();
 			this.modelFromContainedValueChanged.keys.clear();
 			this.modelFromContainedValueChanged.subdirectories.clear();
+			this.modelFromContainedValueChanged.sortKeys.clear();
+			this.modelFromContainedValueChanged.subdirectorySortKeys.clear();
 		} else {
+			this.clearSubDirectorySortKeyOnParent(this.modelFromValueChanged, absPath);
+			this.clearSubDirectorySortKeyOnParent(this.modelFromContainedValueChanged, absPath);
 			this.deleteSubDirectory(this.modelFromValueChanged, absPath);
 			this.deleteSubDirectory(this.modelFromContainedValueChanged, absPath);
 		}
