@@ -98,14 +98,14 @@ describe("SharedTree table APIs execution time", () => {
 	const tableSizes = isInPerformanceTestingMode
 		? [5, 50]
 		: // When not measuring perf, use a single smaller data size so the tests run faster.
-			[5];
+			[3];
 
 	// The number of operations to perform on the tree.
 	// Operation counts 1000 removed due to high overhead and unreliable results.
 	const operationCounts = isInPerformanceTestingMode
 		? [5, 50]
 		: // When not measuring perf, use a single smaller data size so the tests run faster.
-			[5];
+			[3];
 
 	// The maximum duration for each benchmark, in seconds.
 	let maxBenchmarkDurationSeconds: number;
