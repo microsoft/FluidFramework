@@ -85,6 +85,21 @@ export interface IDirectory
 	createSubDirectory(subdirName: string): IDirectory;
 
 	/**
+	 * Creates an IDirectory child of this IDirectory with a requested position in the ordered set of children, or
+	 * retrieves the existing IDirectory child if one with the same name already exists. The positioning hint is
+	 * best-effort and is resolved when the creation op is stamped; if the anchor does not exist at stamp time, the
+	 * new subdirectory is appended at the end of the ordered set, matching {@link IDirectory.createSubDirectory}.
+	 * The hint establishes no long-term relationship with the anchor.
+	 * @param newSubdirName - Name of the new child directory to create
+	 * @param afterSubdirName - Name of the sibling directory to order the new child directory after
+	 * @returns The IDirectory child that was created or retrieved
+	 */
+	createSubDirectoryOrderedAfter(
+		newSubdirName: string,
+		afterSubdirName: string,
+	): IDirectory;
+
+	/**
 	 * Gets an IDirectory child of this IDirectory, if it exists.
 	 * @param subdirName - Name of the child directory to get
 	 * @returns The requested IDirectory

@@ -585,6 +585,16 @@ export class SharedDirectory
 	}
 
 	/**
+	 * {@inheritDoc IDirectory.createSubDirectoryOrderedAfter}
+	 */
+	public createSubDirectoryOrderedAfter(
+		newSubdirName: string,
+		afterSubdirName: string,
+	): IDirectory {
+		return this.root.createSubDirectoryOrderedAfter(newSubdirName, afterSubdirName);
+	}
+
+	/**
 	 * {@inheritDoc IDirectory.getSubDirectory}
 	 */
 	public getSubDirectory(subdirName: string): IDirectory | undefined {
@@ -1286,6 +1296,16 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 	 */
 	public countSubDirectory(): number {
 		return [...this.subdirectories()].length;
+	}
+
+	/**
+	 * {@inheritDoc IDirectory.createSubDirectoryOrderedAfter}
+	 */
+	public createSubDirectoryOrderedAfter(
+		newSubdirName: string,
+		afterSubdirName: string,
+	): IDirectory {
+		throw new Error("createSubDirectoryOrderedAfter: not implemented");
 	}
 
 	/**
