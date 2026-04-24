@@ -554,7 +554,7 @@ const FormattedTextEditorView = withMemoizedTreeObservations(
 					}
 				};
 				if (context.isBranch()) {
-					context.runTransaction(applyDelta, { label: undoRedoRef.current?.transactionLabel });
+					context.runTransaction(applyDelta, { label: undoRedoRef.current?.editLabel });
 				} else {
 					applyDelta();
 				}
@@ -617,14 +617,14 @@ const FormattedTextEditorView = withMemoizedTreeObservations(
 						<button
 							type="button"
 							className="ql-undo"
-							disabled={undoRedo?.manager.canUndo(undoRedo.transactionLabel) !== true}
-							onClick={() => undoRedo?.manager.undo(undoRedo.transactionLabel)}
+							disabled={undoRedo?.manager.canUndo(undoRedo.editLabel) !== true}
+							onClick={() => undoRedo?.manager.undo(undoRedo.editLabel)}
 						/>
 						<button
 							type="button"
 							className="ql-redo"
-							disabled={undoRedo?.manager.canRedo(undoRedo.transactionLabel) !== true}
-							onClick={() => undoRedo?.manager.redo(undoRedo.transactionLabel)}
+							disabled={undoRedo?.manager.canRedo(undoRedo.editLabel) !== true}
+							onClick={() => undoRedo?.manager.redo(undoRedo.editLabel)}
 						/>
 					</>,
 					undoRedoContainer,

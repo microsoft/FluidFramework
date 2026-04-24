@@ -19,7 +19,7 @@ import { syncTextToTree } from "./plainUtils.js";
  * @example
  * ```tsx
  * const titleLabel = Symbol("title-editor");
- * const prop: UndoRedoProp = { manager, transactionLabel: titleLabel };
+ * const prop: UndoRedoProp = { manager, editLabel: titleLabel };
  * <PlainTextMainView root={root} undoRedo={prop} />
  * ```
  *
@@ -34,7 +34,7 @@ export interface UndoRedoProp {
 	 * Symbol that identifies this editor's commits within the shared manager.
 	 * Only edits stamped with this label will be considered part of this editor's undo/redo history.
 	 */
-	readonly transactionLabel: symbol;
+	readonly editLabel: symbol;
 }
 
 /**
@@ -93,7 +93,7 @@ const PlainTextEditorView = withMemoizedTreeObservations(
 				const context = TreeAlpha.context(root);
 				if (context.isBranch()) {
 					context.runTransaction(() => syncTextToTree(root, newText), {
-						label: undoRedo?.transactionLabel,
+						label: undoRedo?.editLabel,
 					});
 				} else {
 					syncTextToTree(root, newText);
@@ -165,15 +165,15 @@ const PlainTextEditorView = withMemoizedTreeObservations(
 						<button
 							type="button"
 							className="pt-undo"
-							disabled={!undoRedo.manager.canUndo(undoRedo.transactionLabel)}
-							onClick={() => undoRedo.manager.undo(undoRedo.transactionLabel)}
+							disabled={!undoRedo.manager.canUndo(undoRedo.editLabel)}
+							onClick={() => undoRedo.manager.undo(undoRedo.editLabel)}
 							title="Undo"
 						/>
 						<button
 							type="button"
 							className="pt-redo"
-							disabled={!undoRedo.manager.canRedo(undoRedo.transactionLabel)}
-							onClick={() => undoRedo.manager.redo(undoRedo.transactionLabel)}
+							disabled={!undoRedo.manager.canRedo(undoRedo.editLabel)}
+							onClick={() => undoRedo.manager.redo(undoRedo.editLabel)}
 							title="Redo"
 						/>
 					</div>

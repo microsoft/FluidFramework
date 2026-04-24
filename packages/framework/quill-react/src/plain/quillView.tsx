@@ -100,7 +100,7 @@ const TextEditorView = withMemoizedTreeObservations(
 					if (context.isBranch()) {
 						context.runTransaction(() => syncTextToTree(root, newText), {
 							// Use ref so this closure always sees the latest label even if undoRedo changes.
-							label: undoRedoRef.current?.transactionLabel,
+							label: undoRedoRef.current?.editLabel,
 						});
 					} else {
 						syncTextToTree(root, newText);
@@ -170,14 +170,14 @@ const TextEditorView = withMemoizedTreeObservations(
 						<button
 							type="button"
 							className="ql-undo"
-							disabled={undoRedo?.manager.canUndo(undoRedo.transactionLabel) !== true}
-							onClick={() => undoRedo?.manager.undo(undoRedo.transactionLabel)}
+							disabled={undoRedo?.manager.canUndo(undoRedo.editLabel) !== true}
+							onClick={() => undoRedo?.manager.undo(undoRedo.editLabel)}
 						/>
 						<button
 							type="button"
 							className="ql-redo"
-							disabled={undoRedo?.manager.canRedo(undoRedo.transactionLabel) !== true}
-							onClick={() => undoRedo?.manager.redo(undoRedo.transactionLabel)}
+							disabled={undoRedo?.manager.canRedo(undoRedo.editLabel) !== true}
+							onClick={() => undoRedo?.manager.redo(undoRedo.editLabel)}
 						/>
 					</>,
 					undoRedoContainer,

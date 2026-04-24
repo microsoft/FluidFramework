@@ -234,7 +234,7 @@ describe("textEditor", () => {
 						const rendered = render(
 							<QuillMainView
 								root={toPropTreeNode(text)}
-								undoRedo={{ manager: mockUndoRedo, transactionLabel: mockLabel }}
+								undoRedo={{ manager: mockUndoRedo, editLabel: mockLabel }}
 							/>,
 							{ reactStrictMode },
 						);
@@ -1116,7 +1116,7 @@ describe("textEditor", () => {
 						const rendered = render(
 							<FormattedMainView
 								root={toPropTreeNode(tree)}
-								undoRedo={{ manager: mockUndoRedo, transactionLabel: mockLabel }}
+								undoRedo={{ manager: mockUndoRedo, editLabel: mockLabel }}
 							/>,
 							{ reactStrictMode },
 						);

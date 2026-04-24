@@ -179,7 +179,7 @@ describe("Plain TextArea view", () => {
 					const rendered = render(
 						<PlainTextMainView
 							root={toPropTreeNode(text)}
-							undoRedo={{ manager: mockUndoRedo, transactionLabel: mockLabel }}
+							undoRedo={{ manager: mockUndoRedo, editLabel: mockLabel }}
 						/>,
 						{ reactStrictMode },
 					);
