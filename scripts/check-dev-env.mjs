@@ -6,7 +6,7 @@
 /**
  * Checks the local developer environment for common configuration issues.
  * Run with: node scripts/check-dev-env.mjs
- * Or via: pnpm doctor
+ * Or via: pnpm check:dev-env
  */
 
 import { execSync } from "node:child_process";
