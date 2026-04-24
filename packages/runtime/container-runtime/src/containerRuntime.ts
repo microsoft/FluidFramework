@@ -3740,16 +3740,16 @@ export class ContainerRuntime
 						this.channelCollection.notifyStagingMode(false);
 					},
 				);
-				if (!silent) {
-					this.emit("stagingModeChanged", {
-						inStagingMode: false,
-						commit: exitMethod === "commit",
-					});
-				}
 			} catch (error) {
 				const normalizedError = normalizeError(error);
 				this.closeFn(normalizedError);
 				throw normalizedError;
+			}
+			if (!silent) {
+				this.emit("stagingModeChanged", {
+					inStagingMode: false,
+					commit: exitMethod === "commit",
+				});
 			}
 		};
 
@@ -3784,9 +3784,7 @@ export class ContainerRuntime
 			try {
 				this.emit("stagingModeChanged", { inStagingMode: true });
 			} catch (error) {
-				const normalizedError = normalizeError(error);
-				this.closeFn(normalizedError);
-				throw normalizedError;
+				throw normalizeError(error);
 			}
 		}
 
