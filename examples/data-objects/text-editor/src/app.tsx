@@ -16,6 +16,7 @@ import {
 import {
 	toPropTreeNode,
 	UndoRedoManager,
+	type LabeledUndoRedo,
 	PlainTextMainView,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "@fluidframework/react/internal";
@@ -222,23 +223,36 @@ async function initFluid(): Promise<DualUserViews> {
 	};
 }
 
+const plainTextareaLabel = Symbol("plain-textarea");
+const plainQuillLabel = Symbol("plain-quill");
+const formattedLabel = Symbol("formatted");
+
 const viewLabels = {
 	plainTextarea: {
 		description: "Plain Textarea",
-		component: (root: TextEditorRoot) => (
-			<PlainTextMainView root={toPropTreeNode(root.plainText)} />
+		component: (root: TextEditorRoot, manager: LabeledUndoRedo) => (
+			<PlainTextMainView
+				root={toPropTreeNode(root.plainText)}
+				undoRedo={{ manager, transactionLabel: plainTextareaLabel }}
+			/>
 		),
 	},
 	plainQuill: {
 		description: "Plain Quill Editor",
-		component: (root: TextEditorRoot) => (
-			<PlainQuillView root={toPropTreeNode(root.plainText)} />
+		component: (root: TextEditorRoot, manager: LabeledUndoRedo) => (
+			<PlainQuillView
+				root={toPropTreeNode(root.plainText)}
+				undoRedo={{ manager, transactionLabel: plainQuillLabel }}
+			/>
 		),
 	},
 	formatted: {
 		description: "Formatted Quill Editor",
-		component: (root: TextEditorRoot) => (
-			<FormattedMainView root={toPropTreeNode(root.formattedText)} />
+		component: (root: TextEditorRoot, manager: LabeledUndoRedo) => (
+			<FormattedMainView
+				root={toPropTreeNode(root.formattedText)}
+				undoRedo={{ manager, transactionLabel: formattedLabel }}
+			/>
 		),
 	},
 } as const;
@@ -330,7 +344,7 @@ const UserPanel: FC<{
 						 */}
 						{isExpanded && (
 							<div id={`${viewType}-panel`} style={{ padding: "12px" }}>
-								{viewLabels[viewType].component(root)}
+								{viewLabels[viewType].component(root, manager)}
 							</div>
 						)}
 					</div>
