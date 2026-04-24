@@ -343,9 +343,8 @@ extends:
                   packageManagerInstallCommand: '${{ parameters.packageManagerInstallCommand }}'
 
               # The bundle-size-artifacts pipeline runs a client build but doesn't publish packages,
-              # so we skip version setting for it. taskSetVersion can also be set to false to skip
-              # this step for other pipelines (e.g. independent packages with sparse checkouts).
-              - ${{ if and(eq(parameters.isBundleSizeArtifactsPipeline, false), eq(parameters.taskSetVersion, true)) }}:
+              # so we skip version setting for it.
+              - ${{ if eq(parameters.isBundleSizeArtifactsPipeline, false) }}:
                   - template: /tools/pipelines/templates/include-set-package-version.yml@self
                     parameters:
                       buildDirectory: '${{ parameters.buildDirectory }}'
@@ -354,6 +353,7 @@ extends:
                       tagName: '${{ parameters.tagName }}'
                       interdependencyRange: '${{ parameters.interdependencyRange }}'
                       packageTypesOverride: '${{ parameters.packageTypesOverride }}'
+                      taskSetVersion: ${{ parameters.taskSetVersion }}
 
               # Build and Lint
               - template: /tools/pipelines/templates/include-build-lint.yml@self
