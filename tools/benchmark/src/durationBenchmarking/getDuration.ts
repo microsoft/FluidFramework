@@ -9,6 +9,7 @@ import {
 	type BenchmarkDescription,
 	type BenchmarkFunction,
 } from "../Configuration.js";
+import { assertProperUse } from "../assert.js";
 import { stripUndefined } from "../benchmarkAuthoringUtilities.js";
 import { ValueType, type CollectedData } from "../reportTypes.js";
 import { getArrayStatistics } from "../sampling.js";
@@ -112,6 +113,7 @@ export class BenchmarkState<T> implements BatchedDurationTimer<T> {
 	public readonly options: Readonly<Required<BenchmarkTimingOptions>>;
 	private readonly startTime: T;
 	private phase: Phase;
+	private collectionComplete = false;
 	public iterationsPerBatch: number;
 	public constructor(
 		public readonly timer: Timer<T>,
@@ -133,23 +135,32 @@ export class BenchmarkState<T> implements BatchedDurationTimer<T> {
 	}
 
 	public recordBatch(duration: number): boolean {
+		let keepGoing: boolean;
 		switch (this.phase) {
 			case Phase.WarmUp: {
 				this.phase = Phase.AdjustIterationPerBatch;
-				return true;
+				keepGoing = true;
+				break;
 			}
 			case Phase.AdjustIterationPerBatch: {
-				if (!this.growBatchSize(duration)) {
+				if (this.growBatchSize(duration)) {
+					keepGoing = true;
+				} else {
 					this.phase = Phase.CollectData;
 					// Since batch is big enough, include it in data collection.
-					return this.addSample(duration);
+					keepGoing = this.addSample(duration);
 				}
-				return true;
+				break;
 			}
 			default: {
-				return this.addSample(duration);
+				keepGoing = this.addSample(duration);
+				break;
 			}
 		}
+		if (!keepGoing) {
+			this.collectionComplete = true;
+		}
+		return keepGoing;
 	}
 
 	/**
@@ -197,6 +208,10 @@ export class BenchmarkState<T> implements BatchedDurationTimer<T> {
 	}
 
 	public computeData(): CollectedData {
+		assertProperUse(
+			this.collectionComplete,
+			"Data collection is not complete. The benchmarking loop must run until recordBatch() (or time()/timeAsync()) returns false.",
+		);
 		const stats = getArrayStatistics(this.samples.map((v) => v / this.iterationsPerBatch));
 		const data: CollectedData = [
 			{

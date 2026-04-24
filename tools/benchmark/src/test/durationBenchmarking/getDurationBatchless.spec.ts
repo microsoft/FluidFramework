@@ -40,6 +40,15 @@ describe("getDurationBatchless", () => {
 		assert.equal(bench.testType, TestType.ExecutionTime);
 	});
 
+	it("benchmarkDurationBatchless throws when benchmarkFn never calls state.time()", async () => {
+		const bench = benchmarkDurationBatchless({
+			benchmarkFn: async () => {
+				// Intentionally never calls state.time() — simulates a user mistake.
+			},
+		});
+		await assert.rejects(async () => bench.run(timer), /Data collection is not complete/);
+	});
+
 	it("benchmarkDurationBatchless sync invokes callback exactly once per time() call", async () => {
 		let callbackCalls = 0;
 		let timeCalls = 0;
@@ -92,6 +101,15 @@ describe("getDurationBatchless", () => {
 			});
 			assert.equal(count, 1);
 			assert(typeof result === "boolean");
+		});
+
+		it("computeData throws when time() has not yet returned false", () => {
+			// minBatchCount: 2, so the first time() returns true (more samples needed)
+			const innerState = makeState(0);
+			const batchless = new BatchlessBenchmarkState(innerState);
+			const keepGoing = batchless.time(() => {});
+			assert.equal(keepGoing, true, "Expected first time() to return true");
+			assert.throws(() => innerState.computeData(), /Data collection is not complete/);
 		});
 	});
 });

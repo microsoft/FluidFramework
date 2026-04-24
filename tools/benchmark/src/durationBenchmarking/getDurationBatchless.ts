@@ -114,7 +114,7 @@ export interface DurationBenchmarkBatchless {
  * @remarks
  * Prefer using {@link benchmarkDuration} with batching when possible, as it will provide more accurate and stable measurements.
  * Use this batchless version only when necessary due to setup/teardown requirements.
- * This will result is significantly higher noise and measurement bias in the data, which is worse the shorter the operation being timed takes.
+ * This will result in significantly higher noise and measurement bias in the data, which is worse the shorter the operation being timed takes.
  * @public
  */
 export function benchmarkDurationBatchless(
