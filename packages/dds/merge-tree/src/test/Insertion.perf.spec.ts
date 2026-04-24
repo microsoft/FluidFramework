@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { BenchmarkType, benchmarkDuration, benchmarkIt } from "@fluid-tools/benchmark";
+import { benchmarkDuration, benchmarkIt } from "@fluid-tools/benchmark";
 
 import { MergeTree } from "../mergeTree.js";
 import { MergeTreeDeltaType } from "../ops.js";
@@ -27,7 +27,6 @@ const TREE_SIZE: number = 7500;
 
 describe("MergeTree insertion", () => {
 	benchmarkIt({
-		type: BenchmarkType.Measurement,
 		title: "insert into empty tree",
 		...benchmarkDuration({
 			benchmarkFn: () => {
@@ -44,7 +43,6 @@ describe("MergeTree insertion", () => {
 	});
 
 	benchmarkIt({
-		type: BenchmarkType.Measurement,
 		title: "insert at start of large tree",
 		...benchmarkDuration({
 			benchmarkFnCustom: async (state) => {
@@ -69,7 +67,6 @@ describe("MergeTree insertion", () => {
 	});
 
 	benchmarkIt({
-		type: BenchmarkType.Measurement,
 		title: "insert at middle of large tree",
 		...benchmarkDuration({
 			benchmarkFnCustom: async (state) => {
@@ -94,7 +91,6 @@ describe("MergeTree insertion", () => {
 	});
 
 	benchmarkIt({
-		type: BenchmarkType.Measurement,
 		title: "insert at end of large tree",
 		...benchmarkDuration({
 			benchmarkFnCustom: async (state) => {

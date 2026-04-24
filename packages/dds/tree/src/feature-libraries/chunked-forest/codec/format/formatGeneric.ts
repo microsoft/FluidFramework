@@ -28,7 +28,6 @@ export const Count = Type.Number({ multipleOf: 1, minimum: 0 });
 
 const EncodedFieldBatchBase = Type.Object(
 	{
-		version: Type.Number(),
 		identifiers: Type.Array(Type.String()),
 		/**
 		 * Top level array is list of field from batch.

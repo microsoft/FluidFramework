@@ -8,7 +8,6 @@ import { strict as assert } from "node:assert";
 import {
 	benchmarkDuration,
 	benchmarkIt,
-	BenchmarkType,
 	isInPerformanceTestingMode,
 	type BenchmarkTimingOptions,
 } from "@fluid-tools/benchmark";
@@ -50,7 +49,6 @@ function runBenchmark({
 	maxBenchmarkDurationSeconds,
 }: BenchmarkConfig): void {
 	benchmarkIt({
-		type: BenchmarkType.Measurement,
 		title,
 		...benchmarkDuration({
 			benchmarkFnCustom: async (state) => {

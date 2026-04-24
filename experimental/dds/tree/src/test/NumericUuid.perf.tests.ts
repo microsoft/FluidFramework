@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { BenchmarkType, benchmarkDuration, benchmarkIt } from '@fluid-tools/benchmark';
+import { benchmarkDuration, benchmarkIt } from '@fluid-tools/benchmark';
 
 import { assertIsStableId, generateStableId } from '../UuidUtilities.js';
 import { defaultClusterCapacity } from '../id-compressor/IdCompressor.js';
@@ -22,9 +22,7 @@ describe('NumericUuid Perf', () => {
 	const uuid2 = numericUuidFromStableId(stableId2);
 	const uuid3 = numericUuidFromStableId(stableId3);
 	const deltaMax = 2 ** 52 - 1;
-	const type = BenchmarkType.Measurement;
 	benchmarkIt({
-		type,
 		title: `convert uuid string to numeric uuid`,
 		...benchmarkDuration({
 			benchmarkFn: () => {
@@ -33,7 +31,6 @@ describe('NumericUuid Perf', () => {
 		}),
 	});
 	benchmarkIt({
-		type,
 		title: `incrementing a uuid`,
 		...benchmarkDuration({
 			benchmarkFn: () => {
@@ -42,7 +39,6 @@ describe('NumericUuid Perf', () => {
 		}),
 	});
 	benchmarkIt({
-		type,
 		title: `convert a uuid string into a session uuid`,
 		...benchmarkDuration({
 			benchmarkFn: () => {
@@ -51,7 +47,6 @@ describe('NumericUuid Perf', () => {
 		}),
 	});
 	benchmarkIt({
-		type,
 		title: `convert an numeric uuid into a uuid string`,
 		...benchmarkDuration({
 			benchmarkFn: () => {
@@ -60,7 +55,6 @@ describe('NumericUuid Perf', () => {
 		}),
 	});
 	benchmarkIt({
-		type,
 		title: `compute the delta between two distant numeric uuids`,
 		...benchmarkDuration({
 			benchmarkFn: () => {
@@ -69,7 +63,6 @@ describe('NumericUuid Perf', () => {
 		}),
 	});
 	benchmarkIt({
-		type,
 		title: `compute the delta between two close numeric uuids`,
 		...benchmarkDuration({
 			benchmarkFn: () => {
@@ -78,7 +71,6 @@ describe('NumericUuid Perf', () => {
 		}),
 	});
 	benchmarkIt({
-		type,
 		title: `generate a random v4 uuid string`,
 		...benchmarkDuration({
 			benchmarkFn: () => {

@@ -33,7 +33,10 @@ describe("Plain TextArea view", () => {
 					const content = <ViewComponent root={toPropTreeNode(text)} />;
 					const rendered = render(content, { reactStrictMode });
 
-					assert.match(rendered.baseElement.textContent ?? "", /Collaborative Text Editor/);
+					assert.ok(
+						rendered.container.querySelector("textarea"),
+						"Textarea should be present after mount",
+					);
 				});
 
 				it("renders MainView with initial text content", () => {

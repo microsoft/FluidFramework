@@ -4,7 +4,7 @@
  */
 
 import { describeCompat } from "@fluid-private/test-version-utils";
-import { TestType, benchmarkIt, collectDurationData } from "@fluid-tools/benchmark";
+import { benchmarkDuration, benchmarkIt } from "@fluid-tools/benchmark";
 import { ISharedCounter, SharedCounter } from "@fluidframework/counter/internal";
 import {
 	ChannelFactoryRegistry,
@@ -50,18 +50,17 @@ describeCompat("SharedCounter - runtime benchmarks", "NoCompat", (getTestObjectP
 
 	benchmarkIt({
 		title: "increment value in 3 containers",
-		testType: TestType.ExecutionTime,
-		run: async () => {
-			const { provider, counters } = await setup();
-			return collectDurationData({
-				benchmarkFnAsync: async () => {
+		...benchmarkDuration({
+			benchmarkFnCustom: async (state) => {
+				const { provider, counters } = await setup();
+				await state.timeAllBatchesAsync(async () => {
 					counters[0].increment(1);
 					await provider.ensureSynchronized();
 					// Something in the way the benchmark tool works makes it so we can't try to verify values;
 					// the check might pass the first time, but at some point during the samples/iterations the
 					// validation will fail and we'll see a (supposedly) successful test but an exit status 1.
-				},
-			});
-		},
+				});
+			},
+		}),
 	});
 });
