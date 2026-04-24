@@ -9,6 +9,7 @@ import {
 	ADOSizeComparator,
 	type BundleComparison,
 	type BundleMetric,
+	bundlesContainNoChanges,
 	getAzureDevopsApi,
 	type SizeComparison,
 	totalSizeMetricName,
@@ -89,20 +90,6 @@ function detectSizeRegression(comparison: BundleComparison[]): boolean {
 			},
 		),
 	);
-}
-
-/**
- * Return true when the comparison has no non-zero metric diffs.
- */
-function comparisonHasNoChanges(comparison: BundleComparison[]): boolean {
-	for (const { commonBundleMetrics } of comparison) {
-		for (const { baseline, compare } of Object.values(commonBundleMetrics)) {
-			if (baseline.parsedSize !== compare.parsedSize) {
-				return false;
-			}
-		}
-	}
-	return true;
 }
 
 export default class GenerateBundleSizeDiff extends BaseCommand<
@@ -198,7 +185,7 @@ export default class GenerateBundleSizeDiff extends BaseCommand<
 			baseCommit: baselineCommit,
 			targetBranch: targetBranchName,
 		};
-		const result: BundleSizeDiffResult = comparisonHasNoChanges(comparison)
+		const result: BundleSizeDiffResult = bundlesContainNoChanges(comparison)
 			? { ...common, kind: "no-changes" }
 			: {
 					...common,
