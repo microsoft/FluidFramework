@@ -21,7 +21,10 @@ const red = (s) => (useColor ? `\x1b[31m${s}\x1b[0m` : s);
 /** Parsed output of `npm config list --json`, or `undefined` if the command failed. */
 const npmConfig = (() => {
 	try {
-		const raw = execSync("npm config list --json", { encoding: "utf8", stdio: ["pipe", "pipe", "pipe"] });
+		const raw = execSync("npm config list --json", {
+			encoding: "utf8",
+			stdio: ["pipe", "pipe", "pipe"],
+		});
 		return JSON.parse(raw);
 	} catch {
 		return undefined;
@@ -65,7 +68,10 @@ function pass(label) {
  */
 function checkNpmRegistry() {
 	if (npmConfig === undefined) {
-		issue("npm registry", "Could not run 'npm config list --json' — is npm installed and on PATH?");
+		issue(
+			"npm registry",
+			"Could not run 'npm config list --json' — is npm installed and on PATH?",
+		);
 		return;
 	}
 
@@ -144,7 +150,12 @@ function checkEnvRegistry() {
  * required in the developer's network environment.
  */
 function checkProxySettings() {
-	const proxyVarNames = ["http_proxy", "https_proxy", "npm_config_proxy", "npm_config_https_proxy"];
+	const proxyVarNames = [
+		"http_proxy",
+		"https_proxy",
+		"npm_config_proxy",
+		"npm_config_https_proxy",
+	];
 	const foundEnv = Object.keys(process.env)
 		.filter((k) => proxyVarNames.includes(k.toLowerCase()))
 		.map((k) => `'${k}'`);
@@ -162,7 +173,10 @@ function checkProxySettings() {
 
 	if (npmConfig !== undefined) {
 		const foundConfig = ["proxy", "https-proxy"]
-			.filter((key) => npmConfig[key] !== undefined && npmConfig[key] !== null && npmConfig[key] !== "")
+			.filter(
+				(key) =>
+					npmConfig[key] !== undefined && npmConfig[key] !== null && npmConfig[key] !== "",
+			)
 			.map((key) => `'${key}'`);
 
 		if (foundConfig.length > 0) {
@@ -202,7 +216,9 @@ if (warnings.length > 0) {
 }
 
 if (issues.length === 0) {
-	console.log(warnings.length > 0 ? "All checks passed (with warnings)." : "\nAll checks passed.");
+	console.log(
+		warnings.length > 0 ? "All checks passed (with warnings)." : "\nAll checks passed.",
+	);
 	process.exit(0);
 }
 
