@@ -6,4 +6,4 @@
  */
 
 export const pkgName = "@fluidframework/server-services-utils";
-export const pkgVersion = "6.0.1";
+export const pkgVersion = "6.0.2";
