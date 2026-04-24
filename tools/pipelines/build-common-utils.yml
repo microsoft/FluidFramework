@@ -105,5 +105,6 @@ extends:
     testCoverage: ${{ variables.testCoverage }}
     sparseCheckoutDirectories: |
       common/lib/common-utils
+      build-tools
       patches
       scripts

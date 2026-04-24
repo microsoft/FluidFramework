@@ -103,4 +103,5 @@ extends:
     - prettier
     sparseCheckoutDirectories: |
       common/build/build-common
+      build-tools
       scripts
