@@ -38,6 +38,10 @@ export interface FormattedMainViewProps {
 	readonly undoRedo?: UndoRedoProp;
 }
 
+type FormattedMainViewPropsInner = Omit<FormattedMainViewProps, "root"> & {
+	readonly root: FormattedTextAsTree.Tree;
+};
+
 /**
  * A React component for formatted text editing.
  * @remarks
@@ -380,7 +384,7 @@ export function buildDeltaFromTree(root: FormattedTextAsTree.Tree): QuillDeltaOp
  * than replacing all content on each change.
  */
 const FormattedTextEditorView = withMemoizedTreeObservations(
-	({ root, undoRedo }: { root: FormattedTextAsTree.Tree; undoRedo?: UndoRedoProp }) => {
+	({ root, undoRedo }: FormattedMainViewPropsInner) => {
 		// DOM element where Quill will mount its editor
 		const editorRef = useRef<HTMLDivElement>(null);
 		// Quill instance, persisted across renders to avoid re-initialization

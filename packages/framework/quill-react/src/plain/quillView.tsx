@@ -31,6 +31,10 @@ export interface MainViewProps {
 	readonly undoRedo?: UndoRedoProp;
 }
 
+type MainViewPropsInner = Omit<MainViewProps, "root"> & {
+	readonly root: TextAsTree.Tree;
+};
+
 /**
  * A React component for plain text editing.
  * @remarks
@@ -43,7 +47,7 @@ export const MainView: FC<MainViewProps> = ({ root, undoRedo }) => {
 };
 
 const TextEditorView = withMemoizedTreeObservations(
-	({ root, undoRedo }: { root: TextAsTree.Tree; undoRedo?: UndoRedoProp }) => {
+	({ root, undoRedo }: MainViewPropsInner) => {
 		// DOM element where Quill will mount its editor
 		const editorRef = useRef<HTMLDivElement>(null);
 		// Quill instance, persisted across renders to avoid re-initialization
