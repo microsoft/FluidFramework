@@ -5,7 +5,11 @@
 
 import { strict as assert } from "node:assert";
 
-import { toPropTreeNode, UndoRedoManager, type LabeledUndoRedo } from "@fluidframework/react/internal";
+import {
+	toPropTreeNode,
+	UndoRedoManager,
+	type LabeledUndoRedo,
+} from "@fluidframework/react/internal";
 import { TreeViewConfiguration } from "@fluidframework/tree";
 import { TreeAlpha, type TreeViewAlpha } from "@fluidframework/tree/alpha";
 import { independentView, TextAsTree } from "@fluidframework/tree/internal";
@@ -215,10 +219,8 @@ describe("textEditor", () => {
 							reactStrictMode,
 						});
 
-						const undoButton =
-							rendered.container.querySelector<HTMLButtonElement>(".ql-undo");
-						const redoButton =
-							rendered.container.querySelector<HTMLButtonElement>(".ql-redo");
+						const undoButton = rendered.container.querySelector<HTMLButtonElement>(".ql-undo");
+						const redoButton = rendered.container.querySelector<HTMLButtonElement>(".ql-redo");
 						assert.ok(undoButton?.disabled === true, "Undo button should be disabled");
 						assert.ok(redoButton?.disabled === true, "Redo button should be disabled");
 					});
@@ -241,10 +243,8 @@ describe("textEditor", () => {
 							{ reactStrictMode },
 						);
 
-						const undoButton =
-							rendered.container.querySelector<HTMLButtonElement>(".ql-undo");
-						const redoButton =
-							rendered.container.querySelector<HTMLButtonElement>(".ql-redo");
+						const undoButton = rendered.container.querySelector<HTMLButtonElement>(".ql-undo");
+						const redoButton = rendered.container.querySelector<HTMLButtonElement>(".ql-redo");
 						assert.equal(undoButton?.disabled, false, "Undo button should be enabled");
 						assert.equal(redoButton?.disabled, false, "Redo button should be enabled");
 					});
