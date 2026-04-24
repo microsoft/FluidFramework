@@ -124,9 +124,6 @@ importers:
       cross-env:
         specifier: ^10.1.0
         version: 10.1.0
-      danger:
-        specifier: ^13.0.4
-        version: 13.0.5(encoding@0.1.13)
       eslint:
         specifier: catalog:eslint
         version: 9.39.1(jiti@2.6.1)

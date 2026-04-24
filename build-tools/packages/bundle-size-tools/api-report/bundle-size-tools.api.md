@@ -22,7 +22,6 @@ export class ADOSizeComparator {
     localReportPath: string,
     adoBuildId: number | undefined,
     getFallbackCommit?: ((startingCommit: string) => Generator<string>) | undefined);
-    createSizeComparisonMessage(tagWaiting: boolean): Promise<BundleComparisonResult>;
     getSizeComparison(tagWaiting: boolean): Promise<SizeComparison>;
     static naiveFallbackCommitGenerator(startingCommit: string): Generator<string>;
 }
@@ -94,12 +93,6 @@ export interface BundleComparison {
         };
     };
 }
-
-// @public
-export type BundleComparisonResult = {
-    message: string;
-    comparison: BundleComparison[] | undefined;
-};
 
 // @public (undocumented)
 export interface BundleFileData {
@@ -233,9 +226,6 @@ export function getChunkAndDependencySizes(stats: StatsCompilation, chunkName: s
 export function getChunkParsedSize(stats: StatsCompilation, chunkId: string | number): number;
 
 // @public
-export function getCommentForBundleDiff(bundleComparison: BundleComparison[], baselineCommit: string): string;
-
-// @public
 export function getEntryStatsProcessor(options: EntryStatsProcessorOptions): WebpackStatsProcessor;
 
 // @public
@@ -243,9 +233,6 @@ export function getLastCommitHashFromPR(adoConnection: WebApi, prId: number, rep
 
 // @public (undocumented)
 export function getPriorCommit(baseCommit: string): string;
-
-// @public
-export function getSimpleComment(message: string, baselineCommit: string): string;
 
 // @public
 export function getStatsFileFromFileSystem(path: string): Promise<StatsCompilation>;

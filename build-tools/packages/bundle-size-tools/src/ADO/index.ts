@@ -25,5 +25,4 @@ export {
 } from "./getBundleBuddyConfigMap";
 export { BundleFileData, getBundleFilePathsFromFolder } from "./getBundleFilePathsFromFolder";
 export { GetBundleSummariesArgs, getBundleSummaries } from "./getBundleSummaries";
-export { getCommentForBundleDiff, getSimpleComment } from "./getCommentForBundleDiff";
 export { prCommentsUtils } from "./PrCommentsUtils";

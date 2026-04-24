@@ -18,8 +18,6 @@ export {
 	getBundlePathsFromFileSystem,
 	getBundlePathsFromZipObject,
 	getBundleSummaries,
-	getCommentForBundleDiff,
-	getSimpleComment,
 	getStatsFileFromFileSystem,
 	getStatsFileFromZip,
 	getZipObjectFromArtifact,
@@ -35,7 +33,6 @@ export {
 export {
 	BundleBuddyConfig,
 	BundleComparison,
-	BundleComparisonResult,
 	BundleMetric,
 	BundleMetricSet,
 	BundleSummaries,
