@@ -179,6 +179,21 @@ export default class GenerateBundleSizeDiff extends BaseCommand<
 			return;
 		}
 
+		// An empty comparison means the baseline or PR collection produced no bundles;
+		// surface that as an error rather than a misleading "no-changes" result.
+		if (comparisonResult.comparison.length === 0) {
+			const errorResult: BundleSizeDiffError = {
+				prNumber,
+				baseCommit: comparisonResult.baselineCommit,
+				targetBranch: targetBranchName,
+				error:
+					"No bundles to compare — baseline artifact or PR local bundle reports are empty.",
+			};
+			writeFileSync(errorPath, JSON.stringify(errorResult, undefined, 2));
+			this.log(`Wrote ${errorPath}`);
+			return;
+		}
+
 		const { baselineCommit, comparison } = comparisonResult;
 		const common = {
 			prNumber,
