@@ -103,3 +103,7 @@ extends:
     packageManagerInstallCommand: 'pnpm i --frozen-lockfile'
     packageManager: pnpm
     testCoverage: ${{ variables.testCoverage }}
+    sparseCheckoutDirectories: |
+      common/lib/common-utils
+      patches
+      scripts

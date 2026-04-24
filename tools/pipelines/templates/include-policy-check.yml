@@ -24,6 +24,12 @@ parameters:
   - policy-check
   - layer-check
 
+# Newline-separated list of directories to pass to git sparse checkout (cone mode). When empty (the default), a full
+# checkout is performed. Should match the sparseCheckoutDirectories used in the build stage.
+- name: sparseCheckoutDirectories
+  type: string
+  default: ''
+
 stages:
 - stage: run_checks
   dependsOn: [] # Has no prereqs
@@ -35,6 +41,8 @@ stages:
     steps:
     - checkout: self
       path: $(FluidFrameworkDirectory)
+      ${{ if ne(parameters.sparseCheckoutDirectories, '') }}:
+        sparseCheckoutDirectories: ${{ parameters.sparseCheckoutDirectories }}
     - template: /tools/pipelines/templates/include-use-node-version.yml@self
 
     - template: /tools/pipelines/templates/include-install-pnpm.yml@self

@@ -122,3 +122,6 @@ extends:
     taskBundleAnalysis: false
     checks:
     - checks
+    sparseCheckoutDirectories: |
+      build-tools
+      scripts

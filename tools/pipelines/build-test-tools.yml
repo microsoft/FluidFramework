@@ -96,3 +96,6 @@ extends:
     taskLint: false
     taskTest:
     - test
+    sparseCheckoutDirectories: |
+      tools/test-tools
+      scripts

@@ -59,6 +59,13 @@ parameters:
   type: boolean
   default: false
 
+# Newline-separated list of directories to include in a sparse checkout. When empty (the default), a full checkout is
+# performed. When set, only the listed directories (plus all root-level files, which git cone mode always includes) are
+# checked out. Use this to avoid checking out large parts of the repo that aren't needed for this pipeline.
+- name: sparseCheckoutDirectories
+  type: string
+  default: ''
+
 - name: buildNumberInPatch
   type: boolean
   default: false
@@ -189,6 +196,7 @@ extends:
               checks: '${{ parameters.checks }}'
               # Install all dependencies, not just the root ones
               dependencyInstallCommand: pnpm install --frozen-lockfile
+              sparseCheckoutDirectories: '${{ parameters.sparseCheckoutDirectories }}'
 
       # Install / Build / Test Stage
       - stage: build
@@ -225,6 +233,8 @@ extends:
                 clean: true
                 lfs: '${{ parameters.checkoutSubmodules }}'
                 submodules: '${{ parameters.checkoutSubmodules }}'
+                ${{ if ne(parameters.sparseCheckoutDirectories, '') }}:
+                  sparseCheckoutDirectories: ${{ parameters.sparseCheckoutDirectories }}
 
               - task: Bash@3
                 displayName: Parameters

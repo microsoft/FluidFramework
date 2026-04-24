@@ -100,3 +100,6 @@ extends:
     taskLint: true
     taskTest:
     - test
+    sparseCheckoutDirectories: |
+      tools/benchmark
+      scripts
