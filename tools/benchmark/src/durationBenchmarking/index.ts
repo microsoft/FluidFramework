@@ -14,5 +14,6 @@ export type {
 export { Phase, benchmarkDuration, collectDurationData, runBenchmarkSync } from "./getDuration.js";
 export {
 	type BatchlessDurationTimer,
+	type DurationBenchmarkBatchless,
 	benchmarkDurationBatchless,
 } from "./getDurationBatchless.js";

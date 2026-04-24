@@ -17,6 +17,12 @@ export interface BatchedDurationTimer<T> {
     readonly timer: Timer<T>;
 }
 
+// @public @sealed
+export interface BatchlessDurationTimer {
+    time(callback: () => void): boolean;
+    timeAsync(callback: () => Promise<unknown>): Promise<boolean>;
+}
+
 // @public @input
 export interface BenchmarkDescription {
     readonly category?: string;
@@ -26,6 +32,9 @@ export interface BenchmarkDescription {
 
 // @public
 export function benchmarkDuration(args: DurationBenchmark): BenchmarkDescription & BenchmarkFunction;
+
+// @public
+export function benchmarkDurationBatchless(args: DurationBenchmarkBatchless): BenchmarkDescription & BenchmarkFunction;
 
 // @public @sealed
 export interface BenchmarkError {
@@ -96,6 +105,14 @@ export type DurationBenchmark = DurationBenchmarkSync | DurationBenchmarkAsync |
 // @public @input
 export interface DurationBenchmarkAsync extends BenchmarkTimingOptions {
     readonly benchmarkFnAsync: () => Promise<unknown>;
+}
+
+// @public
+export interface DurationBenchmarkBatchless {
+    readonly benchmarkFn: (state: BatchlessDurationTimer) => void | Promise<void>;
+    maxBenchmarkDurationSeconds?: number;
+    minSampleCount?: number;
+    startPhase?: Phase.CollectData | Phase.WarmUp;
 }
 
 // @public @input

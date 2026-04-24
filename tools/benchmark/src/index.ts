@@ -38,6 +38,7 @@ export {
 	runBenchmarkSync,
 	benchmarkDuration,
 	type BatchlessDurationTimer,
+	type DurationBenchmarkBatchless,
 	benchmarkDurationBatchless,
 } from "./durationBenchmarking/index.js";
 export { benchmarkIt } from "./mocha/index.js";
