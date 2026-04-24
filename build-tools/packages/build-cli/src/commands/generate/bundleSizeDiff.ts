@@ -3,13 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { mkdirSync, writeFileSync } from "node:fs";
+import { mkdirSync, rmSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import {
 	ADOSizeComparator,
 	type BundleComparison,
 	type BundleMetric,
 	getAzureDevopsApi,
+	type SizeComparison,
 	totalSizeMetricName,
 } from "@fluidframework/bundle-size-tools";
 import { Flags } from "@oclif/core";
@@ -37,26 +38,38 @@ const defaultOutputDir = "./artifacts/bundleSizeDiff";
 // regression.
 const sizeRegressionThresholdBytes = 5120;
 
+// Output file names. Only one of these is present per run: `result.json` when the
+// comparison produced a meaningful result, or `error.json` when it did not. Consumers
+// use file existence as the success/failure discriminator without needing to parse JSON.
+const resultFileName = "result.json";
+const errorFileName = "error.json";
+
 /**
- * Shape of the `result.json` file produced by this command, discriminated by `kind`.
- *
- * On `"no-changes"`, the comparison ran and found no size deltas.
- * On `"changes"`, the comparison found size deltas; `comparison` holds the diff and
- * `sizeRegressionDetected` flags any non-total metric that grew past the threshold.
- * On `"error"`, no usable baseline was available; `error` holds the reason.
- *
- * `baseCommit` reflects the last commit attempted; it may be `undefined` on the error
- * variant if the baseline search never reached a candidate.
+ * Shape of the `result.json` file produced on a successful comparison, discriminated by
+ * `kind`. On `"no-changes"`, the comparison ran and found no size deltas. On `"changes"`,
+ * the comparison found size deltas; `comparison` holds the diff and `sizeRegressionDetected`
+ * flags any non-total metric that grew past the threshold.
  */
 type BundleSizeDiffResult = {
 	prNumber: number;
-	baseCommit: string | undefined;
+	baseCommit: string;
 	targetBranch: string;
 } & (
 	| { kind: "no-changes" }
 	| { kind: "changes"; sizeRegressionDetected: boolean; comparison: BundleComparison[] }
-	| { kind: "error"; error: string }
 );
+
+/**
+ * Shape of the `error.json` file produced when the command could not produce a comparison
+ * (e.g. no usable baseline build, an unexpected ADO API failure). `baseCommit` may be
+ * `undefined` if the baseline search never reached a candidate.
+ */
+interface BundleSizeDiffError {
+	prNumber: number;
+	baseCommit: string | undefined;
+	targetBranch: string;
+	error: string;
+}
 
 /**
  * Compute whether any bundle shows a non-total metric growing by more than the regression
@@ -96,7 +109,7 @@ export default class GenerateBundleSizeDiff extends BaseCommand<
 	typeof GenerateBundleSizeDiff
 > {
 	static readonly description =
-		`Compare the PR's locally-collected bundle reports against the baseline CI build and write the result as a structured result.json file.`;
+		`Compare the PR's locally-collected bundle reports against the baseline CI build and write the outcome as one of two structured files in the output directory: result.json on success, error.json on failure.`;
 
 	static readonly flags = {
 		localReportPath: Flags.directory({
@@ -105,7 +118,7 @@ export default class GenerateBundleSizeDiff extends BaseCommand<
 			required: false,
 		}),
 		outputDir: Flags.directory({
-			description: `Directory to write the result.json file into.`,
+			description: `Directory to write result.json or error.json into.`,
 			default: defaultOutputDir,
 			required: false,
 		}),
@@ -139,31 +152,62 @@ export default class GenerateBundleSizeDiff extends BaseCommand<
 			undefined,
 			ADOSizeComparator.naiveFallbackCommitGenerator,
 		);
-		const comparisonResult = await sizeComparator.getSizeComparison(false);
-
-		const common = {
-			prNumber,
-			baseCommit: comparisonResult.baselineCommit,
-			targetBranch: targetBranchName,
-		};
-		let result: BundleSizeDiffResult;
-		if (comparisonResult.kind === "error") {
-			result = { ...common, kind: "error", error: comparisonResult.error };
-		} else if (comparisonHasNoChanges(comparisonResult.comparison)) {
-			result = { ...common, kind: "no-changes" };
-		} else {
-			result = {
-				...common,
-				kind: "changes",
-				sizeRegressionDetected: detectSizeRegression(comparisonResult.comparison),
-				comparison: comparisonResult.comparison,
+		// `getSizeComparison` is documented to return a structured `SizeComparison` rather
+		// than throw, but it can still propagate unexpected exceptions from underlying ADO
+		// API calls (transient network failures, unexpected HTTP responses). Catch those
+		// here and synthesize an `error` variant so the command always produces a valid
+		// output file — this keeps the pipeline step non-blocking for issues unrelated to
+		// the PR under test.
+		let comparisonResult: SizeComparison;
+		try {
+			comparisonResult = await sizeComparator.getSizeComparison(false);
+		} catch (e) {
+			const errorMessage = e instanceof Error ? e.message : String(e);
+			comparisonResult = {
+				kind: "error",
+				baselineCommit: undefined,
+				error: `Unexpected failure from getSizeComparison: ${errorMessage}`,
 			};
 		}
 
 		const outputDir = path.resolve(process.cwd(), flags.outputDir);
 		mkdirSync(outputDir, { recursive: true });
-		const outputPath = path.join(outputDir, "result.json");
-		writeFileSync(outputPath, JSON.stringify(result, undefined, 2));
-		this.log(`Wrote ${outputPath}`);
+		const resultPath = path.join(outputDir, resultFileName);
+		const errorPath = path.join(outputDir, errorFileName);
+
+		// Clear any prior output files so consumers can rely on file existence as the
+		// success/failure discriminator without worrying about stale artifacts from earlier runs.
+		rmSync(resultPath, { force: true });
+		rmSync(errorPath, { force: true });
+
+		if (comparisonResult.kind === "error") {
+			const errorResult: BundleSizeDiffError = {
+				prNumber,
+				baseCommit: comparisonResult.baselineCommit,
+				targetBranch: targetBranchName,
+				error: comparisonResult.error,
+			};
+			writeFileSync(errorPath, JSON.stringify(errorResult, undefined, 2));
+			this.log(`Wrote ${errorPath}`);
+			return;
+		}
+
+		const { baselineCommit, comparison } = comparisonResult;
+		const common = {
+			prNumber,
+			baseCommit: baselineCommit,
+			targetBranch: targetBranchName,
+		};
+		const result: BundleSizeDiffResult = comparisonHasNoChanges(comparison)
+			? { ...common, kind: "no-changes" }
+			: {
+					...common,
+					kind: "changes",
+					sizeRegressionDetected: detectSizeRegression(comparison),
+					comparison,
+				};
+
+		writeFileSync(resultPath, JSON.stringify(result, undefined, 2));
+		this.log(`Wrote ${resultPath}`);
 	}
 }

@@ -441,6 +441,13 @@ extends:
                       script: |
                         set -eu -o pipefail
                         flub generate bundleSizeDiff
+                        # Flub always exits 0 and writes either result.json (success) or error.json
+                        # (failure — no usable baseline, transient ADO API hiccup, etc.). Surface the
+                        # error case as a pipeline warning so the step turns yellow (succeededWithIssues)
+                        # without blocking the PR.
+                        if [ -f artifacts/bundleSizeDiff/error.json ]; then
+                          echo "##vso[task.logissue type=warning]bundleSizeDiff produced an error; see error.json in the bundleSizeDiff artifact."
+                        fi
 
                   # Copy the generated result.json under its own subfolder so it publishes as a separate
                   # pipeline artifact from bundleAnalysis. Source path must match the --outputDir default
