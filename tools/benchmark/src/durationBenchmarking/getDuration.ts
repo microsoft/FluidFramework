@@ -214,7 +214,7 @@ export class BenchmarkState<T> implements BatchedDurationTimer<T> {
 	public computeData(): CollectedData {
 		assertProperUse(
 			this.collectionComplete,
-			"Data collection is not complete. The benchmarking loop must run until recordBatch() (or time()/timeAsync()) returns false.",
+			"Data collection is not complete. Either call a batch recording method (e.g. recordBatch(), timeBatch()) in a loop until it returns false, or use a method that records all batches at once (e.g. timeAllBatches(), timeAllBatchesAsync()).",
 		);
 		const stats = getArrayStatistics(this.samples.map((v) => v / this.iterationsPerBatch));
 		const data: CollectedData = [
