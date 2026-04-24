@@ -48,7 +48,7 @@ export interface UndoRedo {
  * ```ts
  * const titleLabel = Symbol("title-editor");
  * const bodyLabel  = Symbol("body-editor");
- * const manager = new UndoRedoManager(treeView);
+ * const manager = createLabeledUndoRedo(treeView);
  *
  * // Each editor tags its commits with its own label.
  * treeView.runTransaction(() => { root.title = "Draft"; }, { label: titleLabel });
@@ -140,7 +140,7 @@ interface StackEntry {
  *
  * @sealed @internal
  */
-export class UndoRedoManager implements LabeledUndoRedo {
+class UndoRedoManager implements LabeledUndoRedo {
 	readonly #undoStack: StackEntry[] = [];
 	readonly #redoStack: StackEntry[] = [];
 	readonly #unsubscribe: () => void;
@@ -277,4 +277,20 @@ export class UndoRedoManager implements LabeledUndoRedo {
 		}
 		return undefined;
 	}
+}
+
+/**
+ * Creates a {@link LabeledUndoRedo} manager that tracks commits on the given tree branch.
+ *
+ * @remarks
+ * A single instance must be created per tree branch. Multiple instances on the same branch
+ * will each attempt to call `getRevertible()` on the `changed` event, and the second call
+ * will throw.
+ *
+ * @param branch - The tree branch whose commits this manager will track.
+ * @returns A {@link LabeledUndoRedo} instance scoped to the given branch.
+ * @internal
+ */
+export function createLabeledUndoRedo(branch: TreeBranchAlpha): LabeledUndoRedo {
+	return new UndoRedoManager(branch);
 }

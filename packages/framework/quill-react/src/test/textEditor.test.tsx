@@ -7,7 +7,7 @@ import { strict as assert } from "node:assert";
 
 import {
 	toPropTreeNode,
-	UndoRedoManager,
+	createLabeledUndoRedo,
 	type LabeledUndoRedo,
 } from "@fluidframework/react/internal";
 import { TreeViewConfiguration } from "@fluidframework/tree";
@@ -744,7 +744,7 @@ describe("textEditor", () => {
 					it("insert character, undo removes it, redo restores it", () => {
 						const treeView = createFormattedTreeViewWithEvents();
 						const text = treeView.root;
-						const manager = new UndoRedoManager(treeView);
+						const manager = createLabeledUndoRedo(treeView);
 						const content = <FormattedMainView root={toPropTreeNode(text)} />;
 						const rendered = render(content, { reactStrictMode });
 
@@ -768,7 +768,7 @@ describe("textEditor", () => {
 					it("insert character, make bold, undo removes bold but keeps character", () => {
 						const treeView = createFormattedTreeViewWithEvents();
 						const text = treeView.root;
-						const manager = new UndoRedoManager(treeView);
+						const manager = createLabeledUndoRedo(treeView);
 						const content = <FormattedMainView root={toPropTreeNode(text)} />;
 						const rendered = render(content, { reactStrictMode });
 
@@ -799,7 +799,7 @@ describe("textEditor", () => {
 					it("multiple operations in transaction undo together as one unit", () => {
 						const treeView = createFormattedTreeViewWithEvents();
 						const text = treeView.root;
-						const manager = new UndoRedoManager(treeView);
+						const manager = createLabeledUndoRedo(treeView);
 						const content = <FormattedMainView root={toPropTreeNode(text)} />;
 						const rendered = render(content, { reactStrictMode });
 

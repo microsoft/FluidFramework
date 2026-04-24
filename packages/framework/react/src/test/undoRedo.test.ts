@@ -13,7 +13,7 @@ import {
 	TreeViewConfiguration,
 } from "@fluidframework/tree/alpha";
 
-import { UndoRedoManager } from "../undoRedo.js";
+import { createLabeledUndoRedo } from "../undoRedo.js";
 
 // ---------------------------------------------------------------------------
 // Shared test schema and tree factory
@@ -31,11 +31,11 @@ function createTree(): TreeViewAlpha<typeof TestRoot> {
 
 // ---------------------------------------------------------------------------
 
-describe("UndoRedoManager", () => {
+describe("createLabeledUndoRedo", () => {
 	describe("global undo/redo (no label)", () => {
 		it("undo reverts the most recent change", () => {
 			const view = createTree();
-			const manager = new UndoRedoManager(view);
+			const manager = createLabeledUndoRedo(view);
 
 			view.runTransaction(() => {
 				view.root.value = 1;
@@ -49,7 +49,7 @@ describe("UndoRedoManager", () => {
 
 		it("redo re-applies an undone change", () => {
 			const view = createTree();
-			const manager = new UndoRedoManager(view);
+			const manager = createLabeledUndoRedo(view);
 
 			view.runTransaction(() => {
 				view.root.value = 1;
@@ -62,7 +62,7 @@ describe("UndoRedoManager", () => {
 
 		it("canUndo/canRedo reflect stack state", () => {
 			const view = createTree();
-			const manager = new UndoRedoManager(view);
+			const manager = createLabeledUndoRedo(view);
 
 			assert.equal(manager.canUndo(), false);
 			assert.equal(manager.canRedo(), false);
@@ -81,7 +81,7 @@ describe("UndoRedoManager", () => {
 
 		it("new commit after undo clears redo stack", () => {
 			const view = createTree();
-			const manager = new UndoRedoManager(view);
+			const manager = createLabeledUndoRedo(view);
 
 			view.runTransaction(() => {
 				view.root.value = 1;
@@ -98,7 +98,7 @@ describe("UndoRedoManager", () => {
 
 		it("undo and redo are silent no-ops when stack is empty", () => {
 			const view = createTree();
-			const manager = new UndoRedoManager(view);
+			const manager = createLabeledUndoRedo(view);
 
 			// Should not throw
 			manager.undo();
@@ -109,7 +109,7 @@ describe("UndoRedoManager", () => {
 
 		it("multiple undo/redo preserves stack order", () => {
 			const view = createTree();
-			const manager = new UndoRedoManager(view);
+			const manager = createLabeledUndoRedo(view);
 
 			view.runTransaction(() => {
 				view.root.value = 1;
@@ -137,7 +137,7 @@ describe("UndoRedoManager", () => {
 
 		it("canUndo(label) returns false when stack has no matching commit", () => {
 			const view = createTree();
-			const manager = new UndoRedoManager(view);
+			const manager = createLabeledUndoRedo(view);
 
 			view.runTransaction(
 				() => {
@@ -153,7 +153,7 @@ describe("UndoRedoManager", () => {
 
 		it("undo(label) undoes the most recent matching commit and leaves others in the stack", () => {
 			const view = createTree();
-			const manager = new UndoRedoManager(view);
+			const manager = createLabeledUndoRedo(view);
 
 			view.runTransaction(
 				() => {
@@ -183,7 +183,7 @@ describe("UndoRedoManager", () => {
 
 		it("undo(label) is a silent no-op when no matching commit exists", () => {
 			const view = createTree();
-			const manager = new UndoRedoManager(view);
+			const manager = createLabeledUndoRedo(view);
 
 			view.runTransaction(
 				() => {
@@ -200,7 +200,7 @@ describe("UndoRedoManager", () => {
 
 		it("labeled commit invalidates only redo entries with the same label", () => {
 			const view = createTree();
-			const manager = new UndoRedoManager(view);
+			const manager = createLabeledUndoRedo(view);
 
 			view.runTransaction(
 				() => {
@@ -234,7 +234,7 @@ describe("UndoRedoManager", () => {
 
 		it("anonymous commit clears only anonymous redo entries, preserving labeled redo entries", () => {
 			const view = createTree();
-			const manager = new UndoRedoManager(view);
+			const manager = createLabeledUndoRedo(view);
 
 			view.runTransaction(
 				() => {
@@ -269,7 +269,7 @@ describe("UndoRedoManager", () => {
 
 		it("two labels do not interfere with each other's undo stacks", () => {
 			const view = createTree();
-			const manager = new UndoRedoManager(view);
+			const manager = createLabeledUndoRedo(view);
 
 			view.runTransaction(
 				() => {
@@ -330,7 +330,7 @@ describe("UndoRedoManager", () => {
 
 		it("preserves the undo entry when revert() throws (H1)", () => {
 			const { branch, fireChanged } = createMockBranch();
-			const manager = new UndoRedoManager(branch);
+			const manager = createLabeledUndoRedo(branch);
 
 			fireChanged(true, () => ({
 				revert() {
@@ -347,7 +347,7 @@ describe("UndoRedoManager", () => {
 
 		it("preserves the redo entry when revert() throws during redo (H1)", () => {
 			const { branch, fireChanged } = createMockBranch();
-			const manager = new UndoRedoManager(branch);
+			const manager = createLabeledUndoRedo(branch);
 
 			let shouldThrow = false;
 			fireChanged(true, () => ({
@@ -370,7 +370,7 @@ describe("UndoRedoManager", () => {
 
 		it("clears pendingOperation after undo revert() throws so new commits land on undo stack (C1)", () => {
 			const { branch, fireChanged } = createMockBranch();
-			const manager = new UndoRedoManager(branch);
+			const manager = createLabeledUndoRedo(branch);
 
 			fireChanged(true, () => ({
 				revert() {
@@ -394,7 +394,7 @@ describe("UndoRedoManager", () => {
 
 		it("clears pendingOperation after redo revert() throws so new commits land on undo stack (C1)", () => {
 			const { branch, fireChanged } = createMockBranch();
-			const manager = new UndoRedoManager(branch);
+			const manager = createLabeledUndoRedo(branch);
 
 			let shouldThrow = false;
 			fireChanged(true, () => ({
@@ -422,7 +422,7 @@ describe("UndoRedoManager", () => {
 	describe("dispose", () => {
 		it("dispose clears both stacks and unsubscribes", () => {
 			const view = createTree();
-			const manager = new UndoRedoManager(view);
+			const manager = createLabeledUndoRedo(view);
 
 			view.runTransaction(() => {
 				view.root.value = 1;
