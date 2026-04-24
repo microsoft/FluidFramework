@@ -433,7 +433,6 @@ extends:
                     displayName: (PR only) Generate bundle size diff
                     condition: and(succeeded(), eq(variables['Build.Reason'], 'PullRequest'))
                     env:
-                      ADO_API_TOKEN: $(System.AccessToken)
                       TARGET_BRANCH_NAME: '$(targetBranchName)'
                       PR_NUMBER: '$(System.PullRequest.PullRequestNumber)'
                     inputs:

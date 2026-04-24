@@ -151,8 +151,8 @@ export interface EntryStatsProcessorOptions {
 // @public
 export function getAllFilesInDirectory(sourceFolder: string, partialPathPrefix?: string): Promise<string[]>;
 
-// @public (undocumented)
-export function getAzureDevopsApi(accessToken: string, orgUrl: string): WebApi;
+// @public
+export function getAzureDevopsApi(accessToken: string | undefined, orgUrl: string): WebApi;
 
 // @public
 export function getBaselineCommit(): string;

@@ -115,12 +115,9 @@ export default class GenerateBundleSizeDiff extends BaseCommand<
 	public async run(): Promise<void> {
 		const { flags } = this;
 
-		// Required env vars; failing fast here gives a clearer error than downstream
-		// exceptions from the comparator or the result shape.
+		// ADO_API_TOKEN is optional; when absent, getAzureDevopsApi issues anonymous reads,
+		// which is what we want for fork PR builds where $(System.AccessToken) isn't populated.
 		const adoApiToken = process.env.ADO_API_TOKEN;
-		if (adoApiToken === undefined) {
-			this.error("ADO_API_TOKEN env var is required");
-		}
 		const targetBranchName = process.env.TARGET_BRANCH_NAME;
 		if (targetBranchName === undefined) {
 			this.error("TARGET_BRANCH_NAME env var is required");
