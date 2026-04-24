@@ -7,6 +7,7 @@ import { strict as assert } from "node:assert";
 
 import {
 	independentView,
+	type TreeBranchAlpha,
 	type TreeViewAlpha,
 	SchemaFactory,
 	TreeViewConfiguration,
@@ -289,6 +290,131 @@ describe("UndoRedoManager", () => {
 			manager.undo(labelA);
 			assert.equal(manager.canRedo(labelA), true);
 			assert.equal(manager.canRedo(labelB), false);
+			manager.dispose();
+		});
+	});
+
+	describe("error handling — revert() throws", () => {
+		// Minimal branch mock that lets the test fire controlled changed events with
+		// revertibles whose revert() behavior we control.
+		function createMockBranch(): {
+			branch: TreeBranchAlpha;
+			fireChanged: (
+				isLocal: boolean,
+				getRevertible: (() => { revert(): void; dispose(): void }) | undefined,
+			) => void;
+		} {
+			type Handler = (
+				data: { isLocal: boolean },
+				getRevertible: (() => { revert(): void; dispose(): void }) | undefined,
+			) => void;
+			const handlers: Handler[] = [];
+			const branch = {
+				events: {
+					on(_event: string, handler: Handler) {
+						handlers.push(handler);
+						return () => {
+							const i = handlers.indexOf(handler);
+							if (i >= 0) handlers.splice(i, 1);
+						};
+					},
+				},
+			} as unknown as TreeBranchAlpha;
+			return {
+				branch,
+				fireChanged: (isLocal, getRevertible) => {
+					for (const h of handlers) h({ isLocal }, getRevertible);
+				},
+			};
+		}
+
+		it("preserves the undo entry when revert() throws (H1)", () => {
+			const { branch, fireChanged } = createMockBranch();
+			const manager = new UndoRedoManager(branch);
+
+			fireChanged(true, () => ({
+				revert() {
+					throw new Error("revert failed");
+				},
+				dispose() {},
+			}));
+			assert.equal(manager.canUndo(), true);
+
+			assert.throws(() => manager.undo());
+			assert.equal(manager.canUndo(), true, "entry should remain after failed revert");
+			manager.dispose();
+		});
+
+		it("preserves the redo entry when revert() throws during redo (H1)", () => {
+			const { branch, fireChanged } = createMockBranch();
+			const manager = new UndoRedoManager(branch);
+
+			let shouldThrow = false;
+			fireChanged(true, () => ({
+				revert() {
+					if (shouldThrow) throw new Error("revert failed");
+				},
+				dispose() {},
+			}));
+
+			// First undo succeeds, moving the entry to the redo stack.
+			manager.undo();
+			assert.equal(manager.canRedo(), true);
+
+			// Now make redo's revert() throw.
+			shouldThrow = true;
+			assert.throws(() => manager.redo());
+			assert.equal(manager.canRedo(), true, "redo entry should remain after failed revert");
+			manager.dispose();
+		});
+
+		it("clears pendingOperation after undo revert() throws so new commits land on undo stack (C1)", () => {
+			const { branch, fireChanged } = createMockBranch();
+			const manager = new UndoRedoManager(branch);
+
+			fireChanged(true, () => ({
+				revert() {
+					throw new Error("revert failed");
+				},
+				dispose() {},
+			}));
+			assert.throws(() => manager.undo());
+
+			// A new user commit arriving after the failed undo must go to the undo stack,
+			// not the redo stack (which is what happens when #pendingOperation is stuck).
+			fireChanged(true, () => ({ revert() {}, dispose() {} }));
+			assert.equal(
+				manager.canRedo(),
+				false,
+				"redo stack should be empty — pendingOperation was cleared",
+			);
+			assert.equal(manager.canUndo(), true, "new commit should be on the undo stack");
+			manager.dispose();
+		});
+
+		it("clears pendingOperation after redo revert() throws so new commits land on undo stack (C1)", () => {
+			const { branch, fireChanged } = createMockBranch();
+			const manager = new UndoRedoManager(branch);
+
+			let shouldThrow = false;
+			fireChanged(true, () => ({
+				revert() {
+					if (shouldThrow) throw new Error("revert failed");
+				},
+				dispose() {},
+			}));
+
+			manager.undo();
+			shouldThrow = true;
+			assert.throws(() => manager.redo());
+
+			// New user commit must land on the undo stack, not the undo stack of the redo operation.
+			fireChanged(true, () => ({ revert() {}, dispose() {} }));
+			assert.equal(
+				manager.canRedo(),
+				false,
+				"pendingOperation was cleared after redo failure",
+			);
 			manager.dispose();
 		});
 	});

@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { oob } from "@fluidframework/core-utils/internal";
 import type { RevertibleAlpha, TreeBranchAlpha } from "@fluidframework/tree/internal";
 
 /**
@@ -128,9 +129,7 @@ interface StackEntry {
  * A single undo/redo manager for a tree branch that supports both global and per-label operations.
  *
  * @remarks
- * A single instance should be created per tree branch. It subscribes to the branch's `changed`
- * event exactly once, so multiple instances on the same branch will each try to call
- * `getRevertible()`, which is not permitted.
+ * A single instance should be created per tree branch, as multiple revertible listeners on the same branch is not supported.
  *
  * **Redo invalidation:** when a new user commit arrives with labels `{A, B}`, all redo entries
  * whose label sets intersect `{A, B}` are cleared. An anonymous commit (no labels) clears only
@@ -242,35 +241,43 @@ export class UndoRedoManager implements LabeledUndoRedo {
 	}
 
 	public undo(label?: symbol): void {
-		const entry =
+		const index =
 			label === undefined
-				? this.#undoStack.pop()
-				: this.#removeLastWithLabel(this.#undoStack, label);
-		// Use if-block rather than early return so TypeScript narrows entry to StackEntry.
-		if (entry !== undefined) {
-			this.#pendingOperation = { kind: "undo", labels: entry.labels };
-			try {
-				entry.revertible.revert();
-			} finally {
-				this.#pendingOperation = undefined;
-			}
+				? this.#undoStack.length - 1
+				: this.#lastIndexWithLabel(this.#undoStack, label);
+		if (index === undefined) {
+			return;
 		}
+		const entry = this.#undoStack[index] ?? oob();
+		this.#pendingOperation = { kind: "undo", labels: entry.labels };
+		try {
+			entry.revertible.revert();
+		} finally {
+			this.#pendingOperation = undefined;
+		}
+		// Only remove from the stack after a successful revert.
+		// If revert() throws, the entry stays so the user can retry.
+		this.#undoStack.splice(index, 1);
 	}
 
 	public redo(label?: symbol): void {
-		const entry =
+		const index =
 			label === undefined
-				? this.#redoStack.pop()
-				: this.#removeLastWithLabel(this.#redoStack, label);
-		// Use if-block rather than early return so TypeScript narrows entry to StackEntry.
-		if (entry !== undefined) {
-			this.#pendingOperation = { kind: "redo", labels: entry.labels };
-			try {
-				entry.revertible.revert();
-			} finally {
-				this.#pendingOperation = undefined;
-			}
+				? this.#redoStack.length - 1
+				: this.#lastIndexWithLabel(this.#redoStack, label);
+		if (index === undefined) {
+			return;
 		}
+		const entry = this.#redoStack[index] ?? oob();
+		this.#pendingOperation = { kind: "redo", labels: entry.labels };
+		try {
+			entry.revertible.revert();
+		} finally {
+			this.#pendingOperation = undefined;
+		}
+		// Only remove from the stack after a successful revert.
+		// If revert() throws, the entry stays so the user can retry.
+		this.#redoStack.splice(index, 1);
 	}
 
 	public canUndo(label?: symbol): boolean {
@@ -291,15 +298,14 @@ export class UndoRedoManager implements LabeledUndoRedo {
 		this.#redoStack.length = 0;
 	}
 
-	#removeLastWithLabel(stack: StackEntry[], label: symbol): StackEntry | undefined {
+	#lastIndexWithLabel(stack: StackEntry[], label: symbol): number | undefined {
 		for (let i = stack.length - 1; i >= 0; i--) {
 			const entry = stack[i];
 			if (entry === undefined) {
-				throw new Error("Unexpected undefined entry in undo stack");
+				throw new Error("Unexpected undefined entry in stack");
 			}
 			if (entry.labels.has(label)) {
-				stack.splice(i, 1);
-				return entry;
+				return i;
 			}
 		}
 		return undefined;
