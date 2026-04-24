@@ -3711,6 +3711,9 @@ export class ContainerRuntime
 			discardOrCommit: () => IPendingMessage["batchInfo"][],
 			exitMethod: "commit" | "discard",
 		): void => {
+			if (this.stageControls !== stageControls) {
+				throw new UsageError("Not in staging mode");
+			}
 			try {
 				PerformanceEvent.timedExec(
 					this.mc.logger,
