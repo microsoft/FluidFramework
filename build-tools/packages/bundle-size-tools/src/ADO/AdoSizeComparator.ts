@@ -146,7 +146,7 @@ export class ADOSizeComparator {
 					console.log(error);
 
 					if (tagWaiting) {
-						this.tagBuildAsWaiting(baselineCommit);
+						await this.tagBuildAsWaiting(baselineCommit);
 					}
 
 					return { kind: "error", baselineCommit, error };

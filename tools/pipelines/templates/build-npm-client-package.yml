@@ -441,10 +441,11 @@ extends:
                       script: |
                         set -eu -o pipefail
                         flub generate bundleSizeDiff
-                        # Flub always exits 0 and writes either result.json (success) or error.json
-                        # (failure — no usable baseline, transient ADO API hiccup, etc.). Surface the
-                        # error case as a pipeline warning so the step turns yellow (succeededWithIssues)
-                        # without blocking the PR.
+                        # Flub writes result.json (success) or error.json (failure — no usable baseline,
+                        # transient ADO API hiccup, etc.) and exits 0 in both cases; a non-zero exit is
+                        # reserved for misconfiguration such as missing env vars. Surface the error.json
+                        # case as a pipeline warning so the step turns yellow (succeededWithIssues)
+                        # without failing the pipeline run.
                         if [ -f artifacts/bundleSizeDiff/error.json ]; then
                           echo "##vso[task.logissue type=warning]bundleSizeDiff produced an error; see error.json in the bundleSizeDiff artifact."
                         fi
