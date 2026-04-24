@@ -29,7 +29,10 @@ export interface UndoRedo {
  * label is provided the operation is global and targets the most recent commit regardless of
  * labels.
  *
- * TODO: document how redo stack is affected by undoing with a label (redo entries with overlapping labels are cleared) and by new commits (redo entries with overlapping labels are cleared).
+ * **Redo invalidation:** when a new user commit arrives, redo entries whose label sets overlap
+ * with the new commit's labels are discarded. An anonymous commit (no labels) discards only
+ * anonymous redo entries; labeled redo entries are preserved. Similarly, calling `undo(label)`
+ * discards redo entries that overlap with the undone commit's labels.
  *
  * All operations are silent no-ops when there is nothing to undo/redo matching the label policy.
  *
