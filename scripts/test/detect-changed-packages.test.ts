@@ -103,22 +103,38 @@ describe("buildPackageDirSet", () => {
 	it("unions historical and current packages", () => {
 		const historical = ["packages/old/package.json", "packages/shared/package.json"];
 		const current = ["packages/shared/package.json", "packages/new/package.json"];
-		const dirs = buildPackageDirSet("sha", () => historical, () => current);
-		deepStrictEqual(
-			[...dirs].sort(),
-			["packages/new", "packages/old", "packages/shared"],
+		const dirs = buildPackageDirSet(
+			"sha",
+			() => historical,
+			() => current,
 		);
+		deepStrictEqual([...dirs].sort(), ["packages/new", "packages/old", "packages/shared"]);
 	});
 
 	it("maps a root-level package.json to '.'", () => {
-		const dirs = buildPackageDirSet("sha", () => ["package.json"], () => []);
+		const dirs = buildPackageDirSet(
+			"sha",
+			() => ["package.json"],
+			() => [],
+		);
 		deepStrictEqual([...dirs], ["."]);
 	});
 
 	it("tolerates either list being empty", () => {
-		strictEqual(buildPackageDirSet("sha", () => [], () => []).size, 0);
 		strictEqual(
-			buildPackageDirSet("sha", () => ["packages/a/package.json"], () => []).size,
+			buildPackageDirSet(
+				"sha",
+				() => [],
+				() => [],
+			).size,
+			0,
+		);
+		strictEqual(
+			buildPackageDirSet(
+				"sha",
+				() => ["packages/a/package.json"],
+				() => [],
+			).size,
 			1,
 		);
 	});
@@ -160,10 +176,7 @@ describe("findChangedPackages", () => {
 	});
 
 	it("walks up from nested paths to find an ancestor package dir", () => {
-		strictEqual(
-			findChangedPackages(["packages/alive/src/deeply/nested/x.ts"], pkgDirs),
-			true,
-		);
+		strictEqual(findChangedPackages(["packages/alive/src/deeply/nested/x.ts"], pkgDirs), true);
 	});
 
 	it("does not treat the root pseudo-dir '.' as a per-package hit", () => {

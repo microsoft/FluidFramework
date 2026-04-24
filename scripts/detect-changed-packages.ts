@@ -181,7 +181,9 @@ function emitVsoOutputs(shouldRunTests: boolean, scopedPnpmFilter: string): void
 	console.log(`shouldRunTests=${flag}`);
 	console.log(`scopedPnpmFilter=${scopedPnpmFilter}`);
 	console.log(`##vso[task.setvariable variable=shouldRunTests;isOutput=true]${flag}`);
-	console.log(`##vso[task.setvariable variable=scopedPnpmFilter;isOutput=true]${scopedPnpmFilter}`);
+	console.log(
+		`##vso[task.setvariable variable=scopedPnpmFilter;isOutput=true]${scopedPnpmFilter}`,
+	);
 }
 
 function logWarning(message: string): void {
@@ -229,7 +231,9 @@ export function main(): void {
 	// and the package-change check, silently suppressing all test jobs.
 	const diffOut = git(["diff", "--name-only", mergeBase]);
 	if (diffOut === undefined) {
-		logWarning(`git diff against merge-base ${mergeBase} failed; falling back to full test run.`);
+		logWarning(
+			`git diff against merge-base ${mergeBase} failed; falling back to full test run.`,
+		);
 		emitVsoOutputs(true, "");
 		return;
 	}
