@@ -249,8 +249,11 @@ export class UndoRedoManager implements LabeledUndoRedo {
 		// Use if-block rather than early return so TypeScript narrows entry to StackEntry.
 		if (entry !== undefined) {
 			this.#pendingOperation = { kind: "undo", labels: entry.labels };
-			entry.revertible.revert();
-			this.#pendingOperation = undefined;
+			try {
+				entry.revertible.revert();
+			} finally {
+				this.#pendingOperation = undefined;
+			}
 		}
 	}
 
@@ -262,8 +265,11 @@ export class UndoRedoManager implements LabeledUndoRedo {
 		// Use if-block rather than early return so TypeScript narrows entry to StackEntry.
 		if (entry !== undefined) {
 			this.#pendingOperation = { kind: "redo", labels: entry.labels };
-			entry.revertible.revert();
-			this.#pendingOperation = undefined;
+			try {
+				entry.revertible.revert();
+			} finally {
+				this.#pendingOperation = undefined;
+			}
 		}
 	}
 
