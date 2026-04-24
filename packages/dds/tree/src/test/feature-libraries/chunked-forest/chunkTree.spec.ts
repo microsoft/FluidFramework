@@ -10,6 +10,7 @@ import {
 	EmptyKey,
 	type FieldKey,
 	type JsonableTree,
+	TreeStoredSchemaRepository,
 	type TreeNodeSchemaIdentifier,
 	type Value,
 	mapCursorField,
@@ -29,7 +30,9 @@ import {
 	combineChunks,
 	defaultChunkPolicy,
 	insertValues,
+	makeTreeChunker,
 	polymorphic,
+	splitFieldAtIndex,
 	tryShapeFromFieldSchema,
 	tryShapeFromNodeSchema,
 	uniformChunkFromCursor,
@@ -41,6 +44,7 @@ import { emptyChunk } from "../../../feature-libraries/chunked-forest/emptyChunk
 import { SequenceChunk } from "../../../feature-libraries/chunked-forest/sequenceChunk.js";
 import {
 	TreeShape,
+	UniformChunk,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/chunked-forest/uniformChunk.js";
 import {
@@ -753,6 +757,96 @@ describe("chunkTree", () => {
 				fieldSchemaWithContext,
 			);
 			assert(infoNonIncremental !== undefined);
+		});
+	});
+
+	describe("splitFieldAtIndex", () => {
+		const numberType: TreeNodeSchemaIdentifier = brand(numberSchema.identifier);
+		const numberShape = new TreeShape(numberType, true, []);
+
+		// Schema-aware default chunker so chunkRange (used by splitFieldAtIndex) can
+		// rebuild each half of a split uniform chunk as a uniform chunk.
+		const forestSchema = new TreeStoredSchemaRepository(toInitialSchema(builder.number));
+		const chunker = makeTreeChunker(
+			forestSchema,
+			defaultSchemaPolicy,
+			defaultIncrementalEncodingPolicy,
+		);
+		const compressor = { policy: chunker, idCompressor: undefined };
+
+		function assertChunksUnchanged(chunks: TreeChunk[], snapshot: readonly TreeChunk[]): void {
+			assert.equal(chunks.length, snapshot.length);
+			for (let i = 0; i < snapshot.length; i++) {
+				assert.equal(chunks[i], snapshot[i]);
+			}
+		}
+
+		it("splits a uniform chunk sandwiched between basic chunks at a middle index", () => {
+			// Build a field containing three chunks:
+			// [basic(1 node), uniform(5 nodes), basic(1 node)] -> total 7 nodes, global indices 0..6
+			// The uniform chunk occupies global indices 1..5, and its middle node is global index 3.
+			const leadingBasic = new BasicChunk(numberType, new Map(), 0);
+			const uniform = new UniformChunk(numberShape.withTopLevelLength(5), [1, 2, 3, 4, 5]);
+			const trailingBasic = new BasicChunk(numberType, new Map(), 6);
+			const chunks: TreeChunk[] = [leadingBasic, uniform, trailingBasic];
+
+			const boundaryIndex = splitFieldAtIndex(chunks, 3, compressor);
+
+			// The chunks preceding boundaryIndex must hold exactly the first 3 nodes,
+			// i.e. the split landed on the requested node boundary.
+			let nodesBeforeBoundary = 0;
+			for (let i = 0; i < boundaryIndex; i++) {
+				nodesBeforeBoundary += chunks[i].topLevelLength;
+			}
+			assert.equal(nodesBeforeBoundary, 3);
+
+			// The chunk at boundaryIndex starts with the node that was at global index 3.
+			const boundaryCursor = chunks[boundaryIndex].cursor();
+			boundaryCursor.firstNode();
+			assert.deepEqual(jsonableTreeFromCursor(boundaryCursor), {
+				type: numberSchema.identifier,
+				value: 3,
+			});
+		});
+
+		it("does not mutate the array when the index falls on an existing chunk boundary", () => {
+			// Index 1 lands on the boundary between the BasicChunk and the UniformChunk,
+			// so splitFieldAtIndex should return without touching the array.
+			const chunks: TreeChunk[] = [
+				new BasicChunk(numberType, new Map(), 0),
+				new UniformChunk(numberShape.withTopLevelLength(3), [1, 2, 3]),
+			];
+			const snapshot = [...chunks];
+
+			const boundaryIndex = splitFieldAtIndex(chunks, 1, compressor);
+
+			assert.equal(boundaryIndex, 1);
+			assertChunksUnchanged(chunks, snapshot);
+		});
+
+		it("returns chunks.length when the index equals the total node count", () => {
+			// Splicing at the end of the array (e.g. attach appended to the end of a field)
+			// is a valid splice point that should not mutate any chunk.
+			const chunks: TreeChunk[] = [
+				new BasicChunk(numberType, new Map(), 0),
+				new UniformChunk(numberShape.withTopLevelLength(3), [1, 2, 3]),
+			];
+			const snapshot = [...chunks];
+
+			const boundaryIndex = splitFieldAtIndex(chunks, 4, compressor);
+
+			assert.equal(boundaryIndex, chunks.length);
+			assertChunksUnchanged(chunks, snapshot);
+		});
+
+		it("returns 0 for an empty chunks array at index 0", () => {
+			// Covers both the empty-array case and the index-0 early-return path.
+			const chunks: TreeChunk[] = [];
+
+			const boundaryIndex = splitFieldAtIndex(chunks, 0, compressor);
+
+			assert.equal(boundaryIndex, 0);
+			assert.equal(chunks.length, 0);
 		});
 	});
 });

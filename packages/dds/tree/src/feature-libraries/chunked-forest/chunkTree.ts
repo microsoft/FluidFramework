@@ -25,7 +25,7 @@ import {
 	type SchemaAndPolicy,
 	type SchemaPolicy,
 } from "../../core/index.js";
-import { getOrCreate } from "../../util/index.js";
+import { assertNonNegativeSafeInteger, getOrCreate } from "../../util/index.js";
 import { isStableNodeIdentifier } from "../node-identifier/index.js";
 
 import { BasicChunk } from "./basicChunk.js";
@@ -556,6 +556,50 @@ export function chunkRange(
 
 	return output;
 }
+
+/**
+ * Walks the `chunks` array of a field and splits a chunk if needed so that the node at the given
+ * index sits on a chunk boundary. After the call, the node at `nodeIndex` is the first node of the
+ * chunk at the returned index.
+ *
+ * @param chunks - The array of {@link TreeChunk}s for the field to split. Mutated in place.
+ * @param nodeIndex - The index of the node to split at. Must be in `[0, totalNodes]`, where
+ * `totalNodes` is the sum of {@link TreeChunk.topLevelLength} across all chunks. `nodeIndex === totalNodes`
+ * is allowed as a splice point (e.g. attaching at the end of a chunk array).
+ * @param policy - The {@link ChunkCompressor} to use when splitting chunks and re-chunking each side
+ * of the split via {@link chunkRange}.
+ *
+ * @returns The index of the chunk in `chunks` that contains the node at `nodeIndex`.
+ */
+export function splitFieldAtIndex(
+	chunks: TreeChunk[],
+	nodeIndex: number,
+	policy: ChunkCompressor,
+): number {
+	assertNonNegativeSafeInteger(nodeIndex);
+	let remaining = nodeIndex;
+	for (let i = 0; i < chunks.length; i++) {
+		if (remaining === 0) {
+			return i;
+		}
+		const chunk = chunks[i] ?? oob();
+		if (remaining < chunk.topLevelLength) {
+			const total = chunk.topLevelLength;
+			const cursor = chunk.cursor();
+			cursor.firstNode();
+			const before = chunkRange(cursor, policy, remaining, false);
+			const after = chunkRange(cursor, policy, total - remaining, true);
+			// TODO: this could fail for really long chunks being split (due to argument count limits).
+			chunks.splice(i, 1, ...before, ...after);
+			chunk.referenceRemoved();
+			return i + before.length;
+		}
+		remaining -= chunk.topLevelLength;
+	}
+	assert(remaining === 0, "nodeIndex exceeds total node count in field");
+	return chunks.length;
+}
+
 /**
  * Extracts values from the current cursor position according to the provided tree shape.
  *

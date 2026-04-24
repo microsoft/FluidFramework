@@ -3,9 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import type {
-	TreeNodeSchemaIdentifier,
-	TreeStoredSchemaSubscription,
+import { strict as assert } from "node:assert";
+
+import {
+	type FieldKey,
+	type TreeNodeSchemaIdentifier,
+	type TreeStoredSchemaSubscription,
+	TreeStoredSchemaRepository,
+	rootFieldKey,
 } from "../../../core/index.js";
 import {
 	Chunker,
@@ -21,9 +26,16 @@ import {
 // eslint-disable-next-line import-x/no-internal-modules
 import { buildChunkedForest } from "../../../feature-libraries/chunked-forest/chunkedForest.js";
 import {
+	TreeShape,
+	UniformChunk,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "../../../feature-libraries/chunked-forest/uniformChunk.js";
+import {
 	defaultIncrementalEncodingPolicy,
 	defaultSchemaPolicy,
 } from "../../../feature-libraries/index.js";
+import { SchemaFactory, numberSchema, toInitialSchema } from "../../../simple-tree/index.js";
+import { brand } from "../../../util/index.js";
 import { testForest } from "../../forestTestSuite.js";
 
 const chunkers: [string, (schema: TreeStoredSchemaSubscription) => IChunker][] = [
@@ -122,4 +134,89 @@ describe("ChunkedForest", () => {
 			});
 		});
 	}
+
+	describe("mutation of chunks array inside a multi-node chunkShape", () => {
+		// Manually install a root field of [uniform(5)] so we can exercise splitting a uniform
+		// chunk at a node index in the middle. The visitor splices the chunk array by node index
+		// as if it were a chunk index, so these tests fail against the unpatched implementation.
+		function setup() {
+			const builder = new SchemaFactory("chunkedForest.multiNodeUniform");
+			const forestSchema = new TreeStoredSchemaRepository(toInitialSchema(builder.number));
+			const chunker = makeTreeChunker(
+				forestSchema,
+				defaultSchemaPolicy,
+				defaultIncrementalEncodingPolicy,
+			);
+			const forest = buildChunkedForest(chunker);
+
+			const numberType: TreeNodeSchemaIdentifier = brand(numberSchema.identifier);
+			const numberShape = new TreeShape(numberType, true, []);
+			const uniform = new UniformChunk(numberShape.withTopLevelLength(5), [0, 1, 2, 3, 4]);
+			forest.roots.fields.set(rootFieldKey, [uniform]);
+
+			const detachedKey: FieldKey = brand("detached");
+			const detachedId = { minor: 0 };
+
+			return { forest, numberShape, detachedKey, detachedId };
+		}
+
+		// Combining the topLevelLengths of all chunks in the `chunks` array yields the total node count.
+		// We don't check the chunk shapes themselves as doing so would cause these tests to be fragile
+		// against policy/chunkRange changes.
+		function nodeCount(chunks: readonly { readonly topLevelLength: number }[]): number {
+			return chunks.reduce((n, c) => n + c.topLevelLength, 0);
+		}
+
+		it("detaches a single node from the middle of a uniform chunk", () => {
+			const { forest, detachedKey, detachedId } = setup();
+
+			const visitor = forest.acquireVisitor();
+			visitor.enterField(rootFieldKey);
+			visitor.detach({ start: 2, end: 3 }, detachedKey, detachedId, false);
+			visitor.exitField(rootFieldKey);
+			visitor.free();
+
+			const detached = forest.roots.fields.get(detachedKey);
+			assert(detached !== undefined);
+			assert.equal(detached.length, 1);
+			const cursor = detached[0].cursor();
+			cursor.firstNode();
+			assert.equal(cursor.value, 2);
+
+			const remaining = forest.roots.fields.get(rootFieldKey);
+			assert(remaining !== undefined);
+			assert.equal(nodeCount(remaining), 4);
+		});
+
+		it("attaches a single node into the middle of a uniform chunk", () => {
+			const { forest, numberShape, detachedKey } = setup();
+
+			// Stage a source chunk in the detached field to be attached into the middle of root.
+			const source = new UniformChunk(numberShape.withTopLevelLength(1), [99]);
+			forest.roots.fields.set(detachedKey, [source]);
+
+			const visitor = forest.acquireVisitor();
+			visitor.enterField(rootFieldKey);
+			visitor.attach(detachedKey, 1, 2);
+			visitor.exitField(rootFieldKey);
+			visitor.free();
+
+			// The source detached field should be consumed.
+			assert.equal(forest.roots.fields.get(detachedKey), undefined);
+
+			// The root field should now hold 6 nodes, with 99 landing at index 2.
+			const updated = forest.roots.fields.get(rootFieldKey);
+			assert(updated !== undefined);
+			assert.equal(nodeCount(updated), 6);
+
+			const values: unknown[] = [];
+			for (const chunk of updated) {
+				const cursor = chunk.cursor();
+				for (let hasNode = cursor.firstNode(); hasNode; hasNode = cursor.nextNode()) {
+					values.push(cursor.value);
+				}
+			}
+			assert.deepEqual(values, [0, 1, 99, 2, 3, 4]);
+		});
+	});
 });
