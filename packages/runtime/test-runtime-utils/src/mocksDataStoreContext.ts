@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { EventEmitter } from "@fluid-internal/client-utils";
 import { AttachState, IAudience } from "@fluidframework/container-definitions";
 import { IDeltaManager } from "@fluidframework/container-definitions/internal";
 import { FluidObject } from "@fluidframework/core-interfaces";
@@ -52,9 +51,12 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
 	public deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage> =
 		new MockDeltaManager(() => this.clientId);
 
-	public containerRuntime: IContainerRuntimeBase = Object.assign(new EventEmitter(), {
+	public containerRuntime: IContainerRuntimeBase = {
 		inStagingMode: false,
-	}) as any;
+		on: () => {},
+		off: () => {},
+		once: () => {},
+	} as any;
 	public storage: IRuntimeStorageService = undefined as any;
 	public IFluidDataStoreRegistry: IFluidDataStoreRegistry = undefined as any;
 	public IFluidHandleContext: IFluidHandleContext = undefined as any;
