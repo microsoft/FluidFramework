@@ -193,6 +193,12 @@ class Holder extends schemaFactory.object("Holder", { item: itemTypes }) {}
 const holder = new Holder({ item: new ItemA({ a: 42 }) });
 ```
 
+### How do I effectively use SharedTree when using TypeScript's `isolatedDeclarations`?
+
+SharedTree schema heavily use expression types and class expressions as base classes, both of which `isolatedDeclarations` disallows.
+
+See [isolated-declarations.md](docs/user-facing/isolated-declarations.md) for an explanation of the problem and recommended approaches for using SharedTree schema in a project that requires `isolatedDeclarations`.
+
 ## Architecture
 
 This section covers the internal structure of the Tree DDS.

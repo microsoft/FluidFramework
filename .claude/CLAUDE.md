@@ -6,6 +6,10 @@
 
 When writing asserts (from `@fluidframework/core-utils`), use a string literal for the error message, not a hex assert code. This applies only to newly added asserts, not existing ones.
 
+## API Reports (`*.api.md`)
+
+API report files are **generated artifacts** — never hand-edit them. If they need updating, rebuild and regenerate via `build:api-reports`. If you are working in `@fluidframework/tree` or its aggregator (`fluid-framework`) and encounter unexpected API report diffs, read `.claude/skills/ci-readiness-check/tree-api-checks.md` before attempting to fix them.
+
 ## Azure DevOps
 
 The ADO project for work items and pipelines is **`internal`** (not `FluidFramework`).

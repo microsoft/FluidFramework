@@ -306,8 +306,8 @@ export interface RawValueAccessor<T> {
 
 // @public
 export const StateFactory: {
-    readonly latest: LatestFactory_2;
-    readonly latestMap: LatestMapFactory_2;
+    readonly latest: LatestFactory;
+    readonly latestMap: LatestMapFactory;
 };
 
 // @public @sealed

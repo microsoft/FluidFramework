@@ -1,4 +1,5 @@
 {
+	"_comment": "We configure mocha to use tsx rather than jiti due to ease of integration. We tried making it use jiti like the rest of this package, but this required complex test initialization boilerplate we didn't want to maintain. If better integration between mocha and jiti becomes available in the future, we should revisit this.",
 	"import": "tsx/esm",
 	"reporter": "mocha-multi-reporters",
 	"reporter-options": "configFile=mocha-multi-reporter-config.json",

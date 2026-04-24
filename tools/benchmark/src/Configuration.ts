@@ -104,6 +104,7 @@ export interface Titled {
 export interface BenchmarkDescription {
 	/**
 	 * The kind of benchmark.
+	 * @defaultValue {@link BenchmarkType.Measurement}
 	 */
 	readonly type?: BenchmarkType;
 

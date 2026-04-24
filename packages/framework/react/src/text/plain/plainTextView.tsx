@@ -114,8 +114,8 @@ const PlainTextEditorView = withMemoizedTreeObservations(
 			<div
 				className="text-editor-container"
 				style={{ height: "100%", display: "flex", flexDirection: "column" }}
+				onClick={() => textareaRef.current?.focus()}
 			>
-				<h2 style={{ margin: "10px 0" }}>Collaborative Text Editor</h2>
 				{undoRedo !== undefined && (
 					<div style={{ display: "flex", gap: "8px", marginBottom: "8px" }}>
 						<button
