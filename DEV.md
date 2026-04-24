@@ -19,6 +19,18 @@ hk fix    # auto-format files in place
 
 hk requires the [pkl](https://pkl-lang.org/) CLI. Both hk and pkl can be installed via [mise](https://mise.jdx.dev/).
 
+## Environment check
+
+If you're experiencing unexpected install or build failures, run the environment check to catch common local misconfigurations:
+
+```shell
+pnpm check:dev-env
+```
+
+This checks for things like a custom npm registry (in `.npmrc` or via `NPM_CONFIG_REGISTRY`), proxy environment variables,
+and scoped registry overrides that are not expected in this repo.
+Issues are printed with a fix suggestion; warnings are informational and don't fail the script.
+
 ## Dependencies
 
 This document tracks dependencies that cannot be upgraded to their latest major versions due to technical limitations.
