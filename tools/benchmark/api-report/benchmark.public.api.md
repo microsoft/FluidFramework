@@ -107,7 +107,7 @@ export interface DurationBenchmarkAsync extends BenchmarkTimingOptions {
     readonly benchmarkFnAsync: () => Promise<unknown>;
 }
 
-// @public
+// @public @input
 export interface DurationBenchmarkBatchless {
     readonly benchmarkFn: (state: BatchlessDurationTimer) => void | Promise<void>;
     maxBenchmarkDurationSeconds?: number;

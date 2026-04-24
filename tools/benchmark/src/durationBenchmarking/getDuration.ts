@@ -135,6 +135,10 @@ export class BenchmarkState<T> implements BatchedDurationTimer<T> {
 	}
 
 	public recordBatch(duration: number): boolean {
+		assertProperUse(
+			!this.collectionComplete,
+			"recordBatch() called after data collection is already complete.",
+		);
 		let keepGoing: boolean;
 		switch (this.phase) {
 			case Phase.WarmUp: {

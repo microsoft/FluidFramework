@@ -76,6 +76,7 @@ export class BatchlessBenchmarkState<T> implements BatchlessDurationTimer {
 /**
  * Arguments for {@link benchmarkDurationBatchless}.
  * @public
+ * @input
  */
 export interface DurationBenchmarkBatchless {
 	/**
