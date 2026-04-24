@@ -117,7 +117,7 @@ def build_package_dir_set(
     return dirs
 
 
-def find_changed_packages(
+def any_changed_file_in_packages(
     changed_files: Iterable[str],
     package_dirs: set[str],
 ) -> bool:
@@ -142,7 +142,11 @@ def find_changed_packages(
 
 
 def _git(args: list[str]) -> str | None:
-    """Thin wrapper for ``git`` calls. Returns stdout or None on failure."""
+    """Thin wrapper for ``git`` calls. Returns stdout or None on failure.
+
+    On failure, logs a pipeline warning with the git command and its stderr
+    so the reason for any safe-fallback path is visible in the pipeline run.
+    """
     try:
         result = subprocess.run(
             ["git", *args],
@@ -150,7 +154,12 @@ def _git(args: list[str]) -> str | None:
             text=True,
             check=True,
         )
-    except (subprocess.CalledProcessError, FileNotFoundError):
+    except subprocess.CalledProcessError as e:
+        stderr = (e.stderr or "").strip()
+        _log_warning(f"git {' '.join(args)} failed (exit {e.returncode}): {stderr}")
+        return None
+    except FileNotFoundError as e:
+        _log_warning(f"git executable not found: {e}")
         return None
     return result.stdout
 
@@ -258,7 +267,7 @@ def main() -> None:
     package_dirs = build_package_dir_set(
         merge_base, _git_historical_packages, _current_packages
     )
-    if not find_changed_packages(changed_files, package_dirs):
+    if not any_changed_file_in_packages(changed_files, package_dirs):
         # Most aggressive skip path: no test jobs run. Surface as a pipeline
         # warning (not plain console output) and dump the file list so an
         # accidental silent-suppression bug is auditable from the pipeline

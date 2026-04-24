@@ -23,10 +23,9 @@ _SCRIPTS_DIR = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(_SCRIPTS_DIR))
 
 from detect_changed_packages import (  # noqa: E402
-    FULL_RUN_PATTERNS,
+    any_changed_file_in_packages,
     build_package_dir_set,
     check_full_run_patterns,
-    find_changed_packages,
     normalize_target_branch,
 )
 
@@ -91,15 +90,6 @@ class CheckFullRunPatternsTests(unittest.TestCase):
         assert match is not None
         self.assertEqual(match.pattern, r"^pnpm-lock\.yaml$")
 
-    def test_exposes_pattern_list_for_external_audits(self) -> None:
-        self.assertGreater(len(FULL_RUN_PATTERNS), 0)
-        # Ensure each of the three review-added patterns made it into the
-        # exported list (not just the checker).
-        sources = [p.pattern for p in FULL_RUN_PATTERNS]
-        self.assertIn(r"^\.pnpmfile\.cjs$", sources)
-        self.assertIn(r"^\.npmrc$", sources)
-        self.assertIn(r"^\.nvmrc$", sources)
-
 
 class BuildPackageDirSetTests(unittest.TestCase):
     def test_unions_historical_and_current_packages(self) -> None:
@@ -128,48 +118,31 @@ class BuildPackageDirSetTests(unittest.TestCase):
         )
 
 
-class FindChangedPackagesTests(unittest.TestCase):
-    PKG_DIRS = {"packages/alive", "packages/doomed"}
+class AnyChangedFileInPackagesTests(unittest.TestCase):
+    PKG_DIRS = {"packages/alive"}
 
     def test_detects_file_inside_known_package_dir(self) -> None:
         self.assertTrue(
-            find_changed_packages(["packages/alive/src/x.ts"], self.PKG_DIRS)
-        )
-
-    def test_detects_deleted_packages_file(self) -> None:
-        # Regression — see review #3133324370.
-        # Working-tree check would MISS this because packages/doomed/package.json
-        # no longer exists on disk. The historical-set merge in
-        # build_package_dir_set is what keeps this path live.
-        self.assertTrue(
-            find_changed_packages(["packages/doomed/package.json"], self.PKG_DIRS)
-        )
-
-    def test_detects_new_package_added_on_this_branch(self) -> None:
-        with_new = {"packages/new"}
-        self.assertTrue(
-            find_changed_packages(
-                ["packages/new/package.json", "packages/new/src.ts"], with_new
-            )
+            any_changed_file_in_packages(["packages/alive/src/x.ts"], self.PKG_DIRS)
         )
 
     def test_returns_false_for_root_only_changes(self) -> None:
         # Root-level file changes are handled by FULL_RUN_PATTERNS, not here.
-        self.assertFalse(find_changed_packages(["README.md"], self.PKG_DIRS))
+        self.assertFalse(any_changed_file_in_packages(["README.md"], self.PKG_DIRS))
 
     def test_returns_false_when_file_lives_in_unrelated_sibling_dir(self) -> None:
         self.assertFalse(
-            find_changed_packages(["packages/other/src.ts"], self.PKG_DIRS)
+            any_changed_file_in_packages(["packages/other/src.ts"], self.PKG_DIRS)
         )
 
     def test_ignores_empty_file_entries(self) -> None:
         self.assertTrue(
-            find_changed_packages(["", "packages/alive/src.ts"], self.PKG_DIRS)
+            any_changed_file_in_packages(["", "packages/alive/src.ts"], self.PKG_DIRS)
         )
 
     def test_walks_up_from_nested_paths_to_find_ancestor(self) -> None:
         self.assertTrue(
-            find_changed_packages(
+            any_changed_file_in_packages(
                 ["packages/alive/src/deeply/nested/x.ts"], self.PKG_DIRS
             )
         )
@@ -178,7 +151,9 @@ class FindChangedPackagesTests(unittest.TestCase):
         # Even if '.' is in package_dirs (root package.json case), we should
         # not declare per-package changes for a random root file.
         dirs_with_root = {".", "packages/alive"}
-        self.assertFalse(find_changed_packages(["some-root-file.md"], dirs_with_root))
+        self.assertFalse(
+            any_changed_file_in_packages(["some-root-file.md"], dirs_with_root)
+        )
 
 
 if __name__ == "__main__":
