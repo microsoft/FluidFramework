@@ -421,6 +421,41 @@ extends:
                   # At this point we want to publish the bundleAnalysis artifact,
                   # but as part of 1ES migration that's now part of templateContext.outputs below.
 
+                  # Computes the bundle size diff against the baseline CI build (definitionId 48 in the public
+                  # project) and writes artifacts/bundleSizeDiff/result.json, which is published as the
+                  # bundleSizeDiff pipeline artifact below.
+                  # Invoked via Bash@3 (not Npm@1) so `flub` resolves through the system PATH to the
+                  # workspace-built binary (globally `npm link`ed by set-package-version's invocation of
+                  # include-install-build-tools earlier in the Build job). An `npm run` invocation would
+                  # prepend node_modules/.bin to PATH, which resolves to the catalog-pinned build-cli that
+                  # does not (yet) include `flub generate bundleSizeDiff`.
+                  - task: Bash@3
+                    displayName: (PR only) Generate bundle size diff
+                    condition: and(succeeded(), eq(variables['Build.Reason'], 'PullRequest'))
+                    env:
+                      ADO_API_TOKEN: $(System.AccessToken)
+                      TARGET_BRANCH_NAME: '$(targetBranchName)'
+                      PR_NUMBER: '$(System.PullRequest.PullRequestNumber)'
+                    inputs:
+                      targetType: inline
+                      workingDirectory: '$(Pipeline.Workspace)/${{ parameters.buildDirectory }}'
+                      script: |
+                        set -eu -o pipefail
+                        flub generate bundleSizeDiff
+
+                  # Copy the generated result.json under its own subfolder so it publishes as a separate
+                  # pipeline artifact from bundleAnalysis. Source path must match the --outputDir default
+                  # of `flub generate bundleSizeDiff` (artifacts/bundleSizeDiff).
+                  - task: CopyFiles@2
+                    displayName: (PR only) Copy bundle size diff to artifact staging directory
+                    condition: and(succeeded(), eq(variables['Build.Reason'], 'PullRequest'))
+                    inputs:
+                      sourceFolder: '$(Pipeline.Workspace)/${{ parameters.buildDirectory }}/artifacts/bundleSizeDiff'
+                      targetFolder: $(Build.ArtifactStagingDirectory)/bundleSizeDiff
+
+                  # At this point we want to publish the bundleSizeDiff artifact,
+                  # but as part of 1ES migration that's now part of templateContext.outputs below.
+
               # Docs
               - ${{ if ne(parameters.taskBuildDocs, false) }}:
                   - task: Npm@1
@@ -532,6 +567,16 @@ extends:
                       condition: and( succeeded(), ne(variables['Build.Reason'], 'PullRequest') )
                       targetPath: $(Build.ArtifactStagingDirectory)/bundleAnalysis
                       artifactName: bundleAnalysis
+                      sbomEnabled: false
+                      publishLocation: pipeline
+
+                    # The artifactName is a public-facing pipeline contract; downstream consumers
+                    # download it by name. Any rename here requires updating those consumers in lockstep.
+                    - output: pipelineArtifact
+                      displayName: Publish Artifacts - bundle-size-diff
+                      condition: and( succeeded(), eq(variables['Build.Reason'], 'PullRequest') )
+                      targetPath: $(Build.ArtifactStagingDirectory)/bundleSizeDiff
+                      artifactName: bundleSizeDiff
                       sbomEnabled: false
                       publishLocation: pipeline
 
