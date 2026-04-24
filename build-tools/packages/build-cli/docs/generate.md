@@ -5,6 +5,7 @@ Generate commands are used to create/update code, docs, readmes, etc.
 
 * [`flub generate assertTags`](#flub-generate-asserttags)
 * [`flub generate buildVersion`](#flub-generate-buildversion)
+* [`flub generate bundleSizeDiff`](#flub-generate-bundlesizediff)
 * [`flub generate bundleStats`](#flub-generate-bundlestats)
 * [`flub generate changelog`](#flub-generate-changelog)
 * [`flub generate changeset`](#flub-generate-changeset)
@@ -117,6 +118,30 @@ EXAMPLES
 ```
 
 _See code: [src/commands/generate/buildVersion.ts](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/src/commands/generate/buildVersion.ts)_
+
+## `flub generate bundleSizeDiff`
+
+Compare the PR's locally-collected bundle reports against the baseline CI build and write the result as a structured result.json file.
+
+```
+USAGE
+  $ flub generate bundleSizeDiff [-v | --quiet] [--localReportPath <value>] [--outputDir <value>]
+
+FLAGS
+  --localReportPath=<value>  [default: ./artifacts/bundleAnalysis] Path to the locally-collected bundle reports for the
+                             PR (as produced by `flub generate bundleStats`).
+  --outputDir=<value>        [default: ./artifacts/bundleSizeDiff] Directory to write the result.json file into.
+
+LOGGING FLAGS
+  -v, --verbose  Enable verbose logging.
+      --quiet    Disable all logging.
+
+DESCRIPTION
+  Compare the PR's locally-collected bundle reports against the baseline CI build and write the result as a structured
+  result.json file.
+```
+
+_See code: [src/commands/generate/bundleSizeDiff.ts](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/src/commands/generate/bundleSizeDiff.ts)_
 
 ## `flub generate bundleStats`
 

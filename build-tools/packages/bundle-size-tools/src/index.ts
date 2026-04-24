@@ -25,6 +25,7 @@ export {
 	getZipObjectFromArtifact,
 	IADOConstants,
 	prCommentsUtils,
+	SizeComparison,
 	totalSizeMetricName,
 } from "./ADO";
 export {

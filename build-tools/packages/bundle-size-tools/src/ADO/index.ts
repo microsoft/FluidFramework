@@ -9,7 +9,7 @@ export {
 	getStatsFileFromZip,
 	getZipObjectFromArtifact,
 } from "./AdoArtifactFileProvider";
-export { ADOSizeComparator } from "./AdoSizeComparator";
+export { ADOSizeComparator, SizeComparison } from "./AdoSizeComparator";
 export { IADOConstants, totalSizeMetricName } from "./Constants";
 export { DefaultStatsProcessors } from "./DefaultStatsProcessors";
 export {
