@@ -16,8 +16,9 @@
  */
 
 export {
+	BenchmarkMode,
 	BenchmarkType,
-	type MochaExclusiveOptions,
+	currentBenchmarkMode,
 	isInPerformanceTestingMode,
 	qualifiedTitle,
 	type Titled,
@@ -41,7 +42,7 @@ export {
 	type DurationBenchmarkBatchless,
 	benchmarkDurationBatchless,
 } from "./durationBenchmarking/index.js";
-export { benchmarkIt } from "./mocha/index.js";
+export { benchmarkIt, type MochaBenchmarkOptions } from "./mocha/index.js";
 export {
 	formatResultArrayTable,
 	finishLoggingReport,
