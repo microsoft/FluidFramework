@@ -3,11 +3,11 @@
 
 # include-detect-changed-packages
 #
-# Thin pipeline wrapper around scripts/detect-changed-packages.ts. The
-# detection logic lives in the TypeScript module (extracted in response to
-# PR review feedback so it can be run/debugged locally and covered by unit
-# tests under scripts/test/). Keeping this template minimal ensures the
-# template itself doesn't drift from the tested script.
+# Thin pipeline wrapper around scripts/detect_changed_packages.py. The
+# detection logic lives in the Python module (extracted in response to PR
+# review feedback so it can be run/debugged locally and covered by unit tests
+# under scripts/test/). Keeping this template minimal ensures the template
+# itself doesn't drift from the tested script.
 #
 # Output variables (from the `setChangedPackages` step):
 #   - shouldRunTests    "true" | "false"  — whether any test work is needed
@@ -21,11 +21,9 @@
 # On any error path (missing merge-base, unsupported ref format) the script
 # degrades safely to a full-run outcome, never to a silent skip.
 #
-# The script is invoked via `pnpm exec tsx` after a workspace-root-only
-# install; tsx is a root devDep so its version is pinned in pnpm-lock.yaml.
-# The workspace-root install path mirrors repo-policy-check.yml and
-# deliberately skips the full workspace install, keeping the gate close to
-# "git + node + tsx" fast.
+# The script is invoked via `python3` directly — Python 3 ships on ADO Linux
+# agent images, and this script uses only stdlib, so the gate stays close to
+# "git + python" fast (no pnpm or node install step required here).
 
 parameters:
 - name: buildDirectory
@@ -43,22 +41,6 @@ steps:
     # few hundred commits, so this is cheap in the common case.
     fetchDepth: 200
 
-  - template: /tools/pipelines/templates/include-use-node-version.yml@self
-
-  - template: /tools/pipelines/templates/include-install-pnpm.yml@self
-    parameters:
-      buildDirectory: ${{ parameters.buildDirectory }}
-
-  - task: Bash@3
-    displayName: Install root dependencies
-    inputs:
-      targetType: 'inline'
-      workingDirectory: $(Pipeline.Workspace)/${{ parameters.buildDirectory }}
-      script: |
-        set -eu -o pipefail
-        # Workspace-root only — we just need tsx and its transitive deps.
-        pnpm install --workspace-root --frozen-lockfile
-
   - task: Bash@3
     name: setChangedPackages
     displayName: Detect changed packages
@@ -69,4 +51,4 @@ steps:
       workingDirectory: '$(Pipeline.Workspace)/${{ parameters.buildDirectory }}'
       script: |
         set -eu -o pipefail
-        pnpm exec tsx scripts/detect-changed-packages.ts
+        python3 scripts/detect_changed_packages.py
