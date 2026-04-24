@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Download results
-        uses: dawidd6/action-download-artifact@b2abf1705491048a2d7074f7d90513044fd25d39 # pin@v2
+        uses: dawidd6/action-download-artifact@ac66b43f0e6a346234dd65d4d0c8fbb31cb316e5 # pin@v11
         with:
           workflow: website-validation.yml
           # workflow_conclusion: completed
