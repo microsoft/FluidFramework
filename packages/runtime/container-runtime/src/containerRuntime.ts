@@ -3784,11 +3784,12 @@ export class ContainerRuntime
 			try {
 				this.emit("stagingModeChanged", { inStagingMode: true });
 			} catch (error) {
-				throw normalizeError(error);
+				// Don't let a listener error prevent the caller from receiving stage controls.
+				this.mc.logger.sendErrorEvent({ eventName: "StagingModeChangedError" }, error);
 			}
 		}
 
-		return this.stageControls;
+		return stageControls;
 	};
 
 	/**

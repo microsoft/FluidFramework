@@ -5131,6 +5131,52 @@ describe("Runtime", () => {
 
 					runtime.dispose();
 				});
+
+				it("throws UsageError when calling commitChanges on stale controls after discard", () => {
+					stubChannelCollection(containerRuntime);
+					const controls = containerRuntime.enterStagingMode();
+					controls.discardChanges();
+
+					assert.throws(
+						() => controls.commitChanges(),
+						(error: IErrorBase) =>
+							error.errorType === ContainerErrorTypes.usageError &&
+							error.message === "Not in staging mode",
+						"Calling commitChanges on stale controls should throw UsageError",
+					);
+				});
+
+				it("throws UsageError when calling discardChanges on old controls after re-entering staging mode", () => {
+					stubChannelCollection(containerRuntime);
+					const oldControls = containerRuntime.enterStagingMode();
+					oldControls.discardChanges();
+
+					// Enter staging mode again — new controls
+					containerRuntime.enterStagingMode();
+
+					assert.throws(
+						() => oldControls.discardChanges(),
+						(error: IErrorBase) =>
+							error.errorType === ContainerErrorTypes.usageError &&
+							error.message === "Not in staging mode",
+						"Calling discardChanges on old controls should throw UsageError",
+					);
+				});
+				it("does not emit exit event when container is disposed while in staging mode", () => {
+					const events: StagingModeChangedEvent[] = [];
+					containerRuntime.on("stagingModeChanged", (e) => events.push(e));
+
+					containerRuntime.enterStagingMode();
+					assert.equal(events.length, 1, "Expected enter event");
+
+					containerRuntime.dispose();
+
+					assert.equal(
+						events.length,
+						1,
+						"No exit event should fire on dispose — only the original enter event",
+					);
+				});
 			});
 		});
 	});
