@@ -422,8 +422,9 @@ extends:
                   # but as part of 1ES migration that's now part of templateContext.outputs below.
 
                   # Computes the bundle size diff against the baseline CI build (definitionId 48 in the public
-                  # project) and writes artifacts/bundleSizeDiff/result.json, which is published as the
-                  # bundleSizeDiff pipeline artifact below.
+                  # project) and writes either artifacts/bundleSizeDiff/result.json (on success) or
+                  # artifacts/bundleSizeDiff/error.json (when no usable diff can be produced); that folder is
+                  # published as the bundleSizeDiff pipeline artifact below.
                   # Invoked via Bash@3 (not Npm@1) so `flub` resolves through the system PATH to the
                   # workspace-built binary (globally `npm link`ed by set-package-version's invocation of
                   # include-install-build-tools earlier in the Build job). An `npm run` invocation would
@@ -450,9 +451,10 @@ extends:
                           echo "##vso[task.logissue type=warning]bundleSizeDiff produced an error; see error.json in the bundleSizeDiff artifact."
                         fi
 
-                  # Copy the generated result.json under its own subfolder so it publishes as a separate
-                  # pipeline artifact from bundleAnalysis. Source path must match the --outputDir default
-                  # of `flub generate bundleSizeDiff` (artifacts/bundleSizeDiff).
+                  # Copy the generated bundleSizeDiff output folder under its own subfolder so it publishes
+                  # as a separate pipeline artifact from bundleAnalysis. The folder contains either
+                  # result.json or error.json. Source path must match the --outputDir default of
+                  # `flub generate bundleSizeDiff` (artifacts/bundleSizeDiff).
                   - task: CopyFiles@2
                     displayName: (PR only) Copy bundle size diff to artifact staging directory
                     condition: and(succeeded(), eq(variables['Build.Reason'], 'PullRequest'))
