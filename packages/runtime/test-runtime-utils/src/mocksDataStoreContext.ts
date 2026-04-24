@@ -33,6 +33,8 @@ import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/legacy";
 import { v4 as uuid } from "uuid";
 
+import { EventEmitter } from "@fluid-internal/client-utils";
+
 import { MockDeltaManager } from "./mockDeltas.js";
 
 /**
@@ -51,7 +53,9 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
 	public deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage> =
 		new MockDeltaManager(() => this.clientId);
 
-	public containerRuntime: IContainerRuntimeBase = { inStagingMode: false } as any;
+	public containerRuntime: IContainerRuntimeBase = Object.assign(new EventEmitter(), {
+		inStagingMode: false,
+	}) as any;
 	public storage: IRuntimeStorageService = undefined as any;
 	public IFluidDataStoreRegistry: IFluidDataStoreRegistry = undefined as any;
 	public IFluidHandleContext: IFluidHandleContext = undefined as any;
