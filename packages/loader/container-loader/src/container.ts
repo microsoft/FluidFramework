@@ -2165,7 +2165,6 @@ export class Container
 				...this._deltaManager.connectionProps,
 			},
 			reason?.error,
-			LogLevel.info,
 		);
 
 		if (value === ConnectionState.Connected) {

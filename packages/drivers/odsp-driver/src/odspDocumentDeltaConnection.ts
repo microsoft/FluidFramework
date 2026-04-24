@@ -652,14 +652,10 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 			.catch((error) => this.connectionInitializeDeferredP?.reject(error));
 
 		await this.connectionInitializeDeferredP.promise.finally(() => {
-			this.logger.sendTelemetryEvent(
-				{
-					eventName: "ConnectionAttemptInfo",
-					...this.getConnectionDetailsProps(),
-				},
-				undefined, // error
-				LogLevel.info,
-			);
+			this.logger.sendTelemetryEvent({
+				eventName: "ConnectionAttemptInfo",
+				...this.getConnectionDetailsProps(),
+			});
 		});
 	}
 
