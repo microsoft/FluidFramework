@@ -134,6 +134,7 @@ const TextEditorView = withMemoizedTreeObservations(
 				quillRef.current = undefined;
 				editor.innerHTML = "";
 				editor.className = "";
+				setUndoRedoContainer(undefined);
 				toolbar.remove();
 			};
 			// In React strict mode, effects run twice. The `!quillRef.current` check above
