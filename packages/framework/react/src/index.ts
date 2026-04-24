@@ -48,8 +48,6 @@ export { objectIdNumber } from "./simpleIdentifier.js";
 export {
 	syncTextToTree,
 	PlainTextMainView,
-	plainTextViewTransactionLabel,
+	type PlainTextMainViewProps,
 } from "./text/index.js";
 export { UndoRedoManager, type LabeledUndoRedo, type UndoRedo } from "./undoRedo.js";
-export { UndoRedoContext } from "./undoRedoContext.js";
-export { useUndoRedo } from "./useUndoRedo.js";

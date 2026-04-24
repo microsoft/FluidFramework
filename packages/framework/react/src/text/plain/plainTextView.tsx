@@ -35,6 +35,10 @@ export interface MainViewProps {
 	};
 }
 
+type MainViewPropsInner = Omit<MainViewProps, "root"> & {
+	readonly root: TextAsTree.Tree;
+};
+
 /**
  * A React component for plain text editing.
  * @remarks
@@ -47,7 +51,7 @@ export const MainView: FC<MainViewProps> = ({ root, undoRedo }) => {
 };
 
 const PlainTextEditorView = withMemoizedTreeObservations(
-	({ root, undoRedo }: MainViewProps) => {
+	({ root, undoRedo }: MainViewPropsInner) => {
 		// Reference to the textarea element
 		const textareaRef = useRef<HTMLTextAreaElement>(null);
 		// Guards against update loops between textarea and the tree

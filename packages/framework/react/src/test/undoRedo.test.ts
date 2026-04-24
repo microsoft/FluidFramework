@@ -293,50 +293,6 @@ describe("UndoRedoManager", () => {
 		});
 	});
 
-	describe("onStateChange", () => {
-		it("commit, undo, and redo notify listeners", () => {
-			const view = createTree();
-			const manager = new UndoRedoManager(view);
-			let notifyCount = 0;
-			manager.onStateChange(() => {
-				notifyCount++;
-			});
-
-			view.runTransaction(() => {
-				view.root.value = 1;
-			});
-			assert.equal(notifyCount, 1);
-
-			manager.undo();
-			assert.equal(notifyCount, 2);
-
-			manager.redo();
-			assert.equal(notifyCount, 3);
-			manager.dispose();
-		});
-
-		it("onStateChange returns an unsubscribe function", () => {
-			const view = createTree();
-			const manager = new UndoRedoManager(view);
-			let notifyCount = 0;
-			const unsubscribe = manager.onStateChange(() => {
-				notifyCount++;
-			});
-
-			view.runTransaction(() => {
-				view.root.value = 1;
-			});
-			assert.equal(notifyCount, 1);
-
-			unsubscribe();
-			view.runTransaction(() => {
-				view.root.value = 2;
-			});
-			assert.equal(notifyCount, 1);
-			manager.dispose();
-		});
-	});
-
 	describe("dispose", () => {
 		it("dispose clears both stacks and unsubscribes", () => {
 			const view = createTree();

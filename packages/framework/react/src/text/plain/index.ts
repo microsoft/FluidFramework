@@ -5,6 +5,6 @@
 
 export {
 	MainView as PlainTextMainView,
-	plainTextViewTransactionLabel,
+	type MainViewProps as PlainTextMainViewProps,
 } from "./plainTextView.js";
 export { syncTextToTree } from "./plainUtils.js";

@@ -5,11 +5,7 @@
 
 import { strict as assert } from "node:assert";
 
-import {
-	toPropTreeNode,
-	UndoRedoManager,
-	UndoRedoContext,
-} from "@fluidframework/react/internal";
+import { toPropTreeNode, UndoRedoManager } from "@fluidframework/react/internal";
 import { TreeViewConfiguration } from "@fluidframework/tree";
 import { TreeAlpha, type TreeViewAlpha } from "@fluidframework/tree/alpha";
 import { independentView, TextAsTree } from "@fluidframework/tree/internal";
@@ -694,11 +690,7 @@ describe("textEditor", () => {
 						const treeView = createFormattedTreeViewWithEvents();
 						const text = treeView.root;
 						const manager = new UndoRedoManager(treeView);
-						const content = (
-							<UndoRedoContext.Provider value={manager}>
-								<FormattedMainView root={toPropTreeNode(text)} />
-							</UndoRedoContext.Provider>
-						);
+						const content = <FormattedMainView root={toPropTreeNode(text)} />;
 						const rendered = render(content, { reactStrictMode });
 
 						// Insert a character
@@ -722,11 +714,7 @@ describe("textEditor", () => {
 						const treeView = createFormattedTreeViewWithEvents();
 						const text = treeView.root;
 						const manager = new UndoRedoManager(treeView);
-						const content = (
-							<UndoRedoContext.Provider value={manager}>
-								<FormattedMainView root={toPropTreeNode(text)} />
-							</UndoRedoContext.Provider>
-						);
+						const content = <FormattedMainView root={toPropTreeNode(text)} />;
 						const rendered = render(content, { reactStrictMode });
 
 						// Insert a character
@@ -757,11 +745,7 @@ describe("textEditor", () => {
 						const treeView = createFormattedTreeViewWithEvents();
 						const text = treeView.root;
 						const manager = new UndoRedoManager(treeView);
-						const content = (
-							<UndoRedoContext.Provider value={manager}>
-								<FormattedMainView root={toPropTreeNode(text)} />
-							</UndoRedoContext.Provider>
-						);
+						const content = <FormattedMainView root={toPropTreeNode(text)} />;
 						const rendered = render(content, { reactStrictMode });
 
 						// Two operations in one transaction

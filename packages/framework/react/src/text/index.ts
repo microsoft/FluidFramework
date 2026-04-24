@@ -3,10 +3,8 @@
  * Licensed under the MIT License.
  */
 
-export { type PropTreeNode } from "../propNode.js";
-export { type UndoRedo } from "../undoRedo.js";
 export {
 	PlainTextMainView,
-	plainTextViewTransactionLabel,
+	type PlainTextMainViewProps,
 	syncTextToTree,
 } from "./plain/index.js";

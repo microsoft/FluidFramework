@@ -298,5 +298,4 @@ export class UndoRedoManager implements LabeledUndoRedo {
 		}
 		return undefined;
 	}
-
 }
