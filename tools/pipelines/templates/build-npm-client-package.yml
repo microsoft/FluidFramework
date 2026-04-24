@@ -358,6 +358,21 @@ extends:
 
               - template: /tools/pipelines/templates/include-use-node-version.yml@self
 
+              # Unit tests for helper scripts under scripts/. detect-changed-packages.ts
+              # gates whether the Coverage_tests / Test_* jobs run at all (see
+              # include-detect-changed-packages.yml); a regression in the change
+              # detection logic could silently suppress every package test, so we
+              # run its tests early in the build job — before install — so they
+              # fail fast and independently of package dependencies.
+              - task: Bash@3
+                displayName: Scripts unit tests
+                inputs:
+                  targetType: 'inline'
+                  workingDirectory: $(Pipeline.Workspace)/${{ parameters.buildDirectory }}
+                  script: |
+                    set -eu -o pipefail
+                    npx --yes tsx@4.19.4 --test scripts/test/*.test.ts
+
               - template: /tools/pipelines/templates/include-install.yml@self
                 parameters:
                   packageManager: '${{ parameters.packageManager }}'

@@ -18,6 +18,15 @@ parameters:
 # set as `npm_config_filter` so pnpm scopes the recursive run to the listed
 # packages plus their dependents. Empty means "no filter" — pnpm falls back
 # to running across every workspace package (the historical behavior).
+#
+# IMPORTANT: `npm_config_filter` propagates to every `pnpm` invocation the
+# npm script transitively makes, not just `pnpm -r`. Non-recursive `pnpm`
+# calls (e.g. `pnpm puppeteer ...`, `pnpm exec ...`) will fail with
+# ERR_PNPM_RECURSIVE_EXEC_NO_PACKAGE when a filter is set. Any root-level
+# script that chains a non-recursive pnpm call before a recursive one must
+# clear the filter for the non-recursive portion via
+# `cross-env npm_config_filter= pnpm <subcommand>`. See test:jest in the
+# root package.json for the pattern.
 - name: pnpmFilter
   type: string
   default: ''
