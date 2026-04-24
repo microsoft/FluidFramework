@@ -20,7 +20,7 @@ export interface UndoRedo {
 }
 
 /**
- * Extends {@link UndoRedo} with optional label parameters for per-label undo/redo operations.
+ * An undo/redo stack manager that supports optional scoping based on transaction labels.
  *
  * @remarks
  * When a label is provided to `undo` / `redo`, the operation targets the most recent commit
