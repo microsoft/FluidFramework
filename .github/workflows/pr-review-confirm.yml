@@ -43,27 +43,18 @@ jobs:
       contains(github.event.comment.body, '<!-- pr-review-confirm -->')
     runs-on: ubuntu-latest
     steps:
+      # The comment is authored by the bot, so `author_association` on the
+      # event is the bot's — not meaningful for trust. Check the acting user's
+      # repo permission directly. `require: write` accepts write|maintain|admin.
       - name: Verify editor has write access
         id: authz
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          REPO: ${{ github.repository }}
-          EDITOR: ${{ github.event.sender.login }}
-        run: |
-          # The comment is authored by the bot, so author_association is not
-          # meaningful. Check the acting user's repo permission directly.
-          PERMISSION=$(gh api "repos/${REPO}/collaborators/${EDITOR}/permission" \
-            --jq '.permission' 2>/dev/null || echo "none")
-          echo "Editor ${EDITOR} has ${PERMISSION} permission on ${REPO}"
-          case "$PERMISSION" in
-            admin|maintain|write)
-              echo "authorized=true" >> "$GITHUB_OUTPUT" ;;
-            *)
-              echo "authorized=false" >> "$GITHUB_OUTPUT" ;;
-          esac
+        uses: actions-cool/check-user-permission@7b90a27f92f3961b368376107661682c441f6103 # ratchet:actions-cool/check-user-permission@v2.3.0
+        with:
+          require: write
+          username: ${{ github.event.sender.login }}
 
       - name: Checkout scripts
-        if: steps.authz.outputs.authorized == 'true'
+        if: steps.authz.outputs.require-result == 'true'
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # ratchet:actions/checkout@v6
         with:
           sparse-checkout: |
@@ -75,7 +66,7 @@ jobs:
       # re-trigger the fleet.
       - name: Detect start-review transition
         id: transition
-        if: steps.authz.outputs.authorized == 'true'
+        if: steps.authz.outputs.require-result == 'true'
         env:
           CURRENT_BODY: ${{ github.event.comment.body }}
           PREVIOUS_BODY: ${{ github.event.changes.body.from }}
