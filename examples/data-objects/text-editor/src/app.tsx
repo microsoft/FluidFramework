@@ -272,10 +272,15 @@ const UserPanel: FC<{
 		return () => manager.dispose();
 	}, [manager]);
 
-	// Re-render when undo/redo availability changes (branch emits "changed" on every commit)
+	// Re-render when undo/redo availability changes. Only local commits affect the stacks,
+	// so filtering to isLocal avoids re-renders on every remote keystroke.
 	const [, setVersion] = useState(0);
 	useEffect(() => {
-		const off = treeView.events.on("changed", () => setVersion((v) => v + 1));
+		const off = treeView.events.on("changed", (data) => {
+			if (data.isLocal) {
+				setVersion((v) => v + 1);
+			}
+		});
 		return () => off();
 	}, [treeView]);
 
