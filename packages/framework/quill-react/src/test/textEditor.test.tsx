@@ -5,7 +5,7 @@
 
 import { strict as assert } from "node:assert";
 
-import { toPropTreeNode, UndoRedoManager } from "@fluidframework/react/internal";
+import { toPropTreeNode, UndoRedoManager, type LabeledUndoRedo } from "@fluidframework/react/internal";
 import { TreeViewConfiguration } from "@fluidframework/tree";
 import { TreeAlpha, type TreeViewAlpha } from "@fluidframework/tree/alpha";
 import { independentView, TextAsTree } from "@fluidframework/tree/internal";
@@ -199,6 +199,54 @@ describe("textEditor", () => {
 
 						rendered.rerender(content);
 						assert.match(rendered.baseElement.textContent ?? "", /👋🌍!🎉/);
+					});
+				});
+			}
+		});
+
+		describe("toolbar", () => {
+			const mockLabel = Symbol("test");
+
+			for (const reactStrictMode of [false, true]) {
+				describe(`StrictMode: ${reactStrictMode}`, () => {
+					it("undo and redo buttons are disabled when undoRedo is not provided", () => {
+						const text = TextAsTree.Tree.fromString("");
+						const rendered = render(<QuillMainView root={toPropTreeNode(text)} />, {
+							reactStrictMode,
+						});
+
+						const undoButton =
+							rendered.container.querySelector<HTMLButtonElement>(".ql-undo");
+						const redoButton =
+							rendered.container.querySelector<HTMLButtonElement>(".ql-redo");
+						assert.ok(undoButton?.disabled === true, "Undo button should be disabled");
+						assert.ok(redoButton?.disabled === true, "Redo button should be disabled");
+					});
+
+					it("undo and redo buttons are enabled when undoRedo is provided", () => {
+						const mockUndoRedo: LabeledUndoRedo = {
+							undo: () => {},
+							redo: () => {},
+							canUndo: () => true,
+							canRedo: () => true,
+							dispose: () => {},
+						};
+
+						const text = TextAsTree.Tree.fromString("");
+						const rendered = render(
+							<QuillMainView
+								root={toPropTreeNode(text)}
+								undoRedo={{ manager: mockUndoRedo, transactionLabel: mockLabel }}
+							/>,
+							{ reactStrictMode },
+						);
+
+						const undoButton =
+							rendered.container.querySelector<HTMLButtonElement>(".ql-undo");
+						const redoButton =
+							rendered.container.querySelector<HTMLButtonElement>(".ql-redo");
+						assert.equal(undoButton?.disabled, false, "Undo button should be enabled");
+						assert.equal(redoButton?.disabled, false, "Redo button should be enabled");
 					});
 				});
 			}

@@ -116,22 +116,47 @@ const PlainTextEditorView = withMemoizedTreeObservations(
 				style={{ height: "100%", display: "flex", flexDirection: "column" }}
 				onClick={() => textareaRef.current?.focus()}
 			>
+				<style>{`
+					.pt-toolbar {
+						display: flex;
+						align-items: center;
+						padding: 4px 8px;
+						background: #f8f9fa;
+						border: 1px solid #ccc;
+						border-radius: 4px 4px 0 0;
+					}
+					.pt-undo, .pt-redo {
+						width: 28px;
+						height: 28px;
+						padding: 0;
+						background: none;
+						border: none;
+						cursor: pointer;
+						font-size: 18px;
+						display: flex;
+						align-items: center;
+						justify-content: center;
+					}
+					.pt-undo::after { content: "↶"; }
+					.pt-redo::after { content: "↷"; }
+					.pt-undo:disabled, .pt-redo:disabled { opacity: 0.3; cursor: not-allowed; }
+				`}</style>
 				{undoRedo !== undefined && (
-					<div style={{ display: "flex", gap: "8px", marginBottom: "8px" }}>
+					<div className="pt-toolbar">
 						<button
 							type="button"
+							className="pt-undo"
 							disabled={!undoRedo.manager.canUndo(undoRedo.transactionLabel)}
 							onClick={() => undoRedo.manager.undo(undoRedo.transactionLabel)}
-						>
-							↶ Undo
-						</button>
+							title="Undo"
+						/>
 						<button
 							type="button"
+							className="pt-redo"
 							disabled={!undoRedo.manager.canRedo(undoRedo.transactionLabel)}
 							onClick={() => undoRedo.manager.redo(undoRedo.transactionLabel)}
-						>
-							↷ Redo
-						</button>
+							title="Redo"
+						/>
 					</div>
 				)}
 				<textarea
@@ -143,7 +168,7 @@ const PlainTextEditorView = withMemoizedTreeObservations(
 						flex: 1,
 						minHeight: "300px",
 						border: "1px solid #ccc",
-						borderRadius: "4px",
+						borderRadius: undoRedo === undefined ? "4px" : "0 0 4px 4px",
 						padding: "8px",
 						fontSize: "14px",
 						fontFamily: "inherit",
