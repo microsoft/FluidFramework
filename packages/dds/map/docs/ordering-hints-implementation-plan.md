@@ -246,7 +246,19 @@ One test per resolved ambiguity:
 
 ### 9.7 Oracle / equivalence tests
 
-Extend `directoryOracle.ts` and `directoryEquivalenceUtils.ts` to support the new ordering. Run existing fuzz tests (if present in the package) with the new API enabled.
+Extend `directoryOracle.ts` and `directoryEquivalenceUtils.ts` to support the new ordering. Run existing fuzz tests with the new API enabled.
+
+### 9.8 Fuzz and stress validation (required)
+
+The unit tests in §9.1–§9.7 pin specific scenarios, but the real risk surface for the recursive comparator and the local-optimistic-vs-stamp-time afterParent mutation is random concurrent operation sequences. The implementer **must** run the following as they go (not just at the end) and fix anything that reproduces:
+
+1. **`packages/dds/map/src/test/mocha/directoryFuzzTests.spec.ts`** — the existing randomized directory fuzz suite, which operates over the `baseDirModel` op set. Before running, extend the `baseDirModel` operations (see `packages/dds/map/src/test/index.ts` exports and the fuzz utilities in `fuzzUtils.ts`) to include `createSubDirectoryOrderedAfter` with a random existing-sibling anchor. Without this extension, fuzz coverage of the new API is zero. Run via `npm run test:mocha` in the map package; inspect seeds that fail.
+
+2. **`packages/test/local-server-stress-tests`** — the cross-DDS stress harness already consumes the `baseDirModel` exported by `@fluidframework/map/internal/test` (see `packages/test/local-server-stress-tests/src/ddsModels.ts:11`). Once the fuzz model is extended in step 1, this harness picks up `createSubDirectoryOrderedAfter` automatically and exercises it under realistic multi-client-with-local-server conditions (including detach/reattach, snapshot, summarize/load, reconnect). Run via `npm run test` in that package. Seeds that fail here typically point at snapshot round-trip or op-ordering bugs that the unit tests miss because they fabricate simpler schedules.
+
+3. **`packages/test/test-end-to-end-tests`** — the end-to-end suite runs scenarios against the in-repo driver stack. SharedDirectory is exercised by many of these tests transitively; run the subset that touches directory/summarization paths (e.g., `createNewSummaryCachingTests.spec.ts`, `detachedContainerTests.spec.ts`, `stagingMode.spec.ts`). This catches serialization, op-format, and reconnection regressions that only manifest through the full runtime.
+
+Running these **as you go** — after each meaningful implementation chunk rather than only at the end — is important because the recursive-comparator design has non-obvious failure modes (anchor retained after delete, inversion tiebreaker only for same-anchor siblings, stamp-time re-resolution of the afterParent). If a fuzz seed fails, reduce it to a minimal unit test before attempting a fix so the regression is pinned in `directory.order*.spec.ts`.
 
 ## 10. Open implementation questions
 
@@ -261,9 +273,14 @@ These are *implementation-level* questions whose answers do not change observabl
 
 1. Land the requirements spec (already committed).
 2. Land this implementation plan.
-3. Write tests (TDD) — all tests from §9 as failing tests first, per Nori workflow.
+3. Write tests (TDD) — all tests from §9.1–§9.6 as failing tests first, per Nori workflow.
 4. Implement: op shape → `SequenceData` → comparator → local create path → process → resubmit → serialize/deserialize.
 5. Run full `packages/dds/map` test suite; fix any regressions in existing tests.
-6. Update `api-report/map.*.api.md` via `build:api-reports` (never hand-edit).
-7. Changelog fragment (changie) for the new public API.
-8. PR with link to requirements spec and this plan in the description.
+6. **Extend the `baseDirModel` fuzz operations to include `createSubDirectoryOrderedAfter`** (§9.8 step 1). Run `directoryFuzzTests.spec.ts` to completion on the default seed range; fix anything that reproduces and pin the failing seed as a new unit test.
+7. **Run `packages/test/local-server-stress-tests`** (§9.8 step 2). Fix anything that reproduces.
+8. **Run the relevant subset of `packages/test/test-end-to-end-tests`** (§9.8 step 3) — at minimum the directory/summarization tests.
+9. Update `api-report/map.*.api.md` via `build:api-reports` (never hand-edit).
+10. Changeset for the new public API (Fluid uses changesets, not changie).
+11. PR with link to requirements spec and this plan in the description.
+
+Steps 6–8 are non-negotiable before marking the PR ready for review. Fuzz coverage of the new op is zero until step 6 lands, and the recursive comparator has more surface area than the unit tests alone exercise.
