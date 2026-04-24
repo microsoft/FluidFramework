@@ -96,6 +96,7 @@ stages:
       testPackage: ${{ variables.testPackage }}
       artifactBuildId: $(resources.pipeline.client.runID)
       continueOnError: true
+      passRateThreshold: 100
       timeoutInMinutes: 360
       testCommand: test:realsvc:r11s:docker
       stageVariables:
@@ -136,6 +137,7 @@ stages:
       artifactBuildId: $(resources.pipeline.client.runID)
       timeoutInMinutes: 360
       continueOnError: true
+      passRateThreshold: 100
       testCommand: test:realsvc:frs:report
       lockBehavior: sequential
       r11sSelfSignedCertSecureFile: wu2-tls-certificate.pem
@@ -169,6 +171,7 @@ stages:
       artifactBuildId: $(resources.pipeline.client.runID)
       timeoutInMinutes: 360
       continueOnError: true
+      passRateThreshold: 100
       testCommand: test:realsvc:odsp:report
       splitTestVariants:
         - name: Non-compat
