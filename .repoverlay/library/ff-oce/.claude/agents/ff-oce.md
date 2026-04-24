@@ -110,7 +110,7 @@ The OCE rotation covers **three IcM teams**. Always search all three when lookin
 
 The "Issues" panel returned by `*-pipelines_get_build_status` aggregates **every `##[error]` log line** in the build, grouped by job name. It is **not** necessarily a list of failed tasks/jobs/stages — tasks may emit `##[error]` lines as diagnostics and still exit 0.
 
-Failure flows up the hierarchy: log line → task (non-zero exit or `##vso[task.complete result=Failed]`) → job → stage → build. Only task-level failure and above are real failures.
+Failure flows up the hierarchy: log line → task (`result == "failed"` in the build timeline) → job → stage → build. A task can end up failed because of a non-zero exit code or an explicit `##vso[task.complete result=Failed]`, but the task's recorded timeline `result` is authoritative.
 
 **Source of truth = the build timeline:** `GET https://dev.azure.com/{org}/{project}/_apis/build/builds/{buildId}/timeline?api-version=7.1`. Each record has `type`, `name`, `result`, `startTime`, `finishTime`, `parentId`, `log.id`. Filter for `result == "failed"` and walk `parentId` to attribute it.
 
