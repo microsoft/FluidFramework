@@ -7,21 +7,7 @@ import { oob } from "@fluidframework/core-utils/internal";
 import type { RevertibleAlpha, TreeBranchAlpha } from "@fluidframework/tree/internal";
 
 /**
- * Interface for undo/redo stack operations.
- * @internal
- */
-export interface UndoRedo {
-	/** Reverts the most recent change. */
-	undo(): void;
-	/** Reapplies the most recently undone change. */
-	redo(): void;
-	dispose(): void;
-	canUndo(): boolean;
-	canRedo(): boolean;
-}
-
-/**
- * An undo/redo stack manager that supports optional scoping based on transaction labels.
+ * An undo/redo manager that supports optional scoping based on transaction labels.
  *
  * @remarks
  * When a label is provided to `undo` / `redo`, the operation targets the most recent commit
@@ -48,7 +34,7 @@ export interface UndoRedo {
  * ```ts
  * const titleLabel = Symbol("title-editor");
  * const bodyLabel  = Symbol("body-editor");
- * const manager = createLabeledUndoRedo(treeView);
+ * const manager = createUndoRedo(treeView);
  *
  * // Each editor tags its commits with its own label.
  * treeView.runTransaction(() => { root.title = "Draft"; }, { label: titleLabel });
@@ -77,7 +63,7 @@ export interface UndoRedo {
  *
  * @internal
  */
-export interface LabeledUndoRedo extends UndoRedo {
+export interface UndoRedo {
 	/**
 	 * Undoes the most recent commit whose labels include `label`.
 	 *
@@ -85,7 +71,7 @@ export interface LabeledUndoRedo extends UndoRedo {
 	 * regardless of labels.
 	 * This method no-ops if there is nothing to undo matching the label policy.
 	 *
-	 * @see {@link LabeledUndoRedo.canUndo}
+	 * @see {@link UndoRedo.canUndo}
 	 */
 	undo(label?: symbol): void;
 
@@ -96,7 +82,7 @@ export interface LabeledUndoRedo extends UndoRedo {
 	 * regardless of labels.
 	 * This method no-ops if there is nothing to redo matching the label policy.
 	 *
-	 * @see {@link LabeledUndoRedo.canRedo}
+	 * @see {@link UndoRedo.canRedo}
 	 */
 	redo(label?: symbol): void;
 
@@ -105,7 +91,7 @@ export interface LabeledUndoRedo extends UndoRedo {
 	 *
 	 * @param label - The label to check for. If omitted, checks the global undo stack.
 	 *
-	 * @see {@link LabeledUndoRedo.undo}
+	 * @see {@link UndoRedo.undo}
 	 */
 	canUndo(label?: symbol): boolean;
 
@@ -114,9 +100,12 @@ export interface LabeledUndoRedo extends UndoRedo {
 	 *
 	 * @param label - The label to check for. If omitted, checks the global redo stack.
 	 *
-	 * @see {@link LabeledUndoRedo.redo}
+	 * @see {@link UndoRedo.redo}
 	 */
 	canRedo(label?: symbol): boolean;
+
+	/** Releases the manager's subscription to the branch. */
+	dispose(): void;
 }
 
 interface StackEntry {
@@ -131,7 +120,7 @@ interface StackEntry {
 }
 
 /**
- * Concrete implementation of {@link LabeledUndoRedo} for a SharedTree branch.
+ * Concrete implementation of {@link UndoRedo} for a SharedTree branch.
  *
  * @remarks
  * A single instance must be created per tree branch. Multiple instances on the same branch
@@ -140,7 +129,7 @@ interface StackEntry {
  *
  * @sealed @internal
  */
-class UndoRedoManager implements LabeledUndoRedo {
+class UndoRedoManager implements UndoRedo {
 	readonly #undoStack: StackEntry[] = [];
 	readonly #redoStack: StackEntry[] = [];
 	readonly #unsubscribe: () => void;
@@ -174,7 +163,7 @@ class UndoRedoManager implements LabeledUndoRedo {
 
 			// Normal user commit: extract symbol labels from the commit metadata.
 			// Only root-level symbol entries are collected; nested label nodes (produced by
-			// inner runTransaction calls) are not traversed — see LabeledUndoRedo remarks.
+			// inner runTransaction calls) are not traversed — see UndoRedo remarks.
 			const symbolLabels = new Set<symbol>();
 			for (const labels of data.labels) {
 				if (typeof labels === "symbol") {
@@ -280,7 +269,7 @@ class UndoRedoManager implements LabeledUndoRedo {
 }
 
 /**
- * Creates a {@link LabeledUndoRedo} manager that tracks commits on the given tree branch.
+ * Creates a {@link UndoRedo} manager that tracks commits on the given tree branch.
  *
  * @remarks
  * A single instance must be created per tree branch. Multiple instances on the same branch
@@ -288,9 +277,9 @@ class UndoRedoManager implements LabeledUndoRedo {
  * will throw.
  *
  * @param branch - The tree branch whose commits this manager will track.
- * @returns A {@link LabeledUndoRedo} instance scoped to the given branch.
+ * @returns A {@link UndoRedo} instance scoped to the given branch.
  * @internal
  */
-export function createLabeledUndoRedo(branch: TreeBranchAlpha): LabeledUndoRedo {
+export function createUndoRedo(branch: TreeBranchAlpha): UndoRedo {
 	return new UndoRedoManager(branch);
 }

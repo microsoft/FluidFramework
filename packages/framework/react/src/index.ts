@@ -50,4 +50,4 @@ export {
 	PlainTextMainView,
 	type PlainTextMainViewProps,
 } from "./text/index.js";
-export { createLabeledUndoRedo, type LabeledUndoRedo, type UndoRedo } from "./undoRedo.js";
+export { createUndoRedo, type UndoRedo } from "./undoRedo.js";

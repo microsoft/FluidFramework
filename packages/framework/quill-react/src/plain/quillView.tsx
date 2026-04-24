@@ -7,7 +7,7 @@ import {
 	withMemoizedTreeObservations,
 	syncTextToTree,
 	type PropTreeNode,
-	type LabeledUndoRedo,
+	type UndoRedo,
 } from "@fluidframework/react/internal";
 import { TreeAlpha } from "@fluidframework/tree/internal";
 import type { TextAsTree } from "@fluidframework/tree/internal";
@@ -26,11 +26,11 @@ export interface MainViewProps {
 	 * Optional undo/redo manager and transaction label.
 	 * When provided, undo/redo toolbar buttons are rendered and each user edit is
 	 * committed under `label` so it can be undone/redone independently of edits
-	 * made by other components sharing the same {@link LabeledUndoRedo} manager.
+	 * made by other components sharing the same {@link @fluidframework/react#UndoRedo} manager.
 	 */
 	readonly undoRedo?: {
 		/** The undo/redo manager shared across editors. */
-		readonly manager: LabeledUndoRedo;
+		readonly manager: UndoRedo;
 		/** Symbol that identifies this editor's commits within the shared manager. */
 		readonly transactionLabel: symbol;
 	};
@@ -53,7 +53,7 @@ const TextEditorView = withMemoizedTreeObservations(
 		undoRedo,
 	}: {
 		root: TextAsTree.Tree;
-		undoRedo?: { manager: LabeledUndoRedo; transactionLabel: symbol };
+		undoRedo?: { manager: UndoRedo; transactionLabel: symbol };
 	}) => {
 		// DOM element where Quill will mount its editor
 		const editorRef = useRef<HTMLDivElement>(null);

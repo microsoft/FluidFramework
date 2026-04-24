@@ -11,7 +11,7 @@ import globalJsdom from "global-jsdom";
 
 import { toPropTreeNode } from "../../propNode.js";
 import { PlainTextMainView } from "../../text/index.js";
-import type { LabeledUndoRedo } from "../../undoRedo.js";
+import type { UndoRedo } from "../../undoRedo.js";
 
 describe("Plain TextArea view", () => {
 	let cleanup: () => void;
@@ -150,7 +150,7 @@ describe("Plain TextArea view", () => {
 
 	describe("toolbar", () => {
 		const mockLabel = Symbol("test");
-		const mockUndoRedo: LabeledUndoRedo = {
+		const mockUndoRedo: UndoRedo = {
 			undo: () => {},
 			redo: () => {},
 			canUndo: () => false,

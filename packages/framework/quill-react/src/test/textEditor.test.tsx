@@ -5,11 +5,7 @@
 
 import { strict as assert } from "node:assert";
 
-import {
-	toPropTreeNode,
-	createLabeledUndoRedo,
-	type LabeledUndoRedo,
-} from "@fluidframework/react/internal";
+import { toPropTreeNode, createUndoRedo, type UndoRedo } from "@fluidframework/react/internal";
 import { TreeViewConfiguration } from "@fluidframework/tree";
 import { TreeAlpha, type TreeViewAlpha } from "@fluidframework/tree/alpha";
 import { independentView, TextAsTree } from "@fluidframework/tree/internal";
@@ -226,7 +222,7 @@ describe("textEditor", () => {
 					});
 
 					it("undo and redo buttons are enabled when undoRedo is provided", () => {
-						const mockUndoRedo: LabeledUndoRedo = {
+						const mockUndoRedo: UndoRedo = {
 							undo: () => {},
 							redo: () => {},
 							canUndo: () => true,
@@ -744,7 +740,7 @@ describe("textEditor", () => {
 					it("insert character, undo removes it, redo restores it", () => {
 						const treeView = createFormattedTreeViewWithEvents();
 						const text = treeView.root;
-						const manager = createLabeledUndoRedo(treeView);
+						const manager = createUndoRedo(treeView);
 						const content = <FormattedMainView root={toPropTreeNode(text)} />;
 						const rendered = render(content, { reactStrictMode });
 
@@ -768,7 +764,7 @@ describe("textEditor", () => {
 					it("insert character, make bold, undo removes bold but keeps character", () => {
 						const treeView = createFormattedTreeViewWithEvents();
 						const text = treeView.root;
-						const manager = createLabeledUndoRedo(treeView);
+						const manager = createUndoRedo(treeView);
 						const content = <FormattedMainView root={toPropTreeNode(text)} />;
 						const rendered = render(content, { reactStrictMode });
 
@@ -799,7 +795,7 @@ describe("textEditor", () => {
 					it("multiple operations in transaction undo together as one unit", () => {
 						const treeView = createFormattedTreeViewWithEvents();
 						const text = treeView.root;
-						const manager = createLabeledUndoRedo(treeView);
+						const manager = createUndoRedo(treeView);
 						const content = <FormattedMainView root={toPropTreeNode(text)} />;
 						const rendered = render(content, { reactStrictMode });
 

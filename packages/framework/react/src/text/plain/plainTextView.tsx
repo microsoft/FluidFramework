@@ -8,7 +8,7 @@ import type { TextAsTree } from "@fluidframework/tree/internal";
 import { type ChangeEvent, type FC, useCallback, useRef } from "react";
 
 import type { PropTreeNode } from "../../propNode.js";
-import type { LabeledUndoRedo } from "../../undoRedo.js";
+import type { UndoRedo } from "../../undoRedo.js";
 import { withMemoizedTreeObservations } from "../../useTree.js";
 
 import { syncTextToTree } from "./plainUtils.js";
@@ -25,11 +25,11 @@ export interface MainViewProps {
 	 * @remarks
 	 * When provided, undo/redo buttons are rendered and each user edit is
 	 * committed under `label` so it can be undone/redone independently of edits
-	 * made by other components sharing the same {@link LabeledUndoRedo} manager.
+	 * made by other components sharing the same {@link UndoRedo} manager.
 	 */
 	readonly undoRedo?: {
 		/** The undo/redo manager shared across editors. */
-		readonly manager: LabeledUndoRedo;
+		readonly manager: UndoRedo;
 		/** Symbol that identifies this editor's commits within the shared manager. */
 		readonly transactionLabel: symbol;
 	};

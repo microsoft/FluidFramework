@@ -15,8 +15,8 @@ import {
 } from "@fluidframework/quill-react/internal";
 import {
 	toPropTreeNode,
-	createLabeledUndoRedo,
-	type LabeledUndoRedo,
+	createUndoRedo,
+	type UndoRedo,
 	PlainTextMainView,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "@fluidframework/react/internal";
@@ -230,7 +230,7 @@ const formattedLabel = Symbol("formatted");
 const viewLabels = {
 	plainTextarea: {
 		description: "Plain Textarea",
-		component: (root: TextEditorRoot, manager: LabeledUndoRedo) => (
+		component: (root: TextEditorRoot, manager: UndoRedo) => (
 			<PlainTextMainView
 				root={toPropTreeNode(root.plainText)}
 				undoRedo={{ manager, transactionLabel: plainTextareaLabel }}
@@ -239,7 +239,7 @@ const viewLabels = {
 	},
 	plainQuill: {
 		description: "Plain Quill Editor",
-		component: (root: TextEditorRoot, manager: LabeledUndoRedo) => (
+		component: (root: TextEditorRoot, manager: UndoRedo) => (
 			<PlainQuillView
 				root={toPropTreeNode(root.plainText)}
 				undoRedo={{ manager, transactionLabel: plainQuillLabel }}
@@ -248,7 +248,7 @@ const viewLabels = {
 	},
 	formatted: {
 		description: "Formatted Quill Editor",
-		component: (root: TextEditorRoot, manager: LabeledUndoRedo) => (
+		component: (root: TextEditorRoot, manager: UndoRedo) => (
 			<FormattedMainView
 				root={toPropTreeNode(root.formattedText)}
 				undoRedo={{ manager, transactionLabel: formattedLabel }}
@@ -265,7 +265,7 @@ const UserPanel: FC<{
 	// A single manager per user subscribes to the branch's changed events and handles
 	// all labeled undo/redo. Each editor component reads from context and scopes
 	// operations to its own label.
-	const manager = useMemo(() => createLabeledUndoRedo(treeView), [treeView]);
+	const manager = useMemo(() => createUndoRedo(treeView), [treeView]);
 
 	// Cleanup manager on unmount
 	useEffect(() => {
