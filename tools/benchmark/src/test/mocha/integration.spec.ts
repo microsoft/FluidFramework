@@ -153,7 +153,7 @@ describe("mocha integration", () => {
 		// 1. benchmarkIt({ only: true, title: "only-integration-inner" }) — should run
 		// 2. benchmarkIt({ title: "only-integration-excluded" }) — should be skipped
 		// Mocha's exclusive mode (triggered by only: true) skips all non-only tests.
-		const { stdout } = integrationTest(["--integrationOnly"], false);
+		const { stdout } = integrationTest(["--integrationOnly", "--no-forbid-only"], false);
 		assert.match(stdout, /✔.*@Benchmark @Measurement only-integration-inner/);
 		assert.match(stdout, / 1 passing/);
 		// The excluded test must not have run (running it throws, which would fail the suite).
