@@ -66,7 +66,7 @@
     "ajv": "7.1.1",
     "async": "^3.2.0",
     "fastest-json-copy": "^1.0.1",
-    "lodash": "^4.17.21",
+    "lodash": "^4.18.1",
     "semver": "^7.3.4",
     "traverse": "0.6.6",
     "underscore": "^1.12.1"

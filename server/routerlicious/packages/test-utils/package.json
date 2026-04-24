@@ -58,7 +58,7 @@
     "@fluidframework/server-services-core": "^0.1037.0",
     "@fluidframework/server-services-telemetry": "^0.1037.0",
     "debug": "^4.1.1",
-    "lodash": "^4.17.21",
+    "lodash": "^4.18.1",
     "string-hash": "^1.1.3",
     "uuid": "^8.3.1"
   },
