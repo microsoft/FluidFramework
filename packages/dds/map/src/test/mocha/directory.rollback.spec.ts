@@ -5,31 +5,21 @@
 
 import { strict as assert } from "node:assert";
 
-import { AttachState } from "@fluidframework/container-definitions";
-import {
-	MockContainerRuntimeFactory,
-	MockFluidDataStoreRuntime,
-	MockStorage,
-	type MockContainerRuntime,
-} from "@fluidframework/test-runtime-utils/internal";
+import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
 
 import { DirectoryFactory } from "../../directoryFactory.js";
 import type {
 	IDirectorySortKeyChanged,
 	IDirectorySubDirectorySortKeyChanged,
 	IDirectoryValueChanged,
-	ISharedDirectory,
 	IValueChanged,
 } from "../../interfaces.js";
 
 import { assertEquivalentDirectories } from "./directoryEquivalenceUtils.js";
-
-interface RollbackTestSetup {
-	sharedDirectory: ISharedDirectory;
-	dataStoreRuntime: MockFluidDataStoreRuntime;
-	containerRuntimeFactory: MockContainerRuntimeFactory;
-	containerRuntime: MockContainerRuntime;
-}
+import {
+	createAdditionalClient,
+	setupConnectedDirectoryTest as setupRollbackTest,
+} from "./directoryTestHelpers.js";
 
 interface SubDirectoryEvent {
 	path: string;
@@ -37,44 +27,6 @@ interface SubDirectoryEvent {
 }
 
 const directoryFactory = new DirectoryFactory();
-
-function setupRollbackTest(): RollbackTestSetup {
-	const containerRuntimeFactory = new MockContainerRuntimeFactory({ flushMode: 1 }); // TurnBased
-	const dataStoreRuntime = new MockFluidDataStoreRuntime({ clientId: "1" });
-	const containerRuntime = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
-	const sharedDirectory = directoryFactory.create(dataStoreRuntime, "shared-directory-1");
-	dataStoreRuntime.setAttachState(AttachState.Attached);
-	sharedDirectory.connect({
-		deltaConnection: dataStoreRuntime.createDeltaConnection(),
-		objectStorage: new MockStorage(),
-	});
-	return {
-		sharedDirectory,
-		dataStoreRuntime,
-		containerRuntimeFactory,
-		containerRuntime,
-	};
-}
-
-// Helper to create another client attached to the same containerRuntimeFactory
-function createAdditionalClient(
-	containerRuntimeFactory: MockContainerRuntimeFactory,
-	id: string = "client-2",
-): {
-	sharedDirectory: ISharedDirectory;
-	dataStoreRuntime: MockFluidDataStoreRuntime;
-	containerRuntime: MockContainerRuntime;
-} {
-	const dataStoreRuntime = new MockFluidDataStoreRuntime({ clientId: id });
-	const containerRuntime = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
-	const sharedDirectory = directoryFactory.create(dataStoreRuntime, `shared-directory-${id}`);
-	dataStoreRuntime.setAttachState(AttachState.Attached);
-	sharedDirectory.connect({
-		deltaConnection: dataStoreRuntime.createDeltaConnection(),
-		objectStorage: new MockStorage(),
-	});
-	return { sharedDirectory, dataStoreRuntime, containerRuntime };
-}
 
 describe("SharedDirectory rollback", () => {
 	describe("Storage operations (root subdirectory)", () => {

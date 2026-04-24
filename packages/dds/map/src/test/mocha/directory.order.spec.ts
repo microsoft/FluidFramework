@@ -16,12 +16,10 @@ import {
 	MockStorage,
 } from "@fluidframework/test-runtime-utils/internal";
 
-import {
-	type DirectoryLocalOpMetadata,
-	type IDirectoryOperation,
-	SharedDirectory as SharedDirectoryInternal,
-} from "../../directory.js";
+import type { IDirectoryOperation } from "../../directory.js";
 import { DirectoryFactory, type ISharedDirectory, SharedDirectory } from "../../index.js";
+
+import { TestSharedDirectory } from "./directoryTestHelpers.js";
 
 function createConnectedDirectory(
 	id: string,
@@ -38,22 +36,6 @@ function createConnectedDirectory(
 	const directory = SharedDirectory.create(dataStoreRuntime, id);
 	directory.connect(services);
 	return directory;
-}
-
-class TestSharedDirectory extends SharedDirectoryInternal {
-	private lastMetadata?: DirectoryLocalOpMetadata;
-	public testApplyStashedOp(
-		content: IDirectoryOperation,
-	): DirectoryLocalOpMetadata | undefined {
-		this.lastMetadata = undefined;
-		this.applyStashedOp(content);
-		return this.lastMetadata;
-	}
-
-	public submitLocalMessage(op: IDirectoryOperation, localOpMetadata: unknown): void {
-		this.lastMetadata = localOpMetadata as DirectoryLocalOpMetadata;
-		super.submitLocalMessage(op, localOpMetadata);
-	}
 }
 
 async function populate(content: unknown): Promise<ISharedDirectory> {

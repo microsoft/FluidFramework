@@ -5,21 +5,14 @@
 
 import { strict as assert } from "node:assert";
 
-import { AttachState } from "@fluidframework/container-definitions";
 import { convertSummaryTreeToITree } from "@fluidframework/runtime-utils/internal";
 import {
-	MockContainerRuntimeFactory,
 	MockContainerRuntimeFactoryForReconnection,
 	MockFluidDataStoreRuntime,
 	MockStorage,
-	type MockContainerRuntime,
 } from "@fluidframework/test-runtime-utils/internal";
 
-import {
-	type DirectoryLocalOpMetadata,
-	type IDirectoryOperation,
-	SharedDirectory as SharedDirectoryInternal,
-} from "../../directory.js";
+import type { IDirectoryOperation } from "../../directory.js";
 import { DirectoryFactory } from "../../directoryFactory.js";
 import type {
 	IDirectorySortKeyChanged,
@@ -29,66 +22,13 @@ import type {
 	ISubDirectorySortKeyChanged,
 } from "../../interfaces.js";
 
-interface TestParts {
-	sharedDirectory: ISharedDirectory;
-	dataStoreRuntime: MockFluidDataStoreRuntime;
-	containerRuntimeFactory: MockContainerRuntimeFactory;
-	containerRuntime: MockContainerRuntime;
-}
+import {
+	createAdditionalClient,
+	setupConnectedDirectoryTest as setupTest,
+	TestSharedDirectory,
+} from "./directoryTestHelpers.js";
 
 const directoryFactory = new DirectoryFactory();
-
-function setupTest(): TestParts {
-	const containerRuntimeFactory = new MockContainerRuntimeFactory({ flushMode: 1 }); // TurnBased
-	const dataStoreRuntime = new MockFluidDataStoreRuntime({ clientId: "1" });
-	const containerRuntime = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
-	const sharedDirectory = directoryFactory.create(dataStoreRuntime, "shared-directory-1");
-	dataStoreRuntime.setAttachState(AttachState.Attached);
-	sharedDirectory.connect({
-		deltaConnection: dataStoreRuntime.createDeltaConnection(),
-		objectStorage: new MockStorage(),
-	});
-	return {
-		sharedDirectory,
-		dataStoreRuntime,
-		containerRuntimeFactory,
-		containerRuntime,
-	};
-}
-
-function createAdditionalClient(
-	containerRuntimeFactory: MockContainerRuntimeFactory,
-	id: string = "client-2",
-): {
-	sharedDirectory: ISharedDirectory;
-	dataStoreRuntime: MockFluidDataStoreRuntime;
-	containerRuntime: MockContainerRuntime;
-} {
-	const dataStoreRuntime = new MockFluidDataStoreRuntime({ clientId: id });
-	const containerRuntime = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
-	const sharedDirectory = directoryFactory.create(dataStoreRuntime, `shared-directory-${id}`);
-	dataStoreRuntime.setAttachState(AttachState.Attached);
-	sharedDirectory.connect({
-		deltaConnection: dataStoreRuntime.createDeltaConnection(),
-		objectStorage: new MockStorage(),
-	});
-	return { sharedDirectory, dataStoreRuntime, containerRuntime };
-}
-
-class TestSharedDirectory extends SharedDirectoryInternal {
-	private lastMetadata?: DirectoryLocalOpMetadata;
-	public testApplyStashedOp(
-		content: IDirectoryOperation,
-	): DirectoryLocalOpMetadata | undefined {
-		this.lastMetadata = undefined;
-		this.applyStashedOp(content);
-		return this.lastMetadata;
-	}
-	public submitLocalMessage(op: IDirectoryOperation, localOpMetadata: unknown): void {
-		this.lastMetadata = localOpMetadata as DirectoryLocalOpMetadata;
-		super.submitLocalMessage(op, localOpMetadata);
-	}
-}
 
 describe("SharedDirectory sort keys", () => {
 	describe("API — single client", () => {

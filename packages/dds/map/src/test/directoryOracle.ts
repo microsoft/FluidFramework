@@ -517,9 +517,16 @@ export class SharedDirectoryOracle {
 		this.sharedDir.off("cleared", this.onCleared);
 		this.sharedDir.off("subDirectoryCreated", this.onSubDirCreated);
 		this.sharedDir.off("subDirectoryDeleted", this.onSubDirDeleted);
+		this.sharedDir.off("sortKeyChanged", this.onSortKeyChanged);
+		this.sharedDir.off("subDirectorySortKeyChanged", this.onSubDirectorySortKeyChanged);
 
 		for (const dir of this.attachedDirectories) {
 			dir.off("containedValueChanged", this.onContainedValueChanged);
+			dir.off("containedSortKeyChanged", this.onContainedSortKeyChanged);
+			dir.off(
+				"containedSubDirectorySortKeyChanged",
+				this.onContainedSubDirectorySortKeyChanged,
+			);
 			dir.off("disposed", this.onDisposed);
 			dir.off("undisposed", this.onUndisposed);
 		}
@@ -527,7 +534,11 @@ export class SharedDirectoryOracle {
 		this.attachedDirectories.clear();
 		this.modelFromValueChanged.keys.clear();
 		this.modelFromValueChanged.subdirectories.clear();
+		this.modelFromValueChanged.sortKeys.clear();
+		this.modelFromValueChanged.subdirectorySortKeys.clear();
 		this.modelFromContainedValueChanged.keys.clear();
 		this.modelFromContainedValueChanged.subdirectories.clear();
+		this.modelFromContainedValueChanged.sortKeys.clear();
+		this.modelFromContainedValueChanged.subdirectorySortKeys.clear();
 	}
 }

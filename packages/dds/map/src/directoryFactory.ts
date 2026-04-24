@@ -34,9 +34,6 @@ export class DirectoryFactory implements IChannelFactory<ISharedDirectory> {
 	/**
 	 * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory.attributes}
 	 */
-	// Sort-key fields (`sortKeys`, `subdirectorySortKeys`) were added to `IDirectoryDataObject` as optional,
-	// additive fields. Older builds ignore unknown fields on load, so the format stays at "0.1"; a bump
-	// would only be required if we removed or changed the meaning of an existing field.
 	public static readonly Attributes: IChannelAttributes = {
 		type: DirectoryFactory.Type,
 		snapshotFormatVersion: "0.1",

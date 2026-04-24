@@ -1336,6 +1336,44 @@ function assertNonNullClientId(clientId: string | null): asserts clientId is str
 }
 
 /**
+ * Overlay a list of pending sort-key sets onto a sequenced sort-key map, producing the
+ * currently-visible (optimistic) sort-key map. A pending entry with `sortKey === undefined` clears.
+ */
+function collectOptimisticSortKeys<T extends { sortKey: string | undefined }>(
+	sequenced: ReadonlyMap<string, string>,
+	pending: readonly T[],
+	nameOf: (entry: T) => string,
+): Map<string, string> {
+	const result = new Map(sequenced);
+	for (const entry of pending) {
+		const name = nameOf(entry);
+		if (entry.sortKey === undefined) {
+			result.delete(name);
+		} else {
+			result.set(name, entry.sortKey);
+		}
+	}
+	return result;
+}
+
+/**
+ * Convert a sort-key map to the snapshot `Record<string, string>` representation, or `undefined`
+ * when empty so that snapshots written by pre-feature code round-trip unchanged.
+ */
+function sortKeysToRecord(
+	sortKeys: ReadonlyMap<string, string>,
+): Record<string, string> | undefined {
+	if (sortKeys.size === 0) {
+		return undefined;
+	}
+	const result: Record<string, string> = {};
+	for (const [name, sortKey] of sortKeys.entries()) {
+		result[name] = sortKey;
+	}
+	return result;
+}
+
+/**
  * Partition a default-ordered sequence of items into sort-keyed items (lex order of sort key, with ties
  * broken by default-order position) followed by unkeyed items (in default-order position). Items whose
  * name is not in `sortKeys` fall into the unkeyed bucket.
@@ -1345,10 +1383,6 @@ function orderBySortKey<T>(
 	nameOf: (item: T) => string,
 	sortKeys: ReadonlyMap<string, string>,
 ): T[] {
-	const defaultIndex = new Map<string, number>();
-	for (const [i, item] of defaultOrder.entries()) {
-		defaultIndex.set(nameOf(item), i);
-	}
 	const sortKeyed: T[] = [];
 	const unkeyed: T[] = [];
 	for (const item of defaultOrder) {
@@ -1358,18 +1392,17 @@ function orderBySortKey<T>(
 			unkeyed.push(item);
 		}
 	}
+	// Stable sort preserves default-order position as the tiebreaker.
 	sortKeyed.sort((a, b) => {
-		const nameA = nameOf(a);
-		const nameB = nameOf(b);
-		const sa = sortKeys.get(nameA) ?? "";
-		const sb = sortKeys.get(nameB) ?? "";
+		const sa = sortKeys.get(nameOf(a)) as string;
+		const sb = sortKeys.get(nameOf(b)) as string;
 		if (sa < sb) {
 			return -1;
 		}
 		if (sa > sb) {
 			return 1;
 		}
-		return (defaultIndex.get(nameA) ?? 0) - (defaultIndex.get(nameB) ?? 0);
+		return 0;
 	});
 	return [...sortKeyed, ...unkeyed];
 }
@@ -2331,36 +2364,22 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 	 * Collect optimistic sort keys for all currently-visible keys. Keys without a sort key are omitted.
 	 */
 	private collectOptimisticSortKeys(): Map<string, string> {
-		const result = new Map<string, string>();
-		for (const [key, sortKey] of this.sequencedSortKeys.entries()) {
-			result.set(key, sortKey);
-		}
-		for (const entry of this.pendingSortKeyData) {
-			if (entry.sortKey === undefined) {
-				result.delete(entry.key);
-			} else {
-				result.set(entry.key, entry.sortKey);
-			}
-		}
-		return result;
+		return collectOptimisticSortKeys(
+			this.sequencedSortKeys,
+			this.pendingSortKeyData,
+			(entry) => entry.key,
+		);
 	}
 
 	/**
 	 * Collect optimistic sort keys for all currently-visible child subdirectories.
 	 */
 	private collectOptimisticSubDirectorySortKeys(): Map<string, string> {
-		const result = new Map<string, string>();
-		for (const [name, sortKey] of this.sequencedSubDirectorySortKeys.entries()) {
-			result.set(name, sortKey);
-		}
-		for (const entry of this.pendingSubDirectorySortKeyData) {
-			if (entry.sortKey === undefined) {
-				result.delete(entry.subdirName);
-			} else {
-				result.set(entry.subdirName, entry.sortKey);
-			}
-		}
-		return result;
+		return collectOptimisticSortKeys(
+			this.sequencedSubDirectorySortKeys,
+			this.pendingSubDirectorySortKeyData,
+			(entry) => entry.subdirName,
+		);
 	}
 
 	/**
@@ -3088,14 +3107,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 	 */
 	public getSerializableSortKeys(): Record<string, string> | undefined {
 		this.throwIfDisposed();
-		if (this.sequencedSortKeys.size === 0) {
-			return undefined;
-		}
-		const result: Record<string, string> = {};
-		for (const [key, sortKey] of this.sequencedSortKeys.entries()) {
-			result[key] = sortKey;
-		}
-		return result;
+		return sortKeysToRecord(this.sequencedSortKeys);
 	}
 
 	/**
@@ -3103,14 +3115,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 	 */
 	public getSerializableSubDirectorySortKeys(): Record<string, string> | undefined {
 		this.throwIfDisposed();
-		if (this.sequencedSubDirectorySortKeys.size === 0) {
-			return undefined;
-		}
-		const result: Record<string, string> = {};
-		for (const [subdirName, sortKey] of this.sequencedSubDirectorySortKeys.entries()) {
-			result[subdirName] = sortKey;
-		}
-		return result;
+		return sortKeysToRecord(this.sequencedSubDirectorySortKeys);
 	}
 
 	/**
