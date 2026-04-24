@@ -5,6 +5,7 @@
 
 import { strict as assert } from "node:assert";
 
+import { validateUsageError } from "@fluidframework/test-runtime-utils/internal";
 import {
 	independentView,
 	type TreeBranchAlpha,
@@ -305,7 +306,7 @@ describe("createUndoRedo", () => {
 			) => void;
 		} {
 			type Handler = (
-				data: { isLocal: boolean },
+				data: { isLocal: boolean; labels: symbol[] },
 				getRevertible: (() => { revert(): void; dispose(): void }) | undefined,
 			) => void;
 			const handlers: Handler[] = [];
@@ -323,7 +324,7 @@ describe("createUndoRedo", () => {
 			return {
 				branch,
 				fireChanged: (isLocal, getRevertible) => {
-					for (const h of handlers) h({ isLocal }, getRevertible);
+					for (const h of handlers) h({ isLocal, labels: [] }, getRevertible);
 				},
 			};
 		}
@@ -349,20 +350,25 @@ describe("createUndoRedo", () => {
 			const { branch, fireChanged } = createMockBranch();
 			const manager = createUndoRedo(branch);
 
-			let shouldThrow = false;
+			const redoRevertible = {
+				revert() {
+					throw new Error("revert failed");
+				},
+				dispose() {},
+			};
+
+			// The undo revertible fires a changed event during its revert (as real SharedTree does),
+			// routing redoRevertible onto the redo stack.
 			fireChanged(true, () => ({
 				revert() {
-					if (shouldThrow) throw new Error("revert failed");
+					fireChanged(true, () => redoRevertible);
 				},
 				dispose() {},
 			}));
 
-			// First undo succeeds, moving the entry to the redo stack.
 			manager.undo();
 			assert.equal(manager.canRedo(), true);
 
-			// Now make redo's revert() throw.
-			shouldThrow = true;
 			assert.throws(() => manager.redo());
 			assert.equal(manager.canRedo(), true, "redo entry should remain after failed revert");
 			manager.dispose();
@@ -397,25 +403,63 @@ describe("createUndoRedo", () => {
 			const manager = createUndoRedo(branch);
 
 			let shouldThrow = false;
-			fireChanged(true, () => ({
+			const redoRevertible = {
 				revert() {
 					if (shouldThrow) throw new Error("revert failed");
+				},
+				dispose() {},
+			};
+
+			// The undo revertible fires a changed event during its revert (as real SharedTree does),
+			// routing redoRevertible onto the redo stack.
+			fireChanged(true, () => ({
+				revert() {
+					fireChanged(true, () => redoRevertible);
 				},
 				dispose() {},
 			}));
 
 			manager.undo();
+			assert.equal(manager.canRedo(), true);
+
 			shouldThrow = true;
 			assert.throws(() => manager.redo());
 
-			// New user commit must land on the undo stack, not the undo stack of the redo operation.
+			// New user commit must land on the undo stack, not the redo stack.
 			fireChanged(true, () => ({ revert() {}, dispose() {} }));
-			assert.equal(
-				manager.canRedo(),
-				false,
-				"pendingOperation was cleared after redo failure",
-			);
+			assert.equal(manager.canRedo(), false, "pendingOperation was cleared after redo failure");
 			manager.dispose();
+		});
+	});
+
+	describe("single-instance enforcement", () => {
+		it("throws when a second manager is created for the same branch", () => {
+			const view = createTree();
+			const manager = createUndoRedo(view);
+
+			assert.throws(() => createUndoRedo(view), validateUsageError(/already attached/));
+
+			manager.dispose();
+		});
+
+		it("allows a new manager after the previous one is disposed", () => {
+			const view = createTree();
+			const manager = createUndoRedo(view);
+			manager.dispose();
+
+			// Should not throw
+			const manager2 = createUndoRedo(view);
+			manager2.dispose();
+		});
+
+		it("does not prevent managers on independent branches", () => {
+			const view1 = createTree();
+			const view2 = createTree();
+			const manager1 = createUndoRedo(view1);
+			const manager2 = createUndoRedo(view2);
+
+			manager1.dispose();
+			manager2.dispose();
 		});
 	});
 

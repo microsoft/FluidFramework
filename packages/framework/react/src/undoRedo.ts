@@ -4,6 +4,7 @@
  */
 
 import { oob } from "@fluidframework/core-utils/internal";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import type { RevertibleAlpha, TreeBranchAlpha } from "@fluidframework/tree/internal";
 
 /**
@@ -123,16 +124,18 @@ interface StackEntry {
  * Concrete implementation of {@link UndoRedo} for a SharedTree branch.
  *
  * @remarks
- * A single instance must be created per tree branch. Multiple instances on the same branch
- * will each attempt to call `getRevertible()` on the `changed` event, and the second call
- * will throw.
+ * A single instance must be created per tree branch. Passing a branch that already has an
+ * attached manager throws immediately at construction time.
  *
  * @sealed @internal
  */
+const attachedBranches = new WeakSet<TreeBranchAlpha>();
+
 class UndoRedoManager implements UndoRedo {
 	readonly #undoStack: StackEntry[] = [];
 	readonly #redoStack: StackEntry[] = [];
 	readonly #unsubscribe: () => void;
+	readonly #branch: TreeBranchAlpha;
 	// Set synchronously around revert() calls so the changed event handler can attribute the
 	// resulting commit to this manager's undo or redo action rather than treating it as a new
 	// user commit. Cleared before notifying listeners.
@@ -140,10 +143,14 @@ class UndoRedoManager implements UndoRedo {
 
 	/**
 	 * @param branch - The tree branch whose commits this manager will track.
-	 * A single instance per branch is required; multiple instances on the same branch
-	 * will each attempt to call `getRevertible()` and the second call will throw.
+	 * @throws If a manager is already attached to `branch`.
 	 */
 	public constructor(branch: TreeBranchAlpha) {
+		if (attachedBranches.has(branch)) {
+			throw new UsageError("An UndoRedoManager is already attached to this branch.");
+		}
+		attachedBranches.add(branch);
+		this.#branch = branch;
 		this.#unsubscribe = branch.events.on("changed", (data, getRevertible) => {
 			if (!data.isLocal || getRevertible === undefined) return;
 
@@ -248,6 +255,7 @@ class UndoRedoManager implements UndoRedo {
 
 	public dispose(): void {
 		this.#unsubscribe();
+		attachedBranches.delete(this.#branch);
 		for (const e of this.#undoStack) e.revertible.dispose();
 		for (const e of this.#redoStack) e.revertible.dispose();
 		this.#undoStack.length = 0;
@@ -272,12 +280,12 @@ class UndoRedoManager implements UndoRedo {
  * Creates a {@link UndoRedo} manager that tracks commits on the given tree branch.
  *
  * @remarks
- * A single instance must be created per tree branch. Multiple instances on the same branch
- * will each attempt to call `getRevertible()` on the `changed` event, and the second call
- * will throw.
+ * A single instance must be created per tree branch. Passing a branch that already has an
+ * attached manager throws immediately.
  *
  * @param branch - The tree branch whose commits this manager will track.
  * @returns A {@link UndoRedo} instance scoped to the given branch.
+ * @throws If a manager is already attached to `branch`.
  * @internal
  */
 export function createUndoRedo(branch: TreeBranchAlpha): UndoRedo {
