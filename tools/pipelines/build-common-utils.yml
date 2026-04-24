@@ -23,9 +23,9 @@ parameters:
     - skip
     - force
 - name: buildToolsVersionToInstall
-  displayName: Fluid build tools version (default = installs version in repo)
+  displayName: Fluid build tools version (default = installs from npm per workspace catalog)
   type: string
-  default: repo
+  default: ^0.65.0
 
 trigger:
   branches:
@@ -103,11 +103,7 @@ extends:
     packageManagerInstallCommand: 'pnpm i --frozen-lockfile'
     packageManager: pnpm
     testCoverage: ${{ variables.testCoverage }}
-    # tools/api-markdown-documenter is required by the build-tools build (exact dependency unclear).
     sparseCheckoutDirectories: |
       common/lib/common-utils
-      tools/api-markdown-documenter
-      build-tools
-      common/build/eslint-config-fluid
       patches
       scripts

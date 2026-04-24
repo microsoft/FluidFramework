@@ -122,10 +122,3 @@ extends:
     taskBundleAnalysis: false
     checks:
     - checks
-    # tools/api-markdown-documenter is required by the build-tools build (exact dependency unclear).
-    sparseCheckoutDirectories: |
-      build-tools
-      tools/api-markdown-documenter
-      common/build/eslint-config-fluid
-      patches
-      scripts
