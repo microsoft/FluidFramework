@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { oob } from "@fluidframework/core-utils/internal";
+import { assert, oob } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import type { RevertibleAlpha, TreeBranchAlpha } from "@fluidframework/tree/internal";
 
@@ -105,7 +105,15 @@ export interface UndoRedo {
 	 */
 	canRedo(label?: symbol): boolean;
 
-	/** Releases the manager's subscription to the branch. */
+	/**
+	 * Releases the manager's subscription to the branch and disposes all tracked revertibles.
+	 *
+	 * @remarks
+	 * After calling `dispose()`:
+	 * - `canUndo()` and `canRedo()` return `false`.
+	 * - `undo()` and `redo()` are silent no-ops.
+	 * - Calling `dispose()` again is safe and has no effect.
+	 */
 	dispose(): void;
 }
 
@@ -140,6 +148,7 @@ class UndoRedoManager implements UndoRedo {
 	// resulting commit to this manager's undo or redo action rather than treating it as a new
 	// user commit. Cleared before notifying listeners.
 	#pendingOperation: { kind: "undo" | "redo"; labels: ReadonlySet<symbol> } | undefined;
+	#disposed = false;
 
 	/**
 	 * @param branch - The tree branch whose commits this manager will track.
@@ -200,6 +209,9 @@ class UndoRedoManager implements UndoRedo {
 	}
 
 	public undo(label?: symbol): void {
+		if (this.#disposed){
+			return;
+		}
 		const index =
 			label === undefined
 				? this.#undoStack.length > 0
@@ -222,6 +234,9 @@ class UndoRedoManager implements UndoRedo {
 	}
 
 	public redo(label?: symbol): void {
+		if (this.#disposed) {
+			return;
+		}
 		const index =
 			label === undefined
 				? this.#redoStack.length > 0
@@ -244,16 +259,24 @@ class UndoRedoManager implements UndoRedo {
 	}
 
 	public canUndo(label?: symbol): boolean {
-		if (label === undefined) return this.#undoStack.length > 0;
+		if (label === undefined) {
+			return this.#undoStack.length > 0;
+		}
 		return this.#undoStack.some((e) => e.labels.has(label));
 	}
 
 	public canRedo(label?: symbol): boolean {
-		if (label === undefined) return this.#redoStack.length > 0;
+		if (label === undefined) {
+			return this.#redoStack.length > 0;
+		}
 		return this.#redoStack.some((e) => e.labels.has(label));
 	}
 
 	public dispose(): void {
+		if (this.#disposed) {
+			return;
+		}
+		this.#disposed = true;
 		this.#unsubscribe();
 		attachedBranches.delete(this.#branch);
 		for (const e of this.#undoStack) e.revertible.dispose();
@@ -263,6 +286,7 @@ class UndoRedoManager implements UndoRedo {
 	}
 
 	#lastIndexWithLabel(stack: StackEntry[], label: symbol): number | undefined {
+		assert(!this.#disposed, "Undo/redo manager is disposed.");
 		for (let i = stack.length - 1; i >= 0; i--) {
 			const entry = stack[i];
 			if (entry === undefined) {

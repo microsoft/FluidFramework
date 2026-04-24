@@ -483,5 +483,33 @@ describe("createUndoRedo", () => {
 			});
 			assert.equal(manager.canUndo(), false);
 		});
+
+		it("successive calls to dispose do not throw", () => {
+			const view = createTree();
+			const manager = createUndoRedo(view);
+
+			view.runTransaction(() => {
+				view.root.value = 1;
+			});
+
+			manager.dispose();
+			// Should not throw
+			manager.dispose();
+		});
+
+		it("undo and redo are no-ops after dispose", () => {
+			const view = createTree();
+			const manager = createUndoRedo(view);
+
+			view.runTransaction(() => {
+				view.root.value = 1;
+			});
+			manager.dispose();
+
+			// Should not throw
+			manager.undo();
+			manager.redo();
+			assert.equal(view.root.value, 1);
+		});
 	});
 });
