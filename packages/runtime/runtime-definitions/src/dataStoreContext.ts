@@ -137,6 +137,10 @@ export interface IContainerRuntimeBaseEvents extends IEvent {
 	 * @param stagingModeInfo - An object describing the staging mode state.
 	 * If `inStagingMode` is true, the runtime has entered staging mode.
 	 * If false, it has exited staging mode, and `commit` indicates whether changes were committed or discarded.
+	 *
+	 * @remarks
+	 * This event is not emitted when the container is disposed while in staging mode.
+	 * If the container is disposed, staged changes are silently dropped.
 	 */
 	(event: "stagingModeChanged", listener: (stagingModeInfo: StagingModeChangedEvent) => void);
 }
@@ -504,7 +508,7 @@ export interface IFluidDataStoreChannel extends IDisposable {
  * - `{ inStagingMode: true }` — the runtime has entered staging mode.
  *
  * - `{ inStagingMode: false, commit: boolean }` — the runtime has exited staging mode.
- * `commit` is `true` when staged changes are submitted to the service, or `false` when they are discarded.
+ * `commit` is `true` when staged changes were committed (not discarded), or `false` when they were discarded.
  *
  * @legacy @beta
  */

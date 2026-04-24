@@ -5051,10 +5051,9 @@ describe("Runtime", () => {
 					);
 				});
 
-				it("does not fire when orderSequentially uses staging mode internally for rollback (EnableRollback=true)", async () => {
+				it("does not fire when orderSequentially uses staging mode internally (EnableRollback=true)", async () => {
 					// orderSequentially with EnableRollback calls enterStagingModeCore(silent=true)
-					// internally. The stagingModeChanged event should NOT be emitted for this
-					// internal bookkeeping — only for user-initiated staging mode transitions.
+					// internally. The stagingModeChanged event should NOT be emitted.
 					const context = getMockContext({
 						settings: { "Fluid.ContainerRuntime.EnableRollback": true },
 					}) as IContainerContext;
@@ -5072,7 +5071,7 @@ describe("Runtime", () => {
 					const events: StagingModeChangedEvent[] = [];
 					runtime.on("stagingModeChanged", (e) => events.push(e));
 
-					// Successful orderSequentially: internally enters staging mode then commits
+					// internally enters staging mode then commits
 					runtime.orderSequentially(() => {
 						submitDataStoreOp(runtime, "1", genTestDataStoreMessage("op1"));
 					});
@@ -5080,7 +5079,20 @@ describe("Runtime", () => {
 					assert.equal(
 						events.length,
 						0,
-						"stagingModeChanged should NOT fire for internal orderSequentially staging",
+						"stagingModeChanged should NOT fire for successful orderSequentially",
+					);
+
+					// internally enters staging mode then rolls back
+					assert.throws(() =>
+						runtime.orderSequentially(() => {
+							throw new Error("test error");
+						}),
+					);
+
+					assert.equal(
+						events.length,
+						0,
+						"stagingModeChanged should NOT fire when orderSequentially rolls back",
 					);
 
 					runtime.dispose();
