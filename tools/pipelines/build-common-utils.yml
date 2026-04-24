@@ -103,8 +103,10 @@ extends:
     packageManagerInstallCommand: 'pnpm i --frozen-lockfile'
     packageManager: pnpm
     testCoverage: ${{ variables.testCoverage }}
+    # tools/api-markdown-documenter is required by the build-tools build (exact dependency unclear).
     sparseCheckoutDirectories: |
       common/lib/common-utils
+      tools/api-markdown-documenter
       build-tools
       common/build/eslint-config-fluid
       patches

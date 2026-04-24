@@ -96,8 +96,10 @@ extends:
     taskLint: false
     taskTest:
     - test
+    # tools/api-markdown-documenter is required by the build-tools build (exact dependency unclear).
     sparseCheckoutDirectories: |
       tools/test-tools
+      tools/api-markdown-documenter
       build-tools
       common/build/eslint-config-fluid
       patches

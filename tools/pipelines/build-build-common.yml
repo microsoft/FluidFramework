@@ -101,8 +101,10 @@ extends:
     taskTest: [] # no tests
     checks:
     - prettier
+    # tools/api-markdown-documenter is required by the build-tools build (exact dependency unclear).
     sparseCheckoutDirectories: |
       common/build/build-common
+      tools/api-markdown-documenter
       build-tools
       common/build/eslint-config-fluid
       patches

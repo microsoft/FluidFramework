@@ -105,8 +105,10 @@ extends:
     tagName: protocol-definitions
     testCoverage: false
     taskTest: [] # no tests
+    # tools/api-markdown-documenter is required by the build-tools build (exact dependency unclear).
     sparseCheckoutDirectories: |
       common/lib/protocol-definitions
+      tools/api-markdown-documenter
       build-tools
       common/build/eslint-config-fluid
       patches
