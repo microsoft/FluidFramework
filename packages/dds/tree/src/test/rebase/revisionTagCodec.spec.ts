@@ -5,7 +5,11 @@
 
 import { strict as assert } from "node:assert";
 
-import { createIdCompressor, createSessionId } from "@fluidframework/id-compressor/internal";
+import {
+	createIdCompressor,
+	createSessionId,
+	toIdCompressorWithCore,
+} from "@fluidframework/id-compressor/internal";
 
 import { type RevisionTag, RevisionTagCodec } from "../../core/index.js";
 import { testIdCompressor } from "../utils.js";
@@ -66,9 +70,9 @@ describe("RevisionTagCodec", () => {
 		);
 
 		// Simulate the remote client receiving the creation range for the local ID
-		const range = localCompressor.takeNextCreationRange();
-		localCompressor.finalizeCreationRange(range);
-		remoteCompressor.finalizeCreationRange(range);
+		const range = toIdCompressorWithCore(localCompressor).takeNextCreationRange();
+		toIdCompressorWithCore(localCompressor).finalizeCreationRange(range);
+		toIdCompressorWithCore(remoteCompressor).finalizeCreationRange(range);
 		// Locally encoding will have the final ID form, as will the remote client
 		localEncoded = localCodec.encode(localId);
 		const remoteDecoded = remoteCodec.decode(localEncoded, {
