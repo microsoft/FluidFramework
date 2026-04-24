@@ -1,0 +1,236 @@
+name: "PR Review Confirm"
+
+# Listens for comments on PRs that have a pending review confirmation.
+# When the author (or a collaborator) replies with an affirmative, triggers
+# the review fleet with the reviewer set selected via the comment checkboxes.
+# When they ask a question, answers via Copilot CLI and keeps waiting.
+#
+# Activation guard: looks for a pr-review-pending artifact from the most
+# recent successful auto-route run for this PR. If none exists, this workflow
+# exits immediately without taking any action.
+
+on:
+  issue_comment:
+    types: [created]
+
+permissions:
+  contents: read
+  pull-requests: write
+  # `actions: write` is required for `gh workflow run` below to dispatch
+  # pr-review-fleet.yml. GITHUB_TOKEN can dispatch workflows in its own repo
+  # only when this permission is granted — without it, the dispatch call 403s.
+  actions: write
+
+# Serialize per-PR so rapid-fire comments don't race to trigger the fleet or
+# spawn parallel Copilot installs. Don't cancel in-progress runs — each comment
+# deserves a reply.
+concurrency:
+  group: pr-review-confirm-${{ github.event.issue.number }}
+  cancel-in-progress: false
+
+jobs:
+  handle-reply:
+    name: "Handle reply"
+    # Only process PR comments from trusted repo members. Commenters without
+    # write access (including external PR authors) cannot trigger this
+    # workflow, which has `actions: write` and consumes COPILOT_GITHUB_TOKEN.
+    # A member can still reply on behalf of an external PR author.
+    if: |
+      github.event.issue.pull_request != null &&
+      github.event.sender.type != 'Bot' &&
+      (
+        github.event.comment.author_association == 'OWNER' ||
+        github.event.comment.author_association == 'MEMBER' ||
+        github.event.comment.author_association == 'COLLABORATOR'
+      )
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout scripts and prompts
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # ratchet:actions/checkout@v6
+        with:
+          sparse-checkout: |
+            .github/scripts
+            .github/prompts
+          persist-credentials: false
+
+      # ── Find & download the pending metadata artifact from the most recent ──
+      # ── successful auto-route run for this PR.                              ──
+      - name: Download pending metadata
+        id: download
+        uses: dawidd6/action-download-artifact@8305c0f1062bb0d184d09ef4493ecb9288447732 # ratchet:dawidd6/action-download-artifact@v20
+        with:
+          workflow: pr-review-auto-route.yml
+          workflow_conclusion: success
+          pr: ${{ github.event.issue.number }}
+          name: pr-review-pending
+          path: pending
+          if_no_artifact_found: warn
+
+      - name: Parse pending metadata
+        id: pending
+        if: steps.download.outputs.found_artifact == 'true'
+        run: |
+          PR_NUMBER=$(jq -r '.pr_number' pending/pending.json)
+          HEAD_SHA=$(jq  -r '.head_sha'  pending/pending.json)
+          BASE_REF=$(jq  -r '.base_ref'  pending/pending.json)
+
+          echo "pr_number=$PR_NUMBER" >> "$GITHUB_OUTPUT"
+          echo "head_sha=$HEAD_SHA"   >> "$GITHUB_OUTPUT"
+          echo "base_ref=$BASE_REF"   >> "$GITHUB_OUTPUT"
+
+          echo "PR #${PR_NUMBER} | head=${HEAD_SHA} | base=${BASE_REF}"
+
+      # ── Find confirmation comment and parse checkbox state ────────────────
+      - name: Find confirmation comment
+        id: find-confirm
+        if: steps.download.outputs.found_artifact == 'true'
+        # release notes: https://github.com/peter-evans/find-comment/releases/tag/v3.1.0
+        uses: peter-evans/find-comment@3eae4d37986fb5a8592848f6a574fdf654e61f9e # ratchet:peter-evans/find-comment@v3
+        with:
+          issue-number: ${{ github.event.issue.number }}
+          body-includes: "<!-- pr-review-confirm -->"
+          comment-author: "github-actions[bot]"
+
+      - name: Parse checkbox state
+        id: checkboxes
+        if: |
+          steps.download.outputs.found_artifact == 'true' &&
+          steps.find-confirm.outputs.comment-id != ''
+        env:
+          CONFIRM_BODY: ${{ steps.find-confirm.outputs.comment-body }}
+        run: |
+          echo "$CONFIRM_BODY" > /tmp/confirm-body.txt
+          SELECTED=$(python3 .github/scripts/pr_review_propose.py parse-checkboxes /tmp/confirm-body.txt)
+          echo "selected=$SELECTED" >> "$GITHUB_OUTPUT"
+          echo "Selected reviewers: ${SELECTED}"
+
+      # ── Classify the reply intent ─────────────────────────────────────────
+      - name: Classify intent
+        id: intent
+        if: |
+          steps.download.outputs.found_artifact == 'true' &&
+          steps.find-confirm.outputs.comment-id != ''
+        env:
+          REPLY: ${{ github.event.comment.body }}
+        run: |
+          # Affirmative: short phrase matching common yes-patterns
+          if echo "$REPLY" | grep -qiP \
+            '^\s*(yes|yeah|yep|sure|go ahead|ok|okay|please|start|run|do it|kick it off|lgtm|sounds good|let.s go|yup|absolutely|affirmative|roger)\s*[.!]?\s*$'; then
+            echo "intent=affirm" >> "$GITHUB_OUTPUT"
+          # Question: contains a question mark or starts with a question word
+          elif echo "$REPLY" | grep -qiP '\?|(^|\s)(what|why|how|when|can you|will you|which|where|does|is it|would)'; then
+            echo "intent=question" >> "$GITHUB_OUTPUT"
+          else
+            echo "intent=other" >> "$GITHUB_OUTPUT"
+          fi
+
+          echo "Intent: $(grep 'intent=' "$GITHUB_OUTPUT" | tail -1)"
+
+      # ── Affirm: validate non-empty selection, then trigger the fleet ─────
+      - name: Handle empty selection
+        id: empty-check
+        if: |
+          steps.download.outputs.found_artifact == 'true' &&
+          steps.intent.outputs.intent == 'affirm'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          PR_NUMBER: ${{ steps.pending.outputs.pr_number }}
+          SELECTED: ${{ steps.checkboxes.outputs.selected }}
+        run: |
+          COUNT=$(echo "$SELECTED" | jq 'length')
+          if [ "$COUNT" -eq 0 ]; then
+            gh pr comment "${PR_NUMBER}" --repo "${REPO}" \
+              --body "You haven't selected any reviewers. Tick at least one checkbox in the proposal comment and reply **yes** again."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Trigger review fleet
+        if: |
+          steps.download.outputs.found_artifact == 'true' &&
+          steps.intent.outputs.intent == 'affirm' &&
+          steps.empty-check.outputs.skip == 'false'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          PR_NUMBER: ${{ steps.pending.outputs.pr_number }}
+          HEAD_SHA: ${{ steps.pending.outputs.head_sha }}
+          BASE_REF: ${{ steps.pending.outputs.base_ref }}
+          SELECTED: ${{ steps.checkboxes.outputs.selected }}
+        run: |
+          gh workflow run pr-review-fleet.yml \
+            --repo "${REPO}" \
+            --field "pr_number=${PR_NUMBER}" \
+            --field "reviewers=${SELECTED}" \
+            --field "head_sha=${HEAD_SHA}" \
+            --field "base_ref=${BASE_REF}"
+
+          echo "Triggered fleet for PR #${PR_NUMBER} with reviewers: ${SELECTED}"
+
+      - name: Post acknowledgement
+        if: |
+          steps.download.outputs.found_artifact == 'true' &&
+          steps.intent.outputs.intent == 'affirm' &&
+          steps.empty-check.outputs.skip == 'false'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          PR_NUMBER: ${{ steps.pending.outputs.pr_number }}
+          SELECTED: ${{ steps.checkboxes.outputs.selected }}
+        run: |
+          NAMES=$(python3 .github/scripts/pr_review_propose.py format-names "$SELECTED")
+          gh pr comment "${PR_NUMBER}" --repo "${REPO}" \
+            --body "On it! Starting review with: ${NAMES}"
+
+      # ── Question: answer via Copilot CLI ─────────────────────────────────
+      - name: Set up Node.js
+        if: |
+          steps.download.outputs.found_artifact == 'true' &&
+          steps.intent.outputs.intent == 'question'
+        uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # ratchet:actions/setup-node@v6
+        with:
+          node-version: 22
+
+      - name: Install Copilot CLI
+        if: |
+          steps.download.outputs.found_artifact == 'true' &&
+          steps.intent.outputs.intent == 'question'
+        run: npm install -g @github/copilot
+
+      - name: Answer question
+        if: |
+          steps.download.outputs.found_artifact == 'true' &&
+          steps.intent.outputs.intent == 'question'
+        env:
+          COPILOT_GITHUB_TOKEN: ${{ secrets.COPILOT_GITHUB_TOKEN }}
+          COPILOT_MODEL: claude-sonnet-4-6
+          REPLY: ${{ github.event.comment.body }}
+          SELECTED: ${{ steps.checkboxes.outputs.selected }}
+        run: |
+          REVIEWER_CONTEXT=$(python3 .github/scripts/pr_review_propose.py build-qa-context "$SELECTED")
+          export REVIEWER_CONTEXT
+          python3 .github/scripts/pr_review_propose.py render-qa-prompt \
+            .github/prompts/pr-review-qa.md > /tmp/qa-prompt.md
+
+          copilot \
+            -p "$(cat /tmp/qa-prompt.md)" \
+            --allow-tool=write \
+            --no-ask-user
+
+      - name: Post answer
+        if: |
+          steps.download.outputs.found_artifact == 'true' &&
+          steps.intent.outputs.intent == 'question'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          PR_NUMBER: ${{ steps.pending.outputs.pr_number }}
+        run: |
+          if [ -f answer.txt ]; then
+            gh pr comment "${PR_NUMBER}" --repo "${REPO}" --body-file answer.txt
+          else
+            gh pr comment "${PR_NUMBER}" --repo "${REPO}" \
+              --body "I wasn't able to generate an answer. Reply **yes** to start the review, or ask another question!"
+          fi

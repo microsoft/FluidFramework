@@ -153,7 +153,7 @@ export interface SchemaStaticsAlpha {
 	 * The migration path is:
 	 *
 	 * 1. Start with `sf.required(T)` — all clients require the field.
-	 * 2. Deploy `sf.stagedOptional(T)` — new clients can read documents where the field is present or absent, but the stored schema stays Required (so old clients are unaffected). Writing `undefined` is blocked at runtime.
+	 * 2. Deploy `sf.stagedOptional(T)` — new clients can read documents where the field is present or absent, but the stored schema stays Required (so old clients are unaffected). Setting the field to `undefined` is rejected because the stored schema still declares the field as required.
 	 * 3. Deploy `sf.optional(T)` once all clients support the staged optional field — the stored schema becomes Optional and the field can be cleared.
 	 *
 	 * Analogous to {@link SchemaStaticsBeta.staged} for allowed types, but for field optionality.
@@ -174,6 +174,28 @@ export interface SchemaStaticsAlpha {
 			"defaultProvider" | "stagedOptionalUpgrade"
 		>,
 	) => FieldSchemaAlpha<
+		FieldKind.Optional,
+		T,
+		TCustomMetadata,
+		FieldPropsAlpha<TCustomMetadata>
+	>;
+	/**
+	 * {@link SchemaStaticsAlpha.stagedOptional} except tweaked to work better for recursive types.
+	 * Use with {@link ValidateRecursiveSchema} for improved type safety.
+	 * @remarks
+	 * This version of {@link SchemaStaticsAlpha.stagedOptional} has fewer type constraints to work around TypeScript limitations, see {@link Unenforced}.
+	 * See {@link ValidateRecursiveSchema} for additional information about using recursive schema.
+	 */
+	readonly stagedOptionalRecursive: <
+		const T extends System_Unsafe.ImplicitAllowedTypesUnsafe,
+		const TCustomMetadata = unknown,
+	>(
+		t: T,
+		props?: Omit<
+			FieldPropsAlpha<TCustomMetadata>,
+			"defaultProvider" | "stagedOptionalUpgrade"
+		>,
+	) => FieldSchemaAlphaUnsafe<
 		FieldKind.Optional,
 		T,
 		TCustomMetadata,
@@ -280,10 +302,9 @@ const stagedOptional = <const T extends ImplicitAllowedTypes, const TCustomMetad
 
 const schemaStaticsAlpha: SchemaStaticsAlpha = {
 	withDefault,
-
 	withDefaultRecursive: withDefault as SchemaStaticsAlpha["withDefaultRecursive"],
-
 	stagedOptional,
+	stagedOptionalRecursive: stagedOptional as SchemaStaticsAlpha["stagedOptionalRecursive"],
 };
 
 /**
@@ -511,6 +532,16 @@ export class SchemaFactoryAlpha<
 	 * {@inheritdoc SchemaStaticsAlpha.stagedOptional}
 	 */
 	public static readonly stagedOptional = schemaStaticsAlpha.stagedOptional;
+
+	/**
+	 * {@inheritdoc SchemaStaticsAlpha.stagedOptionalRecursive}
+	 */
+	public readonly stagedOptionalRecursive = schemaStaticsAlpha.stagedOptionalRecursive;
+
+	/**
+	 * {@inheritdoc SchemaStaticsAlpha.stagedOptionalRecursive}
+	 */
+	public static readonly stagedOptionalRecursive = schemaStaticsAlpha.stagedOptionalRecursive;
 
 	/**
 	 * Define a {@link TreeNodeSchema} for a {@link TreeMapNodeAlpha}.

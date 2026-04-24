@@ -91,13 +91,20 @@ The OCE rotation covers **three IcM teams**. Always search all three when lookin
 | Pipeline | Def ID | ADO Org/Project | MCP Server | Key Stages to Monitor |
 |---|---|---|---|---|
 | Build - client packages | 12 | `fluidframework/internal` | `ado` | `build`, `run_checks`, `publish_npm_internal_*` |
-| E2E tests | 56 | `fluidframework/internal` | `ado` | `e2e_odsp`, `e2e_local_server`, `e2e_azure_client_frs`, `e2e_azure_client_local_server` |
+| Real Service End to End Tests | 56 | `fluidframework/internal` | `ado` | `e2e_local_server`, `e2e_tinylicious`, `e2e_docker`, `e2e_frs`, `e2e_odsp` |
+| Service Clients End to End Tests | 80 | `fluidframework/internal` | `ado` | `e2e_azure_client_frs`, `e2e_azure_client_local_server`, `e2e_odsp_client_odsp_server` |
 | Stress tests | 63 | `fluidframework/internal` | `ado` | `stress_tests_odsp`, `stress_tests_odspdf`, `stress_tests_tinylicious`, `stress_tests_frs`, `stress_tests_frs_canary` |
 | Loop-FF integration | 29163 | `office/OC` | `ado-office` | `Build And Run E2E Tests`, `Build And Run Unit Tests`, `Lint and Type Check` |
+
+**Pipeline YAML files:** All test pipelines are defined at `tools/pipelines/test-*.yml`; client build pipelines are typically at `tools/pipelines/build-*.yml` (note that `tools/pipelines/` also contains server, deploy, and policy-check pipelines). To find which pipeline owns a stage, grep `tools/pipelines/` for the `stageId` (e.g., `grep -l e2e_azure_client_frs tools/pipelines/test-*.yml`). **Do not assume a stage is in a particular pipeline based on its name** — `e2e_frs` is in def 56 but `e2e_azure_client_frs` is in def 80.
 
 **ADO MCP servers:** Two ADO MCP servers are configured — `ado` (for `fluidframework` org) and `ado-office` (for `office` org). When querying pipelines in `office/OC` (e.g., Loop-FF integration pipeline def 29163), use the `ado-office` MCP server tools. All other pipelines use the default `ado` tools.
 
 **ADO Build API result codes:** `result`: `2` = succeeded ✅, `4` = partiallySucceeded ⚠️, `8` = failed ❌. `status`: `1` = inProgress, `2` = completed.
+
+**Navigating ADO build logs:** Build log metadata (from `ado-pipelines_get_build_log`) lists log IDs and line counts but **does not include stage/job names**. To identify which log corresponds to which stage, fetch the first ~5 lines of each candidate log and look for the `##[section]Starting:` header (e.g., `[test] test:realsvc:azure`). The largest logs (typically thousands of lines) are usually the test execution output containing mocha pass/fail results — start there.
+
+**ADO ≠ GitHub Actions:** These pipelines are in Azure DevOps. Do not attempt to use GitHub Actions tools (`github-mcp-server-get_job_logs`, etc.) — they will return 404. Always use the `ado-pipelines_*` tools.
 
 ### Teams Channels
 
@@ -172,7 +179,7 @@ This section covers the tasks you may perform. You are not limited to these — 
 
 ### Pipeline Health Monitoring
 
-- **Monitor key pipelines**: Check Build (def 12), E2E (def 56), and Stress (def 63) pipelines for `main` and `lts` branches. Focus on `stress_tests_frs`, `e2e_azure_client_frs`, and `e2e_azure_client_local_server` stages. Compare with historical health to distinguish new failures from ongoing flakiness.
+- **Monitor key pipelines**: Check Build (def 12), Real Service E2E (def 56), Service Clients E2E (def 80), and Stress (def 63) pipelines for `main` and `lts` branches. Focus on `stress_tests_frs` (def 63), `e2e_azure_client_frs` and `e2e_azure_client_local_server` (def 80) stages. Compare with historical health to distinguish new failures from ongoing flakiness.
 
 - **Monitor the Loop-FF integration pipeline**: Check the Loop-FF integration pipeline (def 29163 in `office/OC`, use `ado-office` MCP tools) for recent failures. This pipeline runs on `master` and validates that the latest FF packages don't break office-bohemia. Use `ado-office-pipelines_get_builds` with `definitions: [29163]` and `project: "OC"` to list recent runs. Summarize results (passed/failed, failed stage, error). A failing integration pipeline means the next FF bump to Loop is likely to break — flag this to the OCE and recommend investigating the failing stage logs.
 

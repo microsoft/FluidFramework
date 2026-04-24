@@ -1,0 +1,46 @@
+name: "PR Review Fleet Dispatcher"
+
+# Watches for the fleet-review label and saves PR context as an artifact.
+# The fleet workflow (pr-review-fleet.yml) picks it up via workflow_run and
+# runs its default reviewer count.
+
+on:
+  pull_request:
+    types:
+      - labeled
+    branches:
+      - main
+      - next
+      - release/**/*
+
+permissions:
+  contents: read
+
+# Only one dispatcher per PR at a time; cancel stale runs when labels are applied rapidly.
+concurrency:
+  group: pr-review-dispatch-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  dispatch:
+    name: "Dispatch fleet"
+    if: github.event.label.name == 'fleet-review'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Save dispatch params
+        run: |
+          mkdir -p dispatch
+          jq -n \
+            --arg pr_number "${{ github.event.pull_request.number }}" \
+            --arg head_sha "${{ github.event.pull_request.head.sha }}" \
+            --arg base_ref "${{ github.base_ref }}" \
+            '{pr_number: $pr_number|tonumber, head_sha: $head_sha, base_ref: $base_ref}' \
+            > dispatch/params.json
+          cat dispatch/params.json
+
+      - name: Upload dispatch params
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # ratchet:actions/upload-artifact@v7
+        with:
+          name: dispatch-params
+          path: dispatch/params.json
+          retention-days: 1
