@@ -29,6 +29,8 @@ export interface UndoRedo {
  * label is provided the operation is global and targets the most recent commit regardless of
  * labels.
  *
+ * TODO: document how redo stack is affected by undoing with a label (redo entries with overlapping labels are cleared) and by new commits (redo entries with overlapping labels are cleared).
+ *
  * All operations are silent no-ops when there is nothing to undo/redo matching the label policy.
  *
  * **Nested-transaction labels are not tracked.** SharedTree supports nesting one `runTransaction`
@@ -243,7 +245,9 @@ export class UndoRedoManager implements LabeledUndoRedo {
 	public undo(label?: symbol): void {
 		const index =
 			label === undefined
-				? this.#undoStack.length - 1
+				? this.#undoStack.length > 0
+					? this.#undoStack.length - 1
+					: undefined
 				: this.#lastIndexWithLabel(this.#undoStack, label);
 		if (index === undefined) {
 			return;
@@ -263,7 +267,9 @@ export class UndoRedoManager implements LabeledUndoRedo {
 	public redo(label?: symbol): void {
 		const index =
 			label === undefined
-				? this.#redoStack.length - 1
+				? this.#redoStack.length > 0
+					? this.#redoStack.length - 1
+					: undefined
 				: this.#lastIndexWithLabel(this.#redoStack, label);
 		if (index === undefined) {
 			return;
