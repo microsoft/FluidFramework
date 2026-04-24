@@ -147,14 +147,13 @@ function checkProxySettings() {
 	const proxyVarNames = ["http_proxy", "https_proxy", "npm_config_proxy", "npm_config_https_proxy"];
 	const foundEnv = Object.keys(process.env)
 		.filter((k) => proxyVarNames.includes(k.toLowerCase()))
-		.map((k) => `'${k}' = '${process.env[k]}'`);
+		.map((k) => `'${k}'`);
 
 	if (foundEnv.length > 0) {
 		warn(
 			"proxy environment variables",
-			`Proxy settings detected in environment:\n` +
-				foundEnv.map((entry) => `        ${entry}`).join("\n") +
-				`\n        These may redirect or block package resolution. If you are not on a network\n` +
+			`The following proxy environment variables are set: ${foundEnv.join(", ")}\n` +
+				`        These may redirect or block package resolution. If you are not on a network\n` +
 				`        that requires a proxy, consider unsetting them in your shell profile.`,
 		);
 	} else {
@@ -164,14 +163,13 @@ function checkProxySettings() {
 	if (npmConfig !== undefined) {
 		const foundConfig = ["proxy", "https-proxy"]
 			.filter((key) => npmConfig[key] !== undefined && npmConfig[key] !== null && npmConfig[key] !== "")
-			.map((key) => `'${key}' = '${npmConfig[key]}'`);
+			.map((key) => `'${key}'`);
 
 		if (foundConfig.length > 0) {
 			warn(
 				"proxy settings in npm config",
-				`Proxy settings detected in npm config (set via .npmrc):\n` +
-					foundConfig.map((entry) => `        ${entry}`).join("\n") +
-					`\n        These may redirect or block package resolution. If you are not on a network\n` +
+				`The following proxy keys are set in npm config: ${foundConfig.join(", ")}\n` +
+					`        These may redirect or block package resolution. If you are not on a network\n` +
 					`        that requires a proxy, remove them from your user-level .npmrc (~/.npmrc).`,
 			);
 		} else {
