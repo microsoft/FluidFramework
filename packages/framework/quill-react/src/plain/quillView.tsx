@@ -43,13 +43,7 @@ export const MainView: FC<MainViewProps> = ({ root, undoRedo }) => {
 };
 
 const TextEditorView = withMemoizedTreeObservations(
-	({
-		root,
-		undoRedo,
-	}: {
-		root: TextAsTree.Tree;
-		undoRedo?: UndoRedoProp;
-	}) => {
+	({ root, undoRedo }: { root: TextAsTree.Tree; undoRedo?: UndoRedoProp }) => {
 		// DOM element where Quill will mount its editor
 		const editorRef = useRef<HTMLDivElement>(null);
 		// Quill instance, persisted across renders to avoid re-initialization

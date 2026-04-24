@@ -380,13 +380,7 @@ export function buildDeltaFromTree(root: FormattedTextAsTree.Tree): QuillDeltaOp
  * than replacing all content on each change.
  */
 const FormattedTextEditorView = withMemoizedTreeObservations(
-	({
-		root,
-		undoRedo,
-	}: {
-		root: FormattedTextAsTree.Tree;
-		undoRedo?: UndoRedoProp;
-	}) => {
+	({ root, undoRedo }: { root: FormattedTextAsTree.Tree; undoRedo?: UndoRedoProp }) => {
 		// DOM element where Quill will mount its editor
 		const editorRef = useRef<HTMLDivElement>(null);
 		// Quill instance, persisted across renders to avoid re-initialization
