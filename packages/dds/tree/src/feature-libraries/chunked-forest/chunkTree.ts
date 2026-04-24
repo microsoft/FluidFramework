@@ -569,7 +569,8 @@ export function chunkRange(
  * @param policy - The {@link ChunkCompressor} to use when splitting chunks and re-chunking each side
  * of the split via {@link chunkRange}.
  *
- * @returns The index of the chunk in `chunks` that contains the node at `nodeIndex`.
+ * @returns The index of the chunk in `chunks` that begins at `nodeIndex`, or `chunks.length` when
+ * `nodeIndex === totalNodes`.
  */
 export function splitFieldAtIndex(
 	chunks: TreeChunk[],
