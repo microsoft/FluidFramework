@@ -2,9 +2,11 @@
 
 ## Implementation status (as of 2026-04-23)
 
-**Landed on branch `directory-iteration-order`.** 973 mocha tests pass,
-including 54 new tests in `directory.sortKey.spec.ts`. Build, lint,
-api-reports, api-extractor docs, and type-tests are all green.
+**Landed on branch `directory-iteration-order`.** 985 mocha tests pass,
+covering all deterministic tests T1–T67 across `directory.sortKey.spec.ts`,
+`directory.rollback.spec.ts` (T50–T54), and `directory.snapshot.spec.ts`
+(T58–T62). Build, lint, api-reports, api-extractor docs, and type-tests
+are all green. Slice 11 (fuzz) is the only remaining follow-up.
 
 ### Deviations from the plan
 
@@ -46,17 +48,15 @@ api-reports, api-extractor docs, and type-tests are all green.
 | Subdirectory sort keys | T35–T38, T40, T41, T42 | ✅ in test file | `directory.sortKey.spec.ts` |
 | Subdirectory sort keys | T39 | ⏭ not yet written | `directory.sortKey.spec.ts` |
 | Concurrent / eventual consistency | T43, T44, T45, T46, T47, T48, T49 | ✅ in test file | `directory.sortKey.spec.ts` |
-| Rollback | T50–T54 | ⏭ not yet written | would go in `directory.rollback.spec.ts` — implementation landed |
+| Rollback | T50–T54 | ✅ landed in rollback spec | `directory.rollback.spec.ts` |
 | Reconnect & resubmit | T55, T56 | ✅ in test file | `directory.sortKey.spec.ts` |
 | Reconnect & resubmit | T57 | ⚠ simplified: asserts state after stashed-op application, not `localOpMetadata` identity. The plan's metadata assertion requires wiring a live container runtime, which is beyond what existing `TestSharedDirectory` tests do. | `directory.sortKey.spec.ts` |
-| Snapshot round-trip | T58–T62 | ⏭ not yet written | would go in `directory.snapshot.spec.ts` — implementation landed |
+| Snapshot round-trip | T58–T62 | ✅ landed in snapshot spec | `directory.snapshot.spec.ts` |
 | Detached state | T63–T65 | ✅ in test file | `directory.sortKey.spec.ts` |
 | Back-compat dark-ship guards | T66, T67 | ✅ in test file (shape asserts only, since there is no dark-ship mode — see deviation #2) | `directory.sortKey.spec.ts` |
 
-**54 of 67 planned tests landed** (T45 split into T45a/T45b, so 55 `it`s).
-The 13 still-deferred tests are follow-on hardening in rollback, snapshot,
-and fuzz specs; each corresponds to code paths that are already implemented
-and partially exercised by other tests in the suite.
+**All 67 deterministic tests landed** (T45 split into T45a/T45b; T54 split
+into T54a/T54b/T54c). Remaining follow-up is the fuzz extension (Slice 11).
 
 ### T45 clarification
 
@@ -94,7 +94,11 @@ with T29). Both preserve cross-client eventual consistency.
 2. ✅ T50, T51, T52, T53, T54a, T54b, T54c landed in `directory.rollback.spec.ts`
    (new "Sort-key operations" describe block). T54 was split into three
    sub-cases to mirror T50-T52 as the plan's "mirrors T50-52" language intends.
-3. Add T58–T62 snapshot round-trip tests to `directory.snapshot.spec.ts`.
+3. ✅ T58, T59, T60, T61, T62 landed in `directory.snapshot.spec.ts`
+   (new "SharedDirectory Snapshot Tests — sort keys" describe block).
+   T59 hand-constructs an old-format header; T62 uses an inline
+   `stripSortKeys` helper that recursively deletes `sortKeys` /
+   `subdirectorySortKeys` from the serialized `IDirectoryDataObject` tree.
 4. Slice 11 fuzz extension to `directoryFuzzTests.spec.ts` +
    `directoryOracle.ts`.
 
