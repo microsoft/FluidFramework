@@ -1085,5 +1085,49 @@ describe("textEditor", () => {
 				assert.equal("indent" in (lineOp.attributes ?? {}), false);
 			});
 		});
+
+		describe("toolbar", () => {
+			const mockLabel = Symbol("test");
+
+			for (const reactStrictMode of [false, true]) {
+				describe(`StrictMode: ${reactStrictMode}`, () => {
+					it("undo and redo buttons are disabled when undoRedo is not provided", () => {
+						const { tree } = createFormattedTreeView();
+						const rendered = render(<FormattedMainView root={toPropTreeNode(tree)} />, {
+							reactStrictMode,
+						});
+
+						const undoButton = rendered.container.querySelector<HTMLButtonElement>(".ql-undo");
+						const redoButton = rendered.container.querySelector<HTMLButtonElement>(".ql-redo");
+						assert.ok(undoButton?.disabled === true, "Undo button should be disabled");
+						assert.ok(redoButton?.disabled === true, "Redo button should be disabled");
+					});
+
+					it("undo and redo buttons are enabled when undoRedo is provided", () => {
+						const mockUndoRedo: UndoRedo = {
+							undo: () => {},
+							redo: () => {},
+							canUndo: () => true,
+							canRedo: () => true,
+							dispose: () => {},
+						};
+
+						const { tree } = createFormattedTreeView();
+						const rendered = render(
+							<FormattedMainView
+								root={toPropTreeNode(tree)}
+								undoRedo={{ manager: mockUndoRedo, transactionLabel: mockLabel }}
+							/>,
+							{ reactStrictMode },
+						);
+
+						const undoButton = rendered.container.querySelector<HTMLButtonElement>(".ql-undo");
+						const redoButton = rendered.container.querySelector<HTMLButtonElement>(".ql-redo");
+						assert.equal(undoButton?.disabled, false, "Undo button should be enabled");
+						assert.equal(redoButton?.disabled, false, "Redo button should be enabled");
+					});
+				});
+			}
+		});
 	});
 });
