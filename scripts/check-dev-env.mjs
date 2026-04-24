@@ -18,6 +18,16 @@ const green = (s) => (useColor ? `\x1b[32m${s}\x1b[0m` : s);
 const yellow = (s) => (useColor ? `\x1b[33m${s}\x1b[0m` : s);
 const red = (s) => (useColor ? `\x1b[31m${s}\x1b[0m` : s);
 
+/** Parsed output of `npm config list --json`, or `undefined` if the command failed. */
+const npmConfig = (() => {
+	try {
+		const raw = execSync("npm config list --json", { encoding: "utf8", stdio: ["pipe", "pipe", "pipe"] });
+		return JSON.parse(raw);
+	} catch {
+		return undefined;
+	}
+})();
+
 const issues = [];
 const warnings = [];
 const results = [];
@@ -54,16 +64,12 @@ function pass(label) {
  *   might complain when seeing packages with no provenance info.
  */
 function checkNpmRegistry() {
-	let config;
-	try {
-		const raw = execSync("npm config list --json", { encoding: "utf8", stdio: ["pipe", "pipe", "pipe"] });
-		config = JSON.parse(raw);
-	} catch {
+	if (npmConfig === undefined) {
 		issue("npm registry", "Could not run 'npm config list --json' — is npm installed and on PATH?");
 		return;
 	}
 
-	const registry = (config.registry ?? DEFAULT_REGISTRY).replace(/\/$/, "");
+	const registry = (npmConfig.registry ?? DEFAULT_REGISTRY).replace(/\/$/, "");
 	const expected = DEFAULT_REGISTRY.replace(/\/$/, "");
 
 	if (registry !== expected) {
@@ -78,7 +84,7 @@ function checkNpmRegistry() {
 		pass("npm registry is the default");
 	}
 
-	const scopedRegistries = Object.entries(config)
+	const scopedRegistries = Object.entries(npmConfig)
 		.filter(([key]) => /^@.+:registry$/.test(key))
 		.map(([key, value]) => `'${key}' → '${value}'`);
 
@@ -124,31 +130,53 @@ function checkEnvRegistry() {
 }
 
 /**
- * Checks for proxy-related environment variables that may interfere with package resolution.
+ * Checks for proxy settings that may interfere with package resolution.
  *
  * @remarks
- * Proxy variables (`http_proxy`, `https_proxy`, `npm_config_proxy`, `npm_config_https_proxy`) are
- * commonly set on corporate networks but can silently redirect or block registry traffic on machines
- * that don't actually need a proxy. All four are checked case-insensitively since conventions vary
- * across shells and operating systems. This is reported as a warning rather than an error because
- * the variables may be legitimately required in the developer's network environment.
+ * Proxy configuration can come from two sources:
+ * - **Environment variables** (`http_proxy`, `https_proxy`, `npm_config_proxy`,
+ *   `npm_config_https_proxy`) — checked case-insensitively since conventions vary across shells
+ *   and operating systems.
+ * - **npm config** (`proxy`, `https-proxy`) — set via `.npmrc` files and visible in
+ *   `npm config list --json`.
+ *
+ * Both are reported as warnings rather than errors because proxy settings may be legitimately
+ * required in the developer's network environment.
  */
 function checkProxySettings() {
 	const proxyVarNames = ["http_proxy", "https_proxy", "npm_config_proxy", "npm_config_https_proxy"];
-	const found = Object.keys(process.env)
+	const foundEnv = Object.keys(process.env)
 		.filter((k) => proxyVarNames.includes(k.toLowerCase()))
 		.map((k) => `'${k}' = '${process.env[k]}'`);
 
-	if (found.length > 0) {
+	if (foundEnv.length > 0) {
 		warn(
 			"proxy environment variables",
 			`Proxy settings detected in environment:\n` +
-				found.map((entry) => `        ${entry}`).join("\n") +
+				foundEnv.map((entry) => `        ${entry}`).join("\n") +
 				`\n        These may redirect or block package resolution. If you are not on a network\n` +
 				`        that requires a proxy, consider unsetting them in your shell profile.`,
 		);
 	} else {
 		pass("no proxy environment variables set");
+	}
+
+	if (npmConfig !== undefined) {
+		const foundConfig = ["proxy", "https-proxy"]
+			.filter((key) => npmConfig[key] !== undefined && npmConfig[key] !== null && npmConfig[key] !== "")
+			.map((key) => `'${key}' = '${npmConfig[key]}'`);
+
+		if (foundConfig.length > 0) {
+			warn(
+				"proxy settings in npm config",
+				`Proxy settings detected in npm config (set via .npmrc):\n` +
+					foundConfig.map((entry) => `        ${entry}`).join("\n") +
+					`\n        These may redirect or block package resolution. If you are not on a network\n` +
+					`        that requires a proxy, remove them from your user-level .npmrc (~/.npmrc).`,
+			);
+		} else {
+			pass("no proxy settings in npm config");
+		}
 	}
 }
 
