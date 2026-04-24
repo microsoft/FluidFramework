@@ -121,7 +121,7 @@ _See code: [src/commands/generate/buildVersion.ts](https://github.com/microsoft/
 
 ## `flub generate bundleSizeDiff`
 
-Compare the PR's locally-collected bundle reports against the baseline CI build and write the result as a structured result.json file.
+Compare the PR's locally-collected bundle reports against the baseline CI build and write the outcome as one of two structured files in the output directory: result.json on success, error.json on failure.
 
 ```
 USAGE
@@ -130,15 +130,15 @@ USAGE
 FLAGS
   --localReportPath=<value>  [default: ./artifacts/bundleAnalysis] Path to the locally-collected bundle reports for the
                              PR (as produced by `flub generate bundleStats`).
-  --outputDir=<value>        [default: ./artifacts/bundleSizeDiff] Directory to write the result.json file into.
+  --outputDir=<value>        [default: ./artifacts/bundleSizeDiff] Directory to write result.json or error.json into.
 
 LOGGING FLAGS
   -v, --verbose  Enable verbose logging.
       --quiet    Disable all logging.
 
 DESCRIPTION
-  Compare the PR's locally-collected bundle reports against the baseline CI build and write the result as a structured
-  result.json file.
+  Compare the PR's locally-collected bundle reports against the baseline CI build and write the outcome as one of two
+  structured files in the output directory: result.json on success, error.json on failure.
 ```
 
 _See code: [src/commands/generate/bundleSizeDiff.ts](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/src/commands/generate/bundleSizeDiff.ts)_
