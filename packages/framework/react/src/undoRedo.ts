@@ -118,7 +118,9 @@ export interface UndoRedo {
 
 function labelsOverlap(a: ReadonlySet<symbol>, b: ReadonlySet<symbol>): boolean {
 	for (const label of a) {
-		if (b.has(label)) return true;
+		if (b.has(label)) {
+			return true;
+		}
 	}
 	return false;
 }
