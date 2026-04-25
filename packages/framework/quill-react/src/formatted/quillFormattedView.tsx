@@ -617,12 +617,14 @@ const FormattedTextEditorView = withMemoizedTreeObservations(
 						<button
 							type="button"
 							className="ql-undo"
+							aria-label="Undo"
 							disabled={undoRedo?.manager.canUndo(undoRedo.editLabel) !== true}
 							onClick={() => undoRedo?.manager.undo(undoRedo.editLabel)}
 						/>
 						<button
 							type="button"
 							className="ql-redo"
+							aria-label="Redo"
 							disabled={undoRedo?.manager.canRedo(undoRedo.editLabel) !== true}
 							onClick={() => undoRedo?.manager.redo(undoRedo.editLabel)}
 						/>

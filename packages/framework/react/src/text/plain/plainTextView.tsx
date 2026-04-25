@@ -165,6 +165,7 @@ const PlainTextEditorView = withMemoizedTreeObservations(
 						<button
 							type="button"
 							className="pt-undo"
+							aria-label="Undo"
 							disabled={!undoRedo.manager.canUndo(undoRedo.editLabel)}
 							onClick={() => undoRedo.manager.undo(undoRedo.editLabel)}
 							title="Undo"
@@ -172,6 +173,7 @@ const PlainTextEditorView = withMemoizedTreeObservations(
 						<button
 							type="button"
 							className="pt-redo"
+							aria-label="Redo"
 							disabled={!undoRedo.manager.canRedo(undoRedo.editLabel)}
 							onClick={() => undoRedo.manager.redo(undoRedo.editLabel)}
 							title="Redo"

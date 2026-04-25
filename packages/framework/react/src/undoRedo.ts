@@ -18,8 +18,7 @@ import type { RevertibleAlpha, TreeBranchAlpha } from "@fluidframework/tree/inte
  *
  * **Redo invalidation:** when a new user commit arrives, redo entries whose label sets overlap
  * with the new commit's labels are discarded. An anonymous commit (no labels) discards only
- * anonymous redo entries; labeled redo entries are preserved. Similarly, calling `undo(label)`
- * discards redo entries that overlap with the undone commit's labels.
+ * anonymous redo entries; labeled redo entries are preserved.
  *
  * All operations are silent no-ops when there is nothing to undo/redo matching the label policy.
  *
@@ -117,6 +116,13 @@ export interface UndoRedo {
 	dispose(): void;
 }
 
+function labelsOverlap(a: ReadonlySet<symbol>, b: ReadonlySet<symbol>): boolean {
+	for (const label of a) {
+		if (b.has(label)) return true;
+	}
+	return false;
+}
+
 interface StackEntry {
 	/**
 	 * The revertible object representing the commit that can be undone or redone.
@@ -197,7 +203,7 @@ class UndoRedoManager implements UndoRedo {
 				const overlaps =
 					symbolLabels.size === 0
 						? entry.labels.size === 0
-						: [...symbolLabels].some((l) => entry.labels.has(l));
+						: labelsOverlap(symbolLabels, entry.labels);
 				if (overlaps) {
 					entry.revertible.dispose();
 					this.#redoStack.splice(i, 1);
@@ -224,13 +230,15 @@ class UndoRedoManager implements UndoRedo {
 		const entry = this.#undoStack[index] ?? oob();
 		this.#pendingOperation = { kind: "undo", labels: entry.labels };
 		try {
-			entry.revertible.revert();
+			// revert(false) reverts without auto-disposing, so the entry remains retryable if it throws.
+			entry.revertible.revert(false);
 		} finally {
 			this.#pendingOperation = undefined;
 		}
-		// Only remove from the stack after a successful revert.
+		// Only remove and dispose after a successful revert.
 		// If revert() throws, the entry stays so the user can retry.
 		this.#undoStack.splice(index, 1);
+		entry.revertible.dispose();
 	}
 
 	public redo(label?: symbol): void {
@@ -249,13 +257,15 @@ class UndoRedoManager implements UndoRedo {
 		const entry = this.#redoStack[index] ?? oob();
 		this.#pendingOperation = { kind: "redo", labels: entry.labels };
 		try {
-			entry.revertible.revert();
+			// revert(false) reverts without auto-disposing, so the entry remains retryable if it throws.
+			entry.revertible.revert(false);
 		} finally {
 			this.#pendingOperation = undefined;
 		}
-		// Only remove from the stack after a successful revert.
+		// Only remove and dispose after a successful revert.
 		// If revert() throws, the entry stays so the user can retry.
 		this.#redoStack.splice(index, 1);
+		entry.revertible.dispose();
 	}
 
 	public canUndo(label?: symbol): boolean {

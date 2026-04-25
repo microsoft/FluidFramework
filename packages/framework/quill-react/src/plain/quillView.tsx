@@ -130,8 +130,9 @@ const TextEditorView = withMemoizedTreeObservations(
 				setUndoRedoContainer(undefined);
 				toolbar.remove();
 			};
-			// In React strict mode, effects run twice. The `!quillRef.current` check above
-			// makes the second call a no-op, preventing double-initialization of Quill.
+			// In React StrictMode, this effect runs as initialize/cleanup/initialize during
+			// development. The cleanup above resets quillRef.current and DOM state before the
+			// second initialization.
 			// eslint-disable-next-line react-hooks/exhaustive-deps
 		}, []);
 
@@ -170,12 +171,14 @@ const TextEditorView = withMemoizedTreeObservations(
 						<button
 							type="button"
 							className="ql-undo"
+							aria-label="Undo"
 							disabled={undoRedo?.manager.canUndo(undoRedo.editLabel) !== true}
 							onClick={() => undoRedo?.manager.undo(undoRedo.editLabel)}
 						/>
 						<button
 							type="button"
 							className="ql-redo"
+							aria-label="Redo"
 							disabled={undoRedo?.manager.canRedo(undoRedo.editLabel) !== true}
 							onClick={() => undoRedo?.manager.redo(undoRedo.editLabel)}
 						/>
