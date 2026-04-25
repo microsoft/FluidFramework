@@ -116,7 +116,10 @@ export interface UndoRedo {
 	dispose(): void;
 }
 
-function labelsOverlap(a: ReadonlySet<symbol>, b: ReadonlySet<symbol>): boolean {
+/**
+ * Determines if sets `a` and `b` share at least one symbol.
+ */
+function doLabelSetsOverlap(a: ReadonlySet<symbol>, b: ReadonlySet<symbol>): boolean {
 	for (const label of a) {
 		if (b.has(label)) {
 			return true;
@@ -125,6 +128,9 @@ function labelsOverlap(a: ReadonlySet<symbol>, b: ReadonlySet<symbol>): boolean 
 	return false;
 }
 
+/**
+ * One entry on the undo or redo stack, pairing a revertible with its commit's label set.
+ */
 interface StackEntry {
 	/**
 	 * The revertible object representing the commit that can be undone or redone.
@@ -205,7 +211,7 @@ class UndoRedoManager implements UndoRedo {
 				const overlaps =
 					symbolLabels.size === 0
 						? entry.labels.size === 0
-						: labelsOverlap(symbolLabels, entry.labels);
+						: doLabelSetsOverlap(symbolLabels, entry.labels);
 				if (overlaps) {
 					entry.revertible.dispose();
 					this.#redoStack.splice(i, 1);
