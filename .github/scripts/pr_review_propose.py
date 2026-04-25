@@ -2,20 +2,25 @@
 """Utilities for the PR review proposal flow.
 
 Subcommands:
-  build-comment    Build the markdown proposal comment body.
-  parse-checkboxes Read a comment body file and emit the checked reviewer IDs as JSON.
-  format-names     Convert a JSON reviewer-ID array to a display-name string.
+  build-comment     Build the markdown proposal comment body.
+  parse-checkboxes  Read a comment body file and emit the checked reviewer IDs as JSON.
+  format-names      Convert a JSON reviewer-ID array to a display-name string.
+  build-qa-context  Render a short reviewer-selection context block.
+  render-qa-prompt  Substitute environment variables into a prompt template.
 
 Usage:
   python pr_review_propose.py build-comment --reviewer-count 3 --lines 247 --files 8
   python pr_review_propose.py parse-checkboxes comment.txt
   python pr_review_propose.py format-names '["correctness","security"]'
+  python pr_review_propose.py build-qa-context '["correctness","security"]'
+  python pr_review_propose.py render-qa-prompt qa-template.md
 """
 
 from __future__ import annotations
 
 import argparse
 import json
+import os
 import re
 import sys
 from typing import NamedTuple
@@ -93,7 +98,7 @@ def cmd_parse_checkboxes(args: argparse.Namespace) -> None:
     if path == "-":
         body = sys.stdin.read()
     else:
-        with open(path) as f:
+        with open(path, encoding="utf-8") as f:
             body = f.read()
 
     checked: list[str] = []
@@ -110,6 +115,33 @@ def cmd_format_names(args: argparse.Namespace) -> None:
     ids: list[str] = json.loads(args.reviewers_json)
     names = [_ID_TO_LABEL.get(r, r) for r in ids]
     print(", ".join(names))
+
+
+def cmd_build_qa_context(args: argparse.Namespace) -> None:
+    """Print a compact context block describing which reviewers were selected."""
+    selected_ids = set(json.loads(args.selected_json))
+
+    lines: list[str] = []
+    for r in REVIEWERS:
+        mark = "✓" if r.id in selected_ids else "○"
+        lines.append(f"{mark} {r.label} — {r.description}")
+
+    print("\n".join(lines))
+
+
+def cmd_render_qa_prompt(args: argparse.Namespace) -> None:
+    """Render a QA prompt by substituting environment variables into a template."""
+    template = args.template
+    with open(template, encoding="utf-8") as f:
+        text = f.read()
+
+    reviewer_context = os.environ.get("REVIEWER_CONTEXT", "")
+    reply = os.environ.get("REPLY", "")
+
+    rendered = text.replace("__REVIEWER_CONTEXT__", reviewer_context).replace(
+        "__REPLY__", reply
+    )
+    sys.stdout.write(rendered)
 
 
 # ── CLI wiring ────────────────────────────────────────────────────────────────
@@ -141,6 +173,14 @@ def _build_parser() -> argparse.ArgumentParser:
     p = sub.add_parser("format-names", help="Format reviewer IDs as display names")
     p.add_argument("reviewers_json", help="JSON array of reviewer IDs")
     p.set_defaults(func=cmd_format_names)
+
+    p = sub.add_parser("build-qa-context", help="Build a compact reviewer context block")
+    p.add_argument("selected_json", help="JSON array of selected reviewer IDs")
+    p.set_defaults(func=cmd_build_qa_context)
+
+    p = sub.add_parser("render-qa-prompt", help="Render a QA prompt from a template")
+    p.add_argument("template", help="Path to the template file")
+    p.set_defaults(func=cmd_render_qa_prompt)
 
     return parser
 
