@@ -170,7 +170,7 @@ describe("Container close/dispose telemetry", () => {
 		);
 	});
 
-	it("ContainerDispose is logged as generic when dispose is called without an error", () => {
+	it("ContainerDispose is logged as generic with isDirty, lastSequenceNumber, and containerAttachState fields when dispose is called without an error", () => {
 		const mockLogger = new MockLogger();
 		const container = createTestContainer(mockLogger);
 
@@ -200,27 +200,6 @@ describe("Container close/dispose telemetry", () => {
 			disposeEvent.containerAttachState,
 			AttachState.Detached,
 			"ContainerDispose should log containerAttachState for a never-attached container",
-		);
-	});
-
-	it("ContainerDispose logs isDirty, lastSequenceNumber, and containerAttachState fields", () => {
-		const mockLogger = new MockLogger();
-		const container = createTestContainer(mockLogger);
-
-		container.dispose();
-
-		const disposeEvent = mockLogger.events.find(
-			(e) => typeof e.eventName === "string" && e.eventName.endsWith("ContainerDispose"),
-		);
-		assert(disposeEvent !== undefined, "ContainerDispose event should be logged");
-		assert("isDirty" in disposeEvent, "ContainerDispose event payload should include isDirty");
-		assert(
-			"lastSequenceNumber" in disposeEvent,
-			"ContainerDispose event payload should include lastSequenceNumber",
-		);
-		assert(
-			"containerAttachState" in disposeEvent,
-			"ContainerDispose event payload should include containerAttachState (from subLogger)",
 		);
 	});
 });

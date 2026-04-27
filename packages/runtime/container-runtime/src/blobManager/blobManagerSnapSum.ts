@@ -4,7 +4,6 @@
  */
 
 import type { IContainerContext } from "@fluidframework/container-definitions/internal";
-import { LogLevel } from "@fluidframework/core-interfaces";
 import { readAndParse } from "@fluidframework/driver-utils/internal";
 import type { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions/internal";
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
@@ -58,21 +57,16 @@ export const toRedirectTable = (
 	blobManagerLoadInfo: IBlobManagerLoadInfo,
 	logger: ITelemetryLoggerExt,
 ): Map<string, string> => {
-	if (
-		(blobManagerLoadInfo.ids?.length ?? 0) > 0 ||
-		(blobManagerLoadInfo.redirectTable?.length ?? 0) > 0
-	) {
-		logger.sendTelemetryEvent(
-			{
-				eventName: "AttachmentBlobsLoaded",
-				count: blobManagerLoadInfo.ids?.length ?? 0,
-				redirectTable: blobManagerLoadInfo.redirectTable?.length,
-			},
-			undefined, // error
-			LogLevel.info,
-		);
+	const count = blobManagerLoadInfo.ids?.length ?? 0;
+	const redirectTable = blobManagerLoadInfo.redirectTable?.length ?? 0;
+	if (count > 0 || redirectTable > 0) {
+		logger.sendTelemetryEvent({
+			eventName: "AttachmentBlobsLoaded",
+			count,
+			redirectTable,
+		});
 	}
-	const redirectTable = new Map<string, string>(blobManagerLoadInfo.redirectTable);
+	const redirectTableMap = new Map<string, string>(blobManagerLoadInfo.redirectTable);
 	if (blobManagerLoadInfo.ids !== undefined) {
 		for (const storageId of blobManagerLoadInfo.ids) {
 			// Older versions of the runtime used the storage ID directly in the handle,
@@ -80,10 +74,10 @@ export const toRedirectTable = (
 			// were created in this way but unify handling through the redirectTable, we
 			// add identity mappings to the redirect table at load. These identity entries
 			// will be excluded during summarization.
-			redirectTable.set(storageId, storageId);
+			redirectTableMap.set(storageId, storageId);
 		}
 	}
-	return redirectTable;
+	return redirectTableMap;
 };
 
 export const summarizeBlobManagerState = (
