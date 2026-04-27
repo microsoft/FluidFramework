@@ -32,6 +32,9 @@ importers:
       '@fluid-internal/mocha-test-setup':
         specifier: ~2.83.0
         version: 2.83.0
+      '@fluidframework/build-common':
+        specifier: ^2.0.3
+        version: 2.0.3
       '@microsoft/api-extractor':
         specifier: ^7.58.2
         version: 7.58.2(@types/node@22.19.17)
@@ -149,6 +152,10 @@ packages:
 
   '@fluid-internal/test-driver-definitions@2.83.0':
     resolution: {integrity: sha512-e25u/eR5jifNKwxEjWiLYkK8WJXvoCFAbODvUjiuLZf0k5nII/hUNSRz6id48ycFwJ+FP2eYqnbh43sO50vH9g==}
+
+  '@fluidframework/build-common@2.0.3':
+    resolution: {integrity: sha512-1LU/2uyCeMxf63z5rhFOFEBvFyBogZ7ZXwzXLxyBhSgq/fGiq8PLjBW7uX++r0LcVCdaWyopf7w060eJpANYdg==}
+    hasBin: true
 
   '@fluidframework/core-interfaces@2.83.0':
     resolution: {integrity: sha512-urkyfgSYUTKoGMuw5R1rIrFq7QH11tRw+GjGWBzGDd8Ovb0iXZtjV3dEtzC/KJnWEefgNt4NdbsS0f+5hMoJqA==}
@@ -1617,6 +1624,8 @@ snapshots:
     dependencies:
       '@fluidframework/core-interfaces': 2.83.0
       '@fluidframework/driver-definitions': 2.83.0
+
+  '@fluidframework/build-common@2.0.3': {}
 
   '@fluidframework/core-interfaces@2.83.0': {}
 

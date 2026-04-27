@@ -4,7 +4,6 @@
  */
 
 import {
-	BenchmarkType,
 	benchmarkDuration,
 	benchmarkIt,
 	isInPerformanceTestingMode,
@@ -50,7 +49,6 @@ describe("FluidSerializer", () => {
 	describe("encode Handles", () => {
 		for (const [name, value] of encodeHandlesCases) {
 			benchmarkIt({
-				type: BenchmarkType.Measurement,
 				title: `encode - ${name}`,
 				...benchmarkDuration({
 					benchmarkFn: () => {
@@ -60,7 +58,6 @@ describe("FluidSerializer", () => {
 			});
 
 			benchmarkIt({
-				type: BenchmarkType.Measurement,
 				title: `parse(stringify) - ${name}`,
 				...benchmarkDuration({
 					benchmarkFn: () => {
@@ -74,7 +71,6 @@ describe("FluidSerializer", () => {
 	describe("stringify", () => {
 		for (const [name, value] of stringifyCases) {
 			benchmarkIt({
-				type: BenchmarkType.Measurement,
 				title: `JSON.stringify(encode) - ${name}`,
 				...benchmarkDuration({
 					benchmarkFn: () => {
@@ -84,7 +80,6 @@ describe("FluidSerializer", () => {
 			});
 
 			benchmarkIt({
-				type: BenchmarkType.Measurement,
 				title: `stringify - ${name}`,
 				...benchmarkDuration({
 					benchmarkFn: () => {
@@ -98,7 +93,6 @@ describe("FluidSerializer", () => {
 	describe("parse", () => {
 		for (const [name, value] of parseCases) {
 			benchmarkIt({
-				type: BenchmarkType.Measurement,
 				title: `parse - ${name}`,
 				...benchmarkDuration({
 					benchmarkFn: () => {

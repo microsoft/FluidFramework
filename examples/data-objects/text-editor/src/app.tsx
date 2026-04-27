@@ -250,22 +250,31 @@ const viewLabels = {
 const UserPanel: FC<{
 	label: string;
 	color: string;
-	viewType: ViewType;
 	treeView: TreeView<typeof TextEditorRoot>;
-}> = ({ label, color, viewType, treeView }) => {
+}> = ({ label, color, treeView }) => {
 	// Create undo/redo stack for this user's tree view
-	const undoRedo = useMemo(() => new UndoRedoStacks(treeView.events), [treeView.events]);
+	const undoRedo: UndoRedo = useMemo(
+		() => new UndoRedoStacks(treeView.events),
+		[treeView.events],
+	);
 
 	// Cleanup on unmount
 	useEffect(() => {
 		return () => undoRedo.dispose();
 	}, [undoRedo]);
 
-	// TODO: handle root invalidation, schema upgrades and out of schema documents.
-	const renderView = (): JSX.Element => {
-		const root = treeView.root;
-		return viewLabels[viewType].component(root, treeView, undoRedo);
+	const [collapsed, setCollapsed] = useState<Record<ViewType, boolean>>({
+		plainTextarea: false,
+		plainQuill: false,
+		formatted: false,
+	});
+
+	const toggleCollapsed = (viewType: ViewType): void => {
+		setCollapsed((prev) => ({ ...prev, [viewType]: !prev[viewType] }));
 	};
+
+	// TODO: handle root invalidation, schema upgrades and out of schema documents.
+	const root = treeView.root;
 
 	return (
 		<div
@@ -277,25 +286,66 @@ const UserPanel: FC<{
 				padding: "10px",
 				display: "flex",
 				flexDirection: "column",
+				overflowY: "auto",
 			}}
 		>
-			<div
-				style={{
-					marginBottom: "10px",
-					fontWeight: "bold",
-					color,
-				}}
-			>
-				{label}
-			</div>
-			<div style={{ flex: 1 }}>{renderView()}</div>
+			<div style={{ marginBottom: "10px", fontWeight: "bold", color }}>{label}</div>
+			{(Object.keys(viewLabels) as ViewType[]).map((viewType) => {
+				const isExpanded = !collapsed[viewType];
+				return (
+					<div
+						key={viewType}
+						style={{
+							border: "1px solid #ddd",
+							borderRadius: "6px",
+							marginBottom: "12px",
+							boxShadow: "0 1px 3px rgba(0,0,0,0.06)",
+							overflow: "hidden",
+						}}
+					>
+						<button
+							type="button"
+							aria-expanded={isExpanded}
+							aria-controls={`${viewType}-panel`}
+							onClick={() => toggleCollapsed(viewType)}
+							style={{
+								display: "flex",
+								justifyContent: "space-between",
+								alignItems: "center",
+								width: "100%",
+								padding: "10px 14px",
+								background: "#f5f5f5",
+								border: "none",
+								borderBottom: isExpanded ? "1px solid #ddd" : "none",
+								cursor: "pointer",
+								fontWeight: "600",
+								fontSize: "16px",
+								textAlign: "left",
+								color: "#333",
+							}}
+						>
+							<span>{viewLabels[viewType].description}</span>
+							<span aria-hidden="true" style={{ fontSize: "11px", color: "#666" }}>
+								{isExpanded ? "▲" : "▼"}
+							</span>
+						</button>
+						{/*
+						 * Note: we are intentionally forcing the editor components to be unmounted when their respective cards are collapsed.
+						 * We are doing this to make it possible to use this app to do performance analysis on individual editor components in isolation.
+						 */}
+						{isExpanded && (
+							<div id={`${viewType}-panel`} style={{ padding: "12px" }}>
+								{viewLabels[viewType].component(root, treeView, undoRedo)}
+							</div>
+						)}
+					</div>
+				);
+			})}
 		</div>
 	);
 };
 
 export const App: FC<{ views: DualUserViews }> = ({ views }) => {
-	const [viewType, setViewType] = useState<ViewType>("formatted");
-
 	return (
 		<div
 			style={{
@@ -306,28 +356,6 @@ export const App: FC<{ views: DualUserViews }> = ({ views }) => {
 				flexDirection: "column",
 			}}
 		>
-			<div style={{ marginBottom: "15px" }}>
-				<label htmlFor="view-select" style={{ marginRight: "10px", fontWeight: "bold" }}>
-					View:
-				</label>
-				<select
-					id="view-select"
-					value={viewType}
-					onChange={(e) => setViewType(e.target.value as ViewType)}
-					style={{
-						padding: "8px 12px",
-						fontSize: "14px",
-						borderRadius: "4px",
-						border: "1px solid #ccc",
-					}}
-				>
-					{(Object.keys(viewLabels) as ViewType[]).map((type) => (
-						<option key={type} value={type}>
-							{viewLabels[type].description}
-						</option>
-					))}
-				</select>
-			</div>
 			<div
 				style={{
 					flex: 1,
@@ -336,8 +364,8 @@ export const App: FC<{ views: DualUserViews }> = ({ views }) => {
 					alignItems: "stretch",
 				}}
 			>
-				<UserPanel label="User 1" color="#4a90d9" viewType={viewType} treeView={views.user1} />
-				<UserPanel label="User 2" color="#28a745" viewType={viewType} treeView={views.user2} />
+				<UserPanel label="User 1" color="#4a90d9" treeView={views.user1} />
+				<UserPanel label="User 2" color="#28a745" treeView={views.user2} />
 			</div>
 		</div>
 	);

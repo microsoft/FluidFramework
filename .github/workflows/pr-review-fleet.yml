@@ -1,70 +1,196 @@
 name: "PR Review Fleet"
 
-# Triggers a fleet of parallel Copilot CLI reviewer agents on every PR.
+# Runs a fleet of parallel Copilot CLI reviewer agents on a PR.
 # Each reviewer focuses on a different axis with an adversarial persona.
 # A consolidation job merges, de-duplicates, and posts one structured report.
+#
+# Triggers:
+#   - workflow_run: fired by pr-review-dispatch.yml after label detection
+#   - workflow_dispatch: for manual or programmatic triggering
 #
 # Authentication: Uses the existing COPILOT_GITHUB_TOKEN repository secret.
 # See: https://docs.github.com/en/copilot/how-tos/copilot-cli/automate-copilot-cli/automate-with-actions
 
 on:
-  # pull_request_target runs in the base-repo context so COPILOT_GITHUB_TOKEN
-  # is available even when the PR comes from a fork. The usual risk (executing
-  # untrusted PR code with elevated permissions) is mitigated here because:
-  # 1. Prompt files are read from the base branch, not the PR HEAD.
-  # 2. The checkout below uses the PR HEAD SHA explicitly for diffing only.
-  # 3. The Copilot agent is sandboxed to shell(git:*) + read + write.
-  pull_request_target:
+  workflow_run:
+    workflows: ["PR Review Fleet Dispatcher"]
     types:
-      - labeled
-    branches:
-      - main
-      - next
-      - release/**/*
+      - completed
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: "PR number to review"
+        required: true
+        type: number
+      reviewer_count:
+        description: "Number of reviewers to spawn (ignored when 'reviewers' is provided)"
+        required: false
+        type: choice
+        options:
+          - "1"
+          - "3"
+          - "5"
+        default: "3"
+      reviewers:
+        description: "JSON array of reviewer names (overrides reviewer_count when provided, e.g. [\"correctness\",\"security\"])"
+        required: false
+        type: string
+        default: ""
+      head_sha:
+        description: "PR head SHA to review"
+        required: true
+        type: string
+      base_ref:
+        description: "Base branch ref (e.g. main)"
+        required: true
+        type: string
 
 permissions:
   contents: read
   pull-requests: write
+  actions: read # Required to download artifacts from triggering workflow run
+  checks: write # Required to create/update the "Fleet Review" check run surfaced on the PR's Checks tab
 
-# Cancel in-progress runs for the same PR when new commits are pushed.
 concurrency:
-  group: pr-review-fleet-${{ github.event.pull_request.number }}
+  group: pr-review-fleet-${{ github.event.workflow_run.id || inputs.pr_number }}
   cancel-in-progress: true
 
 jobs:
+  # ──────────────────────────────────────────────────────────────
+  # Resolve PR context from either the upstream artifact or inputs
+  # ──────────────────────────────────────────────────────────────
+  setup:
+    name: "Setup"
+    # For workflow_run: only proceed if the dispatcher succeeded
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    outputs:
+      pr_number: ${{ steps.params.outputs.pr_number }}
+      head_sha: ${{ steps.params.outputs.head_sha }}
+      base_ref: ${{ steps.params.outputs.base_ref }}
+      reviewers: ${{ steps.params.outputs.reviewers }}
+      check_run_id: ${{ steps.check.outputs.check_id }}
+    steps:
+      - name: Download dispatch params
+        if: github.event_name == 'workflow_run'
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # ratchet:actions/download-artifact@v8
+        with:
+          name: dispatch-params
+          path: dispatch
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Parse parameters and select reviewers
+        id: params
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          INPUT_PR_NUMBER: ${{ inputs.pr_number }}
+          INPUT_REVIEWER_COUNT: ${{ inputs.reviewer_count }}
+          INPUT_REVIEWERS: ${{ inputs.reviewers }}
+          INPUT_HEAD_SHA: ${{ inputs.head_sha }}
+          INPUT_BASE_REF: ${{ inputs.base_ref }}
+        run: |
+          if [ "$EVENT_NAME" = "workflow_run" ]; then
+            # Label-based dispatch always uses the default fleet size.
+            # The dispatcher uploads `dispatch/params.json`; upload-artifact
+            # preserves the directory structure relative to the workspace, so
+            # the file lands at `dispatch/params.json` after download too.
+            PR_NUMBER=$(jq -r '.pr_number' dispatch/params.json)
+            HEAD_SHA=$(jq -r '.head_sha' dispatch/params.json)
+            BASE_REF=$(jq -r '.base_ref' dispatch/params.json)
+            REVIEWER_COUNT=3
+          else
+            PR_NUMBER="$INPUT_PR_NUMBER"
+            REVIEWER_COUNT="$INPUT_REVIEWER_COUNT"
+            HEAD_SHA="$INPUT_HEAD_SHA"
+            BASE_REF="$INPUT_BASE_REF"
+          fi
+
+          # If an explicit reviewer list was provided (e.g. from the confirm workflow
+          # after the user toggled checkboxes), use it directly. Otherwise fall back
+          # to taking the first REVIEWER_COUNT entries from the priority-ordered list.
+          # `jq -c` is required: pretty-printed (multi-line) JSON written via plain
+          # `echo key=value >> $GITHUB_OUTPUT` truncates at the first newline,
+          # which would silently break `fromJson(needs.setup.outputs.reviewers)`.
+          if [ -n "$INPUT_REVIEWERS" ] && [ "$INPUT_REVIEWERS" != "" ]; then
+            REVIEWERS=$(echo "$INPUT_REVIEWERS" | jq -c .)
+            REVIEWER_COUNT=$(echo "$REVIEWERS" | jq 'length')
+          else
+            ALL='["correctness","security","api-compatibility","performance","testing"]'
+            REVIEWERS=$(echo "$ALL" | jq -c --argjson n "$REVIEWER_COUNT" '.[:$n]')
+          fi
+
+          echo "pr_number=$PR_NUMBER"   >> "$GITHUB_OUTPUT"
+          echo "head_sha=$HEAD_SHA"     >> "$GITHUB_OUTPUT"
+          echo "base_ref=$BASE_REF"     >> "$GITHUB_OUTPUT"
+          echo "reviewers=$REVIEWERS"   >> "$GITHUB_OUTPUT"
+
+          echo "PR #${PR_NUMBER} | ${REVIEWER_COUNT} reviewer(s): ${REVIEWERS}"
+
+      # ── Create a check run on the PR head ─────────────────────────────────
+      # workflow_dispatch runs are free-standing — they don't appear on the
+      # PR's Checks tab on their own. Creating a check run against the PR head
+      # surfaces this run in the PR UI with a link back to the workflow logs.
+      - name: Create check run
+        id: check
+        uses: LouisBrunner/checks-action@937cbbcde3259005b50746dc91cde29098aac2ff # ratchet:LouisBrunner/checks-action@v3.1.0
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          name: "Fleet Review"
+          sha: ${{ steps.params.outputs.head_sha }}
+          status: "in_progress"
+          details_url: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+
+      # ── Post an in-progress sticky comment with a run link ────────────────
+      # Sticky keeps a single comment per `header` — the consolidate job posts
+      # the final body using the same header, overwriting this in place.
+      - name: Write in-progress body
+        env:
+          REVIEWERS: ${{ steps.params.outputs.reviewers }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          NAMES=$(echo "$REVIEWERS" | jq -r 'join(", ")')
+          cat > body.md <<EOF
+          ## Fleet Review — In progress
+
+          Running reviewers: ${NAMES}
+
+          [View run](${RUN_URL})
+          EOF
+
+      - name: Post in-progress comment
+        # release notes: https://github.com/marocchino/sticky-pull-request-comment/releases/tag/v2.9.4
+        uses: marocchino/sticky-pull-request-comment@773744901bac0e8cbb5a0dc842800d45e9b2b405 # ratchet:marocchino/sticky-pull-request-comment@v2
+        with:
+          header: pr-review-fleet
+          number: ${{ steps.params.outputs.pr_number }}
+          path: body.md
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
   # ──────────────────────────────────────────────────────────────
   # Fan-out: run each reviewer in parallel via matrix strategy
   # ──────────────────────────────────────────────────────────────
   review:
     name: "Review: ${{ matrix.reviewer }}"
-    # Only run when the 'fleet-review' label is added
-    if: github.event.label.name == 'fleet-review'
+    needs: setup
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false # Let all reviewers finish even if one fails
       matrix:
-        reviewer:
-          - correctness
-          - security
-          - api-compatibility
-          - performance
-          - testing
+        reviewer: ${{ fromJson(needs.setup.outputs.reviewers) }}
 
     steps:
       # ── Checkout ──
-      # Explicitly check out the PR HEAD SHA so we diff the PR content.
-      # With pull_request_target, the default ref is the base branch — without
-      # this, the diff would always be empty.
       - name: Checkout PR head
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # ratchet:actions/checkout@v6
         with:
-          ref: ${{ github.event.pull_request.head.sha }}
+          ref: refs/pull/${{ needs.setup.outputs.pr_number }}/head
           fetch-depth: 0
 
       # ── Prepare the diff ──
       - name: Generate PR diff
         env:
-          BASE_REF: ${{ github.base_ref }}
+          BASE_REF: ${{ needs.setup.outputs.base_ref }}
         run: |
           git diff "origin/${BASE_REF}...HEAD" > pr-diff.patch
           echo "Generated diff: $(wc -l < pr-diff.patch) lines"
@@ -77,8 +203,8 @@ jobs:
         env:
           REVIEWER: ${{ matrix.reviewer }}
           REPO: ${{ github.repository }}
-          PR_NUMBER: ${{ github.event.pull_request.number }}
-          BASE_REF: ${{ github.base_ref }}
+          PR_NUMBER: ${{ needs.setup.outputs.pr_number }}
+          BASE_REF: ${{ needs.setup.outputs.base_ref }}
         run: |
           PROMPT_PATH=".github/prompts/reviewers/${REVIEWER}.md"
           PROMPT_FILE="/tmp/prompt-${REVIEWER}.md"
@@ -149,12 +275,11 @@ jobs:
   # ──────────────────────────────────────────────────────────────
   consolidate:
     name: "Consolidate Review"
-    needs: review
-    # always() is required so this job runs even when individual reviewers fail.
-    # Without it, a single crashed reviewer would prevent the report from posting.
-    # needs.review.result != 'skipped' prevents running when the label gate filtered the job.
+    needs: [setup, review]
     if: always() && needs.review.result != 'skipped'
     runs-on: ubuntu-latest
+    outputs:
+      has_findings: ${{ steps.consolidate.outputs.has_findings }}
     steps:
       - name: Checkout scripts
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # ratchet:actions/checkout@v6
@@ -172,12 +297,12 @@ jobs:
       - name: Consolidate findings
         id: consolidate
         env:
-          PR_NUMBER: ${{ github.event.pull_request.number }}
-          COMMIT_COUNT: ${{ github.event.pull_request.commits }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          PR_NUMBER: ${{ needs.setup.outputs.pr_number }}
+          REVIEWERS: ${{ needs.setup.outputs.reviewers }}
         run: |
           set +e
-          python3 .github/scripts/consolidate_reviews.py reviews "$RUN_URL" --pr-number "$PR_NUMBER" --commit-count "$COMMIT_COUNT" -o report.md
+          python3 .github/scripts/consolidate_reviews.py reviews "$RUN_URL" -o report.md --pr-number "$PR_NUMBER" --reviewers "$REVIEWERS"
           exit_code=$?
           set -e
           if [ $exit_code -eq 2 ]; then
@@ -208,32 +333,77 @@ jobs:
               f.write(text)
           '
 
-      - name: Post or update PR comment
+      # Write a clean-verdict body when consolidation found no issues. This step
+      # and the one below run unconditionally so a subsequent clean run always
+      # overwrites a prior findings comment (rather than leaving it stale).
+      - name: Write clean-run body
+        if: steps.consolidate.outputs.has_findings == 'false'
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          PR_NUMBER: ${{ github.event.pull_request.number }}
-          REPO: ${{ github.repository }}
-          HAS_FINDINGS: ${{ steps.consolidate.outputs.has_findings }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
-          MARKER="<!-- pr-review-fleet -->"
+          cat > report.md <<EOF
+          <!-- pr-review-fleet -->
+          ## Fleet Review — Clean
 
-          if [ "$HAS_FINDINGS" = "true" ]; then
-            COMMENT_FILE=report.md
+          No issues found across the reviewer fleet for this run.
+
+          [View run](${RUN_URL})
+          EOF
+
+      - name: Post or update PR comment
+        # release notes: https://github.com/marocchino/sticky-pull-request-comment/releases/tag/v2.9.4
+        uses: marocchino/sticky-pull-request-comment@773744901bac0e8cbb5a0dc842800d45e9b2b405 # ratchet:marocchino/sticky-pull-request-comment@v2
+        with:
+          header: pr-review-fleet
+          number: ${{ needs.setup.outputs.pr_number }}
+          path: report.md
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # ──────────────────────────────────────────────────────────────
+  # Always-runs teardown: finalize the check run created in setup.
+  # Lives in its own job (not inside `consolidate`) so it still
+  # runs when `review`/`consolidate` are skipped — e.g., when
+  # `setup` fails after the check has already been created.
+  # Without this, a failed setup would leave the PR's "Fleet
+  # Review" check stuck in "in_progress" forever.
+  # ──────────────────────────────────────────────────────────────
+  teardown:
+    name: "Finalize check run"
+    needs: [setup, review, consolidate]
+    if: always() && needs.setup.outputs.check_run_id != ''
+    runs-on: ubuntu-latest
+    steps:
+      - name: Compute check conclusion
+        id: conclusion
+        env:
+          SETUP_RESULT: ${{ needs.setup.result }}
+          REVIEW_RESULT: ${{ needs.review.result }}
+          CONSOLIDATE_RESULT: ${{ needs.consolidate.result }}
+          HAS_FINDINGS: ${{ needs.consolidate.outputs.has_findings }}
+        run: |
+          # Failure modes: any upstream job whose result isn't `success` fails the
+          # check. That covers failure, skipped, and cancelled in one check —
+          # e.g., consolidate was skipped because review was skipped, or the
+          # consolidate script itself exited non-zero (failing the step and job).
+          if [ "$SETUP_RESULT" != "success" ] \
+             || [ "$REVIEW_RESULT" != "success" ] \
+             || [ "$CONSOLIDATE_RESULT" != "success" ]; then
+            echo "conclusion=failure" >> "$GITHUB_OUTPUT"
+            echo "summary=Fleet run failed. See workflow logs." >> "$GITHUB_OUTPUT"
+          elif [ "$HAS_FINDINGS" = "true" ]; then
+            echo "conclusion=neutral" >> "$GITHUB_OUTPUT"
+            echo "summary=Findings posted to the PR comment." >> "$GITHUB_OUTPUT"
           else
-            COMMENT_FILE=$(mktemp)
-            printf '%s\n## :telescope: PR Review Fleet Report\n\n**Verdict:** ✔️ Approve\n\nAll reviewers passed — no findings.\n' "$MARKER" > "$COMMENT_FILE"
+            echo "conclusion=success" >> "$GITHUB_OUTPUT"
+            echo "summary=No issues found across the reviewer fleet." >> "$GITHUB_OUTPUT"
           fi
 
-          # Update existing fleet comment if present, otherwise create one.
-          # Always runs (even on no-findings) so prior comments don't go stale.
-          EXISTING_COMMENT_ID=$(gh api "repos/${REPO}/issues/${PR_NUMBER}/comments" \
-            --paginate --jq ".[] | select(.body | startswith(\"${MARKER}\")) | .id" | head -1)
-
-          if [ -n "$EXISTING_COMMENT_ID" ]; then
-            gh api "repos/${REPO}/issues/comments/${EXISTING_COMMENT_ID}" \
-              --method PATCH --field "body=@${COMMENT_FILE}"
-            echo "Updated existing comment ${EXISTING_COMMENT_ID}"
-          else
-            gh pr comment "${PR_NUMBER}" --repo "${REPO}" --body-file "$COMMENT_FILE"
-            echo "Posted new comment"
-          fi
+      - name: Finalize check run
+        uses: LouisBrunner/checks-action@937cbbcde3259005b50746dc91cde29098aac2ff # ratchet:LouisBrunner/checks-action@v3.1.0
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          check_id: ${{ needs.setup.outputs.check_run_id }}
+          status: "completed"
+          conclusion: ${{ steps.conclusion.outputs.conclusion }}
+          output: |
+            {"title": "Fleet Review", "summary": "${{ steps.conclusion.outputs.summary }}"}

@@ -24,10 +24,26 @@ from consolidate_reviews import (
 class TestParseReviewFile:
     def test_parses_findings(self, tmp_path: Path) -> None:
         review = tmp_path / "review-correctness.json"
-        review.write_text(json.dumps({"findings": [
-            {"severity": "HIGH", "location": "src/core/tree.ts:142", "description": "getNode() returns undefined", "fix": "Add undefined check"},
-            {"severity": "MEDIUM", "location": "src/core/tree.ts:200", "description": "Off-by-one in loop", "fix": "Use < instead of <="},
-        ]}))
+        review.write_text(
+            json.dumps(
+                {
+                    "findings": [
+                        {
+                            "severity": "HIGH",
+                            "location": "src/core/tree.ts:142",
+                            "description": "getNode() returns undefined",
+                            "fix": "Add undefined check",
+                        },
+                        {
+                            "severity": "MEDIUM",
+                            "location": "src/core/tree.ts:200",
+                            "description": "Off-by-one in loop",
+                            "fix": "Use < instead of <=",
+                        },
+                    ]
+                }
+            )
+        )
         findings = parse_review_file(review, "Correctness")
         assert len(findings) == 2
         assert findings[0].severity == "HIGH"
@@ -44,10 +60,26 @@ class TestParseReviewFile:
 
     def test_skips_invalid_severity(self, tmp_path: Path) -> None:
         review = tmp_path / "review-correctness.json"
-        review.write_text(json.dumps({"findings": [
-            {"severity": "LOW", "location": "src/foo.ts:10", "description": "desc", "fix": "fix"},
-            {"severity": "HIGH", "location": "src/foo.ts:20", "description": "real bug", "fix": "real fix"},
-        ]}))
+        review.write_text(
+            json.dumps(
+                {
+                    "findings": [
+                        {
+                            "severity": "LOW",
+                            "location": "src/foo.ts:10",
+                            "description": "desc",
+                            "fix": "fix",
+                        },
+                        {
+                            "severity": "HIGH",
+                            "location": "src/foo.ts:20",
+                            "description": "real bug",
+                            "fix": "real fix",
+                        },
+                    ]
+                }
+            )
+        )
         findings = parse_review_file(review, "Correctness")
         assert len(findings) == 1
         assert findings[0].location == "src/foo.ts:20"
@@ -64,10 +96,21 @@ class TestParseReviewFile:
 
     def test_skips_non_dict_finding_items(self, tmp_path: Path) -> None:
         review = tmp_path / "review-correctness.json"
-        review.write_text(json.dumps({"findings": [
-            "not a dict",
-            {"severity": "HIGH", "location": "src/foo.ts:10", "description": "real", "fix": "fix it"},
-        ]}))
+        review.write_text(
+            json.dumps(
+                {
+                    "findings": [
+                        "not a dict",
+                        {
+                            "severity": "HIGH",
+                            "location": "src/foo.ts:10",
+                            "description": "real",
+                            "fix": "fix it",
+                        },
+                    ]
+                }
+            )
+        )
         findings = parse_review_file(review, "Correctness")
         assert len(findings) == 1
         assert findings[0].location == "src/foo.ts:10"
@@ -80,10 +123,26 @@ class TestParseReviewFile:
 
     def test_skips_finding_with_empty_required_field(self, tmp_path: Path) -> None:
         review = tmp_path / "review-correctness.json"
-        review.write_text(json.dumps({"findings": [
-            {"severity": "HIGH", "location": "", "description": "desc", "fix": "fix"},
-            {"severity": "HIGH", "location": "src/foo.ts:10", "description": "desc", "fix": "fix"},
-        ]}))
+        review.write_text(
+            json.dumps(
+                {
+                    "findings": [
+                        {
+                            "severity": "HIGH",
+                            "location": "",
+                            "description": "desc",
+                            "fix": "fix",
+                        },
+                        {
+                            "severity": "HIGH",
+                            "location": "src/foo.ts:10",
+                            "description": "desc",
+                            "fix": "fix",
+                        },
+                    ]
+                }
+            )
+        )
         findings = parse_review_file(review, "Correctness")
         assert len(findings) == 1
         assert findings[0].location == "src/foo.ts:10"
@@ -91,9 +150,20 @@ class TestParseReviewFile:
     def test_preserves_full_fix_text(self, tmp_path: Path) -> None:
         long_fix = "x" * 300
         review = tmp_path / "review-correctness.json"
-        review.write_text(json.dumps({"findings": [
-            {"severity": "HIGH", "location": "src/foo.ts:1", "description": "desc", "fix": long_fix},
-        ]}))
+        review.write_text(
+            json.dumps(
+                {
+                    "findings": [
+                        {
+                            "severity": "HIGH",
+                            "location": "src/foo.ts:1",
+                            "description": "desc",
+                            "fix": long_fix,
+                        },
+                    ]
+                }
+            )
+        )
         findings = parse_review_file(review, "Correctness")
         assert findings[0].fix == long_fix
 
@@ -155,7 +225,7 @@ class TestDetermineVerdict:
         assert text == "Request Changes"
 
     def test_high_in_api_compat_means_request_changes(self) -> None:
-        findings = [Finding("HIGH", "src/a.ts:10", "d", "f", "API Compat")]
+        findings = [Finding("HIGH", "src/a.ts:10", "d", "f", "API Compatibility")]
         text, _ = determine_verdict(findings)
         assert text == "Request Changes"
 
@@ -201,7 +271,9 @@ class TestBuildReport:
         critical_title = severity_labels_for_pr(pr_number)["CRITICAL"]["title"]
         high_title = severity_labels_for_pr(pr_number)["HIGH"]["title"]
         medium_title = severity_labels_for_pr(pr_number)["MEDIUM"]["title"]
-        report = build_report(findings, "https://example.com/run/1", pr_number=pr_number)
+        report = build_report(
+            findings, "https://example.com/run/1", pr_number=pr_number
+        )
         assert f"1 {critical_title}, 0 {high_title}, 1 {medium_title}" in report
         assert "critical bug" in report
         assert "minor issue" in report
@@ -226,14 +298,18 @@ class TestBuildReport:
         assert severity_labels_for_pr(12345) == severity_labels_for_pr(12345)
 
     def test_commit_count_is_deterministic(self) -> None:
-        assert severity_labels_for_pr(42, commit_count=7) == severity_labels_for_pr(42, commit_count=7)
+        assert severity_labels_for_pr(42, commit_count=7) == severity_labels_for_pr(
+            42, commit_count=7
+        )
 
     def test_commit_count_affects_selection(self) -> None:
         """Commit count must actually change the hash input, not be silently ignored."""
         for pr in range(1, 200):
             labels_without_commit_count = severity_labels_for_pr(pr)
             for cc in range(1, 10):
-                if labels_without_commit_count != severity_labels_for_pr(pr, commit_count=cc):
+                if labels_without_commit_count != severity_labels_for_pr(
+                    pr, commit_count=cc
+                ):
                     return
         pytest.fail("Could not find PR/commit combination that changes emoji set")
 
@@ -244,7 +320,15 @@ class TestBuildReport:
         assert f"1 {critical_title}" in report
 
     def test_sanitizes_pipes_and_newlines_in_table_cells(self) -> None:
-        findings = [Finding("HIGH", "src/a.ts:10", "desc with | pipe", "fix\nwith newline", "Correctness")]
+        findings = [
+            Finding(
+                "HIGH",
+                "src/a.ts:10",
+                "desc with | pipe",
+                "fix\nwith newline",
+                "Correctness",
+            )
+        ]
         report = build_report(findings, "https://example.com/run/1")
         assert "desc with \\| pipe" in report
         assert "fix\nwith newline" not in report
@@ -256,15 +340,26 @@ class TestMain:
         review = tmp_path / "review-correctness.json"
         review.write_text(json.dumps({"findings": []}))
         output = tmp_path / "report.md"
-        result = main([str(tmp_path), "https://example.com/run/1", "-o", str(output)])
+        result = main([str(tmp_path), "https://example.com/run/1", "-o", str(output), "--reviewers", '["correctness"]'])
         assert result == 2
         assert not output.exists()
 
     def test_findings_exits_0(self, tmp_path: Path) -> None:
         review = tmp_path / "review-correctness.json"
-        review.write_text(json.dumps({"findings": [
-            {"severity": "HIGH", "location": "src/foo.ts:10", "description": "Bug", "fix": "Fix it"},
-        ]}))
+        review.write_text(
+            json.dumps(
+                {
+                    "findings": [
+                        {
+                            "severity": "HIGH",
+                            "location": "src/foo.ts:10",
+                            "description": "Bug",
+                            "fix": "Fix it",
+                        },
+                    ]
+                }
+            )
+        )
         output = tmp_path / "report.md"
         result = main([str(tmp_path), "https://example.com/run/1", "-o", str(output)])
         assert result == 0
@@ -274,12 +369,34 @@ class TestMain:
         assert "Bug" in content
 
     def test_deduplicates_across_reviewers(self, tmp_path: Path) -> None:
-        (tmp_path / "review-correctness.json").write_text(json.dumps({"findings": [
-            {"severity": "HIGH", "location": "src/foo.ts:10", "description": "Bug from correctness", "fix": "Fix A"},
-        ]}))
-        (tmp_path / "review-security.json").write_text(json.dumps({"findings": [
-            {"severity": "CRITICAL", "location": "src/foo.ts:10", "description": "Same spot from security", "fix": "Fix B"},
-        ]}))
+        (tmp_path / "review-correctness.json").write_text(
+            json.dumps(
+                {
+                    "findings": [
+                        {
+                            "severity": "HIGH",
+                            "location": "src/foo.ts:10",
+                            "description": "Bug from correctness",
+                            "fix": "Fix A",
+                        },
+                    ]
+                }
+            )
+        )
+        (tmp_path / "review-security.json").write_text(
+            json.dumps(
+                {
+                    "findings": [
+                        {
+                            "severity": "CRITICAL",
+                            "location": "src/foo.ts:10",
+                            "description": "Same spot from security",
+                            "fix": "Fix B",
+                        },
+                    ]
+                }
+            )
+        )
         output = tmp_path / "report.md"
         result = main([str(tmp_path), "https://example.com/run/1", "-o", str(output)])
         assert result == 0
@@ -289,29 +406,103 @@ class TestMain:
         assert "Bug from correctness" not in content
 
     def test_commit_count_arg_accepted(self, tmp_path: Path) -> None:
-        (tmp_path / "review-correctness.json").write_text(json.dumps({"findings": [
-            {"severity": "HIGH", "location": "src/foo.ts:10", "description": "Bug", "fix": "Fix it"},
-        ]}))
+        (tmp_path / "review-correctness.json").write_text(
+            json.dumps(
+                {
+                    "findings": [
+                        {
+                            "severity": "HIGH",
+                            "location": "src/foo.ts:10",
+                            "description": "Bug",
+                            "fix": "Fix it",
+                        },
+                    ]
+                }
+            )
+        )
         output = tmp_path / "report.md"
-        result = main([str(tmp_path), "https://example.com/run/1", "--pr-number", "123", "--commit-count", "5", "-o", str(output)])
+        result = main(
+            [
+                str(tmp_path),
+                "https://example.com/run/1",
+                "--pr-number",
+                "123",
+                "--commit-count",
+                "5",
+                "-o",
+                str(output),
+            ]
+        )
         assert result == 0
         assert output.exists()
 
-    def test_invalid_reviewer_output_does_not_count_as_clean(self, tmp_path: Path) -> None:
+    def test_invalid_reviewer_output_does_not_count_as_clean(
+        self, tmp_path: Path
+    ) -> None:
         # Invalid JSON from one reviewer should not suppress findings from another
         (tmp_path / "review-correctness.json").write_text("not json")
-        (tmp_path / "review-security.json").write_text(json.dumps({"findings": [
-            {"severity": "HIGH", "location": "src/foo.ts:10", "description": "Bug", "fix": "Fix it"},
-        ]}))
+        (tmp_path / "review-security.json").write_text(
+            json.dumps(
+                {
+                    "findings": [
+                        {
+                            "severity": "HIGH",
+                            "location": "src/foo.ts:10",
+                            "description": "Bug",
+                            "fix": "Fix it",
+                        },
+                    ]
+                }
+            )
+        )
         output = tmp_path / "report.md"
         result = main([str(tmp_path), "https://example.com/run/1", "-o", str(output)])
         assert result == 0
         assert output.exists()
         assert "Bug" in output.read_text()
 
+    def test_reviewers_flag_rejects_non_array(self, tmp_path: Path) -> None:
+        # A bare JSON string (e.g. forgotten brackets: --reviewers '"correctness"')
+        # must not be iterated char-by-char. Fall back to the default reviewer set.
+        review = tmp_path / "review-correctness.json"
+        review.write_text(
+            json.dumps(
+                {
+                    "findings": [
+                        {
+                            "severity": "HIGH",
+                            "location": "src/foo.ts:10",
+                            "description": "Bug",
+                            "fix": "Fix it",
+                        },
+                    ]
+                }
+            )
+        )
+        output = tmp_path / "report.md"
+        result = main(
+            [
+                str(tmp_path),
+                "https://example.com/run/1",
+                "-o",
+                str(output),
+                "--reviewers",
+                '"correctness"',
+            ]
+        )
+        assert result == 0
+        assert output.exists()
+        assert "Bug" in output.read_text()
+
     def test_all_skipped_exits_1_not_2(self, tmp_path: Path) -> None:
         # All files present but all invalid — must not look like a clean run
-        for reviewer in ["correctness", "security", "performance", "testing", "api-compatibility"]:
+        for reviewer in [
+            "correctness",
+            "security",
+            "performance",
+            "testing",
+            "api-compatibility",
+        ]:
             (tmp_path / f"review-{reviewer}.json").write_text("not json")
         output = tmp_path / "report.md"
         result = main([str(tmp_path), "https://example.com/run/1", "-o", str(output)])
@@ -320,11 +511,49 @@ class TestMain:
 
     def test_missing_review_files_skipped(self, tmp_path: Path) -> None:
         # Only one reviewer has output
-        (tmp_path / "review-performance.json").write_text(json.dumps({"findings": [
-            {"severity": "MEDIUM", "location": "src/hot.ts:50", "description": "O(n^2) loop", "fix": "Use a Map"},
-        ]}))
+        (tmp_path / "review-performance.json").write_text(
+            json.dumps(
+                {
+                    "findings": [
+                        {
+                            "severity": "MEDIUM",
+                            "location": "src/hot.ts:50",
+                            "description": "O(n^2) loop",
+                            "fix": "Use a Map",
+                        },
+                    ]
+                }
+            )
+        )
         output = tmp_path / "report.md"
         result = main([str(tmp_path), "https://example.com/run/1", "-o", str(output)])
         assert result == 0
         content = output.read_text()
         assert "O(n^2)" in content
+
+    def test_high_in_api_compat_file_promotes_to_request_changes(
+        self, tmp_path: Path
+    ) -> None:
+        # Pins the full file-stem → REVIEWERS lookup → PROMOTED_AREAS chain.
+        # If the label in pr_review_propose.REVIEWERS for the api-compatibility
+        # entry diverges from PROMOTED_AREAS in consolidate_reviews, a HIGH
+        # finding here would silently downgrade to "Approve with Suggestions".
+        (tmp_path / "review-api-compatibility.json").write_text(
+            json.dumps(
+                {
+                    "findings": [
+                        {
+                            "severity": "HIGH",
+                            "location": "packages/foo/src/index.ts:1",
+                            "description": "Removed exported function",
+                            "fix": "Restore or deprecate",
+                        },
+                    ]
+                }
+            )
+        )
+        output = tmp_path / "report.md"
+        result = main([str(tmp_path), "https://example.com/run/1", "-o", str(output)])
+        assert result == 0
+        content = output.read_text()
+        assert "Request Changes" in content
