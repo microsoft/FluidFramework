@@ -398,7 +398,10 @@ export class ForestIncrementalSummaryBuilder implements IncrementalEncoderDecode
 				break;
 			}
 			current = latestSummaryRefIdMap.get(current.parentReferenceId);
-			assert(current !== undefined, "Parent chunk not found in latest summary tracking");
+			assert(
+				current !== undefined,
+				0xcf7 /* Parent chunk not found in latest summary tracking */,
+			);
 		}
 		// Segments are collected leaf-to-root and then reversed. The alternative would be to use unshift
 		// instead of push and reverse. However, using push and reverse is O(n) whereas using unshift would be O(n²).
