@@ -257,6 +257,9 @@ const viewLabels = {
 	},
 } as const;
 
+/**
+ * Base style properties for undo/redo buttons in {@link UserPanel}.
+ */
 const userPanelUndoRedoButtonStyleBase = {
 	width: "28px",
 	height: "28px",
