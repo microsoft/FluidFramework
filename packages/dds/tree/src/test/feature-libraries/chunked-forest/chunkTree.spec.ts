@@ -26,6 +26,7 @@ import {
 	chunkField,
 	chunkFieldSingle,
 	chunkRange,
+	chunkTree,
 	combineChunks,
 	defaultChunkPolicy,
 	insertValues,
@@ -41,6 +42,7 @@ import { emptyChunk } from "../../../feature-libraries/chunked-forest/emptyChunk
 import { SequenceChunk } from "../../../feature-libraries/chunked-forest/sequenceChunk.js";
 import {
 	TreeShape,
+	UniformChunk,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/chunked-forest/uniformChunk.js";
 import {
@@ -217,6 +219,66 @@ describe("chunkTree", () => {
 				testIdCompressor,
 			);
 			assert.deepEqual(chunk.values, [compressedId]);
+		});
+	});
+	describe("uniformChunks", () => {
+		const parentType: TreeNodeSchemaIdentifier = brand("parent");
+		const childKey: FieldKey = brand("x");
+		const parentTree: JsonableTree = {
+			type: parentType,
+			fields: {
+				x: [
+					{ type: brand(numberSchema.identifier), value: 1 },
+					{ type: brand(numberSchema.identifier), value: 2 },
+					{ type: brand(numberSchema.identifier), value: 3 },
+				],
+			},
+		};
+
+		const numberType: TreeNodeSchemaIdentifier = brand(numberSchema.identifier);
+		const numberShape = new TreeShape(numberType, true, []);
+
+		// Policy used for parent nodes when testing chunking of uniform children.
+		// Chunks should have a max top level length of 4
+		const nonIncrementalParentPolicy: ChunkPolicy = {
+			sequenceChunkSplitThreshold: Number.POSITIVE_INFINITY,
+			sequenceChunkInlineThreshold: Number.POSITIVE_INFINITY,
+			uniformChunkNodeCount: 4,
+			shapeFromSchema: (t): ShapeInfo => (t === numberType ? numberShape : polymorphic),
+		};
+
+		it("batches uniform shaped nodes into chunks of uniformChunkNodeCount", () => {
+			const fieldData = numberSequenceField(10);
+			const cursor = cursorForJsonableTreeField(fieldData);
+			cursor.firstNode();
+			const chunks = chunkRange(
+				cursor,
+				{ policy: nonIncrementalParentPolicy, idCompressor: undefined },
+				10,
+				true,
+			);
+			assert.equal(chunks.length, 3);
+			assert(chunks[0] instanceof UniformChunk);
+			assert(chunks[1] instanceof UniformChunk);
+			assert(chunks[2] instanceof UniformChunk);
+			assert.equal(chunks[0].topLevelLength, 4);
+			assert.equal(chunks[1].topLevelLength, 4);
+			assert.equal(chunks[2].topLevelLength, 2);
+			assertChunkCursorEquals(new SequenceChunk(chunks), fieldData);
+		});
+
+		it("batches uniform-shaped children when the parent field is not incremental", () => {
+			const cursor = cursorForJsonableTreeNode(parentTree);
+			const chunk = chunkTree(cursor, {
+				policy: nonIncrementalParentPolicy,
+				idCompressor: undefined,
+			});
+			assert(chunk instanceof BasicChunk);
+			const childField = chunk.fields.get(childKey);
+			assert(childField !== undefined);
+			assert.equal(childField.length, 1);
+			assert(childField[0] instanceof UniformChunk);
+			assert.equal(childField[0].topLevelLength, 3);
 		});
 	});
 

@@ -507,8 +507,9 @@ export function chunkRange(
 			const shape = chunkCompressor.policy.shapeFromSchema(type);
 			if (shape instanceof TreeShape) {
 				const nodesPerTopLevelNode = shape.positions.length;
-				const maxTopLevelLength = Math.ceil(
-					nodesPerTopLevelNode / chunkCompressor.policy.uniformChunkNodeCount,
+				const maxTopLevelLength = Math.max(
+					1,
+					chunkCompressor.policy.uniformChunkNodeCount / nodesPerTopLevelNode,
 				);
 				const maxLength = Math.min(maxTopLevelLength, remaining);
 				const newChunk = uniformChunkFromCursor(
