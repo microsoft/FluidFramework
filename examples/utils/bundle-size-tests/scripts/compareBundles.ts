@@ -5,15 +5,16 @@
 
 import { execSync } from "node:child_process";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
-import { tmpdir } from "node:os";
-import { resolve } from "node:path";
+import { dirname, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import { gzipSync } from "node:zlib";
 
 import { decompressStatsFile } from "@fluidframework/bundle-size-tools";
 
-// Default to the persistent analysis root used by collectBundles.ts.
-// Kept in the OS temp dir so results survive `git checkout` and `npm run clean`.
-const defaultAnalysisDirectory = resolve(tmpdir(), "fluid-bundle-compare");
+// Default to the persistent analysis root used by collectBundle.ts.
+// Lives under this package's `bundleAnalysis/` directory (gitignored).
+const scriptDirectory = dirname(fileURLToPath(import.meta.url));
+const defaultAnalysisDirectory = resolve(scriptDirectory, "..", "bundleAnalysis");
 
 /**
  * Extracts the value of a command-line option from the argument list.
@@ -105,12 +106,7 @@ interface BundleStats {
  * @returns Parsed bundle statistics, or empty stats if file not found
  */
 function loadStats(analysisDirectory: string, label: string): BundleStats {
-	const statsFilePath = resolve(
-		analysisDirectory,
-		"bundleAnalysis",
-		label,
-		"bundleStats.msp.gz",
-	);
+	const statsFilePath = resolve(analysisDirectory, label, "bundleStats.msp.gz");
 	if (!existsSync(statsFilePath)) {
 		console.warn(
 			`Warning: Bundle stats not found at "${statsFilePath}". ` +
@@ -263,7 +259,7 @@ interface Options {
 	baseBranch: string;
 	/** Branch name for the current build (auto-detected from git HEAD or BUILD_SOURCEBRANCHNAME) */
 	currentBranch: string;
-	/** Parent directory where bundleStats.msp.gz files are stored under bundleAnalysis/\{label\}/ (default: OS temp dir / fluid-bundle-compare) */
+	/** Directory containing per-label bundleStats.msp.gz files at \{label\}/bundleStats.msp.gz (default: this package's bundleAnalysis/) */
 	analysisDirectory: string;
 }
 
@@ -335,7 +331,7 @@ Options:
   --base-branch <name>    Base branch name (default: main). The "current" side is
                           auto-detected from BUILD_SOURCEBRANCHNAME or git HEAD.
   --analysis-dir <path>   Parent directory where bundleStats.msp.gz files are stored
-                          under bundleAnalysis/{label}/ (default: ${defaultAnalysisDirectory})
+                          at {label}/bundleStats.msp.gz (default: ${defaultAnalysisDirectory})
 
 Examples:
   jiti ./scripts/compareBundles.ts --base-branch main
@@ -386,7 +382,7 @@ function main(argv: string[]): void {
 	// Derive labels and directories from branch names
 	const baseLabel = sanitizeForFileName(options.baseBranch);
 	const currentLabel = sanitizeForFileName(options.currentBranch);
-	const outputDirectory = resolve(options.analysisDirectory, "bundleAnalysis");
+	const outputDirectory = options.analysisDirectory;
 	const baseBuildDirectory = resolve(outputDirectory, baseLabel, "build");
 	const currentBuildDirectory = resolve(outputDirectory, currentLabel, "build");
 

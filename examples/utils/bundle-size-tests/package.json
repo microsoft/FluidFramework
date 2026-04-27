@@ -21,7 +21,7 @@
 		"check:biome": "biome check .",
 		"check:format": "npm run check:biome",
 		"clean": "rimraf --glob build dist lib bundleAnalysis \"**/*.tsbuildinfo\" \"**/*.build.log\" nyc",
-		"collect:bundles": "jiti ./scripts/collectBundles.ts",
+		"collect:bundle": "jiti ./scripts/collectBundle.ts",
 		"collect:compare:bundles": "jiti ./scripts/collectAndCompareBundles.ts",
 		"compare:bundles": "jiti ./scripts/compareBundles.ts",
 		"eslint": "eslint --quiet --format stylish src scripts",
