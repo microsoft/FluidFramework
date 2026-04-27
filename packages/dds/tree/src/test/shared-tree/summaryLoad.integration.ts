@@ -32,12 +32,15 @@ import {
 import { regenerateSnapshots } from "../snapshots/index.js";
 import { testSrcPath } from "../testSrcPath.cjs";
 
-const outputDir = path.join(testSrcPath, "shared-tree", "summary-load-snapshots");
+const outputDirectory = path.join(testSrcPath, "shared-tree", "summary-load-snapshots");
 
-const sf = new SchemaFactory("test schema");
-class TestSchema extends sf.object("parent", {
-	label: sf.string,
-	child: sf.array("nodes", sf.object("child", { count: sf.number })),
+const schemaFactory = new SchemaFactory("test schema");
+class TestSchema extends schemaFactory.object("parent", {
+	label: schemaFactory.string,
+	child: schemaFactory.array(
+		"nodes",
+		schemaFactory.object("child", { count: schemaFactory.number }),
+	),
 }) {}
 
 function listSnapshotFiles(dir: string): string[] {
@@ -70,9 +73,9 @@ async function generateSummaryContent(
 	};
 
 	const dataStoreRuntime = new MockFluidDataStoreRuntime();
-	const stFactory = configuredSharedTree(options).getFactory();
+	const factory = configuredSharedTree(options).getFactory();
 
-	const tree = stFactory.create(dataStoreRuntime, "test");
+	const tree = factory.create(dataStoreRuntime, "test");
 	const view = tree.viewWith(new TreeViewConfiguration({ schema: TestSchema }));
 	view.initialize({ label: "root", child: [] });
 	view.root.label = "foo";
@@ -84,12 +87,12 @@ async function generateSummaryContent(
 }
 
 async function checkForMissingSummaries(addIfMissing: boolean): Promise<void> {
-	if (!existsSync(outputDir)) {
-		mkdirSync(outputDir, { recursive: true });
+	if (!existsSync(outputDirectory)) {
+		mkdirSync(outputDirectory, { recursive: true });
 	}
 
 	const existingContents = new Set<string>();
-	for (const file of listSnapshotFiles(outputDir)) {
+	for (const file of listSnapshotFiles(outputDirectory)) {
 		existingContents.add(readFileSync(file, "utf8"));
 	}
 
@@ -116,7 +119,7 @@ async function checkForMissingSummaries(addIfMissing: boolean): Promise<void> {
 	}
 
 	if (!addIfMissing) {
-		const names = missing.map((m) => m.baseName).join(", ");
+		const names = missing.map((missingSummary) => missingSummary.baseName).join(", ");
 		assert.fail(
 			`Missing summary snapshot(s) for: ${names}. ` +
 				`Run with \`pnpm run test:snapshots:regen\` to add them.`,
@@ -125,10 +128,10 @@ async function checkForMissingSummaries(addIfMissing: boolean): Promise<void> {
 
 	for (const { baseName, content } of missing) {
 		let suffix = 1;
-		let candidate = path.join(outputDir, `${baseName}-${suffix}.json`);
+		let candidate = path.join(outputDirectory, `${baseName}-${suffix}.json`);
 		while (existsSync(candidate)) {
 			suffix += 1;
-			candidate = path.join(outputDir, `${baseName}-${suffix}.json`);
+			candidate = path.join(outputDirectory, `${baseName}-${suffix}.json`);
 		}
 		writeFileSync(candidate, content);
 	}
@@ -145,12 +148,12 @@ describe("Summary load regression tests", () => {
 	]) {
 		const treeEncodeKey = TreeCompressionStrategy[treeEncodeType];
 		describe(`Load singleTree summary with current minVersionForCollab and TreeCompressionStrategy.${treeEncodeKey}`, () => {
-			const files = listSnapshotFiles(outputDir).filter((f) =>
-				path.basename(f).includes(`-${treeEncodeKey}-`),
+			const files = listSnapshotFiles(outputDirectory).filter((file) =>
+				path.basename(file).includes(`-${treeEncodeKey}-`),
 			);
 			for (const file of files) {
-				const relPath = path.relative(outputDir, file);
-				it(`loads ${relPath}`, async () => {
+				const relativePath = path.relative(outputDirectory, file);
+				it(`loads ${relativePath}`, async () => {
 					const summaryJson = readFileSync(file, "utf8");
 
 					const options: SharedTreeOptions = {
@@ -159,13 +162,13 @@ describe("Summary load regression tests", () => {
 						minVersionForCollab: cleanedPackageVersion,
 					};
 					const dataStoreRuntime = new MockFluidDataStoreRuntime();
-					const stFactory = configuredSharedTree(options).getFactory();
+					const factory = configuredSharedTree(options).getFactory();
 
-					const tree = await stFactory.load(
+					const tree = await factory.load(
 						dataStoreRuntime,
 						"test",
 						MockSharedObjectServices.createFromSummary(JSON.parse(summaryJson)),
-						stFactory.attributes,
+						factory.attributes,
 					);
 					// If changes are made to the test summary content, this assertion may need to be updated.
 					// The important thing is that the content is loaded and can be read without error, not the specific values.
