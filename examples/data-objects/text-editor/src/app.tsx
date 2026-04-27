@@ -257,6 +257,19 @@ const viewLabels = {
 	},
 } as const;
 
+const userPanelUndoRedoButtonStyleBase = {
+	width: "28px",
+	height: "28px",
+	padding: 0,
+	background: "none",
+	border: "1px solid #ccc",
+	borderRadius: "4px",
+	fontSize: "18px",
+	display: "flex",
+	alignItems: "center",
+	justifyContent: "center",
+} as const satisfies CSSProperties;
+
 const UserPanel: FC<{
 	label: string;
 	color: string;
@@ -297,19 +310,6 @@ const UserPanel: FC<{
 	// TODO: handle root invalidation, schema upgrades and out of schema documents.
 	const root = treeView.root;
 
-	const undoRedoButtonStyleBase = {
-		width: "28px",
-		height: "28px",
-		padding: 0,
-		background: "none",
-		border: "1px solid #ccc",
-		borderRadius: "4px",
-		fontSize: "18px",
-		display: "flex",
-		alignItems: "center",
-		justifyContent: "center",
-	} as const satisfies CSSProperties;
-
 	return (
 		<div
 			style={{
@@ -339,7 +339,7 @@ const UserPanel: FC<{
 						onClick={() => manager.undo()}
 						title="Undo"
 						style={{
-							...undoRedoButtonStyleBase,
+							...userPanelUndoRedoButtonStyleBase,
 							cursor: manager.canUndo() ? "pointer" : "not-allowed",
 							opacity: manager.canUndo() ? 1 : 0.3,
 						}}
@@ -352,7 +352,7 @@ const UserPanel: FC<{
 						onClick={() => manager.redo()}
 						title="Redo"
 						style={{
-							...undoRedoButtonStyleBase,
+							...userPanelUndoRedoButtonStyleBase,
 							cursor: manager.canRedo() ? "pointer" : "not-allowed",
 							opacity: manager.canRedo() ? 1 : 0.3,
 						}}
