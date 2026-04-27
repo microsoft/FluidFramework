@@ -18,8 +18,10 @@
 "@fluid-experimental/sharejs-json1": minor
 "@fluid-experimental/tree": minor
 "@fluid-internal/client-utils": minor
+"@fluid-internal/platform-dependent": minor
 "@fluid-internal/presence-definitions": minor
 "@fluid-internal/presence-runtime": minor
+"@fluid-internal/replay-tool": minor
 "@fluid-private/test-dds-utils": minor
 "@fluid-private/test-loader-utils": minor
 "@fluid-tools/fetch-tool": minor
@@ -78,6 +80,7 @@
 "@fluidframework/task-manager": minor
 "@fluidframework/telemetry-utils": minor
 "@fluidframework/test-runtime-utils": minor
+"@fluidframework/test-utils": minor
 "@fluidframework/tinylicious-client": minor
 "@fluidframework/tinylicious-driver": minor
 "@fluidframework/tool-utils": minor
