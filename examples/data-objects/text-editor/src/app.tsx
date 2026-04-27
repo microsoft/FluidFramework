@@ -34,7 +34,7 @@ import { SharedTree } from "@fluidframework/tree/legacy";
 import type { IFluidContainer } from "fluid-framework";
 // eslint-disable-next-line import-x/no-internal-modules, import-x/no-unassigned-import
 import "quill/dist/quill.snow.css";
-import { type FC, useEffect, useMemo, useState } from "react";
+import { type CSSProperties, type FC, useEffect, useMemo, useState } from "react";
 // eslint-disable-next-line import-x/no-internal-modules
 import { createRoot } from "react-dom/client";
 
@@ -297,6 +297,19 @@ const UserPanel: FC<{
 	// TODO: handle root invalidation, schema upgrades and out of schema documents.
 	const root = treeView.root;
 
+	const undoRedoButtonStyleBase = {
+		width: "28px",
+		height: "28px",
+		padding: 0,
+		background: "none",
+		border: "1px solid #ccc",
+		borderRadius: "4px",
+		fontSize: "18px",
+		display: "flex",
+		alignItems: "center",
+		justifyContent: "center",
+	} as const satisfies CSSProperties;
+
 	return (
 		<div
 			style={{
@@ -326,17 +339,8 @@ const UserPanel: FC<{
 						onClick={() => manager.undo()}
 						title="Undo"
 						style={{
-							width: "28px",
-							height: "28px",
-							padding: 0,
-							background: "none",
-							border: "1px solid #ccc",
-							borderRadius: "4px",
+							...undoRedoButtonStyleBase,
 							cursor: manager.canUndo() ? "pointer" : "not-allowed",
-							fontSize: "18px",
-							display: "flex",
-							alignItems: "center",
-							justifyContent: "center",
 							opacity: manager.canUndo() ? 1 : 0.3,
 						}}
 					>
@@ -348,17 +352,8 @@ const UserPanel: FC<{
 						onClick={() => manager.redo()}
 						title="Redo"
 						style={{
-							width: "28px",
-							height: "28px",
-							padding: 0,
-							background: "none",
-							border: "1px solid #ccc",
-							borderRadius: "4px",
+							...undoRedoButtonStyleBase,
 							cursor: manager.canRedo() ? "pointer" : "not-allowed",
-							fontSize: "18px",
-							display: "flex",
-							alignItems: "center",
-							justifyContent: "center",
 							opacity: manager.canRedo() ? 1 : 0.3,
 						}}
 					>
