@@ -66,7 +66,7 @@ export const toRedirectTable = (
 			redirectTable: redirectTableLength,
 		});
 	}
-	const redirectTableMap = new Map<string, string>(blobManagerLoadInfo.redirectTable);
+	const redirectTable = new Map<string, string>(blobManagerLoadInfo.redirectTable);
 	if (blobManagerLoadInfo.ids !== undefined) {
 		for (const storageId of blobManagerLoadInfo.ids) {
 			// Older versions of the runtime used the storage ID directly in the handle,
@@ -74,10 +74,10 @@ export const toRedirectTable = (
 			// were created in this way but unify handling through the redirectTable, we
 			// add identity mappings to the redirect table at load. These identity entries
 			// will be excluded during summarization.
-			redirectTableMap.set(storageId, storageId);
+			redirectTable.set(storageId, storageId);
 		}
 	}
-	return redirectTableMap;
+	return redirectTable;
 };
 
 export const summarizeBlobManagerState = (
