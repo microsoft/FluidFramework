@@ -5,12 +5,10 @@
 
 import * as fs from "node:fs";
 import { getIsLatest, getSimpleVersion } from "@fluid-tools/version-tools";
-import { getResolvedFluidRoot } from "@fluidframework/build-tools";
 import { Flags } from "@oclif/core";
 
 import { semverFlag } from "../../flags.js";
 import { BaseCommand } from "../../library/commands/base.js";
-import { Repository } from "../../library/git.js";
 
 /**
  * This command class is used to compute the version number of Fluid packages. The release version number is based on
@@ -101,8 +99,8 @@ export default class GenerateBuildVersionCommand extends BaseCommand<
 			this.error("Test build shouldn't be released");
 		}
 
-		const gitRoot = await getResolvedFluidRoot();
-		const repo = new Repository({ baseDir: gitRoot }, "microsoft/FluidFramework");
+		const context = await this.getContext();
+		const repo = await context.getGitRepository();
 		// eslint-disable-next-line unicorn/no-await-expression-member
 		const tags = flags.tags ?? (await repo.gitClient.tags()).all;
 
