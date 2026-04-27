@@ -3,9 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { existsSync, rmSync } from "node:fs";
-import * as nodePath from "node:path";
-
 import * as sequenceDeprecated from "@fluid-experimental/sequence-deprecated";
 import { SparseMatrix } from "@fluid-experimental/sequence-deprecated";
 import { DriverApi } from "@fluid-private/test-drivers";
@@ -56,15 +53,7 @@ import {
 } from "./compatPackageList.js";
 export type { PackageToInstall } from "./compatPackageList.js";
 import { pkgVersion } from "./packageVersion.js";
-import {
-	checkInstalled,
-	ensureWorkspaceInstalled,
-	fullWorkspaceDir,
-	getRequestedVersion,
-	loadPackage,
-	standardWorkspaceDir,
-	tryReadVersionsManifest,
-} from "./versionUtils.js";
+import { checkInstalled, getRequestedVersion, loadPackage } from "./versionUtils.js";
 
 /**
  * @internal
@@ -75,26 +64,19 @@ export interface InstalledPackage {
 }
 
 /**
- * Ensures the workspace for the requested version is installed and all layer APIs are loaded.
- *
- * Installation uses `pnpm install --frozen-lockfile` against the committed lockfile in
- * `compat-workspaces/standard/` or `compat-workspaces/full/` as appropriate. No registry
- * queries are made at test time when the versions manifest is present.
+ * Loads all layer APIs for the requested version. The compat workspace is expected to be
+ * pre-installed via `pnpm install` (through the package `postinstall` hook).
  *
  * @internal
  */
 export const ensurePackageInstalled = async (
 	baseVersion: string,
 	version: number | string,
-	force: boolean,
 ): Promise<InstalledPackage | undefined> => {
 	const requestedStr = getRequestedVersion(baseVersion, version);
 	if (semver.satisfies(pkgVersion, requestedStr)) {
 		return undefined;
 	}
-
-	// Determine which workspace contains this version and install it if needed.
-	await ensureCompatWorkspaceForVersion(requestedStr, force);
 
 	await Promise.all([
 		loadContainerRuntime(baseVersion, version),
@@ -106,46 +88,6 @@ export const ensurePackageInstalled = async (
 	const { version: resolvedVersion, modulePath } = checkInstalled(requestedStr);
 	return { version: resolvedVersion, modulePath };
 };
-
-/**
- * Installs the workspace that contains `requestedStr`. Determines the correct workspace (standard
- * or full) by checking the versions manifest and whether the version directory exists.
- */
-async function ensureCompatWorkspaceForVersion(
-	requestedStr: string,
-	force: boolean,
-): Promise<void> {
-	const manifest = tryReadVersionsManifest();
-
-	// Determine tier: if the version is in the full array (not in standard), use full workspace
-	let workspaceDir = standardWorkspaceDir;
-	if (manifest !== undefined) {
-		const standardVersions = new Set([
-			manifest.standard["n-1"],
-			manifest.standard["n-2"],
-			manifest.standard.ocv,
-			...(manifest.standard["cross-client"] ?? []),
-		]);
-		if (!standardVersions.has(requestedStr) && manifest.full.includes(requestedStr)) {
-			workspaceDir = fullWorkspaceDir;
-		}
-	} else {
-		// No manifest: check which workspace directory contains the version dir, fall back to standard
-		const { version } = checkInstalled(requestedStr);
-		const inFull = !existsSync(nodePath.join(standardWorkspaceDir, version));
-		if (inFull) workspaceDir = fullWorkspaceDir;
-	}
-
-	if (force) {
-		// Remove node_modules to force reinstall
-		const nodeModulesPath = nodePath.join(workspaceDir, "node_modules");
-		if (existsSync(nodeModulesPath)) {
-			rmSync(nodeModulesPath, { recursive: true });
-		}
-	}
-
-	await ensureWorkspaceInstalled(workspaceDir);
-}
 
 // This module supports synchronous functions to import packages once their install has been
 // completed. Since dynamic import is async, we cache the modules by package version.

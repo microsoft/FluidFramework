@@ -4,16 +4,14 @@
  */
 
 /**
- * Utilities for finding, installing, and loading legacy versions of Fluid Framework packages
- * for compatibility testing.
+ * Utilities for loading legacy versions of Fluid Framework packages for compatibility testing.
  *
  * ## Architecture
  *
- * Legacy packages live in two committed pnpm sub-workspaces under `compat-workspaces/`:
- * - `standard/` — N-1, N-2, and OCV (oldest compatible version). Installed by default when
- * running compat tests.
- * - `full/` — all historical back-compat versions (superset of standard). Installed only when
- * running full back-compat tests (fluid__test__backCompat=FULL or V2_INT_3).
+ * Legacy packages live in a single committed pnpm sub-workspace at `compat-workspaces/full/`.
+ * The workspace is installed automatically when `pnpm install` is run from the repo root (via
+ * the `postinstall` script in this package's `package.json`), so no runtime installation step
+ * is required in tests.
  *
  * The exact resolved versions are recorded in `compat-workspaces/versions.json`, which is
  * maintained by the `update-compat-versions` script and committed to the repository. Tests
@@ -25,7 +23,7 @@
  * `pnpm run update-compat-versions`
  *
  * This regenerates `versions.json` and all per-version `package.json` files, then runs
- * `pnpm install --no-frozen-lockfile` in each workspace to update the committed lockfiles.
+ * `pnpm install --no-frozen-lockfile` in the workspace to update the committed lockfile.
  * Commit all changes produced by the script.
  */
 
@@ -37,7 +35,6 @@ import { fileURLToPath } from "node:url";
 
 import { detectVersionScheme, fromInternalScheme } from "@fluid-tools/version-tools";
 import { assert } from "@fluidframework/core-utils/internal";
-import { lock } from "proper-lockfile";
 import * as semver from "semver";
 
 // Re-export so existing imports of versionHasMovedSparsedMatrix from versionUtils.ts still work.
@@ -51,7 +48,6 @@ export { versionHasMovedSparsedMatrix } from "./compatPackageList.js";
 const compatWorkspacesDir = fileURLToPath(new URL("../compat-workspaces", import.meta.url));
 const versionsJsonPath = path.join(compatWorkspacesDir, "versions.json");
 
-export const standardWorkspaceDir = path.join(compatWorkspacesDir, "standard");
 export const fullWorkspaceDir = path.join(compatWorkspacesDir, "full");
 
 // ---------------------------------------------------------------------------
@@ -68,8 +64,8 @@ export const fullWorkspaceDir = path.join(compatWorkspacesDir, "full");
  */
 export interface CompatVersionsManifest {
 	/**
-	 * Exact package versions installed in the `standard/` workspace.
-	 * These symbolic names are resolved at test time without a registry query.
+	 * Symbolic version names used by the update script. All versions (standard + full) are
+	 * installed in the single `compat-workspaces/full/` workspace.
 	 */
 	standard: {
 		/** The previous minor release bracket (N-1). */
@@ -88,8 +84,7 @@ export interface CompatVersionsManifest {
 		"cross-client": string[];
 	};
 	/**
-	 * Additional exact versions installed ONLY in the `full/` workspace (beyond those in
-	 * `standard/`). The full workspace contains all versions needed for full back-compat testing.
+	 * Additional exact versions for full back-compat testing (beyond the symbolic names above).
 	 * MACHINE-MAINTAINED.
 	 */
 	full: string[];
@@ -197,88 +192,28 @@ export function resolveVersion(requested: string, _installed: boolean): string {
 // Workspace installation
 // ---------------------------------------------------------------------------
 
-/**
- * Ensures a compat workspace is installed. Runs `pnpm install --frozen-lockfile` in the
- * workspace directory if `node_modules/` is absent.
- *
- * Safe to call concurrently — uses a file lock to serialise installs of the same workspace.
- * @internal
- */
-export async function ensureWorkspaceInstalled(workspaceDir: string): Promise<void> {
-	const nodeModulesPath = path.join(workspaceDir, "node_modules");
-	if (existsSync(nodeModulesPath)) return;
-
-	if (!existsSync(workspaceDir)) {
-		throw new Error(
-			`Compat workspace directory does not exist: ${workspaceDir}\n` +
-				`Run \`pnpm run update-compat-versions\` from packages/test/test-version-utils to regenerate it.`,
-		);
-	}
-
-	// Ensure there is a file to lock against
-	const lockTarget = path.join(workspaceDir, "pnpm-lock.yaml");
-	if (!existsSync(lockTarget)) {
-		throw new Error(
-			`Lockfile not found in ${workspaceDir}. Run \`pnpm run update-compat-versions\`.`,
-		);
-	}
-
-	const release = await lock(lockTarget, { retries: { forever: true } });
-	try {
-		// Check again under lock
-		if (existsSync(nodeModulesPath)) return;
-
-		console.log(`Installing compat workspace: ${workspaceDir}`);
-		execSync(`${pnpmCmd} install --frozen-lockfile`, {
-			cwd: workspaceDir,
-			env: { ...process.env, NODE_OPTIONS: "" },
-			stdio: "inherit",
-		});
-	} finally {
-		release();
-	}
-}
-
 // ---------------------------------------------------------------------------
 // Installed package lookup
 // ---------------------------------------------------------------------------
 
 /**
- * Returns the absolute path to the version directory inside a workspace, or `undefined` if the
- * version is not in that workspace.
- */
-function versionDirInWorkspace(workspaceDir: string, version: string): string | undefined {
-	const dir = path.join(workspaceDir, version);
-	return existsSync(dir) ? dir : undefined;
-}
-
-/**
- * Resolves an exact version string to its installed module path.
+ * Resolves an exact version string to its installed module path in `compat-workspaces/full/`.
  *
- * Checks `standard/` first (preferred when both workspaces are installed), then `full/`.
- * Throws a descriptive error if the version is not found in either workspace.
+ * The workspace is expected to be pre-installed via the package `postinstall` hook. Throws a
+ * descriptive error if the version directory is not found.
  * @internal
  */
 export function checkInstalled(requested: string): { version: string; modulePath: string } {
 	const version = resolveVersion(requested, true);
+	const versionDir = path.join(fullWorkspaceDir, version);
 
-	const standardNodeModules = path.join(standardWorkspaceDir, "node_modules");
-	if (existsSync(standardNodeModules)) {
-		const dir = versionDirInWorkspace(standardWorkspaceDir, version);
-		if (dir !== undefined) return { version, modulePath: dir };
-	}
-
-	const fullNodeModules = path.join(fullWorkspaceDir, "node_modules");
-	if (existsSync(fullNodeModules)) {
-		const dir = versionDirInWorkspace(fullWorkspaceDir, version);
-		if (dir !== undefined) return { version, modulePath: dir };
+	if (existsSync(versionDir)) {
+		return { version, modulePath: versionDir };
 	}
 
 	throw new Error(
-		`Version ${version} is not installed in any compat workspace.\n` +
-			`Run \`pnpm run update-compat-versions\` then install the relevant workspace:\n` +
-			`  cd compat-workspaces/standard && pnpm install --frozen-lockfile\n` +
-			`  cd compat-workspaces/full     && pnpm install --frozen-lockfile`,
+		`Version ${version} is not installed in compat-workspaces/full/.\n` +
+			`Run \`pnpm run update-compat-versions\` to regenerate the workspace, then re-run \`pnpm install\`.`,
 	);
 }
 
@@ -293,7 +228,7 @@ export function checkInstalled(requested: string): { version: string; modulePath
  * both version-specific `node_modules/` and the hoisted workspace-root `node_modules/` without
  * manual path construction. The resolved file is then loaded with `import()`.
  *
- * @param modulePath - Path to the version directory (e.g. `compat-workspaces/standard/2.83.0`).
+ * @param modulePath - Path to the version directory (e.g. `compat-workspaces/full/2.83.0`).
  * The resolver starts here and walks up to find hoisted packages.
  * @param pkg - Package name to load (e.g. `@fluidframework/container-loader`).
  * @internal

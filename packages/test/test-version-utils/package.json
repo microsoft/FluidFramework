@@ -24,6 +24,7 @@
 	"main": "lib/index.js",
 	"types": "lib/index.d.ts",
 	"scripts": {
+		"postinstall": "pnpm --dir compat-workspaces/full install --frozen-lockfile",
 		"build": "fluid-build . --task build",
 		"build:compile": "fluid-build . --task compile",
 		"build:docs": "api-extractor run --local",

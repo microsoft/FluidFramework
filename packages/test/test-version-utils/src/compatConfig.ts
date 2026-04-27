@@ -19,18 +19,11 @@ import {
 	driver,
 	r11sEndpointName,
 	tenantIndex,
-	reinstall,
 	odspEndpointName,
 } from "./compatOptions.js";
 import { pkgVersion } from "./packageVersion.js";
 import { ensurePackageInstalled } from "./testApi.js";
-import {
-	ensureWorkspaceInstalled,
-	fullWorkspaceDir,
-	getRequestedVersion,
-	resolveVersion,
-	standardWorkspaceDir,
-} from "./versionUtils.js";
+import { getRequestedVersion, resolveVersion } from "./versionUtils.js";
 
 /**
  * Represents a previous major release of a package based on the provided delta. For example, if the base version is 2.X and
@@ -516,24 +509,12 @@ export async function mochaGlobalSetup(): Promise<void> {
 		return;
 	}
 
-	// Pre-install the required compat workspaces before loading any packages.
-	// Installing upfront (rather than lazily inside ensurePackageInstalled) means all parallel
-	// test workers see the workspace as installed and skip the install step themselves.
-	const needsFull = configs.some(
-		(config) => typeof config.compatVersion === "number" && config.compatVersion <= -3,
-	);
-
-	const workspaceInstalls: Promise<void>[] = [ensureWorkspaceInstalled(standardWorkspaceDir)];
-	if (needsFull) {
-		workspaceInstalls.push(ensureWorkspaceInstalled(fullWorkspaceDir));
-	}
-	await Promise.all(workspaceInstalls);
-
-	// Now load all versioned packages concurrently.
+	// Load all versioned packages concurrently. The compat workspace is pre-installed via
+	// pnpm install (postinstall hook), so no install step is needed here.
 	const versions = new Set(configs.map((value) => value.compatVersion));
 	const installP = Array.from(versions.values()).map(async (value) => {
 		const version = testBaseVersion(value);
-		return ensurePackageInstalled(version, value, reinstall);
+		return ensurePackageInstalled(version, value);
 	});
 
 	let error: unknown;
