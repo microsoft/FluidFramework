@@ -639,6 +639,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 				tokenFetchOptions,
 				loadingGroupId,
 				options,
+				this.logger,
 				this.snapshotFormatFetchType,
 				controller,
 				this.epochTracker,

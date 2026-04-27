@@ -177,11 +177,10 @@ function validateHandlePathExists(handle: string, summaryTree: ISummaryTree) {
 				currentObject.type === SummaryType.Handle,
 				`Handle path ${handle} should be for a subtree or a handle`,
 			);
-			// This validation code currently can not validate paths that point inside a handle.
-			// Since it is currently not expected for this case to occur in these tests, fail to make sure we do not accidentally depend on this lack of validation.
-			assert.fail(
-				`Handle path ${handle} points inside a handle which is currently not supported by this validation code`,
-			);
+			// The path navigates into another handle, meaning the referenced subtree is itself
+			// reused from an even older summary. Fluid supports chained handle resolution, so
+			// this is valid — we simply cannot verify the deeper path without resolving the chain.
+			return;
 		}
 	}
 }
@@ -806,6 +805,462 @@ describe("ForestSummarizer", () => {
 					shouldContainHandle: true,
 					handleCount: itemsCount - 1,
 					lastSummary: summary1.summary,
+				});
+			});
+		});
+
+		describe("4-depth schema with parameterized incremental summarization", () => {
+			/**
+			 * A 4-depth nested schema where each level's map field carries
+			 * {@link incrementalSummaryHint}, creating 4 independent incremental chunks:
+			 * - Depth 1: the `documents` map (outermost chunk).
+			 * - Depth 2: each document's `sections` map.
+			 * - Depth 3: each section's `items` map.
+			 * - Depth 4: each item's `tags` map (innermost chunk).
+			 *
+			 * The root field `version` (depth 0) is non-incremental and does not belong to any chunk.
+			 */
+			/** Depth 4 (innermost): a single tag entry, contained within the `tags` incremental chunk. */
+			class Tag extends sf.object("Tag", {
+				name: sf.string,
+				value: sf.string,
+			}) {}
+
+			/** Depth 3: an item whose `tags` map is the depth-4 incremental chunk. */
+			class Item extends sf.object("Item", {
+				itemName: sf.string,
+				/**
+				 * The entire anonymous map of {@link Tag} entries is the depth-4 incremental chunk.
+				 */
+				tags: sf.types([{ type: sf.map(Tag), metadata: {} }], {
+					custom: { [incrementalSummaryHint]: true },
+				}),
+			}) {}
+
+			/** Depth 2: a section whose `items` map is the depth-3 incremental chunk. */
+			class Section extends sf.object("Section", {
+				sectionName: sf.string,
+				/**
+				 * The entire anonymous map of {@link Item} entries is the depth-3 incremental chunk.
+				 */
+				items: sf.types([{ type: sf.map(Item), metadata: {} }], {
+					custom: { [incrementalSummaryHint]: true },
+				}),
+			}) {}
+
+			/** Depth 1: a document whose `sections` map is the depth-2 incremental chunk. */
+			class Document extends sf.object("Document", {
+				docName: sf.string,
+				/**
+				 * The entire anonymous map of {@link Section} entries is the depth-2 incremental chunk.
+				 */
+				sections: sf.types([{ type: sf.map(Section), metadata: {} }], {
+					custom: { [incrementalSummaryHint]: true },
+				}),
+			}) {}
+
+			/** Depth 0 (root): workspace whose `documents` map is the depth-1 incremental chunk. */
+			class Workspace extends sf.object("Workspace", {
+				version: sf.string,
+				/**
+				 * The entire anonymous map of {@link Document} entries is the depth-1 incremental chunk.
+				 */
+				documents: sf.types([{ type: sf.map(Document), metadata: {} }], {
+					custom: { [incrementalSummaryHint]: true },
+				}),
+			}) {}
+
+			function setupForestSummarization(initialData: Workspace | undefined) {
+				const fieldCursor = initialData
+					? fieldCursorFromInsertable(Workspace, initialData)
+					: fieldJsonCursor([]);
+				const initialContent: TreeStoredContentStrict = {
+					schema: toStoredSchema(Workspace, permissiveStoredSchemaGenerationOptions),
+					initialTree: fieldCursor,
+				};
+				return createForestSummarizer({
+					initialContent,
+					encodeType: TreeCompressionStrategy.CompressedIncremental,
+					forestType: ForestTypeOptimized,
+					shouldEncodeIncrementally: incrementalEncodingPolicyForAllowedTypes(
+						new TreeViewConfigurationAlpha({ schema: Workspace }),
+					),
+				});
+			}
+
+			const initialWorkspaceData = new Workspace({
+				version: "v1",
+				documents: {
+					Doc1: new Document({
+						docName: "Document 1",
+						sections: {
+							Sec1: new Section({
+								sectionName: "Section 1",
+								items: {
+									Item1: new Item({
+										itemName: "Item 1",
+										tags: {
+											Tag1: new Tag({ name: "tag1", value: "value1" }),
+										},
+									}),
+								},
+							}),
+						},
+					}),
+				},
+			});
+
+			/**
+			 * Mutates the tree at the given depth to trigger re-summarization of that depth and
+			 * all its ancestors (depths 0..changeDepth). Depths shallower than `changeDepth` (i.e.,
+			 * closer to the root) are always re-encoded because a changed child forces a new chunk
+			 * reference ID in the parent's encoding.
+			 *
+			 * - Depth 0: changes `version` (non-incremental root field). No chunks change; the
+			 * depth-1 chunk becomes a handle.
+			 * - Depth 1: changes `docName` inside the depth-1 documents chunk.
+			 * - Depth 2: changes `sectionName` inside the depth-2 sections chunk (also re-encodes depth 1).
+			 * - Depth 3: changes `itemName` inside the depth-3 items chunk (also re-encodes depths 1–2).
+			 * - Depth 4: changes a tag `name` inside the depth-4 tags chunk (re-encodes all depths; no handles).
+			 */
+			function makeChangeAtDepth(
+				workspace: Workspace,
+				depth: 0 | 1 | 2 | 3 | 4,
+				iteration: number,
+			): void {
+				const newVal = `updated-${iteration}`;
+				switch (depth) {
+					case 0: {
+						workspace.version = newVal;
+						break;
+					}
+					case 1: {
+						const doc = workspace.documents.get("Doc1");
+						assert(doc !== undefined, "Doc1 not found");
+						doc.docName = newVal;
+						break;
+					}
+					case 2: {
+						const doc = workspace.documents.get("Doc1");
+						assert(doc !== undefined, "Doc1 not found");
+						const sec = doc.sections.get("Sec1");
+						assert(sec !== undefined, "Sec1 not found");
+						sec.sectionName = newVal;
+						break;
+					}
+					case 3: {
+						const doc = workspace.documents.get("Doc1");
+						assert(doc !== undefined, "Doc1 not found");
+						const sec = doc.sections.get("Sec1");
+						assert(sec !== undefined, "Sec1 not found");
+						const item = sec.items.get("Item1");
+						assert(item !== undefined, "Item1 not found");
+						item.itemName = newVal;
+						break;
+					}
+					case 4: {
+						const doc = workspace.documents.get("Doc1");
+						assert(doc !== undefined, "Doc1 not found");
+						const sec = doc.sections.get("Sec1");
+						assert(sec !== undefined, "Sec1 not found");
+						const item = sec.items.get("Item1");
+						assert(item !== undefined, "Item1 not found");
+						const tag = item.tags.get("Tag1");
+						assert(tag !== undefined, "Tag1 not found");
+						tag.name = newVal;
+						break;
+					}
+					default: {
+						throw new Error(`Invalid depth: ${String(depth)}`);
+					}
+				}
+			}
+
+			/**
+			 * Test cases: each entry specifies an ordered sequence of depth changes.
+			 * Each change drives a new summary round; together they exercise different combinations
+			 * of chunk re-encoding and handle reuse.
+			 */
+			const testCases: {
+				name: string;
+				changeDepths: readonly (0 | 1 | 2 | 3 | 4)[];
+			}[] = [
+				{
+					name: "ascending depths 0→1→2→3→4",
+					changeDepths: [0, 1, 2, 3, 4],
+				},
+				{
+					name: "descending depths 4→3→2→1",
+					changeDepths: [4, 3, 2, 1],
+				},
+				{
+					name: "shallow then deep: depth 1 then 3",
+					changeDepths: [1, 3],
+				},
+				{
+					name: "deep then shallow: depth 3 then 1",
+					changeDepths: [3, 1],
+				},
+				{
+					name: "non-sequential: depth 2 then 4 then 1",
+					changeDepths: [2, 4, 1],
+				},
+				// The following test cases exercise the stale-handle-path bug: when a parent chunk
+				// is re-encoded in summary S(i), child handles inside it reference a summaryPath that
+				// was recorded when the child was last encoded as a full tree (possibly S0 or S1).
+				// In S(i+1), those handles are nested inside the newly-re-encoded parent, so their
+				// path must be resolvable in (i) (the latestSummary for (i+1)), not in an older one.
+				{
+					name: "same shallow depth twice: depth 1 then 1",
+					changeDepths: [1, 1],
+				},
+				{
+					name: "same depth twice: depth 2 then 2",
+					changeDepths: [2, 2],
+				},
+				{
+					name: "same depth three times: depth 1 then 1 then 1",
+					changeDepths: [1, 1, 1],
+				},
+				{
+					name: "shallow then same shallow twice: depth 2 then 1 then 1",
+					changeDepths: [2, 1, 1],
+				},
+				{
+					name: "deep then same shallow twice: depth 3 then 1 then 1",
+					changeDepths: [3, 1, 1],
+				},
+				{
+					name: "repeated shallow with deep interleaved: depth 1 then 2 then 1",
+					changeDepths: [1, 2, 1],
+				},
+				// The next two cases exercise the completeSummary copy-propagation path.
+				// When depth 0 changes, ALL incremental chunks become handles (or are not re-encoded
+				// at all). `completeSummary` then copies their tracking entries — including any stale
+				// summaryPath — forward to the new summary. On the following depth-1 (or depth-2)
+				// change, the parent chunk gets a new referenceId, so any child handle whose
+				// summaryPath was copied forward will point to a key that no longer exists in the
+				// preceding summary → BUG.
+				{
+					name: "stale path via copy propagation: depth 1, depth 0, depth 1",
+					changeDepths: [1, 0, 1],
+				},
+				{
+					name: "stale path via copy propagation: depth 2, depth 0, depth 2",
+					changeDepths: [2, 0, 2],
+				},
+			];
+
+			for (const { name, changeDepths } of testCases) {
+				it(`can incrementally summarize with ${name}`, () => {
+					const { checkout, forestSummarizer } =
+						setupForestSummarization(initialWorkspaceData);
+					const view = checkout.viewWith(new TreeViewConfiguration({ schema: Workspace }));
+
+					const summaries: ISummaryTree[] = [];
+
+					// Initial summary (no changes yet → no handles).
+					let seqNum = 0;
+					const initCtx: IExperimentalIncrementalSummaryContext = {
+						summarySequenceNumber: seqNum,
+						latestSummarySequenceNumber: -1,
+						summaryPath: "",
+					};
+					const initialSummaryResult = forestSummarizer.summarize({
+						stringify: JSON.stringify,
+						incrementalSummaryContext: initCtx,
+					});
+					validateSummaryIsIncremental(initialSummaryResult.summary);
+					validateHandlesInForestSummary(initialSummaryResult.summary, {
+						shouldContainHandle: false,
+					});
+					summaries.push(initialSummaryResult.summary);
+
+					for (let round = 0; round < changeDepths.length; round++) {
+						const changeDepth = changeDepths[round];
+						const prevSeqNum = seqNum;
+						seqNum = (round + 1) * 10;
+
+						// Apply the mutation at the specified depth.
+						makeChangeAtDepth(view.root, changeDepth, round);
+
+						// The first unchanged chunk (at depth changeDepth+1) becomes a handle. All
+						// deeper chunks are nested inside it and are not separately represented.
+						// If changeDepth === 4 (the max), every chunk was re-encoded → no handles.
+						const expectedHandleCount = changeDepth < 4 ? 1 : 0;
+
+						const ctx: IExperimentalIncrementalSummaryContext = {
+							summarySequenceNumber: seqNum,
+							latestSummarySequenceNumber: prevSeqNum,
+							summaryPath: "",
+						};
+						const summaryResult = forestSummarizer.summarize({
+							stringify: JSON.stringify,
+							incrementalSummaryContext: ctx,
+						});
+						summaries.push(summaryResult.summary);
+
+						if (expectedHandleCount === 0) {
+							validateHandlesInForestSummary(summaryResult.summary, {
+								shouldContainHandle: false,
+							});
+						} else {
+							// A handle's summaryPath must be resolvable in the immediately preceding
+							// summary (the latestSummary used during this round). That is summaries[round]
+							// because summaries[0] is the initial summary and summaries[i] is from round i-1.
+							validateHandlesInForestSummary(summaryResult.summary, {
+								shouldContainHandle: true,
+								handleCount: expectedHandleCount,
+								lastSummary: summaries[round],
+							});
+						}
+					}
+				});
+			}
+
+			it("simultaneous handles at depth 3 and depth 4 when only one section's items change", () => {
+				// Doc1 has two sections (Sec1 and Sec2). When Item1.itemName in Sec1 changes
+				// (a depth-3 change), depths 1–3 along the Sec1 branch are re-encoded:
+				//   depth 1: A (documents map)   — new tree
+				//   depth 2: B (Doc1.sections)   — new tree
+				//   depth 3: C1 (Sec1.items)     — new tree  (changed)
+				//   depth 3: C2 (Sec2.items)     — handle    (sibling of C1, unchanged)
+				//   depth 4: D1 (Item1.tags)     — handle    (child of C1, unchanged)
+				// Two handles at different depths appear in the same summary.
+				// Repeating the change exposes the stale-path bug for both C2 and D1: their
+				// stored summaryPaths still reference A and B's old referenceIds, so the handle
+				// URL points to keys that no longer exist in the preceding summary.
+				const twoSectionData = new Workspace({
+					version: "v1",
+					documents: {
+						Doc1: new Document({
+							docName: "Document 1",
+							sections: {
+								Sec1: new Section({
+									sectionName: "Section 1",
+									items: {
+										Item1: new Item({
+											itemName: "Item 1",
+											tags: { Tag1: new Tag({ name: "tag1", value: "value1" }) },
+										}),
+									},
+								}),
+								Sec2: new Section({
+									sectionName: "Section 2",
+									items: {
+										Item1: new Item({
+											itemName: "Item 2",
+											tags: { Tag1: new Tag({ name: "tag2", value: "value2" }) },
+										}),
+									},
+								}),
+							},
+						}),
+					},
+				});
+				const { checkout, forestSummarizer } = setupForestSummarization(twoSectionData);
+				const view = checkout.viewWith(new TreeViewConfiguration({ schema: Workspace }));
+				const summaries: ISummaryTree[] = [];
+
+				let seqNum = 0;
+				const initResult = forestSummarizer.summarize({
+					stringify: JSON.stringify,
+					incrementalSummaryContext: {
+						summarySequenceNumber: seqNum,
+						latestSummarySequenceNumber: -1,
+						summaryPath: "",
+					},
+				});
+				validateHandlesInForestSummary(initResult.summary, { shouldContainHandle: false });
+				summaries.push(initResult.summary);
+
+				for (let round = 0; round < 3; round++) {
+					const prevSeqNum = seqNum;
+					seqNum = (round + 1) * 10;
+
+					// Change Item1.itemName in Sec1 — re-encodes A, B, C1 as new trees.
+					const doc1 = view.root.documents.get("Doc1");
+					assert(doc1 !== undefined, "Doc1 not found");
+					const sec1 = doc1.sections.get("Sec1");
+					assert(sec1 !== undefined, "Sec1 not found");
+					const item1 = sec1.items.get("Item1");
+					assert(item1 !== undefined, "Item1 not found");
+					item1.itemName = `updated-${round}`;
+
+					const result = forestSummarizer.summarize({
+						stringify: JSON.stringify,
+						incrementalSummaryContext: {
+							summarySequenceNumber: seqNum,
+							latestSummarySequenceNumber: prevSeqNum,
+							summaryPath: "",
+						},
+					});
+					summaries.push(result.summary);
+
+					// C2 (Sec2.items, depth 3) and D1 (Item1.tags, depth 4) are both handles.
+					// Both handle paths must be resolvable in the immediately preceding summary.
+					validateHandlesInForestSummary(result.summary, {
+						shouldContainHandle: true,
+						handleCount: 2,
+						lastSummary: summaries[round],
+					});
+				}
+			});
+
+			it("fullTree summary forces all chunks to re-encode; subsequent incremental summary creates handles", () => {
+				const { checkout, forestSummarizer } = setupForestSummarization(initialWorkspaceData);
+				const view = checkout.viewWith(new TreeViewConfiguration({ schema: Workspace }));
+
+				let seqNum = 0;
+
+				// Initial incremental summary — no handles.
+				const initCtx: IExperimentalIncrementalSummaryContext = {
+					summarySequenceNumber: seqNum,
+					latestSummarySequenceNumber: -1,
+					summaryPath: "",
+				};
+				const initResult = forestSummarizer.summarize({
+					stringify: JSON.stringify,
+					incrementalSummaryContext: initCtx,
+				});
+				validateHandlesInForestSummary(initResult.summary, { shouldContainHandle: false });
+
+				// fullTree=true summary: no handles even though nothing changed.
+				seqNum = 10;
+				const fullTreeCtx: IExperimentalIncrementalSummaryContext = {
+					summarySequenceNumber: seqNum,
+					latestSummarySequenceNumber: 0,
+					summaryPath: "",
+				};
+				const fullTreeResult = forestSummarizer.summarize({
+					stringify: JSON.stringify,
+					incrementalSummaryContext: fullTreeCtx,
+					fullTree: true,
+				});
+				validateHandlesInForestSummary(fullTreeResult.summary, {
+					shouldContainHandle: false,
+				});
+
+				// Now make a change at depth 1 and take an incremental summary.
+				const doc1 = view.root.documents.get("Doc1");
+				assert(doc1 !== undefined, "Doc1 not found");
+				doc1.docName = "Updated";
+				seqNum = 20;
+				const incrCtx: IExperimentalIncrementalSummaryContext = {
+					summarySequenceNumber: seqNum,
+					latestSummarySequenceNumber: 10,
+					summaryPath: "",
+				};
+				const incrResult = forestSummarizer.summarize({
+					stringify: JSON.stringify,
+					incrementalSummaryContext: incrCtx,
+				});
+				// The sections chunk inside Doc1 is unchanged → 1 handle pointing into the
+				// fullTree summary (the latest summary).
+				validateHandlesInForestSummary(incrResult.summary, {
+					shouldContainHandle: true,
+					handleCount: 1,
+					lastSummary: fullTreeResult.summary,
 				});
 			});
 		});

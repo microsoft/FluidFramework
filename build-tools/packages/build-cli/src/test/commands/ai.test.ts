@@ -8,23 +8,32 @@ import { describe, it } from "mocha";
 
 import {
 	assertSafeAliasSelection,
+	buildLauncherPrompt,
 	normalizePromptAnswer,
-	supportedAliases,
+	SUPPORTED_ALIASES,
 } from "../../commands/ai.js";
 
 describe("ai command", () => {
-	it("allows known agent aliases", () => {
-		for (const alias of supportedAliases) {
+	it("allows all supported aliases", () => {
+		const aliasSet = new Set<string>(SUPPORTED_ALIASES);
+		for (const alias of SUPPORTED_ALIASES) {
 			expect(() =>
-				assertSafeAliasSelection({ alias, explanation: `launch ${alias}` }),
+				assertSafeAliasSelection({ alias, explanation: `launch ${alias}` }, aliasSet),
 			).to.not.throw();
 		}
 	});
 
-	it("rejects unsupported aliases", () => {
-		expect(() =>
-			assertSafeAliasSelection({ alias: "bash", explanation: "definitely not safe" }),
-		).to.throw(/Unsupported AI alias selection: bash/);
+	it("renders the allowed alias list into the launcher prompt", () => {
+		const prompt = buildLauncherPrompt({
+			template:
+				"## Alias Definitions\n{{aliasFileContent}}\n\n## Allowed Aliases\n{{allowedAliasesContent}}\n\n## Getting Started\n{{gettingStartedContent}}",
+			aliasFileContent: "dev() {}",
+			gettingStartedContent: "start here",
+			allowedAliases: ["copilot"],
+		});
+
+		expect(prompt).to.include("- `copilot`");
+		expect(prompt).to.not.include("{{allowedAliasesContent}}");
 	});
 
 	it("maps numbered prompt selections to the selected choice", () => {

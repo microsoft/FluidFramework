@@ -25,6 +25,7 @@ import {
 	toUpgradeSchema,
 	TreeViewConfiguration,
 	TreeViewConfigurationAlpha,
+	type ValidateRecursiveSchema,
 } from "../../../simple-tree/index.js";
 import { TestSchemaRepository, TestTreeProviderLite } from "../../utils.js";
 
@@ -423,5 +424,42 @@ describe("staged optional upgrade", () => {
 
 		const nodeUndefined = new Obj({ foo: undefined });
 		assert(nodeUndefined instanceof Obj);
+	});
+
+	it("works with stagedOptionalRecursive in a recursive schema", () => {
+		const sf = new SchemaFactoryAlpha("stagedOptionalRecursiveTest");
+
+		// A recursive node whose `child` field goes through the staged optional migration.
+		// Schema A: child is required (the "before" state).
+		class NodeA extends sf.objectRecursiveAlpha("TreeNode", {
+			value: sf.number,
+			child: sf.optionalRecursive([() => NodeA]),
+		}) {}
+		{
+			type _check = ValidateRecursiveSchema<typeof NodeA>;
+		}
+
+		// Schema B: child is stagedOptionalRecursive (during the rollout period).
+		class NodeB extends sf.objectRecursiveAlpha("TreeNode", {
+			value: sf.number,
+			child: sf.stagedOptionalRecursive([() => NodeB]),
+		}) {}
+		{
+			type _check = ValidateRecursiveSchema<typeof NodeB>;
+		}
+
+		// Verify unhydrated construction works for both present and absent child.
+		const withChild = new NodeB({
+			value: 1,
+			child: new NodeB({ value: 2, child: undefined }),
+		});
+		assert(withChild instanceof NodeB);
+		assert.equal(withChild.value, 1);
+
+		const withoutChild = new NodeB({ value: 3, child: undefined });
+		assert(withoutChild instanceof NodeB);
+
+		const omittedChild = new NodeB({ value: 4 });
+		assert(omittedChild instanceof NodeB);
 	});
 });

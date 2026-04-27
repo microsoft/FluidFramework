@@ -1555,6 +1555,8 @@ export class SchemaFactoryAlpha<out TScope extends string | undefined = string |
     scopedFactoryAlpha<const T extends TName, TNameInner extends number | string = string>(name: T): SchemaFactoryAlpha<ScopedSchemaName<TScope, T>, TNameInner>;
     readonly stagedOptional: <const T extends ImplicitAllowedTypes, const TCustomMetadata = unknown>(t: T, props?: Omit<FieldPropsAlpha<TCustomMetadata>, "stagedOptionalUpgrade" | "defaultProvider"> | undefined) => FieldSchemaAlpha<FieldKind.Optional, T, TCustomMetadata, FieldPropsAlpha<TCustomMetadata>>;
     static readonly stagedOptional: <const T extends ImplicitAllowedTypes, const TCustomMetadata = unknown>(t: T, props?: Omit<FieldPropsAlpha<TCustomMetadata>, "stagedOptionalUpgrade" | "defaultProvider"> | undefined) => FieldSchemaAlpha<FieldKind.Optional, T, TCustomMetadata, FieldPropsAlpha<TCustomMetadata>>;
+    readonly stagedOptionalRecursive: <const T extends System_Unsafe.ImplicitAllowedTypesUnsafe, const TCustomMetadata = unknown>(t: T, props?: Omit<FieldPropsAlpha<TCustomMetadata>, "stagedOptionalUpgrade" | "defaultProvider"> | undefined) => FieldSchemaAlphaUnsafe<FieldKind.Optional, T, TCustomMetadata, FieldPropsAlpha<TCustomMetadata>>;
+    static readonly stagedOptionalRecursive: <const T extends System_Unsafe.ImplicitAllowedTypesUnsafe, const TCustomMetadata = unknown>(t: T, props?: Omit<FieldPropsAlpha<TCustomMetadata>, "stagedOptionalUpgrade" | "defaultProvider"> | undefined) => FieldSchemaAlphaUnsafe<FieldKind.Optional, T, TCustomMetadata, FieldPropsAlpha<TCustomMetadata>>;
     readonly withDefault: <Kind extends FieldKind, Types extends ImplicitAllowedTypes, TCustomMetadata = unknown>(fieldSchema: FieldSchema<Kind, Types, TCustomMetadata>, defaultValue: NodeProvider<ApplyKindInput<InsertableTreeNodeFromImplicitAllowedTypes<Types>, Kind, true>>) => FieldSchemaAlpha<Kind, Types, TCustomMetadata, FieldPropsAlpha<TCustomMetadata> & {
         defaultProvider: DefaultProvider;
     }>;
@@ -1613,6 +1615,7 @@ export interface SchemaStatics {
 // @alpha @sealed @system
 export interface SchemaStaticsAlpha {
     readonly stagedOptional: <const T extends ImplicitAllowedTypes, const TCustomMetadata = unknown>(t: T, props?: Omit<FieldPropsAlpha<TCustomMetadata>, "defaultProvider" | "stagedOptionalUpgrade">) => FieldSchemaAlpha<FieldKind.Optional, T, TCustomMetadata, FieldPropsAlpha<TCustomMetadata>>;
+    readonly stagedOptionalRecursive: <const T extends System_Unsafe.ImplicitAllowedTypesUnsafe, const TCustomMetadata = unknown>(t: T, props?: Omit<FieldPropsAlpha<TCustomMetadata>, "defaultProvider" | "stagedOptionalUpgrade">) => FieldSchemaAlphaUnsafe<FieldKind.Optional, T, TCustomMetadata, FieldPropsAlpha<TCustomMetadata>>;
     readonly withDefault: <Kind extends FieldKind, Types extends ImplicitAllowedTypes, TCustomMetadata = unknown>(fieldSchema: FieldSchema<Kind, Types, TCustomMetadata>, defaultValue: NodeProvider<InsertableTreeFieldFromImplicitField<FieldSchema<Kind, Types>>>) => FieldSchemaAlpha<Kind, Types, TCustomMetadata, FieldPropsAlpha<TCustomMetadata> & {
         defaultProvider: DefaultProvider;
     }>;

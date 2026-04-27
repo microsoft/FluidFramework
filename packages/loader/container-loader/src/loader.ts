@@ -26,13 +26,15 @@ import type {
 	IUrlResolver,
 } from "@fluidframework/driver-definitions/internal";
 import {
-	type ITelemetryLoggerExt,
 	type MonitoringContext,
 	PerformanceEvent,
 	createChildMonitoringContext,
 	mixinMonitoringContext,
 	sessionStorageConfigProvider,
+	toITelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
+// eslint-disable-next-line import-x/no-internal-modules -- Needed to avoid specialized /internal ITelemetryLoggerExt
+import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/legacy";
 import { v4 as uuid } from "uuid";
 
 import { Container } from "./container.js";
@@ -268,7 +270,7 @@ export class Loader implements IHostLoader {
 			scope:
 				options?.provideScopeLoader === false ? { ...scope } : { ...scope, ILoader: this },
 			protocolHandlerBuilder,
-			subLogger: subMc.logger,
+			subLogger: toITelemetryLoggerExt(subMc.logger),
 		};
 		this.mc = createChildMonitoringContext({
 			logger: this.services.subLogger,
