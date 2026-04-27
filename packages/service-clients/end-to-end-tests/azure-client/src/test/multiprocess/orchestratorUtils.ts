@@ -7,7 +7,7 @@ import { fork } from "node:child_process";
 import type { ChildProcess as AnyChildProcess } from "node:child_process";
 
 import { ScopeType } from "@fluidframework/driver-definitions/legacy";
-import type { AttendeeId } from "@fluidframework/presence/beta";
+import type { AttendeeId } from "@fluidframework/presence";
 import { timeoutAwait, timeoutPromise } from "@fluidframework/test-utils/internal";
 
 import type {

@@ -14,7 +14,7 @@ import type { Attendee } from "./presence.js";
  * Metadata for the value state.
  *
  * @sealed
- * @beta
+ * @public
  */
 export interface LatestMetadata {
 	/**
@@ -32,7 +32,7 @@ export interface LatestMetadata {
  * Represents a value that is accessed directly.
  *
  * @system
- * @beta
+ * @public
  */
 export interface RawValueAccessor<T> {
 	readonly kind: "raw";
@@ -43,7 +43,7 @@ export interface RawValueAccessor<T> {
  * Represents a value that is accessed via a function call, which may result in no value.
  *
  * @system
- * @beta
+ * @public
  */
 export interface ProxiedValueAccessor<T> {
 	readonly kind: "proxied";
@@ -54,7 +54,7 @@ export interface ProxiedValueAccessor<T> {
  * Union of possible accessor types for a value.
  *
  * @system
- * @beta
+ * @public
  */
 export type ValueAccessor<T> = RawValueAccessor<T> | ProxiedValueAccessor<T>;
 
@@ -62,7 +62,7 @@ export type ValueAccessor<T> = RawValueAccessor<T> | ProxiedValueAccessor<T>;
  * Utility type that conditionally represents an accessor type based on the base accessor type.
  *
  * @system
- * @beta
+ * @public
  */
 export type Accessor<T, BaseAccessor extends ValueAccessor<T>> =
 	BaseAccessor extends ProxiedValueAccessor<T>
@@ -75,7 +75,7 @@ export type Accessor<T, BaseAccessor extends ValueAccessor<T>> =
  * State of a value and its metadata.
  *
  * @sealed
- * @beta
+ * @public
  */
 export interface LatestData<T, TValueAccessor extends ValueAccessor<T>> {
 	/**
@@ -100,7 +100,7 @@ export interface LatestData<T, TValueAccessor extends ValueAccessor<T>> {
  * State of a specific {@link Attendee}'s value and its metadata.
  *
  * @sealed
- * @beta
+ * @public
  */
 export interface LatestClientData<
 	T,
@@ -120,7 +120,7 @@ export interface LatestClientData<
  *
  * @returns The validated data, or `undefined` if the data is invalid.
  *
- * @beta
+ * @public
  */
 export type StateSchemaValidator<T> = (
 	/**

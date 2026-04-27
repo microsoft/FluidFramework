@@ -26,12 +26,8 @@ import type { IChannel } from "@fluidframework/datastore-definitions/internal";
 // Valid export as per package.json export map
 import { modifyClusterSize } from "@fluidframework/id-compressor/internal/test-utils";
 import { ISharedMap, SharedMap } from "@fluidframework/map/internal";
-import type { StageControlsAlpha } from "@fluidframework/runtime-definitions/internal";
-import {
-	RuntimeHeaders,
-	toFluidHandleInternal,
-	asLegacyAlpha,
-} from "@fluidframework/runtime-utils/internal";
+import type { StageControls } from "@fluidframework/runtime-definitions/internal";
+import { RuntimeHeaders, toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
 import { timeoutAwait } from "@fluidframework/test-utils/internal";
 
 import { ddsModelMap } from "./ddsModels.js";
@@ -195,7 +191,7 @@ export class StressDataObject extends DataObject {
 	}
 
 	public get isDirty(): boolean | undefined {
-		return asLegacyAlpha(this.runtime).isDirty;
+		return this.runtime.isDirty;
 	}
 }
 
@@ -335,14 +331,14 @@ export class DefaultStressDataObject extends StressDataObject {
 		this._locallyCreatedObjects.push(obj);
 	}
 
-	private stageControls: StageControlsAlpha | undefined;
-	private readonly containerRuntimeExp = asLegacyAlpha(this.context.containerRuntime);
+	private stageControls: StageControls | undefined;
+	private readonly containerRuntimeExp = this.context.containerRuntime;
 
 	/**
 	 * Sets the stage controls. This is called by the runtime factory when loading
 	 * from pending state that was in staging mode.
 	 */
-	public setStageControls(controls: StageControlsAlpha | undefined): void {
+	public setStageControls(controls: StageControls | undefined): void {
 		this.stageControls = controls;
 	}
 
@@ -405,7 +401,7 @@ export const createRuntimeFactory = (): IRuntimeFactory => {
 			// Capture stageControls to pass to the entrypoint after loading.
 			// This must be inside instantiateRuntime so each container instance has its own variable.
 			// eslint-disable-next-line prefer-const -- reassigned after loadContainerRuntimeAlpha returns
-			let pendingStageControls: StageControlsAlpha | undefined;
+			let pendingStageControls: StageControls | undefined;
 
 			const { runtime, stageControls } = await loadContainerRuntimeAlpha({
 				context,

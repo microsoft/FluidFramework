@@ -29,11 +29,10 @@ import type {
 } from "@fluidframework/core-interfaces/internal";
 import type { SessionSpaceCompressedId } from "@fluidframework/id-compressor/internal";
 import { SharedMap } from "@fluidframework/map/internal";
-import {
-	asLegacyAlpha,
-	type IContainerRuntimeBase,
-	type StageControlsAlpha,
-	type StageControlsInternal,
+import type {
+	IContainerRuntimeBase,
+	StageControls,
+	StageControlsInternal,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	encodeHandleForSerialization,
@@ -61,8 +60,8 @@ class DataObjectWithStagingMode extends DataObject {
 			? -1
 			: DataObjectWithStagingMode.instanceCount++;
 
-	private readonly containerRuntimeExp = asLegacyAlpha(this.context.containerRuntime);
-	private _rehydratedStageControls: StageControlsAlpha | undefined;
+	private readonly containerRuntimeExp = this.context.containerRuntime;
+	private _rehydratedStageControls: StageControls | undefined;
 	get DataObjectWithStagingMode(): this {
 		return this;
 	}
@@ -70,11 +69,11 @@ class DataObjectWithStagingMode extends DataObject {
 		return this.context.containerRuntime;
 	}
 
-	public get rehydratedStageControls(): StageControlsAlpha | undefined {
+	public get rehydratedStageControls(): StageControls | undefined {
 		return this._rehydratedStageControls;
 	}
 
-	public setRehydratedStageControls(controls: StageControlsAlpha | undefined): void {
+	public setRehydratedStageControls(controls: StageControls | undefined): void {
 		this._rehydratedStageControls = controls;
 	}
 
@@ -179,7 +178,7 @@ const runtimeFactory: IRuntimeFactory = {
 			enableRuntimeIdCompressor: "on",
 		};
 		// eslint-disable-next-line prefer-const -- assigned after loadContainerRuntimeAlpha returns
-		let pendingStageControls: StageControlsAlpha | undefined;
+		let pendingStageControls: StageControls | undefined;
 		const { runtime, stageControls } = await loadContainerRuntimeAlpha({
 			context,
 			existing,
@@ -775,8 +774,10 @@ describe("Staging Mode", () => {
 			const rehydratedDataObject = await getDataObject(rehydratedContainer);
 
 			// Verify the container is in staging mode
-			const runtimeAlpha = asLegacyAlpha(rehydratedDataObject.containerRuntime);
-			assert(runtimeAlpha.inStagingMode, "Rehydrated container should be in staging mode");
+			assert(
+				rehydratedDataObject.containerRuntime.inStagingMode,
+				"Rehydrated container should be in staging mode",
+			);
 
 			// The rehydrated container should have the pending DDS loaded
 			const rehydratedData = await rehydratedDataObject.enumerateDataWithHandlesResolved();
@@ -936,8 +937,10 @@ describe("Staging Mode", () => {
 			const rehydratedDataObject = await getDataObject(rehydratedContainer);
 
 			// Verify the container is in staging mode
-			const runtimeAlpha = asLegacyAlpha(rehydratedDataObject.containerRuntime);
-			assert(runtimeAlpha.inStagingMode, "Rehydrated container should be in staging mode");
+			assert(
+				rehydratedDataObject.containerRuntime.inStagingMode,
+				"Rehydrated container should be in staging mode",
+			);
 
 			// Verify the handle to the pending datastore was rehydrated
 			const rehydratedData = await rehydratedDataObject.enumerateDataWithHandlesResolved();
@@ -998,8 +1001,10 @@ describe("Staging Mode", () => {
 			});
 			const rehydratedDataObject = await getDataObject(rehydratedContainer);
 
-			const runtimeAlpha = asLegacyAlpha(rehydratedDataObject.containerRuntime);
-			assert(runtimeAlpha.inStagingMode, "Rehydrated container should be in staging mode");
+			assert(
+				rehydratedDataObject.containerRuntime.inStagingMode,
+				"Rehydrated container should be in staging mode",
+			);
 
 			const rehydratedData = await rehydratedDataObject.enumerateDataWithHandlesResolved();
 			assert.deepEqual(

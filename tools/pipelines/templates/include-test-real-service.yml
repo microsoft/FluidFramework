@@ -405,7 +405,7 @@ stages:
             continueOnError: true
             inputs:
               # Increment the number on the cache-bust key (no special semantics) to force a new cache key.
-              key: '"compat-version-installs" | cache-bust-1 | "$(Agent.OS)" | "${{ parameters.testCommand }}" | "${{ variant.name }}" | "$(compatVersionCacheKey)"'
+              key: '"compat-version-installs" | "cache-bust-1" | "$(Agent.OS)" | "${{ parameters.testCommand }}" | "${{ variant.name }}" | "$(compatVersionCacheKey)"'
               path: $(compatVersionInstallsPath)
 
         # Only check out tenants from the tenant pool if we are running tests against ODSP
@@ -560,7 +560,9 @@ stages:
 
 - template: /tools/pipelines/templates/upload-telemetry/include-stage-upload-telemetry.yml@self
   parameters:
-    stageIdFilter: ${{ parameters.stageId }}
+    telemetryDescription: ${{ parameters.stageId }}
+    dependsOn:
+      - ${{ parameters.stageId }}
     telemetry_upload_steps:
       - template: /tools/pipelines/templates/upload-telemetry/include-steps-upload-stage-timing.yml@self
         parameters:

@@ -29,7 +29,6 @@ import type {
 	IFluidDataStoreRuntime,
 	IFluidDataStoreRuntimeEvents,
 	IDeltaManagerErased,
-	IFluidDataStoreRuntimeAlpha,
 } from "@fluidframework/datastore-definitions/internal";
 import {
 	type IClientDetails,
@@ -64,8 +63,6 @@ import {
 	encodeHandlesInContainerRuntime,
 	type IFluidDataStorePolicies,
 	type MinimumVersionForCollab,
-	asLegacyAlpha,
-	type IContainerRuntimeBaseInternal,
 	currentSummarizeStepPrefix,
 	currentSummarizeStepPropertyName,
 } from "@fluidframework/runtime-definitions/internal";
@@ -87,16 +84,19 @@ import {
 	encodeCompactIdToString,
 } from "@fluidframework/runtime-utils/internal";
 import {
-	type ITelemetryLoggerExt,
 	DataProcessingError,
 	LoggingError,
 	type MonitoringContext,
 	UsageError,
 	createChildMonitoringContext,
+	extractTelemetryLoggerExt,
 	generateStack,
 	raiseConnectedEvent,
 	tagCodeArtifacts,
+	toITelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
+// eslint-disable-next-line import-x/no-internal-modules -- Needed to avoid specialized /internal ITelemetryLoggerExt
+import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/legacy";
 import { v4 as uuid } from "uuid";
 
 import { type IChannelContext, summarizeChannel } from "./channelContext.js";
@@ -355,7 +355,7 @@ export class FluidDataStoreRuntime
 	private readonly audience: IAudience;
 	private readonly mc: MonitoringContext;
 	public get logger(): ITelemetryLoggerExt {
-		return this.mc.logger;
+		return toITelemetryLoggerExt(this.mc.logger);
 	}
 
 	/**
@@ -423,7 +423,10 @@ export class FluidDataStoreRuntime
 			namespace: "FluidDataStoreRuntime",
 			properties: {
 				all: { dataStoreId: uuid(), dataStoreVersion: pkgVersion },
-				error: { inStagingMode: () => this.inStagingMode, isDirty: () => this.isDirty },
+				error: {
+					inStagingMode: () => this.inStagingMode,
+					isDirty: () => this.isDirty,
+				},
 			},
 		});
 
@@ -543,16 +546,16 @@ export class FluidDataStoreRuntime
 	}
 
 	/**
-	 * Implementation of IFluidDataStoreRuntimeAlpha.inStagingMode
+	 * {@inheritDoc @fluidframework/datastore-definitions#IFluidDataStoreRuntime.inStagingMode}
 	 */
-	private get inStagingMode(): IFluidDataStoreRuntimeAlpha["inStagingMode"] {
-		return asLegacyAlpha(this.dataStoreContext.containerRuntime)?.inStagingMode;
+	public get inStagingMode(): boolean {
+		return this.dataStoreContext.containerRuntime.inStagingMode;
 	}
 
 	/**
-	 * Implementation of IFluidDataStoreRuntimeAlpha.isDirty
+	 * {@inheritDoc @fluidframework/datastore-definitions#IFluidDataStoreRuntime.isDirty}
 	 */
-	private get isDirty(): IFluidDataStoreRuntimeAlpha["isDirty"] {
+	public get isDirty(): boolean {
 		return this.pendingOpCount.value > 0;
 	}
 
@@ -726,7 +729,7 @@ export class FluidDataStoreRuntime
 			this,
 			this.dataStoreContext,
 			this.dataStoreContext.storage,
-			this.logger,
+			extractTelemetryLoggerExt(this.logger),
 			(content, localOpMetadata) => this.submitChannelOp(channel.id, content, localOpMetadata),
 			(address: string) => this.setChannelDirty(address),
 		);
@@ -745,7 +748,7 @@ export class FluidDataStoreRuntime
 			this,
 			this.dataStoreContext,
 			this.dataStoreContext.storage,
-			this.logger,
+			extractTelemetryLoggerExt(this.logger),
 			(content, localOpMetadata) => this.submitChannelOp(id, content, localOpMetadata),
 			(address: string) => this.setChannelDirty(address),
 			tree,
@@ -888,7 +891,7 @@ export class FluidDataStoreRuntime
 			object.setConnectionState(connected, clientId);
 		}
 
-		raiseConnectedEvent(this.logger, this, connected, clientId);
+		raiseConnectedEvent(extractTelemetryLoggerExt(this.logger), this, connected, clientId);
 	}
 
 	private _readonly: boolean;
@@ -1276,11 +1279,8 @@ export class FluidDataStoreRuntime
 	private visitLocalBoundContextsDuringAttach(
 		visitor: (contextId: string, context: LocalChannelContextBase) => void,
 	): void {
-		const runtimeExp: IContainerRuntimeBaseInternal = asLegacyAlpha(
-			this.dataStoreContext.containerRuntime,
-		);
 		assert(
-			runtimeExp.inStagingMode === true ||
+			this.dataStoreContext.containerRuntime.inStagingMode === true ||
 				this.visibilityState === VisibilityState.LocallyVisible,
 			0xc2c /* The data store should be locally visible when generating attach summary */,
 		);

@@ -95,7 +95,6 @@ import { FetchSource, MessageType } from "@fluidframework/driver-definitions/int
 import { readAndParse } from "@fluidframework/driver-utils/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 import type {
-	// eslint-disable-next-line import-x/no-deprecated -- Will be undeprecated in 2.100.0 when it becomes an internal API
 	IIdCompressorCore,
 	IdCreationRange,
 	SerializedIdCompressorWithNoSession,
@@ -105,6 +104,7 @@ import {
 	createIdCompressor,
 	createSessionId,
 	deserializeIdCompressor,
+	toIdCompressorWithCore,
 } from "@fluidframework/id-compressor/internal";
 import {
 	FlushMode,
@@ -174,6 +174,7 @@ import {
 	wrapError,
 	tagCodeArtifacts,
 	normalizeError,
+	toITelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
 import { gt } from "semver-ts";
 import { v4 as uuid } from "uuid";
@@ -680,18 +681,11 @@ export function getDeviceSpec(): {
 	deviceMemory?: number | undefined;
 	hardwareConcurrency?: number | undefined;
 } {
-	try {
-		if (typeof navigator === "object" && navigator !== null) {
-			return {
-				// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment
-				deviceMemory: (navigator as any).deviceMemory,
-				hardwareConcurrency: navigator.hardwareConcurrency,
-			};
-		}
-	} catch {
-		// Eat the error
-	}
-	return {};
+	return {
+		// deviceMemory is only available in browsers and is not part of the Navigator type definition. In Node 22 it is undefined.
+		deviceMemory: (navigator as Navigator & { deviceMemory?: number }).deviceMemory,
+		hardwareConcurrency: navigator.hardwareConcurrency,
+	};
 }
 
 /**
@@ -1210,7 +1204,6 @@ export class ContainerRuntime
 			idCompressorMode = desiredIdCompressorMode;
 		}
 
-		// eslint-disable-next-line import-x/no-deprecated -- Will be undeprecated in 2.100.0 when it becomes an internal API
 		const createIdCompressorFn = (): IIdCompressor & IIdCompressorCore => {
 			/**
 			 * Because the IdCompressor emits so much telemetry, this function is used to sample
@@ -1229,17 +1222,21 @@ export class ContainerRuntime
 			const pendingLocalState = context.pendingLocalState as IPendingRuntimeState;
 
 			if (pendingLocalState?.pendingIdCompressorState !== undefined) {
-				return deserializeIdCompressor(
-					pendingLocalState.pendingIdCompressorState,
-					compressorLogger,
+				return toIdCompressorWithCore(
+					deserializeIdCompressor(
+						pendingLocalState.pendingIdCompressorState,
+						toITelemetryLoggerExt(compressorLogger),
+					),
 				);
 			} else if (serializedIdCompressor === undefined) {
-				return createIdCompressor(compressorLogger);
+				return toIdCompressorWithCore(createIdCompressor(compressorLogger));
 			} else {
-				return deserializeIdCompressor(
-					serializedIdCompressor,
-					createSessionId(),
-					compressorLogger,
+				return toIdCompressorWithCore(
+					deserializeIdCompressor(
+						serializedIdCompressor,
+						createSessionId(),
+						toITelemetryLoggerExt(compressorLogger),
+					),
 				);
 			}
 		};
@@ -1420,7 +1417,6 @@ export class ContainerRuntime
 		return this.documentsSchemaController.sessionSchema.runtime;
 	}
 
-	// eslint-disable-next-line import-x/no-deprecated -- Will be undeprecated in 2.100.0 when it becomes an internal API
 	private _idCompressor: (IIdCompressor & IIdCompressorCore) | undefined;
 
 	// We accumulate Id compressor Ops while Id compressor is not loaded yet (only for "delayed" mode)
@@ -1436,7 +1432,6 @@ export class ContainerRuntime
 	/**
 	 * {@inheritDoc @fluidframework/runtime-definitions#IContainerRuntimeBase.idCompressor}
 	 */
-	// eslint-disable-next-line import-x/no-deprecated -- Will be undeprecated in 2.100.0 when it becomes an internal API
 	public get idCompressor(): (IIdCompressor & IIdCompressorCore) | undefined {
 		// Expose ID Compressor only if it's On from the start.
 		// If container uses delayed mode, then we can only expose generateDocumentUniqueId() and nothing else.
@@ -1657,7 +1652,6 @@ export class ContainerRuntime
 
 		blobManagerLoadInfo: IBlobManagerLoadInfo,
 		private readonly _storage: IContainerStorageService,
-		// eslint-disable-next-line import-x/no-deprecated -- Will be undeprecated in 2.100.0 when it becomes an internal API
 		private readonly createIdCompressorFn: () => IIdCompressor & IIdCompressorCore,
 
 		private readonly documentsSchemaController: DocumentsSchemaController,
@@ -3640,7 +3634,18 @@ export class ContainerRuntime
 		let stageControls: StageControlsInternal | undefined;
 		if (this.mc.config.getBoolean("Fluid.ContainerRuntime.EnableRollback") === true) {
 			if (!this.batchRunner.running && !this.inStagingMode) {
-				stageControls = this.enterStagingMode();
+				// Use silent=true to suppress stagingModeChanged events for orderSequentially.
+				// orderSequentially uses staging mode as a rollback mechanism.
+				// Emitting stagingModeChanged here would:
+				//   - Cause UI flicker — consumers rendering staging mode event would see
+				//      unexpected enter/exit flashes on every orderSequentially call.
+				//   - consumers cannot distinguish this internal usage
+				//      from a user explicitly entering staging mode, as there is no source field
+				//      on the event to filter by.
+				//   - if orderSequentially is
+				//      later reimplemented without staging mode, consumers calibrated
+				//      to these events would break silently.
+				stageControls = this.enterStagingModeCore(true);
 			}
 			// Note: we are not touching any batches other than mainBatch here, for two reasons:
 			// 1. It would not help, as other batches are flushed independently from main batch.
@@ -3716,9 +3721,22 @@ export class ContainerRuntime
 	 * Enter Staging Mode, such that ops submitted to the ContainerRuntime will not be sent to the ordering service.
 	 * To exit Staging Mode, call either discardChanges or commitChanges on the Stage Controls returned from this method.
 	 *
+	 * @remarks
+	 * The `stagingModeChanged` event is emitted when staging mode is entered or exited via this method.
+	 * It is NOT emitted when staging mode is used internally (e.g. by `orderSequentially` for rollback support).
+	 *
 	 * @returns Controls for exiting Staging Mode.
 	 */
-	public enterStagingMode = (): StageControlsInternal => {
+	public enterStagingMode = (): StageControlsInternal => this.enterStagingModeCore(false);
+
+	/**
+	 * Internal implementation of enterStagingMode.
+	 * @param silent - When true, suppresses `stagingModeChanged` event emission.
+	 * Pass `true` when staging mode is used as an internal implementation detail (e.g. by
+	 * `orderSequentially` for rollback support) so that external listeners only observe
+	 * user-initiated staging mode transitions. Pass `false` for all public entry points.
+	 */
+	private readonly enterStagingModeCore = (silent: boolean): StageControlsInternal => {
 		if (this.stageControls !== undefined) {
 			throw new UsageError("Already in staging mode");
 		}
@@ -3730,10 +3748,15 @@ export class ContainerRuntime
 		// since we mark whole batches as "staged" or not to indicate whether to submit them.
 		this.flush();
 
+		// Note: `silent` is captured from the enclosing `enterStagingModeCore` call.
+		// When `true`, both enter and exit events are suppressed (see orderSequentially).
 		const exitStagingMode = (
 			discardOrCommit: () => IPendingMessage["batchInfo"][],
 			exitMethod: "commit" | "discard",
 		): void => {
+			if (this.stageControls !== stageControls) {
+				throw new UsageError("Not in staging mode");
+			}
 			try {
 				PerformanceEvent.timedExec(
 					this.mc.logger,
@@ -3765,6 +3788,12 @@ export class ContainerRuntime
 				this.closeFn(normalizedError);
 				throw normalizedError;
 			}
+			if (!silent) {
+				this.emit("stagingModeChanged", {
+					inStagingMode: false,
+					commit: exitMethod === "commit",
+				});
+			}
 		};
 
 		const stageControls: StageControlsInternal = {
@@ -3794,8 +3823,16 @@ export class ContainerRuntime
 
 		this.stageControls = stageControls;
 		this.channelCollection.notifyStagingMode(true);
+		if (!silent) {
+			try {
+				this.emit("stagingModeChanged", { inStagingMode: true });
+			} catch (error) {
+				// Don't let a listener error prevent the caller from receiving stage controls.
+				this.mc.logger.sendErrorEvent({ eventName: "StagingModeChangedError" }, error);
+			}
+		}
 
-		return this.stageControls;
+		return stageControls;
 	};
 
 	/**
