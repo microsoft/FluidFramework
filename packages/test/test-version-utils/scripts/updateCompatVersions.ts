@@ -70,6 +70,9 @@ import {
 
 const scriptDir = fileURLToPath(new URL(".", import.meta.url));
 const pkgRoot = path.resolve(scriptDir, "..");
+const gitRoot = execSync("git rev-parse --show-toplevel", { encoding: "utf8", cwd: pkgRoot })
+	.trim()
+	.replace(/\\/g, "/");
 const compatWorkspacesDir = path.join(pkgRoot, "compat-workspaces");
 const versionsJsonPath = path.join(compatWorkspacesDir, "versions.json");
 
@@ -158,7 +161,7 @@ packages:
   - '*'
 `;
 
-function buildVersionPackageJson(version: string): string {
+function buildVersionPackageJson(versionDir: string, version: string): string {
 	const deps: Record<string, string> = {};
 	for (const entry of packageListToInstall) {
 		if (semver.gte(version, entry.minVersion)) {
@@ -168,12 +171,23 @@ function buildVersionPackageJson(version: string): string {
 	if (versionHasMovedSparsedMatrix(version)) {
 		deps["@fluid-experimental/sequence-deprecated"] = version;
 	}
+	const sortedDeps = Object.fromEntries(Object.entries(deps).sort(([a], [b]) => a.localeCompare(b)));
+	const repoDirectory = path.relative(gitRoot, versionDir).replace(/\\/g, "/");
+	// Field order must match sort-package-json output to pass the npm-package-metadata-and-sorting policy.
 	return `${JSON.stringify(
 		{
 			name: `compat-${version}`,
 			version: "1.0.0",
 			private: true,
-			dependencies: deps,
+			homepage: "https://fluidframework.com",
+			repository: {
+				type: "git",
+				url: "https://github.com/microsoft/FluidFramework.git",
+				directory: repoDirectory,
+			},
+			license: "MIT",
+			author: "Microsoft and contributors",
+			dependencies: sortedDeps,
 		},
 		undefined,
 		2,
@@ -197,7 +211,7 @@ function ensureWorkspaceScaffold(workspaceDir: string, registry: string): void {
 function syncVersionDirectory(workspaceDir: string, version: string): boolean {
 	const versionDir = path.join(workspaceDir, version);
 	const pkgJsonPath = path.join(versionDir, "package.json");
-	const newContent = buildVersionPackageJson(version);
+	const newContent = buildVersionPackageJson(versionDir, version);
 
 	if (existsSync(pkgJsonPath)) {
 		const existing = readFileSync(pkgJsonPath, "utf8");
