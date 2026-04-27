@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { execSync } from "node:child_process";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -63,22 +62,6 @@ function hasFlag(argv: string[], flagName: string): boolean {
 function sanitizeForFileName(value: string): string {
 	// eslint-disable-next-line unicorn/prefer-string-replace-all
 	return value.replace(/[^\w.-]/g, "_");
-}
-
-/**
- * Returns the current git branch name, or undefined if it cannot be determined
- * (e.g., not in a git work tree).
- */
-function tryGetCurrentBranch(): string | undefined {
-	try {
-		const branch = execSync("git rev-parse --abbrev-ref HEAD", {
-			encoding: "utf-8",
-			stdio: ["ignore", "pipe", "ignore"],
-		}).trim();
-		return branch.length > 0 ? branch : undefined;
-	} catch {
-		return undefined;
-	}
 }
 
 /** Represents a single asset in a bundle. */
@@ -255,31 +238,28 @@ function formatEntrypointRow(
 
 /** Parsed command-line options for the bundle comparison script. */
 interface Options {
-	/** Branch name for the base build (default: "main") */
-	baseBranch: string;
-	/** Branch name for the current build (auto-detected from git HEAD or BUILD_SOURCEBRANCHNAME) */
-	currentBranch: string;
+	/** Label of the base bundle (default: "main"). Matches the directory name written by collectBundle.ts. */
+	baseLabel: string;
+	/** Label of the current bundle (default: "current"). Matches the directory name written by collectBundle.ts in local mode. */
+	currentLabel: string;
 	/** Directory containing per-label bundleStats.msp.gz files at \{label\}/bundleStats.msp.gz (default: this package's bundleAnalysis/) */
 	analysisDirectory: string;
 }
 
 /**
  * Parses command-line arguments into an Options object.
- * The current branch is auto-detected: BUILD_SOURCEBRANCHNAME (CI) takes precedence,
- * then the current git branch, falling back to the literal "current".
  *
  * @param argv - The command-line argument list
  * @returns Parsed options with defaults applied
  */
 function parseOptions(argv: string[]): Options {
-	const baseBranch = getOptionValue(argv, "--base-branch") ?? "main";
-	const currentBranch =
-		process.env.BUILD_SOURCEBRANCHNAME ?? tryGetCurrentBranch() ?? "current";
+	const baseLabel = getOptionValue(argv, "--base-label") ?? "main";
+	const currentLabel = getOptionValue(argv, "--current-label") ?? "current";
 	const analysisDirectory = resolve(
 		getOptionValue(argv, "--analysis-dir") ?? defaultAnalysisDirectory,
 	);
 
-	return { baseBranch, currentBranch, analysisDirectory };
+	return { baseLabel, currentLabel, analysisDirectory };
 }
 
 /**
@@ -288,23 +268,23 @@ function parseOptions(argv: string[]): Options {
  * File names are derived from sanitized branch names (e.g., "compare-main-to-dev.txt").
  *
  * @param outputDirectory - The directory where output files will be written
- * @param baseBranch - The base branch name (used in output filename)
- * @param currentBranch - The current branch name (used in output filename)
+ * @param baseLabel - The base bundle label (used in output filename)
+ * @param currentLabel - The current bundle label (used in output filename)
  * @param textContent - The formatted text comparison report
  * @param jsonObject - The structured comparison data as a JSON-serializable object
  */
 function writeOutputFiles(
 	outputDirectory: string,
-	baseBranch: string,
-	currentBranch: string,
+	baseLabel: string,
+	currentLabel: string,
 	textContent: string,
 	jsonObject: object,
 ): void {
 	mkdirSync(outputDirectory, { recursive: true });
 
-	const baseRevision = sanitizeForFileName(baseBranch);
-	const currentRevision = sanitizeForFileName(currentBranch);
-	const outputBaseName = `compare-${baseRevision}-to-${currentRevision}`;
+	const baseSuffix = sanitizeForFileName(baseLabel);
+	const currentSuffix = sanitizeForFileName(currentLabel);
+	const outputBaseName = `compare-${baseSuffix}-to-${currentSuffix}`;
 	const textOutputPath = resolve(outputDirectory, `${outputBaseName}.txt`);
 	const jsonOutputPath = resolve(outputDirectory, `${outputBaseName}.json`);
 
@@ -328,13 +308,18 @@ Options:
   --help, -h
     Show this help text and exit.
 
-  --base-branch <name>    Base branch name (default: main). The "current" side is
-                          auto-detected from BUILD_SOURCEBRANCHNAME or git HEAD.
-  --analysis-dir <path>   Parent directory where bundleStats.msp.gz files are stored
-                          at {label}/bundleStats.msp.gz (default: ${defaultAnalysisDirectory})
+  --base-label <name>     Label (subdirectory name) of the base bundle
+                          (default: main). Must match a label previously written
+                          by collectBundle.ts.
+  --current-label <name>  Label (subdirectory name) of the current bundle
+                          (default: current).
+  --analysis-dir <path>   Parent directory containing bundleStats.msp.gz files
+                          at {label}/bundleStats.msp.gz
+                          (default: ${defaultAnalysisDirectory})
 
 Examples:
-  jiti ./scripts/compareBundles.ts --base-branch main
+  jiti ./scripts/compareBundles.ts
+  jiti ./scripts/compareBundles.ts --base-label main --current-label feature
   jiti ./scripts/compareBundles.ts --analysis-dir /some/other/path
 `);
 }
@@ -379,9 +364,8 @@ function main(argv: string[]): void {
 	const options = parseOptions(argv);
 	const reporter = new Reporter();
 
-	// Derive labels and directories from branch names
-	const baseLabel = sanitizeForFileName(options.baseBranch);
-	const currentLabel = sanitizeForFileName(options.currentBranch);
+	const baseLabel = sanitizeForFileName(options.baseLabel);
+	const currentLabel = sanitizeForFileName(options.currentLabel);
 	const outputDirectory = options.analysisDirectory;
 	const baseBuildDirectory = resolve(outputDirectory, baseLabel, "build");
 	const currentBuildDirectory = resolve(outputDirectory, currentLabel, "build");
@@ -411,7 +395,7 @@ function main(argv: string[]): void {
 		}));
 
 	reporter.section(
-		`=== Bundle Size Comparison: ${options.baseBranch} -> ${options.currentBranch} ===`,
+		`=== Bundle Size Comparison: ${options.baseLabel} -> ${options.currentLabel} ===`,
 	);
 	reporter.section("All assets (stat/parsed size in bytes):");
 	reporter.tableHeader(
@@ -492,13 +476,13 @@ function main(argv: string[]): void {
 
 	writeOutputFiles(
 		outputDirectory,
-		options.baseBranch,
-		options.currentBranch,
+		options.baseLabel,
+		options.currentLabel,
 		reporter.toText(),
 		{
 			comparedAt: new Date().toISOString(),
-			baseBranch: options.baseBranch,
-			currentBranch: options.currentBranch,
+			baseLabel: options.baseLabel,
+			currentLabel: options.currentLabel,
 			analysisDirectory: options.analysisDirectory,
 			assets: rows.map((row) => ({
 				name: row.name,

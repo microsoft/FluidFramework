@@ -65,21 +65,17 @@ function sanitizeForFileName(value: string): string {
  *
  * @param scriptName - Script file name under ./scripts/
  * @param scriptArgs - Arguments to forward to the script
- * @param envOverrides - Extra environment variables to set for the child process
  */
-function runScript(
-	scriptName: string,
-	scriptArgs: string[],
-	envOverrides?: Record<string, string>,
-): void {
+function runScript(scriptName: string, scriptArgs: string[]): void {
 	const scriptPath = resolve(scriptDirectory, scriptName);
+	// Bump the V8 heap so compareBundles.ts can hold two decompressed webpack
+	// stats objects in memory without hitting the default ~4 GB OOM.
 	const result = spawnSync(
 		process.execPath,
-		["--import", "jiti/register", scriptPath, ...scriptArgs],
+		["--max-old-space-size=8192", "--import", "jiti/register", scriptPath, ...scriptArgs],
 		{
 			cwd: packageRoot,
 			stdio: "inherit",
-			env: envOverrides === undefined ? process.env : { ...process.env, ...envOverrides },
 		},
 	);
 
@@ -175,12 +171,12 @@ function main(argv: string[]): void {
 			console.log(`\n${"=".repeat(80)}`);
 			console.log("Running bundle comparison...");
 			console.log("=".repeat(80));
-			// compareBundles.ts auto-detects the "current" label from
-			// BUILD_SOURCEBRANCHNAME (sanitized internally), so we use it to plumb
-			// through the explicit current label without modifying compareBundles.
-			runScript("compareBundles.ts", ["--base-branch", baseLabel], {
-				BUILD_SOURCEBRANCHNAME: currentLabel,
-			});
+			runScript("compareBundles.ts", [
+				"--base-label",
+				baseLabel,
+				"--current-label",
+				currentLabel,
+			]);
 		}
 
 		console.log(`\n${"=".repeat(80)}`);

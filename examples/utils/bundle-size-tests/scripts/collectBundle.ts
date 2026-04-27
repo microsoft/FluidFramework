@@ -50,7 +50,7 @@ const bundleAnalysisDirectory = resolve(outerPackageRoot, "bundleAnalysis");
  * Only one inner repo is ever maintained — the unique name avoids collisions
  * with label subdirectories under {@link bundleAnalysisDirectory}.
  */
-const innerRepoRoot = resolve(bundleAnalysisDirectory, "fluid-bundle-compare-base-repo");
+const innerRepoRoot = resolve(bundleAnalysisDirectory, "base-repo");
 
 /**
  * Sanitizes a string for use as a filename.
