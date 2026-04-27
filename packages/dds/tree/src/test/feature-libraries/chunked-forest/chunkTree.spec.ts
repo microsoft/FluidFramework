@@ -26,6 +26,7 @@ import {
 	chunkField,
 	chunkFieldSingle,
 	chunkRange,
+	chunkTree,
 	combineChunks,
 	defaultChunkPolicy,
 	insertValues,
@@ -753,6 +754,67 @@ describe("chunkTree", () => {
 				fieldSchemaWithContext,
 			);
 			assert(infoNonIncremental !== undefined);
+		});
+	});
+
+	/**
+	 * Enforces the policy that an incremental field requires all chunks to be single nodes
+	 * regardless of shape. The encoder emits one `ChunkReferenceId` per chunk (not per
+	 * top-level node), so a multi-node `UniformChunk` would collapse N top-level nodes
+	 * into a single summary tree node and break per-node handle reuse across summaries.
+	 *
+	 * This is already covered at the integration level by
+	 * `forestSummarizer.spec.ts > Incremental summarization > simple schema > array nodes`,
+	 * but that test doesn't successfully test this when multi-node chunks are not enabled.
+	 * This test forces an incremental field through a custom chunker with `isFieldIncremental`
+	 * under a configuration that would otherwise batch multiple top-level nodes into a
+	 * `UniformChunk`, asserting that the chunker only produces single-node chunks.
+	 */
+	describe("incremental field chunking", () => {
+		it("incremental fields produce one chunk per top-level node", () => {
+			// `Item` has positions.length === 2; with `uniformChunkNodeCount === 1`
+			// `uniformChunkFromCursor` would otherwise batch two Items into a
+			// `UniformChunk(topLevelLength === 2)`. `isFieldIncremental` must override that.
+			const itemType: TreeNodeSchemaIdentifier = brand("Item");
+			const numberType: TreeNodeSchemaIdentifier = brand(numberSchema.identifier);
+			const valueKey: FieldKey = brand("value");
+			const itemsKey: FieldKey = brand("items");
+			const parentType: TreeNodeSchemaIdentifier = brand("Parent");
+
+			const numberShape = new TreeShape(numberType, true, []);
+			const itemShape = new TreeShape(itemType, false, [[valueKey, numberShape, 1]]);
+
+			const policy: ChunkPolicy = {
+				shapeFromSchema: (type) => {
+					if (type === itemType) return itemShape;
+					if (type === numberType) return numberShape;
+					return polymorphic;
+				},
+				sequenceChunkInlineThreshold: 0,
+				sequenceChunkSplitThreshold: Number.POSITIVE_INFINITY,
+				uniformChunkNodeCount: 1,
+				isFieldIncremental: (type, key) => type === parentType && key === itemsKey,
+			};
+
+			const cursor = cursorForJsonableTreeNode({
+				type: parentType,
+				fields: {
+					items: [
+						{ type: itemType, fields: { value: [{ type: numberType, value: 1 }] } },
+						{ type: itemType, fields: { value: [{ type: numberType, value: 2 }] } },
+					],
+				},
+			});
+
+			const parent = chunkTree(cursor, { policy, idCompressor: undefined });
+			assert(parent instanceof BasicChunk);
+
+			const itemsChunks = parent.fields.get(itemsKey);
+			assert(itemsChunks !== undefined);
+			assert.equal(itemsChunks.length, 2);
+			for (const chunk of itemsChunks) {
+				assert.equal(chunk.topLevelLength, 1);
+			}
 		});
 	});
 });

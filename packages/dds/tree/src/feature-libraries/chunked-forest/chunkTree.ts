@@ -5,6 +5,7 @@
 
 import { assert, debugAssert, oob, fail } from "@fluidframework/core-utils/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import {
 	CursorLocationType,
@@ -17,6 +18,7 @@ import {
 	type TreeStoredSchemaSubscription,
 	type TreeValue,
 	type Value,
+	mapCursorField,
 	mapCursorFields,
 	Multiplicity,
 	ValueSchema,
@@ -29,7 +31,10 @@ import { getOrCreate } from "../../util/index.js";
 import { isStableNodeIdentifier } from "../node-identifier/index.js";
 
 import { BasicChunk } from "./basicChunk.js";
-import type { IncrementalEncodingPolicy } from "./codec/index.js";
+import {
+	defaultIncrementalEncodingPolicy,
+	type IncrementalEncodingPolicy,
+} from "./codec/index.js";
 import { SequenceChunk } from "./sequenceChunk.js";
 import { type FieldShape, TreeShape, UniformChunk } from "./uniformChunk.js";
 
@@ -63,6 +68,7 @@ export function makeTreeChunker(
 				},
 				type,
 			),
+		shouldEncodeIncrementally,
 	);
 }
 
@@ -122,6 +128,7 @@ export class Chunker implements IChunker {
 			type: TreeNodeSchemaIdentifier,
 			shapes: Map<TreeNodeSchemaIdentifier, ShapeInfo>,
 		) => ShapeInfo,
+		private readonly shouldEncodeIncrementally: IncrementalEncodingPolicy = defaultIncrementalEncodingPolicy,
 	) {}
 
 	public clone(schema: TreeStoredSchemaSubscription): IChunker {
@@ -134,7 +141,26 @@ export class Chunker implements IChunker {
 			this.sequenceChunkInlineThreshold,
 			this.uniformChunkNodeCount,
 			this.tryShapeFromNodeSchema,
+			this.shouldEncodeIncrementally,
 		);
+	}
+
+	public isFieldIncremental(
+		parentType: TreeNodeSchemaIdentifier,
+		fieldKey: FieldKey,
+	): boolean {
+		try {
+			return this.shouldEncodeIncrementally(parentType, fieldKey);
+		} catch (error) {
+			// The policy throws UsageError when called with a fieldKey on a node kind that doesn't
+			// accept one (map, record, leaf). That's a valid "not incremental" answer at the call
+			// site in newBasicChunkTree, which iterates all fields generically. Any other error
+			// indicates a real problem and should propagate.
+			if (error instanceof UsageError) {
+				return false;
+			}
+			throw error;
+		}
 	}
 
 	public shapeFromSchema(schema: TreeNodeSchemaIdentifier): ShapeInfo {
@@ -417,6 +443,13 @@ export interface ChunkPolicy {
 	 * Returns information about the shapes trees of type `schema` can take.
 	 */
 	shapeFromSchema(schema: TreeNodeSchemaIdentifier): ShapeInfo;
+
+	/**
+	 * Returns true if the given field requires single-node chunks (one top-level node per
+	 * chunk), disabling the chunker's normal batching. Used so each top-level node in an
+	 * incremental field gets its own `ChunkReferenceId` at encode time.
+	 */
+	isFieldIncremental?(parentType: TreeNodeSchemaIdentifier, fieldKey: FieldKey): boolean;
 }
 
 export interface ChunkCompressor {
@@ -434,13 +467,22 @@ function newBasicChunkTree(
 	cursor: ITreeCursorSynchronous,
 	policy: ChunkCompressor,
 ): BasicChunk {
+	const parentType = cursor.type;
 	return new BasicChunk(
-		cursor.type,
-		new Map(mapCursorFields(cursor, () => [cursor.getFieldKey(), chunkField(cursor, policy)])),
+		parentType,
+		new Map(
+			mapCursorFields(cursor, () => {
+				const fieldKey = cursor.getFieldKey();
+				// Incremental fields need one chunk per top-level node so per-node summary reuse works.
+				if (policy.policy.isFieldIncremental?.(parentType, fieldKey) === true) {
+					return [fieldKey, mapCursorField(cursor, (c) => chunkTree(c, policy))];
+				}
+				return [fieldKey, chunkField(cursor, policy)];
+			}),
+		),
 		cursor.value,
 	);
 }
-
 /**
  * Chunk a portion of a field.
  *
