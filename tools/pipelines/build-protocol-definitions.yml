@@ -108,5 +108,6 @@ extends:
     taskSetVersion: false
     sparseCheckoutDirectories: |
       common/lib/protocol-definitions
+      common/build/build-common
       patches
       scripts

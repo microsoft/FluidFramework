@@ -106,5 +106,6 @@ extends:
     taskSetVersion: false
     sparseCheckoutDirectories: |
       common/lib/common-utils
+      common/build/build-common
       patches
       scripts

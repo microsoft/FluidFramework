@@ -103,4 +103,5 @@ extends:
     taskSetVersion: false
     sparseCheckoutDirectories: |
       tools/benchmark
+      common/build/build-common
       scripts

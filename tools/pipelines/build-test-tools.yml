@@ -99,4 +99,5 @@ extends:
     taskSetVersion: false
     sparseCheckoutDirectories: |
       tools/test-tools
+      common/build/build-common
       scripts
