@@ -34,8 +34,10 @@
  *
  * HUMAN-MAINTAINED (scaffolded once, then edited as needed):
  *   compat-workspaces/standard/.npmrc
+ *   compat-workspaces/standard/package.json
  *   compat-workspaces/standard/pnpm-workspace.yaml
  *   compat-workspaces/full/.npmrc
+ *   compat-workspaces/full/package.json
  *   compat-workspaces/full/pnpm-workspace.yaml
  *
  * The OCV (oldest compatible version) in versions.json is also human-maintained: update
@@ -171,7 +173,9 @@ function buildVersionPackageJson(versionDir: string, version: string): string {
 	if (versionHasMovedSparsedMatrix(version)) {
 		deps["@fluid-experimental/sequence-deprecated"] = version;
 	}
-	const sortedDeps = Object.fromEntries(Object.entries(deps).sort(([a], [b]) => a.localeCompare(b)));
+	const sortedDeps = Object.fromEntries(
+		Object.entries(deps).sort(([a], [b]) => a.localeCompare(b)),
+	);
 	const repoDirectory = path.relative(gitRoot, versionDir).replace(/\\/g, "/");
 	// Field order must match sort-package-json output to pass the npm-package-metadata-and-sorting policy.
 	return `${JSON.stringify(
@@ -194,6 +198,31 @@ function buildVersionPackageJson(versionDir: string, version: string): string {
 	)}\n`;
 }
 
+function buildWorkspaceRootPackageJson(workspaceDir: string): string {
+	const repoDirectory = path.relative(gitRoot, workspaceDir).replace(/\\/g, "/");
+	const name = `compat-workspaces-${path.basename(workspaceDir)}`;
+	return `${JSON.stringify(
+		{
+			name,
+			version: "1.0.0",
+			private: true,
+			homepage: "https://fluidframework.com",
+			repository: {
+				type: "git",
+				url: "https://github.com/microsoft/FluidFramework.git",
+				directory: repoDirectory,
+			},
+			license: "MIT",
+			author: "Microsoft and contributors",
+			scripts: {
+				preinstall: "node ../../../../../scripts/only-pnpm.cjs",
+			},
+		},
+		undefined,
+		2,
+	)}\n`;
+}
+
 function ensureWorkspaceScaffold(workspaceDir: string, registry: string): void {
 	mkdirSync(workspaceDir, { recursive: true });
 
@@ -205,6 +234,12 @@ function ensureWorkspaceScaffold(workspaceDir: string, registry: string): void {
 	if (!existsSync(workspaceYamlPath)) {
 		writeFileSync(workspaceYamlPath, PNPM_WORKSPACE_YAML, "utf8");
 		console.log(`  Created ${path.relative(pkgRoot, workspaceYamlPath)}`);
+	}
+
+	const rootPkgJsonPath = path.join(workspaceDir, "package.json");
+	if (!existsSync(rootPkgJsonPath)) {
+		writeFileSync(rootPkgJsonPath, buildWorkspaceRootPackageJson(workspaceDir), "utf8");
+		console.log(`  Created ${path.relative(pkgRoot, rootPkgJsonPath)}`);
 	}
 }
 
