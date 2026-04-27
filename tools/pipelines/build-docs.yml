@@ -114,7 +114,7 @@ stages:
             workingDirectory: $(Pipeline.Workspace)/$(FluidFrameworkDirectory)
             script: |
               # Generate the build version. Sets the environment variables version, codeVersion, and isLatest.
-              flub generate buildVersion
+              flub vnext generate buildVersion
         - task: Bash@3
           name: SetShouldDeploy
           displayName: 'Check Version Deployment Condition'
