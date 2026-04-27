@@ -42,6 +42,7 @@
 	},
 	"devDependencies": {
 		"@fluid-internal/mocha-test-setup": "~2.83.0",
+		"@fluidframework/build-common": "^2.0.3",
 		"@microsoft/api-extractor": "^7.58.2",
 		"@types/mocha": "^10.0.10",
 		"@types/node": "~22.19.17",
