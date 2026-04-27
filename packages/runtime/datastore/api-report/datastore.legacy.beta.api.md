@@ -69,7 +69,7 @@ export class FluidDataStoreRuntime extends TypedEventEmitter<IFluidDataStoreRunt
     get isAttached(): boolean;
     get isDirty(): boolean;
     readonly isReadOnly: () => boolean;
-    loadPendingChannels(channelsTree: ISummaryTree): void;
+    loadPendingChannels(channelsTree: ISummaryTree): Promise<Map<string, IFluidHandleInternal>>;
     // (undocumented)
     get logger(): ITelemetryLoggerExt;
     makeVisibleAndAttachGraph(): void;

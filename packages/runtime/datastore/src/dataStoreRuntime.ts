@@ -1296,7 +1296,7 @@ export class FluidDataStoreRuntime
 			visitedLength = visitedContexts.size;
 			for (const [contextId, context] of this.contexts) {
 				if (!(context instanceof LocalChannelContextBase)) {
-					if (runtimeExp.inStagingMode === true) {
+					if (this.dataStoreContext.containerRuntime.inStagingMode === true) {
 						continue;
 					}
 					throw new LoggingError("Should only be called with local channel handles");
@@ -1304,7 +1304,7 @@ export class FluidDataStoreRuntime
 
 				if (
 					!visitedContexts.has(contextId) &&
-					(runtimeExp.inStagingMode === true ||
+					(this.dataStoreContext.containerRuntime.inStagingMode === true ||
 						!this.notBoundedChannelContextSet.has(contextId))
 				) {
 					visitor(contextId, context);
