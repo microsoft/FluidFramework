@@ -58,12 +58,12 @@ export const toRedirectTable = (
 	logger: ITelemetryLoggerExt,
 ): Map<string, string> => {
 	const count = blobManagerLoadInfo.ids?.length ?? 0;
-	const redirectTable = blobManagerLoadInfo.redirectTable?.length ?? 0;
-	if (count > 0 || redirectTable > 0) {
+	const redirectTableLength = blobManagerLoadInfo.redirectTable?.length ?? 0;
+	if (count > 0 || redirectTableLength > 0) {
 		logger.sendTelemetryEvent({
 			eventName: "AttachmentBlobsLoaded",
 			count,
-			redirectTable,
+			redirectTable: redirectTableLength,
 		});
 	}
 	const redirectTableMap = new Map<string, string>(blobManagerLoadInfo.redirectTable);
