@@ -53,14 +53,23 @@ export interface IRuntimeFeature {
 	readonly onReady?: () => Promise<void>;
 
 	/**
-	 * Called each time the runtime gains a service connection.
+	 * Called each time the runtime's connection state changes — including
+	 * connect, disconnect, and read-only toggles while connected.
+	 *
+	 * @param canSendOps - Whether the runtime can currently submit ops. False
+	 * when disconnected, or when connected but read-only.
+	 * @param clientId - The current client id when connected; `undefined` when
+	 * disconnected.
+	 *
+	 * @remarks
+	 * Mirrors the existing `setConnectionState(canSendOps, clientId)` shape used
+	 * internally by the runtime — features observe the same signal the runtime
+	 * has always forwarded to its subsystems.
 	 */
-	readonly onConnect?: (clientId: string) => void;
-
-	/**
-	 * Called each time the runtime loses its service connection.
-	 */
-	readonly onDisconnect?: () => void;
+	readonly onConnectionStateChange?: (
+		canSendOps: boolean,
+		clientId: string | undefined,
+	) => void;
 
 	/**
 	 * Called once when the runtime is being disposed. Features should release

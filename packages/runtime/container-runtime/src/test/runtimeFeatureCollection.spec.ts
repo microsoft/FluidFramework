@@ -68,25 +68,23 @@ describe("RuntimeFeatureCollection", () => {
 		assert.deepEqual(order, ["first", "second"]);
 	});
 
-	it("dispatches sync methods", () => {
-		const connects: string[] = [];
-		const disconnects: number[] = [];
+	it("dispatches onConnectionStateChange to features", () => {
+		const events: { canSendOps: boolean; clientId: string | undefined }[] = [];
 		const collection = new RuntimeFeatureCollection();
 		const feature: IRuntimeFeature = {
-			onConnect: (clientId) => {
-				connects.push(clientId);
-			},
-			onDisconnect: () => {
-				disconnects.push(disconnects.length);
+			onConnectionStateChange: (canSendOps, clientId) => {
+				events.push({ canSendOps, clientId });
 			},
 		};
 		collection.add(feature);
-		collection.onConnect("client-1");
-		collection.onDisconnect();
-		collection.onConnect("client-2");
-		collection.onDisconnect();
-		assert.deepEqual(connects, ["client-1", "client-2"]);
-		assert.equal(disconnects.length, 2);
+		collection.onConnectionStateChange(true, "client-1");
+		collection.onConnectionStateChange(false, undefined);
+		collection.onConnectionStateChange(true, "client-2");
+		assert.deepEqual(events, [
+			{ canSendOps: true, clientId: "client-1" },
+			{ canSendOps: false, clientId: undefined },
+			{ canSendOps: true, clientId: "client-2" },
+		]);
 	});
 
 	it("dispose calls every feature's dispose", () => {
@@ -112,8 +110,7 @@ describe("RuntimeFeatureCollection", () => {
 		assert.equal(typeof collection.onLoadFromSnapshot, "function");
 		assert.equal(typeof collection.onApplyStashedOps, "function");
 		assert.equal(typeof collection.onReady, "function");
-		assert.equal(typeof collection.onConnect, "function");
-		assert.equal(typeof collection.onDisconnect, "function");
+		assert.equal(typeof collection.onConnectionStateChange, "function");
 		assert.equal(typeof collection.dispose, "function");
 	});
 });

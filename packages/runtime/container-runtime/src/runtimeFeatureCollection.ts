@@ -46,15 +46,9 @@ export class RuntimeFeatureCollection implements Required<IRuntimeFeature> {
 		}
 	}
 
-	public onConnect(clientId: string): void {
+	public onConnectionStateChange(canSendOps: boolean, clientId: string | undefined): void {
 		for (const f of this.features) {
-			f.onConnect?.(clientId);
-		}
-	}
-
-	public onDisconnect(): void {
-		for (const f of this.features) {
-			f.onDisconnect?.();
+			f.onConnectionStateChange?.(canSendOps, clientId);
 		}
 	}
 

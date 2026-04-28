@@ -216,6 +216,7 @@ import {
 } from "./deltaManagerProxies.js";
 import { DeltaScheduler } from "./deltaScheduler.js";
 import {
+	GarbageCollectionSubsystem,
 	GCNodeType,
 	GarbageCollector,
 	type IGCRuntimeOptions,
@@ -1924,6 +1925,7 @@ export class ContainerRuntime
 			submitMessage: (message: ContainerRuntimeGCMessage) => this.submit(message),
 			sessionExpiryTimerStarted: pendingRuntimeState?.sessionExpiryTimerStarted,
 		});
+		this.features.add(new GarbageCollectionSubsystem(this.garbageCollector));
 
 		const loadedFromSequenceNumber = this.deltaManager.initialSequenceNumber;
 		// If the base snapshot was generated when isolated channels were disabled, set the summary reference
@@ -2268,9 +2270,8 @@ export class ContainerRuntime
 			assert(this.pendingIdCompressorOps.length === 0, 0x8ec /* no pending ops */);
 		}
 
-		// Summarizer initialization is driven by the SummarizerSubsystem registering for
-		// the `loadFromSnapshot` lifecycle phase on the host. No call needed from here.
-		await this.garbageCollector.initializeBaseState();
+		// Summarizer and GC initialization are driven by their subsystems via the
+		// runtime feature collection's `onLoadFromSnapshot` phase, fired by `loadRuntime2`.
 	}
 
 	public dispose(error?: Error): void {
@@ -2290,7 +2291,6 @@ export class ContainerRuntime
 		);
 
 		this.features.dispose();
-		this.garbageCollector.dispose();
 		this.channelCollection.dispose();
 		this.pendingStateManager.dispose();
 		this.inboundBatchAggregator.dispose();
@@ -2889,7 +2889,7 @@ export class ContainerRuntime
 		}
 
 		this.channelCollection.setConnectionState(canSendOps, clientId);
-		this.garbageCollector.setConnectionState(canSendOps, clientId);
+		this.features.onConnectionStateChange(canSendOps, clientId);
 
 		// Emit "connected" and "disconnected" events based on ability to send ops
 		raiseConnectedEvent(this.mc.logger, this, this.connected /* canSendOps */, clientId);
