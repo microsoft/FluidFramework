@@ -196,13 +196,11 @@ export function checkInstalled(requested: string): { version: string; modulePath
 export const loadPackage = async (
 	modulePath: string,
 	pkg: string,
-	preferredEntrypoint?: "." | `./${string}`,
+	preferredEntrypoint: "." | `./${string}` = ".",
 ): Promise<any> => {
 	// createRequire anchored to the version directory. Node's resolution algorithm walks up
 	// through that directory's node_modules, then the workspace-root node_modules (hoisted), so
 	// we do not need to pass the workspace root separately.
-	// We use require() (via createRequire) rather than import() to avoid the ESM-wrapping overhead
-	// that import() imposes on CJS packages — legacy Fluid packages are CJS and require() is ~10x faster.
 	const requirePath =
 		preferredEntrypoint !== undefined && preferredEntrypoint !== "."
 			? `${pkg}/${preferredEntrypoint.slice(2)}` // e.g. "./internal" → "@scope/pkg/internal"
@@ -460,6 +458,7 @@ function internalSchema(
 
 /**
  * Checks if the given version has the SparseMatrix moved to sequence-deprecated.
+ *
  * @internal
  */
 export function versionHasMovedSparsedMatrix(version: string): boolean {
