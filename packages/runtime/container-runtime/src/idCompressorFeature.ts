@@ -11,7 +11,11 @@ import type {
 import type { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions/internal";
 import { addBlobToSummary } from "@fluidframework/runtime-utils/internal";
 
-import { ContainerMessageType } from "./messageTypes.js";
+import {
+	ContainerMessageType,
+	type ContainerRuntimeIdAllocationMessage,
+} from "./messageTypes.js";
+import type { LocalBatchMessage } from "./opLifecycle/index.js";
 import type { IRuntimeFeature } from "./runtimeFeature.js";
 
 const idCompressorBlobName = ".idCompressor";
@@ -35,7 +39,33 @@ export class IdCompressorFeature implements IRuntimeFeature {
 			savedOp?: boolean,
 		) => void,
 		private readonly getIdCompressor: () => (IIdCompressor & IIdCompressorCore) | undefined,
+		private readonly getReferenceSequenceNumber: () => number,
 	) {}
+
+	/**
+	 * Build a {@link LocalBatchMessage} carrying the next pending creation
+	 * range, or `undefined` if there is nothing to allocate. Called by Outbox
+	 * when a batch is being assembled.
+	 */
+	public generateAllocationOp(): LocalBatchMessage | undefined {
+		const compressor = this.getIdCompressor();
+		if (compressor === undefined) {
+			return undefined;
+		}
+		const idRange = compressor.takeNextCreationRange();
+		if (idRange.ids === undefined) {
+			return undefined;
+		}
+		const idAllocationMessage: ContainerRuntimeIdAllocationMessage = {
+			type: ContainerMessageType.IdAllocation,
+			contents: idRange,
+		};
+		return {
+			runtimeOp: idAllocationMessage,
+			referenceSequenceNumber: this.getReferenceSequenceNumber(),
+			staged: false,
+		};
+	}
 
 	private hasIdCompressor(): boolean {
 		return this.getIdCompressor() !== undefined;

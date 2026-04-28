@@ -228,7 +228,6 @@ import {
 	type ContainerRuntimeDataStoreOpMessage,
 	type OutboundContainerRuntimeDocumentSchemaMessage,
 	type ContainerRuntimeGCMessage,
-	type ContainerRuntimeIdAllocationMessage,
 	type InboundSequencedContainerRuntimeMessage,
 	type LocalContainerRuntimeMessage,
 	type OutboundContainerRuntimeAttachMessage,
@@ -2046,10 +2045,11 @@ export class ContainerRuntime
 			),
 		);
 
-		this.features.add(
+		const idCompressorFeature = this.features.add(
 			new IdCompressorFeature(
 				(contents, savedOp) => this.processIdCompressorMessages(contents, savedOp),
 				() => this._idCompressor,
+				() => this.deltaManager.lastSequenceNumber,
 			),
 		);
 
@@ -2079,24 +2079,7 @@ export class ContainerRuntime
 			}),
 			reSubmit: this.reSubmit.bind(this),
 			opReentrancy: () => this.dataModelChangeRunner.running,
-			generateIdAllocationOp: (): LocalBatchMessage | undefined => {
-				if (this._idCompressor === undefined) {
-					return undefined;
-				}
-				const idRange = this._idCompressor.takeNextCreationRange();
-				if (idRange.ids === undefined) {
-					return undefined;
-				}
-				const idAllocationMessage: ContainerRuntimeIdAllocationMessage = {
-					type: ContainerMessageType.IdAllocation,
-					contents: idRange,
-				};
-				return {
-					runtimeOp: idAllocationMessage,
-					referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
-					staged: false,
-				};
-			},
+			generateIdAllocationOp: () => idCompressorFeature.generateAllocationOp(),
 		});
 
 		this._quorum = quorum;
