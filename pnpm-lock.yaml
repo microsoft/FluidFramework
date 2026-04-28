@@ -61,7 +61,6 @@ overrides:
   picomatch@>=2 <3: ^2.3.2
   picomatch@>=4 <5: ^4.0.4
   langsmith: ^0.5.15
-  path-to-regexp@>=0.1 <0.2: ^0.1.13
 
 pnpmfileChecksum: sha256-UgK94jvekjDphs6M2itZJZ9CcCzYY0xcxZhNXJw7D28=
 

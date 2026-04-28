@@ -371,8 +371,7 @@
 			"express: overridden to ^4.22.1 to resolve a known vulnerability in express 4.21.2.",
 			"picomatch: overridden to patched versions to resolve a known security vulnerability.",
 			"node-forge: overridden to ^1.4.0 to resolve known security vulnerabilities.",
-			"langsmith: overridden to ^0.5.15 to resolve a known security vulnerability. The consumer declares ^0.3.x so the override is needed to cross the minor version boundary.",
-			"path-to-regexp: overridden to ^0.1.13 to resolve a known ReDoS vulnerability (GHSA-9wv6-86v2-598j) in versions <0.1.12. express@4.x pins an older 0.1.x; this forces the patched release."
+			"langsmith: overridden to ^0.5.15 to resolve a known security vulnerability. The consumer declares ^0.3.x so the override is needed to cross the minor version boundary."
 		],
 		"overrides": {
 			"@biomejs/biome": "~2.4.5",
@@ -405,8 +404,7 @@
 			"express@>=4 <5": "^4.22.1",
 			"picomatch@>=2 <3": "^2.3.2",
 			"picomatch@>=4 <5": "^4.0.4",
-			"langsmith": "^0.5.15",
-			"path-to-regexp@>=0.1 <0.2": "^0.1.13"
+			"langsmith": "^0.5.15"
 		},
 		"peerDependencyComments": [
 			"The react-split-pane package used by devtools-view has a peer dependency on React 16, but it doesn't seem to be maintained and it works fine with React 18. TODO: AB#18876",

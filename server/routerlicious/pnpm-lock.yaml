@@ -48,7 +48,6 @@ overrides:
   express@>=4 <5: ^4.22.1
   picomatch@>=2 <3: ^2.3.2
   picomatch@>=4 <5: ^4.0.4
-  path-to-regexp@>=0.1 <0.2: ^0.1.13
 
 patchedDependencies:
   '@microsoft/api-extractor@7.58.1':
