@@ -16,10 +16,7 @@ import {
 	type ISequencedDocumentMessage,
 	MessageType,
 } from "@fluidframework/driver-definitions/internal";
-import type {
-	IRuntimeFeature,
-	ISummaryTreeWithStats,
-} from "@fluidframework/runtime-definitions/internal";
+import type { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions/internal";
 import { addBlobToSummary } from "@fluidframework/runtime-utils/internal";
 import {
 	type MonitoringContext,
@@ -27,6 +24,7 @@ import {
 } from "@fluidframework/telemetry-utils/internal";
 
 import type { ContainerRuntime, ISummaryRuntimeOptions } from "../containerRuntime.js";
+import type { IRuntimeFeature } from "../runtimeFeature.js";
 import { Throttler, formExponentialFn } from "../throttler.js";
 
 import {

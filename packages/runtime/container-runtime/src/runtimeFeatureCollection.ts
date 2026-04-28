@@ -4,10 +4,11 @@
  */
 
 import type {
-	IRuntimeFeature,
 	ISummaryTreeWithStats,
 	ITelemetryContext,
 } from "@fluidframework/runtime-definitions/internal";
+
+import type { IRuntimeFeature } from "./runtimeFeature.js";
 
 /**
  * Collection of {@link IRuntimeFeature}s, dispatching lifecycle calls to each
@@ -36,6 +37,23 @@ export class RuntimeFeatureCollection implements Required<IRuntimeFeature> {
 	public add<T extends IRuntimeFeature>(feature: T): T {
 		this.features.push(feature);
 		return feature;
+	}
+
+	/**
+	 * Replace `oldFeature` (by reference) with `replacement`, preserving the
+	 * registration order. Returns `replacement`. If `oldFeature` isn't present,
+	 * appends `replacement` instead.
+	 *
+	 * Primarily a test-fixture seam — production code should rarely need this.
+	 */
+	public replace<T extends IRuntimeFeature>(oldFeature: IRuntimeFeature, replacement: T): T {
+		const index = this.features.indexOf(oldFeature);
+		if (index >= 0) {
+			this.features[index] = replacement;
+		} else {
+			this.features.push(replacement);
+		}
+		return replacement;
 	}
 
 	public async onLoadFromSnapshot(): Promise<void> {
@@ -77,5 +95,19 @@ export class RuntimeFeatureCollection implements Required<IRuntimeFeature> {
 		for (const f of this.features) {
 			f.contributeSummary?.(summaryTree, fullTree, trackState, telemetryContext);
 		}
+	}
+
+	public handleOp(
+		message: unknown,
+		messagesContent: unknown[],
+		local: boolean,
+		savedOp?: boolean,
+	): boolean {
+		for (const f of this.features) {
+			if (f.handleOp?.(message, messagesContent, local, savedOp) === true) {
+				return true;
+			}
+		}
+		return false;
 	}
 }

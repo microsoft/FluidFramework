@@ -111,7 +111,12 @@ import type {
 	ContainerRuntimeDataStoreOpMessage,
 	OutboundContainerRuntimeAttachMessage,
 } from "./messageTypes.js";
-import { ContainerMessageType, type LocalContainerRuntimeMessage } from "./messageTypes.js";
+import {
+	ContainerMessageType,
+	type InboundSequencedContainerRuntimeMessage,
+	type LocalContainerRuntimeMessage,
+} from "./messageTypes.js";
+import type { IRuntimeFeature } from "./runtimeFeature.js";
 import { StorageServiceWithAttachBlobs } from "./storageServiceWithAttachBlobs.js";
 import {
 	type IContainerRuntimeMetadata,
@@ -317,7 +322,10 @@ export function getLocalDataStoreType(localDataStore: LocalFluidDataStoreContext
  * @internal
  */
 export class ChannelCollection
-	implements Omit<IFluidDataStoreChannel, "entryPoint" | "reSubmit" | "rollback">, IDisposable
+	implements
+		Omit<IFluidDataStoreChannel, "entryPoint" | "reSubmit" | "rollback">,
+		IDisposable,
+		IRuntimeFeature
 {
 	// Stores tracked by the Domain
 	private readonly pendingAttach = new Map<string, IAttachMessage>();
@@ -922,6 +930,27 @@ export class ChannelCollection
 			// detached client don't send ops, so should not expect and ack.
 			this.pendingAttach.set(id, message);
 		}
+	}
+
+	public handleOp(message: unknown, messagesContent: unknown[], local: boolean): boolean {
+		const m = message as Omit<InboundSequencedContainerRuntimeMessage, "contents">;
+		if (
+			m.type !== ContainerMessageType.FluidDataStoreOp &&
+			m.type !== ContainerMessageType.Attach &&
+			m.type !== ContainerMessageType.Alias
+		) {
+			return false;
+		}
+		this.processMessages({
+			envelope: m,
+			messagesContent: messagesContent as IRuntimeMessagesContent[],
+			local,
+		});
+		return true;
+	}
+
+	public onConnectionStateChange(canSendOps: boolean, clientId: string | undefined): void {
+		this.setConnectionState(canSendOps, clientId);
 	}
 
 	/**

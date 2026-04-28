@@ -26,7 +26,6 @@ import { assert } from "@fluidframework/core-utils/internal";
 import type { ICreateBlobResponse } from "@fluidframework/driver-definitions/internal";
 import type {
 	IGarbageCollectionData,
-	IRuntimeFeature,
 	ISummaryTreeWithStats,
 	ITelemetryContext,
 	ISequencedMessageEnvelope,
@@ -46,7 +45,12 @@ import {
 } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
+import {
+	ContainerMessageType,
+	type InboundSequencedContainerRuntimeMessage,
+} from "../messageTypes.js";
 import { isBlobMetadata } from "../metadata.js";
+import type { IRuntimeFeature } from "../runtimeFeature.js";
 
 import {
 	blobsTreeName,
@@ -788,6 +792,15 @@ export class BlobManager implements IRuntimeFeature {
 		if (Object.keys(summary.summary.tree).length > 0) {
 			addSummarizeResultToSummary(summaryTree, blobsTreeName, summary);
 		}
+	}
+
+	public handleOp(message: unknown, _messagesContent: unknown[], local: boolean): boolean {
+		const m = message as Omit<InboundSequencedContainerRuntimeMessage, "contents">;
+		if (m.type !== ContainerMessageType.BlobAttach) {
+			return false;
+		}
+		this.processBlobAttachMessage(m, local);
+		return true;
 	}
 
 	/**

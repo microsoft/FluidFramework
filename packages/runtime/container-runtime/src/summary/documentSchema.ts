@@ -4,12 +4,18 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
+import type { IRuntimeMessagesContent } from "@fluidframework/runtime-definitions/internal";
 import type { SemanticVersion } from "@fluidframework/runtime-utils/internal";
 import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 import { DataProcessingError } from "@fluidframework/telemetry-utils/internal";
 import { gt, lt, parse } from "semver-ts";
 
+import {
+	ContainerMessageType,
+	type InboundSequencedContainerRuntimeMessage,
+} from "../messageTypes.js";
 import { pkgVersion } from "../packageVersion.js";
+import type { IRuntimeFeature } from "../runtimeFeature.js";
 
 /**
  * Descripe allowed type for properties in document schema.
@@ -538,7 +544,7 @@ function arrayToProp(arr: string[]): string[] | undefined {
  * @internal
  * @sealed
  */
-export class DocumentsSchemaController {
+export class DocumentsSchemaController implements IRuntimeFeature {
 	private explicitSchemaControl: boolean;
 
 	/**
@@ -753,6 +759,20 @@ export class DocumentsSchemaController {
 	 * @param sequenceNumber - sequence number of the op
 	 * @returns true if schema was accepted, otherwise false (rejected due to failed CAS)
 	 */
+	public handleOp(message: unknown, messagesContent: unknown[], local: boolean): boolean {
+		const m = message as Omit<InboundSequencedContainerRuntimeMessage, "contents">;
+		if (m.type !== ContainerMessageType.DocumentSchemaChange) {
+			return false;
+		}
+		const contents = (messagesContent as IRuntimeMessagesContent[]).map((c) => c.contents);
+		this.processDocumentSchemaMessages(
+			contents as IDocumentSchemaChangeMessageIncoming[],
+			local,
+			m.sequenceNumber,
+		);
+		return true;
+	}
+
 	public processDocumentSchemaMessages(
 		contents: IDocumentSchemaChangeMessageIncoming[],
 		local: boolean,

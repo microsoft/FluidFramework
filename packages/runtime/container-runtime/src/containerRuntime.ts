@@ -219,7 +219,6 @@ import {
 	type IGCRuntimeOptions,
 	type IGCStats,
 	type IGarbageCollector,
-	type GarbageCollectionMessage,
 	type IGarbageCollectionRuntime,
 } from "./gc/index.js";
 import { InboundBatchAggregator } from "./inboundBatchAggregator.js";
@@ -283,7 +282,6 @@ import {
 	type ICreateContainerMetadata,
 	idCompressorBlobName,
 	type IdCompressorMode,
-	type IDocumentSchemaChangeMessageIncoming,
 	type IDocumentSchemaCurrent,
 	type IDocumentSchemaFeatures,
 	type IEnqueueSummarizeOptions,
@@ -1991,6 +1989,8 @@ export class ContainerRuntime
 			(path: string) => this.garbageCollector.isNodeDeleted(path),
 			new Map<string, string>(dataStoreAliasMap),
 		);
+		this.features.add(this.channelCollection);
+		this.features.add(this.documentsSchemaController);
 		this._deltaManager.on("readonly", this.notifyReadOnlyState);
 
 		this.blobManager = new BlobManager({
@@ -2294,7 +2294,6 @@ export class ContainerRuntime
 		);
 
 		this.features.dispose();
-		this.channelCollection.dispose();
 		this._deltaManager.dispose();
 		this.emit("dispose");
 		this.removeAllListeners();
@@ -2872,7 +2871,6 @@ export class ContainerRuntime
 			this.replayPendingStates();
 		}
 
-		this.channelCollection.setConnectionState(canSendOps, clientId);
 		this.features.onConnectionStateChange(canSendOps, clientId);
 
 		// Emit "connected" and "disconnected" events based on ability to send ops
@@ -3251,34 +3249,18 @@ export class ContainerRuntime
 		local: boolean,
 		savedOp?: boolean,
 	): void {
-		// Get the contents without the localOpMetadata because not all message types know about localOpMetadata.
-		const contents = messagesContent.map((c) => c.contents);
+		// Features (channelCollection, blobManager, garbageCollector,
+		// documentsSchemaController) each claim their own message types.
+		if (this.features.handleOp(message, messagesContent, local, savedOp)) {
+			return;
+		}
 
+		// Residual message types not yet owned by a feature.
 		switch (message.type) {
-			case ContainerMessageType.FluidDataStoreOp:
-			case ContainerMessageType.Attach:
-			case ContainerMessageType.Alias: {
-				// Remove the metadata from the message before sending it to the channel collection. The metadata
-				// is added by the container runtime and is not part of the message that the channel collection and
-				// layers below it expect.
-				this.channelCollection.processMessages({ envelope: message, messagesContent, local });
-				break;
-			}
-			case ContainerMessageType.BlobAttach: {
-				this.blobManager.processBlobAttachMessage(message, local);
-				break;
-			}
 			case ContainerMessageType.IdAllocation: {
+				const contents = messagesContent.map((c) => c.contents);
 				this.processIdCompressorMessages(contents as IdCreationRange[], savedOp);
-				break;
-			}
-			case ContainerMessageType.GC: {
-				this.garbageCollector.processMessages(
-					contents as GarbageCollectionMessage[],
-					message.timestamp,
-					local,
-				);
-				break;
+				return;
 			}
 			case ContainerMessageType.ChunkedOp: {
 				// From observability POV, we should not expose the rest of the system (including "op" events on object) to these messages.
@@ -3286,19 +3268,11 @@ export class ContainerRuntime
 				assert(false, 0x93d /* should not even get here */);
 			}
 			case ContainerMessageType.Rejoin: {
-				break;
-			}
-			case ContainerMessageType.DocumentSchemaChange: {
-				this.documentsSchemaController.processDocumentSchemaMessages(
-					contents as IDocumentSchemaChangeMessageIncoming[],
-					local,
-					message.sequenceNumber,
-				);
-				break;
+				return;
 			}
 			default: {
 				const error = getUnknownMessageTypeError(
-					message.type,
+					message.type as UnknownContainerRuntimeMessage["type"],
 					"validateAndProcessRuntimeMessage" /* codePath */,
 					message as ISequencedDocumentMessage,
 				);

@@ -5,8 +5,7 @@
 
 import { strict as assert } from "node:assert";
 
-import type { IRuntimeFeature } from "@fluidframework/runtime-definitions/internal";
-
+import type { IRuntimeFeature } from "../runtimeFeature.js";
 import { RuntimeFeatureCollection } from "../runtimeFeatureCollection.js";
 
 describe("RuntimeFeatureCollection", () => {
@@ -113,6 +112,43 @@ describe("RuntimeFeatureCollection", () => {
 		assert.equal(typeof collection.onConnectionStateChange, "function");
 		assert.equal(typeof collection.dispose, "function");
 		assert.equal(typeof collection.contributeSummary, "function");
+		assert.equal(typeof collection.handleOp, "function");
+	});
+
+	it("handleOp returns true on the first feature that claims the message", () => {
+		const seen: string[] = [];
+		const collection = new RuntimeFeatureCollection();
+		collection.add({
+			handleOp: (message) => {
+				seen.push("a");
+				return (message as { type: string }).type === "a";
+			},
+		});
+		collection.add({
+			handleOp: (message) => {
+				seen.push("b");
+				return (message as { type: string }).type === "b";
+			},
+		});
+		collection.add({
+			handleOp: () => {
+				seen.push("c");
+				return false;
+			},
+		});
+
+		const m = (type: string): { type: string } => ({ type });
+
+		assert.equal(collection.handleOp(m("a"), [], false), true);
+		assert.deepEqual(seen, ["a"]); // short-circuited on first match
+
+		seen.length = 0;
+		assert.equal(collection.handleOp(m("b"), [], false), true);
+		assert.deepEqual(seen, ["a", "b"]);
+
+		seen.length = 0;
+		assert.equal(collection.handleOp(m("z"), [], false), false);
+		assert.deepEqual(seen, ["a", "b", "c"]); // no match, all seen
 	});
 
 	it("contributeSummary fans out to features that mutate the same tree", () => {

@@ -17,7 +17,6 @@ export type {
 	ExtensionCompatibilityDetails,
 	UnknownExtensionInstantiation,
 } from "./containerExtensionProvider.js";
-export type { IRuntimeFeature } from "./runtimeFeature.js";
 export type {
 	AliasResult,
 	CreateChildSummarizerNodeFn,

@@ -29,6 +29,7 @@ export type {
 	UnknownContainerRuntimeMessage,
 } from "./messageTypes.js";
 export { ContainerMessageType } from "./messageTypes.js";
+export type { IRuntimeFeature } from "./runtimeFeature.js";
 export type { IBlobManagerLoadInfo } from "./blobManager/index.js";
 export type { IDataStoreAliasMessage } from "./dataStore.js";
 export { FluidDataStoreRegistry } from "./dataStoreRegistry.js";

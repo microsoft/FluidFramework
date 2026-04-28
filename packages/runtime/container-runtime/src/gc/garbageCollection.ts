@@ -8,7 +8,7 @@ import { assert, LazyPromise, Timer } from "@fluidframework/core-utils/internal"
 import type { ISnapshotTree } from "@fluidframework/driver-definitions/internal";
 import {
 	type IGarbageCollectionDetailsBase,
-	type IRuntimeFeature,
+	type IRuntimeMessagesContent,
 	type ISummarizeResult,
 	type ISummaryTreeWithStats,
 	gcTreeKey,
@@ -33,7 +33,12 @@ import {
 import { blobManagerBasePath } from "../blobManager/index.js";
 import { TombstoneResponseHeaderKey } from "../containerRuntime.js";
 import { ClientSessionExpiredError } from "../error.js";
-import { ContainerMessageType, type ContainerRuntimeGCMessage } from "../messageTypes.js";
+import {
+	ContainerMessageType,
+	type ContainerRuntimeGCMessage,
+	type InboundSequencedContainerRuntimeMessage,
+} from "../messageTypes.js";
+import type { IRuntimeFeature } from "../runtimeFeature.js";
 import type { IRefreshSummaryResult } from "../summary/index.js";
 
 import { generateGCConfigs } from "./gcConfigs.js";
@@ -1208,6 +1213,16 @@ export class GarbageCollector implements IGarbageCollector, IRuntimeFeature {
 		if (gcSummary !== undefined) {
 			addSummarizeResultToSummary(summaryTree, gcTreeKey, gcSummary);
 		}
+	}
+
+	public handleOp(message: unknown, messagesContent: unknown[], local: boolean): boolean {
+		const m = message as Omit<InboundSequencedContainerRuntimeMessage, "contents">;
+		if (m.type !== ContainerMessageType.GC) {
+			return false;
+		}
+		const contents = (messagesContent as IRuntimeMessagesContent[]).map((c) => c.contents);
+		this.processMessages(contents as GarbageCollectionMessage[], m.timestamp, local);
+		return true;
 	}
 
 	/**
