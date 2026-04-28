@@ -26,7 +26,7 @@
  *   compat-workspaces/full/<version>/package.json  (one per version)
  *   compat-workspaces/full/pnpm-lock.yaml
  *
- * The OCV (oldest compatible version) in versions.mjs is also human-maintained: update
+ * The OCV (oldest compatible version) in this script is also human-maintained: update
  * `OCV` below when the oldest supported version policy changes.
  */
 

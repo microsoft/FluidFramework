@@ -512,13 +512,13 @@ export async function mochaGlobalSetup(): Promise<void> {
 	// Load all versioned packages concurrently. The compat workspace is pre-installed via
 	// pnpm install (postinstall hook), so no install step is needed here.
 	const versions = new Set(configs.map((value) => value.compatVersion));
-	const installP = Array.from(versions.values()).map(async (value) => {
+	const ensureInstalledP = Array.from(versions.values()).map(async (value) => {
 		const version = testBaseVersion(value);
 		return ensurePackageInstalled(version, value);
 	});
 
 	let error: unknown;
-	for (const p of installP) {
+	for (const p of ensureInstalledP) {
 		try {
 			await p;
 		} catch (e) {
