@@ -3,11 +3,12 @@
  * Licensed under the MIT License.
  */
 
+import { strict as assert } from "node:assert";
+
 import {
 	type DevtoolsFeatureFlags,
 	DevtoolsFeatures,
 } from "@fluidframework/devtools-core/internal";
-import "@testing-library/jest-dom";
 import { render, screen } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
 
@@ -67,19 +68,19 @@ describe("TelemetryView Accessibility Check", () => {
 		const maxEventsDropdown = screen.getByRole("combobox", {
 			name: /Max Events to Display/,
 		});
-		expect(maxEventsDropdown).toHaveFocus();
+		assert.strictEqual(document.activeElement, maxEventsDropdown);
 		await user.tab();
 		const refreshButton = screen.getByRole("button", { name: /Refresh Telemetry/ });
-		expect(refreshButton).toHaveFocus();
+		assert.strictEqual(document.activeElement, refreshButton);
 
 		await user.click(refreshButton);
 		const filterCategory = screen.getByRole("combobox", {
 			name: /Category Filter/,
 		});
 		await user.tab();
-		expect(filterCategory).toHaveFocus();
+		assert.strictEqual(document.activeElement, filterCategory);
 		await user.tab();
 		const eventNameFilter = screen.getByRole("combobox", { name: /Event Name Filter/ });
-		expect(eventNameFilter).toHaveFocus();
+		assert.strictEqual(document.activeElement, eventNameFilter);
 	});
 });

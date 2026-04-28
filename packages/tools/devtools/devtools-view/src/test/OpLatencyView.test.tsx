@@ -3,9 +3,10 @@
  * Licensed under the MIT License.
  */
 
+import { strict as assert } from "node:assert";
+
 import { DevtoolsFeatures } from "@fluidframework/devtools-core/internal";
-import "@testing-library/jest-dom";
-import { render, screen, within } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
 
 import { MessageRelayContext } from "../MessageRelayContext.js";
@@ -13,13 +14,7 @@ import { OpLatencyView } from "../components/index.js";
 
 import { assertNoAccessibilityViolations, MockMessageRelay } from "./utils/index.js";
 
-// ResizeObserver is a hook used by Recharts that needs to be mocked for unit tests to function.
-// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
-(globalThis as any).ResizeObserver = jest.fn().mockImplementation(() => ({
-	observe: jest.fn(),
-	unobserve: jest.fn(),
-	disconnect: jest.fn(),
-}));
+// Note: ResizeObserver is stubbed in jest.setup.cjs (required before tests run).
 
 const mockMessageRelayEnabled = new MockMessageRelay(() => {
 	return {
@@ -58,28 +53,15 @@ describe("OpLatencyView component tests", () => {
 			</MessageRelayContext.Provider>,
 		);
 
-		// Check that outermost component container exists
-		const opLatencyMainContainerElement = await screen.findByTestId("test-op-latency-view");
-		expect(opLatencyMainContainerElement).not.toBeNull();
-		expect(opLatencyMainContainerElement).toBeDefined();
+		// Check that outermost component container exists (throws if not found)
+		await screen.findByTestId("test-op-latency-view");
 
 		// Check that graph title exists as a header component
 		const opLatencyHeaderElement = await screen.findByText("Op Latency");
-		expect(opLatencyHeaderElement).not.toBeNull();
-		expect(opLatencyHeaderElement).toBeDefined();
-		expect(opLatencyHeaderElement.tagName).toMatch(/h[1-6]/i);
-
-		// Confirm the rechart graph was rendered
-		const dynamicComposedChartElement = within(opLatencyMainContainerElement).findByTestId(
-			"test-dynamic-composed-chart",
-		);
-		expect(dynamicComposedChartElement).not.toBeNull();
-		expect(dynamicComposedChartElement).toBeDefined();
+		assert.match(opLatencyHeaderElement.tagName, /h[1-6]/i);
 
 		// Confirm helper text header exists
-		const aboutHeader = await screen.findByText("About");
-		expect(aboutHeader).not.toBeNull();
-		expect(aboutHeader).toBeDefined();
+		await screen.findByText("About");
 	});
 
 	it("Renders as expected when unsampled telemetry is disabled", async (): Promise<void> => {
@@ -90,14 +72,10 @@ describe("OpLatencyView component tests", () => {
 		);
 
 		// Check that graph title exists as a header component
-		const opLatencyHeaderElement = await screen.findByText("Op Latency");
-		expect(opLatencyHeaderElement).not.toBeNull();
-		expect(opLatencyHeaderElement).toBeDefined();
+		await screen.findByText("Op Latency");
 
 		// Confirm helper text header exists
-		const instructionsText = await screen.findByText(`Enable Unsampled Telemetry`);
-		expect(instructionsText).not.toBeNull();
-		expect(instructionsText).toBeDefined();
+		await screen.findByText(`Enable Unsampled Telemetry`);
 	});
 });
 
@@ -122,11 +100,11 @@ describe("OpLatencyView Accessibility Check", () => {
 
 		await user.tab();
 		const opsLink = screen.getByRole("link", { name: /Fluid Framework Ops Documentation/ });
-		expect(opsLink).toHaveFocus();
+		assert.strictEqual(document.activeElement, opsLink);
 
 		await user.tab();
 		const disableTelemetryButton = screen.getByText("Disable Unsampled Telemetry");
-		expect(disableTelemetryButton).toHaveFocus();
+		assert.strictEqual(document.activeElement, disableTelemetryButton);
 	});
 	it("Can tab/arrow navigate through OpLatencyView with telemetry disabled", async () => {
 		render(
@@ -141,6 +119,6 @@ describe("OpLatencyView Accessibility Check", () => {
 		const enableUnsampledTelemtryButton = await screen.findByText(
 			"Enable Unsampled Telemetry",
 		);
-		expect(enableUnsampledTelemtryButton).toHaveFocus();
+		assert.strictEqual(document.activeElement, enableUnsampledTelemtryButton);
 	});
 });

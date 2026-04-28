@@ -3,11 +3,12 @@
  * Licensed under the MIT License.
  */
 
+import { strict as assert } from "node:assert";
+
 import {
 	type DevtoolsFeatureFlags,
 	DevtoolsFeatures,
 } from "@fluidframework/devtools-core/internal";
-import "@testing-library/jest-dom";
 import { render, screen } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
 import { type FC, useState } from "react";
@@ -39,7 +40,7 @@ describe("Menu Accessibility Check", () => {
 			type: "homeMenuSelection",
 		});
 
-		const mockRemoveContainer = (containerKey: string): void => {
+		const mockRemoveContainer = (_containerKey: string): void => {
 			// Mock remove function for testing
 		};
 
@@ -68,41 +69,41 @@ describe("Menu Accessibility Check", () => {
 
 		await user.tab();
 		const homeHeader = screen.getByRole("button", { name: "Home" });
-		expect(homeHeader).toHaveFocus();
+		assert.strictEqual(document.activeElement, homeHeader);
 
 		await user.tab();
 		const refreshButton = screen.getByRole("button", { name: /refresh containers list/i });
-		expect(refreshButton).toHaveFocus();
+		assert.strictEqual(document.activeElement, refreshButton);
 
 		await user.tab();
 		const container1 = screen.getByRole("button", {
 			name: /Container1/,
 		});
-		expect(container1).toHaveFocus();
+		assert.strictEqual(document.activeElement, container1);
 
 		await user.tab();
 		const removeButtons = screen.getAllByRole("button", { name: /remove container/i });
-		expect(removeButtons[0]).toHaveFocus();
+		assert.strictEqual(document.activeElement, removeButtons[0]);
 
 		await user.tab();
 		const container2 = screen.getByRole("button", {
 			name: /Container2/,
 		});
-		expect(container2).toHaveFocus();
+		assert.strictEqual(document.activeElement, container2);
 
 		await user.tab();
-		expect(removeButtons[1]).toHaveFocus();
+		assert.strictEqual(document.activeElement, removeButtons[1]);
 
 		await user.tab();
 		const events = screen.getByRole("button", { name: "Events" });
-		expect(events).toHaveFocus();
+		assert.strictEqual(document.activeElement, events);
 
 		await user.tab();
 		const opLatency = screen.getByRole("button", { name: "Op Latency" });
-		expect(opLatency).toHaveFocus();
+		assert.strictEqual(document.activeElement, opLatency);
 
 		await user.tab();
 		const settings = screen.getByRole("button", { name: "Settings" });
-		expect(settings).toHaveFocus();
+		assert.strictEqual(document.activeElement, settings);
 	});
 });

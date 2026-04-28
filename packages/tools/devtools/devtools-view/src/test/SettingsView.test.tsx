@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import "@testing-library/jest-dom";
+import { strict as assert } from "node:assert";
+
 import { render, screen } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
 
@@ -24,17 +25,17 @@ describe("SettingsView Accessibility Check", () => {
 		// Focus on the first interactive element (dropdown theme selector)
 		await user.tab();
 		const dropdown = screen.getByRole("combobox", { name: /Theme Selection Dropdown/ });
-		expect(dropdown).toHaveFocus();
+		assert.strictEqual(document.activeElement, dropdown);
 		// The dropdown theme options are divs but get compiled as buttons in the expect function and thus fail any expect calls.
 		await user.tab();
 		const privacyLink = screen.getByRole("link", { name: /Microsoft Privacy Statement/ });
-		expect(privacyLink).toHaveFocus();
+		assert.strictEqual(document.activeElement, privacyLink);
 
 		const usageToggle = screen.getByRole("switch", { name: /Usage Telemetry Toggle/ });
 		await user.tab();
-		expect(usageToggle).toHaveFocus();
+		assert.strictEqual(document.activeElement, usageToggle);
 		// The usage toggle is a switch and can be toggled by pressing the space bar
 		await user.keyboard(" ");
-		expect(usageToggle).toBeChecked();
+		assert.strictEqual(usageToggle.getAttribute("aria-checked"), "true");
 	});
 });

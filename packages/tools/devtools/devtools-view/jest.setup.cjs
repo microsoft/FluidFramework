@@ -3,5 +3,21 @@
  * Licensed under the MIT License.
  */
 
-// This file is used to mock the canvas element for jest tests.
-HTMLCanvasElement.prototype.getContext = jest.fn();
+// Runs after global-jsdom/register, so `window` is the jsdom window.
+
+// Stub out canvas context so canvas-using components don't throw during tests.
+// eslint-disable-next-line @typescript-eslint/no-empty-function
+HTMLCanvasElement.prototype.getContext = () => null;
+
+// FluentUI uses `targetWindow.ResizeObserver` (the jsdom window); Recharts uses
+// the bare global.  Stub both so all consumers see a valid constructor.
+const MockResizeObserver = class {
+	// eslint-disable-next-line @typescript-eslint/no-empty-function
+	observe() {}
+	// eslint-disable-next-line @typescript-eslint/no-empty-function
+	unobserve() {}
+	// eslint-disable-next-line @typescript-eslint/no-empty-function
+	disconnect() {}
+};
+window.ResizeObserver = MockResizeObserver;
+global.ResizeObserver = MockResizeObserver;

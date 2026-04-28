@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import "@testing-library/jest-dom";
+import { strict as assert } from "node:assert";
+
 import { render, screen } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
 
@@ -23,15 +24,15 @@ describe("AudienceStateTable Accessibility Check", () => {
 		const user = userEvent.setup();
 		await user.tab();
 		const clientIDTooltip = screen.getByRole("button", { name: /client id/i });
-		expect(clientIDTooltip).toHaveFocus();
+		assert.strictEqual(document.activeElement, clientIDTooltip);
 		await user.tab();
 		const userIDTooltip = screen.getByRole("button", { name: /user id/i });
-		expect(userIDTooltip).toHaveFocus();
+		assert.strictEqual(document.activeElement, userIDTooltip);
 		await user.tab();
 		const modeTooltip = screen.getByRole("button", { name: /mode/i });
-		expect(modeTooltip).toHaveFocus();
+		assert.strictEqual(document.activeElement, modeTooltip);
 		await user.tab();
 		const scopesTooltip = screen.getByRole("button", { name: /scopes/i });
-		expect(scopesTooltip).toHaveFocus();
+		assert.strictEqual(document.activeElement, scopesTooltip);
 	});
 });

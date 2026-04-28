@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
+import { strict as assert } from "node:assert";
+
 import { render, screen } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
-
-import "@testing-library/jest-dom";
 
 import {
 	AudienceHistoryTable,
@@ -18,7 +18,7 @@ import { assertNoAccessibilityViolations } from "./utils/index.js";
 describe("AudienceHistoryTable component tests", () => {
 	async function getTableBodyRows(): Promise<HTMLCollection> {
 		const tableElement = await screen.findByRole("table");
-		expect(tableElement.children).toHaveLength(2); // Header and body
+		assert.strictEqual(tableElement.children.length, 2); // Header and body
 
 		const tableBodyElement = tableElement.children[1];
 		return tableBodyElement.children;
@@ -28,7 +28,7 @@ describe("AudienceHistoryTable component tests", () => {
 		render(<AudienceHistoryTable audienceHistoryItems={[]} />);
 
 		const tableBodyRows = await getTableBodyRows();
-		expect(tableBodyRows).toHaveLength(0);
+		assert.strictEqual(tableBodyRows.length, 0);
 	});
 
 	it("Non-empty list", async (): Promise<void> => {
@@ -53,7 +53,7 @@ describe("AudienceHistoryTable component tests", () => {
 		render(<AudienceHistoryTable audienceHistoryItems={audienceHistoryItems} />);
 
 		const tableBodyRows = await getTableBodyRows();
-		expect(tableBodyRows).toHaveLength(3);
+		assert.strictEqual(tableBodyRows.length, 3);
 	});
 });
 
@@ -68,6 +68,6 @@ describe("AudienceHistoryTable Accessibility Check", () => {
 		const user = userEvent.setup();
 		await user.tab();
 		const tooltip = screen.getByRole("button", { name: /client id/i });
-		expect(tooltip).toHaveFocus();
+		assert.strictEqual(document.activeElement, tooltip);
 	});
 });
