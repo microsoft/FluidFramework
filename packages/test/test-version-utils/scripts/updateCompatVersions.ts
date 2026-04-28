@@ -369,7 +369,9 @@ async function main(): Promise<void> {
 		: {};
 	const explicitVersions: string[] = existingManifest.explicit ?? [];
 	if (explicitVersions.length > 0) {
-		console.log(`\nPreserving ${explicitVersions.length} explicit version(s): ${explicitVersions.join(", ")}`);
+		console.log(
+			`\nPreserving ${explicitVersions.length} explicit version(s): ${explicitVersions.join(", ")}`,
+		);
 	}
 
 	// Write versions.json
