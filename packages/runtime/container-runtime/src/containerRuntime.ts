@@ -96,7 +96,6 @@ import { readAndParse } from "@fluidframework/driver-utils/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 import type {
 	IIdCompressorCore,
-	IdCreationRange,
 	SerializedIdCompressorWithNoSession,
 	SerializedIdCompressorWithOngoingSession,
 } from "@fluidframework/id-compressor/internal";
@@ -1366,37 +1365,26 @@ export class ContainerRuntime
 		return this.documentsSchemaController.sessionSchema.runtime;
 	}
 
-	private _idCompressor: (IIdCompressor & IIdCompressorCore) | undefined;
-
-	// We accumulate Id compressor Ops while Id compressor is not loaded yet (only for "delayed" mode)
-	// Once it loads, it will process all such ops and we will stop accumulating further ops - ops will be processes as they come in.
-	private pendingIdCompressorOps: IdCreationRange[] = [];
-
-	// Id Compressor serializes final state (see getPendingLocalState()). As result, it needs to skip all ops that preceeded that state
-	// (such ops will be marked by Loader layer as savedOp === true)
-	// That said, in "delayed" mode it's possible that Id Compressor was never initialized before getPendingLocalState() is called.
-	// In such case we have to process all ops, including those marked with savedOp === true.
+	// `skipSavedCompressorOps`: ID Compressor serializes final state (see getPendingLocalState());
+	// it needs to skip all ops that preceded that state (marked savedOp === true). In "delayed" mode
+	// the compressor may never have been initialized before getPendingLocalState was called — in that
+	// case we have to process all ops, including those marked savedOp === true.
 	private readonly skipSavedCompressorOps: boolean;
+
+	private readonly idCompressorFeature: IdCompressorFeature;
 
 	/**
 	 * {@inheritDoc @fluidframework/runtime-definitions#IContainerRuntimeBase.idCompressor}
 	 */
 	public get idCompressor(): (IIdCompressor & IIdCompressorCore) | undefined {
-		// Expose ID Compressor only if it's On from the start.
-		// If container uses delayed mode, then we can only expose generateDocumentUniqueId() and nothing else.
-		// That's because any other usage will require immidiate loading of ID Compressor in next sessions in order
-		// to reason over such things as session ID space.
-		if (this.sessionSchema.idCompressorMode === "on") {
-			assert(this._idCompressor !== undefined, 0x8ea /* compressor should have been loaded */);
-			return this._idCompressor;
-		}
+		return this.idCompressorFeature.exposedCompressor;
 	}
 
 	/**
 	 * {@inheritDoc @fluidframework/runtime-definitions#IContainerRuntimeBase.generateDocumentUniqueId}
 	 */
 	public generateDocumentUniqueId(): string | number {
-		return this._idCompressor?.generateDocumentUniqueId() ?? uuid();
+		return this.idCompressorFeature.generateDocumentUniqueId();
 	}
 
 	public get IFluidHandleContext(): IFluidHandleContext {
@@ -2045,10 +2033,16 @@ export class ContainerRuntime
 			),
 		);
 
-		const idCompressorFeature = this.features.add(
+		// If we loaded from pending state, skip ops already accounted in that saved state
+		// (Loader marks them with savedOp === true).
+		this.skipSavedCompressorOps = pendingRuntimeState?.pendingIdCompressorState !== undefined;
+
+		this.idCompressorFeature = this.features.add(
 			new IdCompressorFeature(
-				(contents, savedOp) => this.processIdCompressorMessages(contents, savedOp),
-				() => this._idCompressor,
+				this.createIdCompressorFn,
+				() => this.sessionSchema.idCompressorMode,
+				this.skipSavedCompressorOps,
+				this.mc.logger,
 				() => this.deltaManager.lastSequenceNumber,
 			),
 		);
@@ -2079,7 +2073,7 @@ export class ContainerRuntime
 			}),
 			reSubmit: this.reSubmit.bind(this),
 			opReentrancy: () => this.dataModelChangeRunner.running,
-			generateIdAllocationOp: () => idCompressorFeature.generateAllocationOp(),
+			generateIdAllocationOp: () => this.idCompressorFeature.generateAllocationOp(),
 		});
 
 		this._quorum = quorum;
@@ -2193,10 +2187,6 @@ export class ContainerRuntime
 			}
 			return provideEntryPoint(this);
 		});
-
-		// If we loaded from pending state, then we need to skip any ops that are already accounted in such
-		// saved state, i.e. all the ops marked by Loader layer sa savedOp === true.
-		this.skipSavedCompressorOps = pendingRuntimeState?.pendingIdCompressorState !== undefined;
 	}
 
 	public onSchemaChange(schema: IDocumentSchemaCurrent): void {
@@ -2259,20 +2249,7 @@ export class ContainerRuntime
 			this.sessionSchema.idCompressorMode === "on" ||
 			(this.sessionSchema.idCompressorMode === "delayed" && this.connected)
 		) {
-			PerformanceEvent.timedExec(
-				this.mc.logger,
-				{ eventName: "CreateIdCompressorOnBoot" },
-				(event) => {
-					this._idCompressor = this.createIdCompressorFn();
-					event.end({
-						details: {
-							idCompressorMode: this.sessionSchema.idCompressorMode,
-						},
-					});
-				},
-			);
-			// This is called from loadRuntime(), long before we process any ops, so there should be no ops accumulated yet.
-			assert(this.pendingIdCompressorOps.length === 0, 0x8ec /* no pending ops */);
+			this.idCompressorFeature.loadOnBoot();
 		}
 
 		// Summarizer and GC initialization are driven by their subsystems via the
@@ -2583,7 +2560,7 @@ export class ContainerRuntime
 			// Any ID Allocation ops that failed to submit need to have their ranges included
 			// in the next allocation op. Reset the compressor's unfinalized range cursor so that the next
 			// call to takeNextCreationRange (during replay) will include those unfinalized ranges.
-			this._idCompressor?.resetUnfinalizedCreationRange();
+			this.idCompressorFeature.compressor?.resetUnfinalizedCreationRange();
 
 			// replay the ops
 			this.pendingStateManager.replayPendingStates();
@@ -2598,33 +2575,7 @@ export class ContainerRuntime
 	}
 
 	private loadIdCompressor(): void {
-		if (
-			this._idCompressor === undefined &&
-			this.sessionSchema.idCompressorMode !== undefined
-		) {
-			PerformanceEvent.timedExec(
-				this.mc.logger,
-				{ eventName: "CreateIdCompressorOnDelayedLoad" },
-				(event) => {
-					this._idCompressor = this.createIdCompressorFn();
-					// Finalize any ranges we received while the compressor was turned off.
-					const ops = this.pendingIdCompressorOps;
-					this.pendingIdCompressorOps = [];
-					const trace = Trace.start();
-					for (const range of ops) {
-						this._idCompressor.finalizeCreationRange(range);
-					}
-					event.end({
-						details: {
-							finalizeCreationRangeDuration: trace.trace().duration,
-							idCompressorMode: this.sessionSchema.idCompressorMode,
-							pendingIdCompressorOps: ops.length,
-						},
-					});
-				},
-			);
-			assert(this.pendingIdCompressorOps.length === 0, 0x976 /* No new ops added */);
-		}
+		this.idCompressorFeature.loadDelayed();
 	}
 
 	private readonly notifyReadOnlyState = (readonly: boolean): void =>
@@ -3147,35 +3098,6 @@ export class ContainerRuntime
 		throw error;
 	}
 
-	private processIdCompressorMessages(
-		messageContents: IdCreationRange[],
-		savedOp?: boolean,
-	): void {
-		for (const range of messageContents) {
-			// Don't re-finalize the range if we're processing a "savedOp" in
-			// stashed ops flow. The compressor is stashed with these ops already processed.
-			// That said, in idCompressorMode === "delayed", we might not serialize ID compressor, and
-			// thus we need to process all the ops.
-			if (!(this.skipSavedCompressorOps && savedOp === true)) {
-				// Some other client turned on the id compressor. If we have not turned it on,
-				// put it in a pending queue and delay finalization.
-				if (this._idCompressor === undefined) {
-					assert(
-						this.sessionSchema.idCompressorMode !== undefined,
-						0x93c /* id compressor should be enabled */,
-					);
-					this.pendingIdCompressorOps.push(range);
-				} else {
-					assert(
-						this.pendingIdCompressorOps.length === 0,
-						0x979 /* there should be no pending ops! */,
-					);
-					this._idCompressor.finalizeCreationRange(range);
-				}
-			}
-		}
-	}
-
 	public processSignal(
 		message: ISignalMessage<{
 			type: string;
@@ -3652,13 +3574,14 @@ export class ContainerRuntime
 		}
 
 		// We can finalize any allocated IDs since we're the only client
-		const idRange = this._idCompressor?.takeNextCreationRange();
+		const compressor = this.idCompressorFeature.compressor;
+		const idRange = compressor?.takeNextCreationRange();
 		if (idRange !== undefined) {
 			assert(
 				idRange.ids === undefined || idRange.ids.firstGenCount === 1,
 				0x93e /* No other ranges should be taken while container is detached. */,
 			);
-			this._idCompressor?.finalizeCreationRange(idRange);
+			compressor?.finalizeCreationRange(idRange);
 		}
 
 		const summarizeResult = this.channelCollection.getAttachSummary(telemetryContext);
@@ -4927,7 +4850,7 @@ export class ContainerRuntime
 				const sessionExpiryTimerStarted =
 					props?.sessionExpiryTimerStarted ?? this.garbageCollector.sessionExpiryTimerStarted;
 
-				const pendingIdCompressorState = this._idCompressor?.serialize(true);
+				const pendingIdCompressorState = this.idCompressorFeature.compressor?.serialize(true);
 				const pendingAttachmentBlobs = this.blobManager.getPendingBlobs();
 
 				const pendingRuntimeState: IPendingRuntimeState = {
