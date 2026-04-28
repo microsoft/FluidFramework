@@ -15,6 +15,12 @@ import { decompressStatsFile } from "@fluidframework/bundle-size-tools";
 const scriptDirectory = dirname(fileURLToPath(import.meta.url));
 const defaultAnalysisDirectory = resolve(scriptDirectory, "..", "bundleAnalysis");
 
+// Labels are fixed to match what collectBundle.ts writes:
+//   local mode    -> "current"
+//   revision mode -> sanitized revision (we always use "main" for the base side here)
+const baseLabel = "main";
+const currentLabel = "current";
+
 /**
  * Extracts the value of a command-line option from the argument list.
  * Supports both "--option value" and "--option=value" formats.
@@ -238,10 +244,6 @@ function formatEntrypointRow(
 
 /** Parsed command-line options for the bundle comparison script. */
 interface Options {
-	/** Label of the base bundle (default: "main"). Matches the directory name written by collectBundle.ts. */
-	baseLabel: string;
-	/** Label of the current bundle (default: "current"). Matches the directory name written by collectBundle.ts in local mode. */
-	currentLabel: string;
 	/** Directory containing per-label bundleStats.msp.gz files at \{label\}/bundleStats.msp.gz (default: this package's bundleAnalysis/) */
 	analysisDirectory: string;
 }
@@ -253,13 +255,11 @@ interface Options {
  * @returns Parsed options with defaults applied
  */
 function parseOptions(argv: string[]): Options {
-	const baseLabel = getOptionValue(argv, "--base-label") ?? "main";
-	const currentLabel = getOptionValue(argv, "--current-label") ?? "current";
 	const analysisDirectory = resolve(
 		getOptionValue(argv, "--analysis-dir") ?? defaultAnalysisDirectory,
 	);
 
-	return { baseLabel, currentLabel, analysisDirectory };
+	return { analysisDirectory };
 }
 
 /**
@@ -268,15 +268,11 @@ function parseOptions(argv: string[]): Options {
  * File names are derived from sanitized branch names (e.g., "compare-main-to-dev.txt").
  *
  * @param outputDirectory - The directory where output files will be written
- * @param baseLabel - The base bundle label (used in output filename)
- * @param currentLabel - The current bundle label (used in output filename)
  * @param textContent - The formatted text comparison report
  * @param jsonObject - The structured comparison data as a JSON-serializable object
  */
 function writeOutputFiles(
 	outputDirectory: string,
-	baseLabel: string,
-	currentLabel: string,
 	textContent: string,
 	jsonObject: object,
 ): void {
@@ -304,22 +300,20 @@ function printHelp(): void {
 Usage:
   jiti ./scripts/compareBundles.ts [options]
 
+Compares the two bundles previously collected by collectBundle.ts:
+  base    = ${baseLabel}/bundleStats.msp.gz
+  current = ${currentLabel}/bundleStats.msp.gz
+
 Options:
   --help, -h
     Show this help text and exit.
 
-  --base-label <name>     Label (subdirectory name) of the base bundle
-                          (default: main). Must match a label previously written
-                          by collectBundle.ts.
-  --current-label <name>  Label (subdirectory name) of the current bundle
-                          (default: current).
   --analysis-dir <path>   Parent directory containing bundleStats.msp.gz files
                           at {label}/bundleStats.msp.gz
                           (default: ${defaultAnalysisDirectory})
 
 Examples:
   jiti ./scripts/compareBundles.ts
-  jiti ./scripts/compareBundles.ts --base-label main --current-label feature
   jiti ./scripts/compareBundles.ts --analysis-dir /some/other/path
 `);
 }
@@ -364,14 +358,12 @@ function main(argv: string[]): void {
 	const options = parseOptions(argv);
 	const reporter = new Reporter();
 
-	const baseLabel = sanitizeForFileName(options.baseLabel);
-	const currentLabel = sanitizeForFileName(options.currentLabel);
 	const outputDirectory = options.analysisDirectory;
 	const baseBuildDirectory = resolve(outputDirectory, baseLabel, "build");
 	const currentBuildDirectory = resolve(outputDirectory, currentLabel, "build");
 
-	const baseStats = loadStats(options.analysisDirectory, baseLabel);
-	const currentStats = loadStats(options.analysisDirectory, currentLabel);
+	const baseStats = loadStats(outputDirectory, baseLabel);
+	const currentStats = loadStats(outputDirectory, currentLabel);
 
 	const baseAssets = Object.fromEntries(
 		(baseStats.assets ?? [])
@@ -394,9 +386,7 @@ function main(argv: string[]): void {
 			currentStatSize: currentAssets[name]?.size ?? 0,
 		}));
 
-	reporter.section(
-		`=== Bundle Size Comparison: ${options.baseLabel} -> ${options.currentLabel} ===`,
-	);
+	reporter.section(`=== Bundle Size Comparison: ${baseLabel} -> ${currentLabel} ===`);
 	reporter.section("All assets (stat/parsed size in bytes):");
 	reporter.tableHeader(
 		"Asset".padEnd(40) +
@@ -474,26 +464,20 @@ function main(argv: string[]): void {
 		});
 	}
 
-	writeOutputFiles(
-		outputDirectory,
-		options.baseLabel,
-		options.currentLabel,
-		reporter.toText(),
-		{
-			comparedAt: new Date().toISOString(),
-			baseLabel: options.baseLabel,
-			currentLabel: options.currentLabel,
-			analysisDirectory: options.analysisDirectory,
-			assets: rows.map((row) => ({
-				name: row.name,
-				baseStatSize: row.baseStatSize,
-				currentStatSize: row.currentStatSize,
-				diff: row.currentStatSize - row.baseStatSize,
-			})),
-			gzipChangedAssets: gzipRows,
-			entrypoints: entrypointRows,
-		},
-	);
+	writeOutputFiles(outputDirectory, reporter.toText(), {
+		comparedAt: new Date().toISOString(),
+		baseLabel,
+		currentLabel,
+		analysisDirectory: options.analysisDirectory,
+		assets: rows.map((row) => ({
+			name: row.name,
+			baseStatSize: row.baseStatSize,
+			currentStatSize: row.currentStatSize,
+			diff: row.currentStatSize - row.baseStatSize,
+		})),
+		gzipChangedAssets: gzipRows,
+		entrypoints: entrypointRows,
+	});
 }
 
 main(process.argv);

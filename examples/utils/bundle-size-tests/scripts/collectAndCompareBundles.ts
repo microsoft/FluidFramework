@@ -171,12 +171,7 @@ function main(argv: string[]): void {
 			console.log(`\n${"=".repeat(80)}`);
 			console.log("Running bundle comparison...");
 			console.log("=".repeat(80));
-			runScript("compareBundles.ts", [
-				"--base-label",
-				baseLabel,
-				"--current-label",
-				currentLabel,
-			]);
+			runScript("compareBundles.ts", []);
 		}
 
 		console.log(`\n${"=".repeat(80)}`);
