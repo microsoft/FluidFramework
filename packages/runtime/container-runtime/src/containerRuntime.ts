@@ -67,10 +67,8 @@ import type {
 } from "@fluidframework/core-interfaces/internal";
 import {
 	assert,
-	Deferred,
 	Lazy,
 	LazyPromise,
-	PromiseCache,
 	delay,
 	fail,
 	unreachableCase,
@@ -148,7 +146,6 @@ import {
 import type {
 	IEventSampler,
 	IFluidErrorBase,
-	ITelemetryGenericEventExt,
 	ITelemetryLoggerExt,
 	MonitoringContext,
 } from "@fluidframework/telemetry-utils/internal";
@@ -221,6 +218,7 @@ import {
 } from "./gc/index.js";
 import { IdCompressorFeature } from "./idCompressorFeature.js";
 import { InboundBatchAggregator } from "./inboundBatchAggregator.js";
+import { LoadingGroupSnapshotFetcher } from "./loadingGroupSnapshotFetcher.js";
 import {
 	ContainerMessageType,
 	type ContainerRuntimeAliasMessage,
@@ -1548,13 +1546,7 @@ export class ContainerRuntime
 	 */
 	private lastAckedSummaryContext: ISummaryContext | undefined;
 
-	/**
-	 * It a cache for holding mapping for loading groupIds with its snapshot from the service. Add expiry policy of 1 minute.
-	 * Starting with 1 min and based on recorded usage we can tweak it later on.
-	 */
-	private readonly snapshotCacheForLoadingGroupIds = new PromiseCache<string, ISnapshot>({
-		expiry: { policy: "absolute", durationMs: 60000 },
-	});
+	private readonly loadingGroupSnapshotFetcher: LoadingGroupSnapshotFetcher;
 
 	/**
 	 * The compatibility details of the Runtime layer that is exposed to the Loader layer
@@ -2181,6 +2173,14 @@ export class ContainerRuntime
 			}),
 		);
 
+		this.loadingGroupSnapshotFetcher = new LoadingGroupSnapshotFetcher(
+			() => this.storage,
+			this.innerDeltaManager,
+			this.mc.logger,
+			() => rootHasIsolatedChannels(this.metadata),
+			() => this.summarizerSubsystem.summarizer !== undefined,
+		);
+
 		this.entryPoint = new LazyPromise(async () => {
 			if (this.summarizerSubsystem.summarizer !== undefined) {
 				return this.summarizerSubsystem.summarizer;
@@ -2288,125 +2288,7 @@ export class ContainerRuntime
 		loadingGroupIds: string[],
 		pathParts: string[],
 	): Promise<{ snapshotTree: ISnapshotTree; sequenceNumber: number }> {
-		const sortedLoadingGroupIds = loadingGroupIds.sort();
-		assert(
-			this.storage.getSnapshot !== undefined,
-			0x8ed /* getSnapshot api should be defined if used */,
-		);
-		let loadedFromCache = true;
-		// Lookup up in the cache, if not present then make the network call as multiple datastores could
-		// be in same loading group. So, once we have fetched the snapshot for that loading group on
-		// any request, then cache that as same group could be requested in future too.
-		const snapshot = await this.snapshotCacheForLoadingGroupIds.addOrGet(
-			sortedLoadingGroupIds.join(","),
-			async () => {
-				assert(
-					this.storage.getSnapshot !== undefined,
-					0x8ee /* getSnapshot api should be defined if used */,
-				);
-				loadedFromCache = false;
-				return this.storage.getSnapshot({
-					cacheSnapshot: false,
-					scenarioName: "snapshotForLoadingGroupId",
-					loadingGroupIds: sortedLoadingGroupIds,
-				});
-			},
-		);
-
-		this.mc.logger.sendTelemetryEvent({
-			eventName: "GroupIdSnapshotFetched",
-			details: JSON.stringify({
-				fromCache: loadedFromCache,
-				loadingGroupIds: loadingGroupIds.join(","),
-			}),
-		});
-		// Find the snapshotTree inside the returned snapshot based on the path as given in the request.
-		const hasIsolatedChannels = rootHasIsolatedChannels(this.metadata);
-		const snapshotTreeForPath = this.getSnapshotTreeForPath(
-			snapshot.snapshotTree,
-			pathParts,
-			hasIsolatedChannels,
-		);
-		assert(snapshotTreeForPath !== undefined, 0x8ef /* no snapshotTree for the path */);
-		const snapshotSeqNumber = snapshot.sequenceNumber;
-		assert(snapshotSeqNumber !== undefined, 0x8f0 /* snapshotSeqNumber should be present */);
-
-		// This assert fires if we get a snapshot older than the snapshot we loaded from. This is a service issue.
-		// Snapshots should only move forward. If we observe an older snapshot than the one we loaded from, then likely
-		// the file has been overwritten or service lost data.
-		if (snapshotSeqNumber < this.deltaManager.initialSequenceNumber) {
-			throw DataProcessingError.create(
-				"Downloaded snapshot older than snapshot we loaded from",
-				"getSnapshotForLoadingGroupId",
-				undefined,
-				{
-					loadingGroupIds: sortedLoadingGroupIds.join(","),
-					snapshotSeqNumber,
-					initialSequenceNumber: this.deltaManager.initialSequenceNumber,
-				},
-			);
-		}
-
-		// If the snapshot is ahead of the last seq number of the delta manager, then catch up before
-		// returning the snapshot.
-		if (snapshotSeqNumber > this.deltaManager.lastSequenceNumber) {
-			// If this is a summarizer client, which is trying to load a group and it finds that there is
-			// another snapshot from which the summarizer loaded and it is behind, then just give up as
-			// the summarizer state is not up to date.
-			// This should be a recoverable scenario and shouldn't happen as we should process the ack first.
-			if (this.summarizerSubsystem.summarizer !== undefined) {
-				throw new Error("Summarizer client behind, loaded newer snapshot with loadingGroupId");
-			}
-
-			// We want to catchup from sequenceNumber to targetSequenceNumber
-			const props: ITelemetryGenericEventExt = {
-				eventName: "GroupIdSnapshotCatchup",
-				loadingGroupIds: sortedLoadingGroupIds.join(","),
-				targetSequenceNumber: snapshotSeqNumber, // This is so we reuse some columns in telemetry
-				sequenceNumber: this.deltaManager.lastSequenceNumber, // This is so we reuse some columns in telemetry
-			};
-
-			const event = PerformanceEvent.start(this.mc.logger, {
-				...props,
-			});
-			// If the inbound deltas queue is paused or disconnected, we expect a reconnect and unpause
-			// as long as it's not a summarizer client.
-			if (this._deltaManager.inbound.paused) {
-				props.inboundPaused = this._deltaManager.inbound.paused; // reusing telemetry
-			}
-			const defP = new Deferred<boolean>();
-			this.deltaManager.on("op", (message: ISequencedDocumentMessage) => {
-				if (message.sequenceNumber >= snapshotSeqNumber) {
-					defP.resolve(true);
-				}
-			});
-			await defP.promise;
-			event.end(props);
-		}
-		return { snapshotTree: snapshotTreeForPath, sequenceNumber: snapshotSeqNumber };
-	}
-
-	/**
-	 * Api to find a snapshot tree inside a bigger snapshot tree based on the path in the pathParts array.
-	 * @param snapshotTree - snapshot tree to look into.
-	 * @param pathParts - Part of the path, which we want to extract from the snapshot tree.
-	 * @param hasIsolatedChannels - whether the channels are present inside ".channels" subtree. Older
-	 * snapshots will not have trees inside ".channels", so check that.
-	 * @returns requested snapshot tree based on the path parts.
-	 */
-	private getSnapshotTreeForPath(
-		snapshotTree: ISnapshotTree,
-		pathParts: string[],
-		hasIsolatedChannels: boolean,
-	): ISnapshotTree | undefined {
-		let childTree = snapshotTree;
-		for (const part of pathParts) {
-			if (hasIsolatedChannels) {
-				childTree = childTree?.trees[channelsTreeName];
-			}
-			childTree = childTree?.trees[part];
-		}
-		return childTree;
+		return this.loadingGroupSnapshotFetcher.fetch(loadingGroupIds, pathParts);
 	}
 
 	/**
