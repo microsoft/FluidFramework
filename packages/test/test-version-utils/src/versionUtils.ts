@@ -13,7 +13,7 @@
  * the `postinstall` script in this package's `package.json`), so no runtime installation step
  * is required in tests.
  *
- * The exact resolved versions are recorded in `compat-workspaces/versions.mjs`, which is
+ * The exact resolved versions are recorded in `compat-workspaces/versions.cjs`, which is
  * maintained by the `update-compat-versions` script and committed to the repository. Tests
  * read this manifest at startup rather than querying the npm registry.
  *
@@ -22,13 +22,13 @@
  * After a version bump, run:
  * `pnpm run update-compat-versions`
  *
- * This regenerates `versions.mjs` and all per-version `package.json` files, then runs
+ * This regenerates `versions.cjs` and all per-version `package.json` files, then runs
  * `pnpm install --no-frozen-lockfile` in the workspace to update the committed lockfile.
  * Commit all changes produced by the script.
  */
 
 import { execSync } from "node:child_process";
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync } from "node:fs";
 import { createRequire } from "node:module";
 import * as path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -43,16 +43,16 @@ import * as semver from "semver";
 
 // From compiled lib/, go up one level to reach the package root, then into compat-workspaces/
 const compatWorkspacesDir = fileURLToPath(new URL("../compat-workspaces", import.meta.url));
-const versionsMjsPath = path.join(compatWorkspacesDir, "versions.mjs");
+const versionsCjsPath = path.join(compatWorkspacesDir, "versions.cjs");
 
 export const fullWorkspaceDir = path.join(compatWorkspacesDir, "full");
 
 // ---------------------------------------------------------------------------
-// versions.mjs manifest
+// versions.cjs manifest
 // ---------------------------------------------------------------------------
 
 /**
- * Schema for the committed `compat-workspaces/versions.mjs` file.
+ * Schema for the committed `compat-workspaces/versions.cjs` file.
  * MACHINE-MAINTAINED by `scripts/updateCompatVersions.ts` — do not edit by hand.
  * @internal
  */
@@ -93,13 +93,8 @@ let cachedManifest: CompatVersionsManifest | undefined;
  */
 export function tryReadVersionsManifest(): CompatVersionsManifest | undefined {
 	if (cachedManifest !== undefined) return cachedManifest;
-	if (!existsSync(versionsMjsPath)) return undefined;
-	// Extract the JSON object from the JS module wrapper (strips the comment header and
-	// `export const manifest = ...;` wrapper written by updateCompatVersions.ts).
-	const raw = readFileSync(versionsMjsPath, { encoding: "utf8" });
-	const start = raw.indexOf("{");
-	const end = raw.lastIndexOf("}");
-	cachedManifest = JSON.parse(raw.slice(start, end + 1)) as CompatVersionsManifest;
+	if (!existsSync(versionsCjsPath)) return undefined;
+	cachedManifest = createRequire(import.meta.url)(versionsCjsPath) as CompatVersionsManifest;
 	return cachedManifest;
 }
 

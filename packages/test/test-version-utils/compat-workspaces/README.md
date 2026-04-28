@@ -8,8 +8,8 @@ repo root (via the `postinstall` hook in `test-version-utils/package.json`).
 
 ```
 compat-workspaces/
-  explicit-versions.mjs    # Human-maintained: pinned versions needed by specific tests
-  versions.mjs             # Machine-generated: resolved version manifest (do not edit)
+  explicit-versions.cjs    # Human-maintained: pinned versions needed by specific tests
+  versions.cjs             # Machine-generated: resolved version manifest (do not edit)
   full/
     package.json            # Workspace root
     pnpm-workspace.yaml     # Workspace config
@@ -21,7 +21,7 @@ compat-workspaces/
 
 ## Machine-generated files
 
-**`versions.mjs`** — Written on every `update-compat-versions` run. Contains the resolved exact
+**`versions.cjs`** — Written on every `update-compat-versions` run. Contains the resolved exact
 versions for N-1, N-2, OCV, cross-client, and full back-compat tiers. Do not edit by hand.
 
 **`full/<version>/package.json`** — One file per version, listing the Fluid packages to install
@@ -38,5 +38,5 @@ After a Fluid Framework version bump, run from `packages/test/test-version-utils
 pnpm run update-compat-versions
 ```
 
-Then commit all changed files in this directory, including `versions.mjs` and `pnpm-lock.yaml`.
+Then commit all changed files in this directory, including `versions.cjs` and `pnpm-lock.yaml`.
 See `scripts/updateCompatVersions.ts` for details on what the script does.
