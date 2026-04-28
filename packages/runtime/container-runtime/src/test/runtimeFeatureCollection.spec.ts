@@ -5,6 +5,7 @@
 
 import { strict as assert } from "node:assert";
 
+import { ContainerMessageType } from "../messageTypes.js";
 import type { IRuntimeFeature } from "../runtimeFeature.js";
 import { RuntimeFeatureCollection } from "../runtimeFeatureCollection.js";
 
@@ -103,9 +104,8 @@ describe("RuntimeFeatureCollection", () => {
 		assert.deepEqual(disposed, ["a", "b"]);
 	});
 
-	it("collection itself satisfies Required<IRuntimeFeature>", () => {
-		// Compile-time: the collection has every method on the interface, non-optional.
-		const collection: Required<IRuntimeFeature> = new RuntimeFeatureCollection();
+	it("collection exposes every dispatch method", () => {
+		const collection = new RuntimeFeatureCollection();
 		assert.equal(typeof collection.onLoadFromSnapshot, "function");
 		assert.equal(typeof collection.onApplyStashedOps, "function");
 		assert.equal(typeof collection.onReady, "function");
@@ -115,42 +115,55 @@ describe("RuntimeFeatureCollection", () => {
 		assert.equal(typeof collection.handleOp, "function");
 	});
 
-	it("handleOp returns true on the first feature that claims the message", () => {
+	it("handleOp routes by op type via the supportedOps map", () => {
 		const seen: string[] = [];
 		const collection = new RuntimeFeatureCollection();
 		collection.add({
-			handleOp: (message) => {
-				seen.push("a");
-				return (message.type as string) === "a";
-			},
-		});
-		collection.add({
-			handleOp: (message) => {
-				seen.push("b");
-				return (message.type as string) === "b";
-			},
-		});
-		collection.add({
+			supportedOps: [ContainerMessageType.FluidDataStoreOp],
 			handleOp: () => {
-				seen.push("c");
-				return false;
+				seen.push("a");
+			},
+		});
+		collection.add({
+			supportedOps: [ContainerMessageType.GC],
+			handleOp: () => {
+				seen.push("b");
 			},
 		});
 
-		const m = (type: string): Parameters<RuntimeFeatureCollection["handleOp"]>[0] =>
+		const m = (
+			type: ContainerMessageType,
+		): Parameters<RuntimeFeatureCollection["handleOp"]>[0] =>
 			// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
 			({ type }) as unknown as Parameters<RuntimeFeatureCollection["handleOp"]>[0];
 
-		assert.equal(collection.handleOp(m("a"), [], false), true);
-		assert.deepEqual(seen, ["a"]); // short-circuited on first match
+		assert.equal(
+			collection.handleOp(m(ContainerMessageType.FluidDataStoreOp), [], false),
+			true,
+		);
+		assert.deepEqual(seen, ["a"]);
 
 		seen.length = 0;
-		assert.equal(collection.handleOp(m("b"), [], false), true);
-		assert.deepEqual(seen, ["a", "b"]);
+		assert.equal(collection.handleOp(m(ContainerMessageType.GC), [], false), true);
+		assert.deepEqual(seen, ["b"]);
 
 		seen.length = 0;
-		assert.equal(collection.handleOp(m("z"), [], false), false);
-		assert.deepEqual(seen, ["a", "b", "c"]); // no match, all seen
+		assert.equal(collection.handleOp(m(ContainerMessageType.Rejoin), [], false), false);
+		assert.deepEqual(seen, []); // no claim, no feature called
+	});
+
+	it("rejects multiple features claiming the same (type, hook)", () => {
+		const collection = new RuntimeFeatureCollection();
+		collection.add({
+			supportedOps: [ContainerMessageType.GC],
+			handleOp: () => {},
+		});
+		assert.throws(() =>
+			collection.add({
+				supportedOps: [ContainerMessageType.GC],
+				handleOp: () => {},
+			}),
+		);
 	});
 
 	it("contributeSummary fans out to features that mutate the same tree", () => {

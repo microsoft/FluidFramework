@@ -1215,47 +1215,32 @@ export class GarbageCollector implements IGarbageCollector, IRuntimeFeature {
 		}
 	}
 
+	public readonly supportedOps = [ContainerMessageType.GC] as const;
+
 	public handleOp(
 		message: Omit<InboundSequencedContainerRuntimeMessage, "contents">,
 		messagesContent: IRuntimeMessagesContent[],
 		local: boolean,
-	): boolean {
-		if (message.type !== ContainerMessageType.GC) {
-			return false;
-		}
+	): void {
 		const contents = messagesContent.map((c) => c.contents);
 		this.processMessages(contents as GarbageCollectionMessage[], message.timestamp, local);
-		return true;
 	}
 
-	public applyStashedOp(
-		opContents: LocalContainerRuntimeMessage,
-	): { result: unknown } | undefined {
-		if (opContents.type !== ContainerMessageType.GC) {
-			return undefined;
-		}
+	public applyStashedOp(): { result: unknown } {
 		// GC ops are only sent by the summarizer, which never stashes ops.
 		throw new LoggingError("GC op not expected to be stashed in summarizer");
 	}
 
-	public reSubmitOp(message: LocalContainerRuntimeMessage): boolean {
-		if (message.type !== ContainerMessageType.GC) {
-			return false;
-		}
-		this.submitMessage(message);
-		return true;
+	public reSubmitOp(message: LocalContainerRuntimeMessage): void {
+		this.submitMessage(message as ContainerRuntimeGCMessage);
 	}
 
-	public rollbackStagedOp(message: LocalContainerRuntimeMessage): boolean {
-		if (message.type !== ContainerMessageType.GC) {
-			return false;
-		}
+	public rollbackStagedOp(message: LocalContainerRuntimeMessage): void {
 		// Just drop, but log — only TombstoneLoaded is expected here.
 		this.mc.logger.sendErrorEvent({
 			eventName: "GC_OpDiscarded",
-			details: { subType: message.contents.type },
+			details: { subType: (message as ContainerRuntimeGCMessage).contents.type },
 		});
-		return true;
 	}
 
 	/**

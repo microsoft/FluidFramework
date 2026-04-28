@@ -256,7 +256,7 @@ import {
 	runtimeCompatDetailsForLoader,
 	validateLoaderCompatibility,
 } from "./runtimeLayerCompatState.js";
-import { RuntimeOpsFeature } from "./runtimeOpsFeature.js";
+import { chunkedOpsGuardFeature, rejoinFeature } from "./runtimeOpsFeature.js";
 import { SignalTelemetryManager } from "./signalTelemetryProcessing.js";
 // These types are imported as types here because they are present in summaryDelayLoadedModule, which is loaded dynamically when required.
 import {
@@ -2014,7 +2014,8 @@ export class ContainerRuntime
 			),
 		);
 
-		this.features.add(new RuntimeOpsFeature((message) => this.submit(message)));
+		this.features.add(rejoinFeature((message) => this.submit(message)));
+		this.features.add(chunkedOpsGuardFeature());
 
 		this.signalTelemetryManager = this.features.add(new SignalTelemetryManager());
 

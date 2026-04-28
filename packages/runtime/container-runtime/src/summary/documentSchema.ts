@@ -13,7 +13,6 @@ import { gt, lt, parse } from "semver-ts";
 import {
 	ContainerMessageType,
 	type InboundSequencedContainerRuntimeMessage,
-	type LocalContainerRuntimeMessage,
 } from "../messageTypes.js";
 import { pkgVersion } from "../packageVersion.js";
 import type { IRuntimeFeature } from "../runtimeFeature.js";
@@ -760,50 +759,35 @@ export class DocumentsSchemaController implements IRuntimeFeature {
 	 * @param sequenceNumber - sequence number of the op
 	 * @returns true if schema was accepted, otherwise false (rejected due to failed CAS)
 	 */
+	public readonly supportedOps = [ContainerMessageType.DocumentSchemaChange] as const;
+
 	public handleOp(
 		message: Omit<InboundSequencedContainerRuntimeMessage, "contents">,
 		messagesContent: IRuntimeMessagesContent[],
 		local: boolean,
-	): boolean {
-		if (message.type !== ContainerMessageType.DocumentSchemaChange) {
-			return false;
-		}
+	): void {
 		const contents = messagesContent.map((c) => c.contents);
 		this.processDocumentSchemaMessages(
 			contents as IDocumentSchemaChangeMessageIncoming[],
 			local,
 			message.sequenceNumber,
 		);
-		return true;
 	}
 
-	public applyStashedOp(
-		opContents: LocalContainerRuntimeMessage,
-	): { result: unknown } | undefined {
-		if (opContents.type !== ContainerMessageType.DocumentSchemaChange) {
-			return undefined;
-		}
+	public applyStashedOp(): { result: unknown } {
 		// Schema-change ops are intentionally dropped on stash — schema is regenerated on resubmit.
 		return { result: undefined };
 	}
 
-	public reSubmitOp(message: LocalContainerRuntimeMessage): boolean {
-		if (message.type !== ContainerMessageType.DocumentSchemaChange) {
-			return false;
-		}
+	public reSubmitOp(): void {
 		// Don't directly resubmit due to compare-and-swap semantics; schema regenerates from scratch
 		// before other ops are submitted.
 		this.pendingOpNotAcked();
-		return true;
 	}
 
-	public rollbackStagedOp(message: LocalContainerRuntimeMessage): boolean {
-		if (message.type !== ContainerMessageType.DocumentSchemaChange) {
-			return false;
-		}
+	public rollbackStagedOp(): void {
 		// Schema-change ops are not committed yet; allow regeneration on next propose.
 		this.pendingOpNotAcked();
-		return true;
 	}
 
 	public processDocumentSchemaMessages(

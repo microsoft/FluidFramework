@@ -10,44 +10,45 @@ import type {
 } from "@fluidframework/runtime-definitions/internal";
 
 import type {
+	ContainerMessageType,
 	InboundSequencedContainerRuntimeMessage,
 	LocalContainerRuntimeMessage,
 } from "./messageTypes.js";
 import type { IRuntimeFeature } from "./runtimeFeature.js";
 
 /**
- * Collection of {@link IRuntimeFeature}s, dispatching lifecycle calls to each
- * member in registration order.
- *
- * @remarks
- * Implements `Required<IRuntimeFeature>` — every method is present at the
- * collection level even though individual features may omit any. The
- * runtime calls these collection methods directly; it does not iterate
- * features itself.
- *
- * Composite pattern: the collection IS itself a feature in shape, but rather
- * than implementing each method's behavior it fans out to its members.
+ * Collection of {@link IRuntimeFeature}s. Lifecycle hooks fan out to every
+ * member; op-routing hooks (handleOp / applyStashedOp / reSubmitOp /
+ * rollbackStagedOp) dispatch via a single
+ * `Map<ContainerMessageType, IRuntimeFeature>` built at registration time.
+ * Each op type has at most one owning feature.
  *
  * @internal
  */
-export class RuntimeFeatureCollection implements Required<IRuntimeFeature> {
+export class RuntimeFeatureCollection {
 	private readonly features: IRuntimeFeature[] = [];
+
+	private readonly opOwners = new Map<ContainerMessageType, IRuntimeFeature>();
 
 	/**
 	 * Append a feature and return it, so callers can chain registration with
 	 * assignment: `this.foo = this.features.add(new FooFeature(...))`.
 	 *
-	 * Order matters — earlier-added features run first.
+	 * Order matters for fan-out hooks (lifecycle, summary). Op-routing
+	 * dispatch is type-keyed and order-independent.
+	 *
+	 * Throws if the feature claims an op type already claimed by another feature.
 	 */
 	public add<T extends IRuntimeFeature>(feature: T): T {
 		this.features.push(feature);
+		this.registerOpClaims(feature);
 		return feature;
 	}
 
 	/**
-	 * Replace `oldFeature` (by reference) with `replacement`, preserving the
-	 * registration order. Returns `replacement`. If `oldFeature` isn't present,
-	 * appends `replacement` instead.
+	 * Replace `oldFeature` (by reference) with `replacement`, preserving
+	 * registration order. Returns `replacement`. If `oldFeature` isn't
+	 * present, appends `replacement` instead.
 	 *
 	 * Primarily a test-fixture seam — production code should rarely need this.
 	 */
@@ -55,10 +56,29 @@ export class RuntimeFeatureCollection implements Required<IRuntimeFeature> {
 		const index = this.features.indexOf(oldFeature);
 		if (index >= 0) {
 			this.features[index] = replacement;
+			for (const [type, owner] of this.opOwners) {
+				if (owner === oldFeature) {
+					this.opOwners.delete(type);
+				}
+			}
 		} else {
 			this.features.push(replacement);
 		}
+		this.registerOpClaims(replacement);
 		return replacement;
+	}
+
+	private registerOpClaims(feature: IRuntimeFeature): void {
+		if (feature.supportedOps === undefined) {
+			return;
+		}
+		for (const type of feature.supportedOps) {
+			const existing = this.opOwners.get(type);
+			if (existing !== undefined && existing !== feature) {
+				throw new Error(`RuntimeFeatureCollection: multiple features claim ${type}`);
+			}
+			this.opOwners.set(type, feature);
+		}
 	}
 
 	public async onLoadFromSnapshot(): Promise<void> {
@@ -108,34 +128,36 @@ export class RuntimeFeatureCollection implements Required<IRuntimeFeature> {
 		}
 	}
 
+	/**
+	 * Route an inbound message to the feature that claims its type, if any.
+	 * Returns `true` if a feature handled it.
+	 */
 	public handleOp(
 		message: Omit<InboundSequencedContainerRuntimeMessage, "contents">,
 		messagesContent: IRuntimeMessagesContent[],
 		local: boolean,
 		savedOp?: boolean,
 	): boolean {
-		for (const f of this.features) {
-			if (f.handleOp?.(message, messagesContent, local, savedOp) === true) {
-				return true;
-			}
+		const feature = this.opOwners.get(message.type as ContainerMessageType);
+		if (feature?.handleOp === undefined) {
+			return false;
 		}
-		return false;
+		feature.handleOp(message, messagesContent, local, savedOp);
+		return true;
 	}
 
 	/**
-	 * Dispatch a stashed op to features, returning the result wrapper from the
-	 * first feature that claims it, or `undefined` if no feature does.
+	 * Dispatch a stashed op to the feature that claims its type, returning
+	 * the result wrapper, or `undefined` if no feature claims the type.
 	 */
 	public async applyStashedOp(
 		opContents: LocalContainerRuntimeMessage,
 	): Promise<{ result: unknown } | undefined> {
-		for (const f of this.features) {
-			const claim = await f.applyStashedOp?.(opContents);
-			if (claim !== undefined) {
-				return claim;
-			}
+		const feature = this.opOwners.get(opContents.type as ContainerMessageType);
+		if (feature?.applyStashedOp === undefined) {
+			return undefined;
 		}
-		return undefined;
+		return feature.applyStashedOp(opContents);
 	}
 
 	public reSubmitOp(
@@ -144,23 +166,23 @@ export class RuntimeFeatureCollection implements Required<IRuntimeFeature> {
 		opMetadata: unknown,
 		squash: boolean,
 	): boolean {
-		for (const f of this.features) {
-			if (f.reSubmitOp?.(message, localOpMetadata, opMetadata, squash) === true) {
-				return true;
-			}
+		const feature = this.opOwners.get(message.type as ContainerMessageType);
+		if (feature?.reSubmitOp === undefined) {
+			return false;
 		}
-		return false;
+		feature.reSubmitOp(message, localOpMetadata, opMetadata, squash);
+		return true;
 	}
 
 	public rollbackStagedOp(
 		message: LocalContainerRuntimeMessage,
 		localOpMetadata: unknown,
 	): boolean {
-		for (const f of this.features) {
-			if (f.rollbackStagedOp?.(message, localOpMetadata) === true) {
-				return true;
-			}
+		const feature = this.opOwners.get(message.type as ContainerMessageType);
+		if (feature?.rollbackStagedOp === undefined) {
+			return false;
 		}
-		return false;
+		feature.rollbackStagedOp(message, localOpMetadata);
+		return true;
 	}
 }

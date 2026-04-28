@@ -10,6 +10,7 @@ import type {
 } from "@fluidframework/runtime-definitions/internal";
 
 import type {
+	ContainerMessageType,
 	InboundSequencedContainerRuntimeMessage,
 	LocalContainerRuntimeMessage,
 } from "./messageTypes.js";
@@ -118,38 +119,48 @@ export interface IRuntimeFeature {
 	) => void;
 
 	/**
-	 * Called for each inbound runtime message. The feature returns `true` if it
-	 * handled the message; `false` otherwise. Features check the message type
-	 * themselves and decline messages they don't own.
+	 * Op types this feature claims for op-routing hooks
+	 * (handleOp / applyStashedOp / reSubmitOp / rollbackStagedOp).
 	 *
-	 * The collection short-circuits on the first feature that returns `true` —
-	 * each message is owned by at most one feature.
+	 * `RuntimeFeatureCollection` builds per-hook dispatch maps from these
+	 * claims at registration and validates that at most one feature claims
+	 * each (type, hook) pair. Dispatch is then O(1) per message.
+	 *
+	 * Features that don't participate in op routing omit this field entirely.
+	 */
+	readonly supportedOps?: readonly ContainerMessageType[];
+
+	/**
+	 * Called for inbound runtime messages of the feature's
+	 * {@link IRuntimeFeature.supportedOps | supported op types}. The
+	 * dispatcher has already matched the type — the feature's body just does
+	 * the work.
 	 */
 	readonly handleOp?: (
 		message: Omit<InboundSequencedContainerRuntimeMessage, "contents">,
 		messagesContent: IRuntimeMessagesContent[],
 		local: boolean,
 		savedOp?: boolean,
-	) => boolean;
+	) => void;
 
 	/**
-	 * Apply a stashed local op (replayed from saved pending state) during runtime
-	 * load. Each feature inspects the op's type and decides whether it owns the
-	 * apply. Return `undefined` to decline; return `{ result }` to claim — the
-	 * `result` is the localOpMetadata that the pending-state manager will retain
+	 * Apply a stashed local op (replayed from saved pending state) during
+	 * runtime load. Called only for the feature's
+	 * {@link IRuntimeFeature.supportedOps | supported op types}. The returned
+	 * `result` is the localOpMetadata that the pending-state manager retains
 	 * for the resubmit cycle.
 	 *
 	 * @remarks
-	 * Features that intentionally drop their op type on stash (e.g. blob attach,
-	 * schema change) can still claim it by returning `{ result: undefined }`.
+	 * Features that intentionally drop their op type on stash (e.g. blob
+	 * attach, schema change) return `{ result: undefined }`.
 	 */
 	readonly applyStashedOp?: (
 		opContents: LocalContainerRuntimeMessage,
 	) => Promise<{ result: unknown } | undefined> | { result: unknown } | undefined;
 
 	/**
-	 * Resubmit a pending op. Each feature inspects the op's type and decides
-	 * whether it owns the resubmit. Return `true` if claimed.
+	 * Resubmit a pending op. Called only for the feature's
+	 * {@link IRuntimeFeature.supportedOps | supported op types}.
 	 *
 	 * @param message - The local runtime message to resubmit.
 	 * @param localOpMetadata - Subsystem-specific metadata captured at submit time.
@@ -163,11 +174,12 @@ export interface IRuntimeFeature {
 		localOpMetadata: unknown,
 		opMetadata: unknown,
 		squash: boolean,
-	) => boolean;
+	) => void;
 
 	/**
-	 * Roll back a staged op (when staged changes are discarded). Return `true`
-	 * if claimed.
+	 * Roll back a staged op (when staged changes are discarded). Called only
+	 * for the feature's {@link IRuntimeFeature.supportedOps | supported op
+	 * types}.
 	 *
 	 * @param message - The local runtime message to roll back.
 	 * @param localOpMetadata - Subsystem-specific metadata captured at submit time.
@@ -175,5 +187,5 @@ export interface IRuntimeFeature {
 	readonly rollbackStagedOp?: (
 		message: LocalContainerRuntimeMessage,
 		localOpMetadata: unknown,
-	) => boolean;
+	) => void;
 }

@@ -219,31 +219,31 @@ function stubChannelCollection(
 	);
 
 	// reSubmitOp / rollbackStagedOp / applyStashedOp are dispatched via
-	// RuntimeFeatureCollection. Since createStubInstance auto-stubs every method,
-	// we have to rewire these to delegate to the test fakes that the original
-	// stub was relying on (reSubmitContainerMessage, rollbackDataStoreOp,
-	// applyStashedOp on the base class).
+	// RuntimeFeatureCollection. The stub from createStubInstance auto-stubs
+	// every method, so re-wire these to call the test fakes the stub was
+	// already collecting on (reSubmitContainerMessage, rollbackDataStoreOp).
+	// Also set supportedOps so the feature collection's per-type dispatch map
+	// routes the matching ops to this stub.
+	(stub as unknown as { supportedOps: readonly ContainerMessageType[] }).supportedOps = [
+		ContainerMessageType.FluidDataStoreOp,
+		ContainerMessageType.Attach,
+		ContainerMessageType.Alias,
+	];
 	stub.reSubmitOp.callsFake(
 		(message: unknown, localOpMetadata: unknown, _opMetadata: unknown, squash: boolean) => {
-			const m = message as LocalContainerRuntimeMessage;
-			if (
-				m.type !== ContainerMessageType.FluidDataStoreOp &&
-				m.type !== ContainerMessageType.Attach &&
-				m.type !== ContainerMessageType.Alias
-			) {
-				return false;
-			}
-			reSubmitFake(m, localOpMetadata, squash);
-			return true;
+			reSubmitFake(
+				message as Parameters<ChannelCollection["reSubmitContainerMessage"]>[0],
+				localOpMetadata,
+				squash,
+			);
 		},
 	);
 	stub.rollbackStagedOp.callsFake((message: unknown, localOpMetadata: unknown) => {
 		const m = message as LocalContainerRuntimeMessage;
 		if (m.type !== ContainerMessageType.FluidDataStoreOp) {
-			return false;
+			return;
 		}
 		rollbackDataStoreOpStub(m.contents, localOpMetadata);
-		return true;
 	});
 
 	// The runtime dispatches op routing via `features` (a RuntimeFeatureCollection)
@@ -1262,9 +1262,8 @@ describe("Runtime", () => {
 					// Claim FluidDataStoreOp ops so feature dispatch in
 					// validateAndProcessRuntimeMessages doesn't fall through
 					// to the unknown-type default.
-					handleOp: (message: unknown) =>
-						(message as { type: ContainerMessageType }).type ===
-						ContainerMessageType.FluidDataStoreOp,
+					supportedOps: [ContainerMessageType.FluidDataStoreOp] as const,
+					handleOp: () => {},
 				} as unknown as ChannelCollection;
 			};
 
@@ -1579,26 +1578,20 @@ describe("Runtime", () => {
 					channelCollection: Partial<ChannelCollection>;
 				};
 
-				const patchedCC: Partial<ChannelCollection> = {
+				const patchedCC = {
 					setConnectionState: (_connected: boolean, _clientId?: string) => {},
 					// Pass data store op right back to ContainerRuntime
 					reSubmitContainerMessage: containerRuntime.submitMessage.bind(containerRuntime),
 					// Claim FluidDataStoreOp for feature-dispatched resubmit, delegating
 					// to submitMessage so submittedOps grows.
-					reSubmitOp: (
-						message: unknown,
-						localOpMetadata: unknown,
-						_opMetadata: unknown,
-						_squash: boolean,
-					) => {
-						const m = message as LocalContainerRuntimeMessage;
-						if (m.type !== ContainerMessageType.FluidDataStoreOp) {
-							return false;
-						}
-						containerRuntime.submitMessage(m, localOpMetadata);
-						return true;
+					supportedOps: [ContainerMessageType.FluidDataStoreOp] as const,
+					reSubmitOp: (message: LocalContainerRuntimeMessage, localOpMetadata: unknown) => {
+						containerRuntime.submitMessage(
+							message as Parameters<typeof containerRuntime.submitMessage>[0],
+							localOpMetadata,
+						);
 					},
-				};
+				} as unknown as Partial<ChannelCollection>;
 				// Keep feature dispatch in sync with the patched channelCollection.
 				// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
 				(containerRuntime as any).features.replace(

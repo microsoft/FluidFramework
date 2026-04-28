@@ -796,39 +796,27 @@ export class BlobManager implements IRuntimeFeature {
 		}
 	}
 
+	public readonly supportedOps = [ContainerMessageType.BlobAttach] as const;
+
 	public handleOp(
 		message: Omit<InboundSequencedContainerRuntimeMessage, "contents">,
 		_messagesContent: IRuntimeMessagesContent[],
 		local: boolean,
-	): boolean {
-		if (message.type !== ContainerMessageType.BlobAttach) {
-			return false;
-		}
+	): void {
 		this.processBlobAttachMessage(message, local);
-		return true;
 	}
 
-	public applyStashedOp(
-		opContents: LocalContainerRuntimeMessage,
-	): { result: unknown } | undefined {
-		if (opContents.type !== ContainerMessageType.BlobAttach) {
-			return undefined;
-		}
+	public applyStashedOp(): { result: unknown } {
 		// Stashed BlobAttach ops are intentionally dropped — pendingBlobs covers the data.
 		return { result: undefined };
 	}
 
 	public reSubmitOp(
-		message: LocalContainerRuntimeMessage,
+		_message: LocalContainerRuntimeMessage,
 		_localOpMetadata: unknown,
 		opMetadata: unknown,
-		_squash: boolean,
-	): boolean {
-		if (message.type !== ContainerMessageType.BlobAttach) {
-			return false;
-		}
+	): void {
 		this.reSubmit(opMetadata as Record<string, unknown> | undefined);
-		return true;
 	}
 
 	/**

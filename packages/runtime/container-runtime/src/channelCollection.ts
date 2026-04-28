@@ -933,20 +933,18 @@ export class ChannelCollection
 		}
 	}
 
+	public readonly supportedOps = [
+		ContainerMessageType.FluidDataStoreOp,
+		ContainerMessageType.Attach,
+		ContainerMessageType.Alias,
+	] as const;
+
 	public handleOp(
 		message: Omit<InboundSequencedContainerRuntimeMessage, "contents">,
 		messagesContent: IRuntimeMessagesContent[],
 		local: boolean,
-	): boolean {
-		if (
-			message.type !== ContainerMessageType.FluidDataStoreOp &&
-			message.type !== ContainerMessageType.Attach &&
-			message.type !== ContainerMessageType.Alias
-		) {
-			return false;
-		}
+	): void {
 		this.processMessages({ envelope: message, messagesContent, local });
-		return true;
 	}
 
 	public contributeSummary(summaryTree: ISummaryTreeWithStats): void {
@@ -960,27 +958,28 @@ export class ChannelCollection
 		localOpMetadata: unknown,
 		_opMetadata: unknown,
 		squash: boolean,
-	): boolean {
-		if (
-			message.type !== ContainerMessageType.FluidDataStoreOp &&
-			message.type !== ContainerMessageType.Attach &&
-			message.type !== ContainerMessageType.Alias
-		) {
-			return false;
-		}
-		this.reSubmitContainerMessage(message, localOpMetadata, squash);
-		return true;
+	): void {
+		this.reSubmitContainerMessage(
+			message as
+				| ContainerRuntimeDataStoreOpMessage
+				| OutboundContainerRuntimeAttachMessage
+				| ContainerRuntimeAliasMessage,
+			localOpMetadata,
+			squash,
+		);
 	}
 
 	public rollbackStagedOp(
 		message: LocalContainerRuntimeMessage,
 		localOpMetadata: unknown,
-	): boolean {
+	): void {
+		// rollback only applies to FluidDataStoreOp; the dispatcher claims all three
+		// supported types but only this one rolls back. Schema-change/Alias should never
+		// reach this path (they aren't staged), so just guard.
 		if (message.type !== ContainerMessageType.FluidDataStoreOp) {
-			return false;
+			return;
 		}
 		this.rollbackDataStoreOp(message.contents, localOpMetadata);
-		return true;
 	}
 
 	/**

@@ -25,7 +25,6 @@ import {
 	ContainerMessageType,
 	type ContainerRuntimeIdAllocationMessage,
 	type InboundSequencedContainerRuntimeMessage,
-	type LocalContainerRuntimeMessage,
 } from "./messageTypes.js";
 import type { LocalBatchMessage } from "./opLifecycle/index.js";
 import type { IRuntimeFeature } from "./runtimeFeature.js";
@@ -174,19 +173,17 @@ export class IdCompressorFeature implements IRuntimeFeature {
 		}
 	}
 
+	public readonly supportedOps = [ContainerMessageType.IdAllocation] as const;
+
 	public handleOp(
-		message: Omit<InboundSequencedContainerRuntimeMessage, "contents">,
+		_message: Omit<InboundSequencedContainerRuntimeMessage, "contents">,
 		messagesContent: IRuntimeMessagesContent[],
 		_local: boolean,
 		savedOp?: boolean,
-	): boolean {
-		if (message.type !== ContainerMessageType.IdAllocation) {
-			return false;
-		}
+	): void {
 		for (const c of messagesContent) {
 			this.processSingleRange(c.contents as IdCreationRange, savedOp);
 		}
-		return true;
 	}
 
 	private processSingleRange(range: IdCreationRange, savedOp?: boolean): void {
@@ -210,24 +207,15 @@ export class IdCompressorFeature implements IRuntimeFeature {
 		}
 	}
 
-	public applyStashedOp(
-		opContents: LocalContainerRuntimeMessage,
-	): { result: unknown } | undefined {
-		if (opContents.type !== ContainerMessageType.IdAllocation) {
-			return undefined;
-		}
+	public applyStashedOp(): { result: unknown } {
 		// IdAllocation ops in stashed state are ignored — the compressor's tip
 		// state was serialized into the pending state.
 		assert(this.idCompressorMode() !== undefined, 0x8f1 /* ID compressor should be in use */);
 		return { result: undefined };
 	}
 
-	public reSubmitOp(message: LocalContainerRuntimeMessage): boolean {
-		if (message.type !== ContainerMessageType.IdAllocation) {
-			return false;
-		}
+	public reSubmitOp(): void {
 		// Allocation ops are never resubmitted/rebased — the runtime submits a
 		// fresh range covering all pending IDs before replay.
-		return true;
 	}
 }
