@@ -43,6 +43,7 @@ class TestSchema extends schemaFactory.object("parent", {
 	),
 }) {}
 
+/** Enumerates all JSON snapshot files under `dir`, recursively. */
 function listSnapshotFiles(dir: string): string[] {
 	assert(existsSync(dir));
 	const results: string[] = [];
@@ -57,6 +58,7 @@ function listSnapshotFiles(dir: string): string[] {
 	return results;
 }
 
+/** Build a summary string for `treeEncodeType` × `versionKey` using the standard test schema. */
 async function generateSummaryContent(
 	treeEncodeType: TreeCompressionStrategy,
 	versionKey: string,
@@ -84,6 +86,18 @@ async function generateSummaryContent(
 	return `${JSON.stringify(summary, undefined, "\t")}\n`;
 }
 
+/**
+ * Ensures the snapshot directory contains a summary for every supported
+ * `TreeCompressionStrategy` × `minVersionForCollab` combination this build can produce.
+ *
+ * Each missing variant is generated and (if `addIfMissing`) written to disk under a
+ * non-colliding name; otherwise the test fails listing what is missing.
+ *
+ * We never want to delete or rewrite these snapshots — only add new variants.
+ * Persisting summaries written by older code lets us keep loading documents authored
+ * by those builds, even if we later change how a summary at the same version would
+ * be encoded.
+ */
 async function checkForMissingSummaries(addIfMissing: boolean): Promise<void> {
 	if (!existsSync(outputDirectory)) {
 		mkdirSync(outputDirectory, { recursive: true });
@@ -140,44 +154,34 @@ describe("Summary load regression tests", () => {
 		await checkForMissingSummaries(regenerateSnapshots);
 	});
 
-	for (const treeEncodeType of [
-		TreeCompressionStrategy.Compressed,
-		TreeCompressionStrategy.Uncompressed,
-	]) {
-		const treeEncodeKey = TreeCompressionStrategy[treeEncodeType];
-		describe(`Load singleTree summary with current minVersionForCollab and TreeCompressionStrategy.${treeEncodeKey}`, () => {
-			const files = listSnapshotFiles(outputDirectory).filter((file) =>
-				path.basename(file).includes(`-${treeEncodeKey}-`),
-			);
-			for (const file of files) {
-				const relativePath = path.relative(outputDirectory, file);
-				it(`loads ${relativePath}`, async () => {
-					const summaryJson = readFileSync(file, "utf8");
+	describe("Load every snapshot with the current minVersionForCollab", () => {
+		for (const file of listSnapshotFiles(outputDirectory)) {
+			const relativePath = path.relative(outputDirectory, file);
+			it(`loads ${relativePath}`, async () => {
+				const summaryJson = readFileSync(file, "utf8");
 
-					const options: SharedTreeOptions = {
-						jsonValidator: FormatValidatorBasic,
-						treeEncodeType,
-						minVersionForCollab: cleanedPackageVersion,
-					};
-					const dataStoreRuntime = new MockFluidDataStoreRuntime();
-					const factory = configuredSharedTree(options).getFactory();
+				const options: SharedTreeOptions = {
+					jsonValidator: FormatValidatorBasic,
+					minVersionForCollab: cleanedPackageVersion,
+				};
+				const dataStoreRuntime = new MockFluidDataStoreRuntime();
+				const factory = configuredSharedTree(options).getFactory();
 
-					const tree = await factory.load(
-						dataStoreRuntime,
-						"test",
-						MockSharedObjectServices.createFromSummary(JSON.parse(summaryJson)),
-						factory.attributes,
-					);
-					// If changes are made to the test summary content, this assertion may need to be updated.
-					// The important thing is that the content is loaded and can be read without error, not the specific values.
-					const view = tree.viewWith(new TreeViewConfiguration({ schema: TestSchema }));
-					assert.equal(view.root.label, "foo");
-					assert.deepEqual(
-						Array.from(view.root.child, (child) => child.count),
-						[1, 2],
-					);
-				});
-			}
-		});
-	}
+				const tree = await factory.load(
+					dataStoreRuntime,
+					"test",
+					MockSharedObjectServices.createFromSummary(JSON.parse(summaryJson)),
+					factory.attributes,
+				);
+				// If changes are made to the test summary content, this assertion may need to be updated.
+				// The important thing is that the content is loaded and can be read without error, not the specific values.
+				const view = tree.viewWith(new TreeViewConfiguration({ schema: TestSchema }));
+				assert.equal(view.root.label, "foo");
+				assert.deepEqual(
+					Array.from(view.root.child, (child) => child.count),
+					[1, 2],
+				);
+			});
+		}
+	});
 });
