@@ -13,6 +13,7 @@ import { gt, lt, parse } from "semver-ts";
 import {
 	ContainerMessageType,
 	type InboundSequencedContainerRuntimeMessage,
+	type LocalContainerRuntimeMessage,
 } from "../messageTypes.js";
 import { pkgVersion } from "../packageVersion.js";
 import type { IRuntimeFeature } from "../runtimeFeature.js";
@@ -759,32 +760,35 @@ export class DocumentsSchemaController implements IRuntimeFeature {
 	 * @param sequenceNumber - sequence number of the op
 	 * @returns true if schema was accepted, otherwise false (rejected due to failed CAS)
 	 */
-	public handleOp(message: unknown, messagesContent: unknown[], local: boolean): boolean {
-		const m = message as Omit<InboundSequencedContainerRuntimeMessage, "contents">;
-		if (m.type !== ContainerMessageType.DocumentSchemaChange) {
+	public handleOp(
+		message: Omit<InboundSequencedContainerRuntimeMessage, "contents">,
+		messagesContent: IRuntimeMessagesContent[],
+		local: boolean,
+	): boolean {
+		if (message.type !== ContainerMessageType.DocumentSchemaChange) {
 			return false;
 		}
-		const contents = (messagesContent as IRuntimeMessagesContent[]).map((c) => c.contents);
+		const contents = messagesContent.map((c) => c.contents);
 		this.processDocumentSchemaMessages(
 			contents as IDocumentSchemaChangeMessageIncoming[],
 			local,
-			m.sequenceNumber,
+			message.sequenceNumber,
 		);
 		return true;
 	}
 
-	public applyStashedOp(opContents: unknown): { result: unknown } | undefined {
-		const op = opContents as { type: ContainerMessageType };
-		if (op.type !== ContainerMessageType.DocumentSchemaChange) {
+	public applyStashedOp(
+		opContents: LocalContainerRuntimeMessage,
+	): { result: unknown } | undefined {
+		if (opContents.type !== ContainerMessageType.DocumentSchemaChange) {
 			return undefined;
 		}
 		// Schema-change ops are intentionally dropped on stash — schema is regenerated on resubmit.
 		return { result: undefined };
 	}
 
-	public reSubmitOp(message: unknown): boolean {
-		const m = message as { type: ContainerMessageType };
-		if (m.type !== ContainerMessageType.DocumentSchemaChange) {
+	public reSubmitOp(message: LocalContainerRuntimeMessage): boolean {
+		if (message.type !== ContainerMessageType.DocumentSchemaChange) {
 			return false;
 		}
 		// Don't directly resubmit due to compare-and-swap semantics; schema regenerates from scratch
@@ -793,9 +797,8 @@ export class DocumentsSchemaController implements IRuntimeFeature {
 		return true;
 	}
 
-	public rollbackStagedOp(message: unknown): boolean {
-		const m = message as { type: ContainerMessageType };
-		if (m.type !== ContainerMessageType.DocumentSchemaChange) {
+	public rollbackStagedOp(message: LocalContainerRuntimeMessage): boolean {
+		if (message.type !== ContainerMessageType.DocumentSchemaChange) {
 			return false;
 		}
 		// Schema-change ops are not committed yet; allow regeneration on next propose.

@@ -26,6 +26,7 @@ import { assert } from "@fluidframework/core-utils/internal";
 import type { ICreateBlobResponse } from "@fluidframework/driver-definitions/internal";
 import type {
 	IGarbageCollectionData,
+	IRuntimeMessagesContent,
 	ISummaryTreeWithStats,
 	ITelemetryContext,
 	ISequencedMessageEnvelope,
@@ -48,6 +49,7 @@ import { v4 as uuid } from "uuid";
 import {
 	ContainerMessageType,
 	type InboundSequencedContainerRuntimeMessage,
+	type LocalContainerRuntimeMessage,
 } from "../messageTypes.js";
 import { isBlobMetadata } from "../metadata.js";
 import type { IRuntimeFeature } from "../runtimeFeature.js";
@@ -794,18 +796,22 @@ export class BlobManager implements IRuntimeFeature {
 		}
 	}
 
-	public handleOp(message: unknown, _messagesContent: unknown[], local: boolean): boolean {
-		const m = message as Omit<InboundSequencedContainerRuntimeMessage, "contents">;
-		if (m.type !== ContainerMessageType.BlobAttach) {
+	public handleOp(
+		message: Omit<InboundSequencedContainerRuntimeMessage, "contents">,
+		_messagesContent: IRuntimeMessagesContent[],
+		local: boolean,
+	): boolean {
+		if (message.type !== ContainerMessageType.BlobAttach) {
 			return false;
 		}
-		this.processBlobAttachMessage(m, local);
+		this.processBlobAttachMessage(message, local);
 		return true;
 	}
 
-	public applyStashedOp(opContents: unknown): { result: unknown } | undefined {
-		const op = opContents as { type: ContainerMessageType };
-		if (op.type !== ContainerMessageType.BlobAttach) {
+	public applyStashedOp(
+		opContents: LocalContainerRuntimeMessage,
+	): { result: unknown } | undefined {
+		if (opContents.type !== ContainerMessageType.BlobAttach) {
 			return undefined;
 		}
 		// Stashed BlobAttach ops are intentionally dropped — pendingBlobs covers the data.
@@ -813,13 +819,12 @@ export class BlobManager implements IRuntimeFeature {
 	}
 
 	public reSubmitOp(
-		message: unknown,
+		message: LocalContainerRuntimeMessage,
 		_localOpMetadata: unknown,
 		opMetadata: unknown,
 		_squash: boolean,
 	): boolean {
-		const op = message as { type: ContainerMessageType };
-		if (op.type !== ContainerMessageType.BlobAttach) {
+		if (message.type !== ContainerMessageType.BlobAttach) {
 			return false;
 		}
 		this.reSubmit(opMetadata as Record<string, unknown> | undefined);

@@ -933,25 +933,20 @@ export class ChannelCollection
 		}
 	}
 
-	public handleOp(message: unknown, messagesContent: unknown[], local: boolean): boolean {
-		const m = message as Omit<InboundSequencedContainerRuntimeMessage, "contents">;
+	public handleOp(
+		message: Omit<InboundSequencedContainerRuntimeMessage, "contents">,
+		messagesContent: IRuntimeMessagesContent[],
+		local: boolean,
+	): boolean {
 		if (
-			m.type !== ContainerMessageType.FluidDataStoreOp &&
-			m.type !== ContainerMessageType.Attach &&
-			m.type !== ContainerMessageType.Alias
+			message.type !== ContainerMessageType.FluidDataStoreOp &&
+			message.type !== ContainerMessageType.Attach &&
+			message.type !== ContainerMessageType.Alias
 		) {
 			return false;
 		}
-		this.processMessages({
-			envelope: m,
-			messagesContent: messagesContent as IRuntimeMessagesContent[],
-			local,
-		});
+		this.processMessages({ envelope: message, messagesContent, local });
 		return true;
-	}
-
-	public onConnectionStateChange(canSendOps: boolean, clientId: string | undefined): void {
-		this.setConnectionState(canSendOps, clientId);
 	}
 
 	public contributeSummary(summaryTree: ISummaryTreeWithStats): void {
@@ -961,29 +956,30 @@ export class ChannelCollection
 	}
 
 	public reSubmitOp(
-		message: unknown,
+		message: LocalContainerRuntimeMessage,
 		localOpMetadata: unknown,
 		_opMetadata: unknown,
 		squash: boolean,
 	): boolean {
-		const m = message as LocalContainerRuntimeMessage;
 		if (
-			m.type !== ContainerMessageType.FluidDataStoreOp &&
-			m.type !== ContainerMessageType.Attach &&
-			m.type !== ContainerMessageType.Alias
+			message.type !== ContainerMessageType.FluidDataStoreOp &&
+			message.type !== ContainerMessageType.Attach &&
+			message.type !== ContainerMessageType.Alias
 		) {
 			return false;
 		}
-		this.reSubmitContainerMessage(m, localOpMetadata, squash);
+		this.reSubmitContainerMessage(message, localOpMetadata, squash);
 		return true;
 	}
 
-	public rollbackStagedOp(message: unknown, localOpMetadata: unknown): boolean {
-		const m = message as LocalContainerRuntimeMessage;
-		if (m.type !== ContainerMessageType.FluidDataStoreOp) {
+	public rollbackStagedOp(
+		message: LocalContainerRuntimeMessage,
+		localOpMetadata: unknown,
+	): boolean {
+		if (message.type !== ContainerMessageType.FluidDataStoreOp) {
 			return false;
 		}
-		this.rollbackDataStoreOp(m.contents, localOpMetadata);
+		this.rollbackDataStoreOp(message.contents, localOpMetadata);
 		return true;
 	}
 
@@ -1314,7 +1310,7 @@ export class ChannelCollection
 	 *
 	 * @param staging - A boolean indicating whether the container is in staging mode.
 	 */
-	public onStagingModeChange(staging: boolean): void {
+	public notifyStagingMode(staging: boolean): void {
 		for (const [fluidDataStoreId, context] of this.contexts) {
 			try {
 				context.notifyStagingMode(staging);

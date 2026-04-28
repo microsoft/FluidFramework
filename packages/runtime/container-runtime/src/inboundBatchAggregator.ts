@@ -55,7 +55,7 @@ export class InboundBatchAggregator implements IRuntimeFeature {
 		this.deltaManager.on("op", this.afterOpProcessing);
 	}
 
-	public onConnectionStateChange(_canSendOps: boolean, clientId: string | undefined): void {
+	public setConnectionState(_canSendOps: boolean, clientId: string | undefined): void {
 		this.currentClientId = clientId;
 	}
 

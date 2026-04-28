@@ -4,10 +4,15 @@
  */
 
 import type {
+	IRuntimeMessagesContent,
 	ISummaryTreeWithStats,
 	ITelemetryContext,
 } from "@fluidframework/runtime-definitions/internal";
 
+import type {
+	InboundSequencedContainerRuntimeMessage,
+	LocalContainerRuntimeMessage,
+} from "./messageTypes.js";
 import type { IRuntimeFeature } from "./runtimeFeature.js";
 
 /**
@@ -74,15 +79,15 @@ export class RuntimeFeatureCollection implements Required<IRuntimeFeature> {
 		}
 	}
 
-	public onConnectionStateChange(canSendOps: boolean, clientId: string | undefined): void {
+	public setConnectionState(canSendOps: boolean, clientId: string | undefined): void {
 		for (const f of this.features) {
-			f.onConnectionStateChange?.(canSendOps, clientId);
+			f.setConnectionState?.(canSendOps, clientId);
 		}
 	}
 
-	public onStagingModeChange(active: boolean): void {
+	public notifyStagingMode(active: boolean): void {
 		for (const f of this.features) {
-			f.onStagingModeChange?.(active);
+			f.notifyStagingMode?.(active);
 		}
 	}
 
@@ -104,8 +109,8 @@ export class RuntimeFeatureCollection implements Required<IRuntimeFeature> {
 	}
 
 	public handleOp(
-		message: unknown,
-		messagesContent: unknown[],
+		message: Omit<InboundSequencedContainerRuntimeMessage, "contents">,
+		messagesContent: IRuntimeMessagesContent[],
 		local: boolean,
 		savedOp?: boolean,
 	): boolean {
@@ -121,7 +126,9 @@ export class RuntimeFeatureCollection implements Required<IRuntimeFeature> {
 	 * Dispatch a stashed op to features, returning the result wrapper from the
 	 * first feature that claims it, or `undefined` if no feature does.
 	 */
-	public async applyStashedOp(opContents: unknown): Promise<{ result: unknown } | undefined> {
+	public async applyStashedOp(
+		opContents: LocalContainerRuntimeMessage,
+	): Promise<{ result: unknown } | undefined> {
 		for (const f of this.features) {
 			const claim = await f.applyStashedOp?.(opContents);
 			if (claim !== undefined) {
@@ -132,7 +139,7 @@ export class RuntimeFeatureCollection implements Required<IRuntimeFeature> {
 	}
 
 	public reSubmitOp(
-		message: unknown,
+		message: LocalContainerRuntimeMessage,
 		localOpMetadata: unknown,
 		opMetadata: unknown,
 		squash: boolean,
@@ -145,7 +152,10 @@ export class RuntimeFeatureCollection implements Required<IRuntimeFeature> {
 		return false;
 	}
 
-	public rollbackStagedOp(message: unknown, localOpMetadata: unknown): boolean {
+	public rollbackStagedOp(
+		message: LocalContainerRuntimeMessage,
+		localOpMetadata: unknown,
+	): boolean {
 		for (const f of this.features) {
 			if (f.rollbackStagedOp?.(message, localOpMetadata) === true) {
 				return true;

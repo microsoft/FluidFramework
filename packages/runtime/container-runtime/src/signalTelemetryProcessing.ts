@@ -87,7 +87,7 @@ export class SignalTelemetryManager implements IRuntimeFeature {
 	 * IRuntimeFeature: reset signal tracking each time the runtime
 	 * transitions from "cannot send ops" → "can send ops" (i.e. (re)connect).
 	 */
-	public onConnectionStateChange(canSendOps: boolean): void {
+	public setConnectionState(canSendOps: boolean): void {
 		if (canSendOps && !this.wasCanSendOps) {
 			this.resetTracking();
 		}

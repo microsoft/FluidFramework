@@ -4,9 +4,15 @@
  */
 
 import type {
+	IRuntimeMessagesContent,
 	ISummaryTreeWithStats,
 	ITelemetryContext,
 } from "@fluidframework/runtime-definitions/internal";
+
+import type {
+	InboundSequencedContainerRuntimeMessage,
+	LocalContainerRuntimeMessage,
+} from "./messageTypes.js";
 
 /*
  * Internal contract a runtime subsystem implements so the container runtime can
@@ -61,25 +67,29 @@ export interface IRuntimeFeature {
 	 * Called each time the runtime's connection state changes — including
 	 * connect, disconnect, and read-only toggles while connected.
 	 *
+	 * Named to match the existing `setConnectionState` method on subsystems
+	 * (ChannelCollection, GarbageCollector) so they can satisfy this hook
+	 * without introducing a wrapper.
+	 *
 	 * @param canSendOps - Whether the runtime can currently submit ops. False
 	 * when disconnected, or when connected but read-only.
 	 * @param clientId - The current client id when connected; `undefined` when
 	 * disconnected.
 	 */
-	readonly onConnectionStateChange?: (
-		canSendOps: boolean,
-		clientId: string | undefined,
-	) => void;
+	readonly setConnectionState?: (canSendOps: boolean, clientId: string | undefined) => void;
 
 	/**
 	 * Called when the runtime enters or exits staging mode. Features that
 	 * change behavior under staging (e.g. data store contexts going read-only)
 	 * subscribe here.
 	 *
+	 * Named to match `ChannelCollection.notifyStagingMode` so that subsystem
+	 * satisfies this hook without renaming.
+	 *
 	 * @param active - True when staging mode is being entered; false when it
 	 * is being exited (committed or discarded).
 	 */
-	readonly onStagingModeChange?: (active: boolean) => void;
+	readonly notifyStagingMode?: (active: boolean) => void;
 
 	/**
 	 * Called once when the runtime is being disposed. Features should release
@@ -114,19 +124,10 @@ export interface IRuntimeFeature {
 	 *
 	 * The collection short-circuits on the first feature that returns `true` —
 	 * each message is owned by at most one feature.
-	 *
-	 * @remarks
-	 * The runtime passes `Omit<InboundSequencedContainerRuntimeMessage, "contents">`
-	 * for `message` and `IRuntimeMessagesContent[]` for `messagesContent`. The
-	 * signature uses `unknown` here so the interface can live in
-	 * `runtime-definitions/internal` (or wherever stays light on dependencies)
-	 * without dragging the full container-runtime message-type graph through
-	 * api-extractor. Each implementing feature casts inside, where it already
-	 * knows the types involved.
 	 */
 	readonly handleOp?: (
-		message: unknown,
-		messagesContent: unknown[],
+		message: Omit<InboundSequencedContainerRuntimeMessage, "contents">,
+		messagesContent: IRuntimeMessagesContent[],
 		local: boolean,
 		savedOp?: boolean,
 	) => boolean;
@@ -139,19 +140,18 @@ export interface IRuntimeFeature {
 	 * for the resubmit cycle.
 	 *
 	 * @remarks
-	 * The runtime passes a parsed `LocalContainerRuntimeMessage`. Features that
-	 * intentionally drop their op type on stash (e.g. blob attach, schema change)
-	 * can still claim it by returning `{ result: undefined }`.
+	 * Features that intentionally drop their op type on stash (e.g. blob attach,
+	 * schema change) can still claim it by returning `{ result: undefined }`.
 	 */
 	readonly applyStashedOp?: (
-		opContents: unknown,
+		opContents: LocalContainerRuntimeMessage,
 	) => Promise<{ result: unknown } | undefined> | { result: unknown } | undefined;
 
 	/**
 	 * Resubmit a pending op. Each feature inspects the op's type and decides
 	 * whether it owns the resubmit. Return `true` if claimed.
 	 *
-	 * @param message - The local runtime message to resubmit (`LocalContainerRuntimeMessage`).
+	 * @param message - The local runtime message to resubmit.
 	 * @param localOpMetadata - Subsystem-specific metadata captured at submit time.
 	 * @param opMetadata - Op-level metadata (e.g. blobId for BlobAttach).
 	 * @param squash - True when resubmitting via the squash-rebase path on
@@ -159,7 +159,7 @@ export interface IRuntimeFeature {
 	 * it to coalesce intermediate states.
 	 */
 	readonly reSubmitOp?: (
-		message: unknown,
+		message: LocalContainerRuntimeMessage,
 		localOpMetadata: unknown,
 		opMetadata: unknown,
 		squash: boolean,
@@ -172,5 +172,8 @@ export interface IRuntimeFeature {
 	 * @param message - The local runtime message to roll back.
 	 * @param localOpMetadata - Subsystem-specific metadata captured at submit time.
 	 */
-	readonly rollbackStagedOp?: (message: unknown, localOpMetadata: unknown) => boolean;
+	readonly rollbackStagedOp?: (
+		message: LocalContainerRuntimeMessage,
+		localOpMetadata: unknown,
+	) => boolean;
 }

@@ -38,6 +38,7 @@ import {
 	ContainerMessageType,
 	type ContainerRuntimeGCMessage,
 	type InboundSequencedContainerRuntimeMessage,
+	type LocalContainerRuntimeMessage,
 } from "../messageTypes.js";
 import type { IRuntimeFeature } from "../runtimeFeature.js";
 import type { IRefreshSummaryResult } from "../summary/index.js";
@@ -1195,13 +1196,11 @@ export class GarbageCollector implements IGarbageCollector, IRuntimeFeature {
 	}
 
 	// === IRuntimeFeature ===
+	// `setConnectionState` and `initializeBaseState` (via the onLoadFromSnapshot
+	// alias below) are existing methods that satisfy IRuntimeFeature directly.
 
 	public async onLoadFromSnapshot(): Promise<void> {
 		await this.initializeBaseState();
-	}
-
-	public onConnectionStateChange(canSendOps: boolean, clientId: string | undefined): void {
-		this.setConnectionState(canSendOps, clientId);
 	}
 
 	public contributeSummary(
@@ -1216,43 +1215,45 @@ export class GarbageCollector implements IGarbageCollector, IRuntimeFeature {
 		}
 	}
 
-	public handleOp(message: unknown, messagesContent: unknown[], local: boolean): boolean {
-		const m = message as Omit<InboundSequencedContainerRuntimeMessage, "contents">;
-		if (m.type !== ContainerMessageType.GC) {
+	public handleOp(
+		message: Omit<InboundSequencedContainerRuntimeMessage, "contents">,
+		messagesContent: IRuntimeMessagesContent[],
+		local: boolean,
+	): boolean {
+		if (message.type !== ContainerMessageType.GC) {
 			return false;
 		}
-		const contents = (messagesContent as IRuntimeMessagesContent[]).map((c) => c.contents);
-		this.processMessages(contents as GarbageCollectionMessage[], m.timestamp, local);
+		const contents = messagesContent.map((c) => c.contents);
+		this.processMessages(contents as GarbageCollectionMessage[], message.timestamp, local);
 		return true;
 	}
 
-	public applyStashedOp(opContents: unknown): { result: unknown } | undefined {
-		const op = opContents as { type: ContainerMessageType };
-		if (op.type !== ContainerMessageType.GC) {
+	public applyStashedOp(
+		opContents: LocalContainerRuntimeMessage,
+	): { result: unknown } | undefined {
+		if (opContents.type !== ContainerMessageType.GC) {
 			return undefined;
 		}
 		// GC ops are only sent by the summarizer, which never stashes ops.
 		throw new LoggingError("GC op not expected to be stashed in summarizer");
 	}
 
-	public reSubmitOp(message: unknown): boolean {
-		const m = message as ContainerRuntimeGCMessage;
-		if (m.type !== ContainerMessageType.GC) {
+	public reSubmitOp(message: LocalContainerRuntimeMessage): boolean {
+		if (message.type !== ContainerMessageType.GC) {
 			return false;
 		}
-		this.submitMessage(m);
+		this.submitMessage(message);
 		return true;
 	}
 
-	public rollbackStagedOp(message: unknown): boolean {
-		const m = message as ContainerRuntimeGCMessage;
-		if (m.type !== ContainerMessageType.GC) {
+	public rollbackStagedOp(message: LocalContainerRuntimeMessage): boolean {
+		if (message.type !== ContainerMessageType.GC) {
 			return false;
 		}
 		// Just drop, but log — only TombstoneLoaded is expected here.
 		this.mc.logger.sendErrorEvent({
 			eventName: "GC_OpDiscarded",
-			details: { subType: m.contents.type },
+			details: { subType: message.contents.type },
 		});
 		return true;
 	}

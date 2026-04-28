@@ -67,18 +67,18 @@ describe("RuntimeFeatureCollection", () => {
 		assert.deepEqual(order, ["first", "second"]);
 	});
 
-	it("dispatches onConnectionStateChange to features", () => {
+	it("dispatches setConnectionState to features", () => {
 		const events: { canSendOps: boolean; clientId: string | undefined }[] = [];
 		const collection = new RuntimeFeatureCollection();
 		const feature: IRuntimeFeature = {
-			onConnectionStateChange: (canSendOps, clientId) => {
+			setConnectionState: (canSendOps, clientId) => {
 				events.push({ canSendOps, clientId });
 			},
 		};
 		collection.add(feature);
-		collection.onConnectionStateChange(true, "client-1");
-		collection.onConnectionStateChange(false, undefined);
-		collection.onConnectionStateChange(true, "client-2");
+		collection.setConnectionState(true, "client-1");
+		collection.setConnectionState(false, undefined);
+		collection.setConnectionState(true, "client-2");
 		assert.deepEqual(events, [
 			{ canSendOps: true, clientId: "client-1" },
 			{ canSendOps: false, clientId: undefined },
@@ -109,7 +109,7 @@ describe("RuntimeFeatureCollection", () => {
 		assert.equal(typeof collection.onLoadFromSnapshot, "function");
 		assert.equal(typeof collection.onApplyStashedOps, "function");
 		assert.equal(typeof collection.onReady, "function");
-		assert.equal(typeof collection.onConnectionStateChange, "function");
+		assert.equal(typeof collection.setConnectionState, "function");
 		assert.equal(typeof collection.dispose, "function");
 		assert.equal(typeof collection.contributeSummary, "function");
 		assert.equal(typeof collection.handleOp, "function");
@@ -121,13 +121,13 @@ describe("RuntimeFeatureCollection", () => {
 		collection.add({
 			handleOp: (message) => {
 				seen.push("a");
-				return (message as { type: string }).type === "a";
+				return (message.type as string) === "a";
 			},
 		});
 		collection.add({
 			handleOp: (message) => {
 				seen.push("b");
-				return (message as { type: string }).type === "b";
+				return (message.type as string) === "b";
 			},
 		});
 		collection.add({
@@ -137,7 +137,9 @@ describe("RuntimeFeatureCollection", () => {
 			},
 		});
 
-		const m = (type: string): { type: string } => ({ type });
+		const m = (type: string): Parameters<RuntimeFeatureCollection["handleOp"]>[0] =>
+			// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+			({ type }) as unknown as Parameters<RuntimeFeatureCollection["handleOp"]>[0];
 
 		assert.equal(collection.handleOp(m("a"), [], false), true);
 		assert.deepEqual(seen, ["a"]); // short-circuited on first match

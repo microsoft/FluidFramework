@@ -2570,7 +2570,7 @@ export class ContainerRuntime
 			this.replayPendingStates();
 		}
 
-		this.features.onConnectionStateChange(canSendOps, clientId);
+		this.features.setConnectionState(canSendOps, clientId);
 
 		// Emit "connected" and "disconnected" events based on ability to send ops
 		raiseConnectedEvent(this.mc.logger, this, this.connected /* canSendOps */, clientId);
@@ -3219,7 +3219,7 @@ export class ContainerRuntime
 								).length,
 							},
 						});
-						this.features.onStagingModeChange(false);
+						this.features.notifyStagingMode(false);
 					},
 				);
 			} catch (error) {
@@ -3261,7 +3261,7 @@ export class ContainerRuntime
 		};
 
 		this.stageControls = stageControls;
-		this.features.onStagingModeChange(true);
+		this.features.notifyStagingMode(true);
 		if (!silent) {
 			try {
 				this.emit("stagingModeChanged", { inStagingMode: true });

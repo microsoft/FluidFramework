@@ -10,7 +10,10 @@ import type {
 	IIdCompressorCore,
 	IdCreationRange,
 } from "@fluidframework/id-compressor/internal";
-import type { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions/internal";
+import type {
+	IRuntimeMessagesContent,
+	ISummaryTreeWithStats,
+} from "@fluidframework/runtime-definitions/internal";
 import { addBlobToSummary } from "@fluidframework/runtime-utils/internal";
 import {
 	PerformanceEvent,
@@ -21,6 +24,8 @@ import { v4 as uuid } from "uuid";
 import {
 	ContainerMessageType,
 	type ContainerRuntimeIdAllocationMessage,
+	type InboundSequencedContainerRuntimeMessage,
+	type LocalContainerRuntimeMessage,
 } from "./messageTypes.js";
 import type { LocalBatchMessage } from "./opLifecycle/index.js";
 import type { IRuntimeFeature } from "./runtimeFeature.js";
@@ -170,18 +175,16 @@ export class IdCompressorFeature implements IRuntimeFeature {
 	}
 
 	public handleOp(
-		message: unknown,
-		messagesContent: unknown[],
+		message: Omit<InboundSequencedContainerRuntimeMessage, "contents">,
+		messagesContent: IRuntimeMessagesContent[],
 		_local: boolean,
 		savedOp?: boolean,
 	): boolean {
-		if (
-			(message as { type: ContainerMessageType }).type !== ContainerMessageType.IdAllocation
-		) {
+		if (message.type !== ContainerMessageType.IdAllocation) {
 			return false;
 		}
-		for (const c of messagesContent as { contents: IdCreationRange }[]) {
-			this.processSingleRange(c.contents, savedOp);
+		for (const c of messagesContent) {
+			this.processSingleRange(c.contents as IdCreationRange, savedOp);
 		}
 		return true;
 	}
@@ -207,10 +210,10 @@ export class IdCompressorFeature implements IRuntimeFeature {
 		}
 	}
 
-	public applyStashedOp(opContents: unknown): { result: unknown } | undefined {
-		if (
-			(opContents as { type: ContainerMessageType }).type !== ContainerMessageType.IdAllocation
-		) {
+	public applyStashedOp(
+		opContents: LocalContainerRuntimeMessage,
+	): { result: unknown } | undefined {
+		if (opContents.type !== ContainerMessageType.IdAllocation) {
 			return undefined;
 		}
 		// IdAllocation ops in stashed state are ignored — the compressor's tip
@@ -219,10 +222,8 @@ export class IdCompressorFeature implements IRuntimeFeature {
 		return { result: undefined };
 	}
 
-	public reSubmitOp(message: unknown): boolean {
-		if (
-			(message as { type: ContainerMessageType }).type !== ContainerMessageType.IdAllocation
-		) {
+	public reSubmitOp(message: LocalContainerRuntimeMessage): boolean {
+		if (message.type !== ContainerMessageType.IdAllocation) {
 			return false;
 		}
 		// Allocation ops are never resubmitted/rebased — the runtime submits a

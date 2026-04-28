@@ -3,7 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { ContainerMessageType, type LocalContainerRuntimeMessage } from "./messageTypes.js";
+import {
+	ContainerMessageType,
+	type InboundSequencedContainerRuntimeMessage,
+	type LocalContainerRuntimeMessage,
+} from "./messageTypes.js";
 import type { IRuntimeFeature } from "./runtimeFeature.js";
 
 /**
@@ -19,12 +23,13 @@ export class RuntimeOpsFeature implements IRuntimeFeature {
 		private readonly resubmitRejoin: (message: LocalContainerRuntimeMessage) => void,
 	) {}
 
-	public handleOp(message: unknown): boolean {
-		const m = message as { type: ContainerMessageType };
-		if (m.type === ContainerMessageType.Rejoin) {
+	public handleOp(
+		message: Omit<InboundSequencedContainerRuntimeMessage, "contents">,
+	): boolean {
+		if (message.type === ContainerMessageType.Rejoin) {
 			return true;
 		}
-		if (m.type === ContainerMessageType.ChunkedOp) {
+		if (message.type === ContainerMessageType.ChunkedOp) {
 			// ChunkedOps are reassembled in the inbound pipeline before getting here.
 			// Reaching this point means a chunk leaked through — fail loudly.
 			throw new Error("ChunkedOp should not reach the feature dispatch path");
@@ -32,20 +37,20 @@ export class RuntimeOpsFeature implements IRuntimeFeature {
 		return false;
 	}
 
-	public applyStashedOp(opContents: unknown): { result: unknown } | undefined {
-		const m = opContents as { type: ContainerMessageType };
-		if (m.type !== ContainerMessageType.Rejoin) {
+	public applyStashedOp(
+		opContents: LocalContainerRuntimeMessage,
+	): { result: unknown } | undefined {
+		if (opContents.type !== ContainerMessageType.Rejoin) {
 			return undefined;
 		}
 		throw new Error("rejoin not expected here");
 	}
 
-	public reSubmitOp(message: unknown): boolean {
-		const m = message as LocalContainerRuntimeMessage;
-		if (m.type !== ContainerMessageType.Rejoin) {
+	public reSubmitOp(message: LocalContainerRuntimeMessage): boolean {
+		if (message.type !== ContainerMessageType.Rejoin) {
 			return false;
 		}
-		this.resubmitRejoin(m);
+		this.resubmitRejoin(message);
 		return true;
 	}
 }
