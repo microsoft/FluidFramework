@@ -7,12 +7,7 @@ import type {
 	ILayerCompatDetails,
 	IProvideLayerCompatDetails,
 } from "@fluid-internal/client-utils";
-import {
-	checkLayerCompatibility,
-	createEmitter,
-	Trace,
-	TypedEventEmitter,
-} from "@fluid-internal/client-utils";
+import { Trace, TypedEventEmitter } from "@fluid-internal/client-utils";
 import type {
 	IAudience,
 	ISelf,
@@ -37,9 +32,7 @@ import {
 import type {
 	ContainerExtensionFactory,
 	ContainerExtensionId,
-	ExtensionHost,
 	ExtensionHostEvents,
-	ExtensionInstantiationResult,
 	ExtensionRuntimeProperties,
 	IContainerRuntime,
 	IContainerRuntimeEvents,
@@ -57,6 +50,7 @@ import type {
 	ITelemetryBaseLogger,
 	Listenable,
 } from "@fluidframework/core-interfaces";
+import type { IEmitter } from "@fluidframework/core-interfaces/internal";
 import type {
 	IFluidHandleContext,
 	IFluidHandleInternal,
@@ -67,7 +61,6 @@ import type {
 } from "@fluidframework/core-interfaces/internal";
 import {
 	assert,
-	Lazy,
 	LazyPromise,
 	delay,
 	fail,
@@ -208,6 +201,7 @@ import {
 	DeltaManagerSummarizerProxy,
 } from "./deltaManagerProxies.js";
 import { DeltaScheduler } from "./deltaScheduler.js";
+import { ExtensionsManager } from "./extensionsManager.js";
 import {
 	GCNodeType,
 	GarbageCollector,
@@ -260,7 +254,6 @@ import { BatchRunCounter, RunCounter } from "./runCounter.js";
 import { RuntimeFeatureCollection } from "./runtimeFeatureCollection.js";
 import {
 	runtimeCompatDetailsForLoader,
-	runtimeCoreCompatDetails,
 	validateLoaderCompatibility,
 } from "./runtimeLayerCompatState.js";
 import { RuntimeOpsFeature } from "./runtimeOpsFeature.js";
@@ -307,24 +300,6 @@ import {
 	validateSummaryHeuristicConfiguration,
 	wrapSummaryInChannelsTree,
 } from "./summary/index.js";
-
-/**
- * A {@link ContainerExtension}'s factory function as stored in extension map.
- */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any -- `any` required to allow typed factory to be assignable per ContainerExtension.processSignal
-type ExtensionEntry = ExtensionInstantiationResult<unknown, any, unknown[]>;
-
-/**
- * ContainerRuntime's compatibility details that is exposed to Container Extensions.
- */
-const containerRuntimeCompatDetailsForContainerExtensions = {
-	...runtimeCoreCompatDetails,
-	/**
-	 * The features supported by the ContainerRuntime's ContainerExtensionStore
-	 * implementation.
-	 */
-	supportedFeatures: new Set<string>(),
-} as const satisfies ILayerCompatDetails;
 
 /**
  * Creates an error object to be thrown / passed to Container's close fn in case of an unknown message type.
@@ -1556,7 +1531,7 @@ export class ContainerRuntime
 		return runtimeCompatDetailsForLoader;
 	}
 
-	private readonly extensions = new Map<ContainerExtensionId, ExtensionEntry>();
+	private readonly extensionsManager: ExtensionsManager;
 
 	/***/
 	protected constructor(
@@ -2180,6 +2155,18 @@ export class ContainerRuntime
 			() => rootHasIsolatedChannels(this.metadata),
 			() => this.summarizerSubsystem.summarizer !== undefined,
 		);
+
+		this.extensionsManager = new ExtensionsManager({
+			signalAudience: this.signalAudience,
+			clientIdFallback: () => this.clientId,
+			getJoinedStatus: () => this.getJoinedStatus(),
+			logger: this.baseLogger,
+			submitExtensionSignal: (id, addressChain, message) =>
+				this.submitExtensionSignal(id, addressChain, message),
+			getQuorum: () => this.getQuorum(),
+			getAudience: () => this.getAudience(),
+			bindRuntimeEvents: (emitter) => this.bindRuntimeEventsToExtensionEmitter(emitter),
+		});
 
 		this.entryPoint = new LazyPromise(async () => {
 			if (this.summarizerSubsystem.summarizer !== undefined) {
@@ -3039,9 +3026,7 @@ export class ContainerRuntime
 		const addresses = address.split("/");
 		if (addresses.length > 2 && addresses[1] === "ext") {
 			const id = addresses[2] as ContainerExtensionId;
-			const entry = this.extensions.get(id);
-			if (entry !== undefined) {
-				entry.extension.processSignal?.(addresses.slice(3), signalMessage, local);
+			if (this.extensionsManager.processSignal(id, addresses.slice(3), signalMessage, local)) {
 				return;
 			}
 		}
@@ -4813,27 +4798,26 @@ export class ContainerRuntime
 		}
 	}
 
-	// While internal, ContainerRuntime has not been converted to use the new events support.
-	// Recreate the required events (new pattern) with injected, wrapper new emitter.
-	// It is lazily create to avoid listeners (old events) that ultimately go nowhere.
-	private readonly lazyEventsForExtensions = new Lazy<Listenable<ExtensionHostEvents>>(() => {
-		const eventEmitter = createEmitter<ExtensionHostEvents>();
+	private bindRuntimeEventsToExtensionEmitter(
+		emitter: Listenable<ExtensionHostEvents> & IEmitter<ExtensionHostEvents>,
+	): void {
+		// Internal ContainerRuntime hasn't been converted to the new events pattern.
+		// Bridge the legacy EventEmitter events into the extension host's emitter.
 		if (this.getConnectionState) {
 			this.on("connectedToService", (clientId: string, canWrite: boolean) => {
-				eventEmitter.emit("joined", { clientId, canWrite });
+				emitter.emit("joined", { clientId, canWrite });
 			});
-			this.on("disconnectedFromService", () => eventEmitter.emit("disconnected"));
+			this.on("disconnectedFromService", () => emitter.emit("disconnected"));
 			this.on("operabilityChanged", (canWrite: boolean) =>
-				eventEmitter.emit("operabilityChanged", canWrite),
+				emitter.emit("operabilityChanged", canWrite),
 			);
 		} else {
 			this.on("connected", (clientId: string) => {
-				eventEmitter.emit("joined", { clientId, canWrite: true });
+				emitter.emit("joined", { clientId, canWrite: true });
 			});
-			this.on("disconnected", () => eventEmitter.emit("disconnected"));
+			this.on("disconnected", () => emitter.emit("disconnected"));
 		}
-		return eventEmitter;
-	});
+	}
 
 	private getJoinedStatus(): JoinedStatus {
 		const getConnectionState = this.getConnectionState;
@@ -4867,12 +4851,7 @@ export class ContainerRuntime
 		factory: ContainerExtensionFactory<T, TRuntimeProperties, TUseContext>,
 		...useContext: TUseContext
 	): T {
-		return this.acquireExtensionInternal(
-			/* injectionPermitted */ true,
-			id,
-			factory,
-			...useContext,
-		);
+		return this.extensionsManager.acquireExtension(id, factory, ...useContext);
 	}
 
 	public getExtension<
@@ -4884,104 +4863,7 @@ export class ContainerRuntime
 		requirements: ContainerExtensionExpectations,
 		...useContext: TUseContext
 	): T {
-		// Temporarily allow injection for extensions.
-		// `requirements` are expected to be a factory as well.
-		return this.acquireExtensionInternal(
-			/* injectionPermitted */ true,
-			id,
-			requirements as ContainerExtensionFactory<T, TRuntimeProperties, TUseContext>,
-			...useContext,
-		);
-	}
-
-	private acquireExtensionInternal<
-		T,
-		TRuntimeProperties extends ExtensionRuntimeProperties,
-		TUseContext extends unknown[],
-	>(
-		injectionPermitted: boolean,
-		id: ContainerExtensionId,
-		factory: ContainerExtensionFactory<T, TRuntimeProperties, TUseContext>,
-		...useContext: TUseContext
-	): T {
-		const compatCheckResult = checkLayerCompatibility(
-			factory.hostRequirements,
-			containerRuntimeCompatDetailsForContainerExtensions,
-		);
-		if (!compatCheckResult.isCompatible) {
-			throw new UsageError("Extension is not compatible with ContainerRuntime", {
-				errorDetails: JSON.stringify({
-					containerRuntimeVersion:
-						containerRuntimeCompatDetailsForContainerExtensions.pkgVersion,
-					containerRuntimeGeneration:
-						containerRuntimeCompatDetailsForContainerExtensions.generation,
-					minSupportedGeneration: factory.hostRequirements.minSupportedGeneration,
-					isGenerationCompatible: compatCheckResult.isGenerationCompatible,
-					unsupportedFeatures: compatCheckResult.unsupportedFeatures,
-				}),
-			});
-		}
-
-		let entry = this.extensions.get(id);
-		if (entry === undefined) {
-			if (!injectionPermitted) {
-				throw new Error(`Extension ${id} not found`);
-			}
-
-			const audience = this.signalAudience;
-			const runtime = {
-				getJoinedStatus: this.getJoinedStatus.bind(this),
-				getClientId: audience ? () => audience.getSelf()?.clientId : () => this.clientId,
-				events: this.lazyEventsForExtensions.value,
-				logger: this.baseLogger,
-				submitAddressedSignal: (
-					addressChain: string[],
-					message: OutboundExtensionMessage<TRuntimeProperties["SignalMessages"]>,
-				) => {
-					this.submitExtensionSignal(id, addressChain, message);
-				},
-				getQuorum: this.getQuorum.bind(this),
-				getAudience: audience ? () => audience : this.getAudience.bind(this),
-				supportedFeatures: this.ILayerCompatDetails.supportedFeatures,
-			} satisfies ExtensionHost<TRuntimeProperties>;
-			entry = factory.instantiateExtension(runtime, ...useContext);
-			this.extensions.set(id, entry);
-		} else {
-			const { extension, compatibility } = entry;
-			if (
-				// Check short-circuit (re-use) for same instance which must be
-				// same version and capabilities.
-				!(entry instanceof factory) &&
-				// Check version and capabilities if different instance. If
-				// version matches and existing has all capabilities of
-				// requested, then allow direct reuse.
-				(compatibility.version !== factory.instanceExpectations.version ||
-					[...factory.instanceExpectations.capabilities].some(
-						(cap) => !compatibility.capabilities.has(cap),
-					))
-			) {
-				// eslint-disable-next-line unicorn/prefer-ternary -- operations are significant and deserve own blocks
-				if (
-					!injectionPermitted ||
-					gt(compatibility.version, factory.instanceExpectations.version)
-				) {
-					// This is an attempt to acquire an older version of an
-					// extension that is already acquired OR updating (form of
-					// injection) is not permitted.
-					entry = extension.handleVersionOrCapabilitiesMismatch(
-						entry,
-						factory.instanceExpectations,
-					);
-				} else {
-					// This is an attempt to acquire a newer or more capable
-					// version of an extension that is already acquired. Replace
-					// existing with new.
-					entry = factory.resolvePriorInstantiation(entry);
-				}
-			}
-			entry.extension.onNewUse(...useContext);
-		}
-		return entry.interface as T;
+		return this.extensionsManager.getExtension(id, requirements, ...useContext);
 	}
 
 	private get groupedBatchingEnabled(): boolean {
