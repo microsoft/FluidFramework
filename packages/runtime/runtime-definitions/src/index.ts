@@ -18,6 +18,8 @@ export type {
 	UnknownExtensionInstantiation,
 } from "./containerExtensionProvider.js";
 export type {
+	OneShotLifecyclePhase,
+	RepeatingLifecyclePhase,
 	RuntimeFeatureHost,
 	RuntimeFeatureLifecyclePhase,
 } from "./runtimeFeature.js";

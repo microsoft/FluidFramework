@@ -19,27 +19,43 @@
  */
 
 /**
- * Named lifecycle phases the runtime drives during load and shutdown.
+ * Lifecycle phases that fire exactly once during a runtime's lifetime.
  *
  * @remarks
  * Ordering during load: `construct`, then `loadFromSnapshot`, then
- * `loadPendingAttachments`, then `applyStashedOps`, then `ready`.
+ * `loadPendingAttachments`, then `applyStashedOps`, then `ready`. On shutdown,
+ * `dispose` fires once.
  *
- * Connection lifecycle (post-load, possibly many times): `connect`, then `disconnect`.
- *
- * Shutdown: `dispose`. Fires once when the runtime is being disposed.
+ * Subsystems use {@link RuntimeFeatureHost.once} to register for these phases.
  *
  * @internal
  */
-export type RuntimeFeatureLifecyclePhase =
+export type OneShotLifecyclePhase =
 	| "construct"
 	| "loadFromSnapshot"
 	| "loadPendingAttachments"
 	| "applyStashedOps"
 	| "ready"
-	| "connect"
-	| "disconnect"
 	| "dispose";
+
+/**
+ * Lifecycle phases that may fire repeatedly during a runtime's lifetime.
+ *
+ * @remarks
+ * `connect` and `disconnect` alternate as the runtime gains and loses its
+ * service connection. Subsystems use {@link RuntimeFeatureHost.on} to register
+ * for these phases; callbacks fire each time the phase runs.
+ *
+ * @internal
+ */
+export type RepeatingLifecyclePhase = "connect" | "disconnect";
+
+/**
+ * Union of all lifecycle phases.
+ *
+ * @internal
+ */
+export type RuntimeFeatureLifecyclePhase = OneShotLifecyclePhase | RepeatingLifecyclePhase;
 
 /**
  * Runtime surface exposed to a runtime feature/subsystem.
@@ -53,8 +69,16 @@ export type RuntimeFeatureLifecyclePhase =
  */
 export interface RuntimeFeatureHost {
 	/**
-	 * Register a callback for a lifecycle phase. May be called multiple times
-	 * for the same phase; callbacks fire in registration order.
+	 * Register a callback for a one-shot lifecycle phase. The callback fires
+	 * exactly once, when the phase runs.
+	 *
+	 * Throws if the phase has already fired — registration is too late.
 	 */
-	on(phase: RuntimeFeatureLifecyclePhase, callback: () => void | Promise<void>): void;
+	once(phase: OneShotLifecyclePhase, callback: () => void | Promise<void>): void;
+
+	/**
+	 * Register a callback for a repeating lifecycle phase. The callback fires
+	 * each time the phase runs, in registration order.
+	 */
+	on(phase: RepeatingLifecyclePhase, callback: () => void | Promise<void>): void;
 }

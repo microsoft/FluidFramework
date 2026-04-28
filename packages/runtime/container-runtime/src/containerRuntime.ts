@@ -1299,13 +1299,13 @@ export class ContainerRuntime
 		runtime.sharePendingBlobs();
 
 		// Initialize the base state of the runtime before it's returned.
-		runtime.host.on("loadFromSnapshot", async () =>
+		runtime.host.once("loadFromSnapshot", async () =>
 			runtime.initializeBaseState(context.loader),
 		);
 
 		// Apply stashed ops with a reference sequence number equal to the sequence number of the snapshot,
 		// or zero. This must be done before Container replays saved ops.
-		runtime.host.on("applyStashedOps", async () =>
+		runtime.host.once("applyStashedOps", async () =>
 			runtime.pendingStateManager.applyStashedOpsAt(runtimeSequenceNumber ?? 0),
 		);
 

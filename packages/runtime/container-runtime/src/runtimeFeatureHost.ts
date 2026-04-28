@@ -4,6 +4,8 @@
  */
 
 import type {
+	OneShotLifecyclePhase,
+	RepeatingLifecyclePhase,
 	RuntimeFeatureHost,
 	RuntimeFeatureLifecyclePhase,
 } from "@fluidframework/runtime-definitions/internal";
@@ -16,43 +18,40 @@ import type {
  * it. The runtime drives the lifecycle by invoking {@link RuntimeFeatureHostImpl.runPhase};
  * each phase fans out to its registered callbacks in registration order.
  *
- * A given phase may be invoked at most once during a runtime's lifetime, with
- * the exception of `connect`/`disconnect` which alternate. Calling a one-shot
- * phase a second time throws.
+ * The phase set splits into two kinds:
  *
- * Subsystem registration must happen before the corresponding phase fires.
- * Registering a callback for a phase that has already fired throws — the
- * subsystem is too late.
+ * - One-shot phases (registered via {@link RuntimeFeatureHostImpl.once}) fire exactly once per runtime lifetime. Registering after the phase has already fired throws.
+ * - Repeating phases (registered via {@link RuntimeFeatureHostImpl.on}) — the `connect`/`disconnect` pair — may fire any number of times.
  *
  * @internal
  */
 export class RuntimeFeatureHostImpl implements RuntimeFeatureHost {
-	private readonly callbacks: Map<
-		RuntimeFeatureLifecyclePhase,
-		(() => void | Promise<void>)[]
-	> = new Map();
+	private readonly onceCallbacks: Map<OneShotLifecyclePhase, (() => void | Promise<void>)[]> =
+		new Map();
 
-	/** Phases that fire at most once during a runtime lifetime. */
-	private static readonly oneShotPhases: ReadonlySet<RuntimeFeatureLifecyclePhase> = new Set([
-		"construct",
-		"loadFromSnapshot",
-		"loadPendingAttachments",
-		"applyStashedOps",
-		"ready",
-		"dispose",
-	]);
+	private readonly onCallbacks: Map<RepeatingLifecyclePhase, (() => void | Promise<void>)[]> =
+		new Map();
 
-	private readonly firedOneShots: Set<RuntimeFeatureLifecyclePhase> = new Set();
+	private readonly firedOneShots: Set<OneShotLifecyclePhase> = new Set();
 
-	public on(phase: RuntimeFeatureLifecyclePhase, callback: () => void | Promise<void>): void {
-		if (RuntimeFeatureHostImpl.oneShotPhases.has(phase) && this.firedOneShots.has(phase)) {
+	public once(phase: OneShotLifecyclePhase, callback: () => void | Promise<void>): void {
+		if (this.firedOneShots.has(phase)) {
 			throw new Error(
 				`RuntimeFeatureHost: cannot register for phase "${phase}" — phase has already fired.`,
 			);
 		}
-		const list = this.callbacks.get(phase);
+		const list = this.onceCallbacks.get(phase);
 		if (list === undefined) {
-			this.callbacks.set(phase, [callback]);
+			this.onceCallbacks.set(phase, [callback]);
+		} else {
+			list.push(callback);
+		}
+	}
+
+	public on(phase: RepeatingLifecyclePhase, callback: () => void | Promise<void>): void {
+		const list = this.onCallbacks.get(phase);
+		if (list === undefined) {
+			this.onCallbacks.set(phase, [callback]);
 		} else {
 			list.push(callback);
 		}
@@ -63,17 +62,11 @@ export class RuntimeFeatureHostImpl implements RuntimeFeatureHost {
 	 * each (callbacks may be sync or async). On exception, the remaining
 	 * callbacks for the phase are still invoked, and the first error is
 	 * rethrown after all callbacks have run.
+	 *
+	 * One-shot phases throw if invoked a second time.
 	 */
 	public async runPhase(phase: RuntimeFeatureLifecyclePhase): Promise<void> {
-		if (RuntimeFeatureHostImpl.oneShotPhases.has(phase) && this.firedOneShots.has(phase)) {
-			throw new Error(
-				`RuntimeFeatureHost: phase "${phase}" has already fired — cannot run again.`,
-			);
-		}
-		if (RuntimeFeatureHostImpl.oneShotPhases.has(phase)) {
-			this.firedOneShots.add(phase);
-		}
-		const list = this.callbacks.get(phase) ?? [];
+		const list = this.getCallbacks(phase);
 		let firstError: Error | undefined;
 		for (const cb of list) {
 			try {
@@ -85,5 +78,26 @@ export class RuntimeFeatureHostImpl implements RuntimeFeatureHost {
 		if (firstError !== undefined) {
 			throw firstError;
 		}
+	}
+
+	private getCallbacks(
+		phase: RuntimeFeatureLifecyclePhase,
+	): readonly (() => void | Promise<void>)[] {
+		if (RuntimeFeatureHostImpl.isOneShot(phase)) {
+			if (this.firedOneShots.has(phase)) {
+				throw new Error(
+					`RuntimeFeatureHost: phase "${phase}" has already fired — cannot run again.`,
+				);
+			}
+			this.firedOneShots.add(phase);
+			return this.onceCallbacks.get(phase) ?? [];
+		}
+		return this.onCallbacks.get(phase) ?? [];
+	}
+
+	private static isOneShot(
+		phase: RuntimeFeatureLifecyclePhase,
+	): phase is OneShotLifecyclePhase {
+		return phase !== "connect" && phase !== "disconnect";
 	}
 }
