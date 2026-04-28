@@ -134,7 +134,6 @@ import type {
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	addBlobToSummary,
-	addSummarizeResultToSummary,
 	calculateStats,
 	create404Response,
 	defaultMinVersionForCollab,
@@ -182,7 +181,6 @@ import {
 	BlobManager,
 	type IPendingBlobs,
 	blobManagerBasePath,
-	blobsTreeName,
 	isBlobPath,
 	loadBlobManagerLoadInfo,
 	type IBlobManagerLoadInfo,
@@ -216,7 +214,6 @@ import {
 } from "./deltaManagerProxies.js";
 import { DeltaScheduler } from "./deltaScheduler.js";
 import {
-	GarbageCollectionSubsystem,
 	GCNodeType,
 	GarbageCollector,
 	type IGCRuntimeOptions,
@@ -1925,8 +1922,7 @@ export class ContainerRuntime
 			submitMessage: (message: ContainerRuntimeGCMessage) => this.submit(message),
 			sessionExpiryTimerStarted: pendingRuntimeState?.sessionExpiryTimerStarted,
 		});
-		this.features.add(new GarbageCollectionSubsystem(this.garbageCollector));
-		// (No assignment; the runtime continues to access garbageCollector directly.)
+		this.features.add(this.garbageCollector);
 
 		const loadedFromSequenceNumber = this.deltaManager.initialSequenceNumber;
 		// If the base snapshot was generated when isolated channels were disabled, set the summary reference
@@ -2024,6 +2020,7 @@ export class ContainerRuntime
 			pendingBlobs: pendingRuntimeState?.pendingAttachmentBlobs,
 			createBlobPayloadPending: this.sessionSchema.createBlobPayloadPending === true,
 		});
+		this.features.add(this.blobManager);
 
 		this.features.add(
 			new DeltaScheduler(
@@ -2592,17 +2589,7 @@ export class ContainerRuntime
 			addBlobToSummary(summaryTree, electedSummarizerBlobName, electedSummarizerContent);
 		}
 
-		const blobManagerSummary = this.blobManager.summarize();
-		// Some storage (like git) doesn't allow empty tree, so we can omit it.
-		// and the blob manager can handle the tree not existing when loading
-		if (Object.keys(blobManagerSummary.summary.tree).length > 0) {
-			addSummarizeResultToSummary(summaryTree, blobsTreeName, blobManagerSummary);
-		}
-
-		const gcSummary = this.garbageCollector.summarize(fullTree, trackState, telemetryContext);
-		if (gcSummary !== undefined) {
-			addSummarizeResultToSummary(summaryTree, gcTreeKey, gcSummary);
-		}
+		this.features.contributeSummary(summaryTree, fullTree, trackState, telemetryContext);
 	}
 
 	// Track how many times the container tries to reconnect with pending messages.

@@ -26,12 +26,14 @@ import { assert } from "@fluidframework/core-utils/internal";
 import type { ICreateBlobResponse } from "@fluidframework/driver-definitions/internal";
 import type {
 	IGarbageCollectionData,
+	IRuntimeFeature,
 	ISummaryTreeWithStats,
 	ITelemetryContext,
 	ISequencedMessageEnvelope,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	FluidHandleBase,
+	addSummarizeResultToSummary,
 	createResponseError,
 	generateHandleContextPath,
 	responseToException,
@@ -47,6 +49,7 @@ import { v4 as uuid } from "uuid";
 import { isBlobMetadata } from "../metadata.js";
 
 import {
+	blobsTreeName,
 	summarizeBlobManagerState,
 	toRedirectTable,
 	type IBlobManagerLoadInfo,
@@ -231,7 +234,7 @@ const createAbortError = (): LoggingError => new LoggingError("uploadBlob aborte
 
 export const blobManagerBasePath = "_blobs";
 
-export class BlobManager {
+export class BlobManager implements IRuntimeFeature {
 	private readonly mc: MonitoringContext;
 
 	private readonly internalEvents = createEmitter<IBlobManagerInternalEvents>();
@@ -774,6 +777,17 @@ export class BlobManager {
 
 	public summarize(telemetryContext?: ITelemetryContext): ISummaryTreeWithStats {
 		return summarizeBlobManagerState(this.redirectTable);
+	}
+
+	// === IRuntimeFeature ===
+
+	public contributeSummary(summaryTree: ISummaryTreeWithStats): void {
+		const summary = this.summarize();
+		// Some storage (like git) doesn't allow empty trees, so omit when empty.
+		// The blob manager handles the missing tree at load time.
+		if (Object.keys(summary.summary.tree).length > 0) {
+			addSummarizeResultToSummary(summaryTree, blobsTreeName, summary);
+		}
 	}
 
 	/**

@@ -8,12 +8,15 @@ import { assert, LazyPromise, Timer } from "@fluidframework/core-utils/internal"
 import type { ISnapshotTree } from "@fluidframework/driver-definitions/internal";
 import {
 	type IGarbageCollectionDetailsBase,
+	type IRuntimeFeature,
 	type ISummarizeResult,
+	type ISummaryTreeWithStats,
 	gcTreeKey,
 	type IGarbageCollectionData,
 	type ITelemetryContext,
 } from "@fluidframework/runtime-definitions/internal";
 import {
+	addSummarizeResultToSummary,
 	createResponseError,
 	responseToException,
 } from "@fluidframework/runtime-utils/internal";
@@ -91,7 +94,7 @@ import {
  *  NodeId = "dds1"	 NodeId = "dds2"
  * ```
  */
-export class GarbageCollector implements IGarbageCollector {
+export class GarbageCollector implements IGarbageCollector, IRuntimeFeature {
 	public static create(createParams: IGarbageCollectorCreateParams): IGarbageCollector {
 		return new GarbageCollector(createParams);
 	}
@@ -1183,6 +1186,28 @@ export class GarbageCollector implements IGarbageCollector {
 			tracker.stopTracking();
 		}
 		this.unreferencedNodesState.clear();
+	}
+
+	// === IRuntimeFeature ===
+
+	public async onLoadFromSnapshot(): Promise<void> {
+		await this.initializeBaseState();
+	}
+
+	public onConnectionStateChange(canSendOps: boolean, clientId: string | undefined): void {
+		this.setConnectionState(canSendOps, clientId);
+	}
+
+	public contributeSummary(
+		summaryTree: ISummaryTreeWithStats,
+		fullTree: boolean,
+		trackState: boolean,
+		telemetryContext?: ITelemetryContext,
+	): void {
+		const gcSummary = this.summarize(fullTree, trackState, telemetryContext);
+		if (gcSummary !== undefined) {
+			addSummarizeResultToSummary(summaryTree, gcTreeKey, gcSummary);
+		}
 	}
 
 	/**

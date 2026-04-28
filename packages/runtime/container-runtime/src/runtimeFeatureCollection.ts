@@ -3,7 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import type { IRuntimeFeature } from "@fluidframework/runtime-definitions/internal";
+import type {
+	IRuntimeFeature,
+	ISummaryTreeWithStats,
+	ITelemetryContext,
+} from "@fluidframework/runtime-definitions/internal";
 
 /**
  * Collection of {@link IRuntimeFeature}s, dispatching lifecycle calls to each
@@ -61,6 +65,17 @@ export class RuntimeFeatureCollection implements Required<IRuntimeFeature> {
 	public dispose(): void {
 		for (const f of this.features) {
 			f.dispose?.();
+		}
+	}
+
+	public contributeSummary(
+		summaryTree: ISummaryTreeWithStats,
+		fullTree: boolean,
+		trackState: boolean,
+		telemetryContext?: ITelemetryContext,
+	): void {
+		for (const f of this.features) {
+			f.contributeSummary?.(summaryTree, fullTree, trackState, telemetryContext);
 		}
 	}
 }

@@ -112,5 +112,26 @@ describe("RuntimeFeatureCollection", () => {
 		assert.equal(typeof collection.onReady, "function");
 		assert.equal(typeof collection.onConnectionStateChange, "function");
 		assert.equal(typeof collection.dispose, "function");
+		assert.equal(typeof collection.contributeSummary, "function");
+	});
+
+	it("contributeSummary fans out to features that mutate the same tree", () => {
+		const tree = {} as unknown as Parameters<RuntimeFeatureCollection["contributeSummary"]>[0];
+		const seen: string[] = [];
+		const collection = new RuntimeFeatureCollection();
+		collection.add({
+			contributeSummary: (st) => {
+				assert.equal(st, tree);
+				seen.push("a");
+			},
+		});
+		collection.add({
+			contributeSummary: (st) => {
+				assert.equal(st, tree);
+				seen.push("b");
+			},
+		});
+		collection.contributeSummary(tree, false, false);
+		assert.deepEqual(seen, ["a", "b"]);
 	});
 });

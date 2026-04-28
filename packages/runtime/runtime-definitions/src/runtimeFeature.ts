@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import type { ISummaryTreeWithStats, ITelemetryContext } from "./summary.js";
+
 /*
  * Internal contract a runtime subsystem implements so the container runtime can
  * drive it through its lifecycle. The runtime calls these methods at the
@@ -76,4 +78,24 @@ export interface IRuntimeFeature {
 	 * resources synchronously.
 	 */
 	readonly dispose?: () => void;
+
+	/**
+	 * Called during summary generation. Features that contribute to the summary
+	 * tree should mutate `summaryTree` directly (e.g. via
+	 * `addSummarizeResultToSummary`) using their own well-known key.
+	 *
+	 * @param summaryTree - The container summary tree being built. Mutate
+	 * in place to add this feature's contribution.
+	 * @param fullTree - When true, generate a complete summary tree without
+	 * incremental optimizations.
+	 * @param trackState - When true, track which nodes have changed for
+	 * incremental summaries.
+	 * @param telemetryContext - Optional telemetry context for the summary.
+	 */
+	readonly contributeSummary?: (
+		summaryTree: ISummaryTreeWithStats,
+		fullTree: boolean,
+		trackState: boolean,
+		telemetryContext?: ITelemetryContext,
+	) => void;
 }
