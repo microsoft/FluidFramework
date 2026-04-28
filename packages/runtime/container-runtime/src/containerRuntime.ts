@@ -263,7 +263,7 @@ import {
 	type IPendingMessage,
 } from "./pendingStateManager.js";
 import { BatchRunCounter, RunCounter } from "./runCounter.js";
-import { RuntimeFeatureHostImpl } from "./runtimeFeatureHost.js";
+import { RuntimeFeatureCollection } from "./runtimeFeatureCollection.js";
 import {
 	runtimeCompatDetailsForLoader,
 	runtimeCoreCompatDetails,
@@ -1290,18 +1290,14 @@ export class ContainerRuntime
 		runtime.sharePendingBlobs();
 
 		// Initialize the base state of the runtime before it's returned.
-		runtime.host.once("loadFromSnapshot", async () =>
-			runtime.initializeBaseState(context.loader),
-		);
+		await runtime.initializeBaseState(context.loader);
+		await runtime.features.onLoadFromSnapshot();
 
 		// Apply stashed ops with a reference sequence number equal to the sequence number of the snapshot,
 		// or zero. This must be done before Container replays saved ops.
-		runtime.host.once("applyStashedOps", async () =>
-			runtime.pendingStateManager.applyStashedOpsAt(runtimeSequenceNumber ?? 0),
-		);
-
-		await runtime.host.runPhase("loadFromSnapshot");
-		await runtime.host.runPhase("applyStashedOps");
+		const seqNum = runtimeSequenceNumber ?? 0;
+		await runtime.pendingStateManager.applyStashedOpsAt(seqNum);
+		await runtime.features.onApplyStashedOps(seqNum);
 
 		return { runtime };
 	}
@@ -1511,11 +1507,11 @@ export class ContainerRuntime
 	private readonly garbageCollector: IGarbageCollector;
 
 	/**
-	 * Internal facade subsystems use to register lifecycle callbacks. The runtime
-	 * drives the lifecycle by calling host phases; subsystems plug in via the
-	 * host's `on` method.
+	 * Collection of runtime subsystems that participate in the runtime lifecycle.
+	 * The runtime drives the lifecycle by calling methods on the collection;
+	 * the collection fans out to its members.
 	 */
-	private readonly host: RuntimeFeatureHostImpl = new RuntimeFeatureHostImpl();
+	private readonly features: RuntimeFeatureCollection = new RuntimeFeatureCollection();
 
 	private readonly channelCollection: ChannelCollection;
 	private readonly remoteMessageProcessor: RemoteMessageProcessor;
@@ -2167,7 +2163,6 @@ export class ContainerRuntime
 
 		this.summarizerSubsystem = new SummarizerSubsystem({
 			runtime: this,
-			host: this.host,
 			handleContext: this.handleContext,
 			baseLogger: this.baseLogger,
 			mc: this.mc,
@@ -2183,6 +2178,7 @@ export class ContainerRuntime
 			emit: (event: string, ...args: unknown[]) => this.emit(event, ...args),
 			summariesDisabled: this.summariesDisabled,
 		});
+		this.features.add(this.summarizerSubsystem);
 
 		this.entryPoint = new LazyPromise(async () => {
 			if (this.summarizerSubsystem.summarizer !== undefined) {
@@ -2293,7 +2289,7 @@ export class ContainerRuntime
 			error,
 		);
 
-		this.summarizerSubsystem.dispose();
+		this.features.dispose();
 		this.garbageCollector.dispose();
 		this.channelCollection.dispose();
 		this.pendingStateManager.dispose();

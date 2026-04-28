@@ -17,12 +17,7 @@ export type {
 	ExtensionCompatibilityDetails,
 	UnknownExtensionInstantiation,
 } from "./containerExtensionProvider.js";
-export type {
-	OneShotLifecyclePhase,
-	RepeatingLifecyclePhase,
-	RuntimeFeatureHost,
-	RuntimeFeatureLifecyclePhase,
-} from "./runtimeFeature.js";
+export type { IRuntimeFeature } from "./runtimeFeature.js";
 export type {
 	AliasResult,
 	CreateChildSummarizerNodeFn,

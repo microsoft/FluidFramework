@@ -16,7 +16,7 @@ import {
 	type ISequencedDocumentMessage,
 	MessageType,
 } from "@fluidframework/driver-definitions/internal";
-import type { RuntimeFeatureHost } from "@fluidframework/runtime-definitions/internal";
+import type { IRuntimeFeature } from "@fluidframework/runtime-definitions/internal";
 import {
 	type MonitoringContext,
 	createChildLogger,
@@ -52,7 +52,6 @@ export interface SummarizerSubsystemDeps {
 	 * as `ISummarizerRuntime` / `IConnectedState` / `ISummarizerInternalsProvider`.
 	 */
 	readonly runtime: ContainerRuntime;
-	readonly host: RuntimeFeatureHost;
 	readonly handleContext: IFluidHandleContext;
 	readonly baseLogger: ITelemetryBaseLogger;
 	readonly mc: MonitoringContext;
@@ -75,23 +74,20 @@ export interface SummarizerSubsystemDeps {
  * and (on summarizer clients) the `Summarizer` instance itself.
  *
  * @remarks
- * Construction of all three happens lazily during the `loadFromSnapshot` lifecycle
- * phase. The subsystem self-registers a {@link RuntimeFeatureHost.once} callback
- * for that phase in its constructor.
+ * Implements {@link IRuntimeFeature}. Construction of `SummaryManager`/election/
+ * `Summarizer` happens lazily in `onLoadFromSnapshot`, which the runtime drives
+ * during load. Disposal is centralized in `dispose`.
  *
- * Lifted from `ContainerRuntime.initializeSummarizer` — the body is preserved
- * verbatim apart from accessor renames (`this.X` → `this.deps.X`).
+ * Lifted from `ContainerRuntime.initializeSummarizer`.
  *
  * @internal
  */
-export class SummarizerSubsystem {
+export class SummarizerSubsystem implements IRuntimeFeature {
 	private _summaryManager: SummaryManager | undefined;
 	private _summarizerClientElection: SummarizerClientElection | undefined;
 	private _summarizer: Summarizer | undefined;
 
-	public constructor(private readonly deps: SummarizerSubsystemDeps) {
-		deps.host.once("loadFromSnapshot", async () => this.initialize());
-	}
+	public constructor(private readonly deps: SummarizerSubsystemDeps) {}
 
 	/** The {@link SummaryManager}, if constructed. */
 	public get summaryManager(): SummaryManager | undefined {
@@ -124,7 +120,7 @@ export class SummarizerSubsystem {
 		this._summarizer?.dispose();
 	}
 
-	private async initialize(): Promise<void> {
+	public async onLoadFromSnapshot(): Promise<void> {
 		const deps = this.deps;
 		if (deps.summariesDisabled) {
 			deps.mc.logger.sendTelemetryEvent({ eventName: "SummariesDisabled" });
