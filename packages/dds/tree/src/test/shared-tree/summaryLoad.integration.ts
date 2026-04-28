@@ -44,9 +44,7 @@ class TestSchema extends schemaFactory.object("parent", {
 }) {}
 
 function listSnapshotFiles(dir: string): string[] {
-	if (!existsSync(dir)) {
-		return [];
-	}
+	assert(existsSync(dir));
 	const results: string[] = [];
 	for (const entry of readdirSync(dir)) {
 		const full = path.join(dir, entry);
