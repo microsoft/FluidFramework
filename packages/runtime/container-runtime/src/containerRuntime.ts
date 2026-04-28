@@ -341,7 +341,7 @@ const containerRuntimeCompatDetailsForContainerExtensions = {
  * @param sequencedMessage - The sequenced message that contained the unexpected message type.
  *
  */
-function getUnknownMessageTypeError(
+export function getUnknownMessageTypeError(
 	unknownContainerRuntimeMessageType: UnknownContainerRuntimeMessage["type"],
 	codePath: string,
 	sequencedMessage?: ISequencedDocumentMessage,
@@ -1815,13 +1815,14 @@ export class ContainerRuntime
 		this.pendingStateManager = this.features.add(
 			new PendingStateManager(
 				{
-					applyStashedOp: this.applyStashedOp.bind(this),
 					clientId: () => this.clientId,
 					connected: () => this.connected,
 					reSubmitBatch: this.reSubmitBatch.bind(this),
 					isActiveConnection: () => this.innerDeltaManager.active,
 					isAttached: () => this.attachState !== AttachState.Detached,
+					closeFn: this.closeFn,
 				},
+				this.features,
 				pendingRuntimeState?.pending,
 				this.baseLogger,
 			),
@@ -2659,36 +2660,6 @@ export class ContainerRuntime
 
 		// This will emit an event if the state changed relative to before replay
 		this.updateDocumentDirtyState();
-	}
-
-	/**
-	 * Parse an op's type and actual content from given serialized content
-	 * ! Note: this format needs to be in-line with what is set in the "ContainerRuntime.submit(...)" method
-	 */
-	private parseLocalOpContent(serializedContents?: string): LocalContainerRuntimeMessage {
-		assert(serializedContents !== undefined, 0x6d5 /* content must be defined */);
-		const message = JSON.parse(serializedContents) as LocalContainerRuntimeMessage;
-		assert(message.type !== undefined, 0x6d6 /* incorrect op content format */);
-		return message;
-	}
-
-	private async applyStashedOp(serializedOpContent: string): Promise<unknown> {
-		// Pending State contains serialized contents, so parse it here.
-		const opContents = this.parseLocalOpContent(serializedOpContent);
-
-		// Features each claim their own stashed op type.
-		const claimed = await this.features.applyStashedOp(opContents);
-		if (claimed !== undefined) {
-			return claimed.result;
-		}
-
-		// No feature owns this op type — fail.
-		const error = getUnknownMessageTypeError(
-			opContents.type as UnknownContainerRuntimeMessage["type"],
-			"applyStashedOp" /* codePath */,
-		);
-		this.closeFn(error);
-		throw error;
 	}
 
 	private loadIdCompressor(): void {
