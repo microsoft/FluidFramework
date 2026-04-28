@@ -443,20 +443,14 @@ stages:
           env:
             ${{ each pair in parameters.env }}:
               ${{ pair.key }}: ${{ pair.value }}
-            # ODSP tenant setup script injects the values here (appClientId, tenantCreds).
-            # The e2e test workload references the keys (login__*).
-            ${{ if eq(parameters.odspTenantType, 'dogfood') }}:
+            # The ODSP tenant setup script (trips-setup --useFic) sets login__odsp__fic__test__users
+            # and token__package__import__location as pipeline variables. The e2e test workload reads
+            # those plus login__microsoft__clientId (sourced from prague-key-vault).
+            ${{ if or(eq(parameters.odspTenantType, 'dogfood'), eq(parameters.odspTenantType, 'prod')) }}:
               token__package__import__location: $(token__package__import__location)
               login__odsp__fic__test__users: $(login__odsp__fic__test__users)
               SYSTEM_ACCESSTOKEN: $(System.AccessToken)
-              login__microsoft__clientId: $(appClientId)
-              login__odspdf__test__tenants: $(tenantCreds)
-            ${{ elseif eq(parameters.odspTenantType, 'prod') }}:
-              token__package__import__location: $(token__package__import__location)
-              login__odsp__fic__test__users: $(login__odsp__fic__test__users)
-              SYSTEM_ACCESSTOKEN: $(System.AccessToken)
-              login__microsoft__clientId: $(appClientId)
-              login__odsp__test__tenants: $(tenantCreds)
+              login__microsoft__clientId: $(login-microsoft-clientId)
           inputs:
             command: 'custom'
             workingDir: $(Pipeline.Workspace)/$(FFPipelineHostDirectory)/node_modules/${{ parameters.testPackage }}

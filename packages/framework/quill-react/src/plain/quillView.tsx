@@ -47,7 +47,7 @@ const TextEditorView: FC<{ root: TextAsTree.Tree }> = ({ root }) => {
 	// DOM element where Quill will mount its editor
 	const editorRef = useRef<HTMLDivElement>(null);
 	// Quill instance, persisted across renders to avoid re-initialization
-	const quillRef = useRef<Quill | null>(null);
+	const quillRef = useRef<Quill | undefined>(undefined);
 	// Guards against update loops between Quill and the tree
 	const isUpdatingRef = useRef<boolean>(false);
 
@@ -63,22 +63,34 @@ const TextEditorView: FC<{ root: TextAsTree.Tree }> = ({ root }) => {
 		const quill = new Quill(editorRef.current, {
 			placeholder: "Start typing...",
 		});
-		quillRef.current = quill;
 
-		// Set initial content from tree (Quill requires a trailing newline).
+		// Set initial content from tree (add trailing newline to match Quill's convention)
 		const initialText = root.fullString();
-		const textWithNewline = initialText.endsWith("\n") ? initialText : `${initialText}\n`;
-		if (textWithNewline.length > 1) {
+		if (initialText.length > 0) {
+			const textWithNewline = initialText.endsWith("\n") ? initialText : `${initialText}\n`;
 			quill.setText(textWithNewline);
 		}
 
 		// Listen to local Quill changes — sync Quill → tree.
-		quill.on("text-change", (_delta, _oldDelta, source) => {
+		const handleTextChange = (_delta: unknown, _oldDelta: unknown, source: string): void => {
 			if (source !== "user") return;
 			runOnce(isUpdatingRef, () => {
 				syncTextToTree(root, quill.getText());
 			});
-		});
+		};
+
+		quill.on("text-change", handleTextChange);
+		quillRef.current = quill;
+
+		// Capture for cleanup — editorRef.current may have changed by then.
+		const editor = editorRef.current;
+		return () => {
+			quill.off("text-change", handleTextChange);
+			quillRef.current = undefined;
+			// Clear Quill's DOM modifications so the container is clean for any remount.
+			editor.innerHTML = "";
+			editor.className = "";
+		};
 	}, []);
 
 	// Subscribe to incremental tree changes — sync tree → Quill.
@@ -132,6 +144,7 @@ const TextEditorView: FC<{ root: TextAsTree.Tree }> = ({ root }) => {
 		<div
 			className="text-editor-container"
 			style={{ height: "100%", display: "flex", flexDirection: "column" }}
+			onClick={() => quillRef.current?.focus()}
 		>
 			<style>
 				{`
@@ -149,7 +162,6 @@ const TextEditorView: FC<{ root: TextAsTree.Tree }> = ({ root }) => {
 					}
 				`}
 			</style>
-			<h2 style={{ margin: "10px 0" }}>Collaborative Text Editor</h2>
 			<div
 				ref={editorRef}
 				style={{
@@ -158,6 +170,7 @@ const TextEditorView: FC<{ root: TextAsTree.Tree }> = ({ root }) => {
 					border: "1px solid #ccc",
 					borderRadius: "4px",
 					padding: "8px",
+					cursor: "text",
 				}}
 			/>
 		</div>

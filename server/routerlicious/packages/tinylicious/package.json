@@ -101,7 +101,7 @@
 		"typescript": "~5.1.6"
 	},
 	"engines": {
-		"node": ">=14.0.0"
+		"node": ">=22.22.2"
 	},
 	"typeValidation": {
 		"disabled": true,

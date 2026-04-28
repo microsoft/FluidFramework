@@ -4,11 +4,8 @@
  */
 
 import {
-	BenchmarkType,
-	TestType,
 	benchmarkDuration,
 	benchmarkIt,
-	collectDurationData,
 	type BenchmarkTimingOptions,
 } from "@fluid-tools/benchmark";
 import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
@@ -83,13 +80,11 @@ describe("DuplicateBatchDetector benchmark", () => {
 			// so detector state remains valid across iterations.
 			benchmarkIt({
 				title: `processInboundBatch - no cleanup (${trackedBatchCount} tracked)`,
-				type: BenchmarkType.Measurement,
-				testType: TestType.ExecutionTime,
-				run: async () => {
-					entries = generateSnapshotEntries(trackedBatchCount);
-					detector = new DuplicateBatchDetector(entries);
-					return collectDurationData({
-						benchmarkFn: () => {
+				...benchmarkDuration({
+					benchmarkFnCustom: async (state) => {
+						entries = generateSnapshotEntries(trackedBatchCount);
+						detector = new DuplicateBatchDetector(entries);
+						state.timeAllBatches(() => {
 							// MSN=0 means clearOldBatchIds hits the early exit (msn <= minSeqNum).
 							// This measures: early-exit check + getEffectiveBatchId + map lookup + map insert.
 							// Note: detector grows by 1 entry per iteration, but that doesn't affect the
@@ -97,15 +92,14 @@ describe("DuplicateBatchDetector benchmark", () => {
 							const nextSeqNum = trackedBatchCount + 1;
 							const batch = makeBatch(nextSeqNum, 0, `new-batch-${nextSeqNum}`);
 							detector.processInboundBatch(batch);
-						},
-					});
-				},
+						});
+					},
+				}),
 			});
 
 			// Scenario 2: Partial cleanup (MSN advances past half the entries)
 			benchmarkIt({
 				title: `processInboundBatch - 50% cleanup (${trackedBatchCount} tracked)`,
-				type: BenchmarkType.Measurement,
 				...benchmarkDuration({
 					...customExecutionOptions,
 					async benchmarkFnCustom(state) {
@@ -132,7 +126,6 @@ describe("DuplicateBatchDetector benchmark", () => {
 			// Scenario 3: Full cleanup (MSN advances past all entries)
 			benchmarkIt({
 				title: `processInboundBatch - 100% cleanup (${trackedBatchCount} tracked)`,
-				type: BenchmarkType.Measurement,
 				...benchmarkDuration({
 					...customExecutionOptions,
 					async benchmarkFnCustom(state) {

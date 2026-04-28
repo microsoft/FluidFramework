@@ -5,7 +5,12 @@
 
 import { strict as assert } from "node:assert";
 
-import { BenchmarkType, benchmarkDuration, benchmarkIt } from "@fluid-tools/benchmark";
+import {
+	BenchmarkType,
+	benchmarkDuration,
+	benchmarkIt,
+	isInPerformanceTestingMode,
+} from "@fluid-tools/benchmark";
 
 import {
 	type ChangeFamily,
@@ -41,13 +46,20 @@ describe("EditManager - Bench", () => {
 
 	const scenarios: Scenario[] = [
 		{ type: BenchmarkType.Perspective, rebasedEditCount: 1, trunkEditCount: 1 },
-		{ type: BenchmarkType.Perspective, rebasedEditCount: 10, trunkEditCount: 1 },
-		{ type: BenchmarkType.Perspective, rebasedEditCount: 100, trunkEditCount: 1 },
-		{ type: BenchmarkType.Perspective, rebasedEditCount: 1000, trunkEditCount: 1 },
-		{ type: BenchmarkType.Perspective, rebasedEditCount: 1, trunkEditCount: 10 },
-		{ type: BenchmarkType.Perspective, rebasedEditCount: 1, trunkEditCount: 100 },
-		{ type: BenchmarkType.Perspective, rebasedEditCount: 1, trunkEditCount: 1000 },
-		{ type: BenchmarkType.Measurement, rebasedEditCount: 100, trunkEditCount: 100 },
+		// These tests, even in correctness mode, are a bit slow, and occasionally time out,
+		// so run a smaller set with smaller sizes in correctness mode.
+		...(isInPerformanceTestingMode
+			? [
+					{ type: BenchmarkType.Perspective, rebasedEditCount: 10, trunkEditCount: 1 },
+					{ type: BenchmarkType.Perspective, rebasedEditCount: 100, trunkEditCount: 1 },
+					{ type: BenchmarkType.Perspective, rebasedEditCount: 1000, trunkEditCount: 1 },
+					{ type: BenchmarkType.Perspective, rebasedEditCount: 1, trunkEditCount: 10 },
+					{ type: BenchmarkType.Perspective, rebasedEditCount: 1, trunkEditCount: 100 },
+					{ type: BenchmarkType.Perspective, rebasedEditCount: 1, trunkEditCount: 1000 },
+					{ type: BenchmarkType.Measurement, rebasedEditCount: 100, trunkEditCount: 100 },
+				]
+			: // Ensure in correctness mode we have a case where both counts are greater than 1
+				[{ type: BenchmarkType.Perspective, rebasedEditCount: 2, trunkEditCount: 2 }]),
 	];
 
 	interface Family<TChange> {

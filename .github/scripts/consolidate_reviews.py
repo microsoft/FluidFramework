@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """Consolidate review fleet findings into a single PR report.
 
-Reads review-*.md files from a directory, extracts findings in the format
-[SEVERITY] file:line — description — fix, de-duplicates by file:line,
+Reads review-*.json files from a directory, extracts findings in the format
+{"findings": [{"severity": "...", "location": "...", "description": "...", "fix": "..."}]},
+de-duplicates by location,
 and outputs a consolidated markdown report.
 
 Usage:
@@ -25,9 +26,12 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import TypedDict
 
+from pr_review_propose import REVIEWERS as _REVIEWER_DEFS
+
 MARKER = "<!-- pr-review-fleet -->"
 EMOJI_KEY = "emoji"
 TITLE_KEY = "title"
+
 
 class SeverityLevelLabel(TypedDict):
     emoji: str
@@ -36,13 +40,7 @@ class SeverityLevelLabel(TypedDict):
 
 SeverityLabelSet = dict[str, SeverityLevelLabel]
 
-REVIEWERS = {
-    "correctness": "Correctness",
-    "security": "Security",
-    "api-compatibility": "API Compat",
-    "performance": "Performance",
-    "testing": "Testing",
-}
+REVIEWERS: dict[str, str] = {r.id: r.label for r in _REVIEWER_DEFS}
 
 # Severity ordering (highest first) and display config
 SEVERITY_ORDER = ["CRITICAL", "HIGH", "MEDIUM"]
@@ -97,7 +95,9 @@ def parse_review_file(path: Path, area: str) -> list[Finding] | None:
         return None
 
     if not isinstance(data, dict):
-        print(f"Warning: {path.name}: expected a JSON object, got {type(data).__name__}, skipping")
+        print(
+            f"Warning: {path.name}: expected a JSON object, got {type(data).__name__}, skipping"
+        )
         return None
 
     findings: list[Finding] = []
@@ -112,13 +112,26 @@ def parse_review_file(path: Path, area: str) -> list[Finding] | None:
         fix = item.get("fix", "")
         if not location or not description or not fix:
             continue
-        findings.append(Finding(severity=severity, location=location, description=description, fix=fix, area=area))
+        findings.append(
+            Finding(
+                severity=severity,
+                location=location,
+                description=description,
+                fix=fix,
+                area=area,
+            )
+        )
     return findings
 
 
 def _sanitize_cell(text: str) -> str:
     """Normalize text for a markdown table cell: collapse newlines, escape pipes."""
-    return text.replace("\r\n", " ").replace("\r", " ").replace("\n", " ").replace("|", "\\|")
+    return (
+        text.replace("\r\n", " ")
+        .replace("\r", " ")
+        .replace("\n", " ")
+        .replace("|", "\\|")
+    )
 
 
 def deduplicate(findings: list[Finding]) -> list[Finding]:
@@ -142,14 +155,14 @@ def deduplicate(findings: list[Finding]) -> list[Finding]:
     return result
 
 
-PROMOTED_AREAS = {"Correctness", "API Compat"}
+PROMOTED_AREAS = {"Correctness", "API Compatibility"}
 
 
 def determine_verdict(findings: list[Finding]) -> tuple[str, str]:
     """Return (verdict_text, verdict_emoji).
 
     Verdict rules (aligned with local /review skill):
-    - Request Changes: 1+ CRITICAL, or 1+ HIGH in Correctness/API Compat,
+    - Request Changes: 1+ CRITICAL, or 1+ HIGH in Correctness/API Compatibility,
       or 3+ HIGH across other areas
     - Approve with Suggestions: some HIGH/MEDIUM but none in promoted areas
     - Approve: 0 CRITICAL, 0 HIGH
@@ -170,7 +183,9 @@ def determine_verdict(findings: list[Finding]) -> tuple[str, str]:
     return "Approve", "✔️"
 
 
-def severity_labels_for_pr(pr_number: int | None, commit_count: int | None = None) -> SeverityLabelSet:
+def severity_labels_for_pr(
+    pr_number: int | None, commit_count: int | None = None
+) -> SeverityLabelSet:
     """Pick a deterministic severity label set using the PR number and commit count.
 
     Including commit_count means each push to the PR selects a fresh emoji set,
@@ -178,12 +193,19 @@ def severity_labels_for_pr(pr_number: int | None, commit_count: int | None = Non
     """
     if pr_number is None:
         return SEVERITY_LABEL_SETS[0]
-    hash_input = f"{pr_number}:{commit_count}" if commit_count is not None else str(pr_number)
+    hash_input = (
+        f"{pr_number}:{commit_count}" if commit_count is not None else str(pr_number)
+    )
     hash_byte = hashlib.sha256(hash_input.encode("utf-8")).digest()[0]
     return SEVERITY_LABEL_SETS[hash_byte % len(SEVERITY_LABEL_SETS)]
 
 
-def build_report(findings: list[Finding], run_url: str, pr_number: int | None = None, commit_count: int | None = None) -> str:
+def build_report(
+    findings: list[Finding],
+    run_url: str,
+    pr_number: int | None = None,
+    commit_count: int | None = None,
+) -> str:
     """Build the consolidated markdown report."""
     # Count by severity
     counts = {s: 0 for s in SEVERITY_ORDER}
@@ -208,7 +230,8 @@ def build_report(findings: list[Finding], run_url: str, pr_number: int | None = 
 
     table = "\n".join(rows)
     summary = ", ".join(
-        f"{counts[severity]} {severity_labels[severity][TITLE_KEY]}" for severity in SEVERITY_ORDER
+        f"{counts[severity]} {severity_labels[severity][TITLE_KEY]}"
+        for severity in SEVERITY_ORDER
     )
 
     return f"""{MARKER}
@@ -234,20 +257,51 @@ def build_report(findings: list[Finding], run_url: str, pr_number: int | None = 
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("reviews_dir", type=Path, help="Directory containing review-*.md files")
+    parser.add_argument(
+        "reviews_dir", type=Path, help="Directory containing review-*.md files"
+    )
     parser.add_argument("run_url", help="URL to the workflow run")
-    parser.add_argument("-o", "--output", type=Path, default=Path("report.md"), help="Output file path")
-    parser.add_argument("--pr-number", type=int, help="Pull request number for deterministic emoji set selection")
-    parser.add_argument("--commit-count", type=int, help="Number of commits on the PR; combined with --pr-number to vary emoji set per push")
+    parser.add_argument(
+        "-o", "--output", type=Path, default=Path("report.md"), help="Output file path"
+    )
+    parser.add_argument(
+        "--pr-number",
+        type=int,
+        help="Pull request number for deterministic emoji set selection",
+    )
+    parser.add_argument(
+        "--commit-count",
+        type=int,
+        help="Number of commits on the PR; combined with --pr-number to vary emoji set per push",
+    )
+    parser.add_argument(
+        "--reviewers",
+        help="JSON array of reviewer IDs that were run. Used to detect silent crashes. If not provided, assumes all reviewers.",
+    )
     args = parser.parse_args(argv)
+
+    # Determine which reviewers were expected
+    expected_reviewers = REVIEWERS.keys()
+    if args.reviewers:
+        try:
+            parsed = json.loads(args.reviewers)
+        except json.JSONDecodeError:
+            print("Warning: --reviewers must be a valid JSON array, ignoring", file=sys.stderr)
+        else:
+            if isinstance(parsed, list):
+                expected_reviewers = parsed
+            else:
+                print("Warning: --reviewers must be a JSON array, ignoring", file=sys.stderr)
 
     # Collect findings from all reviewer files
     all_findings: list[Finding] = []
     skipped_count = 0
-    for reviewer_key, area_name in REVIEWERS.items():
+    for reviewer_key in expected_reviewers:
+        area_name = REVIEWERS.get(reviewer_key, reviewer_key.title())
         path = args.reviews_dir / f"review-{reviewer_key}.json"
         if not path.exists():
-            print(f"{reviewer_key}: no output file")
+            print(f"{reviewer_key}: no output file (crashed or skipped)")
+            skipped_count += 1
             continue
 
         findings = parse_review_file(path, area_name)
@@ -267,7 +321,9 @@ def main(argv: list[str] | None = None) -> int:
 
     if not all_findings:
         if skipped_count > 0:
-            print(f"{skipped_count} reviewer(s) produced invalid output — cannot confirm clean run.")
+            print(
+                f"{skipped_count} reviewer(s) produced invalid output — cannot confirm clean run."
+            )
             return 1
         print("All reviewers passed with no findings.")
         return 2

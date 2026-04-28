@@ -138,8 +138,8 @@ const PlainTextEditorView: FC<{ root: TextAsTree.Tree }> = ({ root }) => {
 		<div
 			className="text-editor-container"
 			style={{ height: "100%", display: "flex", flexDirection: "column" }}
+			onClick={() => textareaRef.current?.focus()}
 		>
-			<h2 style={{ margin: "10px 0" }}>Collaborative Text Editor</h2>
 			<textarea
 				ref={textareaRef}
 				defaultValue={root.fullString()}
