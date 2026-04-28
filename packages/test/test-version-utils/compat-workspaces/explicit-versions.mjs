@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 /**
  * Human-maintained list of specific package versions required by tests that fall outside
  * the delta-based version range produced by `update-compat-versions`.
