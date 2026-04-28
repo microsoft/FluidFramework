@@ -95,7 +95,7 @@ function assertHasClientId(
  *
  * @internal
  */
-export class RemoteMessageProcessor implements IRuntimeFeature {
+export class RemoteMessageProcessor implements IRuntimeFeature<never> {
 	private batchInProgress: boolean = false;
 
 	constructor(

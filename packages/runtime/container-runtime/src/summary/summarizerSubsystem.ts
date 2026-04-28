@@ -85,7 +85,7 @@ export interface SummarizerSubsystemDeps {
  *
  * @internal
  */
-export class SummarizerSubsystem implements IRuntimeFeature {
+export class SummarizerSubsystem implements IRuntimeFeature<never> {
 	private _summaryManager: SummaryManager | undefined;
 	private _summarizerClientElection: SummarizerClientElection | undefined;
 	private _summarizer: Summarizer | undefined;

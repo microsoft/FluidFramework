@@ -26,7 +26,6 @@ import { assert } from "@fluidframework/core-utils/internal";
 import type { ICreateBlobResponse } from "@fluidframework/driver-definitions/internal";
 import type {
 	IGarbageCollectionData,
-	IRuntimeMessagesContent,
 	ISummaryTreeWithStats,
 	ITelemetryContext,
 	ISequencedMessageEnvelope,
@@ -46,13 +45,14 @@ import {
 } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
-import {
-	ContainerMessageType,
-	type InboundSequencedContainerRuntimeMessage,
-	type LocalContainerRuntimeMessage,
-} from "../messageTypes.js";
+import { ContainerMessageType } from "../messageTypes.js";
 import { isBlobMetadata } from "../metadata.js";
-import type { IRuntimeFeature } from "../runtimeFeature.js";
+import type {
+	InboundRuntimeMessageFor,
+	IRuntimeFeature,
+	LocalRuntimeMessageFor,
+	RuntimeMessagesContentFor,
+} from "../runtimeFeature.js";
 
 import {
 	blobsTreeName,
@@ -240,7 +240,7 @@ const createAbortError = (): LoggingError => new LoggingError("uploadBlob aborte
 
 export const blobManagerBasePath = "_blobs";
 
-export class BlobManager implements IRuntimeFeature {
+export class BlobManager implements IRuntimeFeature<ContainerMessageType.BlobAttach> {
 	private readonly mc: MonitoringContext;
 
 	private readonly internalEvents = createEmitter<IBlobManagerInternalEvents>();
@@ -799,8 +799,8 @@ export class BlobManager implements IRuntimeFeature {
 	public readonly supportedOps = [ContainerMessageType.BlobAttach] as const;
 
 	public handleOp(
-		message: Omit<InboundSequencedContainerRuntimeMessage, "contents">,
-		_messagesContent: IRuntimeMessagesContent[],
+		message: InboundRuntimeMessageFor<ContainerMessageType.BlobAttach>,
+		_messagesContent: RuntimeMessagesContentFor<ContainerMessageType.BlobAttach>[],
 		local: boolean,
 	): void {
 		this.processBlobAttachMessage(message, local);
@@ -812,7 +812,7 @@ export class BlobManager implements IRuntimeFeature {
 	}
 
 	public reSubmitOp(
-		_message: LocalContainerRuntimeMessage,
+		_message: LocalRuntimeMessageFor<ContainerMessageType.BlobAttach>,
 		_localOpMetadata: unknown,
 		opMetadata: unknown,
 	): void {

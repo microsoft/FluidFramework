@@ -107,8 +107,6 @@ describe("RuntimeFeatureCollection", () => {
 	it("collection exposes every dispatch method", () => {
 		const collection = new RuntimeFeatureCollection();
 		assert.equal(typeof collection.onLoadFromSnapshot, "function");
-		assert.equal(typeof collection.onApplyStashedOps, "function");
-		assert.equal(typeof collection.onReady, "function");
 		assert.equal(typeof collection.setConnectionState, "function");
 		assert.equal(typeof collection.dispose, "function");
 		assert.equal(typeof collection.contributeSummary, "function");
@@ -134,7 +132,6 @@ describe("RuntimeFeatureCollection", () => {
 		const m = (
 			type: ContainerMessageType,
 		): Parameters<RuntimeFeatureCollection["handleOp"]>[0] =>
-			// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
 			({ type }) as unknown as Parameters<RuntimeFeatureCollection["handleOp"]>[0];
 
 		assert.equal(

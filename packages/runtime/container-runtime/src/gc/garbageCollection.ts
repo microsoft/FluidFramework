@@ -8,7 +8,6 @@ import { assert, LazyPromise, Timer } from "@fluidframework/core-utils/internal"
 import type { ISnapshotTree } from "@fluidframework/driver-definitions/internal";
 import {
 	type IGarbageCollectionDetailsBase,
-	type IRuntimeMessagesContent,
 	type ISummarizeResult,
 	type ISummaryTreeWithStats,
 	gcTreeKey,
@@ -37,10 +36,13 @@ import { ClientSessionExpiredError } from "../error.js";
 import {
 	ContainerMessageType,
 	type ContainerRuntimeGCMessage,
-	type InboundSequencedContainerRuntimeMessage,
-	type LocalContainerRuntimeMessage,
 } from "../messageTypes.js";
-import type { IRuntimeFeature } from "../runtimeFeature.js";
+import type {
+	InboundRuntimeMessageFor,
+	IRuntimeFeature,
+	LocalRuntimeMessageFor,
+	RuntimeMessagesContentFor,
+} from "../runtimeFeature.js";
 import type { IRefreshSummaryResult } from "../summary/index.js";
 
 import { generateGCConfigs } from "./gcConfigs.js";
@@ -101,7 +103,9 @@ import {
  *  NodeId = "dds1"	 NodeId = "dds2"
  * ```
  */
-export class GarbageCollector implements IGarbageCollector, IRuntimeFeature {
+export class GarbageCollector
+	implements IGarbageCollector, IRuntimeFeature<ContainerMessageType.GC>
+{
 	public static create(createParams: IGarbageCollectorCreateParams): IGarbageCollector {
 		return new GarbageCollector(createParams);
 	}
@@ -1218,12 +1222,12 @@ export class GarbageCollector implements IGarbageCollector, IRuntimeFeature {
 	public readonly supportedOps = [ContainerMessageType.GC] as const;
 
 	public handleOp(
-		message: Omit<InboundSequencedContainerRuntimeMessage, "contents">,
-		messagesContent: IRuntimeMessagesContent[],
+		message: InboundRuntimeMessageFor<ContainerMessageType.GC>,
+		messagesContent: RuntimeMessagesContentFor<ContainerMessageType.GC>[],
 		local: boolean,
 	): void {
 		const contents = messagesContent.map((c) => c.contents);
-		this.processMessages(contents as GarbageCollectionMessage[], message.timestamp, local);
+		this.processMessages(contents, message.timestamp, local);
 	}
 
 	public applyStashedOp(): { result: unknown } {
@@ -1231,15 +1235,15 @@ export class GarbageCollector implements IGarbageCollector, IRuntimeFeature {
 		throw new LoggingError("GC op not expected to be stashed in summarizer");
 	}
 
-	public reSubmitOp(message: LocalContainerRuntimeMessage): void {
-		this.submitMessage(message as ContainerRuntimeGCMessage);
+	public reSubmitOp(message: LocalRuntimeMessageFor<ContainerMessageType.GC>): void {
+		this.submitMessage(message);
 	}
 
-	public rollbackStagedOp(message: LocalContainerRuntimeMessage): void {
+	public rollbackStagedOp(message: LocalRuntimeMessageFor<ContainerMessageType.GC>): void {
 		// Just drop, but log — only TombstoneLoaded is expected here.
 		this.mc.logger.sendErrorEvent({
 			eventName: "GC_OpDiscarded",
-			details: { subType: (message as ContainerRuntimeGCMessage).contents.type },
+			details: { subType: message.contents.type },
 		});
 	}
 

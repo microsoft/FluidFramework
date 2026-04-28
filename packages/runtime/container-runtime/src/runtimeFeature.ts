@@ -11,8 +11,10 @@ import type {
 
 import type {
 	ContainerMessageType,
+	InboundContainerRuntimeMessage,
 	InboundSequencedContainerRuntimeMessage,
 	LocalContainerRuntimeMessage,
+	UnknownContainerRuntimeMessage,
 } from "./messageTypes.js";
 
 /*
@@ -33,8 +35,60 @@ import type {
  */
 
 /**
+ * The full op-type universe for runtime messages, including the
+ * UnknownContainerRuntimeMessage sentinel. Used as the default for
+ * {@link IRuntimeFeature}'s `TOps` type parameter.
+ *
+ * @internal
+ */
+export type AnyRuntimeOpType = ContainerMessageType | UnknownContainerRuntimeMessage["type"];
+
+/**
+ * The {@link InboundSequencedContainerRuntimeMessage} variant whose `type`
+ * matches `TOps`, with `contents` removed. Mirrors the shape of the `message`
+ * argument {@link IRuntimeFeature.handleOp} receives — per-op contents arrive
+ * separately via {@link RuntimeMessagesContentFor}.
+ *
+ * @internal
+ */
+export type InboundRuntimeMessageFor<TOps extends AnyRuntimeOpType> = Omit<
+	InboundSequencedContainerRuntimeMessage,
+	"contents"
+> & { type: TOps };
+
+/**
+ * The {@link LocalContainerRuntimeMessage} variant whose `type` matches
+ * `TOps`. Used for the `message` / `opContents` parameters of
+ * {@link IRuntimeFeature.applyStashedOp}, {@link IRuntimeFeature.reSubmitOp},
+ * and {@link IRuntimeFeature.rollbackStagedOp}.
+ *
+ * @internal
+ */
+export type LocalRuntimeMessageFor<TOps extends AnyRuntimeOpType> =
+	LocalContainerRuntimeMessage & { type: TOps };
+
+/**
+ * A {@link @fluidframework/runtime-definitions#IRuntimeMessagesContent} whose
+ * `contents` is narrowed to the inbound message variant matching `TOps`. Used
+ * to strongly type the `messagesContent` array passed to
+ * {@link IRuntimeFeature.handleOp} so feature implementations don't cast.
+ *
+ * @internal
+ */
+export type RuntimeMessagesContentFor<TOps extends AnyRuntimeOpType> = Omit<
+	IRuntimeMessagesContent,
+	"contents"
+> & {
+	readonly contents: (InboundContainerRuntimeMessage & { type: TOps })["contents"];
+};
+
+/**
  * Internal contract a runtime subsystem implements so the container runtime
  * can drive it through its lifecycle.
+ *
+ * @typeParam TOps - The op types this feature claims (narrows the
+ * `message`/`opContents` parameter types of the op-routing hooks). Default
+ * `AnyRuntimeOpType` for features that don't participate in op routing.
  *
  * @remarks
  * All methods are optional — implement only the moments your feature needs.
@@ -43,7 +97,7 @@ import type {
  *
  * @internal
  */
-export interface IRuntimeFeature {
+export interface IRuntimeFeature<TOps extends AnyRuntimeOpType = AnyRuntimeOpType> {
 	/**
 	 * Called once during runtime load, after the snapshot has been parsed and
 	 * the runtime is constructed but before any stashed ops have been applied.
@@ -51,18 +105,6 @@ export interface IRuntimeFeature {
 	 * Use this to hydrate per-feature state from the snapshot.
 	 */
 	readonly onLoadFromSnapshot?: () => Promise<void>;
-
-	/**
-	 * Called once during runtime load, after stashed local ops have been
-	 * replayed against the local DDS state.
-	 */
-	readonly onApplyStashedOps?: (seqNum: number) => Promise<void>;
-
-	/**
-	 * Called once when the runtime is fully loaded and ready for use, before
-	 * connection establishment.
-	 */
-	readonly onReady?: () => Promise<void>;
 
 	/**
 	 * Called each time the runtime's connection state changes — including
@@ -128,7 +170,7 @@ export interface IRuntimeFeature {
 	 *
 	 * Features that don't participate in op routing omit this field entirely.
 	 */
-	readonly supportedOps?: readonly ContainerMessageType[];
+	readonly supportedOps?: readonly TOps[];
 
 	/**
 	 * Called for inbound runtime messages of the feature's
@@ -136,12 +178,12 @@ export interface IRuntimeFeature {
 	 * dispatcher has already matched the type — the feature's body just does
 	 * the work.
 	 */
-	readonly handleOp?: (
-		message: Omit<InboundSequencedContainerRuntimeMessage, "contents">,
-		messagesContent: IRuntimeMessagesContent[],
+	handleOp?(
+		message: InboundRuntimeMessageFor<TOps>,
+		messagesContent: RuntimeMessagesContentFor<TOps>[],
 		local: boolean,
 		savedOp?: boolean,
-	) => void;
+	): void;
 
 	/**
 	 * Apply a stashed local op (replayed from saved pending state) during
@@ -154,9 +196,9 @@ export interface IRuntimeFeature {
 	 * Features that intentionally drop their op type on stash (e.g. blob
 	 * attach, schema change) return `{ result: undefined }`.
 	 */
-	readonly applyStashedOp?: (
-		opContents: LocalContainerRuntimeMessage,
-	) => Promise<{ result: unknown } | undefined> | { result: unknown } | undefined;
+	applyStashedOp?(
+		opContents: LocalRuntimeMessageFor<TOps>,
+	): Promise<{ result: unknown } | undefined> | { result: unknown } | undefined;
 
 	/**
 	 * Resubmit a pending op. Called only for the feature's
@@ -169,12 +211,12 @@ export interface IRuntimeFeature {
 	 * staging-mode commit. Most features ignore this; ChannelCollection uses
 	 * it to coalesce intermediate states.
 	 */
-	readonly reSubmitOp?: (
-		message: LocalContainerRuntimeMessage,
+	reSubmitOp?(
+		message: LocalRuntimeMessageFor<TOps>,
 		localOpMetadata: unknown,
 		opMetadata: unknown,
 		squash: boolean,
-	) => void;
+	): void;
 
 	/**
 	 * Roll back a staged op (when staged changes are discarded). Called only
@@ -184,8 +226,8 @@ export interface IRuntimeFeature {
 	 * @param message - The local runtime message to roll back.
 	 * @param localOpMetadata - Subsystem-specific metadata captured at submit time.
 	 */
-	readonly rollbackStagedOp?: (
-		message: LocalContainerRuntimeMessage,
+	rollbackStagedOp?(
+		message: LocalRuntimeMessageFor<TOps>,
 		localOpMetadata: unknown,
-	) => void;
+	): void;
 }

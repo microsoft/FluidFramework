@@ -1267,7 +1267,6 @@ export class ContainerRuntime
 		// or zero. This must be done before Container replays saved ops.
 		const seqNum = runtimeSequenceNumber ?? 0;
 		await runtime.pendingStateManager.applyStashedOpsAt(seqNum);
-		await runtime.features.onApplyStashedOps(seqNum);
 
 		return { runtime };
 	}

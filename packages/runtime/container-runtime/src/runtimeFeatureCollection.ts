@@ -10,11 +10,10 @@ import type {
 } from "@fluidframework/runtime-definitions/internal";
 
 import type {
-	ContainerMessageType,
 	InboundSequencedContainerRuntimeMessage,
 	LocalContainerRuntimeMessage,
 } from "./messageTypes.js";
-import type { IRuntimeFeature } from "./runtimeFeature.js";
+import type { AnyRuntimeOpType, IRuntimeFeature } from "./runtimeFeature.js";
 
 /**
  * Collection of {@link IRuntimeFeature}s. Lifecycle hooks fan out to every
@@ -28,7 +27,7 @@ import type { IRuntimeFeature } from "./runtimeFeature.js";
 export class RuntimeFeatureCollection {
 	private readonly features: IRuntimeFeature[] = [];
 
-	private readonly opOwners = new Map<ContainerMessageType, IRuntimeFeature>();
+	private readonly opOwners = new Map<AnyRuntimeOpType, IRuntimeFeature>();
 
 	/**
 	 * Append a feature and return it, so callers can chain registration with
@@ -39,7 +38,8 @@ export class RuntimeFeatureCollection {
 	 *
 	 * Throws if the feature claims an op type already claimed by another feature.
 	 */
-	public add<T extends IRuntimeFeature>(feature: T): T {
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	public add<T extends IRuntimeFeature<any>>(feature: T): T {
 		this.features.push(feature);
 		this.registerOpClaims(feature);
 		return feature;
@@ -52,7 +52,8 @@ export class RuntimeFeatureCollection {
 	 *
 	 * Primarily a test-fixture seam — production code should rarely need this.
 	 */
-	public replace<T extends IRuntimeFeature>(oldFeature: IRuntimeFeature, replacement: T): T {
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	public replace<T extends IRuntimeFeature<any>>(oldFeature: T, replacement: T): T {
 		const index = this.features.indexOf(oldFeature);
 		if (index >= 0) {
 			this.features[index] = replacement;
@@ -84,18 +85,6 @@ export class RuntimeFeatureCollection {
 	public async onLoadFromSnapshot(): Promise<void> {
 		for (const f of this.features) {
 			await f.onLoadFromSnapshot?.();
-		}
-	}
-
-	public async onApplyStashedOps(seqNum: number): Promise<void> {
-		for (const f of this.features) {
-			await f.onApplyStashedOps?.(seqNum);
-		}
-	}
-
-	public async onReady(): Promise<void> {
-		for (const f of this.features) {
-			await f.onReady?.();
 		}
 	}
 
@@ -138,7 +127,7 @@ export class RuntimeFeatureCollection {
 		local: boolean,
 		savedOp?: boolean,
 	): boolean {
-		const feature = this.opOwners.get(message.type as ContainerMessageType);
+		const feature = this.opOwners.get(message.type);
 		if (feature?.handleOp === undefined) {
 			return false;
 		}
@@ -153,7 +142,7 @@ export class RuntimeFeatureCollection {
 	public async applyStashedOp(
 		opContents: LocalContainerRuntimeMessage,
 	): Promise<{ result: unknown } | undefined> {
-		const feature = this.opOwners.get(opContents.type as ContainerMessageType);
+		const feature = this.opOwners.get(opContents.type);
 		if (feature?.applyStashedOp === undefined) {
 			return undefined;
 		}
@@ -166,7 +155,7 @@ export class RuntimeFeatureCollection {
 		opMetadata: unknown,
 		squash: boolean,
 	): boolean {
-		const feature = this.opOwners.get(message.type as ContainerMessageType);
+		const feature = this.opOwners.get(message.type);
 		if (feature?.reSubmitOp === undefined) {
 			return false;
 		}
@@ -178,7 +167,7 @@ export class RuntimeFeatureCollection {
 		message: LocalContainerRuntimeMessage,
 		localOpMetadata: unknown,
 	): boolean {
-		const feature = this.opOwners.get(message.type as ContainerMessageType);
+		const feature = this.opOwners.get(message.type);
 		if (feature?.rollbackStagedOp === undefined) {
 			return false;
 		}

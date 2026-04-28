@@ -106,15 +106,13 @@ import {
 import { DataStoreContexts } from "./dataStoreContexts.js";
 import { FluidDataStoreRegistry } from "./dataStoreRegistry.js";
 import { GCNodeType, type IGCNodeUpdatedProps, urlToGCNodePath } from "./gc/index.js";
-import type {
-	ContainerRuntimeAliasMessage,
-	ContainerRuntimeDataStoreOpMessage,
-	OutboundContainerRuntimeAttachMessage,
-} from "./messageTypes.js";
 import {
 	ContainerMessageType,
+	type ContainerRuntimeAliasMessage,
+	type ContainerRuntimeDataStoreOpMessage,
 	type InboundSequencedContainerRuntimeMessage,
 	type LocalContainerRuntimeMessage,
+	type OutboundContainerRuntimeAttachMessage,
 } from "./messageTypes.js";
 import type { IRuntimeFeature } from "./runtimeFeature.js";
 import { StorageServiceWithAttachBlobs } from "./storageServiceWithAttachBlobs.js";
@@ -326,7 +324,9 @@ export class ChannelCollection
 	implements
 		Omit<IFluidDataStoreChannel, "entryPoint" | "reSubmit" | "rollback">,
 		IDisposable,
-		IRuntimeFeature
+		IRuntimeFeature<		ContainerMessageType.FluidDataStoreOp|
+		ContainerMessageType.Attach|
+		ContainerMessageType.Alias>
 {
 	// Stores tracked by the Domain
 	private readonly pendingAttach = new Map<string, IAttachMessage>();
@@ -858,8 +858,12 @@ export class ChannelCollection
 		context.rollback(envelope.contents, localOpMetadata);
 	};
 
-	public async applyStashedOp(content: unknown): Promise<{ result: unknown } | undefined> {
-		const opContents = content as LocalContainerRuntimeMessage;
+	public async applyStashedOp(
+		opContents:
+			| ContainerRuntimeDataStoreOpMessage
+			| OutboundContainerRuntimeAttachMessage
+			| ContainerRuntimeAliasMessage,
+	): Promise<{ result: unknown } | undefined> {
 		switch (opContents.type) {
 			case ContainerMessageType.Attach: {
 				return { result: await this.applyStashedAttachOp(opContents.contents) };

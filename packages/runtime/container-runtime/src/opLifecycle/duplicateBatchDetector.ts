@@ -24,7 +24,7 @@ import type { BatchStartInfo } from "./remoteMessageProcessor.js";
  *
  * For "serial fork" detection scenarios see PendingStateManager.
  */
-export class DuplicateBatchDetector implements IRuntimeFeature {
+export class DuplicateBatchDetector implements IRuntimeFeature<never> {
 	/**
 	 * Map from batchId to sequenceNumber
 	 */

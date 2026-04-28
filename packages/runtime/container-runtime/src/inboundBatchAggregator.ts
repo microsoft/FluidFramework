@@ -29,7 +29,7 @@ type IRuntimeMessageMetadata =
  * This class ensures that we aggregate a complete batch of incoming ops before processing them. It basically ensures
  * that we never start processing ops in a batch IF we do not have all ops in the batch.
  */
-export class InboundBatchAggregator implements IRuntimeFeature {
+export class InboundBatchAggregator implements IRuntimeFeature<never> {
 	private pauseSequenceNumber: number | undefined;
 	private currentBatchClientId: string | undefined;
 	private localPaused = false;

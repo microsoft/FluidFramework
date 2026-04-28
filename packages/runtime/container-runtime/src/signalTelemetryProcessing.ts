@@ -63,7 +63,7 @@ interface ISignalTelemetryTracking {
 	minimumTrackingSignalSequenceNumber: number | undefined;
 }
 
-export class SignalTelemetryManager implements IRuntimeFeature {
+export class SignalTelemetryManager implements IRuntimeFeature<never> {
 	private readonly signalTracking: ISignalTelemetryTracking = {
 		totalSignalsSentInLatencyWindow: 0,
 		signalsLost: 0,

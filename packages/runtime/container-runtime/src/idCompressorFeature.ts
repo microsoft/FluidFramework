@@ -10,10 +10,7 @@ import type {
 	IIdCompressorCore,
 	IdCreationRange,
 } from "@fluidframework/id-compressor/internal";
-import type {
-	IRuntimeMessagesContent,
-	ISummaryTreeWithStats,
-} from "@fluidframework/runtime-definitions/internal";
+import type { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions/internal";
 import { addBlobToSummary } from "@fluidframework/runtime-utils/internal";
 import {
 	PerformanceEvent,
@@ -24,10 +21,13 @@ import { v4 as uuid } from "uuid";
 import {
 	ContainerMessageType,
 	type ContainerRuntimeIdAllocationMessage,
-	type InboundSequencedContainerRuntimeMessage,
 } from "./messageTypes.js";
 import type { LocalBatchMessage } from "./opLifecycle/index.js";
-import type { IRuntimeFeature } from "./runtimeFeature.js";
+import type {
+	InboundRuntimeMessageFor,
+	IRuntimeFeature,
+	RuntimeMessagesContentFor,
+} from "./runtimeFeature.js";
 
 const idCompressorBlobName = ".idCompressor";
 
@@ -41,7 +41,7 @@ const idCompressorBlobName = ".idCompressor";
  *
  * @internal
  */
-export class IdCompressorFeature implements IRuntimeFeature {
+export class IdCompressorFeature implements IRuntimeFeature<ContainerMessageType.IdAllocation> {
 	private _compressor: (IIdCompressor & IIdCompressorCore) | undefined;
 
 	/**
@@ -176,13 +176,13 @@ export class IdCompressorFeature implements IRuntimeFeature {
 	public readonly supportedOps = [ContainerMessageType.IdAllocation] as const;
 
 	public handleOp(
-		_message: Omit<InboundSequencedContainerRuntimeMessage, "contents">,
-		messagesContent: IRuntimeMessagesContent[],
+		_message: InboundRuntimeMessageFor<ContainerMessageType.IdAllocation>,
+		messagesContent: RuntimeMessagesContentFor<ContainerMessageType.IdAllocation>[],
 		_local: boolean,
 		savedOp?: boolean,
 	): void {
 		for (const c of messagesContent) {
-			this.processSingleRange(c.contents as IdCreationRange, savedOp);
+			this.processSingleRange(c.contents, savedOp);
 		}
 	}
 

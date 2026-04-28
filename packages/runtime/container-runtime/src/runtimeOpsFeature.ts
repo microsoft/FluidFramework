@@ -18,7 +18,7 @@ const CHUNKED_OPS = [ContainerMessageType.ChunkedOp] as const;
  */
 export const rejoinFeature = (
 	resubmit: (message: LocalContainerRuntimeMessage) => void,
-): IRuntimeFeature => ({
+): IRuntimeFeature<ContainerMessageType.Rejoin> => ({
 	supportedOps: REJOIN_OPS,
 	handleOp: () => {
 		// Rejoin is observational only.
@@ -38,7 +38,7 @@ export const rejoinFeature = (
  *
  * @internal
  */
-export const chunkedOpsGuardFeature = (): IRuntimeFeature => ({
+export const chunkedOpsGuardFeature = (): IRuntimeFeature<ContainerMessageType.ChunkedOp> => ({
 	supportedOps: CHUNKED_OPS,
 	handleOp: () => {
 		throw new Error("ChunkedOp should not reach the feature dispatch path");

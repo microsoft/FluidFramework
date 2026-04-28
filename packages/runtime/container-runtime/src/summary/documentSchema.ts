@@ -4,18 +4,18 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
-import type { IRuntimeMessagesContent } from "@fluidframework/runtime-definitions/internal";
 import type { SemanticVersion } from "@fluidframework/runtime-utils/internal";
 import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 import { DataProcessingError } from "@fluidframework/telemetry-utils/internal";
 import { gt, lt, parse } from "semver-ts";
 
-import {
-	ContainerMessageType,
-	type InboundSequencedContainerRuntimeMessage,
-} from "../messageTypes.js";
+import { ContainerMessageType } from "../messageTypes.js";
 import { pkgVersion } from "../packageVersion.js";
-import type { IRuntimeFeature } from "../runtimeFeature.js";
+import type {
+	InboundRuntimeMessageFor,
+	IRuntimeFeature,
+	RuntimeMessagesContentFor,
+} from "../runtimeFeature.js";
 
 /**
  * Descripe allowed type for properties in document schema.
@@ -544,7 +544,7 @@ function arrayToProp(arr: string[]): string[] | undefined {
  * @internal
  * @sealed
  */
-export class DocumentsSchemaController implements IRuntimeFeature {
+export class DocumentsSchemaController implements IRuntimeFeature<ContainerMessageType.DocumentSchemaChange> {
 	private explicitSchemaControl: boolean;
 
 	/**
@@ -762,16 +762,12 @@ export class DocumentsSchemaController implements IRuntimeFeature {
 	public readonly supportedOps = [ContainerMessageType.DocumentSchemaChange] as const;
 
 	public handleOp(
-		message: Omit<InboundSequencedContainerRuntimeMessage, "contents">,
-		messagesContent: IRuntimeMessagesContent[],
+		message: InboundRuntimeMessageFor<ContainerMessageType.DocumentSchemaChange>,
+		messagesContent: RuntimeMessagesContentFor<ContainerMessageType.DocumentSchemaChange>[],
 		local: boolean,
 	): void {
 		const contents = messagesContent.map((c) => c.contents);
-		this.processDocumentSchemaMessages(
-			contents as IDocumentSchemaChangeMessageIncoming[],
-			local,
-			message.sequenceNumber,
-		);
+		this.processDocumentSchemaMessages(contents, local, message.sequenceNumber);
 	}
 
 	public applyStashedOp(): { result: unknown } {
