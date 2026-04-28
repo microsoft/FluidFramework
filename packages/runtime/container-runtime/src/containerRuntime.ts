@@ -266,6 +266,7 @@ import {
 	runtimeCoreCompatDetails,
 	validateLoaderCompatibility,
 } from "./runtimeLayerCompatState.js";
+import { RuntimeOpsFeature } from "./runtimeOpsFeature.js";
 import { SignalTelemetryManager } from "./signalTelemetryProcessing.js";
 // These types are imported as types here because they are present in summaryDelayLoadedModule, which is loaded dynamically when required.
 import {
@@ -2044,6 +2045,8 @@ export class ContainerRuntime
 			),
 		);
 
+		this.features.add(new RuntimeOpsFeature((message) => this.submit(message)));
+
 		const legacySendBatchFn = makeLegacySendBatchFn(submitFn, this.innerDeltaManager);
 
 		this.outbox = new Outbox({
@@ -2673,27 +2676,19 @@ export class ContainerRuntime
 		// Pending State contains serialized contents, so parse it here.
 		const opContents = this.parseLocalOpContent(serializedOpContent);
 
-		// Features (channelCollection, BlobManager, GarbageCollector, DocumentsSchemaController)
-		// each claim their own stashed op type.
+		// Features each claim their own stashed op type.
 		const claimed = await this.features.applyStashedOp(opContents);
 		if (claimed !== undefined) {
 			return claimed.result;
 		}
 
-		// Residual types not yet owned by a feature.
-		switch (opContents.type) {
-			case ContainerMessageType.Rejoin: {
-				throw new Error("rejoin not expected here");
-			}
-			default: {
-				const error = getUnknownMessageTypeError(
-					opContents.type as UnknownContainerRuntimeMessage["type"],
-					"applyStashedOp" /* codePath */,
-				);
-				this.closeFn(error);
-				throw error;
-			}
-		}
+		// No feature owns this op type — fail.
+		const error = getUnknownMessageTypeError(
+			opContents.type as UnknownContainerRuntimeMessage["type"],
+			"applyStashedOp" /* codePath */,
+		);
+		this.closeFn(error);
+		throw error;
 	}
 
 	private loadIdCompressor(): void {
@@ -3233,32 +3228,19 @@ export class ContainerRuntime
 		local: boolean,
 		savedOp?: boolean,
 	): void {
-		// Features (channelCollection, blobManager, garbageCollector,
-		// documentsSchemaController) each claim their own message types.
+		// Features each claim their own message types.
 		if (this.features.handleOp(message, messagesContent, local, savedOp)) {
 			return;
 		}
 
-		// Residual message types not yet owned by a feature.
-		switch (message.type) {
-			case ContainerMessageType.ChunkedOp: {
-				// From observability POV, we should not expose the rest of the system (including "op" events on object) to these messages.
-				// Also resetReconnectCount() would be wrong - see comment that was there before this change was made.
-				assert(false, 0x93d /* should not even get here */);
-			}
-			case ContainerMessageType.Rejoin: {
-				return;
-			}
-			default: {
-				const error = getUnknownMessageTypeError(
-					message.type as UnknownContainerRuntimeMessage["type"],
-					"validateAndProcessRuntimeMessage" /* codePath */,
-					message as ISequencedDocumentMessage,
-				);
-				this.closeFn(error);
-				throw error;
-			}
-		}
+		// No feature owns this op type — fail.
+		const error = getUnknownMessageTypeError(
+			message.type as UnknownContainerRuntimeMessage["type"],
+			"validateAndProcessRuntimeMessage" /* codePath */,
+			message as ISequencedDocumentMessage,
+		);
+		this.closeFn(error);
+		throw error;
 	}
 
 	private processIdCompressorMessages(
@@ -4831,27 +4813,18 @@ export class ContainerRuntime
 		localOpMetadata,
 		opMetadata,
 	}: PendingMessageResubmitData): void {
-		// Features (channelCollection, BlobManager, GarbageCollector, DocumentsSchemaController)
-		// each claim their own resubmit type.
+		// Features each claim their own resubmit type.
 		if (this.features.reSubmitOp(message, localOpMetadata, opMetadata, false /* squash */)) {
 			return;
 		}
 
-		// Residual types not yet owned by a feature.
-		switch (message.type) {
-			case ContainerMessageType.Rejoin: {
-				this.submit(message);
-				return;
-			}
-			default: {
-				const error = getUnknownMessageTypeError(
-					message.type as UnknownContainerRuntimeMessage["type"],
-					"reSubmitCore" /* codePath */,
-				);
-				this.closeFn(error);
-				throw error;
-			}
-		}
+		// No feature owns this op type — fail.
+		const error = getUnknownMessageTypeError(
+			message.type as UnknownContainerRuntimeMessage["type"],
+			"reSubmitCore" /* codePath */,
+		);
+		this.closeFn(error);
+		throw error;
 	}
 
 	/**
