@@ -509,7 +509,7 @@ export function chunkRange(
 				const nodesPerTopLevelNode = shape.positions.length;
 				const maxTopLevelLength = Math.max(
 					1,
-					chunkCompressor.policy.uniformChunkNodeCount / nodesPerTopLevelNode,
+					Math.floor(chunkCompressor.policy.uniformChunkNodeCount / nodesPerTopLevelNode),
 				);
 				const maxLength = Math.min(maxTopLevelLength, remaining);
 				const newChunk = uniformChunkFromCursor(

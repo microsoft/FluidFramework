@@ -1303,6 +1303,30 @@ describe("ForestSummarizer", () => {
 				});
 			}
 
+			it("handles item counts that are not a divisor of uniformChunkNodeCount", async () => {
+				// UniformItem has positions.length = 3, so 400/3 = 133.333…. With strict `===`
+				// equality on a non-integer maxTopLevelLength, the chunker used to advance one
+				// extra node and trip 0x4c3 (values/topLevelLength mismatch) once the field
+				// length crossed floor(400/3) = 133. Use floor(400/3) + 1 = 134 to exercise the
+				// boundary; any larger value would also do.
+				const itemCount = 134;
+				const items = Array.from(
+					{ length: itemCount },
+					(_, i) => new UniformItem({ id: i, label: `label-${i}` }),
+				);
+				const { forestSummarizer } = setupForestForIncrementalSummarization(
+					new Root({ items }),
+				);
+				forestSummarizer.summarize({
+					stringify: JSON.stringify,
+					incrementalSummaryContext: {
+						summarySequenceNumber: 0,
+						latestSummarySequenceNumber: -1,
+						summaryPath: "",
+					},
+				});
+			});
+
 			it("batches uniform items into a single chunk; remakes it on any-node mutation", async () => {
 				const itemCount = 5;
 				const initialItems = Array.from(
