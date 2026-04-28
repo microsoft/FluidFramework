@@ -15,6 +15,10 @@ export interface PackageToInstall {
 	 * If the requested version is lower than this, the package will not be installed. This enables
 	 * compatibility testing for packages which were not yet part of the Fluid Framework at certain
 	 * versions.
+	 *
+	 * Tests are responsible to not use APIs from packages which are not installed for the requested version.
+	 * For example, the "\@fluidframework/tree" package was only introduced in version 2.0.0, so for testing
+	 * versions prior to that, the package will not be installed and the test should skip testing these versions.
 	 */
 	minVersion: string;
 	/**

@@ -51,6 +51,7 @@ import {
 	loaderPackageEntries,
 } from "./compatPackageList.js";
 export type { PackageToInstall } from "./compatPackageList.js";
+import type { PackageToInstall } from "./compatPackageList.js";
 import { pkgVersion } from "./packageVersion.js";
 import {
 	checkInstalled,
@@ -175,12 +176,17 @@ export const DataRuntimeApi = {
 
 /**
  * Helper to load a package if the requested version is compatible.
+ * @param pkgEntry - The package entry to check and load.
+ * @param versionToInstall - The version of the package to install.
+ * @param modulePath - The path to the module.
+ * @returns The loaded package or undefined if not compatible.
  */
 async function loadIfCompatible(
-	pkgEntry: { pkgName: string; minVersion: string; preferredEntrypoint?: "." | `./${string}` },
+	pkgEntry: PackageToInstall,
 	versionToInstall: string,
 	modulePath: string,
 ): Promise<any> {
+	// Check if the requested version satisfies the minVersion requirement
 	if (semver.gte(versionToInstall, pkgEntry.minVersion)) {
 		return loadPackage(modulePath, pkgEntry.pkgName, pkgEntry.preferredEntrypoint);
 	}
@@ -189,13 +195,17 @@ async function loadIfCompatible(
 
 /**
  * Helper to load multiple packages if their requested versions are compatible.
+ * @param packageEntries - The package entries to check and load.
+ * @param version - The version of the packages to install.
+ * @param modulePath - The path to the module.
+ * @returns An object containing the loaded packages.
  */
 async function loadPackages(
-	packageEntries: { pkgName: string; minVersion: string }[],
+	packageEntries: PackageToInstall[],
 	version: string,
 	modulePath: string,
 ): Promise<any> {
-	const loadedPackages: Record<string, any> = {};
+	const loadedPackages = {};
 	for (const pkgEntry of packageEntries) {
 		loadedPackages[pkgEntry.pkgName] = await loadIfCompatible(pkgEntry, version, modulePath);
 	}
