@@ -256,8 +256,10 @@ Options:
   --help, -h                Show this help text and exit.
   --revision <rev>          (revision mode only, required) Branch, tag, or commit
                             SHA to check out in the inner repo before building.
-                            Also used as the label under which the bundle stats
-                            are saved.
+                            Also used as the default label.
+  --label <name>            Override the directory name under which bundle stats
+                            are saved. Defaults to the sanitized revision in
+                            revision mode, or "current" in local mode.
   --force-clean-build       Run the full workspace clean ('npm run clean' at the
                             repo root) before building. Off by default; opt in
                             when stale incremental build state from a previous
@@ -298,7 +300,10 @@ function main(argv: string[]): void {
 		throw new Error(`--mode revision requires --revision <rev>.`);
 	}
 
-	const label = sanitizeForFileName(mode === "revision" ? (revision as string) : "current");
+	const labelOverride = getOptionValue(argv, "--label");
+	const label = sanitizeForFileName(
+		labelOverride ?? (mode === "revision" ? (revision as string) : "current"),
+	);
 
 	let activeRepoRoot: string;
 	let activePackageRoot: string;
