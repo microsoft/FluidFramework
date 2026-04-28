@@ -20,6 +20,8 @@ onlyBuiltDependencies:
 
 # Supply chain security settings - see /DEV.md for documentation
 minimumReleaseAge: 1440
+minimumReleaseAgeExclude:
+  - "@fluidframework/*"
 resolutionMode: highest
 blockExoticSubdeps: true
 trustPolicy: no-downgrade

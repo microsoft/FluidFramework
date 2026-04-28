@@ -1,9 +1,9 @@
 name: "PR Review Confirm"
 
-# Listens for comments on PRs that have a pending review confirmation.
-# When the author (or a collaborator) replies with an affirmative, triggers
-# the review fleet with the reviewer set selected via the comment checkboxes.
-# When they ask a question, answers via Copilot CLI and keeps waiting.
+# Listens for edits to the bot's auto-route proposal comment. When a user with
+# write access ticks the "Start review" checkbox (transitioning it from
+# unchecked to checked), triggers the review fleet with the currently-selected
+# reviewer set.
 #
 # Activation guard: looks for a pr-review-pending artifact from the most
 # recent successful auto-route run for this PR. If none exists, this workflow
@@ -11,7 +11,7 @@ name: "PR Review Confirm"
 
 on:
   issue_comment:
-    types: [created]
+    types: [edited]
 
 permissions:
   contents: read
@@ -21,42 +21,56 @@ permissions:
   # only when this permission is granted — without it, the dispatch call 403s.
   actions: write
 
-# Serialize per-PR so rapid-fire comments don't race to trigger the fleet or
-# spawn parallel Copilot installs. Don't cancel in-progress runs — each comment
-# deserves a reply.
+# Serialize per-PR so rapid-fire checkbox toggles don't race to trigger the fleet.
+# Don't cancel in-progress runs — a trigger deserves to complete.
 concurrency:
   group: pr-review-confirm-${{ github.event.issue.number }}
   cancel-in-progress: false
 
 jobs:
-  handle-reply:
-    name: "Handle reply"
-    # Only process PR comments from trusted repo members. Commenters without
-    # write access (including external PR authors) cannot trigger this
-    # workflow, which has `actions: write` and consumes COPILOT_GITHUB_TOKEN.
-    # A member can still reply on behalf of an external PR author.
+  handle-toggle:
+    name: "Handle checkbox toggle"
+    # Fast rejects before we do any work:
+    #   - must be on a PR comment
+    #   - edit must come from a human user (not a bot re-posting)
+    #   - edited comment must be the auto-route bot's proposal comment
+    #   - Start review box transitioned from unchecked to checked (the substring
+    #     below must match `pr_review_propose.py`'s START_LABEL rendering — keep
+    #     them in sync)
+    # Trust of the editing user is verified by an explicit permission check
+    # below (we can't do it in `if:` because the comment author is the bot).
     if: |
       github.event.issue.pull_request != null &&
-      github.event.sender.type != 'Bot' &&
-      (
-        github.event.comment.author_association == 'OWNER' ||
-        github.event.comment.author_association == 'MEMBER' ||
-        github.event.comment.author_association == 'COLLABORATOR'
-      )
+      github.event.sender.type == 'User' &&
+      github.event.comment.user.login == 'github-actions[bot]' &&
+      contains(github.event.comment.body, '<!-- pr-review-confirm -->') &&
+      contains(github.event.comment.body, '- [x] **Start review**') &&
+      !contains(github.event.changes.body.from, '- [x] **Start review**')
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout scripts and prompts
+      # The comment is authored by the bot, so `author_association` on the
+      # event is the bot's — not meaningful for trust. Check the acting user's
+      # repo permission directly. `require: write` accepts write|maintain|admin.
+      - name: Verify editor has write access
+        id: authz
+        uses: actions-cool/check-user-permission@7b90a27f92f3961b368376107661682c441f6103 # ratchet:actions-cool/check-user-permission@v2.3.0
+        with:
+          require: write
+          username: ${{ github.event.sender.login }}
+
+      - name: Checkout scripts
+        if: steps.authz.outputs.require-result == 'true'
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # ratchet:actions/checkout@v6
         with:
           sparse-checkout: |
             .github/scripts
-            .github/prompts
           persist-credentials: false
 
       # ── Find & download the pending metadata artifact from the most recent ──
       # ── successful auto-route run for this PR.                              ──
       - name: Download pending metadata
         id: download
+        if: steps.authz.outputs.require-result == 'true'
         uses: dawidd6/action-download-artifact@8305c0f1062bb0d184d09ef4493ecb9288447732 # ratchet:dawidd6/action-download-artifact@v20
         with:
           workflow: pr-review-auto-route.yml
@@ -80,58 +94,20 @@ jobs:
 
           echo "PR #${PR_NUMBER} | head=${HEAD_SHA} | base=${BASE_REF}"
 
-      # ── Find confirmation comment and parse checkbox state ────────────────
-      - name: Find confirmation comment
-        id: find-confirm
-        if: steps.download.outputs.found_artifact == 'true'
-        # release notes: https://github.com/peter-evans/find-comment/releases/tag/v3.1.0
-        uses: peter-evans/find-comment@3eae4d37986fb5a8592848f6a574fdf654e61f9e # ratchet:peter-evans/find-comment@v3
-        with:
-          issue-number: ${{ github.event.issue.number }}
-          body-includes: "<!-- pr-review-confirm -->"
-          comment-author: "github-actions[bot]"
-
-      - name: Parse checkbox state
+      - name: Parse selected reviewers
         id: checkboxes
-        if: |
-          steps.download.outputs.found_artifact == 'true' &&
-          steps.find-confirm.outputs.comment-id != ''
+        if: steps.download.outputs.found_artifact == 'true'
         env:
-          CONFIRM_BODY: ${{ steps.find-confirm.outputs.comment-body }}
+          CONFIRM_BODY: ${{ github.event.comment.body }}
         run: |
-          echo "$CONFIRM_BODY" > /tmp/confirm-body.txt
+          printf '%s' "$CONFIRM_BODY" > /tmp/confirm-body.txt
           SELECTED=$(python3 .github/scripts/pr_review_propose.py parse-checkboxes /tmp/confirm-body.txt)
           echo "selected=$SELECTED" >> "$GITHUB_OUTPUT"
           echo "Selected reviewers: ${SELECTED}"
 
-      # ── Classify the reply intent ─────────────────────────────────────────
-      - name: Classify intent
-        id: intent
-        if: |
-          steps.download.outputs.found_artifact == 'true' &&
-          steps.find-confirm.outputs.comment-id != ''
-        env:
-          REPLY: ${{ github.event.comment.body }}
-        run: |
-          # Affirmative: short phrase matching common yes-patterns
-          if echo "$REPLY" | grep -qiP \
-            '^\s*(yes|yeah|yep|sure|go ahead|ok|okay|please|start|run|do it|kick it off|lgtm|sounds good|let.s go|yup|absolutely|affirmative|roger)\s*[.!]?\s*$'; then
-            echo "intent=affirm" >> "$GITHUB_OUTPUT"
-          # Question: contains a question mark or starts with a question word
-          elif echo "$REPLY" | grep -qiP '\?|(^|\s)(what|why|how|when|can you|will you|which|where|does|is it|would)'; then
-            echo "intent=question" >> "$GITHUB_OUTPUT"
-          else
-            echo "intent=other" >> "$GITHUB_OUTPUT"
-          fi
-
-          echo "Intent: $(grep 'intent=' "$GITHUB_OUTPUT" | tail -1)"
-
-      # ── Affirm: validate non-empty selection, then trigger the fleet ─────
       - name: Handle empty selection
         id: empty-check
-        if: |
-          steps.download.outputs.found_artifact == 'true' &&
-          steps.intent.outputs.intent == 'affirm'
+        if: steps.download.outputs.found_artifact == 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           REPO: ${{ github.repository }}
@@ -141,7 +117,7 @@ jobs:
           COUNT=$(echo "$SELECTED" | jq 'length')
           if [ "$COUNT" -eq 0 ]; then
             gh pr comment "${PR_NUMBER}" --repo "${REPO}" \
-              --body "You haven't selected any reviewers. Tick at least one checkbox in the proposal comment and reply **yes** again."
+              --body "You haven't selected any reviewers. Tick at least one reviewer checkbox in the proposal comment, then tick **Start review** again."
             echo "skip=true" >> "$GITHUB_OUTPUT"
           else
             echo "skip=false" >> "$GITHUB_OUTPUT"
@@ -150,7 +126,6 @@ jobs:
       - name: Trigger review fleet
         if: |
           steps.download.outputs.found_artifact == 'true' &&
-          steps.intent.outputs.intent == 'affirm' &&
           steps.empty-check.outputs.skip == 'false'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -172,7 +147,6 @@ jobs:
       - name: Post acknowledgement
         if: |
           steps.download.outputs.found_artifact == 'true' &&
-          steps.intent.outputs.intent == 'affirm' &&
           steps.empty-check.outputs.skip == 'false'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -183,54 +157,3 @@ jobs:
           NAMES=$(python3 .github/scripts/pr_review_propose.py format-names "$SELECTED")
           gh pr comment "${PR_NUMBER}" --repo "${REPO}" \
             --body "On it! Starting review with: ${NAMES}"
-
-      # ── Question: answer via Copilot CLI ─────────────────────────────────
-      - name: Set up Node.js
-        if: |
-          steps.download.outputs.found_artifact == 'true' &&
-          steps.intent.outputs.intent == 'question'
-        uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # ratchet:actions/setup-node@v6
-        with:
-          node-version: 22
-
-      - name: Install Copilot CLI
-        if: |
-          steps.download.outputs.found_artifact == 'true' &&
-          steps.intent.outputs.intent == 'question'
-        run: npm install -g @github/copilot
-
-      - name: Answer question
-        if: |
-          steps.download.outputs.found_artifact == 'true' &&
-          steps.intent.outputs.intent == 'question'
-        env:
-          COPILOT_GITHUB_TOKEN: ${{ secrets.COPILOT_GITHUB_TOKEN }}
-          COPILOT_MODEL: claude-sonnet-4-6
-          REPLY: ${{ github.event.comment.body }}
-          SELECTED: ${{ steps.checkboxes.outputs.selected }}
-        run: |
-          REVIEWER_CONTEXT=$(python3 .github/scripts/pr_review_propose.py build-qa-context "$SELECTED")
-          export REVIEWER_CONTEXT
-          python3 .github/scripts/pr_review_propose.py render-qa-prompt \
-            .github/prompts/pr-review-qa.md > /tmp/qa-prompt.md
-
-          copilot \
-            -p "$(cat /tmp/qa-prompt.md)" \
-            --allow-tool=write \
-            --no-ask-user
-
-      - name: Post answer
-        if: |
-          steps.download.outputs.found_artifact == 'true' &&
-          steps.intent.outputs.intent == 'question'
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          REPO: ${{ github.repository }}
-          PR_NUMBER: ${{ steps.pending.outputs.pr_number }}
-        run: |
-          if [ -f answer.txt ]; then
-            gh pr comment "${PR_NUMBER}" --repo "${REPO}" --body-file answer.txt
-          else
-            gh pr comment "${PR_NUMBER}" --repo "${REPO}" \
-              --body "I wasn't able to generate an answer. Reply **yes** to start the review, or ask another question!"
-          fi

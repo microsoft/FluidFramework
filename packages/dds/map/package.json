@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/map",
-	"version": "2.100.0",
+	"version": "2.101.0",
 	"description": "Distributed map",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -148,7 +148,7 @@
 		"@fluid-internal/mocha-test-setup": "workspace:~",
 		"@fluid-private/stochastic-test-utils": "workspace:~",
 		"@fluid-private/test-dds-utils": "workspace:~",
-		"@fluid-tools/benchmark": "^0.55.0",
+		"@fluid-tools/benchmark": "^0.58.0",
 		"@fluid-tools/build-cli": "catalog:buildTools",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "catalog:buildTools",

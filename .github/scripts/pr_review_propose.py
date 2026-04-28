@@ -5,22 +5,17 @@ Subcommands:
   build-comment    Build the markdown proposal comment body.
   parse-checkboxes Read a comment body file and emit the checked reviewer IDs as JSON.
   format-names     Convert a JSON reviewer-ID array to a display-name string.
-  build-qa-context Build the reviewer-plan context string for Copilot Q&A.
-  render-qa-prompt Render the Q&A prompt template with REVIEWER_CONTEXT/REPLY from env.
 
 Usage:
   python pr_review_propose.py build-comment --reviewer-count 3 --lines 247 --files 8
   python pr_review_propose.py parse-checkboxes comment.txt
   python pr_review_propose.py format-names '["correctness","security"]'
-  python pr_review_propose.py build-qa-context '["correctness","security"]'
-  REVIEWER_CONTEXT=... REPLY=... python pr_review_propose.py render-qa-prompt path/to/qa.md
 """
 
 from __future__ import annotations
 
 import argparse
 import json
-import os
 import re
 import sys
 from typing import NamedTuple
@@ -49,6 +44,11 @@ REVIEWERS: list[Reviewer] = [
 _LABEL_TO_ID: dict[str, str] = {r.label.lower(): r.id for r in REVIEWERS}
 _ID_TO_LABEL: dict[str, str] = {r.id: r.label for r in REVIEWERS}
 
+# The confirm workflow matches the rendered line `- [x] **Start review**` as a
+# literal substring — if this label changes, update the `contains()` checks in
+# .github/workflows/pr-review-confirm.yml to match.
+START_LABEL = "Start review"
+
 
 def get_selected(reviewer_count: int) -> set[str]:
     """Return the reviewer IDs to pre-check for a proposal.
@@ -70,7 +70,7 @@ def cmd_build_comment(args: argparse.Namespace) -> None:
     lines = [
         "<!-- pr-review-confirm -->",
         "",
-        "Hey! You look nice today! Want me to review this PR?",
+        "Hi! Thank you for opening this PR. Want me to review it?",
         "",
         f"Based on the diff ({args.lines} lines, {args.files} files), I've queued these reviewers:",
         "",
@@ -80,7 +80,9 @@ def cmd_build_comment(args: argparse.Namespace) -> None:
         lines.append(f"- [{check}] **{r.label}** — {r.description}")
     lines += [
         "",
-        "Toggle checkboxes to adjust, then reply **yes** to start — or ask me anything!",
+        "Toggle the reviewer checkboxes above to adjust, then tick the box below to start:",
+        "",
+        f"- [ ] **{START_LABEL}**",
     ]
     print("\n".join(lines))
 
@@ -108,29 +110,6 @@ def cmd_format_names(args: argparse.Namespace) -> None:
     ids: list[str] = json.loads(args.reviewers_json)
     names = [_ID_TO_LABEL.get(r, r) for r in ids]
     print(", ".join(names))
-
-
-def cmd_build_qa_context(args: argparse.Namespace) -> None:
-    """Print a reviewer-plan summary for the Copilot Q&A prompt."""
-    selected = set(json.loads(args.selected_json))
-    lines: list[str] = []
-    for r in REVIEWERS:
-        prefix = "✓" if r.id in selected else "○"  # ✓ or ○
-        lines.append(f"{prefix} {r.label} — {r.description}")
-    print("\n".join(lines))
-
-
-def cmd_render_qa_prompt(args: argparse.Namespace) -> None:
-    """Substitute __REVIEWER_CONTEXT__ and __REPLY__ in a template and write to stdout.
-
-    Values are read from the REVIEWER_CONTEXT and REPLY environment variables,
-    which safely carry multi-line content and arbitrary special characters.
-    """
-    with open(args.template, encoding="utf-8") as f:
-        rendered = f.read()
-    rendered = rendered.replace("__REVIEWER_CONTEXT__", os.environ.get("REVIEWER_CONTEXT", ""))
-    rendered = rendered.replace("__REPLY__", os.environ.get("REPLY", ""))
-    sys.stdout.write(rendered)
 
 
 # ── CLI wiring ────────────────────────────────────────────────────────────────
@@ -162,19 +141,6 @@ def _build_parser() -> argparse.ArgumentParser:
     p = sub.add_parser("format-names", help="Format reviewer IDs as display names")
     p.add_argument("reviewers_json", help="JSON array of reviewer IDs")
     p.set_defaults(func=cmd_format_names)
-
-    p = sub.add_parser("build-qa-context", help="Build reviewer context for Q&A prompt")
-    p.add_argument(
-        "selected_json", help="JSON array of currently selected reviewer IDs"
-    )
-    p.set_defaults(func=cmd_build_qa_context)
-
-    p = sub.add_parser(
-        "render-qa-prompt",
-        help="Render Q&A prompt template (REVIEWER_CONTEXT and REPLY read from env)",
-    )
-    p.add_argument("template", help="Path to the Q&A prompt template file")
-    p.set_defaults(func=cmd_render_qa_prompt)
 
     return parser
 

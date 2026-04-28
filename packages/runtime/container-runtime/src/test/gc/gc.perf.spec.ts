@@ -3,12 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import {
-	BenchmarkType,
-	TestType,
-	benchmarkIt,
-	collectDurationData,
-} from "@fluid-tools/benchmark";
+import { benchmarkDuration, benchmarkIt } from "@fluid-tools/benchmark";
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 
 import {
@@ -121,51 +116,42 @@ describe("GC benchmark tests", () => {
 		 * setting of timers, it takes a long time and can cause slow downs.
 		 */
 		benchmarkIt({
-			testType: TestType.ExecutionTime,
 			title: "5000 unref nodes",
-			type: BenchmarkType.Measurement,
-			run: async () => {
-				const gc = await setup(5000 /* unrefNodeCount */);
-				const result = await collectDurationData({
-					benchmarkFnAsync: async () => {
+			...benchmarkDuration({
+				benchmarkFnCustom: async (state) => {
+					const gc = await setup(5000 /* unrefNodeCount */);
+					await state.timeAllBatchesAsync(async () => {
 						await gc.initializeOrUpdateGCState();
-					},
-				});
-				gc.dispose();
-				return result;
-			},
+					});
+					gc.dispose();
+				},
+			}),
 		});
 
 		benchmarkIt({
-			testType: TestType.ExecutionTime,
 			title: "15000 unref nodes",
-			type: BenchmarkType.Measurement,
-			run: async () => {
-				const gc = await setup(15000 /* unrefNodeCount */);
-				const result = await collectDurationData({
-					benchmarkFnAsync: async () => {
+			...benchmarkDuration({
+				benchmarkFnCustom: async (state) => {
+					const gc = await setup(15000 /* unrefNodeCount */);
+					await state.timeAllBatchesAsync(async () => {
 						await gc.initializeOrUpdateGCState();
-					},
-				});
-				gc.dispose();
-				return result;
-			},
+					});
+					gc.dispose();
+				},
+			}),
 		});
 
 		benchmarkIt({
-			testType: TestType.ExecutionTime,
 			title: "30000 unref nodes",
-			type: BenchmarkType.Measurement,
-			run: async () => {
-				const gc = await setup(30000 /* unrefNodeCount */);
-				const result = await collectDurationData({
-					benchmarkFnAsync: async () => {
+			...benchmarkDuration({
+				benchmarkFnCustom: async (state) => {
+					const gc = await setup(30000 /* unrefNodeCount */);
+					await state.timeAllBatchesAsync(async () => {
 						await gc.initializeOrUpdateGCState();
-					},
-				});
-				gc.dispose();
-				return result;
-			},
+					});
+					gc.dispose();
+				},
+			}),
 		});
 	});
 });

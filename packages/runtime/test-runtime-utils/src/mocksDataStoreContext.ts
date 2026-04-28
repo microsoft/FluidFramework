@@ -51,7 +51,12 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
 	public deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage> =
 		new MockDeltaManager(() => this.clientId);
 
-	public containerRuntime: IContainerRuntimeBase = { inStagingMode: false } as any;
+	public containerRuntime: IContainerRuntimeBase = {
+		inStagingMode: false,
+		on: () => {},
+		off: () => {},
+		once: () => {},
+	} as any;
 	public storage: IRuntimeStorageService = undefined as any;
 	public IFluidDataStoreRegistry: IFluidDataStoreRegistry = undefined as any;
 	public IFluidHandleContext: IFluidHandleContext = undefined as any;
