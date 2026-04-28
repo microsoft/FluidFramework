@@ -61,9 +61,10 @@ export const fullWorkspaceDir = path.join(compatWorkspacesDir, "full");
 /**
  * Schema for the committed `compat-workspaces/versions.json` file.
  *
- * This file is MACHINE-MAINTAINED by `scripts/updateCompatVersions.ts`. Do not edit by hand.
- * The only field that may occasionally need manual adjustment is `standard.ocv` when the oldest
- * compatible version policy changes.
+ * The `standard` and `full` fields are MACHINE-MAINTAINED by `scripts/updateCompatVersions.ts`.
+ * The `explicit` field is HUMAN-MAINTAINED: add versions here when a specific test requires a
+ * version that falls outside the delta-based range (e.g. a version where a specific API change
+ * was made). The `standard.ocv` value can also be manually adjusted when the OCV policy changes.
  * @internal
  */
 export interface CompatVersionsManifest {
@@ -93,6 +94,11 @@ export interface CompatVersionsManifest {
 	 * MACHINE-MAINTAINED.
 	 */
 	full: string[];
+	/**
+	 * Explicit versions required by specific tests that aren't covered by the delta-based range.
+	 * Installed in `full/`. HUMAN-MAINTAINED: add here when a test needs a pinned old version.
+	 */
+	explicit?: string[];
 }
 
 let cachedManifest: CompatVersionsManifest | undefined;
@@ -121,6 +127,7 @@ export function getAllManifestVersions(manifest: CompatVersionsManifest): string
 		manifest.standard.ocv,
 		...(manifest.standard["cross-client"] ?? []),
 		...manifest.full,
+		...(manifest.explicit ?? []),
 	].filter(Boolean);
 }
 
