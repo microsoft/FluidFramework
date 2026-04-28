@@ -46,13 +46,23 @@ The script detects changed packages, installs dependencies if needed, runs `flui
 
 Report to the user: packages changed, what was auto-fixed, any checks still failing, and uncommitted files. (Changeset guidance is handled by the `api-changes` skill if API reports changed; otherwise the script warning is sufficient.)
 
-If you see unexpected generated artifacts unrelated to the branch's changes, do a clean build first (set `PKG` to the package directory path):
+If you see unexpected generated artifacts unrelated to the branch's changes (especially in `*.api.md` files), stale build artifacts from a previous session or the incremental TypeScript bug are likely the cause. For `@fluidframework/tree` or its aggregator (`fluid-framework`), a scoped per-package clean is **not reliable** — you must do a full clean build from the repo root:
+
+```bash
+# From the repo root — no shortcuts
+pnpm clean
+pnpm build
+```
+
+The full build includes API report generation for all packages (including the `fluid-framework` aggregator), so no separate regeneration step is needed. Check the reports afterward — if only your intended changes appear, you're good.
+
+For other packages, a scoped clean may suffice:
 
 ```bash
 cd $PKG && pnpm exec fluid-build . --task clean && pnpm exec fluid-build . --task compile
 ```
 
-Then re-run the CI readiness check. Stale build artifacts from a previous session are often the cause of false-positive diffs.
+Then re-run the CI readiness check. **Never hand-edit `*.api.md` files** — they are generated artifacts. If they're wrong, rebuild and regenerate.
 
 Check mode stops here — skip steps 4–8 entirely. Note what was skipped in the final report.
 
@@ -74,7 +84,7 @@ cd $PKG && pnpm exec fluid-build . -t eslint:fix
 
 Steps 6 and 7 only run if the public API surface changed. Proceed if: `src/index.ts` or any entry point (`src/alpha.ts`, `src/beta.ts`, `src/legacy.ts`, `src/internal.ts`) was modified; any exported type/interface/class/function signature changed; or `package.json` `exports` changed. Skip if only tests, internal implementation, comments, or function bodies (not signatures) changed.
 
-Running `build:api-reports` when nothing changed can introduce spurious diffs — specifically for the `@fluidframework/tree` and `fluid-framework` packages, which surface a known incremental TypeScript bug that non-deterministically reorders type unions. If you see only key-reorder diffs with no real API changes, do a clean build of the affected package and regenerate (see `tree-api-checks.md` for details).
+Running `build:api-reports` when nothing changed can introduce spurious diffs — specifically for the `@fluidframework/tree` and `fluid-framework` packages, which surface a known incremental TypeScript bug that non-deterministically reorders type unions and can cause other phantom changes. If you see any unexpected API report diffs, do a full clean build from the repo root (`pnpm clean && pnpm build`) and regenerate. Per-package cleans are not reliable for the tree package. See `tree-api-checks.md` for details.
 
 # Step 6: API reports and cross-package cascade (Build and Test only)
 

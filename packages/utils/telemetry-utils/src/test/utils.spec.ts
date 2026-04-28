@@ -10,11 +10,40 @@ import type {
 	IConfigProviderBase,
 	ITelemetryBaseEvent,
 } from "@fluidframework/core-interfaces";
+import type { InternalCoreInterfacesUtilityTypes } from "@fluidframework/core-interfaces/internal";
+
+import type { ITelemetryLoggerExt as ITelemetryLoggerExtInternal } from "@fluidframework/telemetry-utils/internal";
+import type { ITelemetryLoggerExt as ITelemetryLoggerExtExternal } from "@fluidframework/telemetry-utils/legacy";
 
 import { mixinMonitoringContext } from "../config.js";
 import { TelemetryDataTag, tagCodeArtifacts, tagData } from "../logger.js";
-import type { ITelemetryGenericEventExt, ITelemetryLoggerExt } from "../telemetryTypes.js";
+import type {
+	ITelemetryGenericEventExt,
+	TelemetryLoggerExt,
+} from "../telemetryTypesUndeprecated.js";
 import { type IEventSampler, createSampledLogger } from "../utils.js";
+
+/**
+ * Use to compile-time assert types of two variables are identical.
+ */
+function assertIdenticalTypes<T, U>(
+	_actual: T & InternalCoreInterfacesUtilityTypes.IfSameType<T, U>,
+	_expected: U & InternalCoreInterfacesUtilityTypes.IfSameType<T, U>,
+): InternalCoreInterfacesUtilityTypes.IfSameType<T, U> {
+	return undefined as InternalCoreInterfacesUtilityTypes.IfSameType<T, U>;
+}
+
+/**
+ * This is exported but never called - tests that internal and external ITelemetryLoggerExt types are identical.
+ * At this time the only difference allowed is for the external version to have `@deprecated` tags on it methods.
+ * To be removed when external type is erased and the types are permitted to diverge.
+ */
+export function checkIdenticalLoggers(
+	internal: ITelemetryLoggerExtInternal,
+	external: ITelemetryLoggerExtExternal,
+): void {
+	assertIdenticalTypes(internal, external);
+}
 
 describe("tagData", () => {
 	it("tagData with data", () => {
@@ -59,8 +88,8 @@ describe("Sampling", () => {
 
 	function getMockLoggerExtWithConfig(
 		configDictionary?: Record<string, ConfigTypes>,
-	): ITelemetryLoggerExt {
-		const logger: ITelemetryLoggerExt = {
+	): TelemetryLoggerExt {
+		const logger: TelemetryLoggerExt = {
 			send(event: ITelemetryBaseEvent): void {
 				events.push(event);
 			},

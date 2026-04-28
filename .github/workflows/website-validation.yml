@@ -27,15 +27,15 @@ jobs:
     name: Build site
     steps:
       # release notes: https://github.com/actions/checkout/releases/tag/v6.0.0
-      - uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # ratchet:actions/checkout@v6
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # ratchet:actions/checkout@v6
         with:
           submodules: false
 
       # release notes: https://github.com/pnpm/action-setup/releases/tag/v4.2.0
-      - uses: pnpm/action-setup@41ff72655975bd51cab0327fa583b6e92b6d3061 # ratchet:pnpm/action-setup@v4
+      - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # ratchet:pnpm/action-setup@v5
 
       # release notes: https://github.com/actions/setup-node/releases/tag/v6.0.0
-      - uses: actions/setup-node@2028fbc5c25fe9cf00d9f06a71cc4710d4507903 # ratchet:actions/setup-node@v6
+      - uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # ratchet:actions/setup-node@v6
         with:
           node-version: "22"
           cache: "pnpm"
@@ -49,7 +49,7 @@ jobs:
           ./validateHashes.sh
       - name: Upload site artifact
         # release notes: https://github.com/actions/upload-artifact/releases/tag/v5.0.0
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # ratchet:actions/upload-artifact@v5
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # ratchet:actions/upload-artifact@v7
         with:
           name: fluidframework-site
           path: docs/build
@@ -61,15 +61,15 @@ jobs:
     name: pnpm lint
     steps:
       # release notes: https://github.com/actions/checkout/releases/tag/v6.0.0
-      - uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # ratchet:actions/checkout@v6
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # ratchet:actions/checkout@v6
         with:
           submodules: false
 
       # release notes: https://github.com/pnpm/action-setup/releases/tag/v4.2.0
-      - uses: pnpm/action-setup@41ff72655975bd51cab0327fa583b6e92b6d3061 # ratchet:pnpm/action-setup@v4
+      - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # ratchet:pnpm/action-setup@v5
 
       # release notes: https://github.com/actions/setup-node/releases/tag/v6.0.0
-      - uses: actions/setup-node@2028fbc5c25fe9cf00d9f06a71cc4710d4507903 # ratchet:actions/setup-node@v6
+      - uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # ratchet:actions/setup-node@v6
         with:
           node-version: "22"
           cache: "pnpm"
@@ -86,15 +86,15 @@ jobs:
     needs: build_site
     steps:
       # release notes: https://github.com/actions/checkout/releases/tag/v6.0.0
-      - uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # ratchet:actions/checkout@v6
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # ratchet:actions/checkout@v6
         with:
           submodules: false
 
       # release notes: https://github.com/pnpm/action-setup/releases/tag/v4.2.0
-      - uses: pnpm/action-setup@41ff72655975bd51cab0327fa583b6e92b6d3061 # ratchet:pnpm/action-setup@v4
+      - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # ratchet:pnpm/action-setup@v5
 
       # release notes: https://github.com/actions/setup-node/releases/tag/v6.0.0
-      - uses: actions/setup-node@2028fbc5c25fe9cf00d9f06a71cc4710d4507903 # ratchet:actions/setup-node@v6
+      - uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # ratchet:actions/setup-node@v6
         with:
           node-version: "22"
           cache: "pnpm"
@@ -102,7 +102,7 @@ jobs:
 
       - name: Download site artifact
         # release notes: https://github.com/actions/download-artifact/releases/tag/v6.0.0
-        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # ratchet:actions/download-artifact@v6
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # ratchet:actions/download-artifact@v8
         with:
           name: fluidframework-site
           path: docs/build
@@ -119,15 +119,15 @@ jobs:
     needs: build_site
     steps:
       # release notes: https://github.com/actions/checkout/releases/tag/v6.0.0
-      - uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # ratchet:actions/checkout@v6
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # ratchet:actions/checkout@v6
         with:
           submodules: false
 
       # release notes: https://github.com/pnpm/action-setup/releases/tag/v4.2.0
-      - uses: pnpm/action-setup@41ff72655975bd51cab0327fa583b6e92b6d3061 # ratchet:pnpm/action-setup@v4
+      - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # ratchet:pnpm/action-setup@v5
 
       # release notes: https://github.com/actions/setup-node/releases/tag/v6.0.0
-      - uses: actions/setup-node@2028fbc5c25fe9cf00d9f06a71cc4710d4507903 # ratchet:actions/setup-node@v6
+      - uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # ratchet:actions/setup-node@v6
         with:
           node-version: "22"
           cache: "pnpm"
@@ -137,7 +137,7 @@ jobs:
 
       - name: Download site artifact
         # release notes: https://github.com/actions/download-artifact/releases/tag/v6.0.0
-        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # ratchet:actions/download-artifact@v6
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # ratchet:actions/download-artifact@v8
         with:
           name: fluidframework-site
           path: docs/build
@@ -160,7 +160,7 @@ jobs:
           echo -e "\n\`\`\`" | tee -a ./results/linkcheck
       - name: Upload results artifact
         # release notes: https://github.com/actions/upload-artifact/releases/tag/v5.0.0
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # ratchet:actions/upload-artifact@v5
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # ratchet:actions/upload-artifact@v7
         with:
           name: website-validation-results
           path: ./docs/results

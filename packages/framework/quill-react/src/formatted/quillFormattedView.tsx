@@ -389,7 +389,7 @@ const FormattedTextEditorView = forwardRef<
 	// DOM element where Quill will mount its editor
 	const editorRef = useRef<HTMLDivElement>(null);
 	// Quill instance, persisted across renders to avoid re-initialization
-	const quillRef = useRef<Quill | null>(null);
+	const quillRef = useRef<Quill | undefined>(undefined);
 	// Guards against update loops between Quill and the tree
 	const isUpdating = useRef(false);
 	// Container element for undo/redo button portal
@@ -407,7 +407,10 @@ const FormattedTextEditorView = forwardRef<
 
 	// Initialize Quill editor with formatting toolbar using Quill provided CSS
 	useEffect(() => {
-		if (!editorRef.current || quillRef.current) return;
+		if (!editorRef.current || quillRef.current) {
+			return;
+		}
+
 		const quill = new Quill(editorRef.current, {
 			theme: "snow",
 			placeholder: "Start typing with formatting...",
@@ -438,7 +441,7 @@ const FormattedTextEditorView = forwardRef<
 		// the inference for this event is strongly typed, but the types are wrong (The wrong "Delta" type is provided).
 		// This is likely related to the node16 module resolution issues with quill-delta.
 		// If we break that inference by adding types, `any` is inferred for all of them, so incorrect types here would still compile.
-		quill.on("text-change", (delta: Delta, _oldDelta: Delta, source: EmitterSource) => {
+		const handleTextChange = (delta: Delta, _oldDelta: Delta, source: EmitterSource): void => {
 			if (source !== "user" || isUpdating.current) return;
 			isUpdating.current = true;
 
@@ -559,18 +562,28 @@ const FormattedTextEditorView = forwardRef<
 			}
 
 			isUpdating.current = false;
-		});
+		};
 
+		quill.on("text-change", handleTextChange);
 		quillRef.current = quill;
 
 		// Create container for React-controlled undo/redo buttons and prepend to toolbar
-		const toolbar = editorRef.current.previousElementSibling as HTMLElement;
+		const editor = editorRef.current;
+		const toolbar = editor.previousElementSibling as HTMLElement;
 		const container = document.createElement("span");
 		container.className = "ql-formats";
 		toolbar.prepend(container);
 		setUndoRedoContainer(container);
-		// In React strict mode, effects run twice. The `!quillRef.current` check above
-		// makes the second call a no-op, preventing double-initialization of Quill.
+
+		return () => {
+			quill.off("text-change", handleTextChange);
+			quillRef.current = undefined;
+			setUndoRedoContainer(undefined);
+			// Clear Quill's DOM modifications so the container is clean for any remount.
+			toolbar.remove();
+			editor.innerHTML = "";
+			editor.className = "";
+		};
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, []);
 
@@ -636,7 +649,10 @@ const FormattedTextEditorView = forwardRef<
 		: undefined;
 
 	return (
-		<div style={{ height: "100%", display: "flex", flexDirection: "column" }}>
+		<div
+			style={{ height: "100%", display: "flex", flexDirection: "column" }}
+			onClick={() => quillRef.current?.focus()}
+		>
 			<style>{`
 				.ql-container { height: 100%; font-size: 14px; }
 				.ql-editor { height: 100%; outline: none; }
@@ -652,7 +668,6 @@ const FormattedTextEditorView = forwardRef<
 				li[data-list="bullet"] { display: flex; align-items: center; }
 				li[data-list="bullet"] .ql-ui { align-self: center; }
 			`}</style>
-			<h2 style={{ margin: "10px 0" }}>Collaborative Formatted Text Editor</h2>
 			<div
 				ref={editorRef}
 				style={{
@@ -660,6 +675,7 @@ const FormattedTextEditorView = forwardRef<
 					minHeight: "300px",
 					border: "1px solid #ccc",
 					borderRadius: "4px",
+					cursor: "text",
 				}}
 			/>
 			{undoRedoButtons}

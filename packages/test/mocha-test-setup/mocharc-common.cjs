@@ -64,9 +64,9 @@ function getFluidTestMochaConfig(packageDir, additionalRequiredModules, testRepo
 		spec: process.env.MOCHA_SPEC ?? defaultSpec,
 	};
 
-	// This approach to checking for this flag is consistant with some (buyt not all) others in this file,
+	// This approach to checking for this flag is consistent with some (but not all) others in this file,
 	// but not with tools/benchmark/src/Configuration.ts.
-	// For now, undefined, "1" and "true" should work consistantly across all known use, and "1" is the main form we explicitly use.
+	// For now, undefined, "1" and "true" should work consistently across all known use, and "1" is the main form we explicitly use.
 	// All these should be made to match, see AB#69054.
 	if (process.env.FLUID_TEST_PERF_MODE !== undefined) {
 		if (!process.env.SILENT_TEST_OUTPUT) {
