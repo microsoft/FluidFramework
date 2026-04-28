@@ -451,7 +451,7 @@ describe("ForestSummarizer", () => {
 					{
 						fooArray: new FooArray(["value1", "value2"]),
 					},
-					2 /* incrementalNodeCount */,
+					1 /* incrementalNodeCount */,
 				);
 			});
 
@@ -1262,6 +1262,119 @@ describe("ForestSummarizer", () => {
 					handleCount: 1,
 					lastSummary: fullTreeResult.summary,
 				});
+			});
+		});
+
+		describe("multi-node uniform chunks", () => {
+			/**
+			 * Uniform-shape item: no optional, no sequence, no incremental fields.
+			 * A run of these in an incremental field is batched by the chunker into a single
+			 * multi-node {@link UniformChunk} that gets exactly one {@link ChunkReferenceId}.
+			 */
+			class UniformItem extends sf.objectAlpha("uniformItem", {
+				id: sf.number,
+				label: sf.string,
+			}) {}
+			class UniformItemArray extends sf.arrayAlpha(
+				"uniformItemArray",
+				sf.types([{ type: UniformItem, metadata: {} }], {
+					custom: { [incrementalSummaryHint]: true },
+				}),
+			) {}
+			class Root extends sf.objectAlpha("multiChunkRoot", {
+				items: UniformItemArray,
+			}) {}
+
+			function setupForestForIncrementalSummarization(initialRoot: Root | undefined) {
+				const fieldCursor = initialRoot
+					? fieldCursorFromInsertable(Root, initialRoot)
+					: fieldJsonCursor([]);
+				const initialContent: TreeStoredContentStrict = {
+					schema: toStoredSchema(Root, permissiveStoredSchemaGenerationOptions),
+					initialTree: fieldCursor,
+				};
+				return createForestSummarizer({
+					initialContent,
+					encodeType: TreeCompressionStrategy.CompressedIncremental,
+					forestType: ForestTypeOptimized,
+					shouldEncodeIncrementally: incrementalEncodingPolicyForAllowedTypes(
+						new TreeViewConfigurationAlpha({ schema: Root }),
+					),
+				});
+			}
+
+			it("batches uniform items into a single chunk; remakes it on any-node mutation", async () => {
+				const itemCount = 5;
+				const initialItems = Array.from(
+					{ length: itemCount },
+					(_, i) => new UniformItem({ id: (i + 1) * 10, label: `label-${i}` }),
+				);
+				const { checkout, forestSummarizer } = setupForestForIncrementalSummarization(
+					new Root({ items: initialItems }),
+				);
+
+				// Initial summary: one chunk for all `itemCount` items, not one per item.
+				const summary1 = forestSummarizer.summarize({
+					stringify: JSON.stringify,
+					incrementalSummaryContext: {
+						summarySequenceNumber: 0,
+						latestSummarySequenceNumber: -1,
+						summaryPath: "",
+					},
+				});
+				validateSummaryIsIncremental(summary1.summary, 1 /* incrementalNodeCount */);
+				validateHandlesInForestSummary(summary1.summary, { shouldContainHandle: false });
+
+				// No-change summary: one handle for the chunk, not `itemCount` handles.
+				const summary2 = forestSummarizer.summarize({
+					stringify: JSON.stringify,
+					incrementalSummaryContext: {
+						summarySequenceNumber: 10,
+						latestSummarySequenceNumber: 0,
+						summaryPath: "",
+					},
+				});
+				validateHandlesInForestSummary(summary2.summary, {
+					shouldContainHandle: true,
+					handleCount: 1,
+					lastSummary: summary1.summary,
+				});
+
+				// Mutate a single item. UniformChunks are immutable so the chunker must remake the
+				// chunk; the original chunk's referenceId can no longer be served as a handle.
+				const view = checkout.viewWith(new TreeViewConfiguration({ schema: Root }));
+				const mutatedIndex = 2;
+				const mutated = view.root.items.at(mutatedIndex);
+				assert(mutated !== undefined, "expected item at mutatedIndex");
+				mutated.label = "updated-label";
+
+				const summary3 = forestSummarizer.summarize({
+					stringify: JSON.stringify,
+					incrementalSummaryContext: {
+						summarySequenceNumber: 20,
+						latestSummarySequenceNumber: 10,
+						summaryPath: "",
+					},
+				});
+
+				// Load summary3 into a fresh forest and verify item content, length, and order.
+				const { forestSummarizer: loadedSummarizer, checkout: loadedCheckout } =
+					setupForestForIncrementalSummarization(undefined);
+				await loadedSummarizer.load(
+					MockStorage.createFromSummary(summary3.summary),
+					JSON.parse,
+				);
+				const loadedItems = [
+					...loadedCheckout.viewWith(new TreeViewConfiguration({ schema: Root })).root.items,
+				];
+				assert.equal(loadedItems.length, itemCount);
+				for (let i = 0; i < itemCount; i++) {
+					assert.equal(loadedItems[i].id, (i + 1) * 10);
+					assert.equal(
+						loadedItems[i].label,
+						i === mutatedIndex ? "updated-label" : `label-${i}`,
+					);
+				}
 			});
 		});
 	});
