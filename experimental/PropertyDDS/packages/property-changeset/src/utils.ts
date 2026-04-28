@@ -1613,7 +1613,7 @@ export namespace Utils {
 	 *
 	 * @param in_typeid - The typeid of the property to look for
 	 * @param in_changeSet - The ChangeSet to process
-	 * @param in_excludeTypeids - Exclude all typeids from the returned ChangeSet
+	 * @param in_excludeTypeids - If this is set to true, exclude all typeids from the returned ChangeSet
 	 * @returns Returns the applied operations to entries of the given typeid. The returned maps for insert and modify map paths to ChangeSets
 	 * @internal
 	 */
@@ -1664,7 +1664,7 @@ export namespace Utils {
 	 * @param in_path - The path to process
 	 * @param in_root - The root node to which the ChangeSet has been applied
 	 * @param in_changeSet - The ChangeSet to process
-	 * @param in_excludetypeids - Exclude all typeids from the returned ChangeSet
+	 * @param in_excludetypeids - If this is set to true, exclude all typeids from the returned ChangeSet
 	 * @throws if path is invalid.
 	 * @returns The changes that are applied to the given path.
 	 *
