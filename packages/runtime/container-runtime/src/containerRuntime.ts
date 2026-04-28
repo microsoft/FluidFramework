@@ -2042,7 +2042,7 @@ export class ContainerRuntime
 		this.features.add(
 			new IdCompressorFeature(
 				(contents, savedOp) => this.processIdCompressorMessages(contents, savedOp),
-				() => this._idCompressor !== undefined,
+				() => this._idCompressor,
 			),
 		);
 
@@ -2571,11 +2571,6 @@ export class ContainerRuntime
 	): void {
 		this.addMetadataToSummary(summaryTree);
 
-		if (this._idCompressor) {
-			const idCompressorState = JSON.stringify(this._idCompressor.serialize(false));
-			addBlobToSummary(summaryTree, idCompressorBlobName, idCompressorState);
-		}
-
 		if (this.remoteMessageProcessor.partialMessages.size > 0) {
 			const content = JSON.stringify([...this.remoteMessageProcessor.partialMessages]);
 			addBlobToSummary(summaryTree, chunksBlobName, content);
@@ -2585,11 +2580,6 @@ export class ContainerRuntime
 			this.duplicateBatchDetector?.getRecentBatchInfoForSummary(telemetryContext);
 		if (recentBatchInfo !== undefined) {
 			addBlobToSummary(summaryTree, recentBatchInfoBlobName, JSON.stringify(recentBatchInfo));
-		}
-
-		const dataStoreAliases = this.channelCollection.aliases;
-		if (dataStoreAliases.size > 0) {
-			addBlobToSummary(summaryTree, aliasBlobName, JSON.stringify([...dataStoreAliases]));
 		}
 
 		this.features.contributeSummary(summaryTree, fullTree, trackState, telemetryContext);

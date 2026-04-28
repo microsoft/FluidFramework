@@ -119,6 +119,7 @@ import {
 import type { IRuntimeFeature } from "./runtimeFeature.js";
 import { StorageServiceWithAttachBlobs } from "./storageServiceWithAttachBlobs.js";
 import {
+	aliasBlobName,
 	type IContainerRuntimeMetadata,
 	nonDataStorePaths,
 	rootHasIsolatedChannels,
@@ -951,6 +952,12 @@ export class ChannelCollection
 
 	public onConnectionStateChange(canSendOps: boolean, clientId: string | undefined): void {
 		this.setConnectionState(canSendOps, clientId);
+	}
+
+	public contributeSummary(summaryTree: ISummaryTreeWithStats): void {
+		if (this.aliases.size > 0) {
+			addBlobToSummary(summaryTree, aliasBlobName, JSON.stringify([...this.aliases]));
+		}
 	}
 
 	public reSubmitOp(

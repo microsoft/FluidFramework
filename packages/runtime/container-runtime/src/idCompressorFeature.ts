@@ -3,10 +3,18 @@
  * Licensed under the MIT License.
  */
 
-import type { IdCreationRange } from "@fluidframework/id-compressor/internal";
+import type {
+	IIdCompressor,
+	IIdCompressorCore,
+	IdCreationRange,
+} from "@fluidframework/id-compressor/internal";
+import type { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions/internal";
+import { addBlobToSummary } from "@fluidframework/runtime-utils/internal";
 
 import { ContainerMessageType } from "./messageTypes.js";
 import type { IRuntimeFeature } from "./runtimeFeature.js";
+
+const idCompressorBlobName = ".idCompressor";
 
 /**
  * Feature shell that owns the inbound / stashed / resubmit handling for
@@ -26,8 +34,23 @@ export class IdCompressorFeature implements IRuntimeFeature {
 			contents: IdCreationRange[],
 			savedOp?: boolean,
 		) => void,
-		private readonly hasIdCompressor: () => boolean,
+		private readonly getIdCompressor: () => (IIdCompressor & IIdCompressorCore) | undefined,
 	) {}
+
+	private hasIdCompressor(): boolean {
+		return this.getIdCompressor() !== undefined;
+	}
+
+	public contributeSummary(summaryTree: ISummaryTreeWithStats): void {
+		const compressor = this.getIdCompressor();
+		if (compressor !== undefined) {
+			addBlobToSummary(
+				summaryTree,
+				idCompressorBlobName,
+				JSON.stringify(compressor.serialize(false)),
+			);
+		}
+	}
 
 	public handleOp(
 		message: unknown,
