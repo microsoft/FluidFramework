@@ -388,8 +388,14 @@ async function main(): Promise<void> {
 	writeFileSync(versionsJsonPath, JSON.stringify(manifest, undefined, 2) + "\n", "utf8");
 	console.log(`\nWrote ${path.relative(pkgRoot, versionsJsonPath)}`);
 
-	const standardVersions = new Set([nMinus1, nMinus2, OCV, ...crossClientVersions]);
-	const fullVersions = new Set([...standardVersions, ...fullAdditional, ...explicitVersions]);
+	const standardVersions = new Set([
+		nMinus1,
+		nMinus2,
+		OCV,
+		...crossClientVersions,
+		...explicitVersions,
+	]);
+	const fullVersions = new Set([...standardVersions, ...fullAdditional]);
 
 	let anyChanged = false;
 

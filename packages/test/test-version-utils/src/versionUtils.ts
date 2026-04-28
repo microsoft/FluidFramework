@@ -96,7 +96,8 @@ export interface CompatVersionsManifest {
 	full: string[];
 	/**
 	 * Explicit versions required by specific tests that aren't covered by the delta-based range.
-	 * Installed in `full/`. HUMAN-MAINTAINED: add here when a test needs a pinned old version.
+	 * Installed in both `standard/` and `full/`. HUMAN-MAINTAINED: add here when a test needs a
+	 * pinned old version.
 	 */
 	explicit?: string[];
 }
@@ -305,17 +306,25 @@ export function checkInstalled(requested: string): { version: string; modulePath
  * @param pkg - Package name to load (e.g. `@fluidframework/container-loader`).
  * @internal
  */
-export const loadPackage = async (modulePath: string, pkg: string): Promise<any> => {
+export const loadPackage = async (
+	modulePath: string,
+	pkg: string,
+	preferredEntrypoint?: "." | `./${string}`,
+): Promise<any> => {
 	// createRequire anchored to the version directory. Node's resolution algorithm walks up
 	// through that directory's node_modules, then the workspace-root node_modules (hoisted), so
 	// we do not need to pass the workspace root separately.
 	// We use require() (via createRequire) rather than import() to avoid the ESM-wrapping overhead
 	// that import() imposes on CJS packages — legacy Fluid packages are CJS and require() is ~10x faster.
+	const requirePath =
+		preferredEntrypoint !== undefined && preferredEntrypoint !== "."
+			? `${pkg}/${preferredEntrypoint.slice(2)}` // e.g. "./internal" → "@scope/pkg/internal"
+			: pkg;
 	const resolveFrom = createRequire(path.join(modulePath, "package.json"));
 	try {
-		return resolveFrom(pkg);
+		return resolveFrom(requirePath);
 	} catch (e) {
-		throw new Error(`Cannot load package "${pkg}" from ${modulePath}: ${e}`);
+		throw new Error(`Cannot load package "${requirePath}" from ${modulePath}: ${e}`);
 	}
 };
 
