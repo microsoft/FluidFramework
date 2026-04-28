@@ -2191,7 +2191,7 @@ export class ContainerRuntime
 		// As it's implemented right now (with async initialization), this will only work for "off" -> "delayed" transitions.
 		// Anything else is too risky, and requires ability to initialize ID compressor synchronously!
 		if (schema.runtime.idCompressorMode !== undefined) {
-			this.loadIdCompressor();
+			this.idCompressorFeature.loadDelayed();
 		}
 	}
 
@@ -2443,10 +2443,6 @@ export class ContainerRuntime
 		this.updateDocumentDirtyState();
 	}
 
-	private loadIdCompressor(): void {
-		this.idCompressorFeature.loadDelayed();
-	}
-
 	private readonly notifyReadOnlyState = (readonly: boolean): void =>
 		this.channelCollection.notifyReadOnlyState(readonly);
 
@@ -2514,7 +2510,7 @@ export class ContainerRuntime
 		);
 
 		if (canSendOps && this.sessionSchema.idCompressorMode === "delayed") {
-			this.loadIdCompressor();
+			this.idCompressorFeature.loadDelayed();
 		}
 
 		this.setConnectionStateCore(canSendOps, clientId);
@@ -3487,7 +3483,7 @@ export class ContainerRuntime
 		wrapSummaryInChannelsTree(summarizeResult);
 		const pathPartsForChildren = [channelsTreeName];
 
-		this.loadIdCompressor();
+		this.idCompressorFeature.loadDelayed();
 
 		this.addContainerStateToSummary(summarizeResult, fullTree, trackState, telemetryContext);
 		return {
