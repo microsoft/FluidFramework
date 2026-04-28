@@ -13,7 +13,7 @@
  * the `postinstall` script in this package's `package.json`), so no runtime installation step
  * is required in tests.
  *
- * The exact resolved versions are recorded in `compat-workspaces/versions.json`, which is
+ * The exact resolved versions are recorded in `compat-workspaces/versions.mjs`, which is
  * maintained by the `update-compat-versions` script and committed to the repository. Tests
  * read this manifest at startup rather than querying the npm registry.
  *
@@ -22,7 +22,7 @@
  * After a version bump, run:
  * `pnpm run update-compat-versions`
  *
- * This regenerates `versions.json` and all per-version `package.json` files, then runs
+ * This regenerates `versions.mjs` and all per-version `package.json` files, then runs
  * `pnpm install --no-frozen-lockfile` in the workspace to update the committed lockfile.
  * Commit all changes produced by the script.
  */
@@ -37,8 +37,16 @@ import { detectVersionScheme, fromInternalScheme } from "@fluid-tools/version-to
 import { assert } from "@fluidframework/core-utils/internal";
 import * as semver from "semver";
 
-// Re-export so existing imports of versionHasMovedSparsedMatrix from versionUtils.ts still work.
-export { versionHasMovedSparsedMatrix } from "./compatPackageList.js";
+/**
+ * Checks if the given version has the SparseMatrix moved to sequence-deprecated.
+ * @internal
+ */
+export function versionHasMovedSparsedMatrix(version: string): boolean {
+	// SparseMatrix was moved to "@fluid-experimental/sequence-deprecated" in "2.0.0-internal.2.0.0"
+	return (
+		version >= "2.0.0-internal.2.0.0" || (!version.includes("internal") && version >= "2.0.0")
+	);
+}
 
 // ---------------------------------------------------------------------------
 // Paths
@@ -46,21 +54,17 @@ export { versionHasMovedSparsedMatrix } from "./compatPackageList.js";
 
 // From compiled lib/, go up one level to reach the package root, then into compat-workspaces/
 const compatWorkspacesDir = fileURLToPath(new URL("../compat-workspaces", import.meta.url));
-const versionsJsonPath = path.join(compatWorkspacesDir, "versions.json");
+const versionsMjsPath = path.join(compatWorkspacesDir, "versions.mjs");
 
 export const fullWorkspaceDir = path.join(compatWorkspacesDir, "full");
 
 // ---------------------------------------------------------------------------
-// versions.json manifest
+// versions.mjs manifest
 // ---------------------------------------------------------------------------
 
 /**
- * Schema for the committed `compat-workspaces/versions.json` file.
- *
- * The `standard` and `full` fields are MACHINE-MAINTAINED by `scripts/updateCompatVersions.ts`.
- * The `explicit` field is HUMAN-MAINTAINED: add versions here when a specific test requires a
- * version that falls outside the delta-based range (e.g. a version where a specific API change
- * was made). The `standard.ocv` value can also be manually adjusted when the OCV policy changes.
+ * Schema for the committed `compat-workspaces/versions.mjs` file.
+ * MACHINE-MAINTAINED by `scripts/updateCompatVersions.ts` — do not edit by hand.
  * @internal
  */
 export interface CompatVersionsManifest {
@@ -89,11 +93,6 @@ export interface CompatVersionsManifest {
 	 * MACHINE-MAINTAINED.
 	 */
 	full: string[];
-	/**
-	 * Explicit versions required by specific tests that aren't covered by the delta-based range.
-	 * Installed in `full/`. HUMAN-MAINTAINED: add here when a test needs a pinned old version.
-	 */
-	explicit?: string[];
 }
 
 let cachedManifest: CompatVersionsManifest | undefined;
@@ -105,9 +104,13 @@ let cachedManifest: CompatVersionsManifest | undefined;
  */
 export function tryReadVersionsManifest(): CompatVersionsManifest | undefined {
 	if (cachedManifest !== undefined) return cachedManifest;
-	if (!existsSync(versionsJsonPath)) return undefined;
-	const raw = JSON.parse(readFileSync(versionsJsonPath, { encoding: "utf8" }));
-	cachedManifest = raw as CompatVersionsManifest;
+	if (!existsSync(versionsMjsPath)) return undefined;
+	// Extract the JSON object from the JS module wrapper (strips the comment header and
+	// `export const manifest = ...;` wrapper written by updateCompatVersions.ts).
+	const raw = readFileSync(versionsMjsPath, { encoding: "utf8" });
+	const start = raw.indexOf("{");
+	const end = raw.lastIndexOf("}");
+	cachedManifest = JSON.parse(raw.slice(start, end + 1)) as CompatVersionsManifest;
 	return cachedManifest;
 }
 
@@ -122,7 +125,6 @@ export function getAllManifestVersions(manifest: CompatVersionsManifest): string
 		manifest.standard.ocv,
 		...(manifest.standard["cross-client"] ?? []),
 		...manifest.full,
-		...(manifest.explicit ?? []),
 	].filter(Boolean);
 }
 
