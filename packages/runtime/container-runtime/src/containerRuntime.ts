@@ -280,9 +280,7 @@ import {
 	electedSummarizerBlobName,
 	type EnqueueSummarizeResult,
 	extractSummaryMetadataMessage,
-	formCreateSummarizerFn,
 	type IBaseSummarizeResult,
-	type IConnectableRuntime,
 	type IContainerRuntimeMetadata,
 	type ICreateContainerMetadata,
 	idCompressorBlobName,
@@ -298,7 +296,6 @@ import {
 	type IRootSummarizerNodeWithGC,
 	type ISerializedElection,
 	isSummariesDisabled,
-	isSummaryOnRequest,
 	type ISubmitSummaryOptions,
 	type ISummarizeResults,
 	type ISummarizerInternalsProvider,
@@ -306,22 +303,16 @@ import {
 	type ISummaryConfiguration,
 	type ISummaryMetadataMessage,
 	metadataBlobName,
-	OrderedClientCollection,
-	OrderedClientElection,
 	recentBatchInfoBlobName,
 	RetriableSummaryError,
 	rootHasIsolatedChannels,
 	type SubmitSummaryResult,
-	type Summarizer,
-	SummarizerClientElection,
 	summarizerClientType,
 	summarizerRequestUrl,
-	SummaryCollection,
-	SummaryManager,
+	SummarizerSubsystem,
 	validateSummaryHeuristicConfiguration,
 	wrapSummaryInChannelsTree,
 } from "./summary/index.js";
-import { Throttler, formExponentialFn } from "./throttler.js";
 
 /**
  * A {@link ContainerExtension}'s factory function as stored in extension map.
@@ -1441,13 +1432,12 @@ export class ContainerRuntime
 	// internal logger for ContainerRuntime. Use this.logger for stores, summaries, etc.
 	private readonly mc: MonitoringContext;
 
-	private summarizerClientElection?: SummarizerClientElection;
 	/**
-	 * summaryManager will only be created if this client is permitted to spawn a summarizing client
-	 * It is created only by interactive client, i.e. summarizer client, as well as non-interactive bots
-	 * do not create it (see SummarizerClientElection.clientDetailsPermitElection() for details)
+	 * Owns summary-related machinery: SummaryManager, SummarizerClientElection, and (on
+	 * summarizer clients) the Summarizer itself. Construction happens lazily when the
+	 * `loadFromSnapshot` lifecycle phase fires; until then, all accessors return undefined.
 	 */
-	private summaryManager?: SummaryManager;
+	private readonly summarizerSubsystem: SummarizerSubsystem;
 
 	private readonly summarizerNode: IRootSummarizerNodeWithGC;
 
@@ -1497,7 +1487,7 @@ export class ContainerRuntime
 	 * clientId of parent (non-summarizing) container that owns summarizer container
 	 */
 	public get summarizerClientId(): string | undefined {
-		return this.summarizerClientElection?.electedClientId;
+		return this.summarizerSubsystem.electedClientId;
 	}
 
 	private _disposed = false;
@@ -1512,13 +1502,6 @@ export class ContainerRuntime
 
 	private readonly signalTelemetryManager = new SignalTelemetryManager();
 
-	/**
-	 * Summarizer is responsible for coordinating when to send generate and send summaries.
-	 * It is the main entry point for summary work.
-	 * It is created only by summarizing container (i.e. one with clientType === "summarizer")
-	 */
-
-	private _summarizer?: Summarizer;
 	private readonly deltaScheduler: DeltaScheduler;
 	private readonly inboundBatchAggregator: InboundBatchAggregator;
 	private readonly blobManager: BlobManager;
@@ -2182,9 +2165,28 @@ export class ContainerRuntime
 		ReportOpPerfTelemetry(this.clientId, this._deltaManager, this, this.baseLogger);
 		BindBatchTracker(this, this.baseLogger);
 
+		this.summarizerSubsystem = new SummarizerSubsystem({
+			runtime: this,
+			host: this.host,
+			handleContext: this.handleContext,
+			baseLogger: this.baseLogger,
+			mc: this.mc,
+			getSummaryConfiguration: () => this.summaryConfiguration,
+			summaryRuntimeOptions: this.runtimeOptions.summaryOptions,
+			isSummarizerClient: this.isSummarizerClient,
+			clientDetails: this.clientDetails,
+			deltaManager: this.deltaManager,
+			innerDeltaManager: this.innerDeltaManager,
+			quorum: this._quorum,
+			electedSummarizerData: this.electedSummarizerData,
+			loader: context.loader,
+			emit: (event: string, ...args: unknown[]) => this.emit(event, ...args),
+			summariesDisabled: this.summariesDisabled,
+		});
+
 		this.entryPoint = new LazyPromise(async () => {
-			if (this._summarizer !== undefined) {
-				return this._summarizer;
+			if (this.summarizerSubsystem.summarizer !== undefined) {
+				return this.summarizerSubsystem.summarizer;
 			}
 			return provideEntryPoint(this);
 		});
@@ -2270,144 +2272,9 @@ export class ContainerRuntime
 			assert(this.pendingIdCompressorOps.length === 0, 0x8ec /* no pending ops */);
 		}
 
-		await this.initializeSummarizer(loader);
+		// Summarizer initialization is driven by the SummarizerSubsystem registering for
+		// the `loadFromSnapshot` lifecycle phase on the host. No call needed from here.
 		await this.garbageCollector.initializeBaseState();
-	}
-
-	private async initializeSummarizer(loader: ILoader): Promise<void> {
-		if (this.summariesDisabled) {
-			this.mc.logger.sendTelemetryEvent({ eventName: "SummariesDisabled" });
-			return;
-		}
-
-		const { maxOpsSinceLastSummary = 0, initialSummarizerDelayMs = 0 } = isSummariesDisabled(
-			this.summaryConfiguration,
-		)
-			? {}
-			: {
-					...this.summaryConfiguration,
-					initialSummarizerDelayMs:
-						// back-compat: initialSummarizerDelayMs was moved from ISummaryRuntimeOptions
-						//   to ISummaryConfiguration in 0.60.
-						this.runtimeOptions.summaryOptions.initialSummarizerDelayMs ??
-						this.summaryConfiguration.initialSummarizerDelayMs,
-				};
-
-		const summaryCollection: SummaryCollection = new SummaryCollection(
-			this.deltaManager,
-			this.baseLogger,
-		);
-		const onRequestMode = isSummaryOnRequest(this.summaryConfiguration);
-
-		if (this.isSummarizerClient) {
-			// We want to dynamically import any thing inside summaryDelayLoadedModule module only when we are the summarizer client,
-			// so that all non summarizer clients don't have to load the code inside this module.
-			const module = await import(
-				/* webpackChunkName: "summarizerDelayLoadedModule" */ "./summary/index.js"
-			);
-			this._summarizer = new module.Summarizer(
-				this /* ISummarizerRuntime */,
-				() => this.summaryConfiguration,
-				this /* ISummarizerInternalsProvider */,
-				this.handleContext,
-				summaryCollection,
-
-				async (runtime: IConnectableRuntime) =>
-					module.RunWhileConnectedCoordinator.create(
-						runtime,
-						// Summarization runs in summarizer client and needs access to the real (non-proxy) active
-						// information. The proxy delta manager would always return false for summarizer client.
-						() => this.innerDeltaManager.active,
-					),
-			);
-		} else if (
-			!onRequestMode &&
-			SummarizerClientElection.clientDetailsPermitElection(this.clientDetails)
-		) {
-			// Only create a SummaryManager and SummarizerClientElection
-			// if summaries are enabled and we are not the summarizer client.
-			const orderedClientLogger = createChildLogger({
-				logger: this.baseLogger,
-				namespace: "OrderedClientElection",
-			});
-			const orderedClientCollection = new OrderedClientCollection(
-				orderedClientLogger,
-				this.innerDeltaManager,
-				this._quorum,
-			);
-			const orderedClientElectionForSummarizer = new OrderedClientElection(
-				orderedClientLogger,
-				orderedClientCollection,
-				this.electedSummarizerData ?? this.innerDeltaManager.lastSequenceNumber,
-				SummarizerClientElection.isClientEligible,
-				this.mc.config.getBoolean(
-					"Fluid.ContainerRuntime.OrderedClientElection.EnablePerformanceEvents",
-				),
-			);
-
-			this.summarizerClientElection = new SummarizerClientElection(
-				orderedClientLogger,
-				summaryCollection,
-				orderedClientElectionForSummarizer,
-				maxOpsSinceLastSummary,
-			);
-
-			const defaultAction = (): void => {
-				if (summaryCollection.opsSinceLastAck > maxOpsSinceLastSummary) {
-					this.mc.logger.sendTelemetryEvent({
-						eventName: "SummaryStatus:Behind",
-						opsWithoutSummary: summaryCollection.opsSinceLastAck,
-					});
-					// unregister default to no log on every op after falling behind
-					// and register summary ack handler to re-register this handler
-					// after successful summary
-					summaryCollection.once(MessageType.SummaryAck, () => {
-						this.mc.logger.sendTelemetryEvent({
-							eventName: "SummaryStatus:CaughtUp",
-						});
-						// we've caught up, so re-register the default action to monitor for
-						// falling behind, and unregister ourself
-						summaryCollection.on("default", defaultAction);
-					});
-					summaryCollection.off("default", defaultAction);
-				}
-			};
-
-			summaryCollection.on("default", defaultAction);
-
-			// Create the SummaryManager and mark the initial state
-			this.summaryManager = new SummaryManager(
-				this.summarizerClientElection,
-				this, // IConnectedState
-				summaryCollection,
-				this.baseLogger,
-				formCreateSummarizerFn(loader),
-				new Throttler(
-					60 * 1000, // 60 sec delay window
-					30 * 1000, // 30 sec max delay
-					// throttling function increases exponentially (0ms, 40ms, 80ms, 160ms, etc)
-					formExponentialFn({ coefficient: 20, initialDelay: 0 }),
-				),
-				{
-					initialDelayMs: initialSummarizerDelayMs,
-				},
-			);
-			// Forward events from SummaryManager
-			for (const eventName of [
-				"summarize",
-				"summarizeAllAttemptsFailed",
-				"summarizerStop",
-				"summarizerStart",
-				"summarizerStartupFailed",
-				"summarizeTimeout",
-			] as const) {
-				this.summaryManager.on(eventName, (...args: unknown[]) => {
-					this.emit(eventName, ...args);
-				});
-			}
-
-			this.summaryManager.start();
-		}
 	}
 
 	public dispose(error?: Error): void {
@@ -2426,11 +2293,8 @@ export class ContainerRuntime
 			error,
 		);
 
-		if (this.summaryManager !== undefined) {
-			this.summaryManager.dispose();
-		}
+		this.summarizerSubsystem.dispose();
 		this.garbageCollector.dispose();
-		this._summarizer?.dispose();
 		this.channelCollection.dispose();
 		this.pendingStateManager.dispose();
 		this.inboundBatchAggregator.dispose();
@@ -2516,7 +2380,7 @@ export class ContainerRuntime
 			// another snapshot from which the summarizer loaded and it is behind, then just give up as
 			// the summarizer state is not up to date.
 			// This should be a recoverable scenario and shouldn't happen as we should process the ack first.
-			if (this._summarizer !== undefined) {
+			if (this.summarizerSubsystem.summarizer !== undefined) {
 				throw new Error("Summarizer client behind, loaded newer snapshot with loadingGroupId");
 			}
 
@@ -2583,11 +2447,11 @@ export class ContainerRuntime
 			const id = parser.pathParts[0];
 
 			if (id === summarizerRequestUrl && parser.pathParts.length === 1) {
-				if (this._summarizer !== undefined) {
+				if (this.summarizerSubsystem.summarizer !== undefined) {
 					return {
 						status: 200,
 						mimeType: "fluid/object",
-						value: this._summarizer,
+						value: this.summarizerSubsystem.summarizer,
 					};
 				}
 				return create404Response(request);
@@ -2723,10 +2587,9 @@ export class ContainerRuntime
 			addBlobToSummary(summaryTree, aliasBlobName, JSON.stringify([...dataStoreAliases]));
 		}
 
-		if (this.summarizerClientElection) {
-			const electedSummarizerContent = JSON.stringify(
-				this.summarizerClientElection?.serialize(),
-			);
+		const election = this.summarizerSubsystem.summarizerClientElection;
+		if (election !== undefined) {
+			const electedSummarizerContent = JSON.stringify(election.serialize());
 			addBlobToSummary(summaryTree, electedSummarizerBlobName, electedSummarizerContent);
 		}
 
@@ -4658,7 +4521,7 @@ export class ContainerRuntime
 			this.summarizerNode.clearSummary();
 
 			// ! This needs to happen before we resume inbound queues to ensure heuristics are tracked correctly
-			this._summarizer?.recordSummaryAttempt?.(summaryRefSeqNum);
+			this.summarizerSubsystem.summarizer?.recordSummaryAttempt?.(summaryRefSeqNum);
 
 			// Restart the delta manager
 			this._deltaManager.inbound.resume();
@@ -4976,7 +4839,7 @@ export class ContainerRuntime
 		{ batchId, staged, squash }: PendingBatchResubmitMetadata,
 	): void {
 		assert(
-			this._summarizer === undefined,
+			this.summarizerSubsystem.summarizer === undefined,
 			0x8f2 /* Summarizer never reconnects so should never resubmit */,
 		);
 
@@ -5271,7 +5134,7 @@ export class ContainerRuntime
 		}
 
 		await delay(this.closeSummarizerDelayMs);
-		this._summarizer?.stop("latestSummaryStateStale");
+		this.summarizerSubsystem.summarizer?.stop("latestSummaryStateStale");
 		this.disposeFn();
 	}
 
@@ -5363,28 +5226,28 @@ export class ContainerRuntime
 	};
 
 	public summarizeOnDemand(options: IOnDemandSummarizeOptions): ISummarizeResults {
-		if (this._summarizer !== undefined) {
-			return this._summarizer.summarizeOnDemand(options);
-		} else if (this.summaryManager === undefined) {
+		if (this.summarizerSubsystem.summarizer !== undefined) {
+			return this.summarizerSubsystem.summarizer.summarizeOnDemand(options);
+		} else if (this.summarizerSubsystem.summaryManager === undefined) {
 			// If we're not the summarizer, and we don't have a summaryManager, we expect that
 			// disableSummaries is turned on. We are throwing instead of returning a failure here,
 			// because it is a misuse of the API rather than an expected failure.
 			throw new UsageError(`Can't summarize, disableSummaries: ${this.summariesDisabled}`);
 		} else {
-			return this.summaryManager.summarizeOnDemand(options);
+			return this.summarizerSubsystem.summaryManager.summarizeOnDemand(options);
 		}
 	}
 
 	public enqueueSummarize(options: IEnqueueSummarizeOptions): EnqueueSummarizeResult {
-		if (this._summarizer !== undefined) {
-			return this._summarizer.enqueueSummarize(options);
-		} else if (this.summaryManager === undefined) {
+		if (this.summarizerSubsystem.summarizer !== undefined) {
+			return this.summarizerSubsystem.summarizer.enqueueSummarize(options);
+		} else if (this.summarizerSubsystem.summaryManager === undefined) {
 			// If we're not the summarizer, and we don't have a summaryManager, we expect that
 			// generateSummaries is turned off. We are throwing instead of returning a failure here,
 			// because it is a misuse of the API rather than an expected failure.
 			throw new UsageError(`Can't summarize, disableSummaries: ${this.summariesDisabled}`);
 		} else {
-			return this.summaryManager.enqueueSummarize(options);
+			return this.summarizerSubsystem.summaryManager.enqueueSummarize(options);
 		}
 	}
 
