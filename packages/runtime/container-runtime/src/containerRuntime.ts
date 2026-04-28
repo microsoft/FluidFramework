@@ -1492,7 +1492,7 @@ export class ContainerRuntime
 	private readonly useDeltaManagerOpsProxy: boolean;
 	private readonly closeSummarizerDelayMs: number;
 
-	private readonly signalTelemetryManager = new SignalTelemetryManager();
+	private readonly signalTelemetryManager: SignalTelemetryManager;
 
 	private readonly blobManager: BlobManager;
 	private readonly pendingStateManager: PendingStateManager;
@@ -2054,6 +2054,8 @@ export class ContainerRuntime
 		);
 
 		this.features.add(new RuntimeOpsFeature((message) => this.submit(message)));
+
+		this.signalTelemetryManager = this.features.add(new SignalTelemetryManager());
 
 		const legacySendBatchFn = makeLegacySendBatchFn(submitFn, this.innerDeltaManager);
 
@@ -2741,10 +2743,8 @@ export class ContainerRuntime
 				this.attachState === AttachState.Attached,
 				0x3cd /* Connection is possible only if container exists in storage */,
 			);
-			if (canSendOpsChanged) {
-				this.signalTelemetryManager.resetTracking();
-			}
 		}
+		// signalTelemetryManager handles its own reset via onConnectionStateChange.
 
 		// Fail while disconnected
 		if (reconnection) {
