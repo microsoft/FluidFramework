@@ -212,7 +212,7 @@ function stubChannelCollection(
 			setConnectionState: sandbox.stub(),
 			reSubmitContainerMessage: reSubmitFake,
 			rollbackDataStoreOp: rollbackDataStoreOpStub,
-			notifyStagingMode: sandbox.stub(),
+			onStagingModeChange: sandbox.stub(),
 			dispose: sandbox.stub(),
 		},
 	);
@@ -4360,8 +4360,8 @@ describe("Runtime", () => {
 
 				const controls = containerRuntime.enterStagingMode();
 				assert(
-					channelCollectionStub.notifyStagingMode.calledOnceWithExactly(true),
-					"Expected notifyStagingMode to be called with true",
+					channelCollectionStub.onStagingModeChange.calledOnceWithExactly(true),
+					"Expected onStagingModeChange to be called with true",
 				);
 
 				// Entering staging mode triggers a flush, so we should see the pre-staging op sent,
@@ -4392,8 +4392,8 @@ describe("Runtime", () => {
 					"Unexpected args for reSubmit",
 				);
 				assert(
-					channelCollectionStub.notifyStagingMode.getCall(1)?.calledWithExactly(false),
-					"Expected notifyStagingMode to be called with false on the second call",
+					channelCollectionStub.onStagingModeChange.getCall(1)?.calledWithExactly(false),
+					"Expected onStagingModeChange to be called with false on the second call",
 				);
 
 				assert.equal(
@@ -4441,8 +4441,8 @@ describe("Runtime", () => {
 					"Unexpected args for rollback",
 				);
 				assert(
-					channelCollectionStub.notifyStagingMode.getCall(1)?.calledWithExactly(false),
-					"Expected notifyStagingMode to be called with false on the second call",
+					channelCollectionStub.onStagingModeChange.getCall(1)?.calledWithExactly(false),
+					"Expected onStagingModeChange to be called with false on the second call",
 				);
 
 				assert.equal(

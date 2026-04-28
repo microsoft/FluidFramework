@@ -220,6 +220,7 @@ import {
 	type IGarbageCollector,
 	type IGarbageCollectionRuntime,
 } from "./gc/index.js";
+import { IdCompressorFeature } from "./idCompressorFeature.js";
 import { InboundBatchAggregator } from "./inboundBatchAggregator.js";
 import {
 	ContainerMessageType,
@@ -2036,6 +2037,13 @@ export class ContainerRuntime
 			),
 		);
 
+		this.features.add(
+			new IdCompressorFeature(
+				(contents, savedOp) => this.processIdCompressorMessages(contents, savedOp),
+				() => this._idCompressor !== undefined,
+			),
+		);
+
 		const legacySendBatchFn = makeLegacySendBatchFn(submitFn, this.innerDeltaManager);
 
 		this.outbox = new Outbox({
@@ -2674,15 +2682,6 @@ export class ContainerRuntime
 
 		// Residual types not yet owned by a feature.
 		switch (opContents.type) {
-			case ContainerMessageType.IdAllocation: {
-				// IDs allocation ops in stashed state are ignored because the tip state of the compressor
-				// is serialized into the pending state.
-				assert(
-					this.sessionSchema.idCompressorMode !== undefined,
-					0x8f1 /* ID compressor should be in use */,
-				);
-				return;
-			}
 			case ContainerMessageType.Rejoin: {
 				throw new Error("rejoin not expected here");
 			}
@@ -3242,11 +3241,6 @@ export class ContainerRuntime
 
 		// Residual message types not yet owned by a feature.
 		switch (message.type) {
-			case ContainerMessageType.IdAllocation: {
-				const contents = messagesContent.map((c) => c.contents);
-				this.processIdCompressorMessages(contents as IdCreationRange[], savedOp);
-				return;
-			}
 			case ContainerMessageType.ChunkedOp: {
 				// From observability POV, we should not expose the rest of the system (including "op" events on object) to these messages.
 				// Also resetReconnectCount() would be wrong - see comment that was there before this change was made.
@@ -3554,7 +3548,7 @@ export class ContainerRuntime
 								).length,
 							},
 						});
-						this.channelCollection.notifyStagingMode(false);
+						this.features.onStagingModeChange(false);
 					},
 				);
 			} catch (error) {
@@ -3596,7 +3590,7 @@ export class ContainerRuntime
 		};
 
 		this.stageControls = stageControls;
-		this.channelCollection.notifyStagingMode(true);
+		this.features.onStagingModeChange(true);
 		if (!silent) {
 			try {
 				this.emit("stagingModeChanged", { inStagingMode: true });
@@ -4845,11 +4839,6 @@ export class ContainerRuntime
 
 		// Residual types not yet owned by a feature.
 		switch (message.type) {
-			case ContainerMessageType.IdAllocation: {
-				// Allocation ops are never resubmitted/rebased — the runtime submits a fresh
-				// allocation range covering all pending IDs before invoking pending replay.
-				return;
-			}
 			case ContainerMessageType.Rejoin: {
 				this.submit(message);
 				return;

@@ -1307,7 +1307,7 @@ export class ChannelCollection
 	 *
 	 * @param staging - A boolean indicating whether the container is in staging mode.
 	 */
-	public notifyStagingMode(staging: boolean): void {
+	public onStagingModeChange(staging: boolean): void {
 		for (const [fluidDataStoreId, context] of this.contexts) {
 			try {
 				context.notifyStagingMode(staging);

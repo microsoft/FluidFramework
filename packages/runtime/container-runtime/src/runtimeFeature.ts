@@ -72,6 +72,16 @@ export interface IRuntimeFeature {
 	) => void;
 
 	/**
+	 * Called when the runtime enters or exits staging mode. Features that
+	 * change behavior under staging (e.g. data store contexts going read-only)
+	 * subscribe here.
+	 *
+	 * @param active - True when staging mode is being entered; false when it
+	 * is being exited (committed or discarded).
+	 */
+	readonly onStagingModeChange?: (active: boolean) => void;
+
+	/**
 	 * Called once when the runtime is being disposed. Features should release
 	 * resources synchronously.
 	 */

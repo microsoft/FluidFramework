@@ -80,6 +80,12 @@ export class RuntimeFeatureCollection implements Required<IRuntimeFeature> {
 		}
 	}
 
+	public onStagingModeChange(active: boolean): void {
+		for (const f of this.features) {
+			f.onStagingModeChange?.(active);
+		}
+	}
+
 	public dispose(): void {
 		for (const f of this.features) {
 			f.dispose?.();
