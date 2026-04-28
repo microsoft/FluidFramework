@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert, fail } from "@fluidframework/core-utils/internal";
+import { assert, fail, unreachableCase } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import { BTree } from "@tylerbu/sorted-btree-es6";
 import { lt } from "semver-ts";
@@ -3066,6 +3066,7 @@ class RebaseNodeManagerI implements RebaseNodeManager {
 					undefined,
 					this.table.newChange.rootNodes,
 					(_id, length) => ({ value: this.fieldId, length }),
+					() => fail("Unexpected rename collision"),
 				);
 			}
 		}
@@ -4523,34 +4524,6 @@ function composeRootRenames(
 	composedRoots: RootNodeTable,
 ): void {
 	for (const renameEntry of change2.rootNodes.oldToNewId.entries()) {
-		// Notes on the validity of overwriting apparently conflicting renames:
-		// It is possible for `change1` and `change2` to both have a rename from the same root ID,
-		// or for both to have a rename to the same root ID.
-		// These cases should only be possible when `change1` contains a rollback of a revision in `change2`,
-		// as otherwise detach IDs are not reused.
-		// These scenarios can be divided into two classes.
-		//
-		// 1. The conflicting renames refer to different nodes
-		// `change1` may rename node A to `renameEntry.value`, while `change2` renames node B to the same value.
-		// This is only legal if `change2` also renames node A to some other ID.
-		// If we process `change2`'s rename of node A before its rename of node B, we will not encounter a conflict.
-		// If we process the rename of node B first, we can safely overwrite change1's rename of node A,
-		// as it will be recovered when processing `change2`'s rename of node A.
-		//
-		// This case can occur when `change1` contains a rollback of an optional field clear,
-		// and `change2` contains a rebased version of that clear which detaches a different node.
-		//
-		// 2. The conflicting renames refer to the same node
-		// `change2` may rename node A from `renameEntry.start`, while `change1` also renames node A from `renameEntry.start`.
-		// This should only be possible if `change1` attaches node A after its rename, and `change2` detaches it before its rename.
-		// We can safely overwrite the first rename, as we `composeAttachDetach` should be called for this node,
-		// and the correct rename will be created then (and then overwrite this rename again in `applyPendingComposeRenames`).
-		//
-		// This case can happen when both changes contains a composite move,
-		// and the detach of `change1`'s move is a rollback of the detach part of `change2`'s composite move.
-		// The moves in both `change1` and `change2` will have the same detach ID, but different renames for that ID.
-		// For an example of the above scenario,
-		// see the ModularChangeFamily integration composition test "[return2, move1] and [move2, move3]".
 		composeRootRename(
 			composedRoots,
 			renameEntry.start,
@@ -4559,8 +4532,52 @@ function composeRootRenames(
 			change1,
 			change2,
 			RenameSource.Change2,
-			RenameCollisionPolicy.Overwrite,
+			handleComposeRenameCollision,
 		);
+	}
+}
+
+function handleComposeRenameCollision(
+	collisionType: RenameCollisionType,
+): RenameCollisionPolicy {
+	// It is possible for `change1` and `change2` to both have a rename from the same root ID,
+	// or for both to have a rename to the same root ID.
+	// These cases should only be possible when `change1` contains a rollback of a revision in `change2`,
+	// as otherwise detach IDs are not reused.
+	switch (collisionType) {
+		case RenameCollisionType.Source: {
+			// `change1` and `change2` both have renames from the same ID.
+			// They must be renaming different nodes, with `change1` renaming node A and `change2` renaming node B.
+			// This is only legal if `change2` detaches node B before renaming it.
+			// `change1` must attach node B, otherwise the composition would not be representable.
+			// We will get the correct rename for node B in `applyPendingComposeRenames`,
+			// so here we can safely ignore the rename for B, and preserve the rename for A.
+			return RenameCollisionPolicy.DropNew;
+		}
+		case RenameCollisionType.Destination: {
+			// `change1` and `change2` both have renames to the same ID.
+			// This can happen in two cases:
+			//  1) `change1` and `change2` both rename the same node.
+			// 		`change2` may rename the node from `renameEntry.start`, while `change1` also renames the node from `renameEntry.start`.
+			// 		This should only be possible if `change1` attaches the node after its rename, and `change2` detaches it before its rename.
+			// 		We can safely overwrite the first rename, as we `composeAttachDetach` should be called for this node,
+			// 		and the correct rename will be created then (and then overwrite this rename again in `applyPendingComposeRenames`).
+			//
+			// 		This case can happen when both changes contains a composite move,
+			// 		and the detach of `change1`'s move is a rollback of the detach part of `change2`'s composite move.
+			// 		The moves in both `change1` and `change2` will have the same detach ID, but different renames for that ID.
+			// 		For an example of the above scenario,
+			// 		see the ModularChangeFamily integration composition test "[return2, move1] and [move2, move3]".
+			// 	2) `change1` renames node A, and `change2` renames a different node B.
+			// 		This is only legal if `change2` also renames node A to some other ID.
+			// 		If we process `change2`'s rename of node A before its rename of node B, we will not encounter a conflict.
+			// 		If we process the rename of node B first, we can safely overwrite change1's rename of node A,
+			// 		as it will be recovered when processing `change2`'s rename of node A.
+			return RenameCollisionPolicy.OverwriteOld;
+		}
+		default: {
+			unreachableCase(collisionType);
+		}
 	}
 }
 
@@ -4580,7 +4597,7 @@ function applyPendingComposedRenames(
 			change1,
 			change2,
 			RenameSource.AttachDetach,
-			RenameCollisionPolicy.Error,
+			(collisionType: RenameCollisionType) => fail("Unexpected rename collision"),
 		);
 	}
 
@@ -4801,9 +4818,14 @@ enum RenameSource {
 	AttachDetach,
 }
 
+enum RenameCollisionType {
+	Source,
+	Destination,
+}
+
 enum RenameCollisionPolicy {
-	Error,
-	Overwrite,
+	DropNew,
+	OverwriteOld,
 }
 
 // XXX: Break this function into smaller pieces
@@ -4835,7 +4857,7 @@ function insertRootRename(
 		oldId: ChangeAtomId,
 		count: number,
 	) => RangeQueryResult<FieldId | undefined>,
-	collisionPolicy: RenameCollisionPolicy = RenameCollisionPolicy.Error,
+	getCollisionPolicy: (collisionType: RenameCollisionType) => RenameCollisionPolicy,
 ): void {
 	let countProcessed = count;
 
@@ -4868,79 +4890,29 @@ function insertRootRename(
 	const detachLocationEntry = getDetachLocation(composedOldId, countProcessed);
 	countProcessed = detachLocationEntry.length;
 
-	// Beyond this point we do not make new queries which would change `countProcessed`.
-	// Now that we know the range of IDs we're processing, we apply edits to the table.
-	if (!areEqualChangeAtomIds(composedOldId, oldId)) {
-		// The rename we're inserting composed with a rename to `composedOldId`.
-		// We delete that existing rename here before adding the composed entry.
-		deleteNodeRenameFrom(table, composedOldId, countProcessed);
-	}
-
-	if (!areEqualChangeAtomIds(composedNewId, newId)) {
-		// The rename we're inserting composed with a rename from `composedNewId`.
-		// We delete that existing rename here before adding the composed entry.
-		deleteNodeRenameTo(table, composedNewId, countProcessed);
-	}
-
-	if (collisionPolicy === RenameCollisionPolicy.Overwrite) {
-		deleteNodeRenameFrom(table, composedOldId, countProcessed);
-		deleteNodeRenameTo(table, composedNewId, countProcessed);
-	}
-
-	addNodeRename(
-		table,
+	const outputDetachEntry = getOutputDetachLocation(
 		composedOldId,
 		composedNewId,
 		countProcessed,
-		detachLocationEntry.value,
 	);
+	countProcessed = outputDetachEntry.length;
 
-	if (areEqualChangeAtomIds(composedOldId, composedNewId)) {
-		// The renames cancelling out implies that the detach location of the root is not changed by the composed changeset.
-		if (!areEqualChangeAtomIds(composedOldId, oldId)) {
-			// We're removing a rename from `composedOldId` to `oldId`,
-			// so we also remove any output detach location listed under `oldId`.
-			table.outputDetachLocations.delete(oldId, countProcessed);
-		}
+	const renameToOldId = areEqualChangeAtomIds(oldId, composedOldId) ? undefined : oldId;
+	const firstRenameId =
+		intermediateRenameEntry.value ?? renameToOldId ?? newIntermediateId ?? newId;
 
-		if (!areEqualChangeAtomIdOpts(composedNewId, newId)) {
-			// We're removing a rename from `newId` to `composedNewId`,
-			// so we also remove any output detach location listed under `composedNewId`.
-			table.outputDetachLocations.delete(composedNewId, countProcessed);
-		}
-	} else {
-		if (!areEqualChangeAtomIds(composedOldId, oldId)) {
-			// We previously had a rename from `composedOldId` to `oldId`,
-			// so there may have been an output detach location for `oldId`,
-			// We remove that entry, since the final output ID for that root is now `composedNewId`.
-			table.outputDetachLocations.delete(oldId, countProcessed);
-		}
-
-		const outputDetachLocationEntry = getOutputDetachLocation(
-			composedOldId,
-			composedNewId,
-			countProcessed,
-		);
-		countProcessed = outputDetachLocationEntry.length;
-
-		if (outputDetachLocationEntry.value !== undefined) {
-			table.outputDetachLocations.set(
-				composedNewId,
-				countProcessed,
-				outputDetachLocationEntry.value,
-			);
-		}
-
-		const renameToOldId = areEqualChangeAtomIds(oldId, composedOldId) ? undefined : oldId;
-		const firstRenameId =
-			intermediateRenameEntry.value ?? renameToOldId ?? newIntermediateId ?? newId;
-		if (!areEqualChangeAtomIds(firstRenameId, composedNewId)) {
-			table.firstIntermediateRenames.set(composedOldId, countProcessed, firstRenameId);
-		}
-	}
-
-	tryRemoveDetachLocation(table, composedOldId, countProcessed);
-	tryRemoveDetachLocation(table, oldId, countProcessed);
+	countProcessed = applyComposedRename(
+		table,
+		composedOldId,
+		oldId,
+		newId,
+		composedNewId,
+		countProcessed,
+		detachLocationEntry.value,
+		outputDetachEntry.value,
+		firstRenameId,
+		getCollisionPolicy,
+	);
 
 	const countRemaining = count - countProcessed;
 	if (countRemaining > 0) {
@@ -4959,9 +4931,105 @@ function insertRootRename(
 			renamesBefore,
 			renamesAfter,
 			getDetachLocation,
-			collisionPolicy,
+			getCollisionPolicy,
 		);
 	}
+}
+
+function applyComposedRename(
+	table: RootNodeTable,
+	composedOldId: ChangeAtomId,
+	oldId: ChangeAtomId,
+	newId: ChangeAtomId,
+	composedNewId: ChangeAtomId,
+	count: number,
+	detachLocation: FieldId | undefined,
+	outputDetachLocation: FieldId | undefined,
+	firstRenameId: ChangeAtomId,
+	getCollisionPolicy: (collisionType: RenameCollisionType) => RenameCollisionPolicy,
+): number {
+	let countProcessed = count;
+	const existingRenameEntryFromOld = table.oldToNewId.getFirst(composedOldId, countProcessed);
+	countProcessed = existingRenameEntryFromOld.length;
+
+	const existingRenameEntryToNew = table.newToOldId.getFirst(composedNewId, countProcessed);
+	countProcessed = existingRenameEntryToNew.length;
+
+	// Beyond this point we do not make new queries which would change `countProcessed`.
+	// Now that we know the range of IDs we're processing, we apply edits to the table.
+	if (!areEqualChangeAtomIds(composedOldId, oldId)) {
+		// The rename we're inserting composed with a rename from `composedOldId`.
+		// We delete that existing rename here before adding the composed entry.
+		deleteNodeRenameFrom(table, composedOldId, countProcessed);
+
+		// We remove any existing output detach location entry, since the final output ID for this root is now `composedNewId`.
+		table.outputDetachLocations.delete(oldId, countProcessed);
+	}
+
+	if (!areEqualChangeAtomIds(composedNewId, newId)) {
+		// The rename we're inserting composed with a rename from `composedNewId`.
+		// We delete that existing rename here before adding the composed entry.
+		deleteNodeRenameTo(table, composedNewId, countProcessed);
+		table.outputDetachLocations.delete(composedNewId, countProcessed);
+	}
+
+	if (areEqualChangeAtomIds(composedOldId, composedNewId)) {
+		return countProcessed;
+	}
+
+	if (
+		existingRenameEntryFromOld.value !== undefined &&
+		!areEqualChangeAtomIds(existingRenameEntryFromOld.value, oldId) &&
+		!areEqualChangeAtomIds(existingRenameEntryFromOld.value, composedNewId)
+	) {
+		const policy = getCollisionPolicy(RenameCollisionType.Source);
+		switch (policy) {
+			case RenameCollisionPolicy.OverwriteOld: {
+				deleteNodeRenameFrom(table, composedOldId, countProcessed);
+				break;
+			}
+			case RenameCollisionPolicy.DropNew: {
+				return countProcessed;
+			}
+			default: {
+				unreachableCase(policy);
+			}
+		}
+	}
+
+	if (
+		existingRenameEntryToNew.value !== undefined &&
+		!areEqualChangeAtomIds(existingRenameEntryToNew.value, newId) &&
+		!areEqualChangeAtomIds(existingRenameEntryToNew.value, composedOldId)
+	) {
+		const policy = getCollisionPolicy(RenameCollisionType.Destination);
+		switch (policy) {
+			case RenameCollisionPolicy.OverwriteOld: {
+				deleteNodeRenameTo(table, composedNewId, countProcessed);
+				break;
+			}
+			case RenameCollisionPolicy.DropNew: {
+				return countProcessed;
+			}
+			default: {
+				unreachableCase(policy);
+			}
+		}
+	}
+
+	addNodeRename(table, composedOldId, composedNewId, countProcessed, detachLocation);
+
+	if (outputDetachLocation !== undefined) {
+		table.outputDetachLocations.set(composedNewId, countProcessed, outputDetachLocation);
+	}
+
+	if (!areEqualChangeAtomIds(firstRenameId, composedNewId)) {
+		table.firstIntermediateRenames.set(composedOldId, countProcessed, firstRenameId);
+	}
+
+	tryRemoveDetachLocation(table, composedOldId, countProcessed);
+	tryRemoveDetachLocation(table, oldId, countProcessed);
+	return countProcessed;
 }
 
 function composeRootRename(
@@ -4972,7 +5040,7 @@ function composeRootRename(
 	change1: ModularChangeset,
 	change2: ModularChangeset,
 	renameSource: RenameSource,
-	collisionPolicy: RenameCollisionPolicy,
+	getCollisionPolicy: (collisionType: RenameCollisionType) => RenameCollisionPolicy,
 ): void {
 	// If the rename is from change2, we don't want to compose it with other renames from change2.
 	// Note that a single changeset can have renames which would appear to compose with each other.
@@ -5096,7 +5164,7 @@ function composeRootRename(
 			change1.rootNodes,
 			renamesAfter,
 			getDetachLocation,
-			collisionPolicy,
+			getCollisionPolicy,
 		);
 	}
 }

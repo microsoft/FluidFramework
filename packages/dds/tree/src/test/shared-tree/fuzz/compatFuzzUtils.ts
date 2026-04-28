@@ -19,7 +19,7 @@ import type {
 } from "@fluidframework/datastore-definitions/internal";
 import type { MinimumVersionForCollab } from "@fluidframework/runtime-definitions/internal";
 
-import { ITree } from "../../../simple-tree/index.js";
+import { ITree, type NodeBuilderData } from "../../../simple-tree/index.js";
 import { configuredSharedTree, type ISharedTree } from "../../../treeFactory.js";
 import { validateFuzzTreeConsistency } from "../../utils.js";
 
@@ -34,10 +34,13 @@ import {
 	defaultTreePackageStatics,
 	deterministicIdCompressorFactory,
 	failureDirectory,
+	populatedInitialState,
 	treeToPackageStatics,
+	type FuzzNode,
 	type TreePackageStatics,
 } from "./fuzzUtils.js";
 import type { Operation } from "./operationTypes.js";
+import { createRevertFirstToLastFuzzSuite } from "./undoRedo.fuzz.spec.js";
 
 export function createCompatFuzzSuite(
 	factoryForCompat: IChannelFactory<ITree>,
@@ -50,19 +53,35 @@ export function createCompatFuzzSuite(
 		DDSFuzzTestState<CompatTestTreeFactory>
 	> = {
 		workloadName: "SharedTree Compat",
-		factory: new CompatTestTreeFactory([
-			[factoryForCompat as IChannelFactory<ISharedTree>, compatPackageStatics],
+		factory: new CompatTestTreeFactory(
 			[
-				makeFactorySupportingVersion(compatVersion) as IChannelFactory<ISharedTree>,
-				defaultTreePackageStatics,
+				[factoryForCompat as IChannelFactory<ISharedTree>, compatPackageStatics],
+				[
+					makeFactorySupportingVersion(compatVersion) as IChannelFactory<ISharedTree>,
+					defaultTreePackageStatics,
+				],
 			],
-		]),
+			undefined,
+		),
 		generatorFactory,
 		reducer: fuzzReducer,
 		validateConsistency: validateFuzzTreeConsistency,
 	};
 
 	createDDSFuzzSuite(compatFuzzModel, options);
+
+	createRevertFirstToLastFuzzSuite(
+		new CompatTestTreeFactory(
+			[
+				[factoryForCompat as IChannelFactory<ISharedTree>, compatPackageStatics],
+				[
+					makeFactorySupportingVersion(compatVersion) as IChannelFactory<ISharedTree>,
+					defaultTreePackageStatics,
+				],
+			],
+			populatedInitialState,
+		),
+	);
 }
 
 // TODO: Enable other types of ops.
@@ -98,7 +117,7 @@ const baseOptions: Partial<DDSFuzzSuiteOptions> = {
 	reconnectProbability: 0.5,
 };
 
-const runsPerBatch = 50;
+const runsPerBatch = 1000;
 
 const options: Partial<DDSFuzzSuiteOptions> = {
 	...baseOptions,
@@ -138,6 +157,7 @@ class CompatTestTreeFactory implements IChannelFactory<ISharedTree> {
 
 	public constructor(
 		private readonly factories: readonly [IChannelFactory<ISharedTree>, TreePackageStatics][],
+		private readonly initialState: NodeBuilderData<typeof FuzzNode> | undefined,
 	) {}
 
 	public async load(
@@ -162,7 +182,7 @@ class CompatTestTreeFactory implements IChannelFactory<ISharedTree> {
 				schema: createTreeViewSchema([], statics.newSchemaFactory),
 			}),
 		);
-		(view as FuzzView).initialize(undefined);
+		(view as FuzzView).initialize(this.initialState);
 		view.dispose();
 
 		return tree;
