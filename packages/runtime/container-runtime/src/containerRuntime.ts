@@ -263,6 +263,7 @@ import {
 	type IPendingMessage,
 } from "./pendingStateManager.js";
 import { BatchRunCounter, RunCounter } from "./runCounter.js";
+import { RuntimeFeatureHostImpl } from "./runtimeFeatureHost.js";
 import {
 	runtimeCompatDetailsForLoader,
 	runtimeCoreCompatDetails,
@@ -1298,11 +1299,18 @@ export class ContainerRuntime
 		runtime.sharePendingBlobs();
 
 		// Initialize the base state of the runtime before it's returned.
-		await runtime.initializeBaseState(context.loader);
+		runtime.host.on("loadFromSnapshot", async () =>
+			runtime.initializeBaseState(context.loader),
+		);
 
 		// Apply stashed ops with a reference sequence number equal to the sequence number of the snapshot,
 		// or zero. This must be done before Container replays saved ops.
-		await runtime.pendingStateManager.applyStashedOpsAt(runtimeSequenceNumber ?? 0);
+		runtime.host.on("applyStashedOps", async () =>
+			runtime.pendingStateManager.applyStashedOpsAt(runtimeSequenceNumber ?? 0),
+		);
+
+		await runtime.host.runPhase("loadFromSnapshot");
+		await runtime.host.runPhase("applyStashedOps");
 
 		return { runtime };
 	}
@@ -1518,6 +1526,13 @@ export class ContainerRuntime
 	private readonly duplicateBatchDetector: DuplicateBatchDetector | undefined;
 	private readonly outbox: Outbox;
 	private readonly garbageCollector: IGarbageCollector;
+
+	/**
+	 * Internal facade subsystems use to register lifecycle callbacks. The runtime
+	 * drives the lifecycle by calling host phases; subsystems plug in via the
+	 * host's `on` method.
+	 */
+	private readonly host: RuntimeFeatureHostImpl = new RuntimeFeatureHostImpl();
 
 	private readonly channelCollection: ChannelCollection;
 	private readonly remoteMessageProcessor: RemoteMessageProcessor;
