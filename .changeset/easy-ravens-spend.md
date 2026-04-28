@@ -2,7 +2,7 @@
 "@fluid-experimental/property-common": minor
 "__section": fix
 ---
-`@fluid-experimental/property-common`: Add and correct `MSG` error constants
+Correct some PropertyDDS "MSG" error constant entries
 
 Several error constants referenced in other PropertyDDS packages did not exist and would produce errors with "undefined" (literal) in error message string.
 In the past:
