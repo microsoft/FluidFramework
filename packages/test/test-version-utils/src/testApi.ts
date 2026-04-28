@@ -173,12 +173,12 @@ export const DataRuntimeApi = {
  * Helper to load a package if the requested version is compatible.
  */
 async function loadIfCompatible(
-	pkgEntry: { pkgName: string; minVersion: string },
+	pkgEntry: { pkgName: string; minVersion: string; preferredEntrypoint?: "." | `./${string}` },
 	versionToInstall: string,
 	modulePath: string,
 ): Promise<any> {
 	if (semver.gte(versionToInstall, pkgEntry.minVersion)) {
-		return loadPackage(modulePath, pkgEntry.pkgName);
+		return loadPackage(modulePath, pkgEntry.pkgName, pkgEntry.preferredEntrypoint);
 	}
 	return undefined;
 }

@@ -357,6 +357,17 @@ async function main(): Promise<void> {
 		console.log(`  Delta ${delta}: ${resolved}`);
 	}
 
+	// Preserve human-maintained explicit versions from the existing manifest.
+	const existingManifest = existsSync(versionsJsonPath)
+		? (JSON.parse(readFileSync(versionsJsonPath, "utf8")) as { explicit?: string[] })
+		: {};
+	const explicitVersions: string[] = existingManifest.explicit ?? [];
+	if (explicitVersions.length > 0) {
+		console.log(
+			`\nPreserving ${explicitVersions.length} explicit version(s): ${explicitVersions.join(", ")}`,
+		);
+	}
+
 	// Write versions.json
 	const manifest = {
 		standard: {
@@ -366,6 +377,7 @@ async function main(): Promise<void> {
 			"cross-client": crossClientVersions,
 		},
 		full: fullAdditional,
+		...(explicitVersions.length > 0 ? { explicit: explicitVersions } : {}),
 	};
 	writeFileSync(versionsJsonPath, JSON.stringify(manifest, undefined, 2) + "\n", "utf8");
 	console.log(`\nWrote ${path.relative(pkgRoot, versionsJsonPath)}`);
@@ -375,6 +387,7 @@ async function main(): Promise<void> {
 		nMinus2,
 		OCV,
 		...crossClientVersions,
+		...explicitVersions,
 		...fullAdditional,
 	]);
 

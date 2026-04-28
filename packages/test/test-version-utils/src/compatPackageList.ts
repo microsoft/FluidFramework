@@ -17,6 +17,10 @@ export interface PackageToInstall {
 	 * versions.
 	 */
 	minVersion: string;
+	/**
+	 * Entrypoint to load from, if available. Otherwise, the root entrypoint will be used.
+	 */
+	preferredEntrypoint?: "." | `./${string}`;
 }
 
 // List of driver API packages to install.
@@ -50,7 +54,7 @@ export const dataRuntimePackageEntries: PackageToInstall[] = [
 	{ pkgName: "@fluidframework/register-collection", minVersion: "0.56.0" },
 	{ pkgName: "@fluidframework/sequence", minVersion: "0.56.0" },
 	{ pkgName: "@fluidframework/agent-scheduler", minVersion: "0.56.0" },
-	{ pkgName: "@fluidframework/tree", minVersion: "2.0.0" },
+	{ pkgName: "@fluidframework/tree", minVersion: "2.0.0", preferredEntrypoint: "./internal" },
 ];
 
 /**
