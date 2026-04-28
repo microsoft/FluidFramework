@@ -2583,12 +2583,6 @@ export class ContainerRuntime
 			addBlobToSummary(summaryTree, aliasBlobName, JSON.stringify([...dataStoreAliases]));
 		}
 
-		const election = this.summarizerSubsystem.summarizerClientElection;
-		if (election !== undefined) {
-			const electedSummarizerContent = JSON.stringify(election.serialize());
-			addBlobToSummary(summaryTree, electedSummarizerBlobName, electedSummarizerContent);
-		}
-
 		this.features.contributeSummary(summaryTree, fullTree, trackState, telemetryContext);
 	}
 

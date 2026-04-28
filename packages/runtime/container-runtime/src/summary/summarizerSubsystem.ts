@@ -16,7 +16,11 @@ import {
 	type ISequencedDocumentMessage,
 	MessageType,
 } from "@fluidframework/driver-definitions/internal";
-import type { IRuntimeFeature } from "@fluidframework/runtime-definitions/internal";
+import type {
+	IRuntimeFeature,
+	ISummaryTreeWithStats,
+} from "@fluidframework/runtime-definitions/internal";
+import { addBlobToSummary } from "@fluidframework/runtime-utils/internal";
 import {
 	type MonitoringContext,
 	createChildLogger,
@@ -34,6 +38,7 @@ import { SummarizerClientElection } from "./summarizerClientElection.js";
 import type { IConnectableRuntime, ISummaryConfiguration } from "./summarizerTypes.js";
 import { SummaryCollection } from "./summaryCollection.js";
 import type { Summarizer } from "./summaryDelayLoadedModule/index.js";
+import { electedSummarizerBlobName } from "./summaryFormat.js";
 import {
 	formCreateSummarizerFn,
 	isSummariesDisabled,
@@ -118,6 +123,17 @@ export class SummarizerSubsystem implements IRuntimeFeature {
 			this._summaryManager.dispose();
 		}
 		this._summarizer?.dispose();
+	}
+
+	public contributeSummary(summaryTree: ISummaryTreeWithStats): void {
+		const election = this._summarizerClientElection;
+		if (election !== undefined) {
+			addBlobToSummary(
+				summaryTree,
+				electedSummarizerBlobName,
+				JSON.stringify(election.serialize()),
+			);
+		}
 	}
 
 	public async onLoadFromSnapshot(): Promise<void> {
