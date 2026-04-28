@@ -23,20 +23,26 @@ export interface PackageToInstall {
 	preferredEntrypoint?: "." | `./${string}`;
 }
 
-/**
- * The list of all the packages to install for compatibility testing.
- *
- * This list is read by the `update-compat-versions` script to generate workspace `package.json`
- * files. Changing this list requires re-running `pnpm run update-compat-versions` and committing
- * the updated workspace files.
- * @internal
- */
-export const packageListToInstall: PackageToInstall[] = [
+// List of driver API packages to install.
+export const driverPackageEntries: PackageToInstall[] = [
 	{ pkgName: "@fluidframework/local-driver", minVersion: "0.56.0" },
 	{ pkgName: "@fluidframework/odsp-driver", minVersion: "0.56.0" },
 	{ pkgName: "@fluidframework/routerlicious-driver", minVersion: "0.56.0" },
+];
+
+// List of loader API packages to install.
+export const loaderPackageEntries: PackageToInstall[] = [
 	{ pkgName: "@fluidframework/container-loader", minVersion: "0.56.0" },
+];
+
+// List of container runtime API packages to install.
+export const containerRuntimePackageEntries: PackageToInstall[] = [
 	{ pkgName: "@fluidframework/container-runtime", minVersion: "0.56.0" },
+	{ pkgName: "@fluidframework/aqueduct", minVersion: "0.56.0" },
+];
+
+// List of data runtime API packages to install.
+export const dataRuntimePackageEntries: PackageToInstall[] = [
 	{ pkgName: "@fluidframework/aqueduct", minVersion: "0.56.0" },
 	{ pkgName: "@fluidframework/datastore", minVersion: "0.56.0" },
 	{ pkgName: "@fluidframework/test-utils", minVersion: "0.56.0" },
@@ -49,4 +55,19 @@ export const packageListToInstall: PackageToInstall[] = [
 	{ pkgName: "@fluidframework/sequence", minVersion: "0.56.0" },
 	{ pkgName: "@fluidframework/agent-scheduler", minVersion: "0.56.0" },
 	{ pkgName: "@fluidframework/tree", minVersion: "2.0.0", preferredEntrypoint: "./internal" },
+];
+
+/**
+ * The list of all the packages to install for compatibility testing.
+ *
+ * This list is read by the `update-compat-versions` script to generate workspace `package.json`
+ * files. Changing this list requires re-running `pnpm run update-compat-versions` and committing
+ * the updated workspace files.
+ * @internal
+ */
+export const packageListToInstall: PackageToInstall[] = [
+	...driverPackageEntries,
+	...loaderPackageEntries,
+	...containerRuntimePackageEntries,
+	...dataRuntimePackageEntries,
 ];
