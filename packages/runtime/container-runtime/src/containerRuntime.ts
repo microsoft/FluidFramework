@@ -1830,6 +1830,7 @@ export class ContainerRuntime
 			pendingRuntimeState?.pending,
 			this.baseLogger,
 		);
+		this.features.add(this.pendingStateManager);
 
 		let outerDeltaManager: IDeltaManagerFull = this.innerDeltaManager;
 		this.useDeltaManagerOpsProxy =
@@ -2029,12 +2030,14 @@ export class ContainerRuntime
 			this,
 			createChildLogger({ logger: this.baseLogger, namespace: "DeltaScheduler" }),
 		);
+		this.features.add(this.deltaScheduler);
 
 		this.inboundBatchAggregator = new InboundBatchAggregator(
 			this.innerDeltaManager,
 			() => this.clientId,
 			createChildLogger({ logger: this.baseLogger, namespace: "InboundBatchAggregator" }),
 		);
+		this.features.add(this.inboundBatchAggregator);
 
 		const legacySendBatchFn = makeLegacySendBatchFn(submitFn, this.innerDeltaManager);
 
@@ -2292,9 +2295,6 @@ export class ContainerRuntime
 
 		this.features.dispose();
 		this.channelCollection.dispose();
-		this.pendingStateManager.dispose();
-		this.inboundBatchAggregator.dispose();
-		this.deltaScheduler.dispose();
 		this._deltaManager.dispose();
 		this.emit("dispose");
 		this.removeAllListeners();
