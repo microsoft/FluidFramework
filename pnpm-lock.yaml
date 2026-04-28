@@ -4804,6 +4804,9 @@ importers:
       '@fluidframework/azure-client':
         specifier: workspace:~
         version: link:../../../packages/service-clients/azure-client
+      '@fluidframework/container-definitions':
+        specifier: workspace:~
+        version: link:../../../packages/common/container-definitions
       '@fluidframework/container-loader':
         specifier: workspace:~
         version: link:../../../packages/loader/container-loader
@@ -4813,24 +4816,45 @@ importers:
       '@fluidframework/container-runtime-definitions':
         specifier: workspace:~
         version: link:../../../packages/runtime/container-runtime-definitions
+      '@fluidframework/core-interfaces':
+        specifier: workspace:~
+        version: link:../../../packages/common/core-interfaces
       '@fluidframework/core-utils':
         specifier: workspace:~
         version: link:../../../packages/common/core-utils
+      '@fluidframework/datastore-definitions':
+        specifier: workspace:~
+        version: link:../../../packages/runtime/datastore-definitions
+      '@fluidframework/driver-definitions':
+        specifier: workspace:~
+        version: link:../../../packages/common/driver-definitions
       '@fluidframework/map':
         specifier: workspace:~
         version: link:../../../packages/dds/map
       '@fluidframework/matrix':
         specifier: workspace:~
         version: link:../../../packages/dds/matrix
+      '@fluidframework/merge-tree':
+        specifier: workspace:~
+        version: link:../../../packages/dds/merge-tree
       '@fluidframework/odsp-client':
         specifier: workspace:~
         version: link:../../../packages/service-clients/odsp-client
       '@fluidframework/odsp-driver':
         specifier: workspace:~
         version: link:../../../packages/drivers/odsp-driver
+      '@fluidframework/protocol-base':
+        specifier: ^7.0.0
+        version: 7.0.0
+      '@fluidframework/runtime-definitions':
+        specifier: workspace:~
+        version: link:../../../packages/runtime/runtime-definitions
       '@fluidframework/sequence':
         specifier: workspace:~
         version: link:../../../packages/dds/sequence
+      '@fluidframework/telemetry-utils':
+        specifier: workspace:~
+        version: link:../../../packages/utils/telemetry-utils
       '@fluidframework/tree':
         specifier: workspace:~
         version: link:../../../packages/dds/tree
@@ -4892,9 +4916,15 @@ importers:
       string-replace-loader:
         specifier: ^3.1.0
         version: 3.1.0(webpack@5.103.0)
+      terser-webpack-plugin:
+        specifier: ^5.3.14
+        version: 5.3.15(webpack@5.103.0)
       ts-loader:
         specifier: ^9.5.1
         version: 9.5.1(typescript@5.4.5)(webpack@5.103.0)
+      ts-node:
+        specifier: ^10.9.2
+        version: 10.9.2(@types/node@22.19.17)(typescript@5.4.5)
       typescript:
         specifier: ~5.4.5
         version: 5.4.5
