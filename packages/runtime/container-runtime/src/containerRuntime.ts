@@ -1805,10 +1805,12 @@ export class ContainerRuntime
 			this.mc.logger,
 		);
 
-		this.remoteMessageProcessor = new RemoteMessageProcessor(
-			opSplitter,
-			new OpDecompressor(this.mc.logger),
-			opGroupingManager,
+		this.remoteMessageProcessor = this.features.add(
+			new RemoteMessageProcessor(
+				opSplitter,
+				new OpDecompressor(this.mc.logger),
+				opGroupingManager,
+			),
 		);
 
 		const pendingRuntimeState = pendingLocalState as IPendingRuntimeState | undefined;
@@ -1891,7 +1893,9 @@ export class ContainerRuntime
 		// It maintains a cache of all batchIds/sequenceNumbers within the collab window.
 		// Don't waste resources doing so if not needed.
 		if (this.batchIdTrackingEnabled) {
-			this.duplicateBatchDetector = new DuplicateBatchDetector(recentBatchInfo);
+			this.duplicateBatchDetector = this.features.add(
+				new DuplicateBatchDetector(recentBatchInfo),
+			);
 		}
 
 		if (context.attachState === AttachState.Attached) {
@@ -2570,17 +2574,6 @@ export class ContainerRuntime
 		telemetryContext?: ITelemetryContext,
 	): void {
 		this.addMetadataToSummary(summaryTree);
-
-		if (this.remoteMessageProcessor.partialMessages.size > 0) {
-			const content = JSON.stringify([...this.remoteMessageProcessor.partialMessages]);
-			addBlobToSummary(summaryTree, chunksBlobName, content);
-		}
-
-		const recentBatchInfo =
-			this.duplicateBatchDetector?.getRecentBatchInfoForSummary(telemetryContext);
-		if (recentBatchInfo !== undefined) {
-			addBlobToSummary(summaryTree, recentBatchInfoBlobName, JSON.stringify(recentBatchInfo));
-		}
 
 		this.features.contributeSummary(summaryTree, fullTree, trackState, telemetryContext);
 	}

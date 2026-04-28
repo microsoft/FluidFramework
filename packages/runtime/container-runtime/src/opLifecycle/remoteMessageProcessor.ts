@@ -8,6 +8,8 @@ import {
 	MessageType,
 	type ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
+import type { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions/internal";
+import { addBlobToSummary } from "@fluidframework/runtime-utils/internal";
 
 import {
 	ContainerMessageType,
@@ -15,6 +17,8 @@ import {
 	type InboundSequencedContainerRuntimeMessage,
 } from "../messageTypes.js";
 import { asBatchMetadata } from "../metadata.js";
+import type { IRuntimeFeature } from "../runtimeFeature.js";
+import { chunksBlobName } from "../summary/index.js";
 
 import type { OpDecompressor } from "./opDecompressor.js";
 import { type OpGroupingManager, isGroupedBatch } from "./opGroupingManager.js";
@@ -91,7 +95,7 @@ function assertHasClientId(
  *
  * @internal
  */
-export class RemoteMessageProcessor {
+export class RemoteMessageProcessor implements IRuntimeFeature {
 	private batchInProgress: boolean = false;
 
 	constructor(
@@ -106,6 +110,12 @@ export class RemoteMessageProcessor {
 
 	public clearPartialMessagesFor(clientId: string): void {
 		this.opSplitter.clearPartialChunks(clientId);
+	}
+
+	public contributeSummary(summaryTree: ISummaryTreeWithStats): void {
+		if (this.partialMessages.size > 0) {
+			addBlobToSummary(summaryTree, chunksBlobName, JSON.stringify([...this.partialMessages]));
+		}
 	}
 
 	/**
