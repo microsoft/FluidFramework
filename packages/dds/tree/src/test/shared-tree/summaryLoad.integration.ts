@@ -53,6 +53,10 @@ function listSnapshotFiles(dir: string): string[] {
 			results.push(...listSnapshotFiles(full));
 		} else if (entry.endsWith(".json")) {
 			results.push(full);
+		} else {
+			// Docs (e.g. README.md) are allowed alongside snapshots; anything else is unexpected
+			// and likely a mistake we want to surface rather than silently ignore.
+			assert(entry.endsWith(".md"), `Unexpected file in snapshot directory: ${full}`);
 		}
 	}
 	return results;
