@@ -4,12 +4,7 @@
  */
 
 import { take } from "@fluid-private/stochastic-test-utils";
-import {
-	BenchmarkType,
-	TestType,
-	benchmarkIt,
-	collectDurationData,
-} from "@fluid-tools/benchmark";
+import { benchmarkDuration, benchmarkIt } from "@fluid-tools/benchmark";
 import { assert } from "@fluidframework/core-utils/internal";
 
 import { IdCompressor } from "../idCompressor.js";
@@ -42,7 +37,6 @@ import {
 const initialClusterCapacity = 512;
 
 describe("IdCompressor Perf", () => {
-	const type = BenchmarkType.Measurement;
 	const localClient = Client.Client1;
 	const remoteClient = Client.Client2;
 
@@ -113,32 +107,28 @@ describe("IdCompressor Perf", () => {
 	}
 
 	benchmarkIt({
-		type,
-		testType: TestType.ExecutionTime,
 		title: `allocate local ID`,
-		run: async () => {
-			const { perfCompressor } = setupCompressors(initialClusterCapacity, true, true);
-			return collectDurationData({
-				benchmarkFn: () => {
+		...benchmarkDuration({
+			benchmarkFnCustom: async (state) => {
+				const { perfCompressor } = setupCompressors(initialClusterCapacity, true, true);
+				state.timeAllBatches(() => {
 					perfCompressor.generateCompressedId();
-				},
-			});
-		},
+				});
+			},
+		}),
 	});
 
 	benchmarkIt({
-		type,
-		testType: TestType.ExecutionTime,
 		title: "take an ID creation range",
-		run: async () => {
-			const { perfCompressor } = setupCompressors(initialClusterCapacity, true, true);
-			return collectDurationData({
-				benchmarkFn: () => {
+		...benchmarkDuration({
+			benchmarkFnCustom: async (state) => {
+				const { perfCompressor } = setupCompressors(initialClusterCapacity, true, true);
+				state.timeAllBatches(() => {
 					perfCompressor.generateCompressedId();
 					perfCompressor.takeNextCreationRange();
-				},
-			});
-		},
+				});
+			},
+		}),
 	});
 
 	for (const clusterSize of [1, 10, 500, 1000]) {
@@ -146,18 +136,18 @@ describe("IdCompressor Perf", () => {
 		const session1 = "8150a099-5302-4672-b5f3-7a4492b59418" as SessionId;
 		const session2 = "f2ded886-92da-4248-967b-eb96ee04cf51" as SessionId;
 		benchmarkIt({
-			type,
-			testType: TestType.ExecutionTime,
 			title: `finalize a range of IDs (cluster size = ${clusterSize})`,
-			run: async () => {
-				const { perfCompressor } = setupCompressors(clusterSize, false, true);
-				let session: SessionId = session1;
-				let nextFirstFinalizedGenCount1 = 1;
-				let nextFirstFinalizedGenCount2 = 1;
-				return collectDurationData({
-					benchmarkFn: () => {
-						// Create a range with as minimal overhead as possible, as we'd like for this code to not exist
-						// in the timing loop at all (but benchmark forces us to do so)
+			...benchmarkDuration({
+				// Force batch size of 1
+				minBatchDurationSeconds: 0,
+				benchmarkFnCustom: async (state) => {
+					const { perfCompressor } = setupCompressors(clusterSize, false, true);
+					let session: SessionId = session1;
+					let nextFirstFinalizedGenCount1 = 1;
+					let nextFirstFinalizedGenCount2 = 1;
+					let duration: number;
+					do {
+						// Create a range with as minimal overhead as possible
 						const isFirstClient = session === session1;
 						const firstGenCount = isFirstClient
 							? nextFirstFinalizedGenCount1
@@ -171,8 +161,10 @@ describe("IdCompressor Perf", () => {
 								localIdRanges: [], // no need to populate, as session is remote and compressor would ignore in production
 							},
 						};
-
+						const start = state.timer.now();
 						perfCompressor.finalizeCreationRange(range);
+						const end = state.timer.now();
+						duration = state.timer.toSeconds(start, end);
 
 						const lastGenCount = firstGenCount + numIds;
 						if (isFirstClient) {
@@ -182,266 +174,250 @@ describe("IdCompressor Perf", () => {
 						}
 						// Alternate clients to sidestep optimization that packs them all into last cluster
 						session = isFirstClient ? session1 : session2;
-					},
-				});
-			},
+					} while (state.recordBatch(duration));
+				},
+			}),
 		});
 	}
 
 	benchmarkWithFlag((isLocal) => {
 		const remoteSessionId = sessionIds.get(remoteClient);
 		benchmarkIt({
-			type,
-			testType: TestType.ExecutionTime,
 			title: `normalize a ${
 				isLocal ? "local" : "final"
 			} ID from a remote session to session space`,
-			run: async () => {
-				const { network, perfCompressor } = setupCompressors(
-					initialClusterCapacity,
-					true,
-					true,
-				);
-				const remoteSession = getIdMadeBy(remoteClient, false, network);
-				const opSpaceId = (
-					isLocal
-						? remoteSession
-						: network.getCompressor(remoteClient).normalizeToOpSpace(remoteSession)
-				) as OpSpaceCompressedId;
-				return collectDurationData({
-					benchmarkFn: () => {
+			...benchmarkDuration({
+				benchmarkFnCustom: async (state) => {
+					const { network, perfCompressor } = setupCompressors(
+						initialClusterCapacity,
+						true,
+						true,
+					);
+					const remoteSession = getIdMadeBy(remoteClient, false, network);
+					const opSpaceId = (
+						isLocal
+							? remoteSession
+							: network.getCompressor(remoteClient).normalizeToOpSpace(remoteSession)
+					) as OpSpaceCompressedId;
+					state.timeAllBatches(() => {
 						perfCompressor.normalizeToSessionSpace(opSpaceId, remoteSessionId);
-					},
-				});
-			},
+					});
+				},
+			}),
 		});
 	});
 
 	benchmarkWithFlag((eagerFinal) => {
 		benchmarkIt({
-			type,
-			testType: TestType.ExecutionTime,
 			title: `normalize a final ID corresponding to a ${
 				eagerFinal ? "eager final" : "local"
 			} ID from op space to the local session`,
-			run: async () => {
-				const { network, perfCompressor } = setupCompressors(
-					initialClusterCapacity,
-					true,
-					true,
-				);
-				const opId = perfCompressor.normalizeToOpSpace(
-					getIdMadeBy(localClient, eagerFinal, network),
-				);
-				assert(isFinalId(opId), "Must be final");
-				const id = opId as OpSpaceCompressedId & FinalCompressedId;
-				return collectDurationData({
-					benchmarkFn: () => {
+			...benchmarkDuration({
+				benchmarkFnCustom: async (state) => {
+					const { network, perfCompressor } = setupCompressors(
+						initialClusterCapacity,
+						true,
+						true,
+					);
+					const opId = perfCompressor.normalizeToOpSpace(
+						getIdMadeBy(localClient, eagerFinal, network),
+					);
+					assert(isFinalId(opId), "Must be final");
+					const id = opId as OpSpaceCompressedId & FinalCompressedId;
+					state.timeAllBatches(() => {
 						perfCompressor.normalizeToSessionSpace(id, perfCompressor.localSessionId);
-					},
-				});
-			},
+					});
+				},
+			}),
 		});
 	});
 
 	benchmarkWithFlag((isLocalOriginator) => {
 		const remoteSessionId = sessionIds.get(remoteClient);
 		benchmarkIt({
-			type,
-			testType: TestType.ExecutionTime,
 			title: `normalize a final ID from a ${
 				isLocalOriginator ? "local" : "remote"
 			} session to a small session space (common case)`,
-			run: async () => {
-				const { network, perfCompressor } = setupCompressors(
-					initialClusterCapacity,
-					false,
-					true,
-				);
-				// Ensure the local session has several different clusters
-				for (let clusterCount = 0; clusterCount < 5; clusterCount++) {
-					network.allocateAndSendIds(
-						localClient,
-						// eslint-disable-next-line @typescript-eslint/dot-notation
-						perfCompressor["nextRequestedClusterSize"],
+			...benchmarkDuration({
+				benchmarkFnCustom: async (state) => {
+					const { network, perfCompressor } = setupCompressors(
+						initialClusterCapacity,
+						false,
+						true,
 					);
-					network.allocateAndSendIds(
-						remoteClient,
-						// eslint-disable-next-line @typescript-eslint/dot-notation
-						perfCompressor["nextRequestedClusterSize"] * 2,
-					);
-					network.deliverOperations(DestinationClient.All);
-				}
-				const client = isLocalOriginator ? localClient : remoteClient;
-				const idFromSession = getIdMadeBy(client, true, network);
-				const opSpaceId = network.getCompressor(client).normalizeToOpSpace(idFromSession);
-				return collectDurationData({
-					benchmarkFn: () => {
+					// Ensure the local session has several different clusters
+					for (let clusterCount = 0; clusterCount < 5; clusterCount++) {
+						network.allocateAndSendIds(
+							localClient,
+							// eslint-disable-next-line @typescript-eslint/dot-notation
+							perfCompressor["nextRequestedClusterSize"],
+						);
+						network.allocateAndSendIds(
+							remoteClient,
+							// eslint-disable-next-line @typescript-eslint/dot-notation
+							perfCompressor["nextRequestedClusterSize"] * 2,
+						);
+						network.deliverOperations(DestinationClient.All);
+					}
+					const client = isLocalOriginator ? localClient : remoteClient;
+					const idFromSession = getIdMadeBy(client, true, network);
+					const opSpaceId = network.getCompressor(client).normalizeToOpSpace(idFromSession);
+					state.timeAllBatches(() => {
 						perfCompressor.normalizeToSessionSpace(opSpaceId, remoteSessionId);
-					},
-				});
-			},
+					});
+				},
+			}),
 		});
 	});
 
 	benchmarkIt({
-		type,
-		testType: TestType.ExecutionTime,
 		title: `normalize an unacked local ID from the local session to op space`,
-		run: async () => {
-			const { network, perfCompressor } = setupCompressors(
-				initialClusterCapacity,
-				true,
-				false,
-			);
-			// Ensure no eager finals
-			network.allocateAndSendIds(
-				localClient,
-				// eslint-disable-next-line @typescript-eslint/dot-notation
-				network.getCompressor(localClient)["nextRequestedClusterSize"] * 2 + 1,
-			);
-			const unackedLocalId = getIdMadeBy(localClient, false, network);
-			assert(
-				perfCompressor.normalizeToOpSpace(unackedLocalId) === (unackedLocalId as number),
-				"Local was acked.",
-			);
-			return collectDurationData({
-				benchmarkFn: () => {
+		...benchmarkDuration({
+			benchmarkFnCustom: async (state) => {
+				const { network, perfCompressor } = setupCompressors(
+					initialClusterCapacity,
+					true,
+					false,
+				);
+				// Ensure no eager finals
+				network.allocateAndSendIds(
+					localClient,
+					// eslint-disable-next-line @typescript-eslint/dot-notation
+					network.getCompressor(localClient)["nextRequestedClusterSize"] * 2 + 1,
+				);
+				const unackedLocalId = getIdMadeBy(localClient, false, network);
+				assert(
+					perfCompressor.normalizeToOpSpace(unackedLocalId) === (unackedLocalId as number),
+					"Local was acked.",
+				);
+				state.timeAllBatches(() => {
 					perfCompressor.normalizeToOpSpace(unackedLocalId);
-				},
-			});
-		},
+				});
+			},
+		}),
 	});
 
 	benchmarkWithFlag((eagerFinal) => {
 		benchmarkIt({
-			type,
-			testType: TestType.ExecutionTime,
 			title: `normalize an acked ${
 				eagerFinal ? "eager final" : "local"
 			} ID from the local session to op space`,
-			run: async () => {
-				const { network, perfCompressor } = setupCompressors(
-					initialClusterCapacity,
-					true,
-					true,
-				);
-				const id = getIdMadeBy(localClient, eagerFinal, network);
-				return collectDurationData({
-					benchmarkFn: () => {
+			...benchmarkDuration({
+				benchmarkFnCustom: async (state) => {
+					const { network, perfCompressor } = setupCompressors(
+						initialClusterCapacity,
+						true,
+						true,
+					);
+					const id = getIdMadeBy(localClient, eagerFinal, network);
+					state.timeAllBatches(() => {
 						perfCompressor.normalizeToOpSpace(id);
-					},
-				});
-			},
+					});
+				},
+			}),
 		});
 	});
 
 	benchmarkWithFlag((local) => {
 		benchmarkIt({
-			type,
-			testType: TestType.ExecutionTime,
 			title: `decompress a final ID from a ${
 				local ? "local" : "remote"
 			} client into a stable ID`,
-			run: async () => {
-				const { network, perfCompressor } = setupCompressors(
-					initialClusterCapacity,
-					true,
-					true,
-				);
-				const finalIdToDecompress = getIdMadeBy(
-					local ? localClient : remoteClient,
-					true,
-					network,
-				);
-				return collectDurationData({
-					benchmarkFn: () => {
+			...benchmarkDuration({
+				benchmarkFnCustom: async (state) => {
+					const { network, perfCompressor } = setupCompressors(
+						initialClusterCapacity,
+						true,
+						true,
+					);
+					const finalIdToDecompress = getIdMadeBy(
+						local ? localClient : remoteClient,
+						true,
+						network,
+					);
+					state.timeAllBatches(() => {
 						perfCompressor.decompress(finalIdToDecompress);
-					},
-				});
-			},
+					});
+				},
+			}),
 		});
 	});
 
 	benchmarkIt({
-		type,
-		testType: TestType.ExecutionTime,
 		title: `decompress a local ID into a stable ID`,
-		run: async () => {
-			const { network, perfCompressor } = setupCompressors(initialClusterCapacity, true, true);
-			const localIdToDecompress = getIdMadeBy(localClient, false, network);
-			return collectDurationData({
-				benchmarkFn: () => {
-					perfCompressor.decompress(localIdToDecompress);
-				},
-			});
-		},
-	});
-
-	benchmarkWithFlag((eagerFinal) => {
-		benchmarkIt({
-			type,
-			testType: TestType.ExecutionTime,
-			title: `recompress a stable ID to a ${eagerFinal ? "local" : "final"} ID`,
-			run: async () => {
+		...benchmarkDuration({
+			benchmarkFnCustom: async (state) => {
 				const { network, perfCompressor } = setupCompressors(
 					initialClusterCapacity,
 					true,
 					true,
 				);
-				const stableToCompress = perfCompressor.decompress(
-					getIdMadeBy(localClient, eagerFinal, network),
-				);
-				return collectDurationData({
-					benchmarkFn: () => {
-						perfCompressor.recompress(stableToCompress);
-					},
+				const localIdToDecompress = getIdMadeBy(localClient, false, network);
+				state.timeAllBatches(() => {
+					perfCompressor.decompress(localIdToDecompress);
 				});
 			},
+		}),
+	});
+
+	benchmarkWithFlag((eagerFinal) => {
+		benchmarkIt({
+			title: `recompress a stable ID to a ${eagerFinal ? "local" : "final"} ID`,
+			...benchmarkDuration({
+				benchmarkFnCustom: async (state) => {
+					const { network, perfCompressor } = setupCompressors(
+						initialClusterCapacity,
+						true,
+						true,
+					);
+					const stableToCompress = perfCompressor.decompress(
+						getIdMadeBy(localClient, eagerFinal, network),
+					);
+					state.timeAllBatches(() => {
+						perfCompressor.recompress(stableToCompress);
+					});
+				},
+			}),
 		});
 	});
 
 	benchmarkWithFlag((manySessions) => {
 		benchmarkIt({
-			type,
-			testType: TestType.ExecutionTime,
 			title: `serialize an IdCompressor (${manySessions ? "many sessions" : "many clusters"})`,
-			run: async () => {
-				const perfCompressor = manySessions
-					? buildHugeCompressor(undefined, initialClusterCapacity)
-					: setupCompressors(initialClusterCapacity, false, true).perfCompressor;
-				return collectDurationData({
-					benchmarkFn: () => {
+			...benchmarkDuration({
+				benchmarkFnCustom: async (state) => {
+					const perfCompressor = manySessions
+						? buildHugeCompressor(undefined, initialClusterCapacity)
+						: setupCompressors(initialClusterCapacity, false, true).perfCompressor;
+					state.timeAllBatches(() => {
 						perfCompressor.serialize(false);
-					},
-				});
-			},
+					});
+				},
+			}),
 		});
 	});
 
 	benchmarkWithFlag((manySessions) => {
 		const overrideRemoteSessionId = createSessionId();
 		benchmarkIt({
-			type,
-			testType: TestType.ExecutionTime,
 			title: `deserialize an IdCompressor (${
 				manySessions ? "many sessions" : "many clusters"
 			})`,
-			run: async () => {
-				const perfCompressor = manySessions
-					? buildHugeCompressor(undefined, initialClusterCapacity)
-					: setupCompressors(initialClusterCapacity, false, true).perfCompressor;
-				const serialized: SerializedIdCompressorWithNoSession =
-					perfCompressor.serialize(false);
-				return collectDurationData({
-					benchmarkFn: () => {
+			...benchmarkDuration({
+				benchmarkFnCustom: async (state) => {
+					const perfCompressor = manySessions
+						? buildHugeCompressor(undefined, initialClusterCapacity)
+						: setupCompressors(initialClusterCapacity, false, true).perfCompressor;
+					const serialized: SerializedIdCompressorWithNoSession =
+						perfCompressor.serialize(false);
+					state.timeAllBatches(() => {
 						IdCompressor.deserialize({
 							serialized,
 							newSessionId: overrideRemoteSessionId,
 						});
-					},
-				});
-			},
+					});
+				},
+			}),
 		});
 	});
 });

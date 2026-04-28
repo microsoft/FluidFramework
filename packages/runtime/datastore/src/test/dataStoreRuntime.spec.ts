@@ -10,7 +10,6 @@ import type { FluidObject, IErrorBase } from "@fluidframework/core-interfaces";
 import type {
 	IChannel,
 	IFluidDataStoreRuntime,
-	IFluidDataStoreRuntimeAlpha,
 } from "@fluidframework/datastore-definitions/internal";
 import { SummaryType } from "@fluidframework/driver-definitions";
 import type {
@@ -41,7 +40,7 @@ type Patch<T, U> = Omit<T, keyof U> & U;
 // testing purposes. The patching is in no way type safe and is not recommended.
 type FluidDataStoreRuntime_ForTesting = Patch<
 	FluidDataStoreRuntime,
-	IFluidDataStoreRuntimeAlpha & {
+	IFluidDataStoreRuntime & {
 		contexts: Map<unknown, unknown>;
 		submit(type: DataStoreMessageType, content: unknown, localOpMetadata?: unknown): void;
 	}

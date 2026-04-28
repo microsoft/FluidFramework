@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-internal/presence-definitions",
-	"version": "2.100.0",
+	"version": "2.101.0",
 	"description": "Core type definitions and interfaces for Fluid Framework presence",
 	"homepage": "https://fluidframework.com",
 	"repository": {

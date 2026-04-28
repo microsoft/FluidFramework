@@ -3,12 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import {
-	BenchmarkType,
-	TestType,
-	benchmarkIt,
-	collectDurationData,
-} from "@fluid-tools/benchmark";
+import { BenchmarkType, benchmarkDuration, benchmarkIt } from "@fluid-tools/benchmark";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
 
 import type { ISequenceIntervalCollection } from "../intervalCollection.js";
@@ -29,12 +24,12 @@ function runFindOverlappingIntervalsBenchmark({
 	intervalCount,
 	segmentCount,
 	segmentLength,
-	type,
+	type = BenchmarkType.Measurement,
 }: {
 	intervalCount: number;
 	segmentCount: number;
 	segmentLength: number;
-	type: BenchmarkType;
+	type?: BenchmarkType;
 }) {
 	let sharedString: SharedString;
 	let intervalCollection: ISequenceIntervalCollection;
@@ -63,47 +58,45 @@ function runFindOverlappingIntervalsBenchmark({
 	};
 
 	benchmarkIt({
-		testType: TestType.ExecutionTime,
 		title: `findOverlappingIntervals on string of length ${
 			segmentCount * segmentLength
 		} with ${intervalCount} equally spaced intervals and ${segmentCount} segments`,
 		type,
-		run: async () => {
-			setupSharedString();
-			return collectDurationData({
-				benchmarkFn: () => {
-					const start = (segmentLength * segmentCount) / 2;
-					const end = start + segmentLength;
-					overlappingIntervalsIndex.findOverlappingIntervals(start, end);
-				},
-			});
-		},
+		...benchmarkDuration({
+			benchmarkFnCustom: async (state) => {
+				setupSharedString();
+				const rangeStart = (segmentLength * segmentCount) / 2;
+				const rangeEnd = rangeStart + segmentLength;
+				state.timeAllBatches(() => {
+					overlappingIntervalsIndex.findOverlappingIntervals(rangeStart, rangeEnd);
+				});
+			},
+		}),
 	});
 
 	// Note: this test would likely be covered by a suite of local reference perf tests. In lieu of that,
 	// it simulates flows that some consumers might use involving resolving the endpoints of their sequence intervals.
 	benchmarkIt({
-		testType: TestType.ExecutionTime,
 		title: `findOverlappingIntervals on string of length ${
 			segmentCount * segmentLength
 		} with ${intervalCount} equally spaced intervals and ${segmentCount} segments with endpoint resolution`,
 		type: BenchmarkType.Perspective,
-		run: async () => {
-			setupSharedString();
-			return collectDurationData({
-				benchmarkFn: () => {
-					const start = (segmentLength * segmentCount) / 2;
-					const end = start + segmentLength;
+		...benchmarkDuration({
+			benchmarkFnCustom: async (state) => {
+				setupSharedString();
+				const rangeStart = (segmentLength * segmentCount) / 2;
+				const rangeEnd = rangeStart + segmentLength;
+				state.timeAllBatches(() => {
 					for (const interval of overlappingIntervalsIndex.findOverlappingIntervals(
-						start,
-						end,
+						rangeStart,
+						rangeEnd,
 					)) {
 						sharedString.localReferencePositionToPosition(interval.start);
 						sharedString.localReferencePositionToPosition(interval.end);
 					}
-				},
-			});
-		},
+				});
+			},
+		}),
 	});
 }
 
@@ -113,7 +106,6 @@ describe("IntervalCollection perf", () => {
 			intervalCount: 200,
 			segmentCount: 100,
 			segmentLength: 250,
-			type: BenchmarkType.Measurement,
 		});
 
 		runFindOverlappingIntervalsBenchmark({

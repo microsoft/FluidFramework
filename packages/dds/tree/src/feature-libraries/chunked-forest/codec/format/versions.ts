@@ -32,6 +32,21 @@ export const FieldBatchFormatVersion = strictEnum("FieldBatchFormatVersion", {
 });
 
 /**
+ * Whether the given format version supports incremental chunk encoding.
+ *
+ * @remarks
+ * This helper should be used for comparison since experimental versions
+ * can be a string.
+ */
+export function supportsIncrementalEncoding(version: FieldBatchFormatVersion): boolean {
+	if (version === FieldBatchFormatVersion.v1) {
+		return false;
+	}
+
+	return true;
+}
+
+/**
  * Encoded {@link FieldBatch} using V1 format.
  * @remarks
  * Does not support {@link EncodedIncrementalChunkShape}.
