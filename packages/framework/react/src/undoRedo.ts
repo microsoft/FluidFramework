@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert, oob } from "@fluidframework/core-utils/internal";
+import { oob } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import type { RevertibleAlpha, TreeBranchAlpha } from "@fluidframework/tree/internal";
 
@@ -143,6 +143,16 @@ interface StackEntry {
 }
 
 /**
+ * Returns a predicate that matches any stack entry whose label set contains `label`.
+ * When `label` is `undefined`, the predicate matches every entry (global operation).
+ *
+ * @param label - The symbol to match against, or `undefined` for a global match-all predicate.
+ */
+function labelPredicate(label: symbol | undefined): (entry: StackEntry) => boolean {
+	return label === undefined ? () => true : (entry) => entry.labels.has(label);
+}
+
+/**
  * Concrete implementation of {@link UndoRedo} for a SharedTree branch.
  *
  * @remarks
@@ -175,7 +185,9 @@ class UndoRedoManager implements UndoRedo {
 		attachedBranches.add(branch);
 		this.#branch = branch;
 		this.#unsubscribe = branch.events.on("changed", (data, getRevertible) => {
-			if (!data.isLocal || getRevertible === undefined) return;
+			if (!data.isLocal || getRevertible === undefined) {
+				return;
+			}
 
 			if (this.#pendingOperation !== undefined) {
 				const { kind, labels } = this.#pendingOperation;
@@ -226,68 +238,22 @@ class UndoRedoManager implements UndoRedo {
 		if (this.#disposed) {
 			return;
 		}
-		const index =
-			label === undefined
-				? this.#undoStack.length > 0
-					? this.#undoStack.length - 1
-					: undefined
-				: this.#lastIndexWithLabel(this.#undoStack, label);
-		if (index === undefined) {
-			return;
-		}
-		const entry = this.#undoStack[index] ?? oob();
-		this.#pendingOperation = { kind: "undo", labels: entry.labels };
-		try {
-			// revert(false) reverts without auto-disposing, so the entry remains retryable if it throws.
-			entry.revertible.revert(false);
-		} finally {
-			this.#pendingOperation = undefined;
-		}
-		// Only remove and dispose after a successful revert.
-		// If revert() throws, the entry stays so the user can retry.
-		this.#undoStack.splice(index, 1);
-		entry.revertible.dispose();
+		this.#revertWhere(this.#undoStack, "undo", labelPredicate(label));
 	}
 
 	public redo(label?: symbol): void {
 		if (this.#disposed) {
 			return;
 		}
-		const index =
-			label === undefined
-				? this.#redoStack.length > 0
-					? this.#redoStack.length - 1
-					: undefined
-				: this.#lastIndexWithLabel(this.#redoStack, label);
-		if (index === undefined) {
-			return;
-		}
-		const entry = this.#redoStack[index] ?? oob();
-		this.#pendingOperation = { kind: "redo", labels: entry.labels };
-		try {
-			// revert(false) reverts without auto-disposing, so the entry remains retryable if it throws.
-			entry.revertible.revert(false);
-		} finally {
-			this.#pendingOperation = undefined;
-		}
-		// Only remove and dispose after a successful revert.
-		// If revert() throws, the entry stays so the user can retry.
-		this.#redoStack.splice(index, 1);
-		entry.revertible.dispose();
+		this.#revertWhere(this.#redoStack, "redo", labelPredicate(label));
 	}
 
 	public canUndo(label?: symbol): boolean {
-		if (label === undefined) {
-			return this.#undoStack.length > 0;
-		}
-		return this.#undoStack.some((e) => e.labels.has(label));
+		return this.#undoStack.some(labelPredicate(label));
 	}
 
 	public canRedo(label?: symbol): boolean {
-		if (label === undefined) {
-			return this.#redoStack.length > 0;
-		}
-		return this.#redoStack.some((e) => e.labels.has(label));
+		return this.#redoStack.some(labelPredicate(label));
 	}
 
 	public dispose(): void {
@@ -297,24 +263,67 @@ class UndoRedoManager implements UndoRedo {
 		this.#disposed = true;
 		this.#unsubscribe();
 		attachedBranches.delete(this.#branch);
-		for (const e of this.#undoStack) e.revertible.dispose();
-		for (const e of this.#redoStack) e.revertible.dispose();
+		for (const e of this.#undoStack) {
+			e.revertible.dispose();
+		}
+		for (const e of this.#redoStack) {
+			e.revertible.dispose();
+		}
 		this.#undoStack.length = 0;
 		this.#redoStack.length = 0;
 	}
 
-	#lastIndexWithLabel(stack: StackEntry[], label: symbol): number | undefined {
-		assert(!this.#disposed, "Undo/redo manager is disposed.");
+	/**
+	 * Walks `stack` from the top and returns the index of the first entry matching `predicate`,
+	 * or `undefined` if none match.
+	 *
+	 * @param stack - The undo or redo stack to search.
+	 * @param predicate - Called for each entry from the top; the first entry for which it returns
+	 * `true` is selected.
+	 */
+	static #findLast(
+		stack: StackEntry[],
+		predicate: (entry: StackEntry) => boolean,
+	): number | undefined {
 		for (let i = stack.length - 1; i >= 0; i--) {
-			const entry = stack[i];
-			if (entry === undefined) {
-				throw new Error("Unexpected undefined entry in stack");
-			}
-			if (entry.labels.has(label)) {
+			const entry = stack[i] ?? oob();
+			if (predicate(entry)) {
 				return i;
 			}
 		}
 		return undefined;
+	}
+
+	/**
+	 * Reverts the top-most entry in `stack` matching `predicate`.
+	 * @remarks No-ops if no entry matches.
+	 *
+	 * @param stack - The undo or redo stack to operate on.
+	 * @param kind - Whether this is an `"undo"` or `"redo"` operation, used to route the resulting
+	 * revertible to the opposite stack.
+	 * @param predicate - Selects the target entry; the top-most matching entry is reverted.
+	 */
+	#revertWhere(
+		stack: StackEntry[],
+		kind: "undo" | "redo",
+		predicate: (entry: StackEntry) => boolean,
+	): void {
+		const index = UndoRedoManager.#findLast(stack, predicate);
+		if (index === undefined) {
+			return;
+		}
+		const entry = stack[index] ?? oob();
+		this.#pendingOperation = { kind, labels: entry.labels };
+		try {
+			// revert(false) reverts without auto-disposing, so the entry remains retryable if it throws.
+			entry.revertible.revert(false);
+		} finally {
+			this.#pendingOperation = undefined;
+		}
+		// Only remove and dispose after a successful revert.
+		// If revert() throws, the entry stays so the user can retry.
+		stack.splice(index, 1);
+		entry.revertible.dispose();
 	}
 }
 
