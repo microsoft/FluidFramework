@@ -974,7 +974,7 @@ describeCompat("IdCompressor Summaries", "NoCompat", (getTestObjectProvider, com
 		// Note: This theoretically could fail, as Id compressor is loaded async.
 		// This could happen only in delayed mode test. If it happens, the only thing I can think of to fix it - spin here until it shows up.
 		const idCompressor = (defaultDataStore._context.containerRuntime as any)
-			._idCompressor as IIdCompressor;
+			.idCompressorFeature?.compressor as IIdCompressor | undefined;
 		assert(idCompressor !== undefined, "we should have ID compressor by now");
 
 		// This will do a lot of things!
