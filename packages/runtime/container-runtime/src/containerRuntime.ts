@@ -1897,7 +1897,8 @@ export class ContainerRuntime
 			runtimeOptions.stagingModeAutoFlushThreshold ??
 			defaultStagingModeAutoFlushThreshold;
 		this.duplicateBatchDetectionDisabled =
-			this.mc.config.getBoolean("Fluid.ContainerRuntime.DisableDuplicateBatchDetection") === true;
+			this.mc.config.getBoolean("Fluid.ContainerRuntime.DisableDuplicateBatchDetection") ===
+			true;
 
 		// Activate the duplicate batch detector when this runtime is involved in the
 		// pending-state lifecycle: rehydrated from a captured pending state, or loading
@@ -5280,10 +5281,7 @@ export class ContainerRuntime
 	 * container could resubmit any pending batches we are about to serialize.
 	 */
 	private ensureDuplicateBatchDetector(): void {
-		if (
-			!this.duplicateBatchDetectionDisabled &&
-			this.duplicateBatchDetector === undefined
-		) {
+		if (!this.duplicateBatchDetectionDisabled && this.duplicateBatchDetector === undefined) {
 			this.duplicateBatchDetector = new DuplicateBatchDetector(undefined);
 		}
 	}
