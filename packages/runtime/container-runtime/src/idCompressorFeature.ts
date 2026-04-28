@@ -109,6 +109,11 @@ export class IdCompressorFeature implements IRuntimeFeature<ContainerMessageType
 	/**
 	 * Lazy load for "delayed" mode — finalizes any ranges that piled up in
 	 * {@link pendingOps} while the compressor was off.
+	 *
+	 * @remarks Only safe for `off → delayed` schema transitions. Any other
+	 * schema transition that would turn the compressor on requires synchronous
+	 * ID-compressor initialization and must not call this. The decision point
+	 * lives in `containerRuntime.onSchemaChange` (see PR #20174).
 	 */
 	public loadDelayed(): void {
 		if (this._compressor !== undefined) {

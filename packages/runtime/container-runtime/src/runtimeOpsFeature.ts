@@ -33,14 +33,22 @@ export const rejoinFeature = (
 
 /**
  * Routes the {@link ContainerMessageType.ChunkedOp} op type. ChunkedOps are
- * reassembled in the inbound pipeline before reaching feature dispatch — if
- * one arrives here, fail loudly.
+ * reassembled in the inbound pipeline before reaching feature dispatch and
+ * are excluded from `LocalContainerRuntimeMessage`, so every hook here is a
+ * "should not happen" guard. Each one throws explicitly rather than letting
+ * the collection's missing-handler path collapse to the unknown-type close.
  *
  * @internal
  */
-export const chunkedOpsGuardFeature = (): IRuntimeFeature<ContainerMessageType.ChunkedOp> => ({
-	supportedOps: CHUNKED_OPS,
-	handleOp: () => {
+export const chunkedOpsGuardFeature = (): IRuntimeFeature<ContainerMessageType.ChunkedOp> => {
+	const fail = (): never => {
 		throw new Error("ChunkedOp should not reach the feature dispatch path");
-	},
-});
+	};
+	return {
+		supportedOps: CHUNKED_OPS,
+		handleOp: fail,
+		applyStashedOp: fail,
+		reSubmitOp: fail,
+		rollbackStagedOp: fail,
+	};
+};
