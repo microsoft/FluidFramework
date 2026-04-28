@@ -268,16 +268,18 @@ async function main(): Promise<void> {
 		);
 	}
 
-	// Write versions.cjs
-	const manifest = {
-		standard: {
-			"n-1": nMinus1,
-			"n-2": nMinus2,
-			ocv: OCV,
-			"cross-client": crossClientVersions,
-		},
-		full: fullAdditional,
-	};
+	// allVersions is the single set of versions installed in the workspace and recorded in the manifest.
+	const allVersions = new Set([
+		nMinus1,
+		nMinus2,
+		OCV,
+		...crossClientVersions,
+		...explicitVersions,
+		...fullAdditional,
+	]);
+
+	// Write versions.cjs — flat list of all installed versions, newest first.
+	const manifest = { versions: [...allVersions].sort(semver.rcompare) };
 	const manifestContent = [
 		"/*!",
 		" * Copyright (c) Microsoft Corporation and contributors. All rights reserved.",
@@ -290,15 +292,6 @@ async function main(): Promise<void> {
 	].join("\n");
 	writeFileSync(versionsCjsPath, manifestContent, "utf8");
 	console.log(`\nWrote ${path.relative(pkgRoot, versionsCjsPath)}`);
-
-	const allVersions = new Set([
-		nMinus1,
-		nMinus2,
-		OCV,
-		...crossClientVersions,
-		...explicitVersions,
-		...fullAdditional,
-	]);
 
 	let anyChanged = false;
 

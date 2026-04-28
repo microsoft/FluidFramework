@@ -56,31 +56,8 @@ export const fullWorkspaceDir = path.join(compatWorkspacesDir, "full");
  * @internal
  */
 export interface CompatVersionsManifest {
-	/**
-	 * Symbolic version names used by the update script. All versions (standard + full) are
-	 * installed in the single `compat-workspaces/full/` workspace.
-	 */
-	standard: {
-		/** The previous minor release bracket (N-1). */
-		"n-1": string;
-		/** Two minor release brackets back (N-2). Used for cross-client compat. */
-		"n-2": string;
-		/**
-		 * Oldest compatible version for Loader/Driver layers.
-		 * HUMAN-MAINTAINED: update this constant when the oldest supported version changes.
-		 */
-		ocv: string;
-		/**
-		 * Additional versions needed for cross-client compat testing (e.g. the latest v1.x
-		 * release for "slow train" customers). MACHINE-MAINTAINED.
-		 */
-		"cross-client": string[];
-	};
-	/**
-	 * Additional exact versions for full back-compat testing (beyond the symbolic names above).
-	 * MACHINE-MAINTAINED.
-	 */
-	full: string[];
+	/** All exact versions installed in `compat-workspaces/full/`, newest first. */
+	versions: string[];
 }
 
 let cachedManifest: CompatVersionsManifest | undefined;
@@ -98,17 +75,11 @@ export function tryReadVersionsManifest(): CompatVersionsManifest | undefined {
 }
 
 /**
- * Returns all exact versions recorded in the manifest across both workspaces.
+ * Returns all exact versions recorded in the manifest.
  * @internal
  */
 export function getAllManifestVersions(manifest: CompatVersionsManifest): string[] {
-	return [
-		manifest.standard["n-1"],
-		manifest.standard["n-2"],
-		manifest.standard.ocv,
-		...(manifest.standard["cross-client"] ?? []),
-		...manifest.full,
-	].filter(Boolean);
+	return manifest.versions;
 }
 
 // ---------------------------------------------------------------------------
