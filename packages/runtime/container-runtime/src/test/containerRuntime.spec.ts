@@ -100,6 +100,7 @@ import type {
 } from "../opLifecycle/index.js";
 import { pkgVersion } from "../packageVersion.js";
 import type { IPendingMessage, PendingStateManager } from "../pendingStateManager.js";
+import { ReconnectTracker } from "../reconnectTracker.js";
 import {
 	type ISummaryCancellationToken,
 	neverCancelledSummaryToken,
@@ -1303,7 +1304,16 @@ describe("Runtime", () => {
 				// holds the original channelCollection by reference.
 				runtime.features.replace(runtime.channelCollection, mockChannelCollection);
 				runtime.channelCollection = mockChannelCollection;
-				runtime.maxConsecutiveReconnects = _maxReconnects ?? runtime.maxConsecutiveReconnects;
+				if (_maxReconnects !== undefined) {
+					// Swap in a tracker with the test-specified max. Reuse the real
+					// runtime's private getters via the `any` escape we already have.
+					runtime.reconnectTracker = new ReconnectTracker(
+						_maxReconnects,
+						() => runtime.hasPendingMessages() as boolean,
+						() => runtime.pendingMessagesCount as number,
+						createChildLogger({ logger: mockLogger }),
+					);
+				}
 				/* eslint-enable @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-assignment */
 			}
 

@@ -259,6 +259,7 @@ import {
 	type PendingBatchResubmitMetadata,
 	type IPendingMessage,
 } from "./pendingStateManager.js";
+import { ReconnectTracker } from "./reconnectTracker.js";
 import { BatchRunCounter, RunCounter } from "./runCounter.js";
 import { RuntimeFeatureCollection } from "./runtimeFeatureCollection.js";
 import {
@@ -1434,7 +1435,7 @@ export class ContainerRuntime
 
 	private readonly summarizerNode: IRootSummarizerNodeWithGC;
 
-	private readonly maxConsecutiveReconnects: number;
+	private readonly reconnectTracker: ReconnectTracker;
 
 	private readonly batchRunner = new BatchRunCounter();
 	private readonly _flushMode: FlushMode;
@@ -1453,8 +1454,6 @@ export class ContainerRuntime
 	private canSendSignals: boolean | undefined;
 
 	private readonly getConnectionState?: () => ConnectionState;
-
-	private consecutiveReconnects = 0;
 
 	private readonly dataModelChangeRunner = new RunCounter();
 
@@ -1862,8 +1861,12 @@ export class ContainerRuntime
 			isSummariesDisabled(this.summaryConfiguration) ||
 			this.mc.config.getBoolean("Fluid.ContainerRuntime.Test.DisableSummaries") === true;
 
-		this.maxConsecutiveReconnects =
-			this.mc.config.getNumber(maxConsecutiveReconnectsKey) ?? defaultMaxConsecutiveReconnects;
+		this.reconnectTracker = new ReconnectTracker(
+			this.mc.config.getNumber(maxConsecutiveReconnectsKey) ?? defaultMaxConsecutiveReconnects,
+			() => this.hasPendingMessages(),
+			() => this.pendingMessagesCount,
+			this.mc.logger,
+		);
 
 		this._flushMode = runtimeOptions.flushMode;
 		// TODO: Added in 2.90.0 - Remove this validation once we've released and confirmed no consumer passes an invalid flushMode value.
@@ -2578,42 +2581,6 @@ export class ContainerRuntime
 		this.features.contributeSummary(summaryTree, fullTree, trackState, telemetryContext);
 	}
 
-	// Track how many times the container tries to reconnect with pending messages.
-	// This happens when the connection state is changed and we reset the counter
-	// when we are able to process a local op or when there are no pending messages.
-	// If this counter reaches a max, it's a good indicator that the container
-	// is not making progress and it is stuck in a retry loop.
-	private shouldContinueReconnecting(): boolean {
-		if (this.maxConsecutiveReconnects <= 0) {
-			// Feature disabled, we never stop reconnecting
-			return true;
-		}
-
-		if (!this.hasPendingMessages()) {
-			// If there are no pending messages, we can always reconnect
-			this.resetReconnectCount();
-			return true;
-		}
-
-		if (this.consecutiveReconnects === Math.floor(this.maxConsecutiveReconnects / 2)) {
-			// If we're halfway through the max reconnects, send an event in order
-			// to better identify false positives, if any. If the rate of this event
-			// matches Container Close count below, we can safely cut down
-			// maxConsecutiveReconnects to half.
-			this.mc.logger.sendTelemetryEvent({
-				eventName: "ReconnectsWithNoProgress",
-				attempts: this.consecutiveReconnects,
-				pendingMessages: this.pendingMessagesCount,
-			});
-		}
-
-		return this.consecutiveReconnects < this.maxConsecutiveReconnects;
-	}
-
-	private resetReconnectCount(): void {
-		this.consecutiveReconnects = 0;
-	}
-
 	private replayPendingStates(): void {
 		// We need to be able to send ops to replay states
 		if (!this.shouldSendOps()) {
@@ -2781,9 +2748,9 @@ export class ContainerRuntime
 
 		// Fail while disconnected
 		if (reconnection) {
-			this.consecutiveReconnects++;
+			this.reconnectTracker.recordReconnect();
 
-			if (!this.shouldContinueReconnecting()) {
+			if (!this.reconnectTracker.shouldContinue()) {
 				this.closeFn(
 					DataProcessingError.create(
 						"Runtime detected too many reconnects with no progress syncing local ops.",
@@ -2791,7 +2758,7 @@ export class ContainerRuntime
 						undefined,
 						{
 							dataLoss: 1,
-							attempts: this.consecutiveReconnects,
+							attempts: this.reconnectTracker.attempts,
 							pendingMessages: this.pendingMessagesCount,
 						},
 					),
@@ -3008,7 +2975,7 @@ export class ContainerRuntime
 			// If we have processed a local op, this means that the container is
 			// making progress and we can reset the counter for how many times
 			// we have consecutively replayed the pending states
-			this.resetReconnectCount();
+			this.reconnectTracker.reset();
 		}
 	}
 
@@ -3246,7 +3213,7 @@ export class ContainerRuntime
 			this.signalTelemetryManager.trackReceivedSignal(
 				envelope,
 				this.mc.logger,
-				this.consecutiveReconnects,
+				this.reconnectTracker.attempts,
 			);
 		}
 
