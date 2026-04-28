@@ -324,9 +324,11 @@ export class ChannelCollection
 	implements
 		Omit<IFluidDataStoreChannel, "entryPoint" | "reSubmit" | "rollback">,
 		IDisposable,
-		IRuntimeFeature<		ContainerMessageType.FluidDataStoreOp|
-		ContainerMessageType.Attach|
-		ContainerMessageType.Alias>
+		IRuntimeFeature<
+			| ContainerMessageType.FluidDataStoreOp
+			| ContainerMessageType.Attach
+			| ContainerMessageType.Alias
+		>
 {
 	// Stores tracked by the Domain
 	private readonly pendingAttach = new Map<string, IAttachMessage>();

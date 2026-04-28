@@ -33,10 +33,7 @@ import {
 import { blobManagerBasePath } from "../blobManager/index.js";
 import { TombstoneResponseHeaderKey } from "../containerRuntime.js";
 import { ClientSessionExpiredError } from "../error.js";
-import {
-	ContainerMessageType,
-	type ContainerRuntimeGCMessage,
-} from "../messageTypes.js";
+import { ContainerMessageType, type ContainerRuntimeGCMessage } from "../messageTypes.js";
 import type {
 	InboundRuntimeMessageFor,
 	IRuntimeFeature,

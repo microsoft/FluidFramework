@@ -226,8 +226,5 @@ export interface IRuntimeFeature<TOps extends AnyRuntimeOpType = AnyRuntimeOpTyp
 	 * @param message - The local runtime message to roll back.
 	 * @param localOpMetadata - Subsystem-specific metadata captured at submit time.
 	 */
-	rollbackStagedOp?(
-		message: LocalRuntimeMessageFor<TOps>,
-		localOpMetadata: unknown,
-	): void;
+	rollbackStagedOp?(message: LocalRuntimeMessageFor<TOps>, localOpMetadata: unknown): void;
 }

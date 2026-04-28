@@ -544,7 +544,9 @@ function arrayToProp(arr: string[]): string[] | undefined {
  * @internal
  * @sealed
  */
-export class DocumentsSchemaController implements IRuntimeFeature<ContainerMessageType.DocumentSchemaChange> {
+export class DocumentsSchemaController
+	implements IRuntimeFeature<ContainerMessageType.DocumentSchemaChange>
+{
 	private explicitSchemaControl: boolean;
 
 	/**

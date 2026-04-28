@@ -1338,12 +1338,6 @@ export class ContainerRuntime
 		return this.documentsSchemaController.sessionSchema.runtime;
 	}
 
-	// `skipSavedCompressorOps`: ID Compressor serializes final state (see getPendingLocalState());
-	// it needs to skip all ops that preceded that state (marked savedOp === true). In "delayed" mode
-	// the compressor may never have been initialized before getPendingLocalState was called — in that
-	// case we have to process all ops, including those marked savedOp === true.
-	private readonly skipSavedCompressorOps: boolean;
-
 	private readonly idCompressorFeature: IdCompressorFeature;
 
 	/**
@@ -1540,10 +1534,10 @@ export class ContainerRuntime
 
 		private readonly metadata: IContainerRuntimeMetadata | undefined,
 
-		private readonly electedSummarizerData: ISerializedElection | undefined,
+		electedSummarizerData: ISerializedElection | undefined,
 		chunks: [string, string[]][],
 		dataStoreAliasMap: [string, string][],
-		private readonly runtimeOptions: Readonly<ContainerRuntimeOptionsInternal>,
+		runtimeOptions: Readonly<ContainerRuntimeOptionsInternal>,
 		private readonly containerScope: FluidObject,
 		// Create a custom ITelemetryBaseLogger to output telemetry events.
 		public readonly baseLogger: ITelemetryBaseLogger,
@@ -1551,7 +1545,7 @@ export class ContainerRuntime
 
 		blobManagerLoadInfo: IBlobManagerLoadInfo,
 		private readonly _storage: IContainerStorageService,
-		private readonly createIdCompressorFn: () => IIdCompressor & IIdCompressorCore,
+		createIdCompressorFn: () => IIdCompressor & IIdCompressorCore,
 
 		private readonly documentsSchemaController: DocumentsSchemaController,
 		featureGatesForTelemetry: Record<string, boolean | number | undefined>,
@@ -2000,15 +1994,17 @@ export class ContainerRuntime
 			),
 		);
 
-		// If we loaded from pending state, skip ops already accounted in that saved state
-		// (Loader marks them with savedOp === true).
-		this.skipSavedCompressorOps = pendingRuntimeState?.pendingIdCompressorState !== undefined;
+		// `skipSavedCompressorOps`: ID Compressor serializes final state (see getPendingLocalState());
+		// it needs to skip all ops that preceded that state (marked savedOp === true). In "delayed" mode
+		// the compressor may never have been initialized before getPendingLocalState was called — in that
+		// case we have to process all ops, including those marked savedOp === true.
+		const skipSavedCompressorOps = pendingRuntimeState?.pendingIdCompressorState !== undefined;
 
 		this.idCompressorFeature = this.features.add(
 			new IdCompressorFeature(
-				this.createIdCompressorFn,
+				createIdCompressorFn,
 				() => this.sessionSchema.idCompressorMode,
-				this.skipSavedCompressorOps,
+				skipSavedCompressorOps,
 				this.mc.logger,
 				() => this.deltaManager.lastSequenceNumber,
 			),
@@ -2131,13 +2127,13 @@ export class ContainerRuntime
 				baseLogger: this.baseLogger,
 				mc: this.mc,
 				getSummaryConfiguration: () => this.summaryConfiguration,
-				summaryRuntimeOptions: this.runtimeOptions.summaryOptions,
+				summaryRuntimeOptions: runtimeOptions.summaryOptions,
 				isSummarizerClient: this.isSummarizerClient,
 				clientDetails: this.clientDetails,
 				deltaManager: this.deltaManager,
 				innerDeltaManager: this.innerDeltaManager,
 				quorum: this._quorum,
-				electedSummarizerData: this.electedSummarizerData,
+				electedSummarizerData,
 				loader: context.loader,
 				emit: (event: string, ...args: unknown[]) => this.emit(event, ...args),
 				summariesDisabled: this.summariesDisabled,

@@ -41,7 +41,9 @@ const idCompressorBlobName = ".idCompressor";
  *
  * @internal
  */
-export class IdCompressorFeature implements IRuntimeFeature<ContainerMessageType.IdAllocation> {
+export class IdCompressorFeature
+	implements IRuntimeFeature<ContainerMessageType.IdAllocation>
+{
 	private _compressor: (IIdCompressor & IIdCompressorCore) | undefined;
 
 	/**
