@@ -21,10 +21,10 @@
 		"check:biome": "biome check .",
 		"check:format": "npm run check:biome",
 		"clean": "rimraf --glob build dist lib bundleAnalysis \"**/*.tsbuildinfo\" \"**/*.build.log\" nyc",
-		"eslint": "eslint --quiet --format stylish src",
-		"eslint:fix": "eslint --quiet --format stylish src --fix --fix-type problem,suggestion,layout",
+		"eslint": "eslint --quiet --format stylish src scripts",
+		"eslint:fix": "eslint --quiet --format stylish src scripts --fix --fix-type problem,suggestion,layout",
 		"explore:tree": "fluid-build . --task webpack && source-map-explorer ./build/sharedTree.js --html bundleAnalysis/reportTree.html",
-		"explore:scenario": "node ./scripts/explore-scenario.mjs",
+		"explore:scenario": "jiti ./scripts/exploreScenario.ts",
 		"format": "npm run format:biome",
 		"format:biome": "biome check . --write",
 		"lint": "fluid-build . --task lint",
@@ -34,7 +34,7 @@
 		"test:mocha": "npm run test:mocha:esm",
 		"test:mocha:esm": "mocha",
 		"webpack": "webpack",
-		"webpack:scenario": "node ./scripts/webpack-scenario.mjs",
+		"webpack:scenario": "jiti ./scripts/webpackScenario.ts",
 		"webpack:profile": "npm run webpack"
 	},
 	"dependencies": {

@@ -16,7 +16,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(__dirname, "..");
 const scenariosDir = path.join(repoRoot, "scenarios");
 
-function listScenarios() {
+function listScenarios(): string[] {
 	if (!existsSync(scenariosDir)) {
 		return [];
 	}
@@ -29,7 +29,7 @@ function listScenarios() {
 const scenario = process.argv[2];
 const available = listScenarios();
 
-if (!scenario) {
+if (scenario === undefined) {
 	console.log("Usage: npm run explore:scenario -- <scenario-name>");
 	console.log("");
 	console.log("Available scenarios:");
@@ -52,7 +52,7 @@ if (!available.includes(scenario)) {
 const scenarioDir = path.join(scenariosDir, scenario);
 const configPath = path.join(scenarioDir, "webpack.config.cts");
 
-function run(cmd, args) {
+function run(cmd: string, args: string[]): void {
 	const result = spawnSync(cmd, args, { cwd: repoRoot, stdio: "inherit", shell: true });
 	if (result.status !== 0) {
 		process.exit(result.status ?? 1);

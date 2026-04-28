@@ -9,6 +9,23 @@ import { recommended } from "@fluidframework/eslint-config-fluid/flat.mts";
 const config: Linter.Config[] = [
 	...recommended,
 	{
+		// Include script files in typed linting via an explicit tsconfig list.
+		files: ["**/*.ts", "**/*.tsx", "**/*.mts", "**/*.cts"],
+		languageOptions: {
+			parserOptions: {
+				projectService: false,
+				project: ["./tsconfig.json", "./tsconfig.scripts.json", "./src/test/tsconfig.json"],
+			},
+		},
+	},
+	{
+		files: ["scripts/**/*.ts"],
+		rules: {
+			"import-x/no-nodejs-modules": "off",
+			"unicorn/no-process-exit": "off",
+		},
+	},
+	{
 		rules: {
 			"@typescript-eslint/consistent-type-imports": "off",
 			"@typescript-eslint/no-explicit-any": "off",
