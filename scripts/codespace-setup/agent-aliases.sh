@@ -32,7 +32,7 @@ claude() {
 dev() {
 	_ensure_agency || return 1
 	repoverlay switch --copy nori
-	agency claude --mcp 'ado --org fluidframework' --mcp 'workiq' --mcp 'enghub' "$@" -- --model opus
+	agency claude --profile nori --mcp 'ado --org fluidframework' --mcp 'workiq' --mcp 'enghub' "$@" -- --model opus
 }
 
 copilot() {
@@ -43,8 +43,7 @@ copilot() {
 
 oce() {
 	_ensure_agency || return 1
-	repoverlay switch --copy ff-oce
-	agency copilot "$@" -- --agent ff-oce
+	agency copilot --profile ff-oce "$@" -- --agent ff-oce:ff-oce
 }
 
 ai-reset() {
