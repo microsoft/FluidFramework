@@ -37,17 +37,6 @@ import { detectVersionScheme, fromInternalScheme } from "@fluid-tools/version-to
 import { assert } from "@fluidframework/core-utils/internal";
 import * as semver from "semver";
 
-/**
- * Checks if the given version has the SparseMatrix moved to sequence-deprecated.
- * @internal
- */
-export function versionHasMovedSparsedMatrix(version: string): boolean {
-	// SparseMatrix was moved to "@fluid-experimental/sequence-deprecated" in "2.0.0-internal.2.0.0"
-	return (
-		version >= "2.0.0-internal.2.0.0" || (!version.includes("internal") && version >= "2.0.0")
-	);
-}
-
 // ---------------------------------------------------------------------------
 // Paths
 // ---------------------------------------------------------------------------
@@ -147,9 +136,11 @@ const pnpmCmd = process.platform === "win32" ? "pnpm.cmd" : "pnpm";
  */
 export function resolveVersion(requested: string, _installed: boolean): string {
 	const cachedVersion = resolutionCache.get(requested);
-	if (cachedVersion) return cachedVersion;
-
+	if (cachedVersion) {
+		return cachedVersion;
+	}
 	if (semver.valid(requested)) {
+		// If it is a valid semver already instead of a range, just use it
 		resolutionCache.set(requested, requested);
 		return requested;
 	}
@@ -198,10 +189,6 @@ export function resolveVersion(requested: string, _installed: boolean): string {
 }
 
 // ---------------------------------------------------------------------------
-// Workspace installation
-// ---------------------------------------------------------------------------
-
-// ---------------------------------------------------------------------------
 // Installed package lookup
 // ---------------------------------------------------------------------------
 
@@ -235,7 +222,7 @@ export function checkInstalled(requested: string): { version: string; modulePath
  *
  * Uses Node's standard module resolution algorithm via `createRequire`, which naturally handles
  * both version-specific `node_modules/` and the hoisted workspace-root `node_modules/` without
- * manual path construction. The resolved file is then loaded with `import()`.
+ * manual path construction. The package is loaded with `require()`.
  *
  * @param modulePath - Path to the version directory (e.g. `compat-workspaces/full/2.83.0`).
  * The resolver starts here and walks up to find hoisted packages.
@@ -291,6 +278,7 @@ export function calculateRequestedRange(
 
 	const scheme = detectVersionScheme(baseVersion);
 
+	// if the baseVersion passed is an internal version
 	if (
 		adjustPublicMajor === false &&
 		(scheme === "internal" || scheme === "internalPrerelease")
@@ -317,35 +305,56 @@ export function calculateRequestedRange(
 		throw new Error(err as string);
 	}
 
+	// If the base version is a public version and `adjustPublicMajor` is false, then we need to ensure that we
+	// calculate N-1 as the previous major release, regardless if it is public or internal.
+	// Currently, this case only applies to calculating N-X for 2.x.y.
+	// TODO: This is a temporary solution and we need to entirely rewrite this function to handle the changes the version schemas. See ADO:8198.
 	if (adjustPublicMajor === false && version.major > 1) {
 		if (version.minor < 10) {
+			// If 2.0 <= N < 2.10, then we can pretend that N is RC6 (*which doesn't exist*) and calculate the range as if it were an internal version.
 			const internalSchemeRange = internalSchema("2.0.0", "6.0.0", "rc", requested);
 			return internalSchemeRange;
 		} else {
+			// For each requested version to go back, we go back 10 minor versions. If requested is -2, then we need to go back 20 minor versions.
 			const legacyMinorsToSkip = Math.abs(requested * 10);
 			if (legacyMinorsToSkip > version.minor) {
+				// If the number of minors we need to go back is greater than the minor version, then that means we will be going back to RC releases.
+				// Here we calculate how many more releases we need to go back **after** we take into account going from the current minor version to 2.0.
+				// For example, if N is 2.20, then the range we need to return for N-1 starts at 2.10, for N-2 it starts at 2.0, N-3 is RC5, N-4 is RC4, etc.
+				// So if N is 2.20 and requested is 4, then we still need to go back 2 more releases from 2.0 (treated as RC6).
 				const remainingRequested =
 					(legacyMinorsToSkip - Math.floor(version.minor / 10) * 10) / 10;
 				const internalSchemeRange = internalSchema(
 					"2.0.0",
 					"6.0.0",
 					"rc",
-					remainingRequested * -1,
+					remainingRequested * -1, // make sure the value is negative since we made it positive above
 				);
 				return internalSchemeRange;
 			}
+			// Here we know that the requested version will be >=2.0, so we can avoid all the RC releases.
+			// If N >= 2.10, then the range we need to return for N-1 starts at legacy breaking minor before the one N belongs to.
 			const lowerMinorRange = Math.floor((version.minor - legacyMinorsToSkip) / 10) * 10;
 			const upperMinorRange = lowerMinorRange + 10;
+			// Here we do a range that, when resolved, will result in the latest minor version that satisfies the request.
 			return `>=${version.major}.${lowerMinorRange}.0-0 <${version.major}.${upperMinorRange}.0-0`;
 		}
 	} else {
+		// calculate requested major version number
 		const requestedMajorVersion = version.major + requested;
+		// if the major version number is bigger than 0 then return it as normal
 		if (requestedMajorVersion > 0) {
 			return `^${requestedMajorVersion}.0.0-0`;
 		}
+		// if the major version number is <= 0 then we return the equivalent pre-releases
 		const lastPrereleaseVersion = new semver.SemVer("0.59.0");
+
+		// Minor number in 0.xx release represent a major change hence different rules
+		// are applied for computing the requested version.
 		const requestedMinorVersion = lastPrereleaseVersion.minor + requestedMajorVersion;
+		// too old a version / non existing version requested
 		if (requestedMinorVersion <= 0) {
+			// cap at min version
 			return "^0.0.1-0";
 		}
 		return `^0.${requestedMinorVersion}.0-0`;
@@ -364,8 +373,23 @@ export function calculateRequestedRange(
  * @param baseVersion - The base version to move from (eg. "0.60.0")
  * @param requested - If the value is a negative number, the baseVersion will be adjusted down.
  * If the value is a string then it will be returned as-is. Throws on positive number.
- * @param adjustPublicMajor - If `baseVersion` is a Fluid internal version, controls whether the
- * public or internal version is adjusted by the `requested` value.
+ * @param adjustPublicMajor - If `baseVersion` is a Fluid internal version, then this boolean controls whether the
+ * public or internal version is adjusted by the `requested` value. This parameter has no effect if `requested` is a
+ * string value or if `baseVersion` is not a Fluid internal version.
+ *
+ * @remarks
+ *
+ * In typical use, the `requested` values are negative values to return ranges for previous versions (e.g. "-1").
+ *
+ * @example
+ * ```typescript
+ * const newVersion = getRequestedVersion("2.3.5", -1); // "^1.0.0"
+ * ```
+ *
+ * @example
+ * ```typescript
+ * const newVersion = getRequestedVersion("2.3.5", -2); // "^0.59.0"
+ * ```
  *
  * @internal
  */
@@ -376,11 +400,18 @@ export function getRequestedVersion(
 ): string {
 	const calculatedRange = calculateRequestedRange(baseVersion, requested, adjustPublicMajor);
 	try {
+		// Returns the exact version that was requested (i.e. 2.0.0-rc.2.0.2).
+		// Will throw if the requested version range is not valid.
 		return resolveVersion(calculatedRange, false);
 	} catch (err: any) {
-		// If N-1 is not yet published (e.g. on a newly bumped branch), fall back to N-2.
+		// If we tried fetching N-1 and it failed, try N-2. It is possible that we are trying to bump the current branch
+		// to a new version. If that is the case, then N-1 may not be published yet, and we should try to use N-2 in it's place.
 		if (requested === -1) {
 			const resolvedVersion = getRequestedVersion(baseVersion, -2, adjustPublicMajor);
+			// Here we cache the result so we don't have to enter the try/catch flow again.
+			// Note: This will cache the resolved version range (i.e. >=2.0.0-rc.4.0.0 <2.0.0-rc.5.0.0). Because of this,
+			// it will not cause any conflicts when trying to fetch the current version
+			// i.e. `getRequestedVersion("2.0.0-rc.5.0.0", 0, false)` will still return "2.0.0-rc.5.0.0".
 			resolutionCache.set(calculatedRange, resolvedVersion);
 			return resolvedVersion;
 		} else {
@@ -403,11 +434,15 @@ function internalSchema(
 		return `${publicVersion}-${prereleaseIdentifier}.${internalVersion}`;
 	}
 
+	// Here we handle edge cases of converting the early rc/internal releases.
+	// We convert early rc releases to internal releases, and early internal releases to public releases.
 	if (prereleaseIdentifier === "rc" || prereleaseIdentifier === "dev-rc") {
 		if (semver.eq(publicVersion, "2.0.0")) {
 			const parsed = semver.parse(internalVersion);
 			assert(parsed !== null, "internalVersion should be parsable");
 			if (parsed.major + requested < 1) {
+				// If the request will evaluate to a pre-RC release, we need to convert the request
+				// to the equivalent internal release request.
 				return internalSchema("2.0.0", "8.0.0", "internal", requested + parsed.major);
 			}
 		}
@@ -430,6 +465,7 @@ function internalSchema(
 		return `^1.0.0-0`;
 	}
 
+	// if the version number is for the older version scheme before 1.0.0
 	if (
 		semver.eq(publicVersion, "2.0.0") &&
 		semver.lte(internalVersion, "2.0.0") &&
@@ -443,6 +479,7 @@ function internalSchema(
 	let parsedVersion;
 	let semverInternal: string = internalVersion;
 
+	// applied for all the baseVersion passed as 2.0.0-internal-3.0.0 or greater in 2.0.0 internal series
 	if (semver.gt(internalVersion, publicVersion) && requested <= -2) {
 		const parsed = new semver.SemVer(internalVersion);
 		semverInternal = (parsed.major + requested + 1).toString().concat(".0.0");
@@ -454,10 +491,22 @@ function internalSchema(
 		throw new Error(err as string);
 	}
 
+	// Convert any pre/dev release indicators to internal or rc; default to "internal"
 	const idToUse = prereleaseIdentifier.includes("rc") ? "rc" : "internal";
 	return `>=${publicVersion}-${idToUse}.${
 		parsedVersion.major - 1
 	}.0.0 <${publicVersion}-${idToUse}.${parsedVersion.major}.0.0`;
+}
+
+/**
+ * Checks if the given version has the SparseMatrix moved to sequence-deprecated.
+ * @internal
+ */
+export function versionHasMovedSparsedMatrix(version: string): boolean {
+	// SparseMatrix was moved to "@fluid-experimental/sequence-deprecated" in "2.0.0-internal.2.0.0"
+	return (
+		version >= "2.0.0-internal.2.0.0" || (!version.includes("internal") && version >= "2.0.0")
+	);
 }
 
 /**
@@ -511,6 +560,7 @@ export function versionToComparisonNumber(version: string): number {
 	if (version.startsWith("2.0.0-rc.5")) {
 		return 14;
 	}
+
 	const parsed = semver.parse(version);
 	if (!parsed) {
 		throw new Error(`Invalid version: ${version}`);
