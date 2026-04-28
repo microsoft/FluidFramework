@@ -1499,8 +1499,6 @@ export class ContainerRuntime
 
 	private readonly signalTelemetryManager = new SignalTelemetryManager();
 
-	private readonly deltaScheduler: DeltaScheduler;
-	private readonly inboundBatchAggregator: InboundBatchAggregator;
 	private readonly blobManager: BlobManager;
 	private readonly pendingStateManager: PendingStateManager;
 	private readonly duplicateBatchDetector: DuplicateBatchDetector | undefined;
@@ -1818,19 +1816,20 @@ export class ContainerRuntime
 		);
 
 		const pendingRuntimeState = pendingLocalState as IPendingRuntimeState | undefined;
-		this.pendingStateManager = new PendingStateManager(
-			{
-				applyStashedOp: this.applyStashedOp.bind(this),
-				clientId: () => this.clientId,
-				connected: () => this.connected,
-				reSubmitBatch: this.reSubmitBatch.bind(this),
-				isActiveConnection: () => this.innerDeltaManager.active,
-				isAttached: () => this.attachState !== AttachState.Detached,
-			},
-			pendingRuntimeState?.pending,
-			this.baseLogger,
+		this.pendingStateManager = this.features.add(
+			new PendingStateManager(
+				{
+					applyStashedOp: this.applyStashedOp.bind(this),
+					clientId: () => this.clientId,
+					connected: () => this.connected,
+					reSubmitBatch: this.reSubmitBatch.bind(this),
+					isActiveConnection: () => this.innerDeltaManager.active,
+					isAttached: () => this.attachState !== AttachState.Detached,
+				},
+				pendingRuntimeState?.pending,
+				this.baseLogger,
+			),
 		);
-		this.features.add(this.pendingStateManager);
 
 		let outerDeltaManager: IDeltaManagerFull = this.innerDeltaManager;
 		this.useDeltaManagerOpsProxy =
@@ -1927,6 +1926,7 @@ export class ContainerRuntime
 			sessionExpiryTimerStarted: pendingRuntimeState?.sessionExpiryTimerStarted,
 		});
 		this.features.add(new GarbageCollectionSubsystem(this.garbageCollector));
+		// (No assignment; the runtime continues to access garbageCollector directly.)
 
 		const loadedFromSequenceNumber = this.deltaManager.initialSequenceNumber;
 		// If the base snapshot was generated when isolated channels were disabled, set the summary reference
@@ -2025,19 +2025,21 @@ export class ContainerRuntime
 			createBlobPayloadPending: this.sessionSchema.createBlobPayloadPending === true,
 		});
 
-		this.deltaScheduler = new DeltaScheduler(
-			this.innerDeltaManager,
-			this,
-			createChildLogger({ logger: this.baseLogger, namespace: "DeltaScheduler" }),
+		this.features.add(
+			new DeltaScheduler(
+				this.innerDeltaManager,
+				this,
+				createChildLogger({ logger: this.baseLogger, namespace: "DeltaScheduler" }),
+			),
 		);
-		this.features.add(this.deltaScheduler);
 
-		this.inboundBatchAggregator = new InboundBatchAggregator(
-			this.innerDeltaManager,
-			() => this.clientId,
-			createChildLogger({ logger: this.baseLogger, namespace: "InboundBatchAggregator" }),
+		this.features.add(
+			new InboundBatchAggregator(
+				this.innerDeltaManager,
+				() => this.clientId,
+				createChildLogger({ logger: this.baseLogger, namespace: "InboundBatchAggregator" }),
+			),
 		);
-		this.features.add(this.inboundBatchAggregator);
 
 		const legacySendBatchFn = makeLegacySendBatchFn(submitFn, this.innerDeltaManager);
 
@@ -2166,24 +2168,25 @@ export class ContainerRuntime
 		ReportOpPerfTelemetry(this.clientId, this._deltaManager, this, this.baseLogger);
 		BindBatchTracker(this, this.baseLogger);
 
-		this.summarizerSubsystem = new SummarizerSubsystem({
-			runtime: this,
-			handleContext: this.handleContext,
-			baseLogger: this.baseLogger,
-			mc: this.mc,
-			getSummaryConfiguration: () => this.summaryConfiguration,
-			summaryRuntimeOptions: this.runtimeOptions.summaryOptions,
-			isSummarizerClient: this.isSummarizerClient,
-			clientDetails: this.clientDetails,
-			deltaManager: this.deltaManager,
-			innerDeltaManager: this.innerDeltaManager,
-			quorum: this._quorum,
-			electedSummarizerData: this.electedSummarizerData,
-			loader: context.loader,
-			emit: (event: string, ...args: unknown[]) => this.emit(event, ...args),
-			summariesDisabled: this.summariesDisabled,
-		});
-		this.features.add(this.summarizerSubsystem);
+		this.summarizerSubsystem = this.features.add(
+			new SummarizerSubsystem({
+				runtime: this,
+				handleContext: this.handleContext,
+				baseLogger: this.baseLogger,
+				mc: this.mc,
+				getSummaryConfiguration: () => this.summaryConfiguration,
+				summaryRuntimeOptions: this.runtimeOptions.summaryOptions,
+				isSummarizerClient: this.isSummarizerClient,
+				clientDetails: this.clientDetails,
+				deltaManager: this.deltaManager,
+				innerDeltaManager: this.innerDeltaManager,
+				quorum: this._quorum,
+				electedSummarizerData: this.electedSummarizerData,
+				loader: context.loader,
+				emit: (event: string, ...args: unknown[]) => this.emit(event, ...args),
+				summariesDisabled: this.summariesDisabled,
+			}),
+		);
 
 		this.entryPoint = new LazyPromise(async () => {
 			if (this.summarizerSubsystem.summarizer !== undefined) {

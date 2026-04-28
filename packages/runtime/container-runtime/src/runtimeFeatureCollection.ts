@@ -23,9 +23,15 @@ import type { IRuntimeFeature } from "@fluidframework/runtime-definitions/intern
 export class RuntimeFeatureCollection implements Required<IRuntimeFeature> {
 	private readonly features: IRuntimeFeature[] = [];
 
-	/** Append a feature. Order matters — earlier-added features run first. */
-	public add(feature: IRuntimeFeature): void {
+	/**
+	 * Append a feature and return it, so callers can chain registration with
+	 * assignment: `this.foo = this.features.add(new FooFeature(...))`.
+	 *
+	 * Order matters — earlier-added features run first.
+	 */
+	public add<T extends IRuntimeFeature>(feature: T): T {
 		this.features.push(feature);
+		return feature;
 	}
 
 	public async onLoadFromSnapshot(): Promise<void> {
