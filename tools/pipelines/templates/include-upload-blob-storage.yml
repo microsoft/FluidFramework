@@ -1,0 +1,68 @@
+# Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+# Licensed under the MIT License.
+
+# include-upload-blob-storage
+# Reusable template for uploading files to Azure blob storage with MSI authentication
+
+parameters:
+- name: serviceConnection
+  type: string
+
+- name: storageAccount
+  type: string
+
+- name: containerName
+  type: string
+
+- name: sourceFile
+  type: string
+  default: ''
+
+- name: sourcePattern
+  type: string
+  default: ''
+
+- name: blobName
+  type: string
+  default: ''
+
+- name: displayName
+  type: string
+
+- name: workingDirectory
+  type: string
+  default: '$(Pipeline.Workspace)'
+
+- name: overwrite
+  type: boolean
+  default: true
+
+- name: condition
+  type: string
+  default: ''
+
+- name: contentCache
+  type: string
+  default: ''
+
+steps:
+- task: AzureCLI@2
+  displayName: ${{ parameters.displayName }}
+  continueOnError: true
+  ${{ if ne(parameters.condition, '') }}:
+    condition: ${{ parameters.condition }}
+  inputs:
+    azureSubscription: ${{ parameters.serviceConnection }}
+    scriptType: bash
+    workingDirectory: ${{ parameters.workingDirectory }}
+    scriptLocation: inlineScript
+    inlineScript: |
+      # Upload using MSI authentication
+      ${{ if ne(parameters.sourcePattern, '') }}:
+        # Multiple files mode - loop through pattern
+        for file in ${{ parameters.sourcePattern }}; do
+            az storage blob upload -f "$file" -c '${{ parameters.containerName }}' -n "$(basename "$file")" --account-name ${{ parameters.storageAccount }} ${{ if ne(parameters.contentCache, '') }}--content-cache ${{ parameters.contentCache }}${{ endif }} --auth-mode login --overwrite ${{ parameters.overwrite }} --verbose
+        done
+      ${{ if ne(parameters.sourceFile, '') }}:
+        # Single file mode
+        az storage blob upload -f '${{ parameters.sourceFile }}' -c '${{ parameters.containerName }}' -n '${{ parameters.blobName }}' --account-name ${{ parameters.storageAccount }} ${{ if ne(parameters.contentCache, '') }}--content-cache ${{ parameters.contentCache }}${{ endif }} --auth-mode login --overwrite ${{ parameters.overwrite }} --verbose

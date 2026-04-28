@@ -46,22 +46,32 @@ jobs:
         SourceFolder: $(Pipeline.Workspace)/${{ parameters.buildDirectory }}/upload_release_reports
         TargetFolder: $(Build.ArtifactStagingDirectory)/release_reports
 
-    - task: AzureCLI@2
-      displayName: Upload release reports
-      continueOnError: true
-      inputs:
-        azureSubscription: 'fluid-docs'
-        scriptType: bash
+    - template: /tools/pipelines/templates/include-upload-blob-storage.yml@self
+      parameters:
+        serviceConnection: 'fluid-docs'
+        storageAccount: $(STORAGE_ACCOUNT)
+        containerName: 'manifest-files'
+        sourcePattern: 'upload_release_reports/*'
+        displayName: 'Upload release reports to old storage'
         workingDirectory: $(Pipeline.Workspace)/${{ parameters.buildDirectory }}
-        scriptLocation: inlineScript
-        inlineScript: |
-          for file in upload_release_reports/*; do
-              # Use 5 minute TTL for manifest files. This could be lengthened significantly
-              # for manifest files for a particular build (immutable) or for those for a particular
-              # release (updates with our release cycle), but using a shorter TTL for all risks only small
-              # perf losses while remaining simple.
-              az storage blob upload -f "$file" -c 'manifest-files' -n "$(basename "$file")" --account-name $(STORAGE_ACCOUNT) --content-cache max-age=300 --auth-mode login --overwrite true --verbose
-          done
+        contentCache: 'max-age=300'
+
+    - template: /tools/pipelines/templates/include-upload-blob-storage.yml@self
+      parameters:
+        serviceConnection: 'fluid-docs-torus'
+        storageAccount: $(STORAGE_ACCOUNT_NEW)
+        containerName: 'manifest-files'
+        sourcePattern: 'upload_release_reports/*'
+        displayName: 'Upload release reports to new storage'
+        workingDirectory: $(Pipeline.Workspace)/${{ parameters.buildDirectory }}
+        contentCache: 'max-age=300'
+
+    - task: Bash@3
+      displayName: Clean up temporary directories
+      inputs:
+        targetType: 'inline'
+        workingDirectory: $(Pipeline.Workspace)/${{ parameters.buildDirectory }}
+        script: |
           # Delete generate_release_reports and upload_release_reports folder
           rm -r generate_release_reports upload_release_reports
 
