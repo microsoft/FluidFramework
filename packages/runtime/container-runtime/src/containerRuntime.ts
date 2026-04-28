@@ -158,7 +158,6 @@ import {
 	DataProcessingError,
 	extractSafePropertiesFromMessage,
 	GenericError,
-	LoggingError,
 	PerformanceEvent,
 	// eslint-disable-next-line import-x/no-deprecated
 	TaggedLoggerAdapter,
@@ -2666,44 +2665,31 @@ export class ContainerRuntime
 	private async applyStashedOp(serializedOpContent: string): Promise<unknown> {
 		// Pending State contains serialized contents, so parse it here.
 		const opContents = this.parseLocalOpContent(serializedOpContent);
+
+		// Features (channelCollection, BlobManager, GarbageCollector, DocumentsSchemaController)
+		// each claim their own stashed op type.
+		const claimed = await this.features.applyStashedOp(opContents);
+		if (claimed !== undefined) {
+			return claimed.result;
+		}
+
+		// Residual types not yet owned by a feature.
 		switch (opContents.type) {
-			case ContainerMessageType.FluidDataStoreOp:
-			case ContainerMessageType.Attach:
-			case ContainerMessageType.Alias: {
-				return this.channelCollection.applyStashedOp(opContents);
-			}
 			case ContainerMessageType.IdAllocation: {
 				// IDs allocation ops in stashed state are ignored because the tip state of the compressor
-				// is serialized into the pending state. This is done because generation of new IDs during
-				// stashed op application (or, later, resubmit) must generate new IDs and if the compressor
-				// was loaded from a state serialized at the same time as the summary tree in the stashed state
-				// then it would generate IDs that collide with any in later stashed ops.
-				// In the future, IdCompressor could be extended to have an "applyStashedOp" or similar method
-				// and the runtime could filter out all ID allocation ops from the stashed state and apply them
-				// before applying the rest of the stashed ops. This would accomplish the same thing but with
-				// better performance in future incremental stashed state creation.
+				// is serialized into the pending state.
 				assert(
 					this.sessionSchema.idCompressorMode !== undefined,
 					0x8f1 /* ID compressor should be in use */,
 				);
 				return;
 			}
-			case ContainerMessageType.DocumentSchemaChange: {
-				return;
-			}
-			case ContainerMessageType.BlobAttach: {
-				return;
-			}
 			case ContainerMessageType.Rejoin: {
 				throw new Error("rejoin not expected here");
 			}
-			case ContainerMessageType.GC: {
-				// GC op is only sent in summarizer which should never have stashed ops.
-				throw new LoggingError("GC op not expected to be stashed in summarizer");
-			}
 			default: {
 				const error = getUnknownMessageTypeError(
-					opContents.type,
+					opContents.type as UnknownContainerRuntimeMessage["type"],
 					"applyStashedOp" /* codePath */,
 				);
 				this.closeFn(error);
@@ -4827,25 +4813,19 @@ export class ContainerRuntime
 			canStageMessageOfType(message.type),
 			0xbbb /* Expected message type to be compatible with staging */,
 		);
-		switch (message.type) {
-			case ContainerMessageType.FluidDataStoreOp: {
-				this.channelCollection.reSubmitContainerMessage(
-					message,
-					resubmitData.localOpMetadata,
-					/* squash: */ true,
-				);
-				break;
-			}
-			// NOTE: Squash doesn't apply to GC or DocumentSchemaChange ops, fallback to typical resubmit logic.
-			case ContainerMessageType.GC:
-			case ContainerMessageType.DocumentSchemaChange: {
-				this.reSubmit(resubmitData);
-				break;
-			}
-			default: {
-				unreachableCase(message.type);
-			}
+
+		// Only FluidDataStoreOp uses the squash path; GC and DocumentSchemaChange
+		// fall back to the standard resubmit logic.
+		if (message.type === ContainerMessageType.FluidDataStoreOp) {
+			this.features.reSubmitOp(
+				message,
+				resubmitData.localOpMetadata,
+				undefined /* opMetadata */,
+				true /* squash */,
+			);
+			return;
 		}
+		this.reSubmit(resubmitData);
 	}
 
 	/**
@@ -4858,49 +4838,28 @@ export class ContainerRuntime
 		localOpMetadata,
 		opMetadata,
 	}: PendingMessageResubmitData): void {
+		// Features (channelCollection, BlobManager, GarbageCollector, DocumentsSchemaController)
+		// each claim their own resubmit type.
+		if (this.features.reSubmitOp(message, localOpMetadata, opMetadata, false /* squash */)) {
+			return;
+		}
+
+		// Residual types not yet owned by a feature.
 		switch (message.type) {
-			case ContainerMessageType.FluidDataStoreOp:
-			case ContainerMessageType.Attach:
-			case ContainerMessageType.Alias: {
-				// Call reSubmitContainerMessage which will find the right store
-				// and trigger resubmission on it.
-				this.channelCollection.reSubmitContainerMessage(
-					message,
-					localOpMetadata,
-					/* squash: */ false,
-				);
-				break;
-			}
 			case ContainerMessageType.IdAllocation: {
-				// Allocation ops are never resubmitted/rebased. This is because they require special handling to
-				// avoid being submitted out of order. For example, if the pending state manager contained
-				// [idOp1, dataOp1, idOp2, dataOp2] and the resubmission of dataOp1 generated idOp3, that would be
-				// placed into the outbox in the same batch as idOp1, but before idOp2 is resubmitted.
-				// To avoid this, allocation ops are simply never resubmitted. Prior to invoking the pending state
-				// manager to replay pending ops, the runtime will always submit a new allocation range that includes
-				// all pending IDs. The resubmitted allocation ops are then ignored here.
-				break;
-			}
-			case ContainerMessageType.BlobAttach: {
-				this.blobManager.reSubmit(opMetadata);
-				break;
+				// Allocation ops are never resubmitted/rebased — the runtime submits a fresh
+				// allocation range covering all pending IDs before invoking pending replay.
+				return;
 			}
 			case ContainerMessageType.Rejoin: {
 				this.submit(message);
-				break;
-			}
-			case ContainerMessageType.GC: {
-				this.submit(message);
-				break;
-			}
-			case ContainerMessageType.DocumentSchemaChange: {
-				// We shouldn't directly resubmit due to Compare-And-Swap semantics.
-				// If needed it will be generated from scratch before other ops are submitted.
-				this.documentsSchemaController.pendingOpNotAcked();
-				break;
+				return;
 			}
 			default: {
-				const error = getUnknownMessageTypeError(message.type, "reSubmitCore" /* codePath */);
+				const error = getUnknownMessageTypeError(
+					message.type as UnknownContainerRuntimeMessage["type"],
+					"reSubmitCore" /* codePath */,
+				);
 				this.closeFn(error);
 				throw error;
 			}
@@ -4911,38 +4870,17 @@ export class ContainerRuntime
 	 * Rollback the given op which was only staged but not yet submitted.
 	 */
 	private rollbackStagedChange(
-		{ type, contents }: LocalContainerRuntimeMessage,
+		message: LocalContainerRuntimeMessage,
 		localOpMetadata: unknown,
 	): void {
-		assert(canStageMessageOfType(type), 0xbbc /* Unexpected message type to be rolled back */);
-
-		switch (type) {
-			case ContainerMessageType.FluidDataStoreOp: {
-				// For operations, call rollbackDataStoreOp which will find the right store
-				// and trigger rollback on it.
-				this.channelCollection.rollbackDataStoreOp(contents, localOpMetadata);
-				break;
-			}
-			case ContainerMessageType.GC: {
-				// Just drop it, but log an error, this is not expected and not ideal, but not critical failure either.
-				// Currently the only expected type here is TombstoneLoaded, which will have been preceded by one of these events as well:
-				// GC_Tombstone_DataStore_Requested, GC_Tombstone_SubDataStore_Requested, GC_Tombstone_Blob_Requested
-				this.mc.logger.sendErrorEvent({
-					eventName: "GC_OpDiscarded",
-					details: { subType: contents.type },
-				});
-				break;
-			}
-			case ContainerMessageType.DocumentSchemaChange: {
-				// Notify the document schema controller that the pending op was not acked.
-				// This will allow it to propose the schema change again if needed.
-				this.documentsSchemaController.pendingOpNotAcked();
-				break;
-			}
-			default: {
-				unreachableCase(type);
-			}
+		assert(
+			canStageMessageOfType(message.type),
+			0xbbc /* Unexpected message type to be rolled back */,
+		);
+		if (this.features.rollbackStagedOp(message, localOpMetadata)) {
+			return;
 		}
+		unreachableCase(message.type as never);
 	}
 
 	/**

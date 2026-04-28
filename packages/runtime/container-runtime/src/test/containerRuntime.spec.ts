@@ -190,6 +190,11 @@ function stubChannelCollection(
 		.stub<Parameters<ChannelCollection["reSubmitContainerMessage"]>, void>()
 		.callsFake(containerRuntime.submitMessage.bind(containerRuntime));
 
+	const rollbackDataStoreOpStub = sandbox.stub<
+		Parameters<ChannelCollection["rollbackDataStoreOp"]>,
+		void
+	>();
+
 	const stub = Sinon.createStubInstance(
 		// createSubInstance does not work with property methods (which are
 		// used for stricter typing); so, override via a subclass here.
@@ -206,12 +211,45 @@ function stubChannelCollection(
 		{
 			setConnectionState: sandbox.stub(),
 			reSubmitContainerMessage: reSubmitFake,
-			rollbackDataStoreOp: sandbox.stub(),
+			rollbackDataStoreOp: rollbackDataStoreOpStub,
 			notifyStagingMode: sandbox.stub(),
 			dispose: sandbox.stub(),
 		},
 	);
 
+	// reSubmitOp / rollbackStagedOp / applyStashedOp are dispatched via
+	// RuntimeFeatureCollection. Since createStubInstance auto-stubs every method,
+	// we have to rewire these to delegate to the test fakes that the original
+	// stub was relying on (reSubmitContainerMessage, rollbackDataStoreOp,
+	// applyStashedOp on the base class).
+	stub.reSubmitOp.callsFake(
+		(message: unknown, localOpMetadata: unknown, _opMetadata: unknown, squash: boolean) => {
+			const m = message as LocalContainerRuntimeMessage;
+			if (
+				m.type !== ContainerMessageType.FluidDataStoreOp &&
+				m.type !== ContainerMessageType.Attach &&
+				m.type !== ContainerMessageType.Alias
+			) {
+				return false;
+			}
+			reSubmitFake(m, localOpMetadata, squash);
+			return true;
+		},
+	);
+	stub.rollbackStagedOp.callsFake((message: unknown, localOpMetadata: unknown) => {
+		const m = message as LocalContainerRuntimeMessage;
+		if (m.type !== ContainerMessageType.FluidDataStoreOp) {
+			return false;
+		}
+		rollbackDataStoreOpStub(m.contents, localOpMetadata);
+		return true;
+	});
+
+	// The runtime dispatches op routing via `features` (a RuntimeFeatureCollection)
+	// which holds a reference to the original channelCollection. Swap the stub in
+	// so feature dispatch lands on the stub too.
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
+	(containerRuntime as any).features.replace(containerRuntime.channelCollection, stub);
 	containerRuntime.channelCollection = stub;
 	return stub;
 }
@@ -1220,7 +1258,13 @@ describe("Runtime", () => {
 				return {
 					processMessages: (..._args) => {},
 					setConnectionState: (..._args) => {},
-				} as ChannelCollection;
+					// Claim FluidDataStoreOp ops so feature dispatch in
+					// validateAndProcessRuntimeMessages doesn't fall through
+					// to the unknown-type default.
+					handleOp: (message: unknown) =>
+						(message as { type: ContainerMessageType }).type ===
+						ContainerMessageType.FluidDataStoreOp,
+				} as unknown as ChannelCollection;
 			};
 
 			const getFirstContainerError = (): ICriticalContainerError => {
@@ -1252,12 +1296,15 @@ describe("Runtime", () => {
 			): void {
 				// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment -- Modifying private properties
 				const runtime = containerRuntime as any;
-				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+				const mockChannelCollection = getMockChannelCollection();
+				/* eslint-disable @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-assignment */
 				runtime.pendingStateManager = pendingStateManager;
-				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-				runtime.channelCollection = getMockChannelCollection();
-				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment
+				// Swap the mock into the feature collection too — feature dispatch
+				// holds the original channelCollection by reference.
+				runtime.features.replace(runtime.channelCollection, mockChannelCollection);
+				runtime.channelCollection = mockChannelCollection;
 				runtime.maxConsecutiveReconnects = _maxReconnects ?? runtime.maxConsecutiveReconnects;
+				/* eslint-enable @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-assignment */
 			}
 
 			/**
@@ -1390,13 +1437,8 @@ describe("Runtime", () => {
 				},
 			);
 
-			// TODO: this test patches `runtime.channelCollection` directly, but the
-			// runtime now dispatches via `runtime.features` (a RuntimeFeatureCollection)
-			// which holds the original channelCollection reference. Update patchRuntime
-			// to use `features.replace(...)` so the mock is reachable from feature
-			// dispatch, then re-enable.
 			// biome-ignore format: https://github.com/biomejs/biome/issues/4202
-			it.skip(
+			it(
 				`No progress for ${maxReconnects} connection state changes, with pending state, successfully ` +
 					"processing local op, should not generate telemetry event nor throw an error that closes the container",
 				async () => {
@@ -1431,10 +1473,8 @@ describe("Runtime", () => {
 				},
 			);
 
-			// TODO: see the .skip immediately above — same root cause (patchRuntime
-			// replaces channelCollection but features still reference the original).
 			// biome-ignore format: https://github.com/biomejs/biome/issues/4202
-			it.skip(
+			it(
 				`No progress for ${maxReconnects} connection state changes, with pending state, successfully ` +
 					"processing remote op and local chunked op, should generate telemetry event and throw an error that closes the container",
 				async () => {
@@ -1529,11 +1569,34 @@ describe("Runtime", () => {
 					channelCollection: Partial<ChannelCollection>;
 				};
 
-				patched.channelCollection = {
+				const patchedCC: Partial<ChannelCollection> = {
 					setConnectionState: (_connected: boolean, _clientId?: string) => {},
 					// Pass data store op right back to ContainerRuntime
 					reSubmitContainerMessage: containerRuntime.submitMessage.bind(containerRuntime),
-				} satisfies Partial<ChannelCollection>;
+					// Claim FluidDataStoreOp for feature-dispatched resubmit, delegating
+					// to submitMessage so submittedOps grows.
+					reSubmitOp: (
+						message: unknown,
+						localOpMetadata: unknown,
+						_opMetadata: unknown,
+						_squash: boolean,
+					) => {
+						const m = message as LocalContainerRuntimeMessage;
+						if (m.type !== ContainerMessageType.FluidDataStoreOp) {
+							return false;
+						}
+						containerRuntime.submitMessage(m, localOpMetadata);
+						return true;
+					},
+				};
+				// Keep feature dispatch in sync with the patched channelCollection.
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
+				(containerRuntime as any).features.replace(
+					// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
+					(containerRuntime as any).channelCollection,
+					patchedCC,
+				);
+				patched.channelCollection = patchedCC;
 
 				return patched;
 			}

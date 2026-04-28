@@ -857,20 +857,20 @@ export class ChannelCollection
 		context.rollback(envelope.contents, localOpMetadata);
 	};
 
-	public async applyStashedOp(content: unknown): Promise<unknown> {
+	public async applyStashedOp(content: unknown): Promise<{ result: unknown } | undefined> {
 		const opContents = content as LocalContainerRuntimeMessage;
 		switch (opContents.type) {
 			case ContainerMessageType.Attach: {
-				return this.applyStashedAttachOp(opContents.contents);
+				return { result: await this.applyStashedAttachOp(opContents.contents) };
 			}
 			case ContainerMessageType.Alias: {
-				return;
+				return { result: undefined };
 			}
 			case ContainerMessageType.FluidDataStoreOp: {
-				return this.applyStashedChannelChannelOp(opContents.contents);
+				return { result: await this.applyStashedChannelChannelOp(opContents.contents) };
 			}
 			default: {
-				assert(false, 0x908 /* unknon type of op */);
+				return undefined;
 			}
 		}
 	}
@@ -951,6 +951,33 @@ export class ChannelCollection
 
 	public onConnectionStateChange(canSendOps: boolean, clientId: string | undefined): void {
 		this.setConnectionState(canSendOps, clientId);
+	}
+
+	public reSubmitOp(
+		message: unknown,
+		localOpMetadata: unknown,
+		_opMetadata: unknown,
+		squash: boolean,
+	): boolean {
+		const m = message as LocalContainerRuntimeMessage;
+		if (
+			m.type !== ContainerMessageType.FluidDataStoreOp &&
+			m.type !== ContainerMessageType.Attach &&
+			m.type !== ContainerMessageType.Alias
+		) {
+			return false;
+		}
+		this.reSubmitContainerMessage(m, localOpMetadata, squash);
+		return true;
+	}
+
+	public rollbackStagedOp(message: unknown, localOpMetadata: unknown): boolean {
+		const m = message as LocalContainerRuntimeMessage;
+		if (m.type !== ContainerMessageType.FluidDataStoreOp) {
+			return false;
+		}
+		this.rollbackDataStoreOp(m.contents, localOpMetadata);
+		return true;
 	}
 
 	/**

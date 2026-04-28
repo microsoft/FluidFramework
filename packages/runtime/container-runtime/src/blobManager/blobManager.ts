@@ -803,6 +803,29 @@ export class BlobManager implements IRuntimeFeature {
 		return true;
 	}
 
+	public applyStashedOp(opContents: unknown): { result: unknown } | undefined {
+		const op = opContents as { type: ContainerMessageType };
+		if (op.type !== ContainerMessageType.BlobAttach) {
+			return undefined;
+		}
+		// Stashed BlobAttach ops are intentionally dropped — pendingBlobs covers the data.
+		return { result: undefined };
+	}
+
+	public reSubmitOp(
+		message: unknown,
+		_localOpMetadata: unknown,
+		opMetadata: unknown,
+		_squash: boolean,
+	): boolean {
+		const op = message as { type: ContainerMessageType };
+		if (op.type !== ContainerMessageType.BlobAttach) {
+			return false;
+		}
+		this.reSubmit(opMetadata as Record<string, unknown> | undefined);
+		return true;
+	}
+
 	/**
 	 * Generates data used for garbage collection. Each blob uploaded represents a node in the GC graph as it can be
 	 * individually referenced by storing its handle in a referenced DDS. Returns the list of blob ids as GC nodes.

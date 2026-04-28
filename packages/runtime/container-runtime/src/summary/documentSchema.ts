@@ -773,6 +773,36 @@ export class DocumentsSchemaController implements IRuntimeFeature {
 		return true;
 	}
 
+	public applyStashedOp(opContents: unknown): { result: unknown } | undefined {
+		const op = opContents as { type: ContainerMessageType };
+		if (op.type !== ContainerMessageType.DocumentSchemaChange) {
+			return undefined;
+		}
+		// Schema-change ops are intentionally dropped on stash — schema is regenerated on resubmit.
+		return { result: undefined };
+	}
+
+	public reSubmitOp(message: unknown): boolean {
+		const m = message as { type: ContainerMessageType };
+		if (m.type !== ContainerMessageType.DocumentSchemaChange) {
+			return false;
+		}
+		// Don't directly resubmit due to compare-and-swap semantics; schema regenerates from scratch
+		// before other ops are submitted.
+		this.pendingOpNotAcked();
+		return true;
+	}
+
+	public rollbackStagedOp(message: unknown): boolean {
+		const m = message as { type: ContainerMessageType };
+		if (m.type !== ContainerMessageType.DocumentSchemaChange) {
+			return false;
+		}
+		// Schema-change ops are not committed yet; allow regeneration on next propose.
+		this.pendingOpNotAcked();
+		return true;
+	}
+
 	public processDocumentSchemaMessages(
 		contents: IDocumentSchemaChangeMessageIncoming[],
 		local: boolean,

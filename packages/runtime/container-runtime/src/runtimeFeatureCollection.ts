@@ -110,4 +110,41 @@ export class RuntimeFeatureCollection implements Required<IRuntimeFeature> {
 		}
 		return false;
 	}
+
+	/**
+	 * Dispatch a stashed op to features, returning the result wrapper from the
+	 * first feature that claims it, or `undefined` if no feature does.
+	 */
+	public async applyStashedOp(opContents: unknown): Promise<{ result: unknown } | undefined> {
+		for (const f of this.features) {
+			const claim = await f.applyStashedOp?.(opContents);
+			if (claim !== undefined) {
+				return claim;
+			}
+		}
+		return undefined;
+	}
+
+	public reSubmitOp(
+		message: unknown,
+		localOpMetadata: unknown,
+		opMetadata: unknown,
+		squash: boolean,
+	): boolean {
+		for (const f of this.features) {
+			if (f.reSubmitOp?.(message, localOpMetadata, opMetadata, squash) === true) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	public rollbackStagedOp(message: unknown, localOpMetadata: unknown): boolean {
+		for (const f of this.features) {
+			if (f.rollbackStagedOp?.(message, localOpMetadata) === true) {
+				return true;
+			}
+		}
+		return false;
+	}
 }

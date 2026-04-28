@@ -23,6 +23,7 @@ import {
 import {
 	type ITelemetryLoggerExt,
 	DataProcessingError,
+	LoggingError,
 	type MonitoringContext,
 	PerformanceEvent,
 	createChildLogger,
@@ -1222,6 +1223,37 @@ export class GarbageCollector implements IGarbageCollector, IRuntimeFeature {
 		}
 		const contents = (messagesContent as IRuntimeMessagesContent[]).map((c) => c.contents);
 		this.processMessages(contents as GarbageCollectionMessage[], m.timestamp, local);
+		return true;
+	}
+
+	public applyStashedOp(opContents: unknown): { result: unknown } | undefined {
+		const op = opContents as { type: ContainerMessageType };
+		if (op.type !== ContainerMessageType.GC) {
+			return undefined;
+		}
+		// GC ops are only sent by the summarizer, which never stashes ops.
+		throw new LoggingError("GC op not expected to be stashed in summarizer");
+	}
+
+	public reSubmitOp(message: unknown): boolean {
+		const m = message as ContainerRuntimeGCMessage;
+		if (m.type !== ContainerMessageType.GC) {
+			return false;
+		}
+		this.submitMessage(m);
+		return true;
+	}
+
+	public rollbackStagedOp(message: unknown): boolean {
+		const m = message as ContainerRuntimeGCMessage;
+		if (m.type !== ContainerMessageType.GC) {
+			return false;
+		}
+		// Just drop, but log — only TombstoneLoaded is expected here.
+		this.mc.logger.sendErrorEvent({
+			eventName: "GC_OpDiscarded",
+			details: { subType: m.contents.type },
+		});
 		return true;
 	}
 

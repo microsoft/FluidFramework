@@ -120,4 +120,47 @@ export interface IRuntimeFeature {
 		local: boolean,
 		savedOp?: boolean,
 	) => boolean;
+
+	/**
+	 * Apply a stashed local op (replayed from saved pending state) during runtime
+	 * load. Each feature inspects the op's type and decides whether it owns the
+	 * apply. Return `undefined` to decline; return `{ result }` to claim — the
+	 * `result` is the localOpMetadata that the pending-state manager will retain
+	 * for the resubmit cycle.
+	 *
+	 * @remarks
+	 * The runtime passes a parsed `LocalContainerRuntimeMessage`. Features that
+	 * intentionally drop their op type on stash (e.g. blob attach, schema change)
+	 * can still claim it by returning `{ result: undefined }`.
+	 */
+	readonly applyStashedOp?: (
+		opContents: unknown,
+	) => Promise<{ result: unknown } | undefined> | { result: unknown } | undefined;
+
+	/**
+	 * Resubmit a pending op. Each feature inspects the op's type and decides
+	 * whether it owns the resubmit. Return `true` if claimed.
+	 *
+	 * @param message - The local runtime message to resubmit (`LocalContainerRuntimeMessage`).
+	 * @param localOpMetadata - Subsystem-specific metadata captured at submit time.
+	 * @param opMetadata - Op-level metadata (e.g. blobId for BlobAttach).
+	 * @param squash - True when resubmitting via the squash-rebase path on
+	 * staging-mode commit. Most features ignore this; ChannelCollection uses
+	 * it to coalesce intermediate states.
+	 */
+	readonly reSubmitOp?: (
+		message: unknown,
+		localOpMetadata: unknown,
+		opMetadata: unknown,
+		squash: boolean,
+	) => boolean;
+
+	/**
+	 * Roll back a staged op (when staged changes are discarded). Return `true`
+	 * if claimed.
+	 *
+	 * @param message - The local runtime message to roll back.
+	 * @param localOpMetadata - Subsystem-specific metadata captured at submit time.
+	 */
+	readonly rollbackStagedOp?: (message: unknown, localOpMetadata: unknown) => boolean;
 }
