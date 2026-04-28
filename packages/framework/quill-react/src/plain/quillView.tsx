@@ -13,6 +13,8 @@ import Quill from "quill";
 import type { Op } from "quill-delta";
 import { type FC, useEffect, useRef } from "react";
 
+import { runOnce } from "../shared/index.js";
+
 /**
  * Props for the MainView component.
  * @input @internal
@@ -72,14 +74,10 @@ const TextEditorView: FC<{ root: TextAsTree.Tree }> = ({ root }) => {
 
 		// Listen to local Quill changes — sync Quill → tree.
 		quill.on("text-change", (_delta, _oldDelta, source) => {
-			if (source === "user" && !isUpdatingRef.current) {
-				isUpdatingRef.current = true;
-				try {
-					syncTextToTree(root, quill.getText());
-				} finally {
-					isUpdatingRef.current = false;
-				}
-			}
+			if (source !== "user") return;
+			runOnce(isUpdatingRef, () => {
+				syncTextToTree(root, quill.getText());
+			});
 		});
 	}, []);
 
@@ -88,13 +86,9 @@ const TextEditorView: FC<{ root: TextAsTree.Tree }> = ({ root }) => {
 	// independent of the Quill initialization guard above.
 	useEffect(() => {
 		return root.onCharactersChanged((ops) => {
-			const quill = quillRef.current;
-			if (isUpdatingRef.current || !quill) {
-				return;
-			}
-
-			isUpdatingRef.current = true;
-			try {
+			runOnce(isUpdatingRef, () => {
+				const quill = quillRef.current;
+				if (!quill) return;
 				if (ops === undefined) {
 					// Delta unavailable — fall back to full setText.
 					const text = root.fullString();
@@ -105,34 +99,32 @@ const TextEditorView: FC<{ root: TextAsTree.Tree }> = ({ root }) => {
 						const length = quill.getLength();
 						quill.setSelection(Math.min(selection.index, length - 1), 0);
 					}
-				} else {
-					// Translate TextOp[] to a Quill delta and apply incrementally.
-					// op.count is in Unicode code points; Quill uses UTF-16 code units.
-					// Read the pre-edit Quill content once and use it to compute UTF-16 widths
-					// for retain and delete ops.
-					const preEditContent = quill.getText();
-					let quillPos = 0;
-					const quillOps: Op[] = [];
-					for (const op of ops) {
-						if (op.type === "retain") {
-							const utf16Count = utf16LengthForCodePoints(preEditContent, quillPos, op.count);
-							quillOps.push({ retain: utf16Count });
-							quillPos += utf16Count;
-						} else if (op.type === "insert") {
-							// op.text is a JS string — Quill handles its UTF-16 encoding automatically.
-							quillOps.push({ insert: op.text });
-							// quillPos does not advance: inserts are new content not in preEditContent.
-						} else {
-							const utf16Count = utf16LengthForCodePoints(preEditContent, quillPos, op.count);
-							quillOps.push({ delete: utf16Count });
-							quillPos += utf16Count;
-						}
-					}
-					quill.updateContents({ ops: quillOps }, "api");
+					return;
 				}
-			} finally {
-				isUpdatingRef.current = false;
-			}
+				// Translate TextOp[] to a Quill delta and apply incrementally.
+				// op.count is in Unicode code points; Quill uses UTF-16 code units.
+				// Read the pre-edit Quill content once and use it to compute UTF-16 widths
+				// for retain and delete ops.
+				const preEditContent = quill.getText();
+				let quillPos = 0;
+				const quillOps: Op[] = [];
+				for (const op of ops) {
+					if (op.type === "retain") {
+						const utf16Count = utf16LengthForCodePoints(preEditContent, quillPos, op.count);
+						quillOps.push({ retain: utf16Count });
+						quillPos += utf16Count;
+					} else if (op.type === "insert") {
+						// op.text is a JS string — Quill handles its UTF-16 encoding automatically.
+						quillOps.push({ insert: op.text });
+						// quillPos does not advance: inserts are new content not in preEditContent.
+					} else {
+						const utf16Count = utf16LengthForCodePoints(preEditContent, quillPos, op.count);
+						quillOps.push({ delete: utf16Count });
+						quillPos += utf16Count;
+					}
+				}
+				quill.updateContents({ ops: quillOps }, "api");
+			});
 		});
 	}, [root]);
 

@@ -29,6 +29,8 @@ import {
 } from "react";
 import * as ReactDOM from "react-dom";
 
+import { runOnce } from "../shared/index.js";
+
 // Workaround for quill-delta's export style not working well with node16 module resolution.
 type Delta = DeltaPackage.default;
 type QuillDeltaOp = DeltaPackage.Op;
@@ -607,9 +609,8 @@ const FormattedTextEditorView = forwardRef<
 		// This is likely related to the node16 module resolution issues with quill-delta.
 		// If we break that inference by adding types, `any` is inferred for all of them, so incorrect types here would still compile.
 		quill.on("text-change", (delta: Delta, _oldDelta: Delta, source: EmitterSource) => {
-			if (source !== "user" || isUpdating.current) return;
-			isUpdating.current = true;
-			try {
+			if (source !== "user") return;
+			runOnce(isUpdating, () => {
 				// Wrap all tree mutations in a transaction so they undo/redo as one atomic unit.
 				// If the node is not part of a branch (e.g. unhydrated), apply edits directly.
 				const branch = TreeAlpha.branch(root);
@@ -722,9 +723,7 @@ const FormattedTextEditorView = forwardRef<
 				} else {
 					branch.runTransaction(applyDelta);
 				}
-			} finally {
-				isUpdating.current = false;
-			}
+			});
 		});
 
 		quillRef.current = quill;
@@ -747,10 +746,8 @@ const FormattedTextEditorView = forwardRef<
 	// of rebuilding the full delta from the tree and diffing on every change.
 	useEffect(() => {
 		return root.onContentChanged((ops) => {
-			if (!quillRef.current || isUpdating.current) return;
-
-			isUpdating.current = true;
-			try {
+			runOnce(isUpdating, () => {
+				if (!quillRef.current) return;
 				let quillOps: QuillDeltaOp[] | undefined;
 				if (ops !== undefined) {
 					// Try incremental delta translation first.
@@ -770,9 +767,7 @@ const FormattedTextEditorView = forwardRef<
 				} else if (quillOps.length > 0) {
 					quillRef.current.updateContents(quillOps, "api");
 				}
-			} finally {
-				isUpdating.current = false;
-			}
+			});
 		});
 	}, [root]);
 
