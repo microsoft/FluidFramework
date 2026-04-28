@@ -15,7 +15,7 @@
  *
  * The exact resolved versions are recorded in `compat-workspaces/versions.cjs`, which is
  * maintained by the `update-compat-versions` script and committed to the repository. Tests
- * read this manifest at startup rather than querying the npm registry.
+ * read this manifest at startup to resolve version ranges to exact versions.
  *
  * ## Updating compat versions
  *
@@ -27,7 +27,6 @@
  * Commit all changes produced by the script.
  */
 
-import { execSync } from "node:child_process";
 import { existsSync } from "node:fs";
 import { createRequire } from "node:module";
 import * as path from "node:path";
@@ -118,14 +117,8 @@ export function getAllManifestVersions(manifest: CompatVersionsManifest): string
 
 const resolutionCache = new Map<string, string>();
 
-const pnpmCmd = process.platform === "win32" ? "pnpm.cmd" : "pnpm";
-
 /**
- * Resolves a version range or alias to a specific version number.
- *
- * When the versions manifest is available (after `update-compat-versions` has been run),
- * resolution uses the manifest and avoids any registry query. When the manifest is absent,
- * falls back to querying the pnpm-configured registry.
+ * Resolves a version range or alias to an exact version using the committed manifest.
  *
  * @internal
  */
@@ -144,7 +137,6 @@ export function resolveVersion(requested: string, _installed: boolean): string {
 		throw new Error(`Invalid semver range: "${requested}"`);
 	}
 
-	// Try the manifest first (no registry needed)
 	const manifest = tryReadVersionsManifest();
 	if (manifest !== undefined) {
 		const allVersions = getAllManifestVersions(manifest);
@@ -157,30 +149,7 @@ export function resolveVersion(requested: string, _installed: boolean): string {
 		}
 	}
 
-	// Fallback: query registry (used during the update script and before first manifest commit)
-	let result: string | undefined;
-	try {
-		result = execSync(
-			`${pnpmCmd} view "@fluidframework/container-loader@${requested}" version --json`,
-			{ encoding: "utf8" },
-		);
-	} catch {
-		throw new Error(
-			`Error while running: ${pnpmCmd} view "@fluidframework/container-loader@${requested}" version --json`,
-		);
-	}
-	if (!result) throw new Error(`No version published as ${requested}`);
-	try {
-		const versions: string | string[] = JSON.parse(result);
-		const version = Array.isArray(versions) ? versions.sort(semver.rcompare)[0] : versions;
-		if (version) {
-			resolutionCache.set(requested, version);
-			return version;
-		}
-	} catch {
-		throw new Error(`Error parsing versions for ${requested}`);
-	}
-	throw new Error(`No version found for ${requested}`);
+	throw new Error(`No version in manifest satisfies range: "${requested}"`);
 }
 
 // ---------------------------------------------------------------------------
@@ -360,10 +329,6 @@ export function calculateRequestedRange(
  * Given a version, returns the most recently released version. The version provided can be
  * adjusted to the next or previous major versions by providing positive/negative integers in the
  * `requested` parameter.
- *
- * When the versions manifest is present, resolution uses the manifest and avoids any registry
- * query. Falls back to a registry query when the manifest is absent (e.g. before the first run
- * of the update script).
  *
  * @param baseVersion - The base version to move from (eg. "0.60.0")
  * @param requested - If the value is a negative number, the baseVersion will be adjusted down.
