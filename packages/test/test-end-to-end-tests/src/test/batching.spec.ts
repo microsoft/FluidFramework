@@ -5,8 +5,9 @@
 
 import { strict as assert } from "assert";
 
-import { describeCompat, itExpects } from "@fluid-private/test-version-utils";
+import { describeCompat } from "@fluid-private/test-version-utils";
 import { IContainer } from "@fluidframework/container-definitions/internal";
+import { asLegacyAlpha } from "@fluidframework/container-loader/internal";
 import {
 	CompressionAlgorithms,
 	ContainerMessageType,
@@ -104,9 +105,7 @@ describeCompat("Flushing ops", "NoCompat", (getTestObjectProvider, apis) => {
 		fluidDataObjectType: DataObjectFactoryType.Test,
 		registry,
 		loaderProps: {
-			configProvider: configProvider({
-				"Fluid.ContainerRuntime.enableBatchIdTracking": true,
-			}),
+			configProvider: configProvider({}),
 		},
 	};
 
@@ -159,21 +158,14 @@ describeCompat("Flushing ops", "NoCompat", (getTestObjectProvider, apis) => {
 		await provider.ensureSynchronized();
 	}
 
-	itExpects(
-		"Can't set up a container with Immediate Mode and Offline Load",
-		[
-			{
-				eventName: "fluid:telemetry:Container:ContainerClose",
-				error: "Offline mode is only supported in turn-based mode",
-			},
-		],
-		async () => {
-			await assert.rejects(
-				setupContainers({ flushMode: FlushMode.Immediate }),
-				"Offline load is not supported with Immediate mode",
-			);
-		},
-	);
+	it("Can't capture pending state in Immediate Mode", async () => {
+		await setupContainers({ flushMode: FlushMode.Immediate });
+		await assert.rejects(
+			asLegacyAlpha(container1).getPendingLocalState(),
+			(e: Error) => e.message.startsWith("getPendingLocalState requires FlushMode.TurnBased"),
+			"Capturing pending state outside turn-based mode should fail",
+		);
+	});
 
 	describe("Batch metadata verification when ops are flushed in batches", () => {
 		let dataObject1BatchMessages: ISequencedDocumentMessage[] = [];

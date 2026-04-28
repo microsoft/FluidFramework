@@ -1449,13 +1449,10 @@ export class ContainerRuntime
 	private readonly _flushMode: FlushMode;
 	private readonly stagingModeAutoFlushThreshold: number;
 	/**
-	 * BatchId tracking is needed whenever there's a possibility of a "forked Container",
-	 * where the same local state is pending in two different running Containers, each of
-	 * which is trying to ensure it's persisted.
-	 * "Offline Load" from serialized pending state is one such scenario since two Containers
-	 * could load from the same serialized pending state.
+	 * Kill switch for {@link ContainerRuntime.duplicateBatchDetector} auto-activation.
+	 * When true, the detector is never constructed and resubmits omit batchIds.
 	 */
-	private readonly batchIdTrackingEnabled: boolean;
+	private readonly duplicateBatchDetectionDisabled: boolean;
 	private flushScheduled = false;
 
 	private canSendOps: boolean;
@@ -1515,7 +1512,22 @@ export class ContainerRuntime
 	private readonly inboundBatchAggregator: InboundBatchAggregator;
 	private readonly blobManager: BlobManager;
 	private readonly pendingStateManager: PendingStateManager;
-	private readonly duplicateBatchDetector: DuplicateBatchDetector | undefined;
+	/**
+	 * Detects "forked container" scenarios where two containers load from the same
+	 * serialized pending state and submit batches with the same batchId.
+	 *
+	 * @remarks
+	 * Activates automatically (sticky once on) when this runtime is involved in the
+	 * pending-state lifecycle:
+	 *
+	 * - rehydrated from a captured pending state at construction (`pendingLocalState`),
+	 * - loaded from a snapshot whose `recentBatchInfo` blob is non-empty,
+	 * - or `getPendingLocalState()` is called (the moment we capture pending state).
+	 *
+	 * Can be force-disabled via the `Fluid.ContainerRuntime.DisableDuplicateBatchDetection`
+	 * config (see {@link ContainerRuntime.duplicateBatchDetectionDisabled}).
+	 */
+	private duplicateBatchDetector: DuplicateBatchDetector | undefined;
 	private readonly outbox: Outbox;
 	private readonly garbageCollector: IGarbageCollector;
 
@@ -1884,21 +1896,21 @@ export class ContainerRuntime
 			this.mc.config.getNumber("Fluid.ContainerRuntime.StagingModeAutoFlushThreshold") ??
 			runtimeOptions.stagingModeAutoFlushThreshold ??
 			defaultStagingModeAutoFlushThreshold;
-		this.batchIdTrackingEnabled =
-			this.mc.config.getBoolean("Fluid.Container.enableOfflineFull") ??
-			this.mc.config.getBoolean("Fluid.ContainerRuntime.enableBatchIdTracking") ??
-			false;
+		this.duplicateBatchDetectionDisabled =
+			this.mc.config.getBoolean("Fluid.ContainerRuntime.DisableDuplicateBatchDetection") === true;
 
-		if (this.batchIdTrackingEnabled && this._flushMode !== FlushMode.TurnBased) {
-			const error = new UsageError("Offline mode is only supported in turn-based mode");
-			this.closeFn(error);
-			throw error;
-		}
-
-		// DuplicateBatchDetection is only enabled if Offline Load is enabled
-		// It maintains a cache of all batchIds/sequenceNumbers within the collab window.
-		// Don't waste resources doing so if not needed.
-		if (this.batchIdTrackingEnabled) {
+		// Activate the duplicate batch detector when this runtime is involved in the
+		// pending-state lifecycle: rehydrated from a captured pending state, or loading
+		// a snapshot that already tracks recent batches. Otherwise, lazily activate when
+		// getPendingLocalState() is called (see ensureDuplicateBatchDetector). Activation
+		// is sticky once on for the runtime's lifetime.
+		const loadedWithPendingState = pendingLocalState !== undefined;
+		const loadedWithRecentBatchInfo =
+			recentBatchInfo !== undefined && recentBatchInfo.length > 0;
+		if (
+			!this.duplicateBatchDetectionDisabled &&
+			(loadedWithPendingState || loadedWithRecentBatchInfo)
+		) {
 			this.duplicateBatchDetector = new DuplicateBatchDetector(recentBatchInfo);
 		}
 
@@ -4953,8 +4965,8 @@ export class ContainerRuntime
 	 * checks in the ConnectionStateHandler (Loader layer)
 	 *
 	 * The only exception to this would be if the Container "forks" due to misuse of the "Offline Load" feature.
-	 * If the "Offline Load" feature is enabled, the batchId is included in the resubmitted messages,
-	 * for correlation to detect container forking.
+	 * When the duplicate batch detector is active, the batchId is included in the resubmitted messages
+	 * so a forked peer can detect duplicates against its own tracked batch IDs.
 	 */
 	private reSubmitBatch(
 		batch: PendingMessageResubmitData[],
@@ -4966,9 +4978,11 @@ export class ContainerRuntime
 		);
 
 		const resubmitInfo = {
-			// Only include Batch ID if "Offline Load" feature is enabled
-			// It's only needed to identify batches across container forks arising from misuse of offline load.
-			batchId: this.batchIdTrackingEnabled ? batchId : undefined,
+			// Stamp the batchId on resubmits whenever the duplicate batch detector is
+			// active (this runtime is part of the pending-state lifecycle and a forked
+			// peer might resubmit the same batches). Otherwise omit it to avoid
+			// inflating message metadata.
+			batchId: this.duplicateBatchDetector === undefined ? undefined : batchId,
 			staged,
 		};
 
@@ -5260,6 +5274,20 @@ export class ContainerRuntime
 		this.disposeFn();
 	}
 
+	/**
+	 * Lazily activates the duplicate batch detector. Used at the moment we capture
+	 * pending state via {@link ContainerRuntime.getPendingLocalState}, since a forked
+	 * container could resubmit any pending batches we are about to serialize.
+	 */
+	private ensureDuplicateBatchDetector(): void {
+		if (
+			!this.duplicateBatchDetectionDisabled &&
+			this.duplicateBatchDetector === undefined
+		) {
+			this.duplicateBatchDetector = new DuplicateBatchDetector(undefined);
+		}
+	}
+
 	public getPendingLocalState(props?: IGetPendingLocalStateProps): unknown {
 		// AB#46464 - Add support for serializing pending state while in staging mode
 		if (this.inStagingMode) {
@@ -5274,6 +5302,16 @@ export class ContainerRuntime
 		if (this.batchRunner.running) {
 			throw new UsageError("can't get state while manually accumulating a batch");
 		}
+
+		// Capturing pending state requires turn-based flush so each captured batch is
+		// well-formed (a contiguous run of ops with a single batchId on resubmit).
+		if (this._flushMode !== FlushMode.TurnBased) {
+			throw new UsageError("getPendingLocalState requires FlushMode.TurnBased");
+		}
+
+		// The act of capturing pending state means a forked container could resubmit
+		// the same batches, so we must track batch IDs from this point forward.
+		this.ensureDuplicateBatchDetector();
 
 		// Flush pending batch.
 		// getPendingLocalState() is only exposed through Container.getPendingLocalState(), so it's safe
