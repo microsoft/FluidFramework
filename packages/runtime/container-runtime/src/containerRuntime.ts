@@ -2032,7 +2032,6 @@ export class ContainerRuntime
 		this.features.add(
 			new InboundBatchAggregator(
 				this.innerDeltaManager,
-				() => this.clientId,
 				createChildLogger({ logger: this.baseLogger, namespace: "InboundBatchAggregator" }),
 			),
 		);
