@@ -408,6 +408,12 @@ function throwNotFound(layer: string, version: string): never {
 /**
  * Used to fetch a given version of the Loader API.
  *
+ * @param baseVersion - The version of the package prior to being adjusted.
+ * @param requested - How many major versions to go back from the baseVersion. For example, -1 would indicate we want
+ * to use the most recent major release prior to the baseVersion. 0 would indicate we want to use the baseVersion.
+ * @param adjustMajorPublic - Indicates if we should ignore internal versions when adjusting the baseVersion. For example,
+ * if `baseVersion` is 2.0.0-internal.7.4.0 and `requested` is -1, then we would return ^1.0.
+ *
  * @internal
  */
 export function getLoaderApi(requestedStr: string): typeof LoaderApi {
@@ -424,6 +430,12 @@ export function getLoaderApi(requestedStr: string): typeof LoaderApi {
 /**
  * Used to fetch a given version of the Container Runtime API.
  *
+ * @param baseVersion - The version of the package prior to being adjusted.
+ * @param requested - How many major versions to go back from the baseVersion. For example, -1 would indicate we want
+ * to use the most recent major release prior to the baseVersion. 0 would indicate we want to use the baseVersion.
+ * @param adjustMajorPublic - Indicates if we should ignore internal versions when adjusting the baseVersion. For example,
+ * if `baseVersion` is 2.0.0-internal.7.4.0 and `requested` is -1, then we would return ^1.0.
+ *
  * @internal
  */
 export function getContainerRuntimeApi(requestedStr: string): typeof ContainerRuntimeApi {
@@ -436,6 +448,12 @@ export function getContainerRuntimeApi(requestedStr: string): typeof ContainerRu
 
 /**
  * Used to fetch a given version of the Data Runtime API.
+ *
+ * @param baseVersion - The version of the package prior to being adjusted.
+ * @param requested - How many major versions to go back from the baseVersion. For example, -1 would indicate we want
+ * to use the most recent major release prior to the baseVersion. 0 would indicate we want to use the baseVersion.
+ * @param adjustMajorPublic - Indicates if we should ignore internal versions when adjusting the baseVersion. For example,
+ * if `baseVersion` is 2.0.0-internal.7.4.0 and `requested` is -1, then we would return ^1.0.
  *
  * @internal
  */
@@ -450,6 +468,12 @@ export function getDataRuntimeApi(requestedStr: string): typeof DataRuntimeApi {
 /**
  * Used to fetch a given version of the Driver API.
  *
+ * @param baseVersion - The version of the package prior to being adjusted.
+ * @param requested - How many major versions to go back from the baseVersion. For example, -1 would indicate we want
+ * to use the most recent major release prior to the baseVersion. 0 would indicate we want to use the baseVersion.
+ * @param adjustMajorPublic - Indicates if we should ignore internal versions when adjusting the baseVersion. For example,
+ * if `baseVersion` is 2.0.0-internal.7.4.0 and `requested` is -1, then we would return ^1.0.
+ *
  * @internal
  */
 export function getDriverApi(requestedStr: string): typeof DriverApi {
@@ -463,7 +487,10 @@ export function getDriverApi(requestedStr: string): typeof DriverApi {
 }
 
 /**
- * The compatibility mode that a test is running in.
+ * The compatibility mode that a test is running in. That can be useful in scenarios where the tests
+ * want to alter their behavior based on the compat mode.
+ * For example, some tests may want to run in "LayerCompat" mode but skip running in "CrossClientCompat" mode
+ * because they are the feature they are testing was not available in versions that cross client compat requires.
  *
  * @internal
  */
@@ -471,6 +498,9 @@ export type CompatMode = "None" | "LayerCompat" | "CrossClientCompat";
 
 /**
  * Returns the CompatMode for a given CompatKind.
+ * @param kind - The CompatKind to convert.
+ * @returns The corresponding CompatMode.
+ *
  * @internal
  */
 export function getCompatModeFromKind(kind: CompatKind): CompatMode {
