@@ -24,7 +24,6 @@
 	"main": "lib/index.js",
 	"types": "lib/index.d.ts",
 	"scripts": {
-		"postinstall": "pnpm --dir compat-workspaces/full install --frozen-lockfile",
 		"build": "fluid-build . --task build",
 		"build:compile": "fluid-build . --task compile",
 		"build:docs": "api-extractor run --local",
@@ -46,6 +45,7 @@
 		"format:biome": "biome check . --write",
 		"lint": "fluid-build . --task lint",
 		"lint:fix": "fluid-build . --task eslint:fix --task format",
+		"postinstall": "pnpm --dir compat-workspaces/full install --frozen-lockfile",
 		"test": "npm run test:mocha",
 		"test:mocha": "mocha --timeout=10000",
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
