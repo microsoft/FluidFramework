@@ -219,7 +219,7 @@ interface Options {
 /**
  * Writes comparison results to both text and JSON output files.
  * Creates the output directory if it does not exist.
- * File names are derived from sanitized branch names (e.g., "compare-main-to-dev.txt").
+ * File names are derived from sanitized branch names (e.g., "compare-main-to-client_v2.100.0.txt").
  *
  * @param outputDirectory - The directory where output files will be written
  * @param textContent - The formatted text comparison report

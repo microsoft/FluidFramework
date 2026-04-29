@@ -87,7 +87,7 @@ class CollectAndCompareBundlesCommand extends Command {
 	public static override readonly examples = [
 		"<%= config.bin %> <%= command.id %>",
 		"<%= config.bin %> <%= command.id %> --base-revision main",
-		"<%= config.bin %> <%= command.id %> --base-revision v2.20.0",
+		"<%= config.bin %> <%= command.id %> --base-revision client_v2.100.0",
 		"<%= config.bin %> <%= command.id %> --force-clean-build --skip-compare",
 	];
 

@@ -116,7 +116,7 @@ function buildBundles(packageRoot: string): void {
  * Moves webpack's stats output and `build/` directory into the per-label directory
  * under the persistent analysis root.
  *
- * @param label - Sanitized label for this build (e.g., "main", "feature_branch").
+ * @param label - Sanitized label for this build (e.g., "main", "client_v2.100.0").
  * @param sourcePackageRoot - Package root that produced the webpack output.
  */
 function saveStats(label: string, sourcePackageRoot: string): void {
@@ -223,7 +223,7 @@ class CollectBundleCommand extends Command {
 	public static override readonly examples = [
 		"<%= config.bin %> <%= command.id %>",
 		"<%= config.bin %> <%= command.id %> --mode revision --revision main",
-		"<%= config.bin %> <%= command.id %> --mode revision --revision v2.20.0",
+		"<%= config.bin %> <%= command.id %> --mode revision --revision client_v2.100.0",
 	];
 
 	public static override readonly flags = {
