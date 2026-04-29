@@ -11,8 +11,6 @@ See [node types](./node-types.mdx) for details on the available node types.
 The [`Tree`](../../api/fluid-framework/#tree-variable) singleton provides utilities for inspecting and navigating nodes — methods that can't live on [`TreeNode`](../../api/fluid-framework/treenode-class) directly due to the risk of name collisions with object-node fields.
 The following covers commonly used ones; see the [API documentation](../../api/fluid-framework/#tree-variable) for the full list.
 
--   [`Tree.key`](../../api/fluid-framework/treenodeapi-interface#key-methodsignature) —
-    Returns the key under which the node is stored in its parent: a string property name for object/map nodes, or a numeric index for array nodes.
 
 -   [`Tree.parent`](../../api/fluid-framework/treenodeapi-interface#parent-methodsignature) —
     Returns the parent node.
@@ -31,8 +29,12 @@ The following covers commonly used ones; see the [API documentation](../../api/f
     Returns whether a node is a descendant of another — for example, to confirm a node belongs to a particular section, or to guard against creating a cycle when moving a node.
 
 -   [`Tree.status`](../../api/fluid-framework/treenodeapi-interface#status-methodsignature) —
-    Returns the [`TreeStatus`](../../api/fluid-framework/treestatus-enum) of a node: [`New`](../../api/fluid-framework/treestatus-enum#new-enummember) (not yet inserted), [`InDocument`](../../api/fluid-framework/treestatus-enum#indocument-enummember) (in the tree), or [`Removed`](../../api/fluid-framework/treestatus-enum#removed-enummember) / [`Deleted`](../../api/fluid-framework/treestatus-enum#deleted-enummember) (no longer in the tree).
+    Returns the [`TreeStatus`](../../api/fluid-framework/treestatus-enum) of a node.
     Many editing operations require a specific status.
+    -   [`New`](../../api/fluid-framework/treestatus-enum#new-enummember) — created but not yet inserted into the tree
+    -   [`InDocument`](../../api/fluid-framework/treestatus-enum#indocument-enummember) — parented under the root field
+    -   [`Removed`](../../api/fluid-framework/treestatus-enum#removed-enummember) — not under the root field, but can be added back
+    -   [`Deleted`](../../api/fluid-framework/treestatus-enum#deleted-enummember) — removed and cannot be added back
 
 -   [`Tree.schema`](../../api/fluid-framework/treenodeapi-interface#schema-methodsignature) —
     Returns the [`TreeNodeSchema`](../../api/fluid-framework/treenodeschema-typealias) for a node; useful when the node's type isn't statically known.
