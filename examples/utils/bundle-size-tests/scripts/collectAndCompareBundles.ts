@@ -7,6 +7,10 @@ import { spawnSync } from "node:child_process";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
+import { Command, Flags } from "@oclif/core";
+
+import { maybePrintHelp } from "./oclifHelp.ts";
+
 const scriptDirectory = dirname(fileURLToPath(import.meta.url));
 const packageRoot = resolve(scriptDirectory, "..");
 
@@ -30,40 +34,6 @@ function resolveMergeBase(rev: string): string | undefined {
 	}
 	const sha = result.stdout.trim();
 	return sha.length > 0 ? sha : undefined;
-}
-
-/**
- * Checks if a flag is present in the command-line argument list.
- *
- * @param argv - The command-line argument list
- * @param flagName - The flag to check for
- * @returns True if the flag is present, false otherwise
- */
-function hasFlag(argv: string[], flagName: string): boolean {
-	return argv.includes(flagName);
-}
-
-/**
- * Extracts the value of a command-line option from the argument list.
- *
- * @param argv - The command-line argument list
- * @param optionName - The name of the option to extract
- * @returns The option value, or undefined if not found
- */
-function getOptionValue(argv: string[], optionName: string): string | undefined {
-	const optionPrefix = `${optionName}=`;
-	const index = argv.findIndex((arg) => arg === optionName || arg.startsWith(optionPrefix));
-	if (index === -1) {
-		return undefined;
-	}
-	const optionArg = argv[index];
-	if (optionArg === undefined) {
-		return undefined;
-	}
-	if (optionArg.startsWith(optionPrefix)) {
-		return optionArg.slice(optionPrefix.length);
-	}
-	return argv[index + 1];
 }
 
 /**
@@ -101,117 +71,123 @@ function runScript(scriptName: string, scriptArgs: string[]): void {
 }
 
 /**
- * Prints the help text describing usage and options.
- */
-function printHelp(): void {
-	console.log(`
-Usage:
-  jiti ./scripts/collectAndCompareBundles.ts [options]
-
-Runs collectBundle.ts twice — once in local mode for the outer repo, once in
-revision mode for a separate inner enlistment checked out at the base revision —
-and then runs compareBundles.ts to produce the diff. The outer repo's working
-tree, branch, and stash are never modified.
-
-Options:
-  --help, -h
-    Show this help text and exit.
-
-  --base-revision <rev>     Revision to use as the comparison baseline. Branch,
-                            tag, or commit SHA. The actual base used is the
-                            merge-base of HEAD and this revision (i.e. the fork
-                            point), so worktree-based setups where 'main' is in
-                            an unusual location still produce the expected
-                            comparison. Default: main.
-  --skip-compare            Collect both bundles, skip the comparison step.
-  --force-clean-build       Run the full workspace clean before each build.
-                            Off by default; opt in when stale incremental build
-                            state may interfere with the current revision.
-
-Labels (used as bundleAnalysis subdirectory names) are determined automatically:
-the local bundle is saved under "current" and the base bundle under the
-sanitized base revision name.
-
-Examples:
-  jiti ./scripts/collectAndCompareBundles.ts
-  jiti ./scripts/collectAndCompareBundles.ts --base-revision main
-  jiti ./scripts/collectAndCompareBundles.ts --base-revision v2.20.0
-  jiti ./scripts/collectAndCompareBundles.ts --force-clean-build --skip-compare
-`);
-}
-
-/**
- * Main entry point: runs collection (local + revision) followed by comparison.
+ * Orchestrates: collectBundle.ts (local), then collectBundle.ts (revision),
+ * then compareBundles.ts.
  *
- * @param argv - The command-line argument list
+ * Labels (used as bundleAnalysis subdirectory names) are determined automatically:
+ * the local bundle is saved under "current" and the base bundle under "main",
+ * regardless of the resolved revision SHA, so that compareBundles.ts can find
+ * both directories.
  */
-function main(argv: string[]): void {
-	if (hasFlag(argv, "--help") || hasFlag(argv, "-h")) {
-		printHelp();
-		return;
-	}
+class CollectAndCompareBundlesCommand extends Command {
+	public static override readonly description =
+		"Run collectBundle.ts twice (local + revision merge-base) and then compareBundles.ts. " +
+		"The outer repo's working tree, branch, and stash are never modified.";
 
-	const baseRevisionInput = getOptionValue(argv, "--base-revision") ?? "main";
-	const resolvedBaseRevision = resolveMergeBase(baseRevisionInput);
-	if (resolvedBaseRevision === undefined) {
-		throw new Error(
-			`Could not find merge-base of HEAD and "${baseRevisionInput}". ` +
-				`Ensure the revision exists locally (e.g. "git fetch origin ${baseRevisionInput}").`,
-		);
-	}
-	if (resolvedBaseRevision !== baseRevisionInput) {
-		console.log(
-			`Resolved --base-revision "${baseRevisionInput}" to merge-base ${resolvedBaseRevision}.`,
-		);
-	}
-	const baseRevision = resolvedBaseRevision;
-	// compareBundles.ts reads from fixed label directories ("main" / "current"),
-	// so pin the base bundle's directory name to "main" regardless of which
-	// revision we resolved to.
-	const baseLabel = "main";
-	const currentLabel = "current";
+	public static override readonly examples = [
+		"<%= config.bin %> <%= command.id %>",
+		"<%= config.bin %> <%= command.id %> --base-revision main",
+		"<%= config.bin %> <%= command.id %> --base-revision v2.20.0",
+		"<%= config.bin %> <%= command.id %> --force-clean-build --skip-compare",
+	];
 
-	const skipCompare = hasFlag(argv, "--skip-compare");
-	const forceCleanBuildFlag = hasFlag(argv, "--force-clean-build");
+	public static override readonly flags = {
+		"base-revision": Flags.string({
+			description:
+				"Revision to use as the comparison baseline (branch, tag, or commit SHA). " +
+				"The actual base used is the merge-base of HEAD and this revision (the fork " +
+				"point), so worktree-based setups where 'main' is in an unusual location " +
+				"still produce the expected comparison.",
+			default: "main",
+		}),
+		"skip-compare": Flags.boolean({
+			description: "Collect both bundles, but skip the comparison step.",
+			default: false,
+		}),
+		"force-clean-build": Flags.boolean({
+			description:
+				"Run the full workspace clean before each build. Off by default; opt in " +
+				"when stale incremental build state may interfere with the current revision.",
+			default: false,
+		}),
+	};
 
-	const sharedCollectArgs: string[] = [];
-	if (forceCleanBuildFlag) {
-		sharedCollectArgs.push("--force-clean-build");
-	}
+	public async run(): Promise<void> {
+		const { flags } = await this.parse(CollectAndCompareBundlesCommand);
 
-	try {
-		console.log(`\n${"=".repeat(80)}`);
-		console.log(`Collecting local bundle (label: ${currentLabel})...`);
-		console.log("=".repeat(80));
-		runScript("collectBundle.ts", ["--mode", "local", ...sharedCollectArgs]);
+		const baseRevisionInput = flags["base-revision"];
+		const resolvedBaseRevision = resolveMergeBase(baseRevisionInput);
+		if (resolvedBaseRevision === undefined) {
+			this.error(
+				`Could not find merge-base of HEAD and "${baseRevisionInput}". ` +
+					`Ensure the revision exists locally (e.g. "git fetch origin ${baseRevisionInput}").`,
+				{ exit: 1 },
+			);
+		}
+		if (resolvedBaseRevision !== baseRevisionInput) {
+			console.log(
+				`Resolved --base-revision "${baseRevisionInput}" to merge-base ${resolvedBaseRevision}.`,
+			);
+		}
+		const baseRevision = resolvedBaseRevision;
+		// compareBundles.ts reads from fixed label directories ("main" / "current"),
+		// so pin the base bundle's directory name to "main" regardless of which
+		// revision we resolved to.
+		const baseLabel = "main";
+		const currentLabel = "current";
 
-		console.log(`\n${"=".repeat(80)}`);
-		console.log(`Collecting base bundle (revision: ${baseRevision}, label: ${baseLabel})...`);
-		console.log("=".repeat(80));
-		runScript("collectBundle.ts", [
-			"--mode",
-			"revision",
-			"--revision",
-			baseRevision,
-			"--label",
-			baseLabel,
-			...sharedCollectArgs,
-		]);
+		const skipCompare = flags["skip-compare"];
+		const forceCleanBuildFlag = flags["force-clean-build"];
 
-		if (!skipCompare) {
-			console.log(`\n${"=".repeat(80)}`);
-			console.log("Running bundle comparison...");
-			console.log("=".repeat(80));
-			runScript("compareBundles.ts", []);
+		const sharedCollectArgs: string[] = [];
+		if (forceCleanBuildFlag) {
+			sharedCollectArgs.push("--force-clean-build");
 		}
 
-		console.log(`\n${"=".repeat(80)}`);
-		console.log("✓ Bundle collection and comparison complete!");
-		console.log("=".repeat(80));
-	} catch (error) {
-		console.error("\n✖ Error:", error instanceof Error ? error.message : String(error));
-		throw error;
+		try {
+			console.log(`\n${"=".repeat(80)}`);
+			console.log(`Collecting local bundle (label: ${currentLabel})...`);
+			console.log("=".repeat(80));
+			runScript("collectBundle.ts", ["--mode", "local", ...sharedCollectArgs]);
+
+			console.log(`\n${"=".repeat(80)}`);
+			console.log(
+				`Collecting base bundle (revision: ${baseRevision}, label: ${baseLabel})...`,
+			);
+			console.log("=".repeat(80));
+			runScript("collectBundle.ts", [
+				"--mode",
+				"revision",
+				"--revision",
+				baseRevision,
+				"--label",
+				baseLabel,
+				...sharedCollectArgs,
+			]);
+
+			if (!skipCompare) {
+				console.log(`\n${"=".repeat(80)}`);
+				console.log("Running bundle comparison...");
+				console.log("=".repeat(80));
+				runScript("compareBundles.ts", []);
+			}
+
+			console.log(`\n${"=".repeat(80)}`);
+			console.log("✓ Bundle collection and comparison complete!");
+			console.log("=".repeat(80));
+		} catch (error) {
+			console.error("\n✖ Error:", error instanceof Error ? error.message : String(error));
+			throw error;
+		}
 	}
 }
 
-main(process.argv.slice(2));
+if (
+	!maybePrintHelp(
+		process.argv.slice(2),
+		"collectAndCompareBundles.ts",
+		CollectAndCompareBundlesCommand,
+	)
+) {
+	await CollectAndCompareBundlesCommand.run(process.argv.slice(2), import.meta.url);
+}

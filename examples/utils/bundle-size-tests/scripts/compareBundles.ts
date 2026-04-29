@@ -9,55 +9,21 @@ import { fileURLToPath } from "node:url";
 import { gzipSync } from "node:zlib";
 
 import { decompressStatsFile } from "@fluidframework/bundle-size-tools";
+import { Command, Flags } from "@oclif/core";
+
+import { maybePrintHelp } from "./oclifHelp.ts";
 
 // Default to the persistent analysis root used by collectBundle.ts.
 // Lives under this package's `bundleAnalysis/` directory (gitignored).
 const scriptDirectory = dirname(fileURLToPath(import.meta.url));
 const defaultAnalysisDirectory = resolve(scriptDirectory, "..", "bundleAnalysis");
 
-// Labels are fixed to match what collectBundle.ts writes:
-//   local mode    -> "current"
-//   revision mode -> sanitized revision (we always use "main" for the base side here)
-const baseLabel = "main";
+// The current side is always written by collectBundle.ts in local mode, which
+// uses the fixed label "current". The base side is whatever label
+// collectBundle.ts wrote in revision mode (default "main", overridable via
+// --base-label).
+const defaultBaseLabel = "main";
 const currentLabel = "current";
-
-/**
- * Extracts the value of a command-line option from the argument list.
- * Supports both "--option value" and "--option=value" formats.
- *
- * @param argv - The command-line argument list
- * @param optionName - The name of the option to extract (e.g., "--base-branch")
- * @returns The option value, or undefined if not found
- */
-function getOptionValue(argv: string[], optionName: string): string | undefined {
-	const optionPrefix = `${optionName}=`;
-	const index = argv.findIndex((arg) => arg === optionName || arg.startsWith(optionPrefix));
-	if (index === -1) {
-		return undefined;
-	}
-
-	const optionArg = argv[index];
-	if (optionArg === undefined) {
-		return undefined;
-	}
-
-	if (optionArg.startsWith(optionPrefix)) {
-		return optionArg.slice(optionPrefix.length);
-	}
-
-	return argv[index + 1];
-}
-
-/**
- * Checks if a flag is present in the command-line argument list.
- *
- * @param argv - The command-line argument list
- * @param flagName - The flag to check for (e.g., "--help")
- * @returns True if the flag is present, false otherwise
- */
-function hasFlag(argv: string[], flagName: string): boolean {
-	return argv.includes(flagName);
-}
 
 /**
  * Sanitizes a string for use as a filename by replacing non-alphanumeric characters with underscores.
@@ -246,20 +212,8 @@ function formatEntrypointRow(
 interface Options {
 	/** Directory containing per-label bundleStats.msp.gz files at \{label\}/bundleStats.msp.gz (default: this package's bundleAnalysis/) */
 	analysisDirectory: string;
-}
-
-/**
- * Parses command-line arguments into an Options object.
- *
- * @param argv - The command-line argument list
- * @returns Parsed options with defaults applied
- */
-function parseOptions(argv: string[]): Options {
-	const analysisDirectory = resolve(
-		getOptionValue(argv, "--analysis-dir") ?? defaultAnalysisDirectory,
-	);
-
-	return { analysisDirectory };
+	/** Label subdirectory holding the base-side bundle stats (default: "main"). */
+	baseLabel: string;
 }
 
 /**
@@ -273,6 +227,7 @@ function parseOptions(argv: string[]): Options {
  */
 function writeOutputFiles(
 	outputDirectory: string,
+	baseLabel: string,
 	textContent: string,
 	jsonObject: object,
 ): void {
@@ -295,28 +250,6 @@ function writeOutputFiles(
 /**
  * Prints the help text describing usage, options, and examples for the script.
  */
-function printHelp(): void {
-	console.log(`
-Usage:
-  jiti ./scripts/compareBundles.ts [options]
-
-Compares the two bundles previously collected by collectBundle.ts:
-  base    = ${baseLabel}/bundleStats.msp.gz
-  current = ${currentLabel}/bundleStats.msp.gz
-
-Options:
-  --help, -h
-    Show this help text and exit.
-
-  --analysis-dir <path>   Parent directory containing bundleStats.msp.gz files
-                          at {label}/bundleStats.msp.gz
-                          (default: ${defaultAnalysisDirectory})
-
-Examples:
-  jiti ./scripts/compareBundles.ts
-  jiti ./scripts/compareBundles.ts --analysis-dir /some/other/path
-`);
-}
 
 /** Represents gzip size comparison data for a single asset. */
 interface GzipRow {
@@ -343,21 +276,55 @@ interface EntrypointRow {
 }
 
 /**
- * Main entry point for the bundle comparison script.
  * Loads statistics from base and current builds, compares assets and entrypoints,
  * and generates both console and file-based reports (text and JSON).
- *
- * @param argv - The command-line argument list (typically process.argv)
  */
-function main(argv: string[]): void {
-	if (hasFlag(argv, "--help") || hasFlag(argv, "-h")) {
-		printHelp();
-		return;
-	}
+class CompareBundlesCommand extends Command {
+	public static override readonly description =
+		`Compare the two bundles previously collected by collectBundle.ts (base = --base-label, current = ${currentLabel}).`;
 
-	const options = parseOptions(argv);
+	public static override readonly examples = [
+		"<%= config.bin %> <%= command.id %>",
+		"<%= config.bin %> <%= command.id %> --base-label some-revision",
+		"<%= config.bin %> <%= command.id %> --analysis-dir /some/other/path",
+	];
+
+	public static override readonly flags = {
+		"analysis-dir": Flags.string({
+			description:
+				"Parent directory containing bundleStats.msp.gz files at " +
+				"{label}/bundleStats.msp.gz.",
+			default: defaultAnalysisDirectory,
+		}),
+		"base-label": Flags.string({
+			description:
+				"Label subdirectory under --analysis-dir holding the base-side " +
+				"bundle stats. Must match the --label passed to collectBundle.ts " +
+				"in revision mode.",
+			default: defaultBaseLabel,
+		}),
+	};
+
+	public async run(): Promise<void> {
+		const { flags } = await this.parse(CompareBundlesCommand);
+		const options: Options = {
+			analysisDirectory: resolve(flags["analysis-dir"]),
+			baseLabel: flags["base-label"],
+		};
+
+		runCompare(options);
+	}
+}
+
+/**
+ * Runs the bundle comparison and writes the report files.
+ *
+ * @param options - Parsed options for the comparison
+ */
+function runCompare(options: Options): void {
 	const reporter = new Reporter();
 
+	const { baseLabel } = options;
 	const outputDirectory = options.analysisDirectory;
 	const baseBuildDirectory = resolve(outputDirectory, baseLabel, "build");
 	const currentBuildDirectory = resolve(outputDirectory, currentLabel, "build");
@@ -464,7 +431,7 @@ function main(argv: string[]): void {
 		});
 	}
 
-	writeOutputFiles(outputDirectory, reporter.toText(), {
+	writeOutputFiles(outputDirectory, baseLabel, reporter.toText(), {
 		comparedAt: new Date().toISOString(),
 		baseLabel,
 		currentLabel,
@@ -480,4 +447,6 @@ function main(argv: string[]): void {
 	});
 }
 
-main(process.argv);
+if (!maybePrintHelp(process.argv.slice(2), "compareBundles.ts", CompareBundlesCommand)) {
+	await CompareBundlesCommand.run(process.argv.slice(2), import.meta.url);
+}

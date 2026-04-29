@@ -8,6 +8,10 @@ import { copyFileSync, cpSync, existsSync, mkdirSync, rmSync, unlinkSync } from 
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
+import { Command, Flags } from "@oclif/core";
+
+import { maybePrintHelp } from "./oclifHelp.ts";
+
 const scriptDirectory = dirname(fileURLToPath(import.meta.url));
 const outerPackageRoot = resolve(scriptDirectory, "..");
 
@@ -203,140 +207,103 @@ function syncInnerRepoToRevision(revision: string): void {
 }
 
 /**
- * Extracts the value of a command-line option from the argument list.
- */
-function getOptionValue(argv: string[], optionName: string): string | undefined {
-	const optionPrefix = `${optionName}=`;
-	const index = argv.findIndex((arg) => arg === optionName || arg.startsWith(optionPrefix));
-	if (index === -1) {
-		return undefined;
-	}
-
-	const optionArg = argv[index];
-	if (optionArg === undefined) {
-		return undefined;
-	}
-
-	if (optionArg.startsWith(optionPrefix)) {
-		return optionArg.slice(optionPrefix.length);
-	}
-
-	return argv[index + 1];
-}
-
-/**
- * Checks if a flag is present in the command-line argument list.
- */
-function hasFlag(argv: string[], flagName: string): boolean {
-	return argv.includes(flagName);
-}
-
-/**
- * Prints the help text describing usage and options.
- */
-function printHelp(): void {
-	console.log(`
-Usage:
-  jiti ./scripts/collectBundle.ts [options]
-
-Modes:
-  --mode local              (default) Build and collect a bundle from the outer
-                            FluidFramework enlistment (the repo containing this
-                            script). The outer repo's working tree, branch, and
-                            stash are never modified.
-
-  --mode revision           Build and collect a bundle from a separate inner
-                            FluidFramework enlistment, checked out to a specific
-                            revision. The inner repo lives at:
-                              ${innerRepoRoot}
-                            It is cloned from the outer repo's 'origin' remote on
-                            first use and reused thereafter.
-
-Options:
-  --help, -h                Show this help text and exit.
-  --revision <rev>          (revision mode only, required) Branch, tag, or commit
-                            SHA to check out in the inner repo before building.
-                            Also used as the default label.
-  --label <name>            Override the directory name under which bundle stats
-                            are saved. Defaults to the sanitized revision in
-                            revision mode, or "current" in local mode.
-  --force-clean-build       Run the full workspace clean ('npm run clean' at the
-                            repo root) before building. Off by default; opt in
-                            when stale incremental build state from a previous
-                            revision may interfere with the current one (e.g.
-                            after switching revisions in the inner repo).
-
-Bundle stats are saved under:
-  ${bundleAnalysisDirectory}/<sanitized-label>/
-where <label> is the revision name in revision mode, or "current" in local mode.
-
-Examples:
-  jiti ./scripts/collectBundle.ts
-  jiti ./scripts/collectBundle.ts --mode revision --revision main
-  jiti ./scripts/collectBundle.ts --mode revision --revision v2.20.0
-`);
-}
-
-/**
- * Main entry point: collects a single bundle in either local or revision mode.
+ * Collects a single bundle from either the outer enlistment (local mode) or a
+ * separate inner enlistment checked out to a specific revision (revision mode).
  *
- * @param argv - The command-line argument list
+ * In revision mode, the inner repo at {@link innerRepoRoot} is cloned from the
+ * outer repo's `origin` remote on first use and reused thereafter. The outer
+ * repo's working tree, branch, and stash are never modified.
  */
-function main(argv: string[]): void {
-	if (hasFlag(argv, "--help") || hasFlag(argv, "-h")) {
-		printHelp();
-		return;
-	}
+class CollectBundleCommand extends Command {
+	public static override readonly description =
+		"Build and collect a bundle, either from the outer enlistment (local mode) or " +
+		"from a separate inner enlistment checked out to a specific revision (revision mode). " +
+		"The outer repo's working tree, branch, and stash are never modified.";
 
-	const mode = getOptionValue(argv, "--mode") ?? "local";
-	if (mode !== "local" && mode !== "revision") {
-		throw new Error(`Invalid --mode "${mode}". Expected "local" or "revision".`);
-	}
+	public static override readonly examples = [
+		"<%= config.bin %> <%= command.id %>",
+		"<%= config.bin %> <%= command.id %> --mode revision --revision main",
+		"<%= config.bin %> <%= command.id %> --mode revision --revision v2.20.0",
+	];
 
-	const revision = getOptionValue(argv, "--revision");
-	const forceCleanBuild = hasFlag(argv, "--force-clean-build");
+	public static override readonly flags = {
+		mode: Flags.string({
+			description:
+				"local: collect from the outer enlistment. revision: collect from a separate " +
+				"inner enlistment checked out at --revision.",
+			options: ["local", "revision"] as const,
+			default: "local",
+		}),
+		revision: Flags.string({
+			description:
+				"(revision mode only, required) Branch, tag, or commit SHA to check out " +
+				"in the inner repo before building. Also used as the default label.",
+		}),
+		label: Flags.string({
+			description:
+				"Override the directory name under which bundle stats are saved. " +
+				'Defaults to the sanitized revision in revision mode, or "current" in local mode.',
+		}),
+		"force-clean-build": Flags.boolean({
+			description:
+				"Run the full workspace clean ('npm run clean' at the repo root) before " +
+				"building. Off by default; opt in when stale incremental build state from a " +
+				"previous revision may interfere with the current one.",
+			default: false,
+		}),
+	};
 
-	if (mode === "revision" && (revision === undefined || revision.length === 0)) {
-		throw new Error(`--mode revision requires --revision <rev>.`);
-	}
+	public async run(): Promise<void> {
+		const { flags } = await this.parse(CollectBundleCommand);
 
-	const labelOverride = getOptionValue(argv, "--label");
-	const label = sanitizeForFileName(
-		labelOverride ?? (mode === "revision" ? (revision as string) : "current"),
-	);
+		const mode = flags.mode as "local" | "revision";
+		const { revision } = flags;
+		const forceCleanBuild = flags["force-clean-build"];
 
-	let activeRepoRoot: string;
-	let activePackageRoot: string;
-
-	if (mode === "local") {
-		activeRepoRoot = outerRepoRoot;
-		activePackageRoot = outerPackageRoot;
-	} else {
-		ensureInnerRepo();
-		// Only the inner repo's revision is changed. The outer repo is never touched.
-		syncInnerRepoToRevision(revision as string);
-		activeRepoRoot = innerRepoRoot;
-		activePackageRoot = resolve(innerRepoRoot, packageWorkspacePath);
-		if (!existsSync(activePackageRoot)) {
-			throw new Error(
-				`Expected package not found in inner repo at ${activePackageRoot}. ` +
-					`The revision "${revision as string}" may predate this package.`,
-			);
+		if (mode === "revision" && (revision === undefined || revision.length === 0)) {
+			this.error("--mode revision requires --revision <rev>.", { exit: 1 });
 		}
-		installDependencies(activeRepoRoot);
-	}
 
-	if (forceCleanBuild) {
-		cleanWorkspace(activeRepoRoot);
-	}
-	buildWorkspace(activePackageRoot);
-	buildBundles(activePackageRoot);
-	saveStats(label, activePackageRoot);
+		const label = sanitizeForFileName(
+			flags.label ?? (mode === "revision" ? (revision as string) : "current"),
+		);
 
-	console.log(`\n${"=".repeat(80)}`);
-	console.log(`✓ Bundle collection complete (mode: ${mode}, label: ${label}).`);
-	console.log(`  Stats directory: ${resolve(bundleAnalysisDirectory, label)}`);
-	console.log("=".repeat(80));
+		let activeRepoRoot: string;
+		let activePackageRoot: string;
+
+		if (mode === "local") {
+			activeRepoRoot = outerRepoRoot;
+			activePackageRoot = outerPackageRoot;
+		} else {
+			ensureInnerRepo();
+			// Only the inner repo's revision is changed. The outer repo is never touched.
+			syncInnerRepoToRevision(revision as string);
+			activeRepoRoot = innerRepoRoot;
+			activePackageRoot = resolve(innerRepoRoot, packageWorkspacePath);
+			if (!existsSync(activePackageRoot)) {
+				this.error(
+					`Expected package not found in inner repo at ${activePackageRoot}. ` +
+						`The revision "${revision as string}" may predate this package.`,
+					{ exit: 1 },
+				);
+			}
+			installDependencies(activeRepoRoot);
+		}
+
+		if (forceCleanBuild) {
+			cleanWorkspace(activeRepoRoot);
+		}
+		buildWorkspace(activePackageRoot);
+		buildBundles(activePackageRoot);
+		saveStats(label, activePackageRoot);
+
+		console.log(`\n${"=".repeat(80)}`);
+		console.log(`✓ Bundle collection complete (mode: ${mode}, label: ${label}).`);
+		console.log(`  Stats directory: ${resolve(bundleAnalysisDirectory, label)}`);
+		console.log("=".repeat(80));
+	}
 }
 
-main(process.argv.slice(2));
+if (!maybePrintHelp(process.argv.slice(2), "collectBundle.ts", CollectBundleCommand)) {
+	await CollectBundleCommand.run(process.argv.slice(2), import.meta.url);
+}
