@@ -9,5 +9,6 @@ const getFluidTestMochaConfig = require("@fluid-internal/mocha-test-setup/mochar
 
 // Tests use fake-indexeddb v3 (CJS-only) and require browser-like globals.
 // setup.cjs installs window/self aliases and fake-indexeddb before tests run.
+// fake-indexeddb leaves pending timers after tests complete; exit: true prevents the hang.
 const config = getFluidTestMochaConfig(__dirname, [`${__dirname}/src/test/setup.cjs`]);
-module.exports = config;
+module.exports = { ...config, exit: true };
