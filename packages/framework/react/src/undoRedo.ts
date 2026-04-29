@@ -119,9 +119,6 @@ export interface UndoRedo {
 
 /**
  * Determines if sets `a` and `b` share at least one element.
- *
- * @param a - The first set.
- * @param b - The second set.
  */
 function doLabelSetsOverlap(a: ReadonlySet<unknown>, b: ReadonlySet<unknown>): boolean {
 	for (const label of a) {
