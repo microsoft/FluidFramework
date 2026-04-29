@@ -726,11 +726,14 @@ export class TreeCheckout implements ITreeCheckout {
 									"Cannot generate the same revertible more than once. Note that this can happen when multiple changed event listeners are registered.",
 								);
 							}
+							// Capture the label tree active when the commit was produced so that the
+							// resulting revert commit can inherit the same transaction labels.
 							const revertible = this.createRevertible(
 								revision,
 								kind,
 								this,
 								onRevertibleDisposed,
+								this.labelTreeNode,
 							);
 							this.revertibleCommitBranches.set(
 								revision,
@@ -1008,6 +1011,8 @@ export class TreeCheckout implements ITreeCheckout {
 	 * @param kind - The {@link CommitKind} that produced this revertible (e.g., Default, Undo, Redo).
 	 * @param checkout - The {@link TreeCheckout} instance this revertible belongs to.
 	 * @param onRevertibleDisposed - Callback function that will be called when the revertible is disposed.
+	 * @param labelTree - The {@link LabelTree} (if any) active when the original commit was produced.
+	 * The revert commit inherits these labels so that hosts can scope undo/redo by transaction label.
 	 * @returns A {@link RevertibleAlpha} object.
 	 */
 	private createRevertible(
@@ -1015,6 +1020,7 @@ export class TreeCheckout implements ITreeCheckout {
 		kind: CommitKind,
 		checkout: TreeCheckout,
 		onRevertibleDisposed: ((revertible: RevertibleAlpha) => void) | undefined,
+		labelTree: LabelTree | undefined,
 	): RevertibleAlpha {
 		const commitBranches = checkout.revertibleCommitBranches;
 
@@ -1030,7 +1036,7 @@ export class TreeCheckout implements ITreeCheckout {
 					throw new UsageError("Unable to revert a revertible that has been disposed.");
 				}
 
-				const revertMetrics = checkout.revertRevertible(revision, kind);
+				const revertMetrics = checkout.revertRevertible(revision, kind, labelTree);
 				checkout.logger?.sendTelemetryEvent({
 					eventName: TreeCheckout.revertTelemetryEventName,
 					...revertMetrics,
@@ -1060,7 +1066,13 @@ export class TreeCheckout implements ITreeCheckout {
 
 				targetCheckout.revertibleCommitBranches.set(revision, revertibleBranch.fork());
 
-				return this.createRevertible(revision, kind, targetCheckout, onRevertibleDisposed);
+				return this.createRevertible(
+					revision,
+					kind,
+					targetCheckout,
+					onRevertibleDisposed,
+					labelTree,
+				);
 			},
 			dispose: () => {
 				if (revertible.status === RevertibleStatus.Disposed) {
@@ -1321,7 +1333,11 @@ export class TreeCheckout implements ITreeCheckout {
 		this.revertibles.delete(revertible);
 	}
 
-	private revertRevertible(revision: RevisionTag, kind: CommitKind): RevertMetrics {
+	private revertRevertible(
+		revision: RevisionTag,
+		kind: CommitKind,
+		labelTree: LabelTree | undefined,
+	): RevertMetrics {
 		this.editLock.checkUnlocked("Reverting a commit");
 		if (this.transaction.size > 0) {
 			throw new UsageError("Undo is not yet supported during transactions.");
@@ -1364,12 +1380,20 @@ export class TreeCheckout implements ITreeCheckout {
 			);
 		}
 
-		this.#transaction.activeBranch.apply(
-			change,
-			kind === CommitKind.Default || kind === CommitKind.Redo
-				? CommitKind.Undo
-				: CommitKind.Redo,
-		);
+		// Inherit the original commit's transaction labels on the revert commit, so that hosts using
+		// labels to scope undo/redo see the revert grouped with the edit it is inverting.
+		// The same captured tree is reused for revert-of-revert without introducing new nesting.
+		this.labelTreeNode = labelTree;
+		try {
+			this.#transaction.activeBranch.apply(
+				change,
+				kind === CommitKind.Default || kind === CommitKind.Redo
+					? CommitKind.Undo
+					: CommitKind.Redo,
+			);
+		} finally {
+			this.labelTreeNode = undefined;
+		}
 
 		// Derive some stats about the reversion to return to the caller.
 		let revertAge = 0;
