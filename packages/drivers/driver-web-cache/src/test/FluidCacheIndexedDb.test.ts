@@ -36,11 +36,18 @@ const getUpgradeTestCases = (
 const upgradeTestCases = getUpgradeTestCases(versions);
 
 describe("getFluidCacheIndexedDbInstance", () => {
+	let db: Awaited<ReturnType<typeof getFluidCacheIndexedDbInstance>> | undefined;
+
 	beforeEach(() => {
 		// Reset the indexed db before each test so that it starts off in an empty state
 		// eslint-disable-next-line @typescript-eslint/no-require-imports, import-x/no-internal-modules
 		const FDBFactory = require("fake-indexeddb/lib/FDBFactory");
 		(window.indexedDB as unknown) = new FDBFactory();
+	});
+
+	afterEach(() => {
+		db?.close();
+		db = undefined;
 	});
 
 	for (const [name, { oldVersionNumber }] of upgradeTestCases) {
@@ -57,7 +64,7 @@ describe("getFluidCacheIndexedDbInstance", () => {
 
 			// Act
 			// Now attempt to get the FluidCache instance, which will run the upgrade function
-			const db = await getFluidCacheIndexedDbInstance();
+			db = await getFluidCacheIndexedDbInstance();
 
 			// Assert
 			assert.deepEqual([...db.objectStoreNames], [FluidDriverObjectStoreName]);
@@ -78,7 +85,7 @@ describe("getFluidCacheIndexedDbInstance", () => {
 
 		// Act
 		// Now attempt to get the FluidCache instance, which will run the upgrade function
-		const db = await getFluidCacheIndexedDbInstance(logger);
+		db = await getFluidCacheIndexedDbInstance(logger);
 
 		// Assert
 		// We catch the error and send it to the logger

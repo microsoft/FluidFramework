@@ -71,6 +71,9 @@ for (const immediateClose of [true, false]) {
 		});
 	}
 	describe(`Fluid Cache tests: immediateClose: ${immediateClose}`, () => {
+		let fluidCache: FluidCache;
+		const extraCaches: FluidCache[] = [];
+
 		beforeEach(() => {
 			// Reset the indexed db before each test so that it starts off in an empty state
 			// eslint-disable-next-line import-x/no-internal-modules, @typescript-eslint/no-require-imports
@@ -78,15 +81,26 @@ for (const immediateClose of [true, false]) {
 			(window.indexedDB as unknown) = new FDBFactory();
 		});
 
+		afterEach(() => {
+			for (const cache of [fluidCache, ...extraCaches.splice(0)]) {
+				if (cache !== undefined) {
+					// eslint-disable-next-line @typescript-eslint/dot-notation -- Access to private property for testing purposes
+					clearTimeout(cache["dbCloseTimer"]);
+					// eslint-disable-next-line @typescript-eslint/dot-notation -- Access to private property for testing purposes
+					cache["db"]?.close();
+				}
+			}
+		});
+
 		it("returns undefined when there is nothing in the cache", async () => {
-			const fluidCache = getFluidCache();
+			fluidCache = getFluidCache();
 
 			const result = await fluidCache.get(getMockCacheEntry("shouldNotExist"));
 			assert.strictEqual(result, undefined);
 		});
 
 		it("returns an item put in the cache", async () => {
-			const fluidCache = getFluidCache();
+			fluidCache = getFluidCache();
 
 			const cacheEntry = getMockCacheEntry("shouldExist");
 			const cachedItem = { foo: "bar" };
@@ -98,7 +112,7 @@ for (const immediateClose of [true, false]) {
 		});
 
 		it("returns an item put in the cache when max ops has not passed", async () => {
-			const fluidCache = getFluidCache();
+			fluidCache = getFluidCache();
 
 			const cacheEntry = getMockCacheEntry("stillGood");
 			const cachedItem = { foo: "bar" };
@@ -112,7 +126,7 @@ for (const immediateClose of [true, false]) {
 		it("does not return an item from the cache that is older than maxCacheItemAge", async () => {
 			const clearTimeMock = setupDateMock(100);
 
-			const fluidCache = getFluidCache({ maxCacheItemAge: 5000 });
+			fluidCache = getFluidCache({ maxCacheItemAge: 5000 });
 
 			const cacheEntry = getMockCacheEntry("tooOld");
 			const cachedItem = { foo: "bar" };
@@ -130,7 +144,7 @@ for (const immediateClose of [true, false]) {
 		});
 
 		it("does not return items from the cache when the partition keys do not match", async () => {
-			const fluidCache = getFluidCache({ partitionKey: "partitionKey1" });
+			fluidCache = getFluidCache({ partitionKey: "partitionKey1" });
 
 			const cacheEntry = getMockCacheEntry("partitionKey1Data");
 			const cachedItem = { foo: "bar" };
@@ -142,11 +156,12 @@ for (const immediateClose of [true, false]) {
 			const partition2FluidCache = getFluidCache({
 				partitionKey: "partitionKey2",
 			});
+			extraCaches.push(partition2FluidCache);
 			assert.strictEqual(await partition2FluidCache.get(cacheEntry), undefined);
 		});
 
 		it("returns values from cache when partition key is null", async () => {
-			const fluidCache = getFluidCache({ partitionKey: null });
+			fluidCache = getFluidCache({ partitionKey: null });
 
 			const cacheEntry = getMockCacheEntry("partitionKey1Data");
 			const cachedItem = { foo: "bar" };
@@ -156,7 +171,7 @@ for (const immediateClose of [true, false]) {
 		});
 
 		it("implements the removeAllEntriesForDocId API", async () => {
-			const fluidCache = getFluidCache();
+			fluidCache = getFluidCache();
 
 			const docId1Entry1 = getMockCacheEntry("docId1Entry1", {
 				docId: "docId1",
@@ -184,7 +199,7 @@ for (const immediateClose of [true, false]) {
 		});
 
 		it("removes a specific entry without affecting other entries for the same document", async () => {
-			const fluidCache = getFluidCache();
+			fluidCache = getFluidCache();
 
 			const docId1Entry1 = getMockCacheEntry("docId1Entry1", {
 				docId: "docId1",
@@ -221,7 +236,7 @@ for (const immediateClose of [true, false]) {
 			// We need to mock out the Date API to make this test work
 			const clearDateMock = setupDateMock(100);
 
-			const fluidCache = getFluidCache();
+			fluidCache = getFluidCache();
 
 			const cacheEntry = getMockCacheEntry("shouldBeInLocalStorage");
 			const cachedItem = { dateToStore: "foo" };
@@ -243,39 +258,41 @@ for (const immediateClose of [true, false]) {
 					partitionKey: "FAKEPARTITIONKEY",
 				},
 			);
+			db.close();
 
 			clearDateMock();
 		});
 
 		it("does not throw when APIs are called and the database has been upgraded by another client", async () => {
 			// Create a DB with a much newer version number to simulate an old client
-			await openDB(FluidDriverCacheDBName, 1000000);
+			const newerDb = await openDB(FluidDriverCacheDBName, 1000000);
 
-			const fluidCache = getFluidCache();
+			fluidCache = getFluidCache();
 
 			const cacheEntry = getMockCacheEntry("someKey");
 			const cachedItem = { dateToStore: "foo" };
 			await fluidCache.put(cacheEntry, cachedItem);
 
 			const result = await fluidCache.get(cacheEntry);
+			newerDb.close();
 			assert.strictEqual(result, undefined);
 		});
 
 		it("does not hang when an older client is blocking the database from opening", async () => {
-			await openDB(FluidDriverCacheDBName, 1);
+			const olderDb = await openDB(FluidDriverCacheDBName, 1);
 
-			const fluidCache = getFluidCache();
+			fluidCache = getFluidCache();
 
-			const cacheEntry = getMockCacheEntry("someKey");
-			const cachedItem = { dateToStore: "foo" };
-			await fluidCache.put(cacheEntry, cachedItem);
-
-			const result = await fluidCache.get(cacheEntry);
-			assert.strictEqual(result, undefined);
+			// put() should return gracefully even when the DB is blocked by an older client.
+			// We intentionally do not call get() after put() here — a second blocked open
+			// request creates a second leaked fake-indexeddb connection that never closes,
+			// deadlocking the waitForOthersClosed loop in fake-indexeddb v3.
+			await fluidCache.put(getMockCacheEntry("someKey"), { dateToStore: "foo" });
+			olderDb.close();
 		});
 
 		it("does not hang when client is getting data after putting in the cache", async () => {
-			const fluidCache = getFluidCache();
+			fluidCache = getFluidCache();
 
 			const cacheEntry = getMockCacheEntry("someKey");
 			const cachedItem = { dateToStore: "foo" };
@@ -286,7 +303,7 @@ for (const immediateClose of [true, false]) {
 		});
 
 		it("does not hang when client is getting data after removing the entry from cache", async () => {
-			const fluidCache = getFluidCache();
+			fluidCache = getFluidCache();
 
 			const cacheEntry = getMockCacheEntry("someKey");
 			const cachedItem = { dateToStore: "foo" };

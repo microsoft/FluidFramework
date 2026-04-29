@@ -72,6 +72,9 @@ function getMockCacheEntry(itemKey: string, options?: { docId: string }): ICache
 }
 
 describe("FluidCacheTimer tests", () => {
+	let fluidCache: FluidCache;
+	let extraDb: Awaited<ReturnType<typeof openDB>> | undefined;
+
 	beforeEach(() => {
 		// Reset the indexed db before each test so that it starts off in an empty state
 		// eslint-disable-next-line import-x/no-internal-modules, @typescript-eslint/no-require-imports
@@ -79,9 +82,18 @@ describe("FluidCacheTimer tests", () => {
 		(window.indexedDB as unknown) = new FDBFactory();
 	});
 
+	afterEach(() => {
+		if (fluidCache !== undefined) {
+			clearTimeout(fluidCache["dbCloseTimer"]);
+			fluidCache["db"]?.close();
+		}
+		extraDb?.close();
+		extraDb = undefined;
+	});
+
 	it("db should be closed after the close timer", async () => {
 		const logger = new MockLogger();
-		const fluidCache = getFluidCache({ logger });
+		fluidCache = getFluidCache({ logger });
 
 		const cacheEntry = getMockCacheEntry("someKey");
 		const cachedItem = { dateToStore: "foo" };
@@ -95,28 +107,28 @@ describe("FluidCacheTimer tests", () => {
 
 	it("db should be closed after the version upgrade", async () => {
 		const logger = new MockLogger();
-		const fluidCache = getFluidCache({ logger });
+		fluidCache = getFluidCache({ logger });
 
 		const cacheEntry = getMockCacheEntry("someKey");
 		const cachedItem = { dateToStore: "foo" };
 		await fluidCache.put(cacheEntry, cachedItem);
 		assert.notStrictEqual(fluidCache["db"], undefined);
 		// Create a DB with a much newer version number to force version upgrade on older cache causing it to close.
-		await openDB(FluidDriverCacheDBName, 1000000);
+		extraDb = await openDB(FluidDriverCacheDBName, 1000000);
 		assert.strictEqual(fluidCache["db"], undefined);
 		assert.strictEqual(fluidCache["dbCloseTimer"], undefined);
 	});
 
 	it("db should be closed after the version upgrade", async () => {
 		const logger = new MockLogger();
-		const fluidCache = getFluidCache({ logger });
+		fluidCache = getFluidCache({ logger });
 
 		const cacheEntry = getMockCacheEntry("someKey");
 		const cachedItem = { dateToStore: "foo" };
 		await fluidCache.put(cacheEntry, cachedItem);
 		assert.notStrictEqual(fluidCache["db"], undefined);
 		// Create a DB with a much newer version number to force version upgrade on older cache causing it to close.
-		await openDB(FluidDriverCacheDBName, 1000000);
+		extraDb = await openDB(FluidDriverCacheDBName, 1000000);
 		assert.strictEqual(fluidCache["db"], undefined);
 		assert.strictEqual(fluidCache["dbCloseTimer"], undefined);
 	});
