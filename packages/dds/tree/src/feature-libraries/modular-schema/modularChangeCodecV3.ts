@@ -10,6 +10,7 @@ import {
 	withSchemaValidation,
 	type ICodecOptions,
 	type IJsonCodec,
+	type JsonCodecPart,
 	type SchemaValidationFunction,
 } from "../../codec/index.js";
 import {
@@ -21,6 +22,7 @@ import {
 	type FieldKey,
 	type FieldKindIdentifier,
 	type RevisionTag,
+	type RevisionTagSchema,
 } from "../../core/index.js";
 import {
 	brand,
@@ -28,7 +30,6 @@ import {
 	type IdAllocator,
 	type JsonCompatibleReadOnly,
 	type Mutable,
-	type RangeQueryEntry,
 	type RangeQueryResult,
 	type TupleBTree,
 } from "../../util/index.js";
@@ -98,10 +99,9 @@ type FieldCodec = IJsonCodec<
 
 export function makeModularChangeCodecV3(
 	fieldKinds: FieldKindConfiguration,
-	revisionTagCodec: IJsonCodec<
+	revisionTagCodec: JsonCodecPart<
 		RevisionTag,
-		EncodedRevisionTag,
-		EncodedRevisionTag,
+		typeof RevisionTagSchema,
 		ChangeEncodingContext
 	>,
 	fieldsCodec: FieldBatchCodec,
@@ -400,14 +400,11 @@ export function makeModularChangeCodecV3(
 				return { ...attachEntry, value: attachEntry.value !== undefined };
 			};
 
-			const isDetachId = (
-				id: ChangeAtomId,
-				count: number,
-			): RangeQueryEntry<ChangeAtomId, boolean> => {
+			const isDetachId = (id: ChangeAtomId, count: number): RangeQueryResult<boolean> => {
 				const detachEntry = getFirstDetachField(change.crossFieldKeys, id, count);
 				const renameEntry = change.rootNodes.oldToNewId.getFirst(id, detachEntry.length);
 				const isDetach = (detachEntry.value ?? renameEntry.value) !== undefined;
-				return { start: id, value: isDetach, length: renameEntry.length };
+				return { value: isDetach, length: renameEntry.length };
 			};
 
 			const getInputDetachId = (

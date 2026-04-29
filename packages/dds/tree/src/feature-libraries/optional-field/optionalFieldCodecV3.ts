@@ -5,11 +5,12 @@
 
 import type { TAnySchema } from "@sinclair/typebox";
 
-import type { IJsonCodec } from "../../codec/index.js";
+import type { IJsonCodec, JsonCodecPart } from "../../codec/index.js";
 import type {
 	ChangeEncodingContext,
 	EncodedRevisionTag,
 	RevisionTag,
+	RevisionTagSchema,
 } from "../../core/index.js";
 import type { Mutable } from "../../util/index.js";
 import { makeChangeAtomIdCodec } from "../changeAtomIdCodec.js";
@@ -22,10 +23,9 @@ import { EncodedOptionalChangeset } from "./optionalFieldChangeFormatV3.js";
 import type { OptionalChangeset, Replace } from "./optionalFieldChangeTypes.js";
 
 export function makeOptionalFieldCodec(
-	revisionTagCodec: IJsonCodec<
+	revisionTagCodec: JsonCodecPart<
 		RevisionTag,
-		EncodedRevisionTag,
-		EncodedRevisionTag,
+		typeof RevisionTagSchema,
 		ChangeEncodingContext
 	>,
 ): IJsonCodec<

@@ -46,7 +46,7 @@ class MySharedObject extends SharedObject {
 	protected async loadCore(services: IChannelStorageService): Promise<void> {
 		throw new Error("Method not implemented.");
 	}
-	protected processMessagesCore(messagesCollection: IRuntimeMessageCollection): void {
+	protected override processMessagesCore(messagesCollection: IRuntimeMessageCollection): void {
 		throw new Error("Method not implemented.");
 	}
 	protected onDisconnect(): void {
@@ -101,7 +101,7 @@ class MySharedObjectCore extends SharedObjectCore {
 	protected async loadCore(services: IChannelStorageService): Promise<void> {
 		throw new Error("Method not implemented.");
 	}
-	protected processMessagesCore(messagesCollection: IRuntimeMessageCollection): void {
+	protected override processMessagesCore(messagesCollection: IRuntimeMessageCollection): void {
 		throw new Error("Method not implemented.");
 	}
 	protected onDisconnect(): void {

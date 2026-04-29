@@ -18,7 +18,7 @@ module.exports = {
 		es2024: false,
 		node: true,
 	},
-	extends: ["./minimal-deprecated.js", "plugin:unicorn/recommended"],
+	extends: ["./base.js", "plugin:unicorn/recommended"],
 	plugins: ["eslint-plugin-tsdoc"],
 	rules: {
 		// RECOMMENDED RULES
@@ -179,6 +179,13 @@ module.exports = {
 		 */
 		"@typescript-eslint/no-unsafe-return": "error",
 
+		/**
+		 * Requires eslint-disable comments to include a description explaining why the rule is being disabled.
+		 *
+		 * Docs: {@link https://eslint-community.github.io/eslint-plugin-eslint-comments/rules/require-description.html}
+		 */
+		"@eslint-community/eslint-comments/require-description": "warn",
+
 		// #region eslint-plugin-jsdoc rules
 
 		/**
@@ -186,6 +193,8 @@ module.exports = {
 		 * See <https://github.com/gajus/eslint-plugin-jsdoc#user-content-eslint-plugin-jsdoc-rules-require-description>
 		 */
 		"jsdoc/require-description": ["error", { checkConstructors: false }],
+
+		// #endregion
 
 		/**
 		 * Requires that type-only exports be done using `export type`. Being explicit allows the TypeScript
@@ -211,8 +220,6 @@ module.exports = {
 			"error",
 			{ fixStyle: "separate-type-imports" },
 		],
-
-		// #endregion
 	},
 	overrides: [
 		{
@@ -232,6 +239,7 @@ module.exports = {
 				// TODO: consider unifying code across the repo to use "test" and not "tests", then we can remove this.
 				"**/tests/**",
 			],
+			plugins: ["no-only-tests"],
 			rules: {
 				// Does not work well with describe/it block scoping
 				"unicorn/consistent-function-scoping": "off",
@@ -239,6 +247,14 @@ module.exports = {
 				// We run most of our tests in a Node.js environment, so this rule is not important and makes
 				// file-system logic more cumbersome.
 				"unicorn/prefer-module": "off",
+
+				/**
+				 * Disallow `.only()` in tests (e.g. `describe.only`, `it.only`) to prevent accidentally
+				 * committing focused tests that would skip the rest of the suite in CI.
+				 *
+				 * @see https://github.com/levibuzolic/eslint-plugin-no-only-tests
+				 */
+				"no-only-tests/no-only-tests": "error",
 			},
 		},
 		{

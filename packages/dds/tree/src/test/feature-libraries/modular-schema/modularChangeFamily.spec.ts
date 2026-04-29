@@ -40,7 +40,7 @@ import {
 	defaultChunkPolicy,
 	type TreeChunk,
 	chunkFieldSingle,
-	makeFieldBatchCodec,
+	fieldBatchCodecBuilder,
 	type NodeId,
 	type FieldKindConfiguration,
 	type FieldKindConfigurationEntry,
@@ -183,7 +183,7 @@ const codec = makeModularChangeCodecFamily(
 		[...fieldKindConfigurations.keys()].map((version) => [version, fieldKindConfiguration]),
 	),
 	testRevisionTagCodec,
-	makeFieldBatchCodec(codecOptions),
+	fieldBatchCodecBuilder.build(codecOptions),
 	codecOptions,
 );
 const family = new ModularChangeFamily(fieldKinds, codec, codecOptions);

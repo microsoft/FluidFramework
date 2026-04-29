@@ -51,6 +51,9 @@
 		"@eslint-community/eslint-comments/no-unused-enable": [
 			"error"
 		],
+		"@eslint-community/eslint-comments/require-description": [
+			"warn"
+		],
 		"@fluid-internal/fluid/no-file-path-links-in-jsdoc": [
 			"error"
 		],
@@ -758,7 +761,10 @@
 			}
 		],
 		"@typescript-eslint/no-empty-object-type": [
-			"error"
+			"error",
+			{
+				"allowInterfaces": "with-single-extends"
+			}
 		],
 		"@typescript-eslint/no-explicit-any": [
 			"error",
@@ -1219,6 +1225,7 @@
 				"allow": [
 					"@fluidframework/*/internal{,/**}",
 					"@fluid-experimental/**",
+					"@fluid-internal/**",
 					"*/index.js"
 				]
 			}

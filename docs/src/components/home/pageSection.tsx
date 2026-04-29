@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import React from "react";
+import type { CSSProperties, PropsWithChildren } from "react";
 
 import { SectionHeader, type SectionHeaderProps } from "./sectionHeader";
 
@@ -12,12 +12,12 @@ import "@site/src/css/home/pageSection.css";
 /**
  * {@link PageSection} component props.
  */
-export type PageSectionProps = React.PropsWithChildren<
+export type PageSectionProps = PropsWithChildren<
 	SectionHeaderProps & {
 		/**
 		 * Optional background style to apply to the root element of the section.
 		 */
-		backgroundStyle?: React.CSSProperties;
+		backgroundStyle?: CSSProperties;
 	}
 >;
 

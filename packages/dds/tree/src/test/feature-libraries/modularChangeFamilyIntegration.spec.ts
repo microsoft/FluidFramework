@@ -30,7 +30,6 @@ import {
 	genericFieldKind,
 	type EncodedModularChangesetV1,
 	makeModularChangeCodecFamily,
-	makeFieldBatchCodec,
 	DefaultRevisionReplacer,
 	FieldKinds as defaultFieldKinds,
 	fieldKindConfigurations,
@@ -38,6 +37,7 @@ import {
 	newChangeAtomIdBTree,
 	setInChangeAtomIdMap,
 	type TreeChunk,
+	fieldBatchCodecBuilder,
 } from "../../feature-libraries/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { newGenericChangeset } from "../../feature-libraries/modular-schema/genericFieldKindTypes.js";
@@ -99,7 +99,7 @@ const codecOptions = {
 const codec = makeModularChangeCodecFamily(
 	fieldKindConfigurations,
 	testRevisionTagCodec,
-	makeFieldBatchCodec(codecOptions),
+	fieldBatchCodecBuilder.build(codecOptions),
 	codecOptions,
 );
 const family = new ModularChangeFamily(fieldKinds, codec, codecOptions);

@@ -94,7 +94,6 @@ function rebaseGenericChange(
 	const rebased: GenericChangeset = new BTree();
 	let nextIndex = 0;
 
-	// eslint-disable-next-line no-constant-condition
 	while (true) {
 		const newEntry = change.getPairOrNextHigher(nextIndex);
 		const baseEntry = over.getPairOrNextHigher(nextIndex);

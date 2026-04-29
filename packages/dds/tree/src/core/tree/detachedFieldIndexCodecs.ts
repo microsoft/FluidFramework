@@ -8,8 +8,8 @@ import { lowestMinVersionForCollab } from "@fluidframework/runtime-utils/interna
 
 import {
 	ClientVersionDispatchingCodecBuilder,
-	type CodecWriteOptions,
 	FluidClientVersion,
+	type ICodecOptions,
 } from "../../codec/index.js";
 import type { RevisionTagCodec } from "../rebase/index.js";
 
@@ -17,9 +17,9 @@ import { makeDetachedNodeToFieldCodecV1 } from "./detachedFieldIndexCodecV1.js";
 import { makeDetachedNodeToFieldCodecV2 } from "./detachedFieldIndexCodecV2.js";
 import { DetachedFieldIndexFormatVersion } from "./detachedFieldIndexFormatCommon.js";
 
-type BuildData = CodecWriteOptions & {
-	revisionTagCodec: RevisionTagCodec;
-	idCompressor: IIdCompressor;
+type BuildData = ICodecOptions & {
+	readonly revisionTagCodec: RevisionTagCodec;
+	readonly idCompressor: IIdCompressor;
 };
 
 export const detachedFieldIndexCodecBuilder = ClientVersionDispatchingCodecBuilder.build(

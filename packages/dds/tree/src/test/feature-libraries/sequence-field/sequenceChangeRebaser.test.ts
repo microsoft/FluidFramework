@@ -27,9 +27,9 @@ import {
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/default-schema/defaultFieldKinds.js";
 import {
-	makeFieldBatchCodec,
 	type DefaultChangeset,
 	FieldKinds as defaultFieldKinds,
+	fieldBatchCodecBuilder,
 } from "../../../feature-libraries/index.js";
 import {
 	makeModularChangeCodecFamily,
@@ -563,7 +563,7 @@ const codecOptions: CodecWriteOptions = {
 const codec = makeModularChangeCodecFamily(
 	fieldKindConfigurations,
 	testRevisionTagCodec,
-	makeFieldBatchCodec(codecOptions),
+	fieldBatchCodecBuilder.build(codecOptions),
 	codecOptions,
 );
 const family = new ModularChangeFamily(fieldKinds, codec, codecOptions);

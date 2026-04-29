@@ -42,7 +42,7 @@ type Patch<T, U> = Omit<T, keyof U> & U;
 type PatchedDuplicateBatchDetector = Patch<
 	DuplicateBatchDetector,
 	{
-		batchIdsAll: Set<string>;
+		seqNumByBatchId: Map<string, number>;
 		batchIdsBySeqNum: Map<number, string>;
 	}
 >;
@@ -61,9 +61,9 @@ describe("DuplicateBatchDetector", () => {
 
 	afterEach("validation", () => {
 		assert.deepEqual(
-			[...detector.batchIdsAll].sort(),
-			[...detector.batchIdsBySeqNum].map(([, batchId]) => batchId).sort(),
-			"Invariant: batchIdsAll and batchIdsBySeqNum should be in sync",
+			[...detector.seqNumByBatchId.keys()].sort(),
+			[...detector.batchIdsBySeqNum.values()].sort(),
+			"Invariant: seqNumByBatchId and batchIdsBySeqNum should be in sync",
 		);
 	});
 
@@ -77,7 +77,7 @@ describe("DuplicateBatchDetector", () => {
 	});
 
 	it("First inbound batch is not a duplicate", () => {
-		assert(detector.batchIdsAll.size === 0, "Expected detector to start empty");
+		assert(detector.seqNumByBatchId.size === 0, "Expected detector to start empty");
 
 		const inboundBatch = makeBatch({
 			sequenceNumber: seqNum++,
@@ -179,7 +179,7 @@ describe("DuplicateBatchDetector", () => {
 		detector.processInboundBatch(inboundBatch2);
 
 		assert.deepEqual(
-			[...detector.batchIdsAll].sort(),
+			[...detector.seqNumByBatchId.keys()].sort(),
 			["batch1", "batch2"],
 			"Incorrect batchIds (after 2)",
 		);
@@ -187,7 +187,7 @@ describe("DuplicateBatchDetector", () => {
 		detector.processInboundBatch(inboundBatch3);
 
 		assert.deepEqual(
-			[...detector.batchIdsAll].sort(),
+			[...detector.seqNumByBatchId.keys()].sort(),
 			["batch2", "batch3"],
 			"Incorrect batchIds (after 3)",
 		);

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert, oob } from "@fluidframework/core-utils/internal";
+import { assert } from "@fluidframework/core-utils/internal";
 import { BTree } from "@tylerbu/sorted-btree-es6";
 
 /**
@@ -29,7 +29,7 @@ export class RangeMap<K, V> {
 	 * When writing to a range of keys starting with `start`, the value of the nth key is interpreted to be
 	 * `offsetValue(firstValue, n - 1)`.
 	 * The same logic should be used when interpreting the values for keys after the first in a
-	 * `RangeQueryResult` or `RangeQueryEntry`.
+	 * `RangeQueryResult` or `RangeMapEntry`.
 	 *
 	 * If `offsetValue` is left unspecified, all keys in a block will be given the same value.
 	 */
@@ -44,8 +44,8 @@ export class RangeMap<K, V> {
 	/**
 	 * Retrieves all entries from the RangeMap.
 	 */
-	public entries(): RangeQueryEntry<K, V>[] {
-		const entries: RangeQueryEntry<K, V>[] = [];
+	public entries(): RangeMapEntry<K, V>[] {
+		const entries: RangeMapEntry<K, V>[] = [];
 		for (const [start, entry] of this.tree.entries()) {
 			entries.push({ start, length: entry.length, value: entry.value });
 		}
@@ -62,64 +62,23 @@ export class RangeMap<K, V> {
 	 *
 	 * @param start - The first key in the range being queried
 	 * @param length - The length of the query range
-	 * @returns A list of entries, each describing the value for some subrange of the query.
-	 * The entries are in the same order as the keys, and there is an entry for every key with a non `undefined` value.
+	 * @returns A list of fragments, each describing the value for a subrange of the query.
+	 * The fragments are in the same order as the keys.
+	 * The key for each fragment is `start` offset by `fragment.offset`.
 	 */
-	public getAll(start: K, length: number): RangeQueryEntry<K, V>[] {
-		const entries = this.getIntersectingEntries(start, length);
-		if (entries.length === 0) {
-			return entries;
-		}
-
-		const firstEntry = entries[0] ?? oob();
-		const lengthBefore = this.subtractKeys(start, firstEntry.start);
-		if (lengthBefore > 0) {
-			entries[0] = {
-				start,
-				length: firstEntry.length - lengthBefore,
-				value: this.offsetValue(firstEntry.value, lengthBefore),
-			};
-		}
-
-		const lastEntry = entries[entries.length - 1] ?? oob();
-		const lastEntryKey = this.offsetKey(lastEntry.start, lastEntry.length - 1);
-		const lastQueryKey = this.offsetKey(start, length - 1);
-		const lengthAfter = this.subtractKeys(lastEntryKey, lastQueryKey);
-		if (lengthAfter > 0) {
-			entries[entries.length - 1] = { ...lastEntry, length: lastEntry.length - lengthAfter };
-		}
-
-		return entries;
-	}
-
-	// XXX: Merge with getAll
-	/**
-	 * Like getAll, but includes entries where the value is undefined.
-	 */
-	public getAll2(start: K, length: number): RangeQueryResultFragment<V | undefined>[] {
-		let nextKey = start;
+	public getAll(start: K, length: number): RangeQueryResultFragment<V | undefined>[] {
 		let offset = 0;
-		const result: RangeQueryResultFragment<V | undefined>[] = [];
-		for (const entry of this.getAll(start, length)) {
-			const lengthBefore = this.subtractKeys(entry.start, nextKey);
-			if (lengthBefore > 0) {
-				result.push({ offset, length: lengthBefore, value: undefined });
-				offset += lengthBefore;
-			}
+		const results: RangeQueryResultFragment<V | undefined>[] = [];
 
-			result.push({ offset, length: entry.length, value: entry.value });
-			nextKey = this.offsetKey(entry.start, entry.length);
-			offset += entry.length;
+		while (offset < length) {
+			const key = this.offsetKey(start, offset);
+			const result = this.getFirst(key, length - offset);
+			results.push({ offset, value: result.value, length: result.length });
+			offset += result.length;
 		}
 
-		const lengthRemaining = length - offset;
-		if (lengthRemaining > 0) {
-			result.push({ offset, length: lengthRemaining, value: undefined });
-		}
-
-		return result;
+		return results;
 	}
-
 	/**
 	 * Retrieves the value for some prefix of the query range.
 	 *
@@ -248,7 +207,8 @@ export class RangeMap<K, V> {
 
 	/**
 	 * Returns a new map which contains the entries from both input maps.
-	 * Whenever both maps contain entires for the same keys, the value from map `b` is used in the returned map.
+	 * Whenever both maps contain entries for the same keys, the value is determined by calling `mergeFunc`.
+	 * By default, `mergeFunc` chooses the value from `b`.
 	 */
 	public static union<K, V>(
 		a: RangeMap<K, V>,
@@ -264,7 +224,7 @@ export class RangeMap<K, V> {
 
 		const merged = a.clone();
 		for (const entryB of b.entries()) {
-			for (const entryA of a.getAll2(entryB.start, entryB.length)) {
+			for (const entryA of a.getAll(entryB.start, entryB.length)) {
 				const key = b.offsetKey(entryB.start, entryA.offset);
 				const valueB = b.offsetValue(entryB.value, entryA.offset);
 				const mergedValue =
@@ -277,8 +237,8 @@ export class RangeMap<K, V> {
 		return merged;
 	}
 
-	private getIntersectingEntries(start: K, length: number): RangeQueryEntry<K, V>[] {
-		const entries: RangeQueryEntry<K, V>[] = [];
+	private getIntersectingEntries(start: K, length: number): RangeMapEntry<K, V>[] {
+		const entries: RangeMapEntry<K, V>[] = [];
 		const lastQueryKey = this.offsetKey(start, length - 1);
 		{
 			const entry = this.tree.getPairOrNextLower(start);
@@ -369,7 +329,7 @@ export interface RangeQueryResultFragment<V> extends RangeQueryResult<V> {
 	readonly offset: number;
 }
 
-export interface RangeQueryEntry<K, V> {
+export interface RangeMapEntry<K, V> {
 	readonly start: K;
 	readonly value: V;
 	readonly length: number;

@@ -16,7 +16,7 @@ import {
 } from "@fluidframework/shared-object-base/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
-import { FluidClientVersion } from "./codec/index.js";
+import { FluidClientVersion, type FormatVersion } from "./codec/index.js";
 import {
 	SharedTreeKernel,
 	type ITreePrivate,
@@ -26,10 +26,12 @@ import {
 	type SharedTreeKernelView,
 } from "./shared-tree/index.js";
 import {
+	editManagerCodecName,
+	EditManagerFormatVersion,
 	editManagerFormatVersionSelectorForDetachedRootEditing,
-	editManagerFormatVersionSelectorForSharedBranches,
+	messageCodecName,
+	MessageFormatVersion,
 	messageFormatVersionSelectorForDetachedRootEditing,
-	messageFormatVersionSelectorForSharedBranches,
 } from "./shared-tree-core/index.js";
 import { SharedTreeFactoryType, SharedTreeAttributes } from "./sharedTreeAttributes.js";
 import type { ITree } from "./simple-tree/index.js";
@@ -227,10 +229,17 @@ function resolveFormatOptions(options: SharedTreeOptions): SharedTreeOptionsInte
 }
 
 const sharedBranchesOptions: SharedTreeOptionsInternal = {
-	messageFormatSelector: messageFormatVersionSelectorForSharedBranches,
-	editManagerFormatSelector: editManagerFormatVersionSelectorForSharedBranches,
+	writeVersionOverrides: new Map<string, FormatVersion>([
+		[editManagerCodecName, EditManagerFormatVersion.vSharedBranches],
+		[messageCodecName, MessageFormatVersion.vSharedBranches],
+	]),
+	allowPossiblyIncompatibleWriteVersionOverrides: true,
 };
+
 const detachRootEditingOptions: SharedTreeOptionsInternal = {
-	messageFormatSelector: messageFormatVersionSelectorForDetachedRootEditing,
-	editManagerFormatSelector: editManagerFormatVersionSelectorForDetachedRootEditing,
+	writeVersionOverrides: new Map<string, FormatVersion>([
+		[editManagerCodecName, EditManagerFormatVersion.vDetachedRoots],
+		[messageCodecName, MessageFormatVersion.vDetachedRoots],
+	]),
+	allowPossiblyIncompatibleWriteVersionOverrides: true,
 };

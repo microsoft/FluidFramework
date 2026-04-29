@@ -23,22 +23,22 @@ import sortJson from "sort-json";
 import { table } from "table";
 
 import { releaseGroupFlag } from "../../flags.js";
+import { BaseCommand } from "../../library/commands/base.js";
+import type { Context, VersionDetails } from "../../library/context.js";
+import { getDisplayDate, getDisplayDateRelative } from "../../library/dates.js";
+import type { Repository } from "../../library/git.js";
 import {
-	BaseCommand,
-	type Context,
 	filterVersionsOlderThan,
-	getDisplayDate,
-	getDisplayDateRelative,
 	getFluidDependencies,
-	getRanges,
 	type PackageVersionMap,
+	sortVersions,
+} from "../../library/package.js";
+import {
+	getRanges,
 	type ReleaseReport,
 	type ReportKind,
-	type Repository,
-	sortVersions,
 	toReportKind,
-	type VersionDetails,
-} from "../../library/index.js";
+} from "../../library/release.js";
 import type { CommandLogger } from "../../logging.js";
 import {
 	isReleaseGroup,

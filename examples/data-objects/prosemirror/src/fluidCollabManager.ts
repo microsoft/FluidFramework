@@ -8,7 +8,6 @@
 import { EventEmitter } from "@fluid-example/example-utils";
 import { assert } from "@fluidframework/core-utils/legacy";
 import {
-	// eslint-disable-next-line import-x/no-deprecated
 	createGroupOp,
 	createRemoveRangeOp,
 	// eslint-disable-next-line import-x/no-internal-modules -- #26905: `merge-tree` internals used in examples
@@ -281,7 +280,6 @@ export class FluidCollabManager extends EventEmitter implements IRichTextEditor 
 						operations = operations.concat(sliceOperations);
 					}
 
-					// eslint-disable-next-line import-x/no-deprecated
 					const groupOp = createGroupOp(...operations);
 					this.text.groupOperation(groupOp);
 
@@ -346,7 +344,6 @@ export class FluidCollabManager extends EventEmitter implements IRichTextEditor 
 						operations = operations.concat(sliceOperations);
 					}
 
-					// eslint-disable-next-line import-x/no-deprecated
 					const groupOp = createGroupOp(...operations);
 					this.text.groupOperation(groupOp);
 

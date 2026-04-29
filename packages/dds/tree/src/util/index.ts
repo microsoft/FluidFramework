@@ -66,7 +66,6 @@ export { StackyIterator } from "./stackyIterator.js";
 export {
 	asMutable,
 	balancedReduce,
-	clone,
 	compareSets,
 	getOrAddEmptyToMap,
 	getOrCreate,
@@ -134,9 +133,9 @@ export {
 
 export {
 	RangeMap,
+	type RangeMapEntry,
 	type RangeQueryResult,
 	type RangeQueryResultFragment,
-	type RangeQueryEntry,
 	newIntegerRangeMap,
 	areAdjacentIntegerRanges,
 } from "./rangeMap.js";

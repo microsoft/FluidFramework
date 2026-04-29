@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import React from "react";
-
 import "@site/src/css/home/keyFeatureCard.css";
 
 /**

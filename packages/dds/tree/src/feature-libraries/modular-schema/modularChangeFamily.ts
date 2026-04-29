@@ -70,9 +70,9 @@ import {
 	balancedReduce,
 	compareStrings,
 	createTupleComparator,
-	type RangeQueryEntry,
 	type RangeQueryResultFragment,
 	newTupleBTree,
+	type RangeMapEntry,
 } from "../../util/index.js";
 import {
 	getFromChangeAtomIdMap,
@@ -981,6 +981,7 @@ export class ModularChangeFamily
 		taggedChange: TaggedChange<ModularChangeset>,
 		potentiallyConflictedOver: TaggedChange<ModularChangeset>,
 		revisionMetadata: RevisionMetadataSource,
+		ignoreNoChangeViolation: boolean = false,
 	): ModularChangeset {
 		// Our current cell ordering scheme in sequences depends on being able to rebase over a change with conflicts.
 		// This means that we must rebase over a muted version of the conflicted changeset.
@@ -1069,7 +1070,11 @@ export class ModularChangeFamily
 		);
 
 		let noChangeConstraint = change.noChangeConstraint;
-		if (noChangeConstraint !== undefined && !noChangeConstraint.violated) {
+		if (
+			noChangeConstraint !== undefined &&
+			!noChangeConstraint.violated &&
+			!ignoreNoChangeViolation
+		) {
 			noChangeConstraint = { violated: true };
 			constraintState.violationCount += 1;
 		}
@@ -2264,13 +2269,13 @@ function addAttachesToSet(
 			continue;
 		}
 
-		for (const detachIdEntry of change.rootNodes.newToOldId.getAll2(
+		for (const detachIdEntry of change.rootNodes.newToOldId.getAll(
 			entry.start,
 			entry.length,
 		)) {
 			const detachId =
 				detachIdEntry.value ?? offsetChangeAtomId(entry.start, detachIdEntry.offset);
-			for (const detachEntry of change.crossFieldKeys.getAll2(
+			for (const detachEntry of change.crossFieldKeys.getAll(
 				{ ...detachId, target: NodeMoveType.Detach },
 				detachIdEntry.length,
 			)) {
@@ -2291,7 +2296,7 @@ function addRenamesToSet(
 	rootIds: ChangeAtomIdRangeMap<boolean>,
 ): void {
 	for (const renameEntry of change.rootNodes.oldToNewId.entries()) {
-		for (const detachEntry of change.crossFieldKeys.getAll2(
+		for (const detachEntry of change.crossFieldKeys.getAll(
 			{ ...renameEntry.start, target: NodeMoveType.Detach },
 			renameEntry.length,
 		)) {
@@ -3100,10 +3105,7 @@ class RebaseNodeManagerI implements RebaseNodeManager {
 		this.table.movedDetaches.set(id, count, true);
 	}
 
-	public doesBaseAttachNodes(
-		id: ChangeAtomId,
-		count: number,
-	): RangeQueryEntry<ChangeAtomId, boolean> {
+	public doesBaseAttachNodes(id: ChangeAtomId, count: number): RangeQueryResult<boolean> {
 		let countToProcess = count;
 		const attachEntry = getFirstAttachField(
 			this.table.baseChange.crossFieldKeys,
@@ -3112,7 +3114,7 @@ class RebaseNodeManagerI implements RebaseNodeManager {
 		);
 
 		countToProcess = attachEntry.length;
-		return { start: id, value: attachEntry.value !== undefined, length: countToProcess };
+		return { value: attachEntry.value !== undefined, length: countToProcess };
 	}
 
 	public doesNewAttachNodes(detachId: ChangeAtomId, count: number): RangeQueryResult<boolean> {
@@ -4041,9 +4043,14 @@ function getFieldsForCrossFieldKey(
 	key: CrossFieldKey,
 	count: number,
 ): FieldId[] {
-	return changeset.crossFieldKeys
-		.getAll(key, count)
-		.map(({ value: fieldId }) => normalizeFieldId(fieldId, changeset.nodeAliases));
+	const fieldIds: FieldId[] = [];
+	for (const { value: fieldId } of changeset.crossFieldKeys.getAll(key, count)) {
+		if (fieldId !== undefined) {
+			fieldIds.push(normalizeFieldId(fieldId, changeset.nodeAliases));
+		}
+	}
+
+	return fieldIds;
 }
 
 function getFirstFieldForAttach(
@@ -4138,7 +4145,6 @@ export function normalizeNodeId(
 	let currentId = nodeId;
 	let cycleProbeId: NodeId | undefined = nodeId;
 
-	// eslint-disable-next-line no-constant-condition
 	while (true) {
 		const dealiased = getFromChangeAtomIdMap(nodeAliases, currentId);
 		if (dealiased === undefined) {
@@ -4292,7 +4298,7 @@ function rebaseRoots(
 function rebaseRename(
 	newRoots: RootNodeTable,
 	rebasedRoots: RootNodeTable,
-	renameEntry: RangeQueryEntry<ChangeAtomId, ChangeAtomId>,
+	renameEntry: RangeMapEntry<ChangeAtomId, ChangeAtomId>,
 	base: ModularChangeset,
 	affectedBaseFields: TupleBTree<FieldIdKey, boolean>,
 ): void {
@@ -4710,7 +4716,7 @@ function doesChangeAttachNodes(
 	count: number,
 ): RangeQueryResultFragment<boolean>[] {
 	return table
-		.getAll2({ ...id, target: NodeMoveType.Attach }, count)
+		.getAll({ ...id, target: NodeMoveType.Attach }, count)
 		.map((entry) => ({ ...entry, value: entry.value !== undefined }));
 }
 
@@ -4720,7 +4726,7 @@ function doesChangeDetachNodes(
 	count: number,
 ): RangeQueryResultFragment<boolean>[] {
 	return table
-		.getAll2({ ...id, target: NodeMoveType.Detach }, count)
+		.getAll({ ...id, target: NodeMoveType.Detach }, count)
 		.map((entry) => ({ ...entry, value: entry.value !== undefined }));
 }
 
@@ -4771,7 +4777,7 @@ export function addNodeRename(
 		return;
 	}
 
-	for (const entry of table.oldToNewId.getAll2(oldId, count)) {
+	for (const entry of table.oldToNewId.getAll(oldId, count)) {
 		assert(
 			entry.value === undefined ||
 				areEqualChangeAtomIds(entry.value, offsetChangeAtomId(newId, entry.offset)),
@@ -4779,7 +4785,7 @@ export function addNodeRename(
 		);
 	}
 
-	for (const entry of table.newToOldId.getAll2(newId, count)) {
+	for (const entry of table.newToOldId.getAll(newId, count)) {
 		assert(
 			entry.value === undefined ||
 				areEqualChangeAtomIds(entry.value, offsetChangeAtomId(oldId, entry.offset)),
@@ -4800,7 +4806,14 @@ export function addNodeRename(
  */
 function deleteNodeRenameFrom(roots: RootNodeTable, id: ChangeAtomId, count: number): void {
 	for (const entry of roots.oldToNewId.getAll(id, count)) {
-		deleteNodeRenameEntry(roots, entry.start, entry.value, entry.length);
+		if (entry.value !== undefined) {
+			deleteNodeRenameEntry(
+				roots,
+				offsetChangeAtomId(id, entry.offset),
+				entry.value,
+				entry.length,
+			);
+		}
 	}
 }
 
@@ -4809,7 +4822,14 @@ function deleteNodeRenameFrom(roots: RootNodeTable, id: ChangeAtomId, count: num
  */
 function deleteNodeRenameTo(roots: RootNodeTable, id: ChangeAtomId, count: number): void {
 	for (const entry of roots.newToOldId.getAll(id, count)) {
-		deleteNodeRenameEntry(roots, entry.value, entry.start, entry.length);
+		if (entry.value !== undefined) {
+			deleteNodeRenameEntry(
+				roots,
+				entry.value,
+				offsetChangeAtomId(id, entry.offset),
+				entry.length,
+			);
+		}
 	}
 }
 
@@ -5147,7 +5167,7 @@ function composeRootRename(
 		);
 	};
 
-	for (const intermediateRenameEntry of change2.rootNodes.firstIntermediateRenames.getAll2(
+	for (const intermediateRenameEntry of change2.rootNodes.firstIntermediateRenames.getAll(
 		oldId,
 		count,
 	)) {
@@ -5282,13 +5302,13 @@ function getFieldsWithRootMoves(
 	const fields: TupleBTree<FieldIdKey, boolean> = newFieldIdKeyBTree();
 	for (const { start: rootId, value: fieldId, length } of roots.detachLocations.entries()) {
 		let isRootMoved = false;
-		for (const renameEntry of roots.oldToNewId.getAll2(rootId, length)) {
+		for (const renameEntry of roots.oldToNewId.getAll(rootId, length)) {
 			if (renameEntry.value !== undefined) {
 				isRootMoved = true;
 			}
 		}
 
-		for (const outputDetachEntry of roots.outputDetachLocations.getAll2(rootId, length)) {
+		for (const outputDetachEntry of roots.outputDetachLocations.getAll(rootId, length)) {
 			if (outputDetachEntry.value !== undefined) {
 				isRootMoved = true;
 			}

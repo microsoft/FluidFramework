@@ -11,6 +11,7 @@ import {
 	withSchemaValidation,
 	type ICodecOptions,
 	type IJsonCodec,
+	type JsonCodecPart,
 	type SchemaValidationFunction,
 } from "../../codec/index.js";
 import {
@@ -26,6 +27,7 @@ import {
 	type ITreeCursorSynchronous,
 	type RevisionInfo,
 	type RevisionTag,
+	type RevisionTagSchema,
 } from "../../core/index.js";
 import {
 	brand,
@@ -33,7 +35,6 @@ import {
 	type IdAllocator,
 	type JsonCompatibleReadOnly,
 	type Mutable,
-	type RangeQueryEntry,
 	type RangeQueryResult,
 	type TupleBTree,
 } from "../../util/index.js";
@@ -120,10 +121,9 @@ type FieldChangesetCodecs = Map<
 
 export function getFieldChangesetCodecs(
 	fieldKinds: FieldKindConfiguration,
-	revisionTagCodec: IJsonCodec<
+	revisionTagCodec: JsonCodecPart<
 		RevisionTag,
-		EncodedRevisionTag,
-		EncodedRevisionTag,
+		typeof RevisionTagSchema,
 		ChangeEncodingContext
 	>,
 	codecOptions: ICodecOptions,
@@ -417,10 +417,9 @@ function decodeNodeChangesetFromJson(
 export function decodeDetachedNodes(
 	encoded: EncodedBuilds | undefined,
 	context: ChangeEncodingContext,
-	revisionTagCodec: IJsonCodec<
+	revisionTagCodec: JsonCodecPart<
 		RevisionTag,
-		EncodedRevisionTag,
-		EncodedRevisionTag,
+		typeof RevisionTagSchema,
 		ChangeEncodingContext
 	>,
 	fieldsCodec: FieldBatchCodec,
@@ -466,10 +465,9 @@ export function decodeDetachedNodes(
 export function decodeRevisionInfos(
 	revisions: readonly EncodedRevisionInfo[] | undefined,
 	context: ChangeEncodingContext,
-	revisionTagCodec: IJsonCodec<
+	revisionTagCodec: JsonCodecPart<
 		RevisionTag,
-		EncodedRevisionTag,
-		EncodedRevisionTag,
+		typeof RevisionTagSchema,
 		ChangeEncodingContext
 	>,
 ): RevisionInfo[] | undefined {
@@ -495,10 +493,9 @@ export function decodeRevisionInfos(
 
 export function makeModularChangeCodecV1(
 	fieldKinds: FieldKindConfiguration,
-	revisionTagCodec: IJsonCodec<
+	revisionTagCodec: JsonCodecPart<
 		RevisionTag,
-		EncodedRevisionTag,
-		EncodedRevisionTag,
+		typeof RevisionTagSchema,
 		ChangeEncodingContext
 	>,
 	fieldsCodec: FieldBatchCodec,
@@ -547,10 +544,9 @@ export function encodeChange(
 	context: ChangeEncodingContext,
 	fieldKinds: FieldKindConfiguration,
 	fieldChangesetCodecs: FieldChangesetCodecs,
-	revisionTagCodec: IJsonCodec<
+	revisionTagCodec: JsonCodecPart<
 		RevisionTag,
-		EncodedRevisionTag,
-		EncodedRevisionTag,
+		typeof RevisionTagSchema,
 		ChangeEncodingContext
 	>,
 	fieldsCodec: FieldBatchCodec,
@@ -562,12 +558,9 @@ export function encodeChange(
 		return { ...attachEntry, value: attachEntry.value !== undefined };
 	};
 
-	const isDetachId = (
-		id: ChangeAtomId,
-		count: number,
-	): RangeQueryEntry<ChangeAtomId, boolean> => {
+	const isDetachId = (id: ChangeAtomId, count: number): RangeQueryResult<boolean> => {
 		const detachEntry = getFirstDetachField(change.crossFieldKeys, id, count);
-		return { start: id, value: detachEntry.value !== undefined, length: detachEntry.length };
+		return { value: detachEntry.value !== undefined, length: detachEntry.length };
 	};
 
 	const getOldFromNewId = (
@@ -657,10 +650,9 @@ export function encodeChange(
 export function encodeRevisionInfos(
 	revisions: readonly RevisionInfo[],
 	context: ChangeEncodingContext,
-	revisionTagCodec: IJsonCodec<
+	revisionTagCodec: JsonCodecPart<
 		RevisionTag,
-		EncodedRevisionTag,
-		EncodedRevisionTag,
+		typeof RevisionTagSchema,
 		ChangeEncodingContext
 	>,
 ): EncodedRevisionInfo[] | undefined {
@@ -697,10 +689,9 @@ export function encodeRevisionInfos(
 export function encodeDetachedNodes(
 	detachedNodes: ChangeAtomIdBTree<TreeChunk> | undefined,
 	context: ChangeEncodingContext,
-	revisionTagCodec: IJsonCodec<
+	revisionTagCodec: JsonCodecPart<
 		RevisionTag,
-		EncodedRevisionTag,
-		EncodedRevisionTag,
+		typeof RevisionTagSchema,
 		ChangeEncodingContext
 	>,
 	fieldsCodec: FieldBatchCodec,
@@ -765,12 +756,7 @@ function getChangeHandler(
 }
 
 function encodeRevisionOpt(
-	revisionCodec: IJsonCodec<
-		RevisionTag,
-		EncodedRevisionTag,
-		EncodedRevisionTag,
-		ChangeEncodingContext
-	>,
+	revisionCodec: JsonCodecPart<RevisionTag, typeof RevisionTagSchema, ChangeEncodingContext>,
 	revision: RevisionTag | undefined,
 	context: ChangeEncodingContext,
 ): EncodedRevisionTag | undefined {
@@ -802,7 +788,7 @@ function getFieldToRoots(
 
 	for (const entry of rootTable.oldToNewId.entries()) {
 		// Should `fieldToRoots` include renames that come after a detach?
-		for (const fieldEntry of rootTable.detachLocations.getAll2(entry.start, entry.length)) {
+		for (const fieldEntry of rootTable.detachLocations.getAll(entry.start, entry.length)) {
 			const fieldId = fieldEntry.value;
 			if (fieldId === undefined) {
 				// This is a rename of nodes detached by this changeset.
@@ -845,10 +831,9 @@ export function decodeChange(
 			codec: FieldCodec;
 		}
 	>,
-	revisionTagCodec: IJsonCodec<
+	revisionTagCodec: JsonCodecPart<
 		RevisionTag,
-		EncodedRevisionTag,
-		EncodedRevisionTag,
+		typeof RevisionTagSchema,
 		ChangeEncodingContext
 	>,
 	fieldsCodec: FieldBatchCodec,

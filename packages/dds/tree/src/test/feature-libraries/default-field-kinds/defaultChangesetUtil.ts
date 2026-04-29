@@ -14,10 +14,10 @@ import {
 } from "../../../core/index.js";
 import {
 	DefaultRevisionReplacer,
+	fieldBatchCodecBuilder,
 	fieldKindConfigurations,
 	fieldKinds,
 	intoDelta,
-	makeFieldBatchCodec,
 	makeModularChangeCodecFamily,
 	ModularChangeFamily,
 	type DefaultChangeset,
@@ -50,7 +50,7 @@ const codecOptions: CodecWriteOptions = {
 const codec = makeModularChangeCodecFamily(
 	fieldKindConfigurations,
 	testRevisionTagCodec,
-	makeFieldBatchCodec(codecOptions),
+	fieldBatchCodecBuilder.build(codecOptions),
 	codecOptions,
 );
 

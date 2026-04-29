@@ -71,6 +71,3 @@ export const supportedMessageFormatVersions: ReadonlySet<MessageFormatVersion> =
 	MessageFormatVersion.vSharedBranches,
 	MessageFormatVersion.vDetachedRoots,
 ]);
-export const messageFormatVersions: ReadonlySet<MessageFormatVersion> = new Set(
-	Object.values(MessageFormatVersion),
-);

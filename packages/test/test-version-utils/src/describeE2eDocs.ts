@@ -5,12 +5,13 @@
 
 import fs from "fs";
 
-import { TestDriverTypes } from "@fluid-internal/test-driver-definitions";
+import type { TestDriverTypes } from "@fluid-internal/test-driver-definitions";
+import { isInPerformanceTestingMode } from "@fluid-tools/benchmark";
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import {
 	getUnexpectedLogErrorException,
-	ITestObjectProvider,
-	TestObjectProvider,
+	type ITestObjectProvider,
+	type TestObjectProvider,
 } from "@fluidframework/test-utils/internal";
 
 import { testBaseVersion } from "./baseVersion.js";
@@ -26,13 +27,13 @@ import {
 	getDriverInformationWhenNoProviderIsAvailable,
 	getVersionedTestObjectProviderFromApis,
 } from "./compatUtils.js";
-import { ITestObjectProviderOptions } from "./describeCompat.js";
+import type { ITestObjectProviderOptions } from "./describeCompat.js";
 import {
 	getDataRuntimeApi,
 	getLoaderApi,
 	getContainerRuntimeApi,
 	getDriverApi,
-	CompatApis,
+	type CompatApis,
 	getCompatModeFromKind,
 } from "./testApi.js";
 import { getRequestedVersion } from "./versionUtils.js";
@@ -108,75 +109,98 @@ export interface IE2EDocsConfig {
 	documents: DescribeE2EDocInfo[];
 }
 // Default document types to be used during the performance E2E runs.
-const E2EDefaultDocumentTypes: DescribeE2EDocInfo[] = [
-	{
-		testTitle: "10Mb Map",
-		documentType: "DocumentMap",
-		documentTypeInfo: {
-			numberOfItems: 2,
-			itemSizeMb: 5, // 5Mb
-		},
-		minSampleCount: 2,
-		supportedEndpoints: ["local", "odsp"],
-	},
-	{
-		testTitle: "5Mb Map",
-		documentType: "DocumentMap",
-		documentTypeInfo: {
-			numberOfItems: 1,
-			itemSizeMb: 5, // 5Mb
-		},
-		minSampleCount: 2,
-		supportedEndpoints: ["local", "odsp"],
-	},
-	{
-		testTitle: "250 DataStores - 750 DDSs",
-		documentType: "DocumentMultipleDataStores",
-		documentTypeInfo: {
-			numberDataStores: 250,
-			numberDataStoresPerIteration: 250,
-		},
-		minSampleCount: 1,
-	},
-	{
-		testTitle: "500 DataStores - 1500 DDSs",
-		documentType: "DocumentMultipleDataStores",
-		documentTypeInfo: {
-			numberDataStores: 500,
-			numberDataStoresPerIteration: 250,
-		},
-		minSampleCount: 1,
-	},
-	{
-		testTitle: "Matrix 10x10 with SharedStrings",
-		documentType: "DocumentMatrix",
-		documentTypeInfo: {
-			rowSize: 10,
-			columnSize: 10,
-			stringSize: 100,
-		},
-		minSampleCount: 2,
-	},
-	{
-		testTitle: "Matrix 100x100 with SharedStrings",
-		documentType: "DocumentMatrixPlain",
-		documentTypeInfo: {
-			rowSize: 100,
-			columnSize: 100,
-			stringSize: 100,
-		},
-		minSampleCount: 2,
-	},
-];
-
-/**
- * @internal
- */
-export type BenchmarkType = "ExecutionTime" | "MemoryUsage";
-/**
- * @internal
- */
-export type BenchmarkTypeDescription = "Runtime benchmarks" | "Memory benchmarks";
+const E2EDefaultDocumentTypes: DescribeE2EDocInfo[] = isInPerformanceTestingMode
+	? [
+			{
+				testTitle: "10Mb Map",
+				documentType: "DocumentMap",
+				documentTypeInfo: {
+					numberOfItems: 2,
+					itemSizeMb: 5, // 5Mb
+				},
+				minSampleCount: 2,
+				supportedEndpoints: ["local", "odsp"],
+			},
+			{
+				testTitle: "5Mb Map",
+				documentType: "DocumentMap",
+				documentTypeInfo: {
+					numberOfItems: 1,
+					itemSizeMb: 5, // 5Mb
+				},
+				minSampleCount: 2,
+				supportedEndpoints: ["local", "odsp"],
+			},
+			{
+				testTitle: "250 DataStores - 750 DDSs",
+				documentType: "DocumentMultipleDataStores",
+				documentTypeInfo: {
+					numberDataStores: 250,
+					numberDataStoresPerIteration: 250,
+				},
+				minSampleCount: 1,
+			},
+			{
+				testTitle: "500 DataStores - 1500 DDSs",
+				documentType: "DocumentMultipleDataStores",
+				documentTypeInfo: {
+					numberDataStores: 500,
+					numberDataStoresPerIteration: 250,
+				},
+				minSampleCount: 1,
+			},
+			{
+				testTitle: "Matrix 10x10 with SharedStrings",
+				documentType: "DocumentMatrix",
+				documentTypeInfo: {
+					rowSize: 10,
+					columnSize: 10,
+					stringSize: 100,
+				},
+				minSampleCount: 2,
+			},
+			{
+				testTitle: "Matrix 100x100 with SharedStrings",
+				documentType: "DocumentMatrixPlain",
+				documentTypeInfo: {
+					rowSize: 100,
+					columnSize: 100,
+					stringSize: 100,
+				},
+				minSampleCount: 2,
+			},
+		]
+	: [
+			{
+				testTitle: "2Mb Map",
+				documentType: "DocumentMap",
+				documentTypeInfo: {
+					numberOfItems: 1,
+					itemSizeMb: 2,
+				},
+				minSampleCount: 2,
+				supportedEndpoints: ["local", "odsp"],
+			},
+			{
+				testTitle: "25 DataStores - 75 DDSs",
+				documentType: "DocumentMultipleDataStores",
+				documentTypeInfo: {
+					numberDataStores: 25,
+					numberDataStoresPerIteration: 25,
+				},
+				minSampleCount: 1,
+			},
+			{
+				testTitle: "Matrix 5x5 with SharedStrings",
+				documentType: "DocumentMatrix",
+				documentTypeInfo: {
+					rowSize: 5,
+					columnSize: 5,
+					stringSize: 10,
+				},
+				minSampleCount: 2,
+			},
+		];
 
 /**
  * @internal
@@ -272,13 +296,6 @@ export function assertDocumentTypeInfo(
 /**
  * @internal
  */
-export interface DescribeE2EDocInfoWithBenchmarkType extends DescribeE2EDocInfo {
-	benchmarkType: BenchmarkType;
-}
-
-/**
- * @internal
- */
 export type DescribeE2EDocSuite = (
 	title: string,
 	tests: (
@@ -287,7 +304,6 @@ export type DescribeE2EDocSuite = (
 		documentType: () => DescribeE2EDocInfo,
 	) => void,
 	docTypes?: DescribeE2EDocInfo[],
-	testType?: string,
 ) => Mocha.Suite | void;
 
 function getE2EConfigFile(): IE2EDocsConfig | undefined {
@@ -316,28 +332,9 @@ function getE2EConfigFile(): IE2EDocsConfig | undefined {
 function createE2EDocsDescribe(docTypes?: DescribeE2EDocInfo[]): DescribeE2EDocSuite {
 	const config = getE2EConfigFile();
 
-	const d: DescribeE2EDocSuite = (title, tests, testType) => {
+	const d: DescribeE2EDocSuite = (title, tests) => {
 		describe(
-			// eslint-disable-next-line @typescript-eslint/no-base-to-string -- testType toString is expected to return meaningful string
-			`${testType} -`,
-			createE2EDocCompatSuite(
-				title,
-				tests,
-				docTypes ?? config?.documents ?? E2EDefaultDocumentTypes,
-			),
-		);
-	};
-	return d;
-}
-
-function createE2EDocsDescribeWithType(
-	testType: BenchmarkTypeDescription,
-): DescribeE2EDocSuite {
-	const config = getE2EConfigFile();
-
-	const d: DescribeE2EDocSuite = (title, tests, docTypes) => {
-		describe(
-			`${testType} -`,
+			title,
 			createE2EDocCompatSuite(
 				title,
 				tests,
@@ -458,53 +455,3 @@ function createE2EDocCompatSuite(
  * @internal
  */
 export const describeE2EDocs: DescribeE2EDocSuite = createE2EDocsDescribe();
-
-/**
- * @internal
- */
-export const describeE2EDocsRuntime: DescribeE2EDocSuite =
-	createE2EDocsDescribeWithType("Runtime benchmarks");
-
-/**
- * @internal
- */
-export const describeE2EDocsMemory: DescribeE2EDocSuite =
-	createE2EDocsDescribeWithType("Memory benchmarks");
-
-/**
- * Determines whether the current test run is a memory usage test.
- *
- * @internal
- */
-export function isMemoryTest(): boolean {
-	let isMemoryUsageTest: boolean = false;
-	const childArgs = [...process.execArgv, ...process.argv.slice(1)];
-	for (const flag of ["--grep", "--fgrep"]) {
-		const flagIndex = childArgs.indexOf(flag);
-		if (flagIndex > 0) {
-			isMemoryUsageTest = childArgs[flagIndex + 1] === "@MemoryUsage" ? true : false;
-			break;
-		}
-	}
-	const isMemTest: boolean =
-		process.env.FLUID_E2E_MEMORY !== undefined ? true : (isMemoryUsageTest ?? false);
-	return isMemTest;
-}
-
-/**
- * @internal
- */
-export const describeE2EDocRun: DescribeE2EDocSuite = createE2EDocsDescribeRun();
-
-/**
- * Returns the benchmark type based on the test suite being run.
- *
- * @internal
- */
-export const getCurrentBenchmarkType = (currentType: DescribeE2EDocSuite): BenchmarkType => {
-	return currentType === describeE2EDocsMemory ? "MemoryUsage" : "ExecutionTime";
-};
-
-function createE2EDocsDescribeRun(): DescribeE2EDocSuite {
-	return isMemoryTest() === true ? describeE2EDocsMemory : describeE2EDocsRuntime;
-}

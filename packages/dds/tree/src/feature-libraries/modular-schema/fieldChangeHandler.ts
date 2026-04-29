@@ -3,17 +3,17 @@
  * Licensed under the MIT License.
  */
 
-import type { ICodecFamily, IJsonCodec } from "../../codec/index.js";
+import type { ICodecFamily, JsonCodecPart } from "../../codec/index.js";
 import type {
 	ChangeAtomId,
 	ChangeAtomIdRangeMap,
 	ChangeEncodingContext,
 	DeltaFieldChanges,
 	DeltaFieldMap,
-	EncodedRevisionTag,
 	RevisionMetadataSource,
 	RevisionReplacer,
 	RevisionTag,
+	RevisionTagSchema,
 } from "../../core/index.js";
 import type { IdAllocator, Invariant, RangeQueryResult } from "../../util/index.js";
 import type { ChangeAtomIdBTree } from "../changeAtomIdBTree.js";
@@ -39,10 +39,9 @@ export interface FieldChangeHandler<
 	_typeCheck?: Invariant<TChangeset>;
 	readonly rebaser: FieldChangeRebaser<TChangeset>;
 	readonly codecsFactory: (
-		revisionTagCodec: IJsonCodec<
+		revisionTagCodec: JsonCodecPart<
 			RevisionTag,
-			EncodedRevisionTag,
-			EncodedRevisionTag,
+			typeof RevisionTagSchema,
 			ChangeEncodingContext
 		>,
 	) => ICodecFamily<TChangeset, FieldChangeEncodingContext>;

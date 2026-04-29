@@ -349,6 +349,7 @@ export function rebaseChange<TChange>(
 	sourceHead: GraphCommit<TChange>,
 	targetHead: GraphCommit<TChange>,
 	mintRevisionTag: () => RevisionTag,
+	ignoreNoChangeViolation?: boolean,
 ): RebaseChangeResult<TChange> {
 	const sourcePath: GraphCommit<TChange>[] = [];
 	const targetPath: GraphCommit<TChange>[] = [];
@@ -369,7 +370,12 @@ export function rebaseChange<TChange>(
 	};
 
 	return {
-		change: rebaseChangeOverChanges(changeRebaser, change, [...inverses, ...targetPath]),
+		change: rebaseChangeOverChanges(
+			changeRebaser,
+			change,
+			[...inverses, ...targetPath],
+			ignoreNoChangeViolation,
+		),
 		telemetryProperties,
 	};
 }
@@ -422,6 +428,7 @@ export function rebaseChangeOverChanges<TChange>(
 	changeRebaser: ChangeRebaser<TChange>,
 	changeToRebase: TaggedChange<TChange>,
 	changesToRebaseOver: TaggedChange<TChange>[],
+	ignoreNoChangeViolation?: boolean,
 ): TChange {
 	const revisionMetadata = revisionMetadataSourceFromInfo(
 		getRevInfoFromTaggedChanges([...changesToRebaseOver, changeToRebase]),
@@ -431,7 +438,7 @@ export function rebaseChangeOverChanges<TChange>(
 	for (const b of changesToRebaseOver) {
 		result = mapTaggedChange(
 			changeToRebase,
-			changeRebaser.rebase(result, b, revisionMetadata),
+			changeRebaser.rebase(result, b, revisionMetadata, ignoreNoChangeViolation),
 		);
 	}
 	return result.change;

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import { TextSegment } from "@fluidframework/merge-tree/internal";
 import {
@@ -164,7 +164,7 @@ describe("IntervalCollection detached", () => {
 			const { sharedString2 } = await attachAndLoadSecondSharedString();
 
 			const collection2 = sharedString2.getIntervalCollection("intervals");
-			assert.equal(Array.from(collection2).length, 0);
+			assert.equal([...collection2].length, 0);
 			assert.equal(collection2.getIntervalById(id), undefined);
 			await assertEquivalentSharedStrings(sharedString, sharedString2);
 		});

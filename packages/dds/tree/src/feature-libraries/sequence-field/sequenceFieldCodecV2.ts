@@ -10,6 +10,7 @@ import {
 	DiscriminatedUnionDispatcher,
 	type DiscriminatedUnionLibrary,
 	type IJsonCodec,
+	type JsonCodecPart,
 } from "../../codec/index.js";
 import {
 	areEqualChangeAtomIds,
@@ -18,6 +19,7 @@ import {
 	type ChangesetLocalId,
 	type EncodedRevisionTag,
 	type RevisionTag,
+	type RevisionTagSchema,
 } from "../../core/index.js";
 import { type JsonCompatibleReadOnly, type Mutable, brand } from "../../util/index.js";
 import { getFromChangeAtomIdMap, rangeQueryChangeAtomIdMap } from "../changeAtomIdBTree.js";
@@ -49,10 +51,9 @@ import {
 } from "./utils.js";
 
 export function makeV2CodecHelpers(
-	revisionTagCodec: IJsonCodec<
+	revisionTagCodec: JsonCodecPart<
 		RevisionTag,
-		EncodedRevisionTag,
-		EncodedRevisionTag,
+		typeof RevisionTagSchema,
 		ChangeEncodingContext
 	>,
 ): SequenceCodecHelpers {
@@ -370,10 +371,9 @@ function decodeDetach(
 type NodeChangeSchema = TAnySchema;
 
 export function makeV2Codec(
-	revisionTagCodec: IJsonCodec<
+	revisionTagCodec: JsonCodecPart<
 		RevisionTag,
-		EncodedRevisionTag,
-		EncodedRevisionTag,
+		typeof RevisionTagSchema,
 		ChangeEncodingContext
 	>,
 ): IJsonCodec<

@@ -578,7 +578,7 @@ export const makeTransactionEditGenerator = (
 				boundary: "commit",
 			},
 			opWeights.commit,
-			(state) => viewFromState(state).checkout.transaction.isInProgress(),
+			(state) => viewFromState(state).checkout.transaction.size > 0,
 		],
 		[
 			{
@@ -586,7 +586,7 @@ export const makeTransactionEditGenerator = (
 				boundary: "abort",
 			},
 			opWeights.abort,
-			(state) => viewFromState(state).checkout.transaction.isInProgress(),
+			(state) => viewFromState(state).checkout.transaction.size > 0,
 		],
 	]);
 };
@@ -760,7 +760,7 @@ export function makeOpGenerator(
 				[
 					() => makeConstraintEditGenerator(weights),
 					constraintWeight,
-					(state: FuzzTestState) => viewFromState(state).checkout.transaction.isInProgress(),
+					(state: FuzzTestState) => viewFromState(state).checkout.transaction.size > 0,
 				],
 				[
 					() => makeBranchEditGenerator(weights),

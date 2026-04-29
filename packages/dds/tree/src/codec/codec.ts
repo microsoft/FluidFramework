@@ -203,6 +203,27 @@ export interface IJsonCodec<
 }
 
 /**
+ * Part of a codec.
+ * @remarks
+ * Encode and decode logic and schema for some chunk of data.
+ * Can be composed into larger codecs, and eventually versioned at the top level using
+ * {@link VersionDispatchingCodecBuilder}.
+ *
+ * This portion of a codec is not responsible for managing versioning or validation of the data against the schema.
+ */
+export interface JsonCodecPart<TDecoded, TEncodedSchema extends TAnySchema, TContext = void>
+	extends IEncoder<TDecoded, Static<TEncodedSchema>, TContext>,
+		IDecoder<TDecoded, Static<TEncodedSchema>, TContext> {
+	/**
+	 * TypeBox schema which describes the encoded format for this chunk of data.
+	 * @remarks
+	 * The user of this codec can use this to build its own larger schema,
+	 * until eventually it is provided to the {@link VersionDispatchingCodecBuilder}.
+	 */
+	encodedSchema: TEncodedSchema;
+}
+
+/**
  * Type erase the more detailed encoded type from a codec.
  */
 export function eraseEncodedType<
@@ -366,6 +387,8 @@ export const unitCodec: IJsonCodec<
 /**
  * Wraps a codec with JSON schema validation for its encoded type.
  * @returns An {@link IJsonCodec} which validates the data it encodes and decodes matches the provided schema.
+ * @remarks
+ * Eventually all codecs should use the same pattern implemented by ClientVersionDispatchingCodecBuilder, resulting in that having the only use of this API.
  */
 export function withSchemaValidation<
 	TInMemoryFormat,
@@ -386,17 +409,17 @@ export function withSchemaValidation<
 		encode: (obj: TInMemoryFormat, context: TContext): TEncodedFormat => {
 			const encoded = codec.encode(obj, context);
 			if (!compiledFormat.check(encoded)) {
-				fail(0xac0 /* Encoded schema should validate */);
+				fail(0xac0 /* Encoded data should validate */);
 			}
 			return encoded;
 		},
 		decode: (encoded: TValidate, context: TContext): TInMemoryFormat => {
 			if (!compiledFormat.check(encoded)) {
-				fail(0xac1 /* Encoded schema should validate */);
+				fail(0xac1 /* Data being decoded should validate */);
 			}
-			// TODO: would be nice to provide a more specific validate type to the inner codec than the outer one gets.
-			return codec.decode(encoded, context) as unknown as TInMemoryFormat;
+			return codec.decode(encoded, context);
 		},
+		encodedSchema: schema,
 	};
 }
 
@@ -528,9 +551,17 @@ export const FluidClientVersion = {
  */
 export const currentVersion: MinimumVersionForCollab = runtimeUtilsCleanedPackageVersion;
 
-export interface CodecTree {
+/**
+ * TODO:
+ * This needs to be documented.
+ * Its documentation should cover at least the following:
+ * - Is this used for anything other than testing.
+ * - What should be included as children. For example should it include versioned codecs which dispatch base on the min version for collaboration? If so, what version of them should be used?
+ * - What risks does having this mitigate?
+ */
+export interface CodecTree<TFormatVersion extends FormatVersion = FormatVersion> {
 	readonly name: string;
-	readonly version: FormatVersion;
+	readonly version: TFormatVersion;
 	readonly children?: readonly CodecTree[];
 }
 

@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { type ICodecFamily, type IJsonCodec, makeCodecFamily } from "../../codec/index.js";
+import { type ICodecFamily, type JsonCodecPart, makeCodecFamily } from "../../codec/index.js";
 import type {
 	ChangeEncodingContext,
-	EncodedRevisionTag,
 	RevisionTag,
+	RevisionTagSchema,
 } from "../../core/index.js";
 import type { FieldChangeEncodingContext } from "../modular-schema/index.js";
 
@@ -16,10 +16,9 @@ import { makeOptionalFieldCodec as makeV2Codec } from "./optionalFieldCodecV2.js
 import { makeOptionalFieldCodec as makeV3Codec } from "./optionalFieldCodecV3.js";
 
 export const makeOptionalFieldCodecFamily = (
-	revisionTagCodec: IJsonCodec<
+	revisionTagCodec: JsonCodecPart<
 		RevisionTag,
-		EncodedRevisionTag,
-		EncodedRevisionTag,
+		typeof RevisionTagSchema,
 		ChangeEncodingContext
 	>,
 ): ICodecFamily<OptionalChangeset, FieldChangeEncodingContext> =>

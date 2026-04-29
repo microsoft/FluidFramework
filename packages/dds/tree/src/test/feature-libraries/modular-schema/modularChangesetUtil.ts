@@ -67,7 +67,7 @@ import {
 	type IdAllocator,
 	type Mutable,
 	type RangeMap,
-	type RangeQueryEntry,
+	type RangeMapEntry,
 	type RangeQueryResult,
 	areAdjacentIntegerRanges,
 	brand,
@@ -329,7 +329,7 @@ function normalizeRangeMap<K, V>(
 	const normalized = map.clone();
 	normalized.clear();
 
-	let prevEntry: RangeQueryEntry<K, V> | undefined;
+	let prevEntry: RangeMapEntry<K, V> | undefined;
 
 	for (const entry of map.entries()) {
 		if (prevEntry === undefined) {

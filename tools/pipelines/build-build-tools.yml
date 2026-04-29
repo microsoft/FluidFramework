@@ -53,6 +53,7 @@ trigger:
     - common/build/build-common
     - tools/pipelines/build-build-tools.yml
     - tools/pipelines/templates/build-npm-package.yml
+    - tools/pipelines/templates/include-build-lint.yml
     - tools/pipelines/templates/include-set-package-version.yml
     - tools/pipelines/templates/include-vars.yml
     - tools/pipelines/templates/include-install-pnpm.yml
@@ -79,6 +80,7 @@ pr:
     - common/build/build-common
     - tools/pipelines/build-build-tools.yml
     - tools/pipelines/templates/build-npm-package.yml
+    - tools/pipelines/templates/include-build-lint.yml
     - tools/pipelines/templates/include-set-package-version.yml
     - tools/pipelines/templates/include-vars.yml
     - tools/pipelines/templates/include-install-pnpm.yml
@@ -105,7 +107,7 @@ extends:
     packageManagerInstallCommand: 'pnpm i --frozen-lockfile'
     packageManager: pnpm
     testCoverage: ${{ variables.testCoverage }}
-    buildDirectory: build-tools
+    buildDirectory: ${{ variables.FluidFrameworkDirectory }}/build-tools
     tagName: build-tools
     isReleaseGroup: true
     taskBuild: build

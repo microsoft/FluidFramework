@@ -235,7 +235,7 @@ export class DocumentStorageServiceCompressionAdapter extends DocumentStorageSer
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 			decompressed = originalBlob;
 		} else if (algorithm === SummaryCompressionAlgorithm.LZ4) {
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-assignment
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
 			decompressed = decompress(originalBlob) as ArrayBufferLike;
 		} else {
 			throw new Error(`Unknown Algorithm ${algorithm}`);

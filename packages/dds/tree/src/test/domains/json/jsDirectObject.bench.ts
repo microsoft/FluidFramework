@@ -5,7 +5,11 @@
 
 import { strict as assert } from "node:assert";
 
-import { BenchmarkType, benchmark, isInPerformanceTestingMode } from "@fluid-tools/benchmark";
+import {
+	benchmarkDuration,
+	benchmarkIt,
+	isInPerformanceTestingMode,
+} from "@fluid-tools/benchmark";
 
 import type { JsonCompatibleReadOnlyObject } from "../../../util/index.js";
 
@@ -27,35 +31,36 @@ export function jsObjectBench<T extends JsonCompatibleReadOnlyObject>(
 	for (const { name, getJson, dataConsumer } of data) {
 		const json = getJson();
 
-		benchmark({
-			type: BenchmarkType.Measurement,
+		benchmarkIt({
 			title: `clone JS Object: '${name}'`,
-			before: () => {
-				const cloned = clone(json);
-				assert.deepEqual(cloned, json, "clone() must return an equivalent tree.");
-				assert.notEqual(cloned, json, "clone() must not return the same tree instance.");
-			},
-			benchmarkFn: () => {
-				clone(json);
-			},
+			...benchmarkDuration({
+				benchmarkFnCustom: async (state) => {
+					const cloned = clone(json);
+					assert.deepEqual(cloned, json, "clone() must return an equivalent tree.");
+					assert.notEqual(cloned, json, "clone() must not return the same tree instance.");
+					state.timeAllBatches(() => {
+						clone(json);
+					});
+				},
+			}),
 		});
 
-		benchmark({
-			type: BenchmarkType.Measurement,
+		benchmarkIt({
 			title: `sum JS Object: '${name}'`,
-			before: () => {},
-			benchmarkFn: () => {
-				sumDirect(json);
-			},
+			...benchmarkDuration({
+				benchmarkFn: () => {
+					sumDirect(json);
+				},
+			}),
 		});
 
-		benchmark({
-			type: BenchmarkType.Measurement,
+		benchmarkIt({
 			title: `averageValues JS Object: '${name}'`,
-			before: () => {},
-			benchmarkFn: () => {
-				averageValues(json, dataConsumer);
-			},
+			...benchmarkDuration({
+				benchmarkFn: () => {
+					averageValues(json, dataConsumer);
+				},
+			}),
 		});
 	}
 }

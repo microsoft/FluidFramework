@@ -5,12 +5,16 @@
 
 import type { TAnySchema } from "@sinclair/typebox";
 
-import { DiscriminatedUnionDispatcher, type IJsonCodec } from "../../codec/index.js";
+import {
+	DiscriminatedUnionDispatcher,
+	type IJsonCodec,
+	type JsonCodecPart,
+} from "../../codec/index.js";
 import type {
 	ChangeAtomId,
 	ChangeEncodingContext,
-	EncodedRevisionTag,
 	RevisionTag,
+	RevisionTagSchema,
 } from "../../core/index.js";
 import type { JsonCompatibleReadOnly } from "../../util/index.js";
 import {
@@ -29,10 +33,9 @@ import {
 import type { Changeset, Mark, MarkEffect, Rename } from "./types.js";
 
 export function makeV3Codec(
-	revisionTagCodec: IJsonCodec<
+	revisionTagCodec: JsonCodecPart<
 		RevisionTag,
-		EncodedRevisionTag,
-		EncodedRevisionTag,
+		typeof RevisionTagSchema,
 		ChangeEncodingContext
 	>,
 ): IJsonCodec<
