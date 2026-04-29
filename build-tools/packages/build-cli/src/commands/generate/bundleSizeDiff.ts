@@ -97,6 +97,8 @@ export default class GenerateBundleSizeDiff extends BaseCommand<
 	static readonly description =
 		`Compare the PR's locally-collected bundle reports against the CI build of the merge-base commit (the commit on the target branch the PR is based on) and write the outcome as one of two structured files in the output directory: result.json on success, error.json on failure.`;
 
+	static readonly enableJsonFlag = true;
+
 	static readonly flags = {
 		localReportPath: Flags.directory({
 			description: `Path to the locally-collected bundle reports for the PR (as produced by \`flub generate bundleStats\`).`,
@@ -132,7 +134,7 @@ export default class GenerateBundleSizeDiff extends BaseCommand<
 		...BaseCommand.flags,
 	} as const;
 
-	public async run(): Promise<void> {
+	public async run(): Promise<BundleSizeDiffResult | BundleSizeDiffError> {
 		const { adoApiToken, localReportPath, outputDir, prNumber, targetBranch } = this.flags;
 
 		const adoConnection = getAzureDevopsApi(adoApiToken, adoConstants.orgUrl);
@@ -164,7 +166,7 @@ export default class GenerateBundleSizeDiff extends BaseCommand<
 			};
 			await writeFile(errorPath, JSON.stringify(errorResult, undefined, 2));
 			this.info(`Wrote ${errorPath}`);
-			return;
+			return errorResult;
 		}
 
 		// An empty comparison means the baseline or PR collection produced no bundles;
@@ -179,7 +181,7 @@ export default class GenerateBundleSizeDiff extends BaseCommand<
 			};
 			await writeFile(errorPath, JSON.stringify(errorResult, undefined, 2));
 			this.info(`Wrote ${errorPath}`);
-			return;
+			return errorResult;
 		}
 
 		const { baselineCommit, comparison } = comparisonResult;
@@ -199,5 +201,6 @@ export default class GenerateBundleSizeDiff extends BaseCommand<
 
 		await writeFile(resultPath, JSON.stringify(result, undefined, 2));
 		this.info(`Wrote ${resultPath}`);
+		return result;
 	}
 }

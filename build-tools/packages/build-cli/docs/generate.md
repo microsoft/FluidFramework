@@ -125,7 +125,7 @@ Compare the PR's locally-collected bundle reports against the CI build of the me
 
 ```
 USAGE
-  $ flub generate bundleSizeDiff [-v | --quiet] [--localReportPath <value>] [--outputDir <value>]
+  $ flub generate bundleSizeDiff [--json] [-v | --quiet] [--localReportPath <value>] [--outputDir <value>]
 
 FLAGS
   --localReportPath=<value>  [default: ./artifacts/bundleAnalysis] Path to the locally-collected bundle reports for the
@@ -135,6 +135,9 @@ FLAGS
 LOGGING FLAGS
   -v, --verbose  Enable verbose logging.
       --quiet    Disable all logging.
+
+GLOBAL FLAGS
+  --json  Format output as json.
 
 DESCRIPTION
   Compare the PR's locally-collected bundle reports against the CI build of the merge-base commit (the commit on the
