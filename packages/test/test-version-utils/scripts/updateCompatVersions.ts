@@ -25,9 +25,6 @@
  *   compat-workspaces/versions.cjs
  *   compat-workspaces/full/<version>/package.json  (one per version)
  *   compat-workspaces/full/pnpm-lock.yaml
- *
- * The OCV (oldest compatible version) in this script is also human-maintained: update
- * `OCV` below when the oldest supported version policy changes.
  */
 
 import { execSync } from "node:child_process";
@@ -48,6 +45,10 @@ import * as semver from "semver";
 // jiti (used to run this script) resolves .js imports to .ts files automatically.
 import { calculateRequestedRange, versionHasMovedSparsedMatrix } from "../src/versionUtils.js";
 import { packageListToInstall } from "../src/compatPackageList.js";
+import {
+	numOfInternalMajorsBeforePublic2dot0,
+	oldestCompatibleVersion,
+} from "../src/compatConfig.js";
 
 // ---------------------------------------------------------------------------
 // Configuration
@@ -60,15 +61,6 @@ const gitRoot = execSync("git rev-parse --show-toplevel", { encoding: "utf8", cw
 	.replace(/\\/g, "/");
 const compatWorkspacesDir = path.join(pkgRoot, "compat-workspaces");
 const versionsCjsPath = path.join(compatWorkspacesDir, "versions.cjs");
-
-/** Oldest compatible version — HUMAN-MAINTAINED. Update when the OCV policy changes. */
-const OCV = "2.0.0-internal.5.4.2";
-
-/**
- * Number of "majors" before the public 2.0.0 release: 8 internal + 5 RC.
- * This is the same constant used in genFullBackCompatConfig in compatConfig.ts.
- */
-const NUM_INTERNAL_MAJORS_BEFORE_PUBLIC_2 = 8 + 5;
 
 const pnpmCmd = process.platform === "win32" ? "pnpm.cmd" : "pnpm";
 
@@ -94,13 +86,23 @@ function resolveRangeViaRegistry(range: string): string {
 	return version;
 }
 
-function resolveVersionForDelta(pkgVer: string, delta: number): string | undefined {
-	const range = calculateRequestedRange(pkgVer, delta);
+function tryResolveRangeViaRegistry(range: string): string | undefined {
 	try {
 		return resolveRangeViaRegistry(range);
-	} catch {
+	} catch (error) {
+		console.warn(`Warning: ${error instanceof Error ? error.message : error}`);
 		return undefined;
 	}
+}
+
+function resolveVersionForMinorDelta(pkgVer: string, delta: number): string | undefined {
+	const range = calculateRequestedRange(pkgVer, delta);
+	return tryResolveRangeViaRegistry(range);
+}
+
+function resolveVersionForMajorDelta(pkgVer: string, delta: number): string | undefined {
+	const range = calculateRequestedRange(pkgVer, delta, true /* adjustPublicMajor */);
+	return tryResolveRangeViaRegistry(range);
 }
 
 // ---------------------------------------------------------------------------
@@ -195,23 +197,18 @@ async function main(): Promise<void> {
 
 	// Resolve standard versions
 	console.log("\nResolving standard versions...");
-	let nMinus1 = resolveVersionForDelta(pkgVer, -1);
-	const nMinus2 = resolveVersionForDelta(pkgVer, -2);
-
-	if (nMinus1 === undefined) {
-		console.warn("  N-1 not found, falling back to N-2");
-		nMinus1 = nMinus2;
-	}
+	const nMinus1 = resolveVersionForMinorDelta(pkgVer, -1);
+	const nMinus2 = resolveVersionForMinorDelta(pkgVer, -2);
 	if (nMinus1 === undefined || nMinus2 === undefined) {
 		throw new Error("Could not resolve N-1 or N-2. Check registry connectivity.");
 	}
 
 	console.log(`  n-1: ${nMinus1}`);
 	console.log(`  n-2: ${nMinus2}`);
-	console.log(`  ocv: ${OCV} (human-maintained constant)`);
+	console.log(`  ocv: ${oldestCompatibleVersion}`);
 
 	// seenVersions tracks all resolved versions to avoid duplicates across tiers.
-	const seenVersions = new Set([nMinus1, nMinus2, OCV]);
+	const seenVersions = new Set([nMinus1, nMinus2, oldestCompatibleVersion]);
 
 	// Resolve cross-client "slow train" versions (N-1 and N-2 with adjustPublicMajor=true).
 	// These are the previous public-major releases used when testing cross-client compat with
@@ -219,13 +216,7 @@ async function main(): Promise<void> {
 	console.log("\nResolving cross-client slow-train versions...");
 	const crossClientVersions: string[] = [];
 	for (const delta of [-1, -2]) {
-		const range = calculateRequestedRange(pkgVer, delta, true /* adjustPublicMajor */);
-		let resolved: string | undefined;
-		try {
-			resolved = resolveRangeViaRegistry(range);
-		} catch {
-			resolved = undefined;
-		}
+		const resolved = resolveVersionForMajorDelta(pkgVer, delta);
 		if (resolved === undefined || !semver.gte(resolved, "1.0.0")) {
 			console.log(`  Slow-train N${delta}: not found or below 1.0.0, skipping`);
 			continue;
@@ -243,8 +234,8 @@ async function main(): Promise<void> {
 	console.log("\nResolving full back-compat versions...");
 	const fullAdditional: string[] = [];
 
-	for (let delta = -3; delta > -NUM_INTERNAL_MAJORS_BEFORE_PUBLIC_2; delta--) {
-		const resolved = resolveVersionForDelta(pkgVer, delta);
+	for (let delta = -3; delta > -numOfInternalMajorsBeforePublic2dot0; delta--) {
+		const resolved = resolveVersionForMinorDelta(pkgVer, delta);
 		if (resolved === undefined) {
 			console.warn(`  Delta ${delta}: not found, skipping`);
 			continue;
@@ -272,7 +263,7 @@ async function main(): Promise<void> {
 	const allVersions = new Set([
 		nMinus1,
 		nMinus2,
-		OCV,
+		oldestCompatibleVersion,
 		...crossClientVersions,
 		...explicitVersions,
 		...fullAdditional,

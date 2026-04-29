@@ -72,6 +72,8 @@ export interface InstalledPackage {
  * Loads all layer APIs for the requested version. The compat workspace is expected to be
  * pre-installed via `pnpm install` (through the package `postinstall` hook).
  *
+ * @remarks
+ * This function no longer supports dynamically installing packages. If you need to reference a specific FF version, see explicit-versions.mjs in test-version-utils/compat-workspaces.
  * @internal
  */
 export const ensurePackageInstalled = async (
