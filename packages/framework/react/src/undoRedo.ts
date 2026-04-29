@@ -13,11 +13,13 @@ import type { RevertibleAlpha, TreeBranchAlpha } from "@fluidframework/tree/inte
  * @remarks
  * When a label is provided to `undo` / `redo`, the operation targets the most recent commit
  * whose label set contains that label, skipping commits that do not match. When no label is
- * provided the operation is global and targets the most recent commit regardless of labels.
+ * provided, the operation is global and targets the most recent commit regardless of labels.
  *
  * **Redo invalidation:** when a new user commit arrives, redo entries whose label sets overlap
  * with the new commit's labels are discarded. An anonymous commit (no labels) discards only
- * anonymous redo entries; labeled redo entries are preserved.
+ * anonymous redo entries; labeled redo entries are preserved. This ensures that misc. edits do not invalidate
+ * editor-specific redo stacks, while still guaranteeing that redo operations never reapply commits that have been
+ * semantically "overridden" by a new commit with overlapping labels.
  *
  * All operations are silent no-ops when there is nothing to undo/redo matching the label policy.
  *
@@ -30,7 +32,7 @@ import type { RevertibleAlpha, TreeBranchAlpha } from "@fluidframework/tree/inte
  * entire nested operation as one atomic undo/redo unit.
  *
  * @example Scoped undo/redo with two independent editors
- * ```ts
+ * ```typescript
  * const titleLabel = Symbol("title-editor");
  * const bodyLabel  = Symbol("body-editor");
  * const manager = createUndoRedo(treeView);
@@ -46,7 +48,7 @@ import type { RevertibleAlpha, TreeBranchAlpha } from "@fluidframework/tree/inte
  * ```
  *
  * @example Nested transactions — inner label is not tracked
- * ```ts
+ * ```typescript
  * const outerLabel = Symbol("outer");
  * const innerLabel = Symbol("inner");
  *
