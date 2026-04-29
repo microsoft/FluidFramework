@@ -9899,15 +9899,9 @@ importers:
       fake-indexeddb:
         specifier: 3.1.4
         version: 3.1.4
-      global-jsdom:
-        specifier: ^26.0.0
-        version: 26.0.0(jsdom@26.1.0)
       jiti:
         specifier: ^2.6.1
         version: 2.6.1
-      jsdom:
-        specifier: ^26.1.0
-        version: 26.1.0
       mocha:
         specifier: ^11.7.5
         version: 11.7.5
