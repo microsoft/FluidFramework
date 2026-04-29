@@ -16,12 +16,12 @@ import {
 	performFuzzActions,
 	take,
 } from '@fluid-private/stochastic-test-utils';
-import { BenchmarkType, TestType, benchmarkIt, collectDurationData } from '@fluid-tools/benchmark';
+import { benchmarkDuration, benchmarkIt } from '@fluid-tools/benchmark';
 import { validateAssertionError } from '@fluidframework/test-runtime-utils/internal';
 import { expect } from 'chai';
 
 import { fail } from '../Common.js';
-import { FinalCompressedId, LocalCompressedId, SessionSpaceCompressedId } from '../Identifiers.js';
+import { FinalCompressedId, LocalCompressedId } from '../Identifiers.js';
 import { SessionIdNormalizer } from '../id-compressor/SessionIdNormalizer.js';
 import { isFinalId, isLocalId } from '../id-compressor/index.js';
 
@@ -232,56 +232,50 @@ describe('SessionIdNormalizer', () => {
 
 describe('SessionIdNormalizer Perf', () => {
 	const choiceCount = 1000;
-	const type = BenchmarkType.Measurement;
-	let normalizer: SessionIdNormalizer<DummyRange>;
-	let rand: IRandom;
-	let ids: SessionSpaceCompressedId[];
-	let finals: FinalCompressedId[];
-	let locals: LocalCompressedId[];
-	let localChoices: LocalCompressedId[];
-	let finalChoices: FinalCompressedId[];
-	const before = () => {
-		normalizer = new SessionIdNormalizer();
-		rand = fuzzNormalizer(normalizer, 10000, 3.14);
-		ids = [...normalizer];
-		locals = ids.filter<LocalCompressedId>((id): id is LocalCompressedId => isLocalId(id));
-		finals = ids.filter((id) => isFinalId(id)) as FinalCompressedId[];
-		localChoices = [];
-		finalChoices = [];
+
+	function setupNormalizer(): {
+		normalizer: SessionIdNormalizer<DummyRange>;
+		localChoices: LocalCompressedId[];
+		finalChoices: FinalCompressedId[];
+	} {
+		const normalizer = new SessionIdNormalizer<DummyRange>();
+		const rand = fuzzNormalizer(normalizer, 10000, 3.14);
+		const ids = [...normalizer];
+		const locals = ids.filter<LocalCompressedId>((id): id is LocalCompressedId => isLocalId(id));
+		const finals = ids.filter((id) => isFinalId(id)) as FinalCompressedId[];
+		const localChoices: LocalCompressedId[] = [];
+		const finalChoices: FinalCompressedId[] = [];
 		for (let i = 0; i < choiceCount; i++) {
 			localChoices.push(rand.pick(locals));
 			finalChoices.push(rand.pick(finals));
 		}
-	};
+		return { normalizer, localChoices, finalChoices };
+	}
 
-	let localChoice = 0;
 	benchmarkIt({
-		type,
-		testType: TestType.ExecutionTime,
 		title: `normalize a local ID to a final ID`,
-		run: async () => {
-			before();
-			return collectDurationData({
-				benchmarkFn: () => {
-					normalizer.getFinalId(localChoices[localChoice++ % localChoices.length]);
-				},
-			});
-		},
+		...benchmarkDuration({
+			benchmarkFnCustom: async (state) => {
+				const { normalizer, localChoices } = setupNormalizer();
+				let choice = 0;
+				state.timeAllBatches(() => {
+					normalizer.getFinalId(localChoices[choice++ % localChoices.length]);
+				});
+			},
+		}),
 	});
 
-	let finalChoice = 0;
 	benchmarkIt({
-		type,
-		testType: TestType.ExecutionTime,
 		title: `normalize a final ID to session space`,
-		run: async () => {
-			before();
-			return collectDurationData({
-				benchmarkFn: () => {
-					normalizer.getSessionSpaceId(finalChoices[finalChoice++ % finalChoices.length]);
-				},
-			});
-		},
+		...benchmarkDuration({
+			benchmarkFnCustom: async (state) => {
+				const { normalizer, finalChoices } = setupNormalizer();
+				let choice = 0;
+				state.timeAllBatches(() => {
+					normalizer.getSessionSpaceId(finalChoices[choice++ % finalChoices.length]);
+				});
+			},
+		}),
 	});
 });
 

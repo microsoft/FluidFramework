@@ -57,6 +57,7 @@ import type {
 	ITelemetryBaseLogger,
 	Listenable,
 } from "@fluidframework/core-interfaces";
+import { LogLevel } from "@fluidframework/core-interfaces";
 import type {
 	IFluidHandleContext,
 	IFluidHandleInternal,
@@ -2133,13 +2134,6 @@ export class ContainerRuntime
 		// (We have to call flush _before_ processing a runtime op, but after is ok for non-runtime op)
 		this.deltaManager.on("op", () => this.flush());
 
-		// logging hardware telemetry
-		this.baseLogger.send({
-			category: "generic",
-			eventName: "DeviceSpec",
-			...getDeviceSpec(),
-		});
-
 		this.mc.logger.sendTelemetryEvent({
 			eventName: "ContainerLoadStats",
 			...this.createContainerMetadata,
@@ -2162,6 +2156,8 @@ export class ContainerRuntime
 			groupedBatchingEnabled: this.groupedBatchingEnabled,
 			initialSequenceNumber: this.deltaManager.initialSequenceNumber,
 			minVersionForCollab: this.minVersionForCollab,
+			// logging hardware telemetry
+			deviceSpec: { ...getDeviceSpec() },
 		});
 
 		ReportOpPerfTelemetry(this.clientId, this._deltaManager, this, this.baseLogger);
@@ -2401,6 +2397,8 @@ export class ContainerRuntime
 		}
 		this._disposed = true;
 
+		// The ContainerRuntimeDisposed event is redundant with the loader's ContainerDispose event
+		// (see #27126) and can be removed once the change for ContainerDispose has saturated in telemetry.
 		this.mc.logger.sendTelemetryEvent(
 			{
 				eventName: "ContainerRuntimeDisposed",
@@ -2409,6 +2407,7 @@ export class ContainerRuntime
 				attachState: this.attachState,
 			},
 			error,
+			LogLevel.info,
 		);
 
 		if (this.summaryManager !== undefined) {
@@ -3591,7 +3590,18 @@ export class ContainerRuntime
 		let stageControls: StageControlsInternal | undefined;
 		if (this.mc.config.getBoolean("Fluid.ContainerRuntime.EnableRollback") === true) {
 			if (!this.batchRunner.running && !this.inStagingMode) {
-				stageControls = this.enterStagingMode();
+				// Use silent=true to suppress stagingModeChanged events for orderSequentially.
+				// orderSequentially uses staging mode as a rollback mechanism.
+				// Emitting stagingModeChanged here would:
+				//   - Cause UI flicker — consumers rendering staging mode event would see
+				//      unexpected enter/exit flashes on every orderSequentially call.
+				//   - consumers cannot distinguish this internal usage
+				//      from a user explicitly entering staging mode, as there is no source field
+				//      on the event to filter by.
+				//   - if orderSequentially is
+				//      later reimplemented without staging mode, consumers calibrated
+				//      to these events would break silently.
+				stageControls = this.enterStagingModeCore(true);
 			}
 			// Note: we are not touching any batches other than mainBatch here, for two reasons:
 			// 1. It would not help, as other batches are flushed independently from main batch.
@@ -3667,9 +3677,22 @@ export class ContainerRuntime
 	 * Enter Staging Mode, such that ops submitted to the ContainerRuntime will not be sent to the ordering service.
 	 * To exit Staging Mode, call either discardChanges or commitChanges on the Stage Controls returned from this method.
 	 *
+	 * @remarks
+	 * The `stagingModeChanged` event is emitted when staging mode is entered or exited via this method.
+	 * It is NOT emitted when staging mode is used internally (e.g. by `orderSequentially` for rollback support).
+	 *
 	 * @returns Controls for exiting Staging Mode.
 	 */
-	public enterStagingMode = (): StageControlsInternal => {
+	public enterStagingMode = (): StageControlsInternal => this.enterStagingModeCore(false);
+
+	/**
+	 * Internal implementation of enterStagingMode.
+	 * @param silent - When true, suppresses `stagingModeChanged` event emission.
+	 * Pass `true` when staging mode is used as an internal implementation detail (e.g. by
+	 * `orderSequentially` for rollback support) so that external listeners only observe
+	 * user-initiated staging mode transitions. Pass `false` for all public entry points.
+	 */
+	private readonly enterStagingModeCore = (silent: boolean): StageControlsInternal => {
 		if (this.stageControls !== undefined) {
 			throw new UsageError("Already in staging mode");
 		}
@@ -3681,10 +3704,15 @@ export class ContainerRuntime
 		// since we mark whole batches as "staged" or not to indicate whether to submit them.
 		this.flush();
 
+		// Note: `silent` is captured from the enclosing `enterStagingModeCore` call.
+		// When `true`, both enter and exit events are suppressed (see orderSequentially).
 		const exitStagingMode = (
 			discardOrCommit: () => IPendingMessage["batchInfo"][],
 			exitMethod: "commit" | "discard",
 		): void => {
+			if (this.stageControls !== stageControls) {
+				throw new UsageError("Not in staging mode");
+			}
 			try {
 				PerformanceEvent.timedExec(
 					this.mc.logger,
@@ -3716,6 +3744,12 @@ export class ContainerRuntime
 				this.closeFn(normalizedError);
 				throw normalizedError;
 			}
+			if (!silent) {
+				this.emit("stagingModeChanged", {
+					inStagingMode: false,
+					commit: exitMethod === "commit",
+				});
+			}
 		};
 
 		const stageControls: StageControlsInternal = {
@@ -3745,8 +3779,16 @@ export class ContainerRuntime
 
 		this.stageControls = stageControls;
 		this.channelCollection.notifyStagingMode(true);
+		if (!silent) {
+			try {
+				this.emit("stagingModeChanged", { inStagingMode: true });
+			} catch (error) {
+				// Don't let a listener error prevent the caller from receiving stage controls.
+				this.mc.logger.sendErrorEvent({ eventName: "StagingModeChangedError" }, error);
+			}
+		}
 
-		return this.stageControls;
+		return stageControls;
 	};
 
 	/**

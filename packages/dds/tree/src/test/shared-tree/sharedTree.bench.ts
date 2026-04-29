@@ -7,10 +7,8 @@ import { strict as assert } from "node:assert";
 
 import {
 	BenchmarkType,
-	TestType,
 	benchmarkDuration,
 	benchmarkIt,
-	collectDurationData,
 	isInPerformanceTestingMode,
 } from "@fluid-tools/benchmark";
 import { FlushMode } from "@fluidframework/runtime-definitions/internal";
@@ -20,7 +18,6 @@ import { FormatValidatorBasic } from "../../external-utilities/index.js";
 import {
 	TreeCompressionStrategy,
 	jsonableTreeFromFieldCursor,
-	type Context,
 } from "../../feature-libraries/index.js";
 import { Tree } from "../../shared-tree/index.js";
 import { TreeViewConfiguration } from "../../simple-tree/index.js";
@@ -28,7 +25,6 @@ import { configuredSharedTree } from "../../treeFactory.js";
 import { makeArray } from "../../util/index.js";
 import {
 	type JSDeepTree,
-	type JSWideTree,
 	LinkedList,
 	WideRoot,
 	deepPath,
@@ -91,180 +87,158 @@ describe("SharedTree benchmarks", () => {
 	configureBenchmarkHooks();
 	describe("Direct JS Object", () => {
 		for (const [numberOfNodes, benchmarkType] of nodesCountDeep) {
-			let tree: JSDeepTree;
 			benchmarkIt({
 				type: benchmarkType,
-				testType: TestType.ExecutionTime,
 				title: `Deep Tree as JS Object: reads with ${numberOfNodes} nodes`,
-				run: async () => {
-					tree = makeJsDeepTree(numberOfNodes, 1) as JSDeepTree;
-					return collectDurationData({
-						benchmarkFn: () => {
+				...benchmarkDuration({
+					benchmarkFnCustom: async (state) => {
+						const tree = makeJsDeepTree(numberOfNodes, 1) as JSDeepTree;
+						state.timeAllBatches(() => {
 							const { depth, value } = readDeepTreeAsJSObject(tree);
 							assert.equal(depth, numberOfNodes);
 							assert.equal(value, 1);
-						},
-					});
-				},
+						});
+					},
+				}),
 			});
 		}
 		for (const [numberOfNodes, benchmarkType] of nodesCountWide) {
-			let tree: JSWideTree;
-			let expected = 0;
 			benchmarkIt({
 				type: benchmarkType,
-				testType: TestType.ExecutionTime,
 				title: `Wide Tree as JS Object: reads with ${numberOfNodes} nodes`,
-				run: async () => {
-					tree = makeJsWideTreeWithEndValue(numberOfNodes, numberOfNodes - 1);
-					expected = 0;
-					for (let i = 0; i < numberOfNodes; i++) {
-						expected += i;
-					}
-					return collectDurationData({
-						benchmarkFn: () => {
+				...benchmarkDuration({
+					benchmarkFnCustom: async (state) => {
+						const tree = makeJsWideTreeWithEndValue(numberOfNodes, numberOfNodes - 1);
+						let expected = 0;
+						for (let i = 0; i < numberOfNodes; i++) {
+							expected += i;
+						}
+						state.timeAllBatches(() => {
 							const { nodesCount, sum } = readWideTreeAsJSObject(tree);
 							assert.equal(nodesCount, numberOfNodes);
 							assert.equal(sum, expected);
-						},
-					});
-				},
+						});
+					},
+				}),
 			});
 		}
 		describe(`Edit JS Object`, () => {
 			for (const [numberOfNodes, benchmarkType] of nodesCountDeep) {
-				let tree: JSDeepTree;
-				let currentNode: JSDeepTree;
 				benchmarkIt({
 					type: benchmarkType,
-					testType: TestType.ExecutionTime,
 					title: `Update value at leaf of ${numberOfNodes} deep tree`,
-					run: async () => {
-						tree = makeJsDeepTree(numberOfNodes, 1) as JSDeepTree;
-						currentNode = tree;
-						while (typeof currentNode !== "number") {
-							if (typeof currentNode.foo === "number") {
-								break;
+					...benchmarkDuration({
+						benchmarkFnCustom: async (state) => {
+							const tree = makeJsDeepTree(numberOfNodes, 1) as JSDeepTree;
+							let currentNode: JSDeepTree = tree;
+							while (typeof currentNode !== "number") {
+								if (typeof currentNode.foo === "number") {
+									break;
+								}
+								currentNode = currentNode.foo;
 							}
-							currentNode = currentNode.foo;
-						}
-						const result = await collectDurationData({
-							benchmarkFn: () => {
+							state.timeAllBatches(() => {
 								currentNode.foo = -1;
-							},
-						});
-						const expected = makeJsDeepTree(numberOfNodes, -1);
-						assert.deepEqual(tree, expected);
-						return result;
-					},
+							});
+							const expected = makeJsDeepTree(numberOfNodes, -1);
+							assert.deepEqual(tree, expected);
+						},
+					}),
 				});
 			}
 			for (const [numberOfNodes, benchmarkType] of nodesCountWide) {
-				let tree: JSWideTree;
 				benchmarkIt({
 					type: benchmarkType,
-					testType: TestType.ExecutionTime,
 					title: `Update value at leaf of ${numberOfNodes} Wide tree`,
-					run: async () => {
-						tree = makeJsWideTreeWithEndValue(numberOfNodes, numberOfNodes - 1);
-						const result = await collectDurationData({
-							benchmarkFn: () => {
+					...benchmarkDuration({
+						benchmarkFnCustom: async (state) => {
+							const tree = makeJsWideTreeWithEndValue(numberOfNodes, numberOfNodes - 1);
+							state.timeAllBatches(() => {
 								tree[numberOfNodes - 1] = -1;
-							},
-						});
-						const expected = makeJsWideTreeWithEndValue(numberOfNodes, -1);
-						assert.deepEqual(tree, expected);
-						return result;
-					},
+							});
+							const expected = makeJsWideTreeWithEndValue(numberOfNodes, -1);
+							assert.deepEqual(tree, expected);
+						},
+					}),
 				});
 			}
 		});
 	});
 	describe("Cursors", () => {
 		for (const [numberOfNodes, benchmarkType] of nodesCountDeep) {
-			let tree: Context;
 			benchmarkIt({
 				type: benchmarkType,
-				testType: TestType.ExecutionTime,
 				title: `Deep Tree with cursor: reads with ${numberOfNodes} nodes`,
-				run: async () => {
-					tree = flexTreeViewWithContent(makeDeepContentSimple(numberOfNodes));
-					return collectDurationData({
-						benchmarkFn: () => {
+				...benchmarkDuration({
+					benchmarkFnCustom: async (state) => {
+						const tree = flexTreeViewWithContent(makeDeepContentSimple(numberOfNodes));
+						state.timeAllBatches(() => {
 							const { depth, value } = readDeepCursorTree(tree);
 							assert.equal(value, 1);
 							assert.equal(depth, numberOfNodes);
-						},
-					});
-				},
+						});
+					},
+				}),
 			});
 		}
 		for (const [numberOfNodes, benchmarkType] of nodesCountWide) {
-			let tree: Context;
-			let expected = 0;
 			benchmarkIt({
 				type: benchmarkType,
-				testType: TestType.ExecutionTime,
 				title: `Wide Tree with cursor: reads with ${numberOfNodes} nodes`,
-				run: async () => {
-					const numbers = [];
-					expected = 0;
-					for (let index = 0; index < numberOfNodes; index++) {
-						numbers.push(index);
-						expected += index;
-					}
-					tree = flexTreeViewWithContent(
-						makeWideContentWithEndValueSimple(numberOfNodes, numberOfNodes - 1),
-					);
-					return collectDurationData({
-						benchmarkFn: () => {
+				...benchmarkDuration({
+					benchmarkFnCustom: async (state) => {
+						let expected = 0;
+						for (let index = 0; index < numberOfNodes; index++) {
+							expected += index;
+						}
+						const tree = flexTreeViewWithContent(
+							makeWideContentWithEndValueSimple(numberOfNodes, numberOfNodes - 1),
+						);
+						state.timeAllBatches(() => {
 							const { nodesCount, sum } = readWideCursorTree(tree);
 							assert.equal(sum, expected);
 							assert.equal(nodesCount, numberOfNodes);
-						},
-					});
-				},
+						});
+					},
+				}),
 			});
 		}
 	});
 	describe("FlexTree bench", () => {
 		for (const [numberOfNodes, benchmarkType] of nodesCountDeep) {
-			let tree: Context;
 			benchmarkIt({
 				type: benchmarkType,
-				testType: TestType.ExecutionTime,
 				title: `Deep Tree with Flex Tree: reads with ${numberOfNodes} nodes`,
-				run: async () => {
-					tree = flexTreeViewWithContent(makeDeepContentSimple(numberOfNodes));
-					return collectDurationData({
-						benchmarkFn: () => {
+				...benchmarkDuration({
+					benchmarkFnCustom: async (state) => {
+						const tree = flexTreeViewWithContent(makeDeepContentSimple(numberOfNodes));
+						state.timeAllBatches(() => {
 							const { depth, value } = readDeepFlexTree(tree);
 							assert.equal(depth, numberOfNodes);
 							assert.equal(value, 1);
-						},
-					});
-				},
+						});
+					},
+				}),
 			});
 		}
 		for (const [numberOfNodes, benchmarkType] of nodesCountWide) {
-			let tree: Context;
-			let expected: number = 0;
 			benchmarkIt({
 				type: benchmarkType,
-				testType: TestType.ExecutionTime,
 				title: `Wide Tree with Flex Tree: reads with ${numberOfNodes} nodes`,
-				run: async () => {
-					expected = ((numberOfNodes - 1) * numberOfNodes) / 2; // Arithmetic sum of [0, numberOfNodes)
-					tree = flexTreeViewWithContent(makeWideContentWithEndValueSimple(numberOfNodes));
-					return collectDurationData({
-						benchmarkFn: () => {
+				...benchmarkDuration({
+					benchmarkFnCustom: async (state) => {
+						const expected = ((numberOfNodes - 1) * numberOfNodes) / 2; // Arithmetic sum of [0, numberOfNodes)
+						const tree = flexTreeViewWithContent(
+							makeWideContentWithEndValueSimple(numberOfNodes),
+						);
+						state.timeAllBatches(() => {
 							const { nodesCount, sum } = readWideFlexTree(tree);
 							assert.equal(sum, expected);
 							assert.equal(nodesCount, numberOfNodes);
 							readWideCursorTree(tree);
-						},
-					});
-				},
+						});
+					},
+				}),
 			});
 		}
 	});
@@ -374,7 +348,6 @@ describe("SharedTree benchmarks", () => {
 		const localCommitSize = [1, 25, 100, 500, 1000];
 		for (const size of localCommitSize) {
 			benchmarkIt({
-				type: BenchmarkType.Measurement,
 				title: `for ${size} local commit${size === 1 ? "" : "s"}`,
 				...benchmarkDuration({
 					benchmarkFnCustom: async (state) => {
@@ -424,7 +397,6 @@ describe("SharedTree benchmarks", () => {
 		for (const peerCount of peerCounts) {
 			for (const commitCount of commitCounts) {
 				const test = benchmarkIt({
-					type: BenchmarkType.Measurement,
 					title: `for ${commitCount} commits per peer for ${peerCount} peers`,
 					...benchmarkDuration({
 						benchmarkFnCustom: async (state) => {
@@ -555,7 +527,6 @@ describe("SharedTree benchmarks", () => {
 			for (const bunchSize of bunchSizes) {
 				for (const localBranchSize of localBranchSizes) {
 					const test = benchmarkIt({
-						type: BenchmarkType.Measurement,
 						title: `Rebase ${localBranchSize} local commits over ${bunchSize} inbound commits`,
 						...benchmarkDuration({
 							benchmarkFnCustom: async (state) => {
@@ -603,7 +574,6 @@ describe("SharedTree benchmarks", () => {
 			for (const bunchSize of bunchSizes) {
 				for (const localTrunkSize of localTrunkSizes) {
 					const test = benchmarkIt({
-						type: BenchmarkType.Measurement,
 						title: `Rebase ${bunchSize} inbound commits over ${localTrunkSize} trunk commits`,
 						...benchmarkDuration({
 							benchmarkFnCustom: async (state) => {
@@ -656,7 +626,6 @@ describe("SharedTree benchmarks", () => {
 		const editCounts = isInPerformanceTestingMode ? [10, 100, 1000] : [5];
 		for (const editCount of editCounts) {
 			const test = benchmarkIt({
-				type: BenchmarkType.Measurement,
 				title: `Compose ${editCount} sequence edits into a single transaction`,
 				...benchmarkDuration({
 					benchmarkFnCustom: async (state) => {

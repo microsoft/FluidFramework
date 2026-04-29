@@ -106,6 +106,16 @@ The OCE rotation covers **three IcM teams**. Always search all three when lookin
 
 **ADO ≠ GitHub Actions:** These pipelines are in Azure DevOps. Do not attempt to use GitHub Actions tools (`github-mcp-server-get_job_logs`, etc.) — they will return 404. Always use the `ado-pipelines_*` tools.
 
+### Reading ADO Pipeline Failures Correctly
+
+The "Issues" panel returned by `*-pipelines_get_build_status` aggregates **every `##[error]` log line** in the build, grouped by job name. It is **not** necessarily a list of failed tasks/jobs/stages — tasks may emit `##[error]` lines as diagnostics and still exit 0.
+
+Failure flows up the hierarchy: log line → task (`result == "failed"` in the build timeline) → job → stage → build. A task can end up failed because of a non-zero exit code or an explicit `##vso[task.complete result=Failed]`, but the task's recorded timeline `result` is authoritative.
+
+**Source of truth = the build timeline:** `GET https://dev.azure.com/{org}/{project}/_apis/build/builds/{buildId}/timeline?api-version=7.1`. Each record has `type`, `name`, `result`, `startTime`, `finishTime`, `parentId`, `log.id`. Filter for `result == "failed"` and walk `parentId` to attribute it.
+
+When the user disputes a failure attribution, go to the timeline first. To pin a specific `##[error]` line to a task, cross-reference its timestamp against `##[section]Starting:` / `##[section]Finishing:` markers in the log.
+
 ### Teams Channels
 
 | Channel | Team ID | Channel ID |
@@ -182,6 +192,8 @@ This section covers the tasks you may perform. You are not limited to these — 
 - **Monitor key pipelines**: Check Build (def 12), Real Service E2E (def 56), Service Clients E2E (def 80), and Stress (def 63) pipelines for `main` and `lts` branches. Focus on `stress_tests_frs` (def 63), `e2e_azure_client_frs` and `e2e_azure_client_local_server` (def 80) stages. Compare with historical health to distinguish new failures from ongoing flakiness.
 
 - **Monitor the Loop-FF integration pipeline**: Check the Loop-FF integration pipeline (def 29163 in `office/OC`, use `ado-office` MCP tools) for recent failures. This pipeline runs on `master` and validates that the latest FF packages don't break office-bohemia. Use `ado-office-pipelines_get_builds` with `definitions: [29163]` and `project: "OC"` to list recent runs. Summarize results (passed/failed, failed stage, error). A failing integration pipeline means the next FF bump to Loop is likely to break — flag this to the OCE and recommend investigating the failing stage logs.
+
+  **Pitfall — auto-suppression noise:** Each top-level job (`Lint and Type Check`, `Build And Run Unit Tests`, `Build And Run E2E Tests`) starts with a `Bump FF Versions` task that probes lint, emits `##[error] [@fluidx/<package> lint] ...` / `##[error]Your build failed on the following packages => [<package> lint]` lines for newly-deprecated APIs, then auto-suppresses them via `addEsLintSuppressions.js` and exits 0. These `##[error]` lines surface in the build status "Issues" panel but the task/job/stage are all green — ignore them. The real lint task is `Lint and Type Check with read-write cache`, which runs after `Bump FF Versions`. Confirm real vs noise via the build timeline (see "Reading ADO Pipeline Failures Correctly").
 
 - **Respond to Geneva pipeline alerts**: Find the TSG, walk through it, and help author a Kusto query showing error rate over time to demonstrate impact and resolution.
 

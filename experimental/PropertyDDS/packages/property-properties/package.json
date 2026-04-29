@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-experimental/property-properties",
-	"version": "2.100.0",
+	"version": "2.101.0",
 	"description": "definitions of properties",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -79,6 +79,7 @@
 		"@fluid-internal/mocha-test-setup": "workspace:~",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "catalog:buildTools",
+		"@types/chai": "^4.0.0",
 		"@types/mocha": "^10.0.10",
 		"@types/node": "catalog:types",
 		"@types/sinon": "^17.0.3",

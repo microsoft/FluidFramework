@@ -27,7 +27,11 @@ minimumReleaseAgeExclude: [
 ]
 resolutionMode: highest
 blockExoticSubdeps: true
-trustPolicy: no-downgrade
+# See: https://github.com/orgs/pnpm/discussions/11084 for some discussion.
+# Enabling this is additionally more complicated than coming up with a reasonable allow-list of packages, given that
+# whether a package is trusted may change due to external factors and pnpm lacks a command or mode that scans the full
+# dependency graph to determine trustworthiness. Note the "off" here is the default as well.
+trustPolicy: off
 trustPolicyExclude:
   # axios@0.30.3 is the last legitimate 0.30.x release (published 2026-02-18). The trust
   # downgrade fires because 0.30.x was published via direct CLI rather than the OIDC/GitHub

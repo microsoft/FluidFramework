@@ -57,11 +57,15 @@ export const toRedirectTable = (
 	blobManagerLoadInfo: IBlobManagerLoadInfo,
 	logger: ITelemetryLoggerExt,
 ): Map<string, string> => {
-	logger.sendTelemetryEvent({
-		eventName: "AttachmentBlobsLoaded",
-		count: blobManagerLoadInfo.ids?.length ?? 0,
-		redirectTable: blobManagerLoadInfo.redirectTable?.length,
-	});
+	const count = blobManagerLoadInfo.ids?.length ?? 0;
+	const redirectTableLength = blobManagerLoadInfo.redirectTable?.length ?? 0;
+	if (count > 0 || redirectTableLength > 0) {
+		logger.sendTelemetryEvent({
+			eventName: "AttachmentBlobsLoaded",
+			count,
+			redirectTable: redirectTableLength,
+		});
+	}
 	const redirectTable = new Map<string, string>(blobManagerLoadInfo.redirectTable);
 	if (blobManagerLoadInfo.ids !== undefined) {
 		for (const storageId of blobManagerLoadInfo.ids) {
