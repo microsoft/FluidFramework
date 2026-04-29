@@ -106,6 +106,7 @@
 	},
 	"typeValidation": {
 		"entrypoint": "beta",
-		"broken": {}
+		"broken": {},
+		"disabled": true
 	}
 }
