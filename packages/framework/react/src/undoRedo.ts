@@ -139,11 +139,11 @@ interface StackEntry {
 	/**
 	 * The revertible object representing the commit that can be undone or redone.
 	 */
-	revertible: RevertibleAlpha;
+	readonly revertible: RevertibleAlpha;
 	/**
 	 * Labels associated with the commit (if any).
 	 */
-	labels: ReadonlySet<unknown>;
+	readonly labels: ReadonlySet<unknown>;
 }
 
 /**
