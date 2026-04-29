@@ -11,11 +11,9 @@ import {
 	waitContainerToCatchUp,
 	type ILoaderProps,
 } from "@fluidframework/container-loader/internal";
+import type { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { createLocalOdspDocumentServiceFactory } from "@fluidframework/odsp-driver/internal";
-import {
-	type ITelemetryLoggerExt,
-	PerformanceEvent,
-} from "@fluidframework/telemetry-utils/internal";
+import { createChildLogger, PerformanceEvent } from "@fluidframework/telemetry-utils/internal";
 
 import type { IFluidFileConverter } from "./codeLoaderBundle.js";
 import { FakeUrlResolver } from "./fakeUrlResolver.js";
@@ -68,7 +66,8 @@ export async function exportFile(
 		const eventName = clientArgsValidationError;
 		return { success: false, eventName, errorMessage: telemetryArgError };
 	}
-	const { fileLogger, logger } = createLogger(telemetryFile, telemetryOptions);
+	const { fileLogger, logger: baseLogger } = createLogger(telemetryFile, telemetryOptions);
+	const logger = createChildLogger({ logger: baseLogger });
 
 	try {
 		return await PerformanceEvent.timedExecAsync(
@@ -109,16 +108,18 @@ export async function exportFile(
 /**
  * Create the container based on an ODSP snapshot and execute code on it
  * @returns result of execution
- * @internal
+ * @legacy
+ * @beta
  */
 export async function createContainerAndExecute(
 	localOdspSnapshot: string | Uint8Array,
 	fluidFileConverter: IFluidFileConverter,
-	logger: ITelemetryLoggerExt,
+	baseLogger: ITelemetryBaseLogger,
 	options?: string,
 	timeout?: number,
 	disableNetworkFetch: boolean = false,
 ): Promise<string> {
+	const logger = createChildLogger({ logger: baseLogger });
 	const fn = async (): Promise<string> => {
 		if (disableNetworkFetch) {
 			global.fetch = async () => {

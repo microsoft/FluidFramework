@@ -6,7 +6,7 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
 
-import { PerformanceEvent } from "@fluidframework/telemetry-utils/internal";
+import { createChildLogger, PerformanceEvent } from "@fluidframework/telemetry-utils/internal";
 
 import { isCodeLoaderBundle, isFluidFileConverter } from "./codeLoaderBundle.js";
 import { type IExportFileResponse, createContainerAndExecute } from "./exportFile.js";
@@ -38,7 +38,8 @@ export async function parseBundleAndExportFile(
 		const eventName = clientArgsValidationError;
 		return { success: false, eventName, errorMessage: telemetryArgError };
 	}
-	const { fileLogger, logger } = createLogger(telemetryFile, telemetryOptions);
+	const { fileLogger, logger: baseLogger } = createLogger(telemetryFile, telemetryOptions);
+	const logger = createChildLogger({ logger: baseLogger });
 
 	try {
 		return await PerformanceEvent.timedExecAsync(
