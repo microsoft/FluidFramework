@@ -7,6 +7,7 @@ import { strict as assert } from "node:assert";
 
 import {
 	type FieldKey,
+	type TreeChunk,
 	type TreeNodeSchemaIdentifier,
 	type TreeStoredSchemaSubscription,
 	TreeStoredSchemaRepository,
@@ -136,9 +137,24 @@ describe("ChunkedForest", () => {
 	}
 
 	describe("mutation of chunks array inside a multi-node chunkShape", () => {
-		// Manually install a root field of [uniform(5)] so we can exercise splitting a uniform
-		// chunk at a node index in the middle. The visitor splices the chunk array by node index
-		// as if it were a chunk index, so these tests fail against the unpatched implementation.
+		/** Shape used to construct the uniform chunks in these tests. */
+		const numberShape = new TreeShape(
+			brand<TreeNodeSchemaIdentifier>(numberSchema.identifier),
+			true,
+			[],
+		);
+
+		/** Field key for the detached field used as the source/destination of attach/detach ops. */
+		const detachedKey: FieldKey = brand("detached");
+
+		/** Detached field id paired with `detachedKey`. */
+		const detachedId = { minor: 0 };
+
+		/**
+		 * Builds a fresh chunked forest for use in a single test case.
+		 *
+		 * @returns A chunked forest with a root field containing a single uniform chunk of 5 numbers.
+		 */
 		function setup() {
 			const builder = new SchemaFactory("chunkedForest.multiNodeUniform");
 			const forestSchema = new TreeStoredSchemaRepository(toInitialSchema(builder.number));
@@ -149,26 +165,24 @@ describe("ChunkedForest", () => {
 			);
 			const forest = buildChunkedForest(chunker);
 
-			const numberType: TreeNodeSchemaIdentifier = brand(numberSchema.identifier);
-			const numberShape = new TreeShape(numberType, true, []);
 			const uniform = new UniformChunk(numberShape.withTopLevelLength(5), [0, 1, 2, 3, 4]);
 			forest.roots.fields.set(rootFieldKey, [uniform]);
 
-			const detachedKey: FieldKey = brand("detached");
-			const detachedId = { minor: 0 };
-
-			return { forest, numberShape, detachedKey, detachedId };
+			return forest;
 		}
 
-		// Combining the topLevelLengths of all chunks in the `chunks` array yields the total node count.
-		// We don't check the chunk shapes themselves as doing so would cause these tests to be fragile
-		// against policy/chunkRange changes.
-		function nodeCount(chunks: readonly { readonly topLevelLength: number }[]): number {
+		/**
+		 * Sums the top-level lengths of the given chunks.
+		 *
+		 * @param chunks - The chunks to sum.
+		 * @returns The total number of top-level nodes across the given `chunks`.
+		 */
+		function nodeCount(chunks: readonly TreeChunk[]): number {
 			return chunks.reduce((n, c) => n + c.topLevelLength, 0);
 		}
 
 		it("detaches a single node from the middle of a uniform chunk", () => {
-			const { forest, detachedKey, detachedId } = setup();
+			const forest = setup();
 
 			const visitor = forest.acquireVisitor();
 			visitor.enterField(rootFieldKey);
@@ -189,7 +203,7 @@ describe("ChunkedForest", () => {
 		});
 
 		it("attaches a single node into the middle of a uniform chunk", () => {
-			const { forest, numberShape, detachedKey } = setup();
+			const forest = setup();
 
 			// Stage a source chunk in the detached field to be attached into the middle of root.
 			const source = new UniformChunk(numberShape.withTopLevelLength(1), [99]);

@@ -579,11 +579,10 @@ export function splitFieldAtIndex(
 ): number {
 	assertNonNegativeSafeInteger(nodeIndex);
 	let remaining = nodeIndex;
-	for (let i = 0; i < chunks.length; i++) {
+	for (const [chunkIndex, chunk] of chunks.entries()) {
 		if (remaining === 0) {
-			return i;
+			return chunkIndex;
 		}
-		const chunk = chunks[i] ?? oob();
 		if (remaining < chunk.topLevelLength) {
 			const total = chunk.topLevelLength;
 			const cursor = chunk.cursor();
@@ -591,9 +590,9 @@ export function splitFieldAtIndex(
 			const before = chunkRange(cursor, policy, remaining, false);
 			const after = chunkRange(cursor, policy, total - remaining, true);
 			// TODO: this could fail for really long chunks being split (due to argument count limits).
-			chunks.splice(i, 1, ...before, ...after);
+			chunks.splice(chunkIndex, 1, ...before, ...after);
 			chunk.referenceRemoved();
-			return i + before.length;
+			return chunkIndex + before.length;
 		}
 		remaining -= chunk.topLevelLength;
 	}
