@@ -134,6 +134,7 @@ function doLabelSetsOverlap(a: ReadonlySet<unknown>, b: ReadonlySet<unknown>): b
 
 /**
  * One entry on the undo or redo stack, pairing a revertible with its commit's label set.
+ * @sealed
  */
 interface StackEntry {
 	/**
