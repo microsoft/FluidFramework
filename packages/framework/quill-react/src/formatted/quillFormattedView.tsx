@@ -554,7 +554,11 @@ const FormattedTextEditorView = withMemoizedTreeObservations(
 					}
 				};
 				if (context.isBranch()) {
-					context.runTransaction(applyDelta, { label: undoRedoRef.current?.editLabel });
+					// editLabel is typed unknown; narrow to symbol for runTransaction.
+					const editLabel = undoRedoRef.current?.editLabel;
+					context.runTransaction(applyDelta, {
+						label: typeof editLabel === "symbol" ? editLabel : undefined,
+					});
 				} else {
 					applyDelta();
 				}

@@ -11,10 +11,9 @@ import type { RevertibleAlpha, TreeBranchAlpha } from "@fluidframework/tree/inte
  * An undo/redo manager that supports optional scoping based on transaction labels.
  *
  * @remarks
- * When labels are provided to `undo` / `redo`, the operation targets the most recent commit
- * whose label set contains all of those labels, skipping commits that do not match. When no
- * labels are provided the operation is global and targets the most recent commit regardless of
- * labels.
+ * When a label is provided to `undo` / `redo`, the operation targets the most recent commit
+ * whose label set contains that label, skipping commits that do not match. When no label is
+ * provided the operation is global and targets the most recent commit regardless of labels.
  *
  * **Redo invalidation:** when a new user commit arrives, redo entries whose label sets overlap
  * with the new commit's labels are discarded. An anonymous commit (no labels) discards only
@@ -65,46 +64,46 @@ import type { RevertibleAlpha, TreeBranchAlpha } from "@fluidframework/tree/inte
  */
 export interface UndoRedo {
 	/**
-	 * Undoes the most recent commit whose label set contains all of the specified labels.
+	 * Undoes the most recent commit whose label set contains `label`.
 	 *
-	 * @param labels - The labels that must all be present on the target commit. If omitted,
-	 * undoes the most recent commit regardless of labels.
+	 * @param label - The label to match against. If omitted, undoes the most recent commit
+	 * regardless of labels.
 	 * This method no-ops if there is nothing to undo matching the label policy.
 	 *
 	 * @see {@link UndoRedo.canUndo}
 	 */
-	undo(...labels: readonly unknown[]): void;
+	undo(label?: unknown): void;
 
 	/**
-	 * Redoes the most recent undone commit whose label set contains all of the specified labels.
+	 * Redoes the most recent undone commit whose label set contains `label`.
 	 *
-	 * @param labels - The labels that must all be present on the target commit. If omitted,
-	 * redoes the most recent undone commit regardless of labels.
+	 * @param label - The label to match against. If omitted, redoes the most recent undone commit
+	 * regardless of labels.
 	 * This method no-ops if there is nothing to redo matching the label policy.
 	 *
 	 * @see {@link UndoRedo.canRedo}
 	 */
-	redo(...labels: readonly unknown[]): void;
+	redo(label?: unknown): void;
 
 	/**
 	 * Returns true if there is at least one commit available to undo whose label set contains
-	 * all of the specified labels.
+	 * `label`.
 	 *
-	 * @param labels - The labels to check for. If omitted, checks the global undo stack.
+	 * @param label - The label to check for. If omitted, checks the global undo stack.
 	 *
 	 * @see {@link UndoRedo.undo}
 	 */
-	canUndo(...labels: readonly unknown[]): boolean;
+	canUndo(label?: unknown): boolean;
 
 	/**
 	 * Returns true if there is at least one commit available to redo whose label set contains
-	 * all of the specified labels.
+	 * `label`.
 	 *
-	 * @param labels - The labels to check for. If omitted, checks the global redo stack.
+	 * @param label - The label to check for. If omitted, checks the global redo stack.
 	 *
 	 * @see {@link UndoRedo.redo}
 	 */
-	canRedo(...labels: readonly unknown[]): boolean;
+	canRedo(label?: unknown): boolean;
 
 	/**
 	 * Releases the manager's subscription to the branch and disposes all tracked revertibles.
@@ -148,17 +147,13 @@ interface StackEntry {
 }
 
 /**
- * Returns a predicate that matches any stack entry whose label set contains all of `labels`.
- * When `labels` is empty, the predicate matches every entry (global operation).
+ * Returns a predicate that matches any stack entry whose label set contains `label`.
+ * When `label` is `undefined`, the predicate matches every entry (global operation).
  *
- * @param labels - The values that must all be present in a matching entry's label set.
- * May be empty to match all entries.
+ * @param label - The value to match against, or `undefined` for a global match-all predicate.
  */
-function labelPredicate(labels: readonly unknown[]): (entry: StackEntry) => boolean {
-	if (labels.length === 0) {
-		return () => true;
-	}
-	return (entry) => labels.every((l) => entry.labels.has(l));
+function labelPredicate(label: unknown): (entry: StackEntry) => boolean {
+	return label === undefined ? () => true : (entry) => entry.labels.has(label);
 }
 
 /**
@@ -243,26 +238,26 @@ class UndoRedoManager implements UndoRedo {
 		});
 	}
 
-	public undo(...labels: readonly unknown[]): void {
+	public undo(label?: unknown): void {
 		if (this.#disposed) {
 			return;
 		}
-		this.#revertWhere(this.#undoStack, "undo", labelPredicate(labels));
+		this.#revertWhere(this.#undoStack, "undo", labelPredicate(label));
 	}
 
-	public redo(...labels: readonly unknown[]): void {
+	public redo(label?: unknown): void {
 		if (this.#disposed) {
 			return;
 		}
-		this.#revertWhere(this.#redoStack, "redo", labelPredicate(labels));
+		this.#revertWhere(this.#redoStack, "redo", labelPredicate(label));
 	}
 
-	public canUndo(...labels: readonly unknown[]): boolean {
-		return this.#undoStack.some(labelPredicate(labels));
+	public canUndo(label?: unknown): boolean {
+		return this.#undoStack.some(labelPredicate(label));
 	}
 
-	public canRedo(...labels: readonly unknown[]): boolean {
-		return this.#redoStack.some(labelPredicate(labels));
+	public canRedo(label?: unknown): boolean {
+		return this.#redoStack.some(labelPredicate(label));
 	}
 
 	public dispose(): void {

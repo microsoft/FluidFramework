@@ -31,10 +31,12 @@ export interface UndoRedoProp {
 	 */
 	readonly manager: UndoRedo;
 	/**
-	 * Symbol that identifies this editor's commits within the shared manager.
+	 * Label that identifies this editor's commits within the shared manager.
+	 *
+	 * @remarks
 	 * Only edits stamped with this label will be considered part of this editor's undo/redo history.
 	 */
-	readonly editLabel: symbol;
+	readonly editLabel: unknown;
 }
 
 /**

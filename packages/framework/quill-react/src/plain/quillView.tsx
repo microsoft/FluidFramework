@@ -98,9 +98,11 @@ const TextEditorView = withMemoizedTreeObservations(
 					// and maybe add a debugAssert that the delta actually gets the strings synchronized.
 					const context = TreeAlpha.context(root);
 					if (context.isBranch()) {
+						// Use ref so this closure always sees the latest label even if undoRedo changes.
+						// editLabel is typed unknown; narrow to symbol for runTransaction.
+						const editLabel = undoRedoRef.current?.editLabel;
 						context.runTransaction(() => syncTextToTree(root, newText), {
-							// Use ref so this closure always sees the latest label even if undoRedo changes.
-							label: undoRedoRef.current?.editLabel,
+							label: typeof editLabel === "symbol" ? editLabel : undefined,
 						});
 					} else {
 						syncTextToTree(root, newText);
