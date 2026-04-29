@@ -125,7 +125,7 @@ Each package listed in a changeset will get a changelog entry with the changeset
 - Avoid referring to package names in the summary (they appear in the "packages affected" section of release notes).
 - Changeset body content may include Markdown headings starting at **level 4** (`####`), since levels 1-3 are used in the release notes structure.
 - `@`-prefixed text use should be code formatted (backtick enclosed).
-  GitHub will aggressively turn `@foo` into a mention of username `foo`.
+  GitHub will aggressively turn "@foo" into a mention of username `foo`.
 - Include links to relevant documentation (e.g. API docs on fluidframework.com) where possible.
 - A changeset should never be just a link — always include a summary with links for more detail.
 - For features, breaking changes, and deprecations, include a code example showing usage or migration.
