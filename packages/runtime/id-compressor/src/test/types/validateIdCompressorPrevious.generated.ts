@@ -96,6 +96,7 @@ declare type current_as_old_for_Interface_IIdCompressor = requireAssignableTo<Ty
  * typeValidation.broken:
  * "Interface_IIdCompressorCore": {"forwardCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_Interface_IIdCompressorCore = requireAssignableTo<TypeOnly<old.IIdCompressorCore>, TypeOnly<current.IIdCompressorCore>>
 
 /*
@@ -105,6 +106,7 @@ declare type old_as_current_for_Interface_IIdCompressorCore = requireAssignableT
  * typeValidation.broken:
  * "Interface_IIdCompressorCore": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Interface_IIdCompressorCore = requireAssignableTo<TypeOnly<current.IIdCompressorCore>, TypeOnly<old.IIdCompressorCore>>
 
 /*

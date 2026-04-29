@@ -5,7 +5,7 @@
 
 import { strict as assert } from "node:assert";
 
-import { benchmark } from "@fluid-tools/benchmark";
+import { benchmarkDuration, benchmarkIt } from "@fluid-tools/benchmark";
 
 import { comparePartialRevisions, type RevisionTag } from "../../core/index.js";
 import {
@@ -52,18 +52,22 @@ describe("Utils", () => {
 		testMap.set(index, index * 2);
 	}
 
-	benchmark({
+	benchmarkIt({
 		title: `map from map spread`,
-		benchmarkFn: () => {
-			const m = new Map([...testMap].map(([k, v]) => [k, v] as const));
-		},
+		...benchmarkDuration({
+			benchmarkFn: () => {
+				const m = new Map([...testMap].map(([k, v]) => [k, v] as const));
+			},
+		}),
 	});
 
-	benchmark({
+	benchmarkIt({
 		title: `map from mapIterable`,
-		benchmarkFn: () => {
-			const m = new Map(mapIterable(testMap, ([k, v]) => [k, v] as const));
-		},
+		...benchmarkDuration({
+			benchmarkFn: () => {
+				const m = new Map(mapIterable(testMap, ([k, v]) => [k, v] as const));
+			},
+		}),
 	});
 
 	it("defineLazyCachedProperty", () => {

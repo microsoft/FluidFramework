@@ -110,6 +110,7 @@ export async function prefetchLatestSnapshot(
 			tokenFetchOptions,
 			loadingGroupId,
 			snapshotOptions,
+			odspLogger,
 			undefined,
 			controller,
 		);
@@ -174,7 +175,7 @@ export async function prefetchLatestSnapshot(
 					}, 5000);
 				})
 				.catch((error) => {
-					// Remove it from the non persistent cache if an error occured.
+					// Remove it from the non persistent cache if an error occurred.
 					snapshotNonPersistentCache?.remove(nonPersistentCacheKey);
 					snapshotContentsWithEpochP.reject(error);
 					throw error;

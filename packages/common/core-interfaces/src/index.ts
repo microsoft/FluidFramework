@@ -64,6 +64,7 @@ export type {
 	ITelemetryBaseEvent,
 	ITelemetryBaseLogger,
 	ITelemetryBaseProperties,
+	LogLevelConst,
 	Tagged,
 	TelemetryBaseEventPropertyType,
 } from "./logger.js";

@@ -131,9 +131,20 @@ const pnpmCmd = process.platform === "win32" ? "pnpm.cmd" : "pnpm";
 const minimumReleaseAgeMinutes = 1 * 24 * 60;
 
 // Enforce reasonable security settings on compat package installs to mitigate risk of supply-chain attacks.
+// We exclude our own scopes/packages so the installation of older FF versions for compat testing doesn't
+// fail due to young versions immediately after we ship a new release.
+// Ideally we shouldn't be installing the older versions "dynamically", but while we figure out an alternative
+// approach we can do this to make things a bit better.
 // See https://pnpm.io/supply-chain-security for context on the flags used here.
 const pnpmWorkspaceYamlContent = `
 minimumReleaseAge: ${minimumReleaseAgeMinutes}
+minimumReleaseAgeExclude:
+- '@fluidframework/*'
+- '@fluid-experimental/*'
+- '@fluid-internal/*'
+- '@fluid-private/*'
+- '@fluid-tools/*'
+- 'fluid-framework'
 
 # See: https://github.com/orgs/pnpm/discussions/11084 for some discussion.
 # Enabling this is additionally more complicated than coming up with a reasonable allow-list of packages, as Azure Artifact feeds don't seem to preserve trusted provenance metadata

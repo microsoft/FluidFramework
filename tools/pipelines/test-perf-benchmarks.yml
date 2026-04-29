@@ -80,8 +80,7 @@ resources:
   - repository: ff_pipeline_host
     type: git
     name: ff_pipeline_host
-     # After this pipeline is merged, the staging branch below can be merged, and this can be set to default to "main".
-    ref: 'crmacomb/stagedBenchmarkUpgrade'
+    ref: main
 
 variables:
   - template: /tools/pipelines/templates/include-vars-telemetry-generator.yml@self
@@ -283,7 +282,9 @@ stages:
 
     - template: /tools/pipelines/templates/upload-telemetry/include-stage-upload-telemetry.yml@self
       parameters:
-        stageIdFilter: ${{ job.stageName }}
+        telemetryDescription: ${{ job.stageName }}
+        dependsOn:
+          - ${{ job.stageName }}
         telemetry_upload_steps:
           - template: /tools/pipelines/templates/upload-telemetry/include-steps-upload-stage-timing.yml@self
             parameters:

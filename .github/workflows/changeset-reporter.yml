@@ -21,13 +21,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       # release notes: https://github.com/actions/checkout/releases/tag/v6.0.0
-      - uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # ratchet:actions/checkout@v6
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # ratchet:actions/checkout@v6
         with:
           persist-credentials: false
 
       - name: Download results
         # release notes: https://github.com/dawidd6/action-download-artifact/releases/tag/v11
-        uses: dawidd6/action-download-artifact@ac66b43f0e6a346234dd65d4d0c8fbb31cb316e5 # ratchet:dawidd6/action-download-artifact@v11
+        uses: dawidd6/action-download-artifact@8305c0f1062bb0d184d09ef4493ecb9288447732 # ratchet:dawidd6/action-download-artifact@v20
         with:
           workflow: pr-check-changeset.yml
           run_id: ${{ github.event.workflow_run.id }}
