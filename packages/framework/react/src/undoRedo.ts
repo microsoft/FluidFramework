@@ -167,6 +167,9 @@ function labelPredicate(label: unknown): (entry: StackEntry) => boolean {
  */
 const attachedBranches = new WeakSet<TreeBranchAlpha>();
 
+/**
+ * {@link UndoRedo} implementation.
+ */
 class UndoRedoManager implements UndoRedo {
 	/** Commits available to undo, ordered oldest-first. */
 	readonly #undoStack: StackEntry[] = [];
