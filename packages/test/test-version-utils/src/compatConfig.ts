@@ -62,6 +62,8 @@ export interface CompatConfig {
 	loadVersion?: string;
 }
 
+export const oldestCompatibleVersion = resolveVersion("2.0.0-internal.5.4.2", false);
+
 /**
  * The default versions to be used for generating configurations for layer compat testing.
  */
@@ -69,7 +71,7 @@ const defaultVersionsForLayerCompat = {
 	// N and N - 1
 	currentVersionDeltas: [0, -1],
 	// This is the oldest compatible version (OCV) for Loader and Driver layers.
-	oldestCompatibleVersion: [resolveVersion("2.0.0-internal.5.4.2", false)],
+	oldestCompatibleVersion: [oldestCompatibleVersion],
 };
 
 /**
@@ -213,14 +215,17 @@ const genDriverLoaderBackCompatConfig = (compatVersion: number): CompatConfig[] 
 	];
 };
 
+/**
+ * We have 8 internal and 5 RC versions.
+ */
+export const numOfInternalMajorsBeforePublic2dot0 = 8 + 5;
+
 const getNumberOfVersionsToGoBack = (numOfVersionsAboveV2Int1: number = 0): number => {
 	const semverVersion = semver.parse(codeVersion);
 	assert(semverVersion !== null, `Unexpected pkg version '${codeVersion}'`);
 
-	// We have 8 internal and 5 RC versions.
 	// We want to generate back compat configs for all of them because they are all considered major releases.
 	// RCs can be thought of as internal 9 through 13 for this purpose, so just add them.
-	const numOfInternalMajorsBeforePublic2dot0 = 8 + 5;
 	// This allows us to increase our oldest compatible version (OCV) support for certain versions above
 	// 2.0.0.internal.1.y.z, where we don't want to go that far.
 	return numOfInternalMajorsBeforePublic2dot0 - numOfVersionsAboveV2Int1;

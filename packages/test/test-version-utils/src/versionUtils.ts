@@ -53,8 +53,6 @@ export const fullWorkspaceDir = path.join(compatWorkspacesDir, "full");
 
 /**
  * Schema for the committed `compat-workspaces/versions.cjs` file.
- * MACHINE-MAINTAINED by `scripts/updateCompatVersions.ts` — do not edit by hand.
- * @internal
  */
 export interface CompatVersionsManifest {
 	/** All exact versions installed in `compat-workspaces/full/`, newest first. */
@@ -66,7 +64,6 @@ let cachedManifest: CompatVersionsManifest | undefined;
 /**
  * Reads the committed versions manifest. Returns `undefined` if it doesn't exist (before the
  * first run of the update script).
- * @internal
  */
 export function tryReadVersionsManifest(): CompatVersionsManifest | undefined {
 	if (cachedManifest !== undefined) return cachedManifest;
@@ -77,7 +74,6 @@ export function tryReadVersionsManifest(): CompatVersionsManifest | undefined {
 
 /**
  * Returns all exact versions recorded in the manifest.
- * @internal
  */
 export function getAllManifestVersions(manifest: CompatVersionsManifest): string[] {
 	return manifest.versions;
