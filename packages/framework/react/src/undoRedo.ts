@@ -65,44 +65,46 @@ import type { RevertibleAlpha, TreeBranchAlpha } from "@fluidframework/tree/inte
  */
 export interface UndoRedo {
 	/**
-	 * Undoes the most recent commit whose labels include `label`.
+	 * Undoes the most recent commit whose label set contains all of the specified labels.
 	 *
-	 * @param label - The label to match against. If omitted, undoes the most recent commit
-	 * regardless of labels.
+	 * @param labels - The labels that must all be present on the target commit. If omitted,
+	 * undoes the most recent commit regardless of labels.
 	 * This method no-ops if there is nothing to undo matching the label policy.
 	 *
 	 * @see {@link UndoRedo.canUndo}
 	 */
-	undo(label?: symbol): void;
+	undo(...labels: symbol[]): void;
 
 	/**
-	 * Redoes the most recent undone commit whose labels include `label`.
+	 * Redoes the most recent undone commit whose label set contains all of the specified labels.
 	 *
-	 * @param label - The label to match against. If omitted, redoes the most recent undone commit
-	 * regardless of labels.
+	 * @param labels - The labels that must all be present on the target commit. If omitted,
+	 * redoes the most recent undone commit regardless of labels.
 	 * This method no-ops if there is nothing to redo matching the label policy.
 	 *
 	 * @see {@link UndoRedo.canRedo}
 	 */
-	redo(label?: symbol): void;
+	redo(...labels: symbol[]): void;
 
 	/**
-	 * Returns true if there is at least one commit available to undo matching the label policy.
+	 * Returns true if there is at least one commit available to undo whose label set contains
+	 * all of the specified labels.
 	 *
-	 * @param label - The label to check for. If omitted, checks the global undo stack.
+	 * @param labels - The labels to check for. If omitted, checks the global undo stack.
 	 *
 	 * @see {@link UndoRedo.undo}
 	 */
-	canUndo(label?: symbol): boolean;
+	canUndo(...labels: symbol[]): boolean;
 
 	/**
-	 * Returns true if there is at least one commit available to redo matching the label policy.
+	 * Returns true if there is at least one commit available to redo whose label set contains
+	 * all of the specified labels.
 	 *
-	 * @param label - The label to check for. If omitted, checks the global redo stack.
+	 * @param labels - The labels to check for. If omitted, checks the global redo stack.
 	 *
 	 * @see {@link UndoRedo.redo}
 	 */
-	canRedo(label?: symbol): boolean;
+	canRedo(...labels: symbol[]): boolean;
 
 	/**
 	 * Releases the manager's subscription to the branch and disposes all tracked revertibles.
@@ -143,13 +145,16 @@ interface StackEntry {
 }
 
 /**
- * Returns a predicate that matches any stack entry whose label set contains `label`.
- * When `label` is `undefined`, the predicate matches every entry (global operation).
+ * Returns a predicate that matches any stack entry whose label set contains all of `labels`.
+ * When `labels` is empty, the predicate matches every entry (global operation).
  *
- * @param label - The symbol to match against, or `undefined` for a global match-all predicate.
+ * @param labels - The symbols that must all be present in a matching entry's label set.
  */
-function labelPredicate(label: symbol | undefined): (entry: StackEntry) => boolean {
-	return label === undefined ? () => true : (entry) => entry.labels.has(label);
+function labelPredicate(labels: symbol[]): (entry: StackEntry) => boolean {
+	if (labels.length === 0) {
+		return () => true;
+	}
+	return (entry) => labels.every((l) => entry.labels.has(l));
 }
 
 /**
@@ -234,26 +239,26 @@ class UndoRedoManager implements UndoRedo {
 		});
 	}
 
-	public undo(label?: symbol): void {
+	public undo(...labels: symbol[]): void {
 		if (this.#disposed) {
 			return;
 		}
-		this.#revertWhere(this.#undoStack, "undo", labelPredicate(label));
+		this.#revertWhere(this.#undoStack, "undo", labelPredicate(labels));
 	}
 
-	public redo(label?: symbol): void {
+	public redo(...labels: symbol[]): void {
 		if (this.#disposed) {
 			return;
 		}
-		this.#revertWhere(this.#redoStack, "redo", labelPredicate(label));
+		this.#revertWhere(this.#redoStack, "redo", labelPredicate(labels));
 	}
 
-	public canUndo(label?: symbol): boolean {
-		return this.#undoStack.some(labelPredicate(label));
+	public canUndo(...labels: symbol[]): boolean {
+		return this.#undoStack.some(labelPredicate(labels));
 	}
 
-	public canRedo(label?: symbol): boolean {
-		return this.#redoStack.some(labelPredicate(label));
+	public canRedo(...labels: symbol[]): boolean {
+		return this.#redoStack.some(labelPredicate(labels));
 	}
 
 	public dispose(): void {
