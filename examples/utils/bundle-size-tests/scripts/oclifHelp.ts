@@ -33,14 +33,18 @@ export function maybePrintHelp(
 		{
 			type?: string;
 			description?: string;
-			default?: unknown;
+			default?: string | number | boolean;
 			options?: readonly string[];
 			required?: boolean;
 		}
 	>;
-	const examples = (CommandClass.examples ?? []).map((e) =>
-		typeof e === "string" ? e : (e.command ?? ""),
-	);
+	const examples: string[] = (CommandClass.examples ?? []).map((e) => {
+		if (typeof e === "string") {
+			return e;
+		}
+		const command = (e as { command?: unknown }).command;
+		return typeof command === "string" ? command : "";
+	});
 
 	console.log(`Usage:\n  jiti ./scripts/${commandName} [flags]\n`);
 	if (description.length > 0) {
@@ -57,13 +61,14 @@ export function maybePrintHelp(
 				: def.options
 					? ` <${def.options.join("|")}>`
 					: " <value>";
+			const defaultValue = def.default;
 			const defaultPart =
-				def.default !== undefined && !isBoolean
-					? ` (default: ${String(def.default)})`
-					: isBoolean && def.default === true
+				defaultValue !== undefined && !isBoolean
+					? ` (default: ${String(defaultValue)})`
+					: isBoolean && defaultValue === true
 						? " (default: true)"
 						: "";
-			const requiredPart = def.required ? " (required)" : "";
+			const requiredPart = def.required === true ? " (required)" : "";
 			console.log(
 				`  --${name}${valuePart}${defaultPart}${requiredPart}\n      ${
 					def.description ?? ""
