@@ -160,7 +160,7 @@ export default class GenerateBundleSizeDiff extends BaseCommand<
 				error: comparisonResult.error,
 			};
 			await writeFile(errorPath, JSON.stringify(errorResult, undefined, 2));
-			this.log(`Wrote ${errorPath}`);
+			this.info(`Wrote ${errorPath}`);
 			return;
 		}
 
@@ -175,7 +175,7 @@ export default class GenerateBundleSizeDiff extends BaseCommand<
 					"No bundles to compare — baseline artifact or PR local bundle reports are empty.",
 			};
 			await writeFile(errorPath, JSON.stringify(errorResult, undefined, 2));
-			this.log(`Wrote ${errorPath}`);
+			this.info(`Wrote ${errorPath}`);
 			return;
 		}
 
@@ -195,6 +195,6 @@ export default class GenerateBundleSizeDiff extends BaseCommand<
 				};
 
 		await writeFile(resultPath, JSON.stringify(result, undefined, 2));
-		this.log(`Wrote ${resultPath}`);
+		this.info(`Wrote ${resultPath}`);
 	}
 }
