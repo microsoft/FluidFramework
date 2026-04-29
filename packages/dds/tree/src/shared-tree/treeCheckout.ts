@@ -728,9 +728,7 @@ export class TreeCheckout implements ITreeCheckout {
 
 				// Snapshot the label tree for this commit before any listener runs.
 				const commitLabelTree =
-					this.labelTreeNode === undefined
-						? undefined
-						: cloneLabelTree(this.labelTreeNode);
+					this.labelTreeNode === undefined ? undefined : cloneLabelTree(this.labelTreeNode);
 
 				const getRevertible = hasSchemaChange(change)
 					? undefined
