@@ -155,8 +155,10 @@ describe("ChunkedForest", () => {
 		 *
 		 * @returns A chunked forest with a root field containing a single uniform chunk of 5 numbers.
 		 */
-		function setup() {
-			const forestSchema = new TreeStoredSchemaRepository(toInitialSchema(SchemaFactory.number));
+		function setupForest() {
+			const forestSchema = new TreeStoredSchemaRepository(
+				toInitialSchema(SchemaFactory.number),
+			);
 			const chunker = makeTreeChunker(
 				forestSchema,
 				defaultSchemaPolicy,
@@ -181,7 +183,7 @@ describe("ChunkedForest", () => {
 		}
 
 		it("detaches a single node from the middle of a uniform chunk", () => {
-			const forest = setup();
+			const forest = setupForest();
 
 			const visitor = forest.acquireVisitor();
 			visitor.enterField(rootFieldKey);
@@ -202,7 +204,7 @@ describe("ChunkedForest", () => {
 		});
 
 		it("attaches a single node into the middle of a uniform chunk", () => {
-			const forest = setup();
+			const forest = setupForest();
 
 			// Stage a source chunk in the detached field to be attached into the middle of root.
 			const source = new UniformChunk(numberShape.withTopLevelLength(1), [99]);
