@@ -28,10 +28,10 @@
  */
 
 import { execFileSync } from "node:child_process";
-import { existsSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import * as path from "node:path";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 
 import { detectVersionScheme, fromInternalScheme } from "@fluid-tools/version-tools";
 import { assert } from "@fluidframework/core-utils/internal";
@@ -195,35 +195,73 @@ export function checkInstalled(requested: string): { version: string; modulePath
 // ---------------------------------------------------------------------------
 
 /**
- * Dynamically loads a package from the specified module directory.
- *
- * Uses Node's standard module resolution algorithm via `createRequire`, which naturally handles
- * both version-specific `node_modules/` and the hoisted workspace-root `node_modules/` without
- * manual path construction. The package is loaded with `require()`.
+ * Dynamically loads a package from the specified module path.
  *
  * @param modulePath - Path to the version directory (e.g. `compat-workspaces/full/2.83.0`).
  * The resolver starts here and walks up to find hoisted packages.
  * @param pkg - Package name to load (e.g. `@fluidframework/container-loader`).
+ * @remarks
+ * This function reimplements part of Node's module resolution logic. It would be possible to use `createRequire` / `import` alternatively,
+ * but if this approach is taken, the compat workspace where prior versions of FF get installed *must* be moved outside of a context that might
+ * have other versions of FF installed in parent folders. Otherwise, Node's module resolution might happily load incorrect versions of FF packages
+ * from parent folders instead of the intended versions, which would silently break the tests.
  * @internal
  */
 export const loadPackage = async (
 	modulePath: string,
 	pkg: string,
-	preferredEntrypoint: "." | `./${string}` = ".",
+	importPath: "." | `./${string}` = ".",
 ): Promise<any> => {
-	// createRequire anchored to the version directory. Node's resolution algorithm walks up
-	// through that directory's node_modules, then the workspace-root node_modules (hoisted), so
-	// we do not need to pass the workspace root separately.
-	const requirePath =
-		preferredEntrypoint !== undefined && preferredEntrypoint !== "."
-			? `${pkg}/${preferredEntrypoint.slice(2)}` // e.g. "./internal" → "@scope/pkg/internal"
-			: pkg;
-	const resolveFrom = createRequire(path.join(modulePath, "package.json"));
-	try {
-		return resolveFrom(requirePath);
-	} catch (e) {
-		throw new Error(`Cannot load package "${requirePath}" from ${modulePath}: ${e}`);
+	const pkgPath = path.join(modulePath, "node_modules", pkg);
+	// Because we put legacy versions in a specific subfolder of node_modules (.legacy/<version>), we need to reimplement
+	// some of Node's module loading logic here.
+	// It would be ideal to remove the need for this duplication (e.g. by using node:module APIs instead) if possible.
+	const pkgJson: { main?: string; exports?: string | Record<string, any> } = JSON.parse(
+		readFileSync(path.join(pkgPath, "package.json"), { encoding: "utf8" }),
+	);
+	// See: https://nodejs.org/docs/latest-v18.x/api/packages.html#package-entry-points
+	let primaryExport: string;
+	if (pkgJson.exports !== undefined) {
+		// See https://nodejs.org/docs/latest-v18.x/api/packages.html#conditional-exports for information on the spec
+		// if this assert fails.
+		// The v18 doc doesn't mention that export paths must start with ".", but the modern docs do:
+		// https://nodejs.org/api/packages.html#exports
+		for (const key of Object.keys(pkgJson.exports)) {
+			if (!key.startsWith(".")) {
+				throw new Error(
+					"Conditional exports not supported by test-version-utils. Legacy module loading logic needs to be updated.",
+				);
+			}
+		}
+		if (typeof pkgJson.exports === "string") {
+			primaryExport = pkgJson.exports;
+		} else {
+			const exp: any | undefined = pkgJson.exports[importPath] ?? pkgJson.exports["."];
+			primaryExport =
+				typeof exp === "string"
+					? exp
+					: exp.require !== undefined
+						? exp.require.default
+						: exp.default;
+			if (typeof primaryExport !== "string") {
+				// eslint-disable-next-line unicorn/prefer-type-error -- this isn't a TypeError really; it is an internal logic shortcoming; entry might not be a string
+				throw new Error(
+					`Package ${pkg} defined subpath exports but no recognizable ${importPath} entry.`,
+				);
+			}
+		}
+	} else {
+		if (pkgJson.main === undefined) {
+			throw new Error(`No main or exports in package.json for ${pkg}`);
+		}
+		if (importPath !== ".") {
+			console.warn(
+				`Package ${pkg} main used despite request for ${importPath} entry (no "exports" property found).`,
+			);
+		}
+		primaryExport = pkgJson.main;
 	}
+	return import(pathToFileURL(path.join(pkgPath, primaryExport)).href);
 };
 
 // ---------------------------------------------------------------------------
