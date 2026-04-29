@@ -6,10 +6,10 @@
 import type { TextAsTree } from "@fluidframework/tree/internal";
 import { type ChangeEvent, type FC, useCallback, useRef } from "react";
 
+import type { PropTreeNode } from "../../propNode.js";
 import { withMemoizedTreeObservations } from "../../useTree.js";
 
 import { syncTextToTree } from "./plainUtils.js";
-import type { MainViewProps } from "./quillView.js";
 
 /**
  * A React component for plain text editing.
@@ -17,7 +17,7 @@ import type { MainViewProps } from "./quillView.js";
  * Uses {@link @fluidframework/tree#TextAsTree.Tree} for the data-model and an HTML textarea for the UI.
  * @internal
  */
-export const MainView: FC<MainViewProps> = ({ root }) => {
+export const MainView: FC<{ root: PropTreeNode<TextAsTree.Tree> }> = ({ root }) => {
 	return <PlainTextEditorView root={root} />;
 };
 
@@ -86,8 +86,8 @@ const PlainTextEditorView = withMemoizedTreeObservations(
 			<div
 				className="text-editor-container"
 				style={{ height: "100%", display: "flex", flexDirection: "column" }}
+				onClick={() => textareaRef.current?.focus()}
 			>
-				<h2 style={{ margin: "10px 0" }}>Collaborative Text Editor</h2>
 				<textarea
 					ref={textareaRef}
 					defaultValue={currentText}

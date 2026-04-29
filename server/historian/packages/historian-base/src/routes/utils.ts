@@ -351,7 +351,7 @@ export function queryParamToString(value: any): string | undefined {
  */
 export interface IHistorianRouteContext {
 	router: Router;
-	maxTokenLifetimeSec: number;
+	maxTokenLifetimeSec: number | undefined;
 	tenantThrottleOptions: Partial<IThrottleMiddlewareOptions>;
 	restTenantGeneralThrottler: IThrottler | undefined;
 }
@@ -366,7 +366,7 @@ export function createRouteContext(
 	restTenantThrottlers: Map<string, IThrottler>,
 ): IHistorianRouteContext {
 	const router: Router = Router();
-	const maxTokenLifetimeSec = (config.get("maxTokenLifetimeSec") as number | null) ?? 0;
+	const maxTokenLifetimeSec = config.get("maxTokenLifetimeSec") as number | undefined;
 	const tenantThrottleOptions: Partial<IThrottleMiddlewareOptions> = {
 		throttleIdPrefix: (req) => req.params.tenantId,
 		throttleIdSuffix: Constants.historianRestThrottleIdSuffix,
@@ -380,7 +380,7 @@ export function createRouteContext(
 export function verifyToken(
 	revokedTokenChecker: IRevokedTokenChecker | undefined,
 	requiredScopes: string[],
-	maxTokenLifetimeSec: number,
+	maxTokenLifetimeSec: number | undefined,
 ): RequestHandler {
 	// eslint-disable-next-line @typescript-eslint/no-misused-promises
 	return async (request, response, next) => {
@@ -436,7 +436,13 @@ export function verifyToken(
 				}
 			}
 
-			if (!claims.exp || !claims.iat || claims.exp - claims.iat > maxTokenLifetimeSec) {
+			if (!claims.exp || !claims.iat) {
+				throw new NetworkError(403, "Invalid token expiry");
+			}
+			if (
+				maxTokenLifetimeSec !== undefined &&
+				claims.exp - claims.iat > maxTokenLifetimeSec
+			) {
 				throw new NetworkError(403, "Invalid token expiry");
 			}
 			const lifeTimeMSec = claims.exp * 1000 - new Date().getTime();

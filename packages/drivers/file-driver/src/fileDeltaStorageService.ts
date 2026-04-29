@@ -6,7 +6,7 @@
 import fs from "fs";
 
 import { assert } from "@fluidframework/core-utils/internal";
-import {
+import type {
 	IDocumentDeltaStorageService,
 	IStream,
 	ISequencedDocumentMessage,

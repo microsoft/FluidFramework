@@ -6,14 +6,9 @@
 import { strict as assert } from "assert";
 
 import { describeCompat } from "@fluid-private/test-version-utils";
-import { IMemoryTestObject, benchmarkMemory } from "@fluid-tools/benchmark";
-import {
-	IContainer,
-	IFluidCodeDetails,
-	ILoader,
-} from "@fluidframework/container-definitions/internal";
+import { benchmarkIt, benchmarkMemoryUse, memoryUseOfValue } from "@fluid-tools/benchmark";
+import { IFluidCodeDetails } from "@fluidframework/container-definitions/internal";
 import { ILoaderProps, Loader } from "@fluidframework/container-loader/internal";
-import { IRequest } from "@fluidframework/core-interfaces";
 import { IResolvedUrl } from "@fluidframework/driver-definitions/internal";
 import {
 	ITestObjectProvider,
@@ -60,60 +55,36 @@ describeCompat("Container - memory usage benchmarks", "NoCompat", (getTestObject
 		loaderContainerTracker.reset();
 	});
 
-	benchmarkMemory(
-		new (class implements IMemoryTestObject {
-			title = "Create loader";
-			private loader: ILoader | undefined;
+	benchmarkIt({
+		title: "Create loader",
+		...benchmarkMemoryUse(memoryUseOfValue(() => createLoader())),
+	}).timeout(60000);
 
-			beforeIteration(): void {
-				this.loader = undefined;
-			}
+	benchmarkIt({
+		title: "Create detached container",
+		...benchmarkMemoryUse(
+			memoryUseOfValue(async () => loader.createDetachedContainer(codeDetails)),
+		),
+	}).timeout(60000);
 
-			async run(): Promise<void> {
-				this.loader = createLoader();
-			}
-		})(),
-	);
+	benchmarkIt({
+		title: "Create detached container and attach it",
+		...benchmarkMemoryUse(
+			memoryUseOfValue(async () => {
+				const container = await loader.createDetachedContainer(codeDetails);
+				await container.attach(provider.driver.createCreateNewRequest("containerTest"));
+				return container;
+			}),
+		),
+	}).timeout(60000);
 
-	benchmarkMemory(
-		new (class implements IMemoryTestObject {
-			title = "Create detached container";
-			private container: IContainer | undefined;
-
-			beforeIteration(): void {
-				this.container = undefined;
-			}
-
-			async run(): Promise<void> {
-				this.container = await loader.createDetachedContainer(codeDetails);
-			}
-		})(),
-	);
-
-	benchmarkMemory(
-		new (class implements IMemoryTestObject {
-			title = "Create detached container and attach it";
-			private container: IContainer | undefined;
-
-			beforeIteration(): void {
-				this.container = undefined;
-			}
-
-			async run(): Promise<void> {
-				this.container = await loader.createDetachedContainer(codeDetails);
-				await this.container.attach(provider.driver.createCreateNewRequest("containerTest"));
-			}
-		})(),
-	);
-
-	benchmarkMemory(
-		new (class implements IMemoryTestObject {
-			title = "Load existing container";
-			async run(): Promise<void> {
+	benchmarkIt({
+		title: "Load existing container",
+		...benchmarkMemoryUse(
+			memoryUseOfValue(async () => {
 				const requestUrl = await provider.driver.createContainerUrl(fileName, containerUrl);
-				const testRequest: IRequest = { url: requestUrl };
-				const container = await loader.resolve(testRequest);
-			}
-		})(),
-	);
+				return loader.resolve({ url: requestUrl });
+			}),
+		),
+	}).timeout(60000);
 });

@@ -1,5 +1,40 @@
 # @fluid-experimental/presence
 
+## 2.100.0
+
+### Minor Changes
+
+- Node 22 is now the minimum supported Node.js version ([#27116](https://github.com/microsoft/FluidFramework/pull/27116)) [e8214d29663](https://github.com/microsoft/FluidFramework/commit/e8214d29663f5ee98d737daed82506a25d8de8d0)
+
+  All Fluid Framework client packages now require Node.js 22 or later. This aligns with the standing Node upgrade policy as Node 20 reaches end-of-life on April 30, 2026.
+
+## 2.93.0
+
+### Minor Changes
+
+- `getPresence` from `@fluidframework/presence` is deprecated and will be removed in a future release. ([#26399](https://github.com/microsoft/FluidFramework/pull/26399)) [d533c19c7c](https://github.com/microsoft/FluidFramework/commit/d533c19c7cb25d48ecab1b742e44dfe560d20534)
+
+  Now `getPresence` is available for import from the `fluid-framework` package.
+
+  To prepare, make changes following this pattern:
+
+  ```diff
+  -import { getPresence } from "@fluidframework/presence/beta";
+  +import { getPresence } from "fluid-framework";
+  ```
+
+  See [issue #26397](https://github.com/microsoft/FluidFramework/issues/26397) for more details.
+
+- presence API set now at public support level ([#27001](https://github.com/microsoft/FluidFramework/pull/27001)) [97d14a7e84](https://github.com/microsoft/FluidFramework/commit/97d14a7e8411ff2dd17dc497a09823a276fd78e0)
+
+  All `@fluidframework/presence` APIs that had been `@beta` have been promoted to `@public` support with the exception of `getPresence` which has been relocated to `fluid-framework`. (See [issue #26397](https://github.com/microsoft/FluidFramework/issues/26397) for more `getPresence` details.)
+
+  See [Presence API overview](https://fluidframework.com/docs/build/presence) and [Presence package API details](https://fluidframework.com/docs/api/presence/) with [getPresence API](https://fluidframework.com/docs/api/fluid-framework/#getPresence) to get started.
+
+## 2.92.0
+
+Dependency updates only.
+
 ## 2.91.0
 
 Dependency updates only.

@@ -1198,7 +1198,7 @@ export function makeDiscontinuedEncodingTestSuite(
 			it("throws when decoding", () => {
 				assert.throws(
 					() => jsonCodec.decode({ version }, {}),
-					validateUsageError(/Cannot decode data to format/),
+					validateUsageError(/Cannot decode data in format/),
 				);
 			});
 		});

@@ -27,11 +27,12 @@ import { TreeCompressionStrategy } from "../../treeCompressionUtils.js";
 import { decode } from "./chunkDecoding.js";
 import type { FieldBatch } from "./fieldBatch.js";
 import {
-	type EncodedFieldBatch,
-	FieldBatchFormatVersion,
 	EncodedFieldBatchV1,
 	EncodedFieldBatchV2,
-} from "./format.js";
+	FieldBatchFormatVersion,
+	supportsIncrementalEncoding,
+	type EncodedFieldBatchV1OrV2,
+} from "./format/index.js";
 import type { IncrementalEncodingPolicy } from "./incrementalEncodingPolicy.js";
 import { schemaCompressedEncodeV1, schemaCompressedEncodeV2 } from "./schemaBasedEncode.js";
 import { uncompressedEncodeV1, uncompressedEncodeV2 } from "./uncompressedEncode.js";
@@ -67,7 +68,7 @@ export interface IncrementalEncoder {
 	 */
 	encodeIncrementalField(
 		cursor: ITreeCursorSynchronous,
-		chunkEncoder: (chunk: TreeChunk) => EncodedFieldBatch,
+		chunkEncoder: (chunk: TreeChunk) => EncodedFieldBatchV2,
 	): ChunkReferenceId[];
 }
 
@@ -87,7 +88,7 @@ export interface IncrementalDecoder {
 	 */
 	decodeIncrementalChunk(
 		referenceId: ChunkReferenceId,
-		chunkDecoder: (encoded: EncodedFieldBatch) => TreeChunk,
+		chunkDecoder: (encoded: EncodedFieldBatchV2) => TreeChunk,
 	): TreeChunk;
 }
 /**
@@ -117,25 +118,28 @@ export type FieldBatchCodec = ReturnType<typeof fieldBatchCodecBuilder.build>;
  */
 function makeFieldBatchCodecForVersion(
 	version: FieldBatchFormatVersion,
-	uncompressedEncodeFn: (batch: FieldBatch) => EncodedFieldBatch,
+	uncompressedEncodeFn: (batch: FieldBatch) => EncodedFieldBatchV1OrV2,
 	schemaCompressedEncodeFn: (
 		schema: StoredSchemaCollection,
 		policy: SchemaPolicy,
 		fieldBatch: FieldBatch,
 		idCompressor: IIdCompressor,
 		incrementalEncoder: IncrementalEncoder | undefined,
-	) => EncodedFieldBatch,
+	) => EncodedFieldBatchV1OrV2,
 	encodedFieldBatchType: TSchema,
 ): CodecAndSchema<FieldBatch, FieldBatchEncodingContext> {
 	return {
-		encode: (data: FieldBatch, context: FieldBatchEncodingContext): EncodedFieldBatch => {
+		encode: (
+			data: FieldBatch,
+			context: FieldBatchEncodingContext,
+		): EncodedFieldBatchV1OrV2 => {
 			for (const cursor of data) {
 				assert(
 					cursor.mode === CursorLocationType.Fields,
 					0x8a3 /* FieldBatch expects fields cursors */,
 				);
 			}
-			let encoded: EncodedFieldBatch;
+			let encoded: EncodedFieldBatchV1OrV2;
 			let incrementalEncoder: IncrementalEncoder | undefined;
 			switch (context.encodeType) {
 				case TreeCompressionStrategy.Uncompressed: {
@@ -144,7 +148,7 @@ function makeFieldBatchCodecForVersion(
 				}
 				case TreeCompressionStrategy.CompressedIncremental: {
 					assert(
-						version >= FieldBatchFormatVersion.v2,
+						supportsIncrementalEncoding(version),
 						0xca0 /* Unsupported FieldBatchFormatVersion for incremental encoding; must be v2 or higher */,
 					);
 					// Incremental encoding is only supported for CompressedIncremental.
@@ -176,7 +180,10 @@ function makeFieldBatchCodecForVersion(
 			// TODO: consider checking input data was in schema.
 			return encoded;
 		},
-		decode: (data: EncodedFieldBatch, context: FieldBatchEncodingContext): FieldBatch => {
+		decode: (
+			data: EncodedFieldBatchV1OrV2,
+			context: FieldBatchEncodingContext,
+		): FieldBatch => {
 			// TODO: consider checking data is in schema.
 			return decode(
 				data,

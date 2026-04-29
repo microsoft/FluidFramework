@@ -3,19 +3,26 @@
  * Licensed under the MIT License.
  */
 
-import type { BenchmarkData } from "../ResultTypes";
-import { prettyNumber } from "../RunnerUtilities";
-import { getArrayStatistics } from "../sampling";
-import { type Timer, timer, timerWithResolution } from "../timer";
 import {
-	benchmarkArgumentsIsCustom,
+	isInPerformanceTestingMode,
+	TestType,
+	type BenchmarkDescription,
+	type BenchmarkFunction,
+} from "../Configuration.js";
+import { assertProperUse } from "../assert.js";
+import { stripUndefined } from "../benchmarkAuthoringUtilities.js";
+import { ValueType, type CollectedData } from "../reportTypes.js";
+import { getArrayStatistics } from "../sampling.js";
+import { type Timer, timer as defaultTimer, timerWithResolution } from "../timer.js";
+import {
+	isCustomBenchmark,
 	validateBenchmarkArguments,
-	type BenchmarkRunningOptions,
-	type BenchmarkRunningOptionsAsync,
-	type BenchmarkRunningOptionsSync,
-	type BenchmarkTimer,
+	type DurationBenchmark,
+	type BatchedDurationTimer,
 	type BenchmarkTimingOptions,
-} from "./configuration";
+	type DurationBenchmarkSync,
+	type DurationBenchmarkAsync,
+} from "./configuration.js";
 
 /**
  * @public
@@ -48,46 +55,65 @@ export const defaultTimingOptions: Required<BenchmarkTimingOptions> = {
 };
 
 /**
- * Runs the benchmark.
+ * Default timing options for correctness-only test runs (i.e., without `--perfMode`).
+ */
+export const correctnessTestTimingOptions: Required<BenchmarkTimingOptions> = {
+	maxBenchmarkDurationSeconds: 0,
+	minBatchCount: 1,
+	minBatchDurationSeconds: 0,
+	startPhase: Phase.CollectData,
+};
+
+/**
+ * Runs a duration benchmark and returns the collected timing measurements.
+ * @remarks
+ * When not in performance testing mode (i.e. without `--perfMode`), runs only a single iteration
+ * and returns inaccurate data. Use {@link isInPerformanceTestingMode} to check the current mode.
+ *
+ * If using this inside a {@link BenchmarkFunction}, consider using {@link benchmarkDuration} instead,
+ * or manually tagging the associated {@link BenchmarkDescription.testType} as {@link TestType.ExecutionTime}.
  * @public
  */
-export async function runBenchmark(args: BenchmarkRunningOptions): Promise<BenchmarkData> {
-	if (benchmarkArgumentsIsCustom(args)) {
-		const state = new BenchmarkState(timer, args);
+export async function collectDurationData(args: DurationBenchmark): Promise<CollectedData> {
+	const timingArgs: BenchmarkTimingOptions = isInPerformanceTestingMode
+		? args
+		: correctnessTestTimingOptions;
+
+	if (isCustomBenchmark(args)) {
+		const state = new BenchmarkState(defaultTimer, timingArgs);
 		await args.benchmarkFnCustom(state);
 		return state.computeData();
 	}
 
 	const options = {
 		...defaultTimingOptions,
-		...args,
+		...stripUndefined(args),
+		...timingArgs,
 	};
-	const { isAsync, benchmarkFn: argsBenchmarkFn } = validateBenchmarkArguments(args);
+	const { isAsync, benchmarkFn } = validateBenchmarkArguments(args);
 
-	await options.before?.();
-
-	let data: BenchmarkData;
+	let data: CollectedData;
 	// eslint-disable-next-line unicorn/prefer-ternary
 	if (isAsync) {
 		data = await runBenchmarkAsync({
 			...options,
-			benchmarkFnAsync: argsBenchmarkFn,
+			benchmarkFnAsync: benchmarkFn,
 		});
 	} else {
-		data = runBenchmarkSync({ ...options, benchmarkFn: argsBenchmarkFn });
+		data = runBenchmarkSync({ ...options, benchmarkFn });
 	}
-	await options.after?.();
 	return data;
 }
 
-class BenchmarkState<T> implements BenchmarkTimer<T> {
+export class BenchmarkState<T> implements BatchedDurationTimer<T> {
 	/**
 	 * Duration for each batch, in seconds.
 	 */
 	private readonly samples: number[];
-	private readonly options: Readonly<Required<BenchmarkTimingOptions>>;
+	public readonly options: Readonly<Required<BenchmarkTimingOptions>>;
 	private readonly startTime: T;
 	private phase: Phase;
+	private collectionComplete = false;
 	public iterationsPerBatch: number;
 	public constructor(
 		public readonly timer: Timer<T>,
@@ -97,39 +123,52 @@ class BenchmarkState<T> implements BenchmarkTimer<T> {
 		this.samples = [];
 		this.options = {
 			...defaultTimingOptions,
-			...options,
+			...stripUndefined(options),
 		};
 		this.phase = this.options.startPhase;
 
 		if (this.options.minBatchCount < 1) {
-			throw new Error("Invalid minSampleCount");
+			throw new Error("Invalid minBatchCount: must be at least 1");
 		}
 		this.iterationsPerBatch = 1;
 		tryRunGarbageCollection();
 	}
 
 	public recordBatch(duration: number): boolean {
+		assertProperUse(
+			!this.collectionComplete,
+			"recordBatch() called after data collection is already complete.",
+		);
+		let keepGoing: boolean;
 		switch (this.phase) {
 			case Phase.WarmUp: {
 				this.phase = Phase.AdjustIterationPerBatch;
-				return true;
+				keepGoing = true;
+				break;
 			}
 			case Phase.AdjustIterationPerBatch: {
-				if (!this.growBatchSize(duration)) {
+				if (this.growBatchSize(duration)) {
+					keepGoing = true;
+				} else {
 					this.phase = Phase.CollectData;
 					// Since batch is big enough, include it in data collection.
-					return this.addSample(duration);
+					keepGoing = this.addSample(duration);
 				}
-				return true;
+				break;
 			}
 			default: {
-				return this.addSample(duration);
+				keepGoing = this.addSample(duration);
+				break;
 			}
 		}
+		if (!keepGoing) {
+			this.collectionComplete = true;
+		}
+		return keepGoing;
 	}
 
 	/**
-	 * Returns true if IterationPerBatch should be grown more.
+	 * Returns true if `iterationsPerBatch` should be increased further.
 	 */
 	private growBatchSize(duration: number): boolean {
 		if (duration < this.options.minBatchDurationSeconds) {
@@ -162,7 +201,7 @@ class BenchmarkState<T> implements BenchmarkTimer<T> {
 			return false;
 		}
 
-		// Exit if way too many samples to avoid out of memory.
+		// Stop collecting if sample count is extreme, to avoid running out of memory.
 		if (this.samples.length > 1_000_000) {
 			// Test failed to converge after many samples.
 			// TODO: produce some warning or error state in this case (and probably the case for hitting max time as well).
@@ -172,119 +211,96 @@ class BenchmarkState<T> implements BenchmarkTimer<T> {
 		return true;
 	}
 
-	public computeData(): BenchmarkData {
-		const now = this.timer.now();
+	public computeData(): CollectedData {
+		assertProperUse(
+			this.collectionComplete,
+			"Data collection is not complete. Either call a batch recording method (e.g. recordBatch(), timeBatch()) in a loop until it returns false, or use a method that records all batches at once (e.g. timeAllBatches(), timeAllBatchesAsync()).",
+		);
 		const stats = getArrayStatistics(this.samples.map((v) => v / this.iterationsPerBatch));
-		const data: BenchmarkData = {
-			elapsedSeconds: this.timer.toSeconds(this.startTime, now),
-			customData: {
-				"Batch Count": {
-					rawValue: this.samples.length,
-					formattedValue: prettyNumber(this.samples.length, 0),
-				},
-				"Iterations per Batch": {
-					rawValue: this.iterationsPerBatch,
-					formattedValue: prettyNumber(this.iterationsPerBatch, 0),
-				},
-				"Period (ns/op)": {
-					rawValue: 1e9 * stats.arithmeticMean,
-					formattedValue: prettyNumber(1e9 * stats.arithmeticMean, 2),
-				},
-				"Margin of Error (ns)": {
-					rawValue: stats.marginOfError,
-					formattedValue: `±${prettyNumber(1e9 * stats.marginOfError, 2)}`,
-				},
-				"Relative Margin of Error": {
-					rawValue: stats.marginOfErrorPercent,
-					formattedValue: `±${prettyNumber(stats.marginOfErrorPercent, 2)}%`,
-				},
+		const data: CollectedData = [
+			{
+				name: "Period",
+				value: 1e9 * stats.arithmeticMean,
+				units: "ns/op",
+				type: ValueType.SmallerIsBetter,
+				significance: "Primary",
 			},
-		};
+			{
+				name: "Batch Count",
+				value: this.samples.length,
+				units: "count",
+				significance: "Diagnostic",
+			},
+			{
+				name: "Iterations Per Batch",
+				value: this.iterationsPerBatch,
+				units: "count",
+				significance: "Diagnostic",
+			},
+			{
+				name: "Margin of Error",
+				value: stats.marginOfError * 1e9,
+				units: "ns",
+				type: ValueType.SmallerIsBetter,
+			},
+			{
+				name: "Relative Margin of Error",
+				value: stats.marginOfErrorPercent,
+				units: "%",
+				type: ValueType.SmallerIsBetter,
+			},
+		];
 		return data;
 	}
 
 	public timeBatch(callback: () => void): boolean {
-		let counter = this.iterationsPerBatch;
+		let i = this.iterationsPerBatch;
 		const before = this.timer.now();
-		while (counter--) {
+		while (i--) {
 			callback();
 		}
 		const after = this.timer.now();
-		const duration = this.timer.toSeconds(before, after);
-		return this.recordBatch(duration);
+		return this.recordBatch(this.timer.toSeconds(before, after));
+	}
+
+	public async timeBatchAsync(callback: () => Promise<unknown>): Promise<boolean> {
+		let i = this.iterationsPerBatch;
+		const before = this.timer.now();
+		while (i--) {
+			await callback();
+		}
+		const after = this.timer.now();
+		return this.recordBatch(this.timer.toSeconds(before, after));
+	}
+
+	public timeAllBatches(callback: () => void): void {
+		while (this.timeBatch(callback));
+	}
+
+	public async timeAllBatchesAsync(callback: () => Promise<unknown>): Promise<void> {
+		while (await this.timeBatchAsync(callback));
 	}
 }
 
 /**
- * Run a performance benchmark and return its results.
+ * Runs a synchronous duration benchmark and returns the collected timing measurements.
+ * @remarks
+ * A more limited, synchronous, version of {@link collectDurationData}.
  * @public
  */
-export function runBenchmarkSync(args: BenchmarkRunningOptionsSync): BenchmarkData {
-	const state = new BenchmarkState(timer, args);
-	while (
-		state.recordBatch(doBatch(state.iterationsPerBatch, args.benchmarkFn, args.beforeEachBatch))
-	) {
-		// No-op
-	}
+export function runBenchmarkSync(args: DurationBenchmarkSync): CollectedData {
+	const state = new BenchmarkState(defaultTimer, args);
+	state.timeAllBatches(args.benchmarkFn);
 	return state.computeData();
 }
 
 /**
- * Run a performance benchmark and return its results.
- * @public
+ * Runs an asynchronous duration benchmark and returns the collected timing measurements.
  */
-export async function runBenchmarkAsync(
-	args: BenchmarkRunningOptionsAsync,
-): Promise<BenchmarkData> {
-	const state = new BenchmarkState(timer, args);
-	while (
-		state.recordBatch(
-			await doBatchAsync(
-				state.iterationsPerBatch,
-				args.benchmarkFnAsync,
-				args.beforeEachBatch,
-			),
-		)
-	) {
-		// No-op
-	}
+export async function runBenchmarkAsync(args: DurationBenchmarkAsync): Promise<CollectedData> {
+	const state = new BenchmarkState(defaultTimer, args);
+	await state.timeAllBatchesAsync(args.benchmarkFnAsync);
 	return state.computeData();
-}
-
-/**
- * Returns time to run `f` `iterationCount` times in seconds.
- */
-function doBatch(
-	iterationCount: number,
-	f: () => void,
-	beforeEachBatch: undefined | (() => void),
-): number {
-	beforeEachBatch?.();
-	let i = iterationCount;
-	const before = timer.now();
-	while (i--) {
-		f();
-	}
-	const after = timer.now();
-	return timer.toSeconds(before, after);
-}
-
-/**
- * Returns time to run `f` `iterationCount` times in seconds.
- */
-async function doBatchAsync(
-	iterationCount: number,
-	f: () => Promise<unknown>,
-	beforeEachBatch: undefined | (() => void),
-): Promise<number> {
-	beforeEachBatch?.();
-	let i = iterationCount;
-	const before = timer.now();
-	while (i--) {
-		await f();
-	}
-	const after = timer.now();
-	return timer.toSeconds(before, after);
 }
 
 /**
@@ -292,8 +308,22 @@ async function doBatchAsync(
  *
  * @remarks
  * Used before the test to help reduce noise from previous allocations
- * (ex: from previous tests or startup).
+ * (e.g., from previous tests or startup).
  */
 function tryRunGarbageCollection(): void {
 	global?.gc?.();
+}
+
+/**
+ * Configures a benchmark that uses {@link collectDurationData}
+ * to measure duration and returns the results in a format suitable for reporting via {@link benchmarkIt}.
+ * @public
+ */
+export function benchmarkDuration(
+	args: DurationBenchmark,
+): BenchmarkDescription & BenchmarkFunction {
+	return {
+		testType: TestType.ExecutionTime,
+		run: () => collectDurationData(args),
+	};
 }

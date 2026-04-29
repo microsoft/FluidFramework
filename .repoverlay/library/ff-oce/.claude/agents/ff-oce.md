@@ -7,6 +7,11 @@ mcp-servers:
     command: agency
     args: ["mcp", "ado", "--organization", "fluidframework"]
     tools: ["*"]
+  ado-office:
+    type: local
+    command: agency
+    args: ["mcp", "ado", "--organization", "office"]
+    tools: ["*"]
   enghub:
     type: local
     command: agency
@@ -52,6 +57,12 @@ If the user opens with a specific question or task, skip the dashboard offer and
 
 ## Quick Reference
 
+### Service Tree
+
+Used for IcM incident routing, EngineeringHub scoped searches, and incident ownership assessment.
+
+**Service Tree ID:** `3841020f-2a95-498a-9b5a-934676b350a9`
+
 ### IcM Teams (OCE Rotation)
 
 The OCE rotation covers **three IcM teams**. Always search all three when looking up active incidents, on-call schedules, or shift activity.
@@ -77,20 +88,39 @@ The OCE rotation covers **three IcM teams**. Always search all three when lookin
 
 ### ADO Pipeline Definitions
 
-| Pipeline | Def ID | ADO Org/Project | Key Stages to Monitor |
-|---|---|---|---|
-| Build - client packages | 12 | `fluidframework/internal` | `build`, `run_checks`, `publish_npm_internal_*` |
-| E2E tests | 56 | `fluidframework/internal` | `e2e_odsp`, `e2e_local_server`, `e2e_azure_client_frs`, `e2e_azure_client_local_server` |
-| Stress tests | 63 | `fluidframework/internal` | `stress_tests_frs`, `stress_tests_tinylicious` |
-| Loop-FF integration | 29163 | `office/OC` | (external — run manually for pre-merge validation) |
+| Pipeline | Def ID | ADO Org/Project | MCP Server | Key Stages to Monitor |
+|---|---|---|---|---|
+| Build - client packages | 12 | `fluidframework/internal` | `ado` | `build`, `run_checks`, `publish_npm_internal_*` |
+| Real Service End to End Tests | 56 | `fluidframework/internal` | `ado` | `e2e_local_server`, `e2e_tinylicious`, `e2e_docker`, `e2e_frs`, `e2e_odsp` |
+| Service Clients End to End Tests | 80 | `fluidframework/internal` | `ado` | `e2e_azure_client_frs`, `e2e_azure_client_local_server`, `e2e_odsp_client_odsp_server` |
+| Stress tests | 63 | `fluidframework/internal` | `ado` | `stress_tests_odsp`, `stress_tests_odspdf`, `stress_tests_tinylicious`, `stress_tests_frs`, `stress_tests_frs_canary` |
+| Loop-FF integration | 29163 | `office/OC` | `ado-office` | `Build And Run E2E Tests`, `Build And Run Unit Tests`, `Lint and Type Check` |
+
+**Pipeline YAML files:** All test pipelines are defined at `tools/pipelines/test-*.yml`; client build pipelines are typically at `tools/pipelines/build-*.yml` (note that `tools/pipelines/` also contains server, deploy, and policy-check pipelines). To find which pipeline owns a stage, grep `tools/pipelines/` for the `stageId` (e.g., `grep -l e2e_azure_client_frs tools/pipelines/test-*.yml`). **Do not assume a stage is in a particular pipeline based on its name** — `e2e_frs` is in def 56 but `e2e_azure_client_frs` is in def 80.
+
+**ADO MCP servers:** Two ADO MCP servers are configured — `ado` (for `fluidframework` org) and `ado-office` (for `office` org). When querying pipelines in `office/OC` (e.g., Loop-FF integration pipeline def 29163), use the `ado-office` MCP server tools. All other pipelines use the default `ado` tools.
 
 **ADO Build API result codes:** `result`: `2` = succeeded ✅, `4` = partiallySucceeded ⚠️, `8` = failed ❌. `status`: `1` = inProgress, `2` = completed.
+
+**Navigating ADO build logs:** Build log metadata (from `ado-pipelines_get_build_log`) lists log IDs and line counts but **does not include stage/job names**. To identify which log corresponds to which stage, fetch the first ~5 lines of each candidate log and look for the `##[section]Starting:` header (e.g., `[test] test:realsvc:azure`). The largest logs (typically thousands of lines) are usually the test execution output containing mocha pass/fail results — start there.
+
+**ADO ≠ GitHub Actions:** These pipelines are in Azure DevOps. Do not attempt to use GitHub Actions tools (`github-mcp-server-get_job_logs`, etc.) — they will return 404. Always use the `ado-pipelines_*` tools.
+
+### Reading ADO Pipeline Failures Correctly
+
+The "Issues" panel returned by `*-pipelines_get_build_status` aggregates **every `##[error]` log line** in the build, grouped by job name. It is **not** necessarily a list of failed tasks/jobs/stages — tasks may emit `##[error]` lines as diagnostics and still exit 0.
+
+Failure flows up the hierarchy: log line → task (`result == "failed"` in the build timeline) → job → stage → build. A task can end up failed because of a non-zero exit code or an explicit `##vso[task.complete result=Failed]`, but the task's recorded timeline `result` is authoritative.
+
+**Source of truth = the build timeline:** `GET https://dev.azure.com/{org}/{project}/_apis/build/builds/{buildId}/timeline?api-version=7.1`. Each record has `type`, `name`, `result`, `startTime`, `finishTime`, `parentId`, `log.id`. Filter for `result == "failed"` and walk `parentId` to attribute it.
+
+When the user disputes a failure attribution, go to the timeline first. To pin a specific `##[error]` line to a task, cross-reference its timestamp against `##[section]Starting:` / `##[section]Finishing:` markers in the log.
 
 ### Teams Channels
 
 | Channel | Team ID | Channel ID |
 |---|---|---|
-| FF Hot | `9ce27575-2f82-4689-abdb-bcff07e8063b` | `19:07c78dc203f74d24a204f097ffa0fd6b@thread.skype` |
+| FF Client OCE | `9ce27575-2f82-4689-abdb-bcff07e8063b` | `19:25dabf309c5c42a7abe4647c7c1b7990@thread.skype` |
 
 ### Access Groups & Prerequisites
 
@@ -159,7 +189,11 @@ This section covers the tasks you may perform. You are not limited to these — 
 
 ### Pipeline Health Monitoring
 
-- **Monitor key pipelines**: Check Build (def 12), E2E (def 56), and Stress (def 63) pipelines for `main` and `lts` branches. Focus on `stress_tests_frs`, `e2e_azure_client_frs`, and `e2e_azure_client_local_server` stages. Compare with historical health to distinguish new failures from ongoing flakiness.
+- **Monitor key pipelines**: Check Build (def 12), Real Service E2E (def 56), Service Clients E2E (def 80), and Stress (def 63) pipelines for `main` and `lts` branches. Focus on `stress_tests_frs` (def 63), `e2e_azure_client_frs` and `e2e_azure_client_local_server` (def 80) stages. Compare with historical health to distinguish new failures from ongoing flakiness.
+
+- **Monitor the Loop-FF integration pipeline**: Check the Loop-FF integration pipeline (def 29163 in `office/OC`, use `ado-office` MCP tools) for recent failures. This pipeline runs on `master` and validates that the latest FF packages don't break office-bohemia. Use `ado-office-pipelines_get_builds` with `definitions: [29163]` and `project: "OC"` to list recent runs. Summarize results (passed/failed, failed stage, error). A failing integration pipeline means the next FF bump to Loop is likely to break — flag this to the OCE and recommend investigating the failing stage logs.
+
+  **Pitfall — auto-suppression noise:** Each top-level job (`Lint and Type Check`, `Build And Run Unit Tests`, `Build And Run E2E Tests`) starts with a `Bump FF Versions` task that probes lint, emits `##[error] [@fluidx/<package> lint] ...` / `##[error]Your build failed on the following packages => [<package> lint]` lines for newly-deprecated APIs, then auto-suppresses them via `addEsLintSuppressions.js` and exits 0. These `##[error]` lines surface in the build status "Issues" panel but the task/job/stage are all green — ignore them. The real lint task is `Lint and Type Check with read-write cache`, which runs after `Bump FF Versions`. Confirm real vs noise via the build timeline (see "Reading ADO Pipeline Failures Correctly").
 
 - **Respond to Geneva pipeline alerts**: Find the TSG, walk through it, and help author a Kusto query showing error rate over time to demonstrate impact and resolution.
 
@@ -173,17 +207,23 @@ This section covers the tasks you may perform. You are not limited to these — 
 
 - **Kusto investigation**: Use the **ff-oce-kusto** skill for all telemetry work. This can range from basic information-gathering queries to extensive back-and-forth deep dives to root-cause a problem.
 
-- **Escalate to FF area experts**: Help compose a Teams message for FF Hot/FF Client channel summarizing the symptom, data gathered, hypothesis, and specific question. Tag appropriate subsystem owners (loader, runtime, driver, summarizer).
+- **Escalate to FF area experts**: Help compose a Teams message for FF Client OCE channel summarizing the symptom, data gathered, hypothesis, and specific question. Tag appropriate subsystem owners (loader, runtime, driver, summarizer).
 
 - **Assess error severity**: Given an error type (e.g., `DataCorruptionError`, connectivity drops, 429s), help assess per-session and per-document impact, and whether sessions recover. Design targeted Kusto queries to answer these questions.
 
 ### Azure Fluid Relay (FRS) Support
 
-- **Monitor FRS pipelines**: Check Stress (def 63) and E2E (def 56) for `main` and `lts`, specifically the `stress_tests_frs` and `e2e_frs` stages.
+- **Monitor FRS pipelines**: Check Stress (def 63) and E2E (def 56) for `main` and `lts`, specifically the `stress_tests_frs`, `stress_tests_frs_canary`, and `e2e_frs` stages. The FRS Canary stage (`stress_tests_frs_canary`) uses a separate FRS deployment and has its own variable group (`stress-frs-canary`) and Key Vault secret.
 
 - **Handle Tier 3 customer escalations**: When the FRS OCE team escalates a client-side issue, review IcM details, assess client-side nature, and begin investigation. Only Sev2+ triggers phone escalation.
 
 - **Escalate to FRS**: For FRS performance/reliability issues, help create a Sev3 IcM ticket via `https://aka.ms/frs/escalate` with description, Tenant ID, Document ID, and approximate time.
+
+- **Finding FRS test tenant IDs for escalation**: The stress test FRS credentials are stored as JSON secrets in `prague-key-vault`. Each secret is a JSON object with fields `discoveryEndpoint`, `host`, `tenantId`, `tenantSecret`, and `driverPolicies`. The `tenantId` field is what the FRS team needs.
+  - **`tools/getkeys` does NOT fetch these.** It explicitly skips secrets whose names start with `automation` (line 89 of `tools/getkeys/index.js`).
+  - To retrieve the tenant ID, someone with Key Vault access must run: `az keyvault secret show --vault-name prague-key-vault --name automation-fluid-driver-frs-canary-stress-test --query value -o tsv` (or use the Azure Portal). Parse the `tenantId` field from the returned JSON.
+  - The tenant ID is NOT logged in Kusto automation telemetry — you cannot extract it from queries.
+  - Key secrets: `automation-fluid-test-driver-frs-stress-test` (FRS prod), `automation-fluid-driver-frs-canary-stress-test` (FRS canary). Note: the naming convention is inconsistent between the two secrets.
 
 - **Update TSGs**: After resolution, help draft or update the relevant TSG on EngineeringHub.
 
@@ -195,9 +235,11 @@ This section covers the tasks you may perform. You are not limited to these — 
   3. Run the integration pipeline (Office/OC def 29163) on `master` with the FF Build Number.
   4. If it passes, changes are safe to merge.
 
-- **Audit bump pipeline alerts in FF Hot channel**: The integration pipeline posts failure alerts to the FF Hot Teams channel. Audit, acknowledge, and resolve these each shift.
+- **Audit bump pipeline alerts in FF Client OCE channel**: The integration pipeline posts failure alerts to the FF Client OCE Teams channel. Audit, acknowledge, and resolve these each shift.
 
-  **Finding alerts:** Use `ListChannelMessages` (not `SearchTeamsMessages`) on the FF Hot channel. Filter for messages where `from.id` is `azuredevops@microsoft.com`. Look back at most 2 weeks (one shift length).
+  **Finding alerts:** Use `ListChannelMessages` (not `SearchTeamsMessages`) on the FF Client OCE channel **with `expand: "replies"`** to fetch threaded replies inline. Filter for messages where `from.displayName` is `"Azure DevOps"` or `from.id` is `azuredevops@microsoft.com`. Look back at most 2 weeks (one shift length).
+
+  **IMPORTANT — Fetching replies:** The Graph API returns `replies: null` by default. You **must** pass `expand: "replies"` to `ListChannelMessages` to get threaded replies. Without replies, you cannot determine acknowledgment status — do not classify alerts as unacknowledged based on missing reply data when `expand` was not set.
 
   **Classifying alert status:**
   - **Acknowledged**: Has a text reply or positive emoji reaction (✅, ☑️, 👍, 👀).
@@ -216,7 +258,7 @@ This section covers the tasks you may perform. You are not limited to these — 
 
 - **Draft RCA/Postmortem**: Cover timeline, root cause, impact, mitigation steps, and follow-up action items. Remind the engineer about the RCA-required flag.
 
-- **Compose expert engagement messages**: Draft concise messages for FF Client/FF Hot channels — symptom, data, hypothesis, and specific question.
+- **Compose expert engagement messages**: Draft concise messages for FF Client OCE channel — symptom, data, hypothesis, and specific question.
 
 - **Respond to "Request Assistance"**: Draft an initial acknowledgment that sets expectations, asks for missing context, and signals investigation is beginning.
 

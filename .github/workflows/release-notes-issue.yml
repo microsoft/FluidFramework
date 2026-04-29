@@ -30,16 +30,16 @@ jobs:
     steps:
       # Check out the repo and set up node and pnpm.
       # release notes: https://github.com/actions/checkout/releases/tag/v6.0.0
-      - uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # ratchet:actions/checkout@v6
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # ratchet:actions/checkout@v6
         with:
           fetch-depth: "100"
           persist-credentials: false
 
       # release notes: https://github.com/pnpm/action-setup/releases/tag/v4.2.0
-      - uses: pnpm/action-setup@41ff72655975bd51cab0327fa583b6e92b6d3061 # ratchet:pnpm/action-setup@v4
+      - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # ratchet:pnpm/action-setup@v5
 
       # release notes: https://github.com/actions/setup-node/releases/tag/v6.0.0
-      - uses: actions/setup-node@2028fbc5c25fe9cf00d9f06a71cc4710d4507903 # ratchet:actions/setup-node@v6
+      - uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # ratchet:actions/setup-node@v6
         with:
           node-version-file: .nvmrc
           cache: "pnpm"
@@ -80,7 +80,7 @@ jobs:
       # Read the release notes file that we just generated into an output variable.
       - name: Read release notes file
         id: relNotes
-        uses: juliangruber/read-file-action@b549046febe0fe86f8cb4f93c24e284433f9ab58 # ratchet:juliangruber/read-file-action@v1
+        uses: juliangruber/read-file-action@271ff311a4947af354c6abcd696a306553b9ec18 # ratchet:juliangruber/read-file-action@v1
         with:
           path: ./RELEASE_NOTES.md
 

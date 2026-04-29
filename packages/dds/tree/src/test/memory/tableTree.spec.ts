@@ -6,21 +6,21 @@
 import { strict as assert } from "node:assert";
 
 import {
-	benchmarkMemory,
+	benchmarkIt,
+	benchmarkMemoryUse,
 	isInPerformanceTestingMode,
-	type IMemoryTestObject,
 } from "@fluid-tools/benchmark";
 import type { Test } from "mocha";
 
 import {
 	Column,
 	Row,
-	type UndoRedoManager,
-	type Table,
 	type TableBenchmarkOptions,
 	createTableTree,
 } from "../tablePerformanceTestUtilities.js";
 import { configureBenchmarkHooks } from "../utils.js";
+
+import { iterationSettings, memoryAddedBy } from "./utils.js";
 
 /**
  * Note: These benchmarks are designed to closely match the benchmarks in SharedMatrix.
@@ -42,50 +42,34 @@ function runBenchmark({
 	operation,
 	afterOperation,
 }: TableBenchmarkOptions): Test {
-	return benchmarkMemory(
-		new (class implements IMemoryTestObject {
-			public readonly title = title;
-
-			private table: Table | undefined;
-			private undoRedoStack: UndoRedoManager | undefined;
-			private cleanUp: (() => void) | undefined;
-
-			public async run(): Promise<void> {
-				assert(this.table !== undefined, "table is not initialized");
-				assert(this.undoRedoStack !== undefined, "undoRedoStack is not initialized");
-				operation(this.table, this.undoRedoStack);
-			}
-
-			public beforeIteration(): void {
-				const { table, undoRedoStack, cleanUp } = createTableTree({
-					tableSize,
-					initialCellValue,
-				});
-				this.table = table;
-				this.undoRedoStack = undoRedoStack;
-				this.cleanUp = cleanUp;
-
-				beforeOperation?.(this.table, this.undoRedoStack);
-			}
-
-			public afterIteration(): void {
-				assert(this.table !== undefined, "table is not initialized");
-				assert(this.undoRedoStack !== undefined, "undoRedoStack is not initialized");
-				assert(this.cleanUp !== undefined, "cleanUp is not initialized");
-
-				afterOperation?.(this.table, this.undoRedoStack);
-
-				this.cleanUp();
-				this.undoRedoStack = undefined;
-				this.cleanUp = undefined;
-			}
-		})(),
-	);
+	return benchmarkIt({
+		title,
+		...benchmarkMemoryUse({
+			...iterationSettings,
+			...memoryAddedBy({
+				setup: () => {
+					const result = createTableTree({ tableSize, initialCellValue });
+					beforeOperation?.(result.table, result.undoRedoStack);
+					return result;
+				},
+				modify: ({ table, undoRedoStack }) => {
+					operation(table, undoRedoStack);
+				},
+				after: ({ table, undoRedoStack, cleanUp }) => {
+					afterOperation?.(table, undoRedoStack);
+					// In practice this does not seem to help reduce memory leaks, but calling it is
+					// good for consistency with other benchmarks.
+					cleanUp();
+				},
+			}),
+		}),
+	});
 }
 
 describe("SharedTree table APIs memory usage", () => {
-	// When run as benchmarks, these tests are very slow.
-	// This should speed them up a little, and make them a little more production like for better data.
+	// configureBenchmarkHooks adjusts tests to run in a more production type mode.
+	// This is not as important for memory tests as duration tests,
+	// but since these tests are so slow, doing this does help reduce the overall test runtime which is nice.
 	configureBenchmarkHooks();
 
 	// The value to be set in the cells of the tree.
@@ -96,14 +80,14 @@ describe("SharedTree table APIs memory usage", () => {
 	const tableSizes = isInPerformanceTestingMode
 		? [5, 50]
 		: // When not measuring perf, use a single smaller data size so the tests run faster.
-			[5];
+			[3];
 
 	// The number of operations to perform on the tree.
 	// Operation counts 1000 removed due to high overhead and unreliable results.
 	const operationCounts = isInPerformanceTestingMode
 		? [5, 50]
 		: // When not measuring perf, use a single smaller data size so the tests run faster.
-			[5];
+			[3];
 
 	// IMPORTANT: variables scoped to the test suite are a big problem for memory-profiling tests
 	// because they won't be out of scope when we garbage-collect between runs of the same test,

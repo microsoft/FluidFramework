@@ -34,7 +34,7 @@ export class LazyPromise<T> implements Promise<T> {
 
 // @beta @legacy
 export class PromiseCache<TKey, TResult> {
-    constructor({ expiry, removeOnError, }?: PromiseCacheOptions);
+    constructor(input?: PromiseCacheOptions);
     add(key: TKey, asyncFn: () => Promise<TResult>): boolean;
     addOrGet(key: TKey, asyncFn: () => Promise<TResult>): Promise<TResult>;
     addValue(key: TKey, value: TResult): boolean;

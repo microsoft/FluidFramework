@@ -1035,6 +1035,12 @@ const PropertyError = {
 	SHARED_BEFORE_INSERTED: "PR-187: Property must be inserted in the workspace before sharing.",
 
 	CUSTOM_ID_NOT_ALLOWED: "PR-188: The following property does not support custom id: ",
+
+	CANNOT_INSERT_UNKNOWN_PROPERTY: "PR-189: Cannot insert property with unknown id: ",
+
+	MISMATCHING_PROPERTY_TYPEID: "PR-190: Mismatching property typeid. Expected: ",
+
+	CANNOT_REMOVE_NON_OPTIONAL_PROP: "PR-191: Cannot remove non-optional property: ",
 };
 
 const PropertyFactoryError = {
@@ -1476,10 +1482,10 @@ const PropertyFactoryError = {
 	/**
 	 * methods: PropertyFactory.create
 	 *
-	 * Overridden properties must have same context as the base type.
+	 * Overridden properties must have same field values as the base type.
 	 */
-	OVERRIDEN_PROP_MUST_HAVE_SAME_CONTEXT_AS_BASE_TYPE:
-		"PF-067: Overridden properties must have same context as the base type: ",
+	OVERRIDEN_PROP_MUST_HAVE_SAME_FIELD_VALUES_AS_BASE_TYPE:
+		"PF-067: Overridden properties must have same field values as the base type: ",
 
 	/**
 	 * methods: PropertyFactory.create

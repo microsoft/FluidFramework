@@ -192,7 +192,7 @@ module.exports = {
 		},
 	},
 
-	multiCommandExecutables: ["oclif", "syncpack", "tsx"],
+	multiCommandExecutables: ["jiti", "oclif", "syncpack", "tsx"],
 	declarativeTasks: {
 		// fluid-build lowercases the executable name, so we need to use buildversion instead of buildVersion.
 		"flub check buildversion": {
@@ -226,8 +226,15 @@ module.exports = {
 			gitignore: ["input", "output"],
 		},
 		// eslint-config-fluid specific declarative task to print configs
-		"tsx scripts/print-configs.ts printed-configs": {
-			inputGlobs: ["scripts/print-configs.ts", "src/**/*.ts", "src/**/*.tsx", "*.js"],
+		"jiti scripts/print-configs.ts printed-configs": {
+			inputGlobs: [
+				"scripts/print-configs.ts",
+				"flat.mts",
+				"library/**/*.{mts,ts,mjs}",
+				"src/**/*.ts",
+				"src/**/*.tsx",
+				"*.js",
+			],
 			outputGlobs: ["printed-configs/*.json"],
 			gitignore: ["input", "output"],
 		},
@@ -241,7 +248,7 @@ module.exports = {
 		},
 		"syncpack lint-semver-ranges": {
 			inputGlobs: [
-				"syncpack.config.cjs",
+				".syncpackrc.yml",
 				"package.json",
 
 				...releaseGroupPackageJsonGlobs,
@@ -255,7 +262,7 @@ module.exports = {
 		},
 		"syncpack list-mismatches": {
 			inputGlobs: [
-				"syncpack.config.cjs",
+				".syncpackrc.yml",
 				"package.json",
 
 				...releaseGroupPackageJsonGlobs,
@@ -292,6 +299,7 @@ module.exports = {
 
 		// Independent packages
 		"build-common": "common/build/build-common",
+		"eslint-config-fluid": "common/build/eslint-config-fluid",
 		"eslint-plugin-fluid": "common/build/eslint-plugin-fluid",
 		"common-utils": "common/lib/common-utils",
 		"protocol-def": "common/lib/protocol-definitions",
@@ -321,7 +329,7 @@ module.exports = {
 			"common/build/build-common/src/cjs/package.json",
 			"common/build/build-common/src/esm/package.json",
 			"packages/common/core-interfaces/src/cjs/package.json",
-			"packages/framework/presence/src/cjs/package.json",
+			"packages/framework/presence-definitions/src/cjs/package.json",
 			"examples/utils/import-testing/src/cjs/package.json",
 		],
 		// Exclusion per handler
@@ -429,6 +437,8 @@ module.exports = {
 				"^build-tools/",
 				"^common/lib/common-utils/package.json",
 			],
+			// Packages that don't need type tests
+			"npm-package-types-field": ["common/build/eslint-config-fluid/package.json"],
 			"npm-package-json-test-scripts": [
 				"common/build/eslint-config-fluid/package.json",
 				"packages/test/mocha-test-setup/package.json",
@@ -450,6 +460,7 @@ module.exports = {
 				"^build-tools/",
 				"^common/build/",
 				"^experimental/PropertyDDS/",
+				"^packages/framework/quill-react/",
 				"^tools/api-markdown-documenter/",
 			],
 			"npm-package-exports-field": [
@@ -487,9 +498,6 @@ module.exports = {
 				"^build-tools/packages/build-infrastructure/src/test/data/testRepo/",
 			],
 			"npm-private-packages": [
-				// TODO: Temporarily disabled for this package while it's a part of the client release group.
-				"^common/build/eslint-config-fluid/",
-
 				// test packages
 				"^build-tools/packages/build-infrastructure/src/test/data/testRepo/",
 			],
@@ -518,6 +526,8 @@ module.exports = {
 					"fluid-framework",
 					"@fluid-internal/client-utils",
 					"@fluid-internal/mocha-test-setup",
+					"@fluid-internal/presence-definitions",
+					"@fluid-internal/presence-runtime",
 					"@fluid-internal/test-driver-definitions",
 					"tinylicious",
 				],

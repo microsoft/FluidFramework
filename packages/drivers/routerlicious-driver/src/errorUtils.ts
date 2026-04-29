@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import {
+import type {
 	DriverError,
-	DriverErrorTypes,
 	IDriverErrorBase,
 } from "@fluidframework/driver-definitions/internal";
+import { DriverErrorTypes } from "@fluidframework/driver-definitions/internal";
 import {
 	AuthorizationError,
 	GenericNetworkError,
@@ -15,7 +15,8 @@ import {
 	createGenericNetworkError,
 	type DriverErrorTelemetryProps,
 } from "@fluidframework/driver-utils/internal";
-import { IFluidErrorBase, LoggingError } from "@fluidframework/telemetry-utils/internal";
+import type { IFluidErrorBase } from "@fluidframework/telemetry-utils/internal";
+import { LoggingError } from "@fluidframework/telemetry-utils/internal";
 
 import { R11sServiceClusterDrainingErrorCode } from "./contracts.js";
 import { pkgVersion as driverVersion } from "./packageVersion.js";
@@ -113,33 +114,39 @@ export function createR11sNetworkError(
 		case 401:
 		// The first 401 is manually retried in RouterliciousRestWrapper with a refreshed token,
 		// so we treat repeat 401s the same as 403.
-		case 403:
+		case 403: {
 			error = new AuthorizationError(errorMessage, undefined, undefined, props);
 			break;
-		case 404:
+		}
+		case 404: {
 			const errorType = RouterliciousErrorTypes.fileNotFoundOrAccessDeniedError;
 			error = new NonRetryableError(errorMessage, errorType, props);
 			break;
-		case 429:
+		}
+		case 429: {
 			error = createGenericNetworkError(errorMessage, { canRetry: true, retryAfterMs }, props);
 			break;
+		}
 		case 500:
-		case 502:
+		case 502: {
 			error = new GenericNetworkError(errorMessage, true, props);
 			break;
-		case 503:
+		}
+		case 503: {
 			if (internalErrorCode === R11sServiceClusterDrainingErrorCode) {
 				error = new ClusterDrainingError(
 					errorMessage,
-					retryAfterMs !== undefined ? retryAfterMs / 1000 : 660,
+					retryAfterMs === undefined ? 660 : retryAfterMs / 1000,
 					props,
 				);
 				break;
 			}
-		default:
+		}
+		default: {
 			const retryInfo = { canRetry: retryAfterMs !== undefined, retryAfterMs };
 			error = createGenericNetworkError(errorMessage, retryInfo, props);
 			break;
+		}
 	}
 	error.addTelemetryProperties({ endpointReached: true });
 	return error;

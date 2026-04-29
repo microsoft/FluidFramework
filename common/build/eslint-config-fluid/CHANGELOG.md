@@ -1,34 +1,88 @@
 # @fluidframework/eslint-config-fluid Changelog
 
-## 2.91.0
+## vNext
 
-Dependency updates only.
+### ⚠ BREAKING CHANGES
 
-## 2.90.0
+- Node 22 is now the minimum supported Node.js version. This aligns with the standing Node upgrade policy as Node 20 reaches end-of-life on April 30, 2026.
 
-Dependency updates only.
+## [10.0.0](https://github.com/microsoft/FluidFramework/releases/tag/eslint-config-fluid_v10.0.0)
 
-## 2.83.0
+### eslint-plugin-react replaced by @eslint-react/eslint-plugin
 
-Dependency updates only.
+The `eslint-plugin-react` dependency has been replaced with
+[`@eslint-react/eslint-plugin`](https://eslint-react.xyz/) v2.13.0. This change is required because
+`eslint-plugin-react` 7.37.5 is incompatible with ESLint 10 (it calls the removed `context.getFilename()` API), and the
+upstream fix has been blocked since February 2026.
 
-## 2.82.0
+`@eslint-react/eslint-plugin` v2.13.0 supports ESLint 8, 9, and 10, so this version works with the current ESLint 9
+setup and will not block the future ESLint 10 upgrade.
 
-Dependency updates only.
+`eslint-plugin-react-hooks` is unchanged — it already supports ESLint 10 and continues to provide React Compiler rules.
 
-## 2.81.0
+#### Breaking: Rule names changed
 
-Dependency updates only.
+All `react/*` rules from `eslint-plugin-react` are replaced by `@eslint-react/*` rules. Any `eslint-disable` comments
+or per-package rule overrides referencing `react/*` rules must be updated to the new names.
 
-## 2.80.0
+Key rule mapping:
 
-Dependency updates only.
+| Old rule (`eslint-plugin-react`)      | New rule (`@eslint-react`)                                                               |
+| ------------------------------------- | ---------------------------------------------------------------------------------------- |
+| `react/jsx-key`                       | `@eslint-react/no-missing-key`                                                           |
+| `react/jsx-no-comment-textnodes`      | `@eslint-react/jsx-no-comment-textnodes`                                                 |
+| `react/jsx-no-target-blank`           | `@eslint-react/dom/no-unsafe-target-blank`                                               |
+| `react/no-children-prop`              | `@eslint-react/no-children-prop`                                                         |
+| `react/no-danger-with-children`       | `@eslint-react/dom/no-dangerously-set-innerhtml-with-children`                           |
+| `react/no-deprecated`                 | Multiple rules (see below)                                                               |
+| `react/no-direct-mutation-state`      | `@eslint-react/no-direct-mutation-state`                                                 |
+| `react/no-find-dom-node`              | `@eslint-react/dom/no-find-dom-node`                                                     |
+| `react/no-render-return-value`        | `@eslint-react/dom/no-render-return-value`                                               |
+| `react/no-string-refs`                | `@eslint-react/no-string-refs`                                                           |
+| `react/no-unstable-nested-components` | `@eslint-react/no-nested-component-definitions`                                          |
+| `react/jsx-no-useless-fragment`       | `@eslint-react/no-useless-fragment`                                                      |
+| `react/prop-types`                    | `@eslint-react/no-prop-types` (bans PropTypes usage; TypeScript handles prop validation) |
 
-## 2.74.0
+The `react/no-deprecated` rule is replaced by individual rules for each deprecated API:
+`@eslint-react/no-component-will-mount`, `@eslint-react/no-component-will-receive-props`,
+`@eslint-react/no-component-will-update`, `@eslint-react/no-create-ref`, `@eslint-react/dom/no-find-dom-node`,
+`@eslint-react/dom/no-hydrate`, `@eslint-react/dom/no-render`, `@eslint-react/dom/no-render-return-value`.
 
-Dependency updates only.
+#### Breaking: Rules removed (no equivalent)
 
-## Unreleased
+The following rules have no `@eslint-react` equivalent and are no longer enforced:
+
+- `react/no-unescaped-entities` — Low priority; JSX transpilation handles this correctly.
+- `react/no-is-mounted` — Legacy class component pattern; TypeScript discourages this.
+- `react/require-render-return` — TypeScript enforces return types.
+
+#### New rules enabled
+
+The `recommended-typescript` preset enables many rules not previously configured. These are set at `warn` severity
+unless otherwise noted:
+
+- `@eslint-react/no-nested-component-definitions` (`error`) — Catches component definitions inside render functions.
+- `@eslint-react/no-array-index-key` — Warns against using array index as key.
+- `@eslint-react/no-clone-element` — Warns against `React.cloneElement`.
+- `@eslint-react/no-context-provider` — Warns against deprecated `Context.Provider` (React 19).
+- `@eslint-react/no-forward-ref` — Warns against deprecated `React.forwardRef` (React 19).
+- `@eslint-react/web-api/no-leaked-event-listener` — Catches leaked event listeners.
+- `@eslint-react/web-api/no-leaked-interval` — Catches leaked `setInterval` calls.
+- `@eslint-react/web-api/no-leaked-timeout` — Catches leaked `setTimeout` calls.
+- `@eslint-react/web-api/no-leaked-resize-observer` — Catches leaked resize observers.
+- `@eslint-react/naming-convention/*` — React naming convention rules.
+
+#### Settings namespace changed
+
+The `@eslint-react` plugin uses `react-x` for its settings namespace instead of `react`. If you have custom
+`settings.react` configuration for React version detection, it should be changed to `settings["react-x"]`. The
+`recommended-typescript` preset configures `react-x.version: "detect"` automatically.
+
+### Other new rules
+
+- Adds [no-only-tests/no-only-tests](https://github.com/levibuzolic/eslint-plugin-no-only-tests) rule to ensure tests configured with `.only` are not checked in.
+
+## [9.0.0](https://github.com/microsoft/FluidFramework/releases/tag/eslint-config-fluid_v9.0.0)
 
 ### Native ESLint 9 Flat Config (No FlatCompat)
 
@@ -43,15 +97,6 @@ The `flat.mts` module now exports four configurations:
 - `minimalDeprecated` - Minimal configuration (deprecated, use recommended)
 - `strictBiome` - Strict configuration with Biome formatter compatibility
 
-#### Modular Structure
-
-The configuration is now organized into a modular structure under `library/`:
-
-- `library/constants.mts` - Shared constants (ignores, file patterns, import restrictions)
-- `library/settings.mts` - Plugin settings (import-x, jsdoc)
-- `library/rules/` - Rule definitions organized by config level (base, minimal-deprecated, recommended, strict)
-- `library/configs/` - Config builders and shared overrides
-
 ### Removed Rushstack Dependencies
 
 The following packages have been removed from dependencies:
@@ -60,19 +105,6 @@ The following packages have been removed from dependencies:
 - `@rushstack/eslint-plugin-security`
 
 The `@rushstack/eslint-plugin-security` plugin has been removed from all configurations. The `patch/modern-module-resolution.js` file has also been removed as it was only needed to support the `@rushstack/eslint-patch` dependency.
-
-### ESLint 9 Flat Config Support
-
-This package now supports ESLint 9 flat config format via a new `flat.mjs` export. The flat config wraps existing configs using `FlatCompat` from `@eslint/eslintrc` for backward compatibility.
-
-Key features:
-
-- New `flat.mjs` module exports `recommended`, `strict`, and `minimalDeprecated` configs for ESLint 9
-- Automatic handling of type-aware parsing configuration for JavaScript files and test files
-- Generated `eslint.config.mjs` files for all packages in the repository
-- Script to regenerate flat configs: `pnpm tsx scripts/generate-flat-eslint-configs.ts`
-
-Packages can now use `eslint.config.mjs` instead of `.eslintrc.cjs`, but the legacy `.eslintrc.cjs` format remains supported for backward compatibility. Migration is optional and not required.
 
 ### ESLint Rule Changes
 
@@ -90,7 +122,7 @@ Packages can now use `eslint.config.mjs` instead of `.eslintrc.cjs`, but the leg
 - `react-hooks/set-state-in-render`
 - `react-hooks/use-memo`
 
-**React-hooks rules temporarily downgraded to `"warn"`** (until ESLint 9 migration completes):
+**`react-hooks` rules temporarily set to `"warn"`** (to allow time to address violations before the next major release):
 
 - `react-hooks/rules-of-hooks`: Changed from `"error"` to `"warn"`
 - `react-hooks/exhaustive-deps`: Changed from `"error"` to `"warn"`
@@ -128,7 +160,7 @@ Packages can now use `eslint.config.mjs` instead of `.eslintrc.cjs`, but the leg
 
 #### Rule promotions
 
-**recommended -> minimal**
+The following rules, which were previously enabled only in the `recommended` config, are now also enabled in the `minimal` config:
 
 - `@typescript-eslint/explicit-function-return-type`
 - `@typescript-eslint/no-import-type-side-effects`
@@ -139,7 +171,12 @@ Packages can now use `eslint.config.mjs` instead of `.eslintrc.cjs`, but the leg
 
 - `jsdoc/multiline-blocks`: Updated to allow single-line comments to be expressed as a single line. E.g. `/** Single-line comment */`.
 
-## [9.0.0](https://github.com/microsoft/FluidFramework/releases/tag/eslint-config-fluid_v9.0_0)
+#### Other new rules
+
+#### [@eslint-community/eslint-comments/require-description](https://eslint-community.github.io/eslint-plugin-eslint-comments/rules/require-description.html)
+
+We recommend that all `eslint-disable` comments include a description explaining why the rule is being disabled.
+This rule is currently configured at the `warn` level, so it will emit a warning (which may not fail CI), and is expected to be promoted to an error in the future.
 
 ### eslint-plugin-eslint-comments replaced by @eslint-community/eslint-plugin-eslint-comments
 
@@ -170,7 +207,7 @@ The package now uses rules from [eslint-plugin-import-x](https://github.com/un-t
 eslint-plugin-import. Integrating this change will require renaming eslint disable comments and overrides, but the
 changes are mechanical.
 
-## [7.0.0](https://github.com/microsoft/FluidFramework/releases/tag/eslint-config-fluid_v7.0_0)
+## [7.0.0](https://github.com/microsoft/FluidFramework/releases/tag/eslint-config-fluid_v7.0.0)
 
 ### New Rules
 
@@ -224,14 +261,14 @@ Enables the following new rules as warnings (they will be promoted to errors in 
 - [@typescript-eslint/no-unsafe-function-type](https://typescript-eslint.io/rules/no-unsafe-function-type/)
 - [@typescript-eslint/no-wrapper-object-types](https://typescript-eslint.io/rules/no-wrapper-object-types/)
 
-## [6.0.1](https://github.com/microsoft/FluidFramework/releases/tag/eslint-config-fluid_v6.0_1)
+## [6.0.1](https://github.com/microsoft/FluidFramework/releases/tag/eslint-config-fluid_v6.0.1)
 
 Update dependencies on the following packages:
 
 - `@typescript-eslint/eslint-plugin` (from 7.0.0 to 7.18.0)
 - `@typescript-eslint/parser` (from 7.0.0 to 7.18.0)
 
-## [6.0.0](https://github.com/microsoft/FluidFramework/releases/tag/eslint-config-fluid_v6.0_0)
+## [6.0.0](https://github.com/microsoft/FluidFramework/releases/tag/eslint-config-fluid_v6.0.0)
 
 Adds the following [@typescript-eslint/no-restricted-imports](https://typescript-eslint.io/rules/no-restricted-imports/) rules:
 
@@ -240,7 +277,7 @@ Adds the following [@typescript-eslint/no-restricted-imports](https://typescript
 2. Don't import from parent index file.
     - E.g. prefer `import { Foo } from "./Foo.js";` over `import { Foo } from "./index.js";`
 
-## [5.8.0](https://github.com/microsoft/FluidFramework/releases/tag/eslint-config-fluid_v5.8_0)
+## [5.8.0](https://github.com/microsoft/FluidFramework/releases/tag/eslint-config-fluid_v5.8.0)
 
 Promotes the following rules from the `strict` ruleset to the `recommended` ruleset:
 
