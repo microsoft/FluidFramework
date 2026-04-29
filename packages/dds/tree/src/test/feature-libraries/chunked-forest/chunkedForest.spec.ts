@@ -156,8 +156,7 @@ describe("ChunkedForest", () => {
 		 * @returns A chunked forest with a root field containing a single uniform chunk of 5 numbers.
 		 */
 		function setup() {
-			const builder = new SchemaFactory("chunkedForest.multiNodeUniform");
-			const forestSchema = new TreeStoredSchemaRepository(toInitialSchema(builder.number));
+			const forestSchema = new TreeStoredSchemaRepository(toInitialSchema(SchemaFactory.number));
 			const chunker = makeTreeChunker(
 				forestSchema,
 				defaultSchemaPolicy,
@@ -178,7 +177,7 @@ describe("ChunkedForest", () => {
 		 * @returns The total number of top-level nodes across the given `chunks`.
 		 */
 		function nodeCount(chunks: readonly TreeChunk[]): number {
-			return chunks.reduce((n, c) => n + c.topLevelLength, 0);
+			return chunks.reduce((runningTotal, chunk) => runningTotal + chunk.topLevelLength, 0);
 		}
 
 		it("detaches a single node from the middle of a uniform chunk", () => {
