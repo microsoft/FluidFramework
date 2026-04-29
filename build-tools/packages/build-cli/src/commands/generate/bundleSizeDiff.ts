@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { mkdirSync, rmSync, writeFileSync } from "node:fs";
+import { mkdir, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 import {
 	ADOSizeComparator,
@@ -141,14 +141,16 @@ export default class GenerateBundleSizeDiff extends BaseCommand<
 		const comparisonResult = await sizeComparator.getSizeComparison(false);
 
 		const outputDir = path.resolve(process.cwd(), flags.outputDir);
-		mkdirSync(outputDir, { recursive: true });
+		await mkdir(outputDir, { recursive: true });
 		const resultPath = path.join(outputDir, resultFileName);
 		const errorPath = path.join(outputDir, errorFileName);
 
 		// Clear any prior output files so consumers can rely on file existence as the
 		// success/failure discriminator without worrying about stale artifacts from earlier runs.
-		rmSync(resultPath, { force: true });
-		rmSync(errorPath, { force: true });
+		await Promise.all([
+			rm(resultPath, { force: true }),
+			rm(errorPath, { force: true }),
+		]);
 
 		if (comparisonResult.kind === "error") {
 			const errorResult: BundleSizeDiffError = {
@@ -157,7 +159,7 @@ export default class GenerateBundleSizeDiff extends BaseCommand<
 				targetBranch: targetBranchName,
 				error: comparisonResult.error,
 			};
-			writeFileSync(errorPath, JSON.stringify(errorResult, undefined, 2));
+			await writeFile(errorPath, JSON.stringify(errorResult, undefined, 2));
 			this.log(`Wrote ${errorPath}`);
 			return;
 		}
@@ -172,7 +174,7 @@ export default class GenerateBundleSizeDiff extends BaseCommand<
 				error:
 					"No bundles to compare — baseline artifact or PR local bundle reports are empty.",
 			};
-			writeFileSync(errorPath, JSON.stringify(errorResult, undefined, 2));
+			await writeFile(errorPath, JSON.stringify(errorResult, undefined, 2));
 			this.log(`Wrote ${errorPath}`);
 			return;
 		}
@@ -192,7 +194,7 @@ export default class GenerateBundleSizeDiff extends BaseCommand<
 					comparison,
 				};
 
-		writeFileSync(resultPath, JSON.stringify(result, undefined, 2));
+		await writeFile(resultPath, JSON.stringify(result, undefined, 2));
 		this.log(`Wrote ${resultPath}`);
 	}
 }
