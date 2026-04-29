@@ -172,10 +172,15 @@ class UndoRedoManager implements UndoRedo {
 	readonly #redoStack: StackEntry[] = [];
 	readonly #unsubscribe: () => void;
 	readonly #branch: TreeBranchAlpha;
+
 	// Set synchronously around revert() calls so the changed event handler can attribute the
 	// resulting commit to this manager's undo or redo action rather than treating it as a new
 	// user commit. Cleared before notifying listeners.
+	// This is needed as a workaround for a current limitation in SharedTree where `revert()` operations do not carry
+	// the original label(s) of the commit being reverted.
+	// TODO: AB#71256: Remove this workaround once SharedTree supports preserving commit labels on revert operations.
 	#pendingOperation: { kind: "undo" | "redo"; labels: ReadonlySet<unknown> } | undefined;
+
 	#disposed = false;
 
 	/**
