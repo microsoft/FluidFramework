@@ -63,6 +63,11 @@ export class ADOSizeComparator {
 		 */
 		private readonly localReportPath: string,
 		/**
+		 * Name of the target branch the current branch will merge into. Used to compute
+		 * the baseline commit (`git merge-base origin/<targetBranch> HEAD`).
+		 */
+		private readonly targetBranch: string,
+		/**
 		 * Optional current PR build id to use, such as to tag for
 		 * later update when the baseline build has not completed
 		 */
@@ -105,7 +110,7 @@ export class ADOSizeComparator {
 		// commit value in the synthesized error variant.
 		let baselineCommit: string | undefined;
 		try {
-			baselineCommit = getBaselineCommit();
+			baselineCommit = getBaselineCommit(this.targetBranch);
 			console.log(`The baseline commit for this PR is ${baselineCommit}`);
 
 			// Some circumstances may want us to try a fallback, such as when a commit does
@@ -197,7 +202,7 @@ export class ADOSizeComparator {
 
 			// Unable to find a usable baseline
 			if (baselineCommit === undefined || baselineZip === undefined) {
-				const error = `Could not find a usable baseline build with search starting at CI ${getBaselineCommit()}`;
+				const error = `Could not find a usable baseline build with search starting at CI ${getBaselineCommit(this.targetBranch)}`;
 				console.log(error);
 				return { kind: "error", baselineCommit, error };
 			}

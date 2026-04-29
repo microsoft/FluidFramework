@@ -108,55 +108,58 @@ export default class GenerateBundleSizeDiff extends BaseCommand<
 			default: defaultOutputDir,
 			required: false,
 		}),
+		// Hidden flags carrying CI context. Populated from env vars when running in the
+		// pipeline; can be passed directly for local testing.
+		targetBranch: Flags.string({
+			description: "Name of the target branch the PR will merge into.",
+			env: "TARGET_BRANCH",
+			required: true,
+			hidden: true,
+		}),
+		prNumber: Flags.integer({
+			description: "GitHub PR number being analyzed.",
+			env: "PR_NUMBER",
+			required: true,
+			hidden: true,
+		}),
+		adoApiToken: Flags.string({
+			description:
+				"ADO PAT for accessing the baseline build. When absent, anonymous reads are used (suitable for fork PR builds where $(System.AccessToken) isn't populated).",
+			env: "ADO_API_TOKEN",
+			required: false,
+			hidden: true,
+		}),
 		...BaseCommand.flags,
 	} as const;
 
 	public async run(): Promise<void> {
-		const { flags } = this;
-
-		// ADO_API_TOKEN is optional; when absent, getAzureDevopsApi issues anonymous reads,
-		// which is what we want for fork PR builds where $(System.AccessToken) isn't populated.
-		const adoApiToken = process.env.ADO_API_TOKEN;
-		const targetBranchName = process.env.TARGET_BRANCH_NAME;
-		if (targetBranchName === undefined) {
-			this.error("TARGET_BRANCH_NAME env var is required");
-		}
-		const prNumberRaw = process.env.PR_NUMBER;
-		if (prNumberRaw === undefined) {
-			this.error("PR_NUMBER env var is required");
-		}
-		const prNumber = Number.parseInt(prNumberRaw, 10);
-		if (!Number.isFinite(prNumber)) {
-			this.error(`PR_NUMBER env var is not a valid number: ${prNumberRaw}`);
-		}
+		const { adoApiToken, localReportPath, outputDir, prNumber, targetBranch } = this.flags;
 
 		const adoConnection = getAzureDevopsApi(adoApiToken, adoConstants.orgUrl);
 		const sizeComparator = new ADOSizeComparator(
 			adoConstants,
 			adoConnection,
-			flags.localReportPath,
+			localReportPath,
+			targetBranch,
 			undefined,
 			ADOSizeComparator.naiveFallbackCommitGenerator,
 		);
 		const comparisonResult = await sizeComparator.getSizeComparison(false);
 
-		const outputDir = path.resolve(process.cwd(), flags.outputDir);
-		await mkdir(outputDir, { recursive: true });
-		const resultPath = path.join(outputDir, resultFileName);
-		const errorPath = path.join(outputDir, errorFileName);
+		const resolvedOutputDir = path.resolve(process.cwd(), outputDir);
+		await mkdir(resolvedOutputDir, { recursive: true });
+		const resultPath = path.join(resolvedOutputDir, resultFileName);
+		const errorPath = path.join(resolvedOutputDir, errorFileName);
 
 		// Clear any prior output files so consumers can rely on file existence as the
 		// success/failure discriminator without worrying about stale artifacts from earlier runs.
-		await Promise.all([
-			rm(resultPath, { force: true }),
-			rm(errorPath, { force: true }),
-		]);
+		await Promise.all([rm(resultPath, { force: true }), rm(errorPath, { force: true })]);
 
 		if (comparisonResult.kind === "error") {
 			const errorResult: BundleSizeDiffError = {
 				prNumber,
 				baseCommit: comparisonResult.baselineCommit,
-				targetBranch: targetBranchName,
+				targetBranch,
 				error: comparisonResult.error,
 			};
 			await writeFile(errorPath, JSON.stringify(errorResult, undefined, 2));
@@ -170,7 +173,7 @@ export default class GenerateBundleSizeDiff extends BaseCommand<
 			const errorResult: BundleSizeDiffError = {
 				prNumber,
 				baseCommit: comparisonResult.baselineCommit,
-				targetBranch: targetBranchName,
+				targetBranch,
 				error:
 					"No bundles to compare — baseline artifact or PR local bundle reports are empty.",
 			};
@@ -183,7 +186,7 @@ export default class GenerateBundleSizeDiff extends BaseCommand<
 		const common = {
 			prNumber,
 			baseCommit: baselineCommit,
-			targetBranch: targetBranchName,
+			targetBranch,
 		};
 		const result: BundleSizeDiffResult = bundlesContainNoChanges(comparison)
 			? { ...common, kind: "no-changes" }

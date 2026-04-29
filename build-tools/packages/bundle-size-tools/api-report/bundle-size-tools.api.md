@@ -20,6 +20,7 @@ export class ADOSizeComparator {
     adoConstants: IADOConstants,
     adoConnection: WebApi,
     localReportPath: string,
+    targetBranch: string,
     adoBuildId: number | undefined,
     getFallbackCommit?: ((startingCommit: string) => Generator<string>) | undefined);
     getSizeComparison(tagWaiting: boolean): Promise<SizeComparison>;
@@ -155,7 +156,7 @@ export function getAllFilesInDirectory(sourceFolder: string, partialPathPrefix?:
 export function getAzureDevopsApi(accessToken: string | undefined, orgUrl: string): WebApi;
 
 // @public
-export function getBaselineCommit(): string;
+export function getBaselineCommit(targetBranch: string): string;
 
 // @public (undocumented)
 export interface GetBuildOptions {

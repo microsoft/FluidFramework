@@ -227,7 +227,7 @@ extends:
               - group: ado-feeds
               - group: storage-vars
               - ${{ if eq(variables['Build.Reason'], 'PullRequest') }}:
-                - name: targetBranchName
+                - name: targetBranch
                   value: $(System.PullRequest.TargetBranch)
             steps:
               # Setup
@@ -292,7 +292,7 @@ extends:
 
                     # Target Branch variable (PR policy related)
                     if [[ ${{ variables['Build.Reason'] }} == "PullRequest" ]]; then
-                      echo "TargetBranchName=$(targetBranchName)"
+                      echo "TargetBranch=$(targetBranch)"
                     fi
 
                     # Error checking
@@ -434,7 +434,7 @@ extends:
                     displayName: (PR only) Generate bundle size diff
                     condition: and(succeeded(), eq(variables['Build.Reason'], 'PullRequest'))
                     env:
-                      TARGET_BRANCH_NAME: '$(targetBranchName)'
+                      TARGET_BRANCH: '$(targetBranch)'
                       PR_NUMBER: '$(System.PullRequest.PullRequestNumber)'
                     inputs:
                       targetType: inline
