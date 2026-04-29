@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import * as path from "node:path";
 import * as sequenceDeprecated from "@fluid-experimental/sequence-deprecated";
 import { SparseMatrix } from "@fluid-experimental/sequence-deprecated";
 import { DriverApi } from "@fluid-private/test-drivers";
@@ -369,7 +370,9 @@ async function loadDriver(baseVersion: string, requested?: number | string): Pro
 		// Load the "@fluidframework/server-local-server" package directly without checking for
 		// version compatibility. Server packages have different versioning from client packages.
 		const { LocalDeltaConnectionServer } = await loadPackage(
-			modulePath,
+			// @fluidframework/server-local-server is not a direct dependency of the compat workspace, but it is a known dependency of @fluidframework/local-driver,
+			// so use that as the base path.
+			path.join(modulePath, "node_modules", "@fluidframework/local-driver"),
 			"@fluidframework/server-local-server",
 		);
 
