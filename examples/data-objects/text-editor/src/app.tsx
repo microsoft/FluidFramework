@@ -223,39 +223,23 @@ async function initFluid(): Promise<DualUserViews> {
 	};
 }
 
-const plainTextareaEditLabel = Symbol("plain-textarea");
-const plainQuillEditLabel = Symbol("plain-quill");
-const formattedEditLabel = Symbol("formatted");
-
 const viewLabels = {
 	plainTextarea: {
 		description: "Plain Textarea",
 		component: (root: TextEditorRoot, manager: UndoRedo) => (
-			<PlainTextMainView
-				root={toPropTreeNode(root.plainText)}
-				undoRedo={manager}
-				editLabel={plainTextareaEditLabel}
-			/>
+			<PlainTextMainView root={toPropTreeNode(root.plainText)} undoRedo={manager} />
 		),
 	},
 	plainQuill: {
 		description: "Plain Quill Editor",
 		component: (root: TextEditorRoot, manager: UndoRedo) => (
-			<PlainQuillView
-				root={toPropTreeNode(root.plainText)}
-				undoRedo={manager}
-				editLabel={plainQuillEditLabel}
-			/>
+			<PlainQuillView root={toPropTreeNode(root.plainText)} undoRedo={manager} />
 		),
 	},
 	formatted: {
 		description: "Formatted Quill Editor",
 		component: (root: TextEditorRoot, manager: UndoRedo) => (
-			<FormattedMainView
-				root={toPropTreeNode(root.formattedText)}
-				undoRedo={manager}
-				editLabel={formattedEditLabel}
-			/>
+			<FormattedMainView root={toPropTreeNode(root.formattedText)} undoRedo={manager} />
 		),
 	},
 } as const;
