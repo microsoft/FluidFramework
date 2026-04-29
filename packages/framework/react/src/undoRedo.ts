@@ -11,9 +11,9 @@ import type { RevertibleAlpha, TreeBranchAlpha } from "@fluidframework/tree/inte
  * An undo/redo manager that supports optional scoping based on transaction labels.
  *
  * @remarks
- * When a label is provided to `undo` / `redo`, the operation targets the most recent commit
- * whose label set contains that symbol, skipping commits with non-matching labels. When no
- * label is provided the operation is global and targets the most recent commit regardless of
+ * When labels are provided to `undo` / `redo`, the operation targets the most recent commit
+ * whose label set contains all of those labels, skipping commits that do not match. When no
+ * labels are provided the operation is global and targets the most recent commit regardless of
  * labels.
  *
  * **Redo invalidation:** when a new user commit arrives, redo entries whose label sets overlap
@@ -73,7 +73,7 @@ export interface UndoRedo {
 	 *
 	 * @see {@link UndoRedo.canUndo}
 	 */
-	undo(...labels: symbol[]): void;
+	undo(...labels: readonly unknown[]): void;
 
 	/**
 	 * Redoes the most recent undone commit whose label set contains all of the specified labels.
@@ -84,7 +84,7 @@ export interface UndoRedo {
 	 *
 	 * @see {@link UndoRedo.canRedo}
 	 */
-	redo(...labels: symbol[]): void;
+	redo(...labels: readonly unknown[]): void;
 
 	/**
 	 * Returns true if there is at least one commit available to undo whose label set contains
@@ -94,7 +94,7 @@ export interface UndoRedo {
 	 *
 	 * @see {@link UndoRedo.undo}
 	 */
-	canUndo(...labels: symbol[]): boolean;
+	canUndo(...labels: readonly unknown[]): boolean;
 
 	/**
 	 * Returns true if there is at least one commit available to redo whose label set contains
@@ -104,7 +104,7 @@ export interface UndoRedo {
 	 *
 	 * @see {@link UndoRedo.redo}
 	 */
-	canRedo(...labels: symbol[]): boolean;
+	canRedo(...labels: readonly unknown[]): boolean;
 
 	/**
 	 * Releases the manager's subscription to the branch and disposes all tracked revertibles.
@@ -119,9 +119,12 @@ export interface UndoRedo {
 }
 
 /**
- * Determines if sets `a` and `b` share at least one symbol.
+ * Determines if sets `a` and `b` share at least one element.
+ *
+ * @param a - The first set.
+ * @param b - The second set.
  */
-function doLabelSetsOverlap(a: ReadonlySet<symbol>, b: ReadonlySet<symbol>): boolean {
+function doLabelSetsOverlap(a: ReadonlySet<unknown>, b: ReadonlySet<unknown>): boolean {
 	for (const label of a) {
 		if (b.has(label)) {
 			return true;
@@ -141,16 +144,17 @@ interface StackEntry {
 	/**
 	 * Labels associated with the commit (if any).
 	 */
-	labels: ReadonlySet<symbol>;
+	labels: ReadonlySet<unknown>;
 }
 
 /**
  * Returns a predicate that matches any stack entry whose label set contains all of `labels`.
  * When `labels` is empty, the predicate matches every entry (global operation).
  *
- * @param labels - The symbols that must all be present in a matching entry's label set.
+ * @param labels - The values that must all be present in a matching entry's label set.
+ * May be empty to match all entries.
  */
-function labelPredicate(labels: symbol[]): (entry: StackEntry) => boolean {
+function labelPredicate(labels: readonly unknown[]): (entry: StackEntry) => boolean {
 	if (labels.length === 0) {
 		return () => true;
 	}
@@ -176,7 +180,7 @@ class UndoRedoManager implements UndoRedo {
 	// Set synchronously around revert() calls so the changed event handler can attribute the
 	// resulting commit to this manager's undo or redo action rather than treating it as a new
 	// user commit. Cleared before notifying listeners.
-	#pendingOperation: { kind: "undo" | "redo"; labels: ReadonlySet<symbol> } | undefined;
+	#pendingOperation: { kind: "undo" | "redo"; labels: ReadonlySet<unknown> } | undefined;
 	#disposed = false;
 
 	/**
@@ -208,13 +212,13 @@ class UndoRedoManager implements UndoRedo {
 				return;
 			}
 
-			// Normal user commit: extract symbol labels from the commit metadata.
-			// Only root-level symbol entries are collected; nested label nodes (produced by
-			// inner runTransaction calls) are not traversed — see UndoRedo remarks.
-			const symbolLabels = new Set<symbol>();
-			for (const labels of data.labels) {
-				if (typeof labels === "symbol") {
-					symbolLabels.add(labels);
+			// Normal user commit: extract root-level symbol labels from the commit metadata.
+			// Nested label nodes (produced by inner runTransaction calls) are not traversed —
+			// see UndoRedo remarks.
+			const commitLabels = new Set<unknown>();
+			for (const label of data.labels) {
+				if (typeof label === "symbol") {
+					commitLabels.add(label);
 				}
 			}
 
@@ -226,38 +230,38 @@ class UndoRedoManager implements UndoRedo {
 				}
 
 				const overlaps =
-					symbolLabels.size === 0
+					commitLabels.size === 0
 						? entry.labels.size === 0
-						: doLabelSetsOverlap(symbolLabels, entry.labels);
+						: doLabelSetsOverlap(commitLabels, entry.labels);
 				if (overlaps) {
 					entry.revertible.dispose();
 					this.#redoStack.splice(i, 1);
 				}
 			}
 
-			this.#undoStack.push({ revertible: getRevertible(), labels: symbolLabels });
+			this.#undoStack.push({ revertible: getRevertible(), labels: commitLabels });
 		});
 	}
 
-	public undo(...labels: symbol[]): void {
+	public undo(...labels: readonly unknown[]): void {
 		if (this.#disposed) {
 			return;
 		}
 		this.#revertWhere(this.#undoStack, "undo", labelPredicate(labels));
 	}
 
-	public redo(...labels: symbol[]): void {
+	public redo(...labels: readonly unknown[]): void {
 		if (this.#disposed) {
 			return;
 		}
 		this.#revertWhere(this.#redoStack, "redo", labelPredicate(labels));
 	}
 
-	public canUndo(...labels: symbol[]): boolean {
+	public canUndo(...labels: readonly unknown[]): boolean {
 		return this.#undoStack.some(labelPredicate(labels));
 	}
 
-	public canRedo(...labels: symbol[]): boolean {
+	public canRedo(...labels: readonly unknown[]): boolean {
 		return this.#redoStack.some(labelPredicate(labels));
 	}
 
