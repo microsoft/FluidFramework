@@ -203,7 +203,6 @@ describe("textEditor", () => {
 				});
 			}
 		});
-
 	});
 
 	// Formatted text view tests - Initial view rendering (matching plain text test structure)
@@ -1070,10 +1069,7 @@ describe("textEditor", () => {
 
 						const { tree } = createFormattedTreeView();
 						const rendered = render(
-							<FormattedMainView
-								root={toPropTreeNode(tree)}
-								undoRedo={mockUndoRedo}
-							/>,
+							<FormattedMainView root={toPropTreeNode(tree)} undoRedo={mockUndoRedo} />,
 							{ reactStrictMode },
 						);
 
