@@ -168,19 +168,33 @@ function labelPredicate(label: unknown): (entry: StackEntry) => boolean {
 const attachedBranches = new WeakSet<TreeBranchAlpha>();
 
 class UndoRedoManager implements UndoRedo {
+	/** Commits available to undo, ordered oldest-first. */
 	readonly #undoStack: StackEntry[] = [];
+
+	/** Commits available to redo, ordered oldest-first. */
 	readonly #redoStack: StackEntry[] = [];
+
+	/** Unsubscribes this manager from the branch's `changed` event. */
 	readonly #unsubscribe: () => void;
+
+	/**
+	 * The branch this manager is attached to.
+	 * @remarks Retained after construction so it can be removed from {@link attachedBranches} on dispose.
+	 */
 	readonly #branch: TreeBranchAlpha;
 
-	// Set synchronously around revert() calls so the changed event handler can attribute the
-	// resulting commit to this manager's undo or redo action rather than treating it as a new
-	// user commit. Cleared before notifying listeners.
-	// This is needed as a workaround for a current limitation in SharedTree where `revert()` operations do not carry
-	// the original label(s) of the commit being reverted.
-	// TODO: AB#71256: Remove this workaround once SharedTree supports preserving commit labels on revert operations.
+	/**
+	 * Set synchronously around `revert()` calls so the `changed` event handler can attribute the
+	 * resulting commit to an undo or redo action rather than treating it as a new user commit.
+	 *
+	 * @remarks
+	 * This workaround is needed because SharedTree's `revert()` does not preserve the original
+	 * commit's labels on the resulting commit.
+	 * TODO: AB#71256: Remove once SharedTree supports preserving commit labels on revert.
+	 */
 	#pendingOperation: { kind: "undo" | "redo"; labels: ReadonlySet<unknown> } | undefined;
 
+	/** Whether or not this instance has been disposed. */
 	#disposed = false;
 
 	/**
