@@ -8,6 +8,7 @@ import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { Command, Flags } from "@oclif/core";
+import { simpleGit } from "simple-git";
 
 import { maybePrintHelp } from "./oclifHelp.ts";
 
@@ -24,16 +25,14 @@ const packageRoot = resolve(scriptDirectory, "..");
  * works for worktree-based setups where `main` may not exist as a local branch
  * at the location they expect.
  */
-function resolveMergeBase(rev: string): string | undefined {
-	const result = spawnSync("git", ["merge-base", "HEAD", rev], {
-		cwd: packageRoot,
-		encoding: "utf-8",
-	});
-	if (result.status !== 0) {
+async function resolveMergeBase(rev: string): Promise<string | undefined> {
+	try {
+		const output = await simpleGit(packageRoot).raw(["merge-base", "HEAD", rev]);
+		const sha = output.trim();
+		return sha.length > 0 ? sha : undefined;
+	} catch {
 		return undefined;
 	}
-	const sha = result.stdout.trim();
-	return sha.length > 0 ? sha : undefined;
 }
 
 /**
@@ -116,7 +115,7 @@ class CollectAndCompareBundlesCommand extends Command {
 		const { flags } = await this.parse(CollectAndCompareBundlesCommand);
 
 		const baseRevisionInput = flags["base-revision"];
-		const resolvedBaseRevision = resolveMergeBase(baseRevisionInput);
+		const resolvedBaseRevision = await resolveMergeBase(baseRevisionInput);
 		if (resolvedBaseRevision === undefined) {
 			this.error(
 				`Could not find merge-base of HEAD and "${baseRevisionInput}". ` +

@@ -9,6 +9,7 @@ import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { Command, Flags } from "@oclif/core";
+import { simpleGit } from "simple-git";
 
 import { maybePrintHelp } from "./oclifHelp.ts";
 
@@ -24,14 +25,12 @@ const packageWorkspacePath = "examples/utils/bundle-size-tests";
 /**
  * Gets the repository root directory for the given working directory.
  */
-function getRepoRoot(cwd: string): string {
-	return execSync("git rev-parse --show-toplevel", {
-		cwd,
-		encoding: "utf-8",
-	}).trim();
+async function getRepoRoot(cwd: string): Promise<string> {
+	const output = await simpleGit(cwd).revparse(["--show-toplevel"]);
+	return output.trim();
 }
 
-const outerRepoRoot = getRepoRoot(outerPackageRoot);
+const outerRepoRoot = await getRepoRoot(outerPackageRoot);
 
 /**
  * Where saved bundle stats live, keyed by sanitized label.
@@ -162,11 +161,12 @@ function saveStats(label: string, sourcePackageRoot: string): void {
  * Returns the URL of the outer repo's `origin` remote, used as the source
  * for cloning the inner repo.
  */
-function getOuterOriginUrl(): string {
-	return execSync("git config --get remote.origin.url", {
-		cwd: outerRepoRoot,
-		encoding: "utf-8",
-	}).trim();
+async function getOuterOriginUrl(): Promise<string> {
+	const { value } = await simpleGit(outerRepoRoot).getConfig("remote.origin.url");
+	if (value === null || value.length === 0) {
+		throw new Error(`Could not read remote.origin.url from ${outerRepoRoot}.`);
+	}
+	return value;
 }
 
 /**
@@ -178,32 +178,32 @@ function getOuterOriginUrl(): string {
  *
  * Never modifies the outer repo's working tree, branch, or stash.
  */
-function ensureInnerRepo(): void {
+async function ensureInnerRepo(): Promise<void> {
 	if (existsSync(resolve(innerRepoRoot, ".git"))) {
 		return;
 	}
 
-	const originUrl = getOuterOriginUrl();
+	const originUrl = await getOuterOriginUrl();
 	mkdirSync(dirname(innerRepoRoot), { recursive: true });
 	console.log(`\nCloning inner repo from ${originUrl} into ${innerRepoRoot}...`);
 	// Filter blobs to keep the clone fast; blobs are fetched lazily on checkout.
-	run(
-		`git clone --filter=blob:none ${JSON.stringify(originUrl)} ${JSON.stringify(innerRepoRoot)}`,
-		dirname(innerRepoRoot),
-	);
+	await simpleGit(dirname(innerRepoRoot)).clone(originUrl, innerRepoRoot, [
+		"--filter=blob:none",
+	]);
 }
 
 /**
  * Fetches the latest refs and checks out the requested revision in the inner repo.
  * The revision can be a branch, tag, or commit SHA.
  */
-function syncInnerRepoToRevision(revision: string): void {
+async function syncInnerRepoToRevision(revision: string): Promise<void> {
+	const innerGit = simpleGit(innerRepoRoot);
 	console.log(`\nFetching latest refs in inner repo...`);
-	run("git fetch --tags origin", innerRepoRoot);
+	await innerGit.fetch(["--tags", "origin"]);
 
 	console.log(`Checking out revision "${revision}" in inner repo...`);
 	// Use detached HEAD checkout so we don't have to manage local branch state.
-	run(`git checkout --detach ${JSON.stringify(revision)}`, innerRepoRoot);
+	await innerGit.raw(["checkout", "--detach", revision]);
 }
 
 /**
@@ -275,9 +275,9 @@ class CollectBundleCommand extends Command {
 			activeRepoRoot = outerRepoRoot;
 			activePackageRoot = outerPackageRoot;
 		} else {
-			ensureInnerRepo();
+			await ensureInnerRepo();
 			// Only the inner repo's revision is changed. The outer repo is never touched.
-			syncInnerRepoToRevision(revision as string);
+			await syncInnerRepoToRevision(revision as string);
 			activeRepoRoot = innerRepoRoot;
 			activePackageRoot = resolve(innerRepoRoot, packageWorkspacePath);
 			if (!existsSync(activePackageRoot)) {

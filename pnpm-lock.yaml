@@ -4886,6 +4886,9 @@ importers:
       rimraf:
         specifier: ^6.1.3
         version: 6.1.3
+      simple-git:
+        specifier: ^3.32.3
+        version: 3.32.3
       source-map-explorer:
         specifier: ^2.5.3
         version: 2.5.3
