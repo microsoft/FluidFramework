@@ -27,6 +27,7 @@
  * Commit all changes produced by the script.
  */
 
+import { execFileSync } from "node:child_process";
 import { existsSync } from "node:fs";
 import { createRequire } from "node:module";
 import * as path from "node:path";
@@ -88,12 +89,17 @@ export function getAllManifestVersions(manifest: CompatVersionsManifest): string
 
 const resolutionCache = new Map<string, string>();
 
+// See https://github.com/nodejs/node-v0.x-archive/issues/2318.
+// Note that execFile and execFileSync are used to avoid command injection vulnerability flagging from CodeQL.
+// pnpm is used instead of npm for package installation to enable security flags (--ignore-scripts, --prefer-offline).
+const pnpmCmd = process.platform === "win32" ? "pnpm.cmd" : "pnpm";
+
 /**
  * Resolves a version range or alias to an exact version using the committed manifest.
  *
  * @internal
  */
-export function resolveVersion(requested: string, _installed: boolean): string {
+export function resolveVersion(requested: string, installed: boolean): string {
 	const cachedVersion = resolutionCache.get(requested);
 	if (cachedVersion) {
 		return cachedVersion;
@@ -108,19 +114,55 @@ export function resolveVersion(requested: string, _installed: boolean): string {
 		throw new Error(`Invalid semver range: "${requested}"`);
 	}
 
-	const manifest = tryReadVersionsManifest();
-	if (manifest !== undefined) {
-		const allVersions = getAllManifestVersions(manifest);
-		const matching = allVersions
-			.filter((v) => semver.valid(v) && semver.satisfies(v, requested))
-			.sort(semver.rcompare);
-		if (matching.length > 0) {
-			resolutionCache.set(requested, matching[0]);
-			return matching[0];
+	if (installed) {
+		const manifest = tryReadVersionsManifest();
+		if (manifest !== undefined) {
+			const allVersions = getAllManifestVersions(manifest);
+			const matching = allVersions
+				.filter((v) => semver.valid(v) && semver.satisfies(v, requested))
+				.sort(semver.rcompare);
+			if (matching.length > 0) {
+				resolutionCache.set(requested, matching[0]);
+				return matching[0];
+			}
 		}
-	}
 
-	throw new Error(`No version in manifest satisfies range: "${requested}"`);
+		throw new Error(`No version in manifest satisfies range: "${requested}"`);
+	} else {
+		let result: string | undefined;
+		try {
+			result = execFileSync(
+				pnpmCmd,
+				["view", `"@fluidframework/container-loader@${requested}"`, "version", "--json"],
+				{
+					encoding: "utf8",
+					// When using pnpm.cmd shell must be true: https://nodejs.org/en/blog/vulnerability/april-2024-security-releases-2
+					shell: true,
+				},
+			);
+		} catch (error: any) {
+			debugger;
+			throw new Error(
+				`Error while running: ${pnpmCmd} view "@fluidframework/container-loader@${requested}" version --json`,
+			);
+		}
+		if (result === "" || result === undefined) {
+			throw new Error(`No version published as ${requested}`);
+		}
+
+		try {
+			const versions: string | string[] = result !== "" ? JSON.parse(result) : "";
+			const version = Array.isArray(versions) ? versions.sort(semver.rcompare)[0] : versions;
+			if (version) {
+				resolutionCache.set(requested, version);
+				return version;
+			}
+		} catch (e) {
+			throw new Error(`Error parsing versions for ${requested}`);
+		}
+
+		throw new Error(`No version found for ${requested}`);
+	}
 }
 
 // ---------------------------------------------------------------------------
