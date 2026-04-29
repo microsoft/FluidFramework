@@ -7,7 +7,7 @@ import {
 	withMemoizedTreeObservations,
 	syncTextToTree,
 	type PropTreeNode,
-	type UndoRedoProp,
+	type TextEditorProps,
 } from "@fluidframework/react/internal";
 import { TreeAlpha } from "@fluidframework/tree/internal";
 import type { TextAsTree } from "@fluidframework/tree/internal";
@@ -19,16 +19,9 @@ import * as ReactDOM from "react-dom";
  * Props for the MainView component.
  * @input @internal
  */
-export interface MainViewProps {
+export interface MainViewProps extends TextEditorProps {
 	/** The plain text tree to edit. */
 	readonly root: PropTreeNode<TextAsTree.Tree>;
-	/**
-	 * Optional undo/redo manager and transaction label.
-	 * When provided, undo/redo toolbar buttons are rendered and each user edit is
-	 * committed under `label` so it can be undone/redone independently of edits
-	 * made by other components sharing the same {@link @fluidframework/react#UndoRedoProp.manager}.
-	 */
-	readonly undoRedo?: UndoRedoProp;
 }
 
 type MainViewPropsInner = Omit<MainViewProps, "root"> & {
@@ -42,12 +35,12 @@ type MainViewPropsInner = Omit<MainViewProps, "root"> & {
  * Pass an `undoRedo` prop to enable undo/redo buttons scoped to this editor's transactions.
  * @internal
  */
-export const MainView: FC<MainViewProps> = ({ root, undoRedo }) => {
-	return <TextEditorView root={root} undoRedo={undoRedo} />;
+export const MainView: FC<MainViewProps> = ({ root, undoRedo, editLabel }) => {
+	return <TextEditorView root={root} undoRedo={undoRedo} editLabel={editLabel} />;
 };
 
 const TextEditorView = withMemoizedTreeObservations(
-	({ root, undoRedo }: MainViewPropsInner) => {
+	({ root, undoRedo, editLabel }: MainViewPropsInner) => {
 		// DOM element where Quill will mount its editor
 		const editorRef = useRef<HTMLDivElement>(null);
 		// Quill instance, persisted across renders to avoid re-initialization
@@ -58,9 +51,11 @@ const TextEditorView = withMemoizedTreeObservations(
 		const [undoRedoContainer, setUndoRedoContainer] = useState<HTMLElement | undefined>(
 			undefined,
 		);
-		// Ref so the one-time Quill setup effect always sees the current undoRedo value.
-		const undoRedoRef = useRef(undoRedo);
-		undoRedoRef.current = undoRedo;
+		// Effective label: explicit prop or the root node itself as the default.
+		const effectiveLabel = editLabel ?? root;
+		// Ref so the one-time Quill setup effect always sees the current effective label.
+		const editLabelRef = useRef(effectiveLabel);
+		editLabelRef.current = effectiveLabel;
 
 		// Access tree content during render to establish observation.
 		// The HOC will automatically re-render when this content changes.
@@ -98,11 +93,9 @@ const TextEditorView = withMemoizedTreeObservations(
 					// and maybe add a debugAssert that the delta actually gets the strings synchronized.
 					const context = TreeAlpha.context(root);
 					if (context.isBranch()) {
-						// Use ref so this closure always sees the latest label even if undoRedo changes.
-						// editLabel is typed unknown; narrow to symbol for runTransaction.
-						const editLabel = undoRedoRef.current?.editLabel;
+						// Use ref so this closure always sees the current effective label.
 						context.runTransaction(() => syncTextToTree(root, newText), {
-							label: typeof editLabel === "symbol" ? editLabel : undefined,
+							label: editLabelRef.current,
 						});
 					} else {
 						syncTextToTree(root, newText);
@@ -174,15 +167,15 @@ const TextEditorView = withMemoizedTreeObservations(
 							type="button"
 							className="ql-undo"
 							aria-label="Undo"
-							disabled={undoRedo?.manager.canUndo(undoRedo.editLabel) !== true}
-							onClick={() => undoRedo?.manager.undo(undoRedo.editLabel)}
+							disabled={undoRedo?.canUndo(effectiveLabel) !== true}
+							onClick={() => undoRedo?.undo(effectiveLabel)}
 						/>
 						<button
 							type="button"
 							className="ql-redo"
 							aria-label="Redo"
-							disabled={undoRedo?.manager.canRedo(undoRedo.editLabel) !== true}
-							onClick={() => undoRedo?.manager.redo(undoRedo.editLabel)}
+							disabled={undoRedo?.canRedo(effectiveLabel) !== true}
+							onClick={() => undoRedo?.redo(effectiveLabel)}
 						/>
 					</>,
 					undoRedoContainer,

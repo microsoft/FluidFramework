@@ -8,52 +8,18 @@ import type { TextAsTree } from "@fluidframework/tree/internal";
 import { type ChangeEvent, type FC, useCallback, useRef } from "react";
 
 import type { PropTreeNode } from "../../propNode.js";
-import type { UndoRedo } from "../../undoRedo.js";
 import { withMemoizedTreeObservations } from "../../useTree.js";
+import type { TextEditorProps } from "../textEditorProps.js";
 
 import { syncTextToTree } from "./plainUtils.js";
 
 /**
- * The `undoRedo` prop shape shared by all editor components that integrate with {@link UndoRedo}.
- *
- * @example
- * ```tsx
- * const titleLabel = Symbol("title-editor");
- * const prop: UndoRedoProp = { manager, editLabel: titleLabel };
- * <PlainTextMainView root={root} undoRedo={prop} />
- * ```
- *
- * @internal
- */
-export interface UndoRedoProp {
-	/**
-	 * The undo/redo manager used by this editor.
-	 */
-	readonly manager: UndoRedo;
-	/**
-	 * Label that identifies this editor's commits within the shared manager.
-	 *
-	 * @remarks
-	 * Only edits stamped with this label will be considered part of this editor's undo/redo history.
-	 */
-	readonly editLabel: unknown;
-}
-
-/**
  * Props for the MainView component.
- * @internal
+ * @input @internal
  */
-export interface MainViewProps {
+export interface MainViewProps extends TextEditorProps {
 	/** The plain text tree to edit. */
 	readonly root: PropTreeNode<TextAsTree.Tree>;
-	/**
-	 * Optional undo/redo manager and transaction label.
-	 * @remarks
-	 * When provided, undo/redo buttons are rendered and each user edit is
-	 * committed under `label` so it can be undone/redone independently of edits
-	 * made by other components sharing the same {@link UndoRedoProp.manager}.
-	 */
-	readonly undoRedo?: UndoRedoProp;
 }
 
 type MainViewPropsInner = Omit<MainViewProps, "root"> & {
@@ -67,12 +33,12 @@ type MainViewPropsInner = Omit<MainViewProps, "root"> & {
  * Pass an `undoRedo` prop to enable undo/redo buttons scoped to this editor's transactions.
  * @internal
  */
-export const MainView: FC<MainViewProps> = ({ root, undoRedo }) => {
-	return <PlainTextEditorView root={root} undoRedo={undoRedo} />;
+export const MainView: FC<MainViewProps> = ({ root, undoRedo, editLabel }) => {
+	return <PlainTextEditorView root={root} undoRedo={undoRedo} editLabel={editLabel} />;
 };
 
 const PlainTextEditorView = withMemoizedTreeObservations(
-	({ root, undoRedo }: MainViewPropsInner) => {
+	({ root, undoRedo, editLabel }: MainViewPropsInner) => {
 		// Reference to the textarea element
 		const textareaRef = useRef<HTMLTextAreaElement>(null);
 		// Guards against update loops between textarea and the tree
@@ -81,6 +47,9 @@ const PlainTextEditorView = withMemoizedTreeObservations(
 		// Access tree content during render to establish observation.
 		// The HOC will automatically re-render when this content changes.
 		const currentText = root.fullString();
+
+		// Effective label: explicit prop or the root node itself as the default.
+		const effectiveLabel = editLabel ?? root;
 
 		// Handle textarea changes - sync textarea → tree
 		const handleChange = useCallback(
@@ -95,7 +64,7 @@ const PlainTextEditorView = withMemoizedTreeObservations(
 				const context = TreeAlpha.context(root);
 				if (context.isBranch()) {
 					context.runTransaction(() => syncTextToTree(root, newText), {
-						label: undoRedo?.editLabel,
+						label: effectiveLabel,
 					});
 				} else {
 					syncTextToTree(root, newText);
@@ -103,7 +72,7 @@ const PlainTextEditorView = withMemoizedTreeObservations(
 
 				isUpdatingRef.current = false;
 			},
-			[root, undoRedo],
+			[root, effectiveLabel],
 		);
 
 		// Sync textarea when tree changes externally.
@@ -168,16 +137,16 @@ const PlainTextEditorView = withMemoizedTreeObservations(
 							type="button"
 							className="pt-undo"
 							aria-label="Undo"
-							disabled={!undoRedo.manager.canUndo(undoRedo.editLabel)}
-							onClick={() => undoRedo.manager.undo(undoRedo.editLabel)}
+							disabled={!undoRedo.canUndo(effectiveLabel)}
+							onClick={() => undoRedo.undo(effectiveLabel)}
 							title="Undo"
 						/>
 						<button
 							type="button"
 							className="pt-redo"
 							aria-label="Redo"
-							disabled={!undoRedo.manager.canRedo(undoRedo.editLabel)}
-							onClick={() => undoRedo.manager.redo(undoRedo.editLabel)}
+							disabled={!undoRedo.canRedo(effectiveLabel)}
+							onClick={() => undoRedo.redo(effectiveLabel)}
 							title="Redo"
 						/>
 					</div>

@@ -233,7 +233,8 @@ const viewLabels = {
 		component: (root: TextEditorRoot, manager: UndoRedo) => (
 			<PlainTextMainView
 				root={toPropTreeNode(root.plainText)}
-				undoRedo={{ manager, editLabel: plainTextareaEditLabel }}
+				undoRedo={manager}
+				editLabel={plainTextareaEditLabel}
 			/>
 		),
 	},
@@ -242,7 +243,8 @@ const viewLabels = {
 		component: (root: TextEditorRoot, manager: UndoRedo) => (
 			<PlainQuillView
 				root={toPropTreeNode(root.plainText)}
-				undoRedo={{ manager, editLabel: plainQuillEditLabel }}
+				undoRedo={manager}
+				editLabel={plainQuillEditLabel}
 			/>
 		),
 	},
@@ -251,7 +253,8 @@ const viewLabels = {
 		component: (root: TextEditorRoot, manager: UndoRedo) => (
 			<FormattedMainView
 				root={toPropTreeNode(root.formattedText)}
-				undoRedo={{ manager, editLabel: formattedEditLabel }}
+				undoRedo={manager}
+				editLabel={formattedEditLabel}
 			/>
 		),
 	},
