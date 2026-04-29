@@ -80,14 +80,14 @@ describe("SharedTree table APIs memory usage", () => {
 	const tableSizes = isInPerformanceTestingMode
 		? [5, 50]
 		: // When not measuring perf, use a single smaller data size so the tests run faster.
-			[5];
+			[3];
 
 	// The number of operations to perform on the tree.
 	// Operation counts 1000 removed due to high overhead and unreliable results.
 	const operationCounts = isInPerformanceTestingMode
 		? [5, 50]
 		: // When not measuring perf, use a single smaller data size so the tests run faster.
-			[5];
+			[3];
 
 	// IMPORTANT: variables scoped to the test suite are a big problem for memory-profiling tests
 	// because they won't be out of scope when we garbage-collect between runs of the same test,

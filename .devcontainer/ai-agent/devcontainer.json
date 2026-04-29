@@ -2,7 +2,7 @@
 {
 	"name": "AI-enabled",
 	// Bump this version to force a codespace prebuild rebuild. See .devcontainer/README.md.
-	// prebuild-version: 1.0.2
+	// prebuild-version: 1.0.5
 	"build": {
 		"dockerfile": "../Dockerfile",
 		"args": {
@@ -43,7 +43,7 @@
 		"NODE_VERSION_OVERRIDE": "24",
 		"COREPACK_ENABLE_DOWNLOAD_PROMPT": "0"
 	},
-	"onCreateCommand": "bash scripts/codespace-setup/on-create.sh",
+	"onCreateCommand": "bash scripts/codespace-setup/on-create.sh && bash scripts/codespace-setup/install-build-cli.sh",
 	"postCreateCommand": "bash scripts/codespace-setup/ai-setup.sh",
 	"postStartCommand": {
 		"bwrap-setup": "sudo mount --make-rshared /",

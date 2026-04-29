@@ -3,14 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import {
-	DistributedTokenBucketThrottler,
-	Throttler,
-	ThrottlerHelper,
-} from "@fluidframework/server-services";
-import { IThrottleAndUsageStorageManager, IThrottler } from "@fluidframework/server-services-core";
-import { IHybridThrottleConfig, IThrottleConfig } from "@fluidframework/server-services-utils";
 import winston from "winston";
+import { DistributedTokenBucketThrottler } from "../throttling";
+import { Throttler, ThrottlerHelper } from "../legacy-throttling";
+import type { IHybridThrottleConfig, IThrottleConfig } from "@fluidframework/server-services-utils";
+import type {
+	IThrottleAndUsageStorageManager,
+	IThrottler,
+} from "@fluidframework/server-services-core";
 
 /**
  * Configures a throttler based on the provided throttle configuration.

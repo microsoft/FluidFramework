@@ -26,12 +26,8 @@ import type { IChannel } from "@fluidframework/datastore-definitions/internal";
 // Valid export as per package.json export map
 import { modifyClusterSize } from "@fluidframework/id-compressor/internal/test-utils";
 import { ISharedMap, SharedMap } from "@fluidframework/map/internal";
-import type { StageControlsAlpha } from "@fluidframework/runtime-definitions/internal";
-import {
-	RuntimeHeaders,
-	toFluidHandleInternal,
-	asLegacyAlpha,
-} from "@fluidframework/runtime-utils/internal";
+import type { StageControls } from "@fluidframework/runtime-definitions/internal";
+import { RuntimeHeaders, toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
 import { timeoutAwait } from "@fluidframework/test-utils/internal";
 
 import { ddsModelMap } from "./ddsModels.js";
@@ -195,7 +191,7 @@ export class StressDataObject extends DataObject {
 	}
 
 	public get isDirty(): boolean | undefined {
-		return asLegacyAlpha(this.runtime).isDirty;
+		return this.runtime.isDirty;
 	}
 }
 
@@ -335,8 +331,8 @@ export class DefaultStressDataObject extends StressDataObject {
 		this._locallyCreatedObjects.push(obj);
 	}
 
-	private stageControls: StageControlsAlpha | undefined;
-	private readonly containerRuntimeExp = asLegacyAlpha(this.context.containerRuntime);
+	private stageControls: StageControls | undefined;
+	private readonly containerRuntimeExp = this.context.containerRuntime;
 	public enterStagingMode(): void {
 		assert(
 			this.containerRuntimeExp.enterStagingMode !== undefined,

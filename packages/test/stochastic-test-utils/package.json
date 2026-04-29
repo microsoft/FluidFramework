@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-private/stochastic-test-utils",
-	"version": "2.100.0",
+	"version": "2.101.0",
 	"description": "Utilities for stochastic tests",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -99,7 +99,7 @@
 		"@arethetypeswrong/cli": "^0.18.2",
 		"@biomejs/biome": "~2.4.5",
 		"@fluid-internal/mocha-test-setup": "workspace:~",
-		"@fluid-tools/benchmark": "^0.55.0",
+		"@fluid-tools/benchmark": "^0.58.0",
 		"@fluid-tools/build-cli": "catalog:buildTools",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "catalog:buildTools",

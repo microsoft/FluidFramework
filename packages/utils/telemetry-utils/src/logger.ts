@@ -24,15 +24,55 @@ import {
 	isTaggedTelemetryPropertyValue,
 } from "./errorLogging.js";
 import type {
-	ITelemetryErrorEventExt,
 	ITelemetryEventExt,
-	ITelemetryGenericEventExt,
 	ITelemetryLoggerExt,
-	ITelemetryPerformanceEventExt,
 	ITelemetryPropertiesExt,
-	TelemetryEventCategory,
+	TelemetryLoggerExt,
 	TelemetryEventPropertyTypeExt,
 } from "./telemetryTypes.js";
+import type {
+	ITelemetryErrorEventExt,
+	ITelemetryGenericEventExt,
+	ITelemetryPerformanceEventExt,
+	TelemetryEventCategory,
+} from "./telemetryTypesUndeprecated.js";
+
+/**
+ * Type erase a {@link TelemetryLoggerExt} to an {@link ITelemetryLoggerExt}.
+ * @internal
+ */
+export function toITelemetryLoggerExt(logger: TelemetryLoggerExt): ITelemetryLoggerExt {
+	return logger as unknown as ITelemetryLoggerExt;
+}
+
+/**
+ * Un-type-erase the {@link ITelemetryLoggerExt}.
+ * @remarks
+ * This is the extraction helper as documented by {@link @fluidframework/core-interfaces#BrandedType}.
+ *
+ * @typeParam options - options for the extraction, currently only supports making
+ * the output possibly undefined (when `PossiblyUndefined: true`), which is useful
+ * for cases where we want to allow passing `undefined` through.
+ *
+ * @privateRemarks `ITelemetryLoggerExt` is not currently a branded type, but will
+ * be when the breaking change is made. At that time, use of this helper will be
+ * required.
+ *
+ * @internal
+ */
+export function extractTelemetryLoggerExt<
+	options extends {
+		PossiblyUndefined?: true;
+	} = // eslint-disable-next-line @typescript-eslint/no-empty-object-type -- empty object without PossiblyUndefined is the correct type
+	{},
+>(
+	input:
+		| ITelemetryLoggerExt
+		| TelemetryLoggerExt
+		| (options["PossiblyUndefined"] extends true ? undefined : never),
+): TelemetryLoggerExt | (options["PossiblyUndefined"] extends true ? undefined : never) {
+	return input as unknown as TelemetryLoggerExt;
+}
 
 /**
  * Broad classifications to be applied to individual properties as they're prepared to be logged to telemetry.
@@ -70,6 +110,9 @@ export type ITelemetryLoggerPropertyBag = Record<
 /**
  * @legacy
  * @beta
+ *
+ * @privateRemarks
+ * This is exposed to support {@link createChildLogger} properties parameter.
  */
 export interface ITelemetryLoggerPropertyBags {
 	all?: ITelemetryLoggerPropertyBag;
@@ -115,7 +158,7 @@ export const eventNamespaceSeparator = ":";
  * encoding in one place schemas for various types of Fluid telemetry events.
  * Creates sub-logger that appends properties to all events
  */
-export abstract class TelemetryLogger implements ITelemetryLoggerExt {
+export abstract class TelemetryLogger implements TelemetryLoggerExt {
 	/**
 	 * {@inheritDoc eventNamespaceSeparator}
 	 */
@@ -361,6 +404,12 @@ export class TaggedLoggerAdapter implements ITelemetryBaseLogger {
 	}
 }
 
+function toEitherTelemetryLoggerExt(
+	logger: TelemetryLoggerExt,
+): TelemetryLoggerExt & ITelemetryLoggerExt {
+	return logger as TelemetryLoggerExt & ITelemetryLoggerExt;
+}
+
 /**
  * Create a child logger based on the provided props object.
  *
@@ -369,15 +418,25 @@ export class TaggedLoggerAdapter implements ITelemetryBaseLogger {
  *
  * @param props - logger is the base logger the child will log to after it's processing, namespace will be prefixed to all event names, properties are default properties that will be applied events.
  *
- * @legacy
- * @beta
+ * @internal
+ *
+ * @privateRemarks
+ * Return type is both TelemetryLoggerExt and ITelemetryLoggerExt to allow for
+ * easier internal usage without needing to type erase or un-type-erase the
+ * logger.
+ *
+ * If always creating a child logger for direct external exposure, consider
+ * using {@link createChildLogger} from /legacy API instead, which returns
+ * exactly an {@link ITelemetryLoggerExt}.
  */
 export function createChildLogger(props?: {
 	logger?: ITelemetryBaseLogger;
 	namespace?: string;
 	properties?: ITelemetryLoggerPropertyBags;
-}): ITelemetryLoggerExt {
-	return ChildLogger.create(props?.logger, props?.namespace, props?.properties);
+}): TelemetryLoggerExt & ITelemetryLoggerExt {
+	return toEitherTelemetryLoggerExt(
+		ChildLogger.create(props?.logger, props?.namespace, props?.properties),
+	);
 }
 
 /**
@@ -510,7 +569,7 @@ export interface MultiSinkLoggerProperties {
  *
  * @internal
  */
-export function createMultiSinkLogger(props: MultiSinkLoggerProperties): ITelemetryLoggerExt {
+export function createMultiSinkLogger(props: MultiSinkLoggerProperties): TelemetryLoggerExt {
 	return new MultiSinkLogger(
 		props.namespace,
 		props.properties,
@@ -633,15 +692,23 @@ export class PerformanceEvent {
 	 * @param recordHeapSize - whether or not to also record memory performance
 	 * @param emitLogs - should this instance emit logs. If set to false, logs will not be emitted to the logger,
 	 * but measurements will still be performed and any specified markers will be generated.
+	 * @param logLevel - optional {@link LogLevel} for events emitted by this performance event.
 	 * @returns An instance of {@link PerformanceEvent}
 	 */
 	public static start(
-		logger: ITelemetryLoggerExt,
+		logger: TelemetryLoggerExt | ITelemetryLoggerExt,
 		event: ITelemetryGenericEventExt,
 		markers?: IPerformanceEventMarkers,
 		emitLogs: boolean = true,
+		logLevel?: typeof LogLevel.verbose | typeof LogLevel.default,
 	): PerformanceEvent {
-		return new PerformanceEvent(logger, event, markers, emitLogs);
+		return new PerformanceEvent(
+			extractTelemetryLoggerExt(logger),
+			event,
+			markers,
+			emitLogs,
+			logLevel,
+		);
 	}
 
 	/**
@@ -652,6 +719,7 @@ export class PerformanceEvent {
 	 * @param markers - See {@link IPerformanceEventMarkers}
 	 * @param sampleThreshold - events with the same name and category will be sent to the logger
 	 * only when we hit this many executions of the task. If unspecified, all events will be sent.
+	 * @param logLevel - optional {@link LogLevel} for events emitted by this performance event.
 	 * @returns The results of the executed task
 	 *
 	 * @remarks Note that if the "same" event (category + eventName) would be emitted by different
@@ -660,17 +728,19 @@ export class PerformanceEvent {
 	 * effectively "share" the sampling rate for the event.
 	 */
 	public static timedExec<T>(
-		logger: ITelemetryLoggerExt,
+		logger: TelemetryLoggerExt,
 		event: ITelemetryGenericEventExt,
 		callback: (event: PerformanceEvent) => T,
 		markers?: IPerformanceEventMarkers,
 		sampleThreshold: number = 1,
+		logLevel?: typeof LogLevel.verbose | typeof LogLevel.default,
 	): T {
 		const perfEvent = PerformanceEvent.start(
 			logger,
 			event,
 			markers,
 			PerformanceEvent.shouldReport(event, sampleThreshold),
+			logLevel,
 		);
 		try {
 			const ret = callback(perfEvent);
@@ -691,6 +761,7 @@ export class PerformanceEvent {
 	 * @param recordHeapSize - whether or not to also record memory performance
 	 * @param sampleThreshold - events with the same name and category will be sent to the logger
 	 * only when we hit this many executions of the task. If unspecified, all events will be sent.
+	 * @param logLevel - optional {@link LogLevel} for events emitted by this performance event.
 	 * @returns The results of the executed task
 	 *
 	 * @remarks Note that if the "same" event (category + eventName) would be emitted by different
@@ -699,17 +770,19 @@ export class PerformanceEvent {
 	 * effectively "share" the sampling rate for the event.
 	 */
 	public static async timedExecAsync<T>(
-		logger: ITelemetryLoggerExt,
+		logger: TelemetryLoggerExt | ITelemetryLoggerExt,
 		event: ITelemetryGenericEventExt,
 		callback: (event: PerformanceEvent) => Promise<T>,
 		markers?: IPerformanceEventMarkers,
 		sampleThreshold: number = 1,
+		logLevel?: typeof LogLevel.verbose | typeof LogLevel.default,
 	): Promise<T> {
 		const perfEvent = PerformanceEvent.start(
 			logger,
 			event,
 			markers,
 			PerformanceEvent.shouldReport(event, sampleThreshold),
+			logLevel,
 		);
 		try {
 			const ret = await callback(perfEvent);
@@ -730,10 +803,11 @@ export class PerformanceEvent {
 	private startMark?: string;
 
 	protected constructor(
-		private readonly logger: ITelemetryLoggerExt,
+		private readonly logger: TelemetryLoggerExt,
 		event: ITelemetryGenericEventExt,
 		private readonly markers: IPerformanceEventMarkers = { end: true, cancel: "generic" },
 		private readonly emitLogs: boolean = true,
+		private readonly logLevel?: typeof LogLevel.verbose | typeof LogLevel.default,
 	) {
 		this.event = { ...event };
 		if (this.markers.start) {
@@ -818,7 +892,7 @@ export class PerformanceEvent {
 			event.duration = this.duration;
 		}
 
-		this.logger.sendPerformanceEvent(event, error);
+		this.logger.sendPerformanceEvent(event, error, this.logLevel);
 	}
 
 	private static readonly eventHits = new Map<string, number>();
