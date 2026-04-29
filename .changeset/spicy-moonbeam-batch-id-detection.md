@@ -4,11 +4,12 @@
 ---
 Duplicate batch detection now activates automatically with pending state
 
-Duplicate batch detection in `ContainerRuntime` previously had to be opted in via `Fluid.ContainerRuntime.enableBatchIdTracking` or `Fluid.Container.enableOfflineFull` config. It now activates automatically whenever this runtime is involved in the pending-state lifecycle:
+Duplicate batch detection in `ContainerRuntime` previously had to be opted in via `Fluid.ContainerRuntime.enableBatchIdTracking` or `Fluid.Container.enableOfflineFull` config. It now activates automatically whenever fork detection is in play in this session:
 
 - The runtime is rehydrated from a captured pending state.
 - The loaded snapshot already contains a `recentBatchInfo` blob.
 - `getPendingLocalState()` is called.
+- An inbound batch arrives carrying an explicit `batchId` in its metadata. This covers pure observers — clients that aren't a fork source themselves but need to track inbound batchIds in order to stay consistent with peers that will throw on the duplicate.
 
 Once activated, detection (and `batchId` stamping on resubmits) is sticky for the runtime's lifetime.
 

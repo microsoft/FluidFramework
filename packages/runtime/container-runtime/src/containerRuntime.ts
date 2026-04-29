@@ -1517,17 +1517,34 @@ export class ContainerRuntime
 	 * serialized pending state and submit batches with the same batchId.
 	 *
 	 * @remarks
-	 * Activates automatically (sticky once on) when this runtime is involved in the
-	 * pending-state lifecycle:
+	 * Activates automatically (sticky once on) once we have any signal that fork
+	 * detection is in play in this session:
 	 *
 	 * - rehydrated from a captured pending state at construction (`pendingLocalState`),
 	 * - loaded from a snapshot whose `recentBatchInfo` blob is non-empty,
-	 * - or `getPendingLocalState()` is called (the moment we capture pending state).
+	 * - `getPendingLocalState()` is called (the moment we capture pending state),
+	 * - or an inbound batch arrives carrying an explicit `batchId` in its metadata,
+	 * which means some peer has activated stamping, so this runtime — even as a
+	 * pure observer — needs to be tracking too in order to stay consistent.
 	 *
 	 * Can be force-disabled via the `Fluid.ContainerRuntime.DisableDuplicateBatchDetection`
 	 * config (see {@link ContainerRuntime.duplicateBatchDetectionDisabled}).
 	 */
 	private duplicateBatchDetector: DuplicateBatchDetector | undefined;
+
+	/**
+	 * Whether this runtime should stamp `batchId` on resubmitted batches so peers
+	 * can detect forked-container collisions.
+	 *
+	 * @remarks
+	 * Conceptually orthogonal to {@link ContainerRuntime.duplicateBatchDetector}
+	 * (one is about inbound observation, the other about outbound stamping), but
+	 * we currently use a single all-or-nothing switch: stamping is on iff the
+	 * detector is active.
+	 */
+	private get enableBatchIdTracking(): boolean {
+		return this.duplicateBatchDetector !== undefined;
+	}
 	private readonly outbox: Outbox;
 	private readonly garbageCollector: IGarbageCollector;
 
@@ -3133,6 +3150,12 @@ export class ContainerRuntime
 
 			if ("batchStart" in inboundResult) {
 				const batchStart: BatchStartInfo = inboundResult.batchStart;
+				// An explicit batchId means some peer has activated stamping, so we
+				// must track too — even as a pure observer — to stay consistent with
+				// peers that will throw on the duplicate.
+				if (batchStart.batchId !== undefined) {
+					this.ensureDuplicateBatchDetector();
+				}
 				const result = this.duplicateBatchDetector?.processInboundBatch(batchStart);
 				if (result?.duplicate === true) {
 					const error = new DataCorruptionError(
@@ -4979,11 +5002,11 @@ export class ContainerRuntime
 		);
 
 		const resubmitInfo = {
-			// Stamp the batchId on resubmits whenever the duplicate batch detector is
-			// active (this runtime is part of the pending-state lifecycle and a forked
-			// peer might resubmit the same batches). Otherwise omit it to avoid
-			// inflating message metadata.
-			batchId: this.duplicateBatchDetector === undefined ? undefined : batchId,
+			// Stamp batchId on resubmits whenever fork-detection is in play in this
+			// session. Detector-on and stamping-on are conceptually distinct concerns
+			// (inbound observation vs. outbound cooperation), but currently share a
+			// single all-or-nothing switch (see {@link enableBatchIdTracking}).
+			batchId: this.enableBatchIdTracking ? batchId : undefined,
 			staged,
 		};
 

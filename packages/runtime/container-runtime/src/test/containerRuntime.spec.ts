@@ -2347,23 +2347,28 @@ describe("Runtime", () => {
 			const errorPredicate = (e: Error): boolean =>
 				e.message === "Duplicate batch - The same batch was sequenced twice";
 
-			const processBatchWithId = (
+			const processBatch = (
 				containerRuntime: ContainerRuntime,
 				sequenceNumber: number,
-				batchId: string,
+				batchId: string | undefined,
 			): void => {
 				containerRuntime.process(
 					{
 						sequenceNumber,
 						type: MessageType.Operation,
 						contents: { type: ContainerMessageType.Rejoin, contents: undefined },
-						metadata: { batchId },
+						metadata: batchId === undefined ? undefined : { batchId },
 					} satisfies Partial<ISequencedDocumentMessage> as ISequencedDocumentMessage,
 					false,
 				);
 			};
+			const processBatchWithId = (
+				containerRuntime: ContainerRuntime,
+				sequenceNumber: number,
+				batchId: string,
+			): void => processBatch(containerRuntime, sequenceNumber, batchId);
 
-			it("Does NOT activate by default", async () => {
+			it("Does NOT activate when inbound batches lack an explicit batchId", async () => {
 				const { runtime: containerRuntime } = await ContainerRuntime.loadRuntime2({
 					context: getMockContext() as IContainerContext,
 					registry: new FluidDataStoreRegistry([]),
@@ -2372,10 +2377,31 @@ describe("Runtime", () => {
 					provideEntryPoint: mockProvideEntryPoint,
 				});
 
-				processBatchWithId(containerRuntime, 123, "batchId1");
+				// Inbound batches without explicit batchId must not flip activation on,
+				// otherwise plain (non-forked) sessions would unnecessarily start tracking.
+				processBatch(containerRuntime, 123, undefined);
 				assert.doesNotThrow(
+					() => processBatch(containerRuntime, 234, undefined),
+					"Detector should remain off when no explicit batchId is observed",
+				);
+			});
+
+			it("Activates on inbound batch carrying an explicit batchId", async () => {
+				const { runtime: containerRuntime } = await ContainerRuntime.loadRuntime2({
+					context: getMockContext() as IContainerContext,
+					registry: new FluidDataStoreRegistry([]),
+					existing: false,
+					runtimeOptions: { enableRuntimeIdCompressor: "on" },
+					provideEntryPoint: mockProvideEntryPoint,
+				});
+
+				// First explicit-batchId observation activates the detector; a duplicate
+				// arriving afterwards should be caught.
+				processBatchWithId(containerRuntime, 123, "batchId1");
+				assert.throws(
 					() => processBatchWithId(containerRuntime, 234, "batchId1"),
-					"Detector should not activate by default; duplicate should not throw",
+					errorPredicate,
+					"Detector should activate after seeing an explicit batchId",
 				);
 			});
 
@@ -2472,7 +2498,8 @@ describe("Runtime", () => {
 					provideEntryPoint: mockProvideEntryPoint,
 				});
 
-				// Even with pendingLocalState and getPendingLocalState(), detector stays off.
+				// Even with pendingLocalState, getPendingLocalState(), and explicit
+				// batchIds on inbound batches, the detector stays off.
 				containerRuntime.getPendingLocalState();
 				processBatchWithId(containerRuntime, 123, "batchId1");
 				assert.doesNotThrow(
