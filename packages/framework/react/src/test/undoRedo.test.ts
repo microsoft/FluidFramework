@@ -16,9 +16,7 @@ import {
 
 import { createUndoRedo } from "../undoRedo.js";
 
-// ---------------------------------------------------------------------------
-// Shared test schema and tree factory
-// ---------------------------------------------------------------------------
+// #region Shared test schema and tree factory
 
 const sf = new SchemaFactory("undo-redo-test");
 class TestRoot extends sf.object("TestRoot", { value: sf.number }) {}
@@ -30,7 +28,7 @@ function createTree(): TreeViewAlpha<typeof TestRoot> {
 	return view;
 }
 
-// ---------------------------------------------------------------------------
+// #endregion Shared test schema and tree factory
 
 describe("createUndoRedo", () => {
 	describe("global undo/redo (no label)", () => {
