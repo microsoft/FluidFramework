@@ -135,6 +135,19 @@ function* collectTreeLabels(node: LabelTree): IterableIterator<unknown> {
 }
 
 /**
+ * Deep-clones a {@link LabelTree} so the result is independent of the source.
+ * Used when capturing the label tree on a revertible so that subsequent mutations
+ * (by the framework or by external listeners reading {@link TransactionLabels.tree})
+ * cannot affect the labels the revertible will emit.
+ */
+function cloneLabelTree(tree: LabelTree): LabelTree {
+	return {
+		label: tree.label,
+		sublabels: tree.sublabels.map(cloneLabelTree),
+	};
+}
+
+/**
  * Builds the labels set for a change event from the label tree.
  * If the tree exists and contains at least one defined label, returns a set of all
  * values with the tree attached. Otherwise returns an empty set.
@@ -713,6 +726,12 @@ export class TreeCheckout implements ITreeCheckout {
 				const kind = event.type === "append" ? event.kind : CommitKind.Default;
 				const { change, revision } = commit;
 
+				// Snapshot the label tree for this commit before any listener runs.
+				const commitLabelTree =
+					this.labelTreeNode === undefined
+						? undefined
+						: cloneLabelTree(this.labelTreeNode);
+
 				const getRevertible = hasSchemaChange(change)
 					? undefined
 					: (onRevertibleDisposed?: (revertible: RevertibleAlpha) => void) => {
@@ -726,14 +745,12 @@ export class TreeCheckout implements ITreeCheckout {
 									"Cannot generate the same revertible more than once. Note that this can happen when multiple changed event listeners are registered.",
 								);
 							}
-							// Capture the label tree active when the commit was produced so that the
-							// resulting revert commit can inherit the same transaction labels.
 							const revertible = this.createRevertible(
 								revision,
 								kind,
 								this,
 								onRevertibleDisposed,
-								this.labelTreeNode,
+								commitLabelTree,
 							);
 							this.revertibleCommitBranches.set(
 								revision,
@@ -1380,9 +1397,10 @@ export class TreeCheckout implements ITreeCheckout {
 			);
 		}
 
-		// Inherit the original commit's transaction labels on the revert commit, so that hosts using
-		// labels to scope undo/redo see the revert grouped with the edit it is inverting.
-		// The same captured tree is reused for revert-of-revert without introducing new nesting.
+		// Install the original commit's label tree so the revert commit's metadata inherits
+		// the same labels — letting hosts scope undo/redo by label. Reusing the captured tree
+		// (rather than wrapping it) ensures revert-of-revert does not introduce new nesting.
+		const previousLabelTreeNode = this.labelTreeNode;
 		this.labelTreeNode = labelTree;
 		try {
 			this.#transaction.activeBranch.apply(
@@ -1392,7 +1410,9 @@ export class TreeCheckout implements ITreeCheckout {
 					: CommitKind.Redo,
 			);
 		} finally {
-			this.labelTreeNode = undefined;
+			// Restore rather than clear: a revert triggered from inside another labeled
+			// transaction's changed event must not wipe that outer commit's label state.
+			this.labelTreeNode = previousLabelTreeNode;
 		}
 
 		// Derive some stats about the reversion to return to the caller.

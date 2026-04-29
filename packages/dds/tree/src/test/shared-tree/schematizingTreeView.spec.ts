@@ -1485,7 +1485,7 @@ describe("SchematizingSimpleTreeView", () => {
 			assert.deepEqual(events[1]?.labels.tree, { label: testLabel, sublabels: [] });
 		});
 
-		it("redo of revert reuses the original label tree", () => {
+		it("revert of revert reuses the original label tree", () => {
 			const view = getTestObjectView();
 
 			const events: { kind: CommitKind; labels: TransactionLabels }[] = [];
