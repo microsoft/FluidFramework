@@ -70,9 +70,7 @@ export function maybePrintHelp(
 						: "";
 			const requiredPart = def.required === true ? " (required)" : "";
 			console.log(
-				`  --${name}${valuePart}${defaultPart}${requiredPart}\n      ${
-					def.description ?? ""
-				}`,
+				`  --${name}${valuePart}${defaultPart}${requiredPart}\n      ${def.description ?? ""}`,
 			);
 		}
 		console.log();
