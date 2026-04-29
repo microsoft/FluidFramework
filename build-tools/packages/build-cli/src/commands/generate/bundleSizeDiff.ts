@@ -95,7 +95,7 @@ export default class GenerateBundleSizeDiff extends BaseCommand<
 	typeof GenerateBundleSizeDiff
 > {
 	static readonly description =
-		`Compare the PR's locally-collected bundle reports against the baseline CI build and write the outcome as one of two structured files in the output directory: result.json on success, error.json on failure.`;
+		`Compare the PR's locally-collected bundle reports against the CI build of the merge-base commit (the commit on the target branch the PR is based on) and write the outcome as one of two structured files in the output directory: result.json on success, error.json on failure.`;
 
 	static readonly flags = {
 		localReportPath: Flags.directory({

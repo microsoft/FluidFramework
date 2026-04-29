@@ -121,7 +121,7 @@ _See code: [src/commands/generate/buildVersion.ts](https://github.com/microsoft/
 
 ## `flub generate bundleSizeDiff`
 
-Compare the PR's locally-collected bundle reports against the baseline CI build and write the outcome as one of two structured files in the output directory: result.json on success, error.json on failure.
+Compare the PR's locally-collected bundle reports against the CI build of the merge-base commit (the commit on the target branch the PR is based on) and write the outcome as one of two structured files in the output directory: result.json on success, error.json on failure.
 
 ```
 USAGE
@@ -137,8 +137,9 @@ LOGGING FLAGS
       --quiet    Disable all logging.
 
 DESCRIPTION
-  Compare the PR's locally-collected bundle reports against the baseline CI build and write the outcome as one of two
-  structured files in the output directory: result.json on success, error.json on failure.
+  Compare the PR's locally-collected bundle reports against the CI build of the merge-base commit (the commit on the
+  target branch the PR is based on) and write the outcome as one of two structured files in the output directory:
+  result.json on success, error.json on failure.
 ```
 
 _See code: [src/commands/generate/bundleSizeDiff.ts](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/src/commands/generate/bundleSizeDiff.ts)_
