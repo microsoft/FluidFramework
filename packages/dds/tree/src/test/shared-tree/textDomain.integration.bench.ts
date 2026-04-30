@@ -11,8 +11,6 @@ import {
 	isInPerformanceTestingMode,
 	ValueType,
 	type CollectedData,
-	type Measurement,
-	type PrimaryMeasurement,
 } from "@fluid-tools/benchmark";
 import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 
@@ -33,42 +31,7 @@ import {
 	getOperationsStats,
 	registerOpListener,
 	utf8Length,
-	type OperationsStats,
 } from "./opBenchmarkUtilities.js";
-
-const isInCorrectnessTestingMode = !isInPerformanceTestingMode;
-
-/**
- * Accumulates benchmark measurements across multiple sweep configs.
- *
- * The first measurement added becomes the {@link PrimaryMeasurement}; all subsequent ones are
- * secondary. Call {@link build} at the end of the sweep to get the final {@link CollectedData}.
- */
-function createMeasurementCollector(): {
-	/** Adds a single measurement, promoting it to primary if none has been added yet. */
-	add(measurement: Measurement): void;
-	/** Returns the accumulated {@link CollectedData}. Throws if no measurements were added. */
-	build(): CollectedData;
-} {
-	let primary: PrimaryMeasurement | undefined;
-	const rest: Measurement[] = [];
-
-	return {
-		add(measurement: Measurement): void {
-			if (primary === undefined) {
-				const { name, value, units = "bytes", type = ValueType.SmallerIsBetter } = measurement;
-				primary = { name, value, units, type, significance: "Primary" };
-			} else {
-				rest.push(measurement);
-			}
-		},
-		build(): CollectedData {
-			const resolvedPrimary = primary;
-			assert(resolvedPrimary !== undefined, "At least one measurement must be added before calling build()");
-			return [resolvedPrimary, ...rest];
-		},
-	};
-}
 
 describe("TextDomain benchmarks", () => {
 	configureBenchmarkHooks();
@@ -190,26 +153,6 @@ describe("TextDomain benchmarks", () => {
 			(config) => isInPerformanceTestingMode || config.runInCorrectnessMode,
 		);
 
-		/**
-		 * Creates a collector for op-size sweeps.
-		 * Extends {@link createMeasurementCollector} with {@link addOpStats}, which records the
-		 * three standard op statistics (Total Op Size, Max Op Size, Total Ops) for a single config.
-		 */
-		function createCollector(): {
-			addOpStats(opStats: OperationsStats, label: string): void;
-			build(): CollectedData;
-		} {
-			const { add, build } = createMeasurementCollector();
-			return {
-				addOpStats(opStats: OperationsStats, label: string): void {
-					add({ name: `Total Op Size (Bytes) [${label}]`, value: opStats["Total Op Size (Bytes)"], units: "bytes", type: ValueType.SmallerIsBetter });
-					add({ name: `Max Op Size (Bytes) [${label}]`, value: opStats["Max Op Size (Bytes)"], units: "bytes", type: ValueType.SmallerIsBetter });
-					add({ name: `Total Ops: [${label}]`, value: opStats["Total Ops:"], units: "count" });
-				},
-				build,
-			};
-		}
-
 		describe("Plain text", () => {
 			describe("Insert characters", () => {
 				describe(`Op size by inserted character count`, () => {
@@ -218,36 +161,41 @@ describe("TextDomain benchmarks", () => {
 						type: BenchmarkType.Measurement,
 						title: `Op size by inserted character count`,
 						run: async () => {
-							const opSizeByCharCount: { x: number; y: number }[] = [];
-							const measurements = createCollector();
+							const points: { x: number; y: number }[] = [];
 
 							for (const { characterCount } of filteredCharacterCountConfigs) {
 								const localOps: ISequencedDocumentMessage[] = [];
-
 								const key = getPropertyKey(defaultKeyLength);
-
 								const tree = createConnectedTree();
 								const view = tree.viewWith(viewConfig);
 								view.initialize(makeTree(defaultTreeDepth, key, ""));
-
 								registerOpListener(tree, localOps);
 
 								const textNode = getLeaf(view.root, key);
 								textNode.insertAt(0, "a".repeat(characterCount));
 								assert.equal(textNode.characterCount(), characterCount);
 
-								const opStats = getOperationsStats(localOps);
-								opSizeByCharCount.push({
-									x: characterCount,
-									y: opStats["Total Op Size (Bytes)"],
-								});
-								measurements.addOpStats(opStats, `characterCount=${characterCount}`);
-							}
-							if (isInCorrectnessTestingMode) {
-								assertLinear({ points: opSizeByCharCount });
+								const { "Total Op Size (Bytes)": totalOpSize } =
+									getOperationsStats(localOps);
+								points.push({ x: characterCount, y: totalOpSize });
 							}
 
-							return measurements.build();
+							const { slope, intercept } = assertLinear({ points });
+							return [
+								{
+									name: "bytes per inserted character",
+									value: slope,
+									units: "bytes",
+									type: ValueType.SmallerIsBetter,
+									significance: "Primary",
+								},
+								{
+									name: "fixed insert op overhead",
+									value: intercept,
+									units: "bytes",
+									type: ValueType.SmallerIsBetter,
+								},
+							] as CollectedData;
 						},
 					});
 				});
@@ -258,33 +206,41 @@ describe("TextDomain benchmarks", () => {
 						type: BenchmarkType.Measurement,
 						title: `Op size by tree depth`,
 						run: async () => {
-							const opSizeByDepth: { x: number; y: number }[] = [];
-							const measurements = createCollector();
+							const points: { x: number; y: number }[] = [];
 
 							for (const { depth } of filteredDepthConfigs) {
 								const localOps: ISequencedDocumentMessage[] = [];
-
 								const key = getPropertyKey(defaultKeyLength);
-
 								const tree = createConnectedTree();
 								const view = tree.viewWith(viewConfig);
 								view.initialize(makeTree(depth, key, ""));
-
 								registerOpListener(tree, localOps);
 
 								const textNode = getLeaf(view.root, key);
 								textNode.insertAt(0, "a".repeat(defaultCharacterCount));
 								assert.equal(textNode.characterCount(), defaultCharacterCount);
 
-								const opStats = getOperationsStats(localOps);
-								opSizeByDepth.push({ x: depth, y: opStats["Total Op Size (Bytes)"] });
-								measurements.addOpStats(opStats, `depth=${depth}`);
-							}
-							if (isInCorrectnessTestingMode) {
-								assertLinear({ points: opSizeByDepth });
+								const { "Total Op Size (Bytes)": totalOpSize } =
+									getOperationsStats(localOps);
+								points.push({ x: depth, y: totalOpSize });
 							}
 
-							return measurements.build();
+							const { slope, intercept } = assertLinear({ points });
+							return [
+								{
+									name: "bytes per path level (insert)",
+									value: slope,
+									units: "bytes",
+									type: ValueType.SmallerIsBetter,
+									significance: "Primary",
+								},
+								{
+									name: "base insert op size",
+									value: intercept,
+									units: "bytes",
+									type: ValueType.SmallerIsBetter,
+								},
+							] as CollectedData;
 						},
 					});
 				});
@@ -295,36 +251,41 @@ describe("TextDomain benchmarks", () => {
 						type: BenchmarkType.Measurement,
 						title: `Op size by property key length`,
 						run: async () => {
-							const opSizeByKeyLength: { x: number; y: number }[] = [];
-							const measurements = createCollector();
+							const points: { x: number; y: number }[] = [];
 
 							for (const { keyLength } of filteredKeyConfigs) {
 								const localOps: ISequencedDocumentMessage[] = [];
-
 								const key = getPropertyKey(keyLength);
-
 								const tree = createConnectedTree();
 								const view = tree.viewWith(viewConfig);
 								view.initialize(makeTree(defaultTreeDepth, key, ""));
-
 								registerOpListener(tree, localOps);
 
 								const textNode = getLeaf(view.root, key);
 								textNode.insertAt(0, "a".repeat(defaultCharacterCount));
 								assert.equal(textNode.characterCount(), defaultCharacterCount);
 
-								const opStats = getOperationsStats(localOps);
-								opSizeByKeyLength.push({
-									x: keyLength,
-									y: opStats["Total Op Size (Bytes)"],
-								});
-								measurements.addOpStats(opStats, `keyLength=${keyLength}`);
-							}
-							if (isInCorrectnessTestingMode) {
-								assertLinear({ points: opSizeByKeyLength });
+								const { "Total Op Size (Bytes)": totalOpSize } =
+									getOperationsStats(localOps);
+								points.push({ x: keyLength, y: totalOpSize });
 							}
 
-							return measurements.build();
+							const { slope, intercept } = assertLinear({ points });
+							return [
+								{
+									name: "bytes per key character (insert)",
+									value: slope,
+									units: "bytes",
+									type: ValueType.SmallerIsBetter,
+									significance: "Primary",
+								},
+								{
+									name: "base insert op size (by key)",
+									value: intercept,
+									units: "bytes",
+									type: ValueType.SmallerIsBetter,
+								},
+							] as CollectedData;
 						},
 					});
 				});
@@ -338,38 +299,39 @@ describe("TextDomain benchmarks", () => {
 						title: `Op size by removed character count`,
 						run: async () => {
 							const opSizes: number[] = [];
-							const measurements = createCollector();
 
 							for (const { characterCount } of filteredCharacterCountConfigs) {
 								const localOps: ISequencedDocumentMessage[] = [];
-
 								const key = getPropertyKey(defaultKeyLength);
-
 								const tree = createConnectedTree();
 								const view = tree.viewWith(viewConfig);
-								view.initialize(makeTree(defaultTreeDepth, key, "a".repeat(characterCount)));
-
+								view.initialize(
+									makeTree(defaultTreeDepth, key, "a".repeat(characterCount)),
+								);
 								registerOpListener(tree, localOps);
 
 								const textNode = getLeaf(view.root, key);
 								textNode.removeRange(0, characterCount);
 								assert.equal(textNode.characterCount(), 0);
 
-								const opStats = getOperationsStats(localOps);
-								opSizes.push(opStats["Total Op Size (Bytes)"]);
-								measurements.addOpStats(opStats, `characterCount=${characterCount}`);
-							}
-							// Remove ops encode a (start, count) range, not the removed characters,
-							// so op size should be essentially independent of character count.
-							if (isInCorrectnessTestingMode) {
-								assertApproximatelyConstant({
-									sizes: opSizes,
-									// Allow for a small amount of variance.
-									maxDeltaBytes: 20,
-								});
+								const { "Total Op Size (Bytes)": totalOpSize } =
+									getOperationsStats(localOps);
+								opSizes.push(totalOpSize);
 							}
 
-							return measurements.build();
+							// Remove ops encode a (start, count) range, not the removed characters,
+							// so op size should be essentially independent of character count.
+							assertApproximatelyConstant({ sizes: opSizes, maxDeltaBytes: 20 });
+							const avgOpSize = opSizes.reduce((a, b) => a + b, 0) / opSizes.length;
+							return [
+								{
+									name: "fixed remove op size",
+									value: avgOpSize,
+									units: "bytes",
+									type: ValueType.SmallerIsBetter,
+									significance: "Primary",
+								},
+							] as CollectedData;
 						},
 					});
 				});
@@ -380,33 +342,43 @@ describe("TextDomain benchmarks", () => {
 						type: BenchmarkType.Measurement,
 						title: `Op size by tree depth`,
 						run: async () => {
-							const opSizeByDepth: { x: number; y: number }[] = [];
-							const measurements = createCollector();
+							const points: { x: number; y: number }[] = [];
 
 							for (const { depth } of filteredDepthConfigs) {
 								const localOps: ISequencedDocumentMessage[] = [];
-
 								const key = getPropertyKey(defaultKeyLength);
-
 								const tree = createConnectedTree();
 								const view = tree.viewWith(viewConfig);
-								view.initialize(makeTree(depth, key, "a".repeat(defaultCharacterCount)));
-
+								view.initialize(
+									makeTree(depth, key, "a".repeat(defaultCharacterCount)),
+								);
 								registerOpListener(tree, localOps);
 
 								const textNode = getLeaf(view.root, key);
 								textNode.removeRange(0, defaultCharacterCount);
 								assert.equal(textNode.characterCount(), 0);
 
-								const opStats = getOperationsStats(localOps);
-								opSizeByDepth.push({ x: depth, y: opStats["Total Op Size (Bytes)"] });
-								measurements.addOpStats(opStats, `depth=${depth}`);
-							}
-							if (isInCorrectnessTestingMode) {
-								assertLinear({ points: opSizeByDepth });
+								const { "Total Op Size (Bytes)": totalOpSize } =
+									getOperationsStats(localOps);
+								points.push({ x: depth, y: totalOpSize });
 							}
 
-							return measurements.build();
+							const { slope, intercept } = assertLinear({ points });
+							return [
+								{
+									name: "bytes per path level (remove)",
+									value: slope,
+									units: "bytes",
+									type: ValueType.SmallerIsBetter,
+									significance: "Primary",
+								},
+								{
+									name: "base remove op size",
+									value: intercept,
+									units: "bytes",
+									type: ValueType.SmallerIsBetter,
+								},
+							] as CollectedData;
 						},
 					});
 				});
@@ -417,36 +389,43 @@ describe("TextDomain benchmarks", () => {
 						type: BenchmarkType.Measurement,
 						title: `Op size by property key length`,
 						run: async () => {
-							const opSizeByKeyLength: { x: number; y: number }[] = [];
-							const measurements = createCollector();
+							const points: { x: number; y: number }[] = [];
 
 							for (const { keyLength } of filteredKeyConfigs) {
 								const localOps: ISequencedDocumentMessage[] = [];
-
 								const key = getPropertyKey(keyLength);
-
 								const tree = createConnectedTree();
 								const view = tree.viewWith(viewConfig);
-								view.initialize(makeTree(defaultTreeDepth, key, "a".repeat(defaultCharacterCount)));
-
+								view.initialize(
+									makeTree(defaultTreeDepth, key, "a".repeat(defaultCharacterCount)),
+								);
 								registerOpListener(tree, localOps);
 
 								const textNode = getLeaf(view.root, key);
 								textNode.removeRange(0, defaultCharacterCount);
 								assert.equal(textNode.characterCount(), 0);
 
-								const opStats = getOperationsStats(localOps);
-								opSizeByKeyLength.push({
-									x: keyLength,
-									y: opStats["Total Op Size (Bytes)"],
-								});
-								measurements.addOpStats(opStats, `keyLength=${keyLength}`);
-							}
-							if (isInCorrectnessTestingMode) {
-								assertLinear({ points: opSizeByKeyLength });
+								const { "Total Op Size (Bytes)": totalOpSize } =
+									getOperationsStats(localOps);
+								points.push({ x: keyLength, y: totalOpSize });
 							}
 
-							return measurements.build();
+							const { slope, intercept } = assertLinear({ points });
+							return [
+								{
+									name: "bytes per key character (remove)",
+									value: slope,
+									units: "bytes",
+									type: ValueType.SmallerIsBetter,
+									significance: "Primary",
+								},
+								{
+									name: "base remove op size (by key)",
+									value: intercept,
+									units: "bytes",
+									type: ValueType.SmallerIsBetter,
+								},
+							] as CollectedData;
 						},
 					});
 				});
@@ -493,8 +472,7 @@ describe("TextDomain benchmarks", () => {
 				type: BenchmarkType.Measurement,
 				title: `exportVerbose encoded size by string length`,
 				run: async () => {
-					const encodedSizeByLength: { x: number; y: number }[] = [];
-					const measurements = createMeasurementCollector();
+					const points: { x: number; y: number }[] = [];
 
 					for (const { stringLength } of filteredConfigs) {
 						const independentTree = createIndependentTreeAlpha({});
@@ -503,20 +481,25 @@ describe("TextDomain benchmarks", () => {
 
 						const encoded = TreeAlpha.exportVerbose(view.root);
 						const encodedSize = utf8Length(encoded as JsonCompatibleReadOnly);
+						points.push({ x: stringLength, y: encodedSize });
+					}
 
-						encodedSizeByLength.push({ x: stringLength, y: encodedSize });
-						measurements.add({
-							name: `Encoded Size (Bytes) [stringLength=${stringLength}]`,
-							value: encodedSize,
+					const { slope, intercept } = assertLinear({ points });
+					return [
+						{
+							name: "bytes per character (encoded)",
+							value: slope,
 							units: "bytes",
 							type: ValueType.SmallerIsBetter,
-						});
-					}
-					if (isInCorrectnessTestingMode) {
-						assertLinear({ points: encodedSizeByLength });
-					}
-
-					return measurements.build();
+							significance: "Primary",
+						},
+						{
+							name: "fixed encoding overhead",
+							value: intercept,
+							units: "bytes",
+							type: ValueType.SmallerIsBetter,
+						},
+					] as CollectedData;
 				},
 			});
 		});
