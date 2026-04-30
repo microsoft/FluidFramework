@@ -199,7 +199,7 @@ describe("TextDomain benchmarks", () => {
 									significance: "Primary",
 								},
 								{
-									name: "fixed insert op overhead",
+									name: "fixed insert op overhead (measured by variable character count)",
 									value: intercept,
 									units: "bytes",
 									type: ValueType.SmallerIsBetter,
@@ -244,7 +244,7 @@ describe("TextDomain benchmarks", () => {
 									significance: "Primary",
 								},
 								{
-									name: "base insert op size",
+									name: "base insert op size (measured by variable path length)",
 									value: intercept,
 									units: "bytes",
 									type: ValueType.SmallerIsBetter,
@@ -289,7 +289,7 @@ describe("TextDomain benchmarks", () => {
 									significance: "Primary",
 								},
 								{
-									name: "base insert op size (by key)",
+									name: "base insert op size (measured by variable key length)",
 									value: intercept,
 									units: "bytes",
 									type: ValueType.SmallerIsBetter,
@@ -334,7 +334,7 @@ describe("TextDomain benchmarks", () => {
 							const avgOpSize = opSizes.reduce((a, b) => a + b, 0) / opSizes.length;
 							return [
 								{
-									name: "fixed remove op size",
+									name: "fixed remove op size (measured by variable character count)",
 									value: avgOpSize,
 									units: "bytes",
 									type: ValueType.SmallerIsBetter,
@@ -382,7 +382,7 @@ describe("TextDomain benchmarks", () => {
 									significance: "Primary",
 								},
 								{
-									name: "base remove op size",
+									name: "base remove op size (measured by variable path length)",
 									value: intercept,
 									units: "bytes",
 									type: ValueType.SmallerIsBetter,
@@ -429,7 +429,7 @@ describe("TextDomain benchmarks", () => {
 									significance: "Primary",
 								},
 								{
-									name: "base remove op size (by key)",
+									name: "base remove op size (measured by variable key length)",
 									value: intercept,
 									units: "bytes",
 									type: ValueType.SmallerIsBetter,
