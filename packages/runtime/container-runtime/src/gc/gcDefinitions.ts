@@ -363,10 +363,6 @@ export interface IGarbageCollectionRuntime {
 	 * Returns the type of the GC node.
 	 */
 	getNodeType(nodePath: string): GCNodeType;
-	/**
-	 * Called when the runtime should close because of an error.
-	 */
-	closeFn: (error?: ICriticalContainerError) => void;
 }
 
 /**
@@ -503,6 +499,11 @@ export interface IGCNodeUpdatedProps {
  */
 export interface IGarbageCollectorCreateParams {
 	readonly runtime: IGarbageCollectionRuntime;
+	/**
+	 * Initiate closing of the container due to an error.
+	 */
+	readonly closeFn: (error: ICriticalContainerError) => void;
+
 	readonly gcOptions: IGCRuntimeOptions;
 	readonly baseLogger: ITelemetryLoggerExt;
 	readonly existing: boolean;

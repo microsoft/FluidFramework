@@ -183,13 +183,11 @@ export interface IContainerContext {
     readonly clientDetails: IClientDetails;
     // (undocumented)
     readonly clientId: string | undefined;
-    // (undocumented)
     readonly closeFn: (error?: ICriticalContainerError) => void;
     // (undocumented)
     readonly connected: boolean;
     // (undocumented)
     readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
-    // (undocumented)
     readonly disposeFn?: (error?: ICriticalContainerError) => void;
     getAbsoluteUrl?(relativeUrl: string): Promise<string | undefined>;
     readonly getConnectionState?: () => ConnectionState;

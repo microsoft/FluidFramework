@@ -236,6 +236,9 @@ export interface IRuntime extends IDisposable {
 	 * in the case when `close` is not called.
 	 *
 	 * This is optional for backwards compatibility with older runtime implementations.
+	 *
+	 * Do not confuse this with with the various `closeFn` callbacks (such as {@link IContainerContext.closeFn} or `IGarbageCollectorCreateParams.closeFn`:
+	 * these expose a way to intitate container close, not a way to get notified of container close (which might come from another source).
 	 */
 	close?(): void;
 }
@@ -388,7 +391,25 @@ export interface IContainerContext {
 		referenceSequenceNumber?: number,
 	) => number;
 	readonly submitSignalFn: (contents: unknown, targetClientId?: string) => void;
+	/**
+	 * Initiate disposing of the container due to a critical error.
+	 * @param error - The critical error that caused the container to dispose.
+	 * @remarks
+	 * This is only one of many ways which the container might get disposed.
+	 * To enable the runtime to respond to disposed from any source, it exposes {@link @fluidframework/core-interfaces#IDisposable.dispose}.
+	 */
 	readonly disposeFn?: (error?: ICriticalContainerError) => void;
+	/**
+	 * Initiate closing of the container due to a critical error.
+	 * @param error - The critical error that caused the container to close.
+	 * @remarks
+	 * This is only one of many ways which the container might get closed.
+	 * To enable the runtime to respond to close from any source, it exposes {@link IRuntime.close}.
+	 *
+	 * @privateRemarks
+	 * `error` is optional here to handle the case where `disposeFn` is not provided, so that the `closeFn` is used as a fallback
+	 * and the summarizier wants to initiate a dispose (via {@link ISummarizerRuntime.disposeFn}) which doesn't take in an error.
+	 */
 	readonly closeFn: (error?: ICriticalContainerError) => void;
 	readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
 	readonly quorum: IQuorumClients;
