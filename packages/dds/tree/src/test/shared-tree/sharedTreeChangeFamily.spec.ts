@@ -76,12 +76,13 @@ defaultEditor.valueField(rootField).set(chunkFromJsonTrees(["X"]));
 defaultEditor.exitTransaction();
 defaultEditor.valueField(rootField).set(chunkFromJsonTrees(["Y"]));
 defaultEditor.sequenceField(rootField).remove(0, 1);
-defaultEditor.move(rootField, 0, 1, rootField, 0);
+defaultEditor.sequenceField(rootField).remove(0, 1);
 
 const dataChange1 = dataChanges[0];
 const dataChange2 = dataChanges[1];
 const dataChange3 = dataChanges[2];
 const dataChange4 = dataChanges[3];
+
 // This rebased change now refers to an ID introduced in dataChange3
 const rebasedDataChange4 = modularFamily.rebaser.rebase(
 	makeAnonChange(dataChange4),

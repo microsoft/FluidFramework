@@ -1665,8 +1665,6 @@ describe("ModularChangeFamily integration", () => {
 							marks: [
 								{
 									count: 1,
-									detach: { major: tag1, minor: 0 },
-									attach: { major: tag1, minor: 0 },
 								},
 								{
 									count: 1,

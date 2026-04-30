@@ -54,6 +54,9 @@ import {
 	type RevisionReplacer,
 	comparePartialRevisions,
 	comparePartialChangesetLocalIds,
+	type DeltaMark,
+	offsetDetachId,
+	areDetachedNodeIdsEqual,
 } from "../../core/index.js";
 import {
 	type IdAllocationState,
@@ -118,6 +121,11 @@ import {
 	type RebaseVersion,
 	type RootNodeTable,
 } from "./modularChangeTypes.js";
+import {
+	changeAtomIdFromNodeId,
+	createDeltaMark,
+	nodeIdFromChangeAtom,
+} from "../deltaUtils.js";
 
 /**
  * Implementation of ChangeFamily which delegates work in a given field to the appropriate FieldKind
@@ -2411,12 +2419,7 @@ export function intoDelta(
 
 	if (!hasConflicts(change)) {
 		// If there are no constraint violations, then tree changes apply.
-		const fieldDeltas = intoDeltaImpl(
-			change.fieldChanges,
-			change.nodeChanges,
-			change.nodeAliases,
-			fieldKinds,
-		);
+		const fieldDeltas = intoDeltaImpl(change.fieldChanges, change, fieldKinds);
 
 		const global: DeltaDetachedNodeChanges[] = [];
 		for (const [[major, minor], nodeId] of change.rootNodes.nodeChanges.entries()) {
@@ -2424,25 +2427,13 @@ export function intoDelta(
 				id: { major, minor },
 				fields: deltaFromNodeChange(
 					nodeChangeFromId(change.nodeChanges, change.nodeAliases, nodeId),
-					change.nodeChanges,
-					change.nodeAliases,
+					change,
 					fieldKinds,
 				),
 			});
 		}
 
-		const rename: DeltaDetachedNodeRename[] = [];
-		for (const {
-			start: oldId,
-			value: newId,
-			length,
-		} of change.rootNodes.oldToNewId.entries()) {
-			rename.push({
-				count: length,
-				oldId: makeDetachedNodeId(oldId.revision, oldId.localId),
-				newId: makeDetachedNodeId(newId.revision, newId.localId),
-			});
-		}
+		const rename = getRenamesForDelta(change);
 
 		if (fieldDeltas.size > 0) {
 			rootDelta.fields = fieldDeltas;
@@ -2476,6 +2467,41 @@ export function intoDelta(
 	return rootDelta;
 }
 
+function getRenamesForDelta(change: ModularChangeset): DeltaDetachedNodeRename[] {
+	const result: DeltaDetachedNodeRename[] = [];
+	for (const entry of change.rootNodes.oldToNewId.entries()) {
+		let remainder: RangeMapEntry<ChangeAtomId, ChangeAtomId> | undefined = entry;
+		while (remainder !== undefined) {
+			let count: number = remainder.length;
+			const detachEntry = getFirstDetachField(change.crossFieldKeys, remainder.start, count);
+			count = detachEntry.length;
+			const attachEntry = getFirstAttachField(change.crossFieldKeys, remainder.value, count);
+			count = attachEntry.length;
+
+			// Renames associated with an attach or detach are inlined in `inlineRenamesInFieldDelta,
+			// so we don't include them in the delta.
+			if (detachEntry.value === undefined && attachEntry.value === undefined) {
+				result.push({
+					count,
+					oldId: nodeIdFromChangeAtom(remainder.start),
+					newId: nodeIdFromChangeAtom(remainder.value),
+				});
+			}
+
+			remainder =
+				count < remainder.length
+					? {
+							length: remainder.length - count,
+							start: offsetChangeAtomId(remainder.start, count),
+							value: offsetChangeAtomId(remainder.value, count),
+						}
+					: undefined;
+		}
+	}
+
+	return result;
+}
+
 function copyDetachedNodes(
 	detachedNodes: ChangeAtomIdBTree<TreeChunk>,
 ): DeltaDetachedNodeBuild[] | undefined {
@@ -2493,39 +2519,141 @@ function copyDetachedNodes(
 }
 
 /**
- * @param change - The change to convert into a delta.
+ * @param fieldMap - The change to convert into a delta.
  */
 function intoDeltaImpl(
-	change: FieldChangeMap,
-	nodeChanges: ChangeAtomIdBTree<NodeChangeset>,
-	nodeAliases: ChangeAtomIdBTree<NodeId>,
+	fieldMap: FieldChangeMap,
+	change: ModularChangeset,
 	fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
 ): Map<FieldKey, DeltaFieldChanges> {
 	const delta: Map<FieldKey, DeltaFieldChanges> = new Map();
 
-	for (const [field, fieldChange] of change) {
+	for (const [field, fieldChange] of fieldMap) {
 		const fieldDelta = getChangeHandler(fieldKinds, fieldChange.fieldKind).intoDelta(
 			fieldChange.change,
 			(childChange): DeltaFieldMap => {
-				const nodeChange = nodeChangeFromId(nodeChanges, nodeAliases, childChange);
-				return deltaFromNodeChange(nodeChange, nodeChanges, nodeAliases, fieldKinds);
+				const nodeChange = nodeChangeFromId(
+					change.nodeChanges,
+					change.nodeAliases,
+					childChange,
+				);
+				return deltaFromNodeChange(nodeChange, change, fieldKinds);
 			},
 		);
 		if (fieldDelta !== undefined && fieldDelta.marks.length > 0) {
-			delta.set(field, fieldDelta);
+			delta.set(field, inlineRenamesInFieldDelta(fieldDelta, change));
 		}
 	}
 	return delta;
 }
 
+function inlineRenamesInFieldDelta(
+	delta: DeltaFieldChanges,
+	change: ModularChangeset,
+): DeltaFieldChanges {
+	const result: DeltaMark[] = [];
+	for (const mark of delta.marks) {
+		let remainder: DeltaMark | undefined = mark;
+		while (remainder !== undefined) {
+			const detachEntry = getNormalizedDeltaDetachId(
+				change,
+				remainder.detach,
+				remainder.count,
+			);
+			const attachEntry = getNormalizedDeltaAttachId(
+				change,
+				remainder.attach,
+				detachEntry.length,
+			);
+			const countProcessed = attachEntry.length;
+
+			result.push(
+				createDeltaMark(
+					countProcessed,
+					remainder.fields,
+					detachEntry.value,
+					attachEntry.value,
+				),
+			);
+
+			const countRemaining: number = remainder.count - countProcessed;
+			if (countRemaining === 0) {
+				remainder = undefined;
+			} else {
+				const offsetDetach: DeltaDetachedNodeId | undefined =
+					remainder.detach === undefined
+						? undefined
+						: offsetDetachId(remainder.detach, countProcessed);
+
+				const offsetAttach: DeltaDetachedNodeId | undefined =
+					remainder.attach === undefined
+						? undefined
+						: offsetDetachId(remainder.attach, countProcessed);
+
+				remainder = {
+					count: countRemaining,
+					detach: offsetDetach,
+					attach: offsetAttach,
+				};
+			}
+		}
+	}
+
+	return { marks: result };
+}
+
+function getNormalizedDeltaDetachId(
+	change: ModularChangeset,
+	deltaDetachId: DeltaDetachedNodeId | undefined,
+	count: number,
+): RangeQueryResult<DeltaDetachedNodeId | undefined> {
+	if (deltaDetachId === undefined) {
+		return { value: undefined, length: count };
+	}
+
+	let countProcessed = count;
+	const detachId = changeAtomIdFromNodeId(deltaDetachId);
+	const outputIdEntry = firstAttachIdFromDetachId(change.rootNodes, detachId, countProcessed);
+	countProcessed = outputIdEntry.length;
+
+	const attachEntry = getFirstAttachField(
+		change.crossFieldKeys,
+		outputIdEntry.value,
+		countProcessed,
+	);
+	countProcessed = attachEntry.length;
+
+	const result =
+		attachEntry.value === undefined
+			? nodeIdFromChangeAtom(outputIdEntry.value)
+			: deltaDetachId;
+
+	return { value: result, length: countProcessed };
+}
+
+function getNormalizedDeltaAttachId(
+	change: ModularChangeset,
+	deltaAttachId: DeltaDetachedNodeId | undefined,
+	count: number,
+): RangeQueryResult<DeltaDetachedNodeId | undefined> {
+	if (deltaAttachId === undefined) {
+		return { value: undefined, length: count };
+	}
+
+	let countProcessed = count;
+	const attachId = changeAtomIdFromNodeId(deltaAttachId);
+	const inputIdEntry = firstDetachIdFromAttachId(change.rootNodes, attachId, countProcessed);
+	countProcessed = inputIdEntry.length;
+	return { value: nodeIdFromChangeAtom(inputIdEntry.value), length: countProcessed };
+}
+
 function deltaFromNodeChange(
-	change: NodeChangeset,
-	nodeChanges: ChangeAtomIdBTree<NodeChangeset>,
-	nodeAliases: ChangeAtomIdBTree<NodeId>,
+	nodeChange: NodeChangeset,
+	change: ModularChangeset,
 	fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
 ): DeltaFieldMap {
-	if (change.fieldChanges !== undefined) {
-		return intoDeltaImpl(change.fieldChanges, nodeChanges, nodeAliases, fieldKinds);
+	if (nodeChange.fieldChanges !== undefined) {
+		return intoDeltaImpl(nodeChange.fieldChanges, change, fieldKinds);
 	}
 	// TODO: update the API to allow undefined to be returned here
 	return new Map();
