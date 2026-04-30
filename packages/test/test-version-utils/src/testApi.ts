@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { promises as fs } from "node:fs";
 import * as path from "node:path";
 
 import * as sequenceDeprecated from "@fluid-experimental/sequence-deprecated";
@@ -370,10 +371,17 @@ async function loadDriver(baseVersion: string, requested?: number | string): Pro
 
 		// Load the "@fluidframework/server-local-server" package directly without checking for
 		// version compatibility. Server packages have different versioning from client packages.
-		const { LocalDeltaConnectionServer } = await loadPackage(
-			// @fluidframework/server-local-server is not a direct dependency of the compat workspace, but it is a known dependency of @fluidframework/local-driver,
-			// so use that as the base path.
+		// @fluidframework/server-local-server is not a direct dependency of the compat workspace,
+		// but it is a known dependency of @fluidframework/local-driver, so use that as the base path.
+		// The extra work here is done to handle the structure of pnpm's isolated node_module tree.
+		// This pnpm blog post is a good illustration of that structure: https://pnpm.io/blog/2020/05/27/flat-node-modules-is-not-the-only-way
+		const localDriverDependenciesPath = await fs.realpath(
 			path.join(modulePath, "node_modules", "@fluidframework/local-driver"),
+		);
+		// Strip the trailing /node_modules/@fluidframework/local-driver to get to the path where server-local-server will also be available.
+		const localServerModulePath = path.join(localDriverDependenciesPath, "..", "..", "..");
+		const { LocalDeltaConnectionServer } = await loadPackage(
+			localServerModulePath,
 			"@fluidframework/server-local-server",
 		);
 
