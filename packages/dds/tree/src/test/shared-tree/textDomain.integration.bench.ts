@@ -33,6 +33,15 @@ import {
 	utf8Length,
 } from "./opBenchmarkUtilities.js";
 
+/**
+ * Generates a test string of the given length by repeating "ab".
+ * @remarks
+ * Avoids adjacent repeated characters to prevent unrealistic compression optimizations.
+ */
+function makeTestString(length: number): string {
+	return "ab".repeat(Math.ceil(length / 2)).slice(0, length);
+}
+
 describe("TextDomain benchmarks", () => {
 	configureBenchmarkHooks();
 
@@ -51,7 +60,7 @@ describe("TextDomain benchmarks", () => {
 		const viewConfig = new TreeViewConfiguration({ schema: WrapperMap });
 
 		function getPropertyKey(keyLength: number): string {
-			return "a".repeat(keyLength);
+			return makeTestString(keyLength);
 		}
 
 		function makeTree(depth: number, key: string, text: string): WrapperMap {
@@ -172,7 +181,7 @@ describe("TextDomain benchmarks", () => {
 								registerOpListener(tree, localOps);
 
 								const textNode = getLeaf(view.root, key);
-								textNode.insertAt(0, "a".repeat(characterCount));
+								textNode.insertAt(0, makeTestString(characterCount));
 								assert.equal(textNode.characterCount(), characterCount);
 
 								const { "Total Op Size (Bytes)": totalOpSize } =
@@ -217,7 +226,7 @@ describe("TextDomain benchmarks", () => {
 								registerOpListener(tree, localOps);
 
 								const textNode = getLeaf(view.root, key);
-								textNode.insertAt(0, "a".repeat(defaultCharacterCount));
+								textNode.insertAt(0, makeTestString(defaultCharacterCount));
 								assert.equal(textNode.characterCount(), defaultCharacterCount);
 
 								const { "Total Op Size (Bytes)": totalOpSize } =
@@ -262,7 +271,7 @@ describe("TextDomain benchmarks", () => {
 								registerOpListener(tree, localOps);
 
 								const textNode = getLeaf(view.root, key);
-								textNode.insertAt(0, "a".repeat(defaultCharacterCount));
+								textNode.insertAt(0, makeTestString(defaultCharacterCount));
 								assert.equal(textNode.characterCount(), defaultCharacterCount);
 
 								const { "Total Op Size (Bytes)": totalOpSize } =
@@ -306,7 +315,7 @@ describe("TextDomain benchmarks", () => {
 								const tree = createConnectedTree();
 								const view = tree.viewWith(viewConfig);
 								view.initialize(
-									makeTree(defaultTreeDepth, key, "a".repeat(characterCount)),
+									makeTree(defaultTreeDepth, key, makeTestString(characterCount)),
 								);
 								registerOpListener(tree, localOps);
 
@@ -350,7 +359,7 @@ describe("TextDomain benchmarks", () => {
 								const tree = createConnectedTree();
 								const view = tree.viewWith(viewConfig);
 								view.initialize(
-									makeTree(depth, key, "a".repeat(defaultCharacterCount)),
+									makeTree(depth, key, makeTestString(defaultCharacterCount)),
 								);
 								registerOpListener(tree, localOps);
 
@@ -397,7 +406,7 @@ describe("TextDomain benchmarks", () => {
 								const tree = createConnectedTree();
 								const view = tree.viewWith(viewConfig);
 								view.initialize(
-									makeTree(defaultTreeDepth, key, "a".repeat(defaultCharacterCount)),
+									makeTree(defaultTreeDepth, key, makeTestString(defaultCharacterCount)),
 								);
 								registerOpListener(tree, localOps);
 
@@ -477,7 +486,7 @@ describe("TextDomain benchmarks", () => {
 					for (const { stringLength } of filteredConfigs) {
 						const independentTree = createIndependentTreeAlpha({});
 						const view = independentTree.viewWith(viewConfig);
-						view.initialize(TextAsTree.Tree.fromString("a".repeat(stringLength)));
+						view.initialize(TextAsTree.Tree.fromString(makeTestString(stringLength)));
 
 						const encoded = TreeAlpha.exportVerbose(view.root);
 						const encodedSize = utf8Length(encoded as JsonCompatibleReadOnly);
