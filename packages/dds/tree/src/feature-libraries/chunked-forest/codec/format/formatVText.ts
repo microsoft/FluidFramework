@@ -22,10 +22,10 @@ import { shapesV2 } from "./formatV2.js";
  * to a shape that pins `bold` to a constant `true` — every node decoded with the
  * specialization contributes zero stream tokens for `bold`.
  *
- * Merge rules (see {@link applySpecialization}): `type` is always inherited from the resolved
- * base. `fields`, `value`, and `extraFields` are inherited unless the specialization sets them
- * as own properties — to inherit, the property must be omitted; setting it explicitly (even to
- * `false` or `undefined`) is treated as an override.
+ * Merge rules: `type` is always inherited from the resolved base. `fields`, `value`, and
+ * `extraFields` are inherited unless the specialization sets them as own properties — to
+ * inherit, the property must be omitted; setting it explicitly (even to `false` or
+ * `undefined`) is treated as an override.
  */
 export type EncodedSpecializedNodeShape = Static<typeof EncodedSpecializedNodeShape>;
 export const EncodedSpecializedNodeShape = Type.Object(

@@ -101,10 +101,14 @@ export function decode(
 }
 
 /**
- * Walks a chain of specialized node shapes (`f`) back to the concrete `c` node shape they are
- * ultimately based on.
+ * Resolves `shapeIndex` to a fully-merged {@link EncodedNodeShape}, normalizing away any
+ * specialized node shapes (`f`) along the way by applying their overlays via
+ * {@link applySpecialization} until a concrete node shape is reached.
+ *
+ * @remarks
+ * Exported for testing.
  */
-function resolveToNodeShape(
+export function normalizeToNodeShape(
 	shapeIndex: number,
 	context: DecoderContext<EncodedChunkShape>,
 	visited: Set<number> = new Set(),
@@ -112,16 +116,20 @@ function resolveToNodeShape(
 	assert(!visited.has(shapeIndex), "cyclic specialized node shape chain");
 	visited.add(shapeIndex);
 	const encoded = context.shapes[shapeIndex];
-	assert(encoded !== undefined, "base shape index out of bounds");
+	assert(encoded !== undefined, "shape index out of bounds");
+	// Persisted shape variants are discriminated by single-letter property names (see
+	// `EncodedChunkShape`): `c` is a concrete node shape, `f` is a specialized node shape that
+	// derives from another shape via overrides. Other variants (`a`/`b`/`d`/`e`) are
+	// non-node shapes and cannot appear in a specialization chain.
 	if (encoded.c !== undefined) {
 		return encoded.c;
 	}
 	assert(
 		"f" in encoded && encoded.f !== undefined,
-		"specialized node shape base must resolve to a node shape",
+		"shape in specialization chain must be a node shape (c) or specialized node shape (f)",
 	);
 	return applySpecialization(
-		resolveToNodeShape(encoded.f.base, context, visited),
+		normalizeToNodeShape(encoded.f.base, context, visited),
 		encoded.f,
 		context,
 	);
@@ -137,8 +145,11 @@ function resolveToNodeShape(
  * For `fields`, override entries whose key matches a key in `base.fields` replace that entry's
  * shape index in place; override entries with keys not present in `base` are appended at the end
  * in `spec.fields` order. Field order from `base` is preserved.
+ *
+ * @remarks
+ * Exported for testing.
  */
-function applySpecialization(
+export function applySpecialization(
 	base: EncodedNodeShape,
 	spec: EncodedSpecializedNodeShape,
 	context: DecoderContext<EncodedChunkShape>,
@@ -191,7 +202,7 @@ export class SpecializedNodeDecoder implements ChunkDecoder {
 		context: DecoderContext<EncodedChunkShape>,
 	) {
 		this.inner = new NodeDecoder(
-			applySpecialization(resolveToNodeShape(shape.base, context), shape, context),
+			applySpecialization(normalizeToNodeShape(shape.base, context), shape, context),
 			context,
 		);
 	}

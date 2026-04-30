@@ -28,8 +28,10 @@ import {
 	SpecializedNodeDecoder,
 	aggregateChunks,
 	anyDecoder,
+	applySpecialization,
 	deaggregateChunks,
 	decode,
+	normalizeToNodeShape,
 	readValue,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/chunkDecoding.js";
@@ -1013,7 +1015,7 @@ describe("chunkDecoding", () => {
 			const context = makeContext([], []);
 			assert.throws(
 				() => new SpecializedNodeDecoder({ base: 0, fields: [] }, context),
-				validateAssertionError("base shape index out of bounds"),
+				validateAssertionError("shape index out of bounds"),
 			);
 		});
 
@@ -1024,7 +1026,9 @@ describe("chunkDecoding", () => {
 			const context = makeContext([], shapes);
 			assert.throws(
 				() => new SpecializedNodeDecoder({ base: 0, fields: [] }, context),
-				validateAssertionError("specialized node shape base must resolve to a node shape"),
+				validateAssertionError(
+					"shape in specialization chain must be a node shape (c) or specialized node shape (f)",
+				),
 			);
 		});
 
@@ -1123,11 +1127,10 @@ describe("chunkDecoding", () => {
 			// data: [[3]] — anyDecoder reads shape index 3, dispatching to the f decoder.
 			// Bold is constant so nothing else is consumed; stream is fully exhausted.
 			//
-			// decode() does not inspect the version field at runtime, so v2 is used.
-			// The value is already a branded type from strictEnum, so brand() is not needed here
-			// (and would fail to infer T without contextual typing through the as unknown cast).
+			// `f` is part of the vTextExperimental format, so the batch is tagged with that
+			// version to match the on-the-wire contract.
 			const batch = {
-				version: FieldBatchFormatVersion.v2,
+				version: FieldBatchFormatVersion.vTextExperimental,
 				identifiers: [],
 				shapes: [
 					{ c: { type: "FormatNode", value: false, fields: [["bold", 1]] } },
@@ -1150,6 +1153,342 @@ describe("chunkDecoding", () => {
 						bold: [{ type: brand("boolean"), value: false }],
 					},
 				},
+			]);
+		});
+	});
+
+	describe("normalizeToNodeShape", () => {
+		function makeContext(
+			identifiers: string[],
+			shapes: EncodedChunkShapeVTextExperimental[],
+		): DecoderContext<EncodedChunkShape> {
+			return new DecoderContext(
+				identifiers,
+				shapes as unknown as EncodedChunkShape[],
+				idDecodingContext,
+				undefined,
+			);
+		}
+
+		it("returns a concrete (c) shape unchanged", () => {
+			const c: EncodedNodeShape = { type: "MyNode", value: false, fields: [["a", 1]] };
+			const context = makeContext([], [{ c }]);
+			assert.deepEqual(normalizeToNodeShape(0, context), c);
+		});
+
+		it("merges a single-step f chain", () => {
+			// f at index 1 specializes c at index 0 by overriding "a" with shape index 2.
+			const shapes: EncodedChunkShapeVTextExperimental[] = [
+				{ c: { type: "MyNode", value: false, fields: [["a", 99]] } },
+				{ f: { base: 0, fields: [["a", 2]] } },
+			];
+			const context = makeContext([], shapes);
+			assert.deepEqual(normalizeToNodeShape(1, context), {
+				type: "MyNode",
+				value: false,
+				fields: [["a", 2]],
+				extraFields: undefined,
+			});
+		});
+
+		it("merges a multi-step f chain back to its concrete base", () => {
+			// shapes[0]: base c with fields [a, b]
+			// shapes[1]: inner f — overrides "a" to shape 7
+			// shapes[2]: outer f — overrides "b" to shape 8 and adds new key "c" at shape 9
+			// Expected merged shape: type from c, fields in base order with overrides applied
+			// in place, then "c" appended.
+			const shapes: EncodedChunkShapeVTextExperimental[] = [
+				{
+					c: {
+						type: "MyNode",
+						value: false,
+						fields: [
+							["a", 1],
+							["b", 1],
+						],
+					},
+				},
+				{ f: { base: 0, fields: [["a", 7]] } },
+				{
+					f: {
+						base: 1,
+						fields: [
+							["b", 8],
+							["c", 9],
+						],
+					},
+				},
+			];
+			const context = makeContext([], shapes);
+			assert.deepEqual(normalizeToNodeShape(2, context), {
+				type: "MyNode",
+				value: false,
+				fields: [
+					["a", 7],
+					["b", 8],
+					["c", 9],
+				],
+				extraFields: undefined,
+			});
+		});
+
+		it("propagates value/extraFields overrides through a chain", () => {
+			const shapes: EncodedChunkShapeVTextExperimental[] = [
+				{ c: { type: "MyNode", value: true, fields: [] } },
+				{ f: { base: 0, value: ["pinned"] } },
+				{ f: { base: 1, extraFields: 5 } },
+			];
+			const context = makeContext([], shapes);
+			assert.deepEqual(normalizeToNodeShape(2, context), {
+				type: "MyNode",
+				value: ["pinned"],
+				fields: undefined,
+				extraFields: 5,
+			});
+		});
+
+		it("throws on cyclic chain", () => {
+			const shapes: EncodedChunkShapeVTextExperimental[] = [
+				{ f: { base: 1, fields: [] } },
+				{ f: { base: 0, fields: [] } },
+			];
+			const context = makeContext([], shapes);
+			assert.throws(
+				() => normalizeToNodeShape(0, context),
+				validateAssertionError("cyclic specialized node shape chain"),
+			);
+		});
+
+		it("throws on a non-node shape in the chain", () => {
+			const shapes: EncodedChunkShapeVTextExperimental[] = [{ a: 0 }];
+			const context = makeContext([], shapes);
+			assert.throws(
+				() => normalizeToNodeShape(0, context),
+				validateAssertionError(
+					"shape in specialization chain must be a node shape (c) or specialized node shape (f)",
+				),
+			);
+		});
+
+		it("throws on a 3-step cycle", () => {
+			const shapes: EncodedChunkShapeVTextExperimental[] = [
+				{ f: { base: 1, fields: [] } },
+				{ f: { base: 2, fields: [] } },
+				{ f: { base: 0, fields: [] } },
+			];
+			const context = makeContext([], shapes);
+			assert.throws(
+				() => normalizeToNodeShape(0, context),
+				validateAssertionError("cyclic specialized node shape chain"),
+			);
+		});
+
+		it("outer f override of a field also overridden by inner f wins", () => {
+			// shapes[0]: base c with field [a → 100].
+			// shapes[1]: inner f — overrides a → 7.
+			// shapes[2]: outer f — overrides a → 8 (the same field again).
+			// Merged result must show 8, not 7.
+			const shapes: EncodedChunkShapeVTextExperimental[] = [
+				{ c: { type: "MyNode", value: false, fields: [["a", 100]] } },
+				{ f: { base: 0, fields: [["a", 7]] } },
+				{ f: { base: 1, fields: [["a", 8]] } },
+			];
+			const context = makeContext([], shapes);
+			assert.deepEqual(normalizeToNodeShape(2, context), {
+				type: "MyNode",
+				value: false,
+				fields: [["a", 8]],
+				extraFields: undefined,
+			});
+		});
+
+		it("treats a negative shapeIndex as out of bounds", () => {
+			const context = makeContext([], [{ c: { type: "MyNode", value: false } }]);
+			assert.throws(
+				() => normalizeToNodeShape(-1, context),
+				validateAssertionError("shape index out of bounds"),
+			);
+		});
+	});
+
+	describe("applySpecialization", () => {
+		function makeContext(identifiers: string[]): DecoderContext<EncodedChunkShape> {
+			return new DecoderContext(identifiers, [], idDecodingContext, undefined);
+		}
+
+		it("inherits all properties when spec is empty", () => {
+			const base: EncodedNodeShape = {
+				type: "MyNode",
+				value: ["base-val"],
+				fields: [["a", 1]],
+				extraFields: 2,
+			};
+			assert.deepEqual(applySpecialization(base, { base: 0 }, makeContext([])), {
+				type: "MyNode",
+				value: ["base-val"],
+				fields: [["a", 1]],
+				extraFields: 2,
+			});
+		});
+
+		it("replaces overridden fields in base order, then appends new keys in spec order", () => {
+			const base: EncodedNodeShape = {
+				type: "MyNode",
+				value: false,
+				fields: [
+					["a", 1],
+					["b", 1],
+				],
+			};
+			const merged = applySpecialization(
+				base,
+				{
+					base: 0,
+					fields: [
+						["x", 3],
+						["b", 2],
+						["y", 4],
+						["a", 2],
+					],
+				},
+				makeContext([]),
+			);
+			// Base order [a, b] preserved with overrides applied in place; then [x, y] appended
+			// in spec order.
+			assert.deepEqual(merged.fields, [
+				["a", 2],
+				["b", 2],
+				["x", 3],
+				["y", 4],
+			]);
+		});
+
+		it("treats explicit value: false as an override (not inherited)", () => {
+			// Discriminates "own property" semantics from a `??` fallback — base.value=true would
+			// be incorrectly inherited under `spec.value ?? base.value`.
+			const base: EncodedNodeShape = { type: "MyNode", value: true };
+			const merged = applySpecialization(base, { base: 0, value: false }, makeContext([]));
+			assert.equal(merged.value, false);
+		});
+
+		it("throws on duplicate keys in spec.fields", () => {
+			const base: EncodedNodeShape = { type: "MyNode", value: false };
+			assert.throws(
+				() =>
+					applySpecialization(
+						base,
+						{
+							base: 0,
+							fields: [
+								["k", 1],
+								["k", 2],
+							],
+						},
+						makeContext([]),
+					),
+				validateAssertionError("duplicate field key in specialized node shape"),
+			);
+		});
+
+		it("throws on duplicate keys in base.fields", () => {
+			const base: EncodedNodeShape = {
+				type: "MyNode",
+				value: false,
+				fields: [
+					["k", 1],
+					["k", 2],
+				],
+			};
+			assert.throws(
+				() => applySpecialization(base, { base: 0 }, makeContext([])),
+				validateAssertionError("duplicate field key in base node shape"),
+			);
+		});
+
+		it("matches override against base by resolved key, regardless of encoding", () => {
+			// Base stores the key for "a" as identifier-index 0; spec uses the string "a".
+			// Both resolve to the same FieldKey, so the override must replace base's entry
+			// in place rather than being treated as a new key and appended.
+			const base: EncodedNodeShape = {
+				type: "MyNode",
+				value: false,
+				fields: [[0, 1]],
+			};
+			const merged = applySpecialization(
+				base,
+				{ base: 0, fields: [["a", 2]] },
+				makeContext(["a"]),
+			);
+			// Order: still one entry. Encoding of the key follows base (the index), but the
+			// shape-index follows the override.
+			assert.deepEqual(merged.fields, [[0, 2]]);
+		});
+
+		it("detects duplicates in spec.fields across mixed key encodings", () => {
+			// "k" as a string and identifier-index 0 (= "k") resolve to the same FieldKey.
+			const base: EncodedNodeShape = { type: "MyNode", value: false };
+			assert.throws(
+				() =>
+					applySpecialization(
+						base,
+						{
+							base: 0,
+							fields: [
+								["k", 1],
+								[0, 2],
+							],
+						},
+						makeContext(["k"]),
+					),
+				validateAssertionError("duplicate field key in specialized node shape"),
+			);
+		});
+
+		it("returns fields: undefined when both base and spec contribute no fields", () => {
+			const base: EncodedNodeShape = { type: "MyNode", value: false };
+			const merged = applySpecialization(base, { base: 0 }, makeContext([]));
+			assert.equal(merged.fields, undefined);
+		});
+
+		it("treats spec.fields: [] the same as spec.fields omitted", () => {
+			const base: EncodedNodeShape = {
+				type: "MyNode",
+				value: false,
+				fields: [["a", 1]],
+			};
+			const fromOmitted = applySpecialization(base, { base: 0 }, makeContext([]));
+			const fromEmpty = applySpecialization(base, { base: 0, fields: [] }, makeContext([]));
+			assert.deepEqual(fromEmpty, fromOmitted);
+		});
+
+		it("preserves base order when every base field is overridden", () => {
+			// All three base fields overridden, spec lists them in reverse order. Merged
+			// fields must follow base's [a, b, c] order, not spec's [c, b, a].
+			const base: EncodedNodeShape = {
+				type: "MyNode",
+				value: false,
+				fields: [
+					["a", 1],
+					["b", 1],
+					["c", 1],
+				],
+			};
+			const merged = applySpecialization(
+				base,
+				{
+					base: 0,
+					fields: [
+						["c", 9],
+						["b", 8],
+						["a", 7],
+					],
+				},
+				makeContext([]),
+			);
+			assert.deepEqual(merged.fields, [
+				["a", 7],
+				["b", 8],
+				["c", 9],
 			]);
 		});
 	});
