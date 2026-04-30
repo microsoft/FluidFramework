@@ -89,6 +89,7 @@ function resolveRangeViaRegistry(rangeSpec: string): string {
 	return version;
 }
 
+/** Like {@link resolveRangeViaRegistry} but returns `undefined` and warns instead of throwing. */
 function tryResolveRangeViaRegistry(rangeSpec: string): string | undefined {
 	try {
 		return resolveRangeViaRegistry(rangeSpec);
@@ -98,11 +99,22 @@ function tryResolveRangeViaRegistry(rangeSpec: string): string | undefined {
 	}
 }
 
+/**
+ * Resolves a minor-version delta relative to `pkgVer` against the npm registry.
+ * A delta of -1 means "the release group one minor-version step older than pkgVer"
+ * (e.g. the previous 10-minor-version band for 2.x, or the previous RC/internal tier).
+ */
 function resolveVersionForMinorDelta(pkgVer: string, delta: number): string | undefined {
 	const rangeSpec = calculateRequestedRange(pkgVer, delta);
 	return tryResolveRangeViaRegistry(rangeSpec);
 }
 
+/**
+ * Resolves a public-major delta relative to `pkgVer` against the npm registry.
+ * Unlike {@link resolveVersionForMinorDelta}, this adjusts by public major version
+ * (e.g. delta -1 from any 2.x resolves to the latest 1.x), used for cross-client
+ * slow-train compat testing.
+ */
 function resolveVersionForMajorDelta(pkgVer: string, delta: number): string | undefined {
 	const rangeSpec = calculateRequestedRange(pkgVer, delta, true /* adjustPublicMajor */);
 	return tryResolveRangeViaRegistry(rangeSpec);
@@ -112,6 +124,12 @@ function resolveVersionForMajorDelta(pkgVer: string, delta: number): string | un
 // Workspace file generation
 // ---------------------------------------------------------------------------
 
+/**
+ * Builds the `package.json` content for a per-version workspace directory.
+ * Includes only the Fluid packages that existed at `version` (filtered by `minVersion`),
+ * plus `@fluid-experimental/sequence-deprecated` for versions where SparseMatrix was split out.
+ * Field order matches `sort-package-json` to satisfy the repo's package-metadata policy.
+ */
 function buildVersionPackageJson(versionDir: string, version: string): string {
 	const deps: Record<string, string> = {};
 	for (const entry of packageListToInstall) {
@@ -147,6 +165,10 @@ function buildVersionPackageJson(versionDir: string, version: string): string {
 	)}\n`;
 }
 
+/**
+ * Creates or updates `<workspaceDir>/<version>/package.json`. Skips the write if the
+ * content is already up to date. Returns `true` if the file was created or changed.
+ */
 function syncVersionDirectory(workspaceDir: string, version: string): boolean {
 	const versionDir = path.join(workspaceDir, version);
 	const pkgJsonPath = path.join(versionDir, "package.json");
@@ -164,6 +186,10 @@ function syncVersionDirectory(workspaceDir: string, version: string): boolean {
 	return true;
 }
 
+/**
+ * Deletes any subdirectory of `workspaceDir` whose name is not in `keepVersions`
+ * (excluding `node_modules`). Returns `true` if at least one directory was removed.
+ */
 function removeStaleVersionDirs(workspaceDir: string, keepVersions: Set<string>): boolean {
 	if (!existsSync(workspaceDir)) return false;
 	let removed = false;

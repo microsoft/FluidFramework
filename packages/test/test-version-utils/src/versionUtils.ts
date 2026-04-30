@@ -431,6 +431,16 @@ export function getRequestedVersion(
 // Internal helpers
 // ---------------------------------------------------------------------------
 
+/**
+ * Computes a semver range for a version expressed in Fluid's internal/RC scheme
+ * (e.g. `2.0.0-internal.3.0.0`) after applying a negative `requested` delta.
+ *
+ * Handles several cross-tier edge cases:
+ * - RC → internal: going back far enough from an RC release crosses into internal releases.
+ * - internal → public 1.x / 0.x: going back from early 2.0.0-internal.x versions crosses
+ *   into the public 1.x and pre-1.0 (0.xx) release lines.
+ * - Skipping RC tiers when the delta spans into the internal series from RC.
+ */
 function internalSchema(
 	publicVersion: string,
 	internalVersion: string,
