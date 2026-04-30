@@ -221,8 +221,9 @@ export function createDOProviderContainerRuntimeFactory(props: {
 	 */
 	runtimeOptionOverrides?: Partial<IContainerRuntimeOptions>;
 	/**
-	 * @deprecated Use `minVersionForCollab` instead. When set, behaves identically to passing
-	 * `minVersionForCollab` directly.
+	 * @deprecated Use `minVersionForCollab` instead. When `minVersionForCollab` is not
+	 * provided, this is used as a fallback; when both are provided, `minVersionForCollab`
+	 * takes precedence.
 	 */
 	minVersionForCollabOverride?: MinimumVersionForCollab;
 }): IRuntimeFactory {

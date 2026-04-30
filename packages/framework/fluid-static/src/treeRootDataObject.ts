@@ -227,8 +227,9 @@ export function createTreeContainerRuntimeFactory(props: {
 	 */
 	readonly runtimeOptionOverrides?: Partial<IContainerRuntimeOptions>;
 	/**
-	 * @deprecated Use `minVersionForCollab` instead. When set, behaves identically to passing
-	 * `minVersionForCollab` directly (but will override `minVersionForCollab` if both are provided).
+	 * @deprecated Use `minVersionForCollab` instead. When `minVersionForCollab` is not
+	 * provided, this is used as a fallback; when both are provided, `minVersionForCollab`
+	 * takes precedence.
 	 */
 	readonly minVersionForCollabOverride?: MinimumVersionForCollab;
 }): IRuntimeFactory {
