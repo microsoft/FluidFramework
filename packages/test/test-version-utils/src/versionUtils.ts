@@ -68,7 +68,9 @@ let cachedManifest: CompatVersionsManifest | undefined;
 export function tryReadVersionsManifest(): CompatVersionsManifest | undefined {
 	if (cachedManifest !== undefined) return cachedManifest;
 	if (!existsSync(generatedVersionsCjsPath)) return undefined;
-	cachedManifest = createRequire(import.meta.url)(generatedVersionsCjsPath) as CompatVersionsManifest;
+	cachedManifest = createRequire(import.meta.url)(
+		generatedVersionsCjsPath,
+	) as CompatVersionsManifest;
 	return cachedManifest;
 }
 
