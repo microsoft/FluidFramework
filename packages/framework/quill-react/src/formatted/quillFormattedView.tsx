@@ -542,12 +542,8 @@ const FormattedTextEditorView = withMemoizedTreeObservations(
 						}
 					}
 				};
-				if (context.isBranch()) {
-					context.runTransaction(applyDelta);
-				} else {
-					applyDelta();
-				}
 
+				context.runTransaction(applyDelta);
 				isUpdating.current = false;
 			};
 
