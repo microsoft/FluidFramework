@@ -158,12 +158,12 @@ The script (`scripts/updateCompatVersions.ts`) does the following:
 
 1. Reads the current package version from `src/packageVersion.ts`.
 2. Queries the npm registry to resolve N-1, N-2, OCV, cross-client, and full back-compat versions.
-3. Writes `compat-workspaces/generated-versions.mjs` with the resolved exact versions.
+3. Writes `compat-workspaces/generated-versions.cjs` with the resolved exact versions.
 4. Creates or updates per-version `package.json` files in `compat-workspaces/full/`.
 5. Removes version directories that are no longer needed.
 6. Runs `pnpm install --no-frozen-lockfile` in the workspace to regenerate the committed lockfile.
 
-Commit all files produced by the script: `generated-versions.mjs`, per-version `package.json` files, and
+Commit all files produced by the script: `generated-versions.cjs`, per-version `package.json` files, and
 `compat-workspaces/full/pnpm-lock.yaml`.
 
 ### Adding pinned versions for specific tests

@@ -13,7 +13,7 @@
  * the `postinstall` script in this package's `package.json`), so no runtime installation step
  * is required in tests.
  *
- * The exact resolved versions are recorded in `compat-workspaces/generated-versions.mjs`, which is
+ * The exact resolved versions are recorded in `compat-workspaces/generated-versions.cjs`, which is
  * maintained by the `update-compat-versions` script and committed to the repository. Tests
  * read this manifest at startup to resolve version ranges to exact versions.
  *
@@ -22,13 +22,14 @@
  * After a version bump, run:
  * `pnpm run update-compat-versions`
  *
- * This regenerates `generated-versions.mjs` and all per-version `package.json` files, then runs
+ * This regenerates `generated-versions.cjs` and all per-version `package.json` files, then runs
  * `pnpm install --no-frozen-lockfile` in the workspace to update the committed lockfile.
  * Commit all changes produced by the script.
  */
 
 import { execFileSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
+import { createRequire } from "node:module";
 import * as path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
@@ -42,16 +43,16 @@ import * as semver from "semver";
 
 // From compiled lib/, go up one level to reach the package root, then into compat-workspaces/
 const compatWorkspacesDir = fileURLToPath(new URL("../compat-workspaces", import.meta.url));
-const generatedVersionsMjsPath = path.join(compatWorkspacesDir, "generated-versions.mjs");
+const generatedVersionsCjsPath = path.join(compatWorkspacesDir, "generated-versions.cjs");
 
 export const fullWorkspaceDir = path.join(compatWorkspacesDir, "full");
 
 // ---------------------------------------------------------------------------
-// generated-versions.mjs manifest
+// generated-versions.cjs manifest
 // ---------------------------------------------------------------------------
 
 /**
- * Schema for the committed `compat-workspaces/generated-versions.mjs` file.
+ * Schema for the committed `compat-workspaces/generated-versions.cjs` file.
  */
 export interface CompatVersionsManifest {
 	/** All exact versions installed in `compat-workspaces/full/`, newest first. */
@@ -66,11 +67,8 @@ let cachedManifest: CompatVersionsManifest | undefined;
  */
 export function tryReadVersionsManifest(): CompatVersionsManifest | undefined {
 	if (cachedManifest !== undefined) return cachedManifest;
-	if (!existsSync(generatedVersionsMjsPath)) return undefined;
-	const content = readFileSync(generatedVersionsMjsPath, "utf8");
-	const match = /export const versions = (\[[\s\S]*?\]);/.exec(content);
-	if (!match) throw new Error("Cannot parse generated-versions.mjs");
-	cachedManifest = { versions: JSON.parse(match[1]) as string[] };
+	if (!existsSync(generatedVersionsCjsPath)) return undefined;
+	cachedManifest = createRequire(import.meta.url)(generatedVersionsCjsPath) as CompatVersionsManifest;
 	return cachedManifest;
 }
 
@@ -438,7 +436,7 @@ export function getRequestedVersion(
  * Handles several cross-tier edge cases:
  * - RC → internal: going back far enough from an RC release crosses into internal releases.
  * - internal → public 1.x / 0.x: going back from early 2.0.0-internal.x versions crosses
- *   into the public 1.x and pre-1.0 (0.xx) release lines.
+ * into the public 1.x and pre-1.0 (0.xx) release lines.
  * - Skipping RC tiers when the delta spans into the internal series from RC.
  */
 function internalSchema(
