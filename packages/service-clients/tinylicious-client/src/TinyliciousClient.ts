@@ -22,6 +22,7 @@ import type {
 import type {
 	ContainerSchema,
 	IFluidContainer,
+	// eslint-disable-next-line import-x/no-deprecated
 	CompatibilityMode,
 } from "@fluidframework/fluid-static";
 import {
@@ -30,6 +31,7 @@ import {
 	createServiceAudience,
 } from "@fluidframework/fluid-static/internal";
 import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver/internal";
+import type { MinimumVersionForCollab } from "@fluidframework/runtime-definitions";
 import { wrapConfigProviderWithDefaults } from "@fluidframework/telemetry-utils/internal";
 import {
 	InsecureTinyliciousTokenProvider,
@@ -72,17 +74,25 @@ export class TinyliciousClient {
 	/**
 	 * Creates a new detached container instance in Tinylicious server.
 	 * @param containerSchema - Container schema for the new container.
-	 * @param compatibilityMode - Compatibility mode the container should run in.
+	 * @param compatibilityMode - Compatibility mode the container should run in. Deprecated in favor of `minVersionForCollab`.
+	 * @param minVersionForCollab - Optional minimum Fluid Framework version required for collaboration on
+	 * the document. When provided, takes precedence over `compatibilityMode`. Will be made required in the future when `compatibilityMode` is removed.
 	 * @returns New detached container instance along with associated services.
 	 */
 	public async createContainer<TContainerSchema extends ContainerSchema>(
 		containerSchema: TContainerSchema,
+		// eslint-disable-next-line import-x/no-deprecated
 		compatibilityMode: CompatibilityMode,
+		minVersionForCollab?: MinimumVersionForCollab,
 	): Promise<{
 		container: IFluidContainer<TContainerSchema>;
 		services: TinyliciousContainerServices;
 	}> {
-		const loaderProps = this.getLoaderProps(containerSchema, compatibilityMode);
+		const loaderProps = this.getLoaderProps(
+			containerSchema,
+			compatibilityMode,
+			minVersionForCollab,
+		);
 
 		// We're not actually using the code proposal (our code loader always loads the same module
 		// regardless of the proposal), but the Container will only give us a NullRuntime if there's
@@ -123,18 +133,26 @@ export class TinyliciousClient {
 	 * Accesses the existing container given its unique ID in the tinylicious server.
 	 * @param id - Unique ID of the container.
 	 * @param containerSchema - Container schema used to access data objects in the container.
-	 * @param compatibilityMode - Compatibility mode the container should run in.
+	 * @param compatibilityMode - Compatibility mode the container should run in. Deprecated in favor of `minVersionForCollab`.
+	 * @param minVersionForCollab - Optional minimum Fluid Framework version required for collaboration on
+	 * the document. When provided, takes precedence over `compatibilityMode`. Will be made required in the future when `compatibilityMode` is removed.
 	 * @returns Existing container instance along with associated services.
 	 */
 	public async getContainer<TContainerSchema extends ContainerSchema>(
 		id: string,
 		containerSchema: TContainerSchema,
+		// eslint-disable-next-line import-x/no-deprecated
 		compatibilityMode: CompatibilityMode,
+		minVersionForCollab?: MinimumVersionForCollab,
 	): Promise<{
 		container: IFluidContainer<TContainerSchema>;
 		services: TinyliciousContainerServices;
 	}> {
-		const loaderProps = this.getLoaderProps(containerSchema, compatibilityMode);
+		const loaderProps = this.getLoaderProps(
+			containerSchema,
+			compatibilityMode,
+			minVersionForCollab,
+		);
 		const container = await loadExistingContainer({ ...loaderProps, request: { url: id } });
 		const fluidContainer = await createFluidContainer<TContainerSchema>({
 			container,
@@ -155,11 +173,14 @@ export class TinyliciousClient {
 
 	private getLoaderProps(
 		schema: ContainerSchema,
+		// eslint-disable-next-line import-x/no-deprecated
 		compatibilityMode: CompatibilityMode,
+		minVersionForCollab: MinimumVersionForCollab | undefined,
 	): ILoaderProps {
 		const containerRuntimeFactory = createDOProviderContainerRuntimeFactory({
 			schema,
 			compatibilityMode,
+			minVersionForCollab,
 		});
 		const load = async (): Promise<IFluidModuleWithDetails> => {
 			return {

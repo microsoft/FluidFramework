@@ -20,7 +20,12 @@ import {
 import type { IRuntimeFactory } from "@fluidframework/container-definitions/legacy";
 import type { IConfigProviderBase } from "@fluidframework/core-interfaces";
 import { ScopeType } from "@fluidframework/driver-definitions/legacy";
-import type { CompatibilityMode, ContainerSchema } from "@fluidframework/fluid-static";
+import type {
+	// eslint-disable-next-line import-x/no-deprecated
+	CompatibilityMode,
+	ContainerSchema,
+} from "@fluidframework/fluid-static";
+import type { MinimumVersionForCollab } from "@fluidframework/runtime-definitions";
 import {
 	type MockLogger,
 	createChildLogger,
@@ -57,9 +62,12 @@ export function createAzureClient(
 	createContainerRuntimeFactory?: ({
 		schema,
 		compatibilityMode,
+		minVersionForCollab,
 	}: {
 		schema: ContainerSchema;
+		// eslint-disable-next-line import-x/no-deprecated
 		compatibilityMode: CompatibilityMode;
+		minVersionForCollab?: MinimumVersionForCollab;
 	}) => IRuntimeFactory,
 ): AzureClient {
 	const args = process.argv.slice(2);

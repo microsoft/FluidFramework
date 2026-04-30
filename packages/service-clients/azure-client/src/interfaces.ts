@@ -11,12 +11,14 @@ import type {
 import type { IUser } from "@fluidframework/driver-definitions";
 import type { ICompressionStorageConfig } from "@fluidframework/driver-utils";
 import type {
+	// eslint-disable-next-line import-x/no-deprecated
 	CompatibilityMode,
 	ContainerSchema,
 	IMember,
 	IServiceAudience,
 } from "@fluidframework/fluid-static";
 import type { ITokenProvider } from "@fluidframework/routerlicious-driver";
+import type { MinimumVersionForCollab } from "@fluidframework/runtime-definitions";
 
 /**
  * Props for initializing a new AzureClient instance
@@ -51,9 +53,12 @@ export interface AzureClientPropsInternal extends AzureClientProps {
 	readonly createContainerRuntimeFactory?: ({
 		schema,
 		compatibilityMode,
+		minVersionForCollab,
 	}: {
 		schema: ContainerSchema;
+		// eslint-disable-next-line import-x/no-deprecated
 		compatibilityMode: CompatibilityMode;
+		minVersionForCollab?: MinimumVersionForCollab;
 	}) => IRuntimeFactory;
 }
 

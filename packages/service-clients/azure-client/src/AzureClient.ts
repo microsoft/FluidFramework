@@ -29,6 +29,7 @@ import { applyStorageCompression } from "@fluidframework/driver-utils/internal";
 import type {
 	ContainerSchema,
 	IFluidContainer,
+	// eslint-disable-next-line import-x/no-deprecated
 	CompatibilityMode,
 } from "@fluidframework/fluid-static";
 import {
@@ -37,6 +38,7 @@ import {
 	createServiceAudience,
 } from "@fluidframework/fluid-static/internal";
 import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver/internal";
+import type { MinimumVersionForCollab } from "@fluidframework/runtime-definitions";
 import { wrapConfigProviderWithDefaults } from "@fluidframework/telemetry-utils/internal";
 
 import { createAzureAudienceMember } from "./AzureAudience.js";
@@ -98,9 +100,12 @@ export class AzureClient {
 	private readonly createContainerRuntimeFactory?: ({
 		schema,
 		compatibilityMode,
+		minVersionForCollab,
 	}: {
 		schema: ContainerSchema;
+		// eslint-disable-next-line import-x/no-deprecated
 		compatibilityMode: CompatibilityMode;
+		minVersionForCollab?: MinimumVersionForCollab;
 	}) => IRuntimeFactory;
 
 	/**
@@ -138,17 +143,25 @@ export class AzureClient {
 	 * @typeparam TContainerSchema - Used to infer the the type of 'initialObjects' in the returned container.
 	 * (normally not explicitly specified.)
 	 * @param containerSchema - Container schema for the new container.
-	 * @param compatibilityMode - Compatibility mode the container should run in.
+	 * @param compatibilityMode - Compatibility mode the container should run in. Deprecated in favor of `minVersionForCollab`.
+	 * @param minVersionForCollab - Optional minimum Fluid Framework version required for collaboration on
+	 * the document. When provided, takes precedence over `compatibilityMode`. Will be made required in the future when `compatibilityMode` is removed.
 	 * @returns New detached container instance along with associated services.
 	 */
 	public async createContainer<const TContainerSchema extends ContainerSchema>(
 		containerSchema: TContainerSchema,
+		// eslint-disable-next-line import-x/no-deprecated
 		compatibilityMode: CompatibilityMode,
+		minVersionForCollab?: MinimumVersionForCollab,
 	): Promise<{
 		container: IFluidContainer<TContainerSchema>;
 		services: AzureContainerServices;
 	}> {
-		const loaderProps = this.getLoaderProps(containerSchema, compatibilityMode);
+		const loaderProps = this.getLoaderProps(
+			containerSchema,
+			compatibilityMode,
+			minVersionForCollab,
+		);
 
 		const container = await createDetachedContainer({
 			...loaderProps,
@@ -172,18 +185,26 @@ export class AzureClient {
 	 * (normally not explicitly specified.)
 	 * @param id - Unique ID of the container in Azure Fluid Relay.
 	 * @param containerSchema - Container schema used to access data objects in the container.
-	 * @param compatibilityMode - Compatibility mode the container should run in.
+	 * @param compatibilityMode - Compatibility mode the container should run in. Deprecated in favor of `minVersionForCollab`.
+	 * @param minVersionForCollab - Optional minimum Fluid Framework version required for collaboration on
+	 * the document. When provided, takes precedence over `compatibilityMode`. Will be made required in the future when `compatibilityMode` is removed.
 	 * @returns Existing container instance along with associated services.
 	 */
 	public async getContainer<TContainerSchema extends ContainerSchema>(
 		id: string,
 		containerSchema: TContainerSchema,
+		// eslint-disable-next-line import-x/no-deprecated
 		compatibilityMode: CompatibilityMode,
+		minVersionForCollab?: MinimumVersionForCollab,
 	): Promise<{
 		container: IFluidContainer<TContainerSchema>;
 		services: AzureContainerServices;
 	}> {
-		const loaderProps = this.getLoaderProps(containerSchema, compatibilityMode);
+		const loaderProps = this.getLoaderProps(
+			containerSchema,
+			compatibilityMode,
+			minVersionForCollab,
+		);
 		const url = new URL(this.connectionConfig.endpoint);
 		url.searchParams.append("storage", encodeURIComponent(this.connectionConfig.endpoint));
 		url.searchParams.append(
@@ -210,18 +231,26 @@ export class AzureClient {
 	 * @param id - Unique ID of the source container in Azure Fluid Relay.
 	 * @param containerSchema - Container schema used to access data objects in the container.
 	 * @param version - Unique version of the source container in Azure Fluid Relay.
-	 * @param compatibilityMode - Compatibility mode the container should run in.
+	 * @param compatibilityMode - Compatibility mode the container should run in. Deprecated in favor of `minVersionForCollab`.
+	 * @param minVersionForCollab - Optional minimum Fluid Framework version required for collaboration on
+	 * the document. When provided, takes precedence over `compatibilityMode`. Will be made required in the future when `compatibilityMode` is removed.
 	 * @returns Loaded container instance at the specified version.
 	 */
 	public async viewContainerVersion<TContainerSchema extends ContainerSchema>(
 		id: string,
 		containerSchema: TContainerSchema,
 		version: AzureContainerVersion,
+		// eslint-disable-next-line import-x/no-deprecated
 		compatibilityMode: CompatibilityMode,
+		minVersionForCollab?: MinimumVersionForCollab,
 	): Promise<{
 		container: IFluidContainer<TContainerSchema>;
 	}> {
-		const loaderProps = this.getLoaderProps(containerSchema, compatibilityMode);
+		const loaderProps = this.getLoaderProps(
+			containerSchema,
+			compatibilityMode,
+			minVersionForCollab,
+		);
 		const url = new URL(this.connectionConfig.endpoint);
 		url.searchParams.append("storage", encodeURIComponent(this.connectionConfig.endpoint));
 		url.searchParams.append(
@@ -286,17 +315,14 @@ export class AzureClient {
 
 	private getLoaderProps(
 		schema: ContainerSchema,
+		// eslint-disable-next-line import-x/no-deprecated
 		compatibilityMode: CompatibilityMode,
+		minVersionForCollab: MinimumVersionForCollab | undefined,
 	): ILoaderProps {
+		const factoryArguments = { schema, compatibilityMode, minVersionForCollab };
 		const runtimeFactory = this.createContainerRuntimeFactory
-			? this.createContainerRuntimeFactory({
-					schema,
-					compatibilityMode,
-				})
-			: createDOProviderContainerRuntimeFactory({
-					schema,
-					compatibilityMode,
-				});
+			? this.createContainerRuntimeFactory(factoryArguments)
+			: createDOProviderContainerRuntimeFactory(factoryArguments);
 
 		const load = async (): Promise<IFluidModuleWithDetails> => {
 			return {

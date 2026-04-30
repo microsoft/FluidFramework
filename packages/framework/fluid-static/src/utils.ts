@@ -4,6 +4,7 @@
  */
 
 import type { DataObjectKind } from "@fluidframework/aqueduct/internal";
+import type { IContainerRuntimeOptions } from "@fluidframework/container-runtime/internal";
 import type { FluidObjectKeys, IFluidLoadable } from "@fluidframework/core-interfaces";
 import { oob } from "@fluidframework/core-utils/internal";
 import type {
@@ -19,7 +20,9 @@ import type { ISharedObjectKind } from "@fluidframework/shared-object-base/inter
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import { SharedTreeFactoryType } from "@fluidframework/tree/internal";
 
+import { compatibilityModeRuntimeOptions } from "./compatibilityConfiguration.js";
 import type {
+	// eslint-disable-next-line import-x/no-deprecated
 	CompatibilityMode,
 	ContainerSchema,
 	LoadableObjectKind,
@@ -147,12 +150,42 @@ export function makeFluidObject<
 }
 
 /**
- * Maps CompatibilityMode to a semver valid string that can be passed to the container runtime.
+ * Maps the legacy {@link CompatibilityMode} string identifiers ("1", "2") to their
+ * equivalent {@link MinimumVersionForCollab} semver values.
  */
 export const compatibilityModeToMinVersionForCollab = {
 	"1": "1.0.0",
 	"2": "2.0.0",
+	// eslint-disable-next-line import-x/no-deprecated
 } as const satisfies Record<CompatibilityMode, MinimumVersionForCollab>;
+
+/**
+ * Resolves the {@link MinimumVersionForCollab} and base runtime options to use for a
+ * declarative-model container, given a required `compatibilityMode` (which selects the
+ * runtime defaults) and an optional `minVersionForCollab` overlay. When provided,
+ * `minVersionForCollab` overrides the version derived from `compatibilityMode`; runtime
+ * options are still selected by `compatibilityMode`.
+ *
+ * TODO: when `CompatibilityMode` is removed, the runtime options (currently derived from
+ * {@link compatibilityModeRuntimeOptions} keyed by `compatibilityMode`) must replaced.
+ *
+ * @internal
+ */
+export function resolveMinVersionAndRuntimeOptions(input: {
+	// eslint-disable-next-line import-x/no-deprecated
+	compatibilityMode: CompatibilityMode;
+	minVersionForCollab?: MinimumVersionForCollab;
+}): {
+	minVersionForCollab: MinimumVersionForCollab;
+	runtimeOptions: IContainerRuntimeOptions;
+} {
+	const { compatibilityMode, minVersionForCollab } = input;
+	return {
+		minVersionForCollab:
+			minVersionForCollab ?? compatibilityModeToMinVersionForCollab[compatibilityMode],
+		runtimeOptions: compatibilityModeRuntimeOptions[compatibilityMode],
+	};
+}
 
 /**
  * Determines if the provided schema is a valid tree-based container schema.

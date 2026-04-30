@@ -5,6 +5,7 @@
 
 import type { IContainerRuntimeOptionsInternal } from "@fluidframework/container-runtime/internal";
 
+// eslint-disable-next-line import-x/no-deprecated
 import type { CompatibilityMode } from "./types.js";
 
 /**
@@ -16,6 +17,7 @@ import type { CompatibilityMode } from "./types.js";
  * from the default values (i.e. `enableRuntimeIdCompressor` below).
  */
 export const compatibilityModeRuntimeOptions: Record<
+	// eslint-disable-next-line import-x/no-deprecated
 	CompatibilityMode,
 	IContainerRuntimeOptionsInternal
 > = {

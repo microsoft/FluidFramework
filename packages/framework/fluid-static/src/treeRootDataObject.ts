@@ -31,8 +31,8 @@ import type {
 } from "@fluidframework/runtime-definitions/internal";
 import type { SharedObjectKind } from "@fluidframework/shared-object-base/internal";
 
-import { compatibilityModeRuntimeOptions } from "./compatibilityConfiguration.js";
 import type {
+	// eslint-disable-next-line import-x/no-deprecated
 	CompatibilityMode,
 	IRootDataObject,
 	IStaticEntryPoint,
@@ -41,13 +41,13 @@ import type {
 	TreeContainerSchema,
 } from "./types.js";
 import {
-	compatibilityModeToMinVersionForCollab,
 	createDataObject,
 	createSharedObject,
 	isDataObjectKind,
 	isSharedObjectKind,
 	makeFluidObject,
 	parseDataObjectsFromSharedObjects,
+	resolveMinVersionAndRuntimeOptions,
 } from "./utils.js";
 
 /**
@@ -135,23 +135,17 @@ class TreeContainerRuntimeFactory extends BaseContainerRuntimeFactory {
 	readonly #treeRootDataObjectFactory: TreeDataObjectFactory<TreeRootDataObject>;
 
 	public constructor(
-		compatibilityMode: CompatibilityMode,
 		treeRootDataObjectFactory: TreeDataObjectFactory<TreeRootDataObject>,
-		overrides?: Partial<{
+		resolvedConfig: {
 			runtimeOptions: Partial<IContainerRuntimeOptions>;
 			minVersionForCollab: MinimumVersionForCollab;
-		}>,
+		},
 	) {
 		super({
 			registryEntries: [treeRootDataObjectFactory.registryEntry],
-			runtimeOptions: {
-				...compatibilityModeRuntimeOptions[compatibilityMode],
-				...overrides?.runtimeOptions,
-			},
+			runtimeOptions: resolvedConfig.runtimeOptions,
 			provideEntryPoint,
-			minVersionForCollab:
-				overrides?.minVersionForCollab ??
-				compatibilityModeToMinVersionForCollab[compatibilityMode],
+			minVersionForCollab: resolvedConfig.minVersionForCollab,
 		});
 		this.#treeRootDataObjectFactory = treeRootDataObjectFactory;
 	}
@@ -211,9 +205,18 @@ export function createTreeContainerRuntimeFactory(props: {
 	readonly schema: TreeContainerSchema;
 
 	/**
-	 * See {@link CompatibilityMode} and compatibilityModeRuntimeOptions for more details.
+	 * See {@link CompatibilityMode} for more details.
+	 *
+	 * @deprecated Use `minVersionForCollab` instead.
 	 */
+	// eslint-disable-next-line import-x/no-deprecated
 	readonly compatibilityMode: CompatibilityMode;
+	/**
+	 * Minimum framework version required for collaboration on the document.
+	 * Replaces `compatibilityMode`; aligns the declarative model with the encapsulated model's
+	 * `minVersionForCollab` configuration.
+	 */
+	readonly minVersionForCollab?: MinimumVersionForCollab;
 	/**
 	 * Optional registry of data stores to pass to the DataObject factory.
 	 * If not provided, one will be created based on the schema.
@@ -221,34 +224,37 @@ export function createTreeContainerRuntimeFactory(props: {
 	readonly rootDataStoreRegistry?: IFluidDataStoreRegistry;
 	/**
 	 * Optional overrides for the container runtime options.
-	 * If not provided, only the default options for the given compatibilityMode will be used.
 	 */
 	readonly runtimeOptionOverrides?: Partial<IContainerRuntimeOptions>;
 	/**
-	 * Optional override for minimum version for collab.
-	 * If not provided, the default for the given compatibilityMode will be used.
-	 * @remarks
-	 * This is useful when runtime options are overridden and change the minimum version for collab.
+	 * @deprecated Use `minVersionForCollab` instead. When set, behaves identically to passing
+	 * `minVersionForCollab` directly (but will override `minVersionForCollab` if both are provided).
 	 */
 	readonly minVersionForCollabOverride?: MinimumVersionForCollab;
 }): IRuntimeFactory {
 	const {
 		compatibilityMode,
+		minVersionForCollab,
 		minVersionForCollabOverride,
 		rootDataStoreRegistry,
 		runtimeOptionOverrides,
 		schema,
 	} = props;
 
+	const { minVersionForCollab: resolvedMinVersion, runtimeOptions: baseRuntimeOptions } =
+		resolveMinVersionAndRuntimeOptions({
+			compatibilityMode,
+			minVersionForCollab: minVersionForCollab ?? minVersionForCollabOverride,
+		});
+
 	const [registryEntries, sharedObjects] = parseDataObjectsFromSharedObjects(schema);
 	const registry = rootDataStoreRegistry ?? new FluidDataStoreRegistry(registryEntries);
 
 	return new TreeContainerRuntimeFactory(
-		compatibilityMode,
 		new TreeRootDataObjectFactory(sharedObjects, registry),
 		{
-			runtimeOptions: runtimeOptionOverrides,
-			minVersionForCollab: minVersionForCollabOverride,
+			runtimeOptions: { ...baseRuntimeOptions, ...runtimeOptionOverrides },
+			minVersionForCollab: resolvedMinVersion,
 		},
 	);
 }
