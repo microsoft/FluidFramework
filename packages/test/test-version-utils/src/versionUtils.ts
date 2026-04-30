@@ -13,7 +13,7 @@
  * the `postinstall` script in this package's `package.json`), so no runtime installation step
  * is required in tests.
  *
- * The exact resolved versions are recorded in `compat-workspaces/versions.cjs`, which is
+ * The exact resolved versions are recorded in `compat-workspaces/generated-versions.mjs`, which is
  * maintained by the `update-compat-versions` script and committed to the repository. Tests
  * read this manifest at startup to resolve version ranges to exact versions.
  *
@@ -22,14 +22,13 @@
  * After a version bump, run:
  * `pnpm run update-compat-versions`
  *
- * This regenerates `versions.cjs` and all per-version `package.json` files, then runs
+ * This regenerates `generated-versions.mjs` and all per-version `package.json` files, then runs
  * `pnpm install --no-frozen-lockfile` in the workspace to update the committed lockfile.
  * Commit all changes produced by the script.
  */
 
 import { execFileSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
-import { createRequire } from "node:module";
 import * as path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
@@ -43,16 +42,16 @@ import * as semver from "semver";
 
 // From compiled lib/, go up one level to reach the package root, then into compat-workspaces/
 const compatWorkspacesDir = fileURLToPath(new URL("../compat-workspaces", import.meta.url));
-const versionsCjsPath = path.join(compatWorkspacesDir, "versions.cjs");
+const generatedVersionsMjsPath = path.join(compatWorkspacesDir, "generated-versions.mjs");
 
 export const fullWorkspaceDir = path.join(compatWorkspacesDir, "full");
 
 // ---------------------------------------------------------------------------
-// versions.cjs manifest
+// generated-versions.mjs manifest
 // ---------------------------------------------------------------------------
 
 /**
- * Schema for the committed `compat-workspaces/versions.cjs` file.
+ * Schema for the committed `compat-workspaces/generated-versions.mjs` file.
  */
 export interface CompatVersionsManifest {
 	/** All exact versions installed in `compat-workspaces/full/`, newest first. */
@@ -67,8 +66,11 @@ let cachedManifest: CompatVersionsManifest | undefined;
  */
 export function tryReadVersionsManifest(): CompatVersionsManifest | undefined {
 	if (cachedManifest !== undefined) return cachedManifest;
-	if (!existsSync(versionsCjsPath)) return undefined;
-	cachedManifest = createRequire(import.meta.url)(versionsCjsPath) as CompatVersionsManifest;
+	if (!existsSync(generatedVersionsMjsPath)) return undefined;
+	const content = readFileSync(generatedVersionsMjsPath, "utf8");
+	const match = /export const versions = (\[[\s\S]*?\]);/.exec(content);
+	if (!match) throw new Error("Cannot parse generated-versions.mjs");
+	cachedManifest = { versions: JSON.parse(match[1]) as string[] };
 	return cachedManifest;
 }
 
