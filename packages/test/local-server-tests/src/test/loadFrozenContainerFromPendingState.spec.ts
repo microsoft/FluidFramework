@@ -323,4 +323,131 @@ describe("loadFrozenContainerFromPendingState", () => {
 			);
 		}
 	});
+
+	describe("readOnly: false (writable frozen container)", () => {
+		it("surfaces as not readonly", async () => {
+			const { container, ITestFluidObject, urlResolver, codeLoader, documentServiceFactory } =
+				await initialize();
+			await container.attach(urlResolver.createCreateNewRequest("test"));
+			ITestFluidObject.root.set("seed", "value");
+			const url = await container.getAbsoluteUrl("");
+			assert(url !== undefined, "Expected container to provide a valid absolute URL");
+			const pendingLocalState = await container.getPendingLocalState();
+
+			const frozenContainer = await loadFrozenContainerFromPendingState({
+				codeLoader,
+				documentServiceFactory,
+				urlResolver,
+				request: { url },
+				pendingLocalState,
+				readOnly: false,
+			});
+
+			assert.strictEqual(
+				frozenContainer.readOnlyInfo.readonly,
+				false,
+				"Expected writable frozen container to report readonly === false",
+			);
+			assert.strictEqual(
+				frozenContainer.closed,
+				false,
+				"Expected writable frozen container to remain open",
+			);
+			assert.strictEqual(
+				frozenContainer.disposed,
+				false,
+				"Expected writable frozen container to not be disposed",
+			);
+		});
+
+		it("accepts local writes without closing the container", async () => {
+			const { container, ITestFluidObject, urlResolver, codeLoader, documentServiceFactory } =
+				await initialize();
+			await container.attach(urlResolver.createCreateNewRequest("test"));
+			ITestFluidObject.root.set("seed", "value");
+			const url = await container.getAbsoluteUrl("");
+			assert(url !== undefined, "Expected container to provide a valid absolute URL");
+			const pendingLocalState = await container.getPendingLocalState();
+
+			const frozenContainer = await loadFrozenContainerFromPendingState({
+				codeLoader,
+				documentServiceFactory,
+				urlResolver,
+				request: { url },
+				pendingLocalState,
+				readOnly: false,
+			});
+			const frozenEntryPoint: FluidObject<TestFluidObject> =
+				await frozenContainer.getEntryPoint();
+			assert(
+				frozenEntryPoint.ITestFluidObject !== undefined,
+				"Expected frozen container entrypoint to be a valid TestFluidObject",
+			);
+
+			// Submitting ops would nack and close the container with the read-only variant; the
+			// writable variant should silently drop them and stay open.
+			for (let i = 0; i < 5; i++) {
+				frozenEntryPoint.ITestFluidObject.root.set(`writableOnly-${i}`, i);
+			}
+
+			assert.strictEqual(
+				frozenContainer.closed,
+				false,
+				"Expected writable frozen container to remain open after local writes",
+			);
+			assert.strictEqual(
+				frozenEntryPoint.ITestFluidObject.root.get("writableOnly-0"),
+				0,
+				"Expected local write to be visible in the writable frozen container",
+			);
+			assert.strictEqual(
+				frozenEntryPoint.ITestFluidObject.root.get("writableOnly-4"),
+				4,
+				"Expected last local write to be visible in the writable frozen container",
+			);
+		});
+
+		it("does not propagate local writes to other clients", async () => {
+			const { container, ITestFluidObject, urlResolver, codeLoader, documentServiceFactory } =
+				await initialize();
+			await container.attach(urlResolver.createCreateNewRequest("test"));
+			ITestFluidObject.root.set("seed", "value");
+			const url = await container.getAbsoluteUrl("");
+			assert(url !== undefined, "Expected container to provide a valid absolute URL");
+			if (container.isDirty) {
+				await timeoutPromise((resolve) => container.once("saved", () => resolve()));
+			}
+			const pendingLocalState = await container.getPendingLocalState();
+
+			const frozenContainer = await loadFrozenContainerFromPendingState({
+				codeLoader,
+				documentServiceFactory,
+				urlResolver,
+				request: { url },
+				pendingLocalState,
+				readOnly: false,
+			});
+			const frozenEntryPoint: FluidObject<TestFluidObject> =
+				await frozenContainer.getEntryPoint();
+			assert(
+				frozenEntryPoint.ITestFluidObject !== undefined,
+				"Expected frozen container entrypoint to be a valid TestFluidObject",
+			);
+
+			frozenEntryPoint.ITestFluidObject.root.set("ghost", "should-not-propagate");
+
+			// Force a roundtrip on the original (live) container so any propagated op would have
+			// landed by now.
+			ITestFluidObject.root.set("liveRoundtrip", "tick");
+			if (container.isDirty) {
+				await timeoutPromise((resolve) => container.once("saved", () => resolve()));
+			}
+
+			assert.strictEqual(
+				ITestFluidObject.root.get("ghost"),
+				undefined,
+				"Expected writes from a writable frozen container to NOT reach other clients",
+			);
+		});
+	});
 });

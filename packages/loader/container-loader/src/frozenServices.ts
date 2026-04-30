@@ -30,24 +30,39 @@ import {
 import type { IConnectionStateChangeReason } from "./contracts.js";
 
 /**
- * Creation of a FrozenDocumentServiceFactory which wraps an existing
- * DocumentServiceFactory to provide a storage-only document service.
+ * Creates an {@link IDocumentServiceFactory} that produces a "frozen" document service: one whose
+ * delta stream never sends or receives ops, and whose storage service only supports
+ * {@link IDocumentStorageService.readBlob}. Used to load a container from pending local state
+ * without re-establishing a live connection.
  *
- * @param documentServiceFactory - The underlying DocumentServiceFactory to wrap.
- * @returns A FrozenDocumentServiceFactory
+ * @param factory - The underlying factory to wrap. Its storage backs blob reads; all other
+ * storage operations throw. May be omitted when blob fetches are not required.
+ * @param readOnly - When `true` (the default), the document service advertises the
+ * {@link IDocumentServicePolicies.storageOnly} policy, which causes the loader to surface the
+ * container as read-only (see `IContainer.readOnlyInfo`).
+ *
+ * When `false`, the container is loaded as writable so the runtime will accept DDS submissions.
+ * The first such submission triggers the connectionManager's read→write upgrade attempt. Since
+ * there is no real upstream and we will not fabricate a quorum join op, that upgrade hangs and
+ * the container settles into a `Disconnected` state. Local DDS state continues to update via
+ * optimistic apply, and submitted ops accumulate in the runtime's pending-state manager — which
+ * is exactly the state needed to capture pending local state. Use `false` when callers want to
+ * accrue and capture pending state without publishing it.
+ * @returns A factory that produces frozen document services.
  * @legacy @alpha
  */
 export function createFrozenDocumentServiceFactory(
 	factory?: IDocumentServiceFactory | Promise<IDocumentServiceFactory>,
+	readOnly: boolean = true,
 ): IDocumentServiceFactory {
-	// Sync path
 	return factory instanceof FrozenDocumentServiceFactory
 		? factory
-		: new FrozenDocumentServiceFactory(factory);
+		: new FrozenDocumentServiceFactory(readOnly, factory);
 }
 
 export class FrozenDocumentServiceFactory implements IDocumentServiceFactory {
 	constructor(
+		private readonly readOnly: boolean,
 		private readonly documentServiceFactory?:
 			| IDocumentServiceFactory
 			| Promise<IDocumentServiceFactory>,
@@ -60,6 +75,7 @@ export class FrozenDocumentServiceFactory implements IDocumentServiceFactory {
 		}
 		return new FrozenDocumentService(
 			resolvedUrl,
+			this.readOnly,
 			await factory?.createDocumentService(resolvedUrl),
 		);
 	}
@@ -72,16 +88,23 @@ class FrozenDocumentService
 	extends TypedEventEmitter<IDocumentServiceEvents>
 	implements IDocumentService
 {
+	private disposed = false;
+	private readonly pendingConnectRejecters = new Set<(reason: Error) => void>();
+
 	constructor(
 		public readonly resolvedUrl: IResolvedUrl,
+		private readonly readOnly: boolean,
 		private readonly documentService?: IDocumentService,
 	) {
 		super();
+		// When readOnly, advertise the storageOnly policy. The connectionManager short-circuits
+		// on it: it synthesizes a FrozenDeltaStream itself and never calls
+		// connectToDeltaStream, and the readOnlyInfo getter forces the container to read-only
+		// because the live connection is a FrozenDeltaStream.
+		this.policies = readOnly ? { storageOnly: true } : {};
 	}
 
-	public readonly policies: IDocumentServicePolicies = {
-		storageOnly: true,
-	};
+	public readonly policies: IDocumentServicePolicies;
 	async connectToStorage(): Promise<IDocumentStorageService> {
 		return new FrozenDocumentStorageService(await this.documentService?.connectToStorage());
 	}
@@ -89,9 +112,43 @@ class FrozenDocumentService
 		return frozenDocumentDeltaStorageService;
 	}
 	async connectToDeltaStream(client: IClient): Promise<IDocumentDeltaConnection> {
-		return new FrozenDeltaStream();
+		if (this.readOnly) {
+			// connectionManager short-circuits via policies.storageOnly before reaching here in
+			// the read-only path; this is a defensive fallback.
+			return new FrozenDeltaStream();
+		}
+		if (client.mode !== "write") {
+			// Initial / read-mode connect: hand the runtime a writable-surface FrozenDeltaStream
+			// (DocWrite scope + not matched by isFrozenDeltaStreamConnection, so readOnlyInfo
+			// reports `readonly: false` and the runtime will accept DDS submissions).
+			return new FrozenDeltaStream({ readOnly: false });
+		}
+		// Write upgrade: triggered the moment the runtime tries to send (sendMessages sees
+		// connectionMode === "read"). We can't honor it — there's no upstream and we won't
+		// fabricate a quorum join op. Hang the promise. The container settles into Disconnected
+		// (Connected → reconnecting → never resolves), DDS local apply continues to work, and
+		// submitted ops accumulate in the runtime's pendingStateManager (the outbox sees
+		// shouldSend() return false and skips actual send). That's the right representation
+		// for "load to accrue and capture pending state without publishing".
+		return new Promise<IDocumentDeltaConnection>((_, reject) => {
+			if (this.disposed) {
+				reject(new Error("FrozenDocumentService disposed"));
+				return;
+			}
+			this.pendingConnectRejecters.add(reject);
+		});
 	}
-	dispose(): void {}
+	dispose(): void {
+		this.disposed = true;
+		// Unblock any hung connect attempts so connectCore can exit cleanly. Without this,
+		// container.dispose() leaves the connectionManager's connect loop awaiting a promise
+		// that never resolves until garbage collection cleans up the closure.
+		const rejecters = [...this.pendingConnectRejecters];
+		this.pendingConnectRejecters.clear();
+		for (const reject of rejecters) {
+			reject(new Error("FrozenDocumentService disposed"));
+		}
+	}
 }
 
 const frozenDocumentStorageServiceHandler = (): never => {
@@ -129,59 +186,88 @@ const clientFrozenDeltaStream: IClient = {
 const clientIdFrozenDeltaStream: string = "storage-only client";
 
 /**
- * Implementation of IDocumentDeltaConnection that does not support submitting
- * or receiving ops. Used in storage-only mode and in frozen loads.
+ * Inert {@link IDocumentDeltaConnection} for frozen container loads. Has no server upstream:
+ * op and signal streams are empty, and `initialClients` contains only its own synthetic
+ * read-only client — which lets the connection state handler observe "self" in the audience
+ * and transition the container to Connected without waiting for a real join op or signal.
+ *
+ * Two variants, selected via `options.readOnly` (default `true`):
+ *
+ * - **Read-only (default)** — claims show only `DocRead`. Used by storage-only loads (where connectionManager synthesizes one directly via `policies.storageOnly`) and by the forbidden / out-of-storage fallback paths. {@link isFrozenDeltaStreamConnection} matches this variant and drives the read-only forcing in `ConnectionManager.readOnlyInfo`.
+ * - **Writable (`{ readOnly: false }`)** — claims include `DocWrite` so the container surfaces as writable; not matched by `isFrozenDeltaStreamConnection`, so `readOnlyInfo` reports `readonly: false`. Connection mode stays `"read"`: advertising `"write"` would imply quorum membership, which we cannot honor. The connectionManager's read→write upgrade attempt that follows the first runtime submit is intercepted in `FrozenDocumentService.connectToDeltaStream` and hung indefinitely; the container then settles into Disconnected.
+ *
+ * Both variants nack any incoming submit or submitSignal: this connection has no upstream and
+ * `ConnectionManager.sendMessages` short-circuits read-mode ops to reconnect rather than calling
+ * `submit`, so under normal flow neither method should ever fire. A nack reaching the
+ * connectionManager surfaces the misuse — and may close the container — which is the right
+ * defensive signal that something has bypassed the expected flow.
  */
 export class FrozenDeltaStream
 	extends TypedEventEmitter<IDocumentDeltaConnectionEvents>
 	implements IDocumentDeltaConnection, IDisposable
 {
-	clientId = clientIdFrozenDeltaStream;
-	// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-	claims = {
-		scopes: [ScopeType.DocRead],
-	} as ITokenClaims;
-	mode: ConnectionMode = "read";
-	existing: boolean = true;
-	maxMessageSize: number = 0;
-	version: string = "";
-	initialMessages: ISequencedDocumentMessage[] = [];
-	initialSignals: ISignalMessage[] = [];
-	initialClients: ISignalClient[] = [
+	public readonly clientId: string = clientIdFrozenDeltaStream;
+	public readonly claims: ITokenClaims;
+	public readonly mode: ConnectionMode = "read";
+	public readonly existing: boolean = true;
+	public readonly maxMessageSize: number = 0;
+	public readonly version: string = "";
+	public readonly initialMessages: ISequencedDocumentMessage[] = [];
+	public readonly initialSignals: ISignalMessage[] = [];
+	public readonly initialClients: ISignalClient[] = [
 		{ client: clientFrozenDeltaStream, clientId: clientIdFrozenDeltaStream },
 	];
-	serviceConfiguration: IClientConfiguration = {
+	public readonly serviceConfiguration: IClientConfiguration = {
 		maxMessageSize: 0,
 		blockSize: 0,
 	};
-	checkpointSequenceNumber?: number | undefined = undefined;
+	public readonly checkpointSequenceNumber?: number | undefined = undefined;
+
+	public readonly readOnly: boolean;
+	public readonly storageOnlyReason: string | undefined;
+	public readonly readonlyConnectionReason: IConnectionStateChangeReason | undefined;
+
 	/**
-	 * Connection which is not connected to socket.
-	 * @param storageOnlyReason - Reason on why the connection to delta stream is not allowed.
-	 * @param readonlyConnectionReason - reason/error if any which lead to using FrozenDeltaStream.
+	 * @param options - Configuration:
+	 *
+	 * - `readOnly`: when `true` (the default), claims include only `DocRead` and {@link isFrozenDeltaStreamConnection} matches this instance (forcing the container read-only). When `false`, claims include `DocWrite` and the container surfaces as writable.
+	 * - `storageOnlyReason`: surfaced via `IContainer.readOnlyInfo.storageOnlyReason` for the read-only variant.
+	 * - `readonlyConnectionReason`: error/reason that led to using this stream as a fallback (e.g. forbidden delta stream connection); surfaced via the same readOnlyInfo path.
 	 */
-	constructor(
-		public readonly storageOnlyReason?: string,
-		public readonly readonlyConnectionReason?: IConnectionStateChangeReason,
-	) {
+	constructor(options?: {
+		readOnly?: boolean;
+		storageOnlyReason?: string;
+		readonlyConnectionReason?: IConnectionStateChangeReason;
+	}) {
 		super();
+		this.readOnly = options?.readOnly ?? true;
+		this.storageOnlyReason = options?.storageOnlyReason;
+		this.readonlyConnectionReason = options?.readonlyConnectionReason;
+		// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+		this.claims = {
+			scopes: this.readOnly
+				? [ScopeType.DocRead]
+				: [ScopeType.DocRead, ScopeType.DocWrite],
+		} as ITokenClaims;
 	}
+
 	submit(messages: IDocumentMessage[]): void {
+		// Defensive nack: nothing should send on a frozen delta stream. If this fires, an
+		// invariant in connectionManager has changed and we want it to surface loudly.
 		this.emit(
 			"nack",
 			this.clientId,
-			messages.map((operation) => {
-				return {
-					operation,
-					content: { message: "Cannot submit with storage-only connection", code: 403 },
-				};
-			}),
+			messages.map((operation) => ({
+				operation,
+				content: { message: "Cannot submit on a frozen delta stream", code: 403 },
+			})),
 		);
 	}
+
 	submitSignal(message: unknown): void {
 		this.emit("nack", this.clientId, {
 			operation: message,
-			content: { message: "Cannot submit signal with storage-only connection", code: 403 },
+			content: { message: "Cannot submit signal on a frozen delta stream", code: 403 },
 		});
 	}
 
@@ -193,8 +279,14 @@ export class FrozenDeltaStream
 		this._disposed = true;
 	}
 }
+
+/**
+ * Recognizes the read-only variant of {@link FrozenDeltaStream}. Drives the storage-only forcing
+ * in `ConnectionManager.readOnlyInfo`: only the read-only variant should make the container
+ * surface as read-only.
+ */
 export function isFrozenDeltaStreamConnection(
 	connection: unknown,
 ): connection is FrozenDeltaStream {
-	return connection instanceof FrozenDeltaStream;
+	return connection instanceof FrozenDeltaStream && connection.readOnly;
 }

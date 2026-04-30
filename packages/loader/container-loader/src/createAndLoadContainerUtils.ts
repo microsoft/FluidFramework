@@ -229,6 +229,21 @@ export interface ILoadFrozenContainerFromPendingStateProps
 	 * Pending local state to be applied to the container.
 	 */
 	readonly pendingLocalState: string;
+
+	/**
+	 * Controls whether the frozen container is surfaced as read-only.
+	 *
+	 * Defaults to `true`. When `true`, the container reports `readOnlyInfo.readonly === true`
+	 * with `storageOnly === true`, matching the historical behavior of frozen loads.
+	 *
+	 * When `false`, the container loads as writable so the runtime will accept DDS submissions.
+	 * The first submission triggers an internal read→write upgrade attempt that cannot succeed
+	 * (no upstream, no quorum join op), so the container settles into a `Disconnected` state.
+	 * Local DDS state continues to update via optimistic apply, and submitted ops accumulate in
+	 * the runtime's pending-state manager. Use this when callers want to accrue and capture
+	 * pending state without publishing it.
+	 */
+	readonly readOnly?: boolean;
 }
 
 /**
@@ -241,7 +256,10 @@ export async function loadFrozenContainerFromPendingState(
 ): Promise<IContainer> {
 	return loadExistingContainer({
 		...props,
-		documentServiceFactory: createFrozenDocumentServiceFactory(props.documentServiceFactory),
+		documentServiceFactory: createFrozenDocumentServiceFactory(
+			props.documentServiceFactory,
+			props.readOnly,
+		),
 	});
 }
 

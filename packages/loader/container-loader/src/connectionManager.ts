@@ -582,9 +582,9 @@ export class ConnectionManager implements IConnectionManager {
 					LogLevel.verbose,
 				);
 				if (isDeltaStreamConnectionForbiddenError(origError)) {
-					connection = new FrozenDeltaStream(origError.storageOnlyReason, {
-						text: origError.message,
-						error: origError,
+					connection = new FrozenDeltaStream({
+						storageOnlyReason: origError.storageOnlyReason,
+						readonlyConnectionReason: { text: origError.message, error: origError },
 					});
 					requestedMode = "read";
 					break;
@@ -594,9 +594,8 @@ export class ConnectionManager implements IConnectionManager {
 				) {
 					// If we get out of storage error from calling joinsession, then use the NoDeltaStream object so
 					// that user can at least load the container.
-					connection = new FrozenDeltaStream(undefined, {
-						text: origError.message,
-						error: origError,
+					connection = new FrozenDeltaStream({
+						readonlyConnectionReason: { text: origError.message, error: origError },
 					});
 					requestedMode = "read";
 					break;
