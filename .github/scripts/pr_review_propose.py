@@ -118,7 +118,12 @@ def cmd_build_comment(args: argparse.Namespace) -> None:
         lines.append(f"- [{check}] **{r.label}** — {r.description}")
     lines += [
         "",
-        "Toggle the reviewer checkboxes above to adjust, then tick the box below to start:",
+        "**How this works**",
+        "",
+        "- Adjust the reviewer set by ticking/unticking boxes above. Reviewer toggles alone don't trigger anything.",
+        f"- Tick **{START_LABEL}** below to dispatch the review fleet.",
+        f"- After review finishes, tick **{START_LABEL}** again to request another run — it auto-resets after each dispatch.",
+        "- This comment updates as new commits land; your reviewer selections are preserved.",
         "",
         f"- [ ] **{START_LABEL}**",
     ]
