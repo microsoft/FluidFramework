@@ -9,6 +9,7 @@ import { bufferToString, stringToBuffer } from "@fluid-internal/client-utils";
 import {
 	asLegacyAlpha,
 	createDetachedContainer,
+	createFrozenDocumentServiceFactory,
 	loadFrozenContainerFromPendingState,
 	type ContainerAlpha,
 	type ILoaderProps,
@@ -384,8 +385,10 @@ describe("loadFrozenContainerFromPendingState", () => {
 				"Expected frozen container entrypoint to be a valid TestFluidObject",
 			);
 
-			// Submitting ops would nack and close the container with the read-only variant; the
-			// writable variant should silently drop them and stay open.
+			// Read-only variant short-circuits via storageOnly so submissions never reach the
+			// runtime. Writable variant accepts them: the connectionManager attempts a read→write
+			// upgrade on the first submit, which FrozenDocumentService hangs, so submitted ops
+			// stay in the runtime's pendingStateManager and never reach the wire.
 			for (let i = 0; i < 5; i++) {
 				frozenEntryPoint.ITestFluidObject.root.set(`writableOnly-${i}`, i);
 			}
@@ -447,6 +450,145 @@ describe("loadFrozenContainerFromPendingState", () => {
 				ITestFluidObject.root.get("ghost"),
 				undefined,
 				"Expected writes from a writable frozen container to NOT reach other clients",
+			);
+		});
+
+		it("submitting a signal does not close the container", async () => {
+			const { container, ITestFluidObject, urlResolver, codeLoader, documentServiceFactory } =
+				await initialize();
+			await container.attach(urlResolver.createCreateNewRequest("test"));
+			ITestFluidObject.root.set("seed", "value");
+			const url = await container.getAbsoluteUrl("");
+			assert(url !== undefined, "Expected container to provide a valid absolute URL");
+			const pendingLocalState = await container.getPendingLocalState();
+
+			const frozenContainer = await loadFrozenContainerFromPendingState({
+				codeLoader,
+				documentServiceFactory,
+				urlResolver,
+				request: { url },
+				pendingLocalState,
+				readOnly: false,
+			});
+			const frozenEntryPoint: FluidObject<TestFluidObject> =
+				await frozenContainer.getEntryPoint();
+			assert(
+				frozenEntryPoint.ITestFluidObject !== undefined,
+				"Expected frozen container entrypoint to be a valid TestFluidObject",
+			);
+
+			frozenEntryPoint.ITestFluidObject.runtime.submitSignal("test-signal", { ping: 1 });
+
+			assert.strictEqual(
+				frozenContainer.closed,
+				false,
+				"Expected writable frozen container to remain open after submitting a signal",
+			);
+			assert.strictEqual(
+				frozenContainer.disposed,
+				false,
+				"Expected writable frozen container to not be disposed after submitting a signal",
+			);
+		});
+
+		it("captures local writes in getPendingLocalState() and round-trips through a second frozen load", async () => {
+			const { container, ITestFluidObject, urlResolver, codeLoader, documentServiceFactory } =
+				await initialize();
+			await container.attach(urlResolver.createCreateNewRequest("test"));
+			ITestFluidObject.root.set("seed", "value");
+			const url = await container.getAbsoluteUrl("");
+			assert(url !== undefined, "Expected container to provide a valid absolute URL");
+			if (container.isDirty) {
+				await timeoutPromise((resolve) => container.once("saved", () => resolve()));
+			}
+			const initialPending = await container.getPendingLocalState();
+
+			const frozenContainer = asLegacyAlpha(
+				await loadFrozenContainerFromPendingState({
+					codeLoader,
+					documentServiceFactory,
+					urlResolver,
+					request: { url },
+					pendingLocalState: initialPending,
+					readOnly: false,
+				}),
+			);
+			const frozenEntryPoint: FluidObject<TestFluidObject> =
+				await frozenContainer.getEntryPoint();
+			assert(
+				frozenEntryPoint.ITestFluidObject !== undefined,
+				"Expected frozen container entrypoint to be a valid TestFluidObject",
+			);
+
+			for (let i = 0; i < 5; i++) {
+				frozenEntryPoint.ITestFluidObject.root.set(`pending-${i}`, i);
+			}
+
+			// Capture pending state from the writable-frozen container — the load-bearing
+			// invariant: edits made post-load must round-trip through getPendingLocalState().
+			const layeredPending = await frozenContainer.getPendingLocalState();
+			assert.notStrictEqual(
+				layeredPending,
+				initialPending,
+				"Expected getPendingLocalState() to capture additional ops from the writable frozen container",
+			);
+
+			// Load a second writable-frozen container from the layered pending state and verify
+			// the layered edits are visible.
+			const secondFrozen = await loadFrozenContainerFromPendingState({
+				codeLoader,
+				documentServiceFactory,
+				urlResolver,
+				request: { url },
+				pendingLocalState: layeredPending,
+				readOnly: false,
+			});
+			const secondEntryPoint: FluidObject<TestFluidObject> =
+				await secondFrozen.getEntryPoint();
+			assert(
+				secondEntryPoint.ITestFluidObject !== undefined,
+				"Expected second frozen entrypoint to be a valid TestFluidObject",
+			);
+			for (let i = 0; i < 5; i++) {
+				assert.strictEqual(
+					secondEntryPoint.ITestFluidObject.root.get(`pending-${i}`),
+					i,
+					`Expected pending-${i} from layered pending state to be visible in second frozen load`,
+				);
+			}
+			assert.strictEqual(
+				secondEntryPoint.ITestFluidObject.root.get("seed"),
+				"value",
+				"Expected seed from original snapshot to remain visible in second frozen load",
+			);
+		});
+
+		it("honors readOnly: false when wrapping an already-frozen factory with readOnly: true", async () => {
+			const { container, ITestFluidObject, urlResolver, codeLoader, documentServiceFactory } =
+				await initialize();
+			await container.attach(urlResolver.createCreateNewRequest("test"));
+			ITestFluidObject.root.set("seed", "value");
+			const url = await container.getAbsoluteUrl("");
+			assert(url !== undefined, "Expected container to provide a valid absolute URL");
+			const pendingLocalState = await container.getPendingLocalState();
+
+			// Pre-wrap with readOnly: true (the default), then ask loadFrozenContainerFromPendingState
+			// for readOnly: false. The most recent intent should win — without the rewrap-on-mismatch
+			// logic this would silently surface as read-only.
+			const preWrapped = createFrozenDocumentServiceFactory(documentServiceFactory, true);
+			const frozenContainer = await loadFrozenContainerFromPendingState({
+				codeLoader,
+				documentServiceFactory: preWrapped,
+				urlResolver,
+				request: { url },
+				pendingLocalState,
+				readOnly: false,
+			});
+
+			assert.strictEqual(
+				frozenContainer.readOnlyInfo.readonly,
+				false,
+				"Expected readOnly: false to win over an already-wrapped readOnly: true factory",
 			);
 		});
 	});

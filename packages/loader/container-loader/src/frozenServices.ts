@@ -55,24 +55,25 @@ export function createFrozenDocumentServiceFactory(
 	factory?: IDocumentServiceFactory | Promise<IDocumentServiceFactory>,
 	readOnly: boolean = true,
 ): IDocumentServiceFactory {
-	return factory instanceof FrozenDocumentServiceFactory
-		? factory
-		: new FrozenDocumentServiceFactory(readOnly, factory);
+	if (factory instanceof FrozenDocumentServiceFactory) {
+		// Already wrapped. Reuse if readOnly matches; otherwise unwrap and rewrap so the caller's
+		// most recent readOnly intent wins (silently honoring caller intent rather than dropping
+		// the new argument).
+		return factory.readOnly === readOnly
+			? factory
+			: new FrozenDocumentServiceFactory(readOnly, factory.inner);
+	}
+	return new FrozenDocumentServiceFactory(readOnly, factory);
 }
 
 export class FrozenDocumentServiceFactory implements IDocumentServiceFactory {
 	constructor(
-		private readonly readOnly: boolean,
-		private readonly documentServiceFactory?:
-			| IDocumentServiceFactory
-			| Promise<IDocumentServiceFactory>,
+		public readonly readOnly: boolean,
+		public readonly inner?: IDocumentServiceFactory | Promise<IDocumentServiceFactory>,
 	) {}
 
 	async createDocumentService(resolvedUrl: IResolvedUrl): Promise<IDocumentService> {
-		let factory = this.documentServiceFactory;
-		if (isPromiseLike(factory)) {
-			factory = await this.documentServiceFactory;
-		}
+		const factory = isPromiseLike(this.inner) ? await this.inner : this.inner;
 		return new FrozenDocumentService(
 			resolvedUrl,
 			this.readOnly,
@@ -196,11 +197,16 @@ const clientIdFrozenDeltaStream: string = "storage-only client";
  * - **Read-only (default)** — claims show only `DocRead`. Used by storage-only loads (where connectionManager synthesizes one directly via `policies.storageOnly`) and by the forbidden / out-of-storage fallback paths. {@link isFrozenDeltaStreamConnection} matches this variant and drives the read-only forcing in `ConnectionManager.readOnlyInfo`.
  * - **Writable (`{ readOnly: false }`)** — claims include `DocWrite` so the container surfaces as writable; not matched by `isFrozenDeltaStreamConnection`, so `readOnlyInfo` reports `readonly: false`. Connection mode stays `"read"`: advertising `"write"` would imply quorum membership, which we cannot honor. The connectionManager's read→write upgrade attempt that follows the first runtime submit is intercepted in `FrozenDocumentService.connectToDeltaStream` and hung indefinitely; the container then settles into Disconnected.
  *
- * Both variants nack any incoming submit or submitSignal: this connection has no upstream and
+ * Both variants nack any incoming `submit`: this connection has no upstream and
  * `ConnectionManager.sendMessages` short-circuits read-mode ops to reconnect rather than calling
- * `submit`, so under normal flow neither method should ever fire. A nack reaching the
- * connectionManager surfaces the misuse — and may close the container — which is the right
- * defensive signal that something has bypassed the expected flow.
+ * `submit`, so under normal flow it should never fire. A nack reaching the connectionManager
+ * surfaces the misuse — and may close the container — which is the right defensive signal that
+ * something has bypassed the expected flow.
+ *
+ * `submitSignal` is a silent no-op for both variants. Signals are ephemeral and best-effort —
+ * runtime/presence subsystems may submit them at any point in the writable-frozen lifetime, and
+ * dropping them is the correct behavior here (we have no upstream). Closing the container or
+ * triggering a reconnect on a stray signal would be strictly worse than dropping it.
  */
 export class FrozenDeltaStream
 	extends TypedEventEmitter<IDocumentDeltaConnectionEvents>
@@ -262,11 +268,8 @@ export class FrozenDeltaStream
 		);
 	}
 
-	submitSignal(message: unknown): void {
-		this.emit("nack", this.clientId, {
-			operation: message,
-			content: { message: "Cannot submit signal on a frozen delta stream", code: 403 },
-		});
+	submitSignal(_message: unknown): void {
+		// Intentional no-op. See class JSDoc for rationale.
 	}
 
 	private _disposed = false;
