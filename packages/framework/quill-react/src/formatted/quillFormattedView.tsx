@@ -433,9 +433,8 @@ const FormattedTextEditorView = withMemoizedTreeObservations(
 				isUpdating.current = true;
 
 				// Wrap all tree mutations in a transaction so they undo/redo as one atomic unit.
-				// If the node is not part of a branch (e.g. unhydrated), apply edits directly.
 				const context = TreeAlpha.context(root);
-				const applyDelta = (): void => {
+				context.runTransaction(() => {
 					// Helper to count Unicode codepoints in a string
 					const codepointCount = (s: string): number => [...s].length;
 
@@ -541,9 +540,7 @@ const FormattedTextEditorView = withMemoizedTreeObservations(
 							cpPos += codepointCount(op.insert);
 						}
 					}
-				};
-
-				context.runTransaction(applyDelta);
+				});
 				isUpdating.current = false;
 			};
 
