@@ -30,15 +30,15 @@ import {
 import type { IConnectionStateChangeReason } from "./contracts.js";
 
 /**
- * Creates an {@link IDocumentServiceFactory} that produces a "frozen" document service: one whose
+ * Creates an `IDocumentServiceFactory` that produces a "frozen" document service: one whose
  * delta stream never sends or receives ops, and whose storage service only supports
- * {@link IDocumentStorageService.readBlob}. Used to load a container from pending local state
+ * `IDocumentStorageService.readBlob`. Used to load a container from pending local state
  * without re-establishing a live connection.
  *
  * @param factory - The underlying factory to wrap. Its storage backs blob reads; all other
  * storage operations throw. May be omitted when blob fetches are not required.
  * @param readOnly - When `true` (the default), the document service advertises the
- * {@link IDocumentServicePolicies.storageOnly} policy, which causes the loader to surface the
+ * `IDocumentServicePolicies.storageOnly` policy, which causes the loader to surface the
  * container as read-only (see `IContainer.readOnlyInfo`).
  *
  * When `false`, the container is loaded as writable so the runtime will accept DDS submissions.
@@ -186,7 +186,7 @@ const clientFrozenDeltaStream: IClient = {
 const clientIdFrozenDeltaStream: string = "storage-only client";
 
 /**
- * Inert {@link IDocumentDeltaConnection} for frozen container loads. Has no server upstream:
+ * Inert `IDocumentDeltaConnection` for frozen container loads. Has no server upstream:
  * op and signal streams are empty, and `initialClients` contains only its own synthetic
  * read-only client — which lets the connection state handler observe "self" in the audience
  * and transition the container to Connected without waiting for a real join op or signal.
@@ -245,9 +245,7 @@ export class FrozenDeltaStream
 		this.readonlyConnectionReason = options?.readonlyConnectionReason;
 		// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
 		this.claims = {
-			scopes: this.readOnly
-				? [ScopeType.DocRead]
-				: [ScopeType.DocRead, ScopeType.DocWrite],
+			scopes: this.readOnly ? [ScopeType.DocRead] : [ScopeType.DocRead, ScopeType.DocWrite],
 		} as ITokenClaims;
 	}
 
