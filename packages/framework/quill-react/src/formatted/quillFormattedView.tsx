@@ -28,7 +28,7 @@ const Delta = DeltaPackage.default;
 export interface FormattedMainViewProps {
 	/** The formatted text tree to edit. */
 	readonly root: PropTreeNode<FormattedTextAsTree.Tree>;
-	/** Optional undo/redo manager. When provided, undo/redo toolbar buttons are rendered. */
+	/** Optional undo/redo manager used to enable undo/redo actions for the toolbar buttons. */
 	readonly undoRedo?: UndoRedo;
 }
 
