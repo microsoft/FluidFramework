@@ -5,10 +5,7 @@
 
 import { strict as assert } from "node:assert";
 
-import {
-	assertApproximatelyConstant,
-	assertLinear,
-} from "./opBenchmarkUtilities.js";
+import { assertApproximatelyConstant, assertLinear } from "./opBenchmarkUtilities.js";
 
 describe("opBenchmarkUtilities", () => {
 	describe("assertLinear", () => {
@@ -16,14 +13,23 @@ describe("opBenchmarkUtilities", () => {
 			assert.throws(() => assertLinear({ points: [] }));
 			assert.throws(() => assertLinear({ points: [{ x: 0, y: 0 }] }));
 			assert.throws(() =>
-				assertLinear({ points: [{ x: 0, y: 0 }, { x: 1, y: 1 }] }),
+				assertLinear({
+					points: [
+						{ x: 0, y: 0 },
+						{ x: 1, y: 1 },
+					],
+				}),
 			);
 		});
 
 		it("throws when all points share the same x-value", () => {
 			assert.throws(() =>
 				assertLinear({
-					points: [{ x: 5, y: 10 }, { x: 5, y: 10 }, { x: 5, y: 10 }],
+					points: [
+						{ x: 5, y: 10 },
+						{ x: 5, y: 10 },
+						{ x: 5, y: 10 },
+					],
 				}),
 			);
 		});
@@ -31,7 +37,11 @@ describe("opBenchmarkUtilities", () => {
 		it("throws when two points share an x-value but have different y-values", () => {
 			assert.throws(() =>
 				assertLinear({
-					points: [{ x: 1, y: 5 }, { x: 2, y: 7 }, { x: 1, y: 6 }],
+					points: [
+						{ x: 1, y: 5 },
+						{ x: 2, y: 7 },
+						{ x: 1, y: 6 },
+					],
 				}),
 			);
 		});
