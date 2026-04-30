@@ -57,7 +57,7 @@ describe("TextDomain benchmarks", () => {
 			type _check = ValidateRecursiveSchema<typeof WrapperMap>;
 		}
 
-		const viewConfig = new TreeViewConfiguration({ schema: WrapperMap });
+		const viewConfiguration = new TreeViewConfiguration({ schema: WrapperMap });
 
 		function getPropertyKey(keyLength: number): string {
 			return makeTestString(keyLength);
@@ -86,9 +86,9 @@ describe("TextDomain benchmarks", () => {
 		/**
 		 * Depths at which to place the text node within the wrapper tree.
 		 * @remarks
-		 * A deeper text node results in a longer path in the generated op, which we expect to increase op size.
+		 * A deeper text node results in a longer path in the generated operation, which we expect to increase op size.
 		 */
-		const depthConfigs = [
+		const depthConfigurations = [
 			{ depth: 1, benchmarkType: BenchmarkType.Measurement, runInCorrectnessMode: true },
 			{ depth: 5, benchmarkType: BenchmarkType.Perspective, runInCorrectnessMode: true },
 			{ depth: 25, benchmarkType: BenchmarkType.Measurement, runInCorrectnessMode: true },
@@ -98,7 +98,7 @@ describe("TextDomain benchmarks", () => {
 		/**
 		 * Numbers of characters to insert or remove in each benchmark.
 		 */
-		const characterCountConfigs = [
+		const characterCountConfigurations = [
 			{
 				characterCount: 1,
 				benchmarkType: BenchmarkType.Measurement,
@@ -124,7 +124,7 @@ describe("TextDomain benchmarks", () => {
 		/**
 		 * Key length variants to test. Each entry specifies the key string to use at runtime.
 		 */
-		const keyConfigs = [
+		const keyConfigurations = [
 			{
 				keyLength: 1,
 				benchmarkType: BenchmarkType.Measurement,
@@ -152,14 +152,14 @@ describe("TextDomain benchmarks", () => {
 		const defaultCharacterCount = 1;
 		const defaultKeyLength = 1;
 
-		const filteredDepthConfigs = depthConfigs.filter(
-			(config) => isInPerformanceTestingMode || config.runInCorrectnessMode,
+		const filteredDepthConfigurations = depthConfigurations.filter(
+			(configuration) => isInPerformanceTestingMode || configuration.runInCorrectnessMode,
 		);
-		const filteredCharacterCountConfigs = characterCountConfigs.filter(
-			(config) => isInPerformanceTestingMode || config.runInCorrectnessMode,
+		const filteredCharacterCountConfigurations = characterCountConfigurations.filter(
+			(configuration) => isInPerformanceTestingMode || configuration.runInCorrectnessMode,
 		);
-		const filteredKeyConfigs = keyConfigs.filter(
-			(config) => isInPerformanceTestingMode || config.runInCorrectnessMode,
+		const filteredKeyConfigurations = keyConfigurations.filter(
+			(configuration) => isInPerformanceTestingMode || configuration.runInCorrectnessMode,
 		);
 
 		describe("Plain text", () => {
@@ -172,21 +172,21 @@ describe("TextDomain benchmarks", () => {
 						run: async () => {
 							const points: { x: number; y: number }[] = [];
 
-							for (const { characterCount } of filteredCharacterCountConfigs) {
-								const localOps: ISequencedDocumentMessage[] = [];
+							for (const { characterCount } of filteredCharacterCountConfigurations) {
+								const localOperations: ISequencedDocumentMessage[] = [];
 								const key = getPropertyKey(defaultKeyLength);
 								const tree = createConnectedTree();
-								const view = tree.viewWith(viewConfig);
+								const view = tree.viewWith(viewConfiguration);
 								view.initialize(makeTree(defaultTreeDepth, key, ""));
-								registerOpListener(tree, localOps);
+								registerOpListener(tree, localOperations);
 
 								const textNode = getLeaf(view.root, key);
 								textNode.insertAt(0, makeTestString(characterCount));
 								assert.equal(textNode.characterCount(), characterCount);
 
-								const { "Total Op Size (Bytes)": totalOpSize } =
-									getOperationsStats(localOps);
-								points.push({ x: characterCount, y: totalOpSize });
+								const { "Total Op Size (Bytes)": totalOperationSize } =
+									getOperationsStats(localOperations);
+								points.push({ x: characterCount, y: totalOperationSize });
 							}
 
 							const { slope, intercept } = assertLinear({ points });
@@ -217,21 +217,21 @@ describe("TextDomain benchmarks", () => {
 						run: async () => {
 							const points: { x: number; y: number }[] = [];
 
-							for (const { depth } of filteredDepthConfigs) {
-								const localOps: ISequencedDocumentMessage[] = [];
+							for (const { depth } of filteredDepthConfigurations) {
+								const localOperations: ISequencedDocumentMessage[] = [];
 								const key = getPropertyKey(defaultKeyLength);
 								const tree = createConnectedTree();
-								const view = tree.viewWith(viewConfig);
+								const view = tree.viewWith(viewConfiguration);
 								view.initialize(makeTree(depth, key, ""));
-								registerOpListener(tree, localOps);
+								registerOpListener(tree, localOperations);
 
 								const textNode = getLeaf(view.root, key);
 								textNode.insertAt(0, makeTestString(defaultCharacterCount));
 								assert.equal(textNode.characterCount(), defaultCharacterCount);
 
-								const { "Total Op Size (Bytes)": totalOpSize } =
-									getOperationsStats(localOps);
-								points.push({ x: depth, y: totalOpSize });
+								const { "Total Op Size (Bytes)": totalOperationSize } =
+									getOperationsStats(localOperations);
+								points.push({ x: depth, y: totalOperationSize });
 							}
 
 							const { slope, intercept } = assertLinear({ points });
@@ -262,21 +262,21 @@ describe("TextDomain benchmarks", () => {
 						run: async () => {
 							const points: { x: number; y: number }[] = [];
 
-							for (const { keyLength } of filteredKeyConfigs) {
-								const localOps: ISequencedDocumentMessage[] = [];
+							for (const { keyLength } of filteredKeyConfigurations) {
+								const localOperations: ISequencedDocumentMessage[] = [];
 								const key = getPropertyKey(keyLength);
 								const tree = createConnectedTree();
-								const view = tree.viewWith(viewConfig);
+								const view = tree.viewWith(viewConfiguration);
 								view.initialize(makeTree(defaultTreeDepth, key, ""));
-								registerOpListener(tree, localOps);
+								registerOpListener(tree, localOperations);
 
 								const textNode = getLeaf(view.root, key);
 								textNode.insertAt(0, makeTestString(defaultCharacterCount));
 								assert.equal(textNode.characterCount(), defaultCharacterCount);
 
-								const { "Total Op Size (Bytes)": totalOpSize } =
-									getOperationsStats(localOps);
-								points.push({ x: keyLength, y: totalOpSize });
+								const { "Total Op Size (Bytes)": totalOperationSize } =
+									getOperationsStats(localOperations);
+								points.push({ x: keyLength, y: totalOperationSize });
 							}
 
 							const { slope, intercept } = assertLinear({ points });
@@ -307,31 +307,32 @@ describe("TextDomain benchmarks", () => {
 						type: BenchmarkType.Measurement,
 						title: `Op size by removed character count`,
 						run: async () => {
-							const opSizes: number[] = [];
+							const operationSizes: number[] = [];
 
-							for (const { characterCount } of filteredCharacterCountConfigs) {
-								const localOps: ISequencedDocumentMessage[] = [];
+							for (const { characterCount } of filteredCharacterCountConfigurations) {
+								const localOperations: ISequencedDocumentMessage[] = [];
 								const key = getPropertyKey(defaultKeyLength);
 								const tree = createConnectedTree();
-								const view = tree.viewWith(viewConfig);
+								const view = tree.viewWith(viewConfiguration);
 								view.initialize(
 									makeTree(defaultTreeDepth, key, makeTestString(characterCount)),
 								);
-								registerOpListener(tree, localOps);
+								registerOpListener(tree, localOperations);
 
 								const textNode = getLeaf(view.root, key);
 								textNode.removeRange(0, characterCount);
 								assert.equal(textNode.characterCount(), 0);
 
-								const { "Total Op Size (Bytes)": totalOpSize } =
-									getOperationsStats(localOps);
-								opSizes.push(totalOpSize);
+								const { "Total Op Size (Bytes)": totalOperationSize } =
+									getOperationsStats(localOperations);
+								operationSizes.push(totalOperationSize);
 							}
 
 							// Remove ops encode a (start, count) range, not the removed characters,
 							// so op size should be essentially independent of character count.
-							assertApproximatelyConstant({ sizes: opSizes, maxDeltaBytes: 20 });
-							const avgOpSize = opSizes.reduce((a, b) => a + b, 0) / opSizes.length;
+							assertApproximatelyConstant({ sizes: operationSizes, maxDeltaBytes: 20 });
+							const avgOpSize =
+								operationSizes.reduce((a, b) => a + b, 0) / operationSizes.length;
 							return [
 								{
 									name: "fixed remove op size (measured by variable character count)",
@@ -353,23 +354,21 @@ describe("TextDomain benchmarks", () => {
 						run: async () => {
 							const points: { x: number; y: number }[] = [];
 
-							for (const { depth } of filteredDepthConfigs) {
-								const localOps: ISequencedDocumentMessage[] = [];
+							for (const { depth } of filteredDepthConfigurations) {
+								const localOperations: ISequencedDocumentMessage[] = [];
 								const key = getPropertyKey(defaultKeyLength);
 								const tree = createConnectedTree();
-								const view = tree.viewWith(viewConfig);
-								view.initialize(
-									makeTree(depth, key, makeTestString(defaultCharacterCount)),
-								);
-								registerOpListener(tree, localOps);
+								const view = tree.viewWith(viewConfiguration);
+								view.initialize(makeTree(depth, key, makeTestString(defaultCharacterCount)));
+								registerOpListener(tree, localOperations);
 
 								const textNode = getLeaf(view.root, key);
 								textNode.removeRange(0, defaultCharacterCount);
 								assert.equal(textNode.characterCount(), 0);
 
-								const { "Total Op Size (Bytes)": totalOpSize } =
-									getOperationsStats(localOps);
-								points.push({ x: depth, y: totalOpSize });
+								const { "Total Op Size (Bytes)": totalOperationSize } =
+									getOperationsStats(localOperations);
+								points.push({ x: depth, y: totalOperationSize });
 							}
 
 							const { slope, intercept } = assertLinear({ points });
@@ -400,23 +399,23 @@ describe("TextDomain benchmarks", () => {
 						run: async () => {
 							const points: { x: number; y: number }[] = [];
 
-							for (const { keyLength } of filteredKeyConfigs) {
-								const localOps: ISequencedDocumentMessage[] = [];
+							for (const { keyLength } of filteredKeyConfigurations) {
+								const localOperations: ISequencedDocumentMessage[] = [];
 								const key = getPropertyKey(keyLength);
 								const tree = createConnectedTree();
-								const view = tree.viewWith(viewConfig);
+								const view = tree.viewWith(viewConfiguration);
 								view.initialize(
 									makeTree(defaultTreeDepth, key, makeTestString(defaultCharacterCount)),
 								);
-								registerOpListener(tree, localOps);
+								registerOpListener(tree, localOperations);
 
 								const textNode = getLeaf(view.root, key);
 								textNode.removeRange(0, defaultCharacterCount);
 								assert.equal(textNode.characterCount(), 0);
 
-								const { "Total Op Size (Bytes)": totalOpSize } =
-									getOperationsStats(localOps);
-								points.push({ x: keyLength, y: totalOpSize });
+								const { "Total Op Size (Bytes)": totalOperationSize } =
+									getOperationsStats(localOperations);
+								points.push({ x: keyLength, y: totalOperationSize });
 							}
 
 							const { slope, intercept } = assertLinear({ points });
@@ -445,7 +444,7 @@ describe("TextDomain benchmarks", () => {
 	});
 
 	describe("TextDomain encoding benchmarks", () => {
-		const testConfigs = [
+		const testConfigurations = [
 			{
 				stringLength: 1,
 				benchmarkType: BenchmarkType.Measurement,
@@ -468,12 +467,12 @@ describe("TextDomain benchmarks", () => {
 			},
 		] as const;
 
-		// Filter configs to those that should be run in the current mode (performance or correctness).
-		const filteredConfigs = testConfigs.filter(
-			(config) => isInPerformanceTestingMode || config.runInCorrectnessMode,
+		// Filter configurations to those that should be run in the current mode (performance or correctness).
+		const filteredConfigurations = testConfigurations.filter(
+			(configuration) => isInPerformanceTestingMode || configuration.runInCorrectnessMode,
 		);
 
-		const viewConfig = new TreeViewConfiguration({ schema: TextAsTree.Tree });
+		const viewConfiguration = new TreeViewConfiguration({ schema: TextAsTree.Tree });
 
 		describe("TextAsTree.Tree node encoded size", () => {
 			benchmarkIt({
@@ -483,9 +482,9 @@ describe("TextDomain benchmarks", () => {
 				run: async () => {
 					const points: { x: number; y: number }[] = [];
 
-					for (const { stringLength } of filteredConfigs) {
+					for (const { stringLength } of filteredConfigurations) {
 						const independentTree = createIndependentTreeAlpha({});
-						const view = independentTree.viewWith(viewConfig);
+						const view = independentTree.viewWith(viewConfiguration);
 						view.initialize(TextAsTree.Tree.fromString(makeTestString(stringLength)));
 
 						const encoded = TreeAlpha.exportVerbose(view.root);
