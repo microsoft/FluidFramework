@@ -126,9 +126,7 @@ function resolveVersionForMajorDelta(pkgVer: string, delta: number): string | un
 
 /**
  * Builds the `package.json` content for a per-version workspace directory.
- * Includes only the Fluid packages that existed at `version` (filtered by `minVersion`),
- * plus `@fluid-experimental/sequence-deprecated` for versions where SparseMatrix was split out.
- * Field order matches `sort-package-json` to satisfy the repo's package-metadata policy.
+ * Includes only the Fluid packages that existed at `version` (filtered by `minVersion`).
  */
 function buildVersionPackageJson(versionDir: string, version: string): string {
 	const deps: Record<string, string> = {};
@@ -167,7 +165,7 @@ function buildVersionPackageJson(versionDir: string, version: string): string {
 
 /**
  * Creates or updates `<workspaceDir>/<version>/package.json`. Skips the write if the
- * content is already up to date. Returns `true` if the file was created or changed.
+ * content is already up to date. Returns `true` iff any changes were made.
  */
 function syncVersionDirectory(workspaceDir: string, version: string): boolean {
 	const versionDir = path.join(workspaceDir, version);
@@ -188,7 +186,7 @@ function syncVersionDirectory(workspaceDir: string, version: string): boolean {
 
 /**
  * Deletes any subdirectory of `workspaceDir` whose name is not in `keepVersions`
- * (excluding `node_modules`). Returns `true` if at least one directory was removed.
+ * (excluding `node_modules`). Returns `true` iff at least one directory was removed.
  */
 function removeStaleVersionDirs(workspaceDir: string, keepVersions: Set<string>): boolean {
 	if (!existsSync(workspaceDir)) return false;
@@ -328,13 +326,13 @@ async function main(): Promise<void> {
 		if (changed) anyChanged = true;
 	}
 
-	if (!anyChanged) {
-		console.log("\nNo package.json changes — versions are up to date.");
-	} else {
+	if (anyChanged) {
 		// Regenerate lockfile
 		pnpmInstallWorkspace(fullDir);
 
 		console.log("\nDone. Commit all changes in compat-workspaces/ to the repository.");
+	} else {
+		console.log("\nNo package.json changes — versions are up to date.");
 	}
 }
 
