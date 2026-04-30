@@ -24,7 +24,7 @@
 
 			// compat-workspaces — machine-generated, not subject to formatting
 			"!**/test-version-utils/compat-workspaces/**/package.json",
-			"!**/test-version-utils/compat-workspaces/versions.cjs",
+			"!**/test-version-utils/compat-workspaces/generated-versions.mjs",
 
 			// test collateral
 			"!**/_package.json",

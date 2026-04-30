@@ -116,4 +116,4 @@ tools/markdown-magic/test/include.md
 
 # Auto-generated compat workspace package.json files
 packages/test/test-version-utils/compat-workspaces/**
-packages/test/test-version-utils/compat-workspaces/versions.cjs
+packages/test/test-version-utils/compat-workspaces/generated-versions.mjs
