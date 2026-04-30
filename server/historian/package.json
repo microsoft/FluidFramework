@@ -83,7 +83,7 @@
 			"serialize-javascript: overridden to ^7.0.4 to resolve GHSA-5c6j-r48x-rmvq. No 6.x fix exists; 7.x is API-compatible (only drops Node <20 support).",
 			"express: overridden to ^4.22.1 to resolve a known vulnerability in express 4.21.2.",
 			"picomatch: overridden to patched versions to resolve a known security vulnerability.",
-			"zookeeper: pinned to 7.x since earlier versions fail to compile on Node 22 due to deprecated NAN APIs, and may be brought in transitively."
+			"zookeeper: pinned to 7.x since earlier versions fail to compile on Node 22 due to deprecated NAN APIs, and may be brought in transitively. No longer needed after server-services 8.0.0-396416 which natively requires ^7.2.0."
 		],
 		"overrides": {
 			"express@>=4 <5": "^4.22.1",
@@ -113,8 +113,7 @@
 			"minimatch@>=10 <11": "^10.2.4",
 			"serialize-javascript@>=6 <7": "^7.0.4",
 			"picomatch@>=2 <3": "^2.3.2",
-			"picomatch@>=4 <5": "^4.0.4",
-			"zookeeper": "^7.2.0"
+			"picomatch@>=4 <5": "^4.0.4"
 		},
 		"onlyBuiltDependencies": [
 			"core-js",

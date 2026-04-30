@@ -7,10 +7,8 @@ import { strict as assert } from "assert";
 
 import { ITestDataObject, describeCompat } from "@fluid-private/test-version-utils";
 import {
-	TestType,
 	benchmarkDuration,
 	benchmarkIt,
-	collectDurationData,
 	type BenchmarkTimingOptions,
 } from "@fluid-tools/benchmark";
 import { IContainer } from "@fluidframework/container-definitions/internal";
@@ -109,14 +107,12 @@ describeCompat(
 
 		benchmarkIt({
 			title: `Submit+Flush a single batch of ${batchSize} ops`,
-			testType: TestType.ExecutionTime,
-			run: async () => {
-				const { defaultDataStore, containerRuntime } = await setup();
-				// We could use the defaults for this one, but this way the measurement is symmetrical with the "Process" benchmark below.
-				return collectDurationData({
-					...executionOptions,
-					// eslint-disable-next-line object-shorthand
-					benchmarkFnAsync: async function () {
+			...benchmarkDuration({
+				...executionOptions,
+				benchmarkFnCustom: async (state) => {
+					const { defaultDataStore, containerRuntime } = await setup();
+					// We could use the defaults for this one, but this way the measurement is symmetrical with the "Process" benchmark below.
+					await state.timeAllBatchesAsync(async () => {
 						sendOps("A", defaultDataStore, containerRuntime);
 						// There's no event fired for "flush" so the simplest thing is to wait for the outbound queue to be idle.
 						// This should not add much time, and is part of the real flow so it's ok to include it in the benchmark.
@@ -130,9 +126,9 @@ describeCompat(
 							{ errorMsg: "container's outbound queue never reached idle state" },
 						);
 						assert(opsSent === 1, "Expecting the single grouped batch op to be sent.");
-					},
-				});
-			},
+					});
+				},
+			}),
 		});
 
 		benchmarkIt({

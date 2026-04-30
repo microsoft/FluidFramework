@@ -56,7 +56,7 @@ function getCollectionSizes(
 
 function runAttributionCollectionSuite(
 	ctor: IAttributionCollectionCtor,
-	suiteBaseType: BenchmarkType,
+	suiteBaseType: BenchmarkType = BenchmarkType.Measurement,
 ): void {
 	const collectionTestCases = getCollectionSizes(ctor, suiteBaseType);
 	for (const { name, collection, type } of collectionTestCases) {
@@ -168,6 +168,6 @@ describe("IAttributionCollection perf", () => {
 	// There was a RedBlack tree based implementation for the collection entries, but the linear array based one won due to constant
 	// factors/memory characteristics, so just kept the array based one.
 	describe("list-based implementation", () => {
-		runAttributionCollectionSuite(NewAttributionCollection, BenchmarkType.Measurement);
+		runAttributionCollectionSuite(NewAttributionCollection);
 	});
 });

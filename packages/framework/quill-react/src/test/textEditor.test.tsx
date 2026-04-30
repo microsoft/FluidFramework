@@ -92,7 +92,10 @@ describe("textEditor", () => {
 						const content = <ViewComponent root={toPropTreeNode(text)} />;
 						const rendered = render(content, { reactStrictMode });
 
-						assert.match(rendered.baseElement.textContent ?? "", /Collaborative Text Editor/);
+						assert.ok(
+							rendered.container.querySelector(".ql-editor"),
+							"Quill editor should be present after mount",
+						);
 					});
 
 					it("renders MainView with initial text content", () => {
@@ -214,9 +217,13 @@ describe("textEditor", () => {
 						const content = <FormattedMainView root={toPropTreeNode(tree)} />;
 						const rendered = render(content, { reactStrictMode });
 
-						assert.match(
-							rendered.baseElement.textContent ?? "",
-							/Collaborative Formatted Text Editor/,
+						assert.ok(
+							rendered.container.querySelector(".ql-editor"),
+							"Quill editor should be present after mount",
+						);
+						assert.ok(
+							rendered.container.querySelector(".ql-toolbar"),
+							"Snow toolbar should be present after mount",
 						);
 					});
 

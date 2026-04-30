@@ -6,4 +6,4 @@
  */
 
 export const pkgName = "@fluid-internal/presence-runtime";
-export const pkgVersion = "2.100.0";
+export const pkgVersion = "2.101.0";

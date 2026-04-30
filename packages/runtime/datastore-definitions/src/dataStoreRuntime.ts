@@ -190,16 +190,26 @@ export interface IFluidDataStoreRuntime
 	 * - `undefined` - No local operation activity is currently in progress.
 	 */
 	readonly activeLocalOperationActivity?: "applyStashed" | "rollback" | undefined;
+
+	/**
+	 * Indicates whether the container is currently in staging mode.
+	 *
+	 * @remarks
+	 * See {@link @fluidframework/runtime-definitions#IContainerRuntimeBase.enterStagingMode} for known limitations.
+	 */
+	readonly inStagingMode: boolean;
+
+	/**
+	 * Indicates whether the data store has uncommitted local changes.
+	 */
+	readonly isDirty: boolean;
 }
 
 /**
  * @legacy @alpha
  * @sealed
  */
-export interface IFluidDataStoreRuntimeAlpha extends IFluidDataStoreRuntime {
-	readonly inStagingMode: boolean;
-	readonly isDirty: boolean;
-}
+export interface IFluidDataStoreRuntimeAlpha extends IFluidDataStoreRuntime {}
 
 /**
  * Internal configs possibly implemented by IFuidDataStoreRuntimes, for use only within the runtime layer.

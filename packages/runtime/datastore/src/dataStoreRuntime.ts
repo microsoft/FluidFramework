@@ -29,7 +29,6 @@ import type {
 	IFluidDataStoreRuntime,
 	IFluidDataStoreRuntimeEvents,
 	IDeltaManagerErased,
-	IFluidDataStoreRuntimeAlpha,
 } from "@fluidframework/datastore-definitions/internal";
 import {
 	type IClientDetails,
@@ -64,7 +63,6 @@ import {
 	encodeHandlesInContainerRuntime,
 	type IFluidDataStorePolicies,
 	type MinimumVersionForCollab,
-	asLegacyAlpha,
 	currentSummarizeStepPrefix,
 	currentSummarizeStepPropertyName,
 } from "@fluidframework/runtime-definitions/internal";
@@ -425,7 +423,10 @@ export class FluidDataStoreRuntime
 			namespace: "FluidDataStoreRuntime",
 			properties: {
 				all: { dataStoreId: uuid(), dataStoreVersion: pkgVersion },
-				error: { inStagingMode: () => this.inStagingMode, isDirty: () => this.isDirty },
+				error: {
+					inStagingMode: () => this.inStagingMode,
+					isDirty: () => this.isDirty,
+				},
 			},
 		});
 
@@ -545,16 +546,16 @@ export class FluidDataStoreRuntime
 	}
 
 	/**
-	 * Implementation of IFluidDataStoreRuntimeAlpha.inStagingMode
+	 * {@inheritDoc @fluidframework/datastore-definitions#IFluidDataStoreRuntime.inStagingMode}
 	 */
-	private get inStagingMode(): IFluidDataStoreRuntimeAlpha["inStagingMode"] {
-		return asLegacyAlpha(this.dataStoreContext.containerRuntime)?.inStagingMode;
+	public get inStagingMode(): boolean {
+		return this.dataStoreContext.containerRuntime.inStagingMode;
 	}
 
 	/**
-	 * Implementation of IFluidDataStoreRuntimeAlpha.isDirty
+	 * {@inheritDoc @fluidframework/datastore-definitions#IFluidDataStoreRuntime.isDirty}
 	 */
-	private get isDirty(): IFluidDataStoreRuntimeAlpha["isDirty"] {
+	public get isDirty(): boolean {
 		return this.pendingOpCount.value > 0;
 	}
 
