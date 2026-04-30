@@ -43,6 +43,12 @@ export interface IBatchMetadata {
 	/**
 	 * Set on the envelope of a grouped batch op to the number of inner ops it contains.
 	 * Exposed on the wire so consumers can record batch sizes in telemetry without parsing the grouped batch contents.
+	 *
+	 * Observable values:
+	 * - Absent: this is not a grouped batch envelope (e.g. a singleton batch that bypassed grouping).
+	 * - `0`: empty-grouped-batch placeholder produced when a resubmitted batch becomes empty.
+	 * - `N` (N > 0): grouped batch with N inner ops. For a chunked grouped batch this appears only
+	 *   on the last chunk's envelope (intermediate chunks carry no metadata).
 	 */
 	groupedOpCount?: number;
 }
