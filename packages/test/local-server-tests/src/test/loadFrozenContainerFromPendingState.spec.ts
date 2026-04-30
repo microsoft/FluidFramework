@@ -591,5 +591,122 @@ describe("loadFrozenContainerFromPendingState", () => {
 				"Expected readOnly: false to win over an already-wrapped readOnly: true factory",
 			);
 		});
+
+		it("loads with allowReconnect: false (forced-write initial connect)", async () => {
+			const { container, ITestFluidObject, urlResolver, codeLoader, documentServiceFactory } =
+				await initialize();
+			await container.attach(urlResolver.createCreateNewRequest("test"));
+			ITestFluidObject.root.set("seed", "value");
+			const url = await container.getAbsoluteUrl("");
+			assert(url !== undefined, "Expected container to provide a valid absolute URL");
+			if (container.isDirty) {
+				await timeoutPromise((resolve) => container.once("saved", () => resolve()));
+			}
+			const initialPending = await container.getPendingLocalState();
+
+			// allowReconnect: false makes Container.connectToDeltaStream force mode = "write" on
+			// the very first connect. Without first-vs-subsequent tracking in FrozenDocumentService,
+			// that initial connect would be intercepted by the upgrade-hang path and the load
+			// would never complete.
+			const frozenContainer = asLegacyAlpha(
+				await loadFrozenContainerFromPendingState({
+					codeLoader,
+					documentServiceFactory,
+					urlResolver,
+					request: { url },
+					pendingLocalState: initialPending,
+					readOnly: false,
+					allowReconnect: false,
+				}),
+			);
+
+			assert.strictEqual(
+				frozenContainer.readOnlyInfo.readonly,
+				false,
+				"Expected writable frozen container with allowReconnect: false to report readonly === false",
+			);
+			assert.strictEqual(
+				frozenContainer.closed,
+				false,
+				"Expected writable frozen container with allowReconnect: false to remain open",
+			);
+
+			const frozenEntryPoint: FluidObject<TestFluidObject> =
+				await frozenContainer.getEntryPoint();
+			assert(
+				frozenEntryPoint.ITestFluidObject !== undefined,
+				"Expected frozen container entrypoint to be a valid TestFluidObject",
+			);
+			for (let i = 0; i < 3; i++) {
+				frozenEntryPoint.ITestFluidObject.root.set(`noReconnect-${i}`, i);
+			}
+
+			// Pending state must capture the layered edits — proves we landed in the writable
+			// surface rather than hanging on connect.
+			const layeredPending = await frozenContainer.getPendingLocalState();
+			assert.notStrictEqual(
+				layeredPending,
+				initialPending,
+				"Expected getPendingLocalState() to capture additional ops with allowReconnect: false",
+			);
+		});
+
+		it("loads with a non-interactive client (forced-write initial connect)", async () => {
+			const { container, ITestFluidObject, urlResolver, codeLoader, documentServiceFactory } =
+				await initialize();
+			await container.attach(urlResolver.createCreateNewRequest("test"));
+			ITestFluidObject.root.set("seed", "value");
+			const url = await container.getAbsoluteUrl("");
+			assert(url !== undefined, "Expected container to provide a valid absolute URL");
+			if (container.isDirty) {
+				await timeoutPromise((resolve) => container.once("saved", () => resolve()));
+			}
+			const initialPending = await container.getPendingLocalState();
+
+			// Non-interactive client also forces mode = "write" on the first connect — same path
+			// in Container.connectToDeltaStream as allowReconnect: false. Different forcing
+			// condition, identical observed behavior at the FrozenDocumentService boundary.
+			const frozenContainer = asLegacyAlpha(
+				await loadFrozenContainerFromPendingState({
+					codeLoader,
+					documentServiceFactory,
+					urlResolver,
+					request: { url },
+					pendingLocalState: initialPending,
+					readOnly: false,
+					clientDetailsOverride: {
+						capabilities: { interactive: false },
+					},
+				}),
+			);
+
+			assert.strictEqual(
+				frozenContainer.readOnlyInfo.readonly,
+				false,
+				"Expected writable frozen container with non-interactive client to report readonly === false",
+			);
+			assert.strictEqual(
+				frozenContainer.closed,
+				false,
+				"Expected writable frozen container with non-interactive client to remain open",
+			);
+
+			const frozenEntryPoint: FluidObject<TestFluidObject> =
+				await frozenContainer.getEntryPoint();
+			assert(
+				frozenEntryPoint.ITestFluidObject !== undefined,
+				"Expected frozen container entrypoint to be a valid TestFluidObject",
+			);
+			for (let i = 0; i < 3; i++) {
+				frozenEntryPoint.ITestFluidObject.root.set(`nonInteractive-${i}`, i);
+			}
+
+			const layeredPending = await frozenContainer.getPendingLocalState();
+			assert.notStrictEqual(
+				layeredPending,
+				initialPending,
+				"Expected getPendingLocalState() to capture additional ops with non-interactive client",
+			);
+		});
 	});
 });

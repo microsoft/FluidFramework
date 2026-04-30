@@ -90,6 +90,7 @@ class FrozenDocumentService
 	implements IDocumentService
 {
 	private disposed = false;
+	private handedOutInitialConnection = false;
 	private readonly pendingConnectRejecters = new Set<(reason: Error) => void>();
 
 	constructor(
@@ -118,19 +119,31 @@ class FrozenDocumentService
 			// the read-only path; this is a defensive fallback.
 			return new FrozenDeltaStream();
 		}
-		if (client.mode !== "write") {
-			// Initial / read-mode connect: hand the runtime a writable-surface FrozenDeltaStream
-			// (DocWrite scope + not matched by isFrozenDeltaStreamConnection, so readOnlyInfo
-			// reports `readonly: false` and the runtime will accept DDS submissions).
+		// Distinguish the initial connect from the runtime-driven read→write upgrade. Both can
+		// arrive with `client.mode === "write"`: the upgrade case follows the first runtime
+		// submit (sendMessages sees connectionMode === "read" and triggers reconnectOnError on
+		// "write"); the initial-connect case happens when Container.connectToDeltaStream forces
+		// mode = "write" because allowReconnect is false or the client is non-interactive.
+		// Mode alone can't tell them apart, so track whether we've already handed out a stream.
+		if (!this.handedOutInitialConnection) {
+			// First connect: hand out the writable-surface FrozenDeltaStream regardless of
+			// `client.mode`. DocWrite scope + not matched by isFrozenDeltaStreamConnection, so
+			// readOnlyInfo reports `readonly: false` and the runtime will accept DDS submissions.
+			this.handedOutInitialConnection = true;
 			return new FrozenDeltaStream({ readOnly: false });
 		}
-		// Write upgrade: triggered the moment the runtime tries to send (sendMessages sees
-		// connectionMode === "read"). We can't honor it — there's no upstream and we won't
-		// fabricate a quorum join op. Hang the promise. The container settles into Disconnected
-		// (Connected → reconnecting → never resolves), DDS local apply continues to work, and
-		// submitted ops accumulate in the runtime's pendingStateManager (the outbox sees
-		// shouldSend() return false and skips actual send). That's the right representation
-		// for "load to accrue and capture pending state without publishing".
+		if (client.mode !== "write") {
+			// Subsequent connect in read mode (e.g. reconnect after a forced disconnect). Hand
+			// out another writable stream so the container can re-establish.
+			return new FrozenDeltaStream({ readOnly: false });
+		}
+		// Subsequent connect in write mode: this is the read→write upgrade attempt. We can't
+		// honor it — there's no upstream and we won't fabricate a quorum join op. Hang the
+		// promise. The container settles into Disconnected (Connected → reconnecting → never
+		// resolves), DDS local apply continues to work, and submitted ops accumulate in the
+		// runtime's pendingStateManager (the outbox sees shouldSend() return false and skips
+		// actual send). That's the right representation for "load to accrue and capture pending
+		// state without publishing".
 		return new Promise<IDocumentDeltaConnection>((_, reject) => {
 			if (this.disposed) {
 				reject(new Error("FrozenDocumentService disposed"));
