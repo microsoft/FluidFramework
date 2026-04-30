@@ -172,11 +172,16 @@ export class OpSplitter {
 		}
 
 		// The last chunk will be part of the new batch and needs to
-		// preserve the batch metadata of the original batch
+		// preserve the batch metadata of the original batch.
+		// groupedOpCount is surfaced here so wire-level telemetry can read it once
+		// per chunked grouped batch (mirroring where the batch flag is preserved).
+		const rawGroupedOpCount = firstMessage.metadata?.groupedOpCount;
+		const groupedOpCount =
+			typeof rawGroupedOpCount === "number" ? rawGroupedOpCount : undefined;
 		const lastChunk = chunkToBatchMessage(
 			chunks[chunks.length - 1],
 			batch.referenceSequenceNumber,
-			{ batch: firstMessage.metadata?.batch },
+			{ batch: firstMessage.metadata?.batch, groupedOpCount },
 		);
 
 		this.logger.sendPerformanceEvent({

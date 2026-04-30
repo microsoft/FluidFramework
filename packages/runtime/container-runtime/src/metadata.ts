@@ -40,6 +40,11 @@ export interface IBatchMetadata {
 	 * Maybe set on first message of a batch, to the batchId generated when resubmitting (set/fixed on first resubmit)
 	 */
 	batchId?: BatchId;
+	/**
+	 * Set on the envelope of a grouped batch op to the number of inner ops it contains.
+	 * Exposed on the wire so consumers can record batch sizes in telemetry without parsing the grouped batch contents.
+	 */
+	groupedOpCount?: number;
 }
 
 /**
