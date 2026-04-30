@@ -238,13 +238,15 @@ export interface IRuntime extends IDisposable {
 	 * This is optional for backwards compatibility with older runtime implementations.
 	 *
 	 * Do not confuse this with with the various `closeFn` callbacks (such as {@link IContainerContext.closeFn} or `IGarbageCollectorCreateParams.closeFn`:
-	 * these expose a way to intitate container close, not a way to get notified of container close (which might come from another source).
+	 * those callbacks expose a way to initiate container close, not a way to get notified of container close (which might come from another source).
+	 * This method on the other hand is invoked for all the cases in which the container is closing (though this does not include when its disposing without closing first!),
+	 * and thus this is where the runtime should actually transition to the closed state, and do any appropriate cleanup.
 	 * @privateRemarks
 	 * This method is for communication between two parts of the Fluid client code, and thus should not need to be exposed as a beta+legacy API.
-	 * At some point this whole interface should likley be marked `@sealed` and use an opaque type.
-	 * At that point most of its memmbers, including `close`, could be moved to an internal interface.
+	 * At some point this whole interface should likely be marked `@sealed` and use an opaque type.
+	 * At that point most of its members, including `close`, could be moved to an internal interface.
 	 * After that, pending any needed layer compat delays, this method could be made required instead of optional.
-	 * This likley applies to the other optional methods on this interface as well.
+	 * This likely applies to the other optional methods on this interface as well.
 	 */
 	close?(): void;
 }

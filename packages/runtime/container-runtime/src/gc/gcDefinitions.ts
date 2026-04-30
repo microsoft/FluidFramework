@@ -453,7 +453,7 @@ export interface IGarbageCollector {
 	 * Cancels all GC timers and clears tracked state so timers do not keep the event loop alive
 	 * or leak memory.
 	 * @remarks
-	 * Idempotent: Safe to call multiple times.
+	 * This is idempotent - it is safe to call multiple times.
 	 */
 	dispose(): void;
 }
