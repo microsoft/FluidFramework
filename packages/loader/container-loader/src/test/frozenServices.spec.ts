@@ -5,9 +5,36 @@
 
 import { strict as assert } from "node:assert";
 
-import type { IDocumentMessage, INack } from "@fluidframework/driver-definitions/internal";
+import type {
+	IClient,
+	IDocumentMessage,
+	INack,
+	IResolvedUrl,
+} from "@fluidframework/driver-definitions/internal";
 
-import { FrozenDeltaStream } from "../frozenServices.js";
+import { FrozenDeltaStream, FrozenDocumentServiceFactory } from "../frozenServices.js";
+
+const fakeUrl = {
+	url: "fluid://test",
+	tokens: {},
+	type: "fluid",
+} as unknown as IResolvedUrl;
+
+const fakeReadClient = (): IClient => ({
+	mode: "read",
+	details: { capabilities: { interactive: true } },
+	permission: [],
+	user: { id: "test" },
+	scopes: [],
+});
+
+const fakeWriteClient = (): IClient => ({
+	mode: "write",
+	details: { capabilities: { interactive: true } },
+	permission: [],
+	user: { id: "test" },
+	scopes: [],
+});
 
 const fakeOp = (): IDocumentMessage =>
 	({
@@ -124,5 +151,106 @@ describe("FrozenDeltaStream", () => {
 			const stream = new FrozenDeltaStream({ readonlyConnectionReason: reason });
 			assert.strictEqual(stream.readonlyConnectionReason, reason);
 		});
+	});
+});
+
+describe("FrozenDocumentService.connectToDeltaStream upgrade-hang lifecycle", () => {
+	// Defense-in-depth coverage: the sendMessages short-circuit means this hang path is
+	// unreachable in normal flow, but the rejecter logic on dispose() must still work for
+	// invariant breaks (e.g. nack-driven reconnectOnError("write") if FrozenDeltaStream.submit
+	// were ever called directly). Drives connectToDeltaStream({mode: "write"}) directly to
+	// exercise the rejecter — restores the coverage that the integration "dispose() while
+	// upgrade is hung" test once provided before the sendMessages short-circuit closed off
+	// the runtime-driven path.
+
+	it("rejects the hung upgrade-connect when service.dispose() is called", async () => {
+		const factory = new FrozenDocumentServiceFactory(false);
+		const service = await factory.createDocumentService(fakeUrl);
+
+		// Initial connect — flips handedOutInitialConnection so the next call lands on the
+		// upgrade-hang branch.
+		const initial = await service.connectToDeltaStream(fakeReadClient());
+		assert(initial instanceof FrozenDeltaStream);
+
+		// Subsequent write-mode connect — must hang until dispose.
+		const hangPromise = service.connectToDeltaStream(fakeWriteClient());
+		let rejection: unknown;
+		hangPromise.catch((e: unknown) => {
+			rejection = e;
+		});
+
+		// Yield microtasks; the hang must not settle of its own accord.
+		for (let i = 0; i < 10; i++) {
+			// eslint-disable-next-line no-await-in-loop
+			await Promise.resolve();
+		}
+		assert.strictEqual(
+			rejection,
+			undefined,
+			"Expected upgrade-connect promise to remain pending before dispose()",
+		);
+
+		service.dispose();
+
+		// Allow the rejection to propagate.
+		for (let i = 0; i < 10; i++) {
+			// eslint-disable-next-line no-await-in-loop
+			await Promise.resolve();
+		}
+		assert(
+			rejection instanceof Error,
+			"Expected upgrade-connect promise to reject with an Error after dispose()",
+		);
+		assert.match((rejection as Error).message, /FrozenDocumentService disposed/);
+	});
+
+	it("rejects synchronously when called after service.dispose()", async () => {
+		const factory = new FrozenDocumentServiceFactory(false);
+		const service = await factory.createDocumentService(fakeUrl);
+
+		// Flip handedOutInitialConnection.
+		await service.connectToDeltaStream(fakeReadClient());
+		service.dispose();
+
+		await assert.rejects(
+			service.connectToDeltaStream(fakeWriteClient()),
+			/FrozenDocumentService disposed/,
+			"Expected post-dispose write-mode connect to reject without registering a rejecter",
+		);
+	});
+
+	it("drains multiple pending rejecters on a single dispose() call", async () => {
+		const factory = new FrozenDocumentServiceFactory(false);
+		const service = await factory.createDocumentService(fakeUrl);
+
+		await service.connectToDeltaStream(fakeReadClient());
+
+		const rejections: unknown[] = [];
+		const captureRejection = (e: unknown): void => {
+			rejections.push(e);
+		};
+
+		// Three independent hangs accumulate independent rejecters.
+		service.connectToDeltaStream(fakeWriteClient()).catch(captureRejection);
+		service.connectToDeltaStream(fakeWriteClient()).catch(captureRejection);
+		service.connectToDeltaStream(fakeWriteClient()).catch(captureRejection);
+
+		for (let i = 0; i < 10; i++) {
+			// eslint-disable-next-line no-await-in-loop
+			await Promise.resolve();
+		}
+		assert.strictEqual(rejections.length, 0);
+
+		service.dispose();
+
+		for (let i = 0; i < 10; i++) {
+			// eslint-disable-next-line no-await-in-loop
+			await Promise.resolve();
+		}
+		assert.strictEqual(
+			rejections.length,
+			3,
+			"Expected dispose() to drain every pending rejecter",
+		);
 	});
 });

@@ -771,28 +771,24 @@ describe("loadFrozenContainerFromPendingState", () => {
 				"Expected frozen container entrypoint to be a valid TestFluidObject",
 			);
 
-			// Trigger the read→write upgrade. sendMessages sees connectionMode === "read" and
-			// requests connectToDeltaStream({ mode: "write" }), which FrozenDocumentService hangs.
-			frozenEntryPoint.ITestFluidObject.root.set("triggerUpgrade", 1);
+			// End-to-end smoke for the writable-frozen lifecycle: writes are accepted, the
+			// container stays Connected (sendMessages drops them at the FrozenDeltaStream
+			// short-circuit), and dispose() then runs cleanly. The pendingConnectRejecters
+			// drain path is no longer exercised here in normal flow — the focused unit test
+			// in container-loader/src/test/frozenServices.spec.ts drives connectToDeltaStream(
+			// {mode: "write"}) directly to verify that.
+			frozenEntryPoint.ITestFluidObject.root.set("aWrite", 1);
+			await new Promise<void>((resolve) => setTimeout(resolve, 200));
 
-			// Yield long enough for the runtime/connectionManager to dispatch the upgrade attempt
-			// and register the hung promise on FrozenDocumentService.pendingConnectRejecters.
-			// The writable-frozen container does not transition to a "saved" state and does not
-			// necessarily emit "disconnected" before the upgrade-connect call lands, so we use
-			// a bounded sleep rather than an event signal.
-			await new Promise<void>((resolve) => setTimeout(resolve, 500));
-
-			// dispose() must terminate. Without FrozenDocumentService.dispose() rejecting the
-			// hung promise, the connectionManager's connect loop awaits indefinitely.
 			frozenContainer.dispose();
 			assert.strictEqual(
 				frozenContainer.disposed,
 				true,
-				"Expected frozenContainer.disposed === true after dispose() with hung upgrade",
+				"Expected writable frozen container to dispose cleanly after a local write",
 			);
 		});
 
-		it("close() does not hang while the read→write upgrade connect is hung", async () => {
+		it("close() runs cleanly on a writable-frozen container after a local write", async () => {
 			const { container, ITestFluidObject, urlResolver, codeLoader, documentServiceFactory } =
 				await initialize();
 			await container.attach(urlResolver.createCreateNewRequest("test"));
@@ -819,23 +815,23 @@ describe("loadFrozenContainerFromPendingState", () => {
 				"Expected frozen container entrypoint to be a valid TestFluidObject",
 			);
 
-			frozenEntryPoint.ITestFluidObject.root.set("triggerUpgrade", 1);
-			// Same bounded sleep as the dispose case — give the upgrade attempt a chance to
-			// reach FrozenDocumentService.connectToDeltaStream({mode: "write"}) before close().
-			await new Promise<void>((resolve) => setTimeout(resolve, 500));
+			frozenEntryPoint.ITestFluidObject.root.set("aWrite", 1);
+			await new Promise<void>((resolve) => setTimeout(resolve, 200));
 
-			// close() does not propagate to service.dispose() today, so the hung promise stays
-			// pending until GC. That's the documented "benign leak" tradeoff — what this test
-			// pins is that close() itself returns and the container observes closed === true.
+			// close() does not propagate to service.dispose() — the documented benign-leak
+			// tradeoff for any pending rejecters that might exist on defense-in-depth paths.
+			// In normal writable-frozen flow no such rejecters exist (sendMessages drops at the
+			// FrozenDeltaStream short-circuit), but the contract worth pinning here is that
+			// close() itself returns and the container observes closed === true.
 			frozenContainer.close();
 			assert.strictEqual(
 				frozenContainer.closed,
 				true,
-				"Expected frozenContainer.closed === true after close() with hung upgrade",
+				"Expected writable frozen container to close cleanly after a local write",
 			);
 		});
 
-		it("captures writes performed after the upgrade-connect has hung", async () => {
+		it("captures writes batched across timer/microtask boundaries", async () => {
 			const { container, ITestFluidObject, urlResolver, codeLoader, documentServiceFactory } =
 				await initialize();
 			await container.attach(urlResolver.createCreateNewRequest("test"));
@@ -864,32 +860,32 @@ describe("loadFrozenContainerFromPendingState", () => {
 				"Expected frozen container entrypoint to be a valid TestFluidObject",
 			);
 
-			// First write triggers the upgrade-hang via sendMessages's read→write reconnect.
+			// First write — sendMessages drops it at the FrozenDeltaStream short-circuit and
+			// the runtime accumulates it in pendingStateManager.
 			frozenEntryPoint.ITestFluidObject.root.set("preDisconnect", "first");
 
-			// Bounded wait so the upgrade attempt fires and the container settles into its
-			// post-upgrade state (Disconnected / EstablishingConnection — the exact terminal
-			// state varies, but ops submitted from here on are written after the hang).
+			// Bounded wait — proves the writable-frozen container survives a non-trivial
+			// idle interval (no async close from any deferred reconnect work) before the
+			// next write batch.
 			await new Promise<void>((resolve) => setTimeout(resolve, 500));
 
-			// Second write — happens after the upgrade attempt. The runtime must still apply
-			// it locally and accumulate it in pendingStateManager.
+			// Second write batch — the runtime continues to apply locally and accumulate.
 			frozenEntryPoint.ITestFluidObject.root.set("postDisconnect", "second");
 
 			assert.strictEqual(
 				frozenEntryPoint.ITestFluidObject.root.get("preDisconnect"),
 				"first",
-				"Expected pre-upgrade write to be locally visible",
+				"Expected first-batch write to be locally visible",
 			);
 			assert.strictEqual(
 				frozenEntryPoint.ITestFluidObject.root.get("postDisconnect"),
 				"second",
-				"Expected post-upgrade write to be locally visible",
+				"Expected second-batch write to be locally visible",
 			);
 
-			// Both writes should round-trip through getPendingLocalState — proving the
-			// writable-frozen container continues to capture pending state across the
-			// upgrade-hang boundary.
+			// Both batches should round-trip through getPendingLocalState — proving the
+			// writable-frozen container continues to capture pending state across timer
+			// boundaries.
 			const layeredPending = await frozenContainer.getPendingLocalState();
 			const secondFrozen = await loadFrozenContainerFromPendingState({
 				codeLoader,
@@ -908,12 +904,12 @@ describe("loadFrozenContainerFromPendingState", () => {
 			assert.strictEqual(
 				secondEntryPoint.ITestFluidObject.root.get("preDisconnect"),
 				"first",
-				"Expected pre-upgrade write to round-trip through pending state",
+				"Expected first-batch write to round-trip through pending state",
 			);
 			assert.strictEqual(
 				secondEntryPoint.ITestFluidObject.root.get("postDisconnect"),
 				"second",
-				"Expected post-upgrade write to round-trip through pending state",
+				"Expected second-batch write to round-trip through pending state",
 			);
 		});
 	});
