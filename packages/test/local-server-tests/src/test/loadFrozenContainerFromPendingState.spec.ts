@@ -708,5 +708,105 @@ describe("loadFrozenContainerFromPendingState", () => {
 				"Expected getPendingLocalState() to capture additional ops with non-interactive client",
 			);
 		});
+
+		it("dispose() completes while the read→write upgrade connect is hung", async () => {
+			const { container, ITestFluidObject, urlResolver, codeLoader, documentServiceFactory } =
+				await initialize();
+			await container.attach(urlResolver.createCreateNewRequest("test"));
+			ITestFluidObject.root.set("seed", "value");
+			const url = await container.getAbsoluteUrl("");
+			assert(url !== undefined, "Expected container to provide a valid absolute URL");
+			if (container.isDirty) {
+				await timeoutPromise((resolve) => container.once("saved", () => resolve()));
+			}
+			const pendingLocalState = await container.getPendingLocalState();
+
+			const frozenContainer = await loadFrozenContainerFromPendingState({
+				codeLoader,
+				documentServiceFactory,
+				urlResolver,
+				request: { url },
+				pendingLocalState,
+				readOnly: false,
+			});
+			const frozenEntryPoint: FluidObject<TestFluidObject> =
+				await frozenContainer.getEntryPoint();
+			assert(
+				frozenEntryPoint.ITestFluidObject !== undefined,
+				"Expected frozen container entrypoint to be a valid TestFluidObject",
+			);
+
+			// Trigger the read→write upgrade. sendMessages sees connectionMode === "read" and
+			// requests connectToDeltaStream({ mode: "write" }), which FrozenDocumentService hangs.
+			frozenEntryPoint.ITestFluidObject.root.set("triggerUpgrade", 1);
+
+			// Wait for the disconnect that precedes the hung upgrade-connect attempt — confirms
+			// the hung promise has been registered with pendingConnectRejecters.
+			await timeoutPromise<void>(
+				(resolve) => frozenContainer.once("disconnected", () => resolve()),
+				{
+					durationMs: 5000,
+					errorMsg:
+						"Expected writable frozen container to disconnect after triggering upgrade",
+				},
+			);
+
+			// dispose() must terminate. Without FrozenDocumentService.dispose() rejecting the
+			// hung promise, the connectionManager's connect loop awaits indefinitely.
+			frozenContainer.dispose();
+			assert.strictEqual(
+				frozenContainer.disposed,
+				true,
+				"Expected frozenContainer.disposed === true after dispose() with hung upgrade",
+			);
+		});
+
+		it("close() does not hang while the read→write upgrade connect is hung", async () => {
+			const { container, ITestFluidObject, urlResolver, codeLoader, documentServiceFactory } =
+				await initialize();
+			await container.attach(urlResolver.createCreateNewRequest("test"));
+			ITestFluidObject.root.set("seed", "value");
+			const url = await container.getAbsoluteUrl("");
+			assert(url !== undefined, "Expected container to provide a valid absolute URL");
+			if (container.isDirty) {
+				await timeoutPromise((resolve) => container.once("saved", () => resolve()));
+			}
+			const pendingLocalState = await container.getPendingLocalState();
+
+			const frozenContainer = await loadFrozenContainerFromPendingState({
+				codeLoader,
+				documentServiceFactory,
+				urlResolver,
+				request: { url },
+				pendingLocalState,
+				readOnly: false,
+			});
+			const frozenEntryPoint: FluidObject<TestFluidObject> =
+				await frozenContainer.getEntryPoint();
+			assert(
+				frozenEntryPoint.ITestFluidObject !== undefined,
+				"Expected frozen container entrypoint to be a valid TestFluidObject",
+			);
+
+			frozenEntryPoint.ITestFluidObject.root.set("triggerUpgrade", 1);
+			await timeoutPromise<void>(
+				(resolve) => frozenContainer.once("disconnected", () => resolve()),
+				{
+					durationMs: 5000,
+					errorMsg:
+						"Expected writable frozen container to disconnect after triggering upgrade",
+				},
+			);
+
+			// close() does not propagate to service.dispose() today, so the hung promise stays
+			// pending until GC. That's the documented "benign leak" tradeoff — what this test
+			// pins is that close() itself returns and the container observes closed === true.
+			frozenContainer.close();
+			assert.strictEqual(
+				frozenContainer.closed,
+				true,
+				"Expected frozenContainer.closed === true after close() with hung upgrade",
+			);
+		});
 	});
 });

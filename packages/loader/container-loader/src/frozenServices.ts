@@ -144,6 +144,12 @@ class FrozenDocumentService
 		// runtime's pendingStateManager (the outbox sees shouldSend() return false and skips
 		// actual send). That's the right representation for "load to accrue and capture pending
 		// state without publishing".
+		//
+		// Lifecycle: container.dispose() reaches us via service.dispose() and rejects the
+		// promise so connectionManager's connect loop exits cleanly. container.close() (without
+		// dispose()) does not propagate to service.dispose() — the hung promise stays pending
+		// until GC. That's a benign leak: the closure retains references to FrozenDocumentService
+		// and the rejecter, and is collected with the rest of the container graph.
 		return new Promise<IDocumentDeltaConnection>((_, reject) => {
 			if (this.disposed) {
 				reject(new Error("FrozenDocumentService disposed"));
