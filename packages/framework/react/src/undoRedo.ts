@@ -145,6 +145,8 @@ function labelPredicate(label: unknown): (entry: StackEntry) => boolean {
 	return label === undefined ? () => true : (entry) => entry.labels.has(label);
 }
 
+const attachedBranches = new WeakSet<TreeBranchAlpha>();
+
 /**
  * Concrete implementation of {@link UndoRedo} for a SharedTree branch.
  *
@@ -153,11 +155,6 @@ function labelPredicate(label: unknown): (entry: StackEntry) => boolean {
  * attached manager throws immediately at construction time.
  *
  * @sealed @internal
- */
-const attachedBranches = new WeakSet<TreeBranchAlpha>();
-
-/**
- * {@link UndoRedo} implementation.
  */
 class UndoRedoManager implements UndoRedo {
 	/** Commits available to undo, ordered oldest-first. */
