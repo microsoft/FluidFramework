@@ -21,5 +21,23 @@ trustPolicy: no-downgrade
 # List of packages known to be safe but for whatever reason were published at a date after another version of the same
 # package (including later major versions) which had better provenance information.
 # ALWAYS REVIEW CAREFULLY BEFORE ADDING SOMETHING TO THIS LIST.
-trustPolicyExclude: []
+trustPolicyExclude:
+  # chokidar@4.0.3 is a transitive dependency of mocha@11.x. The trust downgrade fires
+  # because this version lacks provenance attestation while earlier 4.x releases had it.
+  # No supply chain incident is known.
+  # This version is heavily used (~40 million downloads) and a year old at this point,
+  # and also used by other workspaces in this repo, so allowing it seems like a minimal risk.
+  - "chokidar@4.0.3"
+  # undici-types@6.21.0 is a transitive dependency pulled in via @types/node. The trust
+  # downgrade fires because this version lacks provenance attestation while earlier releases
+  # had it. No supply chain incident is known.
+  # This version is heavily used (over 80 million downloads) and a year old at this point,
+  # and also used by other workspaces in this repo, so allowing it seems like a minimal risk.
+  - "undici-types@6.21.0"
+  # semver@5.7.2 is a transitive dependency. The trust downgrade fires because this version
+  # lacks provenance attestation while earlier releases of higher major versions had it (attestation was not backported to the 5 branch).
+  # No supply chain incident is known.
+  # This version is heavily used (~60 million downloads) and 3 years old at this point,
+  # and also used by other workspaces in this repo, so allowing it seems like a minimal risk.
+  - "semver@5.7.2"
 strictDepBuilds: true

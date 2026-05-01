@@ -5,7 +5,7 @@
 
 import { strict as assert } from "node:assert";
 
-import { BenchmarkType, benchmark } from "@fluid-tools/benchmark";
+import { benchmarkDuration, benchmarkIt } from "@fluid-tools/benchmark";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 
 import { EmptyKey, type ITreeCursorSynchronous } from "../../../core/index.js";
@@ -198,46 +198,47 @@ describe("uniformChunk", () => {
 
 	for (const { name: cursorName, factory } of cursorSources) {
 		describe(`${cursorName} bench`, () => {
-			let cursor: ITreeCursorSynchronous;
 			for (const { name, dataFactory: data } of testData) {
-				benchmark({
-					type: BenchmarkType.Measurement,
+				benchmarkIt({
 					title: `Sum: '${name}'`,
-					before: () => {
-						cursor = factory(data());
-					},
-					benchmarkFn: () => {
-						sum(cursor);
-					},
+					...benchmarkDuration({
+						benchmarkFnCustom: async (state) => {
+							const cursor = factory(data());
+							state.timeAllBatches(() => {
+								sum(cursor);
+							});
+						},
+					}),
 				});
 			}
 
-			benchmark({
-				type: BenchmarkType.Measurement,
+			benchmarkIt({
 				title: "Polygon access",
-				before: () => {
-					cursor = polygonTree.dataFactory().cursor();
-					cursor.enterNode(0);
-				},
-				benchmarkFn: () => {
-					let x = 0;
-					let y = 0;
-					cursor.enterField(EmptyKey);
-					for (let inNodes = cursor.firstNode(); inNodes; inNodes = cursor.nextNode()) {
-						cursor.enterField(xField);
+				...benchmarkDuration({
+					benchmarkFnCustom: async (state) => {
+						const cursor = polygonTree.dataFactory().cursor();
 						cursor.enterNode(0);
-						x += cursor.value as number;
-						cursor.exitNode();
-						cursor.exitField();
-						cursor.enterField(yField);
-						cursor.enterNode(0);
-						y += cursor.value as number;
-						cursor.exitNode();
-						cursor.exitField();
-					}
-					cursor.exitField();
-					const _result = x + y;
-				},
+						state.timeAllBatches(() => {
+							let x = 0;
+							let y = 0;
+							cursor.enterField(EmptyKey);
+							for (let inNodes = cursor.firstNode(); inNodes; inNodes = cursor.nextNode()) {
+								cursor.enterField(xField);
+								cursor.enterNode(0);
+								x += cursor.value as number;
+								cursor.exitNode();
+								cursor.exitField();
+								cursor.enterField(yField);
+								cursor.enterNode(0);
+								y += cursor.value as number;
+								cursor.exitNode();
+								cursor.exitField();
+							}
+							cursor.exitField();
+							const _result = x + y;
+						});
+					},
+				}),
 			});
 		});
 	}

@@ -1,8 +1,8 @@
-// AI-enabled (Insiders) — everything in AI-enabled, plus the flub AI launcher command.
+// AI-enabled (Unstable) — everything in AI-enabled, plus the flub AI launcher command.
 {
-	"name": "AI-enabled (Insiders)",
+	"name": "AI-enabled (Unstable)",
 	// Bump this version to force a codespace prebuild rebuild. See .devcontainer/README.md.
-	// prebuild-version: 1.0.2
+	// prebuild-version: 1.0.4
 	"build": {
 		"dockerfile": "../Dockerfile",
 		"args": {

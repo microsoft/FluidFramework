@@ -6,9 +6,9 @@
 import { strict as assert, fail } from "node:assert";
 
 import {
-	BenchmarkType,
+	BenchmarkMode,
 	benchmarkIt,
-	isInPerformanceTestingMode,
+	currentBenchmarkMode,
 	ValueType,
 	type CollectedData,
 } from "@fluid-tools/benchmark";
@@ -234,7 +234,7 @@ const MAX_SUCCESSFUL_OP_BYTE_SIZES = {
 		[TransactionStyle.Individual]: {
 			nodeCounts: {
 				// Edit benchmarks use 1/10 of the actual max sizes outside of perf mode because it takes so long to execute.
-				"100": isInPerformanceTestingMode ? 800000 : 80000,
+				"100": currentBenchmarkMode === BenchmarkMode.Performance ? 800000 : 80000,
 			},
 		},
 		[TransactionStyle.Single]: {
@@ -405,8 +405,6 @@ describe("Op Size", () => {
 			describe(description, () => {
 				for (const { percentile, word } of sizes) {
 					benchmarkIt({
-						only: false,
-						type: BenchmarkType.Measurement,
 						title: `${BENCHMARK_NODE_COUNT} ${word} nodes in ${extraDescription}`,
 						run: async () => {
 							benchmarkOps(style, percentile);
@@ -446,8 +444,6 @@ describe("Op Size", () => {
 							: `1 transactions containing 1 removal of ${BENCHMARK_NODE_COUNT} nodes`
 					}`;
 					benchmarkIt({
-						only: false,
-						type: BenchmarkType.Measurement,
 						title,
 						run: async () => {
 							benchmarkOps(style, percentile);
@@ -487,8 +483,6 @@ describe("Op Size", () => {
 						style === TransactionStyle.Individual ? "1 edit" : `${BENCHMARK_NODE_COUNT} edits`
 					}`;
 					benchmarkIt({
-						only: false,
-						type: BenchmarkType.Measurement,
 						title,
 						run: async () => {
 							benchmarkOps(style, percentile);
