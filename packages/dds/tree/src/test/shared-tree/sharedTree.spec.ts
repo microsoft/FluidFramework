@@ -12,7 +12,7 @@ import { SummaryType } from "@fluidframework/driver-definitions";
 import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 import type {
 	ISharedObjectKind,
-	SharedObjectKind,
+	SharedObjectKindAlpha,
 } from "@fluidframework/shared-object-base/internal";
 import {
 	MockContainerRuntimeFactory,
@@ -126,7 +126,7 @@ const enableSchemaValidation = true;
 const DebugSharedTree = configuredSharedTree({
 	jsonValidator: FormatValidatorBasic,
 	forest: ForestTypeExpensiveDebug,
-}) as SharedObjectKind<ISharedTree> & ISharedObjectKind<ISharedTree>;
+}) as SharedObjectKindAlpha<ISharedTree> & ISharedObjectKind<ISharedTree>;
 
 class MockSharedTreeRuntime extends MockFluidDataStoreRuntime {
 	public constructor() {
@@ -2697,7 +2697,7 @@ describe("SharedTree", () => {
 		const sharedObject = configuredSharedTree({
 			jsonValidator: FormatValidatorBasic,
 			forest: ForestTypeExpensiveDebug,
-		}) as SharedObjectKind<ISharedTree> & ISharedObjectKind<ISharedTree>;
+		}) as SharedObjectKindAlpha<ISharedTree> & ISharedObjectKind<ISharedTree>;
 		const tree = sharedObject.getFactory().create(runtime, "tree");
 		const runtimeFactory = new MockContainerRuntimeFactory();
 		runtimeFactory.createContainerRuntime(runtime);

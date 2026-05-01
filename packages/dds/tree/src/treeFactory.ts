@@ -13,6 +13,7 @@ import {
 	type SharedKernelFactory,
 	type SharedObjectOptions,
 	type FactoryOut,
+	type SharedObjectKindAlpha,
 } from "@fluidframework/shared-object-base/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
@@ -107,7 +108,14 @@ function treeKernelFactory(
  * of objects, arrays, and other data types.
  * @legacy @beta
  */
-export const SharedTree = configuredSharedTree({});
+export const SharedTree: ISharedObjectKind<ITree> & SharedObjectKind<ITree> =
+	configuredSharedTree({});
+
+/**
+ * {@link SharedTree} but without legacy types, and with alpha types.
+ * @alpha
+ */
+export const SharedTreeAlpha: SharedObjectKindAlpha<ITree> = configuredSharedTree({});
 
 /**
  * {@link SharedTree} but allowing a non-default configuration.
@@ -185,14 +193,14 @@ export function configuredSharedTreeAlpha(
  */
 export function configuredSharedTree(
 	options: SharedTreeOptions,
-): ISharedObjectKind<ITree> & SharedObjectKind<ITree> {
+): ISharedObjectKind<ITree> & SharedObjectKindAlpha<ITree> {
 	const internalOptions = resolveOptions(options);
 	return configuredSharedTreeInternal(internalOptions);
 }
 
 export function configuredSharedTreeInternal(
 	options: SharedTreeOptionsInternal,
-): ISharedObjectKind<ITree> & SharedObjectKind<ITree> {
+): ISharedObjectKind<ITree> & SharedObjectKindAlpha<ITree> {
 	const sharedObjectOptions: SharedObjectOptions<ITree> = {
 		type: SharedTreeFactoryType,
 		attributes: SharedTreeAttributes,
