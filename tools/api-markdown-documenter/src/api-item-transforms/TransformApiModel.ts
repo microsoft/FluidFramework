@@ -58,7 +58,7 @@ export function transformApiModel(options: ApiItemTransformationOptions): ApiDoc
 	const filteredPackages = apiModel.packages.filter((apiPackage) => !excludeItem(apiPackage));
 
 	if (filteredPackages.length === 0) {
-		logger.warning("No packages found after filtering per `skipPackages` configuration.");
+		logger.warning("No packages found after filtering per `exclude` configuration.");
 		return [...documentsMap.values()];
 	}
 
