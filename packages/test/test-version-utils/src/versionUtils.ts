@@ -3,173 +3,98 @@
  * Licensed under the MIT License.
  */
 
-/* Utilities to manage finding, installing and loading legacy versions */
+/**
+ * Utilities for loading legacy versions of Fluid Framework packages for compatibility testing.
+ *
+ * ## Architecture
+ *
+ * Legacy packages live in a single committed pnpm sub-workspace at `compat-workspaces/full/`.
+ * The workspace is installed automatically when `pnpm install` is run from the repo root (via
+ * the `postinstall` script in this package's `package.json`), so no runtime installation step
+ * is required in tests.
+ *
+ * The exact resolved versions are recorded in `compat-workspaces/generated-versions.cjs`, which is
+ * maintained by the `update-compat-versions` script and committed to the repository. Tests
+ * read this manifest at startup to resolve version ranges to exact versions.
+ *
+ * ## Updating compat versions
+ *
+ * After a version bump, run:
+ * `pnpm run update-compat-versions`
+ *
+ * This regenerates `generated-versions.cjs` and all per-version `package.json` files, then runs
+ * `pnpm install --no-frozen-lockfile` in the workspace to update the committed lockfile.
+ * Commit all changes produced by the script.
+ */
 
-import { execFileSync, execFile, type ExecFileOptions } from "node:child_process";
-import {
-	existsSync,
-	mkdirSync,
-	rmdirSync,
-	readdirSync,
-	readFileSync,
-	writeFileSync,
-} from "node:fs";
+import { execFileSync } from "node:child_process";
+import { existsSync, readFileSync } from "node:fs";
+import { createRequire } from "node:module";
 import * as path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
 import { detectVersionScheme, fromInternalScheme } from "@fluid-tools/version-tools";
-import { LazyPromise, assert } from "@fluidframework/core-utils/internal";
-import { lock } from "proper-lockfile";
+import { assert } from "@fluidframework/core-utils/internal";
 import * as semver from "semver";
 
-import { pkgVersion } from "./packageVersion.js";
-import { InstalledPackage, type PackageToInstall } from "./testApi.js";
+// ---------------------------------------------------------------------------
+// Paths
+// ---------------------------------------------------------------------------
 
-// Assuming this file is in `lib`, so go to `..\node_modules\.legacy` as the install location
-const baseModulePath = fileURLToPath(new URL("../node_modules/.legacy", import.meta.url));
-const installedJsonPath = path.join(baseModulePath, "installed.json");
-const getModulePath = (version: string): string => path.join(baseModulePath, version);
+// From compiled lib/, go up one level to reach the package root, then into compat-workspaces/
+const compatWorkspacesDir = fileURLToPath(new URL("../compat-workspaces", import.meta.url));
+const generatedVersionsCjsPath = path.join(compatWorkspacesDir, "generated-versions.cjs");
+
+export const fullWorkspaceDir = path.join(compatWorkspacesDir, "full");
+
+// ---------------------------------------------------------------------------
+// generated-versions.cjs manifest
+// ---------------------------------------------------------------------------
+
+/**
+ * Schema for the committed `compat-workspaces/generated-versions.cjs` file.
+ */
+export interface CompatVersionsManifest {
+	/** All exact versions installed in `compat-workspaces/full/`, newest first. */
+	versions: string[];
+}
+
+let cachedManifest: CompatVersionsManifest | undefined;
+
+/**
+ * Reads the committed versions manifest.
+ */
+export function readVersionsManifest(): CompatVersionsManifest {
+	if (cachedManifest !== undefined) return cachedManifest;
+	if (!existsSync(generatedVersionsCjsPath)) {
+		throw new Error("Could not read versions manifest");
+	}
+	cachedManifest = createRequire(import.meta.url)(
+		generatedVersionsCjsPath,
+	) as CompatVersionsManifest;
+	return cachedManifest;
+}
+
+/**
+ * Returns all exact versions recorded in the manifest.
+ */
+export function getAllManifestVersions(manifest: CompatVersionsManifest): string[] {
+	return manifest.versions;
+}
+
+// ---------------------------------------------------------------------------
+// Version resolution
+// ---------------------------------------------------------------------------
 
 const resolutionCache = new Map<string, string>();
-
-// Increment the revision if we want to force installation (e.g. package list changed)
-// Bumped to 5: switched from npm to pnpm with node-linker=hoisted; cached installs with the
-// old npm flat layout or the pnpm isolated layout must be reinstalled.
-export const revision = 5;
-
-interface InstalledJson {
-	revision: number;
-	installed: string[];
-}
-
-let cachedInstalledJson: InstalledJson | undefined;
-function writeAndUpdateInstalledJson(data: InstalledJson): void {
-	cachedInstalledJson = data;
-	writeFileSync(installedJsonPath, JSON.stringify(data, undefined, 2), { encoding: "utf8" });
-}
-
-async function ensureInstalledJson(): Promise<void> {
-	if (existsSync(installedJsonPath)) {
-		return;
-	}
-	const release = await lock(fileURLToPath(import.meta.url), { retries: { forever: true } });
-	try {
-		// Check it again under the lock
-		if (existsSync(installedJsonPath)) {
-			return;
-		}
-		// Create the directory
-		mkdirSync(baseModulePath, { recursive: true });
-		const data: InstalledJson = { revision, installed: [] };
-
-		writeAndUpdateInstalledJson(data);
-	} finally {
-		release();
-	}
-}
-const ensureInstalledJsonLazy = new LazyPromise(async () => ensureInstalledJson());
-
-function readInstalledJsonNoLock(): InstalledJson {
-	const data = readFileSync(installedJsonPath, { encoding: "utf8" });
-	const installedJson = JSON.parse(data) as InstalledJson;
-	if (installedJson.revision !== revision) {
-		// if the revision doesn't match assume that it doesn't match
-		return { revision, installed: [] };
-	}
-	cachedInstalledJson = installedJson;
-	return installedJson;
-}
-
-async function readInstalledJson(): Promise<InstalledJson> {
-	await ensureInstalledJsonLazy;
-	const release = await lock(installedJsonPath, { retries: { forever: true } });
-	try {
-		return readInstalledJsonNoLock();
-	} finally {
-		release();
-	}
-}
-const readInstalledJsonLazy = new LazyPromise(async () => readInstalledJson());
-async function getInstalledJson(): Promise<InstalledJson> {
-	return cachedInstalledJson ?? (await readInstalledJsonLazy);
-}
-
-const isInstalled = async (version: string): Promise<boolean> =>
-	(await getInstalledJson()).installed.includes(version);
-async function addInstalled(version: string): Promise<void> {
-	await ensureInstalledJsonLazy;
-	const release = await lock(installedJsonPath, { retries: { forever: true } });
-	try {
-		const installedJson = readInstalledJsonNoLock();
-		if (!installedJson.installed.includes(version)) {
-			installedJson.installed.push(version);
-			writeAndUpdateInstalledJson(installedJson);
-		}
-	} finally {
-		release();
-	}
-}
-
-async function removeInstalled(version: string): Promise<void> {
-	await ensureInstalledJsonLazy;
-	const release = await lock(installedJsonPath, { retries: { forever: true } });
-	try {
-		const installedJson = readInstalledJsonNoLock();
-		installedJson.installed = installedJson.installed.filter((value) => value !== version);
-		writeAndUpdateInstalledJson(installedJson);
-	} finally {
-		release();
-	}
-}
 
 // See https://github.com/nodejs/node-v0.x-archive/issues/2318.
 // Note that execFile and execFileSync are used to avoid command injection vulnerability flagging from CodeQL.
 // pnpm is used instead of npm for package installation to enable security flags (--ignore-scripts, --prefer-offline).
 const pnpmCmd = process.platform === "win32" ? "pnpm.cmd" : "pnpm";
 
-// Minimum age (in minutes) a package version must have before pnpm will install it.
-const minimumReleaseAgeMinutes = 1 * 24 * 60;
-
-// Enforce reasonable security settings on compat package installs to mitigate risk of supply-chain attacks.
-// We exclude our own scopes/packages so the installation of older FF versions for compat testing doesn't
-// fail due to young versions immediately after we ship a new release.
-// Ideally we shouldn't be installing the older versions "dynamically", but while we figure out an alternative
-// approach we can do this to make things a bit better.
-// See https://pnpm.io/supply-chain-security for context on the flags used here.
-const pnpmWorkspaceYamlContent = `
-minimumReleaseAge: ${minimumReleaseAgeMinutes}
-minimumReleaseAgeExclude:
-- '@fluidframework/*'
-- '@fluid-experimental/*'
-- '@fluid-internal/*'
-- '@fluid-private/*'
-- '@fluid-tools/*'
-- 'fluid-framework'
-
-# See: https://github.com/orgs/pnpm/discussions/11084 for some discussion.
-# Enabling this is additionally more complicated than coming up with a reasonable allow-list of packages, as Azure Artifact feeds don't seem to preserve trusted provenance metadata
-# depending on how packages are ingested. Note the "off" here is the default as well.
-trustPolicy: off
-
-packages:
-  - '.'
-`;
-
-// Queries the registry that pnpm is currently configured to use, so that the isolated install
-// directory can be explicitly pinned to the same registry. In CI, pnpm is configured via
-// NPM_CONFIG_USERCONFIG to use the Azure Artifacts feed; locally it falls back to the public registry.
-let cachedPnpmRegistry: string | undefined;
-function getPnpmRegistry(): string {
-	cachedPnpmRegistry ??= execFileSync(pnpmCmd, ["config", "get", "registry"], {
-		encoding: "utf8",
-		// When using pnpm.cmd shell must be true: https://nodejs.org/en/blog/vulnerability/april-2024-security-releases-2
-		shell: true,
-	}).trim();
-	return cachedPnpmRegistry;
-}
-
 /**
- * Resolves a version range or alias to a specific version number.
+ * Resolves a version range or alias to an exact version using the committed manifest.
  *
  * @internal
  */
@@ -184,27 +109,20 @@ export function resolveVersion(requested: string, installed: boolean): string {
 		return requested;
 	}
 
+	if (!semver.validRange(requested)) {
+		throw new Error(`Invalid semver range: "${requested}"`);
+	}
+
 	if (installed) {
-		// Check the install directory instead of asking NPM for it.
-		const files = readdirSync(baseModulePath, { withFileTypes: true });
-		let found: string | undefined;
-		files.map((dirent) => {
-			if (
-				dirent.isDirectory() &&
-				semver.valid(dirent.name) &&
-				semver.satisfies(dirent.name, requested)
-			) {
-				if (!found || semver.lt(found, dirent.name)) {
-					found = dirent.name;
-				}
-			}
-		});
-		if (found) {
-			return found;
+		const manifest = readVersionsManifest();
+		const matching = manifest.versions
+			.filter((v) => semver.valid(v) && semver.satisfies(v, requested))
+			.sort(semver.rcompare);
+		if (matching.length > 0) {
+			resolutionCache.set(requested, matching[0]);
+			return matching[0];
 		}
-		throw new Error(
-			`No matching version found in ${baseModulePath} (requested: ${requested})`,
-		);
+		throw new Error(`No version in manifest satisfies range: "${requested}"`);
 	} else {
 		let result: string | undefined;
 		try {
@@ -242,163 +160,45 @@ export function resolveVersion(requested: string, installed: boolean): string {
 	}
 }
 
-async function ensureModulePath(version: string, modulePath: string): Promise<void> {
-	const release = await lock(baseModulePath, { retries: { forever: true } });
-	try {
-		console.log(`Installing version ${version} at ${modulePath}`);
-		if (!existsSync(modulePath)) {
-			// Create the under the baseModulePath lock
-			mkdirSync(modulePath, { recursive: true });
-		}
-	} finally {
-		release();
-	}
-}
+// ---------------------------------------------------------------------------
+// Installed package lookup
+// ---------------------------------------------------------------------------
 
 /**
- * Ensures the requested package version is installed locally.
+ * Resolves an exact version string to its installed module path in `compat-workspaces/full/`.
  *
- * @internal
- */
-export async function ensureInstalled(
-	requested: string,
-	packageList: PackageToInstall[],
-	force: boolean,
-): Promise<InstalledPackage | undefined> {
-	if (requested === pkgVersion) {
-		return;
-	}
-	const version = resolveVersion(requested, false);
-	const modulePath = getModulePath(version);
-
-	if (!force && (await isInstalled(version))) {
-		return { version, modulePath };
-	}
-
-	await ensureModulePath(version, modulePath);
-
-	// Adjust package list based on the minVersion for each package. If the requested version is
-	// less than the minVersion, skip that package.
-	const adjustedPackageList = packageList
-		.filter((entry) => semver.gte(version, entry.minVersion))
-		.map((entry) => entry.pkgName);
-
-	if (versionHasMovedSparsedMatrix(version)) {
-		adjustedPackageList.push("@fluid-experimental/sequence-deprecated");
-	}
-
-	// Release the base path but lock the modulePath so we can do parallel installs
-	const release = await lock(modulePath, { retries: { forever: true } });
-	try {
-		if (force) {
-			// remove version from install.json under the modulePath lock
-			await removeInstalled(version);
-		}
-
-		// Check installed status again under the modulePath lock
-		if (force || !(await isInstalled(version))) {
-			const options: ExecFileOptions = {
-				cwd: modulePath,
-				env: {
-					...process.env,
-					// Reset any parent process node options: path-specific options (ex: --require, --experimental-loader)
-					// will otherwise propagate to these commands but fail to resolve.
-					NODE_OPTIONS: "",
-				},
-				// When using pnpm.cmd shell must be true: https://nodejs.org/en/blog/vulnerability/april-2024-security-releases-2
-				shell: true,
-			};
-
-			// Pin the isolated install directory to the same registry pnpm is using in the parent
-			// process and enforce a minimum package age. Writing pnpm-workspace.yaml here
-			// makes pnpm treat modulePath as a workspace root so the settings are scoped here only.
-			const registry = getPnpmRegistry();
-			writeFileSync(
-				path.join(modulePath, ".npmrc"),
-				// node-linker=hoisted gives a flat node_modules layout (npm-compatible), which
-				// loadPackage() requires to resolve both direct and transitive dependencies by
-				// their package name. Without this, pnpm's default isolated layout places
-				// transitive deps under node_modules/.pnpm/ and they cannot be found.
-				`registry=${registry}\nnode-linker=hoisted\n`,
-				{ encoding: "utf8" },
-			);
-			writeFileSync(path.join(modulePath, "pnpm-workspace.yaml"), pnpmWorkspaceYamlContent, {
-				encoding: "utf8",
-			});
-
-			// Write a minimal package.json so pnpm add has a manifest to update.
-			// Done with writeFileSync rather than `pnpm init` so that it is idempotent:
-			// `pnpm init` fails if package.json already exists (e.g. force=true on a previously
-			// installed version, or a revision bump that clears installed.json but leaves the dir).
-			writeFileSync(
-				path.join(modulePath, "package.json"),
-				JSON.stringify({ name: "legacy-compat-install", version: "1.0.0" }, undefined, 2),
-				{ encoding: "utf8" },
-			);
-			await new Promise<void>((resolve, reject) =>
-				execFile(
-					pnpmCmd,
-					[
-						"add",
-						// Use the pnpm content-addressable store cache when available, reducing
-						// exposure to packages published since the cache was last populated.
-						"--prefer-offline",
-						...adjustedPackageList.map((pkg) => `${pkg}@${version}`),
-					],
-					options,
-					(error, stdout, stderr) => {
-						if (error) {
-							const errorString =
-								error instanceof Error
-									? `${error.message}\n${error.stack}`
-									: JSON.stringify(error);
-							reject(
-								new Error(
-									`Failed to install in ${modulePath}\nError:${errorString}\nStdOut:${stdout}\nStdErr:${stderr}`,
-								),
-							);
-						}
-						resolve();
-					},
-				),
-			);
-
-			// add it to the install.json under the modulePath lock.
-			await addInstalled(version);
-		}
-		return { version, modulePath };
-	} catch (e) {
-		try {
-			rmdirSync(modulePath, { recursive: true });
-		} catch (ex) {
-			// TODO: document why we are ignoring the error here
-		}
-		throw new Error(`Unable to install version ${version}\n${e}`);
-	} finally {
-		release();
-	}
-}
-
-/**
- * Checks if a requested version is installed and returns its path.
- *
+ * The workspace is expected to be pre-installed via the package `postinstall` hook. Throws a
+ * descriptive error if the version directory is not found.
  * @internal
  */
 export function checkInstalled(requested: string): { version: string; modulePath: string } {
 	const version = resolveVersion(requested, true);
-	const modulePath = getModulePath(version);
-	if (existsSync(modulePath)) {
-		// assume it is valid if it exists
-		return { version, modulePath };
+	const versionDir = path.join(fullWorkspaceDir, version);
+
+	if (existsSync(versionDir)) {
+		return { version, modulePath: versionDir };
 	}
+
 	throw new Error(
-		`Requested version ${requested} resolved to ${version} is not installed at ${modulePath}`,
+		`Version ${version} is not installed in compat-workspaces/full/.\n` +
+			`Run \`pnpm run update-compat-versions\` to regenerate the workspace, then re-run \`pnpm install\`.`,
 	);
 }
+
+// ---------------------------------------------------------------------------
+// Package loading
+// ---------------------------------------------------------------------------
 
 /**
  * Dynamically loads a package from the specified module path.
  *
+ * @param modulePath - Path to the version directory (e.g. `compat-workspaces/full/2.83.0`).
+ * @param pkg - Package name to load (e.g. `@fluidframework/container-loader`).
+ * @remarks
+ * This function reimplements part of Node's module resolution logic. It would be possible to use `createRequire` / `import` alternatively,
+ * but if this approach is taken, the compat workspace where prior versions of FF get installed *must* be moved outside of a context that might
+ * have other versions of FF installed in parent folders. Otherwise, Node's module resolution might happily load incorrect versions of FF packages
+ * from parent folders instead of the intended versions, which would silently break the tests.
  * @internal
  */
 export const loadPackage = async (
@@ -458,11 +258,15 @@ export const loadPackage = async (
 	return import(pathToFileURL(path.join(pkgPath, primaryExport)).href);
 };
 
+// ---------------------------------------------------------------------------
+// Version arithmetic
+// ---------------------------------------------------------------------------
+
 /**
- * Helper function for `getRequestedVersion()`. This function calculates the requested version **range**
- * based on the base version and the requested value, **without** validating it via npm.
+ * Computes the semver range corresponding to a delta from a base version, without resolving it
+ * to an exact version. Used by both the test runtime and the `update-compat-versions` script.
  */
-function calculateRequestedRange(
+export function calculateRequestedRange(
 	baseVersion: string,
 	requested?: number | string,
 	adjustPublicMajor: boolean = false,
@@ -563,9 +367,9 @@ function calculateRequestedRange(
 }
 
 /**
- *
- * Given a version, returns the most recently released version. The version provided can be adjusted to
- * the next or previous major versions by providing positive/negative integers in the `requested` parameter.
+ * Given a version, returns the most recently released version. The version provided can be
+ * adjusted to the next or previous major versions by providing positive/negative integers in the
+ * `requested` parameter.
  *
  * @param baseVersion - The base version to move from (eg. "0.60.0")
  * @param requested - If the value is a negative number, the baseVersion will be adjusted down.
@@ -617,6 +421,20 @@ export function getRequestedVersion(
 	}
 }
 
+// ---------------------------------------------------------------------------
+// Internal helpers
+// ---------------------------------------------------------------------------
+
+/**
+ * Computes a semver range for a version expressed in Fluid's internal/RC scheme
+ * (e.g. `2.0.0-internal.3.0.0`) after applying a negative `requested` delta.
+ *
+ * Handles several cross-tier edge cases:
+ * - RC → internal: going back far enough from an RC release crosses into internal releases.
+ * - internal → public 1.x / 0.x: going back from early 2.0.0-internal.x versions crosses
+ * into the public 1.x and pre-1.0 (0.xx) release lines.
+ * - Skipping RC tiers when the delta spans into the internal series from RC.
+ */
 function internalSchema(
 	publicVersion: string,
 	internalVersion: string,

@@ -20,6 +20,9 @@ packages:
   - "!**/lib/**"
   - "!**/src/**"
 
+  # exclude sub-workspaces for compat tests — these are managed separately with their own lockfiles
+  - "!**/compat-workspaces/**"
+
 # Supply chain security settings - see /DEV.md for documentation
 minimumReleaseAge: 1440
 minimumReleaseAgeExclude: [
