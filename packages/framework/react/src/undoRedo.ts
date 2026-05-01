@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { oob } from "@fluidframework/core-utils/internal";
+import { assert, oob } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import type { RevertibleAlpha, TreeBranchAlpha } from "@fluidframework/tree/internal";
 
@@ -120,7 +120,6 @@ export interface UndoRedo {
 	 */
 	dispose(): void;
 }
-
 
 /**
  * One entry on the undo or redo stack, pairing a revertible with its commit's label set.
@@ -318,22 +317,20 @@ class UndoRedoManager implements UndoRedo {
 		kind: "undo" | "redo",
 		predicate: (entry: StackEntry) => boolean,
 	): void {
+		assert(this.#pendingOperation === undefined, "Unexpected pending operation during revert");
+
 		const index = UndoRedoManager.#findLast(stack, predicate);
 		if (index === undefined) {
 			return;
 		}
-		const entry = stack[index] ?? oob();
+		const entry = stack.splice(index, 1)[0] ?? oob();
+
 		this.#pendingOperation = { kind, labels: entry.labels };
 		try {
-			// revert(false) reverts without auto-disposing, so the entry remains retryable if it throws.
-			entry.revertible.revert(false);
+			entry.revertible.revert();
 		} finally {
 			this.#pendingOperation = undefined;
 		}
-		// Only remove and dispose after a successful revert.
-		// If revert() throws, the entry stays so the user can retry.
-		stack.splice(index, 1);
-		entry.revertible.dispose();
 	}
 }
 
