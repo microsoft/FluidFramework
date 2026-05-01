@@ -6,9 +6,10 @@
 import { strict as assert } from "node:assert";
 
 // eslint-disable-next-line import-x/no-internal-modules
-import { FormattedTextAsTree, type TreeView } from "@fluidframework/tree/internal";
+import { FormattedTextAsTree } from "@fluidframework/tree/internal";
 import { render } from "@testing-library/react";
-import { TextAsTree, independentView } from "fluid-framework/alpha";
+import type { TreeView } from "fluid-framework";
+import { independentView, TextAsTree } from "fluid-framework/alpha";
 
 import { App, TextEditorRoot, treeConfig } from "../app.js";
 

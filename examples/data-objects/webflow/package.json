@@ -80,7 +80,7 @@
 		"@fluidframework/merge-tree": "workspace:~",
 		"@fluidframework/runtime-definitions": "workspace:~",
 		"@fluidframework/sequence": "workspace:~",
-		"assert": "^2.0.0",
+		"assert": "^2.1.0",
 		"debug": "^4.3.4",
 		"react": "^18.3.1",
 		"react-dom": "^18.3.1"
