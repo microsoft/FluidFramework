@@ -13,7 +13,7 @@ import { driver, odspEndpointName, r11sEndpointName, tenantIndex } from "./compa
 import { getVersionedTestObjectProvider } from "./compatUtils.js";
 import { ITestObjectProviderOptions } from "./describeCompat.js";
 import { pkgVersion } from "./packageVersion.js";
-import { ensurePackageInstalled, InstalledPackage } from "./testApi.js";
+import { ensureVersionLoaded } from "./testApi.js";
 
 /**
  * Interface to hold the requested versions which should be installed
@@ -35,21 +35,21 @@ export interface IRequestedFluidVersions {
 }
 
 const installRequiredVersions = async (config: IRequestedFluidVersions): Promise<void> => {
-	const installPromises: Promise<InstalledPackage | undefined>[] = [];
+	const loadPromises: Promise<void>[] = [];
 	if (config.requestAbsoluteVersions !== undefined) {
-		installPromises.push(
+		loadPromises.push(
 			...config.requestAbsoluteVersions.map(async (version) =>
-				ensurePackageInstalled(version, 0),
+				ensureVersionLoaded(version, 0),
 			),
 		);
 	}
 
 	if (config.requestRelativeVersions !== undefined) {
-		installPromises.push(ensurePackageInstalled(pkgVersion, config.requestRelativeVersions));
+		loadPromises.push(ensureVersionLoaded(pkgVersion, config.requestRelativeVersions));
 	}
 
 	let hadErrors = false;
-	for (const promise of installPromises) {
+	for (const promise of loadPromises) {
 		try {
 			await promise;
 		} catch (e) {
