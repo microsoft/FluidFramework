@@ -5,7 +5,7 @@
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import type { IDisposable } from "@fluidframework/core-interfaces";
-import { isPromiseLike } from "@fluidframework/core-utils/internal";
+import { assert, isPromiseLike } from "@fluidframework/core-utils/internal";
 import {
 	ScopeType,
 	type ConnectionMode,
@@ -256,8 +256,8 @@ export class FrozenDeltaStream
 	 * @param options - Configuration:
 	 *
 	 * - `readOnly`: when `true` (the default), claims include only `DocRead` and {@link isFrozenDeltaStreamConnection} matches this instance (forcing the container read-only). When `false`, claims include `DocWrite` and the container surfaces as writable.
-	 * - `storageOnlyReason`: surfaced via `IContainer.readOnlyInfo.storageOnlyReason` for the read-only variant.
-	 * - `readonlyConnectionReason`: error/reason that led to using this stream as a fallback (e.g. forbidden delta stream connection); surfaced via the same readOnlyInfo path.
+	 * - `storageOnlyReason`: surfaced via `IContainer.readOnlyInfo.storageOnlyReason` for the read-only variant. Must not be passed when `readOnly: false` (the writable variant has no readOnlyInfo to surface it on).
+	 * - `readonlyConnectionReason`: error/reason that led to using this stream as a fallback (e.g. forbidden delta stream connection); surfaced via the same readOnlyInfo path. Same constraint as `storageOnlyReason`.
 	 */
 	constructor(options?: {
 		readOnly?: boolean;
@@ -266,8 +266,26 @@ export class FrozenDeltaStream
 	}) {
 		super();
 		this.readOnly = options?.readOnly ?? true;
+		// Both fields are surfaced through the read-only-forcing path in
+		// ConnectionManager.readOnlyInfo, which only triggers for the read-only variant.
+		// Passing them on the writable variant is silently dropped today; assert to make the
+		// misuse loud rather than surprising.
+		assert(
+			this.readOnly || options?.storageOnlyReason === undefined,
+			"storageOnlyReason is only meaningful for the read-only frozen delta stream variant",
+		);
+		assert(
+			this.readOnly || options?.readonlyConnectionReason === undefined,
+			"readonlyConnectionReason is only meaningful for the read-only frozen delta stream variant",
+		);
 		this.storageOnlyReason = options?.storageOnlyReason;
 		this.readonlyConnectionReason = options?.readonlyConnectionReason;
+		// Cast: ITokenClaims requires tenantId/documentId/user/iat/exp/ver, but a frozen
+		// delta stream has no tenant or session to draw real values from — it's a synthetic
+		// in-process connection that never reaches a service. Inventing sentinel values
+		// would imply quorum membership we cannot honor; only `scopes` actually drives
+		// behavior here (DocRead vs DocWrite gates readOnlyInfo). The cast is the honest
+		// representation of "this connection has no claims worth populating."
 		// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
 		this.claims = {
 			scopes: this.readOnly ? [ScopeType.DocRead] : [ScopeType.DocRead, ScopeType.DocWrite],

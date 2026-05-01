@@ -1094,6 +1094,15 @@ export class ConnectionManager implements IConnectionManager {
 		// Note that we also want nacks to be rare and be treated as catastrophic failures.
 		// Be careful with reentrancy though - disconnected event should not be be raised in the
 		// middle of the current workflow, but rather on clean stack!
+		//
+		// Tripwire: writable-frozen container loads (`loadFrozenContainerFromPendingState({
+		// readOnly: false })`) depend on this short-circuit. Their FrozenDeltaStream is mode
+		// "read", so a runtime submit lands here, the deferred `reconnect("write")` reaches
+		// FrozenDocumentService.connectToDeltaStream({ mode: "write" }) which hangs the
+		// promise, and the runtime's outbox skips actual send so ops accumulate in
+		// pendingStateManager. If this short-circuit is refactored to call submit directly
+		// instead of triggering a reconnect, writable-frozen loses its only mechanism for
+		// capturing additional pending state — see frozenServices.ts JSDoc.
 		if (this.connectionMode === "read") {
 			if (!this.pendingReconnect) {
 				this.pendingReconnect = true;

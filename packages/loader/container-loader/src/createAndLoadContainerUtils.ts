@@ -242,6 +242,13 @@ export interface ILoadFrozenContainerFromPendingStateProps
 	 * Local DDS state continues to update via optimistic apply, and submitted ops accumulate in
 	 * the runtime's pending-state manager. Use this when callers want to accrue and capture
 	 * pending state without publishing it.
+	 *
+	 * @remarks
+	 * The flag uses negative polarity (`readOnly`) rather than a positive opt-in (`writable`)
+	 * to align with `IContainer.readOnlyInfo.readonly`, which is the established surface for
+	 * read/write state on a loaded container. A future positive-polarity option can layer on
+	 * top of this without breaking callers, but flipping the polarity now would split readers
+	 * between two conventions for the same concept.
 	 */
 	readonly readOnly?: boolean;
 }

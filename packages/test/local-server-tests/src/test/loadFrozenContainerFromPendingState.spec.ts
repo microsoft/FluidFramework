@@ -799,5 +799,87 @@ describe("loadFrozenContainerFromPendingState", () => {
 				"Expected frozenContainer.closed === true after close() with hung upgrade",
 			);
 		});
+
+		it("captures writes performed after the upgrade-connect has hung", async () => {
+			const { container, ITestFluidObject, urlResolver, codeLoader, documentServiceFactory } =
+				await initialize();
+			await container.attach(urlResolver.createCreateNewRequest("test"));
+			ITestFluidObject.root.set("seed", "value");
+			const url = await container.getAbsoluteUrl("");
+			assert(url !== undefined, "Expected container to provide a valid absolute URL");
+			if (container.isDirty) {
+				await timeoutPromise((resolve) => container.once("saved", () => resolve()));
+			}
+			const initialPending = await container.getPendingLocalState();
+
+			const frozenContainer = asLegacyAlpha(
+				await loadFrozenContainerFromPendingState({
+					codeLoader,
+					documentServiceFactory,
+					urlResolver,
+					request: { url },
+					pendingLocalState: initialPending,
+					readOnly: false,
+				}),
+			);
+			const frozenEntryPoint: FluidObject<TestFluidObject> =
+				await frozenContainer.getEntryPoint();
+			assert(
+				frozenEntryPoint.ITestFluidObject !== undefined,
+				"Expected frozen container entrypoint to be a valid TestFluidObject",
+			);
+
+			// First write triggers the upgrade-hang via sendMessages's read→write reconnect.
+			frozenEntryPoint.ITestFluidObject.root.set("preDisconnect", "first");
+
+			// Bounded wait so the upgrade attempt fires and the container settles into its
+			// post-upgrade state (Disconnected / EstablishingConnection — the exact terminal
+			// state varies, but ops submitted from here on are written after the hang).
+			await new Promise<void>((resolve) => setTimeout(resolve, 500));
+
+			// Second write — happens after the upgrade attempt. The runtime must still apply
+			// it locally and accumulate it in pendingStateManager.
+			frozenEntryPoint.ITestFluidObject.root.set("postDisconnect", "second");
+
+			assert.strictEqual(
+				frozenEntryPoint.ITestFluidObject.root.get("preDisconnect"),
+				"first",
+				"Expected pre-upgrade write to be locally visible",
+			);
+			assert.strictEqual(
+				frozenEntryPoint.ITestFluidObject.root.get("postDisconnect"),
+				"second",
+				"Expected post-upgrade write to be locally visible",
+			);
+
+			// Both writes should round-trip through getPendingLocalState — proving the
+			// writable-frozen container continues to capture pending state across the
+			// upgrade-hang boundary.
+			const layeredPending = await frozenContainer.getPendingLocalState();
+			const secondFrozen = await loadFrozenContainerFromPendingState({
+				codeLoader,
+				documentServiceFactory,
+				urlResolver,
+				request: { url },
+				pendingLocalState: layeredPending,
+				readOnly: false,
+			});
+			const secondEntryPoint: FluidObject<TestFluidObject> =
+				await secondFrozen.getEntryPoint();
+			assert(
+				secondEntryPoint.ITestFluidObject !== undefined,
+				"Expected second frozen entrypoint to be a valid TestFluidObject",
+			);
+			assert.strictEqual(
+				secondEntryPoint.ITestFluidObject.root.get("preDisconnect"),
+				"first",
+				"Expected pre-upgrade write to round-trip through pending state",
+			);
+			assert.strictEqual(
+				secondEntryPoint.ITestFluidObject.root.get("postDisconnect"),
+				"second",
+				"Expected post-upgrade write to round-trip through pending state",
+			);
+		});
 	});
 });
