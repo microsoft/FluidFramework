@@ -31,6 +31,8 @@ import {
 } from "@fluidframework/devtools-core/internal";
 import type { IFluidContainer } from "@fluidframework/fluid-static";
 import { isInternalFluidContainer } from "@fluidframework/fluid-static/internal";
+import type { FluidContainer } from "@fluidframework/runtime-definitions/internal";
+import { ServiceContainerBase } from "@fluidframework/runtime-definitions/internal";
 
 /**
  * Properties for configuring {@link IDevtools}.
@@ -77,6 +79,43 @@ export interface ContainerDevtoolsProps extends HasContainerKey {
 }
 
 /**
+ * Properties for configuring Devtools for an individual {@link @fluidframework/runtime-definitions#FluidContainer}.
+ *
+ * @sealed
+ * @alpha
+ */
+export interface FluidContainerDevtoolsProps extends HasContainerKey {
+	/**
+	 * The Container to register with the Devtools.
+	 */
+	readonly container: FluidContainer;
+}
+
+/**
+ * Properties for configuring {@link FluidDevtools} with {@link @fluidframework/runtime-definitions#FluidContainer}s.
+ *
+ * @sealed
+ * @alpha
+ */
+export interface FluidDevtoolsProps {
+	/**
+	 * (optional) telemetry logger associated with the Fluid runtime.
+	 *
+	 * @remarks
+	 *
+	 * Note: the Devtools do not register this logger with the Fluid runtime; that must be done separately.
+	 */
+	readonly logger?: IDevtoolsLogger;
+
+	/**
+	 * (optional) List of Containers to initialize the devtools with.
+	 *
+	 * @remarks Additional Containers can be registered via {@link FluidDevtools.registerFluidContainerDevtools}.
+	 */
+	readonly initialContainers?: FluidContainerDevtoolsProps[];
+}
+
+/**
  * Fluid Devtools. A single, global instance is used to generate and communicate stats associated with the general Fluid
  * runtime (i.e., it is not associated with any single Framework entity).
  *
@@ -109,7 +148,30 @@ export interface IDevtools extends IDisposable {
 	closeContainerDevtools(id: string): void;
 }
 
-class Devtools implements IDevtools {
+/**
+ * Fluid Devtools with support for the new {@link @fluidframework/runtime-definitions#FluidContainer} API.
+ *
+ * @remarks
+ *
+ * Extends {@link IDevtools} with the ability to register containers created via a
+ * {@link @fluidframework/runtime-definitions#ServiceClient}.
+ *
+ * @sealed
+ * @alpha
+ */
+export interface FluidDevtools extends IDevtools {
+	/**
+	 * Registers a {@link @fluidframework/runtime-definitions#FluidContainer} with the Devtools.
+	 *
+	 * @throws
+	 *
+	 * Will throw if devtools have already been registered for the specified
+	 * {@link @fluidframework/devtools-core#HasContainerKey.containerKey}.
+	 */
+	registerFluidContainerDevtools(props: FluidContainerDevtoolsProps): Promise<void>;
+}
+
+class Devtools implements FluidDevtools {
 	public constructor(
 		/**
 		 * Handle to the underlying Devtools instance (singleton).
@@ -130,6 +192,16 @@ class Devtools implements IDevtools {
 	 */
 	public closeContainerDevtools(id: string): void {
 		this._devtools.closeContainerDevtools(id);
+	}
+
+	/**
+	 * {@inheritDoc IFluidDevtools.registerFluidContainerDevtools}
+	 */
+	public async registerFluidContainerDevtools(
+		props: FluidContainerDevtoolsProps,
+	): Promise<void> {
+		const mappedProps = await mapFluidContainerProps(props);
+		this._devtools.registerContainerDevtools(mappedProps);
 	}
 
 	/**
@@ -185,6 +257,47 @@ function mapContainerProps(
 		containerKey,
 		containerData: container.initialObjects as Record<string, IFluidLoadable>,
 	};
+}
+
+/**
+ * Maps {@link FluidContainerDevtoolsProps} to lower-level {@link @fluidframework/devtools-core#ContainerDevtoolsPropsBase}.
+ */
+async function mapFluidContainerProps(
+	containerProps: FluidContainerDevtoolsProps,
+): Promise<ContainerDevtoolsPropsBase> {
+	const { container, containerKey } = containerProps;
+	ServiceContainerBase.narrow(container);
+	const entryPoint = await container.container.getEntryPoint();
+	return {
+		container: container.container,
+		containerKey,
+		containerData: { root: entryPoint as IFluidLoadable },
+	};
+}
+
+/**
+ * Initializes the Devtools singleton with support for the new {@link @fluidframework/runtime-definitions#FluidContainer}
+ * API, and returns a handle to it.
+ *
+ * @remarks
+ * Use this instead of {@link initializeDevtools} when passing containers created by a
+ * {@link @fluidframework/runtime-definitions#ServiceClient} (e.g. via `createTinyliciousServiceClient`).
+ *
+ * @alpha
+ */
+export async function initializeFluidDevtools(
+	props: FluidDevtoolsProps,
+): Promise<FluidDevtools> {
+	const { initialContainers, logger } = props;
+	const mappedInitialContainers =
+		initialContainers === undefined
+			? undefined
+			: await Promise.all(initialContainers.map(mapFluidContainerProps));
+	const baseDevtools = initializeDevtoolsBase({
+		logger,
+		initialContainers: mappedInitialContainers,
+	});
+	return new Devtools(baseDevtools);
 }
 
 // Convenience re-exports. Need to cover the things we export form this package,
