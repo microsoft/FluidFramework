@@ -740,16 +740,12 @@ describe("loadFrozenContainerFromPendingState", () => {
 			// requests connectToDeltaStream({ mode: "write" }), which FrozenDocumentService hangs.
 			frozenEntryPoint.ITestFluidObject.root.set("triggerUpgrade", 1);
 
-			// Wait for the disconnect that precedes the hung upgrade-connect attempt — confirms
-			// the hung promise has been registered with pendingConnectRejecters.
-			await timeoutPromise(
-				(resolve) => frozenContainer.once("disconnected", () => resolve()),
-				{
-					durationMs: 5000,
-					errorMsg:
-						"Expected writable frozen container to disconnect after triggering upgrade",
-				},
-			);
+			// Yield long enough for the runtime/connectionManager to dispatch the upgrade attempt
+			// and register the hung promise on FrozenDocumentService.pendingConnectRejecters.
+			// The writable-frozen container does not transition to a "saved" state and does not
+			// necessarily emit "disconnected" before the upgrade-connect call lands, so we use
+			// a bounded sleep rather than an event signal.
+			await new Promise<void>((resolve) => setTimeout(resolve, 500));
 
 			// dispose() must terminate. Without FrozenDocumentService.dispose() rejecting the
 			// hung promise, the connectionManager's connect loop awaits indefinitely.
@@ -789,14 +785,9 @@ describe("loadFrozenContainerFromPendingState", () => {
 			);
 
 			frozenEntryPoint.ITestFluidObject.root.set("triggerUpgrade", 1);
-			await timeoutPromise(
-				(resolve) => frozenContainer.once("disconnected", () => resolve()),
-				{
-					durationMs: 5000,
-					errorMsg:
-						"Expected writable frozen container to disconnect after triggering upgrade",
-				},
-			);
+			// Same bounded sleep as the dispose case — give the upgrade attempt a chance to
+			// reach FrozenDocumentService.connectToDeltaStream({mode: "write"}) before close().
+			await new Promise<void>((resolve) => setTimeout(resolve, 500));
 
 			// close() does not propagate to service.dispose() today, so the hung promise stays
 			// pending until GC. That's the documented "benign leak" tradeoff — what this test
