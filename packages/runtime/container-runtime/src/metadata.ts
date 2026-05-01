@@ -48,6 +48,8 @@ export interface IBatchMetadata {
 	 * - Absent: this is not a grouped batch envelope (e.g. a singleton batch that bypassed grouping).
 	 * - `0`: empty-grouped-batch placeholder produced when a resubmitted batch becomes empty.
 	 * - `N` (N \> 0): grouped batch with N inner ops. For a chunked grouped batch this appears only on the last chunk's envelope (intermediate chunks carry no metadata).
+	 *
+	 * The field is intentionally advisory-only: the runtime does not validate that an inbound value matches the batch's actual inner op count. It is consumed exclusively by off-runtime telemetry.
 	 */
 	groupedOpCount?: number;
 }
