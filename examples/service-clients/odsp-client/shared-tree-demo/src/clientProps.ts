@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { OdspClientProps, OdspConnectionConfig } from "@fluidframework/odsp-client/beta";
+import type { OdspConnectionConfig } from "@fluidframework/odsp-client/beta";
 
 import { OdspTestTokenProvider } from "./tokenProvider.js";
 
@@ -20,13 +20,9 @@ declare global {
 	};
 }
 
-const connectionConfig: OdspConnectionConfig = {
+export const connectionConfig: OdspConnectionConfig = {
 	tokenProvider: new OdspTestTokenProvider(),
 	siteUrl: process.env.SITE_URL,
 	driveId: process.env.SPE_DRIVE_ID,
 	filePath: "",
-};
-
-export const clientProps: OdspClientProps = {
-	connection: connectionConfig,
 };
