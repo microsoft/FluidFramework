@@ -928,7 +928,7 @@ describe("Runtime", () => {
 						// — this test cares about batch boundaries, not batchId stamping.
 						const normalizedMetadata = submittedOpsMetadata.map((m) => {
 							if (m === undefined) {
-								return m;
+								return undefined;
 							}
 							// eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-unsafe-assignment
 							const { batchId: _ignored, ...rest } = m as { batchId?: string };
