@@ -70,16 +70,23 @@ const pnpmCmd = process.platform === "win32" ? "pnpm.cmd" : "pnpm";
  * The typing on this is constructed so that users of the cached function will have their inner function type (including e.g. parameter names) preserved.
  */
 function cached<TFunc extends (...args: any[]) => unknown>(f: TFunc): TFunc {
-	const cache = new Map<string, ReturnType<TFunc>>();
+	const undefinedSentinel = Symbol("undefined");
+	const cache = new Map<string, ReturnType<TFunc> | typeof undefinedSentinel>();
 	return ((...args: Parameters<TFunc>) => {
 		const key = JSON.stringify(args);
-		let cachedOutput: ReturnType<TFunc> | undefined = cache.get(key);
+		let cachedOutput: ReturnType<TFunc> | typeof undefinedSentinel | undefined = cache.get(key);
 		if (cachedOutput === undefined) {
 			cachedOutput = f(...args) as ReturnType<TFunc>;
-			cache.set(key, cachedOutput!);
+			cache.set(key, cachedOutput ?? undefinedSentinel);
 		}
-		return cachedOutput!;
+		return cachedOutput === undefinedSentinel ? undefined : cachedOutput;
 	}) as unknown as TFunc;
+}
+
+function validateRangeSpec(rangeSpec: string): void {
+	if (!semver.validRange(rangeSpec)) {
+		throw new Error(`Invalid semver range: "${rangeSpec}"`);
+	}
 }
 
 /**
@@ -91,9 +98,7 @@ export const resolveRangeViaRegistry = cached((rangeSpec: string): string => {
 		return rangeSpec;
 	}
 
-	if (!semver.validRange(rangeSpec)) {
-		throw new Error(`Invalid semver range: "${rangeSpec}"`);
-	}
+	validateRangeSpec(rangeSpec);
 	let result: string;
 	try {
 		result = execFileSync(
@@ -123,6 +128,7 @@ export const resolveRangeViaRegistry = cached((rangeSpec: string): string => {
  * @param rangeSpec - A valid (as per [semver](https://www.npmjs.com/package/semver)) range specification
  */
 function resolveRangeViaManifest(rangeSpec: string): string {
+	validateRangeSpec(rangeSpec);
 	const manifest = readVersionsManifest();
 	const matching = manifest.versions
 		.filter((v) => semver.valid(v) && semver.satisfies(v, rangeSpec))
