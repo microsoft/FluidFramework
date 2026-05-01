@@ -410,6 +410,7 @@ stages:
             displayName: 'Run tenant setup script'
             env:
               SYSTEM_ACCESSTOKEN: $(System.AccessToken)
+            workingDir: $(Pipeline.Workspace)/$(FFPipelineHostDirectory)
             inputs:
               targetType: 'inline'
               script: |
@@ -509,6 +510,7 @@ stages:
             env:
               login__odsp__fic__test__users: $(login__odsp__fic__test__users)
               SYSTEM_ACCESSTOKEN: $(System.AccessToken)
+            workingDir: $(Pipeline.Workspace)/$(FFPipelineHostDirectory)
             inputs:
               targetType: 'inline'
               script: |
