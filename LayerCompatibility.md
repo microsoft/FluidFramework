@@ -80,17 +80,17 @@ flowchart
 
 ### Error Handling
 
-Layer incompatibility is detected when a layer interacts with another layer for the first time. When that happens, an error of type `FluidErrorTypes.layerIncompatibilityError` is thrown. The error implements `ILayerIncompatibilityError` interface whose properties provide detailed information on the error. This prevents any potential data corruption that could occur from incompatible operations.
+Layer incompatibility is detected when a layer interacts with another layer for the first time. When that happens, an error of type `FluidErrorTypes.layerIncompatibilityError` is thrown. The error implements the `ILayerIncompatibilityError` interface, whose properties provide detailed information about the incompatibility. Throwing this error prevents potentially incompatible operations that could lead to data corruption.
 
 The incompatibilities between the layers are detected as follows:
 
-- **Loader ↔ Driver** and **Loader ↔ Runtime**: Incompatibility is detected during Container create / load. If incompatibility is detected, the creation / load will fail with `FluidErrorTypes.layerIncompatibilityError`.
+- **Loader ↔ Driver** and **Loader ↔ Runtime**: Incompatibility is detected during container create / load. If incompatibility is detected, the creation / load will fail with `FluidErrorTypes.layerIncompatibilityError`.
 - **Runtime ↔ DataStore**: Incompatibility is detected during data store create / load. If incompatibility is detected, the data store creation / load will fail with `FluidErrorTypes.layerIncompatibilityError`.
-  If the data store is being created / loaded during Container create / load, that will also fail with `FluidErrorTypes.layerIncompatibilityError`.
+  If the data store is being created / loaded during container create / load, that will also fail with `FluidErrorTypes.layerIncompatibilityError`.
 
-### Telemetry
+#### Telemetry
 
-An error telemetry with eventName `LayerIncompatibilityError` will be logged whenever a layer incompatibility is detected. The event will include key properties defined in `ILayerIncompatibilityError` interface.
+A telemetry event named `LayerIncompatibilityError` will be logged whenever a layer incompatibility is detected. The event will include key properties defined in the `ILayerIncompatibilityError` interface.
 
 
 ## Layer Compatibility Policy
