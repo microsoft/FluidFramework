@@ -363,10 +363,6 @@ export interface IGarbageCollectionRuntime {
 	 * Returns the type of the GC node.
 	 */
 	getNodeType(nodePath: string): GCNodeType;
-	/**
-	 * Called when the runtime should close because of an error.
-	 */
-	closeFn: (error?: ICriticalContainerError) => void;
 }
 
 /**
@@ -453,6 +449,12 @@ export interface IGarbageCollector {
 	 */
 	isNodeDeleted(nodePath: string): boolean;
 	setConnectionState(canSendOps: boolean, clientId?: string): void;
+	/**
+	 * Cancels all GC timers and clears tracked state so timers do not keep the event loop alive
+	 * or leak memory.
+	 * @remarks
+	 * This is idempotent - it is safe to call multiple times.
+	 */
 	dispose(): void;
 }
 
@@ -497,6 +499,11 @@ export interface IGCNodeUpdatedProps {
  */
 export interface IGarbageCollectorCreateParams {
 	readonly runtime: IGarbageCollectionRuntime;
+	/**
+	 * Initiate closing of the container due to an error.
+	 */
+	readonly closeFn: (error: ICriticalContainerError) => void;
+
 	readonly gcOptions: IGCRuntimeOptions;
 	readonly baseLogger: ITelemetryLoggerExt;
 	readonly existing: boolean;
