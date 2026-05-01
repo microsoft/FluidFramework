@@ -742,7 +742,7 @@ describe("loadFrozenContainerFromPendingState", () => {
 
 			// Wait for the disconnect that precedes the hung upgrade-connect attempt — confirms
 			// the hung promise has been registered with pendingConnectRejecters.
-			await timeoutPromise<void>(
+			await timeoutPromise(
 				(resolve) => frozenContainer.once("disconnected", () => resolve()),
 				{
 					durationMs: 5000,
@@ -789,7 +789,7 @@ describe("loadFrozenContainerFromPendingState", () => {
 			);
 
 			frozenEntryPoint.ITestFluidObject.root.set("triggerUpgrade", 1);
-			await timeoutPromise<void>(
+			await timeoutPromise(
 				(resolve) => frozenContainer.once("disconnected", () => resolve()),
 				{
 					durationMs: 5000,
