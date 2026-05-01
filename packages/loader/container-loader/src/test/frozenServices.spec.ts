@@ -175,8 +175,8 @@ describe("FrozenDocumentService.connectToDeltaStream upgrade-hang lifecycle", ()
 		// Subsequent write-mode connect — must hang until dispose.
 		const hangPromise = service.connectToDeltaStream(fakeWriteClient());
 		let rejection: Error | undefined;
-		hangPromise.catch((e: Error) => {
-			rejection = e;
+		hangPromise.catch((error: Error) => {
+			rejection = error;
 		});
 
 		// Yield microtasks; the hang must not settle of its own accord. Capture into a
@@ -229,8 +229,8 @@ describe("FrozenDocumentService.connectToDeltaStream upgrade-hang lifecycle", ()
 		await service.connectToDeltaStream(fakeReadClient());
 
 		const rejections: unknown[] = [];
-		const captureRejection = (e: unknown): void => {
-			rejections.push(e);
+		const captureRejection = (error: unknown): void => {
+			rejections.push(error);
 		};
 
 		// Three independent hangs accumulate independent rejecters.
