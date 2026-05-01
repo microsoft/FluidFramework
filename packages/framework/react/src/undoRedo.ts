@@ -218,15 +218,10 @@ class UndoRedoManager implements UndoRedo {
 				return;
 			}
 
-			// Normal user commit: extract root-level symbol labels from the commit metadata.
+			// Normal user commit: collect root-level labels from the commit metadata.
 			// Nested label nodes (produced by inner runTransaction calls) are not traversed —
 			// see UndoRedo remarks.
-			const commitLabels = new Set<unknown>();
-			for (const label of data.labels) {
-				if (typeof label === "symbol") {
-					commitLabels.add(label);
-				}
-			}
+			const commitLabels = new Set<unknown>(data.labels);
 
 			// Redo invalidation: clear redo entries whose label sets overlap with this commit's labels.
 			for (let i = this.#redoStack.length - 1; i >= 0; i--) {
