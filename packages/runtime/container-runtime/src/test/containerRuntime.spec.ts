@@ -2474,7 +2474,7 @@ describe("Runtime", () => {
 				assert.strictEqual(containerErrors.length, 1);
 			});
 
-			it("Can roundrip DuplicateBatchDetector state through summary/snapshot", async () => {
+			it("Can roundtrip DuplicateBatchDetector state through summary/snapshot", async () => {
 				// Duplicate Batch Detection is on by default in TurnBased mode.
 				const { runtime: containerRuntime } = await ContainerRuntime.loadRuntime2({
 					context: getMockContext() as IContainerContext,
