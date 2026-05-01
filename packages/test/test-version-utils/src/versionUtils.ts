@@ -161,7 +161,9 @@ export function checkInstalled(requested: string): { version: string; modulePath
 
 	throw new Error(
 		`Version ${version} is not installed in compat-workspaces/full/.\n` +
-			`Run \`pnpm run update-compat-versions\` to regenerate the workspace, then re-run \`pnpm install\`.`,
+			`To add it, update explicit-versions.mjs, then run \`pnpm run update-compat-versions\` to regenerate the workspace dependencies.\n` +
+			`If it is already listed as a dependency of compat-workspaces/full, this error might indicate that the workspace was not installed correctly.\n` +
+			`Try running \`pnpm install\` from the repo root to ensure the workspace is installed.`,
 	);
 }
 
