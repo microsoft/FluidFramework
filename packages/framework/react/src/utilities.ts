@@ -27,7 +27,7 @@ export function findLastIndex<T>(
  * Determines if sets `a` and `b` share no elements.
  *
  * @privateRemarks
- * This should be replaced with {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Set/isDisjointFrom | Set.prototype.isDisjoint}
+ * This should be replaced with {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Set/isDisjointFrom | Set.prototype.isDisjointFrom}
  * once we are able to target ES2024 (which also requires at least TypeScript version 5.7).
  */
 export function areSetsDisjoint(a: ReadonlySet<unknown>, b: ReadonlySet<unknown>): boolean {
