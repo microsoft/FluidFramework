@@ -11,3 +11,8 @@ export { LocalDocumentStorageService } from "./localDocumentStorageService.js";
 export { createLocalResolverCreateNewRequest, LocalResolver } from "./localResolver.js";
 export { localDriverCompatDetailsForLoader } from "./localLayerCompatState.js";
 export { LocalSessionStorageDbFactory } from "./localSessionStorageDb.js";
+export {
+	closeEphemeralContainers,
+	createEphemeralServiceClient,
+	synchronizeLocalService,
+} from "./localService.js";
