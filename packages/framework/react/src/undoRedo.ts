@@ -7,6 +7,8 @@ import { oob } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import type { RevertibleAlpha, TreeBranchAlpha } from "@fluidframework/tree/internal";
 
+import { areSetsDisjoint } from "./utilities.js";
+
 /**
  * An undo/redo manager that supports optional scoping based on transaction labels.
  *
@@ -119,21 +121,9 @@ export interface UndoRedo {
 	dispose(): void;
 }
 
-/**
- * Determines if sets `a` and `b` share at least one element.
- */
-function doLabelSetsOverlap(a: ReadonlySet<unknown>, b: ReadonlySet<unknown>): boolean {
-	for (const label of a) {
-		if (b.has(label)) {
-			return true;
-		}
-	}
-	return false;
-}
 
 /**
  * One entry on the undo or redo stack, pairing a revertible with its commit's label set.
- * @sealed
  */
 interface StackEntry {
 	/**
@@ -246,11 +236,11 @@ class UndoRedoManager implements UndoRedo {
 					throw new Error("Unexpected undefined entry in redo stack");
 				}
 
-				const overlaps =
+				const disjoint =
 					commitLabels.size === 0
-						? entry.labels.size === 0
-						: doLabelSetsOverlap(commitLabels, entry.labels);
-				if (overlaps) {
+						? entry.labels.size > 0
+						: areSetsDisjoint(commitLabels, entry.labels);
+				if (!disjoint) {
 					entry.revertible.dispose();
 					this.#redoStack.splice(i, 1);
 				}
