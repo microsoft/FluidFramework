@@ -179,13 +179,16 @@ describe("FrozenDocumentService.connectToDeltaStream upgrade-hang lifecycle", ()
 			rejection = e;
 		});
 
-		// Yield microtasks; the hang must not settle of its own accord.
+		// Yield microtasks; the hang must not settle of its own accord. Capture into a
+		// separate const so the strictEqual narrowing doesn't propagate to the
+		// post-dispose check (which would narrow rejection to never).
 		for (let i = 0; i < 10; i++) {
 			// eslint-disable-next-line no-await-in-loop
 			await Promise.resolve();
 		}
+		const beforeDispose: Error | undefined = rejection;
 		assert.strictEqual(
-			rejection,
+			beforeDispose,
 			undefined,
 			"Expected upgrade-connect promise to remain pending before dispose()",
 		);
