@@ -10,6 +10,11 @@
  */
 
 export { AzureClient } from "./AzureClient.js";
+export {
+	createAzureServiceClient,
+	AzureServiceContainer,
+	type AzureServiceOptions,
+} from "./azureService.js";
 export type {
 	AzureClientProps,
 	AzureClientPropsInternal,

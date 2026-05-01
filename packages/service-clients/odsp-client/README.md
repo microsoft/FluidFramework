@@ -32,6 +32,8 @@ To access the `public` ([SemVer](https://semver.org/)) APIs, import via `@fluidf
 
 To access the `beta` APIs, import via `@fluidframework/odsp-client/beta`.
 
+To access the `alpha` APIs, import via `@fluidframework/odsp-client/alpha`.
+
 ## API Documentation
 
 API documentation for **@fluidframework/odsp-client** is available at <https://fluidframework.com/docs/apis/odsp-client>.
