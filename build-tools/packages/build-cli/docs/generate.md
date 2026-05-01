@@ -5,6 +5,7 @@ Generate commands are used to create/update code, docs, readmes, etc.
 
 * [`flub generate assertTags`](#flub-generate-asserttags)
 * [`flub generate buildVersion`](#flub-generate-buildversion)
+* [`flub generate bundleSizeDiff`](#flub-generate-bundlesizediff)
 * [`flub generate bundleStats`](#flub-generate-bundlestats)
 * [`flub generate changelog`](#flub-generate-changelog)
 * [`flub generate changeset`](#flub-generate-changeset)
@@ -117,6 +118,34 @@ EXAMPLES
 ```
 
 _See code: [src/commands/generate/buildVersion.ts](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/src/commands/generate/buildVersion.ts)_
+
+## `flub generate bundleSizeDiff`
+
+Compare the PR's locally-collected bundle reports against the CI build of the merge-base commit (the commit on the target branch the PR is based on) and write the outcome as one of two structured files in the output directory: result.json on success, error.json on failure.
+
+```
+USAGE
+  $ flub generate bundleSizeDiff [--json] [-v | --quiet] [--localReportPath <value>] [--outputDir <value>]
+
+FLAGS
+  --localReportPath=<value>  [default: ./artifacts/bundleAnalysis] Path to the locally-collected bundle reports for the
+                             PR (as produced by `flub generate bundleStats`).
+  --outputDir=<value>        [default: ./artifacts/bundleSizeDiff] Directory to write result.json or error.json into.
+
+LOGGING FLAGS
+  -v, --verbose  Enable verbose logging.
+      --quiet    Disable all logging.
+
+GLOBAL FLAGS
+  --json  Format output as json.
+
+DESCRIPTION
+  Compare the PR's locally-collected bundle reports against the CI build of the merge-base commit (the commit on the
+  target branch the PR is based on) and write the outcome as one of two structured files in the output directory:
+  result.json on success, error.json on failure.
+```
+
+_See code: [src/commands/generate/bundleSizeDiff.ts](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/src/commands/generate/bundleSizeDiff.ts)_
 
 ## `flub generate bundleStats`
 

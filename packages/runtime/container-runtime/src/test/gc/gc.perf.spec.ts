@@ -47,11 +47,11 @@ function createGarbageCollector(gcOptions: IGCRuntimeOptions): GcWithPrivates {
 		updateTombstonedRoutes: (tombstoneRoutes: string[]) => {},
 		getNodeType,
 		getCurrentReferenceTimestampMs: () => Date.now(),
-		closeFn: () => {},
 	};
 
 	return GarbageCollector.create({
 		runtime: gcRuntime,
+		closeFn: () => {},
 		gcOptions,
 		baseSnapshot: undefined,
 		baseLogger: createChildLogger({}),
