@@ -35,6 +35,7 @@ import {
 	totalBlobSizePropertyName,
 	type IRuntimeMessageCollection,
 	type IRuntimeMessagesContent,
+	type RegistryKey,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	toDeltaManagerInternal,
@@ -51,6 +52,7 @@ import {
 	type ICustomData,
 	type IFluidErrorBase,
 	LoggingError,
+	UsageError,
 	extractTelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
 // eslint-disable-next-line import-x/no-internal-modules -- Needed to avoid specialized /internal ITelemetryLoggerExt
@@ -986,6 +988,32 @@ export interface SharedObjectKind<out TSharedObject = unknown>
 }
 
 /**
+ * A {@link @fluidframework/runtime-definitions#RegistryKey} for a {@link SharedObjectKind}.
+ * @remarks
+ * This is implemented by {@link SharedObjectKind}, but alternative implementations can be used if needed.
+ *
+ * If you want lazy loading and need a key that does not eagerly load the {@link SharedObjectKind}, an alternative {@link SharedObjectKey} can be implemented.
+ * @privateRemarks
+ * TODO: A built in common pattern for the lazy key case should be provided.
+ * TODO: this same key pattern should be applied to SharedObjectKind.
+ * TODO: things probably break if "adapt" does anything except throw or return the result from the input promise.
+ * @input
+ * @alpha
+ */
+export type SharedObjectKey<T> = RegistryKey<SharedObjectKindAlpha<T>, SharedObjectKindAlpha>;
+
+/**
+ * A {@link SharedObjectKind} that also implements {@link SharedObjectKey}.
+ * @privateRemarks
+ * All concrete shared object kinds (produced by {@link createSharedObjectKind}) implement this interface.
+ * @sealed
+ * @alpha
+ */
+export interface SharedObjectKindAlpha<out TSharedObject = unknown>
+	extends SharedObjectKind<TSharedObject>,
+		SharedObjectKey<TSharedObject> {}
+
+/**
  * Utility for creating ISharedObjectKind instances.
  * @remarks
  * This takes in a class which implements IChannelFactory,
@@ -997,8 +1025,23 @@ export interface SharedObjectKind<out TSharedObject = unknown>
 export function createSharedObjectKind<TSharedObject>(
 	factory: (new () => IChannelFactory<TSharedObject>) & { readonly Type: string },
 ): ISharedObjectKind<TSharedObject> & SharedObjectKind<TSharedObject> {
+	return createSharedObjectKindAlpha(factory);
+}
+
+/**
+ * Utility for creating ISharedObjectKind instances.
+ * @remarks
+ * This takes in a class which implements IChannelFactory,
+ * and uses it to return a a single value which is intended to be used as the API entry point for the corresponding shared object type.
+ * The returned value implements {@link ISharedObjectKind} for use in the encapsulated API, as well as the type erased {@link SharedObjectKind} used by the declarative API.
+ * See {@link @fluidframework/fluid-static#ContainerSchema} for how this is used in the declarative API.
+ * @internal
+ */
+export function createSharedObjectKindAlpha<TSharedObject>(
+	factory: (new () => IChannelFactory<TSharedObject>) & { readonly Type: string },
+): ISharedObjectKind<TSharedObject> & SharedObjectKindAlpha<TSharedObject> {
 	const result: ISharedObjectKind<TSharedObject> &
-		Omit<SharedObjectKind<TSharedObject>, "brand"> = {
+		Omit<SharedObjectKindAlpha<TSharedObject>, "brand"> = {
 		getFactory(): IChannelFactory<TSharedObject> {
 			return new factory();
 		},
@@ -1010,9 +1053,25 @@ export function createSharedObjectKind<TSharedObject>(
 		is(value: IFluidLoadable): value is IFluidLoadable & TSharedObject {
 			return isChannel(value) && value.attributes.type === factory.Type;
 		},
+
+		type: factory.Type,
+
+		adapt: (value: SharedObjectKindAlpha): SharedObjectKindAlpha<TSharedObject> => {
+			if (value === resultFinal) {
+				return resultFinal;
+			}
+			if (value.type === result.type) {
+				throw new UsageError(`Conflicting SharedObjectKinds with same type: ${result.type}`);
+			}
+			throw new UsageError(
+				`Mismatched SharedObjectKind type. Expected: ${result.type}, got: ${value.type}`,
+			);
+		},
 	};
 
-	return result as typeof result & SharedObjectKind<TSharedObject>;
+	const resultFinal = result as typeof result & SharedObjectKindAlpha<TSharedObject>;
+
+	return resultFinal;
 }
 
 function isChannel(loadable: IFluidLoadable): loadable is IChannel {

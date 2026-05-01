@@ -28,10 +28,10 @@ import { extractTelemetryLoggerExt } from "@fluidframework/telemetry-utils/inter
 
 import type { IFluidSerializer } from "./serializer.js";
 import {
-	createSharedObjectKind,
+	createSharedObjectKindAlpha,
 	SharedObject,
 	type ISharedObjectKind,
-	type SharedObjectKind,
+	type SharedObjectKindAlpha,
 } from "./sharedObject.js";
 import type { ISharedObjectEvents, ISharedObject } from "./types.js";
 import type { IChannelView } from "./utils.js";
@@ -494,6 +494,6 @@ function makeChannelFactory<T extends object>(options: SharedObjectOptions<T>) {
  */
 export function makeSharedObjectKind<T extends object>(
 	options: SharedObjectOptions<T>,
-): ISharedObjectKind<T> & SharedObjectKind<T> {
-	return createSharedObjectKind<T>(makeChannelFactory(options));
+): ISharedObjectKind<T> & SharedObjectKindAlpha<T> {
+	return createSharedObjectKindAlpha<T>(makeChannelFactory(options));
 }
