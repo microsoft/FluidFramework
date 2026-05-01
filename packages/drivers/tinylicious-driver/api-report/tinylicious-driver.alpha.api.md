@@ -4,6 +4,25 @@
 
 ```ts
 
+// @alpha
+export function createTinyliciousServiceClient(options: TinyliciousServiceOptions): ServiceClient;
+
+// @alpha
+export class InsecureTinyliciousTokenProvider implements ITokenProvider {
+    constructor(
+    scopes?: ScopeType[] | undefined);
+    // (undocumented)
+    fetchOrdererToken(tenantId: string, documentId?: string): Promise<ITokenResponse>;
+    // (undocumented)
+    fetchStorageToken(tenantId: string, documentId: string): Promise<ITokenResponse>;
+}
+
+// @alpha
+export interface TinyliciousServiceOptions extends ServiceOptions {
+    readonly endpoint?: string;
+    readonly port?: number;
+}
+
 // (No @packageDocumentation comment for this package)
 
 ```
