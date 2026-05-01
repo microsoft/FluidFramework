@@ -185,8 +185,8 @@ function syncVersionDirectory(workspaceDir: string, version: string): boolean {
 }
 
 /**
- * Deletes any subdirectory of `workspaceDir` whose name is not in `keepVersions`
- * (excluding `node_modules`). Returns `true` iff at least one directory was removed.
+ * Deletes any subdirectory (excluding `node_modules`) of `workspaceDir` whose name is
+ * not in `keepVersions`. Returns `true` iff at least one directory was removed.
  */
 function removeStaleVersionDirs(workspaceDir: string, keepVersions: Set<string>): boolean {
 	if (!existsSync(workspaceDir)) return false;
