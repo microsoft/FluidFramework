@@ -13849,9 +13849,18 @@ importers:
       '@fluidframework/container-loader':
         specifier: workspace:~
         version: link:../../loader/container-loader
+      '@fluidframework/container-runtime':
+        specifier: workspace:^
+        version: link:../../runtime/container-runtime
+      '@fluidframework/container-runtime-definitions':
+        specifier: workspace:^
+        version: link:../../runtime/container-runtime-definitions
       '@fluidframework/core-interfaces':
         specifier: workspace:~
         version: link:../../common/core-interfaces
+      '@fluidframework/core-utils':
+        specifier: workspace:~
+        version: link:../../common/core-utils
       '@fluidframework/driver-definitions':
         specifier: workspace:~
         version: link:../../common/driver-definitions
@@ -13864,9 +13873,9 @@ importers:
       '@fluidframework/routerlicious-driver':
         specifier: workspace:~
         version: link:../../drivers/routerlicious-driver
-      '@fluidframework/runtime-definitions':
+      '@fluidframework/runtime-utils':
         specifier: workspace:~
-        version: link:../../runtime/runtime-definitions
+        version: link:../../runtime/runtime-utils
       '@fluidframework/telemetry-utils':
         specifier: workspace:~
         version: link:../../utils/telemetry-utils
@@ -13892,9 +13901,6 @@ importers:
       '@fluidframework/build-tools':
         specifier: catalog:buildTools
         version: 0.65.0(@types/node@22.19.17)
-      '@fluidframework/container-runtime':
-        specifier: workspace:~
-        version: link:../../runtime/container-runtime
       '@fluidframework/eslint-config-fluid':
         specifier: catalog:eslint
         version: 13.0.0(@typescript-eslint/utils@8.61.0(eslint@9.39.1(jiti@2.6.1))(typescript@5.4.5))(eslint@9.39.1(jiti@2.6.1))(typescript@5.4.5)
@@ -14209,6 +14215,12 @@ importers:
       '@fluidframework/container-loader':
         specifier: workspace:~
         version: link:../../loader/container-loader
+      '@fluidframework/container-runtime':
+        specifier: workspace:^
+        version: link:../../runtime/container-runtime
+      '@fluidframework/container-runtime-definitions':
+        specifier: workspace:^
+        version: link:../../runtime/container-runtime-definitions
       '@fluidframework/core-interfaces':
         specifier: workspace:~
         version: link:../../common/core-interfaces
@@ -14218,6 +14230,9 @@ importers:
       '@fluidframework/driver-definitions':
         specifier: workspace:~
         version: link:../../common/driver-definitions
+      '@fluidframework/driver-utils':
+        specifier: workspace:~
+        version: link:../../loader/driver-utils
       '@fluidframework/fluid-static':
         specifier: workspace:~
         version: link:../../framework/fluid-static
@@ -14233,9 +14248,9 @@ importers:
       '@fluidframework/odsp-driver-definitions':
         specifier: workspace:~
         version: link:../../drivers/odsp-driver-definitions
-      '@fluidframework/runtime-definitions':
+      '@fluidframework/runtime-utils':
         specifier: workspace:~
-        version: link:../../runtime/runtime-definitions
+        version: link:../../runtime/runtime-utils
       '@fluidframework/telemetry-utils':
         specifier: workspace:~
         version: link:../../utils/telemetry-utils
