@@ -178,10 +178,21 @@ stages:
           path: $(FFPipelineHostDirectory)
           clean: true
 
+        # ADO doesn't support checking out refs that are determined at pipeline queue time as ours likely would be
+        # (where the ref is a function of one of the pipeline resource inputs). See docs here:
+        # https://learn.microsoft.com/en-us/azure/devops/pipelines/repos/multi-repo-checkout?view=azure-devops#checking-out-a-specific-ref
+        # To work around this, we get to the right revision in a follow-up step.
         - checkout: self
-          ref: ${{ parameters.fluidFrameworkSourceVersion }}
           path: $(FluidFrameworkDirectory)
           clean: true
+
+        - bash: |
+            git fetch --depth=1 origin $FF_SOURCE_VERSION
+            git checkout $FF_SOURCE_VERSION
+          workingDirectory: $(Pipeline.Workspace)/$(FluidFrameworkDirectory)
+          displayName: Switch FluidFramework checkout to artifact source version
+          env:
+            FF_SOURCE_VERSION: ${{ parameters.fluidFrameworkSourceVersion }}
 
         # Install self-signed cert for R11s deployment in local cert store
         - ${{ if ne(parameters.r11sSelfSignedCertSecureFile, '') }}:
