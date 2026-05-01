@@ -84,9 +84,9 @@ Layer incompatibility is detected when a layer interacts with another layer for 
 
 The incompatibilities between the layers are detected as follows:
 
-- **Loader ↔ Driver** and **Loader ↔ Runtime**: Incompatibility is detected during container create / load. If incompatibility is detected, the creation / load will fail with `FluidErrorTypes.layerIncompatibilityError`.
-- **Runtime ↔ DataStore**: Incompatibility is detected during data store create / load. If incompatibility is detected, the data store creation / load will fail with `FluidErrorTypes.layerIncompatibilityError`.
-  If the data store is being created / loaded during container create / load, that will also fail with `FluidErrorTypes.layerIncompatibilityError`.
+- **Loader ↔ Driver** and **Loader ↔ Runtime**: Incompatibility is detected during container create / load. If incompatibility is detected, a `FluidErrorTypes.layerIncompatibilityError` error is thrown, failing the container creation / load.
+- **Runtime ↔ DataStore**: Incompatibility is detected during data store create / load. If incompatibility is detected, a `FluidErrorTypes.layerIncompatibilityError` error is thrown, failing the data store creation / load.
+  If the data store is being created / loaded during container create / load, that will also throw a `FluidErrorTypes.layerIncompatibilityError` error, failing the container creation / load.
 
 #### Telemetry
 
