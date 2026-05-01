@@ -22,6 +22,7 @@ import argparse
 import json
 import re
 import sys
+from pathlib import Path
 from typing import NamedTuple
 
 
@@ -54,6 +55,17 @@ _ID_TO_LABEL: dict[str, str] = {r.id: r.label for r in REVIEWERS}
 START_LABEL = "Start review"
 
 
+def _read_body(path: str, *, missing_ok: bool = False) -> str | None:
+    if path == "-":
+        return sys.stdin.read()
+    try:
+        return Path(path).read_text(encoding="utf-8")
+    except FileNotFoundError:
+        if missing_ok:
+            return None
+        raise
+
+
 def get_selected(reviewer_count: int) -> set[str]:
     """Return the reviewer IDs to pre-check for a proposal.
 
@@ -67,11 +79,13 @@ def get_selected(reviewer_count: int) -> set[str]:
 def parse_checked_ids(body: str) -> list[str]:
     """Extract checked reviewer IDs (in declaration order) from a comment body."""
     found: list[str] = []
+    seen: set[str] = set()
     for m in re.finditer(r"- \[x\] \*\*(.+?)\*\*", body, re.IGNORECASE):
         key = m.group(1).lower()
         rid = _LABEL_TO_ID.get(key)
-        if rid and rid not in found:
+        if rid and rid not in seen:
             found.append(rid)
+            seen.add(rid)
     return found
 
 
@@ -95,13 +109,9 @@ def cmd_build_comment(args: argparse.Namespace) -> None:
     """
     selected: set[str] | None = None
     if args.from_existing_body:
-        try:
-            with open(args.from_existing_body) as f:
-                prior = f.read()
-            if prior.strip():
-                selected = set(parse_checked_ids(prior))
-        except FileNotFoundError:
-            pass
+        prior = _read_body(args.from_existing_body, missing_ok=True)
+        if prior and prior.strip():
+            selected = set(parse_checked_ids(prior))
     if selected is None:
         selected = get_selected(args.reviewer_count)
 
@@ -132,38 +142,22 @@ def cmd_build_comment(args: argparse.Namespace) -> None:
 
 def cmd_parse_checkboxes(args: argparse.Namespace) -> None:
     """Read a comment body file and print a JSON array of checked reviewer IDs."""
-    path = args.body_file
-    if path == "-":
-        body = sys.stdin.read()
-    else:
-        with open(path) as f:
-            body = f.read()
+    body = _read_body(args.body_file) or ""
     print(json.dumps(parse_checked_ids(body)))
 
 
 def cmd_is_start_checked(args: argparse.Namespace) -> None:
     """Print 'true' if the body file has Start review ticked, else 'false'."""
-    path = args.body_file
-    if path == "-":
-        body = sys.stdin.read()
-    else:
-        try:
-            with open(path) as f:
-                body = f.read()
-        except FileNotFoundError:
-            print("false")
-            return
+    body = _read_body(args.body_file, missing_ok=True)
+    if body is None:
+        print("false")
+        return
     print("true" if is_start_checked(body) else "false")
 
 
 def cmd_reset_start(args: argparse.Namespace) -> None:
     """Print the body with the Start review box flipped from [x] to [ ]."""
-    path = args.body_file
-    if path == "-":
-        body = sys.stdin.read()
-    else:
-        with open(path) as f:
-            body = f.read()
+    body = _read_body(args.body_file) or ""
     pattern = rf"- \[x\] \*\*{re.escape(START_LABEL)}\*\*"
     replacement = f"- [ ] **{START_LABEL}**"
     sys.stdout.write(re.sub(pattern, replacement, body, flags=re.IGNORECASE))

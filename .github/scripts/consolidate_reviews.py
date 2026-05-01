@@ -70,6 +70,8 @@ SEVERITY_LABEL_SETS: list[SeverityLabelSet] = [
 
 VALID_SEVERITIES = frozenset({"CRITICAL", "HIGH", "MEDIUM"})
 
+_FILE_LINE_RE = re.compile(r".+:\d+")
+
 
 @dataclass
 class Finding:
@@ -145,8 +147,7 @@ def deduplicate(findings: list[Finding]) -> list[Finding]:
 
     for f in findings:
         # Findings without a recognizable file:line are always kept
-        has_location = re.match(r".+:\d+", f.location)
-        if has_location:
+        if _FILE_LINE_RE.match(f.location):
             if f.location in seen:
                 continue
             seen.add(f.location)

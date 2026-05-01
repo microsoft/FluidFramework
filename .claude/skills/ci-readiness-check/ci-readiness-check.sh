@@ -186,7 +186,7 @@ fi
 # ---------- Phase 2: Verify checks pass ----------
 section "Verifying checks pass"
 
-if (cd "${REPO_ROOT}" && pnpm exec fluid-build --task checks ${PKG_ARGS} 2>&1) >/dev/null 2>&1; then
+if (cd "${REPO_ROOT}" && pnpm exec fluid-build --task checks ${PKG_ARGS} >/dev/null 2>&1); then
     ok "All checks pass"
 else
     CHECKS_OK=false
