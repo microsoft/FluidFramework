@@ -30,6 +30,11 @@ parameters:
 - name: artifactBuildId
   type: string
 
+# The git commit SHA of the build that produced the test artifacts.
+# Callers should pass $(resources.pipeline.<alias>.sourceCommit) for the client pipeline resource.
+- name: fluidFrameworkSourceVersion
+  type: string
+
 stages:
   - stage: CheckAffectedPaths
     displayName: Determine changed packages
@@ -73,6 +78,7 @@ stages:
         condition: eq(dependencies.CheckAffectedPaths.outputs['Job.Check${{ replace(package.testFileTarName, '-', '') }}.AffectedFilesModified'],'true')
         poolBuild: ${{ parameters.pool }}
         artifactBuildId: ${{ parameters.artifactBuildId }}
+        fluidFrameworkSourceVersion: ${{ parameters.fluidFrameworkSourceVersion }}
         testPackage: ${{ package.name }}
         timeoutInMinutes: 120
         testFileTarName: ${{ package.testFileTarName }}
