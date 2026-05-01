@@ -37,26 +37,44 @@ describe("areSetsDisjoint", () => {
 
 describe("findLastIndex", () => {
 	it("returns -1 for an empty array", () => {
-		assert.equal(findLastIndex([], () => true), -1);
+		assert.equal(
+			findLastIndex([], () => true),
+			-1,
+		);
 	});
 
 	it("returns -1 when no element matches", () => {
-		assert.equal(findLastIndex([1, 2, 3], (x) => x > 10), -1);
+		assert.equal(
+			findLastIndex([1, 2, 3], (x) => x > 10),
+			-1,
+		);
 	});
 
 	it("returns the index of the only matching element", () => {
-		assert.equal(findLastIndex([1, 2, 3], (x) => x === 2), 1);
+		assert.equal(
+			findLastIndex([1, 2, 3], (x) => x === 2),
+			1,
+		);
 	});
 
 	it("returns the last (highest) index when multiple elements match", () => {
-		assert.equal(findLastIndex([1, 2, 1, 2], (x) => x === 1), 2);
+		assert.equal(
+			findLastIndex([1, 2, 1, 2], (x) => x === 1),
+			2,
+		);
 	});
 
 	it("returns the last index when the predicate matches all elements", () => {
-		assert.equal(findLastIndex([5, 5, 5], () => true), 2);
+		assert.equal(
+			findLastIndex([5, 5, 5], () => true),
+			2,
+		);
 	});
 
 	it("returns 0 when only the first element matches", () => {
-		assert.equal(findLastIndex([9, 1, 2], (x) => x === 9), 0);
+		assert.equal(
+			findLastIndex([9, 1, 2], (x) => x === 9),
+			0,
+		);
 	});
 });
