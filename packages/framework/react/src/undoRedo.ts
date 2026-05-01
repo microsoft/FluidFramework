@@ -215,7 +215,6 @@ class UndoRedoManager implements UndoRedo {
 				} else {
 					this.#undoStack.push({ revertible, labels });
 				}
-				// Don't notify here; undo()/redo() will notify once after revert() returns.
 				return;
 			}
 
