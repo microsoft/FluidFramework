@@ -410,9 +410,9 @@ stages:
             displayName: 'Run tenant setup script'
             env:
               SYSTEM_ACCESSTOKEN: $(System.AccessToken)
-            workingDir: $(Pipeline.Workspace)/$(FFPipelineHostDirectory)
             inputs:
               targetType: 'inline'
+              workingDir: $(Pipeline.Workspace)/$(FFPipelineHostDirectory)
               script: |
                 set -eu -o pipefail
 
@@ -510,9 +510,9 @@ stages:
             env:
               login__odsp__fic__test__users: $(login__odsp__fic__test__users)
               SYSTEM_ACCESSTOKEN: $(System.AccessToken)
-            workingDir: $(Pipeline.Workspace)/$(FFPipelineHostDirectory)
             inputs:
               targetType: 'inline'
+              workingDir: $(Pipeline.Workspace)/$(FFPipelineHostDirectory)
               script: |
                 set -eu -o pipefail
                 pnpm exec trips-cleanup --odspEndpoint=${{ parameters.odspTenantType }} --useFic
