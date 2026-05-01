@@ -1053,10 +1053,10 @@ describe("textEditor", () => {
 
 						const undoButton = rendered.container.querySelector<HTMLButtonElement>(".ql-undo");
 						const redoButton = rendered.container.querySelector<HTMLButtonElement>(".ql-redo");
-						assert.ok(undoButton !== null, "Undo button should exist");
-						assert.ok(redoButton !== null, "Redo button should exist");
-						assert.ok(undoButton.disabled === true, "Undo button should be disabled");
-						assert.ok(redoButton.disabled === true, "Redo button should be disabled");
+						assert(undoButton !== null, "Undo button should exist");
+						assert(redoButton !== null, "Redo button should exist");
+						assert(undoButton.disabled, "Undo button should be disabled");
+						assert(redoButton.disabled, "Redo button should be disabled");
 					});
 
 					it("undo and redo buttons are enabled when undoRedo is provided", () => {
@@ -1077,10 +1077,10 @@ describe("textEditor", () => {
 
 						const undoButton = rendered.container.querySelector<HTMLButtonElement>(".ql-undo");
 						const redoButton = rendered.container.querySelector<HTMLButtonElement>(".ql-redo");
-						assert.ok(undoButton !== null, "Undo button should exist");
-						assert.ok(redoButton !== null, "Redo button should exist");
-						assert.equal(undoButton.disabled, false, "Undo button should be enabled");
-						assert.equal(redoButton.disabled, false, "Redo button should be enabled");
+						assert(undoButton !== null, "Undo button should exist");
+						assert(redoButton !== null, "Redo button should exist");
+						assert(!undoButton.disabled, "Undo button should be enabled");
+						assert(!redoButton.disabled, "Redo button should be enabled");
 					});
 				});
 			}
