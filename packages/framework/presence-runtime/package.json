@@ -123,6 +123,7 @@
 		"@fluidframework/core-utils": "workspace:~",
 		"@fluidframework/id-compressor": "workspace:~",
 		"@fluidframework/runtime-definitions": "workspace:~",
+		"@fluidframework/runtime-utils": "workspace:~",
 		"@fluidframework/telemetry-utils": "workspace:~"
 	},
 	"devDependencies": {
@@ -134,6 +135,8 @@
 		"@fluidframework/build-tools": "catalog:buildTools",
 		"@fluidframework/driver-definitions": "workspace:~",
 		"@fluidframework/eslint-config-fluid": "catalog:eslint",
+		"@fluidframework/local-driver": "workspace:~",
+		"@fluidframework/shared-object-base": "workspace:~",
 		"@fluidframework/test-runtime-utils": "workspace:~",
 		"@fluidframework/test-utils": "workspace:~",
 		"@microsoft/api-extractor": "7.58.1",
