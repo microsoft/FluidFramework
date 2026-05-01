@@ -641,14 +641,49 @@ describe("loadFrozenContainerFromPendingState", () => {
 				frozenEntryPoint.ITestFluidObject.root.set(`noReconnect-${i}`, i);
 			}
 
-			// Pending state must capture the layered edits — proves we landed in the writable
-			// surface rather than hanging on connect.
+			// Yield enough microtasks to let any read→write reconnect attempt fire. Under
+			// ReconnectMode.Never (allowReconnect: false), an unsuppressed reconnect would
+			// call closeHandler and close the container asynchronously. The
+			// ConnectionManager.sendMessages FrozenDeltaStream short-circuit prevents that.
+			for (let i = 0; i < 10; i++) {
+				await Promise.resolve();
+			}
+			assert.strictEqual(
+				frozenContainer.closed,
+				false,
+				"Expected writable frozen container with allowReconnect: false to remain open after writes (no async close from reconnect attempt)",
+			);
+
+			// Subsequent writes must continue to apply locally — proves the suppression of the
+			// upgrade reconnect doesn't tear down the connection or wedge the runtime.
+			for (let i = 3; i < 6; i++) {
+				frozenEntryPoint.ITestFluidObject.root.set(`noReconnect-${i}`, i);
+			}
+
+			// Pending state must capture all layered edits.
 			const layeredPending = await frozenContainer.getPendingLocalState();
 			assert.notStrictEqual(
 				layeredPending,
 				initialPending,
 				"Expected getPendingLocalState() to capture additional ops with allowReconnect: false",
 			);
+			const replay = await loadFrozenContainerFromPendingState({
+				codeLoader,
+				documentServiceFactory,
+				urlResolver,
+				request: { url },
+				pendingLocalState: layeredPending,
+				readOnly: false,
+			});
+			const replayEntry: FluidObject<TestFluidObject> = await replay.getEntryPoint();
+			assert(replayEntry.ITestFluidObject !== undefined);
+			for (let i = 0; i < 6; i++) {
+				assert.strictEqual(
+					replayEntry.ITestFluidObject.root.get(`noReconnect-${i}`),
+					i,
+					`Expected noReconnect-${i} (pre- and post-microtask-flush writes) to round-trip through pending state`,
+				);
+			}
 		});
 
 		it("loads with a non-interactive client (forced-write initial connect)", async () => {

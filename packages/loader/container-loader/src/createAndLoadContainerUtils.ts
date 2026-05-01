@@ -237,11 +237,11 @@ export interface ILoadFrozenContainerFromPendingStateProps
 	 * with `storageOnly === true`, matching the historical behavior of frozen loads.
 	 *
 	 * When `false`, the container loads as writable so the runtime will accept DDS submissions.
-	 * The first submission triggers an internal read→write upgrade attempt that cannot succeed
-	 * (no upstream, no quorum join op), so the container settles into a `Disconnected` state.
-	 * Local DDS state continues to update via optimistic apply, and submitted ops accumulate in
-	 * the runtime's pending-state manager. Use this when callers want to accrue and capture
-	 * pending state without publishing it.
+	 * The connection itself stays `Connected`: the connection manager recognizes the synthetic
+	 * frozen delta stream and drops outbound messages at the network layer, so no read→write
+	 * reconnect is attempted. Local DDS state continues to update via optimistic apply, and
+	 * submitted ops accumulate in the runtime's pending-state manager. Use this when callers
+	 * want to accrue and capture pending state without publishing it.
 	 *
 	 * @remarks
 	 * The flag uses negative polarity (`readOnly`) rather than a positive opt-in (`writable`)

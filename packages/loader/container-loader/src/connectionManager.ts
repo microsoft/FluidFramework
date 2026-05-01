@@ -1088,21 +1088,27 @@ export class ConnectionManager implements IConnectionManager {
 
 	public sendMessages(messages: IDocumentMessage[]): void {
 		assert(this.connected, 0x2b4 /* "not connected on sending ops!" */);
+		// FrozenDeltaStream short-circuit: writable-frozen containers
+		// (`loadFrozenContainerFromPendingState({ readOnly: false })`) attach a
+		// FrozenDeltaStream as the live connection. Its `mode` is "read" (advertising
+		// "write" would imply quorum membership we cannot honor), so a runtime submit
+		// would otherwise fall into the read-mode reconnect branch below. That branch
+		// schedules `reconnect("write")`, which under `ReconnectMode.Never`
+		// (`allowReconnect: false`) calls `closeHandler` and closes the container — the
+		// opposite of what writable-frozen wants. Drop the messages here: the runtime's
+		// outbox keeps them in `pendingStateManager` so `getPendingLocalState()` can
+		// capture them, which is the entire point of the writable-frozen flow. The
+		// read-only variant should never reach here (its `storageOnly` policy keeps the
+		// runtime from submitting), but covering it too is harmless defense-in-depth.
+		if (this.connection instanceof FrozenDeltaStream) {
+			return;
+		}
 		// If connection is "read" or implicit "read" (got leave op for "write" connection),
 		// then op can't make it through - we will get a nack if op is sent.
 		// We can short-circuit this process.
 		// Note that we also want nacks to be rare and be treated as catastrophic failures.
 		// Be careful with reentrancy though - disconnected event should not be be raised in the
 		// middle of the current workflow, but rather on clean stack!
-		//
-		// Tripwire: writable-frozen container loads (`loadFrozenContainerFromPendingState({
-		// readOnly: false })`) depend on this short-circuit. Their FrozenDeltaStream is mode
-		// "read", so a runtime submit lands here, the deferred `reconnect("write")` reaches
-		// FrozenDocumentService.connectToDeltaStream({ mode: "write" }) which hangs the
-		// promise, and the runtime's outbox skips actual send so ops accumulate in
-		// pendingStateManager. If this short-circuit is refactored to call submit directly
-		// instead of triggering a reconnect, writable-frozen loses its only mechanism for
-		// capturing additional pending state — see frozenServices.ts JSDoc.
 		if (this.connectionMode === "read") {
 			if (!this.pendingReconnect) {
 				this.pendingReconnect = true;

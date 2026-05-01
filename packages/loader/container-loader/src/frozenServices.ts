@@ -42,12 +42,12 @@ import type { IConnectionStateChangeReason } from "./contracts.js";
  * container as read-only (see `IContainer.readOnlyInfo`).
  *
  * When `false`, the container is loaded as writable so the runtime will accept DDS submissions.
- * The first such submission triggers the connectionManager's read→write upgrade attempt. Since
- * there is no real upstream and we will not fabricate a quorum join op, that upgrade hangs and
- * the container settles into a `Disconnected` state. Local DDS state continues to update via
- * optimistic apply, and submitted ops accumulate in the runtime's pending-state manager — which
- * is exactly the state needed to capture pending local state. Use `false` when callers want to
- * accrue and capture pending state without publishing it.
+ * The connection itself stays `Connected`: `ConnectionManager.sendMessages` recognizes the
+ * `FrozenDeltaStream` as the live connection and short-circuits — the message is dropped at
+ * the network layer rather than triggering a read→write reconnect. Local DDS state continues
+ * to update via optimistic apply, and submitted ops accumulate in the runtime's pending-state
+ * manager, which is exactly the state needed to capture pending local state. Use `false` when
+ * callers want to accrue and capture pending state without publishing it.
  * @returns A factory that produces frozen document services.
  * @legacy @alpha
  */
@@ -119,16 +119,14 @@ class FrozenDocumentService
 			// the read-only path; this is a defensive fallback.
 			return new FrozenDeltaStream();
 		}
-		// Distinguish the initial connect from the runtime-driven read→write upgrade. Both can
-		// arrive with `client.mode === "write"`: the upgrade case follows the first runtime
-		// submit (sendMessages sees connectionMode === "read" and triggers reconnectOnError on
-		// "write"); the initial-connect case happens when Container.connectToDeltaStream forces
-		// mode = "write" because allowReconnect is false or the client is non-interactive.
-		// Mode alone can't tell them apart, so track whether we've already handed out a stream.
+		// First connect: hand out the writable-surface FrozenDeltaStream regardless of
+		// `client.mode`. The mode may be forced to "write" by Container.connectToDeltaStream
+		// when allowReconnect is false or the client is non-interactive; that's fine because
+		// the connection object itself reports mode="read" and the runtime-driven write
+		// upgrade is suppressed at sendMessages (see ConnectionManager.sendMessages's
+		// FrozenDeltaStream short-circuit). DocWrite scope + not matched by
+		// isFrozenDeltaStreamConnection, so readOnlyInfo reports `readonly: false`.
 		if (!this.handedOutInitialConnection) {
-			// First connect: hand out the writable-surface FrozenDeltaStream regardless of
-			// `client.mode`. DocWrite scope + not matched by isFrozenDeltaStreamConnection, so
-			// readOnlyInfo reports `readonly: false` and the runtime will accept DDS submissions.
 			this.handedOutInitialConnection = true;
 			return new FrozenDeltaStream({ readOnly: false });
 		}
@@ -137,13 +135,11 @@ class FrozenDocumentService
 			// out another writable stream so the container can re-establish.
 			return new FrozenDeltaStream({ readOnly: false });
 		}
-		// Subsequent connect in write mode: this is the read→write upgrade attempt. We can't
-		// honor it — there's no upstream and we won't fabricate a quorum join op. Hang the
-		// promise. The container settles into Disconnected (Connected → reconnecting → never
-		// resolves), DDS local apply continues to work, and submitted ops accumulate in the
-		// runtime's pendingStateManager (the outbox sees shouldSend() return false and skips
-		// actual send). That's the right representation for "load to accrue and capture pending
-		// state without publishing".
+		// Subsequent connect in write mode. Defense-in-depth: under normal flow this is
+		// unreachable because sendMessages short-circuits FrozenDeltaStream submissions before
+		// they can trigger a write reconnect, and a nack on the FrozenDeltaStream itself is
+		// the only other path that drives reconnectOnError("write"). If we get here anyway,
+		// hang the promise — there's no upstream and we won't fabricate a quorum join op.
 		//
 		// Lifecycle: container.dispose() reaches us via service.dispose() and rejects the
 		// promise so connectionManager's connect loop exits cleanly. container.close() (without
@@ -214,13 +210,13 @@ const clientIdFrozenDeltaStream: string = "storage-only client";
  * Two variants, selected via `options.readOnly` (default `true`):
  *
  * - **Read-only (default)** — claims show only `DocRead`. Used by storage-only loads (where connectionManager synthesizes one directly via `policies.storageOnly`) and by the forbidden / out-of-storage fallback paths. {@link isFrozenDeltaStreamConnection} matches this variant and drives the read-only forcing in `ConnectionManager.readOnlyInfo`.
- * - **Writable (`{ readOnly: false }`)** — claims include `DocWrite` so the container surfaces as writable; not matched by `isFrozenDeltaStreamConnection`, so `readOnlyInfo` reports `readonly: false`. Connection mode stays `"read"`: advertising `"write"` would imply quorum membership, which we cannot honor. The connectionManager's read→write upgrade attempt that follows the first runtime submit is intercepted in `FrozenDocumentService.connectToDeltaStream` and hung indefinitely; the container then settles into Disconnected.
+ * - **Writable (`{ readOnly: false }`)** — claims include `DocWrite` so the container surfaces as writable; not matched by `isFrozenDeltaStreamConnection`, so `readOnlyInfo` reports `readonly: false`. Connection mode stays `"read"`: advertising `"write"` would imply quorum membership, which we cannot honor. `ConnectionManager.sendMessages` recognizes any `FrozenDeltaStream` and short-circuits before its read-mode upgrade branch — the message is dropped at the network layer instead of triggering a reconnect, so the container stays `Connected` and submitted ops accumulate in the runtime's `pendingStateManager`.
  *
  * Both variants nack any incoming `submit`: this connection has no upstream and
- * `ConnectionManager.sendMessages` short-circuits read-mode ops to reconnect rather than calling
- * `submit`, so under normal flow it should never fire. A nack reaching the connectionManager
- * surfaces the misuse — and may close the container — which is the right defensive signal that
- * something has bypassed the expected flow.
+ * `ConnectionManager.sendMessages` recognizes `FrozenDeltaStream` and drops messages before
+ * they reach `submit`, so under normal flow it should never fire. A nack reaching the
+ * connectionManager surfaces the misuse — and may close the container — which is the right
+ * defensive signal that something has bypassed the expected flow.
  *
  * `submitSignal` is a silent no-op for both variants. Signals are ephemeral and best-effort —
  * runtime/presence subsystems may submit them at any point in the writable-frozen lifetime, and
