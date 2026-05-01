@@ -111,25 +111,4 @@ describe("opBenchmarkUtilities", () => {
 			assert.equal(intercept, 3);
 		});
 	});
-
-	describe("assertApproximatelyConstant", () => {
-		it("throws when given fewer than 2 values", () => {
-			assert.throws(() => assertApproximatelyConstant({ sizes: [], maxDeltaBytes: 0 }));
-			assert.throws(() => assertApproximatelyConstant({ sizes: [42], maxDeltaBytes: 100 }));
-		});
-
-		it("passes when all values are identical", () => {
-			assertApproximatelyConstant({ sizes: [100, 100, 100], maxDeltaBytes: 0 });
-		});
-
-		it("passes when delta equals maxDeltaBytes exactly", () => {
-			assertApproximatelyConstant({ sizes: [100, 105], maxDeltaBytes: 5 });
-		});
-
-		it("throws when delta exceeds maxDeltaBytes", () => {
-			assert.throws(() =>
-				assertApproximatelyConstant({ sizes: [100, 107], maxDeltaBytes: 5 }),
-			);
-		});
-	});
 });

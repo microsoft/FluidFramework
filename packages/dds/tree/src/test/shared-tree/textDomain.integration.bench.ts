@@ -25,7 +25,6 @@ import type { JsonCompatibleReadOnly } from "../../util/index.js";
 import { configureBenchmarkHooks } from "../utils.js";
 
 import {
-	assertApproximatelyConstant,
 	assertLinear,
 	createConnectedTree,
 	getOperationsStats,
@@ -329,14 +328,16 @@ describe("TextDomain benchmarks", () => {
 							}
 
 							// Remove ops encode a (start, count) range, not the removed characters,
-							// so op size should be essentially independent of character count.
-							assertApproximatelyConstant({ sizes: operationSizes, maxDeltaBytes: 20 });
-							const avgOpSize =
-								operationSizes.reduce((a, b) => a + b, 0) / operationSizes.length;
+							// so op size should be exactly constant regardless of character count.
+							const referenceSize = operationSizes[0];
+							assert(referenceSize !== undefined);
+							for (const size of operationSizes) {
+								assert.equal(size, referenceSize);
+							}
 							return [
 								{
-									name: "fixed remove op size (measured by variable character count)",
-									value: avgOpSize,
+									name: "fixed remove operation size (measured by variable character count)",
+									value: referenceSize,
 									units: "bytes",
 									type: ValueType.SmallerIsBetter,
 									significance: "Primary",

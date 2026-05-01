@@ -179,30 +179,3 @@ export function assertLinear({
 
 	return { slope: dy / dx, intercept: y0 - (dy / dx) * x0 };
 }
-
-/**
- * Asserts that op size varies by at most `maxDeltaBytes` across all measurements.
- * @throws Throws an error when fewer than 2 values are provided.
- */
-export function assertApproximatelyConstant({
-	sizes,
-	maxDeltaBytes,
-}: {
-	/**
-	 * The measured op sizes to compare.
-	 */
-	readonly sizes: readonly number[];
-	/**
-	 * The maximum permitted difference between the largest and smallest op size.
-	 */
-	readonly maxDeltaBytes: number;
-}): void {
-	if (sizes.length <= 1) {
-		fail("Expected at least 2 measurements to assert approximately constant op size.");
-	}
-	const delta = Math.max(...sizes) - Math.min(...sizes);
-	assert(
-		delta <= maxDeltaBytes,
-		`Expected approximately constant op size (max delta ≤ ${maxDeltaBytes} B), got ${delta} B.`,
-	);
-}
