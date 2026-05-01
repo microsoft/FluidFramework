@@ -22,7 +22,7 @@ steps:
     scriptLocation: inlineScript
     inlineScript: |
       blobPrefix=""
-      if [[ '${{ parameters.buildDirectory }}' == server/* ]]; then
+      if [[ '${{ parameters.buildDirectory }}' == */server/* ]]; then
         if [ "$(release)" == "release" ]; then
           blobPrefix="server/release"
         else

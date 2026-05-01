@@ -124,9 +124,6 @@ importers:
       cross-env:
         specifier: ^10.1.0
         version: 10.1.0
-      danger:
-        specifier: ^13.0.4
-        version: 13.0.5(encoding@0.1.13)
       eslint:
         specifier: catalog:eslint
         version: 9.39.1(jiti@2.6.1)
@@ -9857,6 +9854,9 @@ importers:
       '@biomejs/biome':
         specifier: ~2.4.5
         version: 2.4.5
+      '@fluid-internal/mocha-test-setup':
+        specifier: workspace:~
+        version: link:../../test/mocha-test-setup
       '@fluid-tools/build-cli':
         specifier: catalog:buildTools
         version: 0.65.0(@types/node@22.19.17)(encoding@0.1.13)(webpack-cli@5.1.4)
@@ -9875,33 +9875,42 @@ importers:
       '@microsoft/api-extractor':
         specifier: 7.58.1
         version: 7.58.1(patch_hash=949a26f6cec9ac4e37522f178b8e4982136ccfeb8c6d0835130ef2aa6788f4fa)(@types/node@22.19.17)
-      '@types/jest':
-        specifier: 29.5.3
-        version: 29.5.3
+      '@types/mocha':
+        specifier: ^10.0.10
+        version: 10.0.10
       '@types/node':
         specifier: ~22.19.17
         version: 22.19.17
+      '@types/sinon':
+        specifier: ^17.0.3
+        version: 17.0.3
       concurrently:
         specifier: ^9.2.1
         version: 9.2.1
       copyfiles:
         specifier: ^2.4.1
         version: 2.4.1
+      cross-env:
+        specifier: ^10.1.0
+        version: 10.1.0
       eslint:
         specifier: catalog:eslint
         version: 9.39.1(jiti@2.6.1)
       fake-indexeddb:
         specifier: 3.1.4
         version: 3.1.4
-      jest:
-        specifier: ^29.6.2
-        version: 29.7.0(@types/node@22.19.17)(babel-plugin-macros@3.1.0)(ts-node@10.9.2(@types/node@22.19.17)(typescript@5.4.5))
       jiti:
         specifier: ^2.6.1
         version: 2.6.1
+      mocha:
+        specifier: ^11.7.5
+        version: 11.7.5
       rimraf:
         specifier: ^6.1.3
         version: 6.1.3
+      sinon:
+        specifier: ^18.0.1
+        version: 18.0.1
       typescript:
         specifier: ~5.4.5
         version: 5.4.5
