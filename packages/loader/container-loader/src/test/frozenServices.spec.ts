@@ -174,8 +174,8 @@ describe("FrozenDocumentService.connectToDeltaStream upgrade-hang lifecycle", ()
 
 		// Subsequent write-mode connect — must hang until dispose.
 		const hangPromise = service.connectToDeltaStream(fakeWriteClient());
-		let rejection: unknown;
-		hangPromise.catch((e: unknown) => {
+		let rejection: Error | undefined;
+		hangPromise.catch((e: Error) => {
 			rejection = e;
 		});
 
@@ -198,10 +198,10 @@ describe("FrozenDocumentService.connectToDeltaStream upgrade-hang lifecycle", ()
 			await Promise.resolve();
 		}
 		assert(
-			rejection instanceof Error,
-			"Expected upgrade-connect promise to reject with an Error after dispose()",
+			rejection !== undefined,
+			"Expected upgrade-connect promise to reject after dispose()",
 		);
-		assert.match((rejection as Error).message, /FrozenDocumentService disposed/);
+		assert.match(rejection.message, /FrozenDocumentService disposed/);
 	});
 
 	it("rejects synchronously when called after service.dispose()", async () => {
