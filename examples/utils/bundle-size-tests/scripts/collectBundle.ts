@@ -170,40 +170,51 @@ async function getOuterOriginUrl(): Promise<string> {
 }
 
 /**
- * Ensures the inner FluidFramework enlistment exists under {@link innerRepoRoot}.
+ * Ensures the inner FluidFramework enlistment exists under {@link innerRepoRoot}
+ * and is checked out at the requested revision.
  *
- * On first call, clones from the outer repo's `origin` remote. On subsequent
- * calls, reuses the existing clone (an explicit `git fetch` is performed before
- * checkout to ensure the requested revision is available).
+ * On first call, performs a shallow clone of the outer repo's `origin` remote
+ * (`--depth=1 --no-tags --no-checkout`). On every call (including the first),
+ * the requested revision is fetched shallowly (`fetch --depth=1 origin <rev>`)
+ * and checked out detached. This keeps the inner repo's `.git` directory small
+ * even after many revisions have been visited.
  *
  * Never modifies the outer repo's working tree, branch, or stash.
  */
-async function ensureInnerRepo(): Promise<void> {
-	if (existsSync(resolve(innerRepoRoot, ".git"))) {
-		return;
+async function ensureInnerRepoAtRevision(revision: string): Promise<void> {
+	if (!existsSync(resolve(innerRepoRoot, ".git"))) {
+		const originUrl = await getOuterOriginUrl();
+		mkdirSync(dirname(innerRepoRoot), { recursive: true });
+		console.log(`\nShallow-cloning inner repo from ${originUrl} into ${innerRepoRoot}...`);
+		// Clone shallow with no checkout: we'll fetch and check out the exact
+		// revision the caller requested below. --filter=blob:none isn't needed
+		// on top of --depth=1.
+		await simpleGit(dirname(innerRepoRoot)).clone(originUrl, innerRepoRoot, [
+			"--depth=1",
+			"--no-tags",
+			"--no-checkout",
+		]);
 	}
 
-	const originUrl = await getOuterOriginUrl();
-	mkdirSync(dirname(innerRepoRoot), { recursive: true });
-	console.log(`\nCloning inner repo from ${originUrl} into ${innerRepoRoot}...`);
-	// Filter blobs to keep the clone fast; blobs are fetched lazily on checkout.
-	await simpleGit(dirname(innerRepoRoot)).clone(originUrl, innerRepoRoot, [
-		"--filter=blob:none",
-	]);
-}
-
-/**
- * Fetches the latest refs and checks out the requested revision in the inner repo.
- * The revision can be a branch, tag, or commit SHA.
- */
-async function syncInnerRepoToRevision(revision: string): Promise<void> {
 	const innerGit = simpleGit(innerRepoRoot);
-	console.log(`\nFetching latest refs in inner repo...`);
-	await innerGit.fetch(["--tags", "origin"]);
+	console.log(`\nFetching revision "${revision}" (shallow) into inner repo...`);
+	// Fetch only the requested commit at depth 1. By naming the SHA directly
+	// we skip fetching any branch tips first, which is what keeps the inner
+	// repo's `.git` small. This relies on the server allowing fetch-by-SHA:
+	// `uploadpack.allowReachableSHA1InWant` lets clients ask for any commit
+	// reachable from an advertised ref (not just the ref tips themselves).
+	// GitHub enables this on every repo; without it, we'd have to fetch a
+	// branch and walk history to the SHA, defeating --depth=1 for any
+	// non-tip commit (which is the common case here, since the merge-base
+	// usually isn't `main` HEAD).
+	await innerGit.fetch(["--depth=1", "origin", revision]);
 
 	console.log(`Checking out revision "${revision}" in inner repo...`);
 	// Use detached HEAD checkout so we don't have to manage local branch state.
-	await innerGit.raw(["checkout", "--detach", revision]);
+	// FETCH_HEAD is set by the fetch above and is guaranteed to point at the
+	// requested commit, even when `revision` is a SHA the local clone hasn't
+	// otherwise heard of.
+	await innerGit.raw(["checkout", "--detach", "FETCH_HEAD"]);
 }
 
 /**
@@ -275,9 +286,7 @@ class CollectBundleCommand extends Command {
 			activeRepoRoot = outerRepoRoot;
 			activePackageRoot = outerPackageRoot;
 		} else {
-			await ensureInnerRepo();
-			// Only the inner repo's revision is changed. The outer repo is never touched.
-			await syncInnerRepoToRevision(revision as string);
+			await ensureInnerRepoAtRevision(revision as string);
 			activeRepoRoot = innerRepoRoot;
 			activePackageRoot = resolve(innerRepoRoot, packageWorkspacePath);
 			if (!existsSync(activePackageRoot)) {

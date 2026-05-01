@@ -4,6 +4,7 @@
  */
 
 import { spawnSync } from "node:child_process";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -14,6 +15,7 @@ import { maybePrintHelp } from "./oclifHelp.js";
 
 const scriptDirectory = dirname(fileURLToPath(import.meta.url));
 const packageRoot = resolve(scriptDirectory, "..");
+const bundleAnalysisDirectory = resolve(packageRoot, "bundleAnalysis");
 
 /**
  * Resolves a committish (branch, tag, or SHA) to the merge-base with the outer
@@ -143,6 +145,21 @@ class CollectAndCompareBundlesCommand extends Command {
 			sharedCollectArgs.push("--force-clean-build");
 		}
 
+		// The inner repo is only ever checked out at a clean revision; its build
+		// output for a given SHA is deterministic, so cached stats from a prior
+		// run for the same SHA can be reused. We track the SHA used to produce
+		// the base stats in a sidecar revision.txt file.
+		const baseLabelDirectory = resolve(bundleAnalysisDirectory, baseLabel);
+		const baseStatsPath = resolve(baseLabelDirectory, "bundleStats.msp.gz");
+		const baseRevisionMarkerPath = resolve(baseLabelDirectory, "revision.txt");
+		const cachedBaseRevision = existsSync(baseRevisionMarkerPath)
+			? readFileSync(baseRevisionMarkerPath, "utf8").trim()
+			: undefined;
+		const baseStatsAreCached =
+			!forceCleanBuildFlag &&
+			existsSync(baseStatsPath) &&
+			cachedBaseRevision === baseRevision;
+
 		try {
 			console.log(`\n${"=".repeat(80)}`);
 			console.log(`Collecting local bundle (label: ${currentLabel})...`);
@@ -150,19 +167,31 @@ class CollectAndCompareBundlesCommand extends Command {
 			runScript("collectBundle.ts", ["--mode", "local", ...sharedCollectArgs]);
 
 			console.log(`\n${"=".repeat(80)}`);
-			console.log(
-				`Collecting base bundle (revision: ${baseRevision}, label: ${baseLabel})...`,
-			);
-			console.log("=".repeat(80));
-			runScript("collectBundle.ts", [
-				"--mode",
-				"revision",
-				"--revision",
-				baseRevision,
-				"--label",
-				baseLabel,
-				...sharedCollectArgs,
-			]);
+			if (baseStatsAreCached) {
+				console.log(
+					`Reusing cached base bundle (revision: ${baseRevision}, label: ${baseLabel}).`,
+				);
+				console.log(`  Stats: ${baseStatsPath}`);
+				console.log("=".repeat(80));
+			} else {
+				console.log(
+					`Collecting base bundle (revision: ${baseRevision}, label: ${baseLabel})...`,
+				);
+				console.log("=".repeat(80));
+				runScript("collectBundle.ts", [
+					"--mode",
+					"revision",
+					"--revision",
+					baseRevision,
+					"--label",
+					baseLabel,
+					...sharedCollectArgs,
+				]);
+				// Record the SHA that produced these stats so a subsequent run
+				// against the same merge-base can skip the rebuild.
+				mkdirSync(baseLabelDirectory, { recursive: true });
+				writeFileSync(baseRevisionMarkerPath, `${baseRevision}\n`);
+			}
 
 			if (!skipCompare) {
 				console.log(`\n${"=".repeat(80)}`);
