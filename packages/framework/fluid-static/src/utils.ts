@@ -167,7 +167,7 @@ export const compatibilityModeToMinVersionForCollab = {
  * options are still selected by `compatibilityMode`.
  *
  * TODO: when `CompatibilityMode` is removed, the runtime options (currently derived from
- * {@link compatibilityModeRuntimeOptions} keyed by `compatibilityMode`) must replaced.
+ * {@link compatibilityModeRuntimeOptions} keyed by `compatibilityMode`) must be replaced.
  *
  * @internal
  */

@@ -201,7 +201,7 @@ export function createDOProviderContainerRuntimeFactory(props: {
 	/**
 	 * See {@link CompatibilityMode} for more details.
 	 *
-	 * @deprecated Use {@link createDOProviderContainerRuntimeFactory.minVersionForCollab | minVersionForCollab} instead.
+	 * @deprecated Use `minVersionForCollab` instead.
 	 */
 	// eslint-disable-next-line import-x/no-deprecated
 	compatibilityMode: CompatibilityMode;
