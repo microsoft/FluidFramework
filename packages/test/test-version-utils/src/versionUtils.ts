@@ -122,7 +122,7 @@ export const resolveRangeViaRegistry = cached((rangeSpec: string): string => {
  * Throws if the currently installed compat workspace does not include any version that matches the spec.
  * @param rangeSpec - A valid (as per [semver](https://www.npmjs.com/package/semver)) range specification
  */
-function resolveRangeFromManifest(rangeSpec: string): string {
+function resolveRangeViaManifest(rangeSpec: string): string {
 	const manifest = readVersionsManifest();
 	const matching = manifest.versions
 		.filter((v) => semver.valid(v) && semver.satisfies(v, rangeSpec))
@@ -145,7 +145,7 @@ function resolveRangeFromManifest(rangeSpec: string): string {
  * @internal
  */
 export function checkInstalled(requested: string): { version: string; modulePath: string } {
-	const version = resolveRangeFromManifest(requested);
+	const version = resolveRangeViaManifest(requested);
 	const versionDir = path.join(fullWorkspaceDir, version);
 
 	if (existsSync(versionDir)) {
