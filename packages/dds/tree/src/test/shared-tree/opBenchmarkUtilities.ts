@@ -122,24 +122,37 @@ export function opStatsToCollectedData(opStats: OperationsStats): CollectedData 
 }
 
 /**
- * Asserts that the given (x, y) points lie on a line using exact equality.
- * @returns The slope and intercept of the line defined by the first two distinct x-values.
+ * Asserts that the given (x, y) points lie on a line.
+ *
+ * @remarks
+ * When `maxDeviation` is 0 (the default), exact equality is used: each point must lie
+ * precisely on the line defined by the first two distinct x-values (using integer arithmetic to
+ * avoid floating-point error). Use this for data that is theoretically deterministic.
+ *
+ * When `maxDeviation` is positive, least-squares regression is used to fit the best line
+ * through all unique points, and each point must be within `maxDeviation` of that line.
+ * Use this when small encoding artifacts (e.g. JSON number digit counts) cause minor deviations.
+ *
+ * @returns The slope and intercept of the fitted line.
  * @throws Throws when fewer than 3 points are provided, since 2 points always define a line.
  * @throws Throws when two points share an x-value but have different y-values.
  * @throws Throws when all points share the same x-value (no unique line can be determined).
- * @throws Throws when any point does not lie exactly on the line defined by the first two distinct x-values.
- * @remarks
- * This is intended for use with deterministic data (e.g., integer byte counts produced by a fixed
- * encoding). Because exact equality is used, any measurement noise or non-determinism will cause
- * spurious failures — do not use this with randomly-varying measurements.
+ * @throws Throws when any point deviates from the fitted line by more than `maxDeviation`.
  */
 export function assertLinear({
 	points,
+	maxDeviation = 0,
 }: {
 	/**
 	 * The data points to test, where `x` is the axis value and `y` is the measured output size.
 	 */
 	readonly points: readonly { x: number; y: number }[];
+	/**
+	 * Maximum permitted deviation of any point from the fitted line.
+	 * @remarks When 0, exact equality is required. Must be non-negative.
+	 * @defaultValue 0
+	 */
+	readonly maxDeviation?: number;
 }): { slope: number; intercept: number } {
 	if (points.length <= 2) {
 		fail("Expected at least 3 data points to assert linear relationship.");
@@ -160,22 +173,72 @@ export function assertLinear({
 		fail("Expected at least 2 distinct x-values to determine a line.");
 	}
 
-	// Form the reference line from the first two distinct-x points.
 	const uniquePoints = [...yByX.entries()];
-	const [x0, y0] = uniquePoints[0];
-	const [x1, y1] = uniquePoints[1];
-	const dx = x1 - x0;
-	const dy = y1 - y0;
 
-	// Assert each remaining unique point lies exactly on the line.
-	// Rearranging y - y0 = (dy/dx)(x - x0) to avoid floating-point division:
-	// (y - y0) * dx === dy * (x - x0)
-	for (const [x, y] of uniquePoints.slice(2)) {
-		assert(
-			(y - y0) * dx === dy * (x - x0),
-			`Expected (x=${x}, y=${y}) to lie exactly on the line through (${x0}, ${y0}) and (${x1}, ${y1}).`,
-		);
+	if (maxDeviation === 0) {
+		// Exact mode: reference line from first two distinct-x points, integer arithmetic.
+		const [x0, y0] = uniquePoints[0];
+		const [x1, y1] = uniquePoints[1];
+		const dx = x1 - x0;
+		const dy = y1 - y0;
+
+		// Rearranging y - y0 = (dy/dx)(x - x0) to avoid floating-point division:
+		// (y - y0) * dx === dy * (x - x0)
+		for (const [x, y] of uniquePoints.slice(2)) {
+			assert(
+				(y - y0) * dx === dy * (x - x0),
+				`Expected (x=${x}, y=${y}) to lie exactly on the line through (${x0}, ${y0}) and (${x1}, ${y1}).`,
+			);
+		}
+
+		return { slope: dy / dx, intercept: y0 - (dy / dx) * x0 };
+	} else {
+		// Approximate mode: least-squares regression over all unique points.
+		const n = uniquePoints.length;
+		const sumX = uniquePoints.reduce((s, [x]) => s + x, 0);
+		const sumY = uniquePoints.reduce((s, [, y]) => s + y, 0);
+		const sumXY = uniquePoints.reduce((s, [x, y]) => s + x * y, 0);
+		const sumX2 = uniquePoints.reduce((s, [x]) => s + x * x, 0);
+		const slope = (n * sumXY - sumX * sumY) / (n * sumX2 - sumX * sumX);
+		const intercept = (sumY - slope * sumX) / n;
+
+		for (const { x, y } of points) {
+			const expected = slope * x + intercept;
+			const deviation = Math.abs(y - expected);
+			assert(
+				deviation <= maxDeviation,
+				`Expected (x=${x}, y=${y}) to lie within ${maxDeviation} bytes of the regression line ` +
+					`(y ≈ ${slope.toFixed(2)}x + ${intercept.toFixed(2)}), but deviation was ${deviation.toFixed(1)} bytes.`,
+			);
+		}
+
+		return { slope, intercept };
 	}
+}
 
-	return { slope: dy / dx, intercept: y0 - (dy / dx) * x0 };
+/**
+ * Asserts that op size varies by at most `maxDeltaBytes` across all measurements.
+ * @throws Throws an error when fewer than 2 values are provided.
+ */
+export function assertApproximatelyConstant({
+	sizes,
+	maxDeltaBytes,
+}: {
+	/**
+	 * The measured op sizes to compare.
+	 */
+	readonly sizes: readonly number[];
+	/**
+	 * The maximum permitted difference between the largest and smallest op size.
+	 */
+	readonly maxDeltaBytes: number;
+}): void {
+	if (sizes.length <= 1) {
+		fail("Expected at least 2 measurements to assert approximately constant op size.");
+	}
+	const delta = Math.max(...sizes) - Math.min(...sizes);
+	assert(
+		delta <= maxDeltaBytes,
+		`Expected approximately constant op size (max delta ≤ ${maxDeltaBytes} B), got ${delta} B.`,
+	);
 }

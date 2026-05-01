@@ -110,5 +110,78 @@ describe("opBenchmarkUtilities", () => {
 			assert.equal(slope, 2);
 			assert.equal(intercept, 3);
 		});
+
+		describe("maxDeviation", () => {
+			it("passes when all points are exactly on the regression line (no deviation)", () => {
+				// y = 2x + 3
+				const points = [
+					{ x: 1, y: 5 },
+					{ x: 2, y: 7 },
+					{ x: 3, y: 9 },
+				];
+				const { slope, intercept } = assertLinear({ points, maxDeviation: 0 });
+				assert.equal(slope, 2);
+				assert.equal(intercept, 3);
+			});
+
+			it("passes when a point is within tolerance", () => {
+				// y = 2x + 3, but (2, 8) is off by 1
+				const points = [
+					{ x: 1, y: 5 },
+					{ x: 2, y: 8 }, // off by 1 from the true line y=7
+					{ x: 3, y: 9 },
+				];
+				// Should not throw with tolerance of 2 bytes
+				const { slope } = assertLinear({ points, maxDeviation: 2 });
+				// Regression slope should still be close to 2
+				assert(Math.abs(slope - 2) < 0.5);
+			});
+
+			it("throws when a point exceeds tolerance", () => {
+				// y = 2x + 3, but (2, 8) is off by 1
+				const points = [
+					{ x: 1, y: 5 },
+					{ x: 2, y: 8 }, // off by 1
+					{ x: 3, y: 9 },
+				];
+				// Should throw when tolerance is 0 (exact mode)
+				assert.throws(() => assertLinear({ points, maxDeviation: 0 }));
+			});
+
+			it("uses regression slope, not just first-two-points slope", () => {
+				// Three points that are not exactly collinear but close
+				// True regression line is approximately y = 6x + 670
+				const points = [
+					{ x: 1, y: 676 },
+					{ x: 10, y: 752 },
+					{ x: 100, y: 1294 },
+				];
+				const { slope, intercept } = assertLinear({ points, maxDeviation: 15 });
+				// Regression slope should be between 5 and 8 bytes/unit
+				assert(slope > 5 && slope < 8, `Expected slope between 5 and 8, got ${slope}`);
+				assert(intercept > 650 && intercept < 700, `Expected intercept near 670, got ${intercept}`);
+			});
+		});
+	});
+
+	describe("assertApproximatelyConstant", () => {
+		it("throws when given fewer than 2 values", () => {
+			assert.throws(() => assertApproximatelyConstant({ sizes: [], maxDeltaBytes: 0 }));
+			assert.throws(() => assertApproximatelyConstant({ sizes: [42], maxDeltaBytes: 100 }));
+		});
+
+		it("passes when all values are identical", () => {
+			assertApproximatelyConstant({ sizes: [100, 100, 100], maxDeltaBytes: 0 });
+		});
+
+		it("passes when delta equals maxDeltaBytes exactly", () => {
+			assertApproximatelyConstant({ sizes: [100, 105], maxDeltaBytes: 5 });
+		});
+
+		it("throws when delta exceeds maxDeltaBytes", () => {
+			assert.throws(() =>
+				assertApproximatelyConstant({ sizes: [100, 107], maxDeltaBytes: 5 }),
+			);
+		});
 	});
 });
