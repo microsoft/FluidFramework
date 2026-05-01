@@ -3,11 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import type { AzureMember, IAzureAudience } from "@fluidframework/azure-client";
+import type { IAudience } from "@fluidframework/container-definitions";
 import type { LatestRaw, Presence } from "@fluidframework/presence";
 
 import type { IDiceRollerController } from "./controller.js";
-import type { ICustomUserDetails } from "./fluid.js";
 import type { DiceValues } from "./presence.js";
 
 function makeDiceRollerView(diceRoller: IDiceRollerController): HTMLDivElement {
@@ -38,7 +37,13 @@ function makeDiceRollerView(diceRoller: IDiceRollerController): HTMLDivElement {
 	return wrapperDiv;
 }
 
-function makeAudienceView(audience?: IAzureAudience): HTMLDivElement {
+/**
+ * Creates a DOM section showing the current user and all other connected users.
+ * User IDs are truncated to 8 characters for readability.
+ *
+ * @param audience - Audience providing member info. When `undefined` (e.g. in tests), returns a placeholder.
+ */
+function makeAudienceView(audience?: IAudience): HTMLDivElement {
 	// Accommodating the test which doesn't provide an audience
 	if (audience === undefined) {
 		const noAudienceDiv = document.createElement("div");
@@ -53,35 +58,29 @@ function makeAudienceView(audience?: IAzureAudience): HTMLDivElement {
 	audienceDiv.style.fontSize = "20px";
 
 	const onAudienceChanged = (): void => {
-		const members = audience.getMembers() as ReadonlyMap<
-			string,
-			AzureMember<ICustomUserDetails>
-		>;
-		const self = audience.getMyself();
+		const members = audience.getMembers();
+		const self = audience.getSelf();
+		const selfClientId = self?.clientId;
 		const memberStrings: string[] = [];
-		const useAzure = process.env.FLUID_CLIENT === "azure";
 
-		for (const member of members.values()) {
-			if (member.id !== self?.id) {
-				if (useAzure) {
-					const memberString = `${member.name}: {Gender: ${member.additionalDetails?.gender},
-                        Email: ${member.additionalDetails?.email}}`;
-					memberStrings.push(memberString);
-				} else {
-					memberStrings.push(member.name);
-				}
+		for (const [clientId, member] of members.entries()) {
+			if (clientId !== selfClientId) {
+				memberStrings.push(member.user.id.slice(0, 8));
 			}
 		}
 
+		const selfMember =
+			selfClientId === undefined ? undefined : audience.getMember(selfClientId);
 		const currentUserDiv = document.createElement("div");
-		currentUserDiv.textContent = `Current User: ${self?.name}`;
+		currentUserDiv.textContent = `Current User: ${selfMember?.user.id.slice(0, 8) ?? "(unknown)"}`;
 		const otherUsersDiv = document.createElement("div");
 		otherUsersDiv.textContent = `Other Users: ${memberStrings.join(", ")}`;
 		audienceDiv.replaceChildren(currentUserDiv, otherUsersDiv);
 	};
 
 	onAudienceChanged();
-	audience.on("membersChanged", onAudienceChanged);
+	audience.on("addMember", onAudienceChanged);
+	audience.on("removeMember", onAudienceChanged);
 
 	wrapperDiv.append(audienceDiv);
 	return wrapperDiv;
@@ -107,6 +106,10 @@ function makeDiceValueElement(id: string, value: DiceValues): HTMLDivElement[] {
 	]);
 }
 
+/**
+ * Renders the current remote last-roll state into `target` as a header row followed by one row per attendee.
+ * Replaces all existing children on each call.
+ */
 export function makeDiceValuesView(
 	target: HTMLDivElement,
 	lastRoll: LatestRaw<DiceValues>,
@@ -124,10 +127,18 @@ function addLogEntry(logDiv: HTMLDivElement, entry: string): void {
 	logDiv.prepend(entryDiv);
 }
 
+/**
+ * Creates a DOM section with two panels: a grid of each attendee's last dice rolls (updated in real-time
+ * via presence), and a scrollable log of remote join/leave and roll activity.
+ *
+ * @param presenceConfig - Presence instance and last-roll state accessor. When `undefined` (e.g. in tests),
+ * returns a placeholder.
+ * @param audience - Audience used to resolve display names for attendee events.
+ */
 function makePresenceView(
 	// Biome insist on no semicolon - https://dev.azure.com/fluidframework/internal/_workitems/edit/9083
 	presenceConfig?: { presence: Presence; lastRoll: LatestRaw<DiceValues> },
-	audience?: IAzureAudience,
+	audience?: IAudience,
 ): HTMLDivElement {
 	const presenceDiv = document.createElement("div");
 	// Accommodating the test which doesn't provide a presence
@@ -167,19 +178,19 @@ function makePresenceView(
 	logContentDiv.style.border = "1px solid black";
 	if (audience !== undefined) {
 		presenceConfig.presence.attendees.events.on("attendeeConnected", (attendee) => {
-			const name = audience.getMembers().get(attendee.getConnectionId())?.name;
+			const name = audience.getMembers().get(attendee.getConnectionId())?.user.id.slice(0, 8);
 			const update = `client ${name === undefined ? "(unnamed)" : `named ${name}`} 🔗 with id ${attendee.attendeeId} joined`;
 			addLogEntry(logContentDiv, update);
 		});
 
 		presenceConfig.presence.attendees.events.on("attendeeDisconnected", (attendee) => {
 			// Filter for remote attendees
-			const self = audience.getMyself();
-			if (
-				self &&
-				attendee !== presenceConfig.presence.attendees.getAttendee(self.currentConnection)
-			) {
-				const name = audience.getMembers().get(attendee.getConnectionId())?.name;
+			const self = audience.getSelf();
+			if (self && attendee !== presenceConfig.presence.attendees.getAttendee(self.clientId)) {
+				const name = audience
+					.getMembers()
+					.get(attendee.getConnectionId())
+					?.user.id.slice(0, 8);
 				const update = `client ${name === undefined ? "(unnamed)" : `named ${name}`} ⛓️‍💥 with id ${attendee.attendeeId} left`;
 				addLogEntry(logContentDiv, update);
 			}
@@ -199,11 +210,18 @@ function makePresenceView(
 	return presenceDiv;
 }
 
+/**
+ * Builds the top-level app view: a row of dice rollers, an audience panel, and a presence panel.
+ *
+ * @param diceRollerControllers - One controller per die; each gets its own interactive roller view.
+ * @param presenceConfig - Optional presence state (omit in tests to suppress presence UI).
+ * @param audience - Optional audience (omit in tests to suppress audience UI).
+ */
 export function makeAppView(
 	diceRollerControllers: IDiceRollerController[],
 	// Biome insist on no semicolon - https://dev.azure.com/fluidframework/internal/_workitems/edit/9083
 	presenceConfig?: { presence: Presence; lastRoll: LatestRaw<DiceValues> },
-	audience?: IAzureAudience,
+	audience?: IAudience,
 ): HTMLDivElement {
 	const diceRollerViews = diceRollerControllers.map((controller) =>
 		makeDiceRollerView(controller),

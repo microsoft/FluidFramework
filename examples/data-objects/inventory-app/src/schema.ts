@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { SchemaFactory, TreeViewConfiguration } from "@fluidframework/tree";
+import { SchemaFactory, TreeViewConfiguration } from "fluid-framework";
 
 const builder = new SchemaFactory("com.contoso.app.inventory");
 

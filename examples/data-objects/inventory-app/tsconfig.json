@@ -3,7 +3,7 @@
 	"compilerOptions": {
 		"rootDir": "./src",
 		"outDir": "./lib",
-		"types": ["react"],
+		"types": ["react", "node"],
 		"exactOptionalPropertyTypes": false,
 	},
 	"include": ["src/**/*"],

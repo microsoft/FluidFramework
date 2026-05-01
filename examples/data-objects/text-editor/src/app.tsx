@@ -3,13 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { AzureClient, type AzureLocalConnectionConfig } from "@fluidframework/azure-client";
 import {
 	createDevtoolsLogger,
-	initializeDevtools,
-	type ContainerDevtoolsProps,
+	initializeFluidDevtools,
+	type FluidContainerDevtoolsProps,
+	type FluidDevtools,
 	type IDevtoolsLogger,
-} from "@fluidframework/devtools/beta";
+} from "@fluidframework/devtools/alpha";
 import {
 	FormattedMainView,
 	QuillMainView as PlainQuillView,
@@ -25,16 +25,12 @@ import {
 	PlainTextMainView,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "@fluidframework/react/internal";
-/**
- * InsecureTokenProvider is used here for local development and demo purposes only.
- * Do not use in production - implement proper authentication for production scenarios.
- */
-// eslint-disable-next-line import-x/no-internal-modules
-import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils/internal";
-import { TreeViewConfiguration } from "@fluidframework/tree";
+import {
+	createTinyliciousServiceClient,
+	type TinyliciousServiceOptions,
+} from "@fluidframework/tinylicious-driver/alpha";
 import {
 	asAlpha,
-	configuredSharedTreeAlpha,
 	FluidClientVersion,
 	ForestTypeOptimized,
 	incrementalEncodingPolicyForAllowedTypes,
@@ -44,9 +40,18 @@ import {
 	TreeViewConfigurationAlpha,
 	type TreeViewAlpha,
 } from "@fluidframework/tree/alpha";
-// eslint-disable-next-line import-x/no-internal-modules
-import { FormattedTextAsTreeDefault, TextAsTree } from "@fluidframework/tree/internal";
-import type { IFluidContainer } from "fluid-framework";
+/* eslint-disable import-x/no-internal-modules */
+import {
+	configuredSharedTree,
+	FormattedTextAsTreeDefault,
+} from "@fluidframework/tree/internal";
+/* eslint-enable import-x/no-internal-modules */
+import { TreeViewConfiguration, type TreeView } from "fluid-framework";
+import {
+	TextAsTree,
+	defineTreeDataStore,
+	type FluidContainerAttached,
+} from "fluid-framework/alpha";
 // eslint-disable-next-line import-x/no-internal-modules, import-x/no-unassigned-import
 import "quill/dist/quill.snow.css";
 import { type CSSProperties, type FC, useCallback, useEffect, useMemo, useState } from "react";
@@ -57,7 +62,7 @@ import { createRoot } from "react-dom/client";
  * Get the Tinylicious endpoint URL, handling Codespaces port forwarding. Tinylicious only works for localhost,
  * so in Codespaces we need to use the forwarded URL.
  */
-function getTinyliciousEndpoint(): string {
+function getTinyliciousEndpoint(): { endpoint: string; port: number } {
 	const hostname = window.location.hostname;
 	const tinyliciousPort = 7070;
 
@@ -66,11 +71,30 @@ function getTinyliciousEndpoint(): string {
 		const match = /^(.+)-\d+\.app\.github\.dev$/.exec(hostname);
 		if (match) {
 			const codespaceName = match[1];
-			return `https://${codespaceName}-${tinyliciousPort}.app.github.dev`;
+			// Codespaces forwards the tinylicious port via the subdomain and serves it over standard HTTPS.
+			return {
+				endpoint: `https://${codespaceName}-${tinyliciousPort}.app.github.dev`,
+				port: 443,
+			};
 		}
 	}
 
-	return `http://localhost:${tinyliciousPort}`;
+	return { endpoint: "http://localhost", port: tinyliciousPort };
+}
+
+/**
+ * Builds the {@link TinyliciousServiceOptions} for connecting to the Tinylicious service,
+ * resolving the endpoint (handling Codespaces port forwarding).
+ */
+function makeServiceOptions(): TinyliciousServiceOptions {
+	const { endpoint, port } = getTinyliciousEndpoint();
+	return {
+		minVersionForCollaboration: "2.100.0",
+		endpoint,
+		port,
+		// TODO: logger
+		// TODO: user ids.
+	};
 }
 
 const sf = new SchemaFactoryAlpha("com.fluidframework.example.text-editor");
@@ -92,7 +116,7 @@ export const treeConfig = new TreeViewConfiguration({ schema: TextEditorRoot });
  * {@link incrementalSummaryHint} from the {@link TextEditorRoot}, so both the
  * plain and formatted text are encoded incrementally.
  */
-const SharedTree = configuredSharedTreeAlpha({
+const SharedTree = configuredSharedTree({
 	forest: ForestTypeOptimized,
 	treeEncodeType: TreeCompressionStrategy.CompressedIncremental,
 	shouldEncodeIncrementally: incrementalEncodingPolicyForAllowedTypes(
@@ -101,22 +125,21 @@ const SharedTree = configuredSharedTreeAlpha({
 	minVersionForCollab: FluidClientVersion.v2_74,
 });
 
-const containerSchema = {
-	initialObjects: {
-		tree: SharedTree,
-	},
-};
-
-function getConnectionConfig(userId: string): AzureLocalConnectionConfig {
-	return {
-		type: "local",
-		tokenProvider: new InsecureTokenProvider("VALUE_NOT_USED", {
-			id: userId,
-			name: `User-${userId}`,
-		}),
-		endpoint: getTinyliciousEndpoint(),
-	};
-}
+/**
+ * Data store kind for the text editor application.
+ * Defines the schema, view configuration, and initial (empty) state for both plain and formatted text trees.
+ *
+ * @remarks
+ * The optimized, incremental-summarization {@link SharedTree} is supplied via the registry so the
+ * data store uses it in place of the default SharedTree kind.
+ */
+const textEditorKind = defineTreeDataStore({
+	type: "text-editor",
+	config: treeConfig,
+	registry: [SharedTree],
+	key: SharedTree,
+	initializer: () => createInitialRoot(),
+});
 
 type ViewType = "plainTextarea" | "plainQuill" | "formatted";
 
@@ -162,7 +185,7 @@ export interface UserView {
 	 * dispose it when the panel is removed. Everything the panel renders comes from
 	 * {@link UserView.treeView}.
 	 */
-	readonly container: IFluidContainer<typeof containerSchema>;
+	readonly container: FluidContainerAttached<TreeView<typeof TextEditorRoot>>;
 	/** This user's view of the shared text, rendered and edited by the panel. */
 	readonly treeView: TreeViewAlpha<typeof TextEditorRoot>;
 }
@@ -171,7 +194,7 @@ export interface UserView {
  * Devtools registration props for one user's container. Keyed by user id, which is
  * never reused, so keys stay unique across add/remove cycles.
  */
-const devtoolsContainerProps = (user: UserView): ContainerDevtoolsProps => ({
+const devtoolsContainerProps = (user: UserView): FluidContainerDevtoolsProps => ({
 	container: user.container,
 	containerKey: `User ${user.id} Container`,
 });
@@ -188,60 +211,24 @@ export function createInitialRoot(text = ""): TextEditorRoot {
 	});
 }
 
-async function createAndAttachNewContainer(client: AzureClient): Promise<{
-	container: IFluidContainer<typeof containerSchema>;
-	containerId: string;
-	treeView: TreeViewAlpha<typeof TextEditorRoot>;
-}> {
-	const { container } = await client.createContainer(containerSchema, "2.0.0");
-
-	const treeView = asAlpha<typeof TextEditorRoot>(
-		container.initialObjects.tree.viewWith(treeConfig),
-	);
-
-	treeView.initialize(createInitialRoot());
-
-	const containerId = await container.attach();
-
-	return {
-		container,
-		containerId,
-		treeView,
-	};
-}
-
-async function loadExistingContainer(
-	client: AzureClient,
-	containerId: string,
-): Promise<{
-	container: IFluidContainer<typeof containerSchema>;
-	treeView: TreeViewAlpha<typeof TextEditorRoot>;
-}> {
-	const { container } = await client.getContainer(containerId, containerSchema, "2.0.0");
-	const treeView = asAlpha(container.initialObjects.tree.viewWith(treeConfig));
-	return {
-		container,
-		treeView,
-	};
+/**
+ * Wraps a freshly created or loaded container as a {@link UserView} under a new {@link UserId}.
+ */
+function userViewFromContainer(
+	container: FluidContainerAttached<TreeView<typeof TextEditorRoot>>,
+): UserView {
+	return { id: makeUserId(), container, treeView: asAlpha(container.data) };
 }
 
 /**
- * Connects one user (its own Fluid client, under a fresh {@link UserId}) to an
- * existing document. Shared by the initial load and the "Add user" button.
+ * Connects one user (its own {@link @fluidframework/tinylicious-driver#createTinyliciousServiceClient | ServiceClient},
+ * under a fresh {@link UserId}) to an existing document. Shared by the initial load and the "Add user" button.
  * @param containerId - Identifies the document (Fluid container) to load.
- * @param devtoolsLogger - Shared logger which routes this client's telemetry to Devtools.
  */
-async function connectUser(
-	containerId: string,
-	devtoolsLogger: IDevtoolsLogger,
-): Promise<UserView> {
-	const id = makeUserId();
-	const client = new AzureClient({
-		connection: getConnectionConfig(id),
-		logger: devtoolsLogger,
-	});
-	const { container, treeView } = await loadExistingContainer(client, containerId);
-	return { id, container, treeView };
+async function connectUser(containerId: string): Promise<UserView> {
+	const service = createTinyliciousServiceClient(makeServiceOptions());
+	const container = await service.loadContainer(containerId, textEditorKind);
+	return userViewFromContainer(container);
 }
 
 async function initFluid(): Promise<{
@@ -249,7 +236,8 @@ async function initFluid(): Promise<{
 	devtoolsLogger: IDevtoolsLogger;
 	initialUsers: UserView[];
 }> {
-	console.log(`Connecting to Tinylicious at: ${getTinyliciousEndpoint()}`);
+	const { endpoint } = getTinyliciousEndpoint();
+	console.log(`Connecting to Tinylicious at: ${endpoint}`);
 	const devtoolsLogger = createDevtoolsLogger();
 
 	let containerId: string;
@@ -267,28 +255,21 @@ async function initFluid(): Promise<{
 			);
 		}
 		containerId = rawContainerId;
-		initialUsers.push(await connectUser(containerId, devtoolsLogger));
+		initialUsers.push(await connectUser(containerId));
 	} else {
 		// First user creates and attaches the new document.
-		const userId = makeUserId();
-		const client = new AzureClient({
-			connection: getConnectionConfig(userId),
-			logger: devtoolsLogger,
-		});
-		const created = await createAndAttachNewContainer(client);
-		containerId = created.containerId;
+		const service = createTinyliciousServiceClient(makeServiceOptions());
+		const container = await service.createContainer(textEditorKind);
+		const attached = await container.attach();
+		containerId = attached.id;
 		// eslint-disable-next-line require-atomic-updates
 		location.hash = containerId;
-		initialUsers.push({
-			id: userId,
-			container: created.container,
-			treeView: created.treeView,
-		});
+		initialUsers.push(userViewFromContainer(attached));
 	}
 
 	// Connect the remaining initial users (the first was connected/created above).
 	for (let i = initialUsers.length; i < initialUserCount; i++) {
-		initialUsers.push(await connectUser(containerId, devtoolsLogger));
+		initialUsers.push(await connectUser(containerId));
 	}
 
 	return { containerId, devtoolsLogger, initialUsers };
@@ -334,7 +315,7 @@ const userPanelUndoRedoButtonStyleBase = {
 const UserPanel: FC<{
 	label: string;
 	color: string;
-	container: IFluidContainer<typeof containerSchema>;
+	container: FluidContainerAttached<TreeView<typeof TextEditorRoot>>;
 	treeView: TreeViewAlpha<typeof TextEditorRoot>;
 	/**
 	 * Removes this user from the side-by-side view. Omitted when removal is not
@@ -352,10 +333,10 @@ const UserPanel: FC<{
 		return () => {
 			manager.dispose();
 			treeView.dispose();
-			// Note: disposing while `isDirty` drops any local edits not yet acknowledged
+			// Note: closing while `isDirty` drops any local edits not yet acknowledged
 			// by the service. Acceptable for this demo, and it avoids waiting on an ack
 			// that may never arrive (e.g. if the service is unreachable).
-			container.dispose();
+			container.close();
 		};
 	}, [manager, treeView, container]);
 
@@ -542,28 +523,44 @@ export const App: FC<{
 	// (Re)initializes Devtools with the current users' containers whenever it's enabled
 	// or the user set changes. Recreating the instance on add/remove keeps registration
 	// fully declarative, and add/remove is rare enough that the re-init cost is fine.
-	// Devtools can also dispose itself (its `beforeunload` handler fires even for
-	// navigations that end up canceled), hence the guard before dispose.
+	// initializeFluidDevtools is async (it resolves each Container's entry point), so the
+	// instance may resolve after this effect has been cleaned up; guard against that with
+	// `cancelled`. Devtools can also dispose itself (its `beforeunload` handler fires even
+	// for navigations that end up canceled), hence the guard before dispose.
 	useEffect(() => {
 		if (!devtoolsEnabled) {
-			return;
+			return undefined;
 		}
-		const devtools = initializeDevtools({
+		let instance: FluidDevtools | undefined;
+		let cancelled = false;
+		initializeFluidDevtools({
 			logger: devtoolsLogger,
 			initialContainers: users.map((user) => devtoolsContainerProps(user)),
-		});
+		}).then(
+			(created) => {
+				if (cancelled) {
+					created.dispose();
+				} else {
+					instance = created;
+				}
+			},
+			(error: unknown) => {
+				console.error("Failed to initialize Fluid Devtools:", error);
+			},
+		);
 		return () => {
-			if (!devtools.disposed) {
-				devtools.dispose();
+			cancelled = true;
+			if (instance !== undefined && !instance.disposed) {
+				instance.dispose();
 			}
 		};
 	}, [devtoolsEnabled, devtoolsLogger, users]);
 
 	const addUser = useCallback(() => {
-		connect(containerId, devtoolsLogger)
+		connect(containerId)
 			.then((user) => setUsers((prev) => [...prev, user]))
 			.catch((error: unknown) => console.error("Failed to add user:", error));
-	}, [connect, containerId, devtoolsLogger]);
+	}, [connect, containerId]);
 
 	// Drop the user from the list; the Devtools effect above re-initializes without it
 	// and its UserPanel disposes the view and container as it unmounts (see the teardown
@@ -646,10 +643,11 @@ async function start(): Promise<void> {
 		);
 	} catch (error) {
 		console.error("Failed to start:", error);
+		const { endpoint, port } = getTinyliciousEndpoint();
 		rootElement.innerHTML = `<div style="color: #721c24; background: #f8d7da; padding: 20px; border-radius: 4px; border: 1px solid #f5c6cb;">
 			<h2>Failed to connect to Tinylicious</h2>
-			<p><strong>Error:</strong> ${error instanceof Error ? error.message : error}</p>
-			<p><strong>Tinylicious endpoint:</strong> ${getTinyliciousEndpoint()}</p>
+			<p><strong>Error:</strong> ${error instanceof Error ? error.message : String(error)}</p>
+			<p><strong>Tinylicious endpoint:</strong> ${endpoint}:${port}</p>
 			<h3>Troubleshooting:</h3>
 			<ol>
 				<li>Make sure Tinylicious is running: <code>pnpm tinylicious</code></li>
