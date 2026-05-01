@@ -131,8 +131,8 @@ describe("createUndoRedo", () => {
 	});
 
 	describe("labeled undo/redo", () => {
-		const labelA = Symbol("label-a");
-		const labelB = Symbol("label-b");
+		const labelA = "label-a";
+		const labelB = "label-b";
 
 		it("canUndo(label) returns false when stack has no matching commit", () => {
 			const view = createTree();
@@ -304,7 +304,7 @@ describe("createUndoRedo", () => {
 			) => void;
 		} {
 			type Handler = (
-				data: { isLocal: boolean; labels: symbol[] },
+				data: { isLocal: boolean; labels: unknown[] },
 				getRevertible: (() => { revert(): void; dispose(): void }) | undefined,
 			) => void;
 			const handlers: Handler[] = [];
