@@ -11772,9 +11772,6 @@ importers:
       '@biomejs/biome':
         specifier: ~2.4.5
         version: 2.4.5
-      '@fluid-internal/mocha-test-setup':
-        specifier: workspace:~
-        version: link:../../test/mocha-test-setup
       '@fluid-tools/build-cli':
         specifier: catalog:buildTools
         version: 0.65.0(@types/node@22.19.17)(webpack-cli@5.1.4)
@@ -11790,6 +11787,9 @@ importers:
       '@microsoft/api-extractor':
         specifier: 7.58.1
         version: 7.58.1(patch_hash=949a26f6cec9ac4e37522f178b8e4982136ccfeb8c6d0835130ef2aa6788f4fa)(@types/node@22.19.17)
+      '@types/node':
+        specifier: ~22.19.17
+        version: 22.19.17
       concurrently:
         specifier: ^10.0.3
         version: 10.0.3
@@ -11921,6 +11921,12 @@ importers:
       '@fluidframework/eslint-config-fluid':
         specifier: catalog:eslint
         version: 13.0.0(@typescript-eslint/utils@8.61.0(eslint@9.39.1(jiti@2.6.1))(typescript@5.4.5))(eslint@9.39.1(jiti@2.6.1))(typescript@5.4.5)
+      '@fluidframework/local-driver':
+        specifier: workspace:~
+        version: link:../../drivers/local-driver
+      '@fluidframework/shared-object-base':
+        specifier: workspace:~
+        version: link:../../dds/shared-object-base
       '@fluidframework/test-runtime-utils':
         specifier: workspace:~
         version: link:../../runtime/test-runtime-utils
