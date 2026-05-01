@@ -47,7 +47,13 @@
 			},
 			"Driver-Utils": {
 				"packages": ["@fluidframework/driver-utils"],
-				"deps": ["Protocol-Utils", "Driver-Definitions", "Telemetry-Utils", "Core-Utils"]
+				"deps": [
+					"Protocol-Utils",
+					"Driver-Definitions",
+					"Telemetry-Utils",
+					"Core-Utils",
+					"Runtime-Definitions"
+				]
 			},
 			"Other-Utils": {
 				"dot": false,
@@ -68,6 +74,22 @@
 					"Client-Utils",
 					"Driver-Definitions"
 				]
+			},
+			"Runtime-Definitions": {
+				"packages": [
+					"@fluidframework/id-compressor",
+					"@fluidframework/runtime-definitions",
+					"@fluidframework/container-runtime-definitions",
+					"@fluidframework/datastore-definitions"
+				],
+				"deps": [
+					"Client-Utils",
+					"Container-Definitions",
+					"Core-Interfaces",
+					"Core-Utils",
+					"Driver-Definitions",
+					"Telemetry-Utils"
+				]
 			}
 		}
 	},
@@ -85,7 +107,13 @@
 			"Runtime": {
 				"packages": ["@fluidframework/type-factory"],
 				"dirs": ["experimental/dds/", "packages/dds/", "packages/runtime/"],
-				"deps": ["Container-Definitions", "Core-Utils", "Client-Utils", "Driver-Utils"]
+				"deps": [
+					"Container-Definitions",
+					"Core-Utils",
+					"Client-Utils",
+					"Driver-Utils",
+					"Runtime-Definitions"
+				]
 			},
 			"Framework": {
 				"packages": ["@fluid-experimental/data-objects"],
@@ -148,6 +176,7 @@
 					"Framework",
 					"Runtime",
 					"Routerlicious-Driver",
+					"Tinylicious-Driver",
 					"Loader",
 					"Server-Libs",
 					"Test-Utils"
@@ -177,7 +206,7 @@
 			},
 			"Azure-Examples": {
 				"packages": ["@fluid-example/app-integration-external-controller"],
-				"deps": ["UberPackage", "ServiceClients"]
+				"deps": ["UberPackage", "ServiceClients", "Tinylicious-Driver"]
 			}
 		}
 	},
@@ -225,10 +254,20 @@
 			"Routerlicious-Driver": {
 				"packages": [
 					"@fluidframework/routerlicious-driver",
-					"@fluidframework/routerlicious-urlresolver",
-					"@fluidframework/tinylicious-driver"
+					"@fluidframework/routerlicious-urlresolver"
 				],
 				"deps": ["Driver", "Server-Shared-Utils"]
+			},
+			"Tinylicious-Driver": {
+				"packages": ["@fluidframework/tinylicious-driver"],
+				"deps": [
+					"Container-Definitions",
+					"Driver",
+					"Loader",
+					"Routerlicious-Driver",
+					"Runtime",
+					"Server-Shared-Utils"
+				]
 			},
 			"Routerlicious-Server": {
 				"packages": ["@fluidframework/server-routerlicious"],
