@@ -18,6 +18,11 @@ import { BaseCommand } from "../../library/commands/base.js";
  */
 const TRUST_DOWNGRADE_CODE = "ERR_PNPM_TRUST_DOWNGRADE";
 
+interface PinnedVersion {
+	name: string;
+	version: string;
+}
+
 interface PnpmRunResult {
 	code: number | null;
 	stdout: string;
@@ -82,11 +87,11 @@ export default class CheckTrustPolicyCommand extends BaseCommand<
 			snapshots?: Record<string, unknown>;
 		};
 
-		const pinnedSet = collectPinnedVersions(lockfile);
-		this.verbose(`Found ${pinnedSet.size} unique name@version entries.`);
+		const pinned = collectPinnedVersions(lockfile);
+		this.verbose(`Found ${pinned.length} unique name@version entries.`);
 
 		this.verbose(`Materializing scratch workspace at ${tempDir}...`);
-		const projectCount = writeAuditWorkspace(tempDir, pinnedSet);
+		const projectCount = writeAuditWorkspace(tempDir, pinned);
 		this.verbose(`Wrote ${projectCount} leaf projects.`);
 
 		const violationSet = new Set<string>();
@@ -130,8 +135,12 @@ export default class CheckTrustPolicyCommand extends BaseCommand<
 				);
 				break;
 			}
-			for (const v of newOnes) violationSet.add(v);
-			for (const v of newOnes) this.verbose(`  + ${v}`);
+			for (const v of newOnes) {
+				violationSet.add(v);
+			}
+			for (const v of newOnes) {
+				this.verbose(`  + ${v}`);
+			}
 		}
 
 		const elapsedSec = Number(((Date.now() - start) / 1000).toFixed(1));
@@ -146,7 +155,7 @@ export default class CheckTrustPolicyCommand extends BaseCommand<
 						exitCode,
 						iterations: iteration,
 						elapsedSec,
-						totalUniqueDependencies: pinnedSet.size,
+						totalUniqueDependencies: pinned.length,
 						violations,
 					},
 					undefined,
@@ -157,7 +166,7 @@ export default class CheckTrustPolicyCommand extends BaseCommand<
 			this.log(`Audited via pnpm install in: ${tempDir}`);
 			this.log(`  Final pnpm exit code: ${exitCode}`);
 			this.log(`  Iterations: ${iteration}`);
-			this.log(`  Unique pinned versions: ${pinnedSet.size}`);
+			this.log(`  Unique pinned versions: ${pinned.length}`);
 			this.log(`  Elapsed: ${elapsedSec}s`);
 			if (violations.length === 0) {
 				this.log("\nNo trust-policy violations detected.");
@@ -168,7 +177,9 @@ export default class CheckTrustPolicyCommand extends BaseCommand<
 				}
 			} else {
 				this.log(`\n${violations.length} trust-policy violation(s):\n`);
-				for (const v of violations) this.log(`  ${v}`);
+				for (const v of violations) {
+					this.log(`  ${v}`);
+				}
 			}
 		}
 
@@ -203,8 +214,9 @@ export default class CheckTrustPolicyCommand extends BaseCommand<
 function collectPinnedVersions(lockfile: {
 	packages?: Record<string, unknown>;
 	snapshots?: Record<string, unknown>;
-}): Set<string> {
-	const result = new Set<string>();
+}): PinnedVersion[] {
+	const seen = new Set<string>();
+	const result: PinnedVersion[] = [];
 	for (const key of [
 		...Object.keys(lockfile.packages ?? {}),
 		...Object.keys(lockfile.snapshots ?? {}),
@@ -212,12 +224,23 @@ function collectPinnedVersions(lockfile: {
 		const parenIndex = key.indexOf("(");
 		const stripped = parenIndex >= 0 ? key.slice(0, parenIndex) : key;
 		const lastAt = stripped.lastIndexOf("@");
-		if (lastAt <= 0) continue;
+		if (lastAt <= 0) {
+			continue;
+		}
 		const name = stripped.slice(0, lastAt);
 		const version = stripped.slice(lastAt + 1);
-		if (!name || !version) continue;
-		if (/[/:]/.test(version)) continue;
-		result.add(`${name}@${version}`);
+		if (!name || !version) {
+			continue;
+		}
+		if (/[/:]/.test(version)) {
+			continue;
+		}
+		const token = `${name}@${version}`;
+		if (seen.has(token)) {
+			continue;
+		}
+		seen.add(token);
+		result.push({ name, version });
 	}
 	return result;
 }
@@ -245,7 +268,7 @@ function slugify(name: string, version: string): string {
  * pnpm 10's YAML form silently drops double-quoted scalars and rejects
  * bare scoped names; CLI flags are easier to control across iterations.
  */
-function writeAuditWorkspace(tempDir: string, pinnedSet: Set<string>): number {
+function writeAuditWorkspace(tempDir: string, pinned: readonly PinnedVersion[]): number {
 	if (existsSync(tempDir)) {
 		rmSync(tempDir, { recursive: true, force: true });
 	}
@@ -267,14 +290,13 @@ function writeAuditWorkspace(tempDir: string, pinnedSet: Set<string>): number {
 	mkdirSync(projectsDir, { recursive: true });
 	const usedSlugs = new Map<string, number>();
 	let n = 0;
-	for (const token of pinnedSet) {
-		const lastAt = token.lastIndexOf("@");
-		const name = token.slice(0, lastAt);
-		const version = token.slice(lastAt + 1);
+	for (const { name, version } of pinned) {
 		let slug = slugify(name, version);
 		const collision = usedSlugs.get(slug) ?? 0;
 		usedSlugs.set(slug, collision + 1);
-		if (collision > 0) slug = `${slug}-${collision}`;
+		if (collision > 0) {
+			slug = `${slug}-${collision}`;
+		}
 
 		const projectDir = path.resolve(projectsDir, slug);
 		mkdirSync(projectDir, { recursive: true });
@@ -312,11 +334,15 @@ function runPnpm(args: string[], cwd: string, streamLive: boolean): Promise<Pnpm
 		const stderrChunks: Buffer[] = [];
 		child.stdout?.on("data", (chunk: Buffer) => {
 			stdoutChunks.push(chunk);
-			if (streamLive) process.stdout.write(chunk);
+			if (streamLive) {
+				process.stdout.write(chunk);
+			}
 		});
 		child.stderr?.on("data", (chunk: Buffer) => {
 			stderrChunks.push(chunk);
-			if (streamLive) process.stderr.write(chunk);
+			if (streamLive) {
+				process.stderr.write(chunk);
+			}
 		});
 		child.on("error", rejectRun);
 		child.on("close", (code) => {
@@ -342,10 +368,14 @@ function runPnpm(args: string[], cwd: string, streamLive: boolean): Promise<Pnpm
 function extractTrustViolations(ndjson: string): string[] {
 	const found = new Set<string>();
 	for (const rawLine of ndjson.split(/\r?\n/)) {
-		if (!rawLine) continue;
+		if (!rawLine) {
+			continue;
+		}
 		// Cheap pre-filter — JSON.parse is comparatively expensive and
 		// most lines won't be trust-related.
-		if (!rawLine.includes(TRUST_DOWNGRADE_CODE)) continue;
+		if (!rawLine.includes(TRUST_DOWNGRADE_CODE)) {
+			continue;
+		}
 		let event: {
 			code?: string;
 			err?: { code?: string };
