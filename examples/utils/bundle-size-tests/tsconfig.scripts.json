@@ -2,6 +2,7 @@
 	"extends": "./tsconfig.json",
 	"compilerOptions": {
 		"noEmit": true,
+		"tsBuildInfoFile": "./lib/tsconfig.scripts.tsbuildinfo",
 		"types": ["node"],
 		"exactOptionalPropertyTypes": false,
 		// scripts/ is run directly via jiti on modern Node; the repo-wide ES2020

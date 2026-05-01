@@ -11,7 +11,7 @@ import { fileURLToPath } from "node:url";
 import { Command, Flags } from "@oclif/core";
 import { simpleGit } from "simple-git";
 
-import { maybePrintHelp } from "./oclifHelp.ts";
+import { maybePrintHelp } from "./oclifHelp.js";
 
 const scriptDirectory = dirname(fileURLToPath(import.meta.url));
 const outerPackageRoot = resolve(scriptDirectory, "..");

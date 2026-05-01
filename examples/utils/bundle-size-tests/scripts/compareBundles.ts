@@ -11,7 +11,7 @@ import { gzipSync } from "node:zlib";
 import { decompressStatsFile } from "@fluidframework/bundle-size-tools";
 import { Command, Flags } from "@oclif/core";
 
-import { maybePrintHelp } from "./oclifHelp.ts";
+import { maybePrintHelp } from "./oclifHelp.js";
 
 // Default to the persistent analysis root used by collectBundle.ts.
 // Lives under this package's `bundleAnalysis/` directory (gitignored).

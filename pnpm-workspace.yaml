@@ -15,13 +15,14 @@ packages:
   - "packages/**"
   - "tools/markdown-magic"
 
+  # exclude inner FluidFramework enlistment used by examples/utils/bundle-size-tests
+  # for cross-revision bundle comparison (see examples/utils/bundle-size-tests/scripts/collectBundle.ts).
+  - "!**/bundleAnalysis/**"
+
   # exclude any package.json files that are inside src or output directories
   - "!**/dist/**"
   - "!**/lib/**"
   - "!**/src/**"
-  # exclude inner FluidFramework enlistment used by examples/utils/bundle-size-tests
-  # for cross-revision bundle comparison (see examples/utils/bundle-size-tests/scripts/collectBundle.ts).
-  - "!**/bundleAnalysis/**"
 
 # Supply chain security settings - see /DEV.md for documentation
 minimumReleaseAge: 1440
