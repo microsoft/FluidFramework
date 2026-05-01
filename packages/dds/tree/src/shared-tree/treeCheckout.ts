@@ -136,6 +136,7 @@ function* collectTreeLabels(node: LabelTree): IterableIterator<unknown> {
 
 /**
  * Deep-clones a {@link LabelTree} so the result is independent of the source.
+ * @remarks
  * Used when capturing the label tree on a revertible so that subsequent mutations
  * (by the framework or by external listeners reading {@link TransactionLabels.tree})
  * cannot affect the labels the revertible will emit.
@@ -726,10 +727,6 @@ export class TreeCheckout implements ITreeCheckout {
 				const kind = event.type === "append" ? event.kind : CommitKind.Default;
 				const { change, revision } = commit;
 
-				// Snapshot the label tree for this commit before any listener runs.
-				const commitLabelTree =
-					this.labelTreeNode === undefined ? undefined : cloneLabelTree(this.labelTreeNode);
-
 				const getRevertible = hasSchemaChange(change)
 					? undefined
 					: (onRevertibleDisposed?: (revertible: RevertibleAlpha) => void) => {
@@ -743,12 +740,18 @@ export class TreeCheckout implements ITreeCheckout {
 									"Cannot generate the same revertible more than once. Note that this can happen when multiple changed event listeners are registered.",
 								);
 							}
+							// Capture (deep-clone) the current label tree so the revertible's labels are
+							// independent of any subsequent mutations to this.labelTreeNode or to
+							// metadata.labels.tree. Done lazily here rather than before
+							// emit so listeners that don't request a revertible don't pay the clone cost.
 							const revertible = this.createRevertible(
 								revision,
 								kind,
 								this,
 								onRevertibleDisposed,
-								commitLabelTree,
+								this.labelTreeNode === undefined
+									? undefined
+									: cloneLabelTree(this.labelTreeNode),
 							);
 							this.revertibleCommitBranches.set(
 								revision,
