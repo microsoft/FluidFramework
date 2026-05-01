@@ -412,7 +412,7 @@ stages:
               SYSTEM_ACCESSTOKEN: $(System.AccessToken)
             inputs:
               targetType: 'inline'
-              workingDir: $(Pipeline.Workspace)/$(FFPipelineHostDirectory)
+              workingDirectory: $(Pipeline.Workspace)/$(FFPipelineHostDirectory)
               script: |
                 set -eu -o pipefail
 
@@ -512,7 +512,7 @@ stages:
               SYSTEM_ACCESSTOKEN: $(System.AccessToken)
             inputs:
               targetType: 'inline'
-              workingDir: $(Pipeline.Workspace)/$(FFPipelineHostDirectory)
+              workingDirectory: $(Pipeline.Workspace)/$(FFPipelineHostDirectory)
               script: |
                 set -eu -o pipefail
                 pnpm exec trips-cleanup --odspEndpoint=${{ parameters.odspTenantType }} --useFic
