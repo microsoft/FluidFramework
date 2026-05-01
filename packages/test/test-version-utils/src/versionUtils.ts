@@ -62,12 +62,13 @@ export interface CompatVersionsManifest {
 let cachedManifest: CompatVersionsManifest | undefined;
 
 /**
- * Reads the committed versions manifest. Returns `undefined` if it doesn't exist (before the
- * first run of the update script).
+ * Reads the committed versions manifest.
  */
-export function tryReadVersionsManifest(): CompatVersionsManifest | undefined {
+export function readVersionsManifest(): CompatVersionsManifest {
 	if (cachedManifest !== undefined) return cachedManifest;
-	if (!existsSync(generatedVersionsCjsPath)) return undefined;
+	if (!existsSync(generatedVersionsCjsPath)) {
+		throw new Error("Could not read versions manifest");
+	}
 	cachedManifest = createRequire(import.meta.url)(
 		generatedVersionsCjsPath,
 	) as CompatVersionsManifest;
@@ -113,18 +114,14 @@ export function resolveVersion(requested: string, installed: boolean): string {
 	}
 
 	if (installed) {
-		const manifest = tryReadVersionsManifest();
-		if (manifest !== undefined) {
-			const allVersions = getAllManifestVersions(manifest);
-			const matching = allVersions
-				.filter((v) => semver.valid(v) && semver.satisfies(v, requested))
-				.sort(semver.rcompare);
-			if (matching.length > 0) {
-				resolutionCache.set(requested, matching[0]);
-				return matching[0];
-			}
+		const manifest = readVersionsManifest();
+		const matching = manifest.versions
+			.filter((v) => semver.valid(v) && semver.satisfies(v, requested))
+			.sort(semver.rcompare);
+		if (matching.length > 0) {
+			resolutionCache.set(requested, matching[0]);
+			return matching[0];
 		}
-
 		throw new Error(`No version in manifest satisfies range: "${requested}"`);
 	} else {
 		let result: string | undefined;
@@ -196,7 +193,6 @@ export function checkInstalled(requested: string): { version: string; modulePath
  * Dynamically loads a package from the specified module path.
  *
  * @param modulePath - Path to the version directory (e.g. `compat-workspaces/full/2.83.0`).
- * The resolver starts here and walks up to find hoisted packages.
  * @param pkg - Package name to load (e.g. `@fluidframework/container-loader`).
  * @remarks
  * This function reimplements part of Node's module resolution logic. It would be possible to use `createRequire` / `import` alternatively,
@@ -269,8 +265,6 @@ export const loadPackage = async (
 /**
  * Computes the semver range corresponding to a delta from a base version, without resolving it
  * to an exact version. Used by both the test runtime and the `update-compat-versions` script.
- *
- * @internal
  */
 export function calculateRequestedRange(
 	baseVersion: string,

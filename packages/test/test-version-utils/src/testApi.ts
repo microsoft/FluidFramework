@@ -373,7 +373,8 @@ async function loadDriver(baseVersion: string, requested?: number | string): Pro
 		// version compatibility. Server packages have different versioning from client packages.
 		// @fluidframework/server-local-server is not a direct dependency of the compat workspace,
 		// but it is a known dependency of @fluidframework/local-driver, so use that as the base path.
-		// The extra work here is done to handle the structure of pnpm's isolated node_module tree.
+		// The extra work here is done to handle the structure of pnpm's isolated node_module tree
+		// (as configured in `compat-workspaces/full/.npmrc` in this package).
 		// This pnpm blog post is a good illustration of that structure: https://pnpm.io/blog/2020/05/27/flat-node-modules-is-not-the-only-way
 		const localDriverDependenciesPath = await fs.realpath(
 			path.join(modulePath, "node_modules", "@fluidframework/local-driver"),
