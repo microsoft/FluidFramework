@@ -88,6 +88,41 @@ export * from "@fluidframework/tree/alpha";
 // ---------------------------------------------------------------
 // #region Custom re-exports
 
+// These are alpha APIs, but this package doesn't have an alpha entry point so they are imported from "internal".
+export {
+	dataStoreKind,
+	sharedObjectRegistryFromIterable,
+} from "@fluidframework/shared-object-base/internal";
+export type {
+	DataStoreOptions,
+	SharedObjectCreator,
+	SharedObjectRegistry,
+	SharedObjectKey,
+	SharedObjectKindAlpha,
+	DataStoreContext,
+} from "@fluidframework/shared-object-base/internal";
+export type {
+	DataStoreCreator,
+	DataStoreKey,
+	DataStoreKind,
+	DataStoreRegistry,
+	FluidContainer,
+	FluidContainerAttached,
+	FluidContainerWithService,
+	MinimumVersionForCollaboration,
+	Registry,
+	RegistryKey,
+	ServiceClient,
+	ServiceOptions,
+} from "@fluidframework/driver-definitions/internal";
+export {
+	basicKey,
+	registryLookup,
+	// Due to this currently referencing several existing public types we do not want to stablish as reexports from here,
+	// do not reexport getContainerAudience for now.
+	// getContainerAudience,
+} from "@fluidframework/driver-definitions/internal";
+
 import type { SharedObjectKind } from "@fluidframework/shared-object-base";
 import type { ITree } from "@fluidframework/tree";
 import {

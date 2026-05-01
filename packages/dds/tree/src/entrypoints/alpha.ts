@@ -254,8 +254,9 @@ export {
 	SchemaFactoryAlpha, 
 	SchemaStaticsAlpha, 
 	SchemaType, 
-	SharedTreeFormatOptions, 
-	SharedTreeOptions, 
+	SharedTreeAlpha,
+	SharedTreeFormatOptions,
+	SharedTreeOptions,
 	SimpleAllowedTypeAttributes, 
 	SimpleArrayNodeSchema, 
 	SimpleFieldSchema, 
@@ -279,6 +280,7 @@ export {
 	TreeChangeEventsAlpha, 
 	TreeCompressionStrategy, 
 	TreeContextAlpha, 
+	TreeDataStoreOptions, 
 	TreeIdentifierUtils, 
 	TreeMapNodeAlpha, 
 	TreeParsingOptions, 
@@ -317,12 +319,14 @@ export {
 	incrementalSummaryHint, 
 	independentInitializedView, 
 	independentView, 
+	instantiateTreeFirstTime, 
 	minimize, 
 	normalizeAllowedTypes, 
 	persistedToSimpleSchema, 
 	replaceConciseTreeHandles, 
 	replaceHandles, 
 	replaceVerboseTreeHandles, 
-	trackDirtyNodes
+	trackDirtyNodes, 
+	treeDataStoreKind
 	// #endregion
 } from "../index.js";

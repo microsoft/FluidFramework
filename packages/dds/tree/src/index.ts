@@ -340,6 +340,7 @@ export {
 } from "./simple-tree/index.js";
 export {
 	SharedTree,
+	SharedTreeAlpha,
 	configuredSharedTree,
 	configuredSharedTreeAlpha,
 	configuredSharedTreeBeta,
@@ -417,3 +418,6 @@ export {
 } from "./text/index.js";
 export { ExtensibleUnionNode } from "./extensibleUnionNode.js";
 export { Component } from "./componentApi.js";
+
+export { treeDataStoreKind, instantiateTreeFirstTime } from "./treeDataStore.js";
+export type { TreeDataStoreOptions } from "./treeDataStore.js";
