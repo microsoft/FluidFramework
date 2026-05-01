@@ -7,7 +7,7 @@ import { assert, oob } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import type { RevertibleAlpha, TreeBranchAlpha } from "@fluidframework/tree/internal";
 
-import { areSetsDisjoint } from "./utilities.js";
+import { areSetsDisjoint, findLastIndex } from "./utilities.js";
 
 /**
  * An undo/redo manager that supports optional scoping based on transaction labels.
@@ -283,27 +283,6 @@ class UndoRedoManager implements UndoRedo {
 	}
 
 	/**
-	 * Walks `stack` from the top and returns the index of the first entry matching `predicate`,
-	 * or `undefined` if none match.
-	 *
-	 * @param stack - The undo or redo stack to search.
-	 * @param predicate - Called for each entry from the top; the first entry for which it returns
-	 * `true` is selected.
-	 */
-	static #findLast(
-		stack: StackEntry[],
-		predicate: (entry: StackEntry) => boolean,
-	): number | undefined {
-		for (let i = stack.length - 1; i >= 0; i--) {
-			const entry = stack[i] ?? oob();
-			if (predicate(entry)) {
-				return i;
-			}
-		}
-		return undefined;
-	}
-
-	/**
 	 * Reverts the top-most entry in `stack` matching `predicate`.
 	 * @remarks No-ops if no entry matches.
 	 *
@@ -319,8 +298,8 @@ class UndoRedoManager implements UndoRedo {
 	): void {
 		assert(this.#pendingOperation === undefined, "Unexpected pending operation during revert");
 
-		const index = UndoRedoManager.#findLast(stack, predicate);
-		if (index === undefined) {
+		const index = findLastIndex(stack, predicate);
+		if (index === -1) {
 			return;
 		}
 		const entry = stack.splice(index, 1)[0] ?? oob();
