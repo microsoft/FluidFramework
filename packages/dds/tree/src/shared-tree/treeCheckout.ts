@@ -1136,7 +1136,7 @@ export class TreeCheckout implements ITreeCheckout {
 	}
 
 	/**
-	 * Forks this checkout, constructing the resulting checkout via {@link ctor}.
+	 * Forks this checkout, constructing the resulting checkout via {@link checkoutConstructor}.
 	 * @remarks
 	 * Allows subclasses (e.g. `BranchCheckout`) to participate in forking without duplicating the fork machinery.
 	 * The `@throwIfBroken` decorator is intentionally on this method (not on {@link TreeCheckout.fork}) so every
@@ -1144,7 +1144,7 @@ export class TreeCheckout implements ITreeCheckout {
 	 */
 	@throwIfBroken
 	public forkWith<T extends TreeCheckout>(
-		ctor: new (
+		checkoutConstructor: new (
 			branch: SharedTreeBranch<SharedTreeEditBuilder, SharedTreeChange>,
 			isSharedBranch: boolean,
 			changeFamily: ChangeFamily<SharedTreeEditBuilder, SharedTreeChange>,
@@ -1172,7 +1172,7 @@ export class TreeCheckout implements ITreeCheckout {
 		const storedSchema = this.storedSchema.clone();
 		const forkBreaker = new Breakable("TreeCheckout");
 		const forest = this.forest.clone(storedSchema, forkBreaker);
-		const checkout = new ctor(
+		const checkout = new checkoutConstructor(
 			branch,
 			false,
 			this.changeFamily,

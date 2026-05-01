@@ -84,7 +84,7 @@ export class BranchCheckout extends TreeCheckout {
 		breaker?: Breakable,
 		disposeForksAfterTransaction?: boolean,
 	) {
-		// `isSharedBranch` is required by the base constructor signature (and by `forkWith`'s ctor type),
+		// `isSharedBranch` is required by the base constructor signature (and by `forkWith`'s checkoutConstructor type),
 		// so we accept it positionally and reject the only invalid value here.
 		assert(!isSharedBranch, "BranchCheckout cannot represent a shared branch");
 		super(
