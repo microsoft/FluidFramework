@@ -14,12 +14,12 @@ import { closeRedisClientConnections, StartupCheck } from "@fluidframework/serve
 import * as utils from "@fluidframework/server-services-utils";
 import { DenyList, RedisClientConnectionManager } from "@fluidframework/server-services-utils";
 import type { Provider } from "nconf";
-import winston from "winston";
 
 import type { IHistorianResourcesCustomizations } from "./customizations";
 import { HistorianRunner } from "./runner";
 import * as historianServices from "./services";
 import { normalizePort, Constants } from "./utils";
+import { configureThrottler } from "@fluidframework/server-services";
 
 export class HistorianResources implements core.IResources {
 	public webServerFactory: core.IWebServerFactory;
@@ -153,69 +153,21 @@ export class HistorianResourcesFactory implements core.IResourcesFactory<Histori
 				redisParamsForThrottling,
 			);
 
-		const configureThrottler = (
-			throttleConfig:
-				| Partial<utils.IThrottleConfig>
-				| (Partial<utils.IHybridThrottleConfig> &
-						Required<Pick<utils.IHybridThrottleConfig, "type">>),
-		): core.IThrottler => {
-			if (throttleConfig.type === "DistributedTokenBucket") {
-				return new services.DistributedTokenBucketThrottler(
-					redisThrottleAndUsageStorageManager,
-					winston,
-					{
-						localTokenBucket: throttleConfig.local
-							? {
-									capacity: throttleConfig.local.maxBurst,
-									refillRatePerMs: throttleConfig.local.maxPerMs,
-									minCooldownIntervalMs:
-										throttleConfig.local.minCooldownIntervalInMs,
-							  }
-							: undefined,
-						distributedTokenBucket: throttleConfig.distributed
-							? {
-									capacity: throttleConfig.distributed.maxBurst,
-									refillRatePerMs: throttleConfig.distributed.maxPerMs,
-									minCooldownIntervalMs:
-										throttleConfig.distributed.minCooldownIntervalInMs,
-									distributedSyncIntervalInMs:
-										throttleConfig.distributed.minThrottleIntervalInMs,
-							  }
-							: undefined,
-						maxLocalCacheSize: throttleConfig.maxInMemoryCacheSize,
-						maxLocalCacheAgeInMs: throttleConfig.maxInMemoryCacheAgeInMs,
-						enableEnhancedTelemetry: throttleConfig.enableEnhancedTelemetry,
-					},
-				);
-			}
-			const legacyConfig = throttleConfig as Partial<utils.IThrottleConfig>;
-			const throttlerHelper = new services.ThrottlerHelper(
-				redisThrottleAndUsageStorageManager,
-				legacyConfig.maxPerMs,
-				legacyConfig.maxBurst,
-				legacyConfig.minCooldownIntervalInMs,
-			);
-			return new services.Throttler(
-				throttlerHelper,
-				legacyConfig.minThrottleIntervalInMs,
-				winston,
-				legacyConfig.maxInMemoryCacheSize,
-				legacyConfig.maxInMemoryCacheAgeInMs,
-				legacyConfig.enableEnhancedTelemetry,
-			);
-		};
-
 		// Rest API Throttler
 		const restApiTenantGeneralThrottleConfig = utils.getThrottleConfig(
 			config.get("throttling:restCallsPerTenant:generalRestCall"),
 		);
-		const restTenantGeneralThrottler = configureThrottler(restApiTenantGeneralThrottleConfig);
+		const restTenantGeneralThrottler = configureThrottler(
+			restApiTenantGeneralThrottleConfig,
+			redisThrottleAndUsageStorageManager,
+		);
 
 		const restApiTenantGetSummaryThrottleConfig = utils.getThrottleConfig(
 			config.get("throttling:restCallsPerTenant:getSummary"),
 		);
 		const restTenantGetSummaryThrottler = configureThrottler(
 			restApiTenantGetSummaryThrottleConfig,
+			redisThrottleAndUsageStorageManager,
 		);
 
 		const restApiTenantCreateSummaryThrottleConfig = utils.getThrottleConfig(
@@ -223,6 +175,7 @@ export class HistorianResourcesFactory implements core.IResourcesFactory<Histori
 		);
 		const restTenantCreateSummaryThrottler = configureThrottler(
 			restApiTenantCreateSummaryThrottleConfig,
+			redisThrottleAndUsageStorageManager,
 		);
 
 		const restTenantThrottlers = new Map<string, core.IThrottler>();
@@ -244,6 +197,7 @@ export class HistorianResourcesFactory implements core.IResourcesFactory<Histori
 		);
 		const throttlerCreateSummaryPerCluster = configureThrottler(
 			restApiClusterCreateSummaryThrottleConfig,
+			redisThrottleAndUsageStorageManager,
 		);
 
 		const restApiClusterGetSummaryThrottleConfig = utils.getThrottleConfig(
@@ -251,6 +205,7 @@ export class HistorianResourcesFactory implements core.IResourcesFactory<Histori
 		);
 		const throttlerGetSummaryPerCluster = configureThrottler(
 			restApiClusterGetSummaryThrottleConfig,
+			redisThrottleAndUsageStorageManager,
 		);
 
 		const restClusterThrottlers = new Map<string, core.IThrottler>();

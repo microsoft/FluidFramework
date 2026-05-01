@@ -6,8 +6,9 @@
 import { strict as assert, fail } from "node:assert";
 
 import {
+	BenchmarkMode,
 	benchmarkIt,
-	isInPerformanceTestingMode,
+	currentBenchmarkMode,
 	ValueType,
 	type CollectedData,
 } from "@fluid-tools/benchmark";
@@ -233,7 +234,7 @@ const MAX_SUCCESSFUL_OP_BYTE_SIZES = {
 		[TransactionStyle.Individual]: {
 			nodeCounts: {
 				// Edit benchmarks use 1/10 of the actual max sizes outside of perf mode because it takes so long to execute.
-				"100": isInPerformanceTestingMode ? 800000 : 80000,
+				"100": currentBenchmarkMode === BenchmarkMode.Performance ? 800000 : 80000,
 			},
 		},
 		[TransactionStyle.Single]: {

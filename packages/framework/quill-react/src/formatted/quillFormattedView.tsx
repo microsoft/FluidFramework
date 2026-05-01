@@ -373,8 +373,6 @@ export function buildDeltaFromTree(root: FormattedTextAsTree.Tree): QuillDeltaOp
  * Uses FormattedTextAsTree for collaborative rich text storage with formatting.
  *
  * @remarks
- * This component uses event-based synchronization via Tree.on("treeChanged")
- * to efficiently handle external changes without expensive render-time operations.
  * Unlike the plain text version, this component uses Quill's delta operations
  * to make targeted edits (insert at index, delete range, format range) rather
  * than replacing all content on each change.
@@ -391,6 +389,7 @@ const FormattedTextEditorView = withMemoizedTreeObservations(
 		const [undoRedoContainer, setUndoRedoContainer] = useState<HTMLElement | undefined>(
 			undefined,
 		);
+
 		// Effective label: explicit prop or the root node itself as the default.
 		const effectiveLabel = editLabel ?? root;
 		// Ref so the one-time Quill setup effect always sees the current effective label.

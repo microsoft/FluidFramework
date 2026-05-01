@@ -6,10 +6,10 @@
 import { strict as assert } from "node:assert";
 
 import {
-	benchmarkDuration,
+	BenchmarkMode,
+	benchmarkDurationBatchless,
 	benchmarkIt,
-	isInPerformanceTestingMode,
-	type BenchmarkTimingOptions,
+	currentBenchmarkMode,
 } from "@fluid-tools/benchmark";
 
 import {
@@ -31,7 +31,7 @@ import {
 /**
  * {@link runBenchmark} configuration.
  */
-interface BenchmarkConfig extends BenchmarkTimingOptions, TableBenchmarkOptions {
+interface BenchmarkConfig extends TableBenchmarkOptions {
 	readonly maxBenchmarkDurationSeconds: number;
 }
 
@@ -45,23 +45,14 @@ function runBenchmark({
 	beforeOperation,
 	operation,
 	afterOperation,
-	minBatchDurationSeconds = 0,
 	maxBenchmarkDurationSeconds,
 }: BenchmarkConfig): void {
 	benchmarkIt({
 		title,
-		...benchmarkDuration({
-			benchmarkFnCustom: async (state) => {
-				let duration: number;
+		...benchmarkDurationBatchless({
+			benchmarkFn: (state) => {
+				let running: boolean;
 				do {
-					// Since this setup one collects data from one iteration, assert that this is what is expected.
-					assert.equal(
-						state.iterationsPerBatch,
-						1,
-						"Expected exactly one iteration per batch",
-					);
-
-					// Create table tree
 					const { table, undoRedoStack, cleanUp } = createTableTree({
 						tableSize,
 						initialCellValue,
@@ -69,21 +60,14 @@ function runBenchmark({
 
 					beforeOperation?.(table, undoRedoStack);
 
-					// Operation
-					const before = state.timer.now();
-					operation(table, undoRedoStack);
-					const after = state.timer.now();
-
-					// Measure
-					duration = state.timer.toSeconds(before, after);
+					running = state.time(() => {
+						operation(table, undoRedoStack);
+					});
 
 					afterOperation?.(table, undoRedoStack);
-
-					// Clean up
 					cleanUp();
-				} while (state.recordBatch(duration));
+				} while (running);
 			},
-			minBatchDurationSeconds,
 			maxBenchmarkDurationSeconds,
 		}),
 	});
@@ -95,17 +79,19 @@ describe("SharedTree table APIs execution time", () => {
 
 	// The test tree's size will be 5*5, 50*50.
 	// Table size 1000 benchmarks removed due to high overhead and unreliable results.
-	const tableSizes = isInPerformanceTestingMode
-		? [5, 50]
-		: // When not measuring perf, use a single smaller data size so the tests run faster.
-			[3];
+	const tableSizes =
+		currentBenchmarkMode === BenchmarkMode.Performance
+			? [5, 50]
+			: // When not measuring perf, use a single smaller data size so the tests run faster.
+				[3];
 
 	// The number of operations to perform on the tree.
 	// Operation counts 1000 removed due to high overhead and unreliable results.
-	const operationCounts = isInPerformanceTestingMode
-		? [5, 50]
-		: // When not measuring perf, use a single smaller data size so the tests run faster.
-			[3];
+	const operationCounts =
+		currentBenchmarkMode === BenchmarkMode.Performance
+			? [5, 50]
+			: // When not measuring perf, use a single smaller data size so the tests run faster.
+				[3];
 
 	// The maximum duration for each benchmark, in seconds.
 	let maxBenchmarkDurationSeconds: number;

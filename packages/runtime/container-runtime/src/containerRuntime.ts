@@ -1336,7 +1336,12 @@ export class ContainerRuntime
 		targetClientId?: string,
 	) => void;
 	public readonly disposeFn: (error?: ICriticalContainerError) => void;
-	public readonly closeFn: (error?: ICriticalContainerError) => void;
+
+	/**
+	 * Initiate closing of the container due to a critical error.
+	 * @param error - The critical error that caused the container to close.
+	 */
+	private readonly closeFn: (error: ICriticalContainerError) => void;
 
 	public get flushMode(): FlushMode {
 		return this._flushMode;
@@ -1918,6 +1923,7 @@ export class ContainerRuntime
 
 		this.garbageCollector = GarbageCollector.create({
 			runtime: this,
+			closeFn: this.closeFn,
 			gcOptions: runtimeOptions.gcOptions,
 			baseSnapshot,
 			baseLogger: this.mc.logger,
@@ -2389,6 +2395,10 @@ export class ContainerRuntime
 
 			this.summaryManager.start();
 		}
+	}
+
+	public close(): void {
+		this.garbageCollector.dispose();
 	}
 
 	public dispose(error?: Error): void {
