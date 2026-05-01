@@ -74,7 +74,8 @@ function cached<TFunc extends (...args: any[]) => unknown>(f: TFunc): TFunc {
 	const cache = new Map<string, ReturnType<TFunc> | typeof undefinedSentinel>();
 	return ((...args: Parameters<TFunc>) => {
 		const key = JSON.stringify(args);
-		let cachedOutput: ReturnType<TFunc> | typeof undefinedSentinel | undefined = cache.get(key);
+		let cachedOutput: ReturnType<TFunc> | typeof undefinedSentinel | undefined =
+			cache.get(key);
 		if (cachedOutput === undefined) {
 			cachedOutput = f(...args) as ReturnType<TFunc>;
 			cache.set(key, cachedOutput ?? undefinedSentinel);
