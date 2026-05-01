@@ -1131,8 +1131,34 @@ export class TreeCheckout implements ITreeCheckout {
 	 */
 	#transaction: SquashingTransactionStack<SharedTreeEditBuilder, SharedTreeChange>;
 
-	@throwIfBroken
 	public fork(): TreeCheckout {
+		return this.forkWith(TreeCheckout);
+	}
+
+	/**
+	 * Forks this checkout, constructing the resulting checkout via {@link ctor}.
+	 * @remarks
+	 * Allows subclasses (e.g. `BranchCheckout`) to participate in forking without duplicating the fork machinery.
+	 * The `@throwIfBroken` decorator is intentionally on this method (not on {@link TreeCheckout.fork}) so every
+	 * entry point — including subclass overrides that call `forkWith` directly — gets the broken-state guard.
+	 */
+	@throwIfBroken
+	public forkWith<T extends TreeCheckout>(
+		ctor: new (
+			branch: SharedTreeBranch<SharedTreeEditBuilder, SharedTreeChange>,
+			isSharedBranch: boolean,
+			changeFamily: ChangeFamily<SharedTreeEditBuilder, SharedTreeChange>,
+			storedSchema: TreeStoredSchemaRepository,
+			forest: IEditableForest,
+			mintRevisionTag: () => RevisionTag,
+			revisionTagCodec: RevisionTagCodec,
+			idCompressor: IIdCompressor,
+			removedRoots?: DetachedFieldIndex,
+			logger?: ITelemetryLoggerExt,
+			breaker?: Breakable,
+			disposeForksAfterTransaction?: boolean,
+		) => T,
+	): T {
 		this.checkNotDisposed(
 			"The parent branch has already been disposed and can no longer create new branches.",
 		);
@@ -1146,7 +1172,7 @@ export class TreeCheckout implements ITreeCheckout {
 		const storedSchema = this.storedSchema.clone();
 		const forkBreaker = new Breakable("TreeCheckout");
 		const forest = this.forest.clone(storedSchema, forkBreaker);
-		const checkout = new TreeCheckout(
+		const checkout = new ctor(
 			branch,
 			false,
 			this.changeFamily,
