@@ -27,7 +27,7 @@ import { areSetsDisjoint, findLastIndex } from "./utilities.js";
  *
  * **Nested-transaction labels are not tracked.** SharedTree supports nesting one `runTransaction`
  * call inside another. When a nested transaction carries a label, that label appears as a child
- * node in the commit's label tree rather than at the root level. Only root-level symbol labels are
+ * node in the commit's label tree rather than at the root level. Only root-level labels are
  * extracted from each commit; labels belonging to inner nested transactions are ignored. As a
  * result, inner labels cannot be used with the label-filtered overloads of `undo`, `redo`,
  * `canUndo`, or `canRedo`. The outer transaction's label, if present, is tracked and covers the
