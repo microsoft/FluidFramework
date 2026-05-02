@@ -831,6 +831,75 @@ describe("loadFrozenContainerFromPendingState", () => {
 			);
 		});
 
+		it("survives a disconnect/reconnect cycle without tripping pendingStateManager replay assert", async () => {
+			// Regression for the FrozenDeltaStream clientId reuse issue: pre-fix, every
+			// FrozenDeltaStream instance shared the same fixed clientId, so a reconnect
+			// (which routes through the `client.mode !== "write"` branch in
+			// FrozenDocumentService.connectToDeltaStream) would replay pending ops against
+			// the same clientId twice and trip pendingStateManager assert 0x173. The fix
+			// mints a fresh clientId per instance.
+			const { container, ITestFluidObject, urlResolver, codeLoader, documentServiceFactory } =
+				await initialize();
+			await container.attach(urlResolver.createCreateNewRequest("test"));
+			ITestFluidObject.root.set("seed", "value");
+			const url = await container.getAbsoluteUrl("");
+			assert(url !== undefined, "Expected container to provide a valid absolute URL");
+			if (container.isDirty) {
+				await timeoutPromise((resolve) => container.once("saved", () => resolve()));
+			}
+			const initialPending = await container.getPendingLocalState();
+
+			const frozenContainer = asLegacyAlpha(
+				await loadFrozenContainerFromPendingState({
+					codeLoader,
+					documentServiceFactory,
+					urlResolver,
+					request: { url },
+					pendingLocalState: initialPending,
+					readOnly: false,
+				}),
+			);
+			const frozenEntryPoint: FluidObject<TestFluidObject> =
+				await frozenContainer.getEntryPoint();
+			assert(
+				frozenEntryPoint.ITestFluidObject !== undefined,
+				"Expected frozen container entrypoint to be a valid TestFluidObject",
+			);
+
+			// Accumulate dirty pending ops before the reconnect cycle.
+			for (let i = 0; i < 3; i++) {
+				frozenEntryPoint.ITestFluidObject.root.set(`pending-${i}`, i);
+			}
+
+			// Force a disconnect/reconnect cycle. pendingStateManager will replayPendingStates
+			// on the new connection.
+			frozenContainer.disconnect();
+			frozenContainer.connect();
+			await new Promise<void>((resolve) => setTimeout(resolve, 200));
+
+			assert.strictEqual(
+				frozenContainer.closed,
+				false,
+				"Expected writable-frozen container to survive a disconnect/reconnect cycle with pending ops",
+			);
+			for (let i = 0; i < 3; i++) {
+				assert.strictEqual(
+					frozenEntryPoint.ITestFluidObject.root.get(`pending-${i}`),
+					i,
+					`Expected pending-${i} to remain locally visible across the reconnect`,
+				);
+			}
+
+			// Pending state captures the still-pending ops; loading a second writable-frozen
+			// container from it sees the same writes.
+			const layeredPending = await frozenContainer.getPendingLocalState();
+			assert.notStrictEqual(
+				layeredPending,
+				initialPending,
+				"Expected getPendingLocalState() to capture pending ops after reconnect",
+			);
+		});
+
 		it("captures writes batched across timer/microtask boundaries", async () => {
 			const { container, ITestFluidObject, urlResolver, codeLoader, documentServiceFactory } =
 				await initialize();

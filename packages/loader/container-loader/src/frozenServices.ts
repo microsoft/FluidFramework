@@ -26,6 +26,7 @@ import {
 	type ISignalMessage,
 	type ITokenClaims,
 } from "@fluidframework/driver-definitions/internal";
+import { v4 as uuid } from "uuid";
 
 import type { IConnectionStateChangeReason } from "./contracts.js";
 
@@ -196,10 +197,9 @@ const clientFrozenDeltaStream: IClient = {
 	mode: "read",
 	details: { capabilities: { interactive: true } },
 	permission: [],
-	user: { id: "storage-only client" }, // we need some "fake" ID here.
+	user: { id: "frozen-delta-stream client" }, // synthetic — never reaches a service.
 	scopes: [],
 };
-const clientIdFrozenDeltaStream: string = "storage-only client";
 
 /**
  * Inert `IDocumentDeltaConnection` for frozen container loads. Has no server upstream:
@@ -227,7 +227,11 @@ export class FrozenDeltaStream
 	extends TypedEventEmitter<IDocumentDeltaConnectionEvents>
 	implements IDocumentDeltaConnection, IDisposable
 {
-	public readonly clientId: string = clientIdFrozenDeltaStream;
+	// Mint a fresh clientId per instance. A subsequent connect (e.g. the read-mode reconnect
+	// branch in FrozenDocumentService.connectToDeltaStream) would otherwise reuse the same id
+	// and trip pendingStateManager's 0x173 assert ("replayPendingStates called twice for same
+	// clientId") if the writable-frozen container had accumulated dirty pending ops.
+	public readonly clientId: string = `frozen-delta-stream/${uuid()}`;
 	public readonly claims: ITokenClaims;
 	public readonly mode: ConnectionMode = "read";
 	public readonly existing: boolean = true;
@@ -235,9 +239,7 @@ export class FrozenDeltaStream
 	public readonly version: string = "";
 	public readonly initialMessages: ISequencedDocumentMessage[] = [];
 	public readonly initialSignals: ISignalMessage[] = [];
-	public readonly initialClients: ISignalClient[] = [
-		{ client: clientFrozenDeltaStream, clientId: clientIdFrozenDeltaStream },
-	];
+	public readonly initialClients: ISignalClient[];
 	public readonly serviceConfiguration: IClientConfiguration = {
 		maxMessageSize: 0,
 		blockSize: 0,
@@ -276,6 +278,10 @@ export class FrozenDeltaStream
 		);
 		this.storageOnlyReason = options?.storageOnlyReason;
 		this.readonlyConnectionReason = options?.readonlyConnectionReason;
+		// initialClients must mirror this.clientId so the audience handler observes "self" in
+		// the audience and transitions the container to Connected without waiting for a real
+		// join op or signal. Built per-instance because clientId is per-instance.
+		this.initialClients = [{ client: clientFrozenDeltaStream, clientId: this.clientId }];
 		// Cast: ITokenClaims requires tenantId/documentId/user/iat/exp/ver, but a frozen
 		// delta stream has no tenant or session to draw real values from — it's a synthetic
 		// in-process connection that never reaches a service. Inventing sentinel values
