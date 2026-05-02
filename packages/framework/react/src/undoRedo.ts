@@ -279,10 +279,16 @@ class UndoRedoManager implements UndoRedo {
 	}
 
 	public canUndo(label?: unknown): boolean {
+		if (this.#disposed) {
+			return false;
+		}
 		return this.#undoStack.some(labelPredicate(label));
 	}
 
 	public canRedo(label?: unknown): boolean {
+		if (this.#disposed) {
+			return false;
+		}
 		return this.#redoStack.some(labelPredicate(label));
 	}
 
