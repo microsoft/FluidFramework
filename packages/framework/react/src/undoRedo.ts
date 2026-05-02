@@ -68,46 +68,70 @@ import { areSetsDisjoint, findLastIndex } from "./utilities.js";
  */
 export interface UndoRedo {
 	/**
-	 * Undoes the most recent commit whose label set contains `label`.
-	 *
-	 * @param label - The label to match against. If omitted, undoes the most recent commit
-	 * regardless of labels.
-	 * This method no-ops if there is nothing to undo matching the label policy.
+	 * Undoes the most recent commit, regardless of labels.
+	 * No-ops if the undo stack is empty.
 	 *
 	 * @see {@link UndoRedo.canUndo}
 	 */
-	undo(label?: unknown): void;
+	undo(): void;
+	/**
+	 * Undoes the most recent commit whose label set contains `label`.
+	 * No-ops if no matching commit exists.
+	 *
+	 * @param label - The label to match against.
+	 *
+	 * @see {@link UndoRedo.canUndo}
+	 */
+	undo(label: NonNullable<unknown>): void;
 
 	/**
-	 * Redoes the most recent undone commit whose label set contains `label`.
-	 *
-	 * @param label - The label to match against. If omitted, redoes the most recent undone commit
-	 * regardless of labels.
-	 * This method no-ops if there is nothing to redo matching the label policy.
+	 * Redoes the most recent undone commit, regardless of labels.
+	 * No-ops if the redo stack is empty.
 	 *
 	 * @see {@link UndoRedo.canRedo}
 	 */
-	redo(label?: unknown): void;
+	redo(): void;
+	/**
+	 * Redoes the most recent undone commit whose label set contains `label`.
+	 * No-ops if no matching commit exists.
+	 *
+	 * @param label - The label to match against.
+	 *
+	 * @see {@link UndoRedo.canRedo}
+	 */
+	redo(label: NonNullable<unknown>): void;
 
 	/**
-	 * Returns true if there is at least one commit available to undo whose label set contains
-	 * `label`.
-	 *
-	 * @param label - The label to check for. If omitted, checks the global undo stack.
+	 * Returns `true` if there is at least one commit available to undo.
 	 *
 	 * @see {@link UndoRedo.undo}
 	 */
-	canUndo(label?: unknown): boolean;
-
+	canUndo(): boolean;
 	/**
-	 * Returns true if there is at least one commit available to redo whose label set contains
+	 * Returns `true` if there is at least one commit available to undo whose label set contains
 	 * `label`.
 	 *
-	 * @param label - The label to check for. If omitted, checks the global redo stack.
+	 * @param label - The label to check for.
+	 *
+	 * @see {@link UndoRedo.undo}
+	 */
+	canUndo(label: NonNullable<unknown>): boolean;
+
+	/**
+	 * Returns `true` if there is at least one commit available to redo.
 	 *
 	 * @see {@link UndoRedo.redo}
 	 */
-	canRedo(label?: unknown): boolean;
+	canRedo(): boolean;
+	/**
+	 * Returns `true` if there is at least one commit available to redo whose label set contains
+	 * `label`.
+	 *
+	 * @param label - The label to check for.
+	 *
+	 * @see {@link UndoRedo.redo}
+	 */
+	canRedo(label: NonNullable<unknown>): boolean;
 
 	/**
 	 * Releases the manager's subscription to the branch and disposes all tracked revertibles.
