@@ -1088,7 +1088,7 @@ export class ConnectionManager implements IConnectionManager {
 
 	public sendMessages(messages: IDocumentMessage[]): void {
 		assert(this.connected, 0x2b4 /* "not connected on sending ops!" */);
-		// FrozenDeltaStream short-circuit: writable-frozen containers
+		// FrozenDeltaStream writable-variant short-circuit: writable-frozen containers
 		// (`loadFrozenContainerFromPendingState({ readOnly: false })`) attach a
 		// FrozenDeltaStream as the live connection. Its `mode` is "read" (advertising
 		// "write" would imply quorum membership we cannot honor), so a runtime submit
@@ -1097,10 +1097,14 @@ export class ConnectionManager implements IConnectionManager {
 		// (`allowReconnect: false`) calls `closeHandler` and closes the container — the
 		// opposite of what writable-frozen wants. Drop the messages here: the runtime's
 		// outbox keeps them in `pendingStateManager` so `getPendingLocalState()` can
-		// capture them, which is the entire point of the writable-frozen flow. The
-		// read-only variant should never reach here (its `storageOnly` policy keeps the
-		// runtime from submitting), but covering it too is harmless defense-in-depth.
-		if (this.connection instanceof FrozenDeltaStream) {
+		// capture them, which is the entire point of the writable-frozen flow.
+		//
+		// The check is narrowed to the writable variant (`!readOnly`) so the read-only
+		// variant retains its `FrozenDeltaStream.submit` 403-nack tripwire — a stray
+		// submit on a storage-only frozen connection signals an upstream invariant break
+		// and should remain observable. The read-only variant shouldn't reach here in
+		// normal flow anyway (its `storageOnly` policy keeps the runtime from submitting).
+		if (this.connection instanceof FrozenDeltaStream && !this.connection.readOnly) {
 			return;
 		}
 		// If connection is "read" or implicit "read" (got leave op for "write" connection),

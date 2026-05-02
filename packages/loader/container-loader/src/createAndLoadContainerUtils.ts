@@ -249,6 +249,12 @@ export interface ILoadFrozenContainerFromPendingStateProps
 	 * read/write state on a loaded container. A future positive-polarity option can layer on
 	 * top of this without breaking callers, but flipping the polarity now would split readers
 	 * between two conventions for the same concept.
+	 *
+	 * Subsystem behavior is unchanged from the read-only frozen path regardless of `readOnly`:
+	 * storage operations still throw (only `readBlob` is supported); summarizer / id-compressor
+	 * never fire because no acks arrive; the quorum is whatever was captured in pending state
+	 * and gains no members during the writable-frozen lifetime. The only behavioral delta is
+	 * that the runtime accepts DDS submissions and accumulates them in `pendingStateManager`.
 	 */
 	readonly readOnly?: boolean;
 }

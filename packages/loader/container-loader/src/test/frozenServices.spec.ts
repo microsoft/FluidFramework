@@ -222,6 +222,39 @@ describe("FrozenDocumentService.connectToDeltaStream upgrade-hang lifecycle", ()
 		);
 	});
 
+	it("hands out distinct FrozenDeltaStream instances with distinct clientIds on subsequent read-mode connects", async () => {
+		// Pins the per-instance clientId fix that prevents pendingStateManager's 0x173
+		// replay-assert when a writable-frozen container reconnects through the
+		// `client.mode !== "write"` branch with dirty pending ops. Each FrozenDeltaStream
+		// instance must mint a fresh `frozen-delta-stream/<uuid>` so the runtime sees the
+		// clientId change across replays.
+		const factory = new FrozenDocumentServiceFactory(false);
+		const service = await factory.createDocumentService(fakeUrl);
+
+		const first = await service.connectToDeltaStream(fakeReadClient());
+		const second = await service.connectToDeltaStream(fakeReadClient());
+
+		assert(first instanceof FrozenDeltaStream);
+		assert(second instanceof FrozenDeltaStream);
+		assert.notStrictEqual(
+			first,
+			second,
+			"Expected each subsequent connect to return a fresh FrozenDeltaStream instance",
+		);
+		assert.match(first.clientId, /^frozen-delta-stream\//);
+		assert.match(second.clientId, /^frozen-delta-stream\//);
+		assert.notStrictEqual(
+			first.clientId,
+			second.clientId,
+			"Expected each FrozenDeltaStream instance to mint a fresh clientId — sharing it would trip pendingStateManager 0x173 on replay",
+		);
+
+		// initialClients must mirror the per-instance clientId so the audience handler
+		// observes "self" without waiting for a join op or signal.
+		assert.strictEqual(first.initialClients[0]?.clientId, first.clientId);
+		assert.strictEqual(second.initialClients[0]?.clientId, second.clientId);
+	});
+
 	it("drains multiple pending rejecters on a single dispose() call", async () => {
 		const factory = new FrozenDocumentServiceFactory(false);
 		const service = await factory.createDocumentService(fakeUrl);
