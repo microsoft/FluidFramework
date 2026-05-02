@@ -140,11 +140,14 @@ class CollectAndCompareBundlesCommand extends Command {
 			);
 		}
 		const baseRevision = resolvedBaseRevision;
-		// compareBundles.ts reads from fixed label directories ("main" / "current"),
-		// so pin the base bundle's directory name to "main" regardless of which
-		// revision we resolved to.
+		// compareBundles.ts reads from a fixed base label ("main"); pin the base
+		// bundle's directory name to that regardless of which revision we resolved.
 		const baseLabel = "main";
-		const currentLabel = "current";
+		// The current side is timestamped (unix epoch seconds) so successive runs,
+		// which may carry different uncommitted changes, don't clobber each other.
+		// We pass the same label to collectBundle (--label) and compareBundles
+		// (--current-label) so they agree on the directory.
+		const currentLabel = `current_${Math.floor(Date.now() / 1000)}`;
 
 		const skipCompare = flags["skip-compare"];
 		const forceCleanBuildFlag = flags["force-clean-build"];
@@ -174,7 +177,13 @@ class CollectAndCompareBundlesCommand extends Command {
 			console.log(`\n${"=".repeat(80)}`);
 			console.log(`Collecting local bundle (label: ${currentLabel})...`);
 			console.log("=".repeat(80));
-			runScript("collectBundle.ts", ["--mode", "local", ...sharedCollectArgs]);
+			runScript("collectBundle.ts", [
+				"--mode",
+				"local",
+				"--label",
+				currentLabel,
+				...sharedCollectArgs,
+			]);
 
 			console.log(`\n${"=".repeat(80)}`);
 			if (baseStatsAreCached) {
@@ -219,7 +228,7 @@ class CollectAndCompareBundlesCommand extends Command {
 				console.log(`\n${"=".repeat(80)}`);
 				console.log("Running bundle comparison...");
 				console.log("=".repeat(80));
-				runScript("compareBundles.ts", []);
+				runScript("compareBundles.ts", ["--current-label", currentLabel]);
 			}
 
 			console.log(`\n${"=".repeat(80)}`);

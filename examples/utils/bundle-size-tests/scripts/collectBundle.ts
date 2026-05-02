@@ -4,7 +4,15 @@
  */
 
 import { execSync } from "node:child_process";
-import { copyFileSync, cpSync, existsSync, mkdirSync, rmSync, unlinkSync } from "node:fs";
+import {
+	copyFileSync,
+	cpSync,
+	existsSync,
+	mkdirSync,
+	rmSync,
+	unlinkSync,
+	writeFileSync,
+} from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -158,6 +166,34 @@ function saveStats(label: string, sourcePackageRoot: string): void {
 }
 
 /**
+ * Captures the outer repo's currently-staged diff to a sibling file next to
+ * the bundle stats, so the analysis is reproducible even with uncommitted
+ * changes. Only staged changes are recorded; unstaged changes are intentionally
+ * excluded (they're often noisy / random) but a warning is printed if any are
+ * detected so the user can `git add` the relevant pieces and re-run.
+ *
+ * The patch is written as `staged-changes.patch` next to `bundleStats.msp.gz`
+ * inside the per-label directory.
+ */
+async function captureLocalPatch(repoRoot: string, labelDirectory: string): Promise<void> {
+	const git = simpleGit(repoRoot);
+	const stagedDiff = await git.diff(["--cached"]);
+	const unstagedDiff = await git.diff();
+	if (unstagedDiff.length > 0) {
+		console.warn(
+			`Warning: unstaged changes detected in ${repoRoot}. They will NOT be ` +
+				`captured in the patch alongside this analysis. Stage all changes you ` +
+				`want recorded (e.g. "git add -u") before running collectBundle so the ` +
+				`patch faithfully describes what was bundled.`,
+		);
+	}
+	mkdirSync(labelDirectory, { recursive: true });
+	const patchPath = resolve(labelDirectory, "staged-changes.patch");
+	writeFileSync(patchPath, stagedDiff);
+	console.log(`Saved staged-changes patch to: ${patchPath}`);
+}
+
+/**
  * Returns the URL of the outer repo's `origin` remote, used as the source
  * for cloning the inner repo.
  */
@@ -285,6 +321,9 @@ class CollectBundleCommand extends Command {
 		if (mode === "local") {
 			activeRepoRoot = outerRepoRoot;
 			activePackageRoot = outerPackageRoot;
+			// Capture the staged diff up front, before any build steps. This way the
+			// patch is preserved even if the build subsequently fails.
+			await captureLocalPatch(outerRepoRoot, resolve(bundleAnalysisDirectory, label));
 		} else {
 			await ensureInnerRepoAtRevision(revision as string);
 			activeRepoRoot = innerRepoRoot;

@@ -18,12 +18,12 @@ import { maybePrintHelp } from "./oclifHelp.js";
 const scriptDirectory = dirname(fileURLToPath(import.meta.url));
 const defaultAnalysisDirectory = resolve(scriptDirectory, "..", "bundleAnalysis");
 
-// The current side is always written by collectBundle.ts in local mode, which
-// uses the fixed label "current". The base side is whatever label
-// collectBundle.ts wrote in revision mode (default "main", overridable via
-// --base-label).
+// The current side is always written by collectBundle.ts in local mode. The
+// default label is "current", but the orchestrator (collectAndCompareBundles.ts)
+// passes a timestamped label like "current_<epoch>" via --current-label so that
+// successive runs with different uncommitted changes don't overwrite each other.
 const defaultBaseLabel = "main";
-const currentLabel = "current";
+const defaultCurrentLabel = "current";
 
 /**
  * Sanitizes a string for use as a filename by replacing non-alphanumeric characters with underscores.
@@ -214,6 +214,8 @@ interface Options {
 	analysisDirectory: string;
 	/** Label subdirectory holding the base-side bundle stats (default: "main"). */
 	baseLabel: string;
+	/** Label subdirectory holding the current-side bundle stats (default: "current"). */
+	currentLabel: string;
 }
 
 /**
@@ -228,6 +230,7 @@ interface Options {
 function writeOutputFiles(
 	outputDirectory: string,
 	baseLabel: string,
+	currentLabel: string,
 	textContent: string,
 	jsonObject: object,
 ): void {
@@ -281,7 +284,8 @@ interface EntrypointRow {
  */
 class CompareBundlesCommand extends Command {
 	public static override readonly description =
-		`Compare the two bundles previously collected by collectBundle.ts (base = --base-label, current = ${currentLabel}).`;
+		"Compare the two bundles previously collected by collectBundle.ts " +
+		"(base = --base-label, current = --current-label).";
 
 	public static override readonly examples = [
 		"<%= config.bin %> <%= command.id %>",
@@ -303,6 +307,14 @@ class CompareBundlesCommand extends Command {
 				"in revision mode.",
 			default: defaultBaseLabel,
 		}),
+		"current-label": Flags.string({
+			description:
+				"Label subdirectory under --analysis-dir holding the current-side " +
+				"bundle stats. Must match the --label passed to collectBundle.ts " +
+				"in local mode (the orchestrator passes a timestamped label like " +
+				"'current_<epoch>').",
+			default: defaultCurrentLabel,
+		}),
 	};
 
 	public async run(): Promise<void> {
@@ -310,6 +322,7 @@ class CompareBundlesCommand extends Command {
 		const options: Options = {
 			analysisDirectory: resolve(flags["analysis-dir"]),
 			baseLabel: flags["base-label"],
+			currentLabel: flags["current-label"],
 		};
 
 		runCompare(options);
@@ -324,7 +337,7 @@ class CompareBundlesCommand extends Command {
 function runCompare(options: Options): void {
 	const reporter = new Reporter();
 
-	const { baseLabel } = options;
+	const { baseLabel, currentLabel } = options;
 	const outputDirectory = options.analysisDirectory;
 	const baseBuildDirectory = resolve(outputDirectory, baseLabel, "build");
 	const currentBuildDirectory = resolve(outputDirectory, currentLabel, "build");
@@ -431,7 +444,7 @@ function runCompare(options: Options): void {
 		});
 	}
 
-	writeOutputFiles(outputDirectory, baseLabel, reporter.toText(), {
+	writeOutputFiles(outputDirectory, baseLabel, currentLabel, reporter.toText(), {
 		comparedAt: new Date().toISOString(),
 		baseLabel,
 		currentLabel,
