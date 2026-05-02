@@ -4,7 +4,7 @@
  */
 
 import { spawnSync } from "node:child_process";
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -111,6 +111,15 @@ class CollectAndCompareBundlesCommand extends Command {
 				"when stale incremental build state may interfere with the current revision.",
 			default: false,
 		}),
+		"keep-base-repo": Flags.boolean({
+			description:
+				"For debugging only: keep the inner base-repo clone after collecting the " +
+				"base bundle. By default the inner repo is deleted once stats are saved, " +
+				"since it can be re-created cheaply via shallow clone on the next run. " +
+				"Pass this flag to inspect the inner repo's working tree or build output " +
+				"(e.g. when a build is failing inside the inner repo).",
+			default: false,
+		}),
 	};
 
 	public async run(): Promise<void> {
@@ -139,6 +148,7 @@ class CollectAndCompareBundlesCommand extends Command {
 
 		const skipCompare = flags["skip-compare"];
 		const forceCleanBuildFlag = flags["force-clean-build"];
+		const keepBaseRepo = flags["keep-base-repo"];
 
 		const sharedCollectArgs: string[] = [];
 		if (forceCleanBuildFlag) {
@@ -191,6 +201,18 @@ class CollectAndCompareBundlesCommand extends Command {
 				// against the same merge-base can skip the rebuild.
 				mkdirSync(baseLabelDirectory, { recursive: true });
 				writeFileSync(baseRevisionMarkerPath, `${baseRevision}\n`);
+
+				// Delete the inner repo now that the stats are saved. It's a
+				// shallow clone of the outer repo's `origin`, so re-creating it
+				// on the next run is cheap; keeping it around just consumes disk
+				// (hundreds of MB once dependencies are installed).
+				if (!keepBaseRepo) {
+					const innerRepoRoot = resolve(bundleAnalysisDirectory, "base-repo");
+					if (existsSync(innerRepoRoot)) {
+						console.log(`Deleting inner base-repo at ${innerRepoRoot}...`);
+						rmSync(innerRepoRoot, { recursive: true, force: true });
+					}
+				}
 			}
 
 			if (!skipCompare) {
