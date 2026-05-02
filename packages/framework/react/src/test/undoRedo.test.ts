@@ -327,7 +327,7 @@ describe("createUndoRedo", () => {
 			};
 		}
 
-		it("preserves the undo entry when revert() throws (H1)", () => {
+		it("discards the undo entry when revert() throws", () => {
 			const { branch, fireChanged } = createMockBranch();
 			const manager = createUndoRedo(branch);
 
@@ -340,11 +340,11 @@ describe("createUndoRedo", () => {
 			assert.equal(manager.canUndo(), true);
 
 			assert.throws(() => manager.undo());
-			assert.equal(manager.canUndo(), true, "entry should remain after failed revert");
+			assert.equal(manager.canUndo(), false, "entry is discarded after failed revert");
 			manager.dispose();
 		});
 
-		it("preserves the redo entry when revert() throws during redo (H1)", () => {
+		it("discards the redo entry when revert() throws during redo", () => {
 			const { branch, fireChanged } = createMockBranch();
 			const manager = createUndoRedo(branch);
 
@@ -368,7 +368,7 @@ describe("createUndoRedo", () => {
 			assert.equal(manager.canRedo(), true);
 
 			assert.throws(() => manager.redo());
-			assert.equal(manager.canRedo(), true, "redo entry should remain after failed revert");
+			assert.equal(manager.canRedo(), false, "entry is discarded after failed revert");
 			manager.dispose();
 		});
 
