@@ -64,11 +64,6 @@ jobs:
 
     # This 'inputs' section downloads initial required artifacts/data for this job.
     inputs:
-      - input: 
-        pipeline: buildTools-resource
-        artifactName: pack
-        targetPath: $(Pipeline.Workspace)/buildTools-zip
-
       - input: pipelineArtifact
         artifactName: pack
         buildType: current
