@@ -29,7 +29,7 @@ import {
 	makeServiceClientImpl,
 	rootDataStoreId,
 	ServiceContainerBase,
-} from "@fluidframework/runtime-definitions/internal";
+} from "@fluidframework/runtime-utils/internal";
 import { wrapConfigProviderWithDefaults } from "@fluidframework/telemetry-utils/internal";
 
 import { InsecureTinyliciousTokenProvider } from "./insecureTinyliciousTokenProvider.js";

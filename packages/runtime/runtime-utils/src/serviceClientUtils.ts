@@ -25,13 +25,13 @@ import {
 	registryLookup,
 	type ServiceClient,
 } from "@fluidframework/driver-definitions/internal";
-
-import type { MinimumVersionForCollab } from "./compatibilityDefinitions.js";
-import type { IContainerRuntimeBase } from "./dataStoreContext.js";
 import type {
 	FluidDataStoreRegistryEntry,
+	IContainerRuntimeBase,
 	IFluidDataStoreRegistry,
-} from "./dataStoreRegistry.js";
+	MinimumVersionForCollab,
+} from "@fluidframework/runtime-definitions/internal";
+
 import { DataStoreKindImplementation } from "./serviceClientBase.js";
 
 /**

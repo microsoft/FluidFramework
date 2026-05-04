@@ -5,9 +5,9 @@
 
 import { getPresenceFromContainer } from "@fluidframework/presence/alpha";
 // eslint-disable-next-line import-x/no-internal-modules
-import type { Audience } from "@fluidframework/runtime-definitions/internal";
+import type { Audience } from "@fluidframework/runtime-utils/internal";
 // eslint-disable-next-line import-x/no-internal-modules
-import { getContainerAudience } from "@fluidframework/runtime-definitions/internal";
+import { getContainerAudience } from "@fluidframework/runtime-utils/internal";
 
 import { DiceRollerController, type DieValue } from "./controller.js";
 import { diceRollerDataStoreKind, service } from "./fluid.js";

@@ -30,15 +30,15 @@ import {
 	createOdspUrl,
 } from "@fluidframework/odsp-driver/internal";
 import type { OdspResourceTokenFetchOptions } from "@fluidframework/odsp-driver-definitions/internal";
+import type { MinimumVersionForCollab } from "@fluidframework/runtime-definitions/internal";
 import {
 	type ContainerRuntimeLoader,
 	type ContainerRuntimeLoaderParams,
-	type MinimumVersionForCollab,
 	makeCodeLoader,
 	makeServiceClientImpl,
 	rootDataStoreId,
 	ServiceContainerBase,
-} from "@fluidframework/runtime-definitions/internal";
+} from "@fluidframework/runtime-utils/internal";
 import { wrapConfigProviderWithDefaults } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 

@@ -32,7 +32,7 @@ import {
 import type { FluidContainer } from "@fluidframework/driver-definitions/internal";
 import type { IFluidContainer } from "@fluidframework/fluid-static";
 import { isInternalFluidContainer } from "@fluidframework/fluid-static/internal";
-import { ServiceContainerBase } from "@fluidframework/runtime-definitions/internal";
+import { ServiceContainerBase } from "@fluidframework/runtime-utils/internal";
 
 /**
  * Properties for configuring {@link IDevtools}.

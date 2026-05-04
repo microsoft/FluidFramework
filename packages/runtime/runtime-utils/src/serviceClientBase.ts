@@ -16,15 +16,14 @@ import {
 	type Registry,
 	registryLookup,
 } from "@fluidframework/driver-definitions/internal";
-import { UsageError } from "@fluidframework/telemetry-utils/internal";
-
-import type { MinimumVersionForCollab } from "./compatibilityDefinitions.js";
 import type {
 	IContainerRuntimeBase,
-	IFluidDataStoreContext,
 	IFluidDataStoreChannel,
-} from "./dataStoreContext.js";
-import type { IFluidDataStoreFactory } from "./dataStoreFactory.js";
+	IFluidDataStoreContext,
+	IFluidDataStoreFactory,
+	MinimumVersionForCollab,
+} from "@fluidframework/runtime-definitions/internal";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 /*
  * This file provides common implementation logic for ServiceClient implementations.

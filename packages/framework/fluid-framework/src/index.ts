@@ -103,10 +103,8 @@ export type {
 	SharedObjectKindAlpha,
 	DataStoreContext,
 } from "@fluidframework/shared-object-base/internal";
-export type {
-	MinimumVersionForCollab,
-	ServiceOptions,
-} from "@fluidframework/runtime-definitions/internal";
+export type { MinimumVersionForCollab } from "@fluidframework/runtime-definitions/internal";
+export type { ServiceOptions } from "@fluidframework/runtime-utils/internal";
 export type {
 	DataStoreCreator,
 	DataStoreKey,

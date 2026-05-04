@@ -104,23 +104,3 @@ export {
 	type StageControlsInternal,
 	asLegacyAlpha,
 } from "./stagingMode.js";
-
-export type { ServiceOptions } from "./serviceClientBase.js";
-export type { Audience } from "./serviceClientBase.js";
-export {
-	DataStoreKindImplementation,
-	ServiceContainerBase,
-	getContainerAudience,
-} from "./serviceClientBase.js";
-export {
-	convertRegistry,
-	makeCodeLoader,
-	makeServiceClientImpl,
-	normalizeRegistry,
-	rootDataStoreId,
-} from "./serviceClientUtils.js";
-export type {
-	ContainerRuntimeLoader,
-	ContainerRuntimeLoaderParams,
-	ServiceContainerStatics,
-} from "./serviceClientUtils.js";

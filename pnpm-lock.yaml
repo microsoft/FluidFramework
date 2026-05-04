@@ -4408,9 +4408,9 @@ importers:
       '@fluidframework/presence':
         specifier: workspace:~
         version: link:../../../../packages/framework/presence
-      '@fluidframework/runtime-definitions':
+      '@fluidframework/runtime-utils':
         specifier: workspace:~
-        version: link:../../../../packages/runtime/runtime-definitions
+        version: link:../../../../packages/runtime/runtime-utils
       '@fluidframework/tinylicious-driver':
         specifier: workspace:~
         version: link:../../../../packages/drivers/tinylicious-driver
@@ -10032,6 +10032,9 @@ importers:
       '@fluidframework/runtime-definitions':
         specifier: workspace:~
         version: link:../../runtime/runtime-definitions
+      '@fluidframework/runtime-utils':
+        specifier: workspace:~
+        version: link:../../runtime/runtime-utils
       '@fluidframework/server-local-server':
         specifier: ^7.0.0
         version: 7.0.0
@@ -10660,6 +10663,9 @@ importers:
       '@fluidframework/runtime-definitions':
         specifier: workspace:~
         version: link:../../runtime/runtime-definitions
+      '@fluidframework/runtime-utils':
+        specifier: workspace:~
+        version: link:../../runtime/runtime-utils
       '@fluidframework/telemetry-utils':
         specifier: workspace:~
         version: link:../../utils/telemetry-utils
@@ -11819,6 +11825,9 @@ importers:
       '@fluidframework/runtime-definitions':
         specifier: workspace:~
         version: link:../../runtime/runtime-definitions
+      '@fluidframework/runtime-utils':
+        specifier: workspace:~
+        version: link:../../runtime/runtime-utils
       '@fluidframework/telemetry-utils':
         specifier: workspace:~
         version: link:../../utils/telemetry-utils
@@ -13502,9 +13511,6 @@ importers:
       '@fluidframework/core-interfaces':
         specifier: workspace:~
         version: link:../../common/core-interfaces
-      '@fluidframework/core-utils':
-        specifier: workspace:~
-        version: link:../../common/core-utils
       '@fluidframework/driver-definitions':
         specifier: workspace:~
         version: link:../../common/driver-definitions
@@ -13817,6 +13823,9 @@ importers:
       '@fluidframework/runtime-definitions':
         specifier: workspace:~
         version: link:../../runtime/runtime-definitions
+      '@fluidframework/runtime-utils':
+        specifier: workspace:~
+        version: link:../../runtime/runtime-utils
       '@fluidframework/telemetry-utils':
         specifier: workspace:~
         version: link:../../utils/telemetry-utils
@@ -14192,6 +14201,9 @@ importers:
       '@fluidframework/runtime-definitions':
         specifier: workspace:~
         version: link:../../runtime/runtime-definitions
+      '@fluidframework/runtime-utils':
+        specifier: workspace:~
+        version: link:../../runtime/runtime-utils
       '@fluidframework/telemetry-utils':
         specifier: workspace:~
         version: link:../../utils/telemetry-utils
@@ -16012,6 +16024,9 @@ importers:
       '@fluidframework/runtime-definitions':
         specifier: workspace:~
         version: link:../../../runtime/runtime-definitions
+      '@fluidframework/runtime-utils':
+        specifier: workspace:~
+        version: link:../../../runtime/runtime-utils
     devDependencies:
       '@arethetypeswrong/cli':
         specifier: ^0.18.2

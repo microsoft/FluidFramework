@@ -42,7 +42,7 @@
 	"dependencies": {
 		"@fluidframework/azure-client": "workspace:~",
 		"@fluidframework/presence": "workspace:~",
-		"@fluidframework/runtime-definitions": "workspace:~",
+		"@fluidframework/runtime-utils": "workspace:~",
 		"@fluidframework/tinylicious-driver": "workspace:~",
 		"events_pkg": "npm:events@^3.1.0",
 		"fluid-framework": "workspace:~",

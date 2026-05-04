@@ -19,9 +19,6 @@ export interface AttributionInfo {
 // @beta @legacy
 export type AttributionKey = OpAttributionKey | DetachedAttributionKey | LocalAttributionKey;
 
-// @alpha @sealed
-export type Audience = IAudience;
-
 // @alpha @sealed @legacy
 export interface ContainerRuntimeBaseAlpha extends IContainerRuntimeBase {
 }
@@ -67,9 +64,6 @@ export enum FlushMode {
     Immediate = 0,
     TurnBased = 1
 }
-
-// @alpha
-export function getContainerAudience(container: FluidContainerAttached): Audience;
 
 // @beta @legacy
 export interface IAttachMessage {
@@ -427,12 +421,6 @@ export interface OpAttributionKey {
 
 // @beta @legacy
 export type PackagePath = readonly string[];
-
-// @alpha @input
-export interface ServiceOptions {
-    // (undocumented)
-    readonly minVersionForCollab: MinimumVersionForCollab;
-}
 
 // @beta @sealed @legacy
 export interface StageControls {
