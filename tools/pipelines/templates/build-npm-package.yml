@@ -469,7 +469,7 @@ extends:
                   # At this point we want to publish the artifact with npm-packed packages, and the one with test files,
                   # but as part of 1ES migration that's now part of templateContext.outputs below.
 
-              # Collect/publish/run bundle analysis
+              # Bundle analysis
               - ${{ if eq(parameters.taskBundleAnalysis, true) }}:
                   - task: Npm@1
                     displayName: 'Calculate bundle sizes'
@@ -486,21 +486,8 @@ extends:
                       sourceFolder: '$(Pipeline.Workspace)/${{ parameters.buildDirectory }}/artifacts/bundleAnalysis'
                       targetFolder: $(Build.ArtifactStagingDirectory)/bundleAnalysis
 
-                  # At this point we want to publish the artifact with the bundle size analysis,
+                  # At this point we want to publish the bundleAnalysis artifact,
                   # but as part of 1ES migration that's now part of templateContext.outputs below.
-
-                  - task: Npm@1
-                    displayName: (PR only) Compare bundle sizes against baseline
-                    condition: and(succeeded(), eq(variables['Build.Reason'], 'PullRequest'))
-                    continueOnError: true
-                    env:
-                      ADO_API_TOKEN: $(System.AccessToken)
-                      DANGER_GITHUB_API_TOKEN: $(githubPublicRepoSecret)
-                      TARGET_BRANCH_NAME: '$(targetBranchName)'
-                    inputs:
-                      command: custom
-                      workingDir: '$(Pipeline.Workspace)/${{ parameters.buildDirectory }}'
-                      customCommand: 'run bundle-analysis:run'
 
               # Docs
               - ${{ if ne(parameters.taskBuildDocs, false) }}:

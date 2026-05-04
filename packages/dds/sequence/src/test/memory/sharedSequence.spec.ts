@@ -5,8 +5,9 @@
 
 import {
 	benchmarkIt,
+	BenchmarkMode,
 	benchmarkMemoryUse,
-	isInPerformanceTestingMode,
+	currentBenchmarkMode,
 	memoryAddedBy,
 	memoryUseOfValue,
 } from "@fluid-tools/benchmark";
@@ -19,10 +20,11 @@ describe("SharedSequence memory usage", () => {
 		...benchmarkMemoryUse(memoryUseOfValue(() => new SubSequence<number>([]))),
 	});
 
-	const numbersOfEntriesForTests = isInPerformanceTestingMode
-		? [100, 1000, 10_000]
-		: // When not measuring perf, use a single smaller data size so the tests run faster.
-			[10];
+	const numbersOfEntriesForTests =
+		currentBenchmarkMode === BenchmarkMode.Performance
+			? [100, 1000, 10_000]
+			: // When not measuring perf, use a single smaller data size so the tests run faster.
+				[10];
 
 	for (const x of numbersOfEntriesForTests) {
 		benchmarkIt({

@@ -18,13 +18,12 @@ export {
 	getBundlePathsFromFileSystem,
 	getBundlePathsFromZipObject,
 	getBundleSummaries,
-	getCommentForBundleDiff,
-	getSimpleComment,
 	getStatsFileFromFileSystem,
 	getStatsFileFromZip,
 	getZipObjectFromArtifact,
 	IADOConstants,
 	prCommentsUtils,
+	SizeComparison,
 	totalSizeMetricName,
 } from "./ADO";
 export {
@@ -34,7 +33,6 @@ export {
 export {
 	BundleBuddyConfig,
 	BundleComparison,
-	BundleComparisonResult,
 	BundleMetric,
 	BundleMetricSet,
 	BundleSummaries,
