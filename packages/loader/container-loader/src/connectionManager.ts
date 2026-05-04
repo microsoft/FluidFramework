@@ -63,7 +63,11 @@ import {
 	ReconnectMode,
 } from "./contracts.js";
 import { DeltaQueue } from "./deltaQueue.js";
-import { FrozenDeltaStream, isFrozenDeltaStreamConnection } from "./frozenServices.js";
+import {
+	FrozenDeltaStream,
+	isFrozenDeltaStreamConnection,
+	isWritableFrozenDeltaStreamConnection,
+} from "./frozenServices.js";
 import { SignalType } from "./protocol.js";
 import { isDeltaStreamConnectionForbiddenError } from "./utils.js";
 
@@ -1088,9 +1092,9 @@ export class ConnectionManager implements IConnectionManager {
 
 	public sendMessages(messages: IDocumentMessage[]): void {
 		assert(this.connected, 0x2b4 /* "not connected on sending ops!" */);
-		// FrozenDeltaStream writable-variant short-circuit: writable-frozen containers
+		// WritableFrozenDeltaStream short-circuit: writable-frozen containers
 		// (`loadFrozenContainerFromPendingState({ readOnly: false })`) attach a
-		// FrozenDeltaStream as the live connection. Its `mode` is "read" (advertising
+		// WritableFrozenDeltaStream as the live connection. Its `mode` is "read" (advertising
 		// "write" would imply quorum membership we cannot honor), so a runtime submit
 		// would otherwise fall into the read-mode reconnect branch below. That branch
 		// schedules `reconnect("write")`, which under `ReconnectMode.Never`
@@ -1099,12 +1103,12 @@ export class ConnectionManager implements IConnectionManager {
 		// outbox keeps them in `pendingStateManager` so `getPendingLocalState()` can
 		// capture them, which is the entire point of the writable-frozen flow.
 		//
-		// The check is narrowed to the writable variant (`!readOnly`) so the read-only
-		// variant retains its `FrozenDeltaStream.submit` 403-nack tripwire — a stray
-		// submit on a storage-only frozen connection signals an upstream invariant break
-		// and should remain observable. The read-only variant shouldn't reach here in
-		// normal flow anyway (its `storageOnly` policy keeps the runtime from submitting).
-		if (this.connection instanceof FrozenDeltaStream && !this.connection.readOnly) {
+		// Match only the writable variant (a sibling class, not a subclass) so the read-only
+		// `FrozenDeltaStream` retains its `submit` 403-nack tripwire — a stray submit on a
+		// storage-only frozen connection signals an upstream invariant break and should
+		// remain observable. The read-only variant shouldn't reach here in normal flow anyway
+		// (its `storageOnly` policy keeps the runtime from submitting).
+		if (isWritableFrozenDeltaStreamConnection(this.connection)) {
 			return;
 		}
 		// If connection is "read" or implicit "read" (got leave op for "write" connection),

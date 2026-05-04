@@ -386,9 +386,9 @@ describe("loadFrozenContainerFromPendingState", () => {
 			);
 
 			// Read-only variant short-circuits via storageOnly so submissions never reach the
-			// runtime. Writable variant accepts them: the connectionManager attempts a read→write
-			// upgrade on the first submit, which FrozenDocumentService hangs, so submitted ops
-			// stay in the runtime's pendingStateManager and never reach the wire.
+			// runtime. Writable variant accepts them: ConnectionManager.sendMessages drops
+			// outbound messages at the WritableFrozenDeltaStream short-circuit, so submitted
+			// ops stay in the runtime's pendingStateManager and never reach the wire.
 			for (let i = 0; i < 5; i++) {
 				frozenEntryPoint.ITestFluidObject.root.set(`writableOnly-${i}`, i);
 			}
@@ -744,7 +744,7 @@ describe("loadFrozenContainerFromPendingState", () => {
 			);
 		});
 
-		it("dispose() completes while the read→write upgrade connect is hung", async () => {
+		it("dispose() runs cleanly on a writable-frozen container after a local write", async () => {
 			const { container, ITestFluidObject, urlResolver, codeLoader, documentServiceFactory } =
 				await initialize();
 			await container.attach(urlResolver.createCreateNewRequest("test"));
@@ -772,11 +772,8 @@ describe("loadFrozenContainerFromPendingState", () => {
 			);
 
 			// End-to-end smoke for the writable-frozen lifecycle: writes are accepted, the
-			// container stays Connected (sendMessages drops them at the FrozenDeltaStream
-			// short-circuit), and dispose() then runs cleanly. The pendingConnectRejecters
-			// drain path is no longer exercised here in normal flow — the focused unit test
-			// in container-loader/src/test/frozenServices.spec.ts drives connectToDeltaStream(
-			// {mode: "write"}) directly to verify that.
+			// container stays Connected (sendMessages drops them at the WritableFrozenDeltaStream
+			// short-circuit), and dispose() then runs cleanly.
 			frozenEntryPoint.ITestFluidObject.root.set("aWrite", 1);
 			await new Promise<void>((resolve) => setTimeout(resolve, 200));
 
@@ -818,11 +815,10 @@ describe("loadFrozenContainerFromPendingState", () => {
 			frozenEntryPoint.ITestFluidObject.root.set("aWrite", 1);
 			await new Promise<void>((resolve) => setTimeout(resolve, 200));
 
-			// close() does not propagate to service.dispose() — the documented benign-leak
-			// tradeoff for any pending rejecters that might exist on defense-in-depth paths.
-			// In normal writable-frozen flow no such rejecters exist (sendMessages drops at the
-			// FrozenDeltaStream short-circuit), but the contract worth pinning here is that
-			// close() itself returns and the container observes closed === true.
+			// close() does not propagate to service.dispose(). In writable-frozen flow that's
+			// fine: sendMessages drops outbound writes at the WritableFrozenDeltaStream
+			// short-circuit, so no connect attempts are pending. The contract worth pinning
+			// here is that close() returns and the container observes closed === true.
 			frozenContainer.close();
 			assert.strictEqual(
 				frozenContainer.closed,
@@ -834,10 +830,9 @@ describe("loadFrozenContainerFromPendingState", () => {
 		it("survives a disconnect/reconnect cycle without tripping pendingStateManager replay assert", async () => {
 			// Regression for the FrozenDeltaStream clientId reuse issue: pre-fix, every
 			// FrozenDeltaStream instance shared the same fixed clientId, so a reconnect
-			// (which routes through the `client.mode !== "write"` branch in
-			// FrozenDocumentService.connectToDeltaStream) would replay pending ops against
-			// the same clientId twice and trip pendingStateManager assert 0x173. The fix
-			// mints a fresh clientId per instance.
+			// (which mints another stream from FrozenDocumentService.connectToDeltaStream)
+			// would replay pending ops against the same clientId twice and trip
+			// pendingStateManager assert 0x173. The fix mints a fresh clientId per instance.
 			const { container, ITestFluidObject, urlResolver, codeLoader, documentServiceFactory } =
 				await initialize();
 			await container.attach(urlResolver.createCreateNewRequest("test"));
