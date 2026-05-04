@@ -35,17 +35,18 @@ interface PnpmRunResult {
  * full set of trust-downgrade violations.
  *
  * Strategy:
- *   1. Read the lockfile via `@pnpm/lockfile.fs` and enumerate every key
- *      under `packages` (and `snapshots`, if present in newer lockfile
- *      versions).
- *   2. Materialize a scratch workspace at `<repoRoot>/.trust-audit-temp/`
- *      with one leaf project per `(name, version)`. Each leaf depends on
- *      the *real* registry name (no `npm:` aliases) because pnpm 10's
- *      `--trust-policy-exclude` only matches by registry name.
- *   3. Run `pnpm install` against the scratch workspace with NDJSON
- *      reporting. pnpm aborts at the first violation; we add the
- *      offender to the exclude list and re-run, repeating until pnpm
- *      either succeeds or stops surfacing new violations.
+ *
+ * 1. Read the lockfile via `@pnpm/lockfile.fs` and enumerate every key
+ * under `packages` (and `snapshots`, if present in newer lockfile
+ * versions).
+ * 2. Materialize a scratch workspace at `<repoRoot>/.trust-audit-temp/`
+ * with one leaf project per `(name, version)`. Each leaf depends on
+ * the *real* registry name (no `npm:` aliases) because pnpm 10's
+ * `--trust-policy-exclude` only matches by registry name.
+ * 3. Run `pnpm install` against the scratch workspace with NDJSON
+ * reporting. pnpm aborts at the first violation; we add the
+ * offender to the exclude list and re-run, repeating until pnpm
+ * either succeeds or stops surfacing new violations.
  */
 export default class CheckTrustPolicyCommand extends BaseCommand<
 	typeof CheckTrustPolicyCommand
@@ -66,8 +67,7 @@ export default class CheckTrustPolicyCommand extends BaseCommand<
 			default: false,
 		}),
 		tempDir: Flags.directory({
-			description:
-				"Scratch workspace directory (default: <repo-root>/.trust-audit-temp).",
+			description: "Scratch workspace directory (default: <repo-root>/.trust-audit-temp).",
 		}),
 		...BaseCommand.flags,
 	} as const;
@@ -75,7 +75,9 @@ export default class CheckTrustPolicyCommand extends BaseCommand<
 	public async run(): Promise<void> {
 		const context = await this.getContext();
 		const repoRoot = context.root;
-		const tempDir = path.resolve(this.flags.tempDir ?? path.join(repoRoot, ".trust-audit-temp"));
+		const tempDir = path.resolve(
+			this.flags.tempDir ?? path.join(repoRoot, ".trust-audit-temp"),
+		);
 
 		const lockfilePath = path.join(repoRoot, "pnpm-lock.yaml");
 		this.verbose(`Reading lockfile: ${lockfilePath}`);
@@ -91,10 +93,12 @@ export default class CheckTrustPolicyCommand extends BaseCommand<
 			this.error(`Invalid lockfile: no 'packages' section found in ${lockfilePath}`);
 		}
 
-		const pinned = collectPinnedVersions(lockfile as {
-			packages: Record<string, unknown>;
-			snapshots?: Record<string, unknown>;
-		});
+		const pinned = collectPinnedVersions(
+			lockfile as {
+				packages: Record<string, unknown>;
+				snapshots?: Record<string, unknown>;
+			},
+		);
 		this.verbose(`Found ${pinned.length} unique name@version entries.`);
 
 		this.verbose(`Materializing scratch workspace at ${tempDir}...`);
@@ -260,16 +264,17 @@ function collectPinnedVersions(lockfile: {
  * `\@fluidframework/tree` + `1.0.0` → `fluidframework-tree-1-0-0`.
  */
 function slugify(name: string, version: string): string {
-	const safeName = name.replace(/[^a-zA-Z0-9]+/g, "-").replace(/^-+|-+$/g, "");
-	const safeVersion = version.replace(/[^a-zA-Z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+	const safeName = name.replace(/[^\dA-Za-z]+/g, "-").replace(/^-+|-+$/g, "");
+	const safeVersion = version.replace(/[^\dA-Za-z]+/g, "-").replace(/^-+|-+$/g, "");
 	return `${safeName}-${safeVersion}`.toLowerCase();
 }
 
 /**
  * Creates `tempDir` containing:
- *   - `pnpm-workspace.yaml` declaring the leaf glob and `trustPolicy: no-downgrade`.
- *   - One leaf project per `(name, version)` under `projects/<slug>/`,
- *     each pulling in exactly one real (non-aliased) dependency.
+ *
+ * - `pnpm-workspace.yaml` declaring the leaf glob and `trustPolicy: no-downgrade`.
+ * - One leaf project per `(name, version)` under `projects/<slug>/`,
+ * each pulling in exactly one real (non-aliased) dependency.
  *
  * Real dependency names matter: pnpm's `--trust-policy-exclude` matches
  * against the *registry* name, so aliasing breaks the exclude path for
