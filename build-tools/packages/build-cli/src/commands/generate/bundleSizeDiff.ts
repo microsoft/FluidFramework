@@ -5,13 +5,13 @@
 
 import { mkdir, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
+import { Flags } from "@oclif/core";
 import {
 	ADOSizeComparator,
 	type BundleComparison,
 	bundlesContainNoChanges,
 	getAzureDevopsApi,
-} from "@fluidframework/bundle-size-tools";
-import { Flags } from "@oclif/core";
+} from "../../library/bundleSizeDiff/index.js";
 
 import { BaseCommand } from "../../library/commands/base.js";
 

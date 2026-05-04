@@ -8,11 +8,11 @@ import type { WebApi } from "azure-devops-node-api";
 import type JSZip from "jszip";
 import type { BundleAnalyzerPlugin } from "webpack-bundle-analyzer";
 
-import { unzipStream } from "../utilities";
+import { unzipStream } from "../utilities/index.js";
 import {
 	type BundleFileData,
 	getAnalyzerFilePathsFromFolder,
-} from "./getBundleFilePathsFromFolder";
+} from "./getBundleFilePathsFromFolder.js";
 
 /**
  * Gets a list of `analyzer.json` paths from the zip archive (one per source package).

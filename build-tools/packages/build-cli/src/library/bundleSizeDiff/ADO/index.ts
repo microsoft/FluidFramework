@@ -7,19 +7,19 @@ export {
 	getAnalyzerJsonFromZip,
 	getAnalyzerPathsFromZipObject,
 	getZipObjectFromArtifact,
-} from "./AdoArtifactFileProvider";
-export { ADOSizeComparator, SizeComparison } from "./AdoSizeComparator";
-export { IADOConstants } from "./Constants";
+} from "./AdoArtifactFileProvider.js";
+export { ADOSizeComparator, SizeComparison } from "./AdoSizeComparator.js";
+export { IADOConstants } from "./Constants.js";
 export {
 	getAnalyzerJsonFromFileSystem,
 	getAnalyzerPathsFromFileSystem,
-} from "./FileSystemBundleFileProvider";
-export { getAzureDevopsApi } from "./getAzureDevopsApi";
+} from "./FileSystemBundleFileProvider.js";
+export { getAzureDevopsApi } from "./getAzureDevopsApi.js";
 export {
 	BundleFileData,
 	getAnalyzerFilePathsFromFolder,
-} from "./getBundleFilePathsFromFolder";
+} from "./getBundleFilePathsFromFolder.js";
 export {
 	GetBundleSummariesFromAnalyzerArgs,
 	getBundleSummariesFromAnalyzer,
-} from "./getBundleSummaries";
+} from "./getBundleSummaries.js";

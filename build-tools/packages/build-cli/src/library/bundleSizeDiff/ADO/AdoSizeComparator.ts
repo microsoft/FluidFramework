@@ -4,24 +4,24 @@
  */
 
 import type { WebApi } from "azure-devops-node-api";
-import { BuildResult, BuildStatus } from "azure-devops-node-api/interfaces/BuildInterfaces";
+import { BuildResult, BuildStatus } from "azure-devops-node-api/interfaces/BuildInterfaces.js";
 import type JSZip from "jszip";
 import { join } from "path";
 
-import type { BundleComparison } from "../BundleBuddyTypes";
-import { compareBundles } from "../compareBundles";
-import { getBaselineCommit, getBuilds } from "../utilities";
+import type { BundleComparison } from "../BundleBuddyTypes.js";
+import { compareBundles } from "../compareBundles.js";
+import { getBaselineCommit, getBuilds } from "../utilities/index.js";
 import {
 	getAnalyzerJsonFromZip,
 	getAnalyzerPathsFromZipObject,
 	getZipObjectFromArtifact,
-} from "./AdoArtifactFileProvider";
-import type { IADOConstants } from "./Constants";
+} from "./AdoArtifactFileProvider.js";
+import type { IADOConstants } from "./Constants.js";
 import {
 	getAnalyzerJsonFromFileSystem,
 	getAnalyzerPathsFromFileSystem,
-} from "./FileSystemBundleFileProvider";
-import { getBundleSummariesFromAnalyzer } from "./getBundleSummaries";
+} from "./FileSystemBundleFileProvider.js";
+import { getBundleSummariesFromAnalyzer } from "./getBundleSummaries.js";
 
 /**
  * Result of a size comparison against a baseline build, discriminated by `kind`.

@@ -17,18 +17,18 @@ export {
 	getZipObjectFromArtifact,
 	IADOConstants,
 	SizeComparison,
-} from "./ADO";
+} from "./ADO/index.js";
 export {
 	BundleComparison,
 	BundleMetric,
 	BundleMetricSet,
 	BundleSummaries,
-} from "./BundleBuddyTypes";
-export { bundlesContainNoChanges, compareBundles } from "./compareBundles";
+} from "./BundleBuddyTypes.js";
+export { bundlesContainNoChanges, compareBundles } from "./compareBundles.js";
 export {
 	GetBuildOptions,
 	getAllFilesInDirectory,
 	getBaselineCommit,
 	getBuilds,
 	unzipStream,
-} from "./utilities";
+} from "./utilities/index.js";
