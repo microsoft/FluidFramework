@@ -71,7 +71,7 @@ export interface UndoRedo {
 	 * Undoes the most recent commit, regardless of labels.
 	 * No-ops if the undo stack is empty.
 	 *
-	 * @see {@link UndoRedo.canUndo}
+	 * @see {@link UndoRedo.(canUndo:1)}
 	 */
 	undo(): void;
 	/**
@@ -80,7 +80,7 @@ export interface UndoRedo {
 	 *
 	 * @param label - The label to match against.
 	 *
-	 * @see {@link UndoRedo.canUndo}
+	 * @see {@link UndoRedo.(canUndo:2)}
 	 */
 	undo(label: NonNullable<unknown>): void;
 
@@ -88,7 +88,7 @@ export interface UndoRedo {
 	 * Redoes the most recent undone commit, regardless of labels.
 	 * No-ops if the redo stack is empty.
 	 *
-	 * @see {@link UndoRedo.canRedo}
+	 * @see {@link UndoRedo.(canRedo:1)}
 	 */
 	redo(): void;
 	/**
@@ -97,14 +97,14 @@ export interface UndoRedo {
 	 *
 	 * @param label - The label to match against.
 	 *
-	 * @see {@link UndoRedo.canRedo}
+	 * @see {@link UndoRedo.(canRedo:2)}
 	 */
 	redo(label: NonNullable<unknown>): void;
 
 	/**
 	 * Returns `true` if there is at least one commit available to undo.
 	 *
-	 * @see {@link UndoRedo.undo}
+	 * @see {@link UndoRedo.(canUndo:1)}
 	 */
 	canUndo(): boolean;
 	/**
@@ -113,14 +113,14 @@ export interface UndoRedo {
 	 *
 	 * @param label - The label to check for.
 	 *
-	 * @see {@link UndoRedo.undo}
+	 * @see {@link UndoRedo.(canUndo:2)}
 	 */
 	canUndo(label: NonNullable<unknown>): boolean;
 
 	/**
 	 * Returns `true` if there is at least one commit available to redo.
 	 *
-	 * @see {@link UndoRedo.redo}
+	 * @see {@link UndoRedo.(canRedo:1)}
 	 */
 	canRedo(): boolean;
 	/**
@@ -129,7 +129,7 @@ export interface UndoRedo {
 	 *
 	 * @param label - The label to check for.
 	 *
-	 * @see {@link UndoRedo.redo}
+	 * @see {@link UndoRedo.(canRedo:2)}
 	 */
 	canRedo(label: NonNullable<unknown>): boolean;
 
