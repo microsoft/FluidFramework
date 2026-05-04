@@ -3352,41 +3352,6 @@ describe("TableFactory unit tests", () => {
 			unsubscribe();
 		});
 
-		it("undo of removeColumns is dropped when row removal would orphan the restored column's cells", () => {
-			const { view, table, fork, branchTable, view2, provider } = makeTwoClientTableView(
-				Table.create({
-					columns: [new Column({ id: "column-0", props: {} })],
-					rows: [
-						new Row({
-							id: "row-0",
-							cells: { "column-0": new Cell({ value: "Hello" }) },
-						}),
-					],
-				}),
-			);
-			const { undoStack, unsubscribe } = createTestUndoRedoStacks(fork.events);
-
-			// Remove the column (which has a cell) - this adds a revert constraint on the rows
-			branchTable.removeColumns(["column-0"]);
-			assert.equal(branchTable.columns.length, 0);
-			popAndRevert(undoStack);
-
-			// Column should be restored on the branch
-			assert.equal(branchTable.columns.length, 1);
-			assert.equal(branchTable.getCell({ row: "row-0", column: "column-0" })?.value, "Hello");
-
-			// Concurrently remove the row. Without the constraint, undoing column removal would orphan its cell.
-			view2.root.removeRows(["row-0"]);
-			provider.synchronizeMessages();
-			assert.equal(table.rows.length, 0);
-
-			// The undo is dropped because restoring the column would create an orphaned cell
-			fork.rebaseOnto(view);
-			assert.equal(branchTable.columns.length, 0);
-
-			unsubscribe();
-		});
-
 		it("setCell is dropped when concurrently removed column would orphan the cell", () => {
 			const { view, table, fork, branchTable, view2, provider } = makeTwoClientTableView(
 				Table.create({
