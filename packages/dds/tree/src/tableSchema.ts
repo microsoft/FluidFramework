@@ -774,6 +774,17 @@ export namespace System_TableSchema {
 				// TODO: Replace with "no attach" constraint on the row array when available.
 				const preconditions: TransactionConstraintAlpha[] = [{ type: "noChange" }];
 
+				// Relevant invariant: each cell corresponds to an existing row and column
+				// Adding a constraint on rows here to prevent cells being orphaned. The relevant scenario is:
+				// Client A removes columns
+				// Client B (either concurrently or not, so long as B's edit is sequenced after A's edit) removes a row,
+				// Client A reverts the removal of the columns
+				// TODO: Replace with "no detach on revert" constraint on the row array when available.
+				const rowConstraints: TransactionConstraintAlpha[] = this.table.rows.map((row) => ({
+					type: "nodeInDocument",
+					node: row as RowValueType,
+				}));
+
 				if (typeof indexOrColumns === "number" || indexOrColumns === undefined) {
 					let removedColumns: ColumnValueType[] | undefined;
 					const startIndex = indexOrColumns ?? 0;
@@ -814,6 +825,7 @@ export namespace System_TableSchema {
 							removedColumns = columnsToRemove;
 						},
 						preconditions,
+						preconditionsOnRevert: rowConstraints.length > 0 ? rowConstraints : undefined,
 					});
 					return removedColumns ?? fail(0xc1f /* Transaction did not complete. */);
 				} else {
@@ -848,6 +860,7 @@ export namespace System_TableSchema {
 							}
 						},
 						preconditions,
+						preconditionsOnRevert: rowConstraints.length > 0 ? rowConstraints : undefined,
 					});
 					return columnsToRemove;
 				}
