@@ -25,32 +25,6 @@ function getBundleNameFromPath(relativePath: string): string {
 	return pathParts.join("/");
 }
 
-export function getBundleFilePathsFromFolder(
-	relativePathsInFolder: string[],
-): BundleFileData[] {
-	const statsFilePaths: Omit<BundleFileData, "relativePathToConfigFile">[] = [];
-
-	// A map from bundle name to a bundle buddy config
-	const configFilePathMap = new Map<string, string>();
-
-	relativePathsInFolder.forEach((relativePath) => {
-		if (relativePath.endsWith(".msp.gz")) {
-			statsFilePaths.push({
-				bundleName: getBundleNameFromPath(relativePath),
-				relativePathToStatsFile: relativePath,
-			});
-		} else if (relativePath.endsWith("bundleBuddyConfig.json")) {
-			configFilePathMap.set(getBundleNameFromPath(relativePath), relativePath);
-		}
-	});
-
-	return statsFilePaths.map(({ bundleName, relativePathToStatsFile }) => ({
-		bundleName,
-		relativePathToStatsFile,
-		relativePathToConfigFile: configFilePathMap.get(bundleName),
-	}));
-}
-
 /**
  * Filters the given paths down to `analyzer.json` files (one per source package),
  * pairing each with its derived bundle name.

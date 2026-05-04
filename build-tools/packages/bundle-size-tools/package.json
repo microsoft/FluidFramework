@@ -41,9 +41,7 @@
 	},
 	"dependencies": {
 		"azure-devops-node-api": "^11.2.0",
-		"fflate": "^0.8.2",
 		"jszip": "^3.10.1",
-		"msgpack-lite": "^0.1.26",
 		"typescript": "~5.4.5",
 		"webpack": "^5.103.0"
 	},
@@ -52,7 +50,6 @@
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools-bin": "npm:@fluidframework/build-tools@~0.63.0",
 		"@microsoft/api-extractor": "^7.58.1",
-		"@types/msgpack-lite": "^0.1.12",
 		"@types/node": "~22.19.17",
 		"@types/webpack-bundle-analyzer": "^4.7.0",
 		"copyfiles": "^2.4.1",

@@ -4,28 +4,13 @@
  */
 
 import { promises as fsPromises } from "fs";
-import type { StatsCompilation } from "webpack";
 import type { BundleAnalyzerPlugin } from "webpack-bundle-analyzer";
 
-import type { BundleBuddyConfig } from "../BundleBuddyTypes";
-import { decompressStatsFile, getAllFilesInDirectory } from "../utilities";
+import { getAllFilesInDirectory } from "../utilities";
 import {
 	type BundleFileData,
 	getAnalyzerFilePathsFromFolder,
-	getBundleFilePathsFromFolder,
 } from "./getBundleFilePathsFromFolder";
-
-/**
- * Returns a list of all the files relevant to bundle buddy from the given folder
- * @param bundleReportPath - The path to the folder containing the bundle report
- */
-export async function getBundlePathsFromFileSystem(
-	bundleReportPath: string,
-): Promise<BundleFileData[]> {
-	const filePaths = await getAllFilesInDirectory(bundleReportPath);
-
-	return getBundleFilePathsFromFolder(filePaths);
-}
 
 /**
  * Returns a list of `analyzer.json` paths from the given folder (one per source package).
@@ -37,28 +22,6 @@ export async function getAnalyzerPathsFromFileSystem(
 	const filePaths = await getAllFilesInDirectory(bundleReportPath);
 
 	return getAnalyzerFilePathsFromFolder(filePaths);
-}
-
-/**
- * Gets and parses a BundleBuddyConfig  file from the filesystem
- * @param path - the full path to the file in the filesystem
- */
-export async function getBundleBuddyConfigFromFileSystem(
-	path: string,
-): Promise<BundleBuddyConfig> {
-	const file = await fsPromises.readFile(path);
-
-	return JSON.parse(file.toString());
-}
-
-/**
- * Gets a decompressed webpack stats file from the filesystem
- * @param path - the full path to the file in the filesystem
- */
-export async function getStatsFileFromFileSystem(path: string): Promise<StatsCompilation> {
-	const file = await fsPromises.readFile(path);
-
-	return decompressStatsFile(file);
 }
 
 /**

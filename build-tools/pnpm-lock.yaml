@@ -661,15 +661,9 @@ importers:
       azure-devops-node-api:
         specifier: ^11.2.0
         version: 11.2.0
-      fflate:
-        specifier: ^0.8.2
-        version: 0.8.2
       jszip:
         specifier: ^3.10.1
         version: 3.10.1
-      msgpack-lite:
-        specifier: ^0.1.26
-        version: 0.1.26
       typescript:
         specifier: ~5.4.5
         version: 5.4.5
@@ -689,9 +683,6 @@ importers:
       '@microsoft/api-extractor':
         specifier: ^7.58.1
         version: 7.58.2(@types/node@22.19.17)
-      '@types/msgpack-lite':
-        specifier: ^0.1.12
-        version: 0.1.12
       '@types/node':
         specifier: ~22.19.17
         version: 22.19.17
@@ -2074,9 +2065,6 @@ packages:
 
   '@types/ms@0.7.34':
     resolution: {integrity: sha512-nG96G3Wp6acyAgJqGasjODb+acrI7KltPiRxzHPXnP3NgI28bpQDRv53olbqGXbfcgF5aiiHmO3xpwEpS5Ld9g==}
-
-  '@types/msgpack-lite@0.1.12':
-    resolution: {integrity: sha512-DzYHfFOxK1UCm3pErFyGCQzsNYjcy1chCtO5bLdvL0IbD6L0l0IZzYMHvFAmEDLJ+k6XJosY0WKKmjkOBu9gKQ==}
 
   '@types/mute-stream@0.0.4':
     resolution: {integrity: sha512-CPM9nzrCPPJHQNA9keH9CVkVI+WR5kMa+7XEs5jcGQ0VoAGnLv242w8lIVgwAEfmE4oufJRaTc9PNLQl0ioAow==}
@@ -7672,10 +7660,6 @@ snapshots:
   '@types/mocha@10.0.10': {}
 
   '@types/ms@0.7.34': {}
-
-  '@types/msgpack-lite@0.1.12':
-    dependencies:
-      '@types/node': 22.19.17
 
   '@types/mute-stream@0.0.4':
     dependencies:
