@@ -344,7 +344,7 @@ class UndoRedoManager implements UndoRedo {
  * Creates a {@link UndoRedo} manager that tracks commits on the given tree branch.
  *
  * @remarks
- * A single instance must be created per tree branch. Passing a branch that already has an
+ * At most, a single instance may be created per tree branch. Passing a branch that already has an
  * attached manager throws immediately.
  *
  * @param branch - The tree branch whose commits this manager will track.
