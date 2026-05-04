@@ -63,18 +63,18 @@ describe("createUndoRedo", () => {
 			const view = createTree();
 			const manager = createUndoRedo(view);
 
-			assert.equal(manager.canUndo(), false);
-			assert.equal(manager.canRedo(), false);
+			assert(!manager.canUndo());
+			assert(!manager.canRedo());
 
 			view.runTransaction(() => {
 				view.root.value = 1;
 			});
-			assert.equal(manager.canUndo(), true);
-			assert.equal(manager.canRedo(), false);
+			assert(manager.canUndo());
+			assert(!manager.canRedo());
 
 			manager.undo();
-			assert.equal(manager.canUndo(), false);
-			assert.equal(manager.canRedo(), true);
+			assert(!manager.canUndo());
+			assert(manager.canRedo());
 			manager.dispose();
 		});
 
@@ -86,12 +86,12 @@ describe("createUndoRedo", () => {
 				view.root.value = 1;
 			});
 			manager.undo();
-			assert.equal(manager.canRedo(), true);
+			assert(manager.canRedo());
 
 			view.runTransaction(() => {
 				view.root.value = 2;
 			});
-			assert.equal(manager.canRedo(), false);
+			assert(!manager.canRedo());
 			manager.dispose();
 		});
 
@@ -145,8 +145,8 @@ describe("createUndoRedo", () => {
 				{ label: labelB },
 			);
 
-			assert.equal(manager.canUndo(labelA), false);
-			assert.equal(manager.canUndo(labelB), true);
+			assert(!manager.canUndo(labelA));
+			assert(manager.canUndo(labelB));
 			manager.dispose();
 		});
 
@@ -171,11 +171,11 @@ describe("createUndoRedo", () => {
 			manager.undo(labelA);
 
 			// labelB was skipped — it remains undoable
-			assert.equal(manager.canUndo(labelB), true);
+			assert(manager.canUndo(labelB));
 			// labelA moved to redo stack
-			assert.equal(manager.canRedo(labelA), true);
+			assert(manager.canRedo(labelA));
 			// labelB has nothing to redo
-			assert.equal(manager.canRedo(labelB), false);
+			assert(!manager.canRedo(labelB));
 
 			manager.dispose();
 		});
@@ -216,8 +216,8 @@ describe("createUndoRedo", () => {
 
 			manager.undo(labelA);
 			manager.undo(labelB);
-			assert.equal(manager.canRedo(labelA), true);
-			assert.equal(manager.canRedo(labelB), true);
+			assert(manager.canRedo(labelA));
+			assert(manager.canRedo(labelB));
 
 			// New labelA commit should clear only labelA redo entries
 			view.runTransaction(
@@ -226,8 +226,8 @@ describe("createUndoRedo", () => {
 				},
 				{ label: labelA },
 			);
-			assert.equal(manager.canRedo(labelA), false);
-			assert.equal(manager.canRedo(labelB), true);
+			assert(!manager.canRedo(labelA));
+			assert(manager.canRedo(labelB));
 			manager.dispose();
 		});
 
@@ -247,21 +247,21 @@ describe("createUndoRedo", () => {
 
 			manager.undo(); // Global undo: pops anonymous commit → redo stack has {anonymous}
 			manager.undo(labelA); // Labeled undo: pops labelA commit → redo stack has {anonymous, labelA}
-			assert.equal(manager.canRedo(), true);
-			assert.equal(manager.canRedo(labelA), true);
+			assert(manager.canRedo());
+			assert(manager.canRedo(labelA));
 
 			// New anonymous commit — should clear only the anonymous redo entry
 			view.runTransaction(() => {
 				view.root.value = 3;
 			});
 			// labelA redo is preserved; global canRedo() is still true because labelA is there
-			assert.equal(manager.canRedo(labelA), true);
-			assert.equal(manager.canRedo(), true);
+			assert(manager.canRedo(labelA));
+			assert(manager.canRedo());
 
 			// Consuming the labelA redo entry leaves nothing
 			manager.redo(labelA);
-			assert.equal(manager.canRedo(labelA), false);
-			assert.equal(manager.canRedo(), false); // anonymous redo was already cleared
+			assert(!manager.canRedo(labelA));
+			assert(!manager.canRedo()); // anonymous redo was already cleared
 
 			manager.dispose();
 		});
@@ -283,12 +283,12 @@ describe("createUndoRedo", () => {
 				{ label: labelB },
 			);
 
-			assert.equal(manager.canUndo(labelA), true);
-			assert.equal(manager.canUndo(labelB), true);
+			assert(manager.canUndo(labelA));
+			assert(manager.canUndo(labelB));
 
 			manager.undo(labelA);
-			assert.equal(manager.canRedo(labelA), true);
-			assert.equal(manager.canRedo(labelB), false);
+			assert(manager.canRedo(labelA));
+			assert(!manager.canRedo(labelB));
 			manager.dispose();
 		});
 	});
@@ -337,10 +337,10 @@ describe("createUndoRedo", () => {
 				},
 				dispose() {},
 			}));
-			assert.equal(manager.canUndo(), true);
+			assert(manager.canUndo());
 
 			assert.throws(() => manager.undo());
-			assert.equal(manager.canUndo(), false, "entry is discarded after failed revert");
+			assert(!manager.canUndo(), "entry is discarded after failed revert");
 			manager.dispose();
 		});
 
@@ -365,10 +365,10 @@ describe("createUndoRedo", () => {
 			}));
 
 			manager.undo();
-			assert.equal(manager.canRedo(), true);
+			assert(manager.canRedo());
 
 			assert.throws(() => manager.redo());
-			assert.equal(manager.canRedo(), false, "entry is discarded after failed revert");
+			assert(!manager.canRedo(), "entry is discarded after failed revert");
 			manager.dispose();
 		});
 
@@ -387,12 +387,8 @@ describe("createUndoRedo", () => {
 			// A new user commit arriving after the failed undo must go to the undo stack,
 			// not the redo stack (which is what happens when #pendingOperation is stuck).
 			fireChanged(true, () => ({ revert() {}, dispose() {} }));
-			assert.equal(
-				manager.canRedo(),
-				false,
-				"redo stack should be empty — pendingOperation was cleared",
-			);
-			assert.equal(manager.canUndo(), true, "new commit should be on the undo stack");
+			assert(!manager.canRedo(), "redo stack should be empty — pendingOperation was cleared");
+			assert(manager.canUndo(), "new commit should be on the undo stack");
 			manager.dispose();
 		});
 
@@ -418,18 +414,14 @@ describe("createUndoRedo", () => {
 			}));
 
 			manager.undo();
-			assert.equal(manager.canRedo(), true);
+			assert(manager.canRedo());
 
 			shouldThrow = true;
 			assert.throws(() => manager.redo());
 
 			// New user commit must land on the undo stack, not the redo stack.
 			fireChanged(true, () => ({ revert() {}, dispose() {} }));
-			assert.equal(
-				manager.canRedo(),
-				false,
-				"pendingOperation was cleared after redo failure",
-			);
+			assert(!manager.canRedo(), "pendingOperation was cleared after redo failure");
 			manager.dispose();
 		});
 	});
@@ -473,17 +465,16 @@ describe("createUndoRedo", () => {
 			view.runTransaction(() => {
 				view.root.value = 1;
 			});
-			assert.equal(manager.canUndo(), true);
+			assert(manager.canUndo());
 
 			manager.dispose();
-			assert.equal(manager.canUndo(), false);
-			assert.equal(manager.canRedo(), false);
+			assert(!manager.canRedo());
 
 			// New commits after dispose should not be tracked
 			view.runTransaction(() => {
 				view.root.value = 2;
 			});
-			assert.equal(manager.canUndo(), false);
+			assert(!manager.canUndo());
 		});
 
 		it("successive calls to dispose do not throw", () => {
