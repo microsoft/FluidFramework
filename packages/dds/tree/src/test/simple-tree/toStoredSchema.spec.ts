@@ -7,7 +7,12 @@ import { strict as assert } from "node:assert";
 
 import { validateUsageError } from "@fluidframework/test-runtime-utils/internal";
 
-import { EmptyKey } from "../../core/index.js";
+import {
+	EmptyKey,
+	ObjectNodeStoredSchema,
+	type TreeNodeSchemaIdentifier,
+	type TreeStoredSchema,
+} from "../../core/index.js";
 import {
 	cursorForJsonableTreeField,
 	defaultSchemaPolicy,
@@ -46,6 +51,23 @@ import {
 	HasStagedOptionalFieldAfterUpdate,
 	testDocuments,
 } from "../testTrees.js";
+
+function getTestDocumentSchemaData(name: string): TreeStoredSchema {
+	return testDocuments.find((test) => test.name === name)?.schemaData ?? assert.fail();
+}
+
+function getObjectNodeSchema(
+	schema: TreeStoredSchema,
+	identifier: string,
+): ObjectNodeStoredSchema {
+	const node = schema.nodeSchema.get(brand(identifier)) ?? assert.fail();
+	assert(node instanceof ObjectNodeStoredSchema);
+	return node;
+}
+
+function typeSet(...identifiers: string[]): Set<TreeNodeSchemaIdentifier> {
+	return new Set(identifiers.map((identifier) => brand<TreeNodeSchemaIdentifier>(identifier)));
+}
 
 describe("toStoredSchema", () => {
 	describe("toStoredSchema", () => {
@@ -204,6 +226,43 @@ describe("toStoredSchema", () => {
 					});
 				});
 			}
+
+			it("partially includes staged allowed types by upgrade identity", () => {
+				const node = getObjectNodeSchema(
+					getTestDocumentSchemaData("NestedMultiStage with one upgrade"),
+					"test.NestedMultiStage",
+				);
+
+				const fieldA = node.getFieldSchema(brand("a"));
+				assert.equal(fieldA.kind, FieldKinds.optional.identifier);
+				assert.deepEqual(fieldA.types, typeSet());
+
+				const fieldB = node.getFieldSchema(brand("b"));
+				assert.equal(fieldB.kind, FieldKinds.required.identifier);
+				assert.deepEqual(fieldB.types, typeSet("com.fluidframework.leaf.null"));
+
+				const fieldC = node.getFieldSchema(brand("c"));
+				assert.equal(fieldC.kind, FieldKinds.required.identifier);
+				assert.deepEqual(
+					fieldC.types,
+					typeSet("com.fluidframework.leaf.null", "test.ArrayWithStaged"),
+				);
+			});
+
+			it("partially includes staged optional fields by upgrade identity", () => {
+				const node = getObjectNodeSchema(
+					getTestDocumentSchemaData("NestedStagedOptional with one upgrade"),
+					"test.NestedStagedOptional",
+				);
+
+				const fieldA = node.getFieldSchema(brand("a"));
+				assert.equal(fieldA.kind, FieldKinds.optional.identifier);
+				assert.deepEqual(fieldA.types, typeSet("com.fluidframework.leaf.number"));
+
+				const fieldB = node.getFieldSchema(brand("b"));
+				assert.equal(fieldB.kind, FieldKinds.required.identifier);
+				assert.deepEqual(fieldB.types, typeSet("com.fluidframework.leaf.string"));
+			});
 		});
 	});
 
