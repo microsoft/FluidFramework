@@ -6,11 +6,16 @@
 import type { IAudience } from "@fluidframework/container-definitions";
 import { AttachState, type IContainer } from "@fluidframework/container-definitions/internal";
 import type { IRequest } from "@fluidframework/core-interfaces";
-import {
-	type ErasedBaseType,
-	ErasedTypeImplementation,
-} from "@fluidframework/core-interfaces/internal";
+import { ErasedTypeImplementation } from "@fluidframework/core-interfaces/internal";
 import { assert } from "@fluidframework/core-utils/internal";
+import {
+	type DataStoreKey,
+	type DataStoreKind,
+	type FluidContainerAttached,
+	type FluidContainerWithService,
+	type Registry,
+	registryLookup,
+} from "@fluidframework/driver-definitions/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import type { MinimumVersionForCollab } from "./compatibilityDefinitions.js";
@@ -20,7 +25,21 @@ import type {
 	IFluidDataStoreChannel,
 } from "./dataStoreContext.js";
 import type { IFluidDataStoreFactory } from "./dataStoreFactory.js";
-import { registryLookup, type Registry, type RegistryKey } from "./registry.js";
+
+// TODO: maybe don't reexport these.
+export type {
+	DataStoreCreator,
+	DataStoreKey,
+	DataStoreKind,
+	DataStoreRegistry,
+	FluidContainer,
+	FluidContainerAttached,
+	FluidContainerWithService,
+	Registry,
+	RegistryKey,
+	ServiceClient,
+} from "@fluidframework/driver-definitions/internal";
+export { basicKey, registryLookup } from "@fluidframework/driver-definitions/internal";
 
 /*
  * This file defines the public API for the ServiceClient and related types.
@@ -40,7 +59,7 @@ import { registryLookup, type Registry, type RegistryKey } from "./registry.js";
  */
 
 /**
- * Options for configuring a {@link ServiceClient}.
+ * Options for configuring a `ServiceClient`.
  * @remarks
  * These are the options which apply to all services.
  *
@@ -54,135 +73,7 @@ export interface ServiceOptions {
 }
 
 /**
- * A {@link RegistryKey} for a {@link DataStoreKind}.
- * @remarks
- * This is implemented by {@link DataStoreKind}, but alternative implementations can be used if needed.
- *
- * If you want lazy loading and need a key that does not eagerly load the {@link DataStoreKind}, an alternative {@link DataStoreKey} can be implemented.
- * @privateRemarks
- * TODO: A built in common pattern for the lazy key case should be provided.
- * TODO: this same key pattern should be applied to SharedObjectKind.
- * TODO: things probably break if "adapt" does anything except throw or return the result from the input promise.
- * @input
- * @alpha
- */
-export type DataStoreKey<T, TAll = unknown> = RegistryKey<
-	Promise<DataStoreKind<T>>,
-	Promise<DataStoreKind<TAll>>
->;
-
-/**
- * A Fluid container.
- * @remarks
- * A document which can be stored to or loaded from a Fluid service using a {@link ServiceClient}.
- *
- * @privateRemarks
- * This will likely end up needing many of IFluidContainer's APIs, like disconnect, connectionState, events etc.
- * Before adding them though, care should be taken to consider if they can be improved or simplified.
- * For example maybe a single status enum for `detached -> attaching -> dirty -> saved -> closed` would be good.
- * Or maybe `detached -> attaching -> attached -> closed` and a timer for how long since the last unsaved change was created.
- *
- * The underlying IContainer has a lifecycle which includes both a closed and disposed state.
- * This should be avoidable: the closed but not disposed state exists so its possible to read out some state at that time.
- * We have made the close remove all the timers, so the the dispose step is be unnecessary and we can just have a single closed state.
- *
- * @sealed
- * @alpha
- */
-export interface FluidContainer<TData = unknown>
-	extends DataStoreCreator,
-		ErasedBaseType<readonly ["FluidContainer", TData]> {
-	/**
-	 * The unique identifier for this container, if it has been attached to a service.
-	 */
-	readonly id?: string | undefined;
-
-	/**
-	 * The root data store of the container.
-	 * @remarks
-	 * The type of the root data store is defined by the {@link DataStoreKind} used to create the container.
-	 */
-	readonly data: TData;
-
-	/**
-	 * Close the container, stopping all networking and cancelling runtime timers.
-	 *
-	 * @remarks
-	 * After calling `close()`, the container's data can still be read but no further operations can be sent.
-	 * @privateRemarks
-	 * TODO: we should document the what the expected behavior is if one tries to modify the data after close, or tries to call close multiple times.
-	 * TODO: we also likely want to have a way to detect if closed and events for on close.
-	 */
-	close(): void;
-}
-
-/**
- * A context which has a registry and can create data stores using it.
- * @sealed
- * @alpha
- */
-export interface DataStoreCreator {
-	/**
-	 * Create a new detached datastore `T` which can be attached to the {@link FluidContainer}.
-	 * by adding a handle to it to a DataStore or SharedObject which is already attached to the {@link FluidContainer}.
-	 * @remarks
-	 * `kind` must be included in the registry used to create or load this {@link DataStoreCreator}.
-	 */
-	createDataStore<T>(kind: DataStoreKey<T>): Promise<T>;
-}
-
-/**
- * A Fluid container with an associated {@link ServiceClient} it can attach to.
- * @sealed
- * @alpha
- */
-export interface FluidContainerWithService<T = unknown> extends FluidContainer<T> {
-	/**
-	 * Attaches this container to the associated service client.
-	 *
-	 * The returned promise resolves once the container is attached: the container from the promise is the same one passed in as the argument.
-	 */
-	attach(): Promise<FluidContainerAttached<T>>;
-
-	// This could expose access to the ServiceClient if needed.
-}
-
-/**
- * A Fluid container that has been attached to a service.
- * @sealed
- * @alpha
- */
-export interface FluidContainerAttached<T = unknown> extends FluidContainer<T> {
-	/**
-	 * {@inheritdoc FluidContainer.id}
-	 */
-	readonly id: string;
-}
-
-/**
- * TODO:
- * SharedObjects should be usable as these (putting shared objects directly in the container might need special logic).
- * @privateRemarks
- * Type erased {@link IFluidDataStoreFactory}.
- * @sealed
- * @alpha
- */
-export interface DataStoreKind<out T = unknown>
-	extends DataStoreKey<T>,
-		ErasedBaseType<readonly ["DataStoreKind", T]> {}
-
-/**
- * A registry of {@link DataStoreKind}s.
- * @remarks
- * TODO: unify this with SharedObjectRegistry.
- *
- * @input
- * @alpha
- */
-export type DataStoreRegistry<out T = unknown> = Registry<Promise<DataStoreKind<T>>>;
-
-/**
- * Implementation of {@link DataStoreKind}.
+ * Implementation of `DataStoreKind`.
  * @internal
  */
 export class DataStoreKindImplementation<T>
@@ -256,62 +147,16 @@ export class DataStoreKindImplementation<T>
 }
 
 /**
- * A connection to a Fluid storage service.
- * @sealed
- * @alpha
- */
-export interface ServiceClient {
-	/**
-	 * Attaches a detached container.
-	 *
-	 * The returned promise resolves once the container is attached: the container from the promise is the same one passed in as the argument.
-	 */
-	// TODO: supporting this and a service independent createContainer would be nice, but is current impractical. Can be added later.
-	// attachContainer<T>(detached: FluidContainer<T>): Promise<FluidContainerAttached<T>>;
-	/**
-	 * Creates a detached container associated with this service client.
-	 * @privateRemarks
-	 * TODO:As this is a detached container, it should be able to be created synchronously.
-	 */
-	createContainer<T>(root: DataStoreKind<T>): Promise<FluidContainerWithService<T>>;
-
-	createContainer<T>(
-		root: DataStoreKey<T>,
-		registry: DataStoreRegistry,
-	): Promise<FluidContainerWithService<T>>;
-
-	/**
-	 * Loads an existing container from the service.
-	 * @param id - The unique identifier of the container to load.
-	 * @param root - The {@link DataStoreKind} for the root, or a registry which will be used to look up the root based on its type.
-	 *
-	 * @throws a UsageError if the DataStoreKind's type (either the root directly or looked up from the registry) does not match the type of the root data store in the container.
-	 *
-	 * @privateRemarks
-	 * The ability to provide a registry here means that it's possible to:
-	 * 1. Load a container which might have a few different possible roots, for example because of versioning.
-	 * 2. Generate the DataStoreKind on demand based on the type: this approach could be used for things like debug tools which can load any possible container.
-	 * 3. Generating the DataStoreKind if the type is unrecognized, for example to provide a placeholder which might support some minimal functionality (like debug inspection, and summary).
-	 *
-	 * The ability to provide just a single DataStoreKind<T> is purely a convenience to make it cleaner to use this in simple cases.
-	 */
-	loadContainer<T>(
-		id: string,
-		root: DataStoreKind<T> | DataStoreRegistry<T>,
-	): Promise<FluidContainerAttached<T>>;
-}
-
-/**
- * Shared base class for all {@link ServiceClient} container implementations.
+ * Shared base class for all `ServiceClient` container implementations.
  *
  * @remarks
- * Extends {@link @fluidframework/core-interfaces#ErasedTypeImplementation} so that
+ * Extends `ErasedTypeImplementation` so that
  * {@link getContainerAudience} can narrow via `ServiceContainerBase.narrow()`.
  *
  * @internal
  */
 export abstract class ServiceContainerBase<TData, TOptions = unknown>
-	extends ErasedTypeImplementation<FluidContainer<TData>>
+	extends ErasedTypeImplementation<FluidContainerWithService<TData>>
 	implements FluidContainerWithService<TData>
 {
 	/**
@@ -419,7 +264,7 @@ export type Audience = IAudience;
 
 /**
  * Gets the {@link Audience} from a Fluid container
- * created by any {@link ServiceClient}.
+ * created by any `ServiceClient`.
  * @privateRemarks
  * This is exposed via a free function rather than as a property of FluidContainerAttached
  * for a few minor reasons:

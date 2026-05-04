@@ -47,13 +47,7 @@
 			},
 			"Driver-Utils": {
 				"packages": ["@fluidframework/driver-utils"],
-				"deps": [
-					"Protocol-Utils",
-					"Driver-Definitions",
-					"Telemetry-Utils",
-					"Core-Utils",
-					"Runtime-Definitions"
-				]
+				"deps": ["Protocol-Utils", "Driver-Definitions", "Telemetry-Utils", "Core-Utils"]
 			},
 			"Other-Utils": {
 				"dot": false,
@@ -74,22 +68,6 @@
 					"Client-Utils",
 					"Driver-Definitions"
 				]
-			},
-			"Runtime-Definitions": {
-				"packages": [
-					"@fluidframework/id-compressor",
-					"@fluidframework/runtime-definitions",
-					"@fluidframework/container-runtime-definitions",
-					"@fluidframework/datastore-definitions"
-				],
-				"deps": [
-					"Client-Utils",
-					"Container-Definitions",
-					"Core-Interfaces",
-					"Core-Utils",
-					"Driver-Definitions",
-					"Telemetry-Utils"
-				]
 			}
 		}
 	},
@@ -107,13 +85,7 @@
 			"Runtime": {
 				"packages": ["@fluidframework/type-factory"],
 				"dirs": ["experimental/dds/", "packages/dds/", "packages/runtime/"],
-				"deps": [
-					"Container-Definitions",
-					"Core-Utils",
-					"Client-Utils",
-					"Driver-Utils",
-					"Runtime-Definitions"
-				]
+				"deps": ["Container-Definitions", "Core-Utils", "Client-Utils", "Driver-Utils"]
 			},
 			"Framework": {
 				"packages": ["@fluid-experimental/data-objects"],

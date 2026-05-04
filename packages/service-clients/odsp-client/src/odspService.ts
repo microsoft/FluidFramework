@@ -16,29 +16,27 @@ import type {
 } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import {
-	type ContainerRuntimeLoader,
-	type ContainerRuntimeLoaderParams,
-	makeCodeLoader,
-	makeServiceClientImpl,
-	rootDataStoreId,
-} from "@fluidframework/driver-utils/internal";
-import {
 	OdspDocumentServiceFactory,
 	OdspDriverUrlResolver,
 	createOdspCreateContainerRequest,
 	createOdspUrl,
 } from "@fluidframework/odsp-driver/internal";
 import type { OdspResourceTokenFetchOptions } from "@fluidframework/odsp-driver-definitions/internal";
-import type {
-	DataStoreKind,
-	DataStoreRegistry,
-	FluidContainerAttached,
-	FluidContainerWithService,
-	MinimumVersionForCollab,
-	Registry,
-	ServiceClient,
+import {
+	type ContainerRuntimeLoader,
+	type ContainerRuntimeLoaderParams,
+	type DataStoreKind,
+	type DataStoreRegistry,
+	type FluidContainerAttached,
+	type FluidContainerWithService,
+	type MinimumVersionForCollab,
+	type Registry,
+	type ServiceClient,
+	makeCodeLoader,
+	makeServiceClientImpl,
+	rootDataStoreId,
+	ServiceContainerBase,
 } from "@fluidframework/runtime-definitions/internal";
-import { ServiceContainerBase } from "@fluidframework/runtime-definitions/internal";
 import { wrapConfigProviderWithDefaults } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 

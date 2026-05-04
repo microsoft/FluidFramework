@@ -12,7 +12,6 @@ import type {
 	IRuntime,
 	IRuntimeFactory,
 } from "@fluidframework/container-definitions/internal";
-import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import type { FluidObject } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import type {
@@ -21,17 +20,17 @@ import type {
 	DataStoreRegistry,
 	FluidContainerAttached,
 	FluidContainerWithService,
-	FluidDataStoreRegistryEntry,
-	IFluidDataStoreRegistry,
-	MinimumVersionForCollab,
 	Registry,
 	ServiceClient,
-} from "@fluidframework/runtime-definitions/internal";
-import {
-	basicKey,
-	DataStoreKindImplementation,
-	registryLookup,
-} from "@fluidframework/runtime-definitions/internal";
+} from "@fluidframework/driver-definitions/internal";
+
+import type { MinimumVersionForCollab } from "./compatibilityDefinitions.js";
+import type { IContainerRuntimeBase } from "./dataStoreContext.js";
+import type {
+	FluidDataStoreRegistryEntry,
+	IFluidDataStoreRegistry,
+} from "./dataStoreRegistry.js";
+import { basicKey, DataStoreKindImplementation, registryLookup } from "./serviceClient.js";
 
 /**
  * The constant ID used for the root data store alias in service containers.
@@ -83,7 +82,7 @@ export function normalizeRegistry<T>(
 export interface ContainerRuntimeLoaderParams {
 	context: IContainerContext;
 	registry: IFluidDataStoreRegistry;
-	provideEntryPoint: (runtime: IContainerRuntime) => Promise<FluidObject>;
+	provideEntryPoint: (runtime: IContainerRuntimeBase) => Promise<FluidObject>;
 	existing: boolean;
 	minVersionForCollab: MinimumVersionForCollab;
 	/**
@@ -129,7 +128,7 @@ export function makeCodeLoader<T>(
 			existing: boolean,
 		): Promise<IRuntime> {
 			const provideEntryPoint = async (
-				entryPointRuntime: IContainerRuntime,
+				entryPointRuntime: IContainerRuntimeBase,
 			): Promise<T & FluidObject> => {
 				const data = await entryPointRuntime.getAliasedDataStoreEntryPoint(rootDataStoreId);
 				if (data === undefined) {
@@ -229,7 +228,7 @@ class ServiceClientImpl<TOptions> implements ServiceClient {
 }
 
 /**
- * Creates a {@link @fluidframework/runtime-definitions#ServiceClient} that delegates container
+ * Creates a {@link @fluidframework/driver-definitions#ServiceClient} that delegates container
  * creation and loading to the supplied container class statics.
  * @internal
  */

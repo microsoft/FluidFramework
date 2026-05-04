@@ -12,24 +12,22 @@ import { ContainerRuntime } from "@fluidframework/container-runtime/internal";
 import type { IRequest } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import type { IUrlResolver } from "@fluidframework/driver-definitions/internal";
+import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver/internal";
 import {
 	type ContainerRuntimeLoader,
 	type ContainerRuntimeLoaderParams,
+	type DataStoreKind,
+	type DataStoreRegistry,
+	type FluidContainerAttached,
+	type FluidContainerWithService,
+	type Registry,
+	type ServiceClient,
+	type ServiceOptions,
 	makeCodeLoader,
 	makeServiceClientImpl,
 	rootDataStoreId,
-} from "@fluidframework/driver-utils/internal";
-import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver/internal";
-import type {
-	DataStoreKind,
-	DataStoreRegistry,
-	FluidContainerAttached,
-	FluidContainerWithService,
-	Registry,
-	ServiceClient,
-	ServiceOptions,
+	ServiceContainerBase,
 } from "@fluidframework/runtime-definitions/internal";
-import { ServiceContainerBase } from "@fluidframework/runtime-definitions/internal";
 import { wrapConfigProviderWithDefaults } from "@fluidframework/telemetry-utils/internal";
 
 import { InsecureTinyliciousTokenProvider } from "./insecureTinyliciousTokenProvider.js";

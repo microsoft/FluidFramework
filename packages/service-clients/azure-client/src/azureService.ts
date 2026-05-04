@@ -15,24 +15,22 @@ import type {
 	ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
+import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver/internal";
 import {
 	type ContainerRuntimeLoader,
 	type ContainerRuntimeLoaderParams,
+	type DataStoreKind,
+	type DataStoreRegistry,
+	type FluidContainerAttached,
+	type FluidContainerWithService,
+	type MinimumVersionForCollab,
+	type Registry,
+	type ServiceClient,
 	makeCodeLoader,
 	makeServiceClientImpl,
 	rootDataStoreId,
-} from "@fluidframework/driver-utils/internal";
-import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver/internal";
-import type {
-	DataStoreKind,
-	DataStoreRegistry,
-	FluidContainerAttached,
-	FluidContainerWithService,
-	MinimumVersionForCollab,
-	Registry,
-	ServiceClient,
+	ServiceContainerBase,
 } from "@fluidframework/runtime-definitions/internal";
-import { ServiceContainerBase } from "@fluidframework/runtime-definitions/internal";
 import { wrapConfigProviderWithDefaults } from "@fluidframework/telemetry-utils/internal";
 
 import { AzureUrlResolver, createAzureCreateNewRequest } from "./AzureUrlResolver.js";
