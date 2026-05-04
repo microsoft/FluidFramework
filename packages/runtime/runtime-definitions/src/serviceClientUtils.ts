@@ -14,14 +14,16 @@ import type {
 } from "@fluidframework/container-definitions/internal";
 import type { FluidObject } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
-import type {
-	DataStoreKey,
-	DataStoreKind,
-	DataStoreRegistry,
-	FluidContainerAttached,
-	FluidContainerWithService,
-	Registry,
-	ServiceClient,
+import {
+	basicKey,
+	type DataStoreKey,
+	type DataStoreKind,
+	type DataStoreRegistry,
+	type FluidContainerAttached,
+	type FluidContainerWithService,
+	type Registry,
+	registryLookup,
+	type ServiceClient,
 } from "@fluidframework/driver-definitions/internal";
 
 import type { MinimumVersionForCollab } from "./compatibilityDefinitions.js";
@@ -30,19 +32,13 @@ import type {
 	FluidDataStoreRegistryEntry,
 	IFluidDataStoreRegistry,
 } from "./dataStoreRegistry.js";
-import { basicKey, DataStoreKindImplementation, registryLookup } from "./serviceClient.js";
+import { DataStoreKindImplementation } from "./serviceClientBase.js";
 
 /**
  * The constant ID used for the root data store alias in service containers.
  * @internal
  */
 export const rootDataStoreId = "root";
-
-/**
- * Default minimum version for collaboration when none is specified by service options.
- * @internal
- */
-export const defaultMinVersionForCollab: MinimumVersionForCollab = "2.0.0";
 
 /**
  * Converts a `DataStoreRegistry` to the `IFluidDataStoreRegistry` interface expected by the container runtime.

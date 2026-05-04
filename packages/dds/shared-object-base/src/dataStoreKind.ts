@@ -12,10 +12,12 @@ import type { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitio
 import {
 	type Registry,
 	type DataStoreKind,
+	registryLookup,
+} from "@fluidframework/driver-definitions/internal";
+import {
 	type IFluidDataStoreContext,
 	type IFluidDataStoreChannel,
 	DataStoreKindImplementation,
-	registryLookup,
 } from "@fluidframework/runtime-definitions/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 

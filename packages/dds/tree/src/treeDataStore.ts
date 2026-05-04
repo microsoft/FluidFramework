@@ -4,7 +4,7 @@
  */
 
 import type { IFluidLoadable } from "@fluidframework/core-interfaces";
-import type { DataStoreKind } from "@fluidframework/runtime-definitions/internal";
+import type { DataStoreKind } from "@fluidframework/driver-definitions/internal";
 import type {
 	SharedObjectCreator,
 	SharedObjectKey,

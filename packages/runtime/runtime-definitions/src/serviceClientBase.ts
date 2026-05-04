@@ -26,36 +26,9 @@ import type {
 } from "./dataStoreContext.js";
 import type { IFluidDataStoreFactory } from "./dataStoreFactory.js";
 
-// TODO: maybe don't reexport these.
-export type {
-	DataStoreCreator,
-	DataStoreKey,
-	DataStoreKind,
-	DataStoreRegistry,
-	FluidContainer,
-	FluidContainerAttached,
-	FluidContainerWithService,
-	Registry,
-	RegistryKey,
-	ServiceClient,
-} from "@fluidframework/driver-definitions/internal";
-export { basicKey, registryLookup } from "@fluidframework/driver-definitions/internal";
-
 /*
- * This file defines the public API for the ServiceClient and related types.
+ * This file provides common implementation logic for ServiceClient implementations.
  *
- * TODO:
- * Currently this API surface expect all code using it together to be using a singly copy of the Fluid Framework client packages.
- *
- * Before stabilizing any of this past beta, it should be evaluated if this requirement needs to be relaxed, and if so how to do that.
- * Regardless of if its relaxed or not, what ever rules are put in place should be runtime and compile time enforced as much as possible.
- *
- * TODO:
- * Fault isolation should be considered in this API design.
- * When are exceptions recoverable and how?
- * Likely we can fault isolate exceptions to containers in most cases,
- * and containers can indicate their status by being closed or disposed.
- * Non fatal errors should not be exceptions.
  */
 
 /**
@@ -277,29 +250,3 @@ export function getContainerAudience(container: FluidContainerAttached): Audienc
 	ServiceContainerBase.narrow(container);
 	return container.audience;
 }
-
-/**
- * Creates a detached container.
- *
- * @privateRemarks
- * When implemented, this function likely will need to move elsewhere for dependency reasons.
- *
- * # Implementation challenges
- * The current Fluid code (Mainly IContainer and Container.createDetached packages/loader/container-loader/src/container.ts)
- * seem to follow patterns that would make implementing this difficult.
- *
- * Container.createDetached is currently async, which seems unnecessary and undesirable as creation of detached content should be able to be done synchronously.
- *
- * Additionally it seems like the service must be provided at creation time since IContainer.attach exists and does not take the service client implementation.
- *
- * Therefore it is unclear if this proposed API is actually practical to implement.
- *
- * If it is impractical, a workaround could be provided for the shorter term as an alternative async method on the ServiceClient.
- *
- * @alpha
- */
-// // TODO: support this as an alternative to ServiceClient.createContainer.
-// // This would be nice to have even if there was no way to attach it for non collaborative non persisted use cases.
-// export function createContainer<T>(root: DataStoreKind<T>): FluidContainer<T> {
-// 	throw new Error("TODO: Not implemented: createContainer");
-// }

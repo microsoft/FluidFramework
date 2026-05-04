@@ -5,7 +5,7 @@
 
 import type { PresenceWithNotifications } from "@fluid-internal/presence-definitions";
 import type { ContainerExtensionStore } from "@fluidframework/container-runtime-definitions/internal";
-import type { FluidContainerAttached } from "@fluidframework/runtime-definitions/internal";
+import type { FluidContainerAttached } from "@fluidframework/driver-definitions/internal";
 import { ServiceContainerBase } from "@fluidframework/runtime-definitions/internal";
 
 import { ContainerPresenceFactory, extensionId } from "./containerPresence.js";

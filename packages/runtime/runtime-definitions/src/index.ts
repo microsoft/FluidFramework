@@ -104,30 +104,16 @@ export {
 	type StageControlsInternal,
 	asLegacyAlpha,
 } from "./stagingMode.js";
-export type {
-	DataStoreCreator,
-	DataStoreKey,
-	DataStoreKind,
-	DataStoreRegistry,
-	FluidContainer,
-	FluidContainerAttached,
-	FluidContainerWithService,
-	Registry,
-	RegistryKey,
-	ServiceClient,
-} from "@fluidframework/driver-definitions/internal";
-export { basicKey, registryLookup } from "@fluidframework/driver-definitions/internal";
 
-export type { ServiceOptions } from "./serviceClient.js";
-export type { Audience } from "./serviceClient.js";
+export type { ServiceOptions } from "./serviceClientBase.js";
+export type { Audience } from "./serviceClientBase.js";
 export {
 	DataStoreKindImplementation,
 	ServiceContainerBase,
 	getContainerAudience,
-} from "./serviceClient.js";
+} from "./serviceClientBase.js";
 export {
 	convertRegistry,
-	defaultMinVersionForCollab,
 	makeCodeLoader,
 	makeServiceClientImpl,
 	normalizeRegistry,

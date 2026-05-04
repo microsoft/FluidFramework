@@ -102,6 +102,10 @@ export type {
 	DataStoreContext,
 } from "@fluidframework/shared-object-base/internal";
 export type {
+	MinimumVersionForCollab,
+	ServiceOptions,
+} from "@fluidframework/runtime-definitions/internal";
+export type {
 	DataStoreCreator,
 	DataStoreKey,
 	DataStoreKind,
@@ -109,19 +113,17 @@ export type {
 	FluidContainer,
 	FluidContainerAttached,
 	FluidContainerWithService,
-	MinimumVersionForCollab,
 	Registry,
 	RegistryKey,
 	ServiceClient,
-	ServiceOptions,
-} from "@fluidframework/runtime-definitions/internal";
+} from "@fluidframework/driver-definitions/internal";
 export {
 	basicKey,
 	registryLookup,
 	// Due to this currently referencing several existing public types we do not want to stablish as reexports from here,
 	// do not reexport getContainerAudience for now.
 	// getContainerAudience,
-} from "@fluidframework/runtime-definitions/internal";
+} from "@fluidframework/driver-definitions/internal";
 
 import type { SharedObjectKind } from "@fluidframework/shared-object-base";
 import type { ITree } from "@fluidframework/tree";

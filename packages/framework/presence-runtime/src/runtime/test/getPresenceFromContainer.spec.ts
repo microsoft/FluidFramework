@@ -5,12 +5,12 @@
 
 import { strict as assert } from "node:assert";
 
+import type { FluidContainerAttached } from "@fluidframework/driver-definitions/internal";
 import {
 	closeEphemeralContainers,
 	createEphemeralServiceClient,
 	synchronizeLocalService,
 } from "@fluidframework/local-driver/internal";
-import type { FluidContainerAttached } from "@fluidframework/runtime-definitions/internal";
 import { makeStubDataStoreKind } from "@fluidframework/shared-object-base/internal";
 
 import { getPresenceFromContainer } from "@fluid-internal/presence-runtime/extension";

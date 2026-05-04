@@ -11,17 +11,19 @@ import {
 import { ContainerRuntime } from "@fluidframework/container-runtime/internal";
 import type { IRequest } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
-import type { IUrlResolver } from "@fluidframework/driver-definitions/internal";
+import type {
+	DataStoreKind,
+	DataStoreRegistry,
+	FluidContainerAttached,
+	FluidContainerWithService,
+	IUrlResolver,
+	Registry,
+	ServiceClient,
+} from "@fluidframework/driver-definitions/internal";
 import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver/internal";
 import {
 	type ContainerRuntimeLoader,
 	type ContainerRuntimeLoaderParams,
-	type DataStoreKind,
-	type DataStoreRegistry,
-	type FluidContainerAttached,
-	type FluidContainerWithService,
-	type Registry,
-	type ServiceClient,
 	type ServiceOptions,
 	makeCodeLoader,
 	makeServiceClientImpl,
