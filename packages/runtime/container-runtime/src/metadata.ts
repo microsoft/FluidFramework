@@ -50,6 +50,8 @@ export interface IBatchMetadata {
 	 * - `N` (N \> 0): grouped batch with N inner ops. For a chunked grouped batch this appears only on the last chunk's envelope (intermediate chunks carry no metadata).
 	 *
 	 * The field is intentionally advisory-only: the runtime does not validate that an inbound value matches the batch's actual inner op count. It is consumed exclusively by off-runtime telemetry.
+	 *
+	 * The field is always (re)stamped at outbound time from the current batch's actual size — `groupBatch` reads `batch.messages.length` directly, `createEmptyGroupedBatch` always writes `0`, and the chunking path only ever sees freshly-grouped envelopes from the same flush. It is never propagated from stashed pending state to the wire: on resubmit, ops re-enter grouping and the count is recomputed from the (possibly squashed, dropped, or added) outbound batch. This means the wire value always reflects the actual outbound size, even when the resubmitted batch differs from the original.
 	 */
 	groupedOpCount?: number;
 }
