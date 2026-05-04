@@ -15,7 +15,6 @@ export {
 	getAnalyzerPathsFromFileSystem,
 } from "./FileSystemBundleFileProvider";
 export { getAzureDevopsApi } from "./getAzureDevopsApi";
-export { getBuildTagForCommit } from "./getBuildTagForCommit";
 export {
 	BundleFileData,
 	getAnalyzerFilePathsFromFolder,

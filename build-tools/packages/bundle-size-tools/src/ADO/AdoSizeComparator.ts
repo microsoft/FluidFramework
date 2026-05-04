@@ -10,7 +10,7 @@ import { join } from "path";
 
 import type { BundleComparison } from "../BundleBuddyTypes";
 import { compareBundles } from "../compareBundles";
-import { getBaselineCommit, getBuilds, getPriorCommit } from "../utilities";
+import { getBaselineCommit, getBuilds } from "../utilities";
 import {
 	getAnalyzerJsonFromZip,
 	getAnalyzerPathsFromZipObject,
@@ -21,7 +21,6 @@ import {
 	getAnalyzerJsonFromFileSystem,
 	getAnalyzerPathsFromFileSystem,
 } from "./FileSystemBundleFileProvider";
-import { getBuildTagForCommit } from "./getBuildTagForCommit";
 import { getBundleSummariesFromAnalyzer } from "./getBundleSummaries";
 
 /**
@@ -39,10 +38,9 @@ export type SizeComparison =
 export class ADOSizeComparator {
 	/**
 	 * The default number of most recent builds on the ADO pipeline to search when
-	 * looking for a build matching a baseline commit, and the default number of
-	 * fallback commits returned by the provided default fallback generator.  The
-	 * most recent builds may not necessarily match the chain of commits, but
-	 * typically will when the pipeline only builds commits to main.
+	 * looking for a build matching a baseline commit.  The most recent builds may not
+	 * necessarily match the chain of commits, but typically will when the pipeline
+	 * only builds commits to main.
 	 */
 	private static readonly defaultBuildsToSearch = 20;
 
@@ -64,45 +62,17 @@ export class ADOSizeComparator {
 		 * the baseline commit (`git merge-base origin/<targetBranch> HEAD`).
 		 */
 		private readonly targetBranch: string,
-		/**
-		 * Optional current PR build id to use, such as to tag for
-		 * later update when the baseline build has not completed
-		 */
-		private readonly adoBuildId: number | undefined,
-		/**
-		 * Option to do fallback on commits when either there is no associated CI build or
-		 * it does not have the needed artifacts.  Fallback is not attempted for other
-		 * issues, such as for a failed (but still present) CI build.  This generator is
-		 * only used for fallback (it should not provide the first commit to check)
-		 */
-		private readonly getFallbackCommit:
-			| ((startingCommit: string) => Generator<string>)
-			| undefined = undefined,
 	) {}
-
-	/**
-	 * Naive fallback generator provided for convenience.  It yields the commit directly
-	 * prior to the previous commit.
-	 */
-	public static *naiveFallbackCommitGenerator(startingCommit: string): Generator<string> {
-		let currentCommit = startingCommit;
-		for (let i = 0; i < ADOSizeComparator.defaultBuildsToSearch; i++) {
-			currentCommit = getPriorCommit(currentCommit);
-			yield currentCommit;
-		}
-	}
 
 	/**
 	 * Run the bundle size comparison against the baseline build.
 	 *
-	 * @param tagWaiting - If the build should be tagged to be updated when the baseline
-	 * build completes (if it wasn't already complete when the comparison runs)
 	 * @returns A {@link SizeComparison} tagged with `kind: "success"` or `kind: "error"`.
 	 * Never throws: unexpected exceptions from underlying `git` shell-outs, ADO API
 	 * calls, or stats-file parsing are caught and reported via the `error` variant so
 	 * callers can rely on the return shape.
 	 */
-	public async getSizeComparison(tagWaiting: boolean): Promise<SizeComparison> {
+	public async getSizeComparison(): Promise<SizeComparison> {
 		// Declared outside the try block so the catch can still report the last-known
 		// commit value in the synthesized error variant.
 		let baselineCommit: string | undefined;
@@ -110,96 +80,60 @@ export class ADOSizeComparator {
 			baselineCommit = getBaselineCommit(this.targetBranch);
 			console.log(`The baseline commit for this PR is ${baselineCommit}`);
 
-			// Some circumstances may want us to try a fallback, such as when a commit does
-			// not trigger any CI loops.  If a fallback generator is provided, use that.
-			let baselineZip;
-			const fallbackGen = this.getFallbackCommit?.(baselineCommit!);
 			const recentBuilds = await getBuilds(this.adoConnection, {
 				project: this.adoConstants.projectName,
 				definitions: [this.adoConstants.ciBuildDefinitionId],
 				maxBuildsPerDefinition:
 					this.adoConstants.buildsToSearch ?? ADOSizeComparator.defaultBuildsToSearch,
 			});
-			while (baselineCommit !== undefined) {
-				const baselineBuild = recentBuilds.find(
-					(build) => build.sourceVersion === baselineCommit,
-				);
 
-				if (baselineBuild === undefined) {
-					baselineCommit = fallbackGen?.next().value;
-					// For reasons that I don't understand, the "undefined" string is omitted in the log output, which makes the
-					// output very confusing. The string is capitalized here and elsewhere in this file as a workaround.
-					console.log(
-						`Trying backup baseline commit when baseline build is UNDEFINED: ${baselineCommit}`,
-					);
-					continue;
-				}
+			const baselineBuild = recentBuilds.find(
+				(build) => build.sourceVersion === baselineCommit,
+			);
 
-				// Baseline build does not have id
-				if (baselineBuild.id === undefined) {
-					const error = `Baseline build does not have a build id`;
-					console.log(error);
-					return { kind: "error", baselineCommit, error };
-				}
-
-				// Baseline build is pending
-				if (baselineBuild.status !== BuildStatus.Completed) {
-					const error = "Baseline build for this PR has not yet completed.";
-					console.log(error);
-
-					if (tagWaiting) {
-						await this.tagBuildAsWaiting(baselineCommit);
-					}
-
-					return { kind: "error", baselineCommit, error };
-				}
-
-				// Baseline build failed
-				if (baselineBuild.result !== BuildResult.Succeeded) {
-					const error =
-						"Baseline CI build failed, cannot generate bundle analysis at this time";
-					console.log(error);
-					return { kind: "error", baselineCommit, error };
-				}
-
-				// Baseline build succeeded
-				console.log(`Found baseline build with id: ${baselineBuild.id}`);
-				console.log(`projectName: ${this.adoConstants.projectName}`);
-				console.log(
-					`bundleAnalysisArtifactName: ${this.adoConstants.bundleAnalysisArtifactName}`,
-				);
-
-				baselineZip = await getZipObjectFromArtifact(
-					this.adoConnection,
-					this.adoConstants.projectName,
-					baselineBuild.id,
-					this.adoConstants.bundleAnalysisArtifactName,
-				).catch((error) => {
-					console.log(`Error unzipping object from artifact: ${error.message}`);
-					console.log(`Error stack: ${error.stack}`);
-					return undefined;
-				});
-
-				// For reasons that I don't understand, the "undefined" string is omitted in the log output, which makes the
-				// output very confusing. The string is capitalized here and elsewhere in this file as a workaround.
-				console.log(`Baseline Zip === UNDEFINED: ${baselineZip === undefined}`);
-
-				// Successful baseline build does not have the needed build artifacts
-				if (baselineZip === undefined) {
-					baselineCommit = fallbackGen?.next().value;
-					console.log(
-						`Trying backup baseline commit when successful baseline build does not have the needed build artifacts ${baselineCommit}`,
-					);
-					continue;
-				}
-
-				// Found usable baseline zip
-				break;
+			if (baselineBuild === undefined) {
+				const error = `No CI build found for baseline commit ${baselineCommit}`;
+				console.log(error);
+				return { kind: "error", baselineCommit, error };
 			}
 
-			// Unable to find a usable baseline
-			if (baselineCommit === undefined || baselineZip === undefined) {
-				const error = `Could not find a usable baseline build with search starting at CI ${getBaselineCommit(this.targetBranch)}`;
+			if (baselineBuild.id === undefined) {
+				const error = `Baseline build does not have a build id`;
+				console.log(error);
+				return { kind: "error", baselineCommit, error };
+			}
+
+			if (baselineBuild.status !== BuildStatus.Completed) {
+				const error = "Baseline build for this PR has not yet completed.";
+				console.log(error);
+				return { kind: "error", baselineCommit, error };
+			}
+
+			if (baselineBuild.result !== BuildResult.Succeeded) {
+				const error = "Baseline CI build failed, cannot generate bundle analysis at this time";
+				console.log(error);
+				return { kind: "error", baselineCommit, error };
+			}
+
+			console.log(`Found baseline build with id: ${baselineBuild.id}`);
+			console.log(`projectName: ${this.adoConstants.projectName}`);
+			console.log(
+				`bundleAnalysisArtifactName: ${this.adoConstants.bundleAnalysisArtifactName}`,
+			);
+
+			const baselineZip = await getZipObjectFromArtifact(
+				this.adoConnection,
+				this.adoConstants.projectName,
+				baselineBuild.id,
+				this.adoConstants.bundleAnalysisArtifactName,
+			).catch((error) => {
+				console.log(`Error unzipping object from artifact: ${error.message}`);
+				console.log(`Error stack: ${error.stack}`);
+				return undefined;
+			});
+
+			if (baselineZip === undefined) {
+				const error = "Baseline build did not publish bundle artifacts";
 				console.log(error);
 				return { kind: "error", baselineCommit, error };
 			}
@@ -214,22 +148,6 @@ export class ADOSizeComparator {
 			}`;
 			console.log(error);
 			return { kind: "error", baselineCommit, error };
-		}
-	}
-
-	private async tagBuildAsWaiting(baselineCommit: string): Promise<void> {
-		if (!this.adoBuildId) {
-			console.log(
-				"No ADO build ID was provided, we will not tag this build for follow up when the baseline build completes",
-			);
-		} else {
-			// Tag the current build as waiting for the results of the master CI
-			const buildApi = await this.adoConnection.getBuildApi();
-			await buildApi.addBuildTag(
-				this.adoConstants.projectName,
-				this.adoBuildId,
-				getBuildTagForCommit(baselineCommit),
-			);
 		}
 	}
 

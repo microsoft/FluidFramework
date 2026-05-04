@@ -13,7 +13,6 @@ export {
 	getAnalyzerPathsFromFileSystem,
 	getAnalyzerPathsFromZipObject,
 	getAzureDevopsApi,
-	getBuildTagForCommit,
 	getBundleSummariesFromAnalyzer,
 	getZipObjectFromArtifact,
 	IADOConstants,
@@ -36,6 +35,5 @@ export {
 	getAllFilesInDirectory,
 	getBaselineCommit,
 	getBuilds,
-	getPriorCommit,
 	unzipStream,
 } from "./utilities";

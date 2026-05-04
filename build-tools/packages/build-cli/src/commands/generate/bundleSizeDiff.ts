@@ -114,10 +114,8 @@ export default class GenerateBundleSizeDiff extends BaseCommand<
 			adoConnection,
 			localReportPath,
 			targetBranch,
-			undefined,
-			ADOSizeComparator.naiveFallbackCommitGenerator,
 		);
-		const comparisonResult = await sizeComparator.getSizeComparison(false);
+		const comparisonResult = await sizeComparator.getSizeComparison();
 
 		const resolvedOutputDir = path.resolve(process.cwd(), outputDir);
 		await mkdir(resolvedOutputDir, { recursive: true });

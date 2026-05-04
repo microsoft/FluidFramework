@@ -5,5 +5,5 @@
 
 export { getAllFilesInDirectory } from "./getAllFilesInDirectory";
 export { GetBuildOptions, getBuilds } from "./getBuilds";
-export { getBaselineCommit, getPriorCommit } from "./gitCommands";
+export { getBaselineCommit } from "./gitCommands";
 export { unzipStream } from "./unzipStream";
