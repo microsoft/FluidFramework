@@ -1,0 +1,19 @@
+# This file is scaffolded by scripts/updateCompatVersions.ts.
+# The security settings below are intentional — do not relax them.
+minimumReleaseAge: 1440
+
+# Exclude our own FF scopes so compat tests can install versions we just shipped
+# without hitting the age gate (new releases are < 1440 min old for a few hours).
+minimumReleaseAgeExclude:
+  - "@fluidframework/*"
+  - "@fluid-experimental/*"
+  - "@fluid-internal/*"
+  - "@fluid-private/*"
+  - "@fluid-tools/*"
+  - "fluid-framework"
+
+# See: https://github.com/orgs/pnpm/discussions/11084
+trustPolicy: off
+
+packages:
+  - '*'

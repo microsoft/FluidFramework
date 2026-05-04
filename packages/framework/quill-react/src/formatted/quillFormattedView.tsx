@@ -113,6 +113,7 @@ const lineTagToQuillAttributes = {
  * Parse CSS font-size from a pasted HTML element's inline style.
  * Returns a Quill size name if the pixel value matches a supported size, undefined otherwise.
  * 12px is the default size and returns undefined (no Quill attribute needed).
+ * @param node - The HTML element whose inline `font-size` style to inspect.
  */
 export function parseCssFontSize(node: HTMLElement): string | undefined {
 	const style = node.style.fontSize;
@@ -137,6 +138,7 @@ export function parseCssFontSize(node: HTMLElement): string | undefined {
  * Parse CSS font-family from a pasted HTML element's inline style.
  * Tries fonts in priority order (first to last per CSS spec) and returns
  * the first recognized Quill font value.
+ * @param node - The HTML element whose inline `font-family` style to inspect.
  */
 export function parseCssFontFamily(node: HTMLElement): string | undefined {
 	const style = node.style.fontFamily;
@@ -163,6 +165,8 @@ export function parseCssFontFamily(node: HTMLElement): string | undefined {
  * from pasted HTML elements. Applies each format independently via
  * compose/retain so new attributes can be added without risk of an
  * early return skipping them.
+ * @param node - The pasted DOM node being matched.
+ * @param delta - The Quill delta produced for the pasted content so far.
  * @see https://quilljs.com/docs/modules/clipboard#addmatcher
  */
 export function clipboardFormatMatcher(node: Node, delta: Delta): Delta {
@@ -199,7 +203,11 @@ function parseSize(size: unknown): number {
 	return defaultSize;
 }
 
-/** Extract a LineTag from Quill attributes, or undefined if none present. Quill only supports one LineTag at a time. */
+/**
+ * Extract a LineTag from Quill attributes, or undefined if none present.
+ * Quill only supports one LineTag at a time.
+ * @param attributes - The Quill delta attributes object to inspect.
+ */
 export function parseLineTag(
 	attributes?: Record<string, unknown>,
 ): FormattedTextAsTree.LineTag | undefined {
@@ -816,12 +824,14 @@ const FormattedTextEditorView = forwardRef<
 					<button
 						type="button"
 						className="ql-undo"
+						aria-label="Undo"
 						disabled={undoRedo?.canUndo() !== true}
 						onClick={() => undoRedo?.undo()}
 					/>
 					<button
 						type="button"
 						className="ql-redo"
+						aria-label="Redo"
 						disabled={undoRedo?.canRedo() !== true}
 						onClick={() => undoRedo?.redo()}
 					/>
