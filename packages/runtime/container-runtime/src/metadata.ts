@@ -45,7 +45,7 @@ export interface IBatchMetadata {
 	 * Exposed on the wire so consumers can record batch sizes in telemetry without parsing the grouped batch contents.
 	 *
 	 * Observable values:
-	 * - Absent: this is not a grouped batch envelope (e.g. a singleton batch that bypassed grouping).
+	 * - Absent: either this is not a grouped batch envelope (e.g. a singleton batch that bypassed grouping), OR the producing runtime predates this field. Until the rollout is complete, telemetry consumers should treat absence as ambiguous and parse the envelope contents if a precise count is required for a grouped batch.
 	 * - `0`: empty-grouped-batch placeholder produced when a resubmitted batch becomes empty.
 	 * - `N` (N \> 0): grouped batch with N inner ops. For a chunked grouped batch this appears only on the last chunk's envelope (intermediate chunks carry no metadata).
 	 *
