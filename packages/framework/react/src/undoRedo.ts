@@ -169,6 +169,10 @@ function labelPredicate(label: unknown): (entry: StackEntry) => boolean {
 	return label === undefined ? () => true : (entry) => entry.labels.has(label);
 }
 
+/**
+ * Tracks tree branches currently viewed by an {@link UndoRedoManager} instance.
+ * Used to prevent multiple managers from attaching to the same branch, which is not currently supported.
+ */
 const attachedBranches = new WeakSet<TreeBranchAlpha>();
 
 /**
