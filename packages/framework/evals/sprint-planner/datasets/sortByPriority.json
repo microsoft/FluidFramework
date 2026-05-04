@@ -1,0 +1,24 @@
+{
+	"name": "Sort by Priority",
+	"metadata": {
+		"description": "Tests the agent's ability to sort work items by priority level"
+	},
+	"domainHints": "This is a sprint planning board for an agile software development team. Work items have statuses: todo, in-progress, in-review, done. Priorities are: critical, high, medium, low. Story points use Fibonacci numbers: 1, 2, 3, 5, 8, 13.",
+	"datasets": [
+		{
+			"name": "Sort by priority",
+			"prompt": "Sort work items by priority, critical first"
+		}
+	],
+	"rubrics": [
+		{
+			"name": "Correct Ordering",
+			"description": "Are the work items sorted in descending priority order (critical first, then high, then medium, then low)? All 6 items should be present and in the correct order."
+		},
+		{
+			"name": "Data Integrity",
+			"description": "Were all work item properties (titles, descriptions, statuses, priorities, assignees, story points) preserved without modification? Only the ordering should have changed."
+		}
+	],
+	"dataInterpretationPrompt": "The input is the initial state of an agile sprint board as a tree structure containing work items and team members. The output is the final state after an AI agent processed a user prompt. Compare the input and output trees to evaluate whether the agent correctly fulfilled the user's request while preserving existing data."
+}

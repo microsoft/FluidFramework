@@ -1,0 +1,21 @@
+{
+	"extends": "../../../../../../common/build/build-common/tsconfig.test.node16.json",
+	"compilerOptions": {
+		"rootDir": "./",
+		"outDir": "../../dist/test",
+		"types": ["node", "jest"],
+		"module": "CommonJS",
+		"moduleResolution": "node",
+		"noUnusedLocals": false,
+		"exactOptionalPropertyTypes": false,
+		"noUncheckedIndexedAccess": false,
+		"target": "ES2022",
+		"lib": ["ES2022"],
+	},
+	"include": ["./**/*"],
+	"references": [
+		{
+			"path": "../../tsconfig.json",
+		},
+	],
+}

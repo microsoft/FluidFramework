@@ -1,0 +1,24 @@
+{
+	"name": "Assign Unassigned Work",
+	"metadata": {
+		"description": "Tests the agent's ability to assign unassigned tasks to a specific team member"
+	},
+	"domainHints": "This is a sprint planning board for an agile software development team. Work items have statuses: todo, in-progress, in-review, done. Priorities are: critical, high, medium, low. Story points use Fibonacci numbers: 1, 2, 3, 5, 8, 13.",
+	"datasets": [
+		{
+			"name": "Assign unassigned work",
+			"prompt": "Assign all unassigned tasks to Alice"
+		}
+	],
+	"rubrics": [
+		{
+			"name": "Task Completion",
+			"description": "Did the agent assign all previously unassigned tasks ('Write API documentation' and 'Fix responsive layout on mobile') to 'Alice'?"
+		},
+		{
+			"name": "Data Integrity",
+			"description": "Were already-assigned tasks preserved with their original assignees? 'Set up CI/CD pipeline' should still be assigned to Alice, 'Design database schema' to Bob, and 'Add unit tests for auth module' to Charlie. No other properties should have changed."
+		}
+	],
+	"dataInterpretationPrompt": "The input is the initial state of an agile sprint board as a tree structure containing work items and team members. The output is the final state after an AI agent processed a user prompt. Compare the input and output trees to evaluate whether the agent correctly fulfilled the user's request while preserving existing data."
+}

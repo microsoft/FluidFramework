@@ -1,0 +1,1558 @@
+<!-- Copyright (c) Microsoft Corporation and contributors. All rights reserved. -->
+<!-- Licensed under the MIT License. -->
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Eval App</title>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+      const { useState, useEffect, useRef, useCallback } = React;
+
+      // ── Utility functions ────────────────────────────────────────────
+
+      /**
+       * Format an ISO timestamp identically to the server-side formatTimestamp in reporter.ts.
+       * e.g., "2026-03-19T23:47:50.776Z" → "Mar 19, 2026 11:47 PM"
+       */
+      function formatTimestamp(iso) {
+        try {
+          const d = new Date(iso);
+          if (isNaN(d.getTime())) {
+            return iso;
+          }
+          return (
+            d.toLocaleString('en-US', {
+              timeZone: 'UTC',
+              month: 'short',
+              day: 'numeric',
+              year: 'numeric',
+              hour: 'numeric',
+              minute: '2-digit',
+              hour12: true,
+            }) + ' UTC'
+          );
+        } catch {
+          return iso;
+        }
+      }
+
+      /**
+       * Returns a color from red to green based on a score (0–5).
+       * 2.5 is the midpoint (yellow). Below → red, above → green.
+       */
+      function scoreColor(score) {
+        const clamped = Math.max(0, Math.min(5, score));
+        const ratio = clamped / 5; // 0..1
+        // Interpolate hue: 0 (red) → 60 (yellow) at 0.5 → 120 (green) at 1
+        const hue = ratio * 120;
+        // Saturation/lightness tuned for readable text on white background
+        return `hsl(${hue}, 80%, 35%)`;
+      }
+
+      /** Resolve a relative href against a base URL prefix */
+      function resolveUrl(href, baseUrl) {
+        if (href.startsWith('/') || href.startsWith('http')) return href;
+        return `${baseUrl}/${href}`;
+      }
+
+      function formatInline(text, baseUrl) {
+        return text
+          .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+          .replace(/\[(.*?)\]\((.*?)\)/g, (_, label, href) => {
+            const url = resolveUrl(href, baseUrl);
+            return `<a href="${url}" target="_blank" rel="noopener noreferrer">${label}</a>`;
+          });
+      }
+
+      /**
+       * Render simple markdown to HTML (tables, headers, images, links, bold).
+       * baseUrl is the API path prefix for resolving relative links.
+       */
+      function renderMarkdown(md, baseUrl) {
+        const lines = md.split('\n');
+        const html = [];
+        let inTable = false;
+        let isHeader = true;
+
+        for (let i = 0; i < lines.length; i++) {
+          const line = lines[i];
+
+          // Table rows
+          if (line.trim().startsWith('|')) {
+            const cells = line
+              .split('|')
+              .filter((c, idx, arr) => idx > 0 && idx < arr.length - 1)
+              .map((c) => c.trim());
+
+            // Skip separator rows
+            if (cells.every((c) => /^[-:]+$/.test(c))) {
+              isHeader = false;
+              continue;
+            }
+
+            if (!inTable) {
+              html.push('<table>');
+              inTable = true;
+              isHeader = true;
+            }
+
+            const tag = isHeader ? 'th' : 'td';
+            html.push('<tr>' + cells.map((c) => `<${tag}>${formatInline(c, baseUrl)}</${tag}>`).join('') + '</tr>');
+
+            if (isHeader && i + 1 < lines.length && lines[i + 1].trim().startsWith('|')) {
+              // Next line might be separator
+            }
+            continue;
+          }
+
+          if (inTable) {
+            html.push('</table>');
+            inTable = false;
+            isHeader = true;
+          }
+
+          // HTML passthrough (details, summary, etc.)
+          if (line.trim().match(/^<\/?(details|summary)(\s[^>]*)?>$/)) {
+            html.push(line.trim());
+            continue;
+          }
+
+          // Headers
+          if (line.startsWith('### ')) {
+            html.push(`<h3>${formatInline(line.slice(4), baseUrl)}</h3>`);
+          } else if (line.startsWith('## ')) {
+            html.push(`<h2>${formatInline(line.slice(3), baseUrl)}</h2>`);
+          } else if (line.startsWith('# ')) {
+            html.push(`<h1>${formatInline(line.slice(2), baseUrl)}</h1>`);
+          }
+          // Images
+          else if (line.match(/!\[.*?\]\(.*?\)/)) {
+            const match = line.match(/!\[(.*?)\]\((.*?)\)/);
+            if (match) {
+              const imgUrl = resolveUrl(match[2], baseUrl);
+              html.push(`<img src="${imgUrl}" alt="${match[1]}" />`);
+            }
+          }
+          // Other content
+          else if (line.trim()) {
+            html.push(`<p>${formatInline(line, baseUrl)}</p>`);
+          }
+        }
+
+        if (inTable) html.push('</table>');
+        return html.join('\n');
+      }
+
+      /**
+       * Read an SSE stream from a fetch response, dispatching parsed events to a handler.
+       * handler receives (eventType, parsedData) for each event.
+       * Returns a promise that resolves when the stream ends.
+       */
+      function readSSEStream(response, handler) {
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = '';
+
+        function processChunk({ done, value }) {
+          if (done) return;
+          buffer += decoder.decode(value, { stream: true });
+          const events = buffer.split('\n\n');
+          buffer = events.pop();
+
+          for (const event of events) {
+            const lines = event.split('\n');
+            let eventType = '';
+            let data = '';
+            for (const line of lines) {
+              if (line.startsWith('event: ')) eventType = line.slice(7);
+              if (line.startsWith('data: ')) data = line.slice(6);
+            }
+            if (!eventType || !data) continue;
+            try {
+              handler(eventType, JSON.parse(data));
+            } catch {}
+          }
+          return reader.read().then(processChunk);
+        }
+        return reader.read().then(processChunk);
+      }
+
+      // ── Components ─────────────────────────────────────────────────
+
+      /** Scoring panel shown after a manual run completes (or when viewing a historical manual run). */
+      function ManualScoringPanel({
+        manualRunResult,
+        humanScores,
+        setHumanScores,
+        onSave,
+        saveStatus,
+        readOnly,
+        onCancel,
+      }) {
+        if (!manualRunResult) return null;
+        const { rubrics, datasets, runDirName, scale = { min: 0, max: 5 } } = manualRunResult;
+        return (
+          <div className="card">
+            <h2>Manual Scoring — {manualRunResult.scenarioName}</h2>
+            {datasets.map((ds) => (
+              <div
+                key={ds.name}
+                style={{ marginBottom: 24, borderBottom: '1px solid var(--border)', paddingBottom: 24 }}
+              >
+                <h3 style={{ fontSize: 15, fontWeight: 600, marginBottom: 8 }}>{ds.name}</h3>
+                {ds.imageUrls && ds.imageUrls.length > 0 && (
+                  <div style={{ marginBottom: 12 }}>
+                    {ds.imageUrls.map((url, i) => (
+                      <img
+                        key={i}
+                        src={url}
+                        style={{
+                          maxWidth: '100%',
+                          border: '1px solid var(--border)',
+                          borderRadius: 4,
+                          margin: '8px 0',
+                          display: 'block',
+                        }}
+                      />
+                    ))}
+                  </div>
+                )}
+                <div className="file-links" style={{ marginBottom: 12 }}>
+                  <a
+                    className="file-link"
+                    href={`/api/results/manual/${runDirName}/${ds.dirName}/appOutput.json`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    View Output
+                  </a>
+                  <a
+                    className="file-link"
+                    href={`/api/results/manual/${runDirName}/${ds.dirName}/appInput.json`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    View Input
+                  </a>
+                </div>
+                {rubrics.map((rubric) => {
+                  const entry = humanScores[ds.name]?.[rubric.name] ?? { score: '', reasoning: '' };
+                  return (
+                    <div key={rubric.name} style={{ marginBottom: 16 }}>
+                      <label style={{ fontSize: 13, fontWeight: 600 }}>{rubric.name}</label>
+                      {rubric.description && (
+                        <p
+                          style={{ fontSize: 13, color: 'var(--text-muted)', fontStyle: 'italic', margin: '4px 0 6px' }}
+                        >
+                          "{rubric.description}"
+                        </p>
+                      )}
+                      <div style={{ display: 'flex', gap: 8, alignItems: 'flex-start' }}>
+                        <input
+                          type="number"
+                          min={scale.min}
+                          max={scale.max}
+                          step={1}
+                          value={entry.score}
+                          onChange={(e) =>
+                            !readOnly &&
+                            setHumanScores((prev) => ({
+                              ...prev,
+                              [ds.name]: {
+                                ...prev[ds.name],
+                                [rubric.name]: { ...prev[ds.name]?.[rubric.name], score: e.target.value },
+                              },
+                            }))
+                          }
+                          placeholder={`${scale.min}–${scale.max}`}
+                          readOnly={readOnly}
+                          style={{ width: 70 }}
+                        />
+                        <textarea
+                          rows={2}
+                          value={entry.reasoning}
+                          onChange={(e) =>
+                            !readOnly &&
+                            setHumanScores((prev) => ({
+                              ...prev,
+                              [ds.name]: {
+                                ...prev[ds.name],
+                                [rubric.name]: { ...prev[ds.name]?.[rubric.name], reasoning: e.target.value },
+                              },
+                            }))
+                          }
+                          placeholder="Reasoning…"
+                          readOnly={readOnly}
+                          style={{ flex: 1 }}
+                        />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ))}
+            {!readOnly && (
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                <button className="btn btn-primary" onClick={onSave} disabled={saveStatus === 'saving'}>
+                  {saveStatus === 'saving' ? 'Saving…' : saveStatus === 'saved' ? 'Saved ✓' : 'Save Scores'}
+                </button>
+                {onCancel && (
+                  <button className="btn" onClick={onCancel} disabled={saveStatus === 'saving'}>
+                    Cancel
+                  </button>
+                )}
+                {saveStatus === 'error' && (
+                  <span style={{ color: 'var(--error)', fontSize: 13 }}>Error saving scores</span>
+                )}
+              </div>
+            )}
+          </div>
+        );
+      }
+
+      /** Filterable table of historical runs, shared between eval and manual modes. */
+      function RunsTable({
+        runs,
+        onViewRun,
+        highlightedRunName,
+        filterScenario,
+        setFilterScenario,
+        filterDataset,
+        setFilterDataset,
+        filterGeneratorModel,
+        setFilterGeneratorModel,
+        filterJudgeModel,
+        setFilterJudgeModel,
+        filterTimeFrom,
+        setFilterTimeFrom,
+        filterTimeTo,
+        setFilterTimeTo,
+        filterCustomProps,
+        setFilterCustomProps,
+        visibleRunCount,
+        setVisibleRunCount,
+      }) {
+        const uniqueScenarios = [...new Set(runs.map((r) => r.scenarioName).filter(Boolean))].sort();
+        const uniqueDatasets = [...new Set(runs.flatMap((r) => r.datasets || []))].sort();
+        const uniqueGeneratorModels = [...new Set(runs.map((r) => r.generatorModel).filter(Boolean))].sort();
+        const uniqueJudgeModels = [...new Set(runs.map((r) => r.judgeModel).filter(Boolean))].sort();
+        const allCustomPropKeys = [
+          ...new Set(runs.flatMap((r) => (r.customResultProperties ? Object.keys(r.customResultProperties) : []))),
+        ].sort();
+        const customPropUniqueValues = {};
+        for (const key of allCustomPropKeys) {
+          customPropUniqueValues[key] = [
+            ...new Set(runs.map((r) => r.customResultProperties?.[key]).filter((v) => v !== undefined)),
+          ].sort();
+        }
+        const filteredRuns = runs.filter((run) => {
+          if (filterScenario && run.scenarioName !== filterScenario) return false;
+          if (filterDataset && !(run.datasets || []).includes(filterDataset)) return false;
+          if (filterGeneratorModel && run.generatorModel !== filterGeneratorModel) return false;
+          if (filterJudgeModel && run.judgeModel !== filterJudgeModel) return false;
+          if (filterTimeFrom && run.timestamp && run.timestamp < filterTimeFrom) return false;
+          if (filterTimeTo && run.timestamp && run.timestamp > filterTimeTo + 'T23:59:59') return false;
+          for (const [key, filterVal] of Object.entries(filterCustomProps)) {
+            if (filterVal !== '' && filterVal !== undefined) {
+              const runVal = run.customResultProperties?.[key];
+              if (String(runVal) !== String(filterVal)) return false;
+            }
+          }
+          return true;
+        });
+        const hasActiveFilters =
+          filterScenario ||
+          filterDataset ||
+          filterGeneratorModel ||
+          filterJudgeModel ||
+          filterTimeFrom ||
+          filterTimeTo ||
+          Object.values(filterCustomProps).some((v) => v !== '' && v !== undefined);
+        return (
+          <div className="card">
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, marginBottom: 12, alignItems: 'flex-end' }}>
+              <label style={{ display: 'flex', flexDirection: 'column', fontSize: 12, gap: 4 }}>
+                From
+                <input type="date" value={filterTimeFrom} onChange={(e) => setFilterTimeFrom(e.target.value)} />
+              </label>
+              <label style={{ display: 'flex', flexDirection: 'column', fontSize: 12, gap: 4 }}>
+                To
+                <input type="date" value={filterTimeTo} onChange={(e) => setFilterTimeTo(e.target.value)} />
+              </label>
+              <label style={{ display: 'flex', flexDirection: 'column', fontSize: 12, gap: 4 }}>
+                Scenario
+                <select value={filterScenario} onChange={(e) => setFilterScenario(e.target.value)}>
+                  <option value="">All</option>
+                  {uniqueScenarios.map((s) => (
+                    <option key={s} value={s}>
+                      {s}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label style={{ display: 'flex', flexDirection: 'column', fontSize: 12, gap: 4 }}>
+                Dataset
+                <select value={filterDataset} onChange={(e) => setFilterDataset(e.target.value)}>
+                  <option value="">All</option>
+                  {uniqueDatasets.map((d) => (
+                    <option key={d} value={d}>
+                      {d}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label style={{ display: 'flex', flexDirection: 'column', fontSize: 12, gap: 4 }}>
+                Generator Model
+                <select value={filterGeneratorModel} onChange={(e) => setFilterGeneratorModel(e.target.value)}>
+                  <option value="">All</option>
+                  {uniqueGeneratorModels.map((m) => (
+                    <option key={m} value={m}>
+                      {m}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label style={{ display: 'flex', flexDirection: 'column', fontSize: 12, gap: 4 }}>
+                Judge Model
+                <select value={filterJudgeModel} onChange={(e) => setFilterJudgeModel(e.target.value)}>
+                  <option value="">All</option>
+                  {uniqueJudgeModels.map((m) => (
+                    <option key={m} value={m}>
+                      {m}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              {allCustomPropKeys.map((key) => (
+                <label key={key} style={{ display: 'flex', flexDirection: 'column', fontSize: 12, gap: 4 }}>
+                  {key}
+                  <select
+                    value={filterCustomProps[key] || ''}
+                    onChange={(e) => setFilterCustomProps((prev) => ({ ...prev, [key]: e.target.value }))}
+                  >
+                    <option value="">All</option>
+                    {(customPropUniqueValues[key] || []).map((v) => (
+                      <option key={String(v)} value={String(v)}>
+                        {String(v)}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              ))}
+              {hasActiveFilters && (
+                <button
+                  style={{ fontSize: 12, padding: '4px 8px', cursor: 'pointer' }}
+                  onClick={() => {
+                    setFilterScenario('');
+                    setFilterDataset('');
+                    setFilterGeneratorModel('');
+                    setFilterJudgeModel('');
+                    setFilterTimeFrom('');
+                    setFilterTimeTo('');
+                    setFilterCustomProps({});
+                  }}
+                >
+                  Clear filters
+                </button>
+              )}
+            </div>
+            <div style={{ overflowX: 'auto' }}>
+              <table className="historical-runs-table" style={{ width: '100%' }}>
+                <thead>
+                  <tr>
+                    <th>Time</th>
+                    <th>Scenario</th>
+                    <th>Datasets</th>
+                    <th>Avg Score</th>
+                    <th>Generator Model</th>
+                    <th>Judge Model</th>
+                    {allCustomPropKeys.map((key) => (
+                      <th key={key}>{key}</th>
+                    ))}
+                    <th>Details</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredRuns.slice(0, visibleRunCount).map((run) => (
+                    <tr
+                      key={run.name}
+                      style={{
+                        background: highlightedRunName === run.name ? 'var(--bg-hover)' : 'transparent',
+                      }}
+                    >
+                      <td style={{ fontSize: 13 }}>{run.timestamp ? formatTimestamp(run.timestamp) : '—'}</td>
+                      <td>{run.scenarioName || '—'}</td>
+                      <td style={{ fontSize: 13 }}>
+                        {run.datasets && run.datasets.length > 0 ? run.datasets.join(', ') : '—'}
+                      </td>
+                      <td
+                        style={{
+                          fontWeight: 600,
+                          color: run.averageScore != null ? scoreColor(run.averageScore) : 'inherit',
+                        }}
+                      >
+                        {run.averageScore != null ? run.averageScore.toFixed(2) : '—'}
+                      </td>
+                      <td style={{ fontSize: 13 }}>{run.generatorModel || '—'}</td>
+                      <td style={{ fontSize: 13 }}>{run.judgeModel || '—'}</td>
+                      {allCustomPropKeys.map((key) => (
+                        <td key={key} style={{ fontSize: 13 }}>
+                          {run.customResultProperties?.[key] !== undefined
+                            ? String(run.customResultProperties[key])
+                            : '—'}
+                        </td>
+                      ))}
+                      <td>
+                        <span
+                          className="run-name"
+                          style={{ cursor: 'pointer', color: 'var(--primary)', fontSize: 13 }}
+                          onClick={() => onViewRun(run.name)}
+                        >
+                          View
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            {filteredRuns.length > visibleRunCount && (
+              <div style={{ textAlign: 'center', marginTop: 12 }}>
+                <span
+                  style={{ cursor: 'pointer', color: 'var(--primary)', fontSize: 13 }}
+                  onClick={() => setVisibleRunCount((prev) => prev + 10)}
+                >
+                  Show more ({filteredRuns.length - visibleRunCount} remaining)
+                </span>
+              </div>
+            )}
+          </div>
+        );
+      }
+
+      /** Shared panel for displaying eval results (scenario summary + dataset details). */
+      function ResultsPanel({
+        runDirName,
+        scenarioDirName,
+        summaryMarkdown,
+        datasetSummaries,
+        activeDataset,
+        setActiveDataset,
+        header,
+        children,
+      }) {
+        const scenarioBaseUrl = scenarioDirName
+          ? `/api/results/${runDirName}/${scenarioDirName}`
+          : `/api/results/${runDirName}`;
+        return (
+          <div className="card">
+            {header}
+
+            {/* Scenario summary + dataset detail (wrapped in a single red-bordered container) */}
+            {summaryMarkdown && (
+              <div className="scenario-detail" style={{ marginTop: 12 }}>
+                <div
+                  className="summary-content"
+                  onClick={(e) => {
+                    const link = e.target.closest && e.target.closest('a');
+                    if (link && link.href && link.href.endsWith('/summary.md')) {
+                      e.preventDefault();
+                      const match = link.href.match(/\/([^/]+)\/summary\.md/);
+                      if (match) setActiveDataset(match[1]);
+                    }
+                  }}
+                >
+                  <div
+                    dangerouslySetInnerHTML={{
+                      __html: renderMarkdown(summaryMarkdown, scenarioBaseUrl),
+                    }}
+                  />
+                </div>
+
+                {/* Dataset detail (shown when clicking a dataset link in the summary) */}
+                {activeDataset &&
+                  (() => {
+                    const ds = datasetSummaries.find((d) => d.dirName === activeDataset);
+                    if (!ds) return null;
+                    const baseUrl = `${scenarioBaseUrl}/${ds.dirName}`;
+                    return (
+                      <div
+                        className="summary-content dataset-detail"
+                        style={{ marginTop: 16, borderTop: '1px solid var(--border)', paddingTop: 16 }}
+                      >
+                        <button
+                          className="close-btn"
+                          onClick={() => setActiveDataset(null)}
+                          title="Close"
+                          style={{ float: 'right', marginLeft: 12 }}
+                        >
+                          ✕
+                        </button>
+                        <div dangerouslySetInnerHTML={{ __html: renderMarkdown(ds.markdown, baseUrl) }} />
+                      </div>
+                    );
+                  })()}
+              </div>
+            )}
+
+            {children}
+          </div>
+        );
+      }
+
+      /** Root application component. */
+      function App() {
+        // ── State ──────────────────────────────────────────────────
+
+        // App config (fetched from /api/config)
+        const [appConfig, setAppConfig] = useState(null); // { appName, defaultGeneratorModel, defaultJudgeModel, modelOptions, hasAuth }
+
+        // Eval mode: 'eval' (full LLM judge) | 'manual' (generation only, human scoring)
+        const [evalMode, setEvalMode] = useState('eval');
+
+        // Configuration form
+        const [options, setOptions] = useState({ datasets: [] });
+        const [datasetMode, setDatasetMode] = useState('existing'); // 'existing' | 'custom'
+        const [dataset, setDataset] = useState('');
+        const [customDatasetJson, setCustomDatasetJson] = useState('');
+        const [model, setModel] = useState('');
+        const [judgeModel, setJudgeModel] = useState('');
+        const [customGenerationProps, setCustomGenerationProps] = useState({}); // { [key]: selectedValue }
+
+        // Eval run progress & results
+        const [status, setStatus] = useState('idle'); // idle | running | complete | error
+        const [logs, setLogs] = useState([]);
+        const [datasetSummaries, setDatasetSummaries] = useState([]); // [{datasetName, markdown}]
+        const [scenarioSummary, setScenarioSummary] = useState(''); // scenario-level summary.md
+        const [activeDataset, setActiveDataset] = useState(null); // which dataset detail to show
+        const [outputDir, setOutputDir] = useState('');
+        const [liveScenarioDirName, setLiveScenarioDirName] = useState('');
+        const [errorMessage, setErrorMessage] = useState('');
+
+        // Manual mode results & scoring
+        const [manualRunResult, setManualRunResult] = useState(null); // ManualRunCompletePayload
+        const [humanScores, setHumanScores] = useState({}); // { [datasetName]: { [rubricName]: { score, reasoning } } }
+        const [saveScoresStatus, setSaveScoresStatus] = useState('idle'); // idle | saving | saved | error
+        const [manualResultsRunDirName, setManualResultsRunDirName] = useState(null); // set after saving scores to show ResultsPanel
+        const [editingScores, setEditingScores] = useState(false); // true when re-scoring a historical run
+
+        // Historical runs table (/results view)
+        const [runs, setRuns] = useState([]); // eval runs
+        const [manualRuns, setManualRuns] = useState([]); // manual runs
+        const [viewedRun, setViewedRun] = useState(null); // { name, scenarioDirName }
+        const [viewedManualRun, setViewedManualRun] = useState(null); // { runDirName } — used only for row highlight
+        const [visibleRunCount, setVisibleRunCount] = useState(10); // pagination for results table
+
+        // Filters for results table
+        const [filterScenario, setFilterScenario] = useState('');
+        const [filterDataset, setFilterDataset] = useState('');
+        const [filterGeneratorModel, setFilterGeneratorModel] = useState('');
+        const [filterJudgeModel, setFilterJudgeModel] = useState('');
+        const [filterTimeFrom, setFilterTimeFrom] = useState('');
+        const [filterTimeTo, setFilterTimeTo] = useState('');
+        const [filterCustomProps, setFilterCustomProps] = useState({});
+
+        // Authentication
+        const [authStatus, setAuthStatus] = useState('checking'); // checking | authenticated | unauthenticated
+        const [authInProgress, setAuthInProgress] = useState(false);
+        const [authMessages, setAuthMessages] = useState([]);
+
+        const appName = appConfig?.appName ?? 'Eval';
+        const hasAuth = appConfig?.hasAuth ?? true; // Default to true until config loads
+        const modelOptions = appConfig?.modelOptions ?? null; // null while loading, [] or [...] once loaded
+
+        const resultsOnly = window.location.pathname === '/results';
+        const resultsMode = new URLSearchParams(window.location.search).get('mode') ?? 'eval'; // 'eval' | 'manual'
+
+        const logRef = useRef(null);
+        const resultsPanelRef = useRef(null);
+
+        // ── Auth callbacks ─────────────────────────────────────────
+
+        const checkAuth = useCallback(() => {
+          setAuthStatus('checking');
+          fetch('/api/auth-status')
+            .then((r) => r.json())
+            .then((data) => setAuthStatus(data.authenticated ? 'authenticated' : 'unauthenticated'))
+            .catch(() => setAuthStatus('unauthenticated'));
+        }, []);
+
+        const isAuthError = (message) => {
+          if (!message) return false;
+          const lower = message.toLowerCase();
+          return (
+            lower.includes('authentication failed') ||
+            lower.includes('auth error') ||
+            lower.includes('unauthorized') ||
+            lower.includes('token expired') ||
+            lower.includes('not authenticated')
+          );
+        };
+
+        // ── Data fetching ──────────────────────────────────────────
+
+        const refreshRuns = useCallback(() => {
+          fetch('/api/runs')
+            .then((r) => r.json())
+            .then(setRuns)
+            .catch(() => {});
+        }, []);
+
+        const refreshManualRuns = useCallback(() => {
+          fetch('/api/manual-runs')
+            .then((r) => r.json())
+            .then(setManualRuns)
+            .catch(() => {});
+        }, []);
+
+        // Load config, options, and runs on mount
+        useEffect(() => {
+          fetch('/api/config')
+            .then((r) => r.json())
+            .then((cfg) => {
+              setAppConfig(cfg);
+              document.title = cfg.appName + ' Eval';
+              // Set defaults from server config
+              setModel((prev) => prev || cfg.defaultGeneratorModel || '');
+              setJudgeModel((prev) => prev || cfg.defaultJudgeModel || '');
+              // Initialize custom generation props with first option as default
+              if (cfg.customGenerationProperties) {
+                setCustomGenerationProps((prev) => {
+                  const initialized = { ...prev };
+                  for (const [key, values] of Object.entries(cfg.customGenerationProperties)) {
+                    if (!(key in initialized) && Array.isArray(values) && values.length > 0) {
+                      initialized[key] = String(values[0]);
+                    }
+                  }
+                  return initialized;
+                });
+              }
+              // If no auth configured, mark as authenticated
+              if (!cfg.hasAuth) {
+                setAuthStatus('authenticated');
+              } else {
+                checkAuth();
+              }
+            })
+            .catch(() => {
+              // Config endpoint unavailable — still check auth directly
+              checkAuth();
+            });
+
+          fetch('/api/options')
+            .then((r) => r.json())
+            .then((opts) => {
+              setOptions(opts);
+              // Auto-select first dataset if none set
+              if (!dataset && opts.datasets && opts.datasets.length > 0) {
+                setDataset(opts.datasets[0].file);
+              }
+            })
+            .catch(() => {});
+
+          refreshRuns();
+          refreshManualRuns();
+        }, []);
+
+        // Clear run results when switching mode
+        useEffect(() => {
+          setStatus('idle');
+          setLogs([]);
+          setDatasetSummaries([]);
+          setScenarioSummary('');
+          setLiveScenarioDirName('');
+          setActiveDataset(null);
+          setOutputDir('');
+          setErrorMessage('');
+          setManualRunResult(null);
+          setHumanScores({});
+          setSaveScoresStatus('idle');
+          setManualResultsRunDirName(null);
+          setEditingScores(false);
+          setViewedRun(null);
+          setViewedManualRun(null);
+        }, [evalMode]);
+
+        // Auto-scroll log
+        useEffect(() => {
+          if (logRef.current) {
+            logRef.current.scrollTop = logRef.current.scrollHeight;
+          }
+        }, [logs]);
+
+        // ── Eval & auth actions ──────────────────────────────────
+
+        const startAuth = useCallback(() => {
+          setAuthInProgress(true);
+          setAuthMessages([]);
+          fetch('/api/auth', { method: 'POST' })
+            .then((response) => {
+              return readSSEStream(response, (eventType, parsed) => {
+                if (eventType === 'progress') {
+                  setAuthMessages((prev) => [...prev, parsed.message]);
+                } else if (eventType === 'complete') {
+                  setAuthStatus('authenticated');
+                  setAuthInProgress(false);
+                  setAuthMessages([]);
+                } else if (eventType === 'error') {
+                  setAuthMessages((prev) => [...prev, parsed.message]);
+                  setAuthInProgress(false);
+                }
+              });
+            })
+            .then(() => setAuthInProgress(false))
+            .catch(() => setAuthInProgress(false));
+        }, []);
+
+        const startEvalStream = useCallback(
+          (datasetFile) => {
+            const body = JSON.stringify({
+              dataset: datasetFile,
+              model,
+              judgeModel,
+              customGenerationProperties: customGenerationProps,
+            });
+
+            fetch('/api/run-eval', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body })
+              .then((response) => {
+                return readSSEStream(response, (eventType, parsed) => {
+                  if (eventType === 'progress') {
+                    setLogs((prev) => [...prev, parsed.message]);
+                    if (isAuthError(parsed.message)) {
+                      setAuthStatus('unauthenticated');
+                    }
+                  } else if (eventType === 'complete') {
+                    setStatus('complete');
+                    setDatasetSummaries(parsed.datasetSummaries || []);
+                    setScenarioSummary(parsed.scenarioSummary || '');
+                    setLiveScenarioDirName(parsed.scenarioDirName || '');
+                    setActiveDataset(null);
+                    setOutputDir(parsed.outputDir || '');
+                    refreshRuns();
+                  } else if (eventType === 'error') {
+                    setStatus('error');
+                    setErrorMessage(parsed.message);
+                    if (isAuthError(parsed.message)) {
+                      setAuthStatus('unauthenticated');
+                    }
+                  }
+                });
+              })
+              .catch((err) => {
+                setStatus('error');
+                setErrorMessage(err.message);
+              });
+          },
+          [model, judgeModel, customGenerationProps, refreshRuns]
+        );
+
+        const startManualStream = useCallback(
+          (datasetFile) => {
+            const body = JSON.stringify({
+              dataset: datasetFile,
+              model,
+              customGenerationProperties: customGenerationProps,
+            });
+
+            fetch('/api/run-manual', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body })
+              .then((response) => {
+                return readSSEStream(response, (eventType, parsed) => {
+                  if (eventType === 'progress') {
+                    setLogs((prev) => [...prev, parsed.message]);
+                    if (isAuthError(parsed.message)) setAuthStatus('unauthenticated');
+                  } else if (eventType === 'complete') {
+                    setStatus('complete');
+                    setManualRunResult(parsed);
+                    // Initialize score inputs
+                    const initial = {};
+                    for (const ds of parsed.datasets) {
+                      initial[ds.name] = {};
+                      for (const rubric of parsed.rubrics) {
+                        initial[ds.name][rubric.name] = { score: '', reasoning: '' };
+                      }
+                    }
+                    setHumanScores(initial);
+                    setSaveScoresStatus('idle');
+                    refreshManualRuns();
+                  } else if (eventType === 'error') {
+                    setStatus('error');
+                    setErrorMessage(parsed.message);
+                    if (isAuthError(parsed.message)) setAuthStatus('unauthenticated');
+                  }
+                });
+              })
+              .catch((err) => {
+                setStatus('error');
+                setErrorMessage(err.message);
+              });
+          },
+          [model, customGenerationProps, refreshManualRuns]
+        );
+
+        const saveScores = useCallback(
+          (runDirName) => {
+            const isHistoricalEdit = editingScores;
+            setSaveScoresStatus('saving');
+            fetch('/api/save-scores', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ runDirName, scores: humanScores }),
+            })
+              .then((r) => r.json())
+              .then((data) => {
+                if (data.success) {
+                  setSaveScoresStatus('saved');
+                  refreshManualRuns();
+                  return Promise.all([
+                    fetch(`/api/manual-runs/${runDirName}/summaries`).then((r) => r.json()),
+                    fetch(`/api/manual-runs/${runDirName}/scenario-summary`).then((r) => r.json()),
+                  ]).then(([summariesData, scenarioData]) => {
+                    setDatasetSummaries(summariesData.datasetSummaries || []);
+                    setScenarioSummary(scenarioData.markdown || '');
+                    if (isHistoricalEdit) {
+                      // Return to the results panel for this historical run
+                      setViewedRun({ name: 'manual/' + runDirName, scenarioDirName: '' });
+                      setManualRunResult(null);
+                      setEditingScores(false);
+                    } else {
+                      setManualResultsRunDirName('manual/' + runDirName);
+                    }
+                  });
+                } else {
+                  setSaveScoresStatus('error');
+                }
+              })
+              .catch(() => setSaveScoresStatus('error'));
+          },
+          [humanScores, refreshManualRuns, editingScores]
+        );
+
+        const editManualRun = useCallback(
+          (runDirName) => {
+            fetch(`/api/manual-runs/${runDirName}/scoring-info`)
+              .then((r) => r.json())
+              .then((data) => {
+                setManualRunResult({
+                  runDirName,
+                  scenarioName: data.scenarioName,
+                  rubrics: data.rubrics,
+                  scale: data.scale,
+                  datasets: data.datasets,
+                });
+                const initial = {};
+                for (const ds of data.datasets) {
+                  initial[ds.name] = {};
+                  for (const rubric of data.rubrics) {
+                    const existing = data.existingScores?.[ds.name]?.[rubric.name];
+                    initial[ds.name][rubric.name] = existing
+                      ? { score: existing.score ?? '', reasoning: existing.reasoning }
+                      : { score: '', reasoning: '' };
+                  }
+                }
+                setHumanScores(initial);
+                setSaveScoresStatus('idle');
+                if (manualResultsRunDirName) {
+                  // Live run: clear results view to show ManualScoringPanel in main view
+                  setManualResultsRunDirName(null);
+                  setDatasetSummaries([]);
+                  setScenarioSummary('');
+                } else {
+                  // Historical run: enter editing mode (ResultsPanel stays in state for cancel)
+                  setEditingScores(true);
+                }
+              })
+              .catch(() => {});
+          },
+          [manualResultsRunDirName]
+        );
+
+        const stopEval = useCallback(() => {
+          fetch('/api/stop-eval', { method: 'POST' }).catch(() => {});
+        }, []);
+
+        const runEval = useCallback(() => {
+          setStatus('running');
+          setLogs([]);
+          setDatasetSummaries([]);
+          setScenarioSummary('');
+          setLiveScenarioDirName('');
+          setActiveDataset(null);
+          setOutputDir('');
+          setErrorMessage('');
+          setViewedRun(null);
+          setManualRunResult(null);
+          setHumanScores({});
+          setSaveScoresStatus('idle');
+          setManualResultsRunDirName(null);
+          setEditingScores(false);
+
+          const runStream = evalMode === 'manual' ? startManualStream : startEvalStream;
+
+          if (datasetMode === 'custom') {
+            // Upload custom dataset first, then run
+            setLogs(['Uploading custom dataset...']);
+            fetch('/api/upload-dataset', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: customDatasetJson,
+            })
+              .then((r) => {
+                if (!r.ok) {
+                  return r.json().then((err) => {
+                    throw new Error(err.error || 'Upload failed');
+                  });
+                }
+                return r.json();
+              })
+              .then((result) => {
+                setLogs((prev) => [...prev, `Dataset uploaded as ${result.file}`]);
+                runStream(result.file);
+              })
+              .catch((err) => {
+                setStatus('error');
+                setErrorMessage(err.message || String(err));
+              });
+          } else {
+            runStream(dataset);
+          }
+        }, [evalMode, datasetMode, dataset, customDatasetJson, startEvalStream, startManualStream]);
+
+        // ── Historical run viewing ─────────────────────────────────
+
+        const loadRun = useCallback((runName) => {
+          Promise.all([
+            fetch(`/api/runs/${runName}/summaries`).then((r) => r.json()),
+            fetch(`/api/runs/${runName}/scenario-summary`).then((r) => r.json()),
+          ])
+            .then(([summariesData, scenarioData]) => {
+              setViewedRun({
+                name: runName,
+                scenarioDirName: summariesData.scenarioDirName || '',
+                datasetSummaries: summariesData.datasetSummaries,
+                scenarioSummary: scenarioData.markdown || '',
+              });
+              setDatasetSummaries(summariesData.datasetSummaries);
+              setScenarioSummary(scenarioData.markdown || '');
+              setLiveScenarioDirName('');
+              setActiveDataset(null);
+              setOutputDir('');
+              setLogs([]);
+              setStatus('idle');
+              setErrorMessage('');
+              // Scroll to the results panel after state update renders it
+              setTimeout(() => {
+                resultsPanelRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              }, 100);
+            })
+            .catch(() => {});
+        }, []);
+
+        const loadManualRun = useCallback((runName) => {
+          Promise.all([
+            fetch(`/api/manual-runs/${runName}/summaries`).then((r) => r.json()),
+            fetch(`/api/manual-runs/${runName}/scenario-summary`).then((r) => r.json()),
+          ])
+            .then(([summariesData, scenarioData]) => {
+              setViewedManualRun({ runDirName: runName });
+              setViewedRun({ name: 'manual/' + runName, scenarioDirName: '' });
+              setDatasetSummaries(summariesData.datasetSummaries || []);
+              setScenarioSummary(scenarioData.markdown || '');
+              setActiveDataset(null);
+              setLogs([]);
+              setStatus('idle');
+              setErrorMessage('');
+              setTimeout(() => {
+                resultsPanelRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              }, 100);
+            })
+            .catch(() => {});
+        }, []);
+
+        const closeViewedRun = useCallback(() => {
+          setViewedRun(null);
+          setViewedManualRun(null);
+          setDatasetSummaries([]);
+          setScenarioSummary('');
+          setActiveDataset(null);
+          setHumanScores({});
+          setManualResultsRunDirName(null);
+          setManualRunResult(null);
+          setEditingScores(false);
+        }, []);
+
+        // ── Derived values ──────────────────────────────────────────
+
+        const activeRunDirName =
+          viewedRun?.name ?? manualResultsRunDirName ?? (outputDir ? outputDir.split('/').pop() : '');
+        const activeScenarioDirName = viewedRun?.scenarioDirName ?? liveScenarioDirName;
+        const hasResults = scenarioSummary || datasetSummaries.length > 0;
+
+        const formatLogLine = (line) => {
+          if (line.startsWith('---')) return { className: 'line-phase', text: line };
+          if (line.startsWith('[warn]')) return { className: 'line-warn', text: line };
+          if (line.startsWith('[error]')) return { className: 'line-error', text: line };
+          return { className: '', text: line };
+        };
+
+        // ── Render ────────────────────────────────────────────────
+
+        return (
+          <div className="container">
+            {/* ── Header + auth status ── */}
+            <div className="header">
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                <div>
+                  <h1>
+                    {resultsOnly
+                      ? resultsMode === 'manual'
+                        ? 'All Manual Run Results'
+                        : 'All Eval Results'
+                      : appName + ' Eval'}
+                  </h1>
+                  {!resultsOnly && (
+                    <p>
+                      Run evaluations for {appName}. This tool generates artifacts from scenario datasets, then
+                      evaluates them using LLM-as-judge semantic scoring.
+                    </p>
+                  )}
+                </div>
+                {!resultsOnly && hasAuth && (
+                  <div className="auth-control">
+                    {authStatus === 'checking' && (
+                      <span className="auth-status auth-status-checking">
+                        <span className="spinner"></span> Checking...
+                      </span>
+                    )}
+                    {authStatus === 'authenticated' && <span className="auth-status auth-status-ok">Signed in</span>}
+                    {authStatus === 'unauthenticated' && !authInProgress && (
+                      <span className="auth-status auth-status-warn">Not signed in</span>
+                    )}
+                    <button className="btn-signin" onClick={startAuth} disabled={authInProgress}>
+                      {authInProgress ? (
+                        <>
+                          <span className="spinner"></span> Signing in...
+                        </>
+                      ) : (
+                        'Sign In'
+                      )}
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* ── Auth messages (sign-in progress/errors) ── */}
+            {!resultsOnly && authMessages.length > 0 && (
+              <div className="auth-messages">
+                {authMessages.map((msg, i) => {
+                  const urlMatch = msg.match(/(https?:\/\/\S+)/);
+                  if (urlMatch) {
+                    const parts = msg.split(urlMatch[1]);
+                    return (
+                      <div key={i}>
+                        {parts[0]}
+                        <a href={urlMatch[1]} target="_blank" rel="noopener noreferrer" style={{ color: '#569cd6' }}>
+                          {urlMatch[1]}
+                        </a>
+                        {parts[1]}
+                      </div>
+                    );
+                  }
+                  return <div key={i}>{msg}</div>;
+                })}
+              </div>
+            )}
+
+            {/* ── Auth banners (not authenticated / re-auth success) ── */}
+            {!resultsOnly && hasAuth && authStatus === 'unauthenticated' && !authInProgress && (
+              <div className="auth-banner auth-banner-warn">
+                <strong>Not authenticated.</strong>&nbsp;Sign in to run evaluations.
+              </div>
+            )}
+            {!resultsOnly &&
+              hasAuth &&
+              authStatus === 'authenticated' &&
+              status === 'error' &&
+              isAuthError(errorMessage) && (
+                <div className="auth-banner auth-banner-success">
+                  Authentication successful! You can now re-run the evaluation.
+                </div>
+              )}
+
+            {/* ── Configuration form (dataset, models, run button) ── */}
+            {!resultsOnly && (
+              <div className="card">
+                <div
+                  style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}
+                >
+                  <h2 style={{ margin: 0 }}>Configuration</h2>
+                  <div className="tab-row" style={{ marginBottom: 0, border: 'none' }}>
+                    <button
+                      className={`tab ${evalMode === 'eval' ? 'active' : ''}`}
+                      onClick={() => setEvalMode('eval')}
+                      title="Run generation and LLM-as-judge evaluation"
+                    >
+                      Eval Mode
+                    </button>
+                    <button
+                      className={`tab ${evalMode === 'manual' ? 'active' : ''}`}
+                      onClick={() => setEvalMode('manual')}
+                      title="Run generation only — score datasets manually"
+                    >
+                      Manual Mode
+                    </button>
+                  </div>
+                </div>
+                {evalMode === 'manual' && (
+                  <p style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 12 }}>
+                    Manual mode runs generation without the LLM judge. Review the outputs and assign scores yourself.
+                  </p>
+                )}
+
+                <div className="form-row">
+                  <div className="form-group" style={{ flex: 2 }}>
+                    <label>Dataset</label>
+                    <div className="tab-row">
+                      <button
+                        className={`tab ${datasetMode === 'existing' ? 'active' : ''}`}
+                        onClick={() => setDatasetMode('existing')}
+                      >
+                        Select Existing
+                      </button>
+                      <button
+                        className={`tab ${datasetMode === 'custom' ? 'active' : ''}`}
+                        onClick={() => setDatasetMode('custom')}
+                      >
+                        Custom JSON
+                      </button>
+                    </div>
+                    {datasetMode === 'existing' ? (
+                      <>
+                        <select
+                          value={dataset}
+                          onChange={(e) => setDataset(e.target.value)}
+                          disabled={options.datasets.length === 0}
+                        >
+                          {options.datasets.length === 0 && <option value="">Loading datasets...</option>}
+                          {options.datasets.map((d) => (
+                            <option key={d.file} value={d.file}>
+                              {d.name} ({d.scenarioCount} datasets)
+                            </option>
+                          ))}
+                        </select>
+                        {(() => {
+                          const selected = options.datasets.find((d) => d.file === dataset);
+                          return selected && selected.description ? (
+                            <p style={{ fontSize: 13, color: 'var(--text-muted)', marginTop: 4 }}>
+                              {selected.description}
+                            </p>
+                          ) : null;
+                        })()}
+                      </>
+                    ) : (
+                      <>
+                        <textarea
+                          rows={10}
+                          value={customDatasetJson}
+                          onChange={(e) => setCustomDatasetJson(e.target.value)}
+                          placeholder='Paste dataset JSON here. Must contain a "datasets" array.'
+                        />
+                        <p style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 4 }}>
+                          JSON must have a "datasets" array and "llmEvalConfig". Optionally include "name" and
+                          "metadata".
+                        </p>
+                      </>
+                    )}
+                  </div>
+                </div>
+                <div className="file-links" style={{ marginBottom: 16 }}>
+                  {datasetMode === 'existing' && (
+                    <a
+                      className="file-link"
+                      href={`/api/datasets/${dataset}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      View dataset JSON
+                    </a>
+                  )}
+                </div>
+
+                <div className="form-row">
+                  <div className="form-group">
+                    <label>Generation Model</label>
+                    <select value={model} onChange={(e) => setModel(e.target.value)} disabled={!modelOptions}>
+                      {!modelOptions && <option value="">Loading models...</option>}
+                      {modelOptions && modelOptions.length > 0
+                        ? modelOptions.map((m) => (
+                            <option key={m} value={m}>
+                              {m}
+                            </option>
+                          ))
+                        : modelOptions && model && <option value={model}>{model}</option>}
+                    </select>
+                  </div>
+                  {evalMode === 'eval' && (
+                    <div className="form-group">
+                      <label>Judge Model</label>
+                      <select
+                        value={judgeModel}
+                        onChange={(e) => setJudgeModel(e.target.value)}
+                        disabled={!modelOptions}
+                      >
+                        {!modelOptions && <option value="">Loading models...</option>}
+                        {modelOptions && modelOptions.length > 0
+                          ? modelOptions.map((m) => (
+                              <option key={m} value={m}>
+                                {m}
+                              </option>
+                            ))
+                          : modelOptions && judgeModel && <option value={judgeModel}>{judgeModel}</option>}
+                      </select>
+                    </div>
+                  )}
+                  {appConfig?.customGenerationProperties &&
+                    Object.entries(appConfig.customGenerationProperties).map(([key, values]) => (
+                      <div key={key} className="form-group">
+                        <label>{key}</label>
+                        <select
+                          value={String(customGenerationProps[key] ?? '')}
+                          onChange={(e) => setCustomGenerationProps((prev) => ({ ...prev, [key]: e.target.value }))}
+                        >
+                          {(values || []).map((v) => (
+                            <option key={String(v)} value={String(v)}>
+                              {String(v)}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    ))}
+                </div>
+
+                <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                  <button
+                    className="btn btn-primary"
+                    onClick={runEval}
+                    disabled={
+                      status === 'running' ||
+                      (hasAuth && authStatus !== 'authenticated') ||
+                      (datasetMode === 'custom' && !customDatasetJson.trim())
+                    }
+                  >
+                    {status === 'running' ? (
+                      <>
+                        <span className="spinner"></span>
+                        {evalMode === 'manual' ? 'Generating...' : 'Running Eval...'}
+                      </>
+                    ) : evalMode === 'manual' ? (
+                      'Generate Board'
+                    ) : (
+                      'Run Eval'
+                    )}
+                  </button>
+                  {status === 'running' && (
+                    <button className="btn btn-stop" onClick={stopEval}>
+                      Stop
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* ── Current run results (eval mode, or manual mode after scores saved) ── */}
+            {!resultsOnly && !viewedRun && hasResults && (
+              <ResultsPanel
+                runDirName={activeRunDirName}
+                scenarioDirName={activeScenarioDirName}
+                summaryMarkdown={scenarioSummary}
+                datasetSummaries={datasetSummaries}
+                activeDataset={activeDataset}
+                setActiveDataset={setActiveDataset}
+                header={
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <h2 style={{ margin: 0 }}>Results</h2>
+                    {manualResultsRunDirName && (
+                      <button
+                        className="btn btn-primary"
+                        onClick={() =>
+                          editManualRun(manualRunResult?.runDirName ?? manualResultsRunDirName.replace(/^manual\//, ''))
+                        }
+                      >
+                        Edit Scores
+                      </button>
+                    )}
+                  </div>
+                }
+              />
+            )}
+
+            {/* ── Manual scoring panel (shown after a manual run completes, before scores are saved) ── */}
+            {!resultsOnly && !viewedRun && !manualResultsRunDirName && manualRunResult && status === 'complete' && (
+              <ManualScoringPanel
+                manualRunResult={manualRunResult}
+                humanScores={humanScores}
+                setHumanScores={setHumanScores}
+                onSave={() => saveScores(manualRunResult.runDirName)}
+                saveStatus={saveScoresStatus}
+              />
+            )}
+
+            {/* ── Progress log (streaming output during eval) ── */}
+            {!resultsOnly && logs.length > 0 && (
+              <div className="card">
+                <h2>
+                  Progress{' '}
+                  {status === 'running' && (
+                    <span className="status-badge status-running">
+                      <span className="spinner"></span> Running
+                    </span>
+                  )}
+                  {status === 'complete' && <span className="status-badge status-complete">Complete</span>}
+                  {status === 'error' && <span className="status-badge status-error">Error</span>}
+                </h2>
+                <div className="progress-log" ref={logRef}>
+                  {logs.map((line, i) => {
+                    const { className, text } = formatLogLine(line);
+                    return (
+                      <div key={i} className={className}>
+                        {text}
+                      </div>
+                    );
+                  })}
+                </div>
+                {errorMessage && (
+                  <p style={{ color: 'var(--error)', marginTop: 12, fontSize: 14 }}>
+                    <strong>Error:</strong> {errorMessage}
+                  </p>
+                )}
+              </div>
+            )}
+
+            {/* ── Historical runs link (main view only) ── */}
+            {!resultsOnly && (evalMode === 'eval' ? runs.length > 0 : manualRuns.length > 0) && (
+              <div className="card">
+                {evalMode === 'eval' ? (
+                  <a
+                    href="/results"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{ color: 'var(--primary)', fontSize: 14, textDecoration: 'none' }}
+                  >
+                    Show all eval results ({runs.length}) ↗
+                  </a>
+                ) : (
+                  <a
+                    href="/results?mode=manual"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{ color: 'var(--primary)', fontSize: 14, textDecoration: 'none' }}
+                  >
+                    Show all manual run results ({manualRuns.length}) ↗
+                  </a>
+                )}
+              </div>
+            )}
+
+            {/* ── Historical runs table + detail (/results view only) ── */}
+            {resultsOnly &&
+              (() => {
+                const isManual = resultsMode === 'manual';
+                const activeRuns = isManual ? manualRuns : runs;
+                return (
+                  <>
+                    <RunsTable
+                      runs={activeRuns}
+                      onViewRun={isManual ? loadManualRun : loadRun}
+                      highlightedRunName={isManual ? viewedManualRun?.runDirName : viewedRun?.name}
+                      filterScenario={filterScenario}
+                      setFilterScenario={setFilterScenario}
+                      filterDataset={filterDataset}
+                      setFilterDataset={setFilterDataset}
+                      filterGeneratorModel={filterGeneratorModel}
+                      setFilterGeneratorModel={setFilterGeneratorModel}
+                      filterJudgeModel={filterJudgeModel}
+                      setFilterJudgeModel={setFilterJudgeModel}
+                      filterTimeFrom={filterTimeFrom}
+                      setFilterTimeFrom={setFilterTimeFrom}
+                      filterTimeTo={filterTimeTo}
+                      setFilterTimeTo={setFilterTimeTo}
+                      filterCustomProps={filterCustomProps}
+                      setFilterCustomProps={setFilterCustomProps}
+                      visibleRunCount={visibleRunCount}
+                      setVisibleRunCount={setVisibleRunCount}
+                    />
+
+                    {/* ── Selected run detail panel (eval and manual runs) ── */}
+                    {editingScores && manualRunResult ? (
+                      <>
+                        <div ref={resultsPanelRef} />
+                        <ManualScoringPanel
+                          manualRunResult={manualRunResult}
+                          humanScores={humanScores}
+                          setHumanScores={setHumanScores}
+                          onSave={() => saveScores(manualRunResult.runDirName)}
+                          saveStatus={saveScoresStatus}
+                          onCancel={() => {
+                            setEditingScores(false);
+                            setManualRunResult(null);
+                          }}
+                        />
+                      </>
+                    ) : viewedRun && hasResults ? (
+                      <>
+                        <div ref={resultsPanelRef} />
+                        <ResultsPanel
+                          runDirName={viewedRun.name}
+                          scenarioDirName={viewedRun.scenarioDirName}
+                          summaryMarkdown={scenarioSummary}
+                          datasetSummaries={datasetSummaries}
+                          activeDataset={activeDataset}
+                          setActiveDataset={setActiveDataset}
+                          header={
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                              <h2 style={{ margin: 0 }}>
+                                Results{' '}
+                                <span style={{ fontWeight: 400, fontSize: 13, color: 'var(--text-muted)' }}>
+                                  — {viewedManualRun?.runDirName ?? viewedRun.name}
+                                </span>
+                              </h2>
+                              <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                                {viewedManualRun && (
+                                  <button
+                                    className="btn btn-primary"
+                                    onClick={() => editManualRun(viewedManualRun.runDirName)}
+                                  >
+                                    Edit Scores
+                                  </button>
+                                )}
+                                <button className="close-btn" onClick={closeViewedRun} title="Close">
+                                  ✕
+                                </button>
+                              </div>
+                            </div>
+                          }
+                        />
+                      </>
+                    ) : null}
+                  </>
+                );
+              })()}
+          </div>
+        );
+      }
+
+      const root = ReactDOM.createRoot(document.getElementById('root'));
+      root.render(<App />);
+    </script>
+  </body>
+</html>

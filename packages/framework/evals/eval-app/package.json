@@ -1,0 +1,72 @@
+{
+	"name": "@ff-internal/eval-app",
+	"version": "0.2.3",
+	"type": "module",
+	"main": "dist/index.js",
+	"types": "dist/index.d.ts",
+	"exports": {
+		".": "./dist/index.js",
+		"./package.json": "./package.json"
+	},
+	"files": [
+		"dist",
+		"index.html",
+		"styles.css"
+	],
+	"scripts": {
+		"build": "fluid-build . --task build",
+		"build:compile": "fluid-build . --task compile",
+		"build:esnext": "tsc --project ./tsconfig.json",
+		"build:genver": "gen-version",
+		"check:biome": "biome check .",
+		"check:format": "npm run check:biome",
+		"clean": "rimraf --glob dist _api-extractor-temp \"**/*.tsbuildinfo\" \"**/*.build.log\"",
+		"eslint": "eslint --quiet --format stylish src",
+		"eslint:fix": "eslint --quiet --format stylish src --fix --fix-type problem,suggestion,layout",
+		"format": "npm run format:biome",
+		"format:biome": "biome check . --write",
+		"lint": "fluid-build . --task lint",
+		"lint:fix": "fluid-build . --task eslint:fix --task format",
+		"build:api-reports": "api-extractor run --local",
+		"ci:build:api-reports": "api-extractor run",
+		"test": "npm run test:jest",
+		"test:jest": "jest --ci",
+		"preinstall": "node ../../../../scripts/only-pnpm.cjs"
+	},
+	"dependencies": {
+		"@ff-internal/eval-framework": "workspace:*"
+	},
+	"devDependencies": {
+		"@biomejs/biome": "~2.4.5",
+		"@microsoft/api-extractor": "7.58.1",
+		"@fluid-tools/build-cli": "catalog:buildTools",
+		"@fluidframework/build-common": "^2.0.3",
+		"@fluidframework/build-tools": "catalog:buildTools",
+		"@fluidframework/eslint-config-fluid": "catalog:eslint",
+		"@types/jest": "29.5.3",
+		"@types/node": "catalog:types",
+		"eslint": "catalog:eslint",
+		"jest": "^29.6.2",
+		"jest-junit": "^16.0.0",
+		"jiti": "^2.6.1",
+		"rimraf": "^6.1.3",
+		"ts-jest": "^29.1.1",
+		"typescript": "~5.4.5"
+	},
+	"fluidBuild": {
+		"tasks": {
+			"build:esnext": [
+				"build:genver"
+			],
+			"build:api-reports": [
+				"build:esnext"
+			],
+			"ci:build:api-reports": [
+				"build:esnext"
+			]
+		}
+	},
+	"typeValidation": {
+		"disabled": true
+	}
+}

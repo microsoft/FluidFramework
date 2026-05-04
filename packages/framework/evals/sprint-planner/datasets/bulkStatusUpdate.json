@@ -1,0 +1,28 @@
+{
+	"name": "Bulk Status Update",
+	"metadata": {
+		"description": "Tests the agent's ability to bulk-update statuses of items matching a criteria"
+	},
+	"domainHints": "This is a sprint planning board for an agile software development team. Work items have statuses: todo, in-progress, in-review, done. Priorities are: critical, high, medium, low. Story points use Fibonacci numbers: 1, 2, 3, 5, 8, 13.",
+	"datasets": [
+		{
+			"name": "Bulk status update",
+			"prompt": "Mark all tasks in review as done"
+		}
+	],
+	"rubrics": [
+		{
+			"name": "Task Completion",
+			"description": "Did the agent change the status of all items that were 'in-review' to 'done'? The item 'Design database schema' was the only item in 'in-review' status and should now be 'done'."
+		},
+		{
+			"name": "Selective Update",
+			"description": "Were items NOT in 'in-review' status left unchanged? 'Set up CI/CD pipeline' should remain 'done', 'Implement user authentication' should remain 'in-progress', and 'Write API documentation', 'Add unit tests for auth module', 'Fix responsive layout on mobile' should remain 'todo'."
+		},
+		{
+			"name": "Data Integrity",
+			"description": "Were all non-status properties of all work items (titles, priorities, assignees, story points) preserved without modification?"
+		}
+	],
+	"dataInterpretationPrompt": "The input is the initial state of an agile sprint board as a tree structure containing work items and team members. The output is the final state after an AI agent processed a user prompt. Compare the input and output trees to evaluate whether the agent correctly fulfilled the user's request while preserving existing data."
+}

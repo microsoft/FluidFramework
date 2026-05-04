@@ -1,0 +1,23 @@
+{
+	"$schema": "https://developer.microsoft.com/json-schemas/api-extractor/v7/api-extractor.schema.json",
+	"extends": "../../../../common/build/build-common/api-extractor-base.json",
+	"mainEntryPointFilePath": "<projectFolder>/dist/index.d.ts",
+	"apiReport": {
+		"enabled": true,
+		"reportVariants": ["alpha"]
+	},
+	"docModel": {
+		"enabled": false
+	},
+	"tsdocMetadata": {
+		"enabled": false
+	},
+	"messages": {
+		"extractorMessageReporting": {
+			// {@link} tags to non-package-exported globals (AbortSignal) and intra-interface members are valid
+			"ae-unresolved-link": {
+				"logLevel": "none"
+			}
+		}
+	}
+}
