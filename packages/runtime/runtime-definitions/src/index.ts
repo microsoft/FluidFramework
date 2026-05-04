@@ -105,29 +105,36 @@ export {
 	asLegacyAlpha,
 } from "./stagingMode.js";
 export type {
-	Registry,
-	RegistryKey,
-} from "./registry.js";
-export {
-	registryLookup,
-	basicKey,
-} from "./registry.js";
-
-export type {
+	DataStoreCreator,
+	DataStoreKey,
 	DataStoreKind,
+	DataStoreRegistry,
 	FluidContainer,
-	ServiceClient,
-	ServiceOptions,
 	FluidContainerAttached,
 	FluidContainerWithService,
-	DataStoreKey,
-	DataStoreCreator,
-	DataStoreRegistry,
-} from "./serviceClient.js";
+	Registry,
+	RegistryKey,
+	ServiceClient,
+} from "@fluidframework/driver-definitions/internal";
+export { basicKey, registryLookup } from "@fluidframework/driver-definitions/internal";
 
+export type { ServiceOptions } from "./serviceClient.js";
 export type { Audience } from "./serviceClient.js";
 export {
 	DataStoreKindImplementation,
 	ServiceContainerBase,
 	getContainerAudience,
 } from "./serviceClient.js";
+export {
+	convertRegistry,
+	defaultMinVersionForCollab,
+	makeCodeLoader,
+	makeServiceClientImpl,
+	normalizeRegistry,
+	rootDataStoreId,
+} from "./serviceClientUtils.js";
+export type {
+	ContainerRuntimeLoader,
+	ContainerRuntimeLoaderParams,
+	ServiceContainerStatics,
+} from "./serviceClientUtils.js";

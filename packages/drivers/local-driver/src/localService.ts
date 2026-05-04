@@ -17,20 +17,18 @@ import { assert } from "@fluidframework/core-utils/internal";
 import {
 	type ContainerRuntimeLoader,
 	type ContainerRuntimeLoaderParams,
+	type DataStoreKind,
+	type DataStoreRegistry,
+	type FluidContainerAttached,
+	type FluidContainerWithService,
+	type Registry,
+	type ServiceClient,
+	type ServiceOptions,
 	makeCodeLoader,
 	makeServiceClientImpl,
 	rootDataStoreId,
-} from "@fluidframework/driver-utils/internal";
-import type {
-	ServiceOptions,
-	ServiceClient,
-	FluidContainerAttached,
-	DataStoreKind,
-	FluidContainerWithService,
-	DataStoreRegistry,
-	Registry,
+	ServiceContainerBase,
 } from "@fluidframework/runtime-definitions/internal";
-import { ServiceContainerBase } from "@fluidframework/runtime-definitions/internal";
 import {
 	LocalDeltaConnectionServer,
 	type ILocalDeltaConnectionServer,

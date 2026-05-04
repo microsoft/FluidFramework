@@ -60,14 +60,3 @@ export {
 export { getSnapshotTree, isInstanceOfISnapshot } from "./storageUtils.js";
 export { buildGitTreeHierarchy, getGitMode, getGitType } from "./protocol/index.js";
 export { getKeyForCacheEntry, maximumCacheDurationMs } from "./cacheUtils.js";
-export {
-	type ContainerRuntimeLoader,
-	type ContainerRuntimeLoaderParams,
-	convertRegistry,
-	defaultMinVersionForCollab,
-	makeCodeLoader,
-	makeServiceClientImpl,
-	normalizeRegistry,
-	rootDataStoreId,
-	type ServiceContainerStatics,
-} from "./serviceClientUtils.js";
