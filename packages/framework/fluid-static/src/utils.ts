@@ -148,26 +148,23 @@ export function makeFluidObject<
 }
 
 /**
- * Outermost-boundary filter that resolves the unified `compatibilityMode` input — accepting
- * either a {@link MinimumVersionForCollab} semver string or a legacy {@link CompatibilityMode}
- * value — into the components used internally: a precise `minVersionForCollab` and a
- * {@link CompatibilityMode} key (derived from the major version) for indexing
- * {@link compatibilityModeRuntimeOptions}.
+ * Resolves the `compatibilityMode` input — either a {@link MinimumVersionForCollab}
+ * semver string or a legacy {@link CompatibilityMode} value — into a precise
+ * {@link MinimumVersionForCollab}.
+ *
+ * TODO: This can be removed when the deprecated CompatibilityMode is removed.
  *
  * @internal
  */
-export function resolveCompatibilityInput(
+export function resolveCompatibilityModeToMinVersionForCollab(
 	// eslint-disable-next-line import-x/no-deprecated
-	input: MinimumVersionForCollab | CompatibilityMode,
-	// eslint-disable-next-line import-x/no-deprecated
-): { minVersionForCollab: MinimumVersionForCollab; compatibilityMode: CompatibilityMode } {
-	// TODO: Checking for "1" and "2" can be removed once CompatibilityMode is removed.
-	const minVersionForCollab: MinimumVersionForCollab =
-		input === "1" ? "1.0.0" : input === "2" ? "2.0.0" : input;
-	return {
-		minVersionForCollab,
-		compatibilityMode: minVersionForCollab.startsWith("1.") ? "1" : "2",
-	};
+	compatibilityMode: MinimumVersionForCollab | CompatibilityMode,
+): MinimumVersionForCollab {
+	return compatibilityMode === "1"
+		? "1.0.0"
+		: compatibilityMode === "2"
+			? "2.0.0"
+			: compatibilityMode;
 }
 
 /**

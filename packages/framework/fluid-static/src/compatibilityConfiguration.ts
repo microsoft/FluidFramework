@@ -5,20 +5,16 @@
 
 import type { IContainerRuntimeOptionsInternal } from "@fluidframework/container-runtime/internal";
 
-// eslint-disable-next-line import-x/no-deprecated
-import type { CompatibilityMode } from "./types.js";
-
 /**
- * The CompatibilityMode selected determines the set of runtime options to use. In "1" mode we support
- * full interop with true 1.x clients, while in "2" mode we only support interop with 2.x clients.
+ * The CompatibilityMode (minVersionForCollab) determines the set of runtime options to use.
+ * For a 1.x minVersionForCollab we support full interop with true 1.x clients.
+ * For a 2.x minVersionForCollab we only support interop with 2.x clients.
  *
- * @privateRemarks In general, we can use the `compatibilityMode` property of `LoadContainerRuntimeParams` to apply
- * the proper configurations. However, there are some options that we need to explicity set that differ
- * from the default values (i.e. `enableRuntimeIdCompressor` below).
+ * @privateRemarks This is for when we want to use a different set of defaults than the defaults for a given
+ * minVersionForCollab (i.e. `enableRuntimeIdCompressor` below).
  */
-export const compatibilityModeRuntimeOptions: Record<
-	// eslint-disable-next-line import-x/no-deprecated
-	CompatibilityMode,
+export const minVersionForCollabToDefaultRuntimeOptions: Record<
+	"1" | "2",
 	IContainerRuntimeOptionsInternal
 > = {
 	"1": {},

@@ -31,7 +31,7 @@ import type {
 } from "@fluidframework/runtime-definitions/internal";
 import type { SharedObjectKind } from "@fluidframework/shared-object-base/internal";
 
-import { compatibilityModeRuntimeOptions } from "./compatibilityConfiguration.js";
+import { minVersionForCollabToDefaultRuntimeOptions } from "./compatibilityConfiguration.js";
 import type {
 	// eslint-disable-next-line import-x/no-deprecated
 	CompatibilityMode,
@@ -49,7 +49,7 @@ import {
 	isSharedObjectKind,
 	makeFluidObject,
 	parseDataObjectsFromSharedObjects,
-	resolveCompatibilityInput,
+	resolveCompatibilityModeToMinVersionForCollab,
 } from "./utils.js";
 
 /**
@@ -231,7 +231,7 @@ export function createDOProviderContainerRuntimeFactory(props: {
 		runtimeOptionOverrides,
 		schema,
 	} = props;
-	const { compatibilityMode, minVersionForCollab } = resolveCompatibilityInput(
+	const minVersionForCollab = resolveCompatibilityModeToMinVersionForCollab(
 		props.compatibilityMode,
 	);
 	const [registryEntries, sharedObjects] = parseDataObjectsFromSharedObjects(schema);
@@ -239,7 +239,6 @@ export function createDOProviderContainerRuntimeFactory(props: {
 
 	return new DOProviderContainerRuntimeFactory(
 		schema,
-		compatibilityMode,
 		new RootDataObjectFactory(sharedObjects, registry),
 		{
 			runtimeOptions: runtimeOptionOverrides,
@@ -273,14 +272,11 @@ class DOProviderContainerRuntimeFactory extends BaseContainerRuntimeFactory {
 	 * since it can take care of constructing the root data object factory based on the schema.
 	 *
 	 * @param schema - The schema for the container
-	 * @param compatibilityMode - Compatibility mode
 	 * @param rootDataObjectFactory - A factory that can construct the root data object.
 	 * @param config - Resolved minimum version for collab (required) and optional runtime option overrides.
 	 */
 	public constructor(
 		schema: ContainerSchema,
-		// eslint-disable-next-line import-x/no-deprecated
-		compatibilityMode: CompatibilityMode,
 		rootDataObjectFactory: DataObjectFactory<
 			RootDataObject,
 			{ InitialState: RootDataObjectProps }
@@ -293,7 +289,9 @@ class DOProviderContainerRuntimeFactory extends BaseContainerRuntimeFactory {
 		super({
 			registryEntries: [rootDataObjectFactory.registryEntry],
 			runtimeOptions: {
-				...compatibilityModeRuntimeOptions[compatibilityMode],
+				...minVersionForCollabToDefaultRuntimeOptions[
+					config.minVersionForCollab.startsWith("1.") ? "1" : "2"
+				],
 				...config.runtimeOptions,
 			},
 			provideEntryPoint,

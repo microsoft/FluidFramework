@@ -31,7 +31,7 @@ import type {
 } from "@fluidframework/runtime-definitions/internal";
 import type { SharedObjectKind } from "@fluidframework/shared-object-base/internal";
 
-import { compatibilityModeRuntimeOptions } from "./compatibilityConfiguration.js";
+import { minVersionForCollabToDefaultRuntimeOptions } from "./compatibilityConfiguration.js";
 import type {
 	// eslint-disable-next-line import-x/no-deprecated
 	CompatibilityMode,
@@ -48,7 +48,7 @@ import {
 	isSharedObjectKind,
 	makeFluidObject,
 	parseDataObjectsFromSharedObjects,
-	resolveCompatibilityInput,
+	resolveCompatibilityModeToMinVersionForCollab,
 } from "./utils.js";
 
 /**
@@ -136,8 +136,6 @@ class TreeContainerRuntimeFactory extends BaseContainerRuntimeFactory {
 	readonly #treeRootDataObjectFactory: TreeDataObjectFactory<TreeRootDataObject>;
 
 	public constructor(
-		// eslint-disable-next-line import-x/no-deprecated
-		compatibilityMode: CompatibilityMode,
 		treeRootDataObjectFactory: TreeDataObjectFactory<TreeRootDataObject>,
 		config: {
 			minVersionForCollab: MinimumVersionForCollab;
@@ -147,7 +145,9 @@ class TreeContainerRuntimeFactory extends BaseContainerRuntimeFactory {
 		super({
 			registryEntries: [treeRootDataObjectFactory.registryEntry],
 			runtimeOptions: {
-				...compatibilityModeRuntimeOptions[compatibilityMode],
+				...minVersionForCollabToDefaultRuntimeOptions[
+					config.minVersionForCollab.startsWith("1.") ? "1" : "2"
+				],
 				...config.runtimeOptions,
 			},
 			provideEntryPoint,
@@ -245,7 +245,7 @@ export function createTreeContainerRuntimeFactory(props: {
 		runtimeOptionOverrides,
 		schema,
 	} = props;
-	const { compatibilityMode, minVersionForCollab } = resolveCompatibilityInput(
+	const minVersionForCollab = resolveCompatibilityModeToMinVersionForCollab(
 		props.compatibilityMode,
 	);
 
@@ -253,7 +253,6 @@ export function createTreeContainerRuntimeFactory(props: {
 	const registry = rootDataStoreRegistry ?? new FluidDataStoreRegistry(registryEntries);
 
 	return new TreeContainerRuntimeFactory(
-		compatibilityMode,
 		new TreeRootDataObjectFactory(sharedObjects, registry),
 		{
 			runtimeOptions: runtimeOptionOverrides,
