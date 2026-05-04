@@ -105,6 +105,7 @@
 		"@fluidframework/driver-utils": "workspace:~",
 		"@fluidframework/routerlicious-driver": "workspace:~",
 		"@fluidframework/runtime-definitions": "workspace:~",
+		"@fluidframework/runtime-utils": "workspace:~",
 		"@fluidframework/telemetry-utils": "workspace:~",
 		"jsrsasign": "^11.1.1",
 		"uuid": "^11.1.0"

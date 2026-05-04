@@ -24,15 +24,15 @@ import type {
 	ServiceClient,
 } from "@fluidframework/driver-definitions/internal";
 import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver/internal";
+import type { MinimumVersionForCollab } from "@fluidframework/runtime-definitions/internal";
 import {
 	type ContainerRuntimeLoader,
 	type ContainerRuntimeLoaderParams,
-	type MinimumVersionForCollab,
 	makeCodeLoader,
 	makeServiceClientImpl,
 	rootDataStoreId,
 	ServiceContainerBase,
-} from "@fluidframework/runtime-definitions/internal";
+} from "@fluidframework/runtime-utils/internal";
 import { wrapConfigProviderWithDefaults } from "@fluidframework/telemetry-utils/internal";
 
 import { AzureUrlResolver, createAzureCreateNewRequest } from "./AzureUrlResolver.js";

@@ -30,7 +30,7 @@ import {
 	makeServiceClientImpl,
 	rootDataStoreId,
 	ServiceContainerBase,
-} from "@fluidframework/runtime-definitions/internal";
+} from "@fluidframework/runtime-utils/internal";
 import {
 	LocalDeltaConnectionServer,
 	type ILocalDeltaConnectionServer,

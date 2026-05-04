@@ -14,11 +14,11 @@ import {
 	type DataStoreKind,
 	registryLookup,
 } from "@fluidframework/driver-definitions/internal";
-import {
-	type IFluidDataStoreContext,
-	type IFluidDataStoreChannel,
-	DataStoreKindImplementation,
+import type {
+	IFluidDataStoreContext,
+	IFluidDataStoreChannel,
 } from "@fluidframework/runtime-definitions/internal";
+import { DataStoreKindImplementation } from "@fluidframework/runtime-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import type {
