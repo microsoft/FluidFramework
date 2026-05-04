@@ -11485,6 +11485,9 @@ importers:
       '@fluidframework/tree':
         specifier: workspace:~
         version: link:../../dds/tree
+      semver-ts:
+        specifier: ^1.0.3
+        version: 1.0.3
     devDependencies:
       '@arethetypeswrong/cli':
         specifier: ^0.18.2

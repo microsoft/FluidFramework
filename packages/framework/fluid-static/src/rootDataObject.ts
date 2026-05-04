@@ -31,7 +31,7 @@ import type {
 } from "@fluidframework/runtime-definitions/internal";
 import type { SharedObjectKind } from "@fluidframework/shared-object-base/internal";
 
-import { minVersionForCollabToDefaultRuntimeOptions } from "./compatibilityConfiguration.js";
+import { defaultRuntimeOptionsForMinVersion } from "./compatibilityConfiguration.js";
 import type {
 	// eslint-disable-next-line import-x/no-deprecated
 	CompatibilityMode,
@@ -289,9 +289,7 @@ class DOProviderContainerRuntimeFactory extends BaseContainerRuntimeFactory {
 		super({
 			registryEntries: [rootDataObjectFactory.registryEntry],
 			runtimeOptions: {
-				...minVersionForCollabToDefaultRuntimeOptions[
-					config.minVersionForCollab.startsWith("1.") ? "1" : "2"
-				],
+				...defaultRuntimeOptionsForMinVersion(config.minVersionForCollab),
 				...config.runtimeOptions,
 			},
 			provideEntryPoint,
