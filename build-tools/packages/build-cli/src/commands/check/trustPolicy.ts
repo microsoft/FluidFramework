@@ -87,7 +87,14 @@ export default class CheckTrustPolicyCommand extends BaseCommand<
 			snapshots?: Record<string, unknown>;
 		};
 
-		const pinned = collectPinnedVersions(lockfile);
+		if (!lockfile.packages) {
+			this.error(`Invalid lockfile: no 'packages' section found in ${lockfilePath}`);
+		}
+
+		const pinned = collectPinnedVersions(lockfile as {
+			packages: Record<string, unknown>;
+			snapshots?: Record<string, unknown>;
+		});
 		this.verbose(`Found ${pinned.length} unique name@version entries.`);
 
 		this.verbose(`Materializing scratch workspace at ${tempDir}...`);
@@ -121,25 +128,23 @@ export default class CheckTrustPolicyCommand extends BaseCommand<
 			);
 
 			lastResult = await runPnpm(installArgs, tempDir, this.flags.verbose);
-			const found = extractTrustViolations(`${lastResult.stdout}\n${lastResult.stderr}`);
+			const found = extractTrustViolations(lastResult.stdout);
 
 			if (lastResult.code === 0) {
 				this.verbose("pnpm install succeeded; audit complete.");
 				break;
 			}
 
-			const newOnes = found.filter((v) => !violationSet.has(v));
-			if (newOnes.length === 0) {
+			const newViolations = found.filter((v) => !violationSet.has(v));
+			if (newViolations.length === 0) {
 				this.verbose(
 					`pnpm exited with code ${lastResult.code} but no new trust-policy violations were detected. Stopping.`,
 				);
 				break;
 			}
-			for (const v of newOnes) {
-				violationSet.add(v);
-			}
-			for (const v of newOnes) {
-				this.verbose(`  + ${v}`);
+			for (const violation of newViolations) {
+				violationSet.add(violation);
+				this.verbose(`  + ${violation}`);
 			}
 		}
 
@@ -177,8 +182,8 @@ export default class CheckTrustPolicyCommand extends BaseCommand<
 				}
 			} else {
 				this.log(`\n${violations.length} trust-policy violation(s):\n`);
-				for (const v of violations) {
-					this.log(`  ${v}`);
+				for (const violation of violations) {
+					this.log(`  ${violation}`);
 				}
 			}
 		}
@@ -198,27 +203,26 @@ export default class CheckTrustPolicyCommand extends BaseCommand<
 
 /**
  * Returns the set of unique `name@version` strings referenced by the
- * lockfile's `packages` (and `snapshots`, when present) sections.
+ * lockfile's `packages` and `snapshots` sections.
  *
  * Each key has the form `<name>@<version>[(<peerSuffix>)]`. We strip the
  * peer suffix and split on the last `@` so scoped names parse correctly.
  * Entries whose "version" looks like a URL/tarball/git ref are skipped —
  * pnpm's trust policy only applies to registry resolutions.
  *
- * The `packages:` section's structure (a top-level map keyed by
- * `name@version[(peers)]`) has been stable since pnpm v6 (lockfile
- * versions 5.x through 9.x). Newer lockfile versions also expose a
- * `snapshots:` section with the same key shape, which we read when
- * present.
+ * Both sections use the same key format but may be present in different
+ * pnpm lockfile versions. To ensure a complete audit, we must read both
+ * to capture all pinned dependencies, since versions recorded only in
+ * `snapshots` would otherwise be skipped from the trust-policy check.
  */
 function collectPinnedVersions(lockfile: {
-	packages?: Record<string, unknown>;
+	packages: Record<string, unknown>;
 	snapshots?: Record<string, unknown>;
 }): PinnedVersion[] {
 	const seen = new Set<string>();
 	const result: PinnedVersion[] = [];
 	for (const key of [
-		...Object.keys(lockfile.packages ?? {}),
+		...Object.keys(lockfile.packages),
 		...Object.keys(lockfile.snapshots ?? {}),
 	]) {
 		const parenIndex = key.indexOf("(");
@@ -236,6 +240,9 @@ function collectPinnedVersions(lockfile: {
 			continue;
 		}
 		const token = `${name}@${version}`;
+		// Deduplicate: the same package@version can appear in both `packages`
+		// and `snapshots` sections, so we track what we've already collected
+		// to avoid auditing the same version multiple times.
 		if (seen.has(token)) {
 			continue;
 		}
@@ -247,6 +254,10 @@ function collectPinnedVersions(lockfile: {
 
 /**
  * Builds a filesystem-safe slug for use as a project directory name.
+ *
+ * @returns A lowercase string with runs of non-alphanumeric characters replaced
+ * by `-`, with leading/trailing hyphens trimmed. For example,
+ * `\@fluidframework/tree` + `1.0.0` → `fluidframework-tree-1-0-0`.
  */
 function slugify(name: string, version: string): string {
 	const safeName = name.replace(/[^a-zA-Z0-9]+/g, "-").replace(/^-+|-+$/g, "");
@@ -267,6 +278,8 @@ function slugify(name: string, version: string): string {
  * We avoid putting `trustPolicyExclude` entries in the YAML because
  * pnpm 10's YAML form silently drops double-quoted scalars and rejects
  * bare scoped names; CLI flags are easier to control across iterations.
+ *
+ * @returns The number of leaf projects written (one per entry in `pinned`).
  */
 function writeAuditWorkspace(tempDir: string, pinned: readonly PinnedVersion[]): number {
 	if (existsSync(tempDir)) {
@@ -289,7 +302,7 @@ function writeAuditWorkspace(tempDir: string, pinned: readonly PinnedVersion[]):
 	const projectsDir = path.resolve(tempDir, "projects");
 	mkdirSync(projectsDir, { recursive: true });
 	const usedSlugs = new Map<string, number>();
-	let n = 0;
+	let packageEntryCount = 0;
 	for (const { name, version } of pinned) {
 		let slug = slugify(name, version);
 		const collision = usedSlugs.get(slug) ?? 0;
@@ -304,7 +317,7 @@ function writeAuditWorkspace(tempDir: string, pinned: readonly PinnedVersion[]):
 			path.resolve(projectDir, "package.json"),
 			`${JSON.stringify(
 				{
-					name: `audit-${n++}`,
+					name: `audit-${packageEntryCount}`,
 					version: "0.0.0",
 					private: true,
 					dependencies: { [name]: version },
@@ -313,8 +326,9 @@ function writeAuditWorkspace(tempDir: string, pinned: readonly PinnedVersion[]):
 				2,
 			)}\n`,
 		);
+		packageEntryCount++;
 	}
-	return n;
+	return packageEntryCount;
 }
 
 /**
@@ -356,44 +370,55 @@ function runPnpm(args: string[], cwd: string, streamLive: boolean): Promise<Pnpm
 }
 
 /**
- * Scans pnpm's NDJSON-formatted output and returns a sorted, de-duplicated
- * array of `name@version` strings that triggered the trust-downgrade error.
+ * Scans pnpm's NDJSON stdout for trust-downgrade events and returns a
+ * sorted, de-duplicated array of `name@version` strings that triggered the
+ * error.
  *
- * Each event carries the offending package as a structured field:
- *   `package: { name, version, bareSpecifier }`.
- * That field holds the *real* registry name even when the dependency was
- * installed via an `npm:` alias, which is exactly what
- * `--trust-policy-exclude` matches against.
+ * pnpm's `--reporter ndjson` writes every event (including errors) to stdout
+ * as one JSON object per line. The trust-downgrade error reaches this stream
+ * via pnpm's top-level catch, which calls `logger.error(err, err)`. Bole
+ * copies the error's own properties (including `code` and `package`) to the
+ * top level of the emitted event, so we can read `event.code` and
+ * `event.package.{name,version}` directly.
+ *
+ * Any malformed line, unrecognized event code, or missing package fields
+ * indicate that pnpm's contract has changed and we throw to surface it.
  */
-function extractTrustViolations(ndjson: string): string[] {
+function extractTrustViolations(ndjsonStdout: string): string[] {
 	const found = new Set<string>();
-	for (const rawLine of ndjson.split(/\r?\n/)) {
-		if (!rawLine) {
-			continue;
-		}
-		// Cheap pre-filter — JSON.parse is comparatively expensive and
-		// most lines won't be trust-related.
-		if (!rawLine.includes(TRUST_DOWNGRADE_CODE)) {
+
+	for (const rawLine of ndjsonStdout.split(/\r?\n/)) {
+		// Skip blank lines and any line that can't possibly be a trust-downgrade
+		// event. The substring check is a cheap pre-filter so we only pay the
+		// JSON.parse cost on lines that are actually relevant.
+		if (rawLine === "" || !rawLine.includes(TRUST_DOWNGRADE_CODE)) {
 			continue;
 		}
 		let event: {
 			code?: string;
-			err?: { code?: string };
 			package?: { name?: string; version?: string };
 		};
 		try {
 			event = JSON.parse(rawLine) as typeof event;
-		} catch {
-			continue;
+		} catch (err) {
+			throw new Error(
+				`Found stdout line containing "${TRUST_DOWNGRADE_CODE}" but failed to parse as JSON: ${rawLine}\n${err instanceof Error ? err.message : String(err)}`,
+			);
 		}
-		if (event.code !== TRUST_DOWNGRADE_CODE && event.err?.code !== TRUST_DOWNGRADE_CODE) {
-			continue;
+		if (event.code !== TRUST_DOWNGRADE_CODE) {
+			throw new Error(
+				`Found stdout line containing "${TRUST_DOWNGRADE_CODE}" but event.code did not match: ${rawLine}`,
+			);
 		}
 		const name = event.package?.name;
 		const version = event.package?.version;
-		if (name && version) {
-			found.add(`${name}@${version}`);
+		if (name === undefined || version === undefined) {
+			throw new Error(
+				`pnpm emitted a "${TRUST_DOWNGRADE_CODE}" event without a package name and version: ${rawLine}`,
+			);
 		}
+		found.add(`${name}@${version}`);
 	}
+
 	return [...found].sort();
 }
