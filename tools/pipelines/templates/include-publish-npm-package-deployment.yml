@@ -130,39 +130,19 @@ jobs:
               buildDirectory: buildTools-zip/tarballs
               enableCache: false
 
-          - task: Bash@3
-            name: InstallBuildToolsFromTarball
-            displayName: Install Fluid Build Tools from artifact tarball
-            inputs:
-              targetType: 'inline'
-              workingDirectory: '$(Pipeline.Workspace)/buildTools-zip/tarballs'
-              script: |
-                set -eu -o pipefail
-                echo "Listing files in directory: $(pwd)"
-                ls -la
-                pnpm --version
+            - task: Bash@3
+              name: InstallBuildTools
+              displayName: Install Fluid Build Tools (from npm)
+              inputs:
+                targetType: 'inline'
+                workingDirectory: .
+                script: |
+                  echo "installing version @${{ parameters.buildToolsVersionToInstall }}"
 
-                echo "Installing build tools from tarballs (uses overrides from package.json)"
-                if ls ./*.tgz > /dev/null 2>&1; then
-                  pnpm install ./*.tgz
-                else
-                  echo "Error: No .tgz files found in $(pwd)"
-                  exit 1
-                fi
+                  npm install --global "@fluid-tools/build-cli@${{ parameters.buildToolsVersionToInstall }}"
 
-                # Add the local node_modules/.bin to PATH for subsequent pipeline steps
-                BIN_DIR="$(pwd)/node_modules/.bin"
-                echo "Adding $BIN_DIR to PATH for subsequent steps"
-                echo "##vso[task.prependpath]$BIN_DIR"
-
-                # Verify the tools are available
-                if [ -d "$BIN_DIR" ]; then
-                  echo "Installed binaries:"
-                  ls -la "$BIN_DIR"
-                else
-                  echo "Error: $BIN_DIR does not exist; expected installed binaries to be present."
-                  exit 1
-                fi
+                  # This can be removed once all builds tools are moved to the build-cli library
+                  npm install --global "@fluidframework/build-tools@${{ parameters.buildToolsVersionToInstall }}"
 
           - template: /tools/pipelines/templates/include-publish-npm-package-steps.yml@self
             parameters:
