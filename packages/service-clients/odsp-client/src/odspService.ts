@@ -15,6 +15,14 @@ import type {
 	ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
+import type {
+	DataStoreKind,
+	DataStoreRegistry,
+	FluidContainerAttached,
+	FluidContainerWithService,
+	Registry,
+	ServiceClient,
+} from "@fluidframework/driver-definitions/internal";
 import {
 	OdspDocumentServiceFactory,
 	OdspDriverUrlResolver,
@@ -25,13 +33,7 @@ import type { OdspResourceTokenFetchOptions } from "@fluidframework/odsp-driver-
 import {
 	type ContainerRuntimeLoader,
 	type ContainerRuntimeLoaderParams,
-	type DataStoreKind,
-	type DataStoreRegistry,
-	type FluidContainerAttached,
-	type FluidContainerWithService,
 	type MinimumVersionForCollab,
-	type Registry,
-	type ServiceClient,
 	makeCodeLoader,
 	makeServiceClientImpl,
 	rootDataStoreId,

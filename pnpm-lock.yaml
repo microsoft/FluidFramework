@@ -16003,6 +16003,9 @@ importers:
       '@fluidframework/devtools-core':
         specifier: workspace:~
         version: link:../devtools-core
+      '@fluidframework/driver-definitions':
+        specifier: workspace:~
+        version: link:../../../common/driver-definitions
       '@fluidframework/fluid-static':
         specifier: workspace:~
         version: link:../../../framework/fluid-static

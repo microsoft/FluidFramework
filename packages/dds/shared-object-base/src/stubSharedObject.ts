@@ -4,10 +4,8 @@
  */
 
 import type { IFluidLoadable } from "@fluidframework/core-interfaces";
-import type {
-	DataStoreKind,
-	ISummaryTreeWithStats,
-} from "@fluidframework/runtime-definitions/internal";
+import type { DataStoreKind } from "@fluidframework/driver-definitions/internal";
+import type { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions/internal";
 
 import { dataStoreKind, sharedObjectRegistryFromIterable } from "./dataStoreKind.js";
 import {

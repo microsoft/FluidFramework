@@ -25,6 +25,7 @@ import type {
 import type {
 	IDocumentMessage,
 	ISequencedDocumentMessage,
+	RegistryKey,
 } from "@fluidframework/driver-definitions/internal";
 import {
 	type IExperimentalIncrementalSummaryContext,
@@ -35,7 +36,6 @@ import {
 	totalBlobSizePropertyName,
 	type IRuntimeMessageCollection,
 	type IRuntimeMessagesContent,
-	type RegistryKey,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	toDeltaManagerInternal,

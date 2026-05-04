@@ -5,6 +5,23 @@
 
 import type { ErasedBaseType } from "@fluidframework/core-interfaces/internal";
 
+/*
+ * This file defines the public API for the ServiceClient and related types.
+ *
+ * TODO:
+ * Currently this API surface expect all code using it together to be using a singly copy of the Fluid Framework client packages.
+ *
+ * Before stabilizing any of this past beta, it should be evaluated if this requirement needs to be relaxed, and if so how to do that.
+ * Regardless of if its relaxed or not, what ever rules are put in place should be runtime and compile time enforced as much as possible.
+ *
+ * TODO:
+ * Fault isolation should be considered in this API design.
+ * When are exceptions recoverable and how?
+ * Likely we can fault isolate exceptions to containers in most cases,
+ * and containers can indicate their status by being closed or disposed.
+ * Non fatal errors should not be exceptions.
+ */
+
 // #region Registry types
 
 /**
@@ -213,19 +230,30 @@ export type DataStoreRegistry<out T = unknown> = Registry<Promise<DataStoreKind<
  */
 export interface ServiceClient {
 	/**
-	 * Attaches a detached container.
-	 *
-	 * The returned promise resolves once the container is attached: the container from the promise is the same one passed in as the argument.
-	 */
-	// TODO: supporting this and a service independent createContainer would be nice, but is current impractical. Can be added later.
-	// attachContainer<T>(detached: FluidContainer<T>): Promise<FluidContainerAttached<T>>;
-	/**
 	 * Creates a detached container associated with this service client.
 	 * @privateRemarks
-	 * TODO:As this is a detached container, it should be able to be created synchronously.
+	 * TODO: As this is a detached container, it should be able to be created synchronously.
+	 *
+	 * TODO: Provide more general alternative to this in the form of a service-independent `createContainer` free function.
+	 * It would work with a `ServiceClient.attachContainer<T>(detached: FluidContainer<T>): Promise<FluidContainerAttached<T>>`
+	 * which returns a promise that resolves once the detached container has been attached
+	 * (pointing to the same container object, but with the new type).
+	 *
+	 * Challenges:
+	 *
+	 * Currently the service must be provided at creation time because `IContainer.attach` does not accept a service client,
+	 * making it unclear whether a truly service-independent path is feasible in the near term.
 	 */
 	createContainer<T>(root: DataStoreKind<T>): Promise<FluidContainerWithService<T>>;
 
+	/**
+	 * Creates a detached container associated with this service client.
+	 * @param root - A {@link DataStoreKey} used to look up the root's {@link DataStoreKind} from `registry`.
+	 * @param registry - The {@link DataStoreRegistry} supplying the {@link DataStoreKind} for the root and any other data stores the container may need to create.
+	 * @remarks
+	 * Use this overload when the root {@link DataStoreKind} is not available eagerly (e.g. for lazy loading),
+	 * or when the container needs a registry for creating additional data stores beyond the root.
+	 */
 	createContainer<T>(
 		root: DataStoreKey<T>,
 		registry: DataStoreRegistry,
