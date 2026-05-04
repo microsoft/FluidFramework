@@ -4,11 +4,10 @@
  */
 
 import { spawn } from "node:child_process";
-import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
 import path from "node:path";
 
 import { Flags } from "@oclif/core";
-import { parse as parseYaml } from "yaml";
 
 import { BaseCommand } from "../../library/commands/base.js";
 
@@ -36,9 +35,10 @@ interface PnpmRunResult {
  *
  * Strategy:
  *
- * 1. Read the lockfile via `@pnpm/lockfile.fs` and enumerate every key
- * under `packages` (and `snapshots`, if present in newer lockfile
- * versions).
+ * 1. Run `pnpm list -r --json --depth Infinity` at the repo root and
+ * walk every `(name, version)` pair reachable through any project's
+ * `dependencies` / `devDependencies` / `peerDependencies` /
+ * `optionalDependencies` tree.
  * 2. Materialize a scratch workspace at `<repoRoot>/.trust-audit-temp/`
  * with one leaf project per `(name, version)`. Each leaf depends on
  * the *real* registry name (no `npm:` aliases) because pnpm 10's
@@ -47,6 +47,9 @@ interface PnpmRunResult {
  * reporting. pnpm aborts at the first violation; we add the
  * offender to the exclude list and re-run, repeating until pnpm
  * either succeeds or stops surfacing new violations.
+ *
+ * See https://github.com/pnpm/pnpm/issues/10622 for the bug that motivated
+ * this command.
  */
 export default class CheckTrustPolicyCommand extends BaseCommand<
 	typeof CheckTrustPolicyCommand
@@ -80,25 +83,23 @@ export default class CheckTrustPolicyCommand extends BaseCommand<
 		);
 
 		const lockfilePath = path.join(repoRoot, "pnpm-lock.yaml");
-		this.verbose(`Reading lockfile: ${lockfilePath}`);
 		if (!existsSync(lockfilePath)) {
 			this.error(`No pnpm-lock.yaml found in ${repoRoot}`);
 		}
-		const lockfile = parseYaml(readFileSync(lockfilePath, "utf-8")) as {
-			packages?: Record<string, unknown>;
-			snapshots?: Record<string, unknown>;
-		};
 
-		if (!lockfile.packages) {
-			this.error(`Invalid lockfile: no 'packages' section found in ${lockfilePath}`);
+		this.verbose("Enumerating installed dependencies via `pnpm list -r --json`...");
+		const listResult = await runPnpm(
+			["list", "--recursive", "--json", "--depth", "Infinity"],
+			repoRoot,
+			false,
+		);
+		if (listResult.code !== 0) {
+			this.error(
+				`pnpm list exited with code ${listResult.code}. stderr:\n${listResult.stderr}`,
+			);
 		}
 
-		const pinned = collectPinnedVersions(
-			lockfile as {
-				packages: Record<string, unknown>;
-				snapshots?: Record<string, unknown>;
-			},
-		);
+		const pinned = collectPinnedVersions(listResult.stdout);
 		this.verbose(`Found ${pinned.length} unique name@version entries.`);
 
 		this.verbose(`Materializing scratch workspace at ${tempDir}...`);
@@ -120,6 +121,7 @@ export default class CheckTrustPolicyCommand extends BaseCommand<
 				"install",
 				"--recursive",
 				"--no-frozen-lockfile",
+				"--lockfile-only",
 				"--trust-policy",
 				"no-downgrade",
 				"--reporter",
@@ -206,53 +208,64 @@ export default class CheckTrustPolicyCommand extends BaseCommand<
 }
 
 /**
- * Returns the set of unique `name@version` strings referenced by the
- * lockfile's `packages` and `snapshots` sections.
+ * Walks the JSON output of `pnpm list -r --json --depth Infinity` and returns
+ * the set of unique `name@version` strings for every dependency resolved
+ * from a registry.
  *
- * Each key has the form `<name>@<version>[(<peerSuffix>)]`. We strip the
- * peer suffix and split on the last `@` so scoped names parse correctly.
- * Entries whose "version" looks like a URL/tarball/git ref are skipped —
- * pnpm's trust policy only applies to registry resolutions.
- *
- * Both sections use the same key format but may be present in different
- * pnpm lockfile versions. To ensure a complete audit, we must read both
- * to capture all pinned dependencies, since versions recorded only in
- * `snapshots` would otherwise be skipped from the trust-policy check.
+ * pnpm's output is an array of workspace project nodes. Each node and each
+ * nested dependency entry can carry `dependencies`, `devDependencies`,
+ * `peerDependencies`, and `optionalDependencies` maps. Each map value has
+ * a `from` field (the *real* registry name, even when installed via an
+ * `npm:` alias) and a `version` field. Registry-resolved entries also
+ * carry a `resolved` URL — workspace, link, file, and git installs do not,
+ * so requiring `resolved` is what filters the audit down to the dependencies
+ * pnpm's trust policy actually applies to.
  */
-function collectPinnedVersions(lockfile: {
-	packages: Record<string, unknown>;
-	snapshots?: Record<string, unknown>;
-}): PinnedVersion[] {
+function collectPinnedVersions(listJsonStdout: string): PinnedVersion[] {
+	interface DependencyEntry {
+		from?: string;
+		version?: string;
+		resolved?: string;
+		dependencies?: Record<string, DependencyEntry>;
+		devDependencies?: Record<string, DependencyEntry>;
+		peerDependencies?: Record<string, DependencyEntry>;
+		optionalDependencies?: Record<string, DependencyEntry>;
+	}
+
+	const projects = JSON.parse(listJsonStdout) as DependencyEntry[];
 	const seen = new Set<string>();
 	const result: PinnedVersion[] = [];
-	for (const key of [
-		...Object.keys(lockfile.packages),
-		...Object.keys(lockfile.snapshots ?? {}),
-	]) {
-		const parenIndex = key.indexOf("(");
-		const stripped = parenIndex >= 0 ? key.slice(0, parenIndex) : key;
-		const lastAt = stripped.lastIndexOf("@");
-		if (lastAt <= 0) {
-			continue;
+
+	function visit(entry: DependencyEntry): void {
+		if (
+			entry.from !== undefined &&
+			entry.version !== undefined &&
+			entry.resolved !== undefined &&
+			/^https?:\/\//.test(entry.resolved)
+		) {
+			const token = `${entry.from}@${entry.version}`;
+			if (!seen.has(token)) {
+				seen.add(token);
+				result.push({ name: entry.from, version: entry.version });
+			}
 		}
-		const name = stripped.slice(0, lastAt);
-		const version = stripped.slice(lastAt + 1);
-		if (!name || !version) {
-			continue;
+		for (const map of [
+			entry.dependencies,
+			entry.devDependencies,
+			entry.peerDependencies,
+			entry.optionalDependencies,
+		]) {
+			if (map === undefined) continue;
+			for (const child of Object.values(map)) {
+				visit(child);
+			}
 		}
-		if (/[/:]/.test(version)) {
-			continue;
-		}
-		const token = `${name}@${version}`;
-		// Deduplicate: the same package@version can appear in both `packages`
-		// and `snapshots` sections, so we track what we've already collected
-		// to avoid auditing the same version multiple times.
-		if (seen.has(token)) {
-			continue;
-		}
-		seen.add(token);
-		result.push({ name, version });
 	}
+
+	for (const project of projects) {
+		visit(project);
+	}
+
 	return result;
 }
 
