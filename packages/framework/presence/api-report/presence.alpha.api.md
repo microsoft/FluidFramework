@@ -52,6 +52,9 @@ export type ClientConnectionId = string;
 // @beta @deprecated
 export const getPresence: (fluidContainer: IFluidContainer) => Presence;
 
+// @alpha
+export function getPresenceFromContainer(container: FluidContainerAttached): PresenceWithNotifications;
+
 // @public @system
 export namespace InternalPresenceTypes {
     // @system

@@ -16,6 +16,8 @@ import type {
 	IFluidDataStoreContext,
 } from "@fluidframework/runtime-definitions/internal";
 
+export { getPresenceFromContainer } from "@fluid-internal/presence-runtime/extension";
+
 /**
  * Acquire a {@link Presence} from a Fluid Container
  * @param fluidContainer - Fluid Container to acquire the map from

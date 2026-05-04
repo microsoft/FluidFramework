@@ -608,6 +608,9 @@ TSchema
 // @public
 export type InsertableTypedNode<TSchema extends TreeNodeSchema, T = UnionToIntersection<TSchema>> = (T extends TreeNodeSchema<string, NodeKind, TreeNode | TreeLeafValue, never, true> ? NodeBuilderData<T> : never) | (T extends TreeNodeSchema ? Unhydrated<TreeNode extends NodeFromSchema<T> ? never : NodeFromSchema<T>> : never);
 
+// @alpha
+export function instantiateTreeFirstTime<TSchema extends ImplicitFieldSchema>(rootCreator: SharedObjectCreator, creator: SharedObjectCreator, treeKind: SharedObjectKey<ITree>, options: Pick<TreeDataStoreOptions<TSchema>, "config" | "initializer">): Promise<ITree>;
+
 // @public @sealed
 export interface InternalTreeNode extends ErasedType<"@fluidframework/tree.InternalTreeNode"> {
 }
@@ -1235,6 +1238,9 @@ export class SchemaUpgrade {
 // @public @system
 type ScopedSchemaName<TScope extends string | undefined, TName extends number | string> = TScope extends undefined ? `${TName}` : `${TScope}.${TName}`;
 
+// @alpha
+export const SharedTreeAlpha: SharedObjectKindAlpha<ITree>;
+
 // @alpha @input
 export interface SharedTreeFormatOptions {
     treeEncodeType: TreeCompressionStrategy;
@@ -1781,6 +1787,18 @@ export interface TreeContextAlpha {
     runTransaction(transaction: () => void, params?: RunTransactionParams): TransactionResult;
     runTransactionAsync<TValue>(transaction: () => Promise<WithValue<TValue>>, params?: RunTransactionParams): Promise<TransactionResultExt<TValue, TValue>>;
     runTransactionAsync(transaction: () => Promise<void>, params?: RunTransactionParams): Promise<TransactionResult>;
+}
+
+// @alpha
+export function treeDataStoreKind<const TSchema extends ImplicitFieldSchema>(options: TreeDataStoreOptions<TSchema>): DataStoreKind<TreeView<TSchema>>;
+
+// @alpha @input
+export interface TreeDataStoreOptions<TSchema extends ImplicitFieldSchema> extends Pick<DataStoreOptions<never, never>, "type"> {
+    readonly config: TreeViewConfiguration<TSchema>;
+    readonly initializer?: (creator: SharedObjectCreator) => InsertableTreeFieldFromImplicitField<TSchema>;
+    // (undocumented)
+    readonly key?: SharedObjectKey<ITree>;
+    readonly registry?: Iterable<SharedObjectKindAlpha<IFluidLoadable>> | SharedObjectRegistry;
 }
 
 // @beta @input

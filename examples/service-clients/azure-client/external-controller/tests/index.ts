@@ -3,145 +3,82 @@
  * Licensed under the MIT License.
  */
 
+// eslint-disable-next-line import-x/no-internal-modules
 import {
-	IContainer,
-	IFluidModuleWithDetails,
-	IRuntimeFactory,
-} from "@fluidframework/container-definitions/legacy";
-import { Loader } from "@fluidframework/container-loader/legacy";
-import {
-	createDOProviderContainerRuntimeFactory,
-	createFluidContainer,
-	// eslint-disable-next-line import-x/no-internal-modules -- #26986: `fluid-static` internal used in examples
-} from "@fluidframework/fluid-static/internal";
-// eslint-disable-next-line import-x/no-internal-modules -- #26987: `local-driver` internal used in examples
-import { LocalSessionStorageDbFactory } from "@fluidframework/local-driver/internal";
-import {
-	LocalDocumentServiceFactory,
-	LocalResolver,
-} from "@fluidframework/local-driver/legacy";
-import { LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
+	createEphemeralServiceClient,
+	synchronizeLocalService,
+} from "@fluidframework/local-driver/internal";
 
 import { DiceRollerController } from "../src/controller.js";
-import {
-	diceRollerContainerSchema,
-	initializeAppForNewContainer,
-	loadAppFromExistingContainer,
-	type DiceRollerContainerSchema,
-} from "../src/fluid.js";
+import { diceRollerDataStoreKind } from "../src/fluid.js";
 import type { TwoDiceApp } from "../src/schema.js";
 import { makeAppView } from "../src/view.js";
 
-// The local server needs to be shared across the Loader instances for collaboration to happen
-const localServer = LocalDeltaConnectionServer.create(new LocalSessionStorageDbFactory());
-
-const urlResolver = new LocalResolver();
+// Shared ephemeral service — module-level singleton ensures all containers share the same in-memory server
+const service = createEphemeralServiceClient();
 
 /**
- * Connect to the local SessionStorage Fluid service and retrieve a Container with the given ID running the given code.
- * @param containerId - The document id to retrieve or create
- * @param containerRuntimeFactory - The container factory to be loaded in the container
- * @internal
- */
-export async function getSessionStorageContainer(
-	containerId: string,
-	containerRuntimeFactory: IRuntimeFactory,
-	createNew: boolean,
-): Promise<{ container: IContainer; attach: (() => Promise<void>) | undefined }> {
-	const documentServiceFactory = new LocalDocumentServiceFactory(localServer);
-	const url = `${window.location.origin}/${containerId}`;
-
-	// To bypass proposal-based loading, we need a codeLoader that will return our already-in-memory container factory.
-	// The expected format of that response is an IFluidModule with a fluidExport.
-	const load = async (): Promise<IFluidModuleWithDetails> => {
-		return {
-			module: { fluidExport: containerRuntimeFactory },
-			details: { package: "no-dynamic-package", config: {} },
-		};
-	};
-
-	const codeLoader = { load };
-
-	const loader = new Loader({
-		urlResolver,
-		documentServiceFactory,
-		codeLoader,
-	});
-
-	let container: IContainer;
-	let attach: (() => Promise<void>) | undefined;
-
-	if (createNew) {
-		// We're not actually using the code proposal (our code loader always loads the same module regardless of the
-		// proposal), but the IContainer will only give us a NullRuntime if there's no proposal.  So we'll use a fake
-		// proposal.
-		container = await loader.createDetachedContainer({ package: "", config: {} });
-		attach = async (): Promise<void> => container.attach({ url });
-	} else {
-		container = await loader.resolve({ url });
-	}
-
-	return { container, attach };
-}
-
-/**
- * This is a helper function for loading the page. It's required because getting the Fluid Container
- * requires making async calls.
+ * Creates or loads a Fluid container and renders the dice roller UI into the given DOM element.
+ *
+ * @param containerId - When `undefined` a new detached container is created and then attached.
+ * When provided, the existing container with that ID is loaded (after synchronizing the local server).
+ * @param elementId - ID of the DOM element to render into.
+ * @returns The container ID — either freshly generated or the one that was passed in.
  */
 async function createContainerAndRenderInElement(
-	containerId: string,
+	containerId: string | undefined,
 	elementId: string,
-	createNewFlag: boolean,
-): Promise<void> {
+): Promise<string> {
 	const element = document.querySelector(`#${elementId}`);
 	if (element === null) {
 		throw new Error(`${elementId} does not exist`);
 	}
 
-	// The SessionStorage Container is an in-memory Fluid container that uses the local browser SessionStorage
-	// to store ops.
-	const { container, attach } = await getSessionStorageContainer(
-		containerId,
-		createDOProviderContainerRuntimeFactory({
-			schema: diceRollerContainerSchema,
-			compatibilityMode: "2",
-		}),
-		createNewFlag,
-	);
-
-	// Get the Default Object from the Container
-	const fluidContainer = await createFluidContainer<DiceRollerContainerSchema>({ container });
-
 	let appModel: TwoDiceApp;
-	if (createNewFlag) {
-		appModel = initializeAppForNewContainer(fluidContainer);
-		await attach?.();
+	let id: string;
+
+	if (containerId === undefined) {
+		const container = await service.createContainer(diceRollerDataStoreKind);
+		const attached = await container.attach();
+		id = attached.id;
+		appModel = attached.data.root;
 	} else {
-		appModel = loadAppFromExistingContainer(fluidContainer);
+		await synchronizeLocalService();
+		const container = await service.loadContainer(containerId, diceRollerDataStoreKind);
+		id = containerId;
+		appModel = container.data.root;
 	}
 
-	const diceRollerController = new DiceRollerController(appModel.dice1, () => {});
+	const diceRollerController1 = new DiceRollerController(appModel.dice1, () => {});
 	const diceRollerController2 = new DiceRollerController(appModel.dice2, () => {});
 
-	element.append(makeAppView([diceRollerController, diceRollerController2]));
+	element.append(makeAppView([diceRollerController1, diceRollerController2]));
+	return id;
 }
 
 /**
- * For local testing we have two div's that we are rendering into independently.
+ * Bootstraps the side-by-side test page.
+ *
+ * @remarks
+ * Creates a single container (left panel) or loads an existing one identified by `location.hash`,
+ * then loads the same container a second time into the right panel to simulate two collaborating users.
+ * Sets `window.fluidStarted = true` when complete so test automation can detect readiness.
  */
 async function setup(): Promise<void> {
-	// Since this is a single page Fluid application we are generating a new document id
-	// if one was not provided
 	const createNew = window.location.hash.length === 0;
 	if (createNew) {
 		window.location.hash = Date.now().toString();
 	}
-	const containerId = window.location.hash.slice(1);
+	const containerId = createNew ? undefined : window.location.hash.slice(1);
 
-	await createContainerAndRenderInElement(containerId, "sbs-left", createNew);
+	const id = await createContainerAndRenderInElement(containerId, "sbs-left");
 
-	// The second time we don't need to createNew because we know a Container exists.
-	await createContainerAndRenderInElement(containerId, "sbs-right", false);
+	if (createNew) {
+		window.location.hash = id;
+	}
+
+	// The second time we load — always loading an existing container
+	await createContainerAndRenderInElement(id, "sbs-right");
 
 	// Setting "fluidStarted" is just for our test automation
 	// eslint-disable-next-line @typescript-eslint/dot-notation
@@ -153,7 +90,7 @@ try {
 } catch (error) {
 	console.error(error);
 	console.log(
-		"%cThere were issues setting up and starting the in memory FLuid Server",
+		"%cThere were issues setting up and starting the in memory Fluid Server",
 		"font-size:30px",
 	);
 }

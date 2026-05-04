@@ -39,7 +39,7 @@ import {
 import { isFluidHandle, toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
 import type {
 	ISharedObjectKind,
-	SharedObjectKind,
+	SharedObjectKindAlpha,
 } from "@fluidframework/shared-object-base/internal";
 import {
 	createMockLoggerExt,
@@ -226,7 +226,7 @@ export const DefaultTestSharedTreeKind = configuredSharedTree({
 	jsonValidator: FormatValidatorBasic,
 	// Default to v2_80 to support noChange constraints in table operations
 	minVersionForCollab: FluidClientVersion.v2_80,
-}) as SharedObjectKind<ISharedTree> & ISharedObjectKind<ISharedTree>;
+}) as SharedObjectKindAlpha<ISharedTree> & ISharedObjectKind<ISharedTree>;
 
 /**
  * A {@link IJsonCodec} implementation which fails on encode and decode.

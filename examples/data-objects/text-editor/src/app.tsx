@@ -3,8 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { AzureClient, type AzureLocalConnectionConfig } from "@fluidframework/azure-client";
-import { createDevtoolsLogger, initializeDevtools } from "@fluidframework/devtools/beta";
+import { createDevtoolsLogger, initializeFluidDevtools } from "@fluidframework/devtools/alpha";
 import {
 	FormattedMainView,
 	QuillMainView as PlainQuillView,
@@ -20,48 +19,23 @@ import {
 	PlainTextMainView,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "@fluidframework/react/internal";
-/**
- * InsecureTokenProvider is used here for local development and demo purposes only.
- * Do not use in production - implement proper authentication for production scenarios.
- */
+import {
+	createTinyliciousServiceClient,
+	type TinyliciousServiceOptions,
+} from "@fluidframework/tinylicious-driver/alpha";
 // eslint-disable-next-line import-x/no-internal-modules
-import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils/internal";
-import { SchemaFactory, TreeViewConfiguration, type TreeView } from "@fluidframework/tree";
-// eslint-disable-next-line import-x/no-internal-modules
-import { FormattedTextAsTree, TextAsTree } from "@fluidframework/tree/internal";
-import { SharedTree } from "@fluidframework/tree/legacy";
-import type { IFluidContainer } from "fluid-framework";
+import { FormattedTextAsTree } from "@fluidframework/tree/internal";
+import { SchemaFactory, TreeViewConfiguration, type TreeView } from "fluid-framework";
+import {
+	TextAsTree,
+	treeDataStoreKind,
+	type FluidContainerAttached,
+} from "fluid-framework/alpha";
 // eslint-disable-next-line import-x/no-internal-modules, import-x/no-unassigned-import
 import "quill/dist/quill.snow.css";
 import { type FC, useEffect, useMemo, useState } from "react";
 // eslint-disable-next-line import-x/no-internal-modules
 import { createRoot } from "react-dom/client";
-
-/**
- * Get the Tinylicious endpoint URL, handling Codespaces port forwarding. Tinylicious only works for localhost,
- * so in Codespaces we need to use the forwarded URL.
- */
-function getTinyliciousEndpoint(): string {
-	const hostname = window.location.hostname;
-	const tinyliciousPort = 7070;
-
-	// Detect GitHub Codespaces: hostname like "ideal-giggle-xxx-8080.app.github.dev"
-	if (hostname.endsWith(".app.github.dev")) {
-		const match = /^(.+)-\d+\.app\.github\.dev$/.exec(hostname);
-		if (match) {
-			const codespaceName = match[1];
-			return `https://${codespaceName}-${tinyliciousPort}.app.github.dev`;
-		}
-	}
-
-	return `http://localhost:${tinyliciousPort}`;
-}
-
-const containerSchema = {
-	initialObjects: {
-		tree: SharedTree,
-	},
-};
 
 const sf = new SchemaFactory("com.fluidframework.example.text-editor");
 
@@ -72,16 +46,19 @@ export class TextEditorRoot extends sf.object("TextEditorRoot", {
 
 export const treeConfig = new TreeViewConfiguration({ schema: TextEditorRoot });
 
-function getConnectionConfig(userId: string): AzureLocalConnectionConfig {
-	return {
-		type: "local",
-		tokenProvider: new InsecureTokenProvider("VALUE_NOT_USED", {
-			id: userId,
-			name: `User-${userId}`,
+/**
+ * Data store kind for the text editor application.
+ * Defines the schema, view configuration, and initial (empty) state for both plain and formatted text trees.
+ */
+const textEditorKind = treeDataStoreKind({
+	type: "text-editor",
+	config: treeConfig,
+	initializer: () =>
+		new TextEditorRoot({
+			plainText: TextAsTree.Tree.fromString(""),
+			formattedText: FormattedTextAsTree.Tree.fromString(""),
 		}),
-		endpoint: getTinyliciousEndpoint(),
-	};
-}
+});
 
 type ViewType = "plainTextarea" | "plainQuill" | "formatted";
 
@@ -91,65 +68,27 @@ interface DualUserViews {
 	containerId: string;
 }
 
-async function createAndAttachNewContainer(client: AzureClient): Promise<{
-	container: IFluidContainer<typeof containerSchema>;
-	containerId: string;
-	treeView: TreeView<typeof TextEditorRoot>;
-}> {
-	const { container } = await client.createContainer(containerSchema, "2");
-
-	const treeView = container.initialObjects.tree.viewWith(treeConfig);
-
-	// Initialize tree with root containing both plain and formatted text
-	treeView.initialize(
-		new TextEditorRoot({
-			plainText: TextAsTree.Tree.fromString(""),
-			formattedText: FormattedTextAsTree.Tree.fromString(""),
-		}),
-	);
-
-	const containerId = await container.attach();
-
-	return {
-		container,
-		containerId,
-		treeView,
-	};
-}
-
-async function loadExistingContainer(
-	client: AzureClient,
-	containerId: string,
-): Promise<{
-	container: IFluidContainer<typeof containerSchema>;
-	treeView: TreeView<typeof TextEditorRoot>;
-}> {
-	const { container } = await client.getContainer(containerId, containerSchema, "2");
-	const treeView = container.initialObjects.tree.viewWith(treeConfig);
-	return {
-		container,
-		treeView,
-	};
-}
-
+/**
+ * Initializes Fluid containers and returns tree views for two simulated users.
+ *
+ * @remarks
+ * Uses `location.hash` to determine whether to create a new container or load an existing one.
+ * A second independent service client then loads the same container, providing a second user's view
+ * for side-by-side collaboration testing in a single browser tab.
+ */
 async function initFluid(): Promise<DualUserViews> {
-	const endpoint = getTinyliciousEndpoint();
-	console.log(`Connecting to Tinylicious at: ${endpoint}`);
-
-	const user1Id = `user1-${Math.random().toString(36).slice(2, 6)}`;
-	const user2Id = `user2-${Math.random().toString(36).slice(2, 6)}`;
-
 	// Initialize telemetry logger for use with Devtools
 	const devtoolsLogger = createDevtoolsLogger();
 
-	const client1 = new AzureClient({
-		connection: getConnectionConfig(user1Id),
-		logger: devtoolsLogger,
-	});
+	const options: TinyliciousServiceOptions = {
+		minVersionForCollab: "2.100.0",
+		// TODO: logger
+		// TODO: user ids.
+	};
 
-	let containerId: string;
-	let user1Container: IFluidContainer;
-	let user1View: TreeView<typeof TextEditorRoot>;
+	const service1 = createTinyliciousServiceClient(options);
+
+	let user1Container: FluidContainerAttached<TreeView<typeof TextEditorRoot>>;
 	if (location.hash) {
 		// Load existing document for both users
 		const rawContainerId = location.hash.slice(1);
@@ -162,44 +101,25 @@ async function initFluid(): Promise<DualUserViews> {
 				"Invalid container ID in URL hash. Expected 3-64 alphanumeric or '-' characters.",
 			);
 		}
-		containerId = rawContainerId;
-		console.log(`Loading document for both users: ${containerId}`);
 
 		// User 1 connects to existing document
-		({ container: user1Container, treeView: user1View } = await loadExistingContainer(
-			client1,
-			containerId,
-		));
-
-		console.log(`User 1 connected to document: ${containerId}`);
+		user1Container = await service1.loadContainer(rawContainerId, textEditorKind);
 	} else {
 		// User 1 creates the document
-		({
-			container: user1Container,
-			treeView: user1View,
-			containerId,
-		} = await createAndAttachNewContainer(client1));
-
+		const container = await service1.createContainer(textEditorKind);
+		user1Container = await container.attach();
 		// eslint-disable-next-line require-atomic-updates
-		location.hash = containerId;
-
-		console.log(`User 1 created document: ${containerId}`);
+		location.hash = user1Container.id;
 	}
+	const containerId = user1Container.id;
+
+	const service2 = createTinyliciousServiceClient(options);
 
 	// User 2 connects to the loaded document
-	const client2 = new AzureClient({
-		connection: getConnectionConfig(user2Id),
-		logger: devtoolsLogger,
-	});
-	const { container: user2Container, treeView: user2View } = await loadExistingContainer(
-		client2,
-		containerId,
-	);
-
-	console.log(`User 2 connected to document: ${containerId}`);
+	const user2Container = await service2.loadContainer(containerId, textEditorKind);
 
 	// Initialize Devtools
-	initializeDevtools({
+	await initializeFluidDevtools({
 		logger: devtoolsLogger,
 		initialContainers: [
 			{
@@ -214,8 +134,8 @@ async function initFluid(): Promise<DualUserViews> {
 	});
 
 	return {
-		user1: user1View,
-		user2: user2View,
+		user1: user1Container.data,
+		user2: user2Container.data,
 		containerId,
 	};
 }
@@ -383,8 +303,7 @@ async function start(): Promise<void> {
 		console.error("Failed to start:", error);
 		rootElement.innerHTML = `<div style="color: #721c24; background: #f8d7da; padding: 20px; border-radius: 4px; border: 1px solid #f5c6cb;">
 			<h2>Failed to connect to Tinylicious</h2>
-			<p><strong>Error:</strong> ${error instanceof Error ? error.message : error}</p>
-			<p><strong>Tinylicious endpoint:</strong> ${getTinyliciousEndpoint()}</p>
+			<p><strong>Error:</strong> ${error instanceof Error ? error.message : String(error)}</p>
 			<h3>Troubleshooting:</h3>
 			<ol>
 				<li>Make sure Tinylicious is running: <code>pnpm tinylicious</code></li>
