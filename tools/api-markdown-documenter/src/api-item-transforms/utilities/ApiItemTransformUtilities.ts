@@ -97,7 +97,7 @@ export function getLinkUrlForApiItem(
 	}
 
 	const headingId = getHeadingIdForApiItem(apiItem, config);
-	const headingPostfix = headingId !== undefined ? `#${headingId}` : "";
+	const headingPostfix = headingId === undefined ? "" : `#${headingId}`;
 
 	return `${uriBase}/${documentPath}${headingPostfix}`;
 }
