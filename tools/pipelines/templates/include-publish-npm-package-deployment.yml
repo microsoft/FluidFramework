@@ -130,19 +130,19 @@ jobs:
               buildDirectory: buildTools-zip/tarballs
               enableCache: false
 
-            - task: Bash@3
-              name: InstallBuildTools
-              displayName: Install Fluid Build Tools (from npm)
-              inputs:
-                targetType: 'inline'
-                workingDirectory: .
-                script: |
-                  echo "installing version @${{ parameters.buildToolsVersionToInstall }}"
+          - task: Bash@3
+            name: InstallBuildTools
+            displayName: Install Fluid Build Tools (from npm)
+            inputs:
+              targetType: 'inline'
+              workingDirectory: .
+              script: |
+                echo "installing version @${{ parameters.buildToolsVersionToInstall }}"
 
-                  npm install --global "@fluid-tools/build-cli@${{ parameters.buildToolsVersionToInstall }}"
+                npm install --global "@fluid-tools/build-cli@${{ parameters.buildToolsVersionToInstall }}"
 
-                  # This can be removed once all builds tools are moved to the build-cli library
-                  npm install --global "@fluidframework/build-tools@${{ parameters.buildToolsVersionToInstall }}"
+                # This can be removed once all builds tools are moved to the build-cli library
+                npm install --global "@fluidframework/build-tools@${{ parameters.buildToolsVersionToInstall }}"
 
           - template: /tools/pipelines/templates/include-publish-npm-package-steps.yml@self
             parameters:
