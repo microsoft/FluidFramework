@@ -3,9 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "node:assert";
-
-import { type BenchmarkTimer, BenchmarkType, benchmark } from "@fluid-tools/benchmark";
+import {
+	BenchmarkMode,
+	BenchmarkType,
+	benchmarkDurationBatchless,
+	benchmarkIt,
+	currentBenchmarkMode,
+} from "@fluid-tools/benchmark";
 
 import {
 	type ChangeFamily,
@@ -41,13 +45,20 @@ describe("EditManager - Bench", () => {
 
 	const scenarios: Scenario[] = [
 		{ type: BenchmarkType.Perspective, rebasedEditCount: 1, trunkEditCount: 1 },
-		{ type: BenchmarkType.Perspective, rebasedEditCount: 10, trunkEditCount: 1 },
-		{ type: BenchmarkType.Perspective, rebasedEditCount: 100, trunkEditCount: 1 },
-		{ type: BenchmarkType.Perspective, rebasedEditCount: 1000, trunkEditCount: 1 },
-		{ type: BenchmarkType.Perspective, rebasedEditCount: 1, trunkEditCount: 10 },
-		{ type: BenchmarkType.Perspective, rebasedEditCount: 1, trunkEditCount: 100 },
-		{ type: BenchmarkType.Perspective, rebasedEditCount: 1, trunkEditCount: 1000 },
-		{ type: BenchmarkType.Measurement, rebasedEditCount: 100, trunkEditCount: 100 },
+		// These tests, even in correctness mode, are a bit slow, and occasionally time out,
+		// so run a smaller set with smaller sizes in correctness mode.
+		...(currentBenchmarkMode === BenchmarkMode.Performance
+			? [
+					{ type: BenchmarkType.Perspective, rebasedEditCount: 10, trunkEditCount: 1 },
+					{ type: BenchmarkType.Perspective, rebasedEditCount: 100, trunkEditCount: 1 },
+					{ type: BenchmarkType.Perspective, rebasedEditCount: 1000, trunkEditCount: 1 },
+					{ type: BenchmarkType.Perspective, rebasedEditCount: 1, trunkEditCount: 10 },
+					{ type: BenchmarkType.Perspective, rebasedEditCount: 1, trunkEditCount: 100 },
+					{ type: BenchmarkType.Perspective, rebasedEditCount: 1, trunkEditCount: 1000 },
+					{ type: BenchmarkType.Measurement, rebasedEditCount: 100, trunkEditCount: 100 },
+				]
+			: // Ensure in correctness mode we have a case where both counts are greater than 1
+				[{ type: BenchmarkType.Perspective, rebasedEditCount: 2, trunkEditCount: 2 }]),
 	];
 
 	interface Family<TChange> {
@@ -102,35 +113,27 @@ describe("EditManager - Bench", () => {
 					if (rebasedEditCount * trunkEditCount > family.maxEditCount) {
 						continue;
 					}
-					benchmark({
+					benchmarkIt({
 						type,
 						title: `Rebase ${rebasedEditCount} local commits over ${trunkEditCount} trunk commits`,
-						benchmarkFnCustom: async <T>(state: BenchmarkTimer<T>) => {
-							let duration: number;
-							do {
-								// Since this setup one collects data from one iteration, assert that this is what is expected.
-								assert.equal(state.iterationsPerBatch, 1);
+						...benchmarkDurationBatchless({
+							benchmarkFn: (state) => {
+								let running: boolean;
+								do {
+									// Setup
+									const manager = editManagerFactory(family.changeFamily);
+									const rebasing = rebaseLocalEditsOverTrunkEdits(
+										rebasedEditCount,
+										trunkEditCount,
+										manager,
+										family.mintChange,
+										true,
+									);
 
-								// Setup
-								const manager = editManagerFactory(family.changeFamily);
-								const rebasing = rebaseLocalEditsOverTrunkEdits(
-									rebasedEditCount,
-									trunkEditCount,
-									manager,
-									family.mintChange,
-									true,
-								);
-
-								// Measure
-								const before = state.timer.now();
-								rebasing();
-								const after = state.timer.now();
-								duration = state.timer.toSeconds(before, after);
-								// Collect data
-							} while (state.recordBatch(duration));
-						},
-						// Force batch size of 1
-						minBatchDurationSeconds: 0,
+									running = state.time(rebasing);
+								} while (running);
+							},
+						}),
 					});
 				}
 			});
@@ -139,35 +142,27 @@ describe("EditManager - Bench", () => {
 					if (peerEditCount * trunkEditCount > family.maxEditCount) {
 						continue;
 					}
-					benchmark({
+					benchmarkIt({
 						type,
 						title: `Receive ${peerEditCount} peer commits that need to be rebased over ${trunkEditCount} trunk commits`,
-						benchmarkFnCustom: async <T>(state: BenchmarkTimer<T>) => {
-							let duration: number;
-							do {
-								// Since this setup one collects data from one iteration, assert that this is what is expected.
-								assert.equal(state.iterationsPerBatch, 1);
+						...benchmarkDurationBatchless({
+							benchmarkFn: (state) => {
+								let running: boolean;
+								do {
+									// Setup
+									const manager = editManagerFactory(family.changeFamily);
+									const rebasing = rebasePeerEditsOverTrunkEdits(
+										peerEditCount,
+										trunkEditCount,
+										manager,
+										family.mintChange,
+										true,
+									);
 
-								// Setup
-								const manager = editManagerFactory(family.changeFamily);
-								const rebasing = rebasePeerEditsOverTrunkEdits(
-									peerEditCount,
-									trunkEditCount,
-									manager,
-									family.mintChange,
-									true,
-								);
-
-								// Measure
-								const before = state.timer.now();
-								rebasing();
-								const after = state.timer.now();
-								duration = state.timer.toSeconds(before, after);
-								// Collect data
-							} while (state.recordBatch(duration));
-						},
-						// Force batch size of 1
-						minBatchDurationSeconds: 0,
+									running = state.time(rebasing);
+								} while (running);
+							},
+						}),
 					});
 				}
 			});
@@ -180,34 +175,26 @@ describe("EditManager - Bench", () => {
 					if (editCount ** 2 > family.maxEditCount) {
 						continue;
 					}
-					benchmark({
+					benchmarkIt({
 						type,
 						title: `for ${editCount} peer commits and ${editCount} trunk commits`,
-						benchmarkFnCustom: async <T>(state: BenchmarkTimer<T>) => {
-							let duration: number;
-							do {
-								// Since this setup one collects data from one iteration, assert that this is what is expected.
-								assert.equal(state.iterationsPerBatch, 1);
+						...benchmarkDurationBatchless({
+							benchmarkFn: (state) => {
+								let running: boolean;
+								do {
+									// Setup
+									const manager = editManagerFactory(family.changeFamily);
+									const rebasing = rebaseAdvancingPeerEditsOverTrunkEdits(
+										editCount,
+										manager,
+										family.mintChange,
+										true,
+									);
 
-								// Setup
-								const manager = editManagerFactory(family.changeFamily);
-								const rebasing = rebaseAdvancingPeerEditsOverTrunkEdits(
-									editCount,
-									manager,
-									family.mintChange,
-									true,
-								);
-
-								// Measure
-								const before = state.timer.now();
-								rebasing();
-								const after = state.timer.now();
-								duration = state.timer.toSeconds(before, after);
-								// Collect data
-							} while (state.recordBatch(duration));
-						},
-						// Force batch size of 1
-						minBatchDurationSeconds: 0,
+									running = state.time(rebasing);
+								} while (running);
+							},
+						}),
 					});
 				}
 			});
@@ -228,35 +215,27 @@ describe("EditManager - Bench", () => {
 					if (peerCount * editsPerPeerCount > family.maxEditCount) {
 						continue;
 					}
-					benchmark({
+					benchmarkIt({
 						type,
 						title: `Rebase edits from ${peerCount} peers each sending ${editsPerPeerCount} commits`,
-						benchmarkFnCustom: async <T>(state: BenchmarkTimer<T>) => {
-							let duration: number;
-							do {
-								// Since this setup one collects data from one iteration, assert that this is what is expected.
-								assert.equal(state.iterationsPerBatch, 1);
+						...benchmarkDurationBatchless({
+							benchmarkFn: (state) => {
+								let running: boolean;
+								do {
+									// Setup
+									const manager = editManagerFactory(family.changeFamily);
+									const rebasing = rebaseConcurrentPeerEdits(
+										peerCount,
+										editsPerPeerCount,
+										manager,
+										family.mintChange,
+										true,
+									);
 
-								// Setup
-								const manager = editManagerFactory(family.changeFamily);
-								const rebasing = rebaseConcurrentPeerEdits(
-									peerCount,
-									editsPerPeerCount,
-									manager,
-									family.mintChange,
-									true,
-								);
-
-								// Measure
-								const before = state.timer.now();
-								rebasing();
-								const after = state.timer.now();
-								duration = state.timer.toSeconds(before, after);
-								// Collect data
-							} while (state.recordBatch(duration));
-						},
-						// Force batch size of 1
-						minBatchDurationSeconds: 0,
+									running = state.time(rebasing);
+								} while (running);
+							},
+						}),
 					});
 				}
 			});
@@ -271,52 +250,46 @@ describe("EditManager - Bench", () => {
 				[BenchmarkType.Perspective, 100],
 				[BenchmarkType.Perspective, 1000],
 			]) {
-				benchmark({
+				benchmarkIt({
 					type,
 					title: `Process the sequencing of ${count} local commits`,
-					benchmarkFnCustom: async <T>(state: BenchmarkTimer<T>) => {
-						let duration: number;
-						do {
-							// Since this setup one collects data from one iteration, assert that this is what is expected.
-							assert.equal(state.iterationsPerBatch, 1);
+					...benchmarkDurationBatchless({
+						benchmarkFn: (state) => {
+							let running: boolean;
+							do {
+								// Setup
+								const family = testChangeFamilyFactory(new NoOpChangeRebaser());
+								const manager = editManagerFactory(family);
+								// Subscribe to the local branch to emulate the behavior of SharedTree
+								manager.getLocalBranch("main").events.on("afterChange", ({ change }) => {});
+								const sequencedEdits: Commit<TestChange>[] = [];
+								for (let iChange = 0; iChange < count; iChange++) {
+									const revision = mintRevisionTag();
+									manager
+										.getLocalBranch("main")
+										.apply({ change: TestChange.emptyChange, revision });
+									sequencedEdits.push({
+										change: TestChange.emptyChange,
+										revision,
+										sessionId: manager.localSessionId,
+									});
+								}
 
-							// Setup
-							const family = testChangeFamilyFactory(new NoOpChangeRebaser());
-							const manager = editManagerFactory(family);
-							// Subscribe to the local branch to emulate the behavior of SharedTree
-							manager.getLocalBranch("main").events.on("afterChange", ({ change }) => {});
-							const sequencedEdits: Commit<TestChange>[] = [];
-							for (let iChange = 0; iChange < count; iChange++) {
-								const revision = mintRevisionTag();
-								manager
-									.getLocalBranch("main")
-									.apply({ change: TestChange.emptyChange, revision });
-								sequencedEdits.push({
-									change: TestChange.emptyChange,
-									revision,
-									sessionId: manager.localSessionId,
+								running = state.time(() => {
+									for (let iChange = 0; iChange < count; iChange++) {
+										const commit = sequencedEdits[iChange];
+										manager.addSequencedChanges(
+											[commit],
+											commit.sessionId,
+											brand(iChange + 1),
+											brand(0),
+											"main",
+										);
+									}
 								});
-							}
-
-							// Measure
-							const before = state.timer.now();
-							for (let iChange = 0; iChange < count; iChange++) {
-								const commit = sequencedEdits[iChange];
-								manager.addSequencedChanges(
-									[commit],
-									commit.sessionId,
-									brand(iChange + 1),
-									brand(0),
-									"main",
-								);
-							}
-							const after = state.timer.now();
-							duration = state.timer.toSeconds(before, after);
-							// Collect data
-						} while (state.recordBatch(duration));
-					},
-					// Force batch size of 1
-					minBatchDurationSeconds: 0,
+							} while (running);
+						},
+					}),
 				});
 			}
 		});

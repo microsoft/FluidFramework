@@ -1,5 +1,11 @@
 # @fluidframework/eslint-config-fluid Changelog
 
+## vNext
+
+### ⚠ BREAKING CHANGES
+
+- Node 22 is now the minimum supported Node.js version. This aligns with the standing Node upgrade policy as Node 20 reaches end-of-life on April 30, 2026.
+
 ## [10.0.0](https://github.com/microsoft/FluidFramework/releases/tag/eslint-config-fluid_v10.0.0)
 
 ### eslint-plugin-react replaced by @eslint-react/eslint-plugin
@@ -71,6 +77,10 @@ unless otherwise noted:
 The `@eslint-react` plugin uses `react-x` for its settings namespace instead of `react`. If you have custom
 `settings.react` configuration for React version detection, it should be changed to `settings["react-x"]`. The
 `recommended-typescript` preset configures `react-x.version: "detect"` automatically.
+
+### Other new rules
+
+- Adds [no-only-tests/no-only-tests](https://github.com/levibuzolic/eslint-plugin-no-only-tests) rule to ensure tests configured with `.only` are not checked in.
 
 ## [9.0.0](https://github.com/microsoft/FluidFramework/releases/tag/eslint-config-fluid_v9.0.0)
 

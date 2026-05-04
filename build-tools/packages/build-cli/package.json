@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-tools/build-cli",
-	"version": "0.65.0",
+	"version": "0.66.0",
 	"description": "Build tools for the Fluid Framework",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -104,7 +104,6 @@
 		"async": "^3.2.6",
 		"azure-devops-node-api": "^11.2.0",
 		"change-case": "^5.4.4",
-		"danger": "^13.0.5",
 		"date-fns": "^3.6.0",
 		"debug": "^4.4.3",
 		"ejs": "^3.1.10",

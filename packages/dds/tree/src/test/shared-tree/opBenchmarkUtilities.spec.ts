@@ -159,7 +159,10 @@ describe("opBenchmarkUtilities", () => {
 				const { slope, intercept } = assertLinear({ points, maxDeviation: 15 });
 				// Regression slope should be between 5 and 8 bytes/unit
 				assert(slope > 5 && slope < 8, `Expected slope between 5 and 8, got ${slope}`);
-				assert(intercept > 650 && intercept < 700, `Expected intercept near 670, got ${intercept}`);
+				assert(
+					intercept > 650 && intercept < 700,
+					`Expected intercept near 670, got ${intercept}`,
+				);
 			});
 		});
 	});

@@ -344,6 +344,7 @@ export class ConnectionManager implements IConnectionManager {
 		reconnectAllowed: boolean,
 		private readonly logger: ITelemetryLoggerExt,
 		private readonly props: IConnectionManagerFactoryArgs,
+		private maxInitialConnectionAttempts?: number,
 	) {
 		this.clientDetails = this.client.details;
 		this.defaultReconnectionMode = this.client.mode;
@@ -622,6 +623,17 @@ export class ConnectionManager implements IConnectionManager {
 
 				lastError = origError;
 
+				// When maxInitialConnectionAttempts is set, do not retry beyond the allowed attempts.
+				// The consumer will own the retry policy.
+				if (
+					this.maxInitialConnectionAttempts !== undefined &&
+					connectRepeatCount >= this.maxInitialConnectionAttempts
+				) {
+					const error = normalizeError(origError, { props: fatalConnectErrorProp });
+					this.props.closeHandler(error);
+					throw error;
+				}
+
 				// We will not perform retries if the container disconnected and the ReconnectMode is set to Disabled or Never
 				// so break out of the re-connecting while-loop after first attempt
 				if (this.reconnectMode !== ReconnectMode.Enabled) {
@@ -687,6 +699,11 @@ export class ConnectionManager implements IConnectionManager {
 			});
 			return;
 		}
+
+		// Clear the max connection attempts limit now that a connection has been established.
+		// The limit is only intended to scope initial connection retries;
+		// once connected, normal reconnect behavior should apply.
+		this.maxInitialConnectionAttempts = undefined;
 
 		this.setupNewSuccessfulConnection(connection, requestedMode, reason);
 	}

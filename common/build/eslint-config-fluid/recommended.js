@@ -239,6 +239,7 @@ module.exports = {
 				// TODO: consider unifying code across the repo to use "test" and not "tests", then we can remove this.
 				"**/tests/**",
 			],
+			plugins: ["no-only-tests"],
 			rules: {
 				// Does not work well with describe/it block scoping
 				"unicorn/consistent-function-scoping": "off",
@@ -246,6 +247,14 @@ module.exports = {
 				// We run most of our tests in a Node.js environment, so this rule is not important and makes
 				// file-system logic more cumbersome.
 				"unicorn/prefer-module": "off",
+
+				/**
+				 * Disallow `.only()` in tests (e.g. `describe.only`, `it.only`) to prevent accidentally
+				 * committing focused tests that would skip the rest of the suite in CI.
+				 *
+				 * @see https://github.com/levibuzolic/eslint-plugin-no-only-tests
+				 */
+				"no-only-tests/no-only-tests": "error",
 			},
 		},
 		{

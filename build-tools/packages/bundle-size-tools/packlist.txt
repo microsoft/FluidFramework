@@ -1,6 +1,7 @@
 LICENSE
 README.md
 api-extractor.json
+eslint.config.mts
 package.json
 tsconfig.json
 api-report/bundle-size-tools.api.md
@@ -48,10 +49,6 @@ dist/ADO/getBundleSummaries.d.ts
 dist/ADO/getBundleSummaries.d.ts.map
 dist/ADO/getBundleSummaries.js
 dist/ADO/getBundleSummaries.js.map
-dist/ADO/getCommentForBundleDiff.d.ts
-dist/ADO/getCommentForBundleDiff.d.ts.map
-dist/ADO/getCommentForBundleDiff.js
-dist/ADO/getCommentForBundleDiff.js.map
 dist/ADO/index.d.ts
 dist/ADO/index.d.ts.map
 dist/ADO/index.js
@@ -92,6 +89,7 @@ dist/statsProcessors/totalSizeStatsProcessor.d.ts
 dist/statsProcessors/totalSizeStatsProcessor.d.ts.map
 dist/statsProcessors/totalSizeStatsProcessor.js
 dist/statsProcessors/totalSizeStatsProcessor.js.map
+dist/tsdoc-metadata.json
 dist/utilities/decompressStatsFile.d.ts
 dist/utilities/decompressStatsFile.d.ts.map
 dist/utilities/decompressStatsFile.js

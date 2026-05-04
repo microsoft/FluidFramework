@@ -18,7 +18,7 @@ import { RedisClientConnectionManager } from "@fluidframework/server-services-ut
 import { Emitter as RedisEmitter } from "@socket.io/redis-emitter";
 import type { Provider } from "nconf";
 
-import { Constants, configureThrottler } from "../utils";
+import { Constants } from "../utils";
 
 import type { IAlfredResourcesCustomizations } from "./customizations";
 import { AlfredRunner } from "./runner";
@@ -28,6 +28,7 @@ import {
 	type IDocumentDeleteService,
 	DocumentDeleteService,
 } from "./services";
+import { configureThrottler } from "@fluidframework/server-services";
 
 /**
  * @internal

@@ -84,7 +84,7 @@ import {
 } from "@fluidframework/driver-utils/internal";
 import {
 	type TelemetryEventCategory,
-	type ITelemetryLoggerExt,
+	type TelemetryLoggerExt,
 	EventEmitterWithErrorHandling,
 	GenericError,
 	type IFluidErrorBase,
@@ -94,6 +94,7 @@ import {
 	connectedEventName,
 	createChildLogger,
 	createChildMonitoringContext,
+	extractTelemetryLoggerExt,
 	formatTick,
 	normalizeError,
 	raiseConnectedEvent,
@@ -429,7 +430,7 @@ export class Container
 	private readonly codeLoader: ICodeDetailsLoader;
 	private readonly options: ILoaderOptions;
 	private readonly scope: FluidObject;
-	private readonly subLogger: ITelemetryLoggerExt;
+	private readonly subLogger: TelemetryLoggerExt;
 	private readonly detachedBlobStorage: MemoryDetachedBlobStorage | undefined;
 	private readonly protocolHandlerBuilder: InternalProtocolHandlerBuilder;
 	private readonly signalAudience = new Audience();
@@ -858,7 +859,7 @@ export class Container
 				logger: this.mc.logger,
 				// WARNING: logger on this context should not including getters like containerConnectionState above (on this.subLogger),
 				// as that will result in attempt to dereference this.connectionStateHandler from this call while it's still undefined.
-				mc: loggerToMonitoringContext(subLogger),
+				mc: loggerToMonitoringContext(extractTelemetryLoggerExt(subLogger)),
 				connectionStateChanged: (value, oldState, reason) => {
 					this.logConnectionStateChangeTelemetry(value, oldState, reason);
 					if (this.loaded) {
@@ -1069,6 +1070,7 @@ export class Container
 
 				this.connectionStateHandler.dispose();
 				this.serializedStateManager.dispose();
+				this._runtime?.close?.();
 			} catch (newError) {
 				this.mc.logger.sendErrorEvent({ eventName: "ContainerCloseException" }, newError);
 			}
@@ -1103,6 +1105,8 @@ export class Container
 						eventName: "ContainerDispose",
 						// Only log error if container isn't closed
 						category: !this.closed && error !== undefined ? "error" : "generic",
+						isDirty: this.isDirty,
+						lastSequenceNumber: this._deltaManager.lastSequenceNumber,
 					},
 					error,
 				);
@@ -1609,7 +1613,11 @@ export class Container
 			this.connectToDeltaStream(connectionArgs);
 		}
 
-		this.storageAdapter.connectToService(this.service);
+		// When DisableLoadConnectionRetries is enabled, use no internal retries.
+		// The consumer will own the retry policy.
+		const disableLoadRetries =
+			this.mc.config.getBoolean("Fluid.Container.DisableLoadConnectionRetries") === true;
+		this.storageAdapter.connectToService(this.service, disableLoadRetries ? 0 : undefined);
 
 		this.attachmentData = {
 			state: AttachState.Attached,
@@ -1994,6 +2002,8 @@ export class Container
 
 	private createDeltaManager(): DeltaManager<ConnectionManager> {
 		const serviceProvider = (): IDocumentService | undefined => this.service;
+		const disableLoadConnectionRetries =
+			this.mc.config.getBoolean("Fluid.Container.DisableLoadConnectionRetries") === true;
 		const deltaManager = new DeltaManager<ConnectionManager>(
 			serviceProvider,
 			createChildLogger({ logger: this.subLogger, namespace: "DeltaManager" }),
@@ -2006,6 +2016,7 @@ export class Container
 					this._canReconnect,
 					createChildLogger({ logger: this.subLogger, namespace: "ConnectionManager" }),
 					props,
+					disableLoadConnectionRetries ? 1 : undefined /* maxInitialConnectionAttempts */,
 				),
 		);
 
@@ -2386,6 +2397,9 @@ export class Container
 				this.subLogger,
 				{ eventName: "CodeLoad" },
 				async () => this.codeLoader.load(codeDetails),
+				undefined, // markers
+				undefined, // sampleThreshold
+				LogLevel.info,
 			);
 
 			this._loadedModule = {

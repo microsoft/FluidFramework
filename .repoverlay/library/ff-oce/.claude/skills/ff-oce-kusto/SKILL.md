@@ -15,6 +15,8 @@ This skill provides a comprehensive reference for Fluid Framework telemetry inve
 - **Cluster:** `https://kusto.aria.microsoft.com`
 - **Primary database:** `Office Fluid`
 - **Database ID:** `6a8929bcfc6d44e9b13fee392ada9cf0` (use this, not the pretty name, as the `database` parameter in `kusto_query`)
+- **Automation/stress test database:** `Office Fluid Test`
+- **Database ID:** `742fa5a288b045e5beab1a2b8e445a71` — contains `office_fluid_ffautomation_*` tables used for stress test / pipeline telemetry. **These tables are NOT in the primary "Office Fluid" database.**
 - **Retention:** ~28 days
 - **VPN:** Required (Microsoft internal network)
 - **Access requirement:** M365HeartbeatTenantUsers group membership
