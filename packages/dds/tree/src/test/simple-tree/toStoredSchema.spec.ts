@@ -42,6 +42,8 @@ import { brand } from "../../util/index.js";
 import {
 	HasStagedAllowedTypes,
 	HasStagedAllowedTypesAfterUpdate,
+	HasStagedOptionalField,
+	HasStagedOptionalFieldAfterUpdate,
 	testDocuments,
 } from "../testTrees.js";
 
@@ -115,9 +117,9 @@ describe("toStoredSchema", () => {
 							permissiveStoredSchemaGenerationOptions,
 						);
 
-						// The restrictive case, used for initial schemas and upgrades, does not include any staged allowed types.
-						// The permissive case, used for unhydrated trees, includes all staged allowed types.
-						// They should be equal if an only if there are no staged allowed types.
+						// The restrictive case, used for initial schemas and upgrades, does not include any staged schema features.
+						// The permissive case, used for unhydrated trees, includes all staged schema features.
+						// They should be equal if and only if there are no staged schema features.
 						if (testCase.hasStagedSchema) {
 							assert.notDeepEqual(restrictive, permissive);
 						} else {
@@ -336,6 +338,27 @@ describe("toStoredSchema", () => {
 			);
 			assert.notDeepEqual(v1.encodeV1(), v1Permissive.encodeV1());
 			assert.deepEqual(v1Permissive.encodeV1(), v2.encodeV1());
+
+			const stagedOptionalV1 = getStoredSchema(
+				transformSimpleNodeSchema(
+					HasStagedOptionalField,
+					restrictiveStoredSchemaGenerationOptions,
+				),
+			);
+			const stagedOptionalV2 = getStoredSchema(
+				transformSimpleNodeSchema(
+					HasStagedOptionalFieldAfterUpdate,
+					restrictiveStoredSchemaGenerationOptions,
+				),
+			);
+			const stagedOptionalV1Permissive = getStoredSchema(
+				transformSimpleNodeSchema(
+					HasStagedOptionalField,
+					permissiveStoredSchemaGenerationOptions,
+				),
+			);
+			assert.notDeepEqual(stagedOptionalV1.encodeV1(), stagedOptionalV1Permissive.encodeV1());
+			assert.deepEqual(stagedOptionalV1Permissive.encodeV1(), stagedOptionalV2.encodeV1());
 		});
 	});
 });
