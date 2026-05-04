@@ -4,7 +4,6 @@
  */
 
 import type { DataObjectKind } from "@fluidframework/aqueduct/internal";
-import type { IContainerRuntimeOptions } from "@fluidframework/container-runtime/internal";
 import type { FluidObjectKeys, IFluidLoadable } from "@fluidframework/core-interfaces";
 import { oob } from "@fluidframework/core-utils/internal";
 import type {
@@ -20,7 +19,6 @@ import type { ISharedObjectKind } from "@fluidframework/shared-object-base/inter
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import { SharedTreeFactoryType } from "@fluidframework/tree/internal";
 
-import { compatibilityModeRuntimeOptions } from "./compatibilityConfiguration.js";
 import type {
 	// eslint-disable-next-line import-x/no-deprecated
 	CompatibilityMode,
@@ -150,40 +148,25 @@ export function makeFluidObject<
 }
 
 /**
- * Maps the legacy {@link CompatibilityMode} string identifiers ("1", "2") to their
- * equivalent {@link MinimumVersionForCollab} semver values.
- */
-export const compatibilityModeToMinVersionForCollab = {
-	"1": "1.0.0",
-	"2": "2.0.0",
-	// eslint-disable-next-line import-x/no-deprecated
-} as const satisfies Record<CompatibilityMode, MinimumVersionForCollab>;
-
-/**
- * Resolves the {@link MinimumVersionForCollab} and base runtime options to use for a
- * declarative-model container, given a required `compatibilityMode` (which selects the
- * runtime defaults) and an optional `minVersionForCollab` overlay. When provided,
- * `minVersionForCollab` overrides the version derived from `compatibilityMode`; runtime
- * options are still selected by `compatibilityMode`.
- *
- * TODO: when `CompatibilityMode` is removed, the runtime options (currently derived from
- * {@link compatibilityModeRuntimeOptions} keyed by `compatibilityMode`) must be replaced.
+ * Outermost-boundary filter that resolves the unified `compatibilityMode` input — accepting
+ * either a {@link MinimumVersionForCollab} semver string or a legacy {@link CompatibilityMode}
+ * value — into the components used internally: a precise `minVersionForCollab` and a
+ * {@link CompatibilityMode} key (derived from the major version) for indexing
+ * {@link compatibilityModeRuntimeOptions}.
  *
  * @internal
  */
-export function resolveMinVersionAndRuntimeOptions(input: {
+export function resolveCompatibilityInput(
 	// eslint-disable-next-line import-x/no-deprecated
-	compatibilityMode: CompatibilityMode;
-	minVersionForCollab?: MinimumVersionForCollab;
-}): {
-	minVersionForCollab: MinimumVersionForCollab;
-	runtimeOptions: IContainerRuntimeOptions;
-} {
-	const { compatibilityMode, minVersionForCollab } = input;
+	input: MinimumVersionForCollab | CompatibilityMode,
+	// eslint-disable-next-line import-x/no-deprecated
+): { minVersionForCollab: MinimumVersionForCollab; compatibilityMode: CompatibilityMode } {
+	// TODO: Checking for "1" and "2" can be removed once CompatibilityMode is removed.
+	const minVersionForCollab: MinimumVersionForCollab =
+		input === "1" ? "1.0.0" : input === "2" ? "2.0.0" : input;
 	return {
-		minVersionForCollab:
-			minVersionForCollab ?? compatibilityModeToMinVersionForCollab[compatibilityMode],
-		runtimeOptions: compatibilityModeRuntimeOptions[compatibilityMode],
+		minVersionForCollab,
+		compatibilityMode: minVersionForCollab.startsWith("1.") ? "1" : "2",
 	};
 }
 

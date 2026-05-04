@@ -53,12 +53,10 @@ export interface AzureClientPropsInternal extends AzureClientProps {
 	readonly createContainerRuntimeFactory?: ({
 		schema,
 		compatibilityMode,
-		minVersionForCollab,
 	}: {
 		schema: ContainerSchema;
 		// eslint-disable-next-line import-x/no-deprecated
-		compatibilityMode: CompatibilityMode;
-		minVersionForCollab?: MinimumVersionForCollab;
+		compatibilityMode: MinimumVersionForCollab | CompatibilityMode;
 	}) => IRuntimeFactory;
 }
 

@@ -87,7 +87,7 @@ for (const testOpts of testMatrix) {
 			let treeData: TreeView<typeof StringArray>;
 
 			if (summaryTree === undefined) {
-				const { container } = await client.createContainer(schema, "2");
+				const { container } = await client.createContainer(schema, "2.0.0");
 				treeData = container.initialObjects.tree1.viewWith(treeConfiguration);
 				treeData.initialize(new StringArray([]));
 				containerId = await container.attach();
@@ -100,7 +100,7 @@ for (const testOpts of testMatrix) {
 				);
 
 				containerId = getContainerIdFromPayloadResponse(containerResponse);
-				const { container } = await client.getContainer(containerId, schema, "2");
+				const { container } = await client.getContainer(containerId, schema, "2.0.0");
 				treeData = container.initialObjects.tree1.viewWith(treeConfiguration);
 				await waitForConnection(container);
 			}
@@ -137,7 +137,7 @@ for (const testOpts of testMatrix) {
 
 			treeData.root.insertNew("test string 1");
 
-			const resources = client.getContainer(containerId, schema, "2");
+			const resources = client.getContainer(containerId, schema, "2.0.0");
 			await assert.doesNotReject(
 				resources,
 				() => true,
@@ -172,7 +172,7 @@ for (const testOpts of testMatrix) {
 				}) {}
 
 				it("can read and edit data", async () => {
-					const { container } = await client.createContainer(schema, "2");
+					const { container } = await client.createContainer(schema, "2.0.0");
 					await container.attach();
 					const view = container.initialObjects.tree1.viewWith(
 						new TreeViewConfiguration({ schema: User, enableSchemaValidation: true }),
@@ -213,7 +213,7 @@ for (const testOpts of testMatrix) {
 				});
 
 				it("can handle undo/redo and transactions", async () => {
-					const { container } = await client.createContainer(schema, "2");
+					const { container } = await client.createContainer(schema, "2.0.0");
 					await container.attach();
 					const view = asAlpha(
 						container.initialObjects.tree1.viewWith(
@@ -262,7 +262,7 @@ for (const testOpts of testMatrix) {
 			it("can use identifiers and the static Tree APIs", async () => {
 				class Widget extends sf.object("Widget", { id: sf.identifier }) {}
 
-				const { container } = await client.createContainer(schema, "2");
+				const { container } = await client.createContainer(schema, "2.0.0");
 				await container.attach();
 				const view = container.initialObjects.tree1.viewWith(
 					new TreeViewConfiguration({
@@ -297,7 +297,7 @@ for (const testOpts of testMatrix) {
 				}) {}
 				allowUnused<ValidateRecursiveSchema<typeof Doll>>();
 
-				const { container } = await client.createContainer(schema, "2");
+				const { container } = await client.createContainer(schema, "2.0.0");
 				await container.attach();
 				const view = container.initialObjects.tree1.viewWith(
 					new TreeViewConfiguration({ schema: Doll, enableSchemaValidation: true }),

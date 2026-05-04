@@ -145,10 +145,14 @@ const getOrCreateContainer = async (params: {
 	});
 	let services: AzureContainerServices;
 	if (containerId === undefined) {
-		({ container, services } = await client.createContainer(containerSchema, "2"));
+		({ container, services } = await client.createContainer(containerSchema, "2.0.0"));
 		containerId = await container.attach();
 	} else {
-		({ container, services } = await client.getContainer(containerId, containerSchema, "2"));
+		({ container, services } = await client.getContainer(
+			containerId,
+			containerSchema,
+			"2.0.0",
+		));
 	}
 	container.on("disconnected", onDisconnected);
 

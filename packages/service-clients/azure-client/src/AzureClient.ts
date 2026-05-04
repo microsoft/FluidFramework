@@ -100,12 +100,10 @@ export class AzureClient {
 	private readonly createContainerRuntimeFactory?: ({
 		schema,
 		compatibilityMode,
-		minVersionForCollab,
 	}: {
 		schema: ContainerSchema;
 		// eslint-disable-next-line import-x/no-deprecated
-		compatibilityMode: CompatibilityMode;
-		minVersionForCollab?: MinimumVersionForCollab;
+		compatibilityMode: MinimumVersionForCollab | CompatibilityMode;
 	}) => IRuntimeFactory;
 
 	/**
@@ -143,25 +141,21 @@ export class AzureClient {
 	 * @typeparam TContainerSchema - Used to infer the the type of 'initialObjects' in the returned container.
 	 * (normally not explicitly specified.)
 	 * @param containerSchema - Container schema for the new container.
-	 * @param compatibilityMode - Compatibility mode the container should run in. Deprecated in favor of `minVersionForCollab`.
-	 * @param minVersionForCollab - Optional minimum Fluid Framework version required for collaboration on
-	 * the document. When provided, takes precedence over `compatibilityMode`. Will be made required in the future when `compatibilityMode` is removed.
+	 * @param compatibilityMode - Minimum framework version required for collaboration. Accepts
+	 * either a `MinimumVersionForCollab` semver string (e.g. `"1.0.0"`, `"2.0.0"`) or a legacy
+	 * {@link @fluidframework/fluid-static#CompatibilityMode} value. The legacy values `"1"` and
+	 * `"2"` are **deprecated** equivalents of `"1.0.0"` and `"2.0.0"`.
 	 * @returns New detached container instance along with associated services.
 	 */
 	public async createContainer<const TContainerSchema extends ContainerSchema>(
 		containerSchema: TContainerSchema,
 		// eslint-disable-next-line import-x/no-deprecated
-		compatibilityMode: CompatibilityMode,
-		minVersionForCollab?: MinimumVersionForCollab,
+		compatibilityMode: MinimumVersionForCollab | CompatibilityMode,
 	): Promise<{
 		container: IFluidContainer<TContainerSchema>;
 		services: AzureContainerServices;
 	}> {
-		const loaderProps = this.getLoaderProps(
-			containerSchema,
-			compatibilityMode,
-			minVersionForCollab,
-		);
+		const loaderProps = this.getLoaderProps(containerSchema, compatibilityMode);
 
 		const container = await createDetachedContainer({
 			...loaderProps,
@@ -185,26 +179,22 @@ export class AzureClient {
 	 * (normally not explicitly specified.)
 	 * @param id - Unique ID of the container in Azure Fluid Relay.
 	 * @param containerSchema - Container schema used to access data objects in the container.
-	 * @param compatibilityMode - Compatibility mode the container should run in. Deprecated in favor of `minVersionForCollab`.
-	 * @param minVersionForCollab - Optional minimum Fluid Framework version required for collaboration on
-	 * the document. When provided, takes precedence over `compatibilityMode`. Will be made required in the future when `compatibilityMode` is removed.
+	 * @param compatibilityMode - Minimum framework version required for collaboration. Accepts
+	 * either a `MinimumVersionForCollab` semver string (e.g. `"1.0.0"`, `"2.0.0"`) or a legacy
+	 * {@link @fluidframework/fluid-static#CompatibilityMode} value. The legacy values `"1"` and
+	 * `"2"` are **deprecated** equivalents of `"1.0.0"` and `"2.0.0"`.
 	 * @returns Existing container instance along with associated services.
 	 */
 	public async getContainer<TContainerSchema extends ContainerSchema>(
 		id: string,
 		containerSchema: TContainerSchema,
 		// eslint-disable-next-line import-x/no-deprecated
-		compatibilityMode: CompatibilityMode,
-		minVersionForCollab?: MinimumVersionForCollab,
+		compatibilityMode: MinimumVersionForCollab | CompatibilityMode,
 	): Promise<{
 		container: IFluidContainer<TContainerSchema>;
 		services: AzureContainerServices;
 	}> {
-		const loaderProps = this.getLoaderProps(
-			containerSchema,
-			compatibilityMode,
-			minVersionForCollab,
-		);
+		const loaderProps = this.getLoaderProps(containerSchema, compatibilityMode);
 		const url = new URL(this.connectionConfig.endpoint);
 		url.searchParams.append("storage", encodeURIComponent(this.connectionConfig.endpoint));
 		url.searchParams.append(
@@ -231,9 +221,10 @@ export class AzureClient {
 	 * @param id - Unique ID of the source container in Azure Fluid Relay.
 	 * @param containerSchema - Container schema used to access data objects in the container.
 	 * @param version - Unique version of the source container in Azure Fluid Relay.
-	 * @param compatibilityMode - Compatibility mode the container should run in. Deprecated in favor of `minVersionForCollab`.
-	 * @param minVersionForCollab - Optional minimum Fluid Framework version required for collaboration on
-	 * the document. When provided, takes precedence over `compatibilityMode`. Will be made required in the future when `compatibilityMode` is removed.
+	 * @param compatibilityMode - Minimum framework version required for collaboration. Accepts
+	 * either a `MinimumVersionForCollab` semver string (e.g. `"1.0.0"`, `"2.0.0"`) or a legacy
+	 * {@link @fluidframework/fluid-static#CompatibilityMode} value. The legacy values `"1"` and
+	 * `"2"` are **deprecated** equivalents of `"1.0.0"` and `"2.0.0"`.
 	 * @returns Loaded container instance at the specified version.
 	 */
 	public async viewContainerVersion<TContainerSchema extends ContainerSchema>(
@@ -241,16 +232,11 @@ export class AzureClient {
 		containerSchema: TContainerSchema,
 		version: AzureContainerVersion,
 		// eslint-disable-next-line import-x/no-deprecated
-		compatibilityMode: CompatibilityMode,
-		minVersionForCollab?: MinimumVersionForCollab,
+		compatibilityMode: MinimumVersionForCollab | CompatibilityMode,
 	): Promise<{
 		container: IFluidContainer<TContainerSchema>;
 	}> {
-		const loaderProps = this.getLoaderProps(
-			containerSchema,
-			compatibilityMode,
-			minVersionForCollab,
-		);
+		const loaderProps = this.getLoaderProps(containerSchema, compatibilityMode);
 		const url = new URL(this.connectionConfig.endpoint);
 		url.searchParams.append("storage", encodeURIComponent(this.connectionConfig.endpoint));
 		url.searchParams.append(
@@ -316,10 +302,9 @@ export class AzureClient {
 	private getLoaderProps(
 		schema: ContainerSchema,
 		// eslint-disable-next-line import-x/no-deprecated
-		compatibilityMode: CompatibilityMode,
-		minVersionForCollab: MinimumVersionForCollab | undefined,
+		compatibilityMode: MinimumVersionForCollab | CompatibilityMode,
 	): ILoaderProps {
-		const factoryArguments = { schema, compatibilityMode, minVersionForCollab };
+		const factoryArguments = { schema, compatibilityMode };
 		const runtimeFactory = this.createContainerRuntimeFactory
 			? this.createContainerRuntimeFactory(factoryArguments)
 			: createDOProviderContainerRuntimeFactory(factoryArguments);

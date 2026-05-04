@@ -31,6 +31,7 @@ import type {
 } from "@fluidframework/runtime-definitions/internal";
 import type { SharedObjectKind } from "@fluidframework/shared-object-base/internal";
 
+import { compatibilityModeRuntimeOptions } from "./compatibilityConfiguration.js";
 import type {
 	// eslint-disable-next-line import-x/no-deprecated
 	CompatibilityMode,
@@ -48,7 +49,7 @@ import {
 	isSharedObjectKind,
 	makeFluidObject,
 	parseDataObjectsFromSharedObjects,
-	resolveMinVersionAndRuntimeOptions,
+	resolveCompatibilityInput,
 } from "./utils.js";
 
 /**
@@ -188,9 +189,6 @@ async function provideEntryPoint(
  * The root data object's registry and initial objects are configured based on the provided
  * schema (and optionally, data store registry).
  *
- * `compatibilityMode` (deprecated) selects the runtime defaults. `minVersionForCollab` is an
- * optional overlay; when provided, it overrides the version derived from `compatibilityMode`.
- *
  * @internal
  */
 export function createDOProviderContainerRuntimeFactory(props: {
@@ -199,18 +197,13 @@ export function createDOProviderContainerRuntimeFactory(props: {
 	 */
 	schema: ContainerSchema;
 	/**
-	 * See {@link CompatibilityMode} for more details.
-	 *
-	 * @deprecated Use `minVersionForCollab` instead.
+	 * Minimum framework version required for collaboration. Accepts a
+	 * {@link @fluidframework/runtime-definitions#MinimumVersionForCollab} semver string;
+	 * the legacy {@link CompatibilityMode} values `"1"` and `"2"` are **deprecated**
+	 * equivalents of `"1.0.0"` and `"2.0.0"`.
 	 */
 	// eslint-disable-next-line import-x/no-deprecated
-	compatibilityMode: CompatibilityMode;
-	/**
-	 * Minimum framework version required for collaboration on the document.
-	 * Replaces `compatibilityMode`; aligns the declarative model with the encapsulated model's
-	 * `minVersionForCollab` configuration.
-	 */
-	minVersionForCollab?: MinimumVersionForCollab;
+	compatibilityMode: MinimumVersionForCollab | CompatibilityMode;
 	/**
 	 * Optional registry of data stores to pass to the DataObject factory.
 	 * If not provided, one will be created based on the schema.
@@ -218,39 +211,39 @@ export function createDOProviderContainerRuntimeFactory(props: {
 	rootDataStoreRegistry?: IFluidDataStoreRegistry;
 	/**
 	 * Optional overrides for the container runtime options.
+	 * If not provided, only the default options for the given compatibilityMode will be used.
 	 */
 	runtimeOptionOverrides?: Partial<IContainerRuntimeOptions>;
 	/**
-	 * @deprecated Use `minVersionForCollab` instead. When `minVersionForCollab` is not
-	 * provided, this is used as a fallback; when both are provided, `minVersionForCollab`
-	 * takes precedence.
+	 * Optional override for minimum version for collab.
+	 * If not provided, the default for the given compatibilityMode will be used.
+	 * @remarks
+	 * This is useful when runtime options are overridden and change the minimum version for collab.
+	 *
+	 * @deprecated Pass a {@link @fluidframework/runtime-definitions#MinimumVersionForCollab}
+	 * semver string directly via `compatibilityMode` instead.
 	 */
 	minVersionForCollabOverride?: MinimumVersionForCollab;
 }): IRuntimeFactory {
 	const {
-		compatibilityMode,
-		minVersionForCollab,
 		minVersionForCollabOverride,
 		rootDataStoreRegistry,
 		runtimeOptionOverrides,
 		schema,
 	} = props;
-
-	const { minVersionForCollab: resolvedMinVersion, runtimeOptions: baseRuntimeOptions } =
-		resolveMinVersionAndRuntimeOptions({
-			compatibilityMode,
-			minVersionForCollab: minVersionForCollab ?? minVersionForCollabOverride,
-		});
-
+	const { compatibilityMode, minVersionForCollab } = resolveCompatibilityInput(
+		props.compatibilityMode,
+	);
 	const [registryEntries, sharedObjects] = parseDataObjectsFromSharedObjects(schema);
 	const registry = rootDataStoreRegistry ?? new FluidDataStoreRegistry(registryEntries);
 
 	return new DOProviderContainerRuntimeFactory(
 		schema,
+		compatibilityMode,
 		new RootDataObjectFactory(sharedObjects, registry),
 		{
-			runtimeOptions: { ...baseRuntimeOptions, ...runtimeOptionOverrides },
-			minVersionForCollab: resolvedMinVersion,
+			runtimeOptions: runtimeOptionOverrides,
+			minVersionForCollab: minVersionForCollabOverride ?? minVersionForCollab,
 		},
 	);
 }
@@ -280,25 +273,31 @@ class DOProviderContainerRuntimeFactory extends BaseContainerRuntimeFactory {
 	 * since it can take care of constructing the root data object factory based on the schema.
 	 *
 	 * @param schema - The schema for the container
+	 * @param compatibilityMode - Compatibility mode
 	 * @param rootDataObjectFactory - A factory that can construct the root data object.
-	 * @param resolvedConfig - Pre-resolved runtime options and minimum version for collab.
+	 * @param config - Resolved minimum version for collab (required) and optional runtime option overrides.
 	 */
 	public constructor(
 		schema: ContainerSchema,
+		// eslint-disable-next-line import-x/no-deprecated
+		compatibilityMode: CompatibilityMode,
 		rootDataObjectFactory: DataObjectFactory<
 			RootDataObject,
 			{ InitialState: RootDataObjectProps }
 		>,
-		resolvedConfig: {
-			runtimeOptions: Partial<IContainerRuntimeOptions>;
+		config: {
 			minVersionForCollab: MinimumVersionForCollab;
+			runtimeOptions?: Partial<IContainerRuntimeOptions>;
 		},
 	) {
 		super({
 			registryEntries: [rootDataObjectFactory.registryEntry],
-			runtimeOptions: resolvedConfig.runtimeOptions,
+			runtimeOptions: {
+				...compatibilityModeRuntimeOptions[compatibilityMode],
+				...config.runtimeOptions,
+			},
 			provideEntryPoint,
-			minVersionForCollab: resolvedConfig.minVersionForCollab,
+			minVersionForCollab: config.minVersionForCollab,
 		});
 		this.rootDataObjectFactory = rootDataObjectFactory;
 		this.initialObjects = schema.initialObjects;

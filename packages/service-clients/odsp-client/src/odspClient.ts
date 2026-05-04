@@ -166,7 +166,7 @@ export class OdspClient {
 	private getLoaderProps(schema: ContainerSchema): ILoaderProps {
 		const runtimeFactory = createDOProviderContainerRuntimeFactory({
 			schema,
-			compatibilityMode: "2",
+			compatibilityMode: "2.0.0",
 		});
 		const load = async (): Promise<IFluidModuleWithDetails> => {
 			return {

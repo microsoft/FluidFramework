@@ -62,12 +62,10 @@ export function createAzureClient(
 	createContainerRuntimeFactory?: ({
 		schema,
 		compatibilityMode,
-		minVersionForCollab,
 	}: {
 		schema: ContainerSchema;
 		// eslint-disable-next-line import-x/no-deprecated
-		compatibilityMode: CompatibilityMode;
-		minVersionForCollab?: MinimumVersionForCollab;
+		compatibilityMode: MinimumVersionForCollab | CompatibilityMode;
 	}) => IRuntimeFactory,
 ): AzureClient {
 	const args = process.argv.slice(2);
