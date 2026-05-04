@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { oob } from "@fluidframework/core-utils/internal";
+
 /**
  * Walks `array` from the end and returns the index of the last element matching `predicate`,
  * or `-1` if none match.
@@ -16,7 +18,7 @@ export function findLastIndex<T>(
 	predicate: (item: T) => boolean,
 ): number {
 	for (let i = array.length - 1; i >= 0; i--) {
-		if (predicate(array[i] as T)) {
+		if (predicate(array[i] ?? oob())) {
 			return i;
 		}
 	}
