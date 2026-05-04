@@ -19,7 +19,8 @@ overrides:
   nconf@<0.11.4: '>=0.11.4'
   node-forge@<1.3.0: '>=1.3.0'
   postcss@<8.4.31: '>=8.4.31'
-  jsrsasign@<11.0.0: '>=11.0.0'
+  jsrsasign@<11.0.0: '>=11.1.1'
+  jsrsasign@>=11.0.0 <11.1.1: '>=11.1.1'
   minimist@<0.2.4: '>=0.2.4'
   tough-cookie@<4.1.3: '>=4.1.3'
   braces@<3.0.3: '>=3.0.3'
@@ -32,6 +33,8 @@ overrides:
   '@octokit/request@>=1.0.0 <8.4.1': '>=8.4.1'
   '@octokit/plugin-paginate-rest@>=1.0.0 <9.2.2': '>=9.2.2'
   form-data@<2.5.4: '>=2.5.4'
+  path-to-regexp@<0.1.13: ^0.1.13
+  lodash@<4.18.0: ^4.18.1
 
 importers:
 
@@ -244,8 +247,8 @@ importers:
         specifier: ^1.0.0
         version: 1.2.0
       jsrsasign:
-        specifier: ^11.1.0
-        version: 11.1.0
+        specifier: ^11.1.1
+        version: 11.1.3
       uuid:
         specifier: ^8.3.1
         version: 8.3.2
@@ -4679,8 +4682,8 @@ importers:
         specifier: ^1.0.1
         version: 1.0.1
       lodash:
-        specifier: ^4.17.21
-        version: 4.17.21
+        specifier: ^4.18.1
+        version: 4.18.1
       semver:
         specifier: '>=7.5.2'
         version: 7.7.2
@@ -4761,8 +4764,8 @@ importers:
         specifier: ^1.0.1
         version: 1.0.1
       lodash:
-        specifier: ^4.17.21
-        version: 4.17.21
+        specifier: ^4.18.1
+        version: 4.18.1
       murmurhash3js:
         specifier: 3.0.1
         version: 3.0.1
@@ -4881,8 +4884,8 @@ importers:
         specifier: ^1.0.1
         version: 1.0.1
       lodash:
-        specifier: ^4.17.21
-        version: 4.17.21
+        specifier: ^4.18.1
+        version: 4.18.1
       msgpackr:
         specifier: ^1.4.7
         version: 1.11.5
@@ -4996,8 +4999,8 @@ importers:
         specifier: ^1.0.1
         version: 1.0.1
       lodash:
-        specifier: ^4.17.21
-        version: 4.17.21
+        specifier: ^4.18.1
+        version: 4.18.1
       semver:
         specifier: '>=7.5.2'
         version: 7.7.2
@@ -8082,8 +8085,8 @@ importers:
         specifier: ^3.1.0
         version: 3.3.0
       jsrsasign:
-        specifier: ^11.1.0
-        version: 11.1.0
+        specifier: ^11.1.1
+        version: 11.1.3
       url:
         specifier: ^0.11.0
         version: 0.11.4
@@ -8714,8 +8717,8 @@ importers:
         specifier: ^0.1036.5002
         version: 0.1036.5002
       jsrsasign:
-        specifier: ^11.1.0
-        version: 11.1.0
+        specifier: ^11.1.1
+        version: 11.1.3
       uuid:
         specifier: ^8.3.1
         version: 8.3.2
@@ -9831,8 +9834,8 @@ importers:
         specifier: ^3.1.0
         version: 3.3.0
       lodash:
-        specifier: ^4.17.21
-        version: 4.17.21
+        specifier: ^4.18.1
+        version: 4.18.1
       url:
         specifier: ^0.11.0
         version: 0.11.4
@@ -10414,8 +10417,8 @@ importers:
         specifier: workspace:~
         version: link:../../utils/telemetry-utils
       lodash:
-        specifier: ^4.17.21
-        version: 4.17.21
+        specifier: ^4.18.1
+        version: 4.18.1
       uuid:
         specifier: ^8.3.1
         version: 8.3.2
@@ -10806,8 +10809,8 @@ importers:
         specifier: ^3.1.0
         version: 3.3.0
       jsrsasign:
-        specifier: ^11.1.0
-        version: 11.1.0
+        specifier: ^11.1.1
+        version: 11.1.3
       uuid:
         specifier: ^8.3.1
         version: 8.3.2
@@ -14533,6 +14536,9 @@ packages:
 
   '@sinonjs/text-encoding@0.7.3':
     resolution: {integrity: sha512-DE427ROAphMQzU4ENbliGYrBSYPXF+TtLg9S8vzeA+OF4ZKzoDdzfL8sxuMUGS/lgRhM6j1URSk9ghf7Xo1tyA==}
+    deprecated: |-
+      Deprecated: no longer maintained and no longer used by Sinon packages. See
+        https://github.com/sinonjs/nise/issues/243 for replacement details.
 
   '@socket.io/component-emitter@3.1.2':
     resolution: {integrity: sha512-9BCxFwvbGg/RsZK9tjXd8s4UcwR0MWeFQ1XEKIQVVvAGJyINdrqKMcTRyLoK8Rse1GjzLV9cwjWV1olXRWEXVA==}
@@ -15693,6 +15699,7 @@ packages:
   bootstrap@3.4.1:
     resolution: {integrity: sha512-yN5oZVmRCwe5aKwzRj6736nSmKDX7pLYwsXiCj/EYmo16hODaBiT4En5btW/jhBF/seV+XMx3aYwukYC3A49DA==}
     engines: {node: '>=6'}
+    deprecated: This version of Bootstrap is no longer supported. Please upgrade to the latest version.
 
   boxen@7.1.1:
     resolution: {integrity: sha512-2hCgjEmP8YLWQ130n2FerGv7rYpfBmnmp9Uy2Le1vge6X3gZIfSmEzP5QTDElFxcvVcXlEn8Aq6MU/PZygIOog==}
@@ -17541,24 +17548,26 @@ packages:
 
   glob@10.4.5:
     resolution: {integrity: sha512-7Bv8RF0k6xjo7d4A/PxYLbUCfb6c+Vpd2/mB2yRDlew7Jb5hEXiCD9ibfO7wpk8i4sevK6DFny9h7EYbM3/sHg==}
+    deprecated: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
     hasBin: true
 
   glob@7.1.6:
     resolution: {integrity: sha512-LwaxwyZ72Lk7vZINtNNrywX0ZuLyStrdDtabefZKAY5ZGJhVtgdznluResxNmPitE0SAO+O26sWTHeKSI2wMBA==}
-    deprecated: Glob versions prior to v9 are no longer supported
+    deprecated: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
 
   glob@7.2.3:
     resolution: {integrity: sha512-nFR0zLpU2YCaRxwoCJvL6UvCH2JFyFVIvwTLsIf21AuHlMskA1hhTdk+LlYJtOlYt9v6dvszD2BGRqBL+iQK9Q==}
-    deprecated: Glob versions prior to v9 are no longer supported
+    deprecated: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
 
   glob@8.1.0:
     resolution: {integrity: sha512-r8hpEjiQEYlF2QU0df3dS+nxxSIreXQS1qRhMJM0Q5NDdR386C7jb7Hwwod8Fgiuex+k0GFjgft18yvxm5XoCQ==}
     engines: {node: '>=12'}
-    deprecated: Glob versions prior to v9 are no longer supported
+    deprecated: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
 
   glob@9.3.5:
     resolution: {integrity: sha512-e1LleDykUz2Iu+MTYdkSsuWX8lvAjAcs0Xef0lNIu0S2wOAzuTxCJtcd9S3cijlwYF18EsU3rzb8jPVobxDh9Q==}
     engines: {node: '>=16 || 14 >=14.17'}
+    deprecated: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
 
   global-dirs@3.0.1:
     resolution: {integrity: sha512-NBcGGFbBA9s1VzD41QXDG+3++t9Mn5t1FpLdhESY6oKY4gYTFpX4wO3sqGUa0Srjtbfj3szX0RnemmrVRUdULA==}
@@ -18627,8 +18636,8 @@ packages:
     resolution: {integrity: sha512-P2bSOMAc/ciLz6DzgjVlGJP9+BrJWu5UDGK70C2iweC5QBIeFf0ZXRvGjEj2uYgrY2MkAAhsSWHDWlFtEroZWw==}
     engines: {node: '>=0.6.0'}
 
-  jsrsasign@11.1.0:
-    resolution: {integrity: sha512-Ov74K9GihaK9/9WncTe1mPmvrO7Py665TUfUKvraXBpu+xcTWitrtuOwcjf4KMU9maPaYn0OuaWy0HOzy/GBXg==}
+  jsrsasign@11.1.3:
+    resolution: {integrity: sha512-nPnK5D/4lv0Dwr7TlzrKtAd8JlLZwFTqTUUB3NQCbtdobcRcohGFxjbPySDVh74iWUudcCsapYT6OxoyhJLhhA==}
 
   jssm@5.104.2:
     resolution: {integrity: sha512-2UGO9psXneFRqMq2xzme3d+ralxRTWQAckGgU6c99UZBY2+AI2H9JYtKmHPScYiNr7/yaV2Id3bYVlmtFGyqLg==}
@@ -18881,8 +18890,8 @@ packages:
   lodash.uniqby@4.7.0:
     resolution: {integrity: sha512-e/zcLx6CSbmaEgFHCA7BnoQKyCtKMxnuWrJygbwPs/AIn+IMKl66L8/s+wBUn5LRw2pZx3bUHibiV1b6aTWIww==}
 
-  lodash@4.17.21:
-    resolution: {integrity: sha512-v2kDEe57lecTulaDIuNTPy3Ry4gLGJ6Z1O3vE1krgXZNrsQ+LFTGHVxVjcXPs17LhbZVGedAJv8XZ1tvj5FvSg==}
+  lodash@4.18.1:
+    resolution: {integrity: sha512-dMInicTPVE8d1e5otfwmmjlxkZoUpiVLwyeTdUsi/Caj/gfzzblBcCE5sRHV/AsjuCmxWrte2TNGSYuCeCq+0Q==}
 
   log-symbols@4.0.0:
     resolution: {integrity: sha512-FN8JBzLx6CzeMrB0tg6pqlGU1wCrXW+ZXGH481kfsBqer0hToTIiHdjH4Mq8xJUbvATujKCvaREGWpGUionraA==}
@@ -19900,8 +19909,8 @@ packages:
     resolution: {integrity: sha512-Xa4Nw17FS9ApQFJ9umLiJS4orGjm7ZzwUrwamcGQuHSzDyth9boKDaycYdDcZDuqYATXw4HFXgaqWTctW/v1HA==}
     engines: {node: '>=16 || 14 >=14.18'}
 
-  path-to-regexp@0.1.12:
-    resolution: {integrity: sha512-RA1GjUVMnvYFxuqovrEqZoxxW5NUZqbwKtYz/Tt7nXerk0LbLblQmrsgdeOxV5SFHf0UDggjS/bSeOZwt1pmEQ==}
+  path-to-regexp@0.1.13:
+    resolution: {integrity: sha512-A/AGNMFN3c8bOlvV9RreMdrv7jsmF9XIfDeCd87+I8RNg6s78BhJxMu69NEMHBSJFxKidViTEdruRwEk/WIKqA==}
 
   path-to-regexp@1.9.0:
     resolution: {integrity: sha512-xIp7/apCFJuUHdDLWe8O1HIkb0kQrOMb/0u6FXQjemHn/ii5LrIzU6bdECnsiTF/GjZkMEKg1xdiZwNqDYlZ6g==}
@@ -20216,7 +20225,7 @@ packages:
   puppeteer@1.20.0:
     resolution: {integrity: sha512-bt48RDBy2eIwZPrkgbcwHtb51mj2nKvHOPMaSH2IsWiv7lOG9k9zhaRzpDZafrk05ajMc3cu+lSQYYOfH2DkVQ==}
     engines: {node: '>=6.4.0'}
-    deprecated: < 24.10.2 is no longer supported
+    deprecated: < 24.15.0 is no longer supported
 
   qs@6.14.0:
     resolution: {integrity: sha512-YWWTjgABSKcvs/nWBi9PycY/JiPJqOD4JA6o9Sej2AtvSGarXxKC3OQSk4pAarbdQlKAh5D4FCQkJNkW+GAn3w==}
@@ -20365,6 +20374,7 @@ packages:
 
   realistic-structured-clone@2.0.4:
     resolution: {integrity: sha512-lItAdBIFHUSe6fgztHPtmmWqKUgs+qhcYLi3wTRUl4OTB3Vb8aBVSjGfQZUvkmJCKoX3K9Wf7kyLp/F/208+7A==}
+    deprecated: Package no longer supported. Contact Support at https://www.npmjs.com/support for more info.
 
   rechoir@0.7.1:
     resolution: {integrity: sha512-/njmZ8s1wVeR6pjTZ+0nCnv8SpZNRMT2D1RLOJQESlYFDBvwpTA4KWJpZ+sBJ4+vhjILRcK7JIFdGCdxEAAitg==}
@@ -21200,6 +21210,7 @@ packages:
   tar@6.2.1:
     resolution: {integrity: sha512-DZ4yORTwrbTj/7MZYq2w+/ZFdI6OZ/f9SFHR+71gIVUZhOQPHzVCLpvRnPgyaMpfWxxk/4ONva3GQSyNIKRv6A==}
     engines: {node: '>=10'}
+    deprecated: Old versions of tar are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
 
   terminal-link@2.1.1:
     resolution: {integrity: sha512-un0FmiRUQNr5PJqy9kP7c40F5BOfpGlYTrxonDChEZB7pzZxRNp/bt+ymiy9/npwXya9KH99nJ/GXFIiUkYGFQ==}
@@ -23050,7 +23061,7 @@ snapshots:
   '@fluidframework/azure-service-utils@1.1.1':
     dependencies:
       '@fluidframework/protocol-definitions': 1.2.0
-      jsrsasign: 11.1.0
+      jsrsasign: 11.1.3
       uuid: 8.3.2
 
   '@fluidframework/build-common@0.24.0': {}
@@ -23072,7 +23083,7 @@ snapshots:
       globby: 11.1.0
       ignore: 5.3.2
       json5: 2.2.3
-      lodash: 4.17.21
+      lodash: 4.18.1
       lodash.isequal: 4.5.0
       multimatch: 5.0.0
       picocolors: 1.1.1
@@ -23108,7 +23119,7 @@ snapshots:
       globby: 11.1.0
       ignore: 5.3.2
       json5: 2.2.3
-      lodash: 4.17.21
+      lodash: 4.18.1
       lodash.isequal: 4.5.0
       multimatch: 5.0.0
       picocolors: 1.1.1
@@ -23187,7 +23198,7 @@ snapshots:
       base64-js: 1.5.1
       buffer: 6.0.3
       events: 3.3.0
-      lodash: 4.17.21
+      lodash: 4.18.1
       sha.js: 2.4.12
 
   '@fluidframework/common-utils@1.1.1':
@@ -23197,7 +23208,7 @@ snapshots:
       base64-js: 1.5.1
       buffer: 6.0.3
       events: 3.3.0
-      lodash: 4.17.21
+      lodash: 4.18.1
       sha.js: 2.4.12
 
   '@fluidframework/container-definitions@1.3.1':
@@ -23231,7 +23242,7 @@ snapshots:
       abort-controller: 3.0.0
       double-ended-queue: 2.1.0-0
       events: 3.3.0
-      lodash: 4.17.21
+      lodash: 4.18.1
       url: 0.11.4
       uuid: 8.3.2
     transitivePeerDependencies:
@@ -23253,7 +23264,7 @@ snapshots:
       abort-controller: 3.0.0
       double-ended-queue: 2.1.0-0
       events: 3.3.0
-      lodash: 4.17.21
+      lodash: 4.18.1
       url: 0.11.4
       uuid: 8.3.2
     transitivePeerDependencies:
@@ -23275,7 +23286,7 @@ snapshots:
       abort-controller: 3.0.0
       double-ended-queue: 2.1.0-0
       events: 3.3.0
-      lodash: 4.17.21
+      lodash: 4.18.1
       url: 0.11.4
       uuid: 8.3.2
     transitivePeerDependencies:
@@ -23475,7 +23486,7 @@ snapshots:
       '@fluidframework/runtime-definitions': 1.4.0
       '@fluidframework/runtime-utils': 1.4.0
       '@fluidframework/telemetry-utils': 1.4.0
-      lodash: 4.17.21
+      lodash: 4.18.1
       uuid: 8.3.2
     transitivePeerDependencies:
       - debug
@@ -23497,7 +23508,7 @@ snapshots:
       '@fluidframework/runtime-definitions': 1.4.0
       '@fluidframework/runtime-utils': 1.4.0
       '@fluidframework/telemetry-utils': 1.4.0
-      lodash: 4.17.21
+      lodash: 4.18.1
       uuid: 8.3.2
     transitivePeerDependencies:
       - debug
@@ -23519,7 +23530,7 @@ snapshots:
       '@fluidframework/runtime-definitions': 1.4.0
       '@fluidframework/runtime-utils': 1.4.0
       '@fluidframework/telemetry-utils': 1.4.0
-      lodash: 4.17.21
+      lodash: 4.18.1
       uuid: 8.3.2
     transitivePeerDependencies:
       - debug
@@ -23796,7 +23807,7 @@ snapshots:
       '@fluidframework/server-services-core': 0.1036.5002
       '@fluidframework/server-test-utils': 0.1036.5002
       events: 3.3.0
-      jsrsasign: 11.1.0
+      jsrsasign: 11.1.3
       url: 0.11.4
       uuid: 8.3.2
     transitivePeerDependencies:
@@ -23821,7 +23832,7 @@ snapshots:
       '@fluidframework/server-services-core': 0.1036.5002
       '@fluidframework/server-test-utils': 0.1036.5002
       events: 3.3.0
-      jsrsasign: 11.1.0
+      jsrsasign: 11.1.3
       url: 0.11.4
       uuid: 8.3.2
     transitivePeerDependencies:
@@ -23846,7 +23857,7 @@ snapshots:
       '@fluidframework/server-services-core': 0.1036.5002
       '@fluidframework/server-test-utils': 0.1036.5002
       events: 3.3.0
-      jsrsasign: 11.1.0
+      jsrsasign: 11.1.3
       url: 0.11.4
       uuid: 8.3.2
     transitivePeerDependencies:
@@ -24152,7 +24163,7 @@ snapshots:
       '@fluidframework/common-utils': 0.32.2
       '@fluidframework/gitresources': 0.1036.5002
       '@fluidframework/protocol-definitions': 0.1028.2000
-      lodash: 4.17.21
+      lodash: 4.18.1
 
   '@fluidframework/protocol-base@0.1038.4001':
     dependencies:
@@ -24160,7 +24171,7 @@ snapshots:
       '@fluidframework/gitresources': 0.1038.4001
       '@fluidframework/protocol-definitions': 1.2.0
       events: 3.3.0
-      lodash: 4.17.21
+      lodash: 4.18.1
 
   '@fluidframework/protocol-definitions@0.1028.2000':
     dependencies:
@@ -24427,7 +24438,7 @@ snapshots:
       '@fluidframework/server-services-core': 0.1036.5002
       '@fluidframework/server-services-telemetry': 0.1036.5002
       async: 3.2.6
-      lodash: 4.17.21
+      lodash: 4.18.1
     transitivePeerDependencies:
       - supports-color
 
@@ -24440,7 +24451,7 @@ snapshots:
       assert: 2.1.0
       async: 3.2.6
       events: 3.3.0
-      lodash: 4.17.21
+      lodash: 4.18.1
     transitivePeerDependencies:
       - supports-color
 
@@ -24460,7 +24471,7 @@ snapshots:
       axios: 0.30.1(debug@4.4.1)
       double-ended-queue: 2.1.0-0
       json-stringify-safe: 5.0.1
-      lodash: 4.17.21
+      lodash: 4.18.1
       nconf: 0.12.1
       semver: 6.3.1
       sha.js: 2.4.12
@@ -24488,7 +24499,7 @@ snapshots:
       double-ended-queue: 2.1.0-0
       events: 3.3.0
       json-stringify-safe: 5.0.1
-      lodash: 4.17.21
+      lodash: 4.18.1
       nconf: 0.12.1
       semver: 6.3.1
       sha.js: 2.4.12
@@ -24516,7 +24527,7 @@ snapshots:
       double-ended-queue: 2.1.0-0
       events: 3.3.0
       json-stringify-safe: 5.0.1
-      lodash: 4.17.21
+      lodash: 4.18.1
       nconf: 0.12.1
       semver: 6.3.1
       sha.js: 2.4.12
@@ -24536,7 +24547,7 @@ snapshots:
       '@fluidframework/server-services-telemetry': 0.1036.5002
       '@fluidframework/server-test-utils': 0.1036.5002
       debug: 4.4.1(supports-color@8.1.1)
-      jsrsasign: 11.1.0
+      jsrsasign: 11.1.3
       uuid: 8.3.2
     transitivePeerDependencies:
       - bufferutil
@@ -24555,7 +24566,7 @@ snapshots:
       '@fluidframework/server-test-utils': 0.1038.4001
       debug: 4.4.1(supports-color@8.1.1)
       events: 3.3.0
-      jsrsasign: 11.1.0
+      jsrsasign: 11.1.3
       uuid: 8.3.2
     transitivePeerDependencies:
       - bufferutil
@@ -24578,7 +24589,7 @@ snapshots:
       '@types/ws': 6.0.4
       debug: 4.4.1(supports-color@8.1.1)
       double-ended-queue: 2.1.0-0
-      lodash: 4.17.21
+      lodash: 4.18.1
       sillyname: 0.1.0
       uuid: 8.3.2
       ws: 7.5.10
@@ -24605,7 +24616,7 @@ snapshots:
       debug: 4.4.1(supports-color@8.1.1)
       double-ended-queue: 2.1.0-0
       events: 3.3.0
-      lodash: 4.17.21
+      lodash: 4.18.1
       sillyname: 0.1.0
       uuid: 8.3.2
       ws: 7.5.10
@@ -24624,7 +24635,7 @@ snapshots:
       crc-32: 1.2.0
       debug: 4.4.1(supports-color@8.1.1)
       json-stringify-safe: 5.0.1
-      jsrsasign: 11.1.0
+      jsrsasign: 11.1.3
       jwt-decode: 3.1.2
       querystring: 0.2.1
       sillyname: 0.1.0
@@ -24642,7 +24653,7 @@ snapshots:
       crc-32: 1.2.0
       debug: 4.4.1(supports-color@8.1.1)
       json-stringify-safe: 5.0.1
-      jsrsasign: 11.1.0
+      jsrsasign: 11.1.3
       jwt-decode: 3.1.2
       querystring: 0.2.1
       sillyname: 0.1.0
@@ -24693,7 +24704,7 @@ snapshots:
       debug: 4.4.1(supports-color@8.1.1)
       events: 3.3.0
       ioredis: 4.30.0
-      lodash: 4.17.21
+      lodash: 4.18.1
       nconf: 0.12.1
       notepack.io: 2.3.0
       querystring: 0.2.1
@@ -24755,7 +24766,7 @@ snapshots:
       '@fluidframework/server-services-core': 0.1036.5002
       '@fluidframework/server-services-telemetry': 0.1036.5002
       debug: 4.4.1(supports-color@8.1.1)
-      lodash: 4.17.21
+      lodash: 4.18.1
       string-hash: 1.1.3
       uuid: 8.3.2
     transitivePeerDependencies:
@@ -24773,7 +24784,7 @@ snapshots:
       assert: 2.1.0
       debug: 4.4.1(supports-color@8.1.1)
       events: 3.3.0
-      lodash: 4.17.21
+      lodash: 4.18.1
       string-hash: 1.1.3
       uuid: 8.3.2
     transitivePeerDependencies:
@@ -25009,7 +25020,7 @@ snapshots:
       '@fluidframework/telemetry-utils': 1.4.0
       axios: 0.30.1
       events: 3.3.0
-      jsrsasign: 11.1.0
+      jsrsasign: 11.1.3
       uuid: 8.3.2
     transitivePeerDependencies:
       - bufferutil
@@ -25034,7 +25045,7 @@ snapshots:
       '@fluidframework/telemetry-utils': 1.4.0
       axios: 0.30.1(debug@4.4.1)
       events: 3.3.0
-      jsrsasign: 11.1.0
+      jsrsasign: 11.1.3
       uuid: 8.3.2
     transitivePeerDependencies:
       - bufferutil
@@ -25059,7 +25070,7 @@ snapshots:
       '@fluidframework/telemetry-utils': 1.4.0
       axios: 0.30.1
       events: 3.3.0
-      jsrsasign: 11.1.0
+      jsrsasign: 11.1.3
       uuid: 8.3.2
     transitivePeerDependencies:
       - bufferutil
@@ -25203,7 +25214,7 @@ snapshots:
       '@fluidframework/protocol-definitions': 0.1028.2000
       '@fluidframework/routerlicious-driver': 1.4.0(encoding@0.1.13)
       '@fluidframework/server-services-client': 0.1036.5002
-      jsrsasign: 11.1.0
+      jsrsasign: 11.1.3
       uuid: 8.3.2
     transitivePeerDependencies:
       - bufferutil
@@ -25220,7 +25231,7 @@ snapshots:
       '@fluidframework/protocol-definitions': 0.1028.2000
       '@fluidframework/routerlicious-driver': 1.4.0(encoding@0.1.13)
       '@fluidframework/server-services-client': 0.1036.5002
-      jsrsasign: 11.1.0
+      jsrsasign: 11.1.3
       uuid: 8.3.2
     transitivePeerDependencies:
       - bufferutil
@@ -25777,11 +25788,7 @@ snapshots:
       jest-runner: 26.6.3
       jest-runtime: 26.6.3
     transitivePeerDependencies:
-      - bufferutil
-      - canvas
       - supports-color
-      - ts-node
-      - utf-8-validate
 
   '@jest/transform@26.6.2':
     dependencies:
@@ -25925,7 +25932,7 @@ snapshots:
       '@rushstack/rig-package': 0.3.10
       '@rushstack/ts-command-line': 4.10.9
       colors: 1.2.5
-      lodash: 4.17.21
+      lodash: 4.18.1
       resolve: 1.17.0
       semver: 7.7.2
       source-map: 0.6.1
@@ -25940,7 +25947,7 @@ snapshots:
       '@rushstack/rig-package': 0.3.18
       '@rushstack/ts-command-line': 4.13.2
       colors: 1.2.5
-      lodash: 4.17.21
+      lodash: 4.18.1
       resolve: 1.22.10
       semver: 7.7.2
       source-map: 0.6.1
@@ -25957,7 +25964,7 @@ snapshots:
       '@rushstack/rig-package': 0.3.18
       '@rushstack/ts-command-line': 4.13.2
       colors: 1.2.5
-      lodash: 4.17.21
+      lodash: 4.18.1
       resolve: 1.22.10
       semver: 7.7.2
       source-map: 0.6.1
@@ -25974,7 +25981,7 @@ snapshots:
       '@rushstack/rig-package': 0.5.3
       '@rushstack/terminal': 0.15.4(@types/node@14.18.63)
       '@rushstack/ts-command-line': 5.0.2(@types/node@14.18.63)
-      lodash: 4.17.21
+      lodash: 4.18.1
       minimatch: 10.0.3
       resolve: 1.22.10
       semver: 7.5.4
@@ -25992,7 +25999,7 @@ snapshots:
       '@rushstack/rig-package': 0.5.3
       '@rushstack/terminal': 0.15.4(@types/node@22.18.1)
       '@rushstack/ts-command-line': 5.0.2(@types/node@22.18.1)
-      lodash: 4.17.21
+      lodash: 4.18.1
       minimatch: 10.0.3
       resolve: 1.22.10
       semver: 7.5.4
@@ -26144,7 +26151,7 @@ snapshots:
     dependencies:
       '@oclif/core': 4.5.3
       '@oclif/table': 0.4.12
-      lodash: 4.17.21
+      lodash: 4.18.1
       object-treeify: 4.0.1
     transitivePeerDependencies:
       - bufferutil
@@ -26179,7 +26186,7 @@ snapshots:
       ansis: 3.17.0
       debug: 4.4.1(supports-color@8.1.1)
       http-call: 5.3.0
-      lodash: 4.17.21
+      lodash: 4.18.1
       registry-auth-token: 5.1.0
     transitivePeerDependencies:
       - supports-color
@@ -26750,7 +26757,7 @@ snapshots:
     dependencies:
       '@sinonjs/commons': 1.8.6
       array-from: 2.1.1
-      lodash: 4.17.21
+      lodash: 4.18.1
 
   '@sinonjs/text-encoding@0.7.3': {}
 
@@ -28074,7 +28081,7 @@ snapshots:
 
   benchmark@2.1.4:
     dependencies:
-      lodash: 4.17.21
+      lodash: 4.18.1
       platform: 1.3.6
 
   best-random@1.0.3: {}
@@ -28728,7 +28735,7 @@ snapshots:
     dependencies:
       chalk: 4.1.2
       date-fns: 2.30.0
-      lodash: 4.17.21
+      lodash: 4.18.1
       rxjs: 6.6.7
       spawn-command: 0.0.2
       supports-color: 8.1.1
@@ -28739,7 +28746,7 @@ snapshots:
     dependencies:
       chalk: 4.1.2
       date-fns: 2.30.0
-      lodash: 4.17.21
+      lodash: 4.18.1
       rxjs: 7.8.2
       shell-quote: 1.8.3
       spawn-command: 0.0.2
@@ -28902,7 +28909,7 @@ snapshots:
       css-selector-tokenizer: 0.7.3
       icss-utils: 2.1.0
       loader-utils: 1.4.2
-      lodash: 4.17.21
+      lodash: 4.18.1
       postcss: 8.5.6
       postcss-modules-extract-imports: 1.2.1
       postcss-modules-local-by-default: 1.2.0
@@ -29731,7 +29738,7 @@ snapshots:
       esquery: 1.6.0
       indent-string: 4.0.0
       is-builtin-module: 3.2.1
-      lodash: 4.17.21
+      lodash: 4.18.1
       pluralize: 8.0.0
       read-pkg-up: 7.0.1
       regexp-tree: 0.1.27
@@ -29942,7 +29949,7 @@ snapshots:
       methods: 1.1.2
       on-finished: 2.4.1
       parseurl: 1.3.3
-      path-to-regexp: 0.1.12
+      path-to-regexp: 0.1.13
       proxy-addr: 2.0.7
       qs: 6.14.0
       range-parser: 1.2.1
@@ -30656,7 +30663,7 @@ snapshots:
     dependencies:
       '@types/html-minifier-terser': 6.1.0
       html-minifier-terser: 6.1.0
-      lodash: 4.17.21
+      lodash: 4.18.1
       pretty-error: 4.0.0
       tapable: 2.2.3
     optionalDependencies:
@@ -30898,7 +30905,7 @@ snapshots:
       code-excerpt: 4.0.0
       indent-string: 5.0.0
       is-in-ci: 0.1.0
-      lodash: 4.17.21
+      lodash: 4.18.1
       patch-console: 2.0.0
       react: 18.3.1
       react-reconciler: 0.29.2(react@18.3.1)
@@ -31452,7 +31459,11 @@ snapshots:
       pretty-format: 26.6.2
       throat: 5.0.0
     transitivePeerDependencies:
+      - bufferutil
+      - canvas
       - supports-color
+      - ts-node
+      - utf-8-validate
 
   jest-junit@10.0.0:
     dependencies:
@@ -31832,7 +31843,7 @@ snapshots:
       json-schema: 0.4.0
       verror: 1.10.0
 
-  jsrsasign@11.1.0: {}
+  jsrsasign@11.1.3: {}
 
   jssm@5.104.2:
     dependencies:
@@ -32072,7 +32083,7 @@ snapshots:
 
   lodash.uniqby@4.7.0: {}
 
-  lodash@4.17.21: {}
+  lodash@4.18.1: {}
 
   log-symbols@4.0.0:
     dependencies:
@@ -33003,7 +33014,7 @@ snapshots:
       js-yaml: 4.1.0
       json-parse-helpfulerror: 1.0.3
       jsonlines: 0.1.1
-      lodash: 4.17.21
+      lodash: 4.18.1
       make-fetch-happen: 11.1.1
       minimatch: 9.0.5
       p-map: 4.0.0
@@ -33195,7 +33206,7 @@ snapshots:
       fs-extra: 8.1.0
       github-slugger: 2.0.0
       got: 13.0.0
-      lodash: 4.17.21
+      lodash: 4.18.1
       normalize-package-data: 6.0.2
       semver: 7.7.2
       sort-package-json: 2.15.1
@@ -33225,7 +33236,7 @@ snapshots:
       fs-extra: 8.1.0
       github-slugger: 2.0.0
       got: 13.0.0
-      lodash: 4.17.21
+      lodash: 4.18.1
       normalize-package-data: 6.0.2
       semver: 7.7.2
       sort-package-json: 2.15.1
@@ -33519,7 +33530,7 @@ snapshots:
       lru-cache: 10.4.3
       minipass: 7.1.2
 
-  path-to-regexp@0.1.12: {}
+  path-to-regexp@0.1.13: {}
 
   path-to-regexp@1.9.0:
     dependencies:
@@ -33621,7 +33632,7 @@ snapshots:
 
   pretty-error@4.0.0:
     dependencies:
-      lodash: 4.17.21
+      lodash: 4.18.1
       renderkid: 3.0.0
 
   pretty-format@24.9.0:
@@ -34168,7 +34179,7 @@ snapshots:
       css-select: 4.3.0
       dom-converter: 0.2.0
       htmlparser2: 6.1.0
-      lodash: 4.17.21
+      lodash: 4.18.1
       strip-ansi: 6.0.1
 
   replace-in-file@7.2.0:
@@ -35194,7 +35205,7 @@ snapshots:
       json-stringify-safe: 5.0.1
       level: 8.0.1
       level-sublevel: 6.6.4
-      lodash: 4.17.21
+      lodash: 4.18.1
       morgan: 1.10.1
       nconf: 0.12.1
       socket.io: 4.8.1
@@ -35235,7 +35246,7 @@ snapshots:
       json-stringify-safe: 5.0.1
       level: 8.0.1
       level-sublevel: 6.6.4
-      lodash: 4.17.21
+      lodash: 4.18.1
       morgan: 1.10.1
       nconf: 0.12.1
       socket.io: 4.8.1
@@ -35309,7 +35320,7 @@ snapshots:
       jest: 26.6.3
       jest-util: 26.6.2
       json5: 2.2.3
-      lodash: 4.17.21
+      lodash: 4.18.1
       make-error: 1.3.6
       mkdirp: 1.0.4
       semver: 7.7.2
@@ -35743,7 +35754,7 @@ snapshots:
     dependencies:
       axios: 0.30.1(debug@4.3.4)
       joi: 17.13.3
-      lodash: 4.17.21
+      lodash: 4.18.1
       minimist: 1.2.8
       rxjs: 7.8.2
     transitivePeerDependencies:
@@ -36004,7 +36015,7 @@ snapshots:
 
   whatwg-url@8.7.0:
     dependencies:
-      lodash: 4.17.21
+      lodash: 4.18.1
       tr46: 2.1.0
       webidl-conversions: 6.1.0
 

@@ -8,8 +8,6 @@ const os = require("os");
 const path = require("path");
 const util = require("util");
 const { exec } = require('child_process');
-const msRestAzure = require("ms-rest-azure");
-const keyVault = require("azure-keyvault");
 const rcTools = require("@fluidframework/tool-utils");
 
 const appendFile = util.promisify(fs.appendFile);
@@ -116,18 +114,8 @@ async function execAsync(command, options) {
 
 class AzCliKeyVaultClient {
     static async get() {
-
         await execAsync("az ad signed-in-user show");
         return new AzCliKeyVaultClient();
-
-        // Disabling fallback to REST client while we decide how to streamline the getkeys tool
-
-        // try {
-        //     await execAsync("az account set --subscription Fluid");
-        //     return new AzCliKeyVaultClient();
-        // } catch (e) {
-        //     return undefined;
-        // }
     }
 
     async getSecrets(vaultName) {
@@ -139,36 +127,8 @@ class AzCliKeyVaultClient {
     }
 };
 
-class MsRestAzureKeyVaultClinet {
-    static async get() {
-        const credentials = await msRestAzure.interactiveLogin();
-        return new MsRestAzureKeyVaultClinet(credentials);
-    }
-
-    constructor(credentials) {
-        this.client = new keyVault.KeyVaultClient(credentials);
-    }
-
-    async getSecrets(vaultName) {
-        return this.client.getSecrets(`https://${vaultName}.vault.azure.net/`);
-    }
-
-    async getSecret(vaultName, secretName) {
-        return this.client.getSecret(`https://${vaultName}.vault.azure.net/`, secretName, '');
-    }
-}
-
 async function getClient() {
     return await AzCliKeyVaultClient.get();
-
-    // Disabling fallback to REST client while we decide how to streamline the getkeys tool
-
-    // const primary = await AzCliKeyVaultClient.get();
-    // if (primary !== undefined) {
-    //     console.log("Using Azure CLI");
-    //     return primary;
-    // }
-    // return MsRestAzureKeyVaultClinet.get();
 }
 
 (async () => {

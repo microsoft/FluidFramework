@@ -37,7 +37,7 @@
     "@fluidframework/protocol-definitions": "^0.1028.2000",
     "@fluidframework/routerlicious-driver": "workspace:~",
     "@fluidframework/server-services-client": "^0.1036.5002",
-    "jsrsasign": "^11.1.0",
+    "jsrsasign": "^11.1.1",
     "uuid": "^8.3.1"
   },
   "devDependencies": {

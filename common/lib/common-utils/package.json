@@ -80,7 +80,7 @@
     "@types/events": "^3.0.0",
     "base64-js": "^1.5.1",
     "events": "^3.1.0",
-    "lodash": "^4.17.21",
+    "lodash": "^4.18.1",
     "sha.js": "^2.4.11"
   },
   "devDependencies": {
@@ -114,6 +114,9 @@
     "ts-node": "^7.0.1",
     "typescript": "~4.5.5",
     "typescript-formatter": "7.1.0"
+  },
+  "overrides": {
+    "lodash": "^4.18.1"
   },
   "jest-junit": {
     "outputDirectory": "nyc",
