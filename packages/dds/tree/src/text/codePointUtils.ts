@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils/internal";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 /**
  * Returns the number of Unicode code points in `value`.
@@ -36,7 +36,7 @@ export function codePointCount(value: string): number {
  * Use this to translate {@link TextAsTree}-space counts (code points) into JavaScript string indices (UTF-16).
  * One code point outside the Basic Multilingual Plane (e.g. most emoji) occupies two UTF-16 code units.
  *
- * Asserts that the requested `count` code points are fully consumable from `start`; silent truncation
+ * Validates that the requested `count` code points are fully consumable from `start`; silent truncation
  * would misalign delta offsets applied to strings rather than surface the drift to the caller.
  *
  * @example
@@ -51,11 +51,19 @@ export function codePointCount(value: string): number {
  * @param start - The UTF-16 index in `value` to start measuring from. Must be in `[0, value.length]`.
  * @param count - The number of Unicode code points to measure. Must be non-negative, and there must
  * be at least `count` code points available in `value` starting at `start`.
+ * @throws A {@link @fluidframework/telemetry-utils#UsageError} if `start` is out of range,
+ * `count` is negative, or fewer than `count` code points are available from `start`.
  * @internal
  */
 export function utf16LengthForCodePoints(value: string, start: number, count: number): number {
-	assert(start >= 0 && start <= value.length, "start must be within value bounds");
-	assert(count >= 0, "count must be non-negative");
+	if (start < 0 || start > value.length) {
+		throw new UsageError(
+			`start (${start}) must be within [0, ${value.length}] (value.length).`,
+		);
+	}
+	if (count < 0) {
+		throw new UsageError(`count (${count}) must be non-negative.`);
+	}
 	let utf16 = 0;
 	let counted = 0;
 	while (counted < count && start + utf16 < value.length) {
@@ -64,6 +72,10 @@ export function utf16LengthForCodePoints(value: string, start: number, count: nu
 		utf16 += (value.codePointAt(start + utf16) ?? 0) > 0xffff ? 2 : 1;
 		counted++;
 	}
-	assert(counted === count, "count exceeds available code points from start");
+	if (counted !== count) {
+		throw new UsageError(
+			`count (${count}) exceeds the ${counted} code point(s) available from start (${start}) in a value of length ${value.length}.`,
+		);
+	}
 	return utf16;
 }
