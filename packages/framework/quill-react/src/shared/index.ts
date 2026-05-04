@@ -3,4 +3,4 @@
  * Licensed under the MIT License.
  */
 
-export { runOnce } from "./runOnce.js";
+export { runGuarded } from "./runGuarded.js";

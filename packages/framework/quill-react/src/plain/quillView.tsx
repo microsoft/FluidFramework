@@ -13,7 +13,7 @@ import Quill from "quill";
 import type { Op } from "quill-delta";
 import { type FC, useEffect, useRef } from "react";
 
-import { runOnce } from "../shared/index.js";
+import { runGuarded } from "../shared/index.js";
 
 /**
  * Props for the MainView component.
@@ -74,7 +74,7 @@ const TextEditorView: FC<{ root: TextAsTree.Tree }> = ({ root }) => {
 		// Listen to local Quill changes — sync Quill → tree.
 		const handleTextChange = (_delta: unknown, _oldDelta: unknown, source: string): void => {
 			if (source !== "user") return;
-			runOnce(isUpdatingRef, () => {
+			runGuarded(isUpdatingRef, () => {
 				syncTextToTree(root, quill.getText());
 			});
 		};
@@ -98,7 +98,7 @@ const TextEditorView: FC<{ root: TextAsTree.Tree }> = ({ root }) => {
 	// independent of the Quill initialization guard above.
 	useEffect(() => {
 		return root.onCharactersChanged((ops) => {
-			runOnce(isUpdatingRef, () => {
+			runGuarded(isUpdatingRef, () => {
 				const quill = quillRef.current;
 				if (!quill) return;
 				if (ops === undefined) {
