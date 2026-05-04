@@ -643,8 +643,8 @@ for (const testOpts of testMatrix) {
 				const map2 = container2.initialObjects.map1;
 
 				// Process ops coming from service
-				assert.strictEqual(await mapWait(map2, "1.0.0"), 1);
-				assert.strictEqual(await mapWait(map2, "2.0.0"), 2);
+				assert.strictEqual(await mapWait(map2, "1"), 1);
+				assert.strictEqual(await mapWait(map2, "2"), 2);
 				assert.strictEqual(await mapWait(map2, "3"), 3);
 
 				// Inspect the incoming ops
