@@ -667,9 +667,6 @@ importers:
       typescript:
         specifier: ~5.4.5
         version: 5.4.5
-      webpack:
-        specifier: ^5.103.0
-        version: 5.103.0
     devDependencies:
       '@biomejs/biome':
         specifier: ~2.4.5

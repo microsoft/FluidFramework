@@ -24,11 +24,6 @@ export {
 	BundleMetricSet,
 	BundleSummaries,
 } from "./BundleBuddyTypes";
-export {
-	BannedModule,
-	BannedModulesPlugin,
-	BannedModulesPluginOptions,
-} from "./bannedModulesPlugin/bannedModulesPlugin";
 export { bundlesContainNoChanges, compareBundles } from "./compareBundles";
 export {
 	GetBuildOptions,

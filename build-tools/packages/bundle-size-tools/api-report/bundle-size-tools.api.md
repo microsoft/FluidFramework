@@ -10,7 +10,6 @@ import type { Build } from 'azure-devops-node-api/interfaces/BuildInterfaces';
 import type { BundleAnalyzerPlugin } from 'webpack-bundle-analyzer';
 import type JSZip from 'jszip';
 import { WebApi } from 'azure-devops-node-api';
-import type Webpack from 'webpack';
 
 // @public (undocumented)
 export class ADOSizeComparator {
@@ -20,25 +19,6 @@ export class ADOSizeComparator {
     localReportPath: string,
     targetBranch: string);
     getSizeComparison(): Promise<SizeComparison>;
-}
-
-// @public (undocumented)
-export interface BannedModule {
-    moduleName: string;
-    reason: string;
-}
-
-// @public
-export class BannedModulesPlugin {
-    constructor(options: BannedModulesPluginOptions);
-    // (undocumented)
-    apply(compiler: Webpack.Compiler): void;
-}
-
-// @public (undocumented)
-export interface BannedModulesPluginOptions {
-    // (undocumented)
-    bannedModules: BannedModule[];
 }
 
 // @public
