@@ -8,7 +8,6 @@ import path from "node:path";
 import {
 	ADOSizeComparator,
 	type BundleComparison,
-	type BundleMetric,
 	bundlesContainNoChanges,
 	getAzureDevopsApi,
 } from "@fluidframework/bundle-size-tools";
@@ -33,10 +32,6 @@ const defaultLocalReportPath = "./artifacts/bundleAnalysis";
 // artifact.
 const defaultOutputDir = "./artifacts/bundleSizeDiff";
 
-// Any single non-total metric that grows by more than this threshold is considered a
-// regression.
-const sizeRegressionThresholdBytes = 5120;
-
 // Output file names. Only one of these is present per run: `result.json` when the
 // comparison produced a meaningful result, or `error.json` when it did not. Consumers
 // use file existence as the success/failure discriminator without needing to parse JSON.
@@ -46,17 +41,14 @@ const errorFileName = "error.json";
 /**
  * Shape of the `result.json` file produced on a successful comparison, discriminated by
  * `kind`. On `"no-changes"`, the comparison ran and found no size deltas. On `"changes"`,
- * the comparison found size deltas; `comparison` holds the diff and `sizeRegressionDetected`
- * flags any non-total metric that grew past the threshold.
+ * the comparison found size deltas and `comparison` holds the diff. The producer is
+ * unopinionated about what constitutes a "regression" — consumers apply their own thresholds.
  */
 type BundleSizeDiffResult = {
 	prNumber: number;
 	baseCommit: string;
 	targetBranch: string;
-} & (
-	| { kind: "no-changes" }
-	| { kind: "changes"; sizeRegressionDetected: boolean; comparison: BundleComparison[] }
-);
+} & ({ kind: "no-changes" } | { kind: "changes"; comparison: BundleComparison[] });
 
 /**
  * Shape of the `error.json` file produced when the command could not produce a comparison
@@ -68,18 +60,6 @@ interface BundleSizeDiffError {
 	baseCommit: string | undefined;
 	targetBranch: string;
 	error: string;
-}
-
-/**
- * Compute whether any bundle shows a metric growing by more than the regression threshold.
- */
-function detectSizeRegression(comparison: BundleComparison[]): boolean {
-	return comparison.some((bundle: BundleComparison) =>
-		Object.values(bundle.commonBundleMetrics).some(
-			({ baseline, compare }: { baseline: BundleMetric; compare: BundleMetric }) =>
-				compare.parsedSize - baseline.parsedSize > sizeRegressionThresholdBytes,
-		),
-	);
 }
 
 export default class GenerateBundleSizeDiff extends BaseCommand<
@@ -183,12 +163,7 @@ export default class GenerateBundleSizeDiff extends BaseCommand<
 		};
 		const result: BundleSizeDiffResult = bundlesContainNoChanges(comparison)
 			? { ...common, kind: "no-changes" }
-			: {
-					...common,
-					kind: "changes",
-					sizeRegressionDetected: detectSizeRegression(comparison),
-					comparison,
-				};
+			: { ...common, kind: "changes", comparison };
 
 		await writeFile(resultPath, JSON.stringify(result, undefined, 2));
 		this.info(`Wrote ${resultPath}`);
