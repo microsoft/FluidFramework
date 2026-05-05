@@ -34,7 +34,7 @@ export interface IRequestedFluidVersions {
 	requestAbsoluteVersions?: string[];
 }
 
-const installRequiredVersions = async (config: IRequestedFluidVersions): Promise<void> => {
+const loadVersions = async (config: IRequestedFluidVersions): Promise<void> => {
 	const loadPromises: Promise<void>[] = [];
 	if (config.requestAbsoluteVersions !== undefined) {
 		loadPromises.push(
@@ -77,7 +77,7 @@ function createTestSuiteWithInstalledVersion(
 		before("Create TestObjectProvider", async function () {
 			this.timeout(Math.max(defaultTimeoutMs, timeoutMs));
 
-			await installRequiredVersions(requiredVersions);
+			await loadVersions(requiredVersions);
 			provider = await getVersionedTestObjectProvider(
 				pkgVersion, // baseVersion
 				pkgVersion, // loaderVersion
