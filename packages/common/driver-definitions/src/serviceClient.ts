@@ -164,7 +164,7 @@ export type DataStoreKey<T, TAll = unknown> = RegistryKey<
 export interface DataStoreCreator {
 	/**
 	 * Create a new detached datastore `T` which can be attached to the {@link FluidContainer}.
-	 * by adding a handle to it to a DataStore or SharedObject which is already attached to the {@link FluidContainer}.
+	 * by adding a handle to a DataStore or SharedObject which is already attached to the {@link FluidContainer}.
 	 * @remarks
 	 * `kind` must be included in the registry used to create or load this {@link DataStoreCreator}.
 	 */

@@ -1,6 +1,6 @@
 # Fluid Framework Layer Compatibility Unified
 
-This is a alternative to the [Fluid Framework Layer Compatibility](./LayerCompatibility.md) (which applies mainly to `@legacy` APIs).
+This is an alternative to the [Fluid Framework Layer Compatibility](./LayerCompatibility.md) (which applies mainly to `@legacy` APIs).
 This new approach is intentionally less flexible, but should still be flexible enough for most if not all use-cases, and possible to extend to cover more use-cases later if required.
 
 ## Overview
@@ -29,4 +29,4 @@ If needed, it is possible to explicitly design types to they can support specifi
 For example is supporting a type from one version of another package (no mixing), the range of supported versions can be expressed using the packages's dependency range on the package in question, then directly refer to a nominal type in that package.
 If needing to support a range of versions, but allow multiple package versions at once as long as all are in that range, either structural types detailing the actual requirements can be used, or opaque branded structural types can be used which include version brands.
 
-In a cases where dynamic loading which might be done in non-type safe ways, or where a type safe solution was not found, additional runtime checks should be added similar to those used to check the legacy API surface's layering.
+In cases where dynamic loading which might be done in non-type safe ways, or where a type safe solution was not found, additional runtime checks should be added similar to those used to check the legacy API surface's layering.
