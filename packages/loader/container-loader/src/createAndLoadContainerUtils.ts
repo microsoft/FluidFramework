@@ -277,16 +277,9 @@ export interface ICaptureFullContainerStateProps {
 	 */
 	readonly request: IRequest;
 	/**
-	 * Optional logger. Used for driver-side telemetry and as the base logger
-	 * for the capture's own monitoring context.
+	 * Optional logger for driver-side telemetry.
 	 */
 	readonly logger?: ITelemetryBaseLogger | undefined;
-	/**
-	 * Optional config provider. Reachable from the monitoring context wired
-	 * inside {@link captureFullContainerState}, matching the pattern used by
-	 * the other entry points in this file.
-	 */
-	readonly configProvider?: IConfigProviderBase | undefined;
 }
 
 /**
@@ -324,6 +317,13 @@ export interface ICaptureFullContainerStateProps {
  * Note: if a new snapshot lands between the snapshot fetch and the ops fetch,
  * the returned state may not reflect the very latest snapshot, but remains
  * internally consistent: ops are anchored to the snapshot that was captured.
+ *
+ * No `mixinMonitoringContext` / `configProvider` is wired here, deliberately
+ * diverging from the sibling entry points in this file. The function reads
+ * no feature flags and instantiates no runtime, so there is nothing for a
+ * monitoring context to gate or attribute. If a future change introduces
+ * config-gated behavior or runtime-attributed telemetry, add the wiring
+ * back together with that change.
  * @legacy @alpha
  */
 export async function captureFullContainerState({
@@ -331,101 +331,82 @@ export async function captureFullContainerState({
 	documentServiceFactory,
 	request,
 	logger,
-	configProvider,
 }: ICaptureFullContainerStateProps): Promise<string> {
-	const subMc = mixinMonitoringContext(
-		DebugLogger.mixinDebugLogger("fluid:telemetry", logger, {
-			all: { loaderVersion: pkgVersion },
-		}),
-		sessionStorageConfigProvider.value,
-		configProvider,
+	const resolvedUrl = await urlResolver.resolve(request);
+	if (resolvedUrl === undefined) {
+		throw new UsageError("Failed to resolve request to a Fluid url");
+	}
+
+	const documentService = await documentServiceFactory.createDocumentService(
+		resolvedUrl,
+		logger,
 	);
-	const mc = createChildMonitoringContext({
-		logger: subMc.logger,
-		namespace: "CaptureFullContainerState",
-	});
+	try {
+		const storage = await documentService.connectToStorage();
 
-	return PerformanceEvent.timedExecAsync(
-		mc.logger,
-		{ eventName: "CaptureFullContainerState" },
-		async () => {
-			const resolvedUrl = await urlResolver.resolve(request);
-			if (resolvedUrl === undefined) {
-				throw new UsageError("Failed to resolve request to a Fluid url");
-			}
+		const versions = await storage.getVersions(
+			// `null` signals "latest"
+			// eslint-disable-next-line unicorn/no-null
+			null,
+			1,
+			"captureFullContainerState",
+			FetchSource.noCache,
+		);
+		const version = versions[0];
+		const snapshot: ISnapshot | ISnapshotTree | undefined =
+			storage.getSnapshot === undefined
+				? ((await storage.getSnapshotTree(version)) ?? undefined)
+				: await storage.getSnapshot({
+						cacheSnapshot: false,
+						versionId: version?.id,
+						scenarioName: "captureFullContainerState",
+					});
+		if (snapshot === undefined) {
+			throw new GenericError("Failed to fetch snapshot for captureFullContainerState");
+		}
 
-			const documentService = await documentServiceFactory.createDocumentService(
-				resolvedUrl,
-				mc.logger,
+		const baseSnapshot = getSnapshotTree(snapshot);
+		if (snapshotHasLoadingGroups(baseSnapshot)) {
+			throw new UsageError(
+				"captureFullContainerState does not yet support containers with loading groups",
 			);
-			try {
-				const storage = await documentService.connectToStorage();
+		}
+		const attributes = await getDocumentAttributes(storage, baseSnapshot);
+		const gcData = await parseGcSnapshotData(baseSnapshot, storage);
+		const [structuralBlobs, attachmentBlobs] = await Promise.all([
+			readReferencedSnapshotBlobs(snapshot, storage),
+			captureReferencedAttachmentBlobs(baseSnapshot, storage, gcData),
+		]);
+		const snapshotBlobs = { ...structuralBlobs, ...attachmentBlobs };
 
-				const versions = await storage.getVersions(
-					// `null` signals "latest"
-					// eslint-disable-next-line unicorn/no-null
-					null,
-					1,
-					"captureFullContainerState",
-					FetchSource.noCache,
-				);
-				const version = versions[0];
-				const snapshot: ISnapshot | ISnapshotTree | undefined =
-					storage.getSnapshot === undefined
-						? ((await storage.getSnapshotTree(version)) ?? undefined)
-						: await storage.getSnapshot({
-								cacheSnapshot: false,
-								versionId: version?.id,
-								scenarioName: "captureFullContainerState",
-							});
-				if (snapshot === undefined) {
-					throw new GenericError("Failed to fetch snapshot for captureFullContainerState");
-				}
+		const deltaStorage = await documentService.connectToDeltaStorage();
+		const opsStream = deltaStorage.fetchMessages(
+			attributes.sequenceNumber + 1,
+			undefined,
+			undefined,
+			false,
+			"captureFullContainerState",
+		);
+		const savedOps: ISequencedDocumentMessage[] = [];
+		let opsResult = await opsStream.read();
+		while (!opsResult.done) {
+			savedOps.push(...opsResult.value);
+			opsResult = await opsStream.read();
+		}
 
-				const baseSnapshot = getSnapshotTree(snapshot);
-				if (snapshotHasLoadingGroups(baseSnapshot)) {
-					throw new UsageError(
-						"captureFullContainerState does not yet support containers with loading groups",
-					);
-				}
-				const attributes = await getDocumentAttributes(storage, baseSnapshot);
-				const gcData = await parseGcSnapshotData(baseSnapshot, storage);
-				const [structuralBlobs, attachmentBlobs] = await Promise.all([
-					readReferencedSnapshotBlobs(snapshot, storage),
-					captureReferencedAttachmentBlobs(baseSnapshot, storage, gcData),
-				]);
-				const snapshotBlobs = { ...structuralBlobs, ...attachmentBlobs };
-
-				const deltaStorage = await documentService.connectToDeltaStorage();
-				const opsStream = deltaStorage.fetchMessages(
-					attributes.sequenceNumber + 1,
-					undefined,
-					undefined,
-					false,
-					"captureFullContainerState",
-				);
-				const savedOps: ISequencedDocumentMessage[] = [];
-				let opsResult = await opsStream.read();
-				while (!opsResult.done) {
-					savedOps.push(...opsResult.value);
-					opsResult = await opsStream.read();
-				}
-
-				const pendingState: IPendingContainerState = {
-					attached: true,
-					baseSnapshot,
-					snapshotBlobs,
-					loadedGroupIdSnapshots: undefined,
-					pendingRuntimeState: undefined,
-					savedOps,
-					url: resolvedUrl.url,
-				};
-				return JSON.stringify(pendingState);
-			} finally {
-				documentService.dispose();
-			}
-		},
-	);
+		const pendingState: IPendingContainerState = {
+			attached: true,
+			baseSnapshot,
+			snapshotBlobs,
+			loadedGroupIdSnapshots: undefined,
+			pendingRuntimeState: undefined,
+			savedOps,
+			url: resolvedUrl.url,
+		};
+		return JSON.stringify(pendingState);
+	} finally {
+		documentService.dispose();
+	}
 }
 
 /**

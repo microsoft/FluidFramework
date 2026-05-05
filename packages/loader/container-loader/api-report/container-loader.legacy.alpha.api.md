@@ -49,7 +49,6 @@ export interface IBaseProtocolHandler {
 
 // @alpha @legacy
 export interface ICaptureFullContainerStateProps {
-    readonly configProvider?: IConfigProviderBase | undefined;
     readonly documentServiceFactory: IDocumentServiceFactory;
     readonly logger?: ITelemetryBaseLogger | undefined;
     readonly request: IRequest;

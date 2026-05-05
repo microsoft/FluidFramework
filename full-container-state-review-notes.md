@@ -145,17 +145,19 @@ Either way, **add a non-UTF-8 round-trip test** in `captureFullContainerState.sp
 > [!NOTE]
 > The existing `getBlobContentsFromTree` path in `containerStorageAdapter.ts:324,349` uses the same `bufferToString(..., "utf8")` pattern. The deep-review counter-argument was that the existing path doesn't actually inline arbitrary attachment-blob bytes (it only saves the redirect table) — so this is a *new* obligation this PR creates, not a pre-existing limitation it inherits. Worth confirming that framing when the discussion resumes.
 
-#### B. Monitoring-context wiring missing — RESOLVED
+#### B. Monitoring-context wiring missing — RESOLVED by deliberate divergence (option 2)
 
-Wired up matching the sibling pattern in this file:
+Initially wired the full pattern (`mixinMonitoringContext` + `createChildMonitoringContext` + `PerformanceEvent.timedExecAsync` + `configProvider?` on the props), then reverted on review. Rationale for the revert:
 
-- `ICaptureFullContainerStateProps` now has `readonly configProvider?: IConfigProviderBase | undefined`.
-- `captureFullContainerState` builds a monitoring context with `mixinMonitoringContext` (composing `sessionStorageConfigProvider` + the props' `configProvider`) and a child context with namespace `"CaptureFullContainerState"`.
-- The body is wrapped in `PerformanceEvent.timedExecAsync` with `eventName: "CaptureFullContainerState"`, so successes and failures emit telemetry.
-- The `mc.logger` is forwarded to `createDocumentService` so driver-side telemetry threads through with the same identity.
-- API report regenerated; the new optional field is in `container-loader.legacy.alpha.api.md`.
+- The function reads no feature flags, so the config provider has nothing to gate.
+- It instantiates no runtime, so there is no runtime-attributed telemetry to emit.
+- No specific dashboard or telemetry consumer was identified; the wiring would have been speculative observability infra (YAGNI).
+- The convention argument (sibling functions wire all of this) doesn't really apply — the siblings load full containers with runtimes; this one does not.
+- The "must add `configProvider?` before the @alpha freeze" argument is weak: optional props can be added later without breaking callers.
 
-`jatgarg` should still sign off on the telemetry decisions before promotion.
+Final state on the branch: the function uses just the optional `logger?` we started with (forwarded to `createDocumentService`), and a docblock note explains the deliberate divergence so future reviewers don't relitigate. The revert commit is in branch history if the wiring needs to come back.
+
+If a future change introduces config-gated behavior or runtime-attributed telemetry, add the wiring back at that point. Until then, the function stays a thin driver-only capture — true to its pitch.
 
 #### C. Layering — duplicated constants — PARTIALLY RESOLVED
 
