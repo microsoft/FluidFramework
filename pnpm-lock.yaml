@@ -155,8 +155,8 @@ importers:
   azure/packages/azure-local-service:
     dependencies:
       tinylicious:
-        specifier: ^7.0.0
-        version: 7.0.0
+        specifier: ^7.0.1
+        version: 7.0.1
     devDependencies:
       '@biomejs/biome':
         specifier: ~2.4.5
@@ -374,8 +374,8 @@ importers:
         specifier: ^6.1.3
         version: 6.1.3
       tinylicious:
-        specifier: ^7.0.0
-        version: 7.0.0
+        specifier: ^7.0.1
+        version: 7.0.1
       ts-jest:
         specifier: ^29.1.1
         version: 29.2.5(@babel/core@7.26.0)(@jest/transform@29.7.0)(@jest/types@29.6.3)(babel-jest@29.7.0(@babel/core@7.26.0))(jest@29.7.0(@types/node@22.19.17)(babel-plugin-macros@3.1.0)(ts-node@10.9.2(@types/node@22.19.17)(typescript@5.4.5)))(typescript@5.4.5)
@@ -504,8 +504,8 @@ importers:
         specifier: ^6.1.3
         version: 6.1.3
       tinylicious:
-        specifier: ^7.0.0
-        version: 7.0.0
+        specifier: ^7.0.1
+        version: 7.0.1
       ts-jest:
         specifier: ^29.1.1
         version: 29.2.5(@babel/core@7.26.0)(@jest/transform@29.7.0)(@jest/types@29.6.3)(babel-jest@29.7.0(@babel/core@7.26.0))(jest@29.7.0(@types/node@22.19.17)(babel-plugin-macros@3.1.0)(ts-node@10.9.2(@types/node@22.19.17)(typescript@5.4.5)))(typescript@5.4.5)
@@ -631,8 +631,8 @@ importers:
         specifier: ^6.1.3
         version: 6.1.3
       tinylicious:
-        specifier: ^7.0.0
-        version: 7.0.0
+        specifier: ^7.0.1
+        version: 7.0.1
       ts-jest:
         specifier: ^29.1.1
         version: 29.2.5(@babel/core@7.26.0)(@jest/transform@29.7.0)(@jest/types@29.6.3)(babel-jest@29.7.0(@babel/core@7.26.0))(jest@29.7.0(@types/node@22.19.17)(babel-plugin-macros@3.1.0)(ts-node@10.9.2(@types/node@22.19.17)(typescript@5.4.5)))(typescript@5.4.5)
@@ -815,8 +815,8 @@ importers:
         specifier: ^4.0.0
         version: 4.0.0(webpack@5.103.0)
       tinylicious:
-        specifier: ^7.0.0
-        version: 7.0.0
+        specifier: ^7.0.1
+        version: 7.0.1
       ts-loader:
         specifier: ^9.5.1
         version: 9.5.1(typescript@5.4.5)(webpack@5.103.0)
@@ -927,8 +927,8 @@ importers:
         specifier: ^6.1.3
         version: 6.1.3
       tinylicious:
-        specifier: ^7.0.0
-        version: 7.0.0
+        specifier: ^7.0.1
+        version: 7.0.1
       ts-jest:
         specifier: ^29.1.1
         version: 29.2.5(@babel/core@7.26.0)(@jest/transform@29.7.0)(@jest/types@29.6.3)(babel-jest@29.7.0(@babel/core@7.26.0))(jest@29.7.0(@types/node@22.19.17)(babel-plugin-macros@3.1.0)(ts-node@10.9.2(@types/node@22.19.17)(typescript@5.4.5)))(typescript@5.4.5)
@@ -1072,8 +1072,8 @@ importers:
         specifier: ^2.0.3
         version: 2.0.8
       tinylicious:
-        specifier: ^7.0.0
-        version: 7.0.0
+        specifier: ^7.0.1
+        version: 7.0.1
       ts-jest:
         specifier: ^29.1.1
         version: 29.2.5(@babel/core@7.26.0)(@jest/transform@29.7.0)(@jest/types@29.6.3)(babel-jest@29.7.0(@babel/core@7.26.0))(jest@29.7.0(@types/node@22.19.17)(babel-plugin-macros@3.1.0)(ts-node@10.9.2(@types/node@22.19.17)(typescript@5.4.5)))(typescript@5.4.5)
@@ -1138,8 +1138,8 @@ importers:
         specifier: workspace:~
         version: link:../../../packages/runtime/runtime-definitions
       '@fluidframework/server-local-server':
-        specifier: ^7.0.0
-        version: 7.0.0
+        specifier: ^7.0.1
+        version: 7.0.1
       '@fluidframework/tinylicious-driver':
         specifier: workspace:~
         version: link:../../../packages/drivers/tinylicious-driver
@@ -1229,8 +1229,8 @@ importers:
         specifier: ^4.0.0
         version: 4.0.0(webpack@5.103.0)
       tinylicious:
-        specifier: ^7.0.0
-        version: 7.0.0
+        specifier: ^7.0.1
+        version: 7.0.1
       ts-jest:
         specifier: ^29.1.1
         version: 29.2.5(@babel/core@7.26.0)(@jest/transform@29.7.0)(@jest/types@29.6.3)(babel-jest@29.7.0(@babel/core@7.26.0))(jest@29.7.0(@types/node@22.19.17)(babel-plugin-macros@3.1.0)(ts-node@10.9.2(@types/node@22.19.17)(typescript@5.4.5)))(typescript@5.4.5)
@@ -1353,8 +1353,8 @@ importers:
         specifier: ^6.1.3
         version: 6.1.3
       tinylicious:
-        specifier: ^7.0.0
-        version: 7.0.0
+        specifier: ^7.0.1
+        version: 7.0.1
       ts-jest:
         specifier: ^29.1.1
         version: 29.2.5(@babel/core@7.26.0)(@jest/transform@29.7.0)(@jest/types@29.6.3)(babel-jest@29.7.0(@babel/core@7.26.0))(jest@29.7.0(@types/node@22.19.17)(babel-plugin-macros@3.1.0)(ts-node@10.9.2(@types/node@22.19.17)(typescript@5.4.5)))(typescript@5.4.5)
@@ -1571,8 +1571,8 @@ importers:
         specifier: ^4.0.0
         version: 4.0.0(webpack@5.103.0)
       tinylicious:
-        specifier: ^7.0.0
-        version: 7.0.0
+        specifier: ^7.0.1
+        version: 7.0.1
       ts-jest:
         specifier: ^29.1.1
         version: 29.2.5(@babel/core@7.26.0)(@jest/transform@29.7.0)(@jest/types@29.6.3)(babel-jest@29.7.0(@babel/core@7.26.0))(jest@29.7.0(@types/node@22.19.17)(babel-plugin-macros@3.1.0)(ts-node@10.9.2(@types/node@22.19.17)(typescript@5.4.5)))(typescript@5.4.5)
@@ -2180,8 +2180,8 @@ importers:
         specifier: ^2.0.3
         version: 2.0.8
       tinylicious:
-        specifier: ^7.0.0
-        version: 7.0.0
+        specifier: ^7.0.1
+        version: 7.0.1
       ts-loader:
         specifier: ^9.5.1
         version: 9.5.1(typescript@5.4.5)(webpack@5.103.0)
@@ -2316,8 +2316,8 @@ importers:
         specifier: ^2.0.3
         version: 2.0.8
       tinylicious:
-        specifier: ^7.0.0
-        version: 7.0.0
+        specifier: ^7.0.1
+        version: 7.0.1
       ts-jest:
         specifier: ^29.1.1
         version: 29.2.5(@babel/core@7.26.0)(@jest/transform@29.7.0)(@jest/types@29.6.3)(babel-jest@29.7.0(@babel/core@7.26.0))(jest@29.7.0(@types/node@22.19.17)(babel-plugin-macros@3.1.0)(ts-node@10.9.2(@types/node@22.19.17)(typescript@5.4.5)))(typescript@5.4.5)
@@ -3881,8 +3881,8 @@ importers:
         specifier: ^4.0.0
         version: 4.0.0(webpack@5.103.0)
       tinylicious:
-        specifier: ^7.0.0
-        version: 7.0.0
+        specifier: ^7.0.1
+        version: 7.0.1
       ts-loader:
         specifier: ^9.5.1
         version: 9.5.1(typescript@5.4.5)(webpack@5.103.0)
@@ -4370,8 +4370,8 @@ importers:
         specifier: ^3.4.2
         version: 3.4.2
       tinylicious:
-        specifier: ^7.0.0
-        version: 7.0.0
+        specifier: ^7.0.1
+        version: 7.0.1
       ts-jest:
         specifier: ^29.1.1
         version: 29.2.5(@babel/core@7.26.0)(@jest/transform@29.7.0)(@jest/types@29.6.3)(babel-jest@29.7.0(@babel/core@7.26.0))(jest@29.7.0(@types/node@22.19.17)(babel-plugin-macros@3.1.0)(ts-node@10.9.2(@types/node@22.19.17)(typescript@5.4.5)))(typescript@5.4.5)
@@ -4452,8 +4452,8 @@ importers:
         specifier: workspace:~
         version: link:../../../../packages/drivers/local-driver
       '@fluidframework/server-local-server':
-        specifier: ^7.0.0
-        version: 7.0.0
+        specifier: ^7.0.1
+        version: 7.0.1
       '@fluidframework/test-runtime-utils':
         specifier: workspace:~
         version: link:../../../../packages/runtime/test-runtime-utils
@@ -4515,8 +4515,8 @@ importers:
         specifier: ^2.0.3
         version: 2.0.8
       tinylicious:
-        specifier: ^7.0.0
-        version: 7.0.0
+        specifier: ^7.0.1
+        version: 7.0.1
       ts-jest:
         specifier: ^29.1.1
         version: 29.2.5(@babel/core@7.26.0)(@jest/transform@29.7.0)(@jest/types@29.6.3)(babel-jest@29.7.0(@babel/core@7.26.0))(jest@29.7.0(@types/node@22.19.17)(babel-plugin-macros@3.1.0)(ts-node@10.9.2(@types/node@22.19.17)(typescript@5.4.5)))(typescript@5.4.5)
@@ -4606,8 +4606,8 @@ importers:
         specifier: workspace:~
         version: link:../../../../packages/drivers/local-driver
       '@fluidframework/server-local-server':
-        specifier: ^7.0.0
-        version: 7.0.0
+        specifier: ^7.0.1
+        version: 7.0.1
       '@fluidframework/test-runtime-utils':
         specifier: workspace:~
         version: link:../../../../packages/runtime/test-runtime-utils
@@ -4681,8 +4681,8 @@ importers:
         specifier: ^4.0.0
         version: 4.0.0(webpack@5.103.0)
       tinylicious:
-        specifier: ^7.0.0
-        version: 7.0.0
+        specifier: ^7.0.1
+        version: 7.0.1
       ts-jest:
         specifier: ^29.1.1
         version: 29.2.5(@babel/core@7.26.0)(@jest/transform@29.7.0)(@jest/types@29.6.3)(babel-jest@29.7.0(@babel/core@7.26.0))(jest@29.7.0(@types/node@22.19.17)(babel-plugin-macros@3.1.0)(ts-node@10.9.2(@types/node@22.19.17)(typescript@5.4.5)))(typescript@5.4.5)
@@ -4926,8 +4926,8 @@ importers:
         specifier: workspace:~
         version: link:../../../packages/drivers/routerlicious-driver
       '@fluidframework/server-local-server':
-        specifier: ^7.0.0
-        version: 7.0.0
+        specifier: ^7.0.1
+        version: 7.0.1
       '@fluidframework/tinylicious-driver':
         specifier: workspace:~
         version: link:../../../packages/drivers/tinylicious-driver
@@ -5032,8 +5032,8 @@ importers:
         specifier: workspace:~
         version: link:../../../packages/dds/sequence
       '@fluidframework/server-local-server':
-        specifier: ^7.0.0
-        version: 7.0.0
+        specifier: ^7.0.1
+        version: 7.0.1
       '@fluidframework/task-manager':
         specifier: workspace:~
         version: link:../../../packages/dds/task-manager
@@ -5244,24 +5244,12 @@ importers:
       '@fluidframework/driver-definitions':
         specifier: workspace:~
         version: link:../../../packages/common/driver-definitions
-      '@fluidframework/local-driver':
-        specifier: workspace:~
-        version: link:../../../packages/drivers/local-driver
       '@fluidframework/register-collection':
         specifier: workspace:~
         version: link:../../../packages/dds/register-collection
-      '@fluidframework/routerlicious-driver':
-        specifier: workspace:~
-        version: link:../../../packages/drivers/routerlicious-driver
       '@fluidframework/runtime-definitions':
         specifier: workspace:~
         version: link:../../../packages/runtime/runtime-definitions
-      '@fluidframework/server-local-server':
-        specifier: ^7.0.0
-        version: 7.0.0
-      '@fluidframework/tinylicious-driver':
-        specifier: workspace:~
-        version: link:../../../packages/drivers/tinylicious-driver
       uuid:
         specifier: ^11.1.0
         version: 11.1.0
@@ -5372,8 +5360,8 @@ importers:
         specifier: workspace:~
         version: link:../../../packages/runtime/runtime-utils
       '@fluidframework/server-local-server':
-        specifier: ^7.0.0
-        version: 7.0.0
+        specifier: ^7.0.1
+        version: 7.0.1
       '@fluidframework/telemetry-utils':
         specifier: workspace:~
         version: link:../../../packages/utils/telemetry-utils
@@ -5590,8 +5578,8 @@ importers:
         specifier: ^6.1.3
         version: 6.1.3
       tinylicious:
-        specifier: ^7.0.0
-        version: 7.0.0
+        specifier: ^7.0.1
+        version: 7.0.1
       ts-jest:
         specifier: ^29.1.1
         version: 29.2.5(@babel/core@7.26.0)(@jest/transform@29.7.0)(@jest/types@29.6.3)(babel-jest@29.7.0(@babel/core@7.26.0))(jest@29.7.0(@types/node@22.19.17)(babel-plugin-macros@3.1.0)(ts-node@10.9.2(@types/node@22.19.17)(typescript@5.4.5)))(typescript@5.4.5)
@@ -5759,8 +5747,8 @@ importers:
         specifier: ^4.0.0
         version: 4.0.0(webpack@5.103.0)
       tinylicious:
-        specifier: ^7.0.0
-        version: 7.0.0
+        specifier: ^7.0.1
+        version: 7.0.1
       ts-jest:
         specifier: ^29.1.1
         version: 29.2.5(@babel/core@7.26.0)(@jest/transform@29.7.0)(@jest/types@29.6.3)(babel-jest@29.7.0(@babel/core@7.26.0))(jest@29.7.0(@types/node@22.19.17)(babel-plugin-macros@3.1.0)(ts-node@10.9.2(@types/node@22.19.17)(typescript@5.4.5)))(typescript@5.4.5)
@@ -5840,8 +5828,8 @@ importers:
         specifier: workspace:~
         version: link:../../../packages/dds/sequence
       '@fluidframework/server-local-server':
-        specifier: ^7.0.0
-        version: 7.0.0
+        specifier: ^7.0.1
+        version: 7.0.1
       '@fluidframework/task-manager':
         specifier: workspace:~
         version: link:../../../packages/dds/task-manager
@@ -5940,8 +5928,8 @@ importers:
         specifier: ^4.0.0
         version: 4.0.0(webpack@5.103.0)
       tinylicious:
-        specifier: ^7.0.0
-        version: 7.0.0
+        specifier: ^7.0.1
+        version: 7.0.1
       ts-jest:
         specifier: ^29.1.1
         version: 29.2.5(@babel/core@7.26.0)(@jest/transform@29.7.0)(@jest/types@29.6.3)(babel-jest@29.7.0(@babel/core@7.26.0))(jest@29.7.0(@types/node@22.19.17)(babel-plugin-macros@3.1.0)(ts-node@10.9.2(@types/node@22.19.17)(typescript@5.4.5)))(typescript@5.4.5)
@@ -6100,8 +6088,8 @@ importers:
         specifier: ^4.0.0
         version: 4.0.0(webpack@5.103.0)
       tinylicious:
-        specifier: ^7.0.0
-        version: 7.0.0
+        specifier: ^7.0.1
+        version: 7.0.1
       ts-jest:
         specifier: ^29.1.1
         version: 29.2.5(@babel/core@7.26.0)(@jest/transform@29.7.0)(@jest/types@29.6.3)(babel-jest@29.7.0(@babel/core@7.26.0))(jest@29.7.0(@types/node@22.19.17)(babel-plugin-macros@3.1.0)(ts-node@10.9.2(@types/node@22.19.17)(typescript@5.4.5)))(typescript@5.4.5)
@@ -6227,8 +6215,8 @@ importers:
         specifier: ^6.1.3
         version: 6.1.3
       tinylicious:
-        specifier: ^7.0.0
-        version: 7.0.0
+        specifier: ^7.0.1
+        version: 7.0.1
       ts-jest:
         specifier: ^29.1.1
         version: 29.2.5(@babel/core@7.26.0)(@jest/transform@29.7.0)(@jest/types@29.6.3)(babel-jest@29.7.0(@babel/core@7.26.0))(jest@29.7.0(@types/node@22.19.17)(babel-plugin-macros@3.1.0)(ts-node@10.9.2(@types/node@22.19.17)(typescript@5.4.5)))(typescript@5.4.5)
@@ -6366,8 +6354,8 @@ importers:
         specifier: ^6.1.3
         version: 6.1.3
       tinylicious:
-        specifier: ^7.0.0
-        version: 7.0.0
+        specifier: ^7.0.1
+        version: 7.0.1
       ts-jest:
         specifier: ^29.1.1
         version: 29.2.5(@babel/core@7.26.0)(@jest/transform@29.7.0)(@jest/types@29.6.3)(babel-jest@29.7.0(@babel/core@7.26.0))(jest@29.7.0(@types/node@22.19.17)(babel-plugin-macros@3.1.0)(ts-node@10.9.2(@types/node@22.19.17)(typescript@5.4.5)))(typescript@5.4.5)
@@ -6490,8 +6478,8 @@ importers:
         specifier: ^6.1.3
         version: 6.1.3
       tinylicious:
-        specifier: ^7.0.0
-        version: 7.0.0
+        specifier: ^7.0.1
+        version: 7.0.1
       ts-jest:
         specifier: ^29.1.1
         version: 29.2.5(@babel/core@7.26.0)(@jest/transform@29.7.0)(@jest/types@29.6.3)(babel-jest@29.7.0(@babel/core@7.26.0))(jest@29.7.0(@types/node@22.19.17)(babel-plugin-macros@3.1.0)(ts-node@10.9.2(@types/node@22.19.17)(typescript@5.4.5)))(typescript@5.4.5)
@@ -6802,8 +6790,8 @@ importers:
         specifier: workspace:~
         version: link:../../../../packages/dds/sequence
       '@fluidframework/server-local-server':
-        specifier: ^7.0.0
-        version: 7.0.0
+        specifier: ^7.0.1
+        version: 7.0.1
       '@fluidframework/test-runtime-utils':
         specifier: workspace:~
         version: link:../../../../packages/runtime/test-runtime-utils
@@ -10003,23 +9991,23 @@ importers:
         specifier: workspace:~
         version: link:../../loader/driver-utils
       '@fluidframework/protocol-base':
-        specifier: ^7.0.0
-        version: 7.0.0
+        specifier: ^7.0.1
+        version: 7.0.1
       '@fluidframework/routerlicious-driver':
         specifier: workspace:~
         version: link:../routerlicious-driver
       '@fluidframework/server-local-server':
-        specifier: ^7.0.0
-        version: 7.0.0
+        specifier: ^7.0.1
+        version: 7.0.1
       '@fluidframework/server-services-client':
-        specifier: ^7.0.0
-        version: 7.0.0
+        specifier: ^7.0.1
+        version: 7.0.1
       '@fluidframework/server-services-core':
-        specifier: ^7.0.0
-        version: 7.0.0
+        specifier: ^7.0.1
+        version: 7.0.1
       '@fluidframework/server-test-utils':
-        specifier: ^7.0.0
-        version: 7.0.0
+        specifier: ^7.0.1
+        version: 7.0.1
       '@fluidframework/telemetry-utils':
         specifier: workspace:~
         version: link:../../utils/telemetry-utils
@@ -10434,8 +10422,8 @@ importers:
         specifier: workspace:~
         version: link:../../loader/driver-utils
       '@fluidframework/server-services-client':
-        specifier: ^7.0.0
-        version: 7.0.0
+        specifier: ^7.0.1
+        version: 7.0.1
       '@fluidframework/telemetry-utils':
         specifier: workspace:~
         version: link:../../utils/telemetry-utils
@@ -11168,8 +11156,8 @@ importers:
         specifier: ^2.0.3
         version: 2.0.8
       tinylicious:
-        specifier: ^7.0.0
-        version: 7.0.0
+        specifier: ^7.0.1
+        version: 7.0.1
       tslib:
         specifier: ^1.10.0
         version: 1.14.1
@@ -13921,8 +13909,8 @@ importers:
         specifier: ^2.0.3
         version: 2.0.8
       tinylicious:
-        specifier: ^7.0.0
-        version: 7.0.0
+        specifier: ^7.0.1
+        version: 7.0.1
       uuid:
         specifier: ^11.1.0
         version: 11.1.0
@@ -14288,8 +14276,8 @@ importers:
         specifier: ^2.0.3
         version: 2.0.8
       tinylicious:
-        specifier: ^7.0.0
-        version: 7.0.0
+        specifier: ^7.0.1
+        version: 7.0.1
       typescript:
         specifier: ~5.4.5
         version: 5.4.5
@@ -14522,8 +14510,8 @@ importers:
         specifier: workspace:~
         version: link:../../dds/sequence
       '@fluidframework/server-local-server':
-        specifier: ^7.0.0
-        version: 7.0.0
+        specifier: ^7.0.1
+        version: 7.0.1
       '@fluidframework/task-manager':
         specifier: workspace:~
         version: link:../../dds/task-manager
@@ -14658,8 +14646,8 @@ importers:
         specifier: workspace:~
         version: link:../../dds/sequence
       '@fluidframework/server-local-server':
-        specifier: ^7.0.0
-        version: 7.0.0
+        specifier: ^7.0.1
+        version: 7.0.1
       '@fluidframework/shared-object-base':
         specifier: workspace:~
         version: link:../../dds/shared-object-base
@@ -14829,9 +14817,6 @@ importers:
       '@fluidframework/sequence':
         specifier: workspace:~
         version: link:../../dds/sequence
-      '@fluidframework/server-local-server':
-        specifier: ^7.0.0
-        version: 7.0.0
       '@fluidframework/test-utils':
         specifier: workspace:~
         version: link:../test-utils
@@ -14857,6 +14842,9 @@ importers:
       '@fluidframework/eslint-config-fluid':
         specifier: catalog:eslint
         version: 9.0.0(@typescript-eslint/utils@8.56.1(eslint@9.39.1(jiti@2.6.1))(typescript@5.4.5))(eslint@9.39.1(jiti@2.6.1))(typescript@5.4.5)
+      '@fluidframework/server-local-server':
+        specifier: ^7.0.1
+        version: 7.0.1
       '@types/mocha':
         specifier: ^10.0.10
         version: 10.0.10
@@ -15058,8 +15046,8 @@ importers:
         specifier: workspace:~
         version: link:../../drivers/routerlicious-driver
       '@fluidframework/server-local-server':
-        specifier: ^7.0.0
-        version: 7.0.0
+        specifier: ^7.0.1
+        version: 7.0.1
       '@fluidframework/test-runtime-utils':
         specifier: workspace:~
         version: link:../../runtime/test-runtime-utils
@@ -15281,8 +15269,8 @@ importers:
         specifier: ^2.0.3
         version: 2.0.8
       tinylicious:
-        specifier: ^7.0.0
-        version: 7.0.0
+        specifier: ^7.0.1
+        version: 7.0.1
       uuid:
         specifier: ^11.1.0
         version: 11.1.0
@@ -15481,8 +15469,8 @@ importers:
         specifier: ^2.0.3
         version: 2.0.8
       tinylicious:
-        specifier: ^7.0.0
-        version: 7.0.0
+        specifier: ^7.0.1
+        version: 7.0.1
     devDependencies:
       '@biomejs/biome':
         specifier: ~2.4.5
@@ -18619,8 +18607,8 @@ packages:
   '@fluidframework/gitresources@0.1036.5002':
     resolution: {integrity: sha512-/xdmCca+arU9x9tDGdIl2CCk0DmpWlFjZdcTdWjLNiexKMVKDrHmSw9vCpUMlGmECq8EOO7fyzBnAGM+nu+i0g==}
 
-  '@fluidframework/gitresources@7.0.0':
-    resolution: {integrity: sha512-APAxqCF/+2ljC8th0PoXzdUAo2EJapdTk9KNm6dp7dFD5hxYWoscFqdyu5K+bvMxmhrIpGd0f//nbb7rZq7bog==}
+  '@fluidframework/gitresources@7.0.1':
+    resolution: {integrity: sha512-sFEdPL46Hz/xuP51nwT19JubSeb3fBBrNQXwnRLCcmaX+fXdxg7rkyVLTgue0swgdJ73Oh98eTYpxplkq+FSJA==}
 
   '@fluidframework/id-compressor@2.92.0':
     resolution: {integrity: sha512-hn7fjDxosKE6OBKZ7439BcoBE11AzVv/RRPBbY7Y06R039gb7ZP6+2xpxb8G2Nzhs57SCG4B4x1RIYk4IP8BSA==}
@@ -18661,8 +18649,8 @@ packages:
   '@fluidframework/protocol-base@0.1036.5002':
     resolution: {integrity: sha512-mlI9okyLeSusGx7qU32NDJ4GJptSzVo3V6tPDhphPIOPtyOVTBuL4EQRFYdceoSLHlxEdVnQprwhyoRiMNw7Kw==}
 
-  '@fluidframework/protocol-base@7.0.0':
-    resolution: {integrity: sha512-LUSTKQBJVnemMLMQUuoszHvl46XBfflI8U9R8kW+12T2W/Vvt+ldML7203MvNg4E/sFScGfqqZS5OzYn0z1TIw==}
+  '@fluidframework/protocol-base@7.0.1':
+    resolution: {integrity: sha512-WfMf+vN0OmUHl0xJIsY6jnnsF5p27apMRd38pC9TlMx1URt+3C2fV4WLEybn2wYEGepYcK03ZMqe6I+DXt7/6g==}
 
   '@fluidframework/protocol-definitions@0.1028.2000':
     resolution: {integrity: sha512-ZUPCmPFcK7UAK4RkfVWfzQPAWFvYNm6ywP51V42YC38gCGye+Epvyr3beA+FSaHPIZGxm5+Uw52+ykTvmDb2UA==}
@@ -18709,38 +18697,38 @@ packages:
   '@fluidframework/sequence@2.92.0':
     resolution: {integrity: sha512-6q+v9FvZw7xTQBEEcRqHpNLmEOHsVVxPG/oOhBXFjUyH3Twj4A7oJS/gJ95Eq/RFtnIhBjmQG01uqhYnqeKlvw==}
 
-  '@fluidframework/server-lambdas-driver@7.0.0':
-    resolution: {integrity: sha512-HNXeXUWYIR+jjGMAB61gCWsryuwqysA2o7/bwvdZuM4avqfm75dJUheB6N04uG5GfRfvesMHU68452YHIf6FYQ==}
+  '@fluidframework/server-lambdas-driver@7.0.1':
+    resolution: {integrity: sha512-pzpPPCgnVdGu2qcCAXZbur/2tx5O1qp5n06+BdKq1aZsGs5vNfc9ds+KiueiXBFvvoSa3f+AXUjqWwPQopApZQ==}
 
-  '@fluidframework/server-lambdas@7.0.0':
-    resolution: {integrity: sha512-D5yzSZWpCojgZR2dfczSHa8lix2V39l1P5mwVrfmrTZE8tL+a3POnXtxcRJPT7QeRImfrMMDBdIBXE5dwFxNjQ==}
+  '@fluidframework/server-lambdas@7.0.1':
+    resolution: {integrity: sha512-FVFq1Gt3b+JYm8wg68QyxHluNkR6T8rGKwAlf1AJ1zCHy1E6DPsR0Gn86gAWYfKw/w/gzTBofoogIaozHHskbQ==}
 
-  '@fluidframework/server-local-server@7.0.0':
-    resolution: {integrity: sha512-ygCDPr3pE8HCakMtdYOlv8X6jpyzqval1hbf45v3egBI5LmolA+RDxKGA/nNKo525u13kGglPWvsuC/8tN82qA==}
+  '@fluidframework/server-local-server@7.0.1':
+    resolution: {integrity: sha512-MjszPW3Io2/wITc5qCxQlhocRssobDePYOicLccWKItIZ3XuN2wAp33+pOYte9ImYvlQlV4M2F6ratYppn/Nrg==}
 
-  '@fluidframework/server-memory-orderer@7.0.0':
-    resolution: {integrity: sha512-HmimZuGDYabOma6Tdn5jHpk2IRNEtxbUdUuNkR3qqZxPaqewTj3qeCOXRTMMGyEEaUg5Gmw19LrOROeDRcG6pA==}
+  '@fluidframework/server-memory-orderer@7.0.1':
+    resolution: {integrity: sha512-GHTtnyY7IwpA6BzNJO8VDX0SU3Bj8EXDOw86axPx2JkkDnuW5KFKpvGUugJ6cAkQcqFu/JWzFTm444VLYNOChQ==}
 
   '@fluidframework/server-services-client@0.1036.5002':
     resolution: {integrity: sha512-2d0RSUXvfNlFgHVLiehiU4LgJheqGXlspIgug6U6nvPdwFGtQSbButh2SysBDFilIJ9E6Bacdd0P0e+4HRpCaQ==}
 
-  '@fluidframework/server-services-client@7.0.0':
-    resolution: {integrity: sha512-gzEvH6wNpRuMsyZhY22JrOHbTFsPGSzjLIlAWmnT7UT0znYGCDaMC39WPbOLLm7O8JSvmUblGe2Vx8N1+gCOgQ==}
+  '@fluidframework/server-services-client@7.0.1':
+    resolution: {integrity: sha512-39T7SZba2JdrkkOYqcGr8ZEg+SqPtxVTsHM02CI1yrvZPL78jog0iGcNRe8BrPyTCH0Xw9QOqpJND4/QbV/l4Q==}
 
-  '@fluidframework/server-services-core@7.0.0':
-    resolution: {integrity: sha512-LdPERvJ/8nyXOxDPJ0VsWBHsGjwaCve7kdOcMTBk26UQhsHKtSl1D4ZuStoremzzQZBnA0FuksoZsA2yDizwAg==}
+  '@fluidframework/server-services-core@7.0.1':
+    resolution: {integrity: sha512-5LCpUKcEaV4bFf7SkqkHv8SpHNUWacXtKNzI5JLfkTUCPdiax4tDUjaTTkrMAibrt/3q3eCdb/ZnqY7Xc4qE6A==}
 
-  '@fluidframework/server-services-shared@7.0.0':
-    resolution: {integrity: sha512-kO2/34/4rPPfjnyadaSaIXotWT4ZWMcGxiqruIbuU05zV+OCieUrla3YnE8GFtQ5hCGPMDE6+InfoUcEb8GN9Q==}
+  '@fluidframework/server-services-shared@7.0.1':
+    resolution: {integrity: sha512-kVtPVXEHW2MXT0z/bhcj816Vd8D+TXY38XRja44cPWnNeigI1JYAXfZ+udWgN64B0h2gLygN+taMtOLVQ55Kkw==}
 
-  '@fluidframework/server-services-telemetry@7.0.0':
-    resolution: {integrity: sha512-C3PNyfBWmWboAkSvExELdwyW8dQ9RBIUPhh1P016pf76NRIk2ZypLloVh7K2WA5fo6Tv+gRYhnT2gThXhNm5IA==}
+  '@fluidframework/server-services-telemetry@7.0.1':
+    resolution: {integrity: sha512-4lF+Vhs+YMctigdEFdQ1XisuY3FmUVskpUqNI60yMVKClKlWd10zJy0j+V1enaIYP5Q4kja/LXusNuzLDrS0Dw==}
 
-  '@fluidframework/server-services-utils@7.0.0':
-    resolution: {integrity: sha512-/hwQbeVx3prXNTReSVGbGmDZTbAKPDUVhHB5CY9eG9nKbo8FnkXUbaOXpgX1xECAWhzer0K4Qj//93G95TAY8w==}
+  '@fluidframework/server-services-utils@7.0.1':
+    resolution: {integrity: sha512-sXT4VHDVu6xdrElWthjB4f5bE3sI0X9a5ZCfXBcaXuFCpIqYJIf5YiueJrK0TbFi2rN6JBVnGkSo4g1mkyYDyQ==}
 
-  '@fluidframework/server-test-utils@7.0.0':
-    resolution: {integrity: sha512-ACUoJDbL3sckzeDe/1DGUamYI9IIGyYyeP88MfEnunqgz9FoDrdn3Jae2Vl1SSBYLtck8IxG86rSOh0kbXcPHQ==}
+  '@fluidframework/server-test-utils@7.0.1':
+    resolution: {integrity: sha512-x6WN7pJNfjFBzCHdQKheIbIDgIb3jsi9AMx30JWPVqciBUWptMGrQK7/0Qo2URdQhzJ0A1j8jmE5ghKbGpYFYA==}
 
   '@fluidframework/shared-object-base@1.4.0':
     resolution: {integrity: sha512-NI94dsIyZL7s76UN/UVawd0JqV106cS84MaW1r9Qv91+QGU8aq/KCS3j8R9ZZ8pWFQ46sX9BT4CKa4hy4xZedw==}
@@ -26956,8 +26944,8 @@ packages:
     resolution: {integrity: sha512-j2Zq4NyQYG5XMST4cbs02Ak8iJUdxRM0XI5QyxXuZOzKOINmWurp3smXu3y5wDcJrptwpSjgXHzIQxR0omXljQ==}
     engines: {node: '>=12.0.0'}
 
-  tinylicious@7.0.0:
-    resolution: {integrity: sha512-E1VDL6N/3s/lOtkzWVqw0OSXrcsYvqzQhzcxm6GD3pXXEfRuHd2MrwADiX+MlcDbTX0/iCY4mo6Mh0fuV2UWDQ==}
+  tinylicious@7.0.1:
+    resolution: {integrity: sha512-vJYqt/FaVscYTPoRypx5gKQ93mAkCw7+jaV9N1A8fuywlXtfS7EzloND5WHanF4n7fAgH77CxQ9NoCnhpSXd2g==}
     engines: {node: '>=14.0.0'}
     hasBin: true
 
@@ -30653,7 +30641,7 @@ snapshots:
 
   '@fluidframework/gitresources@0.1036.5002': {}
 
-  '@fluidframework/gitresources@7.0.0': {}
+  '@fluidframework/gitresources@7.0.1': {}
 
   '@fluidframework/id-compressor@2.92.0':
     dependencies:
@@ -30674,12 +30662,12 @@ snapshots:
       '@fluidframework/driver-base': 2.92.0
       '@fluidframework/driver-definitions': 2.92.0
       '@fluidframework/driver-utils': 2.92.0
-      '@fluidframework/protocol-base': 7.0.0
+      '@fluidframework/protocol-base': 7.0.1
       '@fluidframework/routerlicious-driver': 2.92.0
-      '@fluidframework/server-local-server': 7.0.0
-      '@fluidframework/server-services-client': 7.0.0
-      '@fluidframework/server-services-core': 7.0.0
-      '@fluidframework/server-test-utils': 7.0.0
+      '@fluidframework/server-local-server': 7.0.1
+      '@fluidframework/server-services-client': 7.0.1
+      '@fluidframework/server-services-core': 7.0.1
+      '@fluidframework/server-test-utils': 7.0.1
       '@fluidframework/telemetry-utils': 2.92.0
       jsrsasign: 11.1.1
       uuid: 11.1.0
@@ -30842,10 +30830,10 @@ snapshots:
       '@fluidframework/protocol-definitions': 0.1028.2000
       lodash: 4.18.1
 
-  '@fluidframework/protocol-base@7.0.0':
+  '@fluidframework/protocol-base@7.0.1':
     dependencies:
       '@fluidframework/common-utils': 3.1.0
-      '@fluidframework/gitresources': 7.0.0
+      '@fluidframework/gitresources': 7.0.1
       '@fluidframework/protocol-definitions': 3.2.0
       events_pkg: events@3.3.0
 
@@ -30936,7 +30924,7 @@ snapshots:
       '@fluidframework/driver-base': 2.92.0
       '@fluidframework/driver-definitions': 2.92.0
       '@fluidframework/driver-utils': 2.92.0
-      '@fluidframework/server-services-client': 7.0.0
+      '@fluidframework/server-services-client': 7.0.1
       '@fluidframework/telemetry-utils': 2.92.0
       json-stringify-safe: 5.0.1
       socket.io-client: 4.8.3
@@ -31021,12 +31009,12 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@fluidframework/server-lambdas-driver@7.0.0':
+  '@fluidframework/server-lambdas-driver@7.0.1':
     dependencies:
       '@fluidframework/common-utils': 3.1.0
-      '@fluidframework/server-services-client': 7.0.0
-      '@fluidframework/server-services-core': 7.0.0
-      '@fluidframework/server-services-telemetry': 7.0.0
+      '@fluidframework/server-services-client': 7.0.1
+      '@fluidframework/server-services-core': 7.0.1
+      '@fluidframework/server-services-telemetry': 7.0.1
       assert: 2.1.0
       async: 3.2.6
       events: 3.3.0
@@ -31036,16 +31024,16 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@fluidframework/server-lambdas@7.0.0(debug@4.4.3)':
+  '@fluidframework/server-lambdas@7.0.1(debug@4.4.3)':
     dependencies:
       '@fluidframework/common-utils': 3.1.0
-      '@fluidframework/gitresources': 7.0.0
-      '@fluidframework/protocol-base': 7.0.0
+      '@fluidframework/gitresources': 7.0.1
+      '@fluidframework/protocol-base': 7.0.1
       '@fluidframework/protocol-definitions': 3.2.0
-      '@fluidframework/server-lambdas-driver': 7.0.0
-      '@fluidframework/server-services-client': 7.0.0
-      '@fluidframework/server-services-core': 7.0.0
-      '@fluidframework/server-services-telemetry': 7.0.0
+      '@fluidframework/server-lambdas-driver': 7.0.1
+      '@fluidframework/server-services-client': 7.0.1
+      '@fluidframework/server-services-core': 7.0.1
+      '@fluidframework/server-services-telemetry': 7.0.1
       '@types/semver': 7.7.0
       assert: 2.1.0
       async: 3.2.6
@@ -31057,7 +31045,7 @@ snapshots:
       lodash: 4.18.1
       nconf: 0.12.1
       opossum: 8.5.0
-      semver: 7.7.3
+      semver: 7.7.4
       serialize-error: 8.1.0
       sha.js: 2.4.12
       uuid: 11.1.0
@@ -31065,16 +31053,16 @@ snapshots:
       - debug
       - supports-color
 
-  '@fluidframework/server-local-server@7.0.0':
+  '@fluidframework/server-local-server@7.0.1':
     dependencies:
       '@fluidframework/common-utils': 3.1.0
       '@fluidframework/protocol-definitions': 3.2.0
-      '@fluidframework/server-lambdas': 7.0.0(debug@4.4.3)
-      '@fluidframework/server-memory-orderer': 7.0.0
-      '@fluidframework/server-services-client': 7.0.0
-      '@fluidframework/server-services-core': 7.0.0
-      '@fluidframework/server-services-telemetry': 7.0.0
-      '@fluidframework/server-test-utils': 7.0.0
+      '@fluidframework/server-lambdas': 7.0.1(debug@4.4.3)
+      '@fluidframework/server-memory-orderer': 7.0.1
+      '@fluidframework/server-services-client': 7.0.1
+      '@fluidframework/server-services-core': 7.0.1
+      '@fluidframework/server-services-telemetry': 7.0.1
+      '@fluidframework/server-test-utils': 7.0.1
       debug: 4.4.3(supports-color@8.1.1)
       events_pkg: events@3.3.0
       jsrsasign: 11.1.1
@@ -31084,15 +31072,15 @@ snapshots:
       - supports-color
       - utf-8-validate
 
-  '@fluidframework/server-memory-orderer@7.0.0':
+  '@fluidframework/server-memory-orderer@7.0.1':
     dependencies:
       '@fluidframework/common-utils': 3.1.0
-      '@fluidframework/protocol-base': 7.0.0
+      '@fluidframework/protocol-base': 7.0.1
       '@fluidframework/protocol-definitions': 3.2.0
-      '@fluidframework/server-lambdas': 7.0.0(debug@4.4.3)
-      '@fluidframework/server-services-client': 7.0.0
-      '@fluidframework/server-services-core': 7.0.0
-      '@fluidframework/server-services-telemetry': 7.0.0
+      '@fluidframework/server-lambdas': 7.0.1(debug@4.4.3)
+      '@fluidframework/server-services-client': 7.0.1
+      '@fluidframework/server-services-core': 7.0.1
+      '@fluidframework/server-services-telemetry': 7.0.1
       '@types/debug': 4.1.12
       '@types/double-ended-queue': 2.1.7
       '@types/lodash': 4.17.13
@@ -31129,11 +31117,11 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@fluidframework/server-services-client@7.0.0':
+  '@fluidframework/server-services-client@7.0.1':
     dependencies:
       '@fluidframework/common-utils': 3.1.0
-      '@fluidframework/gitresources': 7.0.0
-      '@fluidframework/protocol-base': 7.0.0
+      '@fluidframework/gitresources': 7.0.1
+      '@fluidframework/protocol-base': 7.0.1
       '@fluidframework/protocol-definitions': 3.2.0
       axios: 1.15.0(debug@4.4.3)
       crc-32: 1.2.0
@@ -31146,13 +31134,13 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@fluidframework/server-services-core@7.0.0':
+  '@fluidframework/server-services-core@7.0.1':
     dependencies:
       '@fluidframework/common-utils': 3.1.0
-      '@fluidframework/gitresources': 7.0.0
+      '@fluidframework/gitresources': 7.0.1
       '@fluidframework/protocol-definitions': 3.2.0
-      '@fluidframework/server-services-client': 7.0.0
-      '@fluidframework/server-services-telemetry': 7.0.0
+      '@fluidframework/server-services-client': 7.0.1
+      '@fluidframework/server-services-telemetry': 7.0.1
       '@types/nconf': 0.10.7
       '@types/node': 22.19.17
       debug: 4.4.3(supports-color@8.1.1)
@@ -31161,16 +31149,16 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@fluidframework/server-services-shared@7.0.0':
+  '@fluidframework/server-services-shared@7.0.1':
     dependencies:
       '@fluidframework/common-utils': 3.1.0
-      '@fluidframework/gitresources': 7.0.0
-      '@fluidframework/protocol-base': 7.0.0
+      '@fluidframework/gitresources': 7.0.1
+      '@fluidframework/protocol-base': 7.0.1
       '@fluidframework/protocol-definitions': 3.2.0
-      '@fluidframework/server-services-client': 7.0.0
-      '@fluidframework/server-services-core': 7.0.0
-      '@fluidframework/server-services-telemetry': 7.0.0
-      '@fluidframework/server-services-utils': 7.0.0
+      '@fluidframework/server-services-client': 7.0.1
+      '@fluidframework/server-services-core': 7.0.1
+      '@fluidframework/server-services-telemetry': 7.0.1
+      '@fluidframework/server-services-utils': 7.0.1
       '@socket.io/redis-adapter': 8.3.0(socket.io-adapter@2.5.6)
       '@socket.io/sticky': 1.0.4
       body-parser: 1.20.3
@@ -31193,7 +31181,7 @@ snapshots:
       - supports-color
       - utf-8-validate
 
-  '@fluidframework/server-services-telemetry@7.0.0':
+  '@fluidframework/server-services-telemetry@7.0.1':
     dependencies:
       '@fluidframework/common-utils': 3.1.0
       json-stringify-safe: 5.0.1
@@ -31201,12 +31189,12 @@ snapshots:
       serialize-error: 8.1.0
       uuid: 11.1.0
 
-  '@fluidframework/server-services-utils@7.0.0':
+  '@fluidframework/server-services-utils@7.0.1':
     dependencies:
       '@fluidframework/protocol-definitions': 3.2.0
-      '@fluidframework/server-services-client': 7.0.0
-      '@fluidframework/server-services-core': 7.0.0
-      '@fluidframework/server-services-telemetry': 7.0.0
+      '@fluidframework/server-services-client': 7.0.1
+      '@fluidframework/server-services-core': 7.0.1
+      '@fluidframework/server-services-telemetry': 7.0.1
       debug: 4.4.3(supports-color@8.1.1)
       express: 4.22.1
       ioredis: 5.6.1
@@ -31223,15 +31211,15 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@fluidframework/server-test-utils@7.0.0':
+  '@fluidframework/server-test-utils@7.0.1':
     dependencies:
       '@fluidframework/common-utils': 3.1.0
-      '@fluidframework/gitresources': 7.0.0
-      '@fluidframework/protocol-base': 7.0.0
+      '@fluidframework/gitresources': 7.0.1
+      '@fluidframework/protocol-base': 7.0.1
       '@fluidframework/protocol-definitions': 3.2.0
-      '@fluidframework/server-services-client': 7.0.0
-      '@fluidframework/server-services-core': 7.0.0
-      '@fluidframework/server-services-telemetry': 7.0.0
+      '@fluidframework/server-services-client': 7.0.1
+      '@fluidframework/server-services-core': 7.0.1
+      '@fluidframework/server-services-telemetry': 7.0.1
       '@types/ioredis-mock': 8.2.6(ioredis@5.6.1)
       assert: 2.1.0
       debug: 4.4.3(supports-color@8.1.1)
@@ -37172,7 +37160,7 @@ snapshots:
       fengari: 0.1.4
       fengari-interop: 0.1.3(fengari@0.1.4)
       ioredis: 5.6.1
-      semver: 7.7.3
+      semver: 7.7.4
 
   ioredis@5.6.1:
     dependencies:
@@ -41560,21 +41548,21 @@ snapshots:
       fdir: 6.5.0(picomatch@4.0.4)
       picomatch: 4.0.4
 
-  tinylicious@7.0.0:
+  tinylicious@7.0.1:
     dependencies:
       '@fluidframework/common-utils': 3.1.0
-      '@fluidframework/gitresources': 7.0.0
-      '@fluidframework/protocol-base': 7.0.0
+      '@fluidframework/gitresources': 7.0.1
+      '@fluidframework/protocol-base': 7.0.1
       '@fluidframework/protocol-definitions': 3.2.0
-      '@fluidframework/server-lambdas': 7.0.0(debug@4.4.3)
-      '@fluidframework/server-local-server': 7.0.0
-      '@fluidframework/server-memory-orderer': 7.0.0
-      '@fluidframework/server-services-client': 7.0.0
-      '@fluidframework/server-services-core': 7.0.0
-      '@fluidframework/server-services-shared': 7.0.0
-      '@fluidframework/server-services-telemetry': 7.0.0
-      '@fluidframework/server-services-utils': 7.0.0
-      '@fluidframework/server-test-utils': 7.0.0
+      '@fluidframework/server-lambdas': 7.0.1(debug@4.4.3)
+      '@fluidframework/server-local-server': 7.0.1
+      '@fluidframework/server-memory-orderer': 7.0.1
+      '@fluidframework/server-services-client': 7.0.1
+      '@fluidframework/server-services-core': 7.0.1
+      '@fluidframework/server-services-shared': 7.0.1
+      '@fluidframework/server-services-telemetry': 7.0.1
+      '@fluidframework/server-services-utils': 7.0.1
+      '@fluidframework/server-test-utils': 7.0.1
       agentkeepalive: 4.6.0
       axios: 1.15.0(debug@4.4.3)
       body-parser: 1.20.3
