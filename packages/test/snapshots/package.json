@@ -80,7 +80,6 @@
 		"@fluidframework/register-collection": "workspace:~",
 		"@fluidframework/replay-driver": "workspace:~",
 		"@fluidframework/sequence": "workspace:~",
-		"@fluidframework/server-local-server": "^7.0.0",
 		"@fluidframework/test-utils": "workspace:~",
 		"mocha": "^11.7.5"
 	},
@@ -91,6 +90,7 @@
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "catalog:buildTools",
 		"@fluidframework/eslint-config-fluid": "catalog:eslint",
+		"@fluidframework/server-local-server": "^7.0.1",
 		"@types/mocha": "^10.0.10",
 		"@types/node": "catalog:types",
 		"c8": "^10.1.3",
