@@ -1070,6 +1070,7 @@ export class Container
 
 				this.connectionStateHandler.dispose();
 				this.serializedStateManager.dispose();
+				this._runtime?.close?.();
 			} catch (newError) {
 				this.mc.logger.sendErrorEvent({ eventName: "ContainerCloseException" }, newError);
 			}
@@ -1104,6 +1105,8 @@ export class Container
 						eventName: "ContainerDispose",
 						// Only log error if container isn't closed
 						category: !this.closed && error !== undefined ? "error" : "generic",
+						isDirty: this.isDirty,
+						lastSequenceNumber: this._deltaManager.lastSequenceNumber,
 					},
 					error,
 				);
@@ -2394,6 +2397,9 @@ export class Container
 				this.subLogger,
 				{ eventName: "CodeLoad" },
 				async () => this.codeLoader.load(codeDetails),
+				undefined, // markers
+				undefined, // sampleThreshold
+				LogLevel.info,
 			);
 
 			this._loadedModule = {

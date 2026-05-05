@@ -692,6 +692,7 @@ export class PerformanceEvent {
 	 * @param recordHeapSize - whether or not to also record memory performance
 	 * @param emitLogs - should this instance emit logs. If set to false, logs will not be emitted to the logger,
 	 * but measurements will still be performed and any specified markers will be generated.
+	 * @param logLevel - optional {@link LogLevel} for events emitted by this performance event.
 	 * @returns An instance of {@link PerformanceEvent}
 	 */
 	public static start(
@@ -699,8 +700,15 @@ export class PerformanceEvent {
 		event: ITelemetryGenericEventExt,
 		markers?: IPerformanceEventMarkers,
 		emitLogs: boolean = true,
+		logLevel?: typeof LogLevel.verbose | typeof LogLevel.default,
 	): PerformanceEvent {
-		return new PerformanceEvent(extractTelemetryLoggerExt(logger), event, markers, emitLogs);
+		return new PerformanceEvent(
+			extractTelemetryLoggerExt(logger),
+			event,
+			markers,
+			emitLogs,
+			logLevel,
+		);
 	}
 
 	/**
@@ -711,6 +719,7 @@ export class PerformanceEvent {
 	 * @param markers - See {@link IPerformanceEventMarkers}
 	 * @param sampleThreshold - events with the same name and category will be sent to the logger
 	 * only when we hit this many executions of the task. If unspecified, all events will be sent.
+	 * @param logLevel - optional {@link LogLevel} for events emitted by this performance event.
 	 * @returns The results of the executed task
 	 *
 	 * @remarks Note that if the "same" event (category + eventName) would be emitted by different
@@ -724,12 +733,14 @@ export class PerformanceEvent {
 		callback: (event: PerformanceEvent) => T,
 		markers?: IPerformanceEventMarkers,
 		sampleThreshold: number = 1,
+		logLevel?: typeof LogLevel.verbose | typeof LogLevel.default,
 	): T {
 		const perfEvent = PerformanceEvent.start(
 			logger,
 			event,
 			markers,
 			PerformanceEvent.shouldReport(event, sampleThreshold),
+			logLevel,
 		);
 		try {
 			const ret = callback(perfEvent);
@@ -750,6 +761,7 @@ export class PerformanceEvent {
 	 * @param recordHeapSize - whether or not to also record memory performance
 	 * @param sampleThreshold - events with the same name and category will be sent to the logger
 	 * only when we hit this many executions of the task. If unspecified, all events will be sent.
+	 * @param logLevel - optional {@link LogLevel} for events emitted by this performance event.
 	 * @returns The results of the executed task
 	 *
 	 * @remarks Note that if the "same" event (category + eventName) would be emitted by different
@@ -763,12 +775,14 @@ export class PerformanceEvent {
 		callback: (event: PerformanceEvent) => Promise<T>,
 		markers?: IPerformanceEventMarkers,
 		sampleThreshold: number = 1,
+		logLevel?: typeof LogLevel.verbose | typeof LogLevel.default,
 	): Promise<T> {
 		const perfEvent = PerformanceEvent.start(
 			logger,
 			event,
 			markers,
 			PerformanceEvent.shouldReport(event, sampleThreshold),
+			logLevel,
 		);
 		try {
 			const ret = await callback(perfEvent);
@@ -793,6 +807,7 @@ export class PerformanceEvent {
 		event: ITelemetryGenericEventExt,
 		private readonly markers: IPerformanceEventMarkers = { end: true, cancel: "generic" },
 		private readonly emitLogs: boolean = true,
+		private readonly logLevel?: typeof LogLevel.verbose | typeof LogLevel.default,
 	) {
 		this.event = { ...event };
 		if (this.markers.start) {
@@ -877,7 +892,7 @@ export class PerformanceEvent {
 			event.duration = this.duration;
 		}
 
-		this.logger.sendPerformanceEvent(event, error);
+		this.logger.sendPerformanceEvent(event, error, this.logLevel);
 	}
 
 	private static readonly eventHits = new Map<string, number>();

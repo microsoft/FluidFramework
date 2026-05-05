@@ -6,4 +6,4 @@
  */
 
 export const pkgName = "@fluidframework/devtools-core";
-export const pkgVersion = "2.100.0";
+export const pkgVersion = "2.101.0";

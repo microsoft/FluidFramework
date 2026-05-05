@@ -227,7 +227,7 @@ extends:
               - group: ado-feeds
               - group: storage-vars
               - ${{ if eq(variables['Build.Reason'], 'PullRequest') }}:
-                - name: targetBranchName
+                - name: targetBranch
                   value: $(System.PullRequest.TargetBranch)
             steps:
               # Setup
@@ -292,7 +292,7 @@ extends:
 
                     # Target Branch variable (PR policy related)
                     if [[ ${{ variables['Build.Reason'] }} == "PullRequest" ]]; then
-                      echo "TargetBranchName=$(targetBranchName)"
+                      echo "TargetBranch=$(targetBranch)"
                     fi
 
                     # Error checking
@@ -401,7 +401,7 @@ extends:
                   # At this point we want to publish the artifact with npm-packed packages, and the one with test files,
                   # but as part of 1ES migration that's now part of templateContext.outputs below.
 
-              # Collect/publish/run bundle analysis
+              # Bundle analysis
               - ${{ if eq(parameters.taskBundleAnalysis, true) }}:
                   - task: Npm@1
                     displayName: 'Calculate bundle sizes'
@@ -418,24 +418,52 @@ extends:
                       sourceFolder: '$(Pipeline.Workspace)/${{ parameters.buildDirectory }}/artifacts/bundleAnalysis'
                       targetFolder: $(Build.ArtifactStagingDirectory)/bundleAnalysis
 
-                  # At this point we want to publish the artifact with the bundle size analysis,
+                  # At this point we want to publish the bundleAnalysis artifact,
                   # but as part of 1ES migration that's now part of templateContext.outputs below.
 
-                  # TODO(AB#56981): Re-enable once githubPublicRepoSecret is rotated in prague-key-vault.
-                  # Disabled because the token is expired/rejected.
-                  # Original condition: and(succeeded(), eq(variables['Build.Reason'], 'PullRequest'))
-                  - task: Npm@1
-                    displayName: (PR only) Compare bundle sizes against baseline (DISABLED)
-                    condition: false
-                    continueOnError: true
+                  # Computes the bundle size diff against the baseline CI build (definitionId 48 in the public
+                  # project) and writes either artifacts/bundleSizeDiff/result.json (on success) or
+                  # artifacts/bundleSizeDiff/error.json (when no usable diff can be produced); that folder is
+                  # published as the bundleSizeDiff pipeline artifact below.
+                  # Invoked via Bash@3 (not Npm@1) so `flub` resolves through the system PATH to the
+                  # workspace-built binary (globally `npm link`ed by set-package-version's invocation of
+                  # include-install-build-tools earlier in the Build job). An `npm run` invocation would
+                  # prepend node_modules/.bin to PATH, which resolves to the catalog-pinned build-cli that
+                  # does not (yet) include `flub generate bundleSizeDiff`.
+                  - task: Bash@3
+                    displayName: (PR only) Generate bundle size diff
+                    condition: and(succeeded(), eq(variables['Build.Reason'], 'PullRequest'))
                     env:
-                      ADO_API_TOKEN: $(System.AccessToken)
-                      DANGER_GITHUB_API_TOKEN: $(githubPublicRepoSecret)
-                      TARGET_BRANCH_NAME: '$(targetBranchName)'
+                      TARGET_BRANCH: '$(targetBranch)'
+                      PR_NUMBER: '$(System.PullRequest.PullRequestNumber)'
                     inputs:
-                      command: custom
-                      workingDir: '$(Pipeline.Workspace)/${{ parameters.buildDirectory }}'
-                      customCommand: 'run bundle-analysis:run'
+                      targetType: inline
+                      workingDirectory: '$(Pipeline.Workspace)/${{ parameters.buildDirectory }}'
+                      script: |
+                        set -eu -o pipefail
+                        flub generate bundleSizeDiff
+                        # Flub writes result.json (success) or error.json (failure — no usable baseline,
+                        # transient ADO API hiccup, etc.) and exits 0 in both cases; a non-zero exit is
+                        # reserved for misconfiguration such as missing env vars. Surface the error.json
+                        # case as a pipeline warning so the step turns yellow (succeededWithIssues)
+                        # without failing the pipeline run.
+                        if [ -f artifacts/bundleSizeDiff/error.json ]; then
+                          echo "##vso[task.logissue type=warning]bundleSizeDiff produced an error; see error.json in the bundleSizeDiff artifact."
+                        fi
+
+                  # Copy the generated bundleSizeDiff output folder under its own subfolder so it publishes
+                  # as a separate pipeline artifact from bundleAnalysis. The folder contains either
+                  # result.json or error.json. Source path must match the --outputDir default of
+                  # `flub generate bundleSizeDiff` (artifacts/bundleSizeDiff).
+                  - task: CopyFiles@2
+                    displayName: (PR only) Copy bundle size diff to artifact staging directory
+                    condition: and(succeeded(), eq(variables['Build.Reason'], 'PullRequest'))
+                    inputs:
+                      sourceFolder: '$(Pipeline.Workspace)/${{ parameters.buildDirectory }}/artifacts/bundleSizeDiff'
+                      targetFolder: $(Build.ArtifactStagingDirectory)/bundleSizeDiff
+
+                  # At this point we want to publish the bundleSizeDiff artifact,
+                  # but as part of 1ES migration that's now part of templateContext.outputs below.
 
               # Docs
               - ${{ if ne(parameters.taskBuildDocs, false) }}:
@@ -548,6 +576,16 @@ extends:
                       condition: and( succeeded(), ne(variables['Build.Reason'], 'PullRequest') )
                       targetPath: $(Build.ArtifactStagingDirectory)/bundleAnalysis
                       artifactName: bundleAnalysis
+                      sbomEnabled: false
+                      publishLocation: pipeline
+
+                    # The artifactName is a public-facing pipeline contract; downstream consumers
+                    # download it by name. Any rename here requires updating those consumers in lockstep.
+                    - output: pipelineArtifact
+                      displayName: Publish Artifacts - bundle-size-diff
+                      condition: and( succeeded(), eq(variables['Build.Reason'], 'PullRequest') )
+                      targetPath: $(Build.ArtifactStagingDirectory)/bundleSizeDiff
+                      artifactName: bundleSizeDiff
                       sbomEnabled: false
                       publishLocation: pipeline
 

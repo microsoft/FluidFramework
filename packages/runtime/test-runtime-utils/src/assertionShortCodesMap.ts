@@ -1504,8 +1504,6 @@ export const shortCodeMap = {
 	"0xaf1": "Unexpected indexStack.length",
 	"0xaf2": "Unexpected siblingStack.length",
 	"0xaf3": "Unexpected indexStack.length",
-	"0xaf4": "Unexpected indexOfChunkStack.length",
-	"0xaf5": "Unexpected indexWithinChunkStack.length",
 	"0xaf6": "missing edited field",
 	"0xaf7": "missing edited node",
 	"0xaf8": "should not be at root",
@@ -1933,5 +1931,10 @@ export const shortCodeMap = {
 	"0xcef": "only non-leaf can have fields",
 	"0xcf0": "only strings can opt into maybeCompressedIdLeaf",
 	"0xcf1": "chunk required idCompressor but did not provide it",
-	"0xcf2": "Re-submitting a batch with reentrant ops is not supported"
+	"0xcf2": "Re-submitting a batch with reentrant ops is not supported",
+	"0xcf3": "must be node height",
+	"0xcf4": "must not be above root",
+	"0xcf5": "Unexpected indexOfChunkStack.length",
+	"0xcf6": "Unexpected indexWithinChunkStack.length",
+	"0xcf7": "Parent chunk not found in latest summary tracking"
 };
