@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+/* eslint-disable @typescript-eslint/no-unsafe-call */
 import { strict } from "assert";
 import fs from "fs";
 
@@ -10,6 +11,7 @@ import {
 	compareWithReferenceSnapshot,
 	getNormalizedFileSnapshot,
 	loadContainer,
+	normalizePackageVersions,
 	uploadSummary,
 } from "@fluid-internal/replay-tool";
 import { IContainer } from "@fluidframework/container-definitions/internal";
@@ -54,19 +56,6 @@ function withoutTopLevelBlob(snapshot: IFileSnapshot, blobPath: string): IFileSn
 			entries: snapshot.tree.entries.filter((entry) => entry.path !== blobPath),
 		},
 	};
-}
-
-// Matches `packageVersion` strings inside JSON-encoded blob contents, e.g.
-// `\"packageVersion\":\"0.19.5\"`. Mirrors the replacement done by
-// `compareWithReferenceSnapshot` so back-compat snapshots from older runtimes don't fail
-// solely on the embedded version string.
-const packageVersionRegex = /\\"packageversion\\":\\"[^"]+\\"/gi;
-const packageVersionPlaceholder = '\\"packageVersion\\":\\"X\\"';
-
-function normalizePackageVersions(snapshot: IFileSnapshot): IFileSnapshot {
-	return JSON.parse(
-		JSON.stringify(snapshot).replace(packageVersionRegex, packageVersionPlaceholder),
-	) as IFileSnapshot;
 }
 
 /**

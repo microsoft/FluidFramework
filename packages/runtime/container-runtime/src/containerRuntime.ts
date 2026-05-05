@@ -1909,13 +1909,6 @@ export class ContainerRuntime
 		this.batchIdTrackingEnabled =
 			!disableBatchIdTracking && this._flushMode === FlushMode.TurnBased;
 
-		this.mc.logger.sendTelemetryEvent({
-			eventName: "BatchIdTrackingEnablement",
-			enabled: this.batchIdTrackingEnabled,
-			disableBatchIdTracking,
-			flushMode: FlushMode[this._flushMode],
-		});
-
 		// DuplicateBatchDetector maintains a cache of all batchIds/sequenceNumbers within the
 		// collab window. Skip allocating it when batchId tracking is off.
 		if (this.batchIdTrackingEnabled) {
