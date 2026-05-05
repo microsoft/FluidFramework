@@ -32,8 +32,12 @@ parameters:
   default: $(ado-feeds-primary-registry)
 
 # An optional extra segment appended to the pnpm store cache key (separated by |).
-# Pass a file path to have its contents hashed into the key — useful when installation
-# pulls in additional lockfiles (e.g. compat-workspaces/full/pnpm-lock.yaml).
+# Note that Azure pipelines interpret unquoted cache keys as files rather than literal strings. E.g. the following specification:
+#
+# additionalCacheKey: 'foo | "bar"'
+#
+# will use the hashed contents of the file "foo" (hashing nothing if that file does not exist) as well as the string "bar".
+# Use this parameter if the set of dependencies to be installed may be be better distinguished using files other than the root pnpm-lock.
 - name: additionalCacheKey
   type: string
   default: ''
