@@ -3,7 +3,7 @@
 "__section": other
 ---
 
-ChildLogger now tags events with no explicit `logLevel` as `essential`
+ChildLogger now tags events with no explicit logLevel as essential
 
 `@fluidframework/telemetry-utils` previously forwarded events with no explicit `logLevel` to the base logger as `undefined` (treated as `LogLevel.info` = `20`). It now forwards them as `LogLevel.essential` (= `30`). Specifically:
 
