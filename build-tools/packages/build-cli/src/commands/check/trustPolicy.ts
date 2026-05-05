@@ -97,9 +97,7 @@ export default class CheckTrustPolicyCommand extends BaseCommandWithBuildProject
 			}
 		}
 		if (workspaceDir === undefined) {
-			this.error(
-				`No workspace in build project ${buildProject.root} contains ${searchPath}.`,
-			);
+			this.error(`No workspace in build project ${buildProject.root} contains ${searchPath}.`);
 		}
 		this.verbose(`Auditing workspace: ${workspaceDir}`);
 		const tempDir = path.resolve(
