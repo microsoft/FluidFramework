@@ -809,15 +809,58 @@ export class PerformanceEvent {
 	private event?: ITelemetryGenericEventExt;
 	private readonly startTime = performanceNow();
 	private startMark?: string;
+	private measureName?: string;
 
 	/**
 	 * Marks and measures scheduled for deferred cleanup.
-	 * Entries are collected and cleared in a single batch to allow
-	 * Performance Timeline observers time to capture them.
+	 * Entries are collected in a double buffer so each entry remains
+	 * observable for at least one cleanup interval before being cleared.
 	 */
-	private static readonly pendingMarkCleanup = new Set<string>();
-	private static readonly pendingMeasureCleanup = new Set<string>();
+	private static readonly cleanupIntervalMs = 10_000;
+	private static readonly pendingMarkCleanup: [Set<string>, Set<string>] = [
+		new Set<string>(),
+		new Set<string>(),
+	];
+	private static readonly pendingMeasureCleanup: [Set<string>, Set<string>] = [
+		new Set<string>(),
+		new Set<string>(),
+	];
+	private static activeCleanupBucket: 0 | 1 = 0;
 	private static cleanupScheduled = false;
+	private static nextPerformanceEntryId = 0;
+
+	private static getPerformanceApi():
+		| Pick<Performance, "mark" | "measure" | "clearMarks" | "clearMeasures">
+		| undefined {
+		const performance = globalThis.performance;
+		return typeof performance?.mark === "function" &&
+			typeof performance.measure === "function" &&
+			typeof performance.clearMarks === "function" &&
+			typeof performance.clearMeasures === "function"
+			? performance
+			: undefined;
+	}
+
+	private static hasPendingPerformanceCleanup(): boolean {
+		return (
+			PerformanceEvent.pendingMarkCleanup.some((bucket) => bucket.size > 0) ||
+			PerformanceEvent.pendingMeasureCleanup.some((bucket) => bucket.size > 0)
+		);
+	}
+
+	private static queuePerformanceCleanup(markNames: string[], measureName?: string): void {
+		const markBucket =
+			PerformanceEvent.pendingMarkCleanup[PerformanceEvent.activeCleanupBucket];
+		const measureBucket =
+			PerformanceEvent.pendingMeasureCleanup[PerformanceEvent.activeCleanupBucket];
+		for (const markName of markNames) {
+			markBucket.add(markName);
+		}
+		if (measureName !== undefined) {
+			measureBucket.add(measureName);
+		}
+		PerformanceEvent.scheduleDeferredCleanup();
+	}
 
 	/**
 	 * Schedules deferred cleanup of performance marks and measures.
@@ -828,16 +871,24 @@ export class PerformanceEvent {
 		if (!PerformanceEvent.cleanupScheduled) {
 			PerformanceEvent.cleanupScheduled = true;
 			setTimeout(() => {
-				for (const name of PerformanceEvent.pendingMarkCleanup) {
-					globalThis.performance.clearMarks(name);
+				const bucketToClear = PerformanceEvent.activeCleanupBucket === 0 ? 1 : 0;
+				const performance = PerformanceEvent.getPerformanceApi();
+				if (performance !== undefined) {
+					for (const name of PerformanceEvent.pendingMarkCleanup[bucketToClear]) {
+						performance.clearMarks(name);
+					}
+					for (const name of PerformanceEvent.pendingMeasureCleanup[bucketToClear]) {
+						performance.clearMeasures(name);
+					}
 				}
-				for (const name of PerformanceEvent.pendingMeasureCleanup) {
-					globalThis.performance.clearMeasures(name);
-				}
-				PerformanceEvent.pendingMarkCleanup.clear();
-				PerformanceEvent.pendingMeasureCleanup.clear();
+				PerformanceEvent.pendingMarkCleanup[bucketToClear].clear();
+				PerformanceEvent.pendingMeasureCleanup[bucketToClear].clear();
+				PerformanceEvent.activeCleanupBucket = bucketToClear;
 				PerformanceEvent.cleanupScheduled = false;
-			}, 10_000);
+				if (PerformanceEvent.hasPendingPerformanceCleanup()) {
+					PerformanceEvent.scheduleDeferredCleanup();
+				}
+			}, PerformanceEvent.cleanupIntervalMs);
 		}
 	}
 
@@ -853,15 +904,12 @@ export class PerformanceEvent {
 			this.reportEvent("start");
 		}
 
-		if (
-			typeof globalThis === "object" &&
-			typeof globalThis.performance?.mark === "function" &&
-			typeof globalThis.performance?.measure === "function" &&
-			typeof globalThis.performance?.clearMarks === "function" &&
-			typeof globalThis.performance?.clearMeasures === "function"
-		) {
-			this.startMark = `${event.eventName}-start`;
-			globalThis.performance.mark(this.startMark);
+		const performance = PerformanceEvent.getPerformanceApi();
+		if (performance !== undefined) {
+			const performanceEntryId = PerformanceEvent.nextPerformanceEntryId++;
+			this.measureName = `${event.eventName}-${performanceEntryId}`;
+			this.startMark = `${this.measureName}-start`;
+			performance.mark(this.startMark);
 		}
 	}
 
@@ -892,11 +940,17 @@ export class PerformanceEvent {
 	}
 
 	private performanceEndMark(): void {
-		if (this.startMark !== undefined && this.event) {
-			const endMark = `${this.event.eventName}-end`;
-			globalThis.performance.mark(endMark);
+		if (this.startMark !== undefined && this.measureName !== undefined && this.event) {
+			const performance = PerformanceEvent.getPerformanceApi();
+			if (performance === undefined) {
+				this.startMark = undefined;
+				this.measureName = undefined;
+				return;
+			}
+			const endMark = `${this.measureName}-end`;
+			performance.mark(endMark);
 			try {
-				globalThis.performance.measure(this.event.eventName, this.startMark, endMark);
+				performance.measure(this.measureName, this.startMark, endMark);
 			} catch (error: unknown) {
 				// The start mark may have been cleared by deferred cleanup from a
 				// previous event with the same name. This is benign — the measure
@@ -911,11 +965,9 @@ export class PerformanceEvent {
 			}
 			// Schedule deferred cleanup so marks/measures remain observable
 			// in the Performance Timeline for a short window.
-			PerformanceEvent.pendingMarkCleanup.add(this.startMark);
-			PerformanceEvent.pendingMarkCleanup.add(endMark);
-			PerformanceEvent.pendingMeasureCleanup.add(this.event.eventName);
-			PerformanceEvent.scheduleDeferredCleanup();
+			PerformanceEvent.queuePerformanceCleanup([this.startMark, endMark], this.measureName);
 			this.startMark = undefined;
+			this.measureName = undefined;
 		}
 	}
 
@@ -925,9 +977,9 @@ export class PerformanceEvent {
 	 */
 	private clearPerformanceMarks(): void {
 		if (this.startMark !== undefined) {
-			PerformanceEvent.pendingMarkCleanup.add(this.startMark);
-			PerformanceEvent.scheduleDeferredCleanup();
+			PerformanceEvent.queuePerformanceCleanup([this.startMark]);
 			this.startMark = undefined;
+			this.measureName = undefined;
 		}
 	}
 
