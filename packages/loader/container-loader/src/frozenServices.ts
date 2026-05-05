@@ -100,6 +100,14 @@ class FrozenDocumentService
 		// on it: it synthesizes a FrozenDeltaStream itself and never calls
 		// connectToDeltaStream, and the readOnlyInfo getter forces the container to read-only
 		// because the live connection is a FrozenDeltaStream.
+		//
+		// Audit (2026-05-05): the only consumer of `policies.storageOnly` as a frozen-container
+		// signal is `ConnectionManager` (synthesizing a `FrozenDeltaStream` when set). All other
+		// matches in the loader/runtime/driver layers are either drivers reading their own
+		// policies (e.g. local-driver) or `IReadOnlyInfo.storageOnly`, which is derived from the
+		// live connection — not the policy. So the writable-frozen container is intentionally
+		// indistinguishable from a normal container at the policies layer; downstream behavior
+		// flows through the live `WritableFrozenDeltaStream` instead.
 		this.policies = readOnly ? { storageOnly: true } : {};
 	}
 

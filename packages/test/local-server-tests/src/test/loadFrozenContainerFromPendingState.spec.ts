@@ -976,5 +976,56 @@ describe("loadFrozenContainerFromPendingState", () => {
 				"Expected second-batch write to round-trip through pending state",
 			);
 		});
+
+		it("forceReadonly(true) surfaces a writable-frozen container as readonly", async () => {
+			// Pins the interaction between forceReadonly (the higher-layer #11655 readonly
+			// mechanism: runtime is told it is readonly and stops submitting ops) and the
+			// writable-frozen short-circuit. Calling forceReadonly(true) follows the standard
+			// disconnect/reconnect-as-read flow; reconnect calls FrozenDocumentService
+			// .connectToDeltaStream which mints another WritableFrozenDeltaStream, but
+			// _forceReadonly = true overrides readOnlyInfo.readonly to true regardless of the
+			// new stream's DocWrite scope. The sendMessages short-circuit becomes
+			// double-protection rather than the load-bearing layer.
+			const { container, ITestFluidObject, urlResolver, codeLoader, documentServiceFactory } =
+				await initialize();
+			await container.attach(urlResolver.createCreateNewRequest("test"));
+			ITestFluidObject.root.set("seed", "value");
+			const url = await container.getAbsoluteUrl("");
+			assert(url !== undefined, "Expected container to provide a valid absolute URL");
+			if (container.isDirty) {
+				await timeoutPromise((resolve) => container.once("saved", () => resolve()));
+			}
+			const pendingLocalState = await container.getPendingLocalState();
+
+			const frozenContainer = await loadFrozenContainerFromPendingState({
+				codeLoader,
+				documentServiceFactory,
+				urlResolver,
+				request: { url },
+				pendingLocalState,
+				readOnly: false,
+			});
+			// Initial readonly state is covered by the dedicated `surfaces as not readonly`
+			// test; this one focuses on the post-forceReadonly transition.
+
+			frozenContainer.forceReadonly?.(true);
+			await new Promise<void>((resolve) => setTimeout(resolve, 200));
+
+			const info = frozenContainer.readOnlyInfo;
+			assert(
+				info.readonly === true,
+				"Expected forceReadonly(true) to surface readOnlyInfo.readonly === true",
+			);
+			assert.strictEqual(
+				info.forced,
+				true,
+				"Expected forceReadonly(true) to surface readOnlyInfo.forced === true",
+			);
+			assert.strictEqual(
+				frozenContainer.closed,
+				false,
+				"Expected forceReadonly(true) to keep the writable-frozen container open",
+			);
+		});
 	});
 });
