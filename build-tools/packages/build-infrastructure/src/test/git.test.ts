@@ -6,7 +6,7 @@
 import { strict as assert } from "node:assert";
 import { unlink } from "node:fs/promises";
 import * as os from "node:os";
-import * as path from "node:path";
+import path from "node:path";
 
 import { expect } from "chai";
 import { readJson, writeJson } from "fs-extra/esm";

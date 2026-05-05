@@ -24,6 +24,12 @@ export const rollback = Symbol("SharedTree Transaction Rollback");
 export type TransactionConstraint = NodeInDocumentConstraint; // TODO: Add more constraint types here
 
 /**
+ * Type for alpha version {@link TransactionConstraint | constraint}s
+ * @sealed @alpha
+ */
+export type TransactionConstraintAlpha = TransactionConstraint | NoChangeConstraint; // TODO: Add more constraint types here
+
+/**
  * A transaction {@link TransactionConstraint | constraint} which requires that the given node exists in the tree.
  * @remarks The node must be in the document (its {@link TreeStatus | status} must be {@link TreeStatus.InDocument | InDocument}) to qualify as "existing".
  * @public
@@ -34,36 +40,49 @@ export interface NodeInDocumentConstraint {
 }
 
 /**
- * The status of the transaction callback in the {@link RunTransaction | RunTransaction} API.
+ * A {@link TransactionConstraintAlpha | constraint} which requires that, for this transaction to apply, the document must be in the same state immediately before the transaction is applied as it was before the transaction was authored.
+ * When used as a revert precondition it requires that, for the revert to apply, the document must be in the same state immediately before the revert is applied as it was after the transaction was applied.
+ * @alpha
+ */
+export interface NoChangeConstraint {
+	readonly type: "noChange";
+}
+
+/**
+ * Contains a value returned from a transaction.
+ * @alpha
+ */
+export interface WithValue<TValue> {
+	/** The user-supplied value. */
+	value: TValue;
+}
+
+/**
+ * Contains a value and status returned from a user-supplied {@link TreeBranchAlpha.(runTransaction:1) | transaction callback}.
  * @alpha
  */
 export type TransactionCallbackStatus<TSuccessValue, TFailureValue> = (
-	| {
+	| (WithValue<TSuccessValue> & {
 			/** Indicates that the transaction callback ran successfully. */
 			rollback?: false;
-			/** The user defined value when the transaction ran successfully. */
-			value: TSuccessValue;
-	  }
-	| {
+	  })
+	| (WithValue<TFailureValue> & {
 			/** Indicates that the transaction callback failed and the transaction should be rolled back. */
 			rollback: true;
-			/** The user defined value when the transaction failed. */
-			value: TFailureValue;
-	  }
+	  })
 ) & {
 	/**
-	 * An optional list of {@link TransactionConstraint | constraints} that will be checked when the commit corresponding
+	 * An optional list of {@link TransactionConstraintAlpha | constraints} that will be checked when the commit corresponding
 	 * to this transaction is reverted. If any of these constraints are not met when the revert is being applied either
 	 * locally or on remote clients, the revert will be ignored.
 	 * These constraints must also be met at the time they are first introduced. If they are not met after the transaction
 	 * callback returns, then `runTransaction` (which invokes the transaction callback) will throw a `UsageError`.
 	 */
-	preconditionsOnRevert?: readonly TransactionConstraint[];
+	preconditionsOnRevert?: readonly TransactionConstraintAlpha[];
 };
 
 /**
- * The status of a the transaction callback in the {@link RunTransaction | RunTransaction} API where the transaction doesn't
- * need to return a value. This is the same as {@link TransactionCallbackStatus} but with the `value` field omitted. This
+ * The result of a {@link TreeBranchAlpha.(runTransaction:2) | transaction} that doesn't return a value.
  * @alpha
  */
 export type VoidTransactionCallbackStatus = Omit<
@@ -72,25 +91,21 @@ export type VoidTransactionCallbackStatus = Omit<
 >;
 
 /**
- * The result of the {@link RunTransaction | RunTransaction} API when it was successful.
+ * The result of a {@link TreeBranchAlpha.(runTransaction:1) | transaction} that completed successfully.
  * @alpha
  */
-export interface TransactionResultSuccess<TSuccessValue> {
-	/** Indicates that the transaction was successful. */
+export interface TransactionResultSuccess<TSuccessValue> extends WithValue<TSuccessValue> {
+	/** The success flag for a transaction that completed without being {@link TransactionCallbackStatus | rolled back}. */
 	success: true;
-	/** The user defined value when the transaction was successful. */
-	value: TSuccessValue;
 }
 
 /**
- * The result of the {@link RunTransaction | RunTransaction} API when it failed.
+ * The result of a {@link TreeBranchAlpha.(runTransaction:1) | transaction} that was rolled back.
  * @alpha
  */
-export interface TransactionResultFailed<TFailureValue> {
-	/** Indicates that the transaction failed. */
+export interface TransactionResultFailed<TFailureValue> extends WithValue<TFailureValue> {
+	/** The failure flag for a transaction that was {@link TransactionCallbackStatus | rolled back}. */
 	success: false;
-	/** The user defined value when the transaction failed. */
-	value: TFailureValue;
 }
 
 /**
@@ -117,10 +132,18 @@ export type TransactionResult =
  */
 export interface RunTransactionParams {
 	/**
-	 * An optional list of {@link TransactionConstraint | constraints} that are checked just before the transaction begins.
+	 * An optional list of {@link TransactionConstraintAlpha | constraints} that are checked just before the transaction begins.
+	 * @remarks
 	 * If any of the constraints are not met when `runTransaction` is called, an error will be thrown.
-	 * If any of the constraints are not met after the transaction has been ordered by the service, it will be rolled back on
-	 * this client and ignored by all other clients.
+	 * If any of the constraints are not met after the transaction has been ordered by the service, it will be rolled back on this client and ignored by all other clients.
 	 */
-	readonly preconditions?: readonly TransactionConstraint[];
+	readonly preconditions?: readonly TransactionConstraintAlpha[];
+	/**
+	 * A label for this transaction that allows it to be correlated with later edits (e.g. for controlling undo/redo grouping).
+	 * @remarks
+	 * If this transaction is applied to a {@link TreeBranchAlpha | branch}, the label will be available in the {@link LocalChangeMetadata.label | metadata} of the {@link TreeBranchEvents.changed | `changed`} event.
+	 *
+	 * If there is a nested transaction, only the outermost transaction label will be used.
+	 */
+	readonly label?: unknown;
 }

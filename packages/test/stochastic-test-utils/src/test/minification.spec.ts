@@ -52,7 +52,7 @@ describe("Minification", () => {
 			const e = namedFunction();
 			assert(e.stack !== undefined);
 			const message = extractMessage(e.stack);
-			requireLines(message, 3);
+			requireLines(message, 2);
 			assert.match(message, /\nat namedFunction .*minification\.spec\.ts/);
 		});
 

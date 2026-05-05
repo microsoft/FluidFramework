@@ -16,6 +16,7 @@ export interface IOdspContainerServicesEvents {
 // @beta
 export interface IOdspFluidContainer<TContainerSchema extends ContainerSchema = ContainerSchema> extends IFluidContainer<TContainerSchema> {
     attach(props?: ContainerAttachProps<OdspContainerAttachProps>): Promise<string>;
+    uploadBlob(blob: ArrayBufferLike): Promise<IFluidHandle<ArrayBufferLike>>;
 }
 
 // @beta

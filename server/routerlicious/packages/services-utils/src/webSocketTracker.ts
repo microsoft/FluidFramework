@@ -16,31 +16,38 @@ export class WebSocketTracker implements IWebSocketTracker {
 	// Map of socketId to token ids. It assumes one socket could be used for connections with multiple tokens
 	private readonly socketIdToTokenIdMap: Map<string, Set<string>>;
 
-	constructor() {
+	constructor(private readonly useSocketIoRoomFeature: boolean = false) {
 		this.socketIdToSocketMap = new Map();
 		this.tokenIdToSocketIdMap = new Map();
 		this.socketIdToTokenIdMap = new Map();
 	}
 
-	public addSocketForToken(compositeTokenId: string, webSocket: IWebSocket) {
-		const socketIds = this.tokenIdToSocketIdMap.get(compositeTokenId);
-		if (socketIds) {
-			socketIds.add(webSocket.id);
+	public async addSocketForToken(compositeTokenId: string, webSocket: IWebSocket): Promise<void> {
+		if (this.useSocketIoRoomFeature) {
+			await webSocket.join(compositeTokenId);
 		} else {
-			this.tokenIdToSocketIdMap.set(compositeTokenId, new Set([webSocket.id]));
-		}
+			const socketIds = this.tokenIdToSocketIdMap.get(compositeTokenId);
+			if (socketIds) {
+				socketIds.add(webSocket.id);
+			} else {
+				this.tokenIdToSocketIdMap.set(compositeTokenId, new Set([webSocket.id]));
+			}
 
-		const tokenIds = this.socketIdToTokenIdMap.get(webSocket.id);
-		if (tokenIds) {
-			tokenIds.add(compositeTokenId);
-		} else {
-			this.socketIdToTokenIdMap.set(webSocket.id, new Set([compositeTokenId]));
-		}
+			const tokenIds = this.socketIdToTokenIdMap.get(webSocket.id);
+			if (tokenIds) {
+				tokenIds.add(compositeTokenId);
+			} else {
+				this.socketIdToTokenIdMap.set(webSocket.id, new Set([compositeTokenId]));
+			}
 
-		this.socketIdToSocketMap.set(webSocket.id, webSocket);
+			this.socketIdToSocketMap.set(webSocket.id, webSocket);
+		}
 	}
 
 	public getSocketsForToken(compositeTokenId: string): IWebSocket[] {
+		if (this.useSocketIoRoomFeature) {
+			throw new Error("Method not supported when socket room feature is enabled.");
+		}
 		const socketIds = this.tokenIdToSocketIdMap.get(compositeTokenId);
 
 		if (!socketIds) {
@@ -58,10 +65,17 @@ export class WebSocketTracker implements IWebSocketTracker {
 	}
 
 	public addSocket(webSocket: IWebSocket) {
+		if (this.useSocketIoRoomFeature) {
+			throw new Error("Method not supported when socket room feature is enabled.");
+		}
 		this.socketIdToSocketMap.set(webSocket.id, webSocket);
 	}
 
 	public removeSocket(socketId: string) {
+		if (this.useSocketIoRoomFeature) {
+			// No need to manually remove socket when socket room feature is enabled
+			return false;
+		}
 		const tokenIds = this.socketIdToTokenIdMap.get(socketId);
 
 		if (tokenIds) {
@@ -80,6 +94,9 @@ export class WebSocketTracker implements IWebSocketTracker {
 	}
 
 	public getAllSockets(): IWebSocket[] {
+		if (this.useSocketIoRoomFeature) {
+			throw new Error("Method not supported when socket room feature is enabled.");
+		}
 		return Array.from(this.socketIdToSocketMap.values());
 	}
 }

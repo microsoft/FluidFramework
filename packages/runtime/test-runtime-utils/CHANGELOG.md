@@ -1,5 +1,53 @@
 # @fluidframework/test-runtime-utils
 
+## 2.100.0
+
+### Minor Changes
+
+- Node 22 is now the minimum supported Node.js version ([#27116](https://github.com/microsoft/FluidFramework/pull/27116)) [e8214d29663](https://github.com/microsoft/FluidFramework/commit/e8214d29663f5ee98d737daed82506a25d8de8d0)
+
+  All Fluid Framework client packages now require Node.js 22 or later. This aligns with the standing Node upgrade policy as Node 20 reaches end-of-life on April 30, 2026.
+
+## 2.93.0
+
+Dependency updates only.
+
+## 2.92.0
+
+Dependency updates only.
+
+## 2.91.0
+
+Dependency updates only.
+
+## 2.90.0
+
+Dependency updates only.
+
+## 2.83.0
+
+Dependency updates only.
+
+## 2.82.0
+
+Dependency updates only.
+
+## 2.81.0
+
+Dependency updates only.
+
+## 2.80.0
+
+### Minor Changes
+
+- Types not intended for consumer implementation/extension are now @sealed ([#26024](https://github.com/microsoft/FluidFramework/pull/26024)) [75a3861ba8b](https://github.com/microsoft/FluidFramework/commit/75a3861ba8bd4b1b0043bb137a17e0c8d4d3b330)
+
+  The following types are now explicitly marked as `@sealed` to indicate that they are not intended for consumer implementation or extension.
+  - `MockFluidDataStoreRuntime` class in `@fluidframework/test-runtime-utils`
+  - `IFluidParentContext` interface in `@fluidframework/runtime-definitions`
+  - `IFluidDataStoreContext` interface in `@fluidframework/runtime-definitions`
+  - `IFluidDataStoreContextDetached` interface in `@fluidframework/runtime-definitions`
+
 ## 2.74.0
 
 Dependency updates only.

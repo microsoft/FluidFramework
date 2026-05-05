@@ -179,11 +179,6 @@ export interface ITokenRevocationManager {
 		jwtId: string,
 		options?: IRevokeTokenOptions,
 	): Promise<ITokenRevocationResponse>;
-
-	/**
-	 * @deprecated move this function to IRevokedTokenChecker
-	 */
-	isTokenRevoked?(tenantId: string, documentId: string, jwtId: string): Promise<boolean>;
 }
 
 /**

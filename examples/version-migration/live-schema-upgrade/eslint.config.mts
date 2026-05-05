@@ -1,12 +1,26 @@
-/* eslint-disable */
-/**
- * GENERATED FILE - DO NOT EDIT DIRECTLY.
- * To regenerate: pnpm tsx scripts/generate-flat-eslint-configs.ts --typescript
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
  */
+
 import type { Linter } from "eslint";
-import { minimalDeprecated } from "../../../common/build/eslint-config-fluid/flat.mts";
+import { recommended } from "@fluidframework/eslint-config-fluid/flat.mts";
 import sharedConfig from "../../eslint.config.data.mts";
 
-const config: Linter.Config[] = [...minimalDeprecated, ...sharedConfig];
+const config: Linter.Config[] = [
+	...recommended,
+	...sharedConfig,
+	{
+		rules: {
+			"@typescript-eslint/consistent-type-exports": "off",
+			"@typescript-eslint/consistent-type-imports": "off",
+			"require-atomic-updates": "off",
+			"unicorn/prefer-query-selector": "off",
+			"unicorn/prefer-string-slice": "off",
+			"unicorn/prefer-top-level-await": "off",
+			"unicorn/switch-case-braces": "off",
+		},
+	},
+];
 
 export default config;

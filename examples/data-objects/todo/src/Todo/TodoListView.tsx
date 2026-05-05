@@ -6,7 +6,7 @@
 import { CollaborativeInput } from "@fluid-example/example-utils";
 import { useTree } from "@fluidframework/react/alpha";
 import { SharedString, type ISharedString } from "@fluidframework/sequence/legacy";
-import React, { useEffect, useRef, useState } from "react";
+import { type FC, type FormEvent, useEffect, useRef, useState } from "react";
 
 // eslint-disable-next-line import-x/no-unassigned-import
 import "./style.css";
@@ -20,7 +20,7 @@ export interface TodoListProps {
 	readonly getDirectLink: (itemId: string) => string;
 }
 
-export const TodoListView: React.FC<TodoListProps> = (props: TodoListProps) => {
+export const TodoListView: FC<TodoListProps> = (props: TodoListProps) => {
 	const { todoModel, getDirectLink } = props;
 	const [titleString, setTitleString] = useState<SharedString | undefined>();
 
@@ -28,21 +28,21 @@ export const TodoListView: React.FC<TodoListProps> = (props: TodoListProps) => {
 
 	useTree(todoModel.treeView.root);
 
-	useEffect(() => {
+	useEffect((): (() => void) => {
 		Promise.resolve(todoModel.treeView.root.title.get())
-			.then((title) => {
+			.then((title): void => {
 				setTitleString(title as ISharedString);
 			})
-			.catch((error) => {
+			.catch((error): void => {
 				console.error(error);
 			});
-		return () => {};
+		return (): void => {};
 	}, [todoModel]);
 
 	if (titleString === undefined) {
 		return <div>Loading...</div>;
 	}
-	const handleCreateClick = (ev: React.FormEvent<HTMLFormElement>): void => {
+	const handleCreateClick = (ev: FormEvent<HTMLFormElement>): void => {
 		ev.preventDefault();
 
 		const input = newItemTextInputRef.current;
@@ -52,30 +52,32 @@ export const TodoListView: React.FC<TodoListProps> = (props: TodoListProps) => {
 
 		todoModel
 			.addTodoItem({ startingText: input.value })
-			.then(() => {
+			.then((): void => {
 				input.value = "";
 			})
-			.catch((error) => {
+			.catch((error): void => {
 				console.error("Failed to create todo item:", error);
 			});
 	};
 
 	// Using the list of TodoItem objects, make a list of TodoItemViews.
 	const todoItemViews = Array.from(todoModel.treeView.root.items.entries()).map(
-		([id, todoItem]) => (
+		([id, todoItem]): JSX.Element => (
 			<div className="item-wrap" key={id}>
 				<TodoItemView todoItemModel={todoItem} className="todo-item-view" />
 				<button
 					name="OpenInNewTab"
 					id={id}
 					className="action-button"
-					onClick={() => window.open(getDirectLink(id), "_blank")}
+					onClick={(): void => {
+						window.open(getDirectLink(id), "_blank");
+					}}
 				>
 					↗
 				</button>
 				<button
 					className="action-button"
-					onClick={() => {
+					onClick={(): void => {
 						todoModel.treeView.root.items.delete(id);
 					}}
 				>

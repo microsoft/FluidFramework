@@ -5,8 +5,9 @@
 
 import { strict as assert } from "node:assert";
 
+import { currentVersion } from "../../../../codec/index.js";
 import {
-	makeFieldBatchCodec,
+	fieldBatchCodecBuilder,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/codecs.js";
 import {
@@ -17,7 +18,6 @@ import {
 import { ajvValidator } from "../../../codec/index.js";
 import { testTrees } from "../../../cursorTestSuite.js";
 import { testIdCompressor } from "../../../utils.js";
-import { currentVersion } from "../../../../codec/index.js";
 
 describe("uncompressedEncode", () => {
 	// TODO: test non size 1 batches
@@ -30,7 +30,7 @@ describe("uncompressedEncode", () => {
 					originatorId: testIdCompressor.localSessionId,
 					idCompressor: testIdCompressor,
 				};
-				const codec = makeFieldBatchCodec({
+				const codec = fieldBatchCodecBuilder.build({
 					jsonValidator: ajvValidator,
 					minVersionForCollab: currentVersion,
 				});

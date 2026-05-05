@@ -127,6 +127,8 @@ function getConfigFromEnv(r11sEndpointName?: RouterliciousEndpoint): IConfig {
 	return getEndpointConfigFromEnv(r11sEndpointName);
 }
 /**
+ * Asserts that the endpoint is a valid Routerlicious endpoint or `undefined`.
+ *
  * @internal
  */
 export function assertRouterliciousEndpoint(

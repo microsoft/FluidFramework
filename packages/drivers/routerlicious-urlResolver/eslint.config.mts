@@ -1,16 +1,20 @@
-/* eslint-disable */
-/**
- * GENERATED FILE - DO NOT EDIT DIRECTLY.
- * To regenerate: pnpm tsx scripts/generate-flat-eslint-configs.ts --typescript
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
  */
+
 import type { Linter } from "eslint";
-import { minimalDeprecated } from "../../../common/build/eslint-config-fluid/flat.mts";
+import { recommended } from "@fluidframework/eslint-config-fluid/flat.mts";
 
 const config: Linter.Config[] = [
-	...minimalDeprecated,
+	...recommended,
 	{
 		rules: {
-			"@typescript-eslint/strict-boolean-expressions": "off",
+			"@typescript-eslint/no-unsafe-argument": "off",
+			"@typescript-eslint/no-unsafe-assignment": "off",
+			"@typescript-eslint/no-unsafe-call": "off",
+			"@typescript-eslint/no-unsafe-member-access": "off",
+			"import-x/no-nodejs-modules": ["error"],
 			"unicorn/filename-case": [
 				"error",
 				{
@@ -21,7 +25,7 @@ const config: Linter.Config[] = [
 					"ignore": [{}],
 				},
 			],
-			"import-x/no-nodejs-modules": ["error"],
+			"unicorn/prefer-node-protocol": "off",
 		},
 	},
 	{

@@ -34,7 +34,7 @@ const assertIntervals = (
 	intervalCollection: ISequenceIntervalCollection,
 	expected: readonly { start: number; end: number }[],
 	validateOverlapping: boolean = true,
-) => {
+): void => {
 	const actual = Array.from(intervalCollection);
 	if (validateOverlapping && sharedString.getLength() > 0) {
 		const overlapping = intervalCollection.findOverlappingIntervals(

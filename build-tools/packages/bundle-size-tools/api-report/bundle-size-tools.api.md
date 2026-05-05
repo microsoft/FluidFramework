@@ -6,11 +6,10 @@
 
 /// <reference types="node" />
 
-import { Build } from 'azure-devops-node-api/interfaces/BuildInterfaces';
+import type { Build } from 'azure-devops-node-api/interfaces/BuildInterfaces';
 import type { CommentThreadStatus } from 'azure-devops-node-api/interfaces/GitInterfaces';
 import { Compiler } from 'webpack';
 import type JSZip from 'jszip';
-import { jszip } from 'jszip';
 import type { StatsCompilation } from 'webpack';
 import { WebApi } from 'azure-devops-node-api';
 import type Webpack from 'webpack';
@@ -21,9 +20,10 @@ export class ADOSizeComparator {
     adoConstants: IADOConstants,
     adoConnection: WebApi,
     localReportPath: string,
+    targetBranch: string,
     adoBuildId: number | undefined,
     getFallbackCommit?: ((startingCommit: string) => Generator<string>) | undefined);
-    createSizeComparisonMessage(tagWaiting: boolean): Promise<BundleComparisonResult>;
+    getSizeComparison(tagWaiting: boolean): Promise<SizeComparison>;
     static naiveFallbackCommitGenerator(startingCommit: string): Generator<string>;
 }
 
@@ -95,12 +95,6 @@ export interface BundleComparison {
     };
 }
 
-// @public
-export type BundleComparisonResult = {
-    message: string;
-    comparison: BundleComparison[] | undefined;
-};
-
 // @public (undocumented)
 export interface BundleFileData {
     // (undocumented)
@@ -158,11 +152,11 @@ export interface EntryStatsProcessorOptions {
 // @public
 export function getAllFilesInDirectory(sourceFolder: string, partialPathPrefix?: string): Promise<string[]>;
 
-// @public (undocumented)
-export function getAzureDevopsApi(accessToken: string, orgUrl: string): WebApi;
+// @public
+export function getAzureDevopsApi(accessToken: string | undefined, orgUrl: string): WebApi;
 
 // @public
-export function getBaselineCommit(): string;
+export function getBaselineCommit(targetBranch: string): string;
 
 // @public (undocumented)
 export interface GetBuildOptions {
@@ -233,9 +227,6 @@ export function getChunkAndDependencySizes(stats: StatsCompilation, chunkName: s
 export function getChunkParsedSize(stats: StatsCompilation, chunkId: string | number): number;
 
 // @public
-export function getCommentForBundleDiff(bundleComparison: BundleComparison[], baselineCommit: string): string;
-
-// @public
 export function getEntryStatsProcessor(options: EntryStatsProcessorOptions): WebpackStatsProcessor;
 
 // @public
@@ -243,9 +234,6 @@ export function getLastCommitHashFromPR(adoConnection: WebApi, prId: number, rep
 
 // @public (undocumented)
 export function getPriorCommit(baseCommit: string): string;
-
-// @public
-export function getSimpleComment(message: string, baselineCommit: string): string;
 
 // @public
 export function getStatsFileFromFileSystem(path: string): Promise<StatsCompilation>;
@@ -286,6 +274,17 @@ export class prCommentsUtils {
     updateThreadStatus(threadType: string, commentThreadStatus: CommentThreadStatus): Promise<void>;
 }
 
+// @public
+export type SizeComparison = {
+    kind: "success";
+    baselineCommit: string;
+    comparison: BundleComparison[];
+} | {
+    kind: "error";
+    baselineCommit: string | undefined;
+    error: string;
+};
+
 // @public (undocumented)
 export const totalSizeMetricName = "Total Size";
 
@@ -296,7 +295,7 @@ export interface TotalSizeStatsProcessorOptions {
 }
 
 // @public (undocumented)
-export function unzipStream(stream: NodeJS.ReadableStream): Promise<jszip>;
+export function unzipStream(stream: NodeJS.ReadableStream): Promise<JSZip>;
 
 // @public
 export type WebpackStatsProcessor = (stats: StatsCompilation, config: BundleBuddyConfig | undefined) => BundleMetricSet | undefined;

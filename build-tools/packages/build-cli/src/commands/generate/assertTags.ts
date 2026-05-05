@@ -3,24 +3,23 @@
  * Licensed under the MIT License.
  */
 
+import { strict as assert } from "node:assert";
 import fs from "node:fs";
 import path from "node:path";
-import type { Package } from "@fluidframework/build-tools";
-import { PackageCommand } from "../../BasePackageCommand.js";
-import type { PackageKind, PackageWithKind } from "../../filter.js";
-
-import { strict as assert } from "node:assert";
+import type { FluidRepo, Package } from "@fluidframework/build-tools";
 import { Flags } from "@oclif/core";
 import { lilconfig } from "lilconfig";
 import {
-	type NoSubstitutionTemplateLiteral,
 	type Node,
+	type NoSubstitutionTemplateLiteral,
 	type NumericLiteral,
 	Project,
 	type SourceFile,
 	type StringLiteral,
 	SyntaxKind,
 } from "ts-morph";
+import { PackageCommand } from "../../BasePackageCommand.js";
+import type { PackageKind, PackageWithKind } from "../../filter.js";
 
 /**
  * Used by `TagAssertsCommand`.
@@ -84,6 +83,15 @@ The format of the configuration is specified by the "AssertTaggingPackageConfig"
 			description:
 				"Disable filtering based on the fluid-build config in the repo. Useful for testing.",
 			helpGroup: "TESTING",
+		}),
+		validate: Flags.boolean({
+			default: false,
+			description:
+				"Validate that asserts are well-formed such that future tagging will not fail.",
+		}),
+		requireTagged: Flags.boolean({
+			default: false,
+			description: "Error if changes would be made instead of making them.",
 		}),
 		...PackageCommand.flags,
 	};
@@ -185,6 +193,8 @@ The format of the configuration is specified by the "AssertTaggingPackageConfig"
 		const dataMap = new Map<PackageWithKind, PackageData>();
 		const config = lilconfig(configName, { searchPlaces });
 
+		const { repo } = await this.getContext();
+
 		for (const pkg of packages) {
 			// Package configuration:
 			// eslint-disable-next-line no-await-in-loop
@@ -209,12 +219,27 @@ The format of the configuration is specified by the "AssertTaggingPackageConfig"
 
 			// load the project based on the tsconfig
 			const project = new Project({
-				skipFileDependencyResolution: true,
+				// Be sure not to skip dependency resolution, as we want to
+				// process all files in a package.
+				skipFileDependencyResolution: false,
 				tsConfigFilePath: tsconfigPath,
 			});
 
+			// Filter to package local sources of interest
+			const sourceFiles = project
+				.getSourceFiles(
+					// Limit to sources in the current package directory
+					`${pkg.directory.replaceAll("\\", "/")}/**`,
+				)
+				// Filter out type files - only interested in runtime sources
+				.filter((source) => source.getExtension() !== ".d.ts");
+
+			this.info(
+				`Processing '${pkg.name}'s (${repo.relativeToRepo(pkg.directory)}) ${sourceFiles.length} source files.`,
+			);
 			const newAssertFiles = this.collectAssertData(
-				project,
+				repo,
+				sourceFiles,
 				assertionFunctions,
 				collected,
 				errors,
@@ -227,17 +252,41 @@ The format of the configuration is specified by the "AssertTaggingPackageConfig"
 			return errors;
 		}
 
-		for (const [, data] of dataMap) {
-			errors.push(...this.tagAsserts(collected, data));
+		const makeChanges = !this.flags.validate && !this.flags.requireTagged;
+
+		for (const [pkg, data] of dataMap) {
+			const modified = this.tagAsserts(collected, data, makeChanges);
+			if (modified && this.flags.requireTagged) {
+				errors.push(`Asserts would be tagged in ${pkg.name}.`);
+			}
 		}
 
-		writeShortCodeMappingFile(collected.codeToMsgMap);
+		const mappingFileContents = generateShortCodeMappingFileContents(collected.codeToMsgMap);
+
+		let existingMappingFile: string | undefined;
+		try {
+			existingMappingFile = fs.readFileSync(mappingFile, { encoding: "utf8" });
+		} catch {
+			// Leave existingMappingFile as undefined to indicate file does not exist.
+		}
+
+		// Update mapping file if changed. Leave existing file (with existing modification time) if not changed.
+		if (existingMappingFile !== mappingFileContents) {
+			if (this.flags.requireTagged) {
+				errors.push(`Assert tagging would make changes to ${mappingFile}.`);
+			}
+			if (makeChanges) {
+				fs.mkdirSync(targetFolder, { recursive: true });
+				fs.writeFileSync(mappingFile, mappingFileContents, { encoding: "utf8" });
+			}
+		}
 
 		return errors;
 	}
 
 	private collectAssertData(
-		project: Project,
+		repo: FluidRepo,
+		sources: Iterable<SourceFile>,
 		assertionFunctions: AssertionFunctions,
 		collected: CollectedData,
 		errors: string[],
@@ -246,8 +295,8 @@ The format of the configuration is specified by the "AssertTaggingPackageConfig"
 		const otherErrors: Node[] = [];
 		const newAssertFiles = new Set<SourceFile>();
 
-		// walk all the files in the project
-		for (const sourceFile of project.getSourceFiles()) {
+		for (const sourceFile of sources) {
+			this.verbose(` Processing ${repo.relativeToRepo(sourceFile.getFilePath())}`);
 			// walk the assert message params in the file
 			for (const msg of getAssertMessageParams(sourceFile, assertionFunctions)) {
 				const nodeKind = msg.getKind();
@@ -285,8 +334,8 @@ The format of the configuration is specified by the "AssertTaggingPackageConfig"
 						if (comments.length > 0) {
 							let originalErrorText = comments[0]
 								.getText()
-								.replace(/\/\*/g, "")
-								.replace(/\*\//g, "")
+								.replaceAll("/*", "")
+								.replaceAll("*/", "")
 								.trim();
 
 							// Replace leading+trailing double quotes and backticks.
@@ -321,11 +370,6 @@ The format of the configuration is specified by the "AssertTaggingPackageConfig"
 					// Anything else isn't supported
 					case SyntaxKind.TemplateExpression: {
 						templateErrors.push(msg);
-						break;
-					}
-					case SyntaxKind.BinaryExpression:
-					case SyntaxKind.CallExpression: {
-						// TODO: why are CallExpression and BinaryExpression silently allowed?
 						break;
 					}
 					default: {
@@ -363,11 +407,13 @@ The format of the configuration is specified by the "AssertTaggingPackageConfig"
 	/**
 	 * Updates source files, adding new asserts to `collected`.
 	 *
-	 * @returns array of error strings.
+	 * Returns `true` if any files were modified.
 	 */
-	private tagAsserts(collected: CollectedData, packageData: PackageData): string[] {
-		const errors: string[] = [];
-
+	private tagAsserts(
+		collected: CollectedData,
+		packageData: PackageData,
+		saveChanges = true,
+	): boolean {
 		// eslint-disable-next-line unicorn/consistent-function-scoping
 		function isStringLiteral(msg: Node): msg is StringLiteral | NoSubstitutionTemplateLiteral {
 			const kind = msg.getKind();
@@ -378,13 +424,15 @@ The format of the configuration is specified by the "AssertTaggingPackageConfig"
 			);
 		}
 
+		let modifications = false;
+
 		// go through all the newly collected asserts and add short codes
 		for (const s of packageData.newAssertFiles) {
 			// another policy may have changed the file, so reload it
 			s.refreshFromFileSystemSync();
 			for (const msg of getAssertMessageParams(s, packageData.assertionFunctions)) {
 				// here we only want to look at those messages that are strings,
-				// as we validated existing short codes above
+				// as we validated existing short codes in collectAssertData
 				if (isStringLiteral(msg)) {
 					// for now we don't care about filling gaps, but possible
 					const shortCode = ++collected.maxShortCode;
@@ -394,13 +442,15 @@ The format of the configuration is specified by the "AssertTaggingPackageConfig"
 					// replace the message with shortcode, and put the message in a comment
 					msg.replaceWithText(`${shortCodeStr} /* ${text} */`);
 					collected.codeToMsgMap.set(shortCodeStr, text);
+					modifications = true;
 				}
 			}
 
-			s.saveSync();
+			if (saveChanges) {
+				s.saveSync();
+			}
 		}
-
-		return errors;
+		return modifications;
 	}
 
 	private async getTsConfigPath(pkg: Package): Promise<string> {
@@ -443,25 +493,20 @@ function getAssertMessageParams(
 	return messageArgs;
 }
 
-function writeShortCodeMappingFile(codeToMsgMap: Map<string, string>): void {
-	// eslint-disable-next-line unicorn/prefer-spread, @typescript-eslint/no-unsafe-assignment
-	const mapContents = Array.from(codeToMsgMap.entries())
-		.sort()
-		// eslint-disable-next-line unicorn/no-array-reduce
-		.reduce((accum, current) => {
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-			accum[current[0]] = current[1];
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-return
-			return accum;
-			// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		}, {} as any);
-	// TODO: this should probably come from configuration (if each package can have their own) or a CLI argument.
-	const targetFolder = "packages/runtime/test-runtime-utils/src";
-
-	if (!fs.existsSync(targetFolder)) {
-		fs.mkdirSync(targetFolder, { recursive: true });
+export function generateShortCodeMap(
+	codeToMsgMap: Map<string, string>,
+): Record<string, string> {
+	const entries = Array.from(codeToMsgMap.entries()).sort();
+	const record: Record<string, string> = {};
+	for (const [key, value] of entries) {
+		record[key] = value;
 	}
+	return record;
+}
 
+export function generateShortCodeMappingFileContents(
+	codeToMsgMap: Map<string, string>,
+): string {
 	const fileContents = `/*!
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
@@ -471,9 +516,12 @@ function writeShortCodeMappingFile(codeToMsgMap: Map<string, string>): void {
 
 // Auto-generated by policy-check in @fluidframework/build-tools.
 
-export const shortCodeMap = ${JSON.stringify(mapContents, undefined, "\t")};
+export const shortCodeMap = ${JSON.stringify(generateShortCodeMap(codeToMsgMap), undefined, "\t")};
 `;
-	fs.writeFileSync(path.join(targetFolder, "assertionShortCodesMap.ts"), fileContents, {
-		encoding: "utf8",
-	});
+	return fileContents;
 }
+
+// TODO: this should probably come from configuration (if each package can have their own) or a CLI argument.
+const targetFolder = "packages/runtime/test-runtime-utils/src";
+
+const mappingFile = path.join(targetFolder, "assertionShortCodesMap.ts");

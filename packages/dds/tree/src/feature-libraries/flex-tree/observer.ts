@@ -4,8 +4,10 @@
  */
 
 import { debugAssert } from "@fluidframework/core-utils/internal";
-import type { FlexTreeNode } from "./flexTreeTypes.js";
+
 import type { FieldKey } from "../../core/index.js";
+
+import type { FlexTreeNode } from "./flexTreeTypes.js";
 
 /*
  * This file sets up a static observation tracking system.
@@ -20,8 +22,25 @@ import type { FieldKey } from "../../core/index.js";
  * See {@link withObservation} and {@link currentObserver}.
  */
 export interface Observer {
+	/**
+	 * Arbitrary content in `node` subtree might be observed.
+	 */
+	observeNodeDeep(node: FlexTreeNode): void;
+	/**
+	 * Which fields exist (as non-empty) on `node` is being observed.
+	 * @remarks
+	 * The set of fields should be considered order independent.
+	 */
 	observeNodeFields(node: FlexTreeNode): void;
+	/**
+	 * The contents of the `key` field of `node` are being observed.
+	 * @remarks
+	 * Any (shallow) change to which children exist in this field, or in what order should invalidate this observation.
+	 */
 	observeNodeField(node: FlexTreeNode, key: FieldKey): void;
+	/**
+	 * The parent of `node` is being observed.
+	 */
 	observeParentOf(node: FlexTreeNode): void;
 }
 

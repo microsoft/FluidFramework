@@ -16,6 +16,7 @@ import {
 } from "@fluidframework/shared-object-base/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
+import { FluidClientVersion, type FormatVersion } from "./codec/index.js";
 import {
 	SharedTreeKernel,
 	type ITreePrivate,
@@ -24,14 +25,15 @@ import {
 	type SharedTreeOptionsInternal,
 	type SharedTreeKernelView,
 } from "./shared-tree/index.js";
+import {
+	editManagerCodecName,
+	EditManagerFormatVersion,
+	messageCodecName,
+	MessageFormatVersion,
+} from "./shared-tree-core/index.js";
 import { SharedTreeFactoryType, SharedTreeAttributes } from "./sharedTreeAttributes.js";
 import type { ITree } from "./simple-tree/index.js";
 import { Breakable, copyProperty } from "./util/index.js";
-import { FluidClientVersion } from "./codec/index.js";
-import {
-	editManagerFormatVersionSelectorForSharedBranches,
-	messageFormatVersionSelectorForSharedBranches,
-} from "./shared-tree-core/index.js";
 
 /**
  * {@link ITreePrivate} extended with ISharedObject.
@@ -203,7 +205,7 @@ export function configuredSharedTreeInternal(
 
 export function resolveOptions(options: SharedTreeOptions): SharedTreeOptionsInternal {
 	const internal: SharedTreeOptionsInternal = {
-		...resolveSharedBranchesOptions(options.enableSharedBranches),
+		...resolveFormatOptions(options),
 	};
 	for (const optionName of Object.keys(options)) {
 		copyProperty(options, optionName, internal);
@@ -211,12 +213,20 @@ export function resolveOptions(options: SharedTreeOptions): SharedTreeOptionsInt
 	return internal;
 }
 
-function resolveSharedBranchesOptions(
-	enableSharedBranches: boolean | undefined,
-): SharedTreeOptionsInternal {
-	return enableSharedBranches === true ? sharedBranchesOptions : {};
+function resolveFormatOptions(options: SharedTreeOptions): SharedTreeOptionsInternal {
+	const enableSharedBranches = options.enableSharedBranches ?? false;
+
+	if (enableSharedBranches) {
+		return sharedBranchesOptions;
+	}
+
+	return {};
 }
+
 const sharedBranchesOptions: SharedTreeOptionsInternal = {
-	messageFormatSelector: messageFormatVersionSelectorForSharedBranches,
-	editManagerFormatSelector: editManagerFormatVersionSelectorForSharedBranches,
+	writeVersionOverrides: new Map<string, FormatVersion>([
+		[editManagerCodecName, EditManagerFormatVersion.vSharedBranches],
+		[messageCodecName, MessageFormatVersion.vSharedBranches],
+	]),
+	allowPossiblyIncompatibleWriteVersionOverrides: true,
 };

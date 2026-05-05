@@ -4,7 +4,7 @@
  */
 
 import { Button, Checkbox, makeStyles, shorthands, tokens } from "@fluentui/react-components";
-import React from "react";
+import type { ReactElement } from "react";
 
 import { useTelemetryOptIn } from "../TelemetryUtils.js";
 
@@ -50,7 +50,7 @@ interface ModalProps {
 /**
  * Modal component to display a message over the rest of the page.
  */
-export function TelemetryConsentModal(props: ModalProps): React.ReactElement {
+export function TelemetryConsentModal(props: ModalProps): ReactElement {
 	const { onClose } = props;
 	const styles = useStyles();
 	const [optedIn, setOptedIn] = useTelemetryOptIn();

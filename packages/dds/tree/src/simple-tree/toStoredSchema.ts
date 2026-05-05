@@ -36,6 +36,7 @@ import {
 import {
 	ExpectStored,
 	NodeKind,
+	SchemaUpgrade,
 	Unchanged,
 	type SimpleSchemaTransformationOptions,
 	type StoredFromViewSchemaGenerationOptions,
@@ -76,6 +77,7 @@ const viewToStoredCache = new WeakMap<
 export const restrictiveStoredSchemaGenerationOptions: StoredFromViewSchemaGenerationOptions =
 	{
 		includeStaged: () => false,
+		includeStagedOptional: () => false,
 	};
 
 /**
@@ -92,6 +94,7 @@ export const restrictiveStoredSchemaGenerationOptions: StoredFromViewSchemaGener
  */
 export const permissiveStoredSchemaGenerationOptions: StoredFromViewSchemaGenerationOptions = {
 	includeStaged: () => true,
+	includeStagedOptional: () => true,
 };
 
 /**
@@ -186,27 +189,31 @@ export function transformSimpleSchema(
 ): SimpleTreeSchema {
 	const simpleNodeSchema = new Map<string, SimpleNodeSchema>();
 	const root = filterFieldAllowedTypes(schema.root, options);
-	const queue = Array.from(root.simpleAllowedTypes.keys());
+	const queue = [...root.simpleAllowedTypes.keys()];
 	for (const identifier of queue) {
 		getOrCreate(simpleNodeSchema, identifier, (id) => {
 			const nodeSchema = schema.definitions.get(id) ?? fail(0xca8 /* missing schema */);
 			const transformed = transformSimpleNodeSchema(nodeSchema, options);
 			const kind = transformed.kind;
 			switch (kind) {
-				case NodeKind.Leaf:
+				case NodeKind.Leaf: {
 					break;
+				}
 				case NodeKind.Array:
 				case NodeKind.Map:
-				case NodeKind.Record:
+				case NodeKind.Record: {
 					queue.push(...transformed.simpleAllowedTypes.keys());
 					break;
-				case NodeKind.Object:
+				}
+				case NodeKind.Object: {
 					for (const fieldSchema of transformed.fields.values()) {
 						queue.push(...fieldSchema.simpleAllowedTypes.keys());
 					}
 					break;
-				default:
+				}
+				default: {
 					unreachableCase(kind);
+				}
 			}
 			return transformed;
 		});
@@ -419,8 +426,12 @@ function filterFieldAllowedTypes(
 	f: SimpleFieldSchema,
 	options: SimpleSchemaTransformationOptions,
 ): SimpleFieldSchema {
+	const isStagedOptional =
+		preservesViewData(options) && f.isStagedOptional instanceof SchemaUpgrade
+			? f.isStagedOptional
+			: undefined;
 	return {
-		kind: f.kind,
+		kind: getStoredFieldKind(f, options),
 		persistedMetadata: f.persistedMetadata,
 		metadata: preservesViewData(options)
 			? {
@@ -429,7 +440,27 @@ function filterFieldAllowedTypes(
 				}
 			: {},
 		simpleAllowedTypes: filterAllowedTypes(f.simpleAllowedTypes, options),
+		...(isStagedOptional === undefined ? {} : { isStagedOptional }),
 	};
+}
+
+/**
+ * Returns the field kind to use in the stored schema for the given view field schema.
+ * @remarks
+ * For {@link SchemaFactoryAlpha.stagedOptional | staged optional} fields, the stored field kind is Required
+ * when the staged optional is not being included (i.e., restrictive options).
+ */
+function getStoredFieldKind(
+	f: SimpleFieldSchema,
+	options: SimpleSchemaTransformationOptions,
+): FieldKind {
+	if (!isStoredFromView(options)) {
+		return f.kind;
+	}
+	const { isStagedOptional } = f;
+	if (isStagedOptional === undefined || isStagedOptional === false) return f.kind;
+	// isStagedOptional is a SchemaUpgrade — use includeStagedOptional to decide the stored kind.
+	return options.includeStagedOptional(isStagedOptional) ? f.kind : FieldKind.Required;
 }
 
 /**

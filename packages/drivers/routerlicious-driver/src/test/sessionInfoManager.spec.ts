@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import { IResolvedUrl } from "@fluidframework/driver-definitions/internal";
 import { ISession } from "@fluidframework/server-services-client";
@@ -111,7 +111,7 @@ describe("SessionInfoManager", () => {
 
 	describe("initializeSessionInfo", () => {
 		describe("session provided", () => {
-			[true, false].forEach((enableDiscovery) => {
+			for (const enableDiscovery of [true, false]) {
 				describe(`discovery ${enableDiscovery ? "enabled" : "disabled"}`, () => {
 					it("uses provided session", async () => {
 						const manager = new SessionInfoManager(enableDiscovery);
@@ -158,7 +158,7 @@ describe("SessionInfoManager", () => {
 						);
 					});
 				});
-			});
+			}
 		});
 
 		it("discovery enabled", async () => {

@@ -45,7 +45,7 @@ const loadSummarizerAndSummarize = async (
 	container: IContainer,
 	testContainerConfig: ITestContainerConfig,
 	summaryVersion?: string,
-) => {
+): Promise<string> => {
 	const { summarizer, container: summarizingContainer } = await createSummarizer(
 		provider,
 		container,
@@ -133,7 +133,9 @@ describeCompat(
 			return view.root.map;
 		}
 
-		async function initialize(initializeMap: (d: ITestFluidObject) => Promise<MinimalMap>) {
+		async function initialize(
+			initializeMap: (d: ITestFluidObject) => Promise<MinimalMap>,
+		): Promise<void> {
 			provider = getTestObjectProvider({ syncSummarizer: true });
 			loader = provider.makeTestLoader(mainContainerConfig);
 			container = asLegacyAlpha(

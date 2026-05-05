@@ -5,8 +5,10 @@
 
 import { strict as assert } from "node:assert";
 
+import type { IIdCompressor } from "@fluidframework/id-compressor";
 import { MockHandle } from "@fluidframework/test-runtime-utils/internal";
 
+import type { ICodecOptions } from "../codec/index.js";
 import {
 	type ITreeCursorSynchronous,
 	type JsonableTree,
@@ -18,6 +20,7 @@ import {
 	TreeStoredSchemaRepository,
 	type TreeTypeSet,
 } from "../core/index.js";
+import { FormatValidatorBasic } from "../external-utilities/index.js";
 import {
 	FieldKinds,
 	type FullSchemaPolicy,
@@ -38,7 +41,8 @@ import {
 	SchematizingSimpleTreeView,
 	type ForestOptions,
 } from "../shared-tree/index.js";
-import type { IIdCompressor } from "@fluidframework/id-compressor";
+// eslint-disable-next-line import-x/no-internal-modules
+import { isLazy } from "../simple-tree/core/index.js";
 import {
 	numberSchema,
 	SchemaFactoryAlpha,
@@ -58,14 +62,11 @@ import {
 	permissiveStoredSchemaGenerationOptions,
 	type TreeViewConfiguration,
 } from "../simple-tree/index.js";
+import { brand, Breakable } from "../util/index.js";
+
 // eslint-disable-next-line import-x/no-internal-modules
 import { fieldJsonCursor } from "./json/jsonCursor.js";
-import { brand, Breakable } from "../util/index.js";
-// eslint-disable-next-line import-x/no-internal-modules
-import { isLazy } from "../simple-tree/core/index.js";
 import { fieldCursorFromInsertable, testIdCompressor } from "./utils.js";
-import { FormatValidatorBasic } from "../external-utilities/index.js";
-import type { ICodecOptions } from "../codec/index.js";
 
 interface TestSimpleTree {
 	readonly name: string;
@@ -99,14 +100,14 @@ export interface TestDocument extends TestTree, Omit<TestSimpleTree, "root"> {
 	readonly hasUnknownOptionalFieldSchema?: true;
 
 	/**
-	 * True if and only if the document had staged allowed types.
+	 * True if and only if the document had staged schema features.
 	 */
 	readonly hasStagedSchema?: true;
 
 	/**
-	 * True if and only if the document content requires staged allowed types.
+	 * True if and only if the document content requires staged schema features.
 	 *
-	 * For this to be the case, the stored schema must also have had the staged type included.
+	 * For this to be the case, the stored schema must also have had staged schema features included.
 	 */
 	readonly requiresStagedSchema?: true;
 }
@@ -310,7 +311,7 @@ export const testTrees: readonly TestTree[] = [
 	{
 		name: "node-with-identifier-field",
 		schemaData: toStoredSchema(HasIdentifierField, restrictiveStoredSchemaGenerationOptions),
-		treeFactory: (idCompressor?: IIdCompressor) => {
+		treeFactory: (idCompressor?: IIdCompressor): JsonableTree[] => {
 			assert(idCompressor !== undefined, "idCompressor must be provided");
 			const id = idCompressor.decompress(idCompressor.generateCompressedId());
 			return jsonableTreeFromFieldCursor(
@@ -322,7 +323,7 @@ export const testTrees: readonly TestTree[] = [
 	{
 		name: "identifier-field",
 		schemaData: toStoredSchema(factory.identifier, restrictiveStoredSchemaGenerationOptions),
-		treeFactory: (idCompressor?: IIdCompressor) => {
+		treeFactory: (idCompressor?: IIdCompressor): JsonableTree[] => {
 			assert(idCompressor !== undefined, "idCompressor must be provided");
 			const id = idCompressor.decompress(idCompressor.generateCompressedId());
 			return [{ type: brand(stringSchema.identifier), value: id }];
@@ -405,6 +406,17 @@ export class HasStagedAllowedTypesAfterUpdate extends factory.objectAlpha(
 	},
 ) {}
 
+export class HasStagedOptionalField extends factory.objectAlpha("hasStagedOptionalField", {
+	x: SchemaFactoryAlpha.stagedOptional(SchemaFactoryAlpha.number),
+}) {}
+
+export class HasStagedOptionalFieldAfterUpdate extends factory.objectAlpha(
+	"hasStagedOptionalField",
+	{
+		x: SchemaFactoryAlpha.optional(SchemaFactoryAlpha.number),
+	},
+) {}
+
 class MapWithStaged extends factory.mapAlpha(
 	"MapWithStaged",
 	SchemaFactoryAlpha.types([
@@ -420,6 +432,16 @@ class ArrayWithStaged extends factory.arrayAlpha(
 		SchemaFactoryAlpha.staged(SchemaFactoryAlpha.string),
 	]),
 ) {}
+
+const stagedOptionalRoot = SchemaFactoryAlpha.stagedOptional(SchemaFactoryAlpha.number);
+const optionalRoot = SchemaFactoryAlpha.optional(SchemaFactoryAlpha.number);
+const stagedOptionalA = SchemaFactoryAlpha.stagedOptional(SchemaFactoryAlpha.number);
+const stagedOptionalB = SchemaFactoryAlpha.stagedOptional(SchemaFactoryAlpha.string);
+
+class NestedStagedOptional extends factory.object("NestedStagedOptional", {
+	a: stagedOptionalA,
+	b: stagedOptionalB,
+}) {}
 
 const multiStageCUpgrade = SchemaFactoryAlpha.staged(ArrayWithStaged);
 
@@ -451,7 +473,7 @@ class NestedMultiStage extends factory.object("NestedMultiStage", {
  * Can be used to test schema evolution related features where view and stored schema can diverge.
  * Includes for example documents with unknown optional fields;
  *
- * TODO: will include documents with staged allowed types (once supported) both before and after the stored schema update.
+ * Includes documents with staged schema features both before and after the stored schema update.
  */
 export const testDocuments: readonly TestDocument[] = [
 	...testSimpleTrees.map(
@@ -566,6 +588,87 @@ export const testDocuments: readonly TestDocument[] = [
 	},
 	{
 		ambiguous: false,
+		name: "HasStagedOptionalFieldBeforeUpdate",
+		schema: HasStagedOptionalField,
+		hasStagedSchema: true,
+		policy: defaultSchemaPolicy,
+		schemaData: toInitialSchema(HasStagedOptionalField),
+		treeFactory: () =>
+			jsonableTreeFromFieldCursor(fieldCursorFromInsertable(HasStagedOptionalField, { x: 5 })),
+	},
+	{
+		ambiguous: false,
+		name: "HasStagedOptionalFieldAfterUpdate",
+		schema: HasStagedOptionalField,
+		hasStagedSchema: true,
+		requiresStagedSchema: true,
+		policy: defaultSchemaPolicy,
+		schemaData: toInitialSchema(HasStagedOptionalFieldAfterUpdate),
+		treeFactory: () =>
+			jsonableTreeFromFieldCursor(fieldCursorFromInsertable(HasStagedOptionalField, {})),
+	},
+	{
+		ambiguous: false,
+		name: "Staged optional in root",
+		schema: stagedOptionalRoot,
+		hasStagedSchema: true,
+		policy: defaultSchemaPolicy,
+		schemaData: toInitialSchema(stagedOptionalRoot),
+		treeFactory: () =>
+			jsonableTreeFromFieldCursor(fieldCursorFromInsertable(stagedOptionalRoot, 5)),
+	},
+	{
+		ambiguous: false,
+		name: "Staged optional empty root",
+		schema: stagedOptionalRoot,
+		hasStagedSchema: true,
+		requiresStagedSchema: true,
+		policy: defaultSchemaPolicy,
+		schemaData: toInitialSchema(optionalRoot),
+		treeFactory: () =>
+			jsonableTreeFromFieldCursor(fieldCursorFromInsertable(stagedOptionalRoot, undefined)),
+	},
+	{
+		ambiguous: false,
+		name: "NestedStagedOptional with no upgrades",
+		schema: NestedStagedOptional,
+		hasStagedSchema: true,
+		policy: defaultSchemaPolicy,
+		schemaData: toStoredSchema(NestedStagedOptional, restrictiveStoredSchemaGenerationOptions),
+		treeFactory: () =>
+			jsonableTreeFromFieldCursor(
+				fieldCursorFromInsertable(NestedStagedOptional, { a: 5, b: "text" }),
+			),
+	},
+	{
+		ambiguous: false,
+		name: "NestedStagedOptional with one upgrade",
+		schema: NestedStagedOptional,
+		hasStagedSchema: true,
+		requiresStagedSchema: true,
+		policy: defaultSchemaPolicy,
+		schemaData: toStoredSchema(NestedStagedOptional, {
+			includeStaged: () => false,
+			includeStagedOptional: (upgrade) => upgrade === stagedOptionalA.isStagedOptional,
+		}),
+		treeFactory: () =>
+			jsonableTreeFromFieldCursor(
+				fieldCursorFromInsertable(NestedStagedOptional, { b: "text" }),
+			),
+	},
+	{
+		ambiguous: false,
+		name: "NestedStagedOptional with all upgrades",
+		schema: NestedStagedOptional,
+		hasStagedSchema: true,
+		requiresStagedSchema: true,
+		policy: defaultSchemaPolicy,
+		schemaData: toStoredSchema(NestedStagedOptional, permissiveStoredSchemaGenerationOptions),
+		treeFactory: () =>
+			jsonableTreeFromFieldCursor(fieldCursorFromInsertable(NestedStagedOptional, {})),
+	},
+	{
+		ambiguous: false,
 		name: "NestedMultiStage with no upgrades",
 		schema: NestedMultiStage,
 		hasStagedSchema: true,
@@ -585,6 +688,7 @@ export const testDocuments: readonly TestDocument[] = [
 		policy: defaultSchemaPolicy,
 		schemaData: toStoredSchema(NestedMultiStage, {
 			includeStaged: (upgrade) => upgrade === multiStageCUpgrade.metadata.stagedSchemaUpgrade,
+			includeStagedOptional: () => false,
 		}),
 		treeFactory: () =>
 			jsonableTreeFromFieldCursor(

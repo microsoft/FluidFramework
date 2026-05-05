@@ -5,6 +5,7 @@
 
 import type {
 	IConfigProviderBase,
+	IFluidHandle,
 	IDisposable,
 	ITelemetryBaseLogger,
 	Listenable,
@@ -118,6 +119,12 @@ export interface IOdspFluidContainer<
 	 * @returns A promise which resolves when the attach is complete, with the string identifier of the container.
 	 */
 	attach(props?: ContainerAttachProps<OdspContainerAttachProps>): Promise<string>;
+
+	/**
+	 * Upload a blob of data.
+	 * @param blob - The blob to upload to the ODSP service.
+	 */
+	uploadBlob(blob: ArrayBufferLike): Promise<IFluidHandle<ArrayBufferLike>>;
 }
 
 /**

@@ -4,20 +4,21 @@
  */
 
 import { strict as assert } from "node:assert";
-import { validateUsageError } from "@fluidframework/test-runtime-utils/internal";
+
 import type { SessionId } from "@fluidframework/id-compressor";
 import { createSessionId } from "@fluidframework/id-compressor/internal";
+import { validateUsageError } from "@fluidframework/test-runtime-utils/internal";
 
+import { currentVersion, DependentFormatVersion, makeCodecFamily } from "../../codec/index.js";
 import type {
 	EncodedRevisionTag,
 	GraphCommit,
 	ChangeEncodingContext,
 } from "../../core/index.js";
 import { FormatValidatorBasic } from "../../external-utilities/index.js";
+import { MessageFormatVersion } from "../../shared-tree-core/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
-import { makeMessageCodec, makeMessageCodecs } from "../../shared-tree-core/messageCodecs.js";
-// eslint-disable-next-line import-x/no-internal-modules
-import type { Message } from "../../shared-tree-core/messageFormatV1ToV4.js";
+import { makeMessageCodecBuilder } from "../../shared-tree-core/messageCodecs.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import type { DecodedMessage } from "../../shared-tree-core/messageTypes.js";
 import { TestChange } from "../testChange.js";
@@ -29,8 +30,6 @@ import {
 	testIdCompressor,
 	testRevisionTagCodec,
 } from "../utils.js";
-import { currentVersion, DependentFormatVersion } from "../../codec/index.js";
-import { MessageFormatVersion } from "../../shared-tree-core/index.js";
 
 const commit1 = {
 	revision: mintRevisionTag(),
@@ -143,17 +142,20 @@ const testCases: EncodingTestData<
 };
 
 describe("message codec", () => {
-	const family = makeMessageCodecs(
-		TestChange.codecs,
-		DependentFormatVersion.fromUnique(1),
-		testRevisionTagCodec,
-		{
-			jsonValidator: FormatValidatorBasic,
-		},
+	const builder = makeMessageCodecBuilder<TestChange>();
+	const built = builder.applyOptions({
+		changeCodecs: TestChange.codecs,
+		dependentChangeFormatVersion: DependentFormatVersion.fromUnique(1),
+		revisionTagCodec: testRevisionTagCodec,
+		jsonValidator: FormatValidatorBasic,
+	});
+	const family = makeCodecFamily(
+		built.map((codec) => [codec.formatVersion, codec.codec] as const),
 	);
 	makeEncodingTestSuite(family, testCases, undefined, [
 		MessageFormatVersion.v3,
 		MessageFormatVersion.v4,
+		MessageFormatVersion.v6,
 		MessageFormatVersion.vSharedBranches,
 	]);
 	makeDiscontinuedEncodingTestSuite(family, [
@@ -164,15 +166,13 @@ describe("message codec", () => {
 	]);
 
 	describe("dispatching codec", () => {
-		const codec = makeMessageCodec(
-			TestChange.codecs,
-			DependentFormatVersion.fromUnique(1),
-			testRevisionTagCodec,
-			{
-				jsonValidator: FormatValidatorBasic,
-				minVersionForCollab: currentVersion,
-			},
-		);
+		const codec = makeMessageCodecBuilder<TestChange>().build({
+			changeCodecs: TestChange.codecs,
+			dependentChangeFormatVersion: DependentFormatVersion.fromUnique(1),
+			revisionTagCodec: testRevisionTagCodec,
+			jsonValidator: FormatValidatorBasic,
+			minVersionForCollab: currentVersion,
+		});
 
 		const sessionId: SessionId = "sessionId" as SessionId;
 		it("Drops parent commit fields on encode", () => {
@@ -210,10 +210,10 @@ describe("message codec", () => {
 				originatorId,
 				changeset: {},
 				version: -1,
-			} satisfies Message);
+			});
 			assert.throws(
 				() => codec.decode(JSON.parse(encoded), { idCompressor: testIdCompressor }),
-				validateUsageError(/Unsupported version -1 encountered while decoding data/),
+				validateUsageError(/Unsupported version -1 encountered while decoding Message data./),
 			);
 		});
 	});

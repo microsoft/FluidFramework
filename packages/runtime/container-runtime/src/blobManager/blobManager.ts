@@ -270,7 +270,6 @@ export class BlobManager {
 	// blobPath's format - `/<basePath>/<localId>`.
 	private readonly isBlobDeleted: (blobPath: string) => boolean;
 	private readonly runtime: IBlobManagerRuntime;
-	private readonly localIdGenerator: () => string;
 
 	private readonly createBlobPayloadPending: boolean;
 
@@ -298,7 +297,6 @@ export class BlobManager {
 		readonly isBlobDeleted: (blobPath: string) => boolean;
 		readonly runtime: IBlobManagerRuntime;
 		pendingBlobs: IPendingBlobs | undefined;
-		readonly localIdGenerator?: (() => string) | undefined;
 		readonly createBlobPayloadPending: boolean;
 	}) {
 		const {
@@ -310,7 +308,6 @@ export class BlobManager {
 			isBlobDeleted,
 			runtime,
 			pendingBlobs,
-			localIdGenerator,
 			createBlobPayloadPending,
 		} = props;
 		this.routeContext = routeContext;
@@ -319,7 +316,6 @@ export class BlobManager {
 		this.blobRequested = blobRequested;
 		this.isBlobDeleted = isBlobDeleted;
 		this.runtime = runtime;
-		this.localIdGenerator = localIdGenerator ?? uuid;
 		this.createBlobPayloadPending = createBlobPayloadPending;
 
 		this.mc = createChildMonitoringContext({
@@ -480,7 +476,7 @@ export class BlobManager {
 		if (signal?.aborted === true) {
 			throw createAbortError();
 		}
-		const localId = this.localIdGenerator();
+		const localId = uuid();
 		this.localBlobCache.set(localId, { state: "uploading", blob });
 		// Blobs created while the container is detached are stored in IDetachedBlobStorage.
 		// The 'IContainerStorageService.createBlob()' call below will respond with a pseudo storage ID.
@@ -497,7 +493,7 @@ export class BlobManager {
 		blob: ArrayBufferLike,
 		signal?: AbortSignal,
 	): Promise<IFluidHandleInternalPayloadPending<ArrayBufferLike>> {
-		const localId = this.localIdGenerator();
+		const localId = uuid();
 		this.localBlobCache.set(localId, { state: "localOnly", blob });
 		await this.uploadAndAttach(localId, signal);
 		return this.getNonPayloadPendingBlobHandle(localId);
@@ -507,7 +503,7 @@ export class BlobManager {
 		blob: ArrayBufferLike,
 		signal?: AbortSignal,
 	): IFluidHandleInternalPayloadPending<ArrayBufferLike> {
-		const localId = this.localIdGenerator();
+		const localId = uuid();
 		this.localBlobCache.set(localId, { state: "localOnly", blob });
 
 		const blobHandle = new BlobHandle(

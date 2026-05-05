@@ -16,7 +16,6 @@ export class OdspPersistentCache implements IPersistedCache {
 	public constructor() {}
 
 	async get(entry: ICacheEntry): Promise<any> {
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 		return this.cache.get(getKeyForCacheEntry(entry));
 	}
 

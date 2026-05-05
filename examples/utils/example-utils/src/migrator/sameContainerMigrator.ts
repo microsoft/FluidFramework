@@ -81,9 +81,9 @@ export class SameContainerMigrator
 			.then(() => {
 				console.log("done!");
 			})
-			.catch((e) => {
+			.catch((error) => {
 				// TODO: error handling/retry
-				console.error(e);
+				console.error(error);
 			});
 	}
 
@@ -146,7 +146,11 @@ export class SameContainerMigrator
 			return;
 		}
 
-		if (this.dataTransformationCallback !== undefined) {
+		if (this.dataTransformationCallback === undefined) {
+			// We can't get the data into a format that we can import, give up.
+			this.emit("migrationNotSupported", this._acceptedVersion);
+			return;
+		} else {
 			// Otherwise, try using the dataTransformationCallback if provided to get the exported data into
 			// a format that we can import.
 			assert(this._acceptedVersion !== undefined, "this._acceptedVersion should be defined");
@@ -161,10 +165,6 @@ export class SameContainerMigrator
 				this.emit("migrationNotSupported", this._acceptedVersion);
 				return;
 			}
-		} else {
-			// We can't get the data into a format that we can import, give up.
-			this.emit("migrationNotSupported", this._acceptedVersion);
-			return;
 		}
 	};
 

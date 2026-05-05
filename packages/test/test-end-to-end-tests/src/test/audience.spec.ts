@@ -58,7 +58,9 @@ describeCompat("Audience correctness", "FullCompat", (getTestObjectProvider, api
 							resolve();
 						}
 					};
-					container.audience.on("addMember", (newClientId: string) => listener(newClientId));
+					container.audience.on("addMember", (newClientId: string): void =>
+						listener(newClientId),
+					);
 				},
 				// Wait for 2 seconds to get the client in audience. This wait is needed for a client to get added to its
 				// own audience and 2 seconds should be enough time. It it takes longer than this, we might need to
@@ -78,13 +80,13 @@ describeCompat("Audience correctness", "FullCompat", (getTestObjectProvider, api
 		if (container.audience.getMember(clientId) !== undefined) {
 			return timeoutPromise(
 				(resolve) => {
-					const listener = (newClientId: string) => {
+					const listener = (newClientId: string): void => {
 						if (newClientId === clientId) {
 							container.audience.off("removeMember", listener);
 							resolve();
 						}
 					};
-					container.audience.on("removeMember", (newClientId: string) =>
+					container.audience.on("removeMember", (newClientId: string): void =>
 						listener(newClientId),
 					);
 				},
@@ -248,7 +250,7 @@ describeCompat("Audience correctness", "FullCompat", (getTestObjectProvider, api
 		assert(oldId === container.clientId);
 
 		let newClientId: string | undefined;
-		audience.on("selfChanged", (_old, newValue) => {
+		audience.on("selfChanged", (_old, newValue): void => {
 			newClientId = newValue.clientId;
 			assert(newClientId !== undefined);
 			assert(newValue.client === audience.getMember(newClientId));

@@ -57,7 +57,7 @@ describeCompat("SharedMap", "FullCompat", (getTestObjectProvider, apis) => {
 		await provider.ensureSynchronized();
 	});
 
-	function expectAllValues(msg, key, value1, value2, value3) {
+	function expectAllValues(msg, key, value1, value2, value3): void {
 		const user1Value = sharedMap1.get(key);
 		assert.equal(user1Value, value1, `Incorrect value for ${key} in container 1 ${msg}`);
 		const user2Value = sharedMap2.get(key);
@@ -66,15 +66,15 @@ describeCompat("SharedMap", "FullCompat", (getTestObjectProvider, apis) => {
 		assert.equal(user3Value, value3, `Incorrect value for ${key} in container 3 ${msg}`);
 	}
 
-	function expectAllBeforeValues(key, value1, value2, value3) {
+	function expectAllBeforeValues(key, value1, value2, value3): void {
 		expectAllValues("before process", key, value1, value2, value3);
 	}
 
-	function expectAllAfterValues(key, value) {
+	function expectAllAfterValues(key, value): void {
 		expectAllValues("after process", key, value, value, value);
 	}
 
-	function expectAllSize(size) {
+	function expectAllSize(size): void {
 		const keys1 = Array.from(sharedMap1.keys());
 		assert.equal(keys1.length, size, "Incorrect number of Keys in container 1");
 		const keys2 = Array.from(sharedMap2.keys());

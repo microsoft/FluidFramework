@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { FluidObject } from "@fluidframework/core-interfaces";
-import * as React from "react";
+import type { FluidObject } from "@fluidframework/core-interfaces";
+import { isValidElement } from "react";
 import * as ReactDOM from "react-dom";
 
-import { IFluidMountableView } from "./interface.js";
+import type { IFluidMountableView } from "./interface.js";
 
 /**
  * Abstracts mounting of views for usage outside of their bundle.  Supports React elements.
@@ -30,7 +30,7 @@ export class MountableView implements IFluidMountableView {
 	 * @param view - the view to test if it can be mounted.
 	 */
 	public static canMount(view: FluidObject): boolean {
-		return React.isValidElement(view);
+		return isValidElement(view);
 	}
 
 	/**
@@ -68,7 +68,7 @@ export class MountableView implements IFluidMountableView {
 		this.containerElement = container;
 
 		// Try to get a React view if we don't have one already.
-		if (this.reactView === undefined && React.isValidElement(this.view)) {
+		if (this.reactView === undefined && isValidElement(this.view)) {
 			this.reactView = this.view;
 		}
 		// Render with React if possible.

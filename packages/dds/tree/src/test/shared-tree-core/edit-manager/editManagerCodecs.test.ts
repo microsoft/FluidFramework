@@ -3,12 +3,15 @@
  * Licensed under the MIT License.
  */
 
+import { strict as assert } from "node:assert";
+
 import type { SessionId } from "@fluidframework/id-compressor";
 
+import { DependentFormatVersion, makeCodecFamily } from "../../../codec/index.js";
 import type { ChangeEncodingContext } from "../../../core/index.js";
 import { FormatValidatorBasic } from "../../../external-utilities/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
-import { makeEditManagerCodecs } from "../../../shared-tree-core/editManagerCodecs.js";
+import { makeEditManagerCodecBuilder } from "../../../shared-tree-core/editManagerCodecs.js";
 import {
 	EditManagerFormatVersion,
 	type SharedBranchSummaryData,
@@ -24,8 +27,6 @@ import {
 	testIdCompressor,
 	testRevisionTagCodec,
 } from "../../utils.js";
-import { strict as assert } from "node:assert";
-import { DependentFormatVersion } from "../../../codec/index.js";
 
 const tags = Array.from({ length: 3 }, mintRevisionTag);
 
@@ -200,20 +201,23 @@ const testCases: EncodingTestData<SummaryData<TestChange>, unknown, ChangeEncodi
 	},
 };
 
-export function testCodec() {
+export function testCodec(): void {
 	describe("Codec", () => {
-		const family = makeEditManagerCodecs(
-			TestChange.codecs,
-			DependentFormatVersion.fromUnique(1),
-			testRevisionTagCodec,
-			{
-				jsonValidator: FormatValidatorBasic,
-			},
+		const builder = makeEditManagerCodecBuilder<TestChange>();
+		const built = builder.applyOptions({
+			changeCodecs: TestChange.codecs,
+			dependentChangeFormatVersion: DependentFormatVersion.fromUnique(1),
+			revisionTagCodec: testRevisionTagCodec,
+			jsonValidator: FormatValidatorBasic,
+		});
+		const family = makeCodecFamily(
+			built.map((codec) => [codec.formatVersion, codec.codec] as const),
 		);
-		// Versions 1 through 4 do not encode the summary originator ID.
+		// Non "vSharedBranches" versions do not encode the summary originatorId.
 		makeEncodingTestSuite(family, testCases, assertEquivalentSummaryDataIgnoreOriginator, [
 			EditManagerFormatVersion.v3,
 			EditManagerFormatVersion.v4,
+			EditManagerFormatVersion.v6,
 		]);
 		makeDiscontinuedEncodingTestSuite(family, [
 			EditManagerFormatVersion.v1,

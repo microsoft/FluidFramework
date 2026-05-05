@@ -1,17 +1,19 @@
-/* eslint-disable */
-/**
- * GENERATED FILE - DO NOT EDIT DIRECTLY.
- * To regenerate: pnpm tsx scripts/generate-flat-eslint-configs.ts --typescript
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
  */
+
 import type { Linter } from "eslint";
-import { minimalDeprecated } from "../../../common/build/eslint-config-fluid/flat.mts";
+import { recommended } from "@fluidframework/eslint-config-fluid/flat.mts";
 
 const config: Linter.Config[] = [
-	...minimalDeprecated,
+	...recommended,
 	{
 		rules: {
-			"@typescript-eslint/strict-boolean-expressions": "off",
 			"@fluid-internal/fluid/no-unchecked-record-access": "warn",
+			"@rushstack/no-new-null": "off",
+			"@typescript-eslint/strict-boolean-expressions": "off",
+			"unicorn/no-null": "off",
 		},
 	},
 ];

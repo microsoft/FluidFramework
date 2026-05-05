@@ -52,10 +52,7 @@ import {
 	jsonableTreeFromCursor,
 	jsonableTreeFromFieldCursor,
 } from "../../../feature-libraries/index.js";
-import { brand } from "../../../util/index.js";
-
-import { assertChunkCursorEquals, numberSequenceField } from "./fieldCursorTestUtilities.js";
-import { polygonTree, testData } from "./uniformChunkTestData.js";
+import { JsonAsTree } from "../../../jsonDomainSchema.js";
 import {
 	incrementalEncodingPolicyForAllowedTypes,
 	incrementalSummaryHint,
@@ -67,9 +64,12 @@ import {
 	toInitialSchema,
 	TreeViewConfigurationAlpha,
 } from "../../../simple-tree/index.js";
+import { brand } from "../../../util/index.js";
 import { fieldJsonCursor, singleJsonCursor } from "../../json/index.js";
 import { testIdCompressor } from "../../utils.js";
-import { JsonAsTree } from "../../../jsonDomainSchema.js";
+
+import { assertChunkCursorEquals, numberSequenceField } from "./fieldCursorTestUtilities.js";
+import { polygonTree, testData } from "./uniformChunkTestData.js";
 
 const builder = new SchemaFactory("chunkTree");
 const empty = builder.object("empty", {});
@@ -104,6 +104,52 @@ describe("chunkTree", () => {
 				assert.deepEqual(values, chunk.values);
 			});
 		}
+
+		it("does not compress string values when shape does not have mayContainCompressedIds", () => {
+			// Simulate a string leaf whose shape does not opt into compressed ids
+			// (e.g. a plain string field in a string | number union).
+			// Even if the string value is a valid stable id and an idCompressor is provided,
+			// insertValues must leave it as a string.
+			const stableId = testIdCompressor.decompress(testIdCompressor.generateCompressedId());
+			const stringShapeNoCompress = new TreeShape(
+				brand(stringSchema.identifier),
+				true,
+				[],
+				false,
+			);
+
+			const values: Value[] = [];
+			const cursor = cursorForJsonableTreeNode({
+				type: brand(stringSchema.identifier),
+				value: stableId,
+			});
+			insertValues(cursor, stringShapeNoCompress, values, testIdCompressor);
+			// The value must remain the original string, not a compressed numeric id.
+			assert.equal(values.length, 1);
+			assert.equal(typeof values[0], "string");
+			assert.equal(values[0], stableId);
+		});
+
+		it("compresses string values when shape has mayContainCompressedIds", () => {
+			const compressedId = testIdCompressor.generateCompressedId();
+			const stableId = testIdCompressor.decompress(compressedId);
+			const stringShapeCompress = new TreeShape(
+				brand(stringSchema.identifier),
+				true,
+				[],
+				true,
+			);
+
+			const values: Value[] = [];
+			const cursor = cursorForJsonableTreeNode({
+				type: brand(stringSchema.identifier),
+				value: stableId,
+			});
+			insertValues(cursor, stringShapeCompress, values, testIdCompressor);
+			// The value must be compressed to the numeric id.
+			assert.equal(values.length, 1);
+			assert.equal(values[0], compressedId);
+		});
 	});
 
 	describe("uniformChunkFromCursor", () => {
@@ -383,10 +429,10 @@ describe("chunkTree", () => {
 				idCompressor: undefined,
 			});
 			assert.equal(chunks.length, length);
-			chunks.forEach((chunk, index) => {
+			for (const [index, chunk] of chunks.entries()) {
 				assert(chunk instanceof BasicChunk);
 				assertChunkCursorEquals(chunk, [fieldData[index]]);
-			});
+			}
 		});
 
 		it("respects chunk policy for sequence chunking", () => {

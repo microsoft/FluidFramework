@@ -38,6 +38,7 @@ import {
 	type IFileSnapshot,
 } from "@fluidframework/replay-driver/internal";
 import { convertToSummaryTreeWithStats } from "@fluidframework/runtime-utils/internal";
+import { FluidSerializer } from "@fluidframework/shared-object-base/internal";
 import {
 	type ITelemetryLoggerExt,
 	createChildLogger,
@@ -62,7 +63,9 @@ let threads = { isMainThread: true };
 try {
 	// eslint-disable-next-line @typescript-eslint/no-require-imports
 	threads = require("worker_threads");
-} catch (error) {}
+} catch (error) {
+	// TODO: document why we are ignoring the error here
+}
 
 function expandTreeForReadability(tree: ITree): ITree {
 	const newTree: ITree = { entries: [], id: undefined };
@@ -78,7 +81,9 @@ function expandTreeForReadability(tree: ITree): ITree {
 					contents: JSON.parse(blob.contents) as string,
 					encoding: blob.encoding,
 				};
-			} catch (e) {}
+			} catch (e) {
+				// TODO: document why we are ignoring the error here
+			}
 		}
 		newTree.entries.push(newNode);
 	}
@@ -423,7 +428,9 @@ export class ReplayTool {
 							) {
 								this.args.fromVersion = name;
 							}
-						} catch (err) {}
+						} catch (err) {
+							// TODO: document why we are ignoring the error here
+						}
 					}
 					if (this.args.fromVersion === undefined) {
 						console.error(
@@ -567,7 +574,6 @@ export class ReplayTool {
 			? this.mainDocument.originalSummarySequenceNumbers.filter((s) => s >= this.args.from)
 			: [];
 		let nextSnapPoint = -1;
-		// eslint-disable-next-line no-constant-condition
 		while (true) {
 			const currentOp = this.mainDocument.currentOp;
 			if (nextSnapPoint <= currentOp) {
@@ -944,9 +950,10 @@ async function assertDdsEqual(
 
 	for (let row = 0; row < matrix1.rowCount; row++) {
 		for (let col = 0; col < matrix1.colCount; col++) {
+			const serializer = new FluidSerializer(dataStoreRuntime);
 			strict.deepStrictEqual(
-				JSON.stringify(matrix1.getCell(row, col)),
-				JSON.stringify(matrix2.getCell(row, col)),
+				serializer.stringify(matrix1.getCell(row, col), matrix1.IFluidLoadable.handle),
+				serializer.stringify(matrix2.getCell(row, col), matrix1.IFluidLoadable.handle),
 			);
 		}
 	}

@@ -8,7 +8,7 @@ import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/legacy";
 import { IEvent, IFluidHandle } from "@fluidframework/core-interfaces";
 import { SharedCounter } from "@fluidframework/counter/legacy";
 import { TaskManager } from "@fluidframework/task-manager/legacy";
-import React from "react";
+import { Component } from "react";
 
 import { ClickerAgent } from "./agent.js";
 
@@ -46,7 +46,7 @@ export class Clicker extends DataObject<{ Events: IClickerEvents }> {
 		const taskManagerHandle = this.root.get<IFluidHandle<TaskManager>>(taskManagerKey);
 		this._taskManager = await taskManagerHandle?.get();
 
-		this.counter.on("incremented", () => {
+		this.counter.on("incremented", (): void => {
 			this.emit("incremented");
 		});
 		this.setupAgent();
@@ -67,13 +67,13 @@ export class Clicker extends DataObject<{ Events: IClickerEvents }> {
 		// volunteered because this is an ongoing and not a one-time task.
 		const clickerAgent = new ClickerAgent(this.counter);
 		this.taskManager.subscribeToTask(consoleLogTaskId);
-		this.taskManager.on("assigned", (taskId: string) => {
+		this.taskManager.on("assigned", (taskId: string): void => {
 			if (taskId === consoleLogTaskId) {
 				console.log("Assigned:", (this.taskManager as any).runtime.clientId);
 				void clickerAgent.run();
 			}
 		});
-		this.taskManager.on("lost", (taskId: string) => {
+		this.taskManager.on("lost", (taskId: string): void => {
 			if (taskId === consoleLogTaskId) {
 				clickerAgent.stop();
 			}
@@ -105,8 +105,7 @@ export interface ClickerState {
 	value: number;
 }
 
-/* eslint-disable react/prop-types -- TypeScript interfaces provide compile-time prop validation */
-export class ClickerReactView extends React.Component<ClickerProps, ClickerState> {
+export class ClickerReactView extends Component<ClickerProps, ClickerState> {
 	constructor(props: ClickerProps) {
 		super(props);
 
@@ -116,7 +115,7 @@ export class ClickerReactView extends React.Component<ClickerProps, ClickerState
 	}
 
 	componentDidMount(): void {
-		this.props.clicker.on("incremented", () => {
+		this.props.clicker.on("incremented", (): void => {
 			this.setState({ value: this.props.clicker.value });
 		});
 	}
@@ -128,7 +127,7 @@ export class ClickerReactView extends React.Component<ClickerProps, ClickerState
 					{this.state.value}
 				</span>
 				<button
-					onClick={() => {
+					onClick={(): void => {
 						this.props.clicker.increment();
 					}}
 				>
@@ -138,7 +137,6 @@ export class ClickerReactView extends React.Component<ClickerProps, ClickerState
 		);
 	}
 }
-/* eslint-enable react/prop-types -- TypeScript interfaces provide compile-time prop validation */
 
 // ----- FACTORY SETUP -----
 

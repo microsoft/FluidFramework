@@ -10,7 +10,7 @@ import { v4 as uuid } from "uuid";
 import { type IFluidErrorBase, hasErrorInstanceId, isFluidError } from "./fluidErrorBase.js";
 import { convertToBasePropertyType } from "./logger.js";
 import type {
-	ITelemetryLoggerExt,
+	TelemetryLoggerExt,
 	ITelemetryPropertiesExt,
 	TelemetryEventPropertyTypeExt,
 } from "./telemetryTypes.js";
@@ -194,6 +194,7 @@ export function generateErrorWithStack(stackTraceLimit?: number): Error {
 	}
 	const err = new Error("<<generated stack>>");
 
+	// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- using ??= could change behavior if value is falsy
 	if (stackPopulatedOnCreation === undefined) {
 		stackPopulatedOnCreation = err.stack !== undefined;
 	}
@@ -285,7 +286,7 @@ export function wrapError<T extends LoggingError>(
 export function wrapErrorAndLog<T extends LoggingError>(
 	innerError: unknown,
 	newErrorFn: (message: string) => T,
-	logger: ITelemetryLoggerExt,
+	logger: TelemetryLoggerExt,
 ): T {
 	const newError = wrapError(innerError, newErrorFn);
 

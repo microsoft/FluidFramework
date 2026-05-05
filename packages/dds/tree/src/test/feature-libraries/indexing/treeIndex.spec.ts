@@ -5,12 +5,6 @@
 
 import { strict as assert } from "node:assert";
 
-import { getView, TestTreeProviderLite } from "../../utils.js";
-import {
-	type FlexTreeNode,
-	AnchorTreeIndex,
-	isTreeValue,
-} from "../../../feature-libraries/index.js";
 import {
 	forEachNode,
 	type AnchorNode,
@@ -19,17 +13,23 @@ import {
 	type ITreeSubscriptionCursor,
 	type TreeValue,
 } from "../../../core/index.js";
-import { brand, disposeSymbol, getOrCreate } from "../../../util/index.js";
+import {
+	type FlexTreeNode,
+	AnchorTreeIndex,
+	isTreeValue,
+} from "../../../feature-libraries/index.js";
+import { getOrCreateHydratedFlexTreeNode } from "../../../feature-libraries/index.js";
+import type { SchematizingSimpleTreeView } from "../../../shared-tree/index.js";
+import { Tree } from "../../../shared-tree/index.js";
 import {
 	getInnerNode,
 	SchemaFactory,
 	TreeViewConfiguration,
 	type TreeNode,
 } from "../../../simple-tree/index.js";
-import type { SchematizingSimpleTreeView } from "../../../shared-tree/index.js";
-import { Tree } from "../../../shared-tree/index.js";
-import { getOrCreateHydratedFlexTreeNode } from "../../../feature-libraries/index.js";
 import { getOrCreateNodeFromInnerNode } from "../../../simple-tree/index.js";
+import { brand, disposeSymbol, getOrCreate } from "../../../util/index.js";
+import { getView, TestTreeProviderLite } from "../../utils.js";
 
 function readStringField(cursor: ITreeSubscriptionCursor, fieldKey: FieldKey): string {
 	cursor.enterField(fieldKey);
@@ -162,6 +162,7 @@ describe("tree indexes", () => {
 				assertSameElements(index, expectedEntries);
 
 				const set = new Map(expectedEntries);
+				// eslint-disable-next-line unicorn/no-array-for-each -- Testing forEach API (third param is the map)
 				index.forEach((value, key, i) => {
 					assert.equal(i, index);
 					assert.deepEqual(value, set.get(key));
@@ -329,6 +330,7 @@ describe("tree indexes", () => {
 					assertSameElements(index, expectedEntries);
 
 					const set = new Map(expectedEntries);
+					// eslint-disable-next-line unicorn/no-array-for-each -- Testing forEach API (third param is the map)
 					index.forEach((value, key, i) => {
 						assert.equal(i, index);
 						assert.deepEqual(value, set.get(key));
@@ -442,14 +444,15 @@ describe("tree indexes", () => {
 		const { index } = createIndex(view);
 		index.dispose();
 
-		assert.throws(() => Array.from(index.allEntries()));
-		assert.throws(() => Array.from(index.entries()));
+		assert.throws(() => [...index.allEntries()]);
+		assert.throws(() => [...index.entries()]);
+		// eslint-disable-next-line unicorn/no-array-for-each -- Testing forEach API on disposed index
 		assert.throws(() => index.forEach(() => {}));
 		assert.throws(() => index.get(childId));
 		assert.throws(() => index.has(childId));
-		assert.throws(() => Array.from(index.keys()));
+		assert.throws(() => [...index.keys()]);
 		assert.throws(() => index.size);
-		assert.throws(() => Array.from(index.values()));
+		assert.throws(() => [...index.values()]);
 	});
 
 	it("does not receive updates once disposed", () => {
@@ -494,14 +497,17 @@ describe("tree indexes", () => {
 		parent.child = undefined;
 		provider.synchronizeMessages();
 		// check that the detached child still exists on the index
-		assert.deepEqual(Array.from(index.allEntries()), [
-			[parentId, [0]],
-			[childId, [1]],
-		]);
+		assert.deepEqual(
+			[...index.allEntries()],
+			[
+				[parentId, [0]],
+				[childId, [1]],
+			],
+		);
 		// send an edit so that the detached node is garbage collected
 		parent.child = new IndexableChild({ childKey: parentId });
 		provider.synchronizeMessages();
 		// check that the detached child is removed from the index
-		assert.deepEqual(Array.from(index.allEntries()), [[parentId, [0, 2]]]);
+		assert.deepEqual([...index.allEntries()], [[parentId, [0, 2]]]);
 	});
 });

@@ -851,7 +851,7 @@ describe("ConnectionStateHandler Tests", () => {
 		assert.strictEqual(
 			connectionStateHandler.connectionState,
 			ConnectionState.CatchingUp,
-			"Client 3 should still be in connecting state as timeout has not occured",
+			"Client 3 should still be in connecting state as timeout has not occurred",
 		);
 
 		await tickClock(1);
@@ -921,7 +921,7 @@ describe("ConnectionStateHandler Tests", () => {
 		assert.strictEqual(
 			connectionStateHandler.connectionState,
 			ConnectionState.CatchingUp,
-			"Client 3 should still be in connecting state as timeout has not occured",
+			"Client 3 should still be in connecting state as timeout has not occurred",
 		);
 
 		connectionStateHandler.containerSaved();
@@ -1063,7 +1063,7 @@ describe("ConnectionStateHandler Tests", () => {
 			assert.strictEqual(
 				connectionStateHandler.connectionState,
 				ConnectionState.CatchingUp,
-				"Client 3 should still be in connecting state as timeout has not occured",
+				"Client 3 should still be in connecting state as timeout has not occurred",
 			);
 
 			await tickClock(1);

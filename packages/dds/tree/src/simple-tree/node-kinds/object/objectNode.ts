@@ -4,8 +4,8 @@
  */
 
 import { assert, Lazy, fail, debugAssert } from "@fluidframework/core-utils/internal";
-import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import {
 	ObjectNodeStoredSchema,
@@ -26,7 +26,7 @@ import type {
 	JsonCompatibleReadOnlyObject,
 } from "../../../util/index.js";
 import { brand } from "../../../util/index.js";
-
+import type { ObjectSchemaOptionsAlpha } from "../../api/index.js";
 import {
 	CompatibilityLevel,
 	type TreeNodeSchema,
@@ -56,13 +56,6 @@ import {
 	getTreeNodeSchemaInitializedData,
 	getUnhydratedContext,
 } from "../../createContext.js";
-import { tryGetTreeNodeForField } from "../../getTreeNodeForField.js";
-import type {
-	ObjectNodeSchema,
-	ObjectNodeSchemaInternalData,
-	ObjectNodeSchemaPrivate,
-} from "./objectNodeTypes.js";
-import { prepareForInsertion } from "../../prepareForInsertion.js";
 import {
 	type ImplicitFieldSchema,
 	getStoredKey,
@@ -77,8 +70,12 @@ import {
 	type ContextualFieldProvider,
 	extractFieldProvider,
 	isConstant,
+	type DefaultProvider,
 } from "../../fieldSchema.js";
+import { tryGetTreeNodeForField } from "../../getTreeNodeForField.js";
+import { prepareForInsertion } from "../../prepareForInsertion.js";
 import type { SimpleObjectFieldSchema } from "../../simpleSchema.js";
+import { convertFieldKind } from "../../toStoredSchema.js";
 import {
 	unhydratedFlexTreeFromInsertable,
 	unhydratedFlexTreeFromInsertableNode,
@@ -86,8 +83,12 @@ import {
 	type FactoryContentObject,
 	type InsertableContent,
 } from "../../unhydratedFlexTreeFromInsertable.js";
-import { convertFieldKind } from "../../toStoredSchema.js";
-import type { ObjectSchemaOptionsAlpha } from "../../api/index.js";
+
+import type {
+	ObjectNodeSchema,
+	ObjectNodeSchemaInternalData,
+	ObjectNodeSchemaPrivate,
+} from "./objectNodeTypes.js";
 
 /**
  * Generates the properties for an ObjectNode from its field schema object.
@@ -99,8 +100,7 @@ import type { ObjectSchemaOptionsAlpha } from "../../api/index.js";
  */
 export type ObjectFromSchemaRecord<T extends RestrictiveStringRecord<ImplicitFieldSchema>> =
 	RestrictiveStringRecord<ImplicitFieldSchema> extends T
-		? // eslint-disable-next-line @typescript-eslint/no-empty-object-type
-			{}
+		? {}
 		: {
 				-readonly [Property in keyof T]: Property extends string
 					? TreeFieldFromImplicitField<T[Property]>
@@ -149,8 +149,11 @@ export type TreeObjectNode<
  * @remarks Yields `false` when unknown.
  *
  * @privateRemarks
- * TODO: Account for field schemas with default value providers.
- * For now, this only captures field kinds that we know always have defaults - optional fields and identifier fields.
+ * This checks for:
+ * 1. Optional fields (which have an implicit undefined default)
+ * 2. Identifier fields (which have auto-generated defaults)
+ *
+ * Note that this cannot tell if required fields have defaults. Use `FieldHasDefaultAlpha` for alpha schemas if you need to check for required field defaults.
  *
  * @system @public
  */
@@ -159,6 +162,33 @@ export type FieldHasDefault<T extends ImplicitFieldSchema> = [T] extends [
 ]
 	? true
 	: false;
+
+/**
+ * Type utility for determining if an implicit field schema is known to have a default value.
+ * Supports alpha field schemas with explicit default providers.
+ *
+ * @remarks Yields `false` when unknown.
+ *
+ * @privateRemarks
+ * This checks for:
+ * 1. Fields with explicit default providers (computed from the props type)
+ * 2. Optional fields (which have an implicit undefined default)
+ * 3. Identifier fields (which have auto-generated defaults)
+ *
+ * @system @alpha
+ */
+export type FieldHasDefaultAlpha<T extends ImplicitFieldSchema> =
+	// Extract Kind and TProps from FieldSchemaAlpha and compute whether it has a default
+	[T] extends [FieldSchemaAlpha<infer Kind, infer _Types, infer _Meta, infer TProps>]
+		? // Optional and Identifier kinds always have defaults
+			Kind extends FieldKind.Optional | FieldKind.Identifier
+			? true
+			: // Check if props has defaultProvider
+				TProps extends { defaultProvider: DefaultProvider }
+				? true
+				: false
+		: // Fallback to base FieldHasDefault for non-Alpha schemas
+			FieldHasDefault<T>;
 
 /**
  * Helper used to produce types for:
@@ -189,24 +219,54 @@ export type FieldHasDefault<T extends ImplicitFieldSchema> = [T] extends [
  */
 export type InsertableObjectFromSchemaRecord<
 	T extends RestrictiveStringRecord<ImplicitFieldSchema>,
-> = RestrictiveStringRecord<ImplicitFieldSchema> extends T
-	? { arbitraryKey: "arbitraryValue" } extends T
-		? // {} case
-			Record<string, never>
-		: // RestrictiveStringRecord<ImplicitFieldSchema> case
-			never
-	: FlattenKeys<
-			{
-				readonly [Property in keyof T]?: InsertableTreeFieldFromImplicitField<
-					T[Property & string]
-				>;
-			} & {
-				// Field does not have a known default, make it required:
-				readonly [Property in keyof T as FieldHasDefault<T[Property & string]> extends false
-					? Property
-					: never]: InsertableTreeFieldFromImplicitField<T[Property & string]>;
-			}
-		>;
+> =
+	RestrictiveStringRecord<ImplicitFieldSchema> extends T
+		? { arbitraryKey: "arbitraryValue" } extends T
+			? // {} case
+				Record<string, never>
+			: // RestrictiveStringRecord<ImplicitFieldSchema> case
+				never
+		: FlattenKeys<
+				{
+					readonly [Property in keyof T]?: InsertableTreeFieldFromImplicitField<
+						T[Property & string]
+					>;
+				} & {
+					// Field does not have a known default, make it required:
+					readonly [Property in keyof T as FieldHasDefault<T[Property & string]> extends false
+						? Property
+						: never]: InsertableTreeFieldFromImplicitField<T[Property & string]>;
+				}
+			>;
+
+/**
+ * Alpha version of InsertableObjectFromSchemaRecord that supports field defaults.
+ *
+ * @system @alpha
+ */
+export type InsertableObjectFromSchemaRecordAlpha<
+	T extends RestrictiveStringRecord<ImplicitFieldSchema>,
+> =
+	RestrictiveStringRecord<ImplicitFieldSchema> extends T
+		? { arbitraryKey: "arbitraryValue" } extends T
+			? // {} case
+				Record<string, never>
+			: // RestrictiveStringRecord<ImplicitFieldSchema> case
+				never
+		: FlattenKeys<
+				{
+					readonly [Property in keyof T]?: InsertableTreeFieldFromImplicitField<
+						T[Property & string]
+					>;
+				} & {
+					// Field does not have a known default, make it required:
+					readonly [Property in keyof T as FieldHasDefaultAlpha<
+						T[Property & string]
+					> extends false
+						? Property
+						: never]: InsertableTreeFieldFromImplicitField<T[Property & string]>;
+				}
+			>;
 
 /**
  * Maps from simple field keys ("property" keys) to information about the field.
@@ -373,8 +433,9 @@ export function setField(
 			break;
 		}
 
-		default:
+		default: {
 			fail(0xade /* invalid FieldKind */);
+		}
 	}
 }
 
@@ -385,17 +446,16 @@ export class ObjectFieldSchema<
 		Kind extends FieldKind,
 		Types extends ImplicitAllowedTypes,
 		TCustomMetadata = unknown,
+		TProps extends FieldProps<TCustomMetadata> & {
+			readonly key: string;
+		} = FieldProps<TCustomMetadata> & { readonly key: string },
 	>
-	extends FieldSchemaAlpha<Kind, Types, TCustomMetadata>
+	extends FieldSchemaAlpha<Kind, Types, TCustomMetadata, TProps>
 	implements SimpleObjectFieldSchema
 {
 	public readonly storedKey: string;
 
-	public constructor(
-		kind: Kind,
-		allowedTypes: Types,
-		props: FieldProps<TCustomMetadata> & { readonly key: string },
-	) {
+	public constructor(kind: Kind, allowedTypes: Types, props: TProps) {
 		super(kind, allowedTypes, props);
 		this.storedKey = props.key;
 	}
@@ -590,7 +650,7 @@ export function objectSchema<
 	}
 	type Output = typeof CustomObjectNode &
 		(new (
-			input: InsertableObjectFromSchemaRecord<T> | InternalTreeNode,
+			input: InsertableObjectFromSchemaRecordAlpha<T> | InternalTreeNode,
 		) => TreeObjectNode<T, TName>);
 	return CustomObjectNode as Output;
 }
@@ -709,10 +769,8 @@ function shallowCompatibilityTest(
 
 	// If the schema has a required key which is not present in the input object, reject it.
 	for (const [fieldKey, fieldSchema] of schema.fields) {
-		if (fieldSchema.requiresValue) {
-			if (getFieldProperty(data, fieldKey) === undefined) {
-				return CompatibilityLevel.None;
-			}
+		if (fieldSchema.requiresValue && getFieldProperty(data, fieldKey) === undefined) {
+			return CompatibilityLevel.None;
 		}
 	}
 

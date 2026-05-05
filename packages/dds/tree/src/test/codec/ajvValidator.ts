@@ -3,11 +3,17 @@
  * Licensed under the MIT License.
  */
 
+import type { IFluidHandle } from "@fluidframework/core-interfaces";
+import type { ISharedObjectHandle } from "@fluidframework/shared-object-base/internal";
+import { MockHandle } from "@fluidframework/test-runtime-utils/internal";
 import type { Static, TSchema } from "@sinclair/typebox";
 // Based on ESM workaround from https://github.com/ajv-validator/ajv/issues/2047#issuecomment-1241470041 .
 // In ESM, this gets the module, in cjs, it gets the default export which is the Ajv class.
 import ajvModuleOrClass from "ajv";
 import formats from "ajv-formats";
+
+import { toFormatValidator, type JsonValidator } from "../../codec/index.js";
+import { mockSerializer } from "../mockSerializer.js";
 
 // The first case here covers the esm mode, and the second the cjs one.
 // Getting correct typing for the cjs case without breaking esm compilation proved to be difficult, so that case uses `any`
@@ -15,13 +21,6 @@ const Ajv =
 	(ajvModuleOrClass as typeof ajvModuleOrClass & { default: unknown }).default ??
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	(ajvModuleOrClass as any);
-
-import type { ISharedObjectHandle } from "@fluidframework/shared-object-base/internal";
-import { MockHandle } from "@fluidframework/test-runtime-utils/internal";
-
-import { toFormatValidator, type JsonValidator } from "../../codec/index.js";
-import { mockSerializer } from "../mockSerializer.js";
-import type { IFluidHandle } from "@fluidframework/core-interfaces";
 
 // See: https://github.com/sinclairzx81/typebox#ajv
 const ajv = formats.default(new Ajv({ strict: false, allErrors: true }), [

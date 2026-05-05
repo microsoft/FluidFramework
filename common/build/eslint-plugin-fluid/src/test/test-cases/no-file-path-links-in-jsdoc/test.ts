@@ -18,6 +18,13 @@ const tsdocCommentWithRelativePathLinks = "invalid";
  */
 const tsdocCommentWithAbsolutePathLinks = "invalid";
 
+/**
+ * TSDoc comment with file path link in @remarks block should be flagged.
+ * @remarks
+ * This has a file path link: {@link ./some/file.ts}.
+ */
+const tsdocCommentWithFilePathLinkInRemarks = "invalid";
+
 // #endregion
 
 // #region Valid cases
@@ -44,5 +51,21 @@ const blockCommentWithRelativePathLink = "valid";
 // Line comment should not be flagged.
 // Line comment with link using a file path: {@link /absolute-path}.
 const lineCommentWithFilePathLink = "valid";
+
+// TSDoc comment with file path link in @privateRemarks should be allowed.
+/**
+ * TSDoc comment with file path link in privateRemarks.
+ * @privateRemarks
+ * This has a file path link: {@link ./some/file.ts}.
+ * And another: {@link ../relative/path|text}.
+ */
+const tsdocCommentWithFilePathLinkInPrivateRemarks = "valid";
+
+// TSDoc comment with file path link only in @privateRemarks should be allowed.
+/**
+ * @privateRemarks
+ * File path links are OK here: {@link /absolute/path}.
+ */
+const tsdocCommentWithOnlyPrivateRemarks = "valid";
 
 // #endregion

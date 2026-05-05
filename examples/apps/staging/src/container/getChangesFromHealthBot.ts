@@ -22,7 +22,7 @@ const diffGroceryListPOJO = (
 	const removals: GroceryListItemPOJO[] = [];
 	for (const maybeRemoval of baseGroceryListPOJO) {
 		if (
-			!modifiedGroceryListPOJO.find(
+			!modifiedGroceryListPOJO.some(
 				(destinationItem) => destinationItem.id === maybeRemoval.id,
 			)
 		) {
@@ -32,7 +32,7 @@ const diffGroceryListPOJO = (
 
 	const adds: GroceryListItemPOJO[] = [];
 	for (const maybeAdd of modifiedGroceryListPOJO) {
-		if (!baseGroceryListPOJO.find((sourceItem) => sourceItem.id === maybeAdd.id)) {
+		if (!baseGroceryListPOJO.some((sourceItem) => sourceItem.id === maybeAdd.id)) {
 			adds.push(maybeAdd);
 		}
 	}
@@ -50,7 +50,7 @@ export const getChangesFromHealthBot = async (
 	// Here I'm pretending the network service expects JSON.  Some other format could be used instead.
 	const stringifiedOriginal = JSON.stringify(pojoOriginal);
 	const stringifiedSuggestions = await NETWORK_askHealthBotForSuggestions(stringifiedOriginal);
-	const pojoSuggestions: GroceryListPOJO = JSON.parse(stringifiedSuggestions);
+	const pojoSuggestions = JSON.parse(stringifiedSuggestions) as GroceryListPOJO;
 	const changes = diffGroceryListPOJO(pojoOriginal, pojoSuggestions);
 	console.log(
 		"Suggestions:",

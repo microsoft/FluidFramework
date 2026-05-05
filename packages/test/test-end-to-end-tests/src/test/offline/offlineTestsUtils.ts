@@ -9,7 +9,12 @@ import type { IContainer } from "@fluidframework/container-definitions/internal"
 import { asLegacyAlpha, type ContainerAlpha } from "@fluidframework/container-loader/internal";
 import type { IRequest } from "@fluidframework/core-interfaces";
 import { Deferred } from "@fluidframework/core-utils/internal";
-import type { IDocumentServiceFactory } from "@fluidframework/driver-definitions/internal";
+import type {
+	IDocumentDeltaConnection,
+	IDocumentDeltaStorageService,
+	IDocumentServiceFactory,
+	IDocumentStorageService,
+} from "@fluidframework/driver-definitions/internal";
 import { toDeltaManagerInternal } from "@fluidframework/runtime-utils/internal";
 import {
 	type ITestFluidObject,
@@ -33,8 +38,8 @@ export const generatePendingState = async (
 	testContainerConfig: ITestContainerConfig,
 	testObjectProvider: ITestObjectProvider,
 	send: false | true | "afterReconnect",
-	cb: SharedObjCallback = () => undefined,
-) => {
+	cb: SharedObjCallback = (): void => undefined,
+): Promise<string> => {
 	const container: ContainerAlpha = asLegacyAlpha(
 		await testObjectProvider.loadTestContainer(testContainerConfig),
 	);
@@ -99,15 +104,17 @@ export async function loadContainerOffline(
 		testObjectProvider.documentServiceFactory,
 		{
 			createDocumentService: {
-				connectToDeltaStream: (ds) => async (client) => {
-					await p.promise;
-					return ds.connectToDeltaStream(client);
-				},
-				connectToDeltaStorage: (ds) => async () => {
+				connectToDeltaStream:
+					(ds) =>
+					async (client): Promise<IDocumentDeltaConnection> => {
+						await p.promise;
+						return ds.connectToDeltaStream(client);
+					},
+				connectToDeltaStorage: (ds) => async (): Promise<IDocumentDeltaStorageService> => {
 					await p.promise;
 					return ds.connectToDeltaStorage();
 				},
-				connectToStorage: (ds) => async () => {
+				connectToStorage: (ds) => async (): Promise<IDocumentStorageService> => {
 					await p.promise;
 					return ds.connectToStorage();
 				},
@@ -135,5 +142,5 @@ export async function loadContainerOffline(
 				)),
 		),
 	);
-	return { container, connect: () => p.resolve(undefined) };
+	return { container, connect: (): void => p.resolve(undefined) };
 }

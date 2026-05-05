@@ -11,7 +11,7 @@ import { IContainerRuntime } from "@fluidframework/container-runtime-definitions
 import { FluidObject, IEvent, IFluidHandle } from "@fluidframework/core-interfaces";
 import type { ISharedDirectory } from "@fluidframework/map/internal";
 import type { IFluidDataStoreContext } from "@fluidframework/runtime-definitions/internal";
-import { type ITestObjectProvider } from "@fluidframework/test-utils/internal";
+import type { ITestObjectProvider } from "@fluidframework/test-utils/internal";
 
 interface TestDataObjectTypes {
 	/**

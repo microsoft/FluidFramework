@@ -13,6 +13,8 @@ import {
 	ISummaryConfiguration,
 } from "@fluidframework/container-runtime/internal";
 import { IDocumentServiceFactory } from "@fluidframework/driver-definitions/internal";
+import type { ISharedDirectory } from "@fluidframework/map/internal";
+import type { IFluidDataStoreContext } from "@fluidframework/runtime-definitions/internal";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 import {
 	ITestObjectProvider,
@@ -27,10 +29,10 @@ describeCompat("Cache CreateNewSummary", "NoCompat", (getTestObjectProvider, api
 		containerRuntime: { ContainerRuntimeFactoryWithDefaultDataStore },
 	} = apis;
 	class TestDataObject extends DataObject {
-		public get _root() {
+		public get _root(): ISharedDirectory {
 			return this.root;
 		}
-		public get _context() {
+		public get _context(): IFluidDataStoreContext {
 			return this.context;
 		}
 	}

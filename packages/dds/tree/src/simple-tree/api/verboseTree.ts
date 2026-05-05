@@ -4,8 +4,8 @@
  */
 
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
-import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
 import { assert, fail } from "@fluidframework/core-utils/internal";
+import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import {
@@ -18,15 +18,16 @@ import {
 	type ITreeCursorSynchronous,
 	type TreeNodeStoredSchema,
 } from "../../core/index.js";
-import { brand } from "../../util/index.js";
-import type { ImplicitFieldSchema } from "../fieldSchema.js";
-import type { Context, TreeLeafValue, TreeNodeSchema } from "../core/index.js";
 import {
 	isTreeValue,
 	stackTreeFieldCursor,
 	stackTreeNodeCursor,
 	type CursorAdapter,
 } from "../../feature-libraries/index.js";
+import { brand } from "../../util/index.js";
+import type { Context, TreeLeafValue, TreeNodeSchema } from "../core/index.js";
+import { getUnhydratedContext } from "../createContext.js";
+import type { ImplicitFieldSchema } from "../fieldSchema.js";
 import {
 	booleanSchema,
 	handleSchema,
@@ -35,6 +36,7 @@ import {
 	stringSchema,
 } from "../leafNodeSchema.js";
 import { isObjectNodeSchema } from "../node-kinds/index.js";
+
 import {
 	customFromCursor,
 	KeyEncodingOptions,
@@ -45,7 +47,6 @@ import {
 	type SchemalessParseOptions,
 	type TreeEncodingOptions,
 } from "./customTree.js";
-import { getUnhydratedContext } from "../createContext.js";
 
 /**
  * Verbose encoding of a {@link TreeNode} or {@link TreeLeafValue}.
@@ -127,9 +128,8 @@ export function applySchemaToParserOptions(
 
 	return {
 		keyConverter:
-			config.keys !== KeyEncodingOptions.usePropertyKeys
-				? undefined
-				: {
+			config.keys === KeyEncodingOptions.usePropertyKeys
+				? {
 						encode: (type, key: FieldKey): string => {
 							// translate stored key into property key.
 							const simpleNodeSchema =
@@ -167,7 +167,8 @@ export function applySchemaToParserOptions(
 							}
 							return brand(inputKey);
 						},
-					},
+					}
+				: undefined,
 	};
 }
 
@@ -206,13 +207,16 @@ function verboseTreeAdapter(options: SchemalessParseOptions): CursorAdapter<Verb
 		},
 		type: (node: VerboseTree) => {
 			switch (typeof node) {
-				case "number":
+				case "number": {
 					return brand(numberSchema.identifier);
-				case "string":
+				}
+				case "string": {
 					return brand(stringSchema.identifier);
-				case "boolean":
+				}
+				case "boolean": {
 					return brand(booleanSchema.identifier);
-				default:
+				}
+				default: {
 					if (node === null) {
 						return brand(nullSchema.identifier);
 					}
@@ -220,6 +224,7 @@ function verboseTreeAdapter(options: SchemalessParseOptions): CursorAdapter<Verb
 						return brand(handleSchema.identifier);
 					}
 					return brand(node.type);
+				}
 			}
 		},
 		keysFromNode: (node: VerboseTree): readonly FieldKey[] => {
@@ -242,8 +247,9 @@ function verboseTreeAdapter(options: SchemalessParseOptions): CursorAdapter<Verb
 					}
 					return inputKeys.map((k) => converter.parse(node.type, k));
 				}
-				default:
+				default: {
 					return [];
+				}
 			}
 		},
 		getFieldFromNode: (node: VerboseTree, key: FieldKey): readonly VerboseTree[] => {

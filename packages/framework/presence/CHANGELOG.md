@@ -1,5 +1,77 @@
 # @fluid-experimental/presence
 
+## 2.100.0
+
+### Minor Changes
+
+- Node 22 is now the minimum supported Node.js version ([#27116](https://github.com/microsoft/FluidFramework/pull/27116)) [e8214d29663](https://github.com/microsoft/FluidFramework/commit/e8214d29663f5ee98d737daed82506a25d8de8d0)
+
+  All Fluid Framework client packages now require Node.js 22 or later. This aligns with the standing Node upgrade policy as Node 20 reaches end-of-life on April 30, 2026.
+
+## 2.93.0
+
+### Minor Changes
+
+- `getPresence` from `@fluidframework/presence` is deprecated and will be removed in a future release. ([#26399](https://github.com/microsoft/FluidFramework/pull/26399)) [d533c19c7c](https://github.com/microsoft/FluidFramework/commit/d533c19c7cb25d48ecab1b742e44dfe560d20534)
+
+  Now `getPresence` is available for import from the `fluid-framework` package.
+
+  To prepare, make changes following this pattern:
+
+  ```diff
+  -import { getPresence } from "@fluidframework/presence/beta";
+  +import { getPresence } from "fluid-framework";
+  ```
+
+  See [issue #26397](https://github.com/microsoft/FluidFramework/issues/26397) for more details.
+
+- presence API set now at public support level ([#27001](https://github.com/microsoft/FluidFramework/pull/27001)) [97d14a7e84](https://github.com/microsoft/FluidFramework/commit/97d14a7e8411ff2dd17dc497a09823a276fd78e0)
+
+  All `@fluidframework/presence` APIs that had been `@beta` have been promoted to `@public` support with the exception of `getPresence` which has been relocated to `fluid-framework`. (See [issue #26397](https://github.com/microsoft/FluidFramework/issues/26397) for more `getPresence` details.)
+
+  See [Presence API overview](https://fluidframework.com/docs/build/presence) and [Presence package API details](https://fluidframework.com/docs/api/presence/) with [getPresence API](https://fluidframework.com/docs/api/fluid-framework/#getPresence) to get started.
+
+## 2.92.0
+
+Dependency updates only.
+
+## 2.91.0
+
+Dependency updates only.
+
+## 2.90.0
+
+Dependency updates only.
+
+## 2.83.0
+
+Dependency updates only.
+
+## 2.82.0
+
+Dependency updates only.
+
+## 2.81.0
+
+### Minor Changes
+
+- Self attendee is announced via "attendeeConnected" ([#26247](https://github.com/microsoft/FluidFramework/pull/26247)) [f838524b41](https://github.com/microsoft/FluidFramework/commit/f838524b41dcc71aae58d48955af3f1c9cca9309)
+
+  Local attendee connection is now announced via "attendeeConnected" presence event.
+
+## 2.80.0
+
+### Minor Changes
+
+- Removal of number key support in LatestMap ([#25904](https://github.com/microsoft/FluidFramework/pull/25904)) [c1d91d8b5f4](https://github.com/microsoft/FluidFramework/commit/c1d91d8b5f4f141f890c848a7f344d4238d4a85a)
+
+  `number` keys have never been successfully propagated as `number`s at runtime and this type clarification makes that clear. See [issue 25919](https://github.com/microsoft/FluidFramework/issues/25919) for more details.
+
+- Attendee status fixes on reconnect ([#26111](https://github.com/microsoft/FluidFramework/pull/26111)) [836f22fac9e](https://github.com/microsoft/FluidFramework/commit/836f22fac9e8728324ee1f3c34ea27ce8392f07e)
+
+  Fix "Connected" status for Attendees when local client reconnects (intermittent connection or transition from read-only to read-write connection).
+  This includes no longer emitting incorrect "attendeeDisconnected" events.
+
 ## 2.74.0
 
 Dependency updates only.

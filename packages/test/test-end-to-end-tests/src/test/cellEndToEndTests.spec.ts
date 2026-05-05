@@ -70,7 +70,7 @@ describeCompat("SharedCell", "FullCompat", (getTestObjectProvider, apis) => {
 		await provider.ensureSynchronized();
 	});
 
-	function verifyCellValue(cell: ISharedCell, expectedValue, index: number) {
+	function verifyCellValue(cell: ISharedCell, expectedValue, index: number): void {
 		const userValue = cell.get();
 		assert.equal(
 			userValue,
@@ -80,13 +80,13 @@ describeCompat("SharedCell", "FullCompat", (getTestObjectProvider, apis) => {
 		);
 	}
 
-	function verifyCellValues(value1, value2, value3) {
+	function verifyCellValues(value1, value2, value3): void {
 		verifyCellValue(sharedCell1, value1, 1);
 		verifyCellValue(sharedCell2, value2, 2);
 		verifyCellValue(sharedCell3, value3, 3);
 	}
 
-	function verifyCellEmpty(value1: boolean, value2: boolean, value3: boolean) {
+	function verifyCellEmpty(value1: boolean, value2: boolean, value3: boolean): void {
 		const user1Empty = sharedCell1.empty();
 		assert.equal(
 			user1Empty,

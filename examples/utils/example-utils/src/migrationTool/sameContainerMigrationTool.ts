@@ -3,8 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { IPactMap, PactMap } from "@fluid-experimental/pact-map";
-import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/legacy";
+import { type IPactMap, PactMap } from "@fluid-experimental/pact-map";
+import {
+	DataObject,
+	DataObjectFactory,
+	type IDataObjectProps,
+} from "@fluidframework/aqueduct/legacy";
 import type { IContainer } from "@fluidframework/container-definitions/legacy";
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/legacy";
@@ -109,14 +113,14 @@ export class SameContainerMigrationTool
 			return "proposingV2Code";
 		} else if (this.proposedVersion !== undefined) {
 			return "stoppingCollaboration";
-		} else if (this._proposalP !== undefined) {
-			return "proposingMigration";
-		} else {
+		} else if (this._proposalP === undefined) {
 			return "collaborating";
+		} else {
+			return "proposingMigration";
 		}
 	}
 
-	public constructor(props) {
+	public constructor(props: IDataObjectProps) {
 		super(props);
 		this._containerP = new Promise<IContainer>((resolve) => {
 			this._setContainerRef = (container: IContainer) => resolve(container);

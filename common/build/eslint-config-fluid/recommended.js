@@ -18,31 +18,13 @@ module.exports = {
 		es2024: false,
 		node: true,
 	},
-	extends: ["./minimal-deprecated.js", "plugin:unicorn/recommended"],
+	extends: ["./base.js", "plugin:unicorn/recommended"],
 	plugins: ["eslint-plugin-tsdoc"],
 	rules: {
 		// RECOMMENDED RULES
 		"@rushstack/no-new-null": "error",
-		"no-empty": "error",
 		"no-void": "error",
 		"require-atomic-updates": "error",
-
-		// This rule ensures that our Intellisense looks good by verifying the TSDoc syntax.
-		"tsdoc/syntax": "error",
-
-		// In some cases, type inference can be wrong, and this can cause a "flip-flop" of type changes in our
-		// API documentation. For example, type inference might decide a function returns a concrete type
-		// instead of an interface. This has no runtime impact, but would cause compilation problems.
-		"@typescript-eslint/explicit-function-return-type": [
-			"error",
-			{
-				allowExpressions: true,
-				allowTypedFunctionExpressions: true,
-				allowHigherOrderFunctions: true,
-				allowDirectConstAssertionInArrowFunctions: true,
-				allowConciseArrowFunctionExpressionsStartingWithVoid: false,
-			},
-		],
 
 		// #region `unicorn` rule overrides
 
@@ -56,6 +38,9 @@ module.exports = {
 
 		// False positives on non-array `push` methods.
 		"unicorn/no-array-push-push": "off",
+
+		// False positives on non-array methods.
+		"unicorn/no-array-callback-reference": "off",
 
 		"unicorn/empty-brace-spaces": "off",
 
@@ -194,19 +179,22 @@ module.exports = {
 		 */
 		"@typescript-eslint/no-unsafe-return": "error",
 
-		// #region eslint-plugin-jsdoc rules
-
 		/**
-		 * Ensures all JSDoc/TSDoc comments use the multi-line format for consistency.
-		 * See <https://github.com/gajus/eslint-plugin-jsdoc#user-content-eslint-plugin-jsdoc-rules-multiline-blocks>
+		 * Requires eslint-disable comments to include a description explaining why the rule is being disabled.
+		 *
+		 * Docs: {@link https://eslint-community.github.io/eslint-plugin-eslint-comments/rules/require-description.html}
 		 */
-		"jsdoc/multiline-blocks": ["error", { noSingleLineBlocks: true }],
+		"@eslint-community/eslint-comments/require-description": "warn",
+
+		// #region eslint-plugin-jsdoc rules
 
 		/**
 		 * Require the description (summary) component in JSDoc/TSDoc comments
 		 * See <https://github.com/gajus/eslint-plugin-jsdoc#user-content-eslint-plugin-jsdoc-rules-require-description>
 		 */
 		"jsdoc/require-description": ["error", { checkConstructors: false }],
+
+		// #endregion
 
 		/**
 		 * Requires that type-only exports be done using `export type`. Being explicit allows the TypeScript
@@ -232,15 +220,6 @@ module.exports = {
 			"error",
 			{ fixStyle: "separate-type-imports" },
 		],
-
-		/**
-		 * Ensures that type-only import statements do not result in runtime side-effects.
-		 *
-		 * @see {@link https://typescript-eslint.io/rules/no-import-type-side-effects/}
-		 */
-		"@typescript-eslint/no-import-type-side-effects": "error",
-
-		// #endregion
 	},
 	overrides: [
 		{
@@ -260,6 +239,7 @@ module.exports = {
 				// TODO: consider unifying code across the repo to use "test" and not "tests", then we can remove this.
 				"**/tests/**",
 			],
+			plugins: ["no-only-tests"],
 			rules: {
 				// Does not work well with describe/it block scoping
 				"unicorn/consistent-function-scoping": "off",
@@ -267,6 +247,14 @@ module.exports = {
 				// We run most of our tests in a Node.js environment, so this rule is not important and makes
 				// file-system logic more cumbersome.
 				"unicorn/prefer-module": "off",
+
+				/**
+				 * Disallow `.only()` in tests (e.g. `describe.only`, `it.only`) to prevent accidentally
+				 * committing focused tests that would skip the rest of the suite in CI.
+				 *
+				 * @see https://github.com/levibuzolic/eslint-plugin-no-only-tests
+				 */
+				"no-only-tests/no-only-tests": "error",
 			},
 		},
 		{

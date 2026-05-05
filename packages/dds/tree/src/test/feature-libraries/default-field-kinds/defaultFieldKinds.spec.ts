@@ -7,10 +7,7 @@ import { strict as assert, fail } from "node:assert";
 
 import { makeAnonChange } from "../../../core/index.js";
 import {
-	type RequiredFieldEditor,
 	defaultSchemaPolicy,
-	requiredFieldChangeHandler,
-	requiredFieldEditor,
 	// Allow import from file being tested.
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/default-schema/defaultFieldKinds.js";
@@ -27,7 +24,14 @@ import {
 } from "../../../feature-libraries/modular-schema/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import type { OptionalChangeset } from "../../../feature-libraries/optional-field/index.js";
+import {
+	type RequiredFieldEditor,
+	requiredFieldChangeHandler,
+	requiredFieldEditor,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "../../../feature-libraries/optional-field/requiredField.js";
 import { brand, fakeIdAllocator, idAllocatorFromMaxId } from "../../../util/index.js";
+import { TestNodeId } from "../../testNodeId.js";
 import { defaultRevisionMetadataFromChanges, mintRevisionTag } from "../../utils.js";
 import {
 	Change,
@@ -36,7 +40,6 @@ import {
 	tagChangeInline,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../optional-field/optionalFieldUtils.js";
-import { TestNodeId } from "../../testNodeId.js";
 
 /**
  * A change to a child encoding as a simple placeholder string.

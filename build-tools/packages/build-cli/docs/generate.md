@@ -5,6 +5,7 @@ Generate commands are used to create/update code, docs, readmes, etc.
 
 * [`flub generate assertTags`](#flub-generate-asserttags)
 * [`flub generate buildVersion`](#flub-generate-buildversion)
+* [`flub generate bundleSizeDiff`](#flub-generate-bundlesizediff)
 * [`flub generate bundleStats`](#flub-generate-bundlestats)
 * [`flub generate changelog`](#flub-generate-changelog)
 * [`flub generate changeset`](#flub-generate-changeset)
@@ -22,13 +23,16 @@ Tags asserts by replacing their message with a unique numerical value.
 
 ```
 USAGE
-  $ flub generate assertTags [-v | --quiet] [--disableConfig] [--concurrency <value>] [--branch <value> [--changed |
-    [--all | --dir <value>... | --packages | -g client|server|azure|build-tools|gitrest|historian|all... |
-    --releaseGroupRoot client|server|azure|build-tools|gitrest|historian|all...]]] [--private] [--scope <value>... |
-    --skipScope <value>...]
+  $ flub generate assertTags [-v | --quiet] [--disableConfig] [--validate] [--requireTagged] [--concurrency <value>]
+    [--branch <value> [--changed | [--all | --dir <value>... | --packages | -g
+    client|server|azure|build-tools|gitrest|historian|all... | --releaseGroupRoot
+    client|server|azure|build-tools|gitrest|historian|all...]]] [--private] [--scope <value>... | --skipScope
+    <value>...]
 
 FLAGS
   --concurrency=<value>  [default: 25] The number of tasks to execute concurrently.
+  --requireTagged        Error if changes would be made instead of making them.
+  --validate             Validate that asserts are well-formed such that future tagging will not fail.
 
 PACKAGE SELECTION FLAGS
   -g, --releaseGroup=<option>...      Run on all child packages within the specified release groups. This does not
@@ -114,6 +118,34 @@ EXAMPLES
 ```
 
 _See code: [src/commands/generate/buildVersion.ts](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/src/commands/generate/buildVersion.ts)_
+
+## `flub generate bundleSizeDiff`
+
+Compare the PR's locally-collected bundle reports against the CI build of the merge-base commit (the commit on the target branch the PR is based on) and write the outcome as one of two structured files in the output directory: result.json on success, error.json on failure.
+
+```
+USAGE
+  $ flub generate bundleSizeDiff [--json] [-v | --quiet] [--localReportPath <value>] [--outputDir <value>]
+
+FLAGS
+  --localReportPath=<value>  [default: ./artifacts/bundleAnalysis] Path to the locally-collected bundle reports for the
+                             PR (as produced by `flub generate bundleStats`).
+  --outputDir=<value>        [default: ./artifacts/bundleSizeDiff] Directory to write result.json or error.json into.
+
+LOGGING FLAGS
+  -v, --verbose  Enable verbose logging.
+      --quiet    Disable all logging.
+
+GLOBAL FLAGS
+  --json  Format output as json.
+
+DESCRIPTION
+  Compare the PR's locally-collected bundle reports against the CI build of the merge-base commit (the commit on the
+  target branch the PR is based on) and write the outcome as one of two structured files in the output directory:
+  result.json on success, error.json on failure.
+```
+
+_See code: [src/commands/generate/bundleSizeDiff.ts](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/src/commands/generate/bundleSizeDiff.ts)_
 
 ## `flub generate bundleStats`
 
@@ -285,31 +317,36 @@ Generates type declaration entrypoints for Fluid Framework API levels (/alpha, /
 
 ```
 USAGE
-  $ flub generate entrypoints [-v | --quiet] [--mainEntrypoint <value>] [--outDir <value>] [--outFilePrefix <value>]
-    [--outFileAlpha <value>] [--outFileBeta <value>] [--outFilePublic <value>] [--outFileLegacyAlpha <value>]
-    [--outFileLegacyBeta <value>] [--outFileLegacyPublic <value>] [--outFileSuffix <value>] [--node10TypeCompat]
+  $ flub generate entrypoints [-v | --quiet] [--mainEntrypoint <value>] [--resolutionConditions <value>...] [--outDir
+    <value>] [--outFilePrefix <value>] [--outFileAlpha <value>] [--outFileBeta <value>] [--outFilePublic <value>]
+    [--outFileLegacyAlpha <value>] [--outFileLegacyBeta <value>] [--outFileLegacyPublic <value>] [--outFileSuffix
+    <value>] [--node10TypeCompat]
 
 FLAGS
-  --mainEntrypoint=<value>       [default: ./src/index.ts] Main entrypoint file containing all untrimmed exports.
-  --node10TypeCompat             Optional generation of Node10 resolution compatible type entrypoints matching others.
-  --outDir=<value>               [default: ./lib] Directory to emit entrypoint declaration files.
-  --outFileAlpha=<value>         [default: alpha] Base file name for alpha entrypoint declaration files. To opt out of
-                                 generating this entrypoint, set to `none`.
-  --outFileBeta=<value>          [default: beta] Base file name for beta entrypoint declaration files. To opt out of
-                                 generating this entrypoint, set to `none`.
-  --outFileLegacyAlpha=<value>   Base file name for legacyAlpha entrypoint declaration files. To opt into generating
-                                 this entrypoint, set to a value other than `none`.
-  --outFileLegacyBeta=<value>    Base file name for legacyBeta entrypoint declaration files. To opt into generating this
-                                 entrypoint, set to a value other than `none`.
-  --outFileLegacyPublic=<value>  Base file name for legacyPublic entrypoint declaration files. To opt into generating
-                                 this entrypoint, set to a value other than `none`.
-  --outFilePrefix=<value>        File name prefix for emitting entrypoint declaration files. Pattern of
-                                 '{@unscopedPackageName}' within value will be replaced with the unscoped name of this
-                                 package.
-  --outFilePublic=<value>        [default: public] Base file name for public entrypoint declaration files. To opt out of
-                                 generating this entrypoint, set to `none`.
-  --outFileSuffix=<value>        [default: .d.ts] File name suffix including extension for emitting entrypoint
-                                 declaration files.
+  --mainEntrypoint=<value>           [default: ./src/index.ts] Main entrypoint file containing all untrimmed exports.
+  --node10TypeCompat                 Optional generation of Node10 resolution compatible type entrypoints matching
+                                     others.
+  --outDir=<value>                   [default: ./lib] Directory to emit entrypoint declaration files.
+  --outFileAlpha=<value>             [default: alpha] Base file name for alpha entrypoint declaration files. To opt out
+                                     of generating this entrypoint, set to `none`.
+  --outFileBeta=<value>              [default: beta] Base file name for beta entrypoint declaration files. To opt out of
+                                     generating this entrypoint, set to `none`.
+  --outFileLegacyAlpha=<value>       Base file name for legacyAlpha entrypoint declaration files. To opt into generating
+                                     this entrypoint, set to a value other than `none`.
+  --outFileLegacyBeta=<value>        Base file name for legacyBeta entrypoint declaration files. To opt into generating
+                                     this entrypoint, set to a value other than `none`.
+  --outFileLegacyPublic=<value>      Base file name for legacyPublic entrypoint declaration files. To opt into
+                                     generating this entrypoint, set to a value other than `none`.
+  --outFilePrefix=<value>            File name prefix for emitting entrypoint declaration files. Pattern of
+                                     '{@unscopedPackageName}' within value will be replaced with the unscoped name of
+                                     this package.
+  --outFilePublic=<value>            [default: public] Base file name for public entrypoint declaration files. To opt
+                                     out of generating this entrypoint, set to `none`.
+  --outFileSuffix=<value>            [default: .d.ts] File name suffix including extension for emitting entrypoint
+                                     declaration files.
+  --resolutionConditions=<value>...  [default: ] Import resolution conditions used while resolving imports. If neither
+                                     "import" nor "require" are specified, one of those will be inferred based on
+                                     mainEntrypoint file extension and package.json "type" field.
 
 LOGGING FLAGS
   -v, --verbose  Enable verbose logging.
@@ -441,18 +478,17 @@ Generates type tests for a package or group of packages.
 
 ```
 USAGE
-  $ flub generate typetests [-v | --quiet] [--entrypoint public|alpha|beta|internal|legacyPublic|legacyBeta|legacyAlpha]
-    [--outDir <value>] [--outFile <value>] [--publicFallback] [--skipVersionOutput] [--concurrency <value>] [--branch
-    <value> [--changed | [--all | --dir <value>... | --packages | -g
-    client|server|azure|build-tools|gitrest|historian|all... | --releaseGroupRoot
+  $ flub generate typetests [-v | --quiet] [--entrypoint <value>] [--outDir <value>] [--outFile <value>]
+    [--publicFallback] [--skipVersionOutput] [--concurrency <value>] [--branch <value> [--changed | [--all | --dir
+    <value>... | --packages | -g client|server|azure|build-tools|gitrest|historian|all... | --releaseGroupRoot
     client|server|azure|build-tools|gitrest|historian|all...]]] [--private] [--scope <value>... | --skipScope
     <value>...]
 
 FLAGS
   --concurrency=<value>  [default: 25] The number of tasks to execute concurrently.
-  --entrypoint=<option>  What entrypoint to generate tests for. Use "public" for the default entrypoint. If this flag is
-                         provided it will override the typeValidation.entrypoint setting in the package's package.json.
-                         <options: public|alpha|beta|internal|legacyPublic|legacyBeta|legacyAlpha>
+  --entrypoint=<value>   What entrypoint to generate tests for. Use "public" or "" for the default entrypoint. If this
+                         flag is provided it will override the typeValidation.entrypoint setting in the package's
+                         package.json.
   --outDir=<value>       [default: ./src/test/types] Where to emit the type tests file.
   --outFile=<value>      [default: validate{@unscopedPackageName}Previous.generated.ts] File name for the generated type
                          tests. The pattern '{@unscopedPackageName}' within the value will be replaced with the unscoped

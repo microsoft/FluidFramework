@@ -4,8 +4,8 @@
  */
 
 import { Uint8ArrayToString, stringToBuffer } from "@fluid-internal/client-utils";
-import { ISummaryHandle, ISummaryTree } from "@fluidframework/driver-definitions";
-import {
+import type { ISummaryHandle, ISummaryTree } from "@fluidframework/driver-definitions";
+import type {
 	IDocumentStorageService,
 	IDocumentStorageServicePolicies,
 	ISummaryContext,
@@ -14,19 +14,22 @@ import {
 	IVersion,
 } from "@fluidframework/driver-definitions/internal";
 import { buildGitTreeHierarchy } from "@fluidframework/driver-utils/internal";
-import {
+import type {
 	ITelemetryLoggerExt,
 	MonitoringContext,
+} from "@fluidframework/telemetry-utils/internal";
+import {
 	PerformanceEvent,
 	createChildMonitoringContext,
 } from "@fluidframework/telemetry-utils/internal";
 
-import { ICache, InMemoryCache } from "./cache.js";
-import { ISnapshotTreeVersion } from "./definitions.js";
-import { GitManager } from "./gitManager.js";
-import { IRouterliciousDriverPolicies } from "./policies.js";
+import type { ICache } from "./cache.js";
+import { InMemoryCache } from "./cache.js";
+import type { ISnapshotTreeVersion } from "./definitions.js";
+import type { GitManager } from "./gitManager.js";
+import type { IRouterliciousDriverPolicies } from "./policies.js";
 import { RetriableGitManager } from "./retriableGitManager.js";
-import { ISummaryUploadManager } from "./storageContracts.js";
+import type { ISummaryUploadManager } from "./storageContracts.js";
 import { SummaryTreeUploadManager } from "./summaryTreeUploadManager.js";
 
 const isNode = typeof window === "undefined";
@@ -76,6 +79,7 @@ export class ShreddedSummaryDocumentStorageService implements IDocumentStorageSe
 	}
 
 	public async getVersions(versionId: string | null, count: number): Promise<IVersion[]> {
+		// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- using ?? could change behavior for falsy values
 		const id = versionId ? versionId : this.id;
 		const commits = await PerformanceEvent.timedExecAsync(
 			this.logger,

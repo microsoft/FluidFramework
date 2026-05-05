@@ -19,12 +19,8 @@ import { getOrCreate } from "./utils.js";
 export type BrandedKey<TKey, TContent> = Brand<TKey, ["BrandedKey", Invariant<TContent>]>;
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export type BrandedKeyContent<TKey extends BrandedKey<unknown, any>> = TKey extends BrandedKey<
-	unknown,
-	infer TContent
->
-	? TContent
-	: never;
+export type BrandedKeyContent<TKey extends BrandedKey<unknown, any>> =
+	TKey extends BrandedKey<unknown, infer TContent> ? TContent : never;
 
 /**
  * A Map where the keys carry the types of values which they correspond to.

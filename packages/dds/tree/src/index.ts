@@ -3,13 +3,20 @@
  * Licensed under the MIT License.
  */
 
+// For the time being, if exports are changed, additional files under entrypoints need updated.
+// Run `pnpm generate:entrypoint-sources` to update them.
+
 export {
 	ValueSchema,
 	type Revertible,
 	CommitKind,
 	RevertibleStatus,
 	type CommitMetadata,
+	type LocalChangeMetadata,
+	type RemoteChangeMetadata,
 	type ChangeMetadata,
+	type LabelTree,
+	type TransactionLabels,
 	type RevertibleFactory,
 	type RevertibleAlphaFactory,
 	type RevertibleAlpha,
@@ -51,7 +58,6 @@ export {
 	TreeStatus,
 	TreeCompressionStrategy,
 	type TreeIndex,
-	type TreeIndexKey,
 	type TreeIndexNodes,
 	type IncrementalEncodingPolicy,
 } from "./feature-libraries/index.js";
@@ -65,17 +71,16 @@ export {
 	Tree,
 	type RunTransaction,
 	type ForestOptions,
-	getBranch,
-	type BranchableTree,
-	type TreeBranchFork,
 	independentInitializedView,
 	type ViewContent,
 	TreeAlpha,
 	type ObservationResults,
 	type TreeIdentifierUtils,
 	independentView,
+	type IndependentViewOptions,
 	createIndependentTreeBeta,
 	createIndependentTreeAlpha,
+	type CreateIndependentTreeAlphaOptions,
 	ForestTypeOptimized,
 	ForestTypeExpensiveDebug,
 	ForestTypeReference,
@@ -83,6 +88,7 @@ export {
 
 export {
 	TreeArrayNode,
+	type TreeArrayNodeAlpha,
 	type Unhydrated,
 	IterableTreeArrayContent,
 	TreeNode,
@@ -105,6 +111,7 @@ export {
 	type TreeChangeEvents,
 	type NodeFromSchema,
 	type TreeMapNode,
+	type TreeMapNodeAlpha,
 	type InsertableTreeNodeFromImplicitAllowedTypes,
 	type TreeLeafValue,
 	FieldKind,
@@ -117,6 +124,7 @@ export {
 	NodeKind,
 	type TreeObjectNode,
 	ObjectNodeSchema,
+	type ObjectNodeSchemaWorkaround,
 	type TreeNodeFromImplicitAllowedTypes,
 	type TreeNodeSchemaClass,
 	type SchemaCompatibilityStatus,
@@ -125,7 +133,17 @@ export {
 	normalizeFieldSchema,
 	type InternalTreeNode,
 	type WithType,
+	type ArrayNodeDeltaOp,
+	type ArrayNodeInsertOp,
+	type ArrayNodeRemoveOp,
+	type ArrayNodeRetainOp,
+	type ArrayNodeTreeChangedDeltaOp,
+	type ArrayNodeTreeChangedRetainOp,
 	type NodeChangedData,
+	type NodeChangedDataAlpha,
+	type NodeChangedDataDelta,
+	type NodeChangedDataProperties,
+	type NodeChangedDataTreeDelta,
 	type SchemaUpgrade,
 	contentSchemaSymbol,
 	// Types not really intended for public use, but used in links.
@@ -139,6 +157,8 @@ export {
 	type AllowedTypes,
 	type System_Unsafe,
 	type FieldSchemaAlphaUnsafe,
+	type FieldHasDefaultAlphaUnsafe,
+	type InsertableObjectFromSchemaRecordAlphaUnsafe,
 	type ArrayNodeCustomizableSchemaUnsafe,
 	type MapNodeCustomizableSchemaUnsafe,
 	type TreeRecordNodeUnsafe,
@@ -156,13 +176,13 @@ export {
 	type ValidateRecursiveSchema,
 	type FixRecursiveArraySchema,
 	// Index APIs
-	type SimpleTreeIndex,
 	type IdentifierIndex,
-	createSimpleTreeIndex,
+	createTreeIndex,
 	createIdentifierIndex,
 	type DirtyTreeStatus,
 	trackDirtyNodes,
 	type DirtyTreeMap,
+	type TreeIndexKey,
 	// experimental @alpha APIs:
 	adaptEnum,
 	enumFromStrings,
@@ -187,9 +207,14 @@ export {
 	type AllowedTypesFull,
 	type AllowedTypesFullFromMixed,
 	type SchemaType,
+	type SchemaStaticsAlpha,
+	type NodeProvider,
+	type InsertableObjectFromSchemaRecordAlpha,
+	type FieldHasDefaultAlpha,
 	// Beta APIs
 	TreeBeta,
 	type TreeChangeEventsBeta,
+	type TreeChangeEventsAlpha,
 	// Other
 	type VerboseTreeNode,
 	type TreeEncodingOptions,
@@ -249,7 +274,9 @@ export {
 	type SchemaStatics,
 	type ITreeAlpha,
 	type TransactionConstraint,
+	type TransactionConstraintAlpha,
 	type NodeInDocumentConstraint,
+	type NoChangeConstraint,
 	type RunTransactionParams,
 	type VoidTransactionCallbackStatus,
 	type TransactionCallbackStatus,
@@ -267,6 +294,7 @@ export {
 	allowUnused,
 	type LeafSchema,
 	type ArrayNodeCustomizableSchema,
+	type ArrayNodeCustomizableSchemaAlpha,
 	type ArrayNodePojoEmulationSchema,
 	ArrayNodeSchema,
 	type MapNodeCustomizableSchema,
@@ -290,10 +318,20 @@ export {
 	exportCompatibilitySchemaSnapshot,
 	importCompatibilitySchemaSnapshot,
 	checkCompatibility,
+	snapshotSchemaCompatibility,
+	type SnapshotFileSystem,
 	incrementalSummaryHint,
 	incrementalEncodingPolicyForAllowedTypes,
 	eraseSchemaDetails,
 	eraseSchemaDetailsSubclassable,
+	type ErasedSchema,
+	type ErasedNode,
+	type ErasedSchemaSubclassable,
+	type SnapshotSchemaCompatibilityOptions,
+	type ArrayPlaceAnchor,
+	createArrayInsertionAnchor,
+	type WithValue,
+	type TreeContextAlpha,
 } from "./simple-tree/index.js";
 export {
 	SharedTree,
@@ -308,6 +346,7 @@ export { persistedToSimpleSchema } from "./shared-tree/index.js";
 export {
 	type ICodecOptions,
 	type CodecWriteOptions,
+	type CodecWriteOptionsBeta,
 	FluidClientVersion,
 	type FormatValidator,
 	FormatValidatorNoOp,
@@ -341,13 +380,18 @@ export type {
 export { cloneWithReplacements } from "./util/index.js";
 
 import * as InternalTypes from "./internalTypes.js";
-export {
-	/**
-	 * Contains types used by the API, but which serve mechanical purposes and do not represent semantic concepts.
-	 * They are used internally to implement API aspects, but are not intended for use by external consumers.
-	 */
-	InternalTypes,
-};
+/**
+ * Contains types used by the API, but which serve mechanical purposes and do not represent semantic concepts.
+ * They are used internally to implement API aspects, but are not intended for use by external consumers.
+ *
+ * @public
+ * @system
+ *
+ * @privateRemarks These TS-Docs are not recognized by API-Extractor, but the
+ * support level tag is recognized by flub entrypoint generation.
+ */
+// eslint-disable-next-line unicorn/prefer-export-from -- fixing requires `export * as` (breaks API-Extractor)
+export { InternalTypes };
 
 // Internal/System types:
 // These would be put in `internalTypes` except doing so tents to cause errors like:
@@ -358,3 +402,6 @@ export { JsonAsTree } from "./jsonDomainSchema.js";
 export { FluidSerializableAsTree } from "./serializableDomainSchema.js";
 export { TableSchema, type System_TableSchema } from "./tableSchema.js";
 export { asAlpha, asBeta } from "./api.js";
+
+export { TextAsTree, FormattedTextAsTree } from "./text/index.js";
+export { ExtensibleUnionNode } from "./extensibleUnionNode.js";

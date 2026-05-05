@@ -4,8 +4,7 @@
  */
 
 import type { ICoordinate } from "@fluid-example/multiview-coordinate-interface";
-import React from "react";
-
+import { type FC, useEffect, useState } from "react";
 // eslint-disable-next-line import-x/no-unassigned-import
 import "./style.css";
 
@@ -18,13 +17,13 @@ interface IPlotCoordinateViewProps {
  * For now, it only displays the coordinate, but we could enhance it to allow manipulating the coordinate.
  * @internal
  */
-export const PlotCoordinateView: React.FC<IPlotCoordinateViewProps> = (
+export const PlotCoordinateView: FC<IPlotCoordinateViewProps> = (
 	props: IPlotCoordinateViewProps,
 ) => {
-	const [x, setX] = React.useState(props.model.x);
-	const [y, setY] = React.useState(props.model.y);
+	const [x, setX] = useState(props.model.x);
+	const [y, setY] = useState(props.model.y);
 
-	React.useEffect(() => {
+	useEffect((): (() => void) => {
 		const onCoordinateChanged = (): void => {
 			setX(props.model.x);
 			setY(props.model.y);

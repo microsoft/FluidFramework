@@ -259,6 +259,4 @@ export interface WorkspaceDefinition {
 // @public
 export type WorkspaceName = Opaque<string, "WorkspaceName">;
 
-// (No @packageDocumentation comment for this package)
-
 ```

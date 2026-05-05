@@ -12,7 +12,7 @@ import { Decoration, DecorationSet } from "prosemirror-view";
 export const create = (): Plugin =>
 	new Plugin({
 		props: {
-			decorations(state) {
+			decorations(state): DecorationSet {
 				const selection = state.selection;
 				const resolved = state.doc.resolve(selection.from);
 				const decoration = Decoration.node(resolved.before(), resolved.after(), {

@@ -66,7 +66,7 @@ export const options: FastBuildOptions = {
 
 // This string is duplicated in the readme: update readme if changing this.
 
-function printUsage() {
+function printUsage(): void {
 	log(
 		`
 Usage: fluid-build <options> [(<package regexp>|<path>) ...]
@@ -95,34 +95,34 @@ ${commonOptionString}
 	);
 }
 
-function setClean(build: boolean) {
+function setClean(build: boolean): void {
 	options.force = true;
 	options.clean = true;
 	setBuild(build);
 }
 
-function setBuild(build: boolean) {
+function setBuild(build: boolean): void {
 	if (build || options.build === undefined) {
 		options.build = build;
 	}
 }
 
-function setReinstall() {
+function setReinstall(): void {
 	options.uninstall = true;
 	setInstall();
 }
 
-function setInstall() {
+function setInstall(): void {
 	options.install = true;
 	setBuild(false);
 }
 
-function setUninstall() {
+function setUninstall(): void {
 	options.uninstall = true;
 	setBuild(false);
 }
 
-export function parseOptions(argv: string[]) {
+export function parseOptions(argv: string[]): void {
 	let error = false;
 	for (let i = 2; i < argv.length; i++) {
 		const argParsed = parseOption(argv, i);
@@ -139,6 +139,7 @@ export function parseOptions(argv: string[]) {
 
 		if (arg === "-?" || arg === "--help") {
 			printUsage();
+			// eslint-disable-next-line unicorn/no-process-exit -- assume CLI-only invocation; callers are not expected to handle help requests
 			process.exit(0);
 		}
 
@@ -284,6 +285,7 @@ export function parseOptions(argv: string[]) {
 
 	if (error) {
 		printUsage();
+		// eslint-disable-next-line unicorn/no-process-exit -- assume CLI-only invocation; callers are not expected to handle argument parsing errors
 		process.exit(-1);
 	}
 

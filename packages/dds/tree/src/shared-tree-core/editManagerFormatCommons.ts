@@ -13,6 +13,7 @@ import {
 	SessionIdSchema,
 } from "../core/index.js";
 import { type Brand, brandedNumberType, strictEnum, type Values } from "../util/index.js";
+
 import type { EncodedBranchId } from "./branch.js";
 
 /**
@@ -157,6 +158,11 @@ export const EditManagerFormatVersion = strictEnum("editManager.FormatVersion", 
 	 */
 	v5: 5,
 	/**
+	 * Introduced and made available for writing in 2.80.0
+	 * Adds support for "no change" constraints.
+	 */
+	v6: 6,
+	/**
 	 * Not yet released.
 	 * Only used for testing shared branches.
 	 */
@@ -167,6 +173,7 @@ export const supportedEditManagerFormatVersions: ReadonlySet<EditManagerFormatVe
 	new Set([
 		EditManagerFormatVersion.v3,
 		EditManagerFormatVersion.v4,
+		EditManagerFormatVersion.v6,
 		EditManagerFormatVersion.vSharedBranches,
 	]);
 export const editManagerFormatVersions: ReadonlySet<EditManagerFormatVersion> = new Set(

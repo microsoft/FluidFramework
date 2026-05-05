@@ -12,6 +12,20 @@ import { LoggingError, isILoggingError, normalizeError } from "../errorLogging.j
 import { isFluidError } from "../fluidErrorBase.js";
 
 describe("Errors", () => {
+	describe("DataCorruptionError.create", () => {
+		it("Should yield a DataCorruptionError", () => {
+			const dce = DataCorruptionError.create("Some message", "someCodepath", undefined, {
+				someProp: 1234,
+			});
+			assert(dce instanceof DataCorruptionError);
+			assert(dce.errorType === FluidErrorTypes.dataCorruptionError);
+			assert(dce.message === "Some message");
+			assert(dce.getTelemetryProperties().someProp === 1234);
+			assert(dce.getTelemetryProperties().dataProcessingError === 1);
+			assert(dce.getTelemetryProperties().dataProcessingCodepath === "someCodepath");
+			assert(dce.getTelemetryProperties().untrustedOrigin === 1);
+		});
+	});
 	describe("DataProcessingError.create", () => {
 		it("Should yield a DataProcessingError", () => {
 			const dpe = DataProcessingError.create("Some message", "someCodepath", undefined, {

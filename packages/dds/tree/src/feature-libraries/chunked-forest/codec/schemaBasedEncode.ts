@@ -18,7 +18,9 @@ import {
 	identifierFieldKindIdentifier,
 	type SchemaPolicy,
 } from "../../../core/index.js";
+import { brand, oneFromIterable } from "../../../util/index.js";
 
+import type { IncrementalEncoder } from "./codecs.js";
 import {
 	EncoderContext,
 	type FieldEncoder,
@@ -32,17 +34,15 @@ import {
 } from "./compressedEncode.js";
 import type { FieldBatch } from "./fieldBatch.js";
 import {
-	type EncodedFieldBatch,
 	type EncodedFieldBatchV1,
+	type EncodedFieldBatchV1OrV2,
 	type EncodedFieldBatchV2,
 	type EncodedValueShape,
 	FieldBatchFormatVersion,
 	SpecialField,
-} from "./format.js";
-import type { IncrementalEncoder } from "./codecs.js";
-import { NodeShapeBasedEncoder } from "./nodeEncoder.js";
+} from "./format/index.js";
 import { defaultIncrementalEncodingPolicy } from "./incrementalEncodingPolicy.js";
-import { brand, oneFromIterable } from "../../../util/index.js";
+import { NodeShapeBasedEncoder } from "./nodeEncoder.js";
 
 /**
  * Encode data from `fieldBatch` in into an `EncodedChunk` using {@link FieldBatchFormatVersion.v1}.
@@ -55,7 +55,7 @@ export function schemaCompressedEncodeV1(
 	fieldBatch: FieldBatch,
 	idCompressor: IIdCompressor,
 ): EncodedFieldBatchV1 {
-	return schemaCompressedEncode(
+	const encoded: EncodedFieldBatchV1OrV2 = schemaCompressedEncode(
 		schema,
 		policy,
 		fieldBatch,
@@ -63,6 +63,8 @@ export function schemaCompressedEncodeV1(
 		undefined /* incrementalEncoder */,
 		brand(FieldBatchFormatVersion.v1),
 	);
+	// Since incrementalEncoder was not provided, no V2 features should be used, and this cast should be safe.
+	return encoded as EncodedFieldBatchV1;
 }
 
 /**
@@ -104,7 +106,7 @@ function schemaCompressedEncode(
 	idCompressor: IIdCompressor,
 	incrementalEncoder: IncrementalEncoder | undefined,
 	version: FieldBatchFormatVersion,
-): EncodedFieldBatch {
+): EncodedFieldBatchV1OrV2 {
 	return compressedEncode(
 		fieldBatch,
 		buildContext(schema, policy, idCompressor, incrementalEncoder, version),
@@ -143,7 +145,7 @@ export function getFieldEncoder(
 	const kind = context.fieldShapes.get(field.kind) ?? fail(0xb52 /* missing FieldKind */);
 	const type = oneFromIterable(field.types);
 	const nodeEncoder =
-		type !== undefined ? nodeBuilder.nodeEncoderFromSchema(type) : anyNodeEncoder;
+		type === undefined ? anyNodeEncoder : nodeBuilder.nodeEncoderFromSchema(type);
 	if (kind.multiplicity === Multiplicity.Single) {
 		if (field.kind === identifierFieldKindIdentifier) {
 			assert(type !== undefined, 0x999 /* field type must be defined in identifier field */);
@@ -227,16 +229,20 @@ export function getNodeEncoder(
 
 function valueShapeFromSchema(schema: ValueSchema | undefined): undefined | EncodedValueShape {
 	switch (schema) {
-		case undefined:
+		case undefined: {
 			return false;
+		}
 		case ValueSchema.Number:
 		case ValueSchema.String:
 		case ValueSchema.Boolean:
-		case ValueSchema.FluidHandle:
+		case ValueSchema.FluidHandle: {
 			return true;
-		case ValueSchema.Null:
+		}
+		case ValueSchema.Null: {
 			return [null];
-		default:
+		}
+		default: {
 			unreachableCase(schema);
+		}
 	}
 }

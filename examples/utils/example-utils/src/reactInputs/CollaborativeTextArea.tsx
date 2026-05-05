@@ -3,9 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import React, { useEffect, useRef, useState } from "react";
-
 import {
+	type CSSProperties,
+	type FC,
+	type FormEvent,
+	useEffect,
+	useRef,
+	useState,
+} from "react";
+
+import type {
 	ISharedStringHelperTextChangedEventArgs,
 	SharedStringHelper,
 } from "../SharedStringHelper.js";
@@ -33,14 +40,14 @@ export interface ICollaborativeTextAreaProps {
 	spellCheck?: boolean;
 
 	className?: string;
-	style?: React.CSSProperties;
+	style?: CSSProperties;
 }
 
 /**
  * Given a {@link SharedStringHelper}, will produce a collaborative text area element.
  * @internal
  */
-export const CollaborativeTextArea: React.FC<ICollaborativeTextAreaProps> = (
+export const CollaborativeTextArea: FC<ICollaborativeTextAreaProps> = (
 	props: ICollaborativeTextAreaProps,
 ) => {
 	const { sharedStringHelper, readOnly, spellCheck, className, style } = props;
@@ -56,7 +63,7 @@ export const CollaborativeTextArea: React.FC<ICollaborativeTextAreaProps> = (
 	 * 1. Store the text and selection state in React
 	 * 2. Store the text state in the SharedString
 	 */
-	const handleChange = (ev: React.FormEvent<HTMLTextAreaElement>): void => {
+	const handleChange = (ev: FormEvent<HTMLTextAreaElement>): void => {
 		// First get and stash the new textarea state
 		if (!textareaRef.current) {
 			throw new Error("Handling change without current textarea ref?");
@@ -81,12 +88,12 @@ export const CollaborativeTextArea: React.FC<ICollaborativeTextAreaProps> = (
 		// This is also a bad assumption, in the undo case.
 		const isTextInserted = newCaretPosition - oldSelectionStart > 0;
 		if (isTextInserted) {
-			const insertedText = newText.substring(oldSelectionStart, newCaretPosition);
+			const insertedText = newText.slice(oldSelectionStart, newCaretPosition);
 			const isTextReplaced = oldSelectionEnd - oldSelectionStart > 0;
-			if (!isTextReplaced) {
-				sharedStringHelper.insertText(insertedText, oldSelectionStart);
-			} else {
+			if (isTextReplaced) {
 				sharedStringHelper.replaceText(insertedText, oldSelectionStart, oldSelectionEnd);
+			} else {
+				sharedStringHelper.insertText(insertedText, oldSelectionStart);
 			}
 		} else {
 			// Text was removed

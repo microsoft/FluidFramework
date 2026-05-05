@@ -29,7 +29,7 @@ import {
 	IRequest,
 } from "@fluidframework/core-interfaces";
 import type { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions/internal";
-import { type ISharedDirectory } from "@fluidframework/map/internal";
+import type { ISharedDirectory } from "@fluidframework/map/internal";
 import { SharedMatrix } from "@fluidframework/matrix/internal";
 import type { IFluidDataStoreContext } from "@fluidframework/runtime-definitions/internal";
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";

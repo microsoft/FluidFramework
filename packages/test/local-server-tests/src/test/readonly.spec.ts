@@ -3,14 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { type IRuntimeFactory } from "@fluidframework/container-definitions/internal";
+import type { IRuntimeFactory } from "@fluidframework/container-definitions/internal";
 import {
 	createDetachedContainer,
 	loadExistingContainer,
 	type ILoadExistingContainerProps,
 } from "@fluidframework/container-loader/internal";
 import { loadContainerRuntime } from "@fluidframework/container-runtime/internal";
-import { type FluidObject, type IFluidHandle } from "@fluidframework/core-interfaces/internal";
+import type { FluidObject, IFluidHandle } from "@fluidframework/core-interfaces/internal";
 import { assert } from "@fluidframework/core-utils/internal";
 import { FluidDataStoreRuntime } from "@fluidframework/datastore/internal";
 import type {

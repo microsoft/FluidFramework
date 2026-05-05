@@ -242,7 +242,6 @@ async function runnerProcess(
 		endpoint,
 		seed,
 		runConfig.runId,
-		false, // supportsBrowserAuth
 	);
 
 	// Cycle between creating new factory vs. reusing factory.
@@ -583,7 +582,7 @@ async function setupOpsMetrics(
 	logger: ITelemetryLoggerExt,
 	progressIntervalMs: number,
 	testRuntime: IFluidDataStoreRuntime,
-) {
+): Promise<() => void> {
 	// Use map to cache userName instead of recomputing.
 	const clientIdUserNameMap: { [clientId: string]: string } = {};
 

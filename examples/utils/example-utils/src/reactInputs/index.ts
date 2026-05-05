@@ -4,11 +4,11 @@
  */
 
 export {
-	ICollaborativeInputProps,
-	ICollaborativeInputState,
+	type ICollaborativeInputProps,
+	type ICollaborativeInputState,
 	CollaborativeInput,
 } from "./CollaborativeInput.js";
 export {
 	CollaborativeTextArea,
-	ICollaborativeTextAreaProps,
+	type ICollaborativeTextAreaProps,
 } from "./CollaborativeTextArea.js";
