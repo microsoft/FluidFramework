@@ -227,41 +227,56 @@ describe("toStoredSchema", () => {
 				});
 			}
 
-			it("partially includes staged allowed types by upgrade identity", () => {
-				const node = getObjectNodeSchema(
+			it("partially includes staged schema by upgrade identity", () => {
+				// Test that the filtering logic in `toStoredSchema` works correctly.
+				// These test trees compare the upgrade identity of the staged schema to implement the filter.
+				// Schema that are included by the filter should be present in the resulting stored schema, and any other staged schema should not.
+				// See testTrees.ts for the test cases: "NestedMultiStage with one upgrade" and "NestedStagedOptional with one upgrade".
+				const allowedTypesNode = getObjectNodeSchema(
 					getTestDocumentSchemaData("NestedMultiStage with one upgrade"),
 					"test.NestedMultiStage",
 				);
 
-				const fieldA = node.getFieldSchema(brand("a"));
+				// See NestedMultiStage in testTrees.ts for the definition.
+				// Field a: optional([staged(number)]) -> optional, empty types.
+				// Field b: required([staged(MapWithStaged), null]) -> required, null only.
+				// Field c: required([staged(ArrayWithStaged), null]) -> required, null and ArrayWithStaged.
+				const fieldA = allowedTypesNode.getFieldSchema(brand("a"));
 				assert.equal(fieldA.kind, FieldKinds.optional.identifier);
 				assert.deepEqual(fieldA.types, typeSet());
 
-				const fieldB = node.getFieldSchema(brand("b"));
+				const fieldB = allowedTypesNode.getFieldSchema(brand("b"));
 				assert.equal(fieldB.kind, FieldKinds.required.identifier);
 				assert.deepEqual(fieldB.types, typeSet("com.fluidframework.leaf.null"));
 
-				const fieldC = node.getFieldSchema(brand("c"));
+				const fieldC = allowedTypesNode.getFieldSchema(brand("c"));
 				assert.equal(fieldC.kind, FieldKinds.required.identifier);
 				assert.deepEqual(
 					fieldC.types,
 					typeSet("com.fluidframework.leaf.null", "test.ArrayWithStaged"),
 				);
-			});
 
-			it("partially includes staged optional fields by upgrade identity", () => {
-				const node = getObjectNodeSchema(
+				const stagedOptionalNode = getObjectNodeSchema(
 					getTestDocumentSchemaData("NestedStagedOptional with one upgrade"),
 					"test.NestedStagedOptional",
 				);
 
-				const fieldA = node.getFieldSchema(brand("a"));
-				assert.equal(fieldA.kind, FieldKinds.optional.identifier);
-				assert.deepEqual(fieldA.types, typeSet("com.fluidframework.leaf.number"));
+				// See NestedStagedOptional in testTrees.ts for the definition.
+				// Field a: stagedOptional(number) -> optional number.
+				// Field b: stagedOptional(string) -> required string.
+				const stagedOptionalFieldA = stagedOptionalNode.getFieldSchema(brand("a"));
+				assert.equal(stagedOptionalFieldA.kind, FieldKinds.optional.identifier);
+				assert.deepEqual(
+					stagedOptionalFieldA.types,
+					typeSet("com.fluidframework.leaf.number"),
+				);
 
-				const fieldB = node.getFieldSchema(brand("b"));
-				assert.equal(fieldB.kind, FieldKinds.required.identifier);
-				assert.deepEqual(fieldB.types, typeSet("com.fluidframework.leaf.string"));
+				const stagedOptionalFieldB = stagedOptionalNode.getFieldSchema(brand("b"));
+				assert.equal(stagedOptionalFieldB.kind, FieldKinds.required.identifier);
+				assert.deepEqual(
+					stagedOptionalFieldB.types,
+					typeSet("com.fluidframework.leaf.string"),
+				);
 			});
 		});
 	});
