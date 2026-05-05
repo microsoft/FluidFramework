@@ -9,7 +9,7 @@ import path from "node:path";
 
 import { Flags } from "@oclif/core";
 
-import { BaseCommand } from "../../library/commands/base.js";
+import { BaseCommandWithBuildProject } from "../../library/commands/base.js";
 
 /**
  * The error code pnpm emits (both as the top-level `code` and inside `err`)
@@ -52,7 +52,7 @@ interface PnpmRunResult {
  * See https://github.com/pnpm/pnpm/issues/10622 for the bug that motivated
  * this command.
  */
-export default class CheckTrustPolicyCommand extends BaseCommand<
+export default class CheckTrustPolicyCommand extends BaseCommandWithBuildProject<
 	typeof CheckTrustPolicyCommand
 > {
 	static readonly summary =
@@ -61,37 +61,40 @@ export default class CheckTrustPolicyCommand extends BaseCommand<
 	static readonly description =
 		"Materializes a scratch workspace under `.trust-audit-temp/` containing one leaf project per pinned dependency, then runs `pnpm install --trust-policy no-downgrade` and iteratively excludes each violation until pnpm either succeeds or stops surfacing new violations. Reports the full list of trust-downgrade violations.";
 
+	static readonly enableJsonFlag = true;
+
 	static readonly flags = {
-		json: Flags.boolean({
-			description: "Emit JSON instead of a text report.",
-			default: false,
-		}),
 		keep: Flags.boolean({
 			description: "Do not delete the scratch workspace after running.",
 			default: false,
 		}),
-		tempDir: Flags.directory({
-			description: "Scratch workspace directory (default: <repo-root>/.trust-audit-temp).",
+		path: Flags.directory({
+			description:
+				"Path used to locate the build project to audit. The closest build root containing this path is used. Defaults to the current working directory.",
+			exists: true,
 		}),
-		...BaseCommand.flags,
+		tempDir: Flags.directory({
+			description: "Scratch workspace directory (default: <workspace-root>/.trust-audit-temp).",
+		}),
+		...BaseCommandWithBuildProject.flags,
 	} as const;
 
-	public async run(): Promise<void> {
-		const context = await this.getContext();
-		const repoRoot = context.root;
+	public async run(): Promise<TrustPolicyAuditResult> {
+		const buildProject = this.getBuildProject(this.flags.path);
+		const workspaceRoot = buildProject.root;
 		const tempDir = path.resolve(
-			this.flags.tempDir ?? path.join(repoRoot, ".trust-audit-temp"),
+			this.flags.tempDir ?? path.join(workspaceRoot, ".trust-audit-temp"),
 		);
 
-		const lockfilePath = path.join(repoRoot, "pnpm-lock.yaml");
+		const lockfilePath = path.join(workspaceRoot, "pnpm-lock.yaml");
 		if (!existsSync(lockfilePath)) {
-			this.error(`No pnpm-lock.yaml found in ${repoRoot}`);
+			this.error(`No pnpm-lock.yaml found in ${workspaceRoot}`);
 		}
 
-		this.verbose("Enumerating installed dependencies via `pnpm list -r --json`...");
+		this.verbose("Enumerating installed dependencies via pnpm list -r --json...");
 		const listResult = await runPnpm(
 			["list", "--recursive", "--json", "--depth", "Infinity"],
-			repoRoot,
+			workspaceRoot,
 			false,
 		);
 		if (listResult.code !== 0) {
@@ -107,7 +110,10 @@ export default class CheckTrustPolicyCommand extends BaseCommand<
 		const projectCount = writeAuditWorkspace(tempDir, pinned);
 		this.verbose(`Wrote ${projectCount} leaf projects.`);
 
-		const violationSet = new Set<string>();
+		// Map of registry name → set of offending versions. We accumulate
+		// violations here across iterations so each pnpm invocation can be
+		// re-run with the union of all known offenders excluded.
+		const violationsByName = new Map<string, Set<string>>();
 		let lastResult: PnpmRunResult | undefined;
 		let iteration = 0;
 		let auditIncomplete = false;
@@ -116,9 +122,8 @@ export default class CheckTrustPolicyCommand extends BaseCommand<
 			// eslint-disable-next-line no-constant-condition
 			while (true) {
 				const excludeFlags: string[] = [];
-				// Group excluded versions by package name and pass each name
-				// once with versions joined by `||` (pnpm's "exact-versions
-				// union" syntax). For example:
+				// Pass each excluded package name once with its versions joined
+				// by `||` (pnpm's "exact-versions union" syntax). For example:
 				//   --trust-policy-exclude semver@5.7.2||6.3.1
 				//
 				// This is required because pnpm's `evaluateVersionPolicy` only
@@ -131,21 +136,9 @@ export default class CheckTrustPolicyCommand extends BaseCommand<
 				// (https://pnpm.io/settings#trustpolicyexclude), where the
 				// example `'webpack@4.47.0 || 5.102.1'` excludes both versions
 				// of webpack.
-				const versionsByName = new Map<string, string[]>();
-				for (const violation of violationSet) {
-					const atIndex = violation.lastIndexOf("@");
-					const name = violation.slice(0, atIndex);
-					const version = violation.slice(atIndex + 1);
-					const existing = versionsByName.get(name);
-					if (existing === undefined) {
-						versionsByName.set(name, [version]);
-					} else {
-						existing.push(version);
-					}
-				}
-				for (const name of [...versionsByName.keys()].sort()) {
+				for (const name of [...violationsByName.keys()].sort()) {
 					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-					const versions = versionsByName.get(name)!.sort();
+					const versions = [...violationsByName.get(name)!].sort();
 					// Wrap in double quotes so that on Windows (where `runPnpm`
 					// uses `shell: true`) cmd.exe doesn't interpret `||` as a
 					// command separator before pnpm parses the arg.
@@ -166,8 +159,9 @@ export default class CheckTrustPolicyCommand extends BaseCommand<
 					...excludeFlags,
 				];
 
+				const excludedCount = countViolations(violationsByName);
 				this.verbose(
-					`Iteration ${iteration}: pnpm install (excluded so far: ${violationSet.size})`,
+					`Iteration ${iteration}: pnpm install (excluded so far: ${excludedCount})`,
 				);
 				iteration++;
 
@@ -179,7 +173,9 @@ export default class CheckTrustPolicyCommand extends BaseCommand<
 					break;
 				}
 
-				const newViolations = found.filter((violation) => !violationSet.has(violation));
+				const newViolations = found.filter(
+					({ name, version }) => violationsByName.get(name)?.has(version) !== true,
+				);
 				if (newViolations.length === 0) {
 					// pnpm exited non-zero without surfacing a new trust-policy
 					// violation. That means something else went wrong (network,
@@ -194,9 +190,14 @@ export default class CheckTrustPolicyCommand extends BaseCommand<
 					);
 					break;
 				}
-				for (const violation of newViolations) {
-					violationSet.add(violation);
-					this.verbose(`  + ${violation}`);
+				for (const { name, version } of newViolations) {
+					let versions = violationsByName.get(name);
+					if (versions === undefined) {
+						versions = new Set<string>();
+						violationsByName.set(name, versions);
+					}
+					versions.add(version);
+					this.verbose(`  + ${name}@${version}`);
 				}
 			}
 		} finally {
@@ -209,56 +210,84 @@ export default class CheckTrustPolicyCommand extends BaseCommand<
 		}
 
 		const elapsedSec = Number(((Date.now() - start) / 1000).toFixed(1));
-		const violations = [...violationSet].sort();
+		const violations: PinnedVersion[] = [];
+		for (const name of [...violationsByName.keys()].sort()) {
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			for (const version of [...violationsByName.get(name)!].sort()) {
+				violations.push({ name, version });
+			}
+		}
 		const exitCode = lastResult?.code ?? 2;
 
-		if (this.flags.json) {
-			this.log(
-				JSON.stringify(
-					{
-						tempDir,
-						exitCode,
-						iterations: iteration,
-						elapsedSec,
-						totalUniqueDependencies: pinned.length,
-						auditIncomplete,
-						violations,
-					},
-					undefined,
-					2,
-				),
-			);
-		} else {
-			this.log(`Audited via pnpm install in: ${tempDir}`);
-			this.log(`  Final pnpm exit code: ${exitCode}`);
-			this.log(`  Iterations: ${iteration}`);
-			this.log(`  Unique pinned versions: ${pinned.length}`);
-			this.log(`  Elapsed: ${elapsedSec}s`);
-			if (violations.length === 0) {
-				if (auditIncomplete) {
-					this.log(
-						"\nAudit incomplete: pnpm exited non-zero but no trust-policy events were emitted. Re-run with --verbose to see pnpm's full output.",
-					);
-				} else {
-					this.log("\nNo trust-policy violations detected.");
-				}
+		this.log(`Audited via pnpm install in: ${tempDir}`);
+		this.log(`  Final pnpm exit code: ${exitCode}`);
+		this.log(`  Iterations: ${iteration}`);
+		this.log(`  Unique pinned versions: ${pinned.length}`);
+		this.log(`  Elapsed: ${elapsedSec}s`);
+		if (violations.length === 0) {
+			if (auditIncomplete) {
+				this.log(
+					"\nAudit incomplete: pnpm exited non-zero but no trust-policy events were emitted. Re-run with --verbose to see pnpm's full output.",
+				);
 			} else {
-				this.log(`\n${violations.length} trust-policy violation(s):\n`);
-				for (const violation of violations) {
-					this.log(`  ${violation}`);
-				}
-				if (auditIncomplete) {
-					this.log(
-						"\nAudit incomplete: pnpm exited non-zero after the violations above without surfacing a new event. There may be more violations. Re-run with --verbose to see pnpm's full output.",
-					);
-				}
+				this.log("\nNo trust-policy violations detected.");
+			}
+		} else {
+			this.log(`\n${violations.length} trust-policy violation(s):\n`);
+			for (const { name, version } of violations) {
+				this.log(`  ${name}@${version}`);
+			}
+			if (auditIncomplete) {
+				this.log(
+					"\nAudit incomplete: pnpm exited non-zero after the violations above without surfacing a new event. There may be more violations. Re-run with --verbose to see pnpm's full output.",
+				);
 			}
 		}
 
-		if (violations.length > 0 || auditIncomplete) {
+		const result: TrustPolicyAuditResult = {
+			tempDir,
+			exitCode,
+			iterations: iteration,
+			elapsedSec,
+			totalUniqueDependencies: pinned.length,
+			auditIncomplete,
+			violations,
+		};
+
+		// In text mode we exit non-zero on failure so CI fails. In JSON mode
+		// (handled by oclif via `enableJsonFlag`) we return the structured
+		// result instead, so downstream tooling can pipe the output without
+		// losing it to a non-zero exit.
+		if (!this.jsonEnabled() && (violations.length > 0 || auditIncomplete)) {
 			this.exit(1);
 		}
+
+		return result;
 	}
+}
+
+/**
+ * Structured result emitted by `flub check trustPolicy --json`.
+ */
+interface TrustPolicyAuditResult {
+	tempDir: string;
+	exitCode: number;
+	iterations: number;
+	elapsedSec: number;
+	totalUniqueDependencies: number;
+	auditIncomplete: boolean;
+	violations: PinnedVersion[];
+}
+
+/**
+ * Counts the total number of `(name, version)` pairs in a violations map.
+ */
+function countViolations(violationsByName: ReadonlyMap<string, ReadonlySet<string>>): number {
+	let count = 0;
+	for (const versions of violationsByName.values()) {
+		count += versions.size;
+	}
+	return count;
 }
 
 /**
@@ -450,9 +479,9 @@ function runPnpm(args: string[], cwd: string, streamLive: boolean): Promise<Pnpm
 }
 
 /**
- * Scans pnpm's NDJSON stdout for trust-downgrade events and returns a
- * sorted, de-duplicated array of `name@version` strings that triggered the
- * error.
+ * Scans pnpm's NDJSON stdout for trust-downgrade events and returns the
+ * `(name, version)` pairs that triggered the error, in the order pnpm
+ * emitted them. The caller is responsible for de-duplication.
  *
  * pnpm's `--reporter ndjson` writes every event (including errors) to stdout
  * as one JSON object per line. The trust-downgrade error reaches this stream
@@ -464,8 +493,8 @@ function runPnpm(args: string[], cwd: string, streamLive: boolean): Promise<Pnpm
  * Any malformed line, unrecognized event code, or missing package fields
  * indicate that pnpm's contract has changed and we throw to surface it.
  */
-function extractTrustViolations(ndjsonStdout: string): string[] {
-	const found = new Set<string>();
+function extractTrustViolations(ndjsonStdout: string): PinnedVersion[] {
+	const found: PinnedVersion[] = [];
 
 	for (const rawLine of ndjsonStdout.split(/\r?\n/)) {
 		// Skip blank lines and any line that can't possibly be a trust-downgrade
@@ -497,8 +526,8 @@ function extractTrustViolations(ndjsonStdout: string): string[] {
 				`pnpm emitted a "${TRUST_DOWNGRADE_CODE}" event without a package name and version: ${rawLine}`,
 			);
 		}
-		found.add(`${name}@${version}`);
+		found.push({ name, version });
 	}
 
-	return [...found].sort();
+	return found;
 }
