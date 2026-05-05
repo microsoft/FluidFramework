@@ -84,9 +84,11 @@ If you find NO high-confidence issues:
 
 ## Instructions
 
+Important: Do not request or run shell/Git commands; all review context available to you has been precomputed by the workflow.
+
 1. Read the prepared PR diff from `pr-diff.patch` in the current directory
 2. Read `changed-files.txt` when you need the complete changed-file list
-3. Do not request or run shell/Git commands; all review context available to you has been precomputed by the workflow
+3. Read `api-report-files.txt` to see whether any `*.api.md` files changed. If the file is non-empty, give those packages extra scrutiny.
 4. Identify all production code changes and check if corresponding test changes exist
 5. For new functions or modified behavior, verify tests actually exercise the new code paths
 6. Apply the high-confidence gate to every finding before including it
