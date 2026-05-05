@@ -164,9 +164,24 @@ const clientFrozenDeltaStream: IClient = {
 	mode: "read",
 	details: { capabilities: { interactive: true } },
 	permission: [],
-	user: { id: "frozen-delta-stream client" }, // synthetic — never reaches a service.
+	user: { id: "storage-only client" }, // we need some "fake" ID here.
 	scopes: [],
 };
+
+const clientIdFrozenDeltaStream: string = "storage-only client";
+
+// Cast rationale: ITokenClaims requires tenantId/documentId/user/iat/exp/ver, but a frozen
+// delta stream has no tenant or session to draw real values from — it's a synthetic
+// in-process connection that never reaches a service. Inventing sentinel values would imply
+// quorum membership we cannot honor; only `scopes` actually drives behavior here (DocRead vs
+// DocWrite gates readOnlyInfo). The cast is the honest representation of "this connection
+// has no claims worth populating."
+/* eslint-disable @typescript-eslint/consistent-type-assertions */
+const readOnlyClaims: ITokenClaims = { scopes: [ScopeType.DocRead] } as ITokenClaims;
+const writableClaims: ITokenClaims = {
+	scopes: [ScopeType.DocRead, ScopeType.DocWrite],
+} as ITokenClaims;
+/* eslint-enable @typescript-eslint/consistent-type-assertions */
 
 /**
  * Inert `IDocumentDeltaConnection` for frozen container loads. Has no server upstream:
@@ -176,8 +191,8 @@ const clientFrozenDeltaStream: IClient = {
  *
  * Two concrete variants share this base:
  *
- * - {@link FrozenDeltaStream} — read-only. Claims show only `DocRead`. Used by storage-only loads (where connectionManager synthesizes one directly via `policies.storageOnly`) and by the forbidden / out-of-storage fallback paths. {@link isFrozenDeltaStreamConnection} matches this variant and drives the read-only forcing in `ConnectionManager.readOnlyInfo`.
- * - {@link WritableFrozenDeltaStream} — writable. Claims include `DocWrite` so the container surfaces as writable; not matched by {@link isFrozenDeltaStreamConnection}, so `readOnlyInfo` reports `readonly: false`. Connection mode stays `"read"` (advertising `"write"` would imply quorum membership we cannot honor). `ConnectionManager.sendMessages` recognizes any `WritableFrozenDeltaStream` and short-circuits before its read-mode upgrade branch — the message is dropped at the network layer instead of triggering a reconnect, so the container stays `Connected` and submitted ops accumulate in the runtime's `pendingStateManager`.
+ * - {@link FrozenDeltaStream} — read-only. Claims show only `DocRead`. Used by storage-only loads (where connectionManager synthesizes one directly via `policies.storageOnly`) and by the forbidden / out-of-storage fallback paths. {@link isFrozenDeltaStreamConnection} matches this variant and drives the read-only forcing in `ConnectionManager.readOnlyInfo`. Uses the historical `"storage-only client"` constant `clientId`, preserving existing behavior for any consumer that keys off it.
+ * - {@link WritableFrozenDeltaStream} — writable. Claims include `DocWrite` so the container surfaces as writable; not matched by {@link isFrozenDeltaStreamConnection}, so `readOnlyInfo` reports `readonly: false`. Connection mode stays `"read"` (advertising `"write"` would imply quorum membership we cannot honor). `ConnectionManager.sendMessages` recognizes any `WritableFrozenDeltaStream` and short-circuits before its read-mode upgrade branch — the message is dropped at the network layer instead of triggering a reconnect, so the container stays `Connected` and submitted ops accumulate in the runtime's `pendingStateManager`. Mints a per-instance `frozen-delta-stream/<uuid>` `clientId` to avoid `pendingStateManager` `0x173` (`replayPendingStates called twice for same clientId!`) on reconnect with dirty pending ops.
  *
  * Both variants nack any incoming `submit`: this connection has no upstream and
  * `ConnectionManager.sendMessages` recognizes `WritableFrozenDeltaStream` and drops messages
@@ -194,31 +209,28 @@ abstract class FrozenDeltaStreamBase
 	extends TypedEventEmitter<IDocumentDeltaConnectionEvents>
 	implements IDocumentDeltaConnection, IDisposable
 {
-	// Mint a fresh clientId per instance. A subsequent connect (e.g. the read-mode reconnect
-	// branch in FrozenDocumentService.connectToDeltaStream) would otherwise reuse the same id
-	// and trip pendingStateManager's 0x173 assert ("replayPendingStates called twice for same
-	// clientId") if the writable-frozen container had accumulated dirty pending ops.
-	public readonly clientId: string = `frozen-delta-stream/${uuid()}`;
-	public abstract readonly claims: ITokenClaims;
+	public readonly clientId: string;
+	public readonly claims: ITokenClaims;
+	public readonly initialClients: ISignalClient[];
 	public readonly mode: ConnectionMode = "read";
 	public readonly existing: boolean = true;
 	public readonly maxMessageSize: number = 0;
 	public readonly version: string = "";
 	public readonly initialMessages: ISequencedDocumentMessage[] = [];
 	public readonly initialSignals: ISignalMessage[] = [];
-	public readonly initialClients: ISignalClient[];
 	public readonly serviceConfiguration: IClientConfiguration = {
 		maxMessageSize: 0,
 		blockSize: 0,
 	};
 	public readonly checkpointSequenceNumber?: number | undefined = undefined;
 
-	constructor() {
+	constructor(clientId: string, claims: ITokenClaims) {
 		super();
-		// initialClients must mirror this.clientId so the audience handler observes "self" in
-		// the audience and transitions the container to Connected without waiting for a real
-		// join op or signal. Built per-instance because clientId is per-instance.
-		this.initialClients = [{ client: clientFrozenDeltaStream, clientId: this.clientId }];
+		this.clientId = clientId;
+		this.claims = claims;
+		// initialClients mirrors clientId so the audience handler observes "self" and
+		// transitions the container to Connected without waiting for a real join op or signal.
+		this.initialClients = [{ client: clientFrozenDeltaStream, clientId }];
 	}
 
 	submit(messages: IDocumentMessage[]): void {
@@ -248,14 +260,12 @@ abstract class FrozenDeltaStreamBase
 }
 
 /**
- * Read-only variant of {@link FrozenDeltaStreamBase}. See base-class JSDoc for the shared
- * inert-connection contract; this variant adds:
- *
- * - `claims.scopes = [DocRead]` — {@link isFrozenDeltaStreamConnection} matches this variant to force the container read-only via `ConnectionManager.readOnlyInfo`.
- * - `storageOnlyReason` and `readonlyConnectionReason` — surfaced through `IContainer.readOnlyInfo` for diagnostics on the fallback paths (`isDeltaStreamConnectionForbiddenError`, `outOfStorageError`).
+ * Read-only variant of {@link FrozenDeltaStreamBase}. Adds `storageOnlyReason` and
+ * `readonlyConnectionReason` for the diagnostic surface on the fallback paths
+ * (`isDeltaStreamConnectionForbiddenError`, `outOfStorageError`). See base-class JSDoc for
+ * the shared inert-connection contract.
  */
 export class FrozenDeltaStream extends FrozenDeltaStreamBase {
-	public readonly claims: ITokenClaims;
 	public readonly storageOnlyReason: string | undefined;
 	public readonly readonlyConnectionReason: IConnectionStateChangeReason | undefined;
 
@@ -263,35 +273,27 @@ export class FrozenDeltaStream extends FrozenDeltaStreamBase {
 		storageOnlyReason?: string;
 		readonlyConnectionReason?: IConnectionStateChangeReason;
 	}) {
-		super();
+		// Constant clientId: preserves the pre-PR `"storage-only client"` identity for any
+		// consumer that keys off it. The 0x173 replay-assert risk that motivates per-instance
+		// clientIds applies only to the writable variant, where the runtime accumulates dirty
+		// pending ops across reconnects; the read-only variant does not.
+		super(clientIdFrozenDeltaStream, readOnlyClaims);
 		this.storageOnlyReason = options?.storageOnlyReason;
 		this.readonlyConnectionReason = options?.readonlyConnectionReason;
-		// Cast: ITokenClaims requires tenantId/documentId/user/iat/exp/ver, but a frozen
-		// delta stream has no tenant or session to draw real values from — it's a synthetic
-		// in-process connection that never reaches a service. Inventing sentinel values
-		// would imply quorum membership we cannot honor; only `scopes` actually drives
-		// behavior here (DocRead vs DocWrite gates readOnlyInfo). The cast is the honest
-		// representation of "this connection has no claims worth populating."
-		// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-		this.claims = { scopes: [ScopeType.DocRead] } as ITokenClaims;
 	}
 }
 
 /**
- * Writable variant of {@link FrozenDeltaStreamBase}. See base-class JSDoc for the shared
- * inert-connection contract; this variant differs from {@link FrozenDeltaStream} only in its
- * `claims.scopes`, which include `DocWrite` so the container surfaces as writable. Sibling
- * (not subclass) of `FrozenDeltaStream` so `instanceof` cleanly distinguishes the two:
- * `ConnectionManager.sendMessages` matches `WritableFrozenDeltaStream` to short-circuit
- * outbound submits, and `ConnectionManager.readOnlyInfo` matches `FrozenDeltaStream` to force
- * read-only.
+ * Writable variant of {@link FrozenDeltaStreamBase}. Differs from {@link FrozenDeltaStream}
+ * in two ways: claims include `DocWrite` so the container surfaces as writable, and each
+ * instance mints a fresh `clientId` to avoid `pendingStateManager` `0x173` on reconnect with
+ * dirty pending ops. Sibling (not subclass) of `FrozenDeltaStream` so `instanceof` cleanly
+ * distinguishes the two for `ConnectionManager`'s short-circuits.
  */
 export class WritableFrozenDeltaStream extends FrozenDeltaStreamBase {
-	// See FrozenDeltaStream constructor for cast rationale.
-	// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-	public readonly claims: ITokenClaims = {
-		scopes: [ScopeType.DocRead, ScopeType.DocWrite],
-	} as ITokenClaims;
+	constructor() {
+		super(`frozen-delta-stream/${uuid()}`, writableClaims);
+	}
 }
 
 /**

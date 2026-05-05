@@ -127,11 +127,7 @@ describe("No Delta Stream", () => {
 			ConnectionState.Connected,
 			"container.connected",
 		);
-		assert.match(
-			container.clientId ?? "",
-			/^frozen-delta-stream\//,
-			"container.clientId should be a per-instance frozen-delta-stream id",
-		);
+		assert.strictEqual(container.clientId, "storage-only client", "container.clientId");
 		assert.strictEqual(
 			container.readOnlyInfo.readonly,
 			true,
@@ -146,10 +142,10 @@ describe("No Delta Stream", () => {
 
 		const dataObject = (await container.getEntryPoint()) as ITestFluidObject;
 		assert.strictEqual(dataObject.runtime.connected, false, "dataObject.runtime.connected");
-		assert.match(
-			dataObject.runtime.clientId ?? "",
-			/^frozen-delta-stream\//,
-			"dataObject.runtime.clientId should be a per-instance frozen-delta-stream id",
+		assert.strictEqual(
+			dataObject.runtime.clientId,
+			"storage-only client",
+			"dataObject.runtime.clientId",
 		);
 
 		assert.strictEqual(dataObject.root.get("test"), "key", "mapKey");
@@ -197,11 +193,7 @@ describe("No Delta Stream", () => {
 			ConnectionState.Connected,
 			"container.connected",
 		);
-		assert.match(
-			container.clientId ?? "",
-			/^frozen-delta-stream\//,
-			"container.clientId should be a per-instance frozen-delta-stream id",
-		);
+		assert.strictEqual(container.clientId, "storage-only client", "container.clientId");
 		assert.strictEqual(
 			container.readOnlyInfo.readonly,
 			true,
@@ -217,10 +209,10 @@ describe("No Delta Stream", () => {
 
 		const dataObject = (await container.getEntryPoint()) as ITestFluidObject;
 		assert.strictEqual(dataObject.runtime.connected, false, "dataObject.runtime.connected");
-		assert.match(
-			dataObject.runtime.clientId ?? "",
-			/^frozen-delta-stream\//,
-			"dataObject.runtime.clientId should be a per-instance frozen-delta-stream id",
+		assert.strictEqual(
+			dataObject.runtime.clientId,
+			"storage-only client",
+			"dataObject.runtime.clientId",
 		);
 
 		assert.strictEqual(dataObject.root.get("test"), "key", "mapKey");
