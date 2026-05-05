@@ -9,32 +9,27 @@ import { stringToBuffer } from "@fluid-internal/client-utils";
 import type {
 	IDocumentStorageService,
 	ISnapshot,
-	ISnapshotFetchOptions,
 	ISnapshotTree,
 } from "@fluidframework/driver-definitions/internal";
 
 import {
-	captureGroupIdSnapshots,
 	captureReferencedAttachmentBlobs,
 	parseGcSnapshotData,
 	readReferencedSnapshotBlobs,
+	snapshotHasLoadingGroups,
 	type IGcSnapshotData,
 } from "../captureReferencedContents.js";
 
 /** Minimal storage shim whose readBlob is backed by an id → string map. */
 function mockStorage(
 	blobs: Record<string, string>,
-	getSnapshot?: (options: ISnapshotFetchOptions | undefined) => Promise<ISnapshot>,
-): Pick<IDocumentStorageService, "readBlob"> & {
-	getSnapshot?: IDocumentStorageService["getSnapshot"];
-} {
+): Pick<IDocumentStorageService, "readBlob"> {
 	return {
 		readBlob: async (id) => {
 			const content = blobs[id];
 			assert(content !== undefined, `Test storage missing blob ${id}`);
 			return stringToBuffer(content, "utf8");
 		},
-		getSnapshot,
 	};
 }
 
@@ -277,123 +272,56 @@ describe("captureReferencedContents", () => {
 		});
 	});
 
-	describe("captureGroupIdSnapshots", () => {
-		it("returns {} when the driver does not support getSnapshot", async () => {
-			const snapshot = tree({ groupId: "g", trees: {} });
-			const storage = mockStorage({});
-			const result = await captureGroupIdSnapshots(snapshot, storage, "v", "scenario");
-			assert.deepStrictEqual(result, {});
-		});
-
-		it("returns {} when the snapshot has no groupIds", async () => {
-			const snapshot = tree({
-				trees: { ds: tree({}) },
-			});
-			const storage = mockStorage({}, async () => assert.fail("should not fetch groups"));
-			const result = await captureGroupIdSnapshots(snapshot, storage, "v", "scenario");
-			assert.deepStrictEqual(result, {});
-		});
-
-		it("skips groupIds inside unreferenced subtrees", async () => {
+	describe("snapshotHasLoadingGroups", () => {
+		it("returns false for a snapshot with no groupIds anywhere", () => {
 			const snapshot = tree({
 				trees: {
-					live: tree({ groupId: "live-group" }),
+					a: tree({ trees: { nested: tree({}) } }),
+					b: tree({}),
+				},
+			});
+			assert.strictEqual(snapshotHasLoadingGroups(snapshot), false);
+		});
+
+		it("returns true for a groupId on a top-level subtree", () => {
+			const snapshot = tree({
+				trees: { a: tree({ groupId: "g1" }) },
+			});
+			assert.strictEqual(snapshotHasLoadingGroups(snapshot), true);
+		});
+
+		it("returns true for a groupId on a deeply nested subtree", () => {
+			const snapshot = tree({
+				trees: {
+					a: tree({
+						trees: {
+							fine: tree({}),
+							deep: tree({
+								trees: { deeper: tree({ groupId: "g1" }) },
+							}),
+						},
+					}),
+				},
+			});
+			assert.strictEqual(snapshotHasLoadingGroups(snapshot), true);
+		});
+
+		it("ignores groupIds inside unreferenced subtrees", () => {
+			const snapshot = tree({
+				trees: {
 					dead: tree({ unreferenced: true, groupId: "dead-group" }),
 				},
 			});
-			const fetched = new Set<string>();
-			const storage = mockStorage({}, async (opts) => {
-				fetched.add(opts?.loadingGroupIds?.[0] ?? "");
-				return emptyGroupSnapshot("live-tree", 5);
-			});
-			await captureGroupIdSnapshots(snapshot, storage, "v", "scenario");
-			assert.deepStrictEqual([...fetched].sort(), ["live-group"]);
-		});
-
-		it("fetches each unique groupId once and serializes the result", async () => {
-			const snapshot = tree({
-				trees: {
-					a: tree({ groupId: "g1" }),
-					b: tree({ groupId: "g2" }),
-					c: tree({ groupId: "g1" }), // duplicate
-				},
-			});
-			const requestedGroupIds: string[] = [];
-			const requestedVersions: (string | undefined)[] = [];
-			const storage = mockStorage({}, async (opts) => {
-				const groupId = opts?.loadingGroupIds?.[0] ?? "";
-				requestedGroupIds.push(groupId);
-				requestedVersions.push(opts?.versionId);
-				return emptyGroupSnapshot(`${groupId}-tree`, groupId === "g1" ? 11 : 22);
-			});
-			const result = await captureGroupIdSnapshots(snapshot, storage, "v1", "scenario");
-			assert.deepStrictEqual(
-				requestedGroupIds.sort(),
-				["g1", "g2"],
-				"each unique groupId fetched exactly once",
-			);
-			assert(
-				requestedVersions.every((v) => v === "v1"),
-				"versionId from the main snapshot is forwarded to each group fetch",
-			);
-			assert.strictEqual(result.g1?.snapshotSequenceNumber, 11);
-			assert.strictEqual(result.g2?.snapshotSequenceNumber, 22);
-			assert.strictEqual(result.g1?.baseSnapshot.id, "g1-tree");
-			assert.strictEqual(result.g2?.baseSnapshot.id, "g2-tree");
-		});
-
-		it("preserves `this` binding when getSnapshot references instance state", async () => {
-			// Real driver implementations reference `this` (e.g.
-			// LocalDocumentStorageService.getSnapshot uses this.id). If
-			// captureGroupIdSnapshots extracts the method without binding,
-			// calling it detached would TypeError. Use a class-based stub so
-			// the bug would surface.
-			class StorageStub {
-				public readonly idPrefix = "bound";
-				public async readBlob(_id: string): Promise<ArrayBufferLike> {
-					throw new Error("no readBlob in this test");
-				}
-				public async getSnapshot(_opts: ISnapshotFetchOptions): Promise<ISnapshot> {
-					// Touch `this` — throws TypeError if the method was detached.
-					return emptyGroupSnapshot(`${this.idPrefix}-tree`, 7);
-				}
-			}
-			const snapshot = tree({ trees: { a: tree({ groupId: "g1" }) } });
-			const result = await captureGroupIdSnapshots(
-				snapshot,
-				new StorageStub(),
-				"v",
-				"scenario",
-			);
-			assert.strictEqual(result.g1?.baseSnapshot.id, "bound-tree");
-			assert.strictEqual(result.g1?.snapshotSequenceNumber, 7);
-		});
-
-		it("asks the driver not to cache the fetched group snapshot", async () => {
-			const snapshot = tree({ trees: { a: tree({ groupId: "g1" }) } });
-			const seenOpts: ISnapshotFetchOptions[] = [];
-			const storage = mockStorage({}, async (opts) => {
-				assert(opts !== undefined);
-				seenOpts.push(opts);
-				return emptyGroupSnapshot("g1-tree", 3);
-			});
-			await captureGroupIdSnapshots(snapshot, storage, "v", "scenario");
 			assert.strictEqual(
-				seenOpts[0]?.cacheSnapshot,
+				snapshotHasLoadingGroups(snapshot),
 				false,
-				"cacheSnapshot: false avoids polluting the driver cache with transient fetches",
+				"unreferenced subtrees would not be loaded by the runtime, so their groupIds don't count",
 			);
+		});
+
+		it("returns false when the entire snapshot is unreferenced", () => {
+			const snapshot = tree({ unreferenced: true, groupId: "g1" });
+			assert.strictEqual(snapshotHasLoadingGroups(snapshot), false);
 		});
 	});
 });
-
-function emptyGroupSnapshot(id: string, sequenceNumber: number): ISnapshot {
-	return {
-		snapshotTree: { id, blobs: {}, trees: {} },
-		blobContents: new Map(),
-		ops: [],
-		sequenceNumber,
-		latestSequenceNumber: undefined,
-		snapshotFormatV: 1,
-	};
-}

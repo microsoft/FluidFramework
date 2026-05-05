@@ -12,8 +12,6 @@ import type {
 import { readAndParse } from "@fluidframework/driver-utils/internal";
 
 import type { ISerializableBlobContents } from "./containerStorageAdapter.js";
-import type { SerializedSnapshotInfo } from "./serializedStateManager.js";
-import { getDocumentAttributes } from "./utils.js";
 
 // The following names are defined authoritatively in container-runtime and
 // runtime-definitions. They are duplicated here to avoid a loader → runtime
@@ -57,13 +55,6 @@ type BlobReader = (id: string) => Promise<ArrayBufferLike>;
  * keep a typical driver's request pipeline full, low enough to avoid storms.
  */
 const maxReadConcurrency = 32;
-
-/**
- * Upper bound on concurrent whole-snapshot fetches (for loading groups).
- * Each `getSnapshot` call pulls a full tree's worth of metadata, so the limit
- * is deliberately lower than the per-blob limit.
- */
-const maxSnapshotFetchConcurrency = 4;
 
 /**
  * Runs `fn` over `items` with at most `limit` promises in flight. Preserves
@@ -291,75 +282,26 @@ function collectUnreferencedBlobLocalIds(gcData: IGcSnapshotData): Set<string> {
 }
 
 /**
- * Enumerates the set of loading-group ids declared by datastores in the
- * snapshot, skipping any subtree flagged `unreferenced`.
- */
-function collectGroupIds(tree: ISnapshotTree): Set<string> {
-	const ids = new Set<string>();
-	const visit = (node: ISnapshotTree): void => {
-		if (node.unreferenced === true) {
-			return;
-		}
-		if (node.groupId !== undefined) {
-			ids.add(node.groupId);
-		}
-		for (const child of Object.values(node.trees)) {
-			visit(child);
-		}
-	};
-	visit(tree);
-	return ids;
-}
-
-/**
- * Fetches each loading-group snapshot declared by the base snapshot and
- * serializes it into {@link SerializedSnapshotInfo} form. Each group
- * snapshot is walked with the same `unreferenced` filter as the main
- * snapshot.
+ * Returns true if any referenced subtree of `baseSnapshot` declares a
+ * `loadingGroupId`. Subtrees flagged `unreferenced` are skipped — a dead
+ * subtree's groupId would not be loaded by the runtime either.
  *
- * Returns an empty record if the driver lacks `getSnapshot` support or the
- * snapshot has no group ids. Callers can place the result directly into
- * `IPendingContainerState.loadedGroupIdSnapshots`.
+ * `captureFullContainerState` does not yet support loading groups: prefetching
+ * per-group snapshots adds a code path that has no end-to-end coverage and no
+ * known production consumer. Callers use this to fail fast with a `UsageError`
+ * rather than silently producing a pending state that omits group data.
  */
-export async function captureGroupIdSnapshots(
-	baseSnapshot: ISnapshotTree,
-	storage: Pick<IDocumentStorageService, "readBlob"> & {
-		getSnapshot?: IDocumentStorageService["getSnapshot"];
-	},
-	versionId: string | undefined,
-	scenarioName: string,
-): Promise<Record<string, SerializedSnapshotInfo>> {
-	// Bind to preserve `this` when the method is extracted — real driver
-	// implementations (e.g. LocalDocumentStorageService.getSnapshot)
-	// reference `this`, and detaching the method would TypeError in strict
-	// mode. Matches the pattern used by protocolTreeDocumentStorageService.
-	const getSnapshot = storage.getSnapshot?.bind(storage);
-	if (getSnapshot === undefined) {
-		return {};
+export function snapshotHasLoadingGroups(baseSnapshot: ISnapshotTree): boolean {
+	if (baseSnapshot.unreferenced === true) {
+		return false;
 	}
-	const groupIds = collectGroupIds(baseSnapshot);
-	if (groupIds.size === 0) {
-		return {};
+	if (baseSnapshot.groupId !== undefined) {
+		return true;
 	}
-	const result: Record<string, SerializedSnapshotInfo> = {};
-	await mapWithConcurrency([...groupIds], maxSnapshotFetchConcurrency, async (groupId) => {
-		const groupSnapshot = await getSnapshot({
-			cacheSnapshot: false,
-			versionId,
-			loadingGroupIds: [groupId],
-			scenarioName: `${scenarioName}.group`,
-		});
-		const snapshotBlobs = await readReferencedSnapshotBlobs(groupSnapshot, storage);
-		let sequenceNumber = groupSnapshot.sequenceNumber;
-		if (sequenceNumber === undefined) {
-			const groupAttributes = await getDocumentAttributes(storage, groupSnapshot.snapshotTree);
-			sequenceNumber = groupAttributes.sequenceNumber;
+	for (const child of Object.values(baseSnapshot.trees)) {
+		if (snapshotHasLoadingGroups(child)) {
+			return true;
 		}
-		result[groupId] = {
-			baseSnapshot: groupSnapshot.snapshotTree,
-			snapshotBlobs,
-			snapshotSequenceNumber: sequenceNumber,
-		};
-	});
-	return result;
+	}
+	return false;
 }

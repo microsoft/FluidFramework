@@ -39,10 +39,10 @@ import {
 import { v4 as uuid } from "uuid";
 
 import {
-	captureGroupIdSnapshots,
 	captureReferencedAttachmentBlobs,
 	parseGcSnapshotData,
 	readReferencedSnapshotBlobs,
+	snapshotHasLoadingGroups,
 } from "./captureReferencedContents.js";
 import { DebugLogger } from "./debugLogger.js";
 import { createFrozenDocumentServiceFactory } from "./frozenServices.js";
@@ -290,8 +290,7 @@ export interface ICaptureFullContainerStateProps {
  * be handed to {@link loadExistingContainer} as `pendingLocalState`.
  *
  * The output is a self-contained view of the container's referenced graph:
- * the latest snapshot, pre-fetched snapshots for every loading-group
- * declared by datastores, inlined contents of every blob reachable through
+ * the latest snapshot, inlined contents of every blob reachable through
  * referenced subtrees, inlined contents of every referenced attachment blob
  * keyed by storage id, and all ops with sequence numbers after the base
  * snapshot's sequence number (as read from its attributes blob).
@@ -308,6 +307,12 @@ export interface ICaptureFullContainerStateProps {
  * `pendingRuntimeState` is `undefined` — no runtime is instantiated — so the
  * output cannot carry DDS-level in-flight changes. It is intended for state
  * relay, inspection, and durable-state snapshot use cases.
+ *
+ * Containers that declare loading groups are not yet supported: the function
+ * throws `UsageError` if any referenced subtree carries a `groupId`. Group
+ * snapshots would need a separate prefetch + serialization path; until there
+ * is a known consumer and end-to-end coverage, the capture refuses rather
+ * than silently producing pending state that omits group data.
  *
  * Note: if a new snapshot lands between the snapshot fetch and the ops fetch,
  * the returned state may not reflect the very latest snapshot, but remains
@@ -354,12 +359,16 @@ export async function captureFullContainerState({
 		}
 
 		const baseSnapshot = getSnapshotTree(snapshot);
+		if (snapshotHasLoadingGroups(baseSnapshot)) {
+			throw new UsageError(
+				"captureFullContainerState does not yet support containers with loading groups",
+			);
+		}
 		const attributes = await getDocumentAttributes(storage, baseSnapshot);
 		const gcData = await parseGcSnapshotData(baseSnapshot, storage);
-		const [structuralBlobs, attachmentBlobs, loadedGroupIdSnapshots] = await Promise.all([
+		const [structuralBlobs, attachmentBlobs] = await Promise.all([
 			readReferencedSnapshotBlobs(snapshot, storage),
 			captureReferencedAttachmentBlobs(baseSnapshot, storage, gcData),
-			captureGroupIdSnapshots(baseSnapshot, storage, version?.id, "captureFullContainerState"),
 		]);
 		const snapshotBlobs = { ...structuralBlobs, ...attachmentBlobs };
 
@@ -382,8 +391,7 @@ export async function captureFullContainerState({
 			attached: true,
 			baseSnapshot,
 			snapshotBlobs,
-			loadedGroupIdSnapshots:
-				Object.keys(loadedGroupIdSnapshots).length > 0 ? loadedGroupIdSnapshots : undefined,
+			loadedGroupIdSnapshots: undefined,
 			pendingRuntimeState: undefined,
 			savedOps,
 			url: resolvedUrl.url,
