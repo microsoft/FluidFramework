@@ -197,7 +197,12 @@ Designation is the act of officially marking a Fluid Framework release as a new 
 
 A new checkpoint should be designated no less than 6 months after the previous one. It should also land on a new major or beta boundary (e.g., `3.0.0`, `2.100.0`), so the prior checkpoint's range can extend cleanly to the new boundary.
 
-**To designate a new checkpoint:** update the [Compatibility Checkpoints](./CompatibilityCheckpoints.md) document and include a changeset noting the new boundary so it appears in the release notes.
+**To designate a new checkpoint:**
+
+1. Update the table in [`CompatibilityCheckpoints.md`](./CompatibilityCheckpoints.md).
+2. Mirror the change in [`packages/test/test-version-utils/src/checkpoints.ts`](./packages/test/test-version-utils/src/checkpoints.ts).
+3. From `packages/test/test-version-utils`, run `pnpm run update-compat-versions` to update the installed versions used by e2e tests.
+4. Include a changeset noting the new boundary so it appears in the release notes.
 
 ## Tightening Runtime Enforcement
 
@@ -219,9 +224,10 @@ To tighten runtime enforcement:
    (e.g., `2.x` → `3.x`), also narrow the `MinimumVersionForCollab` type in
    [compatibilityDefinitions.ts](./packages/runtime/runtime-definitions/src/compatibilityDefinitions.ts)
    to drop the now-unsupported major from its definition.
-3. **Update the e2e test matrix:** The `FullCompat` version matrix is derived
-   from the currently supported checkpoints — update it so tests only run
-   against versions within the new window.
+3. **Update the e2e test matrix:** The `FullCompat` and cross-client matrices
+   are derived from the in-repo Compatibility Checkpoints data and follow
+   whichever checkpoints are currently in the supported window automatically;
+   see [Designating a New Compatibility Checkpoint](#designating-a-new-compatibility-checkpoint).
 
 ## Testing
 
@@ -230,25 +236,22 @@ variations using `describeCompat()` with `"FullCompat"`. The variations test
 cross-client compatibility scenarios by using one version of the Fluid runtime for
 creating containers and a different version for loading containers.
 
-**Example:** A test may generate the following variations for cross-client
-compatibility scenarios:
-
-> **Note:** The version labels below (e.g., "N-1 fast train") reflect the current
-> test infrastructure naming. These labels will be updated to reflect
-> checkpoint-based versioning as part of the checkpoint adoption work.
+**Example:** With current build `2.101.0` (N) and in-window prior Compatibility
+Checkpoints `2.60.0` (CC-3), `2.0.9` (CC-2), and `1.4.0` (CC-1), a SharedCell
+test generates these cross-client variations:
 
 ```
-compat cross-client - create with 2.43.0 (N) + load with 2.33.2 (N-1 fast train)
+compat cross-client - create with 2.101.0 (N) + load with 2.60.0 (CC-3)
   ✔ Example test
-compat cross-client - create with 2.43.0 (N) + load with 2.23.0 (N-2 fast train)
+compat cross-client - create with 2.101.0 (N) + load with 2.0.9 (CC-2)
   ✔ Example test
-compat cross-client - create with 2.43.0 (N) + load with 1.4.0 (N-1 slow train/LTS)
+compat cross-client - create with 2.101.0 (N) + load with 1.4.0 (CC-1)
   ✔ Example test
-compat cross-client - create with 2.33.2 (N-1 fast train) + load with 2.43.0 (N)
+compat cross-client - create with 2.60.0 (CC-3) + load with 2.101.0 (N)
   ✔ Example test
-compat cross-client - create with 2.23.0 (N-2 fast train) + load with 2.43.0 (N)
+compat cross-client - create with 2.0.9 (CC-2) + load with 2.101.0 (N)
   ✔ Example test
-compat cross-client - create with 1.4.0 (N-1 slow train/LTS) + load with 2.43.0 (N)
+compat cross-client - create with 1.4.0 (CC-1) + load with 2.101.0 (N)
   ✔ Example test
 ```
 

@@ -6,13 +6,15 @@
 /**
  * Update script for the compat test workspaces.
  *
- * Run this script after a Fluid Framework version bump as part of the release process:
+ * Run this script after a Fluid Framework version bump, or after a new compatibility checkpoint is designated, as
+ * part of the release process:
  *
  *   pnpm run update-compat-versions
  *
  * The script:
  *   1. Reads the current package version from `src/packageVersion.ts`.
- *   2. Queries the npm registry to resolve N-1, N-2, and all full back-compat versions.
+ *   2. Queries the npm registry to resolve the in-window prior Compatibility Checkpoints
+ *      (see `src/checkpoints.ts`) and all full back-compat versions.
  *   3. Writes `compat-workspaces/generated-versions.cjs` with the resolved exact versions.
  *   4. Creates or updates per-version `package.json` files in `compat-workspaces/full/`.
  *   5. Removes version directories that are no longer needed.
@@ -48,6 +50,12 @@ import {
 	numOfInternalMajorsBeforePublic2dot0,
 	oldestCompatibleVersion,
 } from "../src/compatConfig.js";
+import {
+	checkpointResolutionRange,
+	checkpoints,
+	getCurrentCheckpoint,
+	getInWindowPriorCheckpoints,
+} from "../src/checkpoints.js";
 
 // ---------------------------------------------------------------------------
 // Configuration
@@ -106,17 +114,6 @@ function tryResolveRangeViaRegistry(rangeSpec: string): string | undefined {
  */
 function resolveVersionForMinorDelta(pkgVer: string, delta: number): string | undefined {
 	const rangeSpec = calculateRequestedRange(pkgVer, delta);
-	return tryResolveRangeViaRegistry(rangeSpec);
-}
-
-/**
- * Resolves a public-major delta relative to `pkgVer` against the npm registry.
- * Unlike {@link resolveVersionForMinorDelta}, this adjusts by public major version
- * (e.g. delta -1 from any 2.x resolves to the latest 1.x), used for cross-client
- * slow-train compat testing.
- */
-function resolveVersionForMajorDelta(pkgVer: string, delta: number): string | undefined {
-	const rangeSpec = calculateRequestedRange(pkgVer, delta, true /* adjustPublicMajor */);
 	return tryResolveRangeViaRegistry(rangeSpec);
 }
 
@@ -225,46 +222,53 @@ async function main(): Promise<void> {
 	};
 	console.log(`Current package version: ${pkgVer}`);
 
-	// Resolve standard versions
-	console.log("\nResolving standard versions...");
-	const nMinus1 = resolveVersionForMinorDelta(pkgVer, -1);
-	const nMinus2 = resolveVersionForMinorDelta(pkgVer, -2);
-	if (nMinus1 === undefined || nMinus2 === undefined) {
-		throw new Error("Could not resolve N-1 or N-2. Check registry connectivity.");
+	// Resolve the in-window prior Compatibility Checkpoints that drive the
+	// cross-client and layer-compat e2e matrices.
+	console.log("\nResolving in-window compatibility checkpoints...");
+	const currentCheckpoint = getCurrentCheckpoint(pkgVer);
+	if (currentCheckpoint === undefined) {
+		throw new Error(
+			`Could not map package version ${pkgVer} to a compatibility checkpoint. ` +
+				`Known checkpoints: ${checkpoints.map((c) => `${c.name}@${c.openingVersion}`).join(", ")}.`,
+		);
 	}
+	console.log(
+		`  Current: ${currentCheckpoint.name} (opens at ${currentCheckpoint.openingVersion})`,
+	);
 
-	console.log(`  n-1: ${nMinus1}`);
-	console.log(`  n-2: ${nMinus2}`);
-	console.log(`  ocv: ${oldestCompatibleVersion}`);
-
-	// seenVersions tracks all resolved versions to avoid duplicates across tiers.
-	const seenVersions = new Set([nMinus1, nMinus2, oldestCompatibleVersion]);
-
-	// Resolve cross-client "slow train" versions (N-1 and N-2 with adjustPublicMajor=true).
-	// These are the previous public-major releases used when testing cross-client compat with
-	// customers that only adopt public majors (e.g. 1.x when current is 2.x).
-	console.log("\nResolving cross-client slow-train versions...");
-	const crossClientVersions: string[] = [];
-	for (const delta of [-1, -2]) {
-		const resolved = resolveVersionForMajorDelta(pkgVer, delta);
-		if (resolved === undefined || !semver.gte(resolved, "1.0.0")) {
-			console.log(`  Slow-train N${delta}: not found or below 1.0.0, skipping`);
-			continue;
-		}
-		if (seenVersions.has(resolved)) {
-			console.log(`  Slow-train N${delta}: ${resolved} (duplicate, skipping)`);
+	const checkpointVersions: string[] = [];
+	const seenVersions = new Set<string>([oldestCompatibleVersion]);
+	for (const checkpoint of getInWindowPriorCheckpoints(currentCheckpoint)) {
+		const range = checkpointResolutionRange(checkpoint);
+		const resolved = tryResolveRangeViaRegistry(range);
+		if (resolved === undefined || seenVersions.has(resolved)) {
+			console.log(`  ${checkpoint.name} (${range}): ${resolved ?? "not found"} (skipping)`);
 			continue;
 		}
 		seenVersions.add(resolved);
-		crossClientVersions.push(resolved);
-		console.log(`  Slow-train N${delta}: ${resolved}`);
+		checkpointVersions.push(resolved);
+		console.log(`  ${checkpoint.name} (${range}): ${resolved}`);
 	}
+	console.log(`  ocv: ${oldestCompatibleVersion}`);
 
-	// Resolve full back-compat versions (deltas -3 through -(NUM_INTERNAL_MAJORS_BEFORE_PUBLIC_2 - 1))
+	// Resolve the layer-compat adjacent-minor version (N-1). Used by `defaultVersionsForLayerCompat`,
+	// which keeps adjacent-minor semantics because Fluid's intra-client layer-compat checks are
+	// stricter than the cross-client window.
+	console.log("\nResolving layer-compat (N-1)...");
+	const nMinus1 = resolveVersionForMinorDelta(pkgVer, -1);
+	if (nMinus1 === undefined) {
+		throw new Error("Could not resolve N-1. Check registry connectivity.");
+	}
+	if (!seenVersions.has(nMinus1)) {
+		seenVersions.add(nMinus1);
+	}
+	console.log(`  N-1: ${nMinus1}`);
+
+	// Resolve full back-compat versions (deltas -2 through -(NUM_INTERNAL_MAJORS_BEFORE_PUBLIC_2 - 1))
 	console.log("\nResolving full back-compat versions...");
 	const fullAdditional: string[] = [];
 
-	for (let delta = -3; delta > -numOfInternalMajorsBeforePublic2dot0; delta--) {
+	for (let delta = -2; delta > -numOfInternalMajorsBeforePublic2dot0; delta--) {
 		const resolved = resolveVersionForMinorDelta(pkgVer, delta);
 		if (resolved === undefined) {
 			console.warn(`  Delta ${delta}: not found, skipping`);
@@ -292,9 +296,8 @@ async function main(): Promise<void> {
 	// allVersions is the single set of versions installed in the workspace and recorded in the manifest.
 	const allVersions = new Set([
 		nMinus1,
-		nMinus2,
+		...checkpointVersions,
 		oldestCompatibleVersion,
-		...crossClientVersions,
 		...explicitVersions,
 		...fullAdditional,
 	]);
