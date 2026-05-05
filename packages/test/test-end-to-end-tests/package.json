@@ -83,7 +83,7 @@
 		"@fluid-private/test-loader-utils": "workspace:~",
 		"@fluid-private/test-pairwise-generator": "workspace:~",
 		"@fluid-private/test-version-utils": "workspace:~",
-		"@fluid-tools/benchmark": "^0.58.0",
+		"@fluid-tools/benchmark": "^0.59.0",
 		"@fluidframework/agent-scheduler": "workspace:~",
 		"@fluidframework/aqueduct": "workspace:~",
 		"@fluidframework/cell": "workspace:~",
@@ -125,7 +125,7 @@
 		"semver": "^7.7.1",
 		"sinon": "^18.0.1",
 		"start-server-and-test": "^2.0.3",
-		"tinylicious": "^7.0.0",
+		"tinylicious": "^7.0.1",
 		"uuid": "^11.1.0"
 	},
 	"devDependencies": {
