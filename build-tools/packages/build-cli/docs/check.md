@@ -218,16 +218,21 @@ Audits the repo's lockfile against pnpm's `no-downgrade` trust policy.
 
 ```
 USAGE
-  $ flub check trustPolicy [-v | --quiet] [--json] [--keep] [--tempDir <value>]
+  $ flub check trustPolicy [--json] [-v | --quiet] [--keep] [--path <value>] [--tempDir <value>]
 
 FLAGS
-  --json             Emit JSON instead of a text report.
   --keep             Do not delete the scratch workspace after running.
-  --tempDir=<value>  Scratch workspace directory (default: <repo-root>/.trust-audit-temp).
+  --path=<value>     Path inside the workspace to audit. The most specific workspace (e.g. a release group like
+                     `server/routerlicious` rather than the repo root) containing this path is used. Defaults to the
+                     current working directory.
+  --tempDir=<value>  Scratch workspace directory (default: <workspace>/.trust-audit-temp).
 
 LOGGING FLAGS
   -v, --verbose  Enable verbose logging.
       --quiet    Disable all logging.
+
+GLOBAL FLAGS
+  --json  Format output as json.
 
 DESCRIPTION
   Audits the repo's lockfile against pnpm's `no-downgrade` trust policy.
