@@ -26,7 +26,7 @@ function mockStorage(
 ): Pick<IDocumentStorageService, "readBlob"> {
 	return {
 		readBlob: async (id) => {
-			const content = blobs[id];
+			const content: string | undefined = blobs[id];
 			assert(content !== undefined, `Test storage missing blob ${id}`);
 			return stringToBuffer(content, "utf8");
 		},

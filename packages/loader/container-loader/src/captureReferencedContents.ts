@@ -22,9 +22,9 @@ import type { ISerializableBlobContents } from "./containerStorageAdapter.js";
  * values; do not change them in isolation.
  *
  * Authoritative sources:
- *   packages/runtime/container-runtime/src/blobManager/blobManagerSnapSum.ts (blobsTreeName, redirectTableBlobName)
- *   packages/runtime/container-runtime/src/blobManager/blobManager.ts (blobManagerBasePath)
- *   packages/runtime/runtime-definitions/src/garbageCollectionDefinitions.ts (gcTreeKey, gcBlobPrefix, gcTombstoneBlobKey, gcDeletedBlobKey)
+ * - `blobsTreeName`, `redirectTableBlobName`: `packages/runtime/container-runtime/src/blobManager/blobManagerSnapSum.ts`
+ * - `blobManagerBasePath`: `packages/runtime/container-runtime/src/blobManager/blobManager.ts`
+ * - `gcTreeKey`, `gcBlobPrefix`, `gcTombstoneBlobKey`, `gcDeletedBlobKey`: `packages/runtime/runtime-definitions/src/garbageCollectionDefinitions.ts`
  *
  * @internal
  */
@@ -110,7 +110,7 @@ export async function parseGcSnapshotData(
 	baseSnapshot: ISnapshotTree,
 	storage: Pick<IDocumentStorageService, "readBlob">,
 ): Promise<IGcSnapshotData | undefined> {
-	const gcSnapshotTree = baseSnapshot.trees[gcTreeKey];
+	const gcSnapshotTree: ISnapshotTree | undefined = baseSnapshot.trees[gcTreeKey];
 	if (gcSnapshotTree === undefined) {
 		return undefined;
 	}
@@ -221,7 +221,7 @@ export async function captureReferencedAttachmentBlobs(
 	storage: Pick<IDocumentStorageService, "readBlob">,
 	gcData: IGcSnapshotData | undefined,
 ): Promise<ISerializableBlobContents> {
-	const blobsTree = baseSnapshot.trees[blobsTreeName];
+	const blobsTree: ISnapshotTree | undefined = baseSnapshot.trees[blobsTreeName];
 	if (blobsTree === undefined) {
 		return {};
 	}
@@ -257,7 +257,7 @@ async function readRedirectTable(
 	storage: Pick<IDocumentStorageService, "readBlob">,
 ): Promise<Map<string, string>> {
 	const redirectTable = new Map<string, string>();
-	const tableBlobId = blobsTree.blobs[redirectTableBlobName];
+	const tableBlobId: string | undefined = blobsTree.blobs[redirectTableBlobName];
 	if (tableBlobId !== undefined) {
 		const entries = await readAndParse<[string, string][]>(storage, tableBlobId);
 		for (const [localId, storageId] of entries) {
