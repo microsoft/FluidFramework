@@ -88,8 +88,10 @@ If you find NO high-confidence issues:
 
 ## Instructions
 
-1. Read the PR diff from `pr-diff.patch` in the current directory
-2. For performance-critical changes, read the full file to understand the hot path context — callers, loop structures, frequency of invocation
-3. Focus on code that runs per-operation, per-event, or in loops — not one-time setup
-4. Apply the high-confidence gate to every finding before including it
-5. Write your review to `review-performance.json`
+1. Read the prepared PR diff from `pr-diff.patch` in the current directory
+2. Read `changed-files.txt` when you need the complete changed-file list
+3. Do not request or run shell/Git commands; all review context available to you has been precomputed by the workflow
+4. For performance-critical changes, read the full file to understand the hot path context — callers, loop structures, frequency of invocation
+5. Focus on code that runs per-operation, per-event, or in loops — not one-time setup
+6. Apply the high-confidence gate to every finding before including it
+7. Write your review to `review-performance.json`
