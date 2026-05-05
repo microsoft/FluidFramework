@@ -210,6 +210,12 @@ export default class CheckTrustPolicyCommand extends BaseCommandWithBuildProject
 		}
 
 		const elapsedSec = Number(((Date.now() - start) / 1000).toFixed(1));
+
+		// Flatten `violationsByName` into a stable, deterministic array so the
+		// printed list and the JSON payload don't reorder across runs (Map and
+		// Set both preserve insertion order, which depends on pnpm's emission
+		// order across iterations). Sort by name, then by version within each
+		// name. This is the only consumer of `violationsByName` after the loop.
 		const violations: PinnedVersion[] = [];
 		for (const name of [...violationsByName.keys()].sort()) {
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -219,26 +225,26 @@ export default class CheckTrustPolicyCommand extends BaseCommandWithBuildProject
 		}
 		const exitCode = lastResult?.code ?? 2;
 
-		this.log(`Audited via pnpm install in: ${tempDir}`);
-		this.log(`  Final pnpm exit code: ${exitCode}`);
-		this.log(`  Iterations: ${iteration}`);
-		this.log(`  Unique pinned versions: ${pinned.length}`);
-		this.log(`  Elapsed: ${elapsedSec}s`);
+		this.info(`Audited via pnpm install in: ${tempDir}`);
+		this.info(`  Final pnpm exit code: ${exitCode}`);
+		this.info(`  Iterations: ${iteration}`);
+		this.info(`  Unique pinned versions: ${pinned.length}`);
+		this.info(`  Elapsed: ${elapsedSec}s`);
 		if (violations.length === 0) {
 			if (auditIncomplete) {
-				this.log(
+				this.info(
 					"\nAudit incomplete: pnpm exited non-zero but no trust-policy events were emitted. Re-run with --verbose to see pnpm's full output.",
 				);
 			} else {
-				this.log("\nNo trust-policy violations detected.");
+				this.info("\nNo trust-policy violations detected.");
 			}
 		} else {
-			this.log(`\n${violations.length} trust-policy violation(s):\n`);
+			this.info(`\n${violations.length} trust-policy violation(s):\n`);
 			for (const { name, version } of violations) {
-				this.log(`  ${name}@${version}`);
+				this.info(`  ${name}@${version}`);
 			}
 			if (auditIncomplete) {
-				this.log(
+				this.info(
 					"\nAudit incomplete: pnpm exited non-zero after the violations above without surfacing a new event. There may be more violations. Re-run with --verbose to see pnpm's full output.",
 				);
 			}
