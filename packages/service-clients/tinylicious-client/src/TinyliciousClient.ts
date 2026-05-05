@@ -129,7 +129,7 @@ export class TinyliciousClient {
 	 * Accesses the existing container given its unique ID in the tinylicious server.
 	 * @param id - Unique ID of the container.
 	 * @param containerSchema - Container schema used to access data objects in the container.
-	 * @param compatibilityMode - Minimum framework version required for collaboration. Accepts
+	 * @param compatibilityMode - Minimum Fluid Framework version required for collaboration. Accepts
 	 * either a `MinimumVersionForCollab` semver string (e.g. `"1.0.0"`, `"2.0.0"`) or a legacy
 	 * {@link @fluidframework/fluid-static#CompatibilityMode} value. The legacy values `"1"` and
 	 * `"2"` are **deprecated** equivalents of `"1.0.0"` and `"2.0.0"`.

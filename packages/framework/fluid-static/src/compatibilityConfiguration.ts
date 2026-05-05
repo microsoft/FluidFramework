@@ -8,14 +8,14 @@ import type { MinimumVersionForCollab } from "@fluidframework/runtime-definition
 import { gte } from "semver-ts";
 
 /**
- * The CompatibilityMode (minVersionForCollab) determines the set of runtime options to use.
- * For a 1.x minVersionForCollab we support full interop with true 1.x clients.
- * For a 2.x minVersionForCollab we only support interop with 2.x clients.
+ * The `minVersionForCollab` determines the set of runtime options to use.
+ * For a 1.x `minVersionForCollab` we support full interop with true 1.x clients.
+ * For a 2.x `minVersionForCollab` we only support interop with 2.x clients.
  *
- * @privateRemarks This is for when we want to use a different set of defaults than the defaults for a given
- * minVersionForCollab (i.e. `enableRuntimeIdCompressor` below).
+ * @privateRemarks The purpose of this map is to use a different set of defaults
+ * than what the runtime normally uses based on a given `minVersionForCollab` (e.g. `enableRuntimeIdCompressor` below).)
  */
-export const minVersionForCollabToDefaultRuntimeOptions: Record<
+const minVersionForCollabToDefaultRuntimeOptions: Record<
 	"1" | "2",
 	IContainerRuntimeOptionsInternal
 > = {
@@ -29,7 +29,7 @@ export const minVersionForCollabToDefaultRuntimeOptions: Record<
 };
 
 /**
- * Determines default runtime options set for the given minVersionForCollab.
+ * Determines default runtime options for the given minVersionForCollab.
  *
  * @internal
  */

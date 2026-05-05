@@ -141,7 +141,7 @@ export class AzureClient {
 	 * @typeparam TContainerSchema - Used to infer the the type of 'initialObjects' in the returned container.
 	 * (normally not explicitly specified.)
 	 * @param containerSchema - Container schema for the new container.
-	 * @param compatibilityMode - Minimum framework version required for collaboration. Accepts
+	 * @param compatibilityMode - Minimum Fluid Framework version required for collaboration. Accepts
 	 * either a `MinimumVersionForCollab` semver string (e.g. `"1.0.0"`, `"2.0.0"`) or a legacy
 	 * {@link @fluidframework/fluid-static#CompatibilityMode} value. The legacy values `"1"` and
 	 * `"2"` are **deprecated** equivalents of `"1.0.0"` and `"2.0.0"`.

@@ -209,7 +209,7 @@ export function createTreeContainerRuntimeFactory(props: {
 	readonly schema: TreeContainerSchema;
 
 	/**
-	 * Minimum framework version required for collaboration. Accepts a
+	 * Minimum Fluid Framework version required for collaboration. Accepts a
 	 * {@link @fluidframework/runtime-definitions#MinimumVersionForCollab} semver string;
 	 * the legacy {@link CompatibilityMode} values `"1"` and `"2"` are **deprecated**
 	 * equivalents of `"1.0.0"` and `"2.0.0"`.
