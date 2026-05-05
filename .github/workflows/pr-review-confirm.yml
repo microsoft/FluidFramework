@@ -146,20 +146,6 @@ jobs:
 
           echo "Triggered fleet for PR #${PR_NUMBER} with reviewers: ${SELECTED}"
 
-      - name: Post acknowledgement
-        if: |
-          steps.authz.outputs.require-result == 'true' &&
-          steps.empty-check.outputs.skip == 'false'
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          REPO: ${{ github.repository }}
-          PR_NUMBER: ${{ steps.pr.outputs.pr_number }}
-          SELECTED: ${{ steps.checkboxes.outputs.selected }}
-        run: |
-          NAMES=$(python3 .github/scripts/pr_review_propose.py format-names "$SELECTED")
-          gh pr comment "${PR_NUMBER}" --repo "${REPO}" \
-            --body "On it! Starting review with: ${NAMES}"
-
       # Reset the Start review checkbox so the next tick triggers a re-review.
       # Runs whether or not we dispatched (empty-selection paths reset too —
       # otherwise the user would be stuck with a checked Start box and would

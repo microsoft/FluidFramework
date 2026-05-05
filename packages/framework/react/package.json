@@ -102,6 +102,7 @@
 		"@fluidframework/fluid-static": "workspace:~",
 		"@fluidframework/runtime-definitions": "workspace:~",
 		"@fluidframework/shared-object-base": "workspace:~",
+		"@fluidframework/telemetry-utils": "workspace:~",
 		"@fluidframework/tree": "workspace:~",
 		"react": "^18.3.1",
 		"react-dom": "^18.3.1"
@@ -114,6 +115,7 @@
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "catalog:buildTools",
 		"@fluidframework/eslint-config-fluid": "catalog:eslint",
+		"@fluidframework/test-runtime-utils": "workspace:~",
 		"@fluidframework/tinylicious-client": "workspace:~",
 		"@microsoft/api-extractor": "7.58.1",
 		"@testing-library/react": "^16.3.0",
