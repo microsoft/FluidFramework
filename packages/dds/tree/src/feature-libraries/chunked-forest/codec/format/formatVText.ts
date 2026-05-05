@@ -22,10 +22,17 @@ import { shapesV2 } from "./formatV2.js";
  * to a shape that pins `bold` to a constant `true` — every node decoded with the
  * specialization contributes zero stream tokens for `bold`.
  *
- * Merge rules: `type` is always inherited from the resolved base. `fields`, `value`, and
- * `extraFields` are inherited unless the specialization sets them as own properties — to
- * inherit, the property must be omitted; setting it explicitly (even to `false` or
- * `undefined`) is treated as an override.
+ * Specialization rules: `type` is always inherited from the resolved base. `fields` overrides
+ * apply per-key: entries whose key matches a base field replace that entry's shape index in
+ * place; entries with new keys are appended after all base fields. For `value` and
+ * `extraFields`: if the property is absent on the wire, the base's value is inherited; if
+ * `null`, the resulting shape has no value / no extraFields (explicit clear); any other value
+ * replaces the base's.
+ *
+ * The `null` sentinel exists because JSON does not preserve `undefined`-valued properties,
+ * so override-vs-inherit cannot be discriminated by property presence after persistence.
+ *
+ * Decoded by {@link applySpecialization}.
  */
 export type EncodedSpecializedNodeShape = Static<typeof EncodedSpecializedNodeShape>;
 export const EncodedSpecializedNodeShape = Type.Object(
@@ -42,17 +49,19 @@ export const EncodedSpecializedNodeShape = Type.Object(
 		 * matches a base field replace that field's shape index in place; entries with new
 		 * keys are appended after all base fields, in the order given here. Base field order
 		 * is preserved — this is the stream consumption order at decode time, so encoders
-		 * must serialize per-field tokens in the merged order, not in this list's order.
+		 * must serialize per-field tokens in the resulting field order, not in this list's order.
 		 */
 		fields: Type.Optional(Type.Array(EncodedFieldShape)),
 		/**
-		 * If present, replaces the resolved base's value shape.
+		 * If absent, inherits the resolved base's value shape. If `null`, the resulting shape
+		 * has no value shape (explicit clear). Any other value replaces the base's.
 		 */
-		value: Type.Optional(EncodedValueShape),
+		value: Type.Optional(Type.Union([EncodedValueShape, Type.Null()])),
 		/**
-		 * If present, replaces the resolved base's extraFields shape.
+		 * If absent, inherits the resolved base's extraFields shape. If `null`, the resulting
+		 * shape has no extraFields (explicit clear). Any other value replaces the base's.
 		 */
-		extraFields: Type.Optional(ShapeIndex),
+		extraFields: Type.Optional(Type.Union([ShapeIndex, Type.Null()])),
 	},
 	{ additionalProperties: false },
 );

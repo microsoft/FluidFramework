@@ -47,13 +47,13 @@ import {
 	type EncodedChunkShapeVTextExperimental,
 	type EncodedFieldBatchV1OrV2,
 	type EncodedFieldBatchV2,
-	type EncodedFieldShape,
 	type EncodedIncrementalChunkShape,
 	type EncodedInlineArrayShape,
 	type EncodedNestedArrayShape,
 	type EncodedNodeShape,
 	type EncodedSpecializedNodeShape,
 	type EncodedValueShape,
+	type ShapeIndex,
 	SpecialField,
 	supportsIncrementalEncoding,
 } from "./format/index.js";
@@ -101,99 +101,111 @@ export function decode(
 }
 
 /**
- * Resolves `shapeIndex` to a fully-merged {@link EncodedNodeShape}, normalizing away any
+ * Resolves `shapeIndex` to a fully-resolved {@link EncodedNodeShape}, normalizing away any
  * specialized node shapes (`f`) along the way by applying their overlays via
  * {@link applySpecialization} until a concrete node shape is reached.
+ *
+ * @param input - The index of the shape to resolve, which must be a concrete or specialized node shape.
+ * @param context - The decoding context containing the shape definitions.
+ * @param pendingResolution - (Internal) A set of shape indices visited so far in the current resolution chain, used to detect cycles in the specialization chain. Most callers should not provide this argument.
  *
  * @remarks
  * Exported for testing.
  */
 export function normalizeToNodeShape(
-	shapeIndex: number,
+	input: EncodedNodeShape | EncodedSpecializedNodeShape,
 	context: DecoderContext<EncodedChunkShape>,
-	visited: Set<number> = new Set(),
+	pendingResolution: Set<ShapeIndex> = new Set(),
 ): EncodedNodeShape {
-	assert(!visited.has(shapeIndex), "cyclic specialized node shape chain");
-	visited.add(shapeIndex);
-	const encoded = context.shapes[shapeIndex];
-	assert(encoded !== undefined, "shape index out of bounds");
-	// Persisted shape variants are discriminated by single-letter property names (see
-	// `EncodedChunkShape`): `c` is a concrete node shape, `f` is a specialized node shape that
-	// derives from another shape via overrides. Other variants (`a`/`b`/`d`/`e`) are
-	// non-node shapes and cannot appear in a specialization chain.
-	if (encoded.c !== undefined) {
-		return encoded.c;
+	if (!("base" in input)) {
+		return input;
 	}
+
+	const baseIndex = input.base;
+	assert(!pendingResolution.has(baseIndex), "cyclic specialized node shape chain");
+	pendingResolution.add(baseIndex);
+	const encoded = context.shapes[baseIndex];
+	assert(encoded !== undefined, "shape index out of bounds");
+
+	const baseShape = encoded.c ?? ("f" in encoded ? encoded.f : undefined);
 	assert(
-		"f" in encoded && encoded.f !== undefined,
-		"shape in specialization chain must be a node shape (c) or specialized node shape (f)",
+		baseShape !== undefined,
+		"shape at index must be a concrete (c) or specialized (f) node shape",
 	);
+
 	return applySpecialization(
-		normalizeToNodeShape(encoded.f.base, context, visited),
-		encoded.f,
+		normalizeToNodeShape(baseShape, context, pendingResolution),
+		input,
 		context,
 	);
 }
 
 /**
- * Produces a merged {@link EncodedNodeShape} by overlaying `spec` onto `base`.
+ * Produces a specialized {@link EncodedNodeShape} by overlaying `overrides` onto `base`.
  *
- * `type` is always inherited from `base`. `value` and `extraFields` are inherited from `base`
- * unless `spec` includes them as own properties (regardless of value), in which case `spec`'s
- * value wins.
- *
- * For `fields`, override entries whose key matches a key in `base.fields` replace that entry's
- * shape index in place; override entries with keys not present in `base` are appended at the end
- * in `spec.fields` order. Field order from `base` is preserved.
+ * See {@link EncodedSpecializedNodeShape} for the override/inherit/clear semantics.
  *
  * @remarks
  * Exported for testing.
  */
 export function applySpecialization(
 	base: EncodedNodeShape,
-	spec: EncodedSpecializedNodeShape,
+	overrides: EncodedSpecializedNodeShape,
 	context: DecoderContext<EncodedChunkShape>,
 ): EncodedNodeShape {
-	const overrides = new Map<FieldKey, number>();
-	for (const [keyEncoded, shapeIndex] of spec.fields ?? []) {
+	const fields = [...(base.fields ?? [])];
+	const indexFromKey = new Map<FieldKey, number>();
+	for (const [i, [keyEncoded]] of fields.entries()) {
 		const key = context.identifier<FieldKey>(keyEncoded);
-		assert(!overrides.has(key), "duplicate field key in specialized node shape");
-		overrides.set(key, shapeIndex);
+		assert(!indexFromKey.has(key), "duplicate field key in base node shape");
+		indexFromKey.set(key, i);
 	}
 
-	const mergedFields: EncodedFieldShape[] = [];
-	const overriddenKeys = new Set<FieldKey>();
-	const baseKeys = new Set<FieldKey>();
-	for (const [keyEncoded, shapeIndex] of base.fields ?? []) {
+	// Replace fields in base with overrides, append new keys in overrides in the order they are specified.
+	const seenOverrideKeys = new Set<FieldKey>();
+	for (const [keyEncoded, shapeIndex] of overrides.fields ?? []) {
 		const key = context.identifier<FieldKey>(keyEncoded);
-		assert(!baseKeys.has(key), "duplicate field key in base node shape");
-		baseKeys.add(key);
-		const overrideShape = overrides.get(key);
-		if (overrideShape === undefined) {
-			mergedFields.push([keyEncoded, shapeIndex]);
+		assert(!seenOverrideKeys.has(key), "duplicate field key in specialized node shape");
+		seenOverrideKeys.add(key);
+		const existingIndex = indexFromKey.get(key);
+		if (existingIndex === undefined) {
+			fields.push([keyEncoded, shapeIndex]);
 		} else {
-			overriddenKeys.add(key);
-			mergedFields.push([keyEncoded, overrideShape]);
-		}
-	}
-	for (const [keyEncoded, shapeIndex] of spec.fields ?? []) {
-		if (!overriddenKeys.has(context.identifier<FieldKey>(keyEncoded))) {
-			mergedFields.push([keyEncoded, shapeIndex]);
+			const index = fields[existingIndex];
+			assert(index !== undefined, "expected existing field index");
+			fields[existingIndex] = [index[0], shapeIndex];
 		}
 	}
 
 	return {
 		type: base.type,
-		value: "value" in spec ? spec.value : base.value,
-		fields: mergedFields.length > 0 ? mergedFields : undefined,
-		extraFields: "extraFields" in spec ? spec.extraFields : base.extraFields,
+		value: resolveOverride(overrides.value, base.value),
+		fields: fields.length > 0 ? fields : undefined,
+		extraFields: resolveOverride(overrides.extraFields, base.extraFields),
 	};
+}
+
+// `undefined` means the override is absent (inherit from base); `null` is the explicit-clear
+// sentinel needed because JSON.stringify drops `undefined`-valued properties, making
+// property-presence indistinguishable from absent on the wire.
+function resolveOverride<T>(
+	// eslint-disable-next-line @rushstack/no-new-null
+	override: T | null | undefined,
+	baseValue: T | undefined,
+): T | undefined {
+	if (override === undefined) {
+		return baseValue;
+	}
+	if (override === null) {
+		return undefined;
+	}
+	return override;
 }
 
 /**
  * Decoder for {@link EncodedSpecializedNodeShape}s.
- * Merges the specialization's field overrides with the resolved base node shape, then delegates
- * to a {@link NodeDecoder} built from the merged shape.
+ * Applies the specialization's field overrides to the resolved base node shape, then delegates
+ * to a {@link NodeDecoder} built from the resulting shape.
  */
 export class SpecializedNodeDecoder implements ChunkDecoder {
 	private readonly inner: NodeDecoder;
@@ -201,10 +213,7 @@ export class SpecializedNodeDecoder implements ChunkDecoder {
 		shape: EncodedSpecializedNodeShape,
 		context: DecoderContext<EncodedChunkShape>,
 	) {
-		this.inner = new NodeDecoder(
-			applySpecialization(normalizeToNodeShape(shape.base, context), shape, context),
-			context,
-		);
+		this.inner = new NodeDecoder(normalizeToNodeShape(shape, context), context);
 	}
 	public decode(decoders: readonly ChunkDecoder[], stream: StreamCursor): TreeChunk {
 		return this.inner.decode(decoders, stream);
