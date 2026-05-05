@@ -52,7 +52,7 @@ permissions:
   checks: write # Required to create/update the "Fleet Review" check run surfaced on the PR's Checks tab
 
 concurrency:
-  group: pr-review-fleet-${{ github.event_name == 'workflow_dispatch' && inputs.pr_number || github.event.workflow_run.pull_requests[0].number || github.event.workflow_run.id }}
+  group: pr-review-fleet-${{ (github.event_name == 'workflow_dispatch' && inputs.pr_number) || github.event.workflow_run.pull_requests[0].number || github.event.workflow_run.id }}
   cancel-in-progress: true
 
 jobs:
@@ -195,7 +195,7 @@ jobs:
         run: |
           git diff "origin/${BASE_REF}...HEAD" > pr-diff.patch
           git diff --name-only "origin/${BASE_REF}...HEAD" > changed-files.txt
-          git diff --name-only "origin/${BASE_REF}...HEAD" -- '*.api.md' > api-report-files.txt
+          awk '/\.api\.md$/ { print }' changed-files.txt > api-report-files.txt
           echo "Generated diff: $(wc -l < pr-diff.patch) lines"
           echo "Changed files: $(wc -l < changed-files.txt)"
           echo "API report files: $(wc -l < api-report-files.txt)"
