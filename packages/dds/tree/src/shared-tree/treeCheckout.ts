@@ -635,6 +635,16 @@ export class TreeCheckout implements ITreeCheckout {
 			// Only clear the label tree when the outermost transaction has completed.
 			// Inner transactions' commits don't fire the "changed" event, so the label tree
 			// must remain intact until the outermost commit reads it.
+			//
+			// TODO: clear `labelTreeNode` before the changed event is emitted rather than here
+			// in the finally. As-is, a `changed` listener that calls `runTransaction` re-entrantly
+			// will see `labelTreeNode` still set and `pushLabelFrame` will mutate the just-closed
+			// outer tree by pushing the new label as a sublabel — even though the two transactions
+			// are logically independent (the outer has already committed, `transaction.size === 0`
+			// when the inner starts). This conflates the inner transaction's labels with the
+			// outer's, breaking label-scoped undo/redo: e.g. an "auto-stamp" listener pattern
+			// would cause its commits to inherit the user's editor label. Moving the clear before
+			// emit lets re-entrant `pushLabelFrame` create a fresh root for the inner transaction.
 			if (this.transaction.size === 0) {
 				this.labelTreeNode = undefined;
 				this.mostRecentlyClosedLabelNode = undefined;
@@ -727,6 +737,13 @@ export class TreeCheckout implements ITreeCheckout {
 				const kind = event.type === "append" ? event.kind : CommitKind.Default;
 				const { change, revision } = commit;
 
+				// Snapshot the label tree for this commit before any listener runs, so the captured
+				// value is stable against in-place mutations to `this.labelTreeNode` (e.g. by a
+				// re-entrant `runTransaction` from a listener) or to `metadata.labels.tree`
+				// (which aliases the same object).
+				const commitLabelTree =
+					this.labelTreeNode === undefined ? undefined : cloneLabelTree(this.labelTreeNode);
+
 				const getRevertible = hasSchemaChange(change)
 					? undefined
 					: (onRevertibleDisposed?: (revertible: RevertibleAlpha) => void) => {
@@ -740,18 +757,12 @@ export class TreeCheckout implements ITreeCheckout {
 									"Cannot generate the same revertible more than once. Note that this can happen when multiple changed event listeners are registered.",
 								);
 							}
-							// Capture (deep-clone) the current label tree so the revertible's labels are
-							// independent of any subsequent mutations to this.labelTreeNode or to
-							// metadata.labels.tree. Done lazily here rather than before
-							// emit so listeners that don't request a revertible don't pay the clone cost.
 							const revertible = this.createRevertible(
 								revision,
 								kind,
 								this,
 								onRevertibleDisposed,
-								this.labelTreeNode === undefined
-									? undefined
-									: cloneLabelTree(this.labelTreeNode),
+								commitLabelTree,
 							);
 							this.revertibleCommitBranches.set(
 								revision,
