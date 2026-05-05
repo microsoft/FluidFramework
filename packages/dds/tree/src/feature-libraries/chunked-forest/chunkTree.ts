@@ -579,7 +579,8 @@ export function splitFieldAtIndex(
 ): number {
 	assertNonNegativeSafeInteger(nodeIndex);
 	let remaining = nodeIndex;
-	for (const [chunkIndex, chunk] of chunks.entries()) {
+	let chunkIndex = 0;
+	for (const chunk of chunks) {
 		if (remaining === 0) {
 			return chunkIndex;
 		}
@@ -595,6 +596,7 @@ export function splitFieldAtIndex(
 			return chunkIndex + before.length;
 		}
 		remaining -= chunk.topLevelLength;
+		chunkIndex++;
 	}
 	assert(remaining === 0, "nodeIndex exceeds total node count in field");
 	return chunks.length;
