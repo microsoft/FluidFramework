@@ -73,7 +73,8 @@ function runBenchmark({
 	});
 }
 
-describe("SharedTree table APIs execution time", () => {
+// TODO: AB#71782: Investigate why these tests are so slow / possibly contain cross-test contamination and address those issue, then re-enable these tests.
+describe.skip("SharedTree table APIs execution time", () => {
 	// The value to be set in the cells of the tree.
 	const initialCellValue = "cellValue";
 

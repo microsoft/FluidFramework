@@ -67,7 +67,8 @@ function runBenchmark({
 	});
 }
 
-describe("SharedTree table APIs memory usage", () => {
+// TODO: AB#71782: Investigate why these tests are so slow / possibly contain cross-test contamination and address those issue, then re-enable these tests.
+describe.skip("SharedTree table APIs memory usage", () => {
 	// configureBenchmarkHooks adjusts tests to run in a more production type mode.
 	// This is not as important for memory tests as duration tests,
 	// but since these tests are so slow, doing this does help reduce the overall test runtime which is nice.
