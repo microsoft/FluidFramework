@@ -430,6 +430,7 @@ describe("SharedTree table APIs memory usage", () => {
 								undoRedoManager.undo();
 							}
 							assert(!undoRedoManager.canUndo);
+							assert(undoRedoManager.canRedo);
 						},
 						operation: (_table, undoRedoManager) => {
 							for (let i = 0; i < count; i++) {
@@ -495,6 +496,7 @@ describe("SharedTree table APIs memory usage", () => {
 									undoRedoManager.undo();
 								}
 								assert(!undoRedoManager.canUndo);
+								assert(undoRedoManager.canRedo);
 							},
 							operation: (_table, undoRedoManager) => {
 								for (let i = 0; i < count; i++) {
@@ -738,6 +740,7 @@ describe("SharedTree table APIs memory usage", () => {
 								undoRedoManager.undo();
 							}
 							assert(!undoRedoManager.canUndo);
+							assert(undoRedoManager.canRedo);
 						},
 						operation: (_table, undoRedoManager) => {
 							for (let i = 0; i < count; i++) {
@@ -833,6 +836,7 @@ describe("SharedTree table APIs memory usage", () => {
 								undoRedoManager.undo();
 							}
 							assert(!undoRedoManager.canUndo);
+							assert(undoRedoManager.canRedo);
 						},
 						operation: (_table, undoRedoManager) => {
 							for (let i = 0; i < count; i++) {

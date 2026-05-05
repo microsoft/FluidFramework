@@ -417,20 +417,23 @@ describe("SharedTree table APIs execution time", () => {
 					});
 
 					runBenchmark({
-						title: `Redo: Remove a column and a row in the middle ${count} times`,
+						title: `Redo: ${scenarioName}`,
 						tableSize,
 						initialCellValue,
 						beforeOperation: (table, undoRedoManager) => {
 							for (let i = 0; i < count; i++) {
-								const column = table.columns[Math.floor(table.columns.length / 2)];
-								const row = table.rows[Math.floor(table.rows.length / 2)];
-								table.removeColumns([column]);
-								table.removeRows([row]);
+								const column = new Column({});
+								const row = new Row({ cells: {} });
+								table.insertColumns({
+									index: Math.floor(table.columns.length / 2),
+									columns: [column],
+								});
+								table.insertRows({ index: Math.floor(table.rows.length / 2), rows: [row] });
 							}
 							for (let i = 0; i < count; i++) {
-								// Undo remove row
+								// Undo insert row
 								undoRedoManager.undo();
-								// Undo remove column
+								// Undo insert column
 								undoRedoManager.undo();
 							}
 							assert(!undoRedoManager.canUndo);
@@ -438,9 +441,9 @@ describe("SharedTree table APIs execution time", () => {
 						},
 						operation: (_table, undoRedoManager) => {
 							for (let i = 0; i < count; i++) {
-								// Redo remove row
+								// Redo insert column
 								undoRedoManager.redo();
-								// Redo remove column
+								// Redo insert row
 								undoRedoManager.redo();
 							}
 						},
@@ -533,6 +536,7 @@ describe("SharedTree table APIs execution time", () => {
 								undoRedoManager.undo();
 							}
 							assert(!undoRedoManager.canUndo);
+							assert(undoRedoManager.canRedo);
 						},
 						operation: (_table, undoRedoManager) => {
 							for (let i = 0; i < count; i++) {
