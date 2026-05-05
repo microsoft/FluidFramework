@@ -20,6 +20,7 @@ import type {
 	DataStoreRegistry,
 	FluidContainerAttached,
 	FluidContainerWithService,
+	MinimumVersionForCollab,
 	Registry,
 	ServiceClient,
 } from "@fluidframework/driver-definitions/internal";
@@ -30,7 +31,6 @@ import {
 	createOdspUrl,
 } from "@fluidframework/odsp-driver/internal";
 import type { OdspResourceTokenFetchOptions } from "@fluidframework/odsp-driver-definitions/internal";
-import type { MinimumVersionForCollab } from "@fluidframework/runtime-definitions/internal";
 import {
 	type ContainerRuntimeLoader,
 	type ContainerRuntimeLoaderParams,

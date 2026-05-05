@@ -1,7 +1,7 @@
 # Fluid Framework Layer Compatibility Unified
 
 This is a alternative to the [Fluid Framework Layer Compatibility](./LayerCompatibility.md) (which applies mainly to `@legacy` APIs).
-This new approach is intentionally less flexible, but should still be flexible enough for most of not all use-cases, and possible to extend to cover more use-cases later if required.
+This new approach is intentionally less flexible, but should still be flexible enough for most if not all use-cases, and possible to extend to cover more use-cases later if required.
 
 ## Overview
 

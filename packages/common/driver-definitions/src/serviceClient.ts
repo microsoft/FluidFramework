@@ -9,7 +9,7 @@ import type { ErasedBaseType } from "@fluidframework/core-interfaces/internal";
  * This file defines the public API for the ServiceClient and related types.
  *
  * TODO:
- * Currently this API surface expect all code using it together to be using a singly copy of the Fluid Framework client packages.
+ * Currently this API surface expect all code using it together to be using a single copy of the Fluid Framework client packages.
  *
  * Before stabilizing any of this past beta, it should be evaluated if this requirement needs to be relaxed, and if so how to do that.
  * Regardless of if its relaxed or not, what ever rules are put in place should be runtime and compile time enforced as much as possible.
@@ -94,6 +94,49 @@ export function basicKey<T>(type: string): RegistryKey<T, T> {
 // #endregion
 
 // #region ServiceClient types
+
+/**
+ * Oldest version of Fluid Framework client packages to support collaborating with.
+ * @remarks
+ * String in a SemVer format indicating a specific version of the Fluid Framework client package, or the special case of {@link @fluidframework/runtime-utils#defaultMinVersionForCollab}.
+ *
+ * When specifying a given `MinimumVersionForCollab`, any client with a version that is greater than or equal to the specified version will be considered compatible.
+ *
+ * Must be at least {@link @fluidframework/runtime-utils#lowestMinVersionForCollab} and cannot exceed the current version.
+ *
+ * {@link @fluidframework/runtime-utils#validateMinimumVersionForCollab} can be used to check these invariants at runtime.
+ * Since TypeScript cannot enforce them all for literals in code,
+ * it may be useful to use `validateMinimumVersionForCollab` values which may come from constants in the codebase typed as a `MinimumVersionForCollab`.
+ *
+ * @privateRemarks
+ * Since this uses the semver notion of "greater" (which might not actually mean a later release, or supporting more features), care must be taken with how this is used.
+ * See remarks for {@link @fluidframework/runtime-utils#MinimumMinorSemanticVersion} for more details.
+ *
+ * Since this type is marked with `@input`, it can be generalized to allow more cases in the future as a non-breaking change.
+ *
+ * TODO: before stabilizing this further, some restrictions should be considered (since once stabilized, this can be relaxed, but not more constrained).
+ * For example it might make sense to constrain this to something like `"1.4.0" | typeof defaultMinVersionForCollab | 2.${bigint}.0"`.
+ *
+ * @input
+ * @beta
+ */
+export type MinimumVersionForCollab =
+	| `${1 | 2}.${bigint}.${bigint}`
+	| `${1 | 2}.${bigint}.${bigint}-${string}`;
+
+/**
+ * Options for configuring a {@link ServiceClient}.
+ * @remarks
+ * These are the options which apply to all services.
+ *
+ * Individual services will extend with additional options.
+ *
+ * @input
+ * @alpha
+ */
+export interface ServiceOptions {
+	readonly minVersionForCollab: MinimumVersionForCollab;
+}
 
 /**
  * A {@link RegistryKey} for a {@link DataStoreKind}.
