@@ -317,14 +317,14 @@ let bufferTreeEvents: boolean = false;
  * Note: this should be used with caution. User application behaviors are implicitly coupled to event timing.
  * Disrupting this timing can lead to unexpected behavior.
  */
-export function withBufferedTreeEvents(callback: () => void): void {
+export function withBufferedTreeEvents<TResult>(callback: () => TResult): TResult {
 	if (bufferTreeEvents) {
 		// Already buffering - just run the callback
-		callback();
+		return callback();
 	} else {
 		bufferTreeEvents = true;
 		try {
-			callback();
+			return callback();
 		} finally {
 			bufferTreeEvents = false;
 			flushEventsEmitter.emit("flush");

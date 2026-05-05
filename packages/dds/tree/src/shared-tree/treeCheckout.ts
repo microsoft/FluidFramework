@@ -104,6 +104,7 @@ import {
 	customFromCursorStored,
 	type CustomTreeValue,
 	type CustomTreeNode,
+	withBufferedTreeEvents
 } from "../simple-tree/index.js";
 import {
 	Breakable,
@@ -860,7 +861,7 @@ export class TreeCheckout implements ITreeCheckout {
 		params?: RunTransactionParams,
 	): TransactionResultExt<TSuccessValue, TFailureValue> | TransactionResult {
 		this.mountTransaction(params, false);
-		const transactionCallbackStatus = transaction();
+		const transactionCallbackStatus = params?.bufferEvents === true ? withBufferedTreeEvents(transaction) : transaction();
 		return this.unmountTransaction(transactionCallbackStatus, params);
 	}
 
