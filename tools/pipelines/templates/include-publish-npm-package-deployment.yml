@@ -58,9 +58,10 @@ jobs:
     - name: isLatest
       value: $[ stageDependencies.build.build.outputs['SetVersion.isLatest']]
   templateContext:
-    type: job
+    type: releaseJob
     # in() returns true if the first parameter is equal to any of the others
-    isProduction: ${{ in(variables['release'], 'release', 'prerelease')  }}
+    isProduction: false # temp. Should be ${{ in(variables['release'], 'release', 'prerelease')  }}
+    condition: always()
 
     # This 'inputs' section downloads initial required artifacts/data for this job.
     inputs:
