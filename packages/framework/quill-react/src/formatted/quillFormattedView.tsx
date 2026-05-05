@@ -7,7 +7,7 @@ import { assert } from "@fluidframework/core-utils/internal";
 import {
 	type PropTreeNode,
 	withMemoizedTreeObservations,
-	type UndoRedo,
+	type TextEditorProps,
 } from "@fluidframework/react/internal";
 import { TreeAlpha, FormattedTextAsTree } from "@fluidframework/tree/internal";
 export { FormattedTextAsTree } from "@fluidframework/tree/internal";
@@ -25,11 +25,9 @@ const Delta = DeltaPackage.default;
  * Props for the FormattedMainView component.
  * @input @internal
  */
-export interface FormattedMainViewProps {
+export interface FormattedMainViewProps extends TextEditorProps {
 	/** The formatted text tree to edit. */
 	readonly root: PropTreeNode<FormattedTextAsTree.Tree>;
-	/** Optional undo/redo manager used to enable undo/redo actions for the toolbar buttons. */
-	readonly undoRedo?: UndoRedo;
 }
 
 type FormattedMainViewPropsInner = Omit<FormattedMainViewProps, "root"> & {
@@ -43,8 +41,12 @@ type FormattedMainViewPropsInner = Omit<FormattedMainViewProps, "root"> & {
  * Pass an `undoRedo` prop to enable undo/redo buttons scoped to this editor's transactions.
  * @internal
  */
-export const FormattedMainView: FC<FormattedMainViewProps> = ({ root, undoRedo }) => {
-	return <FormattedTextEditorView root={root} undoRedo={undoRedo} />;
+export const FormattedMainView: FC<FormattedMainViewProps> = ({
+	root,
+	undoRedo,
+	editLabel,
+}) => {
+	return <FormattedTextEditorView root={root} undoRedo={undoRedo} editLabel={editLabel} />;
 };
 FormattedMainView.displayName = "FormattedMainView";
 
@@ -376,7 +378,7 @@ export function buildDeltaFromTree(root: FormattedTextAsTree.Tree): QuillDeltaOp
  * than replacing all content on each change.
  */
 const FormattedTextEditorView = withMemoizedTreeObservations(
-	({ root, undoRedo }: FormattedMainViewPropsInner) => {
+	({ root, undoRedo, editLabel }: FormattedMainViewPropsInner) => {
 		// DOM element where Quill will mount its editor
 		const editorRef = useRef<HTMLDivElement>(null);
 		// Quill instance, persisted across renders to avoid re-initialization
@@ -387,6 +389,12 @@ const FormattedTextEditorView = withMemoizedTreeObservations(
 		const [undoRedoContainer, setUndoRedoContainer] = useState<HTMLElement | undefined>(
 			undefined,
 		);
+
+		// Effective label: explicit prop or the root node itself as the default.
+		const effectiveLabel = editLabel ?? root;
+		// Ref so the one-time Quill setup effect always sees the current effective label.
+		const editLabelRef = useRef(effectiveLabel);
+		editLabelRef.current = effectiveLabel;
 
 		// Initialize Quill editor with formatting toolbar using Quill provided CSS
 		useEffect(() => {
@@ -433,8 +441,9 @@ const FormattedTextEditorView = withMemoizedTreeObservations(
 				isUpdating.current = true;
 
 				// Wrap all tree mutations in a transaction so they undo/redo as one atomic unit.
+				// If the node is not part of a branch (e.g. unhydrated), apply edits directly.
 				const context = TreeAlpha.context(root);
-				context.runTransaction(() => {
+				const applyDelta = (): void => {
 					// Helper to count Unicode codepoints in a string
 					const codepointCount = (s: string): number => [...s].length;
 
@@ -540,7 +549,16 @@ const FormattedTextEditorView = withMemoizedTreeObservations(
 							cpPos += codepointCount(op.insert);
 						}
 					}
-				});
+				};
+				if (context.isBranch()) {
+					// Use ref so this closure always sees the current effective label.
+					context.runTransaction(applyDelta, {
+						label: editLabelRef.current,
+					});
+				} else {
+					applyDelta();
+				}
+
 				isUpdating.current = false;
 			};
 
@@ -600,15 +618,15 @@ const FormattedTextEditorView = withMemoizedTreeObservations(
 							type="button"
 							className="ql-undo"
 							aria-label="Undo"
-							disabled={undoRedo?.canUndo() !== true}
-							onClick={() => undoRedo?.undo()}
+							disabled={undoRedo?.canUndo(effectiveLabel) !== true}
+							onClick={() => undoRedo?.undo(effectiveLabel)}
 						/>
 						<button
 							type="button"
 							className="ql-redo"
 							aria-label="Redo"
-							disabled={undoRedo?.canRedo() !== true}
-							onClick={() => undoRedo?.redo()}
+							disabled={undoRedo?.canRedo(effectiveLabel) !== true}
+							onClick={() => undoRedo?.redo(effectiveLabel)}
 						/>
 					</>,
 					undoRedoContainer,
