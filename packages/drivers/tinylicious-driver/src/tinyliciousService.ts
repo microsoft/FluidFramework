@@ -19,12 +19,12 @@ import type {
 	IUrlResolver,
 	Registry,
 	ServiceClient,
+	ServiceOptions,
 } from "@fluidframework/driver-definitions/internal";
 import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver/internal";
 import {
 	type ContainerRuntimeLoader,
 	type ContainerRuntimeLoaderParams,
-	type ServiceOptions,
 	makeCodeLoader,
 	makeServiceClientImpl,
 	rootDataStoreId,

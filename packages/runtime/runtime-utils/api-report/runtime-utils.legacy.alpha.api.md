@@ -81,12 +81,6 @@ export abstract class RuntimeFactoryHelper<T = IContainerRuntime> implements IRu
     abstract preInitialize(context: IContainerContext, existing: boolean): Promise<IRuntime & T>;
 }
 
-// @alpha @input
-export interface ServiceOptions {
-    // (undocumented)
-    readonly minVersionForCollab: MinimumVersionForCollab;
-}
-
 // @beta @legacy
 export class SummaryTreeBuilder implements ISummaryTreeWithStats {
     constructor(params?: {

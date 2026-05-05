@@ -20,11 +20,11 @@ import type {
 	DataStoreRegistry,
 	FluidContainerAttached,
 	FluidContainerWithService,
+	MinimumVersionForCollab,
 	Registry,
 	ServiceClient,
 } from "@fluidframework/driver-definitions/internal";
 import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver/internal";
-import type { MinimumVersionForCollab } from "@fluidframework/runtime-definitions/internal";
 import {
 	type ContainerRuntimeLoader,
 	type ContainerRuntimeLoaderParams,

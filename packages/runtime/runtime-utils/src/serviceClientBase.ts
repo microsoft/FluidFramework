@@ -21,7 +21,6 @@ import type {
 	IFluidDataStoreChannel,
 	IFluidDataStoreContext,
 	IFluidDataStoreFactory,
-	MinimumVersionForCollab,
 } from "@fluidframework/runtime-definitions/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
@@ -29,20 +28,6 @@ import { UsageError } from "@fluidframework/telemetry-utils/internal";
  * This file provides common implementation logic for ServiceClient implementations.
  *
  */
-
-/**
- * Options for configuring a `ServiceClient`.
- * @remarks
- * These are the options which apply to all services.
- *
- * Individual services will extend with additional options.
- *
- * @input
- * @alpha
- */
-export interface ServiceOptions {
-	readonly minVersionForCollab: MinimumVersionForCollab;
-}
 
 /**
  * Implementation of `DataStoreKind`.
@@ -236,7 +221,7 @@ export type Audience = IAudience;
 
 /**
  * Gets the {@link Audience} from a Fluid container
- * created by any `ServiceClient`.
+ * created by any {@link @fluidframework/driver-definitions#ServiceClient}.
  * @privateRemarks
  * This is exposed via a free function rather than as a property of FluidContainerAttached
  * for a few minor reasons:

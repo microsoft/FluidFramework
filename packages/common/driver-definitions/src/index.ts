@@ -139,8 +139,10 @@ export type {
 	FluidContainer,
 	FluidContainerAttached,
 	FluidContainerWithService,
+	MinimumVersionForCollab,
 	Registry,
 	RegistryKey,
 	ServiceClient,
+	ServiceOptions,
 } from "./serviceClient.js";
 export { basicKey, registryLookup } from "./serviceClient.js";

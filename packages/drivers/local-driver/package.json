@@ -128,7 +128,6 @@
 		"@fluidframework/driver-utils": "workspace:~",
 		"@fluidframework/protocol-base": "^7.0.0",
 		"@fluidframework/routerlicious-driver": "workspace:~",
-		"@fluidframework/runtime-definitions": "workspace:~",
 		"@fluidframework/runtime-utils": "workspace:~",
 		"@fluidframework/server-local-server": "^7.0.0",
 		"@fluidframework/server-services-client": "^7.0.0",

@@ -10029,9 +10029,6 @@ importers:
       '@fluidframework/routerlicious-driver':
         specifier: workspace:~
         version: link:../routerlicious-driver
-      '@fluidframework/runtime-definitions':
-        specifier: workspace:~
-        version: link:../../runtime/runtime-definitions
       '@fluidframework/runtime-utils':
         specifier: workspace:~
         version: link:../../runtime/runtime-utils
@@ -10660,9 +10657,6 @@ importers:
       '@fluidframework/routerlicious-driver':
         specifier: workspace:~
         version: link:../routerlicious-driver
-      '@fluidframework/runtime-definitions':
-        specifier: workspace:~
-        version: link:../../runtime/runtime-definitions
       '@fluidframework/runtime-utils':
         specifier: workspace:~
         version: link:../../runtime/runtime-utils
@@ -13820,9 +13814,6 @@ importers:
       '@fluidframework/routerlicious-driver':
         specifier: workspace:~
         version: link:../../drivers/routerlicious-driver
-      '@fluidframework/runtime-definitions':
-        specifier: workspace:~
-        version: link:../../runtime/runtime-definitions
       '@fluidframework/runtime-utils':
         specifier: workspace:~
         version: link:../../runtime/runtime-utils
@@ -14198,9 +14189,6 @@ importers:
       '@fluidframework/odsp-driver-definitions':
         specifier: workspace:~
         version: link:../../drivers/odsp-driver-definitions
-      '@fluidframework/runtime-definitions':
-        specifier: workspace:~
-        version: link:../../runtime/runtime-definitions
       '@fluidframework/runtime-utils':
         specifier: workspace:~
         version: link:../../runtime/runtime-utils
@@ -16021,9 +16009,6 @@ importers:
       '@fluidframework/fluid-static':
         specifier: workspace:~
         version: link:../../../framework/fluid-static
-      '@fluidframework/runtime-definitions':
-        specifier: workspace:~
-        version: link:../../../runtime/runtime-definitions
       '@fluidframework/runtime-utils':
         specifier: workspace:~
         version: link:../../../runtime/runtime-utils
