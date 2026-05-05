@@ -183,7 +183,7 @@ export interface TelemetryLoggerExt extends ITelemetryBaseLogger {
 	 * Send an information telemetry event.
 	 * @param event - Event to send.
 	 * @param error - Optional error object to log.
-	 * @param logLevel - Optional level of the log. Default: {@link @fluidframework/core-interfaces#LogLevelConst.info | LogLevel.info}.
+	 * @param logLevel - Optional level of the log. If undefined, the event will be sent with {@link @fluidframework/core-interfaces#LogLevelConst.essential | LogLevel.essential}.
 	 */
 	sendTelemetryEvent(
 		event: ITelemetryGenericEventExt,
@@ -202,7 +202,7 @@ export interface TelemetryLoggerExt extends ITelemetryBaseLogger {
 	 * Send a performance telemetry event.
 	 * @param event - Event to send
 	 * @param error - Optional error object to log.
-	 * @param logLevel - Optional level of the log. Default: {@link @fluidframework/core-interfaces#LogLevelConst.info | LogLevel.info}.
+	 * @param logLevel - Optional level of the log. If undefined, the event will be sent with {@link @fluidframework/core-interfaces#LogLevelConst.essential | LogLevel.essential}.
 	 */
 	sendPerformanceEvent(
 		event: ITelemetryPerformanceEventExt,

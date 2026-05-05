@@ -122,7 +122,7 @@ export interface ITelemetryBaseLogger {
 	/**
 	 * Log a telemetry event, if it meets the appropriate log-level threshold (see {@link ITelemetryBaseLogger.minLogLevel}).
 	 * @param event - The event to log.
-	 * @param logLevel - The log level of the event. Default: {@link LogLevelConst.info | LogLevel.info}.
+	 * @param logLevel - The log level of the event. If undefined, the event will be sent with {@link LogLevelConst.essential | LogLevel.essential}.
 	 */
 	send(event: ITelemetryBaseEvent, logLevel?: LogLevel): void;
 

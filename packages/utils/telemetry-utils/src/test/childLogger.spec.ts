@@ -204,6 +204,10 @@ describe("ChildLogger", () => {
 		sent = false;
 		childLogger1.send({ category: "generic", eventName: "testEvent" }, LogLevel.info);
 		assert(!sent, "event should not be sent");
+
+		sent = false;
+		childLogger1.send({ category: "generic", eventName: "testEvent" });
+		assert(sent, "default event should be sent");
 	});
 
 	it("should receive verbose events with min loglevel set as verbose", () => {
