@@ -6,12 +6,12 @@
 import { strict as assert } from "node:assert";
 
 import {
-	benchmarkDuration,
+	BenchmarkMode,
+	benchmarkDurationBatchless,
 	benchmarkIt,
 	benchmarkMemoryUse,
-	isInPerformanceTestingMode,
+	currentBenchmarkMode,
 	memoryAddedBy,
-	type BenchmarkTimingOptions,
 } from "@fluid-tools/benchmark";
 import { unreachableCase } from "@fluidframework/core-utils/internal";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
@@ -136,7 +136,7 @@ interface MatrixBenchmarkOptions extends TestMatrixOptions {
 /**
  * {@link runExecutionTimeBenchmark} configuration.
  */
-interface ExecutionTimeBenchmarkConfig extends BenchmarkTimingOptions, MatrixBenchmarkOptions {
+interface ExecutionTimeBenchmarkConfig extends MatrixBenchmarkOptions {
 	readonly maxBenchmarkDurationSeconds: number;
 }
 
@@ -150,22 +150,14 @@ function runExecutionTimeBenchmark({
 	beforeOperation,
 	operation,
 	afterOperation,
-	minBatchDurationSeconds = 0,
 	maxBenchmarkDurationSeconds,
 }: ExecutionTimeBenchmarkConfig): Test {
 	return benchmarkIt({
 		title,
-		...benchmarkDuration({
-			benchmarkFnCustom: async (state) => {
-				let duration: number;
+		...benchmarkDurationBatchless({
+			benchmarkFn: (state) => {
+				let running: boolean;
 				do {
-					assert.equal(
-						state.iterationsPerBatch,
-						1,
-						"Expected exactly one iteration per batch",
-					);
-
-					// Create matrix
 					const { matrix, undoRedoStack, cleanUp } = createTestMatrix({
 						matrixSize,
 						initialCellValue,
@@ -173,21 +165,14 @@ function runExecutionTimeBenchmark({
 
 					beforeOperation?.(matrix, undoRedoStack);
 
-					// Operation
-					const before = state.timer.now();
-					operation(matrix, undoRedoStack);
-					const after = state.timer.now();
-
-					// Measure
-					duration = state.timer.toSeconds(before, after);
+					running = state.time(() => {
+						operation(matrix, undoRedoStack);
+					});
 
 					afterOperation?.(matrix, undoRedoStack);
-
-					// Cleanup
 					cleanUp();
-				} while (state.recordBatch(duration));
+				} while (running);
 			},
-			minBatchDurationSeconds,
 			maxBenchmarkDurationSeconds,
 		}),
 	});
@@ -264,17 +249,19 @@ export function runBenchmarkTestSuite(mode: "memory" | "execution-time"): Suite 
 
 		// The test matrix's size will be 5*5, 50*50.
 		// Matrix size 1000 benchmarks removed due to high overhead and unreliable results.
-		const matrixSizes = isInPerformanceTestingMode
-			? [5, 50]
-			: // When not measuring perf, use a single smaller data size so the tests run faster.
-				[5];
+		const matrixSizes =
+			currentBenchmarkMode === BenchmarkMode.Performance
+				? [5, 50]
+				: // When not measuring perf, use a single smaller data size so the tests run faster.
+					[5];
 
 		// The number of operations to perform on the matrix.
 		// Operation counts 1000 removed due to high overhead and unreliable results.
-		const operationCounts = isInPerformanceTestingMode
-			? [5, 50]
-			: // When not measuring perf, use a single smaller data size so the tests run faster.
-				[5];
+		const operationCounts =
+			currentBenchmarkMode === BenchmarkMode.Performance
+				? [5, 50]
+				: // When not measuring perf, use a single smaller data size so the tests run faster.
+					[5];
 
 		// IMPORTANT: variables scoped to the test suite are a big problem for memory-profiling tests
 		// because they won't be out of scope when we garbage-collect between runs of the same test,

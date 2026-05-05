@@ -8,7 +8,7 @@ import { strict as assert } from "node:assert";
 import { makeRandom } from "@fluid-private/stochastic-test-utils";
 import type { Client } from "@fluid-private/test-dds-utils";
 import { LocalServerTestDriver } from "@fluid-private/test-drivers";
-import { isInPerformanceTestingMode } from "@fluid-tools/benchmark";
+import { BenchmarkMode, currentBenchmarkMode } from "@fluid-tools/benchmark";
 import type { IContainer } from "@fluidframework/container-definitions/internal";
 import { Loader } from "@fluidframework/container-loader/internal";
 import type { ISummarizer } from "@fluidframework/container-runtime/internal";
@@ -1536,11 +1536,11 @@ export function moveWithin(
 }
 
 /**
- * Invoke inside a describe block for benchmarks to add hooks that configure things for maximum performance if isInPerformanceTestingMode,
+ * Invoke inside a describe block for benchmarks to add hooks that configure things for maximum performance in performance testing mode,
  * and enable debug asserts otherwise.
  */
 export function configureBenchmarkHooks(): void {
-	emulateProductionBuildHooks(isInPerformanceTestingMode);
+	emulateProductionBuildHooks(currentBenchmarkMode === BenchmarkMode.Performance);
 }
 
 function emulateProductionBuildHooks(enable = true): void {

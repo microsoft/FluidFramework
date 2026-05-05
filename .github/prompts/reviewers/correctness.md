@@ -100,8 +100,12 @@ If you find NO high-confidence issues:
 
 ## Instructions
 
-1. Read the PR diff from `pr-diff.patch` in the current directory
-2. For files with complex changes, read the full file to understand context — especially shared state, callers, and adjacent logic
-3. Focus only on changed lines and their immediate context
-4. Apply the high-confidence gate to every finding before including it
-5. Write your review to `review-correctness.json`
+Important: Do not request or run shell/Git commands; all review context available to you has been precomputed by the workflow.
+
+1. Read the prepared PR diff from `pr-diff.patch` in the current directory
+2. Read `changed-files.txt` when you need the complete changed-file list
+3. Read `api-report-files.txt` to see whether any `*.api.md` files changed. If the file is non-empty, give those packages extra scrutiny.
+4. For files with complex changes, read the full file to understand context — especially shared state, callers, and adjacent logic
+5. Focus only on changed lines and their immediate context
+6. Apply the high-confidence gate to every finding before including it
+7. Write your review to `review-correctness.json`
