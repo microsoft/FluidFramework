@@ -9,7 +9,7 @@ export {
 	getStatsFileFromZip,
 	getZipObjectFromArtifact,
 } from "./AdoArtifactFileProvider";
-export { ADOSizeComparator } from "./AdoSizeComparator";
+export { ADOSizeComparator, SizeComparison } from "./AdoSizeComparator";
 export { IADOConstants, totalSizeMetricName } from "./Constants";
 export { DefaultStatsProcessors } from "./DefaultStatsProcessors";
 export {
@@ -25,5 +25,4 @@ export {
 } from "./getBundleBuddyConfigMap";
 export { BundleFileData, getBundleFilePathsFromFolder } from "./getBundleFilePathsFromFolder";
 export { GetBundleSummariesArgs, getBundleSummaries } from "./getBundleSummaries";
-export { getCommentForBundleDiff, getSimpleComment } from "./getCommentForBundleDiff";
 export { prCommentsUtils } from "./PrCommentsUtils";
