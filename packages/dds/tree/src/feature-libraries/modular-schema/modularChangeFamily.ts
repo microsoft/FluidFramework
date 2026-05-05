@@ -882,6 +882,7 @@ export class ModularChangeFamily
 		taggedChange: TaggedChange<ModularChangeset>,
 		potentiallyConflictedOver: TaggedChange<ModularChangeset>,
 		revisionMetadata: RevisionMetadataSource,
+		ignoreNoChangeViolation: boolean = false,
 	): ModularChangeset {
 		// Our current cell ordering scheme in sequences depends on being able to rebase over a change with conflicts.
 		// This means that we must rebase over a muted version of the conflicted changeset.
@@ -943,7 +944,11 @@ export class ModularChangeFamily
 		);
 
 		let noChangeConstraint = change.noChangeConstraint;
-		if (noChangeConstraint !== undefined && !noChangeConstraint.violated) {
+		if (
+			noChangeConstraint !== undefined &&
+			!noChangeConstraint.violated &&
+			!ignoreNoChangeViolation
+		) {
 			noChangeConstraint = { violated: true };
 			constraintState.violationCount += 1;
 		}
@@ -2387,7 +2392,7 @@ abstract class CrossFieldManagerI<T> implements CrossFieldManager {
 		id: ChangesetLocalId,
 		count: number,
 		addDependency: boolean,
-	): RangeQueryResult<ChangeAtomId, unknown> {
+	): RangeQueryResult<unknown> {
 		if (addDependency) {
 			// We assume that if there is already an entry for this ID it is because
 			// a field handler has called compose on the same node multiple times.
@@ -3148,9 +3153,14 @@ function getFieldsForCrossFieldKey(
 	key: CrossFieldKey,
 	count: number,
 ): FieldId[] {
-	return changeset.crossFieldKeys
-		.getAll(key, count)
-		.map(({ value: fieldId }) => normalizeFieldId(fieldId, changeset.nodeAliases));
+	const fieldIds: FieldId[] = [];
+	for (const { value: fieldId } of changeset.crossFieldKeys.getAll(key, count)) {
+		if (fieldId !== undefined) {
+			fieldIds.push(normalizeFieldId(fieldId, changeset.nodeAliases));
+		}
+	}
+
+	return fieldIds;
 }
 
 // This is only exported for use in test utilities.
@@ -3169,7 +3179,6 @@ export function normalizeFieldId(
 function normalizeNodeId(nodeId: NodeId, nodeAliases: ChangeAtomIdBTree<NodeId>): NodeId {
 	let currentId = nodeId;
 
-	// eslint-disable-next-line no-constant-condition
 	while (true) {
 		const dealiased = getFromChangeAtomIdMap(nodeAliases, currentId);
 		if (dealiased === undefined) {

@@ -1,5 +1,552 @@
 # @fluidframework/tree
 
+## 2.100.0
+
+### Minor Changes
+
+- Node 22 is now the minimum supported Node.js version ([#27116](https://github.com/microsoft/FluidFramework/pull/27116)) [e8214d29663](https://github.com/microsoft/FluidFramework/commit/e8214d29663f5ee98d737daed82506a25d8de8d0)
+
+  All Fluid Framework client packages now require Node.js 22 or later. This aligns with the standing Node upgrade policy as Node 20 reaches end-of-life on April 30, 2026.
+
+- Add SchemaFactoryAlpha.stagedOptionalRecursive for recursive staged-optional fields ([#27042](https://github.com/microsoft/FluidFramework/pull/27042)) [a6e084e2b66](https://github.com/microsoft/FluidFramework/commit/a6e084e2b66a1dd020aecafc74d163806481e55c)
+
+  `SchemaFactoryAlpha.stagedOptionalRecursive(T)` is the recursive-type variant of `stagedOptional` (released in [2.93.0](https://github.com/microsoft/FluidFramework/pull/26918)). Use it for schemas whose types are recursive - the relaxed type constraints work around TypeScript's limitations with recursive schema definitions. Pair it with `ValidateRecursiveSchema` for improved type safety.
+
+  Example:
+
+  ```typescript
+  const sf = new SchemaFactoryAlpha("my-app");
+  class TreeNode extends sf.objectRecursiveAlpha("TreeNode", {
+    value: sf.number,
+    child: sf.stagedOptionalRecursive([() => TreeNode]),
+  }) {}
+  type _check = ValidateRecursiveSchema<typeof TreeNode>;
+  ```
+
+  See `stagedOptional` for the migration pattern (required to stagedOptional to optional).
+
+- Fixed incremental summary bug in SharedTree that may cause repeated summary failures eventually leading to document corruption ([#26990](https://github.com/microsoft/FluidFramework/pull/26990)) [1514c310319](https://github.com/microsoft/FluidFramework/commit/1514c310319074fca0c45449527a336d48801b84)
+
+  Incremental summary for SharedTree is off by default. This bug only affects applications that have explicitly enabled incremental summarization.
+
+  **Affected configurations**
+
+  A session could be affected if all the following were true:
+  - Incremental summarization was enabled (opt-in feature, off by default).
+  - The SharedTree schema had incremental fields nested at least 2 levels deep. For example, a map field marked with `incrementalSummaryHint` that contains objects which themselves have a map field also marked with `incrementalSummaryHint`.
+  - The document was summarized multiple times, with the outer incremental field changing in at least one summary while the inner incremental field remained unchanged.
+
+  **Symptoms**
+
+  Summaries would fail. Depending on the storage service, the error may appear as:
+  - `TypeError: Cannot read properties of undefined (reading 'trees')` (for example, when using SharePoint storage)
+
+  Repeated summary failures can cause a session to accumulate ops without a summary. Once the limit of ops without a summary is reached (~10k), further ops will be rejected, making the document read-only for that session.
+
+  **Mitigation and recovery**
+  - If a session is already affected, turning off incremental summarization will allow summaries to succeed again.
+  - Upgrade to this version to prevent further summary failures.
+
+## 2.93.0
+
+### Minor Changes
+
+- Add Fluid-controlled map and iterator interfaces ([#26951](https://github.com/microsoft/FluidFramework/pull/26951)) [4735742f15](https://github.com/microsoft/FluidFramework/commit/4735742f15718419e974ead1d5e2e809863d3723)
+
+  `TreeIndex` now extends `FluidReadonlyMap` instead of the built-in `ReadonlyMap`, and `TreeMapNodeAlpha` which extends `FluidReadonlyMap` instead of the built-in `ReadonlyMap` has been added.
+  This works to uncouple Fluid's public API surface to the TypeScript standard library's map types, preventing future breakage when those types change.
+
+- Add SchemaFactoryAlpha.stagedOptional for incremental required-to-optional field migrations ([#26918](https://github.com/microsoft/FluidFramework/pull/26918)) [fb808eb085d](https://github.com/microsoft/FluidFramework/commit/fb808eb085d17612cfb96f2731457f9851986429)
+
+  `SchemaFactoryAlpha.stagedOptional(T)` enables incremental migration of a field from required to
+  optional. It creates a field that is optional in the view schema but stored as required in the
+  stored schema until all clients have been upgraded, avoiding the need for a coordinated
+  simultaneous deployment.
+
+  Migration path:
+  1. Start with `sf.required(T)` - all clients require the field.
+  2. Deploy `sf.stagedOptional(T)` - new clients see the field as optional and can read documents
+     whether the field is present or absent, but the stored schema stays required so old clients
+     are not broken. Writing `undefined` is blocked at runtime during this phase.
+  3. Deploy `sf.optional(T)` once all clients have been updated - the stored schema becomes
+     optional and the field can be cleared.
+
+- Promote tree index APIs from alpha to beta ([#26993](https://github.com/microsoft/FluidFramework/pull/26993)) [37f2f17c118](https://github.com/microsoft/FluidFramework/commit/37f2f17c118baea142b0e842f5b262255d8bb12c)
+
+  The following APIs have been promoted from `@alpha` to `@beta`:
+  - `TreeIndex`
+  - `TreeIndexKey`
+  - `TreeIndexNodes`
+  - `createTreeIndex`
+  - `IdentifierIndex`
+  - `createIdentifierIndex`
+
+  Additionally, the following `@fluidframework/core-interfaces` types have been promoted from `@alpha` to `@beta`:
+  - `FluidReadonlyMap`
+  - `FluidIterable`
+  - `FluidIterableIterator`
+  - `FluidMap`
+
+## 2.92.0
+
+### Minor Changes
+
+- The deprecated getBranch API has been removed ([#26796](https://github.com/microsoft/FluidFramework/pull/26796)) [e80a48e25e](https://github.com/microsoft/FluidFramework/commit/e80a48e25ebab540ce9a0093edc12b9aa5ab03fb)
+
+  To obtain a branch-like object, create a view from your tree via `viewWith`.
+  Or, use `TreeAlpha.context` to get a view from a `TreeNode`.
+
+- Array node nodeChanged events now include a delta payload (via TreeAlpha) ([#26677](https://github.com/microsoft/FluidFramework/pull/26677)) [bf02e33aed](https://github.com/microsoft/FluidFramework/commit/bf02e33aed74295840ffa5b6ef889860d58f5654)
+
+  The `nodeChanged` event for array nodes (accessed via `TreeAlpha.on`) now provides a `delta` field, a sequence of `ArrayNodeDeltaOp` values that describe exactly what changed in the array. This lets you efficiently sync an external representation with tree changes, without taking a snapshot of the old state or diffing the entire array.
+
+  The delta follows [Quill](https://quilljs.com/docs/)-style semantics: each op covers a contiguous run of positions in the array before the change.
+  - `{ type: "retain", count: N }`—N elements stayed in place. Their positions are unchanged, though their contents may have changed (which would fire separate `nodeChanged` events on those elements).
+  - `{ type: "insert", count: N }`—N elements were inserted; read their values from the current tree at these positions.
+  - `{ type: "remove", count: N }`—N elements were removed.
+
+  Trailing unchanged elements are not represented by a trailing `"retain"` op.
+
+  Use `TreeAlpha.on` to subscribe to the richer alpha events. The data passed to the callback is typed as `NodeChangedDataAlpha<TNode>`:
+  - Object, map, and record nodes receive `NodeChangedDataProperties` (with a required `changedProperties` set).
+  - Array nodes receive `NodeChangedDataDelta` (with a `delta` field).
+
+  `TreeBeta.on` is unchanged and does not include delta information.
+
+  #### Example: Applying a Delta to a Plain Array Mirror
+
+  ```typescript
+  // Walk the delta to keep a plain JS array in sync with an array node.
+  // retain = advance past unchanged elements,
+  // insert = splice in new elements,
+  // remove = splice out removed elements.
+  const mirror: number[] = [1, 2, 3];
+
+  TreeAlpha.on(myArrayNode, "nodeChanged", ({ delta }) => {
+    let readPos = 0; // position in the current (post-change) tree
+    let writePos = 0; // position in the mirror array
+
+    for (const op of delta ?? []) {
+      if (op.type === "retain") {
+        writePos += op.count;
+        readPos += op.count;
+      } else if (op.type === "insert") {
+        const newItems = Array.from(
+          { length: op.count },
+          (_, i) => myArrayNode[readPos + i],
+        );
+        mirror.splice(writePos, 0, ...newItems);
+        writePos += op.count;
+        readPos += op.count;
+      } else if (op.type === "remove") {
+        mirror.splice(writePos, op.count);
+      }
+    }
+  });
+  ```
+
+  #### Example: Narrowing the Union in a Generic Handler
+
+  ```typescript
+  TreeAlpha.on(node as TreeNode, "nodeChanged", (data) => {
+    if ("delta" in data) {
+      // Array node — data is NodeChangedDataDelta
+      console.log("array changed, delta:", data.delta);
+    } else {
+      // Object/map/record node — data is NodeChangedDataProperties
+      console.log("properties changed:", data.changedProperties);
+    }
+  });
+  ```
+
+  > **Note:** The `delta` value may be `undefined` in two cases:
+  >
+  > - The node was created locally and has not yet been inserted into a document tree (a known temporary limitation).
+  > - The document was updated in a way that required multiple internal change passes in a single operation (for example, a data change combined with a schema upgrade).
+
+- Add TreeArrayNodeAlpha with a new splice method ([#26740](https://github.com/microsoft/FluidFramework/pull/26740)) [f2b0cf9176](https://github.com/microsoft/FluidFramework/commit/f2b0cf917609b84952db2b9492867e70e0d57981)
+
+  Adds a `splice` method on `TreeArrayNodeAlpha` that supports removing and inserting items in a single operation to align with JavaScript's Array splice API.
+  Returns the removed items as an array.
+  Supports negative `start` indices (wraps from end).
+  Optional `deleteCount` (omitting removes everything from `start` onward).
+  The alpha API is accessible by an `asAlpha` cast on existing TreeArrayNodes, or using `schemaFactoryAlpha`.
+  `arrayAlpha` nodes are accepted wherever `TreeArrayNode` is expected, but not the reverse.
+  `asAlpha` is bidirectional since it's the same underlying schema.
+
+  #### Usage
+
+  ```typescript
+  import {
+    SchemaFactory,
+    SchemaFactoryAlpha,
+    asAlpha,
+  } from "@fluidframework/tree";
+
+  // Using asAlpha to cast an existing TreeArrayNode
+  const sf = new SchemaFactory("example");
+  const Inventory = sf.array("Inventory", sf.string);
+  const inventory = new Inventory(["Apples", "Bananas", "Pears"]);
+  const inventoryAlpha = asAlpha(inventory);
+
+  // Using SchemaFactoryAlpha so splice is available directly
+  const sf = new SchemaFactoryAlpha("example");
+  const Inventory = sf.arrayAlpha("Inventory", sf.string);
+  const inventoryAlpha = new Inventory(["Apples", "Bananas", "Pears"]);
+
+  // Remove 2 items starting at index 0, insert new items in their place
+  const removed = inventoryAlpha.splice(0, 2, "Oranges", "Grapes");
+  // removed: ["Apples", "Bananas"]
+  // inventory: ["Oranges", "Grapes", "Pears"]
+
+  // Removed everything from index 1 onward (omitting deleteCount)
+  const rest = inventoryAlpha.splice(1);
+  // rest: ["Grapes", "Pears"]
+  // inventory: ["Oranges"]
+  ```
+
+## 2.91.0
+
+### Minor Changes
+
+- Adds withDefault API to allow defining default values for required and optional fields ([#26502](https://github.com/microsoft/FluidFramework/pull/26502)) [44fdd9421e4](https://github.com/microsoft/FluidFramework/commit/44fdd9421e4d0bfa3cdfa9ab3672ebf3c0ad20a6)
+
+  The `withDefault` API is now available on `SchemaFactoryAlpha`. It allows you to specify default values for fields,
+  making them optional in constructors even when the field is marked as required in the schema.
+  This provides a better developer experience by reducing boilerplate when creating objects.
+
+  The `withDefault` API wraps a field schema and defines a default value to use when the field is not provided during
+  construction. The default value must be of an allowed type of the field. You can provide defaults in two ways:
+  - **A value**: When a value is provided directly, the data is copied for each use to ensure independence between instances
+  - **A generator function**: A function that is called each time to produce a fresh value
+
+  Defaults are evaluated eagerly during node construction.
+
+  #### Required fields with defaults
+
+  ```typescript
+  import { SchemaFactoryAlpha, TreeAlpha } from "@fluidframework/tree/alpha";
+
+  const sf = new SchemaFactoryAlpha("example");
+
+  class Person extends sf.objectAlpha("Person", {
+    name: sf.required(sf.string),
+    age: sf.withDefault(sf.required(sf.number), -1),
+    role: sf.withDefault(sf.required(sf.string), "guest"),
+  }) {}
+
+  // Before: all fields were required
+  // const person = new Person({ name: "Alice", age: -1, role: "guest" });
+
+  // After: fields with defaults are optional
+  const person = new Person({ name: "Alice" });
+  // person.age === -1
+  // person.role === "guest"
+
+  // You can still provide values to override the defaults
+  const admin = new Person({ name: "Bob", age: 30, role: "admin" });
+  ```
+
+  #### Optional fields with custom defaults
+
+  Optional fields (`sf.optional`) already default to `undefined`, but `withDefault` allows you to specify a different
+  default value:
+
+  ```typescript
+  class Config extends sf.object("Config", {
+    timeout: sf.withDefault(sf.optional(sf.number), 5000),
+    retries: sf.withDefault(sf.optional(sf.number), 3),
+  }) {}
+
+  // All fields are optional, using custom defaults when not provided
+  const config = new Config({});
+  // config.timeout === 5000
+  // config.retries === 3
+
+  const customConfig = new Config({ timeout: 10000 });
+  // customConfig.timeout === 10000
+  // customConfig.retries === 3
+  ```
+
+  #### Value defaults vs function defaults
+
+  When you provide a value directly, the data is copied for each use, ensuring each instance is independent:
+
+  ```typescript
+  class Metadata extends sf.object("Metadata", {
+    tags: sf.array(sf.string),
+    version: sf.number,
+  }) {}
+
+  class Article extends sf.object("Article", {
+    title: sf.required(sf.string),
+
+    // a node is provided directly, it is copied for each use
+    metadata: sf.withDefault(
+      sf.optional(Metadata),
+      new Metadata({ tags: [], version: 1 }),
+    ),
+
+    // also works with arrays
+    authors: sf.withDefault(sf.optional(sf.array(sf.string)), []),
+  }) {}
+
+  const article1 = new Article({ title: "First" });
+  const article2 = new Article({ title: "Second" });
+
+  // each article gets its own independent copy
+  assert(article1.metadata !== article2.metadata);
+  article1.metadata.version = 2; // Doesn't affect article2
+  assert(article2.metadata.version === 1);
+  ```
+
+  Alternatively, you can use generator functions to explicitly create new instances:
+
+  ```typescript
+  class Article extends sf.object("Article", {
+    title: sf.required(sf.string),
+
+    // generators are called each time to create a new instance
+    metadata: sf.withDefault(
+      sf.optional(Metadata),
+      () => new Metadata({ tags: [], version: 1 }),
+    ),
+    authors: sf.withDefault(sf.optional(sf.array(sf.string)), () => []),
+  }) {}
+  ```
+
+  Insertable object literals, arrays, and map objects can be used in place of node instances in both static defaults
+  and generator functions:
+
+  ```typescript
+  class Article extends sf.object("Article", {
+    title: sf.required(sf.string),
+
+    // plain object literal instead of new Metadata(...)
+    metadata: sf.withDefault(sf.optional(Metadata), () => ({
+      tags: [],
+      version: 1,
+    })),
+
+    // plain array instead of new ArrayNode(...)
+    authors: sf.withDefault(sf.optional(sf.array(sf.string)), () => [
+      "anonymous",
+    ]),
+  }) {}
+  ```
+
+  ##### Dynamic defaults
+
+  Generator functions are called each time a new node is created, enabling dynamic defaults:
+
+  ```typescript
+  class Document extends sf.object("Document", {
+    id: sf.withDefault(sf.required(sf.string), () => crypto.randomUUID()),
+    title: sf.required(sf.string),
+  }) {}
+
+  const doc1 = new Document({ title: "First Document" });
+  const doc2 = new Document({ title: "Second Document" });
+  // doc1.id !== doc2.id (each gets a unique UUID)
+  ```
+
+  Generator functions also work with primitive types:
+
+  ```typescript
+  let counter = 0;
+
+  class GameState extends sf.object("GameState", {
+    playerId: sf.withDefault(
+      sf.required(sf.string),
+      () => `player-${counter++}`,
+    ),
+    score: sf.withDefault(sf.required(sf.number), () =>
+      Math.floor(Math.random() * 100),
+    ),
+    isActive: sf.withDefault(sf.required(sf.boolean), () => counter % 2 === 0),
+  }) {}
+  ```
+
+  #### Recursive types
+
+  `withDefaultRecursive` is available for use inside recursive schemas. Use `objectRecursiveAlpha` (rather than
+  `objectRecursive`) when defining recursive schemas with defaults, as it correctly makes defaulted fields optional in
+  the constructor for all field kinds including `requiredRecursive`. It works the same as `withDefault` but is
+  necessary to avoid TypeScript's circular reference limitations.
+
+  ```typescript
+  class TreeNode extends sf.objectRecursiveAlpha("TreeNode", {
+    value: sf.number,
+    label: SchemaFactoryAlpha.withDefaultRecursive(
+      sf.optional(sf.string),
+      "untitled",
+    ),
+    child: sf.optionalRecursive([() => TreeNode]),
+  }) {}
+
+  // `label` is optional in the constructor — the default is used when omitted
+  const leaf = new TreeNode({ value: 1 });
+  // leaf.label === "untitled"
+
+  const root = new TreeNode({ value: 0, label: "root", child: leaf });
+  // root.label === "root"
+  // root.child.label === "untitled"
+  ```
+
+  > **Warning:** Be careful about using the recursive type itself as a default value — this is likely to cause
+  > infinite recursion at construction time, since creating the default value would trigger the same default again.
+  > Instead, use a primitive or a separate node type as the default:
+  >
+  > ```typescript
+  > const DefaultTag = sf.objectRecursiveAlpha("Tag", {
+  >   id: sf.number,
+  >   child: sf.optionalRecursive([() => TreeNode]),
+  > });
+  >
+  > class TreeNode extends sf.objectRecursiveAlpha("TreeNode", {
+  >   value: sf.number,
+  >   // ✅ Safe: default is a non-recursive node
+  >   tag: SchemaFactoryAlpha.withDefaultRecursive(
+  >     sf.optional(DefaultTag),
+  >     () => new DefaultTag({ id: 0, child: new DefaultTag({ id: 1 }) }),
+  >   ),
+  >   child: sf.optionalRecursive([() => TreeNode]),
+  > }) {}
+  > ```
+  >
+  > The following definition for child would cause infinite recursion at construction time:
+  >
+  > ```typescript
+  > child: SchemaFactoryAlpha.withDefaultRecursive(
+  >   sf.optionalRecursive([() => TreeNode]),
+  >   () => new TreeNode({ value: 0 }),
+  > );
+  > ```
+
+  > The infinite recursion can be solved by passing in undefined explicitly but it is
+  > recommended to not use defaults in this case:
+  >
+  > ```typescript
+  > child: SchemaFactoryAlpha.withDefaultRecursive(
+  >   sf.optionalRecursive([() => TreeNode]),
+  >   () => new TreeNode({ value: 0, child: undefined }),
+  > );
+  > ```
+
+  #### Type safety
+
+  The default value (or the value returned by a generator function) must be of an allowed type for the field. TypeScript
+  enforces this at compile time:
+
+  ```typescript
+  // ✅ Valid: number default for number field
+  sf.withDefault(sf.optional(sf.number), 8080);
+
+  // ✅ Valid: generator returns string for string field
+  sf.withDefault(sf.optional(sf.string), () => "localhost");
+
+  // ❌ TypeScript error: string default for number field
+  sf.withDefault(sf.optional(sf.number), "8080");
+
+  // ❌ TypeScript error: generator returns number for string field
+  sf.withDefault(sf.optional(sf.string), () => 8080);
+  ```
+
+## 2.90.0
+
+### Minor Changes
+
+- Add alpha TextAsTree domain for collaboratively editable text ([#26568](https://github.com/microsoft/FluidFramework/pull/26568)) [06736bd81de](https://github.com/microsoft/FluidFramework/commit/06736bd81dea4c8e44cb13304f471a7b1bca42bd)
+
+  A newly exported `TextAsTree` alpha namespace has been added with an initial version of collaboratively editable text.
+  Users of SharedTree can add `TextAsTree.Tree` nodes to their tree to experiment with it.
+
+- Added new TreeAlpha.context(node) API ([#26432](https://github.com/microsoft/FluidFramework/pull/26432)) [ffa62f45e2c](https://github.com/microsoft/FluidFramework/commit/ffa62f45e2ca6c6106c67ed94f69359336823516)
+
+  This release introduces a node-scoped context that works for both hydrated and [unhydrated](https://fluidframework.com/docs/api/fluid-framework/unhydrated-typealias) [TreeNodes](https://fluidframework.com/docs/api/fluid-framework/treenode-class).
+  The new `TreeContextAlpha` interface exposes `runTransaction` / `runTransactionAsync` methods and an `isBranch()` type guard.
+  `TreeBranchAlpha` now extends `TreeContextAlpha`, so you can keep using branch APIs when available.
+
+  #### Migration
+
+  If you previously used `TreeAlpha.branch(node)` to discover a branch, switch to `TreeAlpha.context(node)` and check `isBranch()`:
+
+  ```ts
+  import { TreeAlpha } from "@fluidframework/tree/alpha";
+
+  const context = TreeAlpha.context(node);
+  if (context.isBranch()) {
+    // Same branch APIs as before
+    context.fork();
+  }
+  ```
+
+  `TreeAlpha.branch(node)` is now deprecated.
+  Prefer the context API above.
+
+  #### New transaction entry point
+
+  You can now run transactions from a node context, regardless of whether the node is hydrated:
+
+  ```ts
+  // A synchronous transaction without a return value
+  const context = TreeAlpha.context(node);
+  context.runTransaction(() => {
+    node.count += 1;
+  });
+  ```
+
+  ```ts
+  // An asynchronous transaction with a return value
+  const context = TreeAlpha.context(node);
+  const result = await context.runTransactionAsync(async () => {
+    await doWork(node);
+    return { value: node.foo };
+  });
+  ```
+
+- Promote checkSchemaCompatibilitySnapshots to beta ([#26288](https://github.com/microsoft/FluidFramework/pull/26288)) [eb4ef62672d](https://github.com/microsoft/FluidFramework/commit/eb4ef62672d33f6a903e3726b58d1f65c24d9150)
+
+  [`checkSchemaCompatibilitySnapshots`](https://fluidframework.com/docs/api/fluid-framework#checkschemacompatibilitysnapshots-function) has been promoted to `@beta`.
+  It is recommended that all SharedTree applications use this API to write schema compatibility tests.
+
+  Usage should look something like:
+
+  ```typescript
+  import fs from "node:fs";
+  import path from "node:path";
+
+  import { snapshotSchemaCompatibility } from "@fluidframework/tree/beta";
+
+  // The TreeViewConfiguration the application uses, which contains the application's schema.
+  import { treeViewConfiguration } from "./schema.js";
+  // The next version of the application which will be released.
+  import { packageVersion } from "./version.js";
+
+  // Provide some way to run the check in "update" mode when updating snapshots is intended.
+  const regenerateSnapshots = process.argv.includes("--snapshot");
+
+  // Setup the actual test. In this case using Mocha syntax.
+  describe("schema", () => {
+    it("schema compatibility", () => {
+      // Select a path to save the snapshots in.
+      // This will depend on how your application organizes its test data.
+      const snapshotDirectory = path.join(
+        import.meta.dirname,
+        "../../../src/test/snapshotCompatibilityCheckerExample/schema-snapshots",
+      );
+      snapshotSchemaCompatibility({
+        snapshotDirectory,
+        fileSystem: { ...fs, ...path },
+        version: packageVersion,
+        minVersionForCollaboration: "2.0.0",
+        schema: treeViewConfiguration,
+        mode: regenerateSnapshots ? "update" : "assert",
+      });
+    });
+  });
+  ```
+
 ## 2.83.0
 
 ### Minor Changes

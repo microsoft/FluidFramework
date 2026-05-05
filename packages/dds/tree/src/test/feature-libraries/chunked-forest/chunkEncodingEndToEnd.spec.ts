@@ -37,7 +37,7 @@ import { ChunkedForest } from "../../../feature-libraries/chunked-forest/chunked
 // eslint-disable-next-line import-x/no-internal-modules
 import { decode } from "../../../feature-libraries/chunked-forest/codec/chunkDecoding.js";
 import type {
-	EncodedFieldBatch,
+	EncodedFieldBatchV1OrV2,
 	FieldBatchEncodingContext,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/chunked-forest/index.js";
@@ -47,7 +47,7 @@ import {
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/chunked-forest/uniformChunk.js";
 // eslint-disable-next-line import-x/no-internal-modules
-import type { FormatV1 } from "../../../feature-libraries/forest-summary/formatV1.js";
+import type { FormatCommon } from "../../../feature-libraries/forest-summary/formatCommon.js";
 import {
 	DefaultChangeFamily,
 	DefaultEditBuilder,
@@ -57,7 +57,7 @@ import {
 	buildChunkedForest,
 	defaultSchemaPolicy,
 	fieldKindConfigurations,
-	makeFieldBatchCodec,
+	fieldBatchCodecBuilder,
 	makeModularChangeCodecFamily,
 	MockNodeIdentifierManager,
 	jsonableTreeFromCursor,
@@ -95,7 +95,7 @@ const options: CodecWriteOptions = {
 	minVersionForCollab: FluidClientVersion.v2_0,
 };
 
-const fieldBatchCodec = makeFieldBatchCodec(options);
+const fieldBatchCodec = fieldBatchCodecBuilder.build(options);
 const sessionId = "beefbeef-beef-4000-8000-000000000001" as SessionId;
 const idCompressor = createIdCompressor(sessionId);
 const revisionTagCodec = new RevisionTagCodec(idCompressor);
@@ -200,7 +200,6 @@ describe("End to end chunked encoding", () => {
 		const forestSummarizer = new ForestSummarizer(
 			checkout.forest,
 			revisionTagCodec,
-			fieldBatchCodec,
 			context,
 			options,
 			idCompressor,
@@ -209,10 +208,13 @@ describe("End to end chunked encoding", () => {
 
 		// This function is declared in the test to have access to the original uniform chunk for comparison.
 		function stringify(content: unknown) {
-			const insertedChunk = decode((content as FormatV1).fields as EncodedFieldBatch, {
-				idCompressor,
-				originatorId: idCompressor.localSessionId,
-			});
+			const insertedChunk = decode(
+				(content as FormatCommon).fields as EncodedFieldBatchV1OrV2,
+				{
+					idCompressor,
+					originatorId: idCompressor.localSessionId,
+				},
+			);
 			assert.equal(insertedChunk, chunk);
 			assert(chunk.isShared());
 			return JSON.stringify(content);
@@ -234,7 +236,6 @@ describe("End to end chunked encoding", () => {
 		const forestSummarizer = new ForestSummarizer(
 			forest,
 			revisionTagCodec,
-			fieldBatchCodec,
 			context,
 			options,
 			idCompressor,
@@ -243,10 +244,13 @@ describe("End to end chunked encoding", () => {
 
 		// This function is declared in the test to have access to the original uniform chunk for comparison.
 		function stringify(content: unknown) {
-			const insertedChunk = decode((content as FormatV1).fields as EncodedFieldBatch, {
-				idCompressor,
-				originatorId: idCompressor.localSessionId,
-			});
+			const insertedChunk = decode(
+				(content as FormatCommon).fields as EncodedFieldBatchV1OrV2,
+				{
+					idCompressor,
+					originatorId: idCompressor.localSessionId,
+				},
+			);
 			assert.equal(insertedChunk, chunk);
 			assert(chunk.isShared());
 			return JSON.stringify(content);
@@ -268,7 +272,6 @@ describe("End to end chunked encoding", () => {
 			const forestSummarizer = new ForestSummarizer(
 				checkout.forest,
 				new RevisionTagCodec(testIdCompressor),
-				fieldBatchCodec,
 				encoderContext,
 				options,
 				testIdCompressor,
@@ -296,7 +299,6 @@ describe("End to end chunked encoding", () => {
 			const forestSummarizer = new ForestSummarizer(
 				checkout.forest,
 				new RevisionTagCodec(testIdCompressor),
-				fieldBatchCodec,
 				encoderContext,
 				options,
 				testIdCompressor,
@@ -319,7 +321,6 @@ describe("End to end chunked encoding", () => {
 			const forestSummarizer = new ForestSummarizer(
 				checkout.forest,
 				new RevisionTagCodec(testIdCompressor),
-				fieldBatchCodec,
 				encoderContext,
 				options,
 				testIdCompressor,

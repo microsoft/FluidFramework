@@ -7,7 +7,6 @@ import { strict as assert } from "node:assert";
 
 import { render } from "@testing-library/react";
 import globalJsdom from "global-jsdom";
-import * as React from "react";
 
 import {
 	useObservation,

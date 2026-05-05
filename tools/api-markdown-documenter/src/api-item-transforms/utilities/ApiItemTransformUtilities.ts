@@ -96,12 +96,8 @@ export function getLinkUrlForApiItem(
 		documentPath = documentPath.slice(0, documentPath.length - "index".length);
 	}
 
-	// Don't bother with heading ID if we are linking to the root item of a document
-	let headingPostfix = "";
-	if (!doesItemRequireOwnDocument(apiItem, config.hierarchy)) {
-		const headingId = getHeadingIdForApiItem(apiItem, config);
-		headingPostfix = `#${headingId}`;
-	}
+	const headingId = getHeadingIdForApiItem(apiItem, config);
+	const headingPostfix = headingId === undefined ? "" : `#${headingId}`;
 
 	return `${uriBase}/${documentPath}${headingPostfix}`;
 }
@@ -271,10 +267,7 @@ export function getHeadingForApiItem(
 	apiItem: ApiItem,
 	config: ApiItemTransformationConfiguration,
 ): SectionHeading {
-	// Don't generate an ID for the root heading
-	const id = doesItemRequireOwnDocument(apiItem, config.hierarchy)
-		? undefined
-		: getHeadingIdForApiItem(apiItem, config);
+	const id = getHeadingIdForApiItem(apiItem, config);
 	const title = config.getHeadingTextForItem(apiItem);
 
 	return {
@@ -284,29 +277,28 @@ export function getHeadingForApiItem(
 	};
 }
 
-// TODO: this doesn't actually return `undefined` for own document. Verify and fix.
 /**
  * Generates a heading ID for the provided API item.
  * Guaranteed to be unique within the document to which the API item is being rendered.
  *
  * @remarks
- * Notes:
- *
- * - If the item is one that will be rendered to its own document, this will return `undefined`.
- * Any links pointing to this item may simply link to the document; no heading ID is needed.
- *
- * - The resulting ID is context-dependent. In order to guarantee uniqueness, it will need to express
+ * The resulting ID is context-dependent. In order to guarantee uniqueness, it will need to express
  * hierarchical information up to the ancestor item whose document the specified item will ultimately be rendered to.
  *
  * @param apiItem - The API item for which the heading ID is being generated.
  * @param config - See {@link ApiItemTransformationConfiguration}.
  *
- * @returns A unique heading ID for the API item if one is needed. Otherwise, `undefined`.
+ * @returns A unique heading ID for the API item, or `undefined` if the item is rendered to its own document
+ * (in which case no heading ID is needed — callers may link directly to the document).
  */
 function getHeadingIdForApiItem(
 	apiItem: ApiItem,
 	config: ApiItemTransformationConfiguration,
-): string {
+): string | undefined {
+	if (doesItemRequireOwnDocument(apiItem, config.hierarchy)) {
+		return undefined;
+	}
+
 	let baseName: string | undefined;
 	const apiItemKind = getApiItemKind(apiItem);
 
@@ -328,6 +320,7 @@ function getHeadingIdForApiItem(
 		hierarchyItem = parent;
 	}
 
+	assert(baseName !== undefined, "baseName should always be set for non-own-document items.");
 	return `${baseName}-${apiItemKind.toLowerCase()}`;
 }
 

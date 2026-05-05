@@ -26,20 +26,18 @@ import {
 import type { TreeChunk } from "../../../feature-libraries/chunked-forest/index.js";
 import {
 	type FieldSet,
-	makeForestSummarizerCodec,
+	forestCodecBuilder,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/forest-summary/codec.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { ForestFormatVersion } from "../../../feature-libraries/forest-summary/formatCommon.js";
 // eslint-disable-next-line import-x/no-internal-modules
-import type { FormatV1 } from "../../../feature-libraries/forest-summary/formatV1.js";
-// eslint-disable-next-line import-x/no-internal-modules
-import type { FormatV2 } from "../../../feature-libraries/forest-summary/formatV2.js";
+import type { FormatCommon } from "../../../feature-libraries/forest-summary/formatCommon.js";
 import {
 	FieldBatchFormatVersion,
 	TreeCompressionStrategy,
 	cursorForJsonableTreeField,
-	makeFieldBatchCodec,
+	fieldBatchCodecBuilder,
 } from "../../../feature-libraries/index.js";
 import { brand } from "../../../util/index.js";
 import { EmptyObject } from "../../cursorTestSuite.js";
@@ -55,16 +53,20 @@ const codecOptionsCurrent: CodecWriteOptions = {
 	minVersionForCollab: currentVersion,
 };
 
-const fieldBatchCodecOld = makeFieldBatchCodec(codecOptionsOld);
-const fieldBatchCodecCurrent = makeFieldBatchCodec(codecOptionsCurrent);
+const fieldBatchCodecOld = fieldBatchCodecBuilder.build(codecOptionsOld);
+const fieldBatchCodecCurrent = fieldBatchCodecBuilder.build(codecOptionsCurrent);
 const context = {
 	encodeType: TreeCompressionStrategy.Uncompressed,
 	originatorId: testIdCompressor.localSessionId,
 	idCompressor: testIdCompressor,
 };
 
-const codecOld = makeForestSummarizerCodec(codecOptionsOld, fieldBatchCodecOld);
-const codecCurrent = makeForestSummarizerCodec(codecOptionsCurrent, fieldBatchCodecCurrent);
+const codecOld = forestCodecBuilder.build({
+	...codecOptionsOld,
+});
+const codecCurrent = forestCodecBuilder.build({
+	...codecOptionsCurrent,
+});
 
 const testFieldChunks: TreeChunk[] = chunkField(
 	cursorForJsonableTreeField([{ type: brand(EmptyObject.identifier) }]),
@@ -92,7 +94,7 @@ const malformedData: [string, unknown][] = [
 const validData: [
 	string,
 	FieldSet,
-	FormatV1 | FormatV2 | undefined,
+	FormatCommon | undefined,
 	ForestFormatVersion | undefined,
 ][] = [
 	[
@@ -223,7 +225,7 @@ describe("ForestSummarizerCodec", () => {
 						context,
 					),
 				validateUsageError(
-					/Unsupported version 2\.5 encountered while decoding data. Supported versions for this data are: 1, 2\./,
+					/Unsupported version 2\.5 encountered while decoding Forest data. Supported versions for this data are: \[1,2]\./,
 				),
 			);
 		});
@@ -244,7 +246,9 @@ describe("ForestSummarizerCodec", () => {
 						},
 						context,
 					),
-				validateUsageError(/Unsupported version 2\.5 encountered while decoding data/),
+				validateUsageError(
+					/Unsupported version 2\.5 encountered while decoding FieldBatch data/,
+				),
 			);
 		});
 
@@ -255,7 +259,7 @@ describe("ForestSummarizerCodec", () => {
 						{
 							version: brand<ForestFormatVersion>(ForestFormatVersion.v1),
 							keys: [],
-						} as unknown as FormatV1,
+						} as unknown as FormatCommon,
 						context,
 					),
 				validateAssertionError("Data being decoded should validate"),
@@ -271,7 +275,7 @@ describe("ForestSummarizerCodec", () => {
 							fields: { version: brand<FieldBatchFormatVersion>(FieldBatchFormatVersion.v1) },
 							keys: [],
 							wrong: 5,
-						} as unknown as FormatV1,
+						} as unknown as FormatCommon,
 						context,
 					),
 				validateAssertionError("Data being decoded should validate"),

@@ -7,13 +7,16 @@
 
 import type { IDisposable } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
-import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
-import {
+import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
+import type {
 	Client,
 	ISegment,
 	LocalReferencePosition,
-	PropertiesManager,
 	PropertySet,
+	SequencePlace,
+} from "@fluidframework/merge-tree/internal";
+import {
+	PropertiesManager,
 	ReferenceType,
 	SlidingPreference,
 	compareReferencePositions,
@@ -24,7 +27,6 @@ import {
 	minReferencePosition,
 	refTypeIncludesFlag,
 	reservedRangeLabelsKey,
-	SequencePlace,
 	Side,
 	endpointPosAndSide,
 	addProperties,
@@ -37,9 +39,8 @@ import { v4 as uuid } from "uuid";
 
 import type { ISharedSegmentSequence } from "../sequence.js";
 
+import type { ISerializableInterval, ISerializedInterval } from "./intervalUtils.js";
 import {
-	ISerializableInterval,
-	ISerializedInterval,
 	IntervalStickiness,
 	IntervalType,
 	computeStickinessFromSide,
@@ -307,15 +308,15 @@ export class BaseSequenceInterval implements SequenceInterval, ISerializableInte
 	 * Whether this interval overlaps the provided numerical positions.
 	 */
 	public overlapsPos(_bstart: number, _bend: number): boolean {
-		assert(false, "overlapsPos not supported on BaseSequenceInterval");
+		assert(false, 0xcd7 /* overlapsPos not supported on BaseSequenceInterval */);
 	}
 
 	public clone(): BaseSequenceInterval {
-		assert(false, "clone not supported on BaseSequenceInterval");
+		assert(false, 0xcd8 /* clone not supported on BaseSequenceInterval */);
 	}
 
 	public union(_b: BaseSequenceInterval): BaseSequenceInterval {
-		assert(false, "union not supported on BaseSequenceInterval");
+		assert(false, 0xcd9 /* union not supported on BaseSequenceInterval */);
 	}
 
 	protected verifyNotDispose(): void {
@@ -858,7 +859,7 @@ export function createTransientIntervalFromSequence(
 			endPos !== undefined &&
 			startSide !== undefined &&
 			endSide !== undefined,
-		"start and end cannot be undefined because they were not passed in as undefined",
+		0xcda /* start and end cannot be undefined because they were not passed in as undefined */,
 	);
 
 	const startSlidingPref = startReferenceSlidingPreference(

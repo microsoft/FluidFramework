@@ -4,6 +4,14 @@
  */
 
 import { compareArrays, debugAssert } from "@fluidframework/core-utils/internal";
+import {
+	buildFunc,
+	exposeMethodsSymbol,
+	type ExposedMethods,
+	type IExposedMethods,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "@fluidframework/type-factory/alpha";
+import { typeFactory as tf } from "@fluidframework/type-factory/internal";
 
 import { EmptyKey, mapCursorField, type ITreeCursorSynchronous } from "../core/index.js";
 import {
@@ -13,7 +21,12 @@ import {
 	SchemaFactoryAlpha,
 	TreeArrayNode,
 } from "../simple-tree/index.js";
+// eslint-disable-next-line import-x/no-duplicates
 import type { TreeNode, WithType } from "../simple-tree/index.js";
+// Add some unused imports which show up in the generated d.ts file.
+// This prevents them from getting inline imports generated, cleaning up the d.ts file and API reports.
+// eslint-disable-next-line @typescript-eslint/no-unused-vars, unused-imports/no-unused-imports, import-x/no-duplicates
+import type { NodeKind, TreeNodeSchema } from "../simple-tree/index.js";
 
 const sf = new SchemaFactoryAlpha("com.fluidframework.text");
 
@@ -21,8 +34,67 @@ class TextNode
 	extends sf.object("Text", {
 		content: SchemaFactory.required([() => StringArray], { key: EmptyKey }),
 	})
-	implements TextAsTree.Members
+	implements TextAsTree.Members, IExposedMethods
 {
+	public static [exposeMethodsSymbol](methods: ExposedMethods): void {
+		methods.exposeMethod(
+			TextNode,
+			"insertAt",
+			buildFunc(
+				{
+					description:
+						"Insert characters into the text at the given character index (Unicode code points).",
+					returns: tf.void(),
+				},
+				["index", tf.number()],
+				["additionalCharacters", tf.string()],
+			),
+		);
+		methods.exposeMethod(
+			TextNode,
+			"removeRange",
+			buildFunc(
+				{
+					description:
+						"Remove a range of characters from the text by character index (Unicode code points). startIndex defaults to 0 and endIndex defaults to the length of the text.",
+					returns: tf.void(),
+				},
+				["startIndex", tf.union([tf.number(), tf.undefined()])],
+				["endIndex", tf.union([tf.number(), tf.undefined()])],
+			),
+		);
+		methods.exposeMethod(
+			TextNode,
+			"fullString",
+			buildFunc({
+				description: "Return a copy of this text node's content as a string.",
+				returns: tf.string(),
+			}),
+		);
+		methods.exposeMethod(
+			TextNode,
+			"characterCount",
+			buildFunc({
+				description:
+					"Gets the number of characters (Unicode code points) currently in the text. Joined emojis and other grapheme clusters count as multiple characters.",
+				returns: tf.number(),
+			}),
+		);
+		methods.exposeMethod(
+			TextNode,
+			"charactersCopy",
+			buildFunc({
+				description:
+					"Returns all characters in the text as an array, where each element is a single Unicode code point. Joined emojis and other grapheme clusters are split into separate elements.",
+				returns: tf.array(tf.string()),
+			}),
+		);
+	}
+
+	public [exposeMethodsSymbol](methods: ExposedMethods): void {
+		TextNode[exposeMethodsSymbol](methods);
+	}
+
 	public insertAt(index: number, additionalCharacters: string): void {
 		this.content.insertAt(
 			index,
@@ -174,12 +246,12 @@ class StringArray extends sf.array("StringArray", SchemaFactory.string) {
  *
  * Part of that work will be establishing and documenting those patterns so other components with complex encodings can follow them,
  * in addition to implementing them for text.
- * @internal
+ * @alpha
  */
 export namespace TextAsTree {
 	/**
 	 * Statics for text nodes.
-	 * @internal
+	 * @alpha
 	 */
 	export interface Statics {
 		/**
@@ -204,7 +276,7 @@ export namespace TextAsTree {
 	 *
 	 * @see {@link TextAsTree.Statics.fromString} for construction.
 	 * @see {@link TextAsTree.(Tree:type)} for schema.
-	 * @internal
+	 * @alpha
 	 */
 	export interface Members {
 		/**
@@ -256,12 +328,18 @@ export namespace TextAsTree {
 	}
 
 	/**
-	 * Schema for a text node.
+	 * Schema for a {@link TextAsTree.(Tree:variable)} node.
 	 * @remarks
-	 * See {@link TextAsTree.Members} for the API.
-	 * See {@link TextAsTree.Statics} for static APIs on this Schema, including construction.
-	 * @internal
+	 * See {@link TextAsTree.Statics} for static APIs on this schema, including construction.
+	 * @alpha
 	 */
 	export const Tree = eraseSchemaDetails<Members, Statics>()(TextNode);
+
+	/**
+	 * Node for the {@link TextAsTree.(Tree:type)} schema exposing the {@link TextAsTree.Members} API.
+	 * @remarks
+	 * Create using {@link TextAsTree.Statics.fromString}.
+	 * @alpha
+	 */
 	export type Tree = Members & TreeNode & WithType<"com.fluidframework.text.Text">;
 }

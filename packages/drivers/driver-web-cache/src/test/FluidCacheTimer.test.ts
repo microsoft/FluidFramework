@@ -5,6 +5,8 @@
 
 /* eslint-disable @typescript-eslint/dot-notation */
 
+import { strict as assert } from "node:assert";
+
 import { delay } from "@fluidframework/core-utils/internal";
 import { ICacheEntry } from "@fluidframework/driver-definitions/internal";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
@@ -12,9 +14,6 @@ import { openDB } from "idb";
 
 import { FluidCache } from "../FluidCache.js";
 import { FluidDriverCacheDBName } from "../FluidCacheIndexedDb.js";
-
-// eslint-disable-next-line import-x/no-unassigned-import, @typescript-eslint/no-require-imports, import-x/no-internal-modules
-require("fake-indexeddb/auto");
 
 const mockPartitionKey = "FAKEPARTITIONKEY";
 
@@ -49,7 +48,7 @@ class DateMock {
 export function setupDateMock(startMockTime: number): () => void {
 	const realDate = window.Date;
 	DateMock.mockTimeMs = startMockTime;
-	(window.Date as any) = DateMock;
+	(window.Date as unknown) = DateMock;
 
 	return () => (window.Date = realDate);
 }
@@ -73,52 +72,64 @@ function getMockCacheEntry(itemKey: string, options?: { docId: string }): ICache
 }
 
 describe("FluidCacheTimer tests", () => {
+	let fluidCache: FluidCache;
+	let extraDb: Awaited<ReturnType<typeof openDB>> | undefined;
+
 	beforeEach(() => {
 		// Reset the indexed db before each test so that it starts off in an empty state
 		// eslint-disable-next-line import-x/no-internal-modules, @typescript-eslint/no-require-imports
 		const FDBFactory = require("fake-indexeddb/lib/FDBFactory");
-		(window.indexedDB as any) = new FDBFactory();
+		(window.indexedDB as unknown) = new FDBFactory();
+	});
+
+	afterEach(() => {
+		if (fluidCache !== undefined) {
+			clearTimeout(fluidCache["dbCloseTimer"]);
+			fluidCache["db"]?.close();
+		}
+		extraDb?.close();
+		extraDb = undefined;
 	});
 
 	it("db should be closed after the close timer", async () => {
 		const logger = new MockLogger();
-		const fluidCache = getFluidCache({ logger });
+		fluidCache = getFluidCache({ logger });
 
 		const cacheEntry = getMockCacheEntry("someKey");
 		const cachedItem = { dateToStore: "foo" };
 		await fluidCache.put(cacheEntry, cachedItem);
-		expect(fluidCache["db"] !== undefined).toEqual(true);
+		assert.notStrictEqual(fluidCache["db"], undefined);
 		// Wait for timer to pass.
 		await delay(101);
-		expect(fluidCache["db"] === undefined).toEqual(true);
-		expect(fluidCache["dbCloseTimer"] === undefined).toEqual(true);
+		assert.strictEqual(fluidCache["db"], undefined);
+		assert.strictEqual(fluidCache["dbCloseTimer"], undefined);
 	});
 
 	it("db should be closed after the version upgrade", async () => {
 		const logger = new MockLogger();
-		const fluidCache = getFluidCache({ logger });
+		fluidCache = getFluidCache({ logger });
 
 		const cacheEntry = getMockCacheEntry("someKey");
 		const cachedItem = { dateToStore: "foo" };
 		await fluidCache.put(cacheEntry, cachedItem);
-		expect(fluidCache["db"] !== undefined).toEqual(true);
+		assert.notStrictEqual(fluidCache["db"], undefined);
 		// Create a DB with a much newer version number to force version upgrade on older cache causing it to close.
-		await openDB(FluidDriverCacheDBName, 1000000);
-		expect(fluidCache["db"] === undefined).toEqual(true);
-		expect(fluidCache["dbCloseTimer"] === undefined).toEqual(true);
+		extraDb = await openDB(FluidDriverCacheDBName, 1000000);
+		assert.strictEqual(fluidCache["db"], undefined);
+		assert.strictEqual(fluidCache["dbCloseTimer"], undefined);
 	});
 
 	it("db should be closed after the version upgrade", async () => {
 		const logger = new MockLogger();
-		const fluidCache = getFluidCache({ logger });
+		fluidCache = getFluidCache({ logger });
 
 		const cacheEntry = getMockCacheEntry("someKey");
 		const cachedItem = { dateToStore: "foo" };
 		await fluidCache.put(cacheEntry, cachedItem);
-		expect(fluidCache["db"] !== undefined).toEqual(true);
+		assert.notStrictEqual(fluidCache["db"], undefined);
 		// Create a DB with a much newer version number to force version upgrade on older cache causing it to close.
-		await openDB(FluidDriverCacheDBName, 1000000);
-		expect(fluidCache["db"] === undefined).toEqual(true);
-		expect(fluidCache["dbCloseTimer"] === undefined).toEqual(true);
+		extraDb = await openDB(FluidDriverCacheDBName, 1000000);
+		assert.strictEqual(fluidCache["db"], undefined);
+		assert.strictEqual(fluidCache["dbCloseTimer"], undefined);
 	});
 });

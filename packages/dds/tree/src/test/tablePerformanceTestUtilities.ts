@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-// eslint-disable-next-line import-x/no-internal-modules
 import { strict as assert } from "node:assert";
 
 import { AttachState } from "@fluidframework/container-definitions";
