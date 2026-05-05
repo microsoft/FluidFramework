@@ -253,6 +253,10 @@ This was raised on draft PR #27100 and explicitly re-tiered in-scope by the deep
 - Draft PR #27100 deep-review thread, "Binary attachment blob bytes are corrupted by lossy UTF-8 round-trip during capture" finding.
 - `packages/loader/container-loader/src/captureReferencedContents.ts:234`.
 
+**Status: RESOLVED (path 1 — base64 + parallel pending-state field).**
+
+`captureReferencedAttachmentBlobs` now encodes attachment-blob bytes as base64 (`packages/loader/container-loader/src/captureReferencedContents.ts`). Structural snapshot blobs continue to use UTF-8 in `IPendingContainerState.snapshotBlobs` — that wire format is unchanged. Attachment-blob contents are carried on a new optional field `IPendingContainerState.attachmentBlobContents?: Record<string, string>` (defined in `packages/loader/container-loader/src/serializedStateManager.ts`), populated by `captureFullContainerState` and decoded back to bytes alongside the structural-blob loop in `SerializedStateManager.fetchSnapshot`. `PendingLocalStateStore.set` was updated to dedupe entries on the new field the same way it already dedupes `snapshotBlobs`. Path 1 was preferred over path 2 because hosts with image/encrypted attachment payloads would have been blocked by a UTF-8-only restriction. The new field is optional, so live containers' pending state (which doesn't inline attachment blobs) is unchanged. A non-UTF-8 round-trip integration test landed at `packages/test/local-server-tests/src/test/captureFullContainerState.spec.ts` ("round-trips non-UTF-8 attachment blob bytes byte-exactly"); it asserts both captured-payload byte fidelity and end-to-end frozen rehydration, and verifiably fails when the encoding regresses to UTF-8.
+
 ---
 
 ### Task 2 — captureFullContainerState: expand integration test coverage

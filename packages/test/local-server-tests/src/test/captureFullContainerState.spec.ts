@@ -266,8 +266,15 @@ describe("captureFullContainerState", () => {
 		});
 		const parsed = JSON.parse(pendingLocalState) as {
 			snapshotBlobs: Record<string, string>;
+			attachmentBlobContents?: Record<string, string>;
 		};
-		const inlinedPayloads = Object.values(parsed.snapshotBlobs);
+		assert(
+			parsed.attachmentBlobContents !== undefined,
+			"Expected captured state to populate attachmentBlobContents for attachment blobs",
+		);
+		const inlinedPayloads = Object.values(parsed.attachmentBlobContents).map((v) =>
+			bufferToString(stringToBuffer(v, "base64"), "utf8"),
+		);
 		assert(
 			inlinedPayloads.includes(blobPayload),
 			"Expected captured state to inline attachment blob contents by storage ID",
@@ -291,5 +298,85 @@ describe("captureFullContainerState", () => {
 		const retrievedBlob = await frozenEntryPoint.ITestFluidObject.root.get("blobHandle").get();
 		assert(retrievedBlob !== undefined, "Expected blob handle to resolve in frozen container");
 		assert.strictEqual(bufferToString(retrievedBlob, "utf8"), blobPayload);
+	});
+
+	it("round-trips non-UTF-8 attachment blob bytes byte-exactly", async () => {
+		const { container, testFluidObject, urlResolver, codeLoader, documentServiceFactory } =
+			await initialize();
+
+		// Deliberately invalid UTF-8: 0xff/0xfe/0xc0 are not valid lead bytes
+		// in any UTF-8 sequence, and a UTF-8 round-trip would replace them
+		// with U+FFFD, losing the original bytes irrecoverably. Base64 is the
+		// established encoding for binary attachment blobs in this codebase.
+		const binaryPayload = new Uint8Array([0xff, 0xfe, 0x00, 0x80, 0xc0]);
+		const blobHandle = await testFluidObject.runtime.uploadBlob(binaryPayload.buffer);
+		testFluidObject.root.set("binaryBlobHandle", blobHandle);
+
+		await container.attach(urlResolver.createCreateNewRequest("test"));
+		if (container.isDirty) {
+			await timeoutPromise((resolve) => container.once("saved", () => resolve()));
+		}
+
+		const url = await container.getAbsoluteUrl("");
+		assert(url !== undefined, "Expected container to provide a valid absolute URL");
+
+		const pendingLocalState = await captureFullContainerState({
+			urlResolver,
+			documentServiceFactory,
+			request: { url },
+		});
+
+		// First, prove the captured pending state itself encodes the binary
+		// bytes losslessly. local-server's FrozenDocumentService delegates
+		// readBlob through to live storage, which masks corruption in the
+		// pending state during rehydration; assert directly against the
+		// captured payload so this test fails if attachment-blob encoding
+		// regresses to UTF-8.
+		const parsed = JSON.parse(pendingLocalState) as {
+			attachmentBlobContents?: Record<string, string>;
+		};
+		assert(
+			parsed.attachmentBlobContents !== undefined,
+			"attachment blobs must be captured into attachmentBlobContents (not snapshotBlobs)",
+		);
+		const capturedDecoded = Object.values(parsed.attachmentBlobContents).map(
+			(v) => new Uint8Array(stringToBuffer(v, "base64")),
+		);
+		const matched = capturedDecoded.find(
+			(bytes) =>
+				bytes.length === binaryPayload.length &&
+				bytes.every((b, i) => b === binaryPayload[i]),
+		);
+		assert(
+			matched !== undefined,
+			`captured attachmentBlobContents must contain the original bytes; got ${capturedDecoded
+				.map((b) => `[${[...b].join(",")}]`)
+				.join(", ")}`,
+		);
+
+		// Then verify end-to-end through rehydration that the frozen
+		// container resolves the handle to the same bytes.
+		const frozenContainer = await loadFrozenContainerFromPendingState({
+			codeLoader,
+			documentServiceFactory,
+			urlResolver,
+			request: { url },
+			pendingLocalState,
+		});
+		const frozenEntryPoint: FluidObject<TestFluidObject> =
+			await frozenContainer.getEntryPoint();
+		assert(
+			frozenEntryPoint.ITestFluidObject !== undefined,
+			"Expected frozen container entrypoint to be a valid TestFluidObject",
+		);
+		const retrievedBlob = await frozenEntryPoint.ITestFluidObject.root
+			.get("binaryBlobHandle")
+			.get();
+		assert(retrievedBlob !== undefined, "Expected blob handle to resolve in frozen container");
+		assert.deepStrictEqual(
+			new Uint8Array(retrievedBlob),
+			binaryPayload,
+			"Non-UTF-8 attachment blob bytes must round-trip byte-exactly through capture/rehydrate",
+		);
 	});
 });

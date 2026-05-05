@@ -11,7 +11,10 @@ import type {
 } from "@fluidframework/driver-definitions/internal";
 import { readAndParse } from "@fluidframework/driver-utils/internal";
 
-import type { ISerializableBlobContents } from "./containerStorageAdapter.js";
+import type {
+	IBase64BlobContents,
+	ISerializableBlobContents,
+} from "./containerStorageAdapter.js";
 
 /**
  * Wire-format constants this module needs to walk and filter snapshots.
@@ -213,14 +216,22 @@ function toTreeAndReader(
  * lags behind recent attachments and dropping them would lose live data.
  * If `gcData` is `undefined`, every attachment blob is returned.
  *
- * The returned map is keyed by attachment blob storage id and can be merged
- * directly into a pending-state {@link ISerializableBlobContents} map.
+ * The returned map is keyed by attachment blob storage id. Values are the
+ * raw bytes encoded as **base64** strings — attachment blobs may carry
+ * arbitrary binary payloads (images, encrypted data, etc.) and a
+ * UTF-8 round-trip would silently corrupt non-UTF-8 byte sequences with
+ * replacement characters. The runtime's own pending-blob serializer uses
+ * base64 for the same reason. This diverges from the structural-blob path
+ * in {@link readReferencedSnapshotBlobs}, which encodes UTF-8 because those
+ * blobs are JSON or other text the runtime authored. Callers must keep the
+ * two encodings on separate fields of the pending state so the load side
+ * can decode each correctly.
  */
 export async function captureReferencedAttachmentBlobs(
 	baseSnapshot: ISnapshotTree,
 	storage: Pick<IDocumentStorageService, "readBlob">,
 	gcData: IGcSnapshotData | undefined,
-): Promise<ISerializableBlobContents> {
+): Promise<IBase64BlobContents> {
 	const blobsTree: ISnapshotTree | undefined = baseSnapshot.trees[blobsTreeName];
 	if (blobsTree === undefined) {
 		return {};
@@ -240,10 +251,10 @@ export async function captureReferencedAttachmentBlobs(
 		}
 	}
 
-	const contents: ISerializableBlobContents = {};
+	const contents: IBase64BlobContents = {};
 	await mapWithConcurrency([...storageIdsToFetch], maxReadConcurrency, async (storageId) => {
 		const buffer = await storage.readBlob(storageId);
-		contents[storageId] = bufferToString(buffer, "utf8");
+		contents[storageId] = bufferToString(buffer, "base64");
 	});
 	return contents;
 }

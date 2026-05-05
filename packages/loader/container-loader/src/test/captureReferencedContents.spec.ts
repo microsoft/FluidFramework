@@ -5,7 +5,7 @@
 
 import { strict as assert } from "node:assert";
 
-import { stringToBuffer } from "@fluid-internal/client-utils";
+import { bufferToString, stringToBuffer } from "@fluid-internal/client-utils";
 import type {
 	IDocumentStorageService,
 	ISnapshot,
@@ -36,6 +36,13 @@ function mockStorage(
 function tree(partial: Partial<ISnapshotTree>): ISnapshotTree {
 	return { blobs: {}, trees: {}, ...partial };
 }
+
+/**
+ * Encodes the same UTF-8 bytes the test storage shim returns for `content`,
+ * matching the base64 output `captureReferencedAttachmentBlobs` produces.
+ */
+const toB64 = (content: string): string =>
+	bufferToString(stringToBuffer(content, "utf8"), "base64");
 
 describe("captureReferencedContents", () => {
 	describe("readReferencedSnapshotBlobs", () => {
@@ -189,7 +196,7 @@ describe("captureReferencedContents", () => {
 				{ s1: "S1", s2: "S2" },
 			);
 			const result = await captureReferencedAttachmentBlobs(snapshot, storage, undefined);
-			assert.deepStrictEqual(result, { s1: "S1", s2: "S2" });
+			assert.deepStrictEqual(result, { s1: toB64("S1"), s2: toB64("S2") });
 		});
 
 		it("skips blobs marked unreferenced in gc state", async () => {
@@ -211,7 +218,7 @@ describe("captureReferencedContents", () => {
 				deletedNodes: undefined,
 			};
 			const result = await captureReferencedAttachmentBlobs(snapshot, storage, gcData);
-			assert.deepStrictEqual(result, { "keep-storage": "K" });
+			assert.deepStrictEqual(result, { "keep-storage": toB64("K") });
 		});
 
 		it("skips blobs listed in tombstones or deletedNodes", async () => {
@@ -229,7 +236,7 @@ describe("captureReferencedContents", () => {
 				deletedNodes: ["/_blobs/del"],
 			};
 			const result = await captureReferencedAttachmentBlobs(snapshot, storage, gcData);
-			assert.deepStrictEqual(result, { "ok-storage": "OK" });
+			assert.deepStrictEqual(result, { "ok-storage": toB64("OK") });
 		});
 
 		it("still applies tombstones and deletedNodes when gcState is undefined", async () => {
@@ -249,7 +256,7 @@ describe("captureReferencedContents", () => {
 			const result = await captureReferencedAttachmentBlobs(snapshot, storage, gcData);
 			assert.deepStrictEqual(
 				result,
-				{ "ok-storage": "OK" },
+				{ "ok-storage": toB64("OK") },
 				"tombstones and deletedNodes are authoritative even without gcState",
 			);
 		});
@@ -266,7 +273,7 @@ describe("captureReferencedContents", () => {
 			const result = await captureReferencedAttachmentBlobs(snapshot, storage, gcData);
 			assert.deepStrictEqual(
 				result,
-				{ "recent-storage": "R" },
+				{ "recent-storage": toB64("R") },
 				"blobs absent from the GC graph must be kept",
 			);
 		});
@@ -320,7 +327,7 @@ describe("captureReferencedContents", () => {
 
 			assert.deepStrictEqual(
 				result,
-				{ "live-storage": "LIVE" },
+				{ "live-storage": toB64("LIVE") },
 				"only the live blob survives all three GC mechanisms",
 			);
 		});

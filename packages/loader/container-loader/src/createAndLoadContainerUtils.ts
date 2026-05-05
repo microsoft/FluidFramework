@@ -373,11 +373,15 @@ export async function captureFullContainerState({
 		}
 		const attributes = await getDocumentAttributes(storage, baseSnapshot);
 		const gcData = await parseGcSnapshotData(baseSnapshot, storage);
-		const [structuralBlobs, attachmentBlobs] = await Promise.all([
-			readReferencedSnapshotBlobs(snapshot, storage),
-			captureReferencedAttachmentBlobs(baseSnapshot, storage, gcData),
+		// Structural snapshot blobs (JSON/text the runtime authored) are
+		// UTF-8-encoded; attachment blobs may carry arbitrary binary bytes
+		// and are base64-encoded. Keep them on separate fields of the
+		// pending state so the load side can apply the matching decoder
+		// without ambiguity. See IPendingContainerState.attachmentBlobContents.
+		const [snapshotBlobs, attachmentBlobContents] = await Promise.all([
+			readReferencedSnapshotBlobs(snapshot, storage), // utf8 encoded
+			captureReferencedAttachmentBlobs(baseSnapshot, storage, gcData), // base64 encoded
 		]);
-		const snapshotBlobs = { ...structuralBlobs, ...attachmentBlobs };
 
 		const deltaStorage = await documentService.connectToDeltaStorage();
 		const opsStream = deltaStorage.fetchMessages(
@@ -400,6 +404,8 @@ export async function captureFullContainerState({
 			attached: true,
 			baseSnapshot,
 			snapshotBlobs,
+			attachmentBlobContents:
+				Object.keys(attachmentBlobContents).length === 0 ? undefined : attachmentBlobContents,
 			loadedGroupIdSnapshots: undefined,
 			pendingRuntimeState: undefined,
 			savedOps,
