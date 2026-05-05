@@ -5,20 +5,8 @@
 
 import { strict as assert, fail } from "node:assert";
 
-import {
-	BenchmarkMode,
-	benchmarkIt,
-	currentBenchmarkMode,
-	ValueType,
-	type CollectedData,
-} from "@fluid-tools/benchmark";
+import { BenchmarkMode, benchmarkIt, currentBenchmarkMode } from "@fluid-tools/benchmark";
 import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
-import { createIdCompressor } from "@fluidframework/id-compressor/internal";
-import {
-	MockContainerRuntimeFactory,
-	MockFluidDataStoreRuntime,
-	MockStorage,
-} from "@fluidframework/test-runtime-utils/internal";
 
 import type { Value } from "../../core/index.js";
 import { Tree, type ITreePrivate } from "../../shared-tree/index.js";
@@ -29,8 +17,14 @@ import {
 	type ITree,
 	type TreeView,
 } from "../../simple-tree/index.js";
-import { type JsonCompatibleReadOnly, getOrAddEmptyToMap } from "../../util/index.js";
-import { DefaultTestSharedTreeKind } from "../utils.js";
+import { getOrAddEmptyToMap } from "../../util/index.js";
+
+import {
+	createConnectedTree,
+	getOperationsStats,
+	opStatsToCollectedData,
+	registerOpListener,
+} from "./opBenchmarkUtilities.js";
 
 // Notes:
 // 1. Within this file "percentile" is commonly used, and seems to refer to a portion (0 to 1) or some maximum size.
@@ -49,23 +43,6 @@ class Child extends schemaFactory.object("Test:Opsize-Bench-Child", {
 }) {}
 class Parent extends schemaFactory.array("Test:Opsize-Bench-Root", Child) {}
 
-/**
- * Create a default attached tree for op submission
- */
-function createConnectedTree(): ITreePrivate {
-	const containerRuntimeFactory = new MockContainerRuntimeFactory();
-	const dataStoreRuntime = new MockFluidDataStoreRuntime({
-		idCompressor: createIdCompressor(),
-	});
-	containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
-	const tree = DefaultTestSharedTreeKind.getFactory().create(dataStoreRuntime, "tree");
-	tree.connect({
-		deltaConnection: dataStoreRuntime.createDeltaConnection(),
-		objectStorage: new MockStorage(),
-	});
-	return tree;
-}
-
 const config = new TreeViewConfiguration({
 	schema: Parent,
 	preventAmbiguity: true,
@@ -82,10 +59,6 @@ function initializeTestTree(
 	const view = tree.viewWith(config);
 	view.initialize(state);
 	return view;
-}
-
-function utf8Length(data: JsonCompatibleReadOnly): number {
-	return new TextEncoder().encode(JSON.stringify(data)).length;
 }
 
 /**
@@ -292,61 +265,6 @@ describe("Op Size", () => {
 	const opsByBenchmarkName: Map<string, ISequencedDocumentMessage[]> = new Map();
 	let currentBenchmarkName = "";
 	const currentTestOps: ISequencedDocumentMessage[] = [];
-
-	interface ITreeWithSubmitLocalMessage {
-		submitLocalMessage: (content: unknown, localOpMetadata?: unknown) => void;
-	}
-
-	function registerOpListener(
-		tree: ITreePrivate,
-		resultArray: ISequencedDocumentMessage[],
-	): void {
-		// TODO: better way to hook this up. Needs to detect local ops exactly once.
-		const treeInternal = tree as unknown as ITreeWithSubmitLocalMessage;
-		const oldSubmitLocalMessage = treeInternal.submitLocalMessage.bind(tree);
-		function submitLocalMessage(content: unknown, localOpMetadata?: unknown): void {
-			resultArray.push(content as ISequencedDocumentMessage);
-			oldSubmitLocalMessage(content, localOpMetadata);
-		}
-		treeInternal.submitLocalMessage = submitLocalMessage;
-	}
-
-	const getOperationsStats = (
-		operations: ISequencedDocumentMessage[],
-	): Record<string, number> => {
-		const lengths = operations.map((operation) =>
-			utf8Length(operation as unknown as JsonCompatibleReadOnly),
-		);
-		const totalOpBytes = lengths.reduce((a, b) => a + b, 0);
-		const maxOpSizeBytes = Math.max(...lengths);
-
-		return {
-			"Total Op Size (Bytes)": totalOpBytes,
-			"Max Op Size (Bytes)": maxOpSizeBytes,
-			"Total Ops:": operations.length,
-		};
-	};
-
-	const opStatsToCollectedData = (opStats: Record<string, number>): CollectedData => [
-		{
-			name: "Total Op Size",
-			value: opStats["Total Op Size (Bytes)"],
-			units: "bytes",
-			type: ValueType.SmallerIsBetter,
-			significance: "Primary",
-		},
-		{
-			name: "Max Op Size",
-			value: opStats["Max Op Size (Bytes)"],
-			units: "bytes",
-			type: ValueType.SmallerIsBetter,
-		},
-		{
-			name: "Total Ops",
-			value: opStats["Total Ops:"],
-			units: "count",
-		},
-	];
 
 	const initializeOpDataCollection = (tree: ITreePrivate) => {
 		currentTestOps.length = 0;
