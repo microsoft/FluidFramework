@@ -7,6 +7,7 @@ import { assert } from "@fluidframework/core-utils/internal";
 import {
 	type PropTreeNode,
 	unwrapPropTreeNode,
+	type TextEditorProps,
 	type UndoRedo,
 } from "@fluidframework/react/internal";
 import {
@@ -41,10 +42,9 @@ const Delta = DeltaPackage.default;
  * Props for the FormattedMainView component.
  * @input @internal
  */
-export interface FormattedMainViewProps {
+export interface FormattedMainViewProps extends TextEditorProps {
+	/** The formatted text tree to edit. */
 	readonly root: PropTreeNode<FormattedTextAsTree.Tree>;
-	/** Optional undo/redo stack for the editor. */
-	readonly undoRedo?: UndoRedo;
 }
 
 /**
@@ -60,8 +60,15 @@ export type FormattedEditorHandle = Pick<UndoRedo, "undo" | "redo">;
  * @internal
  */
 export const FormattedMainView = forwardRef<FormattedEditorHandle, FormattedMainViewProps>(
-	({ root, undoRedo }, ref) => {
-		return <FormattedTextEditorView root={root} undoRedo={undoRedo} ref={ref} />;
+	({ root, undoRedo, editLabel }, ref) => {
+		return (
+			<FormattedTextEditorView
+				root={root}
+				undoRedo={undoRedo}
+				editLabel={editLabel}
+				ref={ref}
+			/>
+		);
 	},
 );
 FormattedMainView.displayName = "FormattedMainView";
@@ -688,8 +695,9 @@ const FormattedTextEditorView = forwardRef<
 	{
 		root: PropTreeNode<FormattedTextAsTree.Tree>;
 		undoRedo?: UndoRedo;
+		editLabel?: unknown;
 	}
->(({ root: propRoot, undoRedo }, ref) => {
+>(({ root: propRoot, undoRedo, editLabel }, ref) => {
 	// Unwrap the PropTreeNode to get the actual tree node
 	const root = unwrapPropTreeNode(propRoot);
 	// DOM element where Quill will mount its editor
@@ -705,10 +713,17 @@ const FormattedTextEditorView = forwardRef<
 	// Force re-render when undo/redo state changes
 	const [, forceUpdate] = useReducer((x: number) => x + 1, 0);
 
-	// Expose undo/redo methods via ref
+	// Effective label: explicit prop or the root node itself as the default.
+	const effectiveLabel = editLabel ?? root;
+	// Ref so the one-time Quill setup effect always sees the current effective label.
+	const editLabelRef = useRef(effectiveLabel);
+	editLabelRef.current = effectiveLabel;
+
+	// Expose undo/redo methods via ref. Calls are scoped to this editor's label so external
+	// callers see the same per-editor undo/redo history as the toolbar buttons.
 	useImperativeHandle(ref, () => ({
-		undo: () => undoRedo?.undo(),
-		redo: () => undoRedo?.redo(),
+		undo: () => undoRedo?.undo(effectiveLabel),
+		redo: () => undoRedo?.redo(effectiveLabel),
 	}));
 
 	// Initialize Quill editor with formatting toolbar using Quill provided CSS
@@ -806,18 +821,13 @@ const FormattedTextEditorView = forwardRef<
 					quillRef.current.updateContents(quillOps, "api");
 				}
 			});
+			// Refresh undo/redo button state — undo/redo availability changes alongside tree mutations.
+			if (undoRedo) forceUpdate();
 		});
-	}, [root]);
+	}, [root, undoRedo]);
 
-	// Subscribe to undo/redo state changes to update button disabled state
-	useEffect(() => {
-		if (!undoRedo) return;
-		return undoRedo.onStateChange(() => {
-			forceUpdate();
-		});
-	}, [undoRedo]);
-
-	// Render undo/redo buttons via portal into Quill toolbar
+	// Render undo/redo buttons via portal into Quill toolbar.
+	// canUndo/canRedo and undo/redo are scoped to this editor's effective label.
 	const undoRedoButtons = undoRedoContainer
 		? ReactDOM.createPortal(
 				<>
@@ -825,15 +835,15 @@ const FormattedTextEditorView = forwardRef<
 						type="button"
 						className="ql-undo"
 						aria-label="Undo"
-						disabled={undoRedo?.canUndo() !== true}
-						onClick={() => undoRedo?.undo()}
+						disabled={undoRedo?.canUndo(effectiveLabel) !== true}
+						onClick={() => undoRedo?.undo(effectiveLabel)}
 					/>
 					<button
 						type="button"
 						className="ql-redo"
 						aria-label="Redo"
-						disabled={undoRedo?.canRedo() !== true}
-						onClick={() => undoRedo?.redo()}
+						disabled={undoRedo?.canRedo(effectiveLabel) !== true}
+						onClick={() => undoRedo?.redo(effectiveLabel)}
 					/>
 				</>,
 				undoRedoContainer,

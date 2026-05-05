@@ -3,21 +3,53 @@
  * Licensed under the MIT License.
  */
 
-import { type TextAsTree, utf16LengthForCodePoints } from "@fluidframework/tree/internal";
-import { type ChangeEvent, type FC, useCallback, useEffect, useRef } from "react";
+import {
+	type TextAsTree,
+	TreeAlpha,
+	utf16LengthForCodePoints,
+} from "@fluidframework/tree/internal";
+import {
+	type ChangeEvent,
+	type FC,
+	useCallback,
+	useEffect,
+	useReducer,
+	useRef,
+} from "react";
 
 import { unwrapPropTreeNode, type PropTreeNode } from "../../propNode.js";
+import type { TextEditorProps } from "../textEditorProps.js";
 
 import { syncTextToTree } from "./plainUtils.js";
+
+/**
+ * Props for the MainView component.
+ * @input @internal
+ */
+export interface MainViewProps extends TextEditorProps {
+	/** The plain text tree to edit. */
+	readonly root: PropTreeNode<TextAsTree.Tree>;
+}
+
+type MainViewPropsInner = Omit<MainViewProps, "root"> & {
+	readonly root: TextAsTree.Tree;
+};
 
 /**
  * A React component for plain text editing.
  * @remarks
  * Uses {@link @fluidframework/tree#TextAsTree.Tree} for the data-model and an HTML textarea for the UI.
+ * Pass an `undoRedo` prop to enable undo/redo buttons scoped to this editor's transactions.
  * @internal
  */
-export const MainView: FC<{ root: PropTreeNode<TextAsTree.Tree> }> = ({ root }) => {
-	return <PlainTextEditorView root={unwrapPropTreeNode(root)} />;
+export const MainView: FC<MainViewProps> = ({ root, undoRedo, editLabel }) => {
+	return (
+		<PlainTextEditorView
+			root={unwrapPropTreeNode(root)}
+			undoRedo={undoRedo}
+			editLabel={editLabel}
+		/>
+	);
 };
 
 /**
@@ -29,11 +61,16 @@ export const MainView: FC<{ root: PropTreeNode<TextAsTree.Tree> }> = ({ root }) 
  * {@link @fluidframework/tree#TextAsTree.Members.onCharactersChanged} to apply
  * remote changes to the textarea without a full re-read of the text.
  */
-const PlainTextEditorView: FC<{ root: TextAsTree.Tree }> = ({ root }) => {
+const PlainTextEditorView: FC<MainViewPropsInner> = ({ root, undoRedo, editLabel }) => {
 	// Reference to the textarea element
 	const textareaRef = useRef<HTMLTextAreaElement>(null);
 	// Guards against update loops between textarea and the tree
 	const isUpdatingRef = useRef<boolean>(false);
+	// Force re-render when undo/redo state changes so button disabled state stays current.
+	const [, forceUpdate] = useReducer((x: number) => x + 1, 0);
+
+	// Effective label: explicit prop or the root node itself as the default.
+	const effectiveLabel = editLabel ?? root;
 
 	// Subscribe to incremental tree changes and apply them to the textarea.
 	useEffect(() => {
@@ -114,8 +151,10 @@ const PlainTextEditorView: FC<{ root: TextAsTree.Tree }> = ({ root }) => {
 			} finally {
 				isUpdatingRef.current = false;
 			}
+			// Refresh undo/redo button state — undo/redo availability changes alongside tree mutations.
+			if (undoRedo) forceUpdate();
 		});
-	}, [root]);
+	}, [root, undoRedo]);
 
 	// Handle textarea changes - sync textarea → tree
 	const handleChange = useCallback(
@@ -126,12 +165,20 @@ const PlainTextEditorView: FC<{ root: TextAsTree.Tree }> = ({ root }) => {
 
 			isUpdatingRef.current = true;
 			try {
-				syncTextToTree(root, event.target.value);
+				const newText = event.target.value;
+				const context = TreeAlpha.context(root);
+				if (context.isBranch()) {
+					context.runTransaction(() => syncTextToTree(root, newText), {
+						label: effectiveLabel,
+					});
+				} else {
+					syncTextToTree(root, newText);
+				}
 			} finally {
 				isUpdatingRef.current = false;
 			}
 		},
-		[root],
+		[root, effectiveLabel],
 	);
 
 	return (
@@ -140,6 +187,51 @@ const PlainTextEditorView: FC<{ root: TextAsTree.Tree }> = ({ root }) => {
 			style={{ height: "100%", display: "flex", flexDirection: "column" }}
 			onClick={() => textareaRef.current?.focus()}
 		>
+			<style>{`
+				.pt-toolbar {
+					display: flex;
+					align-items: center;
+					padding: 4px 8px;
+					background: #f8f9fa;
+					border: 1px solid #ccc;
+					border-radius: 4px 4px 0 0;
+				}
+				.pt-undo, .pt-redo {
+					width: 28px;
+					height: 28px;
+					padding: 0;
+					background: none;
+					border: none;
+					cursor: pointer;
+					font-size: 18px;
+					display: flex;
+					align-items: center;
+					justify-content: center;
+				}
+				.pt-undo::after { content: "↶"; }
+				.pt-redo::after { content: "↷"; }
+				.pt-undo:disabled, .pt-redo:disabled { opacity: 0.3; cursor: not-allowed; }
+			`}</style>
+			{undoRedo !== undefined && (
+				<div className="pt-toolbar">
+					<button
+						type="button"
+						className="pt-undo"
+						aria-label="Undo"
+						disabled={!undoRedo.canUndo(effectiveLabel)}
+						onClick={() => undoRedo.undo(effectiveLabel)}
+						title="Undo"
+					/>
+					<button
+						type="button"
+						className="pt-redo"
+						aria-label="Redo"
+						disabled={!undoRedo.canRedo(effectiveLabel)}
+						onClick={() => undoRedo.redo(effectiveLabel)}
+						title="Redo"
+					/>
+				</div>
+			)}
 			<textarea
 				ref={textareaRef}
 				defaultValue={root.fullString()}
@@ -149,7 +241,7 @@ const PlainTextEditorView: FC<{ root: TextAsTree.Tree }> = ({ root }) => {
 					flex: 1,
 					minHeight: "300px",
 					border: "1px solid #ccc",
-					borderRadius: "4px",
+					borderRadius: undoRedo === undefined ? "4px" : "0 0 4px 4px",
 					padding: "8px",
 					fontSize: "14px",
 					fontFamily: "inherit",
