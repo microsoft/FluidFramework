@@ -6,6 +6,7 @@
 import type { ExportDeclaration, ExportedDeclarations, JSDoc, SourceFile } from "ts-morph";
 import { Node, SyntaxKind } from "ts-morph";
 
+import type { CommandLogger } from "../logging.js";
 import type { ApiLevel } from "./apiLevel.js";
 import type { ReleaseLevel } from "./releaseLevel.js";
 import { isReleaseLevel } from "./releaseLevel.js";
@@ -159,7 +160,11 @@ function getNodeApiLevel(node: Node): ApiLevel | undefined {
  * Given a source file, extracts all of the named exports and associated support levels.
  * Named exports without a recognized tag are placed in unknown array.
  */
-export function getApiExports(sourceFile: SourceFile): ExportRecords {
+export function getApiExports(
+	sourceFile: SourceFile,
+	treatmentOfMissing: "throwForMissing" | "warnForMissing",
+	log: CommandLogger,
+): ExportRecords {
 	const exported = sourceFile.getExportedDeclarations();
 	const records: ExportRecords = {
 		public: [],
@@ -176,6 +181,19 @@ export function getApiExports(sourceFile: SourceFile): ExportRecords {
 	// share the same tag. Track and throw if there are different tags.
 	const foundNameLevels = new Map<string, ApiLevel>();
 	for (const [name, exportedDecls] of exported.entries()) {
+		// Watch for the case where we have no export declarations. This can happen
+		// for re-exports of the form `export { something } from "somewhere"` where
+		// `something` is not declared in the file. In this case we won't be able to
+		// find tags in source, so treat as error or warning depending on context.
+		if (exportedDecls.length === 0) {
+			const message = `No export declarations found for "${name}"`;
+			if (treatmentOfMissing === "throwForMissing") {
+				throw new Error(message);
+			} else {
+				log.warning(message);
+			}
+		}
+
 		for (const exportedDecl of exportedDecls) {
 			const level = getNodeApiLevel(exportedDecl);
 			const existingLevel = foundNameLevels.get(name);
@@ -224,7 +242,7 @@ export function getApiExports(sourceFile: SourceFile): ExportRecords {
 			const name = namespaceDecl.getName();
 			const unknownExported = records.unknown.get(name);
 			if (unknownExported !== undefined) {
-				console.log(
+				log.warning(
 					`namespace exports of the form 'export * as foo' are speculatively supported. See ${sourceFile.getFilePath()}:${namespaceDecl.getStartLineNumber()}:\n${namespaceDecl.getText()}`,
 				);
 				const namespaceLevel = getNodeApiLevel(exportDeclaration);

@@ -10,14 +10,10 @@ import type { Machine } from "jssm";
 import chalk from "picocolors";
 
 import { getDefaultInterdependencyRange } from "../config.js";
-import {
-	difference,
-	getPreReleaseDependencies,
-	npmCheckUpdates,
-	setVersion,
-} from "../library/index.js";
+import { getPreReleaseDependencies, npmCheckUpdates, setVersion } from "../library/package.js";
+import { difference } from "../library/sets.js";
 import type { CommandLogger } from "../logging.js";
-import type { MachineState } from "../machines/index.js";
+import type { MachineState } from "../machines/types.js";
 import { isReleaseGroup, type ReleaseGroup, type ReleasePackage } from "../releaseGroups.js";
 import type { FluidReleaseStateHandlerData } from "./fluidReleaseStateHandler.js";
 import { BaseStateHandler, type StateHandlerFunction } from "./stateHandlers.js";

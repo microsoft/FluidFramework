@@ -14,6 +14,8 @@ export type {
 	ITenantCustomDataExternal,
 	ITenantService,
 	ISimplifiedCustomDataRetriever,
+	IPostEphemeralContainerChecker,
+	ICreateGitServiceArgs,
 } from "./definitions";
 export { RedisCache } from "./redisCache";
 export { RedisTenantCache } from "./redisTenantCache";

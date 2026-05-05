@@ -6,7 +6,10 @@
 import type { ITelemetryBaseEvent } from "@fluidframework/core-interfaces";
 
 import { loggerToMonitoringContext } from "./config.js";
-import type { ITelemetryGenericEventExt, ITelemetryLoggerExt } from "./telemetryTypes.js";
+import type {
+	ITelemetryGenericEventExt,
+	TelemetryLoggerExt,
+} from "./telemetryTypesUndeprecated.js";
 
 /**
  * An object that contains a callback used in conjunction with the {@link createSampledLogger} utility function to provide custom logic for sampling events.
@@ -25,7 +28,7 @@ export interface IEventSampler {
  *
  * @internal
  */
-export interface ISampledTelemetryLogger extends ITelemetryLoggerExt {
+export interface ISampledTelemetryLogger extends TelemetryLoggerExt {
 	/**
 	 * Indicates if the feature flag to disable sampling is set.
 	 *
@@ -38,7 +41,7 @@ export interface ISampledTelemetryLogger extends ITelemetryLoggerExt {
 }
 
 /**
- * Wraps around an existing logger matching the {@link ITelemetryLoggerExt} interface and provides the ability to only log a subset of events using a sampling strategy provided by an ${@link IEventSampler}.
+ * Wraps around an existing logger matching the {@link TelemetryLoggerExt} interface and provides the ability to only log a subset of events using a sampling strategy provided by an {@link IEventSampler}.
  * You can chose to not provide an event sampler which is effectively a no-op, meaning that it will be treated as if the sampler always returns true.
  *
  * @remarks
@@ -54,7 +57,7 @@ export interface ISampledTelemetryLogger extends ITelemetryLoggerExt {
  * @internal
  */
 export function createSampledLogger(
-	logger: ITelemetryLoggerExt,
+	logger: TelemetryLoggerExt,
 	eventSampler?: IEventSampler,
 	skipLoggingWhenSamplingIsDisabled?: boolean,
 ): ISampledTelemetryLogger {

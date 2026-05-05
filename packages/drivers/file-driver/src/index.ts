@@ -11,6 +11,6 @@ export {
 	FileStorageDocumentName,
 	FluidFetchReader,
 	FluidFetchReaderFileSnapshotWriter,
-	ISnapshotWriterStorage,
-	ReaderConstructor,
+	type ISnapshotWriterStorage,
+	type ReaderConstructor,
 } from "./fileDocumentStorageService.js";

@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import type { ICriticalContainerError } from "@fluidframework/container-definitions";
 import type { IRequest } from "@fluidframework/core-interfaces";
 import { assert, LazyPromise, Timer } from "@fluidframework/core-utils/internal";
 import type { ISnapshotTree } from "@fluidframework/driver-definitions/internal";
@@ -100,6 +101,10 @@ export class GarbageCollector implements IGarbageCollector {
 
 	private readonly configs: IGarbageCollectorConfigs;
 
+	public get serializedConfigs(): string {
+		return JSON.stringify(this.configs);
+	}
+
 	public get shouldRunGC(): boolean {
 		return this.configs.gcAllowed;
 	}
@@ -137,6 +142,10 @@ export class GarbageCollector implements IGarbageCollector {
 	private completedRuns = 0;
 
 	private readonly runtime: IGarbageCollectionRuntime;
+	/**
+	 * Called when the runtime should close because of an error.
+	 */
+	private readonly closeFn: (error: ICriticalContainerError) => void;
 	private readonly isSummarizerClient: boolean;
 
 	private readonly summaryStateTracker: GCSummaryStateTracker;
@@ -164,6 +173,7 @@ export class GarbageCollector implements IGarbageCollector {
 
 	protected constructor(createParams: IGarbageCollectorCreateParams) {
 		this.runtime = createParams.runtime;
+		this.closeFn = createParams.closeFn;
 		this.isSummarizerClient = createParams.isSummarizerClient;
 		this.getNodePackagePath = createParams.getNodePackagePath;
 		this.getLastSummaryTimestampMs = createParams.getLastSummaryTimestampMs;
@@ -198,14 +208,10 @@ export class GarbageCollector implements IGarbageCollector {
 			}
 			timeoutMs = overrideSessionExpiryTimeoutMs ?? timeoutMs;
 			if (timeoutMs <= 0) {
-				this.runtime.closeFn(
-					new ClientSessionExpiredError(`Client session expired.`, timeoutMs),
-				);
+				this.closeFn(new ClientSessionExpiredError(`Client session expired.`, timeoutMs));
 			}
 			this.sessionExpiryTimer = new Timer(timeoutMs, () => {
-				this.runtime.closeFn(
-					new ClientSessionExpiredError(`Client session expired.`, timeoutMs),
-				);
+				this.closeFn(new ClientSessionExpiredError(`Client session expired.`, timeoutMs));
 			});
 			this.sessionExpiryTimer.start();
 			this.sessionExpiryTimerStarted = Date.now();
@@ -333,15 +339,6 @@ export class GarbageCollector implements IGarbageCollector {
 			const usedRoutes = runGarbageCollection(gcNodes, ["/"]).referencedNodeIds;
 
 			return { gcData: { gcNodes }, usedRoutes };
-		});
-
-		// Log all the GC options and the state determined by the garbage collector.
-		// This is useful even for interactive clients since they track unreferenced nodes and log errors.
-		this.mc.logger.sendTelemetryEvent({
-			eventName: "GarbageCollectorLoaded",
-			gcConfigs: JSON.stringify(this.configs),
-			gcOptions: JSON.stringify(createParams.gcOptions),
-			...createParams.createContainerMetadata,
 		});
 	}
 

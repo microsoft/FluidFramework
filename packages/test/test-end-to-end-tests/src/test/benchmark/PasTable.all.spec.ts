@@ -40,9 +40,8 @@ describeCompat("PAS Test", "NoCompat", () => {
 	 * a. Benchmark Time tests: {@link https://benchmarkjs.com/docs#options} or  {@link BenchmarkOptions}
 	 * b. Benchmark Memory tests: {@link MemoryTestObjectProps}
 	 */
-	benchmarkAll(
-		"Create Table Matrix With SharedStrings",
-		new (class PerformanceTestWrapper implements IBenchmarkParameters {
+	benchmarkAll("Create Table Matrix With SharedStrings", () => {
+		return new (class PerformanceTestWrapper implements IBenchmarkParameters {
 			containerRuntimeFactory = new MockContainerRuntimeFactory();
 			matrix = createLocalMatrix("matrix1", dataStoreRuntime);
 
@@ -58,9 +57,6 @@ describeCompat("PAS Test", "NoCompat", () => {
 					}
 				}
 			}
-			async before(): Promise<void> {}
-			beforeIteration(): void {}
-			async after(): Promise<void> {}
-		})(),
-	);
+		})();
+	});
 });

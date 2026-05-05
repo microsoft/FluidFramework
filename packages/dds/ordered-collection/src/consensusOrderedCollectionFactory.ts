@@ -10,6 +10,7 @@ import type {
 } from "@fluidframework/datastore-definitions/internal";
 import { createSharedObjectKind } from "@fluidframework/shared-object-base/internal";
 
+// eslint-disable-next-line import-x/no-deprecated -- Internal usage of deprecated class in factory
 import { ConsensusQueueClass } from "./consensusQueue.js";
 import type {
 	IConsensusOrderedCollection,
@@ -23,6 +24,9 @@ import { pkgVersion } from "./packageVersion.js";
  * @internal
  */
 export class ConsensusQueueFactory implements IConsensusOrderedCollectionFactory {
+	// New type string, to be activated once the migration has been fully shipped dark and is safe to flip.
+	// See LegacyTypeAwareRegistry in packages/runtime/datastore/src/dataStoreRuntime.ts.
+	// public static Type = "consensus-queue";
 	public static Type = "https://graph.microsoft.com/types/consensus-queue";
 
 	public static readonly Attributes: IChannelAttributes = {
@@ -48,12 +52,14 @@ export class ConsensusQueueFactory implements IConsensusOrderedCollectionFactory
 		services: IChannelServices,
 		attributes: IChannelAttributes,
 	): Promise<IConsensusOrderedCollection> {
+		// eslint-disable-next-line import-x/no-deprecated -- Internal usage of deprecated class
 		const collection = new ConsensusQueueClass(id, runtime, attributes);
 		await collection.load(services);
 		return collection;
 	}
 
 	public create(document: IFluidDataStoreRuntime, id: string): IConsensusOrderedCollection {
+		// eslint-disable-next-line import-x/no-deprecated -- Internal usage of deprecated class
 		const collection = new ConsensusQueueClass(id, document, this.attributes);
 		collection.initializeLocal();
 		return collection;
@@ -68,8 +74,9 @@ export const ConsensusQueue = createSharedObjectKind(ConsensusQueueFactory);
 
 /**
  * {@inheritDoc ConsensusQueueClass}
+ * @deprecated Use {@link IConsensusOrderedCollection} for typing instead. This type alias will be removed in a future release.
  * @legacy @beta
  */
 // TODO: #22835 Use undefined instead of any (breaking change)
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+// eslint-disable-next-line @typescript-eslint/no-explicit-any, import-x/no-deprecated
 export type ConsensusQueue<T = any> = ConsensusQueueClass<T>;

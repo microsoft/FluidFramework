@@ -7,7 +7,7 @@ import { getApiExtractorConfigFilePath, getInstalledPackageVersion } from "../ta
 import { TscDependentTask } from "./tscTask.js";
 
 export class ApiExtractorTask extends TscDependentTask {
-	protected get configFileFullPaths(): string[] {
+	protected get taskSpecificConfigFiles(): string[] {
 		// TODO: read all configs used by command via api-extractor simple extension pattern
 		return [this.getPackageFileFullPath(getApiExtractorConfigFilePath(this.command))];
 	}

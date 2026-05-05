@@ -8,9 +8,9 @@ import { strict as assert } from "node:assert";
 import type { ITelemetryBaseEvent } from "@fluidframework/core-interfaces";
 
 import { PerformanceEvent, TelemetryLogger } from "../logger.js";
-import type { ITelemetryLoggerExt } from "../telemetryTypes.js";
+import type { TelemetryLoggerExt } from "../telemetryTypes.js";
 
-class MockLogger extends TelemetryLogger implements ITelemetryLoggerExt {
+class MockLogger extends TelemetryLogger implements TelemetryLoggerExt {
 	public errorsLogged: number = 0;
 	public eventsLogged: number = 0;
 

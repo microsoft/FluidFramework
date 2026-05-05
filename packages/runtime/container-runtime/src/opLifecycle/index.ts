@@ -45,6 +45,7 @@ export {
 } from "./remoteMessageProcessor.js";
 export {
 	type EmptyGroupedBatch,
+	largeBatchThreshold,
 	OpGroupingManager,
 	type OpGroupingManagerConfig,
 	isGroupedBatch,

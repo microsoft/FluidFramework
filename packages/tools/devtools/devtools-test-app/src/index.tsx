@@ -5,7 +5,7 @@
 
 import { DevtoolsPanel, WindowMessageRelay } from "@fluid-internal/devtools-view";
 import { Resizable } from "re-resizable";
-import React from "react";
+import { type ReactElement, StrictMode } from "react";
 import ReactDOM from "react-dom";
 
 import { App } from "./App.js";
@@ -13,9 +13,9 @@ import { App } from "./App.js";
 console.log("Rendering app...");
 
 ReactDOM.render(
-	<React.StrictMode>
+	<StrictMode>
 		<App />
-	</React.StrictMode>,
+	</StrictMode>,
 	document.querySelector("#content"),
 	() => {
 		console.log("App rendered!");
@@ -31,7 +31,7 @@ ReactDOM.render(<DevtoolsView />, devtoolsElement, () => {
 	globalThis.fluidStarted = true;
 });
 
-function DevtoolsView(): React.ReactElement {
+function DevtoolsView(): ReactElement {
 	return (
 		<Resizable
 			style={{

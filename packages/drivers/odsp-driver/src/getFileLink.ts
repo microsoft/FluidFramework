@@ -194,7 +194,7 @@ async function getFileLinkCore(
 				}/_api/web/GetFileById(@a1)/ListItemAllFields/GetSharingInformation?@a1=guid${encodeURIComponent(
 					`'${fileItem.sharepointIds.listItemUniqueId}'`,
 				)}`;
-				const method = "POST";
+				const method = "GET";
 				const authHeader = await getAuthHeader(
 					{ ...options, request: { url, method } },
 					"GetFileLinkCore",

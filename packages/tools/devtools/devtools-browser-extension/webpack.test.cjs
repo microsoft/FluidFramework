@@ -55,6 +55,8 @@ module.exports = (env) => {
 			new Dotenv({
 				path: "./.env",
 				systemvars: true,
+				// Suppress missing .env warning in CI; keep it locally so devs know to create .env.
+				silent: Boolean(process.env.CI || process.env.TF_BUILD),
 			}),
 			new HtmlWebpackPlugin({
 				template: "./e2e-tests/app/index.html",

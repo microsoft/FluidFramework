@@ -39,15 +39,13 @@ const installRequiredVersions = async (config: IRequestedFluidVersions): Promise
 	if (config.requestAbsoluteVersions !== undefined) {
 		installPromises.push(
 			...config.requestAbsoluteVersions.map(async (version) =>
-				ensurePackageInstalled(version, 0, /* force */ false),
+				ensurePackageInstalled(version, 0),
 			),
 		);
 	}
 
 	if (config.requestRelativeVersions !== undefined) {
-		installPromises.push(
-			ensurePackageInstalled(pkgVersion, config.requestRelativeVersions, /* force */ false),
-		);
+		installPromises.push(ensurePackageInstalled(pkgVersion, config.requestRelativeVersions));
 	}
 
 	let hadErrors = false;

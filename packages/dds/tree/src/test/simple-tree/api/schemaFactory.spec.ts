@@ -39,7 +39,7 @@ import {
 	treeNodeApi as Tree,
 	TreeViewConfiguration,
 	type TreeArrayNode,
-	type TreeMapNode,
+	type TreeMapNodeAlpha,
 	type TreeView,
 	typeSchemaSymbol,
 	type NodeFromSchema,
@@ -76,7 +76,6 @@ import { hydrate } from "../utils.js";
 	class NodeMap extends schema.map("Notes", Note) {}
 	class NodeList extends schema.array("Notes", Note) {}
 
-	// eslint-disable-next-line no-inner-declarations
 	function f(n: NodeMap): void {
 		const item = n.get("x");
 	}
@@ -1850,7 +1849,7 @@ function getKeys(node: TreeNode): string[] | number[] {
 			return keys;
 		}
 		case NodeKind.Map: {
-			return [...(node as TreeMapNode).keys()];
+			return [...(node as TreeMapNodeAlpha).keys()];
 		}
 		case NodeKind.Object: {
 			return Object.keys(node);
