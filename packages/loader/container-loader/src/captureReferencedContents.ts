@@ -13,19 +13,40 @@ import { readAndParse } from "@fluidframework/driver-utils/internal";
 
 import type { ISerializableBlobContents } from "./containerStorageAdapter.js";
 
-// The following names are defined authoritatively in container-runtime and
-// runtime-definitions. They are duplicated here to avoid a loader → runtime
-// layering dependency. Keep in sync with:
-//   packages/runtime/container-runtime/src/blobManager/blobManagerSnapSum.ts
-//   packages/runtime/container-runtime/src/blobManager/blobManager.ts
-//   packages/runtime/runtime-definitions/src/garbageCollectionDefinitions.ts
-const blobsTreeName = ".blobs";
-const redirectTableBlobName = ".redirectTable";
-const blobManagerBasePath = "_blobs";
-const gcTreeKey = "gc";
-const gcBlobPrefix = "__gc";
-const gcTombstoneBlobKey = "__tombstones";
-const gcDeletedBlobKey = "__deletedNodes";
+/**
+ * Wire-format constants this module needs to walk and filter snapshots.
+ * Authoritative definitions live in `container-runtime` and
+ * `runtime-definitions`; the values are duplicated here to avoid a
+ * loader → runtime layering dependency. A contract test in
+ * `packages/test/local-server-tests` asserts these match the authoritative
+ * values; do not change them in isolation.
+ *
+ * Authoritative sources:
+ *   packages/runtime/container-runtime/src/blobManager/blobManagerSnapSum.ts (blobsTreeName, redirectTableBlobName)
+ *   packages/runtime/container-runtime/src/blobManager/blobManager.ts (blobManagerBasePath)
+ *   packages/runtime/runtime-definitions/src/garbageCollectionDefinitions.ts (gcTreeKey, gcBlobPrefix, gcTombstoneBlobKey, gcDeletedBlobKey)
+ *
+ * @internal
+ */
+export const wireFormatConstants = {
+	blobsTreeName: ".blobs",
+	redirectTableBlobName: ".redirectTable",
+	blobManagerBasePath: "_blobs",
+	gcTreeKey: "gc",
+	gcBlobPrefix: "__gc",
+	gcTombstoneBlobKey: "__tombstones",
+	gcDeletedBlobKey: "__deletedNodes",
+} as const;
+
+const {
+	blobsTreeName,
+	redirectTableBlobName,
+	blobManagerBasePath,
+	gcTreeKey,
+	gcBlobPrefix,
+	gcTombstoneBlobKey,
+	gcDeletedBlobKey,
+} = wireFormatConstants;
 
 interface IGcNodeData {
 	outboundRoutes: string[];

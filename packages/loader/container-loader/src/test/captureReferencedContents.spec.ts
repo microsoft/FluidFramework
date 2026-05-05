@@ -270,6 +270,60 @@ describe("captureReferencedContents", () => {
 				"blobs absent from the GC graph must be kept",
 			);
 		});
+
+		it("integrates with parseGcSnapshotData on a snapshot that carries a real gc subtree", async () => {
+			// End-to-end through both helpers: build a snapshot whose gc subtree
+			// blobs encode unreferenced + tombstoned + deleted simultaneously,
+			// run parseGcSnapshotData on it, then feed that into the attachment
+			// filter. Verifies the full GC-driven exclusion path that
+			// captureFullContainerState relies on, not just the helpers in
+			// isolation.
+			const snapshot = tree({
+				trees: {
+					".blobs": tree({ blobs: { ".redirectTable": "rt" } }),
+					gc: tree({
+						blobs: {
+							__gc_root: "gc-blob",
+							__tombstones: "ts-blob",
+							__deletedNodes: "del-blob",
+						},
+					}),
+				},
+			});
+			const storage = mockStorage({
+				rt: JSON.stringify([
+					["live", "live-storage"],
+					["unref", "unref-storage"],
+					["tomb", "tomb-storage"],
+					["del", "del-storage"],
+				]),
+				"gc-blob": JSON.stringify({
+					gcNodes: {
+						"/_blobs/live": { outboundRoutes: [] },
+						"/_blobs/unref": {
+							outboundRoutes: [],
+							unreferencedTimestampMs: 1700000000000,
+						},
+					},
+				}),
+				"ts-blob": JSON.stringify(["/_blobs/tomb"]),
+				"del-blob": JSON.stringify(["/_blobs/del"]),
+				"live-storage": "LIVE",
+				"unref-storage": "must-not-read",
+				"tomb-storage": "must-not-read",
+				"del-storage": "must-not-read",
+			});
+
+			const gcData = await parseGcSnapshotData(snapshot, storage);
+			assert(gcData !== undefined, "snapshot has a gc subtree, so gcData must parse");
+			const result = await captureReferencedAttachmentBlobs(snapshot, storage, gcData);
+
+			assert.deepStrictEqual(
+				result,
+				{ "live-storage": "LIVE" },
+				"only the live blob survives all three GC mechanisms",
+			);
+		});
 	});
 
 	describe("snapshotHasLoadingGroups", () => {

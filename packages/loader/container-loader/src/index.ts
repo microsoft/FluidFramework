@@ -57,3 +57,4 @@ export type {
 	QuorumProposalsSnapshot,
 } from "./protocol/index.js";
 export { PendingLocalStateStore } from "./pendingLocalStateStore.js";
+export { wireFormatConstants } from "./captureReferencedContents.js";
