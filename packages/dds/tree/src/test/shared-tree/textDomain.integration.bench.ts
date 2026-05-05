@@ -100,7 +100,10 @@ describe("TextDomain benchmarks", () => {
 		 */
 		const characterCountConfigurations = [
 			{
-				characterCount: 1,
+				// The minimum is 2 rather than 1: at characterCount=1, the "com.fluidframework.leaf.string" type
+				// identifier has not yet been deduplicated in the op, which skews insert op sizes away from the
+				// otherwise-exact linear relationship.
+				characterCount: 2,
 				benchmarkType: BenchmarkType.Measurement,
 				runInCorrectnessMode: true,
 			},
@@ -166,7 +169,6 @@ describe("TextDomain benchmarks", () => {
 			describe("Insert characters", () => {
 				describe(`Op size by inserted character count`, () => {
 					benchmarkIt({
-						only: false,
 						type: BenchmarkType.Measurement,
 						title: `Op size by inserted character count`,
 						run: async () => {
@@ -189,10 +191,7 @@ describe("TextDomain benchmarks", () => {
 								points.push({ x: characterCount, y: totalOperationSize });
 							}
 
-							// The encoding of individual character nodes uses variable-length IDs
-							// that cause small deviations from perfect linearity across the tested
-							// character count range.
-							const { slope, intercept } = assertLinear({ points, maxDeviation: 15 });
+							const { slope, intercept } = assertLinear({ points });
 							return [
 								{
 									name: "bytes per inserted character",
@@ -206,15 +205,15 @@ describe("TextDomain benchmarks", () => {
 									value: intercept,
 									units: "bytes",
 									type: ValueType.SmallerIsBetter,
+									significance: "Primary",
 								},
-							] as CollectedData;
+							] satisfies CollectedData;
 						},
 					});
 				});
 
 				describe(`Op size by tree depth`, () => {
 					benchmarkIt({
-						only: false,
 						type: BenchmarkType.Measurement,
 						title: `Op size by tree depth`,
 						run: async () => {
@@ -253,15 +252,15 @@ describe("TextDomain benchmarks", () => {
 									value: intercept,
 									units: "bytes",
 									type: ValueType.SmallerIsBetter,
+									significance: "Primary",
 								},
-							] as CollectedData;
+							] satisfies CollectedData;
 						},
 					});
 				});
 
 				describe(`Op size by property key length`, () => {
 					benchmarkIt({
-						only: false,
 						type: BenchmarkType.Measurement,
 						title: `Op size by property key length`,
 						run: async () => {
@@ -298,8 +297,9 @@ describe("TextDomain benchmarks", () => {
 									value: intercept,
 									units: "bytes",
 									type: ValueType.SmallerIsBetter,
+									significance: "Primary",
 								},
-							] as CollectedData;
+							] satisfies CollectedData;
 						},
 					});
 				});
@@ -308,7 +308,6 @@ describe("TextDomain benchmarks", () => {
 			describe("Remove characters", () => {
 				describe(`Op size by removed character count`, () => {
 					benchmarkIt({
-						only: false,
 						type: BenchmarkType.Measurement,
 						title: `Op size by removed character count`,
 						run: async () => {
@@ -337,6 +336,9 @@ describe("TextDomain benchmarks", () => {
 							// so op size is approximately constant regardless of character count.
 							// Small deviations (a few bytes) can occur because the count value itself
 							// is encoded as a JSON number in the op.
+							// TODO: Investigate whether this approximately-constant behavior is
+							// intentional — it is unexpected that op size does not scale with character
+							// count. Confirm the encoding is working as intended.
 							assertApproximatelyConstant({ sizes: operationSizes, maxDeltaBytes: 5 });
 							const referenceSize = operationSizes[0];
 							assert(referenceSize !== undefined);
@@ -348,14 +350,13 @@ describe("TextDomain benchmarks", () => {
 									type: ValueType.SmallerIsBetter,
 									significance: "Primary",
 								},
-							] as CollectedData;
+							] satisfies CollectedData;
 						},
 					});
 				});
 
 				describe(`Op size by tree depth`, () => {
 					benchmarkIt({
-						only: false,
 						type: BenchmarkType.Measurement,
 						title: `Op size by tree depth`,
 						run: async () => {
@@ -394,15 +395,15 @@ describe("TextDomain benchmarks", () => {
 									value: intercept,
 									units: "bytes",
 									type: ValueType.SmallerIsBetter,
+									significance: "Primary",
 								},
-							] as CollectedData;
+							] satisfies CollectedData;
 						},
 					});
 				});
 
 				describe(`Op size by property key length`, () => {
 					benchmarkIt({
-						only: false,
 						type: BenchmarkType.Measurement,
 						title: `Op size by property key length`,
 						run: async () => {
@@ -441,8 +442,9 @@ describe("TextDomain benchmarks", () => {
 									value: intercept,
 									units: "bytes",
 									type: ValueType.SmallerIsBetter,
+									significance: "Primary",
 								},
-							] as CollectedData;
+							] satisfies CollectedData;
 						},
 					});
 				});
@@ -485,7 +487,6 @@ describe("TextDomain benchmarks", () => {
 
 		describe("TextAsTree.Tree node encoded size", () => {
 			benchmarkIt({
-				only: false,
 				type: BenchmarkType.Measurement,
 				title: `exportVerbose encoded size by string length`,
 				run: async () => {
@@ -515,8 +516,9 @@ describe("TextDomain benchmarks", () => {
 							value: intercept,
 							units: "bytes",
 							type: ValueType.SmallerIsBetter,
+							significance: "Primary",
 						},
-					] as CollectedData;
+					] satisfies CollectedData;
 				},
 			});
 		});
