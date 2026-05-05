@@ -4,7 +4,7 @@
  */
 
 import { spawn } from "node:child_process";
-import { existsSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
+import { mkdirSync, rmSync, writeFileSync } from "node:fs";
 import path from "node:path";
 
 import { Flags } from "@oclif/core";
@@ -70,31 +70,45 @@ export default class CheckTrustPolicyCommand extends BaseCommandWithBuildProject
 		}),
 		path: Flags.directory({
 			description:
-				"Path used to locate the build project to audit. The closest build root containing this path is used. Defaults to the current working directory.",
+				"Path inside the workspace to audit. The most specific workspace (e.g. a release group like `server/routerlicious` rather than the repo root) containing this path is used. Defaults to the current working directory.",
 			exists: true,
 		}),
 		tempDir: Flags.directory({
-			description: "Scratch workspace directory (default: <workspace-root>/.trust-audit-temp).",
+			description: "Scratch workspace directory (default: <workspace>/.trust-audit-temp).",
 		}),
 		...BaseCommandWithBuildProject.flags,
 	} as const;
 
 	public async run(): Promise<TrustPolicyAuditResult> {
-		const buildProject = this.getBuildProject(this.flags.path);
-		const workspaceRoot = buildProject.root;
-		const tempDir = path.resolve(
-			this.flags.tempDir ?? path.join(workspaceRoot, ".trust-audit-temp"),
-		);
-
-		const lockfilePath = path.join(workspaceRoot, "pnpm-lock.yaml");
-		if (!existsSync(lockfilePath)) {
-			this.error(`No pnpm-lock.yaml found in ${workspaceRoot}`);
+		const searchPath = path.resolve(this.flags.path ?? process.cwd());
+		const buildProject = this.getBuildProject(searchPath);
+		// Pick the most specific workspace containing `searchPath`. Workspaces
+		// in this repo nest (e.g. `server/routerlicious` lives inside the root
+		// workspace), so longest-prefix wins.
+		let workspaceDir: string | undefined;
+		for (const ws of buildProject.workspaces.values()) {
+			const dir = path.resolve(ws.directory);
+			if (
+				(searchPath === dir || searchPath.startsWith(`${dir}${path.sep}`)) &&
+				(workspaceDir === undefined || dir.length > workspaceDir.length)
+			) {
+				workspaceDir = dir;
+			}
 		}
+		if (workspaceDir === undefined) {
+			this.error(
+				`No workspace in build project ${buildProject.root} contains ${searchPath}.`,
+			);
+		}
+		this.verbose(`Auditing workspace: ${workspaceDir}`);
+		const tempDir = path.resolve(
+			this.flags.tempDir ?? path.join(workspaceDir, ".trust-audit-temp"),
+		);
 
 		this.verbose("Enumerating installed dependencies via pnpm list -r --json...");
 		const listResult = await runPnpm(
 			["list", "--recursive", "--json", "--depth", "Infinity"],
-			workspaceRoot,
+			workspaceDir,
 			false,
 		);
 		if (listResult.code !== 0) {
@@ -205,7 +219,19 @@ export default class CheckTrustPolicyCommand extends BaseCommandWithBuildProject
 				this.verbose(`Leaving temp dir in place: ${tempDir}`);
 			} else {
 				this.verbose(`Cleaning up temp dir: ${tempDir}`);
-				rmSync(tempDir, { recursive: true, force: true });
+				// Cleanup is best-effort: on Windows, pnpm's content-addressed
+				// store leaves hardlinks that AV scanners or lingering child
+				// processes can briefly hold open, and we don't want a stale
+				// lock to mask the audit's exit code or hide the violations
+				// the user actually came here for. Surface a warning so the
+				// user knows to clean up manually (or re-run with --keep).
+				try {
+					rmSync(tempDir, { recursive: true, force: true });
+				} catch (err) {
+					this.warning(
+						`Failed to remove temp dir ${tempDir}: ${err instanceof Error ? err.message : String(err)}. You may need to delete it manually.`,
+					);
+				}
 			}
 		}
 
@@ -390,8 +416,14 @@ function slugify(name: string, version: string): string {
  * @returns The number of leaf projects written (one per entry in `pinned`).
  */
 function writeAuditWorkspace(tempDir: string, pinned: readonly PinnedVersion[]): number {
-	if (existsSync(tempDir)) {
+	// `rmSync` with `force: true` is a no-op if the path doesn't exist, so just
+	// try to remove it (avoids a race with `existsSync`).
+	try {
 		rmSync(tempDir, { recursive: true, force: true });
+	} catch (err) {
+		throw new Error(
+			`Cannot prepare scratch workspace: failed to remove existing temp dir ${tempDir}: ${err instanceof Error ? err.message : String(err)}. Delete it manually or pass a different --tempDir.`,
+		);
 	}
 	mkdirSync(tempDir, { recursive: true });
 
