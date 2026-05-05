@@ -120,7 +120,7 @@
 		"@fluidframework/driver-base": "workspace:~",
 		"@fluidframework/driver-definitions": "workspace:~",
 		"@fluidframework/driver-utils": "workspace:~",
-		"@fluidframework/server-services-client": "^7.0.0",
+		"@fluidframework/server-services-client": "^7.0.1",
 		"@fluidframework/telemetry-utils": "workspace:~",
 		"json-stringify-safe": "5.0.1",
 		"socket.io-client": "^4.8.3"

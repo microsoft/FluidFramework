@@ -146,13 +146,37 @@ resolve the latest version that matches it.
 OPEN ISSUE: while these API can be used directly, currently the default global mocha hook will still run and install the
 default set of legacy versions whether it is necessary or not.
 
+## Updating compat versions
+
+After a Fluid Framework version bump, run from this package's directory:
+
+```
+pnpm run update-compat-versions
+```
+
+The script (`scripts/updateCompatVersions.ts`) does the following:
+
+1. Reads the current package version from `src/packageVersion.ts`.
+2. Queries the npm registry to resolve N-1, N-2, OCV, cross-client, and full back-compat versions.
+3. Writes `compat-workspaces/generated-versions.cjs` with the resolved exact versions.
+4. Creates or updates per-version `package.json` files in `compat-workspaces/full/`.
+5. Removes version directories that are no longer needed.
+6. Runs `pnpm install --no-frozen-lockfile` in the workspace to regenerate the committed lockfile.
+
+Commit all files produced by the script: `generated-versions.cjs`, per-version `package.json` files, and
+`compat-workspaces/full/pnpm-lock.yaml`.
+
+### Adding pinned versions for specific tests
+
+When adding a test that uses `describeInstallVersions({ requestAbsoluteVersions: [...] })` for some pinned version,
+add that version to `compat-workspaces/explicit-versions.mjs`. Then re-run `update-compat-versions` and commit the changes.
+
 ## Implementation notes
 
-The legacy version are installed in their own version folder
-`./../node_modules/.legacy/<version>` (current package root's node_module directory).
-
-Legacy versions of all packages in all categories are installed regardless of what compat combination is requested.
-(See `packageList` in `src/testApi.ts`).
+Legacy packages are installed in a committed pnpm sub-workspace at `compat-workspaces/full/`.
+The workspace is installed automatically when `pnpm install` is run from the repo root (via the
+`postinstall` hook in this package's `package.json`), so no runtime installation step is required
+in tests.
 
 For now, the current versions are statically bound to also provide typings.
 This is a lie since the public API of a package may change over time: `ContainerRuntime` in FF@10.0.0 will not have the

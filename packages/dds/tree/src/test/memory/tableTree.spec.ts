@@ -6,9 +6,10 @@
 import { strict as assert } from "node:assert";
 
 import {
+	BenchmarkMode,
 	benchmarkIt,
 	benchmarkMemoryUse,
-	isInPerformanceTestingMode,
+	currentBenchmarkMode,
 } from "@fluid-tools/benchmark";
 import type { Test } from "mocha";
 
@@ -77,17 +78,19 @@ describe("SharedTree table APIs memory usage", () => {
 
 	// The test tree's size will be 5*5, 50*50.
 	// Tree size 1000 benchmarks removed due to high overhead and unreliable results.
-	const tableSizes = isInPerformanceTestingMode
-		? [5, 50]
-		: // When not measuring perf, use a single smaller data size so the tests run faster.
-			[3];
+	const tableSizes =
+		currentBenchmarkMode === BenchmarkMode.Performance
+			? [5, 50]
+			: // When not measuring perf, use a single smaller data size so the tests run faster.
+				[3];
 
 	// The number of operations to perform on the tree.
 	// Operation counts 1000 removed due to high overhead and unreliable results.
-	const operationCounts = isInPerformanceTestingMode
-		? [5, 50]
-		: // When not measuring perf, use a single smaller data size so the tests run faster.
-			[3];
+	const operationCounts =
+		currentBenchmarkMode === BenchmarkMode.Performance
+			? [5, 50]
+			: // When not measuring perf, use a single smaller data size so the tests run faster.
+				[3];
 
 	// IMPORTANT: variables scoped to the test suite are a big problem for memory-profiling tests
 	// because they won't be out of scope when we garbage-collect between runs of the same test,

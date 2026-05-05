@@ -50,7 +50,7 @@
 		"@fluidframework/odsp-doclib-utils": "workspace:~",
 		"@fluidframework/odsp-driver": "workspace:~",
 		"@fluidframework/routerlicious-driver": "workspace:~",
-		"@fluidframework/server-local-server": "^7.0.0",
+		"@fluidframework/server-local-server": "^7.0.1",
 		"@fluidframework/tinylicious-driver": "workspace:~"
 	},
 	"devDependencies": {
