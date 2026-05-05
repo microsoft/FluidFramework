@@ -526,6 +526,13 @@ class KernelEventBuffer implements Listenable<KernelEvents> {
 	public flush(): void {
 		this.#assertNotDisposed();
 
+		// TODO: The buffer currently tracks *which* fields changed during the window but not the
+		// net delta (i.e. it cannot tell whether a field ended up in the same state it started in).
+		// As a result, a rolled-back transaction still fires one `nodeChanged` event per affected
+		// field even though the tree is net-unchanged.  Ideally, flush() would suppress events for
+		// fields whose composed delta is a no-op (identity change).  This requires delta composition
+		// support in the eventing stack; see the invalidation comment in
+		// #handleChildrenChangedAfterBatch for the related limitation.
 		if (this.#childrenChangedBuffer.size > 0) {
 			this.#events.emit("childrenChangedAfterBatch", {
 				changedFields: this.#childrenChangedBuffer,
