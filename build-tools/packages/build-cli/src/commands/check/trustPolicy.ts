@@ -42,7 +42,8 @@ interface PnpmRunResult {
  * 2. Materialize a scratch workspace at `<repoRoot>/.trust-audit-temp/`
  * with one leaf project per `(name, version)`. Each leaf depends on
  * the *real* registry name (no `npm:` aliases) because pnpm 10's
- * `--trust-policy-exclude` only matches by registry name.
+ * `--trust-policy-exclude` matches the registry name (and optional
+ * exact version), not the alias.
  * 3. Run `pnpm install` against the scratch workspace with NDJSON
  * reporting. pnpm aborts at the first violation; we add the
  * offender to the exclude list and re-run, repeating until pnpm
@@ -109,48 +110,101 @@ export default class CheckTrustPolicyCommand extends BaseCommand<
 		const violationSet = new Set<string>();
 		let lastResult: PnpmRunResult | undefined;
 		let iteration = 0;
+		let auditIncomplete = false;
 		const start = Date.now();
-		// eslint-disable-next-line no-constant-condition
-		while (true) {
-			iteration++;
-			const excludeFlags: string[] = [];
-			for (const v of [...violationSet].sort()) {
-				excludeFlags.push("--trust-policy-exclude", v);
-			}
-			const installArgs = [
-				"install",
-				"--recursive",
-				"--no-frozen-lockfile",
-				"--lockfile-only",
-				"--trust-policy",
-				"no-downgrade",
-				"--reporter",
-				"ndjson",
-				...excludeFlags,
-			];
+		try {
+			// eslint-disable-next-line no-constant-condition
+			while (true) {
+				const excludeFlags: string[] = [];
+				// Group excluded versions by package name and pass each name
+				// once with versions joined by `||` (pnpm's "exact-versions
+				// union" syntax). For example:
+				//   --trust-policy-exclude semver@5.7.2||6.3.1
+				//
+				// This is required because pnpm's `evaluateVersionPolicy` only
+				// consults the FIRST rule matching a given package name (see
+				// `parseVersionPolicyRule`/`evaluateVersionPolicy` in pnpm.cjs).
+				// Passing multiple `--trust-policy-exclude semver@<v>` flags
+				// silently drops all but the first.
+				//
+				// The `||` union form is documented under `trustPolicyExclude`
+				// (https://pnpm.io/settings#trustpolicyexclude), where the
+				// example `'webpack@4.47.0 || 5.102.1'` excludes both versions
+				// of webpack.
+				const versionsByName = new Map<string, string[]>();
+				for (const violation of violationSet) {
+					const atIndex = violation.lastIndexOf("@");
+					const name = violation.slice(0, atIndex);
+					const version = violation.slice(atIndex + 1);
+					const existing = versionsByName.get(name);
+					if (existing === undefined) {
+						versionsByName.set(name, [version]);
+					} else {
+						existing.push(version);
+					}
+				}
+				for (const name of [...versionsByName.keys()].sort()) {
+					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+					const versions = versionsByName.get(name)!.sort();
+					// Wrap in double quotes so that on Windows (where `runPnpm`
+					// uses `shell: true`) cmd.exe doesn't interpret `||` as a
+					// command separator before pnpm parses the arg.
+					excludeFlags.push(
+						"--trust-policy-exclude",
+						`"${name}@${versions.join("||")}"`,
+					);
+				}
+				const installArgs = [
+					"install",
+					"--recursive",
+					"--no-frozen-lockfile",
+					"--lockfile-only",
+					"--trust-policy",
+					"no-downgrade",
+					"--reporter",
+					"ndjson",
+					...excludeFlags,
+				];
 
-			this.verbose(
-				`Iteration ${iteration}: pnpm install (excluded so far: ${violationSet.size})`,
-			);
-
-			lastResult = await runPnpm(installArgs, tempDir, this.flags.verbose);
-			const found = extractTrustViolations(lastResult.stdout);
-
-			if (lastResult.code === 0) {
-				this.verbose("pnpm install succeeded; audit complete.");
-				break;
-			}
-
-			const newViolations = found.filter((v) => !violationSet.has(v));
-			if (newViolations.length === 0) {
 				this.verbose(
-					`pnpm exited with code ${lastResult.code} but no new trust-policy violations were detected. Stopping.`,
+					`Iteration ${iteration}: pnpm install (excluded so far: ${violationSet.size})`,
 				);
-				break;
+				iteration++;
+
+				lastResult = await runPnpm(installArgs, tempDir, this.flags.verbose);
+				const found = extractTrustViolations(lastResult.stdout);
+
+				if (lastResult.code === 0) {
+					this.verbose("pnpm install succeeded; audit complete.");
+					break;
+				}
+
+				const newViolations = found.filter((violation) => !violationSet.has(violation));
+				if (newViolations.length === 0) {
+					// pnpm exited non-zero without surfacing a new trust-policy
+					// violation. That means something else went wrong (network,
+					// auth, a pnpm behavior change, etc.) and the audit is no
+					// longer trustworthy: we have no way to know whether more
+					// violations exist beyond the ones already collected. Mark
+					// the audit incomplete so we exit non-zero below; otherwise
+					// CI would treat a failed audit as passing.
+					auditIncomplete = true;
+					this.warning(
+						`pnpm exited with code ${lastResult.code} but no new trust-policy violations were detected. Audit is incomplete; re-run with --verbose to see pnpm's full output.`,
+					);
+					break;
+				}
+				for (const violation of newViolations) {
+					violationSet.add(violation);
+					this.verbose(`  + ${violation}`);
+				}
 			}
-			for (const violation of newViolations) {
-				violationSet.add(violation);
-				this.verbose(`  + ${violation}`);
+		} finally {
+			if (this.flags.keep) {
+				this.verbose(`Leaving temp dir in place: ${tempDir}`);
+			} else {
+				this.verbose(`Cleaning up temp dir: ${tempDir}`);
+				rmSync(tempDir, { recursive: true, force: true });
 			}
 		}
 
@@ -167,6 +221,7 @@ export default class CheckTrustPolicyCommand extends BaseCommand<
 						iterations: iteration,
 						elapsedSec,
 						totalUniqueDependencies: pinned.length,
+						auditIncomplete,
 						violations,
 					},
 					undefined,
@@ -180,28 +235,27 @@ export default class CheckTrustPolicyCommand extends BaseCommand<
 			this.log(`  Unique pinned versions: ${pinned.length}`);
 			this.log(`  Elapsed: ${elapsedSec}s`);
 			if (violations.length === 0) {
-				this.log("\nNo trust-policy violations detected.");
-				if (exitCode !== 0 && !this.flags.verbose) {
+				if (auditIncomplete) {
 					this.log(
-						"\nNote: pnpm exited non-zero but no trust-related events were emitted. Re-run with --verbose to see pnpm's full output.",
+						"\nAudit incomplete: pnpm exited non-zero but no trust-policy events were emitted. Re-run with --verbose to see pnpm's full output.",
 					);
+				} else {
+					this.log("\nNo trust-policy violations detected.");
 				}
 			} else {
 				this.log(`\n${violations.length} trust-policy violation(s):\n`);
 				for (const violation of violations) {
 					this.log(`  ${violation}`);
 				}
+				if (auditIncomplete) {
+					this.log(
+						"\nAudit incomplete: pnpm exited non-zero after the violations above without surfacing a new event. There may be more violations. Re-run with --verbose to see pnpm's full output.",
+					);
+				}
 			}
 		}
 
-		if (!this.flags.keep) {
-			this.verbose(`Cleaning up temp dir: ${tempDir}`);
-			rmSync(tempDir, { recursive: true, force: true });
-		} else {
-			this.verbose(`Leaving temp dir in place: ${tempDir}`);
-		}
-
-		if (violations.length > 0) {
+		if (violations.length > 0 || auditIncomplete) {
 			this.exit(1);
 		}
 	}
@@ -290,8 +344,9 @@ function slugify(name: string, version: string): string {
  * each pulling in exactly one real (non-aliased) dependency.
  *
  * Real dependency names matter: pnpm's `--trust-policy-exclude` matches
- * against the *registry* name, so aliasing breaks the exclude path for
- * any `(name, version)` combination not picked as the canonical one.
+ * against the *registry* name (with optional exact version), so aliasing
+ * breaks the exclude path for any `(name, version)` combination not
+ * picked as the canonical one.
  *
  * We avoid putting `trustPolicyExclude` entries in the YAML because
  * pnpm 10's YAML form silently drops double-quoted scalars and rejects
@@ -353,6 +408,13 @@ function writeAuditWorkspace(tempDir: string, pinned: readonly PinnedVersion[]):
  * Runs `pnpm` with the given args from `cwd` and captures stdout, stderr,
  * and the exit code. When `streamLive` is true, output is also forwarded
  * to this process so progress is visible during long operations.
+ *
+ * NOTE on `shell: true`: required on Windows so we can spawn `pnpm.cmd`
+ * (Node 20+ refuses to spawn .cmd/.bat files without a shell, per
+ * CVE-2024-27980). The downside is that on Windows cmd.exe interprets shell
+ * metacharacters in argv before pnpm sees them; callers that need to pass
+ * values containing `||`, `&`, `^`, etc. must wrap those values in their
+ * own double quotes (see the `--trust-policy-exclude` exclude builder).
  */
 function runPnpm(args: string[], cwd: string, streamLive: boolean): Promise<PnpmRunResult> {
 	return new Promise((resolveRun, rejectRun) => {
