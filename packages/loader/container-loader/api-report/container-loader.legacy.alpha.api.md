@@ -8,7 +8,7 @@
 export function asLegacyAlpha(base: IContainer): ContainerAlpha;
 
 // @alpha @legacy
-export function captureFullContainerState(props: ICaptureFullContainerStateProps): Promise<string>;
+export function captureFullContainerState(input: ICaptureFullContainerStateProps): Promise<string>;
 
 // @public
 export enum ConnectionState {

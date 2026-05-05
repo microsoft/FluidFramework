@@ -314,11 +314,12 @@ export interface ICaptureFullContainerStateProps {
  * internally consistent: ops are anchored to the snapshot that was captured.
  * @legacy @alpha
  */
-export async function captureFullContainerState(
-	props: ICaptureFullContainerStateProps,
-): Promise<string> {
-	const { urlResolver, documentServiceFactory, request, logger } = props;
-
+export async function captureFullContainerState({
+	urlResolver,
+	documentServiceFactory,
+	request,
+	logger,
+}: ICaptureFullContainerStateProps): Promise<string> {
 	const resolvedUrl = await urlResolver.resolve(request);
 	if (resolvedUrl === undefined) {
 		throw new UsageError("Failed to resolve request to a Fluid url");
