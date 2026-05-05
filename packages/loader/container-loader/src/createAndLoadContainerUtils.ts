@@ -390,7 +390,9 @@ export async function captureFullContainerState({
 		const savedOps: ISequencedDocumentMessage[] = [];
 		let opsResult = await opsStream.read();
 		while (!opsResult.done) {
-			savedOps.push(...opsResult.value);
+			for (const op of opsResult.value) {
+				savedOps.push(op);
+			}
 			opsResult = await opsStream.read();
 		}
 
