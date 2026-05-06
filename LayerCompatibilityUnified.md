@@ -1,7 +1,15 @@
 # Fluid Framework Layer Compatibility Unified
 
-This is an alternative to the [Fluid Framework Layer Compatibility](./LayerCompatibility.md) (which applies mainly to `@legacy` APIs).
+This is an alternative to the [Fluid Framework Layer Compatibility](./LayerCompatibility.md) (which applies mainly to `@legacy` "encapsulated model" APIs).
+
+For now, in its current `@alpha` state, the "Unified API" (`ServiceClient`, `FluidContainer`, `DataStoreKind` and related APIs)
+does not support using multiple copies of any Fluid Client packages (at the same or different versions).
+This is the same approach used in the `@public` "declarative model" APIs.
+
+This document covers how you can address some of the legacy use-cases for the layering approach within this new API, and we can help enforce these rules at the type-checking level.
+
 This new approach is intentionally less flexible, but should still be flexible enough for most if not all use-cases, and possible to extend to cover more use-cases later if required.
+The main problematic use-case which might need future extensions is the incremental adoption of these APIs in existing applications using the legacy layer system which want to adopt these new APIs for new code, but only port parts of existing code.
 
 ## Overview
 
@@ -22,11 +30,11 @@ For example the common service-client interfaces and the portion of their implem
 ## Layer Boundaries and Validation
 
 Structural types should be used when multiple implementations, either written by third parties, or from other versions of packages are allowed.
-`@sealed` Nominal types (Like `ErasedTypeBase` and `ErasedType`) should be used when multiple versions are not supported, and instead a single specific implementation from a specific expected version must be used (and thus could be down cast to expose functionality not part of the type).
+`@sealed` Nominal types (like `ErasedTypeBase` and `ErasedType`) should be used when multiple versions are not supported, and instead a single specific implementation from a specific expected version must be used (and thus could be down cast to expose functionality not part of the type).
 This ensures that TypeScript type checking validates that any version mixing and package duplication being done is actually a supported configuration, at compile time.
 
-If needed, it is possible to explicitly design types to they can support specific ranges of versions of other packages.
-For example is supporting a type from one version of another package (no mixing), the range of supported versions can be expressed using the packages's dependency range on the package in question, then directly refer to a nominal type in that package.
+If needed, it is possible to explicitly design types so they can support specific ranges of versions of other packages.
+For example, if supporting a type from one version of another package (no mixing), the range of supported versions can be expressed using the package's dependency range on the package in question, and then directly refer to a nominal type in that package.
 If needing to support a range of versions, but allow multiple package versions at once as long as all are in that range, either structural types detailing the actual requirements can be used, or opaque branded structural types can be used which include version brands.
 
-In cases where dynamic loading which might be done in non-type safe ways, or where a type safe solution was not found, additional runtime checks should be added similar to those used to check the legacy API surface's layering.
+In cases where dynamic loading might be done in non-type-safe ways, or where a type-safe solution was not found, additional runtime checks should be added similar to those used to check the legacy API surface's layering.
