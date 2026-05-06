@@ -12,20 +12,17 @@ import type { BundleComparison } from "../BundleBuddyTypes";
 import { compareBundles } from "../compareBundles";
 import { getBaselineCommit, getBuilds, getPriorCommit } from "../utilities";
 import {
-	getBundlePathsFromZipObject,
-	getStatsFileFromZip,
+	getAnalyzerJsonFromZip,
+	getAnalyzerPathsFromZipObject,
 	getZipObjectFromArtifact,
 } from "./AdoArtifactFileProvider";
 import type { IADOConstants } from "./Constants";
-import { DefaultStatsProcessors } from "./DefaultStatsProcessors";
 import {
-	getBundleBuddyConfigFromFileSystem,
-	getBundlePathsFromFileSystem,
-	getStatsFileFromFileSystem,
+	getAnalyzerJsonFromFileSystem,
+	getAnalyzerPathsFromFileSystem,
 } from "./FileSystemBundleFileProvider";
 import { getBuildTagForCommit } from "./getBuildTagForCommit";
-import { getBundleBuddyConfigMap } from "./getBundleBuddyConfigMap";
-import { getBundleSummaries } from "./getBundleSummaries";
+import { getBundleSummariesFromAnalyzer } from "./getBundleSummaries";
 
 /**
  * Result of a size comparison against a baseline build, discriminated by `kind`.
@@ -168,15 +165,13 @@ export class ADOSizeComparator {
 				// Baseline build succeeded
 				console.log(`Found baseline build with id: ${baselineBuild.id}`);
 				console.log(`projectName: ${this.adoConstants.projectName}`);
-				console.log(
-					`bundleAnalysisArtifactName: ${this.adoConstants.bundleAnalysisArtifactName}`,
-				);
+				console.log(`artifactName: ${this.adoConstants.artifactName}`);
 
 				baselineZip = await getZipObjectFromArtifact(
 					this.adoConnection,
 					this.adoConstants.projectName,
 					baselineBuild.id,
-					this.adoConstants.bundleAnalysisArtifactName,
+					this.adoConstants.artifactName,
 				).catch((error) => {
 					console.log(`Error unzipping object from artifact: ${error.message}`);
 					console.log(`Error stack: ${error.stack}`);
@@ -237,29 +232,19 @@ export class ADOSizeComparator {
 	}
 
 	private async createComparisonFromZip(baselineZip: JSZip): Promise<BundleComparison[]> {
-		const baselineZipBundlePaths = getBundlePathsFromZipObject(baselineZip);
+		const baselineZipBundlePaths = getAnalyzerPathsFromZipObject(baselineZip);
 
-		const prBundleFileSystemPaths = await getBundlePathsFromFileSystem(this.localReportPath);
+		const prBundleFileSystemPaths = await getAnalyzerPathsFromFileSystem(this.localReportPath);
 
-		const configFileMap = await getBundleBuddyConfigMap({
-			bundleFileData: prBundleFileSystemPaths,
-			getBundleBuddyConfig: (relativePath) =>
-				getBundleBuddyConfigFromFileSystem(join(this.localReportPath, relativePath)),
-		});
-
-		const baselineSummaries = await getBundleSummaries({
+		const baselineSummaries = await getBundleSummariesFromAnalyzer({
 			bundlePaths: baselineZipBundlePaths,
-			getStatsFile: (relativePath) => getStatsFileFromZip(baselineZip, relativePath),
-			getBundleBuddyConfigFile: (bundleName) => configFileMap.get(bundleName),
-			statsProcessors: DefaultStatsProcessors,
+			getAnalyzerJson: (relativePath) => getAnalyzerJsonFromZip(baselineZip, relativePath),
 		});
 
-		const prSummaries = await getBundleSummaries({
+		const prSummaries = await getBundleSummariesFromAnalyzer({
 			bundlePaths: prBundleFileSystemPaths,
-			getStatsFile: (relativePath) =>
-				getStatsFileFromFileSystem(join(this.localReportPath, relativePath)),
-			getBundleBuddyConfigFile: (bundleName) => configFileMap.get(bundleName),
-			statsProcessors: DefaultStatsProcessors,
+			getAnalyzerJson: (relativePath) =>
+				getAnalyzerJsonFromFileSystem(join(this.localReportPath, relativePath)),
 		});
 
 		return compareBundles(baselineSummaries, prSummaries);

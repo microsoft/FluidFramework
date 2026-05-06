@@ -6,7 +6,7 @@
 import { strict as assert } from "node:assert";
 
 // eslint-disable-next-line import-x/no-internal-modules
-import { FormattedTextAsTree, type TreeView } from "@fluidframework/tree/internal";
+import { FormattedTextAsTree, type TreeViewAlpha } from "@fluidframework/tree/internal";
 import { render } from "@testing-library/react";
 import { TextAsTree, independentView } from "fluid-framework/alpha";
 
@@ -15,7 +15,7 @@ import { App, TextEditorRoot, treeConfig } from "../app.js";
 /**
  * Creates a TreeView for formatted text, initialized with the provided initial value.
  */
-function createFormattedTreeView(initialValue = ""): TreeView<typeof TextEditorRoot> {
+function createFormattedTreeView(initialValue = ""): TreeViewAlpha<typeof TextEditorRoot> {
 	const treeView = independentView(treeConfig);
 	treeView.initialize(
 		new TextEditorRoot({

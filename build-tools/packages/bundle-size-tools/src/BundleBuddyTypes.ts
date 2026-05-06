@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import type { StatsCompilation } from "webpack";
-
 /**
  * A map of bundles friendly names to their relevant metrics
  */
@@ -30,31 +28,4 @@ export interface BundleComparison {
 	bundleName: string;
 
 	commonBundleMetrics: { [key: string]: { baseline: BundleMetric; compare: BundleMetric } };
-}
-
-/**
- * Functions used to process a webpack stats file and produce a set of metrics. Some processors may choose
- * to work off a bundle specific config file. Note that these config files are optional, so not all bundles
- * may have one associated with them.
- */
-export type WebpackStatsProcessor = (
-	stats: StatsCompilation,
-	config: BundleBuddyConfig | undefined,
-) => BundleMetricSet | undefined;
-
-/**
- * Defines a specific chunk in a bundle to be analyzed by this tool.
- */
-export interface ChunkToAnalyze {
-	name: string;
-}
-
-/**
- * A configuration file that can be used to run customized analysis for a bundle
- */
-export interface BundleBuddyConfig {
-	/**
-	 * A array of chunk to be analyzed by bundle buddy
-	 */
-	chunksToAnalyze: ChunkToAnalyze[];
 }

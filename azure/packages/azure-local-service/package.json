@@ -28,7 +28,7 @@
 		"test": "echo \"Error: no test specified\" && exit 1"
 	},
 	"dependencies": {
-		"tinylicious": "^7.0.0"
+		"tinylicious": "^7.0.1"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "~2.4.5",
