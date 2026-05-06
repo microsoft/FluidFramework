@@ -1,8 +1,10 @@
 # @fluid-example/app-integration-container-views
 
-**Dice Roller** is a basic example that has a die and a button. Clicking the button re-rolls the die and persists the value in the root SharedDirectory.
+The **container-views** example has a dice and a button. Clicking the button re-rolls the dice and persists the value in a SharedMap.
 
-This implementation demonstrates plugging the container into a standalone application, rather than using the webpack-fluid-loader environment that most of our packages use. This implementation relies on [Tinylicious](/server/routerlicious/packages/tinylicious), so there are a few extra steps to get started. We expect the container to respond with a mountable view that we can use for rendering.
+This example demonstrates the container-views pattern.  In this pattern, the container code (`src/container/index.ts`) establishes not only the model and controller logic (the DiceRoller, `diceRoller.ts`) but also the view code (`view.tsx`) and its binding to the model/controller.  The container's entry point uses `ContainerViewRuntimeFactory` to provide an `IFluidMountableViewEntryPoint` (a mountable view with `mount`/`unmount` methods), so the consumer of the container (`app.ts`) simply mounts it into a DOM element without needing to know about the view implementation.
+
+This is distinct from the external-views pattern, where the container only provides the data model and the consumer is responsible for creating and binding the view.  The container-views pattern can be convenient when the container wants to control its own rendering, but may result in less view flexibility and larger-than-necessary bundle size (especially for headless usage).  The external-views pattern is therefore recommended over the container-views pattern for general use.
 
 <!-- AUTO-GENERATED-CONTENT:START (EXAMPLE_APP_README_HEADER:usesTinylicious=TRUE) -->
 
@@ -17,7 +19,8 @@ You can run this example using the following steps:
 1. Run `pnpm install` and `pnpm run build:fast --nolint` from the `FluidFramework` root directory.
     - For an even faster build, you can add the package name to the build command, like this:
       `pnpm run build:fast --nolint @fluid-example/app-integration-container-views`
-1. In a separate terminal, start a Tinylicious server by following the instructions in [Tinylicious](https://github.com/microsoft/FluidFramework/tree/main/server/routerlicious/packages/tinylicious).
+1. In a separate terminal, start a Tinylicious server by running `pnpm tinylicious` in this directory.
+1. If using codespaces in a browser, set tinylicious (port 7070) visibility to "public". "Private to Organization" will not work. See [sharing a port](https://docs.github.com/en/codespaces/developing-in-a-codespace/forwarding-ports-in-your-codespace#sharing-a-port) for how to do this.
 1. Run `pnpm start` from this directory and open <http://localhost:8080> in a web browser to see the app running.
 1. If you want to run the app against SharePoint, follow the instructions in [webpack-fluid-loader](https://github.com/microsoft/FluidFramework/blob/main/examples/utils/webpack-fluid-loader/README.md#sharepoint) to get auth credentials. Then run `pnpm start:spo` or `pnpm start:spo-df` and open <http://localhost:8080> like above.
 
@@ -43,9 +46,9 @@ For in browser testing update `./jest-puppeteer.config.js` to:
 
 ## Data model
 
-Dice Roller uses the following distributed data structures:
+DiceRoller uses the following distributed data structures:
 
--   SharedDirectory - root
+-   SharedMap
 
 <!-- AUTO-GENERATED-CONTENT:START (README_FOOTER) -->
 

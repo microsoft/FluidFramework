@@ -251,7 +251,7 @@ describe("Int64ArrayProperty", function () {
 				in_options.pre(testProperty._properties.int64Property);
 			}
 
-			var initialChangeset = new ChangeSet(testProperty.serialize({ dirtyOnly: false }));
+			const initialChangeset = new ChangeSet(testProperty.serialize({ dirtyOnly: false }));
 			initialChangeset.setIsNormalized(true);
 
 			innerTestChangeSetSquashing(
@@ -261,13 +261,13 @@ describe("Int64ArrayProperty", function () {
 				in_options,
 			);
 
-			var initialChangeset = initialChangeset.getSerializedChangeSet();
-			if (ChangeSet.isEmptyChangeSet(initialChangeset)) {
+			const initialChangesetSerialized = initialChangeset.getSerializedChangeSet();
+			if (ChangeSet.isEmptyChangeSet(initialChangesetSerialized)) {
 				// if one is empty the other should be empty, too
 				expect(testProperty.serialize({ dirtyOnly: false })).to.be.empty;
 			} else {
 				// else they must be deep equal
-				expect(initialChangeset["array<Int64>"].int64Property).to.deep.equal(
+				expect(initialChangesetSerialized["array<Int64>"].int64Property).to.deep.equal(
 					testProperty.serialize({ dirtyOnly: false })["array<Int64>"].int64Property,
 				);
 			}

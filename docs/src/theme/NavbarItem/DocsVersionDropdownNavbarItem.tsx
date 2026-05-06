@@ -20,7 +20,6 @@ import type { LinkLikeNavbarItemProps } from "@theme/NavbarItem";
 import DefaultNavbarItem from "@theme/NavbarItem/DefaultNavbarItem";
 import type { Props } from "@theme/NavbarItem/DocsVersionDropdownNavbarItem";
 import DropdownNavbarItem from "@theme/NavbarItem/DropdownNavbarItem";
-import React from "react";
 
 /**
  * Gets the documentation page marked as the main/landing page for a version,

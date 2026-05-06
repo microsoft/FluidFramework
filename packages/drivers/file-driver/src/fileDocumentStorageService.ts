@@ -7,25 +7,22 @@ import fs from "fs";
 
 import { bufferToString } from "@fluid-internal/client-utils";
 import { assert } from "@fluidframework/core-utils/internal";
-import { ISummaryTree } from "@fluidframework/driver-definitions";
-import {
+import type { ISummaryTree } from "@fluidframework/driver-definitions";
+import type {
 	IDocumentStorageService,
 	ISummaryContext,
 	ISnapshotTree,
 	IVersion,
 	ITree,
-	FileMode,
-	TreeEntry,
 	IBlob,
 } from "@fluidframework/driver-definitions/internal";
+import { FileMode, TreeEntry } from "@fluidframework/driver-definitions/internal";
 import {
 	buildSnapshotTree,
 	convertSummaryTreeToSnapshotITree,
 } from "@fluidframework/driver-utils/internal";
-import {
-	IFileSnapshot,
-	ReadDocumentStorageServiceBase,
-} from "@fluidframework/replay-driver/internal";
+import type { IFileSnapshot } from "@fluidframework/replay-driver/internal";
+import { ReadDocumentStorageServiceBase } from "@fluidframework/replay-driver/internal";
 
 // This ID is used by replay tool as Document Id.
 // We leverage it to figure out when container is asking for root document tree.
@@ -145,7 +142,6 @@ export interface ISnapshotWriterStorage extends IDocumentStorageService {
  */
 export type ReaderConstructor = new (...args: any[]) => IDocumentStorageService;
 
-// eslint-disable-next-line jsdoc/require-description -- TODO: add documentation
 /**
  * @internal
  */

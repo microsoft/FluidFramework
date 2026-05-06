@@ -6,7 +6,6 @@
 import { type IBuildProject, loadBuildProject } from "@fluid-tools/build-infrastructure";
 import { getResolvedFluidRoot } from "@fluidframework/build-tools";
 import { Command, Flags, type Interfaces } from "@oclif/core";
-// eslint-disable-next-line import-x/no-internal-modules
 import type { PrettyPrintableError } from "@oclif/core/errors";
 import chalk from "picocolors";
 import type { CommandLogger } from "../../logging.js";

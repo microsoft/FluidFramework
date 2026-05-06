@@ -30,6 +30,3 @@ export interface IADOConstants {
 	// be useful when there are a high volume of commits/builds.
 	buildsToSearch?: number;
 }
-
-// The name of the metric that represents the size of the whole bundle
-export const totalSizeMetricName = "Total Size";

@@ -38,10 +38,19 @@ export {
 	type SchemaFactory_base,
 } from "./schemaFactory.js";
 export { SchemaFactoryBeta, type SchemaStaticsBeta } from "./schemaFactoryBeta.js";
-export { SchemaFactoryAlpha } from "./schemaFactoryAlpha.js";
+export {
+	SchemaFactoryAlpha,
+	type SchemaStaticsAlpha,
+	type NodeProvider,
+} from "./schemaFactoryAlpha.js";
 export {
 	eraseSchemaDetails,
 	eraseSchemaDetailsSubclassable,
+} from "./eraseSchemaDetails.js";
+export type {
+	ErasedSchema,
+	ErasedNode,
+	ErasedSchemaSubclassable,
 } from "./eraseSchemaDetails.js";
 export type {
 	ValidateRecursiveSchema,
@@ -57,6 +66,7 @@ export {
 	createCustomizedFluidFrameworkScopedFactory,
 } from "./schemaCreationUtilities.js";
 export {
+	deltaMarksToArrayOps,
 	getIdentifierFromNode,
 	getPropertyKeyFromStoredKey,
 	getStoredKey,
@@ -105,6 +115,8 @@ export type {
 	AllowedTypesFullFromMixedUnsafe,
 	UnannotateAllowedTypesListUnsafe,
 	AnnotateAllowedTypesListUnsafe,
+	FieldHasDefaultAlphaUnsafe,
+	InsertableObjectFromSchemaRecordAlphaUnsafe,
 } from "./typesUnsafe.js";
 
 export {
@@ -142,6 +154,19 @@ export {
 	TreeBeta,
 	type TreeChangeEventsBeta,
 } from "./treeBeta.js";
+export {
+	type ArrayNodeDeltaOp,
+	type ArrayNodeInsertOp,
+	type ArrayNodeRemoveOp,
+	type ArrayNodeRetainOp,
+	type ArrayNodeTreeChangedDeltaOp,
+	type ArrayNodeTreeChangedRetainOp,
+	type NodeChangedDataAlpha,
+	type NodeChangedDataDelta,
+	type NodeChangedDataProperties,
+	type NodeChangedDataTreeDelta,
+	type TreeChangeEventsAlpha,
+} from "./treeAlpha.js";
 export { createTreeIndex, type TreeIndexKey } from "./simpleTreeIndex.js";
 export {
 	createIdentifierIndex,

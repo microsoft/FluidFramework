@@ -4,7 +4,7 @@
  */
 
 import { assert, Deferred } from "@fluidframework/core-utils/internal";
-import {
+import type {
 	IDocumentDeltaStorageService,
 	IDocumentService,
 	IDocumentStorageService,
@@ -14,15 +14,17 @@ import {
 	ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
 import { readAndParse } from "@fluidframework/driver-utils/internal";
-import {
-	FileSnapshotReader,
+import type {
 	IFileSnapshot,
 	ReadDocumentStorageServiceBase,
+} from "@fluidframework/replay-driver/internal";
+import {
+	FileSnapshotReader,
 	ReplayController,
 	SnapshotStorage,
 } from "@fluidframework/replay-driver/internal";
 
-import { IDebuggerController, IDebuggerUI } from "./fluidDebuggerUi.js";
+import type { IDebuggerController, IDebuggerUI } from "./fluidDebuggerUi.js";
 import { Sanitizer } from "./sanitizer.js";
 
 /**
@@ -113,17 +115,17 @@ export class DebugReplayController extends ReplayController implements IDebugger
 	}
 
 	public onSnapshotFileSelection(file: File): void {
-		if (!/^snapshot.*\.json/.exec(file.name)) {
+		if (!/^snapshot.*\.json/.test(file.name)) {
 			alert(`Incorrect file name: ${file.name}`);
 			return;
 		}
-		if (/.*_expanded.*/.exec(file.name)) {
+		if (/.*_expanded.*/.test(file.name)) {
 			alert(`Incorrect file name - please use non-extended files: ${file.name}`);
 			return;
 		}
 
 		const reader = new FileReader();
-		reader.onload = async () => {
+		reader.addEventListener("load", () => {
 			if (this.documentStorageService) {
 				const text = reader.result as string;
 				try {
@@ -151,7 +153,7 @@ export class DebugReplayController extends ReplayController implements IDebugger
 					return;
 				}
 			}
-		};
+		});
 		reader.readAsText(file, "utf-8");
 	}
 
@@ -321,7 +323,6 @@ export class DebugReplayController extends ReplayController implements IDebugger
 		fetchedOps: ISequencedDocumentMessage[],
 	): Promise<void> {
 		let _fetchedOps = fetchedOps;
-		// eslint-disable-next-line no-constant-condition
 		while (true) {
 			if (_fetchedOps.length === 0) {
 				this.ui.updateNextOpText([]);

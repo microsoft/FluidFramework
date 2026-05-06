@@ -97,12 +97,13 @@ stages:
       displayName: 'Check Version Deployment Condition'
       steps:
         - checkout: self
+          path: $(FluidFrameworkDirectory)
           submodules: false
           clean: true
 
         - template: /tools/pipelines/templates/include-install-build-tools.yml@self
           parameters:
-            buildDirectory: $(Build.SourcesDirectory)
+            buildDirectory: $(Pipeline.Workspace)/$(FluidFrameworkDirectory)
         - task: Bash@3
           name: SetVersion
           displayName: 'Set Build Version'
@@ -110,7 +111,7 @@ stages:
             VERSION_BUILDNUMBER: $(Build.BuildNumber)
           inputs:
             targetType: 'inline'
-            workingDirectory: $(Build.SourcesDirectory)
+            workingDirectory: $(Pipeline.Workspace)/$(FluidFrameworkDirectory)
             script: |
               # Generate the build version. Sets the environment variables version, codeVersion, and isLatest.
               flub generate buildVersion
@@ -119,7 +120,7 @@ stages:
           displayName: 'Check Version Deployment Condition'
           inputs:
             targetType: 'inline'
-            workingDirectory: $(Build.SourcesDirectory)
+            workingDirectory: $(Pipeline.Workspace)/$(FluidFrameworkDirectory)
             script: |
               # Check if the version is the latest minor of its corresponding major version series
               # Sets variable shouldDeploy to true if the version is the latest minor and false otherwise
@@ -172,14 +173,14 @@ stages:
 
         - template: /tools/pipelines/templates/include-install-pnpm.yml@self
           parameters:
-            buildDirectory: $(Build.SourcesDirectory)/docs
+            buildDirectory: $(Pipeline.Workspace)/$(FluidFrameworkDirectory)/docs
 
         - task: Bash@3
           displayName: Install dependencies
           retryCountOnTaskFailure: 4
           inputs:
             targetType: 'inline'
-            workingDirectory: $(Build.SourcesDirectory)/docs
+            workingDirectory: $(Pipeline.Workspace)/$(FluidFrameworkDirectory)/docs
             script: |
               set -eu -o pipefail
               pnpm i --frozen-lockfile
@@ -188,7 +189,7 @@ stages:
           displayName: npm run build
           inputs:
             command: 'custom'
-            workingDir: $(Build.SourcesDirectory)/docs
+            workingDir: $(Pipeline.Workspace)/$(FluidFrameworkDirectory)/docs
             customCommand: 'run build'
 
         # Run the tests
@@ -196,20 +197,20 @@ stages:
           displayName: Run tests
           inputs:
             command: 'custom'
-            workingDir: $(Build.SourcesDirectory)/docs
+            workingDir: $(Pipeline.Workspace)/$(FluidFrameworkDirectory)/docs
             customCommand: 'run test'
 
         - task: AzureArtifacts.manifest-generator-task.manifest-generator-task.ManifestGeneratorTask@0
           displayName: 'Generate SBOM'
           inputs:
-            BuildDropPath: $(Build.SourcesDirectory)/docs/build
+            BuildDropPath: $(Pipeline.Workspace)/$(FluidFrameworkDirectory)/docs/build
             PackageName: 'fluidframework-docs'
             PackageVersion: '$(Build.BuildId)'
 
         - task: PublishPipelineArtifact@1
           displayName: 'Publish site build artifact'
           inputs:
-            targetPath: '$(Build.SourcesDirectory)/docs/build'
+            targetPath: '$(Pipeline.Workspace)/$(FluidFrameworkDirectory)/docs/build'
             artifactName: 'fluidframework-docs'
             publishLocation: 'pipeline'
 
@@ -262,7 +263,7 @@ stages:
           inputs:
             GdnBreakPolicyMinSev: Warning
             GdnBreakAllTools: true
-            GdnBreakBaselineFiles: '$(Build.SourcesDirectory)/docs/.gdnbaselines'
+            GdnBreakBaselineFiles: '$(Pipeline.Workspace)/$(FluidFrameworkDirectory)/docs/.gdnbaselines'
             GdnBreakGdnToolESLint: true
             GdnBreakGdnToolESLintSeverity: Warning
             GdnBreakPolicy: M365
@@ -289,6 +290,7 @@ stages:
       continueOnError: true
       steps:
         - checkout: self
+          path: $(FluidFrameworkDirectory)
           submodules: false
           clean: true
 
@@ -296,14 +298,14 @@ stages:
 
         - template: /tools/pipelines/templates/include-install-pnpm.yml@self
           parameters:
-            buildDirectory: $(Build.SourcesDirectory)/docs
+            buildDirectory: $(Pipeline.Workspace)/$(FluidFrameworkDirectory)/docs
 
         - task: Bash@3
           displayName: Install dependencies
           retryCountOnTaskFailure: 4
           inputs:
             targetType: 'inline'
-            workingDirectory: $(Build.SourcesDirectory)/docs
+            workingDirectory: $(Pipeline.Workspace)/$(FluidFrameworkDirectory)/docs
             script: |
               set -eu -o pipefail
               # Ensure it's easy to tell which workspace this is running in by inspecting the logs
@@ -314,14 +316,14 @@ stages:
           displayName: Build
           inputs:
             command: 'custom'
-            workingDir: $(Build.SourcesDirectory)/docs
+            workingDir: $(Pipeline.Workspace)/$(FluidFrameworkDirectory)/docs
             customCommand: 'run build'
 
         - task: Npm@1
           displayName: Validate links
           inputs:
             command: 'custom'
-            workingDir: $(Build.SourcesDirectory)/docs
+            workingDir: $(Pipeline.Workspace)/$(FluidFrameworkDirectory)/docs
             customCommand: 'run ci:check-links'
 
 - stage: deploy
@@ -349,14 +351,14 @@ stages:
           inputs:
             source: current
             artifact: fluidframework-docs
-            path: '$(Build.SourcesDirectory)/docs/build'
+            path: '$(Pipeline.Workspace)/$(FluidFrameworkDirectory)/docs/build'
 
         - task: AzureStaticWebApp@0
           displayName: 'Deploy website to ASWA'
           inputs:
             skip_app_build: true # site was built in previous stage
             skip_api_build: true # api is written in js, no build needed
-            cwd: $(Build.SourcesDirectory)
+            cwd: $(Pipeline.Workspace)/$(FluidFrameworkDirectory)
             app_location: 'docs/build'
             api_location: 'docs/api'
             output_location: ''

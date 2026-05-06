@@ -4,26 +4,39 @@
  */
 
 import { AzureClient, type AzureLocalConnectionConfig } from "@fluidframework/azure-client";
-import { toPropTreeNode } from "@fluidframework/react/alpha";
+import { createDevtoolsLogger, initializeDevtools } from "@fluidframework/devtools/beta";
+import {
+	FormattedMainView,
+	QuillMainView as PlainQuillView,
+	// TODO: These imports use /internal entrypoints because the underlying APIs
+	// haven't been promoted to public yet. Update to public entrypoints as the
+	// APIs are stabilized.
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "@fluidframework/quill-react/internal";
+import {
+	toPropTreeNode,
+	createUndoRedo,
+	type UndoRedo,
+	PlainTextMainView,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "@fluidframework/react/internal";
 /**
  * InsecureTokenProvider is used here for local development and demo purposes only.
  * Do not use in production - implement proper authentication for production scenarios.
  */
 // eslint-disable-next-line import-x/no-internal-modules
 import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils/internal";
-import { SchemaFactory, TreeViewConfiguration, type TreeView } from "@fluidframework/tree";
+import { SchemaFactory, TreeViewConfiguration } from "@fluidframework/tree";
+import { asAlpha, type TreeViewAlpha } from "@fluidframework/tree/alpha";
 // eslint-disable-next-line import-x/no-internal-modules
 import { FormattedTextAsTree, TextAsTree } from "@fluidframework/tree/internal";
 import { SharedTree } from "@fluidframework/tree/legacy";
+import type { IFluidContainer } from "fluid-framework";
 // eslint-disable-next-line import-x/no-internal-modules, import-x/no-unassigned-import
 import "quill/dist/quill.snow.css";
-import * as React from "react";
+import { type CSSProperties, type FC, useEffect, useMemo, useState } from "react";
 // eslint-disable-next-line import-x/no-internal-modules
 import { createRoot } from "react-dom/client";
-
-import { FormattedMainView } from "./formatted/index.js";
-import { PlainTextMainView, QuillMainView as PlainQuillView } from "./plain/index.js";
-import { UndoRedoStacks, type UndoRedo } from "./undoRedo.js";
 
 /**
  * Get the Tinylicious endpoint URL, handling Codespaces port forwarding. Tinylicious only works for localhost,
@@ -53,12 +66,12 @@ const containerSchema = {
 
 const sf = new SchemaFactory("com.fluidframework.example.text-editor");
 
-class TextEditorRoot extends sf.object("TextEditorRoot", {
+export class TextEditorRoot extends sf.object("TextEditorRoot", {
 	plainText: TextAsTree.Tree,
 	formattedText: FormattedTextAsTree.Tree,
 }) {}
 
-const treeConfig = new TreeViewConfiguration({ schema: TextEditorRoot });
+export const treeConfig = new TreeViewConfiguration({ schema: TextEditorRoot });
 
 function getConnectionConfig(userId: string): AzureLocalConnectionConfig {
 	return {
@@ -74,9 +87,52 @@ function getConnectionConfig(userId: string): AzureLocalConnectionConfig {
 type ViewType = "plainTextarea" | "plainQuill" | "formatted";
 
 interface DualUserViews {
-	user1: TreeView<typeof TextEditorRoot>;
-	user2: TreeView<typeof TextEditorRoot>;
+	user1: TreeViewAlpha<typeof TextEditorRoot>;
+	user2: TreeViewAlpha<typeof TextEditorRoot>;
 	containerId: string;
+}
+
+async function createAndAttachNewContainer(client: AzureClient): Promise<{
+	container: IFluidContainer<typeof containerSchema>;
+	containerId: string;
+	treeView: TreeViewAlpha<typeof TextEditorRoot>;
+}> {
+	const { container } = await client.createContainer(containerSchema, "2");
+
+	const treeView = asAlpha<typeof TextEditorRoot>(
+		container.initialObjects.tree.viewWith(treeConfig),
+	);
+
+	// Initialize tree with root containing both plain and formatted text
+	treeView.initialize(
+		new TextEditorRoot({
+			plainText: TextAsTree.Tree.fromString(""),
+			formattedText: FormattedTextAsTree.Tree.fromString(""),
+		}),
+	);
+
+	const containerId = await container.attach();
+
+	return {
+		container,
+		containerId,
+		treeView,
+	};
+}
+
+async function loadExistingContainer(
+	client: AzureClient,
+	containerId: string,
+): Promise<{
+	container: IFluidContainer<typeof containerSchema>;
+	treeView: TreeViewAlpha<typeof TextEditorRoot>;
+}> {
+	const { container } = await client.getContainer(containerId, containerSchema, "2");
+	const treeView = asAlpha(container.initialObjects.tree.viewWith(treeConfig));
+	return {
+		container,
+		treeView,
+	};
 }
 
 async function initFluid(): Promise<DualUserViews> {
@@ -86,11 +142,17 @@ async function initFluid(): Promise<DualUserViews> {
 	const user1Id = `user1-${Math.random().toString(36).slice(2, 6)}`;
 	const user2Id = `user2-${Math.random().toString(36).slice(2, 6)}`;
 
-	const client1 = new AzureClient({ connection: getConnectionConfig(user1Id) });
-	const client2 = new AzureClient({ connection: getConnectionConfig(user2Id) });
+	// Initialize telemetry logger for use with Devtools
+	const devtoolsLogger = createDevtoolsLogger();
+
+	const client1 = new AzureClient({
+		connection: getConnectionConfig(user1Id),
+		logger: devtoolsLogger,
+	});
 
 	let containerId: string;
-
+	let user1Container: IFluidContainer;
+	let user1View: TreeViewAlpha<typeof TextEditorRoot>;
 	if (location.hash) {
 		// Load existing document for both users
 		const rawContainerId = location.hash.slice(1);
@@ -106,102 +168,137 @@ async function initFluid(): Promise<DualUserViews> {
 		containerId = rawContainerId;
 		console.log(`Loading document for both users: ${containerId}`);
 
-		const { container: container1 } = await client1.getContainer(
+		// User 1 connects to existing document
+		({ container: user1Container, treeView: user1View } = await loadExistingContainer(
+			client1,
 			containerId,
-			containerSchema,
-			"2",
-		);
-		const { container: container2 } = await client2.getContainer(
-			containerId,
-			containerSchema,
-			"2",
-		);
+		));
 
-		return {
-			user1: container1.initialObjects.tree.viewWith(treeConfig),
-			user2: container2.initialObjects.tree.viewWith(treeConfig),
-			containerId,
-		};
+		console.log(`User 1 connected to document: ${containerId}`);
 	} else {
 		// User 1 creates the document
-		const { container: container1 } = await client1.createContainer(containerSchema, "2");
+		({
+			container: user1Container,
+			treeView: user1View,
+			containerId,
+		} = await createAndAttachNewContainer(client1));
 
-		const user1View = container1.initialObjects.tree.viewWith(treeConfig);
-
-		// Initialize tree with root containing both plain and formatted text
-		user1View.initialize(
-			new TextEditorRoot({
-				plainText: TextAsTree.Tree.fromString(""),
-				formattedText: FormattedTextAsTree.Tree.fromString(""),
-			}),
-		);
-
-		containerId = await container1.attach();
 		// eslint-disable-next-line require-atomic-updates
 		location.hash = containerId;
+
 		console.log(`User 1 created document: ${containerId}`);
-
-		// User 2 connects to the same document
-		const { container: container2 } = await client2.getContainer(
-			containerId,
-			containerSchema,
-			"2",
-		);
-		console.log(`User 2 connected to document: ${containerId}`);
-
-		return {
-			user1: user1View,
-			user2: container2.initialObjects.tree.viewWith(treeConfig),
-			containerId,
-		};
 	}
+
+	// User 2 connects to the loaded document
+	const client2 = new AzureClient({
+		connection: getConnectionConfig(user2Id),
+		logger: devtoolsLogger,
+	});
+	const { container: user2Container, treeView: user2View } = await loadExistingContainer(
+		client2,
+		containerId,
+	);
+
+	console.log(`User 2 connected to document: ${containerId}`);
+
+	// Initialize Devtools
+	initializeDevtools({
+		logger: devtoolsLogger,
+		initialContainers: [
+			{
+				container: user1Container,
+				containerKey: "User 1 Container",
+			},
+			{
+				container: user2Container,
+				containerKey: "User 2 Container",
+			},
+		],
+	});
+
+	return {
+		user1: user1View,
+		user2: user2View,
+		containerId,
+	};
 }
 
 const viewLabels = {
 	plainTextarea: {
 		description: "Plain Textarea",
-		component: (
-			root: TextEditorRoot,
-			_treeView: TreeView<typeof TextEditorRoot>,
-			_undoRedo?: UndoRedo,
-		) => <PlainTextMainView root={toPropTreeNode(root.plainText)} />,
+		component: (root: TextEditorRoot, manager: UndoRedo) => (
+			<PlainTextMainView root={toPropTreeNode(root.plainText)} undoRedo={manager} />
+		),
 	},
 	plainQuill: {
 		description: "Plain Quill Editor",
-		component: (
-			root: TextEditorRoot,
-			_treeView: TreeView<typeof TextEditorRoot>,
-			_undoRedo?: UndoRedo,
-		) => <PlainQuillView root={toPropTreeNode(root.plainText)} />,
+		component: (root: TextEditorRoot, manager: UndoRedo) => (
+			<PlainQuillView root={toPropTreeNode(root.plainText)} undoRedo={manager} />
+		),
 	},
 	formatted: {
 		description: "Formatted Quill Editor",
-		component: (
-			root: TextEditorRoot,
-			_treeView: TreeView<typeof TextEditorRoot>,
-			undoRedo?: UndoRedo,
-		) => <FormattedMainView root={toPropTreeNode(root.formattedText)} undoRedo={undoRedo} />,
+		component: (root: TextEditorRoot, manager: UndoRedo) => (
+			<FormattedMainView root={toPropTreeNode(root.formattedText)} undoRedo={manager} />
+		),
 	},
 } as const;
 
-const UserPanel: React.FC<{
+/**
+ * Base style properties for undo/redo buttons in {@link UserPanel}.
+ */
+const userPanelUndoRedoButtonStyleBase = {
+	width: "28px",
+	height: "28px",
+	padding: 0,
+	background: "none",
+	border: "1px solid #ccc",
+	borderRadius: "4px",
+	fontSize: "18px",
+	display: "flex",
+	alignItems: "center",
+	justifyContent: "center",
+} as const satisfies CSSProperties;
+
+const UserPanel: FC<{
 	label: string;
 	color: string;
-	viewType: ViewType;
-	treeView: TreeView<typeof TextEditorRoot>;
-}> = ({ label, color, viewType, treeView }) => {
-	// Create undo/redo stack for this user's tree view
-	const undoRedo = React.useMemo(() => new UndoRedoStacks(treeView.events), [treeView.events]);
+	treeView: TreeViewAlpha<typeof TextEditorRoot>;
+}> = ({ label, color, treeView }) => {
+	// A single manager per user subscribes to the branch's changed events and handles
+	// all labeled undo/redo. Each editor component reads from context and scopes
+	// operations to its own label.
+	const manager = useMemo(() => createUndoRedo(treeView), [treeView]);
 
-	// Cleanup on unmount
-	React.useEffect(() => {
-		return () => undoRedo.dispose();
-	}, [undoRedo]);
+	// Cleanup manager on unmount
+	useEffect(() => {
+		return () => manager.dispose();
+	}, [manager]);
 
-	const renderView = (): JSX.Element => {
-		const root = treeView.root;
-		return viewLabels[viewType].component(root, treeView, undoRedo);
+	// Re-render when undo/redo availability changes. Only local commits affect the stacks,
+	// so filtering to isLocal avoids re-renders on every remote keystroke.
+	const [, setVersion] = useState(0);
+	useEffect(() => {
+		const off = treeView.events.on("changed", (data) => {
+			if (data.isLocal) {
+				setVersion((v) => v + 1);
+			}
+		});
+		return () => off();
+	}, [treeView]);
+
+	const [collapsed, setCollapsed] = useState<Record<ViewType, boolean>>({
+		plainTextarea: false,
+		plainQuill: false,
+		formatted: false,
+	});
+
+	const toggleCollapsed = (viewType: ViewType): void => {
+		setCollapsed((prev) => ({ ...prev, [viewType]: !prev[viewType] }));
 	};
+
+	// TODO: handle root invalidation, schema upgrades and out of schema documents.
+	const root = treeView.root;
 
 	return (
 		<div
@@ -213,25 +310,103 @@ const UserPanel: React.FC<{
 				padding: "10px",
 				display: "flex",
 				flexDirection: "column",
+				overflowY: "auto",
 			}}
 		>
 			<div
 				style={{
 					marginBottom: "10px",
-					fontWeight: "bold",
-					color,
+					display: "flex",
+					justifyContent: "space-between",
+					alignItems: "center",
 				}}
 			>
-				{label}
+				<span style={{ fontWeight: "bold", color }}>{label}</span>
+				<div style={{ display: "flex", gap: "4px" }}>
+					<button
+						type="button"
+						disabled={!manager.canUndo()}
+						onClick={() => manager.undo()}
+						title="Undo"
+						style={{
+							...userPanelUndoRedoButtonStyleBase,
+							cursor: manager.canUndo() ? "pointer" : "not-allowed",
+							opacity: manager.canUndo() ? 1 : 0.3,
+						}}
+					>
+						↶
+					</button>
+					<button
+						type="button"
+						disabled={!manager.canRedo()}
+						onClick={() => manager.redo()}
+						title="Redo"
+						style={{
+							...userPanelUndoRedoButtonStyleBase,
+							cursor: manager.canRedo() ? "pointer" : "not-allowed",
+							opacity: manager.canRedo() ? 1 : 0.3,
+						}}
+					>
+						↷
+					</button>
+				</div>
 			</div>
-			<div style={{ flex: 1 }}>{renderView()}</div>
+			{(Object.keys(viewLabels) as ViewType[]).map((viewType) => {
+				const isExpanded = !collapsed[viewType];
+				return (
+					<div
+						key={viewType}
+						style={{
+							border: "1px solid #ddd",
+							borderRadius: "6px",
+							marginBottom: "12px",
+							boxShadow: "0 1px 3px rgba(0,0,0,0.06)",
+							overflow: "hidden",
+						}}
+					>
+						<button
+							type="button"
+							aria-expanded={isExpanded}
+							aria-controls={`${viewType}-panel`}
+							onClick={() => toggleCollapsed(viewType)}
+							style={{
+								display: "flex",
+								justifyContent: "space-between",
+								alignItems: "center",
+								width: "100%",
+								padding: "10px 14px",
+								background: "#f5f5f5",
+								border: "none",
+								borderBottom: isExpanded ? "1px solid #ddd" : "none",
+								cursor: "pointer",
+								fontWeight: "600",
+								fontSize: "16px",
+								textAlign: "left",
+								color: "#333",
+							}}
+						>
+							<span>{viewLabels[viewType].description}</span>
+							<span aria-hidden="true" style={{ fontSize: "11px", color: "#666" }}>
+								{isExpanded ? "▲" : "▼"}
+							</span>
+						</button>
+						{/*
+						 * Note: we are intentionally forcing the editor components to be unmounted when their respective cards are collapsed.
+						 * We are doing this to make it possible to use this app to do performance analysis on individual editor components in isolation.
+						 */}
+						{isExpanded && (
+							<div id={`${viewType}-panel`} style={{ padding: "12px" }}>
+								{viewLabels[viewType].component(root, manager)}
+							</div>
+						)}
+					</div>
+				);
+			})}
 		</div>
 	);
 };
 
-const App: React.FC<{ views: DualUserViews }> = ({ views }) => {
-	const [viewType, setViewType] = React.useState<ViewType>("formatted");
-
+export const App: FC<{ views: DualUserViews }> = ({ views }) => {
 	return (
 		<div
 			style={{
@@ -242,28 +417,6 @@ const App: React.FC<{ views: DualUserViews }> = ({ views }) => {
 				flexDirection: "column",
 			}}
 		>
-			<div style={{ marginBottom: "15px" }}>
-				<label htmlFor="view-select" style={{ marginRight: "10px", fontWeight: "bold" }}>
-					View:
-				</label>
-				<select
-					id="view-select"
-					value={viewType}
-					onChange={(e) => setViewType(e.target.value as ViewType)}
-					style={{
-						padding: "8px 12px",
-						fontSize: "14px",
-						borderRadius: "4px",
-						border: "1px solid #ccc",
-					}}
-				>
-					{(Object.keys(viewLabels) as ViewType[]).map((type) => (
-						<option key={type} value={type}>
-							{viewLabels[type].description}
-						</option>
-					))}
-				</select>
-			</div>
 			<div
 				style={{
 					flex: 1,
@@ -272,8 +425,8 @@ const App: React.FC<{ views: DualUserViews }> = ({ views }) => {
 					alignItems: "stretch",
 				}}
 			>
-				<UserPanel label="User 1" color="#4a90d9" viewType={viewType} treeView={views.user1} />
-				<UserPanel label="User 2" color="#28a745" viewType={viewType} treeView={views.user2} />
+				<UserPanel label="User 1" color="#4a90d9" treeView={views.user1} />
+				<UserPanel label="User 2" color="#28a745" treeView={views.user2} />
 			</div>
 		</div>
 	);

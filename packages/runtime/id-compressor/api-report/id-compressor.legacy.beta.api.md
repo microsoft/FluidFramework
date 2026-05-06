@@ -5,19 +5,19 @@
 ```ts
 
 // @beta @legacy
-export function createIdCompressor(logger?: ITelemetryBaseLogger): IIdCompressor & IIdCompressorCore;
+export function createIdCompressor(logger?: ITelemetryBaseLogger): IIdCompressor;
 
 // @beta @legacy
-export function createIdCompressor(sessionId: SessionId, logger?: ITelemetryBaseLogger): IIdCompressor & IIdCompressorCore;
+export function createIdCompressor(sessionId: SessionId, logger?: ITelemetryBaseLogger): IIdCompressor;
 
 // @beta @legacy
 export function createSessionId(): SessionId;
 
 // @beta @legacy
-export function deserializeIdCompressor(serialized: SerializedIdCompressorWithOngoingSession, logger?: ITelemetryLoggerExt): IIdCompressor & IIdCompressorCore;
+export function deserializeIdCompressor(serialized: SerializedIdCompressorWithOngoingSession, logger?: ITelemetryLoggerExt): IIdCompressor;
 
 // @beta @legacy
-export function deserializeIdCompressor(serialized: SerializedIdCompressorWithNoSession, newSessionId: SessionId, logger?: ITelemetryLoggerExt): IIdCompressor & IIdCompressorCore;
+export function deserializeIdCompressor(serialized: SerializedIdCompressorWithNoSession, newSessionId: SessionId, logger?: ITelemetryLoggerExt): IIdCompressor;
 
 // @beta @legacy
 export interface IdCreationRange {
@@ -44,16 +44,6 @@ export interface IIdCompressor {
     tryRecompress(uncompressed: StableId): SessionSpaceCompressedId | undefined;
 }
 
-// @beta @legacy
-export interface IIdCompressorCore {
-    beginGhostSession(ghostSessionId: SessionId, ghostSessionCallback: () => void): void;
-    finalizeCreationRange(range: IdCreationRange): void;
-    serialize(withSession: true): SerializedIdCompressorWithOngoingSession;
-    serialize(withSession: false): SerializedIdCompressorWithNoSession;
-    takeNextCreationRange(): IdCreationRange;
-    takeUnfinalizedCreationRange(): IdCreationRange;
-}
-
 // @public
 export type OpSpaceCompressedId = number & {
     readonly OpNormalized: "9209432d-a959-4df7-b2ad-767ead4dbcae";
@@ -73,6 +63,12 @@ export type SerializedIdCompressorWithNoSession = SerializedIdCompressor & {
 export type SerializedIdCompressorWithOngoingSession = SerializedIdCompressor & {
     readonly _hasLocalState: "1281acae-6d14-47e7-bc92-71c8ee0819cb";
 };
+
+// @beta @legacy
+export function serializeIdCompressor(compressor: IIdCompressor, withSession: true): SerializedIdCompressorWithOngoingSession;
+
+// @beta @legacy
+export function serializeIdCompressor(compressor: IIdCompressor, withSession: false): SerializedIdCompressorWithNoSession;
 
 // @public
 export type SessionId = StableId & {

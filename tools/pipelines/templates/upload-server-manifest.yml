@@ -1,0 +1,82 @@
+# Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+# Licensed under the MIT License.
+
+parameters:
+- name: buildDirectory
+  type: string
+
+- name: releaseGroup
+  type: string
+
+jobs:
+  - job:
+    displayName: Upload Release Reports
+    variables:
+    - group: storage-vars
+    - name: version
+      value: $[stageDependencies.build.build.outputs['SetVersion.version']]
+    - name: isReleaseBuild
+      value: $[eq(variables['release'], 'release')]
+    steps:
+    - checkout: self
+      path: $(FluidFrameworkDirectory)
+    - template: /tools/pipelines/templates/include-use-node-version.yml@self
+    - template: /tools/pipelines/templates/include-install-build-tools.yml@self
+      parameters:
+        buildDirectory: ${{ parameters.buildDirectory }}
+
+    - task: Bash@3
+      displayName: Generate release reports
+      inputs:
+        targetType: 'inline'
+        workingDirectory: $(Pipeline.Workspace)/${{ parameters.buildDirectory }}
+        script: |
+          set -eu -o pipefail
+          mkdir generate_release_reports
+          # Use --useCurrentVersion for prerelease builds (non-release builds)
+          if [[ "$(isReleaseBuild)" != "True" ]]; then
+            flub release report -g ${{ parameters.releaseGroup }} --useCurrentVersion -o generate_release_reports --baseFileName manifest
+          else
+            flub release report -g ${{ parameters.releaseGroup }} -o generate_release_reports --baseFileName manifest
+          fi
+
+    - task: Bash@3
+      displayName: Update report version
+      inputs:
+        targetType: 'inline'
+        workingDirectory: $(Pipeline.Workspace)/${{ parameters.buildDirectory }}
+        script: |
+          set -eu -o pipefail
+          mkdir upload_release_reports
+          flub release report-unreleased --version $(version) --fullReportFilePath generate_release_reports/manifest.full.json --outDir upload_release_reports --branchName '$(Build.SourceBranch)' --releaseGroup ${{ parameters.releaseGroup }}
+
+    # Renames release reports to include the release group
+    - task: Bash@3
+      displayName: Rename release report files
+      inputs:
+        targetType: 'inline'
+        workingDirectory: $(Pipeline.Workspace)/${{ parameters.buildDirectory }}
+        script: |
+          set -eu -o pipefail
+          buildNumber="$(Build.BuildNumber)"
+          if [[ "${{ parameters.releaseGroup }}" == "server" ]]; then
+            releaseReportCategory="routerlicious-"
+          else
+            releaseReportCategory="${{ parameters.releaseGroup }}-"
+          fi
+          for file in upload_release_reports/*.json; do
+              if [ -f "$file" ]; then
+              baseName="$(basename "$file" .json)"
+              if [[ "$baseName" == *"-$buildNumber" ]] || [[ "$baseName" == *"-$buildNumber-test" ]]; then
+                mv "$file" "upload_release_reports/${releaseReportCategory}$baseName.json"
+              elif [[ "$baseName" =~ -[0-9]{4}-[0-9]{2}-[0-9]{2}$ ]]; then
+                mv "$file" "upload_release_reports/${releaseReportCategory}$baseName.json"
+              else
+                mv "$file" "upload_release_reports/${releaseReportCategory}$baseName-$buildNumber.json"
+              fi
+              fi
+          done
+
+    - template: /tools/pipelines/templates/include-upload-release-reports.yml@self
+      parameters:
+        buildDirectory: ${{ parameters.buildDirectory }}

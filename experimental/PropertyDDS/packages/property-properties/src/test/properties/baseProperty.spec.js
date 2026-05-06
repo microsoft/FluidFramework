@@ -612,7 +612,10 @@ describe("BaseProperty", function () {
 	describe("Ancestry relations should be resolved correctly", function () {
 		/**
 		 * creates a workspace
-		 * @return {property-properties.Workspace} workspace
+		 * @return {Promise<import("../../index.js").NodeProperty>} workspace
+		 * @privateRemarks
+		 * The return type can be `Workspace` once package is updated to support modules. Then
+		 * {Promise<import("@fluid-experimental/property-properties").Workspace>} may be used.
 		 */
 		function createRootProperty() {
 			return Promise.resolve(PropertyFactory.create("NodeProperty"));

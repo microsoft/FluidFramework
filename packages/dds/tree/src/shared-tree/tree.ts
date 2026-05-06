@@ -18,11 +18,8 @@ import {
 	type TransactionConstraint,
 } from "../simple-tree/index.js";
 
-import {
-	addConstraintsToTransaction,
-	SchematizingSimpleTreeView,
-} from "./schematizingTreeView.js";
-import type { ITreeCheckout } from "./treeCheckout.js";
+import { SchematizingSimpleTreeView } from "./schematizingTreeView.js";
+import { addConstraintsToTransaction, type ITreeCheckout } from "./treeCheckout.js";
 
 /**
  * Provides various functions for interacting with {@link TreeNode}s.
@@ -467,7 +464,7 @@ function runTransactionInCheckout<TResult>(
 	transaction: () => TResult | typeof rollback,
 	preconditions: readonly TransactionConstraint[],
 ): TResult | typeof rollback {
-	checkout.transaction.start(false);
+	checkout.transaction.start();
 	addConstraintsToTransaction(checkout, false, preconditions);
 
 	let result: ReturnType<typeof transaction>;

@@ -3,8 +3,12 @@
  * Licensed under the MIT License.
  */
 
+export type { IEventAndErrorTrackingLogger } from "./eventAndErrorLogger.js";
+export {
+	EventAndErrorTrackingLogger,
+	getUnexpectedLogErrorException,
+} from "./eventAndErrorLogger.js";
 export { IProvideTestFluidObject, ITestFluidObject } from "./interfaces.js";
-export { LoaderContainerTracker } from "./loaderContainerTracker.js";
 export {
 	fluidEntryPoint,
 	LocalCodeLoader,
@@ -30,25 +34,33 @@ export {
 	TestFluidObjectFactory,
 	TestDataObjectKind,
 } from "./testFluidObject.js";
-export {
-	createDocumentId,
-	DataObjectFactoryType,
-	EventAndErrorTrackingLogger,
-	type IEventAndErrorTrackingLogger,
-	getUnexpectedLogErrorException,
+
+// #region Exports with load side-effect
+// The below runtime (not "type") exports transitively or directly import
+// timeoutUtils.ts, which always executes on import and may patch Mocha's timeout
+// handling. That patching only takes effect when consumers use
+// @fluid-internal/mocha-test-setup that sets globalThis.getMochaModule.
+// @fluid-internal/mocha-test-setup is pervasive in our tests and thus patch
+// is usually in effect (when this package is used).
+export { LoaderContainerTracker } from "./loaderContainerTracker.js";
+export type {
 	IDocumentIdStrategy,
 	IOpProcessingController,
 	ITestContainerConfig,
 	ITestObjectProvider,
+} from "./testObjectProvider.js";
+export {
+	createDocumentId,
+	DataObjectFactoryType,
 	TestObjectProvider,
 	TestObjectProviderWithVersionedLoad,
 } from "./testObjectProvider.js";
+export type { SummaryInfo } from "./TestSummaryUtils.js";
 export {
 	createSummarizer,
 	createSummarizerCore,
 	createSummarizerFromFactory,
 	summarizeNow,
-	SummaryInfo,
 } from "./TestSummaryUtils.js";
 export {
 	timeoutAwait,
@@ -63,6 +75,8 @@ export {
 	getContainerEntryPointBackCompat,
 	getDataStoreEntryPointBackCompat,
 } from "./containerUtils.js";
+// #endregion
+
 export {
 	type ContainerRuntimeFactoryWithDefaultDataStoreConstructor,
 	type ContainerRuntimeFactoryWithDefaultDataStoreProps,

@@ -14,7 +14,7 @@ import { IContainerRuntime } from "@fluidframework/container-runtime-definitions
 import { FluidObject } from "@fluidframework/core-interfaces";
 import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions/legacy";
 import { RuntimeFactoryHelper } from "@fluidframework/runtime-utils/legacy";
-import React from "react";
+import { createElement } from "react";
 
 import { ProseMirror, ProseMirrorFactory, ProseMirrorReactView } from "./prosemirror.js";
 
@@ -52,7 +52,7 @@ class ProseMirrorRuntimeFactory extends RuntimeFactoryHelper {
 				);
 
 				const view = new MountableView(
-					React.createElement(ProseMirrorReactView, {
+					createElement(ProseMirrorReactView, {
 						collabManager: proseMirror.collabManager,
 					}),
 				) as any;

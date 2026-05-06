@@ -26,7 +26,7 @@ import {
 	cursorForMapTreeField,
 	defaultSchemaPolicy,
 	isTreeValue,
-	makeFieldBatchCodec,
+	fieldBatchCodecBuilder,
 	mapTreeFromCursor,
 	TreeCompressionStrategy,
 	type FieldBatch,
@@ -75,6 +75,7 @@ import {
 	toInitialSchema,
 	type TreeParsingOptions,
 	type NodeChangedData,
+	type TreeChangeEventsAlpha,
 	type ConciseTree,
 	importConcise,
 	exportConcise,
@@ -84,14 +85,12 @@ import {
 	type TreeNodeSchema,
 	getUnhydratedContext,
 	type TreeBranchAlpha,
-	type TransactionResult,
-	type TransactionResultExt,
-	type WithValue,
 } from "../simple-tree/index.js";
 import { brand, extractFromOpaque, type JsonCompatible } from "../util/index.js";
 
 import { independentInitializedView, type ViewContent } from "./independentView.js";
 import { SchematizingSimpleTreeView, ViewSlot } from "./schematizingTreeView.js";
+import { UnhydratedTreeContext } from "./unhydratedTreeContext.js";
 
 const identifier: TreeIdentifierUtils = (node: TreeNode): string | undefined => {
 	return getIdentifierFromNode(node, "uncompressed");
@@ -233,6 +232,27 @@ export interface TreeIdentifierUtils {
  * @sealed @alpha
  */
 export interface TreeAlpha {
+	/**
+	 * Register an event listener on the given node.
+	 * @param node - The node whose events should be subscribed to.
+	 * @param eventName - Which event to subscribe to.
+	 * @param listener - The callback to trigger for the event. The tree can be read during the callback, but it is invalid to modify the tree during this callback.
+	 * @returns A callback function which will deregister the event.
+	 * This callback should be called only once.
+	 * @remarks
+	 * Provides richer events than {@link (TreeBeta:interface).on} for array nodes:
+	 * - `nodeChanged` includes a {@link NodeChangedDataDelta.delta | delta} payload for direct
+	 * changes (insert, remove, move).
+	 * - `treeChanged` also includes a {@link NodeChangedDataDelta.delta | delta} payload and fires
+	 * for both shallow changes and deep changes (e.g. a property of an element changed without
+	 * any direct array change).
+	 */
+	on<K extends keyof TreeChangeEventsAlpha<TNode>, TNode extends TreeNode>(
+		node: TNode,
+		eventName: K,
+		listener: NoInfer<TreeChangeEventsAlpha<TNode>[K]>,
+	): () => void;
+
 	/**
 	 * Retrieve the {@link TreeBranch | branch}, if any, for the given node.
 	 * @param node - The node to query
@@ -599,9 +619,10 @@ export interface ObservationResults<TResult> {
 class NodeSubscription {
 	/**
 	 * If undefined, subscribes to all keys.
+	 * If "deep", subscribes to all changes in the subtree.
 	 * Otherwise only subscribes to the keys in the set.
 	 */
-	private keys: Set<FieldKey> | undefined;
+	private keys: Set<FieldKey> | undefined | "deep";
 	private readonly unsubscribe: () => void;
 	private constructor(
 		private readonly onInvalidation: () => void,
@@ -612,6 +633,9 @@ class NodeSubscription {
 		assert(node instanceof TreeNode, 0xc54 /* Unexpected leaf value */);
 
 		const handler = (data: NodeChangedData): void => {
+			if (this.keys === "deep") {
+				return;
+			}
 			if (this.keys === undefined || data.changedProperties === undefined) {
 				this.onInvalidation();
 			} else {
@@ -632,7 +656,18 @@ class NodeSubscription {
 				}
 			}
 		};
-		this.unsubscribe = TreeBeta.on(node, "nodeChanged", handler);
+
+		// TODO:Performance: It would be better to defer subscribing to events so that this can subscribe to the correct one instead of both.
+		const shallow = TreeBeta.on(node, "nodeChanged", handler);
+		const deep = TreeBeta.on(node, "treeChanged", () => {
+			if (this.keys === "deep") {
+				this.onInvalidation();
+			}
+		});
+		this.unsubscribe = () => {
+			shallow();
+			deep();
+		};
 	}
 
 	/**
@@ -644,18 +679,39 @@ class NodeSubscription {
 	): { observer: Observer; unsubscribe: () => void } {
 		const subscriptions = new Map<FlexTreeNode, NodeSubscription>();
 		const observer: Observer = {
-			observeNodeFields(flexNode: FlexTreeNode): void {
+			observeNodeDeep(flexNode: FlexTreeNode): void {
 				if (flexNode.value !== undefined) {
-					// Leaf value, nothing to observe.
+					// Leaf value: the set of fields (and thus their content) is always empty, and cannot change, so no need to subscribe.
 					return;
 				}
+
+				const subscription = subscriptions.get(flexNode);
+				if (subscription === undefined) {
+					const newSubscription = new NodeSubscription(invalidate, flexNode);
+					newSubscription.keys = "deep";
+					subscriptions.set(flexNode, newSubscription);
+				} else {
+					// Already subscribed to this node.
+					subscription.keys = "deep"; // Now subscribed to subtree changes (deep observation).
+				}
+			},
+			observeNodeFields(flexNode: FlexTreeNode): void {
+				if (flexNode.value !== undefined) {
+					// Leaf value: the set of fields is always empty, and cannot change, so no need to subscribe.
+					return;
+				}
+
+				// Subscribe to any change to any field to ensure that any change which empties or fills a field will invalidate.
+				// This could be more targeted by detecting specifically edits which change the emptiness of fields if desired.
 				const subscription = subscriptions.get(flexNode);
 				if (subscription === undefined) {
 					const newSubscription = new NodeSubscription(invalidate, flexNode);
 					subscriptions.set(flexNode, newSubscription);
 				} else {
 					// Already subscribed to this node.
-					subscription.keys = undefined; // Now subscribed to all keys.
+					if (subscription.keys instanceof Set) {
+						subscription.keys = undefined; // Now subscribed to all keys.
+					}
 				}
 			},
 			observeNodeField(flexNode: FlexTreeNode, key: FieldKey): void {
@@ -669,10 +725,12 @@ class NodeSubscription {
 					newSubscription.keys = new Set([key]);
 					subscriptions.set(flexNode, newSubscription);
 				} else {
-					// Already subscribed to this node: if not subscribed to all keys, subscribe to this one.
-					// TODO:Performance: due to how JavaScript set ordering works,
-					// it might be faster to check `has` and only add if not present in case the same field is viewed many times.
-					subscription.keys?.add(key);
+					// Already subscribed to this node: if not subscribed to all keys or "deep", subscribe to this one.
+					if (subscription.keys instanceof Set) {
+						// TODO:Performance: due to how JavaScript set ordering works,
+						// it might be faster to check `has` and only add if not present in case the same field is viewed many times.
+						subscription.keys.add(key);
+					}
 				}
 			},
 			observeParentOf(node: FlexTreeNode): void {
@@ -751,6 +809,14 @@ function trackObservations<TResult>(
  * @alpha
  */
 export const TreeAlpha: TreeAlpha = {
+	on<K extends keyof TreeChangeEventsAlpha<TNode>, TNode extends TreeNode>(
+		node: TNode,
+		eventName: K,
+		listener: NoInfer<TreeChangeEventsAlpha<TNode>[K]>,
+	): () => void {
+		return treeNodeApi.on(node, eventName, listener);
+	},
+
 	trackObservations<TResult>(
 		onInvalidation: () => void,
 		trackDuring: () => TResult,
@@ -868,7 +934,7 @@ export const TreeAlpha: TreeAlpha = {
 		options: { idCompressor?: IIdCompressor } & Pick<CodecWriteOptions, "minVersionForCollab">,
 	): JsonCompatible<IFluidHandle> {
 		const schema = tryGetSchema(node) ?? fail(0xacf /* invalid input */);
-		const codec = makeFieldBatchCodec({
+		const codec = fieldBatchCodecBuilder.build({
 			jsonValidator: FormatValidatorNoOp,
 			minVersionForCollab: options.minVersionForCollab,
 		});
@@ -890,7 +956,8 @@ export const TreeAlpha: TreeAlpha = {
 			schema: { schema: storedSchema, policy: defaultSchemaPolicy },
 		};
 		const result = codec.encode(batch, context);
-		return result;
+		// TODO: codecs should better track which ones can contain handles, and which cannot. When done properly, casts like this can be removed.
+		return result as JsonCompatible<IFluidHandle>;
 	},
 
 	importCompressed<const TSchema extends ImplicitFieldSchema>(
@@ -1094,42 +1161,4 @@ function borrowFieldCursorFromTreeNodeOrValue(
 	// TODO: avoid copy: borrow cursor from field instead.
 	const mapTree = mapTreeFromCursor(cursor);
 	return cursorForMapTreeField([mapTree]);
-}
-
-class UnhydratedTreeContext implements TreeContextAlpha {
-	public static instance = new UnhydratedTreeContext();
-	private constructor() {}
-
-	public isBranch(): this is TreeBranchAlpha {
-		return false;
-	}
-
-	public runTransaction<TValue>(
-		t: () => WithValue<TValue>,
-	): TransactionResultExt<TValue, TValue>;
-	public runTransaction(t: () => void): TransactionResult;
-	public runTransaction(
-		t: () => WithValue<unknown> | void,
-	): TransactionResultExt<unknown, unknown> | TransactionResult {
-		return UnhydratedTreeContext.wrapTransactionResult(t());
-	}
-
-	public runTransactionAsync<TValue>(
-		t: () => Promise<WithValue<TValue>>,
-	): Promise<TransactionResultExt<TValue, TValue>>;
-	public runTransactionAsync(t: () => Promise<void>): Promise<TransactionResult>;
-	public async runTransactionAsync(
-		t: () => Promise<WithValue<unknown> | void>,
-	): Promise<TransactionResultExt<unknown, unknown> | TransactionResult> {
-		return UnhydratedTreeContext.wrapTransactionResult(await t());
-	}
-
-	private static wrapTransactionResult<TValue>(
-		value: WithValue<TValue> | void,
-	): TransactionResultExt<TValue, TValue> | TransactionResult {
-		if (value?.value !== undefined) {
-			return { success: true, value: value.value };
-		}
-		return { success: true };
-	}
 }

@@ -13,19 +13,12 @@ import {
 	ContainerRuntime,
 	IGCRuntimeOptions,
 } from "@fluidframework/container-runtime/internal";
-import {
-	blobsTreeName,
-	// eslint-disable-next-line import-x/no-internal-modules
-} from "@fluidframework/container-runtime/internal/test/blobManager";
-import {
-	ISweepMessage,
-	// eslint-disable-next-line import-x/no-internal-modules
-} from "@fluidframework/container-runtime/internal/test/gc";
+import { blobsTreeName } from "@fluidframework/container-runtime/internal/test/blobManager";
+import { ISweepMessage } from "@fluidframework/container-runtime/internal/test/gc";
 import {
 	ISummarizer,
 	RetriableSummaryError,
 	defaultMaxAttemptsForSubmitFailures,
-	// eslint-disable-next-line import-x/no-internal-modules
 } from "@fluidframework/container-runtime/internal/test/summary";
 import type { ISummarizeEventProps } from "@fluidframework/container-runtime-definitions/internal";
 import { delay } from "@fluidframework/core-utils/internal";
