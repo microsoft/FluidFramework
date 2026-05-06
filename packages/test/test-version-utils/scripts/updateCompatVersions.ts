@@ -52,7 +52,6 @@ import {
 } from "../src/compatConfig.js";
 import {
 	checkpointResolutionRange,
-	checkpoints,
 	getCurrentCheckpoint,
 	getInWindowPriorCheckpoints,
 } from "../src/checkpoints.js";
@@ -226,12 +225,6 @@ async function main(): Promise<void> {
 	// cross-client and layer-compat e2e matrices.
 	console.log("\nResolving in-window compatibility checkpoints...");
 	const currentCheckpoint = getCurrentCheckpoint(pkgVer);
-	if (currentCheckpoint === undefined) {
-		throw new Error(
-			`Could not map package version ${pkgVer} to a compatibility checkpoint. ` +
-				`Known checkpoints: ${checkpoints.map((c) => `${c.name}@${c.openingVersion}`).join(", ")}.`,
-		);
-	}
 	console.log(
 		`  Current: ${currentCheckpoint.name} (opens at ${currentCheckpoint.openingVersion})`,
 	);
@@ -240,9 +233,9 @@ async function main(): Promise<void> {
 	const seenVersions = new Set<string>([oldestCompatibleVersion]);
 	for (const checkpoint of getInWindowPriorCheckpoints(currentCheckpoint)) {
 		const range = checkpointResolutionRange(checkpoint);
-		const resolved = tryResolveRangeViaRegistry(range);
-		if (resolved === undefined || seenVersions.has(resolved)) {
-			console.log(`  ${checkpoint.name} (${range}): ${resolved ?? "not found"} (skipping)`);
+		const resolved = resolveRangeViaRegistry(range);
+		if (seenVersions.has(resolved)) {
+			console.log(`  ${checkpoint.name} (${range}): ${resolved} (duplicate, skipping)`);
 			continue;
 		}
 		seenVersions.add(resolved);

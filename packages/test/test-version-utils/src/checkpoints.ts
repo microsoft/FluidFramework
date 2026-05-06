@@ -81,33 +81,54 @@ export const windowRadius = 3;
 
 /**
  * Returns the highest checkpoint whose `openingVersion` is at or below
- * `version`. Returns `undefined` if `version` is below the earliest
- * checkpoint or is not a valid semver. A non-checkpoint version inherits
- * the compatibility guarantees of this checkpoint per the Cross-Client
- * Compatibility Policy.
+ * `version`.
  *
  * @internal
  */
-export function getCurrentCheckpoint(version: string): Checkpoint | undefined {
+export function getCurrentCheckpoint(version: string): Checkpoint {
 	if (!semver.valid(version)) {
-		return undefined;
+		throw new Error(`Invalid version: "${version}"`);
 	}
+	// `additionalRanges` entries override the standard `openingVersion`
+	// comparison. They exist for legacy prereleases (e.g. `2.0.0-internal*`)
+	// that should map to an earlier checkpoint despite sorting at or above a
+	// later one's opening version under semver rules.
+	for (const c of checkpoints) {
+		if (c.additionalRanges?.some((r) => matchesRange(version, r))) {
+			return c;
+		}
+	}
+	const parsed = semver.parse(version);
 	const sorted = [...checkpoints].sort((a, b) => b.index - a.index);
 	for (const c of sorted) {
 		if (semver.gte(version, c.openingVersion)) {
 			return c;
 		}
-		// CC-1 has additional ranges (2.0.0-internal*, 2.0.0-rc*) that
-		// would otherwise be missed by a strict opening-version compare.
-		if (c.additionalRanges?.some((r) => matchesRange(version, r))) {
-			return c;
+		// A prerelease whose `major.minor.patch` equals a checkpoint's opening
+		// version belongs to that checkpoint — `2.100.0-rc.0` is the
+		// release-candidate of CC-4, not the tail end of CC-3, even though
+		// `semver.gte("2.100.0-rc.0", "2.100.0")` is `false`.
+		if (parsed !== null && parsed.prerelease.length > 0) {
+			const opening = semver.parse(c.openingVersion);
+			if (
+				opening !== null &&
+				parsed.major === opening.major &&
+				parsed.minor === opening.minor &&
+				parsed.patch === opening.patch
+			) {
+				return c;
+			}
 		}
 	}
-	return undefined;
+	// Throw if we reach here. Should be unreachable in practice since only versions before 1.4.0 would not match any checkpoint.
+	throw new Error(`Version "${version}" is not associated with any checkpoint.`);
 }
 
 /**
- * Returns the prior in-window checkpoints relative to `current` from newest to oldest.
+ * Returns the prior in-window checkpoints relative to `current` from newest
+ * to oldest. May return fewer than `windowRadius` entries when `current`
+ * is near the start of the checkpoint list (e.g., `current === CC-1` returns
+ * `[]`).
  *
  * @internal
  */
@@ -133,17 +154,21 @@ export function checkpointResolutionRange(checkpoint: Checkpoint): string {
 }
 
 /**
- * Returns `true` iff `version` matches `range`. Adds a tolerant fallback
- * for the wildcard-style additional ranges used in `CompatibilityCheckpoints.md`
- * (e.g., `2.0.0-internal*`), which aren't valid semver ranges by themselves.
+ * Returns `true` iff `version` matches `range`. The wildcard-suffix form
+ * (e.g., `2.0.0-internal*`) is handled before falling through to
+ * `semver.satisfies`, because `semver.validRange("2.0.0-internal*")` silently
+ * coerces to `"2.0.0-internal"` (dropping the trailing `*`) which would not
+ * match any prerelease version like `2.0.0-internal.7.3.0`. Throws on a
+ * malformed entry rather than silently returning `false`, so authoring
+ * mistakes in `additionalRanges` fail loudly at the first call site.
  */
 function matchesRange(version: string, range: string): boolean {
-	if (semver.validRange(range)) {
-		return semver.satisfies(version, range, { includePrerelease: true });
-	}
 	if (range.endsWith("*")) {
 		const prefix = range.slice(0, -1);
 		return version.startsWith(prefix);
 	}
-	return false;
+	if (semver.validRange(range)) {
+		return semver.satisfies(version, range, { includePrerelease: true });
+	}
+	throw new Error(`Invalid additionalRanges entry: "${range}"`);
 }

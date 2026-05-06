@@ -329,11 +329,9 @@ export const genCrossClientCompatConfig = (): CompatConfig[] => {
 	// We will not add any versions below 1.0.0 (only >1.0.0 is supported by our cross-client compat policy).
 	const deltaVersions: Map<string, string> = new Map();
 	const current = getCurrentCheckpoint(pkgVersion);
-	if (current !== undefined) {
-		for (const c of getInWindowPriorCheckpoints(current)) {
-			const v = resolveVersion(checkpointResolutionRange(c), true);
-			deltaVersions.set(v, c.name);
-		}
+	for (const c of getInWindowPriorCheckpoints(current)) {
+		const v = resolveVersion(checkpointResolutionRange(c), true);
+		deltaVersions.set(v, c.name);
 	}
 
 	// Build all combos of (current version, prior version) & (prior version, current version)
