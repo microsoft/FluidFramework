@@ -6,7 +6,7 @@
 /**
  * Script to generate a list of deprecated ESLint rules from all plugins used in the flat configs.
  *
- * Loads the flat configs (recommended, strict, minimalDeprecated), inspects each plugin's rule
+ * Loads the flat configs (recommended, strict, strictBiome), inspects each plugin's rule
  * metadata for `meta.deprecated === true`, cross-references with the configured rules, and
  * writes the results to `data/deprecated-rules.json`.
  *
@@ -18,12 +18,12 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { ESLint } from "eslint";
-// @ts-expect-error - This is an internal ESLint API
 import { builtinRules } from "eslint/use-at-your-own-risk";
 import type { Linter, Rule } from "eslint";
 
 // Import flat configs directly from flat.mjs (same pattern as print-configs.ts)
-import { recommended, strict, minimalDeprecated } from "../flat.mjs";
+import { recommended, strict, strictBiome } from "../flat.mjs";
+import type { FlatConfigArray } from "../library/configs/base.mjs";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -38,6 +38,12 @@ interface DeprecatedRuleOutput {
 	replacedBy?: string[];
 	isConfigured: boolean;
 }
+
+export const flatConfigsToInspect: readonly { name: string; config: FlatConfigArray }[] = [
+	{ name: "recommended", config: recommended },
+	{ name: "strict", config: strict },
+	{ name: "strictBiome", config: strictBiome },
+] as const;
 
 /**
  * Extracts deprecated rules from a rules collection.
@@ -128,7 +134,7 @@ function isRuleEnabled(ruleConfig: Linter.RuleSeverityAndOptions | undefined): b
 
 async function main(): Promise<void> {
 	// Combine all configs to discover all registered plugins
-	const allConfigs = [...recommended, ...strict, ...minimalDeprecated];
+	const allConfigs = flatConfigsToInspect.flatMap(({ config }) => config);
 
 	// Collect all deprecated rules from core ESLint and all plugins
 	const allDeprecated: DeprecatedRuleInfo[] = [];
@@ -149,27 +155,19 @@ async function main(): Promise<void> {
 
 	// Resolve configured rules from each config for a .ts file
 	const sampleTsFile = path.join(__dirname, "..", "src", "file.ts");
-	const [recommendedRules, strictRules, minimalRules] = await Promise.all([
-		getResolvedRules(recommended, sampleTsFile),
-		getResolvedRules(strict, sampleTsFile),
-		getResolvedRules(minimalDeprecated, sampleTsFile),
-	]);
+	const resolvedRulesByConfig = await Promise.all(
+		flatConfigsToInspect.map(async ({ config }) => getResolvedRules(config, sampleTsFile)),
+	);
 
 	// Merge all configured rule names
-	const configuredRules = new Set<string>([
-		...Object.keys(recommendedRules),
-		...Object.keys(strictRules),
-		...Object.keys(minimalRules),
-	]);
+	const configuredRules = new Set<string>(
+		resolvedRulesByConfig.flatMap((rules) => Object.keys(rules)),
+	);
 
 	// Determine which deprecated rules are enabled (not just configured, but not "off")
 	const enabledRules = new Set<string>();
 	for (const ruleName of configuredRules) {
-		if (
-			isRuleEnabled(recommendedRules[ruleName]) ||
-			isRuleEnabled(strictRules[ruleName]) ||
-			isRuleEnabled(minimalRules[ruleName])
-		) {
+		if (resolvedRulesByConfig.some((rules) => isRuleEnabled(rules[ruleName]))) {
 			enabledRules.add(ruleName);
 		}
 	}
@@ -238,7 +236,10 @@ async function main(): Promise<void> {
 	}
 }
 
-main().catch((error) => {
-	console.error("Error generating deprecated rules:", error);
-	process.exit(1);
-});
+const isInvokedScript = process.argv.slice(1).some((arg) => path.resolve(arg) === __filename);
+if (isInvokedScript) {
+	main().catch((error) => {
+		console.error("Error generating deprecated rules:", error);
+		process.exit(1);
+	});
+}

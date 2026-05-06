@@ -12,13 +12,13 @@
 	"author": "Microsoft and contributors",
 	"main": "index.js",
 	"scripts": {
-		"build": "npm run print-configs && npm run prettier",
+		"build": "npm run print-configs && npm run generate-deprecated-rules && npm run prettier",
 		"build:readme:disabled": "markdown-magic --files \"**/*.md\"",
 		"clean": "rimraf --glob dist \"**/*.build.log\" nyc",
 		"format": "npm run prettier:fix",
 		"prettier": "prettier --check . --cache --ignore-path ../../../.prettierignore",
 		"prettier:fix": "prettier --write . --cache --ignore-path ../../../.prettierignore",
-		"generate-deprecated-rules": "tsx scripts/generate-deprecated-rules.ts",
+		"generate-deprecated-rules": "jiti scripts/generate-deprecated-rules.ts",
 		"print-configs": "jiti scripts/print-configs.ts printed-configs",
 		"test": "npm run test:mocha",
 		"test:mocha": "mocha \"src/test/**/*.test.mts\""

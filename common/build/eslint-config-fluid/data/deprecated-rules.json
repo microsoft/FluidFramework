@@ -1,8 +1,12 @@
 {
 	"$schema": "http://json-schema.org/draft-07/schema#",
 	"description": "Auto-generated list of deprecated ESLint rules. Do not edit manually. Run: tsx scripts/generate-deprecated-rules.ts",
-	"generatedAt": "2026-02-20T00:31:18.598Z",
+	"generatedAt": "2026-05-06T17:13:11.696Z",
 	"deprecatedRules": [
+		{
+			"rule": "@eslint-react/no-forbidden-props",
+			"isConfigured": false
+		},
 		{
 			"rule": "@typescript-eslint/no-empty-interface",
 			"isConfigured": false,
@@ -355,20 +359,6 @@
 		{
 			"rule": "quotes",
 			"isConfigured": false
-		},
-		{
-			"rule": "react/jsx-sort-default-props",
-			"isConfigured": false,
-			"replacedBy": [
-				"sort-default-props"
-			]
-		},
-		{
-			"rule": "react/jsx-space-before-closing",
-			"isConfigured": false,
-			"replacedBy": [
-				"jsx-tag-spacing"
-			]
 		},
 		{
 			"rule": "rest-spread-spacing",
