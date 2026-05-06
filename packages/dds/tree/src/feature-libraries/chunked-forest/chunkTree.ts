@@ -558,9 +558,23 @@ export function chunkRange(
 }
 
 /**
+ * {@link splitFieldAtIndex} bisects a chunk at its midpoint and
+ * descends into the half holding the target rather than splitting directly at the requested
+ * index. Bisecting shrinks the cost of repeated splits within a large chunk. A sequence of N
+ * splits inside an N-sized chunk does O(N log N) total work, at the price of producing a few
+ * extra intermediate chunks during descent. Smaller chunks are split exactly so we don't pay
+ * the bisection overhead when the linear walk is already cheap.
+ */
+const splitFieldBisectThreshold = 25;
+
+/**
  * Walks the `chunks` array of a field and splits a chunk if needed so that the node at the given
  * index sits on a chunk boundary. After the call, the node at `nodeIndex` is the first node of the
  * chunk at the returned index.
+ *
+ * @remarks
+ * Chunks larger than {@link splitFieldBisectThreshold} are split at the midpoint and the loop
+ * descends into whichever half contains `nodeIndex`.
  *
  * @param chunks - The array of {@link TreeChunk}s for the field to split. Mutated in place.
  * @param nodeIndex - The index of the node to split at. Must be in `[0, totalNodes]`, where
@@ -580,23 +594,30 @@ export function splitFieldAtIndex(
 	assertNonNegativeSafeInteger(nodeIndex);
 	let remaining = nodeIndex;
 	let chunkIndex = 0;
-	for (const chunk of chunks) {
+	while (chunkIndex < chunks.length) {
 		if (remaining === 0) {
 			return chunkIndex;
 		}
-		if (remaining < chunk.topLevelLength) {
-			const total = chunk.topLevelLength;
-			const cursor = chunk.cursor();
-			cursor.firstNode();
-			const before = chunkRange(cursor, policy, remaining, false);
-			const after = chunkRange(cursor, policy, total - remaining, true);
-			// TODO: this could fail for really long chunks being split (due to argument count limits).
-			chunks.splice(chunkIndex, 1, ...before, ...after);
-			chunk.referenceRemoved();
+		const chunk = chunks[chunkIndex] ?? oob();
+		const total = chunk.topLevelLength;
+		if (remaining >= total) {
+			remaining -= total;
+			chunkIndex++;
+			continue;
+		}
+		// For chunks above the bisect threshold, cut at the midpoint and let the loop descend
+		// into whichever half holds nodeIndex. The other half is left untouched.
+		const splitPoint = total > splitFieldBisectThreshold ? Math.floor(total / 2) : remaining;
+		const cursor = chunk.cursor();
+		cursor.firstNode();
+		const before = chunkRange(cursor, policy, splitPoint, false);
+		const after = chunkRange(cursor, policy, total - splitPoint, true);
+		// TODO: this could fail for really long chunks being split (due to argument count limits).
+		chunks.splice(chunkIndex, 1, ...before, ...after);
+		chunk.referenceRemoved();
+		if (splitPoint === remaining) {
 			return chunkIndex + before.length;
 		}
-		remaining -= chunk.topLevelLength;
-		chunkIndex++;
 	}
 	assert(remaining === 0, "nodeIndex exceeds total node count in field");
 	return chunks.length;
