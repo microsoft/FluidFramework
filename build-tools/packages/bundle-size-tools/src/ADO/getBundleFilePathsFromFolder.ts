@@ -50,3 +50,23 @@ export function getBundleFilePathsFromFolder(
 		relativePathToConfigFile: configFilePathMap.get(bundleName),
 	}));
 }
+
+/**
+ * Filters the given paths down to `analyzer.json` files (one per source package),
+ * pairing each with its derived bundle name.
+ */
+export function getAnalyzerFilePathsFromFolder(
+	relativePathsInFolder: string[],
+): BundleFileData[] {
+	return relativePathsInFolder
+		.filter((relativePath) => {
+			// Normalize backslashes so the same logic handles both Windows and POSIX path separators.
+			const fileName = relativePath.replace(/\\/g, "/").split("/").pop();
+			return fileName === "analyzer.json";
+		})
+		.map((relativePath) => ({
+			bundleName: getBundleNameFromPath(relativePath),
+			relativePathToStatsFile: relativePath,
+			relativePathToConfigFile: undefined,
+		}));
+}

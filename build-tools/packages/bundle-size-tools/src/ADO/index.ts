@@ -4,6 +4,8 @@
  */
 
 export {
+	getAnalyzerJsonFromZip,
+	getAnalyzerPathsFromZipObject,
 	getBundleBuddyConfigFileFromZip,
 	getBundlePathsFromZipObject,
 	getStatsFileFromZip,
@@ -13,6 +15,8 @@ export { ADOSizeComparator, SizeComparison } from "./AdoSizeComparator";
 export { IADOConstants, totalSizeMetricName } from "./Constants";
 export { DefaultStatsProcessors } from "./DefaultStatsProcessors";
 export {
+	getAnalyzerJsonFromFileSystem,
+	getAnalyzerPathsFromFileSystem,
 	getBundleBuddyConfigFromFileSystem,
 	getBundlePathsFromFileSystem,
 	getStatsFileFromFileSystem,
@@ -23,6 +27,15 @@ export {
 	GetBundleBuddyConfigMapArgs,
 	getBundleBuddyConfigMap,
 } from "./getBundleBuddyConfigMap";
-export { BundleFileData, getBundleFilePathsFromFolder } from "./getBundleFilePathsFromFolder";
-export { GetBundleSummariesArgs, getBundleSummaries } from "./getBundleSummaries";
+export {
+	BundleFileData,
+	getAnalyzerFilePathsFromFolder,
+	getBundleFilePathsFromFolder,
+} from "./getBundleFilePathsFromFolder";
+export {
+	GetBundleSummariesArgs,
+	GetBundleSummariesFromAnalyzerArgs,
+	getBundleSummaries,
+	getBundleSummariesFromAnalyzer,
+} from "./getBundleSummaries";
 export { prCommentsUtils } from "./PrCommentsUtils";
