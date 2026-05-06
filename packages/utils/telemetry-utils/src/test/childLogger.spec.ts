@@ -32,7 +32,7 @@ describe("ChildLogger", () => {
 			},
 		});
 
-		childLogger1.send({ category: "generic", eventName: "test1" });
+		childLogger1.send({ category: "generic", eventName: "test1" }, LogLevel.essential);
 		assert(sent, "event should be sent");
 
 		sent = false;
@@ -65,7 +65,7 @@ describe("ChildLogger", () => {
 			},
 		});
 
-		childLogger2.send({ category: "generic", eventName: "testEvent" });
+		childLogger2.send({ category: "generic", eventName: "testEvent" }, LogLevel.essential);
 		assert(sent, "event should be sent");
 	});
 
@@ -94,7 +94,7 @@ describe("ChildLogger", () => {
 			},
 		});
 
-		childLogger2.send({ category: "generic", eventName: "testEvent" });
+		childLogger2.send({ category: "generic", eventName: "testEvent" }, LogLevel.essential);
 		assert(sent, "event should be sent");
 	});
 
@@ -123,7 +123,7 @@ describe("ChildLogger", () => {
 			},
 		});
 
-		childLogger2.send({ category: "generic", eventName: "testEvent" });
+		childLogger2.send({ category: "generic", eventName: "testEvent" }, LogLevel.essential);
 		assert(sent, "event should be sent");
 	});
 
