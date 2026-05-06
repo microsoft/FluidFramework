@@ -838,7 +838,7 @@ describe("sharedTreeView", () => {
 			assert.deepEqual(view.root, ["A", "B"]);
 		});
 
-		describe("bufferEvents", () => {
+		describe("deferEvents", () => {
 			itView("buffers nodeChanged events until the transaction commits", ({ view }) => {
 				const log: string[] = [];
 				Tree.on(view.root, "nodeChanged", () => log.push("nodeChanged"));
@@ -850,14 +850,14 @@ describe("sharedTreeView", () => {
 						view.root.insertAtEnd("B");
 						assert.deepEqual(log, [], "nodeChanged should not fire during the transaction");
 					},
-					{ bufferEvents: true },
+					{ deferEvents: true },
 				);
 
 				assert.deepEqual(log, ["nodeChanged"], "nodeChanged should fire once after commit");
 			});
 
 			itView(
-				"coalesces multiple nodeChanged events into one when bufferEvents is true",
+				"coalesces multiple nodeChanged events into one when deferEvents is true",
 				({ view }) => {
 					let nodeChangedCount = 0;
 					Tree.on(view.root, "nodeChanged", () => nodeChangedCount++);
@@ -869,7 +869,7 @@ describe("sharedTreeView", () => {
 							view.root.insertAtEnd("A");
 							view.root.insertAtEnd("B");
 						},
-						{ bufferEvents: true },
+						{ deferEvents: true },
 					);
 
 					assert.equal(nodeChangedCount, 1);
@@ -879,16 +879,18 @@ describe("sharedTreeView", () => {
 			itView(
 				"unbuffered rollback fires two nodeChanged events (edit then revert)",
 				({ view }) => {
-					// Baseline: without `bufferEvents`, the insert and the abort each fire their
+					// Baseline: without `deferEvents`, the insert and the abort each fire their
 					// own `nodeChanged` event — two events for a net-zero change.
 					const log: string[] = [];
 					Tree.on(view.root, "nodeChanged", () => log.push("nodeChanged"));
 
-					view.runTransaction(() => {
-						view.root.insertAtEnd("A");
-						return { rollback: true };
-					},
-					{ bufferEvents: false },);
+					view.runTransaction(
+						() => {
+							view.root.insertAtEnd("A");
+							return { rollback: true };
+						},
+						{ deferEvents: false },
+					);
 
 					assert.deepEqual(view.root, []);
 					assert.deepEqual(log, ["nodeChanged", "nodeChanged"]);
@@ -897,7 +899,7 @@ describe("sharedTreeView", () => {
 
 			itView("emits no nodeChanged events for a rolled-back transaction", ({ view }) => {
 				// Without buffering, a rolled-back transaction emits TWO events: one when the edit
-				// is applied and a second when the abort reverses it. With bufferEvents both are
+				// is applied and a second when the abort reverses it. With deferEvents both are
 				// captured by the buffer; because the tree ends in its starting state the
 				// runTransaction wrapper discards the buffer entirely instead of flushing it.
 				const log: string[] = [];
@@ -908,7 +910,7 @@ describe("sharedTreeView", () => {
 						view.root.insertAtEnd("A");
 						return { rollback: true };
 					},
-					{ bufferEvents: true },
+					{ deferEvents: true },
 				);
 
 				assert.deepEqual(view.root, []);
@@ -916,7 +918,7 @@ describe("sharedTreeView", () => {
 			});
 
 			itView(
-				"fires nodeChanged normally (unbuffered) when bufferEvents is false",
+				"fires nodeChanged normally (unbuffered) when deferEvents is false",
 				({ view }) => {
 					const log: string[] = [];
 					Tree.on(view.root, "nodeChanged", () => log.push("nodeChanged"));
@@ -931,7 +933,7 @@ describe("sharedTreeView", () => {
 			);
 
 			itView(
-				"nested transactions: outer bufferEvents coalesces events from inner transaction",
+				"nested transactions: outer deferEvents coalesces events from inner transaction",
 				({ view }) => {
 					let nodeChangedCount = 0;
 					Tree.on(view.root, "nodeChanged", () => nodeChangedCount++);
@@ -944,7 +946,7 @@ describe("sharedTreeView", () => {
 							});
 							view.root.insertAtEnd("C");
 						},
-						{ bufferEvents: true },
+						{ deferEvents: true },
 					);
 
 					assert.equal(nodeChangedCount, 1);
@@ -965,14 +967,14 @@ describe("sharedTreeView", () => {
 						view.root.insertAtEnd("B");
 						assert.deepEqual(log, [], "treeChanged should not fire during the transaction");
 					},
-					{ bufferEvents: true },
+					{ deferEvents: true },
 				);
 
 				assert.deepEqual(log, ["treeChanged"], "treeChanged should fire once after commit");
 			});
 
 			itView(
-				"coalesces multiple treeChanged events into one when bufferEvents is true",
+				"coalesces multiple treeChanged events into one when deferEvents is true",
 				({ view }) => {
 					let treeChangedCount = 0;
 					Tree.on(view.root, "treeChanged", () => treeChangedCount++);
@@ -982,7 +984,7 @@ describe("sharedTreeView", () => {
 							view.root.insertAtEnd("A");
 							view.root.insertAtEnd("B");
 						},
-						{ bufferEvents: true },
+						{ deferEvents: true },
 					);
 
 					assert.equal(treeChangedCount, 1);
@@ -998,7 +1000,7 @@ describe("sharedTreeView", () => {
 						view.root.insertAtEnd("A");
 						return { rollback: true };
 					},
-					{ bufferEvents: true },
+					{ deferEvents: true },
 				);
 
 				assert.deepEqual(view.root, []);
@@ -1011,7 +1013,7 @@ describe("sharedTreeView", () => {
 			//   - treeChanged on the parent object (subtree change)
 			// but does NOT fire nodeChanged on the parent object (the "items" field was not reassigned).
 
-			const sfBE = new SchemaFactory("bufferEvents treeChanged tests");
+			const sfBE = new SchemaFactory("deferEvents treeChanged tests");
 			const BEItemsArray = sfBE.array("Items", sfBE.string);
 			const BERoot = sfBE.object("Root", { items: BEItemsArray });
 
@@ -1032,7 +1034,7 @@ describe("sharedTreeView", () => {
 							root.items.insertAtEnd("B");
 							assert.deepEqual(log, [], "no events should fire during the transaction");
 						},
-						{ bufferEvents: true },
+						{ deferEvents: true },
 					);
 
 					assert.deepEqual([...root.items], ["A", "B"]);
@@ -1065,7 +1067,7 @@ describe("sharedTreeView", () => {
 							root.items.insertAtEnd("B");
 							assert.deepEqual(log, [], "no events should fire during the transaction");
 						},
-						{ bufferEvents: true },
+						{ deferEvents: true },
 					);
 
 					// Both events fire after the transaction, not during it.

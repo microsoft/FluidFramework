@@ -156,5 +156,5 @@ export interface RunTransactionParams {
 	 *
 	 * @defaultValue `false`
 	 */
-	readonly bufferEvents?: boolean;
+	readonly deferEvents?: boolean;
 }
