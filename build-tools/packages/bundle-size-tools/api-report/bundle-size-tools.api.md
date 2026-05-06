@@ -142,14 +142,14 @@ export interface GetBundleSummariesFromAnalyzerArgs {
 export function getPriorCommit(baseCommit: string): string;
 
 // @public
-export function getZipObjectFromArtifact(adoConnection: WebApi, projectName: string, buildNumber: number, bundleAnalysisArtifactName: string): Promise<JSZip>;
+export function getZipObjectFromArtifact(adoConnection: WebApi, projectName: string, buildNumber: number, artifactName: string): Promise<JSZip>;
 
 // @public (undocumented)
 export interface IADOConstants {
     // (undocumented)
-    buildsToSearch?: number;
+    artifactName: string;
     // (undocumented)
-    bundleAnalysisArtifactName: string;
+    buildsToSearch?: number;
     // (undocumented)
     ciBuildDefinitionId: number;
     // (undocumented)
