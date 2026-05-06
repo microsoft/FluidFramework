@@ -471,23 +471,41 @@ extends:
 
               # Bundle analysis
               - ${{ if eq(parameters.taskBundleAnalysis, true) }}:
-                  - task: Npm@1
+                  # Bash@3 (not Npm@1) so `flub` resolves via PATH to the globally-linked
+                  # workspace build; `npm run` would shadow it with the catalog-pinned
+                  # flub, which currently lacks the bundleAnalyzerJson aggregation.
+                  - task: Bash@3
                     displayName: 'Calculate bundle sizes'
                     inputs:
-                      command: custom
-                      workingDir: '$(Pipeline.Workspace)/${{ parameters.buildDirectory }}'
-                      customCommand: 'run bundle-analysis:collect'
+                      targetType: inline
+                      workingDirectory: '$(Pipeline.Workspace)/${{ parameters.buildDirectory }}'
+                      script: |
+                        set -eu -o pipefail
+                        pnpm run webpack:profile
+                        flub generate bundleStats
 
                   # Copy files so all artifacts we publish end up under the same parent folder.
-                  # The sourceFolder should be wherever the 'npm run bundle-analysis:collect' task places its output.
+                  # The sourceFolder should be wherever the 'Calculate bundle sizes' task places its output.
                   - task: CopyFiles@2
                     displayName: Copy bundle size files to artifact staging directory
                     inputs:
                       sourceFolder: '$(Pipeline.Workspace)/${{ parameters.buildDirectory }}/artifacts/bundleAnalysis'
                       targetFolder: $(Build.ArtifactStagingDirectory)/bundleAnalysis
 
-                  # At this point we want to publish the bundleAnalysis artifact,
-                  # but as part of 1ES migration that's now part of templateContext.outputs below.
+                  # bundleAnalyzerJson is a parallel artifact carrying analyzer.json
+                  # (consumed by `flub generate bundleSizeDiff`). It's separate from the
+                  # bundleAnalysis artifact so the FF-internal telemetry handler — which
+                  # walks every .json under bundleAnalysis — doesn't trip over a file
+                  # whose shape it doesn't recognize.
+                  - task: CopyFiles@2
+                    displayName: Copy bundle analyzer JSON files to artifact staging directory
+                    inputs:
+                      sourceFolder: '$(Pipeline.Workspace)/${{ parameters.buildDirectory }}/artifacts/bundleAnalyzerJson'
+                      targetFolder: $(Build.ArtifactStagingDirectory)/bundleAnalyzerJson
+
+                  # At this point we want to publish the bundleAnalysis and
+                  # bundleAnalyzerJson artifacts, but as part of 1ES migration that's
+                  # now part of templateContext.outputs below.
 
               # Docs
               - ${{ if ne(parameters.taskBuildDocs, false) }}:
@@ -571,6 +589,20 @@ extends:
                       condition: and( succeeded(), ne(variables['Build.Reason'], 'PullRequest'), eq(${{ parameters.isBundleSizeArtifactsPipeline }}, true) )
                       targetPath: $(Build.ArtifactStagingDirectory)/bundleAnalysis
                       artifactName: bundleAnalysis
+                      sbomEnabled: false
+                      publishLocation: pipeline
+
+                    # Parallel artifact for analyzer.json. Kept separate from
+                    # bundleAnalysis so the FF-internal telemetry handler (which walks
+                    # every .json file under that artifact) doesn't pick this up.
+                    # Only published on non-PR (CI) builds so it can serve as the baseline
+                    # that PR builds compare against; PRs read their own analyzer.json
+                    # from artifacts/bundleAnalyzerJson locally and don't need to publish it.
+                    - output: pipelineArtifact
+                      displayName: Publish Artifacts - bundle-analyzer-json
+                      condition: and( succeeded(), ne(variables['Build.Reason'], 'PullRequest'), eq(${{ parameters.isBundleSizeArtifactsPipeline }}, true) )
+                      targetPath: $(Build.ArtifactStagingDirectory)/bundleAnalyzerJson
+                      artifactName: bundleAnalyzerJson
                       sbomEnabled: false
                       publishLocation: pipeline
 
