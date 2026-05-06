@@ -1454,6 +1454,43 @@ describe("SchematizingSimpleTreeView", () => {
 			assert.equal(receivedLabels.tree.sublabels[1]?.label, "after");
 		});
 
+		// Skipped: documents the desired behavior for re-entrant transactions started from a
+		// `changed` listener. Currently, the inner transaction's label is incorrectly pushed
+		// as a sublabel of the just-closed outer tree even though the two transactions are
+		// logically independent (the outer has already committed at that point). See the TODO
+		// in `runWithTransactionLabel` for the proposed fix; unskip this test once it lands.
+		it.skip("re-entrant transactions from a changed listener produce a separate label tree", () => {
+			const view = getTestObjectView();
+
+			let labels: TransactionLabels | undefined;
+			view.checkout.events.on("changed", (meta) => {
+				if (meta.isLocal && meta.kind === CommitKind.Default && meta.labels.has("inner")) {
+					labels = meta.labels;
+				}
+			});
+
+			// Re-entrant: when the outer commit fires, start a separate `inner` transaction.
+			view.checkout.events.on("changed", (meta) => {
+				if (meta.isLocal && meta.kind === CommitKind.Default && !meta.labels.has("inner")) {
+					view.runTransaction(
+						() => {
+							view.root.content = view.root.content + 1;
+						},
+						{ label: "inner" },
+					);
+				}
+			});
+
+			view.runTransaction(
+				() => {
+					view.root.content = 1;
+				},
+				{ label: "outer" },
+			);
+
+			assert.deepEqual(labels?.tree, { label: "inner", sublabels: [] });
+		});
+
 		it("revert commit inherits the original commit's label", () => {
 			const view = getTestObjectView();
 
