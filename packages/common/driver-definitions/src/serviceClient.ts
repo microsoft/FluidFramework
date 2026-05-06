@@ -30,9 +30,11 @@ import type { ErasedBaseType } from "@fluidframework/core-interfaces/internal";
  * Use of a function for this allows a few things that most collections would not:
  * 1. It's possible to generate placeholder / error values on demand.
  * 2. It makes loading from some external registry on demand practical.
- * 3. The lookup can throw an exception if appropriate
- * (the implementer can decide how to handle requests for unknown types, producing placeholders or errors).
+ * 3. The lookup can throw an exception if appropriate (this would typically indicate a bug and produce a fatal error).
  * 4. Generation of values can be lazy, and even asynchronous if `T` allows for a promise.
+ *
+ * This flexibility lets the implementer decide how to handle requests for unknown types.
+ * They can produce placeholders, assert, fall back to a generic implementation etc.
  * @input
  * @alpha
  */

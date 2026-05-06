@@ -42,6 +42,10 @@ export const rootDataStoreId = "root";
 
 /**
  * Converts a `DataStoreRegistry` to the `IFluidDataStoreRegistry` interface expected by the container runtime.
+ * @remarks
+ * This does no leverage the ability for `IFluidDataStoreRegistry.get` to return undefined.
+ * Note that all use-cases of `IFluidDataStoreRegistry.get` returning undefined currently end up as a fatal error.
+ * Therefore it should be fine for the error to instead by thrown by the registry function, which is what this function does.
  * @internal
  */
 export function convertRegistry<T>(registry: DataStoreRegistry<T>): IFluidDataStoreRegistry {
