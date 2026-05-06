@@ -189,8 +189,15 @@ const config: Config = {
 					],
 					apiKey: TYPESENSE_API_KEY,
 				},
-				// Optional
 				contextualSearch: true,
+				additionalSearchParameters: {
+					query_by:
+						"hierarchy.lvl1,hierarchy.lvl2,hierarchy.lvl3,hierarchy.lvl4,hierarchy.lvl5,content",
+					query_by_weights: "6,5,4,3,2,1",
+					sort_by: "_text_match:desc",
+					prioritize_exact_match: true,
+					num_typos: "1,1,1,1,1,0",
+				},
 			},
 		}),
 	} satisfies Preset.ThemeConfig,
