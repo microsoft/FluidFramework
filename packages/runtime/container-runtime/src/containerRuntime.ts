@@ -854,7 +854,7 @@ const defaultMaxConsecutiveReconnects = 7;
  * These are the ONLY message types that are allowed to be submitted while in staging mode
  * (Does not apply to pre-StagingMode batches that are resubmitted, those are not considered to be staged)
  */
-function canStageMessageOfType(
+export function canStageMessageOfType(
 	type: LocalContainerRuntimeMessage["type"],
 ): type is
 	| ContainerMessageType.FluidDataStoreOp
@@ -1840,7 +1840,6 @@ export class ContainerRuntime
 				isActiveConnection: () => this.innerDeltaManager.active,
 				isAttached: () => this.attachState !== AttachState.Detached,
 				isInStagingMode: () => this.inStagingMode,
-				canStageMessageOfType,
 			},
 			pendingRuntimeState?.pending,
 			this.baseLogger,

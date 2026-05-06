@@ -15,7 +15,7 @@ import {
 import Deque from "double-ended-queue";
 import { v4 as uuid } from "uuid";
 
-import { isContainerMessageDirtyable } from "./containerRuntime.js";
+import { canStageMessageOfType, isContainerMessageDirtyable } from "./containerRuntime.js";
 import type {
 	InboundContainerRuntimeMessage,
 	InboundSequencedContainerRuntimeMessage,
@@ -160,38 +160,38 @@ export interface IRuntimeStateHandler {
 	 * `pendingStateApplyStart` event).
 	 */
 	isInStagingMode: () => boolean;
-	/**
-	 * Returns true if a message of the given runtime-op type can be marked staged.
-	 * Used in `applyStashedOpsAt` to skip the staging mutation for non-stageable
-	 * types (e.g. BlobAttach, IdAllocation, Rejoin) so the resubmit path doesn't
-	 * trip the "Unexpected message type submitted in Staging Mode" assert.
-	 */
-	canStageMessageOfType: (type: LocalContainerRuntimeMessage["type"]) => boolean;
 }
 
 /**
- * Optional one-shot hooks invoked around the stashed-op replay loop in
- * {@link PendingStateManager.applyStashedOpsAt}. Both are skipped entirely when no
- * stashed op will actually be applied this call (initialMessages empty, or the front
- * message's `referenceSequenceNumber` is past the requested `seqNum`). Awaited;
- * observers can perform async work (e.g. materializing an entrypoint, fanning out a
- * readonly state change) at exact moments during load.
+ * Optional one-shot hooks invoked around the stashed-op replay window in
+ * {@link PendingStateManager.applyStashedOpsAt}. The window opens on the first
+ * eligible call within a load (stashed ops present, front message's
+ * `referenceSequenceNumber` ≤ requested `seqNum`) and closes once `initialMessages`
+ * is fully drained. `applyStashedOpsAt` may be invoked multiple times per load
+ * (once at boot plus once per saved-op replay) — each hook fires exactly once
+ * per load, not per call. Awaited; observers can perform async work (e.g.
+ * materializing an entrypoint, fanning out a readonly state change) at exact
+ * moments during load.
  *
- * Contract: when a hook runs, {@link PendingStateManager.isApplyingStashedOps} reflects
- * the state *during* its phase — true inside `onBeforeFirstStashedOpApply`, false inside
- * `onAfterStashedOpsApplied`. Hooks are paired: `onAfterStashedOpsApplied` only fires
- * when `onBeforeFirstStashedOpApply` fired.
+ * Contract: when a hook runs, {@link PendingStateManager.isApplyingStashedOps}
+ * reflects the state *during* its phase — true inside `onBeforeFirstStashedOpApply`,
+ * false inside `onAfterStashedOpsApplied`. Hooks are paired:
+ * `onAfterStashedOpsApplied` only fires when `onBeforeFirstStashedOpApply` fired.
+ *
+ * Throws from hooks are wrapped as `DataProcessingError` with
+ * `codePath: "applyStashedOpsHook"` consistent with the per-message replay path.
  */
 export interface PendingStateManagerHooks {
 	/**
-	 * Invoked exactly once, just before the first stashed op is replayed. Awaited.
-	 * Not invoked when no stashed op will be applied this call.
+	 * Invoked exactly once per load, just before the first eligible stashed op is
+	 * replayed. Awaited. Not invoked when no stashed op will be applied (empty
+	 * `initialMessages` or every message filtered by `seqNum`).
 	 */
 	onBeforeFirstStashedOpApply?: () => Promise<void>;
 	/**
-	 * Invoked exactly once, just after the last stashed op finishes replaying (including
-	 * via the apply-loop's finally block on error). Awaited. Only fires when
-	 * `onBeforeFirstStashedOpApply` fired for this call.
+	 * Invoked exactly once per load, just after `initialMessages` has fully drained
+	 * (including via the apply-loop's finally block on error). Awaited. Only fires
+	 * when `onBeforeFirstStashedOpApply` fired earlier in the same load.
 	 */
 	onAfterStashedOpsApplied?: () => Promise<void>;
 }
@@ -425,12 +425,22 @@ export class PendingStateManager implements IDisposable {
 	/**
 	 * True while {@link applyStashedOpsAt} is replaying stashed ops. Contributes to the
 	 * runtime's readonly state during the apply window so consumers don't generate fresh
-	 * local ops that would race the replay.
+	 * local ops that would race the replay. Acts as a one-shot latch across multiple
+	 * `applyStashedOpsAt` calls within a single load: opens on the first eligible call,
+	 * closes when `initialMessages` is fully drained.
 	 */
 	private _isApplyingStashedOps = false;
 	public get isApplyingStashedOps(): boolean {
 		return this._isApplyingStashedOps;
 	}
+
+	/**
+	 * Decided once at the apply window's open: stage un-acked rehydrated ops only when
+	 * the host entered staging mode AND every un-acked stashed op's runtime-op type is
+	 * stageable. Persists across multiple `applyStashedOpsAt` calls so subsequent calls
+	 * apply the same decision without re-scanning.
+	 */
+	private _stageRehydratedOps = false;
 
 	private readonly hooks: PendingStateManagerHooks;
 
@@ -526,10 +536,7 @@ export class PendingStateManager implements IDisposable {
 		// Eligibility check: confirm at least one stashed op will actually be applied
 		// this call before opening the apply window. Without this, a later call (e.g.
 		// from notifyOpReplay after a saved-op replay) whose front message has a
-		// referenceSequenceNumber > seqNum would still set the flag and fire the
-		// start/end hooks with no op in between, breaking the documented event-pairing
-		// contract and tripping "Already in staging mode" if the start handler entered
-		// staging mode on the previous eligible call.
+		// referenceSequenceNumber > seqNum would still fire hooks with no op in between.
 		if (seqNum !== undefined) {
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			const peekMessage = this.initialMessages.peekFront()!;
@@ -540,37 +547,56 @@ export class PendingStateManager implements IDisposable {
 			// check handle it so the apply window's finally still runs.
 		}
 
-		// Decide whether to mark un-acked rehydrated ops as staged. This is all-or-nothing
-		// per call: if the host entered staging mode in the start handler, we stage all
-		// un-acked ops only when every un-acked op's runtime-op type is stageable. If any
-		// un-acked op is non-stageable (e.g. BlobAttach, IdAllocation, Rejoin), we stage
-		// none — staging a subset would violate the queue invariant that staged ops come
-		// after non-staged ops (commit-staged-replay enforces this via assert 0xb86) and
-		// would also trip the "Unexpected message type submitted in Staging Mode" assert
-		// 0xbba on resubmit of the non-stageable type.
-		let stageRehydratedOps = false;
-		if (this.stateHandler.isInStagingMode()) {
-			stageRehydratedOps = true;
-			for (let i = 0; i < this.initialMessages.length && stageRehydratedOps; i++) {
+		// Open the apply window once per load. `applyStashedOpsAt` is invoked at
+		// load and again per saved-op replay during boot (`notifyOpReplay`), but
+		// the hooks/window must fire exactly once per load — listeners may call
+		// `enterStagingMode()` in the start handler and a re-fire would trip
+		// "Already in staging mode". Latch on `_isApplyingStashedOps` so subsequent
+		// eligible calls within the same load skip the open and reuse the
+		// staging-decision made on the first eligible call.
+		const openingApplyWindow = !this._isApplyingStashedOps;
+		if (openingApplyWindow) {
+			// Set the flag before invoking the pre-apply hook so observers (e.g. the
+			// runtime's isReadOnly() aggregation) reflect the apply window from the
+			// moment the hook runs.
+			this._isApplyingStashedOps = true;
+			try {
+				await this.hooks.onBeforeFirstStashedOpApply?.();
+			} catch (error) {
+				// Hook errors are stashed-op-apply failures: classify as data processing.
+				throw DataProcessingError.wrapIfUnrecognized(
+					error,
+					"applyStashedOpsHook",
+					undefined,
+				);
+			}
+
+			// Decide whether to mark un-acked rehydrated ops as staged. This is
+			// all-or-nothing: if the host entered staging mode (typically inside
+			// the start hook above) AND every un-acked op's runtime-op type is
+			// stageable, stage them all. Otherwise stage none — staging a subset
+			// would violate the queue invariant that staged ops follow non-staged
+			// ops (commit-staged-replay enforces this via 0xb86) and would trip
+			// "Unexpected message type submitted in Staging Mode" (0xbba) on
+			// resubmit of the non-stageable type.
+			this._stageRehydratedOps = this.stateHandler.isInStagingMode();
+			for (
+				let i = 0;
+				i < this.initialMessages.length && this._stageRehydratedOps;
+				i++
+			) {
 				const msg = this.initialMessages.get(i);
 				if (msg === undefined || msg.sequenceNumber !== undefined) {
 					continue;
 				}
 				const parsed = JSON.parse(msg.content) as Partial<LocalContainerRuntimeMessage>;
-				if (
-					parsed.type === undefined ||
-					!this.stateHandler.canStageMessageOfType(parsed.type)
-				) {
-					stageRehydratedOps = false;
+				if (parsed.type === undefined || !canStageMessageOfType(parsed.type)) {
+					this._stageRehydratedOps = false;
 				}
 			}
 		}
 
-		// Set the flag before invoking the pre-apply hook so observers (e.g. the runtime's
-		// isReadOnly() aggregation) reflect the apply window from the moment the hook runs.
-		this._isApplyingStashedOps = true;
 		try {
-			await this.hooks.onBeforeFirstStashedOpApply?.();
 			// apply stashed ops at sequence number
 			while (!this.initialMessages.isEmpty()) {
 				if (seqNum !== undefined) {
@@ -612,7 +638,7 @@ export class PendingStateManager implements IDisposable {
 						// original flag — the server already has them, and `getLocalState`
 						// serializes savedOps before pendingMessages, preserving the queue
 						// invariant that non-staged messages come before staged ones.
-						if (stageRehydratedOps && nextMessage.sequenceNumber === undefined) {
+						if (this._stageRehydratedOps && nextMessage.sequenceNumber === undefined) {
 							nextMessage.batchInfo.staged = true;
 							nextMessage.stagedFromStashedRehydration = true;
 						}
@@ -627,10 +653,23 @@ export class PendingStateManager implements IDisposable {
 				}
 			}
 		} finally {
-			// Clear the flag before invoking the post-apply hook so observers see the
-			// post-apply state when the hook (and any fan-out it triggers) runs.
-			this._isApplyingStashedOps = false;
-			await this.hooks.onAfterStashedOpsApplied?.();
+			// Close the apply window only when initialMessages has fully drained,
+			// not on every call. `applyStashedOpsAt` may be invoked multiple times
+			// per load (once at boot plus once per saved-op replay); the
+			// pendingStateApplyEnd hook must fire exactly once at the end of the
+			// final eligible call.
+			if (this.initialMessages.isEmpty() && this._isApplyingStashedOps) {
+				this._isApplyingStashedOps = false;
+				try {
+					await this.hooks.onAfterStashedOpsApplied?.();
+				} catch (error) {
+					throw DataProcessingError.wrapIfUnrecognized(
+						error,
+						"applyStashedOpsHook",
+						undefined,
+					);
+				}
+			}
 		}
 	}
 

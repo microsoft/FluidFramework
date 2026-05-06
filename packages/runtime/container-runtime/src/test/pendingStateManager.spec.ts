@@ -97,7 +97,6 @@ describe("Pending State Manager", () => {
 			isActiveConnection: sandbox.stub(),
 			isAttached: sandbox.stub(),
 			isInStagingMode: sandbox.stub(),
-			canStageMessageOfType: sandbox.stub(),
 		};
 		stubs.applyStashedOp.resolves(undefined);
 		stubs.clientId.returns("clientId");
@@ -105,7 +104,6 @@ describe("Pending State Manager", () => {
 		stubs.isActiveConnection.returns(true);
 		stubs.isAttached.returns(true);
 		stubs.isInStagingMode.returns(false);
-		stubs.canStageMessageOfType.returns(true);
 		return stubs;
 	}
 	const mockLogger = new MockLogger();
@@ -236,7 +234,6 @@ describe("Pending State Manager", () => {
 					isActiveConnection: () => false,
 					isAttached: () => true,
 					isInStagingMode: () => false,
-					canStageMessageOfType: () => true,
 				},
 				undefined /* initialLocalState */,
 				logger,
@@ -714,24 +711,10 @@ describe("Pending State Manager", () => {
 		});
 
 		describe("staged-from-rehydration handling", () => {
-			it("clears stagedFromStashedRehydration when ack arrives for a staged rehydrated op", async () => {
-				// Simulate the load-with-pending-state flow with staging entered:
-				// the rehydrated op gets `staged: true` and `stagedFromStashedRehydration: true`
-				// from applyStashedOpsAt. When the previous-session's ack arrives (delayed),
-				// onLocalBatchBegin must clear those flags rather than asserting.
-				const stashedMessage: IPendingMessage = {
-					type: "message",
-					content: '{"type":"op","contents":{"prop1":"value"}}',
-					referenceSequenceNumber: 0,
-					localOpMetadata: undefined,
-					opMetadata: undefined,
-					batchInfo: { clientId, batchStartCsn: 0, length: 1, staged: false },
-					runtimeOp: undefined,
-					// sequenceNumber omitted — this is the un-acked case the discriminator targets.
-				};
-
-				// Fresh PSM (separate from the outer beforeEach instance) so we can drive
-				// applyStashedOpsAt without an applyStashedOp stub that throws.
+			it("clears stagedFromStashedRehydration when ack arrives for a staged rehydrated op", () => {
+				// Simulate the post-applyStashedOpsAt state with the staged-from-stashed
+				// discriminator set. When the previous-session's ack arrives (delayed),
+				// onLocalBatchBegin must clear those flags rather than asserting 0xb85.
 				const psm = new PendingStateManager(
 					{
 						applyStashedOp: async () => undefined,
@@ -740,20 +723,30 @@ describe("Pending State Manager", () => {
 						reSubmitBatch: () => {},
 						isActiveConnection: () => false,
 						isAttached: () => true,
-						isInStagingMode: () => true,
-						canStageMessageOfType: () => true, // host entered staging in the start handler
+						isInStagingMode: () => false,
 					},
-					{ pendingStates: [stashedMessage] },
+					undefined,
 					logger,
 				) as unknown as PendingStateManager_WithPrivates;
-				await psm.applyStashedOpsAt();
 
-				const queued = psm.pendingMessages.peekFront();
-				assert.ok(queued !== undefined, "queue populated");
-				assert.strictEqual(queued.batchInfo.staged, true);
-				assert.strictEqual(queued.stagedFromStashedRehydration, true);
+				// Direct inject so we can use protocol-level "op" type that the test
+				// infrastructure round-trips, while still exercising the staged-from-
+				// rehydration branch we care about.
+				const stagedRehydratedMessage: IPendingMessage = {
+					type: "message",
+					content: '{"type":"op","contents":{"prop1":"value"}}',
+					referenceSequenceNumber: 0,
+					localOpMetadata: undefined,
+					opMetadata: undefined,
+					batchInfo: { clientId, batchStartCsn: 0, length: 1, staged: true },
+					runtimeOp: {
+						type: MessageType.Operation,
+						contents: { prop1: "value" },
+					} as unknown as LocalContainerRuntimeMessage,
+					stagedFromStashedRehydration: true,
+				};
+				psm.pendingMessages.push(stagedRehydratedMessage);
 
-				// Deliver the matching ack.
 				const ackedMessage: Partial<ISequencedDocumentMessage> = {
 					clientId,
 					type: MessageType.Operation,
@@ -779,8 +772,8 @@ describe("Pending State Manager", () => {
 					),
 				);
 
-				// Front message has been consumed (and its flags would have been cleared
-				// inside onLocalBatchBegin before processing the ack).
+				// Front message consumed (flags cleared inside onLocalBatchBegin before
+				// the ack was processed).
 				assert.strictEqual(psm.pendingMessages.length, 0, "ack consumed the message");
 			});
 
@@ -802,7 +795,6 @@ describe("Pending State Manager", () => {
 						isActiveConnection: () => false,
 						isAttached: () => true,
 						isInStagingMode: () => false,
-						canStageMessageOfType: () => true,
 					},
 					undefined,
 					logger,
@@ -810,7 +802,7 @@ describe("Pending State Manager", () => {
 
 				const stagedPendingMessage: IPendingMessage = {
 					type: "message",
-					content: '{"type":"op","contents":{"prop1":"value"}}',
+					content: '{"type":"component","contents":{"prop1":"value"}}',
 					referenceSequenceNumber: 0,
 					localOpMetadata: undefined,
 					opMetadata: undefined,
@@ -861,7 +853,7 @@ describe("Pending State Manager", () => {
 				// the only entry).
 				const stashedMessage: IPendingMessage = {
 					type: "message",
-					content: '{"type":"op","contents":{"prop1":"value"}}',
+					content: '{"type":"component","contents":{"prop1":"value"}}',
 					referenceSequenceNumber: 0,
 					localOpMetadata: undefined,
 					opMetadata: undefined,
@@ -877,7 +869,6 @@ describe("Pending State Manager", () => {
 						isActiveConnection: () => false,
 						isAttached: () => true,
 						isInStagingMode: () => true,
-						canStageMessageOfType: () => true,
 					},
 					{ pendingStates: [stashedMessage] },
 					logger,
@@ -906,7 +897,6 @@ describe("Pending State Manager", () => {
 					isActiveConnection: () => false,
 					isAttached: () => true,
 					isInStagingMode: () => false,
-					canStageMessageOfType: () => true,
 				},
 				pendingStates ? { pendingStates } : undefined,
 				logger,
@@ -979,7 +969,6 @@ describe("Pending State Manager", () => {
 					isActiveConnection: () => false,
 					isAttached: () => true,
 					isInStagingMode: () => false,
-					canStageMessageOfType: () => true,
 				},
 				{ pendingStates: messages },
 				logger,
@@ -999,7 +988,6 @@ describe("Pending State Manager", () => {
 					isActiveConnection: () => false,
 					isAttached: () => true,
 					isInStagingMode: () => false,
-					canStageMessageOfType: () => true,
 				},
 				undefined /* initialLocalState */,
 				logger,
@@ -1018,7 +1006,6 @@ describe("Pending State Manager", () => {
 					isActiveConnection: () => false,
 					isAttached: () => true,
 					isInStagingMode: () => false,
-					canStageMessageOfType: () => true,
 				},
 				localStateWithEmptyBatch,
 				logger,
@@ -1052,7 +1039,6 @@ describe("Pending State Manager", () => {
 					isActiveConnection: () => false,
 					isAttached: () => true,
 					isInStagingMode: () => false,
-					canStageMessageOfType: () => true,
 				},
 				{ pendingStates: messages },
 				logger,
@@ -1077,6 +1063,119 @@ describe("Pending State Manager", () => {
 			assert.strictEqual(afterCount, 0, "after-hook should not fire");
 			assert.strictEqual(psm.isApplyingStashedOps, false);
 			assert.strictEqual(psm.pendingMessagesCount, 1, "message must remain queued");
+		});
+
+		it("fires hooks once across multiple calls within a single load (latched)", async () => {
+			// applyStashedOpsAt is invoked once at boot AND again per saved-op replay
+			// during initial load (notifyOpReplay). The hooks must fire exactly once
+			// per load — not once per refSeq group — so a host that calls
+			// enterStagingMode() in the start handler doesn't trip "Already in
+			// staging mode" on the second eligible call.
+			let beforeCount = 0;
+			let afterCount = 0;
+			const messages: IPendingMessage[] = [
+				{
+					type: "message",
+					content: '{"type":"component"}',
+					referenceSequenceNumber: 5,
+					localOpMetadata: undefined,
+					opMetadata: undefined,
+					batchInfo: { clientId: "CLIENT_ID", batchStartCsn: 1, length: 1, staged: false },
+					runtimeOp: undefined,
+				},
+				{
+					type: "message",
+					content: '{"type":"component"}',
+					referenceSequenceNumber: 10,
+					localOpMetadata: undefined,
+					opMetadata: undefined,
+					batchInfo: { clientId: "CLIENT_ID", batchStartCsn: 2, length: 1, staged: false },
+					runtimeOp: undefined,
+				},
+			];
+
+			const psm = new PendingStateManager(
+				{
+					applyStashedOp: async () => undefined,
+					clientId: () => "clientId",
+					connected: () => true,
+					reSubmitBatch: () => {},
+					isActiveConnection: () => false,
+					isAttached: () => true,
+					isInStagingMode: () => false,
+				},
+				{ pendingStates: messages },
+				logger,
+				{
+					onBeforeFirstStashedOpApply: async () => {
+						beforeCount++;
+					},
+					onAfterStashedOpsApplied: async () => {
+						afterCount++;
+					},
+				},
+			);
+
+			// First call processes only the refSeq=5 message; refSeq=10 is filtered.
+			await psm.applyStashedOpsAt(5);
+			assert.strictEqual(beforeCount, 1, "before-hook fires on first eligible call");
+			assert.strictEqual(afterCount, 0, "after-hook waits for full drain");
+			assert.strictEqual(psm.isApplyingStashedOps, true, "window stays open across calls");
+
+			// Second call processes the refSeq=10 message and drains the queue.
+			await psm.applyStashedOpsAt(10);
+			assert.strictEqual(beforeCount, 1, "before-hook does not re-fire");
+			assert.strictEqual(afterCount, 1, "after-hook fires on drain");
+			assert.strictEqual(psm.isApplyingStashedOps, false, "window closed");
+
+			// Third call (e.g. another notifyOpReplay) is a no-op.
+			await psm.applyStashedOpsAt(15);
+			assert.strictEqual(beforeCount, 1);
+			assert.strictEqual(afterCount, 1);
+		});
+
+		it("wraps hook errors as DataProcessingError", async () => {
+			// Hook throws during the apply window are stashed-op-apply failures
+			// (per the convention from PR #16343). They must be classified as
+			// DataProcessingError, not propagate as raw Error, so callers can
+			// distinguish them from other failure modes.
+			const messages: IPendingMessage[] = [
+				{
+					type: "message",
+					content: '{"type":"component"}',
+					referenceSequenceNumber: 0,
+					localOpMetadata: undefined,
+					opMetadata: undefined,
+					batchInfo: { clientId: "CLIENT_ID", batchStartCsn: 1, length: 1, staged: false },
+					runtimeOp: undefined,
+				},
+			];
+
+			const psm = new PendingStateManager(
+				{
+					applyStashedOp: async () => undefined,
+					clientId: () => "clientId",
+					connected: () => true,
+					reSubmitBatch: () => {},
+					isActiveConnection: () => false,
+					isAttached: () => true,
+					isInStagingMode: () => false,
+				},
+				{ pendingStates: messages },
+				logger,
+				{
+					onBeforeFirstStashedOpApply: async () => {
+						throw new Error("hook explosion");
+					},
+				},
+			);
+
+			await assert.rejects(
+				psm.applyStashedOpsAt(),
+				(error: IErrorBase) =>
+					error.errorType === ContainerErrorTypes.dataProcessingError,
+				"hook errors are wrapped as DataProcessingError",
+			);
 		});
 
 		it("marks un-acked rehydrated ops staged when staging mode is active", async () => {
@@ -1115,7 +1214,6 @@ describe("Pending State Manager", () => {
 					isActiveConnection: () => false,
 					isAttached: () => true,
 					isInStagingMode: () => true,
-					canStageMessageOfType: () => true, // enter staging in the start handler
 				},
 				{ pendingStates: messages },
 				logger,
@@ -1172,7 +1270,6 @@ describe("Pending State Manager", () => {
 					isActiveConnection: () => false,
 					isAttached: () => true,
 					isInStagingMode: () => false,
-					canStageMessageOfType: () => true,
 				},
 				pendingStates ? { pendingStates } : undefined,
 				logger,
@@ -1320,7 +1417,6 @@ describe("Pending State Manager", () => {
 					isActiveConnection: () => false,
 					isAttached: () => true,
 					isInStagingMode: () => false,
-					canStageMessageOfType: () => true,
 				},
 				pendingStates ? { pendingStates } : undefined /* initialLocalState */,
 				logger,
@@ -1396,7 +1492,6 @@ describe("Pending State Manager", () => {
 					isActiveConnection: () => false,
 					isAttached: () => true,
 					isInStagingMode: () => false,
-					canStageMessageOfType: () => true,
 				},
 				{ pendingStates: initialMessages },
 				logger,
