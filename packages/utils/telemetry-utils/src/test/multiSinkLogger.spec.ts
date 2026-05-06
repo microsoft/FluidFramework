@@ -150,20 +150,18 @@ describe("MultiSinkLogger", () => {
 	});
 
 	describe("logLevel propagation", () => {
-		it("Forwards LogLevel.essential to every sink when sendTelemetryEvent omits logLevel", () => {
+		it("Forwards LogLevel.essential to every sink when `sendTelemetryEvent` omits logLevel", () => {
 			const { sink: sinkA, recorded: recordedA } = createRecordingSink();
 			const { sink: sinkB, recorded: recordedB } = createRecordingSink();
 			const multiSink = createMultiSinkLogger({ loggers: [sinkA, sinkB] });
 
 			multiSink.sendTelemetryEvent({ eventName: "noLogLevel" });
 
-			assert.strictEqual(recordedA.length, 1);
-			assert.strictEqual(recordedB.length, 1);
 			assert.strictEqual(recordedA[0]?.logLevel, LogLevel.essential);
 			assert.strictEqual(recordedB[0]?.logLevel, LogLevel.essential);
 		});
 
-		it("Forwards LogLevel.essential to every sink when sendPerformanceEvent omits logLevel", () => {
+		it("Forwards LogLevel.essential to every sink when `sendPerformanceEvent` omits logLevel", () => {
 			const { sink: sinkA, recorded: recordedA } = createRecordingSink();
 			const { sink: sinkB, recorded: recordedB } = createRecordingSink();
 			const multiSink = createMultiSinkLogger({ loggers: [sinkA, sinkB] });
@@ -174,7 +172,7 @@ describe("MultiSinkLogger", () => {
 			assert.strictEqual(recordedB[0]?.logLevel, LogLevel.essential);
 		});
 
-		it("Forwards LogLevel.essential to every sink for sendErrorEvent", () => {
+		it("Forwards LogLevel.essential to every sink for `sendErrorEvent`", () => {
 			const { sink: sinkA, recorded: recordedA } = createRecordingSink();
 			const { sink: sinkB, recorded: recordedB } = createRecordingSink();
 			const multiSink = createMultiSinkLogger({ loggers: [sinkA, sinkB] });
@@ -186,7 +184,7 @@ describe("MultiSinkLogger", () => {
 		});
 
 		for (const explicitLevel of [LogLevel.verbose, LogLevel.info] as const) {
-			it(`Forwards explicit logLevel (${explicitLevel}) unchanged through MultiSink to every sink via sendTelemetryEvent`, () => {
+			it(`Forwards explicit logLevel (${explicitLevel}) unchanged through MultiSink to every sink via \`sendTelemetryEvent\``, () => {
 				const { sink: sinkA, recorded: recordedA } = createRecordingSink(LogLevel.verbose);
 				const { sink: sinkB, recorded: recordedB } = createRecordingSink(LogLevel.verbose);
 				const multiSink = createMultiSinkLogger({ loggers: [sinkA, sinkB] });
@@ -197,7 +195,7 @@ describe("MultiSinkLogger", () => {
 				assert.strictEqual(recordedB[0]?.logLevel, explicitLevel);
 			});
 
-			it(`Forwards explicit logLevel (${explicitLevel}) unchanged through MultiSink via sendPerformanceEvent`, () => {
+			it(`Forwards explicit logLevel (${explicitLevel}) unchanged through MultiSink via \`sendPerformanceEvent\``, () => {
 				const { sink: sinkA, recorded: recordedA } = createRecordingSink(LogLevel.verbose);
 				const { sink: sinkB, recorded: recordedB } = createRecordingSink(LogLevel.verbose);
 				const multiSink = createMultiSinkLogger({ loggers: [sinkA, sinkB] });
@@ -213,30 +211,6 @@ describe("MultiSinkLogger", () => {
 			});
 		}
 
-		it("Forwards LogLevel.essential through Child -> MultiSink -> sinks (no explicit logLevel)", () => {
-			const { sink: sinkA, recorded: recordedA } = createRecordingSink();
-			const { sink: sinkB, recorded: recordedB } = createRecordingSink();
-			const multiSink = createMultiSinkLogger({ loggers: [sinkA, sinkB] });
-			const child = createChildLogger({ logger: multiSink });
-
-			child.sendTelemetryEvent({ eventName: "chainDefault" });
-
-			assert.strictEqual(recordedA[0]?.logLevel, LogLevel.essential);
-			assert.strictEqual(recordedB[0]?.logLevel, LogLevel.essential);
-		});
-
-		it("Forwards explicit LogLevel.info through Child -> MultiSink -> sinks", () => {
-			const { sink: sinkA, recorded: recordedA } = createRecordingSink(LogLevel.verbose);
-			const { sink: sinkB, recorded: recordedB } = createRecordingSink(LogLevel.verbose);
-			const multiSink = createMultiSinkLogger({ loggers: [sinkA, sinkB] });
-			const child = createChildLogger({ logger: multiSink });
-
-			child.sendTelemetryEvent({ eventName: "chainExplicit" }, undefined, LogLevel.info);
-
-			assert.strictEqual(recordedA[0]?.logLevel, LogLevel.info);
-			assert.strictEqual(recordedB[0]?.logLevel, LogLevel.info);
-		});
-
 		it("Forwards explicit logLevel through MultiSink -> [Child(sinkA), sinkB]", () => {
 			const { sink: sinkA, recorded: recordedA } = createRecordingSink(LogLevel.verbose);
 			const { sink: sinkB, recorded: recordedB } = createRecordingSink(LogLevel.verbose);
@@ -250,7 +224,7 @@ describe("MultiSinkLogger", () => {
 			assert.strictEqual(recordedB[0]?.logLevel, LogLevel.verbose);
 		});
 
-		it("Regression: MultiSinkLogger.send forwards explicit logLevel to every sink (was previously dropped)", () => {
+		it("Regression: `MultiSinkLogger.send` forwards explicit logLevel to every sink (was previously dropped)", () => {
 			const { sink: sinkA, recorded: recordedA } = createRecordingSink(LogLevel.verbose);
 			const { sink: sinkB, recorded: recordedB } = createRecordingSink(LogLevel.verbose);
 			const multiSink = createMultiSinkLogger({

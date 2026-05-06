@@ -217,7 +217,7 @@ export abstract class TelemetryLogger implements TelemetryLoggerExt {
 	 *
 	 * @param event - the event to send
 	 */
-	public abstract send(event: ITelemetryBaseEvent, logLevel: LogLevel): void;
+	public abstract send(event: ITelemetryBaseEvent, logLevel?: LogLevel): void;
 
 	/**
 	 * Send a telemetry event with the logger
@@ -230,15 +230,12 @@ export abstract class TelemetryLogger implements TelemetryLoggerExt {
 	public sendTelemetryEvent(
 		event: ITelemetryGenericEventExt,
 		error?: unknown,
-		logLevel:
-			| typeof LogLevel.verbose
-			| typeof LogLevel.info
-			| typeof LogLevel.essential = LogLevel.essential,
+		logLevel?: typeof LogLevel.verbose | typeof LogLevel.info,
 	): void {
 		this.sendTelemetryEventCore(
 			{ ...event, category: event.category ?? "generic" },
 			error,
-			event.category === "error" ? LogLevel.essential : logLevel,
+			event.category === "error" ? LogLevel.essential : (logLevel ?? LogLevel.essential),
 		);
 	}
 
@@ -298,10 +295,7 @@ export abstract class TelemetryLogger implements TelemetryLoggerExt {
 	public sendPerformanceEvent(
 		event: ITelemetryPerformanceEventExt,
 		error?: unknown,
-		logLevel:
-			| typeof LogLevel.verbose
-			| typeof LogLevel.info
-			| typeof LogLevel.essential = LogLevel.essential,
+		logLevel?: typeof LogLevel.verbose | typeof LogLevel.info,
 	): void {
 		const perfEvent = {
 			...event,
@@ -311,7 +305,7 @@ export abstract class TelemetryLogger implements TelemetryLoggerExt {
 		this.sendTelemetryEventCore(
 			perfEvent,
 			error,
-			perfEvent.category === "error" ? LogLevel.essential : logLevel,
+			perfEvent.category === "error" ? LogLevel.essential : (logLevel ?? LogLevel.essential),
 		);
 	}
 
@@ -523,9 +517,8 @@ export class ChildLogger extends TelemetryLogger {
 		return this.baseLogger.minLogLevel;
 	}
 
-	private shouldFilterOutEvent(event: ITelemetryBaseEvent, logLevel: LogLevel): boolean {
-		// Determine the log level of the event. The log level is now required, so it will always be provided.
-		const eventLogLevel = logLevel;
+	private shouldFilterOutEvent(event: ITelemetryBaseEvent, logLevel?: LogLevel): boolean {
+		const eventLogLevel = logLevel ?? LogLevel.essential;
 		const configLogLevel = this.baseLogger.minLogLevel ?? LogLevel.info;
 		// Filter out in case event log level is below what is wanted in config.
 		return eventLogLevel < configLogLevel;
@@ -536,11 +529,11 @@ export class ChildLogger extends TelemetryLogger {
 	 *
 	 * @param event - the event to send
 	 */
-	public send(event: ITelemetryBaseEvent, logLevel: LogLevel): void {
+	public send(event: ITelemetryBaseEvent, logLevel?: LogLevel): void {
 		if (this.shouldFilterOutEvent(event, logLevel)) {
 			return;
 		}
-		this.baseLogger.send(this.prepareEvent(event), logLevel);
+		this.baseLogger.send(this.prepareEvent(event), logLevel ?? LogLevel.essential);
 	}
 }
 
@@ -660,10 +653,10 @@ export class MultiSinkLogger extends TelemetryLogger {
 	 *
 	 * @param event - the event to send to all the registered logger
 	 */
-	public send(event: ITelemetryBaseEvent, logLevel: LogLevel): void {
+	public send(event: ITelemetryBaseEvent, logLevel?: LogLevel): void {
 		const newEvent = this.prepareEvent(event);
 		for (const logger of this.loggers) {
-			logger.send(newEvent, logLevel);
+			logger.send(newEvent, logLevel ?? LogLevel.essential);
 		}
 	}
 }

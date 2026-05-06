@@ -388,7 +388,7 @@ describe("Sampling", () => {
 			return { logger: wrapped, captures };
 		}
 
-		it("Forwards explicit logLevel through sendTelemetryEvent to the wrapped logger", () => {
+		it("Forwards explicit logLevel through `sendTelemetryEvent` to the wrapped logger", () => {
 			const { logger, captures } = createCapturingLogger();
 			const sampled = createSampledLogger(logger);
 
@@ -399,7 +399,7 @@ describe("Sampling", () => {
 			]);
 		});
 
-		it("Forwards explicit logLevel through sendPerformanceEvent to the wrapped logger", () => {
+		it("Forwards explicit logLevel through `sendPerformanceEvent` to the wrapped logger", () => {
 			const { logger, captures } = createCapturingLogger();
 			const sampled = createSampledLogger(logger);
 
@@ -410,7 +410,7 @@ describe("Sampling", () => {
 			]);
 		});
 
-		it("Forwards explicit logLevel through send to the wrapped logger", () => {
+		it("Forwards explicit logLevel through `send` to the wrapped logger", () => {
 			const { logger, captures } = createCapturingLogger();
 			const sampled = createSampledLogger(logger);
 

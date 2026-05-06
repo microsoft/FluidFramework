@@ -199,15 +199,15 @@ describe("ChildLogger", () => {
 		const childLogger1 = createChildLogger({ logger });
 
 		childLogger1.send({ category: "error", eventName: "testEvent" }, LogLevel.essential);
-		assert(sent, "event should be sent");
+		assert(sent, "essential event should be sent");
 
 		sent = false;
 		childLogger1.send({ category: "generic", eventName: "testEvent" }, LogLevel.info);
-		assert(!sent, "event should not be sent");
+		assert(!sent, "info event should not be sent");
 
 		sent = false;
 		childLogger1.send({ category: "generic", eventName: "testEvent" });
-		assert(sent, "default event should be sent");
+		assert(sent, "event with undefined logLevel should be sent");
 	});
 
 	it("should receive verbose events with min loglevel set as verbose", () => {
@@ -225,11 +225,11 @@ describe("ChildLogger", () => {
 		const childLogger1 = createChildLogger({ logger });
 
 		childLogger1.send({ category: "generic", eventName: "testEvent" }, LogLevel.verbose);
-		assert(sent, "event should be sent");
+		assert(sent, "verbose event should be sent");
 
 		sent = false;
 		childLogger1.send({ category: "error", eventName: "testEvent" });
-		assert(sent, "default event should be sent");
+		assert(sent, "event with undefined logLevel should be sent");
 	});
 
 	it("should not receive verbose events with no min loglevel", () => {
@@ -245,7 +245,7 @@ describe("ChildLogger", () => {
 		const childLogger1 = createChildLogger({ logger });
 
 		childLogger1.send({ category: "error", eventName: "testEvent" });
-		assert(sent, "default event should be sent");
+		assert(sent, "event with undefined logLevel should be sent");
 
 		sent = false;
 		childLogger1.send({ category: "generic", eventName: "testEvent" }, LogLevel.verbose);
@@ -274,6 +274,39 @@ describe("ChildLogger", () => {
 		assert(!sent, "verbose event should not be sent");
 
 		childLogger1.send({ category: "generic", eventName: "testEvent" }, LogLevel.info);
-		assert(sent, "default event should be sent");
+		assert(sent, "info event should be sent");
+	});
+
+	describe("logLevel forwarding", () => {
+		function createRecordingSink(): {
+			sink: ITelemetryBaseLogger;
+			recorded: { event: ITelemetryBaseEvent; logLevel: LogLevel | undefined }[];
+		} {
+			const recorded: { event: ITelemetryBaseEvent; logLevel: LogLevel | undefined }[] = [];
+			const sink: ITelemetryBaseLogger = {
+				send: (event, logLevel): void => {
+					recorded.push({ event, logLevel });
+				},
+			};
+			return { sink, recorded };
+		}
+
+		it("Forwards LogLevel.essential to the sink when `sendTelemetryEvent` omits logLevel", () => {
+			const { sink, recorded } = createRecordingSink();
+			const child = createChildLogger({ logger: sink });
+
+			child.sendTelemetryEvent({ eventName: "chainDefault" });
+
+			assert.strictEqual(recorded[0]?.logLevel, LogLevel.essential);
+		});
+
+		it("Forwards explicit LogLevel.info to the sink via `sendTelemetryEvent`", () => {
+			const { sink, recorded } = createRecordingSink();
+			const child = createChildLogger({ logger: sink });
+
+			child.sendTelemetryEvent({ eventName: "chainExplicit" }, undefined, LogLevel.info);
+
+			assert.strictEqual(recorded[0]?.logLevel, LogLevel.info);
+		});
 	});
 });
