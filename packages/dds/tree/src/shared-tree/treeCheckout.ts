@@ -868,7 +868,11 @@ export class TreeCheckout implements ITreeCheckout {
 			return this.unmountTransaction(transactionCallbackStatus, params);
 		};
 		return params?.bufferEvents === true
-			? withBufferedTreeEvents(transactionCore)
+			? withBufferedTreeEvents(transactionCore, {
+					// On rollback the tree is restored to its starting state, so any buffered events
+					// represent net-zero changes and must not be surfaced to listeners.
+					shouldDiscard: (result) => result.success === false,
+				})
 			: transactionCore();
 	}
 

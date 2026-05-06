@@ -876,14 +876,30 @@ describe("sharedTreeView", () => {
 				},
 			);
 
-			itView("coalesces rollback events into a single nodeChanged (not two)", ({ view }) => {
-				// Without buffering a rollback emits TWO events: one when the edit is applied
-				// and a second when the abort reverses it.
-				// With bufferEvents the KernelEventBuffer accumulates both under the same field
-				// key and flushes exactly ONE coalesced event.
-				// TODO: Ideally a fully rolled-back transaction would emit ZERO events because
-				// the net change to the tree is zero.  This requires delta composition support
-				// in KernelEventBuffer.flush() so it can suppress identity (no-op) changes.
+			itView(
+				"unbuffered rollback fires two nodeChanged events (edit then revert)",
+				({ view }) => {
+					// Baseline: without `bufferEvents`, the insert and the abort each fire their
+					// own `nodeChanged` event — two events for a net-zero change.
+					const log: string[] = [];
+					Tree.on(view.root, "nodeChanged", () => log.push("nodeChanged"));
+
+					view.runTransaction(() => {
+						view.root.insertAtEnd("A");
+						return { rollback: true };
+					},
+					{ bufferEvents: false },);
+
+					assert.deepEqual(view.root, []);
+					assert.deepEqual(log, ["nodeChanged", "nodeChanged"]);
+				},
+			);
+
+			itView("emits no nodeChanged events for a rolled-back transaction", ({ view }) => {
+				// Without buffering, a rolled-back transaction emits TWO events: one when the edit
+				// is applied and a second when the abort reverses it. With bufferEvents both are
+				// captured by the buffer; because the tree ends in its starting state the
+				// runTransaction wrapper discards the buffer entirely instead of flushing it.
 				const log: string[] = [];
 				Tree.on(view.root, "nodeChanged", () => log.push("nodeChanged"));
 
@@ -896,27 +912,8 @@ describe("sharedTreeView", () => {
 				);
 
 				assert.deepEqual(view.root, []);
-				assert.deepEqual(log, ["nodeChanged"]);
+				assert.deepEqual(log, []);
 			});
-
-			itView(
-				"unbuffered rollback fires two nodeChanged events (edit then revert)",
-				({ view }) => {
-					// Demonstrates the improvement: without bufferEvents the abort path fires a
-					// second, unbuffered event after the callback's buffered event has already
-					// flushed — resulting in two total events for a net-zero change.
-					const log: string[] = [];
-					Tree.on(view.root, "nodeChanged", () => log.push("nodeChanged"));
-
-					view.runTransaction(() => {
-						view.root.insertAtEnd("A");
-						return { rollback: true };
-					});
-
-					assert.deepEqual(view.root, []);
-					assert.deepEqual(log, ["nodeChanged", "nodeChanged"]);
-				},
-			);
 
 			itView(
 				"fires nodeChanged normally (unbuffered) when bufferEvents is false",
@@ -992,10 +989,7 @@ describe("sharedTreeView", () => {
 				},
 			);
 
-			itView("coalesces rollback events into a single treeChanged (not two)", ({ view }) => {
-				// TODO: Ideally a fully rolled-back transaction would emit ZERO events because
-				// the net change to the tree is zero.  This requires delta composition support
-				// in KernelEventBuffer.flush() so it can suppress identity (no-op) changes.
+			itView("emits no treeChanged events for a rolled-back transaction", ({ view }) => {
 				const log: string[] = [];
 				Tree.on(view.root, "treeChanged", () => log.push("treeChanged"));
 
@@ -1008,7 +1002,7 @@ describe("sharedTreeView", () => {
 				);
 
 				assert.deepEqual(view.root, []);
-				assert.deepEqual(log, ["treeChanged"]);
+				assert.deepEqual(log, []);
 			});
 
 			// Nested-schema tests — verify treeChanged behavior that diverges from nodeChanged.

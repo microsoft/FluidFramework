@@ -308,6 +308,24 @@ type KernelEvents = Pick<AnchorEvents, (typeof kernelEvents)[number]>;
 let bufferTreeEvents: boolean = false;
 
 /**
+ * Options for {@link withBufferedTreeEvents}.
+ */
+export interface WithBufferedTreeEventsOptions<TResult> {
+	/**
+	 * Predicate invoked with the callback's return value after it completes.
+	 * If it returns `true`, all events buffered during this call are discarded
+	 * instead of being flushed.
+	 * @remarks
+	 * Only honored at the outermost call. When `withBufferedTreeEvents` is invoked
+	 * while another call is already buffering, this option has no effect — the
+	 * discard decision is owned by the outer call.
+	 *
+	 * If the callback throws, the predicate is not invoked and buffered events are flushed.
+	 */
+	readonly shouldDiscard?: (result: TResult) => boolean;
+}
+
+/**
  * Call the provided callback with {@link TreeNode}s' events paused until after the callback's completion.
  *
  * Events that would otherwise have been emitted immediately are merged and buffered until after the
@@ -316,27 +334,36 @@ let bufferTreeEvents: boolean = false;
  * @remarks
  * Note: this should be used with caution. User application behaviors are implicitly coupled to event timing.
  * Disrupting this timing can lead to unexpected behavior.
+ * @param callback - Function to invoke while events are buffered.
+ * @param options - Optional configuration. See {@link WithBufferedTreeEventsOptions}.
  */
-export function withBufferedTreeEvents<TResult>(callback: () => TResult): TResult {
+export function withBufferedTreeEvents<TResult>(
+	callback: () => TResult,
+	options?: WithBufferedTreeEventsOptions<TResult>,
+): TResult {
 	if (bufferTreeEvents) {
-		// Already buffering - just run the callback
+		// Already buffering - just run the callback. The outermost call owns the flush/discard decision.
 		return callback();
-	} else {
-		bufferTreeEvents = true;
-		try {
-			return callback();
-		} finally {
-			bufferTreeEvents = false;
-			flushEventsEmitter.emit("flush");
-		}
+	}
+	bufferTreeEvents = true;
+	let discard = false;
+	try {
+		const result = callback();
+		discard = options?.shouldDiscard?.(result) === true;
+		return result;
+	} finally {
+		bufferTreeEvents = false;
+		flushEventsEmitter.emit(discard ? "discard" : "flush");
 	}
 }
 
 /**
- * Event emitter to notify subscribers when tree events buffered due to {@link withBufferedTreeEvents} should be flushed.
+ * Event emitter to notify subscribers when tree events buffered due to {@link withBufferedTreeEvents} should be flushed
+ * or discarded.
  */
 const flushEventsEmitter = createEmitter<{
 	flush: () => void;
+	discard: () => void;
 }>();
 
 /**
@@ -350,6 +377,14 @@ class KernelEventBuffer implements Listenable<KernelEvents> {
 	 * Listen to {@link flushEventsEmitter} to know when to flush buffered events.
 	 */
 	readonly #disposeOnFlushListener = flushEventsEmitter.on("flush", this.flush.bind(this));
+
+	/**
+	 * Listen to {@link flushEventsEmitter} to know when to discard buffered events.
+	 */
+	readonly #disposeOnDiscardListener = flushEventsEmitter.on(
+		"discard",
+		this.discard.bind(this),
+	);
 
 	readonly #events = createEmitter<KernelEvents>();
 
@@ -526,13 +561,11 @@ class KernelEventBuffer implements Listenable<KernelEvents> {
 	public flush(): void {
 		this.#assertNotDisposed();
 
-		// TODO: The buffer currently tracks *which* fields changed during the window but not the
-		// net delta (i.e. it cannot tell whether a field ended up in the same state it started in).
-		// As a result, a rolled-back transaction still fires one `nodeChanged` event per affected
-		// field even though the tree is net-unchanged.  Ideally, flush() would suppress events for
-		// fields whose composed delta is a no-op (identity change).  This requires delta composition
-		// support in the eventing stack; see the invalidation comment in
-		// #handleChildrenChangedAfterBatch for the related limitation.
+		// TODO: The buffer tracks *which* fields changed during the window but not the net delta,
+		// so a sequence of edits that nets to no change within a committed transaction (e.g. an
+		// insert followed by a remove of the same item) still emits one event per affected field.
+		// Suppressing those would require delta composition support in the eventing stack; see the
+		// invalidation comment in #handleChildrenChangedAfterBatch for the related limitation.
 		if (this.#childrenChangedBuffer.size > 0) {
 			this.#events.emit("childrenChangedAfterBatch", {
 				changedFields: this.#childrenChangedBuffer,
@@ -547,6 +580,22 @@ class KernelEventBuffer implements Listenable<KernelEvents> {
 			this.#events.emit("subtreeChangedAfterBatch");
 			this.#subTreeChangedBuffer = false;
 		}
+	}
+
+	/**
+	 * Discards any events buffered due to {@link withBufferedTreeEvents} without emitting them.
+	 *
+	 * @remarks
+	 * Used by transaction code paths that know the tree is in the same state it started in
+	 * (e.g. a rolled-back synchronous transaction) so the buffered events represent net-zero
+	 * changes that should not be observed by listeners.
+	 */
+	public discard(): void {
+		this.#assertNotDisposed();
+		this.#childrenChangedBuffer.clear();
+		this.#fieldMarksBuffer.clear();
+		this.#invalidatedFieldMarkKeys.clear();
+		this.#subTreeChangedBuffer = false;
 	}
 
 	#assertNotDisposed(): void {
@@ -564,6 +613,7 @@ class KernelEventBuffer implements Listenable<KernelEvents> {
 		);
 
 		this.#disposeOnFlushListener();
+		this.#disposeOnDiscardListener();
 		for (const off of this.#disposeSourceListeners.values()) {
 			off();
 		}

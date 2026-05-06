@@ -149,7 +149,11 @@ export interface RunTransactionParams {
 	readonly label?: unknown;
 
 	/**
-	 * Set this to true to have the transaction's change events buffered and emitted only once the transaction completes
+	 * Set this to true to have the transaction's change events buffered and emitted only once the transaction completes.
+	 *
+	 * @remarks
+	 * If the transaction rolls back, no buffered events are emitted (the tree is unchanged).
+	 *
 	 * @defaultValue `false`
 	 */
 	readonly bufferEvents?: boolean;
