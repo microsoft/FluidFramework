@@ -193,7 +193,6 @@ async function main(): Promise<void> {
 		$schema: "http://json-schema.org/draft-07/schema#",
 		description:
 			"Auto-generated list of deprecated ESLint rules. Do not edit manually. Run: tsx scripts/generate-deprecated-rules.ts",
-		generatedAt: new Date().toISOString(),
 		deprecatedRules: deprecatedRulesOutput,
 	};
 
