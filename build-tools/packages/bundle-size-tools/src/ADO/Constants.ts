@@ -18,8 +18,8 @@ export interface IADOConstants {
 	// Note: Assumes CI and PR builds both run in the same org/project
 	prBuildDefinitionId?: number;
 
-	// The name of the build artifact that contains the bundle size artifacts
-	bundleAnalysisArtifactName: string;
+	// The name of the build artifact that contains the bundle size data
+	artifactName: string;
 
 	// The guid of the repo
 	// Used to post/update comments in ADO

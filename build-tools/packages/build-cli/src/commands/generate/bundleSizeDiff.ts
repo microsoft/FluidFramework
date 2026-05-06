@@ -22,7 +22,7 @@ const adoConstants = {
 	orgUrl: "https://dev.azure.com/fluidframework",
 	projectName: "public",
 	ciBuildDefinitionId: 48,
-	bundleAnalysisArtifactName: "bundleAnalyzerJson",
+	artifactName: "bundleAnalyzerJson",
 } as const;
 
 // Default path to the PR's locally-collected analyzer.json files.
