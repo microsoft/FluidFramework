@@ -6,7 +6,7 @@ Add readOnly option to loadFrozenContainerFromPendingState
 
 `loadFrozenContainerFromPendingState` and `createFrozenDocumentServiceFactory` now accept an optional `readOnly` parameter (default `true`, preserving existing behavior).
 
-When `readOnly: false`, the frozen container loads as writable so the runtime accepts DDS submissions. The container stays `Connected` against the synthetic `FrozenDeltaStream`: `ConnectionManager.sendMessages` recognizes it as the live connection and short-circuits before the read-mode reconnect branch, dropping outbound messages at the connection-manager layer. Submitted ops accumulate in the runtime's pending-state manager so `getPendingLocalState()` can capture them.
+When `readOnly: false`, the frozen container loads as writable so the runtime accepts DDS submissions. The container stays `Connected` against a synthetic `WritableFrozenDeltaStream`: `ConnectionManager.sendMessages` recognizes it as the live connection and short-circuits before the read-mode reconnect branch, dropping outbound messages at the connection-manager layer. Submitted ops accumulate in the runtime's pending-state manager so `getPendingLocalState()` can capture them.
 
 Use `readOnly: false` when the caller wants to load a frozen container, apply additional local changes, and capture the resulting pending state via `getPendingLocalState()`.
 

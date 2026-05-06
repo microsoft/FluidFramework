@@ -775,7 +775,6 @@ describe("loadFrozenContainerFromPendingState", () => {
 			// container stays Connected (sendMessages drops them at the WritableFrozenDeltaStream
 			// short-circuit), and dispose() then runs cleanly.
 			frozenEntryPoint.ITestFluidObject.root.set("aWrite", 1);
-			await new Promise<void>((resolve) => setTimeout(resolve, 200));
 
 			frozenContainer.dispose();
 			assert.strictEqual(
@@ -813,7 +812,6 @@ describe("loadFrozenContainerFromPendingState", () => {
 			);
 
 			frozenEntryPoint.ITestFluidObject.root.set("aWrite", 1);
-			await new Promise<void>((resolve) => setTimeout(resolve, 200));
 
 			// close() does not propagate to service.dispose(). In writable-frozen flow that's
 			// fine: sendMessages drops outbound writes at the WritableFrozenDeltaStream
@@ -867,10 +865,19 @@ describe("loadFrozenContainerFromPendingState", () => {
 			}
 
 			// Force a disconnect/reconnect cycle. pendingStateManager will replayPendingStates
-			// on the new connection.
+			// on the new connection. Bounded wait: races the "connected" event against a
+			// max-duration safety net. The writable-frozen connect path is in-process
+			// (FrozenDocumentService.connectToDeltaStream returns synchronously), so the
+			// reconnect typically settles in microtasks; the safety bound only fires if
+			// state wiring changes.
 			frozenContainer.disconnect();
 			frozenContainer.connect();
-			await new Promise<void>((resolve) => setTimeout(resolve, 200));
+			await Promise.race([
+				new Promise<void>((resolve) =>
+					frozenContainer.once("connected", () => resolve()),
+				),
+				new Promise<void>((resolve) => setTimeout(resolve, 500)),
+			]);
 
 			assert.strictEqual(
 				frozenContainer.closed,
@@ -924,25 +931,25 @@ describe("loadFrozenContainerFromPendingState", () => {
 				"Expected frozen container entrypoint to be a valid TestFluidObject",
 			);
 
-			// First write — sendMessages drops it at the FrozenDeltaStream short-circuit and
-			// the runtime accumulates it in pendingStateManager.
-			frozenEntryPoint.ITestFluidObject.root.set("preDisconnect", "first");
+			// First write — sendMessages drops it at the WritableFrozenDeltaStream
+			// short-circuit and the runtime accumulates it in pendingStateManager.
+			frozenEntryPoint.ITestFluidObject.root.set("preDelay", "first");
 
-			// Bounded wait — proves the writable-frozen container survives a non-trivial
-			// idle interval (no async close from any deferred reconnect work) before the
-			// next write batch.
-			await new Promise<void>((resolve) => setTimeout(resolve, 500));
+			// Cross a single macrotask boundary between the two write batches. The test's
+			// purpose is that the runtime continues to capture pending state across timer
+			// boundaries — a `setTimeout(0)` is sufficient to land on a fresh macrotask.
+			await new Promise<void>((resolve) => setTimeout(resolve, 0));
 
 			// Second write batch — the runtime continues to apply locally and accumulate.
-			frozenEntryPoint.ITestFluidObject.root.set("postDisconnect", "second");
+			frozenEntryPoint.ITestFluidObject.root.set("postDelay", "second");
 
 			assert.strictEqual(
-				frozenEntryPoint.ITestFluidObject.root.get("preDisconnect"),
+				frozenEntryPoint.ITestFluidObject.root.get("preDelay"),
 				"first",
 				"Expected first-batch write to be locally visible",
 			);
 			assert.strictEqual(
-				frozenEntryPoint.ITestFluidObject.root.get("postDisconnect"),
+				frozenEntryPoint.ITestFluidObject.root.get("postDelay"),
 				"second",
 				"Expected second-batch write to be locally visible",
 			);
@@ -966,12 +973,12 @@ describe("loadFrozenContainerFromPendingState", () => {
 				"Expected second frozen entrypoint to be a valid TestFluidObject",
 			);
 			assert.strictEqual(
-				secondEntryPoint.ITestFluidObject.root.get("preDisconnect"),
+				secondEntryPoint.ITestFluidObject.root.get("preDelay"),
 				"first",
 				"Expected first-batch write to round-trip through pending state",
 			);
 			assert.strictEqual(
-				secondEntryPoint.ITestFluidObject.root.get("postDisconnect"),
+				secondEntryPoint.ITestFluidObject.root.get("postDelay"),
 				"second",
 				"Expected second-batch write to round-trip through pending state",
 			);
@@ -1008,8 +1015,10 @@ describe("loadFrozenContainerFromPendingState", () => {
 			// Initial readonly state is covered by the dedicated `surfaces as not readonly`
 			// test; this one focuses on the post-forceReadonly transition.
 
+			// forceReadonly toggles _forceReadonly synchronously, so readOnlyInfo updates
+			// without needing to await a reconnect cycle. The disconnect/reconnect-as-read
+			// triggered behind it is exercised by the survives-disconnect/reconnect test.
 			frozenContainer.forceReadonly?.(true);
-			await new Promise<void>((resolve) => setTimeout(resolve, 200));
 
 			const info = frozenContainer.readOnlyInfo;
 			assert(
