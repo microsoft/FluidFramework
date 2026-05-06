@@ -1101,12 +1101,11 @@ export namespace System_TableSchema {
 					return this.#getColumnCache().get(columnOrIdOrIndex);
 				}
 
-				// If the user provided a node, ensure it actually exists in this table.
-				if (!this.table.columns.includes(columnOrIdOrIndex)) {
-					return undefined;
-				}
-
-				return columnOrIdOrIndex;
+				// If the user provided a node, look it up by ID in the cache and confirm
+				// the cached node is the same instance — preserving the identity-based
+				// semantics of the prior `.includes` check while avoiding a linear scan.
+				const cached = this.#getColumnCache().get(columnOrIdOrIndex.id);
+				return cached === columnOrIdOrIndex ? columnOrIdOrIndex : undefined;
 			}
 
 			/**
@@ -1196,12 +1195,11 @@ export namespace System_TableSchema {
 					return this.#getRowCache().get(rowOrIdOrIndex);
 				}
 
-				// If the user provided a node, ensure it actually exists in this table.
-				if (!this.table.rows.includes(rowOrIdOrIndex)) {
-					return undefined;
-				}
-
-				return rowOrIdOrIndex;
+				// If the user provided a node, look it up by ID in the cache and confirm
+				// the cached node is the same instance — preserving the identity-based
+				// semantics of the prior `.includes` check while avoiding a linear scan.
+				const cached = this.#getRowCache().get(rowOrIdOrIndex.id);
+				return cached === rowOrIdOrIndex ? rowOrIdOrIndex : undefined;
 			}
 
 			/**
