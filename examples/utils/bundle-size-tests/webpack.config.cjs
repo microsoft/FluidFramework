@@ -130,9 +130,13 @@ module.exports = {
 		}),
 		// Generates analyzer.json with per-asset statSize/parsedSize/gzipSize that
 		// `flub generate bundleSizeDiff` consumes to compute the bundle-size diff.
+		// Emitted to a sibling folder so the file ends up in its own artifact
+		// (bundleAnalyzerJson) rather than alongside bundleAnalysis content; the
+		// FF-internal telemetry handler walks every .json under the bundleAnalysis
+		// artifact and would otherwise try to parse this file as webpack stats.
 		new BundleAnalyzerPlugin({
 			analyzerMode: "json",
-			reportFilename: path.resolve(process.cwd(), "bundleAnalysis/analyzer.json"),
+			reportFilename: path.resolve(process.cwd(), "bundleAnalyzerJson/analyzer.json"),
 		}),
 		// Generates bundleStats.msp.gz (compressed webpack stats; consumed by the
 		// FF-internal telemetry handler).

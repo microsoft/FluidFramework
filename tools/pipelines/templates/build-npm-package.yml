@@ -486,8 +486,20 @@ extends:
                       sourceFolder: '$(Pipeline.Workspace)/${{ parameters.buildDirectory }}/artifacts/bundleAnalysis'
                       targetFolder: $(Build.ArtifactStagingDirectory)/bundleAnalysis
 
-                  # At this point we want to publish the bundleAnalysis artifact,
-                  # but as part of 1ES migration that's now part of templateContext.outputs below.
+                  # bundleAnalyzerJson is a parallel artifact carrying analyzer.json
+                  # (consumed by `flub generate bundleSizeDiff`). It's separate from the
+                  # bundleAnalysis artifact so the FF-internal telemetry handler — which
+                  # walks every .json under bundleAnalysis — doesn't trip over a file
+                  # whose shape it doesn't recognize.
+                  - task: CopyFiles@2
+                    displayName: Copy bundle analyzer JSON files to artifact staging directory
+                    inputs:
+                      sourceFolder: '$(Pipeline.Workspace)/${{ parameters.buildDirectory }}/artifacts/bundleAnalyzerJson'
+                      targetFolder: $(Build.ArtifactStagingDirectory)/bundleAnalyzerJson
+
+                  # At this point we want to publish the bundleAnalysis and
+                  # bundleAnalyzerJson artifacts, but as part of 1ES migration that's
+                  # now part of templateContext.outputs below.
 
               # Docs
               - ${{ if ne(parameters.taskBuildDocs, false) }}:
@@ -571,6 +583,20 @@ extends:
                       condition: and( succeeded(), ne(variables['Build.Reason'], 'PullRequest'), eq(${{ parameters.isBundleSizeArtifactsPipeline }}, true) )
                       targetPath: $(Build.ArtifactStagingDirectory)/bundleAnalysis
                       artifactName: bundleAnalysis
+                      sbomEnabled: false
+                      publishLocation: pipeline
+
+                    # Parallel artifact for analyzer.json. Kept separate from
+                    # bundleAnalysis so the FF-internal telemetry handler (which walks
+                    # every .json file under that artifact) doesn't pick this up.
+                    # Only published on non-PR (CI) builds so it can serve as the baseline
+                    # that PR builds compare against; PRs read their own analyzer.json
+                    # from artifacts/bundleAnalyzerJson locally and don't need to publish it.
+                    - output: pipelineArtifact
+                      displayName: Publish Artifacts - bundle-analyzer-json
+                      condition: and( succeeded(), ne(variables['Build.Reason'], 'PullRequest'), eq(${{ parameters.isBundleSizeArtifactsPipeline }}, true) )
+                      targetPath: $(Build.ArtifactStagingDirectory)/bundleAnalyzerJson
+                      artifactName: bundleAnalyzerJson
                       sbomEnabled: false
                       publishLocation: pipeline
 
