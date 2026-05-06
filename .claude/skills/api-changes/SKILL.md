@@ -26,7 +26,7 @@ If all changes are `@internal`-only, tell the user there are no customer-facing 
 
 ---
 
-## Step 2: Check release tags and documentation
+## Step 2: Check release tags, documentation, and export reachability
 
 For any new exports, verify each has a release tag and flag any missing ones to the user — API Extractor will fail with `ae-missing-release-tag`. Help the user choose the right tag:
 
@@ -38,6 +38,8 @@ For any new exports, verify each has a release tag and flag any missing ones to 
 | `@internal` | Framework-internal only, not for external consumers. |
 
 When in doubt: `@alpha` — easier to promote than demote. `@legacy` is a paired modifier (`@legacy @public` or `@legacy @alpha`) for FF v1 APIs; don't apply it to new APIs.
+
+For every new customer-facing export (`@public`, `@beta`, `@alpha`) that is intended to be usable by package consumers, verify it is reachable from the package's public entrypoint, not just exported from the adjacent module or folder. Trace and update the export chain through every relevant `index.ts` barrel up to the package root entrypoint (typically `src/index.ts`, or tiered entrypoints such as `src/alpha.ts` / `src/beta.ts` where used). Missing parent-barrel exports are incomplete API changes. API Extractor may not report the intended API at all, and consumers are expected to import from the package's top-level entrypoint rather than reaching into subpaths.
 
 Also check that each new customer-facing export (`@public`, `@beta`, `@alpha`) has TSDoc documentation — at minimum a summary, `@param` tags, and `@returns` if applicable. Flag any missing documentation to the user.
 

@@ -8,25 +8,33 @@ import { BuildResult, BuildStatus } from "azure-devops-node-api/interfaces/Build
 import type JSZip from "jszip";
 import { join } from "path";
 
-import type { BundleComparison, BundleComparisonResult } from "../BundleBuddyTypes";
+import type { BundleComparison } from "../BundleBuddyTypes";
 import { compareBundles } from "../compareBundles";
 import { getBaselineCommit, getBuilds, getPriorCommit } from "../utilities";
 import {
-	getBundlePathsFromZipObject,
-	getStatsFileFromZip,
+	getAnalyzerJsonFromZip,
+	getAnalyzerPathsFromZipObject,
 	getZipObjectFromArtifact,
 } from "./AdoArtifactFileProvider";
 import type { IADOConstants } from "./Constants";
-import { DefaultStatsProcessors } from "./DefaultStatsProcessors";
 import {
-	getBundleBuddyConfigFromFileSystem,
-	getBundlePathsFromFileSystem,
-	getStatsFileFromFileSystem,
+	getAnalyzerJsonFromFileSystem,
+	getAnalyzerPathsFromFileSystem,
 } from "./FileSystemBundleFileProvider";
 import { getBuildTagForCommit } from "./getBuildTagForCommit";
-import { getBundleBuddyConfigMap } from "./getBundleBuddyConfigMap";
-import { getBundleSummaries } from "./getBundleSummaries";
-import { getCommentForBundleDiff, getSimpleComment } from "./getCommentForBundleDiff";
+import { getBundleSummariesFromAnalyzer } from "./getBundleSummaries";
+
+/**
+ * Result of a size comparison against a baseline build, discriminated by `kind`.
+ *
+ * On `"success"`, `comparison` holds the bundle diff against `baselineCommit`.
+ * On `"error"`, the comparison could not be produced and `error` holds the reason;
+ * `baselineCommit` reflects the last commit that was attempted and may be `undefined`
+ * if the search never found a candidate.
+ */
+export type SizeComparison =
+	| { kind: "success"; baselineCommit: string; comparison: BundleComparison[] }
+	| { kind: "error"; baselineCommit: string | undefined; error: string };
 
 export class ADOSizeComparator {
 	/**
@@ -51,6 +59,11 @@ export class ADOSizeComparator {
 		 * Path to existing local bundle size reports
 		 */
 		private readonly localReportPath: string,
+		/**
+		 * Name of the target branch the current branch will merge into. Used to compute
+		 * the baseline commit (`git merge-base origin/<targetBranch> HEAD`).
+		 */
+		private readonly targetBranch: string,
 		/**
 		 * Optional current PR build id to use, such as to tag for
 		 * later update when the baseline build has not completed
@@ -80,124 +93,126 @@ export class ADOSizeComparator {
 	}
 
 	/**
-	 * Create a size comparison message that can be posted to a PR
+	 * Run the bundle size comparison against the baseline build.
+	 *
 	 * @param tagWaiting - If the build should be tagged to be updated when the baseline
 	 * build completes (if it wasn't already complete when the comparison runs)
-	 * @returns The size comparison result with formatted message and raw data.  In case
-	 * of failure, the message contains the error message and the raw data will be undefined.
+	 * @returns A {@link SizeComparison} tagged with `kind: "success"` or `kind: "error"`.
+	 * Never throws: unexpected exceptions from underlying `git` shell-outs, ADO API
+	 * calls, or stats-file parsing are caught and reported via the `error` variant so
+	 * callers can rely on the return shape.
 	 */
-	public async createSizeComparisonMessage(
-		tagWaiting: boolean,
-	): Promise<BundleComparisonResult> {
-		let baselineCommit: string | undefined = getBaselineCommit();
-		console.log(`The baseline commit for this PR is ${baselineCommit}`);
+	public async getSizeComparison(tagWaiting: boolean): Promise<SizeComparison> {
+		// Declared outside the try block so the catch can still report the last-known
+		// commit value in the synthesized error variant.
+		let baselineCommit: string | undefined;
+		try {
+			baselineCommit = getBaselineCommit(this.targetBranch);
+			console.log(`The baseline commit for this PR is ${baselineCommit}`);
 
-		// Some circumstances may want us to try a fallback, such as when a commit does
-		// not trigger any CI loops.  If a fallback generator is provided, use that.
-		let baselineZip;
-		const fallbackGen = this.getFallbackCommit?.(baselineCommit!);
-		const recentBuilds = await getBuilds(this.adoConnection, {
-			project: this.adoConstants.projectName,
-			definitions: [this.adoConstants.ciBuildDefinitionId],
-			maxBuildsPerDefinition:
-				this.adoConstants.buildsToSearch ?? ADOSizeComparator.defaultBuildsToSearch,
-		});
-		while (baselineCommit !== undefined) {
-			const baselineBuild = recentBuilds.find(
-				(build) => build.sourceVersion === baselineCommit,
-			);
-
-			if (baselineBuild === undefined) {
-				baselineCommit = fallbackGen?.next().value;
-				// For reasons that I don't understand, the "undefined" string is omitted in the log output, which makes the
-				// output very confusing. The string is capitalized here and elsewhere in this file as a workaround.
-				console.log(
-					`Trying backup baseline commit when baseline build is UNDEFINED: ${baselineCommit}`,
+			// Some circumstances may want us to try a fallback, such as when a commit does
+			// not trigger any CI loops.  If a fallback generator is provided, use that.
+			let baselineZip;
+			const fallbackGen = this.getFallbackCommit?.(baselineCommit!);
+			const recentBuilds = await getBuilds(this.adoConnection, {
+				project: this.adoConstants.projectName,
+				definitions: [this.adoConstants.ciBuildDefinitionId],
+				maxBuildsPerDefinition:
+					this.adoConstants.buildsToSearch ?? ADOSizeComparator.defaultBuildsToSearch,
+			});
+			while (baselineCommit !== undefined) {
+				const baselineBuild = recentBuilds.find(
+					(build) => build.sourceVersion === baselineCommit,
 				);
-				continue;
-			}
 
-			// Baseline build does not have id
-			if (baselineBuild.id === undefined) {
-				const message = `Baseline build does not have a build id`;
-				console.log(message);
-				return { message, comparison: undefined };
-			}
-
-			// Baseline build is pending
-			if (baselineBuild.status !== BuildStatus.Completed) {
-				const message = getSimpleComment(
-					"Baseline build for this PR has not yet completed.",
-					baselineCommit,
-				);
-				console.log(message);
-
-				if (tagWaiting) {
-					this.tagBuildAsWaiting(baselineCommit);
+				if (baselineBuild === undefined) {
+					baselineCommit = fallbackGen?.next().value;
+					// For reasons that I don't understand, the "undefined" string is omitted in the log output, which makes the
+					// output very confusing. The string is capitalized here and elsewhere in this file as a workaround.
+					console.log(
+						`Trying backup baseline commit when baseline build is UNDEFINED: ${baselineCommit}`,
+					);
+					continue;
 				}
 
-				return { message, comparison: undefined };
+				// Baseline build does not have id
+				if (baselineBuild.id === undefined) {
+					const error = `Baseline build does not have a build id`;
+					console.log(error);
+					return { kind: "error", baselineCommit, error };
+				}
+
+				// Baseline build is pending
+				if (baselineBuild.status !== BuildStatus.Completed) {
+					const error = "Baseline build for this PR has not yet completed.";
+					console.log(error);
+
+					if (tagWaiting) {
+						await this.tagBuildAsWaiting(baselineCommit);
+					}
+
+					return { kind: "error", baselineCommit, error };
+				}
+
+				// Baseline build failed
+				if (baselineBuild.result !== BuildResult.Succeeded) {
+					const error =
+						"Baseline CI build failed, cannot generate bundle analysis at this time";
+					console.log(error);
+					return { kind: "error", baselineCommit, error };
+				}
+
+				// Baseline build succeeded
+				console.log(`Found baseline build with id: ${baselineBuild.id}`);
+				console.log(`projectName: ${this.adoConstants.projectName}`);
+				console.log(`artifactName: ${this.adoConstants.artifactName}`);
+
+				baselineZip = await getZipObjectFromArtifact(
+					this.adoConnection,
+					this.adoConstants.projectName,
+					baselineBuild.id,
+					this.adoConstants.artifactName,
+				).catch((error) => {
+					console.log(`Error unzipping object from artifact: ${error.message}`);
+					console.log(`Error stack: ${error.stack}`);
+					return undefined;
+				});
+
+				// For reasons that I don't understand, the "undefined" string is omitted in the log output, which makes the
+				// output very confusing. The string is capitalized here and elsewhere in this file as a workaround.
+				console.log(`Baseline Zip === UNDEFINED: ${baselineZip === undefined}`);
+
+				// Successful baseline build does not have the needed build artifacts
+				if (baselineZip === undefined) {
+					baselineCommit = fallbackGen?.next().value;
+					console.log(
+						`Trying backup baseline commit when successful baseline build does not have the needed build artifacts ${baselineCommit}`,
+					);
+					continue;
+				}
+
+				// Found usable baseline zip
+				break;
 			}
 
-			// Baseline build failed
-			if (baselineBuild.result !== BuildResult.Succeeded) {
-				const message = getSimpleComment(
-					"Baseline CI build failed, cannot generate bundle analysis at this time",
-					baselineCommit,
-				);
-				console.log(message);
-				return { message, comparison: undefined };
+			// Unable to find a usable baseline
+			if (baselineCommit === undefined || baselineZip === undefined) {
+				const error = `Could not find a usable baseline build with search starting at CI ${getBaselineCommit(this.targetBranch)}`;
+				console.log(error);
+				return { kind: "error", baselineCommit, error };
 			}
 
-			// Baseline build succeeded
-			console.log(`Found baseline build with id: ${baselineBuild.id}`);
-			console.log(`projectName: ${this.adoConstants.projectName}`);
-			console.log(
-				`bundleAnalysisArtifactName: ${this.adoConstants.bundleAnalysisArtifactName}`,
-			);
+			const comparison: BundleComparison[] = await this.createComparisonFromZip(baselineZip);
+			console.log(JSON.stringify(comparison));
 
-			baselineZip = await getZipObjectFromArtifact(
-				this.adoConnection,
-				this.adoConstants.projectName,
-				baselineBuild.id,
-				this.adoConstants.bundleAnalysisArtifactName,
-			).catch((error) => {
-				console.log(`Error unzipping object from artifact: ${error.message}`);
-				console.log(`Error stack: ${error.stack}`);
-				return undefined;
-			});
-
-			// For reasons that I don't understand, the "undefined" string is omitted in the log output, which makes the
-			// output very confusing. The string is capitalized here and elsewhere in this file as a workaround.
-			console.log(`Baseline Zip === UNDEFINED: ${baselineZip === undefined}`);
-
-			// Successful baseline build does not have the needed build artifacts
-			if (baselineZip === undefined) {
-				baselineCommit = this.getFallbackCommit?.(baselineCommit).next().value;
-				console.log(
-					`Trying backup baseline commit when successful baseline build does not have the needed build artifacts ${baselineCommit}`,
-				);
-				continue;
-			}
-
-			// Found usable baseline zip
-			break;
+			return { kind: "success", baselineCommit, comparison };
+		} catch (e) {
+			const error = `Unexpected failure during size comparison: ${
+				e instanceof Error ? e.message : String(e)
+			}`;
+			console.log(error);
+			return { kind: "error", baselineCommit, error };
 		}
-
-		// Unable to find a usable baseline
-		if (baselineCommit === undefined || baselineZip === undefined) {
-			const message = `Could not find a usable baseline build with search starting at CI ${getBaselineCommit()}`;
-			console.log(message);
-			return { message, comparison: undefined };
-		}
-
-		const comparison: BundleComparison[] = await this.createComparisonFromZip(baselineZip);
-		console.log(JSON.stringify(comparison));
-
-		const message = getCommentForBundleDiff(comparison, baselineCommit);
-		console.log(message);
-
-		return { message, comparison };
 	}
 
 	private async tagBuildAsWaiting(baselineCommit: string): Promise<void> {
@@ -217,29 +232,19 @@ export class ADOSizeComparator {
 	}
 
 	private async createComparisonFromZip(baselineZip: JSZip): Promise<BundleComparison[]> {
-		const baselineZipBundlePaths = getBundlePathsFromZipObject(baselineZip);
+		const baselineZipBundlePaths = getAnalyzerPathsFromZipObject(baselineZip);
 
-		const prBundleFileSystemPaths = await getBundlePathsFromFileSystem(this.localReportPath);
+		const prBundleFileSystemPaths = await getAnalyzerPathsFromFileSystem(this.localReportPath);
 
-		const configFileMap = await getBundleBuddyConfigMap({
-			bundleFileData: prBundleFileSystemPaths,
-			getBundleBuddyConfig: (relativePath) =>
-				getBundleBuddyConfigFromFileSystem(join(this.localReportPath, relativePath)),
-		});
-
-		const baselineSummaries = await getBundleSummaries({
+		const baselineSummaries = await getBundleSummariesFromAnalyzer({
 			bundlePaths: baselineZipBundlePaths,
-			getStatsFile: (relativePath) => getStatsFileFromZip(baselineZip, relativePath),
-			getBundleBuddyConfigFile: (bundleName) => configFileMap.get(bundleName),
-			statsProcessors: DefaultStatsProcessors,
+			getAnalyzerJson: (relativePath) => getAnalyzerJsonFromZip(baselineZip, relativePath),
 		});
 
-		const prSummaries = await getBundleSummaries({
+		const prSummaries = await getBundleSummariesFromAnalyzer({
 			bundlePaths: prBundleFileSystemPaths,
-			getStatsFile: (relativePath) =>
-				getStatsFileFromFileSystem(join(this.localReportPath, relativePath)),
-			getBundleBuddyConfigFile: (bundleName) => configFileMap.get(bundleName),
-			statsProcessors: DefaultStatsProcessors,
+			getAnalyzerJson: (relativePath) =>
+				getAnalyzerJsonFromFileSystem(join(this.localReportPath, relativePath)),
 		});
 
 		return compareBundles(baselineSummaries, prSummaries);

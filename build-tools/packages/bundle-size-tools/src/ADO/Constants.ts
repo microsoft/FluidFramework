@@ -18,8 +18,8 @@ export interface IADOConstants {
 	// Note: Assumes CI and PR builds both run in the same org/project
 	prBuildDefinitionId?: number;
 
-	// The name of the build artifact that contains the bundle size artifacts
-	bundleAnalysisArtifactName: string;
+	// The name of the build artifact that contains the bundle size data
+	artifactName: string;
 
 	// The guid of the repo
 	// Used to post/update comments in ADO
@@ -30,6 +30,3 @@ export interface IADOConstants {
 	// be useful when there are a high volume of commits/builds.
 	buildsToSearch?: number;
 }
-
-// The name of the metric that represents the size of the whole bundle
-export const totalSizeMetricName = "Total Size";

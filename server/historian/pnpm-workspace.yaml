@@ -24,13 +24,12 @@ onlyBuiltDependencies:
 # Supply chain security settings - see /DEV.md for documentation
 minimumReleaseAge: 1440
 minimumReleaseAgeExclude:
-  - "@fluidframework/*"
+  - "@fluidframework/*" # Exclude all @fluidframework scoped packages from the minimumReleaseAge check, because they are published internally and oftentimes we need to update immediately after a previous internal release
 resolutionMode: highest
 blockExoticSubdeps: true
 trustPolicy: no-downgrade
 # List of packages known to be safe but for whatever reason were published at a date after another version of the same
 # package (including later major versions) which had better provenance information.
 # ALWAYS REVIEW CAREFULLY BEFORE ADDING SOMETHING TO THIS LIST.
-trustPolicyExclude:
-  - "semver@5.7.2"
+trustPolicyExclude: []
 strictDepBuilds: true

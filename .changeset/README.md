@@ -117,13 +117,15 @@ Each package listed in a changeset will get a changelog entry with the changeset
   The summary can stand alone for simple changes, but a body is recommended.
 - The summary line should be succinct and focused on the **customer benefit** rather than the implementation.
 - The summary line should not have sentence punctuation (no period at the end).
-- The summary line should not contain code formatting (backticks).
-  Too much code formatting in headings becomes unreadable, and there's no good way to measure "too much," so we avoid it altogether.
+- Preferred: the summary line should not contain code formatting (backticks).
+  Too much code formatting in headings becomes unreadable, and there's no good way to measure "too much," so we prefer to just avoid it.
 - Write in present tense ("Add support for...") or present perfect ("Has been updated to...").
   We use present tense because we are describing changes in the current release.
   A useful rule of thumb: mentally prefix the summary with "In this release," and verify it reads naturally.
 - Avoid referring to package names in the summary (they appear in the "packages affected" section of release notes).
 - Changeset body content may include Markdown headings starting at **level 4** (`####`), since levels 1-3 are used in the release notes structure.
+- `@`-prefixed text use should be code formatted (backtick enclosed).
+  GitHub will aggressively turn "@foo" into a mention of username `foo`.
 - Include links to relevant documentation (e.g. API docs on fluidframework.com) where possible.
 - A changeset should never be just a link — always include a summary with links for more detail.
 - For features, breaking changes, and deprecations, include a code example showing usage or migration.

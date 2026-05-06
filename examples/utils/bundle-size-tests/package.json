@@ -21,7 +21,7 @@
 		"build:test:esm": "tsc --project ./src/test/tsconfig.json",
 		"check:biome": "biome check .",
 		"check:format": "npm run check:biome",
-		"clean": "rimraf --glob build dist lib bundleAnalysis \"**/*.tsbuildinfo\" \"**/*.build.log\" nyc",
+		"clean": "rimraf --glob build dist lib bundleAnalysis bundleAnalyzerJson \"**/*.tsbuildinfo\" \"**/*.build.log\" nyc",
 		"collect:bundle": "jiti ./scripts/collectBundle.ts",
 		"collect:compare:bundles": "jiti ./scripts/collectAndCompareBundles.ts",
 		"compare:bundles": "node --max-old-space-size=8192 --import jiti/register ./scripts/compareBundles.ts",

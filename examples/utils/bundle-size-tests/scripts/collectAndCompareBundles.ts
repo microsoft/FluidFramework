@@ -169,9 +169,7 @@ class CollectAndCompareBundlesCommand extends Command {
 			? readFileSync(baseRevisionMarkerPath, "utf8").trim()
 			: undefined;
 		const baseStatsAreCached =
-			!forceCleanBuildFlag &&
-			existsSync(baseStatsPath) &&
-			cachedBaseRevision === baseRevision;
+			!forceCleanBuildFlag && existsSync(baseStatsPath) && cachedBaseRevision === baseRevision;
 
 		try {
 			console.log(`\n${"=".repeat(80)}`);
