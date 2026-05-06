@@ -48,6 +48,9 @@ docs/resources/_gen/
 # PNPM store (when mounting host file system in docker container)
 .pnpm-store/
 
+# Scratch dir created by `flub check trustPolicy`.
+**/.trust-audit-temp/
+
 # TODO: This can be removed once the `flub add changeset` command no longer creates the UPCOMING file.
 UPCOMING.md
 
