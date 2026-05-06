@@ -177,6 +177,9 @@ export class OpSplitter {
 		// don't carry ops — they carry parts of a payload that only become ops
 		// once the last chunk is processed and the payload is reassembled.
 		// Stamping every chunk would let an observer double-count messages.
+		// batchId is deliberately not forwarded — it's a runtime dedup field
+		// consumed only after processChunk restores originalMetadata, not by
+		// wire observers.
 		const lastChunk = chunkToBatchMessage(
 			chunks[chunks.length - 1],
 			batch.referenceSequenceNumber,
