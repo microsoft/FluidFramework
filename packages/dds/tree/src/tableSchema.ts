@@ -1223,10 +1223,7 @@ export namespace System_TableSchema {
 			 * - A column with a duplicate ID is being inserted.
 			 */
 			#validateNewColumns(newColumns: readonly ColumnInsertableType[]): void {
-				return Table._validateNewColumns(
-					newColumns,
-					new Set(this.table.columns.map((column) => (column as ColumnValueType).id)),
-				);
+				return Table._validateNewColumns(newColumns, this.#getColumnCache());
 			}
 
 			/**
@@ -1236,11 +1233,7 @@ export namespace System_TableSchema {
 			 * - A row is being inserted that contains cells for columns that do not exist in the table.
 			 */
 			#validateNewRows(newRows: readonly RowInsertableType[]): void {
-				return Table._validateNewRows(
-					newRows,
-					new Set(this.table.rows.map((row) => (row as RowValueType).id)),
-					new Set(this.table.columns.map((column) => (column as ColumnValueType).id)),
-				);
+				return Table._validateNewRows(newRows, this.#getRowCache(), this.#getColumnCache());
 			}
 
 			/**
@@ -1250,7 +1243,7 @@ export namespace System_TableSchema {
 			 */
 			private static _validateNewColumns(
 				newColumns: Iterable<ColumnInsertableType>,
-				existingColumnIds: Set<string>,
+				existingColumnIds: { readonly has: (id: string) => boolean },
 			): void {
 				const newColumnIds = new Set<string>();
 				for (const newColumn of newColumns) {
@@ -1278,8 +1271,8 @@ export namespace System_TableSchema {
 			 */
 			private static _validateNewRows(
 				newRows: Iterable<RowInsertableType>,
-				existingRowIds: Set<string>,
-				columnIds: Set<string>,
+				existingRowIds: { readonly has: (id: string) => boolean },
+				columnIds: { readonly has: (id: string) => boolean },
 			): void {
 				const newRowIds = new Set<string>();
 				for (const newRow of newRows) {
