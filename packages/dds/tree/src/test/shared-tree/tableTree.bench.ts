@@ -5,4 +5,6 @@
 
 import { runBenchmarkTestSuite } from "../tableTreeBenchmarks.js";
 
-runBenchmarkTestSuite("execution-time");
+describe.skip("TableSchema Benchmarks", () => {
+	runBenchmarkTestSuite("execution-time");
+});

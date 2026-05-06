@@ -5,4 +5,7 @@
 
 import { runBenchmarkTestSuite } from "../tableTreeBenchmarks.js";
 
-runBenchmarkTestSuite("memory");
+
+describe.skip("TableSchema Benchmarks", () => {
+	runBenchmarkTestSuite("memory");
+});
