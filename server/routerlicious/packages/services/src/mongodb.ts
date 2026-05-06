@@ -316,7 +316,9 @@ export class MongoCollection<T extends Document> implements core.ICollection<T>,
 					options,
 				);
 
-				return result ? { value: result as T, existing: true } : { value, existing: false };
+				return result
+					? { value: result as unknown as T, existing: true }
+					: { value, existing: false };
 			} catch (sdkError) {
 				const error = this.cloneError(sdkError);
 				this.sanitizeError(error);
@@ -343,7 +345,9 @@ export class MongoCollection<T extends Document> implements core.ICollection<T>,
 					options,
 				);
 
-				return result ? { value: result as T, existing: true } : { value, existing: false };
+				return result
+					? { value: result as unknown as T, existing: true }
+					: { value, existing: false };
 			} catch (sdkError) {
 				const error = this.cloneError(sdkError);
 				this.sanitizeError(error);
@@ -625,7 +629,6 @@ const DefaultMongoDbMonitoringEvents = [
 	"connectionPoolCleared",
 ];
 const DefaultHeartbeatFrequencyMS = 30000;
-const DefaultKeepAliveInitialDelay = 60000;
 const DefaultSocketTimeoutMS = 0;
 const DefaultConnectionTimeoutMS = 120000;
 const DefaultMinHeartbeatFrequencyMS = 10000;
@@ -652,7 +655,6 @@ interface IMongoDBConfig {
 	connectionNotAvailableMode?: ConnectionNotAvailableMode;
 	dbMonitoringEventsList?: string[];
 	heartbeatFrequencyMS?: number;
-	keepAliveInitialDelay?: number;
 	socketTimeoutMS?: number;
 	connectionTimeoutMS?: number;
 	minHeartbeatFrequencyMS?: number;
@@ -678,7 +680,6 @@ export class MongoDbFactory implements core.IDbFactory {
 	private readonly retryRuleOverride: Map<string, boolean>;
 	private readonly dbMonitoringEventsList: string[];
 	private readonly heartbeatFrequencyMS: number;
-	private readonly keepAliveInitialDelay: number;
 	private readonly socketTimeoutMS: number;
 	private readonly connectionTimeoutMS: number;
 	private readonly minHeartbeatFrequencyMS: number;
@@ -702,7 +703,6 @@ export class MongoDbFactory implements core.IDbFactory {
 			connectionNotAvailableMode,
 			dbMonitoringEventsList,
 			heartbeatFrequencyMS,
-			keepAliveInitialDelay,
 			socketTimeoutMS,
 			connectionTimeoutMS,
 			minHeartbeatFrequencyMS,
@@ -734,7 +734,6 @@ export class MongoDbFactory implements core.IDbFactory {
 			: new Map();
 		this.dbMonitoringEventsList = dbMonitoringEventsList ?? DefaultMongoDbMonitoringEvents;
 		this.heartbeatFrequencyMS = heartbeatFrequencyMS ?? DefaultHeartbeatFrequencyMS;
-		this.keepAliveInitialDelay = keepAliveInitialDelay ?? DefaultKeepAliveInitialDelay;
 		this.socketTimeoutMS = socketTimeoutMS ?? DefaultSocketTimeoutMS;
 		this.connectionTimeoutMS = connectionTimeoutMS ?? DefaultConnectionTimeoutMS;
 		this.minHeartbeatFrequencyMS = minHeartbeatFrequencyMS ?? DefaultMinHeartbeatFrequencyMS;
@@ -758,7 +757,6 @@ export class MongoDbFactory implements core.IDbFactory {
 		// Need to cast to any before MongoClientOptions due to missing properties in d.ts
 		const options: MongoClientOptions = {
 			directConnection: this.directConnection ?? false,
-			keepAliveInitialDelay: this.keepAliveInitialDelay,
 			socketTimeoutMS: this.socketTimeoutMS,
 			connectTimeoutMS: this.connectionTimeoutMS,
 			heartbeatFrequencyMS: this.heartbeatFrequencyMS,
