@@ -34,6 +34,12 @@ export interface IDirectory extends Map<string, any>, IEventProvider<IDirectoryE
     subdirectories(): IterableIterator<[string, IDirectory]>;
 }
 
+// @beta @sealed @legacy
+export interface IDirectoryBeta extends Omit<IDirectory, keyof Map<string, any>>, FluidMapLegacy<string, any> {
+    get<T = any>(key: string): T | undefined;
+    set<T = unknown>(key: string, value: T): this;
+}
+
 // @beta @deprecated @legacy
 export interface IDirectoryDataObject {
     ci?: ICreateInfo;
@@ -87,6 +93,12 @@ export interface ISharedDirectoryEvents extends ISharedObjectEvents {
 
 // @beta @sealed @legacy
 export interface ISharedMap extends ISharedObject<ISharedMapEvents>, Map<string, any> {
+    get<T = any>(key: string): T | undefined;
+    set<T = unknown>(key: string, value: T): this;
+}
+
+// @beta @sealed @legacy
+export interface ISharedMapBeta extends Omit<ISharedMap, keyof Map<string, any>>, FluidMapLegacy<string, any> {
     get<T = any>(key: string): T | undefined;
     set<T = unknown>(key: string, value: T): this;
 }

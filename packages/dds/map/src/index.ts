@@ -17,11 +17,13 @@
 
 export type {
 	IDirectory,
+	IDirectoryBeta,
 	IDirectoryEvents,
 	IDirectoryValueChanged,
 	ISharedDirectory,
 	ISharedDirectoryEvents,
 	ISharedMap,
+	ISharedMapBeta,
 	ISharedMapEvents,
 	IValueChanged,
 } from "./interfaces.js";

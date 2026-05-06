@@ -7,6 +7,7 @@ import type {
 	FluidIterable,
 	FluidIterableIterator,
 	FluidMap,
+	FluidMapLegacy,
 	FluidReadonlyMap,
 } from "../../index.js";
 
@@ -24,6 +25,26 @@ declare type _readonlyMap_to_fluidReadonlyMap = requireFalse<
 // FluidMap extends FluidReadonlyMap
 declare type _fluidMap_to_fluidReadonlyMap = requireTrue<
 	isAssignableTo<FluidMap<string, number>, FluidReadonlyMap<string, number>>
+>;
+
+// FluidMapLegacy extends FluidMap while preserving legacy Map-like mutator returns.
+declare type _fluidMapLegacy_to_fluidMap = requireTrue<
+	isAssignableTo<FluidMapLegacy<string, number>, FluidMap<string, number>>
+>;
+declare type _fluidMapLegacy_to_map = requireTrue<
+	isAssignableTo<FluidMapLegacy<string, number>, Map<string, number>>
+>;
+declare type _map_to_fluidMapLegacy = requireTrue<
+	isAssignableTo<Map<string, number>, FluidMapLegacy<string, number>>
+>;
+
+interface LegacyStringMapLike extends Map<string, unknown> {
+	get<T = unknown>(key: string): T | undefined;
+	set<T = unknown>(key: string, value: T): this;
+}
+
+declare type _legacyStringMapLike_to_fluidMapLegacy = requireTrue<
+	isAssignableTo<LegacyStringMapLike, FluidMapLegacy<string, unknown>>
 >;
 
 // FluidReadonlyMap is assignable to ReadonlyMap (the extra Symbol.toStringTag is compatible).

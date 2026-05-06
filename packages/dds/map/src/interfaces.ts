@@ -9,6 +9,8 @@ import type {
 	IEventProvider,
 	IEventThisPlaceHolder,
 } from "@fluidframework/core-interfaces";
+// eslint-disable-next-line import-x/no-internal-modules
+import type { FluidMapLegacy } from "@fluidframework/core-interfaces/legacy";
 import type {
 	ISharedObject,
 	ISharedObjectEvents,
@@ -117,6 +119,36 @@ export interface IDirectory
 	 * @returns The requested IDirectory
 	 */
 	getWorkingDirectory(relativePath: string): IDirectory | undefined;
+}
+
+/**
+ * Beta version of {@link IDirectory} which uses {@link @fluidframework/core-interfaces#FluidMapLegacy} for its map-like API.
+ *
+ * @sealed
+ * @legacy @beta
+ */
+export interface IDirectoryBeta
+	// TODO: Use `unknown` instead (breaking change).
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	extends Omit<IDirectory, keyof Map<string, any>>,
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		FluidMapLegacy<string, any> {
+	/**
+	 * Retrieves the value stored at the given key from the directory.
+	 * @param key - Key to retrieve from
+	 * @returns The stored value, or undefined if the key is not set
+	 */
+	// TODO: Use `unknown` instead (breaking change).
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	get<T = any>(key: string): T | undefined;
+
+	/**
+	 * Sets the value stored at key to the provided value.
+	 * @param key - Key to set at
+	 * @param value - Value to set
+	 * @returns The IDirectoryBeta itself
+	 */
+	set<T = unknown>(key: string, value: T): this;
 }
 
 /**
@@ -378,9 +410,12 @@ export interface ISharedMapEvents extends ISharedObjectEvents {
  * @sealed
  * @legacy @beta
  */
-// TODO: Use `unknown` instead (breaking change).
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export interface ISharedMap extends ISharedObject<ISharedMapEvents>, Map<string, any> {
+export interface ISharedMap
+	// TODO: Use `unknown` instead (breaking change).
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	extends ISharedObject<ISharedMapEvents>,
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		Map<string, any> {
 	/**
 	 * Retrieves the given key from the map if it exists.
 	 * @param key - Key to retrieve from
@@ -395,6 +430,36 @@ export interface ISharedMap extends ISharedObject<ISharedMapEvents>, Map<string,
 	 * @param key - Key to set
 	 * @param value - Value to set
 	 * @returns The {@link ISharedMap} itself
+	 */
+	set<T = unknown>(key: string, value: T): this;
+}
+
+/**
+ * Beta version of {@link ISharedMap} which uses {@link @fluidframework/core-interfaces#FluidMapLegacy} for its map-like API.
+ *
+ * @sealed
+ * @legacy @beta
+ */
+export interface ISharedMapBeta
+	// TODO: Use `unknown` instead (breaking change).
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	extends Omit<ISharedMap, keyof Map<string, any>>,
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		FluidMapLegacy<string, any> {
+	/**
+	 * Retrieves the given key from the map if it exists.
+	 * @param key - Key to retrieve from
+	 * @returns The stored value, or undefined if the key is not set
+	 */
+	// TODO: Use `unknown` instead (breaking change).
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	get<T = any>(key: string): T | undefined;
+
+	/**
+	 * Sets the value stored at key to the provided value.
+	 * @param key - Key to set
+	 * @param value - Value to set
+	 * @returns The {@link ISharedMapBeta} itself
 	 */
 	set<T = unknown>(key: string, value: T): this;
 }
