@@ -21,12 +21,12 @@ const adoConstants = {
 	orgUrl: "https://dev.azure.com/fluidframework",
 	projectName: "public",
 	ciBuildDefinitionId: 48,
-	bundleAnalysisArtifactName: "bundleAnalysis",
+	artifactName: "bundleAnalyzerJson",
 } as const;
 
-// Default path to the PR's locally-collected bundle reports.
+// Default path to the PR's locally-collected analyzer.json files.
 // Matches where `flub generate bundleStats` (invoked via `npm run bundle-analysis:collect`) writes.
-const defaultLocalReportPath = "./artifacts/bundleAnalysis";
+const defaultLocalReportPath = "./artifacts/bundleAnalyzerJson";
 
 // Default output directory. The pipeline publishes this directory as the `bundleSizeDiff`
 // artifact.

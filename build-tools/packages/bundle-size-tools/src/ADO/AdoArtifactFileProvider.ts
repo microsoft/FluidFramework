@@ -36,7 +36,7 @@ export async function getZipObjectFromArtifact(
 	adoConnection: WebApi,
 	projectName: string,
 	buildNumber: number,
-	bundleAnalysisArtifactName: string,
+	artifactName: string,
 ): Promise<JSZip> {
 	const buildApi = await adoConnection.getBuildApi();
 
@@ -51,17 +51,14 @@ export async function getZipObjectFromArtifact(
 	const artifactStream = await buildApi.getArtifactContentZip(
 		projectName,
 		buildNumber,
-		bundleAnalysisArtifactName,
+		artifactName,
 	);
 	// Undo hack from above
 	buildApi.createAcceptHeader = originalCreateAcceptHeader;
 
 	// We want our relative paths to be clean, so navigating JsZip into the top level folder
-	const result = (await unzipStream(artifactStream)).folder(bundleAnalysisArtifactName);
-	assert(
-		result,
-		`getZipObjectFromArtifact could not find the folder ${bundleAnalysisArtifactName}`,
-	);
+	const result = (await unzipStream(artifactStream)).folder(artifactName);
+	assert(result, `getZipObjectFromArtifact could not find the folder ${artifactName}`);
 
 	return result;
 }

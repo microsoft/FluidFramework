@@ -13,8 +13,8 @@ export interface IADOConstants {
 	// The ID for the build that runs against main when PRs are merged
 	ciBuildDefinitionId: number;
 
-	// The name of the build artifact that contains the bundle size artifacts
-	bundleAnalysisArtifactName: string;
+	// The name of the build artifact that contains the bundle size data
+	artifactName: string;
 
 	// The number of most recent ADO builds to pull when searching for one associated
 	// with a specific commit, default 20.  Pulling more builds takes longer, but may
