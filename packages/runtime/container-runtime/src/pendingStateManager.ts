@@ -168,24 +168,27 @@ export interface IRuntimeStateHandler {
 
 /**
  * Optional one-shot hooks invoked around the stashed-op replay loop in
- * {@link PendingStateManager.applyStashedOpsAt}. Both are skipped entirely when there are
- * no stashed ops to replay. Awaited; observers can perform async work (e.g. materializing
- * an entrypoint, fanning out a readonly state change) at exact moments during load.
+ * {@link PendingStateManager.applyStashedOpsAt}. Both are skipped entirely when no
+ * stashed op will actually be applied this call (initialMessages empty, or the front
+ * message's `referenceSequenceNumber` is past the requested `seqNum`). Awaited;
+ * observers can perform async work (e.g. materializing an entrypoint, fanning out a
+ * readonly state change) at exact moments during load.
  *
  * Contract: when a hook runs, {@link PendingStateManager.isApplyingStashedOps} reflects
  * the state *during* its phase — true inside `onBeforeFirstStashedOpApply`, false inside
- * `onAfterStashedOpsApplied`.
+ * `onAfterStashedOpsApplied`. Hooks are paired: `onAfterStashedOpsApplied` only fires
+ * when `onBeforeFirstStashedOpApply` fired.
  */
 export interface PendingStateManagerHooks {
 	/**
 	 * Invoked exactly once, just before the first stashed op is replayed. Awaited.
-	 * Not invoked when there are no stashed ops to replay.
+	 * Not invoked when no stashed op will be applied this call.
 	 */
 	onBeforeFirstStashedOpApply?: () => Promise<void>;
 	/**
 	 * Invoked exactly once, just after the last stashed op finishes replaying (including
-	 * via the apply-loop's finally block on error). Awaited. Not invoked when there were
-	 * no stashed ops to replay.
+	 * via the apply-loop's finally block on error). Awaited. Only fires when
+	 * `onBeforeFirstStashedOpApply` fired for this call.
 	 */
 	onAfterStashedOpsApplied?: () => Promise<void>;
 }
@@ -514,6 +517,23 @@ export class PendingStateManager implements IDisposable {
 	public async applyStashedOpsAt(seqNum?: number): Promise<void> {
 		if (this.initialMessages.isEmpty()) {
 			return;
+		}
+
+		// Eligibility check: confirm at least one stashed op will actually be applied
+		// this call before opening the apply window. Without this, a later call (e.g.
+		// from notifyOpReplay after a saved-op replay) whose front message has a
+		// referenceSequenceNumber > seqNum would still set the flag and fire the
+		// start/end hooks with no op in between, breaking the documented event-pairing
+		// contract and tripping "Already in staging mode" if the start handler entered
+		// staging mode on the previous eligible call.
+		if (seqNum !== undefined) {
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			const peekMessage = this.initialMessages.peekFront()!;
+			if (peekMessage.referenceSequenceNumber > seqNum) {
+				return;
+			}
+			// referenceSequenceNumber < seqNum is an error; let the loop's strict
+			// check handle it so the apply window's finally still runs.
 		}
 
 		// Set the flag before invoking the pre-apply hook so observers (e.g. the runtime's

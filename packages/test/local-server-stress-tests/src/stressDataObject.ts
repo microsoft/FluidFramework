@@ -14,8 +14,11 @@ import {
 	loadContainerRuntime,
 	type IContainerRuntimeOptionsInternal,
 } from "@fluidframework/container-runtime/internal";
-// eslint-disable-next-line import-x/no-deprecated
-import type { IContainerRuntimeWithResolveHandle_Deprecated } from "@fluidframework/container-runtime-definitions/internal";
+import type {
+	IContainerRuntime,
+	// eslint-disable-next-line import-x/no-deprecated
+	IContainerRuntimeWithResolveHandle_Deprecated,
+} from "@fluidframework/container-runtime-definitions/internal";
 import type {
 	IFluidHandle,
 	FluidObject,
@@ -289,6 +292,24 @@ export class DefaultStressDataObject extends StressDataObject {
 		)) as any as ISharedMap;
 	}
 
+	protected override async hasInitialized(): Promise<void> {
+		await super.hasInitialized();
+
+		// When this client is loaded from pending state with stashed ops to replay,
+		// enter staging mode in the pre-apply window so the replayed ops are
+		// reviewable. The harness's existing ExitStagingMode operation will commit
+		// or discard. Exercises the new pendingStateApplyStart event path under stress.
+		// `IFluidDataStoreContext.containerRuntime` is typed as IContainerRuntimeBase
+		// which doesn't surface this event; the underlying ContainerRuntime instance
+		// does, so we cast.
+		const runtimeWithEvents = this.context.containerRuntime as unknown as IContainerRuntime;
+		runtimeWithEvents.on("pendingStateApplyStart", () => {
+			if (!this.inStagingMode()) {
+				this.enterStagingMode();
+			}
+		});
+	}
+
 	public registerLocallyCreatedObject(obj: ContainerObjects): void {
 		if (obj.handle !== undefined) {
 			const handle = toFluidHandleInternal(obj.handle);
@@ -371,23 +392,7 @@ export const createRuntimeFactory = (): IRuntimeFactory => {
 					);
 					assert(aliasedDefault !== undefined, "default must exist");
 
-					const entryPoint = await aliasedDefault.get();
-
-					// When loading from pending state with stashed ops, enter staging mode in the
-					// pre-apply window so the replayed ops are reviewable. The stress harness's
-					// existing exitStagingMode generator will eventually commit or discard.
-					// This exercises the pendingStateApplyStart event path under stress.
-					rt.on("pendingStateApplyStart", () => {
-						const maybe = entryPoint as FluidObject<DefaultStressDataObject> | undefined;
-						if (
-							maybe?.DefaultStressDataObject !== undefined &&
-							!maybe.DefaultStressDataObject.inStagingMode()
-						) {
-							maybe.DefaultStressDataObject.enterStagingMode();
-						}
-					});
-
-					return entryPoint;
+					return aliasedDefault.get();
 				},
 			});
 			// id compressor isn't made available via the interface right now.
