@@ -371,7 +371,23 @@ export const createRuntimeFactory = (): IRuntimeFactory => {
 					);
 					assert(aliasedDefault !== undefined, "default must exist");
 
-					return aliasedDefault.get();
+					const entryPoint = await aliasedDefault.get();
+
+					// When loading from pending state with stashed ops, enter staging mode in the
+					// pre-apply window so the replayed ops are reviewable. The stress harness's
+					// existing exitStagingMode generator will eventually commit or discard.
+					// This exercises the pendingStateApplyStart event path under stress.
+					rt.on("pendingStateApplyStart", () => {
+						const maybe = entryPoint as FluidObject<DefaultStressDataObject> | undefined;
+						if (
+							maybe?.DefaultStressDataObject !== undefined &&
+							!maybe.DefaultStressDataObject.inStagingMode()
+						) {
+							maybe.DefaultStressDataObject.enterStagingMode();
+						}
+					});
+
+					return entryPoint;
 				},
 			});
 			// id compressor isn't made available via the interface right now.

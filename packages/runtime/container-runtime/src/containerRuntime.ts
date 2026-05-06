@@ -1300,7 +1300,9 @@ export class ContainerRuntime
 		return this._getAttachState();
 	}
 
-	public readonly isReadOnly = (): boolean => this.deltaManager.readOnlyInfo.readonly === true;
+	public readonly isReadOnly = (): boolean =>
+		this.deltaManager.readOnlyInfo.readonly === true ||
+		this.pendingStateManager.isApplyingStashedOps;
 
 	/**
 	 * Current session schema - defines what options are on & off.
@@ -1796,9 +1798,29 @@ export class ContainerRuntime
 				reSubmitBatch: this.reSubmitBatch.bind(this),
 				isActiveConnection: () => this.innerDeltaManager.active,
 				isAttached: () => this.attachState !== AttachState.Detached,
+				isInStagingMode: () => this.inStagingMode,
 			},
 			pendingRuntimeState?.pending,
 			this.baseLogger,
+			{
+				// PSM has just set its isApplyingStashedOps flag; isReadOnly() now returns true.
+				// Fan out the new readonly state to data stores so DDSes see it during replay,
+				// then materialize the entrypoint so it can subscribe to pendingStateApplyStart
+				// before we emit it. Listeners can call enterStagingMode() in the start handler
+				// so replayed ops are marked staged for review.
+				onBeforeFirstStashedOpApply: async () => {
+					this.notifyReadOnlyState();
+					await this.entryPoint;
+					this.emit("pendingStateApplyStart");
+				},
+				// PSM has cleared its flag; isReadOnly() reflects the network-readonly state again.
+				// Emit the end signal first so listeners observe the final state of the apply
+				// window, then fan out the post-apply readonly state.
+				onAfterStashedOpsApplied: async () => {
+					this.emit("pendingStateApplyEnd");
+					this.notifyReadOnlyState();
+				},
+			},
 		);
 
 		let outerDeltaManager: IDeltaManagerFull = this.innerDeltaManager;
@@ -2845,8 +2867,8 @@ export class ContainerRuntime
 		}
 	}
 
-	private readonly notifyReadOnlyState = (readonly: boolean): void =>
-		this.channelCollection.notifyReadOnlyState(readonly);
+	private readonly notifyReadOnlyState = (): void =>
+		this.channelCollection.notifyReadOnlyState(this.isReadOnly());
 
 	public setConnectionState(canSendOps: boolean, clientId?: string): void {
 		this.setConnectionStateToConnectedOrDisconnected(canSendOps, clientId);

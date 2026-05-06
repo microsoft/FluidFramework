@@ -96,12 +96,14 @@ describe("Pending State Manager", () => {
 			reSubmitBatch: sandbox.stub(),
 			isActiveConnection: sandbox.stub(),
 			isAttached: sandbox.stub(),
+			isInStagingMode: sandbox.stub(),
 		};
 		stubs.applyStashedOp.resolves(undefined);
 		stubs.clientId.returns("clientId");
 		stubs.connected.returns(true);
 		stubs.isActiveConnection.returns(true);
 		stubs.isAttached.returns(true);
+		stubs.isInStagingMode.returns(false);
 		return stubs;
 	}
 	const mockLogger = new MockLogger();
@@ -231,6 +233,7 @@ describe("Pending State Manager", () => {
 					reSubmitBatch: () => {},
 					isActiveConnection: () => false,
 					isAttached: () => true,
+					isInStagingMode: () => false,
 				},
 				undefined /* initialLocalState */,
 				logger,
@@ -720,6 +723,7 @@ describe("Pending State Manager", () => {
 					reSubmitBatch: () => {},
 					isActiveConnection: () => false,
 					isAttached: () => true,
+					isInStagingMode: () => false,
 				},
 				pendingStates ? { pendingStates } : undefined,
 				logger,
@@ -791,6 +795,7 @@ describe("Pending State Manager", () => {
 					reSubmitBatch: () => {},
 					isActiveConnection: () => false,
 					isAttached: () => true,
+					isInStagingMode: () => false,
 				},
 				{ pendingStates: messages },
 				logger,
@@ -809,6 +814,7 @@ describe("Pending State Manager", () => {
 					reSubmitBatch: () => {},
 					isActiveConnection: () => false,
 					isAttached: () => true,
+					isInStagingMode: () => false,
 				},
 				undefined /* initialLocalState */,
 				logger,
@@ -826,6 +832,7 @@ describe("Pending State Manager", () => {
 					reSubmitBatch: () => {},
 					isActiveConnection: () => false,
 					isAttached: () => true,
+					isInStagingMode: () => false,
 				},
 				localStateWithEmptyBatch,
 				logger,
@@ -867,6 +874,7 @@ describe("Pending State Manager", () => {
 					reSubmitBatch: () => {},
 					isActiveConnection: () => false,
 					isAttached: () => true,
+					isInStagingMode: () => false,
 				},
 				pendingStates ? { pendingStates } : undefined,
 				logger,
@@ -1013,6 +1021,7 @@ describe("Pending State Manager", () => {
 					reSubmitBatch: () => {},
 					isActiveConnection: () => false,
 					isAttached: () => true,
+					isInStagingMode: () => false,
 				},
 				pendingStates ? { pendingStates } : undefined /* initialLocalState */,
 				logger,
@@ -1087,6 +1096,7 @@ describe("Pending State Manager", () => {
 					reSubmitBatch: () => {},
 					isActiveConnection: () => false,
 					isAttached: () => true,
+					isInStagingMode: () => false,
 				},
 				{ pendingStates: initialMessages },
 				logger,
