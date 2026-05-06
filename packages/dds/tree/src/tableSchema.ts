@@ -1097,14 +1097,13 @@ export namespace System_TableSchema {
 					return this.table.columns[columnOrIdOrIndex] as ColumnValueType;
 				}
 
+				const columnCache = this.#getColumnCache();
 				if (typeof columnOrIdOrIndex === "string") {
-					return this.#getColumnCache().get(columnOrIdOrIndex);
+					return columnCache.get(columnOrIdOrIndex);
 				}
 
-				// If the user provided a node, look it up by ID in the cache and confirm
-				// the cached node is the same instance — preserving the identity-based
-				// semantics of the prior `.includes` check while avoiding a linear scan.
-				const cached = this.#getColumnCache().get(columnOrIdOrIndex.id);
+				// If the user provided a node, ensure it actually exists in this table.
+				const cached = columnCache.get(columnOrIdOrIndex.id);
 				return cached === columnOrIdOrIndex ? columnOrIdOrIndex : undefined;
 			}
 
@@ -1191,14 +1190,13 @@ export namespace System_TableSchema {
 					return this.table.rows[rowOrIdOrIndex] as RowValueType;
 				}
 
+				const rowCache = this.#getRowCache();
 				if (typeof rowOrIdOrIndex === "string") {
-					return this.#getRowCache().get(rowOrIdOrIndex);
+					return rowCache.get(rowOrIdOrIndex);
 				}
 
-				// If the user provided a node, look it up by ID in the cache and confirm
-				// the cached node is the same instance — preserving the identity-based
-				// semantics of the prior `.includes` check while avoiding a linear scan.
-				const cached = this.#getRowCache().get(rowOrIdOrIndex.id);
+				// If the user provided a node, ensure it actually exists in this table.
+				const cached = rowCache.get(rowOrIdOrIndex.id);
 				return cached === rowOrIdOrIndex ? rowOrIdOrIndex : undefined;
 			}
 
