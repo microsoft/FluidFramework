@@ -165,9 +165,7 @@ export class ADOSizeComparator {
 				// Baseline build succeeded
 				console.log(`Found baseline build with id: ${baselineBuild.id}`);
 				console.log(`projectName: ${this.adoConstants.projectName}`);
-				console.log(
-					`artifactName: ${this.adoConstants.artifactName}`,
-				);
+				console.log(`artifactName: ${this.adoConstants.artifactName}`);
 
 				baselineZip = await getZipObjectFromArtifact(
 					this.adoConnection,

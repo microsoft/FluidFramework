@@ -58,10 +58,7 @@ export async function getZipObjectFromArtifact(
 
 	// We want our relative paths to be clean, so navigating JsZip into the top level folder
 	const result = (await unzipStream(artifactStream)).folder(artifactName);
-	assert(
-		result,
-		`getZipObjectFromArtifact could not find the folder ${artifactName}`,
-	);
+	assert(result, `getZipObjectFromArtifact could not find the folder ${artifactName}`);
 
 	return result;
 }
