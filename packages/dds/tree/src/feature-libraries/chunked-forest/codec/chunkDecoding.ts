@@ -44,7 +44,6 @@ import {
 	type EncodedAnyShape,
 	type EncodedChunkShape,
 	type EncodedChunkShapeV2,
-	type EncodedChunkShapeVTextExperimental,
 	type EncodedFieldBatchV1OrV2,
 	type EncodedFieldBatchV2,
 	type EncodedIncrementalChunkShape,
@@ -221,7 +220,7 @@ export class SpecializedNodeDecoder implements ChunkDecoder {
 }
 
 const decoderLibrary = new DiscriminatedUnionDispatcher<
-	EncodedChunkShapeVTextExperimental,
+	EncodedChunkShape,
 	[context: DecoderContext<EncodedChunkShape>],
 	ChunkDecoder
 >({
