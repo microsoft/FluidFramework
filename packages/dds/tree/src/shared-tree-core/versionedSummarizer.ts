@@ -12,6 +12,9 @@ import type {
 } from "@fluidframework/runtime-definitions/internal";
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
+
+import { readAndParseSnapshotBlob } from "../util/index.js";
+
 import {
 	summarizablesMetadataKey,
 	type SharedTreeSummarizableMetadata,
@@ -19,7 +22,6 @@ import {
 	type SummaryElementParser,
 	type SummaryElementStringifier,
 } from "./summaryTypes.js";
-import { readAndParseSnapshotBlob } from "../util/index.js";
 
 /**
  * Utility for implementing {@link Summarizable}s classes with versioning.
@@ -97,11 +99,12 @@ export abstract class VersionedSummarizer<TVersion extends number> implements Su
 	): Promise<void> {
 		let version: TVersion | undefined;
 		if (await services.contains(summarizablesMetadataKey)) {
-			const metadata = await readAndParseSnapshotBlob<SharedTreeSummarizableMetadata>(
+			const metadata = (await readAndParseSnapshotBlob(
 				summarizablesMetadataKey,
 				services,
 				(contents) => parse(contents),
-			);
+				// TODO: this type cast should use a codec to validate the data instead of just type casting.
+			)) as SharedTreeSummarizableMetadata;
 			version = metadata.version as TVersion;
 			if (!this.supportedVersions.has(version)) {
 				throw new UsageError(`Cannot read version ${version} of shared tree summary.`);

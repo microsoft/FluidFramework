@@ -18,7 +18,9 @@ import {
 	identifierFieldKindIdentifier,
 	type SchemaPolicy,
 } from "../../../core/index.js";
+import { brand, oneFromIterable } from "../../../util/index.js";
 
+import type { IncrementalEncoder } from "./codecs.js";
 import {
 	EncoderContext,
 	type FieldEncoder,
@@ -32,17 +34,15 @@ import {
 } from "./compressedEncode.js";
 import type { FieldBatch } from "./fieldBatch.js";
 import {
-	type EncodedFieldBatch,
 	type EncodedFieldBatchV1,
+	type EncodedFieldBatchV1OrV2,
 	type EncodedFieldBatchV2,
 	type EncodedValueShape,
 	FieldBatchFormatVersion,
 	SpecialField,
-} from "./format.js";
-import type { IncrementalEncoder } from "./codecs.js";
-import { NodeShapeBasedEncoder } from "./nodeEncoder.js";
+} from "./format/index.js";
 import { defaultIncrementalEncodingPolicy } from "./incrementalEncodingPolicy.js";
-import { brand, oneFromIterable } from "../../../util/index.js";
+import { NodeShapeBasedEncoder } from "./nodeEncoder.js";
 
 /**
  * Encode data from `fieldBatch` in into an `EncodedChunk` using {@link FieldBatchFormatVersion.v1}.
@@ -55,7 +55,7 @@ export function schemaCompressedEncodeV1(
 	fieldBatch: FieldBatch,
 	idCompressor: IIdCompressor,
 ): EncodedFieldBatchV1 {
-	return schemaCompressedEncode(
+	const encoded: EncodedFieldBatchV1OrV2 = schemaCompressedEncode(
 		schema,
 		policy,
 		fieldBatch,
@@ -63,6 +63,8 @@ export function schemaCompressedEncodeV1(
 		undefined /* incrementalEncoder */,
 		brand(FieldBatchFormatVersion.v1),
 	);
+	// Since incrementalEncoder was not provided, no V2 features should be used, and this cast should be safe.
+	return encoded as EncodedFieldBatchV1;
 }
 
 /**
@@ -104,7 +106,7 @@ function schemaCompressedEncode(
 	idCompressor: IIdCompressor,
 	incrementalEncoder: IncrementalEncoder | undefined,
 	version: FieldBatchFormatVersion,
-): EncodedFieldBatch {
+): EncodedFieldBatchV1OrV2 {
 	return compressedEncode(
 		fieldBatch,
 		buildContext(schema, policy, idCompressor, incrementalEncoder, version),

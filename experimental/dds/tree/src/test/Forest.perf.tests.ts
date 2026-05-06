@@ -5,7 +5,13 @@
 
 import { strict as assert } from 'assert';
 
-import { BenchmarkType, benchmark, isInPerformanceTestingMode } from '@fluid-tools/benchmark';
+import {
+	BenchmarkMode,
+	BenchmarkType,
+	benchmarkDuration,
+	benchmarkIt,
+	currentBenchmarkMode,
+} from '@fluid-tools/benchmark';
 import { v4 } from 'uuid';
 
 import { Forest, ForestNode } from '../Forest.js';
@@ -20,88 +26,73 @@ import { refreshTestTree } from './utilities/TestUtilities.js';
 describe('Forest Perf', () => {
 	const testTree = refreshTestTree();
 	// Larger sizes can slow down correctness test runs, or even time out, so only run smaller sizes as correctness tests.
-	const sizes = isInPerformanceTestingMode ? [100, 1_000, 10_000, 100_000] : [100, 1_000];
+	const sizes = currentBenchmarkMode === BenchmarkMode.Performance ? [100, 1_000, 10_000, 100_000] : [100, 1_000];
 
 	for (const count of sizes) {
 		// Pick a single representative size for the 'Measurement' suite to keep it small.
 		const type = count === 10_000 ? BenchmarkType.Measurement : BenchmarkType.Perspective;
 
-		benchmark({
+		benchmarkIt({
 			type,
 			title: `${count} random inserts in TreeView`,
-			benchmarkFn: () => {
-				buildRandomTree(testTree, count);
-			},
+			...benchmarkDuration({ benchmarkFn: () => buildRandomTree(testTree, count) }),
 		});
 
-		let built: RevisionView | undefined;
-		let rootId: NodeId | undefined;
-		benchmark({
+		benchmarkIt({
 			type,
 			title: `walk ${count} node TreeView`,
-			before: () => {
-				[built, rootId] = buildRandomTree(testTree, count);
-			},
-			benchmarkFn: () => {
-				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-				const nodes = walk(built!, rootId!);
-				assert(nodes === count);
-			},
-			after: () => {
-				built = undefined;
-				rootId = undefined;
-			},
+			...benchmarkDuration({
+				benchmarkFnCustom: async (state) => {
+					const [built, rootId] = buildRandomTree(testTree, count);
+					state.timeAllBatches(() => {
+						const nodes = walk(built, rootId);
+						assert(nodes === count);
+					});
+				},
+			}),
 		});
 
-		let forest: Forest | undefined;
-		let nodes: ForestNode[];
-		benchmark({
+		benchmarkIt({
 			type,
 			title: `insert ${count} nodes into Forest`,
-			before: () => {
-				forest = Forest.create(true);
-				nodes = [];
-				for (let i = 0; i < count; i++) {
-					nodes.push(makeTestForestNode(testTree));
-				}
-			},
-			benchmarkFn: () => {
-				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-				forest!.add(nodes);
-			},
-			after: () => {
-				forest = undefined;
-			},
-		});
-
-		let otherForest: Forest | undefined;
-		for (const otherCount of sizes) {
-			benchmark({
-				type,
-				title: `invoke delta on Forest with ${count} nodes against Forest with ${otherCount} nodes`,
-				before: () => {
-					forest = Forest.create(true);
-					otherForest = Forest.create(true);
-					nodes = [];
+			...benchmarkDuration({
+				benchmarkFnCustom: async (state) => {
+					const forest = Forest.create(true);
+					const nodes: ForestNode[] = [];
 					for (let i = 0; i < count; i++) {
 						nodes.push(makeTestForestNode(testTree));
 					}
-					forest = forest.add(nodes);
+					state.timeAllBatches(() => {
+						forest.add(nodes);
+					});
+				},
+			}),
+		});
 
-					const otherNodes: ForestNode[] = [];
-					for (let i = 0; i < otherCount; i++) {
-						otherNodes.push(makeTestForestNode(testTree));
-					}
-					otherForest = otherForest.add(otherNodes);
-				},
-				benchmarkFn: () => {
-					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-					forest!.delta(otherForest!);
-				},
-				after: () => {
-					forest = undefined;
-					otherForest = undefined;
-				},
+		for (const otherCount of sizes) {
+			benchmarkIt({
+				type,
+				title: `invoke delta on Forest with ${count} nodes against Forest with ${otherCount} nodes`,
+				...benchmarkDuration({
+					benchmarkFnCustom: async (state) => {
+						let forest = Forest.create(true);
+						let otherForest = Forest.create(true);
+						const nodes: ForestNode[] = [];
+						for (let i = 0; i < count; i++) {
+							nodes.push(makeTestForestNode(testTree));
+						}
+						forest = forest.add(nodes);
+
+						const otherNodes: ForestNode[] = [];
+						for (let i = 0; i < otherCount; i++) {
+							otherNodes.push(makeTestForestNode(testTree));
+						}
+						otherForest = otherForest.add(otherNodes);
+						state.timeAllBatches(() => {
+							forest.delta(otherForest);
+						});
+					},
+				}),
 			});
 		}
 	}

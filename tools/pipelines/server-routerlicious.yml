@@ -71,7 +71,7 @@ trigger:
     - tools/pipelines/templates/include-publish-docker-service-steps.yml
     - tools/pipelines/templates/include-git-tag-steps.yml
     - tools/pipelines/templates/include-use-node-version.yml
-    - tools/pipelines/templates/upload-dev-manifest.yml
+    - tools/pipelines/templates/upload-server-manifest.yml
     exclude:
     - server/routerlicious/kubernetes/routerlicious
 
@@ -95,6 +95,7 @@ pr:
     - tools/pipelines/templates/include-vars.yml
     - tools/pipelines/templates/include-install-pnpm.yml
     - tools/pipelines/templates/include-use-node-version.yml
+    - tools/pipelines/templates/upload-server-manifest.yml
     exclude:
     - server/routerlicious/kubernetes/routerlicious
 
@@ -123,7 +124,7 @@ extends:
     releaseKind: ${{ parameters.releaseKind }}
     buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
     interdependencyRange: ${{ parameters.interdependencyRange }}
-    buildDirectory: server/routerlicious
+    buildDirectory: ${{ variables.FluidFrameworkDirectory }}/server/routerlicious
     containerName: fluidframework/routerlicious/server
     buildNumberInPatch: false
     dockerBuildBumpsVersion: true
@@ -137,11 +138,14 @@ extends:
     pack: true
     lint: true
     test: ci:test
+    # Disabled: coverage performance regressed in Node 22, causing test timeouts
+    # that need mitigation before coverage can be reenabled.
+    # testCoverage: ${{ ne(variables['Build.Reason'], 'PullRequest') }}
     docs: true
     containerBaseDir: /usr/FluidFramework/server/routerlicious
     checks:
     - prettier
     - check:versions
     - generate:packageList
-    additionalBuildArguments: --build-context root=$(Build.SourcesDirectory)
+    additionalBuildArguments: --build-context root=$(Pipeline.Workspace)/${{ variables.FluidFrameworkDirectory }}
     enableDockerImagePull: false

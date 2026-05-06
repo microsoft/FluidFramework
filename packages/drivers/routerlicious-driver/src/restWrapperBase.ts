@@ -5,7 +5,7 @@
 
 import type { QueryStringType } from "./queryStringUtils.js";
 import type { RequestConfig, RequestHeaders } from "./request.cjs";
-import { IR11sResponse } from "./restWrapper.js";
+import type { IR11sResponse } from "./restWrapper.js";
 
 export abstract class RestWrapper {
 	constructor(
@@ -16,6 +16,8 @@ export abstract class RestWrapper {
 	) {}
 
 	/**
+	 * Performs an HTTP GET request to the specified URL.
+	 *
 	 * @param url - Relative or absolute request url.(should not contain any query params)
 	 * @param queryString - query params to be appended to the request url
 	 * @param headers - headers
@@ -46,6 +48,8 @@ export abstract class RestWrapper {
 	}
 
 	/**
+	 * Performs an HTTP POST request to the specified URL.
+	 *
 	 * @param url - Relative or absolute request url.(should not contain any query params)
 	 * @param requestBody - requestBody
 	 * @param queryString - query params to be appended to the request url
@@ -79,6 +83,8 @@ export abstract class RestWrapper {
 	}
 
 	/**
+	 * Performs an HTTP DELETE request to the specified URL.
+	 *
 	 * @param url - Relative or absolute request url.(should not contain any query params)
 	 * @param queryString - query params to be appended to the request url
 	 * @param headers - headers
@@ -109,6 +115,8 @@ export abstract class RestWrapper {
 	}
 
 	/**
+	 * Performs an HTTP PATCH request to the specified URL.
+	 *
 	 * @param url - Relative or absolute request url.(should not contain any query params)
 	 * @param requestBody - requestBody
 	 * @param queryString - query params to be appended to the request url

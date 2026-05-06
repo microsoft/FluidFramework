@@ -4,22 +4,13 @@
  */
 
 import type { Linter } from "eslint";
-import { strict } from "../../../common/build/eslint-config-fluid/flat.mts";
+import { strict } from "@fluidframework/eslint-config-fluid/flat.mts";
 
 const config: Linter.Config[] = [
 	...strict,
 	{
 		rules: {
 			"@typescript-eslint/strict-boolean-expressions": "off",
-		},
-	},
-	{
-		files: ["**/*.ts", "**/*.tsx", "**/*.mts", "**/*.cts"],
-		languageOptions: {
-			parserOptions: {
-				projectService: false,
-				project: ["./tsconfig.json"],
-			},
 		},
 	},
 ];

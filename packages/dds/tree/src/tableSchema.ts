@@ -3,19 +3,18 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable @typescript-eslint/no-unsafe-member-access -- This file uses intentional `as any` casts to access hidden internal properties (cells, tableSchemaSymbol) */
-
 import { fail } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
-import { TreeAlpha } from "./shared-tree/index.js";
+import { EmptyKey } from "./core/index.js";
+import { Tree, TreeAlpha } from "./shared-tree/index.js";
 import {
 	type FieldHasDefault,
 	type ImplicitAllowedTypes,
 	type InsertableObjectFromSchemaRecord,
 	type InsertableTreeNodeFromImplicitAllowedTypes,
 	type NodeKind,
-	SchemaFactoryBeta,
+	type SchemaFactoryBeta,
 	type ScopedSchemaName,
 	TreeArrayNode,
 	type TreeNode,
@@ -33,11 +32,16 @@ import {
 	type TreeRecordNode,
 	objectSchema,
 	eraseSchemaDetailsSubclassable,
-	// eslint-disable-next-line @typescript-eslint/no-unused-vars, unused-imports/no-unused-imports -- This makes the API report slightly cleaner.
+	// #region Unused imports to make d.ts cleaner
+	/* eslint-disable unused-imports/no-unused-imports, @typescript-eslint/no-unused-vars */
 	TreeNodeSchemaCore,
+	FieldKind,
+	/* eslint-enable unused-imports/no-unused-imports, @typescript-eslint/no-unused-vars */
+	// #endregion
+	type TransactionConstraintAlpha,
+	createCustomizedFluidFrameworkScopedFactory,
 } from "./simple-tree/index.js";
 import { validateIndex, validateIndexRange } from "./util/index.js";
-import { EmptyKey } from "./core/index.js";
 
 // Future improvement TODOs:
 // - Omit `cells` property from Row insertion type.
@@ -45,18 +49,7 @@ import { EmptyKey } from "./core/index.js";
 // - Omit `props` properties from Row and Column schemas when not provided?
 
 // Longer-term work:
-// - Add constraint APIs to make it possible to avoid situations that could yield "orphaned" cells.
-
-/**
- * Scope for table schema built-in types.
- * @remarks User-provided factory scoping will be applied as `com.fluidframework.table<user-scope>`.
- */
-const baseSchemaScope = "com.fluidframework.table";
-
-/**
- * A private symbol put on table schema to help identify them.
- */
-const tableSchemaSymbol: unique symbol = Symbol("tableNode");
+// - Use more focused constraint APIs to protect against leaked cells
 
 /**
  * A row in a table.
@@ -88,7 +81,14 @@ export interface RowPrivate<
  * This namespace should be strictly type-exported by the package.
  * All members should be tagged with `@system`.
  *
- * @system @alpha
+ * Orphaned Cells:
+ * Without safeguards, it is possible for cells to become "orphaned".
+ * An orphaned cell is a cell that does not correspond to a valid row and column.
+ * In order to preserve the invariant that all cells must have a valid row and column, table operations
+ * (eg, inserting/removing rows/columns, or setting/removing a cell) will automatically include constraints that
+ * guard transactions from producing orphaned cells.
+ *
+ * @system @beta
  */
 export namespace System_TableSchema {
 	/**
@@ -99,7 +99,7 @@ export namespace System_TableSchema {
 	 * Note: this can't reasonably be implemented via `Pick<ArrayNode<...>>` because we only want to include the
 	 * subset of its method overloads which do not support moving items between lists.
 	 *
-	 * @alpha @system
+	 * @beta @system
 	 */
 	export type RearrangeableList<TItemSchema extends ImplicitAllowedTypes> = TreeNode &
 		readonly TreeNodeFromImplicitAllowedTypes<TItemSchema>[] & {
@@ -127,7 +127,7 @@ export namespace System_TableSchema {
 	 * Longer term, it would be better to simply omit "props" altogether by default.
 	 * For now, this ensures that the user doesn't have to specify a "props" entry when initializing column/row nodes
 	 * and ensures that they cannot set anything that might conflict with future evolutions of the schema.
-	 * @system @alpha
+	 * @system @beta
 	 */
 	export type DefaultPropsType = ReturnType<typeof SchemaFactory.optional<[]>>;
 
@@ -135,7 +135,7 @@ export namespace System_TableSchema {
 	 * A base interface for factory input options which include an schema factory.
 	 * @remarks This interface should not be referenced directly.
 	 * @privateRemarks This interface primarily exists to provide a single home for property documentation.
-	 * @system @alpha
+	 * @system @beta
 	 */
 	export interface OptionsWithSchemaFactory<TSchemaFactory extends SchemaFactoryBeta> {
 		/**
@@ -150,7 +150,7 @@ export namespace System_TableSchema {
 	 * A base interface for factory input options which include the table cell schema.
 	 * @remarks This interface should not be referenced directly.
 	 * @privateRemarks This interface primarily exists to provide a single home for property documentation.
-	 * @system @alpha
+	 * @system @beta
 	 */
 	export interface OptionsWithCellSchema<TCellSchema extends ImplicitAllowedTypes> {
 		/**
@@ -164,7 +164,7 @@ export namespace System_TableSchema {
 	/**
 	 * Base options for creating table column schema.
 	 * @remarks Includes parameters common to all column factory overloads.
-	 * @system @alpha
+	 * @system @beta
 	 */
 	export type CreateColumnOptionsBase<
 		TUserScope extends string = string,
@@ -174,7 +174,7 @@ export namespace System_TableSchema {
 
 	/**
 	 * Factory for creating column schema.
-	 * @system @alpha
+	 * @system @beta
 	 */
 	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type -- Return type is too complex to be reasonable to specify
 	export function createColumnSchema<
@@ -290,7 +290,7 @@ export namespace System_TableSchema {
 
 	/**
 	 * Base column schema type.
-	 * @sealed @system @alpha
+	 * @sealed @system @beta
 	 */
 	export type ColumnSchemaBase<
 		TUserScope extends string = string,
@@ -305,7 +305,7 @@ export namespace System_TableSchema {
 	/**
 	 * Base options for creating table row schema.
 	 * @remarks Includes parameters common to all row factory overloads.
-	 * @system @alpha
+	 * @system @beta
 	 */
 	export type CreateRowOptionsBase<
 		TUserScope extends string = string,
@@ -315,7 +315,7 @@ export namespace System_TableSchema {
 
 	/**
 	 * Factory for creating row schema.
-	 * @sealed @alpha
+	 * @system @beta
 	 */
 	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type -- Return type is too complex to be reasonable to specify
 	export function createRowSchema<
@@ -443,7 +443,7 @@ export namespace System_TableSchema {
 
 	/**
 	 * Base row schema type.
-	 * @sealed @system @alpha
+	 * @sealed @system @beta
 	 */
 	export type RowSchemaBase<
 		TUserScope extends string = string,
@@ -458,7 +458,7 @@ export namespace System_TableSchema {
 	/**
 	 * Base options for creating table schema.
 	 * @remarks Includes parameters common to all table factory overloads.
-	 * @system @alpha
+	 * @system @beta
 	 */
 	export type TableFactoryOptionsBase<
 		TUserScope extends string = string,
@@ -468,7 +468,7 @@ export namespace System_TableSchema {
 
 	/**
 	 * Factory for creating table schema.
-	 * @system @alpha
+	 * @system @beta
 	 */
 	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type -- Return type is too complex to be reasonable to specify
 	export function createTableSchema<
@@ -643,15 +643,33 @@ export namespace System_TableSchema {
 
 				// #endregion
 
-				// TypeScript is unable to narrow the column type correctly here, hence the casts below.
-				// See: https://github.com/microsoft/TypeScript/issues/52144
-				if (index === undefined) {
-					// eslint-disable-next-line @typescript-eslint/no-explicit-any
-					this.table.columns.insertAtEnd(TreeArrayNode.spread(columns) as any);
-				} else {
-					// eslint-disable-next-line @typescript-eslint/no-explicit-any
-					this.table.columns.insertAt(index, TreeArrayNode.spread(columns) as any);
-				}
+				this.#applyEditsInBatch({
+					applyEdits: () => {
+						// TypeScript is unable to narrow the column type correctly here, hence the casts below.
+						// See: https://github.com/microsoft/TypeScript/issues/52144
+						if (index === undefined) {
+							// eslint-disable-next-line @typescript-eslint/no-explicit-any
+							this.table.columns.insertAtEnd(TreeArrayNode.spread(columns) as any);
+						} else {
+							// eslint-disable-next-line @typescript-eslint/no-explicit-any
+							this.table.columns.insertAt(index, TreeArrayNode.spread(columns) as any);
+						}
+					},
+					// Relevant invariant: each cell corresponds to an existing row and column
+					// Scenarios that this constraint is intended to prevent:
+					//  * Client A inserts a column, then client B adds row with a cell for that column, then client A reverts the column insertion.
+					//  * Client A inserts a column, then client B populates a cell for that column within an existing row, then client A reverts the column insertion.
+					//  Notes:
+					//  * In either scenario, A and B may be the same client.
+					//  * In either scenario, B's edit and the revert may or may not be concurrent.
+					// Collateral scenarios that this constraint also prevents:
+					//  * Any other scenario where client A inserts a column, then client B edits _any_ part of the tree, then client A reverts the column insertion.
+					// Future improvements:
+					// Use both...
+					//  * A "no attach on revert" constraint on the row array
+					//  * A "no shallow change" constraint on every cell that corresponds to the new column in every existing row
+					preconditionsOnRevert: [{ type: "noChange" }],
+				});
 
 				// Inserting the input nodes into the tree hydrates them, making them usable as nodes.
 				return columns as unknown as ColumnValueType[];
@@ -673,15 +691,33 @@ export namespace System_TableSchema {
 
 				// #endregion
 
-				// TypeScript is unable to narrow the row type correctly here, hence the casts below.
-				// See: https://github.com/microsoft/TypeScript/issues/52144
-				if (index === undefined) {
-					// eslint-disable-next-line @typescript-eslint/no-explicit-any
-					this.table.rows.insertAtEnd(TreeArrayNode.spread(rows) as any);
-				} else {
-					// eslint-disable-next-line @typescript-eslint/no-explicit-any
-					this.table.rows.insertAt(index, TreeArrayNode.spread(rows) as any);
-				}
+				// Relevant invariant: each cell corresponds to an existing row and column
+				// Prevents cell leaks from concurrently removed columns.
+				// Example scenario: Client A removes a column while concurrently Client B adds a row with cells for those columns (including the one A removed).
+				// If client B is sequenced after A, then B's row could have cells that do not correspond to existing columns.
+				// This constraint ensures all columns that existed when creating the row still exist when the row insertion is applied.
+				// TODO: Replace with "no detach" constraint on the column array when available.
+				const columnConstraints: TransactionConstraintAlpha[] = this.table.columns.map(
+					(column) => ({
+						type: "nodeInDocument",
+						node: column as ColumnValueType,
+					}),
+				);
+
+				this.#applyEditsInBatch({
+					applyEdits: () => {
+						// TypeScript is unable to narrow the row type correctly here, hence the casts below.
+						// See: https://github.com/microsoft/TypeScript/issues/52144
+						if (index === undefined) {
+							// eslint-disable-next-line @typescript-eslint/no-explicit-any
+							this.table.rows.insertAtEnd(TreeArrayNode.spread(rows) as any);
+						} else {
+							// eslint-disable-next-line @typescript-eslint/no-explicit-any
+							this.table.rows.insertAt(index, TreeArrayNode.spread(rows) as any);
+						}
+					},
+					preconditions: columnConstraints.length > 0 ? columnConstraints : undefined,
+				});
 
 				// Inserting the input nodes into the tree hydrates them, making them usable as nodes.
 				return rows as unknown as RowValueType[];
@@ -696,13 +732,48 @@ export namespace System_TableSchema {
 				const row = this.#getRow(rowOrId);
 				const column = this.#getColumn(columnOrId);
 
-				(row as RowValueInternalType).cells[column.id] = cell as CellValueType;
+				this.#applyEditsInBatch({
+					applyEdits: () => {
+						(row as RowValueInternalType).cells[column.id] = cell as CellValueType;
+					},
+					// Relevant invariant: each cell corresponds to an existing row and column
+					// Prevents cell leaks from concurrently removed columns in earlier-sequenced edits.
+					// Example scenario: Client A removes a column, then Client B concurrently sets a cell in that column (sequenced after A's edit).
+					// If both edits are applied, B's cell would not correspond to an existing column.
+					preconditions: [
+						{
+							type: "nodeInDocument",
+							node: column,
+						},
+					],
+					// Relevant invariant: each cell corresponds to an existing row and column
+					// Example scenario: Client A overwrites a populated cell, then Client B removes the column associated with the A's cell (this clears the cell).
+					// If Client A then reverts their edit, the overwritten value is restored in the cell despite the absence of column for that cell.
+					preconditionsOnRevert:
+						(row as RowValueInternalType).cells[column.id] === undefined
+							? undefined
+							: [
+									{
+										type: "nodeInDocument",
+										node: column,
+									},
+								],
+				});
 			}
 
 			public removeColumns(
 				indexOrColumns: number | undefined | readonly string[] | readonly ColumnValueType[],
 				count: number | undefined = undefined,
 			): ColumnValueType[] {
+				// Relevant invariant: each cell corresponds to an existing row and column
+				// Prevents cell leaks from concurrently added rows in earlier-sequenced edits.
+				// Example scenario: Client A adds a row, Client B concurrently removes a column that is populated in A's row.
+				// If Client A's edit is sequenced before Client B's edit, then B's removal would orphan the cell in A's row.
+				// We have the same problem if Client A populates a cell for one of the columns removed by B
+				// This constraint ensures no rows were added.
+				// TODO: Replace with "no attach" constraint on the row array when available.
+				const preconditions: TransactionConstraintAlpha[] = [{ type: "noChange" }];
+
 				if (typeof indexOrColumns === "number" || indexOrColumns === undefined) {
 					let removedColumns: ColumnValueType[] | undefined;
 					const startIndex = indexOrColumns ?? 0;
@@ -716,25 +787,33 @@ export namespace System_TableSchema {
 
 					validateIndexRange(startIndex, endIndex, this.table.columns, "Table.removeColumns");
 
-					this.#applyEditsInBatch(() => {
-						const columnsToRemove = this.table.columns.slice(
-							startIndex,
-							endIndex,
-						) as ColumnValueType[];
+					this.#applyEditsInBatch({
+						applyEdits: () => {
+							const columnsToRemove = this.table.columns.slice(
+								startIndex,
+								endIndex,
+							) as ColumnValueType[];
 
-						// First, remove all cells that correspond to each column from each row:
-						for (const column of columnsToRemove) {
-							this.#removeCells(column);
-						}
+							// First, remove all cells that correspond to each column from each row:
+							for (const column of columnsToRemove) {
+								for (const row of this.table.rows) {
+									// TypeScript is unable to narrow the row type correctly here, hence the cast.
+									// See: https://github.com/microsoft/TypeScript/issues/52144
+									// eslint-disable-next-line @typescript-eslint/no-dynamic-delete -- This is currently how Record node entries are deleted.
+									delete (row as RowValueInternalType).cells[column.id];
+								}
+							}
 
-						// Second, remove the column nodes:
-						removeRangeFromArray(
-							startIndex,
-							endIndex,
-							this.table.columns,
-							"Table.removeColumns",
-						);
-						removedColumns = columnsToRemove;
+							// Second, remove the column nodes:
+							removeRangeFromArray(
+								startIndex,
+								endIndex,
+								this.table.columns,
+								"Table.removeColumns",
+							);
+							removedColumns = columnsToRemove;
+						},
+						preconditions,
 					});
 					return removedColumns ?? fail(0xc1f /* Transaction did not complete. */);
 				} else {
@@ -751,23 +830,24 @@ export namespace System_TableSchema {
 						columnsToRemove.push(this.#getColumn(columnOrIdToRemove));
 					}
 
-					this.#applyEditsInBatch(() => {
-						// Note, throwing an error within a transaction will abort the entire transaction.
-						// So if we throw an error here for any column, no columns will be removed.
-						for (const columnToRemove of columnsToRemove) {
-							// Remove the corresponding cell from all rows.
-							for (const row of this.table.rows) {
-								// TypeScript is unable to narrow the row type correctly here, hence the cast.
-								// See: https://github.com/microsoft/TypeScript/issues/52144
-								this.removeCell({
-									column: columnToRemove,
-									row: row as RowValueType,
-								});
-							}
+					this.#applyEditsInBatch({
+						applyEdits: () => {
+							// Note, throwing an error within a transaction will abort the entire transaction.
+							// So if we throw an error here for any column, no columns will be removed.
+							for (const columnToRemove of columnsToRemove) {
+								// Remove the corresponding cell from all rows.
+								for (const row of this.table.rows) {
+									// TypeScript is unable to narrow the row type correctly here, hence the cast.
+									// See: https://github.com/microsoft/TypeScript/issues/52144
+									// eslint-disable-next-line @typescript-eslint/no-dynamic-delete -- This is currently how Record node entries are deleted.
+									delete (row as RowValueInternalType).cells[columnToRemove.id];
+								}
 
-							// We have already validated that all of the columns exist above, so this is safe.
-							this.table.columns.removeAt(this.table.columns.indexOf(columnToRemove));
-						}
+								// We have already validated that all of the columns exist above, so this is safe.
+								this.table.columns.removeAt(this.table.columns.indexOf(columnToRemove));
+							}
+						},
+						preconditions,
 					});
 					return columnsToRemove;
 				}
@@ -777,7 +857,21 @@ export namespace System_TableSchema {
 				indexOrRows: number | undefined | readonly string[] | readonly RowValueType[],
 				count?: number | undefined,
 			): RowValueType[] {
+				// Relevant invariant: each cell corresponds to an existing row and column
+				// Adding a constraint on columns here to prevent cells being orphaned.  The relevant scenario is:
+				// Client A removes rows
+				// Client B (either concurrently or not, so long as B's edit is sequenced after A's edit) removes a column,
+				// Client A reverts the removal of the rows
+				// TODO: Replace with "no detach on revert" constraint on the column array when available.
+				const columnConstraints: TransactionConstraintAlpha[] = this.table.columns.map(
+					(column) => ({
+						type: "nodeInDocument",
+						node: column as ColumnValueType,
+					}),
+				);
+
 				if (typeof indexOrRows === "number" || indexOrRows === undefined) {
+					let removedRows: RowValueType[] | undefined;
 					const startIndex = indexOrRows ?? 0;
 					const endIndex = count === undefined ? this.table.rows.length : startIndex + count;
 
@@ -786,12 +880,20 @@ export namespace System_TableSchema {
 						return [];
 					}
 
-					return removeRangeFromArray(
-						startIndex,
-						endIndex,
-						this.table.rows,
-						"Table.removeRows",
-					);
+					validateIndexRange(startIndex, endIndex, this.table.rows, "Table.removeRows");
+					this.#applyEditsInBatch({
+						applyEdits: () => {
+							removedRows = removeRangeFromArray(
+								startIndex,
+								endIndex,
+								this.table.rows,
+								"Table.removeRows",
+							);
+						},
+						preconditionsOnRevert:
+							columnConstraints.length > 0 ? columnConstraints : undefined,
+					});
+					return removedRows ?? fail(0xccd /* Transaction did not complete */);
 				}
 
 				// If there are no rows to remove, do nothing
@@ -806,15 +908,17 @@ export namespace System_TableSchema {
 				for (const rowToRemove of indexOrRows) {
 					rowsToRemove.push(this.#getRow(rowToRemove));
 				}
-
-				this.#applyEditsInBatch(() => {
-					// Note, throwing an error within a transaction will abort the entire transaction.
-					// So if we throw an error here for any row, no rows will be removed.
-					for (const rowToRemove of rowsToRemove) {
-						// We have already validated that all of the rows exist above, so this is safe.
-						const index = this.table.rows.indexOf(rowToRemove);
-						this.table.rows.removeAt(index);
-					}
+				this.#applyEditsInBatch({
+					applyEdits: () => {
+						// Note, throwing an error within a transaction will abort the entire transaction.
+						// So if we throw an error here for any row, no rows will be removed.
+						for (const rowToRemove of rowsToRemove) {
+							// We have already validated that all of the rows exist above, so this is safe.
+							const index = this.table.rows.indexOf(rowToRemove);
+							this.table.rows.removeAt(index);
+						}
+					},
+					preconditionsOnRevert: columnConstraints.length > 0 ? columnConstraints : undefined,
 				});
 				return rowsToRemove;
 			}
@@ -831,24 +935,73 @@ export namespace System_TableSchema {
 					return undefined;
 				}
 
-				// eslint-disable-next-line @typescript-eslint/no-dynamic-delete
-				delete row.cells[column.id];
+				this.#applyEditsInBatch({
+					applyEdits: () => {
+						// eslint-disable-next-line @typescript-eslint/no-dynamic-delete -- This is currently how Record node entries are deleted.
+						delete row.cells[column.id];
+					},
+					// Relevant invariant: each cell corresponds to an existing row and column
+					// Prevents cell leaks from concurrently removed columns in earlier-sequenced edits when this cell removal is reverted.
+					// Example scenario: Client A removes a cell, then Client B removes the column for that cell.
+					// If A's cell removal is later reverted, the cell would be restored but B's column removal means there's no column for it.
+					// This constraint on revert ensures the column still exists, ensuring restored cells correspond to existing columns.
+					preconditionsOnRevert: [{ type: "nodeInDocument", node: column }],
+				});
+
 				return cell;
 			}
 
+			// #region ID lookup caches
+
+			// Looking up rows/columns by string ID is a hot path (every getCell / setCell / etc. call goes
+			// through #tryGetRow or #tryGetColumn). Rather than scanning the arrays linearly on every call,
+			// we maintain lazily-built Maps from ID → node.
+			//
+			// Cache invalidation:
+			//   Each cache is marked stale (reset to `undefined`) by a `nodeChanged` listener registered on
+			//   the corresponding array node (this.table.rows / this.table.columns). `nodeChanged` fires on
+			//   an array node whenever an element is inserted, removed, or moved — exactly the set of
+			//   operations that could change which ID maps to which node. The event fires after the full
+			//   batch of edits has been applied (including remote edits received from collaborators), so the
+			//   cache is always rebuilt from a consistent, in-schema state.
+			//   TODO: Consider if we should do more fine-grained invalidation here. E.g. look at the specific deltas
+			//   returned by the `nodeChanged` event and only invalidate entries as needed.
+			//
+			// Listener lifetime:
+			//   The listener is registered exactly once per cache (guarded by the non-undefined check on the
+			//   stored unsubscribe callback).  Subsequent cache rebuilds after invalidation reuse the same
+			//   listener — no additional subscriptions accumulate.  The unsubscribe callback is stored so
+			//   that explicit cleanup is possible in the future if needed.
+
 			/**
-			 * Removes the cell corresponding with the specified column from each row in the table.
+			 * Cache from row ID → row node for O(1) lookups in {@link Table.#tryGetRow}.
+			 * `undefined` means the cache is stale and must be rebuilt before use.
 			 */
-			#removeCells(column: ColumnValueType): void {
-				for (const row of this.table.rows) {
-					// TypeScript is unable to narrow the row type correctly here, hence the cast.
-					// See: https://github.com/microsoft/TypeScript/issues/52144
-					this.removeCell({
-						column,
-						row: row as RowValueType,
-					});
-				}
-			}
+			#rowCache: Map<string, RowValueType> | undefined = undefined;
+
+			/**
+			 * Unsubscribe function for the `nodeChanged` listener on `this.table.rows`.
+			 * `undefined` means the listener has not yet been registered (first cache build is pending).
+			 * After the first build, this is always defined and the listener remains active for the
+			 * lifetime of the Table node.
+			 */
+			#rowCacheUnsubscribe: (() => void) | undefined = undefined;
+
+			/**
+			 * Cache from column ID → column node for O(1) lookups in {@link Table.#tryGetColumn}.
+			 * `undefined` means the cache is stale and must be rebuilt before use.
+			 */
+			#columnCache: Map<string, ColumnValueType> | undefined = undefined;
+
+			/**
+			 * Unsubscribe function for the `nodeChanged` listener on `this.table.columns`.
+			 * `undefined` means the listener has not yet been registered (first cache build is pending).
+			 * After the first build, this is always defined and the listener remains active for the
+			 * lifetime of the Table node.
+			 */
+			#columnCacheUnsubscribe: (() => void) | undefined = undefined;
+
+			// #endregion
 
 			/**
 			 * Applies the provided edits in a "batch".
@@ -859,7 +1012,15 @@ export namespace System_TableSchema {
 			 * Transactions are not supported for unhydrated trees, so we cannot run a transaction in that case.
 			 * But since there are no collaborators, this is not an issue.
 			 */
-			#applyEditsInBatch(applyEdits: () => void): void {
+			#applyEditsInBatch(options: {
+				/** The edits to apply. */
+				applyEdits: () => void;
+				/** Optional constraints that must be satisfied for the transaction to proceed. */
+				preconditions?: readonly TransactionConstraintAlpha[];
+				/** Optional constraints that must be satisfied on revert for the transaction to proceed. */
+				preconditionsOnRevert?: readonly TransactionConstraintAlpha[];
+			}): void {
+				const { applyEdits, preconditions, preconditionsOnRevert } = options;
 				const branch = TreeAlpha.branch(this);
 
 				// Ensure events are paused until all of the edits are applied.
@@ -872,11 +1033,51 @@ export namespace System_TableSchema {
 						// Therefore, we don't need to run the edits as a transaction.
 						applyEdits();
 					} else {
-						branch.runTransaction(() => {
-							applyEdits();
-						});
+						branch.runTransaction(
+							() => {
+								applyEdits();
+								if (preconditionsOnRevert !== undefined) {
+									return { preconditionsOnRevert };
+								}
+							},
+							preconditions === undefined ? undefined : { preconditions },
+						);
 					}
 				});
+			}
+
+			/**
+			 * Returns the column ID → column node cache, building and caching it first if stale.
+			 *
+			 * @remarks
+			 * The first time this is called, it builds the map from the current contents of
+			 * `this.table.columns` and registers a `nodeChanged` listener on that array.
+			 * The listener invalidates the cache (sets `#columnCache` to `undefined`) whenever
+			 * the column array is structurally modified (insert / remove / move), so every
+			 * subsequent call that follows a structural change automatically triggers a rebuild.
+			 * The listener is registered only once — it is not re-registered on cache rebuilds.
+			 */
+			#getColumnCache(): Map<string, ColumnValueType> {
+				let cache = this.#columnCache;
+				if (cache === undefined) {
+					cache = new Map<string, ColumnValueType>();
+					for (const column of this.table.columns) {
+						// TypeScript is unable to narrow array element types correctly here.
+						// See: https://github.com/microsoft/TypeScript/issues/52144
+						cache.set((column as ColumnValueType).id, column as ColumnValueType);
+					}
+					this.#columnCache = cache;
+
+					// Register the invalidation listener once. The `nodeChanged` event fires on the
+					// array node itself after any structural change (insert / remove / move), which is
+					// exactly the set of changes that can alter the ID → node mapping.
+					if (this.#columnCacheUnsubscribe === undefined) {
+						this.#columnCacheUnsubscribe = Tree.on(this.columns, "nodeChanged", () => {
+							this.#columnCache = undefined;
+						});
+					}
+				}
+				return cache;
 			}
 
 			/**
@@ -896,21 +1097,14 @@ export namespace System_TableSchema {
 					return this.table.columns[columnOrIdOrIndex] as ColumnValueType;
 				}
 
+				const columnCache = this.#getColumnCache();
 				if (typeof columnOrIdOrIndex === "string") {
-					const columnId = columnOrIdOrIndex;
-					// TypeScript is unable to narrow the types correctly here, hence the casts.
-					// See: https://github.com/microsoft/TypeScript/issues/52144
-					return this.table.columns.find((col) => (col as ColumnValueType).id === columnId) as
-						| ColumnValueType
-						| undefined;
+					return columnCache.get(columnOrIdOrIndex);
 				}
 
 				// If the user provided a node, ensure it actually exists in this table.
-				if (!this.table.columns.includes(columnOrIdOrIndex)) {
-					return undefined;
-				}
-
-				return columnOrIdOrIndex;
+				const cached = columnCache.get(columnOrIdOrIndex.id);
+				return cached === columnOrIdOrIndex ? columnOrIdOrIndex : undefined;
 			}
 
 			/**
@@ -948,6 +1142,40 @@ export namespace System_TableSchema {
 			}
 
 			/**
+			 * Returns the row ID → row node cache, building and caching it first if stale.
+			 *
+			 * @remarks
+			 * The first time this is called, it builds the map from the current contents of
+			 * `this.table.rows` and registers a `nodeChanged` listener on that array.
+			 * The listener invalidates the cache (sets `#rowCache` to `undefined`) whenever
+			 * the row array is structurally modified (insert / remove / move), so every
+			 * subsequent call that follows a structural change automatically triggers a rebuild.
+			 * The listener is registered only once — it is not re-registered on cache rebuilds.
+			 */
+			#getRowCache(): Map<string, RowValueType> {
+				let cache = this.#rowCache;
+				if (cache === undefined) {
+					cache = new Map<string, RowValueType>();
+					for (const row of this.table.rows) {
+						// TypeScript is unable to narrow array element types correctly here.
+						// See: https://github.com/microsoft/TypeScript/issues/52144
+						cache.set((row as RowValueType).id, row as RowValueType);
+					}
+					this.#rowCache = cache;
+
+					// Register the invalidation listener once. The `nodeChanged` event fires on the
+					// array node itself after any structural change (insert / remove / move), which is
+					// exactly the set of changes that can alter the ID → node mapping.
+					if (this.#rowCacheUnsubscribe === undefined) {
+						this.#rowCacheUnsubscribe = Tree.on(this.rows, "nodeChanged", () => {
+							this.#rowCache = undefined;
+						});
+					}
+				}
+				return cache;
+			}
+
+			/**
 			 * Attempts to resolve the provided Row node or ID to a Row node in the table.
 			 * Returns `undefined` if there is no match.
 			 * @remarks Searches for a match based strictly on the ID and returns that result.
@@ -962,21 +1190,14 @@ export namespace System_TableSchema {
 					return this.table.rows[rowOrIdOrIndex] as RowValueType;
 				}
 
+				const rowCache = this.#getRowCache();
 				if (typeof rowOrIdOrIndex === "string") {
-					const rowId = rowOrIdOrIndex;
-					// TypeScript is unable to narrow the types correctly here, hence the casts.
-					// See: https://github.com/microsoft/TypeScript/issues/52144
-					return this.table.rows.find((row) => (row as RowValueType).id === rowId) as
-						| RowValueType
-						| undefined;
+					return rowCache.get(rowOrIdOrIndex);
 				}
 
 				// If the user provided a node, ensure it actually exists in this table.
-				if (!this.table.rows.includes(rowOrIdOrIndex)) {
-					return undefined;
-				}
-
-				return rowOrIdOrIndex;
+				const cached = rowCache.get(rowOrIdOrIndex.id);
+				return cached === rowOrIdOrIndex ? rowOrIdOrIndex : undefined;
 			}
 
 			/**
@@ -998,10 +1219,7 @@ export namespace System_TableSchema {
 			 * - A column with a duplicate ID is being inserted.
 			 */
 			#validateNewColumns(newColumns: readonly ColumnInsertableType[]): void {
-				return Table._validateNewColumns(
-					newColumns,
-					new Set(this.table.columns.map((column) => (column as ColumnValueType).id)),
-				);
+				return Table._validateNewColumns(newColumns, this.#getColumnCache());
 			}
 
 			/**
@@ -1011,11 +1229,7 @@ export namespace System_TableSchema {
 			 * - A row is being inserted that contains cells for columns that do not exist in the table.
 			 */
 			#validateNewRows(newRows: readonly RowInsertableType[]): void {
-				return Table._validateNewRows(
-					newRows,
-					new Set(this.table.rows.map((row) => (row as RowValueType).id)),
-					new Set(this.table.columns.map((column) => (column as ColumnValueType).id)),
-				);
+				return Table._validateNewRows(newRows, this.#getRowCache(), this.#getColumnCache());
 			}
 
 			/**
@@ -1025,7 +1239,7 @@ export namespace System_TableSchema {
 			 */
 			private static _validateNewColumns(
 				newColumns: Iterable<ColumnInsertableType>,
-				existingColumnIds: Set<string>,
+				existingColumnIds: { readonly has: (id: string) => boolean },
 			): void {
 				const newColumnIds = new Set<string>();
 				for (const newColumn of newColumns) {
@@ -1053,8 +1267,8 @@ export namespace System_TableSchema {
 			 */
 			private static _validateNewRows(
 				newRows: Iterable<RowInsertableType>,
-				existingRowIds: Set<string>,
-				columnIds: Set<string>,
+				existingRowIds: { readonly has: (id: string) => boolean },
+				columnIds: { readonly has: (id: string) => boolean },
 			): void {
 				const newRowIds = new Set<string>();
 				for (const newRow of newRows) {
@@ -1078,9 +1292,9 @@ export namespace System_TableSchema {
 					// #region If the row contains cells, verify that the table contains the columns for those cells
 
 					// Note: we intentionally hide `cells` on `IRow` to avoid leaking the internal data representation as much as possible, so we have to cast here.
-					// eslint-disable-next-line @typescript-eslint/no-explicit-any
+					// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
 					if ((newRow as any).cells !== undefined) {
-						// eslint-disable-next-line @typescript-eslint/no-explicit-any
+						// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
 						const keys: string[] = Object.keys((newRow as any).cells);
 						for (const key of keys) {
 							if (!columnIds.has(key)) {
@@ -1114,13 +1328,6 @@ export namespace System_TableSchema {
 				);
 			}
 		}
-
-		// Set a private symbol on the schema class that marks it as having been generated by this factory.
-		// Column / Row functionality use this to validate that they are being used in a table.
-		// This is effectively a work-around that allows columns and rows to invoke table methods
-		// without having to pass the table as a parameter to their construction, which isn't possible.
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		(Table as any)[tableSchemaSymbol] = true;
 
 		// Named interfaces here do not compile.
 		type Statics = {
@@ -1158,7 +1365,7 @@ export namespace System_TableSchema {
 
 	/**
 	 * Base row schema type.
-	 * @sealed @system @alpha
+	 * @sealed @system @beta
 	 */
 	export type TableSchemaBase<
 		TUserScope extends string,
@@ -1170,10 +1377,15 @@ export namespace System_TableSchema {
 	// #endregion
 }
 
+/**
+ * Sets up scope for table schema built-in types.
+ * @remarks User-provided factory scoping will be applied as `com.fluidframework.table<user-scope>`.
+ */
+// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 function createTableScopedFactory<TUserScope extends string>(
 	inputSchemaFactory: SchemaFactoryBeta<TUserScope>,
-): SchemaFactoryBeta<`${typeof baseSchemaScope}<${TUserScope}>`> {
-	return new SchemaFactoryBeta(`${baseSchemaScope}<${inputSchemaFactory.scope}>`);
+) {
+	return createCustomizedFluidFrameworkScopedFactory(inputSchemaFactory, "tableV2");
 }
 
 /**
@@ -1204,10 +1416,16 @@ function removeRangeFromArray<TNodeSchema extends ImplicitAllowedTypes>(
  *
  * @remarks
  *
- * WARNING: These APIs are in preview and are subject to change.
- * Until these APIs have stabilized, it is not recommended to use them in production code.
- * There may be breaking changes to these APIs and their underlying data format.
- * Using these APIs in production code may result in data loss or corruption.
+ * Note: the APIs produced by this module ensure various tabular data invariants are maintained that the raw, underlying tree structures do not.
+ * For example, they ensure that cells always correspond to existing rows and columns (and do not become "orphaned" due to row/column deletion, etc.).
+ * For this reason, direct manipulation of the underlying tree structures is not supported.
+ * To modify the data, only the APIs provided here may be used.
+ *
+ * Also note: these APIs leverage `SharedTree` functionality that was added in version `2.80.0`,
+ * which is not compatible with previous versions of this library.
+ * To ensure safe collaboration, you will need to configure the {@link @fluidframework/runtime-definitions#MinimumVersionForCollab}
+ * for the Fluid Runtime and/or `SharedTree` to at least `2.80.0`.
+ * To set this minimum version for `SharedTree`, use {@link configuredSharedTreeBeta}.
  *
  * The primary APIs for create tabular data schema are:
  *
@@ -1229,12 +1447,6 @@ function removeRangeFromArray<TNodeSchema extends ImplicitAllowedTypes>(
  *
  * Column and Row schema created using these APIs are extensible via the `props` field.
  * This allows association of additional properties with column and row nodes.
- *
- * Cells in the table may become "orphaned."
- * That is, it is possible to enter a state where one or more rows contain cells with no corresponding column.
- * To reduce the likelihood of this, you can manually remove corresponding cells when removing columns.
- * Either way, it is possible to enter such a state via the merging of edits.
- * For example: one client might add a row while another concurrently removes a column, orphaning the cell where the column and row intersected.
  *
  * @example Defining a Table schema
  *
@@ -1311,7 +1523,7 @@ function removeRangeFromArray<TNodeSchema extends ImplicitAllowedTypes>(
  * The above examples are backed by tests in `tableSchema.spec.ts`.
  * Those tests and these examples should be kept in-sync to ensure that the examples are correct.
  *
- * @alpha
+ * @beta
  */
 export namespace TableSchema {
 	// #region Column
@@ -1321,7 +1533,7 @@ export namespace TableSchema {
 	 * @remarks Implemented by the schema class returned from {@link TableSchema.(column:2)}.
 	 * @typeParam TCell - The type of the cells in the {@link TableSchema.Table}.
 	 * @typeParam TProps - Additional properties to associate with the column.
-	 * @sealed @alpha
+	 * @sealed @beta
 	 */
 	export interface Column<
 		// eslint-disable-next-line @typescript-eslint/no-unused-vars -- Reserving this for future use.
@@ -1349,7 +1561,7 @@ export namespace TableSchema {
 	 * Factory for creating new table column schema.
 	 * @typeParam TUserScope - The {@link SchemaFactory.scope | schema factory scope}.
 	 * @typeParam TCell - The type of the cells in the {@link TableSchema.Table}.
-	 * @alpha
+	 * @beta
 	 */
 	export function column<
 		const TUserScope extends string,
@@ -1370,7 +1582,7 @@ export namespace TableSchema {
 	 * @typeParam TUserScope - The {@link SchemaFactory.scope | schema factory scope}.
 	 * @typeParam TCell - The type of the cells in the {@link TableSchema.Table}.
 	 * @typeParam TProps - Additional properties to associate with the column.
-	 * @alpha
+	 * @beta
 	 */
 	export function column<
 		const TUserScope extends string,
@@ -1410,7 +1622,7 @@ export namespace TableSchema {
 	 * @remarks Implemented by the schema class returned from {@link TableSchema.(row:2)}.
 	 * @typeParam TCell - The type of the cells in the {@link TableSchema.Table}.
 	 * @typeParam TProps - Additional properties to associate with the row.
-	 * @sealed @alpha
+	 * @sealed @beta
 	 */
 	export interface Row<
 		// eslint-disable-next-line @typescript-eslint/no-unused-vars -- Reserving this for future use.
@@ -1438,7 +1650,7 @@ export namespace TableSchema {
 	 * Factory for creating new table column schema.
 	 * @typeParam TUserScope - The {@link SchemaFactory.scope | schema factory scope}.
 	 * @typeParam TCell - The type of the cells in the {@link TableSchema.Table}.
-	 * @alpha
+	 * @beta
 	 */
 	export function row<
 		const TUserScope extends string,
@@ -1455,7 +1667,7 @@ export namespace TableSchema {
 	 * @typeParam TUserScope - The {@link SchemaFactory.scope | schema factory scope}.
 	 * @typeParam TCell - The type of the cells in the {@link TableSchema.Table}.
 	 * @typeParam TProps - Additional properties to associate with the row.
-	 * @alpha
+	 * @beta
 	 */
 	export function row<
 		const TUserScope extends string,
@@ -1492,7 +1704,12 @@ export namespace TableSchema {
 
 	/**
 	 * A key to uniquely identify a cell within a table.
-	 * @input @alpha
+	 *
+	 * @remarks
+	 * Note that edits to the table structure (including edits by collaborators) can cause indexes to refer to different cells over time.
+	 * Therefore, it is recommended to use IDs or node references whenever possible to identify cells.
+	 *
+	 * @input @beta
 	 */
 	export interface CellKey<
 		TColumn extends ImplicitAllowedTypes,
@@ -1511,7 +1728,7 @@ export namespace TableSchema {
 
 	/**
 	 * {@link TableSchema.Table.insertColumns} parameters.
-	 * @input @alpha
+	 * @input @beta
 	 */
 	export interface InsertColumnsParameters<TColumn extends ImplicitAllowedTypes> {
 		/**
@@ -1528,7 +1745,7 @@ export namespace TableSchema {
 
 	/**
 	 * {@link TableSchema.Table.insertRows} parameters.
-	 * @input @alpha
+	 * @input @beta
 	 */
 	export interface InsertRowsParameters<TRow extends ImplicitAllowedTypes> {
 		/**
@@ -1545,7 +1762,7 @@ export namespace TableSchema {
 
 	/**
 	 * {@link TableSchema.Table.setCell} parameters.
-	 * @input @alpha
+	 * @input @beta
 	 */
 	export interface SetCellParameters<
 		TCell extends ImplicitAllowedTypes,
@@ -1575,7 +1792,7 @@ export namespace TableSchema {
 	 * @typeParam TColumn - The type of the columns in the table.
 	 * @typeParam TRow - The type of the rows in the table.
 	 *
-	 * @sealed @alpha
+	 * @sealed @beta
 	 */
 	export interface Table<
 		TUserScope extends string,
@@ -1600,6 +1817,11 @@ export namespace TableSchema {
 		getColumn(id: string): TreeNodeFromImplicitAllowedTypes<TColumn> | undefined;
 		/**
 		 * Gets a table column by its index in the table.
+		 *
+		 * @remarks
+		 * Note that edits to the table structure (including edits by collaborators) can cause indexes to refer to different columns over time.
+		 * Therefore, it is recommended to use IDs whenever possible to identify columns.
+		 *
 		 * @returns The column, if it exists. Otherwise, `undefined`.
 		 */
 		getColumn(index: number): TreeNodeFromImplicitAllowedTypes<TColumn> | undefined;
@@ -1611,6 +1833,11 @@ export namespace TableSchema {
 		getRow(id: string): TreeNodeFromImplicitAllowedTypes<TRow> | undefined;
 		/**
 		 * Gets a table row by its index in the table.
+		 *
+		 * @remarks
+		 * Note that edits to the table structure (including edits by collaborators) can cause indexes to refer to different rows over time.
+		 * Therefore, it is recommended to use IDs whenever possible to identify rows.
+		 *
 		 * @returns The row, if it exists. Otherwise, `undefined`.
 		 */
 		getRow(index: number): TreeNodeFromImplicitAllowedTypes<TRow> | undefined;
@@ -1741,7 +1968,7 @@ export namespace TableSchema {
 
 	/**
 	 * Input parameters for {@link TableSchema.Table}'s `create` factory method.
-	 * @input @alpha
+	 * @input @beta
 	 */
 	export interface TableFactoryMethodParameters<
 		TUserScope extends string,
@@ -1768,7 +1995,7 @@ export namespace TableSchema {
 	 * @typeParam TUserScope - The {@link SchemaFactory.scope | schema factory scope}.
 	 * The resulting schema will have an identifier of the form: `com.fluidframework.table<${TUserScope}>.Table`.
 	 * @typeParam TCell - The type of the cells in the table.
-	 * @alpha
+	 * @beta
 	 */
 	export function table<
 		const TUserScope extends string,
@@ -1795,7 +2022,7 @@ export namespace TableSchema {
 	 * The resulting schema will have an identifier of the form: `com.fluidframework.table<${TUserScope}>.Table`.
 	 * @typeParam TCell - The type of the cells in the table.
 	 * @typeParam TColumn - The type of the columns in the table.
-	 * @alpha
+	 * @beta
 	 */
 	export function table<
 		const TUserScope extends string,
@@ -1821,7 +2048,7 @@ export namespace TableSchema {
 	 * The resulting schema will have an identifier of the form: `com.fluidframework.table<${TUserScope}>.Table`.
 	 * @typeParam TCell - The type of the cells in the table.
 	 * @typeParam TRow - The type of the rows in the table.
-	 * @alpha
+	 * @beta
 	 */
 	export function table<
 		const TUserScope extends string,
@@ -1852,7 +2079,7 @@ export namespace TableSchema {
 	 * @typeParam TCell - The type of the cells in the table.
 	 * @typeParam TColumn - The type of the columns in the table.
 	 * @typeParam TRow - The type of the rows in the table.
-	 * @alpha
+	 * @beta
 	 */
 	export function table<
 		const TUserScope extends string,

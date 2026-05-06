@@ -4,7 +4,7 @@
  */
 
 import { fail } from "node:assert";
-import type { NodeId } from "../feature-libraries/index.js";
+
 import {
 	type ChangeEncodingContext,
 	type DeltaFieldMap,
@@ -12,9 +12,11 @@ import {
 	type FieldKindIdentifier,
 	makeAnonChange,
 } from "../core/index.js";
-import { type JsonCompatibleReadOnly, brand } from "../util/index.js";
+import type { NodeId } from "../feature-libraries/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import type { EncodedNodeChangeset } from "../feature-libraries/modular-schema/modularChangeFormatV1.js";
+import { type JsonCompatibleReadOnly, brand } from "../util/index.js";
+
 import { TestChange } from "./testChange.js";
 
 /**
@@ -94,7 +96,7 @@ function decode(encoded: JsonCompatibleReadOnly, context: ChangeEncodingContext)
 	const fieldChanges =
 		(encoded as EncodedNodeChangeset).fieldChanges ?? fail("Invalid encoded TestNodeId");
 
-	return fieldChanges[0].change as TestNodeId;
+	return fieldChanges[0].change as object as TestNodeId;
 }
 
 function tryGetTestChange(id: NodeId | undefined): TestChange | undefined {

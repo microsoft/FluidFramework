@@ -6,66 +6,36 @@
 export {
 	ADOSizeComparator,
 	BundleFileData,
-	DefaultStatsProcessors,
+	GetBundleSummariesFromAnalyzerArgs,
+	getAnalyzerFilePathsFromFolder,
+	getAnalyzerJsonFromFileSystem,
+	getAnalyzerJsonFromZip,
+	getAnalyzerPathsFromFileSystem,
+	getAnalyzerPathsFromZipObject,
 	getAzureDevopsApi,
 	getBuildTagForCommit,
-	getBundleBuddyConfigFileFromZip,
-	getBundleBuddyConfigFromFileSystem,
-	getBundleBuddyConfigMap,
-	GetBundleBuddyConfigMapArgs,
-	getBundleFilePathsFromFolder,
-	getBundlePathsFromFileSystem,
-	getBundlePathsFromZipObject,
-	getBundleSummaries,
-	GetBundleSummariesArgs,
-	getCommentForBundleDiff,
-	getSimpleComment,
-	getStatsFileFromFileSystem,
-	getStatsFileFromZip,
+	getBundleSummariesFromAnalyzer,
 	getZipObjectFromArtifact,
 	IADOConstants,
-	prCommentsUtils,
-	totalSizeMetricName,
+	SizeComparison,
 } from "./ADO";
+export {
+	BundleComparison,
+	BundleMetric,
+	BundleMetricSet,
+	BundleSummaries,
+} from "./BundleBuddyTypes";
 export {
 	BannedModule,
 	BannedModulesPlugin,
 	BannedModulesPluginOptions,
 } from "./bannedModulesPlugin/bannedModulesPlugin";
-export {
-	BundleBuddyConfigWebpackPlugin,
-	BundleBuddyPluginConfig,
-} from "./BundleBuddyConfigWebpackPlugin";
-export {
-	BundleBuddyConfig,
-	BundleComparison,
-	BundleComparisonResult,
-	BundleMetric,
-	BundleMetricSet,
-	BundleSummaries,
-	ChunkToAnalyze,
-	WebpackStatsProcessor,
-} from "./BundleBuddyTypes";
 export { bundlesContainNoChanges, compareBundles } from "./compareBundles";
 export {
-	BundleBuddyConfigProcessorOptions,
-	EntryStatsProcessorOptions,
-	getBundleBuddyConfigProcessor,
-	getEntryStatsProcessor,
-	getTotalSizeStatsProcessor,
-	TotalSizeStatsProcessorOptions,
-} from "./statsProcessors";
-export {
-	AggregatedChunkAnalysis,
-	ChunkSizeInfo,
-	decompressStatsFile,
+	GetBuildOptions,
 	getAllFilesInDirectory,
 	getBaselineCommit,
-	GetBuildOptions,
 	getBuilds,
-	getChunkAndDependencySizes,
-	getChunkParsedSize,
-	getLastCommitHashFromPR,
 	getPriorCommit,
 	unzipStream,
 } from "./utilities";

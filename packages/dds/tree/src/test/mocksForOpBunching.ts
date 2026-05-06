@@ -5,6 +5,7 @@
 
 import { strict as assert } from "node:assert";
 
+import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import {
 	FlushMode,
 	type IRuntimeMessageCollection,
@@ -15,7 +16,6 @@ import {
 	MockContainerRuntimeForReconnection,
 	type MockFluidDataStoreRuntime,
 } from "@fluidframework/test-runtime-utils/internal";
-import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 
 /**
  * Returns whether the two messages are from the same batch for the purposes of op bunching.

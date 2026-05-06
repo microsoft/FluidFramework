@@ -22,6 +22,7 @@ import {
 	type IFluidSerializer,
 	SharedObject,
 } from "@fluidframework/shared-object-base/internal";
+import { extractTelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
 import {
@@ -102,6 +103,7 @@ const idForLocalUnattachedClient = undefined;
  *
  * Generally not used directly. A derived type will pass in a backing data type
  * IOrderedCollection that will define the deterministic add/acquire order and snapshot ability.
+ * @deprecated Use {@link IConsensusOrderedCollection} for typing and the appropriate factory to create instances. This implementation class will be removed in a future release.
  * @legacy @beta
  */
 
@@ -256,7 +258,10 @@ export class ConsensusOrderedCollection<T = any>
 				opName: "release",
 				acquireId,
 			}).catch((error) => {
-				this.logger.sendErrorEvent({ eventName: "ConsensusQueue_release" }, error);
+				extractTelemetryLoggerExt(this.logger).sendErrorEvent(
+					{ eventName: "ConsensusQueue_release" },
+					error,
+				);
 			});
 		}
 	}
@@ -304,10 +309,7 @@ export class ConsensusOrderedCollection<T = any>
 		}
 	}
 
-	/**
-	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.processMessagesCore}
-	 */
-	protected processMessagesCore(messagesCollection: IRuntimeMessageCollection): void {
+	protected override processMessagesCore(messagesCollection: IRuntimeMessageCollection): void {
 		const { envelope, local, messagesContent } = messagesCollection;
 		for (const messageContent of messagesContent) {
 			this.processMessage(envelope, messageContent, local);
@@ -433,8 +435,12 @@ export class ConsensusOrderedCollection<T = any>
 		return serializer.parse(content);
 	}
 
-	protected applyStashedOp(): void {
-		// empty implementation
+	protected applyStashedOp(content: unknown): void {
+		const op = content as IConsensusOrderedCollectionOperation<T>;
+		// Submit the original op so we can match the ACK when it arrives during remote op processing.
+		// Use a no-op resolve function since we don't need to wait for the result. Note - this results in `acquire()` promises resolving to `false`.
+		const resolve: PendingResolve<T> = () => {};
+		this.submitLocalMessage(op, resolve);
 	}
 
 	/**

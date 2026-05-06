@@ -1,0 +1,54 @@
+<!-- Copyright (c) Microsoft Corporation and contributors. All rights reserved. -->
+<!-- Licensed under the MIT License. -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FF Build Dashboard</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📊</text></svg>">
+    <!-- Chart.js versions pinned for stability -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" integrity="sha384-9nhczxUqK87bcKHh20fSQcTGD4qq5GhayNYSYWqwBkINBhOfQLg/P5HG5lF1urn4" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js" integrity="sha384-cVMg8E3QFwTvGCDuK+ET4PD341jF3W8nO1auiXfuZNQkzbUUiBGLsIQUE+b1mxws" crossorigin="anonymous"></script>
+    <style>
+<%- cssContent %>
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header-row">
+            <h1>Fluid Framework Build Performance Dashboard</h1>
+            <div class="tabs">
+                <button class="tab public active" onclick="switchTab('public')">PR Builds</button>
+                <button class="tab internal" onclick="switchTab('internal')">Internal Builds</button>
+            </div>
+        </div>
+        <div id="public-content" class="tab-content active">
+            <div class="loading" id="public-loading"><div class="loading-spinner"></div><p>Loading PR build data...</p></div>
+            <div id="public-dashboard" style="display: none;"></div>
+            <div class="no-data" id="public-no-data" style="display: none;"><h3>No PR Build Data Available</h3><p>PR build metrics will appear here once the public pipeline runs.</p></div>
+        </div>
+        <div id="internal-content" class="tab-content">
+            <div class="loading" id="internal-loading"><div class="loading-spinner"></div><p>Loading internal build data...</p></div>
+            <div id="internal-dashboard" style="display: none;"></div>
+            <div class="no-data" id="internal-no-data" style="display: none;"><h3>No Internal Build Data Available</h3><p>Internal build metrics will appear here once the internal pipeline runs.</p></div>
+        </div>
+    </div>
+    <script>
+        // Dashboard state
+        const dashboardData = { public: null, internal: null };
+        const chartInstances = { public: {}, internal: {} };
+        const tableState = {
+            public: { recent: { sort: { column: 'date', direction: 'desc' }, page: 1 }, longest: { sort: { column: 'duration', direction: 'desc' }, page: 1 } },
+            internal: { recent: { sort: { column: 'date', direction: 'desc' }, page: 1 }, longest: { sort: { column: 'duration', direction: 'desc' }, page: 1 } }
+        };
+        const itemsPerPage = 5;
+<% if (standalone) { %>
+        const STANDALONE_MODE = '<%= mode %>';
+        const INLINED_DATA = <%- sanitizedDataJson %>;
+<% } %>
+<%- jsContent %>
+    </script>
+</body>
+</html>

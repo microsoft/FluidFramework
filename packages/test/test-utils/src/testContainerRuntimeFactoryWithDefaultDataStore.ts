@@ -68,6 +68,8 @@ export type ContainerRuntimeFactoryWithDefaultDataStoreConstructor = new (
 ) => IRuntimeFactory;
 
 /**
+ * Creates a container runtime factory with default data store for backward compatibility.
+ *
  * @remarks
  * This function is purely needed for back-compat as the constructor argument structure of
  * `ContainerRuntimeFactoryWithDefaultDataStore` was changed.

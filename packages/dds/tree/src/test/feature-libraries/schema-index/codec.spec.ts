@@ -8,33 +8,29 @@ import { strict as assert } from "node:assert";
 // Allow importing from this specific file which is being tested:
 
 import {
+	currentVersion,
+	makeCodecFamily,
+	type CodecWriteOptions,
+} from "../../../codec/index.js";
+import {
 	SchemaFormatVersion,
 	type FieldKindIdentifier,
 	type TreeStoredSchema,
 } from "../../../core/index.js";
 import { FormatValidatorBasic } from "../../../external-utilities/index.js";
-import {
-	allowsRepoSuperset,
-	defaultSchemaPolicy,
-	makeSchemaCodec,
-} from "../../../feature-libraries/index.js";
+import { allowsRepoSuperset, defaultSchemaPolicy } from "../../../feature-libraries/index.js";
 /* eslint-disable-next-line import-x/no-internal-modules */
+import { schemaCodecBuilder } from "../../../feature-libraries/schema-index/codec.js";
+// eslint-disable-next-line import-x/no-internal-modules
 import { Format as FormatV1 } from "../../../feature-libraries/schema-index/formatV1.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { Format as FormatV2 } from "../../../feature-libraries/schema-index/formatV2.js";
-import { takeJsonSnapshot, useSnapshotDirectory } from "../../snapshots/index.js";
-import { type EncodingTestData, makeEncodingTestSuite } from "../../utils.js";
+import { JsonAsTree } from "../../../jsonDomainSchema.js";
+import { SchemaFactory } from "../../../simple-tree/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { toInitialSchema } from "../../../simple-tree/toStoredSchema.js";
-import { SchemaFactory } from "../../../simple-tree/index.js";
-import { JsonAsTree } from "../../../jsonDomainSchema.js";
-import {
-	currentVersion,
-	makeCodecFamily,
-	type CodecWriteOptions,
-} from "../../../codec/index.js";
-// eslint-disable-next-line import-x/no-internal-modules
-import { schemaCodecBuilder } from "../../../feature-libraries/schema-index/codec.js";
+import { takeJsonSnapshot, useSnapshotDirectory } from "../../snapshots/index.js";
+import { type EncodingTestData, makeEncodingTestSuite } from "../../utils.js";
 
 const codecOptions: CodecWriteOptions = {
 	jsonValidator: FormatValidatorBasic,
@@ -42,12 +38,15 @@ const codecOptions: CodecWriteOptions = {
 };
 
 const schemaCodecs = makeCodecFamily(
-	schemaCodecBuilder.applyOptions(codecOptions).map(([_version, codec]) => {
+	schemaCodecBuilder.applyOptions(codecOptions).map((codec) => {
 		return [codec.formatVersion, codec.codec] as const;
 	}),
 );
-const codecV1 = makeSchemaCodec(codecOptions, SchemaFormatVersion.v1);
-const codecV2 = makeSchemaCodec(codecOptions, SchemaFormatVersion.v2);
+const codecV1 = schemaCodecBuilder.build({
+	...codecOptions,
+	writeVersionOverrides: new Map([[schemaCodecBuilder.name, SchemaFormatVersion.v1]]),
+});
+const codecV2 = schemaCodecBuilder.build(codecOptions);
 
 const schema2 = toInitialSchema(SchemaFactory.optional(JsonAsTree.Primitive));
 

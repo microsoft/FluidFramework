@@ -10,15 +10,21 @@ import * as path from "node:path";
 import {
 	independentView,
 	SchemaFactoryAlpha,
+	SchemaFactoryBeta,
 	TreeViewConfiguration,
 	type ImplicitFieldSchema,
 	type InsertableField,
 } from "@fluidframework/tree/internal";
+import {
+	buildFunc,
+	exposeMethodsSymbol,
+	exposePropertiesSymbol,
+	type ExposedMethods,
+	type ExposedProperties,
+} from "@fluidframework/type-factory/alpha";
 
 import type { TreeView } from "../api.js";
-import { buildFunc, exposeMethodsSymbol, type ExposedMethods } from "../methodBinding.js";
-import { getPrompt } from "../prompt.js";
-import { exposePropertiesSymbol, type ExposedProperties } from "../propertyBinding.js";
+import { fluidHandleTypeName, getPrompt } from "../prompt.js";
 import { Subtree } from "../subtree.js";
 import { typeFactory as tf } from "../treeAgentTypes.js";
 
@@ -90,7 +96,7 @@ describe("Prompt generation", () => {
 				}
 
 				public static [exposeMethodsSymbol](methods: ExposedMethods): void {
-					methods.expose(
+					methods.exposeMethod(
 						Obj,
 						"method",
 						buildFunc({ returns: tf.boolean() }, ["s", tf.string()]),
@@ -201,6 +207,33 @@ describe("Prompt generation", () => {
 		}
 	});
 
+	it("includes handle type declaration when handles are present in the schema", () => {
+		// If no handles, then the prompt shouldn't include the handle type declaration
+		{
+			const view = getView(sf.object("Object", {}), {});
+			const prompt = getPrompt({
+				subtree: new Subtree(view),
+				editToolName: "EditTreeTool",
+			});
+			assert.ok(!prompt.includes(`type ${fluidHandleTypeName} = unknown`));
+		}
+		// If there are handles, then the prompt should include the handle type declaration
+		{
+			const view = getView(
+				sf.object("ObjectWithHandle", {
+					handle: sf.optional(sf.handle),
+				}),
+				{ handle: undefined },
+			);
+			const prompt = getPrompt({
+				subtree: new Subtree(view),
+				editToolName: "EditTreeTool",
+			});
+			assert.ok(prompt.includes(`type ${fluidHandleTypeName} = unknown`));
+			assert.ok(prompt.includes(`handle?: ${fluidHandleTypeName}`));
+		}
+	});
+
 	it("sanitizes schema names that contain invalid characters", () => {
 		class InvalidlyNamedObject extends sf.object("Test-Object!", { value: sf.string }) {}
 
@@ -258,7 +291,7 @@ describe("Prompt snapshot", () => {
 		}
 		class NumberValue extends sf.object("TestArrayItem", { value: sf.number }) {
 			public static [exposeMethodsSymbol](methods: ExposedMethods): void {
-				methods.expose(
+				methods.exposeMethod(
 					NumberValue,
 					"formatValue",
 					buildFunc(
@@ -293,13 +326,17 @@ describe("Prompt snapshot", () => {
 				return this.value.toString(radix);
 			}
 		}
-		class TestArray extends sf.array("TestArray", NumberValue) {}
+		class TestArray extends sf.array(
+			"TestArray",
+			SchemaFactoryBeta.types([NumberValue, SchemaFactoryBeta.staged(sf.string)]),
+		) {}
 		class Obj extends sf.object("Obj", {
 			map: TestMap,
 			array: TestArray,
+			handle: sf.optional(sf.handle),
 		}) {
 			public static [exposeMethodsSymbol](methods: ExposedMethods): void {
-				methods.expose(
+				methods.exposeMethod(
 					Obj,
 					"processData",
 					buildFunc(
@@ -360,6 +397,7 @@ describe("Prompt snapshot", () => {
 				new NumberValue({ value: 2 }),
 				new NumberValue({ value: 3 }),
 			],
+			handle: undefined,
 		});
 
 		const fullPrompt = getPrompt({

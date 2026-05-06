@@ -82,11 +82,11 @@ describe("SharedString fuzz testing with rebased batches", () => {
 		{ ...baseSharedStringModel, workloadName: "SharedString with rebasing" },
 		{
 			...defaultFuzzOptions,
-			reconnectProbability: 0.0,
+			reconnectProbability: 0,
 			numberOfClients: 3,
 			clientJoinOptions: {
 				maxNumberOfClients: 3,
-				clientAddProbability: 0.0,
+				clientAddProbability: 0,
 			},
 			rebaseProbability: 0.2,
 			containerRuntimeOptions: {
@@ -111,7 +111,7 @@ describe("SharedString fuzz testing with rebased batches and reconnect", () => {
 			numberOfClients: 3,
 			clientJoinOptions: {
 				maxNumberOfClients: 3,
-				clientAddProbability: 0.0,
+				clientAddProbability: 0,
 			},
 			rebaseProbability: 0.2,
 			containerRuntimeOptions: {

@@ -7,17 +7,17 @@ import type { Abortable } from "events";
 import type {
 	BigIntStats,
 	BufferEncodingOption,
-	Dirent,
 	MakeDirectoryOptions,
 	Mode,
+	ObjectEncodingOptions,
 	OpenMode,
 	PathLike,
 	RmDirOptions,
 	RmOptions,
 	StatOptions,
 	Stats,
-	ObjectEncodingOptions,
 } from "fs";
+import type fsPromises from "fs/promises";
 import type { FileHandle } from "fs/promises";
 import type { Stream } from "stream";
 
@@ -225,36 +225,15 @@ export class RedisFs extends FsPromisesBase {
 	 * isomorphic-git never provides options, and always expects string[] results.
 	 */
 	public async readdirCore(
-		folderpath: PathLike,
-		options?:
-			| (ObjectEncodingOptions & { withFileTypes?: false | undefined })
-			| BufferEncoding
-			// eslint-disable-next-line @rushstack/no-new-null
-			| null,
-	): Promise<string[]>;
-	public async readdirCore(
-		folderpath: PathLike,
-		options: { encoding: "buffer"; withFileTypes?: false | undefined } | "buffer",
-	): Promise<Buffer[]>;
-	public async readdirCore(
-		folderpath: PathLike,
-		options?:
-			| (ObjectEncodingOptions & { withFileTypes?: false | undefined })
-			| BufferEncoding
-			// eslint-disable-next-line @rushstack/no-new-null
-			| null,
-	): Promise<string[] | Buffer[]>;
-	public async readdirCore(
-		folderpath: PathLike,
-		options: ObjectEncodingOptions & { withFileTypes: true },
-	): Promise<Dirent[]>;
-	public async readdirCore(
-		folderpath: PathLike,
-		options?: any,
-	): Promise<string[] | Buffer[] | Dirent[]> {
+		...args: Parameters<typeof fsPromises.readdir>
+	): ReturnType<typeof fsPromises.readdir> {
+		const [folderpath] = args;
 		const folderpathString = folderpath.toString();
 
-		const result = await executeRedisFsApiWithMetric(
+		// Cast through unknown because keysByPrefix returns string[], which doesn't
+		// overlap with Dirent<Buffer>[] (a return type variant added in @types/node@22).
+		// This is safe because isomorphic-git always expects string[] results from readdir.
+		return executeRedisFsApiWithMetric(
 			async () => this.redisFsClient.keysByPrefix(folderpathString),
 			RedisFsApis.Readdir,
 			this.redisFsConfig.enableRedisFsMetrics,
@@ -262,9 +241,7 @@ export class RedisFs extends FsPromisesBase {
 			{
 				folderpathString,
 			},
-		);
-
-		return result;
+		) as unknown as ReturnType<typeof fsPromises.readdir>;
 	}
 
 	/**

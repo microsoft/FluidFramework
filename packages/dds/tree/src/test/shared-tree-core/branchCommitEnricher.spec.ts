@@ -4,10 +4,12 @@
  */
 
 import { strict as assert } from "node:assert";
+
 import type { GraphCommit } from "../../core/index.js";
-import { testIdCompressor } from "../utils.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { BranchCommitEnricher } from "../../shared-tree-core/branchCommitEnricher.js";
+import { testIdCompressor } from "../utils.js";
+
 import {
 	MockChangeEnricher,
 	type MockEnrichableChange,

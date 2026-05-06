@@ -4,7 +4,7 @@
  */
 
 import { StaticCodeLoader, TinyliciousModelLoader } from "@fluid-example/example-utils";
-import React from "react";
+import { createElement } from "react";
 import ReactDOM from "react-dom";
 
 import {
@@ -46,7 +46,7 @@ async function start(): Promise<void> {
 	const contentDiv = document.querySelector("#content");
 	if (contentDiv !== null) {
 		ReactDOM.render(
-			React.createElement(CollaborativeTextView, { text: model.collaborativeText.text }),
+			createElement(CollaborativeTextView, { text: model.collaborativeText.text }),
 			contentDiv,
 		);
 	}

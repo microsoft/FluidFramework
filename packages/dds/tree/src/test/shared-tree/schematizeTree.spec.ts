@@ -5,6 +5,8 @@
 
 import { strict as assert } from "node:assert";
 
+import type { Listenable } from "@fluidframework/core-interfaces";
+
 import {
 	type Anchor,
 	type AnchorNode,
@@ -15,7 +17,6 @@ import {
 	type AnchorSetRootEvents,
 	type TaggedChange,
 } from "../../core/index.js";
-import { fieldJsonCursor } from "../json/index.js";
 import {
 	FieldKinds,
 	allowsRepoSuperset,
@@ -24,7 +25,6 @@ import {
 } from "../../feature-libraries/index.js";
 import type {
 	ITreeCheckout,
-	ITreeCheckoutFork,
 	CheckoutEvents,
 	ISharedTreeEditor,
 } from "../../shared-tree/index.js";
@@ -34,7 +34,7 @@ import {
 	initializerFromChunk,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../shared-tree/schematizeTree.js";
-import type { Listenable } from "@fluidframework/core-interfaces";
+import type { Transactor } from "../../shared-tree-core/index.js";
 import {
 	SchemaFactory,
 	type ImplicitFieldSchema,
@@ -42,8 +42,8 @@ import {
 	type TreeViewConfiguration,
 } from "../../simple-tree/index.js";
 import { toInitialSchema } from "../../simple-tree/index.js";
-import type { Transactor } from "../../shared-tree-core/index.js";
 import { Breakable } from "../../util/index.js";
+import { fieldJsonCursor } from "../json/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { makeTestDefaultChangeFamily } from "../shared-tree-core/utils.js";
 import {
@@ -173,19 +173,38 @@ describe("schematizeTree", () => {
 	function mockCheckout(InputSchema: ImplicitFieldSchema, isEmpty: boolean): ITreeCheckout {
 		const storedSchema = new TreeStoredSchemaRepository(toInitialSchema(InputSchema));
 		const checkout: ITreeCheckout = {
+			disposed: false,
 			breaker: new Breakable("mockCheckout"),
 			storedSchema,
 			// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
 			forest: { isEmpty } as IForestSubscription,
 			editor: undefined as unknown as ISharedTreeEditor,
 			transaction: undefined as unknown as Transactor,
-			branch(): ITreeCheckoutFork {
+			fork(): ITreeCheckout {
 				throw new Error("Function not implemented.");
 			},
-			merge(view: ITreeCheckoutFork): void {
+			isBranch(): boolean {
+				return true;
+			},
+			hasRootSchema(): boolean {
+				return false;
+			},
+			runTransaction(): never {
 				throw new Error("Function not implemented.");
 			},
-			rebase(view: ITreeCheckoutFork): void {
+			runTransactionAsync(): never {
+				throw new Error("Function not implemented.");
+			},
+			applyChange(): void {
+				throw new Error("Function not implemented.");
+			},
+			merge(): void {
+				throw new Error("Function not implemented.");
+			},
+			rebaseOnto(): void {
+				throw new Error("Function not implemented.");
+			},
+			dispose(): void {
 				throw new Error("Function not implemented.");
 			},
 			updateSchema(newSchema: TreeStoredSchema): void {

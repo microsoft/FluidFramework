@@ -4,7 +4,7 @@
  */
 
 import type { UnknownObjectNode } from "@fluidframework/devtools-core/internal";
-import React from "react";
+import type { ReactElement } from "react";
 
 import type { DataVisualizationTreeProps } from "./CommonInterfaces.js";
 import { TreeHeader } from "./TreeHeader.js";
@@ -18,7 +18,7 @@ export type UnknownDataViewProps = DataVisualizationTreeProps<UnknownObjectNode>
 /**
  * Render data with type VisualNodeKind.UnknownObjectNode and render its children.
  */
-export function UnknownDataView(props: UnknownDataViewProps): React.ReactElement {
+export function UnknownDataView(props: UnknownDataViewProps): ReactElement {
 	const { label, node } = props;
 
 	const metadata = JSON.stringify(node.metadata);

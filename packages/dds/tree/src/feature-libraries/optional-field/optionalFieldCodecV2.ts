@@ -5,32 +5,31 @@
 
 import type { TAnySchema } from "@sinclair/typebox";
 
-import type { IJsonCodec } from "../../codec/index.js";
+import type { IJsonCodec, JsonCodecPart } from "../../codec/index.js";
 import type {
+	RevisionTagSchema,
 	ChangeAtomId,
 	ChangeEncodingContext,
-	EncodedRevisionTag,
 	RevisionTag,
 } from "../../core/index.js";
 import type { Mutable } from "../../util/index.js";
 import { makeChangeAtomIdCodec } from "../changeAtomIdCodec.js";
-import {
-	EncodedNodeChangeset,
-	type EncodedChangeAtomId,
-	type FieldChangeEncodingContext,
+import type {
+	FieldChangeEncodingContext,
+	EncodedChangeAtomId,
 } from "../modular-schema/index.js";
+import { EncodedNodeChangeset } from "../modular-schema/index.js";
 
 import { EncodedOptionalChangeset, EncodedRegisterId } from "./optionalFieldChangeFormatV2.js";
 import type { OptionalChangeset, RegisterId, Replace } from "./optionalFieldChangeTypes.js";
 
 function makeRegisterIdCodec(
-	changeAtomIdCodec: IJsonCodec<
+	changeAtomIdCodec: JsonCodecPart<
 		ChangeAtomId,
-		EncodedChangeAtomId,
-		EncodedChangeAtomId,
+		typeof EncodedChangeAtomId,
 		ChangeEncodingContext
 	>,
-): IJsonCodec<RegisterId, EncodedRegisterId, EncodedRegisterId, ChangeEncodingContext> {
+): JsonCodecPart<RegisterId, typeof EncodedRegisterId, ChangeEncodingContext> {
 	return {
 		encode: (registerId: RegisterId, context: ChangeEncodingContext) => {
 			if (registerId === "self") {
@@ -49,10 +48,9 @@ function makeRegisterIdCodec(
 }
 
 export function makeOptionalFieldCodec(
-	revisionTagCodec: IJsonCodec<
+	revisionTagCodec: JsonCodecPart<
 		RevisionTag,
-		EncodedRevisionTag,
-		EncodedRevisionTag,
+		typeof RevisionTagSchema,
 		ChangeEncodingContext
 	>,
 ): IJsonCodec<

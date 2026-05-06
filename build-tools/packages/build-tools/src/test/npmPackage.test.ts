@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
 import * as path from "node:path";
+import { strict as assert } from "assert";
 
 import { type PackageJson, readPackageJsonAndIndent } from "../common/npmPackage";
 import { testDataPath } from "./init";

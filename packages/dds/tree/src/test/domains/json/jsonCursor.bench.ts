@@ -5,7 +5,14 @@
 
 import { strict as assert } from "node:assert";
 
-import { BenchmarkType, benchmark, isInPerformanceTestingMode } from "@fluid-tools/benchmark";
+import {
+	BenchmarkMode,
+	BenchmarkType,
+	benchmarkDuration,
+	benchmarkIt,
+	currentBenchmarkMode,
+} from "@fluid-tools/benchmark";
+import { emulateProductionBuild } from "@fluidframework/core-utils/internal";
 
 import {
 	EmptyKey,
@@ -31,20 +38,19 @@ import {
 	jsonableTreeFromCursor,
 	mapTreeFromCursor,
 } from "../../../feature-libraries/index.js";
+import { JsonAsTree } from "../../../jsonDomainSchema.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import { toInitialSchema } from "../../../simple-tree/toStoredSchema.js";
 import { brand, type JsonCompatible } from "../../../util/index.js";
-
+import { initializeForest } from "../../feature-libraries/index.js";
+import { cursorToJsonObject, singleJsonCursor } from "../../json/index.js";
 import { buildTestForest, testIdCompressor, testRevisionTagCodec } from "../../utils.js";
+
 import { averageValues, sum, sumMap } from "./benchmarks.js";
 import { Canada, generateCanada } from "./canada.js";
 import { CitmCatalog, generateCitmJson } from "./citm.js";
 import { clone } from "./jsObjectUtil.js";
 import { generateTwitterJsonByByteSize } from "./twitter.js";
-// eslint-disable-next-line import-x/no-internal-modules
-import { toInitialSchema } from "../../../simple-tree/toStoredSchema.js";
-import { cursorToJsonObject, singleJsonCursor } from "../../json/index.js";
-import { JsonAsTree } from "../../../jsonDomainSchema.js";
-import { emulateProductionBuild } from "@fluidframework/core-utils/internal";
-import { initializeForest } from "../../feature-libraries/index.js";
 
 // Shared tree keys that map to the type used by the Twitter type/dataset
 export const TwitterKey = {
@@ -87,17 +93,23 @@ function bench(
 						});
 					}
 
-					benchmark({
+					benchmarkIt({
 						type: BenchmarkType.Perspective,
 						title: "Clone JS Object",
-						before: () => {
-							const cloned = clone(json);
-							assert.deepEqual(cloned, json, "clone() must return an equivalent tree.");
-							assert.notEqual(cloned, json, "clone() must not return the same tree instance.");
-						},
-						benchmarkFn: () => {
-							clone(json);
-						},
+						...benchmarkDuration({
+							benchmarkFnCustom: async (state) => {
+								const cloned = clone(json);
+								assert.deepEqual(cloned, json, "clone() must return an equivalent tree.");
+								assert.notEqual(
+									cloned,
+									json,
+									"clone() must not return the same tree instance.",
+								);
+								state.timeAllBatches(() => {
+									clone(json);
+								});
+							},
+						}),
 					});
 
 					const cursorFactories: [string, () => ITreeCursor][] = [
@@ -181,22 +193,23 @@ function bench(
 					for (const [factoryName, factory] of cursorFactories) {
 						describe(factoryName, () => {
 							for (const [consumerName, consumer] of consumers) {
-								let cursor: ITreeCursor;
-								benchmark({
+								benchmarkIt({
 									type: emulateProduction
 										? BenchmarkType.Measurement
 										: BenchmarkType.Perspective,
 									title: `${consumerName}(${factoryName})`,
-									before: () => {
-										cursor = factory();
-										// TODO: validate behavior
-										// assert.deepEqual(cursorToJsonObject(cursor), json, "data should round trip through json");
-										// assert.deepEqual(
-										//     jsonableTreeFromCursor(cursor), encodedTree, "data should round trip through jsonable");
-									},
-									benchmarkFn: () => {
-										consumer(cursor, dataConsumer);
-									},
+									...benchmarkDuration({
+										benchmarkFnCustom: async (state) => {
+											const cursor = factory();
+											// TODO: validate behavior
+											// assert.deepEqual(cursorToJsonObject(cursor), json, "data should round trip through json");
+											// assert.deepEqual(
+											//     jsonableTreeFromCursor(cursor), encodedTree, "data should round trip through jsonable");
+											state.timeAllBatches(() => {
+												consumer(cursor, dataConsumer);
+											});
+										},
+									}),
 								});
 							}
 						});
@@ -209,7 +222,7 @@ function bench(
 
 const canada = generateCanada(
 	// Use the default (large) data set for benchmarking, otherwise use a small dataset.
-	isInPerformanceTestingMode ? undefined : [2, 10],
+	currentBenchmarkMode === BenchmarkMode.Performance ? undefined : [2, 10],
 );
 
 function extractCoordinatesFromCanada(
@@ -324,13 +337,14 @@ function extractAvgValsFromCitm(
 
 // The original benchmark twitter.json is 466906 Bytes according to getSizeInBytes.
 const twitter = generateTwitterJsonByByteSize(
-	isInPerformanceTestingMode ? 2500000 : 466906,
+	currentBenchmarkMode === BenchmarkMode.Performance ? 2500000 : 466906,
 	true,
 );
 // The original benchmark citm_catalog.json 500299 Bytes according to getSizeInBytes.
-const citm = isInPerformanceTestingMode
-	? generateCitmJson(2, 2500000)
-	: generateCitmJson(1, 500299);
+const citm =
+	currentBenchmarkMode === BenchmarkMode.Performance
+		? generateCitmJson(2, 2500000)
+		: generateCitmJson(1, 500299);
 describe("ITreeCursor", () => {
 	bench([
 		{

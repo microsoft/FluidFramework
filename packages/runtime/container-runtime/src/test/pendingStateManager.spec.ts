@@ -97,6 +97,7 @@ describe("Pending State Manager", () => {
 			isActiveConnection: sandbox.stub(),
 			isAttached: sandbox.stub(),
 			isInStagingMode: sandbox.stub(),
+			canStageMessageOfType: sandbox.stub(),
 		};
 		stubs.applyStashedOp.resolves(undefined);
 		stubs.clientId.returns("clientId");
@@ -104,6 +105,7 @@ describe("Pending State Manager", () => {
 		stubs.isActiveConnection.returns(true);
 		stubs.isAttached.returns(true);
 		stubs.isInStagingMode.returns(false);
+		stubs.canStageMessageOfType.returns(true);
 		return stubs;
 	}
 	const mockLogger = new MockLogger();
@@ -157,7 +159,7 @@ describe("Pending State Manager", () => {
 			rollbackContent = [];
 			rollbackShouldThrow = false;
 
-			batchManager = new BatchManager({ canRebase: true });
+			batchManager = new BatchManager({ disableGroupedBatching: false });
 		});
 
 		it("should do nothing when rolling back empty pending stack", () => {
@@ -234,6 +236,7 @@ describe("Pending State Manager", () => {
 					isActiveConnection: () => false,
 					isAttached: () => true,
 					isInStagingMode: () => false,
+				canStageMessageOfType: () => true,
 				},
 				undefined /* initialLocalState */,
 				logger,
@@ -687,11 +690,11 @@ describe("Pending State Manager", () => {
 				}));
 				submitBatch(messages);
 				processFullBatch(messages, 0 /* batchStartCsn */, false /* groupedBatch */);
-				let pendingState = pendingStateManager.getLocalState(0).pendingStates;
+				let pendingState = pendingStateManager.getLocalState(0).pending.pendingStates;
 				assert.strictEqual(pendingState.length, 10);
-				pendingState = pendingStateManager.getLocalState(5).pendingStates;
+				pendingState = pendingStateManager.getLocalState(5).pending.pendingStates;
 				assert.strictEqual(pendingState.length, 5);
-				pendingState = pendingStateManager.getLocalState(10).pendingStates;
+				pendingState = pendingStateManager.getLocalState(10).pending.pendingStates;
 				assert.strictEqual(pendingState.length, 0);
 			});
 
@@ -705,7 +708,7 @@ describe("Pending State Manager", () => {
 				}));
 				submitBatch(messages);
 				assert.throws(() => pendingStateManager.getLocalState(1));
-				const pendingState = pendingStateManager.getLocalState(0).pendingStates;
+				const pendingState = pendingStateManager.getLocalState(0).pending.pendingStates;
 				assert.strictEqual(pendingState.length, 10);
 			});
 		});
@@ -737,7 +740,8 @@ describe("Pending State Manager", () => {
 						reSubmitBatch: () => {},
 						isActiveConnection: () => false,
 						isAttached: () => true,
-						isInStagingMode: () => true, // host entered staging in the start handler
+						isInStagingMode: () => true,
+				canStageMessageOfType: () => true, // host entered staging in the start handler
 					},
 					{ pendingStates: [stashedMessage] },
 					logger,
@@ -798,6 +802,7 @@ describe("Pending State Manager", () => {
 						isActiveConnection: () => false,
 						isAttached: () => true,
 						isInStagingMode: () => false,
+				canStageMessageOfType: () => true,
 					},
 					undefined,
 					logger,
@@ -872,6 +877,7 @@ describe("Pending State Manager", () => {
 						isActiveConnection: () => false,
 						isAttached: () => true,
 						isInStagingMode: () => true,
+				canStageMessageOfType: () => true,
 					},
 					{ pendingStates: [stashedMessage] },
 					logger,
@@ -900,6 +906,7 @@ describe("Pending State Manager", () => {
 					isActiveConnection: () => false,
 					isAttached: () => true,
 					isInStagingMode: () => false,
+				canStageMessageOfType: () => true,
 				},
 				pendingStates ? { pendingStates } : undefined,
 				logger,
@@ -972,6 +979,7 @@ describe("Pending State Manager", () => {
 					isActiveConnection: () => false,
 					isAttached: () => true,
 					isInStagingMode: () => false,
+				canStageMessageOfType: () => true,
 				},
 				{ pendingStates: messages },
 				logger,
@@ -991,13 +999,14 @@ describe("Pending State Manager", () => {
 					isActiveConnection: () => false,
 					isAttached: () => true,
 					isInStagingMode: () => false,
+				canStageMessageOfType: () => true,
 				},
 				undefined /* initialLocalState */,
 				logger,
 			);
 			const { placeholderMessage } = opGroupingManager.createEmptyGroupedBatch("batchId", 0);
 			oldPsm.onFlushEmptyBatch(placeholderMessage, 0, false /* staged */);
-			const localStateWithEmptyBatch = oldPsm.getLocalState(0);
+			const localStateWithEmptyBatch = oldPsm.getLocalState(0).pending;
 
 			const applyStashedOps: string[] = [];
 			const pendingStateManager = new PendingStateManager(
@@ -1009,6 +1018,7 @@ describe("Pending State Manager", () => {
 					isActiveConnection: () => false,
 					isAttached: () => true,
 					isInStagingMode: () => false,
+				canStageMessageOfType: () => true,
 				},
 				localStateWithEmptyBatch,
 				logger,
@@ -1042,6 +1052,7 @@ describe("Pending State Manager", () => {
 					isActiveConnection: () => false,
 					isAttached: () => true,
 					isInStagingMode: () => false,
+				canStageMessageOfType: () => true,
 				},
 				{ pendingStates: messages },
 				logger,
@@ -1103,7 +1114,8 @@ describe("Pending State Manager", () => {
 					reSubmitBatch: () => {},
 					isActiveConnection: () => false,
 					isAttached: () => true,
-					isInStagingMode: () => true, // enter staging in the start handler
+					isInStagingMode: () => true,
+				canStageMessageOfType: () => true, // enter staging in the start handler
 				},
 				{ pendingStates: messages },
 				logger,
@@ -1160,6 +1172,7 @@ describe("Pending State Manager", () => {
 					isActiveConnection: () => false,
 					isAttached: () => true,
 					isInStagingMode: () => false,
+				canStageMessageOfType: () => true,
 				},
 				pendingStates ? { pendingStates } : undefined,
 				logger,
@@ -1307,6 +1320,7 @@ describe("Pending State Manager", () => {
 					isActiveConnection: () => false,
 					isAttached: () => true,
 					isInStagingMode: () => false,
+				canStageMessageOfType: () => true,
 				},
 				pendingStates ? { pendingStates } : undefined /* initialLocalState */,
 				logger,
@@ -1382,6 +1396,7 @@ describe("Pending State Manager", () => {
 					isActiveConnection: () => false,
 					isAttached: () => true,
 					isInStagingMode: () => false,
+				canStageMessageOfType: () => true,
 				},
 				{ pendingStates: initialMessages },
 				logger,

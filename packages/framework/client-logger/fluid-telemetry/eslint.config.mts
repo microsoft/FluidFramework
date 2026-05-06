@@ -4,17 +4,16 @@
  */
 
 import type { Linter } from "eslint";
-import { strict } from "../../../../common/build/eslint-config-fluid/flat.mts";
+import { strict } from "@fluidframework/eslint-config-fluid/flat.mts";
 
 const config: Linter.Config[] = [
 	...strict,
 	{
-		files: ["**/*.ts", "**/*.tsx", "**/*.mts", "**/*.cts"],
-		languageOptions: {
-			parserOptions: {
-				projectService: false,
-				project: ["./tsconfig.json"],
-			},
+		files: ["src/test/**/*.spec.ts"],
+		rules: {
+			// Allow named functions in mocha hooks (before, beforeEach, etc.) so that
+			// the function name appears in error output and stack traces.
+			"prefer-arrow-callback": ["error", { allowNamedFunctions: true }],
 		},
 	},
 ];

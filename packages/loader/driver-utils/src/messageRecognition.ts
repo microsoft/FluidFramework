@@ -4,8 +4,8 @@
  */
 
 import {
-	ISequencedDocumentMessage,
-	IDocumentMessage,
+	type ISequencedDocumentMessage,
+	type IDocumentMessage,
 	MessageType,
 } from "@fluidframework/driver-definitions/internal";
 
@@ -20,6 +20,8 @@ export function isRuntimeMessage(message: { type: string }): boolean {
 }
 
 /**
+ * Whether the message can be coalesced by the relay service.
+ *
  * @privateRemarks ADO #1385: To be moved to packages/protocol-base/src/protocol.ts
  * @internal
  */

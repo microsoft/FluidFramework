@@ -22,6 +22,11 @@ parameters:
     type: string
     default:
 
+  # Indicates if tests should be run with code coverage analysis.
+  - name: testCoverage
+    type: boolean
+    default: false
+
   - name: docs
     type: boolean
     default: false
@@ -191,6 +196,7 @@ extends:
         steps:
         # Setup
         - checkout: self
+          path: $(FluidFrameworkDirectory)
           clean: true
           lfs: false
           submodules: false
@@ -199,7 +205,7 @@ extends:
           displayName: Parameters
           inputs:
             targetType: 'inline'
-            workingDirectory: ${{ parameters.buildDirectory }}
+            workingDirectory: $(Pipeline.Workspace)/${{ parameters.buildDirectory }}
             script: |
               # Note: deliberately not using `set -eu -o pipefail` because this script leverages the return code of grep
               # even in an error case
@@ -241,6 +247,9 @@ extends:
                 containerTagSuffix=$(containerTagSuffix)
                 release=$(release)
                 shouldPublish=$(shouldPublish)
+                consistentSourcesDirectory=$(consistentSourcesDirectory)
+                FluidFrameworkDirectory=$(FluidFrameworkDirectory)
+                FFPipelineHostDirectory=$(FFPipelineHostDirectory)
               "
 
               if [[ "$(release)" == "release" ]]; then
@@ -302,7 +311,7 @@ extends:
             retryCountOnTaskFailure: 4
             inputs:
               targetType: 'inline'
-              workingDirectory: ${{ parameters.buildDirectory }}
+              workingDirectory: $(Pipeline.Workspace)/${{ parameters.buildDirectory }}
               script: |
                 set -eu -o pipefail
                 ${{ parameters.packageManagerInstallCommand }}
@@ -354,10 +363,10 @@ extends:
           displayName: Copy CredScan suppressions file for container builds
           inputs:
             targetType: 'inline'
-            workingDirectory: $(Build.SourcesDirectory)
+            workingDirectory: $(Pipeline.Workspace)/$(FluidFrameworkDirectory)
             script: |
               set -eu -o pipefail
-              cp ./CredScanSuppressions.json ${{ parameters.buildDirectory }}
+              cp ./CredScanSuppressions.json $(Pipeline.Workspace)/${{ parameters.buildDirectory }}
 
         # The GitSSH Dockerfile does not have a 'base' target nor does it run pack/lint/test/docs tasks, so skip
         # all that for it. This feels hacky but it's a simple solution for now to the issue of trying to use variables
@@ -366,8 +375,8 @@ extends:
           # Build base image where we can run pack/lint/test/docs tasks
           - task: 1ES.BuildContainerImage@1
             inputs:
-              dockerfile: ${{ parameters.buildDirectory }}/Dockerfile
-              context: ${{ parameters.buildDirectory }}
+              dockerfile: $(Pipeline.Workspace)/${{ parameters.buildDirectory }}/Dockerfile
+              context: $(Pipeline.Workspace)/${{ parameters.buildDirectory }}
               image: $(baseContainerTag)
               buildArguments: --target base $(DockerBuildArgs.output)
               useBuildKit: true
@@ -410,7 +419,7 @@ extends:
                 STAGING_PATH: $(Build.ArtifactStagingDirectory)
               inputs:
                 targetType: 'inline'
-                workingDirectory: ${{ parameters.buildDirectory }}
+                workingDirectory: $(Pipeline.Workspace)/${{ parameters.buildDirectory }}
                 script: |
                   set -eu -o pipefail
                   flub list --no-private $RELEASE_GROUP --tarball --feed public --outFile $STAGING_PATH/pack/packagePublishOrder-public.txt
@@ -437,7 +446,7 @@ extends:
           - ${{ if ne(parameters.test, '') }}:
 
             # Test - With coverage
-            - ${{ if and(eq(parameters.test, 'ci:test'), ne(variables['Build.Reason'], 'PullRequest')) }}:
+            - ${{ if eq(parameters.testCoverage, true) }}:
               - task: Docker@1
                 displayName: npm run ci:test:coverage
                 inputs:
@@ -507,8 +516,8 @@ extends:
         # Build final image
         - task: 1ES.BuildContainerImage@1
           inputs:
-            dockerfile: ${{ parameters.buildDirectory }}/Dockerfile
-            context: ${{ parameters.buildDirectory }}
+            dockerfile: $(Pipeline.Workspace)/${{ parameters.buildDirectory }}/Dockerfile
+            context: $(Pipeline.Workspace)/${{ parameters.buildDirectory }}
             image: $(containerTag)
             buildArguments: $(DockerBuildArgs.output)
             useBuildKit: true
@@ -527,7 +536,7 @@ extends:
             name: ComputeFinalTagList
             inputs:
               targetType: 'inline'
-              workingDirectory: ${{ parameters.buildDirectory }}
+              workingDirectory: $(Pipeline.Workspace)/${{ parameters.buildDirectory }}
               script: |
                 set -eu -o pipefail
                 # containerTag should always be pushed
@@ -553,7 +562,7 @@ extends:
             displayName: Prune pnpm store
             inputs:
               targetType: 'inline'
-              workingDirectory: ${{ parameters.buildDirectory }}
+              workingDirectory: $(Pipeline.Workspace)/${{ parameters.buildDirectory }}
               script: |
                 set -eu -o pipefail
                 pnpm store prune
@@ -592,7 +601,6 @@ extends:
           tagName: ${{ parameters.tagName }}
           isReleaseGroup: ${{ parameters.isReleaseGroup }}
           buildDirectory: ${{ parameters.buildDirectory }}
-          buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
 
     - ${{ if eq(parameters.shouldReleaseDockerImage, true) }}:
       - stage: publish_docker_official
@@ -609,10 +617,9 @@ extends:
         - template: /tools/pipelines/templates/include-publish-docker-service-steps.yml@self
           parameters:
             environment: container-registry-public
-            # $(containerRegistryConnection) and $(containerRegistryUrl) come from the container-registry-info variable
-            # group and need to be specified as runtime variables (variables from variable groups apparently are never
+            # $(containerRegistryUrl) comes from the container-registry-info variable
+            # group and needs to be specified as a runtime variable (variables from variable groups apparently are never
             # available "statically" at parse/compile time, so can't be used with template-expression syntax ( '${{ }}' )).
-            containerRegistry: $(containerRegistryConnection)
             containerRegistryUrl: $(containerRegistryUrl)
             containerTag: $(containerTag)
             containerName: public/${{ parameters.containerName }}

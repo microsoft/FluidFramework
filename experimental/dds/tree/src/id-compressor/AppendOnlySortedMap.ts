@@ -22,42 +22,42 @@ export class AppendOnlySortedMap<K, V> {
 	public constructor(protected readonly comparator: (a: K, b: K) => number) {}
 
 	/**
-	 * @returns the number of entries in this map
+	 * Gets the number of entries in this map
 	 */
 	public get size(): number {
 		return this.elements.length / 2;
 	}
 
 	/**
-	 * @returns the min key in the map.
+	 * Gets the min key in the map.
 	 */
 	public minKey(): K | undefined {
 		return this.elements[0] as K | undefined;
 	}
 
 	/**
-	 * @returns the max key in the map.
+	 * Gets the max key in the map.
 	 */
 	public maxKey(): K | undefined {
 		return this.elements[this.elements.length - 2] as K | undefined;
 	}
 
 	/**
-	 * @returns the min value in the map.
+	 * Gets the min value in the map.
 	 */
 	public minValue(): V | undefined {
 		return this.elements[1] as V | undefined;
 	}
 
 	/**
-	 * @returns the min value in the map.
+	 * Gets the max value in the map.
 	 */
 	public maxValue(): V | undefined {
 		return this.elements[this.elements.length - 1] as V | undefined;
 	}
 
 	/**
-	 * @returns the min key in the map.
+	 * Gets the first entry in the map.
 	 */
 	public first(): [K, V] | undefined {
 		const { elements } = this;
@@ -69,7 +69,7 @@ export class AppendOnlySortedMap<K, V> {
 	}
 
 	/**
-	 * @returns the max key in the map.
+	 * Gets the last entry in the map.
 	 */
 	public last(): [K, V] | undefined {
 		const { elements } = this;
@@ -94,7 +94,7 @@ export class AppendOnlySortedMap<K, V> {
 	}
 
 	/**
-	 * @returns an iterable of the entries in the map.
+	 * Gets an iterable of the entries in the map.
 	 */
 	public *entries(): IterableIterator<readonly [K, V]> {
 		const { elements } = this;
@@ -104,7 +104,7 @@ export class AppendOnlySortedMap<K, V> {
 	}
 
 	/**
-	 * @returns an iterable of the keys in the map.
+	 * Gets an iterable of the keys in the map.
 	 */
 	public *keys(): IterableIterator<K> {
 		const { elements } = this;
@@ -114,7 +114,7 @@ export class AppendOnlySortedMap<K, V> {
 	}
 
 	/**
-	 * @returns an iterable of the values in the map.
+	 * Gets an iterable of the values in the map.
 	 */
 	public *values(): IterableIterator<V> {
 		const { elements } = this;
@@ -124,7 +124,7 @@ export class AppendOnlySortedMap<K, V> {
 	}
 
 	/**
-	 * @returns an iterable of the entries in the map, reversed.
+	 * Gets an iterable of the entries in the map, reversed.
 	 */
 	public *entriesReversed(): IterableIterator<readonly [K, V]> {
 		const { elements } = this;
@@ -135,8 +135,8 @@ export class AppendOnlySortedMap<K, V> {
 
 	/**
 	 * Adds a new key/value pair to the map. `key` must be \> to all keys in the map.
-	 * @param key - the key to add.
-	 * @param value - the value to add.
+	 * @param key - The key to add.
+	 * @param value - The value to add.
 	 */
 	public append(key: K, value: V): void {
 		const { elements } = this;
@@ -149,8 +149,8 @@ export class AppendOnlySortedMap<K, V> {
 	}
 
 	/**
-	 * @param key - the key to lookup.
-	 * @returns the value associated with `key` if such an entry exists, and undefined otherwise.
+	 * Gets the value associated with `key` if such an entry exists, and `undefined` otherwise.
+	 * @param key - The key to lookup.
 	 */
 	public get(key: K): V | undefined {
 		const index = AppendOnlySortedMap.keyIndexOf(this.elements, key, this.comparator);
@@ -161,18 +161,18 @@ export class AppendOnlySortedMap<K, V> {
 	}
 
 	/**
-	 * @param key - the key to lookup.
-	 * @returns the entry associated with `key` if such an entry exists, the entry associated with the next lower key if such an entry
-	 * exists, and undefined otherwise.
+	 * Gets the entry associated with `key` if such an entry exists, the entry associated with the next lower key if
+	 * such an entry exists, and `undefined` otherwise.
+	 * @param key - The key to lookup.
 	 */
 	public getPairOrNextLower(key: K): readonly [K, V] | undefined {
 		return this.getPairOrNextLowerBy(key, this.comparator);
 	}
 
 	/**
-	 * @param key - the key to lookup.
-	 * @returns the entry associated with `key` if such an entry exists, the entry associated with the next higher key if such an entry
-	 * exists, and undefined otherwise.
+	 * Gets the entry associated with `key` if such an entry exists, the entry associated with the next higher key if
+	 * such an entry exists, and `undefined` otherwise.
+	 * @param key - The key to lookup.
 	 */
 	public getPairOrNextHigher(key: K): readonly [K, V] | undefined {
 		return this.getPairOrNextHigherBy(key, this.comparator);

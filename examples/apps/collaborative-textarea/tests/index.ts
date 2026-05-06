@@ -4,7 +4,7 @@
  */
 
 import { SessionStorageModelLoader, StaticCodeLoader } from "@fluid-example/example-utils";
-import React from "react";
+import { createElement } from "react";
 import ReactDOM from "react-dom";
 
 import {
@@ -43,7 +43,7 @@ async function createContainerAndRenderInElement(element: HTMLElement): Promise<
 
 	// Render it
 	ReactDOM.render(
-		React.createElement(CollaborativeTextView, { text: model.collaborativeText.text }),
+		createElement(CollaborativeTextView, { text: model.collaborativeText.text }),
 		element,
 	);
 
