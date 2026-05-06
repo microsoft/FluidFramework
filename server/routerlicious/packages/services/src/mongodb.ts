@@ -304,7 +304,7 @@ export class MongoCollection<T extends Document> implements core.ICollection<T>,
 		query: any,
 		value: any,
 		options = {
-			returnOriginal: true,
+			returnDocument: "before" as const,
 			upsert: true,
 		},
 	): Promise<{ value: T; existing: boolean }> {
@@ -316,9 +316,7 @@ export class MongoCollection<T extends Document> implements core.ICollection<T>,
 					options,
 				);
 
-				return result.value
-					? { value: result.value, existing: true }
-					: { value, existing: false };
+				return result ? { value: result as T, existing: true } : { value, existing: false };
 			} catch (sdkError) {
 				const error = this.cloneError(sdkError);
 				this.sanitizeError(error);
@@ -345,9 +343,7 @@ export class MongoCollection<T extends Document> implements core.ICollection<T>,
 					options,
 				);
 
-				return result.value
-					? { value: result.value, existing: true }
-					: { value, existing: false };
+				return result ? { value: result as T, existing: true } : { value, existing: false };
 			} catch (sdkError) {
 				const error = this.cloneError(sdkError);
 				this.sanitizeError(error);
@@ -762,7 +758,6 @@ export class MongoDbFactory implements core.IDbFactory {
 		// Need to cast to any before MongoClientOptions due to missing properties in d.ts
 		const options: MongoClientOptions = {
 			directConnection: this.directConnection ?? false,
-			keepAlive: true,
 			keepAliveInitialDelay: this.keepAliveInitialDelay,
 			socketTimeoutMS: this.socketTimeoutMS,
 			connectTimeoutMS: this.connectionTimeoutMS,
