@@ -24,6 +24,9 @@ import type { Linter, Rule } from "eslint";
 // Import flat configs directly from flat.mjs (same pattern as print-configs.ts)
 import { recommended, strict, strictBiome } from "../flat.mjs";
 import type { FlatConfigArray } from "../library/configs/base.mjs";
+import { baseRules, eslintCommentsRecommendedRules } from "../library/rules/base.mjs";
+import { recommendedRules } from "../library/rules/recommended.mjs";
+import { strictRules, strictTsRules } from "../library/rules/strict.mjs";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -37,12 +40,21 @@ interface DeprecatedRuleOutput {
 	rule: string;
 	replacedBy?: string[];
 	isConfigured: boolean;
+	isConfiguredInSource: boolean;
 }
 
 export const flatConfigsToInspect: readonly { name: string; config: FlatConfigArray }[] = [
 	{ name: "recommended", config: recommended },
 	{ name: "strict", config: strict },
 	{ name: "strictBiome", config: strictBiome },
+] as const;
+
+const localRuleSources = [
+	baseRules,
+	eslintCommentsRecommendedRules,
+	recommendedRules,
+	strictRules,
+	strictTsRules,
 ] as const;
 
 /**
@@ -97,6 +109,21 @@ function collectPlugins(
 	}
 
 	return plugins;
+}
+
+/**
+ * Finds rules explicitly configured by the local rule definition modules.
+ */
+function getSourceConfiguredRules(): Set<string> {
+	const sourceConfiguredRules = new Set<string>();
+
+	for (const rules of localRuleSources) {
+		for (const ruleName of Object.keys(rules)) {
+			sourceConfiguredRules.add(ruleName);
+		}
+	}
+
+	return sourceConfiguredRules;
 }
 
 /**
@@ -172,11 +199,14 @@ async function main(): Promise<void> {
 		}
 	}
 
+	const sourceConfiguredRules = getSourceConfiguredRules();
+
 	// Build the output
 	const deprecatedRulesOutput: DeprecatedRuleOutput[] = allDeprecated.map((d) => {
 		const output: DeprecatedRuleOutput = {
 			rule: d.rule,
 			isConfigured: enabledRules.has(d.rule),
+			isConfiguredInSource: sourceConfiguredRules.has(d.rule),
 		};
 		if (d.replacedBy && d.replacedBy.length > 0) {
 			output.replacedBy = d.replacedBy;
