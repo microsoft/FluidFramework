@@ -873,9 +873,7 @@ describe("loadFrozenContainerFromPendingState", () => {
 			frozenContainer.disconnect();
 			frozenContainer.connect();
 			await Promise.race([
-				new Promise<void>((resolve) =>
-					frozenContainer.once("connected", () => resolve()),
-				),
+				new Promise<void>((resolve) => frozenContainer.once("connected", () => resolve())),
 				new Promise<void>((resolve) => setTimeout(resolve, 500)),
 			]);
 
