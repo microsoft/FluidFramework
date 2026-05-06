@@ -5,12 +5,12 @@
 
 import { strict as assert } from "node:assert";
 
-import {
-	type ConfigTypes,
-	type IConfigProviderBase,
-	type ITelemetryBaseEvent,
-	LogLevel,
+import type {
+	ConfigTypes,
+	IConfigProviderBase,
+	ITelemetryBaseEvent,
 } from "@fluidframework/core-interfaces";
+import { LogLevel } from "@fluidframework/core-interfaces";
 import type { InternalCoreInterfacesUtilityTypes } from "@fluidframework/core-interfaces/internal";
 
 import type { ITelemetryLoggerExt as ITelemetryLoggerExtInternal } from "@fluidframework/telemetry-utils/internal";
