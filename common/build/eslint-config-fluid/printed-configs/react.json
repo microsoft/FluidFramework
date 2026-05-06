@@ -15,7 +15,7 @@
 	"plugins": [
 		"@",
 		"@typescript-eslint:@typescript-eslint/eslint-plugin@8.54.0",
-		"import-x:eslint-plugin-import-x@4.16.1",
+		"import-x:eslint-plugin-import-x@4.16.2",
 		"@eslint-community/eslint-comments",
 		"@fluid-internal/fluid",
 		"@rushstack",
@@ -24,7 +24,7 @@
 		"tsdoc",
 		"unicorn:eslint-plugin-unicorn@54.0.0",
 		"unused-imports:unused-imports",
-		"depend:eslint-plugin-depend@1.4.0",
+		"depend:eslint-plugin-depend@1.5.0",
 		"@eslint-react:eslint-plugin-react-x@2.13.0",
 		"@eslint-react/rsc:eslint-plugin-react-rsc@2.13.0",
 		"@eslint-react/dom:eslint-plugin-react-dom@2.13.0",
@@ -2065,9 +2065,6 @@
 		"radix": [
 			"error",
 			"always"
-		],
-		"react-hooks/component-hook-factories": [
-			"error"
 		],
 		"react-hooks/config": [
 			"error"
