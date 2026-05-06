@@ -954,28 +954,24 @@ export namespace System_TableSchema {
 			// #region ID lookup caches
 
 			// Looking up rows/columns by string ID is a hot path (every getCell / setCell / etc. call goes
-			// through #tryGetRow or #tryGetColumn).  Rather than scanning the arrays linearly on every call,
+			// through #tryGetRow or #tryGetColumn). Rather than scanning the arrays linearly on every call,
 			// we maintain lazily-built Maps from ID → node.
 			//
 			// Cache invalidation:
 			//   Each cache is marked stale (reset to `undefined`) by a `nodeChanged` listener registered on
-			//   the corresponding array node (this.table.rows / this.table.columns).  `nodeChanged` fires on
+			//   the corresponding array node (this.table.rows / this.table.columns). `nodeChanged` fires on
 			//   an array node whenever an element is inserted, removed, or moved — exactly the set of
-			//   operations that could change which ID maps to which node.  The event fires after the full
+			//   operations that could change which ID maps to which node. The event fires after the full
 			//   batch of edits has been applied (including remote edits received from collaborators), so the
 			//   cache is always rebuilt from a consistent, in-schema state.
+			//   TODO: Consider if we should do more fine-grained invalidation here. E.g. look at the specific deltas
+			//   returned by the `nodeChanged` event and only invalidate entries as needed.
 			//
 			// Listener lifetime:
 			//   The listener is registered exactly once per cache (guarded by the non-undefined check on the
 			//   stored unsubscribe callback).  Subsequent cache rebuilds after invalidation reuse the same
 			//   listener — no additional subscriptions accumulate.  The unsubscribe callback is stored so
 			//   that explicit cleanup is possible in the future if needed.
-			//
-			// Unhydrated trees:
-			//   `Tree.on` and `nodeChanged` work for unhydrated nodes as well — all mutations go through
-			//   `#applyEditsInBatch`, which wraps them in `withBufferedTreeEvents`, causing `nodeChanged`
-			//   to fire after each batch regardless of whether the node is hydrated.  The invalidation path
-			//   is therefore identical for hydrated and unhydrated tables.
 
 			/**
 			 * Cache from row ID → row node for O(1) lookups in {@link Table.#tryGetRow}.
