@@ -559,9 +559,7 @@ export class PendingStateManager implements IDisposable {
 				const parsed = JSON.parse(msg.content) as Partial<LocalContainerRuntimeMessage>;
 				if (
 					parsed.type === undefined ||
-					!this.stateHandler.canStageMessageOfType(
-						parsed.type as LocalContainerRuntimeMessage["type"],
-					)
+					!this.stateHandler.canStageMessageOfType(parsed.type)
 				) {
 					stageRehydratedOps = false;
 				}
