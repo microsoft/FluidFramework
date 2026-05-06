@@ -28,10 +28,8 @@ import {
 import {
 	editManagerCodecName,
 	EditManagerFormatVersion,
-	editManagerFormatVersionSelectorForDetachedRootEditing,
 	messageCodecName,
 	MessageFormatVersion,
-	messageFormatVersionSelectorForDetachedRootEditing,
 } from "./shared-tree-core/index.js";
 import { SharedTreeFactoryType, SharedTreeAttributes } from "./sharedTreeAttributes.js";
 import type { ITree } from "./simple-tree/index.js";

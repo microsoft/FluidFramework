@@ -24,12 +24,12 @@ import type {
 	RevisionTag,
 	SchemaAndPolicy,
 } from "../core/index.js";
+import { brand } from "../util/index.js";
 
 import { makeV1ToV4CodecWithVersion } from "./messageCodecV1ToV4.js";
 import { makeSharedBranchesCodecWithVersion } from "./messageCodecVSharedBranches.js";
 import { MessageFormatVersion } from "./messageFormat.js";
 import type { DecodedMessage } from "./messageTypes.js";
-import { brand } from "../util/index.js";
 
 export interface MessageEncodingContext {
 	idCompressor: IIdCompressor;

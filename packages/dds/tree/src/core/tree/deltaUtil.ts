@@ -7,7 +7,7 @@ import type { Mutable } from "../../util/index.js";
 import type { FieldKey } from "../schema-stored/index.js";
 
 import type { TreeChunk } from "./chunk.js";
-import type { DetachedNodeId, FieldChanges, FieldMap, Mark, Root } from "./delta.js";
+import type { DetachedNodeId, FieldChanges, FieldMap, Root } from "./delta.js";
 import { rootFieldKey } from "./types.js";
 
 export const emptyDelta: Root = {};

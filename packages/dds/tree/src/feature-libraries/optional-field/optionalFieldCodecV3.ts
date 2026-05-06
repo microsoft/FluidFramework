@@ -8,7 +8,6 @@ import type { TAnySchema } from "@sinclair/typebox";
 import type { IJsonCodec, JsonCodecPart } from "../../codec/index.js";
 import type {
 	ChangeEncodingContext,
-	EncodedRevisionTag,
 	RevisionTag,
 	RevisionTagSchema,
 } from "../../core/index.js";

@@ -11,7 +11,6 @@ import {
 	areEqualChangeAtomIds,
 	type ChangeAtomId,
 	type ChangeEncodingContext,
-	type EncodedRevisionTag,
 	type RevisionTag,
 	type RevisionTagSchema,
 } from "../../core/index.js";

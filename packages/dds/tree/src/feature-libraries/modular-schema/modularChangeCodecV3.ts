@@ -18,7 +18,6 @@ import {
 	type ChangeAtomId,
 	type ChangeAtomIdRangeMap,
 	type ChangeEncodingContext,
-	type EncodedRevisionTag,
 	type FieldKey,
 	type FieldKindIdentifier,
 	type RevisionTag,

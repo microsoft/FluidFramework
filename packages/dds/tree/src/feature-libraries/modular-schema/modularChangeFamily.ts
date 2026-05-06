@@ -56,7 +56,6 @@ import {
 	comparePartialChangesetLocalIds,
 	type DeltaMark,
 	offsetDetachId,
-	areDetachedNodeIdsEqual,
 } from "../../core/index.js";
 import {
 	type IdAllocationState,
@@ -85,6 +84,11 @@ import {
 	type ChangeAtomIdBTree,
 } from "../changeAtomIdBTree.js";
 import type { TreeChunk } from "../chunked-forest/index.js";
+import {
+	changeAtomIdFromNodeId,
+	createDeltaMark,
+	nodeIdFromChangeAtom,
+} from "../deltaUtils.js";
 
 import {
 	type ComposeNodeManager,
@@ -121,11 +125,6 @@ import {
 	type RebaseVersion,
 	type RootNodeTable,
 } from "./modularChangeTypes.js";
-import {
-	changeAtomIdFromNodeId,
-	createDeltaMark,
-	nodeIdFromChangeAtom,
-} from "../deltaUtils.js";
 
 /**
  * Implementation of ChangeFamily which delegates work in a given field to the appropriate FieldKind
@@ -2955,24 +2954,24 @@ class InvertNodeManagerI implements InvertNodeManager {
 			attachIdEntry.value,
 			countProcessed,
 		)) {
-			const offsetDetachId = offsetChangeAtomId(newDetachId, entry.offset);
-			const offsetAttachId = offsetChangeAtomId(newAttachId, entry.offset);
+			const offsetnewDetachId = offsetChangeAtomId(newDetachId, entry.offset);
+			const offsetNewAttachId = offsetChangeAtomId(newAttachId, entry.offset);
 			if (entry.value) {
-				if (!areEqualChangeAtomIds(offsetDetachId, offsetAttachId)) {
+				if (!areEqualChangeAtomIds(offsetnewDetachId, offsetNewAttachId)) {
 					// We are inverting a detach is part of a move, where the detach and attach IDs of the move are different.
 					// We need to create a rename from the new detach ID to the new attach ID.
 					// XXX: This assumes that the field which inverts the attach uses the expected detach ID.
 					// This should be added to the contract of `invertAttach`.
-					this.table.attachToDetachId.set(offsetAttachId, entry.length, offsetDetachId);
+					this.table.attachToDetachId.set(offsetNewAttachId, entry.length, offsetnewDetachId);
 				}
 			} else {
 				const offsetOriginalAttachId = offsetChangeAtomId(attachIdEntry.value, entry.offset);
-				if (!areEqualChangeAtomIds(offsetOriginalAttachId, offsetAttachId)) {
+				if (!areEqualChangeAtomIds(offsetOriginalAttachId, offsetNewAttachId)) {
 					// We are inverting a detach which is not part of a move.
 					// The inverted changeset needs to have a rename from the existing root ID (`offsetOriginalAttachId`)
 					// to the new attach ID (`offsetAttachId`).
 					this.table.attachToDetachId.set(
-						offsetAttachId,
+						offsetNewAttachId,
 						entry.length,
 						offsetOriginalAttachId,
 					);
@@ -4845,16 +4844,6 @@ function doesChangeAttachNodes(
 ): RangeQueryResultFragment<boolean>[] {
 	return table
 		.getAll({ ...id, target: NodeMoveType.Attach }, count)
-		.map((entry) => ({ ...entry, value: entry.value !== undefined }));
-}
-
-function doesChangeDetachNodes(
-	table: CrossFieldKeyTable,
-	id: ChangeAtomId,
-	count: number,
-): RangeQueryResultFragment<boolean>[] {
-	return table
-		.getAll({ ...id, target: NodeMoveType.Detach }, count)
 		.map((entry) => ({ ...entry, value: entry.value !== undefined }));
 }
 

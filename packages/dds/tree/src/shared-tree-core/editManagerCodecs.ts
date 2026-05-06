@@ -11,7 +11,6 @@ import {
 	ClientVersionDispatchingCodecBuilder,
 	type CodecTree,
 	type CodecVersion,
-	type CodecWriteOptions,
 	type DependentFormatVersion,
 	FluidClientVersion,
 	type ICodecFamily,
@@ -25,12 +24,12 @@ import type {
 	RevisionTag,
 	SchemaAndPolicy,
 } from "../core/index.js";
+import { brand } from "../util/index.js";
 
 import type { SummaryData } from "./editManager.js";
 import { makeV1toV4andV6CodecWithVersion } from "./editManagerCodecsV1toV4.js";
 import { makeSharedBranchesCodecWithVersion } from "./editManagerCodecsVSharedBranches.js";
 import { EditManagerFormatVersion } from "./editManagerFormatCommons.js";
-import { brand } from "../util/index.js";
 
 /**
  * Context required for encoding/decoding the {@link EditManager}'s {@link SummaryData}.
