@@ -6,8 +6,9 @@
 /**
  * Update script for the compat test workspaces.
  *
- * Run this script after a Fluid Framework version bump, or after a new compatibility checkpoint is designated, as
- * part of the release process:
+ * Run this script after:
+ * - A Fluid Framework version bump as part of the release process
+ * - A new compatibility checkpoint is designated
  *
  *   pnpm run update-compat-versions
  *
