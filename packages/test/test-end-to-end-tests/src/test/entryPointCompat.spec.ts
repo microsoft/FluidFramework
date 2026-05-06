@@ -9,13 +9,8 @@ import {
 	describeCompat,
 	describeInstallVersions,
 	getVersionedTestObjectProvider,
+	type CompatApis,
 } from "@fluid-private/test-version-utils";
-// TODO:AB#6558: describeInstallVersions doesn't support dynamically providing package APIs.
-import {
-	ContainerRuntimeFactoryWithDefaultDataStore,
-	DataObject,
-	DataObjectFactory,
-} from "@fluidframework/aqueduct/internal";
 import { IContainer } from "@fluidframework/container-definitions/internal";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import { FluidObject } from "@fluidframework/core-interfaces";
@@ -28,21 +23,24 @@ import { pkgVersion } from "../packageVersion.js";
 describe("entryPoint compat", () => {
 	let provider: ITestObjectProvider;
 
-	class TestDataObject extends DataObject {
-		public get _root(): IDirectory {
-			return this.root;
-		}
-		public get _context(): IFluidDataStoreContext {
-			return this.context;
-		}
-	}
-
 	async function getDefaultFluidObject(runtime: IContainerRuntime): Promise<FluidObject> {
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		return (await runtime.getAliasedDataStoreEntryPoint?.("default"))!.get();
 	}
 
-	async function createContainer(): Promise<IContainer> {
+	async function createContainer(apis: CompatApis): Promise<IContainer> {
+		const { DataObject, DataObjectFactory } = apis.dataRuntime;
+		const { ContainerRuntimeFactoryWithDefaultDataStore } = apis.containerRuntime;
+
+		class TestDataObject extends DataObject {
+			public get _root(): IDirectory {
+				return this.root;
+			}
+			public get _context(): IFluidDataStoreContext {
+				return this.context;
+			}
+		}
+
 		const dataObjectFactory = new DataObjectFactory({
 			type: "TestDataObject",
 			ctor: TestDataObject,
@@ -56,13 +54,13 @@ describe("entryPoint compat", () => {
 		return provider.createContainer(runtimeFactory);
 	}
 
-	describeCompat("no compat", "NoCompat", (getTestObjectProvider) => {
+	describeCompat("no compat", "NoCompat", (getTestObjectProvider, apis) => {
 		beforeEach("getTestObjectProvider", async () => {
 			provider = getTestObjectProvider();
 		});
 
 		it("entryPoint pattern", async () => {
-			const container = await createContainer();
+			const container = await createContainer(apis);
 			const entryPoint = await container.getEntryPoint?.();
 			assert.notStrictEqual(entryPoint, undefined, "entryPoint was undefined");
 		});
@@ -71,7 +69,7 @@ describe("entryPoint compat", () => {
 	const loaderWithRequest = "2.0.0-internal.7.0.0";
 	describeInstallVersions({
 		requestAbsoluteVersions: [loaderWithRequest],
-	})("loader compat", (_) => {
+	})("loader compat", (_, apis) => {
 		beforeEach("getVersionedTestObjectProvider", async () => {
 			provider = await getVersionedTestObjectProvider(
 				pkgVersion, // base version
@@ -84,7 +82,7 @@ describe("entryPoint compat", () => {
 		});
 
 		it("request pattern works", async () => {
-			const container = await createContainer();
+			const container = await createContainer(apis);
 			const requestResult = await (container as any).request({ url: "/" });
 
 			assert.strictEqual(requestResult.status, 200, requestResult.value);
@@ -92,7 +90,7 @@ describe("entryPoint compat", () => {
 		});
 
 		it("request pattern works when entryPoint is available", async () => {
-			const container = await createContainer();
+			const container = await createContainer(apis);
 			const requestResult = await (container as any).request({ url: "/" });
 
 			// Verify request pattern still works for older loaders (even with entryPoint available)

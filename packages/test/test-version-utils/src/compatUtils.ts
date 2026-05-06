@@ -105,8 +105,31 @@ export interface ITestDataObject extends IFluidLoadable {
 	_root: ISharedDirectory;
 }
 
+/**
+ * Extension of `ITestContainerConfig` that lets a test build its channel factory registry
+ * from a per-side data-runtime api rather than passing a pre-built one.
+ *
+ * @remarks
+ * Prefer `buildRegistry` over `registry` when the registry contains factories that encode more
+ * than a DDS kind (e.g. `configuredSharedTree`, which bakes options into the factory class). In
+ * cross-client compat tests the framework invokes the builder once per side with that side's
+ * api, producing per-version factories directly and bypassing the type-based remap in
+ * `convertRegistry`. This prevents the silent-drop footgun where custom factory configuration
+ * gets discarded when the load side remaps by type string alone.
+ *
+ * `registry` and `buildRegistry` are mutually exclusive; setting both will throw.
+ *
+ * @internal
+ */
+export interface ICompatTestContainerConfig extends ITestContainerConfig {
+	buildRegistry?: (
+		dataRuntime: ReturnType<typeof getDataRuntimeApi>,
+	) => ChannelFactoryRegistry;
+}
+
 function createGetDataStoreFactoryFunction(
 	api: ReturnType<typeof getDataRuntimeApi>,
+	otherApi?: ReturnType<typeof getDataRuntimeApi>,
 ): (containerOptions?: ITestContainerConfig) => IFluidDataStoreFactory {
 	class TestDataObject extends api.DataObject implements ITestDataObject {
 		public get _context(): IFluidDataStoreContext {
@@ -120,17 +143,26 @@ function createGetDataStoreFactoryFunction(
 		}
 	}
 
-	const registryMapping = {};
-	for (const value of Object.values(api.dds)) {
-		/**
-		 * Skip dds that may not be available in this version of the api.
-		 * Not all versions have all dds. See {@link PackageToInstall} for details.
-		 */
-		if (value?.getFactory === undefined) {
-			continue;
+	const buildRegistryMapping = (
+		a: ReturnType<typeof getDataRuntimeApi>,
+	): Record<string, IChannelFactory> => {
+		const mapping: Record<string, IChannelFactory> = {};
+		for (const value of Object.values(a.dds)) {
+			/**
+			 * Skip dds that may not be available in this version of the api.
+			 * Not all versions have all dds. See {@link PackageToInstall} for details.
+			 */
+			if (value?.getFactory === undefined) {
+				continue;
+			}
+			mapping[value.getFactory().type] = value.getFactory();
 		}
-		registryMapping[value.getFactory().type] = value.getFactory();
-	}
+		return mapping;
+	};
+
+	const registryMapping = buildRegistryMapping(api);
+	const otherRegistryMapping =
+		otherApi === undefined ? undefined : buildRegistryMapping(otherApi);
 
 	function convertRegistry(registry: ChannelFactoryRegistry = []): ChannelFactoryRegistry {
 		const oldRegistry: [string | undefined, IChannelFactory][] = [];
@@ -139,13 +171,37 @@ function createGetDataStoreFactoryFunction(
 			if (oldFactory === undefined) {
 				throw Error(`Invalid or unimplemented channel factory: ${factory.type}`);
 			}
+			// Reject custom wrappers (e.g. configuredSharedTree) — the remap below would drop their config.
+			const matchesOwnDefault = factory.constructor === oldFactory.constructor;
+			const matchesOtherDefault =
+				otherRegistryMapping?.[factory.type]?.constructor === factory.constructor;
+			if (!matchesOwnDefault && !matchesOtherDefault) {
+				throw Error(
+					`Custom factory for "${factory.type}" would lose its configuration during compat ` +
+						`remap. Use buildRegistry or pull the factory from apis.dds instead.`,
+				);
+			}
 			oldRegistry.push([key, oldFactory]);
 		}
 		return oldRegistry;
 	}
 
-	return function (containerOptions?: ITestContainerConfig): IFluidDataStoreFactory {
-		const registry = convertRegistry(containerOptions?.registry);
+	return function (containerOptions?: ICompatTestContainerConfig): IFluidDataStoreFactory {
+		if (
+			containerOptions?.buildRegistry !== undefined &&
+			containerOptions.registry !== undefined
+		) {
+			throw new Error(
+				"ITestContainerConfig: `registry` and `buildRegistry` are mutually exclusive.",
+			);
+		}
+		// buildRegistry receives the side's own api, so its factories are already correct for
+		// this side — no type-based remap needed. Fall back to convertRegistry for the legacy
+		// `registry` field.
+		const registry =
+			containerOptions?.buildRegistry !== undefined
+				? containerOptions.buildRegistry(api)
+				: convertRegistry(containerOptions?.registry);
 		const fluidDataObjectType = containerOptions?.fluidDataObjectType;
 		switch (fluidDataObjectType) {
 			case undefined:
@@ -275,9 +331,13 @@ export async function getCompatVersionedTestObjectProviderFromApis(
 			runtime as any as Required<FluidObject<IFluidHandleContext>>
 		).IFluidHandleContext.resolveHandle(request);
 
-	const getDataStoreFactoryFn = createGetDataStoreFactoryFunction(apis.dataRuntime);
+	const getDataStoreFactoryFn = createGetDataStoreFactoryFunction(
+		apis.dataRuntime,
+		apis.dataRuntimeForLoading,
+	);
 	const getDataStoreFactoryFnForLoading = createGetDataStoreFactoryFunction(
 		apis.dataRuntimeForLoading,
+		apis.dataRuntime,
 	);
 
 	// We want to ensure that we are testing all latest runtime features, but only if both runtimes
