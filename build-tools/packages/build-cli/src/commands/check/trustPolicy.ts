@@ -9,6 +9,8 @@ import path from "node:path";
 import { Flags } from "@oclif/core";
 import execa from "execa";
 import GithubSlugger from "github-slugger";
+import pacote from "pacote";
+import semver from "semver";
 
 import { BaseCommandWithBuildProject } from "../../library/commands/base.js";
 
@@ -21,6 +23,53 @@ const TRUST_DOWNGRADE_CODE = "ERR_PNPM_TRUST_DOWNGRADE";
 interface PinnedVersion {
 	name: string;
 	version: string;
+}
+
+/**
+ * The kinds of "trust evidence" pnpm recognizes on an npm registry
+ * manifest, in increasing order of strength. See `failIfTrustDowngraded`
+ * / `getTrustEvidence` in pnpm's bundled source for the canonical
+ * definitions:
+ *
+ * - `provenance`: `manifest.dist.attestations.provenance` is set.
+ * - `trustedPublisher`: `manifest._npmUser.trustedPublisher` is set.
+ *
+ * `none` is our own sentinel for "neither."
+ */
+type TrustEvidence = "none" | "provenance" | "trustedPublisher";
+
+/**
+ * A trust-downgrade event extracted from pnpm's NDJSON stream.
+ *
+ * `message` and `hint` are pnpm's human-readable strings. The remaining
+ * optional fields are populated by {@link enrichViolations} from the
+ * registry packument and identify the offender's publish metadata plus
+ * the most recent prior version with stronger trust evidence (which is
+ * the version pnpm is implicitly comparing against).
+ */
+interface TrustViolation extends PinnedVersion {
+	message?: string;
+	hint?: string;
+	/** ISO timestamp the offending version was published. */
+	publishedAt?: string;
+	/** npm publisher account name for the offending version. */
+	publisher?: string;
+	/** Trust evidence on the offending version. */
+	evidence?: TrustEvidence;
+	/**
+	 * The most recent earlier-published version (excluding prereleases
+	 * unless the offender itself is a prerelease, matching pnpm's logic)
+	 * that carries stronger trust evidence than the offender. This is the
+	 * version a downgrade would target.
+	 */
+	priorTrusted?: {
+		version: string;
+		publishedAt: string;
+		publisher?: string;
+		evidence: TrustEvidence;
+	};
+	/** Reason enrichment was skipped/failed (registry fetch failure, etc.). */
+	enrichmentError?: string;
 }
 
 interface PnpmRunResult {
@@ -127,6 +176,10 @@ export default class CheckTrustPolicyCommand extends BaseCommandWithBuildProject
 		// violations here across iterations so each pnpm invocation can be
 		// re-run with the union of all known offenders excluded.
 		const violationsByName = new Map<string, Set<string>>();
+		// Reasons (message/hint pairs) keyed by `${name}@${version}`. Kept
+		// alongside `violationsByName` so the exclude-flag construction stays
+		// simple while still surfacing pnpm's explanation in the final report.
+		const reasonsByKey = new Map<string, { message?: string; hint?: string }>();
 		let lastResult: PnpmRunResult | undefined;
 		let iteration = 0;
 		let auditIncomplete = false;
@@ -197,13 +250,14 @@ export default class CheckTrustPolicyCommand extends BaseCommandWithBuildProject
 					);
 					break;
 				}
-				for (const { name, version } of newViolations) {
+				for (const { name, version, message, hint } of newViolations) {
 					let versions = violationsByName.get(name);
 					if (versions === undefined) {
 						versions = new Set<string>();
 						violationsByName.set(name, versions);
 					}
 					versions.add(version);
+					reasonsByKey.set(`${name}@${version}`, { message, hint });
 					this.verbose(`  + ${name}@${version}`);
 				}
 			}
@@ -235,12 +289,26 @@ export default class CheckTrustPolicyCommand extends BaseCommandWithBuildProject
 		// Set both preserve insertion order, which depends on pnpm's emission
 		// order across iterations). Sort by name, then by version within each
 		// name. This is the only consumer of `violationsByName` after the loop.
-		const violations: PinnedVersion[] = [];
+		const violations: TrustViolation[] = [];
 		for (const name of [...violationsByName.keys()].sort()) {
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			for (const version of [...violationsByName.get(name)!].sort()) {
-				violations.push({ name, version });
+				const reason = reasonsByKey.get(`${name}@${version}`);
+				violations.push({ name, version, ...reason });
 			}
+		}
+
+		// Enrich each violation with publish metadata from the registry the
+		// audited workspace would actually resolve from. Best-effort: if a
+		// fetch fails (network, auth, scoped-registry mismatch) the violation
+		// keeps its bare (name, version) and falls back to printing pnpm's
+		// hint verbatim. Done after pnpm's audit so a registry outage can't
+		// mask a real violation.
+		if (violations.length > 0) {
+			this.verbose(
+				`Enriching ${violations.length} violation(s) with registry metadata...`,
+			);
+			await enrichViolations(violations, workspaceDir, (msg) => this.verbose(msg));
 		}
 		const exitCode = lastResult?.code ?? 2;
 
@@ -259,8 +327,32 @@ export default class CheckTrustPolicyCommand extends BaseCommandWithBuildProject
 			}
 		} else {
 			this.info(`\n${violations.length} trust-policy violation(s):\n`);
-			for (const { name, version } of violations) {
-				this.info(`  ${name}@${version}`);
+			for (const violation of violations) {
+				this.info(`  ${violation.name}@${violation.version}`);
+				const publishedAt = formatDate(violation.publishedAt);
+				const evidenceLabel = formatEvidence(violation.evidence);
+				if (publishedAt !== undefined || violation.publisher !== undefined || evidenceLabel !== undefined) {
+					const parts: string[] = [];
+					if (publishedAt !== undefined) parts.push(`published ${publishedAt}`);
+					if (violation.publisher !== undefined) parts.push(`by ${violation.publisher}`);
+					if (evidenceLabel !== undefined) parts.push(`evidence: ${evidenceLabel}`);
+					this.info(`      offender: ${parts.join(", ")}`);
+				}
+				if (violation.priorTrusted !== undefined) {
+					const pt = violation.priorTrusted;
+					const priorParts: string[] = [];
+					priorParts.push(`evidence: ${formatEvidence(pt.evidence) ?? pt.evidence}`);
+					const priorPublished = formatDate(pt.publishedAt);
+					if (priorPublished !== undefined) priorParts.push(`published ${priorPublished}`);
+					if (pt.publisher !== undefined) priorParts.push(`by ${pt.publisher}`);
+					this.info(`      prior trusted: ${violation.name}@${pt.version} (${priorParts.join(", ")})`);
+				}
+				if (violation.enrichmentError !== undefined) {
+					this.info(`      (enrichment unavailable: ${violation.enrichmentError})`);
+					if (violation.hint !== undefined) {
+						this.info(`      hint: ${violation.hint}`);
+					}
+				}
 			}
 			if (auditIncomplete) {
 				this.info(
@@ -301,7 +393,7 @@ interface TrustPolicyAuditResult {
 	elapsedSec: number;
 	totalUniqueDependencies: number;
 	auditIncomplete: boolean;
-	violations: PinnedVersion[];
+	violations: TrustViolation[];
 }
 
 /**
@@ -494,8 +586,8 @@ async function runPnpm(
  * Any malformed line, unrecognized event code, or missing package fields
  * indicate that pnpm's contract has changed and we throw to surface it.
  */
-function extractTrustViolations(ndjsonStdout: string): PinnedVersion[] {
-	const found: PinnedVersion[] = [];
+function extractTrustViolations(ndjsonStdout: string): TrustViolation[] {
+	const found: TrustViolation[] = [];
 
 	for (const rawLine of ndjsonStdout.split(/\r?\n/)) {
 		// Skip blank lines and any line that can't possibly be a trust-downgrade
@@ -507,6 +599,8 @@ function extractTrustViolations(ndjsonStdout: string): PinnedVersion[] {
 		let event: {
 			code?: string;
 			package?: { name?: string; version?: string };
+			message?: string;
+			hint?: string;
 		};
 		try {
 			event = JSON.parse(rawLine) as typeof event;
@@ -527,8 +621,141 @@ function extractTrustViolations(ndjsonStdout: string): PinnedVersion[] {
 				`pnpm emitted a "${TRUST_DOWNGRADE_CODE}" event without a package name and version: ${rawLine}`,
 			);
 		}
-		found.push({ name, version });
+		found.push({ name, version, message: event.message, hint: event.hint });
 	}
 
 	return found;
+}
+
+// Registry-backed enrichment of pnpm's trust-downgrade events.
+//
+// pnpm's NDJSON event only carries the offender's name/version and a
+// generic hint. To surface what the user needs to investigate, we fetch
+// the packument via pacote (which honors the workspace's `.npmrc`,
+// including scoped registries and ADO-style auth tokens) and identify
+// the most recent prior version with stronger trust evidence — i.e. the
+// version pnpm is implicitly comparing against. Best-effort: failures
+// land on `enrichmentError` and reporting falls back to pnpm's hint.
+
+/** Trust-evidence fields pnpm reads. Not on `pacote.Manifest` (non-standard). */
+interface TrustFields {
+	_npmUser?: { name?: string; trustedPublisher?: unknown };
+	dist?: { attestations?: { provenance?: unknown } };
+}
+
+/** Mirrors pnpm's `getTrustEvidence`: trustedPublisher > provenance > none. */
+function getTrustEvidence(manifest: TrustFields): TrustEvidence {
+	if (manifest._npmUser?.trustedPublisher !== undefined) return "trustedPublisher";
+	if (manifest.dist?.attestations?.provenance !== undefined) return "provenance";
+	return "none";
+}
+
+/**
+ * Populates each violation in `violations` (in place) with publish
+ * metadata from the registry — the offender's publish timestamp,
+ * publisher account, and trust evidence kind, plus the most recent
+ * earlier-published version that carries trust evidence.
+ *
+ * The "prior trusted" version is identified by publish time, not
+ * semver order, matching pnpm's own logic in
+ * `detectStrongestTrustEvidenceBeforeDate`. This means it can be a
+ * higher semver than the offender (e.g. when an old major-line
+ * receives a backport publish after a newer major has gone out).
+ *
+ * Packuments are fetched via `pacote.packument`, which honors the
+ * audited workspace's `.npmrc` (registry resolution, scoped registries,
+ * `_authToken` / `_auth` lookup, retries). `where: workspaceDir` is
+ * what makes pacote read the audited workspace's config rather than
+ * the process cwd's, which matters when the audit targets a release-
+ * group sub-workspace. `fullMetadata: true` is required because the
+ * abbreviated packument response strips `_npmUser`,
+ * `dist.attestations`, and `time` — the fields we need.
+ *
+ * Best-effort: any failure (registry error, missing packument fields,
+ * unparseable timestamps) is captured on `violation.enrichmentError`
+ * rather than thrown, so a single weird package can't abort the batch.
+ * Reporting falls back to pnpm's `hint` when enrichment fails.
+ *
+ * Sequential rather than parallel: violation lists are normally small
+ * (<20), pacote's `packumentCache` already memoizes per-name within a
+ * batch, registries can rate-limit, and sequential output keeps the
+ * verbose log deterministic.
+ */
+async function enrichViolations(
+	violations: TrustViolation[],
+	workspaceDir: string,
+	verbose: (msg: string) => void,
+): Promise<void> {
+	const packumentCache = new Map<string, pacote.Packument>();
+	for (const v of violations) {
+		try {
+			verbose(`  fetching packument for ${v.name}`);
+			// `fullMetadata: true` is required: abbreviated packuments strip
+			// `_npmUser`, `dist.attestations`, and `time`. `where` makes pacote
+			// read the audited workspace's `.npmrc`, not the process cwd's.
+			const pkg = await pacote.packument(v.name, {
+				where: workspaceDir,
+				fullMetadata: true,
+				packumentCache,
+			});
+			const versions = pkg.versions as Record<string, pacote.Manifest & TrustFields>;
+			const offender = versions[v.version];
+			const offenderTimeStr = pkg.time?.[v.version];
+			if (offender === undefined || offenderTimeStr === undefined) {
+				v.enrichmentError = `version ${v.version} not present in packument`;
+				continue;
+			}
+			v.publishedAt = offenderTimeStr;
+			v.publisher = offender._npmUser?.name;
+			v.evidence = getTrustEvidence(offender);
+
+			const offenderTime = Date.parse(offenderTimeStr);
+			const offenderIsPrerelease = semver.prerelease(v.version) !== null;
+			let bestTime = -Infinity;
+			// Walk every published version: keep ones predating the offender
+			// that carry trust evidence, pick the most recently published.
+			// Mirrors pnpm's `detectStrongestTrustEvidenceBeforeDate` but
+			// retains the specific version (pnpm only returns the evidence kind).
+			for (const [cVersion, cTimeStr] of Object.entries(pkg.time ?? {})) {
+				if (cVersion === "created" || cVersion === "modified") continue;
+				const cManifest = versions[cVersion];
+				if (cManifest === undefined) continue;
+				if (!offenderIsPrerelease && semver.prerelease(cVersion) !== null) continue;
+				const cTime = Date.parse(cTimeStr);
+				if (Number.isNaN(cTime) || cTime >= offenderTime || cTime <= bestTime) continue;
+				const evidence = getTrustEvidence(cManifest);
+				if (evidence === "none") continue;
+				bestTime = cTime;
+				v.priorTrusted = {
+					version: cVersion,
+					publishedAt: cTimeStr,
+					publisher: cManifest._npmUser?.name,
+					evidence,
+				};
+			}
+		} catch (err) {
+			v.enrichmentError = err instanceof Error ? err.message : String(err);
+		}
+	}
+}
+
+/** Formats an ISO timestamp as `YYYY-MM-DD`, or undefined if invalid/missing. */
+function formatDate(iso: string | undefined): string | undefined {
+	if (iso === undefined) return undefined;
+	const ms = Date.parse(iso);
+	return Number.isNaN(ms) ? undefined : new Date(ms).toISOString().slice(0, 10);
+}
+
+/** Mirrors pnpm's `prettyPrintTrustEvidence`. */
+function formatEvidence(evidence: TrustEvidence | undefined): string | undefined {
+	switch (evidence) {
+		case "trustedPublisher":
+			return "trusted publisher";
+		case "provenance":
+			return "provenance attestation";
+		case "none":
+			return "no trust evidence";
+		default:
+			return undefined;
+	}
 }
