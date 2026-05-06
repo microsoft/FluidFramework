@@ -31,7 +31,7 @@
  *   compat-workspaces/full/pnpm-lock.yaml
  */
 
-import { execSync } from "node:child_process";
+import { execFileSync, execSync } from "node:child_process";
 import {
 	existsSync,
 	mkdirSync,
@@ -210,12 +210,19 @@ function removeStaleVersionDirs(workspaceDir: string, keepVersions: Set<string>)
 }
 
 function pnpmInstallWorkspace(workspaceDir: string, extraPnpmArgs: string[] = []): void {
-	const args = ["install", "--no-frozen-lockfile", ...extraPnpmArgs].join(" ");
-	console.log(`\nRunning pnpm ${args} in ${path.relative(pkgRoot, workspaceDir)} ...`);
-	execSync(`pnpm ${args}`, {
+	const args = ["install", "--no-frozen-lockfile", ...extraPnpmArgs];
+	console.log(
+		`\nRunning pnpm ${args.join(" ")} in ${path.relative(pkgRoot, workspaceDir)} ...`,
+	);
+	// On Windows, pnpm is a .cmd shim, which Node refuses to spawn without shell: true
+	// (CVE-2024-27980). With shell: true on Windows, Node escapes array args for cmd.exe,
+	// so this still passes arguments verbatim — no shell parsing of caller-provided values.
+	const isWindows = process.platform === "win32";
+	execFileSync(isWindows ? "pnpm.cmd" : "pnpm", args, {
 		cwd: workspaceDir,
 		env: { ...process.env, NODE_OPTIONS: "" },
 		stdio: "inherit",
+		shell: isWindows,
 	});
 }
 
