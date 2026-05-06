@@ -11,7 +11,6 @@ import {
 	type BundleMetric,
 	bundlesContainNoChanges,
 	getAzureDevopsApi,
-	totalSizeMetricName,
 } from "@fluidframework/bundle-size-tools";
 import { Flags } from "@oclif/core";
 
@@ -23,12 +22,12 @@ const adoConstants = {
 	orgUrl: "https://dev.azure.com/fluidframework",
 	projectName: "public",
 	ciBuildDefinitionId: 48,
-	bundleAnalysisArtifactName: "bundleAnalysis",
+	artifactName: "bundleAnalyzerJson",
 } as const;
 
-// Default path to the PR's locally-collected bundle reports.
+// Default path to the PR's locally-collected analyzer.json files.
 // Matches where `flub generate bundleStats` (invoked via `npm run bundle-analysis:collect`) writes.
-const defaultLocalReportPath = "./artifacts/bundleAnalysis";
+const defaultLocalReportPath = "./artifacts/bundleAnalyzerJson";
 
 // Default output directory. The pipeline publishes this directory as the `bundleSizeDiff`
 // artifact.
@@ -72,21 +71,13 @@ interface BundleSizeDiffError {
 }
 
 /**
- * Compute whether any bundle shows a non-total metric growing by more than the regression
- * threshold.
+ * Compute whether any bundle shows a metric growing by more than the regression threshold.
  */
 function detectSizeRegression(comparison: BundleComparison[]): boolean {
 	return comparison.some((bundle: BundleComparison) =>
-		Object.entries(bundle.commonBundleMetrics).some(
-			([metricName, { baseline, compare }]: [
-				string,
-				{ baseline: BundleMetric; compare: BundleMetric },
-			]) => {
-				if (metricName === totalSizeMetricName) {
-					return false;
-				}
-				return compare.parsedSize - baseline.parsedSize > sizeRegressionThresholdBytes;
-			},
+		Object.values(bundle.commonBundleMetrics).some(
+			({ baseline, compare }: { baseline: BundleMetric; compare: BundleMetric }) =>
+				compare.parsedSize - baseline.parsedSize > sizeRegressionThresholdBytes,
 		),
 	);
 }

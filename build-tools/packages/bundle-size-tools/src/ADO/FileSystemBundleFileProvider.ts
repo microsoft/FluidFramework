@@ -4,45 +4,35 @@
  */
 
 import { promises as fsPromises } from "fs";
-import type { StatsCompilation } from "webpack";
+import type { BundleAnalyzerPlugin } from "webpack-bundle-analyzer";
 
-import type { BundleBuddyConfig } from "../BundleBuddyTypes";
-import { decompressStatsFile, getAllFilesInDirectory } from "../utilities";
+import { getAllFilesInDirectory } from "../utilities";
 import {
 	type BundleFileData,
-	getBundleFilePathsFromFolder,
+	getAnalyzerFilePathsFromFolder,
 } from "./getBundleFilePathsFromFolder";
 
 /**
- * Returns a list of all the files relevant to bundle buddy from the given folder
+ * Returns a list of `analyzer.json` paths from the given folder (one per source package).
  * @param bundleReportPath - The path to the folder containing the bundle report
  */
-export async function getBundlePathsFromFileSystem(
+export async function getAnalyzerPathsFromFileSystem(
 	bundleReportPath: string,
 ): Promise<BundleFileData[]> {
 	const filePaths = await getAllFilesInDirectory(bundleReportPath);
 
-	return getBundleFilePathsFromFolder(filePaths);
+	return getAnalyzerFilePathsFromFolder(filePaths);
 }
 
 /**
- * Gets and parses a BundleBuddyConfig  file from the filesystem
+ * Reads and parses an analyzer.json file (webpack-bundle-analyzer's
+ * `analyzerMode: "json"` output) from the filesystem.
  * @param path - the full path to the file in the filesystem
  */
-export async function getBundleBuddyConfigFromFileSystem(
+export async function getAnalyzerJsonFromFileSystem(
 	path: string,
-): Promise<BundleBuddyConfig> {
-	const file = await fsPromises.readFile(path);
+): Promise<BundleAnalyzerPlugin.JsonReport> {
+	const text = await fsPromises.readFile(path, "utf8");
 
-	return JSON.parse(file.toString());
-}
-
-/**
- * Gets a decompressed webpack stats file from the filesystem
- * @param path - the full path to the file in the filesystem
- */
-export async function getStatsFileFromFileSystem(path: string): Promise<StatsCompilation> {
-	const file = await fsPromises.readFile(path);
-
-	return decompressStatsFile(file);
+	return JSON.parse(text) as BundleAnalyzerPlugin.JsonReport;
 }
