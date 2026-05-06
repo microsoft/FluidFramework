@@ -7,6 +7,7 @@
 /// <reference types="node" />
 
 import type { Build } from 'azure-devops-node-api/interfaces/BuildInterfaces';
+import type { BundleAnalyzerPlugin } from 'webpack-bundle-analyzer';
 import type { CommentThreadStatus } from 'azure-devops-node-api/interfaces/GitInterfaces';
 import { Compiler } from 'webpack';
 import type JSZip from 'jszip';
@@ -153,6 +154,21 @@ export interface EntryStatsProcessorOptions {
 export function getAllFilesInDirectory(sourceFolder: string, partialPathPrefix?: string): Promise<string[]>;
 
 // @public
+export function getAnalyzerFilePathsFromFolder(relativePathsInFolder: string[]): BundleFileData[];
+
+// @public
+export function getAnalyzerJsonFromFileSystem(path: string): Promise<BundleAnalyzerPlugin.JsonReport>;
+
+// @public
+export function getAnalyzerJsonFromZip(jsZip: JSZip, relativePath: string): Promise<BundleAnalyzerPlugin.JsonReport>;
+
+// @public
+export function getAnalyzerPathsFromFileSystem(bundleReportPath: string): Promise<BundleFileData[]>;
+
+// @public
+export function getAnalyzerPathsFromZipObject(jsZip: JSZip): BundleFileData[];
+
+// @public
 export function getAzureDevopsApi(accessToken: string | undefined, orgUrl: string): WebApi;
 
 // @public
@@ -218,6 +234,17 @@ export interface GetBundleSummariesArgs {
     getStatsFile: (relativePath: string) => Promise<StatsCompilation>;
     // (undocumented)
     statsProcessors: WebpackStatsProcessor[];
+}
+
+// @public
+export function getBundleSummariesFromAnalyzer(args: GetBundleSummariesFromAnalyzerArgs): Promise<BundleSummaries>;
+
+// @public (undocumented)
+export interface GetBundleSummariesFromAnalyzerArgs {
+    // (undocumented)
+    bundlePaths: BundleFileData[];
+    // (undocumented)
+    getAnalyzerJson: (relativePath: string) => Promise<BundleAnalyzerPlugin.JsonReport>;
 }
 
 // @public
