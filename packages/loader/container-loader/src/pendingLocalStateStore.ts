@@ -93,13 +93,8 @@ export class PendingLocalStateStore<TKey> {
 	 */
 	set(key: TKey, pendingLocalState: string): this {
 		const state = getAttachedContainerStateFromSerializedContainer(pendingLocalState);
-		const {
-			savedOps,
-			snapshotBlobs,
-			attachmentBlobContents,
-			loadedGroupIdSnapshots,
-			url,
-		} = state;
+		const { savedOps, snapshotBlobs, attachmentBlobContents, loadedGroupIdSnapshots, url } =
+			state;
 
 		// Normalize URL by removing trailing slash for comparison
 		const normalizedUrl = url.replace(/\/$/, "");

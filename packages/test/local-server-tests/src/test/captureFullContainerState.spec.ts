@@ -344,8 +344,7 @@ describe("captureFullContainerState", () => {
 		);
 		const matched = capturedDecoded.find(
 			(bytes) =>
-				bytes.length === binaryPayload.length &&
-				bytes.every((b, i) => b === binaryPayload[i]),
+				bytes.length === binaryPayload.length && bytes.every((b, i) => b === binaryPayload[i]),
 		);
 		assert(
 			matched !== undefined,
