@@ -316,7 +316,7 @@ function genCompatConfig(versionDetails: {
 }
 /**
  * Generates the cross-client compat config permutations. The current version is paired
- * against every in-window prior Compatibility Checkpoint (CC-(N-1), CC-(N-2), CC-(N-3)).
+ * against every in-window prior Compatibility Checkpoint.
  * See `./checkpoints.ts` and `CompatibilityCheckpoints.md` for details on the policy.
  *
  * @internal
