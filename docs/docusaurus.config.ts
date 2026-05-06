@@ -18,6 +18,19 @@ const TYPESENSE_API_KEY = process.env.TYPESENSE_API_KEY;
 
 const isTypesenseConfigured = TYPESENSE_HOST !== undefined && TYPESENSE_API_KEY !== undefined;
 
+// Each entry is [field, weight, numTypos]. Order determines priority: first = highest ranked.
+const typesenseSearchFields: [field: string, weight: number, numTypos: number][] = [
+	["hierarchy.lvl1", 6, 1],
+	["hierarchy.lvl2", 5, 1],
+	["hierarchy.lvl3", 4, 1],
+	["hierarchy.lvl4", 3, 1],
+	["hierarchy.lvl5", 2, 1],
+	["content", 1, 0],
+];
+const typesenseQueryBy = typesenseSearchFields.map(([field]) => field).join(",");
+const typesenseQueryByWeights = typesenseSearchFields.map(([, weight]) => weight).join(",");
+const typesenseNumTypos = typesenseSearchFields.map(([, , typos]) => typos).join(",");
+
 const githubUrl = "https://github.com/microsoft/FluidFramework";
 const githubMainBranchUrl = `${githubUrl}/tree/main`;
 const githubDocsUrl = `${githubMainBranchUrl}/docs`;
@@ -191,12 +204,11 @@ const config: Config = {
 				},
 				contextualSearch: true,
 				additionalSearchParameters: {
-					query_by:
-						"hierarchy.lvl1,hierarchy.lvl2,hierarchy.lvl3,hierarchy.lvl4,hierarchy.lvl5,content",
-					query_by_weights: "6,5,4,3,2,1",
+					query_by: typesenseQueryBy,
+					query_by_weights: typesenseQueryByWeights,
 					sort_by: "_text_match:desc",
 					prioritize_exact_match: true,
-					num_typos: "1,1,1,1,1,0",
+					num_typos: typesenseNumTypos,
 				},
 			},
 		}),
