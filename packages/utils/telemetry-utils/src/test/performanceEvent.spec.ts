@@ -241,6 +241,63 @@ describe("PerformanceEvent", () => {
 			}
 		});
 
+		it("cleans up marks when Performance API measure throws a benign SyntaxError", () => {
+			const testPerformance = installTestPerformance();
+			testPerformance.measure = () => {
+				throw new SyntaxError("Missing mark");
+			};
+			const clock = sinon.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
+			try {
+				PerformanceEvent.timedExec(logger, { eventName: "SyntaxErrorEvent" }, () => {});
+				clock.tick(20_000);
+
+				assert.equal(logger.eventsLogged, 1);
+				assert.deepEqual(testPerformance.clearedMarkNames, testPerformance.markNames);
+			} finally {
+				clock.restore();
+			}
+		});
+
+		it("propagates non-benign Performance API measure errors after queuing mark cleanup", () => {
+			const testPerformance = installTestPerformance();
+			const measureError = new TypeError("Unexpected measure failure");
+			testPerformance.measure = () => {
+				throw measureError;
+			};
+			const clock = sinon.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
+			try {
+				assert.throws(
+					() => PerformanceEvent.timedExec(logger, { eventName: "TypeErrorEvent" }, () => {}),
+					measureError,
+				);
+				clock.tick(20_000);
+
+				assert.deepEqual(testPerformance.clearedMarkNames, testPerformance.markNames);
+			} finally {
+				clock.restore();
+			}
+		});
+
+		it("cleans up orphaned start marks when a timedExec callback throws", () => {
+			const testPerformance = installTestPerformance();
+			const callbackError = new Error("Callback failed");
+			const clock = sinon.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
+			try {
+				assert.throws(
+					() =>
+						PerformanceEvent.timedExec(logger, { eventName: "CallbackThrowEvent" }, () => {
+							throw callbackError;
+						}),
+					callbackError,
+				);
+				clock.tick(20_000);
+
+				assert.deepEqual(testPerformance.clearedMarkNames, testPerformance.markNames);
+			} finally {
+				clock.restore();
+			}
+		});
+
 		it("does not use Performance API marks when the full API is unavailable", () => {
 			Object.defineProperty(globalThis, "performance", {
 				configurable: true,

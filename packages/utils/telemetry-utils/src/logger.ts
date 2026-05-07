@@ -962,12 +962,13 @@ export class PerformanceEvent {
 				) {
 					throw error;
 				}
+			} finally {
+				// Schedule deferred cleanup so marks/measures remain observable
+				// in the Performance Timeline for a short window.
+				PerformanceEvent.queuePerformanceCleanup([this.startMark, endMark], this.measureName);
+				this.startMark = undefined;
+				this.measureName = undefined;
 			}
-			// Schedule deferred cleanup so marks/measures remain observable
-			// in the Performance Timeline for a short window.
-			PerformanceEvent.queuePerformanceCleanup([this.startMark, endMark], this.measureName);
-			this.startMark = undefined;
-			this.measureName = undefined;
 		}
 	}
 
