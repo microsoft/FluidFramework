@@ -2474,6 +2474,71 @@ describe("Runtime", () => {
 				assert.strictEqual(containerErrors.length, 1);
 			});
 
+			// Regression: enabling default-on batchId tracking when grouped batching is disabled
+			// asserts 0xa00 in OpGroupingManager.createEmptyGroupedBatch the first time a resubmit
+			// produces an empty batch. Tracking must be silently skipped in that configuration.
+			it("Default-on tracking is silently skipped when grouped batching is disabled", async () => {
+				const { runtime: containerRuntime } = await ContainerRuntime.loadRuntime2({
+					context: getMockContext() as IContainerContext,
+					registry: new FluidDataStoreRegistry([]),
+					existing: false,
+					runtimeOptions: {
+						enableGroupedBatching: false,
+						enableRuntimeIdCompressor: "on",
+					},
+					provideEntryPoint: mockProvideEntryPoint,
+				});
+				// Sending a duplicate batchId should not throw because tracking is inactive
+				// when grouped batching is off.
+				containerRuntime.process(
+					{
+						sequenceNumber: 123,
+						type: MessageType.Operation,
+						contents: { type: ContainerMessageType.Rejoin, contents: undefined },
+						metadata: { batchId: "batchId1" },
+					} satisfies Partial<ISequencedDocumentMessage> as ISequencedDocumentMessage,
+					false,
+				);
+				assert.doesNotThrow(() =>
+					containerRuntime.process(
+						{
+							sequenceNumber: 234,
+							type: MessageType.Operation,
+							contents: { type: ContainerMessageType.Rejoin, contents: undefined },
+							metadata: { batchId: "batchId1" },
+						} satisfies Partial<ISequencedDocumentMessage> as ISequencedDocumentMessage,
+						false,
+					),
+				);
+			});
+
+			it("Offline Load opt-in errors when grouped batching is disabled", async () => {
+				const containerErrors: ICriticalContainerError[] = [];
+				const context = {
+					...getMockContext({
+						settings: {
+							"Fluid.Container.enableOfflineFull": true,
+						},
+					}),
+					closeFn: (error?: ICriticalContainerError): void => {
+						if (error !== undefined) {
+							containerErrors.push(error);
+						}
+					},
+				};
+				await assert.rejects(
+					ContainerRuntime.loadRuntime2({
+						context: context as IContainerContext,
+						registry: new FluidDataStoreRegistry([]),
+						existing: false,
+						runtimeOptions: { enableGroupedBatching: false },
+						provideEntryPoint: mockProvideEntryPoint,
+					}),
+					(error: Error) => error instanceof UsageError,
+				);
+				assert.strictEqual(containerErrors.length, 1);
+			});
+
 			it("Can roundtrip DuplicateBatchDetector state through summary/snapshot", async () => {
 				// Duplicate Batch Detection is on by default in TurnBased mode.
 				const { runtime: containerRuntime } = await ContainerRuntime.loadRuntime2({
