@@ -17,10 +17,18 @@ import type { SharedTreeChange } from "./sharedTreeChangeTypes.js";
  * Otherwise returns `true` (including for an empty change, which has nothing
  * a viewer of the post-apply state would be unable to see).
  *
- * @remarks
- * Tracked by ADO 56693. Not yet implemented; the body throws so test cases
- * targeting the eventual contract fail loudly until the implementation lands.
  */
 export function isAuditableFromOutcome(change: SharedTreeChange): boolean {
-	throw new Error("isAuditableFromOutcome is not implemented");
+	if (change.changes.length > 1) {
+		return false;
+	}
+	for (const inner of change.changes) {
+		if (inner.type === "schema") {
+			return false;
+		}
+		if ((inner.innerChange.constraintViolationCount ?? 0) > 0) {
+			return false;
+		}
+	}
+	return true;
 }
