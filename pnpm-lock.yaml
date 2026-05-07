@@ -13733,6 +13733,9 @@ importers:
       '@fluidframework/routerlicious-driver':
         specifier: workspace:~
         version: link:../../drivers/routerlicious-driver
+      '@fluidframework/runtime-definitions':
+        specifier: workspace:~
+        version: link:../../runtime/runtime-definitions
       '@fluidframework/telemetry-utils':
         specifier: workspace:~
         version: link:../../utils/telemetry-utils
@@ -14196,6 +14199,9 @@ importers:
       '@fluidframework/routerlicious-driver':
         specifier: workspace:~
         version: link:../../drivers/routerlicious-driver
+      '@fluidframework/runtime-definitions':
+        specifier: workspace:~
+        version: link:../../runtime/runtime-definitions
       '@fluidframework/runtime-utils':
         specifier: workspace:~
         version: link:../../runtime/runtime-utils
