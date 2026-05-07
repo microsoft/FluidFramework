@@ -42,7 +42,11 @@ import * as semver from "semver";
 
 // Re-use version arithmetic and package list from the main source to keep them in sync.
 // jiti (used to run this script) resolves .js imports to .ts files automatically.
-import { calculateRequestedRange, versionHasMovedSparsedMatrix } from "../src/versionUtils.js";
+import {
+	calculateRequestedRange,
+	versionHasMovedSparsedMatrix,
+	resolveRangeViaRegistry,
+} from "../src/versionUtils.js";
 import { packageListToInstall } from "../src/compatPackageList.js";
 import {
 	numOfInternalMajorsBeforePublic2dot0,
@@ -64,30 +68,6 @@ const generatedVersionsCjsPath = path.join(compatWorkspacesDir, "generated-versi
 // ---------------------------------------------------------------------------
 // Version resolution
 // ---------------------------------------------------------------------------
-
-/**
- * Resolves a semver dependency spec to the single highest version matching that spec which is published in the npm registry.
- * @param rangeSpec - A valid (as per [semver](https://www.npmjs.com/package/semver)) range specification
- */
-function resolveRangeViaRegistry(rangeSpec: string): string {
-	if (semver.valid(rangeSpec)) return rangeSpec;
-	let result: string;
-	try {
-		result = execSync(
-			`pnpm view "@fluidframework/container-loader@${rangeSpec}" version --json`,
-			{
-				encoding: "utf8",
-			},
-		).trim();
-	} catch (e) {
-		throw new Error(`pnpm view failed for range "${rangeSpec}": ${e}`);
-	}
-	if (!result) throw new Error(`No published version for range: ${rangeSpec}`);
-	const versions: string | string[] = JSON.parse(result);
-	const version = Array.isArray(versions) ? versions.sort(semver.rcompare)[0] : versions;
-	if (!version) throw new Error(`Could not resolve range: ${rangeSpec}`);
-	return version;
-}
 
 /** Like {@link resolveRangeViaRegistry} but returns `undefined` and warns instead of throwing. */
 function tryResolveRangeViaRegistry(rangeSpec: string): string | undefined {

@@ -108,7 +108,7 @@ The following dependencies are pinned to older major versions because newer vers
     - Latest: `^15.x`
     - Issue: Version 15 has incompatible type definitions and breaks bundle size analysis tools
     - Error: `Types have separate declarations of a private property` and `Type is missing properties`
-    - Used in: `build-cli`, `bundle-size-tools`
+    - Used in: `build-cli`
     - Note: Pinned at `^11.2.0` to maintain compatibility; upgrade blocked until type issues resolved
 
 #### API/Structure Breaking Changes

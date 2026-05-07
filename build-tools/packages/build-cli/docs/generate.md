@@ -128,8 +128,8 @@ USAGE
   $ flub generate bundleSizeDiff [--json] [-v | --quiet] [--localReportPath <value>] [--outputDir <value>]
 
 FLAGS
-  --localReportPath=<value>  [default: ./artifacts/bundleAnalysis] Path to the locally-collected bundle reports for the
-                             PR (as produced by `flub generate bundleStats`).
+  --localReportPath=<value>  [default: ./artifacts/bundleAnalyzerJson] Path to the locally-collected bundle reports for
+                             the PR (as produced by `flub generate bundleStats`).
   --outputDir=<value>        [default: ./artifacts/bundleSizeDiff] Directory to write result.json or error.json into.
 
 LOGGING FLAGS
