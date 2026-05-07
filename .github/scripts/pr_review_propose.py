@@ -5,22 +5,21 @@ Subcommands:
   build-comment    Build the markdown proposal comment body.
   parse-checkboxes Read a comment body file and emit the checked reviewer IDs as JSON.
   format-names     Convert a JSON reviewer-ID array to a display-name string.
-  build-qa-context Build the reviewer-plan context string for Copilot Q&A.
-  render-qa-prompt Render the Q&A prompt template with REVIEWER_CONTEXT/REPLY from env.
+  is-start-checked Print 'true'/'false' depending on Start review box state.
+  reset-start      Print the body with the Start review box reset to [ ].
 
 Usage:
   python pr_review_propose.py build-comment --reviewer-count 3 --lines 247 --files 8
   python pr_review_propose.py parse-checkboxes comment.txt
   python pr_review_propose.py format-names '["correctness","security"]'
-  python pr_review_propose.py build-qa-context '["correctness","security"]'
-  REVIEWER_CONTEXT=... REPLY=... python pr_review_propose.py render-qa-prompt path/to/qa.md
+  python pr_review_propose.py is-start-checked comment.txt
+  python pr_review_propose.py reset-start comment.txt
 """
 
 from __future__ import annotations
 
 import argparse
 import json
-import os
 import re
 import sys
 from typing import NamedTuple
@@ -49,6 +48,11 @@ REVIEWERS: list[Reviewer] = [
 _LABEL_TO_ID: dict[str, str] = {r.label.lower(): r.id for r in REVIEWERS}
 _ID_TO_LABEL: dict[str, str] = {r.id: r.label for r in REVIEWERS}
 
+# The confirm workflow matches the rendered line `- [x] **Start review**` as a
+# literal substring — if this label changes, update the `contains()` checks in
+# .github/workflows/pr-review-confirm.yml to match.
+START_LABEL = "Start review"
+
 
 def get_selected(reviewer_count: int) -> set[str]:
     """Return the reviewer IDs to pre-check for a proposal.
@@ -60,17 +64,51 @@ def get_selected(reviewer_count: int) -> set[str]:
     return set(priority_ids[:reviewer_count])
 
 
+def parse_checked_ids(body: str) -> list[str]:
+    """Extract checked reviewer IDs (in declaration order) from a comment body."""
+    found: list[str] = []
+    for m in re.finditer(r"- \[x\] \*\*(.+?)\*\*", body, re.IGNORECASE):
+        key = m.group(1).lower()
+        rid = _LABEL_TO_ID.get(key)
+        if rid and rid not in found:
+            found.append(rid)
+    return found
+
+
+def is_start_checked(body: str) -> bool:
+    """Return True if the body has the Start review box ticked."""
+    pattern = rf"- \[x\] \*\*{re.escape(START_LABEL)}\*\*"
+    return re.search(pattern, body, re.IGNORECASE) is not None
+
+
 # ── Subcommand implementations ────────────────────────────────────────────────
 
 
 def cmd_build_comment(args: argparse.Namespace) -> None:
-    """Print the proposal comment markdown to stdout."""
-    selected = get_selected(args.reviewer_count)
+    """Print the proposal comment markdown to stdout.
+
+    If --from-existing-body is provided and the file is non-empty, the prior
+    comment's checked reviewers are carried over instead of using the default
+    priority-based selection. The "Start review" box is always rendered
+    unchecked — checking it is what triggers the fleet, so a re-post must
+    reset it.
+    """
+    selected: set[str] | None = None
+    if args.from_existing_body:
+        try:
+            with open(args.from_existing_body) as f:
+                prior = f.read()
+            if prior.strip():
+                selected = set(parse_checked_ids(prior))
+        except FileNotFoundError:
+            pass
+    if selected is None:
+        selected = get_selected(args.reviewer_count)
 
     lines = [
         "<!-- pr-review-confirm -->",
         "",
-        "Hey! You look nice today! Want me to review this PR?",
+        "Hi! Thank you for opening this PR. Want me to review it?",
         "",
         f"Based on the diff ({args.lines} lines, {args.files} files), I've queued these reviewers:",
         "",
@@ -80,7 +118,14 @@ def cmd_build_comment(args: argparse.Namespace) -> None:
         lines.append(f"- [{check}] **{r.label}** — {r.description}")
     lines += [
         "",
-        "Toggle checkboxes to adjust, then reply **yes** to start — or ask me anything!",
+        "**How this works**",
+        "",
+        "- Adjust the reviewer set by ticking/unticking boxes above. Reviewer toggles alone don't trigger anything.",
+        f"- Tick **{START_LABEL}** below to dispatch the review fleet.",
+        f"- After review finishes, tick **{START_LABEL}** again to request another run — it auto-resets after each dispatch.",
+        "- This comment updates as new commits land; your reviewer selections are preserved.",
+        "",
+        f"- [ ] **{START_LABEL}**",
     ]
     print("\n".join(lines))
 
@@ -93,14 +138,35 @@ def cmd_parse_checkboxes(args: argparse.Namespace) -> None:
     else:
         with open(path) as f:
             body = f.read()
+    print(json.dumps(parse_checked_ids(body)))
 
-    checked: list[str] = []
-    for m in re.finditer(r"- \[x\] \*\*(.+?)\*\*", body, re.IGNORECASE):
-        key = m.group(1).lower()
-        rid = _LABEL_TO_ID.get(key)
-        if rid and rid not in checked:
-            checked.append(rid)
-    print(json.dumps(checked))
+
+def cmd_is_start_checked(args: argparse.Namespace) -> None:
+    """Print 'true' if the body file has Start review ticked, else 'false'."""
+    path = args.body_file
+    if path == "-":
+        body = sys.stdin.read()
+    else:
+        try:
+            with open(path) as f:
+                body = f.read()
+        except FileNotFoundError:
+            print("false")
+            return
+    print("true" if is_start_checked(body) else "false")
+
+
+def cmd_reset_start(args: argparse.Namespace) -> None:
+    """Print the body with the Start review box flipped from [x] to [ ]."""
+    path = args.body_file
+    if path == "-":
+        body = sys.stdin.read()
+    else:
+        with open(path) as f:
+            body = f.read()
+    pattern = rf"- \[x\] \*\*{re.escape(START_LABEL)}\*\*"
+    replacement = f"- [ ] **{START_LABEL}**"
+    sys.stdout.write(re.sub(pattern, replacement, body, flags=re.IGNORECASE))
 
 
 def cmd_format_names(args: argparse.Namespace) -> None:
@@ -108,29 +174,6 @@ def cmd_format_names(args: argparse.Namespace) -> None:
     ids: list[str] = json.loads(args.reviewers_json)
     names = [_ID_TO_LABEL.get(r, r) for r in ids]
     print(", ".join(names))
-
-
-def cmd_build_qa_context(args: argparse.Namespace) -> None:
-    """Print a reviewer-plan summary for the Copilot Q&A prompt."""
-    selected = set(json.loads(args.selected_json))
-    lines: list[str] = []
-    for r in REVIEWERS:
-        prefix = "✓" if r.id in selected else "○"  # ✓ or ○
-        lines.append(f"{prefix} {r.label} — {r.description}")
-    print("\n".join(lines))
-
-
-def cmd_render_qa_prompt(args: argparse.Namespace) -> None:
-    """Substitute __REVIEWER_CONTEXT__ and __REPLY__ in a template and write to stdout.
-
-    Values are read from the REVIEWER_CONTEXT and REPLY environment variables,
-    which safely carry multi-line content and arbitrary special characters.
-    """
-    with open(args.template, encoding="utf-8") as f:
-        rendered = f.read()
-    rendered = rendered.replace("__REVIEWER_CONTEXT__", os.environ.get("REVIEWER_CONTEXT", ""))
-    rendered = rendered.replace("__REPLY__", os.environ.get("REPLY", ""))
-    sys.stdout.write(rendered)
 
 
 # ── CLI wiring ────────────────────────────────────────────────────────────────
@@ -151,6 +194,15 @@ def _build_parser() -> argparse.ArgumentParser:
     )
     p.add_argument("--lines", type=int, required=True, help="Lines changed in diff")
     p.add_argument("--files", type=int, required=True, help="Files changed in diff")
+    p.add_argument(
+        "--from-existing-body",
+        default=None,
+        help=(
+            "Optional path to a prior comment body. If present and non-empty, "
+            "checked reviewers from the prior body are carried forward instead of "
+            "using the default priority selection."
+        ),
+    )
     p.set_defaults(func=cmd_build_comment)
 
     p = sub.add_parser(
@@ -159,22 +211,23 @@ def _build_parser() -> argparse.ArgumentParser:
     p.add_argument("body_file", help="Path to comment body file, or - for stdin")
     p.set_defaults(func=cmd_parse_checkboxes)
 
+    p = sub.add_parser(
+        "is-start-checked",
+        help="Print 'true' if Start review is ticked in body, else 'false'",
+    )
+    p.add_argument("body_file", help="Path to comment body file, or - for stdin")
+    p.set_defaults(func=cmd_is_start_checked)
+
+    p = sub.add_parser(
+        "reset-start",
+        help="Print body with Start review checkbox flipped to unchecked",
+    )
+    p.add_argument("body_file", help="Path to comment body file, or - for stdin")
+    p.set_defaults(func=cmd_reset_start)
+
     p = sub.add_parser("format-names", help="Format reviewer IDs as display names")
     p.add_argument("reviewers_json", help="JSON array of reviewer IDs")
     p.set_defaults(func=cmd_format_names)
-
-    p = sub.add_parser("build-qa-context", help="Build reviewer context for Q&A prompt")
-    p.add_argument(
-        "selected_json", help="JSON array of currently selected reviewer IDs"
-    )
-    p.set_defaults(func=cmd_build_qa_context)
-
-    p = sub.add_parser(
-        "render-qa-prompt",
-        help="Render Q&A prompt template (REVIEWER_CONTEXT and REPLY read from env)",
-    )
-    p.add_argument("template", help="Path to the Q&A prompt template file")
-    p.set_defaults(func=cmd_render_qa_prompt)
 
     return parser
 

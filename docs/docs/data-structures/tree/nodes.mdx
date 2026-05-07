@@ -4,73 +4,54 @@ sidebar_position: 1
 ---
 
 A [SharedTree](./index.mdx)'s data is organized into a tree of nodes.
-See [node types](./node-types.mdx) for details on the types of nodes that can be stored on a `SharedTree`.
+See [node types](./node-types.mdx) for details on the available node types.
 
 ## Node Utilities
 
-Below are some utilities provided to make working with nodes easier.
+The [`Tree`](../../api/fluid-framework/#tree-variable) singleton provides utilities for inspecting and navigating nodes — methods that can't live on [`TreeNode`](../../api/fluid-framework/treenode-class) directly due to the risk of name collisions with object-node fields.
+The following covers commonly used ones; see the [API documentation](../../api/fluid-framework/#tree-variable) for the full list.
 
-### `Tree.key`
 
-```typescript
-Tree.key(node: SharedTreeNode): number | string
-```
+-   [`Tree.parent`](../../api/fluid-framework/treenodeapi-interface#parent-methodsignature) —
+    Returns the parent node.
+    Useful when you need to act on a node's container rather than the node itself — for example, to remove it:
 
-Returns the field key that the `node` is stored under.
-This is a string in all cases, except an array node, in which case it returns the index of the node.
+    ```typescript
+    const parent = Tree.parent(note);
 
-### `Tree.parent`
+    if (Tree.is(parent, Notes) || Tree.is(parent, Items)) {
+    	const index = parent.indexOf(note);
+    	parent.removeAt(index);
+    }
+    ```
 
-```typescript
-Tree.parent(node: SharedTreeNode): SharedTreeNode
-```
+-   [`Tree.contains`](../../api/fluid-framework/tree-interface#contains-methodsignature) —
+    Returns whether a node is a descendant of another — for example, to confirm a node belongs to a particular section, or to guard against creating a cycle when moving a node.
 
-Returns the parent node of `node`. The following snippet continues the sticky notes example. Suppose that you have a reference to a note object and you want to delete it if, and only if, it is a member of an array of notes in a group or it is a direct child of the root. You can get the parent node and test what its type is.
+-   [`Tree.status`](../../api/fluid-framework/treenodeapi-interface#status-methodsignature) —
+    Returns the [`TreeStatus`](../../api/fluid-framework/treestatus-enum) of a node.
+    Many editing operations require a specific status.
+    -   [`New`](../../api/fluid-framework/treestatus-enum#new-enummember) — created but not yet inserted into the tree
+    -   [`InDocument`](../../api/fluid-framework/treestatus-enum#indocument-enummember) — parented under the root field
+    -   [`Removed`](../../api/fluid-framework/treestatus-enum#removed-enummember) — not under the root field, but can be added back
+    -   [`Deleted`](../../api/fluid-framework/treestatus-enum#deleted-enummember) — removed and cannot be added back
 
-```typescript
-const parent = Tree.parent(note);
+-   [`Tree.schema`](../../api/fluid-framework/treenodeapi-interface#schema-methodsignature) —
+    Returns the [`TreeNodeSchema`](../../api/fluid-framework/treenodeschema-typealias) for a node; useful when the node's type isn't statically known.
 
-if (Tree.is(parent, Notes) || Tree.is(parent, Items)) {
-	const index = parent.indexOf(note);
-	parent.removeAt(index);
-}
-```
+-   [`Tree.shortId`](../../api/fluid-framework/treenodeapi-interface#shortid-methodsignature) —
+    Returns the [identifier](../../api/fluid-framework/schemafactory-class#identifier-property) for a node defined with a `SchemaFactory.identifier` field — useful for cross-referencing nodes by stable ID rather than position.
 
-### `Tree.status`
+-   [`Tree.on`](../../api/fluid-framework/treenodeapi-interface#on-methodsignature) —
+    Subscribes to change events on a node.
+    See [Events](./events.mdx) for details.
 
-```typescript
-Tree.status(node: SharedTreeNode): TreeStatus
-```
+-   [`Tree.is`](../../api/fluid-framework/treenodeapi-interface#is-methodsignature) —
+    Narrows a node's type to a specific [`SchemaFactory`](../../api/fluid-framework/schemafactory-class)-derived class.
+    Use when the node's type is unknown:
 
-Returns the current status of `node`. Possible values are:
-
--   **New**: The node is created but has not yet been inserted into the tree.
--   **InDocument**: The node is parented (either directly or indirectly) under the root field.
--   **Removed**: The node is not parented under the root field but may still be restorable by this client or other clients.
--   **Deleted**: The node is deleted and cannot be restored by this client, though it may still be restorable by other clients.
-
-### `Tree.schema`
-
-```typescript
-Tree.schema(node: SharedTreeNode): TreeNodeSchema
-```
-
-Returns the object that defines the schema of the `node` object.
-
-### `Tree.is`
-
-When your code needs to process nodes only of a certain type and it has a reference to an object of an unknown type, you can use the `Tree.is()` method to test for the desired type as in the following examples.
-
-```typescript
-Tree.is(someNode: SharedTreeNode, nodeType: TreeNodeSchema | T): boolean
-```
-
-Returns `true` if `someNode` is of type `nodeType`. Note that `T` is a type that is derived from a call of one of the `SchemaFactory` methods; `object()`, `map()`, or `array()`. Here are examples:
-
-```typescript
-if (Tree.is(myNode, Note)) {
-	// Code here that processes Note nodes.
-}
-```
-
-For another example, see the `Tree.parent()` method.
+    ```typescript
+    if (Tree.is(myNode, Note)) {
+    	// myNode is typed as Note here
+    }
+    ```

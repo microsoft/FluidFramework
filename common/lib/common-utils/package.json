@@ -78,7 +78,7 @@
 		"base64-js": "^1.5.1",
 		"buffer": "^6.0.3",
 		"events": "^3.1.0",
-		"lodash": "^4.17.21",
+		"lodash": "^4.18.1",
 		"sha.js": "^2.4.12"
 	},
 	"devDependencies": {
@@ -120,9 +120,6 @@
 		"typescript-eslint": "~8.55.0"
 	},
 	"packageManager": "pnpm@10.33.0+sha512.10568bb4a6afb58c9eb3630da90cc9516417abebd3fabbe6739f0ae795728da1491e9db5a544c76ad8eb7570f5c4bb3d6c637b2cb41bfdcdb47fa823c8649319",
-	"engines": {
-		"node": ">=22.22.2"
-	},
 	"fluidBuild": {
 		"branchReleaseTypes": {
 			"main": "minor",

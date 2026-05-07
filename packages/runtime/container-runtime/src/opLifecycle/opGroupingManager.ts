@@ -100,7 +100,7 @@ export class OpGroupingManager {
 		const serializedOp = JSON.stringify(emptyGroupedBatch);
 
 		const placeholderMessage: LocalEmptyBatchPlaceholder = {
-			metadata: { batchId: resubmittingBatchId },
+			metadata: { batchId: resubmittingBatchId, groupedOpCount: 0 },
 			localOpMetadata: { emptyBatch: true },
 			referenceSequenceNumber,
 			runtimeOp: emptyGroupedBatch,
@@ -169,7 +169,7 @@ export class OpGroupingManager {
 			...batch,
 			messages: [
 				{
-					metadata: { batchId: groupedBatchId },
+					metadata: { batchId: groupedBatchId, groupedOpCount: batch.messages.length },
 					referenceSequenceNumber: batch.messages[0].referenceSequenceNumber,
 					contents: serializedContent,
 				},

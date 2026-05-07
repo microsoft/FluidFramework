@@ -149,9 +149,9 @@ jobs:
           --output release-notes.md \
           --template .github/workflows/data/patch-changelog.hbs
 
-      # Only creates GH releases for client, server, and build-tools releases.
+      # Only creates GH releases for client and server releases.
       - name: Create GH release
-        if: fromJson(env.RELEASE_JSON).packageOrReleaseGroup == 'client' || fromJson(env.RELEASE_JSON).packageOrReleaseGroup == 'build-tools' || fromJson(env.RELEASE_JSON).packageOrReleaseGroup == 'server'
+        if: fromJson(env.RELEASE_JSON).packageOrReleaseGroup == 'client' || fromJson(env.RELEASE_JSON).packageOrReleaseGroup == 'server'
         # release notes: https://github.com/ncipollo/release-action/releases/tag/v1.20.0
         uses: ncipollo/release-action@339a81892b84b4eeb0f6e744e4574d79d0d9b8dd # ratchet:ncipollo/release-action@v1
         with:

@@ -52,7 +52,7 @@ permissions:
   checks: write # Required to create/update the "Fleet Review" check run surfaced on the PR's Checks tab
 
 concurrency:
-  group: pr-review-fleet-${{ github.event.workflow_run.id || inputs.pr_number }}
+  group: pr-review-fleet-${{ (github.event_name == 'workflow_dispatch' && inputs.pr_number) || github.event.workflow_run.pull_requests[0].number || github.event.workflow_run.id }}
   cancel-in-progress: true
 
 jobs:
@@ -184,16 +184,21 @@ jobs:
       - name: Checkout PR head
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # ratchet:actions/checkout@v6
         with:
-          ref: refs/pull/${{ needs.setup.outputs.pr_number }}/head
+          ref: ${{ needs.setup.outputs.head_sha }}
           fetch-depth: 0
+          persist-credentials: false
 
-      # ── Prepare the diff ──
-      - name: Generate PR diff
+      # ── Prepare review context ──
+      - name: Generate review context
         env:
           BASE_REF: ${{ needs.setup.outputs.base_ref }}
         run: |
           git diff "origin/${BASE_REF}...HEAD" > pr-diff.patch
+          git diff --name-only "origin/${BASE_REF}...HEAD" > changed-files.txt
+          awk '/\.api\.md$/ { print }' changed-files.txt > api-report-files.txt
           echo "Generated diff: $(wc -l < pr-diff.patch) lines"
+          echo "Changed files: $(wc -l < changed-files.txt)"
+          echo "API report files: $(wc -l < api-report-files.txt)"
 
       # ── Prepare the prompt ──
       # Read the prompt from the BASE branch, not the PR HEAD, to prevent
@@ -248,14 +253,12 @@ jobs:
         timeout-minutes: 15
         run: |
           PROMPT=$(cat "$PROMPT_FILE")
-          # File inspection is done via the workspace-scoped `read` tool.
-          # Only `shell(git:*)` is granted so the agent can run diff/log/etc.
-          # Broader shell grants (cat/head/tail/grep/ls/wc) would let a
-          # prompt-injected agent read env vars or credential files and
-          # exfiltrate them via the generated report.
+          # The reviewer is credentialed with COPILOT_GITHUB_TOKEN, while the PR
+          # diff is attacker-controlled input. Grant no shell tools here:
+          # Git can execute shell through aliases and related mechanisms, so all
+          # Git-derived review context is precomputed before this token is in scope.
           copilot \
             -p "$PROMPT" \
-            --allow-tool='shell(git:*)' \
             --allow-tool=read \
             --allow-tool=write \
             --no-ask-user
@@ -314,8 +317,8 @@ jobs:
           fi
 
       # Defense in depth: scrub GitHub token patterns from the report before
-      # posting. Even with the agent sandboxed to `shell(git:*)` + `read`, a
-      # leaked token in the generated report would be a critical failure.
+      # posting. The reviewer runs without shell tools, but its generated report
+      # is still untrusted model output.
       - name: Scrub secrets from report
         if: steps.consolidate.outputs.has_findings == 'true'
         run: |

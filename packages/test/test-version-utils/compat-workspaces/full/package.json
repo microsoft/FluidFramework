@@ -1,0 +1,16 @@
+{
+  "name": "compat-workspaces-full",
+  "version": "1.0.0",
+  "private": true,
+  "homepage": "https://fluidframework.com",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/microsoft/FluidFramework.git",
+    "directory": "packages/test/test-version-utils/compat-workspaces/full"
+  },
+  "license": "MIT",
+  "author": "Microsoft and contributors",
+  "scripts": {
+    "preinstall": "node ../scripts/only-pnpm.cjs"
+  }
+}
