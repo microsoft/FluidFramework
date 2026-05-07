@@ -56,23 +56,40 @@ Testing findings are **capped at HIGH**:
 
 ## Output Format
 
-Write your findings to `review-testing.md`. Use this exact format for each finding:
+Write your findings to `review-testing.json` as raw JSON. Do not wrap output in a markdown code block or include any other text — the file must be valid JSON and nothing else.
 
-```
-[SEVERITY] path/to/source-file.ts:LINE — Description of the coverage gap and what bug could go undetected — Concrete test scenario to add
+```json
+{
+  "findings": [
+    {
+      "severity": "HIGH",
+      "location": "src/merge/resolver.ts:78",
+      "description": "`resolveConflict()` has no test for the case where both sides delete the same node — a silent data loss bug would go undetected",
+      "fix": "Add a test: two clients each delete node X, merge result should reflect a single deletion with no error thrown"
+    }
+  ]
+}
 ```
 
-If you find NO high-confidence issues, write exactly this:
+- `severity`: `"HIGH"` or `"MEDIUM"` (testing findings are capped at HIGH)
+- `location`: `path/to/source-file.ts:LINE` (point to the production code that lacks coverage)
+- `description`: the coverage gap and the concrete bug it would miss
+- `fix`: specific test scenario to add, including inputs and expected behavior
 
-```
-<!-- NO_ISSUES_FOUND -->
-No high-confidence testing gaps found in the current diff.
+If you find NO high-confidence issues:
+
+```json
+{ "findings": [] }
 ```
 
 ## Instructions
 
-1. Read the PR diff from `pr-diff.patch` in the current directory
-2. Identify all production code changes and check if corresponding test changes exist
-3. For new functions or modified behavior, verify tests actually exercise the new code paths
-4. Apply the high-confidence gate to every finding before including it
-5. Write your review to `review-testing.md`
+Important: Do not request or run shell/Git commands; all review context available to you has been precomputed by the workflow.
+
+1. Read the prepared PR diff from `pr-diff.patch` in the current directory
+2. Read `changed-files.txt` when you need the complete changed-file list
+3. Read `api-report-files.txt` to see whether any `*.api.md` files changed. If the file is non-empty, give those packages extra scrutiny.
+4. Identify all production code changes and check if corresponding test changes exist
+5. For new functions or modified behavior, verify tests actually exercise the new code paths
+6. Apply the high-confidence gate to every finding before including it
+7. Write your review to `review-testing.json`

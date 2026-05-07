@@ -1,5 +1,29 @@
 # @fluidframework/id-compressor
 
+## 2.100.0
+
+### Minor Changes
+
+- Node 22 is now the minimum supported Node.js version ([#27116](https://github.com/microsoft/FluidFramework/pull/27116)) [e8214d29663](https://github.com/microsoft/FluidFramework/commit/e8214d29663f5ee98d737daed82506a25d8de8d0)
+
+  All Fluid Framework client packages now require Node.js 22 or later. This aligns with the standing Node upgrade policy as Node 20 reaches end-of-life on April 30, 2026.
+
+- Remove IIdCompressorCore from legacy API surface ([#27146](https://github.com/microsoft/FluidFramework/pull/27146)) [a0d3a13888a](https://github.com/microsoft/FluidFramework/commit/a0d3a13888ae9020e1a4231f4c3ff810b6aaac19)
+
+  The `IIdCompressorCore` interface has been removed from the `@legacy` API surface and is now `@internal`.
+  This was previously deprecated in 2.92.0.
+
+  The return types of `createIdCompressor` and `deserializeIdCompressor` have been narrowed from `IIdCompressor & IIdCompressorCore` to `IIdCompressor`.
+
+  #### Migration
+  - **`serialize()`**:
+    Use the `serializeIdCompressor(compressor, withSession)` free function instead of calling `compressor.serialize(withSession)` directly.
+  - **`takeNextCreationRange()`, `takeUnfinalizedCreationRange()`, `finalizeCreationRange()`, `beginGhostSession()`**:
+    These are internal runtime operations that should not be called by external consumers.
+    If you depend on these APIs, please file an issue on the FluidFramework repository describing your use case.
+  - **Return types of `createIdCompressor` / `deserializeIdCompressor`**:
+    Type your variables as `IIdCompressor` rather than `IIdCompressor & IIdCompressorCore`.
+
 ## 2.93.0
 
 Dependency updates only.

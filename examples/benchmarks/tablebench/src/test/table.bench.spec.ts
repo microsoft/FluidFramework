@@ -5,12 +5,12 @@
 
 import {
 	BenchmarkType,
-	TestType,
 	type CollectedData,
 	ValueType,
+	BenchmarkMode,
+	benchmarkDuration,
 	benchmarkIt,
-	collectDurationData,
-	isInPerformanceTestingMode,
+	currentBenchmarkMode,
 } from "@fluid-tools/benchmark";
 import { IChannel } from "@fluidframework/datastore-definitions/legacy";
 import { SharedMatrix } from "@fluidframework/matrix/legacy";
@@ -26,7 +26,7 @@ import { Table, generateTable } from "../index.js";
 
 import { create, measureAttachmentSummary, measureEncodedLength } from "./utils.js";
 
-const numRows = isInPerformanceTestingMode ? 10000 : 100;
+const numRows = currentBenchmarkMode === BenchmarkMode.Performance ? 10000 : 100;
 
 describe("Table", () => {
 	const data = generateTable(numRows);
@@ -47,24 +47,22 @@ describe("Table", () => {
 		const totalProfitColumn = columnNames.indexOf("Total Profit");
 
 		benchmarkIt({
-			type: BenchmarkType.Measurement,
-			testType: TestType.ExecutionTime,
 			title: `SharedMatrix`,
-			run: async () => {
-				({ channel, processAllMessages } = create(SharedMatrix.getFactory()));
-				matrix = channel as SharedMatrix;
-				matrix.insertCols(0, columnNames.length);
-				matrix.insertRows(0, data.length);
+			...benchmarkDuration({
+				benchmarkFnCustom: async (state) => {
+					({ channel, processAllMessages } = create(SharedMatrix.getFactory()));
+					matrix = channel as SharedMatrix;
+					matrix.insertCols(0, columnNames.length);
+					matrix.insertRows(0, data.length);
 
-				for (let r = 0; r < data.length; r++) {
-					for (const [c, key] of columnNames.entries()) {
-						// eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access -- TODO: Use real types
-						matrix.setCell(r, c, (data as any)[r][key]);
+					for (let r = 0; r < data.length; r++) {
+						for (const [c, key] of columnNames.entries()) {
+							// eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access -- TODO: Use real types
+							matrix.setCell(r, c, (data as any)[r][key]);
+						}
 					}
-				}
-				processAllMessages();
-				return collectDurationData({
-					benchmarkFn: () => {
+					processAllMessages();
+					state.timeAllBatches(() => {
 						for (let r = 0; r < matrix.rowCount; r++) {
 							const unitsSold = matrix.getCell(r, unitsSoldColumn) as number;
 							const unitPrice = matrix.getCell(r, unitPriceColumn) as number;
@@ -79,26 +77,24 @@ describe("Table", () => {
 							matrix.setCell(r, totalProfitColumn, totalProfit);
 						}
 						processAllMessages();
-					},
-				});
-			},
+					});
+				},
+			}),
 		});
 
 		benchmarkIt({
-			type: BenchmarkType.Measurement,
-			testType: TestType.ExecutionTime,
 			title: `SharedTree`,
-			run: async () => {
-				({ channel, processAllMessages } = create(SharedTree.getFactory()));
-				const tree = channel as unknown as ITree;
+			...benchmarkDuration({
+				benchmarkFnCustom: async (state) => {
+					({ channel, processAllMessages } = create(SharedTree.getFactory()));
+					const tree = channel as unknown as ITree;
 
-				const view = tree.viewWith(new TreeViewConfiguration({ schema: Table }));
-				view.initialize(data);
-				table = view.root;
+					const view = tree.viewWith(new TreeViewConfiguration({ schema: Table }));
+					view.initialize(data);
+					table = view.root;
 
-				processAllMessages();
-				return collectDurationData({
-					benchmarkFn: () => {
+					processAllMessages();
+					state.timeAllBatches(() => {
 						// Batching these updates in a transaction gives a about a 3x performance boost
 						TreeAlpha.context(table).runTransaction(() => {
 							for (const row of table) {
@@ -116,9 +112,9 @@ describe("Table", () => {
 							}
 						});
 						processAllMessages();
-					},
-				});
-			},
+					});
+				},
+			}),
 		});
 	});
 
@@ -166,22 +162,18 @@ describe("Table", () => {
 			}
 
 			benchmarkIt({
-				only: false,
 				type: BenchmarkType.Perspective,
 				title: `Row-major JSON (Typical Database Baseline)`,
 				run: () => summarySizeResult(rowMajorJsonBytes),
 			});
 
 			benchmarkIt({
-				only: false,
 				type: BenchmarkType.Perspective,
 				title: `Column-major JSON (Compact REST Baseline)`,
 				run: () => summarySizeResult(colMajorJsonBytes),
 			});
 
 			benchmarkIt({
-				only: false,
-				type: BenchmarkType.Measurement,
 				title: `SharedMatrix`,
 				run: () => {
 					const columnNames = Object.keys(data[0]);
@@ -204,8 +196,6 @@ describe("Table", () => {
 			});
 
 			benchmarkIt({
-				only: false,
-				type: BenchmarkType.Measurement,
 				title: `SharedTree`,
 				run: () => {
 					const { channel, processAllMessages } = create(SharedTree.getFactory());

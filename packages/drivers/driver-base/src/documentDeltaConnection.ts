@@ -29,8 +29,8 @@ import {
 } from "@fluidframework/driver-utils/internal";
 import type {
 	IFluidErrorBase,
-	ITelemetryLoggerExt,
 	MonitoringContext,
+	TelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
 import {
 	EventEmitterWithErrorHandling,
@@ -120,7 +120,7 @@ export class DocumentDeltaConnection
 	 *
 	 * @deprecated Implementors should manage their own logger or monitoring context
 	 */
-	protected get logger(): ITelemetryLoggerExt {
+	protected get logger(): TelemetryLoggerExt {
 		return this.mc.logger;
 	}
 
@@ -140,7 +140,7 @@ export class DocumentDeltaConnection
 	protected constructor(
 		protected readonly socket: Socket,
 		public documentId: string,
-		logger: ITelemetryLoggerExt,
+		logger: TelemetryLoggerExt,
 		private readonly enableLongPollingDowngrades: boolean = false,
 		protected readonly connectionId?: string,
 	) {

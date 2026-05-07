@@ -1,5 +1,19 @@
 # @fluidframework/container-runtime
 
+## 2.100.0
+
+### Minor Changes
+
+- Node 22 is now the minimum supported Node.js version ([#27116](https://github.com/microsoft/FluidFramework/pull/27116)) [e8214d29663](https://github.com/microsoft/FluidFramework/commit/e8214d29663f5ee98d737daed82506a25d8de8d0)
+
+  All Fluid Framework client packages now require Node.js 22 or later. This aligns with the standing Node upgrade policy as Node 20 reaches end-of-life on April 30, 2026.
+
+- Container runtime instantiation now requires `navigator` to be defined in the runtime environment ([#27010](https://github.com/microsoft/FluidFramework/pull/27010)) [936562b87da](https://github.com/microsoft/FluidFramework/commit/936562b87da3a096315b819131e454accb27d0e8)
+
+  The internal `getDeviceSpec()` function, which is called during container runtime instantiation to report hardware telemetry, no longer guards against `navigator` being `null` or `undefined`. This means loading a container runtime requires either a browser environment or Node 22+, both of which provide a built-in `navigator` global. Environments that do not provide `navigator` (e.g., older versions of Node.js) will encounter a runtime error when instantiating the container runtime.
+
+  This requirement aligns with the recent migration of the repo to Node 22 per our standing Node upgrade policy. Node 20 reaches end-of-life on April 30, 2026.
+
 ## 2.93.0
 
 Dependency updates only.

@@ -4,10 +4,10 @@
  */
 
 import {
-	BenchmarkType,
 	benchmarkDuration,
+	BenchmarkMode,
 	benchmarkIt,
-	isInPerformanceTestingMode,
+	currentBenchmarkMode,
 } from "@fluid-tools/benchmark";
 import { FluidObjectHandle } from "@fluidframework/datastore/internal";
 
@@ -22,7 +22,7 @@ const handle = Object.assign(new FluidObjectHandle({}, "/", context), {
 });
 
 const shallowNoHandles = makeJson(/* breadth: */ 2, /* depth: */ 2, () => ({}));
-const size = isInPerformanceTestingMode ? 8 : 3;
+const size = currentBenchmarkMode === BenchmarkMode.Performance ? 8 : 3;
 const deepWithHandles = makeJson(/* breadth: */ size, /* depth: */ size, () => handle);
 
 const shallowNoHandlesString = serializer.stringify(shallowNoHandles, handle);
@@ -50,7 +50,6 @@ describe("FluidSerializer", () => {
 	describe("encode Handles", () => {
 		for (const [name, value] of encodeHandlesCases) {
 			benchmarkIt({
-				type: BenchmarkType.Measurement,
 				title: `encode - ${name}`,
 				...benchmarkDuration({
 					benchmarkFn: () => {
@@ -60,7 +59,6 @@ describe("FluidSerializer", () => {
 			});
 
 			benchmarkIt({
-				type: BenchmarkType.Measurement,
 				title: `parse(stringify) - ${name}`,
 				...benchmarkDuration({
 					benchmarkFn: () => {
@@ -74,7 +72,6 @@ describe("FluidSerializer", () => {
 	describe("stringify", () => {
 		for (const [name, value] of stringifyCases) {
 			benchmarkIt({
-				type: BenchmarkType.Measurement,
 				title: `JSON.stringify(encode) - ${name}`,
 				...benchmarkDuration({
 					benchmarkFn: () => {
@@ -84,7 +81,6 @@ describe("FluidSerializer", () => {
 			});
 
 			benchmarkIt({
-				type: BenchmarkType.Measurement,
 				title: `stringify - ${name}`,
 				...benchmarkDuration({
 					benchmarkFn: () => {
@@ -98,7 +94,6 @@ describe("FluidSerializer", () => {
 	describe("parse", () => {
 		for (const [name, value] of parseCases) {
 			benchmarkIt({
-				type: BenchmarkType.Measurement,
 				title: `parse - ${name}`,
 				...benchmarkDuration({
 					benchmarkFn: () => {

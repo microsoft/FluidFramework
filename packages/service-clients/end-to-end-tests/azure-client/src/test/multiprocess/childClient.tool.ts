@@ -14,8 +14,7 @@ import {
 } from "@fluidframework/azure-client";
 import { AttachState } from "@fluidframework/container-definitions";
 import { ConnectionState } from "@fluidframework/container-loader";
-import type { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
-import { LogLevel } from "@fluidframework/core-interfaces";
+import type { ITelemetryBaseLogger, LogLevel } from "@fluidframework/core-interfaces";
 import type { ScopeType } from "@fluidframework/driver-definitions/legacy";
 import type { ContainerSchema, IFluidContainer } from "@fluidframework/fluid-static";
 import { getPresence } from "@fluidframework/fluid-static";
@@ -74,7 +73,10 @@ function telemetryEventInterestLevel(eventName: string): "none" | "basic" | "det
 	return "none";
 }
 
-function selectiveVerboseLog(event: ITelemetryBaseEvent, logLevel?: LogLevel): void {
+function selectiveVerboseLog(
+	event: ITelemetryBaseEvent,
+	logLevel: LogLevel | undefined,
+): void {
 	const interest = telemetryEventInterestLevel(event.eventName);
 	if (interest === "none") {
 		return;
@@ -86,7 +88,7 @@ function selectiveVerboseLog(event: ITelemetryBaseEvent, logLevel?: LogLevel): v
 	if (interest === "details") {
 		content.details = event.details;
 	}
-	log(`[${logLevel ?? LogLevel.default}]`, content);
+	log(`[${logLevel ?? "unspecified"}]`, content);
 }
 
 /**

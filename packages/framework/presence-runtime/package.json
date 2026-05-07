@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-internal/presence-runtime",
-	"version": "2.100.0",
+	"version": "2.101.0",
 	"description": "Core runtime implementation for Fluid Framework presence",
 	"homepage": "https://fluidframework.com",
 	"repository": {

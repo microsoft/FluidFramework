@@ -6,12 +6,10 @@
 import { strict as assert } from "node:assert";
 
 import {
-	BenchmarkType,
-	TestType,
+	BenchmarkMode,
 	benchmarkDuration,
 	benchmarkIt,
-	collectDurationData,
-	isInPerformanceTestingMode,
+	currentBenchmarkMode,
 } from "@fluid-tools/benchmark";
 
 import type { JsonCompatibleReadOnlyObject } from "../../../util/index.js";
@@ -35,23 +33,20 @@ export function jsObjectBench<T extends JsonCompatibleReadOnlyObject>(
 		const json = getJson();
 
 		benchmarkIt({
-			type: BenchmarkType.Measurement,
-			testType: TestType.ExecutionTime,
 			title: `clone JS Object: '${name}'`,
-			run: async () => {
-				const cloned = clone(json);
-				assert.deepEqual(cloned, json, "clone() must return an equivalent tree.");
-				assert.notEqual(cloned, json, "clone() must not return the same tree instance.");
-				return collectDurationData({
-					benchmarkFn: () => {
+			...benchmarkDuration({
+				benchmarkFnCustom: async (state) => {
+					const cloned = clone(json);
+					assert.deepEqual(cloned, json, "clone() must return an equivalent tree.");
+					assert.notEqual(cloned, json, "clone() must not return the same tree instance.");
+					state.timeAllBatches(() => {
 						clone(json);
-					},
-				});
-			},
+					});
+				},
+			}),
 		});
 
 		benchmarkIt({
-			type: BenchmarkType.Measurement,
 			title: `sum JS Object: '${name}'`,
 			...benchmarkDuration({
 				benchmarkFn: () => {
@@ -61,7 +56,6 @@ export function jsObjectBench<T extends JsonCompatibleReadOnlyObject>(
 		});
 
 		benchmarkIt({
-			type: BenchmarkType.Measurement,
 			title: `averageValues JS Object: '${name}'`,
 			...benchmarkDuration({
 				benchmarkFn: () => {
@@ -97,12 +91,12 @@ function extractAvgValsFromTwitterDirect(
 
 const canada = generateCanada(
 	// Use the default (large) data set for benchmarking, otherwise use a small dataset.
-	isInPerformanceTestingMode ? undefined : [2, 10],
+	currentBenchmarkMode === BenchmarkMode.Performance ? undefined : [2, 10],
 );
 
 // The original benchmark twitter.json is 466906 Bytes according to getSizeInBytes.
 const twitter = generateTwitterJsonByByteSize(
-	isInPerformanceTestingMode ? 2500000 : 466906,
+	currentBenchmarkMode === BenchmarkMode.Performance ? 2500000 : 466906,
 	true,
 );
 

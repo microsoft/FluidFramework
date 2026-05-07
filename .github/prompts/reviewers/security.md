@@ -66,23 +66,39 @@ Severity levels:
 
 ## Output Format
 
-Write your findings to `review-security.md`. Use this exact format for each finding:
+Write your findings to `review-security.json` as raw JSON. Do not wrap output in a markdown code block or include any other text — the file must be valid JSON and nothing else.
 
+```json
+{
+  "findings": [
+    {
+      "severity": "HIGH",
+      "location": "src/server/handler.ts:88",
+      "description": "User-supplied `path` is passed to `fs.readFile` without sanitization, allowing directory traversal to read arbitrary files",
+      "fix": "Resolve the path against a trusted base directory and verify it stays within bounds before reading"
+    }
+  ]
+}
 ```
-[SEVERITY] path/to/file.ts:LINE — Description of the vulnerability and attack scenario — Remediation
+
+- `severity`: `"CRITICAL"`, `"HIGH"`, or `"MEDIUM"`
+- `location`: `path/to/file.ts:LINE`
+- `description`: the vulnerability and its concrete attack scenario
+- `fix`: specific remediation
+
+If you find NO high-confidence issues:
+
+```json
+{ "findings": [] }
 ```
 
-If you find NO high-confidence issues, write exactly this:
 
-```
-<!-- NO_ISSUES_FOUND -->
-No high-confidence security vulnerabilities found in the current diff.
-```
+Important: Do not request or run shell/Git commands; all review context available to you has been precomputed by the workflow.
 
-## Instructions
-
-1. Read the PR diff from `pr-diff.patch` in the current directory
-2. For files with security-sensitive changes, read the full file to understand the complete security context
-3. Focus on changes that handle user input, file system access, or token handling
-4. Apply the high-confidence gate to every finding before including it
-5. Write your review to `review-security.md`
+1. Read the prepared PR diff from `pr-diff.patch` in the current directory
+2. Read `changed-files.txt` when you need the complete changed-file list
+3. Read `api-report-files.txt` to see whether any `*.api.md` files changed. If the file is non-empty, give those packages extra scrutiny.
+4. For files with security-sensitive changes, read the full file to understand the complete security context
+5. Focus on changes that handle user input, file system access, or token handling
+6. Apply the high-confidence gate to every finding before including it
+7. Write your review to `review-security.json`

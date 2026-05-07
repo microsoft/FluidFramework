@@ -53,6 +53,7 @@ import type {
 	ISequencedMessageEnvelope,
 	ITelemetryContext,
 	ISummarizeInternalResult,
+	StagingModeChangedEvent,
 } from "@fluidframework/runtime-definitions/internal";
 import { FlushMode } from "@fluidframework/runtime-definitions/internal";
 import { defaultMinVersionForCollab } from "@fluidframework/runtime-utils/internal";
@@ -436,11 +437,7 @@ describe("Runtime", () => {
 				let batchEnd = 0;
 				let callsToEnsure = 0;
 				const { runtime: containerRuntime } = await ContainerRuntime.loadRuntime2({
-					context: getMockContext({
-						settings: {
-							"Fluid.ContainerRuntime.enableBatchIdTracking": true,
-						},
-					}) as IContainerContext,
+					context: getMockContext() as IContainerContext,
 					registry: new FluidDataStoreRegistry([]),
 					existing: false,
 					runtimeOptions: {},
@@ -480,13 +477,19 @@ describe("Runtime", () => {
 				assert.strictEqual(containerRuntime.isDirty, false);
 			});
 
-			for (const enableBatchIdTracking of [true, undefined])
-				it("Replaying ops should resend in correct order, with batch ID if applicable", async () => {
+			// BatchId tracking is on by default (TurnBased mode); the kill-switch suppresses stamping.
+			for (const variant of [
+				{ name: "default (no settings)", settings: {}, expectStamped: true },
+				{
+					name: "kill-switch active",
+					settings: { "Fluid.ContainerRuntime.DisableBatchIdTracking": true },
+					expectStamped: false,
+				},
+			])
+				it(`Replaying ops should resend in correct order, with batch ID if applicable (${variant.name})`, async () => {
 					const { runtime } = await ContainerRuntime.loadRuntime2({
 						context: getMockContext({
-							settings: {
-								"Fluid.ContainerRuntime.enableBatchIdTracking": enableBatchIdTracking, // batchId only stamped if true
-							},
+							settings: variant.settings,
 						}) as IContainerContext,
 						registry: new FluidDataStoreRegistry([]),
 						existing: false,
@@ -524,7 +527,7 @@ describe("Runtime", () => {
 						);
 					}
 
-					if (enableBatchIdTracking === true) {
+					if (variant.expectStamped) {
 						assert(
 							batchIdMatchesUnsentFormat(
 								// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
@@ -920,8 +923,20 @@ describe("Runtime", () => {
 							{ batch: false },
 						];
 
+						// In TurnBased mode batchId tracking is on by default, so resubmitted batches
+						// will also carry a batchId on their first message. Strip it before comparing
+						// — this test cares about batch boundaries, not batchId stamping.
+						const normalizedMetadata = submittedOpsMetadata.map((m) => {
+							if (m === undefined) {
+								return undefined;
+							}
+							// eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-unsafe-assignment
+							const { batchId: _ignored, ...rest } = m as { batchId?: string };
+							return Object.keys(rest).length === 0 ? undefined : rest;
+						});
+
 						assert.deepStrictEqual(
-							submittedOpsMetadata,
+							normalizedMetadata,
 							expectedBatchMetadata,
 							"batch metadata does not match",
 						);
@@ -2342,13 +2357,19 @@ describe("Runtime", () => {
 		});
 
 		describe("Duplicate Batch Detection", () => {
-			for (const enableBatchIdTracking of [undefined, true]) {
-				it(`DuplicateBatchDetector is disabled if Batch Id Tracking isn't needed (${enableBatchIdTracking === true ? "ENABLED" : "DISABLED"})`, async () => {
+			// BatchId tracking is on by default (TurnBased); the kill-switch suppresses detection.
+			for (const variant of [
+				{ name: "default (no settings)", settings: {}, expectDetection: true },
+				{
+					name: "kill-switch active",
+					settings: { "Fluid.ContainerRuntime.DisableBatchIdTracking": true },
+					expectDetection: false,
+				},
+			]) {
+				it(`DuplicateBatchDetector reflects batch-id tracking enablement (${variant.name})`, async () => {
 					const { runtime: containerRuntime } = await ContainerRuntime.loadRuntime2({
 						context: getMockContext({
-							settings: {
-								"Fluid.ContainerRuntime.enableBatchIdTracking": enableBatchIdTracking,
-							},
+							settings: variant.settings,
 						}) as IContainerContext,
 						registry: new FluidDataStoreRegistry([]),
 						existing: false,
@@ -2369,8 +2390,9 @@ describe("Runtime", () => {
 						false,
 					);
 					// Process a duplicate batch "batchId1" with different seqNum 234
-					const assertThrowsOnlyIfExpected =
-						enableBatchIdTracking === true ? assert.throws : assert.doesNotThrow;
+					const assertThrowsOnlyIfExpected = variant.expectDetection
+						? assert.throws
+						: assert.doesNotThrow;
 					const errorPredicate = (e: Error) =>
 						e.message === "Duplicate batch - The same batch was sequenced twice";
 					assertThrowsOnlyIfExpected(
@@ -2386,20 +2408,76 @@ describe("Runtime", () => {
 							);
 						},
 						errorPredicate,
-						"Expected duplicate batch detection to match Offline Load enablement",
+						"Expected duplicate batch detection to match enablement",
 					);
 				});
 			}
 
-			it("Can roundrip DuplicateBatchDetector state through summary/snapshot", async () => {
-				// Duplicate Batch Detection requires OfflineLoad enabled
-				const settings_enableOfflineLoad = {
-					"Fluid.ContainerRuntime.enableBatchIdTracking": true,
-				};
+			it("Default-on tracking is silently skipped in FlushMode.Immediate (no UsageError)", async () => {
 				const { runtime: containerRuntime } = await ContainerRuntime.loadRuntime2({
-					context: getMockContext({
-						settings: settings_enableOfflineLoad,
-					}) as IContainerContext,
+					context: getMockContext() as IContainerContext,
+					registry: new FluidDataStoreRegistry([]),
+					existing: false,
+					runtimeOptions: {
+						flushMode: FlushMode.Immediate,
+						enableRuntimeIdCompressor: "on",
+					},
+					provideEntryPoint: mockProvideEntryPoint,
+				});
+				// Sending a duplicate batchId should not throw because tracking is inactive in Immediate mode.
+				containerRuntime.process(
+					{
+						sequenceNumber: 123,
+						type: MessageType.Operation,
+						contents: { type: ContainerMessageType.Rejoin, contents: undefined },
+						metadata: { batchId: "batchId1" },
+					} satisfies Partial<ISequencedDocumentMessage> as ISequencedDocumentMessage,
+					false,
+				);
+				assert.doesNotThrow(() =>
+					containerRuntime.process(
+						{
+							sequenceNumber: 234,
+							type: MessageType.Operation,
+							contents: { type: ContainerMessageType.Rejoin, contents: undefined },
+							metadata: { batchId: "batchId1" },
+						} satisfies Partial<ISequencedDocumentMessage> as ISequencedDocumentMessage,
+						false,
+					),
+				);
+			});
+
+			it("Offline Load opt-in still errors in FlushMode.Immediate (back-compat)", async () => {
+				const containerErrors: ICriticalContainerError[] = [];
+				const context = {
+					...getMockContext({
+						settings: {
+							"Fluid.Container.enableOfflineFull": true,
+						},
+					}),
+					closeFn: (error?: ICriticalContainerError): void => {
+						if (error !== undefined) {
+							containerErrors.push(error);
+						}
+					},
+				};
+				await assert.rejects(
+					ContainerRuntime.loadRuntime2({
+						context: context as IContainerContext,
+						registry: new FluidDataStoreRegistry([]),
+						existing: false,
+						runtimeOptions: { flushMode: FlushMode.Immediate },
+						provideEntryPoint: mockProvideEntryPoint,
+					}),
+					(error: Error) => error instanceof UsageError,
+				);
+				assert.strictEqual(containerErrors.length, 1);
+			});
+
+			it("Can roundtrip DuplicateBatchDetector state through summary/snapshot", async () => {
+				// Duplicate Batch Detection is on by default in TurnBased mode.
+				const { runtime: containerRuntime } = await ContainerRuntime.loadRuntime2({
+					context: getMockContext() as IContainerContext,
 					registry: new FluidDataStoreRegistry([]),
 					existing: false,
 					runtimeOptions: {
@@ -2431,7 +2509,6 @@ describe("Runtime", () => {
 				};
 				const { runtime: containerRuntime2 } = await ContainerRuntime.loadRuntime2({
 					context: getMockContext({
-						settings: settings_enableOfflineLoad,
 						baseSnapshot: {
 							trees: {},
 							blobs: { [recentBatchInfoBlobName]: "nonempty_id_ignored_by_mockStorage" },
@@ -4971,6 +5048,211 @@ describe("Runtime", () => {
 					"Staged op should be submitted after commitChanges",
 				);
 				runtime.dispose();
+			});
+
+			describe("stagingModeChanged event", () => {
+				it("emits with { inStagingMode: true } on enter, and inStagingMode is true when handler runs", () => {
+					const events: StagingModeChangedEvent[] = [];
+					const inStagingModeAtEventTime: boolean[] = [];
+
+					containerRuntime.on("stagingModeChanged", (e) => {
+						events.push(e);
+						inStagingModeAtEventTime.push(containerRuntime.inStagingMode);
+					});
+
+					containerRuntime.enterStagingMode();
+
+					assert.equal(events.length, 1, "Expected exactly one event on enter");
+					assert.deepEqual(
+						events[0],
+						{ inStagingMode: true },
+						"Event payload should be { inStagingMode: true }",
+					);
+					assert.equal(
+						inStagingModeAtEventTime[0],
+						true,
+						"inStagingMode should be true when the enter event fires",
+					);
+				});
+
+				it("emits with { inStagingMode: false, commit: true } on commitChanges, and inStagingMode is false when handler runs", () => {
+					stubChannelCollection(containerRuntime);
+					const events: StagingModeChangedEvent[] = [];
+					const inStagingModeAtEventTime: boolean[] = [];
+
+					containerRuntime.on("stagingModeChanged", (e) => {
+						events.push(e);
+						inStagingModeAtEventTime.push(containerRuntime.inStagingMode);
+					});
+
+					const controls = containerRuntime.enterStagingMode();
+					controls.commitChanges();
+
+					assert.equal(events.length, 2, "Expected enter + commit events");
+					assert.deepEqual(
+						events[1],
+						{ inStagingMode: false, commit: true },
+						"Commit event payload should be { inStagingMode: false, commit: true }",
+					);
+					assert.equal(
+						inStagingModeAtEventTime[1],
+						false,
+						"inStagingMode should be false when the commit event fires",
+					);
+				});
+
+				it("emits with { inStagingMode: false, commit: false } on discardChanges, and inStagingMode is false when handler runs", () => {
+					stubChannelCollection(containerRuntime);
+					const events: StagingModeChangedEvent[] = [];
+					const inStagingModeAtEventTime: boolean[] = [];
+
+					containerRuntime.on("stagingModeChanged", (e) => {
+						events.push(e);
+						inStagingModeAtEventTime.push(containerRuntime.inStagingMode);
+					});
+
+					const controls = containerRuntime.enterStagingMode();
+					controls.discardChanges();
+
+					assert.equal(events.length, 2, "Expected enter + discard events");
+					assert.deepEqual(
+						events[1],
+						{ inStagingMode: false, commit: false },
+						"Discard event payload should be { inStagingMode: false, commit: false }",
+					);
+					assert.equal(
+						inStagingModeAtEventTime[1],
+						false,
+						"inStagingMode should be false when the discard event fires",
+					);
+				});
+
+				it("does not fire when orderSequentially uses staging mode internally (EnableRollback=true)", async () => {
+					// orderSequentially with EnableRollback calls enterStagingModeCore(silent=true)
+					// internally. The stagingModeChanged event should NOT be emitted.
+					const context = getMockContext({
+						settings: { "Fluid.ContainerRuntime.EnableRollback": true },
+					}) as IContainerContext;
+					const { runtime: rawRuntime } = await ContainerRuntime.loadRuntime2({
+						context,
+						registry: new FluidDataStoreRegistry([]),
+						existing: false,
+						runtimeOptions: {},
+						provideEntryPoint: mockProvideEntryPoint,
+					});
+					const runtime = rawRuntime as unknown as ContainerRuntime_WithPrivates;
+					stubChannelCollection(runtime);
+					submittedOps.length = 0;
+
+					const events: StagingModeChangedEvent[] = [];
+					runtime.on("stagingModeChanged", (e) => events.push(e));
+
+					// internally enters staging mode then commits
+					runtime.orderSequentially(() => {
+						submitDataStoreOp(runtime, "1", genTestDataStoreMessage("op1"));
+					});
+
+					assert.equal(
+						events.length,
+						0,
+						"stagingModeChanged should NOT fire for successful orderSequentially",
+					);
+
+					// internally enters staging mode then rolls back
+					assert.throws(() =>
+						runtime.orderSequentially(() => {
+							throw new Error("test error");
+						}),
+					);
+
+					assert.equal(
+						events.length,
+						0,
+						"stagingModeChanged should NOT fire when orderSequentially rolls back",
+					);
+
+					runtime.dispose();
+				});
+
+				it("still fires for explicit enterStagingMode() when EnableRollback=true", async () => {
+					// Sanity-check that the silent flag only suppresses orderSequentially's
+					// internal usage — direct calls to enterStagingMode() still emit normally.
+					const context = getMockContext({
+						settings: { "Fluid.ContainerRuntime.EnableRollback": true },
+					}) as IContainerContext;
+					const { runtime: rawRuntime } = await ContainerRuntime.loadRuntime2({
+						context,
+						registry: new FluidDataStoreRegistry([]),
+						existing: false,
+						runtimeOptions: {},
+						provideEntryPoint: mockProvideEntryPoint,
+					});
+					const runtime = rawRuntime as unknown as ContainerRuntime_WithPrivates;
+					stubChannelCollection(runtime);
+					submittedOps.length = 0;
+
+					const events: StagingModeChangedEvent[] = [];
+					runtime.on("stagingModeChanged", (e) => events.push(e));
+
+					const controls = runtime.enterStagingMode();
+					controls.commitChanges();
+
+					assert.equal(
+						events.length,
+						2,
+						"Expected enter + commit events for explicit staging",
+					);
+					assert.deepEqual(events[0], { inStagingMode: true }, "Enter event");
+					assert.deepEqual(events[1], { inStagingMode: false, commit: true }, "Commit event");
+
+					runtime.dispose();
+				});
+
+				it("throws UsageError when calling commitChanges on stale controls after discard", () => {
+					stubChannelCollection(containerRuntime);
+					const controls = containerRuntime.enterStagingMode();
+					controls.discardChanges();
+
+					assert.throws(
+						() => controls.commitChanges(),
+						(error: IErrorBase) =>
+							error.errorType === ContainerErrorTypes.usageError &&
+							error.message === "Not in staging mode",
+						"Calling commitChanges on stale controls should throw UsageError",
+					);
+				});
+
+				it("throws UsageError when calling discardChanges on old controls after re-entering staging mode", () => {
+					stubChannelCollection(containerRuntime);
+					const oldControls = containerRuntime.enterStagingMode();
+					oldControls.discardChanges();
+
+					// Enter staging mode again — new controls
+					containerRuntime.enterStagingMode();
+
+					assert.throws(
+						() => oldControls.discardChanges(),
+						(error: IErrorBase) =>
+							error.errorType === ContainerErrorTypes.usageError &&
+							error.message === "Not in staging mode",
+						"Calling discardChanges on old controls should throw UsageError",
+					);
+				});
+				it("does not emit exit event when container is disposed while in staging mode", () => {
+					const events: StagingModeChangedEvent[] = [];
+					containerRuntime.on("stagingModeChanged", (e) => events.push(e));
+
+					containerRuntime.enterStagingMode();
+					assert.equal(events.length, 1, "Expected enter event");
+
+					containerRuntime.dispose();
+
+					assert.equal(
+						events.length,
+						1,
+						"No exit event should fire on dispose — only the original enter event",
+					);
+				});
 			});
 		});
 	});

@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/quill-react",
-	"version": "2.100.0",
+	"version": "2.101.0",
 	"description": "Utilities for integrating content powered by the Fluid Framework into React applications that utilize the Quill rich text editor",
 	"homepage": "https://fluidframework.com",
 	"repository": {

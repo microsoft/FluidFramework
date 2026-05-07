@@ -36,8 +36,9 @@ import {
 	type EncodedFieldBatchV1OrV2,
 	type EncodedNestedArrayShape,
 	type EncodedValueShape,
-	FieldBatchFormatVersion,
+	type FieldBatchFormatVersion,
 	SpecialField,
+	supportsIncrementalEncoding,
 } from "./format/index.js";
 
 /**
@@ -461,7 +462,7 @@ export const incrementalFieldEncoder: FieldEncoder = {
 			0xc88 /* incremental encoder must be defined to use incrementalFieldEncoder */,
 		);
 		assert(
-			context.version >= FieldBatchFormatVersion.v2,
+			supportsIncrementalEncoding(context.version),
 			0xca1 /* Unsupported FieldBatchFormatVersion for incremental encoding; must be v2 or higher */,
 		);
 

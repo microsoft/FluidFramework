@@ -1,5 +1,27 @@
 # @fluidframework/telemetry-utils
 
+## 2.100.0
+
+### Minor Changes
+
+- Node 22 is now the minimum supported Node.js version ([#27116](https://github.com/microsoft/FluidFramework/pull/27116)) [e8214d29663](https://github.com/microsoft/FluidFramework/commit/e8214d29663f5ee98d737daed82506a25d8de8d0)
+
+  All Fluid Framework client packages now require Node.js 22 or later. This aligns with the standing Node upgrade policy as Node 20 reaches end-of-life on April 30, 2026.
+
+- Deprecate ITelemetryLoggerExt methods and related types ([#26912](https://github.com/microsoft/FluidFramework/pull/26912)) [42b77ab8455](https://github.com/microsoft/FluidFramework/commit/42b77ab8455dd2a691442bcfbca7bac970f988fe)
+
+  `ITelemetryLoggerExt` is only for internal Fluid Framework use. The following deprecations help formalize that. See [issue #26910](https://github.com/microsoft/FluidFramework/issues/26910) for details.
+
+  | API                                          | Kind       | Package Export    |
+  | -------------------------------------------- | ---------- | ----------------- |
+  | `TelemetryEventCategory`                     | Type alias | `@legacy` `@beta` |
+  | `ITelemetryGenericEventExt`                  | Interface  | `@legacy` `@beta` |
+  | `ITelemetryErrorEventExt`                    | Interface  | `@legacy` `@beta` |
+  | `ITelemetryPerformanceEventExt`              | Interface  | `@legacy` `@beta` |
+  | `ITelemetryLoggerExt.sendTelemetryEvent()`   | Method     | `@legacy` `@beta` |
+  | `ITelemetryLoggerExt.sendErrorEvent()`       | Method     | `@legacy` `@beta` |
+  | `ITelemetryLoggerExt.sendPerformanceEvent()` | Method     | `@legacy` `@beta` |
+
 ## 2.93.0
 
 Dependency updates only.

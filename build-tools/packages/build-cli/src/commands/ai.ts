@@ -179,7 +179,7 @@ export default class AiCommand extends BaseCommand<typeof AiCommand> {
 
 		this.log(`\nLaunching ${chalk.green(proposal.alias)}...\n`);
 
-		// When --launch-file is provided, write the command to that file and exit
+		// When --launchFile is provided, write the command to that file and exit
 		// so a shell wrapper can run it as a separate, independent process.
 		if (flags.launchFile !== undefined) {
 			try {

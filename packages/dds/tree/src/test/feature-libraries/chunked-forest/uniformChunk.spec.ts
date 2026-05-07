@@ -5,12 +5,7 @@
 
 import { strict as assert } from "node:assert";
 
-import {
-	BenchmarkType,
-	TestType,
-	benchmarkIt,
-	collectDurationData,
-} from "@fluid-tools/benchmark";
+import { benchmarkDuration, benchmarkIt } from "@fluid-tools/benchmark";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 
 import { EmptyKey, type ITreeCursorSynchronous } from "../../../core/index.js";
@@ -203,32 +198,27 @@ describe("uniformChunk", () => {
 
 	for (const { name: cursorName, factory } of cursorSources) {
 		describe(`${cursorName} bench`, () => {
-			let cursor: ITreeCursorSynchronous;
 			for (const { name, dataFactory: data } of testData) {
 				benchmarkIt({
-					type: BenchmarkType.Measurement,
-					testType: TestType.ExecutionTime,
 					title: `Sum: '${name}'`,
-					run: async () => {
-						cursor = factory(data());
-						return collectDurationData({
-							benchmarkFn: () => {
+					...benchmarkDuration({
+						benchmarkFnCustom: async (state) => {
+							const cursor = factory(data());
+							state.timeAllBatches(() => {
 								sum(cursor);
-							},
-						});
-					},
+							});
+						},
+					}),
 				});
 			}
 
 			benchmarkIt({
-				type: BenchmarkType.Measurement,
-				testType: TestType.ExecutionTime,
 				title: "Polygon access",
-				run: async () => {
-					cursor = polygonTree.dataFactory().cursor();
-					cursor.enterNode(0);
-					return collectDurationData({
-						benchmarkFn: () => {
+				...benchmarkDuration({
+					benchmarkFnCustom: async (state) => {
+						const cursor = polygonTree.dataFactory().cursor();
+						cursor.enterNode(0);
+						state.timeAllBatches(() => {
 							let x = 0;
 							let y = 0;
 							cursor.enterField(EmptyKey);
@@ -246,9 +236,9 @@ describe("uniformChunk", () => {
 							}
 							cursor.exitField();
 							const _result = x + y;
-						},
-					});
-				},
+						});
+					},
+				}),
 			});
 		});
 	}

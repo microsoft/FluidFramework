@@ -7,7 +7,7 @@ import { strict as assert } from "assert";
 
 import { bufferToString } from "@fluid-internal/client-utils";
 import { ITestDataObject, describeCompat } from "@fluid-private/test-version-utils";
-import { TestType, benchmarkIt, collectDurationData } from "@fluid-tools/benchmark";
+import { benchmarkDuration, benchmarkIt } from "@fluid-tools/benchmark";
 import { IContainer } from "@fluidframework/container-definitions/internal";
 import {
 	ContainerRuntime,
@@ -51,17 +51,14 @@ async function setupContainer(getTestObjectProvider: () => ITestObjectProvider):
 describeCompat("Summarization - runtime benchmarks", "NoCompat", (getTestObjectProvider) => {
 	benchmarkIt({
 		title: "Generate summary tree",
-		testType: TestType.ExecutionTime,
-		run: async () => {
-			const { provider, mainContainer } = await setupContainer(getTestObjectProvider);
-			return collectDurationData({
-				benchmarkFnAsync: async () => {
-					const defaultDataStore = (await mainContainer.getEntryPoint()) as ITestDataObject;
-					const containerRuntime = defaultDataStore._context
-						.containerRuntime as ContainerRuntime;
-
-					await provider.ensureSynchronized();
-
+		...benchmarkDuration({
+			benchmarkFnCustom: async (state) => {
+				const { provider, mainContainer } = await setupContainer(getTestObjectProvider);
+				const defaultDataStore = (await mainContainer.getEntryPoint()) as ITestDataObject;
+				const containerRuntime = defaultDataStore._context
+					.containerRuntime as ContainerRuntime;
+				await provider.ensureSynchronized();
+				await state.timeAllBatchesAsync(async () => {
 					const { stats, summary } = await containerRuntime.summarize({
 						runGC: false,
 						fullTree: true,
@@ -150,8 +147,8 @@ describeCompat("Summarization - runtime benchmarks", "NoCompat", (getTestObjectP
 						defaultDdsNode.tree[".attributes"]?.type === SummaryType.Blob,
 						"Expected .attributes blob in default root DDS summary tree.",
 					);
-				},
-			});
-		},
+				});
+			},
+		}),
 	});
 });
