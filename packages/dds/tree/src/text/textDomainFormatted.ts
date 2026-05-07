@@ -203,7 +203,11 @@ class TextNode
 		callback: (ops: readonly TextAsTree.TextOp[] | undefined) => void,
 	): () => void {
 		return TreeAlpha.on(this.content, "nodeChanged", ({ delta }) =>
-			processCharactersChangedDelta(delta, (index) => this.getAtomCharacterAt(index), callback),
+			processCharactersChangedDelta(
+				delta,
+				(index) => this.getAtomCharacterAt(index),
+				callback,
+			),
 		);
 	}
 
@@ -211,7 +215,11 @@ class TextNode
 		callback: (ops: readonly TextAsTree.TextOp[] | undefined) => void,
 	): () => void {
 		return TreeAlpha.on(this.content, "treeChanged", ({ delta }) =>
-			processCharactersChangedDelta(delta, (index) => this.getAtomCharacterAt(index), callback),
+			processCharactersChangedDelta(
+				delta,
+				(index) => this.getAtomCharacterAt(index),
+				callback,
+			),
 		);
 	}
 
