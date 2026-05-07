@@ -550,6 +550,42 @@ describe("Runtime", () => {
 					}
 				});
 
+			// Regression for assert 0xa00 in OpGroupingManager.createEmptyGroupedBatch.
+			// Pre-fix, batchId tracking was on for any TurnBased container regardless of grouped
+			// batching state. Resubmits could then stamp a batchId on an empty batch, which the
+			// outbox would try to send via createEmptyGroupedBatch, hitting the assert in
+			// production stress runs. The fix gates batchId tracking on groupedBatchingEnabled,
+			// so resubmits in this configuration must NOT stamp a batchId.
+			it("Resubmit must not stamp a batchId when grouped batching is disabled", async () => {
+				const { runtime } = await ContainerRuntime.loadRuntime2({
+					context: getMockContext() as IContainerContext,
+					registry: new FluidDataStoreRegistry([]),
+					existing: false,
+					runtimeOptions: { enableGroupedBatching: false },
+					provideEntryPoint: mockProvideEntryPoint,
+				});
+				const containerRuntime = runtime as unknown as ContainerRuntime_WithPrivates;
+
+				stubChannelCollection(containerRuntime);
+
+				changeConnectionState(containerRuntime, false, mockClientId);
+
+				submitDataStoreOp(containerRuntime, "1", testDataStoreMessage);
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
+				(containerRuntime as any).flush();
+
+				submitDataStoreOp(containerRuntime, "2", testDataStoreMessage);
+				changeConnectionState(containerRuntime, true, mockClientId);
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
+				(containerRuntime as any).flush();
+
+				assert.strictEqual(submittedOps.length, 2);
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+				assert.strictEqual(submittedOps[0].metadata?.batchId, undefined);
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+				assert.strictEqual(submittedOps[1].metadata?.batchId, undefined);
+			});
+
 			// NOTE: This test is examining a case that only occurs with an old Loader that doesn't tell ContainerRuntime when processing system ops.
 			// In other words, when the MockDeltaManager bumps its lastSequenceNumber, ContainerRuntime.process would be called in the current code, but not with legacy loader.
 			it("Inbound (non-runtime) op triggers flush due to refSeq changing", async () => {
