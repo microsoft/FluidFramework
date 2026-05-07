@@ -203,7 +203,7 @@ describe("Tree Representation tests", () => {
 		} catch {
 			success = false;
 		}
-		assert(!success, "Error should have occured");
+		assert(!success, "Error should have occurred");
 	});
 
 	it("node instance test", async () => {
@@ -217,7 +217,7 @@ describe("Tree Representation tests", () => {
 		} catch {
 			success = false;
 		}
-		assert(!success, "Error should have occured");
+		assert(!success, "Error should have occurred");
 	});
 
 	it("number instance test", async () => {
@@ -231,7 +231,7 @@ describe("Tree Representation tests", () => {
 		} catch {
 			success = false;
 		}
-		assert(!success, "Error should have occured");
+		assert(!success, "Error should have occurred");
 	});
 
 	it("bool instance test", async () => {
@@ -245,6 +245,6 @@ describe("Tree Representation tests", () => {
 		} catch {
 			success = false;
 		}
-		assert(!success, "Error should have occured");
+		assert(!success, "Error should have occurred");
 	});
 });

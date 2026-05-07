@@ -52,6 +52,7 @@ stages:
       testPackage: ${{ variables.testPackage }}
       testCommand: test:realsvc:azure
       artifactBuildId: $(resources.pipeline.client.runID)
+      fluidFrameworkSourceVersion: $(resources.pipeline.client.sourceCommit)
       pipelineIdentifierForTelemetry: ${{ variables.pipelineIdentifierForTelemetry }}
       env:
         FLUID_TEST_SCALE: true # run longer duration tests
@@ -69,6 +70,7 @@ stages:
       testPackage: ${{ variables.testPackage }}
       testCommand: test:realsvc:tinylicious
       artifactBuildId: $(resources.pipeline.client.runID)
+      fluidFrameworkSourceVersion: $(resources.pipeline.client.sourceCommit)
       pipelineIdentifierForTelemetry: ${{ variables.pipelineIdentifierForTelemetry }}
       env:
         FLUID_TEST_SCALE: true # run longer duration tests
@@ -88,6 +90,7 @@ stages:
       testPackage: ${{ variables.testOdspPackage }}
       testCommand: test:realsvc:odsp
       artifactBuildId: $(resources.pipeline.client.runID)
+      fluidFrameworkSourceVersion: $(resources.pipeline.client.sourceCommit)
       pipelineIdentifierForTelemetry: ${{ variables.pipelineIdentifierForTelemetry }}
       env:
         FLUID_TEST_SCALE: true # run longer duration tests

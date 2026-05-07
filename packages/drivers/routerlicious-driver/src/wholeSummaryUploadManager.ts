@@ -3,14 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import {
+import type {
 	ISummaryTree,
 	IWholeSummaryPayload,
 	IWholeSummaryPayloadType,
-	convertSummaryTreeToWholeSummaryTree,
 } from "@fluidframework/server-services-client";
+import { convertSummaryTreeToWholeSummaryTree } from "@fluidframework/server-services-client";
 
-import { IGitManager, ISummaryUploadManager } from "./storageContracts.js";
+import type { IGitManager, ISummaryUploadManager } from "./storageContracts.js";
 
 /**
  * Converts summary to snapshot tree and uploads with single snaphot tree payload.

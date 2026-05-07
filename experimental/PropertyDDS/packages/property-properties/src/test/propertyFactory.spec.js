@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-/* globals sinon */
+/* globals expect, sinon */
 
 const { MSG } = require("@fluid-experimental/property-common").constants;
 const { generateGUID } = require("@fluid-experimental/property-common").GuidUtils;
@@ -3499,6 +3499,12 @@ describe("Template registration", function () {
 		myPropertyFactory = new PropertyFactory.constructor();
 	});
 
+	/** @returns {number} count of calls to console.warn */
+	function consoleWarnCallCount() {
+		// @ts-expect-error - sinon adds the callCount property to the stubbed function
+		return console.warn.callCount;
+	}
+
 	afterEach(function () {
 		this.sinon.restore();
 	});
@@ -3510,7 +3516,7 @@ describe("Template registration", function () {
 	it("should print a warning when registering an existing template that is not different from what is in the registry", function () {
 		myPropertyFactory.register(ColorID["1-0-0"].original);
 		myPropertyFactory.register(ColorID["1-0-0"].original);
-		expect(console.warn.callCount).to.equal(1);
+		expect(consoleWarnCallCount()).to.equal(1);
 	});
 
 	it("should accept registering a different template from what is in the registry if it is semantically equivalent", function () {
@@ -3586,19 +3592,19 @@ describe("Template registration", function () {
 		myPropertyFactory.register(ColorID["1-0-0"].original);
 		myPropertyFactory.register(ColorID["1-0-1"].goodSemver);
 
-		expect(console.warn.callCount).to.equal(0);
+		expect(consoleWarnCallCount()).to.equal(0);
 	});
 
 	it("should register a new template with the PATCH version updated", function () {
 		myPropertyFactory.register(ColorID["1-0-0"].original);
 		myPropertyFactory.register(ColorID["1-0-1"].goodSemver);
-		expect(console.warn.callCount).to.equal(0);
+		expect(consoleWarnCallCount()).to.equal(0);
 	});
 
 	it("should register a new template with the MINOR version updated", function () {
 		myPropertyFactory.register(ColorID["1-0-0"].original);
 		myPropertyFactory.register(ColorID["1-1-0"].goodSemver);
-		expect(console.warn.callCount).to.equal(0);
+		expect(consoleWarnCallCount()).to.equal(0);
 	});
 
 	it("should print a warning when registering a new template with the wrong version updated", function () {
@@ -3617,13 +3623,13 @@ describe("Template registration", function () {
 		myPropertyFactory.register(ColorID["1-1-0"].badSemver2);
 		myPropertyFactory._registerRemoteTemplate(ColorID["1-0-0"].original, generateGUID());
 
-		expect(console.warn.callCount).to.equal(4);
+		expect(consoleWarnCallCount()).to.equal(4);
 	});
 
 	it("should register a new template with the MAJOR version updated", function () {
 		myPropertyFactory.register(ColorID["1-0-0"].original);
 		myPropertyFactory.register(ColorID["2-0-0"]);
-		expect(console.warn.callCount).to.equal(0);
+		expect(consoleWarnCallCount()).to.equal(0);
 	});
 
 	it("should register a versioned remote template", function () {
@@ -3642,7 +3648,7 @@ describe("Template registration", function () {
 
 			myPropertyFactory._registerRemoteTemplate(ColorID["1-0-0"].original, generateGUID());
 			myPropertyFactory.register(ColorID["1-0-0"].original);
-			expect(console.warn.callCount).to.equal(0);
+			expect(consoleWarnCallCount()).to.equal(0);
 		},
 	);
 
@@ -3679,7 +3685,7 @@ describe("Template registration", function () {
 
 		myPropertyFactory._registerRemoteTemplate(ColorID["1-1-0"].goodSemver, scope);
 		myPropertyFactory._registerRemoteTemplate(ColorID["1-0-1"].goodSemver, scope);
-		expect(console.warn.callCount).to.equal(0);
+		expect(consoleWarnCallCount()).to.equal(0);
 	});
 
 	it("should register a local template even when there are other versions of the same template in the remote registry", function () {
@@ -3696,7 +3702,7 @@ describe("Template registration", function () {
 		myPropertyFactory.register(ColorID["1-0-0"].original);
 		myPropertyFactory.register(ColorID["2-0-0"]);
 
-		expect(console.warn.callCount).to.equal(0);
+		expect(consoleWarnCallCount()).to.equal(0);
 	});
 
 	it("`registered` event is triggered when registering a template", function (done) {

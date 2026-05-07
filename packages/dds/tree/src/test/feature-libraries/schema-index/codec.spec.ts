@@ -18,11 +18,7 @@ import {
 	type TreeStoredSchema,
 } from "../../../core/index.js";
 import { FormatValidatorBasic } from "../../../external-utilities/index.js";
-import {
-	allowsRepoSuperset,
-	defaultSchemaPolicy,
-	makeSchemaCodec,
-} from "../../../feature-libraries/index.js";
+import { allowsRepoSuperset, defaultSchemaPolicy } from "../../../feature-libraries/index.js";
 /* eslint-disable-next-line import-x/no-internal-modules */
 import { schemaCodecBuilder } from "../../../feature-libraries/schema-index/codec.js";
 // eslint-disable-next-line import-x/no-internal-modules
@@ -46,8 +42,11 @@ const schemaCodecs = makeCodecFamily(
 		return [codec.formatVersion, codec.codec] as const;
 	}),
 );
-const codecV1 = makeSchemaCodec(codecOptions, SchemaFormatVersion.v1);
-const codecV2 = makeSchemaCodec(codecOptions, SchemaFormatVersion.v2);
+const codecV1 = schemaCodecBuilder.build({
+	...codecOptions,
+	writeVersionOverrides: new Map([[schemaCodecBuilder.name, SchemaFormatVersion.v1]]),
+});
+const codecV2 = schemaCodecBuilder.build(codecOptions);
 
 const schema2 = toInitialSchema(SchemaFactory.optional(JsonAsTree.Primitive));
 

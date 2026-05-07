@@ -44,8 +44,6 @@ export function asMutable<T>(readonly: T): Mutable<T> {
 	return readonly as Mutable<T>;
 }
 
-export { default as clone } from "@ungap/structured-clone";
-
 /**
  * Checks whether or not the given object is a `readonly` array.
  *

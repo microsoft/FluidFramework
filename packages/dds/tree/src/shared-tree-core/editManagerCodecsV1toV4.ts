@@ -5,14 +5,18 @@
 
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 
-import { type ICodecOptions, type IJsonCodec, withSchemaValidation } from "../codec/index.js";
+import type { CodecAndSchema, IJsonCodec, Versioned } from "../codec/index.js";
 import type {
 	ChangeEncodingContext,
 	EncodedRevisionTag,
 	RevisionTag,
 	SchemaAndPolicy,
 } from "../core/index.js";
-import { type JsonCompatibleReadOnly, JsonCompatibleReadOnlySchema } from "../util/index.js";
+import {
+	type JsonCompatibleReadOnly,
+	type JsonCompatibleReadOnlyObject,
+	JsonCompatibleReadOnlySchema,
+} from "../util/index.js";
 
 import type { SummaryData } from "./editManager.js";
 import { decodeSharedBranch, encodeSharedBranch } from "./editManagerCodecsCommons.js";
@@ -23,7 +27,15 @@ export interface EditManagerEncodingContext {
 	readonly schema?: SchemaAndPolicy;
 }
 
-export function makeV1CodecWithVersion<TChangeset>(
+/**
+ * Create the provided version of the {@link EditManager} codec (which encodes it's {@link SummaryData}).
+ * @remarks
+ * The changeCodec and revisionTagCodec are not explicitly versioned, so the exact right version of them must be provided here
+ * or data will be incompatible.
+ *
+ * TODO: this file should be renamed as this is used for v6 as well.
+ */
+export function makeV1toV4andV6CodecWithVersion<TChangeset>(
 	changeCodec: IJsonCodec<
 		TChangeset,
 		JsonCompatibleReadOnly,
@@ -36,66 +48,49 @@ export function makeV1CodecWithVersion<TChangeset>(
 		EncodedRevisionTag,
 		ChangeEncodingContext
 	>,
-	options: ICodecOptions,
 	version: EncodedEditManager<TChangeset>["version"],
-): IJsonCodec<
-	SummaryData<TChangeset>,
-	JsonCompatibleReadOnly,
-	JsonCompatibleReadOnly,
-	EditManagerEncodingContext
-> {
-	const format = EncodedEditManager(changeCodec.encodedSchema ?? JsonCompatibleReadOnlySchema);
+): CodecAndSchema<SummaryData<TChangeset>, EditManagerEncodingContext> {
+	const schema = EncodedEditManager(changeCodec.encodedSchema ?? JsonCompatibleReadOnlySchema);
 
-	const codec: IJsonCodec<
-		SummaryData<TChangeset>,
-		EncodedEditManager<TChangeset>,
-		EncodedEditManager<TChangeset>,
-		EditManagerEncodingContext
-	> = withSchemaValidation(
-		format,
-		{
-			encode: (data, context: EditManagerEncodingContext) => {
-				const mainBranch = encodeSharedBranch(
+	const codec: CodecAndSchema<SummaryData<TChangeset>, EditManagerEncodingContext> = {
+		schema,
+		encode: (
+			data: SummaryData<TChangeset>,
+			context: EditManagerEncodingContext,
+		): EncodedEditManager<TChangeset> & Versioned & JsonCompatibleReadOnlyObject => {
+			const mainBranch = encodeSharedBranch(
+				changeCodec,
+				revisionTagCodec,
+				data.main,
+				context,
+				data.originator,
+			);
+			const encoded: EncodedEditManager<TChangeset> = {
+				trunk: mainBranch.trunk,
+				branches: mainBranch.peers,
+				version,
+			};
+			return encoded as EncodedEditManager<TChangeset> &
+				Versioned &
+				JsonCompatibleReadOnlyObject;
+		},
+		decode: (
+			json: EncodedEditManager<TChangeset> & JsonCompatibleReadOnly,
+			context: EditManagerEncodingContext,
+		): SummaryData<TChangeset> => {
+			return {
+				main: decodeSharedBranch(
 					changeCodec,
 					revisionTagCodec,
-					data.main,
+					{
+						trunk: json.trunk,
+						peers: json.branches,
+					},
 					context,
-					data.originator,
-				);
-				const json: EncodedEditManager<TChangeset> = {
-					trunk: mainBranch.trunk,
-					branches: mainBranch.peers,
-					version,
-				};
-				return json;
-			},
-			decode: (
-				json: EncodedEditManager<TChangeset>,
-				context: EditManagerEncodingContext,
-			): SummaryData<TChangeset> => {
-				return {
-					main: decodeSharedBranch(
-						changeCodec,
-						revisionTagCodec,
-						{
-							trunk: json.trunk,
-							peers: json.branches,
-						},
-						context,
-						undefined, // originatorId is not encoded in v1
-					),
-				};
-			},
+					undefined, // Non "vSharedBranches" versions do not encode the summary originatorId.
+				),
+			};
 		},
-		options.jsonValidator,
-	);
-	// TODO: makeVersionedValidatedCodec and withSchemaValidation should allow the codec to decode JsonCompatibleReadOnly, or Versioned or something like that,
-	// and not leak the internal encoded format in the API surface.
-	// Fixing that would remove the need for this cast.
-	return codec as unknown as IJsonCodec<
-		SummaryData<TChangeset>,
-		JsonCompatibleReadOnly,
-		JsonCompatibleReadOnly,
-		EditManagerEncodingContext
-	>;
+	};
+	return codec;
 }

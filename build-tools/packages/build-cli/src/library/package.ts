@@ -25,8 +25,6 @@ import execa from "execa";
 import { readJsonSync } from "fs-extra/esm";
 import latestVersion from "latest-version";
 import ncu from "npm-check-updates";
-import type { Index } from "npm-check-updates/build/src/types/IndexType.js";
-import type { VersionSpec } from "npm-check-updates/build/src/types/VersionSpec.js";
 import * as semver from "semver";
 import {
 	AllPackagesSelectionCriteria,
@@ -149,7 +147,7 @@ export async function npmCheckUpdates(
 		log?.verbose(`Checking packages in ${path.join(repoPath, glob)}`);
 
 		// eslint-disable-next-line no-await-in-loop
-		const result = (await ncu.run({
+		const result: unknown = await ncu.run({
 			filter: depsToUpdate,
 			cwd: repoPath,
 			packageFile: glob === "" ? "package.json" : `${glob}/package.json`,
@@ -159,16 +157,18 @@ export async function npmCheckUpdates(
 			jsonUpgraded: true,
 			silent: true,
 			peer: true,
-		})) as Index<VersionSpec>;
+		});
 
-		if (typeof result !== "object") {
+		if (typeof result !== "object" || result === null) {
 			throw new TypeError(`Expected an object: ${typeof result}`);
 		}
 
 		// npm-check-updates returns different data depending on how many packages were updated. This code detects the
 		// two main cases: a single package or multiple packages.
 		if (glob.endsWith("*")) {
-			for (const [pkgJsonPath, upgradedDeps] of Object.entries(result)) {
+			// With glob patterns, result is Record<string, Record<string, string>> (path → upgraded deps)
+			const resultRecord = result as Record<string, Record<string, string>>;
+			for (const [pkgJsonPath, upgradedDeps] of Object.entries(resultRecord)) {
 				const jsonPath = path.join(repoPath, pkgJsonPath);
 				// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 				const { name } = readJsonSync(jsonPath);
@@ -188,6 +188,8 @@ export async function npmCheckUpdates(
 				}
 			}
 		} else {
+			// Without glob, result is Record<string, string> (dep → new range)
+			const resultRecord = result as Record<string, string>;
 			const jsonPath = path.join(repoPath, glob, "package.json");
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 			const { name } = readJsonSync(jsonPath);
@@ -197,12 +199,12 @@ export async function npmCheckUpdates(
 				continue;
 			}
 
-			for (const [dep, newRange] of Object.entries(result)) {
+			for (const [dep, newRange] of Object.entries(resultRecord)) {
 				upgradeLogLines.add(indentString(`${dep}: '${newRange}'`));
 				updatedDependencies[dep] = newRange;
 			}
 
-			if (Object.keys(result).length > 0) {
+			if (Object.keys(resultRecord).length > 0) {
 				updatedPackages.push(pkg);
 			}
 		}
@@ -300,7 +302,7 @@ export async function getPreReleaseDependencies(
 			catalogCache.set(workspaceRoot, catalogs);
 		}
 
-		for (const { name: depName, version: depVersion } of pkg.combinedDependencies) {
+		for (const { name: depName, version: depVersion, depClass } of pkg.combinedDependencies) {
 			// If it's not a dep we're looking to update, skip to the next dep
 			if (!updateDependenciesOnThesePackages.includes(depName)) {
 				continue;
@@ -308,6 +310,18 @@ export async function getPreReleaseDependencies(
 
 			// Resolve catalog: references before passing to semver
 			const resolvedVersion = resolveCatalogVersion(depName, depVersion, catalogs);
+
+			if (resolvedVersion.startsWith("workspace:")) {
+				// We do not have logic for handling workspace version to packages outside the release group.
+				// Currently we only do this for dev deps,
+				// and allowing prerelease dev deps to go undetected is low risk, so continue here instead of erroring.
+				if (depClass === "dev") {
+					continue;
+				}
+				throw new Error(
+					`Unexpected workspace dependency for non-dev dep ${depName} in package ${pkg.name}. Resolved version: ${resolvedVersion}`,
+				);
+			}
 
 			// Convert the range into the minimum version
 			const minVer = semver.minVersion(resolvedVersion);

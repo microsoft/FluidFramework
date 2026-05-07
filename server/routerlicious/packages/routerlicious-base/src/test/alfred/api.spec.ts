@@ -270,14 +270,6 @@ describe("Routerlicious", () => {
 							"patch",
 						);
 					});
-					it("/:tenantId/:id/blobs", async () => {
-						await assertThrottle(
-							`/api/v1/${appTenant1.id}/${document1._id}/blobs`,
-							undefined,
-							undefined,
-							"post",
-						);
-					});
 					it("/api/v1/:tenantId/:id/broadcast-signal", async () => {
 						await assertThrottle(
 							`/api/v1/${appTenant1.id}/${document1._id}/broadcast-signal`,
@@ -846,12 +838,6 @@ describe("Routerlicious", () => {
 						await assertCorrelationId(
 							`/api/v1/${appTenant1.id}/${document1._id}/root`,
 							"patch",
-						);
-					});
-					it("/:tenantId/:id/blobs", async () => {
-						await assertCorrelationId(
-							`/api/v1/${appTenant1.id}/${document1._id}/blobs`,
-							"post",
 						);
 					});
 					it("/api/v1/:tenantId/:id/broadcast-signal", async () => {
@@ -1562,6 +1548,54 @@ describe("Routerlicious", () => {
 							assert(
 								spyProducerSend.calledThrice,
 								"Producer should be called by default when flag is not set",
+							);
+						});
+				});
+
+				it("should reject doc:read-only token with 403", async () => {
+					const readOnlyToken = `Basic ${generateToken(
+						appTenant1.id,
+						document1._id,
+						appTenant1.key,
+						[ScopeType.DocRead],
+					)}`;
+					const testApp = createAppWithPatchRootConfig(true);
+					const testSupertest = request(testApp);
+
+					await testSupertest
+						.patch(`/api/v1/${appTenant1.id}/${document1._id}/root`)
+						.set("Authorization", readOnlyToken)
+						.set("access-token", readOnlyToken.split(" ")[1])
+						.send([{ op: "testOp", path: "/testPath", value: "testValue" }])
+						.expect(403)
+						.expect(() => {
+							assert(
+								spyProducerSend.notCalled,
+								"Producer should not be called for read-only token",
+							);
+						});
+				});
+
+				it("should reject doc:write-only token (missing doc:read) with 403", async () => {
+					const writeOnlyToken = `Basic ${generateToken(
+						appTenant1.id,
+						document1._id,
+						appTenant1.key,
+						[ScopeType.DocWrite],
+					)}`;
+					const testApp = createAppWithPatchRootConfig(true);
+					const testSupertest = request(testApp);
+
+					await testSupertest
+						.patch(`/api/v1/${appTenant1.id}/${document1._id}/root`)
+						.set("Authorization", writeOnlyToken)
+						.set("access-token", writeOnlyToken.split(" ")[1])
+						.send([{ op: "testOp", path: "/testPath", value: "testValue" }])
+						.expect(403)
+						.expect(() => {
+							assert(
+								spyProducerSend.notCalled,
+								"Producer should not be called for write-only token",
 							);
 						});
 				});

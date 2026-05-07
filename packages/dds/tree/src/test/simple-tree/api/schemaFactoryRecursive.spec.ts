@@ -98,6 +98,18 @@ describe("SchemaFactory Recursive methods", () => {
 				allowUnused<requireAssignableTo<typeof arrayOfAnnotated, typeof fieldArray>>();
 			}
 		});
+
+		describe("stagedOptionalRecursive", () => {
+			const field = SchemaFactoryAlpha.stagedOptional(SchemaFactoryAlpha.number);
+
+			const fieldRecursive = SchemaFactoryAlpha.stagedOptionalRecursive(
+				SchemaFactoryAlpha.number,
+			);
+
+			{
+				allowUnused<requireTrue<areSafelyAssignable<typeof field, typeof fieldRecursive>>>();
+			}
+		});
 	});
 
 	describe("objectRecursive", () => {
@@ -1050,7 +1062,6 @@ describe("SchemaFactory Recursive methods", () => {
 				// Check constructor
 				type TBuild = NodeBuilderData<typeof RecordRecursive>;
 				type _check2 = requireAssignableTo<RecordRecursive, TBuild>;
-				// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 				type _check3 = requireAssignableTo<{}, TBuild>;
 				type _check4 = requireAssignableTo<{ a: RecordRecursive }, TBuild>;
 				type _check5 = requireAssignableTo<Record<string, TInsert>, TBuild>;

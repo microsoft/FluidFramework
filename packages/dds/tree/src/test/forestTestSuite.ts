@@ -103,7 +103,6 @@ export function testForest(config: ForestTestConfiguration): void {
 
 	// Use Json Cursor to insert and extract some Json data
 	describe("insert and extract json", () => {
-		// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 		const testCases: [string, {} | number][] = [
 			["primitive", 5],
 			["array", [1, 2, 3]],
@@ -463,7 +462,7 @@ export function testForest(config: ForestTestConfiguration): void {
 		it("an empty forest", () => {
 			const schema = new TreeStoredSchemaRepository();
 			const forest = factory(schema);
-			const clone = forest.clone(schema, forest.anchors);
+			const clone = forest.clone(schema);
 			const reader = clone.allocateCursor();
 			moveToDetachedField(clone, reader);
 			// Expect no nodes under the detached field
@@ -481,7 +480,7 @@ export function testForest(config: ForestTestConfiguration): void {
 				testIdCompressor,
 			);
 
-			const clone = forest.clone(schema, forest.anchors);
+			const clone = forest.clone(schema);
 			const reader = clone.allocateCursor();
 			moveToDetachedField(clone, reader);
 			assert(reader.firstNode());
@@ -503,7 +502,7 @@ export function testForest(config: ForestTestConfiguration): void {
 				testIdCompressor,
 			);
 
-			const clone = forest.clone(schema, forest.anchors);
+			const clone = forest.clone(schema);
 			const reader = clone.allocateCursor();
 			moveToDetachedField(clone, reader);
 			assert(reader.firstNode());
@@ -511,7 +510,7 @@ export function testForest(config: ForestTestConfiguration): void {
 			assert.deepEqual(nestedContent, fromClone);
 		});
 
-		it("with anchors", () => {
+		it("clone has an independent anchor set", () => {
 			const schema = new TreeStoredSchemaRepository(optionalArraySchema);
 			const forest = factory(schema);
 			initializeForest(
@@ -521,17 +520,20 @@ export function testForest(config: ForestTestConfiguration): void {
 				testIdCompressor,
 			);
 
-			const forestReader = forest.allocateCursor();
-			moveToDetachedField(forest, forestReader);
-			assert(forestReader.firstNode());
-			forestReader.enterField(xField);
-			assert(forestReader.firstNode());
-			const anchor = forestReader.buildAnchor();
+			const clone = forest.clone(schema);
 
-			const clone = forest.clone(schema, forest.anchors);
+			// The clone must have its own anchor set, not the original's.
+			assert.notEqual(clone.anchors, forest.anchors);
+
+			// Anchors built within the clone must resolve in the clone.
+			const cloneReader = clone.allocateCursor();
+			moveToDetachedField(clone, cloneReader);
+			assert(cloneReader.firstNode());
+			const cloneAnchor = cloneReader.buildAnchor();
+			cloneReader.free();
+
 			const reader = clone.allocateCursor();
-			clone.tryMoveCursorToNode(anchor, reader);
-			assert.equal(reader.value, undefined);
+			assert.equal(clone.tryMoveCursorToNode(cloneAnchor, reader), TreeNavigationResult.Ok);
 		});
 	});
 
@@ -550,7 +552,7 @@ export function testForest(config: ForestTestConfiguration): void {
 			testIdCompressor,
 		);
 
-		const clone = forest.clone(schema, forest.anchors);
+		const clone = forest.clone(schema);
 		const mark: DeltaMark = { count: 1, detach: detachId };
 		const delta: DeltaFieldMap = new Map([[rootFieldKey, { marks: [mark] }]]);
 		applyTestDelta(delta, clone);

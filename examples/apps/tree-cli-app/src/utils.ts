@@ -14,6 +14,7 @@ import type { SerializedIdCompressorWithOngoingSession } from "@fluidframework/i
 import {
 	createIdCompressor,
 	deserializeIdCompressor,
+	serializeIdCompressor,
 } from "@fluidframework/id-compressor/legacy";
 import { isFluidHandle } from "@fluidframework/runtime-utils";
 import { TreeArrayNode, type InsertableTypedNode } from "@fluidframework/tree";
@@ -174,7 +175,7 @@ export function exportContent(destination: string, tree: List): JsonCompatible {
 				}),
 
 				schema: extractPersistedSchema(config.schema, compatVersion, () => true),
-				idCompressor: idCompressor.serialize(true),
+				idCompressor: serializeIdCompressor(idCompressor, true),
 			};
 			return file as JsonCompatible;
 		}
