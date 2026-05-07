@@ -433,10 +433,6 @@ export const createRuntimeFactory = (): IRuntimeFactory => {
 
 					return aliasedDefault.get();
 				},
-				// Opt in so DefaultStressDataObject.hasInitialized runs during the apply
-				// window and can subscribe to pendingStateApplyStart to enter staging mode
-				// for review of replayed ops.
-				materializeEntryPointForPendingStateApply: true,
 			});
 			// id compressor isn't made available via the interface right now.
 			// We could revisit exposing the safe part of its API (IIdCompressor, not IIdCompressorCore) in a way

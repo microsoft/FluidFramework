@@ -72,42 +72,6 @@ const dataObjectFactory = new DataObjectFactory({
 });
 
 /**
- * DataObject that snapshots `this.root.size` during `initializingFromExisting` —
- * exactly the pattern the reviewer flagged as sensitive to entry-point timing.
- * Used to regression-check that the default (no opt-in) load path observes the
- * same logical state on with-pending-state and no-pending-state loads.
- */
-class SyncSnapshotDataObject extends DataObject {
-	private _snapshotSize: number = -1;
-	get SyncSnapshotDataObject(): this {
-		return this;
-	}
-
-	public get snapshotSize(): number {
-		return this._snapshotSize;
-	}
-
-	public set(key: string, value: unknown): void {
-		this.root.set(key, value);
-	}
-
-	public get rootSize(): number {
-		return this.root.size;
-	}
-
-	protected override async initializingFromExisting(): Promise<void> {
-		// Synchronous DDS read at construction time — mimics what real DataObjects
-		// might do that's sensitive to apply-window timing.
-		this._snapshotSize = this.root.size;
-	}
-}
-
-const syncSnapshotFactory = new DataObjectFactory({
-	type: "SyncSnapshotDataObject",
-	ctor: SyncSnapshotDataObject,
-});
-
-/**
  * Build a runtime factory whose `provideEntryPoint` subscribes to the new
  * pendingStateApplyStart/End events and optionally enters staging mode in the start
  * handler. The closure-captured `observations` object lets the test inspect what fired.
@@ -125,10 +89,6 @@ function createRuntimeFactory(
 				context,
 				existing,
 				registryEntries: [[dataObjectFactory.type, Promise.resolve(dataObjectFactory)]],
-				// Opt in so the entry point materializes eagerly during the apply
-				// window, letting `provideEntryPoint`'s subscription be in place
-				// before pendingStateApplyStart fires.
-				materializeEntryPointForPendingStateApply: true,
 				provideEntryPoint: async (rt: IContainerRuntime) => {
 					const rtWithReadOnly = rt as RuntimeWithReadOnly;
 					rt.on("pendingStateApplyStart", () => {
@@ -435,110 +395,6 @@ describe("Pending state apply lifecycle", () => {
 			observerDataObject.get("discard-me"),
 			undefined,
 			"observer never saw discarded staged op",
-		);
-	});
-
-	it("default load path: synchronous DDS reads in initializingFromExisting observe equivalent state with vs without pending state", async () => {
-		// Regression test for the reviewer's concern that eager entry-point
-		// materialization is a non-opt-in behavior change. Without the opt-in
-		// (`materializeEntryPointForPendingStateApply: false`, the default),
-		// `provideEntryPoint` runs lazily — *after* stashed ops have been
-		// applied. A DataObject that synchronously reads DDS state in
-		// `initializingFromExisting` must observe the apply-completed state
-		// on both load paths (no perturbation when not opted in).
-		const factory: IRuntimeFactory = {
-			get IRuntimeFactory() {
-				return this;
-			},
-			instantiateRuntime: async (context, existing) =>
-				loadContainerRuntime({
-					context,
-					existing,
-					registryEntries: [[syncSnapshotFactory.type, Promise.resolve(syncSnapshotFactory)]],
-					// Default — no opt-in — so the entry point materializes lazily.
-					provideEntryPoint: async (rt) => {
-						const aliased = await rt.getAliasedDataStoreEntryPoint("default");
-						if (aliased === undefined) {
-							const ds = await rt.createDataStore(syncSnapshotFactory.type);
-							await ds.trySetAlias("default");
-							const created = await rt.getAliasedDataStoreEntryPoint("default");
-							assert(created !== undefined, "default data store must exist");
-							return created.get();
-						}
-						return aliased.get();
-					},
-				}),
-		};
-
-		const deltaConnectionServer = LocalDeltaConnectionServer.create();
-		const { codeDetails, urlResolver, loaderProps } = createLoader({
-			deltaConnectionServer,
-			runtimeFactory: factory,
-		});
-
-		// Set up: two acked keys plus one offline edit.
-		const seedContainer = asLegacyAlphaContainer(
-			await createDetachedContainer({ ...loaderProps, codeDetails }),
-		);
-		const seedEntryPoint = (await seedContainer.getEntryPoint()) as Partial<{
-			SyncSnapshotDataObject: SyncSnapshotDataObject;
-		}>;
-		const seedObject = seedEntryPoint.SyncSnapshotDataObject;
-		assert(seedObject !== undefined);
-		seedObject.set("acked-1", "v1");
-		seedObject.set("acked-2", "v2");
-		await seedContainer.attach(urlResolver.createCreateNewRequest("regression"));
-		const url = await seedContainer.getAbsoluteUrl("");
-		assert(url !== undefined);
-		await new Promise<void>((resolve) =>
-			seedContainer.isDirty ? seedContainer.once("saved", () => resolve()) : resolve(),
-		);
-		seedContainer.disconnect();
-		seedObject.set("offline-1", "v3");
-		const pendingState = await seedContainer.getPendingLocalState();
-		seedContainer.close();
-
-		// Path 1: reload without pending state.
-		const noPendingContainer = await loadExistingContainer({
-			...loaderProps,
-			request: { url },
-		});
-		const noPendingEntryPoint = (await noPendingContainer.getEntryPoint()) as Partial<{
-			SyncSnapshotDataObject: SyncSnapshotDataObject;
-		}>;
-		const noPendingObject = noPendingEntryPoint.SyncSnapshotDataObject;
-		assert(noPendingObject !== undefined);
-
-		// Path 2: reload with pending state.
-		const withPendingContainer = await loadExistingContainer({
-			...loaderProps,
-			request: { url },
-			pendingLocalState: pendingState,
-		});
-		const withPendingEntryPoint = (await withPendingContainer.getEntryPoint()) as Partial<{
-			SyncSnapshotDataObject: SyncSnapshotDataObject;
-		}>;
-		const withPendingObject = withPendingEntryPoint.SyncSnapshotDataObject;
-		assert(withPendingObject !== undefined);
-
-		// Without the opt-in, both DataObjects' `initializingFromExisting` runs
-		// after the runtime has fully booted (lazy entry-point materialization).
-		// On the with-pending path, the offline op has been replayed by then, so
-		// the snapshotted size includes it — matching `root.size`.
-		assert.strictEqual(
-			withPendingObject.snapshotSize,
-			withPendingObject.rootSize,
-			"with-pending DataObject's snapshotted size matches its DDS state",
-		);
-		assert.strictEqual(
-			noPendingObject.snapshotSize,
-			noPendingObject.rootSize,
-			"no-pending DataObject's snapshotted size matches its DDS state",
-		);
-		assert.strictEqual(
-			withPendingObject.snapshotSize,
-			noPendingObject.snapshotSize + 1,
-			"with-pending sees one extra (offline) op compared to no-pending",
 		);
 	});
 });

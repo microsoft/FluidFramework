@@ -817,30 +817,6 @@ export interface LoadContainerRuntimeParams {
 	 * disable `foo` by default.
 	 */
 	minVersionForCollab?: MinimumVersionForCollab;
-
-	/**
-	 * Opt in to materializing the entry point (via {@link LoadContainerRuntimeParams.provideEntryPoint})
-	 * during the stashed-op apply window — *before* the ops are replayed — so the entry
-	 * point can subscribe to
-	 * {@link @fluidframework/container-runtime-definitions#IContainerRuntimeEvents.pendingStateApplyStart}
-	 * and call `enterStagingMode()` to make the replayed ops reviewable via
-	 * `commitChanges` / `discardChanges`.
-	 *
-	 * **Behavior change when enabled:** the entry point's construction (including
-	 * `provideEntryPoint` and any `initializingFromExisting` / `hasInitialized`
-	 * lifecycle hooks on a `DataObject`-derived entry point) runs *before* stashed
-	 * ops have been replayed onto the local DDS state. Synchronous DDS reads in
-	 * those hooks will see snapshot state, not post-replay state. DataObjects that
-	 * subscribe to DDS events (the typical pattern) self-correct as the replay fires
-	 * change notifications; DataObjects that snapshot DDS values into instance
-	 * fields would observe stale data.
-	 *
-	 * Defaults to `false`, which preserves the prior behavior (entry point
-	 * materializes lazily on the first `getEntryPoint()` call, after the apply
-	 * window has closed). Has no effect when there is no pending local state or
-	 * when the pending state contains no stashed ops to replay.
-	 */
-	materializeEntryPointForPendingStateApply?: boolean;
 }
 /**
  * This is meant to be used by a {@link @fluidframework/container-definitions#IRuntimeFactory} to instantiate a container runtime.
@@ -985,7 +961,6 @@ export class ContainerRuntime
 			containerScope = {},
 			containerRuntimeCtor = ContainerRuntime,
 			minVersionForCollab = defaultMinVersionForCollab,
-			materializeEntryPointForPendingStateApply = false,
 		} = params;
 
 		// If taggedLogger exists, use it. Otherwise, wrap the vanilla logger:
@@ -1321,11 +1296,6 @@ export class ContainerRuntime
 			recentBatchInfo,
 		);
 
-		// Set the eager-entrypoint opt-in before applyStashedOpsAt runs (it fires the
-		// pre-apply hook that consults this flag).
-		runtime.materializeEntryPointForPendingStateApply =
-			materializeEntryPointForPendingStateApply;
-
 		runtime.sharePendingBlobs();
 
 		// Initialize the base state of the runtime before it's returned.
@@ -1423,13 +1393,6 @@ export class ContainerRuntime
 	// That said, in "delayed" mode it's possible that Id Compressor was never initialized before getPendingLocalState() is called.
 	// In such case we have to process all ops, including those marked with savedOp === true.
 	private readonly skipSavedCompressorOps: boolean;
-
-	/**
-	 * Mirror of {@link LoadContainerRuntimeParams.materializeEntryPointForPendingStateApply}.
-	 * Set by `loadRuntime2` after construction and consulted by the pre-apply hook so the
-	 * runtime only awaits the entry point eagerly when the host opted in.
-	 */
-	public materializeEntryPointForPendingStateApply: boolean = false;
 
 	/**
 	 * {@inheritDoc @fluidframework/runtime-definitions#IContainerRuntimeBase.idCompressor}
@@ -1882,18 +1845,16 @@ export class ContainerRuntime
 			this.baseLogger,
 			{
 				// PSM has just set its isApplyingStashedOps flag; isReadOnly() now returns true.
-				// Fan out the new readonly state to data stores so DDSes see it during replay.
-				// When the host opts in via `materializeEntryPointForPendingStateApply`, also
-				// materialize the entry point so it can subscribe to pendingStateApplyStart
+				// Fan out the new readonly state to data stores so DDSes see it during replay,
+				// then materialize the entry point so it can subscribe to pendingStateApplyStart
 				// before we emit it (typical pattern: the entry point's lifecycle hook calls
-				// `enterStagingMode()` so replayed ops are marked staged for review). Without
-				// the opt-in we leave the entry point lazy to preserve the prior behavior
-				// where DataObject lifecycle hooks ran post-replay.
+				// `enterStagingMode()` so replayed ops are marked staged for review). Eager
+				// materialization on this path is consistent with `applyStashedOp` itself,
+				// which can realize data stores during replay; pending state is a new feature
+				// without entrenched consumers, so the new lifecycle is unconditional.
 				onBeforeFirstStashedOpApply: async () => {
 					this.notifyReadOnlyState();
-					if (this.materializeEntryPointForPendingStateApply) {
-						await this.entryPoint;
-					}
+					await this.entryPoint;
 					this.emit("pendingStateApplyStart");
 				},
 				// PSM has cleared its flag; isReadOnly() reflects the network-readonly state again.
