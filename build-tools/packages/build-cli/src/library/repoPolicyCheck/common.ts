@@ -5,7 +5,7 @@
 
 import fs from "node:fs";
 import type { PackageJson } from "@fluidframework/build-tools";
-import { type Result, err, ok } from "true-myth/result";
+import { err, ok, type Result } from "true-myth/result";
 
 /**
  * each handler has a name for filtering and a match regex for matching which files it should resolve

@@ -20,10 +20,10 @@ export const handlers: Handler[] = [
 			const manifest = getFlubConfig(root);
 
 			const result = readPackageJson(packageJsonFile);
-			if ("error" in result) {
+			if (result.isErr) {
 				return result.error;
 			}
-			const json = result.json;
+			const json = result.value;
 
 			// Ignore any paths in the policy configuration.
 			// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions

@@ -242,18 +242,7 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy> {
 					}
 					return true;
 				})
-				.map(async (handler): Promise<{ handler: Handler; result: string | undefined }> => {
-					let result: string | undefined;
-					try {
-						// Pass the handler the absolute file path and the absolute path to the git root
-						result = await runWithPerf(handler.name, "handle", () =>
-							handler.handler(file, gitRoot),
-						);
-					} catch (error: unknown) {
-						result = error instanceof Error ? error.message : String(error);
-					}
-					return { handler, result };
-				}),
+				.map(async (handler) => runPolicyHandler(handler, file, gitRoot)),
 		);
 
 		// Now that all handlers have completed, we can react to results which might include running resolvers
@@ -348,10 +337,25 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy> {
 	}
 }
 
+export async function runPolicyHandler(
+	handler: Handler,
+	file: string,
+	gitRoot: string,
+): Promise<{ handler: Handler; result: string | undefined }> {
+	let result: string | undefined;
+	try {
+		// Pass the handler the absolute file path and the absolute path to the git root.
+		result = await runWithPerf(handler.name, "handle", () => handler.handler(file, gitRoot));
+	} catch (error: unknown) {
+		result = error instanceof Error ? error.message : String(error);
+	}
+	return { handler, result };
+}
+
 async function runWithPerf<T>(
 	name: string,
 	action: policyAction,
-	run: () => Promise<T>,
+	run: () => T | Promise<T>,
 ): Promise<T> {
 	const actionMap = handlerPerformanceData.get(action) ?? new Map<string, number>();
 	let dur = actionMap.get(name) ?? 0;
