@@ -97,7 +97,6 @@ describe("Container Runtime", () => {
 			for (let i = 0; i < count; i++) {
 				const message: Partial<ISequencedDocumentMessage> = {
 					clientId,
-					clientSequenceNumber: seq,
 					minimumSequenceNumber: 0,
 					sequenceNumber: seq++,
 					type: MessageType.Operation,
