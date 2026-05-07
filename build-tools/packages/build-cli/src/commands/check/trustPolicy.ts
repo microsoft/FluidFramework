@@ -50,6 +50,15 @@ type TrustEvidence = "none" | "provenance" | "trustedPublisher";
 interface TrustViolation extends PinnedVersion {
 	message?: string;
 	hint?: string;
+	/**
+	 * Names of workspace projects in the audited workspace whose dependency
+	 * graphs reach this `(name, version)`. Sorted, de-duplicated. Computed
+	 * from the original `pnpm list -r --json` walk, not from pnpm's NDJSON
+	 * `pkgsStack` (which in our scratch workspace tends to be empty because
+	 * each pinned version has its own self-leaf that fires the violation
+	 * before any transitive path can).
+	 */
+	roots?: string[];
 	/** ISO timestamp the offending version was published. */
 	publishedAt?: string;
 	/** npm publisher account name for the offending version. */
@@ -157,7 +166,6 @@ export default class CheckTrustPolicyCommand extends BaseCommandWithBuildProject
 		const listResult = await runPnpm(
 			["list", "--recursive", "--json", "--depth", "Infinity"],
 			workspaceDir,
-			false,
 		);
 		if (listResult.code !== 0) {
 			this.error(
@@ -165,7 +173,7 @@ export default class CheckTrustPolicyCommand extends BaseCommandWithBuildProject
 			);
 		}
 
-		const pinned = collectPinnedVersions(listResult.stdout);
+		const { pinned, rootsByKey } = collectPinnedVersions(listResult.stdout);
 		this.verbose(`Found ${pinned.length} unique name@version entries.`);
 
 		this.verbose(`Materializing scratch workspace at ${tempDir}...`);
@@ -225,7 +233,7 @@ export default class CheckTrustPolicyCommand extends BaseCommandWithBuildProject
 				);
 				iteration++;
 
-				lastResult = await runPnpm(installArgs, tempDir, this.flags.verbose);
+				lastResult = await runPnpm(installArgs, tempDir);
 				const found = extractTrustViolations(lastResult.stdout);
 
 				if (lastResult.code === 0) {
@@ -293,8 +301,14 @@ export default class CheckTrustPolicyCommand extends BaseCommandWithBuildProject
 		for (const name of [...violationsByName.keys()].sort()) {
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			for (const version of [...violationsByName.get(name)!].sort()) {
-				const reason = reasonsByKey.get(`${name}@${version}`);
-				violations.push({ name, version, ...reason });
+				const key = `${name}@${version}`;
+				const reason = reasonsByKey.get(key);
+				const rootSet = rootsByKey.get(key);
+				const roots =
+					rootSet === undefined || rootSet.size === 0
+						? undefined
+						: [...rootSet].sort();
+				violations.push({ name, version, ...reason, roots });
 			}
 		}
 
@@ -346,6 +360,9 @@ export default class CheckTrustPolicyCommand extends BaseCommandWithBuildProject
 					if (priorPublished !== undefined) priorParts.push(`published ${priorPublished}`);
 					if (pt.publisher !== undefined) priorParts.push(`by ${pt.publisher}`);
 					this.info(`      prior trusted: ${violation.name}@${pt.version} (${priorParts.join(", ")})`);
+				}
+				if (violation.roots !== undefined) {
+					this.info(`      roots: ${violation.roots.join(", ")}`);
 				}
 				if (violation.enrichmentError !== undefined) {
 					this.info(`      (enrichment unavailable: ${violation.enrichmentError})`);
@@ -410,7 +427,8 @@ function countViolations(violationsByName: ReadonlyMap<string, ReadonlySet<strin
 /**
  * Walks the JSON output of `pnpm list -r --json --depth Infinity` and returns
  * the set of unique `name@version` strings for every dependency resolved
- * from a registry.
+ * from a registry, plus a map from `${name}@${version}` to the set of
+ * workspace project names whose dependency graphs reach it.
  *
  * pnpm's output is an array of workspace project nodes. Each node and each
  * nested dependency entry can carry `dependencies`, `devDependencies`,
@@ -420,9 +438,19 @@ function countViolations(violationsByName: ReadonlyMap<string, ReadonlySet<strin
  * carry a `resolved` URL — workspace, link, file, and git installs do not,
  * so requiring `resolved` is what filters the audit down to the dependencies
  * pnpm's trust policy actually applies to.
+ *
+ * Root attribution: while traversing each top-level project node, we record
+ * the project's `name` against every `(name, version)` reachable from it.
+ * This gives the violation report something useful to point at — pnpm's
+ * NDJSON `pkgsStack` is empty in our scratch workspace because every pinned
+ * version has its own self-leaf that fires the violation before any
+ * transitive path can.
  */
-function collectPinnedVersions(listJsonStdout: string): PinnedVersion[] {
+function collectPinnedVersions(
+	listJsonStdout: string,
+): { pinned: PinnedVersion[]; rootsByKey: Map<string, Set<string>> } {
 	interface DependencyEntry {
+		name?: string;
 		from?: string;
 		version?: string;
 		resolved?: string;
@@ -434,9 +462,10 @@ function collectPinnedVersions(listJsonStdout: string): PinnedVersion[] {
 
 	const projects = JSON.parse(listJsonStdout) as DependencyEntry[];
 	const seen = new Set<string>();
-	const result: PinnedVersion[] = [];
+	const pinned: PinnedVersion[] = [];
+	const rootsByKey = new Map<string, Set<string>>();
 
-	function visit(entry: DependencyEntry): void {
+	function visit(entry: DependencyEntry, rootName: string): void {
 		if (
 			entry.from !== undefined &&
 			entry.version !== undefined &&
@@ -446,8 +475,14 @@ function collectPinnedVersions(listJsonStdout: string): PinnedVersion[] {
 			const token = `${entry.from}@${entry.version}`;
 			if (!seen.has(token)) {
 				seen.add(token);
-				result.push({ name: entry.from, version: entry.version });
+				pinned.push({ name: entry.from, version: entry.version });
 			}
+			let roots = rootsByKey.get(token);
+			if (roots === undefined) {
+				roots = new Set<string>();
+				rootsByKey.set(token, roots);
+			}
+			roots.add(rootName);
 		}
 		for (const map of [
 			entry.dependencies,
@@ -457,16 +492,19 @@ function collectPinnedVersions(listJsonStdout: string): PinnedVersion[] {
 		]) {
 			if (map === undefined) continue;
 			for (const child of Object.values(map)) {
-				visit(child);
+				visit(child, rootName);
 			}
 		}
 	}
 
 	for (const project of projects) {
-		visit(project);
+		// Workspace project nodes always have a `name`. Skip any anomalous
+		// entry without one rather than fabricating an opaque label.
+		if (project.name === undefined) continue;
+		visit(project, project.name);
 	}
 
-	return result;
+	return { pinned, rootsByKey };
 }
 
 /**
@@ -545,25 +583,20 @@ async function writeAuditWorkspace(
 
 /**
  * Runs `pnpm` with the given args from `cwd` and captures stdout, stderr,
- * and the exit code. When `streamLive` is true, output is also forwarded
- * to this process so progress is visible during long operations.
+ * and the exit code. Output is buffered, never streamed live: pnpm's
+ * NDJSON reporter emits one event per fetched package and that swamps
+ * the terminal long before any trust-policy violation surfaces. The
+ * captured stderr is included in error messages on non-zero exits, and
+ * the captured stdout is parsed for the trust-downgrade events we
+ * actually care about.
  */
-async function runPnpm(
-	args: string[],
-	cwd: string,
-	streamLive: boolean,
-): Promise<PnpmRunResult> {
-	const subprocess = execa("pnpm", args, {
+async function runPnpm(args: string[], cwd: string): Promise<PnpmRunResult> {
+	const result = await execa("pnpm", args, {
 		cwd,
 		reject: false,
 		stdin: "ignore",
 		env: { ...process.env, CI: "1" },
 	});
-	if (streamLive) {
-		subprocess.stdout?.on("data", (chunk: Buffer) => process.stdout.write(chunk));
-		subprocess.stderr?.on("data", (chunk: Buffer) => process.stderr.write(chunk));
-	}
-	const result = await subprocess;
 	return {
 		code: result.exitCode,
 		stdout: result.stdout,
