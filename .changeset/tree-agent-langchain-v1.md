@@ -18,4 +18,4 @@ No source changes are required for consumers using these APIs.
 The new `contentBlocks` content-block API is opt-in.
 
 Consumers of `createLangchainChatModel` who currently install `@langchain/core@^0.3` should bump to `@langchain/core@^1.1.43`
-(the lowest version that satisfies the peer ranges of all v1 sibling integrations — `@langchain/google-genai@2.1.30` requires `^1.1.43`).
+(the lowest version that satisfies the peer ranges of all v1 sibling integrations—`@langchain/google-genai@2.1.30` requires `^1.1.43`).
