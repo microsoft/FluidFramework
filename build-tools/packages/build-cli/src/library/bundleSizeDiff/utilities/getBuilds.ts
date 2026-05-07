@@ -4,7 +4,7 @@
  */
 
 import type { WebApi } from "azure-devops-node-api";
-import type { Build } from "azure-devops-node-api/interfaces/BuildInterfaces";
+import type { Build } from "azure-devops-node-api/interfaces/BuildInterfaces.js";
 
 export interface GetBuildOptions {
 	// The ADO project name
