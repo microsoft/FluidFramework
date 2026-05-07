@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { TreeAlpha } from "@fluidframework/tree/internal";
 import type { TextAsTree } from "@fluidframework/tree/internal";
+import { TreeAlpha } from "@fluidframework/tree/internal";
 import { type ChangeEvent, type FC, useCallback, useRef } from "react";
 
 import type { PropTreeNode } from "../../propNode.js";

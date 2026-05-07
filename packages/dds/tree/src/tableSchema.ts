@@ -9,37 +9,37 @@ import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import { EmptyKey } from "./core/index.js";
 import { Tree, TreeAlpha } from "./shared-tree/index.js";
 import {
+	createCustomizedFluidFrameworkScopedFactory,
+	eraseSchemaDetailsSubclassable,
 	type FieldHasDefault,
+	FieldKind,
 	type ImplicitAllowedTypes,
+	type ImplicitFieldSchema,
 	type InsertableObjectFromSchemaRecord,
+	type InsertableTreeFieldFromImplicitField,
 	type InsertableTreeNodeFromImplicitAllowedTypes,
+	type InternalTreeNode,
 	type NodeKind,
+	objectSchema,
+	SchemaFactory,
 	type SchemaFactoryBeta,
 	type ScopedSchemaName,
+	scoped,
+	/* eslint-enable unused-imports/no-unused-imports, @typescript-eslint/no-unused-vars */
+	// #endregion
+	type TransactionConstraintAlpha,
 	TreeArrayNode,
+	type TreeFieldFromImplicitField,
 	type TreeNode,
 	type TreeNodeFromImplicitAllowedTypes,
 	type TreeNodeSchema,
 	type TreeNodeSchemaClass,
-	type WithType,
-	type TreeFieldFromImplicitField,
-	type InsertableTreeFieldFromImplicitField,
-	type InternalTreeNode,
-	SchemaFactory,
-	scoped,
-	type ImplicitFieldSchema,
-	withBufferedTreeEvents,
-	type TreeRecordNode,
-	objectSchema,
-	eraseSchemaDetailsSubclassable,
 	// #region Unused imports to make d.ts cleaner
 	/* eslint-disable unused-imports/no-unused-imports, @typescript-eslint/no-unused-vars */
 	TreeNodeSchemaCore,
-	FieldKind,
-	/* eslint-enable unused-imports/no-unused-imports, @typescript-eslint/no-unused-vars */
-	// #endregion
-	type TransactionConstraintAlpha,
-	createCustomizedFluidFrameworkScopedFactory,
+	type TreeRecordNode,
+	type WithType,
+	withBufferedTreeEvents,
 } from "./simple-tree/index.js";
 import { validateIndex, validateIndexRange } from "./util/index.js";
 

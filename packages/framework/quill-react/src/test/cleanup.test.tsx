@@ -9,7 +9,7 @@ import { toPropTreeNode } from "@fluidframework/react/internal";
 import { TreeViewConfiguration } from "@fluidframework/tree";
 import { independentView } from "@fluidframework/tree/alpha";
 import { FormattedTextAsTree, TextAsTree } from "@fluidframework/tree/internal";
-import { cleanup as rtlCleanup, render } from "@testing-library/react";
+import { render, cleanup as rtlCleanup } from "@testing-library/react";
 import globalJsdom from "global-jsdom";
 import Quill from "quill";
 import { StrictMode } from "react";

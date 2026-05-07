@@ -31,7 +31,7 @@ import {
 
 import { documentType } from "../package.js";
 import { IHTMLAttributes } from "../util/attr.js";
-import { TagName, TokenList, clamp } from "../util/index.js";
+import { clamp, TagName, TokenList } from "../util/index.js";
 
 import { debug } from "./debug.js";
 import { SegmentSpan } from "./segmentspan.js";

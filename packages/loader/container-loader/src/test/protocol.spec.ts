@@ -7,10 +7,10 @@ import { strict as assert } from "node:assert";
 
 import type { IClientDetails, IUser } from "@fluidframework/driver-definitions";
 import {
-	MessageType,
+	type IClientJoin,
 	type ISequencedDocumentMessage,
 	type ISequencedDocumentSystemMessage,
-	type IClientJoin,
+	MessageType,
 } from "@fluidframework/driver-definitions/internal";
 
 import { ProtocolOpHandler } from "../protocol/index.js";

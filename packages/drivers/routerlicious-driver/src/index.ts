@@ -3,25 +3,20 @@
  * Licensed under the MIT License.
  */
 
-// URL
-export type { IRouterliciousResolvedUrl } from "./routerliciousResolvedUrl.js";
-
 // Tokens
 export { DefaultTokenProvider } from "./defaultTokenProvider.js";
-export type { ITokenProvider, ITokenResponse, ITokenService } from "./tokens.js";
-
-// Errors
-export { RouterliciousErrorTypes } from "./errorUtils.js";
-
 // Factory
 export {
 	createRouterliciousDocumentServiceFactory,
 	DocumentPostCreateError,
 	RouterliciousDocumentServiceFactory,
 } from "./documentServiceFactory.js";
-
+// Errors
+export { RouterliciousErrorTypes } from "./errorUtils.js";
 // Configuration
 export type { IRouterliciousDriverPolicies } from "./policies.js";
-
 // Layer Compat details
 export { r11sDriverCompatDetailsForLoader } from "./r11sLayerCompatState.js";
+// URL
+export type { IRouterliciousResolvedUrl } from "./routerliciousResolvedUrl.js";
+export type { ITokenProvider, ITokenResponse, ITokenService } from "./tokens.js";

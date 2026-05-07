@@ -11,8 +11,8 @@ import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 import { getFileLink } from "../getFileLink.js";
 
 import {
-	type MockResponse,
 	createResponse,
+	type MockResponse,
 	mockFetchMultiple,
 	mockFetchSingle,
 	notFound,

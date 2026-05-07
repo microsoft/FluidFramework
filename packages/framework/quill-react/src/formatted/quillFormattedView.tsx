@@ -6,11 +6,13 @@
 import { assert } from "@fluidframework/core-utils/internal";
 import {
 	type PropTreeNode,
-	withMemoizedTreeObservations,
 	type TextEditorProps,
+	withMemoizedTreeObservations,
 } from "@fluidframework/react/internal";
-import { TreeAlpha, FormattedTextAsTree } from "@fluidframework/tree/internal";
+import { FormattedTextAsTree, TreeAlpha } from "@fluidframework/tree/internal";
+
 export { FormattedTextAsTree } from "@fluidframework/tree/internal";
+
 import Quill, { type EmitterSource } from "quill";
 import DeltaPackage from "quill-delta";
 import { type FC, useEffect, useRef, useState } from "react";

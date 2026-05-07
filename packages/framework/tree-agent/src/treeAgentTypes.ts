@@ -6,8 +6,8 @@
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import type { TreeNodeSchemaClass } from "@fluidframework/tree/alpha";
 import { ObjectNodeSchema } from "@fluidframework/tree/alpha";
-import { typeFactory as baseTypeFactory } from "@fluidframework/type-factory/internal";
 import type { TypeFactoryInstanceOf } from "@fluidframework/type-factory/internal";
+import { typeFactory as baseTypeFactory } from "@fluidframework/type-factory/internal";
 
 /**
  * Namespace containing type factory functions.

@@ -12,12 +12,12 @@ import {
 	ObjectNodeSchema,
 	RecordNodeSchema,
 } from "@fluidframework/tree/alpha";
-import { FieldKind, NodeKind, ValueSchema } from "@fluidframework/tree/internal";
 import type {
 	AllowedTypeMetadata,
 	AllowedTypesFull,
 	SimpleLeafNodeSchema,
 } from "@fluidframework/tree/internal";
+import { FieldKind, NodeKind, ValueSchema } from "@fluidframework/tree/internal";
 import {
 	isTypeFactoryType,
 	type TypeFactoryOptional,
@@ -31,8 +31,8 @@ import type { PropertyDef } from "./propertyBinding.js";
 import { getExposedProperties } from "./propertyBinding.js";
 import { renderTypeFactoryTypeScript } from "./renderTypeFactoryTypeScript.js";
 import {
-	IdentifierCollisionResolver,
 	getFriendlyName,
+	IdentifierCollisionResolver,
 	isNamedSchema,
 	llmDefault,
 } from "./utils.js";

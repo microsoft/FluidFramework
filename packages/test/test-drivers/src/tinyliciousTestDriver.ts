@@ -10,10 +10,10 @@ import {
 	IResolvedUrl,
 } from "@fluidframework/driver-definitions/internal";
 import {
-	InsecureTinyliciousTokenProvider,
-	InsecureTinyliciousUrlResolver,
 	createTinyliciousCreateNewRequest,
 	defaultTinyliciousPort,
+	InsecureTinyliciousTokenProvider,
+	InsecureTinyliciousUrlResolver,
 } from "@fluidframework/tinylicious-driver/internal";
 
 import {

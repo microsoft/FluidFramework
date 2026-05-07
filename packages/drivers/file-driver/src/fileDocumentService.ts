@@ -6,12 +6,12 @@
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import type { IClient } from "@fluidframework/driver-definitions";
 import type {
-	IDocumentServiceEvents,
-	IDocumentService,
-	IResolvedUrl,
-	IDocumentStorageService,
 	IDocumentDeltaConnection,
 	IDocumentDeltaStorageService,
+	IDocumentService,
+	IDocumentServiceEvents,
+	IDocumentStorageService,
+	IResolvedUrl,
 } from "@fluidframework/driver-definitions/internal";
 
 import type { FileDeltaStorageService } from "./fileDeltaStorageService.js";

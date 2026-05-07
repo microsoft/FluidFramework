@@ -8,19 +8,19 @@ import * as fs from "node:fs";
 import * as path from "node:path";
 
 import {
+	type ImplicitFieldSchema,
+	type InsertableField,
 	independentView,
 	SchemaFactoryAlpha,
 	SchemaFactoryBeta,
 	TreeViewConfiguration,
-	type ImplicitFieldSchema,
-	type InsertableField,
 } from "@fluidframework/tree/internal";
 import {
 	buildFunc,
-	exposeMethodsSymbol,
-	exposePropertiesSymbol,
 	type ExposedMethods,
 	type ExposedProperties,
+	exposeMethodsSymbol,
+	exposePropertiesSymbol,
 } from "@fluidframework/type-factory/alpha";
 
 import type { TreeView } from "../api.js";

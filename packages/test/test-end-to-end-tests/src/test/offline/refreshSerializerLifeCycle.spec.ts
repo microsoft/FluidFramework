@@ -10,22 +10,22 @@ import { describeCompat } from "@fluid-private/test-version-utils";
 import { asLegacyAlpha, type ContainerAlpha } from "@fluidframework/container-loader/internal";
 import { DefaultSummaryConfiguration } from "@fluidframework/container-runtime/internal";
 import type {
-	IFluidHandle,
 	ConfigTypes,
 	IConfigProviderBase,
+	IFluidHandle,
 	ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces/internal";
 import { Deferred } from "@fluidframework/core-utils/internal";
-import { SharedMap, type ISharedMap } from "@fluidframework/map/internal";
+import { type ISharedMap, SharedMap } from "@fluidframework/map/internal";
 import {
-	ITestFluidObject,
-	timeoutPromise,
-	DataObjectFactoryType,
-	createAndAttachContainer,
-	timeoutAwait,
-	waitForContainerConnection,
 	type ChannelFactoryRegistry,
+	createAndAttachContainer,
+	DataObjectFactoryType,
+	ITestFluidObject,
 	type ITestObjectProvider,
+	timeoutAwait,
+	timeoutPromise,
+	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
 
 import { wrapObjectAndOverride } from "../../mocking.js";

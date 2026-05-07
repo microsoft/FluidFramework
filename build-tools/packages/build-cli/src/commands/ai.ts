@@ -6,12 +6,14 @@
 import { readFile, writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import * as readline from "node:readline/promises";
+
 import { getResolvedFluidRoot } from "@fluidframework/build-tools";
 import { confirm } from "@inquirer/prompts";
 import { Flags } from "@oclif/core";
 import execa from "execa";
 import matter from "gray-matter";
 import chalk from "picocolors";
+
 import { type AliasProposal, runAiSession } from "../library/ai/copilotSession.js";
 import { BaseCommand } from "../library/commands/base.js";
 

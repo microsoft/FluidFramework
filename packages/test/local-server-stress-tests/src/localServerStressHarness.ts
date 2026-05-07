@@ -17,11 +17,11 @@ import type {
 	SaveInfo,
 } from "@fluid-private/stochastic-test-utils";
 import {
-	FuzzTestMinimizer,
 	asyncGeneratorFromArray,
 	chainAsync,
 	createFuzzDescribe,
 	done,
+	FuzzTestMinimizer,
 	generateTestSeeds,
 	getSaveDirectory,
 	getSaveInfo,
@@ -39,10 +39,10 @@ import {
 import {
 	asLegacyAlpha,
 	ConnectionState,
+	type ContainerAlpha,
 	createDetachedContainer,
 	loadExistingContainer,
 	loadFrozenContainerFromPendingState,
-	type ContainerAlpha,
 	PendingLocalStateStore,
 } from "@fluidframework/container-loader/internal";
 import type {
@@ -68,16 +68,16 @@ import {
 } from "@fluidframework/telemetry-utils/internal";
 import {
 	LocalCodeLoader,
-	timeoutPromise,
 	timeoutAwait,
+	timeoutPromise,
 } from "@fluidframework/test-utils/internal";
 
 import { saveFluidOps } from "./baseModel.js";
 import { validateConsistencyOfAllDDS } from "./ddsOperations.js";
 import {
 	createRuntimeFactory,
-	StressDataObject,
 	type DefaultStressDataObject,
+	StressDataObject,
 } from "./stressDataObject.js";
 import { makeUnreachableCodePathProxy } from "./utils.js";
 

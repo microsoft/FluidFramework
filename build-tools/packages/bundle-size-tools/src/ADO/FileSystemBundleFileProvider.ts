@@ -4,9 +4,11 @@
  */
 
 import { promises as fsPromises } from "fs";
+
 import type { BundleAnalyzerPlugin } from "webpack-bundle-analyzer";
 
 import { getAllFilesInDirectory } from "../utilities";
+
 import {
 	type BundleFileData,
 	getAnalyzerFilePathsFromFolder,

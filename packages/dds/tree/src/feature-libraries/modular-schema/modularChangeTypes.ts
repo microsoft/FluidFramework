@@ -4,14 +4,14 @@
  */
 
 import {
-	subtractChangeAtomIds,
 	type ChangeAtomId,
 	type ChangesetLocalId,
 	type FieldKey,
 	type FieldKindIdentifier,
 	type RevisionInfo,
+	subtractChangeAtomIds,
 } from "../../core/index.js";
-import { brand, RangeMap, type Brand } from "../../util/index.js";
+import { type Brand, brand, RangeMap } from "../../util/index.js";
 import type { ChangeAtomIdBTree } from "../changeAtomIdBTree.js";
 import type { TreeChunk } from "../chunked-forest/index.js";
 

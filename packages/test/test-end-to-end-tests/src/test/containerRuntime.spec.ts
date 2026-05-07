@@ -11,9 +11,9 @@ import { CompressionAlgorithms } from "@fluidframework/container-runtime/interna
 import type { ISharedDirectory } from "@fluidframework/map/internal";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 import {
+	getContainerEntryPointBackCompat,
 	type ITestContainerConfig,
 	ITestObjectProvider,
-	getContainerEntryPointBackCompat,
 } from "@fluidframework/test-utils/internal";
 // eslint-disable-next-line import-x/no-internal-modules
 import semverGt from "semver/functions/gt.js";

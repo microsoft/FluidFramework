@@ -40,18 +40,18 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 
 import * as semver from "semver";
 
-// Re-use version arithmetic and package list from the main source to keep them in sync.
-// jiti (used to run this script) resolves .js imports to .ts files automatically.
-import {
-	calculateRequestedRange,
-	versionHasMovedSparsedMatrix,
-	resolveRangeViaRegistry,
-} from "../src/versionUtils.js";
-import { packageListToInstall } from "../src/compatPackageList.js";
 import {
 	numOfInternalMajorsBeforePublic2dot0,
 	oldestCompatibleVersion,
 } from "../src/compatConfig.js";
+import { packageListToInstall } from "../src/compatPackageList.js";
+// Re-use version arithmetic and package list from the main source to keep them in sync.
+// jiti (used to run this script) resolves .js imports to .ts files automatically.
+import {
+	calculateRequestedRange,
+	resolveRangeViaRegistry,
+	versionHasMovedSparsedMatrix,
+} from "../src/versionUtils.js";
 
 // ---------------------------------------------------------------------------
 // Configuration

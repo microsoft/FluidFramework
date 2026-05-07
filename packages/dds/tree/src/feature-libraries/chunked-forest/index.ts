@@ -3,29 +3,30 @@
  * Licensed under the MIT License.
  */
 
-export { uniformChunk, ChunkShape } from "./uniformChunk.js";
-export { type TreeChunk, dummyRoot } from "../../core/index.js";
-export {
-	chunkTree,
-	defaultChunkPolicy,
-	makeTreeChunker,
-	type IChunker,
-	chunkFieldSingle,
-	chunkField,
-	combineChunks,
-} from "./chunkTree.js";
+export { dummyRoot, type TreeChunk } from "../../core/index.js";
+
 export { buildChunkedForest } from "./chunkedForest.js";
 export {
-	FieldBatchFormatVersion,
-	type FieldBatch,
-	type FieldBatchCodec,
-	fieldBatchCodecBuilder,
-	type FieldBatchEncodingContext,
-	type IncrementalEncoderDecoder,
+	chunkField,
+	chunkFieldSingle,
+	chunkTree,
+	combineChunks,
+	defaultChunkPolicy,
+	type IChunker,
+	makeTreeChunker,
+} from "./chunkTree.js";
+export {
 	type ChunkReferenceId,
-	type IncrementalEncodingPolicy,
 	defaultIncrementalEncodingPolicy,
 	type EncodedFieldBatchV1OrV2,
 	type EncodedFieldBatchV2,
+	type FieldBatch,
+	type FieldBatchCodec,
+	type FieldBatchEncodingContext,
+	FieldBatchFormatVersion,
+	fieldBatchCodecBuilder,
+	type IncrementalEncoderDecoder,
+	type IncrementalEncodingPolicy,
 } from "./codec/index.js";
 export { emptyChunk } from "./emptyChunk.js";
+export { ChunkShape, uniformChunk } from "./uniformChunk.js";

@@ -7,8 +7,8 @@ import { strict as assert } from "node:assert";
 import {
 	existsSync,
 	mkdirSync,
-	readFileSync,
 	readdirSync,
+	readFileSync,
 	statSync,
 	writeFileSync,
 } from "node:fs";
@@ -26,8 +26,8 @@ import {
 	configuredSharedTree,
 	FormatValidatorBasic,
 	SchemaFactory,
-	TreeViewConfiguration,
 	type SharedTreeOptions,
+	TreeViewConfiguration,
 } from "../../index.js";
 import { regenerateSnapshots } from "../snapshots/index.js";
 import { testSrcPath } from "../testSrcPath.cjs";

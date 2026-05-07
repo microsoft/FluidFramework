@@ -11,24 +11,23 @@ import type {
 	LatestMap,
 	Presence,
 } from "@fluid-internal/presence-definitions";
-import type { OpaqueJsonDeserialized } from "@fluidframework/core-interfaces/internal/exposedUtilityTypes";
-import { EventAndErrorTrackingLogger } from "@fluidframework/test-utils/internal";
-import { describe, it, after, afterEach, before, beforeEach } from "mocha";
-import type { SinonFakeTimers } from "sinon";
-import { useFakeTimers } from "sinon";
-
 import { StateFactory } from "@fluid-internal/presence-runtime/states";
 import { toOpaqueJson } from "@fluid-internal/presence-runtime/utils";
+import type { OpaqueJsonDeserialized } from "@fluidframework/core-interfaces/internal/exposedUtilityTypes";
+import { EventAndErrorTrackingLogger } from "@fluidframework/test-utils/internal";
+import { after, afterEach, before, beforeEach, describe, it } from "mocha";
+import type { SinonFakeTimers } from "sinon";
+import { useFakeTimers } from "sinon";
 
 import { MockEphemeralRuntime } from "../mockEphemeralRuntime.js";
 import type { InboundPresenceSignalMessage, ProcessSignalFunction } from "../testUtils.js";
 import {
 	assertFinalExpectations,
 	attendeeId1,
-	localAttendeeId,
 	connectionId1,
-	initialLocalClientConnectionId,
 	createSpiedValidator,
+	initialLocalClientConnectionId,
+	localAttendeeId,
 	prepareConnectedPresence,
 } from "../testUtils.js";
 

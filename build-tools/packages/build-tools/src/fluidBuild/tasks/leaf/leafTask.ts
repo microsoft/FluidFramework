@@ -6,10 +6,11 @@
 import * as assert from "node:assert";
 import { existsSync } from "node:fs";
 import { readFile, stat, unlink, writeFile } from "node:fs/promises";
-import type { AsyncPriorityQueue } from "async";
 import crypto from "crypto";
-import registerDebug from "debug";
 import * as path from "path";
+
+import type { AsyncPriorityQueue } from "async";
+import registerDebug from "debug";
 import chalk from "picocolors";
 
 import { defaultLogger } from "../../../common/logging";

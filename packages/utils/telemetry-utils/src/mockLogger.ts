@@ -13,8 +13,8 @@ import { assert } from "@fluidframework/core-utils/internal";
 import { createChildLogger } from "./logger.js";
 import type {
 	ITelemetryEventExt,
-	TelemetryLoggerExt,
 	ITelemetryPropertiesExt,
+	TelemetryLoggerExt,
 } from "./telemetryTypes.js";
 
 /**

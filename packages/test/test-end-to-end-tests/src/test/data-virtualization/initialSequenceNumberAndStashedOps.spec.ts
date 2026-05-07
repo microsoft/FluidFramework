@@ -9,8 +9,8 @@ import { describeCompat, type ITestDataObject } from "@fluid-private/test-versio
 import { asLegacyAlpha } from "@fluidframework/container-loader/internal";
 import type { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
 import {
-	type ITestObjectProvider,
 	ITestContainerConfig,
+	type ITestObjectProvider,
 } from "@fluidframework/test-utils/internal";
 
 const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({

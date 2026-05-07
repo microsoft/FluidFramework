@@ -6,13 +6,12 @@
 import { strict as assert } from "node:assert";
 
 import type { InternalPresenceTypes, Presence } from "@fluid-internal/presence-definitions";
+import { createPresenceManager } from "@fluid-internal/presence-runtime/internal/test";
+import { StateFactory } from "@fluid-internal/presence-runtime/states";
 import type {
 	JsonDeserialized,
 	JsonSerializable,
 } from "@fluidframework/core-interfaces/internal/exposedUtilityTypes";
-
-import { createPresenceManager } from "@fluid-internal/presence-runtime/internal/test";
-import { StateFactory } from "@fluid-internal/presence-runtime/states";
 
 import { addControlsTests } from "./broadcastControlsTests.js";
 import { MockEphemeralRuntime } from "./mockEphemeralRuntime.js";

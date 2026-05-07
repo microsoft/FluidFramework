@@ -4,28 +4,31 @@
  */
 
 export type { BrandedType } from "./brandedType.js";
-
+export type { ConfigTypes, IConfigProviderBase } from "./config.js";
 export type { IDisposable } from "./disposable.js";
-
-export type {
-	FluidIterable,
-	FluidIterableIterator,
-	FluidMap,
-	FluidReadonlyMap,
-} from "./fluidMap.js";
-
+export type { ErasedBaseType, ErasedType, InstanceTypeRelaxed } from "./erasedType.js";
+export { ErasedTypeImplementation } from "./erasedType.js";
 export type {
 	IErrorBase,
 	IGenericError,
-	IUsageError,
-	IThrottlingWarning,
 	ILayerIncompatibilityError,
+	IThrottlingWarning,
+	IUsageError,
 } from "./error.js";
 export {
 	FluidErrorTypes,
 	FluidErrorTypesAlpha,
 } from "./error.js";
-
+export type {
+	HasListeners,
+	IEmitter,
+	IsListener,
+	Listenable,
+	Listeners,
+	MapGetSet,
+	NoListenersCallback,
+	Off,
+} from "./events/index.js";
 export type {
 	ExtendEventProvider,
 	IErrorEvent,
@@ -36,15 +39,18 @@ export type {
 	ReplaceIEventThisPlaceHolder,
 	TransformedEvent,
 } from "./events.js";
-
 export type { IProvideFluidLoadable } from "./fluidLoadable.js";
 export { IFluidLoadable } from "./fluidLoadable.js";
-
+export type {
+	FluidIterable,
+	FluidIterableIterator,
+	FluidMap,
+	FluidReadonlyMap,
+} from "./fluidMap.js";
 // TypeScript forgets the index signature when customers augment IRequestHeader if we export *.
 // So we export the explicit members as a workaround:
 // https://github.com/microsoft/TypeScript/issues/18877#issuecomment-476921038
 export type { IRequest, IRequestHeader, IResponse } from "./fluidRouter.js";
-
 export type {
 	IFluidHandleErased,
 	IFluidHandleEvents,
@@ -57,8 +63,7 @@ export type {
 	IProvideFluidHandleContext,
 	PayloadState,
 } from "./handles.js";
-export { IFluidHandleContext, IFluidHandle, fluidHandleSymbol } from "./handles.js";
-
+export { fluidHandleSymbol, IFluidHandle, IFluidHandleContext } from "./handles.js";
 export type {
 	ILoggingError,
 	ITelemetryBaseEvent,
@@ -69,19 +74,5 @@ export type {
 	TelemetryBaseEventPropertyType,
 } from "./logger.js";
 export { LogLevel } from "./logger.js";
-export type { FluidObjectProviderKeys, FluidObject, FluidObjectKeys } from "./provider.js";
-export type { ConfigTypes, IConfigProviderBase } from "./config.js";
 export type { ISignalEnvelope, TypedMessage } from "./messages.js";
-export type { ErasedType, ErasedBaseType, InstanceTypeRelaxed } from "./erasedType.js";
-export { ErasedTypeImplementation } from "./erasedType.js";
-
-export type {
-	HasListeners,
-	IEmitter,
-	IsListener,
-	Listeners,
-	Listenable,
-	MapGetSet,
-	NoListenersCallback,
-	Off,
-} from "./events/index.js";
+export type { FluidObject, FluidObjectKeys, FluidObjectProviderKeys } from "./provider.js";

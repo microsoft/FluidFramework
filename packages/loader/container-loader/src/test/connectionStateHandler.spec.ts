@@ -21,18 +21,18 @@ import type {
 	ITokenClaims,
 } from "@fluidframework/driver-definitions/internal";
 import {
-	type TelemetryEventCategory,
 	createChildLogger,
 	loggerToMonitoringContext,
+	type TelemetryEventCategory,
 } from "@fluidframework/telemetry-utils/internal";
 import { type SinonFakeTimers, useFakeTimers } from "sinon";
 
 import { Audience } from "../audience.js";
 import { ConnectionState } from "../connectionState.js";
 import {
+	createConnectionStateHandlerCore,
 	type IConnectionStateHandler,
 	type IConnectionStateHandlerInputs,
-	createConnectionStateHandlerCore,
 } from "../connectionStateHandler.js";
 import type { IConnectionDetailsInternal } from "../contracts.js";
 import { ProtocolHandler } from "../protocol.js";

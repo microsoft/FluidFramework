@@ -3,25 +3,25 @@
  * Licensed under the MIT License.
  */
 
-import { assert, compareArrays, oob, fail } from "@fluidframework/core-utils/internal";
-import type { SessionSpaceCompressedId, IIdCompressor } from "@fluidframework/id-compressor";
+import { assert, compareArrays, fail, oob } from "@fluidframework/core-utils/internal";
+import type { IIdCompressor, SessionSpaceCompressedId } from "@fluidframework/id-compressor";
 
 import {
+	type ChunkedCursor,
 	CursorLocationType,
+	cursorChunk,
+	dummyRoot,
 	type FieldKey,
 	type FieldUpPath,
 	type PathRootPrefix,
+	type TreeChunk,
 	type TreeNodeSchemaIdentifier,
 	type TreeValue,
 	type UpPath,
 	type Value,
-	type ChunkedCursor,
-	type TreeChunk,
-	cursorChunk,
-	dummyRoot,
 } from "../../core/index.js";
-import { ReferenceCountedBase, getOrCreate, hasSome } from "../../util/index.js";
-import { SynchronousCursor, prefixFieldPath, prefixPath } from "../treeCursorUtils.js";
+import { getOrCreate, hasSome, ReferenceCountedBase } from "../../util/index.js";
+import { prefixFieldPath, prefixPath, SynchronousCursor } from "../treeCursorUtils.js";
 
 /**
  * Create a tree chunk with ref count 1.

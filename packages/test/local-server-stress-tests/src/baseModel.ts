@@ -19,10 +19,10 @@ import { ddsModelMap } from "./ddsModels.js";
 import {
 	convertToRealHandles,
 	covertLocalServerStateToDdsState,
+	type DDSModelOp,
 	DDSModelOpGenerator,
 	DDSModelOpReducer,
 	loadAllHandles,
-	type DDSModelOp,
 	type OrderSequentially,
 } from "./ddsOperations";
 import { _dirname } from "./dirname.cjs";

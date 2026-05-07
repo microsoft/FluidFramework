@@ -29,12 +29,12 @@ import {
 } from "./compatUtils.js";
 import type { ITestObjectProviderOptions } from "./describeCompat.js";
 import {
-	getDataRuntimeApi,
-	getLoaderApi,
-	getContainerRuntimeApi,
-	getDriverApi,
 	type CompatApis,
 	getCompatModeFromKind,
+	getContainerRuntimeApi,
+	getDataRuntimeApi,
+	getDriverApi,
+	getLoaderApi,
 } from "./testApi.js";
 import { getRequestedVersion } from "./versionUtils.js";
 

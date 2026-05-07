@@ -13,27 +13,27 @@ import type { TreeNodeSchemaIdentifier, TreeValue } from "../../../../core/index
 import { BasicChunk } from "../../../../feature-libraries/chunked-forest/basicChunk.js";
 import {
 	type ChunkDecoder,
-	type StreamCursor,
 	readStream,
+	type StreamCursor,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/chunkCodecUtilities.js";
 import {
-	InlineArrayDecoder,
-	IncrementalChunkDecoder,
-	NestedArrayDecoder,
-	NodeDecoder,
 	aggregateChunks,
 	anyDecoder,
 	deaggregateChunks,
 	decode,
+	IncrementalChunkDecoder,
+	InlineArrayDecoder,
+	NestedArrayDecoder,
+	NodeDecoder,
 	readValue,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/chunkDecoding.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { DecoderContext } from "../../../../feature-libraries/chunked-forest/codec/chunkDecodingGeneric.js";
 import {
-	fieldBatchCodecBuilder,
 	type ChunkReferenceId,
+	fieldBatchCodecBuilder,
 	type IncrementalDecoder,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/codecs.js";
@@ -52,7 +52,7 @@ import {
 // eslint-disable-next-line import-x/no-internal-modules
 import { SequenceChunk } from "../../../../feature-libraries/chunked-forest/sequenceChunk.js";
 import type { TreeChunk } from "../../../../feature-libraries/index.js";
-import { type ReferenceCountedBase, brand } from "../../../../util/index.js";
+import { brand, type ReferenceCountedBase } from "../../../../util/index.js";
 import { testIdCompressor } from "../../../utils.js";
 import { assertChunkCursorEquals } from "../fieldCursorTestUtilities.js";
 

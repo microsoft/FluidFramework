@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { fail, strict as assert } from "node:assert";
+import { strict as assert, fail } from "node:assert";
 
 import {
 	ApiDocumentedItem,

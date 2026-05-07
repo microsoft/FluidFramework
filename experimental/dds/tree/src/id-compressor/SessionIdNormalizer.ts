@@ -5,7 +5,7 @@
 
 import { assert } from '@fluidframework/core-utils/internal';
 
-import { Mutable, compareFiniteNumbers, compareFiniteNumbersReversed, fail } from '../Common.js';
+import { compareFiniteNumbers, compareFiniteNumbersReversed, fail, Mutable } from '../Common.js';
 import { FinalCompressedId, LocalCompressedId, SessionSpaceCompressedId } from '../Identifiers.js';
 
 import { AppendOnlyDoublySortedMap } from './AppendOnlySortedMap.js';

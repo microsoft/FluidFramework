@@ -10,8 +10,8 @@ import type { ITelemetryBaseEvent } from "@fluidframework/core-interfaces";
 import type {
 	ITelemetryErrorEventExt,
 	ITelemetryGenericEventExt,
-	TelemetryLoggerExt,
 	ITelemetryPerformanceEventExt,
+	TelemetryLoggerExt,
 } from "../telemetryTypesUndeprecated.js";
 import { ThresholdCounter } from "../thresholdCounter.js";
 

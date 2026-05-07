@@ -6,8 +6,8 @@
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import {
-	type IIdCompressor,
 	createIdCompressor,
+	type IIdCompressor,
 } from "@fluidframework/id-compressor/internal";
 
 import type { CodecWriteOptions, ICodecOptions } from "../codec/index.js";
@@ -17,30 +17,30 @@ import {
 	TreeStoredSchemaRepository,
 } from "../core/index.js";
 import {
+	combineChunks,
 	createNodeIdentifierManager,
-	fieldBatchCodecBuilder,
-	type FieldBatchEncodingContext,
-	defaultSchemaPolicy,
-	TreeCompressionStrategy,
 	defaultIncrementalEncodingPolicy,
+	defaultSchemaPolicy,
+	type FieldBatchEncodingContext,
+	fieldBatchCodecBuilder,
 	schemaCodecBuilder,
+	TreeCompressionStrategy,
 } from "../feature-libraries/index.js";
-import { combineChunks } from "../feature-libraries/index.js";
 import type {
-	TreeViewConfiguration,
 	ImplicitFieldSchema,
-	TreeViewAlpha,
 	ITreeAlpha,
-	ViewableTree,
-	TreeView,
 	ReadSchema,
-	VerboseTree,
 	SimpleTreeSchema,
+	TreeView,
+	TreeViewAlpha,
+	TreeViewConfiguration,
+	VerboseTree,
+	ViewableTree,
 } from "../simple-tree/index.js";
 import {
-	type JsonCompatibleReadOnly,
-	type JsonCompatible,
 	Breakable,
+	type JsonCompatible,
+	type JsonCompatibleReadOnly,
 	oneFromIterable,
 } from "../util/index.js";
 

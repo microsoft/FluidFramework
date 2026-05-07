@@ -5,11 +5,11 @@
 
 import { strict as assert } from "assert";
 
-import { ITestDataObject, describeCompat } from "@fluid-private/test-version-utils";
+import { describeCompat, ITestDataObject } from "@fluid-private/test-version-utils";
 import {
+	type BenchmarkTimingOptions,
 	benchmarkDuration,
 	benchmarkIt,
-	type BenchmarkTimingOptions,
 } from "@fluid-tools/benchmark";
 import { IContainer } from "@fluidframework/container-definitions/internal";
 import {
@@ -17,10 +17,10 @@ import {
 	ContainerRuntime,
 } from "@fluidframework/container-runtime/internal";
 import {
-	toIDeltaManagerFull,
 	ITestContainerConfig,
 	ITestObjectProvider,
 	timeoutPromise,
+	toIDeltaManagerFull,
 } from "@fluidframework/test-utils/internal";
 
 // NOTE: Changing this will rename the benchmark which will create a new chart on the dashboard

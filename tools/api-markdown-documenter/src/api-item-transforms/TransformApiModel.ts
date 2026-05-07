@@ -4,9 +4,9 @@
  */
 
 import {
-	ApiItemKind,
 	type ApiEntryPoint,
 	type ApiItem,
+	ApiItemKind,
 	type ApiModel,
 	type ApiPackage,
 } from "@microsoft/api-extractor-model";
@@ -14,13 +14,13 @@ import {
 import type { ApiDocument } from "../ApiDocument.js";
 import type { Section } from "../mdast/index.js";
 
-import { apiItemToDocument, apiItemToSections } from "./TransformApiItem.js";
 import {
 	type ApiItemTransformationConfiguration,
 	type ApiItemTransformationOptions,
 	getApiItemTransformationConfigurationWithDefaults,
 } from "./configuration/index.js";
 import { createBreadcrumbParagraph, createEntryPointList } from "./helpers/index.js";
+import { apiItemToDocument, apiItemToSections } from "./TransformApiItem.js";
 import {
 	checkForDuplicateDocumentPaths,
 	createDocument,

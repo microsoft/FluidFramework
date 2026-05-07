@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
-export type { OptionalChangeset } from "./optionalFieldChangeTypes.js";
 export {
 	type OptionalFieldEditor,
 	optional,
 } from "./optionalField.js";
+export type { OptionalChangeset } from "./optionalFieldChangeTypes.js";
 export {
-	required,
 	type RequiredFieldEditor,
+	required,
 } from "./requiredField.js";

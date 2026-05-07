@@ -4,19 +4,19 @@
  */
 
 import type {
-	EncodedFieldBatchV1OrV2,
-	EncodedFieldBatchV1AndV2,
-	EncodedFieldBatchV2,
 	EncodedFieldBatchV1,
+	EncodedFieldBatchV1AndV2,
+	EncodedFieldBatchV1OrV2,
+	EncodedFieldBatchV2,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../../../feature-libraries/chunked-forest/codec/format/versions.js";
 import { allowUnused } from "../../../../../simple-tree/index.js";
 import {
-	isAssignableTo,
-	requireTrue,
 	type areSafelyAssignable,
+	isAssignableTo,
 	type requireAssignableTo,
 	type requireFalse,
+	requireTrue,
 } from "../../../../../util/index.js";
 
 // Validate assignability of the various formats is working as expected.

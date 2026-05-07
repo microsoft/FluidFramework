@@ -5,6 +5,7 @@
 
 import * as fs from "node:fs/promises";
 import path from "node:path";
+
 import { isInternalTestVersion } from "@fluid-tools/version-tools";
 import type { Logger } from "@fluidframework/build-tools";
 import { Flags } from "@oclif/core";

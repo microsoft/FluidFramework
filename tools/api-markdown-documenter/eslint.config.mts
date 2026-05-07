@@ -3,8 +3,9 @@
  * GENERATED FILE - DO NOT EDIT DIRECTLY.
  * To regenerate: pnpm tsx scripts/generate-flat-eslint-configs.ts --typescript
  */
-import type { Linter } from "eslint";
+
 import { strict } from "@fluidframework/eslint-config-fluid/flat.mts";
+import type { Linter } from "eslint";
 
 const config: Linter.Config[] = [
 	...strict,

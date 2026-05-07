@@ -7,10 +7,10 @@ import type { ICriticalContainerError } from "@fluidframework/container-definiti
 import type { IRequest } from "@fluidframework/core-interfaces";
 import type { ISnapshotTree } from "@fluidframework/driver-definitions/internal";
 import type {
-	ITelemetryContext,
 	IGarbageCollectionData,
 	IGarbageCollectionDetailsBase,
 	ISummarizeResult,
+	ITelemetryContext,
 } from "@fluidframework/runtime-definitions/internal";
 import type { ReadAndParseBlob } from "@fluidframework/runtime-utils/internal";
 import type {

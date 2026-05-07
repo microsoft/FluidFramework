@@ -12,9 +12,9 @@ import {
 } from "@fluidframework/container-definitions/internal";
 import {
 	createDetachedContainer,
-	Loader,
 	type ICreateDetachedContainerProps,
 	type ILoaderProps,
+	Loader,
 } from "@fluidframework/container-loader/internal";
 import { IRequest, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import {
@@ -22,7 +22,7 @@ import {
 	IUrlResolver,
 } from "@fluidframework/driver-definitions/internal";
 
-import { LocalCodeLoader, fluidEntryPoint } from "./localCodeLoader.js";
+import { fluidEntryPoint, LocalCodeLoader } from "./localCodeLoader.js";
 
 /**
  * Creates a loader with the given package entries and driver.

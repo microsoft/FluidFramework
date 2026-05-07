@@ -9,16 +9,6 @@ import type {
 	PresenceWithNotifications,
 	StateSchemaValidator,
 } from "@fluid-internal/presence-definitions";
-import type { InboundExtensionMessage } from "@fluidframework/container-runtime-definitions/internal";
-import type {
-	InternalCoreInterfacesUtilityTypes,
-	JsonDeserialized,
-} from "@fluidframework/core-interfaces/internal";
-import type { EventAndErrorTrackingLogger } from "@fluidframework/test-utils/internal";
-import { getUnexpectedLogErrorException } from "@fluidframework/test-utils/internal";
-import { spy } from "sinon";
-import type { SinonFakeTimers } from "sinon";
-
 import type {
 	InboundClientJoinMessage,
 	InboundDatastoreUpdateMessage,
@@ -30,6 +20,15 @@ import {
 	broadcastJoinResponseDelaysMs,
 	createPresenceManager,
 } from "@fluid-internal/presence-runtime/internal/test";
+import type { InboundExtensionMessage } from "@fluidframework/container-runtime-definitions/internal";
+import type {
+	InternalCoreInterfacesUtilityTypes,
+	JsonDeserialized,
+} from "@fluidframework/core-interfaces/internal";
+import type { EventAndErrorTrackingLogger } from "@fluidframework/test-utils/internal";
+import { getUnexpectedLogErrorException } from "@fluidframework/test-utils/internal";
+import type { SinonFakeTimers } from "sinon";
+import { spy } from "sinon";
 
 import type { MockEphemeralRuntime } from "./mockEphemeralRuntime.js";
 import { initialLocalClientConnectionId } from "./mockEphemeralRuntime.js";

@@ -8,8 +8,8 @@ import Path from "node:path";
 import {
 	ApiItemKind,
 	ApiModel,
-	ReleaseTag,
 	type ApiPackage,
+	ReleaseTag,
 } from "@microsoft/api-extractor-model";
 
 import { loadModel, MarkdownRenderer } from "../index.js";

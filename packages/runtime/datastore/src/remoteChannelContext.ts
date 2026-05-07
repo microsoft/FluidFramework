@@ -11,28 +11,28 @@ import type {
 } from "@fluidframework/datastore-definitions/internal";
 import type { ISnapshotTree } from "@fluidframework/driver-definitions/internal";
 import type {
-	IExperimentalIncrementalSummaryContext,
-	ITelemetryContext,
-	IGarbageCollectionData,
 	CreateChildSummarizerNodeFn,
+	IExperimentalIncrementalSummaryContext,
 	IFluidDataStoreContext,
-	ISummarizeInternalResult,
-	ISummarizeResult,
-	ISummarizerNodeWithGC,
+	IGarbageCollectionData,
 	IPendingMessagesState,
 	IRuntimeMessageCollection,
 	IRuntimeStorageService,
+	ISummarizeInternalResult,
+	ISummarizeResult,
+	ISummarizerNodeWithGC,
+	ITelemetryContext,
 } from "@fluidframework/runtime-definitions/internal";
 import {
+	createChildLogger,
 	type ITelemetryLoggerExt,
 	ThresholdCounter,
-	createChildLogger,
 } from "@fluidframework/telemetry-utils/internal";
 
 import {
 	type ChannelServiceEndpoints,
-	type IChannelContext,
 	createChannelServiceEndpoints,
+	type IChannelContext,
 	loadChannel,
 	loadChannelFactoryAndAttributes,
 	summarizeChannelAsync,

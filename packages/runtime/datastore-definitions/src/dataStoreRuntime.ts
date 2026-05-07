@@ -5,13 +5,13 @@
 
 import type { AttachState, IAudience } from "@fluidframework/container-definitions";
 import type {
-	IFluidHandle,
+	ErasedType,
 	FluidObject,
 	IDisposable,
 	IEvent,
 	IEventProvider,
+	IFluidHandle,
 	ITelemetryBaseLogger,
-	ErasedType,
 } from "@fluidframework/core-interfaces";
 import type { IFluidHandleContext } from "@fluidframework/core-interfaces/internal";
 import type { IQuorumClients } from "@fluidframework/driver-definitions";

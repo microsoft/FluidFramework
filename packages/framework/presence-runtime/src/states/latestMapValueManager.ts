@@ -29,24 +29,23 @@ import type {
 	ValueManager,
 } from "@fluid-internal/presence-definitions/internal";
 import type { StateDatastore } from "@fluid-internal/presence-definitions/internal/workspace-states";
+import {
+	asDeeplyReadonly,
+	asDeeplyReadonlyDeserializedJson,
+	brandIVM,
+	isValueRequiredState,
+	OptionalBroadcastControl,
+	objectEntries,
+	objectKeys,
+	toOpaqueJson,
+} from "@fluid-internal/presence-runtime/utils";
+import { datastoreFromHandle } from "@fluid-internal/presence-runtime/workspace";
 import type { IEmitter } from "@fluidframework/core-interfaces/internal";
 import type {
 	DeepReadonly,
 	JsonDeserialized,
 	JsonSerializable,
 } from "@fluidframework/core-interfaces/internal/exposedUtilityTypes";
-
-import {
-	asDeeplyReadonly,
-	asDeeplyReadonlyDeserializedJson,
-	brandIVM,
-	isValueRequiredState,
-	objectEntries,
-	objectKeys,
-	OptionalBroadcastControl,
-	toOpaqueJson,
-} from "@fluid-internal/presence-runtime/utils";
-import { datastoreFromHandle } from "@fluid-internal/presence-runtime/workspace";
 
 import type { SpecificAttendee } from "./presence.js";
 import { createValidatedGetter } from "./validatedGetter.js";

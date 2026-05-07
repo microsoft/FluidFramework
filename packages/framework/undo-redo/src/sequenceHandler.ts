@@ -4,15 +4,15 @@
  */
 
 import {
-	type ISegment,
-	type MergeTreeDeltaRevertible,
 	appendToMergeTreeDeltaRevertibles,
 	discardMergeTreeDeltaRevertible,
+	type ISegment,
+	type MergeTreeDeltaRevertible,
 	revertMergeTreeDeltaRevertibles,
 } from "@fluidframework/merge-tree/internal";
 import type {
-	SequenceDeltaEvent,
 	ISharedSegmentSequence,
+	SequenceDeltaEvent,
 } from "@fluidframework/sequence/internal";
 
 import type { IRevertible, UndoRedoStackManager } from "./undoRedoStackManager.js";

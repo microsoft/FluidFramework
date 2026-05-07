@@ -9,19 +9,18 @@ import type {
 	NotificationsWorkspace,
 	PresenceWithNotifications,
 } from "@fluid-internal/presence-definitions";
-import { EventAndErrorTrackingLogger } from "@fluidframework/test-utils/internal";
-import { describe, it, after, afterEach, before, beforeEach } from "mocha";
-import { useFakeTimers, type SinonFakeTimers } from "sinon";
-
 import { Notifications, StateFactory } from "@fluid-internal/presence-runtime/states";
 import { toOpaqueJson } from "@fluid-internal/presence-runtime/utils";
+import { EventAndErrorTrackingLogger } from "@fluidframework/test-utils/internal";
+import { after, afterEach, before, beforeEach, describe, it } from "mocha";
+import { type SinonFakeTimers, useFakeTimers } from "sinon";
 
 import { MockEphemeralRuntime } from "./mockEphemeralRuntime.js";
 import {
 	assertFinalExpectations,
 	initialLocalClientConnectionId,
-	prepareConnectedPresence,
 	localAttendeeId,
+	prepareConnectedPresence,
 } from "./testUtils.js";
 
 describe("Presence/States", () => {

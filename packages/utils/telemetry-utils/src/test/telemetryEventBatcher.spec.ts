@@ -12,8 +12,8 @@ import { TelemetryEventBatcher } from "../telemetryEventBatcher.js";
 import type {
 	ITelemetryErrorEventExt,
 	ITelemetryGenericEventExt,
-	TelemetryLoggerExt,
 	ITelemetryPerformanceEventExt,
+	TelemetryLoggerExt,
 } from "../telemetryTypesUndeprecated.js";
 import { measure } from "../utils.js";
 

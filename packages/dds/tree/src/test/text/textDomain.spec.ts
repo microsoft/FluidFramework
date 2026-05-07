@@ -8,13 +8,13 @@ import { strict as assert } from "node:assert";
 import { TreeAlpha } from "../../shared-tree/index.js";
 import {
 	allowUnused,
-	TreeViewConfiguration,
 	type NodeFromSchema,
+	TreeViewConfiguration,
 } from "../../simple-tree/index.js";
 // Allow importing file being tested
 // eslint-disable-next-line import-x/no-internal-modules
 import { TextAsTree } from "../../text/textDomain.js";
-import type { requireTrue, areSafelyAssignable } from "../../util/index.js";
+import type { areSafelyAssignable, requireTrue } from "../../util/index.js";
 import { describeHydration, hydrateNode } from "../simple-tree/index.js";
 import { testSchemaCompatibilitySnapshots } from "../snapshots/index.js";
 import { suitesWithAndWithoutProduction } from "../utils.js";

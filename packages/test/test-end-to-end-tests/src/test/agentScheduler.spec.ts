@@ -10,10 +10,10 @@ import { IAgentScheduler, TaskSubscription } from "@fluidframework/agent-schedul
 import { IContainer } from "@fluidframework/container-definitions/internal";
 import { disabledCompressionConfig } from "@fluidframework/container-runtime/internal";
 import {
-	ITestObjectProvider,
 	createTestContainerRuntimeFactory,
-	getContainerEntryPointBackCompat,
 	type fluidEntryPoint,
+	getContainerEntryPointBackCompat,
+	ITestObjectProvider,
 } from "@fluidframework/test-utils/internal";
 
 // By default, the container loads in read mode.  However, pick() attempts silently fail if not in write

@@ -4,13 +4,13 @@
  */
 
 import {
-	withMemoizedTreeObservations,
-	syncTextToTree,
 	type PropTreeNode,
+	syncTextToTree,
 	type TextEditorProps,
+	withMemoizedTreeObservations,
 } from "@fluidframework/react/internal";
-import { TreeAlpha } from "@fluidframework/tree/internal";
 import type { TextAsTree } from "@fluidframework/tree/internal";
+import { TreeAlpha } from "@fluidframework/tree/internal";
 import Quill from "quill";
 import { type FC, useEffect, useRef, useState } from "react";
 import * as ReactDOM from "react-dom";

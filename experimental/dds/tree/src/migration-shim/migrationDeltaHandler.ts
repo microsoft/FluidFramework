@@ -5,7 +5,7 @@
 
 import { assert } from '@fluidframework/core-utils/internal';
 import type { IChannelAttributes, IDeltaHandler } from '@fluidframework/datastore-definitions/internal';
-import { MessageType, type ISequencedDocumentMessage } from '@fluidframework/driver-definitions/internal';
+import { type ISequencedDocumentMessage, MessageType } from '@fluidframework/driver-definitions/internal';
 import type { IRuntimeMessageCollection, IRuntimeMessagesContent } from '@fluidframework/runtime-definitions/internal';
 
 import type { IOpContents, IShimDeltaHandler } from './types.js';

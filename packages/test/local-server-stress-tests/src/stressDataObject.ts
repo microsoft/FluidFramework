@@ -11,14 +11,14 @@ import {
 } from "@fluidframework/container-definitions/internal";
 import {
 	ContainerRuntime,
-	loadContainerRuntime,
 	type IContainerRuntimeOptionsInternal,
+	loadContainerRuntime,
 } from "@fluidframework/container-runtime/internal";
 // eslint-disable-next-line import-x/no-deprecated
 import type { IContainerRuntimeWithResolveHandle_Deprecated } from "@fluidframework/container-runtime-definitions/internal";
 import type {
-	IFluidHandle,
 	FluidObject,
+	IFluidHandle,
 	IFluidLoadable,
 } from "@fluidframework/core-interfaces";
 import { assert, LazyPromise, unreachableCase } from "@fluidframework/core-utils/internal";

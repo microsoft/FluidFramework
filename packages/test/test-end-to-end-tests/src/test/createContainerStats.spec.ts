@@ -16,11 +16,11 @@ import {
 } from "@fluidframework/container-runtime/internal";
 import { ISharedDirectory } from "@fluidframework/map/internal";
 import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions/internal";
-import { MockLogger, createChildLogger } from "@fluidframework/telemetry-utils/internal";
+import { createChildLogger, MockLogger } from "@fluidframework/telemetry-utils/internal";
 import {
-	ITestObjectProvider,
 	createContainerRuntimeFactoryWithDefaultDataStore,
 	getContainerEntryPointBackCompat,
+	ITestObjectProvider,
 } from "@fluidframework/test-utils/internal";
 
 describeCompat("Generate Summary Stats", "NoCompat", (getTestObjectProvider, apis) => {

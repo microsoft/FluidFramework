@@ -4,6 +4,7 @@
  */
 
 import { getEsLintConfigFilePath, getInstalledPackageVersion } from "../taskUtils";
+
 import { TscDependentTask } from "./tscTask";
 
 export class EsLintTask extends TscDependentTask {

@@ -15,9 +15,9 @@ import type { Test } from "mocha";
 
 import {
 	Column,
+	createTableTree,
 	Row,
 	type TableBenchmarkOptions,
-	createTableTree,
 } from "../tablePerformanceTestUtilities.js";
 import { configureBenchmarkHooks } from "../utils.js";
 

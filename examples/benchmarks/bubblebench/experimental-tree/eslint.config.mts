@@ -3,8 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import type { Linter } from "eslint";
 import { recommended } from "@fluidframework/eslint-config-fluid/flat.mts";
+import type { Linter } from "eslint";
+
 import sharedConfig from "../../../eslint.config.data.mts";
 
 const config: Linter.Config[] = [

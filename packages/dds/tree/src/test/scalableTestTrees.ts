@@ -8,21 +8,21 @@ import { strict as assert } from "node:assert";
 import {
 	EmptyKey,
 	type FieldKey,
-	type NormalizedUpPath,
-	type UpPath,
 	moveToDetachedField,
+	type NormalizedUpPath,
 	rootFieldKey,
+	type UpPath,
 } from "../core/index.js";
 import {
-	FieldKinds,
-	isFlexTreeNode,
 	type Context,
+	FieldKinds,
 	type FlexTreeNode,
+	isFlexTreeNode,
 } from "../feature-libraries/index.js";
 import {
+	type InsertableContent,
 	SchemaFactory,
 	toInitialSchema,
-	type InsertableContent,
 	type UnsafeUnknownSchema,
 	type ValidateRecursiveSchema,
 } from "../simple-tree/index.js";

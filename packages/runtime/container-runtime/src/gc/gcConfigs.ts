@@ -12,20 +12,20 @@ import {
 import type { IContainerRuntimeMetadata } from "../summary/index.js";
 
 import {
-	type GCFeatureMatrix,
-	type GCVersion,
-	type IGCMetadata_Deprecated,
-	type IGCRuntimeOptions,
-	type IGarbageCollectorConfigs,
 	defaultInactiveTimeoutMs,
 	defaultSessionExpiryDurationMs,
 	defaultSweepGracePeriodMs,
+	disableThrowOnTombstoneLoadKey,
+	type GCFeatureMatrix,
+	type GCVersion,
 	gcGenerationOptionName,
 	gcTestModeKey,
+	type IGarbageCollectorConfigs,
+	type IGCMetadata_Deprecated,
+	type IGCRuntimeOptions,
 	maxSnapshotCacheExpiryMs,
 	oneDayMs,
 	runSessionExpiryKey,
-	disableThrowOnTombstoneLoadKey,
 } from "./gcDefinitions.js";
 import { getGCVersion, getGCVersionInEffect, shouldAllowGcSweep } from "./gcHelpers.js";
 

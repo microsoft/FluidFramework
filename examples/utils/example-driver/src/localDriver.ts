@@ -11,8 +11,8 @@ import {
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "@fluidframework/local-driver/internal";
 import {
-	LocalDeltaConnectionServer,
 	type ILocalDeltaConnectionServer,
+	LocalDeltaConnectionServer,
 } from "@fluidframework/server-local-server";
 
 import type { ExampleDriver } from "./interfaces.js";

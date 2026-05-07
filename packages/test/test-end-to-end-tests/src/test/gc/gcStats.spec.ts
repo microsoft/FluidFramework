@@ -7,9 +7,9 @@ import { strict as assert } from "assert";
 
 import { stringToBuffer } from "@fluid-internal/client-utils";
 import {
+	describeCompat,
 	ITestDataObject,
 	TestDataObjectType,
-	describeCompat,
 } from "@fluid-private/test-version-utils";
 import { IContainer } from "@fluidframework/container-definitions/internal";
 import {
@@ -22,9 +22,9 @@ import { ISummaryTree, SummaryType } from "@fluidframework/driver-definitions";
 import { ISummaryStats } from "@fluidframework/runtime-definitions/internal";
 import { calculateStats, mergeStats } from "@fluidframework/runtime-utils/internal";
 import {
+	createTestConfigProvider,
 	ITestContainerConfig,
 	ITestObjectProvider,
-	createTestConfigProvider,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
 

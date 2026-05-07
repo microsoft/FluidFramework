@@ -7,10 +7,10 @@ import { strict as assert } from "assert";
 
 import { bufferToString } from "@fluid-internal/client-utils";
 import {
-	ITestDataObject,
-	TestDataObjectType,
 	describeCompat,
+	ITestDataObject,
 	itExpects,
+	TestDataObjectType,
 } from "@fluid-private/test-version-utils";
 import { IContainer } from "@fluidframework/container-definitions/internal";
 import {
@@ -21,27 +21,27 @@ import {
 import { ISummaryBlob, ISummaryTree, SummaryType } from "@fluidframework/driver-definitions";
 import { ISummaryContext } from "@fluidframework/driver-definitions/internal";
 import {
+	channelsTreeName,
 	FlushMode,
 	IFluidDataStoreFactory,
-	channelsTreeName,
 } from "@fluidframework/runtime-definitions/internal";
 import type { SharedString } from "@fluidframework/sequence/internal";
-import { MockLogger, createChildLogger } from "@fluidframework/telemetry-utils/internal";
+import { createChildLogger, MockLogger } from "@fluidframework/telemetry-utils/internal";
 import {
 	ChannelFactoryRegistry,
-	DataObjectFactoryType,
-	ITestContainerConfig,
-	ITestFluidObject,
-	ITestObjectProvider,
 	createSummarizer,
 	createSummarizerFromFactory,
 	createTestConfigProvider,
+	DataObjectFactoryType,
 	getContainerEntryPointBackCompat,
+	ITestContainerConfig,
+	ITestFluidObject,
+	ITestObjectProvider,
 	summarizeNow,
 	timeoutPromise,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
-import { SinonSandbox, createSandbox } from "sinon";
+import { createSandbox, SinonSandbox } from "sinon";
 
 import { TestPersistedCache } from "../../testPersistedCache.js";
 

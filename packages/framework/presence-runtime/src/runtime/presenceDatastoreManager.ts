@@ -29,17 +29,16 @@ import type {
 	RuntimeLocalUpdateOptions,
 	ValueElementMap,
 } from "@fluid-internal/presence-definitions/internal/workspace-runtime";
-import type { InboundExtensionMessage } from "@fluidframework/container-runtime-definitions/internal";
-import type { IEmitter } from "@fluidframework/core-interfaces/internal";
-import { assert } from "@fluidframework/core-utils/internal";
-import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
-
 import { objectEntries, TimerManager } from "@fluid-internal/presence-runtime/utils";
 import {
 	createPresenceStates,
 	mergeUntrackedDatastore,
 	mergeValueDirectory,
 } from "@fluid-internal/presence-runtime/workspace";
+import type { InboundExtensionMessage } from "@fluidframework/container-runtime-definitions/internal";
+import type { IEmitter } from "@fluidframework/core-interfaces/internal";
+import { assert } from "@fluidframework/core-utils/internal";
+import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 
 import type {
 	DatastoreMessageContent,

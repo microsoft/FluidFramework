@@ -11,7 +11,7 @@ import type { IMergeTreeOp, IMergeTreeOptions, InteriorSequencePlace } from "../
 import type { SegmentGroup } from "../mergeTreeNodes.js";
 
 import type { TestClient } from "./testClient.js";
-import { TestClientLogger, createClientsAtInitialState } from "./testClientLogger.js";
+import { createClientsAtInitialState, TestClientLogger } from "./testClientLogger.js";
 
 const ClientIds = ["A", "B", "C", "D"] as const;
 type ClientName = (typeof ClientIds)[number];

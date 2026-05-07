@@ -8,7 +8,7 @@ import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import { TestObjectProvider, timeoutAwait } from "@fluidframework/test-utils/internal";
 import { Context } from "mocha";
 
-import { ExpectedEvents, createExpectsTest } from "./itExpects.js";
+import { createExpectsTest, ExpectedEvents } from "./itExpects.js";
 
 function createSkippedTestsWithDriverType(
 	skippedDrivers: TestDriverTypes[],

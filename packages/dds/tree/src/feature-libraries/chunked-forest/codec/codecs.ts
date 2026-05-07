@@ -21,17 +21,17 @@ import {
 	type StoredSchemaCollection,
 	type TreeChunk,
 } from "../../../core/index.js";
-import { brandedNumberType, type Brand } from "../../../util/index.js";
+import { type Brand, brandedNumberType } from "../../../util/index.js";
 import { TreeCompressionStrategy } from "../../treeCompressionUtils.js";
 
 import { decode } from "./chunkDecoding.js";
 import type { FieldBatch } from "./fieldBatch.js";
 import {
 	EncodedFieldBatchV1,
+	type EncodedFieldBatchV1OrV2,
 	EncodedFieldBatchV2,
 	FieldBatchFormatVersion,
 	supportsIncrementalEncoding,
-	type EncodedFieldBatchV1OrV2,
 } from "./format/index.js";
 import type { IncrementalEncodingPolicy } from "./incrementalEncodingPolicy.js";
 import { schemaCompressedEncodeV1, schemaCompressedEncodeV2 } from "./schemaBasedEncode.js";

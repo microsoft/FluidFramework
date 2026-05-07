@@ -14,12 +14,12 @@ import {
 
 import type { Section } from "../../mdast/index.js";
 import {
+	type ApiConstructorLike,
 	ApiModifier,
+	type ApiTypeLike,
 	getApiItemKind,
 	getScopedMemberNameForDiagnostics,
 	isStatic,
-	type ApiConstructorLike,
-	type ApiTypeLike,
 } from "../../utilities/index.js";
 import type { ApiItemTransformationConfiguration } from "../configuration/index.js";
 import { createChildDetailsSection, createMemberTables } from "../helpers/index.js";

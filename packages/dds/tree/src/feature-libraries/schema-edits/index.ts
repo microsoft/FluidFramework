@@ -4,5 +4,5 @@
  */
 
 export { makeSchemaChangeCodec } from "./schemaChangeCodecs.js";
-export type { SchemaChange } from "./schemaChangeTypes.js";
 export { EncodedSchemaChange } from "./schemaChangeFormat.js";
+export type { SchemaChange } from "./schemaChangeTypes.js";

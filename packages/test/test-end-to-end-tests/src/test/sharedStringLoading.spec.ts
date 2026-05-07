@@ -17,11 +17,11 @@ import { ReferenceType, TextSegment } from "@fluidframework/merge-tree/internal"
 import type { SharedString } from "@fluidframework/sequence/internal";
 import {
 	ChannelFactoryRegistry,
+	createDocumentId,
 	ITestFluidObject,
 	LocalCodeLoader,
 	SupportedExportInterfaces,
 	TestFluidObjectFactory,
-	createDocumentId,
 } from "@fluidframework/test-utils/internal";
 
 import { wrapObjectAndOverride } from "../mocking.js";

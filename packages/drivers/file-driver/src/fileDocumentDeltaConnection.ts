@@ -7,15 +7,15 @@ import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import type { IDisposable } from "@fluidframework/core-interfaces";
 import type { ConnectionMode } from "@fluidframework/driver-definitions";
 import type {
-	IDocumentDeltaConnection,
-	IDocumentDeltaConnectionEvents,
 	IClientConfiguration,
 	IConnected,
+	IDocumentDeltaConnection,
+	IDocumentDeltaConnectionEvents,
 	IDocumentMessage,
-	ISignalClient,
-	ITokenClaims,
 	ISequencedDocumentMessage,
+	ISignalClient,
 	ISignalMessage,
+	ITokenClaims,
 } from "@fluidframework/driver-definitions/internal";
 import { ScopeType } from "@fluidframework/driver-definitions/internal";
 

@@ -6,10 +6,10 @@
 /* eslint-disable jsdoc/require-jsdoc */
 
 import {
+	allowUnused,
 	SchemaFactory,
 	TreeViewConfiguration,
 	type ValidateRecursiveSchema,
-	allowUnused,
 } from "@fluidframework/tree/alpha";
 
 const schema = new SchemaFactory("com.example");

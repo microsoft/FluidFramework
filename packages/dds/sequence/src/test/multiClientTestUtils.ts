@@ -5,9 +5,9 @@
 
 import { IChannelServices } from "@fluidframework/datastore-definitions/internal";
 import {
+	type MockContainerRuntimeFactoryForReconnection,
 	MockFluidDataStoreRuntime,
 	MockStorage,
-	type MockContainerRuntimeFactoryForReconnection,
 } from "@fluidframework/test-runtime-utils/internal";
 
 import { SharedString } from "../sequenceFactory.js";

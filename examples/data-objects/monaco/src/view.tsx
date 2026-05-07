@@ -12,6 +12,7 @@ import {
 } from "@fluidframework/sequence/legacy";
 import * as monaco from "monaco-editor";
 import { type FC, useEffect, useRef } from "react";
+
 /**
  * Compilation options for Monaco to use on TypeScript
  */

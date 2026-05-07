@@ -14,8 +14,8 @@
 export type { TelemetryLoggerExt } from "./telemetryTypes.js";
 
 import type {
-	ITelemetryGenericEventExt as ExposedITelemetryGenericEventExt,
 	ITelemetryErrorEventExt as ExposedITelemetryErrorEventExt,
+	ITelemetryGenericEventExt as ExposedITelemetryGenericEventExt,
 	ITelemetryPerformanceEventExt as ExposedITelemetryPerformanceEventExt,
 	TelemetryEventCategory as ExposedTelemetryEventCategory,
 } from "./telemetryTypes.js";

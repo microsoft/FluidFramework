@@ -7,14 +7,13 @@ import { strict as assert } from "node:assert";
 
 import type {
 	BroadcastControlSettings,
-	LatestMapRaw,
-	LatestMapItemUpdatedClientData,
-	Presence,
-	RawValueAccessor,
 	LatestMap,
 	LatestMapConfiguration,
+	LatestMapItemUpdatedClientData,
+	LatestMapRaw,
+	Presence,
+	RawValueAccessor,
 } from "@fluid-internal/presence-definitions";
-
 import { createPresenceManager } from "@fluid-internal/presence-runtime/internal/test";
 import { StateFactory } from "@fluid-internal/presence-runtime/states";
 

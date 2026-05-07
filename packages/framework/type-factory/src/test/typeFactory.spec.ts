@@ -5,7 +5,7 @@
 
 import { strict as assert } from "node:assert";
 
-import { typeFactory as tf, isTypeFactoryType } from "../treeAgentTypes.js";
+import { isTypeFactoryType, typeFactory as tf } from "../treeAgentTypes.js";
 
 describe("type factories", () => {
 	describe("primitive types", () => {

@@ -14,12 +14,12 @@ import {
 import type { SharedString } from "@fluidframework/sequence/internal";
 import {
 	ChannelFactoryRegistry,
+	createSummarizer,
 	DataObjectFactoryType,
+	getContainerEntryPointBackCompat,
 	ITestContainerConfig,
 	ITestFluidObject,
 	ITestObjectProvider,
-	createSummarizer,
-	getContainerEntryPointBackCompat,
 	summarizeNow,
 } from "@fluidframework/test-utils/internal";
 

@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-export { Versioned, versionField } from "./format.js";
 export {
-	makeDiscontinuedCodecAndSchema,
 	ClientVersionDispatchingCodecBuilder,
-	type CodecVersion,
 	type CodecAndSchema,
+	type CodecVersion,
+	makeDiscontinuedCodecAndSchema,
 } from "./codec.js";
+export { Versioned, versionField } from "./format.js";

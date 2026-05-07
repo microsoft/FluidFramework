@@ -8,10 +8,10 @@ import { strict as assert } from "node:assert";
 import type { ITelemetryBaseEvent, Tagged } from "@fluidframework/core-interfaces";
 
 import {
+	convertToBasePropertyType,
 	type ITelemetryLoggerPropertyBag,
 	type ITelemetryLoggerPropertyBags,
 	TelemetryLogger,
-	convertToBasePropertyType,
 } from "../logger.js";
 import type { TelemetryEventPropertyTypeExt } from "../telemetryTypes.js";
 

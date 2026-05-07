@@ -7,9 +7,9 @@ import { strict as assert } from "node:assert";
 
 import {
 	type AnnouncedVisitor,
+	combineVisitors,
 	type DeltaVisitor,
 	type FieldKey,
-	combineVisitors,
 } from "../../../core/index.js";
 import { brand } from "../../../util/index.js";
 

@@ -6,29 +6,29 @@
 import { strict as assert } from "node:assert";
 
 import {
-	TypedEventEmitter,
 	type IProvideLayerCompatDetails,
+	TypedEventEmitter,
 } from "@fluid-internal/client-utils";
 import { AttachState, type IAudience } from "@fluidframework/container-definitions";
 import type {
-	ICriticalContainerError,
 	IContainer,
 	IContainerEvents,
+	ICriticalContainerError,
 	IDeltaManager,
 	IDeltaManagerEvents,
 	ReadOnlyInfo,
 } from "@fluidframework/container-definitions/internal";
 import type { IClient } from "@fluidframework/driver-definitions";
 import type {
+	IDocumentMessage,
 	IDocumentServiceFactory,
 	IResolvedUrl,
-	IDocumentMessage,
 	ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
 import {
+	createChildLogger,
 	GenericError,
 	MockLogger,
-	createChildLogger,
 } from "@fluidframework/telemetry-utils/internal";
 
 import { Audience } from "../audience.js";

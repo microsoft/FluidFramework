@@ -21,11 +21,11 @@ import type {
 } from "@fluidframework/container-runtime/internal";
 import { ISummaryTree } from "@fluidframework/driver-definitions";
 import {
-	ITestFluidObject,
-	ITestObjectProvider,
 	createContainerRuntimeFactoryWithDefaultDataStore,
 	createSummarizerCore,
 	getContainerEntryPointBackCompat,
+	ITestFluidObject,
+	ITestObjectProvider,
 	summarizeNow,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";

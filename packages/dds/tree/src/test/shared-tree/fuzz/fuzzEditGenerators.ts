@@ -8,65 +8,65 @@ import { strict as assert } from "node:assert";
 import {
 	type AsyncGenerator,
 	type BaseFuzzTestState,
+	createWeightedGenerator,
+	done,
 	type Generator,
 	type IRandom,
 	type Weights,
-	createWeightedGenerator,
-	done,
 } from "@fluid-private/stochastic-test-utils";
 import type { Client, DDSFuzzTestState, DDSRandom } from "@fluid-private/test-dds-utils";
 import type { IChannelFactory } from "@fluidframework/datastore-definitions/internal";
 
 import { asAlpha } from "../../../api.js";
 import type {
-	TreeStoredSchemaRepository,
 	FieldKey,
 	FieldUpPath,
-	UpPath,
 	TreeNodeSchemaIdentifier,
+	TreeStoredSchemaRepository,
+	UpPath,
 } from "../../../core/index.js";
 import { type DownPath, toDownPath } from "../../../feature-libraries/index.js";
-import { Tree, type ITreePrivate } from "../../../shared-tree/index.js";
+import { type ITreePrivate, Tree } from "../../../shared-tree/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import type { SchematizingSimpleTreeView } from "../../../shared-tree/schematizingTreeView.js";
-import { getInnerNode } from "../../../simple-tree/index.js";
 import {
+	getInnerNode,
 	SchemaFactory,
-	TreeViewConfiguration,
 	type TreeNode,
 	type TreeNodeSchema,
+	TreeViewConfiguration,
 } from "../../../simple-tree/index.js";
 import type { ISharedTree } from "../../../treeFactory.js";
 import { getOrCreate, makeArray } from "../../../util/index.js";
 
 import {
-	type FuzzNode,
 	createTreeViewSchema,
+	type FuzzNode,
 	type FuzzNodeSchema,
 	type fuzzFieldSchema,
 	nodeSchemaFromTreeSchema,
 } from "./fuzzUtils.js";
 import {
+	type Constraint,
+	type CrossFieldMove,
+	type FieldEdit,
+	type ForkMergeOperation,
+	type GeneratedFuzzNode,
+	GeneratedFuzzValueType,
 	type Insert,
-	type Remove,
-	type SetField,
 	type IntraFieldMove,
+	type NodeRange,
 	type Operation,
 	type OptionalFieldEdit,
+	type Remove,
 	type RequiredFieldEdit,
 	type SchemaChange,
 	type SequenceFieldEdit,
+	type SetField,
 	type Synchronize,
 	type TransactionBoundary,
 	type TreeEdit,
 	type UndoRedo,
-	type FieldEdit,
-	type CrossFieldMove,
-	type Constraint,
-	type GeneratedFuzzNode,
-	GeneratedFuzzValueType,
-	type NodeRange,
-	type ForkMergeOperation,
 } from "./operationTypes.js";
 
 export type FuzzView = SchematizingSimpleTreeView<typeof fuzzFieldSchema> & {

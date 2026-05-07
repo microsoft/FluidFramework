@@ -4,8 +4,8 @@
  */
 
 import type {
-	IDriverErrorBase,
 	DriverError,
+	IDriverErrorBase,
 } from "@fluidframework/driver-definitions/internal";
 import { DriverErrorTypes } from "@fluidframework/driver-definitions/internal";
 

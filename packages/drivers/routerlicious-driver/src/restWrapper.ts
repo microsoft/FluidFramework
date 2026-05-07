@@ -11,11 +11,11 @@ import { GenericNetworkError, NonRetryableError } from "@fluidframework/driver-u
 import {
 	CorrelationIdHeaderName,
 	DriverVersionHeaderName,
-	RestLessClient,
 	getAuthorizationTokenFromCredentials,
+	RestLessClient,
 } from "@fluidframework/server-services-client";
 import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
-import { PerformanceEvent, numberFromString } from "@fluidframework/telemetry-utils/internal";
+import { numberFromString, PerformanceEvent } from "@fluidframework/telemetry-utils/internal";
 import safeStringify from "json-stringify-safe";
 
 import {
@@ -25,7 +25,7 @@ import {
 } from "./errorUtils.js";
 import { pkgVersion as driverVersion } from "./packageVersion.js";
 import { addOrUpdateQueryParams, type QueryStringType } from "./queryStringUtils.js";
-import type { RequestConfig, RawRequestHeaders } from "./request.cjs";
+import type { RawRequestHeaders, RequestConfig } from "./request.cjs";
 import { RestWrapper } from "./restWrapperBase.js";
 import type { ITokenProvider, ITokenResponse } from "./tokens.js";
 

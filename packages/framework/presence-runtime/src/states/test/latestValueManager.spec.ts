@@ -14,7 +14,6 @@ import type {
 	Presence,
 	RawValueAccessor,
 } from "@fluid-internal/presence-definitions";
-
 import { createPresenceManager } from "@fluid-internal/presence-runtime/internal/test";
 import { StateFactory } from "@fluid-internal/presence-runtime/states";
 

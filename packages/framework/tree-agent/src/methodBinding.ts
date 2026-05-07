@@ -7,10 +7,10 @@
 import type { TreeNodeSchema } from "@fluidframework/tree";
 import { NodeKind } from "@fluidframework/tree";
 import {
-	exposeMethodsSymbol,
 	type Arg,
 	type Ctor,
 	type ExposedMethods,
+	exposeMethodsSymbol,
 	type FunctionDef,
 	type IExposedMethods,
 	type MethodKeys,

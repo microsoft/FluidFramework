@@ -14,23 +14,23 @@ import type { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { Deferred } from "@fluidframework/core-utils/internal";
 import {
 	type FetchSource,
+	type IDocumentAttributes,
 	type IResolvedUrl,
+	type ISequencedDocumentMessage,
 	type ISnapshot,
 	type ISnapshotFetchOptions,
-	type IDocumentAttributes,
 	type ISnapshotTree,
 	type IVersion,
 	MessageType,
-	type ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
 import { getSnapshotTree } from "@fluidframework/driver-utils/internal";
 import { MockLogger, mixinMonitoringContext } from "@fluidframework/telemetry-utils/internal";
-import { useFakeTimers, type SinonFakeTimers } from "sinon";
+import { type SinonFakeTimers, useFakeTimers } from "sinon";
 
 import {
 	type IPendingContainerState,
-	SerializedStateManager,
 	type ISerializedStateManagerDocumentStorageService,
+	SerializedStateManager,
 	type SnapshotWithBlobs,
 } from "../serializedStateManager.js";
 

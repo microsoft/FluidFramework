@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import type { Linter } from "eslint";
 import { strict } from "@fluidframework/eslint-config-fluid/flat.mts";
+import type { Linter } from "eslint";
 
 const config: Linter.Config[] = [...strict];
 

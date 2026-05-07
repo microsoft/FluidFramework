@@ -7,6 +7,7 @@ import type { ExportDeclaration, ExportedDeclarations, JSDoc, SourceFile } from 
 import { Node, SyntaxKind } from "ts-morph";
 
 import type { CommandLogger } from "../logging.js";
+
 import type { ApiLevel } from "./apiLevel.js";
 import type { ReleaseLevel } from "./releaseLevel.js";
 import { isReleaseLevel } from "./releaseLevel.js";

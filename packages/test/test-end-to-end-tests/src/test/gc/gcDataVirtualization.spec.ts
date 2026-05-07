@@ -23,7 +23,7 @@ import {
 } from "@fluidframework/test-utils/internal";
 
 import { TestPersistedCache } from "../../testPersistedCache.js";
-import { supportsDataVirtualization, clearCacheIfOdsp } from "../data-virtualization/index.js";
+import { clearCacheIfOdsp, supportsDataVirtualization } from "../data-virtualization/index.js";
 
 import { getGCStateFromSummary } from "./gcTestSummaryUtils.js";
 

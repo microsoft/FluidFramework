@@ -11,7 +11,6 @@ import type {
 	ITelemetryBaseEvent,
 } from "@fluidframework/core-interfaces";
 import type { InternalCoreInterfacesUtilityTypes } from "@fluidframework/core-interfaces/internal";
-
 import type { ITelemetryLoggerExt as ITelemetryLoggerExtInternal } from "@fluidframework/telemetry-utils/internal";
 import type { ITelemetryLoggerExt as ITelemetryLoggerExtExternal } from "@fluidframework/telemetry-utils/legacy";
 
@@ -21,7 +20,7 @@ import type {
 	ITelemetryGenericEventExt,
 	TelemetryLoggerExt,
 } from "../telemetryTypesUndeprecated.js";
-import { type IEventSampler, createSampledLogger } from "../utils.js";
+import { createSampledLogger, type IEventSampler } from "../utils.js";
 
 /**
  * Use to compile-time assert types of two variables are identical.

@@ -10,9 +10,9 @@ import type Sinon from "sinon";
 import { assert as sinonAssert, spy } from "sinon";
 
 import {
+	createLogger,
 	type FluidAppInsightsLoggerConfig,
 	type TelemetryFilter,
-	createLogger,
 } from "../fluidAppInsightsLogger.js";
 
 // Create the ApplicationInsights instance once for the whole file and eagerly initialize it.
