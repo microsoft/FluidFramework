@@ -32,8 +32,8 @@ resolutionMode: highest
 blockExoticSubdeps: true
 # See: https://github.com/orgs/pnpm/discussions/11084 for some discussion.
 # Enabling no-downgrade requires every transitive trust-policy violation to either be remediated
-# at the source or excluded below with a documented rationale. The current excludes cover the
-# eight violations surfaced by `flub check trustPolicy` on this workspace.
+# at the source or excluded below with a documented rationale. Run `flub check trustPolicy` to
+# surface current violations.
 trustPolicy: no-downgrade
 trustPolicyExclude:
   # axios@0.30.3 is the last legitimate 0.30.x release (published 2026-02-18). The trust
