@@ -2101,6 +2101,43 @@ describe("Pending State Manager", () => {
 			);
 		});
 
+		it("threads opMetadata through to the callback (BlobAttach rollback uses it)", () => {
+			// Blob identity (`{ localId, blobId }`) is carried as message-level
+			// `opMetadata`; rolling back a `BlobAttach` op needs that field, not
+			// `localOpMetadata` (which is undefined for stashed BlobAttach
+			// replays). This test pins the contract that popStagedBatches
+			// surfaces opMetadata on the callback argument.
+			const stubs = getStateHandlerStub();
+			const psm = newPendingStateManager(stubs);
+			const blobMetadata = { localId: "local-id-1", blobId: "blob-id-1" };
+			psm.onFlushBatch(
+				[
+					{
+						runtimeOp: op("blobAttachContents"),
+						referenceSequenceNumber: 1,
+						metadata: blobMetadata,
+						localOpMetadata: undefined,
+					},
+				],
+				/* clientSequenceNumber: */ undefined,
+				/* staged: */ true,
+			);
+
+			let captured: { localOpMetadata: unknown; opMetadata: unknown } | undefined;
+			psm.popStagedBatches((msg) => {
+				captured = {
+					localOpMetadata: msg.localOpMetadata,
+					opMetadata: msg.opMetadata,
+				};
+			});
+
+			assert.deepStrictEqual(
+				captured,
+				{ localOpMetadata: undefined, opMetadata: blobMetadata },
+				"opMetadata must be exposed on the popStagedBatches callback argument",
+			);
+		});
+
 		it("should not pop unstaged messages", () => {
 			const stubs = getStateHandlerStub();
 			const psm = newPendingStateManager(stubs);

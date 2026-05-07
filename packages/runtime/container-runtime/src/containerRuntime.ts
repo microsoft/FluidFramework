@@ -3663,7 +3663,11 @@ export class ContainerRuntime
 					try {
 						checkpoint.rollback((message: LocalBatchMessage) =>
 							// These changes are staged since we entered staging mode above
-							this.rollbackStagedChange(message.runtimeOp, message.localOpMetadata),
+							this.rollbackStagedChange(
+								message.runtimeOp,
+								message.localOpMetadata,
+								message.metadata,
+							),
 						);
 						this.updateDocumentDirtyState();
 						stageControls?.discardChanges();
@@ -3803,8 +3807,8 @@ export class ContainerRuntime
 				exitStagingMode(() => {
 					// Pop all staged batches from the PSM and roll them back in LIFO order
 					const batchInfos = this.pendingStateManager.popStagedBatches(
-						({ runtimeOp, localOpMetadata }) => {
-							this.rollbackStagedChange(runtimeOp, localOpMetadata);
+						({ runtimeOp, localOpMetadata, opMetadata }) => {
+							this.rollbackStagedChange(runtimeOp, localOpMetadata, opMetadata);
 						},
 					);
 					this.updateDocumentDirtyState();
@@ -5126,6 +5130,7 @@ export class ContainerRuntime
 	private rollbackStagedChange(
 		{ type, contents }: LocalContainerRuntimeMessage,
 		localOpMetadata: unknown,
+		opMetadata: Record<string, unknown> | undefined,
 	): void {
 		switch (type) {
 			case ContainerMessageType.FluidDataStoreOp: {
@@ -5174,10 +5179,13 @@ export class ContainerRuntime
 				break;
 			}
 			case ContainerMessageType.BlobAttach: {
-				// Drop from the blob manager's pending list. Storage-resolved
-				// handles still work for acked blobs; un-acked blobs become
-				// unresolvable, which is correct.
-				this.blobManager.rollbackAttach(localOpMetadata);
+				// Drop from the blob manager's pending list. Blob identity
+				// (`{ localId, blobId }`) is carried as message-level
+				// `opMetadata` (see `BlobManager.processBlobAttachMessage`),
+				// not `localOpMetadata` (which is `undefined` for stashed
+				// BlobAttach replays). Storage-resolved handles still work
+				// for acked blobs; un-acked blobs become unresolvable.
+				this.blobManager.rollbackAttach(opMetadata);
 				break;
 			}
 			case ContainerMessageType.IdAllocation: {
