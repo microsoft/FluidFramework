@@ -15,7 +15,7 @@ import {
 import Deque from "double-ended-queue";
 import { v4 as uuid } from "uuid";
 
-import { canStageMessageOfType, isContainerMessageDirtyable } from "./containerRuntime.js";
+import { isContainerMessageDirtyable } from "./containerRuntime.js";
 import type {
 	InboundContainerRuntimeMessage,
 	InboundSequencedContainerRuntimeMessage,
@@ -584,44 +584,18 @@ export class PendingStateManager implements IDisposable {
 					);
 				}
 
-				// Decide whether to mark un-acked rehydrated ops as staged. This is
-				// all-or-nothing: if the host entered staging mode (typically inside
-				// the start hook above) AND every un-acked op's runtime-op type is
-				// stageable, stage them all. Otherwise stage none — staging a subset
-				// would violate the queue invariant that staged ops follow non-staged
-				// ops (commit-staged-replay enforces this via 0xb86) and would trip
-				// "Unexpected message type submitted in Staging Mode" (0xbba) on
-				// resubmit of the non-stageable type. Empty batch placeholders don't
-				// carry user intent and are skipped from this scan.
+				// Stage every un-acked rehydrated op when the host entered staging
+				// mode in the start handler, regardless of runtime-op type. The
+				// ordinary `submit()` path rejects staged ops of types like Attach
+				// / Alias / BlobAttach / IdAllocation / Rejoin, but rehydrated
+				// staged ops do *not* go through that path on (re)connect — they
+				// sit in the queue (see `replayPendingStates`) until the host
+				// commits or discards. On commit the staged flag is cleared before
+				// resubmit so all types pass the check. On discard, the runtime
+				// dispatches to type-specific rollback handlers that "hide" or
+				// drop the local effect; a wake-up path resurrects hidden state
+				// when a remote op for the same target arrives.
 				this._stageRehydratedOps = this.stateHandler.isInStagingMode();
-				if (this._stageRehydratedOps) {
-					let unstageableType: string | undefined;
-					for (let i = 0; i < this.initialMessages.length; i++) {
-						const msg = this.initialMessages.get(i);
-						if (msg === undefined || msg.sequenceNumber !== undefined) {
-							continue;
-						}
-						if (isEmptyBatchPendingMessage(msg)) {
-							continue;
-						}
-						const parsed = JSON.parse(msg.content) as Partial<LocalContainerRuntimeMessage>;
-						if (parsed.type === undefined || !canStageMessageOfType(parsed.type)) {
-							unstageableType = parsed.type ?? "<unknown>";
-							break;
-						}
-					}
-					if (unstageableType !== undefined) {
-						this._stageRehydratedOps = false;
-						// Surface the silent-fallback case so hosts can detect it (e.g.
-						// to warn the user that discardChanges won't roll back the
-						// rehydrated edits in this stash).
-						this.logger.sendTelemetryEvent({
-							eventName: "StagedRehydrationFallback",
-							category: "performance",
-							details: { unstageableType },
-						});
-					}
-				}
 			}
 
 			// apply stashed ops at sequence number
@@ -1017,6 +991,15 @@ export class PendingStateManager implements IDisposable {
 
 				seenStagedBatch = true;
 				pendingMessage.batchInfo.staged = false; // Clear staged flag so we can submit
+				pendingMessage.stagedFromStashedRehydration = false;
+			} else if (pendingMessage.stagedFromStashedRehydration === true) {
+				// Rehydrated ops staged at apply time stay in the queue until the
+				// host explicitly commits or discards. Skip them on the normal
+				// (non-committing) replay path so they don't go to the wire and
+				// don't trip `submit()`'s stage-only-stageable-types assertion
+				// (`0xbba`) for runtime-op types like Attach / Alias / BlobAttach.
+				this.pendingMessages.push(pendingMessage);
+				continue;
 			}
 
 			const batchMetadataFlag = asBatchMetadata(pendingMessage.opMetadata)?.batch;

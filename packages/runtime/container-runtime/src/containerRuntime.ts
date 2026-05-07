@@ -5116,8 +5116,6 @@ export class ContainerRuntime
 		{ type, contents }: LocalContainerRuntimeMessage,
 		localOpMetadata: unknown,
 	): void {
-		assert(canStageMessageOfType(type), 0xbbc /* Unexpected message type to be rolled back */);
-
 		switch (type) {
 			case ContainerMessageType.FluidDataStoreOp: {
 				// For operations, call rollbackDataStoreOp which will find the right store
@@ -5141,8 +5139,55 @@ export class ContainerRuntime
 				this.documentsSchemaController.pendingOpNotAcked();
 				break;
 			}
+			// The following types only reach this rollback path via rehydrated
+			// pending state (host opted into staging-on-rehydration in the
+			// `pendingStateApplyStart` handler). In live staging mode they're
+			// rejected upstream by `canStageMessageOfType`.
+			//
+			// LIFO rollback ordering guarantees that any DDS ops that referenced
+			// these targets have already been popped before we get here, so
+			// "hiding" or dropping the local effect is safe — nothing else in
+			// the staged queue references them.
+			case ContainerMessageType.Attach: {
+				// Mark the data store hidden locally. Realize-on-demand handles
+				// re-surfacing it if a remote op (or a delayed ack of the
+				// previous-session attach) routes to its internalId.
+				this.channelCollection.rollbackAttach(contents);
+				break;
+			}
+			case ContainerMessageType.Alias: {
+				// Drop the local alias mapping. The underlying data store stays
+				// addressable by internalId; the alias is re-established if a
+				// remote Alias op arrives.
+				this.channelCollection.rollbackAlias(contents);
+				break;
+			}
+			case ContainerMessageType.BlobAttach: {
+				// Drop from the blob manager's pending list. Storage-resolved
+				// handles still work for acked blobs; un-acked blobs become
+				// unresolvable, which is correct.
+				this.blobManager.rollbackAttach(localOpMetadata);
+				break;
+			}
+			case ContainerMessageType.IdAllocation: {
+				// Per the resubmit policy at containerRuntime.ts (see reSubmit's
+				// IdAllocation case): allocation ops are never resubmitted —
+				// they regenerate fresh. Rollback drops the queued op with no
+				// state to undo. IDs that were minted into channels by this
+				// allocation were referenced only by ops popped first via LIFO.
+				break;
+			}
+			case ContainerMessageType.Rejoin: {
+				// Connect-time signaling. Should not appear in stashed pending
+				// state in practice; if it does, dropping is correct.
+				break;
+			}
 			default: {
-				unreachableCase(type);
+				// ChunkedOp / Unknown — same defensive close-on-error treatment
+				// reSubmit uses for unrecognized types (containerRuntime.ts:5104).
+				const error = getUnknownMessageTypeError(type, "rollbackStagedChange" /* codePath */);
+				this.closeFn(error);
+				throw error;
 			}
 		}
 	}

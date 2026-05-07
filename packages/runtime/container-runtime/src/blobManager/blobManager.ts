@@ -744,6 +744,29 @@ export class BlobManager {
 		}
 	}
 
+	/**
+	 * Rollback a `BlobAttach` op staged at apply time on the staging-on-rehydration
+	 * path. Drops the local "attaching" record so a subsequent resubmit doesn't
+	 * fire for it. Storage state is untouched: if the previous-session attach was
+	 * acked, handles to the blob still resolve via the storage redirect; if it
+	 * wasn't acked, the blob becomes locally unresolvable, which is correct.
+	 */
+	public rollbackAttach(metadata: unknown): void {
+		if (!isBlobMetadata(metadata)) {
+			return;
+		}
+		const { localId } = metadata;
+		const localBlobRecord = this.localBlobCache.get(localId);
+		if (localBlobRecord?.state === "attaching") {
+			this.localBlobCache.set(localId, {
+				state: "localOnly",
+				blob: localBlobRecord.blob,
+			});
+		}
+		this.pendingBlobsWithAttachedHandles.delete(localId);
+		this.pendingOnlyLocalIds.delete(localId);
+	}
+
 	public processBlobAttachMessage(message: ISequencedMessageEnvelope, local: boolean): void {
 		assert(
 			isBlobMetadata(message.metadata),

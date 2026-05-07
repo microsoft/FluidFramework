@@ -341,6 +341,19 @@ export class ChannelCollection
 		Promise<AliasResult>
 	>();
 
+	/**
+	 * InternalIds whose attach was rolled back via `discardChanges` on the
+	 * staging-on-rehydration path. The data store context stays in
+	 * {@link contexts} (DDSes, listeners, etc. are not torn down) but is hidden
+	 * from host-facing lookups via {@link getDataStoreIfAvailable} and friends.
+	 *
+	 * The hidden state is cleared when an inbound op for the internalId arrives
+	 * (the server clearly thinks the data store exists, so we surface it again).
+	 * This is the "limbo until a remote op resurrects me" semantics for
+	 * potentially-acked attaches that the local user discarded.
+	 */
+	private readonly rolledBackAttachIds = new Set<string>();
+
 	protected readonly contexts: DataStoreContexts;
 	private readonly aliasedDataStores: Set<string>;
 
@@ -455,6 +468,11 @@ export class ChannelCollection
 		const { envelope, messagesContent, local } = messageCollection;
 		for (const { contents } of messagesContent) {
 			const attachMessage = contents as InboundAttachMessage;
+			// Wake up any rolled-back attach: the server has the data store, so
+			// it should once again be visible locally. The hidden flag is
+			// cleared *before* the regular processing path runs so the data
+			// store is surfaced atomically with the ack.
+			this.rolledBackAttachIds.delete(attachMessage.id);
 			// We need to process the GC Data for both local and remote attach messages
 			const foundGCData = processAttachMessageGCData(
 				attachMessage.snapshot ?? undefined,
@@ -985,6 +1003,11 @@ export class ChannelCollection
 			const address = contentsEnvelope.address;
 			const context = this.contexts.get(address);
 
+			// Wake up any rolled-back attach: an op routed to this address means
+			// the server has the data store, so it should once again be visible
+			// locally. Cleared atomically with op processing.
+			this.rolledBackAttachIds.delete(address);
+
 			// If the data store has been deleted, log an error and ignore this message. This helps prevent document
 			// corruption in case a deleted data store accidentally submitted an op.
 			if (this.checkAndLogIfDeleted(address, context, "Changed", "processFluidDataStoreOp")) {
@@ -1094,12 +1117,48 @@ export class ChannelCollection
 		) {
 			return undefined;
 		}
+		// If the attach was rolled back via discardChanges on the staging-on-
+		// rehydration path, the data store is locally hidden until a remote op
+		// resurrects it. Hide it from host-facing lookups.
+		if (this.rolledBackAttachIds.has(id)) {
+			return undefined;
+		}
 		const headerData = { ...defaultRuntimeHeaderData, ...requestHeaderData };
 		const context = await this.contexts.getBoundOrRemoted(id, headerData.wait);
 		if (context === undefined) {
 			return undefined;
 		}
 		return context;
+	}
+
+	/**
+	 * Rollback an `Attach` that was staged at apply time. The data store's
+	 * in-memory state stays intact — this is just a visibility flag so host-
+	 * facing lookups skip it. Wake-up happens in {@link processAttachMessages}
+	 * and {@link processChannelMessages} when an inbound op routes to the
+	 * hidden internalId.
+	 *
+	 * Per the rollback contract this is only invoked from
+	 * `popStagedBatches` in LIFO order, so any DDS ops that referenced this
+	 * data store have already been popped before we get here.
+	 */
+	public rollbackAttach(message: IAttachMessage): void {
+		this.rolledBackAttachIds.add(message.id);
+		// If this attach was un-acked, we recorded it in pendingAttach during
+		// applyStashedOp. Clearing it ensures we don't error if a delayed ack
+		// arrives — the wake-up path in processAttachMessages re-establishes
+		// pendingAttach if needed.
+		this.pendingAttach.delete(message.id);
+	}
+
+	/**
+	 * Rollback an `Alias` that was staged at apply time. The underlying data
+	 * store stays addressable by internalId; only the alias→internalId mapping
+	 * is removed. A subsequent inbound `Alias` op (e.g. the previous-session
+	 * resubmit's delayed ack) re-establishes the mapping naturally.
+	 */
+	public rollbackAlias(message: IDataStoreAliasMessage): void {
+		this.aliasMap.delete(message.alias);
 	}
 
 	/**

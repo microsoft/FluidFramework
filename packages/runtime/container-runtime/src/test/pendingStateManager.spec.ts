@@ -1312,15 +1312,15 @@ describe("Pending State Manager", () => {
 			assert.strictEqual(realOp.stagedFromStashedRehydration, true);
 		});
 
-		it("disables staging and emits telemetry when an unstageable type is in the stash", async () => {
-			// Per the queue invariant, we can't selectively stage when non-stageable
-			// types (BlobAttach, IdAllocation, Rejoin, Attach, Alias) are interleaved
-			// with stageable ones. Fall back to non-staged for all rehydrated ops and
-			// log a telemetry event so hosts can detect that discardChanges() will
-			// not roll back the rehydrated edits in this stash.
-			mockLogger.clear();
+		it("stages every un-acked rehydrated op including non-FluidDataStoreOp types", async () => {
+			// All un-acked stashed ops are staged regardless of runtime-op type when
+			// the host enters staging mode. Non-stageable types (Attach, Alias,
+			// BlobAttach, IdAllocation) don't go through the regular submit path on
+			// (re)connect — they sit in the queue (see replayPendingStates skip in
+			// the non-committing path) until the host commits or discards. Discard
+			// dispatches to type-specific rollback handlers in containerRuntime's
+			// `rollbackStagedChange`.
 			const messages: IPendingMessage[] = [
-				// Non-stageable: BlobAttach.
 				{
 					type: "message",
 					content: '{"type":"blobAttach","metadata":{}}',
@@ -1330,7 +1330,6 @@ describe("Pending State Manager", () => {
 					batchInfo: { clientId: "CLIENT_ID", batchStartCsn: 1, length: 1, staged: false },
 					runtimeOp: undefined,
 				},
-				// Stageable: would have been staged if it were alone.
 				{
 					type: "message",
 					content: '{"type":"component"}',
@@ -1362,15 +1361,11 @@ describe("Pending State Manager", () => {
 			for (const msg of queue) {
 				assert.strictEqual(
 					msg.batchInfo.staged,
-					false,
-					"all rehydrated ops fall back to non-staged when an unstageable type is present",
+					true,
+					"all un-acked rehydrated ops are staged regardless of type",
 				);
-				assert.strictEqual(msg.stagedFromStashedRehydration, undefined);
+				assert.strictEqual(msg.stagedFromStashedRehydration, true);
 			}
-			mockLogger.assertMatch(
-				[{ eventName: "StagedRehydrationFallback" }],
-				"telemetry surfaces the silent-fallback case",
-			);
 		});
 
 		it("marks un-acked rehydrated ops staged when staging mode is active", async () => {
