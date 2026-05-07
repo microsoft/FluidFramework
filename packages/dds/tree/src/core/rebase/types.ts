@@ -9,7 +9,7 @@ import type {
 	SessionSpaceCompressedId,
 	StableId,
 } from "@fluidframework/id-compressor";
-import { Type } from "@sinclair/typebox";
+import { Type, type Static } from "@sinclair/typebox";
 
 import {
 	type Brand,
@@ -73,7 +73,15 @@ export interface ChangeAtomId {
 	readonly localId: ChangesetLocalId;
 }
 
-export type EncodedChangeAtomId = [ChangesetLocalId, EncodedRevisionTag] | ChangesetLocalId;
+export const ChangesetLocalIdSchema = brandedNumberType<ChangesetLocalId>({
+	multipleOf: 1,
+});
+
+export const EncodedChangeAtomId = Type.Union([
+	Type.Tuple([ChangesetLocalIdSchema, RevisionTagSchema]),
+	ChangesetLocalIdSchema,
+]);
+export type EncodedChangeAtomId = Static<typeof EncodedChangeAtomId>;
 
 export type ChangeAtomIdMap<T> = NestedMap<RevisionTag | undefined, ChangesetLocalId, T>;
 

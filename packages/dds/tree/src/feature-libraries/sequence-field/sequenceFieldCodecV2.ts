@@ -17,6 +17,7 @@ import {
 	type ChangeAtomId,
 	type ChangeEncodingContext,
 	type ChangesetLocalId,
+	type EncodedChangeAtomId,
 	type EncodedRevisionTag,
 	type RevisionTag,
 	type RevisionTagSchema,
@@ -26,7 +27,6 @@ import { getFromChangeAtomIdMap, rangeQueryChangeAtomIdMap } from "../changeAtom
 import { makeChangeAtomIdCodec } from "../changeAtomIdCodec.js";
 import {
 	EncodedNodeChangeset,
-	type EncodedChangeAtomId,
 	type FieldChangeEncodingContext,
 } from "../modular-schema/index.js";
 

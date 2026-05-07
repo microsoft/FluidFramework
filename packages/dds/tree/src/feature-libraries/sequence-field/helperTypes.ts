@@ -7,13 +7,11 @@ import type { DiscriminatedUnionLibrary, IJsonCodec } from "../../codec/index.js
 import type {
 	ChangeAtomId,
 	ChangeEncodingContext,
+	EncodedChangeAtomId,
 	EncodedRevisionTag,
 	RevisionTag,
 } from "../../core/index.js";
-import type {
-	EncodedChangeAtomId,
-	FieldChangeEncodingContext,
-} from "../modular-schema/index.js";
+import type { FieldChangeEncodingContext } from "../modular-schema/index.js";
 
 import type { Encoded } from "./formatV2.js";
 import type {

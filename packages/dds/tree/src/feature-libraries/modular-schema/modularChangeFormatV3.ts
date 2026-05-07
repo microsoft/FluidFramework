@@ -5,10 +5,10 @@
 
 import { type ObjectOptions, type Static, Type } from "@sinclair/typebox";
 
+import { ChangesetLocalIdSchema, EncodedChangeAtomId } from "../../core/index.js";
+
 import {
-	ChangesetLocalIdSchema,
 	EncodedBuilds,
-	EncodedChangeAtomId,
 	EncodedFieldChangeMap,
 	EncodedNodeChangeset,
 	EncodedRevisionInfo,

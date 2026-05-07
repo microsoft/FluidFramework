@@ -11,15 +11,13 @@ import {
 	areEqualChangeAtomIds,
 	type ChangeAtomId,
 	type ChangeEncodingContext,
+	type EncodedChangeAtomId,
 	type RevisionTag,
 	type RevisionTagSchema,
 } from "../../core/index.js";
 import type { Mutable } from "../../util/index.js";
 import { makeChangeAtomIdCodec } from "../changeAtomIdCodec.js";
-import type {
-	FieldChangeEncodingContext,
-	EncodedChangeAtomId,
-} from "../modular-schema/index.js";
+import type { FieldChangeEncodingContext } from "../modular-schema/index.js";
 import { EncodedNodeChangeset } from "../modular-schema/index.js";
 
 import { EncodedOptionalChangeset, EncodedRegisterId } from "./optionalFieldChangeFormatV2.js";

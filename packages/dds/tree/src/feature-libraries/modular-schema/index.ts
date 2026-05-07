@@ -22,8 +22,6 @@ export {
 	setInCrossFieldMap,
 } from "./crossFieldQueries.js";
 export {
-	ChangesetLocalIdSchema,
-	EncodedChangeAtomId,
 	EncodedRevisionInfo,
 	EncodedModularChangesetV1,
 	EncodedNodeChangeset,
