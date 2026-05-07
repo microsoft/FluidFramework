@@ -11,7 +11,6 @@ export type {
 	FluidIterable,
 	FluidIterableIterator,
 	FluidMap,
-	FluidMapLegacy,
 	FluidReadonlyMap,
 } from "./fluidMap.js";
 

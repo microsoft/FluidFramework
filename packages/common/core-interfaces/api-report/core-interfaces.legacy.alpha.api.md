@@ -81,14 +81,6 @@ export interface FluidMap<K, V> extends FluidReadonlyMap<K, V> {
     set(key: K, value: V): void;
 }
 
-// @beta @sealed @legacy
-export interface FluidMapLegacy<K, V> extends FluidMap<K, V> {
-    clear(): void;
-    delete(key: K): boolean;
-    forEach(callbackfn: (value: V, key: K, map: FluidMapLegacy<K, V>) => void, thisArg?: any): void;
-    set(key: K, value: V): this;
-}
-
 // @public
 export type FluidObject<T = unknown> = {
     [P in FluidObjectProviderKeys<T>]?: T[P];

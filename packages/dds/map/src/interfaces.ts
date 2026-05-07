@@ -9,7 +9,7 @@ import type {
 	IEventProvider,
 	IEventThisPlaceHolder,
 } from "@fluidframework/core-interfaces";
-import type { FluidMapLegacy } from "@fluidframework/core-interfaces/internal";
+import type { FluidMap } from "@fluidframework/core-interfaces/internal";
 import type {
 	ISharedObject,
 	ISharedObjectEvents,
@@ -121,7 +121,47 @@ export interface IDirectory
 }
 
 /**
- * Beta version of {@link IDirectory} which uses {@link @fluidframework/core-interfaces/internal#FluidMapLegacy} for its map-like API.
+ * Legacy map-like API that extends {@link FluidMap}, without the `get` and `set` methods supplied by legacy map interfaces.
+ *
+ * @sealed
+ * @legacy @beta
+ */
+export interface FluidMapLegacy<K, V> extends Omit<FluidMap<K, V>, "get" | "set" | "forEach"> {
+	/**
+	 * Removes all entries from the map.
+	 */
+	clear(): void;
+
+	/**
+	 * Executes the provided function once per each key/value pair in the map.
+	 */
+	forEach(
+		callbackfn: (value: V, key: K, map: FluidMap<K, V>) => void,
+		// Typing inherited from FluidMap.
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		thisArg?: any,
+	): void;
+
+	/**
+	 * Executes the provided function once per each key/value pair in the map.
+	 */
+	forEach(
+		callbackfn: (value: V, key: K, map: Map<K, V>) => void,
+		// Typing inherited from Map.
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		thisArg?: any,
+	): void;
+
+	/**
+	 * Removes the specified element from the map by its key.
+	 *
+	 * @returns `true` if an element existed and has been removed, or `false` if the element does not exist.
+	 */
+	delete(key: K): boolean;
+}
+
+/**
+ * Beta version of {@link IDirectory} which uses {@link FluidMapLegacy} for its map-like API.
  *
  * @sealed
  * @legacy @beta
@@ -129,7 +169,7 @@ export interface IDirectory
 export interface IDirectoryBeta
 	extends Omit<IDirectory, Exclude<keyof Map<string, unknown>, "get" | "set">>,
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		Omit<FluidMapLegacy<string, any>, "get" | "set"> {}
+		FluidMapLegacy<string, any> {}
 
 /**
  * Events emitted in response to changes to the directory data.
@@ -414,7 +454,7 @@ export interface ISharedMap
 }
 
 /**
- * Beta version of {@link ISharedMap} which uses {@link @fluidframework/core-interfaces#FluidMapLegacy} for its map-like API.
+ * Beta version of {@link ISharedMap} which uses {@link FluidMapLegacy} for its map-like API.
  *
  * @sealed
  * @legacy @beta
@@ -422,4 +462,4 @@ export interface ISharedMap
 export interface ISharedMapBeta
 	extends Omit<ISharedMap, Exclude<keyof Map<string, unknown>, "get" | "set">>,
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		Omit<FluidMapLegacy<string, any>, "get" | "set"> {}
+		FluidMapLegacy<string, any> {}

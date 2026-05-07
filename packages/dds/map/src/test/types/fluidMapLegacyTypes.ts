@@ -4,9 +4,15 @@
  */
 
 import type { requireAssignableTo } from "@fluidframework/build-tools";
-import type { FluidMapLegacy } from "@fluidframework/core-interfaces/legacy";
+import type { FluidMap } from "@fluidframework/core-interfaces/internal";
 
-import type { IDirectory, IDirectoryBeta, ISharedMap, ISharedMapBeta } from "../../index.js";
+import type {
+	FluidMapLegacy,
+	IDirectory,
+	IDirectoryBeta,
+	ISharedMap,
+	ISharedMapBeta,
+} from "../../index.js";
 
 declare type _iDirectoryBeta_to_fluidMapLegacy = requireAssignableTo<
 	IDirectoryBeta,
@@ -27,6 +33,14 @@ declare type _iSharedMap_to_map = requireAssignableTo<
 	// TODO: Use `unknown` instead (breaking change).
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	Map<string, any>
+>;
+declare type _iDirectoryBeta_to_fluidMap = requireAssignableTo<
+	IDirectoryBeta,
+	FluidMap<string, unknown>
+>;
+declare type _iSharedMapBeta_to_fluidMap = requireAssignableTo<
+	ISharedMapBeta,
+	FluidMap<string, unknown>
 >;
 declare type _iDirectoryBeta_to_map = requireAssignableTo<
 	IDirectoryBeta,
