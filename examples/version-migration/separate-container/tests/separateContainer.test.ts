@@ -7,33 +7,28 @@ import type { IMigrator } from "@fluid-example/migration-tools/alpha";
 import type { IContainer } from "@fluidframework/container-definitions/legacy";
 import type { ISequencedClient } from "@fluidframework/driver-definitions/legacy";
 
-import { globals } from "../jest.config.cjs";
+import { expect, test } from "@playwright/test";
 
-describe("separate-container migration", () => {
-	beforeAll(async () => {
-		// Wait for the page to load first before running any tests
-		// so this time isn't attributed to the first test
-		await page.goto(globals.PATH, { waitUntil: "load", timeout: 0 });
-		await page.waitForFunction(() => window["fluidStarted"]);
-	}, 45000);
+/* eslint-disable @typescript-eslint/dot-notation */
 
-	describe("Without summarizer connected", () => {
-		beforeEach(async () => {
-			await page.goto(globals.PATH, { waitUntil: "load" });
+test.describe("separate-container migration", () => {
+	test.describe("Without summarizer connected", () => {
+		test.beforeEach(async ({ page }) => {
+			await page.goto("/", { waitUntil: "load" });
 			await page.waitForFunction(() => window["fluidStarted"]);
 		});
 
-		it("loads and there's an input", async () => {
+		test("loads and there's an input", async ({ page }) => {
 			// Validate the input shows up
 			await page.waitForSelector("input");
 		});
 
-		it("can click the migrate debug button", async () => {
+		test("can click the migrate debug button", async ({ page }) => {
 			// Validate there is a button that can be clicked
-			await expect(page).toClick("button", { text: '"two"' });
+			await page.getByRole("button", { name: '"two"' }).first().click();
 		});
 
-		it("shows the correct code version at pageload", async () => {
+		test("shows the correct code version at pageload", async ({ page }) => {
 			// Validate the migration status shows "one"
 			await page.waitForSelector(".migration-status");
 			const containsOne = await page.evaluate(() => {
@@ -43,7 +38,7 @@ describe("separate-container migration", () => {
 			expect(containsOne).toEqual(true);
 		});
 
-		it("migrates and shows the correct code version after migration", async () => {
+		test("migrates and shows the correct code version after migration", async ({ page }) => {
 			// Validate the migration status shows "one" initially
 			await Promise.all([
 				page.waitForSelector("#sbs-left .migration-status"),
@@ -75,7 +70,7 @@ describe("separate-container migration", () => {
 				return Promise.all(migrationPs);
 			});
 
-			await expect(page).toClick("button", { text: '"two"' });
+			await page.getByRole("button", { name: '"two"' }).first().click();
 
 			await migrationP;
 
@@ -91,13 +86,13 @@ describe("separate-container migration", () => {
 		});
 	});
 
-	describe("With summarizer connected", () => {
-		beforeEach(async () => {
-			await page.goto(`${globals.PATH}?testMode`, { waitUntil: "load" });
+	test.describe("With summarizer connected", () => {
+		test.beforeEach(async ({ page }) => {
+			await page.goto("/?testMode", { waitUntil: "load" });
 			await page.waitForFunction(() => window["fluidStarted"]);
 		});
 
-		it("migrates after summarizer has connected", async () => {
+		test("migrates after summarizer has connected", async ({ page }) => {
 			// Validate the migration status shows "one" initially
 			await Promise.all([
 				page.waitForSelector("#sbs-left .migration-status"),
@@ -105,12 +100,16 @@ describe("separate-container migration", () => {
 			]);
 
 			// Force the containers into write mode
-			await expect(page).toClick(
-				"#sbs-right > div:nth-child(1) > table > tbody > tr:nth-child(3) > td > button",
-			);
-			await expect(page).toClick(
-				"#sbs-left > div:nth-child(1) > table > tbody > tr:nth-child(3) > td > button",
-			);
+			await page
+				.locator(
+					"#sbs-right > div:nth-child(1) > table > tbody > tr:nth-child(3) > td > button",
+				)
+				.click();
+			await page
+				.locator(
+					"#sbs-left > div:nth-child(1) > table > tbody > tr:nth-child(3) > td > button",
+				)
+				.click();
 
 			const leftContainsOne = await page.evaluate(() => {
 				const migrationStatusElements = document.querySelectorAll(".migration-status");
@@ -172,7 +171,7 @@ describe("separate-container migration", () => {
 				return Promise.all(migrationPs);
 			});
 
-			await expect(page).toClick("button", { text: '"two"' });
+			await page.getByRole("button", { name: '"two"' }).first().click();
 
 			await migrationP;
 
