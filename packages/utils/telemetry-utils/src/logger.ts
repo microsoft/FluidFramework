@@ -224,8 +224,8 @@ export abstract class TelemetryLogger implements TelemetryLoggerExt {
 	 *
 	 * @param event - the event to send
 	 * @param error - optional error object to log
-	 * @param logLevel - optional level of the log. It category of event is set as error,
-	 * then the logLevel will be upgraded to be an error.
+	 * @param logLevel - optional level of the log. If the event's category is `error`,
+	 * the logLevel will be upgraded to {@link @fluidframework/core-interfaces#LogLevelConst.essential | LogLevel.essential}.
 	 */
 	public sendTelemetryEvent(
 		event: ITelemetryGenericEventExt,
@@ -289,8 +289,8 @@ export abstract class TelemetryLogger implements TelemetryLoggerExt {
 	 *
 	 * @param event - Event to send
 	 * @param error - optional error object to log
-	 * @param logLevel - optional level of the log. It category of event is set as error,
-	 * then the logLevel will be upgraded to be an error.
+	 * @param logLevel - optional level of the log. If the event's category is `error`,
+	 * the logLevel will be upgraded to {@link @fluidframework/core-interfaces#LogLevelConst.essential | LogLevel.essential}.
 	 */
 	public sendPerformanceEvent(
 		event: ITelemetryPerformanceEventExt,
@@ -805,12 +805,12 @@ export class PerformanceEvent {
 	private readonly startTime = performanceNow();
 	private startMark?: string;
 
-	protected constructor(
+	private constructor(
 		private readonly logger: TelemetryLoggerExt,
 		event: ITelemetryGenericEventExt,
 		private readonly markers: IPerformanceEventMarkers = { end: true, cancel: "generic" },
 		private readonly emitLogs: boolean = true,
-		private readonly logLevel?: typeof LogLevel.verbose | typeof LogLevel.info,
+		private readonly logLevel: typeof LogLevel.verbose | typeof LogLevel.info | undefined,
 	) {
 		this.event = { ...event };
 		if (this.markers.start) {

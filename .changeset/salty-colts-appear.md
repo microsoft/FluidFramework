@@ -5,11 +5,13 @@
 
 Deprecated LogLevel.default and LogLevel.error
 
-`LogLevel.default` and `LogLevel.error` in `@fluidframework/core-interfaces` are deprecated in favor of the semantically clearer `LogLevel.info` and `LogLevel.essential` respectively.
+`LogLevel.default` and `LogLevel.error` in `@fluidframework/core-interfaces` are deprecated in favor of the semantically clearer `LogLevel.info` and `LogLevel.essential`.
 
 #### Migration
 
-- `LogLevel.default` (= `20`) → use `LogLevel.info`
-- `LogLevel.error` (= `30`) → use `LogLevel.essential`
+The recommended replacement depends on how the value is used:
 
-Removal is tracked in [issue #26969](https://github.com/microsoft/FluidFramework/issues/26969) and is planned for the v3.0 major release.
+- For an **event's `logLevel`** (e.g. the `logLevel` argument to `sendTelemetryEvent` / `sendPerformanceEvent` / `ITelemetryBaseLogger.send`), the recommendation is `LogLevel.essential`.
+- For a logger's **`minLogLevel`** (the threshold that filters events), `LogLevel.info` is the recommendation.
+
+See [issue #26969](https://github.com/microsoft/FluidFramework/issues/26969) for full guidance and removal tracking (planned for v3.0).
