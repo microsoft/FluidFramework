@@ -67,12 +67,12 @@ function makeFactoryWithFailingReadBlob(
 										);
 									};
 								}
-								return Reflect.get(storageTarget, storageProp, storageReceiver);
+								return Reflect.get(storageTarget, storageProp, storageReceiver) as unknown;
 							},
 						});
 					};
 				}
-				return Reflect.get(target, prop, receiver);
+				return Reflect.get(target, prop, receiver) as unknown;
 			},
 		});
 

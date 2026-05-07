@@ -398,3 +398,33 @@ This is correct only as long as structural and attachment storage ids never coll
 - Protocol-assumptions review on this branch, Tier 4 #4.3.
 - `packages/loader/container-loader/src/serializedStateManager.ts:286-298`.
 - `packages/loader/container-loader/src/containerStorageAdapter.ts:167-170`.
+
+---
+
+### Task 7 — captureFullContainerState: handle GC-revival of `unreferenced` base-snapshot subtrees
+
+**Title:** captureFullContainerState — base-snapshot `unreferenced` filter breaks self-containment when `savedOps` revive a node
+
+**Type:** Bug / correctness
+
+**Description:**
+
+`collectReferencedBlobIds` in `packages/loader/container-loader/src/captureReferencedContents.ts:181-195` early-returns for any subtree with `tree.unreferenced === true`, so those snapshot blobs are not inlined into `snapshotBlobs`. `captureFullContainerState` then drains all post-snapshot ops via `deltaStorage.fetchMessages(seq+1, …)` into `savedOps` (`createAndLoadContainerUtils.ts:390-425`), and the loader replays those ops during pending-state load.
+
+Fluid GC's `GarbageCollector.addedOutboundReference` records a new outbound reference as `"Revived"` and clears the unreferenced state (`packages/runtime/container-runtime/src/gc/garbageCollection.ts:1110-1168`). If a post-snapshot op stores a handle to a node/data store that was `unreferenced` in the base snapshot but not tombstoned/deleted, the captured artifact represents it as reachable after replay — but that node's base-snapshot blobs were deliberately omitted. A frozen/offline load then either fails or falls through to live storage when resolving the revived handle. The artifact's self-containment guarantee is broken on any GC-supported revival transition.
+
+`captureFullContainerState.spec.ts:430-511` covers post-snapshot **attachment** blobs with live `readBlob` disabled, but does not cover revived **unreferenced snapshot subtrees**.
+
+**Acceptance criteria:**
+
+- Pick one of two paths and document which:
+  1. **Full fix** — inline `unreferenced` snapshot subtrees too when `savedOps.length > 0`, preserving artifact self-containment for any GC-revival path. (Costs capture size on every artifact that has trailing ops.)
+  2. **Conservative fix** — fail fast in `captureFullContainerState` (`UsageError`) when the base snapshot contains any `unreferenced` subtree and `savedOps.length > 0`, rather than emitting a non-self-contained artifact. The choice is itself an API-shape decision worth surfacing.
+- Add a regression test in `packages/test/local-server-tests/src/test/captureFullContainerState.spec.ts`: build a base snapshot containing an `unreferenced` data-store subtree, perform a post-snapshot op that stores a handle to that subtree (triggering GC revival), `captureFullContainerState`, then rehydrate via `loadFrozenContainerFromPendingState` with live `readBlob` disabled (use `makeFactoryWithFailingReadBlob` per Task 4) — assert the revived handle resolves to the original blob bytes (path 1) or that capture rejects with `UsageError` (path 2).
+
+**Background links:**
+
+- PR #27220 deep-review thread: <https://github.com/microsoft/FluidFramework/pull/27220#discussion_r3202581532>.
+- `packages/loader/container-loader/src/captureReferencedContents.ts:181-195` (`collectReferencedBlobIds`).
+- `packages/loader/container-loader/src/createAndLoadContainerUtils.ts:390-425` (`savedOps` drain).
+- `packages/runtime/container-runtime/src/gc/garbageCollection.ts:1110-1168` (`addedOutboundReference` → "Revived").
