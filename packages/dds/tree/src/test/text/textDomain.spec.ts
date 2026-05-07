@@ -189,6 +189,33 @@ describe("textDomain", () => {
 			assert.deepEqual(received[0], [{ type: "remove", count: 3 }]);
 		});
 
+		// Empty inserts/removes are no-ops semantically. In hydrated trees they produce no change
+		// notification at all; unhydrated trees fire the callback once with no real ops (a quirk of
+		// the unhydrated event path), so we only assert the hydrated behavior here.
+		it("does not fire for an empty insert (hydrated)", () => {
+			if (!hydrated) return;
+			const text = TextAsTree.Tree.fromString("abc");
+			hydrateNode(text);
+			let callCount = 0;
+			text.onCharactersChanged(() => {
+				callCount++;
+			});
+			text.insertAt(1, "");
+			assert.equal(callCount, 0, "empty insert should not produce a change notification");
+		});
+
+		it("does not fire for an empty remove (hydrated)", () => {
+			if (!hydrated) return;
+			const text = TextAsTree.Tree.fromString("abc");
+			hydrateNode(text);
+			let callCount = 0;
+			text.onCharactersChanged(() => {
+				callCount++;
+			});
+			text.removeRange(1, 1);
+			assert.equal(callCount, 0, "empty remove should not produce a change notification");
+		});
+
 		it("cleanup function unsubscribes the callback", () => {
 			const text = TextAsTree.Tree.fromString("ab");
 			if (hydrated) {

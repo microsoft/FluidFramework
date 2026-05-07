@@ -202,12 +202,13 @@ class StringArray extends sf.array("StringArray", SchemaFactory.string) {
 
 /**
  * Processes an array-node delta into a {@link TextAsTree.TextOp}[] and calls `callback`.
+ * @remarks
  * Shared by both the plain `onCharactersChanged` (from `nodeChanged`) and formatted `onContentChanged`
  * (from `treeChanged`) implementations.
  * @param delta - The raw array-node delta, or `undefined` when no delta is available.
  * When retain ops carry `subtreeChanged` (i.e. delta comes from a `treeChanged` event), the emitted
  * retain ops include an explicit `formattingChanged: boolean`. Otherwise `formattingChanged` is omitted.
- * @param getChar - Returns the character string at the given array index in the **post-edit** tree.
+ * @param getCharacter - Returns the character string at the given array index in the **post-edit** tree.
  * Only invoked for insert ops, where it must read the inserted character at the given index of the tree
  * after the edit has been applied. Passing an accessor that reads pre-edit content will silently produce wrong text.
  * Return `undefined` if the tree is out of sync with the delta; this triggers a full-reread fallback.
@@ -215,14 +216,14 @@ class StringArray extends sf.array("StringArray", SchemaFactory.string) {
  */
 export function processCharactersChangedDelta(
 	delta: readonly (ArrayNodeDeltaOp | ArrayNodeTreeChangedDeltaOp)[] | undefined,
-	getChar: (index: number) => string | undefined,
+	getCharacter: (index: number) => string | undefined,
 	callback: (ops: readonly TextAsTree.TextOp[] | undefined) => void,
 ): void {
 	if (delta === undefined) {
 		callback(undefined);
 		return;
 	}
-	let readPos = 0;
+	let readPosition = 0;
 	const ops: TextAsTree.TextOp[] = [];
 	for (const op of delta) {
 		if (op.type === "retain") {
@@ -232,22 +233,22 @@ export function processCharactersChangedDelta(
 					? { type: "retain", count: op.count, formattingChanged: op.subtreeChanged === true }
 					: { type: "retain", count: op.count },
 			);
-			readPos += op.count;
+			readPosition += op.count;
 		} else if (op.type === "insert") {
 			// Accumulate into an array and join at the end to keep this O(n) for large inserts
 			// (paste of long text) instead of O(n^2) from repeated string concatenation.
-			const chars: string[] = [];
+			const characters: string[] = [];
 			for (let i = 0; i < op.count; i++) {
-				const ch = getChar(readPos);
-				if (ch === undefined) {
+				const character = getCharacter(readPosition);
+				if (character === undefined) {
 					// Tree is out of sync with the delta — fall back to full re-read.
 					callback(undefined);
 					return;
 				}
-				chars.push(ch);
-				readPos++;
+				characters.push(character);
+				readPosition++;
 			}
-			ops.push({ type: "insert", text: chars.join("") });
+			ops.push({ type: "insert", text: characters.join("") });
 		} else {
 			// Construct explicit remove op so internal fields on the source op don't leak.
 			ops.push({ type: "remove", count: op.count });
@@ -334,10 +335,12 @@ export namespace TextAsTree {
 		 */
 		readonly count: number;
 		/**
+		 * Whether at least one character in the retained range had a deep change.
+		 * @remarks
 		 * Present only on retain ops delivered by {@link @fluidframework/tree#FormattedTextAsTree.Members.onContentChanged};
 		 * always absent on retain ops delivered by {@link TextAsTree.Members.onCharactersChanged}.
-		 * When present, `true` indicates at least one character in the retained range had a deep change
-		 * (e.g. a formatting property update or an atom content edit); `false` indicates no deep change.
+		 * When present, `true` indicates the retained range contained a formatting property update
+		 * or an atom content edit; `false` indicates no deep change.
 		 */
 		readonly formattingChanged?: boolean;
 	}
@@ -396,7 +399,6 @@ export namespace TextAsTree {
 
 	/**
 	 * Interface for a text node.
-	 * @sealed
 	 * @remarks
 	 * The string is broken up into substrings which are referred to as 'characters'.
 	 * Unlike with JavaScript strings, all indexes are by character, not UTF-16 code unit.
@@ -410,6 +412,7 @@ export namespace TextAsTree {
 	 *
 	 * @see {@link TextAsTree.Statics.fromString} for construction.
 	 * @see {@link TextAsTree.(Tree:type)} for schema.
+	 * @sealed
 	 * @alpha
 	 */
 	export interface Members {

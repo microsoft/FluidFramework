@@ -5,7 +5,7 @@
 
 import { strict as assert } from "node:assert";
 
-import { UsageError } from "@fluidframework/telemetry-utils/internal";
+import { validateUsageError } from "@fluidframework/test-runtime-utils/internal";
 
 // Allow importing file being tested
 // eslint-disable-next-line import-x/no-internal-modules
@@ -57,23 +57,41 @@ describe("codePointUtils", () => {
 			assert.equal(utf16LengthForCodePoints("a😀b", 3, 1), 1);
 		});
 
-		it("throws UsageError when start or count is out of range", () => {
-			assert.throws(() => utf16LengthForCodePoints("abc", -1, 1), UsageError); // negative start
-			assert.throws(() => utf16LengthForCodePoints("abc", 4, 1), UsageError); // start > length
-			assert.throws(() => utf16LengthForCodePoints("abc", 0, -1), UsageError); // negative count
+		it("throws UsageError when start is negative", () => {
+			assert.throws(
+				() => utf16LengthForCodePoints("abc", -1, 1),
+				validateUsageError(/start \(-1\)/),
+			);
+		});
+
+		it("throws UsageError when start is past end of string", () => {
+			assert.throws(
+				() => utf16LengthForCodePoints("abc", 4, 1),
+				validateUsageError(/start \(4\)/),
+			);
+		});
+
+		it("throws UsageError when count is negative", () => {
+			assert.throws(
+				() => utf16LengthForCodePoints("abc", 0, -1),
+				validateUsageError(/count \(-1\)/),
+			);
 		});
 
 		it("throws UsageError when count exceeds available code points from start", () => {
-			assert.throws(() => utf16LengthForCodePoints("abc", 0, 4), UsageError);
-			assert.throws(() => utf16LengthForCodePoints("abc", 1, 3), UsageError);
-			assert.throws(() => utf16LengthForCodePoints("a😀b", 1, 3), UsageError); // only 2 cps from index 1
-		});
-
-		it("UsageError messages include the offending values", () => {
-			// Specific numbers in error messages help consumers diagnose misuse.
-			assert.throws(() => utf16LengthForCodePoints("abc", -1, 1), /start \(-1\)/);
-			assert.throws(() => utf16LengthForCodePoints("abc", 0, -1), /count \(-1\)/);
-			assert.throws(() => utf16LengthForCodePoints("ab", 0, 5), /count \(5\)/);
+			assert.throws(
+				() => utf16LengthForCodePoints("abc", 0, 4),
+				validateUsageError(/count \(4\)/),
+			);
+			assert.throws(
+				() => utf16LengthForCodePoints("abc", 1, 3),
+				validateUsageError(/count \(3\)/),
+			);
+			// Only 2 code points from index 1 in "a😀b"
+			assert.throws(
+				() => utf16LengthForCodePoints("a😀b", 1, 3),
+				validateUsageError(/count \(3\)/),
+			);
 		});
 	});
 });
