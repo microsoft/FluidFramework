@@ -277,3 +277,46 @@ describe("ChildLogger", () => {
 		assert(sent, "info event should be sent");
 	});
 });
+describe("logLevel forwarding", () => {
+	function createRecordingSink(minLogLevel?: LogLevel): {
+		sink: ITelemetryBaseLogger;
+		recorded: { event: ITelemetryBaseEvent; logLevel: LogLevel | undefined }[];
+	} {
+		const recorded: { event: ITelemetryBaseEvent; logLevel: LogLevel | undefined }[] = [];
+		const sink: ITelemetryBaseLogger = {
+			send: (event, logLevel): void => {
+				recorded.push({ event, logLevel });
+			},
+			minLogLevel,
+		};
+		return { sink, recorded };
+	}
+
+	it("Forwards LogLevel.essential to the sink when `sendTelemetryEvent` omits logLevel", () => {
+		const { sink, recorded } = createRecordingSink();
+		const child = createChildLogger({ logger: sink });
+
+		child.sendTelemetryEvent({ eventName: "chainDefault" });
+
+		assert.strictEqual(recorded[0]?.logLevel, LogLevel.essential);
+	});
+
+	it("Forwards explicit LogLevel.info to the sink via `sendTelemetryEvent`", () => {
+		const { sink, recorded } = createRecordingSink();
+		const child = createChildLogger({ logger: sink });
+
+		child.sendTelemetryEvent({ eventName: "chainExplicit" }, undefined, LogLevel.info);
+
+		assert.strictEqual(recorded[0]?.logLevel, LogLevel.info);
+	});
+
+	it("Forwards LogLevel.verbose to the sink via `sendTelemetryEvent`", () => {
+		// You have to add a minLogLevel of verbose to the sink to receive verbose events, otherwise they will be dropped.
+		const { sink, recorded } = createRecordingSink(LogLevel.verbose);
+		const child = createChildLogger({ logger: sink });
+
+		child.sendTelemetryEvent({ eventName: "chainDefault" }, undefined, LogLevel.verbose);
+
+		assert.strictEqual(recorded[0]?.logLevel, LogLevel.verbose);
+	});
+});
