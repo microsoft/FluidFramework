@@ -3,8 +3,8 @@
 	"exclude": ["lib", "node_modules"],
 	"compilerOptions": {
 		"outDir": "./lib",
-		"types": ["jest", "puppeteer", "jest-environment-puppeteer", "expect-puppeteer"],
+		"types": ["node"],
 		"exactOptionalPropertyTypes": false,
 	},
-	"include": ["src/**/*", "tests/**/*"],
+	"include": ["src/**/*", "test/**/*", "playwright.config.ts"],
 }
