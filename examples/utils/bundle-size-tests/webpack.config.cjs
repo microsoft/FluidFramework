@@ -7,7 +7,6 @@ const path = require("path");
 const { BundleComparisonPlugin } = require("@mixer/webpack-bundle-compare/dist/plugin");
 const { BundleAnalyzerPlugin } = require("webpack-bundle-analyzer");
 const DuplicatePackageCheckerPlugin = require("@cerner/duplicate-package-checker-webpack-plugin");
-const { BannedModulesPlugin } = require("@fluidframework/bundle-size-tools");
 const {
 	isInternalVersionScheme,
 	fromInternalScheme,
@@ -91,6 +90,11 @@ module.exports = {
 	},
 	resolve: {
 		extensions: [".tsx", ".ts", ".js"],
+		// Block the Node-core `assert` polyfill from being bundled. It's very large in browser
+		// builds; consumers should use the assert API in @fluidframework/core-utils instead.
+		fallback: {
+			assert: false,
+		},
 	},
 	output: {
 		path: path.resolve(__dirname, "build"),
@@ -98,15 +102,6 @@ module.exports = {
 	},
 	node: false,
 	plugins: [
-		new BannedModulesPlugin({
-			bannedModules: [
-				{
-					moduleName: "assert",
-					reason:
-						"This module is very large when bundled in browser facing Javascript, instead use the assert API in @fluidframework/common-utils",
-				},
-			],
-		}),
 		new DuplicatePackageCheckerPlugin({
 			// Also show module that is requiring each duplicate package
 			verbose: true,

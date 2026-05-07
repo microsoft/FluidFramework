@@ -3,30 +3,6 @@
  * Licensed under the MIT License.
  */
 
-/**
- * Utilities for loading legacy versions of Fluid Framework packages for compatibility testing.
- *
- * ## Architecture
- *
- * Legacy packages live in a single committed pnpm sub-workspace at `compat-workspaces/full/`.
- * The workspace is installed automatically when `pnpm install` is run from the repo root (via
- * the `postinstall` script in this package's `package.json`), so no runtime installation step
- * is required in tests.
- *
- * The exact resolved versions are recorded in `compat-workspaces/generated-versions.cjs`, which is
- * maintained by the `update-compat-versions` script and committed to the repository. Tests
- * read this manifest at startup to resolve version ranges to exact versions.
- *
- * ## Updating compat versions
- *
- * After a version bump, run:
- * `pnpm run update-compat-versions`
- *
- * This regenerates `generated-versions.cjs` and all per-version `package.json` files, then runs
- * `pnpm install --no-frozen-lockfile` in the workspace to update the committed lockfile.
- * Commit all changes produced by the script.
- */
-
 import { execFileSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 import { createRequire } from "node:module";
@@ -75,13 +51,6 @@ export function readVersionsManifest(): CompatVersionsManifest {
 	return cachedManifest;
 }
 
-/**
- * Returns all exact versions recorded in the manifest.
- */
-export function getAllManifestVersions(manifest: CompatVersionsManifest): string[] {
-	return manifest.versions;
-}
-
 // ---------------------------------------------------------------------------
 // Version resolution
 // ---------------------------------------------------------------------------
@@ -94,70 +63,81 @@ const resolutionCache = new Map<string, string>();
 const pnpmCmd = process.platform === "win32" ? "pnpm.cmd" : "pnpm";
 
 /**
- * Resolves a version range or alias to an exact version using the committed manifest.
- *
- * @internal
+ * @returns A version of the provided function which caches outputs based on JSON-stringified arguments.
+ * @remarks
+ * Do not use this function if any of the arguments to the function are conceptually not primitives OR if they can be undefined.
+ * @privateRemarks
+ * The typing on this is constructed so that users of the cached function will have their inner function type (including e.g. parameter names) preserved.
  */
-export function resolveVersion(requested: string, installed: boolean): string {
-	const cachedVersion = resolutionCache.get(requested);
-	if (cachedVersion) {
-		return cachedVersion;
+function cached<TFunc extends (...args: any[]) => unknown>(f: TFunc): TFunc {
+	const undefinedSentinel = Symbol("undefined");
+	const cache = new Map<string, ReturnType<TFunc> | typeof undefinedSentinel>();
+	return ((...args: Parameters<TFunc>) => {
+		const key = JSON.stringify(args);
+		let cachedOutput: ReturnType<TFunc> | typeof undefinedSentinel | undefined =
+			cache.get(key);
+		if (cachedOutput === undefined) {
+			cachedOutput = f(...args) as ReturnType<TFunc>;
+			cache.set(key, cachedOutput ?? undefinedSentinel);
+		}
+		return cachedOutput === undefinedSentinel ? undefined : cachedOutput;
+	}) as unknown as TFunc;
+}
+
+function validateRangeSpec(rangeSpec: string): void {
+	if (!semver.validRange(rangeSpec)) {
+		throw new Error(`Invalid semver range: "${rangeSpec}"`);
 	}
-	if (semver.valid(requested)) {
-		// If it is a valid semver already instead of a range, just use it
-		resolutionCache.set(requested, requested);
-		return requested;
+}
+
+/**
+ * Resolves a semver dependency spec to the single highest version matching that spec which is published in the npm registry.
+ * @param rangeSpec - A valid (as per [semver](https://www.npmjs.com/package/semver)) range specification
+ */
+export const resolveRangeViaRegistry = cached((rangeSpec: string): string => {
+	if (semver.valid(rangeSpec)) {
+		return rangeSpec;
 	}
 
-	if (!semver.validRange(requested)) {
-		throw new Error(`Invalid semver range: "${requested}"`);
+	validateRangeSpec(rangeSpec);
+	let result: string;
+	try {
+		result = execFileSync(
+			pnpmCmd,
+			["view", `"@fluidframework/container-loader@${rangeSpec}"`, "version", "--json"],
+			{
+				encoding: "utf8",
+				// When using pnpm.cmd shell must be true: https://nodejs.org/en/blog/vulnerability/april-2024-security-releases-2
+				shell: true,
+			},
+		);
+	} catch (e) {
+		throw new Error(`pnpm view failed for range "${rangeSpec}": ${e}`);
 	}
+	if (!result) throw new Error(`No published version for range: ${rangeSpec}`);
+	const versions: string | string[] = JSON.parse(result);
+	const version = Array.isArray(versions) ? versions.sort(semver.rcompare)[0] : versions;
+	if (!version) throw new Error(`Could not resolve range: ${rangeSpec}`);
+	return version;
+});
 
-	if (installed) {
-		const manifest = readVersionsManifest();
-		const matching = manifest.versions
-			.filter((v) => semver.valid(v) && semver.satisfies(v, requested))
-			.sort(semver.rcompare);
-		if (matching.length > 0) {
-			resolutionCache.set(requested, matching[0]);
-			return matching[0];
-		}
-		throw new Error(`No version in manifest satisfies range: "${requested}"`);
-	} else {
-		let result: string | undefined;
-		try {
-			result = execFileSync(
-				pnpmCmd,
-				["view", `"@fluidframework/container-loader@${requested}"`, "version", "--json"],
-				{
-					encoding: "utf8",
-					// When using pnpm.cmd shell must be true: https://nodejs.org/en/blog/vulnerability/april-2024-security-releases-2
-					shell: true,
-				},
-			);
-		} catch (error: any) {
-			debugger;
-			throw new Error(
-				`Error while running: ${pnpmCmd} view "@fluidframework/container-loader@${requested}" version --json`,
-			);
-		}
-		if (result === "" || result === undefined) {
-			throw new Error(`No version published as ${requested}`);
-		}
-
-		try {
-			const versions: string | string[] = result !== "" ? JSON.parse(result) : "";
-			const version = Array.isArray(versions) ? versions.sort(semver.rcompare)[0] : versions;
-			if (version) {
-				resolutionCache.set(requested, version);
-				return version;
-			}
-		} catch (e) {
-			throw new Error(`Error parsing versions for ${requested}`);
-		}
-
-		throw new Error(`No version found for ${requested}`);
+/**
+ * Resolves a semver dependency spec to the most recent installed version under compat-workspaces which
+ * satisfies that range.
+ *
+ * Throws if the currently installed compat workspace does not include any version that matches the spec.
+ * @param rangeSpec - A valid (as per [semver](https://www.npmjs.com/package/semver)) range specification
+ */
+function resolveRangeViaManifest(rangeSpec: string): string {
+	validateRangeSpec(rangeSpec);
+	const manifest = readVersionsManifest();
+	const matching = manifest.versions
+		.filter((v) => semver.valid(v) && semver.satisfies(v, rangeSpec))
+		.sort(semver.rcompare);
+	if (matching.length > 0) {
+		return matching[0];
 	}
+	throw new Error(`No version in manifest satisfies range: "${rangeSpec}"`);
 }
 
 // ---------------------------------------------------------------------------
@@ -172,7 +152,7 @@ export function resolveVersion(requested: string, installed: boolean): string {
  * @internal
  */
 export function checkInstalled(requested: string): { version: string; modulePath: string } {
-	const version = resolveVersion(requested, true);
+	const version = resolveRangeViaManifest(requested);
 	const versionDir = path.join(fullWorkspaceDir, version);
 
 	if (existsSync(versionDir)) {
@@ -181,7 +161,9 @@ export function checkInstalled(requested: string): { version: string; modulePath
 
 	throw new Error(
 		`Version ${version} is not installed in compat-workspaces/full/.\n` +
-			`Run \`pnpm run update-compat-versions\` to regenerate the workspace, then re-run \`pnpm install\`.`,
+			`To add it, update explicit-versions.mjs, then run \`pnpm run update-compat-versions\` to regenerate the workspace dependencies.\n` +
+			`If it is already listed as a dependency of compat-workspaces/full, this error might indicate that the workspace was not installed correctly.\n` +
+			`Try running \`pnpm install\` from the repo root to ensure the workspace is installed.`,
 	);
 }
 
@@ -403,7 +385,7 @@ export function getRequestedVersion(
 	try {
 		// Returns the exact version that was requested (i.e. 2.0.0-rc.2.0.2).
 		// Will throw if the requested version range is not valid.
-		return resolveVersion(calculatedRange, false);
+		return resolveRangeViaRegistry(calculatedRange);
 	} catch (err: any) {
 		// If we tried fetching N-1 and it failed, try N-2. It is possible that we are trying to bump the current branch
 		// to a new version. If that is the case, then N-1 may not be published yet, and we should try to use N-2 in it's place.
