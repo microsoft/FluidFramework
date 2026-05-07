@@ -42,7 +42,8 @@ function makeTestString(length: number): string {
 	return "ab".repeat(Math.ceil(length / 2)).slice(0, length);
 }
 
-describe("TextDomain benchmarks", () => {
+// TODO: AB#72660: Investigate why these appear to be breaking the benchmarks pipeline and re-enable once the issue is resolved.
+describe.skip("TextDomain benchmarks", () => {
 	configureBenchmarkHooks();
 
 	describe("TextDomain op size benchmarks", () => {

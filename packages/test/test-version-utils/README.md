@@ -126,8 +126,7 @@ We also accept some of the flags via environment variables.
 
 This bypasses any configuration of version used by the describe\* functions and provides direct access to the versioned APIs.
 
-First make sure to call `ensurePackageInstalled` before running the tests to make sure the necessary legacy version are
-installed.
+First make sure to call `ensureVersionLoaded` before running the tests to make sure the necessary legacy versions are available.
 
 The main entry point is `getVersionedTestObjectProvider` to get a `TestObjectProvider` for a specific version combinations
 and driver config. Additionally, you can get versioned API for specific layers using these API.
