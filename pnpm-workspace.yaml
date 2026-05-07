@@ -31,10 +31,10 @@ minimumReleaseAgeExclude: [
 resolutionMode: highest
 blockExoticSubdeps: true
 # See: https://github.com/orgs/pnpm/discussions/11084 for some discussion.
-# Enabling this is additionally more complicated than coming up with a reasonable allow-list of packages, given that
-# whether a package is trusted may change due to external factors and pnpm lacks a command or mode that scans the full
-# dependency graph to determine trustworthiness. Note the "off" here is the default as well.
-trustPolicy: off
+# Enabling no-downgrade requires every transitive trust-policy violation to either be remediated
+# at the source or excluded below with a documented rationale. The current excludes cover the
+# eight violations surfaced by `flub check trustPolicy` on this workspace.
+trustPolicy: no-downgrade
 trustPolicyExclude:
   # axios@0.30.3 is the last legitimate 0.30.x release (published 2026-02-18). The trust
   # downgrade fires because 0.30.x was published via direct CLI rather than the OIDC/GitHub
@@ -43,8 +43,9 @@ trustPolicyExclude:
   # See: https://www.microsoft.com/en-us/security/blog/2026/04/01/mitigating-the-axios-npm-supply-chain-compromise/
   - "axios@0.30.3"
   # @octokit/endpoint@9.0.6 (published 2025-02-14, by octokitbot) — pipeline regression.
-  # Prior trusted: @octokit/endpoint@10.1.3 (provenance, 2025-02-13, by octokitbot).
-  # Same publisher; provenance attestation was lost on the v9 maintenance branch.
+  # Prior trusted: @octokit/endpoint@10.1.3 (provenance, 2025-02-13, by octokitbot), with
+  # verified provenance from octokit/endpoint.js .github/workflows/release.yml @ refs/heads/main.
+  # Same publisher account (octokitbot); the v9 maintenance branch publish bypassed release.yml.
   # Pulled in transitively via danger@13 → @octokit/rest@20 → @octokit/core@5 → @octokit/request@8.
   # No reachable direct-dep bump escapes this without overriding @octokit/rest itself.
   - "@octokit/endpoint@9.0.6"
