@@ -1041,8 +1041,7 @@ describe("sharedTreeView", () => {
 					// items.nodeChanged fires once (two inserts coalesced).
 					// treeChanged fires once on root (subtree changed).
 					// nodeChanged does NOT fire on root (the "items" field was not reassigned).
-					assert.deepEqual(new Set(log), new Set(["items.nodeChanged", "treeChanged"]));
-					assert.ok(!log.includes("nodeChanged"), "root nodeChanged must not fire");
+					assert.deepEqual(log, ["treeChanged", "items.nodeChanged"]);
 				},
 				{
 					initialContent: {
@@ -1070,8 +1069,8 @@ describe("sharedTreeView", () => {
 						{ deferEvents: true },
 					);
 
-					// Both events fire after the transaction, not during it.
-					assert.deepEqual(new Set(log), new Set(["items.nodeChanged", "treeChanged"]));
+					// Both events fire (each exactly once) after the transaction, not during it.
+					assert.deepEqual(log, ["treeChanged", "items.nodeChanged"]);
 				},
 				{
 					initialContent: {
