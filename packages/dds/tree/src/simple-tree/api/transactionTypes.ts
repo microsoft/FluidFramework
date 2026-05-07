@@ -167,6 +167,7 @@ export interface RunTransactionSyncParams extends RunTransactionParams {
 	 *
 	 * @remarks
 	 * If the transaction rolls back *during the transaction*, no buffered events are emitted (the tree is unchanged).
+	 * This does not apply to a later rollbacks (e.g. caused by post-sequencing constraint validation after `runTransaction` has returned).
 	 *
 	 * @defaultValue `false`
 	 */
