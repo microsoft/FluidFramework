@@ -6,11 +6,11 @@
 import { promises as fsPromises } from "fs";
 import type { BundleAnalyzerPlugin } from "webpack-bundle-analyzer";
 
-import { getAllFilesInDirectory } from "../utilities";
+import { getAllFilesInDirectory } from "../utilities/index.js";
 import {
 	type BundleFileData,
 	getAnalyzerFilePathsFromFolder,
-} from "./getBundleFilePathsFromFolder";
+} from "./getBundleFilePathsFromFolder.js";
 
 /**
  * Returns a list of `analyzer.json` paths from the given folder (one per source package).

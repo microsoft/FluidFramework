@@ -57,7 +57,6 @@
 		"@fluid-tools/version-tools": "catalog:buildTools",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "catalog:buildTools",
-		"@fluidframework/bundle-size-tools": "catalog:buildTools",
 		"@fluidframework/eslint-config-fluid": "catalog:eslint",
 		"@mixer/webpack-bundle-compare": "^0.1.0",
 		"@types/mocha": "^10.0.10",

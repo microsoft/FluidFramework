@@ -3,8 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type JSZip from "jszip";
-import { loadAsync } from "jszip";
+import JSZip from "jszip";
 
 function readStreamAsBuffer(stream: NodeJS.ReadableStream): Promise<Buffer> {
 	return new Promise((resolve, reject) => {
@@ -23,5 +22,5 @@ function readStreamAsBuffer(stream: NodeJS.ReadableStream): Promise<Buffer> {
 }
 
 export async function unzipStream(stream: NodeJS.ReadableStream): Promise<JSZip> {
-	return loadAsync(await readStreamAsBuffer(stream));
+	return JSZip.loadAsync(await readStreamAsBuffer(stream));
 }
