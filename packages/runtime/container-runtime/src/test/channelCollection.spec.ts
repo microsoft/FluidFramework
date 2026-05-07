@@ -573,6 +573,44 @@ describe("Runtime", () => {
 					"alias is dropped after rollback",
 				);
 			});
+
+			it("rollbackAlias drops the GC root entry when no other alias survives", () => {
+				const alias = "my-alias";
+				const internalId = "ds-internal-id";
+				const cc = channelCollection as unknown as {
+					readonly aliasMap: Map<string, string>;
+					readonly aliasedDataStores: Set<string>;
+				};
+				cc.aliasMap.set(alias, internalId);
+				cc.aliasedDataStores.add(internalId);
+
+				channelCollection.rollbackAlias({ alias, internalId });
+				assert.strictEqual(
+					cc.aliasedDataStores.has(internalId),
+					false,
+					"discarded internalId must drop from the GC root set",
+				);
+			});
+
+			it("rollbackAlias keeps the GC root entry when another alias still maps to it", () => {
+				const alias = "my-alias";
+				const otherAlias = "other-alias";
+				const internalId = "ds-internal-id";
+				const cc = channelCollection as unknown as {
+					readonly aliasMap: Map<string, string>;
+					readonly aliasedDataStores: Set<string>;
+				};
+				cc.aliasMap.set(alias, internalId);
+				cc.aliasMap.set(otherAlias, internalId);
+				cc.aliasedDataStores.add(internalId);
+
+				channelCollection.rollbackAlias({ alias, internalId });
+				assert.strictEqual(
+					cc.aliasedDataStores.has(internalId),
+					true,
+					"GC root entry must survive while another alias still maps to internalId",
+				);
+			});
 			/* eslint-enable @typescript-eslint/consistent-type-assertions */
 		});
 	});

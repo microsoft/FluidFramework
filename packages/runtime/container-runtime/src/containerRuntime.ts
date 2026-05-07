@@ -1831,6 +1831,11 @@ export class ContainerRuntime
 		);
 
 		const pendingRuntimeState = pendingLocalState as IPendingRuntimeState | undefined;
+		// Tracks whether the public `pendingStateApplyStart` event was emitted on
+		// this load so the After hook never fires an orphan End. The Start emit
+		// happens after `await this.entryPoint`, which can reject and throw before
+		// the emit; PSM still runs the After hook on its cleanup path.
+		let pendingStateApplyStartEmitted = false;
 		this.pendingStateManager = new PendingStateManager(
 			{
 				applyStashedOp: this.applyStashedOp.bind(this),
@@ -1856,12 +1861,18 @@ export class ContainerRuntime
 					this.notifyReadOnlyState();
 					await this.entryPoint;
 					this.emit("pendingStateApplyStart");
+					pendingStateApplyStartEmitted = true;
 				},
 				// PSM has cleared its flag; isReadOnly() reflects the network-readonly state again.
 				// Emit the end signal first so listeners observe the final state of the apply
-				// window, then fan out the post-apply readonly state.
+				// window, then fan out the post-apply readonly state. Skip End if Start was
+				// never emitted (e.g. entry-point rejection in the start hook) — End is
+				// documented to pair with Start.
 				onAfterStashedOpsApplied: async () => {
-					this.emit("pendingStateApplyEnd");
+					if (pendingStateApplyStartEmitted) {
+						this.emit("pendingStateApplyEnd");
+						pendingStateApplyStartEmitted = false;
+					}
 					this.notifyReadOnlyState();
 				},
 			},

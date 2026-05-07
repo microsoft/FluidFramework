@@ -1169,9 +1169,23 @@ export class ChannelCollection
 	 * store stays addressable by internalId; only the alias→internalId mapping
 	 * is removed. A subsequent inbound `Alias` op (e.g. the previous-session
 	 * resubmit's delayed ack) re-establishes the mapping naturally.
+	 *
+	 * Also remove the internalId from `aliasedDataStores` (the GC root set)
+	 * unless another live alias still maps to the same internalId — leaving it
+	 * would advertise the discarded data store as a permanent GC root.
 	 */
 	public rollbackAlias(message: IDataStoreAliasMessage): void {
 		this.aliasMap.delete(message.alias);
+		let stillAliased = false;
+		for (const internalId of this.aliasMap.values()) {
+			if (internalId === message.internalId) {
+				stillAliased = true;
+				break;
+			}
+		}
+		if (!stillAliased) {
+			this.aliasedDataStores.delete(message.internalId);
+		}
 	}
 
 	/**
