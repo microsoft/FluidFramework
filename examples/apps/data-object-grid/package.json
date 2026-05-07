@@ -69,7 +69,7 @@
 		"@fluidframework/build-tools": "catalog:buildTools",
 		"@fluidframework/eslint-config-fluid": "catalog:eslint",
 		"@fluidframework/test-tools": "^2.0.0",
-		"@playwright/test": "^1.55.1",
+		"@playwright/test": "^1.59.1",
 		"@types/node": "catalog:types",
 		"@types/prop-types": "^15",
 		"@types/react": "^18.3.11",
