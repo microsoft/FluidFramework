@@ -305,9 +305,7 @@ export default class CheckTrustPolicyCommand extends BaseCommandWithBuildProject
 				const reason = reasonsByKey.get(key);
 				const rootSet = rootsByKey.get(key);
 				const roots =
-					rootSet === undefined || rootSet.size === 0
-						? undefined
-						: [...rootSet].sort();
+					rootSet === undefined || rootSet.size === 0 ? undefined : [...rootSet].sort();
 				violations.push({ name, version, ...reason, roots });
 			}
 		}
@@ -319,9 +317,7 @@ export default class CheckTrustPolicyCommand extends BaseCommandWithBuildProject
 		// hint verbatim. Done after pnpm's audit so a registry outage can't
 		// mask a real violation.
 		if (violations.length > 0) {
-			this.verbose(
-				`Enriching ${violations.length} violation(s) with registry metadata...`,
-			);
+			this.verbose(`Enriching ${violations.length} violation(s) with registry metadata...`);
 			await enrichViolations(violations, workspaceDir, (msg) => this.verbose(msg));
 		}
 		const exitCode = lastResult?.code ?? 2;
@@ -345,7 +341,11 @@ export default class CheckTrustPolicyCommand extends BaseCommandWithBuildProject
 				this.info(`  ${violation.name}@${violation.version}`);
 				const publishedAt = formatDate(violation.publishedAt);
 				const evidenceLabel = formatEvidence(violation.evidence);
-				if (publishedAt !== undefined || violation.publisher !== undefined || evidenceLabel !== undefined) {
+				if (
+					publishedAt !== undefined ||
+					violation.publisher !== undefined ||
+					evidenceLabel !== undefined
+				) {
 					const parts: string[] = [];
 					if (publishedAt !== undefined) parts.push(`published ${publishedAt}`);
 					if (violation.publisher !== undefined) parts.push(`by ${violation.publisher}`);
@@ -359,7 +359,9 @@ export default class CheckTrustPolicyCommand extends BaseCommandWithBuildProject
 					const priorPublished = formatDate(pt.publishedAt);
 					if (priorPublished !== undefined) priorParts.push(`published ${priorPublished}`);
 					if (pt.publisher !== undefined) priorParts.push(`by ${pt.publisher}`);
-					this.info(`      prior trusted: ${violation.name}@${pt.version} (${priorParts.join(", ")})`);
+					this.info(
+						`      prior trusted: ${violation.name}@${pt.version} (${priorParts.join(", ")})`,
+					);
 				}
 				if (violation.roots !== undefined) {
 					this.info(`      roots: ${violation.roots.join(", ")}`);
@@ -446,9 +448,10 @@ function countViolations(violationsByName: ReadonlyMap<string, ReadonlySet<strin
  * version has its own self-leaf that fires the violation before any
  * transitive path can.
  */
-function collectPinnedVersions(
-	listJsonStdout: string,
-): { pinned: PinnedVersion[]; rootsByKey: Map<string, Set<string>> } {
+function collectPinnedVersions(listJsonStdout: string): {
+	pinned: PinnedVersion[];
+	rootsByKey: Map<string, Set<string>>;
+} {
 	interface DependencyEntry {
 		name?: string;
 		from?: string;
