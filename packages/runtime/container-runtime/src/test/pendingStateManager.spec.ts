@@ -1172,8 +1172,7 @@ describe("Pending State Manager", () => {
 
 			await assert.rejects(
 				psm.applyStashedOpsAt(),
-				(error: IErrorBase) =>
-					error.errorType === ContainerErrorTypes.dataProcessingError,
+				(error: IErrorBase) => error.errorType === ContainerErrorTypes.dataProcessingError,
 				"hook errors are wrapped as DataProcessingError",
 			);
 		});

@@ -564,11 +564,7 @@ export class PendingStateManager implements IDisposable {
 				await this.hooks.onBeforeFirstStashedOpApply?.();
 			} catch (error) {
 				// Hook errors are stashed-op-apply failures: classify as data processing.
-				throw DataProcessingError.wrapIfUnrecognized(
-					error,
-					"applyStashedOpsHook",
-					undefined,
-				);
+				throw DataProcessingError.wrapIfUnrecognized(error, "applyStashedOpsHook", undefined);
 			}
 
 			// Decide whether to mark un-acked rehydrated ops as staged. This is
@@ -580,11 +576,7 @@ export class PendingStateManager implements IDisposable {
 			// "Unexpected message type submitted in Staging Mode" (0xbba) on
 			// resubmit of the non-stageable type.
 			this._stageRehydratedOps = this.stateHandler.isInStagingMode();
-			for (
-				let i = 0;
-				i < this.initialMessages.length && this._stageRehydratedOps;
-				i++
-			) {
+			for (let i = 0; i < this.initialMessages.length && this._stageRehydratedOps; i++) {
 				const msg = this.initialMessages.get(i);
 				if (msg === undefined || msg.sequenceNumber !== undefined) {
 					continue;
@@ -596,6 +588,12 @@ export class PendingStateManager implements IDisposable {
 			}
 		}
 
+		// Capture an after-hook error to rethrow outside the finally block; throwing
+		// inside finally trips no-unsafe-finally and would also mask any error from
+		// the apply loop. If both the apply loop and the after-hook throw, the
+		// loop's error propagates and the hook's error is lost — that's the right
+		// priority since the loop error describes the actual data-processing failure.
+		let afterHookError: unknown;
 		try {
 			// apply stashed ops at sequence number
 			while (!this.initialMessages.isEmpty()) {
@@ -663,13 +661,16 @@ export class PendingStateManager implements IDisposable {
 				try {
 					await this.hooks.onAfterStashedOpsApplied?.();
 				} catch (error) {
-					throw DataProcessingError.wrapIfUnrecognized(
-						error,
-						"applyStashedOpsHook",
-						undefined,
-					);
+					afterHookError = error;
 				}
 			}
+		}
+		if (afterHookError !== undefined) {
+			throw DataProcessingError.wrapIfUnrecognized(
+				afterHookError,
+				"applyStashedOpsHook",
+				undefined,
+			);
 		}
 	}
 

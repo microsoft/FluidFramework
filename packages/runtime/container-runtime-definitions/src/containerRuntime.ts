@@ -61,9 +61,13 @@ export interface IContainerRuntimeEvents
 	 * Not fired when the runtime is loaded without pending local state, or when the
 	 * pending local state contains no stashed ops to replay.
 	 *
-	 * Listeners must be subscribed before the apply window opens. The runtime ensures
-	 * the entrypoint (`getEntryPoint()`) has been materialized prior to firing this
-	 * event so the entrypoint's construction is the natural place to subscribe.
+	 * Listeners must be subscribed before the apply window opens. To subscribe from
+	 * the entry point, the host must opt in via
+	 * `LoadContainerRuntimeParams.materializeEntryPointForPendingStateApply: true`,
+	 * which causes the runtime to materialize `provideEntryPoint` synchronously
+	 * during the apply window before firing this event. Without the opt-in the
+	 * entry point materializes lazily after the apply window has closed (preserving
+	 * prior behavior) and entry-point-side subscriptions will miss the events.
 	 */
 	(event: "pendingStateApplyStart", listener: () => void);
 	/**
