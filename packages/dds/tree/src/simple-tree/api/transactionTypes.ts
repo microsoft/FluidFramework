@@ -147,12 +147,26 @@ export interface RunTransactionParams {
 	 * If there is a nested transaction, only the outermost transaction label will be used.
 	 */
 	readonly label?: unknown;
+}
 
+/**
+ * The parameters for the asynchronous {@link RunTransaction | runTransaction} API.
+ * @input
+ * @alpha
+ */
+export interface RunTransactionAsyncParams extends RunTransactionParams {}
+
+/**
+ * The parameters for the synchronous {@link RunTransaction | runTransaction} API.
+ * @input
+ * @alpha
+ */
+export interface RunTransactionSyncParams extends RunTransactionParams {
 	/**
 	 * Set this to true to have the transaction's change events buffered and emitted only once the transaction completes.
 	 *
 	 * @remarks
-	 * If the transaction rolls back, no buffered events are emitted (the tree is unchanged).
+	 * If the transaction rolls back *during the transaction*, no buffered events are emitted (the tree is unchanged).
 	 *
 	 * @defaultValue `false`
 	 */

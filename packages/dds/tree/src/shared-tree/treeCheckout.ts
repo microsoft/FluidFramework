@@ -97,6 +97,8 @@ import {
 	type TransactionResult,
 	type TransactionResultExt,
 	type RunTransactionParams,
+	type RunTransactionAsyncParams,
+	type RunTransactionSyncParams,
 	type TransactionConstraintAlpha,
 	type TreeViewAlpha,
 	getInnerNode,
@@ -846,11 +848,11 @@ export class TreeCheckout implements ITreeCheckout {
 
 	public runTransaction<TSuccessValue, TFailureValue>(
 		transaction: () => TransactionCallbackStatus<TSuccessValue, TFailureValue>,
-		params?: RunTransactionParams,
+		params?: RunTransactionSyncParams,
 	): TransactionResultExt<TSuccessValue, TFailureValue>;
 	public runTransaction(
 		transaction: () => VoidTransactionCallbackStatus | void,
-		params?: RunTransactionParams,
+		params?: RunTransactionSyncParams,
 	): TransactionResult;
 	@breakingMethod
 	public runTransaction<TSuccessValue, TFailureValue>(
@@ -858,7 +860,7 @@ export class TreeCheckout implements ITreeCheckout {
 			| TransactionCallbackStatus<TSuccessValue, TFailureValue>
 			| VoidTransactionCallbackStatus
 			| void,
-		params?: RunTransactionParams,
+		params?: RunTransactionSyncParams,
 	): TransactionResultExt<TSuccessValue, TFailureValue> | TransactionResult {
 		const transactionCore = ():
 			| TransactionResultExt<TSuccessValue, TFailureValue>
@@ -871,18 +873,18 @@ export class TreeCheckout implements ITreeCheckout {
 			? withBufferedTreeEvents(transactionCore, {
 					// On rollback the tree is restored to its starting state, so any buffered events
 					// represent net-zero changes and must not be surfaced to listeners.
-					shouldDiscard: (result) => result.success === false,
+					shouldDiscard: (result) => !result.success,
 				})
 			: transactionCore();
 	}
 
 	public runTransactionAsync<TSuccessValue, TFailureValue>(
 		transaction: () => Promise<TransactionCallbackStatus<TSuccessValue, TFailureValue>>,
-		params?: RunTransactionParams,
+		params?: RunTransactionAsyncParams,
 	): Promise<TransactionResultExt<TSuccessValue, TFailureValue>>;
 	public runTransactionAsync(
 		transaction: () => Promise<VoidTransactionCallbackStatus | void>,
-		params?: RunTransactionParams,
+		params?: RunTransactionAsyncParams,
 	): Promise<TransactionResult>;
 	@breakingMethod
 	public async runTransactionAsync<TSuccessValue, TFailureValue>(
@@ -891,7 +893,7 @@ export class TreeCheckout implements ITreeCheckout {
 			| VoidTransactionCallbackStatus
 			| void
 		>,
-		params: RunTransactionParams | undefined,
+		params: RunTransactionAsyncParams | undefined,
 	): Promise<TransactionResultExt<TSuccessValue, TFailureValue> | TransactionResult> {
 		this.mountTransaction(params, true);
 		const transactionCallbackStatus = await transaction();

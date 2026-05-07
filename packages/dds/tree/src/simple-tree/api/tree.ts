@@ -36,7 +36,8 @@ import type { UnsafeUnknownSchema } from "../unsafeUnknownSchema.js";
 
 import type { TreeViewConfiguration } from "./configuration.js";
 import type {
-	RunTransactionParams,
+	RunTransactionAsyncParams,
+	RunTransactionSyncParams,
 	TransactionCallbackStatus,
 	TransactionResult,
 	TransactionResultExt,
@@ -193,7 +194,7 @@ export interface TreeContextAlpha {
 	 * Run a synchronous transaction which groups sequential edits to the tree into a single atomic edit if possible.
 	 * @param transaction - A callback run during the transaction to perform user-supplied operations.
 	 * It may optionally return a {@link WithValue | value }, which will be returned by the `runTransaction` call.
-	 * @param params - Optional {@link RunTransactionParams | parameters} for the transaction.
+	 * @param params - Optional {@link RunTransactionSyncParams | parameters} for the transaction.
 	 * @returns A {@link TransactionResultExt | value } indicating whether or not the transaction succeeded, and containing the value returned by `transaction`.
 	 * @remarks
 	 * All of the changes in the transaction are applied synchronously and therefore no other changes from a remote client can be interleaved with those changes.
@@ -215,11 +216,14 @@ export interface TreeContextAlpha {
 	 */
 	runTransaction<TValue>(
 		transaction: () => WithValue<TValue>,
-		params?: RunTransactionParams,
+		params?: RunTransactionSyncParams,
 	): TransactionResultExt<TValue, TValue>;
 
 	/** An overload of {@link TreeContextAlpha.(runTransaction:1) | runTransaction } which does not return a value. */
-	runTransaction(transaction: () => void, params?: RunTransactionParams): TransactionResult;
+	runTransaction(
+		transaction: () => void,
+		params?: RunTransactionSyncParams,
+	): TransactionResult;
 
 	/**
 	 * An asynchronous version of {@link TreeContextAlpha.(runTransaction:1) | runTransaction}.
@@ -234,13 +238,13 @@ export interface TreeContextAlpha {
 	 */
 	runTransactionAsync<TValue>(
 		transaction: () => Promise<WithValue<TValue>>,
-		params?: RunTransactionParams,
+		params?: RunTransactionAsyncParams,
 	): Promise<TransactionResultExt<TValue, TValue>>;
 
 	/** An overload of {@link TreeContextAlpha.(runTransactionAsync:1) | runTransactionAsync } which does not return a value. */
 	runTransactionAsync(
 		transaction: () => Promise<void>,
-		params?: RunTransactionParams,
+		params?: RunTransactionAsyncParams,
 	): Promise<TransactionResult>;
 
 	/**
@@ -301,7 +305,7 @@ export interface TreeBranchAlpha extends TreeBranch, TreeContextAlpha {
 	 */
 	runTransaction<TSuccessValue, TFailureValue>(
 		transaction: () => TransactionCallbackStatus<TSuccessValue, TFailureValue>,
-		params?: RunTransactionParams,
+		params?: RunTransactionSyncParams,
 	): TransactionResultExt<TSuccessValue, TFailureValue>;
 
 	/**
@@ -309,7 +313,7 @@ export interface TreeBranchAlpha extends TreeBranch, TreeContextAlpha {
 	 */
 	runTransaction(
 		transaction: () => VoidTransactionCallbackStatus | void,
-		params?: RunTransactionParams,
+		params?: RunTransactionSyncParams,
 	): TransactionResult;
 
 	/**
@@ -319,7 +323,7 @@ export interface TreeBranchAlpha extends TreeBranch, TreeContextAlpha {
 
 	runTransactionAsync<TSuccessValue, TFailureValue>(
 		transaction: () => Promise<TransactionCallbackStatus<TSuccessValue, TFailureValue>>,
-		params?: RunTransactionParams,
+		params?: RunTransactionAsyncParams,
 	): Promise<TransactionResultExt<TSuccessValue, TFailureValue>>;
 
 	/**
@@ -327,7 +331,7 @@ export interface TreeBranchAlpha extends TreeBranch, TreeContextAlpha {
 	 */
 	runTransactionAsync(
 		transaction: () => Promise<VoidTransactionCallbackStatus | void>,
-		params?: RunTransactionParams,
+		params?: RunTransactionAsyncParams,
 	): Promise<TransactionResult>;
 
 	/**
