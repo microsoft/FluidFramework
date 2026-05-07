@@ -9,11 +9,17 @@ import { bufferToString, stringToBuffer } from "@fluid-internal/client-utils";
 import {
 	captureFullContainerState,
 	createDetachedContainer,
+	extractBlobAttachReferences,
 	loadFrozenContainerFromPendingState,
 	asLegacyAlpha,
 	type ContainerAlpha,
 } from "@fluidframework/container-loader/internal";
 import type { FluidObject } from "@fluidframework/core-interfaces/internal";
+import type {
+	IDocumentService,
+	IDocumentServiceFactory,
+	IDocumentStorageService,
+} from "@fluidframework/driver-definitions/internal";
 import type {
 	LocalDocumentServiceFactory,
 	LocalResolver,
@@ -35,6 +41,47 @@ const toComparableArray = (map: ISharedMap): [string, unknown][] =>
 		key,
 		isFluidHandle(value) ? toFluidHandleInternal(value).absolutePath : value,
 	]);
+
+/**
+ * Wraps a document service factory so that any `readBlob` call on the
+ * resulting storage throws. Frozen-load delegates `readBlob` to the inner
+ * storage when one is provided, which masks the case where the artifact
+ * itself is not self-contained. Routing through this wrapper turns "blob
+ * fell through to live storage" into a hard failure that the test can catch.
+ */
+function makeFactoryWithFailingReadBlob(
+	inner: IDocumentServiceFactory,
+): IDocumentServiceFactory {
+	const wrapService = (svc: IDocumentService): IDocumentService =>
+		new Proxy(svc, {
+			get: (target, prop, receiver) => {
+				if (prop === "connectToStorage") {
+					return async (): Promise<IDocumentStorageService> => {
+						const innerStorage = await target.connectToStorage();
+						return new Proxy(innerStorage, {
+							get: (storageTarget, storageProp, storageReceiver) => {
+								if (storageProp === "readBlob") {
+									return async (_id: string): Promise<ArrayBufferLike> => {
+										throw new Error(
+											"readBlob hit live storage — captured artifact was not self-contained",
+										);
+									};
+								}
+								return Reflect.get(storageTarget, storageProp, storageReceiver);
+							},
+						});
+					};
+				}
+				return Reflect.get(target, prop, receiver);
+			},
+		});
+
+	return {
+		createContainer: async (...args) => wrapService(await inner.createContainer(...args)),
+		createDocumentService: async (...args) =>
+			wrapService(await inner.createDocumentService(...args)),
+	};
+}
 
 const initialize = async (): Promise<{
 	container: ContainerAlpha;
@@ -377,5 +424,89 @@ describe("captureFullContainerState", () => {
 			binaryPayload,
 			"Non-UTF-8 attachment blob bytes must round-trip byte-exactly through capture/rehydrate",
 		);
+	});
+
+	it("inlines blobs uploaded after the base snapshot via blobAttach replay", async () => {
+		const { container, testFluidObject, urlResolver, codeLoader, documentServiceFactory } =
+			await initialize();
+
+		// Take the container live first. The attach summary becomes the base
+		// snapshot; any blob uploaded after this point reaches the captured
+		// artifact only as a BlobAttach op in the tail, not via the snapshot's
+		// `.blobs` redirect table.
+		await container.attach(urlResolver.createCreateNewRequest("test"));
+		if (container.isDirty) {
+			await timeoutPromise((resolve) => container.once("saved", () => resolve()));
+		}
+
+		const blobPayload = "post-snapshot-attachment-payload";
+		const blobHandle = await testFluidObject.runtime.uploadBlob(
+			stringToBuffer(blobPayload, "utf8"),
+		);
+		testFluidObject.root.set("postSnapshotBlobHandle", blobHandle);
+		if (container.isDirty) {
+			await timeoutPromise((resolve) => container.once("saved", () => resolve()));
+		}
+
+		const url = await container.getAbsoluteUrl("");
+		assert(url !== undefined, "Expected container to provide a valid absolute URL");
+
+		const pendingLocalState = await captureFullContainerState({
+			urlResolver,
+			documentServiceFactory,
+			request: { url },
+		});
+
+		// Sanity: the savedOps tail must contain at least one blobAttach op,
+		// otherwise the test does not actually exercise the post-snapshot path.
+		// Route through the public extractor so this prerequisite stays correct
+		// if BlobAttach ops are ever wrapped in a groupedBatch.
+		const parsed = JSON.parse(pendingLocalState) as {
+			savedOps: { metadata?: unknown; contents: unknown }[];
+			attachmentBlobContents?: Record<string, string>;
+		};
+		const totalBlobAttachReferences = parsed.savedOps.reduce(
+			(count, op) => count + extractBlobAttachReferences(op).length,
+			0,
+		);
+		assert(
+			totalBlobAttachReferences > 0,
+			"test prerequisite: savedOps must carry at least one blobAttach reference",
+		);
+		assert(
+			parsed.attachmentBlobContents !== undefined,
+			"Expected attachmentBlobContents to be populated for the post-snapshot blob",
+		);
+		const inlinedPayloads = Object.values(parsed.attachmentBlobContents).map((v) =>
+			bufferToString(stringToBuffer(v, "base64"), "utf8"),
+		);
+		assert(
+			inlinedPayloads.includes(blobPayload),
+			`Expected captured artifact to inline the post-snapshot blob; got [${inlinedPayloads.join(", ")}]`,
+		);
+
+		// Round-trip with a factory whose live storage throws on readBlob.
+		// If the captured artifact is genuinely self-contained, the handle
+		// resolves from the cached attachment bytes and live storage is
+		// never consulted.
+		const noLiveStorageFactory = makeFactoryWithFailingReadBlob(documentServiceFactory);
+		const frozenContainer = await loadFrozenContainerFromPendingState({
+			codeLoader,
+			documentServiceFactory: noLiveStorageFactory,
+			urlResolver,
+			request: { url },
+			pendingLocalState,
+		});
+		const frozenEntryPoint: FluidObject<TestFluidObject> =
+			await frozenContainer.getEntryPoint();
+		assert(
+			frozenEntryPoint.ITestFluidObject !== undefined,
+			"Expected frozen container entrypoint to be a valid TestFluidObject",
+		);
+		const retrievedBlob = await frozenEntryPoint.ITestFluidObject.root
+			.get("postSnapshotBlobHandle")
+			.get();
+		assert(retrievedBlob !== undefined, "Expected blob handle to resolve in frozen container");
+		assert.strictEqual(bufferToString(retrievedBlob, "utf8"), blobPayload);
 	});
 });

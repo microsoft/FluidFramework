@@ -40,9 +40,13 @@ import { v4 as uuid } from "uuid";
 
 import {
 	captureReferencedAttachmentBlobs,
+	extractBlobAttachReferences,
+	inlineAttachmentBlobsByReference,
 	parseGcSnapshotData,
 	readReferencedSnapshotBlobs,
 	snapshotHasLoadingGroups,
+	unreferencedAttachmentBlobLocalIds,
+	type IBlobAttachReference,
 } from "./captureReferencedContents.js";
 import { DebugLogger } from "./debugLogger.js";
 import { createFrozenDocumentServiceFactory } from "./frozenServices.js";
@@ -392,12 +396,32 @@ export async function captureFullContainerState({
 			"captureFullContainerState",
 		);
 		const savedOps: ISequencedDocumentMessage[] = [];
+		const postSnapshotBlobReferences: IBlobAttachReference[] = [];
 		let opsResult = await opsStream.read();
 		while (!opsResult.done) {
 			for (const op of opsResult.value) {
 				savedOps.push(op);
+				// Blobs uploaded after the base snapshot are not in its
+				// `.blobs` redirect table, so `captureReferencedAttachmentBlobs`
+				// did not see them. The wire-format BlobAttach op carries
+				// `(localId, storageId)` in its metadata; collect those here so
+				// we can backfill the bytes before sealing the artifact.
+				const refs = extractBlobAttachReferences(op);
+				if (refs.length > 0) {
+					postSnapshotBlobReferences.push(...refs);
+				}
 			}
 			opsResult = await opsStream.read();
+		}
+
+		if (postSnapshotBlobReferences.length > 0) {
+			const added = await inlineAttachmentBlobsByReference(
+				postSnapshotBlobReferences,
+				storage,
+				unreferencedAttachmentBlobLocalIds(gcData),
+				attachmentBlobContents,
+			);
+			Object.assign(attachmentBlobContents, added);
 		}
 
 		const pendingState: IPendingContainerState = {

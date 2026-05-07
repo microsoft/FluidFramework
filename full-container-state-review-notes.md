@@ -316,3 +316,85 @@ Without driver-level coverage, regressions in any of those areas can ship undete
 
 - Draft PR #27100 deep-review thread, ODSP-driver coverage gap.
 - Existing ODSP test scaffolding: `packages/test/test-end-to-end-tests/src/test/`.
+
+---
+
+### Task 4 — captureFullContainerState: self-containment-by-default in capture tests
+
+**Title:** captureFullContainerState — promote no-live-storage factory wrapper to test default
+
+**Type:** Test debt
+
+**Description:**
+
+`packages/test/local-server-tests/src/test/captureFullContainerState.spec.ts` defines a `makeFactoryWithFailingReadBlob` helper that wraps a `documentServiceFactory` so any `readBlob` call throws. This is the only thing that catches the case where the captured artifact is not actually self-contained — `FrozenDocumentStorageService.readBlob` (`packages/loader/container-loader/src/frozenServices.ts:107-109`) silently delegates to the inner driver's `readBlob` whenever an inner factory is wired, so a missing inlined blob masquerades as success.
+
+Today the wrapper is used in only one of the spec's six tests (the new "inlines blobs uploaded after the base snapshot via blobAttach replay" case). Every other test rehydrates with the unwrapped factory, so any future bug that drops a referenced blob from `attachmentBlobContents` or `snapshotBlobs` would silently pass — the runtime would resolve the handle by reaching back into the local server.
+
+**Acceptance criteria:**
+
+- Either (a) wrap `documentServiceFactory` with `makeFactoryWithFailingReadBlob` by default in this spec — i.e. every `loadFrozenContainerFromPendingState` call uses the wrapped factory unless a test specifically opts out — or (b) add an explicit "self-containment" assertion variant for each existing test that today rehydrates with the live factory.
+- If a test legitimately needs live storage on rehydrate (e.g. group-loaded data), document why and have it opt out by an explicit, named flag rather than absence of the wrapper.
+- If `loadFrozenContainerFromPendingState` accumulates additional fall-through-eligible code paths in the future, extend the wrapper to also throw on those (today only `readBlob` is on the fall-through; `getSnapshotTree`, `getSnapshot`, etc. already throw via `frozenDocumentStorageServiceHandler`).
+
+**Background links:**
+
+- Protocol-assumptions review on this branch, Tier 4 #4.2.
+- `packages/loader/container-loader/src/frozenServices.ts:107-109`.
+
+---
+
+### Task 5 — captureFullContainerState: contract-test the GC node-path shape
+
+**Title:** captureFullContainerState — pin GC blob-path shape, not just the constant
+
+**Type:** Tech debt / contract testing
+
+**Description:**
+
+`wireFormatConstants.spec.ts` currently asserts the *string values* of GC-related constants (`gcTreeKey`, `gcBlobPrefix`, `gcTombstoneBlobKey`, `gcDeletedBlobKey`, `blobManagerBasePath`). The loader-side filter in `captureReferencedContents.ts` makes additional protocol assumptions that these constants don't capture:
+
+1. **Path shape**: `collectUnreferencedBlobLocalIds` builds `blobPathPrefix = /${blobManagerBasePath}/` and `nodePath.slice(blobPathPrefix.length)` to recover the local id. This requires the runtime's `getGCNodePathFromLocalId` to keep emitting paths in the `/{base}/{localId}` form — a separator change or extra path segment would silently produce wrong local ids.
+2. **Tombstone/deleted-node path format**: the filter assumes `tombstones` and `deletedNodes` arrays contain full GC paths (matched via `nodePath.startsWith(blobPathPrefix)`), not bare local ids. A future refactor that switched these arrays to bare ids would silently make every blob path look "not a blob path" and disable the unreferenced filter — silently keeping tombstoned/deleted blobs in the artifact.
+3. **GC-state path keys** in `gcState.gcNodes` use the same `/{base}/{localId}` form.
+
+None of these are asserted by either the constants check or the runtime type system.
+
+**Acceptance criteria:**
+
+- Add a contract test to `packages/test/local-server-tests/src/test/wireFormatConstants.spec.ts` (or an adjacent spec) that imports `getGCNodePathFromLocalId` from `@fluidframework/container-runtime/internal` (export it from the runtime if necessary) and asserts that for a known `localId`, the path matches `${gcNodeBlobPrefix}/${localId}` where `gcNodeBlobPrefix === /${blobManagerBasePath}` — i.e. assert the *shape*, not just the constants.
+- Optionally also add a small end-to-end test that constructs a container with a tombstoned blob, captures its state, and asserts the captured artifact omits the tombstoned blob's bytes — exercising the entire filter chain rather than just the path-shape constant.
+- If `getGCNodePathFromLocalId` is not currently exported, decide between exporting it (preferred — single source of truth) and inlining the path-construction in the test with a clear comment pointing at the authoritative source.
+
+**Background links:**
+
+- Protocol-assumptions review on this branch, Tier 2 #2.3 and #2.4.
+- `packages/loader/container-loader/src/captureReferencedContents.ts` (`collectUnreferencedBlobLocalIds`).
+- `packages/runtime/container-runtime/src/blobManager/blobManager.ts` (`getGCNodePathFromLocalId`).
+
+---
+
+### Task 6 — captureFullContainerState: assert disjoint storage-id namespaces
+
+**Title:** captureFullContainerState — guard the implicit storage-id namespace split
+
+**Type:** Tech debt / hardening
+
+**Description:**
+
+The capture and rehydrate paths fold structural snapshot blobs (UTF-8 JSON) and attachment blobs (base64-encoded arbitrary bytes) into a single storage-id-keyed `Map` on the load side (`packages/loader/container-loader/src/serializedStateManager.ts:286-298`, then `containerStorageAdapter.cacheSnapshotBlobs`). Structural blobs are inserted first; attachment blobs follow and overwrite on key collision (the comment at `serializedStateManager.ts:293-295` calls this out: "should resolve to the binary form").
+
+This is correct only as long as structural and attachment storage ids never collide. In practice content-addressed storage with cryptographic hashes makes collision astronomically unlikely — but nothing in code enforces or even asserts the disjointness. A future change to id assignment (e.g. moving to short, non-content-addressed ids for attachments, or accidentally sharing a hash space with a different domain) would silently corrupt the cache: an attachment's binary bytes returned for a structural blob would crash JSON parse, and a structural blob's UTF-8 bytes returned for an attachment would deliver the wrong file payload — without any test or assert noticing.
+
+**Acceptance criteria:**
+
+- At capture time (`createAndLoadContainerUtils.ts`), after computing both `snapshotBlobs` and `attachmentBlobContents`, assert that their key sets are disjoint. Throw `GenericError` with a clear message if they overlap.
+- At load time (`serializedStateManager.ts`), make the merge explicit and symmetric: either keep the current "attachments win" rule and add a debug-mode assert that the merge had no collisions, or split the cache into two disjoint maps so a collision becomes a compile-time impossibility.
+- Decide whether the wire format needs to change to keep the two namespaces fully separate at rest (a follow-on to Task 1's resolution); if the split-cache option is chosen, document the migration of any existing serialized artifacts.
+- Add a unit test that constructs a synthetic pending state with overlapping ids and asserts the loader rejects it.
+
+**Background links:**
+
+- Protocol-assumptions review on this branch, Tier 4 #4.3.
+- `packages/loader/container-loader/src/serializedStateManager.ts:286-298`.
+- `packages/loader/container-loader/src/containerStorageAdapter.ts:167-170`.

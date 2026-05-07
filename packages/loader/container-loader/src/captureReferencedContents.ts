@@ -6,6 +6,7 @@
 import { bufferToString } from "@fluid-internal/client-utils";
 import type {
 	IDocumentStorageService,
+	ISequencedDocumentMessage,
 	ISnapshot,
 	ISnapshotTree,
 } from "@fluidframework/driver-definitions/internal";
@@ -311,6 +312,107 @@ function collectUnreferencedBlobLocalIds(gcData: IGcSnapshotData): Set<string> {
 		}
 	}
 	return unreferenced;
+}
+
+/**
+ * A blob reference extracted from a `BlobAttach` op. `localId` is the
+ * `BlobManager` GC identity for the blob; `storageId` is the id used for
+ * `IDocumentStorageService.readBlob`.
+ *
+ * @internal
+ */
+export interface IBlobAttachReference {
+	readonly localId: string;
+	readonly storageId: string;
+}
+
+interface IBlobAttachLikeMetadata {
+	readonly localId: string;
+	readonly blobId: string;
+}
+
+function isBlobAttachLikeMetadata(metadata: unknown): metadata is IBlobAttachLikeMetadata {
+	if (typeof metadata !== "object" || metadata === null) {
+		return false;
+	}
+	const candidate = metadata as { localId?: unknown; blobId?: unknown };
+	return typeof candidate.localId === "string" && typeof candidate.blobId === "string";
+}
+
+/**
+ * Extracts every `BlobAttach` reference an op carries. Returns an empty array
+ * for non-blobAttach ops.
+ *
+ * This is the single place in the loader that interprets the BlobAttach
+ * wire format. Capture and load-side reasoning about ops should call into
+ * this function rather than reading `op.metadata` directly, so a future
+ * protocol change touches one site.
+ *
+ * BlobAttach ops carry `(localId, storageId)` directly on
+ * `ISequencedDocumentMessage.metadata` and are not grouped — the container
+ * runtime routes them through a separate `outbox.submitBlobAttach` lane,
+ * and `OpGroupingManager.groupBatch` asserts (0x5dd) that no op carrying
+ * non-batch metadata enters a grouped batch. If either guarantee changes,
+ * extend this function rather than each call site.
+ *
+ * @internal
+ */
+export function extractBlobAttachReferences(
+	op: Pick<ISequencedDocumentMessage, "metadata">,
+): IBlobAttachReference[] {
+	if (!isBlobAttachLikeMetadata(op.metadata)) {
+		return [];
+	}
+	return [{ localId: op.metadata.localId, storageId: op.metadata.blobId }];
+}
+
+/**
+ * Set of attachment-blob localIds that GC has marked unreferenced,
+ * tombstoned, or deleted in the base snapshot. `undefined` if `gcData`
+ * is `undefined` (GC disabled / pre-GC document).
+ *
+ * @internal
+ */
+export function unreferencedAttachmentBlobLocalIds(
+	gcData: IGcSnapshotData | undefined,
+): Set<string> | undefined {
+	return gcData === undefined ? undefined : collectUnreferencedBlobLocalIds(gcData);
+}
+
+/**
+ * Inline attachment blob contents for the given `(localId, storageId)`
+ * references. Skips entries already present in `existing` (de-dupe with
+ * the snapshot path) and entries whose `localId` is in
+ * `unreferencedLocalIds`. Returns only the freshly-read entries; the
+ * caller merges them into the existing map.
+ *
+ * @internal
+ */
+export async function inlineAttachmentBlobsByReference(
+	references: readonly IBlobAttachReference[],
+	storage: Pick<IDocumentStorageService, "readBlob">,
+	unreferencedLocalIds: ReadonlySet<string> | undefined,
+	existing: Readonly<IBase64BlobContents>,
+): Promise<IBase64BlobContents> {
+	const storageIdsToFetch = new Set<string>();
+	for (const { localId, storageId } of references) {
+		if (unreferencedLocalIds?.has(localId) === true) {
+			continue;
+		}
+		if (existing[storageId] !== undefined) {
+			continue;
+		}
+		storageIdsToFetch.add(storageId);
+	}
+	const added: IBase64BlobContents = {};
+	if (storageIdsToFetch.size === 0) {
+		return added;
+	}
+	await mapWithConcurrency([...storageIdsToFetch], maxReadConcurrency, async (storageId) => {
+		const buffer = await storage.readBlob(storageId);
+		added[storageId] = bufferToString(buffer, "base64");
+	});
+	return added;
 }
 
 /**
