@@ -338,7 +338,7 @@ export async function captureFullContainerState({
 }: ICaptureFullContainerStateProps): Promise<string> {
 	const resolvedUrl = await urlResolver.resolve(request);
 	if (resolvedUrl === undefined) {
-		throw new UsageError("Failed to resolve request to a Fluid url");
+		throw new UsageError("Failed to resolve request to a Fluid URL");
 	}
 
 	const documentService = await documentServiceFactory.createDocumentService(
@@ -359,7 +359,7 @@ export async function captureFullContainerState({
 		const version = versions[0];
 		const snapshot: ISnapshot | ISnapshotTree | undefined =
 			storage.getSnapshot === undefined
-				? ((await storage.getSnapshotTree(version)) ?? undefined)
+				? ((await storage.getSnapshotTree(version, "captureFullContainerState")) ?? undefined)
 				: await storage.getSnapshot({
 						cacheSnapshot: false,
 						versionId: version?.id,

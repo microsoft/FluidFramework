@@ -328,7 +328,8 @@ describe("captureFullContainerState", () => {
 		);
 
 		// Round-trip: the frozen container reads the blob through the cached
-		// snapshotBlobs entry, confirming the inlined copy is used on load.
+		// attachmentBlobContents entry (base64-decoded into the blob cache on
+		// load), confirming the inlined copy is used on rehydrate.
 		const frozenContainer = await loadFrozenContainerFromPendingState({
 			codeLoader,
 			documentServiceFactory,

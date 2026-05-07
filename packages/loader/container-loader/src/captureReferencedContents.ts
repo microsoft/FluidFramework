@@ -417,8 +417,9 @@ export async function inlineAttachmentBlobsByReference(
 
 /**
  * Returns true if any referenced subtree of `baseSnapshot` declares a
- * `loadingGroupId`. Subtrees flagged `unreferenced` are skipped — a dead
- * subtree's groupId would not be loaded by the runtime either.
+ * `groupId` — the snapshot-tree wire field that carries the runtime's
+ * loading-group identifier. Subtrees flagged `unreferenced` are skipped —
+ * a dead subtree's `groupId` would not be loaded by the runtime either.
  *
  * `captureFullContainerState` does not yet support loading groups: prefetching
  * per-group snapshots adds a code path that has no end-to-end coverage and no
