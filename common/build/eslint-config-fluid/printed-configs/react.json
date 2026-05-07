@@ -1461,7 +1461,7 @@
 			"error"
 		],
 		"import-x/order": [
-			"error",
+			"off",
 			{
 				"groups": [
 					"builtin",
@@ -1474,13 +1474,8 @@
 				"newlines-between": "always",
 				"alphabetize": {
 					"order": "asc",
-					"caseInsensitive": false,
-					"orderImportKind": "ignore"
-				},
-				"distinctGroup": true,
-				"sortTypesGroup": false,
-				"named": false,
-				"warnOnUnassignedImports": false
+					"caseInsensitive": false
+				}
 			}
 		],
 		"indent": [
