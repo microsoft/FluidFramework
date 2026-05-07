@@ -1134,11 +1134,15 @@ describe("Pending State Manager", () => {
 			assert.strictEqual(afterCount, 1);
 		});
 
-		it("wraps hook errors as DataProcessingError", async () => {
+		it("wraps hook errors as DataProcessingError and closes the apply window", async () => {
 			// Hook throws during the apply window are stashed-op-apply failures
 			// (per the convention from PR #16343). They must be classified as
-			// DataProcessingError, not propagate as raw Error, so callers can
-			// distinguish them from other failure modes.
+			// DataProcessingError, not propagate as raw Error.
+			//
+			// Critically, the apply window must close on the throw path so the
+			// runtime doesn't stay permanently readonly (`isApplyingStashedOps`
+			// returns false post-throw) and any host that received
+			// `pendingStateApplyStart` gets a paired `pendingStateApplyEnd`.
 			const messages: IPendingMessage[] = [
 				{
 					type: "message",
@@ -1151,6 +1155,7 @@ describe("Pending State Manager", () => {
 				},
 			];
 
+			let afterHookCalled = 0;
 			const psm = new PendingStateManager(
 				{
 					applyStashedOp: async () => undefined,
@@ -1167,6 +1172,9 @@ describe("Pending State Manager", () => {
 					onBeforeFirstStashedOpApply: async () => {
 						throw new Error("hook explosion");
 					},
+					onAfterStashedOpsApplied: async () => {
+						afterHookCalled++;
+					},
 				},
 			);
 
@@ -1174,6 +1182,194 @@ describe("Pending State Manager", () => {
 				psm.applyStashedOpsAt(),
 				(error: IErrorBase) => error.errorType === ContainerErrorTypes.dataProcessingError,
 				"hook errors are wrapped as DataProcessingError",
+			);
+			assert.strictEqual(
+				psm.isApplyingStashedOps,
+				false,
+				"flag must clear on throw — otherwise runtime stays readonly",
+			);
+			assert.strictEqual(
+				afterHookCalled,
+				1,
+				"after-hook fires once even on the pre-hook throw path",
+			);
+		});
+
+		it("closes the apply window when the apply loop throws on a non-empty queue", async () => {
+			// `applyStashedOp` rejects mid-loop; finally must still close the window.
+			// Without this, isApplyingStashedOps would stay true forever (the apply
+			// loop's queue is non-empty when the throw escapes) and the runtime
+			// would advertise readonly indefinitely.
+			const messages: IPendingMessage[] = [
+				{
+					type: "message",
+					content: '{"type":"component"}',
+					referenceSequenceNumber: 0,
+					localOpMetadata: undefined,
+					opMetadata: undefined,
+					batchInfo: { clientId: "CLIENT_ID", batchStartCsn: 1, length: 1, staged: false },
+					runtimeOp: undefined,
+				},
+				// Second message guarantees the queue is non-empty when applyStashedOp
+				// rejects on the first one.
+				{
+					type: "message",
+					content: '{"type":"component"}',
+					referenceSequenceNumber: 0,
+					localOpMetadata: undefined,
+					opMetadata: undefined,
+					batchInfo: { clientId: "CLIENT_ID", batchStartCsn: 2, length: 1, staged: false },
+					runtimeOp: undefined,
+				},
+			];
+
+			let afterHookCalled = 0;
+			const psm = new PendingStateManager(
+				{
+					applyStashedOp: async () => {
+						throw new Error("apply-stashed-op explosion");
+					},
+					clientId: () => "clientId",
+					connected: () => true,
+					reSubmitBatch: () => {},
+					isActiveConnection: () => false,
+					isAttached: () => true,
+					isInStagingMode: () => false,
+				},
+				{ pendingStates: messages },
+				logger,
+				{
+					onAfterStashedOpsApplied: async () => {
+						afterHookCalled++;
+					},
+				},
+			);
+
+			await assert.rejects(
+				psm.applyStashedOpsAt(),
+				(error: IErrorBase) => error.errorType === ContainerErrorTypes.dataProcessingError,
+			);
+			assert.strictEqual(
+				psm.isApplyingStashedOps,
+				false,
+				"flag must clear on apply-loop throw",
+			);
+			assert.strictEqual(afterHookCalled, 1, "after-hook fires on apply-loop throw");
+		});
+
+		it("ignores empty-batch placeholders in the staging eligibility scan", async () => {
+			// Empty `groupedBatch` placeholders (created by `onFlushEmptyBatch`) carry
+			// no user intent and live alongside real ops in the stashed queue. They
+			// must not flip the staging decision off — otherwise any stash containing
+			// a single empty batch would silently disable staging on the rehydration
+			// path, breaking discardChanges() for the offline edits.
+			const messages: IPendingMessage[] = [
+				// Empty groupedBatch placeholder — would be rejected by canStageMessageOfType.
+				{
+					type: "message",
+					content: '{"type":"groupedBatch","contents":[]}',
+					referenceSequenceNumber: 0,
+					localOpMetadata: undefined,
+					opMetadata: undefined,
+					batchInfo: { clientId: "CLIENT_ID", batchStartCsn: 1, length: 1, staged: false },
+					runtimeOp: undefined,
+				},
+				// Real un-acked FluidDataStoreOp — stageable.
+				{
+					type: "message",
+					content: '{"type":"component"}',
+					referenceSequenceNumber: 0,
+					localOpMetadata: undefined,
+					opMetadata: undefined,
+					batchInfo: { clientId: "CLIENT_ID", batchStartCsn: 2, length: 1, staged: false },
+					runtimeOp: undefined,
+				},
+			];
+
+			const psm = new PendingStateManager(
+				{
+					applyStashedOp: async () => undefined,
+					clientId: () => "clientId",
+					connected: () => true,
+					reSubmitBatch: () => {},
+					isActiveConnection: () => false,
+					isAttached: () => true,
+					isInStagingMode: () => true,
+				},
+				{ pendingStates: messages },
+				logger,
+			) as unknown as PendingStateManager_WithPrivates;
+
+			await psm.applyStashedOpsAt();
+
+			const queue = psm.pendingMessages.toArray();
+			assert.strictEqual(queue.length, 2);
+			// The real op is staged because the empty-batch placeholder didn't disable
+			// the decision.
+			const realOp = queue.find((m) => m.runtimeOp !== undefined);
+			assert.ok(realOp !== undefined);
+			assert.strictEqual(realOp.batchInfo.staged, true);
+			assert.strictEqual(realOp.stagedFromStashedRehydration, true);
+		});
+
+		it("disables staging and emits telemetry when an unstageable type is in the stash", async () => {
+			// Per the queue invariant, we can't selectively stage when non-stageable
+			// types (BlobAttach, IdAllocation, Rejoin, Attach, Alias) are interleaved
+			// with stageable ones. Fall back to non-staged for all rehydrated ops and
+			// log a telemetry event so hosts can detect that discardChanges() will
+			// not roll back the rehydrated edits in this stash.
+			mockLogger.clear();
+			const messages: IPendingMessage[] = [
+				// Non-stageable: BlobAttach.
+				{
+					type: "message",
+					content: '{"type":"blobAttach","metadata":{}}',
+					referenceSequenceNumber: 0,
+					localOpMetadata: undefined,
+					opMetadata: undefined,
+					batchInfo: { clientId: "CLIENT_ID", batchStartCsn: 1, length: 1, staged: false },
+					runtimeOp: undefined,
+				},
+				// Stageable: would have been staged if it were alone.
+				{
+					type: "message",
+					content: '{"type":"component"}',
+					referenceSequenceNumber: 0,
+					localOpMetadata: undefined,
+					opMetadata: undefined,
+					batchInfo: { clientId: "CLIENT_ID", batchStartCsn: 2, length: 1, staged: false },
+					runtimeOp: undefined,
+				},
+			];
+
+			const psm = new PendingStateManager(
+				{
+					applyStashedOp: async () => undefined,
+					clientId: () => "clientId",
+					connected: () => true,
+					reSubmitBatch: () => {},
+					isActiveConnection: () => false,
+					isAttached: () => true,
+					isInStagingMode: () => true,
+				},
+				{ pendingStates: messages },
+				logger,
+			) as unknown as PendingStateManager_WithPrivates;
+
+			await psm.applyStashedOpsAt();
+
+			const queue = psm.pendingMessages.toArray();
+			for (const msg of queue) {
+				assert.strictEqual(
+					msg.batchInfo.staged,
+					false,
+					"all rehydrated ops fall back to non-staged when an unstageable type is present",
+				);
+				assert.strictEqual(msg.stagedFromStashedRehydration, undefined);
+			}
+			mockLogger.assertMatch(
+				[{ eventName: "StagedRehydrationFallback" }],
+				"telemetry surfaces the silent-fallback case",
 			);
 		});
 

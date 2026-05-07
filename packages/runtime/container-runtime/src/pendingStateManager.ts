@@ -555,46 +555,75 @@ export class PendingStateManager implements IDisposable {
 		// eligible calls within the same load skip the open and reuse the
 		// staging-decision made on the first eligible call.
 		const openingApplyWindow = !this._isApplyingStashedOps;
-		if (openingApplyWindow) {
-			// Set the flag before invoking the pre-apply hook so observers (e.g. the
-			// runtime's isReadOnly() aggregation) reflect the apply window from the
-			// moment the hook runs.
-			this._isApplyingStashedOps = true;
-			try {
-				await this.hooks.onBeforeFirstStashedOpApply?.();
-			} catch (error) {
-				// Hook errors are stashed-op-apply failures: classify as data processing.
-				throw DataProcessingError.wrapIfUnrecognized(error, "applyStashedOpsHook", undefined);
-			}
 
-			// Decide whether to mark un-acked rehydrated ops as staged. This is
-			// all-or-nothing: if the host entered staging mode (typically inside
-			// the start hook above) AND every un-acked op's runtime-op type is
-			// stageable, stage them all. Otherwise stage none — staging a subset
-			// would violate the queue invariant that staged ops follow non-staged
-			// ops (commit-staged-replay enforces this via 0xb86) and would trip
-			// "Unexpected message type submitted in Staging Mode" (0xbba) on
-			// resubmit of the non-stageable type.
-			this._stageRehydratedOps = this.stateHandler.isInStagingMode();
-			for (let i = 0; i < this.initialMessages.length && this._stageRehydratedOps; i++) {
-				const msg = this.initialMessages.get(i);
-				if (msg === undefined || msg.sequenceNumber !== undefined) {
-					continue;
-				}
-				const parsed = JSON.parse(msg.content) as Partial<LocalContainerRuntimeMessage>;
-				if (parsed.type === undefined || !canStageMessageOfType(parsed.type)) {
-					this._stageRehydratedOps = false;
-				}
-			}
-		}
-
-		// Capture an after-hook error to rethrow outside the finally block; throwing
-		// inside finally trips no-unsafe-finally and would also mask any error from
-		// the apply loop. If both the apply loop and the after-hook throw, the
-		// loop's error propagates and the hook's error is lost — that's the right
-		// priority since the loop error describes the actual data-processing failure.
+		// Capture errors so we can rethrow them outside the finally block. Throwing
+		// inside finally would trip no-unsafe-finally and could mask the original
+		// failure. We track:
+		//  - `applyError`: error from the pre-apply hook or the apply loop itself.
+		//    Wins priority over after-hook errors (it describes the actual data
+		//    failure); after-hook error is silently dropped if both occur.
+		//  - `afterHookError`: error from the after-apply hook only.
+		let applyError: unknown;
 		let afterHookError: unknown;
 		try {
+			if (openingApplyWindow) {
+				// Set the flag before invoking the pre-apply hook so observers (e.g.
+				// the runtime's isReadOnly() aggregation) reflect the apply window
+				// from the moment the hook runs.
+				this._isApplyingStashedOps = true;
+				try {
+					await this.hooks.onBeforeFirstStashedOpApply?.();
+				} catch (error) {
+					// Hook errors are stashed-op-apply failures: classify as data
+					// processing. Throw inside the outer try so finally runs and
+					// closes the apply window.
+					throw DataProcessingError.wrapIfUnrecognized(
+						error,
+						"applyStashedOpsHook",
+						undefined,
+					);
+				}
+
+				// Decide whether to mark un-acked rehydrated ops as staged. This is
+				// all-or-nothing: if the host entered staging mode (typically inside
+				// the start hook above) AND every un-acked op's runtime-op type is
+				// stageable, stage them all. Otherwise stage none — staging a subset
+				// would violate the queue invariant that staged ops follow non-staged
+				// ops (commit-staged-replay enforces this via 0xb86) and would trip
+				// "Unexpected message type submitted in Staging Mode" (0xbba) on
+				// resubmit of the non-stageable type. Empty batch placeholders don't
+				// carry user intent and are skipped from this scan.
+				this._stageRehydratedOps = this.stateHandler.isInStagingMode();
+				if (this._stageRehydratedOps) {
+					let unstageableType: string | undefined;
+					for (let i = 0; i < this.initialMessages.length; i++) {
+						const msg = this.initialMessages.get(i);
+						if (msg === undefined || msg.sequenceNumber !== undefined) {
+							continue;
+						}
+						if (isEmptyBatchPendingMessage(msg)) {
+							continue;
+						}
+						const parsed = JSON.parse(msg.content) as Partial<LocalContainerRuntimeMessage>;
+						if (parsed.type === undefined || !canStageMessageOfType(parsed.type)) {
+							unstageableType = parsed.type ?? "<unknown>";
+							break;
+						}
+					}
+					if (unstageableType !== undefined) {
+						this._stageRehydratedOps = false;
+						// Surface the silent-fallback case so hosts can detect it (e.g.
+						// to warn the user that discardChanges won't roll back the
+						// rehydrated edits in this stash).
+						this.logger.sendTelemetryEvent({
+							eventName: "StagedRehydrationFallback",
+							category: "performance",
+							details: { unstageableType },
+						});
+					}
+				}
+			}
+
 			// apply stashed ops at sequence number
 			while (!this.initialMessages.isEmpty()) {
 				if (seqNum !== undefined) {
@@ -650,13 +679,19 @@ export class PendingStateManager implements IDisposable {
 					throw DataProcessingError.wrapIfUnrecognized(error, "applyStashedOp", nextMessage);
 				}
 			}
+		} catch (error) {
+			applyError = error;
 		} finally {
-			// Close the apply window only when initialMessages has fully drained,
-			// not on every call. `applyStashedOpsAt` may be invoked multiple times
-			// per load (once at boot plus once per saved-op replay); the
-			// pendingStateApplyEnd hook must fire exactly once at the end of the
-			// final eligible call.
-			if (this.initialMessages.isEmpty() && this._isApplyingStashedOps) {
+			// Close the apply window when the queue has drained OR an error is
+			// propagating. Closing on error guarantees the runtime doesn't stay
+			// permanently readonly and that `pendingStateApplyEnd` fires for any
+			// host that received a `pendingStateApplyStart`. In the normal multi-
+			// call path (no error, queue not yet drained), this branch is skipped
+			// so the latch persists across `applyStashedOpsAt` invocations.
+			const closing =
+				this._isApplyingStashedOps &&
+				(this.initialMessages.isEmpty() || applyError !== undefined);
+			if (closing) {
 				this._isApplyingStashedOps = false;
 				try {
 					await this.hooks.onAfterStashedOpsApplied?.();
@@ -664,6 +699,13 @@ export class PendingStateManager implements IDisposable {
 					afterHookError = error;
 				}
 			}
+		}
+		if (applyError !== undefined) {
+			// Wrap through DataProcessingError so the lint's only-throw-error rule
+			// is satisfied; raw values from the catch are typed `unknown`. Wrapping
+			// is a no-op for already-classified errors (DataProcessingError /
+			// LoggingError), so this preserves the original error type.
+			throw DataProcessingError.wrapIfUnrecognized(applyError, "applyStashedOps", undefined);
 		}
 		if (afterHookError !== undefined) {
 			throw DataProcessingError.wrapIfUnrecognized(
