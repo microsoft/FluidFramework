@@ -251,6 +251,16 @@ export function findTopLevelBlock(content: string, key: "pr" | "trigger"): Block
 }
 
 /**
+ * Reads the content of a file by absolute path. Throws if the file cannot be read for
+ * any reason — including not existing. Allows callers to inject an in-memory file
+ * system for testing. A missing file in this code path is always a bug (either in the
+ * caller or in a hand-written YAML reference), so we do not treat it as a soft signal.
+ */
+export type FileReader = (absPath: string) => string;
+
+const defaultFsReader: FileReader = (absPath) => fs.readFileSync(absPath, "utf8");
+
+/**
  * BFS over `template:` references reachable from `rootFile`. Follows only same-repo
  * references (`@self` or no resource suffix).
  *
@@ -261,15 +271,25 @@ export function findTopLevelBlock(content: string, key: "pr" | "trigger"): Block
  *
  * Templates whose paths cannot be resolved (e.g. `${{ ... }}` interpolation, missing
  * files) are reported in `unresolved` as human-readable strings.
+ *
+ * @param read - Optional file-reader. Defaults to a real-filesystem reader; tests can
+ * supply a Map-backed reader to exercise resolution without scaffolding files.
  */
 export function findIncludedTemplates(
 	rootFile: string,
 	repoRoot: string,
+	read: FileReader = defaultFsReader,
 ): { parents: Map<string, string | undefined>; unresolved: Set<string> } {
 	const rootAbs = path.resolve(rootFile);
 	const parents = new Map<string, string | undefined>();
 	parents.set(rootAbs, undefined);
 	const unresolved = new Set<string>();
+	// Cache content of files that have been successfully read, so each reachable file
+	// is read at most once.
+	const cachedContent = new Map<string, string>();
+
+	cachedContent.set(rootAbs, read(rootAbs));
+
 	const visited = new Set<string>();
 	const queue: string[] = [rootAbs];
 
@@ -277,16 +297,7 @@ export function findIncludedTemplates(
 		const file = queue.shift() as string;
 		if (visited.has(file)) continue;
 		visited.add(file);
-
-		let content: string;
-		try {
-			content = fs.readFileSync(file, "utf8");
-		} catch (err) {
-			unresolved.add(
-				`Could not read ${path.relative(repoRoot, file)}: ${(err as Error).message}`,
-			);
-			continue;
-		}
+		const content = cachedContent.get(file) as string;
 
 		for (const rawLine of content.split(/\r?\n/)) {
 			if (rawLine.trim().startsWith("#")) continue;
@@ -310,18 +321,25 @@ export function findIncludedTemplates(
 			const absPath = templatePath.startsWith("/")
 				? path.join(repoRoot, templatePath)
 				: path.resolve(path.dirname(file), templatePath);
-
-			if (!fs.existsSync(absPath)) {
-				unresolved.add(
-					`'${value}' → '${path.relative(repoRoot, absPath)}' (referenced from '${path.relative(repoRoot, file)}', file not found)`,
-				);
-				continue;
-			}
-
 			const norm = path.resolve(absPath);
-			// First-seen wins: BFS guarantees this is a shortest chain to `norm`.
-			if (!parents.has(norm)) parents.set(norm, file);
-			if (!visited.has(norm)) queue.push(norm);
+
+			// Already discovered — BFS guarantees its shortest chain is already recorded.
+			if (parents.has(norm) || cachedContent.has(norm)) continue;
+
+			let childContent: string;
+			try {
+				childContent = read(norm);
+			} catch (err) {
+				// Re-throw with the originating reference as context so the error pinpoints
+				// the broken YAML location instead of just a bare absolute path.
+				throw new Error(
+					`Failed to read template '${value}' (referenced from '${path.relative(repoRoot, file)}'): ${(err as Error).message}`,
+					{ cause: err },
+				);
+			}
+			parents.set(norm, file);
+			cachedContent.set(norm, childContent);
+			queue.push(norm);
 		}
 	}
 
@@ -392,12 +410,16 @@ function toRepoRelative(absolute: string, repoRoot: string): string {
 	return path.relative(repoRoot, absolute).replaceAll(path.sep, "/");
 }
 
-export function analyzePipeline(file: string, repoRoot: string): Analysis {
-	const content = readFile(file);
+export function analyzePipeline(
+	file: string,
+	repoRoot: string,
+	read: FileReader = defaultFsReader,
+): Analysis {
+	const content = read(path.resolve(file));
 	const trigger = findTopLevelBlock(content, "trigger");
 	const pr = findTopLevelBlock(content, "pr");
 
-	const { parents, unresolved } = findIncludedTemplates(file, repoRoot);
+	const { parents, unresolved } = findIncludedTemplates(file, repoRoot, read);
 	// `findIncludedTemplates` already records the pipeline file itself as a root, so
 	// `parents.keys()` contains every file that should be covered by the trigger paths.
 
