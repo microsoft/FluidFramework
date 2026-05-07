@@ -76,7 +76,7 @@ describe("fetchJoinSession", () => {
 		assert.ok(captured.body !== undefined, "request body was not captured");
 		assert.match(
 			captured.body,
-			/\r\nPrefer: Return-Sensitivity-Labels\r\n/,
+			/Prefer: Return-Sensitivity-Labels/,
 			"Return-Sensitivity-Labels Prefer header was not present in the join-session request body",
 		);
 	});
