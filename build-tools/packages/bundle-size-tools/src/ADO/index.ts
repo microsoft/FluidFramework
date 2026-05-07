@@ -4,26 +4,22 @@
  */
 
 export {
-	getBundleBuddyConfigFileFromZip,
-	getBundlePathsFromZipObject,
-	getStatsFileFromZip,
+	getAnalyzerJsonFromZip,
+	getAnalyzerPathsFromZipObject,
 	getZipObjectFromArtifact,
 } from "./AdoArtifactFileProvider";
-export { ADOSizeComparator } from "./AdoSizeComparator";
-export { IADOConstants, totalSizeMetricName } from "./Constants";
-export { DefaultStatsProcessors } from "./DefaultStatsProcessors";
+export { ADOSizeComparator, SizeComparison } from "./AdoSizeComparator";
+export { IADOConstants } from "./Constants";
 export {
-	getBundleBuddyConfigFromFileSystem,
-	getBundlePathsFromFileSystem,
-	getStatsFileFromFileSystem,
+	getAnalyzerJsonFromFileSystem,
+	getAnalyzerPathsFromFileSystem,
 } from "./FileSystemBundleFileProvider";
 export { getAzureDevopsApi } from "./getAzureDevopsApi";
-export { getBuildTagForCommit } from "./getBuildTagForCommit";
 export {
-	GetBundleBuddyConfigMapArgs,
-	getBundleBuddyConfigMap,
-} from "./getBundleBuddyConfigMap";
-export { BundleFileData, getBundleFilePathsFromFolder } from "./getBundleFilePathsFromFolder";
-export { GetBundleSummariesArgs, getBundleSummaries } from "./getBundleSummaries";
-export { getCommentForBundleDiff, getSimpleComment } from "./getCommentForBundleDiff";
-export { prCommentsUtils } from "./PrCommentsUtils";
+	BundleFileData,
+	getAnalyzerFilePathsFromFolder,
+} from "./getBundleFilePathsFromFolder";
+export {
+	GetBundleSummariesFromAnalyzerArgs,
+	getBundleSummariesFromAnalyzer,
+} from "./getBundleSummaries";

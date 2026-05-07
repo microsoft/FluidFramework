@@ -6,14 +6,9 @@
 import { execSync } from "child_process";
 
 /**
- * Gets the commit in the target branch that the current branch is based on.
+ * Gets the commit on the target branch that the current branch is based on.
+ * @param targetBranch - The name of the target branch (e.g., "main").
  */
-export function getBaselineCommit(): string {
-	return execSync(`git merge-base origin/${process.env.TARGET_BRANCH_NAME} HEAD`)
-		.toString()
-		.trim();
-}
-
-export function getPriorCommit(baseCommit: string): string {
-	return execSync(`git log --pretty=format:"%H" -1 ${baseCommit}~1`).toString().trim();
+export function getBaselineCommit(targetBranch: string): string {
+	return execSync(`git merge-base origin/${targetBranch} HEAD`).toString().trim();
 }

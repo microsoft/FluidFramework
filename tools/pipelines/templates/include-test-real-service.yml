@@ -71,6 +71,15 @@ parameters:
 - name: artifactBuildId
   type: string
 
+# A valid git ref to use for the microsoft/FluidFramework repository checkout (e.g. refs/heads/main, a commit SHA, tag, etc)
+# Pipelines that are triggered on completion of the "Build - client packages" pipeline should generally use
+# the same source commit as what was used for "Build - client packages". This is typically available via
+# `$(resources.pipeline.client.sourceCommit)` (where "client" is actually the name of the resource declared
+# in the current pipeline's root yaml file)
+- name: fluidFrameworkSourceVersion
+  type: string
+  default: $(Build.SourceVersion)
+
 # Name of the Secure File that contains the self-signed cert for the R11s deployment.
 # If not blank, the pipeline will try to install it to the local cert store.
 - name: r11sSelfSignedCertSecureFile
@@ -85,11 +94,6 @@ parameters:
 # If true, skip publishing report files for test results.
 # Useful because our stress tests pipeline doesn't generate any test result files.
 - name: skipTestResultPublishing
-  type: boolean
-  default: false
-
-# If true, the versions of our packages installed for compat testing will be cached.
-- name: cacheCompatVersionsInstalls
   type: boolean
   default: false
 
@@ -174,6 +178,22 @@ stages:
           path: $(FFPipelineHostDirectory)
           clean: true
 
+        # ADO doesn't support checking out refs that are determined at pipeline queue time as ours likely would be
+        # (where the ref is a function of one of the pipeline resource inputs). See docs here:
+        # https://learn.microsoft.com/en-us/azure/devops/pipelines/repos/multi-repo-checkout?view=azure-devops#checking-out-a-specific-ref
+        # To work around this, we get to the right revision in a follow-up step.
+        - checkout: self
+          path: $(FluidFrameworkDirectory)
+          clean: true
+
+        - bash: |
+            git fetch --depth=1 origin $FF_SOURCE_VERSION
+            git checkout $FF_SOURCE_VERSION
+          workingDirectory: $(Pipeline.Workspace)/$(FluidFrameworkDirectory)
+          displayName: Switch FluidFramework checkout to artifact source version
+          env:
+            FF_SOURCE_VERSION: ${{ parameters.fluidFrameworkSourceVersion }}
+
         # Install self-signed cert for R11s deployment in local cert store
         - ${{ if ne(parameters.r11sSelfSignedCertSecureFile, '') }}:
           - task: DownloadSecureFile@1
@@ -231,15 +251,15 @@ stages:
         - template: /tools/pipelines/templates/include-install-pnpm.yml@self
           parameters:
             buildDirectory: $(FFPipelineHostDirectory)
+            # The compat-workspaces lockfile is committed to the FluidFramework repo and changes
+            # whenever legacy package versions are added or removed. Including it in the pnpm store
+            # cache key ensures a cache miss whenever the set of compat packages changes.
+            additionalCacheKey: '$(Pipeline.Workspace)/$(FluidFrameworkDirectory)/packages/test/test-version-utils/compat-workspaces/full/pnpm-lock.yaml'
 
         - template: /tools/pipelines/templates/include-setup-npmrc-for-download.yml@self
 
         # Set up Docker environment if running against docker
         - ${{ if eq(parameters.runAgainstDocker, true) }}:
-          # Checks out FluidFramework repo
-          - checkout: self
-            path: $(FluidFrameworkDirectory)
-            clean: true
           - task: Docker@2
             displayName: 'Login to container registry'
             inputs:
@@ -371,56 +391,19 @@ stages:
               sourcePackageLocation: $(Pipeline.Workspace)/$(FFPipelineHostDirectory)/node_modules/${{ parameters.testPackage }}
               destPackageLocation: $(Pipeline.Workspace)/$(FFPipelineHostDirectory)
 
-        - ${{ if eq(parameters.cacheCompatVersionsInstalls, true) }}:
-          - task: Bash@3
-            displayName: Compute compat versions install location and version
-            inputs:
-              targetType: 'inline'
-              workingDirectory: $(Pipeline.Workspace)/$(FFPipelineHostDirectory)/node_modules/@fluid-private/test-end-to-end-tests
-              # Using import.meta.resolve to compute this is more resilient to different install tree types.
-              # Also note that test-version-utils is esm-only, so cannot be loaded with require.
-              script: |
-                set -eu -o pipefail
-                node --input-type=module -e "
-                  import { createRequire } from 'module';
-                  const require = createRequire(import.meta.url);
-                  const path = require('path');
-                  const versionUtilsIndexUrl = await import.meta.resolve('@fluid-private/test-version-utils');
-                  const basePath = new URL(versionUtilsIndexUrl.replace('/lib/index.js', '')).pathname;
-                  const legacyModulesPath = path.join(basePath, 'node_modules', '.legacy');
-                  console.log('Resolved @fluid-private/test-version-utils legacy modules to ' + legacyModulesPath);
-                  console.log('##vso[task.setvariable variable=compatVersionInstallsPath]' + legacyModulesPath);
-                  const packageJsonPath = path.join(basePath, 'package.json');
-                  const packageJson = require(packageJsonPath);
-                  const packageVersion = packageJson.version;
-                  const [major, minor] = packageVersion.split('.');
-                  const cacheKey = 'major:' + major + ',minor:' + minor;
-                  console.log('Computed compat version cache key: ' + cacheKey);
-                  console.log('##vso[task.setvariable variable=compatVersionCacheKey;]'+ cacheKey);
-                "
-
-          - task: Cache@2
-            displayName: Cache compat versions install location
-            timeoutInMinutes: 3
-            continueOnError: true
-            inputs:
-              key: '"compat-version-installs" | "$(Agent.OS)" | "${{ parameters.testCommand }}" | "${{ variant.name }}" | "$(compatVersionCacheKey)"'
-              path: $(compatVersionInstallsPath)
-
         # Only check out tenants from the tenant pool if we are running tests against ODSP
         - ${{ if ne(parameters.odspTenantType, 'none') }}:
           # Retrieve a tenant from the tenant pool
           - task: AzureCLI@2
             displayName: 'Log in to retrieve tenant credentials'
             inputs:
-              azureSubscription: 'Fluid Framework Tests'
+              azureSubscription: 'FF Pipeline Authentication'
               # This injects environment variables into the below script. See https://learn.microsoft.com/en-us/azure/devops/pipelines/tasks/reference/azure-cli-v2?view=azure-pipelines
               addSpnToEnvironment: true
               scriptType: 'bash'
               scriptLocation: 'inlineScript'
               inlineScript: |
                 set -eu -o pipefail
-
                 az login --service-principal -u $servicePrincipalId -p $idToken --tenant $tenantId
 
           - task: Bash@3
@@ -429,11 +412,12 @@ stages:
               SYSTEM_ACCESSTOKEN: $(System.AccessToken)
             inputs:
               targetType: 'inline'
+              workingDirectory: $(Pipeline.Workspace)/$(FFPipelineHostDirectory)
               script: |
                 set -eu -o pipefail
 
                 # Increase the maximum time to wait for a tenant to 1 hour to accommodate multiple test runs at the same time.
-                pnpm exec trips-setup --waitTime=3600 --accessToken=$SYSTEM_ACCESSTOKEN --odspEndpoint=${{ parameters.odspTenantType }}
+                pnpm exec trips-setup --waitTime=3600 --accessToken=$SYSTEM_ACCESSTOKEN --odspEndpoint=${{ parameters.odspTenantType }} --useFic
                 echo "##vso[task.setvariable variable=tenantSetupSuccess;]true"
 
         # run the test
@@ -443,14 +427,14 @@ stages:
           env:
             ${{ each pair in parameters.env }}:
               ${{ pair.key }}: ${{ pair.value }}
-            # ODSP tenant setup script injects the values here (appClientId, tenantCreds).
-            # The e2e test workload references the keys (login__*).
-            ${{ if eq(parameters.odspTenantType, 'dogfood') }}:
-              login__microsoft__clientId: $(appClientId)
-              login__odspdf__test__tenants: $(tenantCreds)
-            ${{ elseif eq(parameters.odspTenantType, 'prod') }}:
-              login__microsoft__clientId: $(appClientId)
-              login__odsp__test__tenants: $(tenantCreds)
+            # The ODSP tenant setup script (trips-setup --useFic) sets login__odsp__fic__test__users
+            # and token__package__import__location as pipeline variables. The e2e test workload reads
+            # those plus login__microsoft__clientId (sourced from prague-key-vault).
+            ${{ if or(eq(parameters.odspTenantType, 'dogfood'), eq(parameters.odspTenantType, 'prod')) }}:
+              token__package__import__location: $(token__package__import__location)
+              login__odsp__fic__test__users: $(login__odsp__fic__test__users)
+              SYSTEM_ACCESSTOKEN: $(System.AccessToken)
+              login__microsoft__clientId: $(login-microsoft-clientId)
           inputs:
             command: 'custom'
             workingDir: $(Pipeline.Workspace)/$(FFPipelineHostDirectory)/node_modules/${{ parameters.testPackage }}
@@ -510,7 +494,7 @@ stages:
           - task: AzureCLI@2
             displayName: 'Log in to release tenant credentials'
             inputs:
-              azureSubscription: 'Fluid Framework Tests'
+              azureSubscription: 'FF Pipeline Authentication'
               addSpnToEnvironment: true
               scriptType: 'bash'
               scriptLocation: 'inlineScript'
@@ -523,11 +507,15 @@ stages:
           # Release the tenant back to the tenant pool
           - task: Bash@3
             displayName: 'Release tenant credentials'
+            env:
+              login__odsp__fic__test__users: $(login__odsp__fic__test__users)
+              SYSTEM_ACCESSTOKEN: $(System.AccessToken)
             inputs:
               targetType: 'inline'
+              workingDirectory: $(Pipeline.Workspace)/$(FFPipelineHostDirectory)
               script: |
                 set -eu -o pipefail
-                pnpm exec trips-cleanup --reservationId=$(stringBearerToken) --odspEndpoint=${{ parameters.odspTenantType }}
+                pnpm exec trips-cleanup --odspEndpoint=${{ parameters.odspTenantType }} --useFic
             condition: eq(variables['tenantSetupSuccess'], 'true')
 
         # Log Test Failures
@@ -551,7 +539,9 @@ stages:
 
 - template: /tools/pipelines/templates/upload-telemetry/include-stage-upload-telemetry.yml@self
   parameters:
-    stageIdFilter: ${{ parameters.stageId }}
+    telemetryDescription: ${{ parameters.stageId }}
+    dependsOn:
+      - ${{ parameters.stageId }}
     telemetry_upload_steps:
       - template: /tools/pipelines/templates/upload-telemetry/include-steps-upload-stage-timing.yml@self
         parameters:

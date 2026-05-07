@@ -28,7 +28,6 @@ eslint-config-fluid/
 │   ├── settings.mts            # Plugin settings (import-x, jsdoc)
 │   ├── rules/
 │   │   ├── base.mts            # Base rules from eslint:recommended, typescript-eslint, etc.
-│   │   ├── minimal-deprecated.mts  # Additional rules for minimal-deprecated config
 │   │   ├── recommended.mts     # Rules for recommended config (unicorn, type safety)
 │   │   └── strict.mts          # Rules for strict config (jsdoc requirements, explicit access)
 │   └── configs/
@@ -109,6 +108,7 @@ a diff to review as part of a PR -- just like we do with API reports for code ch
 | `prettier:fix` | `prettier --write .` |
 | `print-configs` | `tsx scripts/print-configs.ts printed-configs` |
 | `test` | `echo TODO: add tests in @fluidframework/eslint-config-fluid` |
+| `test:mocha` | `mocha "src/test/**/*.test.mts"` |
 
 <!-- prettier-ignore-end -->
 

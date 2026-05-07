@@ -11,6 +11,7 @@ import {
 	type WithType,
 	normalizeAllowedTypes,
 	isTreeNode,
+	createSchemaUpgrade,
 } from "../core/index.js";
 // These imports prevent a large number of type references in the API reports from showing up as *_2.
 /* eslint-disable unused-imports/no-unused-imports, @typescript-eslint/no-unused-vars, import-x/no-duplicates */
@@ -18,7 +19,7 @@ import {
 	type FieldProps,
 	type FieldSchemaAlpha,
 	type FieldPropsAlpha,
-	type FieldKind,
+	FieldKind,
 	type ImplicitFieldSchema,
 	type InsertableTreeFieldFromImplicitField,
 	type FieldSchema,
@@ -144,6 +145,64 @@ export interface SchemaStaticsAlpha {
 		FieldPropsAlpha<TCustomMetadata> & { defaultProvider: DefaultProvider }
 	>;
 	/**
+	 * Creates a field schema that is Optional in the view but behaves as Required in the stored schema
+	 * during the rollout period of an optional-field migration.
+	 *
+	 * @remarks
+	 * Use this to incrementally migrate a required field to optional without a coordinated deployment.
+	 * The migration path is:
+	 *
+	 * 1. Start with `sf.required(T)` — all clients require the field.
+	 * 2. Deploy `sf.stagedOptional(T)` — new clients can read documents where the field is present or absent, but the stored schema stays Required (so old clients are unaffected). Setting the field to `undefined` is rejected because the stored schema still declares the field as required.
+	 * 3. Deploy `sf.optional(T)` once all clients support the staged optional field — the stored schema becomes Optional and the field can be cleared.
+	 *
+	 * Analogous to {@link SchemaStaticsBeta.staged} for allowed types, but for field optionality.
+	 *
+	 * @param t - The types allowed under the field.
+	 * @param props - Optional properties to associate with the field.
+	 *
+	 * @typeParam TCustomMetadata - Custom metadata properties to associate with the field.
+	 * See {@link FieldSchemaMetadata.custom}.
+	 */
+	readonly stagedOptional: <
+		const T extends ImplicitAllowedTypes,
+		const TCustomMetadata = unknown,
+	>(
+		t: T,
+		props?: Omit<
+			FieldPropsAlpha<TCustomMetadata>,
+			"defaultProvider" | "stagedOptionalUpgrade"
+		>,
+	) => FieldSchemaAlpha<
+		FieldKind.Optional,
+		T,
+		TCustomMetadata,
+		FieldPropsAlpha<TCustomMetadata>
+	>;
+	/**
+	 * {@link SchemaStaticsAlpha.stagedOptional} except tweaked to work better for recursive types.
+	 * Use with {@link ValidateRecursiveSchema} for improved type safety.
+	 * @remarks
+	 * This version of {@link SchemaStaticsAlpha.stagedOptional} has fewer type constraints to work around TypeScript limitations, see {@link Unenforced}.
+	 * See {@link ValidateRecursiveSchema} for additional information about using recursive schema.
+	 */
+	readonly stagedOptionalRecursive: <
+		const T extends System_Unsafe.ImplicitAllowedTypesUnsafe,
+		const TCustomMetadata = unknown,
+	>(
+		t: T,
+		props?: Omit<
+			FieldPropsAlpha<TCustomMetadata>,
+			"defaultProvider" | "stagedOptionalUpgrade"
+		>,
+	) => FieldSchemaAlphaUnsafe<
+		FieldKind.Optional,
+		T,
+		TCustomMetadata,
+		FieldPropsAlpha<TCustomMetadata>
+	>;
+
+	/**
 	 * {@link SchemaStaticsAlpha.withDefault} except tweaked to work better for recursive types.
 	 * Use with {@link ValidateRecursiveSchema} for improved type safety.
 	 * @remarks
@@ -225,10 +284,27 @@ const withDefault = <
 	);
 };
 
+const stagedOptional = <const T extends ImplicitAllowedTypes, const TCustomMetadata = unknown>(
+	t: T,
+	props?: Omit<FieldPropsAlpha<TCustomMetadata>, "defaultProvider" | "stagedOptionalUpgrade">,
+): FieldSchemaAlpha<
+	FieldKind.Optional,
+	T,
+	TCustomMetadata,
+	FieldPropsAlpha<TCustomMetadata>
+> => {
+	return createFieldSchema(FieldKind.Optional, t, {
+		defaultProvider: getDefaultProvider(() => []),
+		...props,
+		stagedOptionalUpgrade: createSchemaUpgrade(),
+	});
+};
+
 const schemaStaticsAlpha: SchemaStaticsAlpha = {
 	withDefault,
-
 	withDefaultRecursive: withDefault as SchemaStaticsAlpha["withDefaultRecursive"],
+	stagedOptional,
+	stagedOptionalRecursive: stagedOptional as SchemaStaticsAlpha["stagedOptionalRecursive"],
 };
 
 /**
@@ -448,7 +524,27 @@ export class SchemaFactoryAlpha<
 	public static readonly withDefaultRecursive = schemaStaticsAlpha.withDefaultRecursive;
 
 	/**
-	 * Define a {@link TreeNodeSchema} for a {@link TreeMapNode}.
+	 * {@inheritdoc SchemaStaticsAlpha.stagedOptional}
+	 */
+	public readonly stagedOptional = schemaStaticsAlpha.stagedOptional;
+
+	/**
+	 * {@inheritdoc SchemaStaticsAlpha.stagedOptional}
+	 */
+	public static readonly stagedOptional = schemaStaticsAlpha.stagedOptional;
+
+	/**
+	 * {@inheritdoc SchemaStaticsAlpha.stagedOptionalRecursive}
+	 */
+	public readonly stagedOptionalRecursive = schemaStaticsAlpha.stagedOptionalRecursive;
+
+	/**
+	 * {@inheritdoc SchemaStaticsAlpha.stagedOptionalRecursive}
+	 */
+	public static readonly stagedOptionalRecursive = schemaStaticsAlpha.stagedOptionalRecursive;
+
+	/**
+	 * Define a {@link TreeNodeSchema} for a {@link TreeMapNodeAlpha}.
 	 *
 	 * @param name - Unique identifier for this schema within this factory's scope.
 	 * @param allowedTypes - The types that may appear as values in the map.

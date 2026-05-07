@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/react",
-	"version": "2.92.0",
+	"version": "2.101.0",
 	"description": "Utilities for integrating content powered by the Fluid Framework into React applications",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -102,6 +102,7 @@
 		"@fluidframework/fluid-static": "workspace:~",
 		"@fluidframework/runtime-definitions": "workspace:~",
 		"@fluidframework/shared-object-base": "workspace:~",
+		"@fluidframework/telemetry-utils": "workspace:~",
 		"@fluidframework/tree": "workspace:~",
 		"react": "^18.3.1",
 		"react-dom": "^18.3.1"
@@ -114,11 +115,12 @@
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "catalog:buildTools",
 		"@fluidframework/eslint-config-fluid": "catalog:eslint",
+		"@fluidframework/test-runtime-utils": "workspace:~",
 		"@fluidframework/tinylicious-client": "workspace:~",
-		"@microsoft/api-extractor": "7.52.11",
+		"@microsoft/api-extractor": "7.58.1",
 		"@testing-library/react": "^16.3.0",
 		"@types/mocha": "^10.0.10",
-		"@types/node": "~20.19.30",
+		"@types/node": "catalog:types",
 		"@types/react": "^18.3.11",
 		"@types/react-dom": "^18.3.1",
 		"c8": "^10.1.3",

@@ -20,6 +20,9 @@ packages:
   - "!**/lib/**"
   - "!**/src/**"
 
+  # exclude sub-workspaces for compat tests — these are managed separately with their own lockfiles
+  - "!**/compat-workspaces/**"
+
 # Supply chain security settings - see /DEV.md for documentation
 minimumReleaseAge: 1440
 minimumReleaseAgeExclude: [
@@ -27,18 +30,32 @@ minimumReleaseAgeExclude: [
 ]
 resolutionMode: highest
 blockExoticSubdeps: true
-trustPolicy: no-downgrade
+# See: https://github.com/orgs/pnpm/discussions/11084 for some discussion.
+# Enabling this is additionally more complicated than coming up with a reasonable allow-list of packages, given that
+# whether a package is trusted may change due to external factors and pnpm lacks a command or mode that scans the full
+# dependency graph to determine trustworthiness. Note the "off" here is the default as well.
+trustPolicy: off
+trustPolicyExclude:
+  # axios@0.30.3 is the last legitimate 0.30.x release (published 2026-02-18). The trust
+  # downgrade fires because 0.30.x was published via direct CLI rather than the OIDC/GitHub
+  # Actions provenance pipeline used by earlier versions. The compromised versions were
+  # 0.30.4 and 1.14.1 (supply chain attack on 2026-03-31, attributed to Sapphire Sleet).
+  # See: https://www.microsoft.com/en-us/security/blog/2026/04/01/mitigating-the-axios-npm-supply-chain-compromise/
+  - "axios@0.30.3"
 strictDepBuilds: true
 
 catalogs:
   # Build-tools packages
   buildTools:
-    "@fluid-tools/build-cli": ^0.64.0
-    "@fluid-tools/version-tools": ^0.64.0
-    "@fluidframework/build-tools": ^0.64.0
-    "@fluidframework/bundle-size-tools": ^0.64.0
+    "@fluid-tools/build-cli": ^0.65.0
+    "@fluid-tools/version-tools": ^0.65.0
+    "@fluidframework/build-tools": ^0.65.0
+    "@fluidframework/bundle-size-tools": ^0.65.0
   # eslint and related packages
   eslint:
     "@fluidframework/eslint-config-fluid": "^9.0.0"
     "eslint": "~9.39.1"
     "eslint-config-prettier": "~10.1.8"
+  # Type definitions
+  types:
+    "@types/node": "~22.19.17"

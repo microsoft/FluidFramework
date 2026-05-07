@@ -18,7 +18,6 @@ import {
 	LocalResolver,
 } from "@fluidframework/local-driver/internal";
 import { type ISharedMap, SharedMap } from "@fluidframework/map/internal";
-import { asLegacyAlpha } from "@fluidframework/runtime-definitions/internal";
 import {
 	ILocalDeltaConnectionServer,
 	LocalDeltaConnectionServer,
@@ -299,7 +298,7 @@ describe("Document Dirty", () => {
 				// Submit a non-dirtyable op
 				containerRuntime.submit(nonDirtyableOp);
 
-				const stageControls = asLegacyAlpha(containerRuntime).enterStagingMode();
+				const stageControls = containerRuntime.enterStagingMode();
 
 				// Submit an op in staging mode - we will discard it later
 				sharedMap.set("key", "value");

@@ -13,7 +13,7 @@ import { assert } from "@fluidframework/core-utils/internal";
 import { createChildLogger } from "./logger.js";
 import type {
 	ITelemetryEventExt,
-	ITelemetryLoggerExt,
+	TelemetryLoggerExt,
 	ITelemetryPropertiesExt,
 } from "./telemetryTypes.js";
 
@@ -51,7 +51,7 @@ export class MockLogger implements ITelemetryBaseLogger {
 		this._events = [];
 	}
 
-	public toTelemetryLogger(): ITelemetryLoggerExt {
+	public toTelemetryLogger(): ReturnType<typeof createChildLogger> {
 		return createChildLogger({ logger: this });
 	}
 
@@ -357,13 +357,13 @@ function matchObjects(
 }
 
 /**
- * Mock {@link ITelemetryLoggerExt} implementation.
+ * Mock {@link TelemetryLoggerExt} implementation.
  *
  * @remarks Can be created via {@link createMockLoggerExt}.
  *
  * @internal
  */
-export interface IMockLoggerExt extends ITelemetryLoggerExt {
+export interface IMockLoggerExt extends TelemetryLoggerExt {
 	/**
 	 * Gets the events that have been logged so far.
 	 */

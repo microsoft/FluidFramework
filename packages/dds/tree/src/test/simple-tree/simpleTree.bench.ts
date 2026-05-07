@@ -3,29 +3,33 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert, fail } from "node:assert";
+import { strict as assert } from "node:assert";
 
-import { BenchmarkType, benchmark, isInPerformanceTestingMode } from "@fluid-tools/benchmark";
+import {
+	BenchmarkMode,
+	BenchmarkType,
+	benchmarkDuration,
+	benchmarkIt,
+	currentBenchmarkMode,
+} from "@fluid-tools/benchmark";
 
 import { SchemaFactory, SchemaFactoryAlpha, type TreeNode } from "../../simple-tree/index.js";
 import { configureBenchmarkHooks } from "../utils.js";
 
 import {
-	type DeepTreeNode,
 	generateDeepSimpleTree,
 	generateWideSimpleTree,
 	readDeepSimpleTree,
 	readWideSimpleTree,
 	writeDeepTree,
 	writeWideSimpleTreeNewValue,
-	type WideTreeNode,
 } from "./benchmarkUtilities.js";
 import { hydrateNode } from "./utils.js";
 
 // number of nodes in test for wide trees
 const nodesCountWide = [
 	[2, BenchmarkType.Measurement],
-	...(isInPerformanceTestingMode
+	...(currentBenchmarkMode === BenchmarkMode.Performance
 		? [
 				[100, BenchmarkType.Perspective],
 				[500, BenchmarkType.Measurement],
@@ -35,7 +39,7 @@ const nodesCountWide = [
 // number of nodes in test for deep trees
 const nodesCountDeep = [
 	[1, BenchmarkType.Measurement],
-	...(isInPerformanceTestingMode
+	...(currentBenchmarkMode === BenchmarkMode.Performance
 		? [
 				[10, BenchmarkType.Perspective],
 				[100, BenchmarkType.Measurement],
@@ -48,50 +52,44 @@ describe("SimpleTree benchmarks", () => {
 	describe("Read SimpleTree", () => {
 		const leafValue = 1;
 		for (const [numberOfNodes, benchmarkType] of nodesCountDeep) {
-			let tree: DeepTreeNode;
-			let actualDepth = 0;
-			let actualValue = 0;
-
-			benchmark({
+			benchmarkIt({
 				type: benchmarkType,
 				title: `Deep Tree as SimpleTree: reads with ${numberOfNodes} nodes`,
-				before: () => {
-					// Setup
-					tree = generateDeepSimpleTree(numberOfNodes, leafValue);
-				},
-				benchmarkFn: () => {
-					const { depth, value } = readDeepSimpleTree(tree);
-					actualDepth = depth;
-					actualValue = value;
-				},
-				after() {
-					//  Assert read values
-					assert.equal(actualDepth, numberOfNodes);
-					assert.equal(actualValue, leafValue);
-				},
+				...benchmarkDuration({
+					benchmarkFnCustom: async (state) => {
+						const tree = generateDeepSimpleTree(numberOfNodes, leafValue);
+						let actualDepth = 0;
+						let actualValue = 0;
+						state.timeAllBatches(() => {
+							const { depth, value } = readDeepSimpleTree(tree);
+							actualDepth = depth;
+							actualValue = value;
+						});
+						assert.equal(actualDepth, numberOfNodes);
+						assert.equal(actualValue, leafValue);
+					},
+				}),
 			});
 		}
 		for (const [numberOfNodes, benchmarkType] of nodesCountWide) {
-			let tree: WideTreeNode;
-			const expected = numberOfNodes * leafValue;
-			let actualNodesCount = 0;
-			let actualSum = 0;
-			benchmark({
+			benchmarkIt({
 				type: benchmarkType,
 				title: `Wide Tree as SimpleTree: reads with ${numberOfNodes} nodes`,
-				before: () => {
-					// Setup
-					tree = generateWideSimpleTree(numberOfNodes, leafValue);
-				},
-				benchmarkFn: () => {
-					const { nodesCount, sum } = readWideSimpleTree(tree);
-					actualNodesCount = nodesCount;
-					actualSum = sum;
-				},
-				after() {
-					assert.equal(actualNodesCount, numberOfNodes);
-					assert.equal(actualSum, expected);
-				},
+				...benchmarkDuration({
+					benchmarkFnCustom: async (state) => {
+						const tree = generateWideSimpleTree(numberOfNodes, leafValue);
+						const expected = numberOfNodes * leafValue;
+						let actualNodesCount = 0;
+						let actualSum = 0;
+						state.timeAllBatches(() => {
+							const { nodesCount, sum } = readWideSimpleTree(tree);
+							actualNodesCount = nodesCount;
+							actualSum = sum;
+						});
+						assert.equal(actualNodesCount, numberOfNodes);
+						assert.equal(actualSum, expected);
+					},
+				}),
 			});
 		}
 
@@ -110,23 +108,21 @@ describe("SimpleTree benchmarks", () => {
 				expectedValue: number | undefined,
 			) {
 				for (const doHydration of [false, true]) {
-					let tree: RootNode | undefined;
-					let readNumber: number | undefined;
-					benchmark({
-						type: BenchmarkType.Measurement,
+					benchmarkIt({
 						title: `${title} (${doHydration ? "hydrated" : "unhydrated"} node)`,
-						before: () => {
-							tree = unhydratedNodeInitFunction();
-							if (doHydration) {
-								hydrateNode(tree);
-							}
-						},
-						benchmarkFn: () => {
-							readNumber = treeReadingFunction(tree ?? fail("Expected tree to be set"));
-						},
-						after: () => {
-							assert.equal(readNumber, expectedValue);
-						},
+						...benchmarkDuration({
+							benchmarkFnCustom: async (state) => {
+								const tree = unhydratedNodeInitFunction();
+								if (doHydration) {
+									hydrateNode(tree);
+								}
+								let readNumber: number | undefined;
+								state.timeAllBatches(() => {
+									readNumber = treeReadingFunction(tree);
+								});
+								assert.equal(readNumber, expectedValue);
+							},
+						}),
 					});
 				}
 			}
@@ -382,100 +378,91 @@ describe("SimpleTree benchmarks", () => {
 		const leafValue = 1;
 		const changedLeafValue = -1;
 		for (const [numberOfNodes, benchmarkType] of nodesCountDeep) {
-			let tree: DeepTreeNode;
-			benchmark({
+			benchmarkIt({
 				type: benchmarkType,
 				title: `Update value at leaf of ${numberOfNodes} deep tree`,
-				before: () => {
-					// Setup
-					tree = generateDeepSimpleTree(numberOfNodes, leafValue);
-				},
-				benchmarkFn: () => {
-					writeDeepTree(tree, changedLeafValue);
-				},
-				after: () => {
-					const expected = generateDeepSimpleTree(numberOfNodes, changedLeafValue);
-					assert.deepEqual(tree, expected);
-				},
+				...benchmarkDuration({
+					benchmarkFnCustom: async (state) => {
+						const tree = generateDeepSimpleTree(numberOfNodes, leafValue);
+						state.timeAllBatches(() => {
+							writeDeepTree(tree, changedLeafValue);
+						});
+						const expected = generateDeepSimpleTree(numberOfNodes, changedLeafValue);
+						assert.deepEqual(tree, expected);
+					},
+				}),
 			});
 		}
 
 		for (const [numberOfNodes, benchmarkType] of nodesCountWide) {
-			let tree: WideTreeNode;
-			benchmark({
+			benchmarkIt({
 				type: benchmarkType,
 				title: `Remove and insert end value at leaf of ${numberOfNodes} Wide tree`,
-				before: () => {
-					// Setup
-					tree = generateWideSimpleTree(numberOfNodes, leafValue);
-				},
-				benchmarkFn: () => {
-					writeWideSimpleTreeNewValue(tree, changedLeafValue, tree.length - 1);
-				},
-				after: () => {
-					const actual = tree[tree.length - 1];
-					assert.equal(actual, changedLeafValue);
-				},
+				...benchmarkDuration({
+					benchmarkFnCustom: async (state) => {
+						const tree = generateWideSimpleTree(numberOfNodes, leafValue);
+						state.timeAllBatches(() => {
+							writeWideSimpleTreeNewValue(tree, changedLeafValue, tree.length - 1);
+						});
+						const actual = tree[tree.length - 1];
+						assert.equal(actual, changedLeafValue);
+					},
+				}),
 			});
 		}
 
 		for (const [numberOfNodes, benchmarkType] of nodesCountWide) {
-			let tree: WideTreeNode;
-			benchmark({
+			benchmarkIt({
 				type: benchmarkType,
 				title: `Remove and insert first value at leaf of ${numberOfNodes} Wide tree`,
-				before: () => {
-					// Setup
-					tree = generateWideSimpleTree(numberOfNodes, leafValue);
-				},
-				benchmarkFn: () => {
-					writeWideSimpleTreeNewValue(tree, changedLeafValue, 0);
-				},
-				after: () => {
-					const actual = tree[0];
-					assert.equal(actual, changedLeafValue);
-				},
+				...benchmarkDuration({
+					benchmarkFnCustom: async (state) => {
+						const tree = generateWideSimpleTree(numberOfNodes, leafValue);
+						state.timeAllBatches(() => {
+							writeWideSimpleTreeNewValue(tree, changedLeafValue, 0);
+						});
+						const actual = tree[0];
+						assert.equal(actual, changedLeafValue);
+					},
+				}),
 			});
 		}
 
 		for (const [numberOfNodes, benchmarkType] of nodesCountWide) {
-			let tree: WideTreeNode;
-			benchmark({
+			benchmarkIt({
 				type: benchmarkType,
-				title: `Move second leaf to begining of ${numberOfNodes} Wide tree`,
-				before: () => {
-					// Setup
-					tree = generateWideSimpleTree(numberOfNodes, leafValue);
-					writeWideSimpleTreeNewValue(tree, changedLeafValue, 1);
-				},
-				benchmarkFn: () => {
-					tree.moveToIndex(0, 1);
-				},
-				after: () => {
-					// Even number of iterations cancel out, so this validation only works after odd numbers of iterations.
-					// Correctness mode always does a single iteration, so just validate that case.
-					if (!isInPerformanceTestingMode) assert.equal(tree[0], changedLeafValue);
-				},
+				title: `Move second leaf to beginning of ${numberOfNodes} Wide tree`,
+				...benchmarkDuration({
+					benchmarkFnCustom: async (state) => {
+						const tree = generateWideSimpleTree(numberOfNodes, leafValue);
+						writeWideSimpleTreeNewValue(tree, changedLeafValue, 1);
+						state.timeAllBatches(() => {
+							tree.moveToIndex(0, 1);
+						});
+						// Even number of iterations cancel out, so this validation only works after odd numbers of iterations.
+						// Correctness mode always does a single iteration, so just validate that case.
+						if (currentBenchmarkMode !== BenchmarkMode.Performance)
+							assert.equal(tree[0], changedLeafValue);
+					},
+				}),
 			});
 		}
 
 		for (const [numberOfNodes, benchmarkType] of nodesCountWide) {
-			let tree: WideTreeNode;
-			benchmark({
+			benchmarkIt({
 				type: benchmarkType,
 				title: `Move next-to-last leaf to end of ${numberOfNodes} Wide tree`,
-				before: () => {
-					// Setup
-					tree = generateWideSimpleTree(numberOfNodes, leafValue);
-					writeWideSimpleTreeNewValue(tree, changedLeafValue, tree.length - 2);
-				},
-				benchmarkFn: () => {
-					tree.moveToIndex(tree.length - 2, tree.length - 1);
-				},
-				after: () => {
-					if (!isInPerformanceTestingMode)
-						assert.equal(tree[tree.length - 1], changedLeafValue);
-				},
+				...benchmarkDuration({
+					benchmarkFnCustom: async (state) => {
+						const tree = generateWideSimpleTree(numberOfNodes, leafValue);
+						writeWideSimpleTreeNewValue(tree, changedLeafValue, tree.length - 2);
+						state.timeAllBatches(() => {
+							tree.moveToIndex(tree.length - 2, tree.length - 1);
+						});
+						if (currentBenchmarkMode !== BenchmarkMode.Performance)
+							assert.equal(tree[tree.length - 1], changedLeafValue);
+					},
+				}),
 			});
 		}
 	});

@@ -4,6 +4,14 @@
  */
 
 import { compareArrays, debugAssert } from "@fluidframework/core-utils/internal";
+import {
+	buildFunc,
+	exposeMethodsSymbol,
+	type ExposedMethods,
+	type IExposedMethods,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "@fluidframework/type-factory/alpha";
+import { typeFactory as tf } from "@fluidframework/type-factory/internal";
 
 import { EmptyKey, mapCursorField, type ITreeCursorSynchronous } from "../core/index.js";
 import {
@@ -26,8 +34,67 @@ class TextNode
 	extends sf.object("Text", {
 		content: SchemaFactory.required([() => StringArray], { key: EmptyKey }),
 	})
-	implements TextAsTree.Members
+	implements TextAsTree.Members, IExposedMethods
 {
+	public static [exposeMethodsSymbol](methods: ExposedMethods): void {
+		methods.exposeMethod(
+			TextNode,
+			"insertAt",
+			buildFunc(
+				{
+					description:
+						"Insert characters into the text at the given character index (Unicode code points).",
+					returns: tf.void(),
+				},
+				["index", tf.number()],
+				["additionalCharacters", tf.string()],
+			),
+		);
+		methods.exposeMethod(
+			TextNode,
+			"removeRange",
+			buildFunc(
+				{
+					description:
+						"Remove a range of characters from the text by character index (Unicode code points). startIndex defaults to 0 and endIndex defaults to the length of the text.",
+					returns: tf.void(),
+				},
+				["startIndex", tf.union([tf.number(), tf.undefined()])],
+				["endIndex", tf.union([tf.number(), tf.undefined()])],
+			),
+		);
+		methods.exposeMethod(
+			TextNode,
+			"fullString",
+			buildFunc({
+				description: "Return a copy of this text node's content as a string.",
+				returns: tf.string(),
+			}),
+		);
+		methods.exposeMethod(
+			TextNode,
+			"characterCount",
+			buildFunc({
+				description:
+					"Gets the number of characters (Unicode code points) currently in the text. Joined emojis and other grapheme clusters count as multiple characters.",
+				returns: tf.number(),
+			}),
+		);
+		methods.exposeMethod(
+			TextNode,
+			"charactersCopy",
+			buildFunc({
+				description:
+					"Returns all characters in the text as an array, where each element is a single Unicode code point. Joined emojis and other grapheme clusters are split into separate elements.",
+				returns: tf.array(tf.string()),
+			}),
+		);
+	}
+
+	public [exposeMethodsSymbol](methods: ExposedMethods): void {
+		TextNode[exposeMethodsSymbol](methods);
+	}
+
 	public insertAt(index: number, additionalCharacters: string): void {
 		this.content.insertAt(
 			index,
