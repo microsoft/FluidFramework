@@ -32,13 +32,17 @@ export async function downloadArtifact(
 	// getArtifactContentZip() in the azure-devops-node-api package tries to download pipeline artifacts using an
 	// API version (in the http request's accept header) that isn't supported by the artifact download endpoint.
 	// One way of getting around that is by temporarily removing the API version that the package adds, to force
-	// it to use a supported one.
+	// it to use a supported one. Restore via try/finally so a thrown download doesn't leak the override into
+	// subsequent ADO calls on the same buildApi.
 	// See https://github.com/microsoft/azure-devops-node-api/issues/432 for more details.
 	const originalCreateAcceptHeader = buildApi.createAcceptHeader;
-	buildApi.createAcceptHeader = (type: string): string => type;
-	const artifactStream = await buildApi.getArtifactContentZip(project, buildId, artifactName);
-	// Undo hack from above
-	buildApi.createAcceptHeader = originalCreateAcceptHeader;
+	let artifactStream: NodeJS.ReadableStream;
+	try {
+		buildApi.createAcceptHeader = (type: string): string => type;
+		artifactStream = await buildApi.getArtifactContentZip(project, buildId, artifactName);
+	} finally {
+		buildApi.createAcceptHeader = originalCreateAcceptHeader;
+	}
 
 	const unzipped = unzipSync(await readStreamAsUint8Array(artifactStream));
 
@@ -63,7 +67,7 @@ async function readStreamAsUint8Array(stream: NodeJS.ReadableStream): Promise<Ui
 	return new Promise((resolve, reject) => {
 		const chunks: Buffer[] = [];
 		stream.on("data", (chunk: Buffer) => chunks.push(chunk));
-		stream.on("close", () => resolve(new Uint8Array(Buffer.concat(chunks))));
-		stream.on("error", (error) => reject(error));
+		stream.once("end", () => resolve(new Uint8Array(Buffer.concat(chunks))));
+		stream.once("error", reject);
 	});
 }

@@ -87,7 +87,7 @@ export const getCoverageMetricsFromArtifact = async (
 				Buffer.from(coverageReportBytes),
 				(err: Error | null, result: unknown): void => {
 					if (err) {
-						console.warn(`Error processing file ${coverageReportFile}: ${err}`);
+						logger?.warning(`Error processing file ${coverageReportFile}: ${err}`);
 						return;
 					}
 					coverageMetricsForBaseline = extractCoverageMetrics(
