@@ -54,7 +54,7 @@ export interface NodeChangedData<TNode extends TreeNode = TreeNode> {
 	 * @remarks
 	 * This only includes changes to the node itself (which would trigger {@link TreeChangeEvents.nodeChanged}).
 	 *
-	 * Set to `undefined` when the {@link NodeKind} does not support this feature (currently just ArrayNodes).
+	 * Not present when the {@link NodeKind} does not support this feature (currently just ArrayNodes).
 	 *
 	 * When defined, the set should never be empty, since `nodeChanged` will only be triggered when there is a change, and for the supported node types, the only things that can change are properties.
 	 */
@@ -120,7 +120,7 @@ export interface TreeChangeEventsBeta<TNode extends TreeNode = TreeNode>
  * Extensions to {@link (Tree:interface)} which are not yet stable.
  * @remarks
  * Use via the {@link (TreeBeta:variable)} singleton.
- * @system @sealed @beta
+ * @sealed @beta
  */
 export interface TreeBeta {
 	/**

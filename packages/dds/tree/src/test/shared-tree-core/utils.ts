@@ -18,7 +18,6 @@ import type {
 import {
 	createIdCompressor,
 	type IIdCompressor,
-	SerializationVersion,
 } from "@fluidframework/id-compressor/internal";
 import type {
 	ISummaryTreeWithStats,
@@ -58,7 +57,7 @@ import {
 	TreeCompressionStrategy,
 	defaultSchemaPolicy,
 	fieldKindConfigurations,
-	makeFieldBatchCodec,
+	fieldBatchCodecBuilder,
 	makeModularChangeCodecFamily,
 } from "../../feature-libraries/index.js";
 import {
@@ -125,7 +124,7 @@ export function createTree<TIndexes extends readonly Summarizable[]>(options: {
 		logger,
 		indexes,
 		TreeCompressionStrategy.Uncompressed,
-		createIdCompressor(SerializationVersion.V3),
+		createIdCompressor(),
 		new TreeStoredSchemaRepository(),
 		codecOptions ?? testCodecOptions,
 		enrichmentConfig,
@@ -142,7 +141,7 @@ export function createTreeSharedObject<TIndexes extends readonly Summarizable[]>
 	enrichmentConfig?: EnrichmentConfig<DefaultChangeset>,
 ): TestSharedTreeCore {
 	return new TestSharedTreeCore(
-		new MockFluidDataStoreRuntime(),
+		new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
 		undefined,
 		indexes,
 		undefined,
@@ -161,7 +160,7 @@ export function makeTestDefaultChangeFamily(options?: {
 		makeModularChangeCodecFamily(
 			fieldKindConfigurations,
 			new RevisionTagCodec(options?.idCompressor ?? testIdCompressor),
-			makeFieldBatchCodec(codecOptions),
+			fieldBatchCodecBuilder.build(codecOptions),
 			codecOptions,
 			options?.chunkCompressionStrategy ?? TreeCompressionStrategy.Compressed,
 		),

@@ -24,15 +24,10 @@ import type {
 import { assert, LazyPromise, unreachableCase } from "@fluidframework/core-utils/internal";
 import type { IChannel } from "@fluidframework/datastore-definitions/internal";
 // Valid export as per package.json export map
-// eslint-disable-next-line import-x/no-internal-modules
 import { modifyClusterSize } from "@fluidframework/id-compressor/internal/test-utils";
 import { ISharedMap, SharedMap } from "@fluidframework/map/internal";
-import type { StageControlsAlpha } from "@fluidframework/runtime-definitions/internal";
-import {
-	RuntimeHeaders,
-	toFluidHandleInternal,
-	asLegacyAlpha,
-} from "@fluidframework/runtime-utils/internal";
+import type { StageControls } from "@fluidframework/runtime-definitions/internal";
+import { RuntimeHeaders, toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
 import { timeoutAwait } from "@fluidframework/test-utils/internal";
 
 import { ddsModelMap } from "./ddsModels.js";
@@ -46,12 +41,16 @@ export interface CreateDataStore {
 	type: "createDataStore";
 	asChild: boolean;
 	tag: `datastore-${number}`;
+	/** Whether to store handle in the current datastore's root, increasing likelihood of collaborative reachability */
+	storeHandle: boolean;
 }
 
 export interface CreateChannel {
 	type: "createChannel";
 	channelType: string;
 	tag: `channel-${number}`;
+	/** Whether to store handle in the current datastore's root, increasing likelihood of collaborative reachability */
+	storeHandle: boolean;
 }
 
 export interface EnterStagingMode {
@@ -152,12 +151,16 @@ export class StressDataObject extends DataObject {
 		});
 	}
 
-	public createChannel(tag: `channel-${number}`, type: string): void {
-		this.runtime.createChannel(tag, type);
+	public createChannel(tag: `channel-${number}`, type: string): IFluidHandle {
+		const channel = this.runtime.createChannel(tag, type);
 		this.channelNameMap.set(tag, type);
+		return channel.handle;
 	}
 
-	public async createDataStore(tag: `datastore-${number}`, asChild: boolean): Promise<void> {
+	public async createDataStore(
+		tag: `datastore-${number}`,
+		asChild: boolean,
+	): Promise<{ handle: IFluidHandle }> {
 		const dataStore = await this.context.containerRuntime.createDataStore(
 			asChild
 				? [...this.context.packagePath, StressDataObject.factory.type]
@@ -172,14 +175,23 @@ export class StressDataObject extends DataObject {
 			tag,
 			stressDataObject: maybe.StressDataObject,
 		});
+		return { handle: dataStore.entryPoint };
 	}
 
 	public orderSequentially(act: () => void): void {
 		this.context.containerRuntime.orderSequentially(act);
 	}
 
+	/**
+	 * Stores a handle in this datastore's root directory, increasing the
+	 * likelihood that the target is collaboratively reachable by other clients.
+	 */
+	public storeHandleInRoot(key: string, handle: IFluidHandle): void {
+		this.root.set(key, handle);
+	}
+
 	public get isDirty(): boolean | undefined {
-		return asLegacyAlpha(this.runtime).isDirty;
+		return this.runtime.isDirty;
 	}
 }
 
@@ -319,8 +331,8 @@ export class DefaultStressDataObject extends StressDataObject {
 		this._locallyCreatedObjects.push(obj);
 	}
 
-	private stageControls: StageControlsAlpha | undefined;
-	private readonly containerRuntimeExp = asLegacyAlpha(this.context.containerRuntime);
+	private stageControls: StageControls | undefined;
+	private readonly containerRuntimeExp = this.context.containerRuntime;
 	public enterStagingMode(): void {
 		assert(
 			this.containerRuntimeExp.enterStagingMode !== undefined,

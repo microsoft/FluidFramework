@@ -6,6 +6,8 @@ sidebar_position: 2
 # Types of Schema Changes
 
 Understanding which types of schema changes are safe versus breaking is crucial for evolving your [SharedTree](../index.mdx) schemas without disrupting existing applications.
+Writing a test using [`snapshotSchemaCompatibility`](../../../api/fluid-framework/#snapshotschemacompatibility-function) is highly recommended to ensure any schema changes maintain your compatibility requirements.
+Knowledge of the details below will still be needed to design schemas such that the required future changes can be compatible, and to understand any errors detected by the test.
 
 All the examples below are modifying this schema:
 ```typescript
@@ -158,5 +160,5 @@ because those documents will only use the `string` type for the `id` field, whic
 ## See Also
 
 - [Schema Evolution](./index.mdx) - Overview and upgrade process
-- [Schema Definition](../schema-definition.mdx) - How to define schemas
+- [Schema Definition](../schema-definition/index.mdx) - How to define schemas
 - [Node Types](../node-types.mdx) - Understanding different node types

@@ -5,10 +5,7 @@
 
 import { strict as assert } from "assert";
 
-import {
-	createIdCompressor,
-	SerializationVersion,
-} from "@fluidframework/id-compressor/internal";
+import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
 
 import { MockHandle } from "../mockHandle.js";
@@ -28,8 +25,8 @@ describe("MockContainerRuntime", () => {
 	});
 
 	it("generates and finalizes IdCreationRanges when generating an op", () => {
-		const firstIdCompressor = createIdCompressor(SerializationVersion.V3);
-		const secondIdCompressor = createIdCompressor(SerializationVersion.V3);
+		const firstIdCompressor = createIdCompressor();
+		const secondIdCompressor = createIdCompressor();
 		const factory = new MockContainerRuntimeFactory();
 		const firstDataStoreRuntime = new MockFluidDataStoreRuntime({
 			idCompressor: firstIdCompressor,

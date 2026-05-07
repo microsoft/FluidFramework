@@ -4,12 +4,12 @@
  */
 
 import { ContainerViewRuntimeFactory } from "@fluid-example/example-utils";
-import React from "react";
+import { createElement } from "react";
 
-import { type DiceRoller, DiceRollerInstantiationFactory, DiceRollerView } from "./main.js";
+import { DiceRollerInstantiationFactory, DiceRollerView, type IDiceRoller } from "./main.js";
 
-const diceRollerViewCallback = (model: DiceRoller): JSX.Element =>
-	React.createElement(DiceRollerView, { model });
+const diceRollerViewCallback = (diceRoller: IDiceRoller): JSX.Element =>
+	createElement(DiceRollerView, { diceRoller });
 
 /**
  * This does setup for the Container. The ContainerViewRuntimeFactory will instantiate a single Fluid object to use

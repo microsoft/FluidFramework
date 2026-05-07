@@ -956,7 +956,7 @@ describeCompat("Detached Container", "NoCompat", (getTestObjectProvider, apis) =
 				{
 					configProvider: {
 						getRawConfig: (name) =>
-							name === "Fluid.Container.RetryOnAttachFailure" ? true : undefined,
+							name === "Fluid.Container.DisableCloseOnAttachFailure" ? true : undefined,
 					},
 				},
 			);

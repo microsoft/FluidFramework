@@ -424,8 +424,8 @@ export interface ChunkCompressor {
 	/**
 	 * If the idCompressor is provided, {@link UniformChunk}s with identifiers will be encoded for its in-memory representation.
 	 * @remarks
-	 * This compression applies to {@link UniformChunk}s when {@link TreeShape.maybeDecompressedStringAsNumber} is set.
-	 * If the `policy` does not use UniformChunks or does not set `maybeDecompressedStringAsNumber`, then no compression will be applied even when providing `idCompressor`.
+	 * This compression applies to {@link UniformChunk}s when {@link TreeShape.mayContainCompressedIds} is set.
+	 * If the `policy` does not use UniformChunks or does not set `mayContainCompressedIds`, then no compression will be applied even when providing `idCompressor`.
 	 */
 	readonly idCompressor: IIdCompressor | undefined;
 }
@@ -583,6 +583,7 @@ export function insertValues(
 	// Slow path: walk shape and cursor together, inserting values.
 	if (shape.hasValue) {
 		if (
+			shape.mayContainCompressedIds &&
 			typeof cursor.value === "string" &&
 			idCompressor !== undefined &&
 			isStableNodeIdentifier(cursor.value)

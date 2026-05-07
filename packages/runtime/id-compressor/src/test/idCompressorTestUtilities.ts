@@ -30,9 +30,9 @@ import {
 	type SessionSpaceCompressedId,
 	type StableId,
 	createIdCompressor,
+	toIdCompressorWithCore,
 } from "../index.js";
 import { SessionSpaceNormalizer } from "../sessionSpaceNormalizer.js";
-import { SerializationVersion } from "../types/index.js";
 import { assertIsSessionId, createSessionId, localIdFromGenCount } from "../utilities.js";
 
 import {
@@ -113,11 +113,7 @@ export class CompressorFactory {
 		clusterCapacity = 5,
 		logger?: ITelemetryBaseLogger,
 	): IdCompressor {
-		const compressor = createIdCompressor(
-			sessionId,
-			SerializationVersion.V3,
-			logger,
-		) as IdCompressor;
+		const compressor = createIdCompressor(sessionId, logger) as IdCompressor;
 		modifyClusterSize(compressor, clusterCapacity);
 		return compressor;
 	}
@@ -736,10 +732,7 @@ export function roundtrip(
 	const capacity: number = getClusterSize(compressor);
 	if (withSession) {
 		const serialized = compressor.serialize(withSession);
-		const roundtripped = IdCompressor.deserialize({
-			serialized,
-			requestedWriteVersion: SerializationVersion.V3,
-		});
+		const roundtripped = IdCompressor.deserialize({ serialized });
 		modifyClusterSize(roundtripped, capacity);
 		return [serialized, roundtripped];
 	} else {
@@ -747,7 +740,6 @@ export function roundtrip(
 		const roundtripped = IdCompressor.deserialize({
 			serialized: nonLocalSerialized,
 			newSessionId: createSessionId(),
-			requestedWriteVersion: SerializationVersion.V3,
 		});
 		modifyClusterSize(roundtripped, capacity);
 		return [nonLocalSerialized, roundtripped];
@@ -1093,12 +1085,8 @@ export function createAlwaysFinalizedIdCompressor(
 	// This local session is unused, but it needs to not collide with the GhostSession, so allocate a random one.
 	// This causes the compressor to serialize non-deterministically even when provided an explicit SessionId.
 	// This can be fixed in the future if needed.
-	const compressor = createIdCompressor(
-		random.uuid4() as SessionId,
-		SerializationVersion.V3,
-		logger,
-	);
+	const compressor = createIdCompressor(random.uuid4() as SessionId, logger);
 	// Permanently put the compressor in a ghost session
 	(compressor as IdCompressor).startGhostSession(sessionId);
-	return compressor;
+	return toIdCompressorWithCore(compressor);
 }

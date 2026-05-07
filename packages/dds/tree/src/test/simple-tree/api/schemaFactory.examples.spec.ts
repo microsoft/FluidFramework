@@ -5,6 +5,7 @@
 
 import { strict as assert } from "node:assert";
 
+import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
 
 import {
@@ -101,7 +102,10 @@ function setup(tree: ITree): Note[] {
 describe("Class based end to end example", () => {
 	it("run example", () => {
 		const factory = DefaultTestSharedTreeKind.getFactory();
-		const theTree = factory.create(new MockFluidDataStoreRuntime(), "tree");
+		const theTree = factory.create(
+			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
+			"tree",
+		);
 		setup(theTree);
 	});
 

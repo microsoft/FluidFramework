@@ -3,14 +3,11 @@
  * Licensed under the MIT License.
  */
 
-/* globals */
+/* globals expect */
 
-let _;
 let PropertyFactory;
 let PsetUtils;
 let DeferredPromise;
-let ChangeSet;
-let deepCopy;
 const AllProperties = {
 	typeid: "mysample:all-1.0.0",
 	inherits: "NamedProperty",
@@ -56,9 +53,6 @@ describe("property-properties.Utils isLeafNode", function () {
 	 */
 	before(function () {
 		PropertyFactory = require("../..").PropertyFactory;
-		ChangeSet = require("@fluid-experimental/property-changeset").ChangeSet;
-		_ = require("lodash");
-		deepCopy = _.cloneDeep;
 
 		PropertyFactory.register(AllProperties);
 		PropertyFactory.register({

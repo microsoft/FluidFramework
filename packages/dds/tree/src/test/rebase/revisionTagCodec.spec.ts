@@ -8,7 +8,7 @@ import { strict as assert } from "node:assert";
 import {
 	createIdCompressor,
 	createSessionId,
-	SerializationVersion,
+	toIdCompressorWithCore,
 } from "@fluidframework/id-compressor/internal";
 
 import { type RevisionTag, RevisionTagCodec } from "../../core/index.js";
@@ -17,8 +17,8 @@ import { testIdCompressor } from "../utils.js";
 describe("RevisionTagCodec", () => {
 	it("handles the root constant revision tag", () => {
 		const rootRevisionTag: RevisionTag = "root";
-		const localCompressor = createIdCompressor(SerializationVersion.V3);
-		const remoteCompressor = createIdCompressor(SerializationVersion.V3);
+		const localCompressor = createIdCompressor(createSessionId());
+		const remoteCompressor = createIdCompressor(createSessionId());
 		const codec = new RevisionTagCodec(localCompressor);
 		const encoded = codec.encode(rootRevisionTag);
 		assert.deepEqual(encoded, rootRevisionTag);
@@ -40,8 +40,8 @@ describe("RevisionTagCodec", () => {
 	it("normalizes compressed IDs between op and session space", () => {
 		const localSession = createSessionId();
 		const remoteSession = createSessionId();
-		const localCompressor = createIdCompressor(localSession, SerializationVersion.V3);
-		const remoteCompressor = createIdCompressor(remoteSession, SerializationVersion.V3);
+		const localCompressor = createIdCompressor(localSession);
+		const remoteCompressor = createIdCompressor(remoteSession);
 		const localCodec = new RevisionTagCodec(localCompressor);
 		const remoteCodec = new RevisionTagCodec(remoteCompressor);
 		// Generate a compressed ID in the local space
@@ -70,9 +70,9 @@ describe("RevisionTagCodec", () => {
 		);
 
 		// Simulate the remote client receiving the creation range for the local ID
-		const range = localCompressor.takeNextCreationRange();
-		localCompressor.finalizeCreationRange(range);
-		remoteCompressor.finalizeCreationRange(range);
+		const range = toIdCompressorWithCore(localCompressor).takeNextCreationRange();
+		toIdCompressorWithCore(localCompressor).finalizeCreationRange(range);
+		toIdCompressorWithCore(remoteCompressor).finalizeCreationRange(range);
 		// Locally encoding will have the final ID form, as will the remote client
 		localEncoded = localCodec.encode(localId);
 		const remoteDecoded = remoteCodec.decode(localEncoded, {

@@ -166,7 +166,9 @@ describe("ValueMapProperty", function () {
 				value2: 2,
 				value3: 3,
 			});
-			expect(Uint32Map.getAsArray()).to.include(1, 2, 3);
+			expect(Uint32Map.getAsArray()).to.include(1);
+			expect(Uint32Map.getAsArray()).to.include(2);
+			expect(Uint32Map.getAsArray()).to.include(3);
 			expect(Uint32Map.has("value1")).to.be.ok;
 			expect(Uint32Map.has("value2")).to.be.ok;
 			expect(Uint32Map.has("value3")).to.be.ok;
@@ -178,10 +180,13 @@ describe("ValueMapProperty", function () {
 		it("should be possible to remove entries", function () {
 			Uint32Map.remove("value1");
 			expect(Uint32Map.has("value1")).to.be.not.ok;
+			expect(Uint32Map.has("value2")).to.be.ok;
+			expect(Uint32Map.has("value3")).to.be.ok;
 			Uint32Map.remove("value2");
-			expect(Uint32Map.has("value1")).to.be.not.ok;
+			expect(Uint32Map.has("value2")).to.be.not.ok;
+			expect(Uint32Map.has("value3")).to.be.ok;
 			Uint32Map.remove("value3");
-			expect(Uint32Map.has("value1")).to.be.not.ok;
+			expect(Uint32Map.has("value3")).to.be.not.ok;
 			expect(ChangeSet.isEmptyChangeSet(Uint32Map.serialize())).to.be.ok;
 		});
 

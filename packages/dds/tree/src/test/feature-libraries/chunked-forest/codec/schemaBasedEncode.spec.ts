@@ -7,7 +7,7 @@ import { strict as assert, fail } from "node:assert";
 
 import {
 	createIdCompressor,
-	SerializationVersion,
+	toIdCompressorWithCore,
 } from "@fluidframework/id-compressor/internal";
 import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
 
@@ -22,7 +22,7 @@ import type {
 import { IdentifierToken } from "../../../../feature-libraries/chunked-forest/codec/chunkEncodingGeneric.js";
 import {
 	type FieldBatchEncodingContext,
-	makeFieldBatchCodec,
+	fieldBatchCodecBuilder,
 	type ChunkReferenceId,
 	type IncrementalEncoder,
 	type IncrementalDecoder,
@@ -39,11 +39,10 @@ import {
 } from "../../../../feature-libraries/chunked-forest/codec/compressedEncode.js";
 import {
 	FieldBatchFormatVersion,
+	type EncodedFieldBatchV2,
 	SpecialField,
-	validVersions,
-	type EncodedFieldBatch,
 	// eslint-disable-next-line import-x/no-internal-modules
-} from "../../../../feature-libraries/chunked-forest/codec/format.js";
+} from "../../../../feature-libraries/chunked-forest/codec/format/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { NodeShapeBasedEncoder } from "../../../../feature-libraries/chunked-forest/codec/nodeEncoder.js";
 import {
@@ -364,7 +363,7 @@ describe("schemaBasedEncoding", () => {
 				),
 				encodeIncrementalField: (
 					cursor: ITreeCursorSynchronous,
-					chunkEncoder: (chunk: TreeChunk) => EncodedFieldBatch,
+					chunkEncoder: (chunk: TreeChunk) => EncodedFieldBatchV2,
 				): ChunkReferenceId[] => {
 					const fieldKey = cursor.getFieldKey();
 					assert(fieldKey === "incrementalField", "should only encode incremental fields");
@@ -446,7 +445,7 @@ describe("schemaBasedEncoding", () => {
 		assert.deepEqual(bufferFull, [[0]]);
 	});
 
-	for (const version of validVersions) {
+	for (const version of fieldBatchCodecBuilder.registry.map((entry) => entry.formatVersion)) {
 		describe(`test trees FieldBatchFormatVersion V${version}`, () => {
 			useSnapshotDirectory(`chunked-forest-schema-compressed/V${version}`);
 			// TODO: test non size 1 batches
@@ -454,7 +453,6 @@ describe("schemaBasedEncoding", () => {
 				it(name, () => {
 					const idCompressor = createIdCompressor(
 						assertIsSessionId("00000000-0000-4000-b000-000000000000"),
-						SerializationVersion.V3,
 					);
 					const storedSchema = schemaData;
 					const tree = treeFactory(idCompressor);
@@ -474,8 +472,9 @@ describe("schemaBasedEncoding", () => {
 						schema: { schema: storedSchema, policy: defaultSchemaPolicy },
 						idCompressor,
 					};
-					idCompressor.finalizeCreationRange(idCompressor.takeNextCreationRange());
-					const codec = makeFieldBatchCodec({
+					const idCompressorCore = toIdCompressorWithCore(idCompressor);
+					idCompressorCore.finalizeCreationRange(idCompressorCore.takeNextCreationRange());
+					const codec = fieldBatchCodecBuilder.build({
 						jsonValidator: ajvValidator,
 						minVersionForCollab: currentVersion,
 					});

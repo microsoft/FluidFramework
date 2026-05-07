@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-// eslint-disable-next-line import-x/no-internal-modules
 import { strict as assert } from "node:assert";
 
 import { AttachState } from "@fluidframework/container-definitions";
+import { createIdCompressor } from "@fluidframework/id-compressor/legacy";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
 
 import { CommitKind, type Revertible } from "../core/index.js";
@@ -101,6 +101,7 @@ export function createTableTree({ tableSize, initialCellValue }: TableTreeOption
 } {
 	const sharedTreeFactory = DefaultTestSharedTreeKind.getFactory();
 	const runtime = new MockFluidDataStoreRuntime({
+		idCompressor: createIdCompressor(),
 		attachState: AttachState.Detached,
 	});
 	const tree = sharedTreeFactory.create(runtime, "tree");

@@ -9,6 +9,7 @@ import { AttachState } from "@fluidframework/container-definitions";
 import { asLegacyAlpha, type ContainerAlpha } from "@fluidframework/container-loader/internal";
 import type { IChannel } from "@fluidframework/datastore-definitions/internal";
 import { SummaryType } from "@fluidframework/driver-definitions";
+import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 import type {
 	ISharedObjectKind,
 	SharedObjectKind,
@@ -58,7 +59,6 @@ import {
 	ForestTypeExpensiveDebug,
 	ForestTypeOptimized,
 	ForestTypeReference,
-	getBranch,
 	type ITreePrivate,
 	Tree,
 	type TreeCheckout,
@@ -131,6 +131,7 @@ const DebugSharedTree = configuredSharedTree({
 class MockSharedTreeRuntime extends MockFluidDataStoreRuntime {
 	public constructor() {
 		super({
+			idCompressor: createIdCompressor(),
 			registry: [DebugSharedTree.getFactory()],
 		});
 	}
@@ -477,8 +478,12 @@ describe("SharedTree", () => {
 		describe("incrementally reuses previous blobs", () => {
 			it("on a client which never uploaded a blob", async () => {
 				const containerRuntimeFactory = new MockContainerRuntimeFactory();
-				const dataStoreRuntime1 = new MockFluidDataStoreRuntime();
-				const dataStoreRuntime2 = new MockFluidDataStoreRuntime();
+				const dataStoreRuntime1 = new MockFluidDataStoreRuntime({
+					idCompressor: createIdCompressor(),
+				});
+				const dataStoreRuntime2 = new MockFluidDataStoreRuntime({
+					idCompressor: createIdCompressor(),
+				});
 				const factory = new SharedTreeTestFactory(() => {});
 
 				containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
@@ -736,6 +741,7 @@ describe("SharedTree", () => {
 		// If it doesn't, the second tree will throw an error when trying to sequence a commit with sequence number that has "gone backwards" and this test will fail.
 		const sharedTreeFactory = DefaultTestSharedTreeKind.getFactory();
 		const runtime = new MockFluidDataStoreRuntime({
+			idCompressor: createIdCompressor(),
 			attachState: AttachState.Detached,
 		});
 		const tree = sharedTreeFactory.create(runtime, "tree");
@@ -750,7 +756,7 @@ describe("SharedTree", () => {
 		);
 		view.initialize(["a"]);
 		// Create a branch to prevent the EditManager from evicting all of its commits - otherwise, the summary won't have these edits in the trunk.
-		getBranch(tree).branch();
+		asAlpha(view).fork();
 		view.root.insertAtEnd("b");
 
 		const treeSummarizeResult = await tree.summarize();
@@ -911,7 +917,7 @@ describe("SharedTree", () => {
 				new TreeViewConfiguration({ schema: JsonAsTree.Array, enableSchemaValidation }),
 			);
 			viewUpgrade.upgradeSchema();
-			tree.kernel.checkout.transaction.start(false);
+			tree.kernel.checkout.transaction.start();
 			viewUpgrade.root.insertAtStart("A");
 			viewUpgrade.root.insertAt(1, "C");
 			assert.deepEqual([...viewUpgrade.root], ["A", "C"]);
@@ -1609,7 +1615,7 @@ describe("SharedTree", () => {
 				provider.synchronizeMessages();
 
 				// fork the tree
-				const branch = resubmitter.checkout.branch();
+				const branch = resubmitter.checkout.fork();
 
 				// edit the removed tree on the fork
 				const branchView = new SchematizingSimpleTreeView(
@@ -2211,7 +2217,7 @@ describe("SharedTree", () => {
 			Tree.runTransaction(parentView, () => {
 				parentView.root.insertAtStart("B");
 			});
-			const childCheckout = parentTree.kernel.checkout.branch();
+			const childCheckout = parentTree.kernel.checkout.fork();
 			const childView = new SchematizingSimpleTreeView(
 				childCheckout,
 				new TreeViewConfiguration({
@@ -2664,7 +2670,7 @@ describe("SharedTree", () => {
 	});
 
 	it("throws an error if attaching during a transaction", () => {
-		const runtime = new MockFluidDataStoreRuntime();
+		const runtime = new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() });
 		const tree = DefaultTestSharedTreeKind.getFactory().create(runtime, "tree");
 		const runtimeFactory = new MockContainerRuntimeFactory();
 		runtimeFactory.createContainerRuntime(runtime);
@@ -2685,6 +2691,7 @@ describe("SharedTree", () => {
 
 	it("summarize with pre-attach removed nodes", () => {
 		const runtime = new MockFluidDataStoreRuntime({
+			idCompressor: createIdCompressor(),
 			minVersionForCollab: FluidClientVersion.v2_52,
 		});
 		const sharedObject = configuredSharedTree({

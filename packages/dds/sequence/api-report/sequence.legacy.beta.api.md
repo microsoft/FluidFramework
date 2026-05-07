@@ -179,7 +179,7 @@ export interface ISequenceDeltaRange<TOperation extends MergeTreeDeltaOperationT
 export interface ISequenceIntervalCollection extends TypedEventEmitter<ISequenceIntervalCollectionEvents> {
     // (undocumented)
     [Symbol.iterator](): Iterator<SequenceInterval>;
-    add({ start, end, props, }: {
+    add(input: {
         start: SequencePlace;
         end: SequencePlace;
         props?: PropertySet;
@@ -189,7 +189,7 @@ export interface ISequenceIntervalCollection extends TypedEventEmitter<ISequence
     // (undocumented)
     readonly attached: boolean;
     attachIndex(index: SequenceIntervalIndex): void;
-    change(id: string, { start, end, props }: {
+    change(id: string, input: {
         start?: SequencePlace;
         end?: SequencePlace;
         props?: PropertySet;
@@ -249,7 +249,7 @@ export interface ISerializedInterval {
 export interface ISharedSegmentSequence<T extends ISegment> extends ISharedObject<ISharedSegmentSequenceEvents>, MergeTreeRevertibleDriver {
     annotateAdjustRange(start: number, end: number, adjust: MapLike<AdjustParams>): void;
     annotateRange(start: number, end: number, props: PropertySet): void;
-    createLocalReferencePosition(segment: T, offset: number, refType: ReferenceType, properties: PropertySet | undefined, slidingPreference?: SlidingPreference, canSlideToEndpoint?: boolean): LocalReferencePosition;
+    createLocalReferencePosition(segment: T | "start" | "end", offset: number | undefined, refType: ReferenceType, properties: PropertySet | undefined, slidingPreference?: SlidingPreference, canSlideToEndpoint?: boolean): LocalReferencePosition;
     getContainingSegment(pos: number): {
         segment: T | undefined;
         offset: number | undefined;

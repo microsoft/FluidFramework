@@ -6,6 +6,7 @@
 import { strict as assert } from "node:assert";
 
 import { type IGCTestProvider, runGCTests } from "@fluid-private/test-dds-utils";
+import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 import { toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
 import {
 	MockContainerRuntimeFactory,
@@ -35,7 +36,9 @@ function createConnectedTree(
 	id: string,
 	runtimeFactory: MockContainerRuntimeFactory,
 ): ISharedTree {
-	const dataStoreRuntime = new MockFluidDataStoreRuntime();
+	const dataStoreRuntime = new MockFluidDataStoreRuntime({
+		idCompressor: createIdCompressor(),
+	});
 	const tree = DefaultTestSharedTreeKind.getFactory().create(dataStoreRuntime, id);
 	runtimeFactory.createContainerRuntime(dataStoreRuntime);
 	const services = {
@@ -48,7 +51,10 @@ function createConnectedTree(
 
 function createLocalTree(id: string): ISharedTree {
 	const factory = DefaultTestSharedTreeKind.getFactory();
-	return factory.create(new MockFluidDataStoreRuntime(), id);
+	return factory.create(
+		new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
+		id,
+	);
 }
 
 describe("Garbage Collection", () => {

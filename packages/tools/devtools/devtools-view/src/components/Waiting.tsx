@@ -4,7 +4,7 @@
  */
 
 import { Spinner } from "@fluentui/react-components";
-import React from "react";
+import type { ReactElement } from "react";
 
 /**
  * Default label displayed by {@link Waiting} when no {@link WaitingProps.label} is specified.
@@ -26,7 +26,7 @@ export interface WaitingProps {
 /**
  * Placeholder component to display while waiting for a data response from the webpage.
  */
-export function Waiting(props: WaitingProps): React.ReactElement {
+export function Waiting(props: WaitingProps): ReactElement {
 	const { label } = props;
 	return <Spinner label={label ?? defaultWaitingLabel} />;
 }

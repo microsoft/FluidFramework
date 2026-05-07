@@ -9,7 +9,13 @@ import { bufferToString, stringToBuffer } from "@fluid-internal/client-utils";
 import { take } from "@fluid-private/stochastic-test-utils";
 import { createChildLogger, MockLogger } from "@fluidframework/telemetry-utils/internal";
 
-import { IdCompressor, createIdCompressor, deserializeIdCompressor } from "../idCompressor.js";
+import {
+	IdCompressor,
+	createIdCompressor,
+	deserializeIdCompressor,
+	serializeIdCompressor,
+	toIdCompressorWithCore,
+} from "../idCompressor.js";
 import type {
 	OpSpaceCompressedId,
 	SerializedIdCompressorWithNoSession,
@@ -18,7 +24,6 @@ import type {
 	StableId,
 	SerializedIdCompressorWithOngoingSession,
 } from "../index.js";
-import { SerializationVersion } from "../types/index.js";
 import { createSessionId } from "../utilities.js";
 
 import {
@@ -460,6 +465,95 @@ describe("IdCompressor", () => {
 					() => compressor.finalizeCreationRange(range4),
 					(e: Error) => e.message === "Ranges finalized out of order",
 				);
+			});
+		});
+
+		describe("by reserving unfinalized ranges for the next take", () => {
+			it("produces equivalent range to takeUnfinalizedCreationRange on next takeNextCreationRange", () => {
+				const compressor = CompressorFactory.createCompressor(Client.Client1, 2);
+				generateCompressedIds(compressor, 1);
+				compressor.takeNextCreationRange();
+
+				// Reserve instead of take
+				compressor.resetUnfinalizedCreationRange();
+
+				// Next takeNextCreationRange should cover the unfinalized IDs
+				const range = compressor.takeNextCreationRange();
+				assert.deepEqual(range.ids, {
+					firstGenCount: 1,
+					count: 1,
+					localIdRanges: [[1, 1]],
+					requestedClusterSize: 2,
+				});
+			});
+
+			it("includes new IDs generated after reserving", () => {
+				const compressor = CompressorFactory.createCompressor(Client.Client1, 2);
+				generateCompressedIds(compressor, 1);
+				compressor.takeNextCreationRange();
+
+				compressor.resetUnfinalizedCreationRange();
+				generateCompressedIds(compressor, 1);
+
+				const range = compressor.takeNextCreationRange();
+				assert.deepEqual(range.ids, {
+					firstGenCount: 1,
+					count: 2,
+					localIdRanges: [[1, 2]],
+					requestedClusterSize: 2,
+				});
+			});
+
+			it("is a no-op when there are no unfinalized IDs", () => {
+				const compressor = CompressorFactory.createCompressor(Client.Client1, 2);
+				generateCompressedIds(compressor, 1);
+				compressor.finalizeCreationRange(compressor.takeNextCreationRange());
+
+				compressor.resetUnfinalizedCreationRange();
+				const range = compressor.takeNextCreationRange();
+				assert.equal(range.ids, undefined);
+			});
+
+			it("is idempotent", () => {
+				const compressor = CompressorFactory.createCompressor(Client.Client1, 2);
+				generateCompressedIds(compressor, 2);
+				compressor.takeNextCreationRange();
+
+				compressor.resetUnfinalizedCreationRange();
+				compressor.resetUnfinalizedCreationRange();
+				compressor.resetUnfinalizedCreationRange();
+
+				const range = compressor.takeNextCreationRange();
+				assert.deepEqual(range.ids, {
+					firstGenCount: 1,
+					count: 2,
+					localIdRanges: [[1, 2]],
+					requestedClusterSize: 2,
+				});
+			});
+
+			it("works with multiple outstanding ranges", () => {
+				const compressor = CompressorFactory.createCompressor(Client.Client1, 2);
+				generateCompressedIds(compressor, 1);
+				const range1 = compressor.takeNextCreationRange();
+				generateCompressedIds(compressor, 1); // one local
+				compressor.finalizeCreationRange(range1);
+				compressor.takeNextCreationRange();
+				generateCompressedIds(compressor, 1); // one eager final
+				compressor.takeNextCreationRange();
+				generateCompressedIds(compressor, 1); // one local
+				compressor.takeNextCreationRange();
+
+				compressor.resetUnfinalizedCreationRange();
+				const range = compressor.takeNextCreationRange();
+				assert.deepEqual(range.ids?.firstGenCount, 2);
+				assert.deepEqual(range.ids?.count, 3);
+				assert.deepEqual(range.ids?.localIdRanges, [
+					[2, 1],
+					[4, 1],
+				]);
+
+				compressor.finalizeCreationRange(range);
 			});
 		});
 	});
@@ -918,7 +1012,7 @@ describe("IdCompressor", () => {
 
 		it("correctly passes logger when no session specified", () => {
 			const mockLogger = new MockLogger();
-			const compressor = createIdCompressor(SerializationVersion.V3, mockLogger);
+			const compressor = toIdCompressorWithCore(createIdCompressor(mockLogger));
 			compressor.generateCompressedId();
 			compressor.finalizeCreationRange(compressor.takeNextCreationRange());
 			mockLogger.assertMatchAny([
@@ -947,7 +1041,6 @@ describe("IdCompressor", () => {
 			const [_, serializedWithSession] = expectSerializes(compressor1);
 			const compressorResumed = IdCompressor.deserialize({
 				serialized: serializedWithSession,
-				requestedWriteVersion: SerializationVersion.V3,
 			});
 			compressorResumed.generateCompressedId();
 			const range2 = compressorResumed.takeNextCreationRange();
@@ -974,7 +1067,7 @@ describe("IdCompressor", () => {
 				"base64",
 			) as SerializedIdCompressorWithNoSession;
 			assert.throws(
-				() => deserializeIdCompressor(docString1, createSessionId(), SerializationVersion.V3),
+				() => deserializeIdCompressor(docString1, createSessionId()),
 				(e: Error) => e.message === "IdCompressor version 1.0 is no longer supported.",
 			);
 		});
@@ -987,93 +1080,8 @@ describe("IdCompressor", () => {
 				"base64",
 			) as SerializedIdCompressorWithOngoingSession;
 			assert.throws(
-				() => deserializeIdCompressor(serializedWithUnknownVersion, SerializationVersion.V3),
+				() => deserializeIdCompressor(serializedWithUnknownVersion),
 				(e: Error) => e.message === "Unknown IdCompressor serialized version.",
-			);
-		});
-
-		/**
-		 * Helper to test version negotiation during serialization/deserialization.
-		 * @param serializedVersion - The version to set in the serialized data
-		 * @param requestedWriteVersion - The version requested when deserializing
-		 * @param expectedVersion - The version expected after re-serialization
-		 * @param withSession - Whether to serialize with session state
-		 */
-		function testVersionNegotiation(
-			serializedVersion: SerializationVersion,
-			requestedWriteVersion: SerializationVersion,
-			expectedVersion: SerializationVersion,
-			withSession: boolean,
-		): void {
-			// Create and serialize a compressor
-			const compressor = CompressorFactory.createCompressor(Client.Client1);
-			compressor.generateCompressedId();
-			const serialized = withSession
-				? compressor.serialize(true)
-				: compressor.serialize(false);
-
-			// Modify the serialized data to use the specified version
-			const buffer = stringToBuffer(serialized, "base64");
-			const floatView = new Float64Array(buffer);
-			floatView[0] = serializedVersion;
-			const modifiedSerialized = bufferToString(buffer, "base64");
-
-			// Deserialize with requested version and re-serialize
-			if (withSession) {
-				const deserialized = IdCompressor.deserialize({
-					serialized: modifiedSerialized as SerializedIdCompressorWithOngoingSession,
-					requestedWriteVersion,
-				});
-				const reserialized = deserialized.serialize(true);
-				const reserializedBuffer = stringToBuffer(reserialized, "base64");
-				const reserializedFloatView = new Float64Array(reserializedBuffer);
-				assert.equal(reserializedFloatView[0], expectedVersion);
-			} else {
-				const deserialized = IdCompressor.deserialize({
-					serialized: modifiedSerialized as SerializedIdCompressorWithNoSession,
-					newSessionId: createSessionId(),
-					requestedWriteVersion,
-				});
-				const reserialized = deserialized.serialize(false);
-				const reserializedBuffer = stringToBuffer(reserialized, "base64");
-				const reserializedFloatView = new Float64Array(reserializedBuffer);
-				assert.equal(reserializedFloatView[0], expectedVersion);
-			}
-		}
-
-		it("uses requested version when higher than serialized version", () => {
-			testVersionNegotiation(
-				SerializationVersion.V2,
-				SerializationVersion.V3,
-				SerializationVersion.V3,
-				false,
-			);
-		});
-
-		it("uses serialized version when higher than requested version", () => {
-			testVersionNegotiation(
-				SerializationVersion.V3,
-				SerializationVersion.V2,
-				SerializationVersion.V3,
-				false,
-			);
-		});
-
-		it("uses matching version when requested equals serialized", () => {
-			testVersionNegotiation(
-				SerializationVersion.V3,
-				SerializationVersion.V3,
-				SerializationVersion.V3,
-				false,
-			);
-		});
-
-		it("preserves serialized version with session when requested version is lower", () => {
-			testVersionNegotiation(
-				SerializationVersion.V3,
-				SerializationVersion.V2,
-				SerializationVersion.V3,
-				true,
 			);
 		});
 	});
@@ -1086,10 +1094,11 @@ describe("IdCompressor", () => {
 			compressor.generateCompressedId();
 			const serializedWithSession = compressor.serialize(true);
 			// Resume with logger and ensure telemetry emits on serialize
-			const resumed = deserializeIdCompressor(
-				serializedWithSession,
-				SerializationVersion.V3,
-				createChildLogger({ logger: mockLogger }),
+			const resumed = toIdCompressorWithCore(
+				deserializeIdCompressor(
+					serializedWithSession,
+					createChildLogger({ logger: mockLogger }),
+				),
 			);
 			resumed.serialize(false);
 			mockLogger.assertMatchAny([
@@ -1105,11 +1114,12 @@ describe("IdCompressor", () => {
 			compressor.finalizeCreationRange(compressor.takeNextCreationRange());
 			const serializedNoSession = compressor.serialize(false);
 			const newSessionId = createSessionId();
-			const resumed = deserializeIdCompressor(
-				serializedNoSession,
-				newSessionId,
-				SerializationVersion.V3,
-				createChildLogger({ logger: mockLogger }),
+			const resumed = toIdCompressorWithCore(
+				deserializeIdCompressor(
+					serializedNoSession,
+					newSessionId,
+					createChildLogger({ logger: mockLogger }),
+				),
 			);
 			resumed.serialize(false);
 			mockLogger.assertMatchAny([
@@ -1124,7 +1134,6 @@ describe("IdCompressor", () => {
 			const serializedWithSession = compressor.serialize(true);
 			const resumed = IdCompressor.deserialize({
 				serialized: serializedWithSession,
-				requestedWriteVersion: SerializationVersion.V3,
 				logger: createChildLogger({ logger: mockLogger }),
 			});
 			resumed.serialize(false);
@@ -1143,13 +1152,31 @@ describe("IdCompressor", () => {
 			const resumed = IdCompressor.deserialize({
 				serialized: serializedNoSession,
 				newSessionId,
-				requestedWriteVersion: SerializationVersion.V3,
 				logger: createChildLogger({ logger: mockLogger }),
 			});
 			resumed.serialize(false);
 			mockLogger.assertMatchAny([
 				{ eventName: "RuntimeIdCompressor:SerializedIdCompressorSize" },
 			]);
+		});
+	});
+
+	describe("serializeIdCompressor", () => {
+		it("produces the same result as the underlying serialize(true)", () => {
+			const compressor = CompressorFactory.createCompressor(Client.Client1);
+			compressor.generateCompressedId();
+			const direct = compressor.serialize(true);
+			const wrapper = serializeIdCompressor(compressor, true);
+			assert.deepStrictEqual(wrapper, direct);
+		});
+
+		it("produces the same result as the underlying serialize(false)", () => {
+			const compressor = CompressorFactory.createCompressor(Client.Client1);
+			compressor.generateCompressedId();
+			compressor.finalizeCreationRange(compressor.takeNextCreationRange());
+			const direct = compressor.serialize(false);
+			const wrapper = serializeIdCompressor(compressor, false);
+			assert.deepStrictEqual(wrapper, direct);
 		});
 	});
 
@@ -1429,7 +1456,6 @@ describe("IdCompressor", () => {
 							IdCompressor.deserialize({
 								serialized: serializedWithoutLocalState,
 								newSessionId: sessionIds.get(Client.Client2),
-								requestedWriteVersion: SerializationVersion.V3,
 							}),
 						(e: Error) => e.message === "Cannot resume existing session.",
 					);

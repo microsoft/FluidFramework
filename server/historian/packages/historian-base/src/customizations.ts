@@ -10,7 +10,7 @@ import type {
 } from "@fluidframework/server-services-core";
 import type { IRedisClientConnectionManager } from "@fluidframework/server-services-utils";
 
-import type { ISimplifiedCustomDataRetriever } from "./services";
+import type { IPostEphemeralContainerChecker, ISimplifiedCustomDataRetriever } from "./services";
 
 export interface IHistorianResourcesCustomizations {
 	storageNameRetriever?: IStorageNameRetriever;
@@ -20,4 +20,5 @@ export interface IHistorianResourcesCustomizations {
 	redisClientConnectionManagerForInvalidTokenCache?: IRedisClientConnectionManager;
 	readinessCheck?: IReadinessCheck;
 	simplifiedCustomDataRetriever?: ISimplifiedCustomDataRetriever;
+	postEphemeralContainerChecker?: IPostEphemeralContainerChecker;
 }

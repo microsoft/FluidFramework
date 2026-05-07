@@ -7,10 +7,7 @@ import { IsoBuffer } from "@fluid-internal/client-utils";
 import { makeRandom } from "@fluid-private/stochastic-test-utils";
 import { IChannel, IChannelFactory } from "@fluidframework/datastore-definitions/legacy";
 import { SessionId } from "@fluidframework/id-compressor";
-import {
-	createIdCompressor,
-	SerializationVersion,
-} from "@fluidframework/id-compressor/internal"; // eslint-disable-line import-x/no-internal-modules
+import { createIdCompressor } from "@fluidframework/id-compressor/legacy";
 import {
 	MockContainerRuntimeFactory,
 	MockFluidDataStoreRuntime,
@@ -28,7 +25,7 @@ export function create<T>(factory: IChannelFactory<T>): {
 	const dataStoreRuntime = new MockFluidDataStoreRuntime({
 		clientId: `test-client-${sessionId}`,
 		id: "test",
-		idCompressor: createIdCompressor(sessionId, SerializationVersion.V3),
+		idCompressor: createIdCompressor(sessionId),
 	});
 
 	const channel = factory.create(
