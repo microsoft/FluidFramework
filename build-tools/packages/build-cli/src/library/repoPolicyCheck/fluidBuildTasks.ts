@@ -768,7 +768,7 @@ function buildDepsHandler(
 	check: (context: BuildDepsCallbackContext) => string | undefined,
 ): string | undefined {
 	const result = readPackageJson(file);
-	if (result.isErr) {
+	if (!result.success) {
 		return result.error;
 	}
 	const json = result.value;
@@ -826,7 +826,7 @@ export const handlers: Handler[] = [
 		match,
 		handler: async (file: string, root: string): Promise<string | undefined> => {
 			const result = readPackageJson(file);
-			if (result.isErr) {
+			if (!result.success) {
 				return result.error;
 			}
 			const json = result.value;

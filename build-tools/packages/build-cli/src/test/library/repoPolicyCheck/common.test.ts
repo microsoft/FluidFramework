@@ -21,7 +21,7 @@ describe("readPackageJson", () => {
 		}
 	}
 
-	it("returns Ok with the parsed package.json", async () => {
+	it("returns success with the parsed package.json", async () => {
 		await withTempDir(async (testDir) => {
 			const packageJsonFile = path.join(testDir, "package.json");
 			await writeFile(
@@ -31,35 +31,35 @@ describe("readPackageJson", () => {
 
 			const result = readPackageJson(packageJsonFile);
 
-			if (result.isErr) {
+			if (!result.success) {
 				throw new Error(result.error);
 			}
 			expect(result.value.name).to.equal("test-package");
 		});
 	});
 
-	it("returns Err with the file path for malformed JSON", async () => {
+	it("returns failure with the file path for malformed JSON", async () => {
 		await withTempDir(async (testDir) => {
 			const packageJsonFile = path.join(testDir, "package.json");
 			await writeFile(packageJsonFile, "{");
 
 			const result = readPackageJson(packageJsonFile);
 
-			if (result.isOk) {
-				throw new Error("Expected malformed JSON to return Err.");
+			if (result.success) {
+				throw new Error("Expected malformed JSON to return an error result.");
 			}
 			expect(result.error).to.include(packageJsonFile);
 		});
 	});
 
-	it("returns Err with the file path for a missing file", async () => {
+	it("returns failure with the file path for a missing file", async () => {
 		await withTempDir(async (testDir) => {
 			const packageJsonFile = path.join(testDir, "package.json");
 
 			const result = readPackageJson(packageJsonFile);
 
-			if (result.isOk) {
-				throw new Error("Expected missing file to return Err.");
+			if (result.success) {
+				throw new Error("Expected missing file to return an error result.");
 			}
 			expect(result.error).to.include(packageJsonFile);
 		});

@@ -367,7 +367,7 @@ async function ensurePrivatePackagesComputed(): Promise<Set<string>> {
 
 	for (const filePath of packageJsons) {
 		const result = readPackageJson(path.resolve(baseDir, filePath));
-		if (result.isErr) {
+		if (!result.success) {
 			continue;
 		}
 		if (result.value.private ?? false) {
@@ -777,7 +777,7 @@ export const handlers: Handler[] = [
 		match,
 		handler: async (file: string, gitRoot: string): Promise<string | undefined> => {
 			const result = readPackageJson(file);
-			if (result.isErr) {
+			if (!result.success) {
 				return result.error;
 			}
 			const json = result.value;
@@ -871,7 +871,7 @@ export const handlers: Handler[] = [
 		match,
 		handler: async (file: string, root: string): Promise<string | undefined> => {
 			const result = readPackageJson(file);
-			if (result.isErr) {
+			if (!result.success) {
 				return result.error;
 			}
 			const json = result.value;
@@ -893,7 +893,7 @@ export const handlers: Handler[] = [
 		match,
 		handler: async (file: string, root: string): Promise<string | undefined> => {
 			const result = readPackageJson(file);
-			if (result.isErr) {
+			if (!result.success) {
 				return result.error;
 			}
 			const json = result.value;
@@ -930,7 +930,7 @@ export const handlers: Handler[] = [
 		match,
 		handler: async (file: string): Promise<string | undefined> => {
 			const result = readPackageJson(file);
-			if (result.isErr) {
+			if (!result.success) {
 				return result.error;
 			}
 			const json = result.value;
@@ -956,7 +956,7 @@ export const handlers: Handler[] = [
 		},
 		resolver: (file: string): { resolved: boolean; message?: string } => {
 			const result = readPackageJson(file);
-			if (result.isErr) {
+			if (!result.success) {
 				return { resolved: false, message: result.error };
 			}
 			const json = result.value;
@@ -1000,7 +1000,7 @@ export const handlers: Handler[] = [
 		match,
 		handler: async (file: string): Promise<string | undefined> => {
 			const result = readPackageJson(file);
-			if (result.isErr) {
+			if (!result.success) {
 				return result.error;
 			}
 			const json = result.value;
@@ -1027,7 +1027,7 @@ export const handlers: Handler[] = [
 		match,
 		handler: async (file: string, root: string): Promise<string | undefined> => {
 			const result = readPackageJson(file);
-			if (result.isErr) {
+			if (!result.success) {
 				return result.error;
 			}
 			const json = result.value;
@@ -1072,7 +1072,7 @@ export const handlers: Handler[] = [
 		match,
 		handler: async (file: string): Promise<string | undefined> => {
 			const result = readPackageJson(file);
-			if (result.isErr) {
+			if (!result.success) {
 				return result.error;
 			}
 			const json = result.value;
@@ -1165,7 +1165,7 @@ export const handlers: Handler[] = [
 		match,
 		handler: async (file: string): Promise<string | undefined> => {
 			const result = readPackageJson(file);
-			if (result.isErr) {
+			if (!result.success) {
 				return result.error;
 			}
 			const json = result.value;
@@ -1198,7 +1198,7 @@ export const handlers: Handler[] = [
 			}
 			const commandDep = new Map(commandPackages);
 			const result = readPackageJson(file);
-			if (result.isErr) {
+			if (!result.success) {
 				return result.error;
 			}
 			const json = result.value;
@@ -1252,7 +1252,7 @@ export const handlers: Handler[] = [
 		match,
 		handler: async (file: string): Promise<string | undefined> => {
 			const result = readPackageJson(file);
-			if (result.isErr) {
+			if (!result.success) {
 				return result.error;
 			}
 			const json = result.value;
@@ -1298,7 +1298,7 @@ export const handlers: Handler[] = [
 			// or mocha/jest dependencies, it should have a test scripts so that the pipeline will pick it up
 
 			const result = readPackageJson(file);
-			if (result.isErr) {
+			if (!result.success) {
 				return result.error;
 			}
 			const json = result.value;
@@ -1345,7 +1345,7 @@ export const handlers: Handler[] = [
 			// has the split set up property (into test:mocha, test:jest and test:realsvc). Release groups that don't
 			// have splits in the pipeline is excluded in the "handlerExclusions" in the fluidBuild.config.cjs
 			const result = readPackageJson(file);
-			if (result.isErr) {
+			if (!result.success) {
 				return result.error;
 			}
 			const json = result.value;
@@ -1389,7 +1389,7 @@ export const handlers: Handler[] = [
 		handler: async (file: string): Promise<string | undefined> => {
 			// This rule enforces that mocha will use a config file and setup both the console, json and xml reporters.
 			const result = readPackageJson(file);
-			if (result.isErr) {
+			if (!result.success) {
 				return result.error;
 			}
 			const json = result.value;
@@ -1425,7 +1425,7 @@ export const handlers: Handler[] = [
 		handler: async (file: string): Promise<string | undefined> => {
 			// This rule enforces that jest will use a config file and setup both the default (console) and junit reporters.
 			const result = readPackageJson(file);
-			if (result.isErr) {
+			if (!result.success) {
 				return result.error;
 			}
 			const json = result.value;
@@ -1489,7 +1489,7 @@ export const handlers: Handler[] = [
 			// some thought has been put in place. The package might be CJS first and ESM second
 			// with a secondary package.json specifying "type": "module" or use .mjs extensions.
 			const result = readPackageJson(file);
-			if (result.isErr) {
+			if (!result.success) {
 				return result.error;
 			}
 			const json = result.value;
@@ -1522,7 +1522,7 @@ export const handlers: Handler[] = [
 		handler: async (file: string): Promise<string | undefined> => {
 			// This rule enforces the "clean" script will delete all the build and test output
 			const result = readPackageJson(file);
-			if (result.isErr) {
+			if (!result.success) {
 				return result.error;
 			}
 			const json = result.value;
@@ -1586,7 +1586,7 @@ export const handlers: Handler[] = [
 		handler: async (file: string): Promise<string | undefined> => {
 			// This rule enforces each package has a types field in its package.json
 			const result = readPackageJson(file);
-			if (result.isErr) {
+			if (!result.success) {
 				return result.error;
 			}
 			const json = result.value;
@@ -1614,7 +1614,7 @@ export const handlers: Handler[] = [
 		match,
 		handler: async (file: string): Promise<string | undefined> => {
 			const result = readPackageJson(file);
-			if (result.isErr) {
+			if (!result.success) {
 				return result.error;
 			}
 			const json = result.value;
@@ -1715,7 +1715,7 @@ export const handlers: Handler[] = [
 		match,
 		handler: async (file: string): Promise<string | undefined> => {
 			const result = readPackageJson(file);
-			if (result.isErr) {
+			if (!result.success) {
 				return result.error;
 			}
 			const packageJson = result.value;
@@ -1826,7 +1826,7 @@ export const handlers: Handler[] = [
 			rootDirectoryPath: string,
 		): Promise<string | undefined> => {
 			const result = readPackageJson(packageJsonFilePath);
-			if (result.isErr) {
+			if (!result.success) {
 				return result.error;
 			}
 			const packageJson = result.value;

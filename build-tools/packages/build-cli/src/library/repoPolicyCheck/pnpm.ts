@@ -20,7 +20,7 @@ export const handlers: Handler[] = [
 			const manifest = getFlubConfig(root);
 
 			const result = readPackageJson(packageJsonFile);
-			if (result.isErr) {
+			if (!result.success) {
 				return result.error;
 			}
 			const json = result.value;
