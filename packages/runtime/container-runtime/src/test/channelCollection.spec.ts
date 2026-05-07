@@ -418,5 +418,162 @@ describe("Runtime", () => {
 			});
 			/* eslint-enable @typescript-eslint/consistent-type-assertions */
 		});
+
+		describe("rollback + wake-up for staged-from-rehydration ops", () => {
+			/* eslint-disable @typescript-eslint/consistent-type-assertions */
+			let channelCollection: ChannelCollection;
+			let mockLogger: MockLogger;
+			let parentContext: IFluidRootParentContextPrivate;
+
+			const createMockAttachMessage = (
+				id: string,
+				type: string = "TestDataStore",
+			): IAttachMessage => ({
+				id,
+				type,
+				snapshot: { id: "snapshot-id", entries: [], blobs: [] } as ITree,
+			});
+
+			const createMockMessageCollection = (
+				attachMessage: IAttachMessage,
+				local: boolean = false,
+				sequenceNumber: number = 1,
+			): IRuntimeMessageCollection => ({
+				envelope: {
+					type: ContainerMessageType.Attach,
+					contents: attachMessage,
+					sequenceNumber,
+					clientId: local ? "local-client" : "remote-client",
+					timestamp: Date.now(),
+				} as ISequencedDocumentMessage,
+				messagesContent: [
+					{
+						contents: attachMessage,
+						localOpMetadata: undefined,
+						clientSequenceNumber: 1,
+					},
+				],
+				local,
+			});
+
+			const configProvider = (settings: Record<string, ConfigTypes>) => ({
+				getRawConfig: (name: string): ConfigTypes => settings[name],
+			});
+
+			beforeEach(() => {
+				mockLogger = new MockLogger();
+				const mc = mixinMonitoringContext(
+					mockLogger,
+					configProvider({ "Fluid.Runtime.DisableShortIds": true }),
+				);
+				const baseParentContext = createParentContext(mc.logger);
+				parentContext = {
+					...baseParentContext,
+					attachState: AttachState.Attached,
+					submitMessage: () => {},
+					submitSignal: () => {},
+					addedGCOutboundRoute: () => {},
+					makeLocallyVisible: () => {},
+					getExtension: () => undefined,
+					getCreateChildSummarizerNodeFn: (id: string) =>
+						createSummarizerNodeAndGetCreateFn(id).createSummarizerNodeFn,
+				} as unknown as IFluidRootParentContextPrivate;
+
+				channelCollection = new ChannelCollection(
+					undefined,
+					parentContext,
+					mockLogger,
+					() => {},
+					() => false,
+					new Map(),
+				);
+			});
+
+			it("rollbackAttach hides the data store from getDataStoreIfAvailable", async () => {
+				// Seed a context so getDataStoreIfAvailable would normally return it.
+				const localContext = channelCollection.createDataStoreContext([
+					"TestPackage",
+				]) as LocalFluidDataStoreContext;
+				const id = localContext.id;
+				localContext.setAttachState(AttachState.Attaching);
+				localContext.setAttachState(AttachState.Attached);
+				(
+					channelCollection as unknown as { readonly contexts: DataStoreContexts }
+				).contexts.bind(id);
+
+				// Pre-rollback the context surfaces.
+				const before = await channelCollection.getDataStoreIfAvailable(id, {});
+				assert.ok(before !== undefined, "context should be visible before rollback");
+
+				// Rollback hides it.
+				channelCollection.rollbackAttach({
+					id,
+					type: "TestPackage",
+					snapshot: { id: "snapshot-id", entries: [], blobs: [] } as ITree,
+				});
+				const after = await channelCollection.getDataStoreIfAvailable(id, {});
+				assert.strictEqual(after, undefined, "context is hidden after rollback");
+			});
+
+			it("processAttachMessages wakes a hidden data store (delayed-ack wake-up)", async () => {
+				// Setup: bind a context, then mark its attach as rolled back.
+				const id = "wake-target";
+				const localContext = channelCollection.createDataStoreContext([
+					"TestPackage",
+				]) as LocalFluidDataStoreContext;
+				const realId = localContext.id;
+				localContext.setAttachState(AttachState.Attaching);
+				localContext.setAttachState(AttachState.Attached);
+				(
+					channelCollection as unknown as { readonly contexts: DataStoreContexts }
+				).contexts.bind(realId);
+
+				channelCollection.rollbackAttach({
+					id: realId,
+					type: "TestPackage",
+					snapshot: { id: "snapshot-id", entries: [], blobs: [] } as ITree,
+				});
+				assert.strictEqual(
+					await channelCollection.getDataStoreIfAvailable(realId, {}),
+					undefined,
+					"hidden after rollback",
+				);
+
+				// Simulate the previous-session ack arriving as a remote Attach op
+				// for the same internalId.
+				const remoteAttach = createMockAttachMessage(realId);
+				assert.doesNotThrow(() =>
+					channelCollection.processMessages(
+						createMockMessageCollection(remoteAttach, false /* local */),
+					),
+				);
+
+				// The hidden flag is cleared atomically with the inbound op
+				// processing, so the context is visible again.
+				const woken = await channelCollection.getDataStoreIfAvailable(realId, {});
+				assert.ok(woken !== undefined, "context is visible after wake-up");
+				// Suppress unused-id lint (the variable just documents we used a label).
+				assert.strictEqual(typeof id, "string");
+			});
+
+			it("rollbackAlias drops the local alias mapping", () => {
+				const alias = "my-alias";
+				const internalId = "ds-internal-id";
+				(
+					channelCollection as unknown as { readonly aliasMap: Map<string, string> }
+				).aliasMap.set(alias, internalId);
+
+				// Pre-rollback the alias resolves.
+				assert.strictEqual(channelCollection.aliases.get(alias), internalId);
+
+				channelCollection.rollbackAlias({ alias, internalId });
+				assert.strictEqual(
+					channelCollection.aliases.get(alias),
+					undefined,
+					"alias is dropped after rollback",
+				);
+			});
+			/* eslint-enable @typescript-eslint/consistent-type-assertions */
+		});
 	});
 });

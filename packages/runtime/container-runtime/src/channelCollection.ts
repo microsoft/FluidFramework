@@ -471,8 +471,11 @@ export class ChannelCollection
 			// Wake up any rolled-back attach: the server has the data store, so
 			// it should once again be visible locally. The hidden flag is
 			// cleared *before* the regular processing path runs so the data
-			// store is surfaced atomically with the ack.
-			this.rolledBackAttachIds.delete(attachMessage.id);
+			// store is surfaced atomically with the ack. We also remember that
+			// this id was rolled back so the duplicate-id checks below don't
+			// fire — the existing (hidden) context *is* the data store the
+			// server is acking.
+			const wakingFromRollback = this.rolledBackAttachIds.delete(attachMessage.id);
 			// We need to process the GC Data for both local and remote attach messages
 			const foundGCData = processAttachMessageGCData(
 				attachMessage.snapshot ?? undefined,
@@ -507,6 +510,16 @@ export class ChannelCollection
 				);
 				this.contexts.get(attachMessage.id)?.setAttachState(AttachState.Attached);
 				this.pendingAttach.delete(attachMessage.id);
+				continue;
+			}
+
+			// Wake-up path: an inbound attach for an id we just hid via
+			// `rollbackAttach`. The existing (hidden) context is the data store
+			// the server is acking — finalize its attach state and skip the
+			// duplicate-id collision checks below, which would otherwise fire
+			// for a context still present in `contexts`.
+			if (wakingFromRollback) {
+				this.contexts.get(attachMessage.id)?.setAttachState(AttachState.Attached);
 				continue;
 			}
 
