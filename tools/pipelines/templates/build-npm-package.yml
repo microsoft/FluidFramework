@@ -471,6 +471,18 @@ extends:
 
               # Bundle analysis
               - ${{ if eq(parameters.taskBundleAnalysis, true) }}:
+                  # The bundle-size-artifacts pipeline skips set-package-version (and
+                  # therefore the include-install-build-tools step that globally links
+                  # `flub`); install build-tools standalone here so `flub` is on PATH for
+                  # the bundle-analysis steps below. Other pipelines already have flub
+                  # linked via set-package-version, so this is a no-op for them.
+                  - ${{ if eq(parameters.isBundleSizeArtifactsPipeline, true) }}:
+                      - template: /tools/pipelines/templates/include-install-build-tools.yml@self
+                        parameters:
+                          buildDirectory: ${{ parameters.buildDirectory }}
+                          buildToolsVersionToInstall: '${{ parameters.buildToolsVersionToInstall }}'
+                          pnpmStorePath: $(Pipeline.Workspace)/.pnpm-store
+
                   # Bash@3 (not Npm@1) so `flub` resolves via PATH to the globally-linked
                   # workspace build; `npm run` would shadow it with the catalog-pinned
                   # flub, which currently lacks the bundleAnalyzerJson aggregation.
