@@ -1093,7 +1093,7 @@ export class ConnectionManager implements IConnectionManager {
 	public sendMessages(messages: IDocumentMessage[]): void {
 		assert(this.connected, 0x2b4 /* "not connected on sending ops!" */);
 		// WritableFrozenDeltaStream short-circuit: writable-frozen containers
-		// (`loadFrozenContainerFromPendingState({ readOnly: false })`) attach a
+		// (`loadFrozenContainerFromPendingState({ allowLocalChanges: true })`) attach a
 		// WritableFrozenDeltaStream as the live connection. Its `mode` is "read" (advertising
 		// "write" would imply quorum membership we cannot honor), so a runtime submit
 		// would otherwise fall into the read-mode reconnect branch below. That branch

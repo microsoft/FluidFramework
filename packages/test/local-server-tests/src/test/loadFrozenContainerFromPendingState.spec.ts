@@ -325,7 +325,7 @@ describe("loadFrozenContainerFromPendingState", () => {
 		}
 	});
 
-	describe("readOnly: false (writable frozen container)", () => {
+	describe("allowLocalChanges: true (writable frozen container)", () => {
 		it("surfaces as not readonly", async () => {
 			const { container, ITestFluidObject, urlResolver, codeLoader, documentServiceFactory } =
 				await initialize();
@@ -341,7 +341,7 @@ describe("loadFrozenContainerFromPendingState", () => {
 				urlResolver,
 				request: { url },
 				pendingLocalState,
-				readOnly: false,
+				allowLocalChanges: true,
 			});
 
 			assert.strictEqual(
@@ -376,7 +376,7 @@ describe("loadFrozenContainerFromPendingState", () => {
 				urlResolver,
 				request: { url },
 				pendingLocalState,
-				readOnly: false,
+				allowLocalChanges: true,
 			});
 			const frozenEntryPoint: FluidObject<TestFluidObject> =
 				await frozenContainer.getEntryPoint();
@@ -428,7 +428,7 @@ describe("loadFrozenContainerFromPendingState", () => {
 				urlResolver,
 				request: { url },
 				pendingLocalState,
-				readOnly: false,
+				allowLocalChanges: true,
 			});
 			const frozenEntryPoint: FluidObject<TestFluidObject> =
 				await frozenContainer.getEntryPoint();
@@ -468,7 +468,7 @@ describe("loadFrozenContainerFromPendingState", () => {
 				urlResolver,
 				request: { url },
 				pendingLocalState,
-				readOnly: false,
+				allowLocalChanges: true,
 			});
 			const frozenEntryPoint: FluidObject<TestFluidObject> =
 				await frozenContainer.getEntryPoint();
@@ -510,7 +510,7 @@ describe("loadFrozenContainerFromPendingState", () => {
 					urlResolver,
 					request: { url },
 					pendingLocalState: initialPending,
-					readOnly: false,
+					allowLocalChanges: true,
 				}),
 			);
 			const frozenEntryPoint: FluidObject<TestFluidObject> =
@@ -541,7 +541,7 @@ describe("loadFrozenContainerFromPendingState", () => {
 				urlResolver,
 				request: { url },
 				pendingLocalState: layeredPending,
-				readOnly: false,
+				allowLocalChanges: true,
 			});
 			const secondEntryPoint: FluidObject<TestFluidObject> =
 				await secondFrozen.getEntryPoint();
@@ -563,7 +563,7 @@ describe("loadFrozenContainerFromPendingState", () => {
 			);
 		});
 
-		it("honors readOnly: false when wrapping an already-frozen factory with readOnly: true", async () => {
+		it("honors allowLocalChanges: true when wrapping an already-frozen factory with allowLocalChanges: false", async () => {
 			const { container, ITestFluidObject, urlResolver, codeLoader, documentServiceFactory } =
 				await initialize();
 			await container.attach(urlResolver.createCreateNewRequest("test"));
@@ -572,23 +572,24 @@ describe("loadFrozenContainerFromPendingState", () => {
 			assert(url !== undefined, "Expected container to provide a valid absolute URL");
 			const pendingLocalState = await container.getPendingLocalState();
 
-			// Pre-wrap with readOnly: true (the default), then ask loadFrozenContainerFromPendingState
-			// for readOnly: false. The most recent intent should win — without the rewrap-on-mismatch
-			// logic this would silently surface as read-only.
-			const preWrapped = createFrozenDocumentServiceFactory(documentServiceFactory, true);
+			// Pre-wrap with allowLocalChanges: false (the default), then ask
+			// loadFrozenContainerFromPendingState for allowLocalChanges: true. The most recent
+			// intent should win — without the rewrap-on-mismatch logic this would silently
+			// surface as read-only.
+			const preWrapped = createFrozenDocumentServiceFactory(documentServiceFactory, false);
 			const frozenContainer = await loadFrozenContainerFromPendingState({
 				codeLoader,
 				documentServiceFactory: preWrapped,
 				urlResolver,
 				request: { url },
 				pendingLocalState,
-				readOnly: false,
+				allowLocalChanges: true,
 			});
 
 			assert.strictEqual(
 				frozenContainer.readOnlyInfo.readonly,
 				false,
-				"Expected readOnly: false to win over an already-wrapped readOnly: true factory",
+				"Expected allowLocalChanges: true to win over an already-wrapped allowLocalChanges: false factory",
 			);
 		});
 
@@ -615,7 +616,7 @@ describe("loadFrozenContainerFromPendingState", () => {
 					urlResolver,
 					request: { url },
 					pendingLocalState: initialPending,
-					readOnly: false,
+					allowLocalChanges: true,
 					allowReconnect: false,
 				}),
 			);
@@ -673,7 +674,7 @@ describe("loadFrozenContainerFromPendingState", () => {
 				urlResolver,
 				request: { url },
 				pendingLocalState: layeredPending,
-				readOnly: false,
+				allowLocalChanges: true,
 			});
 			const replayEntry: FluidObject<TestFluidObject> = await replay.getEntryPoint();
 			assert(replayEntry.ITestFluidObject !== undefined);
@@ -708,7 +709,7 @@ describe("loadFrozenContainerFromPendingState", () => {
 					urlResolver,
 					request: { url },
 					pendingLocalState: initialPending,
-					readOnly: false,
+					allowLocalChanges: true,
 					clientDetailsOverride: {
 						capabilities: { interactive: false },
 					},
@@ -762,7 +763,7 @@ describe("loadFrozenContainerFromPendingState", () => {
 				urlResolver,
 				request: { url },
 				pendingLocalState,
-				readOnly: false,
+				allowLocalChanges: true,
 			});
 			const frozenEntryPoint: FluidObject<TestFluidObject> =
 				await frozenContainer.getEntryPoint();
@@ -802,7 +803,7 @@ describe("loadFrozenContainerFromPendingState", () => {
 				urlResolver,
 				request: { url },
 				pendingLocalState,
-				readOnly: false,
+				allowLocalChanges: true,
 			});
 			const frozenEntryPoint: FluidObject<TestFluidObject> =
 				await frozenContainer.getEntryPoint();
@@ -849,7 +850,7 @@ describe("loadFrozenContainerFromPendingState", () => {
 					urlResolver,
 					request: { url },
 					pendingLocalState: initialPending,
-					readOnly: false,
+					allowLocalChanges: true,
 				}),
 			);
 			const frozenEntryPoint: FluidObject<TestFluidObject> =
@@ -919,7 +920,7 @@ describe("loadFrozenContainerFromPendingState", () => {
 					urlResolver,
 					request: { url },
 					pendingLocalState: initialPending,
-					readOnly: false,
+					allowLocalChanges: true,
 				}),
 			);
 			const frozenEntryPoint: FluidObject<TestFluidObject> =
@@ -962,7 +963,7 @@ describe("loadFrozenContainerFromPendingState", () => {
 				urlResolver,
 				request: { url },
 				pendingLocalState: layeredPending,
-				readOnly: false,
+				allowLocalChanges: true,
 			});
 			const secondEntryPoint: FluidObject<TestFluidObject> =
 				await secondFrozen.getEntryPoint();
@@ -1008,7 +1009,7 @@ describe("loadFrozenContainerFromPendingState", () => {
 				urlResolver,
 				request: { url },
 				pendingLocalState,
-				readOnly: false,
+				allowLocalChanges: true,
 			});
 			// Initial readonly state is covered by the dedicated `surfaces as not readonly`
 			// test; this one focuses on the post-forceReadonly transition.
