@@ -869,13 +869,21 @@ export class TreeCheckout implements ITreeCheckout {
 			const transactionCallbackStatus = transaction();
 			return this.unmountTransaction(transactionCallbackStatus, params);
 		};
-		return params?.deferEvents === true
-			? withBufferedTreeEvents(transactionCore, {
-					// On rollback the tree is restored to its starting state, so any buffered events
-					// represent net-zero changes and must not be surfaced to listeners.
-					shouldDiscard: (result) => !result.success,
-				})
-			: transactionCore();
+		if (params?.deferEvents !== true) {
+			return transactionCore();
+		}
+
+		let result:
+			| TransactionResultExt<TSuccessValue, TFailureValue>
+			| TransactionResult
+			| undefined;
+		withBufferedTreeEvents(() => {
+			result = transactionCore();
+			// On rollback, the tree is restored to its starting state, so any buffered events
+			// represent net-zero changes and should not be surfaced to listeners.
+			return !result.success;
+		});
+		return result ?? fail("withBufferedTreeEvents should have invoked its callback");
 	}
 
 	public runTransactionAsync<TSuccessValue, TFailureValue>(

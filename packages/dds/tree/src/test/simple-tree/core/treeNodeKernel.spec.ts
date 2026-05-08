@@ -180,12 +180,10 @@ describe("withBufferedTreeEvents", () => {
 			const { obj, log } = makeSubject();
 			withBufferedTreeEvents(() => {
 				obj.foo = "outer";
-				withBufferedTreeEvents(
-					() => {
-						obj.baz = 5;
-					},
-					{ shouldDiscard: () => true },
-				);
+				withBufferedTreeEvents(() => {
+					obj.baz = 5;
+					return true;
+				});
 			});
 			// Inner contribution (baz) must be dropped; outer's foo must fire.
 			assert.deepEqual(log, ['nodeChanged: ["foo"]']);
@@ -193,32 +191,26 @@ describe("withBufferedTreeEvents", () => {
 
 		it("outer discard + inner commit: nothing fires", () => {
 			const { obj, log } = makeSubject();
-			withBufferedTreeEvents(
-				() => {
-					obj.foo = "outer";
-					withBufferedTreeEvents(() => {
-						obj.baz = 5;
-					});
-				},
-				{ shouldDiscard: () => true },
-			);
+			withBufferedTreeEvents(() => {
+				obj.foo = "outer";
+				withBufferedTreeEvents(() => {
+					obj.baz = 5;
+				});
+				return true;
+			});
 			assert.deepEqual(log, []);
 		});
 
 		it("outer discard + inner discard: nothing fires", () => {
 			const { obj, log } = makeSubject();
-			withBufferedTreeEvents(
-				() => {
-					obj.foo = "outer";
-					withBufferedTreeEvents(
-						() => {
-							obj.baz = 5;
-						},
-						{ shouldDiscard: () => true },
-					);
-				},
-				{ shouldDiscard: () => true },
-			);
+			withBufferedTreeEvents(() => {
+				obj.foo = "outer";
+				withBufferedTreeEvents(() => {
+					obj.baz = 5;
+					return true;
+				});
+				return true;
+			});
 			assert.deepEqual(log, []);
 		});
 
@@ -226,35 +218,16 @@ describe("withBufferedTreeEvents", () => {
 			const { obj, log } = makeSubject();
 			withBufferedTreeEvents(() => {
 				obj.foo = "outer";
-				withBufferedTreeEvents(
-					() => {
-						// Middle scope contributes "bar" via the innermost.
-						withBufferedTreeEvents(() => {
-							obj.bar = false;
-						});
-					},
-					{ shouldDiscard: () => true },
-				);
+				withBufferedTreeEvents(() => {
+					// Middle scope contributes "bar" via the innermost.
+					withBufferedTreeEvents(() => {
+						obj.bar = false;
+					});
+					return true;
+				});
 			});
 			// Innermost merged "bar" into the middle scope, which then discarded.
 			// Only outer's "foo" should fire.
-			assert.deepEqual(log, ['nodeChanged: ["foo"]']);
-		});
-
-		it("inner shouldDiscard receives the inner callback's result, not the outer's", () => {
-			const { obj, log } = makeSubject();
-			withBufferedTreeEvents(() => {
-				obj.foo = "outer";
-				const innerResult = withBufferedTreeEvents(
-					() => {
-						obj.baz = 5;
-						return { discardMe: true } as const;
-					},
-					{ shouldDiscard: (r) => r.discardMe === true },
-				);
-				assert.equal(innerResult.discardMe, true);
-			});
-			// Inner discarded based on its own result; outer kept.
 			assert.deepEqual(log, ['nodeChanged: ["foo"]']);
 		});
 
@@ -265,21 +238,19 @@ describe("withBufferedTreeEvents", () => {
 			let lateObj: MyObject | undefined;
 			withBufferedTreeEvents(() => {
 				outerObj.foo = "outer";
-				withBufferedTreeEvents(
-					() => {
-						// Construct + subscribe + edit entirely inside the inner scope.
-						lateObj = new MyObject({ foo: "late", bar: true });
-						lateLog = [];
-						TreeBeta.on(lateObj, "nodeChanged", ({ changedProperties }) => {
-							assert(lateLog !== undefined, "lateLog should be defined when event fires");
-							lateLog.push(
-								`nodeChanged: ${JSON.stringify([...changedProperties.keys()].sort())}`,
-							);
-						});
-						lateObj.baz = 9;
-					},
-					{ shouldDiscard: () => true },
-				);
+				withBufferedTreeEvents(() => {
+					// Construct + subscribe + edit entirely inside the inner scope.
+					lateObj = new MyObject({ foo: "late", bar: true });
+					lateLog = [];
+					TreeBeta.on(lateObj, "nodeChanged", ({ changedProperties }) => {
+						assert(lateLog !== undefined, "lateLog should be defined when event fires");
+						lateLog.push(
+							`nodeChanged: ${JSON.stringify([...changedProperties.keys()].sort())}`,
+						);
+					});
+					lateObj.baz = 9;
+					return true;
+				});
 			});
 			// outerObj's outer-scope edit should still fire.
 			assert.deepEqual(outerLog, ['nodeChanged: ["foo"]']);

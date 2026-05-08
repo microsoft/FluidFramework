@@ -308,24 +308,6 @@ type KernelEvents = Pick<AnchorEvents, (typeof kernelEvents)[number]>;
 let bufferTreeEvents: boolean = false;
 
 /**
- * Options for {@link withBufferedTreeEvents}.
- */
-export interface WithBufferedTreeEventsOptions<TResult> {
-	/**
-	 * Predicate invoked with the callback's return value after it completes.
-	 * If it returns `true`, all events buffered during this call are discarded
-	 * instead of being flushed.
-	 * @remarks
-	 * Only honored at the outermost call. When `withBufferedTreeEvents` is invoked
-	 * while another call is already buffering, this option has no effect — the
-	 * discard decision is owned by the outer call.
-	 *
-	 * If the callback throws, the predicate is not invoked and buffered events are flushed.
-	 */
-	readonly shouldDiscard?: (result: TResult) => boolean;
-}
-
-/**
  * Call the provided callback with {@link TreeNode}s' events paused until after the callback's completion.
  *
  * Events that would otherwise have been emitted immediately are merged and buffered until after the
@@ -334,13 +316,16 @@ export interface WithBufferedTreeEventsOptions<TResult> {
  * @remarks
  * Note: this should be used with caution. User application behaviors are implicitly coupled to event timing.
  * Disrupting this timing can lead to unexpected behavior.
+ *
+ * Nested calls each manage their own buffering scope: each scope's events are merged into the
+ * surrounding scope on success or discarded independently if its callback signals discard.
+ *
  * @param callback - Function to invoke while events are buffered.
- * @param options - Optional configuration. See {@link WithBufferedTreeEventsOptions}.
+ * Return `true` to discard the events buffered during this call (e.g. when work is being rolled back);
+ * return `false`/nothing to keep them.
+ * If the callback throws, buffered events are kept.
  */
-export function withBufferedTreeEvents<TResult>(
-	callback: () => TResult,
-	options?: WithBufferedTreeEventsOptions<TResult>,
-): TResult {
+export function withBufferedTreeEvents(callback: () => boolean | void): void {
 	const isOutermost = !bufferTreeEvents;
 	if (!isOutermost) {
 		// Nested call: open a new frame so this scope's events can be merged or discarded
@@ -350,9 +335,7 @@ export function withBufferedTreeEvents<TResult>(
 	bufferTreeEvents = true;
 	let discard = false;
 	try {
-		const result = callback();
-		discard = options?.shouldDiscard?.(result) === true;
-		return result;
+		discard = callback() === true;
 	} finally {
 		if (isOutermost) {
 			bufferTreeEvents = false;
