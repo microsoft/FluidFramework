@@ -358,7 +358,7 @@ export function withBufferedTreeEvents<TResult>(
 			bufferTreeEvents = false;
 			flushEventsEmitter.emit(discard ? "discard" : "flush");
 		} else {
-			flushEventsEmitter.emit(discard ? "popFrameDiscard" : "popFrameKeep");
+			flushEventsEmitter.emit("popFrame", discard);
 		}
 	}
 }
@@ -374,10 +374,12 @@ const flushEventsEmitter = createEmitter<{
 	discard: () => void;
 	/** A nested call started; save current buffer state and start a fresh frame. */
 	pushFrame: () => void;
-	/** A nested call ended successfully; merge its frame into the surrounding scope's frame. */
-	popFrameKeep: () => void;
-	/** A nested call ended with discard; drop its frame and restore the surrounding scope's. */
-	popFrameDiscard: () => void;
+	/**
+	 * A nested call ended.
+	 * @param discardBufferedEvents - If true, drop the current frame and restore the surrounding scope's.
+	 * If false, merge the current frame into the surrounding scope's so its events bubble up.
+	 */
+	popFrame: (discardBufferedEvents: boolean) => void;
 }>();
 
 /**
@@ -418,13 +420,9 @@ class KernelEventBuffer implements Listenable<KernelEvents> {
 		"pushFrame",
 		this.pushFrame.bind(this),
 	);
-	readonly #disposeOnPopFrameKeepListener = flushEventsEmitter.on(
-		"popFrameKeep",
-		this.popFrameKeep.bind(this),
-	);
-	readonly #disposeOnPopFrameDiscardListener = flushEventsEmitter.on(
-		"popFrameDiscard",
-		this.popFrameDiscard.bind(this),
+	readonly #disposeOnPopFrameListener = flushEventsEmitter.on(
+		"popFrame",
+		this.popFrame.bind(this),
 	);
 
 	/**
@@ -665,22 +663,33 @@ class KernelEventBuffer implements Listenable<KernelEvents> {
 	}
 
 	/**
-	 * End a nested buffering scope, keeping its events: merge the current frame into the parent
-	 * frame so the events bubble up to the surrounding scope.
+	 * End a nested buffering scope.
+	 *
+	 * @param discard - If true, drop the current frame and restore the surrounding scope's frame.
+	 * If false, merge the current frame into the surrounding scope's frame so its events bubble up.
 	 *
 	 * @remarks
-	 * If the frame stack is empty, this buffer joined the scope after the parent's
-	 * {@link KernelEventBuffer.pushFrame | pushFrame} (i.e., it was constructed mid-scope), so its
-	 * current state already represents only events from the popping scope; just keep it as-is.
+	 * If the frame stack is empty, this buffer joined the scope after the surrounding call's
+	 * {@link KernelEventBuffer.pushFrame | pushFrame} (i.e., it was constructed mid-scope), so
+	 * its current state already represents only events from the popping scope. In that case
+	 * `discard` clears the current buffers and `!discard` keeps them so they bubble up.
 	 */
-	public popFrameKeep(): void {
+	public popFrame(discard: boolean): void {
 		this.#assertNotDisposed();
 		const prev = this.#frameStack.pop();
 		if (prev === undefined) {
-			// Late-joining buffer: nothing to merge into; current bubbles up unchanged.
+			// Late-joining buffer: all of current belongs to the popping scope.
+			if (discard) {
+				this.clearBuffers();
+			}
+			// Otherwise keep current as-is so it bubbles up unchanged.
 			return;
 		}
-		// Snapshot the inner scope's contributions, then restore the outer scope, then re-apply
+		if (discard) {
+			this.#restoreFrame(prev);
+			return;
+		}
+		// Keep: snapshot the inner scope's contributions, restore the outer scope, then re-apply
 		// the inner's contributions on top using the same collision rules as
 		// #handleChildrenChangedAfterBatch.
 		const inner: BufferFrame = {
@@ -711,25 +720,6 @@ class KernelEventBuffer implements Listenable<KernelEvents> {
 		if (inner.subTreeChangedBuffer) {
 			this.#subTreeChangedBuffer = true;
 		}
-	}
-
-	/**
-	 * End a nested buffering scope, discarding its events: drop the current frame and restore
-	 * the parent frame.
-	 *
-	 * @remarks
-	 * If the frame stack is empty, this buffer joined the scope mid-call, so its current state
-	 * represents only events from the popping (discarded) scope; just clear it.
-	 */
-	public popFrameDiscard(): void {
-		this.#assertNotDisposed();
-		const prev = this.#frameStack.pop();
-		if (prev === undefined) {
-			// Late-joining buffer: all of current belongs to the discarded scope.
-			this.clearBuffers();
-			return;
-		}
-		this.#restoreFrame(prev);
 	}
 
 	#restoreFrame(frame: BufferFrame): void {
@@ -767,8 +757,7 @@ class KernelEventBuffer implements Listenable<KernelEvents> {
 		this.#disposeOnFlushListener();
 		this.#disposeOnDiscardListener();
 		this.#disposeOnPushFrameListener();
-		this.#disposeOnPopFrameKeepListener();
-		this.#disposeOnPopFrameDiscardListener();
+		this.#disposeOnPopFrameListener();
 		for (const off of this.#disposeSourceListeners.values()) {
 			off();
 		}
