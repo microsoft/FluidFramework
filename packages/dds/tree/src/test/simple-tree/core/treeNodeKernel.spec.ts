@@ -271,7 +271,8 @@ describe("withBufferedTreeEvents", () => {
 						lateObj = new MyObject({ foo: "late", bar: true });
 						lateLog = [];
 						TreeBeta.on(lateObj, "nodeChanged", ({ changedProperties }) => {
-							lateLog!.push(
+							assert(lateLog !== undefined, "lateLog should be defined when event fires");
+							lateLog.push(
 								`nodeChanged: ${JSON.stringify([...changedProperties.keys()].sort())}`,
 							);
 						});
