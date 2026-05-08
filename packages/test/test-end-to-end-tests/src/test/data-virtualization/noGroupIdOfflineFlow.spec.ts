@@ -6,7 +6,7 @@
 import { strict as assert } from "assert";
 
 import { describeCompat } from "@fluid-private/test-version-utils";
-import { asLegacyAlpha, type ContainerAlpha } from "@fluidframework/container-loader/internal";
+import type { IContainer } from "@fluidframework/container-definitions/internal";
 import type { IContainerRuntimeOptions } from "@fluidframework/container-runtime/internal";
 import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
@@ -69,9 +69,7 @@ describeCompat("Offline Attach Ops", "NoCompat", (getTestObjectProvider, apis) =
 	});
 
 	it("Can create loadingGroupId", async () => {
-		const container: ContainerAlpha = asLegacyAlpha(
-			await provider.createContainer(runtimeFactory),
-		);
+		const container: IContainer = await provider.createContainer(runtimeFactory);
 		const mainObject = (await container.getEntryPoint()) as TestDataObject;
 
 		// Disconnect and create child object attached stashed ops

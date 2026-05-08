@@ -5,13 +5,14 @@
 
 import { strict as assert } from "assert";
 
-import type { ICodeDetailsLoader } from "@fluidframework/container-definitions/internal";
+import type {
+	ICodeDetailsLoader,
+	IContainer,
+} from "@fluidframework/container-definitions/internal";
 import {
-	asLegacyAlpha,
 	createDetachedContainer,
 	loadFrozenContainerFromPendingState,
 	PendingLocalStateStore,
-	type ContainerAlpha,
 	type ILoaderProps,
 } from "@fluidframework/container-loader/internal";
 import type { LocalResolver } from "@fluidframework/local-driver/internal";
@@ -25,7 +26,7 @@ describe("PendingLocalStateStore End-to-End Tests", () => {
 	 * Helper function to initialize a container with test data
 	 */
 	const initializeContainer = async (): Promise<{
-		container: ContainerAlpha;
+		container: IContainer;
 		testFluidObject: ITestFluidObject;
 		urlResolver: LocalResolver;
 		codeLoader: ICodeDetailsLoader;
@@ -36,12 +37,10 @@ describe("PendingLocalStateStore End-to-End Tests", () => {
 			deltaConnectionServer,
 		});
 
-		const container = asLegacyAlpha(
-			await createDetachedContainer({
-				codeDetails,
-				...loaderProps,
-			}),
-		);
+		const container = await createDetachedContainer({
+			codeDetails,
+			...loaderProps,
+		});
 
 		const testFluidObject = (await container.getEntryPoint()) as ITestFluidObject;
 		assert(

@@ -35,7 +35,7 @@ import type { IConnectionStateChangeReason } from "./contracts.js";
  *
  * @param documentServiceFactory - The underlying DocumentServiceFactory to wrap.
  * @returns A FrozenDocumentServiceFactory
- * @legacy @alpha
+ * @legacy @beta
  */
 export function createFrozenDocumentServiceFactory(
 	factory?: IDocumentServiceFactory | Promise<IDocumentServiceFactory>,

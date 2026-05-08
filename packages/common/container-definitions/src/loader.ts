@@ -457,6 +457,21 @@ export interface IContainer extends IEventProvider<IContainerEvents> {
 	serialize(): string;
 
 	/**
+	 * Serialize the current state of an attached container so it can be rehydrated later
+	 * to the same position without data loss. The returned blob can be passed back as
+	 * `pendingLocalState` to {@link ILoader.resolve} (or `loadExistingContainer` from
+	 * `@fluidframework/container-loader`).
+	 *
+	 * @remarks
+	 * The container must be attached. For detached containers use {@link IContainer.serialize}.
+	 *
+	 * WARNING: misuse of this API can result in duplicate op submission and potential
+	 * document corruption. The blob returned MUST be discarded if and when this container
+	 * emits a "connected" event.
+	 */
+	getPendingLocalState(): Promise<string>;
+
+	/**
 	 * Get an absolute URL for a provided container-relative request URL.
 	 * If the container is not attached, this will return undefined.
 	 *

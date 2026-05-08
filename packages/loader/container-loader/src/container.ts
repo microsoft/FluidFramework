@@ -316,7 +316,7 @@ interface IContainerLifecycleEvents extends IEvent {
 
 export class Container
 	extends EventEmitterWithErrorHandling<IContainerEvents>
-	implements IContainer, ContainerAlpha
+	implements IContainer
 {
 	/**
 	 * Load an existing container.
@@ -2610,26 +2610,4 @@ export class Container
 			}
 		}
 	}
-}
-
-/**
- * IContainer interface that includes experimental features still under development.
- * @alpha @legacy @sealed
- */
-export interface ContainerAlpha extends IContainer {
-	/**
-	 * Get pending state from container. WARNING: misuse of this API can result in duplicate op
-	 * submission and potential document corruption. The blob returned MUST be deleted if and when this
-	 * container emits a "connected" event.
-	 * @returns serialized blob that can be passed to Loader.resolve()
-	 */
-	getPendingLocalState(): Promise<string>;
-}
-
-/**
- * Converts types to their alpha counterparts to expose alpha functionality.
- * @legacy @alpha
- */
-export function asLegacyAlpha(base: IContainer): ContainerAlpha {
-	return base as ContainerAlpha;
 }

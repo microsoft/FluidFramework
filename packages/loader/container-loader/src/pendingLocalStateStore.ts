@@ -38,7 +38,7 @@ import { getAttachedContainerStateFromSerializedContainer } from "./utils.js";
  *
  * @typeParam TKey - The type of keys used to identify stored states
  *
- * @legacy @alpha
+ * @legacy @beta
  */
 export class PendingLocalStateStore<TKey> {
 	#firstUrl: string | undefined;

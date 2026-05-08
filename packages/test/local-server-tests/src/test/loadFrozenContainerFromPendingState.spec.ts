@@ -6,11 +6,10 @@
 import { strict as assert } from "assert";
 
 import { bufferToString, stringToBuffer } from "@fluid-internal/client-utils";
+import type { IContainer } from "@fluidframework/container-definitions/internal";
 import {
-	asLegacyAlpha,
 	createDetachedContainer,
 	loadFrozenContainerFromPendingState,
-	type ContainerAlpha,
 	type ILoaderProps,
 } from "@fluidframework/container-loader/internal";
 import type { FluidObject } from "@fluidframework/core-interfaces/internal";
@@ -41,7 +40,7 @@ const toComparableArray = (dir: ISharedMap): [string, unknown][] =>
 
 // initialize loader and create a container function
 const initialize = async (): Promise<{
-	container: ContainerAlpha;
+	container: IContainer;
 	ITestFluidObject: ITestFluidObject;
 	urlResolver: LocalResolver;
 	codeLoader: LocalCodeLoader;
@@ -56,12 +55,10 @@ const initialize = async (): Promise<{
 			deltaConnectionServer,
 		});
 
-	const container = asLegacyAlpha(
-		await createDetachedContainer({
-			codeDetails,
-			...loaderProps,
-		}),
-	);
+	const container = await createDetachedContainer({
+		codeDetails,
+		...loaderProps,
+	});
 	const { ITestFluidObject }: FluidObject<TestFluidObject> =
 		(await container.getEntryPoint()) ?? {};
 	assert(

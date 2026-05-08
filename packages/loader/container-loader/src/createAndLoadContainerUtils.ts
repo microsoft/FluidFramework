@@ -238,7 +238,7 @@ export async function loadExistingContainer(
 
 /**
  * Properties required to load a frozen container from pending state.
- * @legacy @alpha
+ * @legacy @beta
  */
 export interface ILoadFrozenContainerFromPendingStateProps
 	extends ILoadExistingContainerProps {
@@ -251,7 +251,7 @@ export interface ILoadFrozenContainerFromPendingStateProps
 /**
  * Loads a frozen container from pending local state.
  * @param props - Properties required to load a frozen container from pending state.
- * @legacy @alpha
+ * @legacy @beta
  */
 export async function loadFrozenContainerFromPendingState(
 	props: ILoadFrozenContainerFromPendingStateProps,
@@ -264,7 +264,7 @@ export async function loadFrozenContainerFromPendingState(
 
 /**
  * Properties for {@link captureFullContainerState}.
- * @legacy @alpha
+ * @legacy @beta
  */
 export interface ICaptureFullContainerStateProps {
 	/**
@@ -328,7 +328,7 @@ export interface ICaptureFullContainerStateProps {
  * monitoring context to gate or attribute. If a future change introduces
  * config-gated behavior or runtime-attributed telemetry, add the wiring
  * back together with that change.
- * @legacy @alpha
+ * @legacy @beta
  */
 export async function captureFullContainerState({
 	urlResolver,
