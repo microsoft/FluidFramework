@@ -46,6 +46,8 @@ interface ApplyLifecycleObservations {
 	wasReadOnlyAtStart: boolean;
 	/** Captured during the start handler; undefined when the test opts not to enter staging mode. */
 	stageControls: StageControlsAlpha | undefined;
+	/** Container runtime reference captured from `provideEntryPoint` for tests that need to call into it. */
+	runtime: IContainerRuntime | undefined;
 }
 
 class CountingDataObject extends DataObject {
@@ -90,6 +92,7 @@ function createRuntimeFactory(
 				existing,
 				registryEntries: [[dataObjectFactory.type, Promise.resolve(dataObjectFactory)]],
 				provideEntryPoint: async (rt: IContainerRuntime) => {
+					observations.runtime = rt;
 					const rtWithReadOnly = rt as RuntimeWithReadOnly;
 					rt.on("pendingStateApplyStart", () => {
 						observations.startCount += 1;
@@ -122,6 +125,7 @@ const newObservations = (): ApplyLifecycleObservations => ({
 	endCount: 0,
 	wasReadOnlyAtStart: false,
 	stageControls: undefined,
+	runtime: undefined,
 });
 
 async function getDataObject(container: IContainer): Promise<CountingDataObject> {
@@ -396,5 +400,135 @@ describe("Pending state apply lifecycle", () => {
 			undefined,
 			"observer never saw discarded staged op",
 		);
+	});
+
+	it("two containers loading the same pending state — A discards, B commits, A sees B's ops", async () => {
+		// Captures pending state with one of every rollback op type the
+		// runtime dispatches on `discardChanges`:
+		//   - FluidDataStoreOp (a `set` on the root SharedMap)
+		//   - Attach (data-store: `createDataStore` while disconnected)
+		//   - Alias (`trySetAlias` while disconnected — promise stays unresolved
+		//     until reconnect, but the Alias op is queued in pending state)
+		//   - BlobAttach (`uploadBlob` while disconnected)
+		//   - IdAllocation (implicit via `createDataStore` minting a new id)
+		// Then loads two containers from the same `pendingState` string:
+		//   - A enters staging in the start hook and discards.
+		//   - B enters staging in the start hook and commits.
+		// Both stay open. After B's commit propagates through the server,
+		// A receives B's ops and its local view ends up identical to B's —
+		// every rollback path's wake-up logic has to fire correctly for that.
+		const deltaConnectionServer = LocalDeltaConnectionServer.create();
+
+		// 1. Capture pending state with one op per rollback type.
+		const captureObs = newObservations();
+		const captureFactory = createRuntimeFactory(captureObs, {
+			enterStagingModeOnStart: false,
+		});
+		const { codeDetails, urlResolver, loaderProps } = createLoader({
+			deltaConnectionServer,
+			runtimeFactory: captureFactory,
+		});
+		const captureContainer = asLegacyAlphaContainer(
+			await createDetachedContainer({ ...loaderProps, codeDetails }),
+		);
+		const captureDataObject = await getDataObject(captureContainer);
+		captureDataObject.set("acked-while-attached", "value");
+		await captureContainer.attach(urlResolver.createCreateNewRequest("dual-container-test"));
+		const url = await captureContainer.getAbsoluteUrl("");
+		assert(url !== undefined, "url required");
+		await new Promise<void>((resolve) =>
+			captureContainer.isDirty ? captureContainer.once("saved", () => resolve()) : resolve(),
+		);
+
+		// Disconnect → every op below stashes as pending.
+		captureContainer.disconnect();
+
+		// FluidDataStoreOp + IdAllocation: a plain DDS set.
+		captureDataObject.set("offline-dds-key", "offline-dds-value");
+
+		// Attach + Alias: createDataStore mints a new internalId (IdAllocation),
+		// trySetAlias submits the Alias op. The promise stays unresolved until
+		// reconnect; we don't await it.
+		assert(captureObs.runtime !== undefined, "captureObs runtime captured");
+		const childDs = await captureObs.runtime.createDataStore(dataObjectFactory.type);
+		const childAlias = "child";
+		void childDs.trySetAlias(childAlias); // Alias op queued; do not await.
+
+		// BlobAttach is intentionally omitted from this dual-container scenario:
+		// `uploadBlob` requires a storage round-trip and blocks while
+		// disconnected, which would deadlock the capture step. BlobAttach
+		// rollback + delayed-ack wake-up are exercised separately by the
+		// `BlobManager.rollbackAttach` unit tests and the `popStagedBatches`
+		// `opMetadata`-threading test in `pendingStateManager.spec.ts`.
+
+		const pendingState = await captureContainer.getPendingLocalState();
+		captureContainer.close();
+
+		// 2. Container A: stages in start hook, then discards.
+		const obsA = newObservations();
+		const factoryA = createRuntimeFactory(obsA, { enterStagingModeOnStart: true });
+		const { loaderProps: lpA } = createLoader({
+			deltaConnectionServer,
+			runtimeFactory: factoryA,
+		});
+		const containerA = await loadExistingContainer({
+			...lpA,
+			request: { url },
+			pendingLocalState: pendingState,
+		});
+		const dataA = await getDataObject(containerA);
+		assert(obsA.stageControls !== undefined, "A captured stage controls");
+		obsA.stageControls.discardChanges();
+
+		// A's local view — none of the offline edits should be observable.
+		assert.strictEqual(dataA.get("offline-dds-key"), undefined, "A: DDS edit rolled back");
+		assert.strictEqual(
+			await obsA.runtime?.getAliasedDataStoreEntryPoint(childAlias),
+			undefined,
+			"A: aliased child not visible after discard",
+		);
+
+		// 3. Container B: stages in start hook, then commits and reconnects so
+		//    its previously-staged ops fly to the server.
+		const obsB = newObservations();
+		const factoryB = createRuntimeFactory(obsB, { enterStagingModeOnStart: true });
+		const { loaderProps: lpB } = createLoader({
+			deltaConnectionServer,
+			runtimeFactory: factoryB,
+		});
+		const containerB = await loadExistingContainer({
+			...lpB,
+			request: { url },
+			pendingLocalState: pendingState,
+		});
+		const dataB = await getDataObject(containerB);
+		assert(obsB.stageControls !== undefined, "B captured stage controls");
+		obsB.stageControls.commitChanges();
+
+		// Wait for B's pending ops to be acked by the server.
+		await new Promise<void>((resolve) =>
+			containerB.isDirty ? containerB.once("saved", () => resolve()) : resolve(),
+		);
+
+		// 4. Both containers stayed open through staging exit.
+		assert.strictEqual(containerA.closed, false, "A stayed open through discard");
+		assert.strictEqual(containerB.closed, false, "B stayed open through commit");
+
+		// 5. A receives B's ops via the server. Wake-up paths fire on inbound
+		//    Attach / Alias / DDS ops for the rolled-back ids.
+		await new Promise<void>((resolve) =>
+			containerA.isDirty ? containerA.once("saved", () => resolve()) : resolve(),
+		);
+		// A small settle window — the inbound batches need to land on A.
+		await new Promise<void>((resolve) => setTimeout(resolve, 100));
+
+		assert.strictEqual(dataA.get("offline-dds-key"), "offline-dds-value", "A sees B's DDS op");
+		assert.notStrictEqual(
+			await obsA.runtime?.getAliasedDataStoreEntryPoint(childAlias),
+			undefined,
+			"A sees B's aliased child after wake-up",
+		);
+		// And B's own state is consistent — the commit kept everything visible.
+		assert.strictEqual(dataB.get("offline-dds-key"), "offline-dds-value");
 	});
 });
