@@ -8,13 +8,11 @@ export {
 	BundleFileData,
 	GetBundleSummariesFromAnalyzerArgs,
 	getAnalyzerFilePathsFromFolder,
+	getAnalyzerJsonFromContents,
 	getAnalyzerJsonFromFileSystem,
-	getAnalyzerJsonFromZip,
 	getAnalyzerPathsFromFileSystem,
-	getAnalyzerPathsFromZipObject,
 	getAzureDevopsApi,
 	getBundleSummariesFromAnalyzer,
-	getZipObjectFromArtifact,
 	IADOConstants,
 	SizeComparison,
 } from "./ADO/index.js";
@@ -30,5 +28,4 @@ export {
 	getAllFilesInDirectory,
 	getBaselineCommit,
 	getBuilds,
-	unzipStream,
 } from "./utilities/index.js";
