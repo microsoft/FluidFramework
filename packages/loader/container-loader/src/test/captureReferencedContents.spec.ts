@@ -332,10 +332,9 @@ describe("captureReferencedContents", () => {
 			// gcState may contain unreferenced/tombstoned nodes for data stores,
 			// channels, etc. Those paths must not be confused with blob localIds
 			// — the attachment filter only looks at /_blobs/ paths.
-			const { snapshot, storage } = attachmentsOnly(
-				[["live", "live-storage"]],
-				{ "live-storage": "LIVE" },
-			);
+			const { snapshot, storage } = attachmentsOnly([["live", "live-storage"]], {
+				"live-storage": "LIVE",
+			});
 			const gcData: IGcSnapshotData = {
 				gcState: {
 					gcNodes: {
@@ -473,10 +472,7 @@ describe("captureReferencedContents", () => {
 		});
 
 		it("returns [] when metadata is undefined", () => {
-			assert.deepStrictEqual(
-				extractBlobAttachReferences({ metadata: undefined }),
-				[],
-			);
+			assert.deepStrictEqual(extractBlobAttachReferences({ metadata: undefined }), []);
 		});
 
 		it("returns [] when metadata is null", () => {
@@ -491,17 +487,11 @@ describe("captureReferencedContents", () => {
 		});
 
 		it("returns [] when localId is missing", () => {
-			assert.deepStrictEqual(
-				extractBlobAttachReferences({ metadata: { blobId: "S" } }),
-				[],
-			);
+			assert.deepStrictEqual(extractBlobAttachReferences({ metadata: { blobId: "S" } }), []);
 		});
 
 		it("returns [] when blobId is missing", () => {
-			assert.deepStrictEqual(
-				extractBlobAttachReferences({ metadata: { localId: "L" } }),
-				[],
-			);
+			assert.deepStrictEqual(extractBlobAttachReferences({ metadata: { localId: "L" } }), []);
 		});
 
 		it("returns [] when localId is not a string", () => {
@@ -654,12 +644,9 @@ describe("captureReferencedContents", () => {
 				{ localId: "dup", storageId: "dup-s" },
 			];
 			const storage = mockStorage({});
-			const result = await inlineAttachmentBlobsByReference(
-				refs,
-				storage,
-				new Set(["drop"]),
-				{ "dup-s": toB64("X") },
-			);
+			const result = await inlineAttachmentBlobsByReference(refs, storage, new Set(["drop"]), {
+				"dup-s": toB64("X"),
+			});
 			assert.deepStrictEqual(result, {});
 		});
 	});
