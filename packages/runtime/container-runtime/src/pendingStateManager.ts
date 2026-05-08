@@ -620,6 +620,15 @@ export class PendingStateManager implements IDisposable {
 							emptyBatch: true,
 						} satisfies LocalEmptyBatchPlaceholder["localOpMetadata"]; // equivalent to applyStashedOp for empty batch
 						patchbatchInfo(nextMessage); // Back compat
+						// Mark empty-batch placeholders staged on the same conditions as
+						// real ops. Otherwise an unacked placeholder at the tail of a
+						// staged-rehydrated queue would trip 0xb89 in popStagedBatches:
+						// the LIFO walk stops at the non-staged placeholder, then the
+						// trailing assert sees earlier staged messages still in queue.
+						if (this._stageRehydratedOps && nextMessage.sequenceNumber === undefined) {
+							nextMessage.batchInfo.staged = true;
+							nextMessage.stagedFromStashedRehydration = true;
+						}
 						this.pendingMessages.push(nextMessage);
 						continue;
 					}

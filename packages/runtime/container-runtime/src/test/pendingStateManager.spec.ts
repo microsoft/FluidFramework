@@ -1312,6 +1312,54 @@ describe("Pending State Manager", () => {
 			assert.strictEqual(realOp.stagedFromStashedRehydration, true);
 		});
 
+		it("stages empty-batch placeholders so popStagedBatches drains them too", async () => {
+			// `[staged-rehydrated op, unacked empty-batch placeholder]` at the
+			// tail of the queue. Without staging the placeholder, popStagedBatches
+			// stops at the non-staged tail and trips 0xb89 because earlier staged
+			// messages remain in the queue.
+			const messages: IPendingMessage[] = [
+				{
+					type: "message",
+					content: '{"type":"component"}',
+					referenceSequenceNumber: 0,
+					localOpMetadata: undefined,
+					opMetadata: undefined,
+					batchInfo: { clientId: "CLIENT_ID", batchStartCsn: 1, length: 1, staged: false },
+					runtimeOp: undefined,
+				},
+				{
+					type: "message",
+					content: '{"type":"groupedBatch","contents":[]}',
+					referenceSequenceNumber: 0,
+					localOpMetadata: undefined,
+					opMetadata: undefined,
+					batchInfo: { clientId: "CLIENT_ID", batchStartCsn: 2, length: 1, staged: false },
+					runtimeOp: undefined,
+				},
+			];
+
+			const psm = new PendingStateManager(
+				{
+					applyStashedOp: async () => undefined,
+					clientId: () => "clientId",
+					connected: () => true,
+					reSubmitBatch: () => {},
+					isActiveConnection: () => false,
+					isAttached: () => true,
+					isInStagingMode: () => true,
+				},
+				{ pendingStates: messages },
+				logger,
+			) as unknown as PendingStateManager_WithPrivates;
+
+			await psm.applyStashedOpsAt();
+
+			// Both messages are staged; popStagedBatches drains both without
+			// throwing 0xb89.
+			assert.doesNotThrow(() => psm.popStagedBatches(() => {}));
+			assert.strictEqual(psm.pendingMessages.toArray().length, 0);
+		});
+
 		it("stages every un-acked rehydrated op including non-FluidDataStoreOp types", async () => {
 			// All un-acked stashed ops are staged regardless of runtime-op type when
 			// the host enters staging mode. Non-stageable types (Attach, Alias,

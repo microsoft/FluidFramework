@@ -1470,6 +1470,13 @@ export class ChannelCollection
 		telemetryProps: ITelemetryPropertiesExt,
 	): Promise<void> {
 		for (const [contextId, context] of this.contexts) {
+			// Skip data stores whose Attach was rolled back via discardChanges
+			// on the staging-on-rehydration path. They are not on the server,
+			// so a summarizer running between rollback and wake-up must not
+			// write them into the next snapshot.
+			if (this.rolledBackAttachIds.has(contextId)) {
+				continue;
+			}
 			// Summarizer client and hence GC works only with clients with no local changes. A data store in
 			// attaching state indicates an op was sent to attach a local data store, and the the attach op
 			// had not yet round tripped back to the client.
@@ -1671,6 +1678,12 @@ export class ChannelCollection
 		const outboundRoutes: string[] = [];
 		// Getting this information is a performance optimization that reduces network calls for virtualized datastores
 		for (const [contextId, context] of this.contexts) {
+			// Rolled-back attaches are hidden from GC outbound routes so they
+			// aren't kept alive by self-references that won't appear in the
+			// next summary either.
+			if (this.rolledBackAttachIds.has(contextId)) {
+				continue;
+			}
 			const isRootDataStore = await context.isRoot(this.aliasedDataStores);
 			if (isRootDataStore) {
 				outboundRoutes.push(`/${contextId}`);

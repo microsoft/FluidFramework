@@ -955,6 +955,12 @@ export class FluidDataStoreRuntime
 				sendBunchedMessages();
 			}
 
+			// Wake up any rolled-back DDS attach: an inbound op routed to
+			// this address means the server has the channel, so it should
+			// once again be visible locally. Cleared atomically with op
+			// processing — symmetric to processAttachMessages's wake-up.
+			this.rolledBackAttachIds.delete(contentsEnvelope.address);
+
 			currentMessagesContent.push({
 				contents: contentsEnvelope.contents,
 				...restOfMessagesContent,
@@ -1078,6 +1084,12 @@ export class FluidDataStoreRuntime
 	private getOutboundRoutes(): string[] {
 		const outboundRoutes: string[] = [];
 		for (const [contextId] of this.contexts) {
+			// Rolled-back attaches are hidden from GC outbound routes so
+			// they aren't kept alive by self-references that won't be in
+			// the next summary anyway.
+			if (this.rolledBackAttachIds.has(contextId)) {
+				continue;
+			}
 			outboundRoutes.push(`${this.absolutePath}/${contextId}`);
 		}
 		return outboundRoutes;
@@ -1233,6 +1245,13 @@ export class FluidDataStoreRuntime
 		visitor: (contextId: string, context: IChannelContext) => Promise<void>,
 	): Promise<void> {
 		for (const [contextId, context] of this.contexts) {
+			// Skip channels whose Attach was rolled back via discardChanges on
+			// the staging-on-rehydration path. They are not on the server, so
+			// a summarizer running between rollback and wake-up must not write
+			// them into the next snapshot.
+			if (this.rolledBackAttachIds.has(contextId)) {
+				continue;
+			}
 			const isAttached = this.isChannelAttached(contextId);
 			// We are not expecting local dds! Summary / GC data may not capture local state.
 			assert(isAttached, 0x17f /* "Not expecting detached channels during summarize" */);
