@@ -120,9 +120,13 @@ class FrozenDocumentService
 	}
 	async connectToDeltaStream(_client: IClient): Promise<IDocumentDeltaConnection> {
 		if (this.readOnly) {
-			// connectionManager short-circuits via policies.storageOnly before reaching here in
-			// the read-only path; this is a defensive fallback.
-			return new FrozenDeltaStream();
+			// connectionManager short-circuits via policies.storageOnly before reaching here
+			// in the read-only path; reaching this branch indicates a non-connectionManager
+			// consumer or a regression of the short-circuit. Throw to surface the misuse
+			// rather than silently produce a working stream.
+			throw new Error(
+				"FrozenDocumentService is read-only; connectToDeltaStream should not be called (connectionManager short-circuits via policies.storageOnly)",
+			);
 		}
 		// Writable path: hand out a fresh WritableFrozenDeltaStream regardless of client.mode
 		// or whether this is the initial connect or a reconnect. The stream's own mode is
