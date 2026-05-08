@@ -531,6 +531,15 @@ export const FluidClientVersion = {
 	 * - ModularChangeFormatVersion.v5 - written when minVersionForCollab \>= 2.80
 	 */
 	v2_80: "2.80.0",
+
+	/**
+	 * Fluid Framework Client 2.100 and newer.
+	 * @remarks
+	 * New formats introduced in 2.100:
+	 * - EditManagerSummaryFormatVersion.v3 - written when minVersionForCollab \>= 2.100
+	 * - DetachedFieldIndexSummaryFormatVersion.v3 - written when minVersionForCollab \>= 2.100
+	 */
+	v2_100: "2.100.0",
 } as const satisfies Record<string, MinimumVersionForCollab>;
 
 /**
