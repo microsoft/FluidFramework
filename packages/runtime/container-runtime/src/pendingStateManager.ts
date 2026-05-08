@@ -809,6 +809,15 @@ export class PendingStateManager implements IDisposable {
 		);
 
 		pendingMessage.sequenceNumber = sequenceNumber;
+		// Clear staging flags on every ack'd message, not just the batch front.
+		// `onLocalBatchBegin` only touches `peekFront()`, and after JSON rehydration
+		// each message has its own `batchInfo` instance, so tail messages of a
+		// multi-message rehydrated batch could otherwise carry the flags into
+		// `savedOps` → re-stash → permanent skip in `replayPendingStates`.
+		if (pendingMessage.stagedFromStashedRehydration === true) {
+			pendingMessage.stagedFromStashedRehydration = false;
+			pendingMessage.batchInfo.staged = false;
+		}
 		this.savedOps.push(toSerializableForm(pendingMessage));
 
 		this.pendingMessages.shift();
@@ -1001,12 +1010,19 @@ export class PendingStateManager implements IDisposable {
 				seenStagedBatch = true;
 				pendingMessage.batchInfo.staged = false; // Clear staged flag so we can submit
 				pendingMessage.stagedFromStashedRehydration = false;
-			} else if (pendingMessage.stagedFromStashedRehydration === true) {
+			} else if (
+				pendingMessage.batchInfo.staged === true &&
+				pendingMessage.stagedFromStashedRehydration === true
+			) {
 				// Rehydrated ops staged at apply time stay in the queue until the
 				// host explicitly commits or discards. Skip them on the normal
 				// (non-committing) replay path so they don't go to the wire and
 				// don't trip `submit()`'s stage-only-stageable-types assertion
 				// (`0xbba`) for runtime-op types like Attach / Alias / BlobAttach.
+				// Both flags are required so a stale-ack-cleared message (where
+				// `batchInfo.staged` was reset but `stagedFromStashedRehydration`
+				// wasn't, before processNextPendingMessage's per-message cleanup)
+				// doesn't get stuck on this skip path.
 				this.pendingMessages.push(pendingMessage);
 				continue;
 			}
