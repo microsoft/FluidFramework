@@ -95,6 +95,15 @@
 		"sinon": "^18.0.1",
 		"typescript": "~5.4.5"
 	},
+	"fluidBuild": {
+		"_tasks_comment": "This package does not have a proper ESM build. It depends on CommonJS from property-changeset.",
+		"tasks": {
+			"build:esnext": [
+				"...",
+				"@fluid-experimental/property-changeset#tsc"
+			]
+		}
+	},
 	"typeValidation": {
 		"disabled": true
 	}
