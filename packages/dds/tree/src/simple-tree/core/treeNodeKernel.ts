@@ -383,7 +383,7 @@ class KernelEventBuffer implements Listenable<KernelEvents> {
 	 */
 	readonly #disposeOnDiscardListener = flushEventsEmitter.on(
 		"discard",
-		this.discard.bind(this),
+		this.clearBuffers.bind(this),
 	);
 
 	readonly #events = createEmitter<KernelEvents>();
@@ -571,15 +571,13 @@ class KernelEventBuffer implements Listenable<KernelEvents> {
 				changedFields: this.#childrenChangedBuffer,
 				fieldMarks: this.#fieldMarksBuffer,
 			});
-			this.#childrenChangedBuffer.clear();
-			this.#fieldMarksBuffer.clear();
-			this.#invalidatedFieldMarkKeys.clear();
 		}
 
 		if (this.#subTreeChangedBuffer) {
 			this.#events.emit("subtreeChangedAfterBatch");
-			this.#subTreeChangedBuffer = false;
 		}
+
+		this.clearBuffers();
 	}
 
 	/**
@@ -590,8 +588,9 @@ class KernelEventBuffer implements Listenable<KernelEvents> {
 	 * (e.g. a rolled-back synchronous transaction) so the buffered events represent net-zero
 	 * changes that should not be observed by listeners.
 	 */
-	public discard(): void {
+	public clearBuffers(): void {
 		this.#assertNotDisposed();
+
 		this.#childrenChangedBuffer.clear();
 		this.#fieldMarksBuffer.clear();
 		this.#invalidatedFieldMarkKeys.clear();
