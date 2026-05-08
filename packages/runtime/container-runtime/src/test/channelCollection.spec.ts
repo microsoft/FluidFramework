@@ -515,6 +515,34 @@ describe("Runtime", () => {
 				assert.strictEqual(after, undefined, "context is hidden after rollback");
 			});
 
+			it("rollbackAttach also hides the data store from request() (URL-route path)", async () => {
+				// Seed a context so request() would normally resolve it.
+				const localContext = channelCollection.createDataStoreContext([
+					"TestPackage",
+				]) as LocalFluidDataStoreContext;
+				const id = localContext.id;
+				localContext.setAttachState(AttachState.Attaching);
+				localContext.setAttachState(AttachState.Attached);
+				(
+					channelCollection as unknown as { readonly contexts: DataStoreContexts }
+				).contexts.bind(id);
+
+				channelCollection.rollbackAttach({
+					id,
+					type: "TestPackage",
+					snapshot: { id: "snapshot-id", entries: [], blobs: [] } as ITree,
+				});
+
+				// Request-URL routing must observe the same hidden view as
+				// `getDataStoreIfAvailable`; otherwise the rollback contract
+				// is bypassed for handle-resolution paths. The 404-style
+				// rejection from `getDataStore` propagates as a thrown error.
+				await assert.rejects(
+					channelCollection.request({ url: id }),
+					"request() must reject for a rolled-back attach id",
+				);
+			});
+
 			it("processAttachMessages wakes a hidden data store (delayed-ack wake-up)", async () => {
 				// Setup: bind a context, then mark its attach as rolled back.
 				const id = "wake-target";

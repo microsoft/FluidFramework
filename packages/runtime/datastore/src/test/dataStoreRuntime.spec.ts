@@ -510,6 +510,26 @@ describe("FluidDataStoreRuntime.isDirty tracking", () => {
 				"Existing context should be restored after wake-up",
 			);
 		});
+
+		it("request() also hides rolled-back attach ids (handle path)", async () => {
+			const runtime = createRuntime("rollbackAttachRequest");
+			assert(typeof runtime.rollback === "function", "rollback must be present");
+			sinon
+				.stub(runtime, "contexts")
+				.get(() => new Map([[attachMessage.id, { getChannel: () => ({}) }]]));
+
+			runtime.submit(DataStoreMessageType.Attach, attachMessage, undefined);
+			runtime.rollback(DataStoreMessageType.Attach, attachMessage, undefined);
+
+			// Request-by-handle must also see the hidden state, otherwise the
+			// rollback contract is bypassed for handle-resolution paths.
+			const response = await runtime.request({ url: attachMessage.id });
+			assert.strictEqual(
+				response.status,
+				404,
+				"request() must return 404 for a rolled-back attach id",
+			);
+		});
 	});
 });
 

@@ -752,9 +752,7 @@ export class BlobManager {
 	 * wasn't acked, the blob becomes locally unresolvable, which is correct.
 	 */
 	public rollbackAttach(metadata: unknown): void {
-		if (!isBlobMetadata(metadata)) {
-			return;
-		}
+		assert(isBlobMetadata(metadata), "Expected blob metadata for a BlobAttach rollback");
 		const { localId } = metadata;
 		const localBlobRecord = this.localBlobCache.get(localId);
 		if (localBlobRecord?.state === "attaching") {

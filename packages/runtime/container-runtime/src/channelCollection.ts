@@ -1102,6 +1102,15 @@ export class ChannelCollection
 			);
 		}
 
+		// If the attach was rolled back via discardChanges on the staging-on-
+		// rehydration path, the data store is locally hidden until a remote op
+		// resurrects it. Hide it from request-URL routing too so handle paths
+		// see the same view as `getDataStoreIfAvailable`.
+		if (this.rolledBackAttachIds.has(id)) {
+			const request: IRequest = { url: id };
+			throw responseToException(create404Response(request), request);
+		}
+
 		const context = await this.contexts.getBoundOrRemoted(id, headerData.wait);
 		if (context === undefined) {
 			// The requested data store does not exits. Throw a 404 response exception.

@@ -606,8 +606,11 @@ export class FluidDataStoreRuntime
 			}
 
 			if (id !== undefined) {
-				// Check for a data type reference first
-				const context = this.contexts.get(id);
+				// Check for a data type reference first. Skip ids whose attach was
+				// rolled back via `discardChanges` on the staging-on-rehydration
+				// path so request-by-handle sees the same hidden state as
+				// `getChannel`.
+				const context = this.rolledBackAttachIds.has(id) ? undefined : this.contexts.get(id);
 				if (context !== undefined && parser.isLeaf(1)) {
 					try {
 						const channel = await context.getChannel();
