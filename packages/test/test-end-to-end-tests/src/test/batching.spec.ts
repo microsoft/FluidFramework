@@ -103,11 +103,6 @@ describeCompat("Flushing ops", "NoCompat", (getTestObjectProvider, apis) => {
 	let testContainerConfig: ITestContainerConfig = {
 		fluidDataObjectType: DataObjectFactoryType.Test,
 		registry,
-		loaderProps: {
-			configProvider: configProvider({
-				"Fluid.Container.enableOfflineFull": true,
-			}),
-		},
 	};
 
 	let provider: ITestObjectProvider;

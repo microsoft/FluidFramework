@@ -95,10 +95,7 @@ export class SnapshotRefresher implements IDisposable {
 
 		this.snapshotRefreshTimeoutMs = snapshotRefreshTimeoutMs ?? this.snapshotRefreshTimeoutMs;
 
-		this.#snapshotRefreshEnabled =
-			this.offlineLoadEnabled &&
-			(this.mc.config.getBoolean("Fluid.Container.enableOfflineSnapshotRefresh") ??
-				this.mc.config.getBoolean("Fluid.Container.enableOfflineFull")) === true;
+		this.#snapshotRefreshEnabled = this.offlineLoadEnabled;
 
 		this.refreshTimer = this.#snapshotRefreshEnabled
 			? new Timer(this.snapshotRefreshTimeoutMs, () => this.tryRefreshSnapshot())

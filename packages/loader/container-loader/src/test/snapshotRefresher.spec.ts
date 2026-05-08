@@ -15,7 +15,7 @@ import type {
 	ISnapshotTree,
 	IVersion,
 } from "@fluidframework/driver-definitions/internal";
-import { MockLogger, mixinMonitoringContext } from "@fluidframework/telemetry-utils/internal";
+import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 import { useFakeTimers, type SinonFakeTimers } from "sinon";
 
 import type {
@@ -52,13 +52,6 @@ const initialSnapshot: ISnapshot = {
 	snapshotTree,
 	snapshotFormatV: 1,
 };
-
-function enableOfflineSnapshotRefresh(logger: ITelemetryBaseLogger): ITelemetryBaseLogger {
-	return mixinMonitoringContext(logger, {
-		getRawConfig: (name) =>
-			name === "Fluid.Container.enableOfflineSnapshotRefresh" ? true : undefined,
-	}).logger;
-}
 
 class MockStorageAdapter implements ISerializedStateManagerDocumentStorageService {
 	public readonly blobs = new Map<string, ArrayBuffer>();
@@ -209,7 +202,7 @@ describe("SnapshotRefresher", () => {
 
 	describe("Constructor and Initialization", () => {
 		it("should create refresher with offline load enabled", () => {
-			const logger = enableOfflineSnapshotRefresh(mockLogger);
+			const logger = mockLogger;
 			const refresher = createRefresher(true, () => true, undefined, logger);
 			assert.strictEqual(refresher.disposed, false, "Refresher should not be disposed");
 			refresher.dispose();
@@ -222,7 +215,7 @@ describe("SnapshotRefresher", () => {
 		});
 
 		it("should use custom timeout when provided", () => {
-			const logger = enableOfflineSnapshotRefresh(mockLogger);
+			const logger = mockLogger;
 			const customTimeout = 5000;
 			const refresher = createRefresher(true, () => true, customTimeout, logger);
 			refresher.startTimer();
@@ -239,7 +232,7 @@ describe("SnapshotRefresher", () => {
 		});
 
 		it("should use default timeout when not provided", () => {
-			const logger = enableOfflineSnapshotRefresh(mockLogger);
+			const logger = mockLogger;
 			const refresher = createRefresher(true, () => true, undefined, logger);
 			refresher.startTimer();
 
@@ -257,7 +250,7 @@ describe("SnapshotRefresher", () => {
 
 	describe("Timer Management", () => {
 		it("should start timer when startTimer is called", async () => {
-			const logger = enableOfflineSnapshotRefresh(mockLogger);
+			const logger = mockLogger;
 			const timeout = 1000;
 			const refresher = createRefresher(true, () => true, timeout, logger);
 
@@ -273,7 +266,7 @@ describe("SnapshotRefresher", () => {
 		});
 
 		it("should restart timer when restartTimer is called", async () => {
-			const logger = enableOfflineSnapshotRefresh(mockLogger);
+			const logger = mockLogger;
 			const timeout = 1000;
 			const refresher = createRefresher(true, () => true, timeout, logger);
 
@@ -313,27 +306,11 @@ describe("SnapshotRefresher", () => {
 
 			refresher.dispose();
 		});
-
-		it("should not trigger refresh when snapshot refresh is not enabled", () => {
-			const timeout = 1000;
-			const refresher = createRefresher(true, () => true, timeout); // No config enabled
-
-			refresher.startTimer();
-			clock.tick(timeout);
-
-			assert.strictEqual(
-				mockStorage.getVersionsCallCount,
-				0,
-				"getVersions should not be called when snapshot refresh is not enabled",
-			);
-
-			refresher.dispose();
-		});
 	});
 
 	describe("tryRefreshSnapshot", () => {
 		it("should trigger refresh manually", async () => {
-			const logger = enableOfflineSnapshotRefresh(mockLogger);
+			const logger = mockLogger;
 			const refresher = createRefresher(true, () => true, undefined, logger);
 
 			refresher.tryRefreshSnapshot();
@@ -348,7 +325,7 @@ describe("SnapshotRefresher", () => {
 		});
 
 		it("should not trigger refresh if already in progress", async () => {
-			const logger = enableOfflineSnapshotRefresh(mockLogger);
+			const logger = mockLogger;
 			const refresher = createRefresher(true, () => true, undefined, logger);
 
 			refresher.tryRefreshSnapshot();
@@ -364,7 +341,7 @@ describe("SnapshotRefresher", () => {
 		});
 
 		it("should not trigger refresh if disposed", async () => {
-			const logger = enableOfflineSnapshotRefresh(mockLogger);
+			const logger = mockLogger;
 			const refresher = createRefresher(true, () => true, undefined, logger);
 
 			refresher.dispose();
@@ -378,7 +355,7 @@ describe("SnapshotRefresher", () => {
 		});
 
 		it("should trigger refresh again after previous completes", async () => {
-			const logger = enableOfflineSnapshotRefresh(mockLogger);
+			const logger = mockLogger;
 			const refresher = createRefresher(true, () => true, undefined, logger);
 
 			// First refresh
@@ -404,7 +381,7 @@ describe("SnapshotRefresher", () => {
 
 	describe("Snapshot Refresh Flow", () => {
 		it("should fetch snapshot using getSnapshot API when supported", async () => {
-			const logger = enableOfflineSnapshotRefresh(mockLogger);
+			const logger = mockLogger;
 			const refresher = createRefresher(true, () => true, undefined, logger);
 
 			mockStorage.uploadSummary(10);
@@ -432,7 +409,7 @@ describe("SnapshotRefresher", () => {
 		});
 
 		it("should fetch snapshot using getSnapshotTree API when getSnapshot not supported", async () => {
-			const logger = enableOfflineSnapshotRefresh(mockLogger);
+			const logger = mockLogger;
 			const refresher = createRefresher(true, () => false, undefined, logger);
 
 			mockStorage.uploadSummary(10);
@@ -463,7 +440,7 @@ describe("SnapshotRefresher", () => {
 		});
 
 		it("should handle refresh error and log telemetry", async () => {
-			const logger = enableOfflineSnapshotRefresh(mockLogger);
+			const logger = mockLogger;
 			const refresher = createRefresher(true, () => true, undefined, logger);
 
 			mockStorage.shouldFailGetVersions = true;
@@ -491,7 +468,7 @@ describe("SnapshotRefresher", () => {
 		});
 
 		it("should restart timer after successful refresh", async () => {
-			const logger = enableOfflineSnapshotRefresh(mockLogger);
+			const logger = mockLogger;
 			const timeout = 1000;
 			const refresher = createRefresher(true, () => true, timeout, logger);
 
@@ -524,7 +501,7 @@ describe("SnapshotRefresher", () => {
 		});
 
 		it("should not invoke callback if disposed during refresh", async () => {
-			const logger = enableOfflineSnapshotRefresh(mockLogger);
+			const logger = mockLogger;
 			const refresher = createRefresher(true, () => true, undefined, logger);
 
 			mockStorage.uploadSummary(10);
@@ -547,7 +524,7 @@ describe("SnapshotRefresher", () => {
 		});
 
 		it("should return -1 from refreshSnapshotP when disposed during refresh", async () => {
-			const logger = enableOfflineSnapshotRefresh(mockLogger);
+			const logger = mockLogger;
 			const refresher = createRefresher(true, () => true, undefined, logger);
 
 			mockStorage.uploadSummary(10);
@@ -568,7 +545,7 @@ describe("SnapshotRefresher", () => {
 
 	describe("clearLatestSnapshot", () => {
 		it("should clear latest snapshot and allow new refresh", async () => {
-			const logger = enableOfflineSnapshotRefresh(mockLogger);
+			const logger = mockLogger;
 			const refresher = createRefresher(true, () => true, undefined, logger);
 
 			mockStorage.uploadSummary(10);
@@ -616,7 +593,7 @@ describe("SnapshotRefresher", () => {
 		});
 
 		it("should clear timer on disposal", async () => {
-			const logger = enableOfflineSnapshotRefresh(mockLogger);
+			const logger = mockLogger;
 			const timeout = 1000;
 			const refresher = createRefresher(true, () => true, timeout, logger);
 
@@ -657,7 +634,7 @@ describe("SnapshotRefresher", () => {
 		});
 
 		it("should return promise when refresh is in progress", () => {
-			const logger = enableOfflineSnapshotRefresh(mockLogger);
+			const logger = mockLogger;
 			const refresher = createRefresher(true, () => true, undefined, logger);
 
 			refresher.tryRefreshSnapshot();
@@ -672,7 +649,7 @@ describe("SnapshotRefresher", () => {
 		});
 
 		it("should return undefined after refresh completes", async () => {
-			const logger = enableOfflineSnapshotRefresh(mockLogger);
+			const logger = mockLogger;
 			const refresher = createRefresher(true, () => true, undefined, logger);
 
 			mockStorage.uploadSummary(10);
@@ -693,7 +670,7 @@ describe("SnapshotRefresher", () => {
 		});
 
 		it("should return snapshot sequence number from promise", async () => {
-			const logger = enableOfflineSnapshotRefresh(mockLogger);
+			const logger = mockLogger;
 			const refresher = createRefresher(true, () => true, undefined, logger);
 
 			mockStorage.uploadSummary(42);
@@ -712,7 +689,7 @@ describe("SnapshotRefresher", () => {
 
 	describe("Group ID Snapshots", () => {
 		it("should fetch group ID snapshots when available and getSnapshot API is supported", async () => {
-			const logger = enableOfflineSnapshotRefresh(mockLogger);
+			const logger = mockLogger;
 			const mockStorageWithGroupIds = new MockStorageAdapter();
 
 			// Add group ID snapshots
@@ -752,7 +729,7 @@ describe("SnapshotRefresher", () => {
 		});
 
 		it("should not fetch group ID snapshots when getSnapshot API is not supported", async () => {
-			const logger = enableOfflineSnapshotRefresh(mockLogger);
+			const logger = mockLogger;
 			const mockStorageWithGroupIds = new MockStorageAdapter();
 
 			// Add group ID snapshots

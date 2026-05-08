@@ -963,9 +963,8 @@ export class Container
 
 		const offlineLoadEnabled =
 			this.isInteractiveClient &&
-			(this.mc.config.getBoolean("Fluid.Container.enableOfflineLoad") ??
-				this.mc.config.getBoolean("Fluid.Container.enableOfflineFull") ??
-				options.enableOfflineLoad !== false);
+			options.enableOfflineLoad !== false &&
+			this.mc.config.getBoolean("Fluid.Container.disableOfflineFull") !== true;
 		this.serializedStateManager = new SerializedStateManager(
 			this.subLogger,
 			this.storageAdapter,

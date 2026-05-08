@@ -10,7 +10,6 @@ import type {
 	IGetPendingLocalStateProps,
 	IRuntime,
 } from "@fluidframework/container-definitions/internal";
-import type { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { Deferred } from "@fluidframework/core-utils/internal";
 import {
 	type FetchSource,
@@ -24,7 +23,7 @@ import {
 	type ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
 import { getSnapshotTree } from "@fluidframework/driver-utils/internal";
-import { MockLogger, mixinMonitoringContext } from "@fluidframework/telemetry-utils/internal";
+import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 import { useFakeTimers, type SinonFakeTimers } from "sinon";
 
 import {
@@ -192,13 +191,6 @@ function generateSavedOp(seq: number): ISequencedDocumentMessage {
 	} as unknown as ISequencedDocumentMessage;
 }
 
-function enableOfflineSnapshotRefresh(logger: ITelemetryBaseLogger): ITelemetryBaseLogger {
-	return mixinMonitoringContext(logger, {
-		getRawConfig: (name) =>
-			name === "Fluid.Container.enableOfflineSnapshotRefresh" ? true : undefined,
-	}).logger;
-}
-
 describe("serializedStateManager", () => {
 	let logger: MockLogger;
 
@@ -210,7 +202,7 @@ describe("serializedStateManager", () => {
 		it("can't get pending local state when offline load disabled", async () => {
 			const storageAdapter = new MockStorageAdapter();
 			const serializedStateManager = new SerializedStateManager(
-				enableOfflineSnapshotRefresh(logger),
+				logger,
 				storageAdapter,
 				false,
 				eventEmitter,
@@ -232,7 +224,7 @@ describe("serializedStateManager", () => {
 		});
 		it("can get pending local state after attach", async () => {
 			const serializedStateManager = new SerializedStateManager(
-				enableOfflineSnapshotRefresh(logger),
+				logger,
 				failSometimeProxy<ISerializedStateManagerDocumentStorageService>({
 					loadedGroupIdSnapshots: {},
 				}),
@@ -257,7 +249,7 @@ describe("serializedStateManager", () => {
 			};
 			const storageAdapter = new MockStorageAdapter();
 			const serializedStateManager = new SerializedStateManager(
-				enableOfflineSnapshotRefresh(logger),
+				logger,
 				storageAdapter,
 				true,
 				eventEmitter,
@@ -282,7 +274,7 @@ describe("serializedStateManager", () => {
 		it("can fetch snapshot and get state from it", async () => {
 			const storageAdapter = new MockStorageAdapter();
 			const serializedStateManager = new SerializedStateManager(
-				enableOfflineSnapshotRefresh(logger),
+				logger,
 				storageAdapter,
 				true,
 				eventEmitter,
@@ -319,7 +311,7 @@ describe("serializedStateManager", () => {
 			const storageAdapter = new MockStorageAdapter();
 			const getLatestSnapshotInfoP = new Deferred<void>();
 			const serializedStateManager = new SerializedStateManager(
-				enableOfflineSnapshotRefresh(logger),
+				logger,
 				storageAdapter,
 				true,
 				eventEmitter,
@@ -369,7 +361,7 @@ describe("serializedStateManager", () => {
 			};
 			const storageAdapter = new MockStorageAdapter();
 			const serializedStateManager = new SerializedStateManager(
-				enableOfflineSnapshotRefresh(logger),
+				logger,
 				storageAdapter,
 				true,
 				eventEmitter,
@@ -434,7 +426,7 @@ describe("serializedStateManager", () => {
 				snapshotBlobs: pending.snapshotBlobs,
 			});
 			const serializedStateManager = new SerializedStateManager(
-				enableOfflineSnapshotRefresh(logger),
+				logger,
 				storageAdapter,
 				true,
 				eventEmitter,
@@ -474,7 +466,7 @@ describe("serializedStateManager", () => {
 				let saved = false;
 				const isDirtyF = (): boolean => (saved ? false : isDirty);
 				const serializedStateManager = new SerializedStateManager(
-					enableOfflineSnapshotRefresh(logger),
+					logger,
 					storageAdapter,
 					true,
 					eventEmitter,
@@ -535,7 +527,7 @@ describe("serializedStateManager", () => {
 				const isDirtyF = (): boolean => (saved ? false : isDirty);
 				const storageAdapter = new MockStorageAdapter();
 				const serializedStateManager = new SerializedStateManager(
-					enableOfflineSnapshotRefresh(logger),
+					logger,
 					storageAdapter,
 					true,
 					eventEmitter,
@@ -586,7 +578,7 @@ describe("serializedStateManager", () => {
 				const isDirtyF = (): boolean => (saved ? false : isDirty);
 				const storageAdapter = new MockStorageAdapter();
 				const serializedStateManager = new SerializedStateManager(
-					enableOfflineSnapshotRefresh(logger),
+					logger,
 					storageAdapter,
 					true,
 					eventEmitter,
@@ -648,7 +640,7 @@ describe("serializedStateManager", () => {
 				};
 				const storageAdapter = new MockStorageAdapter();
 				const serializedStateManager = new SerializedStateManager(
-					enableOfflineSnapshotRefresh(logger),
+					logger,
 					storageAdapter,
 					true,
 					eventEmitter,
@@ -679,7 +671,7 @@ describe("serializedStateManager", () => {
 				const isDirtyF = (): boolean => (saved ? false : isDirty);
 				const storageAdapter = new MockStorageAdapter();
 				const serializedStateManager = new SerializedStateManager(
-					enableOfflineSnapshotRefresh(logger),
+					logger,
 					storageAdapter,
 					true,
 					eventEmitter,
@@ -749,7 +741,7 @@ describe("serializedStateManager", () => {
 				const isDirtyF = (): boolean => (saved ? false : isDirty);
 				const storageAdapter = new MockStorageAdapter();
 				const serializedStateManager = new SerializedStateManager(
-					enableOfflineSnapshotRefresh(logger),
+					logger,
 					storageAdapter,
 					true,
 					eventEmitter,
@@ -798,7 +790,7 @@ describe("serializedStateManager", () => {
 				};
 				const storageAdapter = new MockStorageAdapter();
 				const serializedStateManager = new SerializedStateManager(
-					enableOfflineSnapshotRefresh(logger),
+					logger,
 					storageAdapter,
 					true,
 					eventEmitter,
@@ -832,7 +824,7 @@ describe("serializedStateManager", () => {
 				};
 				const storageAdapter = new MockStorageAdapter();
 				const serializedStateManager = new SerializedStateManager(
-					enableOfflineSnapshotRefresh(logger),
+					logger,
 					storageAdapter,
 					true,
 					eventEmitter,
@@ -882,7 +874,7 @@ describe("serializedStateManager", () => {
 				const isDirtyF = (): boolean => (saved ? false : isDirty);
 				const storageAdapter = new MockStorageAdapter();
 				const serializedStateManager = new SerializedStateManager(
-					enableOfflineSnapshotRefresh(logger),
+					logger,
 					storageAdapter,
 					true,
 					eventEmitter,
@@ -982,7 +974,7 @@ describe("serializedStateManager", () => {
 				let saved = false;
 				const isDirtyF = (): boolean => (saved ? false : isDirty);
 				const serializedStateManager = new SerializedStateManager(
-					enableOfflineSnapshotRefresh(logger),
+					logger,
 					storageAdapter,
 					true,
 					eventEmitter,
@@ -1045,7 +1037,7 @@ describe("serializedStateManager", () => {
 				let saved = false;
 				const isDirtyF = (): boolean => (saved ? false : isDirty);
 				const serializedStateManager = new SerializedStateManager(
-					enableOfflineSnapshotRefresh(logger),
+					logger,
 					storageAdapter,
 					true,
 					eventEmitter,
@@ -1108,7 +1100,7 @@ describe("serializedStateManager", () => {
 				let saved = false;
 				const isDirtyF = (): boolean => (saved ? false : isDirty);
 				const serializedStateManager = new SerializedStateManager(
-					enableOfflineSnapshotRefresh(logger),
+					logger,
 					storageAdapter,
 					true,
 					eventEmitter,
@@ -1175,7 +1167,7 @@ describe("serializedStateManager", () => {
 				let saved = false;
 				const isDirtyF = (): boolean => (saved ? false : isDirty);
 				const serializedStateManager = new SerializedStateManager(
-					enableOfflineSnapshotRefresh(logger),
+					logger,
 					storageAdapter,
 					true,
 					eventEmitter,
@@ -1248,7 +1240,7 @@ describe("serializedStateManager", () => {
 				const isDirtyF = (): boolean => (saved ? false : isDirty);
 				const storageAdapter = new MockStorageAdapter();
 				const serializedStateManager = new SerializedStateManager(
-					enableOfflineSnapshotRefresh(logger),
+					logger,
 					storageAdapter,
 					true,
 					eventEmitter,
@@ -1314,7 +1306,7 @@ describe("serializedStateManager", () => {
 				const isDirtyF = (): boolean => (saved ? false : isDirty);
 				const storageAdapter = new MockStorageAdapter();
 				const serializedStateManager = new SerializedStateManager(
-					enableOfflineSnapshotRefresh(logger),
+					logger,
 					storageAdapter,
 					true,
 					eventEmitter,

@@ -35,7 +35,6 @@ describe("Local Server Stress", () => {
 		defaultTestCount: 200,
 		saveFailures,
 		configurations: {
-			"Fluid.Container.enableOfflineFull": true,
 			"Fluid.ContainerRuntime.EnableRollback": true,
 		},
 		// Minimization is slow with many seeds; use only to minimize specific failing seeds.
