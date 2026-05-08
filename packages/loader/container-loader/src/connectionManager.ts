@@ -596,7 +596,7 @@ export class ConnectionManager implements IConnectionManager {
 					isFluidError(origError) &&
 					origError.errorType === DriverErrorTypes.outOfStorageError
 				) {
-					// If we get out of storage error from calling joinsession, then use the NoDeltaStream object so
+					// If we get out of storage error from calling joinsession, then use the FrozenDeltaStream object so
 					// that user can at least load the container.
 					connection = new FrozenDeltaStream({
 						readonlyConnectionReason: { text: origError.message, error: origError },
