@@ -7,32 +7,32 @@ import { strict as assert } from "node:assert";
 import type { WebApi } from "azure-devops-node-api";
 import type { Build } from "azure-devops-node-api/interfaces/BuildInterfaces.js";
 import { BuildResult } from "azure-devops-node-api/interfaces/BuildInterfaces.js";
-import type JSZip from "jszip";
 import type { CommandLogger } from "../../logging.js";
-import { getZipObjectFromArtifact } from "../bundleSizeDiff/index.js";
 import type { IAzureDevopsBuildCoverageConstants } from "./constants.js";
+import { type ArtifactContents, downloadArtifact } from "./downloadArtifact.js";
 import { getBuild, getBuilds } from "./utils.js";
 
 export interface IBuildMetrics {
 	build: Build & { id: number };
 	/**
-	 * The artifact that was published by the PR build in zip format
+	 * The decompressed contents of the artifact that was published by the build,
+	 * keyed by file path relative to the artifact root.
 	 */
-	artifactZip: JSZip;
+	artifactContents: ArtifactContents;
 }
 
 /**
  * Method that returns the build artifact for a baseline build.
  * @param azureDevopsBuildCoverageConstants - Code coverage constants for the project.
- * @param adoConnection - The connection to the Azure DevOps API
+ * @param adoApi - The connection to the Azure DevOps API
  * @param logger - The logger to log messages.
  */
 export async function getBaselineBuildMetrics(
 	azureDevopsBuildCoverageConstants: IAzureDevopsBuildCoverageConstants,
-	adoConnection: WebApi,
+	adoApi: WebApi,
 	logger?: CommandLogger,
 ): Promise<IBuildMetrics> {
-	const recentBuilds = await getBuilds(adoConnection, {
+	const recentBuilds = await getBuilds(adoApi, {
 		project: azureDevopsBuildCoverageConstants.projectName,
 		definitions: [azureDevopsBuildCoverageConstants.ciBuildDefinitionId],
 		branch:
@@ -43,7 +43,7 @@ export async function getBaselineBuildMetrics(
 	});
 
 	let baselineBuild: Build | undefined;
-	let baselineArtifactZip: JSZip | undefined;
+	let baselineArtifactContents: ArtifactContents | undefined;
 	for (const build of recentBuilds) {
 		if (build.result !== BuildResult.Succeeded) {
 			continue;
@@ -64,8 +64,8 @@ export async function getBaselineBuildMetrics(
 		);
 
 		// eslint-disable-next-line no-await-in-loop
-		baselineArtifactZip = await getZipObjectFromArtifact(
-			adoConnection,
+		baselineArtifactContents = await downloadArtifact(
+			adoApi,
 			azureDevopsBuildCoverageConstants.projectName,
 			build.id,
 			`${azureDevopsBuildCoverageConstants.artifactName}_${build.id}`,
@@ -80,22 +80,24 @@ export async function getBaselineBuildMetrics(
 
 		// For reasons that I don't understand, the "undefined" string is omitted in the log output, which makes the
 		// output very confusing. The string is capitalized here and elsewhere in this file as a workaround.
-		logger?.verbose(`Baseline Zip === UNDEFINED: ${baselineArtifactZip === undefined}`);
+		logger?.verbose(
+			`Baseline artifact contents === UNDEFINED: ${baselineArtifactContents === undefined}`,
+		);
 
 		// Successful baseline build does not have the needed build artifacts
-		if (baselineArtifactZip === undefined) {
+		if (baselineArtifactContents === undefined) {
 			logger?.warning(
 				`Trying backup builds when successful baseline build does not have the needed build artifacts ${build.id}`,
 			);
 			continue;
 		}
-		// Found usable baseline zip, so break out of the loop early.
+		// Found usable baseline contents, so break out of the loop early.
 		baselineBuild = build;
 		break;
 	}
 
 	// Unable to find a usable baseline
-	if (baselineArtifactZip === undefined) {
+	if (baselineArtifactContents === undefined) {
 		const message = `Could not find a usable baseline build`;
 		logger?.warning(message);
 		throw new Error(message);
@@ -118,26 +120,26 @@ export async function getBaselineBuildMetrics(
 
 	return {
 		build: { ...baselineBuild, id: baselineBuild.id },
-		artifactZip: baselineArtifactZip,
+		artifactContents: baselineArtifactContents,
 	};
 }
 
 /**
  * Method that returns the build artifact for a specific build.
  * @param azureDevopsBuildCoverageConstants - Code coverage constants for the project.
- * @param adoConnection - The connection to the Azure DevOps API
+ * @param adoApi - The connection to the Azure DevOps API
  * @param logger - The logger to log messages.
  */
 export async function getBuildArtifactForSpecificBuild(
 	azureDevopsBuildCoverageConstants: IAzureDevopsBuildCoverageConstants,
-	adoConnection: WebApi,
+	adoApi: WebApi,
 	logger?: CommandLogger,
 ): Promise<IBuildMetrics> {
 	assert(azureDevopsBuildCoverageConstants.buildId !== undefined, "buildId is required");
 	logger?.verbose(`The buildId id ${azureDevopsBuildCoverageConstants.buildId}`);
 
 	const build: Build = await getBuild(
-		adoConnection,
+		adoApi,
 		{
 			project: azureDevopsBuildCoverageConstants.projectName,
 			definitions: [azureDevopsBuildCoverageConstants.ciBuildDefinitionId],
@@ -159,8 +161,8 @@ export async function getBuildArtifactForSpecificBuild(
 		`codeCoverageAnalysisArtifactName: ${azureDevopsBuildCoverageConstants.artifactName}`,
 	);
 
-	const artifactZip: JSZip | undefined = await getZipObjectFromArtifact(
-		adoConnection,
+	const artifactContents: ArtifactContents | undefined = await downloadArtifact(
+		adoApi,
 		azureDevopsBuildCoverageConstants.projectName,
 		build.id,
 		`${azureDevopsBuildCoverageConstants.artifactName}_${build.id}`,
@@ -175,8 +177,8 @@ export async function getBuildArtifactForSpecificBuild(
 
 	// For reasons that I don't understand, the "undefined" string is omitted in the log output, which makes the
 	// output very confusing. The string is capitalized here and elsewhere in this file as a workaround.
-	logger?.verbose(`Artifact Zip === UNDEFINED: ${artifactZip === undefined}`);
-	if (artifactZip === undefined) {
+	logger?.verbose(`Artifact contents === UNDEFINED: ${artifactContents === undefined}`);
+	if (artifactContents === undefined) {
 		const message = `Could not find a usable artifact`;
 		logger?.warning(message);
 		throw new Error(message);
@@ -184,6 +186,6 @@ export async function getBuildArtifactForSpecificBuild(
 
 	return {
 		build: { ...build, id: build.id },
-		artifactZip,
+		artifactContents,
 	};
 }

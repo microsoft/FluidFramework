@@ -518,11 +518,6 @@ stages:
                 pnpm exec trips-cleanup --odspEndpoint=${{ parameters.odspTenantType }} --useFic
             condition: eq(variables['tenantSetupSuccess'], 'true')
 
-        # Log Test Failures
-        # - template: /tools/pipelines/templates/include-process-test-results.yml@self
-        #   parameters:
-        #     buildDirectory: ${{ variables.testPackageDir }}
-
         # Stop the docker environment if running against it
         - ${{ if eq(parameters.runAgainstDocker, true) }}:
           - task: DockerCompose@1
