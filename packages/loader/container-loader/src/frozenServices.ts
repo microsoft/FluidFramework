@@ -294,14 +294,18 @@ export class FrozenDeltaStream extends FrozenDeltaStreamBase {
 }
 
 /**
- * Writable variant of {@link FrozenDeltaStreamBase}. Claims include `DocWrite` so the
- * container surfaces as writable; not matched by {@link isFrozenDeltaStreamConnection}, so
- * `readOnlyInfo` reports `readonly: false`. Connection mode stays `"read"` (advertising
- * `"write"` would imply quorum membership we cannot honor). `ConnectionManager.sendMessages`
- * recognizes any `WritableFrozenDeltaStream` (via {@link isWritableFrozenDeltaStreamConnection})
- * and short-circuits before its read-mode upgrade branch — the message is dropped at the
- * network layer instead of triggering a reconnect, so the container stays `Connected` and
- * submitted ops accumulate in the runtime's `pendingStateManager`.
+ * Variant of {@link FrozenDeltaStreamBase} that appears to support writing but remains
+ * "frozen" — no messages are actually sent or received. The stream itself does not enforce
+ * the no-send guarantee; that lives in `ConnectionManager.sendMessages`, which recognizes
+ * any `WritableFrozenDeltaStream` (via {@link isWritableFrozenDeltaStreamConnection}) and
+ * short-circuits before its read-mode upgrade branch. Submitted ops are dropped at the
+ * connection-manager layer, so the container stays `Connected` and the runtime accumulates
+ * them in `pendingStateManager`.
+ *
+ * "Appears writable" mechanics: claims include `DocWrite` so the container surfaces as
+ * writable; not matched by {@link isFrozenDeltaStreamConnection}, so `readOnlyInfo` reports
+ * `readonly: false`. Connection mode stays `"read"` (advertising `"write"` would imply quorum
+ * membership we cannot honor).
  *
  * Each instance mints a fresh `frozen-delta-stream/<uuid>` `clientId` to avoid
  * `pendingStateManager` `0x173` (`replayPendingStates called twice for same clientId!`) on
