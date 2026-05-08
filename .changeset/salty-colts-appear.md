@@ -11,9 +11,9 @@ Deprecated LogLevel.default and LogLevel.error
 
 The recommended replacement for `LogLevel.default` depends on how the value is used:
 
-- For an **event's default `logLevel`** (e.g. the `logLevel` argument to `sendTelemetryEvent` / `sendPerformanceEvent` / `ITelemetryBaseLogger.send`), the recommendation is `LogLevel.essential`.
+- For an **event's default `logLevel`** (e.g. the `logLevel` argument to `ITelemetryBaseLogger.send`), the recommendation is `LogLevel.essential`.
 - For a logger's **default `minLogLevel`** (the threshold that filters events), `LogLevel.info` is the recommendation.
 
-The replacement for `LogLevel.error` should always be essential.
+The replacement for `LogLevel.error` should always be `LogLevel.essential`.
 
 See [issue #26969](https://github.com/microsoft/FluidFramework/issues/26969) for full guidance and removal tracking (planned for v3.0).
