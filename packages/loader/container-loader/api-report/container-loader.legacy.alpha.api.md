@@ -24,7 +24,7 @@ export interface ContainerAlpha extends IContainer {
 export function createDetachedContainer(createDetachedContainerProps: ICreateDetachedContainerProps): Promise<IContainer>;
 
 // @alpha @legacy
-export function createFrozenDocumentServiceFactory(factory?: IDocumentServiceFactory | Promise<IDocumentServiceFactory>, allowLocalChanges?: boolean): IDocumentServiceFactory;
+export function createFrozenDocumentServiceFactory(factory?: IDocumentServiceFactory | Promise<IDocumentServiceFactory>, readOnly?: boolean): IDocumentServiceFactory;
 
 // @beta @legacy (undocumented)
 export interface IBaseProtocolHandler {
@@ -105,8 +105,8 @@ export interface ILoadExistingContainerProps extends ICreateAndLoadContainerProp
 
 // @alpha @legacy
 export interface ILoadFrozenContainerFromPendingStateProps extends ILoadExistingContainerProps {
-    readonly allowLocalChanges?: boolean;
     readonly pendingLocalState: string;
+    readonly readOnly?: boolean;
 }
 
 // @alpha @legacy

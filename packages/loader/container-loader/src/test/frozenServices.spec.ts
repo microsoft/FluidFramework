@@ -138,7 +138,7 @@ describe("FrozenDocumentService.connectToDeltaStream", () => {
 		// replay-assert when a writable-frozen container reconnects with dirty pending ops.
 		// Each WritableFrozenDeltaStream instance must mint a fresh `frozen-delta-stream/<uuid>`
 		// so the runtime sees the clientId change across replays.
-		const factory = new FrozenDocumentServiceFactory(true);
+		const factory = new FrozenDocumentServiceFactory(false);
 		const service = await factory.createDocumentService(fakeUrl);
 
 		const first = await service.connectToDeltaStream(fakeReadClient());

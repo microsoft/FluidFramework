@@ -38,38 +38,38 @@ import type { IConnectionStateChangeReason } from "./contracts.js";
  *
  * @param factory - The underlying factory to wrap. Its storage backs blob reads; all other
  * storage operations throw. May be omitted when blob fetches are not required.
- * @param allowLocalChanges - When `false` (the default), the document service advertises the
+ * @param readOnly - When `true` (the default), the document service advertises the
  * `IDocumentServicePolicies.storageOnly` policy, which causes the loader to surface the
  * container as read-only (see `IContainer.readOnlyInfo`).
  *
- * When `true`, the runtime accepts local DDS submissions but they are not published. The
- * connection stays `Connected`: `ConnectionManager.sendMessages` recognizes the
- * `WritableFrozenDeltaStream` as the live connection and short-circuits — the message is
- * dropped at the network layer rather than triggering a read→write reconnect. Local DDS state
- * continues to update via optimistic apply, and submitted ops accumulate in the runtime's
- * pending-state manager, which is exactly the state needed to capture pending local state.
- * Use `true` when callers want to accrue and capture pending state without publishing it.
+ * When `false`, the container is loaded as writable so the runtime will accept DDS submissions.
+ * The connection itself stays `Connected`: `ConnectionManager.sendMessages` recognizes the
+ * `WritableFrozenDeltaStream` as the live connection and short-circuits — the message is dropped
+ * at the network layer rather than triggering a read→write reconnect. Local DDS state continues
+ * to update via optimistic apply, and submitted ops accumulate in the runtime's pending-state
+ * manager, which is exactly the state needed to capture pending local state. Use `false` when
+ * callers want to accrue and capture pending state without publishing it.
  * @returns A factory that produces frozen document services.
  * @legacy @alpha
  */
 export function createFrozenDocumentServiceFactory(
 	factory?: IDocumentServiceFactory | Promise<IDocumentServiceFactory>,
-	allowLocalChanges: boolean = false,
+	readOnly: boolean = true,
 ): IDocumentServiceFactory {
 	if (factory instanceof FrozenDocumentServiceFactory) {
-		// Already wrapped. Reuse if allowLocalChanges matches; otherwise unwrap and rewrap so
-		// the caller's most recent intent wins (silently honoring caller intent rather than
-		// dropping the new argument).
-		return factory.allowLocalChanges === allowLocalChanges
+		// Already wrapped. Reuse if readOnly matches; otherwise unwrap and rewrap so the caller's
+		// most recent readOnly intent wins (silently honoring caller intent rather than dropping
+		// the new argument).
+		return factory.readOnly === readOnly
 			? factory
-			: new FrozenDocumentServiceFactory(allowLocalChanges, factory.inner);
+			: new FrozenDocumentServiceFactory(readOnly, factory.inner);
 	}
-	return new FrozenDocumentServiceFactory(allowLocalChanges, factory);
+	return new FrozenDocumentServiceFactory(readOnly, factory);
 }
 
 export class FrozenDocumentServiceFactory implements IDocumentServiceFactory {
 	constructor(
-		public readonly allowLocalChanges: boolean,
+		public readonly readOnly: boolean,
 		public readonly inner?: IDocumentServiceFactory | Promise<IDocumentServiceFactory>,
 	) {}
 
@@ -77,7 +77,7 @@ export class FrozenDocumentServiceFactory implements IDocumentServiceFactory {
 		const factory = isPromiseLike(this.inner) ? await this.inner : this.inner;
 		return new FrozenDocumentService(
 			resolvedUrl,
-			this.allowLocalChanges,
+			this.readOnly,
 			await factory?.createDocumentService(resolvedUrl),
 		);
 	}
@@ -92,23 +92,23 @@ class FrozenDocumentService
 {
 	constructor(
 		public readonly resolvedUrl: IResolvedUrl,
-		private readonly allowLocalChanges: boolean,
+		private readonly readOnly: boolean,
 		private readonly documentService?: IDocumentService,
 	) {
 		super();
-		// When local changes are not allowed, advertise the storageOnly policy. The
-		// connectionManager short-circuits on it: it synthesizes a FrozenDeltaStream itself
-		// and never calls connectToDeltaStream, and the readOnlyInfo getter forces the
-		// container to read-only because the live connection is a FrozenDeltaStream.
+		// When readOnly, advertise the storageOnly policy. The connectionManager short-circuits
+		// on it: it synthesizes a FrozenDeltaStream itself and never calls
+		// connectToDeltaStream, and the readOnlyInfo getter forces the container to read-only
+		// because the live connection is a FrozenDeltaStream.
 		//
 		// Audit (2026-05-05): the only consumer of `policies.storageOnly` as a frozen-container
 		// signal is `ConnectionManager` (synthesizing a `FrozenDeltaStream` when set). All other
 		// matches in the loader/runtime/driver layers are either drivers reading their own
 		// policies (e.g. local-driver) or `IReadOnlyInfo.storageOnly`, which is derived from the
-		// live connection — not the policy. So the allow-local-changes container is intentionally
+		// live connection — not the policy. So the writable-frozen container is intentionally
 		// indistinguishable from a normal container at the policies layer; downstream behavior
 		// flows through the live `WritableFrozenDeltaStream` instead.
-		this.policies = allowLocalChanges ? {} : { storageOnly: true };
+		this.policies = readOnly ? { storageOnly: true } : {};
 	}
 
 	public readonly policies: IDocumentServicePolicies;
@@ -119,22 +119,21 @@ class FrozenDocumentService
 		return frozenDocumentDeltaStorageService;
 	}
 	async connectToDeltaStream(_client: IClient): Promise<IDocumentDeltaConnection> {
-		if (!this.allowLocalChanges) {
+		if (this.readOnly) {
 			// connectionManager short-circuits via policies.storageOnly before reaching here
-			// in the no-local-changes path; reaching this branch indicates a
-			// non-connectionManager consumer or a regression of the short-circuit. Throw to
-			// surface the misuse rather than silently produce a working stream.
+			// in the read-only path; reaching this branch indicates a non-connectionManager
+			// consumer or a regression of the short-circuit. Throw to surface the misuse
+			// rather than silently produce a working stream.
 			throw new Error(
-				"FrozenDocumentService does not allow local changes; connectToDeltaStream should not be called (connectionManager short-circuits via policies.storageOnly)",
+				"FrozenDocumentService is read-only; connectToDeltaStream should not be called (connectionManager short-circuits via policies.storageOnly)",
 			);
 		}
-		// Local-changes path: hand out a fresh WritableFrozenDeltaStream regardless of
-		// client.mode or whether this is the initial connect or a reconnect. The stream's own
-		// mode is "read" (advertising "write" would imply quorum membership we cannot honor),
-		// and `ConnectionManager.sendMessages` short-circuits on WritableFrozenDeltaStream so
+		// Writable path: hand out a fresh WritableFrozenDeltaStream regardless of client.mode
+		// or whether this is the initial connect or a reconnect. The stream's own mode is
+		// "read" (advertising "write" would imply quorum membership we cannot honor), and
+		// `ConnectionManager.sendMessages` short-circuits on WritableFrozenDeltaStream so
 		// outbound writes never reach a real network. The per-instance clientId minted in
-		// WritableFrozenDeltaStream prevents pendingStateManager 0x173 on replay across
-		// reconnects.
+		// FrozenDeltaStreamBase prevents pendingStateManager 0x173 on replay across reconnects.
 		return new WritableFrozenDeltaStream();
 	}
 	dispose(): void {}
