@@ -48,7 +48,7 @@
     "@fluidframework/shared-object-base": "workspace:~",
     "axios": "^0.28.0",
     "fastest-json-copy": "^1.0.1",
-    "lodash": "^4.17.21",
+    "lodash": "^4.18.1",
     "msgpackr": "^1.4.7",
     "pako": "^2.0.4",
     "uuid": "^8.3.1"

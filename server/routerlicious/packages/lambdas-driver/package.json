@@ -56,7 +56,7 @@
     "@fluidframework/server-services-core": "^0.1037.0",
     "@fluidframework/server-services-telemetry": "^0.1037.0",
     "async": "^3.2.2",
-    "lodash": "^4.17.21"
+    "lodash": "^4.18.1"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.24.0",

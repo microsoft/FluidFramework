@@ -40,7 +40,7 @@
 	},
 	"dependencies": {
 		"@fluidframework/protocol-definitions": "^1.0.0",
-		"jsrsasign": "^11.1.0",
+		"jsrsasign": "^11.1.1",
 		"uuid": "^8.3.1"
 	},
 	"devDependencies": {
