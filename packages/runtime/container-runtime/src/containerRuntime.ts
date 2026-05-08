@@ -1890,27 +1890,20 @@ export class ContainerRuntime
 			this.mc.config.getNumber("Fluid.ContainerRuntime.StagingModeAutoFlushThreshold") ??
 			runtimeOptions.stagingModeAutoFlushThreshold ??
 			defaultStagingModeAutoFlushThreshold;
-		// BatchId tracking powers DuplicateBatchDetector (catching forked-container duplicates)
-		// and is also a prerequisite for the Offline Load feature. It is enabled by default in
-		// TurnBased mode; the kill-switch below allows disabling it without a code change if a
-		// regression is observed. Offline Load still requires TurnBased, so consumers that
-		// explicitly opt into it with FlushMode.Immediate continue to get a UsageError.
-		const offlineLoadRequested =
-			this.mc.config.getBoolean("Fluid.Container.enableOfflineFull") === true;
-		const disableBatchIdTracking =
-			this.mc.config.getBoolean("Fluid.ContainerRuntime.DisableBatchIdTracking") === true;
+		this.batchIdTrackingEnabled =
+			this.mc.config.getBoolean("Fluid.Container.enableOfflineFull") ??
+			this.mc.config.getBoolean("Fluid.ContainerRuntime.enableBatchIdTracking") ??
+			false;
 
-		if (offlineLoadRequested && this._flushMode !== FlushMode.TurnBased) {
+		if (this.batchIdTrackingEnabled && this._flushMode !== FlushMode.TurnBased) {
 			const error = new UsageError("Offline mode is only supported in turn-based mode");
 			this.closeFn(error);
 			throw error;
 		}
 
-		this.batchIdTrackingEnabled =
-			!disableBatchIdTracking && this._flushMode === FlushMode.TurnBased;
-
-		// DuplicateBatchDetector maintains a cache of all batchIds/sequenceNumbers within the
-		// collab window. Skip allocating it when batchId tracking is off.
+		// DuplicateBatchDetection is only enabled if Offline Load is enabled
+		// It maintains a cache of all batchIds/sequenceNumbers within the collab window.
+		// Don't waste resources doing so if not needed.
 		if (this.batchIdTrackingEnabled) {
 			this.duplicateBatchDetector = new DuplicateBatchDetector(recentBatchInfo);
 		}

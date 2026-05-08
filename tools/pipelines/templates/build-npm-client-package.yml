@@ -33,13 +33,6 @@ parameters:
 - name: coverageTests
   type: object
 
-# A list of directories (under the buildDirectory) to run the PublishTestResults task on in separate steps.
-# Used to avoid the force merge limit of 100 result files.
-- name: testResultDirs
-  type: object
-  default:
-  - nyc
-
 - name: taskBundleAnalysis
   type: boolean
   default: false
@@ -271,7 +264,6 @@ extends:
                       PublishDocs=${{ parameters.publishDocs }}
                       Test=${{ convertToJson(parameters.taskTest) }}
                       TestCoverage=${{ parameters.testCoverage }}
-                      TestResultDirs=${{ convertToJson(parameters.testResultDirs) }}
 
                     Variables:
                       consistentSourcesDirectory=$(consistentSourcesDirectory)
@@ -771,11 +763,15 @@ extends:
                     echo "Running code coverage comparison"
                     flub report codeCoverage --verbose
 
-            # Process test result, include publishing and logging
-              - template: /tools/pipelines/templates/include-process-test-results.yml@self
-                parameters:
-                  buildDirectory: '${{ parameters.buildDirectory }}'
-                  testResultDirs: '${{ parameters.testResultDirs }}'
+              # Process test result, include publishing and logging
+              - task: PublishTestResults@2
+                displayName: Publish Test Results
+                inputs:
+                  testResultsFormat: 'JUnit'
+                  testResultsFiles: '**/*junit-report.xml'
+                  searchFolder: $(Pipeline.Workspace)/${{ parameters.buildDirectory }}/nyc
+                  mergeTestResults: false
+                condition: and(succeededOrFailed(), eq(variables['startTest'], 'true'))
 
             templateContext:
               outputParentDirectory: $(Build.ArtifactStagingDirectory)/codeCoverageAnalysis
@@ -918,10 +914,14 @@ extends:
                         fi
 
                 # Process test result, include publishing and logging
-                - template: /tools/pipelines/templates/include-process-test-results.yml@self
-                  parameters:
-                    buildDirectory: '${{ parameters.buildDirectory }}'
-                    testResultDirs: '${{ parameters.testResultDirs }}'
+                - task: PublishTestResults@2
+                  displayName: Publish Test Results
+                  inputs:
+                    testResultsFormat: 'JUnit'
+                    testResultsFiles: '**/*junit-report.xml'
+                    searchFolder: $(Pipeline.Workspace)/${{ parameters.buildDirectory }}/nyc
+                    mergeTestResults: false
+                  condition: and(succeededOrFailed(), eq(variables['startTest'], 'true'))
 
       # Publish stage
       - ${{ if eq(parameters.publish, true) }}:
