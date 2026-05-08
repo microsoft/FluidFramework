@@ -341,9 +341,11 @@ export function withBufferedTreeEvents<TResult>(
 	callback: () => TResult,
 	options?: WithBufferedTreeEventsOptions<TResult>,
 ): TResult {
-	if (bufferTreeEvents) {
-		// Already buffering - just run the callback. The outermost call owns the flush/discard decision.
-		return callback();
+	const isOutermost = !bufferTreeEvents;
+	if (!isOutermost) {
+		// Nested call: open a new frame so this scope's events can be merged or discarded
+		// independently from the surrounding scope's events.
+		flushEventsEmitter.emit("pushFrame");
 	}
 	bufferTreeEvents = true;
 	let discard = false;
@@ -352,19 +354,42 @@ export function withBufferedTreeEvents<TResult>(
 		discard = options?.shouldDiscard?.(result) === true;
 		return result;
 	} finally {
-		bufferTreeEvents = false;
-		flushEventsEmitter.emit(discard ? "discard" : "flush");
+		if (isOutermost) {
+			bufferTreeEvents = false;
+			flushEventsEmitter.emit(discard ? "discard" : "flush");
+		} else {
+			flushEventsEmitter.emit(discard ? "popFrameDiscard" : "popFrameKeep");
+		}
 	}
 }
 
 /**
- * Event emitter to notify subscribers when tree events buffered due to {@link withBufferedTreeEvents} should be flushed
- * or discarded.
+ * Event emitter to notify subscribers about tree-event buffer lifecycle:
+ * {@link withBufferedTreeEvents} signals frame pushes and pops here.
  */
 const flushEventsEmitter = createEmitter<{
+	/** Outermost call ended; emit any buffered events to listeners. */
 	flush: () => void;
+	/** Outermost call ended; drop any buffered events without emitting. */
 	discard: () => void;
+	/** A nested call started; save current buffer state and start a fresh frame. */
+	pushFrame: () => void;
+	/** A nested call ended successfully; merge its frame into the surrounding scope's frame. */
+	popFrameKeep: () => void;
+	/** A nested call ended with discard; drop its frame and restore the surrounding scope's. */
+	popFrameDiscard: () => void;
 }>();
+
+/**
+ * A snapshot of {@link KernelEventBuffer}'s buffered state — pushed when entering a nested
+ * {@link withBufferedTreeEvents} call and popped (and either merged or discarded) when leaving.
+ */
+interface BufferFrame {
+	childrenChangedBuffer: Set<FieldKey>;
+	fieldMarksBuffer: Map<FieldKey, readonly DeltaMark[]>;
+	invalidatedFieldMarkKeys: Set<FieldKey>;
+	subTreeChangedBuffer: boolean;
+}
 
 /**
  * Event emitter for {@link TreeNodeKernel}, which optionally buffers events based on {@link bufferTreeEvents}.
@@ -385,6 +410,30 @@ class KernelEventBuffer implements Listenable<KernelEvents> {
 		"discard",
 		this.clearBuffers.bind(this),
 	);
+
+	/**
+	 * Listen to {@link flushEventsEmitter} to handle nested {@link withBufferedTreeEvents} calls.
+	 */
+	readonly #disposeOnPushFrameListener = flushEventsEmitter.on(
+		"pushFrame",
+		this.pushFrame.bind(this),
+	);
+	readonly #disposeOnPopFrameKeepListener = flushEventsEmitter.on(
+		"popFrameKeep",
+		this.popFrameKeep.bind(this),
+	);
+	readonly #disposeOnPopFrameDiscardListener = flushEventsEmitter.on(
+		"popFrameDiscard",
+		this.popFrameDiscard.bind(this),
+	);
+
+	/**
+	 * Stack of saved buffer states, one entry per active nested {@link withBufferedTreeEvents}
+	 * call that this buffer was alive for. The current (live) state is always held in the
+	 * regular buffer fields; this stack holds previously-saved states that will be restored
+	 * (or merged into) when the corresponding nested call ends.
+	 */
+	readonly #frameStack: BufferFrame[] = [];
 
 	readonly #events = createEmitter<KernelEvents>();
 
@@ -597,6 +646,108 @@ class KernelEventBuffer implements Listenable<KernelEvents> {
 		this.#subTreeChangedBuffer = false;
 	}
 
+	/**
+	 * Begin a nested buffering scope. The current buffered state is saved onto the frame stack
+	 * and the live buffers are reset so the nested scope's events can be tracked separately.
+	 */
+	public pushFrame(): void {
+		this.#assertNotDisposed();
+		this.#frameStack.push({
+			childrenChangedBuffer: new Set(this.#childrenChangedBuffer),
+			fieldMarksBuffer: new Map(this.#fieldMarksBuffer),
+			invalidatedFieldMarkKeys: new Set(this.#invalidatedFieldMarkKeys),
+			subTreeChangedBuffer: this.#subTreeChangedBuffer,
+		});
+		this.#childrenChangedBuffer.clear();
+		this.#fieldMarksBuffer.clear();
+		this.#invalidatedFieldMarkKeys.clear();
+		this.#subTreeChangedBuffer = false;
+	}
+
+	/**
+	 * End a nested buffering scope, keeping its events: merge the current frame into the parent
+	 * frame so the events bubble up to the surrounding scope.
+	 *
+	 * @remarks
+	 * If the frame stack is empty, this buffer joined the scope after the parent's
+	 * {@link KernelEventBuffer.pushFrame | pushFrame} (i.e., it was constructed mid-scope), so its
+	 * current state already represents only events from the popping scope; just keep it as-is.
+	 */
+	public popFrameKeep(): void {
+		this.#assertNotDisposed();
+		const prev = this.#frameStack.pop();
+		if (prev === undefined) {
+			// Late-joining buffer: nothing to merge into; current bubbles up unchanged.
+			return;
+		}
+		// Snapshot the inner scope's contributions, then restore the outer scope, then re-apply
+		// the inner's contributions on top using the same collision rules as
+		// #handleChildrenChangedAfterBatch.
+		const inner: BufferFrame = {
+			childrenChangedBuffer: new Set(this.#childrenChangedBuffer),
+			fieldMarksBuffer: new Map(this.#fieldMarksBuffer),
+			invalidatedFieldMarkKeys: new Set(this.#invalidatedFieldMarkKeys),
+			subTreeChangedBuffer: this.#subTreeChangedBuffer,
+		};
+		this.#restoreFrame(prev);
+		for (const key of inner.childrenChangedBuffer) {
+			this.#childrenChangedBuffer.add(key);
+		}
+		for (const [key, marks] of inner.fieldMarksBuffer) {
+			if (this.#invalidatedFieldMarkKeys.has(key)) {
+				continue;
+			}
+			if (this.#fieldMarksBuffer.has(key)) {
+				this.#fieldMarksBuffer.delete(key);
+				this.#invalidatedFieldMarkKeys.add(key);
+			} else {
+				this.#fieldMarksBuffer.set(key, marks);
+			}
+		}
+		for (const key of inner.invalidatedFieldMarkKeys) {
+			this.#fieldMarksBuffer.delete(key);
+			this.#invalidatedFieldMarkKeys.add(key);
+		}
+		if (inner.subTreeChangedBuffer) {
+			this.#subTreeChangedBuffer = true;
+		}
+	}
+
+	/**
+	 * End a nested buffering scope, discarding its events: drop the current frame and restore
+	 * the parent frame.
+	 *
+	 * @remarks
+	 * If the frame stack is empty, this buffer joined the scope mid-call, so its current state
+	 * represents only events from the popping (discarded) scope; just clear it.
+	 */
+	public popFrameDiscard(): void {
+		this.#assertNotDisposed();
+		const prev = this.#frameStack.pop();
+		if (prev === undefined) {
+			// Late-joining buffer: all of current belongs to the discarded scope.
+			this.clearBuffers();
+			return;
+		}
+		this.#restoreFrame(prev);
+	}
+
+	#restoreFrame(frame: BufferFrame): void {
+		this.#childrenChangedBuffer.clear();
+		for (const key of frame.childrenChangedBuffer) {
+			this.#childrenChangedBuffer.add(key);
+		}
+		this.#fieldMarksBuffer.clear();
+		for (const [key, marks] of frame.fieldMarksBuffer) {
+			this.#fieldMarksBuffer.set(key, marks);
+		}
+		this.#invalidatedFieldMarkKeys.clear();
+		for (const key of frame.invalidatedFieldMarkKeys) {
+			this.#invalidatedFieldMarkKeys.add(key);
+		}
+		this.#subTreeChangedBuffer = frame.subTreeChangedBuffer;
+	}
+
 	#assertNotDisposed(): void {
 		assert(!this.#disposed, 0xc51 /* Event handler disposed. */);
 	}
@@ -607,12 +758,17 @@ class KernelEventBuffer implements Listenable<KernelEvents> {
 		}
 
 		assert(
-			this.#childrenChangedBuffer.size === 0 && !this.#subTreeChangedBuffer,
+			this.#childrenChangedBuffer.size === 0 &&
+				!this.#subTreeChangedBuffer &&
+				this.#frameStack.length === 0,
 			0xc52 /* Buffered kernel events should have been flushed before disposing. */,
 		);
 
 		this.#disposeOnFlushListener();
 		this.#disposeOnDiscardListener();
+		this.#disposeOnPushFrameListener();
+		this.#disposeOnPopFrameKeepListener();
+		this.#disposeOnPopFrameDiscardListener();
 		for (const off of this.#disposeSourceListeners.values()) {
 			off();
 		}
