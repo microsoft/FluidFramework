@@ -84,8 +84,12 @@ const maxReadConcurrency = 32;
 /**
  * Runs `fn` over `items` with at most `limit` promises in flight. Preserves
  * input order on output (not that any caller depends on it today).
+ *
+ * Exported for unit tests; not part of the package public API.
+ *
+ * @internal
  */
-async function mapWithConcurrency<T, R>(
+export async function mapWithConcurrency<T, R>(
 	items: readonly T[],
 	limit: number,
 	fn: (item: T) => Promise<R>,
