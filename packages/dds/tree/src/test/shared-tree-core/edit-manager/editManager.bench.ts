@@ -219,7 +219,7 @@ describe("EditManager - Bench", () => {
 						type,
 						title: `Rebase edits from ${peerCount} peers each sending ${editsPerPeerCount} commits`,
 						// These tests run close to the default 2s mocha timeout in correctness mode and
-						// have flaked on CI (see ICM 792323064 / 787811568, ADO 72685). Extend the
+						// have flaked on CI (see ICM 792323064 / 787811568, AB#72685). Extend the
 						// correctness-mode timeout while leaving perf-mode timeouts unchanged.
 						correctnessTimeoutMs: 20_000,
 						...benchmarkDurationBatchless({
