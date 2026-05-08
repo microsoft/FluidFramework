@@ -12,7 +12,7 @@ import {
 	getBearerTokenProvider,
 } from "@azure/identity";
 import type { TokenCredential } from "@azure/identity";
-import { createEvalServer } from "@ff-internal/eval-app";
+import { createEvalServer } from "@fluidframework/eval-app";
 
 import { createRunGeneration } from "./evalGeneration.js";
 

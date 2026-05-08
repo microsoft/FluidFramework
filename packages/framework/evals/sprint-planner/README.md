@@ -15,9 +15,9 @@ An example app demonstrating a SharedTree AI agent for sprint planning, with an 
 pnpm install
 
 # Build dependencies and the sprint-planner package
-pnpm --filter @ff-internal/eval-framework build
-pnpm --filter @ff-internal/eval-app build
-pnpm --filter @ff-internal/sprint-planner build
+pnpm --filter @fluidframework/eval-framework build
+pnpm --filter @fluidframework/eval-app build
+pnpm --filter @fluid-private/sprint-planner build
 ```
 
 ## Authentication

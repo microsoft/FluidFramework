@@ -48,7 +48,7 @@ sequenceDiagram
 The framework is a library — consumers instantiate `EvalFramework` and call `.run()` with a `ScenarioArtifact` object:
 
 ```typescript
-import { EvalFramework } from '@ff-internal/eval-framework';
+import { EvalFramework } from '@fluidframework/eval-framework';
 
 const framework = new EvalFramework({ logger, judgeModel, llmClient });
 const result = await framework.run({
@@ -232,7 +232,7 @@ class MyEvaluator implements IEvaluator {
 When images are present, `ChatMessage.content` will be a `ContentBlock[]` instead of a plain string. Your `ILLMClient` implementation must handle both cases. Example for an OpenAI-compatible API:
 
 ```typescript
-import type { ILLMClient, ChatMessage, ContentBlock } from '@ff-internal/eval-framework';
+import type { ILLMClient, ChatMessage, ContentBlock } from '@fluidframework/eval-framework';
 
 class MyLLMClient implements ILLMClient {
   async chatCompletion(messages: ChatMessage[]): Promise<string> {

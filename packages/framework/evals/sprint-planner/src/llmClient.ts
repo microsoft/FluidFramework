@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { ChatMessage, ILLMClient, LLMResponse } from "@ff-internal/eval-framework";
+import type { ChatMessage, ILLMClient, LLMResponse } from "@fluidframework/eval-framework";
 import { AzureOpenAI } from "openai";
 import type { ChatCompletionMessageParam } from "openai/resources/index";
 

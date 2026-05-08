@@ -1,5 +1,5 @@
 {
-	"name": "@ff-internal/eval-framework",
+	"name": "@fluidframework/eval-framework",
 	"version": "0.2.3",
 	"type": "module",
 	"main": "dist/index.js",

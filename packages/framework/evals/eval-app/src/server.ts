@@ -16,7 +16,7 @@ import {
 	type EvaluationResult,
 	type Logger,
 	type ScenarioArtifact,
-} from "@ff-internal/eval-framework";
+} from "@fluidframework/eval-framework";
 import {
 	DEFAULT_SCALE,
 	formatError,
@@ -25,7 +25,7 @@ import {
 	writeResultsToDirectory,
 	type DatasetEvalResultInternal,
 	type ScenarioEvalResultInternal,
-} from "@ff-internal/eval-framework/internal";
+} from "@fluidframework/eval-framework/internal";
 
 import {
 	findScenarioDirName,

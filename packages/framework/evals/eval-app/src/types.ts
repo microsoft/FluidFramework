@@ -15,7 +15,7 @@ import type {
 	IEvaluator,
 	ILLMClient,
 	RunOptions,
-} from "@ff-internal/eval-framework";
+} from "@fluidframework/eval-framework";
 
 /**
  * Progress reporter for streaming status updates to the client via SSE.

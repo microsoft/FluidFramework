@@ -72,8 +72,8 @@ UI assets (`index.html`, `styles.css`) live at the package root and are resolved
 Import `createEvalServer` and pass your app-specific configuration:
 
 ```typescript
-import { createEvalServer } from '@ff-internal/eval-app';
-import type { ProgressReporter } from '@ff-internal/eval-app';
+import { createEvalServer } from '@fluidframework/eval-app';
+import type { ProgressReporter } from '@fluidframework/eval-app';
 
 createEvalServer({
   appName: 'My App',

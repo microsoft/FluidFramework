@@ -12,13 +12,13 @@ import type {
 	RunGenerationRequest,
 	RunGenerationResult,
 	ProgressReporter,
-} from "@ff-internal/eval-app";
+} from "@fluidframework/eval-app";
 import type {
 	Rubric,
 	ScenarioArtifact,
 	DatasetArtifact,
 	JsonObject,
-} from "@ff-internal/eval-framework";
+} from "@fluidframework/eval-framework";
 import { TreeViewConfiguration } from "@fluidframework/tree";
 import { TreeAlpha, independentView } from "@fluidframework/tree/alpha";
 import { SharedTreeSemanticAgent } from "@fluidframework/tree-agent/alpha";

@@ -1,5 +1,5 @@
 {
-	"name": "@ff-internal/eval-app",
+	"name": "@fluidframework/eval-app",
 	"version": "0.2.3",
 	"type": "module",
 	"main": "dist/index.js",
@@ -34,7 +34,7 @@
 		"preinstall": "node ../../../../scripts/only-pnpm.cjs"
 	},
 	"dependencies": {
-		"@ff-internal/eval-framework": "workspace:*"
+		"@fluidframework/eval-framework": "workspace:*"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "~2.4.5",

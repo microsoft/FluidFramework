@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { ChatMessage } from "@ff-internal/eval-framework";
+import type { ChatMessage } from "@fluidframework/eval-framework";
 
 import { OpenAiJudgeClient } from "../llmClient.js";
 

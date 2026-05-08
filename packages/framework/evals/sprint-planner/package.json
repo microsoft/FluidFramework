@@ -1,5 +1,5 @@
 {
-	"name": "@ff-internal/sprint-planner",
+	"name": "@fluid-private/sprint-planner",
 	"version": "0.2.3",
 	"private": true,
 	"type": "module",
@@ -30,8 +30,8 @@
 	},
 	"dependencies": {
 		"@azure/identity": "^4.13.0",
-		"@ff-internal/eval-app": "workspace:*",
-		"@ff-internal/eval-framework": "workspace:*",
+		"@fluidframework/eval-app": "workspace:*",
+		"@fluidframework/eval-framework": "workspace:*",
 		"@fluidframework/react": "workspace:~",
 		"@fluidframework/tinylicious-client": "workspace:~",
 		"@fluidframework/tree": "workspace:~",
