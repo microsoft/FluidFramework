@@ -452,7 +452,10 @@ describe("Pending state apply lifecycle", () => {
 		assert(captureObs.runtime !== undefined, "captureObs runtime captured");
 		const childDs = await captureObs.runtime.createDataStore(dataObjectFactory.type);
 		const childAlias = "child";
-		void childDs.trySetAlias(childAlias); // Alias op queued; do not await.
+		// Alias op is queued synchronously; the returned Promise resolves on
+		// reconnect, which we don't await here.
+		// eslint-disable-next-line @typescript-eslint/no-floating-promises
+		childDs.trySetAlias(childAlias);
 
 		// BlobAttach is intentionally omitted from this dual-container scenario:
 		// `uploadBlob` requires a storage round-trip and blocks while
