@@ -193,10 +193,10 @@ const writableClaims: ITokenClaims = {
  * read-only client — which lets the connection state handler observe "self" in the audience
  * and transition the container to Connected without waiting for a real join op or signal.
  *
- * Two concrete variants share this base:
+ * Two concrete variants share this base — see their JSDoc for variant-specific details:
  *
- * - {@link FrozenDeltaStream} — read-only. Claims show only `DocRead`. Used by storage-only loads (where connectionManager synthesizes one directly via `policies.storageOnly`) and by the forbidden / out-of-storage fallback paths. {@link isFrozenDeltaStreamConnection} matches this variant and drives the read-only forcing in `ConnectionManager.readOnlyInfo`. Uses the historical `"storage-only client"` constant `clientId`, preserving existing behavior for any consumer that keys off it.
- * - {@link WritableFrozenDeltaStream} — writable. Claims include `DocWrite` so the container surfaces as writable; not matched by {@link isFrozenDeltaStreamConnection}, so `readOnlyInfo` reports `readonly: false`. Connection mode stays `"read"` (advertising `"write"` would imply quorum membership we cannot honor). `ConnectionManager.sendMessages` recognizes any `WritableFrozenDeltaStream` and short-circuits before its read-mode upgrade branch — the message is dropped at the network layer instead of triggering a reconnect, so the container stays `Connected` and submitted ops accumulate in the runtime's `pendingStateManager`. Mints a per-instance `frozen-delta-stream/<uuid>` `clientId` to avoid `pendingStateManager` `0x173` (`replayPendingStates called twice for same clientId!`) on reconnect with dirty pending ops.
+ * - {@link FrozenDeltaStream} — read-only.
+ * - {@link WritableFrozenDeltaStream} — writable.
  *
  * Both variants nack any incoming `submit`: this connection has no upstream and
  * `ConnectionManager.sendMessages` recognizes `WritableFrozenDeltaStream` and drops messages
@@ -264,10 +264,16 @@ abstract class FrozenDeltaStreamBase
 }
 
 /**
- * Read-only variant of {@link FrozenDeltaStreamBase}. Adds `storageOnlyReason` and
- * `readonlyConnectionReason` for the diagnostic surface on the fallback paths
- * (`isDeltaStreamConnectionForbiddenError`, `outOfStorageError`). See base-class JSDoc for
- * the shared inert-connection contract.
+ * Read-only variant of {@link FrozenDeltaStreamBase}. Claims show only `DocRead`. Used by
+ * storage-only loads (where `connectionManager` synthesizes one directly via
+ * `policies.storageOnly`) and by the forbidden / out-of-storage fallback paths.
+ * {@link isFrozenDeltaStreamConnection} matches this variant and drives the read-only forcing
+ * in `ConnectionManager.readOnlyInfo`. Uses the historical `"storage-only client"` constant
+ * `clientId`, preserving existing behavior for any consumer that keys off it.
+ *
+ * `storageOnlyReason` and `readonlyConnectionReason` are surfaced through `IContainer.readOnlyInfo`
+ * for diagnostics on the fallback paths (`isDeltaStreamConnectionForbiddenError`,
+ * `outOfStorageError`).
  */
 export class FrozenDeltaStream extends FrozenDeltaStreamBase {
 	public readonly storageOnlyReason: string | undefined;
@@ -288,11 +294,19 @@ export class FrozenDeltaStream extends FrozenDeltaStreamBase {
 }
 
 /**
- * Writable variant of {@link FrozenDeltaStreamBase}. Differs from {@link FrozenDeltaStream}
- * in two ways: claims include `DocWrite` so the container surfaces as writable, and each
- * instance mints a fresh `clientId` to avoid `pendingStateManager` `0x173` on reconnect with
- * dirty pending ops. Sibling (not subclass) of `FrozenDeltaStream` so `instanceof` cleanly
- * distinguishes the two for `ConnectionManager`'s short-circuits.
+ * Writable variant of {@link FrozenDeltaStreamBase}. Claims include `DocWrite` so the
+ * container surfaces as writable; not matched by {@link isFrozenDeltaStreamConnection}, so
+ * `readOnlyInfo` reports `readonly: false`. Connection mode stays `"read"` (advertising
+ * `"write"` would imply quorum membership we cannot honor). `ConnectionManager.sendMessages`
+ * recognizes any `WritableFrozenDeltaStream` (via {@link isWritableFrozenDeltaStreamConnection})
+ * and short-circuits before its read-mode upgrade branch — the message is dropped at the
+ * network layer instead of triggering a reconnect, so the container stays `Connected` and
+ * submitted ops accumulate in the runtime's `pendingStateManager`.
+ *
+ * Each instance mints a fresh `frozen-delta-stream/<uuid>` `clientId` to avoid
+ * `pendingStateManager` `0x173` (`replayPendingStates called twice for same clientId!`) on
+ * reconnect with dirty pending ops. Sibling (not subclass) of `FrozenDeltaStream` so
+ * `instanceof` cleanly distinguishes the two for `ConnectionManager`'s short-circuits.
  */
 export class WritableFrozenDeltaStream extends FrozenDeltaStreamBase {
 	constructor() {
