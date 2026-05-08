@@ -460,9 +460,9 @@ describe("Pending state apply lifecycle", () => {
 		// BlobAttach is intentionally omitted from this dual-container scenario:
 		// `uploadBlob` requires a storage round-trip and blocks while
 		// disconnected, which would deadlock the capture step. BlobAttach
-		// rollback + delayed-ack wake-up are exercised separately by the
-		// `BlobManager.rollbackAttach` unit tests and the `popStagedBatches`
-		// `opMetadata`-threading test in `pendingStateManager.spec.ts`.
+		// rollback is exercised by the `BlobManager.rollbackAttach` unit
+		// tests in `blobManager.spec.ts`, and `opMetadata` threading is
+		// pinned in `pendingStateManager.spec.ts`'s `popStagedBatches` test.
 
 		const pendingState = await captureContainer.getPendingLocalState();
 		captureContainer.close();

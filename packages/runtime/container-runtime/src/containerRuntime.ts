@@ -1296,14 +1296,20 @@ export class ContainerRuntime
 			recentBatchInfo,
 		);
 
-		runtime.sharePendingBlobs();
-
 		// Initialize the base state of the runtime before it's returned.
 		await runtime.initializeBaseState(context.loader);
 
 		// Apply stashed ops with a reference sequence number equal to the sequence number of the snapshot,
 		// or zero. This must be done before Container replays saved ops.
 		await runtime.pendingStateManager.applyStashedOpsAt(runtimeSequenceNumber ?? 0);
+
+		// Pending-blob sharing may submit a `BlobAttach` op, which is a local
+		// edit. Defer until after the apply window closes so the host's
+		// `pendingStateApplyStart` review window (during which `isReadOnly()`
+		// returns true) actually blocks all outbound edits — the blob path
+		// can't be gated by `isReadOnly()` directly because `canStartSharing`
+		// is connection-bound, not readonly-bound.
+		runtime.sharePendingBlobs();
 
 		return { runtime };
 	}
