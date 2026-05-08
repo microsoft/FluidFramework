@@ -3,7 +3,7 @@
 "__section": deprecation
 ---
 
-Deprecated LogLevel.default and LogLevel.error
+Deprecate LogLevel.default and LogLevel.error
 
 `LogLevel.default` and `LogLevel.error` in `@fluidframework/core-interfaces` are deprecated in favor of the semantically clearer `LogLevel.info` and `LogLevel.essential`.
 
