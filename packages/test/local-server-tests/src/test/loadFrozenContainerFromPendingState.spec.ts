@@ -826,80 +826,17 @@ describe("loadFrozenContainerFromPendingState", () => {
 			);
 		});
 
-		it("survives a disconnect/reconnect cycle without tripping pendingStateManager replay assert", async () => {
-			// Regression for the FrozenDeltaStream clientId reuse issue: pre-fix, every
-			// FrozenDeltaStream instance shared the same fixed clientId, so a reconnect
-			// (which mints another stream from FrozenDocumentService.connectToDeltaStream)
-			// would replay pending ops against the same clientId twice and trip
-			// pendingStateManager assert 0x173. The fix mints a fresh clientId per instance.
-			const { container, ITestFluidObject, urlResolver, codeLoader, documentServiceFactory } =
-				await initialize();
-			await container.attach(urlResolver.createCreateNewRequest("test"));
-			ITestFluidObject.root.set("seed", "value");
-			const url = await container.getAbsoluteUrl("");
-			assert(url !== undefined, "Expected container to provide a valid absolute URL");
-			if (container.isDirty) {
-				await timeoutPromise((resolve) => container.once("saved", () => resolve()));
-			}
-			const initialPending = await container.getPendingLocalState();
-
-			const frozenContainer = asLegacyAlpha(
-				await loadFrozenContainerFromPendingState({
-					codeLoader,
-					documentServiceFactory,
-					urlResolver,
-					request: { url },
-					pendingLocalState: initialPending,
-					allowLocalChanges: true,
-				}),
-			);
-			const frozenEntryPoint: FluidObject<TestFluidObject> =
-				await frozenContainer.getEntryPoint();
-			assert(
-				frozenEntryPoint.ITestFluidObject !== undefined,
-				"Expected frozen container entrypoint to be a valid TestFluidObject",
-			);
-
-			// Accumulate dirty pending ops before the reconnect cycle.
-			for (let i = 0; i < 3; i++) {
-				frozenEntryPoint.ITestFluidObject.root.set(`pending-${i}`, i);
-			}
-
-			// Force a disconnect/reconnect cycle. pendingStateManager will replayPendingStates
-			// on the new connection. Bounded wait: races the "connected" event against a
-			// max-duration safety net. The writable-frozen connect path is in-process
-			// (FrozenDocumentService.connectToDeltaStream returns synchronously), so the
-			// reconnect typically settles in microtasks; the safety bound only fires if
-			// state wiring changes.
-			frozenContainer.disconnect();
-			frozenContainer.connect();
-			await Promise.race([
-				new Promise<void>((resolve) => frozenContainer.once("connected", () => resolve())),
-				new Promise<void>((resolve) => setTimeout(resolve, 500)),
-			]);
-
-			assert.strictEqual(
-				frozenContainer.closed,
-				false,
-				"Expected writable-frozen container to survive a disconnect/reconnect cycle with pending ops",
-			);
-			for (let i = 0; i < 3; i++) {
-				assert.strictEqual(
-					frozenEntryPoint.ITestFluidObject.root.get(`pending-${i}`),
-					i,
-					`Expected pending-${i} to remain locally visible across the reconnect`,
-				);
-			}
-
-			// Pending state captures the still-pending ops; loading a second writable-frozen
-			// container from it sees the same writes.
-			const layeredPending = await frozenContainer.getPendingLocalState();
-			assert.notStrictEqual(
-				layeredPending,
-				initialPending,
-				"Expected getPendingLocalState() to capture pending ops after reconnect",
-			);
-		});
+		// 0x173 (`replayPendingStates called twice for same clientId!`) regression coverage
+		// for the writable-frozen path lives in the focused unit test
+		// `frozenServices.spec.ts → "hands out distinct WritableFrozenDeltaStream instances
+		// with distinct clientIds on subsequent connects"`. An attempt to exercise the
+		// mitigation end-to-end via `IContainer.disconnect()` + `connect()` does not actually
+		// rotate the live connection on a writable-frozen container within a bounded wait
+		// (clientId stays pinned for >10s after disconnect/connect), so an integration test
+		// gated on that observable would either be vacuous or flaky. The unit test directly
+		// asserts that each successive `FrozenDocumentService.connectToDeltaStream()` returns
+		// a fresh `frozen-delta-stream/<uuid>` clientId — which is the contract the 0x173
+		// mitigation depends on.
 
 		it("captures writes batched across timer/microtask boundaries", async () => {
 			const { container, ITestFluidObject, urlResolver, codeLoader, documentServiceFactory } =
