@@ -49,29 +49,6 @@ export interface IContainerRuntimeEvents
 		ISummarizerEvents {
 	(event: "dirty" | "disconnected" | "saved" | "attached", listener: () => void);
 	(event: "connected", listener: (clientId: string) => void);
-	/**
-	 * Fired when the runtime is loaded from pending local state and is about to replay
-	 * the first stashed op. Listeners may, for example, call `enterStagingMode()` here
-	 * so that the replayed ops are marked staged and can be reviewed before they are
-	 * persisted (via `commitChanges` / `discardChanges` on the returned controls).
-	 *
-	 * The runtime is in a readonly state during the apply window — fresh ops should
-	 * not be submitted between `pendingStateApplyStart` and `pendingStateApplyEnd`.
-	 *
-	 * Not fired when the runtime is loaded without pending local state, or when the
-	 * pending local state contains no stashed ops to replay.
-	 *
-	 * Listeners must be subscribed before the apply window opens. The runtime
-	 * materializes `provideEntryPoint` synchronously during the apply window
-	 * before firing this event, so the entry point's lifecycle hooks (e.g.
-	 * `hasInitialized` on a `DataObject`) are the natural place to subscribe.
-	 */
-	(event: "pendingStateApplyStart", listener: () => void);
-	/**
-	 * Fired immediately after the last stashed op finishes replaying (including via
-	 * the apply-loop's finally block on error). Pairs with `pendingStateApplyStart`.
-	 */
-	(event: "pendingStateApplyEnd", listener: () => void);
 }
 
 /**

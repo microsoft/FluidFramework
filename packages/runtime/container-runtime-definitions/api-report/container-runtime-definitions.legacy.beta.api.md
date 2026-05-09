@@ -36,8 +36,6 @@ export interface IContainerRuntimeEvents extends IContainerRuntimeBaseEvents, IS
     (event: "dirty" | "disconnected" | "saved" | "attached", listener: () => void): any;
     // (undocumented)
     (event: "connected", listener: (clientId: string) => void): any;
-    (event: "pendingStateApplyStart", listener: () => void): any;
-    (event: "pendingStateApplyEnd", listener: () => void): any;
 }
 
 // @beta @deprecated @legacy (undocumented)

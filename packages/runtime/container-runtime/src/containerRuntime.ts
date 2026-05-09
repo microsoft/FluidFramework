@@ -5425,24 +5425,33 @@ export class ContainerRuntime
 	 */
 	public sharePendingBlobs = (): void => {
 		new Promise<void>((resolve) => {
-			// eslint-disable-next-line unicorn/consistent-function-scoping
 			const canStartSharing = (): boolean =>
-				this.connected && this.deltaManager.readOnlyInfo.readonly !== true;
+				this.connected &&
+				this.deltaManager.readOnlyInfo.readonly !== true &&
+				// Staging mode rejects `BlobAttach` at submit time
+				// (`canStageMessageOfType` allow-list excludes it). If a host
+				// entered staging mode in the `pendingStateApplyStart` handler,
+				// we must wait until the host commits or discards before
+				// firing `sendBlobAttachMessage` — otherwise the synchronous
+				// attach attempt would close the container.
+				!this.inStagingMode;
 
 			if (canStartSharing()) {
 				resolve();
 				return;
 			}
 
-			const checkCanShare = (readonly: boolean): void => {
+			const checkCanShare = (): void => {
 				if (canStartSharing()) {
 					this.deltaManager.off("readonly", checkCanShare);
 					this.off("connected", checkCanShare);
+					this.off("stagingModeChanged", checkCanShare);
 					resolve();
 				}
 			};
 			this.deltaManager.on("readonly", checkCanShare);
 			this.on("connected", checkCanShare);
+			this.on("stagingModeChanged", checkCanShare);
 		})
 			.then(this.blobManager.sharePendingBlobs)
 			// It may not be necessary to close the container on failures - this should just mean there's

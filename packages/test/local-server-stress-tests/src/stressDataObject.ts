@@ -15,7 +15,6 @@ import {
 	type IContainerRuntimeOptionsInternal,
 } from "@fluidframework/container-runtime/internal";
 import type {
-	IContainerRuntime,
 	// eslint-disable-next-line import-x/no-deprecated
 	IContainerRuntimeWithResolveHandle_Deprecated,
 } from "@fluidframework/container-runtime-definitions/internal";
@@ -311,11 +310,7 @@ export class DefaultStressDataObject extends StressDataObject {
 		// enter staging mode in the pre-apply window so the replayed ops are
 		// reviewable. The harness's existing ExitStagingMode operation will commit
 		// or discard. Exercises the new pendingStateApplyStart event path under stress.
-		// `IFluidDataStoreContext.containerRuntime` is typed as IContainerRuntimeBase
-		// which doesn't surface this event; the underlying ContainerRuntime instance
-		// does, so we cast.
-		const runtimeWithEvents = this.context.containerRuntime as unknown as IContainerRuntime;
-		runtimeWithEvents.on("pendingStateApplyStart", () => {
+		this.context.containerRuntime.on("pendingStateApplyStart", () => {
 			if (!this.inStagingMode()) {
 				this.enterStagingMode();
 			}
