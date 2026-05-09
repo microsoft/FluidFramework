@@ -195,18 +195,54 @@ function createTscUtil(tsLib: typeof ts) {
 				console.warn("Warning: '&&' is not supported in tsc command.");
 			}
 
-			let slicedArgs = args.slice(1);
+			const slicedArgs = args.slice(1);
+
+			// TypeScript uses a separate parseBuildCommand() API for `tsc -b`.
+			// In TS <5.9, parseCommandLine() also accepted `-b`, but 5.9 removed
+			// that. Use isBuildCommand/parseBuildCommand when available (TS 5.9+),
+			// otherwise fall back to parseCommandLine which handles it.
+			const isBuildCommand = (tsLib as any).isBuildCommand as
+				| ((args: string[]) => boolean)
+				| undefined;
+			const parseBuildCommand = (tsLib as any).parseBuildCommand as
+				| ((args: string[]) => {
+						buildOptions: any;
+						projects: string[];
+						errors: ts.Diagnostic[];
+				  })
+				| undefined;
+			if (isBuildCommand?.(slicedArgs) && parseBuildCommand) {
+				const buildResult = parseBuildCommand(slicedArgs);
+				if (buildResult.errors.length) {
+					console.error(
+						`Error parsing tsc build command: ${command} (split into ${JSON.stringify(slicedArgs)}.`,
+					);
+					for (const error of buildResult.errors) {
+						console.error(error);
+					}
+					return undefined;
+				}
+				// Map parseBuildCommand result to ParsedCommandLine shape so
+				// callers can check options.build and use fileNames for projects.
+				return {
+					options: { build: true },
+					fileNames: buildResult.projects,
+					errors: [],
+				} as ts.ParsedCommandLine;
+			}
+
+			let filteredArgs = slicedArgs;
 			// workaround for https://github.com/microsoft/TypeScript/issues/59095
 			// TODO: This breaks --force (by removing it). Find a way to fix --force.
 			// See code in leaf/tscTask.ts which adds --force.
-			if (slicedArgs.at(-1) === "--force") {
-				slicedArgs = slicedArgs.slice(0, slicedArgs.length - 1);
+			if (filteredArgs.at(-1) === "--force") {
+				filteredArgs = filteredArgs.slice(0, filteredArgs.length - 1);
 			}
-			const parsedCommand = tsLib.parseCommandLine(slicedArgs);
+			const parsedCommand = tsLib.parseCommandLine(filteredArgs);
 
 			if (parsedCommand.errors.length) {
 				console.error(
-					`Error parsing tsc command: ${command} (split into ${JSON.stringify(slicedArgs)}.`,
+					`Error parsing tsc command: ${command} (split into ${JSON.stringify(filteredArgs)}.`,
 				);
 				for (const error of parsedCommand.errors) {
 					console.error(error);
