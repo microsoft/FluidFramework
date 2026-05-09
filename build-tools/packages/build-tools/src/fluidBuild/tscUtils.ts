@@ -215,7 +215,7 @@ function createTscUtil(tsLib: typeof ts) {
 				const buildResult = parseBuildCommand(slicedArgs);
 				if (buildResult.errors.length) {
 					console.error(
-						`Error parsing tsc build command: ${command} (split into ${JSON.stringify(slicedArgs)}.`,
+						`Error parsing tsc build command: ${command} (split into ${JSON.stringify(slicedArgs)}).`,
 					);
 					for (const error of buildResult.errors) {
 						console.error(error);
@@ -242,7 +242,7 @@ function createTscUtil(tsLib: typeof ts) {
 
 			if (parsedCommand.errors.length) {
 				console.error(
-					`Error parsing tsc command: ${command} (split into ${JSON.stringify(filteredArgs)}.`,
+					`Error parsing tsc command: ${command} (split into ${JSON.stringify(filteredArgs)}).`,
 				);
 				for (const error of parsedCommand.errors) {
 					console.error(error);
