@@ -27,6 +27,7 @@ import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interface
 import { assert } from "@fluidframework/core-utils/internal";
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 import { LocalCodeLoader } from "@fluidframework/test-utils/internal";
+import { OdspTokenManager } from "@fluidframework/tool-utils/internal";
 
 import { createFluidExport, type ILoadTest, type IRunConfig } from "./loadTestDataStore.js";
 import {
@@ -135,6 +136,9 @@ export async function createTestDriver(
 			directory: "stress",
 			options: options[(runId ?? seed) % options.length],
 			odspEndpointName: endpointName,
+			// Use a memory-only token manager to avoid cross-process file lock contention
+			// when many stress test workers run simultaneously.
+			tokenManager: new OdspTokenManager(),
 		},
 		r11s: {
 			r11sEndpointName: endpointName,

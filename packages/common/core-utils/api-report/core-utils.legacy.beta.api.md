@@ -37,7 +37,7 @@ export function onAssertionFailure(handler: (error: Error) => void): () => void;
 
 // @beta @legacy
 export class PromiseCache<TKey, TResult> {
-    constructor({ expiry, removeOnError, }?: PromiseCacheOptions);
+    constructor(input?: PromiseCacheOptions);
     add(key: TKey, asyncFn: () => Promise<TResult>): boolean;
     addOrGet(key: TKey, asyncFn: () => Promise<TResult>): Promise<TResult>;
     addValue(key: TKey, value: TResult): boolean;

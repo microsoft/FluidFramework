@@ -5,7 +5,10 @@
 
 import { strict as assert, fail } from "node:assert";
 
-import { createIdCompressor } from "@fluidframework/id-compressor/internal";
+import {
+	createIdCompressor,
+	toIdCompressorWithCore,
+} from "@fluidframework/id-compressor/internal";
 import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
 
 import { currentVersion } from "../../../../codec/index.js";
@@ -469,7 +472,8 @@ describe("schemaBasedEncoding", () => {
 						schema: { schema: storedSchema, policy: defaultSchemaPolicy },
 						idCompressor,
 					};
-					idCompressor.finalizeCreationRange(idCompressor.takeNextCreationRange());
+					const idCompressorCore = toIdCompressorWithCore(idCompressor);
+					idCompressorCore.finalizeCreationRange(idCompressorCore.takeNextCreationRange());
 					const codec = fieldBatchCodecBuilder.build({
 						jsonValidator: ajvValidator,
 						minVersionForCollab: currentVersion,

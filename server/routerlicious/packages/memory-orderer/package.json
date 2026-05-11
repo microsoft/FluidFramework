@@ -32,8 +32,7 @@
 		"test:coverage": "c8 npm test -- --reporter xunit --reporter-option output=nyc/junit-report.xml",
 		"test:webpack": "webpack --config webpack.config.cjs",
 		"tsc": "tsc",
-		"typetests:gen": "flub generate typetests --dir . -v",
-		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"
+		"typetests:gen": "flub generate typetests --dir . -v"
 	},
 	"c8": {
 		"all": true,
@@ -63,12 +62,12 @@
 		"@fluidframework/server-services-client": "workspace:~",
 		"@fluidframework/server-services-core": "workspace:~",
 		"@fluidframework/server-services-telemetry": "workspace:~",
-		"@types/node": "^22",
+		"@types/node": "~22.19.17",
 		"assert": "^2.0.0",
 		"debug": "^4.3.4",
 		"double-ended-queue": "^2.1.0-0",
 		"events": "^3.1.0",
-		"lodash": "^4.17.21",
+		"lodash": "^4.18.1",
 		"sillyname": "^0.1.0",
 		"uuid": "^11.1.0",
 		"ws": "^7.5.10"

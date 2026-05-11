@@ -6,6 +6,7 @@
 import { strict as assert } from "node:assert";
 // For these tests, import from the public API like a user would.
 import {
+	TestType,
 	benchmarkDuration,
 	benchmarkIt,
 	benchmarkMemoryUse,
@@ -152,6 +153,7 @@ describe("integration tests", () => {
 
 	benchmarkIt({
 		title: "collectDurationData test",
+		testType: TestType.ExecutionTime,
 		category: "Duration",
 		run: () => {
 			// Before test custom setup
