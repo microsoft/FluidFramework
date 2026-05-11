@@ -14,9 +14,9 @@ Runtime-level offline features (batch-ID tracking, duplicate-batch detection) si
 
 **Migration**
 
-- Hosts setting `Fluid.ContainerRuntime.DisableBatchIdTracking=true` to disable batch-id tracking should set `Fluid.Container.disableOfflineFull=true` instead.
+- Hosts setting `Fluid.ContainerRuntime.DisableBatchIdTracking=true` to disable batch-id tracking should set `Fluid.Container.disableOfflineFull=true` instead. For one release, `Fluid.ContainerRuntime.DisableBatchIdTracking === true` is still honored at the runtime gate as a deprecation alias so existing defensive configurations do not silently flip on upgrade.
 - Hosts setting `Fluid.Container.enableOfflineSnapshotRefresh=false` as a stability mitigation should set `Fluid.Container.disableOfflineSnapshotRefresh=true` instead.
-- `Fluid.Container.enableOfflineLoad` and `Fluid.Container.enableOfflineFull` are removed from the read paths, but `=== false` on either key is still honored for one release as a deprecation alias to preserve defensive kill-switches partners may hold. New code should use `Fluid.Container.disableOfflineFull=true`.
+- `Fluid.Container.enableOfflineLoad` and `Fluid.Container.enableOfflineFull` are removed from the read paths, but `=== false` on either key is still honored for one release as a deprecation alias to preserve defensive kill-switches partners may hold. The runtime gate honors `Fluid.Container.enableOfflineFull === false` symmetrically so batch-id tracking and duplicate-batch detection turn off in lockstep with offline load. New code should use `Fluid.Container.disableOfflineFull=true`.
 
 **Risk**
 

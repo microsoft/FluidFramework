@@ -1898,8 +1898,15 @@ export class ContainerRuntime
 		// empty batches that must still be sent on the wire as a placeholder grouped batch to
 		// preserve their batchId (see OpGroupingManager.createEmptyGroupedBatch /
 		// outbox.flushEmptyBatch).
+		// `disableOfflineFull` is the supported kill-switch. The legacy `enableOfflineFull === false`
+		// (mirroring the loader-side deprecation alias in `isOfflineLoadEnabled`) and
+		// `Fluid.ContainerRuntime.DisableBatchIdTracking === true` (the prior runtime-side kill) are
+		// honored as deprecation aliases for one release so hosts that hold them defensively don't
+		// silently flip to tracking-on after upgrade.
 		const offlineDisabled =
-			this.mc.config.getBoolean("Fluid.Container.disableOfflineFull") === true;
+			this.mc.config.getBoolean("Fluid.Container.disableOfflineFull") === true ||
+			this.mc.config.getBoolean("Fluid.Container.enableOfflineFull") === false ||
+			this.mc.config.getBoolean("Fluid.ContainerRuntime.DisableBatchIdTracking") === true;
 
 		this.batchIdTrackingEnabled =
 			!offlineDisabled &&

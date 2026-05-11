@@ -2610,6 +2610,96 @@ describe("Runtime", () => {
 				});
 			});
 
+			// Legacy deprecation aliases that the runtime gate must honor symmetrically with the
+			// loader-side `isOfflineLoadEnabled` (see container.ts). Without these, a host with
+			// the legacy keys deployed defensively lands in a partially-degraded state.
+			describe("Legacy deprecation aliases for batch-id tracking", () => {
+				it("honors Fluid.Container.enableOfflineFull === false (turns tracking off)", async () => {
+					const { runtime: containerRuntime } = await ContainerRuntime.loadRuntime2({
+						context: getMockContext({
+							settings: { "Fluid.Container.enableOfflineFull": false },
+						}) as IContainerContext,
+						registry: new FluidDataStoreRegistry([]),
+						existing: false,
+						runtimeOptions: { enableRuntimeIdCompressor: "on" },
+						provideEntryPoint: mockProvideEntryPoint,
+					});
+					// Tracking off => DuplicateBatchDetector not allocated => duplicate batchIds do not throw.
+					containerRuntime.process(
+						{
+							sequenceNumber: 123,
+							type: MessageType.Operation,
+							contents: { type: ContainerMessageType.Rejoin, contents: undefined },
+							metadata: { batchId: "batchId1" },
+						} satisfies Partial<ISequencedDocumentMessage> as ISequencedDocumentMessage,
+						false,
+					);
+					assert.doesNotThrow(() =>
+						containerRuntime.process(
+							{
+								sequenceNumber: 234,
+								type: MessageType.Operation,
+								contents: { type: ContainerMessageType.Rejoin, contents: undefined },
+								metadata: { batchId: "batchId1" },
+							} satisfies Partial<ISequencedDocumentMessage> as ISequencedDocumentMessage,
+							false,
+						),
+					);
+				});
+
+				it("honors Fluid.ContainerRuntime.DisableBatchIdTracking === true (turns tracking off)", async () => {
+					const { runtime: containerRuntime } = await ContainerRuntime.loadRuntime2({
+						context: getMockContext({
+							settings: { "Fluid.ContainerRuntime.DisableBatchIdTracking": true },
+						}) as IContainerContext,
+						registry: new FluidDataStoreRegistry([]),
+						existing: false,
+						runtimeOptions: { enableRuntimeIdCompressor: "on" },
+						provideEntryPoint: mockProvideEntryPoint,
+					});
+					containerRuntime.process(
+						{
+							sequenceNumber: 123,
+							type: MessageType.Operation,
+							contents: { type: ContainerMessageType.Rejoin, contents: undefined },
+							metadata: { batchId: "batchId1" },
+						} satisfies Partial<ISequencedDocumentMessage> as ISequencedDocumentMessage,
+						false,
+					);
+					assert.doesNotThrow(() =>
+						containerRuntime.process(
+							{
+								sequenceNumber: 234,
+								type: MessageType.Operation,
+								contents: { type: ContainerMessageType.Rejoin, contents: undefined },
+								metadata: { batchId: "batchId1" },
+							} satisfies Partial<ISequencedDocumentMessage> as ISequencedDocumentMessage,
+							false,
+						),
+					);
+				});
+
+				it("does not emit OfflineBatchIdTrackingDegraded when a legacy alias intentionally disables tracking", async () => {
+					const logger = new MockLogger();
+					await ContainerRuntime.loadRuntime2({
+						context: getMockContext({
+							logger,
+							settings: { "Fluid.Container.enableOfflineFull": false },
+						}) as IContainerContext,
+						registry: new FluidDataStoreRegistry([]),
+						existing: false,
+						runtimeOptions: {
+							flushMode: FlushMode.Immediate,
+							enableRuntimeIdCompressor: "on",
+						},
+						provideEntryPoint: mockProvideEntryPoint,
+					});
+					logger.assertMatchNone([
+						{ eventName: "ContainerRuntime:OfflineBatchIdTrackingDegraded" },
+					]);
+				});
+			});
+
 			it("Can roundtrip DuplicateBatchDetector state through summary/snapshot", async () => {
 				// Duplicate Batch Detection is on by default in TurnBased mode.
 				const { runtime: containerRuntime } = await ContainerRuntime.loadRuntime2({

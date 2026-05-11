@@ -25,8 +25,6 @@ import { LoggingError } from "@fluidframework/telemetry-utils/internal";
 import type { OptionOverride, TestConfiguration } from "./testConfigFile.js";
 
 interface ILoaderOptionsExperimental extends ILoaderOptions {
-	disableOfflineFull?: boolean;
-	disableOfflineSnapshotRefresh?: boolean;
 	snapshotRefreshTimeoutMs?: number;
 }
 
@@ -36,9 +34,16 @@ const loaderOptionsMatrix: OptionsMatrix<ILoaderOptionsExperimental> = {
 	provideScopeLoader: booleanCases,
 	maxClientLeaveWaitTime: numberCases,
 	enableOfflineLoad: booleanCases,
-	disableOfflineFull: booleanCases,
-	disableOfflineSnapshotRefresh: booleanCases,
 	snapshotRefreshTimeoutMs: [undefined, 60 * 5 * 1000 /* 5min */],
+};
+
+/**
+ * Default config-provider settings exercised by every stress run. Kill-switch coverage lives here
+ * (not on `loaderOptionsMatrix`) because the product reads these keys from `IConfigProvider`.
+ */
+const configurationsMatrix: OptionsMatrix<Record<string, ConfigTypes>> = {
+	"Fluid.Container.disableOfflineFull": booleanCases,
+	"Fluid.Container.disableOfflineSnapshotRefresh": booleanCases,
 };
 
 export function applyOverrides<T extends Record<string, any>>(
@@ -162,12 +167,12 @@ export function generateRuntimeOptions(
 
 export function generateConfigurations(
 	seed: number,
-	overrides: OptionsMatrix<Record<string, ConfigTypes>> | undefined,
+	overrides: Partial<OptionsMatrix<Record<string, ConfigTypes>>> | undefined,
 ): Record<string, ConfigTypes>[] {
-	if (overrides === undefined) {
-		return [{}];
-	}
-	return generatePairwiseOptions<Record<string, ConfigTypes>>(overrides, seed);
+	return generatePairwiseOptions<Record<string, ConfigTypes>>(
+		applyOverrides(configurationsMatrix, overrides),
+		seed,
+	);
 }
 
 /**
