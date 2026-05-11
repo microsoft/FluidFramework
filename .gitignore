@@ -70,7 +70,3 @@ CLAUDE.local.md
 
 # Output from benchmarks
 **/benchmark*Output.json
-
-# Python bytecode cache (scripts/ contains a small Python helper + tests).
-__pycache__/
-*.pyc

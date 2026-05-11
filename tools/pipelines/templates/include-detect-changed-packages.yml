@@ -1,10 +1,10 @@
 # Copyright (c) Microsoft Corporation and contributors. All rights reserved.
 # Licensed under the MIT License.
 
-# Pipeline wrapper around scripts/detect_changed_packages.py. The Python
-# module owns the decision logic and its own docstring; see that file for
+# Pipeline wrapper around scripts/detect_changed_packages.mjs. The Node ESM
+# module owns the decision logic and its own doc comment; see that file for
 # output-variable semantics, safe-fallback policy, and full-run patterns.
-# Python 3 stdlib only, so no install step is needed here.
+# Node built-ins only, so no install step is needed here.
 
 parameters:
 - name: buildDirectory
@@ -31,4 +31,4 @@ steps:
       workingDirectory: '$(Pipeline.Workspace)/${{ parameters.buildDirectory }}'
       script: |
         set -eu -o pipefail
-        python3 scripts/detect_changed_packages.py
+        node scripts/detect_changed_packages.mjs
