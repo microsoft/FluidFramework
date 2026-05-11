@@ -30,8 +30,9 @@ test.describe("End to end tests", () => {
 
 	test.beforeEach(async ({ page }) => {
 		await page.goto("/", { waitUntil: "load" });
-		// eslint-disable-next-line @typescript-eslint/dot-notation
-		await page.waitForFunction(() => window["fluidStarted"]);
+		await page.waitForFunction(
+			() => (window as unknown as { fluidStarted: unknown }).fluidStarted,
+		);
 		await page.waitForSelector("textarea");
 	});
 
