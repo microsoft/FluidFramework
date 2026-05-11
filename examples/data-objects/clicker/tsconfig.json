@@ -1,9 +1,14 @@
 {
 	"extends": "../../../common/build/build-common/tsconfig.node16.json",
 	"compilerOptions": {
+		"rootDir": "./src",
 		"outDir": "./lib",
 		"types": ["node", "react"],
 		"exactOptionalPropertyTypes": false,
 	},
-	"include": ["src/**/*", "tests/**/*", "playwright.config.ts"],
+	// Keep src-only here so the emitted layout (./lib/index.{js,d.ts}) matches the
+	// package's "main"/"types"/"exports" entries — this package is consumed by
+	// @fluid-example/data-object-grid. Tests and playwright.config.ts are handled
+	// by Playwright's own TypeScript runner and don't need to be tsc-emitted.
+	"include": ["src/**/*"],
 }
