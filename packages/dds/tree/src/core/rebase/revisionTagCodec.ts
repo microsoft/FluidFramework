@@ -5,6 +5,7 @@
 
 import { assert } from "@fluidframework/core-utils/internal";
 import type { IIdCompressor, SessionId } from "@fluidframework/id-compressor";
+import { isStableId } from "@fluidframework/id-compressor/internal";
 
 import type { JsonCodecPart } from "../../codec/index.js";
 import type { ChangeEncodingContext } from "../change-family/index.js";
@@ -21,20 +22,30 @@ export class RevisionTagCodec
 		this.localSessionId = idCompressor.localSessionId;
 	}
 
-	public encode(tag: RevisionTag): EncodedRevisionTag {
-		return tag === "root"
-			? tag
-			: (this.idCompressor.normalizeToOpSpace(tag) as EncodedRevisionTag);
+	public encode(tag: RevisionTag, context: ChangeEncodingContext): EncodedRevisionTag {
+		if (tag === "root") {
+			return tag;
+		}
+		const opSpaceId = this.idCompressor.normalizeToOpSpace(tag);
+		// In contexts that require finalization (see `ChangeEncodingContext.idsMustBeFinalized`),
+		// a negative op-space ID would be unresolvable by clients loading the blob after the
+		// originating session's local state is gone. Emit the stable UUID instead.
+		if (context.idsMustBeFinalized === true && opSpaceId < 0) {
+			return this.idCompressor.decompress(tag) as EncodedRevisionTag;
+		}
+		return opSpaceId as EncodedRevisionTag;
 	}
 	public decode(tag: EncodedRevisionTag, context: ChangeEncodingContext): RevisionTag {
 		if (tag === "root") {
 			return tag;
 		}
-
-		assert(
-			typeof tag === "number",
-			0x88d /* String revision tag must be the literal 'root' */,
-		);
+		if (typeof tag === "string") {
+			assert(
+				isStableId(tag),
+				0x88d /* String revision tag must be 'root' or a stable UUID */,
+			);
+			return this.idCompressor.recompress(tag);
+		}
 		return this.idCompressor.normalizeToSessionSpace(tag, context.originatorId);
 	}
 }

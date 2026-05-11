@@ -102,11 +102,21 @@ export class EditManagerSummarizer<TChangeset>
 		incrementalSummaryContext?: IExperimentalIncrementalSummaryContext;
 		builder: SummaryTreeBuilder;
 	}): void {
-		const { stringify, builder } = props;
+		const { stringify, builder, incrementalSummaryContext } = props;
+		// An undefined `incrementalSummaryContext` indicates this is an attach summary (or a GC
+		// pass). Attach summary blobs can be reused as handles in later summaries with no
+		// intervening ops to finalize local IDs, after which the originating session's local
+		// ID state is no longer available to readers — so any compressed ID we persist must be
+		// in a form (stable UUID) that does not depend on session state.
+		const idsMustBeFinalized = incrementalSummaryContext === undefined;
 		const context: EditManagerEncodingContext =
 			this.schemaAndPolicy === undefined
-				? { idCompressor: this.idCompressor }
-				: { schema: this.schemaAndPolicy, idCompressor: this.idCompressor };
+				? { idCompressor: this.idCompressor, idsMustBeFinalized }
+				: {
+						schema: this.schemaAndPolicy,
+						idCompressor: this.idCompressor,
+						idsMustBeFinalized,
+					};
 		const jsonCompatible = this.codec.encode(this.editManager.getSummaryData(), context);
 		const dataString = stringify(jsonCompatible);
 		builder.addBlob(stringKey, dataString);

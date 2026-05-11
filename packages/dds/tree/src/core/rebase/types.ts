@@ -36,10 +36,21 @@ export const SessionIdSchema = brandedStringType<SessionId>();
  * possible on readonly clients. These clients generally don't need ids, but  must be done at tree initialization time.
  */
 export type RevisionTag = SessionSpaceCompressedId | "root";
-export type EncodedRevisionTag = Brand<OpSpaceCompressedId, "EncodedRevisionTag"> | "root";
+/**
+ * The encoded form of a {@link RevisionTag}.
+ * @remarks
+ * - `"root"` is used for the trunk base.
+ * - A number is the finalized op-space ID emitted by
+ *   `IIdCompressor.normalizeToOpSpace`.
+ * - Any other string is the stable UUID fallback emitted when the encoder
+ *   is told `idsMustBeFinalized` and the op-space form would be negative
+ *   (i.e. the originator session has not yet been allocated a cluster).
+ *   See {@link ChangeEncodingContext.idsMustBeFinalized}.
+ */
+export type EncodedRevisionTag = Brand<OpSpaceCompressedId, "EncodedRevisionTag"> | string;
 export const RevisionTagSchema = Type.Union([
-	Type.Literal("root"),
-	brandedNumberType<Exclude<EncodedRevisionTag, string>>(),
+	Type.String(),
+	brandedNumberType<Brand<OpSpaceCompressedId, "EncodedRevisionTag">>(),
 ]);
 
 export type EncodedStableId = Brand<StableId, "EncodedStableId">;

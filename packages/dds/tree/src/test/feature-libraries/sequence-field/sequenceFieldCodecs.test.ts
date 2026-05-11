@@ -36,8 +36,8 @@ const baseContext = {
 	revision: tag1,
 	idCompressor: testIdCompressor,
 };
-const encodedTag1 = testRevisionTagCodec.encode(tag1);
-const encodedTag2 = testRevisionTagCodec.encode(tag2);
+const encodedTag1 = testRevisionTagCodec.encode(tag1, baseContext);
+const encodedTag2 = testRevisionTagCodec.encode(tag2, baseContext);
 const context: FieldChangeEncodingContext = {
 	baseContext,
 	encodeNode: (node) => TestNodeId.encode(node, baseContext),

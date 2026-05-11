@@ -20,7 +20,11 @@ describe("RevisionTagCodec", () => {
 		const localCompressor = createIdCompressor(createSessionId());
 		const remoteCompressor = createIdCompressor(createSessionId());
 		const codec = new RevisionTagCodec(localCompressor);
-		const encoded = codec.encode(rootRevisionTag);
+		const encoded = codec.encode(rootRevisionTag, {
+			originatorId: localCompressor.localSessionId,
+			revision: undefined,
+			idCompressor: localCompressor,
+		});
 		assert.deepEqual(encoded, rootRevisionTag);
 		const decoded = codec.decode(encoded, {
 			originatorId: localCompressor.localSessionId,
@@ -28,7 +32,11 @@ describe("RevisionTagCodec", () => {
 			idCompressor: testIdCompressor,
 		});
 		assert.deepEqual(decoded, rootRevisionTag);
-		const remoteEncoded = new RevisionTagCodec(remoteCompressor).encode(rootRevisionTag);
+		const remoteEncoded = new RevisionTagCodec(remoteCompressor).encode(rootRevisionTag, {
+			originatorId: remoteCompressor.localSessionId,
+			revision: undefined,
+			idCompressor: remoteCompressor,
+		});
 		const decodedFromRemote = codec.decode(remoteEncoded, {
 			originatorId: remoteCompressor.localSessionId,
 			revision: undefined,
@@ -48,7 +56,11 @@ describe("RevisionTagCodec", () => {
 		const localId = localCompressor.generateCompressedId();
 
 		// The encoded ID will not have a final ID form
-		let localEncoded = localCodec.encode(localId);
+		let localEncoded = localCodec.encode(localId, {
+			originatorId: localSession,
+			revision: undefined,
+			idCompressor: localCompressor,
+		});
 
 		assert.deepEqual(localId, localEncoded);
 		assert.deepEqual(
@@ -74,13 +86,21 @@ describe("RevisionTagCodec", () => {
 		toIdCompressorWithCore(localCompressor).finalizeCreationRange(range);
 		toIdCompressorWithCore(remoteCompressor).finalizeCreationRange(range);
 		// Locally encoding will have the final ID form, as will the remote client
-		localEncoded = localCodec.encode(localId);
+		localEncoded = localCodec.encode(localId, {
+			originatorId: localSession,
+			revision: undefined,
+			idCompressor: localCompressor,
+		});
 		const remoteDecoded = remoteCodec.decode(localEncoded, {
 			originatorId: localSession,
 			revision: undefined,
 			idCompressor: testIdCompressor,
 		});
-		const remoteEncoded = remoteCodec.encode(remoteDecoded);
+		const remoteEncoded = remoteCodec.encode(remoteDecoded, {
+			originatorId: remoteSession,
+			revision: undefined,
+			idCompressor: remoteCompressor,
+		});
 
 		assert.notDeepEqual(localId, localEncoded);
 		assert.deepEqual(localEncoded, remoteDecoded);

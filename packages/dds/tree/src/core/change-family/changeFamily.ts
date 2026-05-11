@@ -25,6 +25,22 @@ export interface ChangeEncodingContext {
 	readonly revision: RevisionTag | undefined;
 	readonly idCompressor: IIdCompressor;
 	readonly schema?: SchemaAndPolicy;
+	/**
+	 * When true, encoders must not emit op-space compressed IDs that have not
+	 * yet been finalized (i.e. negative integers). Instead, they emit the
+	 * stable UUID form, which any reader can resolve without access to the
+	 * originator's session state.
+	 * @remarks
+	 * Set by callers producing attach summaries (where the host runtime
+	 * passes no `incrementalSummaryContext`): the resulting blob may be
+	 * reused as a handle in later summaries, after which the originating
+	 * session's local ID state is no longer available to readers.
+	 *
+	 * This flag is propagated transitively through the change codec stack
+	 * (e.g. into `FieldBatchEncodingContext.idsMustBeFinalized` for builds
+	 * and refreshers inside changesets).
+	 */
+	readonly idsMustBeFinalized?: boolean;
 }
 
 export type ChangeFamilyCodec<TChange> = IJsonCodec<

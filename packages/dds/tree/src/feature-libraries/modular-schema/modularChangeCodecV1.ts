@@ -330,6 +330,10 @@ export function encodeDetachedNodes(
 					schema: context.schema,
 					originatorId: context.originatorId,
 					idCompressor: context.idCompressor,
+					// Propagate so that identifier-typed values in build / refresher trees
+					// emit stable UUIDs when this change is being persisted as part of an
+					// attach summary. See {@link ChangeEncodingContext.idsMustBeFinalized}.
+					idsMustBeFinalized: context.idsMustBeFinalized,
 				}),
 			};
 }

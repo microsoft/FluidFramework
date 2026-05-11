@@ -28,6 +28,12 @@ import type {
 export interface EditManagerEncodingContext {
 	idCompressor: IIdCompressor;
 	readonly schema?: SchemaAndPolicy;
+	/**
+	 * When true, encoders must emit stable UUID forms for any compressed ID
+	 * that has not yet been finalized. See
+	 * {@link ChangeEncodingContext.idsMustBeFinalized}.
+	 */
+	readonly idsMustBeFinalized?: boolean;
 }
 
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
@@ -53,6 +59,7 @@ function encodeCommit<TChangeset, T extends Commit<TChangeset>>(
 			originatorId: commit.sessionId,
 			idCompressor: context.idCompressor,
 			revision: undefined,
+			idsMustBeFinalized: context.idsMustBeFinalized,
 		}),
 		change: changeCodec.encode(commit.change, { ...context, revision: commit.revision }),
 	};
@@ -112,6 +119,7 @@ export function encodeSharedBranch<TChangeset>(
 				idCompressor: context.idCompressor,
 				schema: context.schema,
 				revision: undefined,
+				idsMustBeFinalized: context.idsMustBeFinalized,
 			}),
 		),
 		peers: Array.from(data.peerLocalBranches.entries(), ([sessionId, branch]) => [
@@ -121,6 +129,7 @@ export function encodeSharedBranch<TChangeset>(
 					originatorId: sessionId,
 					idCompressor: context.idCompressor,
 					revision: undefined,
+					idsMustBeFinalized: context.idsMustBeFinalized,
 				}),
 				commits: branch.commits.map((commit) =>
 					encodeCommit(changeCodec, revisionTagCodec, commit, {
@@ -128,6 +137,7 @@ export function encodeSharedBranch<TChangeset>(
 						idCompressor: context.idCompressor,
 						schema: context.schema,
 						revision: undefined,
+						idsMustBeFinalized: context.idsMustBeFinalized,
 					}),
 				),
 			},
@@ -154,6 +164,7 @@ export function encodeSharedBranch<TChangeset>(
 			originatorId,
 			idCompressor: context.idCompressor,
 			revision: undefined,
+			idsMustBeFinalized: context.idsMustBeFinalized,
 		});
 	}
 	return json;

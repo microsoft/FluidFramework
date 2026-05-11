@@ -51,11 +51,17 @@ export function makeSharedBranchesCodecWithVersion<TChangeset>(
 	const codec: CodecAndSchema<SummaryData<TChangeset>, EditManagerEncodingContext> = {
 		schema,
 		encode: (data: SummaryData<TChangeset>, context: EditManagerEncodingContext) => {
+			// vSharedBranches stores the summary's originator at the top level,
+			// and the decode path threads that originator down to each child codec.
+			// Stable-UUID fallbacks are therefore unnecessary here even when this is
+			// an attach summary, so suppress `idsMustBeFinalized` for the inner codec
+			// calls regardless of what the caller passed.
+			const innerContext = { ...context, idsMustBeFinalized: false };
 			const mainBranch = encodeSharedBranch(
 				changeCodec,
 				revisionTagCodec,
 				data.main,
-				context,
+				innerContext,
 				data.originator,
 			);
 			assert(
@@ -75,7 +81,7 @@ export function makeSharedBranchesCodecWithVersion<TChangeset>(
 							changeCodec,
 							revisionTagCodec,
 							branch,
-							context,
+							innerContext,
 							data.originator,
 						),
 					);

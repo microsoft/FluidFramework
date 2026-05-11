@@ -25,6 +25,7 @@ import { EncodedEditManager } from "./editManagerFormatV1toV4.js";
 export interface EditManagerEncodingContext {
 	idCompressor: IIdCompressor;
 	readonly schema?: SchemaAndPolicy;
+	readonly idsMustBeFinalized?: boolean;
 }
 
 /**

@@ -27,7 +27,14 @@ class MajorCodec implements IJsonCodec<Major, EncodedRevisionTag> {
 
 	public encode(major: Major): EncodedRevisionTag {
 		assert(major !== undefined, 0x88e /* Unexpected undefined revision */);
-		const id = this.revisionTagCodec.encode(major);
+		// The v1 schema does not allow stable-UUID strings, so pass
+		// `idsMustBeFinalized: false` and assert the result is finalized.
+		const id = this.revisionTagCodec.encode(major, {
+			originatorId: this.revisionTagCodec.localSessionId,
+			idCompressor: this.idCompressor,
+			revision: undefined,
+			idsMustBeFinalized: false,
+		});
 		/**
 		 * Preface: this codec is only used at summarization time (not for ops).
 		 * Note that the decode path must provide a session id in which to interpret the revision tag.
@@ -46,7 +53,7 @@ class MajorCodec implements IJsonCodec<Major, EncodedRevisionTag> {
 		 * The assert below will fail in such a scenario. This is addressed in the v2 codec.
 		 */
 		assert(
-			id === "root" || id >= 0,
+			id === "root" || (typeof id === "number" && id >= 0),
 			0x88f /* Expected final id on encode of detached field index revision */,
 		);
 		return id;
@@ -54,7 +61,7 @@ class MajorCodec implements IJsonCodec<Major, EncodedRevisionTag> {
 
 	public decode(major: EncodedRevisionTag): RevisionTag {
 		assert(
-			major === "root" || major >= 0,
+			major === "root" || (typeof major === "number" && major >= 0),
 			0x890 /* Expected final id on decode of detached field index revision */,
 		);
 		return this.revisionTagCodec.decode(major, {
