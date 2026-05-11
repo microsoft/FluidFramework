@@ -428,7 +428,7 @@ export interface ChunkPolicy {
 	 * is split exactly. This bounds N splits inside an M-sized chunk at the cost of producing a
 	 * few extra intermediate chunks.
 	 *
-	 * Future merge/extend logic for adjacent small chunks is expected to use the same value as the
+	 * Future merge/extend logic for adjacent small chunks could use the same value as the
 	 * upper bound it tries to stay under, so dynamic chunk sizes settle around this target.
 	 *
 	 * Independent of {@link ChunkPolicy.uniformChunkNodeCount}, which only bounds the size of
