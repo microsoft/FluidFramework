@@ -28,6 +28,17 @@ import type { DependencyUpdateType } from "./bump.js";
 import type { Context } from "./context.js";
 
 /**
+ * Strips a leading `refs/heads/` prefix from a branch name, if present.
+ *
+ * Azure DevOps surfaces target branches as fully qualified refs (`refs/heads/main`), but git
+ * fetch / merge-base operations expect bare branch names.
+ */
+export function normalizeTargetBranch(branch: string): string {
+	const prefix = "refs/heads/";
+	return branch.startsWith(prefix) ? branch.slice(prefix.length) : branch;
+}
+
+/**
  * Creates an appropriate branch for a release group and bump type. Does not commit!
  *
  * @param context - The {@link Context}.

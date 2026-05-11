@@ -4,12 +4,21 @@
  */
 
 import path from "node:path";
-import { dirname } from "node:path/posix";
 
-import { getChangedSinceRef, getRemote } from "@fluid-tools/build-infrastructure";
+import {
+	getChangedSinceRef,
+	getMergeBaseRemote,
+	getPackageDirsAtRef,
+	getRemote,
+	isFileInPackageDir,
+} from "@fluid-tools/build-infrastructure";
 import { Flags } from "@oclif/core";
-import type { SimpleGit } from "simple-git";
 
+import {
+	formatLogIssue,
+	formatSetVariable,
+} from "../../library/azureDevops/pipelineCommands.js";
+import { normalizeTargetBranch } from "../../library/branches.js";
 import { BaseCommandWithBuildProject } from "../../library/commands/base.js";
 
 /**
@@ -17,7 +26,7 @@ import { BaseCommandWithBuildProject } from "../../library/commands/base.js";
  * every package's tests. Keep this conservative since these files can affect
  * dependency resolution, build behavior, or pipeline behavior across packages.
  */
-export const fullRunPatterns: readonly RegExp[] = [
+const fullRunPatterns: readonly RegExp[] = [
 	/^package\.json$/,
 	/^pnpm-lock\.yaml$/,
 	/^pnpm-workspace\.yaml$/,
@@ -33,24 +42,37 @@ export const fullRunPatterns: readonly RegExp[] = [
 	/^\.changeset\/config\.json$/,
 ];
 
+/**
+ * Result of computing which packages have changed since the target branch.
+ *
+ * The same shape is returned both for full-run fallbacks (e.g. unexpected errors or trigger-pattern
+ * matches) and for the normal scoped-filter case. Consumers can inspect {@link forcedFullRunPattern}
+ * to disambiguate.
+ */
 export interface ChangedPackagesResult {
+	/** Whether any tests should run at all. `false` only when no changed file maps to a workspace package. */
 	shouldRunTests: boolean;
+	/** The computed `pnpm --filter` expression, or an empty string for full / no-op runs. */
 	scopedPnpmFilter: string;
+	/** The (normalized) target branch the comparison was performed against. */
 	targetBranch: string;
+	/** The merge-base commit between HEAD and the target branch, when it could be determined. */
 	mergeBase?: string;
+	/** The list of files that changed since the merge base. Empty on the error fallback path. */
 	changedFiles: string[];
+	/** The source of the first {@link fullRunPatterns} entry that matched a changed file, if any. */
 	forcedFullRunPattern?: string;
+	/** Number of workspace packages reported as changed by `getChangedSinceRef`. */
 	changedPackageCount: number;
 }
 
-export function normalizeTargetBranch(branch: string): string {
-	const prefix = "refs/heads/";
-	return branch.startsWith(prefix) ? branch.slice(prefix.length) : branch;
-}
-
-export function checkFullRunPatterns(
+/**
+ * Returns the first pattern in `patterns` that matches any path in `files`, or `undefined` if
+ * none match.
+ */
+function findFullRunPatternMatch(
 	files: readonly string[],
-	patterns: readonly RegExp[] = fullRunPatterns,
+	patterns: readonly RegExp[],
 ): RegExp | undefined {
 	for (const pattern of patterns) {
 		if (files.some((file) => pattern.test(file))) {
@@ -60,79 +82,14 @@ export function checkFullRunPatterns(
 	return undefined;
 }
 
-export function buildPackageDirSet(
-	mergeBase: string,
-	listHistoricalPackages: (ref: string) => readonly string[],
-	listCurrentPackages: () => readonly string[],
-): Set<string> {
-	const dirs = new Set<string>();
-	for (const file of listHistoricalPackages(mergeBase)) {
-		dirs.add(dirname(file));
-	}
-	for (const file of listCurrentPackages()) {
-		dirs.add(dirname(file));
-	}
-	return dirs;
-}
-
-export function anyChangedFileInPackages(
-	changedFiles: readonly string[],
-	packageDirs: ReadonlySet<string>,
-): boolean {
-	for (const file of changedFiles) {
-		if (file === "") {
-			continue;
-		}
-
-		let dir = dirname(file);
-		while (dir !== "." && dir !== "/") {
-			if (packageDirs.has(dir)) {
-				return true;
-			}
-			dir = dirname(dir);
-		}
-	}
-	return false;
-}
-
-const packageJsonPattern = /(^|\/)package\.json$/;
-
-function packageJsonFilesFromGitOutput(output: string): string[] {
-	return output.split("\n").filter((file) => packageJsonPattern.test(file));
-}
-
-async function resolveMergeBase(
-	git: Readonly<SimpleGit>,
-	remote: string,
-	targetBranch: string,
-	log: (message: string) => void,
-): Promise<string> {
-	try {
-		return (
-			await git.raw("merge-base", "HEAD", `refs/remotes/${remote}/${targetBranch}`)
-		).trim();
-	} catch {
-		const isShallow = (await git.raw("rev-parse", "--is-shallow-repository")).trim();
-		if (isShallow !== "true") {
-			throw new Error(`No merge-base with ${remote}/${targetBranch}`);
-		}
-
-		log("Merge-base not found in shallow clone; deepening and retrying.");
-		await git.fetch(["--deepen", "1000", remote, targetBranch]);
-		return (
-			await git.raw("merge-base", "HEAD", `refs/remotes/${remote}/${targetBranch}`)
-		).trim();
-	}
-}
-
 export default class CheckChangedPackagesCommand extends BaseCommandWithBuildProject<
 	typeof CheckChangedPackagesCommand
 > {
 	static readonly summary =
-		"Computes Azure DevOps output variables for changed-package-scoped test runs.";
+		"Computes Azure DevOps output variables used by pipelines to conditionally skip tests.";
 
 	static readonly description =
-		"Compares the current PR branch to the merge base with a target branch, then emits shouldRunTests and scopedPnpmFilter output variables. Unexpected errors conservatively fall back to a full test run.";
+		"Compares the current PR branch to the merge base with a target branch, then emits 'shouldRunTests' and 'scopedPnpmFilter' as Azure DevOps output variables. Unexpected errors conservatively fall back to a full test run.";
 
 	static readonly enableJsonFlag = true;
 
@@ -140,6 +97,7 @@ export default class CheckChangedPackagesCommand extends BaseCommandWithBuildPro
 		targetBranch: Flags.string({
 			description:
 				"Target branch to compare against. Defaults to the TARGET_BRANCH environment variable.",
+			env: "TARGET_BRANCH",
 		}),
 		searchPath: Flags.directory({
 			description:
@@ -174,8 +132,12 @@ export default class CheckChangedPackagesCommand extends BaseCommandWithBuildPro
 			}
 
 			await git.fetch([remote, targetBranch]);
-			const mergeBase = await resolveMergeBase(git, remote, targetBranch, (message) =>
-				this.info(message),
+			const mergeBase = await getMergeBaseRemote(
+				git,
+				targetBranch,
+				remote,
+				"HEAD",
+				(message) => this.info(message),
 			);
 			this.info(`Merge base: ${mergeBase}`);
 
@@ -189,7 +151,7 @@ export default class CheckChangedPackagesCommand extends BaseCommandWithBuildPro
 				this.info(`... and ${changedFiles.length - 30} more`);
 			}
 
-			const match = checkFullRunPatterns(changedFiles);
+			const match = findFullRunPatternMatch(changedFiles, fullRunPatterns);
 			if (match !== undefined) {
 				this.info(`Match for full-run pattern '${match.source}' - forcing full test run.`);
 				this.emitVsoOutputs(true, "");
@@ -204,19 +166,13 @@ export default class CheckChangedPackagesCommand extends BaseCommandWithBuildPro
 				};
 			}
 
-			const historicalPackageJsonFiles = packageJsonFilesFromGitOutput(
-				await git.raw("ls-tree", "-r", "--name-only", mergeBase),
-			);
-			const currentPackageJsonFiles = packageJsonFilesFromGitOutput(
-				await git.raw("ls-files", "--", "package.json", "*/package.json"),
-			);
-			const packageDirs = buildPackageDirSet(
-				mergeBase,
-				() => historicalPackageJsonFiles,
-				() => currentPackageJsonFiles,
-			);
+			// Union of package directories at the merge-base tree and the current working tree so
+			// that packages added, removed, or moved between the two refs are all considered.
+			const historicalDirs = await getPackageDirsAtRef(git, mergeBase);
+			const currentDirs = await getPackageDirsAtRef(git);
+			const packageDirs = new Set([...historicalDirs, ...currentDirs]);
 
-			if (!anyChangedFileInPackages(changedFiles, packageDirs)) {
+			if (!changedFiles.some((file) => isFileInPackageDir(file, packageDirs))) {
 				this.logWarning(
 					`No changed files mapped to a workspace package - skipping all test execution. Files considered (${changedFiles.length}):`,
 				);
@@ -261,15 +217,13 @@ export default class CheckChangedPackagesCommand extends BaseCommandWithBuildPro
 		const flag = shouldRunTests ? "true" : "false";
 		this.log(`shouldRunTests=${flag}`);
 		this.log(`scopedPnpmFilter=${scopedPnpmFilter}`);
-		this.log(`##vso[task.setvariable variable=shouldRunTests;isOutput=true]${flag}`);
-		this.log(
-			`##vso[task.setvariable variable=scopedPnpmFilter;isOutput=true]${scopedPnpmFilter}`,
-		);
+		this.log(formatSetVariable("shouldRunTests", flag, { isOutput: true }));
+		this.log(formatSetVariable("scopedPnpmFilter", scopedPnpmFilter, { isOutput: true }));
 	}
 
 	private logWarning(message: string): void {
 		if (!this.jsonEnabled()) {
-			this.log(`##vso[task.logissue type=warning]${message}`);
+			this.log(formatLogIssue("warning", message));
 		}
 	}
 

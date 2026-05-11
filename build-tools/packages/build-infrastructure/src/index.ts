@@ -34,7 +34,10 @@ export {
 	getChangedSinceRef,
 	getFiles,
 	getMergeBaseRemote,
+	getPackageDirsAtRef,
 	getRemote,
+	isFileInPackageDir,
+	listPackageJsonPaths,
 } from "./git.js";
 export { PackageBase } from "./package.js";
 export { updatePackageJsonFile, updatePackageJsonFileAsync } from "./packageJsonUtils.js";
