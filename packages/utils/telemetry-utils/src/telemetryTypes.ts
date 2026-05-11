@@ -13,6 +13,8 @@ import type { ITelemetryBaseLogger, LogLevel, Tagged } from "@fluidframework/cor
  * error - Error log event, ideally 0 of these are logged during a session
  *
  * performance - Includes duration, and often has _start, _end, or _cancel suffixes for activity tracking
+ * @deprecated This type is being removed without a replacement.
+ * @see {@link https://github.com/microsoft/FluidFramework/issues/26910 | Issue #26910} for details.
  * @legacy @beta
  */
 export type TelemetryEventCategory = "generic" | "error" | "performance";
@@ -65,6 +67,8 @@ export interface ITelemetryEventExt extends ITelemetryPropertiesExt {
 /**
  * Informational (non-error) telemetry event
  * @remarks Maps to category = "generic"
+ * @deprecated This type is being removed without a replacement.
+ * @see {@link https://github.com/microsoft/FluidFramework/issues/26910 | Issue #26910} for details.
  * @legacy @beta
  */
 export interface ITelemetryGenericEventExt extends ITelemetryPropertiesExt {
@@ -83,6 +87,8 @@ export interface ITelemetryGenericEventExt extends ITelemetryPropertiesExt {
 /**
  * Error telemetry event.
  * @remarks Maps to category = "error"
+ * @deprecated This type is being removed without a replacement.
+ * @see {@link https://github.com/microsoft/FluidFramework/issues/26910 | Issue #26910} for details.
  * @legacy @beta
  */
 export interface ITelemetryErrorEventExt extends ITelemetryPropertiesExt {
@@ -95,6 +101,8 @@ export interface ITelemetryErrorEventExt extends ITelemetryPropertiesExt {
 /**
  * Performance telemetry event.
  * @remarks Maps to category = "performance"
+ * @deprecated This type is being removed without a replacement.
+ * @see {@link https://github.com/microsoft/FluidFramework/issues/26910 | Issue #26910} for details.
  * @legacy @beta
  */
 export interface ITelemetryPerformanceEventExt extends ITelemetryGenericEventExt {
@@ -105,14 +113,72 @@ export interface ITelemetryPerformanceEventExt extends ITelemetryGenericEventExt
 }
 
 /**
+ * This is the externally facing type for a FluidFramework internal telemetry logger wrapper.
+ *
+ * @remarks
+ * The methods if this interface are not to be used directly by consumers and are all
+ * deprecated to removed without replacement. This type is not deprecated and will
+ * transition to an erased type to handle cases where "internal" `ITelemetryLoggerExt`
+ * previously leaked out.
+ *
+ * @see {@link https://github.com/microsoft/FluidFramework/issues/26910 | Issue #26910} for deprecation and breaking change details.
+ *
+ * @privateRemarks
+ * External APIs taking in an `ITelemetryLoggerExt` ideally should be updated to
+ * accept `ITelemetryBaseLogger` instead.
+ *
+ * @sealed
+ * @legacy
+ * @beta
+ */
+export interface ITelemetryLoggerExt extends ITelemetryBaseLogger {
+	/**
+	 * Send an information telemetry event.
+	 * @param event - Event to send.
+	 * @param error - Optional error object to log.
+	 * @param logLevel - Optional level of the log. Default: {@link @fluidframework/core-interfaces#LogLevel.essential}.
+	 * @deprecated This method is being removed without a replacement.
+	 * @see {@link https://github.com/microsoft/FluidFramework/issues/26910 | Issue #26910} for details.
+	 */
+	sendTelemetryEvent(
+		event: ITelemetryGenericEventExt,
+		error?: unknown,
+		logLevel?: typeof LogLevel.verbose | typeof LogLevel.default,
+	): void;
+
+	/**
+	 * Send an error telemetry event.
+	 * @param event - Event to send.
+	 * @param error - Optional error object to log.
+	 * @deprecated This method is being removed without a replacement.
+	 * @see {@link https://github.com/microsoft/FluidFramework/issues/26910 | Issue #26910} for details.
+	 */
+	sendErrorEvent(event: ITelemetryErrorEventExt, error?: unknown): void;
+
+	/**
+	 * Send a performance telemetry event.
+	 * @param event - Event to send
+	 * @param error - Optional error object to log.
+	 * @param logLevel - Optional level of the log. Default: {@link @fluidframework/core-interfaces#LogLevel.essential}.
+	 * @deprecated This method is being removed without a replacement.
+	 * @see {@link https://github.com/microsoft/FluidFramework/issues/26910 | Issue #26910} for details.
+	 */
+	sendPerformanceEvent(
+		event: ITelemetryPerformanceEventExt,
+		error?: unknown,
+		logLevel?: typeof LogLevel.verbose | typeof LogLevel.default,
+	): void;
+}
+
+/**
  * An extended {@link @fluidframework/core-interfaces#ITelemetryBaseLogger} which allows for more lenient event types.
  *
  * @remarks
  * This interface is meant to be used internally within the Fluid Framework,
  * and `ITelemetryBaseLogger` should be used when loggers are passed between layers.
- * @legacy @beta
+ * @internal
  */
-export interface ITelemetryLoggerExt extends ITelemetryBaseLogger {
+export interface TelemetryLoggerExt extends ITelemetryBaseLogger {
 	/**
 	 * Send an information telemetry event.
 	 * @param event - Event to send.
@@ -136,7 +202,7 @@ export interface ITelemetryLoggerExt extends ITelemetryBaseLogger {
 	 * Send a performance telemetry event.
 	 * @param event - Event to send
 	 * @param error - Optional error object to log.
-	 * @param logLevel - Optional level of the log. Default: {@link @fluidframework/core-interfaces#LogLevel.default}.
+	 * @param logLevel - Optional level of the log. Default: {@link @fluidframework/core-interfaces#LogLevelConst.default | LogLevel.default}.
 	 */
 	sendPerformanceEvent(
 		event: ITelemetryPerformanceEventExt,

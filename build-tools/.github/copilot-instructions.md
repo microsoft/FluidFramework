@@ -4,7 +4,7 @@
 
 This is the **build-tools** release group for the Fluid Framework monorepo. It contains CLI tools and libraries for building, testing, releasing, and managing Fluid Framework repositories.
 
-**Runtime**: Node.js >=20.19.0, pnpm 10.33.0
+**Runtime**: Node.js >=22.22.2, pnpm 10.33.0
 **Language**: TypeScript ~5.4.5
 **Module system**: Mix of CommonJS and ESM (see DEV.md for constraints)
 
@@ -16,7 +16,6 @@ This is the **build-tools** release group for the Fluid Framework monorepo. It c
 | `@fluidframework/build-tools` | Core build infrastructure, `fluid-build` CLI | `dist/` | CommonJS |
 | `@fluid-tools/build-infrastructure` | Workspace and release group abstractions | `lib/` (ESM), `dist/` (CJS) | Dual |
 | `@fluid-tools/version-tools` (fluv) | Semantic versioning utilities CLI | `lib/` | CommonJS |
-| `@fluidframework/bundle-size-tools` | Bundle size analysis utilities | `dist/` | CommonJS |
 
 ## Build Commands
 
@@ -54,8 +53,7 @@ Packages have workspace dependencies and must build in order:
 1. `version-tools` (no internal deps)
 2. `build-tools` (depends on version-tools)
 3. `build-infrastructure` (depends on version-tools)
-4. `bundle-size-tools` (no internal deps)
-5. `build-cli` (depends on all above)
+4. `build-cli` (depends on all above)
 
 The `fluid-build` task scheduler handles this automatically via `pnpm build`.
 
@@ -141,7 +139,6 @@ build-tools/
 │   ├── build-cli/          # flub CLI (ESM)
 │   ├── build-infrastructure/ # Workspace abstractions (dual ESM/CJS)
 │   ├── build-tools/        # fluid-build CLI (CommonJS)
-│   ├── bundle-size-tools/  # Bundle analysis (CommonJS)
 │   └── version-tools/      # fluv CLI (CommonJS)
 ├── biome.jsonc             # Formatter config
 ├── .syncpackrc.yml         # Dep version rules

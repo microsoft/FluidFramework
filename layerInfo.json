@@ -83,6 +83,7 @@
 				"deps": ["Container-Definitions", "Driver-Utils", "Client-Utils"]
 			},
 			"Runtime": {
+				"packages": ["@fluidframework/type-factory"],
 				"dirs": ["experimental/dds/", "packages/dds/", "packages/runtime/"],
 				"deps": ["Container-Definitions", "Core-Utils", "Client-Utils", "Driver-Utils"]
 			},

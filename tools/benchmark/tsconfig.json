@@ -6,7 +6,7 @@
 		"composite": true,
 		// Uses Node types to detect Node and do special case optimization for it.
 		// This package should still support browser.
-		"types": ["mocha", "node"],
+		"types": ["node"],
 	},
 	"include": ["src/**/*"],
 	"exclude": ["src/test/**/*"],

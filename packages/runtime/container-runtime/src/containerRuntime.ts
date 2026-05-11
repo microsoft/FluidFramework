@@ -57,6 +57,7 @@ import type {
 	ITelemetryBaseLogger,
 	Listenable,
 } from "@fluidframework/core-interfaces";
+import { LogLevel } from "@fluidframework/core-interfaces";
 import type {
 	IFluidHandleContext,
 	IFluidHandleInternal,
@@ -95,7 +96,6 @@ import { FetchSource, MessageType } from "@fluidframework/driver-definitions/int
 import { readAndParse } from "@fluidframework/driver-utils/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 import type {
-	// eslint-disable-next-line import-x/no-deprecated -- Will be undeprecated in 2.100.0 when it becomes an internal API
 	IIdCompressorCore,
 	IdCreationRange,
 	SerializedIdCompressorWithNoSession,
@@ -105,6 +105,7 @@ import {
 	createIdCompressor,
 	createSessionId,
 	deserializeIdCompressor,
+	toIdCompressorWithCore,
 } from "@fluidframework/id-compressor/internal";
 import {
 	FlushMode,
@@ -131,7 +132,6 @@ import type {
 	IContainerRuntimeBaseInternal,
 	MinimumVersionForCollab,
 	ContainerExtensionExpectations,
-	ContainerRuntimeBaseAlpha,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	addBlobToSummary,
@@ -173,6 +173,7 @@ import {
 	wrapError,
 	tagCodeArtifacts,
 	normalizeError,
+	toITelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
 import { gt } from "semver-ts";
 import { v4 as uuid } from "uuid";
@@ -675,18 +676,11 @@ export function getDeviceSpec(): {
 	deviceMemory?: number | undefined;
 	hardwareConcurrency?: number | undefined;
 } {
-	try {
-		if (typeof navigator === "object" && navigator !== null) {
-			return {
-				// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment
-				deviceMemory: (navigator as any).deviceMemory,
-				hardwareConcurrency: navigator.hardwareConcurrency,
-			};
-		}
-	} catch {
-		// Eat the error
-	}
-	return {};
+	return {
+		// deviceMemory is only available in browsers and is not part of the Navigator type definition. In Node 22 it is undefined.
+		deviceMemory: (navigator as Navigator & { deviceMemory?: number }).deviceMemory,
+		hardwareConcurrency: navigator.hardwareConcurrency,
+	};
 }
 
 /**
@@ -846,7 +840,7 @@ export async function loadContainerRuntime(
  * @legacy @alpha
  */
 export async function loadContainerRuntimeAlpha(params: LoadContainerRuntimeParams): Promise<{
-	runtime: IContainerRuntime & ContainerRuntimeBaseAlpha & IRuntime;
+	runtime: IContainerRuntime & IRuntime;
 }> {
 	return ContainerRuntime.loadRuntime2({
 		...params,
@@ -1185,7 +1179,6 @@ export class ContainerRuntime
 			idCompressorMode = desiredIdCompressorMode;
 		}
 
-		// eslint-disable-next-line import-x/no-deprecated -- Will be undeprecated in 2.100.0 when it becomes an internal API
 		const createIdCompressorFn = (): IIdCompressor & IIdCompressorCore => {
 			/**
 			 * Because the IdCompressor emits so much telemetry, this function is used to sample
@@ -1204,17 +1197,21 @@ export class ContainerRuntime
 			const pendingLocalState = context.pendingLocalState as IPendingRuntimeState;
 
 			if (pendingLocalState?.pendingIdCompressorState !== undefined) {
-				return deserializeIdCompressor(
-					pendingLocalState.pendingIdCompressorState,
-					compressorLogger,
+				return toIdCompressorWithCore(
+					deserializeIdCompressor(
+						pendingLocalState.pendingIdCompressorState,
+						toITelemetryLoggerExt(compressorLogger),
+					),
 				);
 			} else if (serializedIdCompressor === undefined) {
-				return createIdCompressor(compressorLogger);
+				return toIdCompressorWithCore(createIdCompressor(compressorLogger));
 			} else {
-				return deserializeIdCompressor(
-					serializedIdCompressor,
-					createSessionId(),
-					compressorLogger,
+				return toIdCompressorWithCore(
+					deserializeIdCompressor(
+						serializedIdCompressor,
+						createSessionId(),
+						toITelemetryLoggerExt(compressorLogger),
+					),
 				);
 			}
 		};
@@ -1339,7 +1336,12 @@ export class ContainerRuntime
 		targetClientId?: string,
 	) => void;
 	public readonly disposeFn: (error?: ICriticalContainerError) => void;
-	public readonly closeFn: (error?: ICriticalContainerError) => void;
+
+	/**
+	 * Initiate closing of the container due to a critical error.
+	 * @param error - The critical error that caused the container to close.
+	 */
+	private readonly closeFn: (error: ICriticalContainerError) => void;
 
 	public get flushMode(): FlushMode {
 		return this._flushMode;
@@ -1378,7 +1380,6 @@ export class ContainerRuntime
 		return this.documentsSchemaController.sessionSchema.runtime;
 	}
 
-	// eslint-disable-next-line import-x/no-deprecated -- Will be undeprecated in 2.100.0 when it becomes an internal API
 	private _idCompressor: (IIdCompressor & IIdCompressorCore) | undefined;
 
 	// We accumulate Id compressor Ops while Id compressor is not loaded yet (only for "delayed" mode)
@@ -1394,7 +1395,6 @@ export class ContainerRuntime
 	/**
 	 * {@inheritDoc @fluidframework/runtime-definitions#IContainerRuntimeBase.idCompressor}
 	 */
-	// eslint-disable-next-line import-x/no-deprecated -- Will be undeprecated in 2.100.0 when it becomes an internal API
 	public get idCompressor(): (IIdCompressor & IIdCompressorCore) | undefined {
 		// Expose ID Compressor only if it's On from the start.
 		// If container uses delayed mode, then we can only expose generateDocumentUniqueId() and nothing else.
@@ -1615,7 +1615,6 @@ export class ContainerRuntime
 
 		blobManagerLoadInfo: IBlobManagerLoadInfo,
 		private readonly _storage: IContainerStorageService,
-		// eslint-disable-next-line import-x/no-deprecated -- Will be undeprecated in 2.100.0 when it becomes an internal API
 		private readonly createIdCompressorFn: () => IIdCompressor & IIdCompressorCore,
 
 		private readonly documentsSchemaController: DocumentsSchemaController,
@@ -1924,6 +1923,7 @@ export class ContainerRuntime
 
 		this.garbageCollector = GarbageCollector.create({
 			runtime: this,
+			closeFn: this.closeFn,
 			gcOptions: runtimeOptions.gcOptions,
 			baseSnapshot,
 			baseLogger: this.mc.logger,
@@ -2069,6 +2069,24 @@ export class ContainerRuntime
 			}),
 			reSubmit: this.reSubmit.bind(this),
 			opReentrancy: () => this.dataModelChangeRunner.running,
+			generateIdAllocationOp: (): LocalBatchMessage | undefined => {
+				if (this._idCompressor === undefined) {
+					return undefined;
+				}
+				const idRange = this._idCompressor.takeNextCreationRange();
+				if (idRange.ids === undefined) {
+					return undefined;
+				}
+				const idAllocationMessage: ContainerRuntimeIdAllocationMessage = {
+					type: ContainerMessageType.IdAllocation,
+					contents: idRange,
+				};
+				return {
+					runtimeOp: idAllocationMessage,
+					referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
+					staged: false,
+				};
+			},
 		});
 
 		this._quorum = quorum;
@@ -2122,13 +2140,6 @@ export class ContainerRuntime
 		// (We have to call flush _before_ processing a runtime op, but after is ok for non-runtime op)
 		this.deltaManager.on("op", () => this.flush());
 
-		// logging hardware telemetry
-		this.baseLogger.send({
-			category: "generic",
-			eventName: "DeviceSpec",
-			...getDeviceSpec(),
-		});
-
 		this.mc.logger.sendTelemetryEvent({
 			eventName: "ContainerLoadStats",
 			...this.createContainerMetadata,
@@ -2151,6 +2162,8 @@ export class ContainerRuntime
 			groupedBatchingEnabled: this.groupedBatchingEnabled,
 			initialSequenceNumber: this.deltaManager.initialSequenceNumber,
 			minVersionForCollab: this.minVersionForCollab,
+			// logging hardware telemetry
+			deviceSpec: { ...getDeviceSpec() },
 		});
 
 		ReportOpPerfTelemetry(this.clientId, this._deltaManager, this, this.baseLogger);
@@ -2384,12 +2397,18 @@ export class ContainerRuntime
 		}
 	}
 
+	public close(): void {
+		this.garbageCollector.dispose();
+	}
+
 	public dispose(error?: Error): void {
 		if (this._disposed) {
 			return;
 		}
 		this._disposed = true;
 
+		// The ContainerRuntimeDisposed event is redundant with the loader's ContainerDispose event
+		// (see #27126) and can be removed once the change for ContainerDispose has saturated in telemetry.
 		this.mc.logger.sendTelemetryEvent(
 			{
 				eventName: "ContainerRuntimeDisposed",
@@ -2398,6 +2417,7 @@ export class ContainerRuntime
 				attachState: this.attachState,
 			},
 			error,
+			LogLevel.info,
 		);
 
 		if (this.summaryManager !== undefined) {
@@ -3580,7 +3600,18 @@ export class ContainerRuntime
 		let stageControls: StageControlsInternal | undefined;
 		if (this.mc.config.getBoolean("Fluid.ContainerRuntime.EnableRollback") === true) {
 			if (!this.batchRunner.running && !this.inStagingMode) {
-				stageControls = this.enterStagingMode();
+				// Use silent=true to suppress stagingModeChanged events for orderSequentially.
+				// orderSequentially uses staging mode as a rollback mechanism.
+				// Emitting stagingModeChanged here would:
+				//   - Cause UI flicker — consumers rendering staging mode event would see
+				//      unexpected enter/exit flashes on every orderSequentially call.
+				//   - consumers cannot distinguish this internal usage
+				//      from a user explicitly entering staging mode, as there is no source field
+				//      on the event to filter by.
+				//   - if orderSequentially is
+				//      later reimplemented without staging mode, consumers calibrated
+				//      to these events would break silently.
+				stageControls = this.enterStagingModeCore(true);
 			}
 			// Note: we are not touching any batches other than mainBatch here, for two reasons:
 			// 1. It would not help, as other batches are flushed independently from main batch.
@@ -3656,9 +3687,22 @@ export class ContainerRuntime
 	 * Enter Staging Mode, such that ops submitted to the ContainerRuntime will not be sent to the ordering service.
 	 * To exit Staging Mode, call either discardChanges or commitChanges on the Stage Controls returned from this method.
 	 *
+	 * @remarks
+	 * The `stagingModeChanged` event is emitted when staging mode is entered or exited via this method.
+	 * It is NOT emitted when staging mode is used internally (e.g. by `orderSequentially` for rollback support).
+	 *
 	 * @returns Controls for exiting Staging Mode.
 	 */
-	public enterStagingMode = (): StageControlsInternal => {
+	public enterStagingMode = (): StageControlsInternal => this.enterStagingModeCore(false);
+
+	/**
+	 * Internal implementation of enterStagingMode.
+	 * @param silent - When true, suppresses `stagingModeChanged` event emission.
+	 * Pass `true` when staging mode is used as an internal implementation detail (e.g. by
+	 * `orderSequentially` for rollback support) so that external listeners only observe
+	 * user-initiated staging mode transitions. Pass `false` for all public entry points.
+	 */
+	private readonly enterStagingModeCore = (silent: boolean): StageControlsInternal => {
 		if (this.stageControls !== undefined) {
 			throw new UsageError("Already in staging mode");
 		}
@@ -3670,10 +3714,15 @@ export class ContainerRuntime
 		// since we mark whole batches as "staged" or not to indicate whether to submit them.
 		this.flush();
 
+		// Note: `silent` is captured from the enclosing `enterStagingModeCore` call.
+		// When `true`, both enter and exit events are suppressed (see orderSequentially).
 		const exitStagingMode = (
 			discardOrCommit: () => IPendingMessage["batchInfo"][],
 			exitMethod: "commit" | "discard",
 		): void => {
+			if (this.stageControls !== stageControls) {
+				throw new UsageError("Not in staging mode");
+			}
 			try {
 				PerformanceEvent.timedExec(
 					this.mc.logger,
@@ -3687,9 +3736,6 @@ export class ContainerRuntime
 
 						this.stageControls = undefined;
 
-						// During Staging Mode, we avoid submitting any ID Allocation ops (apart from resubmitting pre-staging ops).
-						// Now that we've exited, we need to submit an ID Allocation op for any IDs that were generated while in Staging Mode.
-						this.submitIdAllocationOpIfNeeded({ staged: false });
 						const batchInfos = discardOrCommit();
 						event.reportProgress({
 							details: {
@@ -3707,6 +3753,12 @@ export class ContainerRuntime
 				const normalizedError = normalizeError(error);
 				this.closeFn(normalizedError);
 				throw normalizedError;
+			}
+			if (!silent) {
+				this.emit("stagingModeChanged", {
+					inStagingMode: false,
+					commit: exitMethod === "commit",
+				});
 			}
 		};
 
@@ -3737,8 +3789,16 @@ export class ContainerRuntime
 
 		this.stageControls = stageControls;
 		this.channelCollection.notifyStagingMode(true);
+		if (!silent) {
+			try {
+				this.emit("stagingModeChanged", { inStagingMode: true });
+			} catch (error) {
+				// Don't let a listener error prevent the caller from receiving stage controls.
+				this.mc.logger.sendErrorEvent({ eventName: "StagingModeChangedError" }, error);
+			}
+		}
 
-		return this.stageControls;
+		return stageControls;
 	};
 
 	/**
@@ -4272,7 +4332,6 @@ export class ContainerRuntime
 					outboxLength: this.outbox.messageCount,
 					mainBatchLength: this.outbox.mainBatchMessageCount,
 					blobAttachBatchLength: this.outbox.blobAttachBatchMessageCount,
-					idAllocationBatchLength: this.outbox.idAllocationBatchMessageCount,
 				},
 			);
 		}
@@ -4605,7 +4664,8 @@ export class ContainerRuntime
 
 	/**
 	 * This helper is called during summarization. If the container is dirty, it will return a failed summarize result
-	 * (IBaseSummarizeResult) unless this is the final summarize attempt and SkipFailingIncorrectSummary option is set.
+	 * (IBaseSummarizeResult) unless this is the final summarize attempt, in which case the summary is allowed to
+	 * proceed to make progress in documents where there are consistently pending ops in the summarizer.
 	 * @param logger - The logger to be used for sending telemetry.
 	 * @param referenceSequenceNumber - The reference sequence number of the summary attempt.
 	 * @param minimumSequenceNumber - The minimum sequence number of the summary attempt.
@@ -4624,13 +4684,9 @@ export class ContainerRuntime
 			return;
 		}
 
-		// If "SkipFailingIncorrectSummary" option is true, don't fail the summary in the last attempt.
-		// This is a fallback to make progress in documents where there are consistently pending ops in
-		// the summarizer.
-		if (
-			finalAttempt &&
-			this.mc.config.getBoolean("Fluid.Summarizer.SkipFailingIncorrectSummary") === true
-		) {
+		// Don't fail the summary in the last attempt. This is a fallback to make progress in
+		// documents where there are consistently pending ops in the summarizer.
+		if (finalAttempt) {
 			const error = DataProcessingError.create(
 				"Pending ops during summarization",
 				"submitSummary",
@@ -4639,7 +4695,7 @@ export class ContainerRuntime
 			);
 			logger.sendErrorEvent(
 				{
-					eventName: "SkipFailingIncorrectSummary",
+					eventName: "PendingOpsDuringSummaryFinalAttempt",
 					referenceSequenceNumber,
 					minimumSequenceNumber,
 					beforeGenerate: beforeSummaryGeneration,
@@ -4733,33 +4789,6 @@ export class ContainerRuntime
 		return this.blobManager.lookupTemporaryBlobStorageId(localId);
 	}
 
-	private submitIdAllocationOpIfNeeded({
-		resubmitOutstandingRanges = false,
-		staged,
-	}: {
-		resubmitOutstandingRanges?: boolean;
-		staged: boolean;
-	}): void {
-		if (this._idCompressor) {
-			const idRange = resubmitOutstandingRanges
-				? this._idCompressor.takeUnfinalizedCreationRange()
-				: this._idCompressor.takeNextCreationRange();
-			// Don't include the idRange if there weren't any Ids allocated
-			if (idRange.ids !== undefined) {
-				const idAllocationMessage: ContainerRuntimeIdAllocationMessage = {
-					type: ContainerMessageType.IdAllocation,
-					contents: idRange,
-				};
-				const idAllocationBatchMessage: LocalBatchMessage = {
-					runtimeOp: idAllocationMessage,
-					referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
-					staged,
-				};
-				this.outbox.submitIdAllocation(idAllocationBatchMessage);
-			}
-		}
-	}
-
 	private submit(
 		containerRuntimeMessage: LocalContainerRuntimeMessage,
 		localOpMetadata: unknown = undefined,
@@ -4802,11 +4831,6 @@ export class ContainerRuntime
 				!staged || canStageMessageOfType(type),
 				0xbba /* Unexpected message type submitted in Staging Mode */,
 			);
-
-			// Before submitting any non-staged change, submit the ID Allocation op to cover any compressed IDs included in the op.
-			if (!staged) {
-				this.submitIdAllocationOpIfNeeded({ staged: false });
-			}
 
 			// Allow document schema controller to send a message if it needs to propose change in document schema.
 			// If it needs to send a message, it will call provided callback with payload of such message and rely
@@ -4867,7 +4891,7 @@ export class ContainerRuntime
 		// Incoming ops still break the batch via direct this.flush() calls elsewhere
 		// (deltaManager "op" handler, process(), connection changes, getPendingLocalState,
 		// exitStagingMode). Those all bypass scheduleFlush(), so they're unaffected by this check.
-		// Additionally, outbox.maybeFlushPartialBatch() (called on every submit) detects
+		// Additionally, outbox.outboxSequenceNumberCoherencyCheck() (called on every submit) detects
 		// sequence number changes and throws if unexpected changes are detected.
 		if (
 			this.inStagingMode &&

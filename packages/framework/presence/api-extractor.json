@@ -1,4 +1,6 @@
 {
 	"$schema": "https://developer.microsoft.com/json-schemas/api-extractor/v7/api-extractor.schema.json",
-	"extends": "../../../common/build/build-common/api-extractor-model.esm.json"
+	"extends": "../../../common/build/build-common/api-extractor-model.esm.json",
+	// Make sure re-exports are included in docs
+	"bundledPackages": ["@fluid-internal/presence-*"]
 }

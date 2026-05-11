@@ -5,19 +5,19 @@
 ```ts
 
 // @beta @legacy
-export function createIdCompressor(logger?: ITelemetryBaseLogger): IIdCompressor & IIdCompressorCore;
+export function createIdCompressor(logger?: ITelemetryBaseLogger): IIdCompressor;
 
 // @beta @legacy
-export function createIdCompressor(sessionId: SessionId, logger?: ITelemetryBaseLogger): IIdCompressor & IIdCompressorCore;
+export function createIdCompressor(sessionId: SessionId, logger?: ITelemetryBaseLogger): IIdCompressor;
 
 // @beta @legacy
 export function createSessionId(): SessionId;
 
 // @beta @legacy
-export function deserializeIdCompressor(serialized: SerializedIdCompressorWithOngoingSession, logger?: ITelemetryLoggerExt): IIdCompressor & IIdCompressorCore;
+export function deserializeIdCompressor(serialized: SerializedIdCompressorWithOngoingSession, logger?: ITelemetryLoggerExt): IIdCompressor;
 
 // @beta @legacy
-export function deserializeIdCompressor(serialized: SerializedIdCompressorWithNoSession, newSessionId: SessionId, logger?: ITelemetryLoggerExt): IIdCompressor & IIdCompressorCore;
+export function deserializeIdCompressor(serialized: SerializedIdCompressorWithNoSession, newSessionId: SessionId, logger?: ITelemetryLoggerExt): IIdCompressor;
 
 // @beta @legacy
 export interface IdCreationRange {
@@ -42,17 +42,6 @@ export interface IIdCompressor {
     normalizeToSessionSpace(id: OpSpaceCompressedId, originSessionId: SessionId): SessionSpaceCompressedId;
     recompress(uncompressed: StableId): SessionSpaceCompressedId;
     tryRecompress(uncompressed: StableId): SessionSpaceCompressedId | undefined;
-}
-
-// @beta @deprecated @legacy
-export interface IIdCompressorCore {
-    beginGhostSession(ghostSessionId: SessionId, ghostSessionCallback: () => void): void;
-    finalizeCreationRange(range: IdCreationRange): void;
-    resetUnfinalizedCreationRange(): void;
-    serialize(withSession: true): SerializedIdCompressorWithOngoingSession;
-    serialize(withSession: false): SerializedIdCompressorWithNoSession;
-    takeNextCreationRange(): IdCreationRange;
-    takeUnfinalizedCreationRange(): IdCreationRange;
 }
 
 // @public

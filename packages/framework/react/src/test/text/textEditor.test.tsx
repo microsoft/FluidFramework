@@ -11,6 +11,7 @@ import globalJsdom from "global-jsdom";
 
 import { toPropTreeNode } from "../../propNode.js";
 import { PlainTextMainView } from "../../text/index.js";
+import type { UndoRedo } from "../../undoRedo.js";
 
 describe("Plain TextArea view", () => {
 	let cleanup: () => void;
@@ -33,7 +34,10 @@ describe("Plain TextArea view", () => {
 					const content = <ViewComponent root={toPropTreeNode(text)} />;
 					const rendered = render(content, { reactStrictMode });
 
-					assert.match(rendered.baseElement.textContent ?? "", /Collaborative Text Editor/);
+					assert.ok(
+						rendered.container.querySelector("textarea"),
+						"Textarea should be present after mount",
+					);
 				});
 
 				it("renders MainView with initial text content", () => {
@@ -139,6 +143,60 @@ describe("Plain TextArea view", () => {
 
 					rendered.rerender(content);
 					assert.match(rendered.baseElement.textContent ?? "", /👋🌍!🎉/);
+				});
+			});
+		}
+	});
+
+	describe("toolbar", () => {
+		const mockLabel = Symbol("test");
+		const mockUndoRedo: UndoRedo = {
+			undo: () => {},
+			redo: () => {},
+			canUndo: () => false,
+			canRedo: () => false,
+			dispose: () => {},
+		};
+
+		for (const reactStrictMode of [false, true]) {
+			describe(`StrictMode: ${reactStrictMode}`, () => {
+				it("does not render a toolbar when undoRedo is not provided", () => {
+					const text = TextAsTree.Tree.fromString("");
+					const rendered = render(<PlainTextMainView root={toPropTreeNode(text)} />, {
+						reactStrictMode,
+					});
+
+					assert.equal(
+						rendered.container.querySelector(".pt-toolbar"),
+						// eslint-disable-next-line unicorn/no-null -- null is what the API returns when the element is not found, which is what we want to verify here.
+						null,
+						"Toolbar should not be present when undoRedo is not provided",
+					);
+				});
+
+				it("renders toolbar with undo and redo buttons when undoRedo is provided", () => {
+					const text = TextAsTree.Tree.fromString("");
+					const rendered = render(
+						<PlainTextMainView
+							root={toPropTreeNode(text)}
+							undoRedo={mockUndoRedo}
+							editLabel={mockLabel}
+						/>,
+						{ reactStrictMode },
+					);
+
+					assert.ok(
+						rendered.container.querySelector(".pt-toolbar"),
+						"Toolbar should be present when undoRedo is provided",
+					);
+					assert.ok(
+						rendered.container.querySelector(".pt-undo"),
+						"Undo button should be present when undoRedo is provided",
+					);
+					assert.ok(
+						rendered.container.querySelector(".pt-redo"),
+						"Redo button should be present when undoRedo is provided",
+					);
 				});
 			});
 		}
