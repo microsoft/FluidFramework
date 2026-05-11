@@ -4,6 +4,7 @@
  */
 
 import { findPackageOrReleaseGroup, packageOrReleaseGroupArg, semverArg } from "../../args.js";
+import { formatSetVariable } from "../../library/azureDevops/pipelineCommands.js";
 import { BaseCommand } from "../../library/commands/base.js";
 import { isLatestInMajor } from "../../library/latestVersions.js";
 
@@ -52,9 +53,9 @@ export default class LatestVersionsCommand extends BaseCommand<typeof LatestVers
 			this.log(
 				`Version ${versionInput.version} is the latest version for major version ${result.majorVersion}`,
 			);
-			this.log(`##vso[task.setvariable variable=shouldDeploy;isoutput=true]true`);
+			this.log(formatSetVariable("shouldDeploy", "true", { isOutput: true }));
 			this.log(
-				`##vso[task.setvariable variable=majorVersion;isoutput=true]${result.majorVersion}`,
+				formatSetVariable("majorVersion", String(result.majorVersion), { isOutput: true }),
 			);
 			return;
 		}
@@ -63,9 +64,9 @@ export default class LatestVersionsCommand extends BaseCommand<typeof LatestVers
 			this.log(
 				`##[warning]skipping deployment stage. input version ${versionInput.version} does not match the latest version ${result.latestVersion}`,
 			);
-			this.log(`##vso[task.setvariable variable=shouldDeploy;isoutput=true]false`);
+			this.log(formatSetVariable("shouldDeploy", "false", { isOutput: true }));
 			this.log(
-				`##vso[task.setvariable variable=majorVersion;isoutput=true]${result.majorVersion}`,
+				formatSetVariable("majorVersion", String(result.majorVersion), { isOutput: true }),
 			);
 			return;
 		}
@@ -73,9 +74,9 @@ export default class LatestVersionsCommand extends BaseCommand<typeof LatestVers
 		this.log(
 			`##[warning]No major version found corresponding to input version ${versionInput.version}`,
 		);
-		this.log(`##vso[task.setvariable variable=shouldDeploy;isoutput=true]false`);
+		this.log(formatSetVariable("shouldDeploy", "false", { isOutput: true }));
 		this.log(
-			`##vso[task.setvariable variable=majorVersion;isoutput=true]${result.majorVersion}`,
+			formatSetVariable("majorVersion", String(result.majorVersion), { isOutput: true }),
 		);
 	}
 }
