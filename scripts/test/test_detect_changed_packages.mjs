@@ -29,40 +29,26 @@ test("normalizeTargetBranch returns empty string for empty input", () => {
 	assert.equal(normalizeTargetBranch(""), "");
 });
 
-test("checkFullRunPatterns matches pnpm-lock.yaml", () => {
-	const match = checkFullRunPatterns(["pnpm-lock.yaml"]);
-	assert.ok(match);
-	assert.equal(match.source, "^pnpm-lock\\.yaml$");
-});
-
-test("checkFullRunPatterns matches .pnpmfile.cjs", () => {
-	const match = checkFullRunPatterns([".pnpmfile.cjs"]);
-	assert.ok(match);
-	assert.equal(match.source, "^\\.pnpmfile\\.cjs$");
-});
-
-test("checkFullRunPatterns matches .npmrc", () => {
-	const match = checkFullRunPatterns([".npmrc"]);
-	assert.ok(match);
-	assert.equal(match.source, "^\\.npmrc$");
-});
-
-test("checkFullRunPatterns matches .nvmrc", () => {
-	const match = checkFullRunPatterns([".nvmrc"]);
-	assert.ok(match);
-	assert.equal(match.source, "^\\.nvmrc$");
-});
+for (const [file, expectedSource] of [
+	["pnpm-lock.yaml", "^pnpm-lock\\.yaml$"],
+	[".pnpmfile.cjs", "^\\.pnpmfile\\.cjs$"],
+	[".npmrc", "^\\.npmrc$"],
+	[".nvmrc", "^\\.nvmrc$"],
+	["package.json", "^package\\.json$"],
+]) {
+	test(`checkFullRunPatterns matches ${file}`, () => {
+		const match = checkFullRunPatterns([file]);
+		assert.ok(match);
+		assert.equal(match.source, expectedSource);
+	});
+}
 
 test("checkFullRunPatterns matches tools prefix", () => {
-	const match = checkFullRunPatterns(["tools/pipelines/build-client.yml"]);
-	assert.ok(match, "expected tools/ prefix to match");
+	assert.ok(checkFullRunPatterns(["tools/pipelines/build-client.yml"]));
 });
 
-test("checkFullRunPatterns matches root package.json but not nested package.json", () => {
+test("checkFullRunPatterns does not match nested package.json", () => {
 	assert.equal(checkFullRunPatterns(["packages/foo/package.json"]), undefined);
-	const match = checkFullRunPatterns(["package.json"]);
-	assert.ok(match);
-	assert.equal(match.source, "^package\\.json$");
 });
 
 test("checkFullRunPatterns matches root tsconfig only", () => {

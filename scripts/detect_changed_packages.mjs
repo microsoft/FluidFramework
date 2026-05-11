@@ -64,9 +64,8 @@ export function normalizeTargetBranch(branch) {
 }
 
 export function checkFullRunPatterns(files, patterns = FULL_RUN_PATTERNS) {
-	const fileList = [...files];
 	for (const pattern of patterns) {
-		if (fileList.some((file) => pattern.test(file))) {
+		if (files.some((file) => pattern.test(file))) {
 			return pattern;
 		}
 	}
@@ -75,17 +74,11 @@ export function checkFullRunPatterns(files, patterns = FULL_RUN_PATTERNS) {
 
 export function buildPackageDirSet(mergeBase, listHistoricalPackages, listCurrentPackages) {
 	const dirs = new Set();
-
-	const record = (file) => {
-		const dir = dirname(file);
-		dirs.add(dir === "" || dir === "." ? "." : dir);
-	};
-
 	for (const file of listHistoricalPackages(mergeBase)) {
-		record(file);
+		dirs.add(dirname(file));
 	}
 	for (const file of listCurrentPackages()) {
-		record(file);
+		dirs.add(dirname(file));
 	}
 	return dirs;
 }
@@ -96,7 +89,7 @@ export function anyChangedFileInPackages(changedFiles, packageDirs) {
 			continue;
 		}
 		let dir = dirname(file);
-		while (dir !== "." && dir !== "/" && dir !== "") {
+		while (dir !== "." && dir !== "/") {
 			if (packageDirs.has(dir)) {
 				return true;
 			}
@@ -158,20 +151,19 @@ function fallbackFullRun(reason) {
 }
 
 function resolveMergeBase(targetBranch) {
-	const firstMergeBase = git(["merge-base", "HEAD", `origin/${targetBranch}`]);
-	if (firstMergeBase?.trim()) {
-		return firstMergeBase.trim();
+	const firstMergeBase = git(["merge-base", "HEAD", `origin/${targetBranch}`])?.trim();
+	if (firstMergeBase) {
+		return firstMergeBase;
 	}
 
-	const isShallow = git(["rev-parse", "--is-shallow-repository"]);
-	if (isShallow?.trim() !== "true") {
+	const isShallow = git(["rev-parse", "--is-shallow-repository"])?.trim();
+	if (isShallow !== "true") {
 		return undefined;
 	}
 
 	console.log("Merge-base not found in shallow clone; deepening and retrying.");
 	git(["fetch", "--deepen", "1000", "origin", targetBranch]);
-	const secondMergeBase = git(["merge-base", "HEAD", `origin/${targetBranch}`]);
-	return secondMergeBase?.trim() ? secondMergeBase.trim() : undefined;
+	return git(["merge-base", "HEAD", `origin/${targetBranch}`])?.trim() || undefined;
 }
 
 export function main() {
