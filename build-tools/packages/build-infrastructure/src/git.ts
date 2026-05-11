@@ -59,9 +59,13 @@ export function findGitRootSync(cwd = process.cwd()): string {
 /**
  * Get the merge base between the current HEAD and a remote branch.
  *
+ * If the repository is a shallow clone and no merge base is found, the clone will be deepened
+ * and the merge base computation retried once.
+ *
  * @param branch - The branch to compare against.
  * @param remote - The remote to compare against. If this is undefined, then the local branch is compared with.
  * @param localRef - The local ref to compare against. Defaults to HEAD.
+ * @param onDeepen - Optional callback invoked with a status message if a shallow-clone deepen is performed.
  * @returns The ref of the merge base between the current HEAD and the remote branch.
  */
 export async function getMergeBaseRemote(
@@ -69,6 +73,7 @@ export async function getMergeBaseRemote(
 	branch: string,
 	remote?: string,
 	localRef = "HEAD",
+	onDeepen?: (message: string) => void,
 ): Promise<string> {
 	if (remote !== undefined) {
 		// make sure we have the latest remote refs
@@ -76,8 +81,22 @@ export async function getMergeBaseRemote(
 	}
 
 	const compareRef = remote === undefined ? branch : `refs/remotes/${remote}/${branch}`;
-	const base = await git.raw("merge-base", compareRef, localRef);
-	return base;
+	try {
+		const base = await git.raw("merge-base", compareRef, localRef);
+		return base.trim();
+	} catch (error) {
+		const isShallow = (await git.raw("rev-parse", "--is-shallow-repository")).trim();
+		if (isShallow !== "true" || remote === undefined) {
+			throw error;
+		}
+
+		onDeepen?.(
+			`Merge-base with ${compareRef} not found in shallow clone; deepening and retrying.`,
+		);
+		await git.fetch(["--deepen", "1000", remote, branch]);
+		const base = await git.raw("merge-base", compareRef, localRef);
+		return base.trim();
+	}
 }
 
 /**
@@ -119,6 +138,63 @@ export async function getChangedFilesSinceRef(
 function filePathsToDirectories(files: string[]): string[] {
 	const dirs = new Set(files.map((f) => path.dirname(f)));
 	return [...dirs];
+}
+
+/**
+ * Matches paths that end in `package.json` (either at the root or under a directory).
+ */
+const packageJsonPathPattern = /(^|\/)package\.json$/;
+
+/**
+ * Lists all `package.json` file paths tracked at the given ref, or in the current working tree
+ * when no ref is provided. Paths are repo-relative and use POSIX separators (as returned by git).
+ *
+ * @param git - The git instance.
+ * @param ref - Optional ref. When provided, uses `git ls-tree -r --name-only <ref>` to enumerate
+ * tracked files at that historical snapshot. When omitted, uses `git ls-files` against the
+ * current working tree.
+ */
+export async function listPackageJsonPaths(git: SimpleGit, ref?: string): Promise<string[]> {
+	const raw =
+		ref === undefined
+			? await git.raw("ls-files", "--", "package.json", "*/package.json")
+			: await git.raw("ls-tree", "-r", "--name-only", ref);
+	return raw.split("\n").filter((file) => packageJsonPathPattern.test(file));
+}
+
+/**
+ * Returns the set of repo-relative directories that contain a `package.json` at the given ref
+ * (or in the current working tree when `ref` is omitted).
+ *
+ * Useful for attributing changed files to packages when the set of packages may have changed
+ * between two refs (e.g. packages added, removed, or moved between a merge base and HEAD).
+ */
+export async function getPackageDirsAtRef(git: SimpleGit, ref?: string): Promise<Set<string>> {
+	const files = await listPackageJsonPaths(git, ref);
+	return new Set(files.map((file) => path.posix.dirname(file)));
+}
+
+/**
+ * Returns `true` if `file` lives inside any directory in `packageDirs` (or any nested
+ * subdirectory of one).
+ *
+ * Walks `file`'s POSIX-style ancestor directories upward toward the repo root, returning `true`
+ * on the first hit. Empty strings return `false`. The repo-root pseudo-directory (`"."`) is not
+ * walked into, so a root-level file does not match `packageDirs` containing `"."`.
+ */
+export function isFileInPackageDir(file: string, packageDirs: ReadonlySet<string>): boolean {
+	if (file === "") {
+		return false;
+	}
+
+	let dir = path.posix.dirname(file);
+	while (dir !== "." && dir !== "/") {
+		if (packageDirs.has(dir)) {
+			return true;
+		}
+		dir = path.posix.dirname(dir);
+	}
+	return false;
 }
 
 /**
