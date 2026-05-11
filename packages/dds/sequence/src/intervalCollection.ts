@@ -144,16 +144,6 @@ export function toOptionalSequencePlace(
 	return typeof pos === "number" && side !== undefined ? { pos, side } : pos;
 }
 
-// When replaying a stashed op, drop the side for a numeric position when it
-// matches `defaultSide` — a plain-number caller would have produced the same
-// shape, so this keeps the replayed call equivalent to the original.
-function replaySide(
-	pos: number | "start" | "end" | undefined,
-	side: Side | undefined,
-): Side | undefined {
-	return typeof pos === "number" && side === defaultSide ? undefined : side;
-}
-
 export class LocalIntervalCollection {
 	public readonly overlappingIntervalsIndex: ISequenceOverlappingIntervalsIndex;
 	public readonly idIntervalIndex: IIdIntervalIndex;
@@ -953,26 +943,29 @@ export class IntervalCollection
 	public applyStashedOp(op: IIntervalCollectionTypeOperationValue): void {
 		const { opName, value } = op;
 		const { id, properties } = getSerializedProperties(value);
+		// Serialized ops always include startSide/endSide for future-proofing,
+		// but the original add()/change() call may have used plain numeric
+		// positions. Drop the side when it equals the default so the replayed
+		// call matches the original shape — otherwise assertStickinessEnabled
+		// would treat a plain-number interval as sticky. (Op values can be
+		// frozen, so this is computed into locals rather than mutating value.)
+		const startSide = value.startSide === defaultSide ? undefined : value.startSide;
+		const endSide = value.endSide === defaultSide ? undefined : value.endSide;
 		switch (opName) {
 			case "add": {
-				// Serialized ops always include startSide/endSide for future-proofing,
-				// but the original add() call may have used plain numeric positions.
-				// Pass the side through only when it represents non-default stickiness
-				// so the replayed call matches the original shape — otherwise
-				// assertStickinessEnabled would treat a plain-number interval as sticky.
 				this.add({
 					id,
 					// Todo: we should improve typing so we know add ops always have start and end
-					start: toSequencePlace(value.start, replaySide(value.start, value.startSide)),
-					end: toSequencePlace(value.end, replaySide(value.end, value.endSide)),
+					start: toSequencePlace(value.start, startSide),
+					end: toSequencePlace(value.end, endSide),
 					props: properties,
 				});
 				break;
 			}
 			case "change": {
 				this.change(id, {
-					start: toOptionalSequencePlace(value.start, value.startSide),
-					end: toOptionalSequencePlace(value.end, value.endSide),
+					start: toOptionalSequencePlace(value.start, startSide),
+					end: toOptionalSequencePlace(value.end, endSide),
 					props: properties,
 				});
 				break;
