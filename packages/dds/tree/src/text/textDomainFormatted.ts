@@ -176,8 +176,12 @@ class TextNode
 			// Note: for unhydrated nodes each atom edit fires a separate `treeChanged` event,
 			// so formatting N atoms will produce N callbacks on `onContentChanged` subscribers
 			// instead of the single callback that hydrated (transacted) edits produce.
-			// This is a known limitation of unhydrated nodes; use `runTransaction` on a
-			// hydrated node (i.e. after inserting into the document) if batched events matter.
+			// `withBufferedTreeEvents` is not a viable mitigation here: when more than one atom's
+			// `format` field changes within the same buffered scope, the kernel's per-field
+			// dedup logic discards the delta (see `treeNodeKernel.ts` `#fieldMarksBuffer`),
+			// which is worse for incremental consumers than N well-formed callbacks.
+			// Use `runTransaction` on a hydrated node (i.e. after inserting into the document)
+			// if batched events matter.
 			applyFormatting();
 		} else {
 			// Wrap all formatting operations in a single transaction for atomicity.
