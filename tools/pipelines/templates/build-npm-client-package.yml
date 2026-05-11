@@ -215,6 +215,19 @@ extends:
               - name: targetBranchName
                 value: $(System.PullRequest.TargetBranch)
             steps:
+              - checkout: self
+                path: $(FluidFrameworkDirectory)
+                clean: true
+                # Shallow clone; `flub check changedPackages` deepens on demand
+                # if the merge-base falls outside this depth. Most PRs
+                # merge-base within a few hundred commits.
+                fetchDepth: 200
+
+              - template: /tools/pipelines/templates/include-install-build-tools.yml@self
+                parameters:
+                  buildDirectory: ${{ parameters.buildDirectory }}
+                  buildToolsVersionToInstall: repo
+
               - template: /tools/pipelines/templates/include-detect-changed-packages.yml@self
                 parameters:
                   buildDirectory: ${{ parameters.buildDirectory }}
@@ -355,22 +368,6 @@ extends:
                   packageManager: '${{ parameters.packageManager }}'
                   buildDirectory: '${{ parameters.buildDirectory }}'
                   packageManagerInstallCommand: '${{ parameters.packageManagerInstallCommand }}'
-
-              # Unit tests for helper scripts under scripts/. detect_changed_packages.mjs
-              # gates whether the Coverage_tests / Test_* jobs run at all (see
-              # include-detect-changed-packages.yml); a regression in the change
-              # detection logic could silently suppress every package test, so
-              # we run its tests here in the build job — early, before any heavy
-              # build work, so they fail fast. Node built-ins only; no extra
-              # install step is needed.
-              - task: Bash@3
-                displayName: Scripts unit tests
-                inputs:
-                  targetType: 'inline'
-                  workingDirectory: $(Pipeline.Workspace)/${{ parameters.buildDirectory }}
-                  script: |
-                    set -eu -o pipefail
-                    node --test scripts/test/test_detect_changed_packages.mjs
 
               # The bundle-size-artifacts pipeline runs a client build but doesn't publish packages,
               # so we skip version setting for it.
