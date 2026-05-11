@@ -3,11 +3,7 @@
  * Licensed under the MIT License.
  */
 
-export {
-	getAnalyzerJsonFromZip,
-	getAnalyzerPathsFromZipObject,
-	getZipObjectFromArtifact,
-} from "./AdoArtifactFileProvider.js";
+export { getAnalyzerJsonFromContents } from "./AdoArtifactFileProvider.js";
 export { ADOSizeComparator, SizeComparison } from "./AdoSizeComparator.js";
 export { IADOConstants } from "./Constants.js";
 export {
