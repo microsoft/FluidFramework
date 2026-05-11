@@ -28,6 +28,14 @@ import type {
 export interface EditManagerEncodingContext {
 	idCompressor: IIdCompressor;
 	readonly schema?: SchemaAndPolicy;
+	/**
+	 * See {@link ChangeEncodingContext.healUnresolvableIdsOnDecode}.
+	 */
+	readonly healUnresolvableIdsOnDecode?: boolean;
+	/**
+	 * See {@link ChangeEncodingContext.sharedObjectId}.
+	 */
+	readonly sharedObjectId?: string;
 }
 
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
@@ -186,6 +194,8 @@ export function decodeSharedBranch<TChangeset>(
 					originatorId: commit.sessionId,
 					idCompressor: context.idCompressor,
 					revision: undefined,
+					healUnresolvableIdsOnDecode: context.healUnresolvableIdsOnDecode,
+					sharedObjectId: context.sharedObjectId,
 				}),
 		),
 		peerLocalBranches: new Map(
@@ -207,6 +217,8 @@ export function decodeSharedBranch<TChangeset>(
 								originatorId: commit.sessionId,
 								idCompressor: context.idCompressor,
 								revision: undefined,
+								healUnresolvableIdsOnDecode: context.healUnresolvableIdsOnDecode,
+								sharedObjectId: context.sharedObjectId,
 							},
 						),
 					),

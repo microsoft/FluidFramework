@@ -246,6 +246,8 @@ export class SharedTreeKernel
 			encodeType: options.treeEncodeType,
 			originatorId: idCompressor.localSessionId,
 			idCompressor,
+			healUnresolvableIdsOnDecode: options.healUnresolvableIdsOnDecode,
+			sharedObjectId: sharedObject.id,
 		};
 		const forestSummarizer = new ForestSummarizer(
 			forest,
@@ -570,7 +572,32 @@ export function getCodecTreeForSharedTreeFormat(
  * Configuration options for SharedTree.
  * @beta @input
  */
-export type SharedTreeOptionsBeta = ForestOptions & Partial<CodecWriteOptionsBeta>;
+export interface SharedTreeOptionsBeta
+	extends ForestOptions,
+		Partial<CodecWriteOptionsBeta> {
+	/**
+	 * When `true`, an attempt to decode a persisted compressed ID that the local
+	 * id-compressor cannot resolve produces a deterministic stable UUID (a "healed"
+	 * revision tag) instead of throwing.
+	 *
+	 * @remarks
+	 * Defaults to `false`.
+	 *
+	 * The intended use is recovering documents whose attach summary was persisted
+	 * with non-finalized op-space IDs (a SharedTree-attaches-to-already-attached-container
+	 * scenario). Such IDs become unresolvable once the attach summary's id-compressor
+	 * session state is stripped. With this flag enabled, unresolvable IDs are replaced
+	 * at decode time with stable UUIDs derived deterministically from the originator
+	 * session id and the unresolvable op-space integer, so every reader of the same
+	 * blob agrees on the resulting in-memory tag. Healed tags are written back out
+	 * at the next summary in their stable UUID form, so the inconsistency does not
+	 * need to be re-healed on every load.
+	 *
+	 * Off by default because enabling it for documents that are not actually corrupt
+	 * would mask genuine bugs that otherwise surface as decode failures.
+	 */
+	readonly healUnresolvableIdsOnDecode?: boolean;
+}
 
 /**
  * Configuration options for SharedTree with alpha features.
@@ -724,6 +751,7 @@ export const defaultSharedTreeOptions: Required<SharedTreeOptionsInternal> = {
 	disposeForksAfterTransaction: true,
 	shouldEncodeIncrementally: defaultIncrementalEncodingPolicy,
 	enableSharedBranches: false,
+	healUnresolvableIdsOnDecode: false,
 	writeVersionOverrides: new Map(),
 	allowPossiblyIncompatibleWriteVersionOverrides: false,
 };

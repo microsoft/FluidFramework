@@ -106,6 +106,24 @@ export interface FieldBatchEncodingContext {
 	 * This will be defined if incremental encoding is supported and enabled.
 	 */
 	readonly incrementalEncoderDecoder?: IncrementalEncoderDecoder;
+	/**
+	 * If `true`, when an op-space compressed ID encountered while decoding
+	 * cannot be resolved by the local id-compressor (e.g. the attach-summary
+	 * blob's originator session state was stripped), a deterministic stable
+	 * UUID derived from `sharedObjectId` is returned instead of throwing.
+	 * @remarks
+	 * Off by default. Used only to recover documents whose attach summary was
+	 * written with non-finalized op-space IDs before the encode-side fix
+	 * (commit d43d50d7563) shipped. See
+	 * {@link SharedTreeOptionsBeta.healUnresolvableIdsOnDecode}.
+	 */
+	readonly healUnresolvableIdsOnDecode?: boolean;
+	/**
+	 * The SharedTree's shared-object id, used as input to the deterministic
+	 * UUID derivation when `healUnresolvableIdsOnDecode` triggers. Required
+	 * for that path; ignored otherwise.
+	 */
+	readonly sharedObjectId?: string;
 }
 /**
  * @remarks
@@ -190,6 +208,8 @@ function makeFieldBatchCodecForVersion(
 				{
 					idCompressor: context.idCompressor,
 					originatorId: context.originatorId,
+					healUnresolvableIdsOnDecode: context.healUnresolvableIdsOnDecode,
+					sharedObjectId: context.sharedObjectId,
 				},
 				context.incrementalEncoderDecoder,
 			).map((chunk) => chunk.cursor());

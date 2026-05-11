@@ -25,6 +25,17 @@ export interface ChangeEncodingContext {
 	readonly revision: RevisionTag | undefined;
 	readonly idCompressor: IIdCompressor;
 	readonly schema?: SchemaAndPolicy;
+	/**
+	 * If `true`, identifier values that the local id-compressor cannot resolve
+	 * during decode are healed into deterministic stable UUIDs instead of
+	 * throwing. See `FieldBatchEncodingContext.healUnresolvableIdsOnDecode`.
+	 */
+	readonly healUnresolvableIdsOnDecode?: boolean;
+	/**
+	 * The SharedTree's shared-object id, used as input to the deterministic
+	 * UUID derivation when {@link healUnresolvableIdsOnDecode} triggers.
+	 */
+	readonly sharedObjectId?: string;
 }
 
 export type ChangeFamilyCodec<TChange> = IJsonCodec<

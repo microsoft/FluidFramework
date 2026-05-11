@@ -85,6 +85,10 @@ export class EditManagerSummarizer<TChangeset>
 		private readonly idCompressor: IIdCompressor,
 		minVersionForCollab: MinimumVersionForCollab,
 		private readonly schemaAndPolicy?: SchemaAndPolicy,
+		/** See {@link EditManagerEncodingContext.healUnresolvableIdsOnDecode}. */
+		private readonly healUnresolvableIdsOnDecode?: boolean,
+		/** See {@link EditManagerEncodingContext.sharedObjectId}. */
+		private readonly sharedObjectId?: string,
 	) {
 		super(
 			EditManagerSummarizer.key,
@@ -103,10 +107,12 @@ export class EditManagerSummarizer<TChangeset>
 		builder: SummaryTreeBuilder;
 	}): void {
 		const { stringify, builder } = props;
-		const context: EditManagerEncodingContext =
-			this.schemaAndPolicy === undefined
-				? { idCompressor: this.idCompressor }
-				: { schema: this.schemaAndPolicy, idCompressor: this.idCompressor };
+		const context: EditManagerEncodingContext = {
+			idCompressor: this.idCompressor,
+			schema: this.schemaAndPolicy,
+			healUnresolvableIdsOnDecode: this.healUnresolvableIdsOnDecode,
+			sharedObjectId: this.sharedObjectId,
+		};
 		const jsonCompatible = this.codec.encode(this.editManager.getSummaryData(), context);
 		const dataString = stringify(jsonCompatible);
 		builder.addBlob(stringKey, dataString);
@@ -127,7 +133,11 @@ export class EditManagerSummarizer<TChangeset>
 		);
 
 		const summary = parse(bufferToString(schemaBuffer, "utf8")) as JsonCompatibleReadOnly;
-		const data = this.codec.decode(summary, { idCompressor: this.idCompressor });
+		const data = this.codec.decode(summary, {
+			idCompressor: this.idCompressor,
+			healUnresolvableIdsOnDecode: this.healUnresolvableIdsOnDecode,
+			sharedObjectId: this.sharedObjectId,
+		});
 		this.editManager.loadSummaryData(data);
 	}
 }

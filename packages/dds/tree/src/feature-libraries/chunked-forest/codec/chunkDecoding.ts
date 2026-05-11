@@ -9,6 +9,7 @@ import type {
 	OpSpaceCompressedId,
 	SessionId,
 } from "@fluidframework/id-compressor";
+import { v5 as uuidV5 } from "uuid";
 
 import { DiscriminatedUnionDispatcher } from "../../../codec/index.js";
 import type {
@@ -59,13 +60,30 @@ export interface IdDecodingContext {
 	 * The creator of any local Ids to be decoded.
 	 */
 	originatorId: SessionId;
+	/**
+	 * See {@link FieldBatchEncodingContext.healUnresolvableIdsOnDecode}.
+	 */
+	healUnresolvableIdsOnDecode?: boolean;
+	/**
+	 * See {@link FieldBatchEncodingContext.sharedObjectId}.
+	 */
+	sharedObjectId?: string;
 }
+
+/**
+ * Fixed v5 namespace for the "heal an unresolvable identifier into a stable
+ * UUID" path in {@link readValue}. Any randomly-generated v4 UUID would work;
+ * the value is baked in so synthesized identifiers are stable across versions
+ * of this codec.
+ */
+const healingNamespace = "1b671a64-40d5-491e-99b0-da01ff1f3341";
+
 /**
  * Decode `chunk` into a TreeChunk.
  */
 export function decode(
 	chunk: EncodedFieldBatchV1OrV2,
-	idDecodingContext: { idCompressor: IIdCompressor; originatorId: SessionId },
+	idDecodingContext: IdDecodingContext,
 	incrementalDecoder?: IncrementalDecoder,
 ): TreeChunk[] {
 	return genericDecode(
@@ -126,15 +144,35 @@ export function readValue(
 				typeof streamValue === "number" || typeof streamValue === "string",
 				0x997 /* identifier must be string or number. */,
 			);
+			if (typeof streamValue === "string") {
+				return streamValue;
+			}
 			const idCompressor = idDecodingContext.idCompressor;
-			return typeof streamValue === "number"
-				? idCompressor.decompress(
-						idCompressor.normalizeToSessionSpace(
-							streamValue as OpSpaceCompressedId,
-							idDecodingContext.originatorId,
-						),
-					)
-				: streamValue;
+			try {
+				return idCompressor.decompress(
+					idCompressor.normalizeToSessionSpace(
+						streamValue as OpSpaceCompressedId,
+						idDecodingContext.originatorId,
+					),
+				);
+			} catch (error) {
+				// Documents written before the encode-side fix for non-finalized identifier
+				// values (commit d43d50d7563) can persist negative op-space IDs that are no
+				// longer resolvable once the originating session's local state has been
+				// stripped (attach-summary blobs reused as handles). When the heal-on-decode
+				// option is on, synthesize a deterministic stable UUID so all readers of
+				// the same blob agree on the resulting value.
+				if (
+					idDecodingContext.healUnresolvableIdsOnDecode === true &&
+					idDecodingContext.sharedObjectId !== undefined
+				) {
+					return uuidV5(
+						`${idDecodingContext.sharedObjectId}|${streamValue}`,
+						healingNamespace,
+					);
+				}
+				throw error;
+			}
 		} else {
 			// EncodedCounter case:
 			unreachableCase(shape, "decoding values as deltas is not yet supported");
