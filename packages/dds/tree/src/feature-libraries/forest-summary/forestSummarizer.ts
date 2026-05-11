@@ -164,6 +164,12 @@ export class ForestSummarizer
 				incrementalSummaryBehavior === ForestIncrementalSummaryBehavior.Incremental
 					? this.incrementalSummaryBuilder
 					: undefined,
+			// An undefined `incrementalSummaryContext` indicates this is an attach summary (or a GC
+			// pass). Attach summary blobs can be reused as handles in later summaries with no
+			// intervening ops to finalize local IDs, after which the originating session's local
+			// ID state is no longer available to readers — so any non-finalized identifier must
+			// be encoded as its stable UUID instead.
+			idsMustBeFinalized: incrementalSummaryContext === undefined,
 		};
 		const encoded = this.codec.encode(fieldMap, encoderContext);
 		for (const value of fieldMap.values()) {

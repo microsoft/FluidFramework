@@ -535,6 +535,16 @@ export class EncoderContext implements NodeEncodeBuilder, FieldEncodeBuilder {
 		 */
 		public readonly incrementalEncoder: IncrementalEncoder | undefined,
 		public readonly version: FieldBatchFormatVersion,
+		/**
+		 * When true, any encoded ID that would otherwise serialize as a non-finalized
+		 * (negative) op-space ID is emitted in its stable UUID form instead.
+		 * @remarks
+		 * Used when producing attach summaries (where `incrementalSummaryContext` is undefined):
+		 * the attach blob may be reused as a handle in later summaries with no intervening ops
+		 * to finalize local IDs, so any session-local IDs in the blob would be unresolvable
+		 * by clients that load after the IdCompressor's session state is gone.
+		 */
+		public readonly idsMustBeFinalized: boolean = false,
 	) {}
 
 	public nodeEncoderFromSchema(schemaName: TreeNodeSchemaIdentifier): NodeEncoder {

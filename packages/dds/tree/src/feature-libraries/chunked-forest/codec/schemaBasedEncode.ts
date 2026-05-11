@@ -54,6 +54,8 @@ export function schemaCompressedEncodeV1(
 	policy: SchemaPolicy,
 	fieldBatch: FieldBatch,
 	idCompressor: IIdCompressor,
+	_incrementalEncoder: IncrementalEncoder | undefined,
+	idsMustBeFinalized: boolean,
 ): EncodedFieldBatchV1 {
 	const encoded: EncodedFieldBatchV1OrV2 = schemaCompressedEncode(
 		schema,
@@ -62,6 +64,7 @@ export function schemaCompressedEncodeV1(
 		idCompressor,
 		undefined /* incrementalEncoder */,
 		brand(FieldBatchFormatVersion.v1),
+		idsMustBeFinalized,
 	);
 	// Since incrementalEncoder was not provided, no V2 features should be used, and this cast should be safe.
 	return encoded as EncodedFieldBatchV1;
@@ -78,6 +81,7 @@ export function schemaCompressedEncodeV2(
 	fieldBatch: FieldBatch,
 	idCompressor: IIdCompressor,
 	incrementalEncoder: IncrementalEncoder | undefined,
+	idsMustBeFinalized: boolean,
 ): EncodedFieldBatchV2 {
 	return schemaCompressedEncode(
 		schema,
@@ -86,6 +90,7 @@ export function schemaCompressedEncodeV2(
 		idCompressor,
 		incrementalEncoder,
 		brand(FieldBatchFormatVersion.v2),
+		idsMustBeFinalized,
 	);
 }
 
@@ -106,10 +111,11 @@ function schemaCompressedEncode(
 	idCompressor: IIdCompressor,
 	incrementalEncoder: IncrementalEncoder | undefined,
 	version: FieldBatchFormatVersion,
+	idsMustBeFinalized: boolean,
 ): EncodedFieldBatchV1OrV2 {
 	return compressedEncode(
 		fieldBatch,
-		buildContext(schema, policy, idCompressor, incrementalEncoder, version),
+		buildContext(schema, policy, idCompressor, incrementalEncoder, version, idsMustBeFinalized),
 	);
 }
 
@@ -119,6 +125,7 @@ export function buildContext(
 	idCompressor: IIdCompressor,
 	incrementalEncoder: IncrementalEncoder | undefined,
 	version: FieldBatchFormatVersion,
+	idsMustBeFinalized: boolean = false,
 ): EncoderContext {
 	const context: EncoderContext = new EncoderContext(
 		(fieldBuilder: FieldEncodeBuilder, schemaName: TreeNodeSchemaIdentifier) =>
@@ -129,6 +136,7 @@ export function buildContext(
 		idCompressor,
 		incrementalEncoder,
 		version,
+		idsMustBeFinalized,
 	);
 	return context;
 }

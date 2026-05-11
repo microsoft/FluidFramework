@@ -77,7 +77,15 @@ export class NodeShapeBasedEncoder
 			if (isStableId(cursor.value)) {
 				const sessionSpaceCompressedId = context.idCompressor.tryRecompress(cursor.value);
 				if (sessionSpaceCompressedId !== undefined) {
-					return context.idCompressor.normalizeToOpSpace(sessionSpaceCompressedId);
+					const opSpaceId = context.idCompressor.normalizeToOpSpace(sessionSpaceCompressedId);
+					// In attach-summary contexts (see EncoderContext.idsMustBeFinalized) a non-finalized
+					// (negative) op-space ID would be unresolvable by clients that load the blob after
+					// the originating session's local state is gone. Emit the stable UUID instead — the
+					// identifier-field decode path already accepts either a number or a string.
+					if (context.idsMustBeFinalized && opSpaceId < 0) {
+						return cursor.value;
+					}
+					return opSpaceId;
 				}
 			}
 		}

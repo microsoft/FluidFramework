@@ -5,6 +5,8 @@
 
 import { strict as assert, fail } from "node:assert";
 
+import { createIdCompressor } from "@fluidframework/id-compressor/internal";
+
 import type { JsonableTree } from "../../../../core/index.js";
 import {
 	Counter,
@@ -26,7 +28,7 @@ import { NodeShapeBasedEncoder } from "../../../../feature-libraries/chunked-for
 import { fieldKinds } from "../../../../feature-libraries/default-schema/index.js";
 import { FieldBatchFormatVersion } from "../../../../feature-libraries/index.js";
 import { brand } from "../../../../util/index.js";
-import { testIdCompressor } from "../../../utils.js";
+import { assertIsSessionId, testIdCompressor } from "../../../utils.js";
 
 import { checkNodeEncode } from "./checkEncode.js";
 
@@ -158,6 +160,101 @@ describe("nodeShape", () => {
 
 			const encodedChunk = checkNodeEncode(shape, context, tree);
 			assert.deepEqual(encodedChunk, ["value", "v", [6]]);
+		});
+
+		// Repro for the attach-summary ID bug: an identifier value generated locally by a session
+		// that hasn't yet been allocated a cluster will normalize to a negative op-space ID. If we
+		// emit that into an attach summary blob that is later reused as a handle, no client that
+		// loads the persisted IdCompressor state (which excludes session-local data) can resolve
+		// the ID. With `idsMustBeFinalized: true`, the encoder must instead emit the stable UUID.
+		describe("idsMustBeFinalized for SpecialField.Identifier", () => {
+			function makeIdentifierShape(): NodeShapeBasedEncoder {
+				return new NodeShapeBasedEncoder(brand("id"), 0 /* SpecialField.Identifier */, [], undefined);
+			}
+
+			it("emits negative op-space IDs when the flag is false (default)", () => {
+				const compressor = createIdCompressor(
+					assertIsSessionId("00000000-0000-4000-8000-000000000001"),
+				);
+				const localId = compressor.generateCompressedId();
+				assert(localId < 0, "test setup requires a non-finalized (negative) ID");
+				const stableId = compressor.decompress(localId);
+
+				const context = new EncoderContext(
+					() => fail(),
+					() => fail(),
+					fieldKinds,
+					compressor,
+					undefined /* incrementalEncoder */,
+					fieldBatchVersion,
+				);
+
+				const encoded = checkNodeEncode(makeIdentifierShape(), context, {
+					type: brand("id"),
+					value: stableId,
+				});
+				assert.deepEqual(
+					encoded,
+					[compressor.normalizeToOpSpace(localId)],
+					"default behavior must preserve the existing on-wire form",
+				);
+			});
+
+			it("falls back to the stable UUID when the flag is true and the ID is not finalized", () => {
+				const compressor = createIdCompressor(
+					assertIsSessionId("00000000-0000-4000-8000-000000000002"),
+				);
+				const localId = compressor.generateCompressedId();
+				assert(localId < 0, "test setup requires a non-finalized (negative) ID");
+				const stableId = compressor.decompress(localId);
+
+				const context = new EncoderContext(
+					() => fail(),
+					() => fail(),
+					fieldKinds,
+					compressor,
+					undefined /* incrementalEncoder */,
+					fieldBatchVersion,
+					true /* idsMustBeFinalized */,
+				);
+
+				const encoded = checkNodeEncode(makeIdentifierShape(), context, {
+					type: brand("id"),
+					value: stableId,
+				});
+				assert.deepEqual(
+					encoded,
+					[stableId],
+					"non-finalized IDs must be emitted as their stable UUID",
+				);
+			});
+
+			it("still emits the final op-space ID when the flag is true and the ID is finalized", () => {
+				// testIdCompressor uses a permanent ghost session so every generated ID is final.
+				const finalId = testIdCompressor.generateCompressedId();
+				assert(finalId >= 0, "test setup requires an already-finalized ID");
+				const stableId = testIdCompressor.decompress(finalId);
+
+				const context = new EncoderContext(
+					() => fail(),
+					() => fail(),
+					fieldKinds,
+					testIdCompressor,
+					undefined /* incrementalEncoder */,
+					fieldBatchVersion,
+					true /* idsMustBeFinalized */,
+				);
+
+				const encoded = checkNodeEncode(makeIdentifierShape(), context, {
+					type: brand("id"),
+					value: stableId,
+				});
+				assert.deepEqual(
+					encoded,
+					[testIdCompressor.normalizeToOpSpace(finalId)],
+					"finalized IDs must still be emitted as op-space numbers",
+				);
+			});
 		});
 	});
 });

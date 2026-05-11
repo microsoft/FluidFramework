@@ -106,6 +106,16 @@ export interface FieldBatchEncodingContext {
 	 * This will be defined if incremental encoding is supported and enabled.
 	 */
 	readonly incrementalEncoderDecoder?: IncrementalEncoderDecoder;
+	/**
+	 * When true, identifier values that would otherwise serialize as a non-finalized
+	 * (negative) op-space ID are emitted in their stable UUID form instead.
+	 * @remarks
+	 * Set by callers producing attach summaries (where the host runtime passes no
+	 * `incrementalSummaryContext`): the resulting blob may be reused as a handle in
+	 * later summaries, after which the originating session's local ID state is no
+	 * longer available to readers.
+	 */
+	readonly idsMustBeFinalized?: boolean;
 }
 /**
  * @remarks
@@ -125,6 +135,7 @@ function makeFieldBatchCodecForVersion(
 		fieldBatch: FieldBatch,
 		idCompressor: IIdCompressor,
 		incrementalEncoder: IncrementalEncoder | undefined,
+		idsMustBeFinalized: boolean,
 	) => EncodedFieldBatchV1OrV2,
 	encodedFieldBatchType: TSchema,
 ): CodecAndSchema<FieldBatch, FieldBatchEncodingContext> {
@@ -167,6 +178,7 @@ function makeFieldBatchCodecForVersion(
 							data,
 							context.idCompressor,
 							incrementalEncoder,
+							context.idsMustBeFinalized ?? false,
 						);
 					}
 
