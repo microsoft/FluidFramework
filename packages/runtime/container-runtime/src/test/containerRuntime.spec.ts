@@ -551,11 +551,12 @@ describe("Runtime", () => {
 				});
 
 			// Regression for assert 0xa00 in OpGroupingManager.createEmptyGroupedBatch.
-			// Pre-fix, batchId tracking was on for any TurnBased container regardless of grouped
-			// batching state. Resubmits could then stamp a batchId on an empty batch, which the
-			// outbox would try to send via createEmptyGroupedBatch, hitting the assert in
-			// production stress runs. The fix gates batchId tracking on groupedBatchingEnabled,
-			// so resubmits in this configuration must NOT stamp a batchId.
+			// When batchId tracking is on with grouped batching off, a resubmit can stamp a
+			// batchId onto an empty batch and the outbox sends it via createEmptyGroupedBatch,
+			// hitting the assert. The gate `batchIdTrackingEnabled && groupedBatchingEnabled`
+			// prevents the stamp. The previous `UsageError` safety-net that closed the container
+			// in this configuration has been removed (offline now silently degrades), so this
+			// regression test is the primary guarantee that the empty-batch path is unreachable.
 			it("Resubmit must not stamp a batchId when grouped batching is disabled", async () => {
 				const { runtime } = await ContainerRuntime.loadRuntime2({
 					context: getMockContext() as IContainerContext,
