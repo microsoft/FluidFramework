@@ -124,6 +124,12 @@ function compressInterval(interval: ISerializedInterval): CompressedSerializedIn
 	return base;
 }
 
+// The side that an endpoint resolves to when none is specified — see
+// endpointPosAndSide in merge-tree, which produces this for a plain numeric
+// position. Used to fill in serialized ops written by older clients (no
+// startSide/endSide field) and to detect that a serialized side is redundant.
+const defaultSide = Side.Before;
+
 export function toSequencePlace(
 	pos: number | "start" | "end",
 	side: Side | undefined,
@@ -138,14 +144,14 @@ export function toOptionalSequencePlace(
 	return typeof pos === "number" && side !== undefined ? { pos, side } : pos;
 }
 
-// For a numeric position, `Side.Before` is the default that a plain-number
-// caller produces, so drop it when reconstructing a stashed op — that keeps
-// the replayed add() call equivalent to the original.
+// When replaying a stashed op, drop the side for a numeric position when it
+// matches `defaultSide` — a plain-number caller would have produced the same
+// shape, so this keeps the replayed call equivalent to the original.
 function replaySide(
 	pos: number | "start" | "end" | undefined,
 	side: Side | undefined,
 ): Side | undefined {
-	return typeof pos === "number" && side === Side.Before ? undefined : side;
+	return typeof pos === "number" && side === defaultSide ? undefined : side;
 }
 
 export class LocalIntervalCollection {
@@ -1432,8 +1438,8 @@ export class IntervalCollection
 				const { start, end, startSide, endSide } = serializedInterval;
 				newInterval = intervalToChange.modify(
 					"",
-					toOptionalSequencePlace(start, startSide ?? Side.Before),
-					toOptionalSequencePlace(end, endSide ?? Side.Before),
+					toOptionalSequencePlace(start, startSide ?? defaultSide),
+					toOptionalSequencePlace(end, endSide ?? defaultSide),
 					op,
 				);
 				if (isLatestInterval) {
@@ -1676,8 +1682,8 @@ export class IntervalCollection
 
 		const interval: SequenceIntervalClass = this.localCollection.addInterval(
 			id,
-			toSequencePlace(serializedInterval.start, serializedInterval.startSide ?? Side.Before),
-			toSequencePlace(serializedInterval.end, serializedInterval.endSide ?? Side.Before),
+			toSequencePlace(serializedInterval.start, serializedInterval.startSide ?? defaultSide),
+			toSequencePlace(serializedInterval.end, serializedInterval.endSide ?? defaultSide),
 			properties,
 			op,
 		);
