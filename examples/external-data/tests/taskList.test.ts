@@ -5,12 +5,12 @@
 
 import { test } from "@playwright/test";
 
-/* eslint-disable @typescript-eslint/dot-notation */
-
 test.describe("taskList", () => {
 	test.beforeEach(async ({ page }) => {
 		await page.goto("/", { waitUntil: "load" });
-		await page.waitForFunction(() => window["fluidStarted"]);
+		await page.waitForFunction(
+			() => (window as unknown as { fluidStarted: unknown }).fluidStarted,
+		);
 	});
 
 	test.skip("loads and there's an input", async ({ page }) => {
