@@ -7,31 +7,31 @@ import { strict as assert } from "assert";
 
 import { describeCompat } from "@fluid-private/test-version-utils";
 import {
- ContainerRuntimeFactoryWithDefaultDataStore,
- DataObject,
- DataObjectFactory,
+	ContainerRuntimeFactoryWithDefaultDataStore,
+	DataObject,
+	DataObjectFactory,
 } from "@fluidframework/aqueduct/internal";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import type { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions/internal";
 import type { IContainerRuntimeBase } from "@fluidframework/runtime-definitions/internal";
 import type { ISharedObject } from "@fluidframework/shared-object-base/internal";
 import {
- ITestObjectProvider,
- createContainerRuntimeFactoryWithDefaultDataStore,
- createSummarizerFromFactory,
- summarizeNow,
+	ITestObjectProvider,
+	createContainerRuntimeFactoryWithDefaultDataStore,
+	createSummarizerFromFactory,
+	summarizeNow,
 } from "@fluidframework/test-utils/internal";
 import {
- ITree,
- SchemaFactory,
- TreeViewConfiguration,
- type TreeView,
+	ITree,
+	SchemaFactory,
+	TreeViewConfiguration,
+	type TreeView,
 } from "@fluidframework/tree";
 import { SharedTree } from "@fluidframework/tree/internal";
 
 const sf = new SchemaFactory("idCompressorDetachedDataStoreTest");
 class Root extends sf.object("Root", {
- id: sf.identifier,
+	id: sf.identifier,
 }) {}
 
 const treeConfig = new TreeViewConfiguration({ schema: Root });
@@ -41,24 +41,24 @@ const treeConfig = new TreeViewConfiguration({ schema: Root });
  * detached data store will be stored to trigger its attach.
  */
 class DefaultDataObject extends DataObject {
- public static readonly Name = "DefaultDataObject";
+	public static readonly Name = "DefaultDataObject";
 
- public get containerRuntime(): IContainerRuntimeBase {
-  return this.context.containerRuntime;
- }
+	public get containerRuntime(): IContainerRuntimeBase {
+		return this.context.containerRuntime;
+	}
 
- public storeHandle(key: string, handle: IFluidHandle): void {
-  this.root.set(key, handle);
- }
+	public storeHandle(key: string, handle: IFluidHandle): void {
+		this.root.set(key, handle);
+	}
 
- public getStoredHandle<T>(key: string): IFluidHandle<T> | undefined {
-  return this.root.get<IFluidHandle<T>>(key);
- }
+	public getStoredHandle<T>(key: string): IFluidHandle<T> | undefined {
+		return this.root.get<IFluidHandle<T>>(key);
+	}
 }
 
 const defaultFactory = new DataObjectFactory({
- type: DefaultDataObject.Name,
- ctor: DefaultDataObject,
+	type: DefaultDataObject.Name,
+	ctor: DefaultDataObject,
 });
 
 /**
@@ -69,109 +69,109 @@ const defaultFactory = new DataObjectFactory({
  * therefore allocates only local (negative / not-yet-finalized) ids.
  */
 class TreeOwningDataObject extends DataObject {
- public static readonly Name = "TreeOwningDataObject";
- private static readonly treeChannelId = "tree";
+	public static readonly Name = "TreeOwningDataObject";
+	private static readonly treeChannelId = "tree";
 
- #treeView: TreeView<typeof Root> | undefined;
+	#treeView: TreeView<typeof Root> | undefined;
 
- public get treeView(): TreeView<typeof Root> {
-  assert(this.#treeView !== undefined, "treeView has not been initialized");
-  return this.#treeView;
- }
+	public get treeView(): TreeView<typeof Root> {
+		assert(this.#treeView !== undefined, "treeView has not been initialized");
+		return this.#treeView;
+	}
 
- public get dataStoreRuntime(): IFluidDataStoreRuntime {
-  return this.runtime;
- }
+	public get dataStoreRuntime(): IFluidDataStoreRuntime {
+		return this.runtime;
+	}
 
- protected override async initializingFirstTime(): Promise<void> {
-  // Create the SharedTree channel while the data store is detached.
-  const channel = this.runtime.createChannel(
-   TreeOwningDataObject.treeChannelId,
-   SharedTree.getFactory().type,
-  );
-  (channel as unknown as ISharedObject).bindToContext();
-  const tree = channel as unknown as ITree;
+	protected override async initializingFirstTime(): Promise<void> {
+		// Create the SharedTree channel while the data store is detached.
+		const channel = this.runtime.createChannel(
+			TreeOwningDataObject.treeChannelId,
+			SharedTree.getFactory().type,
+		);
+		(channel as unknown as ISharedObject).bindToContext();
+		const tree = channel as unknown as ITree;
 
-  // Initialize while detached. Creating the Root node causes the
-  // runtime's id compressor to allocate a local (negative) compressed
-  // id for its `identifier` field because no finalize op has been
-  // observed yet.
-  const view = tree.viewWith(treeConfig);
-  view.initialize({});
-  this.#treeView = view;
- }
+		// Initialize while detached. Creating the Root node causes the
+		// runtime's id compressor to allocate a local (negative) compressed
+		// id for its `identifier` field because no finalize op has been
+		// observed yet.
+		const view = tree.viewWith(treeConfig);
+		view.initialize({});
+		this.#treeView = view;
+	}
 }
 
 const treeOwningFactory = new DataObjectFactory({
- type: TreeOwningDataObject.Name,
- ctor: TreeOwningDataObject,
- sharedObjects: [SharedTree.getFactory()],
+	type: TreeOwningDataObject.Name,
+	ctor: TreeOwningDataObject,
+	sharedObjects: [SharedTree.getFactory()],
 });
 
 describeCompat.noCompat(
- "SharedTree in a data store created detached and attached via op",
- "NoCompat",
- (getTestObjectProvider) => {
-  let provider: ITestObjectProvider;
+	"SharedTree in a data store created detached and attached via op",
+	"NoCompat",
+	(getTestObjectProvider) => {
+		let provider: ITestObjectProvider;
 
-  beforeEach("getTestObjectProvider", () => {
-   provider = getTestObjectProvider();
-  });
+		beforeEach("getTestObjectProvider", () => {
+			provider = getTestObjectProvider();
+		});
 
-  const runtimeFactory = createContainerRuntimeFactoryWithDefaultDataStore(
-   ContainerRuntimeFactoryWithDefaultDataStore,
-   {
-    defaultFactory,
-    registryEntries: [
-     [defaultFactory.type, Promise.resolve(defaultFactory)],
-     [treeOwningFactory.type, Promise.resolve(treeOwningFactory)],
-    ],
-    runtimeOptions: {
-     // SharedTree requires the runtime id compressor.
-     enableRuntimeIdCompressor: "on",
-    },
-   },
-  );
+		const runtimeFactory = createContainerRuntimeFactoryWithDefaultDataStore(
+			ContainerRuntimeFactoryWithDefaultDataStore,
+			{
+				defaultFactory,
+				registryEntries: [
+					[defaultFactory.type, Promise.resolve(defaultFactory)],
+					[treeOwningFactory.type, Promise.resolve(treeOwningFactory)],
+				],
+				runtimeOptions: {
+					// SharedTree requires the runtime id compressor.
+					enableRuntimeIdCompressor: "on",
+				},
+			},
+		);
 
-  it.only("Summarizer creates the data store from the attach op summary and a new container can load and edit the tree", async () => {
-   // 1. Create a container with an attached default data store.
-   const container1 = await provider.createContainer(runtimeFactory);
-   const defaultDataObject = (await container1.getEntryPoint()) as DefaultDataObject;
-   const containerRuntime = defaultDataObject.containerRuntime;
+		it.only("Summarizer creates the data store from the attach op summary and a new container can load and edit the tree", async () => {
+			// 1. Create a container with an attached default data store.
+			const container1 = await provider.createContainer(runtimeFactory);
+			const defaultDataObject = (await container1.getEntryPoint()) as DefaultDataObject;
+			const containerRuntime = defaultDataObject.containerRuntime;
 
-   // 2. Create the data store *detached*. The factory uses
-   //    `createDetachedDataStore` + `attachRuntime` internally, and
-   //    the data object's `initializingFirstTime` (which creates and
-   //    initializes the SharedTree) runs while the data store is
-   //    still detached.
-   const treeDataStore = await treeOwningFactory.createInstance(containerRuntime);
+			// 2. Create the data store *detached*. The factory uses
+			//    `createDetachedDataStore` + `attachRuntime` internally, and
+			//    the data object's `initializingFirstTime` (which creates and
+			//    initializes the SharedTree) runs while the data store is
+			//    still detached.
+			const treeDataStore = await treeOwningFactory.createInstance(containerRuntime);
 
-   // 3. Attach the data store by referencing its handle from
-   //    the (attached) default data store. This produces an attach op
-   //    that carries the data store's initial summary (including the
-   //    SharedTree summary, which encodes the local ids).
-   defaultDataObject.storeHandle("treeDataStore", treeDataStore.IFluidHandle);
-   // Keep the IDataStore reference reachable so it isn't GC'd.
-   // void treeDataStore;
+			// 3. Attach the data store by referencing its handle from
+			//    the (attached) default data store. This produces an attach op
+			//    that carries the data store's initial summary (including the
+			//    SharedTree summary, which encodes the local ids).
+			defaultDataObject.storeHandle("treeDataStore", treeDataStore.IFluidHandle);
+			// Keep the IDataStore reference reachable so it isn't GC'd.
+			// void treeDataStore;
 
-   await provider.ensureSynchronized();
+			await provider.ensureSynchronized();
 
-   // 4. Create a summarizer (which loads the data store from the
-   //    attach op's summary) and run an on-demand summary.
-   // This fails with `Unknown op space ID`.
-   const { summarizer } = await createSummarizerFromFactory(
-    provider,
-    container1,
-    defaultFactory,
-    undefined /* summaryVersion */,
-    ContainerRuntimeFactoryWithDefaultDataStore,
-    [
-     [defaultFactory.type, Promise.resolve(defaultFactory)],
-     [treeOwningFactory.type, Promise.resolve(treeOwningFactory)],
-    ],
-   );
-   await provider.ensureSynchronized();
-   await summarizeNow(summarizer, "afterDetachedAttach");
-  });
- },
+			// 4. Create a summarizer (which loads the data store from the
+			//    attach op's summary) and run an on-demand summary.
+			// This fails with `Unknown op space ID`.
+			const { summarizer } = await createSummarizerFromFactory(
+				provider,
+				container1,
+				defaultFactory,
+				undefined /* summaryVersion */,
+				ContainerRuntimeFactoryWithDefaultDataStore,
+				[
+					[defaultFactory.type, Promise.resolve(defaultFactory)],
+					[treeOwningFactory.type, Promise.resolve(treeOwningFactory)],
+				],
+			);
+			await provider.ensureSynchronized();
+			await summarizeNow(summarizer, "afterDetachedAttach");
+		});
+	},
 );

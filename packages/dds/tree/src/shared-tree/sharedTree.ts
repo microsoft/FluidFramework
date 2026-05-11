@@ -572,9 +572,7 @@ export function getCodecTreeForSharedTreeFormat(
  * Configuration options for SharedTree.
  * @beta @input
  */
-export interface SharedTreeOptionsBeta
-	extends ForestOptions,
-		Partial<CodecWriteOptionsBeta> {
+export interface SharedTreeOptionsBeta extends ForestOptions, Partial<CodecWriteOptionsBeta> {
 	/**
 	 * When `true`, an attempt to decode a persisted compressed ID that the local
 	 * id-compressor cannot resolve produces a deterministic stable UUID (a "healed"
