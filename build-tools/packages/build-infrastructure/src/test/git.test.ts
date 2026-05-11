@@ -11,7 +11,7 @@ import path from "node:path";
 import { expect } from "chai";
 import { readJson, writeJson } from "fs-extra/esm";
 import { describe, it } from "mocha";
-import { CleanOptions, simpleGit } from "simple-git";
+import { CleanOptions, type SimpleGit, simpleGit } from "simple-git";
 
 import { loadBuildProject } from "../buildProject.js";
 import { NotInGitRepository } from "../errors.js";
@@ -19,8 +19,11 @@ import {
 	findGitRootSync,
 	getChangedSinceRef,
 	getFiles,
+	getMergeBaseRemote,
+	getPackageDirsAtRef,
 	getRemote,
 	isFileInPackageDir,
+	listPackageJsonPaths,
 } from "../git.js";
 import type { PackageJson } from "../types.js";
 
@@ -197,5 +200,198 @@ describe("isFileInPackageDir", () => {
 		expect(isFileInPackageDir("some-root-file.md", new Set([".", "packages/alive"]))).to.equal(
 			false,
 		);
+	});
+});
+
+/**
+ * Builds a partial `SimpleGit` mock for unit-testing functions that only call `raw` and `fetch`.
+ * Each entry in `rawResponses` is matched against the args of a `git.raw(...)` call in order.
+ */
+function makeGitMock(options: {
+	rawResponses: ((args: readonly string[]) => string | Promise<string>)[];
+	onFetch?: (args: readonly string[]) => void | Promise<void>;
+}): SimpleGit {
+	let rawCallIndex = 0;
+	return {
+		raw: async (...args: unknown[]): Promise<string> => {
+			// `git.raw` is overloaded: callers may pass varargs or a single array.
+			const flat: readonly string[] = (
+				args.length === 1 && Array.isArray(args[0]) ? args[0] : args
+			) as readonly string[];
+			const responder = options.rawResponses[rawCallIndex++];
+			if (responder === undefined) {
+				throw new Error(
+					`Unexpected git.raw call #${rawCallIndex} with args: ${flat.join(" ")}`,
+				);
+			}
+			return responder(flat);
+		},
+		fetch: async (...args: unknown[]): Promise<unknown> => {
+			const flat: readonly string[] = (
+				args.length === 1 && Array.isArray(args[0]) ? args[0] : args
+			) as readonly string[];
+			await options.onFetch?.(flat);
+			return undefined;
+		},
+	} as unknown as SimpleGit;
+}
+
+describe("getMergeBaseRemote", () => {
+	it("deepens shallow clone and retries when merge-base is missing", async () => {
+		const fetchCalls: string[][] = [];
+		const onDeepenMessages: string[] = [];
+		const mock = makeGitMock({
+			rawResponses: [
+				// First merge-base attempt fails (e.g. shallow clone too shallow).
+				() => {
+					throw new Error("fatal: Not a valid object name");
+				},
+				// rev-parse --is-shallow-repository
+				(args) => {
+					expect(args).to.deep.equal(["rev-parse", "--is-shallow-repository"]);
+					return "true\n";
+				},
+				// Retried merge-base after fetch --deepen
+				(args) => {
+					expect(args).to.deep.equal(["merge-base", "refs/remotes/origin/main", "HEAD"]);
+					return "abc123\n";
+				},
+			],
+			onFetch: (args) => {
+				fetchCalls.push([...args]);
+			},
+		});
+
+		const sha = await getMergeBaseRemote(mock, "main", "origin", "HEAD", (msg) =>
+			onDeepenMessages.push(msg),
+		);
+
+		expect(sha).to.equal("abc123");
+		// First fetch is the initial `git.fetch([remote])`; second is the deepen.
+		expect(fetchCalls).to.deep.equal([["origin"], ["--deepen", "1000", "origin", "main"]]);
+		expect(onDeepenMessages).to.have.lengthOf(1);
+		expect(onDeepenMessages[0]).to.match(/deepening and retrying/);
+	});
+
+	it("rethrows the original error when the repo is not shallow", async () => {
+		const original = new Error("fatal: Not a valid object name");
+		const mock = makeGitMock({
+			rawResponses: [
+				() => {
+					throw original;
+				},
+				() => "false\n",
+			],
+		});
+
+		try {
+			await getMergeBaseRemote(mock, "main", "origin");
+			expect.fail("expected getMergeBaseRemote to throw");
+		} catch (err) {
+			expect(err).to.equal(original);
+		}
+	});
+
+	it("rethrows the original error when no remote is provided", async () => {
+		const original = new Error("fatal: Not a valid object name");
+		const fetchCalls: string[][] = [];
+		const mock = makeGitMock({
+			rawResponses: [
+				() => {
+					throw original;
+				},
+				// rev-parse --is-shallow-repository is still consulted, but with no remote we
+				// must rethrow regardless.
+				() => "true\n",
+			],
+			onFetch: (args) => {
+				fetchCalls.push([...args]);
+			},
+		});
+
+		try {
+			await getMergeBaseRemote(mock, "main");
+			expect.fail("expected getMergeBaseRemote to throw");
+		} catch (err) {
+			expect(err).to.equal(original);
+		}
+		expect(fetchCalls).to.deep.equal([]);
+	});
+});
+
+describe("listPackageJsonPaths", () => {
+	it("filters ls-files output to only package.json entries (no ref)", async () => {
+		const mock = makeGitMock({
+			rawResponses: [
+				(args) => {
+					expect(args).to.deep.equal(["ls-files"]);
+					return [
+						"package.json",
+						"packages/foo/package.json",
+						"packages/foo/src/index.ts",
+						"packages/foo/bar/baz/package.json",
+						"README.md",
+					].join("\n");
+				},
+			],
+		});
+
+		const result = await listPackageJsonPaths(mock);
+		expect(result).to.deep.equal([
+			"package.json",
+			"packages/foo/package.json",
+			"packages/foo/bar/baz/package.json",
+		]);
+	});
+
+	it("filters ls-tree output to only package.json entries (with ref)", async () => {
+		const mock = makeGitMock({
+			rawResponses: [
+				(args) => {
+					expect(args).to.deep.equal(["ls-tree", "-r", "--name-only", "abc123"]);
+					return [
+						"package.json",
+						"packages/foo/package.json",
+						"packages/foo/src/index.ts",
+					].join("\n");
+				},
+			],
+		});
+
+		const result = await listPackageJsonPaths(mock, "abc123");
+		expect(result).to.deep.equal(["package.json", "packages/foo/package.json"]);
+	});
+
+	it("excludes paths that merely end with .json or contain package.json as a substring", async () => {
+		const mock = makeGitMock({
+			rawResponses: [
+				() =>
+					[
+						"not-a-package.json.bak",
+						"package.jsonc",
+						"docs/package.json.md",
+						"packages/foo/package.json",
+					].join("\n"),
+			],
+		});
+
+		const result = await listPackageJsonPaths(mock);
+		expect(result).to.deep.equal(["packages/foo/package.json"]);
+	});
+});
+
+describe("getPackageDirsAtRef", () => {
+	it("returns dirnames of all package.json paths and excludes the repo root", async () => {
+		const mock = makeGitMock({
+			rawResponses: [
+				() =>
+					["package.json", "packages/foo/package.json", "packages/bar/package.json"].join(
+						"\n",
+					),
+			],
+		});
+
+		const result = await getPackageDirsAtRef(mock);
+		expect([...result].sort()).to.deep.equal(["packages/bar", "packages/foo"]);
 	});
 });

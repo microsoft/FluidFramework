@@ -66,7 +66,8 @@ export function findGitRootSync(cwd = process.cwd()): string {
  * @param remote - The remote to compare against. If this is undefined, then the local branch is compared with.
  * @param localRef - The local ref to compare against. Defaults to HEAD.
  * @param onDeepen - Optional callback invoked with a status message if a shallow-clone deepen is performed.
- * @returns The ref of the merge base between the current HEAD and the remote branch.
+ * @returns The ref of the merge base between the current HEAD and the remote branch. Trailing
+ * whitespace from the underlying `git merge-base` output is trimmed.
  */
 export async function getMergeBaseRemote(
 	git: SimpleGit,
@@ -85,7 +86,13 @@ export async function getMergeBaseRemote(
 		const base = await git.raw("merge-base", compareRef, localRef);
 		return base.trim();
 	} catch (error) {
-		const isShallow = (await git.raw("rev-parse", "--is-shallow-repository")).trim();
+		// Don't let a failure of the secondary `rev-parse` call mask the original `merge-base` error.
+		let isShallow: string;
+		try {
+			isShallow = (await git.raw("rev-parse", "--is-shallow-repository")).trim();
+		} catch {
+			throw error;
+		}
 		if (isShallow !== "true" || remote === undefined) {
 			throw error;
 		}
@@ -153,11 +160,18 @@ const packageJsonPathPattern = /(^|\/)package\.json$/;
  * @param ref - Optional ref. When provided, uses `git ls-tree -r --name-only <ref>` to enumerate
  * tracked files at that historical snapshot. When omitted, uses `git ls-files` against the
  * current working tree.
+ *
+ * @privateRemarks
+ * Both branches list every tracked file and then filter to `package.json` entries on the JS
+ * side. We deliberately do not pass a pathspec to `git ls-files`, because pathspec wildcards
+ * use `FNM_PATHNAME` semantics and would not match nested `package.json` files. Filtering
+ * here keeps both code paths symmetric and uses a single source of truth
+ * (`packageJsonPathPattern`) for what counts as a package manifest.
  */
 export async function listPackageJsonPaths(git: SimpleGit, ref?: string): Promise<string[]> {
 	const raw =
 		ref === undefined
-			? await git.raw("ls-files", "--", "package.json", "*/package.json")
+			? await git.raw("ls-files")
 			: await git.raw("ls-tree", "-r", "--name-only", ref);
 	return raw.split("\n").filter((file) => packageJsonPathPattern.test(file));
 }
@@ -168,10 +182,17 @@ export async function listPackageJsonPaths(git: SimpleGit, ref?: string): Promis
  *
  * Useful for attributing changed files to packages when the set of packages may have changed
  * between two refs (e.g. packages added, removed, or moved between a merge base and HEAD).
+ *
+ * A `package.json` at the repo root produces a `"."` entry from `path.posix.dirname`, which is
+ * intentionally filtered out: a root-level package would otherwise match every file in the
+ * repo, defeating the purpose of per-package attribution. Callers that need to attribute
+ * changes to a root-level package should handle that case separately.
  */
 export async function getPackageDirsAtRef(git: SimpleGit, ref?: string): Promise<Set<string>> {
 	const files = await listPackageJsonPaths(git, ref);
-	return new Set(files.map((file) => path.posix.dirname(file)));
+	const dirs = new Set(files.map((file) => path.posix.dirname(file)));
+	dirs.delete(".");
+	return dirs;
 }
 
 /**
