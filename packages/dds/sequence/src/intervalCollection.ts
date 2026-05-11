@@ -138,6 +138,16 @@ export function toOptionalSequencePlace(
 	return typeof pos === "number" && side !== undefined ? { pos, side } : pos;
 }
 
+// For a numeric position, `Side.Before` is the default that a plain-number
+// caller produces, so drop it when reconstructing a stashed op — that keeps
+// the replayed add() call equivalent to the original.
+function replaySide(
+	pos: number | "start" | "end" | undefined,
+	side: Side | undefined,
+): Side | undefined {
+	return typeof pos === "number" && side === Side.Before ? undefined : side;
+}
+
 export class LocalIntervalCollection {
 	public readonly overlappingIntervalsIndex: ISequenceOverlappingIntervalsIndex;
 	public readonly idIntervalIndex: IIdIntervalIndex;
@@ -939,11 +949,16 @@ export class IntervalCollection
 		const { id, properties } = getSerializedProperties(value);
 		switch (opName) {
 			case "add": {
+				// Serialized ops always include startSide/endSide for future-proofing,
+				// but the original add() call may have used plain numeric positions.
+				// Pass the side through only when it represents non-default stickiness
+				// so the replayed call matches the original shape — otherwise
+				// assertStickinessEnabled would treat a plain-number interval as sticky.
 				this.add({
 					id,
 					// Todo: we should improve typing so we know add ops always have start and end
-					start: toSequencePlace(value.start, value.startSide),
-					end: toSequencePlace(value.end, value.endSide),
+					start: toSequencePlace(value.start, replaySide(value.start, value.startSide)),
+					end: toSequencePlace(value.end, replaySide(value.end, value.endSide)),
 					props: properties,
 				});
 				break;
