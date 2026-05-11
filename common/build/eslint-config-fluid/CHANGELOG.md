@@ -1,10 +1,14 @@
 # @fluidframework/eslint-config-fluid Changelog
 
-## vNext
+## [11.0.0](https://github.com/microsoft/FluidFramework/releases/tag/eslint-config-fluid_v11.0.0)
 
-### ⚠ BREAKING CHANGES
+### Breaking: node 22 is now the minimum supported node version
 
-- Node 22 is now the minimum supported Node.js version. This aligns with the standing Node upgrade policy as Node 20 reaches end-of-life on April 30, 2026.
+Node 22 is now the minimum supported Node.js version. This aligns with the standing Node upgrade policy as Node 20 reached end-of-life on April 30, 2026.
+
+### Breaking: import-x/order disabled
+
+The `import-x/order` rule has been disabled. Prefer using formatting tools like Biome to handle import sorting.
 
 ## [10.0.0](https://github.com/microsoft/FluidFramework/releases/tag/eslint-config-fluid_v10.0.0)
 
