@@ -212,6 +212,7 @@ export class ChunkedForest implements IEditableForest {
 				// Split start first: splitting end later only expands chunks at positions >= startChunkIndex,
 				// which leaves startChunkIndex valid. The reverse order would shift endChunkIndex when
 				// source.start and source.end land in different chunks.
+				// Performance: It's practical to have a variant of splitFieldAtIndex which can split at multiple locations in a single pass if the performance of this becomes worth optimizing.
 				const startChunkIndex = splitFieldAtIndex(sourceField, source.start, policy);
 				const endChunkIndex = splitFieldAtIndex(sourceField, source.end, policy);
 				const newField = sourceField.splice(startChunkIndex, endChunkIndex - startChunkIndex);
