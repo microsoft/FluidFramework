@@ -8,6 +8,7 @@
 import { strict as assert } from "assert";
 
 import { AttachState } from "@fluidframework/container-definitions";
+import { Side } from "@fluidframework/merge-tree/internal";
 import { IntervalType } from "@fluidframework/sequence-previous/internal";
 import {
 	MockContainerRuntimeFactory,
@@ -17,7 +18,7 @@ import {
 
 import type { ISequenceIntervalCollection } from "../intervalCollection.js";
 import type { IMapOperation } from "../intervalCollectionMap.js";
-import { IntervalOpType } from "../intervals/index.js";
+import { IntervalOpType, SequenceIntervalClass } from "../intervals/index.js";
 import { SharedStringFactory, type SharedString } from "../sequenceFactory.js";
 import { SharedStringClass } from "../sharedString.js";
 
@@ -165,6 +166,76 @@ describe("Interval Stashed Ops on client ", () => {
 			sharedString["applyStashedOp"](opArgs);
 			assertIntervals(sharedString, collection, [{ start: 0, end: 5 }]);
 			assert.equal(interval.properties.a, 2);
+		});
+	});
+
+	describe("round-trip add via applyStashedOp", () => {
+		const label = "test";
+
+		function createSharedString(intervalStickinessEnabled: boolean): SharedString {
+			const runtime = new MockFluidDataStoreRuntime({ clientId: "rt" });
+			runtime.options = { intervalStickinessEnabled };
+			runtime.setAttachState(AttachState.Attached);
+			const factory = new MockContainerRuntimeFactory();
+			factory.createContainerRuntime(runtime);
+			const ss = new SharedStringClass(runtime, "ss", SharedStringFactory.Attributes);
+			ss.initializeLocal();
+			ss.connect({
+				deltaConnection: runtime.createDeltaConnection(),
+				objectStorage: new MockStorage(),
+			});
+			return ss;
+		}
+
+		function assertRoundTrip(
+			intervalStickinessEnabled: boolean,
+			addArgs: Parameters<ISequenceIntervalCollection["add"]>[0],
+		): void {
+			const source = createSharedString(intervalStickinessEnabled);
+			const target = createSharedString(intervalStickinessEnabled);
+			source.insertText(0, "hello world");
+			target.insertText(0, "hello world");
+
+			const sourceCollection = source.getIntervalCollection(label);
+			const sourceInterval = sourceCollection.add(addArgs) as SequenceIntervalClass;
+
+			const targetCollection = target.getIntervalCollection(label);
+			target["applyStashedOp"]({
+				key: label,
+				type: "act",
+				value: { opName: IntervalOpType.ADD, value: sourceInterval.serialize() },
+			} satisfies IMapOperation);
+
+			const [replayed] = Array.from(targetCollection) as SequenceIntervalClass[];
+			assert(replayed !== undefined, "expected replayed interval");
+			assert.equal(
+				target.localReferencePositionToPosition(replayed.start),
+				source.localReferencePositionToPosition(sourceInterval.start),
+				"start position mismatch",
+			);
+			assert.equal(
+				target.localReferencePositionToPosition(replayed.end),
+				source.localReferencePositionToPosition(sourceInterval.end),
+				"end position mismatch",
+			);
+			assert.equal(replayed.startSide, sourceInterval.startSide, "startSide mismatch");
+			assert.equal(replayed.endSide, sourceInterval.endSide, "endSide mismatch");
+			assert.equal(replayed.stickiness, sourceInterval.stickiness, "stickiness mismatch");
+		}
+
+		it("non-sticky interval with intervalStickinessEnabled disabled", () => {
+			assertRoundTrip(false, { start: 0, end: 5 });
+		});
+
+		it("non-sticky interval with intervalStickinessEnabled enabled", () => {
+			assertRoundTrip(true, { start: 0, end: 5 });
+		});
+
+		it("sticky interval with intervalStickinessEnabled enabled", () => {
+			assertRoundTrip(true, {
+				start: "start",
+				end: { pos: 5, side: Side.After },
+			});
 		});
 	});
 });
