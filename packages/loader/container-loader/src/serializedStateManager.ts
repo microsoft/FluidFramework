@@ -33,6 +33,7 @@ import {
 import {
 	getBlobContentsFromTree,
 	type ContainerStorageAdapter,
+	type IBase64BlobContents,
 	type ISerializableBlobContents,
 } from "./containerStorageAdapter.js";
 import { SnapshotRefresher } from "./snapshotRefresher.js";
@@ -83,6 +84,21 @@ export interface IPendingContainerState extends SnapshotWithBlobs {
 	 * Any group snapshots (aka delay-loaded) we've downloaded from the service for this container
 	 */
 	loadedGroupIdSnapshots?: Record<string, SerializedSnapshotInfo>;
+	/**
+	 * Attachment blob contents inlined by storage id, encoded as base64.
+	 *
+	 * Carried separately from {@link SnapshotWithBlobs.snapshotBlobs} because
+	 * attachment blobs may contain arbitrary binary payloads, and the
+	 * UTF-8 encoding used for `snapshotBlobs` (which holds JSON/text the
+	 * runtime authors) would corrupt non-UTF-8 byte sequences with
+	 * replacement characters. Populated by `captureFullContainerState`; the
+	 * live container's pending-state path leaves this `undefined` because
+	 * it does not inline attachment blob contents.
+	 *
+	 * On load, entries are decoded from base64 and merged into the same
+	 * blob cache that `snapshotBlobs` populates.
+	 */
+	attachmentBlobContents?: IBase64BlobContents;
 	/**
 	 * All ops since base snapshot sequence number up to the latest op
 	 * seen when the container was closed. Used to apply stashed (saved pending)
@@ -265,10 +281,21 @@ export class SerializedStateManager implements IDisposable {
 			}
 			return { snapshot, version, attributes };
 		} else {
-			const { baseSnapshot, snapshotBlobs, savedOps } = pendingLocalState;
+			const { baseSnapshot, snapshotBlobs, attachmentBlobContents, savedOps } =
+				pendingLocalState;
 			const blobContents = new Map<string, ArrayBuffer>();
+			// Structural snapshot blobs (snapshot trees, `.attributes`, `.redirectTable`)
+			// are JSON/text the runtime authored, so UTF-8 round-trip is lossless.
 			for (const [id, value] of Object.entries(snapshotBlobs)) {
 				blobContents.set(id, stringToBuffer(value, "utf8"));
+			}
+			// Attachment blobs are base64-encoded — see IPendingContainerState
+			// docs. Decoded after structural blobs because storage-id collisions
+			// between the two namespaces should resolve to the binary form.
+			if (attachmentBlobContents !== undefined) {
+				for (const [id, value] of Object.entries(attachmentBlobContents)) {
+					blobContents.set(id, stringToBuffer(value, "base64"));
+				}
 			}
 			this.storageAdapter.cacheSnapshotBlobs(blobContents);
 			const attributes = await getDocumentAttributes(this.storageAdapter, baseSnapshot);
