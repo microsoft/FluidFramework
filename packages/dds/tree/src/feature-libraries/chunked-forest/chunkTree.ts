@@ -53,6 +53,7 @@ export function makeTreeChunker(
 		defaultChunkPolicy.sequenceChunkInlineThreshold,
 		defaultChunkPolicy.sequenceChunkInlineThreshold,
 		defaultChunkPolicy.uniformChunkNodeCount,
+		defaultChunkPolicy.uniformChunkNodeCountDynamicTargetMax,
 		(type: TreeNodeSchemaIdentifier, shapes: Map<TreeNodeSchemaIdentifier, ShapeInfo>) =>
 			tryShapeFromNodeSchema(
 				{
@@ -117,6 +118,7 @@ export class Chunker implements IChunker {
 		public readonly sequenceChunkSplitThreshold: number,
 		public readonly sequenceChunkInlineThreshold: number,
 		public readonly uniformChunkNodeCount: number,
+		public readonly uniformChunkNodeCountDynamicTargetMax: number,
 		// eslint-disable-next-line @typescript-eslint/no-shadow
 		private readonly tryShapeFromNodeSchema: (
 			type: TreeNodeSchemaIdentifier,
@@ -133,6 +135,7 @@ export class Chunker implements IChunker {
 			this.sequenceChunkSplitThreshold,
 			this.sequenceChunkInlineThreshold,
 			this.uniformChunkNodeCount,
+			this.uniformChunkNodeCountDynamicTargetMax,
 			this.tryShapeFromNodeSchema,
 		);
 	}
@@ -379,6 +382,7 @@ export const defaultChunkPolicy: ChunkPolicy = {
 	sequenceChunkInlineThreshold: Number.POSITIVE_INFINITY,
 	// Current UniformChunk handling doesn't scale well to large chunks, so set a modest size limit:
 	uniformChunkNodeCount: 400,
+	uniformChunkNodeCountDynamicTargetMax: 25,
 	// Without knowing what the schema is, all shapes are possible.
 	// Use `makeTreeChunker` to do better.
 	shapeFromSchema: () => polymorphic,
@@ -388,6 +392,7 @@ export const basicOnlyChunkPolicy: ChunkPolicy = {
 	sequenceChunkSplitThreshold: Number.POSITIVE_INFINITY,
 	sequenceChunkInlineThreshold: Number.POSITIVE_INFINITY,
 	uniformChunkNodeCount: 0,
+	uniformChunkNodeCountDynamicTargetMax: 0,
 	shapeFromSchema: () => polymorphic,
 };
 
@@ -412,6 +417,24 @@ export interface ChunkPolicy {
 	 * Maximum total nodes to put in a UniformChunk.
 	 */
 	readonly uniformChunkNodeCount: number;
+
+	/**
+	 * Target maximum top level length for a UniformChunk while a field is being edited.
+	 *
+	 * @remarks
+	 * When {@link splitFieldAtIndex} has to split a chunk to land an attach/detach on a chunk
+	 * boundary, chunks whose {@link TreeChunk.topLevelLength} exceeds this value are bisected
+	 * recursively until each piece is at or below it, and only the piece holding the target index
+	 * is split exactly. This bounds N splits inside an M-sized chunk at the cost of producing a
+	 * few extra intermediate chunks.
+	 *
+	 * Future merge/extend logic for adjacent small chunks is expected to use the same value as the
+	 * upper bound it tries to stay under, so dynamic chunk sizes settle around this target.
+	 *
+	 * Independent of {@link ChunkPolicy.uniformChunkNodeCount}, which only bounds the size of
+	 * chunks produced by the initial chunking pass.
+	 */
+	readonly uniformChunkNodeCountDynamicTargetMax: number;
 
 	/**
 	 * Returns information about the shapes trees of type `schema` can take.
@@ -558,23 +581,13 @@ export function chunkRange(
 }
 
 /**
- * {@link splitFieldAtIndex} bisects a chunk at its midpoint and
- * descends into the half holding the target rather than splitting directly at the requested
- * index. Bisecting shrinks the cost of repeated splits within a large chunk. A sequence of N
- * splits inside an N-sized chunk does O(N log N) total work, at the price of producing a few
- * extra intermediate chunks during descent. Smaller chunks are split exactly so we don't pay
- * the bisection overhead when the linear walk is already cheap.
- */
-const splitFieldBisectThreshold = 25;
-
-/**
  * Walks the `chunks` array of a field and splits a chunk if needed so that the node at the given
  * index sits on a chunk boundary. After the call, the node at `nodeIndex` is the first node of the
  * chunk at the returned index.
  *
  * @remarks
- * Chunks larger than {@link splitFieldBisectThreshold} are split at the midpoint and the loop
- * descends into whichever half contains `nodeIndex`.
+ * Chunks whose top level length exceeds {@link ChunkPolicy.uniformChunkNodeCountDynamicTargetMax}
+ * are bisected at the midpoint and the loop descends into whichever half contains `nodeIndex`.
  *
  * @param chunks - The array of {@link TreeChunk}s for the field to split. Mutated in place.
  * @param nodeIndex - The index of the node to split at. Must be in `[0, totalNodes]`, where
@@ -592,6 +605,7 @@ export function splitFieldAtIndex(
 	policy: ChunkCompressor,
 ): number {
 	assertNonNegativeSafeInteger(nodeIndex);
+	const bisectThreshold = policy.policy.uniformChunkNodeCountDynamicTargetMax;
 	let remaining = nodeIndex;
 	let chunkIndex = 0;
 	while (chunkIndex < chunks.length) {
@@ -607,13 +621,15 @@ export function splitFieldAtIndex(
 		}
 		// For chunks above the bisect threshold, cut at the midpoint and let the loop descend
 		// into whichever half holds nodeIndex. The other half is left untouched.
-		const splitPoint = total > splitFieldBisectThreshold ? Math.floor(total / 2) : remaining;
+		const splitPoint = total > bisectThreshold ? Math.floor(total / 2) : remaining;
 		const cursor = chunk.cursor();
 		cursor.firstNode();
 		const before = chunkRange(cursor, policy, splitPoint, false);
 		const after = chunkRange(cursor, policy, total - splitPoint, true);
 		// TODO: this could fail for really long chunks being split (due to argument count limits).
 		chunks.splice(chunkIndex, 1, ...before, ...after);
+		// The spliced-out slot held a ref to the original chunk. The two new chunks come with
+		// their own refs from chunkRange, so the slot's ref to the original needs to be released.
 		chunk.referenceRemoved();
 		if (splitPoint === remaining) {
 			return chunkIndex + before.length;

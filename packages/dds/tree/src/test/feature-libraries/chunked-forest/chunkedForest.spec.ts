@@ -49,6 +49,7 @@ const chunkers: [string, (schema: TreeStoredSchemaSubscription) => IChunker][] =
 				Number.POSITIVE_INFINITY,
 				Number.POSITIVE_INFINITY,
 				0,
+				defaultChunkPolicy.uniformChunkNodeCountDynamicTargetMax,
 				() => polymorphic,
 			),
 	],
@@ -59,7 +60,7 @@ const chunkers: [string, (schema: TreeStoredSchemaSubscription) => IChunker][] =
 	[
 		"sequences",
 		(schema): IChunker =>
-			new Chunker(schema, defaultSchemaPolicy, 2, 1, 0, (): ShapeInfo => polymorphic),
+			new Chunker(schema, defaultSchemaPolicy, 2, 1, 0, 0, (): ShapeInfo => polymorphic),
 	],
 	[
 		"minimal-uniform",
@@ -70,6 +71,7 @@ const chunkers: [string, (schema: TreeStoredSchemaSubscription) => IChunker][] =
 				Number.POSITIVE_INFINITY,
 				Number.POSITIVE_INFINITY,
 				1,
+				0,
 				(type: TreeNodeSchemaIdentifier, shapes: Map<TreeNodeSchemaIdentifier, ShapeInfo>) =>
 					tryShapeFromNodeSchema(
 						{
@@ -91,6 +93,7 @@ const chunkers: [string, (schema: TreeStoredSchemaSubscription) => IChunker][] =
 				Number.POSITIVE_INFINITY,
 				Number.POSITIVE_INFINITY,
 				defaultChunkPolicy.uniformChunkNodeCount,
+				defaultChunkPolicy.uniformChunkNodeCountDynamicTargetMax,
 				(type: TreeNodeSchemaIdentifier, shapes: Map<TreeNodeSchemaIdentifier, ShapeInfo>) =>
 					tryShapeFromNodeSchema(
 						{
@@ -112,6 +115,7 @@ const chunkers: [string, (schema: TreeStoredSchemaSubscription) => IChunker][] =
 				2,
 				1,
 				defaultChunkPolicy.uniformChunkNodeCount,
+				defaultChunkPolicy.uniformChunkNodeCountDynamicTargetMax,
 				(type: TreeNodeSchemaIdentifier, shapes: Map<TreeNodeSchemaIdentifier, ShapeInfo>) =>
 					tryShapeFromNodeSchema(
 						{

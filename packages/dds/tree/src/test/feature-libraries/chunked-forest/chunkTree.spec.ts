@@ -285,6 +285,7 @@ describe("chunkTree", () => {
 				sequenceChunkSplitThreshold: 2,
 				sequenceChunkInlineThreshold: Number.POSITIVE_INFINITY,
 				uniformChunkNodeCount: 0,
+				uniformChunkNodeCountDynamicTargetMax: 0,
 				shapeFromSchema: () => polymorphic,
 			};
 
@@ -334,6 +335,7 @@ describe("chunkTree", () => {
 						sequenceChunkSplitThreshold: threshold,
 						sequenceChunkInlineThreshold: Number.POSITIVE_INFINITY,
 						uniformChunkNodeCount: 0,
+						uniformChunkNodeCountDynamicTargetMax: 0,
 						shapeFromSchema: () => polymorphic,
 					};
 					const field = numberSequenceField(fieldLength);
@@ -444,6 +446,7 @@ describe("chunkTree", () => {
 				sequenceChunkSplitThreshold: 2,
 				sequenceChunkInlineThreshold: Number.POSITIVE_INFINITY,
 				uniformChunkNodeCount: 0,
+				uniformChunkNodeCountDynamicTargetMax: 0,
 				shapeFromSchema: () => polymorphic,
 			};
 
@@ -529,6 +532,7 @@ describe("chunkTree", () => {
 				sequenceChunkSplitThreshold: 2,
 				sequenceChunkInlineThreshold: Number.POSITIVE_INFINITY,
 				uniformChunkNodeCount: 0,
+				uniformChunkNodeCountDynamicTargetMax: 0,
 				shapeFromSchema: () => polymorphic,
 			};
 
@@ -781,6 +785,12 @@ describe("chunkTree", () => {
 			}
 		}
 
+		function assertChunksUnshared(chunks: readonly TreeChunk[]): void {
+			for (const chunk of chunks) {
+				assert.equal(chunk.isShared(), false);
+			}
+		}
+
 		it("splits a uniform chunk sandwiched between basic chunks at a middle index", () => {
 			// Build a field containing three chunks:
 			// [basic(1 node), uniform(5 nodes), basic(1 node)] -> total 7 nodes, global indices 0..6
@@ -789,6 +799,11 @@ describe("chunkTree", () => {
 			const uniform = new UniformChunk(numberShape.withTopLevelLength(5), [1, 2, 3, 4, 5]);
 			const trailingBasic = new BasicChunk(numberType, new Map(), 6);
 			const chunks: TreeChunk[] = [leadingBasic, uniform, trailingBasic];
+
+			// Hold an extra ref to the uniform chunk so we can inspect its refcount after the
+			// split (without it, referenceRemoved would drive the refcount to 0 and reuse risks
+			// observing a destroyed object).
+			uniform.referenceAdded();
 
 			const boundaryIndex = splitFieldAtIndex(chunks, 3, compressor);
 
@@ -807,6 +822,12 @@ describe("chunkTree", () => {
 				type: numberSchema.identifier,
 				value: 3,
 			});
+
+			// Each resulting chunk should be the sole owner of its slot.
+			assertChunksUnshared(chunks);
+			// The original uniform chunk's array-slot ref was released; only our test ref remains.
+			assert.equal(uniform.isShared(), false);
+			uniform.referenceRemoved();
 		});
 
 		it("does not mutate the array when the index falls on an existing chunk boundary", () => {
@@ -822,6 +843,7 @@ describe("chunkTree", () => {
 
 			assert.equal(boundaryIndex, 1);
 			assertChunksUnchanged(chunks, snapshot);
+			assertChunksUnshared(chunks);
 		});
 
 		it("returns chunks.length when the index equals the total node count", () => {
@@ -837,6 +859,7 @@ describe("chunkTree", () => {
 
 			assert.equal(boundaryIndex, chunks.length);
 			assertChunksUnchanged(chunks, snapshot);
+			assertChunksUnshared(chunks);
 		});
 
 		it("returns 0 for an empty chunks array at index 0", () => {
