@@ -1910,6 +1910,22 @@ export class ContainerRuntime
 		// collab window. Skip allocating it when batchId tracking is off.
 		if (this.batchIdTrackingEnabled) {
 			this.duplicateBatchDetector = new DuplicateBatchDetector(recentBatchInfo);
+		} else if (!offlineDisabled) {
+			// Offline is requested but a prerequisite is missing — emit one event so the silent
+			// degradation is observable. Skipped when the user explicitly disabled offline.
+			const reasons: string[] = [];
+			if (this._flushMode !== FlushMode.TurnBased) {
+				reasons.push("NotTurnBased");
+			}
+			if (!this.groupedBatchingEnabled) {
+				reasons.push("GroupedBatchingDisabled");
+			}
+			this.mc.logger.sendTelemetryEvent({
+				eventName: "OfflineBatchIdTrackingDegraded",
+				reason: reasons.join(","),
+				flushMode: this._flushMode,
+				groupedBatchingEnabled: this.groupedBatchingEnabled,
+			});
 		}
 
 		if (context.attachState === AttachState.Attached) {

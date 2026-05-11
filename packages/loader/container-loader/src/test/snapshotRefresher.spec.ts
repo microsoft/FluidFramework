@@ -6,7 +6,11 @@
 import { strict as assert } from "node:assert";
 
 import { stringToBuffer } from "@fluid-internal/client-utils";
-import type { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+import type {
+	ConfigTypes,
+	IConfigProviderBase,
+	ITelemetryBaseLogger,
+} from "@fluidframework/core-interfaces";
 import { Deferred } from "@fluidframework/core-utils/internal";
 import type {
 	FetchSource,
@@ -15,7 +19,7 @@ import type {
 	ISnapshotTree,
 	IVersion,
 } from "@fluidframework/driver-definitions/internal";
-import { MockLogger } from "@fluidframework/telemetry-utils/internal";
+import { MockLogger, mixinMonitoringContext } from "@fluidframework/telemetry-utils/internal";
 import { useFakeTimers, type SinonFakeTimers } from "sinon";
 
 import type {
@@ -577,6 +581,53 @@ describe("SnapshotRefresher", () => {
 				mockStorage.getVersionsCallCount,
 				2,
 				"Should refresh after clearing snapshot",
+			);
+
+			refresher.dispose();
+		});
+	});
+
+	describe("disableOfflineSnapshotRefresh config", () => {
+		const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
+			getRawConfig: (name: string): ConfigTypes => settings[name],
+		});
+
+		it("does not refresh when Fluid.Container.disableOfflineSnapshotRefresh is true", () => {
+			const loggerWithConfig = mixinMonitoringContext(
+				mockLogger,
+				configProvider({ "Fluid.Container.disableOfflineSnapshotRefresh": true }),
+			).logger;
+			const timeout = 1000;
+			const refresher = createRefresher(true, () => true, timeout, loggerWithConfig);
+
+			refresher.startTimer();
+			clock.tick(timeout);
+			refresher.tryRefreshSnapshot();
+
+			assert.strictEqual(
+				mockStorage.getVersionsCallCount,
+				0,
+				"getVersions should not be called when sub-switch disables refresh",
+			);
+			assert.strictEqual(
+				refresher.refreshSnapshotP,
+				undefined,
+				"No refresh promise should be in flight",
+			);
+
+			refresher.dispose();
+		});
+
+		it("refreshes normally when Fluid.Container.disableOfflineSnapshotRefresh is unset", () => {
+			const loggerWithConfig = mixinMonitoringContext(mockLogger, configProvider({})).logger;
+			const refresher = createRefresher(true, () => true, undefined, loggerWithConfig);
+
+			refresher.tryRefreshSnapshot();
+
+			assert.strictEqual(
+				mockStorage.getVersionsCallCount,
+				1,
+				"getVersions should be called when sub-switch is unset",
 			);
 
 			refresher.dispose();

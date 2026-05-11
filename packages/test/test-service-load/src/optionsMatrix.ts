@@ -25,7 +25,6 @@ import { LoggingError } from "@fluidframework/telemetry-utils/internal";
 import type { OptionOverride, TestConfiguration } from "./testConfigFile.js";
 
 interface ILoaderOptionsExperimental extends ILoaderOptions {
-	enableOfflineSnapshotRefresh?: boolean;
 	snapshotRefreshTimeoutMs?: number;
 }
 
@@ -35,7 +34,6 @@ const loaderOptionsMatrix: OptionsMatrix<ILoaderOptionsExperimental> = {
 	provideScopeLoader: booleanCases,
 	maxClientLeaveWaitTime: numberCases,
 	enableOfflineLoad: booleanCases,
-	enableOfflineSnapshotRefresh: booleanCases,
 	snapshotRefreshTimeoutMs: [undefined, 60 * 5 * 1000 /* 5min */],
 };
 

@@ -95,7 +95,12 @@ export class SnapshotRefresher implements IDisposable {
 
 		this.snapshotRefreshTimeoutMs = snapshotRefreshTimeoutMs ?? this.snapshotRefreshTimeoutMs;
 
-		this.#snapshotRefreshEnabled = this.offlineLoadEnabled;
+		// disableOfflineSnapshotRefresh is a sub-switch that turns off snapshot refresh without
+		// disabling the rest of offline load — used as a stability mitigation if periodic refresh
+		// surfaces server-side ordering regressions.
+		this.#snapshotRefreshEnabled =
+			this.offlineLoadEnabled &&
+			this.mc.config.getBoolean("Fluid.Container.disableOfflineSnapshotRefresh") !== true;
 
 		this.refreshTimer = this.#snapshotRefreshEnabled
 			? new Timer(this.snapshotRefreshTimeoutMs, () => this.tryRefreshSnapshot())

@@ -2521,6 +2521,94 @@ describe("Runtime", () => {
 				);
 			});
 
+			describe("OfflineBatchIdTrackingDegraded telemetry", () => {
+				it("emits with reason=NotTurnBased when FlushMode.Immediate is configured", async () => {
+					const logger = new MockLogger();
+					await ContainerRuntime.loadRuntime2({
+						context: getMockContext({ logger }) as IContainerContext,
+						registry: new FluidDataStoreRegistry([]),
+						existing: false,
+						runtimeOptions: {
+							flushMode: FlushMode.Immediate,
+							enableRuntimeIdCompressor: "on",
+						},
+						provideEntryPoint: mockProvideEntryPoint,
+					});
+
+					logger.assertMatchAny([
+						{
+							eventName: "ContainerRuntime:OfflineBatchIdTrackingDegraded",
+							category: "generic",
+							reason: "NotTurnBased",
+							flushMode: FlushMode.Immediate,
+							groupedBatchingEnabled: true,
+						},
+					]);
+				});
+
+				it("emits with reason=GroupedBatchingDisabled when grouped batching is off", async () => {
+					const logger = new MockLogger();
+					await ContainerRuntime.loadRuntime2({
+						context: getMockContext({ logger }) as IContainerContext,
+						registry: new FluidDataStoreRegistry([]),
+						existing: false,
+						runtimeOptions: {
+							enableGroupedBatching: false,
+							enableRuntimeIdCompressor: "on",
+						},
+						provideEntryPoint: mockProvideEntryPoint,
+					});
+
+					logger.assertMatchAny([
+						{
+							eventName: "ContainerRuntime:OfflineBatchIdTrackingDegraded",
+							category: "generic",
+							reason: "GroupedBatchingDisabled",
+							flushMode: FlushMode.TurnBased,
+							groupedBatchingEnabled: false,
+						},
+					]);
+				});
+
+				it("does not emit on the happy path (TurnBased + grouped batching)", async () => {
+					const logger = new MockLogger();
+					await ContainerRuntime.loadRuntime2({
+						context: getMockContext({ logger }) as IContainerContext,
+						registry: new FluidDataStoreRegistry([]),
+						existing: false,
+						runtimeOptions: {
+							enableRuntimeIdCompressor: "on",
+						},
+						provideEntryPoint: mockProvideEntryPoint,
+					});
+
+					logger.assertMatchNone([
+						{ eventName: "ContainerRuntime:OfflineBatchIdTrackingDegraded" },
+					]);
+				});
+
+				it("does not emit when disableOfflineFull is set, even if prerequisites are missing", async () => {
+					const logger = new MockLogger();
+					await ContainerRuntime.loadRuntime2({
+						context: getMockContext({
+							logger,
+							settings: { "Fluid.Container.disableOfflineFull": true },
+						}) as IContainerContext,
+						registry: new FluidDataStoreRegistry([]),
+						existing: false,
+						runtimeOptions: {
+							flushMode: FlushMode.Immediate,
+							enableRuntimeIdCompressor: "on",
+						},
+						provideEntryPoint: mockProvideEntryPoint,
+					});
+
+					logger.assertMatchNone([
+						{ eventName: "ContainerRuntime:OfflineBatchIdTrackingDegraded" },
+					]);
+				});
+			});
+
 			it("Can roundtrip DuplicateBatchDetector state through summary/snapshot", async () => {
 				// Duplicate Batch Detection is on by default in TurnBased mode.
 				const { runtime: containerRuntime } = await ContainerRuntime.loadRuntime2({
