@@ -188,26 +188,30 @@ describe("Interval Stashed Ops on client ", () => {
 		}
 
 		function assertIntervalMatches(
-			label: string,
+			scenario: string,
 			target: SharedString,
 			replayed: SequenceIntervalClass | undefined,
 			source: SharedString,
 			expected: SequenceIntervalClass,
 		): void {
-			assert(replayed !== undefined, `${label}: expected replayed interval`);
+			assert(replayed !== undefined, `${scenario}: expected replayed interval`);
 			assert.equal(
 				target.localReferencePositionToPosition(replayed.start),
 				source.localReferencePositionToPosition(expected.start),
-				`${label}: start position mismatch`,
+				`${scenario}: start position mismatch`,
 			);
 			assert.equal(
 				target.localReferencePositionToPosition(replayed.end),
 				source.localReferencePositionToPosition(expected.end),
-				`${label}: end position mismatch`,
+				`${scenario}: end position mismatch`,
 			);
-			assert.equal(replayed.startSide, expected.startSide, `${label}: startSide mismatch`);
-			assert.equal(replayed.endSide, expected.endSide, `${label}: endSide mismatch`);
-			assert.equal(replayed.stickiness, expected.stickiness, `${label}: stickiness mismatch`);
+			assert.equal(replayed.startSide, expected.startSide, `${scenario}: startSide mismatch`);
+			assert.equal(replayed.endSide, expected.endSide, `${scenario}: endSide mismatch`);
+			assert.equal(
+				replayed.stickiness,
+				expected.stickiness,
+				`${scenario}: stickiness mismatch`,
+			);
 		}
 
 		function assertAddRoundTrip(
