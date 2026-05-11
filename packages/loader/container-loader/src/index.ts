@@ -7,11 +7,13 @@ export { ConnectionState } from "./connectionState.js";
 export { type ContainerAlpha, waitContainerToCatchUp, asLegacyAlpha } from "./container.js";
 export { createFrozenDocumentServiceFactory } from "./frozenServices.js";
 export {
+	captureFullContainerState,
 	createDetachedContainer,
 	loadExistingContainer,
 	rehydrateDetachedContainer,
 	loadFrozenContainerFromPendingState,
 	loadSummarizerContainerAndMakeSummary,
+	type ICaptureFullContainerStateProps,
 	type ICreateAndLoadContainerProps,
 	type ICreateDetachedContainerProps,
 	type ILoadExistingContainerProps,
@@ -55,3 +57,8 @@ export type {
 	QuorumProposalsSnapshot,
 } from "./protocol/index.js";
 export { PendingLocalStateStore } from "./pendingLocalStateStore.js";
+export {
+	extractBlobAttachReferences,
+	wireFormatConstants,
+	type IBlobAttachReference,
+} from "./captureReferencedContents.js";

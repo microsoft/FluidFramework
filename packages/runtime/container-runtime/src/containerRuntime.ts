@@ -1891,10 +1891,14 @@ export class ContainerRuntime
 			runtimeOptions.stagingModeAutoFlushThreshold ??
 			defaultStagingModeAutoFlushThreshold;
 		// BatchId tracking powers DuplicateBatchDetector (catching forked-container duplicates)
-		// and is also a prerequisite for the Offline Load feature. It is enabled by default in
-		// TurnBased mode; the kill-switch below allows disabling it without a code change if a
-		// regression is observed. Offline Load still requires TurnBased, so consumers that
-		// explicitly opt into it with FlushMode.Immediate continue to get a UsageError.
+		// and is also a prerequisite for the Offline Load feature. It is enabled by default
+		// when both TurnBased flush mode and grouped batching are active; the kill-switch
+		// below allows disabling it without a code change if a regression is observed.
+		// Grouped batching is required because resubmits can produce empty batches that must
+		// still be sent on the wire as a placeholder grouped batch to preserve their batchId
+		// (see OpGroupingManager.createEmptyGroupedBatch / outbox.flushEmptyBatch).
+		// Offline Load requires both prerequisites, so a consumer that opts into it without
+		// them gets an explicit UsageError rather than silent degradation.
 		const offlineLoadRequested =
 			this.mc.config.getBoolean("Fluid.Container.enableOfflineFull") === true;
 		const disableBatchIdTracking =
@@ -1905,9 +1909,16 @@ export class ContainerRuntime
 			this.closeFn(error);
 			throw error;
 		}
+		if (offlineLoadRequested && !this.groupedBatchingEnabled) {
+			const error = new UsageError("Offline mode requires grouped batching to be enabled");
+			this.closeFn(error);
+			throw error;
+		}
 
 		this.batchIdTrackingEnabled =
-			!disableBatchIdTracking && this._flushMode === FlushMode.TurnBased;
+			!disableBatchIdTracking &&
+			this._flushMode === FlushMode.TurnBased &&
+			this.groupedBatchingEnabled;
 
 		// DuplicateBatchDetector maintains a cache of all batchIds/sequenceNumbers within the
 		// collab window. Skip allocating it when batchId tracking is off.
