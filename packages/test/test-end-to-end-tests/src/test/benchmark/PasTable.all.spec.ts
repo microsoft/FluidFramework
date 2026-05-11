@@ -31,8 +31,6 @@ describeCompat("PAS Test", "NoCompat", () => {
 	const rowSize = 6;
 	const columnSize = 5;
 
-	before(async () => {});
-
 	/**
 	 * The PerformanceTestWrapper class includes 2 functionalities:
 	 * 1) Store any objects that should not be garbage collected during the benchmark execution (specific for memory tests).
@@ -45,6 +43,9 @@ describeCompat("PAS Test", "NoCompat", () => {
 			containerRuntimeFactory = new MockContainerRuntimeFactory();
 			matrix = createLocalMatrix("matrix1", dataStoreRuntime);
 
+			// Every iteration of this benchmark will allocate lots of new SharedString instances
+			// The old ones from the previous iteration will no longer be reachable from the matrix after they are replaced,
+			// but are leaked in the container as Fluid's GC won't collecting them for a very long time (much longer than this test will run).
 			async run(): Promise<void> {
 				this.matrix.insertRows(0, rowSize);
 				this.matrix.insertCols(0, columnSize);
