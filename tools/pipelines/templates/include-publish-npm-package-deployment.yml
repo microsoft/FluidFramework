@@ -57,34 +57,23 @@ jobs:
       value: ${{ parameters.release }}
     - name: isLatest
       value: $[ stageDependencies.build.build.outputs['SetVersion.isLatest']]
+  templateContext:
+    type: releaseJob
+    # in() returns true if the first parameter is equal to any of the others
+    isProduction: ${{ in(variables['release'], 'release', 'prerelease')  }}
+
+    # This 'inputs' section downloads initial required artifacts/data for this job.
+    inputs:
+      - input: pipelineArtifact
+        artifactName: pack
+        buildType: current
+        targetPath: $(Pipeline.Workspace)/pack
   strategy:
     runOnce:
         deploy:
           steps:
-          - download: current
-            artifact: pack
-          - checkout: self
-            clean: true
-            lfs: false
-            submodules: false
-          - task: UseNode@1
-            displayName: Use Node 20.15.1
-            inputs:
-              version: 20.15.1
-          - task: Npm@1
-            displayName: Install npm 10
-            retryCountOnTaskFailure: 4
-            inputs:
-              command: 'custom'
-              customCommand: 'install --global npm@^10'
-              customRegistry: 'useNpmrc'
-          # Install pnpm and dependencies so flub is available for publish steps
-          - template: /tools/pipelines/templates/include-install.yml@self
-            parameters:
-              packageManager: '${{ parameters.packageManager }}'
-              buildDirectory: .
-              packageManagerInstallCommand: '${{ parameters.packageManagerInstallCommand }}'
-          # Add installed build-tools to CLI
+          - template: /tools/pipelines/templates/include-use-node-version.yml@self
+
           - task: Bash@3
             name: InstallBuildTools
             displayName: Install Fluid Build Tools (from npm)
@@ -98,22 +87,26 @@ jobs:
 
                 # This can be removed once all builds tools are moved to the build-cli library
                 npm install --global "@fluidframework/build-tools@${{ parameters.buildToolsVersionToInstall }}"
-          - task: Bash@3
-            name: BuildToolsInstallCheck
-            displayName: Check Build Tools Installation
-            inputs:
-              targetType: 'inline'
-              workingDirectory: .
-              script: |
-                # Output the help and full command list for debugging purposes
-                flub --help
-                flub commands
-          - template: include-publish-npm-package-steps.yml
+
+          - template: /tools/pipelines/templates/include-publish-npm-package-steps.yml@self
             parameters:
               artifactPath: tarballs
-              feedKind: ${{ parameters.feedKind }}
               feedUrl: ${{ parameters.feedUrl }}
               customEndPoint: ${{ parameters.customEndPoint }}
-          - template: include-git-tag-steps.yml
-            parameters:
-              tagName: ${{ parameters.tagName }}
+              feedKind: ${{ parameters.feedKind }}
+
+- job: TagRelease
+  displayName: Tag Release
+  # Note: must be kept in sync with the name of the deployment job above
+  dependsOn: publish_${{ replace(parameters.environment, '-', '_') }}
+  # Only tag the repo if a tag name is provided.
+  condition: and(succeeded(), ne('${{ parameters.tagName }}', ''))
+  variables:
+    version: $[ stageDependencies.build.build.outputs['SetVersion.version']]
+  steps:
+  - checkout: self
+    clean: true
+  - template: /tools/pipelines/templates/include-git-tag-steps.yml@self
+    parameters:
+      tagName: ${{ parameters.tagName }}
+
