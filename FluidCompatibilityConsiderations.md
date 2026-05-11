@@ -44,13 +44,13 @@ See [API support levels](./docs/docs/build/releases-and-apitags.mdx#api-support-
 
 ### Motivation
 
-This allows users of our packages to use [dependency ranges](https://github.com/npm/node-semver) like "^2.100.0" providing predictable upgrade path to newer Fluid versions, ensuring big fixes are easy to integrate, and its clear when breaking changes need to be checked for.
+This allows users of our packages to use [dependency ranges](https://github.com/npm/node-semver) like "^2.100.0" providing predictable upgrade path to newer Fluid versions, ensuring bug fixes are easy to integrate, and it's clear when breaking changes need to be checked for.
 
 ## Layer compatibility
 
 Layer compatibility implies that a single client can have different versions for different compatibility layers we support - Driver, Loader, Runtime and Datastore. For example, Driver v1.0, Loader v2.0, Runtime v3.0 and both Datastore v3.1 and v3.2 are used on the same client. Multiple Datastore versions can coexist within a single Runtime because each datastore type may come from a separately-versioned package loaded through the runtime's code-loading registry. The APIs at the boundaries of these layers have strict compatibility requirements at _runtime_ (distinct from package and type compatibility, which are about build-time dependencies), to support the full range of versions that may be calling them from another layer.
 
-The APIs between these layers are often internal, and their implementations involve down casting, so special mechanisms beyond simple type checking are needed to ensure their compatibility.
+The APIs between these layers are often internal, and their implementations involve downcasting, so special mechanisms beyond simple type checking are needed to ensure their compatibility.
 
 ### Motivation
 
