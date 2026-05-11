@@ -180,8 +180,9 @@ async function extractPackageJsonFromTarball(
 	let unzipped: Uint8Array;
 
 	{
-		// eslint-disable-next-line no-return-assign -- assigning the chunk to unzipped is intentional
-		const gunzip = new Gunzip((chunk: Uint8Array) => (unzipped = chunk));
+		const gunzip = new Gunzip((chunk: Uint8Array) => {
+			unzipped = chunk;
+		});
 		gunzip.push(tarball, /* final */ true);
 	}
 	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
