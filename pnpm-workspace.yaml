@@ -31,10 +31,10 @@ minimumReleaseAgeExclude: [
 resolutionMode: highest
 blockExoticSubdeps: true
 # See: https://github.com/orgs/pnpm/discussions/11084 for some discussion.
-# Enabling this is additionally more complicated than coming up with a reasonable allow-list of packages, given that
-# whether a package is trusted may change due to external factors and pnpm lacks a command or mode that scans the full
-# dependency graph to determine trustworthiness. Note the "off" here is the default as well.
-trustPolicy: off
+# Enabling no-downgrade requires every transitive trust-policy violation to either be remediated
+# at the source or excluded below with a documented rationale. Run `flub check trustPolicy` to
+# surface current violations.
+trustPolicy: no-downgrade
 trustPolicyExclude:
   # axios@0.30.3 is the last legitimate 0.30.x release (published 2026-02-18). The trust
   # downgrade fires because 0.30.x was published via direct CLI rather than the OIDC/GitHub
@@ -42,6 +42,38 @@ trustPolicyExclude:
   # 0.30.4 and 1.14.1 (supply chain attack on 2026-03-31, attributed to Sapphire Sleet).
   # See: https://www.microsoft.com/en-us/security/blog/2026/04/01/mitigating-the-axios-npm-supply-chain-compromise/
   - "axios@0.30.3"
+  # @octokit/endpoint@9.0.6 (published 2025-02-14, by octokitbot) — pipeline regression.
+  # Prior trusted: @octokit/endpoint@10.1.3 (provenance, 2025-02-13, by octokitbot), with
+  # verified provenance from octokit/endpoint.js .github/workflows/release.yml @ refs/heads/main.
+  # Same publisher account (octokitbot); the v9 maintenance branch publish bypassed release.yml.
+  # Pulled in transitively via danger@13 → @octokit/rest@20 → @octokit/core@5 → @octokit/request@8.
+  # No reachable direct-dep bump escapes this without overriding @octokit/rest itself.
+  - "@octokit/endpoint@9.0.6"
+  # chokidar@4.0.3 (published 2024-12-18, by paulmillr) — pipeline regression.
+  # Prior trusted: chokidar@4.0.1 (provenance, 2024-09-22, by paulmillr).
+  # Same publisher (sole maintainer); provenance attestation was dropped after 4.0.1.
+  # Pulled in transitively via mocha@11 (chokidar ^4.0.1) and sass@1 (chokidar ^4.0.0).
+  # chokidar@5.0.0 has restored provenance but no upstream consumer pins ^5 yet.
+  - "chokidar@4.0.3"
+  # detect-port@1.6.1 (published 2024-05-08, by fengmk2) — pipeline regression.
+  # Prior trusted: detect-port@1.6.0 (provenance, 2024-05-08, by fengmk2).
+  # Same publisher; provenance attestation was lost on the immediately-following patch release.
+  # Pulled in transitively under @fluidframework/azure-local-service.
+  - "detect-port@1.6.1"
+  # semver@5.7.2 (published 2023-07-10, by lukekarrys) — legacy maintenance line.
+  # Prior trusted: semver@7.5.4 (provenance, 2023-07-07, by npm-cli-ops).
+  # Different publisher account because the 5.x and 6.x maintenance lines are
+  # hand-published by lukekarrys (a long-time npm/node-semver maintainer), while the
+  # current 7.x line publishes through the npm-cli OIDC/Actions pipeline. The 5.x/6.x
+  # lines will not be retroactively re-published with provenance. Pulled in by widely-
+  # used legacy tooling that pins ^5 / ^6.
+  - "semver@5.7.2"
+  - "semver@6.3.1"
+  # undici-types@6.21.0 (published 2024-11-13, by matteo.collina) — pipeline regression.
+  # Prior trusted: undici-types@6.19.2 (provenance, 2024-06-18, by matteo.collina).
+  # Same publisher (undici project lead). Type-only package (.d.ts shipped from undici
+  # repo); provenance attestation was lost on a subsequent 6.x release.
+  - "undici-types@6.21.0"
 strictDepBuilds: true
 
 catalogs:

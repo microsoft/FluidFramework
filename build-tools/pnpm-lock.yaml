@@ -208,9 +208,6 @@ importers:
       jssm:
         specifier: ^5.104.2
         version: 5.104.2
-      jszip:
-        specifier: ^3.10.1
-        version: 3.10.1
       latest-version:
         specifier: ^9.0.0
         version: 9.0.0

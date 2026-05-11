@@ -36,10 +36,29 @@ import type {
 import { convertSnapshotInfoToSnapshot } from "./utils.js";
 
 /**
- * Stringified blobs from a summary/snapshot tree.
+ * Stringified blobs from a summary/snapshot tree, keyed by blob id.
+ * Values are **UTF-8-encoded** — this is the right encoding for JSON or
+ * other text the runtime authors and consumes through this map. For
+ * arbitrary binary payloads (e.g. attachment blob contents), use
+ * {@link IBase64BlobContents} instead; a UTF-8 round-trip silently
+ * corrupts non-UTF-8 byte sequences with replacement characters.
  * @internal
  */
 export interface ISerializableBlobContents {
+	[id: string]: string;
+}
+
+/**
+ * Stringified blobs inlined in a summary/snapshot tree, keyed by blob id.
+ * Values are **base64-encoded** raw bytes. Used for attachment-blob
+ * payloads, which may carry arbitrary binary data (images, encrypted
+ * blobs, etc.). Mirrors the encoding used by the runtime's own
+ * pending-blob serializer in `BlobManager`. Structurally identical to
+ * {@link ISerializableBlobContents}; the two types exist to keep the
+ * encoding contract visible at every call site.
+ * @internal
+ */
+export interface IBase64BlobContents {
 	[id: string]: string;
 }
 
