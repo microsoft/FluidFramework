@@ -127,11 +127,4 @@ export const baseConfig: FlatConfigArray = [
 			],
 		},
 	},
-	// Keep import ordering delegated to Biome's organizeImports action. This must come after
-	// shared and formatter configs so import-x presets cannot re-enable the rule.
-	{
-		rules: {
-			"import-x/order": "off",
-		},
-	},
 ];

@@ -1251,24 +1251,6 @@
 		"import-x/no-unused-modules": [
 			"error"
 		],
-		"import-x/order": [
-			"off",
-			{
-				"groups": [
-					"builtin",
-					"external",
-					"internal",
-					"parent",
-					"sibling",
-					"index"
-				],
-				"newlines-between": "always",
-				"alphabetize": {
-					"order": "asc",
-					"caseInsensitive": false
-				}
-			}
-		],
 		"indent": [
 			"off"
 		],
