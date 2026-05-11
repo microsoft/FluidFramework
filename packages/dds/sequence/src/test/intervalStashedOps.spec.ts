@@ -169,7 +169,7 @@ describe("Interval Stashed Ops on client ", () => {
 		});
 	});
 
-	describe("round-trip add via applyStashedOp", () => {
+	describe("round-trip via applyStashedOp", () => {
 		const label = "test";
 
 		function createSharedString(intervalStickinessEnabled: boolean): SharedString {
@@ -187,7 +187,30 @@ describe("Interval Stashed Ops on client ", () => {
 			return ss;
 		}
 
-		function assertRoundTrip(
+		function assertIntervalMatches(
+			label: string,
+			target: SharedString,
+			replayed: SequenceIntervalClass | undefined,
+			source: SharedString,
+			expected: SequenceIntervalClass,
+		): void {
+			assert(replayed !== undefined, `${label}: expected replayed interval`);
+			assert.equal(
+				target.localReferencePositionToPosition(replayed.start),
+				source.localReferencePositionToPosition(expected.start),
+				`${label}: start position mismatch`,
+			);
+			assert.equal(
+				target.localReferencePositionToPosition(replayed.end),
+				source.localReferencePositionToPosition(expected.end),
+				`${label}: end position mismatch`,
+			);
+			assert.equal(replayed.startSide, expected.startSide, `${label}: startSide mismatch`);
+			assert.equal(replayed.endSide, expected.endSide, `${label}: endSide mismatch`);
+			assert.equal(replayed.stickiness, expected.stickiness, `${label}: stickiness mismatch`);
+		}
+
+		function assertAddRoundTrip(
 			intervalStickinessEnabled: boolean,
 			addArgs: Parameters<ISequenceIntervalCollection["add"]>[0],
 		): void {
@@ -207,34 +230,76 @@ describe("Interval Stashed Ops on client ", () => {
 			} satisfies IMapOperation);
 
 			const [replayed] = Array.from(targetCollection) as SequenceIntervalClass[];
-			assert(replayed !== undefined, "expected replayed interval");
-			assert.equal(
-				target.localReferencePositionToPosition(replayed.start),
-				source.localReferencePositionToPosition(sourceInterval.start),
-				"start position mismatch",
-			);
-			assert.equal(
-				target.localReferencePositionToPosition(replayed.end),
-				source.localReferencePositionToPosition(sourceInterval.end),
-				"end position mismatch",
-			);
-			assert.equal(replayed.startSide, sourceInterval.startSide, "startSide mismatch");
-			assert.equal(replayed.endSide, sourceInterval.endSide, "endSide mismatch");
-			assert.equal(replayed.stickiness, sourceInterval.stickiness, "stickiness mismatch");
+			assertIntervalMatches("add", target, replayed, source, sourceInterval);
 		}
 
-		it("non-sticky interval with intervalStickinessEnabled disabled", () => {
-			assertRoundTrip(false, { start: 0, end: 5 });
+		function assertChangeRoundTrip(
+			intervalStickinessEnabled: boolean,
+			addArgs: Parameters<ISequenceIntervalCollection["add"]>[0],
+			changeArgs: Parameters<ISequenceIntervalCollection["change"]>[1],
+		): void {
+			const source = createSharedString(intervalStickinessEnabled);
+			const target = createSharedString(intervalStickinessEnabled);
+			source.insertText(0, "hello world");
+			target.insertText(0, "hello world");
+
+			const sourceCollection = source.getIntervalCollection(label);
+			const initial = sourceCollection.add(addArgs) as SequenceIntervalClass;
+			const id = initial.getIntervalId();
+
+			const targetCollection = target.getIntervalCollection(label);
+			target["applyStashedOp"]({
+				key: label,
+				type: "act",
+				value: { opName: IntervalOpType.ADD, value: initial.serialize() },
+			} satisfies IMapOperation);
+
+			const changed = sourceCollection.change(id, changeArgs) as SequenceIntervalClass;
+			target["applyStashedOp"]({
+				key: label,
+				type: "act",
+				value: {
+					opName: IntervalOpType.CHANGE,
+					value: changed.serializeDelta({ props: undefined, includeEndpoints: true }),
+				},
+			} satisfies IMapOperation);
+
+			const [replayed] = Array.from(targetCollection) as SequenceIntervalClass[];
+			assertIntervalMatches("change", target, replayed, source, changed);
+		}
+
+		describe("add", () => {
+			it("non-sticky interval with intervalStickinessEnabled disabled", () => {
+				assertAddRoundTrip(false, { start: 0, end: 5 });
+			});
+
+			it("non-sticky interval with intervalStickinessEnabled enabled", () => {
+				assertAddRoundTrip(true, { start: 0, end: 5 });
+			});
+
+			it("sticky interval with intervalStickinessEnabled enabled", () => {
+				assertAddRoundTrip(true, {
+					start: "start",
+					end: { pos: 5, side: Side.After },
+				});
+			});
 		});
 
-		it("non-sticky interval with intervalStickinessEnabled enabled", () => {
-			assertRoundTrip(true, { start: 0, end: 5 });
-		});
+		describe("change", () => {
+			it("non-sticky endpoints with intervalStickinessEnabled disabled", () => {
+				assertChangeRoundTrip(false, { start: 0, end: 5 }, { start: 2, end: 7 });
+			});
 
-		it("sticky interval with intervalStickinessEnabled enabled", () => {
-			assertRoundTrip(true, {
-				start: "start",
-				end: { pos: 5, side: Side.After },
+			it("non-sticky endpoints with intervalStickinessEnabled enabled", () => {
+				assertChangeRoundTrip(true, { start: 0, end: 5 }, { start: 2, end: 7 });
+			});
+
+			it("sticky endpoints with intervalStickinessEnabled enabled", () => {
+				assertChangeRoundTrip(
+					true,
+					{ start: "start", end: { pos: 5, side: Side.After } },
+					{ start: "start", end: { pos: 7, side: Side.After } },
+				);
 			});
 		});
 	});

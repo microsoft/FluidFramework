@@ -947,8 +947,9 @@ export class IntervalCollection
 		// but the original add()/change() call may have used plain numeric
 		// positions. Drop the side when it equals the default so the replayed
 		// call matches the original shape — otherwise assertStickinessEnabled
-		// would treat a plain-number interval as sticky. (Op values can be
-		// frozen, so this is computed into locals rather than mutating value.)
+		// would treat a plain-number interval as sticky. Stashed-op values
+		// can be deep-frozen by upstream layers (e.g. test mocks), so this is
+		// computed into locals rather than mutating value.
 		const startSide = value.startSide === defaultSide ? undefined : value.startSide;
 		const endSide = value.endSide === defaultSide ? undefined : value.endSide;
 		switch (opName) {
