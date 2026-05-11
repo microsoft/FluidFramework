@@ -6,26 +6,26 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import { type IEventThisPlaceHolder, IFluidHandle } from "@fluidframework/core-interfaces";
+import type { IEventThisPlaceHolder, IFluidHandle } from "@fluidframework/core-interfaces";
 import {
 	assert,
 	unreachableCase,
 	isObject,
 	type DoublyLinkedList,
 } from "@fluidframework/core-utils/internal";
-import {
+import type {
 	IFluidDataStoreRuntime,
 	IChannelStorageService,
 } from "@fluidframework/datastore-definitions/internal";
 import {
 	MessageType,
-	ISequencedDocumentMessage,
+	type ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
-import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions/internal";
+import type { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions/internal";
 import { toDeltaManagerInternal } from "@fluidframework/runtime-utils/internal";
-import { IFluidSerializer } from "@fluidframework/shared-object-base/internal";
+import type { IFluidSerializer } from "@fluidframework/shared-object-base/internal";
 import {
-	ITelemetryLoggerExt,
+	type ITelemetryLoggerExt,
 	LoggingError,
 	UsageError,
 } from "@fluidframework/telemetry-utils/internal";
@@ -33,7 +33,7 @@ import {
 import { MergeTreeTextHelper, type IMergeTreeTextHelper } from "./MergeTreeTextHelper.js";
 import { RedBlackTree } from "./collections/index.js";
 import { NonCollabClient, SquashClient, UniversalSequenceNumber } from "./constants.js";
-import { LocalReferencePosition, SlidingPreference } from "./localReference.js";
+import { type LocalReferencePosition, SlidingPreference } from "./localReference.js";
 import {
 	MergeTree,
 	errorIfOptionNotTrue,
@@ -48,12 +48,12 @@ import type {
 } from "./mergeTreeDeltaCallback.js";
 import { walkAllChildSegments } from "./mergeTreeNodeWalk.js";
 import {
-	CollaborationWindow,
-	ISegment,
-	ISegmentAction,
-	ISegmentPrivate,
-	Marker,
-	SegmentGroup,
+	type CollaborationWindow,
+	type ISegment,
+	type ISegmentAction,
+	type ISegmentPrivate,
+	type Marker,
+	type SegmentGroup,
 	compareStrings,
 	isSegmentLeaf,
 	type ISegmentInternal,
@@ -71,17 +71,17 @@ import {
 	createRemoveRangeOp,
 } from "./opBuilder.js";
 import {
-	IJSONSegment,
-	IMergeTreeAnnotateMsg,
-	IMergeTreeDeltaOp,
-	// eslint-disable-next-line import/no-deprecated
-	IMergeTreeGroupMsg,
-	IMergeTreeInsertMsg,
-	// eslint-disable-next-line import/no-deprecated
-	IMergeTreeObliterateMsg,
-	IMergeTreeOp,
-	IMergeTreeRemoveMsg,
-	IRelativePosition,
+	type IJSONSegment,
+	type IMergeTreeAnnotateMsg,
+	type IMergeTreeDeltaOp,
+	// eslint-disable-next-line import-x/no-deprecated
+	type IMergeTreeGroupMsg,
+	type IMergeTreeInsertMsg,
+	// eslint-disable-next-line import-x/no-deprecated
+	type IMergeTreeObliterateMsg,
+	type IMergeTreeOp,
+	type IMergeTreeRemoveMsg,
+	type IRelativePosition,
 	MergeTreeDeltaType,
 	ReferenceType,
 	type AdjustParams,
@@ -94,8 +94,8 @@ import {
 	PriorPerspective,
 	type Perspective,
 } from "./perspective.js";
-import { PropertySet, type MapLike } from "./properties.js";
-import { DetachedReferencePosition, ReferencePosition } from "./referencePositions.js";
+import type { PropertySet, MapLike } from "./properties.js";
+import { DetachedReferencePosition, type ReferencePosition } from "./referencePositions.js";
 import {
 	isInserted,
 	isRemoved,
@@ -323,9 +323,9 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 	public obliterateRangeLocal(
 		start: number | InteriorSequencePlace,
 		end: number | InteriorSequencePlace,
-		// eslint-disable-next-line import/no-deprecated
+		// eslint-disable-next-line import-x/no-deprecated
 	): IMergeTreeObliterateMsg | IMergeTreeObliterateSidedMsg {
-		// eslint-disable-next-line import/no-deprecated
+		// eslint-disable-next-line import-x/no-deprecated
 		let obliterateOp: IMergeTreeObliterateMsg | IMergeTreeObliterateSidedMsg;
 		if (this._mergeTree.options?.mergeTreeEnableSidedObliterate) {
 			obliterateOp = createObliterateRangeOpSided(start, end);
@@ -672,7 +672,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 	 * @throws LoggingError if the range is invalid
 	 */
 	private getValidSidedRange(
-		// eslint-disable-next-line import/no-deprecated
+		// eslint-disable-next-line import-x/no-deprecated
 		op: IMergeTreeObliterateSidedMsg | IMergeTreeObliterateMsg,
 		perspective: Perspective,
 	): {
@@ -752,7 +752,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 			| IMergeTreeAnnotateAdjustMsg
 			| IMergeTreeInsertMsg
 			| IMergeTreeRemoveMsg
-			// eslint-disable-next-line import/no-deprecated
+			// eslint-disable-next-line import-x/no-deprecated
 			| IMergeTreeObliterateMsg,
 		perspective: Perspective,
 	): IIntegerRange {
@@ -893,7 +893,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		);
 		const canSlideToEndpoint = true;
 		// Destructuring segment + offset is convenient and segment is reassigned
-		// eslint-disable-next-line prefer-const
+
 		const segOff = getSlideToSegoff(
 			{ segment: oldSegment, offset: oldOffset },
 			slidePreference,
@@ -1274,6 +1274,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 					segments: [],
 					localSeq: segmentGroup.localSeq,
 					refSeq: this.getCollabWindow().currentSeq,
+					previousProps: segmentGroup.previousProps?.slice(0),
 				};
 
 				segment.segmentGroups.enqueue(newSegmentGroup);
@@ -1478,6 +1479,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 
 		const collabWindow = this.getCollabWindow();
 		if (
+			// eslint-disable-next-line @typescript-eslint/prefer-optional-chain -- TODO: ADO#58520 Code owners should verify if this code change is safe and make it if so or update this comment otherwise
 			this.lastNormalization === undefined ||
 			collabWindow.currentSeq !== this.lastNormalization.refSeq ||
 			collabWindow.localSeq !== this.lastNormalization.localRefSeq
@@ -1594,7 +1596,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		return loader.initialize(storage);
 	}
 
-	// eslint-disable-next-line import/no-deprecated
+	// eslint-disable-next-line import-x/no-deprecated
 	localTransaction(groupOp: IMergeTreeGroupMsg): void {
 		for (const op of groupOp.ops) {
 			const opArgs: IMergeTreeDeltaOpArgs = {

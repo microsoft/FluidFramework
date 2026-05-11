@@ -4,11 +4,11 @@
  */
 
 import { ContainerErrorTypes } from "@fluidframework/container-definitions/internal";
-import { ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
-import { IThrottlingWarning } from "@fluidframework/core-interfaces/internal";
+import type { ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
+import type { IThrottlingWarning } from "@fluidframework/core-interfaces/internal";
 import {
-	IFluidErrorBase,
-	ITelemetryLoggerExt,
+	type IFluidErrorBase,
+	type ITelemetryLoggerExt,
 	LoggingError,
 	wrapErrorAndLog,
 } from "@fluidframework/telemetry-utils/internal";

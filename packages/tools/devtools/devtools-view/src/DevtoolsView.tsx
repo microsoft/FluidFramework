@@ -6,6 +6,7 @@
 import { FluentProvider, makeStyles, shorthands, tokens } from "@fluentui/react-components";
 import type { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import {
+	CloseContainer,
 	type ContainerKey,
 	ContainerList,
 	type DevtoolsFeatureFlags,
@@ -17,7 +18,7 @@ import {
 	handleIncomingMessage,
 } from "@fluidframework/devtools-core/internal";
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
-import React from "react";
+import { type ReactElement, useCallback, useEffect, useMemo, useState } from "react";
 
 import { useMessageRelay } from "./MessageRelayContext.js";
 import {
@@ -88,20 +89,20 @@ export interface DevtoolsViewProps {
  *
  * Requires {@link MessageRelayContext} to have been set.
  */
-export function DevtoolsView(props: DevtoolsViewProps): React.ReactElement {
+export function DevtoolsView(props: DevtoolsViewProps): ReactElement {
 	const { usageTelemetryLogger } = props;
 
 	// Set of features supported by the Devtools.
-	const [supportedFeatures, setSupportedFeatures] = React.useState<
+	const [supportedFeatures, setSupportedFeatures] = useState<
 		DevtoolsFeatureFlags | undefined
 	>();
-	const [queryTimedOut, setQueryTimedOut] = React.useState(false);
-	const [selectedTheme, setSelectedTheme] = React.useState(getFluentUIThemeToUse());
+	const [queryTimedOut, setQueryTimedOut] = useState(false);
+	const [selectedTheme, setSelectedTheme] = useState(getFluentUIThemeToUse());
 
-	const [isMessageDismissed, setIsMessageDismissed] = React.useState(false);
-	const [modalVisible, setModalVisible] = React.useState(false);
+	const [isMessageDismissed, setIsMessageDismissed] = useState(false);
+	const [modalVisible, setModalVisible] = useState(false);
 
-	React.useEffect(() => {
+	useEffect(() => {
 		const displayed = localStorage.getItem(telemetryConsentKey);
 		if (displayed === null || displayed !== "true") {
 			setModalVisible(true);
@@ -112,20 +113,20 @@ export function DevtoolsView(props: DevtoolsViewProps): React.ReactElement {
 	const queryTimeoutInMilliseconds = 30_000; // 30 seconds
 	const messageRelay = useMessageRelay();
 
-	const consoleLogger = React.useMemo(
+	const consoleLogger = useMemo(
 		() => new ConsoleVerboseLogger(usageTelemetryLogger),
 		[usageTelemetryLogger],
 	);
-	const telemetryOptInLogger = React.useMemo(
+	const telemetryOptInLogger = useMemo(
 		() => new TelemetryOptInLogger(consoleLogger),
 		[consoleLogger],
 	);
 
-	const [topLevelLogger, setTopLevelLogger] = React.useState(
+	const [topLevelLogger, setTopLevelLogger] = useState(
 		createChildLogger({ logger: telemetryOptInLogger }),
 	);
 
-	React.useEffect(() => {
+	useEffect(() => {
 		/**
 		 * Handlers for inbound messages related to the registry.
 		 */
@@ -173,7 +174,7 @@ export function DevtoolsView(props: DevtoolsViewProps): React.ReactElement {
 	}, [messageRelay, setSupportedFeatures, telemetryOptInLogger]);
 
 	// Manage the query timeout
-	React.useEffect(() => {
+	useEffect(() => {
 		if (supportedFeatures === undefined) {
 			// If we have queried for the supported feature list but have not received
 			// a response yet, queue a timer.
@@ -233,16 +234,16 @@ interface _DevtoolsViewProps {
 /**
  * Internal {@link DevtoolsView}, displayed once the supported feature set has been acquired from the webpage.
  */
-function _DevtoolsView(props: _DevtoolsViewProps): React.ReactElement {
+function _DevtoolsView(props: _DevtoolsViewProps): ReactElement {
 	const { supportedFeatures } = props;
 
-	const [containers, setContainers] = React.useState<ContainerKey[] | undefined>();
-	const [menuSelection, setMenuSelection] = React.useState<MenuSelection>({
+	const [containers, setContainers] = useState<ContainerKey[] | undefined>();
+	const [menuSelection, setMenuSelection] = useState<MenuSelection>({
 		type: "homeMenuSelection",
 	});
 	const messageRelay = useMessageRelay();
 
-	React.useEffect(() => {
+	useEffect(() => {
 		/**
 		 * Handlers for inbound messages related to the registry.
 		 */
@@ -275,6 +276,20 @@ function _DevtoolsView(props: _DevtoolsViewProps): React.ReactElement {
 
 	const styles = useDevtoolsStyles();
 
+	/**
+	 * Handles removing a container from the list when the dismiss button is clicked.
+	 */
+	const handleRemoveContainer = useCallback(
+		(containerKey: ContainerKey): void => {
+			// Send message to client to remove container from tracking
+			messageRelay.postMessage(CloseContainer.createMessage({ containerKey }));
+
+			// Update local state to remove container from view
+			setContainers((prev) => prev?.filter((key) => key !== containerKey));
+		},
+		[messageRelay],
+	);
+
 	return (
 		<div className={styles.root}>
 			<Menu
@@ -282,6 +297,7 @@ function _DevtoolsView(props: _DevtoolsViewProps): React.ReactElement {
 				setSelection={setMenuSelection}
 				containers={containers}
 				supportedFeatures={supportedFeatures}
+				onRemoveContainer={handleRemoveContainer}
 			/>
 			<div style={{ width: "1px", backgroundColor: tokens.colorNeutralForeground1 }}></div>
 			<View menuSelection={menuSelection} containers={containers} />
@@ -323,12 +339,12 @@ interface ViewProps {
 /**
  * View body component used by {@link DevtoolsView}.
  */
-function View(props: ViewProps): React.ReactElement {
+function View(props: ViewProps): ReactElement {
 	const { menuSelection, containers } = props;
 
 	const styles = useViewStyles();
 
-	let view: React.ReactElement;
+	let view: ReactElement;
 	switch (menuSelection?.type) {
 		case "telemetryMenuSelection": {
 			view = <TelemetryView />;

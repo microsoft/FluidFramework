@@ -4,21 +4,20 @@
  */
 
 import {
-	IFluidMountableViewEntryPoint,
+	type IFluidMountableViewEntryPoint,
 	MountableView,
 	getDataStoreEntryPoint,
 } from "@fluid-example/example-utils";
 import { Constellation } from "@fluid-example/multiview-constellation-model";
-import { ICoordinate } from "@fluid-example/multiview-coordinate-interface";
+import type { ICoordinate } from "@fluid-example/multiview-coordinate-interface";
 import { Coordinate } from "@fluid-example/multiview-coordinate-model";
 import { BaseContainerRuntimeFactory } from "@fluidframework/aqueduct/legacy";
-import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/legacy";
-import { FluidObject } from "@fluidframework/core-interfaces";
-import * as React from "react";
+import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions/legacy";
+import type { FluidObject } from "@fluidframework/core-interfaces";
 
 import { DefaultView } from "./defaultView.js";
 
-// eslint-disable-next-line import/no-unassigned-import
+// eslint-disable-next-line import-x/no-unassigned-import
 import "./style.css";
 
 const simpleCoordinateComponentId = "simpleCoordinate";
@@ -72,7 +71,7 @@ export class CoordinateContainerRuntimeFactory extends BaseContainerRuntimeFacto
 					containerRuntime,
 					constellationComponentName,
 				);
-				/* eslint-disable @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-return, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/explicit-function-return-type */
+				/* eslint-disable @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment */
 				const view = (
 					<DefaultView
 						simpleCoordinate={simpleCoordinate}
@@ -83,16 +82,17 @@ export class CoordinateContainerRuntimeFactory extends BaseContainerRuntimeFacto
 					/>
 				) as any;
 
-				let getMountableDefaultView = async () => view;
+				let getMountableDefaultView = async (): Promise<any> => view;
 				if (MountableView.canMount(view)) {
-					getMountableDefaultView = async () => new MountableView(view);
+					getMountableDefaultView = async (): Promise<MountableView> =>
+						new MountableView(view);
 				}
 
 				return {
 					getDefaultDataObject: async (): Promise<FluidObject> => ({}),
 					getMountableDefaultView,
 				};
-				/* eslint-enable @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-return, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/explicit-function-return-type */
+				/* eslint-enable @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment */
 			},
 		});
 	}

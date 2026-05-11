@@ -7,7 +7,10 @@ import { strict as assert } from "assert";
 
 import { describeCompat } from "@fluid-private/test-version-utils";
 import { AttachState } from "@fluidframework/container-definitions";
-import { IFluidCodeDetails } from "@fluidframework/container-definitions/internal";
+import type {
+	IContainer,
+	IFluidCodeDetails,
+} from "@fluidframework/container-definitions/internal";
 import { Loader } from "@fluidframework/container-loader/internal";
 import { IRequest } from "@fluidframework/core-interfaces";
 import type { ISharedMap } from "@fluidframework/map/internal";
@@ -22,7 +25,6 @@ import {
 	ITestObjectProvider,
 	LoaderContainerTracker,
 	LocalCodeLoader,
-	TestFluidObject,
 	TestFluidObjectFactory,
 	createDocumentId,
 } from "@fluidframework/test-utils/internal";
@@ -38,7 +40,7 @@ function onAttachChange(
 	context: IFluidDataStoreContext,
 	stateToNotify: AttachState.Attaching | AttachState.Attached,
 	callback: () => void,
-) {
+): void {
 	const oldApi = (context as any).setAttachState.bind(context);
 
 	(context as any).setAttachState = (arg) => {
@@ -66,10 +68,13 @@ describeCompat(
 		let loader: Loader;
 		const loaderContainerTracker = new LoaderContainerTracker();
 
-		const createTestStatementForAttachedDetached = (name: string, attached: boolean) =>
+		const createTestStatementForAttachedDetached = (name: string, attached: boolean): string =>
 			`${name} should be ${attached ? "Attached" : "Detached"}`;
 
-		async function createDetachedContainerAndGetEntryPoint() {
+		async function createDetachedContainerAndGetEntryPoint(): Promise<{
+			container: IContainer;
+			defaultDataStore: ITestFluidObject;
+		}> {
 			const container = await loader.createDetachedContainer(codeDetails);
 			// Get the root dataStore from the detached container.
 			const defaultDataStore = (await container.getEntryPoint()) as ITestFluidObject;
@@ -79,12 +84,16 @@ describeCompat(
 			};
 		}
 
-		const createPeerDataStore = async (containerRuntime: IContainerRuntimeBase) => {
+		/**
+		 * Creates a new DataStore and returns its entry point
+		 */
+		const createPeerDataStore = async (
+			containerRuntime: IContainerRuntimeBase,
+		): Promise<{ peerDataStore: ITestFluidObject }> => {
 			const dataStore = await containerRuntime.createDataStore(["default"]);
 			const peerDataStore = (await dataStore.entryPoint.get()) as ITestFluidObject;
 			return {
-				peerDataStore,
-				peerDataStoreRuntimeChannel: peerDataStore.channel,
+				peerDataStore, // aka entryPoint
 			};
 		};
 
@@ -107,7 +116,7 @@ describeCompat(
 		}
 
 		let provider: ITestObjectProvider;
-		beforeEach("createLoader", async () => {
+		beforeEach("createLoader", async (): Promise<void> => {
 			provider = getTestObjectProvider();
 			const documentId = createDocumentId();
 			const driver = provider.driver;
@@ -534,20 +543,18 @@ describeCompat(
 				await container.attach(request);
 
 				// Create another data store which returns the runtime channel.
-				const peerDataStore1 = await createPeerDataStore(
+				const { peerDataStore: dataStore2 } = await createPeerDataStore(
 					defaultDataStore.context.containerRuntime,
 				);
-				const dataStore2 = peerDataStore1.peerDataStore as TestFluidObject;
 				assert(
 					dataStore2.runtime.attachState === AttachState.Detached,
 					"DataStore2 should be unattached",
 				);
 
 				// Create another data store which returns the runtime channel.
-				const peerDataStore2 = await createPeerDataStore(
+				const { peerDataStore: dataStore3} = await createPeerDataStore(
 					defaultDataStore.context.containerRuntime,
 				);
-				const dataStore3 = peerDataStore2.peerDataStore as TestFluidObject;
 				assert(
 					dataStore3.runtime.attachState === AttachState.Detached,
 					"DataStore3 should be unattached",
@@ -561,23 +568,18 @@ describeCompat(
 				const channel3 = await dataStore3.getSharedObject<ISharedMap>(mapId2);
 				assert.strictEqual(channel3.handle.isAttached, false, "Channel should be detached");
 
-				// dataStore2 POINTS TO dataStore3, channel3
-				// dataStore3 POINTS TO dataStore2, channel2
 				// channel2   POINTS TO dataStore3, channel3
 				// channel3   POINTS TO dataStore2, channel2
 				channel2.set("channel3handle", channel3.handle);
-				channel3.set("channel2handle", channel2.handle);
 				channel2.set("dataStore3", dataStore3.handle);
+				channel3.set("channel2handle", channel2.handle);
 				channel3.set("dataStore2", dataStore2.handle);
-				toFluidHandleInternal(dataStore2.handle).bind(
-					toFluidHandleInternal(dataStore3.handle),
-				);
-				toFluidHandleInternal(dataStore2.handle).bind(toFluidHandleInternal(channel3.handle));
-				toFluidHandleInternal(dataStore3.handle).bind(
-					toFluidHandleInternal(dataStore2.handle),
-				);
-				toFluidHandleInternal(dataStore3.handle).bind(toFluidHandleInternal(channel2.handle));
 
+				// Flow of attachment:
+				// dataStore2
+				// -> channel2
+				//    -> channel3
+				//    -> dataStore3
 				toFluidHandleInternal(dataStore2.handle).attachGraph();
 				assert.strictEqual(
 					channel2.isAttached(),
@@ -594,6 +596,11 @@ describeCompat(
 					true,
 					createTestStatementForAttachedDetached("DataStore2", true),
 				);
+				assert.strictEqual(
+					dataStore3.handle.isAttached,
+					true,
+					createTestStatementForAttachedDetached("DataStore3", true),
+				);
 			},
 		);
 
@@ -607,31 +614,27 @@ describeCompat(
 				await container.attach(request);
 
 				// Create another dataStore which returns the runtime channel.
-				const peerDataStore1 = await createPeerDataStore(
+				const { peerDataStore: dataStore2} = await createPeerDataStore(
 					defaultDataStore.context.containerRuntime,
 				);
-				const dataStore2 = peerDataStore1.peerDataStore as TestFluidObject;
 				assert(
 					dataStore2.runtime.attachState === AttachState.Detached,
 					"DataStore2 should be unattached",
 				);
 
 				// Create another dataStore which returns the runtime channel.
-				// Create another dataStore which returns the runtime channel.
-				const peerDataStore2 = await createPeerDataStore(
+				const { peerDataStore: dataStore3 } = await createPeerDataStore(
 					defaultDataStore.context.containerRuntime,
 				);
-				const dataStore3 = peerDataStore2.peerDataStore as TestFluidObject;
 				assert(
 					dataStore3.runtime.attachState === AttachState.Detached,
 					"DataStore3 should be unattached",
 				);
 
 				// Create another dataStore which returns the runtime channel.
-				const peerDataStore3 = await createPeerDataStore(
+				const { peerDataStore: dataStore4 } = await createPeerDataStore(
 					defaultDataStore.context.containerRuntime,
 				);
-				const dataStore4 = peerDataStore3.peerDataStore as TestFluidObject;
 				assert(
 					dataStore4.runtime.attachState === AttachState.Detached,
 					"DataStore4 should be unattached",
@@ -675,21 +678,18 @@ describeCompat(
 					"Channel should be detached",
 				);
 
-				channel2OfDataStore2.set("componet3Handle", dataStore3.handle);
+				channel2OfDataStore2.set("dataStore3Handle", dataStore3.handle);
 				channel1OfDataStore3.set("channel23handle", channel2OfDataStore3.handle);
-				toFluidHandleInternal(dataStore3.handle).bind(
-					toFluidHandleInternal(dataStore4.handle),
-				);
+				channel2OfDataStore3.set("dataStore4Handle", dataStore4.handle);
 
 				// Channel 1 of dataStore 2 points to its parent dataStore 2.
 				// Channel 2 of dataStore 2 points to its parent dataStore 2 and also to dataStore 3.
 				// Channel 1 of dataStore 3 points to its parent dataStore 3 and its sibling channel 2 of dataStore 3.
-				// Channel 2 of dataStore 3 points to its parent dataStore 3.
+				// Channel 2 of dataStore 3 points to its parent dataStore 3 and also to dataStore 4.
 				// Channel 1 of dataStore 4 points to its parent dataStore 4.
-				// DataStore 3 points to dataStore 4.
 				toFluidHandleInternal(channel1OfDataStore2.handle).attachGraph();
 
-				// Everything should be attached except channel 1 of dataStore 4
+				// Everything should be attached
 				assert.strictEqual(
 					channel1OfDataStore2.isAttached(),
 					true,

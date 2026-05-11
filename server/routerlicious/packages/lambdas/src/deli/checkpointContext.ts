@@ -3,12 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import { ICheckpointService, IContext, IDeliState } from "@fluidframework/server-services-core";
+import type {
+	ICheckpointService,
+	IContext,
+	IDeliState,
+} from "@fluidframework/server-services-core";
 import { getLumberBaseProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
 
 import { CheckpointReason } from "../utils";
 
-import { ICheckpointParams, IDeliCheckpointManager } from "./checkpointManager";
+import type { ICheckpointParams, IDeliCheckpointManager } from "./checkpointManager";
 
 export class CheckpointContext {
 	private pendingUpdateP: Promise<void> | undefined;

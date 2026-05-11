@@ -21,7 +21,7 @@ export class Editor {
 	private readonly layout: Layout;
 	private readonly caret: Caret;
 	private readonly caretSync: () => void;
-	private get doc() {
+	private get doc(): FlowDocument {
 		return this.layout.doc;
 	}
 
@@ -35,7 +35,7 @@ export class Editor {
 		this.caret = new Caret(this.layout);
 
 		let scheduled = false;
-		this.caretSync = () => {
+		this.caretSync = (): void => {
 			if (scheduled) {
 				return;
 			}
@@ -58,11 +58,11 @@ export class Editor {
 		root.addEventListener("keypress", this.onKeyPress);
 	}
 
-	public get selection() {
+	public get selection(): { start: number; end: number } {
 		return this.caret.selection;
 	}
 
-	public remove() {
+	public remove(): void {
 		this.root.contentEditable = "false";
 		this.root.removeEventListener("paste", this.onPaste);
 		this.root.removeEventListener("keydown", this.onKeyDown);
@@ -71,7 +71,7 @@ export class Editor {
 		this.layout.remove();
 	}
 
-	private delete(e: Event, direction: Direction) {
+	private delete(e: Event, direction: Direction): void {
 		this.consume(e);
 
 		const caret = this.caret;
@@ -92,7 +92,7 @@ export class Editor {
 		caret.collapseForward();
 	}
 
-	private unlinkChildren(node: Node | HTMLElement) {
+	private unlinkChildren(node: Node | HTMLElement): void {
 		while (node.lastChild) {
 			const child = node.lastChild;
 			node.removeChild(child);
@@ -100,7 +100,7 @@ export class Editor {
 		}
 	}
 
-	private readonly onKeyDown = (e: KeyboardEvent) => {
+	private readonly onKeyDown = (e: KeyboardEvent): void => {
 		switch (e.code) {
 			case KeyCode.F4: {
 				console.clear();
@@ -130,12 +130,12 @@ export class Editor {
 		}
 	};
 
-	private readonly onPaste = (e: ClipboardEvent) => {
+	private readonly onPaste = (e: ClipboardEvent): void => {
 		this.consume(e);
 		paste(this.doc, e.clipboardData, this.caret.position);
 	};
 
-	private readonly onKeyPress = (e: KeyboardEvent) => {
+	private readonly onKeyPress = (e: KeyboardEvent): void => {
 		this.consume(e);
 
 		switch (e.code) {
@@ -153,7 +153,7 @@ export class Editor {
 		}
 	};
 
-	private insertText(e: KeyboardEvent, text = e.key) {
+	private insertText(e: KeyboardEvent, text = e.key): void {
 		const { start, end } = this.caret.selection;
 		if (start === end) {
 			this.doc.insertText(end, text);
@@ -163,7 +163,7 @@ export class Editor {
 		this.caret.collapseForward();
 	}
 
-	private consume(e: Event) {
+	private consume(e: Event): void {
 		e.preventDefault();
 		e.stopPropagation();
 	}

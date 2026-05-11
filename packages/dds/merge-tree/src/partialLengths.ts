@@ -5,12 +5,12 @@
 
 import { assert } from "@fluidframework/core-utils/internal";
 
-import { MergeTree } from "./mergeTree.js";
+import type { MergeTree } from "./mergeTree.js";
 import {
-	CollaborationWindow,
+	type CollaborationWindow,
 	getMinSeqStamp,
-	IMergeNode,
-	ISegmentPrivate,
+	type IMergeNode,
+	type ISegmentPrivate,
 	type MergeBlock,
 } from "./mergeTreeNodes.js";
 import {
@@ -582,9 +582,9 @@ export class PartialSequenceLengths {
 			// Segment was obliterated on insert. Generally this means it should be visible only to the
 			// inserting client (in which case we add an adjustment to only that client's perspective),
 			// but if that client has also removed it, we don't need to add anything.
-			const wasRemovedByInsertingClient =
-				removeInfo !== undefined &&
-				removeInfo.removes.some((remove) => remove.clientId === clientId);
+			const wasRemovedByInsertingClient = removeInfo?.removes.some(
+				(remove) => remove.clientId === clientId,
+			);
 
 			if (!wasRemovedByInsertingClient) {
 				const removeSeq = firstRemove?.seq;
@@ -861,6 +861,7 @@ export class PartialSequenceLengths {
 		// eslint-disable-next-line unicorn/no-array-for-each
 		this.perClientAdjustments.forEach((clientAdjustments) => {
 			const leqPartial = clientAdjustments.latestLeq(seq);
+			// eslint-disable-next-line @typescript-eslint/prefer-optional-chain -- using ?. could change behavior
 			if (leqPartial && leqPartial.seq === seq) {
 				this.addClientAdjustment(clientId, seq, -leqPartial.seglen);
 			}
@@ -928,6 +929,7 @@ export class PartialSequenceLengths {
 				}
 				const partialLengths = branchPartialLengths.partialLengths;
 				const leqPartial = partialLengths.latestLeq(seq);
+				// eslint-disable-next-line @typescript-eslint/prefer-optional-chain -- using ?. could change behavior
 				if (leqPartial && leqPartial.seq === seq) {
 					seqSeglen += leqPartial.seglen;
 				}
@@ -937,6 +939,7 @@ export class PartialSequenceLengths {
 				// eslint-disable-next-line unicorn/no-array-for-each
 				branchPartialLengths.perClientAdjustments.forEach((clientAdjustments) => {
 					const leqBranchPartial = clientAdjustments.latestLeq(seq);
+					// eslint-disable-next-line @typescript-eslint/prefer-optional-chain -- using ?. could change behavior
 					if (leqBranchPartial && leqBranchPartial.seq === seq) {
 						this.addClientAdjustment(clientId, seq, leqBranchPartial.seglen);
 					}
@@ -1088,7 +1091,11 @@ export class PartialSequenceLengths {
 		refSeq,
 		localSeq,
 		seglen,
-	}: { refSeq: number; localSeq: number; seglen: number }): void {
+	}: {
+		refSeq: number;
+		localSeq: number;
+		seglen: number;
+	}): void {
 		assert(
 			this.unsequencedRecords !== undefined,
 			0xabb /* Local adjustment computed without partials */,

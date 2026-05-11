@@ -3,25 +3,25 @@
  * Licensed under the MIT License.
  */
 
-// eslint-disable-next-line import/no-deprecated
-import { Deferred, TypedEventEmitter } from "@fluidframework/common-utils";
+// eslint-disable-next-line import-x/no-deprecated
+import { Deferred, type TypedEventEmitter } from "@fluidframework/common-utils";
 import {
 	configureWebSocketServices,
-	ICollaborationSessionEvents,
+	type ICollaborationSessionEvents,
 } from "@fluidframework/server-lambdas";
 import {
-	IDocumentStorage,
-	IOrdererManager,
-	ITenantManager,
-	IWebServer,
-	IWebServerFactory,
-	MongoManager,
+	type IDocumentStorage,
+	type IOrdererManager,
+	type ITenantManager,
+	type IWebServer,
+	type IWebServerFactory,
+	type MongoManager,
 	DefaultMetricClient,
-	IRunner,
+	type IRunner,
 } from "@fluidframework/server-services-core";
 import { TestClientManager } from "@fluidframework/server-test-utils";
 import detect from "detect-port";
-import { Provider } from "nconf";
+import type { Provider } from "nconf";
 import * as winston from "winston";
 
 import * as app from "./app";
@@ -29,7 +29,7 @@ import * as app from "./app";
 export class TinyliciousRunner implements IRunner {
 	private server?: IWebServer;
 
-	// eslint-disable-next-line import/no-deprecated
+	// eslint-disable-next-line import-x/no-deprecated
 	private runningDeferred?: Deferred<void>;
 
 	constructor(
@@ -40,7 +40,7 @@ export class TinyliciousRunner implements IRunner {
 		private readonly tenantManager: ITenantManager,
 		private readonly storage: IDocumentStorage,
 		private readonly mongoManager: MongoManager,
-		// eslint-disable-next-line import/no-deprecated
+		// eslint-disable-next-line import-x/no-deprecated
 		private readonly collaborationSessionEventEmitter?: TypedEventEmitter<ICollaborationSessionEvents>,
 	) {}
 
@@ -48,18 +48,18 @@ export class TinyliciousRunner implements IRunner {
 		const version = process.env.npm_package_version;
 		winston.info(`Starting tinylicious@${version}`);
 
-		// eslint-disable-next-line import/no-deprecated
+		// eslint-disable-next-line import-x/no-deprecated
 		this.runningDeferred = new Deferred<void>();
 
 		// Make sure provided port is unoccupied
 		try {
 			await this.ensurePortIsFree();
-		} catch (e) {
+		} catch (error) {
 			if (this.config.get("exitOnPortConflict")) {
-				winston.info(e);
+				winston.info(error);
 				return;
 			}
-			throw e;
+			throw error;
 		}
 
 		const alfred = app.create(
@@ -90,6 +90,7 @@ export class TinyliciousRunner implements IRunner {
 			undefined /* isTokenExpiryEnabled */,
 			undefined /* isClientConnectivityCountingEnabled */,
 			undefined /* isSignalUsageCountingEnabled */,
+			undefined /* enablePrivateLinkNetworkCheck */,
 			undefined /* cache */,
 			undefined /* connectThrottlerPerTenant */,
 			undefined /* connectThrottlerPerCluster */,
@@ -157,14 +158,17 @@ export class TinyliciousRunner implements IRunner {
 
 		// Handle specific listen errors with friendly messages
 		switch (error.code) {
-			case "EACCES":
+			case "EACCES": {
 				this.runningDeferred?.reject(`${bind} requires elevated privileges`);
 				break;
-			case "EADDRINUSE":
+			}
+			case "EADDRINUSE": {
 				this.runningDeferred?.reject(`${bind} is already in use`);
 				break;
-			default:
+			}
+			default: {
 				throw error;
+			}
 		}
 	}
 

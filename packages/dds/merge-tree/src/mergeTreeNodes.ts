@@ -4,9 +4,9 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
-import { AttributionKey } from "@fluidframework/runtime-definitions/internal";
+import type { AttributionKey } from "@fluidframework/runtime-definitions/internal";
 
-import { IAttributionCollection } from "./attributionCollection.js";
+import type { IAttributionCollection } from "./attributionCollection.js";
 import {
 	LocalClientId,
 	NonCollabClient,
@@ -15,13 +15,13 @@ import {
 } from "./constants.js";
 import { LocalReferenceCollection, type LocalReferencePosition } from "./localReference.js";
 import { TrackingGroupCollection, type ITrackingGroup } from "./mergeTreeTracking.js";
-import { IJSONSegment, IMarkerDef, ReferenceType } from "./ops.js";
+import type { IJSONSegment, IMarkerDef, ReferenceType } from "./ops.js";
 import { computeHierarchicalOrdinal } from "./ordinal.js";
 import type { PartialSequenceLengths } from "./partialLengths.js";
 import { LocalDefaultPerspective, PriorPerspective, type Perspective } from "./perspective.js";
-import { PropertySet, clone, createMap, type MapLike } from "./properties.js";
-import { ReferencePosition } from "./referencePositions.js";
-import { SegmentGroupCollection } from "./segmentGroupCollection.js";
+import { type PropertySet, clone, createMap, type MapLike } from "./properties.js";
+import type { ReferencePosition } from "./referencePositions.js";
+import type { SegmentGroupCollection } from "./segmentGroupCollection.js";
 import {
 	hasProp,
 	isInserted,
@@ -32,10 +32,10 @@ import {
 	type IMergeNodeInfo,
 	type IHasRemovalInfo,
 	type SegmentWithInfo,
-	ISegmentInsideObliterateInfo,
+	type ISegmentInsideObliterateInfo,
 	isInsideObliterate,
 } from "./segmentInfos.js";
-import { PropertiesManager } from "./segmentPropertiesManager.js";
+import type { PropertiesManager } from "./segmentPropertiesManager.js";
 import type { Side } from "./sequencePlace.js";
 import type { OperationStamp, SliceRemoveOperationStamp } from "./stamps.js";
 
@@ -132,8 +132,7 @@ export type IMergeNode = MergeBlock | ISegmentLeaf;
 /**
  * A segment representing a portion of the merge tree.
  * Segments are leaf nodes of the merge tree and contain data.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface ISegment {
 	readonly type: string;
@@ -178,16 +177,14 @@ export interface ISegment {
 
 /**
  * Determine if a segment has been removed.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export function segmentIsRemoved(segment: ISegment): boolean {
 	return isRemoved(segment);
 }
 
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface ISegmentAction<TClientData> {
 	// eslint-disable-next-line @typescript-eslint/prefer-function-type
@@ -285,7 +282,7 @@ export class MergeBlock implements Partial<IMergeNodeInfo> {
 	partialLengths?: PartialSequenceLengths;
 
 	public constructor(public childCount: number) {
-		// Suppression needed due to the way the merge tree children are initalized - we
+		// Suppression needed due to the way the merge tree children are initialized - we
 		// allocate 8 children blocks, but any unused blocks are not counted in the childCount.
 		// Using Array.from leads to unused children being undefined, which are counted in childCount.
 		// eslint-disable-next-line unicorn/no-new-array
@@ -330,8 +327,7 @@ export function seqLTE(seq: number, minOrRefSeq: number): boolean {
 }
 
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export abstract class BaseSegment implements ISegment {
 	public cachedLength: number = 0;
@@ -469,8 +465,7 @@ export abstract class BaseSegment implements ISegment {
  *
  * @remarks In general, marker ids should be accessed using the inherent method
  * {@link Marker.getId}. Marker ids should not be updated after creation.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export const reservedMarkerIdKey = "markerId";
 
@@ -480,8 +475,7 @@ export const reservedMarkerIdKey = "markerId";
 export const reservedMarkerSimpleTypeKey = "markerSimpleType";
 
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IJSONMarkerSegment extends IJSONSegment {
 	marker: IMarkerDef;
@@ -496,8 +490,7 @@ export interface IJSONMarkerSegment extends IJSONSegment {
  * start of a paragraph to the end, assuming a paragraph is bound by markers at
  * the start and end.
  *
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export class Marker extends BaseSegment implements ReferencePosition, ISegment {
 	public static readonly type = "Marker";
@@ -620,7 +613,7 @@ export class CollaborationWindow {
 	 * Semantically, `localSeq`s provide an ordering on in-flight merge-tree operations:
 	 * for operations stamped with localSeqs `a` and `b`, `a < b` if and only if `a` was submitted before `b`.
 	 *
-	 * @remarks - This field is analogous to the `clientSequenceNumber` field on ops, but it's accessible to merge-tree
+	 * @remarks This field is analogous to the `clientSequenceNumber` field on ops, but it's accessible to merge-tree
 	 * at op submission time rather than only at ack time. This enables more natural state tracking for in-flight ops.
 	 *
 	 * It's useful to stamp ops with such an incrementing counter because it enables reasoning about which segments existed from

@@ -7,7 +7,7 @@ import { ScriptoriumLambdaFactory } from "@fluidframework/server-lambdas";
 import * as services from "@fluidframework/server-services";
 import {
 	CheckpointService,
-	IPartitionLambdaFactory,
+	type IPartitionLambdaFactory,
 	MongoCheckpointRepository,
 	MongoDocumentRepository,
 	MongoManager,
@@ -17,7 +17,7 @@ import {
 	executeOnInterval,
 	FluidServiceErrorCode,
 } from "@fluidframework/server-services-utils";
-import { Provider } from "nconf";
+import type { Provider } from "nconf";
 
 export async function create(
 	config: Provider,

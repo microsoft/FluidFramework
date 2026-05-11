@@ -6,26 +6,29 @@
 import { strict } from "assert";
 import fs from "fs";
 
-import { IContainer, ILoaderOptions } from "@fluidframework/container-definitions/internal";
+import type {
+	IContainer,
+	ILoaderOptions,
+} from "@fluidframework/container-definitions/internal";
 import { Loader } from "@fluidframework/container-loader/internal";
-import {
+import type {
 	ContainerRuntime,
 	IContainerRuntimeOptions,
 } from "@fluidframework/container-runtime/internal";
-import {
+import type {
 	ConfigTypes,
 	FluidObject,
 	IConfigProviderBase,
-	type ITelemetryBaseLogger,
+	ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
-import {
+import type {
 	IDocumentServiceFactory,
 	IResolvedUrl,
 } from "@fluidframework/driver-definitions/internal";
-import { IFileSnapshot } from "@fluidframework/replay-driver/internal";
+import type { IFileSnapshot } from "@fluidframework/replay-driver/internal";
 import {
-	ISnapshotNormalizerConfig,
+	type ISnapshotNormalizerConfig,
 	getNormalizedSnapshot,
 } from "@fluidframework/tool-utils/internal";
 import stringify from "json-stable-stringify";
@@ -66,13 +69,15 @@ export function getNormalizedFileSnapshot(snapshot: IFileSnapshot): IFileSnapsho
 }
 
 /**
+ * Compares a snapshot against a reference snapshot file and reports any differences.
+ *
  * @internal
  */
 export function compareWithReferenceSnapshot(
 	snapshot: IFileSnapshot,
 	referenceSnapshotFilename: string,
 	errorHandler: (description: string, error?: any) => void,
-) {
+): void {
 	// Read the reference snapshot and covert it to normalized IFileSnapshot.
 	const referenceSnapshotString = fs.readFileSync(
 		`${referenceSnapshotFilename}.json`,
@@ -124,6 +129,8 @@ export function compareWithReferenceSnapshot(
 }
 
 /**
+ * Loads a Fluid container using the provided document service factory and configuration.
+ *
  * @internal
  */
 export async function loadContainer(
@@ -213,9 +220,11 @@ export async function loadContainer(
 }
 
 /**
+ * Generates and uploads a summary for the given container.
+ *
  * @internal
  */
-export async function uploadSummary(container: IContainer) {
+export async function uploadSummary(container: IContainer): Promise<string> {
 	const entryPoint: FluidObject<ReplayToolContainerEntryPoint> =
 		await container.getEntryPoint();
 	const runtime = entryPoint?.ReplayToolContainerEntryPoint?.containerRuntime;

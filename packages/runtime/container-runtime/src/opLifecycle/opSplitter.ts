@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { IBatchMessage } from "@fluidframework/container-definitions/internal";
-import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+import type { IBatchMessage } from "@fluidframework/container-definitions/internal";
+import type { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
-import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
+import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import {
 	DataCorruptionError,
 	createChildLogger,
@@ -14,12 +14,15 @@ import {
 	type ITelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
 
-import { ContainerMessageType, ContainerRuntimeChunkedOpMessage } from "../messageTypes.js";
-
 import {
+	ContainerMessageType,
+	type ContainerRuntimeChunkedOpMessage,
+} from "../messageTypes.js";
+
+import type {
 	IChunkedOp,
-	type OutboundBatchMessage,
-	type OutboundSingletonBatch,
+	OutboundBatchMessage,
+	OutboundSingletonBatch,
 } from "./definitions.js";
 import { estimateSocketSize } from "./outbox.js";
 
@@ -115,7 +118,7 @@ export class OpSplitter {
 	 * To illustrate the current functionality, if the input is `[largeOp]`, `largeOp` will be split into `[chunk1, chunk2, chunk3, chunk4]`.
 	 * `chunk1`, `chunk2` and `chunk3` will be sent individually and `[chunk4]` will be returned.
 	 *
-	 * @remarks - A side effect here is that 1 or more chunks are queued immediately for sending in next JS turn.
+	 * @remarks A side effect here is that 1 or more chunks are queued immediately for sending in next JS turn.
 	 *
 	 * @privateRemarks
 	 * This maintains support for splitting a compressed batch with multiple messages (empty placeholders after the first),
@@ -168,12 +171,22 @@ export class OpSplitter {
 			);
 		}
 
-		// The last chunk will be part of the new batch and needs to
-		// preserve the batch metadata of the original batch
+		// The last chunk will be part of the new batch and needs to preserve the
+		// batch metadata of the original batch. groupedOpCount is surfaced here
+		// (and only here, not on intermediate chunks) because intermediate chunks
+		// don't carry ops — they carry parts of a payload that only become ops
+		// once the last chunk is processed and the payload is reassembled.
+		// Stamping every chunk would let an observer double-count messages.
+		// batchId is deliberately not forwarded — it's a runtime dedup field
+		// consumed only after processChunk restores originalMetadata, not by
+		// wire observers.
 		const lastChunk = chunkToBatchMessage(
 			chunks[chunks.length - 1],
 			batch.referenceSequenceNumber,
-			{ batch: firstMessage.metadata?.batch },
+			{
+				batch: firstMessage.metadata?.batch,
+				groupedOpCount: firstMessage.metadata?.groupedOpCount,
+			},
 		);
 
 		this.logger.sendPerformanceEvent({

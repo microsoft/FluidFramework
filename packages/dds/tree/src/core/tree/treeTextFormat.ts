@@ -165,15 +165,11 @@ export function genericTreeDeleteIfEmpty<T>(
 	removeMapObject: boolean,
 ): void {
 	const children = getGenericTreeFieldMap(node, false);
-	if (Object.prototype.hasOwnProperty.call(children, key)) {
-		if (children[key]?.length === 0) {
-			// eslint-disable-next-line @typescript-eslint/no-dynamic-delete
-			delete children[key];
-			if (removeMapObject) {
-				if (Object.keys(children).length === 0) {
-					delete node.fields;
-				}
-			}
+	if (Object.prototype.hasOwnProperty.call(children, key) && children[key]?.length === 0) {
+		// eslint-disable-next-line @typescript-eslint/no-dynamic-delete
+		delete children[key];
+		if (removeMapObject && Object.keys(children).length === 0) {
+			delete node.fields;
 		}
 	}
 }

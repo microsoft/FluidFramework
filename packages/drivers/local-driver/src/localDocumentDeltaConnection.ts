@@ -3,16 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+import type { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { DocumentDeltaConnection } from "@fluidframework/driver-base/internal";
-import { IClient } from "@fluidframework/driver-definitions";
-import {
-	IConnect,
-	IDocumentMessage,
-	NackErrorType,
-} from "@fluidframework/driver-definitions/internal";
-import { LocalWebSocketServer } from "@fluidframework/server-local-server";
-import { IWebSocketServer } from "@fluidframework/server-services-core";
+import type { IClient } from "@fluidframework/driver-definitions";
+import type { IConnect, IDocumentMessage } from "@fluidframework/driver-definitions/internal";
+import { NackErrorType } from "@fluidframework/driver-definitions/internal";
+import type { LocalWebSocketServer } from "@fluidframework/server-local-server";
+import type { IWebSocketServer } from "@fluidframework/server-services-core";
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import type { Socket } from "socket.io-client";
 
@@ -81,7 +78,7 @@ export class LocalDocumentDeltaConnection extends DocumentDeltaConnection {
 	 * Send a "disconnect" message on the socket.
 	 * @param disconnectReason - The reason of the disconnection.
 	 */
-	public disconnectClient(disconnectReason: string) {
+	public disconnectClient(disconnectReason: string): void {
 		this.socket.emit("disconnect", disconnectReason);
 	}
 
@@ -95,7 +92,7 @@ export class LocalDocumentDeltaConnection extends DocumentDeltaConnection {
 		code: number = 400,
 		type: NackErrorType = NackErrorType.ThrottlingError,
 		message: any,
-	) {
+	): void {
 		const nackMessage = {
 			operation: undefined,
 			sequenceNumber: -1,

@@ -9,7 +9,7 @@ import * as path from "node:path";
 
 import { defaultLogger } from "../common/logging";
 import { commonOptionString, parseOption } from "./commonOptions";
-import { IPackageMatchedOptions } from "./fluidRepoBuild";
+import type { IPackageMatchedOptions } from "./fluidRepoBuild";
 import { defaultBuildTaskName, defaultCleanTaskName } from "./fluidTaskDefinitions";
 
 const { log, errorLog } = defaultLogger;
@@ -34,6 +34,7 @@ interface FastBuildOptions extends IPackageMatchedOptions {
 	 * When a worker is finished with a task, if this is exceeded, a new worker is spawned.
 	 */
 	workerMemoryLimit: number;
+	metricsFile?: string;
 }
 
 // defaults
@@ -66,7 +67,7 @@ export const options: FastBuildOptions = {
 
 // This string is duplicated in the readme: update readme if changing this.
 
-function printUsage() {
+function printUsage(): void {
 	log(
 		`
 Usage: fluid-build <options> [(<package regexp>|<path>) ...]
@@ -79,6 +80,7 @@ Options:
   -f --force                Force build and ignore dependency check on matched packages (all if package regexp is not specified)
   -? --help                 Print this message
      --install              Run npm install for all packages/monorepo. This skips a package if node_modules already exists: it can not be used to update in response to changes to the package.json.
+     --metricsFile <path>   Write build cache metrics JSON to the specified file
      --workerMemoryLimitMB  Memory limit for worker threads in MiB
   -r --rebuild              Clean and build on matched packages (all if package regexp is not specified)
      --reinstall            Same as --uninstall --install.
@@ -95,34 +97,34 @@ ${commonOptionString}
 	);
 }
 
-function setClean(build: boolean) {
+function setClean(build: boolean): void {
 	options.force = true;
 	options.clean = true;
 	setBuild(build);
 }
 
-function setBuild(build: boolean) {
+function setBuild(build: boolean): void {
 	if (build || options.build === undefined) {
 		options.build = build;
 	}
 }
 
-function setReinstall() {
+function setReinstall(): void {
 	options.uninstall = true;
 	setInstall();
 }
 
-function setInstall() {
+function setInstall(): void {
 	options.install = true;
 	setBuild(false);
 }
 
-function setUninstall() {
+function setUninstall(): void {
 	options.uninstall = true;
 	setBuild(false);
 }
 
-export function parseOptions(argv: string[]) {
+export function parseOptions(argv: string[]): void {
 	let error = false;
 	for (let i = 2; i < argv.length; i++) {
 		const argParsed = parseOption(argv, i);
@@ -139,6 +141,7 @@ export function parseOptions(argv: string[]) {
 
 		if (arg === "-?" || arg === "--help") {
 			printUsage();
+			// eslint-disable-next-line unicorn/no-process-exit -- assume CLI-only invocation; callers are not expected to handle help requests
 			process.exit(0);
 		}
 
@@ -266,6 +269,16 @@ export function parseOptions(argv: string[]) {
 			break;
 		}
 
+		if (arg === "--metricsFile") {
+			if (i !== process.argv.length - 1) {
+				options.metricsFile = process.argv[++i];
+				continue;
+			}
+			errorLog("Missing argument for --metricsFile");
+			error = true;
+			break;
+		}
+
 		// Package regexp or paths
 		if (!arg.startsWith("-")) {
 			const resolvedPath = path.resolve(arg);
@@ -284,6 +297,7 @@ export function parseOptions(argv: string[]) {
 
 	if (error) {
 		printUsage();
+		// eslint-disable-next-line unicorn/no-process-exit -- assume CLI-only invocation; callers are not expected to handle argument parsing errors
 		process.exit(-1);
 	}
 

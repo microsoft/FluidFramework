@@ -11,6 +11,6 @@ For more details, see our internal documentation for the [patch policy][policy] 
 [patch releases][patch].
 
 [patch]:
-    https://eng.ms/docs/experiences-devices/opg/office-shared/fluid-framework/fluid-framework-internal/fluid-framework/docs/on-call/release/release-patch
+    https://eng.ms/docs/experiences-devices/opg/office-shared/fluid-framework/fluid-framework-internal/fluid-framework/docs/on-call/release/release#what-about-patch-releases
 [policy]:
     https://eng.ms/docs/experiences-devices/opg/office-shared/fluid-framework/fluid-framework-internal/fluid-framework/docs/dev/resources/patch-policy

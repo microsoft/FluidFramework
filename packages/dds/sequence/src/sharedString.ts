@@ -3,31 +3,26 @@
  * Licensed under the MIT License.
  */
 
-import {
+import type {
 	IChannelAttributes,
 	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions/internal";
-import {
-	// eslint-disable-next-line import/no-deprecated
+import type {
 	IMergeTreeTextHelper,
 	IRelativePosition,
 	ISegment,
 	ISegmentAction,
-	Marker,
 	PropertySet,
 	ReferenceType,
-	TextSegment,
-	refHasTileLabel,
 } from "@fluidframework/merge-tree/internal";
+import { Marker, TextSegment, refHasTileLabel } from "@fluidframework/merge-tree/internal";
 
-// eslint-disable-next-line import/no-deprecated
 import { SharedSegmentSequence, type ISharedSegmentSequence } from "./sequence.js";
 import { SharedStringFactory } from "./sequenceFactory.js";
 
 /**
  * Fluid object interface describing access methods on a SharedString
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface ISharedString extends ISharedSegmentSequence<SharedStringSegment> {
 	/**
@@ -127,8 +122,7 @@ export interface ISharedString extends ISharedSegmentSequence<SharedStringSegmen
 }
 
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export type SharedStringSegment = TextSegment | Marker;
 
@@ -143,7 +137,6 @@ export type SharedStringSegment = TextSegment | Marker;
  * @internal
  */
 export class SharedStringClass
-	// eslint-disable-next-line import/no-deprecated
 	extends SharedSegmentSequence<SharedStringSegment>
 	implements ISharedString
 {
@@ -151,7 +144,6 @@ export class SharedStringClass
 		return this;
 	}
 
-	// eslint-disable-next-line import/no-deprecated
 	private readonly mergeTreeTextHelper: IMergeTreeTextHelper;
 
 	constructor(

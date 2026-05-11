@@ -13,8 +13,7 @@ import type {
  * Basic types for the SharedSignal DDS
  * It can be used as a generic constraint (`extends SerializableTypeForSharedSignal`) but is
  * *never* meant to be a concrete/real type on its own.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export type SerializableTypeForSharedSignal =
 	| boolean
@@ -24,8 +23,7 @@ export type SerializableTypeForSharedSignal =
 	| object;
 
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface ISharedSignalEvents<T extends SerializableTypeForSharedSignal>
 	extends ISharedObjectEvents {
@@ -35,8 +33,7 @@ export interface ISharedSignalEvents<T extends SerializableTypeForSharedSignal>
 }
 
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export interface ISharedSignal<T extends SerializableTypeForSharedSignal = any>

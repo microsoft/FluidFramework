@@ -6,18 +6,15 @@
 import { strict as assert } from "node:assert";
 
 import { delay } from "@fluidframework/core-utils/internal";
-import { ISnapshot } from "@fluidframework/driver-definitions/internal";
-import {
-	ICacheEntry,
-	IOdspResolvedUrl,
-	maximumCacheDurationMs,
-} from "@fluidframework/odsp-driver-definitions/internal";
+import type { ICacheEntry, ISnapshot } from "@fluidframework/driver-definitions/internal";
+import { maximumCacheDurationMs } from "@fluidframework/driver-utils/internal";
+import type { IOdspResolvedUrl } from "@fluidframework/odsp-driver-definitions/internal";
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 
 import {
-	HostStoragePolicyInternal,
-	IOdspSnapshot,
-	IVersionedValueWithEpoch,
+	type HostStoragePolicyInternal,
+	type IOdspSnapshot,
+	type IVersionedValueWithEpoch,
 	persistedCacheValueVersion,
 } from "../contracts.js";
 import { createOdspUrl } from "../createOdspUrl.js";
@@ -29,7 +26,7 @@ import {
 } from "../odspDocumentStorageManager.js";
 import { OdspDriverUrlResolver } from "../odspDriverUrlResolver.js";
 import { getHashedDocumentId } from "../odspPublicUtils.js";
-import { INewFileInfo } from "../odspUtils.js";
+import type { INewFileInfo } from "../odspUtils.js";
 
 import { createResponse, mockFetchSingle, notFound } from "./mockFetch.js";
 
@@ -151,6 +148,7 @@ describe("Tests for snapshot fetch", () => {
 				{
 					docId: hashedDocumentId,
 					resolvedUrl,
+					fileVersion: resolvedUrlWithFileVersion.fileVersion,
 				},
 				createChildLogger(),
 			);
@@ -198,7 +196,7 @@ describe("Tests for snapshot fetch", () => {
 			const cacheEntry: ICacheEntry = {
 				key: "",
 				type: "snapshot",
-				file: { docId: hashedDocumentId, resolvedUrl },
+				file: { docId: hashedDocumentId, resolvedUrl, fileVersion: undefined },
 			};
 
 			await localCache.put(cacheEntry, latestValue);
@@ -228,6 +226,7 @@ describe("Tests for snapshot fetch", () => {
 				{
 					docId: hashedDocumentId,
 					resolvedUrl,
+					fileVersion: undefined,
 				},
 				createChildLogger(),
 			);
@@ -276,7 +275,7 @@ describe("Tests for snapshot fetch", () => {
 			const cacheEntry: ICacheEntry = {
 				key: "",
 				type: "snapshot",
-				file: { docId: hashedDocumentId, resolvedUrl },
+				file: { docId: hashedDocumentId, resolvedUrl, fileVersion: undefined },
 			};
 			await localCache.put(cacheEntry, value);
 
@@ -310,7 +309,7 @@ describe("Tests for snapshot fetch", () => {
 			const cacheEntry: ICacheEntry = {
 				key: "",
 				type: "snapshot",
-				file: { docId: hashedDocumentId, resolvedUrl },
+				file: { docId: hashedDocumentId, resolvedUrl, fileVersion: undefined },
 			};
 			await localCache.put(cacheEntry, value);
 
@@ -340,7 +339,7 @@ describe("Tests for snapshot fetch", () => {
 			const cacheEntry: ICacheEntry = {
 				key: "",
 				type: "snapshot",
-				file: { docId: hashedDocumentId, resolvedUrl },
+				file: { docId: hashedDocumentId, resolvedUrl, fileVersion: undefined },
 			};
 			await localCache.put(cacheEntry, valueWithExpiredCache(maximumCacheDurationMs));
 
@@ -360,7 +359,7 @@ describe("Tests for snapshot fetch", () => {
 			const cacheEntry: ICacheEntry = {
 				key: "",
 				type: "snapshot",
-				file: { docId: hashedDocumentId, resolvedUrl },
+				file: { docId: hashedDocumentId, resolvedUrl, fileVersion: undefined },
 			};
 			await localCache.put(cacheEntry, valueWithExpiredCache(maximumCacheDurationMs));
 
@@ -386,6 +385,7 @@ describe("Tests for snapshot fetch", () => {
 				{
 					docId: hashedDocumentId,
 					resolvedUrl,
+					fileVersion: undefined,
 				},
 				createChildLogger(),
 			);
@@ -414,7 +414,7 @@ describe("Tests for snapshot fetch", () => {
 			const cacheEntry: ICacheEntry = {
 				key: "",
 				type: "snapshot",
-				file: { docId: hashedDocumentId, resolvedUrl },
+				file: { docId: hashedDocumentId, resolvedUrl, fileVersion: undefined },
 			};
 			await localCache.put(
 				cacheEntry,
@@ -437,7 +437,7 @@ describe("Tests for snapshot fetch", () => {
 			const cacheEntry: ICacheEntry = {
 				key: "",
 				type: "snapshot",
-				file: { docId: hashedDocumentId, resolvedUrl },
+				file: { docId: hashedDocumentId, resolvedUrl, fileVersion: undefined },
 			};
 			await localCache.put(
 				cacheEntry,

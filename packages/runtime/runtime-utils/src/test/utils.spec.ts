@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import { charSetForEncodingIds, encodeCompactIdToString } from "../utils.js";
 
@@ -48,7 +48,7 @@ describe("Utils", () => {
 	});
 
 	it("encodeCompactIdToString() generates Unique values", () => {
-		const result: Set<string> = new Set();
+		const result = new Set<string>();
 		const len = 10000;
 		for (let i = 0; i < len; i++) {
 			const value = encodeCompactIdToString(i);
@@ -69,7 +69,7 @@ describe("Utils", () => {
 	});
 
 	it("encodeCompactIdToString() with prefix", () => {
-		const result: Set<string> = new Set();
+		const result = new Set<string>();
 		const len = 1000;
 		for (let i = 0; i < len; i++) {
 			const value = encodeCompactIdToString(i, "_");

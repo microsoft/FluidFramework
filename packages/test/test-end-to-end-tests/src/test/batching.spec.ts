@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 
-import { describeCompat } from "@fluid-private/test-version-utils";
+import { describeCompat, itExpects } from "@fluid-private/test-version-utils";
 import { IContainer } from "@fluidframework/container-definitions/internal";
 import {
 	CompressionAlgorithms,
@@ -44,7 +44,7 @@ async function yieldJSTurn(): Promise<void> {
 function setupBatchMessageListener(
 	dataStore: ITestFluidObject,
 	receivedMessages: ISequencedDocumentMessage[],
-) {
+): void {
 	dataStore.context.containerRuntime.on(
 		"op",
 		(message: ISequencedDocumentMessage, runtimeMessage?: boolean) => {
@@ -55,7 +55,7 @@ function setupBatchMessageListener(
 	);
 }
 
-function verifyBatchMetadata(batchMessages: ISequencedDocumentMessage[]) {
+function verifyBatchMetadata(batchMessages: ISequencedDocumentMessage[]): void {
 	const batchCount = batchMessages.length;
 	assert(batchCount !== 0, "No messages in the batch");
 
@@ -77,11 +77,13 @@ function verifyBatchMetadata(batchMessages: ISequencedDocumentMessage[]) {
 	assert.equal(batchEndMetadata, false, "Batch end metadata not found");
 }
 
-const filterDatastoreOps = (messages: ISequencedDocumentMessage[]) => {
+const filterDatastoreOps = (
+	messages: ISequencedDocumentMessage[],
+): ISequencedDocumentMessage[] => {
 	return messages.filter((m) => m.type === ContainerMessageType.FluidDataStoreOp);
 };
 
-async function waitForCleanContainers(...dataStores: ITestFluidObject[]) {
+async function waitForCleanContainers(...dataStores: ITestFluidObject[]): Promise<void[]> {
 	return Promise.all(
 		dataStores.map(async (dataStore) => {
 			const runtime = dataStore.context.containerRuntime as IContainerRuntime;
@@ -103,7 +105,7 @@ describeCompat("Flushing ops", "NoCompat", (getTestObjectProvider, apis) => {
 		registry,
 		loaderProps: {
 			configProvider: configProvider({
-				"Fluid.Container.enableOfflineLoad": true,
+				"Fluid.ContainerRuntime.enableBatchIdTracking": true,
 			}),
 		},
 	};
@@ -125,7 +127,7 @@ describeCompat("Flushing ops", "NoCompat", (getTestObjectProvider, apis) => {
 	async function setupContainers(
 		runtimeOptions?: IContainerRuntimeOptionsInternal,
 		disableOfflineLoad = false,
-	) {
+	): Promise<void> {
 		if (disableOfflineLoad) {
 			testContainerConfig = {
 				...testContainerConfig,
@@ -157,12 +159,21 @@ describeCompat("Flushing ops", "NoCompat", (getTestObjectProvider, apis) => {
 		await provider.ensureSynchronized();
 	}
 
-	it("Can't set up a container with Immediate Mode and Offline Load", async () => {
-		await assert.rejects(
-			setupContainers({ flushMode: FlushMode.Immediate }),
-			"Offline load is not supported with Immediate mode",
-		);
-	});
+	itExpects(
+		"Can't set up a container with Immediate Mode and Offline Load",
+		[
+			{
+				eventName: "fluid:telemetry:Container:ContainerClose",
+				error: "Offline mode is only supported in turn-based mode",
+			},
+		],
+		async () => {
+			await assert.rejects(
+				setupContainers({ flushMode: FlushMode.Immediate }),
+				"Offline load is not supported with Immediate mode",
+			);
+		},
+	);
 
 	describe("Batch metadata verification when ops are flushed in batches", () => {
 		let dataObject1BatchMessages: ISequencedDocumentMessage[] = [];
@@ -171,7 +182,7 @@ describeCompat("Flushing ops", "NoCompat", (getTestObjectProvider, apis) => {
 		function testFlushingUsingOrderSequentially(
 			options: IContainerRuntimeOptionsInternal,
 			disableOfflineLoad,
-		) {
+		): void {
 			beforeEach("setupBatchMessageListeners", async () => {
 				await setupContainers(options, disableOfflineLoad);
 				setupBatchMessageListener(dataObject1, dataObject1BatchMessages);
@@ -337,7 +348,7 @@ describeCompat("Flushing ops", "NoCompat", (getTestObjectProvider, apis) => {
 			testFlushingUsingOrderSequentially({ flushMode: FlushMode.Immediate }, true);
 		});
 
-		function testFlushingOfBatches(compressionEnabled: boolean) {
+		function testFlushingOfBatches(compressionEnabled: boolean): void {
 			beforeEach("setupBatchMessageListeners", async () => {
 				const noCompressionConfig = {
 					flushMode: FlushMode.TurnBased,
@@ -544,7 +555,10 @@ describeCompat("Flushing ops", "NoCompat", (getTestObjectProvider, apis) => {
 
 	describe("Document Dirty State when batches are flushed", () => {
 		// Verifies that the document dirty state for the given document is as expected.
-		function verifyDocumentDirtyState(dataStore: ITestFluidObject, expectedState: boolean) {
+		function verifyDocumentDirtyState(
+			dataStore: ITestFluidObject,
+			expectedState: boolean,
+		): void {
 			const dirty = (dataStore.context.containerRuntime as IContainerRuntime).isDirty;
 			assert.equal(dirty, expectedState, "The document dirty state is not as expected");
 		}
@@ -552,7 +566,7 @@ describeCompat("Flushing ops", "NoCompat", (getTestObjectProvider, apis) => {
 		function testAutomaticFlushingUsingOrderSequentially(
 			options: IContainerRuntimeOptionsInternal,
 			disableOfflineLoad,
-		) {
+		): void {
 			beforeEach("setupContainers", async () => {
 				await setupContainers(options, disableOfflineLoad);
 			});

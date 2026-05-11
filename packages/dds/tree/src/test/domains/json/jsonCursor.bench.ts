@@ -5,7 +5,14 @@
 
 import { strict as assert } from "node:assert";
 
-import { BenchmarkType, benchmark, isInPerformanceTestingMode } from "@fluid-tools/benchmark";
+import {
+	BenchmarkMode,
+	BenchmarkType,
+	benchmarkDuration,
+	benchmarkIt,
+	currentBenchmarkMode,
+} from "@fluid-tools/benchmark";
+import { emulateProductionBuild } from "@fluidframework/core-utils/internal";
 
 import {
 	EmptyKey,
@@ -19,30 +26,31 @@ import {
 	basicChunkTree,
 	defaultChunkPolicy,
 	makeTreeChunker,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/chunked-forest/chunkTree.js";
 import {
 	buildChunkedForest,
 	cursorForJsonableTreeField,
 	cursorForJsonableTreeNode,
 	cursorForMapTreeNode,
+	defaultIncrementalEncodingPolicy,
 	defaultSchemaPolicy,
-	initializeForest,
 	jsonableTreeFromCursor,
 	mapTreeFromCursor,
 } from "../../../feature-libraries/index.js";
+import { JsonAsTree } from "../../../jsonDomainSchema.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import { toInitialSchema } from "../../../simple-tree/toStoredSchema.js";
 import { brand, type JsonCompatible } from "../../../util/index.js";
-
+import { initializeForest } from "../../feature-libraries/index.js";
+import { cursorToJsonObject, singleJsonCursor } from "../../json/index.js";
 import { buildTestForest, testIdCompressor, testRevisionTagCodec } from "../../utils.js";
+
 import { averageValues, sum, sumMap } from "./benchmarks.js";
 import { Canada, generateCanada } from "./canada.js";
 import { CitmCatalog, generateCitmJson } from "./citm.js";
 import { clone } from "./jsObjectUtil.js";
 import { generateTwitterJsonByByteSize } from "./twitter.js";
-// eslint-disable-next-line import/no-internal-modules
-import { toStoredSchema } from "../../../simple-tree/toStoredSchema.js";
-import { cursorToJsonObject, singleJsonCursor } from "../../json/index.js";
-import { JsonAsTree } from "../../../jsonDomainSchema.js";
 
 // Shared tree keys that map to the type used by the Twitter type/dataset
 export const TwitterKey = {
@@ -62,120 +70,148 @@ function bench(
 		dataConsumer: (cursor: ITreeCursor, calculate: (a: number) => void) => void;
 	}[],
 ) {
-	for (const { name, getJson, dataConsumer } of data) {
-		describe(name, () => {
-			let json: JsonCompatible;
-			let encodedTree: JsonableTree;
-			before(() => {
-				json = getJson();
-				encodedTree = jsonableTreeFromCursor(singleJsonCursor(json));
-			});
-
-			benchmark({
-				type: BenchmarkType.Measurement,
-				title: "Clone JS Object",
-				before: () => {
-					const cloned = clone(json);
-					assert.deepEqual(cloned, json, "clone() must return an equivalent tree.");
-					assert.notEqual(cloned, json, "clone() must not return the same tree instance.");
-				},
-				benchmarkFn: () => {
-					clone(json);
-				},
-			});
-
-			const cursorFactories: [string, () => ITreeCursor][] = [
-				["JsonCursor", () => singleJsonCursor(json)],
-				["TextCursor", () => cursorForJsonableTreeNode(encodedTree)],
-				[
-					"MapCursor",
-					() =>
-						cursorForMapTreeNode(mapTreeFromCursor(cursorForJsonableTreeNode(encodedTree))),
-				],
-				[
-					"object-forest Cursor",
-					() => {
-						const forest = buildTestForest({ additionalAsserts: true });
-						initializeForest(
-							forest,
-							cursorForJsonableTreeField([encodedTree]),
-							testRevisionTagCodec,
-							testIdCompressor,
-						);
-						const cursor = forest.allocateCursor();
-						moveToDetachedField(forest, cursor);
-						assert(cursor.firstNode());
-						return cursor;
-					},
-				],
-				[
-					"BasicChunkCursor",
-					() => {
-						const input = cursorForJsonableTreeNode(encodedTree);
-						const chunk = basicChunkTree(input, {
-							policy: defaultChunkPolicy,
-							idCompressor: undefined,
+	// The debug asserts in cursors have some performance overhead (which is part of why they are debug asserts).
+	// Running these benchmarks in both modes not only allows confirming that the mode selection works,
+	// but also helps measure the performance impact of the debug asserts.
+	// Note that real production mode would be even lower overhead as the debug asserts would be removed by the bundler instead of just early existing.
+	for (const emulateProduction of [true, false]) {
+		describe(`emulateProductionBuild: ${emulateProduction}`, () => {
+			for (const { name, getJson, dataConsumer } of data) {
+				describe(name, () => {
+					let json: JsonCompatible;
+					let encodedTree: JsonableTree;
+					before(() => {
+						json = getJson();
+						encodedTree = jsonableTreeFromCursor(singleJsonCursor(json));
+					});
+					if (emulateProduction) {
+						before(() => {
+							emulateProductionBuild();
 						});
-						const cursor = chunk.cursor();
-						cursor.enterNode(0);
-						return cursor;
-					},
-				],
-				[
-					"chunked-forest Cursor",
-					() => {
-						const forest = buildChunkedForest(
-							makeTreeChunker(
-								new TreeStoredSchemaRepository(toStoredSchema(JsonAsTree.Tree)),
-								defaultSchemaPolicy,
-							),
-						);
-						initializeForest(
-							forest,
-							cursorForJsonableTreeField([encodedTree]),
-							testRevisionTagCodec,
-							testIdCompressor,
-						);
-						const cursor = forest.allocateCursor();
-						moveToDetachedField(forest, cursor);
-						assert(cursor.firstNode());
-						return cursor;
-					},
-				],
-			];
+						after(() => {
+							emulateProductionBuild(false);
+						});
+					}
 
-			const consumers: [
-				string,
-				(
-					cursor: ITreeCursor,
-					dataConsumer: (cursor: ITreeCursor, calculate: (a: number) => void) => unknown,
-				) => void,
-			][] = [
-				["cursorToJsonObject", cursorToJsonObject],
-				["jsonableTreeFromCursor", jsonableTreeFromCursor],
-				["mapTreeFromCursor", mapTreeFromCursor],
-				["sum", sum],
-				["sum-map", sumMap],
-				["averageValues", averageValues],
-			];
+					benchmarkIt({
+						type: BenchmarkType.Perspective,
+						title: "Clone JS Object",
+						...benchmarkDuration({
+							benchmarkFnCustom: async (state) => {
+								const cloned = clone(json);
+								assert.deepEqual(cloned, json, "clone() must return an equivalent tree.");
+								assert.notEqual(
+									cloned,
+									json,
+									"clone() must not return the same tree instance.",
+								);
+								state.timeAllBatches(() => {
+									clone(json);
+								});
+							},
+						}),
+					});
 
-			for (const [factoryName, factory] of cursorFactories) {
-				describe(factoryName, () => {
-					for (const [consumerName, consumer] of consumers) {
-						let cursor: ITreeCursor;
-						benchmark({
-							type: BenchmarkType.Measurement,
-							title: `${consumerName}(${factoryName})`,
-							before: () => {
-								cursor = factory();
-								// TODO: validate behavior
-								// assert.deepEqual(cursorToJsonObject(cursor), json, "data should round trip through json");
-								// assert.deepEqual(
-								//     jsonableTreeFromCursor(cursor), encodedTree, "data should round trip through jsonable");
+					const cursorFactories: [string, () => ITreeCursor][] = [
+						["JsonCursor", () => singleJsonCursor(json)],
+						["TextCursor", () => cursorForJsonableTreeNode(encodedTree)],
+						[
+							"MapCursor",
+							() =>
+								cursorForMapTreeNode(
+									mapTreeFromCursor(cursorForJsonableTreeNode(encodedTree)),
+								),
+						],
+						[
+							"object-forest Cursor",
+							() => {
+								const forest = buildTestForest({ additionalAsserts: true });
+								initializeForest(
+									forest,
+									cursorForJsonableTreeField([encodedTree]),
+									testRevisionTagCodec,
+									testIdCompressor,
+								);
+								const cursor = forest.allocateCursor();
+								moveToDetachedField(forest, cursor);
+								assert(cursor.firstNode());
+								return cursor;
 							},
-							benchmarkFn: () => {
-								consumer(cursor, dataConsumer);
+						],
+						[
+							"BasicChunkCursor",
+							() => {
+								const input = cursorForJsonableTreeNode(encodedTree);
+								const chunk = basicChunkTree(input, {
+									policy: defaultChunkPolicy,
+									idCompressor: undefined,
+								});
+								const cursor = chunk.cursor();
+								cursor.enterNode(0);
+								return cursor;
 							},
+						],
+						[
+							"chunked-forest Cursor",
+							() => {
+								const forest = buildChunkedForest(
+									makeTreeChunker(
+										new TreeStoredSchemaRepository(toInitialSchema(JsonAsTree.Tree)),
+										defaultSchemaPolicy,
+										defaultIncrementalEncodingPolicy,
+									),
+								);
+								initializeForest(
+									forest,
+									cursorForJsonableTreeField([encodedTree]),
+									testRevisionTagCodec,
+									testIdCompressor,
+								);
+								const cursor = forest.allocateCursor();
+								moveToDetachedField(forest, cursor);
+								assert(cursor.firstNode());
+								return cursor;
+							},
+						],
+					];
+
+					const consumers: [
+						string,
+						(
+							cursor: ITreeCursor,
+							dataConsumer: (cursor: ITreeCursor, calculate: (a: number) => void) => unknown,
+						) => void,
+					][] = [
+						["cursorToJsonObject", cursorToJsonObject],
+						["jsonableTreeFromCursor", jsonableTreeFromCursor],
+						["mapTreeFromCursor", mapTreeFromCursor],
+						["sum", sum],
+						["sum-map", sumMap],
+						["averageValues", averageValues],
+					];
+
+					for (const [factoryName, factory] of cursorFactories) {
+						describe(factoryName, () => {
+							for (const [consumerName, consumer] of consumers) {
+								benchmarkIt({
+									type: emulateProduction
+										? BenchmarkType.Measurement
+										: BenchmarkType.Perspective,
+									title: `${consumerName}(${factoryName})`,
+									...benchmarkDuration({
+										benchmarkFnCustom: async (state) => {
+											const cursor = factory();
+											// TODO: validate behavior
+											// assert.deepEqual(cursorToJsonObject(cursor), json, "data should round trip through json");
+											// assert.deepEqual(
+											//     jsonableTreeFromCursor(cursor), encodedTree, "data should round trip through jsonable");
+											state.timeAllBatches(() => {
+												consumer(cursor, dataConsumer);
+											});
+										},
+									}),
+								});
+							}
 						});
 					}
 				});
@@ -186,7 +222,7 @@ function bench(
 
 const canada = generateCanada(
 	// Use the default (large) data set for benchmarking, otherwise use a small dataset.
-	isInPerformanceTestingMode ? undefined : [2, 10],
+	currentBenchmarkMode === BenchmarkMode.Performance ? undefined : [2, 10],
 );
 
 function extractCoordinatesFromCanada(
@@ -301,13 +337,14 @@ function extractAvgValsFromCitm(
 
 // The original benchmark twitter.json is 466906 Bytes according to getSizeInBytes.
 const twitter = generateTwitterJsonByByteSize(
-	isInPerformanceTestingMode ? 2500000 : 466906,
+	currentBenchmarkMode === BenchmarkMode.Performance ? 2500000 : 466906,
 	true,
 );
 // The original benchmark citm_catalog.json 500299 Bytes according to getSizeInBytes.
-const citm = isInPerformanceTestingMode
-	? generateCitmJson(2, 2500000)
-	: generateCitmJson(1, 500299);
+const citm =
+	currentBenchmarkMode === BenchmarkMode.Performance
+		? generateCitmJson(2, 2500000)
+		: generateCitmJson(1, 500299);
 describe("ITreeCursor", () => {
 	bench([
 		{

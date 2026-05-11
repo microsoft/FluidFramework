@@ -4,8 +4,8 @@
  */
 
 import {
-	IClientConfiguration,
-	INackContent,
+	type IClientConfiguration,
+	type INackContent,
 	NackErrorType,
 } from "@fluidframework/protocol-definitions";
 

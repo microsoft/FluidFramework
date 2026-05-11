@@ -20,7 +20,7 @@ import {
 
 const mapId = "mapKey";
 
-function generate(name: string, input: any[], output: any[]) {
+function generate(name: string, input: any[], output: any[]): void {
 	describeCompat(name, "FullCompat", (getTestObjectProvider, apis) => {
 		const { SharedMap, ConsensusQueue } = apis.dds;
 		const { acquireAndComplete, ConsensusResult, waitAcquireAndComplete } =

@@ -5,12 +5,12 @@
 
 import { assert, Deferred } from "@fluidframework/core-utils/internal";
 
-import {
+import type {
+	IRetriableFailureError,
 	SubmitSummaryFailureData,
 	SubmitSummaryResult,
 	SummarizeResultPart,
-	type IRetriableFailureError,
-} from "../index.js";
+} from "../summarizerTypes.js";
 
 import type {
 	IAckSummaryResult,

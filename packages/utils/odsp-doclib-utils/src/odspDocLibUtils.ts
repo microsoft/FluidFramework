@@ -8,24 +8,27 @@ const odspTenants = new Map<string, string>([
 	["spo-df", "microsoft-my.sharepoint-df.com"],
 ]);
 
+// eslint-disable-next-line jsdoc/require-description -- TODO: Add documentation
 /**
  * @internal
  */
-export function isOdspHostname(server: string) {
+export function isOdspHostname(server: string): boolean {
 	return server.endsWith("sharepoint.com") || server.endsWith("sharepoint-df.com");
 }
 
+// eslint-disable-next-line jsdoc/require-description -- TODO: Add documentation
 /**
  * @internal
  */
-export function isPushChannelHostname(server: string) {
+export function isPushChannelHostname(server: string): boolean {
 	return server.includes(".push") && server.endsWith(".svc.ms");
 }
 
+// eslint-disable-next-line jsdoc/require-description -- TODO: Add documentation
 /**
  * @internal
  */
-export function getAadUrl(server: string) {
+export function getAadUrl(server: string): string {
 	// special case for local / pushchannel testing
 	if (server === "localhost" || server.startsWith("localhost:")) {
 		// localhost will not be https
@@ -40,52 +43,55 @@ export function getAadUrl(server: string) {
 	return `https://login.microsoftonline.com`;
 }
 
+// eslint-disable-next-line jsdoc/require-description -- TODO: Add documentation
 /**
  * @internal
  */
-export function getAadTenant(server: string) {
+export function getAadTenant(server: string): string {
 	let hostname = server;
 
 	if (hostname.startsWith("http://")) {
-		hostname = hostname.substring(7);
+		hostname = hostname.slice(7);
 	} else if (hostname.startsWith("https://")) {
-		hostname = hostname.substring(8);
+		hostname = hostname.slice(8);
 	}
 
-	let tenantName = hostname.substr(0, hostname.indexOf(".")).toLowerCase();
-	let restOfTenantHostname = hostname.substr(tenantName.length).toLowerCase();
+	let tenantName = hostname.slice(0, Math.max(0, hostname.indexOf("."))).toLowerCase();
+	let restOfTenantHostname = hostname.slice(tenantName.length).toLowerCase();
 
 	if (tenantName.endsWith("-my")) {
-		tenantName = tenantName.substr(0, tenantName.length - 3);
+		tenantName = tenantName.slice(0, Math.max(0, tenantName.length - 3));
 	} else if (tenantName.endsWith("-admin")) {
-		tenantName = tenantName.substr(0, tenantName.length - 6);
+		tenantName = tenantName.slice(0, Math.max(0, tenantName.length - 6));
 	}
 
 	if (restOfTenantHostname.startsWith(".sharepoint.")) {
-		restOfTenantHostname = `.onmicrosoft.${restOfTenantHostname.substr(12)}`;
+		restOfTenantHostname = `.onmicrosoft.${restOfTenantHostname.slice(12)}`;
 	}
 	if (restOfTenantHostname.startsWith(".sharepoint-df.")) {
-		restOfTenantHostname = `.onmicrosoft.${restOfTenantHostname.substr(15)}`;
+		restOfTenantHostname = `.onmicrosoft.${restOfTenantHostname.slice(15)}`;
 	}
 
 	return `${tenantName}${restOfTenantHostname}`;
 }
 
+// eslint-disable-next-line jsdoc/require-description -- TODO: Add documentation
 /**
  * @internal
  */
 export function getServer(tenantId: string): string {
 	const server = odspTenants.get(tenantId);
 	if (!server) {
-		throw Error(`Invalid SPO tenantId ${tenantId}.`);
+		throw new Error(`Invalid SPO tenantId ${tenantId}.`);
 	}
 	return server;
 }
 
+// eslint-disable-next-line jsdoc/require-description -- TODO: Add documentation
 /**
  * @internal
  */
-export function getSiteUrl(server: string) {
+export function getSiteUrl(server: string): string {
 	if (server.startsWith("http://") || server.startsWith("https://")) {
 		// server is already a site url
 		return server;

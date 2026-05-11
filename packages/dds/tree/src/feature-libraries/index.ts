@@ -9,7 +9,11 @@ export {
 } from "./editableTreeBinder.js";
 export { allowsValue, assertAllowedValue, isTreeValue } from "./valueUtilities.js";
 
-export { ForestSummarizer } from "./forest-summary/index.js";
+export {
+	ForestSummarizer,
+	forestCodecBuilder,
+	ForestFormatVersion,
+} from "./forest-summary/index.js";
 export {
 	cursorForMapTreeField,
 	cursorForMapTreeNode,
@@ -25,9 +29,7 @@ export {
 export { buildForest } from "./object-forest/index.js";
 export {
 	SchemaSummarizer,
-	encodeTreeSchema,
-	makeSchemaCodec,
-	makeSchemaCodecs,
+	schemaCodecBuilder,
 } from "./schema-index/index.js";
 export {
 	stackTreeNodeCursor,
@@ -44,9 +46,13 @@ export {
 	jsonableTreeFromFieldCursor,
 	jsonableTreeFromForest,
 } from "./treeTextCursor.js";
+export {
+	buildNodeComparator,
+	type NodeComparator,
+} from "./cursorComparator.js";
 
-// Split this up into separate import and export for compatibility with API-Extractor.
 import * as SequenceField from "./sequence-field/index.js";
+// eslint-disable-next-line unicorn/prefer-export-from -- fixing requires `export * as` (breaks API-Extractor) or named exports (changes public API)
 export { SequenceField };
 
 export {
@@ -75,31 +81,18 @@ export {
 	genericFieldKind,
 	type HasFieldChanges,
 	type NodeExistsConstraint,
-	FieldKindWithEditor,
 	ModularChangeFamily,
 	type RelevantRemovedRootsFromChild,
-	EncodedModularChangeset,
+	EncodedModularChangesetV1,
+	EncodedModularChangesetV2,
 	updateRefreshers,
 	type NodeId,
 	type FieldChangeEncodingContext,
 	type FieldKindConfiguration,
 	type FieldKindConfigurationEntry,
-	getAllowedContentDiscrepancies,
-	isRepoSuperset,
-	type AllowedTypeDiscrepancy,
-	type FieldKindDiscrepancy,
-	type ValueSchemaDiscrepancy,
-	type FieldDiscrepancy,
-	type NodeDiscrepancy,
-	type NodeKindDiscrepancy,
-	type NodeFieldsDiscrepancy,
 	isNeverTree,
-	type LinearExtension,
-	type Realizer,
-	fieldRealizer,
-	PosetComparisonResult,
-	comparePosetElements,
-	posetLte,
+	DefaultRevisionReplacer,
+	ModularChangeFormatVersion,
 } from "./modular-schema/index.js";
 
 export { mapRootChanges } from "./deltaUtils.js";
@@ -107,15 +100,20 @@ export { mapRootChanges } from "./deltaUtils.js";
 export {
 	type TreeChunk,
 	chunkTree,
+	chunkField,
 	chunkFieldSingle,
 	buildChunkedForest,
 	defaultChunkPolicy,
 	type FieldBatch,
 	type FieldBatchCodec,
+	FieldBatchFormatVersion,
 	makeTreeChunker,
-	makeFieldBatchCodec,
-	fluidVersionToFieldBatchCodecWriteVersion,
+	fieldBatchCodecBuilder,
 	type FieldBatchEncodingContext,
+	emptyChunk,
+	combineChunks,
+	type IncrementalEncodingPolicy,
+	defaultIncrementalEncodingPolicy,
 } from "./chunked-forest/index.js";
 
 export {
@@ -131,11 +129,6 @@ export {
 
 export {
 	FieldKinds,
-	type Required,
-	type Optional,
-	type Sequence,
-	type Identifier,
-	type Forbidden,
 	type DefaultChangeset,
 	DefaultChangeFamily,
 	DefaultEditBuilder,
@@ -148,11 +141,15 @@ export {
 	fieldKindConfigurations,
 	intoDelta,
 	relevantRemovedRoots,
+	getCodecTreeForModularChangeFormat,
+} from "./default-schema/index.js";
+
+export {
 	SchemaValidationError,
 	isNodeInSchema,
 	isFieldInSchema,
-	inSchemaOrThrow,
-} from "./default-schema/index.js";
+	throwOutOfSchema,
+} from "./schemaChecker.js";
 
 export {
 	type FlexTreeOptionalField,
@@ -183,6 +180,10 @@ export {
 	type FlexibleFieldContent,
 	type FlexTreeHydratedContextMinimal,
 	type HydratedFlexTreeNode,
+	getOrCreateHydratedFlexTreeNode,
+	currentObserver,
+	withObservation,
+	type Observer,
 } from "./flex-tree/index.js";
 
 export { TreeCompressionStrategy } from "./treeCompressionUtils.js";
@@ -193,7 +194,7 @@ export { DetachedFieldIndexSummarizer } from "./detachedFieldIndexSummarizer.js"
 
 export {
 	type SchemaChange,
-	makeSchemaChangeCodecs,
+	makeSchemaChangeCodec,
 	EncodedSchemaChange,
 } from "./schema-edits/index.js";
 
@@ -204,8 +205,12 @@ export {
 	AnchorTreeIndex,
 	hasElement,
 	type TreeIndex,
-	type TreeIndexKey,
 	type TreeIndexNodes,
 } from "./indexing/index.js";
 
-export { initializeForest } from "./initializeForest.js";
+export {
+	type ChangeAtomIdBTree,
+	newChangeAtomIdBTree,
+	getFromChangeAtomIdMap,
+	setInChangeAtomIdMap,
+} from "./changeAtomIdBTree.js";

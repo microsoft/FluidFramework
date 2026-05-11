@@ -4,12 +4,12 @@
  */
 
 import { StaticCodeLoader, TinyliciousModelLoader } from "@fluid-example/example-utils";
-import React from "react";
+import { createElement } from "react";
 import ReactDOM from "react-dom";
 
 import {
 	DataObjectGridContainerRuntimeFactory,
-	IDataObjectGridAppModel,
+	type IDataObjectGridAppModel,
 } from "./container.js";
 import { DataObjectGridAppView } from "./dataObjectGridView.js";
 
@@ -49,7 +49,7 @@ async function start(): Promise<void> {
 	const requestedItemId = parsedUrl.searchParams.get("item") ?? undefined;
 	if (requestedItemId === undefined) {
 		ReactDOM.render(
-			React.createElement(DataObjectGridAppView, {
+			createElement(DataObjectGridAppView, {
 				model: model.dataObjectGrid,
 				getDirectUrl: (itemId: string) => `?item=${itemId}#${id}`,
 			}),

@@ -3,10 +3,4 @@
  * Licensed under the MIT License.
  */
 
-export { benchmark } from "./runner";
-export { benchmarkMemory, IMemoryTestObject, MemoryTestObjectProps } from "./memoryTestRunner";
-export {
-	benchmarkCustom,
-	CustomBenchmarkOptions,
-	IMeasurementReporter,
-} from "./customOutputRunner";
+export { benchmarkIt, type MochaBenchmarkOptions } from "./benchmarkIt.js";

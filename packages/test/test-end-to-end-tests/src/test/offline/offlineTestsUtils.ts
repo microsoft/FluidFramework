@@ -6,10 +6,15 @@
 import { strict as assert } from "assert";
 
 import type { IContainer } from "@fluidframework/container-definitions/internal";
-import type { IContainerExperimental } from "@fluidframework/container-loader/internal";
+import { asLegacyAlpha, type ContainerAlpha } from "@fluidframework/container-loader/internal";
 import type { IRequest } from "@fluidframework/core-interfaces";
 import { Deferred } from "@fluidframework/core-utils/internal";
-import type { IDocumentServiceFactory } from "@fluidframework/driver-definitions/internal";
+import type {
+	IDocumentDeltaConnection,
+	IDocumentDeltaStorageService,
+	IDocumentServiceFactory,
+	IDocumentStorageService,
+} from "@fluidframework/driver-definitions/internal";
 import { toDeltaManagerInternal } from "@fluidframework/runtime-utils/internal";
 import {
 	type ITestFluidObject,
@@ -33,10 +38,11 @@ export const generatePendingState = async (
 	testContainerConfig: ITestContainerConfig,
 	testObjectProvider: ITestObjectProvider,
 	send: false | true | "afterReconnect",
-	cb: SharedObjCallback = () => undefined,
-) => {
-	const container: IContainerExperimental =
-		await testObjectProvider.loadTestContainer(testContainerConfig);
+	cb: SharedObjCallback = (): void => undefined,
+): Promise<string> => {
+	const container: ContainerAlpha = asLegacyAlpha(
+		await testObjectProvider.loadTestContainer(testContainerConfig),
+	);
 	await waitForContainerConnection(container);
 	const dataStore = (await container.getEntryPoint()) as ITestFluidObject;
 
@@ -56,17 +62,18 @@ export const generatePendingState = async (
 
 	let pendingState: string | undefined;
 	if (send === true) {
-		pendingState = await container.getPendingLocalState?.();
+		pendingState = await container.getPendingLocalState();
 		await testObjectProvider.ensureSynchronized(); // Note: This will resume processing to get synchronized
 		container.close();
 	} else if (send === "afterReconnect") {
-		pendingState = await container.getPendingLocalState?.();
+		pendingState = await container.getPendingLocalState();
 		container.disconnect();
 		container.connect();
 		await testObjectProvider.ensureSynchronized(); // Note: This will have a different clientId than in pendingState
 		container.close();
 	} else {
-		pendingState = await container.closeAndGetPendingLocalState?.();
+		pendingState = await container.getPendingLocalState();
+		container.close();
 	}
 
 	testObjectProvider.opProcessingController.resumeProcessing();
@@ -90,22 +97,24 @@ export async function loadContainerOffline(
 	testObjectProvider: ITestObjectProvider,
 	request: IRequest,
 	pendingLocalState?: string,
-): Promise<{ container: IContainerExperimental; connect: () => void }> {
+): Promise<{ container: ContainerAlpha; connect: () => void }> {
 	const p = new Deferred();
 	// This documentServiceFactory will wait for the promise p to resolve before connecting to the service
 	const documentServiceFactory = wrapObjectAndOverride<IDocumentServiceFactory>(
 		testObjectProvider.documentServiceFactory,
 		{
 			createDocumentService: {
-				connectToDeltaStream: (ds) => async (client) => {
-					await p.promise;
-					return ds.connectToDeltaStream(client);
-				},
-				connectToDeltaStorage: (ds) => async () => {
+				connectToDeltaStream:
+					(ds) =>
+					async (client): Promise<IDocumentDeltaConnection> => {
+						await p.promise;
+						return ds.connectToDeltaStream(client);
+					},
+				connectToDeltaStorage: (ds) => async (): Promise<IDocumentDeltaStorageService> => {
 					await p.promise;
 					return ds.connectToDeltaStorage();
 				},
-				connectToStorage: (ds) => async () => {
+				connectToStorage: (ds) => async (): Promise<IDocumentStorageService> => {
 					await p.promise;
 					return ds.connectToStorage();
 				},
@@ -122,10 +131,16 @@ export async function loadContainerOffline(
 		],
 		{ ...testContainerConfig.loaderProps, documentServiceFactory },
 	);
-	const container = await loader.resolve(
-		request,
-		pendingLocalState ??
-			(await generatePendingState(testContainerConfig, testObjectProvider, false /* send */)),
+	const container = asLegacyAlpha(
+		await loader.resolve(
+			request,
+			pendingLocalState ??
+				(await generatePendingState(
+					testContainerConfig,
+					testObjectProvider,
+					false /* send */,
+				)),
+		),
 	);
-	return { container, connect: () => p.resolve(undefined) };
+	return { container, connect: (): void => p.resolve(undefined) };
 }

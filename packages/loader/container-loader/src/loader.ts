@@ -4,41 +4,43 @@
  */
 
 import {
-	IContainer,
-	IFluidCodeDetails,
-	IFluidModule,
-	IHostLoader,
-	ILoader,
-	ILoaderOptions,
-	IProvideFluidCodeDetailsComparer,
+	type IContainer,
+	type IFluidCodeDetails,
+	type IFluidModule,
+	type IHostLoader,
+	type ILoader,
+	type ILoaderOptions,
+	type IProvideFluidCodeDetailsComparer,
 	LoaderHeader,
 } from "@fluidframework/container-definitions/internal";
-import {
+import type {
 	FluidObject,
 	IConfigProviderBase,
 	IRequest,
 	ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
-import { IClientDetails } from "@fluidframework/driver-definitions";
-import {
+import type { IClientDetails } from "@fluidframework/driver-definitions";
+import type {
 	IDocumentServiceFactory,
 	IResolvedUrl,
 	IUrlResolver,
 } from "@fluidframework/driver-definitions/internal";
 import {
-	ITelemetryLoggerExt,
-	MonitoringContext,
+	type MonitoringContext,
 	PerformanceEvent,
 	createChildMonitoringContext,
 	mixinMonitoringContext,
 	sessionStorageConfigProvider,
+	toITelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
+// eslint-disable-next-line import-x/no-internal-modules -- Needed to avoid specialized /internal ITelemetryLoggerExt
+import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/legacy";
 import { v4 as uuid } from "uuid";
 
 import { Container } from "./container.js";
 import { DebugLogger } from "./debugLogger.js";
 import { pkgVersion } from "./packageVersion.js";
-import { ProtocolHandlerBuilder } from "./protocol.js";
+import type { ProtocolHandlerBuilder } from "./protocol.js";
 import type { IPendingContainerState } from "./serializedStateManager.js";
 import {
 	getAttachedContainerStateFromSerializedContainer,
@@ -94,8 +96,7 @@ export class RelativeLoader implements ILoader {
  * {@link @fluidframework/container-definitions#IFluidModuleWithDetails}
  * to have all the code loading modules in one package. #8193
  * Encapsulates a module entry point with corresponding code details.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IFluidModuleWithDetails {
 	/**
@@ -115,8 +116,7 @@ export interface IFluidModuleWithDetails {
  * to have code loading modules in one package. #8193
  * Fluid code loader resolves a code module matching the document schema, i.e. code details, such as
  * a package name and package version range.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface ICodeDetailsLoader extends Partial<IProvideFluidCodeDetailsComparer> {
 	/**
@@ -130,8 +130,7 @@ export interface ICodeDetailsLoader extends Partial<IProvideFluidCodeDetailsComp
 
 /**
  * Services and properties necessary for creating a loader
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface ILoaderProps {
 	/**
@@ -183,8 +182,7 @@ export interface ILoaderProps {
 
 /**
  * Services and properties used by and exposed by the loader
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface ILoaderServices {
 	/**
@@ -231,8 +229,7 @@ export interface ILoaderServices {
 
 /**
  * Manages Fluid resource loading
- * @legacy
- * @alpha
+ * @legacy @beta
  *
  * @remarks The Loader class is deprecated and will be removed in a future release. Use the free-form functions instead (See issue #24450 for more details).
  */
@@ -273,7 +270,7 @@ export class Loader implements IHostLoader {
 			scope:
 				options?.provideScopeLoader === false ? { ...scope } : { ...scope, ILoader: this },
 			protocolHandlerBuilder,
-			subLogger: subMc.logger,
+			subLogger: toITelemetryLoggerExt(subMc.logger),
 		};
 		this.mc = createChildMonitoringContext({
 			logger: this.services.subLogger,

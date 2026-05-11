@@ -3,10 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { TypedEventEmitter, type ILayerCompatDetails } from "@fluid-internal/client-utils";
-import type { FluidObject } from "@fluidframework/core-interfaces";
-import { IClient } from "@fluidframework/driver-definitions";
-import {
+import { TypedEventEmitter } from "@fluid-internal/client-utils";
+import type { IClient } from "@fluidframework/driver-definitions";
+import type {
 	IDocumentDeltaConnection,
 	IDocumentDeltaStorageService,
 	IDocumentService,
@@ -24,16 +23,8 @@ export abstract class DocumentServiceProxy
 	extends TypedEventEmitter<IDocumentServiceEvents>
 	implements IDocumentService
 {
-	/**
-	 * The compatibility details of the base Driver layer that is exposed to the Loader layer
-	 * for validating Loader-Driver compatibility.
-	 */
-	public readonly ILayerCompatDetails: ILayerCompatDetails | undefined;
-
 	constructor(private readonly _service: IDocumentService) {
 		super();
-		const maybeDriverCompatDetails = _service as FluidObject<ILayerCompatDetails>;
-		this.ILayerCompatDetails = maybeDriverCompatDetails.ILayerCompatDetails;
 	}
 
 	public get service(): IDocumentService {
@@ -52,7 +43,7 @@ export abstract class DocumentServiceProxy
 		return this._service.connectToDeltaStream(client);
 	}
 
-	public dispose(error?: any): void {
+	public dispose(error?: unknown): void {
 		this._service.dispose(error);
 	}
 

@@ -7,7 +7,7 @@ import { strict as assert } from "node:assert";
 
 import * as semver from "semver";
 
-import { VersionBumpType } from "./bumpTypes";
+import type { VersionBumpType } from "./bumpTypes";
 
 /**
  * The virtualPatch format uses this value to encode and decode versions in that scheme.

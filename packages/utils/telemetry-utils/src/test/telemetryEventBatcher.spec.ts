@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import assert from "node:assert";
+import { strict as assert } from "node:assert";
 
 import type { ITelemetryBaseEvent } from "@fluidframework/core-interfaces";
 import sinon from "sinon";
@@ -12,9 +12,9 @@ import { TelemetryEventBatcher } from "../telemetryEventBatcher.js";
 import type {
 	ITelemetryErrorEventExt,
 	ITelemetryGenericEventExt,
-	ITelemetryLoggerExt,
+	TelemetryLoggerExt,
 	ITelemetryPerformanceEventExt,
-} from "../telemetryTypes.js";
+} from "../telemetryTypesUndeprecated.js";
 import { measure } from "../utils.js";
 
 /**
@@ -38,7 +38,7 @@ interface TestTelemetryPropertiesWithDuration extends TestTelemetryProperties {
 /**
  * Test logger with only necessary functionality used by the TelemetryEventBatcher
  */
-class TestLogger implements ITelemetryLoggerExt {
+class TestLogger implements TelemetryLoggerExt {
 	public events: ITelemetryPerformanceEventExt[] = [];
 
 	public sendPerformanceEvent(event: ITelemetryPerformanceEventExt, error?: unknown): void {

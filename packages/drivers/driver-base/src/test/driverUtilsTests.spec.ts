@@ -12,7 +12,7 @@ import { validateMessages } from "../driverUtils.js";
 describe("driver utils tests", () => {
 	describe("validateMessagesTests", () => {
 		const mockLogger = new MockLogger();
-		const generateOps = (start: number, count: number) => {
+		const generateOps = (start: number, count: number): ISequencedDocumentMessage[] => {
 			const ops: ISequencedDocumentMessage[] = [];
 			let i = 0;
 			while (i < count) {

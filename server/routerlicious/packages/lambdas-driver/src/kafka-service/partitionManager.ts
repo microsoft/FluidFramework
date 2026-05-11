@@ -6,16 +6,16 @@
 import { EventEmitter } from "events";
 
 import {
-	IConsumer,
-	IQueuedMessage,
-	IPartition,
-	IPartitionLambdaFactory,
-	ILogger,
+	type IConsumer,
+	type IQueuedMessage,
+	type IPartition,
+	type IPartitionLambdaFactory,
+	type ILogger,
 	LambdaCloseType,
-	IContextErrorData,
+	type IContextErrorData,
 } from "@fluidframework/server-services-core";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
-import { Provider } from "nconf";
+import type { Provider } from "nconf";
 
 import { Partition } from "./partition";
 

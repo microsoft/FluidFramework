@@ -4,11 +4,10 @@
  */
 
 // Eventually this will become a library to craft various rest ops.
-import * as git from "@fluidframework/gitresources";
 import {
-	IClientJoin,
-	IDocumentMessage,
-	IDocumentSystemMessage,
+	type IClientJoin,
+	type IDocumentMessage,
+	type IDocumentSystemMessage,
 	MessageType,
 } from "@fluidframework/protocol-definitions";
 import * as core from "@fluidframework/server-services-core";
@@ -17,12 +16,6 @@ export interface IMapSetOperation {
 	op: string;
 	path: string;
 	value: string;
-}
-
-export interface IBlobData {
-	content: string;
-
-	metadata: git.ICreateBlobParams;
 }
 
 export function craftClientJoinMessage(
@@ -129,4 +122,31 @@ export function craftMapSet(op: IMapSetOperation) {
 	};
 
 	return opMessage;
+}
+
+export function getDocumentUrlsfromNetworkInfo(
+	tenantId: string,
+	externalOrdererUrl: string,
+	externalHistorianUrl: string,
+	externalDeltaStreamUrl: string,
+	enablePrivateLinkNetworkCheck: boolean = false,
+	isPrivateLink: boolean = false,
+	privateServiceHost?: string | undefined,
+): {
+	documentOrdererUrl: string;
+	documentHistorianUrl: string;
+	documentDeltaStreamUrl: string;
+} {
+	if (enablePrivateLinkNetworkCheck && isPrivateLink) {
+		return {
+			documentOrdererUrl: `https://${tenantId}.alfred.${privateServiceHost}`,
+			documentHistorianUrl: `https://${tenantId}.historian.${privateServiceHost}`,
+			documentDeltaStreamUrl: `https://${tenantId}.nexus.${privateServiceHost}`,
+		};
+	}
+	return {
+		documentOrdererUrl: externalOrdererUrl,
+		documentHistorianUrl: externalHistorianUrl,
+		documentDeltaStreamUrl: externalDeltaStreamUrl,
+	};
 }

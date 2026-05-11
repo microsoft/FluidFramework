@@ -4,14 +4,14 @@
 
 Test function that returns an inline type
 
-## Signature {#testfunctionreturninguniontype-signature}
+<h2 id="testfunctionreturninguniontype-signature">Signature</h2>
 
 ```typescript
 export declare function testFunctionReturningUnionType(): string | TestInterface;
 ```
 
-## Returns {#testfunctionreturninguniontype-returns}
+<h2 id="testfunctionreturninguniontype-returns">Returns</h2>
 
 A union type
 
-**Return type**: string \| [TestInterface](/test-suite-a/testinterface-interface/)
+**Return type**: string | [TestInterface](/test-suite-a/testinterface-interface/)

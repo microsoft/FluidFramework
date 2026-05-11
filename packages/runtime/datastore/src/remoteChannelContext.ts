@@ -3,17 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { AttachState } from "@fluidframework/container-definitions";
+import { AttachState } from "@fluidframework/container-definitions/internal";
 import { assert, LazyPromise } from "@fluidframework/core-utils/internal";
-import {
+import type {
 	IChannel,
 	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions/internal";
-import {
-	IDocumentStorageService,
-	ISnapshotTree,
-} from "@fluidframework/driver-definitions/internal";
-import {
+import type { ISnapshotTree } from "@fluidframework/driver-definitions/internal";
+import type {
 	IExperimentalIncrementalSummaryContext,
 	ITelemetryContext,
 	IGarbageCollectionData,
@@ -22,24 +19,25 @@ import {
 	ISummarizeInternalResult,
 	ISummarizeResult,
 	ISummarizerNodeWithGC,
-	type IPendingMessagesState,
-	type IRuntimeMessageCollection,
+	IPendingMessagesState,
+	IRuntimeMessageCollection,
+	IRuntimeStorageService,
 } from "@fluidframework/runtime-definitions/internal";
 import {
-	ITelemetryLoggerExt,
+	type ITelemetryLoggerExt,
 	ThresholdCounter,
 	createChildLogger,
 } from "@fluidframework/telemetry-utils/internal";
 
 import {
-	ChannelServiceEndpoints,
-	IChannelContext,
+	type ChannelServiceEndpoints,
+	type IChannelContext,
 	createChannelServiceEndpoints,
 	loadChannel,
 	loadChannelFactoryAndAttributes,
 	summarizeChannelAsync,
 } from "./channelContext.js";
-import { ISharedObjectRegistry } from "./dataStoreRuntime.js";
+import type { ISharedObjectRegistry } from "./dataStoreRuntime.js";
 
 export class RemoteChannelContext implements IChannelContext {
 	private isLoaded = false;
@@ -61,7 +59,7 @@ export class RemoteChannelContext implements IChannelContext {
 	constructor(
 		runtime: IFluidDataStoreRuntime,
 		dataStoreContext: IFluidDataStoreContext,
-		storageService: IDocumentStorageService,
+		storageService: IRuntimeStorageService,
 		submitFn: (content: unknown, localOpMetadata: unknown) => void,
 		dirtyFn: (address: string) => void,
 		private readonly id: string,

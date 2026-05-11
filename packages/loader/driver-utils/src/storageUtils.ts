@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ISnapshot, ISnapshotTree } from "@fluidframework/driver-definitions/internal";
+import type { ISnapshot, ISnapshotTree } from "@fluidframework/driver-definitions/internal";
 
 /**
  * Utility API to check if the type of snapshot contents is `ISnapshot`.

@@ -137,7 +137,7 @@ class InternalSignaler extends TypedEventEmitter<IErrorEvent> implements ISignal
 		return this;
 	}
 
-	public submitSignal<T>(signalName: string, payload?: Jsonable<T>) {
+	public submitSignal<T>(signalName: string, payload?: Jsonable<T>): void {
 		const signalerSignalName = this.getSignalerSignalName(signalName);
 		if (this.signaler.connected) {
 			this.signaler.submitSignal(signalerSignalName, payload);
@@ -166,7 +166,7 @@ class SignalerClass
 		ctor: SignalerClass,
 	});
 
-	protected async hasInitialized() {
+	protected async hasInitialized(): Promise<void> {
 		this._signaler = new InternalSignaler(this.runtime);
 		this.signaler.on("error", (error) => {
 			this.emit("error", error);
@@ -185,7 +185,7 @@ class SignalerClass
 		return this;
 	}
 
-	public submitSignal<T>(signalName: string, payload?: Jsonable<T>) {
+	public submitSignal<T>(signalName: string, payload?: Jsonable<T>): void {
 		this.signaler.submitSignal(signalName, payload);
 	}
 }

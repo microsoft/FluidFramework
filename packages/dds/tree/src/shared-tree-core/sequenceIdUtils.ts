@@ -7,18 +7,18 @@ import { assert } from "@fluidframework/core-utils/internal";
 
 import { brand } from "../util/index.js";
 
-import type { SequenceId } from "./editManagerFormat.js";
+import type { SequenceId } from "./editManagerFormatCommons.js";
 
 /**
  * Compares two sequenceIds. Returns a negative number if a \< b, a positive number if a \> b, and 0 if a === b.
  * Note that this handles cases where indexInBatch is Number.POSITIVE_INFINITY.
  */
 export const sequenceIdComparator = (a: SequenceId, b: SequenceId): number =>
-	a.sequenceNumber !== b.sequenceNumber
-		? a.sequenceNumber - b.sequenceNumber
-		: a.indexInBatch === b.indexInBatch
+	a.sequenceNumber === b.sequenceNumber
+		? a.indexInBatch === b.indexInBatch
 			? 0
-			: (a.indexInBatch ?? 0) - (b.indexInBatch ?? 0);
+			: (a.indexInBatch ?? 0) - (b.indexInBatch ?? 0)
+		: a.sequenceNumber - b.sequenceNumber;
 export const equalSequenceIds = (a: SequenceId, b: SequenceId): boolean =>
 	sequenceIdComparator(a, b) === 0;
 export const minSequenceId = (a: SequenceId, b: SequenceId): SequenceId =>

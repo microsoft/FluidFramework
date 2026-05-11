@@ -2,7 +2,7 @@
 
 A test public abstract method.
 
-### Signature {#publicabstractmethod-signature}
+<h3 id="publicabstractmethod-signature">Signature</h3>
 
 ```typescript
 abstract publicAbstractMethod(): void;

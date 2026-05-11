@@ -5,25 +5,25 @@
 
 import {
 	ContainerMessageType,
-	IChunkedOp,
+	type IChunkedOp,
 	unpackRuntimeMessage,
 } from "@fluidframework/container-runtime/internal";
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import { DataStoreMessageType } from "@fluidframework/datastore/internal";
 import {
-	ISummaryAck,
-	ISummaryNack,
-	ISummaryProposal,
+	type ISummaryAck,
+	type ISummaryNack,
+	type ISummaryProposal,
 	MessageType,
 	TreeEntry,
-	ISequencedDocumentMessage,
+	type ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
-import { IAttachMessage, IEnvelope } from "@fluidframework/runtime-definitions/internal";
+import type { IAttachMessage, IEnvelope } from "@fluidframework/runtime-definitions/internal";
 
 const noClientName = "No Client";
 const objectTypePrefix = "https://graph.microsoft.com/types/";
 
-function incr(map: Map<string, [number, number]>, key: string, size: number, count = 1) {
+function incr(map: Map<string, [number, number]>, key: string, size: number, count = 1): void {
 	const value = map.get(key);
 	if (value === undefined) {
 		map.set(key, [count, size]);
@@ -50,7 +50,7 @@ interface IMessageAnalyzer {
  * Helper class to track session statistics
  */
 class ActiveSession {
-	public static create(email: string, message: ISequencedDocumentMessage) {
+	public static create(email: string, message: ISequencedDocumentMessage): ActiveSession {
 		return new ActiveSession(email, message);
 	}
 
@@ -61,7 +61,7 @@ class ActiveSession {
 		private readonly startMessage: ISequencedDocumentMessage,
 	) {}
 
-	public reportOp(timestamp: number) {
+	public reportOp(timestamp: number): void {
 		this.opCount++;
 	}
 
@@ -90,7 +90,7 @@ function dumpStats(
 		removeTotals?: boolean;
 		reverseSort?: boolean;
 	},
-) {
+): void {
 	const fieldSizes = [10, 14];
 	const nameLength = 72;
 	const fieldsLength = fieldSizes[0] + fieldSizes[1] + 1;
@@ -174,7 +174,7 @@ function dumpStats(
 	}
 }
 
-const getObjectId = (dataStoreId: string, id: string) => `[${dataStoreId}]/${id}`;
+const getObjectId = (dataStoreId: string, id: string): string => `[${dataStoreId}]/${id}`;
 
 /**
  * Analyzer for sessions
@@ -477,11 +477,11 @@ class MessageDumper implements IMessageAnalyzer {
 }
 
 export async function printMessageStats(
-	generator, // AsyncGenerator<ISequencedDocumentMessage[]>,
+	generator: AsyncGenerator<ISequencedDocumentMessage[]>,
 	dumpMessageStats: boolean,
 	dumpMessages: boolean,
 	messageTypeFilter: Set<string> = new Set<string>(),
-) {
+): Promise<void> {
 	let lastMessage: ISequencedDocumentMessage | undefined;
 
 	const analyzers: IMessageAnalyzer[] = [
@@ -498,7 +498,7 @@ export async function printMessageStats(
 	}
 
 	for await (const messages of generator) {
-		for (const message of messages as ISequencedDocumentMessage[]) {
+		for (const message of messages) {
 			const msgSize = JSON.stringify(message).length;
 			lastMessage = message;
 
@@ -531,7 +531,7 @@ function processOp(
 	dataTypeStats: Map<string, [number, number]>,
 	messageTypeStats: Map<string, [number, number]>,
 	chunkMap: Map<string, { chunks: string[]; totalSize: number }>,
-) {
+): void {
 	let type = runtimeMessage.type;
 	let recorded = false;
 	let totalMsgSize = msgSize;
@@ -675,7 +675,7 @@ function processOp(
 function processDataStoreAttachOp(
 	attachMessage: IAttachMessage | string,
 	dataType: Map<string, string>,
-) {
+): void {
 	// dataType.set(getObjectId(attachMessage.id), attachMessage.type);
 
 	// That's data store, and it brings a bunch of data structures.
@@ -703,7 +703,7 @@ function reportOpenSessions(
 	sessionsInProgress: Map<string, ActiveSession>,
 	sessions: Map<string, [number, number]>,
 	users: Map<string, [number, number]>,
-) {
+): void {
 	const activeSessions = new Map<string, [number, number]>();
 
 	for (const [clientId, ses] of sessionsInProgress) {
@@ -739,10 +739,11 @@ function reportOpenSessions(
 function calcChannelStats(
 	dataType: Map<string, string>,
 	objectStats: Map<string, [number, number]>,
-) {
+): Map<string, [number, number]> {
 	const channelStats = new Map<string, [number, number]>();
 	for (const [objectId, type] of dataType) {
 		let value = objectStats.get(objectId);
+		// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- using ??= could change behavior if value is falsy
 		if (value === undefined) {
 			value = [0, 0];
 		}
@@ -761,7 +762,7 @@ function processQuorumMessages(
 	sessionsInProgress: Map<string, ActiveSession>,
 	sessions: Map<string, [number, number]>,
 	users: Map<string, [number, number]>,
-) {
+): ActiveSession | undefined {
 	let session: ActiveSession | undefined;
 	const dataString = (message as any).data;
 	if (message.type === "join") {

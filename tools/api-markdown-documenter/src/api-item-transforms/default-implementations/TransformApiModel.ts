@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { ApiItemKind, type ApiModel } from "@microsoft/api-extractor-model";
+import type { ApiModel } from "@microsoft/api-extractor-model";
 
-import { ParagraphNode, SectionNode, SpanNode } from "../../documentation-domain/index.js";
+import type { Section } from "../../mdast/index.js";
 import type { ApiItemTransformationConfiguration } from "../configuration/index.js";
-import { createTableWithHeading } from "../helpers/index.js";
+import { createPackagesTable } from "../helpers/index.js";
 
 /**
  * Default documentation transform for `Model` items.
@@ -15,40 +15,49 @@ import { createTableWithHeading } from "../helpers/index.js";
 export function transformApiModel(
 	apiModel: ApiModel,
 	config: ApiItemTransformationConfiguration,
-): SectionNode[] {
-	if (apiModel.packages.length === 0) {
-		// If no packages under model, print simple note.
-		return [
-			new SectionNode([
-				new ParagraphNode([
-					SpanNode.createFromPlainText("No packages discovered while parsing model.", {
-						italic: true,
-					}),
-				]),
-			]),
-		];
-	}
-
-	// Filter out packages not wanted per user config
+): Section[] {
 	const filteredPackages = apiModel.packages.filter(
 		(apiPackage) => !config.exclude(apiPackage),
 	);
 
-	// Render packages table
-	const packagesTableSection = createTableWithHeading(
-		{
-			headingTitle: "Packages",
-			itemKind: ApiItemKind.Package,
-			items: filteredPackages,
-		},
-		config,
-	);
+	if (filteredPackages.length === 0) {
+		return [
+			{
+				type: "section",
+				children: [
+					{
+						type: "paragraph",
+						children: [
+							{
+								type: "emphasis",
+								children: [
+									{
+										type: "text",
+										value: "No packages discovered while parsing model.",
+									},
+								],
+							},
+						],
+					},
+				],
+			},
+		];
+	}
 
-	if (packagesTableSection === undefined) {
+	// Render packages table
+	const packagesTable = createPackagesTable(filteredPackages, config);
+
+	if (packagesTable === undefined) {
 		throw new Error(
 			"No table rendered for non-empty package list. This indicates an internal error.",
 		);
 	}
 
-	return [packagesTableSection];
+	return [
+		{
+			type: "section",
+			heading: { type: "sectionHeading", title: "Packages" },
+			children: [packagesTable],
+		} satisfies Section,
+	];
 }

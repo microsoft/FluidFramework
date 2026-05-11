@@ -8,7 +8,7 @@ import {
 	TestDataObjectType,
 	type ITestDataObject,
 } from "@fluid-private/test-version-utils";
-import { type IContainerRuntimeOptions } from "@fluidframework/container-runtime/internal";
+import type { IContainerRuntimeOptions } from "@fluidframework/container-runtime/internal";
 import type { IContainerRuntimeBase } from "@fluidframework/runtime-definitions/internal";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 import {
@@ -31,7 +31,6 @@ describeCompat("Odsp Network calls", "NoCompat", (getTestObjectProvider) => {
 	};
 	const configProvider = createTestConfigProvider({
 		"Fluid.Container.UseLoadingGroupIdForSnapshotFetch2": true,
-		"Fluid.Container.enableOfflineLoad": true,
 	});
 
 	let provider: ITestObjectProvider;
@@ -48,7 +47,7 @@ describeCompat("Odsp Network calls", "NoCompat", (getTestObjectProvider) => {
 	const createDataObjectsWithGroupIds = async (
 		mainObject: ITestDataObject,
 		containerRuntime: IContainerRuntimeBase,
-	) => {
+	): Promise<void> => {
 		const dataStoreA = await containerRuntime.createDataStore(
 			TestDataObjectType,
 			loadingGroupId,

@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import fs from "fs";
+import fs from "node:fs";
 
-import { ICommit, ICreateCommitParams } from "@fluidframework/gitresources";
+import type { ICommit, ICreateCommitParams } from "@fluidframework/gitresources";
 import { Router } from "express";
 import * as git from "isomorphic-git";
-import nconf from "nconf";
+import type nconf from "nconf";
 
 import * as utils from "../utils";
 

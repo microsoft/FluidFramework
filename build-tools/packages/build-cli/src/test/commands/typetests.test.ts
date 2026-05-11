@@ -7,15 +7,17 @@ import { assert, expect } from "chai";
 import { describe, it } from "mocha";
 
 import {
-	VersionOptions,
+	normalizeConfig,
+	normalizeTypeTestScript,
 	previousVersion,
 	resetBrokenTests,
 	updateTypeTestDependency,
+	VersionOptions,
 } from "../../commands/typetests.js";
 import {
+	defaultTypeValidationConfig,
 	type ITypeValidationConfig,
 	type PackageWithTypeTestSettings,
-	defaultTypeValidationConfig,
 } from "../../typeValidator/typeValidatorConfig.js";
 
 /**
@@ -41,7 +43,7 @@ function packageWithTypeValidation(enabled = true): PackageWithTypeTestSettings 
 			"test-package-previous": "4.0.0",
 		},
 		typeValidation: {
-			entrypoint: "legacy",
+			entrypoint: "legacyAlpha",
 			broken: {
 				"broken-api": {
 					backCompat: false,
@@ -149,7 +151,7 @@ describe("typetests tests", () => {
 		it("minimal", () => {
 			const pkgJson: { typeValidation?: ITypeValidationConfig } = {
 				typeValidation: {
-					entrypoint: "legacy",
+					entrypoint: "legacyAlpha",
 					broken: {
 						"broken-api": {
 							backCompat: false,
@@ -159,7 +161,7 @@ describe("typetests tests", () => {
 				},
 			};
 			resetBrokenTests(pkgJson);
-			assert.deepEqual(pkgJson, { typeValidation: { broken: {}, entrypoint: "legacy" } });
+			assert.deepEqual(pkgJson, { typeValidation: { broken: {}, entrypoint: "legacyAlpha" } });
 		});
 
 		it("ignores packages with no typeValidation node", () => {
@@ -207,5 +209,75 @@ describe("typetests tests", () => {
 				assert.equal(previousVersion(input), expected);
 			});
 		}
+	});
+
+	describe("normalizeTypeTestScript", () => {
+		it("adds script when typeValidation is enabled", () => {
+			const pkg: PackageWithTypeTestSettings = {
+				...packageMinimal(),
+				typeValidation: { broken: {} },
+			};
+			normalizeTypeTestScript(pkg);
+			expect(pkg.scripts?.["typetests:gen"]).to.equal("flub generate typetests --dir . -v");
+		});
+
+		it("removes script when typeValidation is disabled", () => {
+			const pkg: PackageWithTypeTestSettings = {
+				...packageMinimal(),
+				scripts: { "typetests:gen": "flub generate typetests --dir . -v" },
+				typeValidation: { disabled: true },
+			};
+			normalizeTypeTestScript(pkg);
+			// eslint-disable-next-line @typescript-eslint/no-unused-expressions
+			expect(pkg.scripts?.["typetests:gen"]).to.not.exist;
+		});
+
+		it("replaces non-standard script value", () => {
+			const pkg: PackageWithTypeTestSettings = {
+				...packageMinimal(),
+				scripts: { "typetests:gen": "some-old-command" },
+				typeValidation: { broken: {} },
+			};
+			normalizeTypeTestScript(pkg);
+			expect(pkg.scripts?.["typetests:gen"]).to.equal("flub generate typetests --dir . -v");
+		});
+
+		it("does nothing when typeValidation is undefined", () => {
+			const pkg = packageMinimal();
+			normalizeTypeTestScript(pkg);
+			// eslint-disable-next-line @typescript-eslint/no-unused-expressions
+			expect(pkg.scripts?.["typetests:gen"]).to.not.exist;
+		});
+	});
+
+	describe("normalizeConfig", () => {
+		it("undefined config", () => {
+			const result = normalizeConfig(undefined);
+			expect(result).to.deep.equal({
+				broken: {},
+			});
+		});
+
+		it("config with defaults", () => {
+			const result = normalizeConfig(defaultTypeValidationConfig);
+			expect(result).to.deep.equal({
+				broken: {},
+			});
+		});
+
+		it("disabled config", () => {
+			const result = normalizeConfig({
+				disabled: true,
+				broken: {
+					"broken-api": {
+						backCompat: false,
+					},
+				},
+				entrypoint: defaultTypeValidationConfig.entrypoint,
+			});
+			expect(result).to.deep.equal({
+				disabled: true,
+			});
+		});
 	});
 });

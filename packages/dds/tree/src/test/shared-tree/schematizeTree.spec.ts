@@ -5,6 +5,8 @@
 
 import { strict as assert } from "node:assert";
 
+import type { Listenable } from "@fluidframework/core-interfaces";
+
 import {
 	type Anchor,
 	type AnchorNode,
@@ -13,49 +15,47 @@ import {
 	type TreeStoredSchema,
 	TreeStoredSchemaRepository,
 	type AnchorSetRootEvents,
+	type TaggedChange,
 } from "../../core/index.js";
-import { singleJsonCursor } from "../json/index.js";
 import {
 	FieldKinds,
 	allowsRepoSuperset,
 	defaultSchemaPolicy,
+	type ModularChangeset,
 } from "../../feature-libraries/index.js";
 import type {
 	ITreeCheckout,
-	ITreeCheckoutFork,
 	CheckoutEvents,
 	ISharedTreeEditor,
 } from "../../shared-tree/index.js";
 import {
-	type TreeStoredContent,
-	UpdateType,
 	canInitialize,
-	ensureSchema,
-	evaluateUpdate,
-	initializeContent,
-	// eslint-disable-next-line import/no-internal-modules
+	initialize,
+	initializerFromChunk,
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../shared-tree/schematizeTree.js";
-import { checkoutWithContent, validateViewConsistency } from "../utils.js";
-import type { Listenable } from "@fluidframework/core-interfaces";
+import type { Transactor } from "../../shared-tree-core/index.js";
 import {
 	SchemaFactory,
-	SchemaCompatibilityTester,
 	type ImplicitFieldSchema,
 	type TreeView,
 	type TreeViewConfiguration,
-	normalizeFieldSchema,
 } from "../../simple-tree/index.js";
-// eslint-disable-next-line import/no-internal-modules
-import { toStoredSchema } from "../../simple-tree/toStoredSchema.js";
-import type { Transactor } from "../../shared-tree-core/index.js";
+import { toInitialSchema } from "../../simple-tree/index.js";
 import { Breakable } from "../../util/index.js";
-import { JsonAsTree } from "../../jsonDomainSchema.js";
+import { fieldJsonCursor } from "../json/index.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import { makeTestDefaultChangeFamily } from "../shared-tree-core/utils.js";
+import {
+	mintRevisionTag,
+	type TreeStoredContentStrict,
+	treeChunkFromCursor,
+} from "../utils.js";
 
 const builder = new SchemaFactory("test");
 const root = builder.number;
 const schema = root;
 
-const schemaGeneralized = builder.optional([root, builder.string]);
 const schemaValueRoot = [root, builder.string];
 
 // Schema for tree that must always be empty.
@@ -67,29 +67,35 @@ function expectSchema(actual: TreeStoredSchema, expected: TreeStoredSchema): voi
 	assert(allowsRepoSuperset(defaultSchemaPolicy, expected, actual));
 }
 
-function makeSchemaRepository(repository: TreeStoredSchemaRepository): {
-	storedSchema: ITreeCheckout["storedSchema"];
-	updateSchema: ITreeCheckout["updateSchema"];
-} {
+function makeCheckout(
+	repository: TreeStoredSchemaRepository,
+	onChange: (change: TaggedChange<ModularChangeset>) => void = () => {},
+) {
+	const editor = makeTestDefaultChangeFamily().buildEditor(mintRevisionTag, onChange);
+
 	return {
 		storedSchema: repository,
 		updateSchema: (newSchema: TreeStoredSchema) => {
 			// This test repository applies the schema immediately.
 			repository.apply(newSchema);
 		},
+		editor,
 	};
 }
 
 describe("schematizeTree", () => {
-	describe("initializeContent", () => {
-		function testInitialize(name: string, content: TreeStoredContent): void {
+	describe("initialize", () => {
+		function testInitialize(name: string, content: TreeStoredContentStrict): void {
 			describe(`Initialize ${name}`, () => {
 				it("correct output", () => {
 					const storedSchema = new TreeStoredSchemaRepository();
 					let count = 0;
-					initializeContent(makeSchemaRepository(storedSchema), content.schema, () => {
-						count++;
-					});
+					const checkout = makeCheckout(storedSchema, () => count++);
+					initialize(
+						checkout,
+						content.schema,
+						initializerFromChunk(checkout, () => treeChunkFromCursor(content.initialTree)),
+					);
 					assert.equal(count, 1);
 					expectSchema(storedSchema, content.schema);
 				});
@@ -108,11 +114,16 @@ describe("schematizeTree", () => {
 					});
 
 					let currentData: typeof content.initialTree;
-					initializeContent(makeSchemaRepository(storedSchema), content.schema, () => {
+					const checkout = makeCheckout(storedSchema, () => {
 						// TODO: check currentData is compatible with current schema.
 						// TODO: check data in cursors is compatible with current schema.
 						currentData = content.initialTree;
 					});
+					initialize(
+						checkout,
+						content.schema,
+						initializerFromChunk(checkout, () => treeChunkFromCursor(content.initialTree)),
+					);
 
 					// Ensure final schema change was actually tested.
 					// This would fail if event is triggered before schema update so last update is missed (and first update checks noop).
@@ -126,8 +137,11 @@ describe("schematizeTree", () => {
 					storedSchema.events.on("afterSchemaChange", () => {
 						log.push("schema");
 					});
-					initializeContent(makeSchemaRepository(storedSchema), content.schema, () =>
-						log.push("content"),
+					const checkout = makeCheckout(storedSchema, () => log.push("content"));
+					initialize(
+						checkout,
+						content.schema,
+						initializerFromChunk(checkout, () => treeChunkFromCursor(content.initialTree)),
 					);
 
 					assert.deepEqual(
@@ -141,37 +155,56 @@ describe("schematizeTree", () => {
 		}
 
 		testInitialize("optional-empty", {
-			schema: toStoredSchema(schema),
-			initialTree: undefined,
+			schema: toInitialSchema(builder.optional(schema)),
+			initialTree: fieldJsonCursor([]),
 		});
 		testInitialize("optional-full", {
-			schema: toStoredSchema(schema),
-			initialTree: singleJsonCursor(5),
+			schema: toInitialSchema(builder.optional(schema)),
+			initialTree: fieldJsonCursor([5]),
 		});
 		testInitialize("value", {
-			schema: toStoredSchema(schemaValueRoot),
-			initialTree: singleJsonCursor(6),
+			schema: toInitialSchema(schemaValueRoot),
+			initialTree: fieldJsonCursor([6]),
 		});
 
 		// TODO: Test schema validation of initial tree (once we have a utility for it)
 	});
 
 	function mockCheckout(InputSchema: ImplicitFieldSchema, isEmpty: boolean): ITreeCheckout {
-		const storedSchema = new TreeStoredSchemaRepository(toStoredSchema(InputSchema));
+		const storedSchema = new TreeStoredSchemaRepository(toInitialSchema(InputSchema));
 		const checkout: ITreeCheckout = {
+			disposed: false,
 			breaker: new Breakable("mockCheckout"),
 			storedSchema,
 			// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
 			forest: { isEmpty } as IForestSubscription,
 			editor: undefined as unknown as ISharedTreeEditor,
 			transaction: undefined as unknown as Transactor,
-			branch(): ITreeCheckoutFork {
+			fork(): ITreeCheckout {
 				throw new Error("Function not implemented.");
 			},
-			merge(view: ITreeCheckoutFork): void {
+			isBranch(): boolean {
+				return true;
+			},
+			hasRootSchema(): boolean {
+				return false;
+			},
+			runTransaction(): never {
 				throw new Error("Function not implemented.");
 			},
-			rebase(view: ITreeCheckoutFork): void {
+			runTransactionAsync(): never {
+				throw new Error("Function not implemented.");
+			},
+			applyChange(): void {
+				throw new Error("Function not implemented.");
+			},
+			merge(): void {
+				throw new Error("Function not implemented.");
+			},
+			rebaseOnto(): void {
+				throw new Error("Function not implemented.");
+			},
+			dispose(): void {
 				throw new Error("Function not implemented.");
 			},
 			updateSchema(newSchema: TreeStoredSchema): void {
@@ -194,133 +227,12 @@ describe("schematizeTree", () => {
 		return checkout;
 	}
 
-	describe("evaluateUpdate", () => {
-		describe("test cases", () => {
-			const testCases: [string, ImplicitFieldSchema, boolean][] = [
-				["empty", emptySchema, true],
-				["basic-optional-empty", schema, true],
-				["basic-optional", schema, false],
-				["basic-value", schemaValueRoot, false],
-				["complex-empty", JsonAsTree.Tree, true],
-				["complex", builder.arrayRecursive("root", JsonAsTree.Tree), false],
-			];
-			for (const [name, data, isEmpty] of testCases) {
-				it(name, () => {
-					const checkout = mockCheckout(data, isEmpty);
-					const viewSchema = new SchemaCompatibilityTester(
-						defaultSchemaPolicy,
-						{},
-						normalizeFieldSchema(data),
-					);
-					const result = evaluateUpdate(viewSchema, checkout);
-					assert.equal(result, UpdateType.None);
-				});
-			}
-		});
-
-		it("UpdateType.SchemaCompatible", () => {
-			const checkout = mockCheckout(schema, false);
-			const viewSchema = new SchemaCompatibilityTester(
-				defaultSchemaPolicy,
-				{},
-				schemaGeneralized,
-			);
-			{
-				const result = evaluateUpdate(viewSchema, checkout);
-				assert.equal(result, UpdateType.SchemaCompatible);
-			}
-		});
-	});
-
 	describe("canInitialize", () => {
 		it("incompatible upgrade errors and does not modify schema", () => {
 			assert(canInitialize(mockCheckout(emptySchema, true)));
 			assert(!canInitialize(mockCheckout(emptySchema, false)));
 			assert(!canInitialize(mockCheckout(schema, true)));
 			assert(!canInitialize(mockCheckout(schema, false)));
-		});
-	});
-
-	describe("ensureSchema", () => {
-		it("compatible empty schema", () => {
-			const checkout = checkoutWithContent({
-				schema: toStoredSchema(emptySchema),
-				initialTree: undefined,
-			});
-			const viewSchema = new SchemaCompatibilityTester(defaultSchemaPolicy, {}, emptySchema);
-			assert(ensureSchema(viewSchema, checkout));
-		});
-
-		it("compatible: upgrade optional root", () => {
-			const emptyContent: TreeStoredContent = {
-				schema: toStoredSchema(emptySchema),
-				initialTree: undefined,
-			};
-
-			// Schema upgraded, but content not initialized
-			const upgradedCheckout = checkoutWithContent({
-				schema: toStoredSchema(schemaGeneralized),
-				initialTree: undefined,
-			});
-			const viewSchema = new SchemaCompatibilityTester(
-				defaultSchemaPolicy,
-				{},
-				schemaGeneralized,
-			);
-
-			// Schema upgrade
-			{
-				const checkout = checkoutWithContent(emptyContent);
-				assert(ensureSchema(viewSchema, checkout));
-				validateViewConsistency(checkout, upgradedCheckout);
-			}
-		});
-
-		it("incompatible: empty to required root", () => {
-			const emptyContent: TreeStoredContent = {
-				schema: toStoredSchema(emptySchema),
-				initialTree: undefined,
-			};
-			const emptyCheckout = checkoutWithContent(emptyContent);
-
-			const viewSchema = new SchemaCompatibilityTester(
-				defaultSchemaPolicy,
-				{},
-				normalizeFieldSchema(schemaValueRoot),
-			);
-
-			// Case which doesn't update due to root being required
-			const checkout = checkoutWithContent(emptyContent);
-			assert(!ensureSchema(viewSchema, checkout));
-			validateViewConsistency(checkout, emptyCheckout);
-		});
-
-		it("update non-empty", () => {
-			const initialContent: TreeStoredContent = {
-				schema: toStoredSchema(schema),
-				get initialTree() {
-					return singleJsonCursor(5);
-				},
-			};
-			const initialCheckout = checkoutWithContent(initialContent);
-			const content: TreeStoredContent = {
-				schema: toStoredSchema(schemaGeneralized),
-				initialTree: singleJsonCursor("Should not be used"),
-			};
-			const updatedCheckout = checkoutWithContent({
-				schema: toStoredSchema(schemaGeneralized),
-				initialTree: initialContent.initialTree,
-			});
-
-			const viewSchema = new SchemaCompatibilityTester(
-				defaultSchemaPolicy,
-				{},
-				schemaGeneralized,
-			);
-
-			const checkout = checkoutWithContent(initialContent);
-			assert(ensureSchema(viewSchema, checkout));
-			validateViewConsistency(checkout, updatedCheckout);
 		});
 	});
 });

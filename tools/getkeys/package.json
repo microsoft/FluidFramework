@@ -29,15 +29,32 @@
 		"@fluidframework/tool-utils": "^0.35.0"
 	},
 	"devDependencies": {
-		"@fluidframework/eslint-config-fluid": "^5.7.4",
-		"eslint": "~8.55.0",
+		"@fluidframework/eslint-config-fluid": "^6.1.0",
+		"eslint": "~8.57.0",
 		"prettier": "~3.0.3",
 		"typescript": "~4.5.5"
 	},
-	"packageManager": "pnpm@9.15.7+sha512.ed98f9c748442673c46964b70345bd2282c9b305e8eae539b34ab31d6ef24ef8dd59d8b55f27466f705500b009d9c113471cf87e544f3d5036b297330c26e996",
+	"packageManager": "pnpm@10.33.0+sha512.10568bb4a6afb58c9eb3630da90cc9516417abebd3fabbe6739f0ae795728da1491e9db5a544c76ad8eb7570f5c4bb3d6c637b2cb41bfdcdb47fa823c8649319",
 	"pnpm": {
+		"onlyBuiltDependencies": ["unrs-resolver"],
+		"commentsOverrides": [
+			"qs: overridden to ^6.15.0 to resolve a known vulnerability in older versions.",
+			"js-yaml: overridden to fix CVE-2025-64718 (prototype pollution via merge keys).",
+			"minimatch: overridden to patched versions to resolve known security vulnerabilities across all major version ranges.",
+			"picomatch: overridden to patched versions to resolve a known security vulnerability."
+		],
 		"overrides": {
-			"qs": "^6.11.0"
+			"js-yaml": "^4.1.1",
+			"qs": "^6.15.0",
+			"minimatch@>=3 <4": "^3.1.5",
+			"minimatch@>=5 <6": "^5.1.9",
+			"minimatch@>=6 <7": "^6.2.3",
+			"minimatch@>=7 <8": "^7.4.9",
+			"minimatch@>=8 <9": "^8.0.7",
+			"minimatch@>=9 <10": "^9.0.9",
+			"minimatch@>=10 <11": "^10.2.4",
+			"picomatch@>=2 <3": "^2.3.2",
+			"picomatch@>=4 <5": "^4.0.4"
 		}
 	}
 }

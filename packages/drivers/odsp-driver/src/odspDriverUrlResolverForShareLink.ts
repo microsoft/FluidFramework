@@ -3,22 +3,22 @@
  * Licensed under the MIT License.
  */
 
-import { IRequest, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+import type { IRequest, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { PromiseCache } from "@fluidframework/core-utils/internal";
-import {
+import type {
 	IContainerPackageInfo,
 	IResolvedUrl,
 	IUrlResolver,
 } from "@fluidframework/driver-definitions/internal";
-import {
+import type {
 	IOdspResolvedUrl,
 	IdentityType,
 	OdspResourceTokenFetchOptions,
 	TokenFetcher,
 } from "@fluidframework/odsp-driver-definitions/internal";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
+import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 
-import { OdspFluidDataStoreLocator, SharingLinkHeader } from "./contractsPublic.js";
+import { type OdspFluidDataStoreLocator, SharingLinkHeader } from "./contractsPublic.js";
 import { createOdspUrl } from "./createOdspUrl.js";
 import { getFileLink } from "./getFileLink.js";
 import { OdspDriverUrlResolver } from "./odspDriverUrlResolver.js";
@@ -37,7 +37,7 @@ import {
 /**
  * Properties passed to the code responsible for fetching share link for a file.
  * @legacy
- * @alpha
+ * @beta
  */
 export interface ShareLinkFetcherProps {
 	/**
@@ -55,7 +55,7 @@ export interface ShareLinkFetcherProps {
  * url format and the ones which have things like driveId, siteId, itemId etc encoded in nav param.
  * This resolver also handles share links and try to generate one for the use by the app.
  * @legacy
- * @alpha
+ * @beta
  */
 export class OdspDriverUrlResolverForShareLink implements IUrlResolver {
 	private readonly logger: ITelemetryLoggerExt;

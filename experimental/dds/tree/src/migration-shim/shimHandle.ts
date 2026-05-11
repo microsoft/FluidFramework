@@ -3,10 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { type IFluidHandleInternal } from '@fluidframework/core-interfaces/internal';
 import { FluidHandleBase, toFluidHandleInternal } from '@fluidframework/runtime-utils/internal';
 
-import { type IShim } from './types.js';
+import type { IShim } from './types.js';
 
 /**
  * ShimHandle is a special class to handle the fact that we are essentially creating a proxy for a DDS.
@@ -32,11 +31,5 @@ export class ShimHandle<TShim extends IShim> extends FluidHandleBase<TShim> {
 	}
 	public async get(): Promise<TShim> {
 		return this.shim;
-	}
-	/**
-	 * @deprecated No replacement provided. Arbitrary handles may not serve as a bind source.
-	 */
-	public bind(handle: IFluidHandleInternal): void {
-		return toFluidHandleInternal(this.shim.currentTree.handle).bind(handle);
 	}
 }

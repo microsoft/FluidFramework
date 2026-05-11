@@ -125,8 +125,7 @@ export interface IDirectory
  * @remarks
  * These events only emit on the {@link ISharedDirectory} itself, and not on subdirectories.
  * @sealed
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface ISharedDirectoryEvents extends ISharedObjectEvents {
 	/**
@@ -154,6 +153,8 @@ export interface ISharedDirectoryEvents extends ISharedObjectEvents {
 	/**
 	 * Emitted when the {@link ISharedDirectory} is cleared.
 	 *
+	 * @deprecated Use the "cleared" event instead which provides the path that was cleared.
+	 *
 	 * @remarks Listener parameters:
 	 *
 	 * - `local` - Whether the clear originated from this client.
@@ -161,6 +162,22 @@ export interface ISharedDirectoryEvents extends ISharedObjectEvents {
 	 * - `target` - The {@link ISharedDirectory} itself.
 	 */
 	(event: "clear", listener: (local: boolean, target: IEventThisPlaceHolder) => void);
+
+	/**
+	 * Emitted when the {@link ISharedDirectory} is cleared.
+	 *
+	 * @remarks Listener parameters:
+	 *
+	 * - `path` - The absolute path to the directory that was cleared.
+	 *
+	 * - `local` - Whether the clear originated from this client.
+	 *
+	 * - `target` - The {@link ISharedDirectory} itself.
+	 */
+	(
+		event: "cleared",
+		listener: (path: string, local: boolean, target: IEventThisPlaceHolder) => void,
+	);
 
 	/**
 	 * Emitted when a subdirectory is created.
@@ -283,8 +300,7 @@ export interface IDirectoryEvents extends IEvent {
  * The values stored within can be accessed like a map, and the hierarchy can be navigated using path syntax.
  * SubDirectories can be retrieved for use as working directories.
  * @sealed
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface ISharedDirectory
 	extends ISharedObject<ISharedDirectoryEvents & IDirectoryEvents>,
@@ -316,8 +332,7 @@ export interface IDirectoryValueChanged extends IValueChanged {
 /**
  * Events emitted in response to changes to the {@link ISharedMap | map} data.
  * @sealed
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface ISharedMapEvents extends ISharedObjectEvents {
 	/**
@@ -361,8 +376,7 @@ export interface ISharedMapEvents extends ISharedObjectEvents {
  *
  * For more information, including example usages, see {@link https://fluidframework.com/docs/data-structures/map/}.
  * @sealed
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 // TODO: Use `unknown` instead (breaking change).
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

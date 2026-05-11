@@ -56,6 +56,7 @@
 		"privateremarks",
 		"pseudorandomly",
 		"reconnections",
+		"revertibles",
 		"Routerlicious",
 		"runtimes",
 		"snapshotlegacy",
@@ -68,6 +69,7 @@
 		"unaugmented",
 		"undoprovider",
 		"unsequenced",
+		"validatable",
 	],
 
 	// Enable biome as default formatter, and disable rules that disagree with it

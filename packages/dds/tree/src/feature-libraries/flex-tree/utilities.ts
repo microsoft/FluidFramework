@@ -31,7 +31,7 @@ export function treeStatusFromDetachedField(detachedField: DetachedField): TreeS
  *
  * @param anchors - the {@link AnchorSet} to compare your anchorNode cache to.
  * @param anchorNode - the {@link AnchorNode} to get the {@link TreeStatus} of.
- * @returns - the {@link TreeStatus} of the anchorNode provided.
+ * @returns the {@link TreeStatus} of the anchorNode provided.
  */
 export function treeStatusFromAnchorCache(anchorNode: AnchorNode): TreeStatus {
 	const cache = anchorNode.slots.get(detachedFieldSlot);

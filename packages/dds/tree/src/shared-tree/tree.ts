@@ -3,31 +3,29 @@
  * Licensed under the MIT License.
  */
 
+import { assert } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
+import { Context } from "../feature-libraries/index.js";
 import {
 	type ImplicitFieldSchema,
 	type TreeNode,
 	type TreeNodeApi,
 	type TreeView,
-	getOrCreateInnerNode,
+	getInnerNode,
 	treeNodeApi,
 	rollback,
 	type TransactionConstraint,
 } from "../simple-tree/index.js";
 
-import { getCheckoutFlexTreeView } from "./checkoutFlexTreeView.js";
-import {
-	addConstraintsToTransaction,
-	SchematizingSimpleTreeView,
-} from "./schematizingTreeView.js";
-import type { ITreeCheckout } from "./treeCheckout.js";
+import { SchematizingSimpleTreeView } from "./schematizingTreeView.js";
+import { addConstraintsToTransaction, type ITreeCheckout } from "./treeCheckout.js";
 
 /**
  * Provides various functions for interacting with {@link TreeNode}s.
  * @remarks
  * This type should only be used via the {@link (Tree:variable)} export.
- * @system @sealed @public
+ * @sealed @public
  */
 export interface Tree extends TreeNodeApi {
 	/**
@@ -59,6 +57,9 @@ export interface Tree extends TreeNodeApi {
 export const Tree: Tree = {
 	...treeNodeApi,
 
+	// Note: the implementation details of `createRunTransaction` are deprecated.
+	// We have introduced replacement `@alpha` APIs on `TreeBranch`, but until they are `@public`, we can't reasonably deprecated this.
+	// Once they have been promoted to public, we can deprecate this API.
 	runTransaction: createRunTransaction(),
 
 	contains(parent: TreeNode, child: TreeNode): boolean {
@@ -403,16 +404,16 @@ export interface RunTransaction {
 
 // TODO: Add more constraint types here
 
+/** A type-safe helper to add a "rollback" property (as required by the `RunTransaction` interface) to a given object */
+function defineRollbackProperty<T extends object>(
+	target: T,
+): T & { rollback: typeof rollback } {
+	Reflect.defineProperty(target, "rollback", { value: rollback });
+	return target as T & { readonly rollback: typeof rollback };
+}
+
 /** Creates a copy of `runTransaction` with the `rollback` property added so as to satisfy the `RunTransaction` interface. */
 function createRunTransaction(): RunTransaction {
-	/** A type-safe helper to add a "rollback" property (as required by the `RunTransaction` interface) to a given object */
-	function defineRollbackProperty<T extends object>(
-		target: T,
-	): T & { rollback: typeof rollback } {
-		Reflect.defineProperty(target, "rollback", { value: rollback });
-		return target as T & { readonly rollback: typeof rollback };
-	}
-
 	return defineRollbackProperty(runTransaction.bind({}));
 }
 
@@ -443,14 +444,14 @@ export function runTransaction<
 	} else {
 		const node = treeOrNode as TNode;
 		const t = transaction as (node: TNode) => TResult | typeof rollback;
-		const context = getOrCreateInnerNode(node).context;
+		const context = getInnerNode(node).context;
 		if (context.isHydrated() === false) {
 			throw new UsageError(
 				"Transactions cannot be run on Unhydrated nodes. Transactions apply to a TreeView and Unhydrated nodes are not part of a TreeView.",
 			);
 		}
-		const treeView = getCheckoutFlexTreeView(context);
-		return runTransactionInCheckout(treeView.checkout, () => t(node), preconditions);
+		assert(context instanceof Context, 0xbe3 /* Expected context to be a Context instance. */);
+		return runTransactionInCheckout(context.checkout, () => t(node), preconditions);
 	}
 }
 

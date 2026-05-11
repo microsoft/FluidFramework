@@ -3,9 +3,10 @@
  * Licensed under the MIT License.
  */
 
+import type { IFluidHandle } from "@fluidframework/core-interfaces";
+
 import type { FieldKey } from "../../../core/index.js";
 import type { DownPath } from "../../../feature-libraries/index.js";
-import type { IFluidHandle } from "@fluidframework/core-interfaces";
 
 export type Operation = TreeOperation | Synchronize;
 
@@ -117,7 +118,7 @@ export interface Insert {
 export interface SetField {
 	type: "set";
 	/**
-	 * @privateRemarks - Optional fields use {@link ClearField} to mean "remove the field's contents" rather than
+	 * @privateRemarks Optional fields use {@link ClearField} to mean "remove the field's contents" rather than
 	 * a `SetField` with undefined value, hence why this property is required.
 	 */
 	value: GeneratedFuzzNode;

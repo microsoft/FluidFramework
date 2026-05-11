@@ -3,24 +3,24 @@
  * Licensed under the MIT License.
  */
 
-import { IBlob, ITree, ITreeEntry } from "@fluidframework/gitresources";
-import { SummaryObject, SummaryType } from "@fluidframework/protocol-definitions";
+import type { IBlob, ITree, ITreeEntry } from "@fluidframework/gitresources";
+import { type SummaryObject, SummaryType } from "@fluidframework/protocol-definitions";
 import {
-	IWholeFlatSummaryBlob,
-	IWholeFlatSummaryTreeEntry,
-	IWholeSummaryBlob,
-	IWholeSummaryTree,
-	IWholeSummaryTreeHandleEntry,
-	IWholeSummaryTreeValueEntry,
+	type IWholeFlatSummaryBlob,
+	type IWholeFlatSummaryTreeEntry,
+	type IWholeSummaryBlob,
+	type IWholeSummaryTree,
+	type IWholeSummaryTreeHandleEntry,
+	type IWholeSummaryTreeValueEntry,
 	NetworkError,
-	WholeSummaryTreeEntry,
+	type WholeSummaryTreeEntry,
 } from "@fluidframework/server-services-client";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
 
-import { IRepositoryManager } from "../definitions";
+import type { IRepositoryManager } from "../definitions";
 
 import { Constants } from "./constants";
-import { IFullGitTree } from "./definitions";
+import type { IFullGitTree } from "./definitions";
 
 /**
  * A representation of an IFullGitTree in summary format that

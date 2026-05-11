@@ -14,15 +14,19 @@ import {
 	updatePackageJsonFile,
 	updatePackageJsonFileAsync,
 } from "@fluid-tools/build-infrastructure";
-import { PackageJson, getApiExtractorConfigFilePath } from "@fluidframework/build-tools";
+import { getApiExtractorConfigFilePath, type PackageJson } from "@fluidframework/build-tools";
 import { writeJson } from "fs-extra/esm";
 import JSON5 from "json5";
-import replace from "replace-in-file";
+import { replaceInFileSync } from "replace-in-file";
 import sortPackageJson from "sort-package-json";
-import { PackageNamePolicyConfig, ScriptRequirement, getFlubConfig } from "../../config.js";
+import {
+	getFlubConfig,
+	type PackageNamePolicyConfig,
+	type ScriptRequirement,
+} from "../../config.js";
 import { Repository } from "../git.js";
 import { queryTypesResolutionPathsFromPackageExports } from "../packageExports.js";
-import { Handler, readFile, writeFile } from "./common.js";
+import { type Handler, readFile, writeFile } from "./common.js";
 
 const require = createRequire(import.meta.url);
 
@@ -983,7 +987,7 @@ export const handlers: Handler[] = [
 				);
 			}
 			if (readmeInfo.title !== packageName) {
-				replace.sync({
+				replaceInFileSync({
 					files: readmeInfo.filePath,
 					from: /^(.*)/,
 					to: expectedTitle,
@@ -1414,6 +1418,7 @@ export const handlers: Handler[] = [
 			const mochaScriptName = scripts["test:mocha"] === undefined ? "test" : "test:mocha";
 			const mochaScript = scripts[mochaScriptName];
 
+			// eslint-disable-next-line @typescript-eslint/prefer-optional-chain -- Existing logic is easier to read
 			if (mochaScript === undefined || !mochaScript.startsWith("mocha")) {
 				// skip irregular test script for now
 				return undefined;
@@ -1451,6 +1456,7 @@ export const handlers: Handler[] = [
 			const jestScriptName = scripts["test:jest"] === undefined ? "test" : "test:jest";
 			const jestScript = scripts[jestScriptName];
 
+			// eslint-disable-next-line @typescript-eslint/prefer-optional-chain -- Existing logic is easier to read
 			if (jestScript === undefined || !jestScript.startsWith("jest")) {
 				// skip irregular test script for now
 				return undefined;

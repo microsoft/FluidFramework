@@ -41,11 +41,11 @@ import { ITestFluidObject } from "./interfaces.js";
  * @internal
  */
 export class TestFluidObject implements ITestFluidObject {
-	public get ITestFluidObject() {
+	public get ITestFluidObject(): ITestFluidObject {
 		return this;
 	}
 
-	public get IFluidLoadable() {
+	public get IFluidLoadable(): IFluidLoadable {
 		return this;
 	}
 
@@ -101,8 +101,8 @@ export class TestFluidObject implements ITestFluidObject {
 			: create404Response(request);
 	}
 
-	public async initialize(existing: boolean) {
-		const doInitialization = async () => {
+	public async initialize(existing: boolean): Promise<void> {
+		const doInitialization = async (): Promise<void> => {
 			if (!existing) {
 				this.root = SharedMap.create(this.runtime, "root");
 
@@ -176,7 +176,7 @@ export type TestDataObjectKind = new (
  * @internal
  */
 export class TestFluidObjectFactory implements IFluidDataStoreFactory {
-	public get IFluidDataStoreFactory() {
+	public get IFluidDataStoreFactory(): IFluidDataStoreFactory {
 		return this;
 	}
 

@@ -17,7 +17,7 @@ import { pkgName } from "./packageVersion.js";
 Error.stackTraceLimit = Number.POSITIVE_INFINITY;
 
 const testVariant = process.env.FLUID_TEST_VARIANT;
-const propsDict =
+const envLoggerProps =
 	process.env.FLUID_LOGGER_PROPS != null
 		? JSON.parse(process.env.FLUID_LOGGER_PROPS)
 		: undefined;
@@ -31,7 +31,7 @@ const _global: any = global;
 class FluidTestRunLogger implements ITelemetryBufferedLogger {
 	private currentTestName: string | undefined;
 
-	send(event: ITelemetryBaseEvent) {
+	send(event: ITelemetryBaseEvent): void {
 		// TODO: Remove when issue #7061 is resolved.
 		// Don't log this event as we generate too much.
 		if (event.eventName === "fluid:telemetry:RouterliciousDriver:readBlob_end") {
@@ -46,11 +46,11 @@ class FluidTestRunLogger implements ITelemetryBufferedLogger {
 			...event,
 			// Setting hostname to pkgName is the behavior we had for a long time, so keeping it just in case.
 			// But prefer a value set through FLUID_LOGGER_PROPS if it exists.
-			hostName: propsDict?.hostName ?? pkgName,
-			details: JSON.stringify(propsDict),
+			hostName: envLoggerProps?.hostName ?? pkgName,
+			testEnvProps: JSON.stringify(envLoggerProps),
 		});
 	}
-	async flush() {
+	async flush(): Promise<void> {
 		return this.parentLogger.flush();
 	}
 	constructor(private readonly parentLogger: ITelemetryBufferedLogger) {}
@@ -60,7 +60,7 @@ class FluidTestRunLogger implements ITelemetryBufferedLogger {
 	 * The test name will be included in all events logged through the logger until {@link clearCurrentTest} is called.
 	 * @param testName - The name of the test that is currently running.
 	 */
-	public setCurrentTest(testName: string) {
+	public setCurrentTest(testName: string): void {
 		this.currentTestName = testName;
 	}
 
@@ -69,13 +69,13 @@ class FluidTestRunLogger implements ITelemetryBufferedLogger {
 	 * Must be called after a given test has completed so that events logged outside the context of a test
 	 * don't include the name of the last test that ran.
 	 */
-	public clearCurrentTest() {
+	public clearCurrentTest(): void {
 		this.currentTestName = undefined;
 	}
 }
 const nullLogger: ITelemetryBufferedLogger = {
-	send: () => {},
-	flush: async () => {},
+	send: (): void => {},
+	flush: async (): Promise<void> => {},
 };
 
 // Keep references to the original console functions so we can restore them after each test.
@@ -86,16 +86,39 @@ const warn = console.warn;
 let testLogger: FluidTestRunLogger;
 
 /**
+ * The amount of time to wait after logging an event before flushing the logger.
+ * This amount was decided after doing tests with different values. See AB#44378 for details.
+ */
+const AFTER_FLUSH_DELAY_MS = 1250;
+
+/**
  * @internal
  */
 export const mochaHooks = {
-	beforeAll() {
+	async beforeAll() {
 		// Code in our tests will call the global `getTestLogger` function to get a logger to use.
 
 		// First we call the version of that function that was (potentially) injected dynamicaly to get the logger that it
 		// provides and wrap it with a more intelligent logger which adds test-run-related context to all events logged
 		// through it. See the documentation on `FluidTestRunLogger` for details.
-		const originalLogger = _global.getTestLogger?.() ?? nullLogger;
+		let originalLogger: ITelemetryBufferedLogger;
+
+		if (process.env.FLUID_TEST_LOGGER_PKG_SPECIFIER === undefined) {
+			originalLogger = nullLogger;
+		} else {
+			const { createTestLogger } = await import(process.env.FLUID_TEST_LOGGER_PKG_SPECIFIER);
+			if (typeof createTestLogger !== "function") {
+				throw new TypeError(
+					`Expected package '${process.env.FLUID_TEST_LOGGER_PKG_SPECIFIER}' to export a function, but got an object of type '${typeof createTestLogger}' instead`,
+				);
+			} else {
+				originalLogger = createTestLogger({
+					afterFlushDelayMs: AFTER_FLUSH_DELAY_MS,
+					throttleLogging: false,
+				});
+			}
+		}
+
 		testLogger = new FluidTestRunLogger(originalLogger);
 
 		// Then we redefine `getTestLogger` so it returns the wrapper logger.
@@ -114,7 +137,16 @@ export const mochaHooks = {
 		}
 
 		ensureTestRunLoggerIsInitialized(testLogger);
-		testLogger.setCurrentTest(this.currentTest?.fullTitle() ?? "");
+
+		let testTitle = "";
+		if (this.currentTest !== undefined) {
+			if (testVariant !== undefined) {
+				this.currentTest.title = `[${testVariant}] ${this.currentTest.title}`;
+			}
+			testTitle = this.currentTest.fullTitle();
+		}
+		testLogger.setCurrentTest(testTitle);
+
 		testLogger.send({
 			category: "generic",
 			eventName: "fluid:telemetry:Test_start",
@@ -140,6 +172,12 @@ export const mochaHooks = {
 		// Clear the current test from the logger. Important so if anything calls `getTestLogger` outside the context of a
 		// test (e.g. during a `before` or `after` hook), it doesn't log events with the name of the last test that ran.
 		testLogger.clearCurrentTest();
+	},
+	async afterAll(this: Mocha.Context) {
+		// Allow 5 seconds for the logger to flush.
+		this.timeout(5000);
+		// After all tests ran, flush the logger to ensure all events are sent before the process exits.
+		await testLogger.flush();
 	},
 };
 

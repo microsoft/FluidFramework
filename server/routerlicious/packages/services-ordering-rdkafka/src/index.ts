@@ -3,7 +3,11 @@
  * Licensed under the MIT License.
  */
 
-export { IOauthBearerConfig, IOauthBearerResponse } from "./rdkafkaBase";
-export { IKafkaConsumerOptions, RdkafkaConsumer } from "./rdkafkaConsumer";
-export { IKafkaProducerOptions, RdkafkaProducer } from "./rdkafkaProducer";
-export { IRdkafkaResources, RdkafkaResources, RdkafkaResourcesFactory } from "./resourcesFactory";
+export type { IOauthBearerConfig, IOauthBearerResponse } from "./rdkafkaBase";
+export { type IKafkaConsumerOptions, RdkafkaConsumer } from "./rdkafkaConsumer";
+export { type IKafkaProducerOptions, RdkafkaProducer } from "./rdkafkaProducer";
+export {
+	type IRdkafkaResources,
+	RdkafkaResources,
+	RdkafkaResourcesFactory,
+} from "./resourcesFactory";

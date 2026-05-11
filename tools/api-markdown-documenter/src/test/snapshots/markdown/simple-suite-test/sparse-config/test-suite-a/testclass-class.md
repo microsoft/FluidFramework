@@ -2,7 +2,7 @@
 
 Test class
 
-### Signature {#testclass-signature}
+<h3 id="testclass-signature">Signature</h3>
 
 ```typescript
 export declare class TestClass<TTypeParameterA, TTypeParameterB> extends TestAbstractClass
@@ -17,7 +17,7 @@ export declare class TestClass<TTypeParameterA, TTypeParameterB> extends TestAbs
 | TTypeParameterA | A type parameter |
 | TTypeParameterB | Another type parameter |
 
-### Remarks {#testclass-remarks}
+<h3 id="testclass-remarks">Remarks</h3>
 
 Here are some remarks about the class
 
@@ -49,7 +49,7 @@ Here are some remarks about the class
 
 | Property | Modifiers | Type | Description |
 | - | - | - | - |
-| [abstractPropertyGetter](docs/test-suite-a/testclass-abstractpropertygetter-property) | `readonly` | [TestMappedType](docs/test-suite-a/testmappedtype-typealias) | A test abstract getter property. |
+| [abstractPropertyGetter](docs/test-suite-a/testclass-abstractpropertygetter-property) | `readonly` | [TestMappedType](docs/test-suite-a/testmappedtype-typealias) | <p>A test abstract getter property.</p><p>@escapedTag</p> |
 | [testClassGetterProperty](docs/test-suite-a/testclass-testclassgetterproperty-property) | `virtual` | number | Test class property with both a getter and a setter. |
 | [testClassProperty](docs/test-suite-a/testclass-testclassproperty-property) | `readonly` | TTypeParameterB | Test class property |
 
@@ -61,6 +61,6 @@ Here are some remarks about the class
 | [testClassMethod(input)](docs/test-suite-a/testclass-testclassmethod-method) | `sealed` | TTypeParameterA | Test class method |
 | [virtualMethod()](docs/test-suite-a/testclass-virtualmethod-method) | | number | Overrides [virtualMethod()](docs/test-suite-a/testabstractclass-virtualmethod-method). |
 
-### See Also {#testclass-see-also}
+<h3 id="testclass-see-also">See Also</h3>
 
 [TestAbstractClass](docs/test-suite-a/testabstractclass-class)

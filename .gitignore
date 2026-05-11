@@ -31,19 +31,25 @@ legacy.d.ts
 # Temporary api-extractor build artifacts
 **/_api-extractor-temp/**
 
+# api-extractor metadata artifact
+# This should not be generically ignored nor checked in. If found, examine settings
+# to see if file is meant to be generated in that location.
+# tsdoc-metadata.json
+
 # Bundle analysis artifacts
 bundleAnalysis
+bundleAnalyzerJson
 
 # Misc pipeline artifacts
 artifacts
 
 docs/resources/_gen/
 
-# documentation tool artifact
-tsdoc-metadata.json
-
 # PNPM store (when mounting host file system in docker container)
 .pnpm-store/
+
+# Scratch dir created by `flub check trustPolicy`.
+**/.trust-audit-temp/
 
 # TODO: This can be removed once the `flub add changeset` command no longer creates the UPCOMING file.
 UPCOMING.md
@@ -52,3 +58,15 @@ UPCOMING.md
 # This is created to later publish its content on the pipeline and do not need to be included on git as
 # artifacts or bundleAnalysis folders. See scripts/pack-build-output.sh for more details.
 build_output_archive
+
+# Claude Code
+# Local settings contain author-specific information and should not be shared.
+**/.claude/**/*.local.*
+CLAUDE.local.md
+# Session-specific task tracking
+**/.claude/todos/
+# Git worktrees created by Claude Code
+**/.claude/worktrees/
+
+# Output from benchmarks
+**/benchmark*Output.json

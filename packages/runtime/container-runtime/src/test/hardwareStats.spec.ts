@@ -3,10 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import assert from "node:assert";
+import { strict as assert } from "node:assert";
 
-import { IContainerContext } from "@fluidframework/container-definitions/internal";
-import { ITelemetryBaseEvent } from "@fluidframework/core-interfaces";
+import type { IContainerContext } from "@fluidframework/container-definitions/internal";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 import {
 	MockDeltaManager,
@@ -15,12 +14,32 @@ import {
 } from "@fluidframework/test-runtime-utils/internal";
 
 import { ContainerRuntime, getDeviceSpec } from "../containerRuntime.js";
+import { FluidDataStoreRegistry } from "../dataStoreRegistry.js";
 
-function setNavigator(
-	// eslint-disable-next-line @rushstack/no-new-null -- testing behavior with global
-	navigator: Partial<Navigator & { deviceMemory?: number }> | undefined | null,
-) {
-	global.navigator = navigator as Navigator;
+// Capture the full property descriptor (not just the value) so we can restore the original getter-backed property after tests override it.
+// Uses an IIFE so the assert narrows the type to a definite PropertyDescriptor, avoiding
+// non-null assertions in restoreNavigator (TypeScript can't track narrowing across function boundaries).
+const originalNavigatorDescriptor = (() => {
+	const desc = Object.getOwnPropertyDescriptor(globalThis, "navigator");
+	assert(
+		desc !== undefined,
+		"navigator must be defined in the test environment (requires Node 22)",
+	);
+	return desc;
+})();
+
+function setNavigator(navigator: Partial<Navigator & { deviceMemory?: number }>) {
+	// In Node 22+, globalThis.navigator is a read-only getter, so direct
+	// assignment throws. Use Object.defineProperty to override it.
+	Object.defineProperty(globalThis, "navigator", {
+		value: navigator,
+		writable: true,
+		configurable: true,
+	});
+}
+
+function restoreNavigator() {
+	Object.defineProperty(globalThis, "navigator", originalNavigatorDescriptor);
 }
 
 describe("Hardware Stats", () => {
@@ -35,13 +54,25 @@ describe("Hardware Stats", () => {
 		getLoadedFromVersion: () => undefined,
 	};
 
-	const getDeviceSpecEvents = (): ITelemetryBaseEvent[] =>
-		mockLogger.events.filter((event) => event.eventName === "DeviceSpec");
+	const getDeviceSpecEvents = () =>
+		mockLogger.events
+			.filter(
+				(event) =>
+					event.eventName === "ContainerRuntime:ContainerLoadStats" &&
+					event.deviceSpec !== undefined,
+			)
+			.map(
+				(event) =>
+					JSON.parse(event.deviceSpec as string) as {
+						deviceMemory?: number;
+						hardwareConcurrency?: number;
+					},
+			);
 
 	const loadContainer = async () =>
-		ContainerRuntime.loadRuntime({
+		ContainerRuntime.loadRuntime2({
 			context: mockContext as IContainerContext,
-			registryEntries: [],
+			registry: new FluidDataStoreRegistry([]),
 			runtimeOptions: {
 				summaryOptions: {
 					summaryConfigOverrides: { state: "disabled" },
@@ -52,6 +83,10 @@ describe("Hardware Stats", () => {
 			}),
 			existing: false,
 		});
+
+	afterEach(() => {
+		restoreNavigator();
+	});
 
 	beforeEach(async () => {
 		mockLogger = new MockLogger();
@@ -66,7 +101,7 @@ describe("Hardware Stats", () => {
 		};
 	});
 
-	it("should generate correct hardware stats with regular navigator", async () => {
+	it("should generate correct hardware stats with browser-like navigator", async () => {
 		const navigator = {
 			deviceMemory: 10,
 			hardwareConcurrency: 8,
@@ -81,7 +116,7 @@ describe("Hardware Stats", () => {
 
 		// checking telemetry
 		const events = getDeviceSpecEvents();
-		assert(events !== undefined, "No deviceSpec event found");
+		assert(events.length > 0, "No ContainerLoadStats event with deviceSpec found");
 		assert.strictEqual(events[0].deviceMemory, 10, "incorrect deviceMemory logged");
 		assert.strictEqual(
 			events[0].hardwareConcurrency,
@@ -90,46 +125,34 @@ describe("Hardware Stats", () => {
 		);
 	});
 
-	it("should generate correct hardware stats with null navigator", async () => {
-		// eslint-disable-next-line unicorn/no-null -- testing behavior with global
-		const navigator = null;
-		setNavigator(navigator);
+	// If Node ever adds support for deviceMemory, we can collapse both tests into one
+	// and stop mocking navigator entirely.
+	it("should generate correct hardware stats with Node-native navigator", async () => {
+		// Node 22+ provides a built-in navigator with hardwareConcurrency but not deviceMemory.
+		restoreNavigator();
 		// testing function
 		const { deviceMemory, hardwareConcurrency } = getDeviceSpec();
-		assert.strictEqual(deviceMemory, undefined, "incorrect deviceMemory value");
-		assert.strictEqual(hardwareConcurrency, undefined, "incorrect hardwareConcurrency value");
-
-		await loadContainer();
-
-		// checking telemetry
-		const events = getDeviceSpecEvents();
-		assert(events !== undefined, "No deviceSpec event found");
-		assert.strictEqual(events[0].deviceMemory, undefined, "incorrect deviceMemory logged");
+		assert.strictEqual(deviceMemory, undefined, "deviceMemory should be undefined on Node");
 		assert.strictEqual(
-			events[0].hardwareConcurrency,
-			undefined,
-			"incorrect hardwareConcurrency logged",
+			typeof hardwareConcurrency,
+			"number",
+			"hardwareConcurrency should be a number on Node",
 		);
-	});
-
-	it("should generate correct hardware stats with undefined navigator", async () => {
-		const navigator = undefined;
-		setNavigator(navigator);
-		// testing function
-		const { deviceMemory, hardwareConcurrency } = getDeviceSpec();
-		assert.strictEqual(deviceMemory, undefined, "incorrect deviceMemory value");
-		assert.strictEqual(hardwareConcurrency, undefined, "incorrect hardwareConcurrency value");
 
 		await loadContainer();
 
 		// checking telemetry
 		const events = getDeviceSpecEvents();
-		assert(events !== undefined, "No deviceSpec event found");
-		assert.strictEqual(events[0].deviceMemory, undefined, "incorrect deviceMemory logged");
+		assert(events.length > 0, "No ContainerLoadStats event with deviceSpec found");
 		assert.strictEqual(
-			events[0].hardwareConcurrency,
+			events[0].deviceMemory,
 			undefined,
-			"incorrect hardwareConcurrency logged",
+			"deviceMemory should be undefined on Node",
+		);
+		assert.strictEqual(
+			typeof events[0].hardwareConcurrency,
+			"number",
+			"hardwareConcurrency should be a number on Node",
 		);
 	});
 });

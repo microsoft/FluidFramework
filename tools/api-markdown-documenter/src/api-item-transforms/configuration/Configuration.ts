@@ -7,7 +7,7 @@ import type { ApiItem, ApiModel } from "@microsoft/api-extractor-model";
 
 import { defaultConsoleLogger } from "../../Logging.js";
 import type { LoggingConfiguration } from "../../LoggingConfiguration.js";
-import type { SectionNode } from "../../documentation-domain/index.js";
+import type { Section } from "../../mdast/index.js";
 import { createSectionForApiItem } from "../default-implementations/index.js";
 
 import {
@@ -69,6 +69,13 @@ export interface ApiItemTransformationConfiguration
 	readonly transformations: ApiItemTransformations;
 
 	/**
+	 * Optional override for the starting heading level of a document.
+	 *
+	 * @remarks Must be an integer on [1, ∞).
+	 */
+	readonly startingHeadingLevel: number;
+
+	/**
 	 * Generates the default section layout used by all default {@link ApiItemTransformations}.
 	 *
 	 * @remarks
@@ -77,13 +84,13 @@ export interface ApiItemTransformationConfiguration
 	 *
 	 * API item kind-specific details are passed in, and can be displayed as desired.
 	 *
-	 * @returns The list of {@link SectionNode}s that comprise the top-level section body for the API item.
+	 * @returns The list of {@link Section}s that comprise the top-level section body for the API item.
 	 */
 	readonly defaultSectionLayout: (
 		apiItem: ApiItem,
-		childSections: SectionNode[] | undefined,
+		childSections: Section[] | undefined,
 		config: ApiItemTransformationConfiguration,
-	) => SectionNode[];
+	) => Section[];
 }
 
 /**
@@ -108,13 +115,20 @@ export interface ApiItemTransformationOptions
 	readonly transformations?: Partial<ApiItemTransformations>;
 
 	/**
+	 * {@inheritDoc ApiItemTransformationConfiguration.startingHeadingLevel}
+	 *
+	 * @defaultValue 1
+	 */
+	readonly startingHeadingLevel?: number | undefined;
+
+	/**
 	 * {@inheritDoc ApiItemTransformationConfiguration.defaultSectionLayout}
 	 */
 	readonly defaultSectionLayout?: (
 		apiItem: ApiItem,
-		childSections: SectionNode[] | undefined,
+		childSections: Section[] | undefined,
 		config: ApiItemTransformationConfiguration,
-	) => SectionNode[];
+	) => Section[];
 }
 
 /**
@@ -135,6 +149,7 @@ export function getApiItemTransformationConfigurationWithDefaults(
 		transformations,
 		apiModel: options.apiModel,
 		uriRoot: options.uriRoot ?? "",
+		startingHeadingLevel: options.startingHeadingLevel ?? 1,
 		logger,
 		defaultSectionLayout,
 	};

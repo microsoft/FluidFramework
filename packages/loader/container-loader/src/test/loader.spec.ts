@@ -3,13 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import assert from "node:assert";
+import { strict as assert } from "node:assert";
 
+import type { IProvideLayerCompatDetails } from "@fluid-internal/client-utils";
 import { AttachState } from "@fluidframework/container-definitions";
 import { FluidErrorTypes, type ConfigTypes } from "@fluidframework/core-interfaces/internal";
-import {
-	type IResolvedUrl,
-	type IUrlResolver,
+import type {
+	IDocumentService,
+	IDocumentServiceFactory,
+	IResolvedUrl,
+	IUrlResolver,
 } from "@fluidframework/driver-definitions/internal";
 import {
 	isFluidError,
@@ -17,6 +20,7 @@ import {
 	wrapConfigProviderWithDefaults,
 	mixinMonitoringContext,
 	createChildLogger,
+	toITelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
@@ -24,17 +28,23 @@ import { Container } from "../container.js";
 import { Loader } from "../loader.js";
 import type { IPendingDetachedContainerState } from "../serializedStateManager.js";
 
-import { failProxy, failSometimeProxy } from "./failProxy.js";
+import { AbsentProperty, failProxy, failSometimeProxy } from "./failProxy.js";
 import {
 	createTestCodeLoaderProxy,
 	createTestDocumentServiceFactoryProxy,
 } from "./testProxies.js";
 
+const documentServiceFactoryFailProxy = failSometimeProxy<
+	IDocumentServiceFactory & IProvideLayerCompatDetails
+>({
+	ILayerCompatDetails: AbsentProperty,
+});
+
 describe("loader unit test", () => {
 	it("rehydrateDetachedContainerFromSnapshot with invalid format", async () => {
 		const loader = new Loader({
 			codeLoader: failProxy(),
-			documentServiceFactory: failProxy(),
+			documentServiceFactory: documentServiceFactoryFailProxy,
 			urlResolver: failProxy(),
 		});
 
@@ -54,7 +64,7 @@ describe("loader unit test", () => {
 	it("rehydrateDetachedContainerFromSnapshot with valid format", async () => {
 		const loader = new Loader({
 			codeLoader: createTestCodeLoaderProxy(),
-			documentServiceFactory: failProxy(),
+			documentServiceFactory: documentServiceFactoryFailProxy,
 			urlResolver: failProxy(),
 		});
 		const detached = await loader.createDetachedContainer({ package: "none" });
@@ -63,14 +73,14 @@ describe("loader unit test", () => {
 		assert.strictEqual(parsedState.attached, false);
 		assert.strictEqual(parsedState.hasAttachmentBlobs, false);
 		assert.strictEqual(Object.keys(parsedState.snapshotBlobs).length, 4);
-		assert.ok(parsedState.baseSnapshot);
+		assert(parsedState.baseSnapshot !== undefined);
 		await loader.rehydrateDetachedContainerFromSnapshot(detachedContainerState);
 	});
 
 	it("rehydrateDetachedContainerFromSnapshot with valid format and attachment blobs", async () => {
 		const loader = new Loader({
 			codeLoader: createTestCodeLoaderProxy({ createDetachedBlob: true }),
-			documentServiceFactory: failProxy(),
+			documentServiceFactory: documentServiceFactoryFailProxy,
 			urlResolver: failProxy(),
 		});
 		const detached = await loader.createDetachedContainer({ package: "none" });
@@ -79,18 +89,18 @@ describe("loader unit test", () => {
 		assert.strictEqual(parsedState.attached, false);
 		assert.strictEqual(parsedState.hasAttachmentBlobs, true);
 		assert.strictEqual(Object.keys(parsedState.snapshotBlobs).length, 4);
-		assert.ok(parsedState.baseSnapshot);
+		assert(parsedState.baseSnapshot !== undefined);
 		await loader.rehydrateDetachedContainerFromSnapshot(detachedContainerState);
 	});
 
 	it("serialize and rehydrateDetachedContainerFromSnapshot while attaching", async () => {
 		const loader = new Loader({
 			codeLoader: createTestCodeLoaderProxy(),
-			documentServiceFactory: failProxy(),
+			documentServiceFactory: documentServiceFactoryFailProxy,
 			urlResolver: failProxy(),
 			configProvider: {
 				getRawConfig: (name): ConfigTypes =>
-					name === "Fluid.Container.RetryOnAttachFailure" ? true : undefined,
+					name === "Fluid.Container.DisableCloseOnAttachFailure" ? true : undefined,
 			},
 		});
 		const detached = await loader.createDetachedContainer({ package: "none" });
@@ -108,7 +118,7 @@ describe("loader unit test", () => {
 		assert.strictEqual(parsedState.hasAttachmentBlobs, false);
 		assert.strictEqual(Object.keys(parsedState.snapshotBlobs).length, 4);
 		assert.deepStrictEqual(parsedState.pendingRuntimeState, { pending: [] });
-		assert.ok(parsedState.baseSnapshot);
+		assert(parsedState.baseSnapshot !== undefined);
 		await loader.rehydrateDetachedContainerFromSnapshot(detachedContainerState);
 	});
 
@@ -128,7 +138,7 @@ describe("loader unit test", () => {
 			}),
 			configProvider: {
 				getRawConfig: (name): ConfigTypes =>
-					name === "Fluid.Container.RetryOnAttachFailure" ? true : undefined,
+					name === "Fluid.Container.DisableCloseOnAttachFailure" ? true : undefined,
 			},
 		});
 		const detached = await loader.createDetachedContainer({ package: "none" });
@@ -146,7 +156,7 @@ describe("loader unit test", () => {
 		assert.strictEqual(parsedState.attached, false);
 		assert.strictEqual(parsedState.hasAttachmentBlobs, true);
 		assert.strictEqual(Object.keys(parsedState.snapshotBlobs).length, 4);
-		assert.ok(parsedState.baseSnapshot);
+		assert(parsedState.baseSnapshot !== undefined);
 		await loader.rehydrateDetachedContainerFromSnapshot(detachedContainerState);
 	});
 
@@ -175,11 +185,123 @@ describe("loader unit test", () => {
 		// - Container.connectionStateHandler.connectionState - crash, as Container.connectionStateHandler is undefined (not setup yet).
 		new Container({
 			urlResolver: failProxy(),
-			documentServiceFactory: failProxy(),
+			documentServiceFactory: documentServiceFactoryFailProxy,
 			codeLoader: createTestCodeLoaderProxy(),
 			options: {},
 			scope: {},
-			subLogger: logger.logger,
+			subLogger: toITelemetryLoggerExt(logger.logger),
 		});
+	});
+
+	it("can attach with `IRuntime` only implementing `setConnectionState`", async () => {
+		const resolvedUrl: IResolvedUrl = {
+			id: "none",
+			endpoints: {},
+			tokens: {},
+			type: "fluid",
+			url: "none",
+		};
+		const urlResolver = failSometimeProxy<IUrlResolver>({
+			resolve: async () => resolvedUrl,
+		});
+		const loader = new Loader({
+			codeLoader: createTestCodeLoaderProxy({ runtimeWithout_setConnectionStatus: true }),
+			documentServiceFactory: createTestDocumentServiceFactoryProxy(resolvedUrl),
+			urlResolver,
+		});
+		const container = await loader.createDetachedContainer({ package: "none" });
+		await container.attach({ url: "none" });
+	});
+});
+
+describe("DisableLoadConnectionRetries", () => {
+	const resolvedUrl: IResolvedUrl = {
+		id: uuid(),
+		endpoints: {},
+		tokens: {},
+		type: "fluid",
+		url: `https://localhost/tenant/${uuid()}`,
+	};
+
+	const urlResolver = failSometimeProxy<IUrlResolver>({
+		resolve: async () => resolvedUrl,
+	});
+
+	function createRetryableError(message: string): Error {
+		const error = new Error(message);
+		(error as unknown as { canRetry: boolean }).canRetry = true;
+		return error;
+	}
+
+	it("load rejects when connectToStorage fails with retryable error and flag is enabled", async () => {
+		const documentServiceFactory = failSometimeProxy<
+			IDocumentServiceFactory & IProvideLayerCompatDetails
+		>({
+			createDocumentService: async () =>
+				failSometimeProxy<IDocumentService>({
+					policies: {},
+					resolvedUrl,
+					connectToStorage: async () => {
+						throw createRetryableError("transient storage failure");
+					},
+					connectToDeltaStream: async () => new Promise(() => {}),
+					on: AbsentProperty,
+					off: AbsentProperty,
+					dispose: () => {},
+				}),
+			ILayerCompatDetails: AbsentProperty,
+		});
+
+		const loader = new Loader({
+			codeLoader: createTestCodeLoaderProxy(),
+			documentServiceFactory,
+			urlResolver,
+			configProvider: {
+				getRawConfig: (name): ConfigTypes =>
+					name === "Fluid.Container.DisableLoadConnectionRetries" ? true : undefined,
+			},
+		});
+
+		// With the flag enabled, the load should reject immediately instead of retrying.
+		await assert.rejects(
+			async () => loader.resolve({ url: "test" }),
+			"Load should reject when storage connection fails with retries disabled",
+		);
+	});
+
+	it("load rejects when connectToDeltaStream fails with retryable error and flag is enabled", async () => {
+		const documentServiceFactory = failSometimeProxy<
+			IDocumentServiceFactory & IProvideLayerCompatDetails
+		>({
+			createDocumentService: async () =>
+				failSometimeProxy<IDocumentService>({
+					policies: {},
+					resolvedUrl,
+					connectToStorage: async () => new Promise(() => {}),
+					connectToDeltaStream: async (): Promise<never> => {
+						throw createRetryableError("transient connection failure");
+					},
+					on: AbsentProperty,
+					off: AbsentProperty,
+					dispose: () => {},
+				}),
+			ILayerCompatDetails: AbsentProperty,
+		});
+
+		const loader = new Loader({
+			codeLoader: createTestCodeLoaderProxy(),
+			documentServiceFactory,
+			urlResolver,
+			configProvider: {
+				getRawConfig: (name): ConfigTypes =>
+					name === "Fluid.Container.DisableLoadConnectionRetries" ? true : undefined,
+			},
+		});
+
+		// With the flag enabled, the load should reject immediately instead of retrying.
+		await assert.rejects(
+			async () => loader.resolve({ url: "test" }),
+			"Load should reject when delta connection fails with retries disabled",
+		);
 	});
 });

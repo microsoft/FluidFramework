@@ -4,7 +4,7 @@
 
 **WARNING: This API is provided as an alpha preview and may change without notice. Use at your own risk.**
 
-## Signature {#alphamember-signature}
+<h2 id="alphamember-signature">Signature</h2>
 
 ```typescript
 alphaMember = "alpha"

@@ -43,12 +43,12 @@ The `function` syntax must be used for `this.skip()` to be available, arrow func
 
 Some drivers take a second bit of configuration besides the driver type, which is a specific "target environment",
 usually referred to as `<driverType>EndpointName`, e.g. `odspEndpointName` and `r11sEndpointName`.
-These are important to get right for the specific environment you're targetting, otherwise the test driver might
+These are important to get right for the specific environment you're targeting, otherwise the test driver might
 configure things in a way that the target environment doesn't expect, and you could see weird and unexpected
 errors when running tests.
 
 Usually you'll pass these as extra flags when running tests. E.g., to run our e2e tests against a routerlicious instance
-running locally in docker per our dev setup for it, you'll want to run:
+running locally in docker per our dev setup for it in `@fluid-private/test-end-to-end-tests` you'll want to run:
 
 ```bash
 <base command to kick-off tests> --driver=r11s --r11sEndpointName=docker

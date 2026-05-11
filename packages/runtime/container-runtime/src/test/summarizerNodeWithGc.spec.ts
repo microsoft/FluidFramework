@@ -7,14 +7,14 @@ import { strict as assert } from "node:assert";
 
 import { SummaryType } from "@fluidframework/driver-definitions";
 import {
-	IGarbageCollectionData,
-	CreateChildSummarizerNodeParam,
+	type IGarbageCollectionData,
+	type CreateChildSummarizerNodeParam,
 	CreateSummarizerNodeSource,
-	IGarbageCollectionDetailsBase,
-	ISummarizeInternalResult,
-	ISummarizerNodeConfig,
-	ISummarizerNodeWithGC,
-	SummarizeInternalFn,
+	type IGarbageCollectionDetailsBase,
+	type ISummarizeInternalResult,
+	type ISummarizerNodeConfig,
+	type ISummarizerNodeWithGC,
+	type SummarizeInternalFn,
 	channelsTreeName,
 } from "@fluidframework/runtime-definitions/internal";
 import { GCDataBuilder, mergeStats } from "@fluidframework/runtime-utils/internal";
@@ -25,13 +25,13 @@ import {
 } from "@fluidframework/telemetry-utils/internal";
 
 import { cloneGCData } from "../gc/index.js";
-// eslint-disable-next-line import/no-internal-modules
-import { ValidateSummaryResult } from "../summary/summarizerNode/index.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import type { ValidateSummaryResult } from "../summary/summarizerNode/index.js";
 import {
-	IRootSummarizerNodeWithGC,
-	SummarizerNodeWithGC,
+	type IRootSummarizerNodeWithGC,
+	type SummarizerNodeWithGC,
 	createRootSummarizerNodeWithGC,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../summary/summarizerNode/summarizerNodeWithGc.js";
 
 type SummarizerNodeWithPrivates = ISummarizerNodeWithGC & {

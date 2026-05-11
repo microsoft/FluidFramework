@@ -18,13 +18,17 @@ resources:
       - release/*
       - main
       - next
+  repositories:
+  - repository: ff_pipeline_host
+    type: git
+    name: ff_pipeline_host
+
 
 variables:
 - template: /tools/pipelines/templates/include-vars-telemetry-generator.yml@self
-- name: testWorkspace
-  value: $(Pipeline.Workspace)/test
 # This is a test pipeline, not a build one, so we don't need to run CodeQL tasks
-- name: DisableCodeQL
+# Note that using this variable only works for non-1ES-template pipelines.
+- name: Codeql.SkipTaskAutoInjection
   value: true
 
 parameters:
@@ -39,6 +43,7 @@ stages:
   - template: /tools/pipelines/templates/include-conditionally-run-stress-tests.yml@self
     parameters:
       artifactBuildId: $(resources.pipeline.client.runID)
+      fluidFrameworkSourceVersion: $(resources.pipeline.client.sourceCommit)
       packages:
         - name: "@fluidframework/sequence"
           affectedPaths:
@@ -68,5 +73,4 @@ stages:
           - packages/dds/merge-tree
           testFileTarName: matrix
           testCommand: test:stress
-      testWorkspace: ${{ variables.testWorkspace }}
       stressMode: ${{ parameters.stressMode }}

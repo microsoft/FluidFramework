@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import assert from "assert";
+import { strict as assert } from "assert";
 import express from "express";
 import request from "supertest";
 import { IThrottler } from "@fluidframework/server-services-core";

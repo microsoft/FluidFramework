@@ -14,7 +14,6 @@ import type {
 	ISummaryTree,
 } from "@fluidframework/driver-definitions";
 import type {
-	IDocumentStorageService,
 	ISnapshot,
 	IDocumentMessage,
 	ISnapshotTree,
@@ -22,12 +21,17 @@ import type {
 	IVersion,
 	MessageType,
 	ISequencedDocumentMessage,
+	ICreateBlobResponse,
+	ISummaryContext,
+	ISnapshotFetchOptions,
+	FetchSource,
+	IDocumentStorageServicePolicies,
 } from "@fluidframework/driver-definitions/internal";
 
 import type { IAudience } from "./audience.js";
 import type { IDeltaManager } from "./deltas.js";
 import type { ICriticalContainerError } from "./error.js";
-import type { ILoader } from "./loader.js";
+import type { ConnectionState, ILoader } from "./loader.js";
 
 /**
  * The attachment state of some Fluid data (e.g. a container or data store), denoting whether it is uploaded to the
@@ -54,19 +58,123 @@ export enum AttachState {
 }
 
 /**
+ * Defines the connection status of the container.
+ *
+ * @legacy @beta
+ * @sealed
+ */
+export interface ConnectionStatusTemplate {
+	connectionState: ConnectionState;
+	/**
+	 * True if the runtime is currently allowed to send ops.
+	 */
+	canSendOps: boolean;
+	/**
+	 * True if the container is in readonly mode.
+	 */
+	readonly: boolean;
+}
+
+/**
+ * Status for an establishing connection.
+ *
+ * @legacy @beta
+ * @sealed
+ */
+export interface ConnectionStatusEstablishingConnection extends ConnectionStatusTemplate {
+	connectionState: ConnectionState.EstablishingConnection;
+	canSendOps: false;
+}
+
+/**
+ * Status for an in-progress connection that is catching up to latest op state.
+ *
+ * @legacy @beta
+ * @sealed
+ */
+export interface ConnectionStatusCatchingUp extends ConnectionStatusTemplate {
+	connectionState: ConnectionState.CatchingUp;
+	/**
+	 * The ID of the client connection that is connecting.
+	 */
+	pendingClientConnectionId: string;
+	canSendOps: false;
+}
+
+/**
+ * Status for a full connection.
+ *
+ * @legacy @beta
+ * @sealed
+ */
+export interface ConnectionStatusConnected extends ConnectionStatusTemplate {
+	connectionState: ConnectionState.Connected;
+	/**
+	 * The ID of the client connection that is connected.
+	 */
+	clientConnectionId: string;
+	canSendOps: boolean;
+}
+
+/**
+ * Status for a disconnected connection.
+ *
+ * @legacy @beta
+ * @sealed
+ */
+export interface ConnectionStatusDisconnected extends ConnectionStatusTemplate {
+	connectionState: ConnectionState.Disconnected;
+	canSendOps: false;
+	/**
+	 * The ID of the client connection that was most recently connecting (catching up).
+	 */
+	priorPendingClientConnectionId: string | undefined;
+	/**
+	 * The ID of the client connection that was most recently connected.
+	 */
+	priorConnectedClientConnectionId: string | undefined;
+}
+
+/**
+ * Connection status of the container.
+ *
+ * @legacy @beta
+ * @sealed
+ */
+export type ConnectionStatus =
+	| ConnectionStatusEstablishingConnection
+	| ConnectionStatusCatchingUp
+	| ConnectionStatusConnected
+	| ConnectionStatusDisconnected;
+
+/**
  * The IRuntime represents an instantiation of a code package within a Container.
  * Primarily held by the ContainerContext to be able to interact with the running instance of the Container.
  *
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IRuntime extends IDisposable {
 	/**
 	 * Notifies the runtime of a change in the connection state
 	 * @param canSendOps - true if the runtime is allowed to send ops
 	 * @param clientId - the ID of the client that is connecting or disconnecting
+	 *
+	 * @remarks
+	 * This is deprecated when used with `@fluidframework/container-loader` v2.63
+	 * and later. Implement {@link IRuntime.setConnectionStatus}. Then this method
+	 * will not be called, when using newer container-loader.
+	 *
+	 * Note: when {@link IRuntime.setConnectionStatus} is implemented, there will
+	 * not be a call exactly when Container loads as happens currently without it.
 	 */
 	setConnectionState(canSendOps: boolean, clientId?: string);
+
+	/**
+	 * Notifies the runtime of a change in the connection state.
+	 *
+	 * @remarks This supersedes {@link IRuntime.setConnectionState}.
+	 */
+	setConnectionStatus?(status: ConnectionStatus): void;
 
 	/**
 	 * Processes the given op (message)
@@ -115,18 +223,124 @@ export interface IRuntime extends IDisposable {
 	 * @see {@link IContainer.getEntryPoint}
 	 */
 	getEntryPoint(): Promise<FluidObject>;
+
+	/**
+	 * Closes the runtime, releasing timers and other transient resources which are only useful while changes to the content or service are still possible.
+	 * The entryPoint is preserved, allowing content to still be read/inspected.
+	 *
+	 * @remarks
+	 * This enters an intermediate lifecycle stage between connected operation and full disposal.
+	 * The container may call this when it closes, before eventually calling
+	 * {@link @fluidframework/core-interfaces#IDisposable.dispose}.
+	 * Any resources this cleans up should also be cleaned up by `dispose`
+	 * in the case when `close` is not called.
+	 *
+	 * This is optional for backwards compatibility with older runtime implementations.
+	 *
+	 * Do not confuse this with with the various `closeFn` callbacks (such as {@link IContainerContext.closeFn} or `IGarbageCollectorCreateParams.closeFn`:
+	 * those callbacks expose a way to initiate container close, not a way to get notified of container close (which might come from another source).
+	 * This method on the other hand is invoked for all the cases in which the container is closing (though this does not include when its disposing without closing first!),
+	 * and thus this is where the runtime should actually transition to the closed state, and do any appropriate cleanup.
+	 * @privateRemarks
+	 * This method is for communication between two parts of the Fluid client code, and thus should not need to be exposed as a beta+legacy API.
+	 * At some point this whole interface should likely be marked `@sealed` and use an opaque type.
+	 * At that point most of its members, including `close`, could be moved to an internal interface.
+	 * After that, pending any needed layer compat delays, this method could be made required instead of optional.
+	 * This likely applies to the other optional methods on this interface as well.
+	 */
+	close?(): void;
 }
 
 /**
  * Payload type for IContainerContext.submitBatchFn()
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IBatchMessage {
 	contents?: string;
 	metadata?: Record<string, unknown>;
 	compression?: string;
 	referenceSequenceNumber?: number;
+}
+
+/**
+ * Interface to provide access to snapshots and policies to the Runtime layer. This should follow the Loader / Runtime
+ * layer compatibility rules.
+ *
+ * @remarks It contains a subset of APIs from {@link @fluidframework/driver-definitions#IDocumentStorageService} but
+ * allows the Runtime to not support layer compatibility with the Driver layer. Instead, it supports compatibility
+ * with the Loader layer which it already does.
+ *
+ * @legacy @beta
+ */
+export interface IContainerStorageService {
+	/**
+	 * Policies implemented/instructed by driver.
+	 *
+	 * @deprecated This will be removed in a future release. The Runtime layer only needs `maximumCacheDurationMs`
+	 * policy which is added as a separate property.
+	 */
+	readonly policies?: IDocumentStorageServicePolicies | undefined;
+
+	/**
+	 * See {@link @fluidframework/driver-definitions#IDocumentStorageServicePolicies.maximumCacheDurationMs}
+	 */
+	readonly maximumCacheDurationMs?: IDocumentStorageServicePolicies["maximumCacheDurationMs"];
+
+	/**
+	 * Returns the snapshot tree.
+	 * @param version - Version of the snapshot to be fetched.
+	 * @param scenarioName - scenario in which this api is called. This will be recorded by server and would help
+	 * in debugging purposes to see why this call was made.
+	 */
+	// TODO: use `undefined` instead.
+	// eslint-disable-next-line @rushstack/no-new-null
+	getSnapshotTree(version?: IVersion, scenarioName?: string): Promise<ISnapshotTree | null>;
+
+	/**
+	 * Returns the snapshot which can contain other artifacts too like blob contents, ops etc. It is different from
+	 * `getSnapshotTree` api in that, that API only returns the snapshot tree from the snapshot.
+	 * @param snapshotFetchOptions - Options specified by the caller to specify and want certain behavior from the
+	 * driver when fetching the snapshot.
+	 */
+	getSnapshot?(snapshotFetchOptions?: ISnapshotFetchOptions): Promise<ISnapshot>;
+
+	/**
+	 * Retrieves all versions of the document starting at the specified versionId - or null if from the head
+	 * @param versionId - Version id of the requested version.
+	 * @param count - Number of the versions to be fetched.
+	 * @param scenarioName - scenario in which this api is called. This will be recorded by server and would help
+	 * in debugging purposes to see why this call was made.
+	 * @param fetchSource - Callers can specify the source of the response. For ex. Driver may choose to cache
+	 * requests and serve data from cache. That will result in stale info returned. Callers can disable this
+	 * functionality by passing fetchSource = noCache and ensuring that driver will return latest information
+	 * from storage.
+	 */
+	getVersions(
+		// TODO: use `undefined` instead.
+		// eslint-disable-next-line @rushstack/no-new-null
+		versionId: string | null,
+		count: number,
+		scenarioName?: string,
+		fetchSource?: FetchSource,
+	): Promise<IVersion[]>;
+
+	/**
+	 * Creates a blob out of the given buffer
+	 */
+	createBlob(file: ArrayBufferLike): Promise<ICreateBlobResponse>;
+
+	/**
+	 * Reads the object with the given ID, returns content in arrayBufferLike
+	 */
+	readBlob(id: string): Promise<ArrayBufferLike>;
+
+	/**
+	 * Uploads a summary tree to storage using the given context for reference of previous summary handle.
+	 * The ISummaryHandles in the uploaded tree should have paths to indicate which summary object they are
+	 * referencing from the previously acked summary.
+	 * Returns the uploaded summary handle.
+	 */
+	uploadSummaryWithContext(summary: ISummaryTree, context: ISummaryContext): Promise<string>;
 }
 
 /**
@@ -140,8 +354,7 @@ export interface IBatchMessage {
  * TODO: once `@alpha` tag is removed, `unknown` should be removed from submitSignalFn.
  * See {@link https://dev.azure.com/fluidframework/internal/_workitems/edit/7462}
  *
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IContainerContext {
 	/**
@@ -154,9 +367,18 @@ export interface IContainerContext {
 	readonly options: Record<string | number, any>;
 	readonly clientId: string | undefined;
 	readonly clientDetails: IClientDetails;
-	readonly storage: IDocumentStorageService;
+	readonly storage: IContainerStorageService;
 	readonly connected: boolean;
 	readonly baseSnapshot: ISnapshotTree | undefined;
+
+	/**
+	 * Gets the current connection state of the container.
+	 *
+	 * @remarks
+	 * This provides more detailed connection state information beyond the simple boolean `connected` property.
+	 * Available starting from version 2.52.0. Property is not present in older versions.
+	 */
+	readonly getConnectionState?: () => ConnectionState;
 	/**
 	 * @deprecated Please use submitBatchFn & submitSummaryFn
 	 */
@@ -177,11 +399,39 @@ export interface IContainerContext {
 		referenceSequenceNumber?: number,
 	) => number;
 	readonly submitSignalFn: (contents: unknown, targetClientId?: string) => void;
+	/**
+	 * Initiate disposing of the container due to a critical error.
+	 * @param error - The critical error that caused the container to dispose.
+	 * @remarks
+	 * This is only one of many ways which the container might get disposed.
+	 * To enable the runtime to respond to disposed from any source, it exposes {@link @fluidframework/core-interfaces#IDisposable.dispose}.
+	 */
 	readonly disposeFn?: (error?: ICriticalContainerError) => void;
+	/**
+	 * Initiate closing of the container due to a critical error.
+	 * @param error - The critical error that caused the container to close.
+	 * @remarks
+	 * This is only one of many ways which the container might get closed.
+	 * To enable the runtime to respond to close from any source, it exposes {@link IRuntime.close}.
+	 *
+	 * @privateRemarks
+	 * `error` is optional here to handle the case where `disposeFn` is not provided, so that the `closeFn` is used as a fallback
+	 * and the summarizier wants to initiate a dispose (via {@link ISummarizerRuntime.disposeFn}) which doesn't take in an error.
+	 */
 	readonly closeFn: (error?: ICriticalContainerError) => void;
 	readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
 	readonly quorum: IQuorumClients;
 	readonly audience: IAudience;
+	/**
+	 * Signal-based audience provides a view of the audience that only relies
+	 * on system signals which will be updated more quickly than
+	 * {@link IContainerContext#audience} that relies on ops for write clients.
+	 * Being signal-based the write members are inherently less reliable than
+	 * {@link IContainerContext#audience}.
+	 *
+	 * @system
+	 */
+	readonly signalAudience?: IAudience;
 	readonly loader: ILoader;
 	// The logger implementation, which would support tagged events, should be provided by the loader.
 	readonly taggedLogger: ITelemetryBaseLogger;
@@ -210,7 +460,7 @@ export interface IContainerContext {
 	updateDirtyContainerState(dirty: boolean): void;
 
 	/**
-	 * @deprecated - This has been deprecated. It was used internally and there is no replacement.
+	 * @deprecated This has been deprecated. It was used internally and there is no replacement.
 	 */
 	readonly supportedFeatures?: ReadonlyMap<string, unknown>;
 
@@ -233,14 +483,12 @@ export interface IContainerContext {
 }
 
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export const IRuntimeFactory: keyof IProvideRuntimeFactory = "IRuntimeFactory";
 
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IProvideRuntimeFactory {
 	readonly IRuntimeFactory: IRuntimeFactory;
@@ -251,8 +499,7 @@ export interface IProvideRuntimeFactory {
  *
  * Provides the entry point for the ContainerContext to load the proper IRuntime
  * to start up the running instance of the Container.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IRuntimeFactory extends IProvideRuntimeFactory {
 	/**
@@ -267,8 +514,7 @@ export interface IRuntimeFactory extends IProvideRuntimeFactory {
 
 /**
  * Defines list of properties expected for getPendingLocalState
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IGetPendingLocalStateProps {
 	/**

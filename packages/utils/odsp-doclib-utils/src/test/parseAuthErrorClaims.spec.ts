@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import assert from "assert";
+import { strict as assert } from "node:assert";
 
 import { parseAuthErrorClaims } from "../parseAuthErrorClaims.js";
 
@@ -18,8 +18,8 @@ const validWwwAuthenticateHeader =
 
 describe("parseAuthErrorClaims", () => {
 	it("returns undefined if headers does not have expected entry", () => {
-		const headers = { get: (_name: string) => undefined };
-		const result = parseAuthErrorClaims(headers as any);
+		const headers = { get: (_name: string) => undefined } as unknown as Headers;
+		const result = parseAuthErrorClaims(headers);
 		assert.strictEqual(result, undefined);
 	});
 
@@ -29,8 +29,8 @@ describe("parseAuthErrorClaims", () => {
 				name.toLowerCase() === "www-authenticate"
 					? invalidWwwAuthenticateHeaderWithoutError
 					: undefined,
-		};
-		const result = parseAuthErrorClaims(headers as any);
+		} as unknown as Headers;
+		const result = parseAuthErrorClaims(headers);
 		assert.strictEqual(result, undefined);
 	});
 
@@ -40,8 +40,8 @@ describe("parseAuthErrorClaims", () => {
 				name.toLowerCase() === "www-authenticate"
 					? invalidWwwAuthenticateHeaderWithUnexpectedErrorValue
 					: undefined,
-		};
-		const result = parseAuthErrorClaims(headers as any);
+		} as unknown as Headers;
+		const result = parseAuthErrorClaims(headers);
 		assert.strictEqual(result, undefined);
 	});
 
@@ -51,8 +51,8 @@ describe("parseAuthErrorClaims", () => {
 				name.toLowerCase() === "www-authenticate"
 					? invalidWwwAuthenticateHeaderWithoutClaims
 					: undefined,
-		};
-		const result = parseAuthErrorClaims(headers as any);
+		} as unknown as Headers;
+		const result = parseAuthErrorClaims(headers);
 		assert.strictEqual(result, undefined);
 	});
 
@@ -60,8 +60,8 @@ describe("parseAuthErrorClaims", () => {
 		const headers = {
 			get: (name: string) =>
 				name.toLowerCase() === "www-authenticate" ? validWwwAuthenticateHeader : undefined,
-		};
-		const result = parseAuthErrorClaims(headers as any);
+		} as unknown as Headers;
+		const result = parseAuthErrorClaims(headers);
 		assert.strictEqual(
 			result,
 			'{"access_token":{"nbf":{"essential":true, "value":"1597959090"}}}',

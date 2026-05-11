@@ -3,53 +3,44 @@
  * Licensed under the MIT License.
  */
 
-import { fromUtf8ToBase64 } from "@fluidframework/common-utils";
-import * as git from "@fluidframework/gitresources";
-import { IClient, IClientJoin, ScopeType } from "@fluidframework/protocol-definitions";
+import { type IClient, type IClientJoin, ScopeType } from "@fluidframework/protocol-definitions";
 import {
-	IRoom,
-	IRuntimeSignalEnvelope,
+	type IRoom,
+	type IRuntimeSignalEnvelope,
 	createRuntimeMessage,
 } from "@fluidframework/server-lambdas";
 import { validateRequestParams, handleResponse } from "@fluidframework/server-services";
-import { BasicRestWrapper, NetworkError } from "@fluidframework/server-services-client";
-import * as core from "@fluidframework/server-services-core";
-import {
-	Lumberjack,
-	getLumberBaseProperties,
-	getGlobalTelemetryContext,
-} from "@fluidframework/server-services-telemetry";
+import { NetworkError } from "@fluidframework/server-services-client";
+import type * as core from "@fluidframework/server-services-core";
+import { Lumberjack, getLumberBaseProperties } from "@fluidframework/server-services-telemetry";
 import {
 	throttle,
-	IThrottleMiddlewareOptions,
+	type IThrottleMiddlewareOptions,
 	getParam,
 	getBooleanFromConfig,
 	verifyToken,
 	verifyStorageToken,
-	logHttpMetrics,
 	denyListMiddleware,
 } from "@fluidframework/server-services-utils";
 import type { Emitter as RedisEmitter } from "@socket.io/redis-emitter";
-import { Request, Router, Response } from "express";
-import { Provider } from "nconf";
+import { type Request, Router, type Response } from "express";
+import type { Provider } from "nconf";
 import sillyname from "sillyname";
-import { v4 as uuid } from "uuid";
 import winston from "winston";
 
-import { Constants } from "../../../utils";
+import { Constants, getSessionFromCache } from "../../../utils";
 
 import {
 	craftClientJoinMessage,
 	craftClientLeaveMessage,
 	craftMapSet,
 	craftOpMessage,
-	IBlobData,
-	IMapSetOperation,
+	type IMapSetOperation,
 } from "./restHelper";
 
 export function create(
 	config: Provider,
-	producer: core.IProducer,
+	producer: core.IProducer | undefined,
 	tenantManager: core.ITenantManager,
 	storage: core.IDocumentStorage,
 	tenantThrottlers: Map<string, core.IThrottler>,
@@ -57,6 +48,7 @@ export function create(
 	revokedTokenChecker?: core.IRevokedTokenChecker,
 	collaborationSessionEventEmitter?: RedisEmitter,
 	fluidAccessTokenGenerator?: core.IFluidAccessTokenGenerator,
+	redisCacheForGetSession?: core.ICache,
 	denyList?: core.IDenyList,
 ): Router {
 	const router: Router = Router();
@@ -72,15 +64,6 @@ export function create(
 		"alfred:jwtTokenCache:enable",
 		config,
 	);
-
-	function handlePatchRootSuccess(request: Request, opBuilder: (request: Request) => any[]) {
-		const tenantId = request.params.tenantId;
-		const documentId = request.params.id;
-		const clientId = (sillyname() as string).toLowerCase().split(" ").join("-");
-		sendJoin(tenantId, documentId, clientId, producer);
-		sendOp(request, tenantId, documentId, clientId, producer, opBuilder);
-		sendLeave(tenantId, documentId, clientId, producer);
-	}
 
 	router.get(
 		"/ping",
@@ -125,6 +108,25 @@ export function create(
 		denyListMiddleware(denyList),
 		// eslint-disable-next-line @typescript-eslint/no-misused-promises
 		async (request, response) => {
+			// Check if the patchRoot API is enabled
+			const patchRootEnabled = config.get("alfred:api:patchRoot") ?? true;
+			if (!patchRootEnabled) {
+				response.status(501).json({
+					error: "patchRoot API is not implemented",
+					message: "The PATCH /root endpoint is disabled on this server",
+				});
+				return;
+			}
+
+			// Check if producer is available (should not happen if config is consistent)
+			if (!producer) {
+				response.status(501).json({
+					error: "patchRoot API is not implemented",
+					message: "Producer not available for patchRoot operations",
+				});
+				return;
+			}
+
 			const maxTokenLifetimeSec = config.get("auth:maxTokenLifetimeSec") as number;
 			const isTokenExpiryEnabled = config.get("auth:enableTokenExpiration") as boolean;
 			const validP = verifyRequest(
@@ -136,6 +138,7 @@ export function create(
 				enableJwtTokenCache,
 				jwtTokenCache,
 				revokedTokenChecker,
+				[ScopeType.DocRead, ScopeType.DocWrite],
 			);
 			handleResponse(
 				validP.then(() => undefined),
@@ -143,35 +146,8 @@ export function create(
 				undefined,
 				undefined,
 				200,
-				() => handlePatchRootSuccess(request, mapSetBuilder),
+				() => handlePatchRootSuccess(request, mapSetBuilder, producer),
 			);
-		},
-	);
-
-	router.post(
-		"/:tenantId/:id/blobs",
-		validateRequestParams("tenantId", "id"),
-		throttle(generalTenantThrottler, winston, tenantThrottleOptions),
-		denyListMiddleware(denyList),
-		// eslint-disable-next-line @typescript-eslint/no-misused-promises
-		async (request, response) => {
-			const tenantId = request.params.tenantId;
-			const blobData = request.body as IBlobData;
-			// TODO: why is this contacting external blob storage?
-			const externalHistorianUrl = config.get("worker:blobStorageUrl") as string;
-			const requestToken = fromUtf8ToBase64(tenantId);
-			const uri = `/repos/${tenantId}/git/blobs?token=${requestToken}`;
-			const requestBody: git.ICreateBlobParams = {
-				content: blobData.content,
-				encoding: "base64",
-			};
-			uploadBlob(externalHistorianUrl, uri, requestBody)
-				.then((data: git.ICreateBlobResponse) => {
-					response.status(200).json(data);
-				})
-				.catch((err) => {
-					response.status(400).end(err.toString());
-				});
 		},
 	);
 
@@ -189,6 +165,7 @@ export function create(
 				config,
 				storage,
 				collaborationSessionEventEmitter,
+				redisCacheForGetSession,
 			);
 			handleResponse(
 				handleBroadcastSignalP,
@@ -202,7 +179,7 @@ export function create(
 						"Error handling broadcast-signal",
 						{
 							tenantId: request.params.tenantId,
-							documentId: request.params.documentId,
+							documentId: request.params.id,
 						},
 						error,
 					),
@@ -221,6 +198,19 @@ function mapSetBuilder(request: Request): any[] {
 	}
 
 	return ops;
+}
+
+function handlePatchRootSuccess(
+	request: Request,
+	opBuilder: (request: Request) => any[],
+	producer: core.IProducer,
+) {
+	const tenantId = request.params.tenantId;
+	const documentId = request.params.id;
+	const clientId = (sillyname() as string).toLowerCase().split(" ").join("-");
+	sendJoin(tenantId, documentId, clientId, producer);
+	sendOp(request, tenantId, documentId, clientId, producer, opBuilder);
+	sendLeave(tenantId, documentId, clientId, producer);
 }
 
 function sendJoin(
@@ -309,6 +299,7 @@ const verifyRequest = async (
 	tokenCacheEnabled: boolean,
 	tokenCache?: core.ICache,
 	revokedTokenChecker?: core.IRevokedTokenChecker,
+	requiredScopes?: ScopeType[],
 ) =>
 	Promise.all([
 		verifyTokenWrapper(
@@ -319,6 +310,7 @@ const verifyRequest = async (
 			tokenCacheEnabled,
 			tokenCache,
 			revokedTokenChecker,
+			requiredScopes,
 		),
 		checkDocumentExistence(request, storage),
 	]);
@@ -331,6 +323,7 @@ async function verifyTokenWrapper(
 	tokenCacheEnabled: boolean,
 	tokenCache?: core.ICache,
 	revokedTokenChecker?: core.IRevokedTokenChecker,
+	requiredScopes?: ScopeType[],
 ): Promise<void> {
 	const token = request.headers["access-token"] as string;
 	if (!token) {
@@ -355,7 +348,7 @@ async function verifyTokenWrapper(
 		tokenCache,
 		revokedTokenChecker,
 	};
-	return verifyToken(tenantId, documentId, token, tenantManager, options);
+	return verifyToken(tenantId, documentId, token, tenantManager, options, requiredScopes);
 }
 
 async function checkDocumentExistence(
@@ -373,39 +366,13 @@ async function checkDocumentExistence(
 	}
 }
 
-const uploadBlob = async (
-	baseUrl: string,
-	uri: string,
-	blobData: git.ICreateBlobParams,
-): Promise<git.ICreateBlobResponse> => {
-	const restWrapper = new BasicRestWrapper(
-		baseUrl,
-		undefined,
-		undefined,
-		undefined,
-		undefined,
-		undefined,
-		undefined,
-		undefined,
-		() =>
-			getGlobalTelemetryContext().getProperties().correlationId ??
-			uuid() /* getCorrelationId */,
-		() => getGlobalTelemetryContext().getProperties() /* getTelemetryContextProperties */,
-		undefined /* refreshTokenIfNeeded */,
-		logHttpMetrics /* logHttpMetrics */,
-		() => getGlobalTelemetryContext().getProperties().serviceName ?? "" /* serviceName */,
-	);
-	return restWrapper.post(uri, blobData, undefined, {
-		"Content-Type": "application/json",
-	});
-};
-
 async function handleBroadcastSignal(
 	request: Request,
 	response: Response,
 	config: Provider,
 	storage: core.IDocumentStorage,
 	collaborationSessionEventEmitter?: RedisEmitter,
+	redisCacheForGetSession?: core.ICache,
 ): Promise<void> {
 	const tenantId = request.params.tenantId;
 	const documentId = request.params.id;
@@ -429,28 +396,53 @@ async function handleBroadcastSignal(
 	}
 
 	const serverUrl: string = config.get("worker:serverUrl");
-	const document = await storage?.getDocument(tenantId, documentId);
-	if (!document?.session?.isSessionAlive) {
-		Lumberjack.error("Document not found", { tenantId, documentId });
+	let sessionOrdererUrl: string | undefined;
+	let isSessionAlive: boolean | undefined;
+	let cacheHit = false;
+
+	// Attempt a cache lookup first to avoid a DB round-trip on every call.
+	// The cache is populated by the session discovery endpoint (GET /documents/:tenantId/session/:id)
+	// which clients call before connecting, so it will be warm for any active session.
+	if (redisCacheForGetSession) {
+		const cachedSession = await getSessionFromCache(
+			tenantId,
+			documentId,
+			redisCacheForGetSession,
+		);
+		if (cachedSession) {
+			sessionOrdererUrl = cachedSession.ordererUrl;
+			isSessionAlive = cachedSession.isSessionAlive;
+			cacheHit = true;
+		}
+	}
+
+	// Cache miss: fall back to DB lookup.
+	if (!cacheHit) {
+		const document = await storage.getDocument(tenantId, documentId);
+		sessionOrdererUrl = document?.session?.ordererUrl;
+		// A document with a scheduled deletion time should be treated as not found.
+		isSessionAlive = document?.session?.isSessionAlive && !document?.scheduledDeletionTime;
+	}
+
+	if (!isSessionAlive || !sessionOrdererUrl) {
+		Lumberjack.error("Document not found", { tenantId, documentId, cacheHit });
 		throw new NetworkError(404, "Document not found");
 	}
-	if (!document.session.isSessionActive) {
-		Lumberjack.warning("Document session not active", { tenantId, documentId });
-		throw new NetworkError(410, "Document session not active");
-	}
-	if (document.session.ordererUrl !== serverUrl) {
+
+	if (sessionOrdererUrl !== serverUrl) {
 		Lumberjack.info("Redirecting broadcast-signal to correct cluster", {
-			documentUrl: document.session.ordererUrl,
+			documentUrl: sessionOrdererUrl,
 			currentUrl: serverUrl,
-			targetUrlAndPath: `${document.session.ordererUrl}${request.originalUrl}`,
+			targetUrlAndPath: `${sessionOrdererUrl}${request.originalUrl}`,
+			cacheHit,
 		});
-		response.redirect(`${document.session.ordererUrl}${request.originalUrl}`);
+		response.redirect(`${sessionOrdererUrl}${request.originalUrl}`);
 		return;
 	}
 
 	const signalMessage = createRuntimeMessage(signalContent);
 	const signalRoom: IRoom = { tenantId, documentId };
-	Lumberjack.info("Broadcasting signal to room", { tenantId, documentId });
+	Lumberjack.info("Broadcasting signal to room", { tenantId, documentId, cacheHit });
 	collaborationSessionEventEmitter.to(getRoomId(signalRoom)).emit("signal", signalMessage);
 }
 

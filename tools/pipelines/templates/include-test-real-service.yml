@@ -20,7 +20,7 @@ parameters:
 # Variables to be set in the stage that runs tests
 - name: stageVariables
   type: object
-  default:
+  default: {}
 
 # If true, the stage that uploads pipeline telemetry to Kusto will include a task to upload
 # test pass rate telemetry.
@@ -40,16 +40,13 @@ parameters:
   type: string
   default: "@fluid-private/test-end-to-end-tests"
 
-- name: testWorkspace
-  type: string
-
 - name: timeoutInMinutes
   type: number
   default: 60
 
 - name: env
   type: object
-  default:
+  default: {}
 
 - name: splitTestVariants
   type: object
@@ -74,19 +71,25 @@ parameters:
 - name: artifactBuildId
   type: string
 
+# A valid git ref to use for the microsoft/FluidFramework repository checkout (e.g. refs/heads/main, a commit SHA, tag, etc)
+# Pipelines that are triggered on completion of the "Build - client packages" pipeline should generally use
+# the same source commit as what was used for "Build - client packages". This is typically available via
+# `$(resources.pipeline.client.sourceCommit)` (where "client" is actually the name of the resource declared
+# in the current pipeline's root yaml file)
+- name: fluidFrameworkSourceVersion
+  type: string
+  default: $(Build.SourceVersion)
+
 # Name of the Secure File that contains the self-signed cert for the R11s deployment.
 # If not blank, the pipeline will try to install it to the local cert store.
 - name: r11sSelfSignedCertSecureFile
   type: string
   default: ""
 
+# If provided, this value is passed directly to the "condition" key of the stage in this file.
 - name: condition
   type: string
   default: true
-
-- name: loggerPackage
-  type: string
-  default: '@ff-internal/aria-logger'
 
 # If true, skip publishing report files for test results.
 # Useful because our stress tests pipeline doesn't generate any test result files.
@@ -94,19 +97,46 @@ parameters:
   type: boolean
   default: false
 
-# Custom steps specified by the "caller" of this template, for any additional things that need to be done
-# after the steps in this template complete.
-- name: additionalSteps
-  type: stepList
-  default: []
+# If tests need to run against an ODSP tenant, specify the type of tenant here. Steps will be injected to lease one for the duration of the test.
+- name: odspTenantType
+  type: string
+  default: none
+  values:
+    - none
+    - prod
+    - dogfood
 
-# If true, the versions of our packages installed for compat testing will be cached.
-- name: cacheCompatVersionsInstalls
+# lockBehavior of the stage (if any).
+- name: lockBehavior
+  type: string
+  default: none
+  values:
+    - none
+    - sequential
+
+# if true, the FluidFramework repo will be checked out and a docker-compose env will be spun up for testing
+- name: runAgainstDocker
   type: boolean
   default: false
 
+# Tags for docker environment setup
+- name: alfredImageTag
+  type: string
+  default: 'latest'
+- name: historianImageTag
+  type: string
+  default: 'latest'
+- name: gitrestImageTag
+  type: string
+  default: 'latest'
+- name: gitsshImageTag
+  type: string
+  default: 'latest'
+
 stages:
-- stage: ${{ parameters.stageId}}
+- stage: ${{ parameters.stageId }}
+  ${{ if ne(parameters.lockBehavior, 'none') }}:
+    lockBehavior: ${{ parameters.lockBehavior }}
   condition: ${{ parameters.condition }}
   displayName: ${{ parameters.stageDisplayName }}
   dependsOn: ${{ parameters.stageDependencies }}
@@ -129,8 +159,9 @@ stages:
         # basic ANSI color support though, so force that in the pipeline
         - name: FORCE_COLOR
           value: 1
+
         - name: testPackageDir
-          value: '${{ parameters.testWorkspace }}/node_modules/${{ parameters.testPackage }}'
+          value: '$(Pipeline.Workspace)/$(FFPipelineHostDirectory)/node_modules/${{ parameters.testPackage }}'
         - name: testPackageFilePattern
           value: ${{ replace(replace(parameters.testPackage, '@', '' ), '/', '-') }}-[0-9]*.tgz
         # Note that this path must match the path that the packed packages are saved to in the build pipeline.
@@ -141,11 +172,27 @@ stages:
           value: true
         - name: artifactPipeline
           value: Build - client packages
-
         steps:
         # Setup
-        - checkout: none
+        - checkout: ff_pipeline_host
+          path: $(FFPipelineHostDirectory)
           clean: true
+
+        # ADO doesn't support checking out refs that are determined at pipeline queue time as ours likely would be
+        # (where the ref is a function of one of the pipeline resource inputs). See docs here:
+        # https://learn.microsoft.com/en-us/azure/devops/pipelines/repos/multi-repo-checkout?view=azure-devops#checking-out-a-specific-ref
+        # To work around this, we get to the right revision in a follow-up step.
+        - checkout: self
+          path: $(FluidFrameworkDirectory)
+          clean: true
+
+        - bash: |
+            git fetch --depth=1 origin $FF_SOURCE_VERSION
+            git checkout $FF_SOURCE_VERSION
+          workingDirectory: $(Pipeline.Workspace)/$(FluidFrameworkDirectory)
+          displayName: Switch FluidFramework checkout to artifact source version
+          env:
+            FF_SOURCE_VERSION: ${{ parameters.fluidFrameworkSourceVersion }}
 
         # Install self-signed cert for R11s deployment in local cert store
         - ${{ if ne(parameters.r11sSelfSignedCertSecureFile, '') }}:
@@ -185,10 +232,10 @@ stages:
               Pipeline Parameters:
                 poolBuild=${{ parameters.poolBuild }}
                 testPackage=${{ parameters.testPackage }}
+                runAgainstDocker=${{ parameters.runAgainstDocker }}
 
               Pipeline Variables:
                 isTestBranch=${{ variables.isTestBranch }}
-                testWorkspace=${{ parameters.testWorkspace }}
                 testPackageFilePattern=${{ variables.testPackageFilePattern }}
                 testCommand=${{ parameters.testCommand }}
                 continueOnError=${{ parameters.continueOnError }}
@@ -196,11 +243,58 @@ stages:
                 testFileTarName=${{ parameters.testFileTarName }}
                 artifactPipeline=${{ variables.artifactPipeline }}
                 artifactBuildId=${{ parameters.artifactBuildId }}
+                FFPipelineHostDirectory=$(FFPipelineHostDirectory)
               "
 
         - template: /tools/pipelines/templates/include-use-node-version.yml@self
 
+        - template: /tools/pipelines/templates/include-install-pnpm.yml@self
+          parameters:
+            buildDirectory: $(FFPipelineHostDirectory)
+            # The compat-workspaces lockfile is committed to the FluidFramework repo and changes
+            # whenever legacy package versions are added or removed. Including it in the pnpm store
+            # cache key ensures a cache miss whenever the set of compat packages changes.
+            additionalCacheKey: '$(Pipeline.Workspace)/$(FluidFrameworkDirectory)/packages/test/test-version-utils/compat-workspaces/full/pnpm-lock.yaml'
+
         - template: /tools/pipelines/templates/include-setup-npmrc-for-download.yml@self
+
+        # Set up Docker environment if running against docker
+        - ${{ if eq(parameters.runAgainstDocker, true) }}:
+          - task: Docker@2
+            displayName: 'Login to container registry'
+            inputs:
+              containerRegistry: 'Fluid Container Registry'
+              command: 'login'
+          - task: DockerCompose@1
+            displayName: 'Start routerlicious environment in docker'
+            inputs:
+              containerregistrytype: 'Container Registry'
+              dockerComposeFile: $(Pipeline.Workspace)/$(FluidFrameworkDirectory)/server/docker-compose.yml
+              action: 'Run a Docker Compose command'
+              dockerComposeCommand: 'up -d --wait'
+              projectName: 'routerlicious'
+            env:
+              REGISTRY_URL: fluidcr.azurecr.io/build
+              ALFRED_IMAGE_TAG: ${{ parameters.alfredImageTag }}
+              HISTORIAN_IMAGE_TAG: ${{ parameters.historianImageTag }}
+              GITREST_IMAGE_TAG: ${{ parameters.gitrestImageTag }}
+              GITSSH_IMAGE_TAG: ${{ parameters.gitsshImageTag }}
+          - task: Bash@3
+            displayName: 'Wait for services to be ready'
+            inputs:
+              targetType: 'filePath'
+              filePath: $(Pipeline.Workspace)/$(FluidFrameworkDirectory)/scripts/wait-for-docker-services.sh
+            env:
+              DOCKER_COMPOSE_FILE: $(Pipeline.Workspace)/$(FluidFrameworkDirectory)/server/docker-compose.yml
+
+        - task: Bash@3
+          displayName: Install base dependencies
+          inputs:
+            targetType: 'inline'
+            workingDirectory: $(Pipeline.Workspace)/$(FFPipelineHostDirectory)
+            script: |
+              set -eu -o pipefail
+              pnpm install
 
         # Download artifact
         - task: DownloadPipelineArtifact@2
@@ -223,26 +317,13 @@ stages:
             # preferTriggeringPipeline: true
 
         - task: Bash@3
-          displayName: Create test directory
-          inputs:
-            targetType: 'inline'
-            script: |
-              set -eu -o pipefail
-
-              mkdir ${{ parameters.testWorkspace }}
-
-        - task: Bash@3
           name: Initialize
           displayName: Initialize
           inputs:
             targetType: 'inline'
-            workingDirectory: ${{ parameters.testWorkspace }}
+            workingDirectory: $(Pipeline.Workspace)/$(FFPipelineHostDirectory)
             script: |
               set -eu -o pipefail
-
-              echo Initialize package
-              npm init --yes
-
               if [[ `ls -1 ${{ variables.testPackagePathPattern }} | wc -l` -eq 1 ]]; then
                 echo "##vso[task.setvariable variable=testPackageTgz;isOutput=true]`ls ${{ variables.testPackagePathPattern }}`"
               else
@@ -250,18 +331,17 @@ stages:
                 echo "##vso[task.logissue type=error]Test package '${{ parameters.testPackage }}' not found, or there are more than one found"
                 exit -1
               fi
-
-        # Install test and logger package
+        # Install test package
         - task: Bash@3
-          displayName: 'npm install'
+          displayName: 'pnpm install test package'
           # ADO feeds have latency on the order of minutes before packages are available downstream. See:
           # https://learn.microsoft.com/en-us/azure/devops/artifacts/concepts/upstream-sources?view=azure-devops#upstream-sources-health-status
           # This pipeline installs packages which were published very recently relative to its runtime, hence the rather high retry count here.
           retryCountOnTaskFailure: 10
           inputs:
-            workingDirectory: ${{ parameters.testWorkspace }}
             targetType: 'inline'
-            script: 'npm install $(Initialize.testPackageTgz) ${{ parameters.loggerPackage }}'
+            workingDirectory: $(Pipeline.Workspace)/$(FFPipelineHostDirectory)
+            script: 'pnpm install $(Initialize.testPackageTgz)'
 
         # Download Test Files & Install Extra Dependencies
         # These steps are intended to include extra dependencies that are not available as
@@ -290,8 +370,8 @@ stages:
           - task: Bash@3
             displayName: Unpack test files
             inputs:
-              workingDirectory: ${{ parameters.testWorkspace }}/node_modules/${{ parameters.testPackage }}
               targetType: 'inline'
+              workingDirectory: $(Pipeline.Workspace)/$(FFPipelineHostDirectory)/node_modules/${{ parameters.testPackage }}
               script: |
                 set -eu -o pipefail
 
@@ -306,49 +386,58 @@ stages:
                 tar --extract --verbose --file $TAR_PATH ./dist/test
                 tar --extract --verbose --file $TAR_PATH ./src/test
 
-          - task: Bash@3
-            displayName: Copy devDependencies
+          - template: /tools/pipelines/templates/include-copy-dev-dependencies.yml@self
+            parameters:
+              sourcePackageLocation: $(Pipeline.Workspace)/$(FFPipelineHostDirectory)/node_modules/${{ parameters.testPackage }}
+              destPackageLocation: $(Pipeline.Workspace)/$(FFPipelineHostDirectory)
+
+        # Only check out tenants from the tenant pool if we are running tests against ODSP
+        - ${{ if ne(parameters.odspTenantType, 'none') }}:
+          # Retrieve a tenant from the tenant pool
+          - task: AzureCLI@2
+            displayName: 'Log in to retrieve tenant credentials'
             inputs:
-              workingDirectory: ${{ parameters.testWorkspace }}
+              azureSubscription: 'FF Pipeline Authentication'
+              # This injects environment variables into the below script. See https://learn.microsoft.com/en-us/azure/devops/pipelines/tasks/reference/azure-cli-v2?view=azure-pipelines
+              addSpnToEnvironment: true
+              scriptType: 'bash'
+              scriptLocation: 'inlineScript'
+              inlineScript: |
+                set -eu -o pipefail
+                az login --service-principal -u $servicePrincipalId -p $idToken --tenant $tenantId
+
+          - task: Bash@3
+            displayName: 'Run tenant setup script'
+            env:
+              SYSTEM_ACCESSTOKEN: $(System.AccessToken)
+            inputs:
               targetType: 'inline'
+              workingDirectory: $(Pipeline.Workspace)/$(FFPipelineHostDirectory)
               script: |
                 set -eu -o pipefail
 
-                testPkgJsonPath=${{ parameters.testWorkspace }}/node_modules/${{ parameters.testPackage }}/package.json
-                pkgJsonPath=${{ parameters.testWorkspace }}/package.json
-                node -e "
-                  const { devDependencies } = require('$testPkgJsonPath');
-                  const pkg = require('$pkgJsonPath');
-                  pkg.devDependencies=devDependencies;
-                  require('fs').writeFileSync('$pkgJsonPath', JSON.stringify(pkg));
-                "
-
-          - task: Bash@3
-            displayName: 'npm install - extra dependencies for test files'
-            retryCountOnTaskFailure: 10
-            inputs:
-              workingDirectory: ${{ parameters.testWorkspace }}
-              targetType: 'inline'
-              script: 'npm install'
-
-        - ${{ if eq(parameters.cacheCompatVersionsInstalls, true) }}:
-          - task: Cache@2
-            displayName: Cache compat versions install location
-            timeoutInMinutes: 3
-            continueOnError: true
-            inputs:
-              key: '"compat-version-installs" | "$(Agent.OS)" | "${{ parameters.testCommand }}" | "${{ variant.name }}"'
-              path: ${{ parameters.testWorkspace }}/node_modules/@fluid-private/test-version-utils/node_modules/.legacy/
+                # Increase the maximum time to wait for a tenant to 1 hour to accommodate multiple test runs at the same time.
+                pnpm exec trips-setup --waitTime=3600 --accessToken=$SYSTEM_ACCESSTOKEN --odspEndpoint=${{ parameters.odspTenantType }} --useFic
+                echo "##vso[task.setvariable variable=tenantSetupSuccess;]true"
 
         # run the test
         - task: Npm@1
           displayName: '[test] ${{ parameters.testCommand }} ${{ variant.flags }}'
           continueOnError: ${{ parameters.continueOnError }}
           env:
-            ${{ parameters.env }}
+            ${{ each pair in parameters.env }}:
+              ${{ pair.key }}: ${{ pair.value }}
+            # The ODSP tenant setup script (trips-setup --useFic) sets login__odsp__fic__test__users
+            # and token__package__import__location as pipeline variables. The e2e test workload reads
+            # those plus login__microsoft__clientId (sourced from prague-key-vault).
+            ${{ if or(eq(parameters.odspTenantType, 'dogfood'), eq(parameters.odspTenantType, 'prod')) }}:
+              token__package__import__location: $(token__package__import__location)
+              login__odsp__fic__test__users: $(login__odsp__fic__test__users)
+              SYSTEM_ACCESSTOKEN: $(System.AccessToken)
+              login__microsoft__clientId: $(login-microsoft-clientId)
           inputs:
             command: 'custom'
-            workingDir: ${{ parameters.testWorkspace }}/node_modules/${{ parameters.testPackage }}
+            workingDir: $(Pipeline.Workspace)/$(FFPipelineHostDirectory)/node_modules/${{ parameters.testPackage }}
             customCommand: 'run ${{ parameters.testCommand }} -- ${{ variant.flags }}'
 
         - ${{ if eq(parameters.skipTestResultPublishing, false) }}:
@@ -358,6 +447,7 @@ stages:
             condition: succeededOrFailed()
             inputs:
               targetType: 'inline'
+              workingDirectory: $(Pipeline.Workspace)/$(FFPipelineHostDirectory)
               script: |
                 set -eu -o pipefail
 
@@ -390,24 +480,70 @@ stages:
           - task: PublishPipelineArtifact@1
             displayName: Publish Artifact - Tinylicious Log
             inputs:
-              targetPath: '${{ parameters.testWorkspace }}/node_modules/${{ parameters.testPackage }}/tinylicious.log'
+              targetPath: '$(Pipeline.Workspace)/$(FFPipelineHostDirectory)/node_modules/${{ parameters.testPackage }}/tinylicious.log'
               artifactName: 'tinyliciousLog_attempt-$(System.JobAttempt)'
               publishLocation: 'pipeline'
             condition: always()
             continueOnError: true # Keep running subsequent tasks even if this one fails (e.g. the tinylicious log wasn't there)
 
-        # Log Test Failures
-        # - template: /tools/pipelines/templates/include-process-test-results.yml@self
-        #   parameters:
-        #     buildDirectory: ${{ variables.testPackageDir }}
+        # Only release tenants that were checked out from the tenant pool for ODSP/ODSPDF tests
+        - ${{ if ne(parameters.odspTenantType, 'none') }}:
+          # Login to release tenant credentials
+          # Currently, some of the compat tests run for longer than 60 minutes and exceed the average token lifetime:
+          # https://learn.microsoft.com/en-us/entra/identity-platform/configurable-token-lifetimes#access-tokens
+          - task: AzureCLI@2
+            displayName: 'Log in to release tenant credentials'
+            inputs:
+              azureSubscription: 'FF Pipeline Authentication'
+              addSpnToEnvironment: true
+              scriptType: 'bash'
+              scriptLocation: 'inlineScript'
+              inlineScript: |
+                set -eu -o pipefail
 
-        - ${{ parameters.additionalSteps }}
+                az login --service-principal -u $servicePrincipalId -p $idToken --tenant $tenantId
+            condition: eq(variables['tenantSetupSuccess'], 'true')
+
+          # Release the tenant back to the tenant pool
+          - task: Bash@3
+            displayName: 'Release tenant credentials'
+            env:
+              login__odsp__fic__test__users: $(login__odsp__fic__test__users)
+              SYSTEM_ACCESSTOKEN: $(System.AccessToken)
+            inputs:
+              targetType: 'inline'
+              workingDirectory: $(Pipeline.Workspace)/$(FFPipelineHostDirectory)
+              script: |
+                set -eu -o pipefail
+                pnpm exec trips-cleanup --odspEndpoint=${{ parameters.odspTenantType }} --useFic
+            condition: eq(variables['tenantSetupSuccess'], 'true')
+
+        # Stop the docker environment if running against it
+        - ${{ if eq(parameters.runAgainstDocker, true) }}:
+          - task: DockerCompose@1
+            displayName: 'Stop routerlicious environment in docker'
+            condition: always()
+            inputs:
+              containerregistrytype: 'Container Registry'
+              dockerComposeFile: $(Pipeline.Workspace)/$(FluidFrameworkDirectory)/server/docker-compose.yml
+              action: 'Run a Docker Compose command'
+              dockerComposeCommand: 'down'
+              projectName: 'routerlicious'
 
         - template: /tools/pipelines/templates/include-upload-npm-logs.yml@self
 
-- template: /tools/pipelines/templates/include-upload-stage-telemetry.yml@self
+- template: /tools/pipelines/templates/upload-telemetry/include-stage-upload-telemetry.yml@self
   parameters:
-    stageId: ${{ parameters.stageId }}
-    uploadTestPassRateTelemetry: ${{ parameters.uploadTestPassRateTelemetry }}
-    pipelineIdentifierForTelemetry: ${{ parameters.pipelineIdentifierForTelemetry }}
-    testWorkspace: ${{ parameters.testWorkspace }}
+    telemetryDescription: ${{ parameters.stageId }}
+    dependsOn:
+      - ${{ parameters.stageId }}
+    telemetry_upload_steps:
+      - template: /tools/pipelines/templates/upload-telemetry/include-steps-upload-stage-timing.yml@self
+        parameters:
+          stageIdFilter: ${{ parameters.stageId }}
+          pipelineIdentifierForTelemetry: ${{ parameters.pipelineIdentifierForTelemetry }}
+      - ${{ if parameters.uploadTestPassRateTelemetry }}:
+        - template: /tools/pipelines/templates/upload-telemetry/include-steps-upload-test-pass-rate.yml@self
+          parameters:
+            stageIdFilter: ${{ parameters.stageId }}
+            pipelineIdentifierForTelemetry: ${{ parameters.pipelineIdentifierForTelemetry }}

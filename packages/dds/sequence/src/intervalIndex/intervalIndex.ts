@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { type SequenceInterval } from "../intervals/index.js";
+import type { SequenceInterval } from "../intervals/index.js";
 
 /**
  * Collection of intervals.
@@ -13,8 +13,7 @@ import { type SequenceInterval } from "../intervals/index.js";
  * - "find all intervals with start endpoint between these two points"
  * - "find all intervals which overlap this range"
  * etc.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface SequenceIntervalIndex {
 	/**

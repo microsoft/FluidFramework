@@ -3,11 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { IRequest } from "@fluidframework/core-interfaces";
+import type { ICriticalContainerError } from "@fluidframework/container-definitions";
+import type { IRequest } from "@fluidframework/core-interfaces";
 import { assert, LazyPromise, Timer } from "@fluidframework/core-utils/internal";
+import type { ISnapshotTree } from "@fluidframework/driver-definitions/internal";
 import {
-	IGarbageCollectionDetailsBase,
-	ISummarizeResult,
+	type IGarbageCollectionDetailsBase,
+	type ISummarizeResult,
 	gcTreeKey,
 	type IGarbageCollectionData,
 	type ITelemetryContext,
@@ -17,9 +19,9 @@ import {
 	responseToException,
 } from "@fluidframework/runtime-utils/internal";
 import {
-	ITelemetryLoggerExt,
+	type ITelemetryLoggerExt,
 	DataProcessingError,
-	MonitoringContext,
+	type MonitoringContext,
 	PerformanceEvent,
 	createChildLogger,
 	createChildMonitoringContext,
@@ -29,23 +31,23 @@ import {
 import { blobManagerBasePath } from "../blobManager/index.js";
 import { TombstoneResponseHeaderKey } from "../containerRuntime.js";
 import { ClientSessionExpiredError } from "../error.js";
-import { ContainerMessageType, ContainerRuntimeGCMessage } from "../messageTypes.js";
-import { IRefreshSummaryResult } from "../summary/index.js";
+import { ContainerMessageType, type ContainerRuntimeGCMessage } from "../messageTypes.js";
+import type { IRefreshSummaryResult } from "../summary/index.js";
 
 import { generateGCConfigs } from "./gcConfigs.js";
 import {
 	GCNodeType,
-	GarbageCollectionMessage,
+	type GarbageCollectionMessage,
 	GarbageCollectionMessageType,
-	IGCMetadata,
-	IGCResult,
-	IGCStats,
-	IGarbageCollectionRuntime,
-	IGarbageCollector,
-	IGarbageCollectorConfigs,
-	IGarbageCollectorCreateParams,
-	IMarkPhaseStats,
-	ISweepPhaseStats,
+	type IGCMetadata,
+	type IGCResult,
+	type IGCStats,
+	type IGarbageCollectionRuntime,
+	type IGarbageCollector,
+	type IGarbageCollectorConfigs,
+	type IGarbageCollectorCreateParams,
+	type IMarkPhaseStats,
+	type ISweepPhaseStats,
 	UnreferencedState,
 	type IGCNodeUpdatedProps,
 } from "./gcDefinitions.js";
@@ -57,7 +59,7 @@ import {
 	urlToGCNodePath,
 } from "./gcHelpers.js";
 import { runGarbageCollection } from "./gcReferenceGraphAlgorithm.js";
-import {
+import type {
 	IGarbageCollectionSnapshotData,
 	IGarbageCollectionState,
 } from "./gcSummaryDefinitions.js";
@@ -99,6 +101,10 @@ export class GarbageCollector implements IGarbageCollector {
 
 	private readonly configs: IGarbageCollectorConfigs;
 
+	public get serializedConfigs(): string {
+		return JSON.stringify(this.configs);
+	}
+
 	public get shouldRunGC(): boolean {
 		return this.configs.gcAllowed;
 	}
@@ -136,6 +142,10 @@ export class GarbageCollector implements IGarbageCollector {
 	private completedRuns = 0;
 
 	private readonly runtime: IGarbageCollectionRuntime;
+	/**
+	 * Called when the runtime should close because of an error.
+	 */
+	private readonly closeFn: (error: ICriticalContainerError) => void;
 	private readonly isSummarizerClient: boolean;
 
 	private readonly summaryStateTracker: GCSummaryStateTracker;
@@ -163,6 +173,7 @@ export class GarbageCollector implements IGarbageCollector {
 
 	protected constructor(createParams: IGarbageCollectorCreateParams) {
 		this.runtime = createParams.runtime;
+		this.closeFn = createParams.closeFn;
 		this.isSummarizerClient = createParams.isSummarizerClient;
 		this.getNodePackagePath = createParams.getNodePackagePath;
 		this.getLastSummaryTimestampMs = createParams.getLastSummaryTimestampMs;
@@ -190,21 +201,17 @@ export class GarbageCollector implements IGarbageCollector {
 			);
 			let timeoutMs = this.configs.sessionExpiryTimeoutMs;
 
-			if (pendingSessionExpiryTimerStarted) {
+			if (pendingSessionExpiryTimerStarted !== undefined) {
 				// NOTE: This assumes the client clock hasn't been tampered with since the original session
 				const timeLapsedSincePendingTimer = Date.now() - pendingSessionExpiryTimerStarted;
 				timeoutMs -= timeLapsedSincePendingTimer;
 			}
 			timeoutMs = overrideSessionExpiryTimeoutMs ?? timeoutMs;
 			if (timeoutMs <= 0) {
-				this.runtime.closeFn(
-					new ClientSessionExpiredError(`Client session expired.`, timeoutMs),
-				);
+				this.closeFn(new ClientSessionExpiredError(`Client session expired.`, timeoutMs));
 			}
 			this.sessionExpiryTimer = new Timer(timeoutMs, () => {
-				this.runtime.closeFn(
-					new ClientSessionExpiredError(`Client session expired.`, timeoutMs),
-				);
+				this.closeFn(new ClientSessionExpiredError(`Client session expired.`, timeoutMs));
 			});
 			this.sessionExpiryTimer.start();
 			this.sessionExpiryTimerStarted = Date.now();
@@ -232,7 +239,7 @@ export class GarbageCollector implements IGarbageCollector {
 
 				try {
 					// For newer documents, GC data should be present in the GC tree in the root of the snapshot.
-					const gcSnapshotTree = baseSnapshot.trees[gcTreeKey];
+					const gcSnapshotTree: ISnapshotTree | undefined = baseSnapshot.trees[gcTreeKey];
 					if (gcSnapshotTree === undefined) {
 						// back-compat - Older documents get their gc data reset for simplicity as there are few of them
 						// incremental gc summary will not work with older gc data as well
@@ -332,15 +339,6 @@ export class GarbageCollector implements IGarbageCollector {
 			const usedRoutes = runGarbageCollection(gcNodes, ["/"]).referencedNodeIds;
 
 			return { gcData: { gcNodes }, usedRoutes };
-		});
-
-		// Log all the GC options and the state determined by the garbage collector.
-		// This is useful even for interactive clients since they track unreferenced nodes and log errors.
-		this.mc.logger.sendTelemetryEvent({
-			eventName: "GarbageCollectorLoaded",
-			gcConfigs: JSON.stringify(this.configs),
-			gcOptions: JSON.stringify(createParams.gcOptions),
-			...createParams.createContainerMetadata,
 		});
 	}
 
@@ -845,6 +843,8 @@ export class GarbageCollector implements IGarbageCollector {
 			if (gcDataSuperSet.gcNodes[sourceNodeId] === undefined) {
 				gcDataSuperSet.gcNodes[sourceNodeId] = outboundRoutes;
 			} else {
+				// TODO: Fix this violation and remove the disable
+				// eslint-disable-next-line @fluid-internal/fluid/no-unchecked-record-access
 				gcDataSuperSet.gcNodes[sourceNodeId].push(...outboundRoutes);
 			}
 			newOutboundRoutesSinceLastRun.push(...outboundRoutes);
@@ -1179,6 +1179,12 @@ export class GarbageCollector implements IGarbageCollector {
 	public dispose(): void {
 		this.sessionExpiryTimer?.clear();
 		this.sessionExpiryTimer = undefined;
+
+		// Clear all unreferenced node timers to prevent process hanging
+		for (const tracker of this.unreferencedNodesState.values()) {
+			tracker.stopTracking();
+		}
+		this.unreferencedNodesState.clear();
 	}
 
 	/**

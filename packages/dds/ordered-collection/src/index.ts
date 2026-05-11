@@ -4,15 +4,20 @@
  */
 
 export {
-	ConsensusCallback,
+	type ConsensusCallback,
 	ConsensusResult,
-	IConsensusOrderedCollection,
-	IConsensusOrderedCollectionEvents,
-	IConsensusOrderedCollectionFactory,
-	IOrderedCollection,
-	ISnapshotable,
+	type IConsensusOrderedCollection,
+	type IConsensusOrderedCollectionEvents,
+	type IConsensusOrderedCollectionFactory,
+	type IOrderedCollection,
+	type ISnapshotable,
 } from "./interfaces.js";
 export { ConsensusQueueFactory, ConsensusQueue } from "./consensusOrderedCollectionFactory.js";
 export { ConsensusOrderedCollection } from "./consensusOrderedCollection.js";
 export { ConsensusQueueClass } from "./consensusQueue.js";
-export { acquireAndComplete, waitAcquireAndComplete } from "./testUtils.js";
+export {
+	acquireAndComplete,
+	waitAcquireAndComplete,
+	acquireAndRelease,
+	waitAcquireAndRelease,
+} from "./testUtils.js";

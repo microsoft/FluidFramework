@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import {
+import type {
 	IDeltaManager,
 	ContainerWarning,
 } from "@fluidframework/container-definitions/internal";
@@ -11,18 +11,19 @@ import type {
 	ISummarizerEvents,
 	SummarizerStopReason,
 } from "@fluidframework/container-runtime-definitions/internal";
-import {
+import type {
 	IEventProvider,
 	ITelemetryBaseProperties,
 	ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
-import { ISummaryTree } from "@fluidframework/driver-definitions";
-import {
+import type { ISummaryTree } from "@fluidframework/driver-definitions";
+import type {
 	IDocumentMessage,
 	ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
-import { ISummaryStats } from "@fluidframework/runtime-definitions/internal";
-import {
+import type { ISummaryStats } from "@fluidframework/runtime-definitions/internal";
+import type { TelemetryContext } from "@fluidframework/runtime-utils/internal";
+import type {
 	ITelemetryLoggerExt,
 	ITelemetryLoggerPropertyBag,
 } from "@fluidframework/telemetry-utils/internal";
@@ -124,8 +125,10 @@ export interface ISummarizerRuntime extends IConnectableRuntime {
 	 */
 	readonly summarizerClientId: string | undefined;
 	readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
+	/**
+	 * Initiate disposal of the container.
+	 */
 	disposeFn(): void;
-	closeFn(): void;
 	on(
 		event: "op",
 		listener: (op: ISequencedDocumentMessage, runtimeMessage?: boolean) => void,
@@ -138,8 +141,7 @@ export interface ISummarizerRuntime extends IConnectableRuntime {
 
 /**
  * Options affecting summarize behavior.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface ISummarizeOptions {
 	/**
@@ -168,11 +170,14 @@ export interface ISubmitSummaryOptions extends ISummarizeOptions {
 	 * The sequence number of the latest summary used to validate if summary state is correct before summarizing
 	 */
 	readonly latestSummaryRefSeqNum: number;
+	/**
+	 * Shared telemetry context for the current summarize attempt.
+	 */
+	telemetryContext?: TelemetryContext;
 }
 
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IOnDemandSummarizeOptions extends ISummarizeOptions {
 	/**
@@ -187,8 +192,7 @@ export interface IOnDemandSummarizeOptions extends ISummarizeOptions {
 
 /**
  * Options to use when enqueueing a summarize attempt.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IEnqueueSummarizeOptions extends IOnDemandSummarizeOptions {
 	/**
@@ -208,8 +212,7 @@ export interface IEnqueueSummarizeOptions extends IOnDemandSummarizeOptions {
 /**
  * In addition to the normal summary tree + stats, this contains additional stats
  * only relevant at the root of the tree.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IGeneratedSummaryStats extends ISummaryStats {
 	/**
@@ -240,8 +243,7 @@ export interface IGeneratedSummaryStats extends ISummaryStats {
 
 /**
  * Type for summarization failures that are retriable.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IRetriableFailureError extends Error {
 	readonly retryAfterSeconds?: number;
@@ -249,8 +251,7 @@ export interface IRetriableFailureError extends Error {
 
 /**
  * Base results for all submitSummary attempts.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IBaseSummarizeResult {
 	readonly stage: "base";
@@ -267,8 +268,7 @@ export interface IBaseSummarizeResult {
 
 /**
  * Results of submitSummary after generating the summary tree.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IGenerateSummaryTreeResult extends Omit<IBaseSummarizeResult, "stage"> {
 	readonly stage: "generate";
@@ -288,8 +288,7 @@ export interface IGenerateSummaryTreeResult extends Omit<IBaseSummarizeResult, "
 
 /**
  * Results of submitSummary after uploading the tree to storage.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IUploadSummaryResult extends Omit<IGenerateSummaryTreeResult, "stage"> {
 	readonly stage: "upload";
@@ -305,8 +304,7 @@ export interface IUploadSummaryResult extends Omit<IGenerateSummaryTreeResult, "
 
 /**
  * Results of submitSummary after submitting the summarize op.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface ISubmitSummaryOpResult extends Omit<IUploadSummaryResult, "stage" | "error"> {
 	readonly stage: "submit";
@@ -335,8 +333,7 @@ export interface ISubmitSummaryOpResult extends Omit<IUploadSummaryResult, "stag
  * 3. "upload" - the summary was uploaded to storage, and the result contains the server-provided handle
  *
  * 4. "submit" - the summarize op was submitted, and the result contains the op client sequence number.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export type SubmitSummaryResult =
 	| IBaseSummarizeResult
@@ -346,23 +343,20 @@ export type SubmitSummaryResult =
 
 /**
  * The stages of Summarize, used to describe how far progress succeeded in case of a failure at a later stage.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export type SummaryStage = SubmitSummaryResult["stage"] | "unknown";
 
 /**
  * The data in summarizer result when submit summary stage fails.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface SubmitSummaryFailureData {
 	stage: SummaryStage;
 }
 
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export type SummarizeResultPart<TSuccess, TFailure = undefined> =
 	| {
@@ -377,8 +371,7 @@ export type SummarizeResultPart<TSuccess, TFailure = undefined> =
 	  };
 
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface ISummarizer extends IEventProvider<ISummarizerEvents> {
 	/**
@@ -675,8 +668,7 @@ export interface ISummarizeRunnerTelemetry extends ITelemetryLoggerPropertyBag {
 }
 
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface ISummaryBaseConfiguration {
 	/**
@@ -698,8 +690,7 @@ export interface ISummaryBaseConfiguration {
 }
 
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface ISummaryConfigurationHeuristics extends ISummaryBaseConfiguration {
 	state: "enabled";
@@ -762,26 +753,32 @@ export interface ISummaryConfigurationHeuristics extends ISummaryBaseConfigurati
 }
 
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface ISummaryConfigurationDisableSummarizer {
 	state: "disabled";
 }
 
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface ISummaryConfigurationDisableHeuristics extends ISummaryBaseConfiguration {
 	state: "disableHeuristics";
 }
 
 /**
- * @legacy
- * @alpha
+ * Configuration used internally to indicate on-demand summaries only (no election/heuristics).
+ * @legacy @beta
+ */
+export interface ISummaryConfigurationWithSummaryOnRequest extends ISummaryBaseConfiguration {
+	state: "summaryOnRequest";
+}
+
+/**
+ * @legacy @beta
  */
 export type ISummaryConfiguration =
 	| ISummaryConfigurationDisableSummarizer
 	| ISummaryConfigurationDisableHeuristics
-	| ISummaryConfigurationHeuristics;
+	| ISummaryConfigurationHeuristics
+	| ISummaryConfigurationWithSummaryOnRequest;

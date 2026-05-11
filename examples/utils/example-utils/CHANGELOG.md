@@ -1,5 +1,93 @@
 # @fluid-example/example-utils
 
+## 2.100.0
+
+Dependency updates only.
+
+## 2.93.0
+
+Dependency updates only.
+
+## 2.92.0
+
+Dependency updates only.
+
+## 2.91.0
+
+Dependency updates only.
+
+## 2.90.0
+
+Dependency updates only.
+
+## 2.83.0
+
+Dependency updates only.
+
+## 2.82.0
+
+Dependency updates only.
+
+## 2.81.0
+
+Dependency updates only.
+
+## 2.80.0
+
+Dependency updates only.
+
+## 2.74.0
+
+Dependency updates only.
+
+## 2.73.0
+
+Dependency updates only.
+
+## 2.72.0
+
+Dependency updates only.
+
+## 2.71.0
+
+Dependency updates only.
+
+## 2.70.0
+
+Dependency updates only.
+
+## 2.63.0
+
+Dependency updates only.
+
+## 2.62.0
+
+Dependency updates only.
+
+## 2.61.0
+
+Dependency updates only.
+
+## 2.60.0
+
+Dependency updates only.
+
+## 2.53.0
+
+Dependency updates only.
+
+## 2.52.0
+
+Dependency updates only.
+
+## 2.51.0
+
+Dependency updates only.
+
+## 2.50.0
+
+Dependency updates only.
+
 ## 2.43.0
 
 Dependency updates only.
@@ -127,7 +215,6 @@ Dependency updates only.
 - aqueduct: Removed requestHandler utilities [9a451d4946](https://github.com/microsoft/FluidFramework/commits/9a451d4946b5c51a52e4d1ab5bf51e7b285b0d74)
 
   The following `requestHandler` utilities have been removed:
-
   - `makeModelRequestHandler`
   - `defaultFluidObjectRequestHandler`
   - `defaultRouteRequestHandler`

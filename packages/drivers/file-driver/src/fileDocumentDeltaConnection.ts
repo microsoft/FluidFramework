@@ -4,9 +4,9 @@
  */
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import { IDisposable } from "@fluidframework/core-interfaces";
-import { ConnectionMode } from "@fluidframework/driver-definitions";
-import {
+import type { IDisposable } from "@fluidframework/core-interfaces";
+import type { ConnectionMode } from "@fluidframework/driver-definitions";
+import type {
 	IDocumentDeltaConnection,
 	IDocumentDeltaConnectionEvents,
 	IClientConfiguration,
@@ -14,12 +14,12 @@ import {
 	IDocumentMessage,
 	ISignalClient,
 	ITokenClaims,
-	ScopeType,
 	ISequencedDocumentMessage,
 	ISignalMessage,
 } from "@fluidframework/driver-definitions/internal";
+import { ScopeType } from "@fluidframework/driver-definitions/internal";
 
-import { FileDeltaStorageService } from "./fileDeltaStorageService.js";
+import type { FileDeltaStorageService } from "./fileDeltaStorageService.js";
 
 const MaxBatchDeltas = 2000;
 
@@ -37,8 +37,8 @@ const Claims: ITokenClaims = {
 	user: {
 		id: "",
 	},
-	iat: Math.round(new Date().getTime() / 1000),
-	exp: Math.round(new Date().getTime() / 1000) + 60 * 60, // 1 hour expiration
+	iat: Math.round(Date.now() / 1000),
+	exp: Math.round(Date.now() / 1000) + 60 * 60, // 1 hour expiration
 	ver: "1.0",
 };
 
@@ -54,7 +54,7 @@ export class Replayer {
 		private readonly documentStorageService: FileDeltaStorageService,
 	) {}
 
-	public get currentReplayedOp() {
+	public get currentReplayedOp(): number {
 		return this.currentReplayOp;
 	}
 
@@ -70,7 +70,7 @@ export class Replayer {
 	 * Replay the ops upto a certain number.
 	 * @param replayTo - The last op number to be replayed.
 	 */
-	public replay(replayTo: number) {
+	public replay(replayTo: number): number {
 		let totalReplayedOps = 0;
 		let done: boolean;
 		do {
@@ -94,14 +94,14 @@ export class Replayer {
 		return totalReplayedOps;
 	}
 
-	private isDoneFetch(replayTo: number) {
+	private isDoneFetch(replayTo: number): boolean {
 		if (replayTo >= 0) {
 			return this.currentReplayOp >= replayTo;
 		}
 		return false;
 	}
 
-	private emit(ops: ISequencedDocumentMessage[]) {
+	private emit(ops: ISequencedDocumentMessage[]): void {
 		// Note: do not clone messages here!
 		// If Replay Tool fails due to one container patching message in-place,
 		// then same thing can happen in shipping product due to
@@ -162,7 +162,7 @@ export class ReplayFileDeltaConnection
 		this.replayer = new Replayer(this, documentDeltaStorageService);
 	}
 
-	public getReplayer() {
+	public getReplayer(): Replayer {
 		return this.replayer;
 	}
 
@@ -208,13 +208,14 @@ export class ReplayFileDeltaConnection
 		throw new Error("ReplayFileDeltaConnection.submit() can't be called");
 	}
 
-	public async submitSignal(message: any) {}
+	// eslint-disable-next-line @typescript-eslint/no-misused-promises
+	public async submitSignal(message: any): Promise<void> {}
 
 	private _disposed = false;
-	public get disposed() {
+	public get disposed(): boolean {
 		return this._disposed;
 	}
-	public dispose() {
+	public dispose(): void {
 		this._disposed = true;
 	}
 }

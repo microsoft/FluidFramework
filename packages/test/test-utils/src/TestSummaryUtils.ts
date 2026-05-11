@@ -9,7 +9,6 @@ import {
 	LoaderHeader,
 } from "@fluidframework/container-definitions/internal";
 import {
-	// eslint-disable-next-line import/no-deprecated
 	IOnDemandSummarizeOptions,
 	ISummarizer,
 	ISummaryRuntimeOptions,
@@ -29,7 +28,7 @@ import {
 } from "@fluidframework/runtime-definitions/internal";
 
 import { createTestConfigProvider } from "./TestConfigs.js";
-// eslint-disable-next-line import/no-deprecated
+// eslint-disable-next-line import-x/no-deprecated
 import { ContainerRuntimeFactoryWithDefaultDataStore } from "./containerRuntimeFactories.js";
 import { waitForContainerConnection } from "./containerUtils.js";
 import {
@@ -63,12 +62,17 @@ async function getSummarizerBackCompat(container: IContainer): Promise<ISummariz
 	return response.value as ISummarizer;
 }
 
-/** @internal */
+/**
+ * @internal
+ */
 export async function createSummarizerCore(
 	container: IContainer,
 	loader: IHostLoader,
 	summaryVersion?: string,
-) {
+): Promise<{
+	container: IContainer;
+	summarizer: ISummarizer;
+}> {
 	const absoluteUrl = await container.getAbsoluteUrl("");
 	if (absoluteUrl === undefined) {
 		throw new Error("URL could not be resolved");
@@ -128,7 +132,7 @@ export async function createSummarizerFromFactory(
 	configProvider: IConfigProviderBase = createTestConfigProvider(),
 ): Promise<{ container: IContainer; summarizer: ISummarizer }> {
 	const runtimeFactory = createContainerRuntimeFactoryWithDefaultDataStore(
-		// eslint-disable-next-line import/no-deprecated
+		// eslint-disable-next-line import-x/no-deprecated
 		containerRuntimeFactoryType ?? ContainerRuntimeFactoryWithDefaultDataStore,
 		{
 			defaultFactory: dataStoreFactory,

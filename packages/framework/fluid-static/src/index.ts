@@ -17,8 +17,10 @@ export {
 	type IFluidContainerInternal,
 	type InitialObjects,
 } from "./fluidContainer.js";
+export { getPresence, getPresenceAlpha } from "./getPresence.js";
 export { createDOProviderContainerRuntimeFactory } from "./rootDataObject.js";
 export { createServiceAudience } from "./serviceAudience.js";
+export { createTreeContainerRuntimeFactory } from "./treeRootDataObject.js";
 export type {
 	CompatibilityMode,
 	ContainerSchema,
@@ -29,4 +31,6 @@ export type {
 	IServiceAudienceEvents,
 	MemberChangedListener,
 	Myself,
+	TreeContainerSchema,
 } from "./types.js";
+export { isTreeContainerSchema } from "./utils.js";

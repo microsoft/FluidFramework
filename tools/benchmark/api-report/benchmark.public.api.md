@@ -4,92 +4,72 @@
 
 ```ts
 
-/// <reference types="node" />
+import type { Test } from 'mocha';
 
-import { Test } from 'mocha';
-
-// @public
-export function benchmark(args: BenchmarkArguments): Test;
-
-// @public
-export type BenchmarkArguments = Titled & (BenchmarkSyncArguments | BenchmarkAsyncArguments | CustomBenchmarkArguments);
-
-// @public
-export interface BenchmarkAsyncArguments extends BenchmarkAsyncFunction, BenchmarkOptions {
-}
-
-// @public
-export interface BenchmarkAsyncFunction extends BenchmarkOptions {
-    benchmarkFnAsync: () => Promise<unknown>;
-}
-
-// @public
-export function benchmarkCustom(options: CustomBenchmarkOptions): Test;
-
-// @public
-export interface BenchmarkData {
-    customData: CustomData;
-    elapsedSeconds: number;
-}
-
-// @public
-export interface BenchmarkDescription {
-    category?: string;
-    type?: BenchmarkType;
-}
-
-// @public
-export interface BenchmarkError {
-    error: string;
-}
-
-// @public
-export function benchmarkMemory(testObject: IMemoryTestObject): Test;
-
-// @public
-export interface BenchmarkOptions extends MochaExclusiveOptions, HookArguments, BenchmarkTimingOptions, OnBatch, BenchmarkDescription {
-}
-
-// @public
-export class BenchmarkReporter {
-    constructor(outputDirectory?: string);
-    recordResultsSummary(): void;
-    recordSuiteResults(suiteName: string): void;
-    recordTestResult(suiteName: string, testName: string, result: BenchmarkResult): void;
-}
-
-// @public
-export type BenchmarkResult = BenchmarkError | BenchmarkData;
-
-// @public (undocumented)
-export type BenchmarkRunningOptions = BenchmarkSyncArguments | BenchmarkAsyncArguments | CustomBenchmarkArguments;
-
-// @public
-export interface BenchmarkSyncArguments extends BenchmarkSyncFunction, BenchmarkOptions {
-}
-
-// @public
-export interface BenchmarkSyncFunction extends BenchmarkOptions {
-    benchmarkFn: () => void;
-}
-
-// @public @sealed (undocumented)
-export interface BenchmarkTimer<T> {
-    // (undocumented)
+// @public @sealed
+export interface BatchedDurationTimer<T> {
     readonly iterationsPerBatch: number;
-    // (undocumented)
     recordBatch(duration: number): boolean;
+    timeAllBatches(callback: () => void): void;
+    timeAllBatchesAsync(callback: () => Promise<unknown>): Promise<void>;
     timeBatch(callback: () => void): boolean;
-    // (undocumented)
+    timeBatchAsync(callback: () => Promise<unknown>): Promise<boolean>;
     readonly timer: Timer<T>;
 }
 
+// @public @sealed
+export interface BatchlessDurationTimer {
+    time(callback: () => void): boolean;
+    timeAsync(callback: () => Promise<unknown>): Promise<boolean>;
+}
+
+// @public @input
+export interface BenchmarkDescription {
+    readonly category?: string;
+    readonly testType?: TestType;
+    readonly type?: BenchmarkType;
+}
+
 // @public
+export function benchmarkDuration(args: DurationBenchmark): BenchmarkDescription & BenchmarkFunction;
+
+// @public
+export function benchmarkDurationBatchless(args: DurationBenchmarkBatchless): BenchmarkDescription & BenchmarkFunction;
+
+// @public @sealed
+export interface BenchmarkError {
+    readonly error: string;
+}
+
+// @public @input
+export interface BenchmarkFunction {
+    readonly run: <TimeStamp>(timer: Timer<TimeStamp>) => CollectedData | Promise<CollectedData>;
+}
+
+// @public
+export function benchmarkIt(options: MochaBenchmarkOptions): Test;
+
+// @public
+export function benchmarkMemoryUse(args: MemoryUseBenchmark): BenchmarkDescription & BenchmarkFunction;
+
+// @public
+export enum BenchmarkMode {
+    Correctness = "correctness",
+    Performance = "performance"
+}
+
+// @public @input
+export interface BenchmarkOptions extends Titled, BenchmarkDescription, BenchmarkFunction {
+}
+
+// @public @sealed
+export type BenchmarkResult = BenchmarkError | CollectedData;
+
+// @public @input
 export interface BenchmarkTimingOptions {
     maxBenchmarkDurationSeconds?: number;
     minBatchCount?: number;
     minBatchDurationSeconds?: number;
-    // (undocumented)
     startPhase?: Phase;
 }
 
@@ -101,76 +81,129 @@ export enum BenchmarkType {
     Perspective = 0
 }
 
-// @public (undocumented)
-export interface CustomBenchmark extends BenchmarkTimingOptions {
-    benchmarkFnCustom<T>(state: BenchmarkTimer<T>): Promise<void>;
-}
-
-// @public (undocumented)
-export type CustomBenchmarkArguments = MochaExclusiveOptions & CustomBenchmark & BenchmarkDescription;
-
 // @public
-export interface CustomBenchmarkOptions extends Titled, BenchmarkDescription, MochaExclusiveOptions {
-    run: (reporter: IMeasurementReporter) => void | Promise<unknown>;
+export class Box<T extends NonNullable<unknown>> {
+    clear(): void;
+    static empty<T extends NonNullable<unknown>>(): Box<T>;
+    static full<T extends NonNullable<unknown>>(item: T): Box<T>;
+    get value(): T;
+    set value(v: T);
 }
 
 // @public
-export type CustomData = Record<string, {
-    rawValue: unknown;
-    formattedValue: string;
+export function captureResults(f: () => CollectedData | Promise<CollectedData>, durationMeasurementName?: string): Promise<{
+    result: BenchmarkResult;
+    exception?: Error;
 }>;
 
 // @public
-export function geometricMean(values: number[]): number;
+export function collectDurationData(args: DurationBenchmark): Promise<CollectedData>;
 
 // @public
-export interface HookArguments {
-    after?: HookFunction | undefined;
-    before?: HookFunction | undefined;
+export type CollectedData = readonly [PrimaryMeasurement, ...Measurement[]];
+
+// @public
+export function collectMemoryUseData(argsIn: MemoryUseBenchmark): Promise<CollectedData>;
+
+// @public
+export const currentBenchmarkMode: BenchmarkMode;
+
+// @public @input
+export type DurationBenchmark = DurationBenchmarkSync | DurationBenchmarkAsync | DurationBenchmarkCustom;
+
+// @public @input
+export interface DurationBenchmarkAsync extends BenchmarkTimingOptions {
+    readonly benchmarkFnAsync: () => Promise<unknown>;
+}
+
+// @public @input
+export interface DurationBenchmarkBatchless {
+    readonly benchmarkFn: (state: BatchlessDurationTimer) => void | Promise<void>;
+    maxBenchmarkDurationSeconds?: number;
+    minSampleCount?: number;
+    startPhase?: Phase.CollectData | Phase.WarmUp;
+}
+
+// @public @input
+export interface DurationBenchmarkCustom extends BenchmarkTimingOptions {
+    benchmarkFnCustom<T>(state: BatchedDurationTimer<T>): Promise<void>;
+}
+
+// @public @input
+export interface DurationBenchmarkSync extends BenchmarkTimingOptions {
+    readonly benchmarkFn: () => void;
 }
 
 // @public
-export type HookFunction = () => void | Promise<unknown>;
+export function finishLoggingReport(reports: SuiteData, incremental: boolean, outputFilePath: string | undefined): void;
 
 // @public
-export interface IMeasurementReporter {
-    addMeasurement(key: string, value: number): void;
-}
-
-// @public (undocumented)
-export interface IMemoryTestObject extends MemoryTestObjectProps {
-    after?: HookFunction;
-    afterIteration?: HookFunction;
-    before?: HookFunction;
-    beforeIteration?: HookFunction;
-    run(): Promise<unknown>;
-}
+export function formatResultArrayTable(data: SuiteData): string | undefined;
 
 // @public
+export function fullName(parent: ReportPath | undefined, benchmarkName?: string): string;
+
+// @public @deprecated
 export const isInPerformanceTestingMode: boolean;
 
 // @public
 export function isResultError(result: BenchmarkResult): result is BenchmarkError;
 
-// @public (undocumented)
-export interface MemoryTestObjectProps extends MochaExclusiveOptions, Titled, BenchmarkDescription {
-    readonly allowedDeviationBytes?: number;
-    readonly baselineMemoryUsage?: number;
-    readonly maxBenchmarkDurationSeconds?: number;
-    readonly maxRelativeMarginOfError?: number;
-    readonly minSampleCount?: number;
-    readonly samplePercentageToUse?: number;
+// @public
+export function isSuiteNode(item: ReportSuite | ReportEntry): item is ReportSuite;
+
+// @public
+export interface Measurement {
+    readonly name: string;
+    readonly significance?: Significance;
+    readonly type?: ValueType;
+    readonly units?: string;
+    readonly value: number;
 }
 
 // @public
-export interface MochaExclusiveOptions {
-    only?: boolean;
+export function memoryAddedBy<TIn extends NonNullable<unknown>>(options: MemoryUseModifier<TIn>): MemoryUseBenchmark;
+
+// @public
+export interface MemoryUseBenchmark {
+    benchmarkFn(state: MemoryUseCallbacks): Promise<void>;
+    enableAsyncGC?: boolean;
+    keepIterations?: number;
+    logProcessedData?: boolean;
+    logRawData?: boolean;
+    warmUpIterations?: number;
+}
+
+// @public @sealed
+export interface MemoryUseCallbacks {
+    afterDeallocation(): Promise<void>;
+    beforeAllocation(): Promise<void>;
+    continue(): boolean;
+    whileAllocated(): Promise<void>;
+}
+
+// @public @input
+export interface MemoryUseModifier<TIn> {
+    after?(input: TIn): void | Promise<void>;
+    modify(input: TIn): void | Promise<void>;
+    setup(): TIn | Promise<TIn>;
 }
 
 // @public
-export interface OnBatch {
-    beforeEachBatch?: () => void;
+export function memoryUseOfValue<TOut extends NonNullable<unknown>>(factory: () => TOut | Promise<TOut>): MemoryUseBenchmark;
+
+// @public @input
+export interface MochaBenchmarkOptions extends BenchmarkOptions {
+    readonly correctnessTimeoutMs?: number;
+    readonly only?: boolean;
+    readonly skip?: BenchmarkMode | true;
 }
+
+// @public
+export function parseBenchmarkResult(json: string): BenchmarkResult;
+
+// @public
+export function parseReport(text: string): unknown;
 
 // @public (undocumented)
 export enum Phase {
@@ -183,7 +216,9 @@ export enum Phase {
 }
 
 // @public
-export function prettyNumber(num: number, numDecimals?: number): string;
+export type PrimaryMeasurement = Required<Measurement> & {
+    significance: "Primary";
+};
 
 // @public
 export function qualifiedTitle(args: BenchmarkDescription & Titled & {
@@ -191,45 +226,86 @@ export function qualifiedTitle(args: BenchmarkDescription & Titled & {
 }): string;
 
 // @public
-export function runBenchmark(args: BenchmarkRunningOptions): Promise<BenchmarkData>;
+export function recordTestResult(parent: ReportPath | undefined, entry: ReportEntry): void;
 
 // @public
-export interface Stats {
-    readonly arithmeticMean: number;
-    readonly marginOfError: number;
-    readonly marginOfErrorPercent: number;
-    readonly samples: readonly number[];
-    readonly standardDeviation: number;
-    readonly standardErrorOfMean: number;
-    readonly variance: number;
+export type ReportArray = (ReportSuite | ReportEntry)[];
+
+// @public
+export interface ReportEntry {
+    // (undocumented)
+    readonly benchmarkName: string;
+    // (undocumented)
+    readonly data: BenchmarkResult;
 }
 
-// @public (undocumented)
+// @public
+export interface ReportPath {
+    // (undocumented)
+    readonly parent?: ReportPath;
+    // (undocumented)
+    readonly report: Pick<ReportSuite, "suiteName">;
+}
+
+// @public
+export interface ReportSuite {
+    // (undocumented)
+    readonly contents: ReportArray;
+    // (undocumented)
+    readonly suiteName: string;
+}
+
+// @public
+export interface ReportSuiteWithPath extends ReportPath {
+    // (undocumented)
+    readonly parent?: ReportPath;
+    // (undocumented)
+    readonly report: ReportSuite;
+}
+
+// @public
+export function runBenchmarkSync(args: DurationBenchmarkSync): CollectedData;
+
+// @public
+export type Significance = "Primary" | "Secondary" | "Diagnostic";
+
+// @public
+export interface SuiteData {
+    // (undocumented)
+    content: ReportArray;
+    // (undocumented)
+    parent?: ReportPath;
+}
+
+// @public
 export enum TestType {
     ExecutionTime = 0,
     MemoryUsage = 1
 }
 
-// @public (undocumented)
+// @public
 export interface Timer<T = unknown> {
-    // (undocumented)
     now(): T;
-    // (undocumented)
     toSeconds(before: T, after: T): number;
 }
 
 // @public
+export const timer: Timer;
+
+// @public @input
 export interface Titled {
-    title: string;
+    readonly title: string;
 }
 
 // @public
-export function validateBenchmarkArguments(args: BenchmarkSyncArguments | BenchmarkAsyncArguments): {
-    isAsync: true;
-    benchmarkFn: () => Promise<unknown>;
-} | {
-    isAsync: false;
-    benchmarkFn: () => void;
-};
+export enum ValueType {
+    // (undocumented)
+    LargerIsBetter = "LargerIsBetter",
+    // (undocumented)
+    SmallerIsBetter = "SmallerIsBetter"
+}
+
+// @public
+export function visitSuitesArray(report: SuiteData, callback: (data: SuiteData) => void): void;
 
 ```

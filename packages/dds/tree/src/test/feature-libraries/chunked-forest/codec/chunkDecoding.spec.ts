@@ -6,59 +6,74 @@
 import { strict as assert } from "node:assert";
 
 import { compareArrays } from "@fluidframework/core-utils/internal";
+import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 
-// eslint-disable-next-line import/no-internal-modules
+import type { TreeNodeSchemaIdentifier, TreeValue } from "../../../../core/index.js";
+// eslint-disable-next-line import-x/no-internal-modules
 import { BasicChunk } from "../../../../feature-libraries/chunked-forest/basicChunk.js";
 import {
 	type ChunkDecoder,
 	type StreamCursor,
 	readStream,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/chunkCodecUtilities.js";
 import {
 	InlineArrayDecoder,
+	IncrementalChunkDecoder,
 	NestedArrayDecoder,
-	TreeDecoder,
+	NodeDecoder,
 	aggregateChunks,
 	anyDecoder,
 	deaggregateChunks,
 	decode,
 	readValue,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/chunkDecoding.js";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import { DecoderContext } from "../../../../feature-libraries/chunked-forest/codec/chunkDecodingGeneric.js";
 import {
-	type EncodedChunkShape,
+	fieldBatchCodecBuilder,
+	type ChunkReferenceId,
+	type IncrementalDecoder,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "../../../../feature-libraries/chunked-forest/codec/codecs.js";
+import {
+	type EncodedChunkShapeV1,
+	type EncodedFieldBatchV1OrV2,
+	type EncodedNodeShape,
+	FieldBatchFormatVersion,
 	SpecialField,
-	version,
-	// eslint-disable-next-line import/no-internal-modules
-} from "../../../../feature-libraries/chunked-forest/codec/format.js";
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "../../../../feature-libraries/chunked-forest/codec/format/index.js";
 import {
 	emptyChunk,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/emptyChunk.js";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import { SequenceChunk } from "../../../../feature-libraries/chunked-forest/sequenceChunk.js";
 import type { TreeChunk } from "../../../../feature-libraries/index.js";
 import { type ReferenceCountedBase, brand } from "../../../../util/index.js";
-import { assertChunkCursorEquals } from "../fieldCursorTestUtilities.js";
 import { testIdCompressor } from "../../../utils.js";
+import { assertChunkCursorEquals } from "../fieldCursorTestUtilities.js";
 
 function assertRefCount(item: ReferenceCountedBase, count: 0 | 1 | "shared"): void {
 	switch (count) {
-		case 0:
+		case 0: {
 			assert(item.isUnreferenced());
 			break;
-		case 1:
+		}
+		case 1: {
 			assert(!item.isUnreferenced());
 			assert(!item.isShared());
 			break;
-		case "shared":
+		}
+		case "shared": {
 			assert(item.isShared());
 			break;
-		default:
+		}
+		default: {
 			break;
+		}
 	}
 }
 
@@ -78,22 +93,29 @@ const idDecodingContext = {
 	idCompressor: testIdCompressor,
 	originatorId: testIdCompressor.localSessionId,
 };
+
 describe("chunkDecoding", () => {
 	describe("decode", () => {
 		// Smoke test for top level decode function.
 		// All real functionality should be tested in more specific tests.
-		it("minimal", () => {
-			const result = decode(
-				{
-					version,
-					identifiers: [],
-					shapes: [{ a: 0 }],
-					data: [[0, []]],
-				},
-				idDecodingContext,
-			);
-			assert.deepEqual(result, [emptyChunk]);
-		});
+		for (const version of fieldBatchCodecBuilder.registry.map(
+			(entry) => entry.formatVersion,
+		)) {
+			describe(`FieldBatchFormatVersion ${version}`, () => {
+				it("minimal", () => {
+					const result = decode(
+						{
+							version: brand(version),
+							identifiers: [],
+							shapes: [{ a: 0 }],
+							data: [[0, []]],
+						},
+						idDecodingContext,
+					);
+					assert.deepEqual(result, [emptyChunk]);
+				});
+			});
+		}
 	});
 
 	describe("readValue", () => {
@@ -186,7 +208,7 @@ describe("chunkDecoding", () => {
 		}
 	});
 
-	describe("EncodedNestedArray", () => {
+	describe("EncodedNestedArrayShape", () => {
 		it("empty", () => {
 			const decoder = new NestedArrayDecoder(0);
 			const log: string[] = [];
@@ -238,7 +260,7 @@ describe("chunkDecoding", () => {
 		});
 	});
 
-	describe("EncodedInlineArray", () => {
+	describe("EncodedInlineArrayShape", () => {
 		it("empty", () => {
 			const decoder = new InlineArrayDecoder({ length: 0, shape: 0 });
 			const log: string[] = [];
@@ -278,10 +300,15 @@ describe("chunkDecoding", () => {
 		assert.deepEqual(log, ["a", "b", "c"]);
 	});
 
-	describe("TreeDecoder", () => {
+	describe("NodeDecoder", () => {
 		it("empty node", () => {
-			const cache = new DecoderContext([], [], idDecodingContext);
-			const decoder = new TreeDecoder(
+			const cache = new DecoderContext(
+				[],
+				[],
+				idDecodingContext,
+				undefined /* incrementalDecoder */,
+			);
+			const decoder = new NodeDecoder(
 				{
 					value: false,
 					fields: [],
@@ -294,8 +321,13 @@ describe("chunkDecoding", () => {
 		});
 
 		it("typed node", () => {
-			const cache = new DecoderContext([], [], idDecodingContext);
-			const decoder = new TreeDecoder(
+			const cache = new DecoderContext(
+				[],
+				[],
+				idDecodingContext,
+				undefined /* incrementalDecoder */,
+			);
+			const decoder = new NodeDecoder(
 				{
 					type: "baz",
 					value: false,
@@ -311,9 +343,14 @@ describe("chunkDecoding", () => {
 		it("identifier node", () => {
 			const compressedId = testIdCompressor.generateCompressedId();
 			const stableId = testIdCompressor.decompress(compressedId);
-			const cache = new DecoderContext([], [], idDecodingContext);
+			const cache = new DecoderContext(
+				[],
+				[],
+				idDecodingContext,
+				undefined /* incrementalDecoder */,
+			);
 
-			const decoder = new TreeDecoder(
+			const decoder = new NodeDecoder(
 				{
 					type: "identifier",
 					value: SpecialField.Identifier,
@@ -327,11 +364,16 @@ describe("chunkDecoding", () => {
 		});
 
 		it("dynamic", () => {
-			const cache = new DecoderContext(["b", "d"], [], idDecodingContext);
+			const cache = new DecoderContext(
+				["b", "d"],
+				[],
+				idDecodingContext,
+				undefined /* incrementalDecoder */,
+			);
 			const log: string[] = [];
 			const localChunk = new BasicChunk(brand("local"), new Map());
 			const decoders = [makeLoggingDecoder(log, localChunk)];
-			const decoder = new TreeDecoder(
+			const decoder = new NodeDecoder(
 				{
 					fields: [],
 					extraFields: 0,
@@ -360,13 +402,14 @@ describe("chunkDecoding", () => {
 			const cache = new DecoderContext(
 				["key"],
 				// This is unused, but used to bounds check the index into decoders, so it needs 2 items.
-				[null as unknown as EncodedChunkShape, null as unknown as EncodedChunkShape],
+				[null as unknown as EncodedChunkShapeV1, null as unknown as EncodedChunkShapeV1],
 				idDecodingContext,
+				undefined /* incrementalDecoder */,
 			);
 			const log: string[] = [];
 			const localChunk = new BasicChunk(brand("local"), new Map());
 			const decoders = [makeLoggingDecoder(log, localChunk)];
-			const decoder = new TreeDecoder(
+			const decoder = new NodeDecoder(
 				{
 					fields: [[0, 0]],
 					value: false,
@@ -387,6 +430,172 @@ describe("chunkDecoding", () => {
 				},
 			]);
 			assert.deepEqual(log, ["l1"]);
+		});
+	});
+
+	describe("EncodedIncrementalChunkShape", () => {
+		const fieldBatchVersion = brand<FieldBatchFormatVersion>(FieldBatchFormatVersion.v2);
+
+		function createMockIncrementalDecoder(
+			chunksMap: Map<ChunkReferenceId, EncodedFieldBatchV1OrV2>,
+		): IncrementalDecoder {
+			return {
+				decodeIncrementalChunk: (referenceId, chunkDecoder) => {
+					const batch = chunksMap.get(referenceId);
+					assert(batch !== undefined, `Chunk with reference ID ${referenceId} not found`);
+					return chunkDecoder(batch);
+				},
+			};
+		}
+
+		function createMockEncodedIdentifierBatch(
+			nodeIdentifier: TreeNodeSchemaIdentifier,
+			value: TreeValue,
+		): EncodedFieldBatchV1OrV2 {
+			const shape: EncodedNodeShape = {
+				type: nodeIdentifier,
+				value: SpecialField.Identifier,
+				fields: [],
+			};
+			return {
+				version: fieldBatchVersion,
+				identifiers: [],
+				shapes: [
+					{
+						c: shape,
+					},
+				],
+				data: [[0, value]],
+			};
+		}
+
+		it("empty", () => {
+			const referenceId = brand<ChunkReferenceId>(0);
+			const emptyBatch: EncodedFieldBatchV1OrV2 = {
+				version: fieldBatchVersion,
+				identifiers: [],
+				shapes: [{ a: 0 }],
+				data: [[0, []]],
+			};
+			const chunksMap = new Map<ChunkReferenceId, EncodedFieldBatchV1OrV2>();
+			chunksMap.set(referenceId, emptyBatch);
+
+			const mockIncrementalDecoder = createMockIncrementalDecoder(chunksMap);
+			const cache = new DecoderContext([], [], idDecodingContext, mockIncrementalDecoder);
+			const decoder = new IncrementalChunkDecoder(cache);
+			const stream = { data: [referenceId], offset: 0 };
+
+			const result = decoder.decode([], stream);
+			assert.equal(result, emptyChunk);
+		});
+
+		it("non-empty", () => {
+			const referenceId = brand<ChunkReferenceId>(1);
+			const compressedId = testIdCompressor.generateCompressedId();
+			const nodeIdentifier: TreeNodeSchemaIdentifier = brand("identifier");
+			const batch: EncodedFieldBatchV1OrV2 = createMockEncodedIdentifierBatch(
+				nodeIdentifier,
+				compressedId,
+			);
+			const chunksMap = new Map<ChunkReferenceId, EncodedFieldBatchV1OrV2>();
+
+			chunksMap.set(referenceId, batch);
+			const mockIncrementalDecoder = createMockIncrementalDecoder(chunksMap);
+			const cache = new DecoderContext([], [], idDecodingContext, mockIncrementalDecoder);
+			const decoder = new IncrementalChunkDecoder(cache);
+			const stream = { data: [referenceId], offset: 0 };
+
+			const result = decoder.decode([], stream);
+			const expectedResult = new BasicChunk(
+				nodeIdentifier,
+				new Map(),
+				testIdCompressor.decompress(compressedId),
+			);
+			assert.deepStrictEqual(result, expectedResult);
+		});
+
+		it("nested incremental chunk", () => {
+			const referenceId1 = brand<ChunkReferenceId>(1);
+			const referenceId2 = brand<ChunkReferenceId>(2);
+			const nodeIdentifier: TreeNodeSchemaIdentifier = brand("identifier");
+			// The encoded incremental chunk contains a nested array with another incremental chunk.
+			const batch1: EncodedFieldBatchV1OrV2 = {
+				version: fieldBatchVersion,
+				identifiers: [],
+				shapes: [
+					{
+						a: 1, // Nested array shape
+					},
+					{
+						e: 0, // Incremental chunk shape inside the nested array
+					},
+				],
+				data: [[0, [referenceId2]]],
+			};
+
+			const compressedId2 = testIdCompressor.generateCompressedId();
+			const batch2: EncodedFieldBatchV1OrV2 = createMockEncodedIdentifierBatch(
+				nodeIdentifier,
+				compressedId2,
+			);
+
+			const chunksMap = new Map<ChunkReferenceId, EncodedFieldBatchV1OrV2>();
+			chunksMap.set(referenceId1, batch1);
+			chunksMap.set(referenceId2, batch2);
+
+			const mockIncrementalDecoder = createMockIncrementalDecoder(chunksMap);
+			const cache = new DecoderContext([], [], idDecodingContext, mockIncrementalDecoder);
+			const decoder = new IncrementalChunkDecoder(cache);
+			const stream = { data: [referenceId1], offset: 0 };
+
+			const result = decoder.decode([], stream);
+			const expectedResult = new BasicChunk(
+				nodeIdentifier,
+				new Map(),
+				testIdCompressor.decompress(compressedId2),
+			);
+			assert.deepStrictEqual(result, expectedResult);
+		});
+
+		it("throws when incremental decoder is not available", () => {
+			const cache = new DecoderContext(
+				[],
+				[],
+				idDecodingContext,
+				undefined, // No incremental decoder
+			);
+
+			const decoder = new IncrementalChunkDecoder(cache);
+			const stream = { data: [42], offset: 0 };
+
+			assert.throws(
+				() => decoder.decode([], stream),
+				validateAssertionError(
+					"incremental decoder not available for incremental field decoding",
+				),
+			);
+		});
+
+		it("fails for unsupported FieldBatchFormatVersion.v1", () => {
+			const referenceId = brand<ChunkReferenceId>(0);
+			const emptyBatch: EncodedFieldBatchV1OrV2 = {
+				version: brand(FieldBatchFormatVersion.v1),
+				identifiers: [],
+				shapes: [{ a: 0 }],
+				data: [[0, []]],
+			};
+			const chunksMap = new Map<ChunkReferenceId, EncodedFieldBatchV1OrV2>();
+			chunksMap.set(referenceId, emptyBatch);
+
+			const mockIncrementalDecoder = createMockIncrementalDecoder(chunksMap);
+			const cache = new DecoderContext([], [], idDecodingContext, mockIncrementalDecoder);
+			const decoder = new IncrementalChunkDecoder(cache);
+			const stream = { data: [referenceId], offset: 0 };
+
+			assert.throws(
+				() => decoder.decode([], stream),
+				validateAssertionError(/Unsupported FieldBatchFormatVersion/),
+			);
 		});
 	});
 });

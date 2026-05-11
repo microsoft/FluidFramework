@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { IBlob, ITree } from "@fluidframework/gitresources";
-import {
+import type { IBlob, ITree } from "@fluidframework/gitresources";
+import type {
 	IWholeFlatSummary,
 	IWholeFlatSummaryBlob,
 	IWholeFlatSummaryTreeEntry,

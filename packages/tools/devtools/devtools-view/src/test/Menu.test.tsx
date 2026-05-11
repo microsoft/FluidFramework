@@ -10,7 +10,7 @@ import {
 import "@testing-library/jest-dom";
 import { render, screen } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
-import React from "react";
+import { type FC, useState } from "react";
 
 import { MessageRelayContext } from "../MessageRelayContext.js";
 import { Menu, type MenuSelection } from "../components/index.js";
@@ -34,10 +34,14 @@ describe("Menu Accessibility Check", () => {
 			},
 		};
 	});
-	const MenuWrapper: React.FC = () => {
-		const [menuSelection, setMenuSelection] = React.useState<MenuSelection>({
+	const MenuWrapper: FC = () => {
+		const [menuSelection, setMenuSelection] = useState<MenuSelection>({
 			type: "homeMenuSelection",
 		});
+
+		const mockRemoveContainer = (containerKey: string): void => {
+			// Mock remove function for testing
+		};
 
 		return (
 			<MessageRelayContext.Provider value={mockMessageRelay}>
@@ -46,6 +50,7 @@ describe("Menu Accessibility Check", () => {
 					setSelection={setMenuSelection}
 					containers={containers}
 					supportedFeatures={supportedFeatures}
+					onRemoveContainer={mockRemoveContainer}
 				/>
 			</MessageRelayContext.Provider>
 		);
@@ -62,7 +67,7 @@ describe("Menu Accessibility Check", () => {
 		const user = userEvent.setup();
 
 		await user.tab();
-		const homeHeader = screen.getByText("Home");
+		const homeHeader = screen.getByRole("button", { name: "Home" });
 		expect(homeHeader).toHaveFocus();
 
 		await user.tab();
@@ -70,23 +75,34 @@ describe("Menu Accessibility Check", () => {
 		expect(refreshButton).toHaveFocus();
 
 		await user.tab();
-		const container1 = screen.getByText("Container1");
+		const container1 = screen.getByRole("button", {
+			name: /Container1/,
+		});
 		expect(container1).toHaveFocus();
 
 		await user.tab();
-		const container2 = screen.getByText("Container2");
+		const removeButtons = screen.getAllByRole("button", { name: /remove container/i });
+		expect(removeButtons[0]).toHaveFocus();
+
+		await user.tab();
+		const container2 = screen.getByRole("button", {
+			name: /Container2/,
+		});
 		expect(container2).toHaveFocus();
 
 		await user.tab();
-		const events = screen.getByText("Events");
+		expect(removeButtons[1]).toHaveFocus();
+
+		await user.tab();
+		const events = screen.getByRole("button", { name: "Events" });
 		expect(events).toHaveFocus();
 
 		await user.tab();
-		const opLatency = screen.getByText("Op Latency");
+		const opLatency = screen.getByRole("button", { name: "Op Latency" });
 		expect(opLatency).toHaveFocus();
 
 		await user.tab();
-		const settings = screen.getByText("Settings");
+		const settings = screen.getByRole("button", { name: "Settings" });
 		expect(settings).toHaveFocus();
 	});
 });

@@ -7,8 +7,7 @@ import type { SessionId } from "../identifiers.js";
 
 /**
  * The serialized contents of an IdCompressor, suitable for persistence in a summary.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export type SerializedIdCompressor = string & {
 	readonly _serializedIdCompressor: "8c73c57c-1cf4-4278-8915-6444cb4f6af5";
@@ -16,8 +15,7 @@ export type SerializedIdCompressor = string & {
 
 /**
  * The serialized contents of an IdCompressor, suitable for persistence in a summary.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export type SerializedIdCompressorWithNoSession = SerializedIdCompressor & {
 	readonly _noLocalState: "3aa2e1e8-cc28-4ea7-bc1a-a11dc3f26dfb";
@@ -25,8 +23,7 @@ export type SerializedIdCompressorWithNoSession = SerializedIdCompressor & {
 
 /**
  * The serialized contents of an IdCompressor, suitable for persistence in a summary.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export type SerializedIdCompressorWithOngoingSession = SerializedIdCompressor & {
 	readonly _hasLocalState: "1281acae-6d14-47e7-bc92-71c8ee0819cb";
@@ -36,8 +33,7 @@ export type SerializedIdCompressorWithOngoingSession = SerializedIdCompressor & 
  * Data describing a range of session-local IDs (from a remote or local session).
  *
  * A range is composed of local IDs that were generated.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IdCreationRange {
 	readonly sessionId: SessionId;

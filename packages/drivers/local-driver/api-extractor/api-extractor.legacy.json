@@ -1,4 +1,13 @@
 {
 	"$schema": "https://developer.microsoft.com/json-schemas/api-extractor/v7/api-extractor.schema.json",
-	"extends": "<projectFolder>/../../../common/build/build-common/api-extractor-report.esm.legacy.json"
+	"extends": "<projectFolder>/../../../common/build/build-common/api-extractor-report.esm.legacy.json",
+	// Note: excluding server packages until we can update their tags (and release new server versions)
+	// TODO: remove this override once server dependencies have been updated.
+	"bundledPackages": [
+		"@fluidframework/!(server-local-server)",
+		"@fluid-internal/*",
+		"@fluid-experimental/*",
+		"@fluid-private/*",
+		"@fluid-tools/*"
+	]
 }

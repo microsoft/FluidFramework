@@ -6,41 +6,40 @@
 import { EventEmitter } from "events";
 import { inspect } from "util";
 
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { IGitManager } from "@fluidframework/server-services-client";
+import type { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import type { IGitManager } from "@fluidframework/server-services-client";
 import {
-	ICheckpointService,
-	ICollection,
-	IContext,
-	IDeltaService,
-	IDocument,
-	IDocumentRepository,
-	IPartitionLambda,
-	IPartitionLambdaConfig,
-	IPartitionLambdaFactory,
-	IProducer,
-	IScribe,
-	ISequencedOperationMessage,
-	IServiceConfiguration,
-	ITenantManager,
-	MongoManager,
+	type ICheckpointService,
+	type ICollection,
+	type IContext,
+	type IDeltaService,
+	type IDocument,
+	type IDocumentRepository,
+	type IPartitionLambda,
+	type IPartitionLambdaConfig,
+	type IPartitionLambdaFactory,
+	type IProducer,
+	type IScribe,
+	type ISequencedOperationMessage,
+	type IServiceConfiguration,
+	type ITenantManager,
+	type MongoManager,
 	runWithRetry,
 } from "@fluidframework/server-services-core";
 import {
 	getLumberBaseProperties,
 	LumberEventName,
 	Lumberjack,
-	Lumber,
+	type Lumber,
 } from "@fluidframework/server-services-telemetry";
 
 import { NoOpLambda, createSessionMetric, isDocumentValid, isDocumentSessionValid } from "../utils";
 
 import { CheckpointManager } from "./checkpointManager";
-import { ILatestSummaryState } from "./interfaces";
+import type { ILatestSummaryState, ISummaryWriterFactory } from "./interfaces";
 import { ScribeLambda } from "./lambda";
 import { PendingMessageReader } from "./pendingMessageReader";
 import { SummaryReader } from "./summaryReader";
-import { SummaryWriter } from "./summaryWriter";
 import { getClientIds, initializeProtocol, isScribeCheckpointQuorumScrubbed } from "./utils";
 
 const DefaultScribe: IScribe = {
@@ -87,6 +86,7 @@ export class ScribeLambdaFactory
 		private readonly kafkaCheckpointOnReprocessingOp: boolean,
 		private readonly maxLogtailLength: number,
 		private readonly maxPendingCheckpointMessagesLength: number,
+		private readonly summaryWriterFactory: ISummaryWriterFactory,
 	) {
 		super();
 	}
@@ -314,7 +314,7 @@ export class ScribeLambdaFactory
 		const protocolHandler = initializeProtocol(lastCheckpoint.protocolState);
 
 		const lastSummaryMessages = latestSummary.messages;
-		const summaryWriter = new SummaryWriter(
+		const summaryWriter = this.summaryWriterFactory.create(
 			tenantId,
 			documentId,
 			gitManager,

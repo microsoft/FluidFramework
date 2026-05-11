@@ -193,10 +193,7 @@ function mergeMaps(
 	let same = true;
 	const out = new Map();
 	for (const key of lhsKeys) {
-		if (!rhs.has(key)) {
-			same = false;
-			out.set(key, new Conflict(lhs.get(key), undefined));
-		} else {
+		if (rhs.has(key)) {
 			// The JavaScript feature detection pattern, used for IFluidHandle, uses a field that is set to the
 			// parent object.
 			// Detect this pattern and special case it to avoid infinite recursion.
@@ -208,6 +205,9 @@ function mergeMaps(
 			const d = merge(lhs.get(key), rhs.get(key), transform);
 			same = same && !hasConflict(d);
 			out.set(key, d);
+		} else {
+			same = false;
+			out.set(key, new Conflict(lhs.get(key), undefined));
 		}
 	}
 	for (const key of rhsKeys) {

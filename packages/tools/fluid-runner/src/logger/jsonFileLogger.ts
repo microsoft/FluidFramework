@@ -4,6 +4,7 @@
  */
 
 import * as fs from "fs";
+import * as path from "path";
 
 import { BaseFileLogger } from "./baseFileLogger.js";
 
@@ -18,11 +19,15 @@ export class JSONFileLogger extends BaseFileLogger {
 		defaultProps?: Record<string, string | number>,
 	) {
 		super(filePath, eventsPerFlush, defaultProps);
+		const dirName = path.dirname(this.filePath);
+		fs.mkdirSync(dirName, { recursive: true });
 		fs.appendFileSync(this.filePath, "[");
 	}
 
 	public async close(): Promise<void> {
 		await super.close();
+		const dirName = path.dirname(this.filePath);
+		fs.mkdirSync(dirName, { recursive: true });
 		fs.appendFileSync(this.filePath, "]");
 	}
 }

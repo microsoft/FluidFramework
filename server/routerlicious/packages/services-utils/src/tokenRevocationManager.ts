@@ -4,7 +4,7 @@
  */
 
 import { NetworkError } from "@fluidframework/server-services-client";
-import {
+import type {
 	ITokenRevocationManager,
 	IRevokedTokenChecker,
 	ITokenRevocationResponse,

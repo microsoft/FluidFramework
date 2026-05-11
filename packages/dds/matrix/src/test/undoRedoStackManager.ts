@@ -9,7 +9,7 @@
 
 import { EventEmitter } from "@fluid-internal/client-utils";
 
-import { IRevertible } from "../types.js";
+import type { IRevertible } from "../types.js";
 
 enum UndoRedoMode {
 	None,

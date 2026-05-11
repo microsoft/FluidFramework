@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import assert from "assert";
+import { strict as assert } from "assert";
 
 import { describeCompat } from "@fluid-private/test-version-utils";
 import { IContainer, IHostLoader } from "@fluidframework/container-definitions/internal";
@@ -36,11 +36,6 @@ describeCompat("Container dirty flag", "NoCompat", (getTestObjectProvider, apis)
 	const testContainerConfig: ITestContainerConfig = {
 		fluidDataObjectType: DataObjectFactoryType.Test,
 		registry,
-		loaderProps: {
-			configProvider: configProvider({
-				"Fluid.Container.enableOfflineLoad": true,
-			}),
-		},
 	};
 
 	let provider: ITestObjectProvider;
@@ -50,7 +45,7 @@ describeCompat("Container dirty flag", "NoCompat", (getTestObjectProvider, apis)
 	let map1: ISharedMap;
 
 	describe("Attached container", () => {
-		const verifyDirtyStateTransitions = async (container: IContainer) => {
+		const verifyDirtyStateTransitions = async (container: IContainer): Promise<void> => {
 			assert.strictEqual(container.isDirty, false, "Container should not be dirty");
 
 			const dataStore2 = (await container.getEntryPoint()) as ITestFluidObject;

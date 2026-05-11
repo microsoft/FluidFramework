@@ -159,9 +159,7 @@ describe("BasicRestWrapper", () => {
 
 			// act/assert
 			await rw.get(requestUrl).then(
-				// tslint:disable-next-line:no-void-expression
 				() => assert.fail("Promise was not rejected"),
-				// tslint:disable-next-line:no-void-expression
 				(err) => assert.ok(err, "Invalid response code rejected Promise"),
 			);
 		});
@@ -179,9 +177,7 @@ describe("BasicRestWrapper", () => {
 
 			// act/assert
 			await rw.get(requestUrl).then(
-				// tslint:disable-next-line:no-void-expression
 				() => assert.fail("Promise was not rejected"),
-				// tslint:disable-next-line:no-void-expression
 				(err) => assert.ok(err, "Invalid response code rejected Promise"),
 			);
 		});
@@ -199,9 +195,7 @@ describe("BasicRestWrapper", () => {
 
 			// act/assert
 			await rw.get(requestUrl).then(
-				// tslint:disable-next-line:no-void-expression
 				() => assert.fail("Promise was not rejected"),
-				// tslint:disable-next-line:no-void-expression
 				(err) => assert.ok(err, "Invalid response code rejected Promise"),
 			);
 		});
@@ -219,10 +213,8 @@ describe("BasicRestWrapper", () => {
 
 			// act/assert
 			await rw.get(requestUrl).then(
-				// tslint:disable-next-line:no-void-expression
 				(response) =>
 					assert.strictEqual(response, "A successful request after being throttled."),
-				// tslint:disable-next-line:no-void-expression
 				(err) => assert.fail("Invalid response code rejected Promise"),
 			);
 		});
@@ -274,7 +266,6 @@ describe("BasicRestWrapper", () => {
 			await rw.get(requestUrl);
 
 			// assert
-			// tslint:disable-next-line:max-line-length
 			assert.strictEqual(
 				outputUrl,
 				requestOptions.url.substring(0, outputUrl.length),
@@ -349,9 +340,7 @@ describe("BasicRestWrapper", () => {
 
 			// act/assert
 			await rw.post(requestUrl, {}).then(
-				// tslint:disable-next-line:no-void-expression
 				() => assert.fail("Promise was not rejected"),
-				// tslint:disable-next-line:no-void-expression
 				(err) => assert.ok(err, "Invalid response code rejected Promise"),
 			);
 		});
@@ -369,9 +358,7 @@ describe("BasicRestWrapper", () => {
 
 			// act/assert
 			await rw.post(requestUrl, {}).then(
-				// tslint:disable-next-line:no-void-expression
 				() => assert.fail("Promise was not rejected"),
-				// tslint:disable-next-line:no-void-expression
 				(err) => assert.ok(err, "Invalid response code rejected Promise"),
 			);
 		});
@@ -389,9 +376,7 @@ describe("BasicRestWrapper", () => {
 
 			// act/assert
 			await rw.post(requestUrl, {}).then(
-				// tslint:disable-next-line:no-void-expression
 				() => assert.fail("Promise was not rejected"),
-				// tslint:disable-next-line:no-void-expression
 				(err) => assert.ok(err, "Invalid response code rejected Promise"),
 			);
 		});
@@ -409,10 +394,8 @@ describe("BasicRestWrapper", () => {
 
 			// act/assert
 			await rw.post(requestUrl, {}).then(
-				// tslint:disable-next-line:no-void-expression
 				(response) =>
 					assert.strictEqual(response, "A successful request after being throttled."),
-				// tslint:disable-next-line:no-void-expression
 				(err) => assert.fail("Invalid response code rejected Promise"),
 			);
 		});
@@ -536,9 +519,7 @@ describe("BasicRestWrapper", () => {
 
 			// act/assert
 			await rw.delete(requestUrl, {}).then(
-				// tslint:disable-next-line:no-void-expression
 				() => assert.fail("Promise was not rejected"),
-				// tslint:disable-next-line:no-void-expression
 				(err) => assert.ok(err, "Invalid response code rejected Promise"),
 			);
 		});
@@ -556,9 +537,7 @@ describe("BasicRestWrapper", () => {
 
 			// act/assert
 			await rw.delete(requestUrl, {}).then(
-				// tslint:disable-next-line:no-void-expression
 				() => assert.fail("Promise was not rejected"),
-				// tslint:disable-next-line:no-void-expression
 				(err) => assert.ok(err, "Invalid response code rejected Promise"),
 			);
 		});
@@ -576,9 +555,7 @@ describe("BasicRestWrapper", () => {
 
 			// act/assert
 			await rw.delete(requestUrl, {}).then(
-				// tslint:disable-next-line:no-void-expression
 				() => assert.fail("Promise was not rejected"),
-				// tslint:disable-next-line:no-void-expression
 				(err) => assert.ok(err, "Invalid response code rejected Promise"),
 			);
 		});
@@ -596,10 +573,8 @@ describe("BasicRestWrapper", () => {
 
 			// act/assert
 			await rw.delete(requestUrl, {}).then(
-				// tslint:disable-next-line:no-void-expression
 				(response) =>
 					assert.strictEqual(response, "A successful request after being throttled."),
-				// tslint:disable-next-line:no-void-expression
 				(err) => assert.fail("Invalid response code rejected Promise"),
 			);
 		});
@@ -723,9 +698,7 @@ describe("BasicRestWrapper", () => {
 
 			// act/assert
 			await rw.patch(requestUrl, {}).then(
-				// tslint:disable-next-line:no-void-expression
 				() => assert.fail("Promise was not rejected"),
-				// tslint:disable-next-line:no-void-expression
 				(err) => assert.ok(err, "Invalid response code rejected Promise"),
 			);
 		});
@@ -743,9 +716,7 @@ describe("BasicRestWrapper", () => {
 
 			// act/assert
 			await rw.patch(requestUrl, {}).then(
-				// tslint:disable-next-line:no-void-expression
 				() => assert.fail("Promise was not rejected"),
-				// tslint:disable-next-line:no-void-expression
 				(err) => assert.ok(err, "Invalid response code rejected Promise"),
 			);
 		});
@@ -763,9 +734,7 @@ describe("BasicRestWrapper", () => {
 
 			// act/assert
 			await rw.patch(requestUrl, {}).then(
-				// tslint:disable-next-line:no-void-expression
 				() => assert.fail("Promise was not rejected"),
-				// tslint:disable-next-line:no-void-expression
 				(err) => assert.ok(err, "Invalid response code rejected Promise"),
 			);
 		});
@@ -783,10 +752,8 @@ describe("BasicRestWrapper", () => {
 
 			// act/assert
 			await rw.patch(requestUrl, {}).then(
-				// tslint:disable-next-line:no-void-expression
 				(response) =>
 					assert.strictEqual(response, "A successful request after being throttled."),
-				// tslint:disable-next-line:no-void-expression
 				(err) => assert.fail("Invalid response code rejected Promise"),
 			);
 		});
@@ -943,10 +910,7 @@ describe("BasicRestWrapper", () => {
 			);
 
 			//act
-			await rw.get(requestUrl).then(
-				// tslint:disable-next-line:no-void-expression
-				() => assert.ok(true),
-			);
+			await rw.get(requestUrl).then(() => assert.ok(true));
 
 			assert.notEqual(rw["defaultHeaders"].Authorization, `Basic ${expiredToken}`);
 			assert.strictEqual(rw["defaultHeaders"].Authorization, `Basic ${newToken}`);

@@ -5,11 +5,24 @@
 
 import * as path from "node:path";
 
-import { createDDSFuzzSuite } from "@fluid-private/test-dds-utils";
+import { TypedEventEmitter } from "@fluid-internal/client-utils";
+import { createDDSFuzzSuite, type DDSFuzzHarnessEvents } from "@fluid-private/test-dds-utils";
 import { FlushMode } from "@fluidframework/runtime-definitions/internal";
+
+import { SharedMapOracle } from "../mapOracle.js";
 
 import { _dirname } from "./dirname.cjs";
 import { baseMapModel } from "./fuzzUtils.js";
+import type { ISharedMapWithOracle } from "./oracleUtils.js";
+
+const oracleEmitter = new TypedEventEmitter<DDSFuzzHarnessEvents>();
+
+oracleEmitter.on("clientCreate", (client) => {
+	const channel = client.channel as ISharedMapWithOracle;
+
+	const mapOracle = new SharedMapOracle(channel);
+	channel.sharedMapOracle = mapOracle;
+});
 
 describe("Map fuzz tests", () => {
 	createDDSFuzzSuite(baseMapModel, {
@@ -21,6 +34,7 @@ describe("Map fuzz tests", () => {
 			stashableClientProbability: 0.2,
 		},
 		reconnectProbability: 0,
+		emitter: oracleEmitter,
 		// Uncomment to replay a particular seed.
 		// replay: 0,
 		saveFailures: { directory: path.join(_dirname, "../../../src/test/mocha/results/map") },
@@ -37,6 +51,7 @@ describe("Map fuzz tests", () => {
 				stashableClientProbability: 0.2,
 			},
 			reconnectProbability: 0.1,
+			emitter: oracleEmitter,
 			// Uncomment to replay a particular seed.
 			// replay: 0,
 			saveFailures: {
@@ -60,6 +75,7 @@ describe("Map fuzz tests", () => {
 				flushMode: FlushMode.TurnBased,
 				enableGroupedBatching: true,
 			},
+			emitter: oracleEmitter,
 			// Uncomment to replay a particular seed.
 			// replay: 0,
 			saveFailures: {

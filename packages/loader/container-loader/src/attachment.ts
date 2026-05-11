@@ -5,13 +5,15 @@
 
 import { AttachState } from "@fluidframework/container-definitions";
 import { assert } from "@fluidframework/core-utils/internal";
-import { ISummaryTree } from "@fluidframework/driver-definitions";
-import { IDocumentStorageService } from "@fluidframework/driver-definitions/internal";
-import { CombinedAppAndProtocolSummary } from "@fluidframework/driver-utils/internal";
+import type { ISummaryTree } from "@fluidframework/driver-definitions";
+import type {
+	IDocumentStorageService,
+	ISnapshot,
+} from "@fluidframework/driver-definitions/internal";
+import type { CombinedAppAndProtocolSummary } from "@fluidframework/driver-utils/internal";
 
 import type { MemoryDetachedBlobStorage } from "./memoryBlobStorage.js";
-import type { SnapshotWithBlobs } from "./serializedStateManager.js";
-import { getSnapshotTreeAndBlobsFromSerializedContainer } from "./utils.js";
+import { getISnapshotFromSerializedContainer } from "./utils.js";
 
 /**
  * The default state a newly created detached container will have.
@@ -124,11 +126,6 @@ export interface AttachProcessProps {
 	readonly createAttachmentSummary: (
 		redirectTable?: Map<string, string>,
 	) => CombinedAppAndProtocolSummary;
-
-	/**
-	 * Whether offline load is enabled or not.
-	 */
-	readonly offlineLoadEnabled: boolean;
 }
 
 /**
@@ -137,16 +134,15 @@ export interface AttachProcessProps {
  * this method will resume the attachment process and attempt to complete it.
  *
  * @param AttachProcessProps - The data and services necessary to run the attachment process
- * @returns - The attach summary (only if offline load is enabled), or undefined
+ * @returns The attach summary (only if offline load is enabled), or undefined
  */
 export const runRetriableAttachProcess = async ({
 	detachedBlobStorage,
 	createOrGetStorageService,
 	setAttachmentData,
 	createAttachmentSummary,
-	offlineLoadEnabled,
 	initialAttachmentData,
-}: AttachProcessProps): Promise<SnapshotWithBlobs | undefined> => {
+}: AttachProcessProps): Promise<ISnapshot> => {
 	let currentData: AttachmentData = initialAttachmentData;
 
 	if (currentData.blobs === undefined) {
@@ -214,9 +210,7 @@ export const runRetriableAttachProcess = async ({
 		});
 	}
 
-	const snapshot: SnapshotWithBlobs | undefined = offlineLoadEnabled
-		? getSnapshotTreeAndBlobsFromSerializedContainer(currentData.summary)
-		: undefined;
+	const snapshot = getISnapshotFromSerializedContainer(currentData.summary);
 
 	setAttachmentData(
 		(currentData = {

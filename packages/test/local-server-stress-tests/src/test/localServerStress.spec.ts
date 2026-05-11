@@ -22,7 +22,7 @@ import {
 describe("Local Server Stress", () => {
 	const model: LocalServerStressModel<StressOperations> = {
 		workloadName: "default",
-		generatorFactory: () => takeAsync(100, makeGenerator()),
+		generatorFactory: () => takeAsync(200, makeGenerator()),
 		reducer,
 		validateConsistency: async (...clients) => {
 			await validateAllDataStoresSaved(...clients);
@@ -32,17 +32,16 @@ describe("Local Server Stress", () => {
 	};
 
 	createLocalServerStressSuite(model, {
-		defaultTestCount: 100,
-		// skipMinimization: true,
-		// Uncomment to replay a particular seed.
-		// replay: 93,
-		// only: [28],
+		defaultTestCount: 200,
 		saveFailures,
-		// saveSuccesses,
-		skip: [
-			...[18, 65, 98], // Number of keys not same
-			...[5, 49, 57], // Number of subDirectories not same,
-			...[11, 39], // Rollback op does not match last pending
-		],
+		configurations: {
+			"Fluid.Container.enableOfflineFull": true,
+			"Fluid.ContainerRuntime.EnableRollback": true,
+		},
+		// Minimization is slow with many seeds; use only to minimize specific failing seeds.
+		skipMinimization: true,
+		// Pre-existing DDS bugs: seed 54 (ConsensusOrderedCollection consistency).
+		skip: [54],
+		// Use skip, replay, and only properties to control which seeds run.
 	});
 });

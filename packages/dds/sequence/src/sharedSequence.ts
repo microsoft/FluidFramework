@@ -4,19 +4,14 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
-import {
+import type {
 	IChannelAttributes,
 	IFluidDataStoreRuntime,
 	Serializable,
 } from "@fluidframework/datastore-definitions/internal";
-import {
-	BaseSegment,
-	IJSONSegment,
-	ISegment,
-	PropertySet,
-} from "@fluidframework/merge-tree/internal";
+import type { IJSONSegment, ISegment, PropertySet } from "@fluidframework/merge-tree/internal";
+import { BaseSegment } from "@fluidframework/merge-tree/internal";
 
-// eslint-disable-next-line import/no-deprecated
 import { SharedSegmentSequence } from "./sequence.js";
 
 const MaxRun = 128;
@@ -119,7 +114,6 @@ export class SubSequence<T> extends BaseSegment {
  * @deprecated SharedSequence will be removed in a upcoming release. It has been moved to the fluid-experimental/sequence-deprecated package
  * @internal
  */
-// eslint-disable-next-line import/no-deprecated
 export class SharedSequence<T> extends SharedSegmentSequence<SubSequence<T>> {
 	constructor(
 		document: IFluidDataStoreRuntime,
@@ -131,6 +125,8 @@ export class SharedSequence<T> extends SharedSegmentSequence<SubSequence<T>> {
 	}
 
 	/**
+	 * Inserts items at the specified position in the sequence.
+	 *
 	 * @param pos - The position to insert the items at.
 	 * @param items - The items to insert.
 	 * @param props - Optional. Properties to set on the inserted items.
@@ -141,6 +137,8 @@ export class SharedSequence<T> extends SharedSegmentSequence<SubSequence<T>> {
 	}
 
 	/**
+	 * Removes items from the sequence in the specified range.
+	 *
 	 * @param start - The inclusive start of the range to remove
 	 * @param end - The exclusive end of the range to remove
 	 */
@@ -173,6 +171,7 @@ export class SharedSequence<T> extends SharedSegmentSequence<SubSequence<T>> {
 		this.walkSegments(
 			(segment: ISegment) => {
 				if (SubSequence.is(segment)) {
+					// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- using ??= could change behavior if value is falsy
 					if (firstSegment === undefined) {
 						firstSegment = segment;
 					}

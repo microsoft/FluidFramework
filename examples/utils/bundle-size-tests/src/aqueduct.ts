@@ -12,7 +12,7 @@ import { IContainerRuntime } from "@fluidframework/container-runtime-definitions
 import { DirectoryFactory } from "@fluidframework/map/internal";
 import { SharedString } from "@fluidframework/sequence/internal";
 
-export function apisToBundle() {
+export function apisToBundle(): void {
 	class BundleTestDo extends DataObject {}
 	const defaultFactory = new DataObjectFactory({
 		type: "BundleTestDo",

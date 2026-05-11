@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/eslint-config-fluid",
-	"version": "5.7.4",
+	"version": "10.0.0",
 	"description": "Shareable ESLint config for the Fluid Framework",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -12,60 +12,105 @@
 	"author": "Microsoft and contributors",
 	"main": "index.js",
 	"scripts": {
-		"build": "npm run print-config && npm run build:readme && npm run prettier",
-		"build:readme": "markdown-magic --files \"**/*.md\"",
-		"cleanup-printed-configs": "node ./scripts/cleanup-printed-configs.js ./printed-configs",
+		"build": "npm run print-configs && npm run prettier",
+		"build:readme:disabled": "markdown-magic --files \"**/*.md\"",
+		"clean": "rimraf --glob dist \"**/*.build.log\" nyc",
 		"format": "npm run prettier:fix",
 		"prettier": "prettier --check . --cache --ignore-path ../../../.prettierignore",
 		"prettier:fix": "prettier --write . --cache --ignore-path ../../../.prettierignore",
-		"print-config": "concurrently \"npm:print-config:*\" && npm run cleanup-printed-configs",
-		"print-config:default": "eslint --config ./index.js --print-config ./src/file.ts > ./printed-configs/default.json",
-		"print-config:minimal": "eslint --config ./minimal-deprecated.js --print-config ./src/file.ts > ./printed-configs/minimal.json",
-		"print-config:react": "eslint --config ./index.js --print-config ./src/file.tsx > ./printed-configs/react.json",
-		"print-config:recommended": "eslint --config ./recommended.js --print-config ./src/file.ts > ./printed-configs/recommended.json",
-		"print-config:strict": "eslint --config ./strict.js --print-config ./src/file.ts > ./printed-configs/strict.json",
-		"print-config:strict-biome": "eslint --config ./strict-biome.js --print-config ./src/file.ts > ./printed-configs/strict-biome.json",
-		"print-config:test": "eslint --config ./index.js --print-config ./src/test/file.ts > ./printed-configs/test.json",
-		"test": "echo TODO: add tests"
+		"print-configs": "jiti scripts/print-configs.ts printed-configs",
+		"test": "npm run test:mocha",
+		"test:mocha": "mocha \"src/test/**/*.test.mts\""
 	},
 	"dependencies": {
-		"@fluid-internal/eslint-plugin-fluid": "^0.1.5",
-		"@microsoft/tsdoc": "^0.14.2",
-		"@rushstack/eslint-patch": "~1.4.0",
-		"@rushstack/eslint-plugin": "~0.13.1",
-		"@rushstack/eslint-plugin-security": "~0.7.1",
-		"@typescript-eslint/eslint-plugin": "~6.7.5",
-		"@typescript-eslint/parser": "~6.7.5",
-		"eslint-config-biome": "~1.9.3",
-		"eslint-config-prettier": "~9.0.0",
-		"eslint-import-resolver-typescript": "~3.6.3",
-		"eslint-plugin-eslint-comments": "~3.2.0",
-		"eslint-plugin-import": "npm:eslint-plugin-i@~2.29.1",
-		"eslint-plugin-jsdoc": "~46.8.2",
-		"eslint-plugin-promise": "~6.1.1",
-		"eslint-plugin-react": "~7.33.2",
-		"eslint-plugin-react-hooks": "~4.6.2",
-		"eslint-plugin-tsdoc": "~0.2.17",
-		"eslint-plugin-unicorn": "~48.0.1",
-		"eslint-plugin-unused-imports": "~3.0.0"
+		"@eslint-community/eslint-plugin-eslint-comments": "~4.5.0",
+		"@eslint-react/eslint-plugin": "~2.13.0",
+		"@eslint/eslintrc": "~3.3.3",
+		"@eslint/js": "~9.39.2",
+		"@fluid-internal/eslint-plugin-fluid": "^0.4.1",
+		"@rushstack/eslint-plugin": "~0.22.1",
+		"@typescript-eslint/eslint-plugin": "~8.54.0",
+		"@typescript-eslint/parser": "~8.54.0",
+		"eslint-config-biome": "~2.1.3",
+		"eslint-config-prettier": "~10.1.8",
+		"eslint-import-resolver-typescript": "~4.4.4",
+		"eslint-plugin-depend": "~1.4.0",
+		"eslint-plugin-import-x": "~4.16.1",
+		"eslint-plugin-jsdoc": "~61.4.1",
+		"eslint-plugin-no-only-tests": "~3.3.0",
+		"eslint-plugin-promise": "~7.2.1",
+		"eslint-plugin-react-hooks": "~7.0.1",
+		"eslint-plugin-tsdoc": "~0.5.0",
+		"eslint-plugin-unicorn": "~54.0.0",
+		"eslint-plugin-unused-imports": "~4.3.0",
+		"globals": "^14.0.0",
+		"typescript-eslint": "~8.54.0"
 	},
 	"devDependencies": {
-		"@fluid-tools/markdown-magic": "file:../../../tools/markdown-magic",
 		"@fluidframework/build-common": "^2.0.3",
-		"concurrently": "^8.2.2",
-		"eslint": "~8.55.0",
+		"@types/mocha": "~10.0.10",
+		"@types/node": "~22.19.17",
+		"@types/sort-json": "^2.0.3",
+		"concurrently": "^9.2.1",
+		"eslint": "~9.39.1",
+		"jiti": "^2.6.1",
+		"mocha": "^11.7.5",
 		"mocha-multi-reporters": "^1.5.1",
-		"prettier": "~3.0.3",
+		"prettier": "~3.6.2",
+		"rimraf": "^6.1.3",
 		"sort-json": "^2.0.1",
-		"typescript": "~5.1.6"
+		"tsx": "^4.19.4",
+		"typescript": "~5.4.5"
 	},
-	"packageManager": "pnpm@9.15.3+sha512.1f79bc245a66eb0b07c5d4d83131240774642caaa86ef7d0434ab47c0d16f66b04e21e0c086eb61e62c77efc4d7f7ec071afad3796af64892fae66509173893a",
+	"packageManager": "pnpm@10.33.0+sha512.10568bb4a6afb58c9eb3630da90cc9516417abebd3fabbe6739f0ae795728da1491e9db5a544c76ad8eb7570f5c4bb3d6c637b2cb41bfdcdb47fa823c8649319",
+	"engines": {
+		"node": ">=22.22.2"
+	},
+	"fluidBuild": {
+		"tasks": {
+			"prettier": {
+				"dependsOn": [
+					"print-configs"
+				]
+			},
+			"tsc": {
+				"dependsOn": [
+					"print-configs",
+					"prettier"
+				],
+				"script": false
+			}
+		}
+	},
 	"pnpm": {
 		"commentsOverrides": [
-			"serialize-javascript - CVE-2024-11831 impacts version 6.0.0 which is pinned by mocha 10.4.0, which in turn comes from mocha-multi-reporters 1.5.1 (which has no updated version at this time)"
+			"chokidar: overridden to patched version to resolve a known security vulnerability.",
+			"diff: overridden to patched version to resolve a known ReDoS vulnerability.",
+			"js-yaml: overridden to fix CVE-2025-64718 (prototype pollution via merge keys).",
+			"minimatch: overridden to patched versions to resolve known security vulnerabilities across all major version ranges.",
+			"serialize-javascript: overridden to ^7.0.4 to resolve GHSA-5c6j-r48x-rmvq and CVE-2024-11831. No 6.x fix exists; 7.x is API-compatible (only drops Node <20 support).",
+			"brace-expansion: overridden to ^1.1.12 to resolve CVE-2025-5889.",
+			"picomatch: overridden to patched versions to resolve a known security vulnerability."
 		],
 		"overrides": {
-			"mocha>serialize-javascript@6.0.0": "^6.0.2"
-		}
+			"brace-expansion@>=1 <2": "^1.1.12",
+			"chokidar": "^5",
+			"diff@>=5 <6": "^5.2.2",
+			"js-yaml": "^4.1.1",
+			"minimatch@>=3 <4": "^3.1.5",
+			"minimatch@>=5 <6": "^5.1.9",
+			"minimatch@>=6 <7": "^6.2.3",
+			"minimatch@>=7 <8": "^7.4.9",
+			"minimatch@>=8 <9": "^8.0.7",
+			"minimatch@>=9 <10": "^9.0.9",
+			"minimatch@>=10 <11": "^10.2.4",
+			"serialize-javascript@>=6 <7": "^7.0.4",
+			"picomatch@>=2 <3": "^2.3.2",
+			"picomatch@>=4 <5": "^4.0.4"
+		},
+		"onlyBuiltDependencies": [
+			"esbuild",
+			"unrs-resolver"
+		]
 	}
 }

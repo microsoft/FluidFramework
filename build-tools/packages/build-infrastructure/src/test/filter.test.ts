@@ -3,16 +3,17 @@
  * Licensed under the MIT License.
  */
 
-import chai, { assert, expect } from "chai";
+import * as chai from "chai";
+import { assert, expect } from "chai";
 import assertArrays from "chai-arrays";
 
 import { loadBuildProject } from "../buildProject.js";
 import {
 	AllPackagesSelectionCriteria,
 	EmptySelectionCriteria,
-	PackageFilterOptions,
-	PackageSelectionCriteria,
 	filterPackages,
+	type PackageFilterOptions,
+	type PackageSelectionCriteria,
 	selectAndFilterPackages,
 } from "../filter.js";
 import type { IBuildProject, IPackage, WorkspaceName } from "../types.js";

@@ -9,8 +9,8 @@ import type { IIdCompressor } from "@fluidframework/id-compressor";
 import {
 	type CodecWriteOptions,
 	FluidClientVersion,
+	FormatValidatorNoOp,
 	type IJsonCodec,
-	noopValidator,
 } from "../../codec/index.js";
 import {
 	type IdAllocator,
@@ -28,8 +28,7 @@ import type { RevisionTag, RevisionTagCodec } from "../rebase/index.js";
 import type { FieldKey } from "../schema-stored/index.js";
 
 import type * as Delta from "./delta.js";
-import { makeDetachedNodeToFieldCodec } from "./detachedFieldIndexCodec.js";
-import type { Format } from "./detachedFieldIndexFormat.js";
+import { detachedFieldIndexCodecBuilder } from "./detachedFieldIndexCodecs.js";
 import type {
 	DetachedField,
 	DetachedFieldSummaryData,
@@ -39,9 +38,43 @@ import type {
 } from "./detachedFieldIndexTypes.js";
 
 /**
+ * Readonly interface for {@link DetachedFieldIndex}.
+ */
+export interface ReadOnlyDetachedFieldIndex {
+	/**
+	 * Creates a deep clone of this `DetachedFieldIndex`.
+	 */
+	clone(): DetachedFieldIndex;
+
+	/**
+	 * Returns a field key for the given ID.
+	 * This does not save the field key on the index. To do so, call {@link createEntry}.
+	 */
+	toFieldKey(id: ForestRootId): FieldKey;
+
+	/**
+	 * Returns the `ForestRootId` associated with the given id.
+	 * Returns undefined if no such id is known to the index.
+	 */
+	tryGetEntry(id: Delta.DetachedNodeId): ForestRootId | undefined;
+
+	/**
+	 * Returns the `ForestRootId` associated with the given id.
+	 * Fails if no such id is known to the index.
+	 */
+	getEntry(id: Delta.DetachedNodeId): ForestRootId;
+}
+
+/**
+ * Restores the originating DetachedFieldIndex to the state it was in when the checkpoint was created.
+ * Can be invoked multiple times.
+ */
+export type DetachedFieldIndexCheckpoint = () => void;
+
+/**
  * The tree index records detached field IDs and associates them with a change atom ID.
  */
-export class DetachedFieldIndex {
+export class DetachedFieldIndex implements ReadOnlyDetachedFieldIndex {
 	/**
 	 * A mapping from detached node ids to detached fields.
 	 */
@@ -59,7 +92,7 @@ export class DetachedFieldIndex {
 		Delta.DetachedNodeId
 	> = new Map();
 
-	private readonly codec: IJsonCodec<DetachedFieldSummaryData, Format>;
+	private readonly codec: IJsonCodec<DetachedFieldSummaryData>;
 	private readonly options: CodecWriteOptions;
 
 	/**
@@ -84,11 +117,14 @@ export class DetachedFieldIndex {
 		options?: CodecWriteOptions,
 	) {
 		this.options = options ?? {
-			jsonValidator: noopValidator,
-			oldestCompatibleClient: FluidClientVersion.v2_0,
+			jsonValidator: FormatValidatorNoOp,
+			minVersionForCollab: FluidClientVersion.v2_0,
 		};
-		// TODO: this should take in CodecWriteOptions, and use it to pick the write version.
-		this.codec = makeDetachedNodeToFieldCodec(revisionTagCodec, this.options, idCompressor);
+		this.codec = detachedFieldIndexCodecBuilder.build({
+			...this.options,
+			revisionTagCodec,
+			idCompressor,
+		});
 	}
 
 	public clone(): DetachedFieldIndex {
@@ -108,23 +144,42 @@ export class DetachedFieldIndex {
 		return clone;
 	}
 
+	/**
+	 * Creates a restorable checkpoint of the current state of the DetachedFieldIndex.
+	 */
+	public createCheckpoint(): DetachedFieldIndexCheckpoint {
+		const clone = this.clone();
+		return () => {
+			this.purge();
+			populateNestedMap(clone.detachedNodeToField, this.detachedNodeToField, true);
+			populateNestedMap(
+				clone.latestRelevantRevisionToFields,
+				this.latestRelevantRevisionToFields,
+				true,
+			);
+			this.rootIdAllocator = idAllocatorFromMaxId(
+				clone.rootIdAllocator.getMaxId(),
+			) as IdAllocator<ForestRootId>;
+		};
+	}
+
 	public *entries(): Generator<{
 		root: ForestRootId;
 		latestRelevantRevision?: RevisionTag;
 		id: Delta.DetachedNodeId;
 	}> {
 		for (const [major, innerMap] of this.detachedNodeToField) {
-			if (major !== undefined) {
+			if (major === undefined) {
 				for (const [minor, { root, latestRelevantRevision }] of innerMap) {
-					yield latestRelevantRevision !== undefined
-						? { id: { major, minor }, root, latestRelevantRevision }
-						: { id: { major, minor }, root };
+					yield latestRelevantRevision === undefined
+						? { id: { minor }, root }
+						: { id: { minor }, root, latestRelevantRevision };
 				}
 			} else {
 				for (const [minor, { root, latestRelevantRevision }] of innerMap) {
-					yield latestRelevantRevision !== undefined
-						? { id: { minor }, root, latestRelevantRevision }
-						: { id: { minor }, root };
+					yield latestRelevantRevision === undefined
+						? { id: { major, minor }, root }
+						: { id: { major, minor }, root, latestRelevantRevision };
 				}
 			}
 		}
@@ -138,91 +193,14 @@ export class DetachedFieldIndex {
 		this.latestRelevantRevisionToFields.clear();
 	}
 
-	public updateMajor(current: Major, updated: Major): void {
-		// Update latestRelevantRevision information corresponding to `current`
-		{
-			const inner = this.latestRelevantRevisionToFields.get(current);
-			if (inner !== undefined) {
-				for (const nodeId of inner.values()) {
-					const entry = tryGetFromNestedMap(
-						this.detachedNodeToField,
-						nodeId.major,
-						nodeId.minor,
-					);
-					assert(
-						entry !== undefined,
-						0x9b8 /* Inconsistent data: missing detached node entry */,
-					);
-					setInNestedMap(this.detachedNodeToField, nodeId.major, nodeId.minor, {
-						...entry,
-						latestRelevantRevision: updated,
-					});
-				}
-				this.latestRelevantRevisionToFields.delete(current);
-
-				const updatedInner = this.latestRelevantRevisionToFields.get(updated);
-				if (updatedInner !== undefined) {
-					for (const [root, nodeId] of inner) {
-						updatedInner.set(root, nodeId);
-					}
-				} else {
-					this.latestRelevantRevisionToFields.set(updated, inner);
-				}
-			}
-		}
-
-		// Update the major keys corresponding to `current`
-		{
-			const innerCurrent = this.detachedNodeToField.get(current);
-			if (innerCurrent !== undefined) {
-				this.detachedNodeToField.delete(current);
-				const innerUpdated = this.detachedNodeToField.get(updated);
-				if (innerUpdated === undefined) {
-					this.detachedNodeToField.set(updated, innerCurrent);
-				} else {
-					for (const [minor, entry] of innerCurrent) {
-						assert(
-							innerUpdated.get(minor) === undefined,
-							0x7a9 /* Collision during index update */,
-						);
-						innerUpdated.set(minor, entry);
-					}
-				}
-
-				for (const [minor, entry] of innerCurrent) {
-					const entryInLatest = this.latestRelevantRevisionToFields.get(
-						entry.latestRelevantRevision,
-					);
-					assert(
-						entryInLatest !== undefined,
-						0x9b9 /* Inconsistent data: missing node entry in latestRelevantRevision */,
-					);
-					entryInLatest.set(entry.root, { major: updated, minor });
-				}
-			}
-		}
-	}
-
-	/**
-	 * Returns a field key for the given ID.
-	 * This does not save the field key on the index. To do so, call {@link createEntry}.
-	 */
 	public toFieldKey(id: ForestRootId): FieldKey {
 		return brand(`${this.name}-${id}`);
 	}
 
-	/**
-	 * Returns the FieldKey associated with the given id.
-	 * Returns undefined if no such id is known to the index.
-	 */
 	public tryGetEntry(id: Delta.DetachedNodeId): ForestRootId | undefined {
 		return tryGetFromNestedMap(this.detachedNodeToField, id.major, id.minor)?.root;
 	}
 
-	/**
-	 * Returns the FieldKey associated with the given id.
-	 * Fails if no such id is known to the index.
-	 */
 	public getEntry(id: Delta.DetachedNodeId): ForestRootId {
 		const key = this.tryGetEntry(id);
 		assert(key !== undefined, 0x7aa /* Unknown removed node ID */);
@@ -295,7 +273,10 @@ export class DetachedFieldIndex {
 					root: brand<ForestRootId>(root + i),
 					latestRelevantRevision: revision,
 				});
-				setInNestedMap(this.latestRelevantRevisionToFields, revision, root, nodeId);
+				setInNestedMap(this.latestRelevantRevisionToFields, revision, root + i, {
+					major: nodeId.major,
+					minor: nodeId.minor + i,
+				});
 			}
 		}
 		return root;
@@ -337,7 +318,7 @@ export class DetachedFieldIndex {
 	 * Loads the tree index from the given string, this overrides any existing data.
 	 */
 	public loadData(data: JsonCompatibleReadOnly): void {
-		const detachedFieldIndex: DetachedFieldSummaryData = this.codec.decode(data as Format);
+		const detachedFieldIndex: DetachedFieldSummaryData = this.codec.decode(data);
 
 		this.rootIdAllocator = idAllocatorFromMaxId(
 			detachedFieldIndex.maxId,

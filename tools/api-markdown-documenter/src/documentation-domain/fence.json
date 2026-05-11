@@ -1,5 +1,0 @@
-{
-	"tags": ["documentation-domain"],
-	"exports": ["index"],
-	"imports": ["common", "utilities"]
-}

@@ -10,9 +10,8 @@ import {
 	type RouterliciousEndpoint,
 } from "@fluid-internal/test-driver-definitions";
 import { FluidTestDriverConfig, createFluidTestDriver } from "@fluid-private/test-drivers";
-import type { MinimumVersionForCollab } from "@fluidframework/container-runtime/internal";
 import { FluidObject, IFluidLoadable, IRequest } from "@fluidframework/core-interfaces";
-import { IFluidHandleContext } from "@fluidframework/core-interfaces/internal";
+import { IFluidHandleContext, type IResponse } from "@fluidframework/core-interfaces/internal";
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import {
 	IFluidDataStoreRuntime,
@@ -23,6 +22,7 @@ import {
 	IContainerRuntimeBase,
 	IFluidDataStoreContext,
 	IFluidDataStoreFactory,
+	type MinimumVersionForCollab,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	ITestContainerConfig,
@@ -105,38 +105,42 @@ export interface ITestDataObject extends IFluidLoadable {
 	_root: ISharedDirectory;
 }
 
-function createGetDataStoreFactoryFunction(api: ReturnType<typeof getDataRuntimeApi>) {
+function createGetDataStoreFactoryFunction(
+	api: ReturnType<typeof getDataRuntimeApi>,
+): (containerOptions?: ITestContainerConfig) => IFluidDataStoreFactory {
 	class TestDataObject extends api.DataObject implements ITestDataObject {
-		public get _context() {
+		public get _context(): IFluidDataStoreContext {
 			return this.context;
 		}
-		public get _runtime() {
+		public get _runtime(): IFluidDataStoreRuntime {
 			return this.runtime;
 		}
-		public get _root() {
+		public get _root(): ISharedDirectory {
 			return this.root;
 		}
 	}
 
 	const registryMapping = {};
 	for (const value of Object.values(api.dds)) {
+		/**
+		 * Skip dds that may not be available in this version of the api.
+		 * Not all versions have all dds. See {@link PackageToInstall} for details.
+		 */
+		if (value?.getFactory === undefined) {
+			continue;
+		}
 		registryMapping[value.getFactory().type] = value.getFactory();
 	}
 
 	function convertRegistry(registry: ChannelFactoryRegistry = []): ChannelFactoryRegistry {
 		const oldRegistry: [string | undefined, IChannelFactory][] = [];
 		for (const [key, factory] of registry) {
-			if (factory.type === "https://graph.microsoft.com/types/tree") {
-				oldRegistry.push([key, factory]);
-			} else {
-				const oldFactory = registryMapping[factory.type];
-				if (oldFactory === undefined) {
-					throw Error(`Invalid or unimplemented channel factory: ${factory.type}`);
-				}
-				oldRegistry.push([key, oldFactory]);
+			const oldFactory = registryMapping[factory.type];
+			if (oldFactory === undefined) {
+				throw Error(`Invalid or unimplemented channel factory: ${factory.type}`);
 			}
+			oldRegistry.push([key, oldFactory]);
 		}
-
 		return oldRegistry;
 	}
 
@@ -175,17 +179,18 @@ export const getDataStoreFactory = createGetDataStoreFactoryFunction(
  * @internal
  */
 export async function getVersionedTestObjectProviderFromApis(
-	apis: Omit<CompatApis, "dds">,
+	apis: Omit<CompatApis, "dds" | "mode">,
 	driverConfig?: {
 		type?: TestDriverTypes;
 		config?: FluidTestDriverConfig;
 	},
-) {
+): Promise<TestObjectProvider> {
 	const type = driverConfig?.type ?? "local";
 
 	const driver = await createFluidTestDriver(type, driverConfig?.config, apis.driver);
 
 	const getDataStoreFactoryFn = createGetDataStoreFactoryFunction(apis.dataRuntime);
+	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type -- Returns anonymous class type
 	const containerFactoryFn = (containerOptions?: ITestContainerConfig) => {
 		const dataStoreFactory = getDataStoreFactoryFn(containerOptions);
 		const runtimeCtor =
@@ -262,7 +267,10 @@ export async function getCompatVersionedTestObjectProviderFromApis(
 		apis.driverForLoading,
 	);
 
-	const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
+	const innerRequestHandler = async (
+		request: IRequest,
+		runtime: IContainerRuntimeBase,
+	): Promise<IResponse> =>
 		(
 			runtime as any as Required<FluidObject<IFluidHandleContext>>
 		).IFluidHandleContext.resolveHandle(request);
@@ -301,6 +309,7 @@ export async function getCompatVersionedTestObjectProviderFromApis(
 					? versionForCreating
 					: versionForLoading;
 
+	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type -- Returns anonymous class type
 	const createContainerFactoryFn = (containerOptions?: ITestContainerConfig) => {
 		const dataStoreFactory = getDataStoreFactoryFn(containerOptions);
 		const factoryCtor = createTestContainerRuntimeFactory(
@@ -318,6 +327,7 @@ export async function getCompatVersionedTestObjectProviderFromApis(
 			[innerRequestHandler],
 		);
 	};
+	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type -- Returns anonymous class type
 	const loadContainerFactoryFn = (containerOptions?: ITestContainerConfig) => {
 		if (containerOptions?.forceUseCreateVersion === true) {
 			return createContainerFactoryFn(containerOptions);

@@ -45,7 +45,7 @@ export type DiscriminatedUnionLibrary<
 ][_InlineTrick];
 
 /**
- * Applies a function to the content of a [discriminated union](https://en.wikipedia.org/wiki/Tagged_union)
+ * Applies a function to the content of a {@link https://en.wikipedia.org/wiki/Tagged_union | discriminated union}
  * where the function to apply depends on which value from the union it holds.
  *
  * This uses a rather non-standard encoding of the union where it is an object with many differently named optional fields,

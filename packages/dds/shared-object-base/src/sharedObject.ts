@@ -3,34 +3,34 @@
  * Licensed under the MIT License.
  */
 
-import { EventEmitterEventType } from "@fluid-internal/client-utils";
+import type { EventEmitterEventType } from "@fluid-internal/client-utils";
 import { AttachState } from "@fluidframework/container-definitions";
 import type { IDeltaManager } from "@fluidframework/container-definitions/internal";
-import { ITelemetryBaseProperties, type ErasedType } from "@fluidframework/core-interfaces";
-import {
-	type IFluidHandleInternal,
-	type IFluidLoadable,
+import type { ITelemetryBaseProperties, ErasedType } from "@fluidframework/core-interfaces";
+import type {
+	IFluidHandleInternal,
+	IFluidLoadable,
 } from "@fluidframework/core-interfaces/internal";
 import { assert } from "@fluidframework/core-utils/internal";
-import {
+import type {
 	IChannelServices,
 	IChannelStorageService,
-	type IChannel,
+	IChannel,
 	IChannelAttributes,
-	type IChannelFactory,
+	IChannelFactory,
 	IFluidDataStoreRuntime,
-	type IDeltaHandler,
-	type IFluidDataStoreRuntimeInternalConfig,
+	IDeltaHandler,
+	IFluidDataStoreRuntimeInternalConfig,
 } from "@fluidframework/datastore-definitions/internal";
-import {
-	type IDocumentMessage,
+import type {
+	IDocumentMessage,
 	ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
 import {
-	IExperimentalIncrementalSummaryContext,
-	ISummaryTreeWithStats,
-	ITelemetryContext,
-	IGarbageCollectionData,
+	type IExperimentalIncrementalSummaryContext,
+	type ISummaryTreeWithStats,
+	type ITelemetryContext,
+	type IGarbageCollectionData,
 	blobCountPropertyName,
 	totalBlobSizePropertyName,
 	type IRuntimeMessageCollection,
@@ -38,13 +38,12 @@ import {
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	toDeltaManagerInternal,
-	TelemetryContext,
+	type TelemetryContext,
 } from "@fluidframework/runtime-utils/internal";
 import {
-	ITelemetryLoggerExt,
 	DataProcessingError,
 	EventEmitterWithErrorHandling,
-	MonitoringContext,
+	type MonitoringContext,
 	SampledTelemetryHelper,
 	createChildLogger,
 	loggerToMonitoringContext,
@@ -52,13 +51,16 @@ import {
 	type ICustomData,
 	type IFluidErrorBase,
 	LoggingError,
+	extractTelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
+// eslint-disable-next-line import-x/no-internal-modules -- Needed to avoid specialized /internal ITelemetryLoggerExt
+import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/legacy";
 import { v4 as uuid } from "uuid";
 
 import { GCHandleVisitor } from "./gcHandleVisitor.js";
 import { SharedObjectHandle } from "./handle.js";
-import { FluidSerializer, IFluidSerializer } from "./serializer.js";
-import { ISharedObject, ISharedObjectEvents } from "./types.js";
+import { FluidSerializer, type IFluidSerializer } from "./serializer.js";
+import type { ISharedObject, ISharedObjectEvents } from "./types.js";
 import { bindHandles, makeHandlesSerializable, parseHandles } from "./utils.js";
 
 /**
@@ -83,8 +85,7 @@ interface ProcessTelemetryProperties {
  *
  * TODO:
  * This class should eventually be made internal, as custom subclasses of it outside this repository are intended to be made unsupported in the future.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export abstract class SharedObjectCore<
 		TEvent extends ISharedObjectEvents = ISharedObjectEvents,
@@ -163,7 +164,7 @@ export abstract class SharedObjectCore<
 
 		this.handle = new SharedObjectHandle(this, id, runtime);
 
-		this.logger = createChildLogger({
+		const internalLogger = createChildLogger({
 			logger: runtime.logger,
 			properties: {
 				all: {
@@ -174,25 +175,12 @@ export abstract class SharedObjectCore<
 				},
 			},
 		});
-		this.mc = loggerToMonitoringContext(this.logger);
+		this.logger = internalLogger;
+		this.mc = loggerToMonitoringContext(internalLogger);
 
 		const { opProcessingHelper, callbacksHelper } = this.setUpSampledTelemetryHelpers();
 		this.opProcessingHelper = opProcessingHelper;
 		this.callbacksHelper = callbacksHelper;
-
-		const processMessagesCore = this.processMessagesCore?.bind(this);
-		this.processMessagesHelper =
-			processMessagesCore === undefined
-				? (messagesCollection: IRuntimeMessageCollection) =>
-						processHelper(messagesCollection, this.process.bind(this))
-				: (messagesCollection: IRuntimeMessageCollection) => {
-						processMessagesCoreHelper(
-							messagesCollection,
-							this.opProcessingHelper,
-							this.emitInternal.bind(this),
-							processMessagesCore,
-						);
-					};
 	}
 
 	/**
@@ -221,7 +209,7 @@ export abstract class SharedObjectCore<
 				eventName: "ddsOpProcessing",
 				category: "performance",
 			},
-			this.logger,
+			extractTelemetryLoggerExt(this.logger),
 			this.mc.config.getNumber("Fluid.SharedObject.OpProcessingTelemetrySampling") ?? 1000,
 			true,
 			new Map<string, ITelemetryBaseProperties>([
@@ -234,7 +222,7 @@ export abstract class SharedObjectCore<
 				eventName: "ddsEventCallbacks",
 				category: "performance",
 			},
-			this.logger,
+			extractTelemetryLoggerExt(this.logger),
 			this.mc.config.getNumber("Fluid.SharedObject.DdsCallbacksTelemetrySampling") ?? 1000,
 			true,
 		);
@@ -253,6 +241,7 @@ export abstract class SharedObjectCore<
 	 * @param error - error object that is thrown whenever an attempt is made to modify this object
 	 */
 	private closeWithError(error: IFluidErrorBase | undefined): void {
+		// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- using ??= could change behavior if value is falsy
 		if (this.closeError === undefined) {
 			this.closeError = error;
 		}
@@ -411,52 +400,23 @@ export abstract class SharedObjectCore<
 	}
 
 	/**
-	 * Derived classes must override this to do custom processing on a remote message.
-	 * @param message - The message to process
-	 * @param local - True if the shared object is local
-	 * @param localOpMetadata - For local client messages, this is the metadata that was submitted with the message.
-	 * For messages from a remote client, this will be undefined.
-	 *
-	 * @deprecated Replaced by {@link SharedObjectCore.processMessagesCore}.
-	 */
-	protected abstract processCore(
-		message: ISequencedDocumentMessage,
-		local: boolean,
-		localOpMetadata: unknown,
-	): void;
-
-	/* eslint-disable jsdoc/check-indentation */
-	/**
-	 * Process a 'bunch' of messages for this shared object.
-	 *
+	 * Apply a 'bunch' of sequenced ops to this shared object.
 	 * @remarks
-	 * A 'bunch' is a group of messages that have the following properties:
-	 * - They are all part of the same grouped batch, which entails:
-	 *   - They are contiguous in sequencing order.
-	 *   - They are all from the same client.
-	 *   - They are all based on the same reference sequence number.
-	 *   - They are not interleaved with messages from other clients.
-	 * - They are not interleaved with messages from other DDS in the container.
-	 * Derived classes should override this if they need to do custom processing on a 'bunch' of remote messages.
-	 * @param messageCollection - The collection of messages to process.
+	 * See {@link @fluidframework/runtime-definitions#IRuntimeMessageCollection} for what a "bunch" is.
 	 *
+	 * These ops have been sequenced by the service and now have a finalized ordering.
+	 * They may be local or remote ops, but they cannot be ops that are still pending acknowledgement from the service.
+	 *
+	 * @param messageCollection - The 'bunch' of sequenced ops to apply to this shared object.
+	 * @privateRemarks
+	 * TODO:Performance: AB#59783: Allowing this to process more messages at once (more than the current definition of 'bunch') could improve performance of clients which fall behind,
+	 * which is one of the most important performance sensitive scenarios.
 	 */
-	/* eslint-enable jsdoc/check-indentation */
-	protected processMessagesCore?(messagesCollection: IRuntimeMessageCollection): void;
-
-	/**
-	 * Calls {@link SharedObjectCore.processCore} or {@link SharedObjectCore.processMessagesCore} depending on whether
-	 * processMessagesCore is defined. This helper is used to keep the code cleaner while we have to support both these
-	 * function.
-	 */
-	private readonly processMessagesHelper: (
-		messagesCollection: IRuntimeMessageCollection,
-	) => void;
+	protected abstract processMessagesCore(messagesCollection: IRuntimeMessageCollection): void;
 
 	/**
 	 * Called when the object has disconnected from the delta stream.
 	 */
-
 	protected abstract onDisconnect(): void;
 
 	/**
@@ -481,7 +441,7 @@ export abstract class SharedObjectCore<
 				(this.runtime as IFluidDataStoreRuntimeInternalConfig)
 					.submitMessagesWithoutEncodingHandles === true;
 			const contentToSubmit = onlyBind
-				? bindHandles(content, this.serializer, this.handle)
+				? bindHandles(content, this.handle)
 				: makeHandlesSerializable(content, this.serializer, this.handle);
 
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -587,7 +547,7 @@ export abstract class SharedObjectCore<
 			setConnectionState: (connected: boolean) => {
 				this.setConnectionState(connected);
 			},
-			reSubmit: (content: unknown, localOpMetadata: unknown, squash?: boolean) => {
+			reSubmit: (content: unknown, localOpMetadata: unknown, squash: boolean) => {
 				this.reSubmit(content, localOpMetadata, squash);
 			},
 			applyStashedOp: (content: unknown): void => {
@@ -629,39 +589,6 @@ export abstract class SharedObjectCore<
 		}
 	}
 
-	/**
-	 * Handles a message being received from the remote delta server.
-	 * @param message - The message to process
-	 * @param local - Whether the message originated from the local client
-	 * @param localOpMetadata - For local client messages, this is the metadata that was submitted with the message.
-	 * For messages from a remote client, this will be undefined.
-	 *
-	 * @deprecated Replaced by {@link SharedObjectCore.processMessages}.
-	 */
-	private process(
-		message: ISequencedDocumentMessage,
-		local: boolean,
-		localOpMetadata: unknown,
-	): void {
-		this.verifyNotClosed(); // This will result in container closure.
-		this.emitInternal("pre-op", message, local, this);
-
-		this.opProcessingHelper.measure(
-			(): ICustomData<ProcessTelemetryProperties> => {
-				this.processCore(message, local, localOpMetadata);
-				const telemetryProperties: ProcessTelemetryProperties = {
-					sequenceDifference: message.sequenceNumber - message.referenceSequenceNumber,
-				};
-				return {
-					customData: telemetryProperties,
-				};
-			},
-			local ? "local" : "remote",
-		);
-
-		this.emitInternal("op", message, local, this);
-	}
-
 	/* eslint-disable jsdoc/check-indentation */
 	/**
 	 * Process a bunch of messages for this shared object. A bunch is group of messages that have the following properties:
@@ -678,13 +605,11 @@ export abstract class SharedObjectCore<
 	private processMessages(messagesCollection: IRuntimeMessageCollection): void {
 		this.verifyNotClosed(); // This will result in container closure.
 
+		const { envelope, local, messagesContent } = messagesCollection;
+
 		// Decode any handles in the contents before processing the messages.
 		const decodedMessagesContent: IRuntimeMessagesContent[] = [];
-		for (const {
-			contents,
-			localOpMetadata,
-			clientSequenceNumber,
-		} of messagesCollection.messagesContent) {
+		for (const { contents, localOpMetadata, clientSequenceNumber } of messagesContent) {
 			const decodedMessageContent: IRuntimeMessagesContent = {
 				contents: parseHandles(contents, this.serializer),
 				localOpMetadata,
@@ -693,11 +618,36 @@ export abstract class SharedObjectCore<
 			decodedMessagesContent.push(decodedMessageContent);
 		}
 
-		const decodedMessagesCollection: IRuntimeMessageCollection = {
-			...messagesCollection,
-			messagesContent: decodedMessagesContent,
+		const emitEvents = (event: "pre-op" | "op"): void => {
+			for (const { contents, clientSequenceNumber } of decodedMessagesContent) {
+				const message: ISequencedDocumentMessage = {
+					...envelope,
+					contents,
+					clientSequenceNumber,
+				};
+				this.emitInternal(event, message, local);
+			}
 		};
-		this.processMessagesHelper(decodedMessagesCollection);
+
+		emitEvents("pre-op");
+		this.opProcessingHelper.measure(
+			(): ICustomData<ProcessTelemetryProperties> => {
+				const decodedMessagesCollection: IRuntimeMessageCollection = {
+					envelope,
+					local,
+					messagesContent: decodedMessagesContent,
+				};
+				this.processMessagesCore(decodedMessagesCollection);
+				const telemetryProperties: ProcessTelemetryProperties = {
+					sequenceDifference: envelope.sequenceNumber - envelope.referenceSequenceNumber,
+				};
+				return {
+					customData: telemetryProperties,
+				};
+			},
+			local ? "local" : "remote",
+		);
+		emitEvents("op");
 	}
 
 	/**
@@ -705,13 +655,11 @@ export abstract class SharedObjectCore<
 	 * reconnection.
 	 * @param content - The content of the original message.
 	 * @param localOpMetadata - The local metadata associated with the original message.
-	 * @param squash - Optional. If `true`, the message will be resubmitted in a squashed form. If `undefined` or `false`,
-	 * the legacy behavior (no squashing) will be used. Defaults to `false` for backward compatibility.
+	 * @param squash - If `true`, the message will be resubmitted in a squashed form. If `false`,
+	 * the legacy behavior (no squashing) will be used.
 	 */
-	private reSubmit(content: unknown, localOpMetadata: unknown, squash?: boolean): void {
-		// Back-compat: squash argument may not be provided by container-runtime layer.
-		// Default to previous behavior (no squash).
-		if (squash ?? false) {
+	private reSubmit(content: unknown, localOpMetadata: unknown, squash: boolean): void {
+		if (squash) {
 			this.reSubmitSquashed(content, localOpMetadata);
 		} else {
 			this.reSubmitCore(content, localOpMetadata);
@@ -789,8 +737,7 @@ export abstract class SharedObjectCore<
  * This class is badly named.
  * Once it becomes `@internal` "SharedObjectCore" should probably become "SharedObject"
  * and this class should be renamed to something like "SharedObjectSynchronous".
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export abstract class SharedObject<
 	TEvent extends ISharedObjectEvents = ISharedObjectEvents,
@@ -979,8 +926,7 @@ export abstract class SharedObject<
  * This does not extend {@link SharedObjectKind} since doing so would prevent implementing this interface in type safe code.
  * Any implementation of this can safely be used as a {@link SharedObjectKind} with an explicit type conversion,
  * but doing so is typically not needed as {@link createSharedObjectKind} is used to produce values that are both types simultaneously.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface ISharedObjectKind<TSharedObject> {
 	/**
@@ -1072,76 +1018,4 @@ export function createSharedObjectKind<TSharedObject>(
 function isChannel(loadable: IFluidLoadable): loadable is IChannel {
 	// This assumes no other IFluidLoadable has an `attributes` field, and thus may not be fully robust.
 	return (loadable as IChannel).attributes !== undefined;
-}
-
-/**
- * Utility that processes the given messages in the message collection together by calling `processMessagesCore`.
- * This will be called when {@link SharedObjectCore.processMessagesCore} is defined.
- */
-function processMessagesCoreHelper(
-	messagesCollection: IRuntimeMessageCollection,
-	opProcessingHelper: SampledTelemetryHelper<void, ProcessTelemetryProperties>,
-	emitInternal: (
-		event: "pre-op" | "op",
-		op: ISequencedDocumentMessage,
-		local: boolean,
-	) => void,
-	processMessagesCore: (messagesCollection: IRuntimeMessageCollection) => void,
-): void {
-	const { envelope, local, messagesContent } = messagesCollection;
-
-	const emitEvents = (
-		event: "pre-op" | "op",
-		messagesContentForEvent: readonly IRuntimeMessagesContent[],
-	): void => {
-		for (const { contents, clientSequenceNumber } of messagesContentForEvent) {
-			const message: ISequencedDocumentMessage = {
-				...envelope,
-				contents,
-				clientSequenceNumber,
-			};
-			emitInternal(event, message, local);
-		}
-	};
-
-	emitEvents("pre-op", messagesContent);
-	opProcessingHelper.measure(
-		(): ICustomData<ProcessTelemetryProperties> => {
-			processMessagesCore(messagesCollection);
-			const telemetryProperties: ProcessTelemetryProperties = {
-				sequenceDifference: envelope.sequenceNumber - envelope.referenceSequenceNumber,
-			};
-			return {
-				customData: telemetryProperties,
-			};
-		},
-		local ? "local" : "remote",
-	);
-	emitEvents("op", messagesContent);
-}
-
-/**
- * Utility that processes the given messages in the message collection one by one by calling `process`. This will
- * be called when {@link SharedObjectCore.processMessagesCore} is not defined.
- */
-function processHelper(
-	messagesCollection: IRuntimeMessageCollection,
-	process: (
-		message: ISequencedDocumentMessage,
-		local: boolean,
-		localOpMetadata: unknown,
-	) => void,
-): void {
-	const { envelope, local, messagesContent } = messagesCollection;
-	for (const { contents, localOpMetadata, clientSequenceNumber } of messagesContent) {
-		process(
-			{
-				...envelope,
-				contents,
-				clientSequenceNumber,
-			},
-			local,
-			localOpMetadata,
-		);
-	}
 }

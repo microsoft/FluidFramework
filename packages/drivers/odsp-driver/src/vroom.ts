@@ -3,22 +3,22 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
-import {
+import type { ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
+import type {
 	IOdspUrlParts,
 	ISocketStorageDiscovery,
 	InstrumentedStorageTokenFetcher,
 } from "@fluidframework/odsp-driver-definitions/internal";
 import {
-	ITelemetryLoggerExt,
+	type ITelemetryLoggerExt,
 	PerformanceEvent,
 } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
-import { EpochTracker } from "./epochTracker.js";
+import type { EpochTracker } from "./epochTracker.js";
 import { mockify } from "./mockify.js";
 import { getApiRoot } from "./odspUrlHelper.js";
-import { TokenFetchOptionsEx } from "./odspUtils.js";
+import type { TokenFetchOptionsEx } from "./odspUtils.js";
 import { runWithRetry } from "./retryUtils.js";
 
 interface IJoinSessionBody {
@@ -89,8 +89,9 @@ export const fetchJoinSession = mockify(
 				postBody += `X-HTTP-Method-Override: POST\r\n`;
 				postBody += `Content-Type: application/json\r\n`;
 				if (!disableJoinSessionRefresh) {
-					postBody += `prefer: FluidRemoveCheckAccess\r\n`;
+					postBody += `Prefer: FluidRemoveCheckAccess\r\n`;
 				}
+				postBody += `Prefer: Return-Sensitivity-Labels\r\n`;
 				postBody += `_post: 1\r\n`;
 
 				let requestBody: IJoinSessionBody | undefined;
@@ -131,6 +132,7 @@ export const fetchJoinSession = mockify(
 					pushv2: socketUrl.includes("pushf"),
 					webSocketHostName,
 					refreshSessionDurationSeconds: response.content.refreshSessionDurationSeconds,
+					hasSensitivityLabelsInfo: response.content.sensitivityLabelsInfo !== undefined,
 				});
 
 				if (response.content.runtimeTenantId && !response.content.tenantId) {

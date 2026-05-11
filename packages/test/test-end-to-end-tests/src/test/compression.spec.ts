@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-// eslint-disable-next-line import/no-nodejs-modules
+// eslint-disable-next-line import-x/no-nodejs-modules
 import * as crypto from "crypto";
 
 import {
@@ -16,11 +16,10 @@ import {
 	CompressionAlgorithms,
 	type IContainerRuntimeOptions,
 	type IContainerRuntimeOptionsInternal,
-	type MinimumVersionForCollab,
 } from "@fluidframework/container-runtime/internal";
 // TODO:AB#6558: This should be provided based on the compatibility configuration.
-// eslint-disable-next-line @typescript-eslint/no-restricted-imports
 import { ISharedMap, SharedMap } from "@fluidframework/map/internal";
+import type { MinimumVersionForCollab } from "@fluidframework/runtime-definitions/internal";
 import {
 	DataObjectFactoryType,
 	ITestContainerConfig,
@@ -31,7 +30,7 @@ import {
 
 import { pkgVersion } from "../packageVersion.js";
 
-const compressionSuite = (getProvider, apis?) => {
+const compressionSuite = (getProvider, apis?): void => {
 	describe("Compression", () => {
 		let provider: ITestObjectProvider;
 		let localDataObject: ITestFluidObject;
@@ -59,7 +58,7 @@ const compressionSuite = (getProvider, apis?) => {
 		async function setupContainers(
 			runtimeOptions: IContainerRuntimeOptionsInternal = defaultRuntimeOptions,
 			minVersionForCollab: MinimumVersionForCollab | undefined = undefined,
-		) {
+		): Promise<void> {
 			const containerConfig: ITestContainerConfig = {
 				registry: [["mapKey", SharedMap.getFactory()]],
 				runtimeOptions,

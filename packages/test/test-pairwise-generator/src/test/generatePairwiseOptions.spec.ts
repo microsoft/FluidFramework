@@ -16,7 +16,7 @@ interface SimpleOptions {
 	string?: string;
 	array?: number[];
 }
-const optionsToString = <T>(...options: T[]) =>
+const optionsToString = <T>(...options: T[]): string =>
 	options.map((o) => JSON.stringify(o)).join("\n");
 
 const simpleOptionsMatrix: OptionsMatrix<SimpleOptions> = {
@@ -27,7 +27,7 @@ const simpleOptionsMatrix: OptionsMatrix<SimpleOptions> = {
 	array: [undefined, [0]],
 };
 
-function validateSimpleOption(option: SimpleOptions) {
+function validateSimpleOption(option: SimpleOptions): void {
 	assert("number" in option, `number not defined:${optionsToString(option)}`);
 	assert(
 		option.number === undefined || option.number === 7,
@@ -72,7 +72,7 @@ const complexOptionsMatrix: OptionsMatrix<ComplexOptions> = {
 
 const complexValues = generatePairwiseOptions<ComplexOptions>(complexOptionsMatrix);
 
-function validateComplexOption(option: ComplexOptions) {
+function validateComplexOption(option: ComplexOptions): void {
 	assert("boolean" in option, `boolean not defined:${option}`);
 	assert(
 		option.boolean === undefined || option.boolean === true || option.boolean === false,
@@ -92,7 +92,7 @@ function validateComplexOption(option: ComplexOptions) {
 function validatePairsExhaustively<T extends Record<string, any>>(
 	matrix: OptionsMatrix<T>,
 	values: T[],
-) {
+): void {
 	const keys = Object.keys(matrix);
 	for (const i of keys) {
 		for (const j of keys) {

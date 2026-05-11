@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { type ISegmentLeaf, type MergeBlock, IMergeNode } from "./mergeTreeNodes.js";
+import type { ISegmentLeaf, MergeBlock, IMergeNode } from "./mergeTreeNodes.js";
 import { isMergeNodeInfo } from "./segmentInfos.js";
 
 export const LeafAction = {
@@ -53,7 +53,6 @@ export function depthFirstNodeWalk(
 	let childCount = block.childCount;
 	let start: IMergeNode | undefined = startChild;
 
-	// eslint-disable-next-line no-constant-condition
 	while (true) {
 		// go down to the leaf level
 		let blockResult: NodeAction;

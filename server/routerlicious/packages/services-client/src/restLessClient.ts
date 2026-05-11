@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { AxiosRequestConfig } from "axios";
+import type { AxiosRequestConfig } from "axios";
 
 /**
  * @internal

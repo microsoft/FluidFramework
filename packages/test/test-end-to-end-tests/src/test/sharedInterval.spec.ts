@@ -14,11 +14,11 @@ import { FlushMode } from "@fluidframework/runtime-definitions/internal";
 import type {
 	ISequenceIntervalCollection,
 	ISequenceOverlappingIntervalsIndex,
+	ISharedString,
 	SequenceInterval,
 	SharedString,
 } from "@fluidframework/sequence/internal";
 // This is not in sequence's public API, but an e2e test in this file sniffs the summary.
-// eslint-disable-next-line import/no-internal-modules
 import type { ISerializedIntervalCollectionV2 } from "@fluidframework/sequence/internal/test/intervalCollection";
 import {
 	ChannelFactoryRegistry,
@@ -34,7 +34,7 @@ const assertSequenceIntervals = (
 	overlappingIntervalsIndex: ISequenceOverlappingIntervalsIndex,
 	expected: readonly { start: number; end: number }[],
 	validateOverlapping: boolean = true,
-) => {
+): void => {
 	const actual = Array.from(intervalCollection);
 	if (validateOverlapping && sharedString.getLength() > 0) {
 		const overlapping = overlappingIntervalsIndex.findOverlappingIntervals(
@@ -58,7 +58,7 @@ const assertSequenceIntervals = (
 	assert.deepEqual(actualPos, expected, "intervals are not as expected");
 };
 
-function testIntervalOperations(intervalCollection: ISequenceIntervalCollection) {
+function testIntervalOperations(intervalCollection: ISequenceIntervalCollection): void {
 	const intervalArray: SequenceInterval[] = [];
 	let interval: SequenceInterval | undefined;
 	let id;
@@ -261,7 +261,7 @@ describeCompat("SharedInterval", "NoCompat", (getTestObjectProvider, apis) => {
 		let overlappingIntervalsIndex: ISequenceOverlappingIntervalsIndex;
 		let dataObject: ITestFluidObject & IFluidLoadable;
 
-		const assertIntervals = (expected: readonly { start: number; end: number }[]) => {
+		const assertIntervals = (expected: readonly { start: number; end: number }[]): void => {
 			assertSequenceIntervals(sharedString, intervals, overlappingIntervalsIndex, expected);
 		};
 
@@ -485,7 +485,7 @@ describeCompat("SharedInterval", "NoCompat", (getTestObjectProvider, apis) => {
 			const sharedString2 = await dataObject2.getSharedObject<SharedString>(stringId);
 			const intervals2 = sharedString2.getIntervalCollection("intervals");
 
-			const checkIdEquals = (a: SequenceInterval, b: SequenceInterval, s: string) => {
+			const checkIdEquals = (a: SequenceInterval, b: SequenceInterval, s: string): void => {
 				assert.strictEqual(a.getIntervalId(), b.getIntervalId(), s);
 			};
 			let i: number;
@@ -571,7 +571,12 @@ describeCompat("SharedInterval", "NoCompat", (getTestObjectProvider, apis) => {
 		});
 
 		describe("Conflicting ops", () => {
-			async function setupConflictingOps() {
+			async function setupConflictingOps(): Promise<{
+				sharedString1: ISharedString;
+				sharedString2: ISharedString;
+				intervals1: ISequenceIntervalCollection;
+				intervals2: ISequenceIntervalCollection;
+			}> {
 				const stringId = "stringKey";
 				const registry: ChannelFactoryRegistry = [[stringId, SharedString.getFactory()]];
 				const testContainerConfig: ITestContainerConfig = {
@@ -711,149 +716,95 @@ describeCompat("SharedInterval", "NoCompat", (getTestObjectProvider, apis) => {
 			});
 
 			describe("conflicting property changes", () => {
+				function verifyAndClearDeltas(
+					actual: PropertySet[],
+					expected: PropertySet[],
+					message?: string,
+				): void {
+					assert.deepEqual(actual.splice(0), expected, message);
+				}
+				function verifyIntervalProperties(
+					properties1: PropertySet | undefined,
+					properties2: PropertySet | undefined,
+					expected: PropertySet,
+				): void {
+					assert.deepStrictEqual(
+						{ ...properties1 },
+						{ ...expected },
+						"properties1 does not match",
+					);
+					assert.deepStrictEqual(
+						{ ...properties2 },
+						{ ...expected },
+						"properties2 does not match",
+					);
+				}
+
 				it("change different properties", async () => {
 					const { intervals1, intervals2 } = await setupConflictingOps();
 					const interval1 = intervals1.add({ start: 1, end: 1 });
-					const id1 = interval1.getIntervalId();
+					const id = interval1.getIntervalId();
 					await provider.ensureSynchronized();
 
-					let deltaArgs1: PropertySet = {};
-					let deltaArgs2: PropertySet = {};
-					intervals1.on("propertyChanged", (_interval, propertyDeltas) => {
-						deltaArgs1 = propertyDeltas;
-					});
-					intervals2.on("propertyChanged", (_interval, propertyDeltas) => {
-						deltaArgs2 = propertyDeltas;
-					});
-					intervals1.change(id1, { props: { prop1: "prop1" } });
-					assert.strictEqual(
-						deltaArgs1.prop1,
-						null,
-						"Mismatch in property-changed event arg 1",
-					);
+					const deltaEvents1: PropertySet[] = [];
+					const deltaEvents2: PropertySet[] = [];
+					intervals1.on("propertyChanged", (_, delta) => deltaEvents1.push(delta));
+					intervals2.on("propertyChanged", (_, delta) => deltaEvents2.push(delta));
+					intervals1.change(id, { props: { prop1: "prop1" } });
+					verifyAndClearDeltas(deltaEvents1, [{ prop1: null }]);
+					verifyAndClearDeltas(deltaEvents2, []);
 					await provider.opProcessingController.processOutgoing();
-					intervals2.change(id1, { props: { prop2: "prop2" } });
-					assert.strictEqual(
-						deltaArgs2.prop2,
-						null,
-						"Mismatch in property-changed event arg 2",
-					);
+					intervals2.change(id, { props: { prop2: "prop2" } });
+					verifyAndClearDeltas(deltaEvents1, []);
+					verifyAndClearDeltas(deltaEvents2, [{ prop2: null }]);
 					await provider.ensureSynchronized();
-					assert.strictEqual(
-						deltaArgs1.prop2,
-						null,
-						"Mismatch in property-changed event arg 3",
-					);
-					assert.strictEqual(
-						deltaArgs2.prop1,
-						null,
-						"Mismatch in property-changed event arg 4",
-					);
-					// interval1 = intervals1.getIntervalById(id1);
-					const interval2 = intervals2.getIntervalById(id1);
-					assert.strictEqual(
-						interval1?.properties.prop1,
-						"prop1",
-						"Mismatch in changed properties 1",
-					);
-					assert.strictEqual(
-						interval1?.properties.prop2,
-						"prop2",
-						"Mismatch in changed properties 2",
-					);
-					assert.strictEqual(
-						interval2?.properties.prop1,
-						"prop1",
-						"Mismatch in changed properties 3",
-					);
-					assert.strictEqual(
-						interval2?.properties.prop2,
-						"prop2",
-						"Mismatch in changed properties 4",
+					verifyAndClearDeltas(deltaEvents1, [{ prop2: null }]);
+					verifyAndClearDeltas(deltaEvents2, [{ prop1: null }]);
+					verifyIntervalProperties(
+						intervals1.getIntervalById(id)?.properties,
+						intervals2.getIntervalById(id)?.properties,
+						{ prop1: "prop1", prop2: "prop2" },
 					);
 				});
 				it("change the same property", async () => {
 					const { intervals1, intervals2 } = await setupConflictingOps();
 					const interval1 = intervals1.add({ start: 1, end: 1 });
-					const id1 = interval1.getIntervalId();
-					await provider.ensureSynchronized();
+					const id = interval1.getIntervalId();
 
-					let deltaArgs1: PropertySet = {};
-					let deltaArgs2: PropertySet = {};
-					intervals1.on("propertyChanged", (_interval, propertyDeltas) => {
-						deltaArgs1 = propertyDeltas;
-					});
-					intervals2.on("propertyChanged", (_interval, propertyDeltas) => {
-						deltaArgs2 = propertyDeltas;
-					});
-					intervals1.change(id1, { props: { prop1: "1" } });
-					assert.strictEqual(
-						deltaArgs1.prop1,
-						null,
-						"Mismatch in property-changed event arg 5",
-					);
-					await provider.opProcessingController.processOutgoing();
-					intervals2.change(id1, { props: { prop1: "2" } });
-					assert.strictEqual(
-						deltaArgs2.prop1,
-						null,
-						"Mismatch in property-changed event arg 6",
-					);
 					await provider.ensureSynchronized();
-					assert.strictEqual(
-						deltaArgs1.prop1,
-						"1",
-						"Mismatch in property-changed event arg 7",
-					);
-					assert.strictEqual(
-						Object.hasOwnProperty.call(deltaArgs2, "prop1"),
-						false,
-						"Mismatch in property-changed event arg 8",
-					);
-					assert.strictEqual(
-						interval1?.properties.prop1,
-						"2",
-						"Mismatch in changed properties 5",
-					);
-					const interval2 = intervals2.getIntervalById(id1);
-					assert.strictEqual(
-						interval2?.properties.prop1,
-						"2",
-						"Mismatch in changed properties 7",
-					);
-					intervals1.change(id1, { props: { prop1: "1again" } });
-					assert.strictEqual(
-						deltaArgs1.prop1,
-						"2",
-						"Mismatch in property-changed event arg 9",
-					);
+					const deltaEvents1: PropertySet[] = [];
+					const deltaEvents2: PropertySet[] = [];
+					intervals1.on("propertyChanged", (_, delta) => deltaEvents1.push(delta));
+					intervals2.on("propertyChanged", (_, delta) => deltaEvents2.push(delta));
+
 					await provider.opProcessingController.processOutgoing();
-					intervals2.change(id1, { props: { prop1: null } });
-					assert.strictEqual(
-						deltaArgs2.prop1,
-						"2",
-						"Mismatch in property-changed event arg 10",
-					);
+					intervals2.change(id, { props: { prop1: "2" } });
+					verifyAndClearDeltas(deltaEvents1, []);
+					verifyAndClearDeltas(deltaEvents2, [{ prop1: null }]);
+
 					await provider.ensureSynchronized();
-					assert.strictEqual(
-						deltaArgs1.prop1,
-						"1again",
-						"Mismatch in property-changed event arg 11",
+					verifyAndClearDeltas(deltaEvents1, [{ prop1: null }]);
+					verifyAndClearDeltas(deltaEvents2, []);
+					assert.deepEqual(
+						intervals1.getIntervalById(id)?.properties,
+						intervals2.getIntervalById(id)?.properties,
 					);
-					assert.strictEqual(
-						Object.hasOwnProperty.call(deltaArgs2, "prop1"),
-						false,
-						"Mismatch in property-changed event arg 12",
-					);
-					assert.strictEqual(
-						Object.prototype.hasOwnProperty.call(interval1.properties, "prop1"),
-						false,
-						"Property not deleted 1",
-					);
-					assert.strictEqual(
-						Object.prototype.hasOwnProperty.call(interval2.properties, "prop1"),
-						false,
-						"Property not deleted 2",
+					intervals1.change(id, { props: { prop1: "1again" } });
+					verifyAndClearDeltas(deltaEvents1, [{ prop1: "2" }]);
+					verifyAndClearDeltas(deltaEvents2, []);
+
+					await provider.opProcessingController.processOutgoing();
+					intervals2.change(id, { props: { prop1: null } });
+					verifyAndClearDeltas(deltaEvents1, []);
+					verifyAndClearDeltas(deltaEvents2, [{ prop1: "2" }]);
+
+					await provider.ensureSynchronized();
+					verifyAndClearDeltas(deltaEvents1, [{ prop1: "1again" }]);
+					verifyAndClearDeltas(deltaEvents2, []);
+					verifyIntervalProperties(
+						intervals1.getIntervalById(id)?.properties,
+						intervals2.getIntervalById(id)?.properties,
+						{},
 					);
 				});
 			});

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { SimpleGit } from "simple-git";
+import type { SimpleGit } from "simple-git";
 import type { Opaque, SetRequired, PackageJson as StandardPackageJson } from "type-fest";
 
 import type { BuildProjectConfig } from "./config.js";

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-export { IEntryPointPiece } from "./interfaces.js";
+export type { IEntryPointPiece } from "./interfaces.js";
 export {
 	CompositeEntryPoint,
 	loadCompositeRuntime,

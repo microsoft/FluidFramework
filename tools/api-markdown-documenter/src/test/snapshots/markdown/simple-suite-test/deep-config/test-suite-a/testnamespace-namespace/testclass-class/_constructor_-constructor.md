@@ -4,13 +4,13 @@
 
 Test class constructor
 
-## Signature {#\_constructor\_-signature}
+<h2 id="_constructor_-signature">Signature</h2>
 
 ```typescript
 constructor(testClassProperty: string);
 ```
 
-## Parameters {#\_constructor\_-parameters}
+<h2 id="_constructor_-parameters">Parameters</h2>
 
 | Parameter | Type | Description |
 | - | - | - |

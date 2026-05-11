@@ -280,7 +280,8 @@ Int16ArrayProperty.prototype._typeid = "Int16";
  * An ArrayProperty which stores Uint32 values
  */
 export class Uint32ArrayProperty extends ValueArrayProperty {
-	/** @param {Object} in_params - Input parameters for property creation
+	/**
+	 * @param {Object} in_params - Input parameters for property creation
 	 *
 	 * @constructor
 	 * @protected
@@ -333,7 +334,8 @@ Int32ArrayProperty.prototype._typeid = "Int32";
  * An ArrayProperty which stores Int64 values
  */
 export class Integer64ArrayProperty extends ValueArrayProperty {
-	/** @param {Object} in_params - Input parameters for property creation
+	/**
+	 * @param {Object} in_params - Input parameters for property creation
 	 *
 	 * @constructor
 	 * @protected

@@ -27,7 +27,7 @@ const RecursionMarkerSymbol: unique symbol = Symbol("recursion here");
  * @privateRemarks
  * WeakRef should be added when lib is updated to ES2021 or later.
  *
- * @beta
+ * @public
  */
 export type ReadonlySupportedGenerics =
 	| IFluidHandle
@@ -46,7 +46,7 @@ export type ReadonlySupportedGenerics =
  * depth limit when a recursive type is found. Use of `0` will stop applying
  * `DeepReadonly` at the first point recursion is detected.
  *
- * @beta
+ * @public
  * @system
  */
 export type DeepReadonlyRecursionLimit = "NoLimit" | 0 | `+${string}`;
@@ -67,7 +67,7 @@ export type DeepReadonlyRecursionLimit = "NoLimit" | 0 | `+${string}`;
  * exported anyway. All in namespace are left exported to avoid api-extractor
  * potentially failing to validate other modules correctly.
  *
- * @beta
+ * @public
  * @system
  */
 // eslint-disable-next-line @typescript-eslint/no-namespace
@@ -118,6 +118,11 @@ export namespace InternalUtilityTypes {
 		 * Typically this will be `NonNullJsonObjectWith<TupleToUnion<AllowExactly> | AllowExtensionOf>`.
 		 */
 		DegenerateNonNullObjectSubstitute: unknown;
+
+		/**
+		 * Either `RecursionMarker` when filtering after recursion has been replace or `never`
+		 */
+		RecursionMarkerAllowed: unknown; // Can be RecursionMarker ?
 	}
 
 	/**
@@ -129,15 +134,18 @@ export namespace InternalUtilityTypes {
 	 *
 	 * @system
 	 */
-	export type OptionalNonSymbolKeysOf<
-		T extends object,
-		Keys extends keyof T = keyof T,
-	> = Exclude<
-		{
-			[K in Keys]: T extends Record<K, T[K]> ? never : K;
-		}[Keys],
-		undefined | symbol
-	>;
+	export type OptionalNonSymbolKeysOf<T extends object, Keys extends keyof T = keyof T> =
+		Exclude<
+			{
+				[K in Keys]: T extends Record<K, T[K]> ? never : K;
+			}[Keys],
+			undefined | symbol
+		> extends infer Result
+			? //   Workaround for TypeScript bug/limitation where an alias for a type
+				// is not considered the same type when used as an index. This restores
+				// the original `Keys` (`keyof T`) type when there is no filtering.
+				IfSameType<Keys, Result, Keys, Extract<Result, string | number>>
+			: never;
 
 	/**
 	 * Returns non-symbol keys for required properties of an object type.
@@ -148,15 +156,18 @@ export namespace InternalUtilityTypes {
 	 *
 	 * @system
 	 */
-	export type RequiredNonSymbolKeysOf<
-		T extends object,
-		Keys extends keyof T = keyof T,
-	> = Exclude<
-		{
-			[K in Keys]: T extends Record<K, T[K]> ? K : never;
-		}[Keys],
-		undefined | symbol
-	>;
+	export type RequiredNonSymbolKeysOf<T extends object, Keys extends keyof T = keyof T> =
+		Exclude<
+			{
+				[K in Keys]: T extends Record<K, T[K]> ? K : never;
+			}[Keys],
+			undefined | symbol
+		> extends infer Result
+			? //   Workaround for TypeScript bug/limitation where an alias for a type
+				// is not considered the same type when used as an index. This restores
+				// the original `Keys` (`keyof T`) type when there is no filtering.
+				IfSameType<Keys, Result, Keys, Extract<Result, string | number>>
+			: never;
 
 	/**
 	 * Returns Result.WhenSomethingDeserializable if T is sometimes at least a
@@ -197,7 +208,7 @@ export namespace InternalUtilityTypes {
 						| symbol
 						| undefined
 						? /* not serializable => */ Result["WhenNeverDeserializable"]
-						: // eslint-disable-next-line @typescript-eslint/ban-types
+						: // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
 							T extends Function
 							? ExtractFunctionFromIntersection<T> extends {
 									classification: "exactly Function";
@@ -259,9 +270,10 @@ export namespace InternalUtilityTypes {
 
 	/**
 	 * Returns non-symbol keys for defined, (likely) serializable properties of an
-	 * object type. Keys with fully unsupported properties (undefined, symbol, and
-	 * bigint) and sometimes unsupported (functions) are excluded. An exception to
-	 * that is when there are supported types in union with just bigint.
+	 * object type. Literal keys with fully unsupported properties (undefined, symbol,
+	 * and bigint) and sometimes unsupported (functions) are excluded. An exception to
+	 * that is when there are supported types in union with just bigint. Indexed keys
+	 * are only excluded when there are no supported properties.
 	 *
 	 * For homomorphic mapping use with `as` to filter. Example:
 	 * `[K in keyof T as NonSymbolWithDeserializablePropertyOf<T, [], never, K>]: ...`
@@ -273,40 +285,62 @@ export namespace InternalUtilityTypes {
 		TExactExceptions extends unknown[],
 		TExtendsException,
 		Keys extends keyof T = keyof T,
-	> = Exclude<
-		{
-			[K in Keys]: /* all possible types that aren't already allowed, with the exception of `unknown` */
-			ExcludeExactlyInTuple<
-				Exclude<T[K], TExtendsException>,
-				OmitExactlyFromTuple<TExactExceptions, unknown>
-			> extends infer PossibleTypeLessAllowed
-				? IfSameType<
-						PossibleTypeLessAllowed,
-						unknown,
-						/* value might not be supported => exclude K */ never,
-						/* extract types that might lead to missing property */ Extract<
+	> =
+		Exclude<
+			{
+				[K in Keys]: /* all possible types that aren't already allowed, with the exception of `unknown` */
+				ExcludeExactlyInTuple<
+					Exclude<T[K], TExtendsException>,
+					OmitExactlyFromTuple<TExactExceptions, unknown>
+				> extends infer PossibleTypeLessAllowed
+					? IfSameType<
 							PossibleTypeLessAllowed,
-							/* types that might lead to missing property, except `bigint` */
-							// eslint-disable-next-line @typescript-eslint/ban-types
-							undefined | symbol | Function
-						> extends never
-							? /* all types are supported plus possibly `bigint` => */
-								/* check for only `bigint` remaining */ IfSameType<
-									PossibleTypeLessAllowed,
-									bigint,
-									/* only `bigint` => nothing supported */ never,
-									/* exclusively supported types (and maybe `bigint`) or exactly `never` */
-									/* => check for `never` */ T[K] extends never ? never : K
-								>
-							: /* value might not be supported => exclude K */ never
-					>
-				: never;
-		}[Keys],
-		undefined | symbol
-	>;
+							unknown,
+							/* value might not be supported => check for indexed key */ IfIndexOrBrandedKey<
+								K,
+								/* indexed => allow K */ K,
+								/* literal => exclude K */ never
+							>,
+							/* extract types that might lead to missing property */ Extract<
+								PossibleTypeLessAllowed,
+								/* types that might lead to missing property, except `bigint` */
+								// eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
+								undefined | symbol | Function
+							> extends never
+								? /* all types are supported plus possibly `bigint` => */
+									/* check for only `bigint` remaining */ IfSameType<
+										PossibleTypeLessAllowed,
+										bigint,
+										/* only `bigint` => nothing supported */ never,
+										/* exclusively supported types (and maybe `bigint`) or exactly `never` */
+										/* => check for `never` */ T[K] extends never ? never : K
+									>
+								: /* value might not be supported => check for any supported */ TestDeserializabilityOf<
+										T[K],
+										OmitExactlyFromTuple<TExactExceptions, unknown>,
+										TExtendsException,
+										{
+											WhenSomethingDeserializable: /* => check for indexed key */ IfIndexOrBrandedKey<
+												K,
+												/* indexed => allow K */ K,
+												/* literal => exclude K */ never
+											>;
+											WhenNeverDeserializable: /* => exclude K */ never;
+										}
+									>
+						>
+					: never;
+			}[Keys],
+			undefined | symbol
+		> extends infer Result
+			? //   Workaround for TypeScript bug/limitation where an alias for a type
+				// is not considered the same type when used as an index. This restores
+				// the original `Keys` (`keyof T`) type when there is no filtering.
+				IfSameType<Keys, Result, Keys, Extract<Result, string | number>>
+			: never;
 
 	/**
-	 * Returns non-symbol keys for partially supported properties of an object type.
+	 * Returns non-symbol, literal keys for partially supported properties of an object type.
 	 * Keys with only unsupported properties (undefined, symbol, bigint, and
 	 * functions without other properties) are excluded.
 	 *
@@ -315,35 +349,54 @@ export namespace InternalUtilityTypes {
 	 *
 	 * @system
 	 */
-	export type NonSymbolWithPossiblyDeserializablePropertyOf<
+	export type NonSymbolLiteralWithPossiblyDeserializablePropertyOf<
 		T extends object,
 		TExactExceptions extends unknown[],
 		TExtendsException,
 		Keys extends keyof T = keyof T,
-	> = Exclude<
-		{
-			[K in Keys]: /* all possible types that aren't already allowed, with the exception of `unknown` */
-			ExcludeExactlyInTuple<
-				Exclude<T[K], TExtendsException>,
-				OmitExactlyFromTuple<TExactExceptions, unknown>
-			> extends infer PossibleTypeLessAllowed
-				? Extract<
-						IfSameType<PossibleTypeLessAllowed, unknown, undefined, PossibleTypeLessAllowed>,
-						/* types that might lead to missing property */
-						// eslint-disable-next-line @typescript-eslint/ban-types
-						undefined | symbol | Function
-					> extends never
-					? /* exclusively supported types or exactly `never` */ never
-					: /* at least some unsupported type => check for any supported */ TestDeserializabilityOf<
-							T[K],
-							OmitExactlyFromTuple<TExactExceptions, unknown>,
-							TExtendsException,
-							{ WhenSomethingDeserializable: K; WhenNeverDeserializable: never }
-						>
-				: never;
-		}[Keys],
-		undefined | symbol
-	>;
+	> =
+		Exclude<
+			{
+				[K in Keys]: IfIndexOrBrandedKey<
+					K,
+					/* indexed => exclude K */ never,
+					/* literal => ... */
+					/* all possible types that aren't already allowed, with the exception of `unknown` */
+					ExcludeExactlyInTuple<
+						Exclude<T[K], TExtendsException>,
+						OmitExactlyFromTuple<TExactExceptions, unknown>
+					> extends infer PossibleTypeLessAllowed
+						? Extract<
+								IfSameType<
+									PossibleTypeLessAllowed,
+									unknown,
+									undefined,
+									PossibleTypeLessAllowed
+								>,
+								/* types that might lead to missing property */
+								// eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
+								undefined | symbol | Function
+							> extends never
+							? /* exclusively supported types or exactly `never` */ never
+							: /* at least some unsupported type => check for any supported */ TestDeserializabilityOf<
+									T[K],
+									OmitExactlyFromTuple<TExactExceptions, unknown>,
+									TExtendsException,
+									{
+										WhenSomethingDeserializable: K;
+										WhenNeverDeserializable: never;
+									}
+								>
+						: never
+				>;
+			}[Keys],
+			undefined | symbol
+		> extends infer Result
+			? //   Workaround for TypeScript bug/limitation where an alias for a type
+				// is not considered the same type when used as an index. This restores
+				// the original `Keys` (`keyof T`) type when there is no filtering.
+				IfSameType<Keys, Result, Keys, Extract<Result, string | number>>
+			: never;
 
 	/**
 	 * Filters a type `T` for `undefined` that is not viable in an array (or tuple) that
@@ -358,32 +411,33 @@ export namespace InternalUtilityTypes {
 		Controls extends FilterControls,
 		TAncestorTypes extends unknown[],
 		TBlessed,
-	> = /* Some initial filtering must be provided before a test for undefined. */
-	/* These tests are expected to match those in JsonSerializableImpl. */
-	/* test for 'any' */ boolean extends (T extends never ? true : false)
-		? /* 'any' => */ TBlessed
-		: /* test for 'unknown' */ unknown extends T
-			? /* 'unknown' => */ TBlessed
-			: /* test for exact recursion */ IfExactTypeInTuple<
-					T,
-					TAncestorTypes,
-					/* recursion; stop here => */ T,
-					/* test for JSON primitive types or given alternative */ T extends
-						| null
-						| boolean
-						| number
-						| string
-						| Controls["AllowExtensionOf"]
-						? /* primitive types or alternative => */ T
-						: /* test for exact alternative */ IfExactTypeInTuple<
-								T,
-								Controls["AllowExactly"],
-								T,
-								/* test for undefined possibility */ undefined extends T
-									? /* undefined | ... => */ SerializationErrorPerUndefinedArrayElement
-									: TBlessed
-							>
-				>;
+	> =
+		/* Some initial filtering must be provided before a test for undefined. */
+		/* These tests are expected to match those in JsonSerializableImpl. */
+		/* test for 'any' */ boolean extends (T extends never ? true : false)
+			? /* 'any' => */ TBlessed
+			: /* test for 'unknown' */ unknown extends T
+				? /* 'unknown' => */ TBlessed
+				: /* test for exact recursion */ IfExactTypeInTuple<
+						T,
+						TAncestorTypes,
+						/* recursion; stop here => */ T,
+						/* test for JSON primitive types or given alternative */ T extends
+							| null
+							| boolean
+							| number
+							| string
+							| Controls["AllowExtensionOf"]
+							? /* primitive types or alternative => */ T
+							: /* test for exact alternative */ IfExactTypeInTuple<
+									T,
+									Controls["AllowExactly"],
+									T,
+									/* test for undefined possibility */ undefined extends T
+										? /* undefined | ... => */ SerializationErrorPerUndefinedArrayElement
+										: TBlessed
+								>
+					>;
 
 	/**
 	 * Filters a type `T` for types that become null through JSON serialization.
@@ -394,34 +448,35 @@ export namespace InternalUtilityTypes {
 		T,
 		Controls extends DeserializedFilterControls,
 		TBlessed,
-	> = /* Some initial filtering must be provided before a test for undefined, symbol, or function. */
-	/* These tests are expected to match those in JsonDeserializedImpl. */
-	/* test for 'any' */ boolean extends (T extends never ? true : false)
-		? /* 'any' => */ TBlessed
-		: /* test for 'unknown' */ unknown extends T
-			? /* 'unknown' => */ TBlessed
-			: /* test for JSON primitive types or general alternative */ T extends
-						| null
-						| boolean
-						| number
-						| string
-						| Controls["AllowExtensionOf"]
-				? /* primitive or replaced types => */ T
-				: /* test for exact alternative */ IfExactTypeInTuple<
-						T,
-						Controls["AllowExactly"],
-						/* exactly replaced => */ T,
-						/* test for known types that become null */ T extends undefined | symbol
-							? /* => */ null
-							: // eslint-disable-next-line @typescript-eslint/ban-types
-								T extends Function
-								? ExtractFunctionFromIntersection<T> extends {
-										classification: "exactly Function";
-									}
-									? null
-									: null | TBlessed
-								: TBlessed
-					>;
+	> =
+		/* Some initial filtering must be provided before a test for undefined, symbol, or function. */
+		/* These tests are expected to match those in JsonDeserializedImpl. */
+		/* test for 'any' */ boolean extends (T extends never ? true : false)
+			? /* 'any' => */ TBlessed
+			: /* test for 'unknown' */ unknown extends T
+				? /* 'unknown' => */ TBlessed
+				: /* test for JSON primitive types or general alternative */ T extends
+							| null
+							| boolean
+							| number
+							| string
+							| Controls["AllowExtensionOf"]
+					? /* primitive or replaced types => */ T
+					: /* test for exact alternative */ IfExactTypeInTuple<
+							T,
+							[...Controls["AllowExactly"], Controls["RecursionMarkerAllowed"]],
+							/* exactly replaced => */ T,
+							/* test for known types that become null */ T extends undefined | symbol
+								? /* => */ null
+								: // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
+									T extends Function
+									? ExtractFunctionFromIntersection<T> extends {
+											classification: "exactly Function";
+										}
+										? null
+										: null | TBlessed
+									: TBlessed
+						>;
 
 	/**
 	 * Checks for a type that is simple class of number and string indexed types to numbers and strings.
@@ -434,7 +489,7 @@ export namespace InternalUtilityTypes {
 		NotEnumLike = unknown,
 	> = T extends readonly (infer _)[]
 		? /* array => */ NotEnumLike
-		: // eslint-disable-next-line @typescript-eslint/ban-types
+		: // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
 			T extends Function
 			? /* function => */ NotEnumLike
 			: T extends {
@@ -465,11 +520,8 @@ export namespace InternalUtilityTypes {
 	 *
 	 * @system
 	 */
-	export type IfSameType<X, Y, IfSame = unknown, IfDifferent = never> = (<T>() => T extends X
-		? 1
-		: 2) extends <T>() => T extends Y ? 1 : 2
-		? IfSame
-		: IfDifferent;
+	export type IfSameType<X, Y, IfSame = unknown, IfDifferent = never> =
+		(<T>() => T extends X ? 1 : 2) extends <T>() => T extends Y ? 1 : 2 ? IfSame : IfDifferent;
 
 	/**
 	 * Test for type equality with tuple of other types.
@@ -501,7 +553,7 @@ export namespace InternalUtilityTypes {
 	 * @typeParam IfNoMatch - Type to return if no match is found.
 	 *
 	 * @remarks
-	 * In a recursive context, use {@link InternalUtilityTypes.IfExactTypeInTuple} to manage ancestry.
+	 * In a recursive context, use {@link InternalCoreInterfacesUtilityTypes.IfExactTypeInTuple} to manage ancestry.
 	 *
 	 * @privateRemarks
 	 * Perhaps it is a Typescript defect but a simple check that `T` is `never`
@@ -515,6 +567,47 @@ export namespace InternalUtilityTypes {
 		/* T is never => */ IfSameType<Union, never, IfMatch, IfNoMatch>,
 		/* T is NOT never => */ IfSameType<T, Extract<Union, T>, IfMatch, IfNoMatch>
 	>;
+
+	/**
+	 * Check for a template literal that has $\{string\} or $\{number\}
+	 * in the pattern. Just `string` and/or `number` also match.
+	 *
+	 * @remarks This works recursively looking at first elements when not
+	 * `string` or `number`. `first` will just be a single character if
+	 * not $\{string\} or $\{number\}.
+	 *
+	 * @system
+	 */
+	export type IfVariableStringOrNumber<T, IfVariable, IfLiteral> = `${string}` extends T
+		? IfVariable
+		: number extends T
+			? IfVariable
+			: T extends `${infer first}${infer rest}`
+				? string extends first
+					? IfVariable
+					: `${number}` extends first
+						? IfVariable
+						: IfVariableStringOrNumber<rest, IfVariable, IfLiteral>
+				: IfLiteral;
+
+	/**
+	 * Essentially a check for a non-fixed number or string OR a branded key.
+	 *
+	 * @remarks There is no known mechanism to determine the primitive from a
+	 * generic tagged (branded) primitive, such as `X$\{string\}` & \{ foo: "bar" \}.
+	 * There appears to be little use for a branded literal key -- at runtime
+	 * there is no brand; so, two of the same literal with different brands would
+	 * collide. Thus any branded key can usually be considered indexed.
+	 *
+	 * @system
+	 */
+	export type IfIndexOrBrandedKey<
+		T extends keyof AnyRecord,
+		IfIndexOrBranded,
+		Otherwise,
+	> = T extends object
+		? /* branded string or number */ IfIndexOrBranded
+		: /* => check for variable */ IfVariableStringOrNumber<T, IfIndexOrBranded, Otherwise>;
 
 	/**
 	 * Test for type equality
@@ -559,7 +652,7 @@ export namespace InternalUtilityTypes {
 		: T;
 
 	/**
-	 * Convenience constraint for any Opaque Json type.
+	 * Convenience constraint for any OpaqueJson* type.
 	 *
 	 * @remarks
 	 * Use in extends check: `T extends AnyOpaqueJsonType`
@@ -610,17 +703,15 @@ export namespace InternalUtilityTypes {
 	 *
 	 * @system
 	 */
-	export type FilterPreservingFunction<
-		Original extends object,
-		Filtered,
-	> = ExtractFunctionFromIntersection<Original> extends {
-		classification: infer TClassification;
-		function: infer TFunction;
-	}
-		? TClassification extends "exactly Function"
-			? TFunction
-			: TFunction & Filtered
-		: never;
+	export type FilterPreservingFunction<Original extends object, Filtered> =
+		ExtractFunctionFromIntersection<Original> extends {
+			classification: infer TClassification;
+			function: infer TFunction;
+		}
+			? TClassification extends "exactly Function"
+				? TFunction
+				: TFunction & Filtered
+			: never;
 
 	/**
 	 * Replaces any instance where a type T recurses into itself or a portion of
@@ -654,36 +745,37 @@ export namespace InternalUtilityTypes {
 		Controls extends FilterControls,
 		TAncestorTypes extends unknown[] = [],
 		TNextAncestor = T,
-	> = /* test for recursion */
-	IfExactTypeInTuple<T, TAncestorTypes, true, "no match"> extends true
-		? /* recursion => use replacement */ TRecursionMarker
-		: /* force union separation hereafter */ T extends infer _
-			? /* test for recursion among union elements */
-				IfExactTypeInTuple<T, TAncestorTypes, true, "no match"> extends true
-				? TRecursionMarker
-				: /* test for general allowance */ T extends Controls["AllowExtensionOf"]
-					? /* allowed extension type => */ T
-					: /* test for exact allowance */ IfExactTypeInTuple<
-								T,
-								Controls["AllowExactly"],
-								true,
-								"no match"
-							> extends true
-						? /* exact allowed type => */ T
-						: T extends object
-							? FilterPreservingFunction<
+	> =
+		/* test for recursion */
+		IfExactTypeInTuple<T, TAncestorTypes, true, "no match"> extends true
+			? /* recursion => use replacement */ TRecursionMarker
+			: /* force union separation hereafter */ T extends infer _
+				? /* test for recursion among union elements */
+					IfExactTypeInTuple<T, TAncestorTypes, true, "no match"> extends true
+					? TRecursionMarker
+					: /* test for general allowance */ T extends Controls["AllowExtensionOf"]
+						? /* allowed extension type => */ T
+						: /* test for exact allowance */ IfExactTypeInTuple<
 									T,
-									{
-										[K in keyof T]: ReplaceRecursionWithMarkerAndPreserveAllowances<
-											T[K],
-											TRecursionMarker,
-											Controls,
-											[TNextAncestor, ...TAncestorTypes]
-										>;
-									}
-								>
-							: /* non-object => T as is */ T
-			: never;
+									Controls["AllowExactly"],
+									true,
+									"no match"
+								> extends true
+							? /* exact allowed type => */ T
+							: T extends object
+								? FilterPreservingFunction<
+										T,
+										{
+											[K in keyof T]: ReplaceRecursionWithMarkerAndPreserveAllowances<
+												T[K],
+												TRecursionMarker,
+												Controls,
+												[TNextAncestor, ...TAncestorTypes]
+											>;
+										}
+									>
+								: /* non-object => T as is */ T
+				: never;
 
 	/**
 	 * Replaces any instances of "allowed" types and recursion within with `never`.
@@ -701,41 +793,42 @@ export namespace InternalUtilityTypes {
 		Controls extends FilterControls,
 		TAncestorTypes extends unknown[] = [],
 		TNextAncestor = T,
-	> = /* test for exact recursion first */ IfExactTypeInTuple<
-		T,
-		TAncestorTypes,
-		true,
-		"no match"
-	> extends true
-		? /* recursion => */ never
-		: /* test for general allowance (also forces union separation) */ T extends Controls["AllowExtensionOf"]
-			? /* allowed extension type => */ never
-			: /* test for exact allowance */ IfExactTypeInTuple<
-						T,
-						Controls["AllowExactly"],
-						true,
-						"no match"
-					> extends true
-				? /* exact allowed type => */ never
-				: /* test for recursion among union elements */ IfExactTypeInTuple<
+	> =
+		/* test for exact recursion first */ IfExactTypeInTuple<
+			T,
+			TAncestorTypes,
+			true,
+			"no match"
+		> extends true
+			? /* recursion => */ never
+			: /* test for general allowance (also forces union separation) */ T extends Controls["AllowExtensionOf"]
+				? /* allowed extension type => */ never
+				: /* test for exact allowance */ IfExactTypeInTuple<
 							T,
-							TAncestorTypes,
+							Controls["AllowExactly"],
 							true,
 							"no match"
 						> extends true
-					? /* recursion => */ never
-					: T extends object
-						? FilterPreservingFunction<
+					? /* exact allowed type => */ never
+					: /* test for recursion among union elements */ IfExactTypeInTuple<
 								T,
-								{
-									[K in keyof T]: ReplaceAllowancesAndRecursionWithNever<
-										T[K],
-										Controls,
-										[TNextAncestor, ...TAncestorTypes]
-									>;
-								}
-							>
-						: /* non-object => T as is */ T;
+								TAncestorTypes,
+								true,
+								"no match"
+							> extends true
+						? /* recursion => */ never
+						: T extends object
+							? FilterPreservingFunction<
+									T,
+									{
+										[K in keyof T]: ReplaceAllowancesAndRecursionWithNever<
+											T[K],
+											Controls,
+											[TNextAncestor, ...TAncestorTypes]
+										>;
+									}
+								>
+							: /* non-object => T as is */ T;
 
 	/**
 	 * Test for non-public properties (which can only exist on class instance types).
@@ -758,9 +851,8 @@ export namespace InternalUtilityTypes {
 		Controls extends FilterControls,
 		HasNonPublic = never,
 		OnlyPublics = unknown,
-	> = ReplaceAllowancesAndRecursionWithNever<T, Controls> extends T
-		? OnlyPublics
-		: HasNonPublic;
+	> =
+		ReplaceAllowancesAndRecursionWithNever<T, Controls> extends T ? OnlyPublics : HasNonPublic;
 
 	/**
 	 * Union of all types in a tuple.
@@ -780,82 +872,85 @@ export namespace InternalUtilityTypes {
 	export type JsonSerializableImpl<
 		T,
 		Options extends Partial<FilterControls> & {
+			/**
+			 * See {@link JsonSerializableOptions} for meaning and expected use.
+			 */
 			IgnoreInaccessibleMembers?: "ignore-inaccessible-members";
 		},
 		TAncestorTypes extends unknown[] = [],
 		TNextAncestor = T,
-	> = /* Build Controls from Options filling in defaults for any missing properties */
-	{
-		AllowExactly: Options extends { AllowExactly: unknown[] } ? Options["AllowExactly"] : [];
-		AllowExtensionOf: Options extends { AllowExtensionOf: unknown }
-			? Options["AllowExtensionOf"]
-			: never;
-		// The Substitute type could be extracted to helper type, but is kept explicit here
-		// to make JsonTypeWith and OpaqueJsonSerializable show explicitly in results for
-		// users, rather than either the helper type name or a partially unrolled version.
-		DegenerateSubstitute:
-			| JsonTypeWith<
-					| (Options extends { AllowExactly: unknown[] }
-							? TupleToUnion<Options["AllowExactly"]>
-							: never)
-					| (Options extends { AllowExtensionOf: unknown }
-							? Options["AllowExtensionOf"]
-							: never)
-			  >
-			| OpaqueJsonSerializable<
-					unknown,
-					Options extends { AllowExactly: unknown[] } ? Options["AllowExactly"] : [],
-					Options extends { AllowExtensionOf: unknown } ? Options["AllowExtensionOf"] : never
-			  >;
-	} extends infer Controls
-		? /* Controls should always satisfy FilterControlsWithSubstitution, but Typescript wants a check */
-			Controls extends FilterControlsWithSubstitution
-			? /* test for 'any' */ boolean extends (T extends never ? true : false)
-				? /* 'any' => */ Controls["DegenerateSubstitute"]
-				: Options["IgnoreInaccessibleMembers"] extends "ignore-inaccessible-members"
-					? JsonSerializableFilter<T, Controls, TAncestorTypes, TNextAncestor>
-					: /* test for non-public properties (class instance type) */
-						IfNonPublicProperties<
-								T,
-								{
-									AllowExactly: Controls["AllowExactly"];
-									AllowExtensionOf:
-										| Controls["AllowExtensionOf"]
-										// Add in primitives that may be branded to ignore intersection classes
-										| boolean
-										| number
-										| string
-										// Add in Opaque Json types
-										| AnyOpaqueJsonType;
-									DegenerateSubstitute: Controls["DegenerateSubstitute"];
-								},
-								"found non-publics",
-								"only publics"
-							> extends "found non-publics"
-						? /* hidden props => test if it is array properties that are the problem */ T extends readonly (infer _)[]
-							? /* array => */ {
-									/* use homomorphic mapped type to preserve tuple type */
-									[K in keyof T]: JsonSerializableImpl<
-										T[K],
-										Controls,
-										[TNextAncestor, ...TAncestorTypes]
-									>;
-								}
-							: /* test for potentially branded primitive (intersection with a supported primitive) */
-								T extends boolean | number | string
-								? /* assume intersection is branding and allow as-is => */ T
-								: /* not array => error */ SerializationErrorPerNonPublicProperties
-						: /* no hidden properties => apply filtering => */ JsonSerializableFilter<
-								T,
-								Controls,
-								TAncestorTypes,
-								TNextAncestor
-							>
-			: never /* FilterControlsWithSubstitution assert else; should never be reached */
-		: never /* unreachable else for infer */;
+	> =
+		/* Build Controls from Options filling in defaults for any missing properties */
+		{
+			AllowExactly: Options extends { AllowExactly: unknown[] } ? Options["AllowExactly"] : [];
+			AllowExtensionOf: Options extends { AllowExtensionOf: unknown }
+				? Options["AllowExtensionOf"]
+				: never;
+			// The Substitute type could be extracted to helper type, but is kept explicit here
+			// to make JsonTypeWith and OpaqueJsonSerializable show explicitly in results for
+			// users, rather than either the helper type name or a partially unrolled version.
+			DegenerateSubstitute:
+				| JsonTypeWith<
+						| (Options extends { AllowExactly: unknown[] }
+								? TupleToUnion<Options["AllowExactly"]>
+								: never)
+						| (Options extends { AllowExtensionOf: unknown }
+								? Options["AllowExtensionOf"]
+								: never)
+				  >
+				| OpaqueJsonSerializable<
+						unknown,
+						Options extends { AllowExactly: unknown[] } ? Options["AllowExactly"] : [],
+						Options extends { AllowExtensionOf: unknown } ? Options["AllowExtensionOf"] : never
+				  >;
+		} extends infer Controls
+			? /* Controls should always satisfy FilterControlsWithSubstitution, but Typescript wants a check */
+				Controls extends FilterControlsWithSubstitution
+				? /* test for 'any' */ boolean extends (T extends never ? true : false)
+					? /* 'any' => */ Controls["DegenerateSubstitute"]
+					: Options extends { IgnoreInaccessibleMembers: "ignore-inaccessible-members" }
+						? JsonSerializableFilter<T, Controls, TAncestorTypes, TNextAncestor>
+						: /* test for non-public properties (class instance type) */
+							IfNonPublicProperties<
+									T,
+									{
+										AllowExactly: Controls["AllowExactly"];
+										AllowExtensionOf:
+											| Controls["AllowExtensionOf"]
+											// Add in primitives that may be branded to ignore intersection classes
+											| boolean
+											| number
+											| string
+											// Add in OpaqueJson* types
+											| AnyOpaqueJsonType;
+									},
+									"found non-publics",
+									"only publics"
+								> extends "found non-publics"
+							? /* hidden props => test if it is array properties that are the problem */ T extends readonly (infer _)[]
+								? /* array => */ {
+										/* use homomorphic mapped type to preserve tuple type */
+										[K in keyof T]: JsonSerializableImpl<
+											T[K],
+											Controls,
+											[TNextAncestor, ...TAncestorTypes]
+										>;
+									}
+								: /* test for potentially branded primitive (intersection with a supported primitive) */
+									T extends boolean | number | string
+									? /* assume intersection is branding and allow as-is => */ T
+									: /* not array => error */ SerializationErrorPerNonPublicProperties
+							: /* no hidden properties => apply filtering => */ JsonSerializableFilter<
+									T,
+									Controls,
+									TAncestorTypes,
+									TNextAncestor
+								>
+				: never /* FilterControlsWithSubstitution assert else; should never be reached */
+			: never /* unreachable else for infer */;
 
 	/**
-	 * Handle Opaque Json types for {@link JsonSerializable}.
+	 * Handle OpaqueJson* types for {@link JsonSerializable}.
 	 *
 	 * @remarks
 	 * {@link OpaqueJsonSerializable} and {@link OpaqueJsonDeserialized} instances
@@ -875,50 +970,41 @@ export namespace InternalUtilityTypes {
 	export type JsonSerializableOpaqueAllowances<
 		T extends AnyOpaqueJsonType,
 		Controls extends FilterControlsWithSubstitution,
-	> = /* eslint-disable @typescript-eslint/no-explicit-any -- must use `any` for invariant constraint override */
-	/* infer underlying data type */ T extends
-		| OpaqueJsonSerializable<infer TData, any, unknown>
-		| OpaqueJsonDeserialized<infer TData, any, unknown>
-		? T extends OpaqueJsonSerializable<TData, any, unknown> &
-				OpaqueJsonDeserialized<TData, any, unknown>
-			? OpaqueJsonSerializable<TData, Controls["AllowExactly"], Controls["AllowExtensionOf"]> &
-					OpaqueJsonDeserialized<TData, Controls["AllowExactly"], Controls["AllowExtensionOf"]>
-			: T extends OpaqueJsonSerializable<TData, any, unknown>
-				? OpaqueJsonSerializable<TData, Controls["AllowExactly"], Controls["AllowExtensionOf"]>
-				: T extends OpaqueJsonDeserialized<TData, any, unknown>
-					? OpaqueJsonDeserialized<
+	> =
+		/* eslint-disable @typescript-eslint/no-explicit-any -- must use `any` for invariant constraint override */
+		/* infer underlying data type */ T extends
+			| OpaqueJsonSerializable<infer TData, any, unknown>
+			| OpaqueJsonDeserialized<infer TData, any, unknown>
+			? T extends OpaqueJsonSerializable<TData, any, unknown> &
+					OpaqueJsonDeserialized<TData, any, unknown>
+				? OpaqueJsonSerializable<
+						TData,
+						Controls["AllowExactly"],
+						Controls["AllowExtensionOf"]
+					> &
+						OpaqueJsonDeserialized<
 							TData,
 							Controls["AllowExactly"],
 							Controls["AllowExtensionOf"]
 						>
-					: "internal error: failed to determine Opaque Json type"
-		: never;
+				: T extends OpaqueJsonSerializable<TData, any, unknown>
+					? OpaqueJsonSerializable<
+							TData,
+							Controls["AllowExactly"],
+							Controls["AllowExtensionOf"]
+						>
+					: T extends OpaqueJsonDeserialized<TData, any, unknown>
+						? OpaqueJsonDeserialized<
+								TData,
+								Controls["AllowExactly"],
+								Controls["AllowExtensionOf"]
+							>
+						: "internal error: failed to determine OpaqueJson* type"
+			: never;
 	/* eslint-enable @typescript-eslint/no-explicit-any */
 
 	/**
-	 * Essentially a check for a template literal that has $\{string\} or
-	 * $\{number\} in the pattern. Just `string` and/or `number` also match.
-	 *
-	 * @remarks This works recursively looking at first elements when not
-	 * `string` or `number`. `first` will just be a single character if
-	 * not $\{string\} or $\{number\}.
-	 *
-	 * @system
-	 */
-	export type IfIndexKey<T, IfIndex, IfLiteral> = `${string}` extends T
-		? IfIndex
-		: number extends T
-			? IfIndex
-			: T extends `${infer first}${infer rest}`
-				? string extends first
-					? IfIndex
-					: `${number}` extends first
-						? IfIndex
-						: IfIndexKey<rest, IfIndex, IfLiteral>
-				: IfLiteral;
-
-	/**
-	 * Helper for {@link JsonSerializableFilter} to determine if a property may
+	 * Helper for {@link InternalCoreInterfacesUtilityTypes.JsonSerializableFilter} to determine if a property may
 	 * be `undefined` and selects from options for result.
 	 * Since `unknown` is a superset of `undefined`, it is given a special case.
 	 * Additionally since index signatures are inherently optional, `unknown` typed
@@ -927,7 +1013,7 @@ export namespace InternalUtilityTypes {
 	 * @system
 	 */
 	export type IfPossiblyUndefinedProperty<
-		TKey,
+		TKey extends keyof AnyRecord,
 		TValue,
 		Result extends {
 			IfPossiblyUndefined: unknown;
@@ -936,7 +1022,7 @@ export namespace InternalUtilityTypes {
 		},
 	> = undefined extends TValue
 		? unknown extends TValue
-			? IfIndexKey<TKey, Result["Otherwise"], Result["IfUnknownNonIndexed"]>
+			? IfIndexOrBrandedKey<TKey, Result["Otherwise"], Result["IfUnknownNonIndexed"]>
 			: Result["IfPossiblyUndefined"]
 		: Result["Otherwise"];
 
@@ -979,7 +1065,7 @@ export namespace InternalUtilityTypes {
 								"no match"
 							> extends true
 						? /* exact alternate type => */ T
-						: // eslint-disable-next-line @typescript-eslint/ban-types
+						: // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
 							/* test for not a function */ Extract<T, Function> extends never
 							? /* not a function => test for object */ T extends object
 								? /* object => test for array */ T extends readonly (infer _)[]
@@ -1003,8 +1089,8 @@ export namespace InternalUtilityTypes {
 											>
 										: /* test for enum like types */ IfEnumLike<T> extends never
 											? /* enum or similar simple type (return as-is) => */ T
-											: /* test for Opaque Json types */ T extends AnyOpaqueJsonType
-												? /* Opaque Json type => */ JsonSerializableOpaqueAllowances<
+											: /* test for OpaqueJson* types */ T extends AnyOpaqueJsonType
+												? /* OpaqueJson* type => */ JsonSerializableOpaqueAllowances<
 														T,
 														Controls
 													>
@@ -1062,130 +1148,164 @@ export namespace InternalUtilityTypes {
 		[RecursionMarkerSymbol]: typeof RecursionMarkerSymbol;
 	}
 
-	/**
-	 * Recursion limit is the count of `+` that prefix it when string.
-	 *
-	 * @system
-	 */
-	export type RecursionLimit = `+${string}` | 0;
-
 	// #region JsonDeserialized implementation
 
 	/**
 	 * Outer implementation of {@link JsonDeserialized} handling meta cases
 	 * like recursive types.
 	 *
-	 * @privateRemarks
-	 * This utility is reentrant and will process a type `T` up to `RecurseLimit`.
+	 * @remarks
+	 * If no modification is needed (`T` is exactly deserializable), `T` will
+	 * be the result.
+	 *
+	 * Upon recursion with `T` that requires modification, `T` is wrapped in
+	 * {@link OpaqueJsonDeserialized} to avoid further immediate processing.
+	 * Caller will need to unwrap the type to continue processing.
 	 *
 	 * @system
 	 */
 	export type JsonDeserializedImpl<
 		T,
 		Options extends Partial<FilterControls>,
-		RecurseLimit extends RecursionLimit = "++++" /* 4 */,
-	> = /* Build Controls from Options filling in defaults for any missing properties */
-	{
-		AllowExactly: Options extends { AllowExactly: unknown[] } ? Options["AllowExactly"] : [];
-		AllowExtensionOf: Options extends { AllowExtensionOf: unknown }
-			? Options["AllowExtensionOf"]
-			: never;
-		// The Substitute types could be extracted to helper type, but are kept explicit here
-		// to make JsonTypeWith/NonNullJsonObjectWith show explicitly in results for users, rather
-		// than either the helper type name or a partially unrolled version.
-		DegenerateSubstitute: JsonTypeWith<
-			| (Options extends { AllowExactly: unknown[] }
-					? TupleToUnion<Options["AllowExactly"]>
-					: never)
-			| (Options extends { AllowExtensionOf: unknown } ? Options["AllowExtensionOf"] : never)
-		>;
-		DegenerateNonNullObjectSubstitute: NonNullJsonObjectWith<
-			| (Options extends { AllowExactly: unknown[] }
-					? TupleToUnion<Options["AllowExactly"]>
-					: never)
-			| (Options extends { AllowExtensionOf: unknown } ? Options["AllowExtensionOf"] : never)
-		>;
-	} extends infer Controls
-		? /* Controls should always satisfy DeserializedFilterControls, but Typescript wants a check */
-			Controls extends DeserializedFilterControls
-			? /* test for 'any' */ boolean extends (T extends never ? true : false)
-				? /* 'any' => */ Controls["DegenerateSubstitute"]
-				: /* infer non-recursive version of T */ ReplaceRecursionWithMarkerAndPreserveAllowances<
-							T,
-							RecursionMarker,
-							Controls
-						> extends infer TNoRecursionAndOnlyPublics
-					? /* test for no change from filtered type */ IsSameType<
-							TNoRecursionAndOnlyPublics,
-							JsonDeserializedFilter<
-								TNoRecursionAndOnlyPublics,
-								{
-									AllowExactly: [...Controls["AllowExactly"], RecursionMarker];
-									AllowExtensionOf: Controls["AllowExtensionOf"];
-									DegenerateSubstitute: Controls["DegenerateSubstitute"];
-									DegenerateNonNullObjectSubstitute: Controls["DegenerateNonNullObjectSubstitute"];
-								},
-								0
-							>
-						> extends true
-						? /* same (no filtering needed) => test for non-public
-						     properties (class instance type) */
-							IfNonPublicProperties<
+		TypeUnderRecursion extends boolean = false,
+	> =
+		/* Build Controls from Options filling in defaults for any missing properties */
+		{
+			AllowExactly: Options extends { AllowExactly: unknown[] } ? Options["AllowExactly"] : [];
+			AllowExtensionOf: Options extends { AllowExtensionOf: unknown }
+				? Options["AllowExtensionOf"]
+				: never;
+			// The Substitute types could be extracted to helper type, but are kept explicit here
+			// to make JsonTypeWith/NonNullJsonObjectWith show explicitly in results for users, rather
+			// than either the helper type name or a partially unrolled version.
+			DegenerateSubstitute: JsonTypeWith<
+				| (Options extends { AllowExactly: unknown[] }
+						? TupleToUnion<Options["AllowExactly"]>
+						: never)
+				| (Options extends { AllowExtensionOf: unknown } ? Options["AllowExtensionOf"] : never)
+			>;
+			DegenerateNonNullObjectSubstitute: NonNullJsonObjectWith<
+				| (Options extends { AllowExactly: unknown[] }
+						? TupleToUnion<Options["AllowExactly"]>
+						: never)
+				| (Options extends { AllowExtensionOf: unknown } ? Options["AllowExtensionOf"] : never)
+			>;
+			RecursionMarkerAllowed: never;
+		} extends infer Controls
+			? /* Controls should always satisfy DeserializedFilterControls, but Typescript wants a check */
+				Controls extends DeserializedFilterControls
+				? /* test for 'any' */ boolean extends (T extends never ? true : false)
+					? /* 'any' => */ Controls["DegenerateSubstitute"]
+					: /* infer non-recursive version of T */ ReplaceRecursionWithMarkerAndPreserveAllowances<
 								T,
-								// Note: no extra allowance is made here for possible branded
-								// primitives as JsonDeserializedFilter will allow them as
-								// extensions of the primitives. Should there need a need to
-								// explicit allow them here, see JsonSerializableImpl's use.
-								Controls,
-								"found non-publics",
-								"only publics"
-							> extends "found non-publics"
-							? /* hidden props => apply filtering to avoid retaining
-							     exact class except for any classes in allowances => */
+								RecursionMarker,
+								{
+									AllowExactly: Controls["AllowExactly"];
+									AllowExtensionOf:
+										| Controls["AllowExtensionOf"]
+										// Also preserve OpaqueJson* types
+										| AnyOpaqueJsonType;
+								}
+							> extends infer TNoRecursionAndOnlyPublics
+						? /* test for no change from filtered type */ IsSameType<
+								TNoRecursionAndOnlyPublics,
 								JsonDeserializedFilter<
-									T,
-									Controls,
-									// Note that use of RecurseLimit may not be needed here
-									// could have an adverse effect on correctness if there
-									// several ancestor types that require modification and
-									// are peeling away the limit. In such a case, the limit
-									// will be used for the problems and result is already
-									// messy; so deferring full understanding of the problems
-									// that could arise from a reset and being conservative.
-									RecurseLimit
+									TNoRecursionAndOnlyPublics,
+									{
+										AllowExactly: Controls["AllowExactly"];
+										AllowExtensionOf: Controls["AllowExtensionOf"];
+										DegenerateSubstitute: Controls["DegenerateSubstitute"];
+										DegenerateNonNullObjectSubstitute: Controls["DegenerateNonNullObjectSubstitute"];
+										RecursionMarkerAllowed: RecursionMarker;
+									}
 								>
-							: /* no hidden properties => deserialized T is just T */
-								T
-						: /* filtering is needed => */ JsonDeserializedFilter<T, Controls, RecurseLimit>
-					: /* unreachable else for infer */ never
-			: never /* DeserializedFilterControls assert else; should never be reached */
-		: never /* unreachable else for infer */;
+							> extends true
+							? /* same (no filtering needed) => test for non-public
+						     properties (class instance type) */
+								IfNonPublicProperties<
+									T,
+									// Note: no extra allowance is made here for possible branded
+									// primitives as JsonDeserializedFilter will allow them as
+									// extensions of the primitives. Should there be a need to
+									// explicitly allow them here, see JsonSerializableImpl's use.
+									{
+										AllowExactly: Controls["AllowExactly"];
+										AllowExtensionOf:
+											| Controls["AllowExtensionOf"]
+											// Add in OpaqueJson* types
+											| AnyOpaqueJsonType;
+									},
+									"found non-publics",
+									"only publics"
+								> extends "found non-publics"
+								? /* hidden props => apply filtering to avoid retaining
+							     exact class except for any classes in allowances =>
+								 test for known recursion */
+									TypeUnderRecursion extends false
+									? /* no known recursion => */ JsonDeserializedFilter<T, Controls>
+									: /* known recursion => use OpaqueJsonDeserialized for later processing */
+										OpaqueJsonDeserialized<
+											T,
+											Controls["AllowExactly"],
+											Controls["AllowExtensionOf"]
+										>
+								: /* no hidden properties => deserialized T is just T */
+									T
+							: /* filtering is needed => test for known recursion */ TypeUnderRecursion extends false
+								? /* no known recursion => */ JsonDeserializedFilter<T, Controls>
+								: /* known recursion => use OpaqueJsonDeserialized for later processing */
+									OpaqueJsonDeserialized<
+										T,
+										Controls["AllowExactly"],
+										Controls["AllowExtensionOf"]
+									>
+						: /* unreachable else for infer */ never
+				: never /* DeserializedFilterControls assert else; should never be reached */
+			: never /* unreachable else for infer */;
 
 	/**
-	 * Recurses `T` applying {@link InternalUtilityTypes.JsonDeserializedFilter} up to `RecurseLimit` times.
+	 * Recurses `T` applying {@link InternalCoreInterfacesUtilityTypes.JsonDeserializedFilter} up until
+	 * `T` is found to be a match of an ancestor type. At that point `T` is wrapped in
+	 * {@link OpaqueJsonDeserialized} to avoid further immediate processing, if
+	 * modification is needed. Caller will need to unwrap the type to continue processing.
+	 * If no modification is needed, then `T` will be the result.
+	 *
+	 * @privateRemarks Exact recursion pattern employed should allow shortcut
+	 * test to return `OpaqueJsonDeserialized<T>` from here when the exact
+	 * recursion match is the first ancestor type in tuple as it must have been
+	 * processed and found to need modification.
 	 *
 	 * @system
 	 */
 	export type JsonDeserializedRecursion<
 		T,
 		Controls extends DeserializedFilterControls,
-		RecurseLimit extends RecursionLimit,
-		TAncestorTypes,
-	> = T extends TAncestorTypes
-		? RecurseLimit extends `+${infer RecursionRemainder}`
-			? /* Now that specific recursion is found, process that recursive type
-			     directly to avoid any collateral damage from ancestor type that
-			     required modification. */
-				JsonDeserializedImpl<
-					T,
-					Controls,
-					RecursionRemainder extends RecursionLimit ? RecursionRemainder : 0
-				>
-			: Controls["DegenerateSubstitute"]
-		: JsonDeserializedFilter<T, Controls, RecurseLimit, TAncestorTypes | T>;
+		TAncestorTypes extends object[],
+	> =
+		IfExactTypeInTuple<T, TAncestorTypes, true, "no match"> extends true
+			? /* recursion found => reprocess that recursive type directly to avoid
+		     any collateral damage from ancestor type that required modification.
+			 Further recursion will not happen during processing. Either:
+			  - the type requires modification and the `TypeUnderRecursion=true`
+			    arg will result in `OpaqueJsonDeserialized<T>` wrapper OR
+			  - no change is needed from this point and `T` will result. */
+				JsonDeserializedImpl<T, Controls, true>
+			: T extends object
+				? IfExactTypeInTuple<T, TAncestorTypes, true, "no match"> extends true
+					? JsonDeserializedImpl<T, Controls, true>
+					: /* no recursion yet detected => */ JsonDeserializedFilter<
+							T,
+							Controls,
+							[...TAncestorTypes, T]
+						>
+				: /* not an object (no recursion) => */ JsonDeserializedFilter<
+						T,
+						Controls,
+						TAncestorTypes
+					>;
 
 	/**
-	 * Handle Opaque Json types for {@link JsonDeserialized}.
+	 * Handle OpaqueJson* types for {@link JsonDeserialized}.
 	 *
 	 * @remarks
 	 * {@link OpaqueJsonSerializable} instances are converted to {@link OpaqueJsonDeserialized}.
@@ -1205,12 +1325,13 @@ export namespace InternalUtilityTypes {
 	export type JsonDeserializedOpaqueConversion<
 		T extends AnyOpaqueJsonType,
 		Controls extends FilterControls,
-	> = /* eslint-disable @typescript-eslint/no-explicit-any -- must use `any` for invariant constraint override */
-	T extends
-		| OpaqueJsonSerializable<infer TData, any, unknown>
-		| OpaqueJsonDeserialized<infer TData, any, unknown>
-		? OpaqueJsonDeserialized<TData, Controls["AllowExactly"], Controls["AllowExtensionOf"]>
-		: "internal error: failed to determine Opaque Json type";
+	> =
+		/* eslint-disable @typescript-eslint/no-explicit-any -- must use `any` for invariant constraint override */
+		T extends
+			| OpaqueJsonSerializable<infer TData, any, unknown>
+			| OpaqueJsonDeserialized<infer TData, any, unknown>
+			? OpaqueJsonDeserialized<TData, Controls["AllowExactly"], Controls["AllowExtensionOf"]>
+			: "internal error: failed to determine OpaqueJson* type";
 	/* eslint-enable @typescript-eslint/no-explicit-any */
 
 	/**
@@ -1221,8 +1342,9 @@ export namespace InternalUtilityTypes {
 	export type JsonDeserializedFilter<
 		T,
 		Controls extends DeserializedFilterControls,
-		RecurseLimit extends RecursionLimit,
-		TAncestorTypes = T /* Always start with self as ancestor; otherwise recursion limit appears one greater */,
+		// Always start with object portion of self as ancestor. Filtering will
+		// not apply past recursion (nested occurrence of this).
+		TAncestorTypes extends object[] = [Extract<T, object>],
 	> = /* test for 'any' */ boolean extends (T extends never ? true : false)
 		? /* 'any' => */ Controls["DegenerateSubstitute"]
 		: /* test for 'unknown' */ unknown extends T
@@ -1236,7 +1358,7 @@ export namespace InternalUtilityTypes {
 				? /* primitive types or alternate => */ T
 				: /* test for given exact alternate */ IfExactTypeInTuple<
 							T,
-							Controls["AllowExactly"],
+							[...Controls["AllowExactly"], Controls["RecursionMarkerAllowed"]],
 							true,
 							"not found"
 						> extends true
@@ -1254,43 +1376,39 @@ export namespace InternalUtilityTypes {
 										[K in keyof T]: JsonForDeserializedArrayItem<
 											T[K],
 											Controls,
-											JsonDeserializedRecursion<T[K], Controls, RecurseLimit, TAncestorTypes>
+											JsonDeserializedRecursion<T[K], Controls, TAncestorTypes>
 										>;
 									}
 								: /* not an array => test for exactly `object` */ IsExactlyObject<T> extends true
 									? /* `object` => */ Controls["DegenerateNonNullObjectSubstitute"]
 									: /* test for enum like types */ IfEnumLike<T> extends never
 										? /* enum or similar simple type (return as-is) => */ T
-										: /* test for matching Opaque Json types */ T extends AnyOpaqueJsonType
-											? /* Opaque Json type => */ JsonDeserializedOpaqueConversion<T, Controls>
+										: /* test for matching OpaqueJson* types */ T extends AnyOpaqueJsonType
+											? /* OpaqueJson* type => */ JsonDeserializedOpaqueConversion<T, Controls>
 											: /* property bag => */ FlattenIntersection<
 													/* properties with symbol keys or wholly unsupported values are removed */
 													{
 														/* properties with defined values are recursed */
 														[K in keyof T as NonSymbolWithDeserializablePropertyOf<
 															T,
-															Controls["AllowExactly"],
+															[
+																...Controls["AllowExactly"],
+																Controls["RecursionMarkerAllowed"],
+															],
 															Controls["AllowExtensionOf"],
 															K
-														>]: JsonDeserializedRecursion<
-															T[K],
-															Controls,
-															RecurseLimit,
-															TAncestorTypes
-														>;
+														>]: JsonDeserializedRecursion<T[K], Controls, TAncestorTypes>;
 													} & {
-														/* properties that may have undefined values are optional */
-														[K in keyof T as NonSymbolWithPossiblyDeserializablePropertyOf<
+														/* literal properties that may have undefined values are optional */
+														[K in keyof T as NonSymbolLiteralWithPossiblyDeserializablePropertyOf<
 															T,
-															Controls["AllowExactly"],
+															[
+																...Controls["AllowExactly"],
+																Controls["RecursionMarkerAllowed"],
+															],
 															Controls["AllowExtensionOf"],
 															K
-														>]?: JsonDeserializedRecursion<
-															T[K],
-															Controls,
-															RecurseLimit,
-															TAncestorTypes
-														>;
+														>]?: JsonDeserializedRecursion<T[K], Controls, TAncestorTypes>;
 													}
 												>
 						: /* not an object => */ never;
@@ -1298,6 +1416,13 @@ export namespace InternalUtilityTypes {
 	// #endregion
 
 	// #region *Readonly implementations
+
+	/**
+	 * Recursion limit is the count of `+` that prefix it when string.
+	 *
+	 * @system
+	 */
+	export type RecursionLimit = `+${string}` | 0;
 
 	/**
 	 * If `T` is a `Map<K,V>` or `ReadonlyMap<K,V>`, returns `ReadonlyMap` and,
@@ -1311,14 +1436,15 @@ export namespace InternalUtilityTypes {
 		DeepenedGenerics extends ReadonlySupportedGenerics,
 		NoDepthOrRecurseLimit extends "Shallow" | DeepReadonlyRecursionLimit,
 		Else,
-	> = T extends ReadonlyMap<infer K, infer V>
-		? Map<K, V> extends DeepenedGenerics
-			? ReadonlyMap<
-					ReadonlyImpl<K, DeepenedGenerics, NoDepthOrRecurseLimit>,
-					ReadonlyImpl<V, DeepenedGenerics, NoDepthOrRecurseLimit>
-				>
-			: ReadonlyMap<K, V>
-		: Else;
+	> =
+		T extends ReadonlyMap<infer K, infer V>
+			? Map<K, V> extends DeepenedGenerics
+				? ReadonlyMap<
+						ReadonlyImpl<K, DeepenedGenerics, NoDepthOrRecurseLimit>,
+						ReadonlyImpl<V, DeepenedGenerics, NoDepthOrRecurseLimit>
+					>
+				: ReadonlyMap<K, V>
+			: Else;
 
 	/**
 	 * If `T` is a `Set<TSet>` or `ReadonlySet<TSet>`, returns `ReadonlySet` and,
@@ -1332,11 +1458,12 @@ export namespace InternalUtilityTypes {
 		DeepenedGenerics extends ReadonlySupportedGenerics,
 		NoDepthOrRecurseLimit extends "Shallow" | DeepReadonlyRecursionLimit,
 		Else,
-	> = T extends ReadonlySet<infer V>
-		? Set<V> extends DeepenedGenerics
-			? ReadonlySet<ReadonlyImpl<V, DeepenedGenerics, NoDepthOrRecurseLimit>>
-			: ReadonlySet<V>
-		: Else;
+	> =
+		T extends ReadonlySet<infer V>
+			? Set<V> extends DeepenedGenerics
+				? ReadonlySet<ReadonlyImpl<V, DeepenedGenerics, NoDepthOrRecurseLimit>>
+				: ReadonlySet<V>
+			: Else;
 
 	/**
 	 * If `T` is a `IFluidHandle<THandle>` and if `T` extends `DeepenedGenerics`,
@@ -1350,11 +1477,12 @@ export namespace InternalUtilityTypes {
 		DeepenedGenerics extends ReadonlySupportedGenerics,
 		NoDepthOrRecurseLimit extends "Shallow" | DeepReadonlyRecursionLimit,
 		Else,
-	> = T extends Readonly<IFluidHandle<infer V>>
-		? IFluidHandle<V> extends DeepenedGenerics
-			? Readonly<IFluidHandle<ReadonlyImpl<V, DeepenedGenerics, NoDepthOrRecurseLimit>>>
-			: Readonly<T>
-		: Else;
+	> =
+		T extends Readonly<IFluidHandle<infer V>>
+			? IFluidHandle<V> extends DeepenedGenerics
+				? Readonly<IFluidHandle<ReadonlyImpl<V, DeepenedGenerics, NoDepthOrRecurseLimit>>>
+				: Readonly<T>
+			: Else;
 
 	/**
 	 * If `T` is a `Promise<TPromise>` and if `T` extends `DeepenedGenerics`,
@@ -1368,11 +1496,12 @@ export namespace InternalUtilityTypes {
 		DeepenedGenerics extends ReadonlySupportedGenerics,
 		NoDepthOrRecurseLimit extends "Shallow" | DeepReadonlyRecursionLimit,
 		Else,
-	> = T extends Promise<infer V>
-		? Promise<V> extends DeepenedGenerics
-			? Promise<ReadonlyImpl<V, DeepenedGenerics, NoDepthOrRecurseLimit>>
-			: T
-		: Else;
+	> =
+		T extends Promise<infer V>
+			? Promise<V> extends DeepenedGenerics
+				? Promise<ReadonlyImpl<V, DeepenedGenerics, NoDepthOrRecurseLimit>>
+				: T
+			: Else;
 
 	/**
 	 * If `T` is a `WeakMap<K,V>`, returns immutable `WeakMap` and,
@@ -1386,17 +1515,18 @@ export namespace InternalUtilityTypes {
 		DeepenedGenerics extends ReadonlySupportedGenerics,
 		NoDepthOrRecurseLimit extends "Shallow" | DeepReadonlyRecursionLimit,
 		Else,
-	> = T extends Omit<WeakMap<infer K, infer V>, "delete" | "set">
-		? WeakMap<K, V> extends DeepenedGenerics
-			? Omit<
-					WeakMap<
-						ReadonlyImpl<K, DeepenedGenerics, NoDepthOrRecurseLimit>,
-						ReadonlyImpl<V, DeepenedGenerics, NoDepthOrRecurseLimit>
-					>,
-					"delete" | "set"
-				>
-			: Omit<WeakMap<K, V>, "delete" | "set">
-		: Else;
+	> =
+		T extends Omit<WeakMap<infer K, infer V>, "delete" | "set">
+			? WeakMap<K, V> extends DeepenedGenerics
+				? Omit<
+						WeakMap<
+							ReadonlyImpl<K, DeepenedGenerics, NoDepthOrRecurseLimit>,
+							ReadonlyImpl<V, DeepenedGenerics, NoDepthOrRecurseLimit>
+						>,
+						"delete" | "set"
+					>
+				: Omit<WeakMap<K, V>, "delete" | "set">
+			: Else;
 
 	/**
 	 * If `T` is a `WeakSet<TSet>`, returns immutable `WeakSet` and,
@@ -1410,14 +1540,15 @@ export namespace InternalUtilityTypes {
 		DeepenedGenerics extends ReadonlySupportedGenerics,
 		NoDepthOrRecurseLimit extends "Shallow" | DeepReadonlyRecursionLimit,
 		Else,
-	> = T extends Omit<WeakSet<infer V>, "add" | "delete">
-		? WeakSet<V> extends DeepenedGenerics
-			? Omit<
-					WeakSet<ReadonlyImpl<V, DeepenedGenerics, NoDepthOrRecurseLimit>>,
-					"add" | "delete"
-				>
-			: Omit<WeakSet<V>, "add" | "delete">
-		: Else;
+	> =
+		T extends Omit<WeakSet<infer V>, "add" | "delete">
+			? WeakSet<V> extends DeepenedGenerics
+				? Omit<
+						WeakSet<ReadonlyImpl<V, DeepenedGenerics, NoDepthOrRecurseLimit>>,
+						"add" | "delete"
+					>
+				: Omit<WeakSet<V>, "add" | "delete">
+			: Else;
 
 	/**
 	 * If `T` is a {@link ReadonlySupportedGenerics}, `T` is returned as
@@ -1470,19 +1601,17 @@ export namespace InternalUtilityTypes {
 	 *
 	 * @system
 	 */
-	export type PreserveErasedTypeOrBrandedPrimitive<
-		T extends object,
-		Else,
-	> = /* Test for erased type */ T extends ErasedType<infer _>
-		? /* erased type => keep as-is */ T
-		: /* Test for branded primitive */ T extends infer Brand &
-					(boolean | number | string | symbol | bigint)
-			? // Should just return T here, but TypeScript appears to produce `never` when doing so.
-				// Workaround by inferring the Primitive type and returning intersection with B.
-				T extends Brand & infer Primitive
-				? /* [potentially] branded type => "as-is" */ Primitive & Brand
-				: /* Should never be reached */ T
-			: Else;
+	export type PreserveErasedTypeOrBrandedPrimitive<T extends object, Else> =
+		/* Test for erased type */ T extends ErasedType<infer _>
+			? /* erased type => keep as-is */ T
+			: /* Test for branded primitive */ T extends infer Brand &
+						(boolean | number | string | symbol | bigint)
+				? // Should just return T here, but TypeScript appears to produce `never` when doing so.
+					// Workaround by inferring the Primitive type and returning intersection with B.
+					T extends Brand & infer Primitive
+					? /* [potentially] branded type => "as-is" */ Primitive & Brand
+					: /* Should never be reached */ T
+				: Else;
 
 	/**
 	 * De-multiplexing implementation of {@link DeepReadonly} and {@link ShallowReadonly}
@@ -1617,43 +1746,44 @@ export namespace InternalUtilityTypes {
 		T,
 		DeepenedGenerics extends ReadonlySupportedGenerics,
 		NoDepthOrRecurseLimit extends RecursionLimit,
-	> = /* infer non-recursive version of T */ ReplaceRecursionWithMarkerAndPreserveAllowances<
-		T,
-		RecursionMarker,
-		{ AllowExactly: []; AllowExtensionOf: never }
-	> extends infer TNoRecursionAndOnlyPublics
-		? /* test for no change from altered type (excluding non-publics) */ IsSameType<
-				TNoRecursionAndOnlyPublics,
-				DeepReadonlyWorker<TNoRecursionAndOnlyPublics, DeepenedGenerics, 0>
-			> extends true
-			? /* same (no filtering needed) => test for non-public properties (class instance type) */
-				IfNonPublicProperties<
-					T,
-					// Note: no extra allowance is made here for possible branded
-					// primitives as DeepReadonlyWorker will allow them as
-					// extensions of the primitives. Should there need a need to
-					// explicit allow them here, see JsonSerializableImpl's use.
-					{ AllowExactly: []; AllowExtensionOf: never },
-					"found non-publics",
-					"only publics"
-				> extends "found non-publics"
-				? /* hidden props => apply filtering => */
-					DeepReadonlyWorker<
+	> =
+		/* infer non-recursive version of T */ ReplaceRecursionWithMarkerAndPreserveAllowances<
+			T,
+			RecursionMarker,
+			{ AllowExactly: []; AllowExtensionOf: never }
+		> extends infer TNoRecursionAndOnlyPublics
+			? /* test for no change from altered type (excluding non-publics) */ IsSameType<
+					TNoRecursionAndOnlyPublics,
+					DeepReadonlyWorker<TNoRecursionAndOnlyPublics, DeepenedGenerics, 0>
+				> extends true
+				? /* same (no filtering needed) => test for non-public properties (class instance type) */
+					IfNonPublicProperties<
+						T,
+						// Note: no extra allowance is made here for possible branded
+						// primitives as DeepReadonlyWorker will allow them as
+						// extensions of the primitives. Should there need a need to
+						// explicit allow them here, see JsonSerializableImpl's use.
+						{ AllowExactly: []; AllowExtensionOf: never },
+						"found non-publics",
+						"only publics"
+					> extends "found non-publics"
+					? /* hidden props => apply filtering => */
+						DeepReadonlyWorker<
+							T,
+							DeepenedGenerics,
+							Extract<NoDepthOrRecurseLimit, RecursionLimit>
+						>
+					: /* no hidden properties => readonly T is just T */
+						T
+				: /* filtering is needed => */ DeepReadonlyWorker<
 						T,
 						DeepenedGenerics,
 						Extract<NoDepthOrRecurseLimit, RecursionLimit>
 					>
-				: /* no hidden properties => readonly T is just T */
-					T
-			: /* filtering is needed => */ DeepReadonlyWorker<
-					T,
-					DeepenedGenerics,
-					Extract<NoDepthOrRecurseLimit, RecursionLimit>
-				>
-		: /* unreachable else for infer */ never;
+			: /* unreachable else for infer */ never;
 
 	/**
-	 * Recurses `T` applying {@link InternalUtilityTypes.DeepReadonlyWorker} up to `RecurseLimit` times.
+	 * Recurses `T` applying {@link InternalCoreInterfacesUtilityTypes.DeepReadonlyWorker} up to `RecurseLimit` times.
 	 *
 	 * @system
 	 */
@@ -1676,7 +1806,7 @@ export namespace InternalUtilityTypes {
 		: DeepReadonlyWorker<T, DeepenedGenerics, RecurseLimit, TAncestorTypes | T>;
 
 	/**
-	 * Core implementation of {@link InternalUtilityTypes.DeepReadonlyLimitingRecursion}.
+	 * Core implementation of {@link InternalCoreInterfacesUtilityTypes.DeepReadonlyLimitingRecursion}.
 	 *
 	 * @system
 	 */

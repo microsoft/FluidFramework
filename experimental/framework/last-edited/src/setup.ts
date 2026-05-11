@@ -4,11 +4,11 @@
  */
 
 import { ContainerMessageType } from "@fluidframework/container-runtime/internal";
-import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
-import { IQuorumClients } from "@fluidframework/driver-definitions";
-import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
+import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
+import type { IQuorumClients } from "@fluidframework/driver-definitions";
+import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 
-import { IFluidLastEditedTracker, ILastEditDetails } from "./interfaces.js";
+import type { IFluidLastEditedTracker, ILastEditDetails } from "./interfaces.js";
 
 /**
  * Default implementation of {@link setupLastEditedTrackerForContainer}'s `shouldDiscardMessageFn` parameter,
@@ -31,7 +31,6 @@ function getLastEditDetailsFromMessage(
 	quorum: IQuorumClients,
 ): ILastEditDetails | undefined {
 	// TODO: Verify whether this should be able to handle server-generated ops (with null clientId)
-	// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
 	const sequencedClient = quorum.getMember(message.clientId as string);
 	const user = sequencedClient?.client.user;
 	if (user !== undefined) {

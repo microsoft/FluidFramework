@@ -6,25 +6,32 @@
 import * as assert from "node:assert";
 import { existsSync } from "node:fs";
 import { readFile, stat, unlink, writeFile } from "node:fs/promises";
-
+import type { AsyncPriorityQueue } from "async";
 import crypto from "crypto";
-import * as path from "path";
-import { AsyncPriorityQueue } from "async";
 import registerDebug from "debug";
-import globby from "globby";
+import * as path from "path";
 import chalk from "picocolors";
 
 import { defaultLogger } from "../../../common/logging";
-import { ExecAsyncResult, execAsync, getExecutableFromCommand } from "../../../common/utils";
-import type { BuildContext } from "../../buildContext";
-import { BuildPackage, BuildResult, summarizeBuildResult } from "../../buildGraph";
 import {
-	type GitIgnoreSetting,
+	type ExecAsyncResult,
+	execAsync,
+	getExecutableFromCommand,
+} from "../../../common/utils";
+import type { BuildContext } from "../../buildContext";
+import type { BuildPackage } from "../../buildGraph";
+import type { Seconds } from "../../buildMetrics";
+import { TaskCacheOutcome } from "../../buildMetrics";
+import { BuildResult, summarizeBuildResult } from "../../buildResult";
+import {
 	type GitIgnoreSettingValue,
 	gitignoreDefaultValue,
+	replaceRepoRootToken,
 } from "../../fluidBuildConfig";
+import type { GitIgnoreSetting } from "../../fluidTaskDefinitions";
 import { options } from "../../options";
-import { Task, TaskExec } from "../task";
+import { Task, type TaskExec } from "../task";
+import { globWithGitignore } from "../taskUtils";
 
 const { log } = defaultLogger;
 const traceTaskTrigger = registerDebug("fluid-build:task:trigger");
@@ -47,8 +54,10 @@ export abstract class LeafTask extends Task {
 	private _parentLeafTasks: Set<LeafTask> | undefined | null;
 	private parentWeight = -1;
 
+	public lastQueueWaitTime = 0;
+
 	// For task that needs to override the actual command to execute
-	protected get executionCommand() {
+	protected get executionCommand(): string {
 		return this.command;
 	}
 
@@ -65,11 +74,11 @@ export abstract class LeafTask extends Task {
 		}
 	}
 
-	public initializeDependentLeafTasks() {
+	public initializeDependentLeafTasks(): void {
 		this.ensureDependentLeafTasks();
 	}
 
-	private ensureDependentLeafTasks() {
+	private ensureDependentLeafTasks(): Set<LeafTask> {
 		if (this.dependentLeafTasks === undefined) {
 			this.dependentLeafTasks = new Set();
 			this.addDependentLeafTasks(this.transitiveDependentLeafTask);
@@ -88,11 +97,11 @@ export abstract class LeafTask extends Task {
 		}
 	}
 
-	public collectLeafTasks(leafTasks: Set<LeafTask>) {
+	public collectLeafTasks(leafTasks: Set<LeafTask>): void {
 		leafTasks.add(this);
 	}
 
-	public initializeWeight() {
+	public initializeWeight(): number {
 		if (this.parentWeight === -1) {
 			this.parentWeight = this.computeParentWeight() + this.taskWeight;
 			traceTaskInitWeight(`${this.nameColored}: ${this.parentWeight}`);
@@ -100,7 +109,7 @@ export abstract class LeafTask extends Task {
 		return this.parentWeight;
 	}
 
-	private computeParentWeight() {
+	private computeParentWeight(): number {
 		let sum = 0;
 		for (const t of this.parentLeafTasks.values()) {
 			sum += t.taskWeight;
@@ -142,16 +151,16 @@ export abstract class LeafTask extends Task {
 		}
 	}
 
-	protected get taskWeight() {
+	protected get taskWeight(): number {
 		return 1;
 	}
 
-	public get weight() {
+	public get weight(): number {
 		assert.notStrictEqual(this.parentWeight, -1);
 		return this.parentWeight;
 	}
 
-	public get isDisabled() {
+	public get isDisabled(): boolean {
 		if (this.isTemp) {
 			return true;
 		}
@@ -159,16 +168,33 @@ export abstract class LeafTask extends Task {
 		return (options.nolint && isLintTask) || (options.lintonly && !isLintTask);
 	}
 
-	public get executable() {
+	public get executable(): string {
 		return getExecutableFromCommand(
 			this.command,
 			this.context.fluidBuildConfig?.multiCommandExecutables ?? [],
 		);
 	}
 
-	protected get useWorker() {
+	protected get useWorker(): boolean {
 		return false;
 	}
+	private recordMetric(outcome: TaskCacheOutcome, startTime?: number, worker?: boolean): void {
+		this.node.context.buildMetrics.recordTask({
+			taskName: this.taskName ?? this.command,
+			packageName: this.node.pkg.name,
+			command: this.command,
+			executable: this.executable,
+			outcome,
+			isIncremental: this.isIncremental,
+			supportsRecheck: this.recheckLeafIsUpToDate,
+			execTimeSeconds: (startTime !== undefined
+				? (Date.now() - startTime) / 1000
+				: 0) as Seconds,
+			queueWaitSeconds: this.lastQueueWaitTime as Seconds,
+			worker: worker ?? false,
+		});
+	}
+
 	public async exec(): Promise<BuildResult> {
 		if (this.isDisabled) {
 			return BuildResult.UpToDate;
@@ -185,6 +211,7 @@ export abstract class LeafTask extends Task {
 		}
 		const startTime = Date.now();
 		if (this.recheckLeafIsUpToDate && !this.forced && (await this.checkLeafIsUpToDate())) {
+			this.recordMetric(TaskCacheOutcome.CacheHitRecheck, startTime);
 			return this.execDone(startTime, BuildResult.UpToDate);
 		}
 		const ret = await this.execCore();
@@ -195,6 +222,7 @@ export abstract class LeafTask extends Task {
 				`${this.node.pkg.nameColored}: error during command '${this.command}'${codeStr}`,
 			);
 			console.error(this.getExecErrors(ret));
+			this.recordMetric(TaskCacheOutcome.Failed, startTime, ret.worker);
 			return this.execDone(startTime, BuildResult.Failed);
 		}
 		if (ret.stderr) {
@@ -204,6 +232,11 @@ export abstract class LeafTask extends Task {
 		}
 
 		await this.markExecDone();
+		this.recordMetric(
+			this.isIncremental ? TaskCacheOutcome.CacheMiss : TaskCacheOutcome.NonIncremental,
+			startTime,
+			ret.worker,
+		);
 		return this.execDone(startTime, BuildResult.Success, ret.worker);
 	}
 
@@ -265,7 +298,7 @@ export abstract class LeafTask extends Task {
 		});
 	}
 
-	private getExecErrors(ret: ExecAsyncResult) {
+	private getExecErrors(ret: ExecAsyncResult): string {
 		let errorMessages = ret.stdout;
 		if (ret.stderr) {
 			errorMessages = `${errorMessages}\n${ret.stderr}`;
@@ -280,7 +313,7 @@ export abstract class LeafTask extends Task {
 		return errorMessages;
 	}
 
-	private execDone(startTime: number, status: BuildResult, worker?: boolean) {
+	private execDone(startTime: number, status: BuildResult, worker?: boolean): BuildResult {
 		if (!options.showExec) {
 			let statusCharacter: string = " ";
 			switch (status) {
@@ -323,6 +356,7 @@ export abstract class LeafTask extends Task {
 		// Build all the dependent tasks first
 		const result = await this.buildDependentTask(q);
 		if (result === BuildResult.Failed) {
+			this.recordMetric(TaskCacheOutcome.NotRun);
 			return BuildResult.Failed;
 		}
 
@@ -352,6 +386,7 @@ export abstract class LeafTask extends Task {
 		traceTaskCheck(`${this.nameColored}: checkLeafIsUpToDate: ${Date.now() - start}ms`);
 		if (leafIsUpToDate) {
 			this.node.context.taskStats.leafUpToDateCount++;
+			this.recordMetric(TaskCacheOutcome.CacheHitInitial);
 			this.traceExec(`Skipping Leaf Task`);
 		}
 
@@ -369,7 +404,7 @@ export abstract class LeafTask extends Task {
 		return true;
 	}
 
-	protected getDependentLeafTasks() {
+	protected getDependentLeafTasks(): IterableIterator<LeafTask> {
 		assert.notStrictEqual(this.dependentLeafTasks, undefined);
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		return this.dependentLeafTasks!.values();
@@ -402,7 +437,7 @@ export abstract class LeafTask extends Task {
 	 */
 
 	// After the task is done, indicate whether the command can be incremental next time.
-	protected abstract get isIncremental();
+	protected abstract get isIncremental(): boolean;
 
 	// check if this task is up to date
 	protected abstract checkLeafIsUpToDate(): Promise<boolean>;
@@ -418,24 +453,23 @@ export abstract class LeafTask extends Task {
 		return false;
 	}
 
-	// For called when the task has successfully executed
-	// eslint-disable-next-line @typescript-eslint/no-empty-function
+	// Called when the task has successfully executed
 	protected async markExecDone(): Promise<void> {}
 
-	protected getVsCodeErrorMessages(errorMessages: string) {
+	protected getVsCodeErrorMessages(errorMessages: string): string {
 		return errorMessages;
 	}
 
-	protected traceNotUpToDate() {
+	protected traceNotUpToDate(): void {
 		this.traceTrigger("not up to date");
 	}
 
-	protected traceTrigger(reason: string) {
+	protected traceTrigger(reason: string): void {
 		const msg = `${this.nameColored}: [${reason}]`;
 		traceTaskTrigger(msg);
 	}
 
-	protected traceError(msg: string) {
+	protected traceError(msg: string): void {
 		traceError(`${this.nameColored}: ${msg}`);
 	}
 }
@@ -446,10 +480,10 @@ export abstract class LeafTask extends Task {
 export abstract class LeafWithDoneFileTask extends LeafTask {
 	private _isIncremental: boolean = true;
 
-	protected get isIncremental() {
+	protected get isIncremental(): boolean {
 		return this._isIncremental;
 	}
-	protected get doneFileFullPath() {
+	protected get doneFileFullPath(): string {
 		return this.getPackageFileFullPath(this.doneFile);
 	}
 
@@ -473,7 +507,7 @@ export abstract class LeafWithDoneFileTask extends LeafTask {
 		return leafIsUpToDate;
 	}
 
-	protected async markExecDone() {
+	protected async markExecDone(): Promise<void> {
 		const doneFileFullPath = this.doneFileFullPath;
 		try {
 			// TODO: checkLeafIsUpToDate already called this. Consider reusing its results to save recomputation of them.
@@ -494,7 +528,7 @@ export abstract class LeafWithDoneFileTask extends LeafTask {
 		}
 	}
 
-	protected async checkLeafIsUpToDate() {
+	protected async checkLeafIsUpToDate(): Promise<boolean> {
 		const doneFileFullPath = this.doneFileFullPath;
 		try {
 			const doneFileExpectedContent = await this.getDoneFileContent();
@@ -539,6 +573,23 @@ export abstract class LeafWithDoneFileTask extends LeafTask {
 	 */
 
 	/**
+	 * Get additional config files to track for this task from the task definition.
+	 * @returns absolute paths to additional config files
+	 */
+	protected get additionalConfigFiles(): string[] {
+		if (this.taskName === undefined) {
+			return [];
+		}
+
+		const repoRoot = this.node.context.repoRoot;
+		return this.node
+			.getAdditionalConfigFiles(this.taskName)
+			.map((configPath) =>
+				this.getPackageFileFullPath(replaceRepoRootToken(configPath, repoRoot)),
+			);
+	}
+
+	/**
 	 * The content to be written in the "done file".
 	 * @remarks
 	 * This file must have different content if the work needed to be done by this task changes.
@@ -559,11 +610,11 @@ export class UnknownLeafTask extends LeafTask {
 		super(node, command, context, taskName);
 	}
 
-	protected get isIncremental() {
+	protected get isIncremental(): boolean {
 		return this.command === "";
 	}
 
-	protected async checkLeafIsUpToDate() {
+	protected async checkLeafIsUpToDate(): Promise<boolean> {
 		if (this.command === "") {
 			// Empty command is always up to date.
 			return true;
@@ -576,9 +627,14 @@ export class UnknownLeafTask extends LeafTask {
 
 /**
  * A Leaf task base that can be used for tasks that have a list of input and output file paths to include in the
- * donefile. By default, the donefile will contain the filestat information, like last modified time, as the values in
- * the donefile. Despite its name, this class can be used for hash-based donefiles by overriding the `useHashes`
- * property.
+ * donefile.
+ *
+ * @remarks
+ * Despite its name, this class supports both timestamp-based and hash-based donefiles via the `useHashes` property.
+ *
+ * Subclasses can override `useHashes` to return `true` to use content hashes instead of timestamps. Hashing avoids
+ * false positives from timestamp changes that don't reflect actual content changes (e.g., git operations, file
+ * copies), but has a small performance cost.
  */
 export abstract class LeafWithFileStatDoneFileTask extends LeafWithDoneFileTask {
 	/**
@@ -595,11 +651,26 @@ export abstract class LeafWithFileStatDoneFileTask extends LeafWithDoneFileTask 
 	 * If this returns true, then the donefile will use the hash of the file contents instead of the last modified time
 	 * and other file stats.
 	 *
-	 * Hashing is roughly 20% slower than the stats-based approach, but is less susceptible to getting invalidated by
-	 * other processes like git touching files but not ultimately changing their contents.
+	 * @remarks
+	 * Hashing avoids false positives from timestamp changes that don't reflect actual content changes (e.g., git
+	 * operations, file copies), but has a small performance cost.
+	 *
+	 * @returns `true` to use content hashes, `false` to use file timestamps (default).
 	 */
 	protected get useHashes(): boolean {
 		return false;
+	}
+
+	/**
+	 * Get all input files for done file tracking, including additional config files.
+	 */
+	private async getAllInputFiles(): Promise<string[]> {
+		const srcFiles = await this.getInputFiles();
+		const additionalConfigFiles = this.additionalConfigFiles;
+		if (additionalConfigFiles.length === 0) {
+			return srcFiles;
+		}
+		return [...srcFiles, ...additionalConfigFiles];
 	}
 
 	protected async getDoneFileContent(): Promise<string | undefined> {
@@ -607,12 +678,14 @@ export abstract class LeafWithFileStatDoneFileTask extends LeafWithDoneFileTask 
 			return this.getHashDoneFileContent();
 		}
 
-		// Gather the file information
+		// Timestamp-based done file content.
+		// Note: timestamps may signal change without meaningful content modification (e.g., git
+		// operations, file copies). Override useHashes to return true to use content hashes instead.
 		try {
-			const srcFiles = await this.getInputFiles();
+			const allSrcFiles = await this.getAllInputFiles();
 			const dstFiles = await this.getOutputFiles();
 			const srcTimesP = Promise.all(
-				srcFiles
+				allSrcFiles
 					.map((match) => this.getPackageFileFullPath(match))
 					.map((match) => stat(match)),
 			);
@@ -629,7 +702,7 @@ export abstract class LeafWithFileStatDoneFileTask extends LeafWithDoneFileTask 
 			const dstInfo = dstTimes.map((dstTime) => {
 				return { mtimeMs: dstTime.mtimeMs, size: dstTime.size };
 			});
-			return JSON.stringify({ srcFiles, dstFiles, srcInfo, dstInfo });
+			return JSON.stringify({ srcFiles: allSrcFiles, dstFiles, srcInfo, dstInfo });
 		} catch (e: any) {
 			this.traceError(`error comparing file times: ${e.message}`);
 			this.traceTrigger("failed to get file stats");
@@ -638,7 +711,7 @@ export abstract class LeafWithFileStatDoneFileTask extends LeafWithDoneFileTask 
 	}
 
 	private async getHashDoneFileContent(): Promise<string | undefined> {
-		const mapHash = async (name: string) => {
+		const mapHash = async (name: string): Promise<{ name: string; hash: string }> => {
 			const hash = await this.node.context.fileHashCache.getFileHash(
 				this.getPackageFileFullPath(name),
 			);
@@ -646,9 +719,9 @@ export abstract class LeafWithFileStatDoneFileTask extends LeafWithDoneFileTask 
 		};
 
 		try {
-			const srcFiles = await this.getInputFiles();
+			const allSrcFiles = await this.getAllInputFiles();
 			const dstFiles = await this.getOutputFiles();
-			const srcHashesP = Promise.all(srcFiles.map(mapHash));
+			const srcHashesP = Promise.all(allSrcFiles.map(mapHash));
 			const dstHashesP = Promise.all(dstFiles.map(mapHash));
 
 			const [srcHashes, dstHashes] = await Promise.all([srcHashesP, dstHashesP]);
@@ -657,11 +730,10 @@ export abstract class LeafWithFileStatDoneFileTask extends LeafWithDoneFileTask 
 			srcHashes.sort(sortByName);
 			dstHashes.sort(sortByName);
 
-			const output = JSON.stringify({
+			return JSON.stringify({
 				srcHashes,
 				dstHashes,
 			});
-			return output;
 		} catch (e: any) {
 			this.traceError(`error calculating file hashes: ${e.message}`);
 			this.traceTrigger("failed to get file hash");
@@ -678,12 +750,20 @@ export abstract class LeafWithGlobInputOutputDoneFileTask extends LeafWithFileSt
 	/**
 	 * @returns The list of globs for all the files that this task depends on.
 	 */
-	protected abstract getInputGlobs(): Promise<string[]>;
+	protected abstract getInputGlobs(): Promise<readonly string[]>;
 
 	/**
 	 * @returns The list of globs for all the files that this task generates.
 	 */
-	protected abstract getOutputGlobs(): Promise<string[]>;
+	protected abstract getOutputGlobs(): Promise<readonly string[]>;
+
+	/**
+	 * @returns If the lock file should be included as input files for this task.
+	 */
+	protected get includeLockFiles(): boolean {
+		// Include the lock file by default.
+		return true;
+	}
 
 	/**
 	 * Configures how gitignore rules are applied. "input" applies gitignore rules to the input, "output" applies them to
@@ -700,7 +780,15 @@ export abstract class LeafWithGlobInputOutputDoneFileTask extends LeafWithFileSt
 	}
 
 	protected override async getInputFiles(): Promise<string[]> {
-		return this.getFiles("input");
+		const inputs = await this.getFiles("input");
+		if (this.includeLockFiles) {
+			const lockFilePath = this.node.pkg.getLockFilePath();
+			if (lockFilePath === undefined) {
+				throw new Error(`Lock file missing for ${this.node.pkg.nameColored}.`);
+			}
+			inputs.push(lockFilePath);
+		}
+		return inputs;
 	}
 
 	protected override async getOutputFiles(): Promise<string[]> {
@@ -717,13 +805,10 @@ export abstract class LeafWithGlobInputOutputDoneFileTask extends LeafWithFileSt
 		const globs = mode === "input" ? await this.getInputGlobs() : await this.getOutputGlobs();
 		const excludeGitIgnoredFiles: boolean = this.gitIgnore.includes(mode);
 
-		const files = await globby(globs, {
+		return globWithGitignore(globs, {
 			cwd: this.node.pkg.directory,
-			// file paths returned from getInputFiles and getOutputFiles should always be absolute
-			absolute: true,
 			gitignore: excludeGitIgnoredFiles,
 		});
-		return files;
 	}
 }
 

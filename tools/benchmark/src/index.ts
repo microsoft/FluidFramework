@@ -16,47 +16,69 @@
  */
 
 export {
+	BenchmarkMode,
 	BenchmarkType,
-	BenchmarkArguments,
-	BenchmarkSyncArguments,
-	BenchmarkAsyncArguments,
-	BenchmarkOptions,
-	MochaExclusiveOptions,
-	HookFunction,
-	HookArguments,
+	currentBenchmarkMode,
 	isInPerformanceTestingMode,
-	validateBenchmarkArguments,
 	qualifiedTitle,
-	Titled,
-	BenchmarkTimingOptions,
-	BenchmarkRunningOptions,
-	BenchmarkSyncFunction,
-	BenchmarkAsyncFunction,
-	OnBatch,
-	BenchmarkDescription,
-	CustomBenchmark,
-	BenchmarkTimer,
-	CustomBenchmarkArguments,
+	type Titled,
+	type BenchmarkDescription,
 	TestType,
-} from "./Configuration";
+	type BenchmarkFunction,
+	type BenchmarkOptions,
+} from "./Configuration.js";
 export {
-	benchmark,
-	benchmarkMemory,
-	benchmarkCustom,
-	IMemoryTestObject,
-	MemoryTestObjectProps,
-	CustomBenchmarkOptions,
-	IMeasurementReporter,
-} from "./mocha";
-export { prettyNumber, geometricMean } from "./RunnerUtilities";
-export { BenchmarkReporter } from "./Reporter";
-export { Phase, runBenchmark } from "./runBenchmark";
+	type DurationBenchmarkSync,
+	type DurationBenchmarkAsync,
+	type DurationBenchmark,
+	type BenchmarkTimingOptions,
+	type BatchedDurationTimer,
+	type DurationBenchmarkCustom,
+	Phase,
+	collectDurationData,
+	runBenchmarkSync,
+	benchmarkDuration,
+	type BatchlessDurationTimer,
+	type DurationBenchmarkBatchless,
+	benchmarkDurationBatchless,
+} from "./durationBenchmarking/index.js";
+export { benchmarkIt, type MochaBenchmarkOptions } from "./mocha/index.js";
 export {
-	BenchmarkData,
-	BenchmarkError,
-	BenchmarkResult,
-	Stats,
-	CustomData,
+	formatResultArrayTable,
+	finishLoggingReport,
+	fullName,
+	recordTestResult,
+	visitSuitesArray,
+	type ReportPath,
+	type ReportSuiteWithPath,
+	type SuiteData,
+} from "./reporterUtilities.js";
+export {
 	isResultError,
-} from "./ResultTypes";
-export { Timer } from "./timer";
+	isSuiteNode,
+	parseBenchmarkResult,
+	parseReport,
+	type BenchmarkError,
+	type BenchmarkResult,
+	type CollectedData,
+	type PrimaryMeasurement,
+	type Measurement,
+	type Significance,
+	ValueType,
+	type ReportEntry,
+	type ReportArray,
+	type ReportSuite,
+} from "./reportTypes.js";
+export { timer, type Timer } from "./timer.js";
+export { captureResults } from "./benchmarkAuthoringUtilities.js";
+
+export {
+	type MemoryUseBenchmark,
+	type MemoryUseCallbacks,
+	benchmarkMemoryUse,
+	collectMemoryUseData,
+	Box,
+	type MemoryUseModifier,
+	memoryAddedBy,
+	memoryUseOfValue,
+} from "./memoryBenchmarking/index.js";

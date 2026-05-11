@@ -5,24 +5,38 @@
 
 import { strict as assert } from "node:assert";
 
-import { IGCTestProvider, runGCTests } from "@fluid-private/test-dds-utils";
+import { type IGCTestProvider, runGCTests } from "@fluid-private/test-dds-utils";
 import type { IFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
-import { IChannelServices } from "@fluidframework/datastore-definitions/internal";
+import type { IChannelServices } from "@fluidframework/datastore-definitions/internal";
 import {
 	MockContainerRuntimeFactory,
 	MockContainerRuntimeFactoryForReconnection,
-	MockContainerRuntimeForReconnection,
+	type MockContainerRuntimeForReconnection,
 	MockFluidDataStoreRuntime,
 	MockStorage,
 } from "@fluidframework/test-runtime-utils/internal";
 
-import type { ConsensusOrderedCollection } from "../consensusOrderedCollection.js";
+import { ConsensusOrderedCollection } from "../consensusOrderedCollection.js";
 import {
 	ConsensusQueueFactory,
 	type ConsensusQueue,
 } from "../consensusOrderedCollectionFactory.js";
-import { ConsensusResult, IConsensusOrderedCollection } from "../interfaces.js";
-import { acquireAndComplete, waitAcquireAndComplete } from "../testUtils.js";
+import { ConsensusQueueClass } from "../consensusQueue.js";
+import { ConsensusResult, type IConsensusOrderedCollection } from "../interfaces.js";
+import {
+	acquireAndComplete,
+	acquireAndRelease,
+	waitAcquireAndComplete,
+} from "../testUtils.js";
+
+/**
+ * Test class that exposes protected applyStashedOp method for testing
+ */
+class TestConsensusQueue extends ConsensusQueueClass {
+	public testApplyStashedOp(content: unknown): void {
+		this.applyStashedOp(content);
+	}
+}
 
 function createConnectedCollection(
 	id: string,
@@ -66,6 +80,26 @@ function createCollectionForReconnection(
 	return { collection, containerRuntime };
 }
 
+function createTestCollectionForStashedOps(
+	id: string,
+	runtimeFactory: MockContainerRuntimeFactory,
+): TestConsensusQueue {
+	const dataStoreRuntime = new MockFluidDataStoreRuntime();
+	runtimeFactory.createContainerRuntime(dataStoreRuntime);
+	const services: IChannelServices = {
+		deltaConnection: dataStoreRuntime.createDeltaConnection(),
+		objectStorage: new MockStorage(),
+	};
+
+	const collection = new TestConsensusQueue(
+		id,
+		dataStoreRuntime,
+		ConsensusQueueFactory.Attributes,
+	);
+	collection.connect(services);
+	return collection;
+}
+
 describe("ConsensusOrderedCollection", () => {
 	function generate(
 		input: unknown[],
@@ -102,7 +136,7 @@ describe("ConsensusOrderedCollection", () => {
 			});
 
 			it("Can create a collection", () => {
-				assert.ok(testCollection);
+				assert(testCollection !== undefined);
 			});
 
 			it("Can add and remove data", async () => {
@@ -115,7 +149,7 @@ describe("ConsensusOrderedCollection", () => {
 			it("Can add and remove a handle", async () => {
 				assert.strictEqual(await removeItem(), undefined);
 				const handle = testCollection.handle;
-				assert(handle, "Need an actual handle to test this case");
+				assert(handle !== undefined, "Need an actual handle to test this case");
 				await addItem(handle);
 
 				const acquiredValue = (await removeItem()) as IFluidHandleInternal;
@@ -385,6 +419,160 @@ describe("ConsensusOrderedCollection", () => {
 		});
 	});
 
+	describe("applyStashedOp", () => {
+		let containerRuntimeFactory: MockContainerRuntimeFactory;
+		let testCollection1: TestConsensusQueue;
+		let testCollection2: IConsensusOrderedCollection;
+
+		beforeEach(() => {
+			containerRuntimeFactory = new MockContainerRuntimeFactory();
+			testCollection1 = createTestCollectionForStashedOps(
+				"collection1",
+				containerRuntimeFactory,
+			);
+			testCollection2 = createConnectedCollection("collection2", containerRuntimeFactory);
+		});
+
+		it("can apply stashed add op and have it reach remote client", async () => {
+			const testValue = "testValue";
+
+			// Create a stashed add op
+			const stashedOp = {
+				opName: "add" as const,
+				value: JSON.stringify(testValue),
+			};
+
+			// Apply the stashed op - this should submit it for processing
+			testCollection1.testApplyStashedOp(stashedOp);
+
+			// Process all messages
+			containerRuntimeFactory.processAllMessages();
+
+			// Verify the value can be acquired from the remote collection
+			const resP = acquireAndComplete(testCollection2);
+			containerRuntimeFactory.processAllMessages();
+			setImmediate(() => containerRuntimeFactory.processAllMessages());
+			const result = (await resP) as string | undefined;
+
+			assert.equal(
+				result,
+				testValue,
+				"Remote collection should be able to acquire the added value",
+			);
+		});
+
+		it("can apply stashed acquire op", async () => {
+			// First add a value normally
+			const testValue = "testValue";
+			const addP = testCollection1.add(testValue);
+			containerRuntimeFactory.processAllMessages();
+			await addP;
+
+			// Create a stashed acquire op
+			const stashedOp = {
+				opName: "acquire" as const,
+				acquireId: "test-acquire-id",
+			};
+
+			// Track if acquire event fires
+			let acquireFired = false;
+			testCollection2.on("acquire", () => {
+				acquireFired = true;
+			});
+
+			// Apply the stashed acquire op
+			testCollection1.testApplyStashedOp(stashedOp);
+
+			// Process all messages
+			containerRuntimeFactory.processAllMessages();
+
+			// Verify the acquire was processed
+			assert.equal(acquireFired, true, "Acquire event should fire on remote client");
+		});
+
+		it("can apply stashed complete op after acquire", async () => {
+			// First add a value normally
+			const testValue = "testValue";
+			const addP = testCollection1.add(testValue);
+			containerRuntimeFactory.processAllMessages();
+			await addP;
+
+			// Apply a stashed acquire op first
+			const acquireId = "test-acquire-id";
+			const acquireOp = {
+				opName: "acquire" as const,
+				acquireId,
+			};
+			testCollection1.testApplyStashedOp(acquireOp);
+			containerRuntimeFactory.processAllMessages();
+
+			// Track if complete event fires
+			let completeFired = false;
+			testCollection2.on("complete", () => {
+				completeFired = true;
+			});
+
+			// Apply a stashed complete op
+			const completeOp = {
+				opName: "complete" as const,
+				acquireId,
+			};
+			testCollection1.testApplyStashedOp(completeOp);
+			containerRuntimeFactory.processAllMessages();
+
+			// Verify the complete was processed
+			assert.equal(completeFired, true, "Complete event should fire on remote client");
+		});
+
+		it("can apply stashed release op after acquire", async () => {
+			// First add a value normally
+			const testValue = "testValue";
+			const addP = testCollection1.add(testValue);
+			containerRuntimeFactory.processAllMessages();
+			await addP;
+
+			// Apply a stashed acquire op first
+			const acquireId = "test-acquire-id";
+			const acquireOp = {
+				opName: "acquire" as const,
+				acquireId,
+			};
+			testCollection1.testApplyStashedOp(acquireOp);
+			containerRuntimeFactory.processAllMessages();
+
+			// Track if add event fires (release should put value back in queue)
+			let addFired = false;
+			testCollection2.on("add", (value, newlyAdded) => {
+				if (!newlyAdded) {
+					addFired = true;
+				}
+			});
+
+			// Apply a stashed release op
+			const releaseOp = {
+				opName: "release" as const,
+				acquireId,
+			};
+			testCollection1.testApplyStashedOp(releaseOp);
+			containerRuntimeFactory.processAllMessages();
+
+			// Verify the release was processed (value should be back in queue)
+			assert.equal(
+				addFired,
+				true,
+				"Add event should fire on remote client when value is released",
+			);
+
+			// Verify we can acquire the value again
+			const resP = acquireAndComplete(testCollection2);
+			containerRuntimeFactory.processAllMessages();
+			setImmediate(() => containerRuntimeFactory.processAllMessages());
+			const result = (await resP) as string | undefined;
+
+			assert.equal(result, testValue, "Should be able to acquire the released value");
+		});
+	});
+
 	describe("Garbage Collection", () => {
 		class GCOrderedCollectionProvider implements IGCTestProvider {
 			private _expectedRoutes: string[] = [];
@@ -431,7 +619,7 @@ describe("ConsensusOrderedCollection", () => {
 
 			public async deleteOutboundRoutes(): Promise<void> {
 				const deletedHandle = (await this.removeItem()) as IFluidHandleInternal;
-				assert(deletedHandle, "Route must be added before deleting");
+				assert(deletedHandle !== undefined, "Route must be added before deleting");
 				// Remove deleted handle's route from expected routes.
 				this._expectedRoutes = this._expectedRoutes.filter(
 					(route) => route !== deletedHandle.absolutePath,
@@ -460,5 +648,337 @@ describe("ConsensusOrderedCollection", () => {
 		}
 
 		runGCTests(GCOrderedCollectionProvider);
+	});
+
+	describe("Rollback", () => {
+		let containerRuntimeFactory: MockContainerRuntimeFactoryForReconnection;
+
+		let testCollection1: IConsensusOrderedCollection;
+		let containerRuntime1: MockContainerRuntimeForReconnection;
+
+		let testCollection2: IConsensusOrderedCollection;
+		let containerRuntime2: MockContainerRuntimeForReconnection;
+
+		const processAcquireMessages = (): void => {
+			// acquire() will first send an acquire op. After that is processed it will also send a complete op.
+			// To account for this, we need to flush/process the acquire op, then immediately flush/process the complete op to process everything.
+			containerRuntime1.flush();
+			containerRuntime2.flush();
+			containerRuntimeFactory.processAllMessages();
+			setImmediate(() => {
+				containerRuntime1.flush();
+				containerRuntime2.flush();
+				containerRuntimeFactory.processAllMessages();
+			});
+		};
+
+		beforeEach(async () => {
+			containerRuntimeFactory = new MockContainerRuntimeFactoryForReconnection({
+				flushMode: 1, // turn based
+			});
+
+			const response1 = createCollectionForReconnection(
+				"collection1",
+				containerRuntimeFactory,
+			);
+			testCollection1 = response1.collection;
+			containerRuntime1 = response1.containerRuntime;
+
+			const response2 = createCollectionForReconnection(
+				"collection2",
+				containerRuntimeFactory,
+			);
+			testCollection2 = response2.collection;
+			containerRuntime2 = response2.containerRuntime;
+		});
+
+		it("can rollback add op", async () => {
+			let addFired = false;
+			testCollection1.on("add", () => {
+				addFired = true;
+			});
+
+			const addP = testCollection1.add("value");
+
+			containerRuntime1.rollback?.();
+
+			containerRuntime1.flush();
+			containerRuntimeFactory.processAllMessages();
+			await addP;
+
+			assert.equal(addFired, false, "Add event should not fire");
+
+			const acquiredP = acquireAndComplete(testCollection1);
+			processAcquireMessages();
+			const acquiredVal = (await acquiredP) as unknown;
+			assert.equal(acquiredVal, undefined, "Should not have added value post rollback");
+		});
+
+		it("can rollback acquire/complete ops", async () => {
+			let acquireFired = false;
+			let completeFired = false;
+			testCollection1.on("acquire", () => {
+				acquireFired = true;
+			});
+			testCollection1.on("complete", () => {
+				completeFired = true;
+			});
+
+			const addP = testCollection1.add("value");
+			containerRuntime1.flush();
+			containerRuntimeFactory.processAllMessages();
+			await addP;
+
+			const acquiredP1 = acquireAndComplete(testCollection1);
+			containerRuntime1.rollback?.();
+
+			processAcquireMessages();
+			const acquiredVal1 = (await acquiredP1) as unknown;
+			assert.equal(acquiredVal1, undefined, "Should not have acquired value post rollback");
+			assert.equal(acquireFired, false, "Acquire event should not fire");
+			assert.equal(completeFired, false, "Complete event should not fire");
+
+			const acquiredP2 = acquireAndComplete(testCollection1);
+			processAcquireMessages();
+			const acquiredVal2 = (await acquiredP2) as unknown;
+			assert.equal(acquiredVal2, "value", "Should be able to acquire value post rollback");
+			assert.equal(acquireFired, true, "acquire event should fire post rollback");
+			assert.equal(completeFired, true, "complete event should fire post rollback");
+		});
+
+		it("can rollback acquire/release ops", async () => {
+			let acquireFired = false;
+			let releaseFired = false;
+			testCollection1.on("acquire", () => {
+				acquireFired = true;
+			});
+			testCollection1.on("localRelease", () => {
+				releaseFired = true;
+			});
+
+			const addP = testCollection1.add("value");
+			containerRuntime1.flush();
+			containerRuntimeFactory.processAllMessages();
+			await addP;
+
+			const acquiredP1 = acquireAndRelease(testCollection1);
+			containerRuntime1.rollback?.();
+
+			processAcquireMessages();
+			const acquiredVal1 = (await acquiredP1) as unknown;
+			assert.equal(acquiredVal1, undefined, "Should not have acquired value post rollback");
+			assert.equal(acquireFired, false, "acquire event should not fire");
+			assert.equal(releaseFired, false, "release event should not fire");
+
+			const acquiredP2 = acquireAndRelease(testCollection1);
+			processAcquireMessages();
+			const acquiredVal2 = (await acquiredP2) as unknown;
+			assert.equal(acquiredVal2, "value", "Should be able to acquire value post rollback");
+			assert.equal(acquireFired, true, "acquire event should fire post rollback");
+			assert.equal(releaseFired, true, "release event should fire post rollback");
+		});
+
+		it("can rollback only the complete op", async () => {
+			let acquireFired = false;
+			let completeFired = false;
+			testCollection1.on("acquire", () => {
+				acquireFired = true;
+			});
+			testCollection1.on("complete", () => {
+				completeFired = true;
+			});
+
+			const addP = testCollection1.add("value");
+			containerRuntime1.flush();
+			containerRuntimeFactory.processAllMessages();
+			await addP;
+
+			const acquiredP1 = acquireAndComplete(testCollection1);
+			containerRuntime1.flushSomeMessages(1); // flush only the acquire op
+			containerRuntimeFactory.processAllMessages();
+			setImmediate(() => {
+				containerRuntime1.rollback?.(); // rollback before flushing the complete op
+				containerRuntime1.flush();
+				containerRuntimeFactory.processAllMessages();
+			});
+
+			const acquiredVal1 = (await acquiredP1) as unknown;
+			assert.equal(acquiredVal1, "value", "Should have acquired value");
+			assert.equal(acquireFired, true, "Acquire event should have fired");
+			assert.equal(completeFired, false, "Complete event should not fire");
+		});
+
+		it("can rollback only the release op", async () => {
+			let acquireFired = false;
+			let releaseFired = false;
+			testCollection1.on("acquire", () => {
+				acquireFired = true;
+			});
+			testCollection1.on("localRelease", () => {
+				releaseFired = true;
+			});
+
+			const addP = testCollection1.add("value");
+			containerRuntime1.flush();
+			containerRuntimeFactory.processAllMessages();
+			await addP;
+
+			const acquiredP1 = acquireAndComplete(testCollection1);
+			containerRuntime1.flushSomeMessages(1); // flush only the acquire op
+			containerRuntimeFactory.processAllMessages();
+			setImmediate(() => {
+				containerRuntime1.rollback?.(); // rollback before flushing the release op
+				containerRuntime1.flush();
+				containerRuntimeFactory.processAllMessages();
+			});
+
+			const acquiredVal1 = (await acquiredP1) as unknown;
+			assert.equal(acquiredVal1, "value", "Should have acquired value");
+			assert.equal(acquireFired, true, "Acquire event should have fired");
+			assert.equal(releaseFired, false, "Release event should not fire");
+		});
+
+		describe("Rollback across remote ops", () => {
+			it("can rollback add across remote ops", async () => {
+				let addFiredCount1 = 0;
+				let addFiredCount2 = 0;
+				testCollection1.on("add", () => {
+					addFiredCount1++;
+				});
+				testCollection2.on("add", () => {
+					addFiredCount2++;
+				});
+
+				const addP1 = testCollection1.add("value1");
+				const addP2 = testCollection2.add("value2");
+
+				containerRuntime1.rollback?.();
+
+				containerRuntime1.flush();
+				containerRuntime2.flush();
+				containerRuntimeFactory.processAllMessages();
+				await Promise.all([addP1, addP2]);
+
+				assert.deepEqual(
+					[addFiredCount1, addFiredCount2],
+					[1, 1],
+					"Add event should only fire once for each client",
+				);
+
+				const acquiredP1 = acquireAndComplete(testCollection1);
+				processAcquireMessages();
+				const acquiredVal1 = (await acquiredP1) as unknown;
+				assert.equal(acquiredVal1, "value2", "value2 should be the first value acquired");
+
+				const acquiredP2 = acquireAndComplete(testCollection1);
+				processAcquireMessages();
+				const acquiredVal2 = (await acquiredP2) as unknown;
+				assert.equal(
+					acquiredVal2,
+					undefined,
+					"There should have only been one value to acquire",
+				);
+			});
+
+			it("can rollback acquire/complete across remote ops", async () => {
+				let acquireFiredCount1 = 0;
+				let completeFiredCount1 = 0;
+				let acquireFiredCount2 = 0;
+				let completeFiredCount2 = 0;
+				testCollection1.on("acquire", () => {
+					acquireFiredCount1++;
+				});
+				testCollection1.on("complete", () => {
+					completeFiredCount1++;
+				});
+				testCollection2.on("acquire", () => {
+					acquireFiredCount2++;
+				});
+				testCollection2.on("complete", () => {
+					completeFiredCount2++;
+				});
+
+				const addP = testCollection1.add("value");
+				containerRuntime1.flush();
+				containerRuntimeFactory.processAllMessages();
+				await addP;
+
+				const acquiredP1 = acquireAndComplete(testCollection1);
+				const acquiredP2 = acquireAndComplete(testCollection2);
+				containerRuntime1.rollback?.();
+
+				processAcquireMessages();
+
+				const [acquiredVal1, acquiredVal2] = (await Promise.all([acquiredP1, acquiredP2])) as [
+					unknown,
+					unknown,
+				];
+				assert.deepEqual(
+					[acquiredVal1, acquiredVal2],
+					[undefined, "value"],
+					"Client 1 should not have acquired value post rollback, value 2 should have",
+				);
+				assert.deepEqual(
+					[acquireFiredCount1, completeFiredCount1, acquireFiredCount2, completeFiredCount2],
+					[1, 1, 1, 1],
+					"Both clients should have fired each event once",
+				);
+
+				const acquiredP3 = acquireAndComplete(testCollection1);
+				processAcquireMessages();
+				const acquiredVal3 = (await acquiredP3) as unknown;
+				assert.equal(acquiredVal3, undefined, "There should be no more values to acquire");
+			});
+
+			it("can rollback acquire/release across remote ops", async () => {
+				let acquireFiredCount1 = 0;
+				let releaseFiredCount1 = 0;
+				let acquireFiredCount2 = 0;
+				let releaseFiredCount2 = 0;
+				testCollection1.on("acquire", () => {
+					acquireFiredCount1++;
+				});
+				testCollection1.on("localRelease", () => {
+					releaseFiredCount1++;
+				});
+				testCollection2.on("acquire", () => {
+					acquireFiredCount2++;
+				});
+				testCollection2.on("localRelease", () => {
+					releaseFiredCount2++;
+				});
+
+				const addP = testCollection1.add("value");
+				containerRuntime1.flush();
+				containerRuntimeFactory.processAllMessages();
+				await addP;
+
+				const acquiredP1 = acquireAndRelease(testCollection1);
+				const acquiredP2 = acquireAndRelease(testCollection2);
+				containerRuntime1.rollback?.();
+
+				processAcquireMessages();
+
+				const [acquiredVal1, acquiredVal2] = (await Promise.all([acquiredP1, acquiredP2])) as [
+					unknown,
+					unknown,
+				];
+				assert.deepEqual(
+					[acquiredVal1, acquiredVal2],
+					[undefined, "value"],
+					"Client 1 should not have acquired value post rollback, value 2 should have",
+				);
+				assert.deepEqual(
+					[acquireFiredCount1, releaseFiredCount1, acquireFiredCount2, releaseFiredCount2],
+					[1, 0, 1, 1],
+					"Only client 2 should have local release event fired",
+				);
+
+				const acquiredP3 = acquireAndRelease(testCollection1);
+				processAcquireMessages();
+				const acquiredVal3 = (await acquiredP3) as unknown;
+				assert.equal(acquiredVal3, undefined, "There should be no more values to acquire");
+			});
+		});
 	});
 });

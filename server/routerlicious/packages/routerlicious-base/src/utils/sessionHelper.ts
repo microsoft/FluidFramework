@@ -4,17 +4,20 @@
  */
 
 import { delay } from "@fluidframework/common-utils";
-import { ISession, isNetworkError, NetworkError } from "@fluidframework/server-services-client";
 import {
-	IDocument,
+	type ISession,
+	isNetworkError,
+	NetworkError,
+} from "@fluidframework/server-services-client";
+import {
+	type IDocument,
 	runWithRetry,
-	IDocumentRepository,
-	IClusterDrainingChecker,
+	type IDocumentRepository,
+	type IClusterDrainingChecker,
 	type ICache,
+	type StageTrace,
 } from "@fluidframework/server-services-core";
 import { getLumberBaseProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
-
-import { StageTrace } from "./trace";
 
 const defaultSessionStickinessDurationMs = 60 * 60 * 1000; // 60 minutes
 const defaultGetSessionCacheTtlInSeconds = 5 * 60; // 5 mins
@@ -281,7 +284,7 @@ export function generateCacheKey(tenantId: string, documentId: string): string {
  * If the document is deleted, we store a session object with empty URLs and isSessionAlive=false.
  * @internal
  */
-async function getSessionFromCache(
+export async function getSessionFromCache(
 	tenantId: string,
 	documentId: string,
 	redisCacheForGetSession: ICache,

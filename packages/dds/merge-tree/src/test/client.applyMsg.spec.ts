@@ -8,12 +8,12 @@
 import { strict as assert } from "node:assert";
 
 import { FluidErrorTypes } from "@fluidframework/core-interfaces/internal";
-import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
+import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import { isFluidError } from "@fluidframework/telemetry-utils/internal";
 
 import { UnassignedSequenceNumber } from "../constants.js";
 import { walkAllChildSegments } from "../mergeTreeNodeWalk.js";
-import { ISegmentPrivate, SegmentGroup } from "../mergeTreeNodes.js";
+import type { ISegmentPrivate, SegmentGroup } from "../mergeTreeNodes.js";
 import { TrackingGroup } from "../mergeTreeTracking.js";
 import { MergeTreeDeltaType, ReferenceType } from "../ops.js";
 import {
@@ -23,7 +23,7 @@ import {
 	toRemovalInfo,
 } from "../segmentInfos.js";
 import { Side } from "../sequencePlace.js";
-import { TextSegment } from "../textSegment.js";
+import type { TextSegment } from "../textSegment.js";
 
 import { TestClient } from "./testClient.js";
 import { TestClientLogger, createClientsAtInitialState } from "./testClientLogger.js";

@@ -40,7 +40,7 @@ export function getMetadata(folder: string): ITestMetadata {
 /**
  * Writes the metadata file in the given test folder.
  */
-export function writeMetadataFile(folder: string) {
+export function writeMetadataFile(folder: string): void {
 	const metadataFile = getFullMetadataFileName(folder);
 	fs.writeFileSync(metadataFile, JSON.stringify(currentMetadata), {
 		encoding: "utf-8",

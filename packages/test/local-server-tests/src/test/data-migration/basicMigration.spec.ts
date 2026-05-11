@@ -41,7 +41,7 @@ const lstValue1 = 42;
 const lstValue2 = 38;
 const dirValue = "bar";
 
-function modifyOldFile(rootDataObject: RootDO) {
+function modifyOldFile(rootDataObject: RootDO): void {
 	setLSTQuantity(rootDataObject.doWithLST.tree, lstValue1);
 	setLSTQuantity(rootDataObject.doWithLSTAndDir.tree, lstValue2);
 	rootDataObject.doWithLSTAndDir.subDirectory.set("value", dirValue);
@@ -62,7 +62,7 @@ async function validateNewRoot(
 	provider: ITestObjectProvider,
 	runtimeFactory: IRuntimeFactory,
 	readContainer?: IContainer,
-) {
+): Promise<void> {
 	// Validate in memory objects
 	const view = rootDataObject.doWithST.view;
 	const view2 = rootDataObject.doWithST2.view;
@@ -165,7 +165,7 @@ class ExampleStrategy implements IMigrationStrategy {
 }
 
 const migrationStrategies: IMigrationStrategy[] = [new ExampleStrategy()];
-const createFluidEntryPoint = () => {
+const createFluidEntryPoint = (): never => {
 	throw new Error();
 };
 describe.skip("basicMigration", () => {

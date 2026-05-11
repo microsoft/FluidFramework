@@ -5,10 +5,10 @@
 
 import {
 	default as Axios,
-	AxiosError,
-	AxiosInstance,
-	AxiosRequestConfig,
-	RawAxiosRequestHeaders,
+	type AxiosError,
+	type AxiosInstance,
+	type AxiosRequestConfig,
+	type RawAxiosRequestHeaders,
 	type AxiosResponse,
 } from "axios";
 import safeStringify from "json-stringify-safe";
@@ -20,7 +20,7 @@ import {
 	TelemetryContextHeaderName,
 } from "./constants";
 import { debug } from "./debug";
-import { createFluidServiceNetworkError, INetworkErrorDetails } from "./error";
+import { createFluidServiceNetworkError, type INetworkErrorDetails } from "./error";
 import { getGlobalTimeoutContext } from "./timeoutContext";
 import { isAxiosCanceledError } from "./utils";
 

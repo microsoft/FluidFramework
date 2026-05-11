@@ -3,11 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import { IResolvedUrl } from "@fluidframework/driver-definitions/internal";
 import { ISession } from "@fluidframework/server-services-client";
-import { MockLogger } from "@fluidframework/telemetry-utils/internal";
+import {
+	MockLogger,
+	type ITelemetryLoggerExt,
+} from "@fluidframework/telemetry-utils/internal";
 import { SinonFakeTimers, useFakeTimers } from "sinon";
 
 import { RouterliciousOrdererRestWrapper } from "../restWrapper.js";
@@ -40,7 +43,7 @@ describe("SessionInfoManager", () => {
 	});
 
 	class MockOrdererRestWrapper {
-		get() {
+		get(): { content: ISession } {
 			mockOrdererCalls++;
 			return {
 				content: createSession(numberToFakeUrl(mockOrdererCalls)),
@@ -59,7 +62,17 @@ describe("SessionInfoManager", () => {
 		};
 	}
 
-	function createGetSessionInfoParams(documentId: string, session?: ISession) {
+	function createGetSessionInfoParams(
+		documentId: string,
+		session?: ISession,
+	): {
+		resolvedUrl: IResolvedUrl;
+		documentId: string;
+		tenantId: string;
+		ordererRestWrapper: RouterliciousOrdererRestWrapper;
+		logger: ITelemetryLoggerExt;
+		session: ISession | undefined;
+	} {
 		return {
 			resolvedUrl: {
 				type: "fluid",
@@ -89,14 +102,14 @@ describe("SessionInfoManager", () => {
 		resolvedUrl: IResolvedUrl,
 		expectedUrl: string,
 		errorMessage?: string,
-	) {
+	): void {
 		// ! The deltaStreamUrl endpoint is hijacked by these tests to detect session info changes
 		assert.strictEqual(resolvedUrl.endpoints.deltaStreamUrl, expectedUrl, errorMessage);
 	}
 
 	describe("initializeSessionInfo", () => {
 		describe("session provided", () => {
-			[true, false].forEach((enableDiscovery) => {
+			for (const enableDiscovery of [true, false]) {
 				describe(`discovery ${enableDiscovery ? "enabled" : "disabled"}`, () => {
 					it("uses provided session", async () => {
 						const manager = new SessionInfoManager(enableDiscovery);
@@ -143,7 +156,7 @@ describe("SessionInfoManager", () => {
 						);
 					});
 				});
-			});
+			}
 		});
 
 		it("discovery enabled", async () => {

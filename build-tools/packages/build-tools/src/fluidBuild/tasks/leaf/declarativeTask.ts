@@ -7,13 +7,13 @@ import type { BuildContext } from "../../buildContext";
 import type { BuildPackage } from "../../buildGraph";
 import {
 	type DeclarativeTask,
-	type GitIgnoreSetting,
 	gitignoreDefaultValue,
+	replaceRepoRootTokens,
 } from "../../fluidBuildConfig";
-import type { TaskHandlerFunction } from "../taskHandlers";
-import { LeafTask, LeafWithGlobInputOutputDoneFileTask } from "./leafTask";
+import type { GitIgnoreSetting } from "../../fluidTaskDefinitions";
+import { LeafWithGlobInputOutputDoneFileTask } from "./leafTask";
 
-class DeclarativeTaskHandler extends LeafWithGlobInputOutputDoneFileTask {
+export class DeclarativeLeafTask extends LeafWithGlobInputOutputDoneFileTask {
 	constructor(
 		node: BuildPackage,
 		command: string,
@@ -35,31 +35,15 @@ class DeclarativeTaskHandler extends LeafWithGlobInputOutputDoneFileTask {
 		return this.taskDefinition.gitignore ?? gitignoreDefaultValue;
 	}
 
-	protected async getInputGlobs(): Promise<string[]> {
-		return this.taskDefinition.inputGlobs;
+	protected override get includeLockFiles(): boolean {
+		return this.taskDefinition.includeLockFiles ?? super.includeLockFiles;
 	}
 
-	protected async getOutputGlobs(): Promise<string[]> {
-		return this.taskDefinition.outputGlobs;
+	protected async getInputGlobs(): Promise<readonly string[]> {
+		return replaceRepoRootTokens(this.taskDefinition.inputGlobs, this.node.context.repoRoot);
 	}
-}
 
-/**
- * Generates a task handler for a declarative task dynamically.
- *
- * @param taskDefinition - The declarative task definition.
- * @returns a function that can be used to instantiate a LeafTask to handle a task.
- */
-export function createDeclarativeTaskHandler(
-	taskDefinition: DeclarativeTask,
-): TaskHandlerFunction {
-	const handler: TaskHandlerFunction = (
-		node: BuildPackage,
-		command: string,
-		context: BuildContext,
-		taskName?: string,
-	): LeafTask => {
-		return new DeclarativeTaskHandler(node, command, context, taskName, taskDefinition);
-	};
-	return handler;
+	protected async getOutputGlobs(): Promise<readonly string[]> {
+		return replaceRepoRootTokens(this.taskDefinition.outputGlobs, this.node.context.repoRoot);
+	}
 }

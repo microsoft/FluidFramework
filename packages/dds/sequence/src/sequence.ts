@@ -4,25 +4,22 @@
  */
 
 import { bufferToString } from "@fluid-internal/client-utils";
-import { IEventThisPlaceHolder } from "@fluidframework/core-interfaces";
+import type { IEventThisPlaceHolder } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
-import {
+import type {
 	IChannelAttributes,
 	IFluidDataStoreRuntime,
 	IChannelStorageService,
 } from "@fluidframework/datastore-definitions/internal";
-import {
-	MessageType,
-	ISequencedDocumentMessage,
-} from "@fluidframework/driver-definitions/internal";
-import {
-	Client,
+import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
+import { MessageType } from "@fluidframework/driver-definitions/internal";
+import type {
 	IJSONSegment,
 	IMergeTreeAnnotateMsg,
 	IMergeTreeDeltaOp,
-	// eslint-disable-next-line import/no-deprecated
+	// eslint-disable-next-line import-x/no-deprecated
 	IMergeTreeGroupMsg,
-	// eslint-disable-next-line import/no-deprecated
+	// eslint-disable-next-line import-x/no-deprecated
 	IMergeTreeObliterateMsg,
 	IMergeTreeOp,
 	IMergeTreeRemoveMsg,
@@ -30,14 +27,16 @@ import {
 	ISegment,
 	ISegmentAction,
 	LocalReferencePosition,
-	MergeTreeDeltaType,
 	MergeTreeRevertibleDriver,
 	PropertySet,
 	ReferencePosition,
 	ReferenceType,
 	SlidingPreference,
+} from "@fluidframework/merge-tree/internal";
+import {
+	Client,
+	MergeTreeDeltaType,
 	createAnnotateRangeOp,
-	// eslint-disable-next-line import/no-deprecated
 	createGroupOp,
 	createInsertOp,
 	createObliterateRangeOp,
@@ -47,35 +46,39 @@ import {
 	type InteriorSequencePlace,
 	type MapLike,
 } from "@fluidframework/merge-tree/internal";
-import {
+import type {
 	ISummaryTreeWithStats,
 	ITelemetryContext,
+	IRuntimeMessageCollection,
+	IRuntimeMessagesContent,
+	ISequencedMessageEnvelope,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	ObjectStoragePartition,
 	SummaryTreeBuilder,
 } from "@fluidframework/runtime-utils/internal";
-import {
+import type {
 	IFluidSerializer,
+	ISharedObject,
 	ISharedObjectEvents,
-	SharedObject,
-	type ISharedObject,
 } from "@fluidframework/shared-object-base/internal";
+import { SharedObject } from "@fluidframework/shared-object-base/internal";
 import {
 	LoggingError,
 	createChildLogger,
 	createConfigBasedOptionsProxy,
+	extractTelemetryLoggerExt,
 	loggerToMonitoringContext,
 } from "@fluidframework/telemetry-utils/internal";
 import Deque from "double-ended-queue";
 
-import { type ISequenceIntervalCollection } from "./intervalCollection.js";
-import { IMapOperation, IntervalCollectionMap } from "./intervalCollectionMap.js";
-import { type SequenceOptions } from "./intervalCollectionMapInterfaces.js";
+import type { ISequenceIntervalCollection } from "./intervalCollection.js";
+import type { IMapOperation } from "./intervalCollectionMap.js";
+import { IntervalCollectionMap } from "./intervalCollectionMap.js";
+import type { SequenceOptions } from "./intervalCollectionMapInterfaces.js";
+import type { SequenceDeltaEvent, SequenceMaintenanceEvent } from "./sequenceDeltaEvent.js";
 import {
-	SequenceDeltaEvent,
 	SequenceDeltaEventClass,
-	SequenceMaintenanceEvent,
 	SequenceMaintenanceEventClass,
 } from "./sequenceDeltaEvent.js";
 
@@ -114,8 +117,7 @@ const contentPath = "content";
  * - `event` - Various information on the segments that were modified.
  *
  * - `target` - The sequence itself.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface ISharedSegmentSequenceEvents extends ISharedObjectEvents {
 	(
@@ -133,8 +135,7 @@ export interface ISharedSegmentSequenceEvents extends ISharedObjectEvents {
 }
 
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface ISharedSegmentSequence<T extends ISegment>
 	extends ISharedObject<ISharedSegmentSequenceEvents>,
@@ -142,14 +143,14 @@ export interface ISharedSegmentSequence<T extends ISegment>
 	/**
 	 * Creates a `LocalReferencePosition` on this SharedString. If the refType does not include
 	 * ReferenceType.Transient, the returned reference will be added to the localRefs on the provided segment.
-	 * @param segment - Segment to add the local reference on
+	 * @param segment - Segment to add the local reference on, or "start"/"end" for endpoint segments
 	 * @param offset - Offset on the segment at which to place the local reference
 	 * @param refType - ReferenceType for the created local reference
 	 * @param properties - PropertySet to place on the created local reference
 	 */
 	createLocalReferencePosition(
-		segment: T,
-		offset: number,
+		segment: T | "start" | "end",
+		offset: number | undefined,
 		refType: ReferenceType,
 		properties: PropertySet | undefined,
 		slidingPreference?: SlidingPreference,
@@ -345,7 +346,7 @@ export interface ISharedSegmentSequence<T extends ISegment>
 	 * release, as group ops are redundant with the native batching capabilities
 	 * of the runtime
 	 */
-	// eslint-disable-next-line import/no-deprecated
+	// eslint-disable-next-line import-x/no-deprecated
 	groupOperation(groupOp: IMergeTreeGroupMsg): void;
 
 	getRangeExtentsOfPosition(pos: number): {
@@ -402,6 +403,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 						props[key] = r.segment.properties?.[key] ?? null;
 					}
 					if (
+						// eslint-disable-next-line @typescript-eslint/prefer-optional-chain -- TODO: ADO#58521 Code owners should verify if this code change is safe and make it if so or update this comment otherwise
 						lastAnnotate &&
 						lastAnnotate.pos2 === r.position &&
 						matchProperties(lastAnnotate.props, props)
@@ -415,9 +417,10 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 					break;
 				}
 
-				case MergeTreeDeltaType.INSERT:
+				case MergeTreeDeltaType.INSERT: {
 					ops.push(createInsertOp(r.position, r.segment.clone().toJSONObject()));
 					break;
+				}
 
 				case MergeTreeDeltaType.REMOVE: {
 					const lastRem = ops[ops.length - 1] as IMergeTreeRemoveMsg;
@@ -431,7 +434,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 				}
 
 				case MergeTreeDeltaType.OBLITERATE: {
-					// eslint-disable-next-line import/no-deprecated
+					// eslint-disable-next-line import-x/no-deprecated
 					const lastRem = ops[ops.length - 1] as IMergeTreeObliterateMsg;
 					if (lastRem?.pos1 === r.position) {
 						assert(lastRem.pos2 !== undefined, 0x874 /* pos2 should not be undefined here */);
@@ -475,7 +478,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 	 * even if the op is resubmitted more than once. Thus during resubmit, `inFlightRefSeqs` gets populated with the
 	 * original refSeq rather than the refSeq at the time of reconnection.
 	 *
-	 * @remarks - In some not fully understood cases, the runtime may process incoming ops before putting an op that this
+	 * @remarks In some not fully understood cases, the runtime may process incoming ops before putting an op that this
 	 * DDS submits over the wire. See `inFlightRefSeqs` for more details.
 	 */
 	private get currentRefSeq() {
@@ -500,7 +503,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 				: createReentrancyDetector((depth) => {
 						if (totalReentrancyLogs > 0) {
 							totalReentrancyLogs--;
-							this.logger.sendTelemetryEvent(
+							extractTelemetryLoggerExt(this.logger).sendTelemetryEvent(
 								{ eventName: "LocalOpReentry", depth },
 								new LoggingError(reentrancyErrorMessage),
 							);
@@ -574,7 +577,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 		this.guardReentrancy(() => this.client.obliterateRangeLocal(start, end));
 	}
 
-	// eslint-disable-next-line import/no-deprecated
+	// eslint-disable-next-line import-x/no-deprecated
 	public groupOperation(groupOp: IMergeTreeGroupMsg): void {
 		this.guardReentrancy(() => this.client.localTransaction(groupOp));
 	}
@@ -616,8 +619,8 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 	}
 
 	public createLocalReferencePosition(
-		segment: T,
-		offset: number,
+		segment: T | "start" | "end",
+		offset: number | undefined,
 		refType: ReferenceType,
 		properties: PropertySet | undefined,
 		slidingPreference?: SlidingPreference,
@@ -830,7 +833,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 			);
 
 			// process the catch up ops, and finishing the loading process
-			(await catchupOpsP).forEach((m) => {
+			for (const m of await catchupOpsP) {
 				const collabWindow = this.client.getCollabWindow();
 				if (
 					m.minimumSequenceNumber < collabWindow.minSeq ||
@@ -854,24 +857,38 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 					);
 				}
 				this.processMergeTreeMsg(m);
-			});
+			}
 
 			// Initialize the interval collections
 			this.initializeIntervalCollections();
 		} catch (error) {
-			this.logger.sendErrorEvent({ eventName: "SequenceLoadFailed" }, error);
+			extractTelemetryLoggerExt(this.logger).sendErrorEvent(
+				{ eventName: "SequenceLoadFailed" },
+				error,
+			);
 			throw error;
 		}
 	}
 
-	/**
-	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.processCore}
-	 */
-	protected processCore(
-		message: ISequencedDocumentMessage,
+	protected override processMessagesCore(messagesCollection: IRuntimeMessageCollection): void {
+		const { envelope, local, messagesContent } = messagesCollection;
+		for (const messageContent of messagesContent) {
+			this.processMessage(envelope, messageContent, local);
+		}
+	}
+
+	private processMessage(
+		messageEnvelope: ISequencedMessageEnvelope,
+		messageContent: IRuntimeMessagesContent,
 		local: boolean,
-		localOpMetadata: unknown,
-	) {
+	): void {
+		// Reconstruct ISequencedDocumentMessage which is needed by merge tree client
+		const message: ISequencedDocumentMessage = {
+			...messageEnvelope,
+			contents: messageContent.contents,
+			clientSequenceNumber: messageContent.clientSequenceNumber,
+		};
+
 		if (local) {
 			const recordedRefSeq = this.inFlightRefSeqs.shift();
 			assert(recordedRefSeq !== undefined, 0x8bc /* No pending recorded refSeq found */);
@@ -893,7 +910,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 			message.contents as IMapOperation,
 			local,
 			message,
-			localOpMetadata,
+			messageContent.localOpMetadata,
 		);
 
 		if (!handled) {
@@ -934,9 +951,9 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 
 		this.processMinSequenceNumberChanged(minSeq);
 
-		this.messagesSinceMSNChange.forEach((m) => {
+		for (const m of this.messagesSinceMSNChange) {
 			m.minimumSequenceNumber = minSeq;
-		});
+		}
 
 		return this.client.summarize(
 			this.runtime,
@@ -947,6 +964,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 	}
 
 	/**
+	 * Processes a merge tree message for the sequence.
 	 *
 	 * @param message - Message with decoded and hydrated handles
 	 */
@@ -957,10 +975,8 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 		}
 		const needsTransformation = message.referenceSequenceNumber !== message.sequenceNumber - 1;
 		let stashMessage: Readonly<ISequencedDocumentMessage> = message;
-		if (this.runtime.options.newMergeTreeSnapshotFormat !== true) {
-			if (needsTransformation) {
-				this.on("sequenceDelta", transformOps);
-			}
+		if (this.runtime.options.newMergeTreeSnapshotFormat !== true && needsTransformation) {
+			this.on("sequenceDelta", transformOps);
 		}
 
 		this.client.applyMsg(message, local);
@@ -973,8 +989,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 				stashMessage = {
 					...message,
 					referenceSequenceNumber: stashMessage.sequenceNumber - 1,
-					// eslint-disable-next-line import/no-deprecated
-					contents: ops.length !== 1 ? createGroupOp(...ops) : ops[0],
+					contents: ops.length === 1 ? ops[0] : createGroupOp(...ops),
 				};
 			}
 
@@ -1009,7 +1024,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 			(key: string, local: boolean) => {
 				const intervalCollection = this.intervalCollections.get(key);
 				if (!intervalCollection.attached) {
-					intervalCollection.attachGraph(this.client, key);
+					intervalCollection.attachGraph(this, this.client, key);
 				}
 				this.emit("createIntervalCollection", key, local, this);
 			},
@@ -1018,7 +1033,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 		// Initialize existing SharedIntervalCollections
 		for (const key of this.intervalCollections.keys()) {
 			const intervalCollection = this.intervalCollections.get(key);
-			intervalCollection.attachGraph(this.client, key);
+			intervalCollection.attachGraph(this, this.client, key);
 		}
 	}
 

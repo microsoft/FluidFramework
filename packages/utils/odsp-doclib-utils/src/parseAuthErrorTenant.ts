@@ -35,16 +35,17 @@ export function parseAuthErrorTenant(responseHeader: Headers): string | undefine
 
 	let tenantId: string | undefined;
 	authHeaderData
-		.substring(indexOfBearerInfo + oAuthBearerScheme.length)
+		.slice(Math.max(0, indexOfBearerInfo + oAuthBearerScheme.length))
 		.split(",")
 		.map((section) => {
 			if (!tenantId) {
 				const nameValuePair = section.split("=");
 				// values can be encoded and contain '=' symbol inside so it is possible to have more than one
-				if (nameValuePair.length >= 2) {
-					if (nameValuePair[0].trim().toLowerCase() === "realm") {
-						tenantId = JSON.parse(nameValuePair[1].trim());
-					}
+				if (nameValuePair.length >= 2 && nameValuePair[0].trim().toLowerCase() === "realm") {
+					// TODO: this is assigning an object to a string.
+					// If this is intentional, we should document what's going on here.
+					// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+					tenantId = JSON.parse(nameValuePair[1].trim());
 				}
 			}
 		});

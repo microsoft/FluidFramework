@@ -8,16 +8,6 @@ import type {
 	RestrictiveStringRecord,
 	UnionToIntersection,
 } from "../../util/index.js";
-
-import type {
-	ApplyKind,
-	ApplyKindInput,
-	FieldKind,
-	FieldSchema,
-	FieldSchemaAlpha,
-	ImplicitAllowedTypes,
-	TreeLeafValue,
-} from "../schemaTypes.js";
 import type {
 	NodeKind,
 	WithType,
@@ -27,10 +17,28 @@ import type {
 	TreeNodeSchema,
 	TreeNodeSchemaCore,
 	TreeNodeSchemaClass,
+	ImplicitAllowedTypes,
+	TreeLeafValue,
+	FlexListToUnion,
+	LazyItem,
+	AnnotatedAllowedType,
+	AnnotatedAllowedTypes,
 } from "../core/index.js";
+import type {
+	ApplyKind,
+	ApplyKindInput,
+	DefaultProvider,
+	FieldKind,
+	FieldSchema,
+	FieldSchemaAlpha,
+	FieldPropsAlpha,
+} from "../fieldSchema.js";
 import type { TreeArrayNode } from "../node-kinds/index.js";
-import type { FlexListToUnion, LazyItem } from "../flexList.js";
-import type { SimpleArrayNodeSchema, SimpleMapNodeSchema } from "../simpleSchema.js";
+import type {
+	SchemaType,
+	SimpleArrayNodeSchema,
+	SimpleMapNodeSchema,
+} from "../simpleSchema.js";
 
 /*
  * TODO:
@@ -459,7 +467,8 @@ export interface FieldSchemaAlphaUnsafe<
 	out Kind extends FieldKind,
 	out Types extends System_Unsafe.ImplicitAllowedTypesUnsafe,
 	out TCustomMetadata = unknown,
-> extends FieldSchemaAlpha<Kind, any, TCustomMetadata>,
+	out TProps extends FieldPropsAlpha<TCustomMetadata> | undefined = undefined,
+> extends FieldSchemaAlpha<Kind, any, TCustomMetadata, TProps>,
 		System_Unsafe.FieldSchemaUnsafe<Kind, Types, TCustomMetadata> {
 	/**
 	 * {@inheritDoc FieldSchema.allowedTypes}
@@ -468,6 +477,51 @@ export interface FieldSchemaAlphaUnsafe<
 }
 
 /* eslint-enable @typescript-eslint/no-explicit-any */
+
+/**
+ * {@link Unenforced} version of {@link FieldHasDefaultAlpha}.
+ * @remarks
+ * Do not use this type directly: it's only needed in the implementation of generic logic which define recursive schema, not when using recursive schema.
+ * @system @sealed @alpha
+ */
+export type FieldHasDefaultAlphaUnsafe<T extends System_Unsafe.ImplicitFieldSchemaUnsafe> =
+	T extends FieldSchemaAlphaUnsafe<
+		infer Kind,
+		System_Unsafe.ImplicitAllowedTypesUnsafe,
+		unknown,
+		infer TProps
+	>
+		? Kind extends FieldKind.Optional | FieldKind.Identifier
+			? true
+			: TProps extends { defaultProvider: DefaultProvider }
+				? true
+				: false
+		: System_Unsafe.FieldHasDefaultUnsafe<T>;
+
+/**
+ * {@link Unenforced} version of {@link InsertableObjectFromSchemaRecordAlpha}.
+ * @see {@link System_Unsafe.InsertableObjectFromSchemaRecordUnsafe}
+ * @remarks
+ * Do not use this type directly: it's only needed in the implementation of generic logic which define recursive schema, not when using recursive schema.
+ * @system @alpha
+ */
+export type InsertableObjectFromSchemaRecordAlphaUnsafe<
+	T extends RestrictiveStringRecord<System_Unsafe.ImplicitFieldSchemaUnsafe>,
+> = {
+	// Field does not have a known default, make it required:
+	readonly [Property in keyof T as FieldHasDefaultAlphaUnsafe<
+		T[Property & string]
+	> extends false
+		? Property
+		: never]: System_Unsafe.InsertableTreeFieldFromImplicitFieldUnsafe<T[Property & string]>;
+} & {
+	// Field has a known default, make it optional:
+	readonly [Property in keyof T as FieldHasDefaultAlphaUnsafe<
+		T[Property & string]
+	> extends true
+		? Property
+		: never]?: System_Unsafe.InsertableTreeFieldFromImplicitFieldUnsafe<T[Property & string]>;
+};
 
 /**
  * {@link Unenforced} version of {@link ArrayNodeCustomizableSchema}s.
@@ -495,7 +549,7 @@ export interface ArrayNodeCustomizableSchemaUnsafe<
 			undefined,
 			TCustomMetadata
 		>,
-		SimpleArrayNodeSchema<TCustomMetadata> {}
+		SimpleArrayNodeSchema<SchemaType.View, TCustomMetadata> {}
 
 /**
  * {@link Unenforced} version of {@link MapNodeCustomizableSchema}s.
@@ -526,4 +580,98 @@ export interface MapNodeCustomizableSchemaUnsafe<
 			undefined,
 			TCustomMetadata
 		>,
-		SimpleMapNodeSchema<TCustomMetadata> {}
+		SimpleMapNodeSchema<SchemaType.View, TCustomMetadata> {}
+
+/**
+ * {@link Unenforced} version of {@link TreeRecordNode}.
+ * @remarks
+ * Do not use this type directly: it's only needed in the implementation of generic logic which define recursive schema, not when using recursive schema.
+ * @system @sealed @beta
+ */
+export interface TreeRecordNodeUnsafe<
+	TAllowedTypes extends System_Unsafe.ImplicitAllowedTypesUnsafe,
+> extends Record<string, System_Unsafe.TreeNodeFromImplicitAllowedTypesUnsafe<TAllowedTypes>>,
+		TreeNode {
+	[Symbol.iterator](): IterableIterator<
+		[string, System_Unsafe.TreeNodeFromImplicitAllowedTypesUnsafe<TAllowedTypes>]
+	>;
+}
+
+/**
+ * {@link Unenforced} utility to remove {@link AnnotatedAllowedTypeUnsafe} wrappers.
+ * @remarks
+ * Do not use this type directly: it's only needed in the implementation of generic logic which define recursive schema, not when using recursive schema.
+ * @sealed
+ * @beta
+ * @system
+ */
+export type UnannotateAllowedTypeUnsafe<
+	T extends Unenforced<
+		AnnotatedAllowedTypeUnsafe | LazyItem<System_Unsafe.TreeNodeSchemaUnsafe>
+	>,
+> = T extends AnnotatedAllowedTypeUnsafe<infer X> ? X : T;
+
+/**
+ * {@link Unenforced} version of {@link AnnotatedAllowedType}.
+ * @remarks
+ * Do not use this type directly: it's only needed in the implementation of generic logic which define recursive schema, not when using recursive schema.
+ * @system @sealed @beta
+ */
+export interface AnnotatedAllowedTypeUnsafe<T = Unenforced<LazyItem<TreeNodeSchema>>>
+	extends AnnotatedAllowedType<T> {}
+
+/**
+ * {@link Unenforced} version of {@link AnnotatedAllowedTypes}.
+ * @remarks
+ * Do not use this type directly: it's only needed in the implementation of generic logic which define recursive schema, not when using recursive schema.
+ * @system @sealed @beta
+ */
+export interface AnnotatedAllowedTypesUnsafe
+	extends AnnotatedAllowedTypes<LazyItem<System_Unsafe.TreeNodeSchemaUnsafe>> {}
+
+/**
+ * {@link Unenforced} version of {@link AllowedTypesFull}.
+ * @remarks
+ * Do not use this type directly: it's only needed in the implementation of generic logic which define recursive schema, not when using recursive schema.
+ * @system @sealed @alpha
+ */
+export type AllowedTypesFullUnsafe<
+	T extends readonly AnnotatedAllowedTypeUnsafe[] = readonly AnnotatedAllowedTypeUnsafe[],
+> = AnnotatedAllowedTypes<T> & UnannotateAllowedTypesListUnsafe<T>;
+
+/**
+ * {@link Unenforced} version of {@link AllowedTypesFullFromMixed}.
+ * @remarks
+ * Do not use this type directly: it's only needed in the implementation of generic logic which define recursive schema, not when using recursive schema.
+ * @system @sealed @beta
+ */
+export type AllowedTypesFullFromMixedUnsafe<
+	T extends readonly Unenforced<AnnotatedAllowedType | LazyItem<TreeNodeSchema>>[],
+> = UnannotateAllowedTypesListUnsafe<T> &
+	AnnotatedAllowedTypes<AnnotateAllowedTypesListUnsafe<T>>;
+
+/**
+ * {@link Unenforced} version of {@link UnannotateAllowedTypesList}.
+ * @remarks
+ * Do not use this type directly: it's only needed in the implementation of generic logic which define recursive schema, not when using recursive schema.
+ * @system @sealed @beta
+ */
+export type UnannotateAllowedTypesListUnsafe<
+	T extends readonly Unenforced<AnnotatedAllowedType | LazyItem<TreeNodeSchema>>[],
+> = {
+	readonly [I in keyof T]: T[I] extends { type: infer X } ? X : T[I];
+};
+
+/**
+ * {@link Unenforced} version of {@link AnnotateAllowedTypesList}.
+ * @remarks
+ * Do not use this type directly: it's only needed in the implementation of generic logic which define recursive schema, not when using recursive schema.
+ * @system @sealed @beta
+ */
+export type AnnotateAllowedTypesListUnsafe<
+	T extends readonly Unenforced<AnnotatedAllowedType | LazyItem<TreeNodeSchema>>[],
+> = {
+	[I in keyof T]: T[I] extends AnnotatedAllowedTypeUnsafe
+		? T[I]
+		: AnnotatedAllowedTypeUnsafe<T[I]>;
+};

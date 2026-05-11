@@ -7,7 +7,8 @@ import { stringToBuffer } from "@fluid-internal/client-utils";
 import { assert } from "@fluidframework/core-utils/internal";
 import { IChannelStorageService } from "@fluidframework/datastore-definitions/internal";
 import { ISummaryTree } from "@fluidframework/driver-definitions";
-import { IBlob, ITree } from "@fluidframework/driver-definitions/internal";
+import { IBlob, ITree, type ISnapshotTree } from "@fluidframework/driver-definitions/internal";
+import { buildSnapshotTree } from "@fluidframework/driver-utils/internal";
 import {
 	convertSummaryTreeToITree,
 	listBlobsAtTreePath,
@@ -15,11 +16,10 @@ import {
 
 /**
  * Mock implementation of IChannelStorageService based on ITree input.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export class MockStorage implements IChannelStorageService {
-	public static createFromSummary(summaryTree: ISummaryTree) {
+	public static createFromSummary(summaryTree: ISummaryTree): MockStorage {
 		const tree = convertSummaryTreeToITree(summaryTree);
 		return new MockStorage(tree);
 	}
@@ -43,7 +43,14 @@ export class MockStorage implements IChannelStorageService {
 		}
 	}
 
-	constructor(protected tree?: ITree) {}
+	private readonly snapshotTree: ISnapshotTree | undefined;
+
+	constructor(protected tree?: ITree) {
+		if (tree === undefined) {
+			return;
+		}
+		this.snapshotTree = buildSnapshotTree(tree.entries, new Map());
+	}
 
 	public async readBlob(path: string): Promise<ArrayBufferLike> {
 		const blob = MockStorage.readBlobCore(this.tree, path.split("/"));
@@ -57,5 +64,9 @@ export class MockStorage implements IChannelStorageService {
 
 	public async list(path: string): Promise<string[]> {
 		return listBlobsAtTreePath(this.tree, path);
+	}
+
+	public getSnapshotTree(): ISnapshotTree | undefined {
+		return this.snapshotTree;
 	}
 }

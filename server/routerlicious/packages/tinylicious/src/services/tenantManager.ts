@@ -8,9 +8,9 @@ import {
 	BasicRestWrapper,
 	GitManager,
 	Historian,
-	IGitManager,
+	type IGitManager,
 } from "@fluidframework/server-services-client";
-import {
+import type {
 	ITenant,
 	ITenantConfig,
 	ITenantConfigManager,
@@ -80,6 +80,10 @@ export class TenantManager implements ITenantManager, ITenantConfigManager {
 	}
 
 	public async createTenant(tenantId?: string): Promise<ITenantConfig & { key: string }> {
+		throw new Error("Method not implemented.");
+	}
+
+	public async getTenantfromRiddler(tenantId?: string): Promise<ITenantConfig> {
 		throw new Error("Method not implemented.");
 	}
 

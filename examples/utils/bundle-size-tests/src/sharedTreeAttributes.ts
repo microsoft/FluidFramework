@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import { SharedTreeAttributes } from "@fluidframework/tree/legacy";
 
-export function apisToBundle() {
+export function apisToBundle(): typeof SharedTreeAttributes {
 	return SharedTreeAttributes;
 }

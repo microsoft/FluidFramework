@@ -10,7 +10,7 @@ import { validateAssertionError } from "@fluidframework/test-runtime-utils/inter
 
 import { ContainerMessageType } from "../../index.js";
 import {
-	OutboundBatchMessage,
+	type OutboundBatchMessage,
 	OpCompressor,
 	type OutboundBatch,
 	type OutboundSingletonBatch,
@@ -41,7 +41,7 @@ describe("OpCompressor", () => {
 		referenceSequenceNumber: messages[0].referenceSequenceNumber,
 	});
 	const createMessage = (contents: string) => ({
-		metadata: { flag: true },
+		metadata: { flag: true, groupedOpCount: 7 },
 		type: ContainerMessageType.FluidDataStoreOp,
 		contents,
 		referenceSequenceNumber: 0,
@@ -63,6 +63,7 @@ describe("OpCompressor", () => {
 				assert.strictEqual(compressedBatch.messages.length, batch.messages.length);
 				assert.strictEqual(compressedBatch.messages[0].compression, "lz4");
 				assert.strictEqual(compressedBatch.messages[0].metadata?.flag, true);
+				assert.strictEqual(compressedBatch.messages[0].metadata?.groupedOpCount, 7);
 			}).timeout(3000);
 		}
 	});
@@ -81,13 +82,9 @@ describe("OpCompressor", () => {
 					() => {
 						compressor.compressBatch(batch as OutboundSingletonBatch); // The need to cast indicates this is not going to work
 					},
-					(error: Error) => {
-						validateAssertionError(
-							error,
-							"Batch should not be empty and should contain a single message",
-						); // 0x5a4
-						return true;
-					},
+					validateAssertionError(
+						"Batch should not be empty and should contain a single message", // 0x5a4
+					),
 					"Expected error was not thrown",
 				);
 			});

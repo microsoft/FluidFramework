@@ -14,7 +14,7 @@ import path from "node:path";
 // import { fileURLToPath } from "node:url";
 // const __dirname = dirname(fileURLToPath(import.meta.url));
 
-assert(__dirname.match(/(dist|lib)[/\\]test$/));
+assert(/(dist|lib)[/\\]test$/.exec(__dirname));
 
 /**
  * Path to the test source folder - ./src/test

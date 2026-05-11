@@ -58,7 +58,7 @@ For that reason, naming choices of fields and semantics for the remainder of the
 This should alleviate any back-compat issues if/when we do decide to implement move (esp. fields that end up in ops or snapshots).
 The current proposal is to use the runtime value "null" to represent "out of existence", but this choice is flexible.
 In prose, for terseness that operation will still be called obliterate.
-After describing obliterate's design, this document [digs into how the design can be extended to work for move](##Move).
+After describing obliterate's design, this document [digs into how the design can be extended to work for move](#Move).
 
 Notice that the above examples always insert text at positions strictly inside the removed range.
 If the insert operation was instead before the "1" or after the "2", one can imagine different applications wanting different behavior:
@@ -144,18 +144,18 @@ perspective: if the perspective is from after the segment was moved, the tombsto
 However, these fields need to be independent from `removedSeq` due to the possibility of a removal and a move overlapping, as well as the differences
 in how concurrent inserts are handled into a removed or a moved range.
 
-Segment groups will store `ObliterateInfo`, which will hold the references to a start and end position for a given obliterate, in addition to some other bookeeping information relevant to resolving the obliterate on other clients.
+Segment groups will store `ObliterateInfo`, which will hold the references to a start and end position for a given obliterate, in addition to some other bookkeeping information relevant to resolving the obliterate on other clients.
 
 ```typescript
 export interface ObliterateInfo {
 	/**
 	 * Local references created at the start and end of an obliterated range. Since the end of an obliterate is exclusive, the end reference will be created at the position before the passed-in end position.
-	*/
+	 */
 	start: LocalReferencePosition;
 	end: LocalReferencePosition;
 	/**
 	 * The refSeq at which the obliterate occurs.
-	*/
+	 */
 	refSeq: number;
 	/**
 	 * The clientId that performed the obliterate.

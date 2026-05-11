@@ -5,17 +5,18 @@
 
 import { strict as assert } from "node:assert";
 
+import { currentVersion } from "../../../../codec/index.js";
 import {
-	makeFieldBatchCodec,
-	// eslint-disable-next-line import/no-internal-modules
+	fieldBatchCodecBuilder,
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/codecs.js";
 import {
 	TreeCompressionStrategy,
 	cursorForJsonableTreeField,
+	jsonableTreeFromFieldCursor,
 } from "../../../../feature-libraries/index.js";
 import { ajvValidator } from "../../../codec/index.js";
 import { testTrees } from "../../../cursorTestSuite.js";
-import { jsonableTreesFromFieldCursor } from "../fieldCursorTestUtilities.js";
 import { testIdCompressor } from "../../../utils.js";
 
 describe("uncompressedEncode", () => {
@@ -29,10 +30,13 @@ describe("uncompressedEncode", () => {
 					originatorId: testIdCompressor.localSessionId,
 					idCompressor: testIdCompressor,
 				};
-				const codec = makeFieldBatchCodec({ jsonValidator: ajvValidator }, 1);
+				const codec = fieldBatchCodecBuilder.build({
+					jsonValidator: ajvValidator,
+					minVersionForCollab: currentVersion,
+				});
 				const result = codec.encode([input], context);
 				const decoded = codec.decode(result, context);
-				const decodedJson = decoded.map(jsonableTreesFromFieldCursor);
+				const decodedJson = decoded.map(jsonableTreeFromFieldCursor);
 				assert.deepEqual([[jsonable]], decodedJson);
 			});
 		}

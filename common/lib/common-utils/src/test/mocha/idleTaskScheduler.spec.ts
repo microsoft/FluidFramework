@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 
-import { SinonFakeTimers, useFakeTimers, fake, match } from "sinon";
+import { fake, match, type SinonFakeTimers, useFakeTimers } from "sinon";
 
 import * as idleTask from "../../idleTaskScheduler";
 

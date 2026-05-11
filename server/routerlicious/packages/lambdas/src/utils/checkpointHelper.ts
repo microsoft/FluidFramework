@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IQueuedMessage } from "@fluidframework/server-services-core";
+import type { IQueuedMessage } from "@fluidframework/server-services-core";
 
 export enum CheckpointReason {
 	EveryMessage,

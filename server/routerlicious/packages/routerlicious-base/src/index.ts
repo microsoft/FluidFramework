@@ -10,22 +10,22 @@ export {
 	AlfredRunnerFactory,
 	DeltaService,
 	DocumentDeleteService,
-	IAlfredResourcesCustomizations,
-	IDocumentDeleteService,
+	type IAlfredResourcesCustomizations,
+	type IDocumentDeleteService,
 } from "./alfred";
 export {
 	NexusResources,
 	NexusResourcesFactory,
 	NexusRunnerFactory,
-	INexusResourcesCustomizations,
+	type INexusResourcesCustomizations,
 	OrdererManager,
 } from "./nexus";
 export { OrderingResourcesFactory } from "./ordering";
 export {
 	MongoTenantRepository,
-	IRiddlerResourcesCustomizations,
-	ITenantDocument,
-	ITenantRepository,
+	type IRiddlerResourcesCustomizations,
+	type ITenantDocument,
+	type ITenantRepository,
 	RiddlerResources,
 	RiddlerResourcesFactory,
 	RiddlerRunner,
@@ -40,5 +40,5 @@ export {
 	getSession,
 	getTenantIdFromRequest,
 	handleError,
-	IPlugin,
+	type IPlugin,
 } from "./utils";

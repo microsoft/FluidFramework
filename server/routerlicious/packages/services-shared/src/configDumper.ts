@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ILogger } from "@fluidframework/server-services-core";
+import type { ILogger } from "@fluidframework/server-services-core";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
 import fastRedact from "fast-redact";
 const errorSanitizationMessage = "FluidREDACTED";

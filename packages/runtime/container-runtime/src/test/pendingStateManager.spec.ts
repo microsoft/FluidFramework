@@ -5,7 +5,7 @@
 
 /* eslint-disable @typescript-eslint/consistent-type-assertions */
 
-import assert from "node:assert";
+import { strict as assert } from "node:assert";
 
 import { booleanCases, generatePairwiseOptions } from "@fluid-private/test-pairwise-generator";
 import {
@@ -14,11 +14,14 @@ import {
 } from "@fluidframework/container-definitions/internal";
 import {
 	MessageType,
-	ISequencedDocumentMessage,
+	type ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
-import type { IEnvelope } from "@fluidframework/runtime-definitions/internal";
+import type {
+	FluidDataStoreMessage,
+	IEnvelope,
+} from "@fluidframework/runtime-definitions/internal";
 import { MockLogger, createChildLogger } from "@fluidframework/telemetry-utils/internal";
-import Deque from "double-ended-queue";
+import type Deque from "double-ended-queue";
 import Sinon from "sinon";
 
 import {
@@ -29,13 +32,13 @@ import {
 import {
 	addBatchMetadata,
 	BatchManager,
-	LocalBatchMessage,
+	type LocalBatchMessage,
 	OpGroupingManager,
 	type InboundMessageResult,
 } from "../opLifecycle/index.js";
 import {
 	findFirstCharacterMismatched,
-	IPendingMessage,
+	type IPendingMessage,
 	PendingStateManager,
 	type IPendingLocalState,
 	type IRuntimeStateHandler,
@@ -74,6 +77,14 @@ type StubbedRuntimeStateHandler = {
 		ReturnType<IRuntimeStateHandler[K]>
 	>;
 };
+
+const testAddressedDataStoreMessage = {
+	address: "test-address",
+	contents: {
+		type: "op",
+		content: "test-content",
+	},
+} as const satisfies IEnvelope<FluidDataStoreMessage>;
 
 describe("Pending State Manager", () => {
 	const sandbox = Sinon.createSandbox();
@@ -135,7 +146,7 @@ describe("Pending State Manager", () => {
 			rollbackCalled = true;
 			rollbackContent.push(m);
 			if (rollbackShouldThrow) {
-				throw new Error();
+				throw new Error("test error");
 			}
 		};
 
@@ -144,7 +155,7 @@ describe("Pending State Manager", () => {
 			rollbackContent = [];
 			rollbackShouldThrow = false;
 
-			batchManager = new BatchManager({ canRebase: true });
+			batchManager = new BatchManager({ disableGroupedBatching: false });
 		});
 
 		it("should do nothing when rolling back empty pending stack", () => {
@@ -213,7 +224,7 @@ describe("Pending State Manager", () => {
 			pendingStateManager = new PendingStateManager(
 				{
 					applyStashedOp: () => {
-						throw new Error();
+						throw new Error("test error");
 					},
 					clientId: () => "oldClientId",
 					connected: () => true,
@@ -673,11 +684,11 @@ describe("Pending State Manager", () => {
 				}));
 				submitBatch(messages);
 				processFullBatch(messages, 0 /* batchStartCsn */, false /* groupedBatch */);
-				let pendingState = pendingStateManager.getLocalState(0).pendingStates;
+				let pendingState = pendingStateManager.getLocalState(0).pending.pendingStates;
 				assert.strictEqual(pendingState.length, 10);
-				pendingState = pendingStateManager.getLocalState(5).pendingStates;
+				pendingState = pendingStateManager.getLocalState(5).pending.pendingStates;
 				assert.strictEqual(pendingState.length, 5);
-				pendingState = pendingStateManager.getLocalState(10).pendingStates;
+				pendingState = pendingStateManager.getLocalState(10).pending.pendingStates;
 				assert.strictEqual(pendingState.length, 0);
 			});
 
@@ -691,7 +702,7 @@ describe("Pending State Manager", () => {
 				}));
 				submitBatch(messages);
 				assert.throws(() => pendingStateManager.getLocalState(1));
-				const pendingState = pendingStateManager.getLocalState(0).pendingStates;
+				const pendingState = pendingStateManager.getLocalState(0).pending.pendingStates;
 				assert.strictEqual(pendingState.length, 10);
 			});
 		});
@@ -804,7 +815,7 @@ describe("Pending State Manager", () => {
 			);
 			const { placeholderMessage } = opGroupingManager.createEmptyGroupedBatch("batchId", 0);
 			oldPsm.onFlushEmptyBatch(placeholderMessage, 0, false /* staged */);
-			const localStateWithEmptyBatch = oldPsm.getLocalState(0);
+			const localStateWithEmptyBatch = oldPsm.getLocalState(0).pending;
 
 			const applyStashedOps: string[] = [];
 			const pendingStateManager = new PendingStateManager(
@@ -1064,7 +1075,6 @@ describe("Pending State Manager", () => {
 	});
 
 	describe("hasPendingUserChanges", () => {
-		// eslint-disable-next-line unicorn/consistent-function-scoping
 		function createPendingStateManager(
 			pendingMessages: IPendingMessage[] = [],
 			initialMessages: IPendingMessage[] = [],
@@ -1176,7 +1186,10 @@ describe("Pending State Manager", () => {
 				stubs.reSubmitBatch.callsFake((batch, metadata) => {
 					// Here's where we implement [firstBatchSize === 0] case - Flush an empty batch on resubmit
 					if (firstBatchSize === 0 && stubs.reSubmitBatch.callCount === 1) {
-						assert(metadata.batchId, "PRECONDITION: Expected batchId for empty batch");
+						assert(
+							metadata.batchId !== undefined,
+							"PRECONDITION: Expected batchId for empty batch",
+						);
 						const { placeholderMessage } = opGroupingManager.createEmptyGroupedBatch(
 							metadata.batchId,
 							refSeqResubmit_15,
@@ -1211,7 +1224,7 @@ describe("Pending State Manager", () => {
 						{
 							runtimeOp: {
 								type: ContainerMessageType.FluidDataStoreOp,
-								contents: {} as IEnvelope,
+								contents: testAddressedDataStoreMessage,
 							},
 							referenceSequenceNumber: RefSeqInitial_10,
 							metadata: undefined, // Single message batch has no batch metadata
@@ -1228,7 +1241,7 @@ describe("Pending State Manager", () => {
 							Array.from<unknown, LocalBatchMessage>({ length: secondBatchSize }, (_, i) => ({
 								runtimeOp: {
 									type: ContainerMessageType.FluidDataStoreOp,
-									contents: {} as IEnvelope,
+									contents: testAddressedDataStoreMessage,
 								},
 								referenceSequenceNumber: RefSeqInitial_10,
 								localOpMetadata: `SECOND_BATCH_MSG${i + 1}`,
@@ -1307,7 +1320,7 @@ describe("Pending State Manager", () => {
 					{
 						runtimeOp: {
 							type: ContainerMessageType.FluidDataStoreOp,
-							contents: {} as IEnvelope,
+							contents: testAddressedDataStoreMessage,
 						},
 						referenceSequenceNumber: 13,
 						metadata: undefined,
@@ -1322,7 +1335,7 @@ describe("Pending State Manager", () => {
 					{
 						runtimeOp: {
 							type: ContainerMessageType.FluidDataStoreOp,
-							contents: {} as IEnvelope,
+							contents: testAddressedDataStoreMessage,
 						},
 						referenceSequenceNumber: 12,
 						metadata: undefined,
@@ -1381,7 +1394,7 @@ describe("Pending State Manager", () => {
 					{
 						runtimeOp: {
 							type: ContainerMessageType.FluidDataStoreOp,
-							contents: {} as IEnvelope,
+							contents: testAddressedDataStoreMessage,
 						},
 						referenceSequenceNumber: 15,
 						metadata: undefined,
@@ -1399,7 +1412,7 @@ describe("Pending State Manager", () => {
 					{
 						runtimeOp: {
 							type: ContainerMessageType.FluidDataStoreOp,
-							contents: {} as IEnvelope,
+							contents: testAddressedDataStoreMessage,
 						},
 						referenceSequenceNumber: 15,
 						metadata: undefined,
@@ -1425,7 +1438,7 @@ describe("Pending State Manager", () => {
 					{
 						runtimeOp: {
 							type: ContainerMessageType.FluidDataStoreOp,
-							contents: {} as IEnvelope,
+							contents: testAddressedDataStoreMessage,
 						},
 						referenceSequenceNumber: 16,
 						metadata: undefined,

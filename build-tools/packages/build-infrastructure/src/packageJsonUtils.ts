@@ -9,8 +9,10 @@ import path from "node:path";
 
 import detectIndent from "detect-indent";
 import fsePkg from "fs-extra";
-// eslint-disable-next-line import/no-named-as-default-member -- Imports are written this way for CJS/ESM compat
+
+// eslint-disable-next-line import-x/no-named-as-default-member -- Imports are written this way for CJS/ESM compat
 const { writeJson, writeJsonSync } = fsePkg;
+
 import sortPackageJson from "sort-package-json";
 
 import type { PackageJson } from "./types.js";

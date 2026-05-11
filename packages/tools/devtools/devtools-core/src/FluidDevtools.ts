@@ -3,10 +3,19 @@
  * Licensed under the MIT License.
  */
 
+import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
+import type { IFluidLoadable } from "@fluidframework/core-interfaces";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
+import type { BaseDevtools } from "./BaseDevtools.js";
 import type { ContainerKey } from "./CommonInterfaces.js";
 import { ContainerDevtools, type ContainerDevtoolsProps } from "./ContainerDevtools.js";
+import {
+	ContainerRuntimeDevtools,
+	type ContainerRuntimeProps,
+	DecomposedContainerForContainerRuntime,
+} from "./ContainerRuntimeDevtools.js";
+import type { DecomposedContainer } from "./DecomposedContainer.js";
 import type { IDevtoolsLogger } from "./DevtoolsLogger.js";
 import type { DevtoolsFeatureFlags } from "./Features.js";
 import type { IContainerDevtools } from "./IContainerDevtools.js";
@@ -17,10 +26,10 @@ import {
 	DevtoolsFeatures,
 	GetContainerList,
 	GetDevtoolsFeatures,
+	SetUnsampledTelemetry,
 	type ISourcedDevtoolsMessage,
 	type InboundHandlers,
 	type MessageLoggingOptions,
-	SetUnsampledTelemetry,
 	handleIncomingWindowMessage,
 	postMessagesToWindow,
 } from "./messaging/index.js";
@@ -68,7 +77,9 @@ export function getContainerAlreadyRegisteredErrorText(containerKey: ContainerKe
 
 /**
  * Properties for configuring the Devtools.
- * @alpha
+ * @beta
+ * @input
+ * @sealed
  */
 export interface FluidDevtoolsProps {
 	/**
@@ -81,14 +92,14 @@ export interface FluidDevtoolsProps {
 	 * This is provided to the Devtools instance strictly to enable communicating supported / desired functionality with
 	 * external listeners.
 	 */
-	logger?: IDevtoolsLogger;
+	readonly logger?: IDevtoolsLogger;
 
 	/**
 	 * (optional) List of Containers to initialize the devtools with.
 	 *
 	 * @remarks Additional Containers can be registered with the Devtools via {@link IFluidDevtools.registerContainerDevtools}.
 	 */
-	initialContainers?: ContainerDevtoolsProps[];
+	readonly initialContainers?: ContainerDevtoolsProps[];
 
 	// TODO: Add ability for customers to specify custom data visualizer overrides
 }
@@ -132,7 +143,7 @@ export class FluidDevtools implements IFluidDevtools {
 	 * Stores Container-level devtools instances registered with this object.
 	 * Maps from a {@link ContainerKey} to the corresponding {@link ContainerDevtools} instance.
 	 */
-	private readonly containers: Map<ContainerKey, ContainerDevtools>;
+	private readonly containers: Map<ContainerKey, BaseDevtools<DecomposedContainer>>;
 
 	/**
 	 * Private {@link FluidDevtools.disposed} tracking.
@@ -205,8 +216,8 @@ export class FluidDevtools implements IFluidDevtools {
 	 * Posts a {@link ContainerList.Message} to the window (globalThis).
 	 */
 	private readonly postContainerList = (): void => {
-		const containers: ContainerKey[] = this.getAllContainerDevtools().map(
-			(containerDevtools) => containerDevtools.containerKey,
+		const containers: ContainerKey[] = this.getAllContainers().map(
+			(container) => container.containerKey,
 		);
 
 		postMessagesToWindow(
@@ -226,7 +237,7 @@ export class FluidDevtools implements IFluidDevtools {
 
 	private constructor(props?: FluidDevtoolsProps) {
 		// Populate initial Container-level devtools
-		this.containers = new Map<string, ContainerDevtools>();
+		this.containers = new Map<ContainerKey, BaseDevtools<DecomposedContainer>>();
 		if (props?.initialContainers !== undefined) {
 			for (const containerConfig of props.initialContainers) {
 				this.containers.set(
@@ -303,13 +314,70 @@ export class FluidDevtools implements IFluidDevtools {
 			throw new UsageError(getContainerAlreadyRegisteredErrorText(containerKey));
 		}
 
-		const containerDevtools = new ContainerDevtools({
-			...props,
-		});
+		const containerDevtools = new ContainerDevtools(props);
 		this.containers.set(containerKey, containerDevtools);
 
 		// Post message for container list change
 		this.postContainerList();
+	}
+
+	public async registerContainerRuntime(props: ContainerRuntimeProps): Promise<void> {
+		const { runtime, label } = props;
+
+		const containerRuntimeKey = this.generateReadableKey(label ?? "Container-Runtime");
+		const extractedContainerRuntimeData =
+			await FluidDevtools.extractContainerDataFromRuntime(runtime);
+
+		const decomposedContainer = new DecomposedContainerForContainerRuntime(runtime);
+
+		// Check if the container runtime is already registered.
+		if (this.containers.has(containerRuntimeKey)) {
+			throw new UsageError(getContainerAlreadyRegisteredErrorText(containerRuntimeKey));
+		}
+
+		const containerRuntimeDevtools = new ContainerRuntimeDevtools({
+			containerKey: containerRuntimeKey,
+			container: decomposedContainer,
+			containerData: extractedContainerRuntimeData,
+		});
+		this.containers.set(containerRuntimeKey, containerRuntimeDevtools);
+
+		this.postContainerList();
+	}
+
+	/**
+	 * Helper method to extract container data from IContainerRuntime for visualization.
+	 * This method attempts to access the entry point data store from the runtime.
+	 *
+	 * @param containerRuntime - The container runtime to extract data from
+	 * @returns A record of data store names to IFluidLoadable objects, or undefined if no data can be extracted
+	 */
+	public static async extractContainerDataFromRuntime(
+		containerRuntime: IContainerRuntime,
+	): Promise<Record<string, IFluidLoadable> | undefined> {
+		try {
+			// Get the entry point from the container runtime
+			// Cast to access getEntryPoint method which exists on the concrete implementation
+			const runtimeWithEntryPoint = containerRuntime as IContainerRuntime & {
+				getEntryPoint(): Promise<IFluidLoadable>;
+			};
+
+			if (
+				typeof runtimeWithEntryPoint.scope === "object" &&
+				typeof runtimeWithEntryPoint.getEntryPoint === "function"
+			) {
+				const entryPoint = await runtimeWithEntryPoint.getEntryPoint();
+				if (entryPoint !== undefined) {
+					return {
+						entryPoint,
+					};
+				}
+			}
+		} catch (error) {
+			console.warn("Could not extract container data from runtime:", error);
+		}
+
+		return undefined;
 	}
 
 	/**
@@ -320,20 +388,17 @@ export class FluidDevtools implements IFluidDevtools {
 			throw new UsageError(useAfterDisposeErrorText);
 		}
 
-		const containerDevtools = this.containers.get(containerKey);
-		if (containerDevtools === undefined) {
-			console.warn(`No ContainerDevtools associated with key "${containerKey}" was found.`);
+		if (this.containers.has(containerKey)) {
+			this.removeContainer(containerKey);
 		} else {
-			containerDevtools.dispose();
-			this.containers.delete(containerKey);
-
-			// Post message for container list change
-			this.postContainerList();
+			console.warn(
+				`No ContainerDevtools or ContainerRuntimeDevtools associated with key "${containerKey}" was found.`,
+			);
 		}
 	}
 
 	/**
-	 * Gets the registered Container Devtools associated with the provided {@link ContainerKey}, if one exists.
+	 * Gets the registered Container Devtools or Container Runtime Devtools associated with the provided {@link ContainerKey}, if one exists.
 	 * Otherwise returns `undefined`.
 	 */
 	public getContainerDevtools(containerKey: ContainerKey): IContainerDevtools | undefined {
@@ -345,9 +410,9 @@ export class FluidDevtools implements IFluidDevtools {
 	}
 
 	/**
-	 * Gets all Container-level devtools instances.
+	 * Gets all container devtools instances (not data objects).
 	 */
-	public getAllContainerDevtools(): readonly IContainerDevtools[] {
+	public getAllContainers(): readonly BaseDevtools<DecomposedContainer>[] {
 		if (this.disposed) {
 			throw new UsageError(useAfterDisposeErrorText);
 		}
@@ -402,6 +467,47 @@ export class FluidDevtools implements IFluidDevtools {
 			opLatencyTelemetry: true,
 		};
 	}
+
+	/**
+	 * Removes a container devtools instance from the devtools instance.
+	 * @param containerKey - The key of the container to remove.
+	 */
+	private removeContainer(containerKey: ContainerKey): void {
+		if (this.disposed) {
+			throw new UsageError(useAfterDisposeErrorText);
+		}
+
+		const containerDevtools = this.containers.get(containerKey);
+		if (containerDevtools === undefined) {
+			console.warn(`No ContainerDevtools associated with key "${containerKey}" was found.`);
+			return;
+		}
+
+		containerDevtools.dispose();
+		this.containers.delete(containerKey);
+
+		// Post message for container list change
+		this.postContainerList();
+	}
+
+	/**
+	 * Tracks the number of {@link ContainerRuntimeDevtools} instances created for each base key.
+	 */
+	private readonly containerRuntimesInstanceCounts = new Map<string, number>();
+
+	/**
+	 * Generates a readable key for a container runtime using package path and sequential numbering.
+	 *
+	 * @privateRemarks
+	 * TODO: Once we enable automatic extraction of ContainerData for IContainer instance, extend the usage of assigning readable key.
+	 */
+	private generateReadableKey(baseKey: string): string {
+		// Get the next number for this base key
+		const nextNumber = (this.containerRuntimesInstanceCounts.get(baseKey) ?? 0) + 1;
+		this.containerRuntimesInstanceCounts.set(baseKey, nextNumber);
+
+		return `${baseKey}-${nextNumber}`;
+	}
 }
 
 /**
@@ -413,7 +519,7 @@ export class FluidDevtools implements IFluidDevtools {
  *
  * It is automatically disposed on webpage unload, but it can be closed earlier by calling `dispose`
  * on the returned handle.
- * @alpha
+ * @beta
  */
 export function initializeDevtools(props?: FluidDevtoolsProps): IFluidDevtools {
 	return FluidDevtools.initialize(props);
@@ -421,7 +527,7 @@ export function initializeDevtools(props?: FluidDevtoolsProps): IFluidDevtools {
 
 /**
  * Gets the Devtools singleton if it has been {@link initializeDevtools | initialized}, otherwise returns `undefined`.
- * @alpha
+ * @beta
  */
 export function tryGetFluidDevtools(): IFluidDevtools | undefined {
 	return FluidDevtools.tryGet();

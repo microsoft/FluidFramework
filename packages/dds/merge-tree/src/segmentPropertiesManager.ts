@@ -15,7 +15,7 @@ import type {
 	IMergeTreeAnnotateAdjustMsg,
 	IMergeTreeAnnotateMsg,
 } from "./ops.js";
-import { MapLike, PropertySet, clone, createMap } from "./properties.js";
+import { type MapLike, type PropertySet, clone, createMap } from "./properties.js";
 
 /**
  * Minimally copies properties and the property manager from source to destination.
@@ -86,7 +86,6 @@ export type PropsOrAdjust =
 
 const opToChanges = (op: PropsOrAdjust, seq: number): [string, PropertyChange][] => [
 	...Object.entries(op.props ?? {})
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 		.map<[string, PropertyChange]>(([k, raw]) => [k, { raw, seq }])
 		.filter(([_, v]) => v.raw !== undefined),
 	...Object.entries(op.adjust ?? {}).map<[string, PropertyChange]>(([k, adjust]) => [

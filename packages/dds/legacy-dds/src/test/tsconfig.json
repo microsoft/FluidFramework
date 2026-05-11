@@ -4,6 +4,11 @@
 		"rootDir": "./",
 		"outDir": "../../lib/test",
 		"types": ["mocha", "node"],
+		"noUnusedLocals": false, // Need it so memory tests can declare local variables just for the sake of keeping things in memory
+		"noUncheckedIndexedAccess": false,
+		"exactOptionalPropertyTypes": false,
+		"declaration": true,
+		"declarationMap": true,
 	},
 	"include": ["./**/*"],
 	"references": [

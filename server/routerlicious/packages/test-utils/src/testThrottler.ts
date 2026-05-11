@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IThrottler, ThrottlingError } from "@fluidframework/server-services-core";
+import { type IThrottler, ThrottlingError } from "@fluidframework/server-services-core";
 
 /**
  * Throttles if an id's count exceeds limit. Exposes tracked `throttleCounts` for easy assertions.
@@ -31,7 +31,7 @@ export class TestThrottler implements IThrottler {
 
 	private checkThrottled(count: number): void {
 		if (this.limit && count > this.limit) {
-			// eslint-disable-next-line @typescript-eslint/no-throw-literal
+			// eslint-disable-next-line @typescript-eslint/only-throw-error
 			throw new ThrottlingError("throttled", count - this.limit);
 		}
 	}

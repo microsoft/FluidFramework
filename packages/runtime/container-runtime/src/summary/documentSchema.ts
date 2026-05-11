@@ -4,11 +4,11 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
+import type { SemanticVersion } from "@fluidframework/runtime-utils/internal";
 import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 import { DataProcessingError } from "@fluidframework/telemetry-utils/internal";
 import { gt, lt, parse } from "semver-ts";
 
-import type { SemanticVersion } from "../compatUtils.js";
 import { pkgVersion } from "../packageVersion.js";
 
 /**
@@ -30,8 +30,7 @@ export type DocumentSchemaValueType = string | string[] | true | number | undefi
  * undefined - ID compressor is not loaded.
  * While IContainerRuntime.generateDocumentUniqueId() is available, it will produce long IDs that are do not compress well.
  *
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export type IdCompressorMode = "on" | "delayed" | undefined;
 
@@ -108,8 +107,10 @@ export interface IDocumentSchemaInfo {
 	 * See {@link @fluidframework/container-runtime#LoadContainerRuntimeParams} for additional details on `minVersionForCollab`.
 	 *
 	 * @remarks
-	 * We use `SemanticVersion` instead of `MinimumVersionForCollab` since we may open future documents that with a
+	 * We use `SemanticVersion` instead of `MinimumVersionForCollab` since we may open future documents with a
 	 * minVersionForCollab version that `MinimumVersionForCollab` does not support.
+	 * Note that in such a case (where minVersionForCollab is not a valid `MinimumVersionForCollab`),
+	 * loading the document might not work since this version of the runtime may not support it.
 	 */
 	minVersionForCollab: SemanticVersion;
 }
@@ -343,7 +344,7 @@ function checkRuntimeCompatibility(
 	} else {
 		for (const [name, value] of Object.entries(documentSchema.runtime)) {
 			const validator = documentSchemaSupportedConfigs[name] as IProperty | undefined;
-			if (validator === undefined || !validator.validate(value)) {
+			if (!(validator?.validate(value) ?? false)) {
 				unknownProperty = `runtime/${name}`;
 			}
 		}
@@ -511,7 +512,7 @@ function arrayToProp(arr: string[]): string[] | undefined {
  *
  * Users of this class need to use DocumentsSchemaController.sessionSchema to determine what features can be used.
  *
- * There are two modes this class can operate:
+ * There are three modes this class can operate:
  * 1) Legacy mode. In such mode it does not issue any ops to change document schema. Any changes happen implicitly,
  *    right away, and new features are available right away
  * 2) Non-legacy mode. In such mode any changes to schema require an op roundtrip. This class will manage such transitions.
@@ -522,6 +523,9 @@ function arrayToProp(arr: string[]): string[] | undefined {
  *    then eventually all documents that are modified will have that feature reflected in their schema. It could require
  *    multiple reloads / new sessions to get there (depends on if code reacts to schema changes right away, or only consults
  *    schema on document load).
+ * 3) Schema upgrade disabled mode (disableSchemaUpgrade = true). In this mode the controller will never send DocumentSchemaChange ops
+ *    and will throw an error if any incoming schema change ops are received. The document schema is effectively frozen at the schema
+ *    loaded for this session (snapshot) and will not accept further schema-change ops.
  *
  * How schemas are changed (in non-legacy mode):
  * If a client needs to change a schema, it will attempt to do so as part of normal ops sending process.
@@ -568,6 +572,7 @@ export class DocumentsSchemaController {
 	 * @param onSchemaChange - callback that is called whenever schema is changed (not called on creation / load, only when processing document schema change ops)
 	 * @param info - Informational properties of the document that are not subject to strict schema enforcement
 	 * @param logger - telemetry logger from the runtime
+	 * @param disableSchemaUpgrade - when true, the controller will never send or accept DocumentSchemaChange ops
 	 */
 	constructor(
 		existing: boolean,
@@ -577,6 +582,7 @@ export class DocumentsSchemaController {
 		private readonly onSchemaChange: (schema: IDocumentSchemaCurrent) => void,
 		info: IDocumentSchemaInfo,
 		logger: ITelemetryLoggerExt,
+		private readonly disableSchemaUpgrade: boolean,
 	) {
 		// For simplicity, let's only support new schema features for explicit schema control mode
 		assert(
@@ -703,9 +709,12 @@ export class DocumentsSchemaController {
 	 * Called by Container runtime whenever it is about to send some op.
 	 * It gives opportunity for controller to issue its own ops - we do not want to send ops if there are no local changes in document.
 	 * Please consider note above constructor about race conditions - current design is to generate op only once in a session lifetime.
-	 * @returns Optional message to send.
+	 * @returns Optional message to send. Always returns undefined when disableSchemaUpgrade is true.
 	 */
 	public maybeGenerateSchemaMessage(): IDocumentSchemaChangeMessageOutgoing | undefined {
+		if (this.disableSchemaUpgrade) {
+			return undefined;
+		}
 		if (this.futureSchema !== undefined && !this.opPending) {
 			this.opPending = true;
 			assert(
@@ -738,16 +747,31 @@ export class DocumentsSchemaController {
 	/**
 	 * Process document schema change messages
 	 * Called by ContainerRuntime whenever it sees document schema messages.
+	 * When disableSchemaUpgrade is true, an error is thrown if any incoming schema change ops are received.
 	 * @param contents - contents of the messages
 	 * @param local - whether op is local
 	 * @param sequenceNumber - sequence number of the op
-	 * @returns - true if schema was accepted, otherwise false (rejected due to failed CAS)
+	 * @returns true if schema was accepted, otherwise false (rejected due to failed CAS)
 	 */
 	public processDocumentSchemaMessages(
 		contents: IDocumentSchemaChangeMessageIncoming[],
 		local: boolean,
 		sequenceNumber: number,
 	): boolean {
+		if (this.disableSchemaUpgrade) {
+			assert(
+				!local,
+				0xceb /* local schema change messages should never be generated when disableSchemaUpgrade is enabled */,
+			);
+			// Clients with disableSchemaUpgrade enabled should never generate schema change messages, but they
+			// may receive them from misconfigured clients. In such case, throw on any incoming schema change ops
+			// to prevent unexpected schema upgrades.
+			throw DataProcessingError.create(
+				"DocSchema: Received schema change op while disableSchemaUpgrade is enabled",
+				"processDocumentSchemaMessages",
+				undefined,
+			);
+		}
 		for (const content of contents) {
 			this.validateSeqNumber(content.refSeq, this.documentSchema.refSeq, "content.refSeq");
 			this.validateSeqNumber(this.documentSchema.refSeq, sequenceNumber, "refSeq");
@@ -810,7 +834,7 @@ export class DocumentsSchemaController {
  */
 function isDevBuild(version: string): boolean {
 	const parsed = parse(version);
-	return parsed !== null && parsed.prerelease.includes("test");
+	return parsed?.prerelease.includes("test") ?? false;
 }
 
 /* eslint-enable jsdoc/check-indentation */

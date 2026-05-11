@@ -7,8 +7,8 @@ import { unlinkSync } from "node:fs";
 import path from "node:path";
 import type { IFluidBuildConfig } from "@fluidframework/build-tools";
 import { getFluidBuildConfig } from "@fluidframework/build-tools";
-import { FlubConfig, getFlubConfig } from "../../config.js";
-import { Handler } from "./common.js";
+import { type FlubConfig, getFlubConfig } from "../../config.js";
+import type { Handler } from "./common.js";
 
 const lockFilePattern = /.*?package-lock\.json$/i;
 let _knownPaths: string[] | undefined;

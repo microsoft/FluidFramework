@@ -134,16 +134,13 @@ export abstract class Checkout extends EventEmitterWithErrorHandling<ICheckoutEv
     // (undocumented)
     applyEdit(...changes: readonly Change[]): EditId;
     closeEdit(): EditId;
-    // (undocumented)
     get currentView(): TreeView;
     dispose(error?: Error): void;
     // (undocumented)
     disposed: boolean;
     protected emitChange(): void;
-    // (undocumented)
     getEditStatus(): EditStatus;
     protected handleNewEdit(id: EditId, result: ValidEditingResult): void;
-    // (undocumented)
     hasOpenEdit(): boolean;
     protected hintKnownEditingResult(edit: Edit<ChangeInternal>, result: ValidEditingResult): void;
     protected abstract get latestCommittedView(): RevisionView;
@@ -668,7 +665,8 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
     get logViewer(): LogViewer;
     mergeEditsFrom(other: SharedTree, edits: Iterable<Edit<InternalizedChange>>, stableIdRemapper?: (id: StableNodeId) => StableNodeId): EditId[];
     protected onDisconnect(): void;
-    protected processCore(message: unknown, local: boolean): void;
+    // (undocumented)
+    protected processMessagesCore(messagesCollection: IRuntimeMessageCollection): void;
     protected registerCore(): void;
     // (undocumented)
     protected reSubmitCore(op: unknown, localOpMetadata?: StashedLocalOpMetadata): void;
@@ -686,7 +684,7 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 // @alpha
 export type SharedTreeArgs<WF extends WriteFormat = WriteFormat> = [writeFormat: WF, options?: SharedTreeOptions<WF>];
 
-// @alpha @legacy
+// @beta @legacy
 export const SharedTreeAttributes: IChannelAttributes;
 
 // @alpha
@@ -712,7 +710,7 @@ export class SharedTreeFactory implements IChannelFactory {
     get type(): string;
 }
 
-// @alpha @legacy
+// @beta @legacy
 export const SharedTreeFactoryType = "SharedTree";
 
 // @alpha
@@ -992,7 +990,7 @@ export namespace TransactionInternal {
     }
     // (undocumented)
     export type ValidState = SucceedingTransactionState;
-        {};
+    export {};
 }
 
 // @alpha

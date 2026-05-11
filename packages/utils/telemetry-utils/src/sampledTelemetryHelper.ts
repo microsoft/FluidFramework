@@ -5,14 +5,15 @@
 
 import { performanceNow } from "@fluid-internal/client-utils";
 import type { IDisposable, ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
+import { LogLevel } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 
 import { roundToDecimalPlaces } from "./mathTools.js";
 import type {
 	ITelemetryGenericEventExt,
-	ITelemetryLoggerExt,
+	TelemetryLoggerExt,
 	ITelemetryPerformanceEventExt,
-} from "./telemetryTypes.js";
+} from "./telemetryTypesUndeprecated.js";
 
 /**
  * @privateRemarks
@@ -111,7 +112,7 @@ export type MeasureReturnType<TMeasureReturn, TCustomMetrics> = TCustomMetrics e
 	? TMeasureReturn
 	: ICustomData<TCustomMetrics> &
 			(TMeasureReturn extends void
-				? { [K in "returnValue"]?: never }
+				? Partial<Record<"returnValue", never>>
 				: { returnValue: TMeasureReturn });
 
 /**
@@ -123,6 +124,9 @@ export type MeasureReturnType<TMeasureReturn, TCustomMetrics> = TCustomMetrics e
  * The `duration` field in the telemetry event this class generates is the duration of the latest execution (sample)
  * of the specified code block.
  * See the documentation of the `includeAggregateMetrics` parameter for additional details that can be included.
+ *
+ * Telemetry events emitted by this class (both at the sample threshold and on dispose) are sent with
+ * {@link @fluidframework/core-interfaces#LogLevelConst.info | LogLevel.info}.
  *
  * @typeParam TMeasurementReturn - The return type (in a vacuum) of the code block that will be measured, ignoring
  * any custom metric data that might be required by this class. E.g., the code might just return a boolean.
@@ -148,26 +152,22 @@ export class SampledTelemetryHelper<
 	private readonly measurementsMap = new Map<string, LoggerData>();
 
 	/**
-	 * @param eventBase -
-	 * Custom properties to include in the telemetry performance event when it is written.
-	 * @param logger -
-	 * The logger to use to write the telemetry performance event.
-	 * @param sampleThreshold -
-	 * Telemetry performance events will be generated every time we hit this many executions of the code block.
-	 * @param includeAggregateMetrics -
-	 * If set to `true`, the telemetry performance event will include aggregated metrics (total duration, min duration,
-	 * max duration) for all the executions in between generated events.
-	 * @param perBucketProperties -
-	 * Map of strings that represent different buckets (which can be specified when calling the 'measure' method), to
-	 * properties which should be added to the telemetry event for that bucket. If a bucket being measured does not
-	 * have an entry in this map, no additional properties will be added to its telemetry events. The following keys are
-	 * reserved for use by this class: "duration", "count", "totalDuration", "minDuration", "maxDuration". If any of
-	 * them is specified as a key in one of the ITelemetryBaseProperties objects in this map, that key-value pair will be
-	 * ignored.
+	 * @param eventBase - Custom properties to include in the telemetry performance event when it is written.
+	 * @param logger - The logger to use to write the telemetry performance event.
+	 * @param sampleThreshold - Telemetry performance events will be generated every time we hit this many executions
+	 * of the code block.
+	 * @param includeAggregateMetrics - If set to `true`, the telemetry performance event will include aggregated
+	 * metrics (total duration, min duration, max duration) for all the executions in between generated events.
+	 * @param perBucketProperties - Map of strings that represent different buckets (which can be specified when calling
+	 * the 'measure' method), to properties which should be added to the telemetry event for that bucket.
+	 * If a bucket being measured does not have an entry in this map, no additional properties will be added to its
+	 * telemetry events. The following keys are reserved for use by this class: "duration", "count", "totalDuration",
+	 * "minDuration", "maxDuration". If any of them is specified as a key in one of the ITelemetryBaseProperties objects
+	 * in this map, that key-value pair will be ignored.
 	 */
 	public constructor(
 		private readonly eventBase: ITelemetryGenericEventExt,
-		private readonly logger: ITelemetryLoggerExt,
+		private readonly logger: TelemetryLoggerExt,
 		private readonly sampleThreshold: number,
 		private readonly includeAggregateMetrics: boolean = false,
 		private readonly perBucketProperties = new Map<string, ITelemetryBaseProperties>(),
@@ -297,7 +297,11 @@ export class SampledTelemetryHelper<
 				...processedCustomData,
 			};
 
-			this.logger.sendPerformanceEvent(telemetryEvent);
+			this.logger.sendPerformanceEvent(
+				telemetryEvent,
+				undefined, // error
+				LogLevel.info,
+			);
 			this.measurementsMap.delete(bucket);
 		}
 	}

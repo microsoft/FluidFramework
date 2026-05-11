@@ -8,8 +8,7 @@ import { FluidHandleBase } from "@fluidframework/runtime-utils/internal";
 
 /**
  * Mock implementation of IFluidHandle.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export class MockHandle<T> extends FluidHandleBase<T> {
 	private graphAttachState: AttachState = AttachState.Detached;
@@ -31,11 +30,5 @@ export class MockHandle<T> extends FluidHandleBase<T> {
 	}
 	public attachGraph(): void {
 		this.graphAttachState = AttachState.Attached;
-	}
-	/**
-	 * @deprecated No replacement provided. Arbitrary handles may not serve as a bind source.
-	 */
-	public bind() {
-		throw Error("MockHandle.bind() unimplemented.");
 	}
 }

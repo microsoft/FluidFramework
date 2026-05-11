@@ -5,7 +5,7 @@
 
 import { EventEmitter } from "events";
 
-import {
+import type {
 	IContext,
 	IDocumentLambdaServerConfiguration,
 	IPartitionLambdaConfig,

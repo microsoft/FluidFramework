@@ -17,14 +17,12 @@ import { EventEmitter } from "./eventEmitter.cjs";
  * string | symbol vs. string | number
  *
  * The polyfill is now always used, but string is the only event type preferred.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export type EventEmitterEventType = string;
 
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export type TypedEventTransform<TThis, TEvent> =
 	// Event emitter supports some special events for the emitter itself to use
@@ -46,8 +44,7 @@ export type TypedEventTransform<TThis, TEvent> =
  * Event Emitter helper class the supports emitting typed events.
  * @privateRemarks
  * This should become internal once the classes extending it become internal.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export class TypedEventEmitter<TEvent>
 	extends EventEmitter

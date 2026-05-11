@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { AzureMember, IAzureAudience } from "@fluidframework/azure-client";
-import type { LatestRaw, Presence } from "@fluidframework/presence/beta";
+import type { AzureMember, IAzureAudience } from "@fluidframework/azure-client";
+import type { LatestRaw, Presence } from "@fluidframework/presence";
 
-import { ICustomUserDetails } from "./app.js";
-import { IDiceRollerController } from "./controller.js";
+import type { IDiceRollerController } from "./controller.js";
+import type { ICustomUserDetails } from "./fluid.js";
 import type { DiceValues } from "./presence.js";
 
 function makeDiceRollerView(diceRoller: IDiceRollerController): HTMLDivElement {
@@ -73,10 +73,11 @@ function makeAudienceView(audience?: IAzureAudience): HTMLDivElement {
 			}
 		}
 
-		audienceDiv.innerHTML = `
-            Current User: ${self?.name} <br />
-            Other Users: ${memberStrings.join(", ")}
-        `;
+		const currentUserDiv = document.createElement("div");
+		currentUserDiv.textContent = `Current User: ${self?.name}`;
+		const otherUsersDiv = document.createElement("div");
+		otherUsersDiv.textContent = `Other Users: ${memberStrings.join(", ")}`;
+		audienceDiv.replaceChildren(currentUserDiv, otherUsersDiv);
 	};
 
 	onAudienceChanged();

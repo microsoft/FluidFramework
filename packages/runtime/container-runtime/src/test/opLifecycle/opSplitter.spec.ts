@@ -8,16 +8,16 @@
 import { strict as assert } from "node:assert";
 import * as crypto from "node:crypto";
 
-import { IBatchMessage } from "@fluidframework/container-definitions/internal";
+import type { IBatchMessage } from "@fluidframework/container-definitions/internal";
 import { ContainerMessageType } from "@fluidframework/container-runtime-previous/internal";
-import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
+import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 
 import { CompressionAlgorithms } from "../../compressionDefinitions.js";
 import type { ContainerRuntimeChunkedOpMessage } from "../../messageTypes.js";
 import {
-	OutboundBatchMessage,
-	IChunkedOp,
+	type OutboundBatchMessage,
+	type IChunkedOp,
 	OpSplitter,
 	isChunkedMessage,
 	splitOp,
@@ -379,6 +379,8 @@ describe("OpSplitter", () => {
 							) as ContainerRuntimeChunkedOpMessage
 						).contents.contents,
 				);
+				// TODO: Fix this violation and remove the disable
+				// eslint-disable-next-line unicorn/no-array-reduce
 				const sentContent = [...contentSentSeparately, lastChunk.contents].reduce(
 					(accumulator, current) => `${accumulator}${current}`,
 				);
@@ -396,6 +398,73 @@ describe("OpSplitter", () => {
 				);
 			});
 		}
+
+		it("Propagates groupedOpCount onto the last chunk only", () => {
+			const chunkSize = 20;
+			const opSplitter = new OpSplitter(
+				[],
+				mockSubmitBatchFn,
+				chunkSize,
+				maxBatchSizeInBytes,
+				mockLogger,
+			);
+			const groupedOpCount = 7;
+			const largeMessage: OutboundBatchMessage = {
+				...generateChunkableOp(100),
+				metadata: { batch: true, groupedOpCount },
+			};
+
+			const result = opSplitter.splitSingletonBatchMessage({
+				messages: [largeMessage],
+				contentSizeInBytes: largeMessage.contents?.length ?? 0,
+				referenceSequenceNumber: 0,
+			});
+
+			// Intermediate chunks (the ones submitted directly) carry no metadata.
+			for (const submitted of batchesSubmitted) {
+				assert.strictEqual(submitted.messages.length, 1);
+				assert.strictEqual(submitted.messages[0].metadata, undefined);
+			}
+
+			// Last chunk envelope carries both batch flag and groupedOpCount.
+			assert.strictEqual(result.messages.length, 1);
+			assert.deepStrictEqual(result.messages[0].metadata, {
+				batch: true,
+				groupedOpCount,
+			});
+
+			// Reassembly preserves groupedOpCount via originalMetadata on the final chunk's payload.
+			const reassembler = new OpSplitter(
+				[],
+				mockSubmitBatchFn,
+				chunkSize,
+				maxBatchSizeInBytes,
+				mockLogger,
+			);
+			const allChunks = [
+				...batchesSubmitted.map(
+					(b) =>
+						JSON.parse((b.messages[0] as OutboundBatchMessage).contents!) as {
+							contents: IChunkedOp;
+						},
+				),
+				JSON.parse(result.messages[0].contents!) as { contents: IChunkedOp },
+			].map((parsed) => parsed.contents);
+
+			let final: ISequencedDocumentMessage | undefined;
+			for (const chunk of allChunks) {
+				const wrapped = {
+					contents: { type: ContainerMessageType.ChunkedOp, contents: chunk },
+					clientId: "testClient",
+				} as unknown as ISequencedDocumentMessage;
+				const processed = reassembler.processChunk(wrapped);
+				if (processed.isFinalChunk) {
+					final = processed.message;
+				}
+			}
+			assert(final !== undefined, "Expected reassembly to complete");
+			assert.deepStrictEqual(final.metadata, { batch: true, groupedOpCount });
+		});
 	});
 	const assertSameMessage = (
 		result: ISequencedDocumentMessage,

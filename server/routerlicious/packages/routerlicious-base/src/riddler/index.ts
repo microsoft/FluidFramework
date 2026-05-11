@@ -5,6 +5,6 @@
 
 export { RiddlerRunner } from "./runner";
 export { RiddlerResources, RiddlerResourcesFactory, RiddlerRunnerFactory } from "./runnerFactory";
-export { ITenantDocument, TenantManager } from "./tenantManager";
-export { ITenantRepository, MongoTenantRepository } from "./mongoTenantRepository";
-export { IRiddlerResourcesCustomizations } from "./customizations";
+export { type ITenantDocument, TenantManager } from "./tenantManager";
+export { type ITenantRepository, MongoTenantRepository } from "./mongoTenantRepository";
+export type { IRiddlerResourcesCustomizations } from "./customizations";

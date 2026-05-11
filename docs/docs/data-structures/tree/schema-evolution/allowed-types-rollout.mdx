@@ -1,0 +1,85 @@
+---
+title: Rolling Out New Allowed Types
+sidebar_position: 3
+---
+
+This guide shows how to safely add a new [TreeNodeSchema](../../../api/fluid-framework/treenodeschema-typealias) to an existing [AllowedTypes](../../../api/tree/allowedtypes-typealias) field without breaking [forwards compatibility](./index.mdx#forwards-compatibility).
+
+Adding a new allowed type directly would break old clients as they cannot read documents containing it.
+The staged process below avoids this.
+
+A [`snapshotSchemaCompatibility`](../../../api/fluid-framework/#snapshotschemacompatibility-function) test is recommended to verify that all relevant client versions can collaborate correctly through the rollout.
+
+## Step-by-Step Guide
+
+The example below adds `string` support to a field that previously only allowed `number`.
+Full code is in the [test suite](https://github.com/microsoft/FluidFramework/blob/main/packages/dds/tree/src/test/simple-tree/api/stagedSchemaUpgrade.spec.ts) (which uses test utilities to emulate code deployments).
+
+```typescript
+// Initial version: only number allowed
+const mySchema = SchemaFactoryBeta.optional([SchemaFactoryBeta.number]);
+```
+
+### Step 1: Define and Stage the New Allowed Type
+
+Use [`staged`](../../../api/fluid-framework/schemafactorybeta-class#staged-property) to add support for future documents containing the new type.
+This version still creates documents that only allow the old types, but can work with documents created in Step 3 that contain the new type.
+Any code using this schema must correctly handle the presence of the new type, even though it cannot be added to documents yet.
+
+```typescript
+const mySchema = SchemaFactoryBeta.optional(SchemaFactoryBeta.types([
+    SchemaFactoryBeta.number,
+    SchemaFactoryBeta.staged(SchemaFactoryBeta.string),
+]));
+```
+
+No schema upgrade is performed at this step: [`staged`](../../../api/fluid-framework/schemafactorybeta-class#staged-property) types are excluded from stored schemas, so `upgradeSchema()` is a no-op and the new type cannot be added to documents yet:
+
+```typescript
+// Assuming `view` is a TreeView configured with `mySchema`:
+assert.throws(() => {
+    view.root = "test"; // Strings are staged: writing them is not allowed until Step 3.
+});
+```
+
+### Step 2: Wait for Client Saturation
+
+Wait until enough clients have adopted Step 1.
+Monitor version distribution telemetry until the pre-Step-1 version is no longer in use.
+Clients without Step 1 cannot open documents upgraded in Step 3.
+
+See [staged rollouts](./index.mdx#staged-rollouts) for more detail.
+
+### Step 3: Enable Inserting the New Type
+
+Remove the [`staged()`](../../../api/fluid-framework/schemafactorybeta-class#staged-property) wrapper and call [`upgradeSchema()`](../../../api/fluid-framework/treeview-interface#upgradeschema-methodsignature) to update the stored schema:
+
+```typescript
+// number or string, both fully allowed
+const mySchema = SchemaFactoryBeta.optional([
+    SchemaFactoryBeta.number,
+    SchemaFactoryBeta.string,
+]);
+
+const config = new TreeViewConfiguration({
+    schema: mySchema,
+});
+const view = tree.viewWith(config);
+assert.equal(view.compatibility.canView, false);
+assert.equal(view.compatibility.canUpgrade, true);
+// Upgrade the stored schema to allow strings
+view.upgradeSchema();
+
+// Now we can use the new type
+view.root = "test";
+```
+
+Code that writes the new allowed type can be deployed in this step.
+
+This step changes the stored schema, which is why the wait in Step 2 is necessary: once a document is upgraded, clients on the original schema can no longer open it.
+If you have a [`snapshotSchemaCompatibility`](../../../api/fluid-framework/#snapshotschemacompatibility-function) test (strongly recommended for any schema change), update the [minVersionForCollaboration](../../../api/fluid-framework/snapshotschemacompatibilityoptions-interface#minversionforcollaboration-propertysignature) to the version released in Step 1 and take a new snapshot.
+
+## See Also
+
+- [`SchemaFactoryBeta.staged()` API](../../../api/fluid-framework/schemafactorybeta-class#staged-property) - API documentation
+- [Schema Definition](../schema-definition/index.mdx) - How to define schemas

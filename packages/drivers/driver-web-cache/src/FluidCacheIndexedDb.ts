@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
-import { ICacheEntry } from "@fluidframework/odsp-driver-definitions/internal";
+import type { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
-import { DBSchema, DeleteDBCallbacks, IDBPDatabase, deleteDB, openDB } from "idb";
+import type { DBSchema, DeleteDBCallbacks, IDBPDatabase } from "idb";
+import { deleteDB, openDB } from "idb";
 
 import { FluidCacheErrorEvent } from "./fluidCacheTelemetry.js";
 
@@ -24,11 +24,7 @@ export const oldVersionNameMapping: Partial<{ [key: number]: string }> = {
 	2: "diverStorage.V2",
 };
 
-export function getKeyForCacheEntry(entry: ICacheEntry) {
-	return `${entry.file.docId}_${entry.type}_${entry.key}`;
-}
-
-export function getFluidCacheIndexedDbInstance(
+export async function getFluidCacheIndexedDbInstance(
 	logger?: ITelemetryBaseLogger,
 ): Promise<IDBPDatabase<FluidCacheDBSchema>> {
 	return new Promise((resolve, reject) => {
@@ -76,10 +72,9 @@ export function getFluidCacheIndexedDbInstance(
  * Deletes the indexed DB instance.
  *
  * @remarks Warning this can throw an error in Firefox incognito, where accessing storage is prohibited.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
-export function deleteFluidCacheIndexDbInstance(
+export async function deleteFluidCacheIndexDbInstance(
 	deleteDBCallbacks?: DeleteDBCallbacks,
 ): Promise<void> {
 	return deleteDB(FluidDriverCacheDBName, deleteDBCallbacks);

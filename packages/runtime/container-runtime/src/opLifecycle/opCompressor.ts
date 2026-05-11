@@ -4,7 +4,7 @@
  */
 
 import { IsoBuffer } from "@fluid-internal/client-utils";
-import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+import type { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import {
 	DataProcessingError,
@@ -15,7 +15,7 @@ import { compress } from "lz4js";
 
 import { CompressionAlgorithms } from "../compressionDefinitions.js";
 
-import { type OutboundBatchMessage, type OutboundSingletonBatch } from "./definitions.js";
+import type { OutboundBatchMessage, OutboundSingletonBatch } from "./definitions.js";
 import { estimateSocketSize } from "./outbox.js";
 
 /**

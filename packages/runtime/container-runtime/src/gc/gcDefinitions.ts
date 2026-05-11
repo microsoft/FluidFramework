@@ -3,24 +3,24 @@
  * Licensed under the MIT License.
  */
 
-import { ICriticalContainerError } from "@fluidframework/container-definitions";
-import { IRequest } from "@fluidframework/core-interfaces";
-import { ISnapshotTree } from "@fluidframework/driver-definitions/internal";
-import {
+import type { ICriticalContainerError } from "@fluidframework/container-definitions";
+import type { IRequest } from "@fluidframework/core-interfaces";
+import type { ISnapshotTree } from "@fluidframework/driver-definitions/internal";
+import type {
 	ITelemetryContext,
 	IGarbageCollectionData,
 	IGarbageCollectionDetailsBase,
 	ISummarizeResult,
 } from "@fluidframework/runtime-definitions/internal";
-import { ReadAndParseBlob } from "@fluidframework/runtime-utils/internal";
-import {
+import type { ReadAndParseBlob } from "@fluidframework/runtime-utils/internal";
+import type {
 	ITelemetryLoggerExt,
-	type ITelemetryPropertiesExt,
+	ITelemetryPropertiesExt,
 } from "@fluidframework/telemetry-utils/internal";
 
-import { RuntimeHeaderData } from "../containerRuntime.js";
-import { ContainerRuntimeGCMessage } from "../messageTypes.js";
-import {
+import type { RuntimeHeaderData } from "../containerRuntime.js";
+import type { ContainerRuntimeGCMessage } from "../messageTypes.js";
+import type {
 	IContainerRuntimeMetadata,
 	ICreateContainerMetadata,
 	IRefreshSummaryResult,
@@ -363,16 +363,16 @@ export interface IGarbageCollectionRuntime {
 	 * Returns the type of the GC node.
 	 */
 	getNodeType(nodePath: string): GCNodeType;
-	/**
-	 * Called when the runtime should close because of an error.
-	 */
-	closeFn: (error?: ICriticalContainerError) => void;
 }
 
 /**
  * Defines the contract for the garbage collector.
  */
 export interface IGarbageCollector {
+	/**
+	 * The GC configurations serialized as a JSON string for telemetry.
+	 */
+	readonly serializedConfigs: string;
 	/**
 	 * Tells the time at which session expiry timer started in a previous container.
 	 * This is only set when loading from a stashed container and will be equal to the
@@ -449,6 +449,12 @@ export interface IGarbageCollector {
 	 */
 	isNodeDeleted(nodePath: string): boolean;
 	setConnectionState(canSendOps: boolean, clientId?: string): void;
+	/**
+	 * Cancels all GC timers and clears tracked state so timers do not keep the event loop alive
+	 * or leak memory.
+	 * @remarks
+	 * This is idempotent - it is safe to call multiple times.
+	 */
 	dispose(): void;
 }
 
@@ -493,6 +499,11 @@ export interface IGCNodeUpdatedProps {
  */
 export interface IGarbageCollectorCreateParams {
 	readonly runtime: IGarbageCollectionRuntime;
+	/**
+	 * Initiate closing of the container due to an error.
+	 */
+	readonly closeFn: (error: ICriticalContainerError) => void;
+
 	readonly gcOptions: IGCRuntimeOptions;
 	readonly baseLogger: ITelemetryLoggerExt;
 	readonly existing: boolean;
@@ -510,8 +521,7 @@ export interface IGarbageCollectorCreateParams {
 }
 
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IGCRuntimeOptions {
 	/**

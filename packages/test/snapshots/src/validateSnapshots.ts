@@ -39,10 +39,10 @@ export async function validateSnapshots(
 	srcDir: string,
 	destDir: string,
 	seqToMessage: Map<number, ISequencedDocumentMessage>,
-) {
+): Promise<void> {
 	const errors: string[] = [];
 	// Error handler that reports errors if any while validation.
-	const reportError = (description: string, error?: any) => {
+	const reportError = (description: string, error?: any): void => {
 		let errorString: string;
 		if (error === undefined) {
 			errorString = description;
@@ -81,7 +81,7 @@ export async function validateSnapshots(
 		try {
 			// This function will be called by the storage service when the container is snapshotted. When that happens,
 			// validate that snapshot with the destination snapshot.
-			const onSnapshotCb = (snapshot: IFileSnapshot) =>
+			const onSnapshotCb = (snapshot: IFileSnapshot): void =>
 				compareWithReferenceSnapshot(
 					getNormalizedFileSnapshot(
 						addSummaryMessage(

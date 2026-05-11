@@ -72,9 +72,9 @@ export const verifyIFluidHandleEntries = (
 	for (let i = 0; i < actualEntries.length; i = i + 1) {
 		const actual = actualEntries[i];
 		const expected = expectedEntries[i];
-		assert.ok(actual);
-		assert.ok(expected);
-		assert.ok(actualEntries[i]);
+		assert(actual !== undefined);
+		assert(expected !== undefined);
+		assert(actualEntries[i] !== undefined);
 		assert.equal(
 			toFluidHandleInternal(actual).absolutePath,
 			toFluidHandleInternal(expected).absolutePath,

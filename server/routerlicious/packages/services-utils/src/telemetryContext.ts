@@ -9,7 +9,7 @@ import {
 } from "@fluidframework/server-services-client";
 import {
 	BaseTelemetryProperties,
-	ITelemetryContextProperties,
+	type ITelemetryContextProperties,
 	isTelemetryContextProperties,
 	getGlobalTelemetryContext,
 	Lumberjack,

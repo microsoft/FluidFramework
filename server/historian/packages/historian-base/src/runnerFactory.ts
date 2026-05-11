@@ -4,21 +4,22 @@
  */
 
 import * as services from "@fluidframework/server-services";
-import * as core from "@fluidframework/server-services-core";
-import * as utils from "@fluidframework/server-services-utils";
-import { Provider } from "nconf";
-import winston from "winston";
-import { DenyList, RedisClientConnectionManager } from "@fluidframework/server-services-utils";
-import * as historianServices from "./services";
-import { normalizePort, Constants } from "./utils";
-import { HistorianRunner } from "./runner";
-import { IHistorianResourcesCustomizations } from "./customizations";
-import { closeRedisClientConnections, StartupCheck } from "@fluidframework/server-services-shared";
-import type { IDenyList } from "@fluidframework/server-services-core";
 import {
 	setupAxiosInterceptorsForAbortSignals,
 	getGlobalAbortControllerContext,
 } from "@fluidframework/server-services-client";
+import type * as core from "@fluidframework/server-services-core";
+import type { IDenyList } from "@fluidframework/server-services-core";
+import { closeRedisClientConnections, StartupCheck } from "@fluidframework/server-services-shared";
+import * as utils from "@fluidframework/server-services-utils";
+import { DenyList, RedisClientConnectionManager } from "@fluidframework/server-services-utils";
+import type { Provider } from "nconf";
+
+import type { IHistorianResourcesCustomizations } from "./customizations";
+import { HistorianRunner } from "./runner";
+import * as historianServices from "./services";
+import { normalizePort, Constants } from "./utils";
+import { configureThrottler } from "@fluidframework/server-services";
 
 export class HistorianResources implements core.IResources {
 	public webServerFactory: core.IWebServerFactory;
@@ -39,6 +40,7 @@ export class HistorianResources implements core.IResources {
 		public readonly ephemeralDocumentTTLSec?: number,
 		public readonly readinessCheck?: core.IReadinessCheck,
 		public readonly simplifiedCustomDataRetriever?: historianServices.ISimplifiedCustomDataRetriever,
+		public readonly postEphemeralContainerChecker?: historianServices.IPostEphemeralContainerChecker,
 	) {
 		const httpServerConfig: services.IHttpServerConfig = config.get("system:httpServer");
 		this.webServerFactory = new services.BasicWebServerFactory(httpServerConfig);
@@ -151,36 +153,21 @@ export class HistorianResourcesFactory implements core.IResourcesFactory<Histori
 				redisParamsForThrottling,
 			);
 
-		const configureThrottler = (
-			throttleConfig: Partial<utils.IThrottleConfig>,
-		): core.IThrottler => {
-			const throttlerHelper = new services.ThrottlerHelper(
-				redisThrottleAndUsageStorageManager,
-				throttleConfig.maxPerMs,
-				throttleConfig.maxBurst,
-				throttleConfig.minCooldownIntervalInMs,
-			);
-			return new services.Throttler(
-				throttlerHelper,
-				throttleConfig.minThrottleIntervalInMs,
-				winston,
-				throttleConfig.maxInMemoryCacheSize,
-				throttleConfig.maxInMemoryCacheAgeInMs,
-				throttleConfig.enableEnhancedTelemetry,
-			);
-		};
-
 		// Rest API Throttler
 		const restApiTenantGeneralThrottleConfig = utils.getThrottleConfig(
 			config.get("throttling:restCallsPerTenant:generalRestCall"),
 		);
-		const restTenantGeneralThrottler = configureThrottler(restApiTenantGeneralThrottleConfig);
+		const restTenantGeneralThrottler = configureThrottler(
+			restApiTenantGeneralThrottleConfig,
+			redisThrottleAndUsageStorageManager,
+		);
 
 		const restApiTenantGetSummaryThrottleConfig = utils.getThrottleConfig(
 			config.get("throttling:restCallsPerTenant:getSummary"),
 		);
 		const restTenantGetSummaryThrottler = configureThrottler(
 			restApiTenantGetSummaryThrottleConfig,
+			redisThrottleAndUsageStorageManager,
 		);
 
 		const restApiTenantCreateSummaryThrottleConfig = utils.getThrottleConfig(
@@ -188,6 +175,7 @@ export class HistorianResourcesFactory implements core.IResourcesFactory<Histori
 		);
 		const restTenantCreateSummaryThrottler = configureThrottler(
 			restApiTenantCreateSummaryThrottleConfig,
+			redisThrottleAndUsageStorageManager,
 		);
 
 		const restTenantThrottlers = new Map<string, core.IThrottler>();
@@ -209,6 +197,7 @@ export class HistorianResourcesFactory implements core.IResourcesFactory<Histori
 		);
 		const throttlerCreateSummaryPerCluster = configureThrottler(
 			restApiClusterCreateSummaryThrottleConfig,
+			redisThrottleAndUsageStorageManager,
 		);
 
 		const restApiClusterGetSummaryThrottleConfig = utils.getThrottleConfig(
@@ -216,6 +205,7 @@ export class HistorianResourcesFactory implements core.IResourcesFactory<Histori
 		);
 		const throttlerGetSummaryPerCluster = configureThrottler(
 			restApiClusterGetSummaryThrottleConfig,
+			redisThrottleAndUsageStorageManager,
 		);
 
 		const restClusterThrottlers = new Map<string, core.IThrottler>();
@@ -264,6 +254,8 @@ export class HistorianResourcesFactory implements core.IResourcesFactory<Histori
 			);
 		}
 
+		const postEphemeralContainerChecker = customizations?.postEphemeralContainerChecker;
+
 		return new HistorianResources(
 			config,
 			port,
@@ -280,6 +272,7 @@ export class HistorianResourcesFactory implements core.IResourcesFactory<Histori
 			ephemeralDocumentTTLSec,
 			customizations?.readinessCheck,
 			simplifiedCustomDataRetriever,
+			postEphemeralContainerChecker,
 		);
 	}
 }
@@ -302,6 +295,7 @@ export class HistorianRunnerFactory implements core.IRunnerFactory<HistorianReso
 			resources.ephemeralDocumentTTLSec,
 			resources.readinessCheck,
 			resources.simplifiedCustomDataRetriever,
+			resources.postEphemeralContainerChecker,
 		);
 	}
 }

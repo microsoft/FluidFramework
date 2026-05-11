@@ -24,6 +24,7 @@ declare function useLoadable(params: FluidObject<IFluidLoadable> | undefined): v
 declare function getLoadable(): IFluidLoadable;
 
 declare function use(obj: unknown);
+
 // test implicit conversions between FluidObject and a FluidObject with a provides interface
 {
 	const provider: FluidObject<IProvideFluidLoadable> = getFluidObject();

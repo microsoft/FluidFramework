@@ -6,31 +6,35 @@
 import { strict as assert } from "node:assert";
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import {
+import type {
 	IDeltaManager,
 	IDeltaManagerEvents,
 } from "@fluidframework/container-definitions/internal";
-import { ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
-import { ConnectionMode, IClient, ISequencedClient } from "@fluidframework/driver-definitions";
-import {
+import type { ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
+import type {
+	ConnectionMode,
+	IClient,
+	ISequencedClient,
+} from "@fluidframework/driver-definitions";
+import type {
 	IClientConfiguration,
 	ITokenClaims,
 } from "@fluidframework/driver-definitions/internal";
 import {
-	TelemetryEventCategory,
+	type TelemetryEventCategory,
 	createChildLogger,
 	loggerToMonitoringContext,
 } from "@fluidframework/telemetry-utils/internal";
-import { SinonFakeTimers, useFakeTimers } from "sinon";
+import { type SinonFakeTimers, useFakeTimers } from "sinon";
 
 import { Audience } from "../audience.js";
 import { ConnectionState } from "../connectionState.js";
 import {
-	IConnectionStateHandler,
-	IConnectionStateHandlerInputs,
+	type IConnectionStateHandler,
+	type IConnectionStateHandlerInputs,
 	createConnectionStateHandlerCore,
 } from "../connectionStateHandler.js";
-import { IConnectionDetailsInternal } from "../contracts.js";
+import type { IConnectionDetailsInternal } from "../contracts.js";
 import { ProtocolHandler } from "../protocol.js";
 
 class MockDeltaManagerForCatchingUp
@@ -845,7 +849,7 @@ describe("ConnectionStateHandler Tests", () => {
 		assert.strictEqual(
 			connectionStateHandler.connectionState,
 			ConnectionState.CatchingUp,
-			"Client 3 should still be in connecting state as timeout has not occured",
+			"Client 3 should still be in connecting state as timeout has not occurred",
 		);
 
 		await tickClock(1);
@@ -915,7 +919,7 @@ describe("ConnectionStateHandler Tests", () => {
 		assert.strictEqual(
 			connectionStateHandler.connectionState,
 			ConnectionState.CatchingUp,
-			"Client 3 should still be in connecting state as timeout has not occured",
+			"Client 3 should still be in connecting state as timeout has not occurred",
 		);
 
 		connectionStateHandler.containerSaved();
@@ -1057,7 +1061,7 @@ describe("ConnectionStateHandler Tests", () => {
 			assert.strictEqual(
 				connectionStateHandler.connectionState,
 				ConnectionState.CatchingUp,
-				"Client 3 should still be in connecting state as timeout has not occured",
+				"Client 3 should still be in connecting state as timeout has not occurred",
 			);
 
 			await tickClock(1);

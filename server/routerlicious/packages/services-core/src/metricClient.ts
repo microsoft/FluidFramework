@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ITrace } from "@fluidframework/protocol-definitions";
+import type { ITrace } from "@fluidframework/protocol-definitions";
 
 /**
  * @internal

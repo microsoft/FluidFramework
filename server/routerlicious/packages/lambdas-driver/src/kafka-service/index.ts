@@ -5,4 +5,4 @@
 
 export { PartitionManager } from "./partitionManager";
 export { KafkaRunner } from "./runner";
-export { IKafkaResources, KafkaRunnerFactory } from "./runnerFactory";
+export { type IKafkaResources, KafkaRunnerFactory } from "./runnerFactory";

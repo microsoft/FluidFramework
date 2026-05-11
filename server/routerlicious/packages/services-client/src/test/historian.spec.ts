@@ -5,7 +5,7 @@
 
 import { fromUtf8ToBase64 } from "@fluidframework/common-utils";
 import * as git from "@fluidframework/gitresources";
-import assert from "assert";
+import { strict as assert } from "assert";
 import Axios, { AxiosRequestConfig } from "axios";
 import AxiosMockAdapter from "axios-mock-adapter";
 import { Historian, ICredentials, getAuthorizationTokenFromCredentials } from "../historian";

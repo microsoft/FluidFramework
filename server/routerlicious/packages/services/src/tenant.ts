@@ -3,18 +3,19 @@
  * Licensed under the MIT License.
  */
 
-import { fromUtf8ToBase64 } from "@fluidframework/common-utils";
 import { ScopeType, type IUser } from "@fluidframework/protocol-definitions";
 import {
 	GitManager,
 	Historian,
-	ICredentials,
+	type ICredentials,
 	BasicRestWrapper,
 	getAuthorizationTokenFromCredentials,
-	IGitManager,
+	type IGitManager,
 	parseToken,
 	isNetworkError,
 	NetworkError,
+	type GitManagerConfigDecorator,
+	type IGitManagerConfig,
 } from "@fluidframework/server-services-client";
 import * as core from "@fluidframework/server-services-core";
 import type { IInvalidTokenError } from "@fluidframework/server-services-core";
@@ -29,7 +30,7 @@ import {
 	getValidAccessToken,
 	logHttpMetrics,
 } from "@fluidframework/server-services-utils";
-import { RawAxiosRequestHeaders } from "axios";
+import type { RawAxiosRequestHeaders } from "axios";
 
 import { IsEphemeralContainer } from ".";
 
@@ -41,10 +42,7 @@ export function getRefreshTokenIfNeededCallback(
 	serviceName: string,
 ): (authorizationHeader: RawAxiosRequestHeaders) => Promise<RawAxiosRequestHeaders | undefined> {
 	const refreshTokenIfNeeded = async (authorizationHeader: RawAxiosRequestHeaders) => {
-		if (
-			authorizationHeader.Authorization &&
-			typeof authorizationHeader.Authorization === "string"
-		) {
+		if (typeof authorizationHeader.Authorization === "string") {
 			const currentAccessToken = extractTokenFromHeader(authorizationHeader.Authorization);
 			const props = {
 				...getLumberBaseProperties(documentId, tenantId),
@@ -62,7 +60,7 @@ export function getRefreshTokenIfNeededCallback(
 				Lumberjack.error("Failed to refresh access token", props, error);
 				throw error;
 			});
-			if (newAccessToken) {
+			if (newAccessToken !== undefined) {
 				return {
 					Authorization: `Basic ${newAccessToken}`,
 				};
@@ -127,8 +125,28 @@ export class TenantManager implements core.ITenantManager, core.ITenantConfigMan
 			() => getGlobalTelemetryContext().getProperties().serviceName ?? "" /* serviceName */,
 		);
 		const result = await restWrapper.post<core.ITenantConfig & { key: string }>(
-			`/api/tenants/${encodeURIComponent(tenantId || "")}`,
+			`/api/tenants/${encodeURIComponent(tenantId ?? "")}`,
 			undefined /* requestBody */,
+		);
+		return result;
+	}
+
+	public async getTenantfromRiddler(tenantId?: string): Promise<core.ITenantConfig> {
+		const restWrapper = new BasicRestWrapper(
+			undefined /* baseUrl */,
+			undefined /* defaultQueryString */,
+			undefined /* maxBodyLength */,
+			undefined /* maxContentLength */,
+			undefined /* defaultHeaders */,
+			undefined /* axios */,
+			undefined /* refreshDefaultQureyString */,
+			undefined /* refreshDefaultHeaders */,
+			() => getGlobalTelemetryContext().getProperties().correlationId,
+			() => getGlobalTelemetryContext().getProperties(),
+		);
+		const result = await restWrapper.get<core.ITenantConfig>(
+			`${this.endpoint}/api/tenants/${encodeURIComponent(tenantId ?? "")}`,
+			undefined,
 		);
 		return result;
 	}
@@ -137,10 +155,18 @@ export class TenantManager implements core.ITenantManager, core.ITenantConfigMan
 		tenantId: string,
 		documentId: string,
 		includeDisabledTenant = false,
+		configDecorator?: GitManagerConfigDecorator,
 	): Promise<core.ITenant> {
 		const [details, gitManager] = await Promise.all([
 			this.getTenantConfig(tenantId, includeDisabledTenant),
-			this.getTenantGitManager(tenantId, documentId, undefined, includeDisabledTenant),
+			this.getTenantGitManager(
+				tenantId,
+				documentId,
+				undefined,
+				includeDisabledTenant,
+				false,
+				configDecorator,
+			),
 		]);
 
 		const tenant = new Tenant(details, gitManager);
@@ -148,12 +174,80 @@ export class TenantManager implements core.ITenantManager, core.ITenantConfigMan
 		return tenant;
 	}
 
+	/**
+	 * Gets a GitManager instance for a specific tenant and document.
+	 *
+	 * @param tenantId - The tenant identifier
+	 * @param documentId - The document identifier
+	 * @param storageName - Optional storage name for routing
+	 * @param includeDisabledTenant - Whether to include disabled tenants
+	 * @param isEphemeralContainer - Whether this is for an ephemeral container
+	 * @param configDecorator - Optional decorator to customize the GitManager configuration
+	 * (Security: Critical functions are protected from override)
+	 *
+	 * @example Basic usage:
+	 * ```typescript
+	 * const gitManager = await tenantManager.getTenantGitManager(tenantId, documentId);
+	 * ```
+	 *
+	 * @example With custom headers:
+	 * ```typescript
+	 * const gitManager = await tenantManager.getTenantGitManager(
+	 *   tenantId,
+	 *   documentId,
+	 *   undefined,
+	 *   false,
+	 *   false,
+	 *   GitManagerConfigDecorators.withCustom({
+	 *     defaultHeaders: {
+	 *       'X-Custom-Header': 'custom-value',
+	 *       'X-Request-ID': requestId,
+	 *     }
+	 *   })
+	 * );
+	 * ```
+	 *
+	 * @example With custom metrics and query params:
+	 * ```typescript
+	 * const gitManager = await tenantManager.getTenantGitManager(
+	 *   tenantId, documentId, undefined, false, false,
+	 *   GitManagerConfigDecorators.withCustom({
+	 *     defaultQueryString: { version: '2.0' },
+	 *     logHttpMetrics: (props) => {
+	 *       console.log('Custom HTTP metrics:', props);
+	 *       // Your custom logging logic here
+	 *     },
+	 *   })
+	 * );
+	 * ```
+	 *
+	 * @example Custom decorator for specific tenant needs:
+	 * ```typescript
+	 * const customDecorator = GitManagerConfigDecorators.withCustom((config, context) => ({
+	 *   defaultHeaders: {
+	 *     'X-Tenant-ID': context.tenantId,        // ✅ Safe custom header
+	 *     'X-Document-ID': context.documentId,    // ✅ Safe custom header
+	 *     'X-Storage-Name': context.storageName || 'default', // ✅ Safe custom header
+	 *   },
+	 *   maxBodyLength: context.isEphemeralContainer ? 100 * 1024 : 1000 * 1024, // ✅ Safe override
+	 *   // refreshTokenIfNeeded: customRefresh, // ❌ This would be ignored for security
+	 * }));
+	 *
+	 * // Or even simpler for static overrides:
+	 * const simpleDecorator = GitManagerConfigDecorators.withCustom({
+	 *   maxBodyLength: 2000 * 1024,                          // ✅ Safe limit
+	 *   defaultQueryString: { version: '2.0', source: 'custom' }, // ✅ Safe params
+	 *   logHttpMetrics: customMetricsLogger,                 // ✅ Safe (with validation)
+	 * });
+	 * ```
+	 */
 	public async getTenantGitManager(
 		tenantId: string,
 		documentId: string,
 		storageName?: string,
 		includeDisabledTenant = false,
 		isEphemeralContainer = false,
+		configDecorator?: GitManagerConfigDecorator,
 	): Promise<IGitManager> {
 		const lumberProperties = {
 			...getLumberBaseProperties(documentId, tenantId),
@@ -166,9 +260,10 @@ export class TenantManager implements core.ITenantManager, core.ITenantConfigMan
 			lumberProperties /* telemetryProperties */,
 		);
 
-		const defaultQueryString = {
-			token: fromUtf8ToBase64(`${tenantId}`),
-		};
+		const baseUrl = `${this.internalHistorianUrl}/repos/${encodeURIComponent(tenantId)}`;
+
+		// Create default configuration
+		const defaultQueryString = {};
 		const getDefaultHeaders = () => {
 			const credentials: ICredentials = {
 				password: accessToken,
@@ -177,7 +272,7 @@ export class TenantManager implements core.ITenantManager, core.ITenantConfigMan
 			const headers: RawAxiosRequestHeaders = {
 				Authorization: getAuthorizationTokenFromCredentials(credentials),
 			};
-			if (storageName) {
+			if (storageName !== undefined) {
 				headers.StorageName = storageName;
 			}
 
@@ -190,12 +285,9 @@ export class TenantManager implements core.ITenantManager, core.ITenantConfigMan
 		};
 
 		const refreshTokenIfNeeded = async (authorizationHeader: RawAxiosRequestHeaders) => {
-			if (
-				authorizationHeader.Authorization &&
-				typeof authorizationHeader.Authorization === "string"
-			) {
+			if (typeof authorizationHeader.Authorization === "string") {
 				const currentAccessToken = parseToken(tenantId, authorizationHeader.Authorization);
-				if (currentAccessToken) {
+				if (currentAccessToken !== undefined) {
 					const props = {
 						...lumberProperties,
 						serviceName: "historian",
@@ -216,7 +308,7 @@ export class TenantManager implements core.ITenantManager, core.ITenantConfigMan
 						Lumberjack.error("Failed to refresh access token", props, error);
 						throw error;
 					});
-					if (newAccessToken) {
+					if (newAccessToken !== undefined) {
 						const newCredentials: ICredentials = {
 							password: newAccessToken,
 							user: tenantId,
@@ -229,22 +321,45 @@ export class TenantManager implements core.ITenantManager, core.ITenantConfigMan
 				}
 			}
 		};
-		const defaultHeaders = getDefaultHeaders();
-		const baseUrl = `${this.internalHistorianUrl}/repos/${encodeURIComponent(tenantId)}`;
+
+		// Create default configuration
+		let config: IGitManagerConfig = {
+			defaultQueryString,
+			defaultHeaders: getDefaultHeaders(),
+			getDefaultHeaders,
+			refreshTokenIfNeeded,
+			getCorrelationId: () => getGlobalTelemetryContext().getProperties().correlationId,
+			getTelemetryProperties: () => getGlobalTelemetryContext().getProperties(),
+			logHttpMetrics,
+			getServiceName: () => getGlobalTelemetryContext().getProperties().serviceName ?? "",
+		};
+
+		// Apply decorator if provided
+		if (configDecorator) {
+			config = configDecorator(config, {
+				tenantId,
+				documentId,
+				storageName,
+				isEphemeralContainer,
+				accessToken,
+				baseUrl,
+			});
+		}
+
 		const tenantRestWrapper = new BasicRestWrapper(
 			baseUrl,
-			defaultQueryString,
+			config.defaultQueryString,
+			config.maxBodyLength,
+			config.maxContentLength,
+			config.defaultHeaders,
 			undefined,
-			undefined,
-			defaultHeaders,
-			undefined,
-			undefined,
-			getDefaultHeaders,
-			() => getGlobalTelemetryContext().getProperties().correlationId,
-			() => getGlobalTelemetryContext().getProperties(),
-			refreshTokenIfNeeded,
-			logHttpMetrics,
-			() => getGlobalTelemetryContext().getProperties().serviceName ?? "" /* serviceName */,
+			config.refreshDefaultQueryString,
+			config.refreshDefaultHeaders ?? config.getDefaultHeaders,
+			config.getCorrelationId,
+			config.getTelemetryProperties,
+			config.refreshTokenIfNeeded,
+			config.logHttpMetrics,
+			config.getServiceName,
 		);
 		const historian = new Historian(baseUrl, true, false, tenantRestWrapper);
 		const gitManager = new GitManager(historian);
@@ -276,7 +391,7 @@ export class TenantManager implements core.ITenantManager, core.ITenantConfigMan
 	public async verifyToken(tenantId: string, token: string): Promise<void> {
 		if (this.invalidTokenCache) {
 			const cachedInvalidTokenError = await this.invalidTokenCache.get(token);
-			if (cachedInvalidTokenError) {
+			if (cachedInvalidTokenError !== null) {
 				this.throwInvalidTokenErrorAsNetworkError(cachedInvalidTokenError);
 			}
 		}

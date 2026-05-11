@@ -3,19 +3,19 @@
  * Licensed under the MIT License.
  */
 
-import assert from "node:assert";
+import { strict as assert } from "node:assert";
 
 import type { ITelemetryBaseEvent } from "@fluidframework/core-interfaces";
 
 import type {
 	ITelemetryErrorEventExt,
 	ITelemetryGenericEventExt,
-	ITelemetryLoggerExt,
+	TelemetryLoggerExt,
 	ITelemetryPerformanceEventExt,
-} from "../telemetryTypes.js";
+} from "../telemetryTypesUndeprecated.js";
 import { ThresholdCounter } from "../thresholdCounter.js";
 
-class FakeTelemetryLogger implements ITelemetryLoggerExt {
+class FakeTelemetryLogger implements TelemetryLoggerExt {
 	public events: ITelemetryGenericEventExt[] = [];
 
 	public send(_event: ITelemetryBaseEvent): void {

@@ -8,22 +8,25 @@ import { strict as assert } from "node:assert";
 import { stringToBuffer } from "@fluid-internal/client-utils";
 import { AttachState } from "@fluidframework/container-definitions";
 import { SummaryType } from "@fluidframework/driver-definitions";
-import {
+import type {
 	IDocumentStorageService,
-	type ICreateBlobResponse,
+	ICreateBlobResponse,
 } from "@fluidframework/driver-definitions/internal";
 import { v4 as uuid } from "uuid";
 
 import {
-	AttachProcessProps,
-	AttachingDataWithBlobs,
-	AttachingDataWithoutBlobs,
-	AttachmentData,
-	DetachedDataWithOutstandingBlobs,
-	DetachedDefaultData,
+	type AttachProcessProps,
+	type AttachingDataWithBlobs,
+	type AttachingDataWithoutBlobs,
+	type AttachmentData,
+	type DetachedDataWithOutstandingBlobs,
+	type DetachedDefaultData,
 	runRetriableAttachProcess,
 } from "../attachment.js";
 import { combineAppAndProtocolSummary } from "../utils.js";
+
+import type { PartialOrAbsent } from "./failProxy.js";
+import { AbsentProperty } from "./failProxy.js";
 
 const emptySummary = combineAppAndProtocolSummary(
 	{ tree: {}, type: SummaryType.Tree },
@@ -78,13 +81,17 @@ const createDetachStorage = (
 };
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const createProxyWithFailDefault = <T extends Record<string, any> | undefined>(
-	partial: Partial<T> = {},
+const createProxyWithFailDefault = <T extends Record<string, any>>(
+	partial: PartialOrAbsent<T> = {},
 ): T => {
 	return new Proxy(partial, {
 		get: (t, p, r): unknown => {
 			if (p in t) {
-				return Reflect.get(t, p, r);
+				const value = Reflect.get(t, p, r);
+				if (value === AbsentProperty) {
+					return undefined;
+				}
+				return value;
 			}
 
 			return new Proxy(
@@ -106,7 +113,6 @@ describe("runRetriableAttachProcess", () => {
 			let attachmentData: AttachmentData | undefined;
 			await runRetriableAttachProcess({
 				initialAttachmentData: initial,
-				offlineLoadEnabled: false,
 				setAttachmentData: (data) => (attachmentData = data),
 				createAttachmentSummary: (redirectTable) => {
 					assert.strictEqual(redirectTable, undefined, "redirectTable");
@@ -126,7 +132,6 @@ describe("runRetriableAttachProcess", () => {
 			let attachmentData: AttachmentData | undefined;
 			const snapshot = await runRetriableAttachProcess({
 				initialAttachmentData: initial,
-				offlineLoadEnabled: true,
 				setAttachmentData: (data) => (attachmentData = data),
 				createAttachmentSummary: (redirectTable) => {
 					assert.strictEqual(redirectTable, undefined, "redirectTable");
@@ -157,7 +162,6 @@ describe("runRetriableAttachProcess", () => {
 			});
 			await runRetriableAttachProcess({
 				initialAttachmentData: initial,
-				offlineLoadEnabled: false,
 				setAttachmentData: (data) => (attachmentData = data),
 				createAttachmentSummary: (redirectTable) => {
 					assert.strictEqual(redirectTable?.size, blobCount, "redirectTable?.size");
@@ -196,7 +200,6 @@ describe("runRetriableAttachProcess", () => {
 			let attachmentData: AttachmentData | undefined;
 			await runRetriableAttachProcess({
 				initialAttachmentData: initial,
-				offlineLoadEnabled: false,
 				setAttachmentData: (data) => (attachmentData = data),
 				createAttachmentSummary: (redirectTable) => {
 					assert.strictEqual(redirectTable, undefined, "redirectTable");
@@ -206,7 +209,7 @@ describe("runRetriableAttachProcess", () => {
 				// we have blobs storage, but it is empty,
 				// so it should be treat like there are no blobs
 				detachedBlobStorage: createProxyWithFailDefault<
-					AttachProcessProps["detachedBlobStorage"]
+					Required<AttachProcessProps>["detachedBlobStorage"]
 				>({ size: 0 }),
 			});
 
@@ -225,7 +228,7 @@ describe("runRetriableAttachProcess", () => {
 				await runRetriableAttachProcess(
 					createProxyWithFailDefault<AttachProcessProps>({
 						initialAttachmentData: initial,
-						detachedBlobStorage: undefined,
+						detachedBlobStorage: AbsentProperty,
 						createAttachmentSummary: () => {
 							throw error;
 						},
@@ -255,7 +258,7 @@ describe("runRetriableAttachProcess", () => {
 						initialAttachmentData: initial,
 						setAttachmentData: (data) => (attachmentData = data),
 						createAttachmentSummary: () => emptySummary,
-						detachedBlobStorage: undefined,
+						detachedBlobStorage: AbsentProperty,
 						createOrGetStorageService: () => {
 							throw error;
 						},
@@ -288,7 +291,6 @@ describe("runRetriableAttachProcess", () => {
 			try {
 				await runRetriableAttachProcess({
 					initialAttachmentData: initial,
-					offlineLoadEnabled: false,
 					setAttachmentData: (data) => (attachmentData = data),
 					createAttachmentSummary: () => emptySummary,
 					createOrGetStorageService: async () =>
@@ -326,7 +328,6 @@ describe("runRetriableAttachProcess", () => {
 			try {
 				await runRetriableAttachProcess({
 					initialAttachmentData: initial,
-					offlineLoadEnabled: false,
 					setAttachmentData: (data) => (attachmentData = data),
 					createAttachmentSummary: () => {
 						throw error;
@@ -369,7 +370,6 @@ describe("runRetriableAttachProcess", () => {
 			try {
 				await runRetriableAttachProcess({
 					initialAttachmentData: initial,
-					offlineLoadEnabled: false,
 					setAttachmentData: (data) => (attachmentData = data),
 					createAttachmentSummary: (redirectTable) => {
 						assert.strictEqual(redirectTable?.size, 10, "redirectTable?.size");
@@ -416,7 +416,6 @@ describe("runRetriableAttachProcess", () => {
 			});
 			await runRetriableAttachProcess({
 				initialAttachmentData: initial,
-				offlineLoadEnabled: false,
 				setAttachmentData: (data) => (attachmentData = data),
 				createAttachmentSummary: (redirectTable) => {
 					assert.strictEqual(redirectTable?.size, blobCount, "redirectTable?.size");
@@ -460,7 +459,6 @@ describe("runRetriableAttachProcess", () => {
 			const snapshot = await runRetriableAttachProcess(
 				createProxyWithFailDefault<AttachProcessProps>({
 					initialAttachmentData: initial,
-					offlineLoadEnabled: true,
 					setAttachmentData: (data) => (attachmentData = data),
 					createOrGetStorageService: async () =>
 						// only the summary should be left to upload
@@ -484,7 +482,6 @@ describe("runRetriableAttachProcess", () => {
 			const snapshot = await runRetriableAttachProcess(
 				createProxyWithFailDefault<AttachProcessProps>({
 					initialAttachmentData: initial,
-					offlineLoadEnabled: true,
 					setAttachmentData: (data) => (attachmentData = data),
 					createOrGetStorageService: async (summary) => {
 						assert.notStrictEqual(summary, undefined, "data.summary");

@@ -5,15 +5,17 @@
 
 export {
 	BlobManager,
-	IPendingBlobs,
-	IBlobManagerRuntime,
-	IBlobManagerEvents,
 	blobManagerBasePath,
+	getGCNodePathFromLocalId,
+	type IBlobManagerRuntime,
+	type ICreateBlobResponseWithTTL,
+	type IPendingBlobs,
 	isBlobPath,
+	type SerializableLocalBlobRecord,
 } from "./blobManager.js";
 export {
-	loadBlobManagerLoadInfo,
-	IBlobManagerLoadInfo,
 	blobsTreeName,
+	type IBlobManagerLoadInfo,
+	loadBlobManagerLoadInfo,
 	redirectTableBlobName,
 } from "./blobManagerSnapSum.js";

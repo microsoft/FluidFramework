@@ -6,8 +6,21 @@
 import { strict as assert } from "node:assert";
 
 import type { SessionId } from "@fluidframework/id-compressor";
+
 import type { GenericChangeset, CrossFieldManager } from "../../../feature-libraries/index.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import { newGenericChangeset } from "../../../feature-libraries/modular-schema/genericFieldKindTypes.js";
+import {
+	type FieldChangeDelta,
+	type FieldChangeEncodingContext,
+	type NodeId,
+	type RebaseRevisionMetadata,
+	genericChangeHandler,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "../../../feature-libraries/modular-schema/index.js";
 import { fakeIdAllocator, brand, idAllocatorFromMaxId } from "../../../util/index.js";
+import { TestChange } from "../../testChange.js";
+import { TestNodeId } from "../../testNodeId.js";
 import {
 	type EncodingTestData,
 	defaultRevisionMetadataFromChanges,
@@ -16,19 +29,8 @@ import {
 	testIdCompressor,
 	testRevisionTagCodec,
 } from "../../utils.js";
-import {
-	type FieldChangeDelta,
-	type FieldChangeEncodingContext,
-	type NodeId,
-	type RebaseRevisionMetadata,
-	genericChangeHandler,
-	// eslint-disable-next-line import/no-internal-modules
-} from "../../../feature-libraries/modular-schema/index.js";
-import { TestNodeId } from "../../testNodeId.js";
-import { TestChange } from "../../testChange.js";
+
 import { testSnapshots } from "./genericFieldSnapshots.test.js";
-// eslint-disable-next-line import/no-internal-modules
-import { newGenericChangeset } from "../../../feature-libraries/modular-schema/genericFieldKindTypes.js";
 
 const nodeId1: NodeId = { localId: brand(1) };
 const nodeId2: NodeId = { localId: brand(2) };
@@ -186,11 +188,13 @@ describe("GenericField", () => {
 		]);
 
 		const expected: FieldChangeDelta = {
-			local: [
-				{ count: 1, fields: TestNodeId.deltaFromChild(nodeChange1) },
-				{ count: 1 },
-				{ count: 1, fields: TestNodeId.deltaFromChild(nodeChange2) },
-			],
+			local: {
+				marks: [
+					{ count: 1, fields: TestNodeId.deltaFromChild(nodeChange1) },
+					{ count: 1 },
+					{ count: 1, fields: TestNodeId.deltaFromChild(nodeChange2) },
+				],
+			},
 		};
 
 		const actual = genericChangeHandler.intoDelta(input, TestNodeId.deltaFromChild);
@@ -265,6 +269,6 @@ describe("GenericField", () => {
 						? [{ minor: 43 }]
 						: assert.fail("Unexpected child"),
 		);
-		assert.deepEqual(Array.from(actual), [{ minor: 42 }, { minor: 43 }]);
+		assert.deepEqual([...actual], [{ minor: 42 }, { minor: 43 }]);
 	});
 });

@@ -15,6 +15,7 @@ import { IInsecureUser } from "./insecureUsers.js";
  *
  * As the name implies, this is not secure and should not be used in production.
  * It simply makes examples where authentication is not relevant easier to bootstrap.
+ * @sealed
  * @internal
  */
 export class InsecureTokenProvider implements ITokenProvider {
@@ -38,43 +39,36 @@ export class InsecureTokenProvider implements ITokenProvider {
 		 * @defaultValue [ ScopeType.DocRead, ScopeType.DocWrite, ScopeType.SummaryWrite ]
 		 */
 		private readonly scopes?: ScopeType[],
+
+		/**
+		 * Optional. Override of attach container scopes. If a param is not provided,
+		 * InsecureTokenProvider will use the value of {@link InsecureTokenProvider.scopes}.
+		 *
+		 * @remarks Common use of this parameter is to allow write for container
+		 * attach and just read for all other access. Effectively can create a
+		 * container and then read-only client.
+		 *
+		 * @param attachContainerScopes - See {@link @fluidframework/protocol-definitions#ITokenClaims.scopes}
+		 *
+		 * @defaultValue {@link InsecureTokenProvider.scopes}
+		 */
+		private readonly attachContainerScopes?: ScopeType[],
 	) {}
 
-	/**
-	 * {@inheritDoc @fluidframework/routerlicious-driver#ITokenProvider.fetchOrdererToken}
-	 */
-	public async fetchOrdererToken(
-		tenantId: string,
-		documentId?: string,
-	): Promise<ITokenResponse> {
+	private async fetchToken(tenantId: string, documentId?: string): Promise<ITokenResponse> {
+		const generalScopes = this.scopes ?? [
+			ScopeType.DocRead,
+			ScopeType.DocWrite,
+			ScopeType.SummaryWrite,
+		];
+		const scopes = (documentId ? undefined : this.attachContainerScopes) ?? generalScopes;
 		return {
 			fromCache: true,
-			jwt: generateToken(
-				tenantId,
-				this.tenantKey,
-				this.scopes ?? [ScopeType.DocRead, ScopeType.DocWrite, ScopeType.SummaryWrite],
-				documentId,
-				this.user,
-			),
+			jwt: generateToken(tenantId, this.tenantKey, scopes, documentId, this.user),
 		};
 	}
 
-	/**
-	 * {@inheritDoc @fluidframework/routerlicious-driver#ITokenProvider.fetchStorageToken}
-	 */
-	public async fetchStorageToken(
-		tenantId: string,
-		documentId: string,
-	): Promise<ITokenResponse> {
-		return {
-			fromCache: true,
-			jwt: generateToken(
-				tenantId,
-				this.tenantKey,
-				this.scopes ?? [ScopeType.DocRead, ScopeType.DocWrite, ScopeType.SummaryWrite],
-				documentId,
-				this.user,
-			),
-		};
-	}
+	public readonly fetchOrdererToken = this.fetchToken.bind(this);
+
+	public readonly fetchStorageToken = this.fetchToken.bind(this);
 }

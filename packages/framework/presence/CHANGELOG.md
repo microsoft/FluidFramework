@@ -1,5 +1,149 @@
 # @fluid-experimental/presence
 
+## 2.100.0
+
+### Minor Changes
+
+- Node 22 is now the minimum supported Node.js version ([#27116](https://github.com/microsoft/FluidFramework/pull/27116)) [e8214d29663](https://github.com/microsoft/FluidFramework/commit/e8214d29663f5ee98d737daed82506a25d8de8d0)
+
+  All Fluid Framework client packages now require Node.js 22 or later. This aligns with the standing Node upgrade policy as Node 20 reaches end-of-life on April 30, 2026.
+
+## 2.93.0
+
+### Minor Changes
+
+- `getPresence` from `@fluidframework/presence` is deprecated and will be removed in a future release. ([#26399](https://github.com/microsoft/FluidFramework/pull/26399)) [d533c19c7c](https://github.com/microsoft/FluidFramework/commit/d533c19c7cb25d48ecab1b742e44dfe560d20534)
+
+  Now `getPresence` is available for import from the `fluid-framework` package.
+
+  To prepare, make changes following this pattern:
+
+  ```diff
+  -import { getPresence } from "@fluidframework/presence/beta";
+  +import { getPresence } from "fluid-framework";
+  ```
+
+  See [issue #26397](https://github.com/microsoft/FluidFramework/issues/26397) for more details.
+
+- presence API set now at public support level ([#27001](https://github.com/microsoft/FluidFramework/pull/27001)) [97d14a7e84](https://github.com/microsoft/FluidFramework/commit/97d14a7e8411ff2dd17dc497a09823a276fd78e0)
+
+  All `@fluidframework/presence` APIs that had been `@beta` have been promoted to `@public` support with the exception of `getPresence` which has been relocated to `fluid-framework`. (See [issue #26397](https://github.com/microsoft/FluidFramework/issues/26397) for more `getPresence` details.)
+
+  See [Presence API overview](https://fluidframework.com/docs/build/presence) and [Presence package API details](https://fluidframework.com/docs/api/presence/) with [getPresence API](https://fluidframework.com/docs/api/fluid-framework/#getPresence) to get started.
+
+## 2.92.0
+
+Dependency updates only.
+
+## 2.91.0
+
+Dependency updates only.
+
+## 2.90.0
+
+Dependency updates only.
+
+## 2.83.0
+
+Dependency updates only.
+
+## 2.82.0
+
+Dependency updates only.
+
+## 2.81.0
+
+### Minor Changes
+
+- Self attendee is announced via "attendeeConnected" ([#26247](https://github.com/microsoft/FluidFramework/pull/26247)) [f838524b41](https://github.com/microsoft/FluidFramework/commit/f838524b41dcc71aae58d48955af3f1c9cca9309)
+
+  Local attendee connection is now announced via "attendeeConnected" presence event.
+
+## 2.80.0
+
+### Minor Changes
+
+- Removal of number key support in LatestMap ([#25904](https://github.com/microsoft/FluidFramework/pull/25904)) [c1d91d8b5f4](https://github.com/microsoft/FluidFramework/commit/c1d91d8b5f4f141f890c848a7f344d4238d4a85a)
+
+  `number` keys have never been successfully propagated as `number`s at runtime and this type clarification makes that clear. See [issue 25919](https://github.com/microsoft/FluidFramework/issues/25919) for more details.
+
+- Attendee status fixes on reconnect ([#26111](https://github.com/microsoft/FluidFramework/pull/26111)) [836f22fac9e](https://github.com/microsoft/FluidFramework/commit/836f22fac9e8728324ee1f3c34ea27ce8392f07e)
+
+  Fix "Connected" status for Attendees when local client reconnects (intermittent connection or transition from read-only to read-write connection).
+  This includes no longer emitting incorrect "attendeeDisconnected" events.
+
+## 2.74.0
+
+Dependency updates only.
+
+## 2.73.0
+
+Dependency updates only.
+
+## 2.72.0
+
+Dependency updates only.
+
+## 2.71.0
+
+Dependency updates only.
+
+## 2.70.0
+
+### Minor Changes
+
+- Improved join scalability ([#25371](https://github.com/microsoft/FluidFramework/pull/25371)) [98dadd30ae](https://github.com/microsoft/FluidFramework/commit/98dadd30aebbf202c9fad268013d27719129c774)
+
+  Protocol for attendees joining has been updated to more efficiently accommodate a larger number of attendees, including when few-to-none have write access.
+
+## 2.63.0
+
+Dependency updates only.
+
+## 2.62.0
+
+Dependency updates only.
+
+## 2.61.0
+
+Dependency updates only.
+
+## 2.60.0
+
+Dependency updates only.
+
+## 2.53.0
+
+### Minor Changes
+
+- StateFactory.latestMap now accepts a validator parameter ([#25172](https://github.com/microsoft/FluidFramework/pull/25172)) [cac39eb33d0](https://github.com/microsoft/FluidFramework/commit/cac39eb33d0c5371c9fce34ce45a299e5f51d194)
+
+  The StateFactory.latestMap API now accepts a `validator` argument.
+  The `validator` is a function that will be called at runtime to verify that the data is valid.
+  This is especially useful when changing the schema of presence data.
+
+  See [the presence documentation](https://fluidframework.com/docs/build/presence) for more details.
+
+## 2.52.0
+
+Dependency updates only.
+
+## 2.51.0
+
+Dependency updates only.
+
+## 2.50.0
+
+### Minor Changes
+
+- StateFactory.latest now accepts a validator parameter ([#24958](https://github.com/microsoft/FluidFramework/pull/24958)) [839ce9af20](https://github.com/microsoft/FluidFramework/commit/839ce9af203dd3ade2d7234865057092ec12d608)
+
+  The StateFactory.latest API now accepts a `validator` argument. The `validator` is a function
+  that will be called at runtime to verify that the data is valid. This is especially useful when changing the schema of
+  presence data.
+
+  See [the presence documentation](https://fluidframework.com/docs/build/presence) for more details.
+
 ## 2.43.0
 
 Dependency updates only.
@@ -33,7 +177,6 @@ Dependency updates only.
 ### Minor Changes
 
 - Latest and LatestMap support more types ([#24417](https://github.com/microsoft/FluidFramework/pull/24417)) [619af0b05e2](https://github.com/microsoft/FluidFramework/commit/619af0b05e23c469feb754e93351b7edca1a74a4)
-
   - `Latest` (`StateFactory.latest`) permits `null` so that nullable types may be used.
   - `LatestMap` (`StateFactory.latestMap`) permits `boolean`, `number`, `string`, and `null`.
 
@@ -154,7 +297,6 @@ Dependency updates only.
 
   The [presence value managers](https://fluidframework.com/docs/build/presence#value-managers) now raise events for local
   value changes. The new events are as follows:
-
   - LatestValueManager
     - `localUpdated` raised when `local` is assigned
   - LatestMapValueManager
@@ -248,7 +390,6 @@ Dependency updates only.
   #### Package scope advanced from `@fluid-experimental` ([#23073](https://github.com/microsoft/FluidFramework/pull/23073))
 
   To update existing:
-
   - package.json: replace `@fluid-experimental/presence` with `@fluidframework/presence`
   - code imports: replace `@fluid-experimental/presence` with `@fluidframework/presence/alpha`
 

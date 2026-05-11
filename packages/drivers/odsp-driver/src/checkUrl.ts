@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { DriverPreCheckInfo } from "@fluidframework/driver-definitions/internal";
+import type { DriverPreCheckInfo } from "@fluidframework/driver-definitions/internal";
 
 import { getLocatorFromOdspUrl } from "./odspFluidFileLink.js";
 
@@ -13,7 +13,7 @@ import { getLocatorFromOdspUrl } from "./odspFluidFileLink.js";
  * Instead, this should be used as a lightweight check that can filter out easily detectable unsupported URLs
  * before the entire Fluid loading process needs to be kicked off.
  * @legacy
- * @alpha
+ * @beta
  */
 export function checkUrl(documentUrl: URL): DriverPreCheckInfo | undefined {
 	const locator = getLocatorFromOdspUrl(documentUrl);

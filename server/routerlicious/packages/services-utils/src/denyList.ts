@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IDenyList } from "@fluidframework/server-services-core";
+import type { IDenyList } from "@fluidframework/server-services-core";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
 import type { RequestHandler } from "express";
 

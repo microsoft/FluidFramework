@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import React from "react";
+import { type CSSProperties, type ReactElement, useState } from "react";
 
 import { CardWithBlur } from "@site/src/components/card";
 
@@ -18,7 +18,7 @@ export interface MockDiceRollerSampleProps {
 	/**
 	 * Style properties to apply to the root element of the component.
 	 */
-	style?: React.CSSProperties;
+	style?: CSSProperties;
 
 	/**
 	 * Optional CSS class name to apply to the root element of the component.
@@ -36,9 +36,9 @@ export interface MockDiceRollerSampleProps {
 export function MockDiceRollerSample({
 	style,
 	className,
-}: MockDiceRollerSampleProps): React.ReactElement {
-	const [containerId] = React.useState(Date.now().toString());
-	const [diceValue, setDiceValue] = React.useState(1);
+}: MockDiceRollerSampleProps): ReactElement {
+	const [containerId] = useState(Date.now().toString());
+	const [diceValue, setDiceValue] = useState(1);
 
 	const rollDice = (): void => {
 		setDiceValue(Math.floor(Math.random() * 6) + 1);
@@ -75,11 +75,7 @@ interface DiceRollerCardProps {
 /**
  * A single dice-roller view within a styled card.
  */
-function DiceRollerCard({
-	diceValue,
-	containerId,
-	onClick,
-}: DiceRollerCardProps): React.ReactElement {
+function DiceRollerCard({ diceValue, containerId, onClick }: DiceRollerCardProps): ReactElement {
 	const imageUrl = `https://storage.fluidframework.com/static/images/website/dice/${diceValue}.png`;
 	return (
 		<CardWithBlur>

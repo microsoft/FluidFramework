@@ -17,8 +17,8 @@ import {
 	RedisClientConnectionManager,
 	type IRedisClientConnectionManager,
 } from "@fluidframework/server-services-utils";
-import { RedisOptions, ClusterOptions } from "ioredis";
-import { Provider } from "nconf";
+import type { RedisOptions, ClusterOptions } from "ioredis";
+import type { Provider } from "nconf";
 import * as winston from "winston";
 
 export async function deliCreate(

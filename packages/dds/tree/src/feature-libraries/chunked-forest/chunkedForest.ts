@@ -41,10 +41,11 @@ import {
 	getLast,
 	getOrAddEmptyToMap,
 	hasSome,
+	type Breakable,
 } from "../../util/index.js";
 
 import { BasicChunk, BasicChunkCursor, type SiblingsOrKey } from "./basicChunk.js";
-import { type IChunker, basicChunkTree, chunkFieldSingle, chunkTree } from "./chunkTree.js";
+import { type IChunker, basicChunkTree, chunkField, chunkTree } from "./chunkTree.js";
 
 function makeRoot(): BasicChunk {
 	return new BasicChunk(aboveRootPlaceholder, new Map());
@@ -85,13 +86,13 @@ export class ChunkedForest implements IEditableForest {
 		return this.roots.fields.size === 0;
 	}
 
-	public clone(schema: TreeStoredSchemaSubscription, anchors: AnchorSet): ChunkedForest {
+	public clone(schema: TreeStoredSchemaSubscription, _breaker?: Breakable): ChunkedForest {
 		this.roots.referenceAdded();
-		return new ChunkedForest(this.roots, schema, this.chunker.clone(schema), anchors);
+		return new ChunkedForest(this.roots, schema, this.chunker.clone(schema));
 	}
 
-	public chunkField(cursor: ITreeCursorSynchronous): TreeChunk {
-		return chunkFieldSingle(cursor, { idCompressor: this.idCompressor, policy: this.chunker });
+	public chunkField(cursor: ITreeCursorSynchronous): TreeChunk[] {
+		return chunkField(cursor, { idCompressor: this.idCompressor, policy: this.chunker });
 	}
 
 	public forgetAnchor(anchor: Anchor): void {
@@ -196,17 +197,17 @@ export class ChunkedForest implements IEditableForest {
 				assertValidRange(source, sourceField);
 				const newField = sourceField.splice(source.start, source.end - source.start);
 
-				if (destination !== undefined) {
+				if (destination === undefined) {
+					for (const child of newField) {
+						child.referenceRemoved();
+					}
+				} else {
 					assert(
 						!this.forest.roots.fields.has(destination),
 						0x7af /* Destination must be a new empty detached field */,
 					);
 					if (newField.length > 0) {
 						this.forest.roots.fields.set(destination, newField);
-					}
-				} else {
-					for (const child of newField) {
-						child.referenceRemoved();
 					}
 				}
 				// This check is performed after the transfer to ensure that the field is not removed in scenarios
@@ -276,7 +277,9 @@ export class ChunkedForest implements IEditableForest {
 		};
 
 		const announcedVisitors: AnnouncedVisitor[] = [];
-		this.deltaVisitors.forEach((getVisitor) => announcedVisitors.push(getVisitor()));
+		for (const getVisitor of this.deltaVisitors) {
+			announcedVisitors.push(getVisitor());
+		}
 		const combinedVisitor = combineVisitors([forestVisitor, ...announcedVisitors]);
 		this.activeVisitor = combinedVisitor;
 		return combinedVisitor;

@@ -3,25 +3,25 @@
  * Licensed under the MIT License.
  */
 
-import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
+import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import type { IdCreationRange } from "@fluidframework/id-compressor/internal";
-import {
+import type {
+	FluidDataStoreMessage,
 	IAttachMessage,
 	IEnvelope,
 	InboundAttachMessage,
 } from "@fluidframework/runtime-definitions/internal";
 
-import { IDataStoreAliasMessage } from "./dataStore.js";
-import { GarbageCollectionMessage } from "./gc/index.js";
-import { IChunkedOp } from "./opLifecycle/index.js";
-import {
-	type IDocumentSchemaChangeMessageIncoming,
-	type IDocumentSchemaChangeMessageOutgoing,
+import type { IDataStoreAliasMessage } from "./dataStore.js";
+import type { GarbageCollectionMessage } from "./gc/index.js";
+import type { IChunkedOp } from "./opLifecycle/index.js";
+import type {
+	IDocumentSchemaChangeMessageIncoming,
+	IDocumentSchemaChangeMessageOutgoing,
 } from "./summary/index.js";
 
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export enum ContainerMessageType {
 	// An op to be delivered to store
@@ -45,7 +45,7 @@ export enum ContainerMessageType {
 	/**
 	 * An op containing an IdRange of Ids allocated using the runtime's IdCompressor since
 	 * the last allocation op was sent.
-	 * See the [IdCompressor README](./id-compressor/README.md) for more details.
+	 * See the {@link https://github.com/microsoft/FluidFramework/blob/main/packages/runtime/id-compressor/README.md|IdCompressor README} for more details.
 	 */
 	IdAllocation = "idAllocation",
 
@@ -67,8 +67,10 @@ export enum ContainerMessageType {
  *
  * IMPORTANT: when creating one to be serialized, set the properties in the order they appear here.
  * This way stringified values can be compared.
+ *
+ * @internal
  */
-interface TypedContainerRuntimeMessage<TType extends ContainerMessageType, TContents> {
+export interface TypedContainerRuntimeMessage<TType extends ContainerMessageType, TContents> {
 	/**
 	 * Type of the op, within the ContainerRuntime's domain
 	 */
@@ -79,14 +81,22 @@ interface TypedContainerRuntimeMessage<TType extends ContainerMessageType, TCont
 	contents: TContents;
 }
 
+/**
+ * @internal
+ * @privateRemarks exported per ContainerRuntime export for testing purposes
+ */
 export type ContainerRuntimeDataStoreOpMessage = TypedContainerRuntimeMessage<
 	ContainerMessageType.FluidDataStoreOp,
-	IEnvelope
+	IEnvelope<FluidDataStoreMessage>
 >;
 export type InboundContainerRuntimeAttachMessage = TypedContainerRuntimeMessage<
 	ContainerMessageType.Attach,
 	InboundAttachMessage
 >;
+/**
+ * @internal
+ * @privateRemarks exported per ContainerRuntime export for testing purposes
+ */
 export type OutboundContainerRuntimeAttachMessage = TypedContainerRuntimeMessage<
 	ContainerMessageType.Attach,
 	IAttachMessage
@@ -103,6 +113,10 @@ export type ContainerRuntimeRejoinMessage = TypedContainerRuntimeMessage<
 	ContainerMessageType.Rejoin,
 	undefined
 >;
+/**
+ * @internal
+ * @privateRemarks exported per ContainerRuntime export for testing purposes
+ */
 export type ContainerRuntimeAliasMessage = TypedContainerRuntimeMessage<
 	ContainerMessageType.Alias,
 	IDataStoreAliasMessage

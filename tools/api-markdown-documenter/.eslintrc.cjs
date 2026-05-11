@@ -32,7 +32,6 @@ module.exports = {
 
 		"unicorn/prefer-module": "off",
 		"unicorn/prefer-negative-index": "off",
-		"unicorn/no-array-push-push": "off",
 
 		// This package is exclusively used in a Node.js context
 		"import/no-nodejs-modules": "off",

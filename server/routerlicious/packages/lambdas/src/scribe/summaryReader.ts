@@ -4,18 +4,18 @@
  */
 
 import { bufferToString, toUtf8 } from "@fluidframework/common-utils";
-import {
+import type {
 	IDocumentAttributes,
 	ISequencedDocumentMessage,
 } from "@fluidframework/protocol-definitions";
 import {
 	convertWholeFlatSummaryToSnapshotTreeAndBlobs,
-	IGitManager,
-	IWholeFlatSummary,
+	type IGitManager,
+	type IWholeFlatSummary,
 	LatestSummaryId,
 } from "@fluidframework/server-services-client";
 import {
-	IDeliState,
+	type IDeliState,
 	requestWithRetry,
 	shouldRetryNetworkError,
 } from "@fluidframework/server-services-core";
@@ -26,7 +26,7 @@ import {
 	Lumberjack,
 } from "@fluidframework/server-services-telemetry";
 
-import { ILatestSummaryState, ISummaryReader } from "./interfaces";
+import type { ILatestSummaryState, ISummaryReader } from "./interfaces";
 
 /**
  * Git specific implementation of ISummaryReader

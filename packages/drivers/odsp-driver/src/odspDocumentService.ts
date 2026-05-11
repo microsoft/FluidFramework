@@ -3,42 +3,41 @@
  * Licensed under the MIT License.
  */
 
-import { TypedEventEmitter, type ILayerCompatDetails } from "@fluid-internal/client-utils";
+import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { assert } from "@fluidframework/core-utils/internal";
-import { IClient } from "@fluidframework/driver-definitions";
-import {
+import type { IClient } from "@fluidframework/driver-definitions";
+import type {
 	IDocumentDeltaConnection,
 	IDocumentDeltaStorageService,
 	IDocumentService,
 	IDocumentServiceEvents,
 	IDocumentServicePolicies,
 	IDocumentStorageService,
+	IEntry,
 	IResolvedUrl,
 	ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
-import {
+import type {
 	HostStoragePolicy,
-	IEntry,
 	IOdspResolvedUrl,
 	InstrumentedStorageTokenFetcher,
 	TokenFetchOptions,
 } from "@fluidframework/odsp-driver-definitions/internal";
 import {
-	ITelemetryLoggerExt,
-	MonitoringContext,
+	type ITelemetryLoggerExt,
+	type MonitoringContext,
 	createChildMonitoringContext,
 } from "@fluidframework/telemetry-utils/internal";
 
-import { HostStoragePolicyInternal } from "./contracts.js";
-import { EpochTracker } from "./epochTracker.js";
-import { IOdspCache } from "./odspCache.js";
+import type { HostStoragePolicyInternal } from "./contracts.js";
+import type { EpochTracker } from "./epochTracker.js";
+import type { IOdspCache } from "./odspCache.js";
 import type { OdspDelayLoadedDeltaStream } from "./odspDelayLoadedDeltaStream.js";
 import {
 	OdspDeltaStorageService,
 	OdspDeltaStorageWithCache,
 } from "./odspDeltaStorageService.js";
 import { OdspDocumentStorageService } from "./odspDocumentStorageManager.js";
-import { odspDriverCompatDetailsForLoader } from "./odspLayerCompatState.js";
 import { hasOdcOrigin } from "./odspUrlHelper.js";
 import { getOdspResolvedUrl } from "./odspUtils.js";
 import { OpsCache } from "./opsCaching.js";
@@ -99,14 +98,6 @@ export class OdspDocumentService
 			socketReferenceKeyPrefix,
 			clientIsSummarizer,
 		);
-	}
-
-	/**
-	 * The compatibility details of the ODSP Driver layer that is exposed to the Loader layer
-	 * for validating Loader-Driver compatibility.
-	 */
-	public get ILayerCompatDetails(): ILayerCompatDetails {
-		return odspDriverCompatDetailsForLoader;
 	}
 
 	private storageManager?: OdspDocumentStorageService;
@@ -181,6 +172,7 @@ export class OdspDocumentService
 	 * @returns returns the document storage service for sharepoint driver.
 	 */
 	public async connectToStorage(): Promise<IDocumentStorageService> {
+		// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- using ??= could change behavior if value is falsy
 		if (!this.storageManager) {
 			this.storageManager = new OdspDocumentStorageService(
 				this.odspResolvedUrl,
@@ -256,6 +248,7 @@ export class OdspDocumentService
 	 * @returns returns the document delta stream service for onedrive/sharepoint driver.
 	 */
 	public async connectToDeltaStream(client: IClient): Promise<IDocumentDeltaConnection> {
+		// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- using ??= could change behavior if value is falsy
 		if (this.socketModuleP === undefined) {
 			this.socketModuleP = this.getDelayLoadedDeltaStream();
 		}
@@ -344,7 +337,9 @@ export class OdspDocumentService
 				write: async (key: string, opsData: string): Promise<void> => {
 					return this.cache.persistedCache.put({ ...opsKey, key }, opsData);
 				},
-				read: async (key: string) => this.cache.persistedCache.get({ ...opsKey, key }),
+				read: async (key: string): Promise<string | undefined> =>
+					// typing workaround because this.cache.persistedCache.get returns `Promise<any>`
+					this.cache.persistedCache.get({ ...opsKey, key }) as Promise<string | undefined>,
 				remove: (): void => {
 					this.cache.persistedCache.removeEntries().catch(() => {});
 				},
@@ -356,7 +351,7 @@ export class OdspDocumentService
 		return this._opsCache;
 	}
 
-	// Called whenever re receive ops through any channel for this document (snapshot, delta connection, delta storage)
+	// Called whenever we receive ops through any channel for this document (snapshot, delta connection, delta storage)
 	// We use it to notify caching layer of how stale is snapshot stored in cache.
 	protected opsReceived(ops: ISequencedDocumentMessage[]): void {
 		// No need for two clients to save same ops

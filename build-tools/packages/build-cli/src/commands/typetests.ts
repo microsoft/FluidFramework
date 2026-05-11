@@ -4,16 +4,14 @@
  */
 
 import { updatePackageJsonFile } from "@fluid-tools/build-infrastructure";
-import { Package } from "@fluidframework/build-tools";
+import type { Package } from "@fluidframework/build-tools";
 import { Flags } from "@oclif/core";
 import { PackageCommand } from "../BasePackageCommand.js";
 import type { PackageSelectionDefault } from "../flags.js";
 import {
+	defaultTypeValidationConfig,
 	type ITypeValidationConfig,
 	type PackageWithTypeTestSettings,
-	defaultTypeValidationConfig,
-	// AB#8118 tracks removing the barrel files and importing directly from the submodules, including disabling this rule.
-	// eslint-disable-next-line import/no-internal-modules
 } from "../typeValidator/typeValidatorConfig.js";
 
 export default class PrepareTypeTestsCommand extends PackageCommand<
@@ -65,7 +63,7 @@ If targeting prerelease versions, skipping versions, or using skipping some alte
 		}),
 		normalize: Flags.boolean({
 			char: "n",
-			description: `Removes any unrecognized data from "typeValidation" in the package.json and adds any missing default settings.`,
+			description: `Normalizes type test configuration in package.json. Removes unrecognized data from "typeValidation" and adds any missing default settings. Also updates the "typetests:gen" script: adds or replaces it when type tests are enabled, or removes it when disabled.`,
 			exclusive: ["enable"],
 		}),
 		...PackageCommand.flags,
@@ -112,17 +110,66 @@ If targeting prerelease versions, skipping versions, or using skipping some alte
 			}
 
 			if (this.flags.normalize) {
-				json.typeValidation = {
-					disabled:
-						json.typeValidation?.disabled === true
-							? true
-							: defaultTypeValidationConfig.disabled,
-					broken: json.typeValidation?.broken ?? defaultTypeValidationConfig.broken,
-					entrypoint:
-						json.typeValidation?.entrypoint ?? defaultTypeValidationConfig.entrypoint,
-				};
+				json.typeValidation = normalizeConfig(json.typeValidation);
+				normalizeTypeTestScript(json);
 			}
 		});
+	}
+}
+
+/**
+ * Generates a simplified version of the input config.
+ * @remarks Omits some defaults, and removes other properties when the config is `disabled`.
+ */
+export function normalizeConfig(
+	config: Readonly<ITypeValidationConfig> | undefined,
+): ITypeValidationConfig {
+	if (config?.disabled === true) {
+		// If disabled, remove other properties (which will not be used).
+		return {
+			disabled: true,
+		};
+	}
+
+	const normalized: ITypeValidationConfig = {
+		...config,
+	};
+
+	// Omit `disabled` when false (this is the default).
+	delete normalized.disabled;
+
+	// Omit entrypoint if it is the default.
+	if (normalized.entrypoint === defaultTypeValidationConfig.entrypoint) {
+		delete normalized.entrypoint;
+	}
+
+	// Populate empty `broken` property if it is not set.
+	// This helps make the property more discoverable and easier to edit as needed.
+	if (normalized.broken === undefined) {
+		normalized.broken = { ...defaultTypeValidationConfig.broken };
+	}
+	return normalized;
+}
+
+const typetestsGenScript = "flub generate typetests --dir . -v";
+
+/**
+ * Normalizes the `typetests:gen` script in the package.json `scripts` section when the
+ * `typeValidation` node is present.
+ *
+ * If `typeValidation.disabled` is `true`, the script is removed. Otherwise, if `typeValidation`
+ * is defined, the script is added or replaced. If `typeValidation` is `undefined`, this function
+ * does not modify `scripts`.
+ */
+export function normalizeTypeTestScript(pkgJson: PackageWithTypeTestSettings): void {
+	if (pkgJson.typeValidation?.disabled === true) {
+		if (pkgJson.scripts?.["typetests:gen"] !== undefined) {
+			// eslint-disable-next-line @typescript-eslint/no-dynamic-delete
+			delete pkgJson.scripts["typetests:gen"];
+		}
+	} else if (pkgJson.typeValidation !== undefined) {
+		pkgJson.scripts ??= {};
+		pkgJson.scripts["typetests:gen"] = typetestsGenScript;
 	}
 }
 

@@ -1,14 +1,7 @@
 {
-	"extends": "./tsconfig.main.cjs.json",
-	"include": ["src/experimentalAccess.ts", "src/index.ts"],
-	"exclude": [],
+	// This config must be used in a "type": "commonjs" environment. (Use fluid-tsc commonjs.)
+	"extends": "./tsconfig.json",
 	"compilerOptions": {
-		// Could alternatively build with exactOptionalPropertyTypes: false. See tsconfig.json.
-		"skipLibCheck": true,
+		"outDir": "./dist",
 	},
-	"references": [
-		{
-			"path": "./tsconfig.main.cjs.json",
-		},
-	],
 }

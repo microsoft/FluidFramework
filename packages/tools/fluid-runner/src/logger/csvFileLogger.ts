@@ -4,8 +4,9 @@
  */
 
 import * as fs from "fs";
+import * as path from "path";
 
-import { ITelemetryBaseEvent } from "@fluidframework/core-interfaces";
+import type { ITelemetryBaseEvent } from "@fluidframework/core-interfaces";
 import { Parser } from "@json2csv/plainjs";
 
 import { BaseFileLogger } from "./baseFileLogger.js";
@@ -46,6 +47,8 @@ export class CSVFileLogger extends BaseFileLogger {
 			// Orders columns based on order of the set, which puts most recently seen fields from send at the end.
 			fields: Array.from(this.columns),
 		});
+		const dirName = path.dirname(this.filePath);
+		fs.mkdirSync(dirName, { recursive: true });
 		fs.writeFileSync(this.filePath, parser.parse(this.events));
 	}
 }

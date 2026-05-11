@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidDependencySynthesizer } from "./IFluidDependencySynthesizer.js";
+import type { IFluidDependencySynthesizer } from "./IFluidDependencySynthesizer.js";
 
 /**
  * This is a condensed version of Record that requires the object has all
@@ -15,8 +15,7 @@ import { IFluidDependencySynthesizer } from "./IFluidDependencySynthesizer.js";
  * ```typescript
  * { IFoo: "IFoo" }
  * ```
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export type FluidObjectSymbolProvider<T> = {
 	[P in keyof T]?: P;
@@ -26,8 +25,7 @@ export type FluidObjectSymbolProvider<T> = {
  * This is a condensed version of Record that requires the object has all
  * the FluidObject properties as its type mapped to an object that implements
  * the property.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export type AsyncRequiredFluidObjectProvider<T> = T extends undefined
 	? Record<string, never>
@@ -40,8 +38,7 @@ export type AsyncRequiredFluidObjectProvider<T> = T extends undefined
  * This is a condensed version of Record that requires the object has all
  * the FluidObject properties as its type, mapped to an object that implements
  * the property or undefined.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export type AsyncOptionalFluidObjectProvider<T> = T extends undefined
 	? Record<string, never>
@@ -51,16 +48,14 @@ export type AsyncOptionalFluidObjectProvider<T> = T extends undefined
 
 /**
  * Combined type for Optional and Required Async Fluid object Providers
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export type AsyncFluidObjectProvider<O, R = undefined> = AsyncOptionalFluidObjectProvider<O> &
 	AsyncRequiredFluidObjectProvider<R>;
 
 /**
  * Multiple ways to provide a Fluid object.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export type FluidObjectProvider<T> =
 	| NonNullable<T>
