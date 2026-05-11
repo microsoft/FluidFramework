@@ -4,7 +4,10 @@
 # Pipeline wrapper around scripts/detect_changed_packages.mjs. The Node ESM
 # module owns the decision logic and its own doc comment; see that file for
 # output-variable semantics, safe-fallback policy, and full-run patterns.
-# Node built-ins only, so no install step is needed here.
+# Node built-ins only, so no install step is needed here. This intentionally
+# runs before dependency installation / build-tools setup; using flub here would
+# require first installing or linking @fluid-tools/build-cli, delaying the early
+# decision about whether downstream test jobs need to run.
 
 parameters:
 - name: buildDirectory

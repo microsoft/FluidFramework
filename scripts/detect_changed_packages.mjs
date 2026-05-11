@@ -29,6 +29,15 @@ import { dirname } from "node:path/posix";
  * commits that landed on origin/<branch> after this PR diverged would show up
  * as "changed." Computing the merge-base SHA ourselves and feeding that SHA
  * into the selector gives three-dot (merge-base) semantics.
+ *
+ * Why this is a standalone script instead of a flub command: the pipeline runs
+ * this in the detect_changes job immediately after checkout, before dependency
+ * installation and before include-install-build-tools makes `flub` available.
+ * Moving this logic into flub would require installing/linking
+ * @fluid-tools/build-cli just to decide whether downstream test jobs should
+ * run. Keeping this script limited to Node built-ins preserves the early,
+ * fail-fast check and avoids paying that install cost in jobs that may skip
+ * the heavier work.
  */
 
 // Full-run trigger patterns. A diff touching any of these paths forces running
