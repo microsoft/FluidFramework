@@ -42,6 +42,7 @@ import { dirname } from "node:path/posix";
 // scoping within a pipeline that's already running - but adding a new
 // cross-cutting root-level file generally warrants updating both. There's no
 // programmatic link, so keep them in sync by convention.
+/** @type {readonly RegExp[]} */
 export const FULL_RUN_PATTERNS = [
 	/^package\.json$/,
 	/^pnpm-lock\.yaml$/,
@@ -58,11 +59,28 @@ export const FULL_RUN_PATTERNS = [
 	/^\.changeset\/config\.json$/,
 ];
 
+/**
+ * Strips the `refs/heads/` prefix from a branch name. ADO pipeline variables
+ * sometimes deliver the fully-qualified ref instead of the short name, but
+ * git plumbing commands like `merge-base origin/<name>` want the short form.
+ *
+ * @param {string} branch
+ * @returns {string}
+ */
 export function normalizeTargetBranch(branch) {
 	const prefix = "refs/heads/";
 	return branch.startsWith(prefix) ? branch.slice(prefix.length) : branch;
 }
 
+/**
+ * Returns the first pattern in `patterns` that matches any file in `files`,
+ * or `undefined` when nothing matches. The matched pattern is returned (rather
+ * than a boolean) so callers can log which rule fired.
+ *
+ * @param {readonly string[]} files
+ * @param {readonly RegExp[]} [patterns]
+ * @returns {RegExp | undefined}
+ */
 export function checkFullRunPatterns(files, patterns = FULL_RUN_PATTERNS) {
 	for (const pattern of patterns) {
 		if (files.some((file) => pattern.test(file))) {
@@ -72,6 +90,23 @@ export function checkFullRunPatterns(files, patterns = FULL_RUN_PATTERNS) {
 	return undefined;
 }
 
+/**
+ * Computes the union of package directories across the merge-base commit and
+ * the current working tree. Both endpoints are unioned so that a `package.json`
+ * which was added or deleted across the range still counts as a package dir —
+ * otherwise a deletion at HEAD would orphan the historical files under it.
+ *
+ * The list callbacks are injected to keep this function testable without
+ * shelling out to git.
+ *
+ * @param {string} mergeBase
+ * @param {(ref: string) => readonly string[]} listHistoricalPackages
+ *   Returns `package.json` paths recorded at `ref`.
+ * @param {() => readonly string[]} listCurrentPackages
+ *   Returns `package.json` paths tracked in the current working tree.
+ * @returns {Set<string>} Posix-style directory paths (e.g. `packages/foo`,
+ *   or `.` for a root-level `package.json`).
+ */
 export function buildPackageDirSet(mergeBase, listHistoricalPackages, listCurrentPackages) {
 	const dirs = new Set();
 	for (const file of listHistoricalPackages(mergeBase)) {
@@ -83,6 +118,18 @@ export function buildPackageDirSet(mergeBase, listHistoricalPackages, listCurren
 	return dirs;
 }
 
+/**
+ * Returns true if any entry in `changedFiles` lives under a known package dir.
+ * Walks each path up toward the root so deeply-nested changes (e.g.
+ * `packages/foo/src/a/b/c.ts`) match the ancestor package dir
+ * (`packages/foo`). The root pseudo-dir `"."` is intentionally NOT treated as
+ * a per-package hit — root-level changes are handled separately by
+ * {@link checkFullRunPatterns}.
+ *
+ * @param {readonly string[]} changedFiles
+ * @param {ReadonlySet<string>} packageDirs
+ * @returns {boolean}
+ */
 export function anyChangedFileInPackages(changedFiles, packageDirs) {
 	for (const file of changedFiles) {
 		if (!file) {
@@ -99,6 +146,15 @@ export function anyChangedFileInPackages(changedFiles, packageDirs) {
 	return false;
 }
 
+/**
+ * Runs `git` with the given args and returns stdout, or `undefined` if the
+ * executable was missing or the command exited non-zero. Errors are logged as
+ * ADO warnings rather than thrown so callers can decide whether to fall back
+ * to a full run or continue with partial data.
+ *
+ * @param {readonly string[]} args
+ * @returns {string | undefined}
+ */
 function git(args) {
 	const result = spawnSync("git", args, { encoding: "utf8" });
 	if (result.error !== undefined) {
@@ -115,6 +171,14 @@ function git(args) {
 
 const packageJsonPattern = /(^|\/)package\.json$/;
 
+/**
+ * Lists every `package.json` recorded at the given git ref (typically the
+ * merge-base commit). Used to recover package dirs that existed historically
+ * but may have been removed at HEAD.
+ *
+ * @param {string} ref
+ * @returns {string[]}
+ */
 function gitHistoricalPackages(ref) {
 	const out = git(["ls-tree", "-r", "--name-only", ref]);
 	if (out === undefined) {
@@ -123,6 +187,11 @@ function gitHistoricalPackages(ref) {
 	return out.split("\n").filter((file) => packageJsonPattern.test(file));
 }
 
+/**
+ * Lists every `package.json` currently tracked in the working tree.
+ *
+ * @returns {string[]}
+ */
 function currentPackages() {
 	const out = git(["ls-files", "--", "package.json", "*/package.json"]);
 	if (out === undefined) {
@@ -131,6 +200,15 @@ function currentPackages() {
 	return out.split("\n").filter((file) => packageJsonPattern.test(file));
 }
 
+/**
+ * Writes both output variables consumed by the downstream ADO jobs. Always
+ * emits both, even when one is empty, so consumers can rely on the variables
+ * existing.
+ *
+ * @param {boolean} shouldRunTests
+ * @param {string} scopedPnpmFilter
+ * @returns {void}
+ */
 function emitVsoOutputs(shouldRunTests, scopedPnpmFilter) {
 	const flag = shouldRunTests ? "true" : "false";
 	console.log(`shouldRunTests=${flag}`);
@@ -141,15 +219,38 @@ function emitVsoOutputs(shouldRunTests, scopedPnpmFilter) {
 	);
 }
 
+/**
+ * Surfaces a warning to the ADO pipeline log without failing the task.
+ *
+ * @param {string} message
+ * @returns {void}
+ */
 function logWarning(message) {
 	console.log(`##vso[task.logissue type=warning]${message}`);
 }
 
+/**
+ * Emits the safe-fallback outputs (run everything, no filter) and logs why.
+ * Use any time the scoping logic can't reach a confident decision; never
+ * silently skip tests on error.
+ *
+ * @param {string} reason
+ * @returns {void}
+ */
 function fallbackFullRun(reason) {
 	logWarning(`${reason} Falling back to full test run.`);
 	emitVsoOutputs(true, "");
 }
 
+/**
+ * Returns the merge-base SHA between HEAD and `origin/<targetBranch>`, or
+ * `undefined` if it can't be determined. On a shallow clone the merge-base
+ * may not be reachable; in that case we deepen once and retry rather than
+ * fetching the full history up front.
+ *
+ * @param {string} targetBranch
+ * @returns {string | undefined}
+ */
 function resolveMergeBase(targetBranch) {
 	const firstMergeBase = git(["merge-base", "HEAD", `origin/${targetBranch}`])?.trim();
 	if (firstMergeBase) {
@@ -166,6 +267,14 @@ function resolveMergeBase(targetBranch) {
 	return git(["merge-base", "HEAD", `origin/${targetBranch}`])?.trim() || undefined;
 }
 
+/**
+ * Pipeline entry point. Resolves the merge-base, classifies the diff, and
+ * emits the two ADO output variables (`shouldRunTests`, `scopedPnpmFilter`).
+ * Never throws — every failure path falls back to a full test run via
+ * {@link fallbackFullRun}.
+ *
+ * @returns {void}
+ */
 export function main() {
 	const targetBranch = normalizeTargetBranch(process.env.TARGET_BRANCH ?? "");
 	if (!targetBranch) {
