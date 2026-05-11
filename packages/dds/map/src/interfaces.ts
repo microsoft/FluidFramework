@@ -121,7 +121,7 @@ export interface IDirectory
 }
 
 /**
- * Legacy map-like API that extends {@link FluidMap}, without the `get` and `set` methods supplied by legacy map interfaces.
+ * Legacy map-like API that extends FluidMap, without the `get` and `set` methods supplied by legacy map interfaces.
  *
  * @sealed
  * @legacy @beta
