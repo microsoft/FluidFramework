@@ -114,7 +114,7 @@ const firstChanceAssertionHandler = new Set<(error: Error) => void>();
  * 	firstAssertion ??= error;
  * });
  * ```
- * @alpha
+ * @beta
  */
 export function onAssertionFailure(handler: (error: Error) => void): () => void {
 	// To avoid issues if the same callback is registered twice (mainly it not triggering twice and the first unregister removing it),

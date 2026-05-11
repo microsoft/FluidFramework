@@ -1063,6 +1063,9 @@ export interface ObjectSchemaOptions<TCustomMetadata = unknown> extends NodeSche
 // @public
 export type Off = () => void;
 
+// @beta
+export function onAssertionFailure(handler: (error: Error) => void): () => void;
+
 // @beta @system
 export type PopUnion<Union, AsOverloadedFunction = UnionToIntersection<Union extends unknown ? (f: Union) => void : never>> = AsOverloadedFunction extends (a: infer First) => void ? First : never;
 
