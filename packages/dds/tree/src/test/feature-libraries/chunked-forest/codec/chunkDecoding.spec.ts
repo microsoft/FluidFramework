@@ -181,7 +181,7 @@ describe("chunkDecoding", () => {
 				// non-finalized op-space id during a summary load and healing is not
 				// available. See `chunkDecoding.ts`.
 				const nonFinalizedDuringSummaryError =
-					/Encountered a non-finalized op-space identifier while loading a summary./;
+					/Summary could not be loaded due incorrectly encoded identifier\./;
 
 				it("throws when the heal flag is not enabled", () => {
 					const { opSpaceId, originatorId } = makeUnresolvableOpSpaceId();
@@ -208,12 +208,14 @@ describe("chunkDecoding", () => {
 					};
 					const result = readValue(makeStream(opSpaceId), SpecialField.Identifier, ctx);
 					assert.equal(typeof result, "string");
-					assert.equal(result as string, "d5d534e7-5e2c-53c3-b26c-9fd81e6fbc37");
+					assert.equal(result, "d5d534e7-5e2c-53c3-b26c-9fd81e6fbc37");
 				});
 
 				it("produces the same UUID for the same (sharedObjectId, opSpaceId) inputs", () => {
-					const { opSpaceId, originatorId } = makeUnresolvableOpSpaceId();
-					const heal = (): unknown =>
+					const { opSpaceId } = makeUnresolvableOpSpaceId();
+					const originator1 = "originator-1" as SessionId;
+					const originator2 = "originator-2" as SessionId;
+					const heal = (originatorId: SessionId): unknown =>
 						readValue(makeStream(opSpaceId), SpecialField.Identifier, {
 							idCompressor: testIdCompressor,
 							originatorId,
@@ -221,7 +223,7 @@ describe("chunkDecoding", () => {
 							healUnresolvableIdentifiersOnDecode: true,
 							sharedObjectId: "doc-a",
 						});
-					assert.equal(heal(), heal());
+					assert.equal(heal(originator1), heal(originator2));
 				});
 
 				it("produces different UUIDs for different sharedObjectIds", () => {
