@@ -16,10 +16,7 @@ import {
 	type ContainerAlpha,
 	type ILoaderProps,
 } from "@fluidframework/container-loader/internal";
-import type {
-	FluidObject,
-	ILocalFluidHandle,
-} from "@fluidframework/core-interfaces/internal";
+import type { FluidObject, ILocalFluidHandle } from "@fluidframework/core-interfaces/internal";
 import type {
 	LocalDocumentServiceFactory,
 	LocalResolver,
@@ -1015,8 +1012,13 @@ describe("loadFrozenContainerFromPendingState", () => {
 	for (const createBlobPayloadPending of [undefined, true] as const) {
 		describe(`blob handling (createBlobPayloadPending: ${createBlobPayloadPending})`, () => {
 			it("readonly frozen container reads blobs captured in pending state", async () => {
-				const { container, ITestFluidObject, urlResolver, codeLoader, documentServiceFactory } =
-					await initialize({ createBlobPayloadPending });
+				const {
+					container,
+					ITestFluidObject,
+					urlResolver,
+					codeLoader,
+					documentServiceFactory,
+				} = await initialize({ createBlobPayloadPending });
 				await container.attach(urlResolver.createCreateNewRequest("test"));
 
 				const blobHandle = await ITestFluidObject.runtime.uploadBlob(
@@ -1059,8 +1061,13 @@ describe("loadFrozenContainerFromPendingState", () => {
 			});
 
 			it("writable frozen container reads blobs captured in pending state", async () => {
-				const { container, ITestFluidObject, urlResolver, codeLoader, documentServiceFactory } =
-					await initialize({ createBlobPayloadPending });
+				const {
+					container,
+					ITestFluidObject,
+					urlResolver,
+					codeLoader,
+					documentServiceFactory,
+				} = await initialize({ createBlobPayloadPending });
 				await container.attach(urlResolver.createCreateNewRequest("test"));
 
 				const blobHandle = await ITestFluidObject.runtime.uploadBlob(
