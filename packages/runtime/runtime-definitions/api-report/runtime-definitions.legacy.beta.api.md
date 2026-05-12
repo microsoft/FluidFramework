@@ -181,6 +181,7 @@ export interface IFluidDataStoreFactory extends IProvideFluidDataStoreFactory {
 
 // @beta @legacy
 export interface IFluidDataStorePolicies {
+    readonly enableDataStoreClaims?: boolean;
     readonly readonlyInStagingMode: boolean;
 }
 

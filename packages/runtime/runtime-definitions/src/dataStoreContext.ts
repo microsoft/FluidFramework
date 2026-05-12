@@ -377,6 +377,22 @@ export interface IFluidDataStorePolicies {
 	 * @see {@link IContainerRuntimeBase.enterStagingMode}
 	 */
 	readonly readonlyInStagingMode: boolean;
+
+	/**
+	 * When set to true, this data store enables the first-writer-wins
+	 * "claims" feature. {@link @fluidframework/datastore-definitions#IFluidDataStoreRuntime.trySetClaim}
+	 * (and the corresponding helpers on `DataObject`) require this flag and
+	 * will throw a `UsageError` if it is not set.
+	 *
+	 * @defaultValue `false`
+	 *
+	 * @remarks
+	 * The new claim op type is silently ignored by older clients that do not
+	 * understand it. Authors enabling this flag should ensure all
+	 * collaborating clients run a runtime that recognizes the op (otherwise
+	 * older clients would not see the claim being set).
+	 */
+	readonly enableDataStoreClaims?: boolean;
 }
 
 /**

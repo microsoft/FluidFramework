@@ -24,6 +24,7 @@ export type {
 	IFluidDataStoreRuntimeEvents,
 	IFluidDataStoreRuntimeInternalConfig,
 	IDeltaManagerErased,
+	ClaimResult,
 } from "./dataStoreRuntime.js";
 export type {
 	Jsonable,

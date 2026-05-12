@@ -51,6 +51,18 @@ export type IDeltaManagerErased =
 	ErasedType<"@fluidframework/container-definitions.IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>">;
 
 /**
+ * Result of attempting to set a claim on a data store via
+ * {@link IFluidDataStoreRuntime.trySetClaim}.
+ *
+ * - `"Success"` - this client owns the claim for the given key.
+ * - `"AlreadyClaimed"` - another client has already claimed the key; the
+ * existing value is unchanged. Claims are first-writer-wins and are
+ * immutable for the lifetime of the document.
+ * @legacy @beta
+ */
+export type ClaimResult = "Success" | "AlreadyClaimed";
+
+/**
  * Represents the runtime for the data store. Contains helper functions/state of the data store.
  * @sealed
  * @legacy @beta
@@ -203,6 +215,62 @@ export interface IFluidDataStoreRuntime
 	 * Indicates whether the data store has uncommitted local changes.
 	 */
 	readonly isDirty: boolean;
+
+	/**
+	 * Attempt to set a first-writer-wins "claim" for the given key on this data
+	 * store. Once a claim has been sequenced for a key, no other client can
+	 * overwrite it for the lifetime of the document.
+	 *
+	 * @remarks
+	 * Claims are intended for partner scenarios that need to wire up singleton
+	 * components (typically a handle to a child DDS) with first-writer-wins
+	 * semantics, instead of the last-writer-wins semantics provided by writing
+	 * to a DDS such as `SharedDirectory`.
+	 *
+	 * The value is JSON-serializable. {@link @fluidframework/core-interfaces#IFluidHandle}
+	 * instances embedded in the value are encoded the same way as handles in
+	 * summary blobs and contribute to garbage-collection routes from this data
+	 * store.
+	 *
+	 * The returned promise resolves to `"Success"` for the client whose op was
+	 * sequenced first for the key, and `"AlreadyClaimed"` for every other
+	 * client. A repeated call from the winning client returns `"Success"`.
+	 *
+	 * Optional. Implementations that do not support claims will not provide
+	 * this method.
+	 *
+	 * @param key - The claim key.
+	 * @param value - The claim value (JSON-serializable; may include handles).
+	 * @returns A promise that resolves to the {@link ClaimResult}.
+	 */
+	trySetClaim?(key: string, value: unknown): Promise<ClaimResult>;
+
+	/**
+	 * Returns the value of a previously-claimed key, with embedded handles
+	 * decoded. Returns `undefined` if the key has not (yet) been claimed.
+	 *
+	 * Optional. Implementations that do not support claims will not provide
+	 * this method.
+	 */
+	getClaim?(key: string): unknown;
+
+	/**
+	 * Returns `true` if the given key has been sequenced as a claim on this
+	 * data store.
+	 *
+	 * Optional. Implementations that do not support claims will not provide
+	 * this method.
+	 */
+	hasClaim?(key: string): boolean;
+
+	/**
+	 * Read-only view of all sequenced claims on this data store, with embedded
+	 * handles decoded.
+	 *
+	 * Optional. Implementations that do not support claims will not provide
+	 * this property.
+	 */
+	readonly claims?: ReadonlyMap<string, unknown>;
 }
 
 /**
