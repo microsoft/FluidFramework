@@ -9,6 +9,8 @@ import type { ICodecFamily, IJsonCodec } from "../../codec/index.js";
 import type { SchemaAndPolicy } from "../../core/index.js";
 import type { JsonCompatibleReadOnly } from "../../util/index.js";
 import type { ChangeRebaser, RevisionTag, TaggedChange } from "../rebase/index.js";
+// eslint-disable-next-line @typescript-eslint/no-unused-vars -- Referenced by doc comments
+import type { FieldBatchEncodingContext } from "../../feature-libraries/index.js";
 
 export interface ChangeFamily<TEditor extends ChangeFamilyEditor, TChange> {
 	buildEditor(
@@ -39,7 +41,7 @@ export interface ChangeEncodingContext {
 	/**
 	 * If `true`, identifier values that the local id-compressor cannot resolve
 	 * during decode are healed into deterministic stable UUIDs instead of
-	 * throwing. See `FieldBatchEncodingContext.healUnresolvableIdentifiersOnDecode`.
+	 * throwing. See {@link FieldBatchEncodingContext.healUnresolvableIdentifiersOnDecode}.
 	 * Only takes effect when `isSummary` is also `true`.
 	 */
 	readonly healUnresolvableIdentifiersOnDecode?: boolean;
