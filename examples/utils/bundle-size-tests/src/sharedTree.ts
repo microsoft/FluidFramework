@@ -5,6 +5,6 @@
 
 import { SharedTree } from "fluid-framework";
 
-export function apisToBundle() {
+export function apisToBundle(): typeof SharedTree {
 	return SharedTree;
 }

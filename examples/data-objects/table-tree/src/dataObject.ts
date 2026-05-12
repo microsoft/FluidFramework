@@ -90,7 +90,7 @@ function getInitialTree(): Table {
 		},
 	});
 
-	return new Table({
+	return Table.create({
 		columns: [taskNameColumn, dateColumn, completedColumn],
 		rows: [row0, row1],
 	});

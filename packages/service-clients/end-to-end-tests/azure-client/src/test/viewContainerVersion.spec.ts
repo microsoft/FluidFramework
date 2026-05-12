@@ -10,7 +10,6 @@ import { ConnectionState } from "@fluidframework/container-loader";
 import type { ContainerSchema, IFluidContainer } from "@fluidframework/fluid-static";
 import { SharedMap } from "@fluidframework/map/legacy";
 import { timeoutPromise } from "@fluidframework/test-utils/internal";
-import type { AxiosResponse } from "axios";
 
 import {
 	createAzureClient,
@@ -58,7 +57,7 @@ for (const testOpts of testMatrix) {
 			let containerId: string;
 			let container: IFluidContainer;
 			if (isEphemeral) {
-				const containerResponse: AxiosResponse | undefined = await createContainerFromPayload(
+				const containerResponse = await createContainerFromPayload(
 					ephemeralSummaryTrees.getVersionsOfCurrentDocument,
 					"test-user-id-1",
 					"test-user-name-1",
@@ -120,7 +119,7 @@ for (const testOpts of testMatrix) {
 			let containerId: string;
 			let container: IFluidContainer;
 			if (isEphemeral) {
-				const containerResponse: AxiosResponse | undefined = await createContainerFromPayload(
+				const containerResponse = await createContainerFromPayload(
 					ephemeralSummaryTrees.copyDocumentSuccessfully,
 					"test-user-id-1",
 					"test-user-name-1",
@@ -164,7 +163,7 @@ for (const testOpts of testMatrix) {
 			const testKey = "new-key";
 			const expectedValue = "expected-value";
 			if (isEphemeral) {
-				const containerResponse: AxiosResponse | undefined = await createContainerFromPayload(
+				const containerResponse = await createContainerFromPayload(
 					ephemeralSummaryTrees.copyDDSValuesWhenCopyingContainer,
 					"test-user-id-1",
 					"test-user-name-1",

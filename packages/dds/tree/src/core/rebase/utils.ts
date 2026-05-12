@@ -200,7 +200,7 @@ export function rebaseBranch<TChange>(
 	const sourceBranchLength = sourcePath.length;
 
 	// Find where `targetCommit` is in the target branch
-	const targetCommitIndex = targetPath.findIndex((r) => r === targetCommit);
+	const targetCommitIndex = targetPath.indexOf(targetCommit);
 	if (targetCommitIndex === -1) {
 		// If the targetCommit is not in the target path, then it is either disjoint from `target` or it is behind/at
 		// the commit where source and target diverge (ancestor), in which case there is nothing more to rebase
@@ -292,7 +292,7 @@ export function rebaseBranch<TChange>(
 	const revInfos = getRevInfoFromTaggedChanges([...targetRebasePath, ...sourcePath]);
 	// Note that the `revisionMetadata` gets updated as `revInfos` gets updated.
 	const revisionMetadata = revisionMetadataSourceFromInfo(revInfos);
-	let editsToCompose: TaggedChange<TChange>[] = targetRebasePath.slice();
+	let editsToCompose: TaggedChange<TChange>[] = [...targetRebasePath];
 	for (const c of sourcePath) {
 		const rollback = rollbackFromCommit(changeRebaser, c, mintRevisionTag, true /* cache */);
 		if (sourceSet.has(c.revision)) {
@@ -347,6 +347,7 @@ export function rebaseChange<TChange>(
 	sourceHead: GraphCommit<TChange>,
 	targetHead: GraphCommit<TChange>,
 	mintRevisionTag: () => RevisionTag,
+	ignoreNoChangeViolation?: boolean,
 ): RebaseChangeResult<TChange> {
 	const sourcePath: GraphCommit<TChange>[] = [];
 	const targetPath: GraphCommit<TChange>[] = [];
@@ -367,7 +368,12 @@ export function rebaseChange<TChange>(
 	};
 
 	return {
-		change: rebaseChangeOverChanges(changeRebaser, change, [...inverses, ...targetPath]),
+		change: rebaseChangeOverChanges(
+			changeRebaser,
+			change,
+			[...inverses, ...targetPath],
+			ignoreNoChangeViolation,
+		),
 		telemetryProperties,
 	};
 }
@@ -388,7 +394,7 @@ export function revisionMetadataSourceFromInfo(
 	};
 
 	const hasRollback = (revision: RevisionTag): boolean => {
-		return revInfos.find((info) => info.rollbackOf === revision) !== undefined;
+		return revInfos.some((info) => info.rollbackOf === revision);
 	};
 
 	return { getIndex, tryGetInfo, hasRollback };
@@ -398,15 +404,20 @@ export function rebaseChangeOverChanges<TChange>(
 	changeRebaser: ChangeRebaser<TChange>,
 	changeToRebase: TaggedChange<TChange>,
 	changesToRebaseOver: TaggedChange<TChange>[],
+	ignoreNoChangeViolation?: boolean,
 ): TChange {
 	const revisionMetadata = revisionMetadataSourceFromInfo(
 		getRevInfoFromTaggedChanges([...changesToRebaseOver, changeToRebase]),
 	);
 
-	return changesToRebaseOver.reduce(
-		(a, b) => mapTaggedChange(changeToRebase, changeRebaser.rebase(a, b, revisionMetadata)),
-		changeToRebase,
-	).change;
+	let result = changeToRebase;
+	for (const b of changesToRebaseOver) {
+		result = mapTaggedChange(
+			changeToRebase,
+			changeRebaser.rebase(result, b, revisionMetadata, ignoreNoChangeViolation),
+		);
+	}
+	return result.change;
 }
 
 // TODO: Deduplicate

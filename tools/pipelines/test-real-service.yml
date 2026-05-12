@@ -9,16 +9,6 @@ name: $(Build.BuildId)
 trigger: none
 pr: none
 
-parameters:
-# If true, the routerlicious tests will run against the PPE (aka non-prod) environment.
-# This can be useful when we need to make changes to the routerlicious cluster
-# and we can make them in the PPE environment first before making them in the "prod" environment
-# that the tests normally target.
-- name: useR11sPpeEnvironment
-  displayName: Use PPE Routerlicious environment?
-  type: boolean
-  default: false
-
 resources:
   pipelines:
   - pipeline: client
@@ -28,8 +18,6 @@ resources:
       branches:
       - release/*
       - main
-      - next
-      - lts
   - pipeline: routerlicious
     source: server-routerlicious
     branch: main # Default branch for manual/scheduled triggers if none is selected
@@ -50,8 +38,6 @@ resources:
 variables:
 - template: /tools/pipelines/templates/include-vars-telemetry-generator.yml@self
 - group: prague-key-vault
-- name: testWorkspace
-  value: $(Pipeline.Workspace)/test
 - name: testPackage
   value: "@fluid-private/test-end-to-end-tests"
   readonly: true
@@ -71,10 +57,10 @@ stages:
       stageDisplayName: e2e - local server
       poolBuild: Large-eastus2 # Need Large pool for full-compat matrix
       testPackage: ${{ variables.testPackage }}
-      testWorkspace: ${{ variables.testWorkspace }}
       artifactBuildId: $(resources.pipeline.client.runID)
+      fluidFrameworkSourceVersion: $(resources.pipeline.client.sourceCommit)
       testCommand: test:realsvc:local:report:full
-      cacheCompatVersionsInstalls: true
+
       uploadTestPassRateTelemetry: true
       pipelineIdentifierForTelemetry: ${{ variables.pipelineIdentifierForTelemetry }}
       env:
@@ -88,10 +74,10 @@ stages:
       stageDisplayName: e2e - tinylicious
       poolBuild: Large-eastus2 # Need Large pool for full-compat matrix
       testPackage: ${{ variables.testPackage }}
-      testWorkspace: ${{ variables.testWorkspace }}
       artifactBuildId: $(resources.pipeline.client.runID)
+      fluidFrameworkSourceVersion: $(resources.pipeline.client.sourceCommit)
       testCommand: test:realsvc:tinylicious:report:full
-      cacheCompatVersionsInstalls: true
+
       # TODO: AB#8968 tracks figuring out the root cause of the extended delay, and restoring this timeout to 90m or less
       timeoutInMinutes: 120
       uploadTestPassRateTelemetry: true
@@ -103,44 +89,6 @@ stages:
         logger__colorize: "false" # Need to pass it as string so ADO doesn't convert it into False (capital F) which doesn't work
         logger__morganFormat: tiny
 
-  # end-to-end tests routerlicious
-  - template: /tools/pipelines/templates/include-test-real-service.yml@self
-    parameters:
-      stageId: e2e_routerlicious
-      stageDisplayName: e2e - routerlicious
-      poolBuild: Small-eastus2
-      testPackage: ${{ variables.testPackage }}
-      testWorkspace: ${{ variables.testWorkspace }}
-      artifactBuildId: $(resources.pipeline.client.runID)
-      testCommand: test:realsvc:routerlicious:report
-      lockBehavior: sequential
-      continueOnError: true
-      ${{ if eq(parameters.useR11sPpeEnvironment, true) }}:
-        r11sSelfSignedCertSecureFile: wu2-ppe-tls-certificate.pem
-      ${{ else }}:
-        r11sSelfSignedCertSecureFile: wu2-tls-certificate.pem
-      stageVariables:
-        - group: e2e-r11s-lock
-      splitTestVariants:
-        - name: Non-compat
-          flags: --compatVersion=0
-        - name: N-1
-          flags: --compatVersion=-1
-        - name: LTS
-          flags: --compatVersion=LTS
-        - name: Cross-Client
-          flags: --compatVersion=CROSS_CLIENT
-      cacheCompatVersionsInstalls: true
-      uploadTestPassRateTelemetry: true
-      pipelineIdentifierForTelemetry: ${{ variables.pipelineIdentifierForTelemetry }}
-      env:
-        ${{ if eq(parameters.useR11sPpeEnvironment, true) }}:
-          fluid__test__driver__r11s: $(automation-fluid-test-driver-r11s-ppe)
-        ${{ else }}:
-          fluid__test__driver__r11s: $(automation-fluid-test-driver-r11s)
-        FLUID_TEST_LOGGER_PKG_SPECIFIER: '@ff-internal/aria-logger' # Contains createTestLogger impl to inject
-        FLUID_LOGGER_PROPS: '{ "displayName": "${{variables.pipelineIdentifierForTelemetry}}"}'
-
   # end-to-end tests docker
   - template: templates/include-test-real-service.yml
     parameters:
@@ -148,8 +96,8 @@ stages:
       stageDisplayName: e2e - docker
       poolBuild: Large-eastus2 # Need Large pool for full-compat matrix
       testPackage: ${{ variables.testPackage }}
-      testWorkspace: ${{ variables.testWorkspace }}
       artifactBuildId: $(resources.pipeline.client.runID)
+      fluidFrameworkSourceVersion: $(resources.pipeline.client.sourceCommit)
       continueOnError: true
       timeoutInMinutes: 360
       testCommand: test:realsvc:r11s:docker
@@ -160,11 +108,11 @@ stages:
           flags: --compatVersion=0
         - name: N-1
           flags: --compatVersion=-1
-        - name: LTS
-          flags: --compatVersion=LTS
+        - name: Oldest-Compatible-Version
+          flags: --compatVersion=OCV
         - name: Cross-Client
           flags: --compatVersion=CROSS_CLIENT
-      cacheCompatVersionsInstalls: true
+
       uploadTestPassRateTelemetry: true
       pipelineIdentifierForTelemetry: ${{ variables.pipelineIdentifierForTelemetry }}
 
@@ -188,8 +136,8 @@ stages:
       stageDisplayName: e2e - AFR
       poolBuild: Small-eastus2
       testPackage: ${{ variables.testPackage }}
-      testWorkspace: ${{ variables.testWorkspace }}
       artifactBuildId: $(resources.pipeline.client.runID)
+      fluidFrameworkSourceVersion: $(resources.pipeline.client.sourceCommit)
       timeoutInMinutes: 360
       continueOnError: true
       testCommand: test:realsvc:frs:report
@@ -202,11 +150,11 @@ stages:
           flags: --compatVersion=0
         - name: N-1
           flags: --compatVersion=-1
-        - name: LTS
-          flags: --compatVersion=LTS
+        - name: Oldest-Compatible-Version
+          flags: --compatVersion=OCV
         - name: Cross-Client
           flags: --compatVersion=CROSS_CLIENT
-      cacheCompatVersionsInstalls: true
+
       uploadTestPassRateTelemetry: true
       pipelineIdentifierForTelemetry: ${{ variables.pipelineIdentifierForTelemetry }}
       env:
@@ -222,8 +170,8 @@ stages:
       odspTenantType: prod
       poolBuild: Small-eastus2
       testPackage: ${{ variables.testPackage }}
-      testWorkspace: ${{ variables.testWorkspace }}
       artifactBuildId: $(resources.pipeline.client.runID)
+      fluidFrameworkSourceVersion: $(resources.pipeline.client.sourceCommit)
       timeoutInMinutes: 360
       continueOnError: true
       testCommand: test:realsvc:odsp:report
@@ -239,7 +187,7 @@ stages:
         # Tests N-2 to LTS+3 back compat for loader + driver
         - name: N-2ToLTS+1-back-compat
           flags: --compatVersion=V2_INT_3 --tenantIndex=3
-      cacheCompatVersionsInstalls: true
+
       uploadTestPassRateTelemetry: true
       pipelineIdentifierForTelemetry: ${{ variables.pipelineIdentifierForTelemetry }}
       env:

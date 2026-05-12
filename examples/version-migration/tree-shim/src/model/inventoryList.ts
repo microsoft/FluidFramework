@@ -36,7 +36,7 @@ const DEBUG_migrateSlowly = false;
 
 const newTreeFactory = SharedTree.getFactory();
 
-function migrate(legacyTree: LegacySharedTree, newTree: ITree) {
+function migrate(legacyTree: LegacySharedTree, newTree: ITree): void {
 	// Revert local edits - otherwise we will be eventually inconsistent
 	const edits = legacyTree.edits;
 	const localEdits = [...edits.getLocalEdits()].reverse();
@@ -74,32 +74,32 @@ export class InventoryList extends DataObject implements IInventoryList, IMigrat
 	private _writeOk: boolean | undefined;
 	private _shim: MigrationShim | SharedTreeShim | undefined;
 
-	private get shim() {
+	private get shim(): MigrationShim | SharedTreeShim {
 		if (this._shim === undefined) {
 			throw new Error("Not initialized properly");
 		}
 		return this._shim;
 	}
 
-	private get model() {
+	private get model(): IInventoryList {
 		if (this._model === undefined) {
 			throw new Error("Not initialized properly");
 		}
 		return this._model;
 	}
 
-	public get writeOk() {
+	public get writeOk(): boolean {
 		if (this._writeOk === undefined) {
 			throw new Error("Not initialized properly");
 		}
 		return this._writeOk;
 	}
 
-	private readonly isMigrated = () => {
+	private readonly isMigrated = (): boolean => {
 		return this.shim.attributes.type === newTreeShimFactory.type;
 	};
 
-	public readonly addItem = (name: string, quantity: number) => {
+	public readonly addItem = (name: string, quantity: number): void => {
 		this.model.addItem(name, quantity);
 	};
 
@@ -127,21 +127,21 @@ export class InventoryList extends DataObject implements IInventoryList, IMigrat
 	 * hasInitialized is run by each client as they load the DataObject.  Here we use it to set up usage of the
 	 * DataObject, by registering an event listener for changes to the inventory list.
 	 */
-	protected async hasInitialized() {
+	protected async hasInitialized(): Promise<void> {
 		await this.setModel();
 		// TODO: Inspect migration state and set writeOk appropriately, we may be mid-migration when loading.
 		this._writeOk = true;
 	}
 
-	private readonly onItemAdded = (item) => {
+	private readonly onItemAdded = (item: IInventoryItem): void => {
 		this.emit("itemAdded", item);
 	};
 
-	private readonly onItemDeleted = (item) => {
+	private readonly onItemDeleted = (item: IInventoryItem): void => {
 		this.emit("itemDeleted", item);
 	};
 
-	private async setModel() {
+	private async setModel(): Promise<void> {
 		// On initial load the _model is unset.  But when migrating we need to unregister listeners from the old model.
 		this._model?.off("itemAdded", this.onItemAdded);
 		this._model?.off("itemDeleted", this.onItemDeleted);
@@ -173,7 +173,7 @@ export class InventoryList extends DataObject implements IInventoryList, IMigrat
 	}
 
 	// This might normally be kicked off by some heuristic or network trigger to decide when to do the migration.
-	private async performMigration() {
+	private async performMigration(): Promise<void> {
 		// Do nothing if already migrated.
 		if (this.isMigrated()) {
 			return;
@@ -194,7 +194,7 @@ export class InventoryList extends DataObject implements IInventoryList, IMigrat
 
 	// For this demo we'll just expose the ability to trigger the migration through DEBUG, this method is sync
 	// to make it easy to hook up to a debug button.
-	private readonly triggerMigration = () => {
+	private readonly triggerMigration = (): void => {
 		// Do nothing if already migrated.
 		if (this.isMigrated()) {
 			return;

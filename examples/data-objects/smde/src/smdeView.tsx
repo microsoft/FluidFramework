@@ -11,7 +11,7 @@ import {
 	ReferenceType,
 	TextSegment,
 } from "@fluidframework/sequence/legacy";
-import React, { useEffect, useRef } from "react";
+import { type FC, useEffect, useRef } from "react";
 import SimpleMDE from "simplemde";
 
 import { SmdeDataObject } from "./smde.js";
@@ -27,6 +27,7 @@ class SmdeView {
 
 	public render(elm: HTMLElement): void {
 		// Create base textarea
+		// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- using ??= could change behavior if value is falsy
 		if (!this.textArea) {
 			this.textArea = document.createElement("textarea");
 		}
@@ -42,7 +43,7 @@ class SmdeView {
 		}
 	}
 
-	private setupEditor() {
+	private setupEditor(): void {
 		const smde = new SimpleMDE({ element: this.textArea });
 		this.smde = smde;
 
@@ -135,7 +136,7 @@ export interface ISmdeReactViewProps {
 /**
  * A React view that may be applied to an SmdeDataObject to render it and allow editing.
  */
-export const SmdeReactView: React.FC<ISmdeReactViewProps> = (props: ISmdeReactViewProps) => {
+export const SmdeReactView: FC<ISmdeReactViewProps> = (props: ISmdeReactViewProps) => {
 	const { smdeDataObject } = props;
 	const htmlView = useRef<SmdeView>(new SmdeView(smdeDataObject));
 	const divRef = useRef<HTMLDivElement>(null);

@@ -23,15 +23,15 @@ import {
 	type TreeChunk,
 	tryGetChunk,
 	type SchemaAndPolicy,
+	type SchemaPolicy,
 } from "../../core/index.js";
 import { getOrCreate } from "../../util/index.js";
-import type { FullSchemaPolicy } from "../modular-schema/index.js";
 import { isStableNodeIdentifier } from "../node-identifier/index.js";
 
 import { BasicChunk } from "./basicChunk.js";
+import type { IncrementalEncodingPolicy } from "./codec/index.js";
 import { SequenceChunk } from "./sequenceChunk.js";
 import { type FieldShape, TreeShape, UniformChunk } from "./uniformChunk.js";
-import type { IncrementalEncodingPolicy } from "./codec/index.js";
 
 export interface Disposable {
 	/**
@@ -44,7 +44,7 @@ export interface Disposable {
  */
 export function makeTreeChunker(
 	schema: TreeStoredSchemaSubscription,
-	policy: FullSchemaPolicy,
+	policy: SchemaPolicy,
 	shouldEncodeIncrementally: IncrementalEncodingPolicy,
 ): IChunker {
 	return new Chunker(
@@ -113,7 +113,7 @@ export class Chunker implements IChunker {
 
 	public constructor(
 		public readonly schema: TreeStoredSchemaSubscription,
-		public readonly policy: FullSchemaPolicy,
+		public readonly policy: SchemaPolicy,
 		public readonly sequenceChunkSplitThreshold: number,
 		public readonly sequenceChunkInlineThreshold: number,
 		public readonly uniformChunkNodeCount: number,
@@ -424,8 +424,8 @@ export interface ChunkCompressor {
 	/**
 	 * If the idCompressor is provided, {@link UniformChunk}s with identifiers will be encoded for its in-memory representation.
 	 * @remarks
-	 * This compression applies to {@link UniformChunk}s when {@link TreeShape.maybeDecompressedStringAsNumber} is set.
-	 * If the `policy` does not use UniformChunks or does not set `maybeDecompressedStringAsNumber`, then no compression will be applied even when providing `idCompressor`.
+	 * This compression applies to {@link UniformChunk}s when {@link TreeShape.mayContainCompressedIds} is set.
+	 * If the `policy` does not use UniformChunks or does not set `mayContainCompressedIds`, then no compression will be applied even when providing `idCompressor`.
 	 */
 	readonly idCompressor: IIdCompressor | undefined;
 }
@@ -583,6 +583,7 @@ export function insertValues(
 	// Slow path: walk shape and cursor together, inserting values.
 	if (shape.hasValue) {
 		if (
+			shape.mayContainCompressedIds &&
 			typeof cursor.value === "string" &&
 			idCompressor !== undefined &&
 			isStableNodeIdentifier(cursor.value)

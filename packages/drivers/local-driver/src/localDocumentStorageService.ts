@@ -10,25 +10,25 @@ import {
 	stringToBuffer,
 } from "@fluid-internal/client-utils";
 import { assert } from "@fluidframework/core-utils/internal";
-import { ISummaryHandle, ISummaryTree } from "@fluidframework/driver-definitions";
-import {
+import type { ISummaryHandle, ISummaryTree } from "@fluidframework/driver-definitions";
+import type {
+	ICreateBlobResponse,
 	IDocumentStorageService,
 	IDocumentStorageServicePolicies,
 	IResolvedUrl,
-	type ISnapshot,
-	type ISnapshotFetchOptions,
-	ISummaryContext,
-	ICreateBlobResponse,
+	ISnapshot,
+	ISnapshotFetchOptions,
 	ISnapshotTreeEx,
+	ISummaryContext,
 	IVersion,
 } from "@fluidframework/driver-definitions/internal";
 import { buildGitTreeHierarchy } from "@fluidframework/protocol-base";
-import { ILocalDeltaConnectionServer } from "@fluidframework/server-local-server";
-import {
+import type { ILocalDeltaConnectionServer } from "@fluidframework/server-local-server";
+import type {
 	GitManager,
 	ISummaryUploadManager,
-	SummaryTreeUploadManager,
 } from "@fluidframework/server-services-client";
+import { SummaryTreeUploadManager } from "@fluidframework/server-services-client";
 
 import { createDocument } from "./localCreateDocument.js";
 
@@ -57,6 +57,7 @@ export class LocalDocumentStorageService implements IDocumentStorageService {
 	}
 
 	public async getVersions(versionId: string | null, count: number): Promise<IVersion[]> {
+		// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- using ?? could change behavior for falsy values
 		const id = versionId ? versionId : this.id;
 		const commits = await this.manager.getCommits(id, count);
 		return commits.map((commit) => ({
@@ -145,7 +146,7 @@ export class LocalDocumentStorageService implements IDocumentStorageService {
 		tree: ISnapshotTreeEx,
 		loadingGroupIds: Set<string>,
 		blobContents: Map<string, ArrayBuffer>,
-	) {
+	): Promise<void> {
 		const groupId = await this.readGroupId(tree);
 		if (groupId === undefined || loadingGroupIds.has(groupId)) {
 			for (const id of Object.values(tree.blobs)) {
@@ -217,7 +218,7 @@ export class LocalDocumentStorageService implements IDocumentStorageService {
 				);
 			}),
 		);
-		const isAncestorOfDescendantsWithGroupId = descendants.some((keep) => keep);
+		const isAncestorOfDescendantsWithGroupId = descendants.some(Boolean);
 
 		// We don't want to return prematurely as we still may have children that we want to keep.
 		if (
@@ -264,7 +265,7 @@ export class LocalDocumentStorageService implements IDocumentStorageService {
 		);
 	}
 
-	private stripTree(tree: ISnapshotTreeEx, groupId: string | undefined) {
+	private stripTree(tree: ISnapshotTreeEx, groupId: string | undefined): void {
 		tree.blobs = {};
 		tree.groupId = groupId;
 		tree.trees = {};

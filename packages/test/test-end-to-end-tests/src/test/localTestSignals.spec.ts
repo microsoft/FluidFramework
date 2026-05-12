@@ -56,7 +56,9 @@ async function timeoutPromise<T = void>(
 		timeoutOptions,
 	);
 }
-async function waitForSignal(...signallers: { once(e: "signal", l: () => void): void }[]) {
+async function waitForSignal(
+	...signallers: { once(e: "signal", l: () => void): void }[]
+): Promise<void[]> {
 	return Promise.all(
 		signallers.map(async (signaller, index) =>
 			timeoutPromise(({ resolve }) => signaller.once("signal", () => resolve()), {
@@ -299,7 +301,7 @@ describeCompat("Targeted Signals", "NoCompat", (getTestObjectProvider) => {
 	async function sendAndVerifySignalToTargetClient(
 		runtime: RuntimeLayer,
 		targetOffset: 0 | 1,
-	) {
+	): Promise<void> {
 		const accumulatedFailures: unknown[] = [];
 		clients.forEach((client) => {
 			client[runtime].on("signal", (message: IInboundSignalMessage, local: boolean) => {
@@ -363,17 +365,17 @@ describeCompat("Targeted Signals", "NoCompat", (getTestObjectProvider) => {
 		});
 	}
 
-	async function sendAndVerifySignalToRemoteClient(runtime: RuntimeLayer) {
+	async function sendAndVerifySignalToRemoteClient(runtime: RuntimeLayer): Promise<void> {
 		return sendAndVerifySignalToTargetClient(runtime, 1);
 	}
-	async function sendAndVerifySignalToSelf(runtime: RuntimeLayer) {
+	async function sendAndVerifySignalToSelf(runtime: RuntimeLayer): Promise<void> {
 		return sendAndVerifySignalToTargetClient(runtime, 0);
 	}
 
 	function assertSignalProperties(
 		message: IInboundSignalMessage,
 		clientId: string | undefined,
-	) {
+	): void {
 		assert.equal(message.type, "Test Signal Type", "signal type mismatch");
 		assert.equal(message.content, "Test Signal Content", "signal content mismatch");
 		assert.equal(message.targetClientId, clientId, "Signal should be targeted to this client");

@@ -4,7 +4,6 @@
  */
 
 export type {
-	EntryPoint,
 	IDiceRoller,
 	IDiceRollerEvents,
 } from "./diceRoller/index.js";

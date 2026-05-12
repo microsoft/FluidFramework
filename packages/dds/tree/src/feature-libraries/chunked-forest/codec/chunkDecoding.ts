@@ -37,18 +37,21 @@ import {
 	decode as genericDecode,
 	readStreamIdentifier,
 } from "./chunkDecodingGeneric.js";
+import type { IncrementalDecoder } from "./codecs.js";
 import {
 	type EncodedAnyShape,
-	type EncodedChunkShape,
-	type EncodedFieldBatch,
+	type EncodedChunkShapeV1OrV2,
+	type EncodedChunkShapeV2,
+	type EncodedFieldBatchV1OrV2,
+	type EncodedFieldBatchV2,
 	type EncodedIncrementalChunkShape,
 	type EncodedInlineArrayShape,
 	type EncodedNestedArrayShape,
 	type EncodedNodeShape,
 	type EncodedValueShape,
 	SpecialField,
-} from "./format.js";
-import type { IncrementalDecoder } from "./codecs.js";
+	supportsIncrementalEncoding,
+} from "./format/index.js";
 
 export interface IdDecodingContext {
 	idCompressor: IIdCompressor;
@@ -61,7 +64,7 @@ export interface IdDecodingContext {
  * Decode `chunk` into a TreeChunk.
  */
 export function decode(
-	chunk: EncodedFieldBatch,
+	chunk: EncodedFieldBatchV1OrV2,
 	idDecodingContext: { idCompressor: IIdCompressor; originatorId: SessionId },
 	incrementalDecoder?: IncrementalDecoder,
 ): TreeChunk[] {
@@ -74,8 +77,8 @@ export function decode(
 }
 
 const decoderLibrary = new DiscriminatedUnionDispatcher<
-	EncodedChunkShape,
-	[context: DecoderContext<EncodedChunkShape>],
+	EncodedChunkShapeV1OrV2,
+	[context: DecoderContext<EncodedChunkShapeV1OrV2>],
 	ChunkDecoder
 >({
 	a(shape: EncodedNestedArrayShape, context): ChunkDecoder {
@@ -90,8 +93,11 @@ const decoderLibrary = new DiscriminatedUnionDispatcher<
 	d(shape: EncodedAnyShape): ChunkDecoder {
 		return anyDecoder;
 	},
-	e(shape: EncodedIncrementalChunkShape, cache): ChunkDecoder {
-		return new IncrementalChunkDecoder(cache);
+	e(
+		shape: EncodedIncrementalChunkShape,
+		context: DecoderContext<EncodedChunkShapeV2>,
+	): ChunkDecoder {
+		return new IncrementalChunkDecoder(context);
 	},
 });
 
@@ -176,12 +182,15 @@ export function deaggregateChunks(chunk: TreeChunk): TreeChunk[] {
 export function aggregateChunks(input: TreeChunk[]): TreeChunk {
 	const chunks = input.flatMap(deaggregateChunks);
 	switch (chunks.length) {
-		case 0:
+		case 0: {
 			return emptyChunk;
-		case 1:
+		}
+		case 1: {
 			return chunks[0] ?? oob();
-		default:
+		}
+		default: {
 			return new SequenceChunk(chunks);
+		}
 	}
 }
 
@@ -238,14 +247,18 @@ export class InlineArrayDecoder implements ChunkDecoder {
  * Decoder for {@link EncodedIncrementalChunkShape}s.
  */
 export class IncrementalChunkDecoder implements ChunkDecoder {
-	public constructor(private readonly context: DecoderContext<EncodedChunkShape>) {}
+	public constructor(private readonly context: DecoderContext<EncodedChunkShapeV2>) {}
 	public decode(_: readonly ChunkDecoder[], stream: StreamCursor): TreeChunk {
 		assert(
 			this.context.incrementalDecoder !== undefined,
 			0xc27 /* incremental decoder not available for incremental field decoding */,
 		);
 
-		const chunkDecoder = (batch: EncodedFieldBatch): TreeChunk => {
+		const chunkDecoder = (batch: EncodedFieldBatchV2): TreeChunk => {
+			assert(
+				supportsIncrementalEncoding(batch.version),
+				0xc9f /* Unsupported FieldBatchFormatVersion for incremental chunks; must be v2 or higher */,
+			);
 			const context = new DecoderContext(
 				batch.identifiers,
 				batch.shapes,
@@ -284,10 +297,10 @@ type BasicFieldDecoder = (
 ) => [FieldKey, TreeChunk];
 
 /**
- * Get a decoder for fields of a provided (via `shape` and `context`) {@link EncodedChunkShape}.
+ * Get a decoder for fields of a provided (via `shape` and `context`).
  */
 function fieldDecoder(
-	context: DecoderContext<EncodedChunkShape>,
+	context: DecoderContext<EncodedChunkShapeV1OrV2>,
 	key: FieldKey,
 	shape: number,
 ): BasicFieldDecoder {
@@ -306,7 +319,7 @@ export class NodeDecoder implements ChunkDecoder {
 	private readonly fieldDecoders: readonly BasicFieldDecoder[];
 	public constructor(
 		private readonly shape: EncodedNodeShape,
-		private readonly context: DecoderContext<EncodedChunkShape>,
+		private readonly context: DecoderContext<EncodedChunkShapeV1OrV2>,
 	) {
 		this.type = shape.type === undefined ? undefined : context.identifier(shape.type);
 
@@ -331,7 +344,7 @@ export class NodeDecoder implements ChunkDecoder {
 			// consider keeping array chunks here if they are longer than some threshold.
 			const chunks = deaggregateChunks(data);
 
-			if (chunks.length !== 0) {
+			if (chunks.length > 0) {
 				fields.set(key, chunks);
 			}
 		}

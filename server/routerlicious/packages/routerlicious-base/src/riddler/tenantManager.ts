@@ -533,7 +533,7 @@ export class TenantManager {
 		);
 
 		const tenant = await this.getTenant(id);
-		// eslint-disable-next-line import/namespace
+		// eslint-disable-next-line import-x/namespace
 		return _.extend(tenant, {
 			key: tenantKeys?.key1,
 			secondaryKey: tenantKeys?.key2,

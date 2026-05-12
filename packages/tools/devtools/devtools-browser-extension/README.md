@@ -99,7 +99,7 @@ To run the automated end-to-end tests, run `npm run test:jest` in a terminal fro
 
 To use a local build of this extension in your browser:
 
-1. Build this package and its dependencies.
+1. Build webpack of this package using `npm run build:webpack`.
    Your extension files should be generated under the build output directory (`dist/bundle`) in this package directory.
 2. Load the unpacked extension in the browser by following [these instructions](https://developer.chrome.com/docs/extensions/mv3/getstarted/development-basics/#load-unpacked).
     - For [Windows Subsystem for Linux (WSL)](https://learn.microsoft.com/en-us/windows/wsl/about) users, your Linux files should be at a \\wsl$ path.

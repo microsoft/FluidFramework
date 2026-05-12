@@ -30,7 +30,6 @@ import {
 	type TokenFetcher,
 } from "@fluidframework/odsp-driver-definitions/internal";
 import { PerformanceEvent, createChildLogger } from "@fluidframework/telemetry-utils/internal";
-
 import { v4 as uuid } from "uuid";
 
 import { useCreateNewModule } from "./createFile/index.js";

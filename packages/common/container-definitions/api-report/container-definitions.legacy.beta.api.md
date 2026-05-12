@@ -81,6 +81,7 @@ export const ContainerErrorTypes: {
     readonly dataCorruptionError: "dataCorruptionError";
     readonly dataProcessingError: "dataProcessingError";
     readonly usageError: "usageError";
+    readonly layerIncompatibilityError: "layerIncompatibilityError";
 };
 
 // @beta @legacy
@@ -182,13 +183,11 @@ export interface IContainerContext {
     readonly clientDetails: IClientDetails;
     // (undocumented)
     readonly clientId: string | undefined;
-    // (undocumented)
     readonly closeFn: (error?: ICriticalContainerError) => void;
     // (undocumented)
     readonly connected: boolean;
     // (undocumented)
     readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
-    // (undocumented)
     readonly disposeFn?: (error?: ICriticalContainerError) => void;
     getAbsoluteUrl?(relativeUrl: string): Promise<string | undefined>;
     readonly getConnectionState?: () => ConnectionState;
@@ -462,6 +461,7 @@ export interface IProvideRuntimeFactory {
 
 // @beta @legacy
 export interface IRuntime extends IDisposable {
+    close?(): void;
     createSummary(blobRedirectTable?: Map<string, string>): ISummaryTree;
     getEntryPoint(): Promise<FluidObject>;
     getPendingLocalState(props?: IGetPendingLocalStateProps): unknown;

@@ -72,22 +72,6 @@ export enum FlushMode {
 }
 
 /**
- * @internal
- */
-export enum FlushModeExperimental {
-	/**
-	 * When in Async flush mode, the runtime will accumulate all operations across JS turns and send them as a single
-	 * batch when all micro-tasks are complete.
-	 *
-	 * This feature requires a version of the loader which supports reference sequence numbers. If an older version of
-	 * the loader is used, the runtime will fall back on FlushMode.TurnBased.
-	 *
-	 * @experimental Not ready for use
-	 */
-	Async = 2,
-}
-
-/**
  * This tells the visibility state of a Fluid object. It basically tracks whether the object is not visible, visible
  * locally within the container only or visible globally to all clients.
  * @legacy @beta
@@ -148,6 +132,17 @@ export interface IContainerRuntimeBaseEvents extends IEvent {
 	(event: "op", listener: (op: ISequencedDocumentMessage, runtimeMessage?: boolean) => void);
 	(event: "signal", listener: (message: IInboundSignalMessage, local: boolean) => void);
 	(event: "dispose", listener: () => void);
+	/**
+	 * Fires when the container runtime enters or exits staging mode.
+	 * @param stagingModeInfo - An object describing the staging mode state.
+	 * If `inStagingMode` is true, the runtime has entered staging mode.
+	 * If false, it has exited staging mode, and `commit` indicates whether changes were committed or discarded.
+	 *
+	 * @remarks
+	 * This event is not emitted when the container is disposed while in staging mode.
+	 * If the container is disposed, staged changes are silently dropped.
+	 */
+	(event: "stagingModeChanged", listener: (stagingModeInfo: StagingModeChangedEvent) => void);
 }
 
 /**
@@ -194,6 +189,35 @@ export interface IDataStore {
 	 * with it.
 	 */
 	readonly entryPoint: IFluidHandleInternal<FluidObject>;
+}
+
+/**
+ * Controls for managing staged changes in staging mode.
+ *
+ * Provides methods to either commit or discard changes made while in staging mode.
+ *
+ * @see {@link IContainerRuntimeBase.enterStagingMode}
+ *
+ * @legacy @beta
+ * @sealed
+ */
+export interface StageControls {
+	/**
+	 * Exit staging mode and commit to any changes made while in staging mode.
+	 * This will cause them to be sent to the ordering service, and subsequent changes
+	 * made by this container will additionally flow freely to the ordering service.
+	 *
+	 * @remarks
+	 * Squash-rebase semantics during commit are not yet fully specified.
+	 */
+	readonly commitChanges: () => void;
+	/**
+	 * Exit staging mode and discard any changes made while in staging mode.
+	 *
+	 * @remarks
+	 * DDS rollback support may be incomplete — this may throw for some DDS implementations.
+	 */
+	readonly discardChanges: () => void;
 }
 
 /**
@@ -306,6 +330,27 @@ export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeB
 		loadingGroupIds: string[],
 		pathParts: string[],
 	): Promise<{ snapshotTree: ISnapshotTree; sequenceNumber: number }>;
+
+	/**
+	 * Enter Staging Mode, such that ops submitted to the ContainerRuntime will not be sent to the ordering service.
+	 * To exit Staging Mode, call either discardChanges or commitChanges on the Stage Controls returned from this method.
+	 *
+	 * @remarks
+	 * Known limitations:
+	 * - DDS rollback support may be incomplete — {@link StageControls.discardChanges} may throw for some DDS implementations.
+	 * - Squash-rebase semantics during {@link StageControls.commitChanges} are not yet fully specified.
+	 *
+	 * @returns Controls for committing or discarding staged changes.
+	 */
+	enterStagingMode(): StageControls;
+
+	/**
+	 * If true, the ContainerRuntime is not submitting any new ops to the ordering service.
+	 * Ops submitted to the ContainerRuntime while in Staging Mode will be queued in the PendingStateManager,
+	 * either to be discarded or committed later (via the Stage Controls returned from enterStagingMode).
+	 * @see {@link IContainerRuntimeBase.enterStagingMode}
+	 */
+	readonly inStagingMode: boolean;
 }
 
 /**
@@ -319,11 +364,17 @@ export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeB
  */
 export interface IFluidDataStorePolicies {
 	/**
-	 * When set to true, data stores will appear to be readonly while in staging mode.
+	 * When set to true, the data store will appear readonly while in staging mode.
 	 *
 	 * @remarks
-	 * This policy is useful for data stores that do not support staging mode, such as those using consensus DDS.
-	 * It ensures that the data store appears readonly during staging mode to discourage unsupported operations.
+	 * In staging mode, operations are held locally until committed, so consensus-based operations
+	 * (e.g., `ConsensusRegisterCollection`, `ConsensusQueue`, `TaskManager`) won't resolve their promises until
+	 * staging mode exits. Set this to `true` for data stores that depend on consensus acknowledgments
+	 * to prevent modifications that would leave the data store in an unresponsive state.
+	 *
+	 * This provides a best-effort readonly appearance, but no strict enforcement.
+	 *
+	 * @see {@link IContainerRuntimeBase.enterStagingMode}
 	 */
 	readonly readonlyInStagingMode: boolean;
 }
@@ -427,7 +478,7 @@ export interface IFluidDataStoreChannel extends IDisposable {
 	 * See remarks about squashing contract on `CommitStagedChangesOptionsExperimental`.
 	 */
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO (#28746): breaking change
-	reSubmit(type: string, content: any, localOpMetadata: unknown, squash?: boolean): void;
+	reSubmit(type: string, content: any, localOpMetadata: unknown, squash: boolean): void;
 
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO (#28746): breaking change
 	applyStashedOp(content: any): Promise<unknown>;
@@ -451,6 +502,19 @@ export interface IFluidDataStoreChannel extends IDisposable {
 
 	setAttachState(attachState: AttachState.Attaching | AttachState.Attached): void;
 }
+
+/**
+ * Describes a staging mode transition on the container runtime.
+ * - `{ inStagingMode: true }` — the runtime has entered staging mode.
+ *
+ * - `{ inStagingMode: false, commit: boolean }` — the runtime has exited staging mode.
+ * `commit` is `true` when staged changes were committed (not discarded), or `false` when they were discarded.
+ *
+ * @legacy @beta
+ */
+export type StagingModeChangedEvent =
+	| { readonly inStagingMode: true }
+	| { readonly inStagingMode: false; readonly commit: boolean };
 
 /**
  * @legacy @beta
@@ -487,6 +551,7 @@ export interface IPendingMessagesState {
  * partially implemented by ContainerRuntime to provide context to the ChannelCollection.
  *
  * @legacy @beta
+ * @sealed
  */
 export interface IFluidParentContext
 	extends IProvideFluidHandleContext,
@@ -505,7 +570,7 @@ export interface IFluidParentContext
 	 * Consumed by {@link @fluidframework/container-runtime#FluidDataStoreContext}.
 	 * See {@link @fluidframework/container-runtime#LoadContainerRuntimeParams.minVersionForCollab} for more details.
 	 */
-	readonly minVersionForCollab?: MinimumVersionForCollab;
+	readonly minVersionForCollab: MinimumVersionForCollab;
 	readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
 	readonly storage: IRuntimeStorageService;
 	readonly baseLogger: ITelemetryBaseLogger;
@@ -635,6 +700,7 @@ export type PackagePath = readonly string[];
  * This context is provided to the implementation of {@link IFluidDataStoreChannel} which powers the datastore.
  *
  * @legacy @beta
+ * @sealed
  */
 export interface IFluidDataStoreContext extends IFluidParentContext {
 	readonly id: string;
@@ -710,6 +776,7 @@ export interface FluidDataStoreContextInternal
 
 /**
  * @legacy @beta
+ * @sealed
  */
 export interface IFluidDataStoreContextDetached extends IFluidDataStoreContext {
 	/**

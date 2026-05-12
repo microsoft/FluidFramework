@@ -111,9 +111,8 @@ async function initializeFluidOfficeOrOneNote(
 	urlSource: URL,
 ): Promise<IOdspUrlParts | undefined> {
 	const pathname = urlSource.pathname;
-	const siteDriveItemMatch = pathname.match(
-		/\/(p|preview|meetingnotes|notes)\/([^/]*)\/([^/]*)\/([^/]*)/,
-	);
+	const siteDriveItemMatch =
+		/\/(p|preview|meetingnotes|notes)\/([^/]*)\/([^/]*)\/([^/]*)/.exec(pathname);
 	if (siteDriveItemMatch === null) {
 		return undefined;
 	}

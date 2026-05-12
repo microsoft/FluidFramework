@@ -1,0 +1,11 @@
+{
+	"$schema": "../../../../../../node_modules/@biomejs/biome/configuration_schema.json",
+	"extends": ["./base-formatter.jsonc", "./base-linter.jsonc"],
+	"root": true,
+	"files": {
+		"includes": ["src/**"]
+	},
+	"formatter": {
+		"lineWidth": 80
+	}
+}

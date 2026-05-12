@@ -3,13 +3,12 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable import-x/order */
-// Driver API
+import { promises as fs } from "node:fs";
+import * as path from "node:path";
+
 import * as sequenceDeprecated from "@fluid-experimental/sequence-deprecated";
 import { SparseMatrix } from "@fluid-experimental/sequence-deprecated";
 import { DriverApi } from "@fluid-private/test-drivers";
-
-// Loader API
 import * as agentScheduler from "@fluidframework/agent-scheduler/internal";
 import {
 	BaseContainerRuntimeFactory,
@@ -20,16 +19,12 @@ import {
 import * as cell from "@fluidframework/cell/internal";
 import { SharedCell } from "@fluidframework/cell/internal";
 import { Loader } from "@fluidframework/container-loader/internal";
-
-// ContainerRuntime API
 import { ContainerRuntime } from "@fluidframework/container-runtime/internal";
-
-// Data Runtime API
 import * as counter from "@fluidframework/counter/internal";
 import { SharedCounter } from "@fluidframework/counter/internal";
-import { SharedArray, SharedSignal } from "@fluidframework/legacy-dds/internal";
 import * as datastore from "@fluidframework/datastore/internal";
 import { FluidDataStoreRuntime } from "@fluidframework/datastore/internal";
+import { SharedArray, SharedSignal } from "@fluidframework/legacy-dds/internal";
 import * as map from "@fluidframework/map/internal";
 import { SharedDirectory, SharedMap } from "@fluidframework/map/internal";
 import * as matrix from "@fluidframework/matrix/internal";
@@ -40,48 +35,33 @@ import * as registerCollection from "@fluidframework/register-collection/interna
 import { ConsensusRegisterCollection } from "@fluidframework/register-collection/internal";
 import * as sequence from "@fluidframework/sequence/internal";
 import { SharedString } from "@fluidframework/sequence/internal";
-import { TestFluidObjectFactory } from "@fluidframework/test-utils/internal";
-
-// ContainerRuntime and Data Runtime API
-import * as semver from "semver";
-
 // TypeScript generates incorrect imports in the d.ts file if this is not included.
 import { ISharedObjectKind } from "@fluidframework/shared-object-base/internal";
+import { TestFluidObjectFactory } from "@fluidframework/test-utils/internal";
+import * as treeCurrent from "@fluidframework/tree/internal";
+import { SharedTree } from "@fluidframework/tree/internal";
+import * as semver from "semver";
 
 // Since this project has a TypeScript configuration which errors on unused imports and types, to avoid the above import causing a compile error, a dummy usage is included.
 // For this to avoid a compile error, it also has to be used somehow: exporting it is the simplest way to "use" it.
 export type _fakeUsage = ISharedObjectKind<unknown>;
 
+import { CompatKind } from "./compatOptions.js";
+import {
+	containerRuntimePackageEntries,
+	dataRuntimePackageEntries,
+	driverPackageEntries,
+	loaderPackageEntries,
+} from "./compatPackageList.js";
+export type { PackageToInstall } from "./compatPackageList.js";
+import type { PackageToInstall } from "./compatPackageList.js";
 import { pkgVersion } from "./packageVersion.js";
 import {
 	checkInstalled,
-	ensureInstalled,
 	getRequestedVersion,
 	loadPackage,
 	versionHasMovedSparsedMatrix,
 } from "./versionUtils.js";
-
-/* eslint-enable import-x/order */
-
-// List of package that needs to be install for legacy versions
-const packageList = [
-	"@fluidframework/aqueduct",
-	"@fluidframework/datastore",
-	"@fluidframework/test-utils",
-	"@fluidframework/container-loader",
-	"@fluidframework/container-runtime",
-	"@fluidframework/cell",
-	"@fluidframework/counter",
-	"@fluidframework/map",
-	"@fluidframework/matrix",
-	"@fluidframework/ordered-collection",
-	"@fluidframework/register-collection",
-	"@fluidframework/sequence",
-	"@fluidframework/local-driver",
-	"@fluidframework/odsp-driver",
-	"@fluidframework/routerlicious-driver",
-	"@fluidframework/agent-scheduler",
-];
 
 /**
  * @internal
@@ -92,29 +72,34 @@ export interface InstalledPackage {
 }
 
 /**
+ * Loads all layer APIs for the requested version. The compat workspace is expected to be
+ * pre-installed via `pnpm install` (through the package `postinstall` hook).
+ *
+ * @returns
+ * A promise that resolves when the requested version is loaded and can be accessed synchronously
+ * using the getters for each layer's API (e.g. `getLoaderApi`)
+ *
  * @internal
  */
-export const ensurePackageInstalled = async (
+export const ensureVersionLoaded = async (
 	baseVersion: string,
 	version: number | string,
-	force: boolean,
-): Promise<InstalledPackage | undefined> => {
-	const pkg = await ensureInstalled(
-		getRequestedVersion(baseVersion, version),
-		packageList,
-		force,
-	);
+): Promise<void> => {
+	const requestedStr = getRequestedVersion(baseVersion, version);
+	if (semver.satisfies(pkgVersion, requestedStr)) {
+		return;
+	}
+
 	await Promise.all([
 		loadContainerRuntime(baseVersion, version),
 		loadDataRuntime(baseVersion, version),
 		loadLoader(baseVersion, version),
 		loadDriver(baseVersion, version),
 	]);
-	return pkg;
 };
 
-// This module supports synchronous functions to import packages once their install has been completed.
-// Since dynamic import is async, we thus cache the modules based on their package version.
+// This module supports synchronous functions to import packages once their install has been
+// completed. Since dynamic import is async, we cache the modules by package version.
 const loaderCache = new Map<string, typeof LoaderApi>();
 const containerRuntimeCache = new Map<string, typeof ContainerRuntimeApi>();
 const dataRuntimeCache = new Map<string, typeof DataRuntimeApi>();
@@ -153,7 +138,6 @@ export const DataRuntimeApi = {
 	DataObjectFactory,
 	FluidDataStoreRuntime,
 	TestFluidObjectFactory,
-	// TODO: SharedTree is not included included here. Perhaps it should be added?
 	dds: {
 		SharedCell,
 		SharedCounter,
@@ -166,6 +150,7 @@ export const DataRuntimeApi = {
 		SparseMatrix,
 		SharedArray,
 		SharedSignal,
+		SharedTree,
 	},
 	/**
 	 * Contains all APIs from imported DDS packages.
@@ -187,10 +172,49 @@ export const DataRuntimeApi = {
 		sequence,
 		sequenceDeprecated,
 		agentScheduler,
+		tree: treeCurrent,
 	},
 };
 
 // #endregion
+
+/**
+ * Helper to load a package if the requested version is compatible.
+ * @param pkgEntry - The package entry to check and load.
+ * @param versionToInstall - The version of the package to install.
+ * @param modulePath - The path to the module.
+ * @returns The loaded package or undefined if not compatible.
+ */
+async function loadIfCompatible(
+	pkgEntry: PackageToInstall,
+	versionToInstall: string,
+	modulePath: string,
+): Promise<any> {
+	// Check if the requested version satisfies the minVersion requirement
+	if (semver.gte(versionToInstall, pkgEntry.minVersion)) {
+		return loadPackage(modulePath, pkgEntry.pkgName, pkgEntry.preferredEntrypoint);
+	}
+	return undefined;
+}
+
+/**
+ * Helper to load multiple packages if their requested versions are compatible.
+ * @param packageEntries - The package entries to check and load.
+ * @param version - The version of the packages to install.
+ * @param modulePath - The path to the module.
+ * @returns An object containing the loaded packages.
+ */
+async function loadPackages(
+	packageEntries: PackageToInstall[],
+	version: string,
+	modulePath: string,
+): Promise<any> {
+	const loadedPackages = {};
+	for (const pkgEntry of packageEntries) {
+		loadedPackages[pkgEntry.pkgName] = await loadIfCompatible(pkgEntry, version, modulePath);
+	}
+	return loadedPackages;
+}
 
 async function loadLoader(baseVersion: string, requested?: number | string): Promise<void> {
 	const requestedStr = getRequestedVersion(baseVersion, requested);
@@ -200,9 +224,10 @@ async function loadLoader(baseVersion: string, requested?: number | string): Pro
 
 	const { version, modulePath } = checkInstalled(requestedStr);
 	if (!loaderCache.has(version)) {
-		const loader = {
+		const loadedPackages = await loadPackages(loaderPackageEntries, version, modulePath);
+		const loader: typeof LoaderApi = {
 			version,
-			Loader: (await loadPackage(modulePath, "@fluidframework/container-loader")).Loader,
+			Loader: loadedPackages["@fluidframework/container-loader"].Loader,
 		};
 		loaderCache.set(version, loader);
 	}
@@ -219,10 +244,14 @@ async function loadContainerRuntime(
 
 	const { version, modulePath } = checkInstalled(requestedStr);
 	if (!containerRuntimeCache.has(version)) {
-		const [containerRuntimePkg, aqueductPkg] = await Promise.all([
-			loadPackage(modulePath, "@fluidframework/container-runtime"),
-			loadPackage(modulePath, "@fluidframework/aqueduct"),
-		]);
+		const loadedPackages = await loadPackages(
+			containerRuntimePackageEntries,
+			version,
+			modulePath,
+		);
+
+		const aqueductPkg = loadedPackages["@fluidframework/aqueduct"];
+		const containerRuntimePkg = loadedPackages["@fluidframework/container-runtime"];
 
 		/* eslint-disable @typescript-eslint/no-shadow */
 		const { ContainerRuntime } = containerRuntimePkg;
@@ -230,7 +259,7 @@ async function loadContainerRuntime(
 			aqueductPkg;
 		/* eslint-enable @typescript-eslint/no-shadow */
 
-		const containerRuntime = {
+		const containerRuntime: typeof ContainerRuntimeApi = {
 			version,
 			BaseContainerRuntimeFactory,
 			ContainerRuntime,
@@ -251,67 +280,51 @@ async function loadDataRuntime(
 	const { version, modulePath } = checkInstalled(requestedStr);
 	if (!dataRuntimeCache.has(version)) {
 		/* eslint-disable @typescript-eslint/no-shadow */
-		const [
-			{ DataObject, DataObjectFactory },
-			datastore,
-			{ TestFluidObjectFactory },
-			map,
-			sequence,
-			cell,
-			counter,
-			matrix,
-			orderedCollection,
-			registerCollection,
-			sequenceDeprecated,
-			agentScheduler,
-		] = await Promise.all([
-			loadPackage(modulePath, "@fluidframework/aqueduct"),
-			loadPackage(modulePath, "@fluidframework/datastore"),
-			loadPackage(modulePath, "@fluidframework/test-utils"),
-			loadPackage(modulePath, "@fluidframework/map"),
-			loadPackage(modulePath, "@fluidframework/sequence"),
-			loadPackage(modulePath, "@fluidframework/cell"),
-			loadPackage(modulePath, "@fluidframework/counter"),
-			loadPackage(modulePath, "@fluidframework/matrix"),
-			loadPackage(modulePath, "@fluidframework/ordered-collection"),
-			loadPackage(modulePath, "@fluidframework/register-collection"),
-			loadPackage(
-				modulePath,
-				versionHasMovedSparsedMatrix(version)
-					? "@fluid-experimental/sequence-deprecated"
-					: "@fluidframework/sequence",
-			),
-			loadPackage(modulePath, "@fluidframework/agent-scheduler"),
-		]);
-		const { FluidDataStoreRuntime } = datastore;
-		const { SharedCell } = cell;
-		const { SharedCounter } = counter;
-		const { SharedDirectory, SharedMap } = map;
-		const { SharedMatrix } = matrix;
-		const { ConsensusQueue } = orderedCollection;
-		const { ConsensusRegisterCollection } = registerCollection;
-		const { SharedString } = sequence;
-		const { SparseMatrix } = sequenceDeprecated;
-		/* eslint-enable @typescript-eslint/no-shadow */
 
-		const dataRuntime = {
+		const loadedPackages = await loadPackages(dataRuntimePackageEntries, version, modulePath);
+
+		// Load sequenceDeprecated separately as it has special handling.
+		const sequenceDeprecated = await loadPackage(
+			modulePath,
+			versionHasMovedSparsedMatrix(version)
+				? "@fluid-experimental/sequence-deprecated"
+				: "@fluidframework/sequence",
+		);
+
+		// Destructure loaded packages
+		const aqueduct = loadedPackages["@fluidframework/aqueduct"];
+		const datastore = loadedPackages["@fluidframework/datastore"];
+		const testUtils = loadedPackages["@fluidframework/test-utils"];
+		const cell = loadedPackages["@fluidframework/cell"];
+		const counter = loadedPackages["@fluidframework/counter"];
+		const map = loadedPackages["@fluidframework/map"];
+		const matrix = loadedPackages["@fluidframework/matrix"];
+		const orderedCollection = loadedPackages["@fluidframework/ordered-collection"];
+		const registerCollection = loadedPackages["@fluidframework/register-collection"];
+		const sequence = loadedPackages["@fluidframework/sequence"];
+		const agentScheduler = loadedPackages["@fluidframework/agent-scheduler"];
+		const tree = loadedPackages["@fluidframework/tree"];
+
+		/* eslint-enable @typescript-eslint/no-shadow */
+		const dataRuntime: typeof DataRuntimeApi = {
 			version,
-			DataObject,
-			DataObjectFactory,
-			FluidDataStoreRuntime,
-			TestFluidObjectFactory,
+			DataObject: aqueduct?.DataObject,
+			DataObjectFactory: aqueduct?.DataObjectFactory,
+			FluidDataStoreRuntime: datastore?.FluidDataStoreRuntime,
+			TestFluidObjectFactory: testUtils?.TestFluidObjectFactory,
 			dds: {
-				SharedCell,
-				SharedCounter,
-				SharedDirectory,
-				SharedMap,
-				SharedMatrix,
-				ConsensusQueue,
-				ConsensusRegisterCollection,
-				SharedString,
-				SparseMatrix,
+				SharedCell: cell?.SharedCell,
+				SharedCounter: counter?.SharedCounter,
+				SharedDirectory: map?.SharedDirectory,
+				SharedMap: map?.SharedMap,
+				SharedMatrix: matrix?.SharedMatrix,
+				ConsensusQueue: orderedCollection?.ConsensusQueue,
+				ConsensusRegisterCollection: registerCollection?.ConsensusRegisterCollection,
+				SharedString: sequence?.SharedString,
+				SparseMatrix: sequenceDeprecated?.SparseMatrix,
 				SharedArray,
 				SharedSignal,
+				SharedTree: tree?.SharedTree,
 			},
 			packages: {
 				datastore,
@@ -324,6 +337,7 @@ async function loadDataRuntime(
 				registerCollection,
 				sequenceDeprecated,
 				agentScheduler,
+				tree,
 			},
 		};
 		dataRuntimeCache.set(version, dataRuntime);
@@ -338,9 +352,9 @@ async function loadDriver(baseVersion: string, requested?: number | string): Pro
 
 	const { version, modulePath } = checkInstalled(requestedStr);
 	if (!driverCache.has(version)) {
+		const loadedPackages = await loadPackages(driverPackageEntries, version, modulePath);
 		const [
 			{ LocalDocumentServiceFactory, LocalResolver, createLocalResolverCreateNewRequest },
-			{ LocalDeltaConnectionServer },
 			{
 				OdspDocumentServiceFactory,
 				OdspDriverUrlResolver,
@@ -348,12 +362,28 @@ async function loadDriver(baseVersion: string, requested?: number | string): Pro
 				createOdspUrl,
 			},
 			{ RouterliciousDocumentServiceFactory },
-		] = await Promise.all([
-			loadPackage(modulePath, "@fluidframework/local-driver"),
-			loadPackage(modulePath, "@fluidframework/server-local-server"),
-			loadPackage(modulePath, "@fluidframework/odsp-driver"),
-			loadPackage(modulePath, "@fluidframework/routerlicious-driver"),
-		]);
+		] = [
+			loadedPackages["@fluidframework/local-driver"],
+			loadedPackages["@fluidframework/odsp-driver"],
+			loadedPackages["@fluidframework/routerlicious-driver"],
+		];
+
+		// Load the "@fluidframework/server-local-server" package directly without checking for
+		// version compatibility. Server packages have different versioning from client packages.
+		// @fluidframework/server-local-server is not a direct dependency of the compat workspace,
+		// but it is a known dependency of @fluidframework/local-driver, so use that as the base path.
+		// The extra work here is done to handle the structure of pnpm's isolated node_module tree
+		// (as configured in `compat-workspaces/full/.npmrc` in this package).
+		// This pnpm blog post is a good illustration of that structure: https://pnpm.io/blog/2020/05/27/flat-node-modules-is-not-the-only-way
+		const localDriverDependenciesPath = await fs.realpath(
+			path.join(modulePath, "node_modules", "@fluidframework/local-driver"),
+		);
+		// Strip the trailing /node_modules/@fluidframework/local-driver to get to the path where server-local-server will also be available.
+		const localServerModulePath = path.join(localDriverDependenciesPath, "..", "..", "..");
+		const { LocalDeltaConnectionServer } = await loadPackage(
+			localServerModulePath,
+			"@fluidframework/server-local-server",
+		);
 
 		const LocalDriverApi: typeof DriverApi.LocalDriverApi = {
 			version,
@@ -471,9 +501,38 @@ export function getDriverApi(requestedStr: string): typeof DriverApi {
 }
 
 /**
+ * The compatibility mode that a test is running in. That can be useful in scenarios where the tests
+ * want to alter their behavior based on the compat mode.
+ * For example, some tests may want to run in "LayerCompat" mode but skip running in "CrossClientCompat" mode
+ * because they are the feature they are testing was not available in versions that cross client compat requires.
+ *
+ * @internal
+ */
+export type CompatMode = "None" | "LayerCompat" | "CrossClientCompat";
+
+/**
+ * Returns the CompatMode for a given CompatKind.
+ * @param kind - The CompatKind to convert.
+ * @returns The corresponding CompatMode.
+ *
+ * @internal
+ */
+export function getCompatModeFromKind(kind: CompatKind): CompatMode {
+	switch (kind) {
+		case CompatKind.None:
+			return "None";
+		case CompatKind.CrossClient:
+			return "CrossClientCompat";
+		default:
+			return "LayerCompat";
+	}
+}
+
+/**
  * @internal
  */
 export interface CompatApis {
+	mode: CompatMode;
 	containerRuntime: ReturnType<typeof getContainerRuntimeApi>;
 	dataRuntime: ReturnType<typeof getDataRuntimeApi>;
 	dds: ReturnType<typeof getDataRuntimeApi>["dds"];

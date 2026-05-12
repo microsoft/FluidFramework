@@ -68,6 +68,7 @@ interface backCompat_ContainerRuntime {
  */
 export const createTestContainerRuntimeFactory = (
 	containerRuntimeCtor: typeof ContainerRuntime,
+	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type -- Returning anonymous class type
 ) => {
 	return class extends RuntimeFactoryHelper {
 		constructor(
@@ -144,14 +145,17 @@ export const createTestContainerRuntimeFactory = (
 					existing,
 				);
 			}
-			const provideEntryPoint = async (runtime: IContainerRuntime) => {
+			const provideEntryPoint = async (runtime: IContainerRuntime): Promise<FluidObject> => {
 				const entryPoint = await runtime.getAliasedDataStoreEntryPoint("default");
 				if (entryPoint === undefined) {
 					throw new Error("default dataStore must exist");
 				}
 				return entryPoint.get();
 			};
-			const getDefaultObject = async (request: IRequest, runtime: IContainerRuntime) => {
+			const getDefaultObject = async (
+				request: IRequest,
+				runtime: IContainerRuntime,
+			): Promise<IResponse | undefined> => {
 				const parser = RequestParser.create(request);
 				if (parser.pathParts.length === 0) {
 					// This cast is safe as loadContainerRuntime is called below

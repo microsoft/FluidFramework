@@ -52,6 +52,8 @@ export interface TaskFileDependencies {
 	 * An array of globs that will be used to identify input files for the task. The globs are interpreted relative to the
 	 * package the task belongs to.
 	 *
+	 * You can use the special token `${repoRoot}` to reference files at the repository root without using relative paths.
+	 *
 	 * By default, inputGlobs **will not** match files ignored by git. This can be changed using the `gitignore` property
 	 * on the task. See the documentation for that property for details.
 	 */
@@ -60,6 +62,8 @@ export interface TaskFileDependencies {
 	/**
 	 * An array of globs that will be used to identify output files for the task. The globs are interpreted relative to
 	 * the package the task belongs to.
+	 *
+	 * You can use the special token `${repoRoot}` to reference files at the repository root without using relative paths.
 	 *
 	 * By default, outputGlobs **will** match files ignored by git, because build output is often gitignored. This can be
 	 *   changed using the `gitignore` property on the task. See the documentation for that property for details.
@@ -88,6 +92,37 @@ export interface TaskFileDependencies {
 	 * and set this to false.
 	 */
 	includeLockFiles?: boolean;
+
+	/**
+	 * Additional configuration files to track for known task handlers (e.g., eslint, tsc, api-extractor).
+	 * These files will be included in the task's incremental build tracking in addition to the files
+	 * the task handler automatically discovers (like .eslintrc for eslint tasks).
+	 *
+	 * This is useful for tracking shared configuration files from the repository root that affect the task.
+	 * File paths are relative to the package directory, but can use "../" to reference parent directories,
+	 * or use the special token "${repoRoot}" to reference files at the repository root.
+	 *
+	 * Example: To track a root-level eslint config from a package:
+	 * ```json
+	 * {
+	 *   "fluidBuild": {
+	 *     "tasks": {
+	 *       "eslint": {
+	 *         "files": {
+	 *           "additionalConfigFiles": ["${repoRoot}/.eslintrc.cjs", "${repoRoot}/common/eslint-config.json"]
+	 *         }
+	 *       }
+	 *     }
+	 *   }
+	 * }
+	 * ```
+	 *
+	 * The "${repoRoot}" token will be replaced with the absolute path to the repository root,
+	 * eliminating the need to use relative paths like "../../" which vary by package depth.
+	 *
+	 * Supports "..." to extend from global configuration.
+	 */
+	additionalConfigFiles?: readonly string[];
 }
 
 export interface TaskConfig {
@@ -250,7 +285,7 @@ const detectInvalid = (
 	name: string,
 	kind: string,
 	isGlobal: boolean,
-) => {
+): void => {
 	const invalid = config.filter((value) => isInvalid(value));
 	if (invalid.length !== 0) {
 		throw new Error(
@@ -316,6 +351,15 @@ export function normalizeGlobalTaskDefinitions(
 					"files.outputGlobs",
 					true,
 				);
+				if (full.files.additionalConfigFiles !== undefined) {
+					detectInvalid(
+						full.files.additionalConfigFiles,
+						(value) => value === "...",
+						name,
+						"files.additionalConfigFiles",
+						true,
+					);
+				}
 			}
 			taskDefinitions[name] = full;
 		}
@@ -323,7 +367,7 @@ export function normalizeGlobalTaskDefinitions(
 	return taskDefinitions;
 }
 
-function expandDotDotDot(config: readonly string[], inherited?: readonly string[]) {
+function expandDotDotDot(config: readonly string[], inherited?: readonly string[]): string[] {
 	const expanded = config.filter((value) => value !== "...");
 	if (inherited !== undefined && expanded.length !== config.length) {
 		return expanded.concat(inherited);
@@ -387,11 +431,12 @@ export function getTaskDefinitions(
 	const packageTaskDefinitions = json.fluidBuild?.tasks;
 	const taskDefinitions: MutableTaskDefinitions = {};
 
-	const globalAllow = (value) =>
+	const globalAllow = (value: string): boolean =>
 		value.startsWith("^") ||
 		(globalTaskDefinitions[value] !== undefined && !globalTaskDefinitions[value].script) ||
 		packageScripts[value] !== undefined;
-	const globalAllowExpansionsStar = (value) => value === "*" || globalAllow(value);
+	const globalAllowExpansionsStar = (value: string): boolean =>
+		value === "*" || globalAllow(value);
 
 	// Initialize from global TaskDefinition, and filter out script tasks if the package doesn't have the script
 	for (const name in globalTaskDefinitions) {
@@ -453,6 +498,12 @@ export function getTaskDefinitions(
 					full.files.outputGlobs,
 					currentFiles?.outputGlobs,
 				);
+				if (full.files.additionalConfigFiles !== undefined) {
+					full.files.additionalConfigFiles = expandDotDotDot(
+						full.files.additionalConfigFiles,
+						currentFiles?.additionalConfigFiles,
+					);
+				}
 			}
 			taskDefinitions[name] = full;
 		}
@@ -462,13 +513,13 @@ export function getTaskDefinitions(
 	// For release group root, the default for any task is to run all the tasks in the group
 	// even if there is not task definition or script for it.
 	if (!isReleaseGroupRoot) {
-		const invalidDependOn = (value) =>
+		const invalidDependOn = (value: string): boolean =>
 			!value.includes("#") &&
 			!value.startsWith("^") &&
 			taskDefinitions[value] === undefined &&
 			json.scripts?.[value] === undefined;
-		const invalidBefore = (value) => value !== "*" && invalidDependOn(value);
-		const invalidAfter = (value) => value !== "^*" && invalidBefore(value);
+		const invalidBefore = (value: string): boolean => value !== "*" && invalidDependOn(value);
+		const invalidAfter = (value: string): boolean => value !== "^*" && invalidBefore(value);
 		for (const name in taskDefinitions) {
 			const taskDefinition = taskDefinitions[name];
 			// Find any non-existent tasks or scripts in the dependencies

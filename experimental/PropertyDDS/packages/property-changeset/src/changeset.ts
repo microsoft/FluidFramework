@@ -8,7 +8,6 @@
  */
 
 import { constants, ConsoleUtils, joinPaths } from "@fluid-experimental/property-common";
-
 import cloneDeep from "lodash/cloneDeep.js";
 import each from "lodash/each.js";
 import extend from "lodash/extend.js";
@@ -1007,7 +1006,7 @@ export class ChangeSet {
 	 * in a later release.
 	 * @param in_withoutRoot - Bypass a fix where the root of a changeset is cleaned
 	 */
-	public _stripReversibleChangeSet(in_withoutRoot: boolean) {
+	public _stripReversibleChangeSet(in_withoutRoot?: boolean) {
 		const callback = function (in_context) {
 			const opType = in_context.getOperationType();
 			if (opType === "remove" || opType === "modify") {

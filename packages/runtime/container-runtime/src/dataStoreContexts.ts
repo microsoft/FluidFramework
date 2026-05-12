@@ -13,27 +13,41 @@ import {
 import type { FluidDataStoreContext, LocalFluidDataStoreContext } from "./dataStoreContext.js";
 
 /**
+ * Manages the collection of data store contexts, tracking their bound/unbound state.
+ *
+ * @remarks
+ * A context is "unbound" when it's created locally but not yet made visible (reachable from root).
+ * A context is "bound" once it's made locally visible, regardless of the Container's attach state.
+ * In attached containers, binding a context immediately sends an attach op and transitions it to Attaching state.
+ *
  * @internal
  */
 export class DataStoreContexts
 	implements Iterable<[string, FluidDataStoreContext]>, IDisposable
 {
+	/**
+	 * Set of IDs for contexts that are unbound (not yet made locally visible).
+	 * These contexts exist locally but aren't known to other clients (even in an attached container).
+	 */
 	private readonly notBoundContexts = new Set<string>();
 
 	/**
-	 * Attached and loaded context proxies
+	 * Map of all data store contexts (both bound and unbound).
 	 */
 	private readonly _contexts = new Map<string, FluidDataStoreContext>();
 
 	/**
 	 * List of pending context waiting either to be bound or to arrive from another client.
 	 * This covers the case where a local context has been created but not yet bound,
-	 * or the case where a client knows a store will exist and is waiting on its creation,
+	 * or the case where a client knows a store will exist (e.g. by alias) and is waiting on its creation,
 	 * so that a caller may await the deferred's promise until such a time as the context is fully ready.
 	 * This is a superset of _contexts, since contexts remain here once the Deferred resolves.
 	 */
 	private readonly deferredContexts = new Map<string, Deferred<FluidDataStoreContext>>();
 
+	/**
+	 * Lazy disposal logic that disposes all contexts when called.
+	 */
 	// eslint-disable-next-line unicorn/consistent-function-scoping -- Property is defined once; no need to extract inner lambda
 	private readonly disposeOnce = new Lazy<void>(() => {
 		// close/stop all store contexts
@@ -73,22 +87,39 @@ export class DataStoreContexts
 	}
 	public readonly dispose = (): void => this.disposeOnce.value;
 
+	/**
+	 * Returns the count of unbound contexts (i.e. local-only on this client)
+	 */
 	public notBoundLength(): number {
 		return this.notBoundContexts.size;
 	}
 
+	/**
+	 * Returns true if the given ID corresponds to an unbound context. (i.e. local-only on this client)
+	 */
 	public isNotBound(id: string): boolean {
 		return this.notBoundContexts.has(id);
 	}
 
+	/**
+	 * Returns true if a context with the given ID exists (bound or unbound).
+	 */
 	public has(id: string): boolean {
 		return this._contexts.has(id);
 	}
 
+	/**
+	 * Returns the context with the given ID, or undefined if not found.
+	 * This returns both bound and unbound contexts.
+	 */
 	public get(id: string): FluidDataStoreContext | undefined {
 		return this._contexts.get(id);
 	}
 
+	/**
+	 * Deletes the context with the given ID from all internal maps.
+	 * @returns True if the context was found and deleted, false otherwise.
+	 */
 	public delete(id: string): boolean {
 		this.deferredContexts.delete(id);
 		this.notBoundContexts.delete(id);
@@ -100,16 +131,24 @@ export class DataStoreContexts
 		return this._contexts.delete(id);
 	}
 
+	/**
+	 * Map of recently deleted contexts for diagnostic purposes for GC.
+	 * Allows retrieval of context information even after deletion for logging/telemetry.
+	 */
 	private readonly _recentlyDeletedContexts: Map<string, FluidDataStoreContext | undefined> =
 		new Map();
 
+	/**
+	 * Returns a recently deleted context by ID, or undefined if not found.
+	 * Used for diagnostic logging for GC, when a deleted context is referenced.
+	 */
 	public getRecentlyDeletedContext(id: string): FluidDataStoreContext | undefined {
 		return this._recentlyDeletedContexts.get(id);
 	}
 
 	/**
-	 * Return the unbound local context with the given id,
-	 * or undefined if it's not found or not unbound.
+	 * Returns the unbound local context with the given ID.
+	 * @returns The unbound context, or undefined if not found or not unbound.
 	 */
 	public getUnbound(id: string): LocalFluidDataStoreContext | undefined {
 		const context = this._contexts.get(id);
@@ -121,7 +160,8 @@ export class DataStoreContexts
 	}
 
 	/**
-	 * Add the given context, marking it as to-be-bound
+	 * Adds the given context to the collection, marking it as unbound (not yet locally visible).
+	 * Asserts that no context with this ID already exists.
 	 */
 	public addUnbound(context: LocalFluidDataStoreContext): void {
 		const id = context.id;
@@ -152,6 +192,10 @@ export class DataStoreContexts
 		return deferredContext.promise;
 	}
 
+	/**
+	 * Gets or creates a deferred promise for the given context ID.
+	 * Used to allow waiting for contexts that don't exist yet.
+	 */
 	private ensureDeferred(id: string): Deferred<FluidDataStoreContext> {
 		const deferred = this.deferredContexts.get(id);
 		if (deferred) {
@@ -164,7 +208,8 @@ export class DataStoreContexts
 	}
 
 	/**
-	 * Update this context as bound
+	 * Marks the context with the given ID as bound (locally visible).
+	 * Removes it from the unbound set and resolves its deferred promise.
 	 */
 	public bind(id: string): void {
 		const removed: boolean = this.notBoundContexts.delete(id);
@@ -191,9 +236,11 @@ export class DataStoreContexts
 	}
 
 	/**
-	 * Add the given context, marking it as not local-only.
-	 * This could be because it's a local context that's been bound, or because it's a remote context.
-	 * @param context - The context to add
+	 * Adds the given context to the collection as already bound or from a remote client.
+	 * This is used when:
+	 * - Adding a local context that's already been bound via the bind() method, OR
+	 * - Adding a remote context that was created by another client.
+	 * The context's deferred promise is resolved immediately.
 	 */
 	public addBoundOrRemoted(context: FluidDataStoreContext): void {
 		const id = context.id;

@@ -76,7 +76,7 @@ export class TodoListDataObject extends TreeDataObject {
 	 * This method was placed in the data object (instead of the TodoList schema class),
 	 * as we needed access to the runtime to create the `SharedString`.
 	 */
-	public async addTodoItem(props?: TodoItemProps) {
+	public async addTodoItem(props?: TodoItemProps): Promise<void> {
 		const title = SharedString.create(this.runtime);
 		const newItemText = props?.startingText ?? "New Item";
 		title.insertText(0, newItemText);

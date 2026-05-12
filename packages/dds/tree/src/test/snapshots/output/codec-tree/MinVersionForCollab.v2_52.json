@@ -27,10 +27,6 @@
               "version": 4,
               "children": [
                 {
-                  "name": "FieldKind:NodeKey",
-                  "version": 1
-                },
-                {
                   "name": "FieldKind:Value",
                   "version": 2
                 },
@@ -53,14 +49,8 @@
               ]
             },
             {
-              "name": "SchemaChange",
-              "version": 1,
-              "children": [
-                {
-                  "name": "Schema",
-                  "version": 2
-                }
-              ]
+              "name": "Schema",
+              "version": 2
             }
           ]
         }
@@ -79,10 +69,6 @@
               "version": 4,
               "children": [
                 {
-                  "name": "FieldKind:NodeKey",
-                  "version": 1
-                },
-                {
                   "name": "FieldKind:Value",
                   "version": 2
                 },
@@ -105,14 +91,8 @@
               ]
             },
             {
-              "name": "SchemaChange",
-              "version": 1,
-              "children": [
-                {
-                  "name": "Schema",
-                  "version": 2
-                }
-              ]
+              "name": "Schema",
+              "version": 2
             }
           ]
         }

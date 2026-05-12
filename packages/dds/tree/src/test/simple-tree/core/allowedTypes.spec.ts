@@ -5,8 +5,30 @@
 
 import { strict as assert } from "node:assert";
 
+import { validateUsageError } from "@fluidframework/test-runtime-utils/internal";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 
+import {
+	AnnotatedAllowedTypesInternal,
+	isAnnotatedAllowedType,
+	normalizeAllowedTypes,
+	normalizeAndEvaluateAnnotatedAllowedTypes,
+	normalizeToAnnotatedAllowedType,
+	type AllowedTypes,
+	type AllowedTypesFull,
+	type AllowedTypesFullEvaluated,
+	type AllowedTypesFullFromMixed,
+	type AnnotateAllowedTypesList,
+	type AnnotatedAllowedType,
+	type AnnotatedAllowedTypes,
+	type ImplicitAllowedTypes,
+	type InsertableTreeNodeFromAllowedTypes,
+	type InsertableTreeNodeFromImplicitAllowedTypes,
+	type NumberKeys,
+	type TreeNodeFromImplicitAllowedTypes,
+	type UnannotateAllowedTypesList,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "../../../simple-tree/core/allowedTypes.js";
 import {
 	allowUnused,
 	numberSchema,
@@ -34,29 +56,6 @@ import type {
 	requireTrue,
 	UnionToIntersection,
 } from "../../../util/index.js";
-
-import {
-	AnnotatedAllowedTypesInternal,
-	isAnnotatedAllowedType,
-	normalizeAllowedTypes,
-	normalizeAndEvaluateAnnotatedAllowedTypes,
-	normalizeToAnnotatedAllowedType,
-	type AllowedTypes,
-	type AllowedTypesFull,
-	type AllowedTypesFullEvaluated,
-	type AllowedTypesFullFromMixed,
-	type AnnotateAllowedTypesList,
-	type AnnotatedAllowedType,
-	type AnnotatedAllowedTypes,
-	type ImplicitAllowedTypes,
-	type InsertableTreeNodeFromAllowedTypes,
-	type InsertableTreeNodeFromImplicitAllowedTypes,
-	type NumberKeys,
-	type TreeNodeFromImplicitAllowedTypes,
-	type UnannotateAllowedTypesList,
-	// eslint-disable-next-line import-x/no-internal-modules
-} from "../../../simple-tree/core/allowedTypes.js";
-import { validateUsageError } from "../../utils.js";
 
 const schema = new SchemaFactory("com.example");
 
@@ -247,6 +246,22 @@ const schema = new SchemaFactory("com.example");
 
 			type _check4 = requireAssignableTo<UnannotateAllowedTypesList<[A]>, [A]>;
 		}
+		// Can assign to ImplicitAllowedTypes
+		{
+			type A = UnannotateAllowedTypesList<(AnnotatedAllowedType | LazyItem<TreeNodeSchema>)[]>;
+			// @ts-expect-error TODO: AB#53315
+			type _check1 = requireAssignableTo<A, ImplicitAllowedTypes>;
+		}
+	}
+
+	// AllowedTypesFullFromMixed
+	{
+		// Can assign to ImplicitAllowedTypes
+		{
+			type A = AllowedTypesFullFromMixed<(AnnotatedAllowedType | LazyItem<TreeNodeSchema>)[]>;
+			// @ts-expect-error TODO: AB#53315
+			type _check1 = requireAssignableTo<A, ImplicitAllowedTypes>;
+		}
 	}
 }
 
@@ -381,14 +396,14 @@ describe("allowedTypes", () => {
 		it("in an array", () => {
 			assert.throws(
 				() => normalizeAllowedTypes([Foo, Bar]),
-				(error: Error) => validateAssertionError(error, /Encountered an undefined schema/),
+				validateAssertionError(/Encountered an undefined schema/),
 			);
 		});
 
 		it("directly", () => {
 			assert.throws(
 				() => normalizeAllowedTypes(Bar),
-				(error: Error) => validateAssertionError(error, /Encountered an undefined schema/),
+				validateAssertionError(/Encountered an undefined schema/),
 			);
 		});
 
@@ -396,7 +411,7 @@ describe("allowedTypes", () => {
 			const normalized = normalizeAllowedTypes([() => Bar]);
 			assert.throws(
 				() => normalized.evaluate(),
-				(error: Error) => validateAssertionError(error, /Encountered an undefined schema/),
+				validateAssertionError(/Encountered an undefined schema/),
 			);
 		});
 	});
@@ -657,16 +672,11 @@ describe("allowedTypes", () => {
 			 * This still has a lot of unsolved issues and open questions, but generally seems like an improvement
 			 * (or at least stricter and more consistent).
 			 */
-			type SchemaUnionToIntersection<T> = UnionToIntersection<SchemaToPair<T>> extends [
-				infer s,
-				infer X,
-			]
-				? s
-				: never;
+			type SchemaUnionToIntersection<T> =
+				UnionToIntersection<SchemaToPair<T>> extends [infer s, infer X] ? s : never;
 
-			type SchemaToPair<T> = T extends TreeNodeSchema<string, NodeKind, infer Node>
-				? [T, Node]
-				: [never, never];
+			type SchemaToPair<T> =
+				T extends TreeNodeSchema<string, NodeKind, infer Node> ? [T, Node] : [never, never];
 
 			const sf = new SchemaFactory("test");
 
@@ -818,8 +828,8 @@ describe("allowedTypes", () => {
 			const result = AnnotatedAllowedTypesInternal.create(input);
 			assert(Object.isFrozen(input));
 			assert.throws(() => {
-				// @ts-expect-error Array should be readonly, so this error is good.
-				result.push(stringSchema);
+				// Array should be readonly, so this error is good.
+				(result as unknown as unknown[]).push(stringSchema);
 			}, "TypeError: result.push is not a function");
 		});
 

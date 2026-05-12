@@ -46,7 +46,7 @@ class MySharedObject extends SharedObject {
 	protected async loadCore(services: IChannelStorageService): Promise<void> {
 		throw new Error("Method not implemented.");
 	}
-	protected processMessagesCore(messagesCollection: IRuntimeMessageCollection): void {
+	protected override processMessagesCore(messagesCollection: IRuntimeMessageCollection): void {
 		throw new Error("Method not implemented.");
 	}
 	protected onDisconnect(): void {
@@ -101,7 +101,7 @@ class MySharedObjectCore extends SharedObjectCore {
 	protected async loadCore(services: IChannelStorageService): Promise<void> {
 		throw new Error("Method not implemented.");
 	}
-	protected processMessagesCore(messagesCollection: IRuntimeMessageCollection): void {
+	protected override processMessagesCore(messagesCollection: IRuntimeMessageCollection): void {
 		throw new Error("Method not implemented.");
 	}
 	protected onDisconnect(): void {
@@ -128,9 +128,7 @@ describe("SharedObject", () => {
 	it("rejects slashes in id", () => {
 		const invalidId = "beforeSlash/afterSlash";
 		const codeBlock = (): SharedObject => new MySharedObject(invalidId);
-		assert.throws(codeBlock, (e: Error) =>
-			validateAssertionError(e, "Id cannot contain slashes"),
-		);
+		assert.throws(codeBlock, validateAssertionError("Id cannot contain slashes"));
 	});
 });
 
@@ -138,9 +136,7 @@ describe("SharedObjectCore", () => {
 	it("rejects slashes in id", () => {
 		const invalidId = "beforeSlash/afterSlash";
 		const codeBlock = (): SharedObjectCore => new MySharedObjectCore({ id: invalidId });
-		assert.throws(codeBlock, (e: Error) =>
-			validateAssertionError(e, "Id cannot contain slashes"),
-		);
+		assert.throws(codeBlock, validateAssertionError("Id cannot contain slashes"));
 	});
 
 	describe("handle encoding in submitLocalMessage", () => {

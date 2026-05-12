@@ -70,6 +70,7 @@ export type IDeltaManagerErased = ErasedType<"@fluidframework/container-definiti
 
 // @beta @sealed @legacy
 export interface IFluidDataStoreRuntime extends IEventProvider<IFluidDataStoreRuntimeEvents>, IDisposable {
+    readonly activeLocalOperationActivity?: "applyStashed" | "rollback" | undefined;
     addChannel(channel: IChannel): void;
     readonly attachState: AttachState;
     bindChannel(channel: IChannel): void;
@@ -91,6 +92,8 @@ export interface IFluidDataStoreRuntime extends IEventProvider<IFluidDataStoreRu
     readonly idCompressor: IIdCompressor | undefined;
     // (undocumented)
     readonly IFluidHandleContext: IFluidHandleContext;
+    readonly inStagingMode: boolean;
+    readonly isDirty: boolean;
     readonly isReadOnly: () => boolean;
     // (undocumented)
     readonly logger: ITelemetryBaseLogger;
@@ -107,10 +110,6 @@ export interface IFluidDataStoreRuntime extends IEventProvider<IFluidDataStoreRu
 
 // @alpha @sealed @legacy (undocumented)
 export interface IFluidDataStoreRuntimeAlpha extends IFluidDataStoreRuntime {
-    // (undocumented)
-    readonly inStagingMode: boolean;
-    // (undocumented)
-    readonly isDirty: boolean;
 }
 
 // @beta @legacy

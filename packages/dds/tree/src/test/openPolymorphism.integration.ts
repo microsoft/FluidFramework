@@ -5,6 +5,10 @@
 
 import { strict as assert } from "node:assert";
 
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
+import { validateUsageError } from "@fluidframework/test-runtime-utils/internal";
+
+import { Tree } from "../shared-tree/index.js";
 import {
 	allowUnused,
 	evaluateLazySchema,
@@ -17,10 +21,7 @@ import {
 	type TreeNodeSchema,
 	type Unhydrated,
 } from "../simple-tree/index.js";
-import { Tree } from "../shared-tree/index.js";
-import { validateUsageError } from "./utils.js";
 import { getOrAddInMap, type requireAssignableTo } from "../util/index.js";
-import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 /**
  * Examples and tests for open polymorphism design patterns for schema.
@@ -618,7 +619,7 @@ export namespace Component {
 				return config;
 			};
 			this.componentsMap = new Map(allComponents.map((c) => [c, c(lazyConfigInner)]));
-			this.components = Array.from(this.componentsMap.values());
+			this.components = [...this.componentsMap.values()];
 			config = lazyConfiguration(this);
 			this.config = config;
 		}

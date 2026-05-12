@@ -127,9 +127,7 @@ describe("OdspErrorUtils", () => {
 				"Error should be a genericNetworkError",
 			);
 			assert.equal(
-				// TODO: use a real type here
-				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
-				(networkError as any).retryAfterSeconds,
+				(networkError as Partial<IThrottlingWarning>).retryAfterSeconds,
 				undefined,
 				"retryAfterSeconds should not be set",
 			);

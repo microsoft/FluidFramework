@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import { AttachState } from "@fluidframework/container-definitions";
 import { IChannelServices } from "@fluidframework/datastore-definitions/internal";
@@ -19,6 +19,7 @@ import {
 	reservedMarkerSimpleTypeKey,
 	reservedTileLabelsKey,
 	revertMergeTreeDeltaRevertibles,
+	type ISegmentInternal,
 } from "@fluidframework/merge-tree/internal";
 import {
 	MockContainerRuntimeFactory,
@@ -187,6 +188,35 @@ describe("SharedString", () => {
 			}
 		});
 
+		it("can annotate single multi-character segment in a local SharedString", () => {
+			sharedString.insertText(0, "Blocker");
+			sharedString.annotateRange(0, 7, { bold: true });
+			let segmentCount = 0;
+			const segmentLengths: number[] = [];
+			sharedString.walkSegments(
+				(segment: ISegmentInternal) => {
+					segmentCount++;
+					segmentLengths.push(segment.cachedLength);
+					return true;
+				},
+				0,
+				sharedString.getLength(),
+				undefined,
+				true,
+			);
+			assert.equal(segmentCount, 1, `Expected one segment, saw ${segmentCount} segments`);
+			assert.equal(
+				segmentLengths.length,
+				1,
+				`Expected one segment length, saw ${segmentLengths.length} lengths`,
+			);
+			assert.equal(
+				segmentLengths[0],
+				7,
+				`Expected segment length 7, saw ${segmentLengths[0]}`,
+			);
+		});
+
 		it("can insert marker", () => {
 			sharedString.insertText(0, "hello world");
 			// Insert a simple marker.
@@ -253,8 +283,7 @@ describe("SharedString", () => {
 				() => {
 					sharedString.annotateMarker(simpleMarker, newIdProps);
 				},
-				(e: Error) =>
-					validateAssertionError(e, "Cannot change the markerId of an existing marker"),
+				validateAssertionError("Cannot change the markerId of an existing marker"),
 				"Error from attempting to update marker was not thrown or was not the expected error",
 			);
 		});
@@ -273,8 +302,7 @@ describe("SharedString", () => {
 				() => {
 					sharedString.annotateMarker(simpleMarker, newIdProps);
 				},
-				(e: Error) =>
-					validateAssertionError(e, "Cannot change the markerId of an existing marker"),
+				validateAssertionError("Cannot change the markerId of an existing marker"),
 				"Error from attempting to update marker was not thrown or was not the expected error",
 			);
 		});
@@ -293,8 +321,7 @@ describe("SharedString", () => {
 				() => {
 					sharedString.annotateMarker(simpleMarker, newIdProps);
 				},
-				(e: Error) =>
-					validateAssertionError(e, "Cannot change the markerId of an existing marker"),
+				validateAssertionError("Cannot change the markerId of an existing marker"),
 				"Error from attempting to update marker was not thrown or was not the expected error",
 			);
 		});
@@ -323,8 +350,8 @@ describe("SharedString", () => {
 
 		it("replace zero range", async () => {
 			sharedString.insertText(0, "123");
-			sharedString.replaceText(1, 1, "\u00e4\u00c4");
-			assert.equal(sharedString.getText(), "1\u00e4\u00c423", "Could not replace zero range");
+			sharedString.replaceText(1, 1, "\u00E4\u00C4");
+			assert.equal(sharedString.getText(), "1\u00E4\u00C423", "Could not replace zero range");
 		});
 
 		it("replace negative range", async () => {
@@ -578,6 +605,62 @@ describe("SharedString", () => {
 			}
 		});
 
+		it("can annotate single multi-character segment with a remote SharedString", () => {
+			sharedString.insertText(0, "Blocker");
+			sharedString.annotateRange(0, 7, { bold: true });
+			containerRuntimeFactory.processAllMessages();
+
+			let segmentCount = 0;
+			const segmentLengths: number[] = [];
+			sharedString.walkSegments(
+				(segment: ISegmentInternal) => {
+					segmentCount++;
+					segmentLengths.push(segment.cachedLength);
+					return true;
+				},
+				0,
+				sharedString.getLength(),
+				undefined,
+				true,
+			);
+			assert.equal(segmentCount, 1, `Expected one segment, saw ${segmentCount} segments`);
+			assert.equal(
+				segmentLengths.length,
+				1,
+				`Expected one segment length, saw ${segmentLengths.length} lengths`,
+			);
+			assert.equal(
+				segmentLengths[0],
+				7,
+				`Expected segment length 7, saw ${segmentLengths[0]}`,
+			);
+
+			segmentCount = 0;
+			const segmentLengths2: number[] = [];
+			sharedString2.walkSegments(
+				(segment: ISegmentInternal) => {
+					segmentCount++;
+					segmentLengths2.push(segment.cachedLength);
+					return true;
+				},
+				0,
+				sharedString.getLength(),
+				undefined,
+				true,
+			);
+			assert.equal(segmentCount, 1, `Expected one segment, saw ${segmentCount} segments`);
+			assert.equal(
+				segmentLengths2.length,
+				1,
+				`Expected one segment length, saw ${segmentLengths2.length} lengths`,
+			);
+			assert.equal(
+				segmentLengths2[0],
+				7,
+				`Expected segment length 7, saw ${segmentLengths2[0]}`,
+			);
+		});
+
 		it("can insert marker", () => {
 			const label = "tileLabel";
 			const id = "tileMarkerId";
@@ -803,9 +886,8 @@ describe("SharedString", () => {
 
 		it("annotate", () => {
 			sharedString.insertText(0, "hello world");
-			Array.from({ length: sharedString.getLength() }).forEach((_, i) =>
-				assert(matchProperties(sharedString.getPropertiesAtPosition(i), undefined)),
-			);
+			for (const [i, _] of Array.from({ length: sharedString.getLength() }).entries())
+				assert(matchProperties(sharedString.getPropertiesAtPosition(i), undefined));
 
 			const revertibles: MergeTreeDeltaRevertible[] = [];
 			sharedString.on("sequenceDelta", (event) =>
@@ -816,23 +898,20 @@ describe("SharedString", () => {
 				sharedString.annotateRange(i, i + 1, { test: i });
 			}
 			assert.equal(sharedString.getText(), "hello world");
-			Array.from({ length: sharedString.getLength() }).forEach((_, i) =>
-				assert(matchProperties(sharedString.getPropertiesAtPosition(i), { test: i })),
-			);
+			for (const [i, _] of Array.from({ length: sharedString.getLength() }).entries())
+				assert(matchProperties(sharedString.getPropertiesAtPosition(i), { test: i }));
 
 			// undo all annotates
 			revertMergeTreeDeltaRevertibles(sharedString, revertibles.splice(0));
 			assert.equal(sharedString.getText(), "hello world");
-			Array.from({ length: sharedString.getLength() }).forEach((_, i) =>
-				assert(matchProperties(sharedString.getPropertiesAtPosition(i), {})),
-			);
+			for (const [i, _] of Array.from({ length: sharedString.getLength() }).entries())
+				assert(matchProperties(sharedString.getPropertiesAtPosition(i), {}));
 
 			// redo all annotates
 			revertMergeTreeDeltaRevertibles(sharedString, revertibles.splice(0));
 			assert.equal(sharedString.getText(), "hello world");
-			Array.from({ length: sharedString.getLength() }).forEach((_, i) =>
-				assert(matchProperties(sharedString.getPropertiesAtPosition(i), { test: i })),
-			);
+			for (const [i, _] of Array.from({ length: sharedString.getLength() }).entries())
+				assert(matchProperties(sharedString.getPropertiesAtPosition(i), { test: i }));
 		});
 	});
 });

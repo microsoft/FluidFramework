@@ -8,7 +8,10 @@ import fs from "fs";
 import type { ITelemetryBufferedLogger } from "@fluid-internal/test-driver-definitions";
 import { type ITelemetryBaseEvent, LogLevel } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
-import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
+import {
+	createChildLogger,
+	type ITelemetryLoggerExt,
+} from "@fluidframework/telemetry-utils/internal";
 
 import { pkgName, pkgVersion } from "./packageVersion.js";
 
@@ -41,7 +44,10 @@ export const createLogger = async (
 		profile: string;
 		runId: number | undefined;
 	},
-) => {
+): Promise<{
+	logger: ITelemetryLoggerExt;
+	flush: () => Promise<void>;
+}> => {
 	const baseLogger = await createInjectedLoggerIfExists();
 	const fileLogger = new FileLogger(outputDirectoryPath, fileNamePrefix, baseLogger);
 	const childLogger = createChildLogger({

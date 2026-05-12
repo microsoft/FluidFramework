@@ -35,7 +35,7 @@ export class TestCollection implements ICollection<any> {
 		if (!value) {
 			throw new Error("Not found");
 		}
-		// eslint-disable-next-line import/namespace
+		// eslint-disable-next-line import-x/namespace
 		_.extend(value, set);
 	}
 
@@ -45,7 +45,7 @@ export class TestCollection implements ICollection<any> {
 			if (!value) {
 				throw new Error("Not found");
 			}
-			// eslint-disable-next-line import/namespace
+			// eslint-disable-next-line import-x/namespace
 			_.extend(value, set);
 		});
 	}
@@ -56,7 +56,7 @@ export class TestCollection implements ICollection<any> {
 			this.collection.push(set);
 		}
 
-		// eslint-disable-next-line import/namespace
+		// eslint-disable-next-line import-x/namespace
 		_.extend(value, set);
 	}
 

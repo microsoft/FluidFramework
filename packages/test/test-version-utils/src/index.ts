@@ -4,6 +4,7 @@
  */
 
 export { mochaGlobalSetup } from "./compatConfig.js";
+export { CompatKind } from "./compatOptions.js";
 export {
 	getDataStoreFactory,
 	getVersionedTestObjectProvider,
@@ -30,12 +31,6 @@ export {
 	DocumentType,
 	DocumentTypeInfo,
 	DescribeE2EDocInfo,
-	BenchmarkType,
-	describeE2EDocsMemory,
-	describeE2EDocsRuntime,
-	describeE2EDocRun,
-	getCurrentBenchmarkType,
-	isMemoryTest,
 	DocumentMapInfo,
 	DocumentMultipleDataStoresInfo,
 	DocumentMatrixInfo,
@@ -49,7 +44,7 @@ export {
 export { ExpectedEvents, ExpectsTest, itExpects } from "./itExpects.js";
 export {
 	CompatApis,
-	ensurePackageInstalled,
+	ensureVersionLoaded,
 	getContainerRuntimeApi,
 	getDataRuntimeApi,
 	getDriverApi,
@@ -58,6 +53,8 @@ export {
 	DataRuntimeApi,
 	ContainerRuntimeApi,
 	LoaderApi,
+	CompatMode,
+	getCompatModeFromKind,
 } from "./testApi.js";
 export {
 	itExpectsSkipsFailureOnSpecificDrivers,

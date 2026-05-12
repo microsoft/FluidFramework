@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import React, { useEffect, useState } from "react";
+import { type FC, useEffect, useState } from "react";
 
 import type { IInventoryListAppModel } from "../modelInterfaces.js";
 
@@ -19,7 +19,7 @@ export interface IInventoryListAppViewProps {
  * of appropriately disabling the view during migration.  It would also be what triggers any other migration UI we
  * might want, progress wheels, etc.
  */
-export const InventoryListAppView: React.FC<IInventoryListAppViewProps> = (
+export const InventoryListAppView: FC<IInventoryListAppViewProps> = (
 	props: IInventoryListAppViewProps,
 ) => {
 	const { model } = props;
@@ -29,7 +29,7 @@ export const InventoryListAppView: React.FC<IInventoryListAppViewProps> = (
 	);
 
 	useEffect(() => {
-		const migrationStateChangedHandler = () => {
+		const migrationStateChangedHandler = (): void => {
 			setDisableInput(model.migrationTool.migrationState !== "collaborating");
 		};
 		model.migrationTool.on("proposingMigration", migrationStateChangedHandler);

@@ -9,6 +9,7 @@ A namespace tagged as `@beta`.
 <h2 id="testbetanamespace-signature">Signature</h2>
 
 ```typescript
+/** @sealed */
 export declare namespace TestBetaNamespace
 ```
 

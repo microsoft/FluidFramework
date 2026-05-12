@@ -406,11 +406,13 @@ describe("Directory", () => {
 				directory.createSubDirectory("rock2");
 				const childSubDirectory = subDirectory.createSubDirectory("rock1Child");
 				assert.strictEqual(
-					directory.countSubDirectory?.(),
+					// eslint-disable-next-line @typescript-eslint/prefer-optional-chain -- TODO: ADO#58519 Code owners should verify if this code change is safe and make it if so or update this comment otherwise
+					directory.countSubDirectory !== undefined && directory.countSubDirectory(),
 					2,
 					"Should have 2 sub directories",
 				);
 				assert(
+					// eslint-disable-next-line @typescript-eslint/prefer-optional-chain -- TODO: ADO#58519 Code owners should verify if this code change is safe and make it if so or update this comment otherwise
 					subDirectory.countSubDirectory !== undefined &&
 						subDirectory.countSubDirectory() === 1,
 					"Should have 1 sub directory",
@@ -1918,7 +1920,6 @@ describe("Directory", () => {
 				this.directory2 = createConnectedDirectory("directory2", this.containerRuntimeFactory);
 			}
 
-			/* eslint-disable @fluid-internal/fluid/no-hyphen-after-jsdoc-tag -- false positive AB#50920 */
 			/**
 			 * {@inheritDoc @fluid-private/test-dds-utils#IGCTestProvider.sharedObject}
 			 */
@@ -1998,7 +1999,6 @@ describe("Directory", () => {
 					toFluidHandleInternal(subMap2.handle).absolutePath,
 				);
 			}
-			/* eslint-enable @fluid-internal/fluid/no-hyphen-after-jsdoc-tag */
 		}
 
 		runGCTests(GCSharedDirectoryProvider);

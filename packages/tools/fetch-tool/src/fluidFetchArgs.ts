@@ -47,7 +47,7 @@ const optionsArray = [
 	["--loginHint", "login hint for the user with document access."],
 ];
 
-function printUsage() {
+function printUsage(): void {
 	console.log("Usage: fluid-fetch [options] URL");
 	console.log("URL: <ODSP URL>|<Routerlicious URL>");
 	console.log("Options:");
@@ -66,7 +66,7 @@ export function setArguments(values: {
 	dumpSnapshotStats?: boolean;
 	dumpSnapshotTrees?: boolean;
 	overWrite?: boolean;
-}) {
+}): void {
 	paramSaveDir = values.saveDir;
 	paramURL = values.paramURL;
 	dumpMessages = values.dumpMessages ?? dumpMessages;
@@ -76,7 +76,7 @@ export function setArguments(values: {
 	overWrite = values.overWrite ?? overWrite;
 }
 
-export function parseArguments() {
+export function parseArguments(): void {
 	for (let i = 2; i < process.argv.length; i++) {
 		const arg = process.argv[i];
 		switch (arg) {
@@ -157,7 +157,7 @@ export function parseArguments() {
 	checkArgs();
 }
 
-function parseStrArg(i: number, name: string) {
+function parseStrArg(i: number, name: string): string {
 	if (i + 1 >= process.argv.length) {
 		console.error(`ERROR: Missing ${name}`);
 		printUsage();
@@ -165,7 +165,7 @@ function parseStrArg(i: number, name: string) {
 	}
 	return process.argv[i + 1];
 }
-function parseIntArg(i: number, name: string, allowZero: boolean) {
+function parseIntArg(i: number, name: string, allowZero: boolean): number {
 	if (i + 1 >= process.argv.length) {
 		console.error(`ERROR: Missing ${name}`);
 		printUsage();
@@ -181,7 +181,7 @@ function parseIntArg(i: number, name: string, allowZero: boolean) {
 	return paramNumber;
 }
 
-function checkArgs() {
+function checkArgs(): void {
 	if (paramSnapshotVersionIndex !== undefined) {
 		paramNumSnapshotVersions = Math.max(
 			paramSnapshotVersionIndex + 1,

@@ -20,7 +20,6 @@
 					"base": "$tsc",
 					"fileLocation": "absolute",
 				},
-				"$tslint5",
 			],
 		},
 	],

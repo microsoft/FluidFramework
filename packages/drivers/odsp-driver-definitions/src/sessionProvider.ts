@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IResolvedUrl } from "@fluidframework/driver-definitions/internal";
+import type { IResolvedUrl } from "@fluidframework/driver-definitions/internal";
 
 /**
  * Socket storage discovery api response
@@ -52,8 +52,8 @@ export interface ISocketStorageDiscovery {
  * @legacy @beta
  */
 export interface ISensitivityLabelsInfo {
-	/** ISO format timestamp when the label info snapshot was generated. */
-	timestamp: string;
+	/** Unix timestamp in milliseconds when the label info snapshot was generated. */
+	timestamp: number;
 	/** List of applied sensitivity labels. Empty if none. */
 	labels: ISensitivityLabel[];
 }

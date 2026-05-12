@@ -5,6 +5,13 @@
 ```ts
 
 // @public
+export class BrandedType<out Brand> {
+    static [Symbol.hasInstance](value: never): value is never;
+    protected constructor();
+    protected readonly brand: (dummy: never) => Brand;
+}
+
+// @public
 export type ConfigTypes = string | number | boolean | number[] | string[] | boolean[] | undefined;
 
 // @public @sealed
@@ -310,7 +317,6 @@ export interface ITelemetryBaseProperties {
 // @public @sealed
 export interface Listenable<TListeners extends object> {
     off<K extends keyof Listeners<TListeners>>(eventName: K, listener: TListeners[K]): void;
-    // (undocumented)
     on<K extends keyof Listeners<TListeners>>(eventName: K, listener: TListeners[K]): Off;
 }
 
@@ -320,14 +326,19 @@ export type Listeners<T extends object> = {
 };
 
 // @public
-export const LogLevel: {
-    readonly verbose: 10;
-    readonly default: 20;
-    readonly error: 30;
-};
+export const LogLevel: LogLevelConst;
 
 // @public
 export type LogLevel = (typeof LogLevel)[keyof typeof LogLevel];
+
+// @public
+export interface LogLevelConst {
+    readonly default: 20;
+    readonly error: 30;
+    readonly essential: 30;
+    readonly info: 20;
+    readonly verbose: 10;
+}
 
 // @public
 export type Off = () => void;

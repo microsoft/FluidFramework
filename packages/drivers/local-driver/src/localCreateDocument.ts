@@ -3,14 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { ISummaryTree } from "@fluidframework/driver-definitions";
-import { IResolvedUrl } from "@fluidframework/driver-definitions/internal";
+import type { ISummaryTree } from "@fluidframework/driver-definitions";
+import type { IResolvedUrl } from "@fluidframework/driver-definitions/internal";
 import {
 	getDocAttributesFromProtocolSummary,
 	getQuorumValuesFromProtocolSummary,
 	isCombinedAppAndProtocolSummary,
 } from "@fluidframework/driver-utils/internal";
-import { LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
+import type { LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import { defaultHash } from "@fluidframework/server-services-client";
 
 export async function createDocument(

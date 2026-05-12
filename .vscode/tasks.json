@@ -22,7 +22,6 @@
 					"base": "$tsc",
 					"fileLocation": "absolute",
 				},
-				"$tslint5",
 			],
 		},
 		{
@@ -44,7 +43,6 @@
 					"base": "$tsc",
 					"fileLocation": "absolute",
 				},
-				"$tslint5",
 			],
 		},
 		{

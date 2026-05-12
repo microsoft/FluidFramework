@@ -569,9 +569,9 @@ export function configureWebSocketServices(
 			/**
 			 * @param contentBatches - typed as `unknown` array as it comes from wire and has not been validated.
 			 * v1 signals are expected to be an array of strings (Json.stringified `ISignalEnvelope`s from
-			 * [Container.submitSignal](https://github.com/microsoft/FluidFramework/blob/ccb26baf65be1cbe3f708ec0fe6887759c25be6d/packages/loader/container-loader/src/container.ts#L2292-L2294)
+			 * {@link https://github.com/microsoft/FluidFramework/blob/ccb26baf65be1cbe3f708ec0fe6887759c25be6d/packages/loader/container-loader/src/container.ts#L2292-L2294|Container.submitSignal}
 			 * and sent via
-			 * [DocumentDeltaConnection.emitMessages](https://github.com/microsoft/FluidFramework/blob/ccb26baf65be1cbe3f708ec0fe6887759c25be6d/packages/drivers/driver-base/src/documentDeltaConnection.ts#L313C1-L321C4)),
+			 * {@link https://github.com/microsoft/FluidFramework/blob/ccb26baf65be1cbe3f708ec0fe6887759c25be6d/packages/drivers/driver-base/src/documentDeltaConnection.ts#L313C1-L321C4|DocumentDeltaConnection.emitMessages}
 			 * but actual content is passed-thru and not decoded.
 			 *
 			 * v2 signals are expected to be an array of `ISentSignalMessage` objects.

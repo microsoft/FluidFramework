@@ -42,7 +42,7 @@ describeCompat("Table Document with Interception", "LoaderCompat", (getTestObjec
 
 		// Function that verifies that the given table has correct value and properties for
 		// a given cell.
-		function verifyCell(table: ITable, cell: ICellType, props?: PropertySet) {
+		function verifyCell(table: ITable, cell: ICellType, props?: PropertySet): void {
 			assert.equal(
 				table.getCellValue(cell.row, cell.col),
 				cell.value,
@@ -204,7 +204,7 @@ describeCompat("Table Document with Interception", "LoaderCompat", (getTestObjec
 			// If useWrapper above is true, this interception callback calls a method on the wrapped object
 			// causing an infinite recursion.
 			// If useWrapper is false, it uses the passed shared string which does not cause recursion.
-			function recursiveInterceptionCb(properties?: PropertySet) {
+			function recursiveInterceptionCb(properties?: PropertySet): PropertySet {
 				const ss = useWrapper ? tableDocumentWithInterception : tableDocument;
 				// Annotate the first row and column.
 				ss.setCellValue(cellInRecursiveCb.row, cellInRecursiveCb.col, cellInRecursiveCb.value);

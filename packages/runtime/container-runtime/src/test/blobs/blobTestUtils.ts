@@ -570,6 +570,7 @@ export const waitHandlePayloadShared = async (handle: IFluidHandle): Promise<voi
 				handle.events.off("payloadShareFailed", onPayloadShareFailed);
 			};
 			const onPayloadShareFailed = (error: unknown) => {
+				// eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors
 				reject(error);
 				handle.events.off("payloadShared", onPayloadShared);
 				handle.events.off("payloadShareFailed", onPayloadShareFailed);

@@ -31,19 +31,36 @@ parameters:
   type: string
   default: $(ado-feeds-primary-registry)
 
+# An optional extra segment appended to the pnpm store cache key (separated by |).
+# Note that Azure pipelines interpret unquoted cache keys as files rather than literal strings. E.g. the following specification:
+#
+# additionalCacheKey: 'foo | "bar"'
+#
+# will use the hashed contents of the file "foo" (hashing nothing if that file does not exist) as well as the string "bar".
+# Use this parameter if the set of dependencies to be installed may be be better distinguished using files other than the root pnpm-lock.
+- name: additionalCacheKey
+  type: string
+  default: ''
+
 steps:
 - ${{ if eq(parameters.enableCache, true) }}:
   - task: Cache@2
     displayName: Cache pnpm store
-    timeoutInMinutes: 3
+    # The timeout applies to both the pre-job restore and post-job save operations.
+    # 3 minutes was insufficient for the post-job cache upload of the pnpm store, causing
+    # intermittent "The task has timed out" errors that mark builds as Partially Succeeded.
+    timeoutInMinutes: 5
     continueOnError: true
     inputs:
       # Caches are already scoped to individual pipelines, so no need to include the release group name or tag
       # in the cache key
-      key: 'pnpm-store | "$(Agent.OS)" | ${{ parameters.buildDirectory }}/pnpm-lock.yaml'
+      ${{ if ne(parameters.additionalCacheKey, '') }}:
+        key: '"pnpm-store" | "$(Agent.OS)" | $(Pipeline.Workspace)/${{ parameters.buildDirectory }}/pnpm-lock.yaml | ${{ parameters.additionalCacheKey }}'
+      ${{ else }}:
+        key: '"pnpm-store" | "$(Agent.OS)" | $(Pipeline.Workspace)/${{ parameters.buildDirectory }}/pnpm-lock.yaml'
       path: ${{ parameters.pnpmStorePath }}
       restoreKeys: |
-        pnpm-store | "$(Agent.OS)"
+        "pnpm-store" | "$(Agent.OS)"
 
 - task: Bash@3
   displayName: Install and configure pnpm
@@ -52,7 +69,7 @@ steps:
   condition: or(succeeded(), canceled())
   inputs:
     targetType: 'inline'
-    workingDirectory: ${{ parameters.buildDirectory }}
+    workingDirectory: '$(Pipeline.Workspace)/${{ parameters.buildDirectory }}'
     # workspace-concurrency 0 means use use the CPU core count. This is better than the default (4) for larger agents.
     script: |
       set -eu -o pipefail

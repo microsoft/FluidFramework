@@ -27,7 +27,7 @@ import {
 } from "@fluidframework/server-services-telemetry";
 import type { RequestHandler, Request, Response } from "express";
 // In this case we want @types/express-serve-static-core, not express-serve-static-core, and so disable the lint rule
-// eslint-disable-next-line import/no-unresolved
+// eslint-disable-next-line import-x/no-unresolved
 import type { Params } from "express-serve-static-core";
 import { decode, sign } from "jsonwebtoken";
 import type { Provider } from "nconf";

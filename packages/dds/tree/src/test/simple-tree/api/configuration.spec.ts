@@ -6,20 +6,20 @@
 import { strict as assert } from "node:assert";
 
 import { createIdCompressor } from "@fluidframework/id-compressor/internal";
+import { validateUsageError } from "@fluidframework/test-runtime-utils/internal";
 
+import { independentView } from "../../../shared-tree/index.js";
+import {
+	TreeViewConfiguration,
+	TreeViewConfigurationAlpha,
+	checkUnion,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "../../../simple-tree/api/configuration.js";
 import {
 	type TreeNodeSchema,
 	SchemaFactory,
 	SchemaFactoryAlpha,
 } from "../../../simple-tree/index.js";
-import { validateUsageError } from "../../utils.js";
-import { independentView } from "../../../shared-tree/index.js";
-
-import {
-	TreeViewConfiguration,
-	checkUnion,
-	// eslint-disable-next-line import-x/no-internal-modules
-} from "../../../simple-tree/api/configuration.js";
 
 const schema = new SchemaFactory("com.example");
 
@@ -256,5 +256,10 @@ describe("simple-tree configuration", () => {
 				],
 			);
 		});
+	});
+
+	it("creates TreeViewConfigurationAlpha", () => {
+		const config = new TreeViewConfiguration({ schema: [] });
+		assert(config instanceof TreeViewConfigurationAlpha);
 	});
 });

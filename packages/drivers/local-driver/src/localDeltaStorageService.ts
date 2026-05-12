@@ -3,13 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import {
+import type {
 	IDocumentDeltaStorageService,
 	IStream,
 	ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
 import { streamFromMessages } from "@fluidframework/driver-utils/internal";
-import { IDatabaseManager } from "@fluidframework/server-services-core";
+import type { IDatabaseManager } from "@fluidframework/server-services-core";
 
 /**
  * Provides access to the underlying delta storage on the server for local driver.
@@ -31,7 +31,7 @@ export class LocalDeltaStorageService implements IDocumentDeltaStorageService {
 		return streamFromMessages(this.getCore(from, to));
 	}
 
-	private async getCore(from: number, to?: number) {
+	private async getCore(from: number, to?: number): Promise<ISequencedDocumentMessage[]> {
 		const query = { documentId: this.id, tenantId: this.tenantId };
 		query["operation.sequenceNumber"] = {};
 		query["operation.sequenceNumber"].$gt = from - 1; // from is inclusive

@@ -22,6 +22,7 @@ import type {
 	ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
 import type { ISummaryStats } from "@fluidframework/runtime-definitions/internal";
+import type { TelemetryContext } from "@fluidframework/runtime-utils/internal";
 import type {
 	ITelemetryLoggerExt,
 	ITelemetryLoggerPropertyBag,
@@ -124,8 +125,10 @@ export interface ISummarizerRuntime extends IConnectableRuntime {
 	 */
 	readonly summarizerClientId: string | undefined;
 	readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
+	/**
+	 * Initiate disposal of the container.
+	 */
 	disposeFn(): void;
-	closeFn(): void;
 	on(
 		event: "op",
 		listener: (op: ISequencedDocumentMessage, runtimeMessage?: boolean) => void,
@@ -167,6 +170,10 @@ export interface ISubmitSummaryOptions extends ISummarizeOptions {
 	 * The sequence number of the latest summary used to validate if summary state is correct before summarizing
 	 */
 	readonly latestSummaryRefSeqNum: number;
+	/**
+	 * Shared telemetry context for the current summarize attempt.
+	 */
+	telemetryContext?: TelemetryContext;
 }
 
 /**

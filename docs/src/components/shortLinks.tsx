@@ -5,7 +5,7 @@
 
 import { useDoc } from "@docusaurus/plugin-content-docs/client";
 import type { ApiItemKind } from "@fluid-tools/api-markdown-documenter";
-import React from "react";
+import type { ReactNode } from "react";
 
 // TODO: how will versioning interact with these?
 
@@ -17,7 +17,7 @@ export interface PackageLinkProps {
 	 * Contents to display within the link.
 	 * @defaultValue {@link PackageLinkProps.packageName}
 	 */
-	children?: React.ReactNode;
+	children?: ReactNode;
 	packageName: string;
 	headingId?: string;
 }
@@ -39,7 +39,7 @@ export interface ApiLinkProps {
 	 * Contents to display within the link.
 	 * @defaultValue {@link ApiLinkProps.apiName}
 	 */
-	children?: React.ReactNode;
+	children?: ReactNode;
 	packageName: string;
 	apiName: string;
 	// TODO: do we have enough context to determine this automatically when unambiguous?
@@ -96,7 +96,7 @@ export interface GlossaryLinkProps {
 	 * Contents to display within the link.
 	 * @defaultValue {@link GlossaryLinkProps.term}
 	 */
-	children?: React.ReactNode;
+	children?: ReactNode;
 
 	/**
 	 * The glossary term to link to.

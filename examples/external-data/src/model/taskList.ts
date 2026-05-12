@@ -535,6 +535,7 @@ export class BaseDocument extends DataObject implements IBaseDocument {
 	/**
 	 * {@inheritDoc IBaseDocument.addTaskList}
 	 */
+	// eslint-disable-next-line @typescript-eslint/no-misused-promises
 	public readonly addTaskList = async (props: IBaseDocumentInitialState): Promise<void> => {
 		if (this.taskListCollection.has(props.externalTaskListId)) {
 			throw new Error(

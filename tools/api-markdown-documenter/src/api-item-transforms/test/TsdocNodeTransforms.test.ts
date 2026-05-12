@@ -870,6 +870,37 @@ describe("Tsdoc node transformation tests", () => {
 				},
 			]);
 		});
+
+		describe("Regression tests", () => {
+			// TSDoc currently does something funny when parsing comments like the following case.
+			// If the summary comment is followed by a line with multiple modifier tags, TSDoc doesn't seem to trim trailing whitespace and newlines from the summary.
+			// This results in us generating paragraph content with trailing lines and whitespace that aren't desired.
+			// This test exists to ensure we handle this case correctly and don't emit extra whitespace.
+			it("Summary content parsed with trailing line break", () => {
+				// Note
+				const comment = `/**
+ * I am a regression test.
+ *
+ * @sealed @beta
+ */`;
+				const context = parser.parseString(comment);
+				const summarySection = context.docComment.summarySection;
+
+				const result = transformTsdocSection(summarySection, transformOptions);
+
+				expect(result).to.deep.equal([
+					{
+						type: "paragraph",
+						children: [
+							{
+								type: "text",
+								value: "I am a regression test.",
+							},
+						],
+					},
+				]);
+			});
+		});
 	});
 
 	// Test TODOs:

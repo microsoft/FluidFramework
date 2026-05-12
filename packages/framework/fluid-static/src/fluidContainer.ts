@@ -274,9 +274,7 @@ export interface IFluidContainerInternal extends ContainerExtensionStore {
  */
 export async function createFluidContainer<
 	TContainerSchema extends ContainerSchema = ContainerSchema,
->(props: {
-	container: IContainer;
-}): Promise<IFluidContainer<TContainerSchema>> {
+>(props: { container: IContainer }): Promise<IFluidContainer<TContainerSchema>> {
 	const entryPoint: FluidObject<IStaticEntryPoint> = await props.container.getEntryPoint();
 	assert(
 		entryPoint.IStaticEntryPoint !== undefined,
@@ -377,10 +375,12 @@ class FluidContainer<TContainerSchema extends ContainerSchema = ContainerSchema>
 		throw new Error("Cannot attach container. Attach method not provided.");
 	}
 
+	// eslint-disable-next-line @typescript-eslint/no-misused-promises
 	public async connect(): Promise<void> {
 		this.container.connect?.();
 	}
 
+	// eslint-disable-next-line @typescript-eslint/no-misused-promises
 	public async disconnect(): Promise<void> {
 		this.container.disconnect?.();
 	}

@@ -16,8 +16,8 @@ import {
 	parsePackageSelectionFlags,
 	selectAndFilterPackages,
 } from "./filter.js";
-import { type PackageSelectionDefault, filterFlags, selectionFlags } from "./flags.js";
-import { BaseCommand } from "./library/index.js";
+import { filterFlags, type PackageSelectionDefault, selectionFlags } from "./flags.js";
+import { BaseCommand } from "./library/commands/base.js";
 
 /**
  * Commands that run operations per project.
@@ -151,6 +151,7 @@ export abstract class PackageCommand<
 		}
 
 		try {
+			// eslint-disable-next-line import-x/no-named-as-default-member -- async.mapLimit is the idiomatic usage
 			await async.mapLimit(packages, this.flags.concurrency, async (pkg: PackageWithKind) => {
 				started += 1;
 				updateStatus();

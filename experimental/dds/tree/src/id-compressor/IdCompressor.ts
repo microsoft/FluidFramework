@@ -7,6 +7,8 @@ import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
 import { assert } from '@fluidframework/core-utils/internal';
 import { ITelemetryLoggerExt, createChildLogger } from '@fluidframework/telemetry-utils/internal';
 import { BTree } from '@tylerbu/sorted-btree-es6';
+// eslint-disable-next-line import-x/no-internal-modules
+import { diffAgainst } from '@tylerbu/sorted-btree-es6/extended/diffAgainst';
 
 import {
 	Mutable,
@@ -1064,6 +1066,7 @@ export class IdCompressor {
 				}
 			}
 		} else {
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-unary-minus
 			const idOffset = -id; // Convert to a positive number
 			if (idOffset > this.localIdCount) {
 				// This local ID was never allocated.
@@ -1161,6 +1164,7 @@ export class IdCompressor {
 		}
 
 		// Check if this local ID has not been allocated yet
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-unary-minus
 		if (-id > this.localIdCount) {
 			fail('Supplied local ID was not created by this compressor.');
 		}
@@ -1220,6 +1224,7 @@ export class IdCompressor {
 	public normalizeToSessionSpace(id: OpSpaceCompressedId, sessionIdIfLocal?: SessionId): SessionSpaceCompressedId {
 		if (isLocalId(id)) {
 			if (sessionIdIfLocal === undefined || sessionIdIfLocal === this.localSessionId) {
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-unary-minus
 				const localIndex = -id;
 				if (localIndex > this.localIdCount) {
 					fail('Supplied local ID was not created by this compressor.');
@@ -1228,6 +1233,7 @@ export class IdCompressor {
 			} else {
 				const session =
 					this.sessions.get(sessionIdIfLocal) ?? fail('No IDs have ever been finalized by the supplied session.');
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-unary-minus
 				const localCount = -id;
 				const numericUuid = incrementUuid(session.sessionUuid, localCount - 1);
 				return this.compressNumericUuid(numericUuid) ?? fail('ID is not known to this compressor.');
@@ -1381,7 +1387,7 @@ export class IdCompressor {
 			return { break: true };
 		};
 
-		const compareCompressionMappings = (a, b) => {
+		const compareCompressionMappings = (a, b): boolean => {
 			const unfinalizedA = IdCompressor.isUnfinalizedOverride(a);
 			const unfinalizedB = IdCompressor.isUnfinalizedOverride(b);
 			if (unfinalizedA) {
@@ -1412,7 +1418,8 @@ export class IdCompressor {
 			return true;
 		};
 
-		const diff = this.clustersAndOverridesInversion.diffAgainst(
+		const diff = diffAgainst(
+			this.clustersAndOverridesInversion,
 			other.clustersAndOverridesInversion,
 			missingInOne,
 			missingInOne,
@@ -1721,6 +1728,7 @@ export class IdCompressor {
 			const { sessionIndex, capacity, count, overrides } = deserializeCluster(serializedCluster);
 			const { session, sessionId } = sessionInfos[sessionIndex];
 			const { lastFinalizedLocalId, sessionUuid } = session;
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-unary-minus
 			const currentIdCount = lastFinalizedLocalId === undefined ? 0 : -lastFinalizedLocalId;
 
 			const cluster: Mutable<IdCluster> = {
@@ -1796,6 +1804,7 @@ export class IdCompressor {
 
 		assertWithMessage(
 			compressor.localSession.lastFinalizedLocalId === undefined ||
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-unary-minus
 				compressor.localIdCount >= -compressor.localSession.lastFinalizedLocalId
 		);
 

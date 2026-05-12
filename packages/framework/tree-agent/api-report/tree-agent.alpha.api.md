@@ -4,39 +4,36 @@
 
 ```ts
 
-// @alpha
-export type Arg<T extends z.ZodTypeAny = z.ZodTypeAny> = readonly [name: string, type: T];
+export { Arg }
+
+export { ArgsTuple }
 
 // @alpha
-export type ArgsTuple<T extends readonly Arg[]> = T extends readonly [infer Single extends Arg] ? [Single[1]] : T extends readonly [infer Head extends Arg, ...infer Tail extends readonly Arg[]] ? [Head[1], ...ArgsTuple<Tail>] : never;
-
-// @alpha
-export type AsynchronousEditor = (context: Record<string, unknown>, code: string) => Promise<void>;
+export type AsynchronousEditor<TSchema extends ImplicitFieldSchema> = (tree: ViewOrTree<TSchema>, code: string) => Promise<void>;
 
 // @alpha
 export type BindableSchema = TreeNodeSchema<string, NodeKind.Object> | TreeNodeSchema<string, NodeKind.Record> | TreeNodeSchema<string, NodeKind.Array> | TreeNodeSchema<string, NodeKind.Map>;
 
-// @alpha
-export const bindEditor: typeof bindEditorImpl;
+export { buildFunc }
 
 // @alpha
-export function bindEditorImpl<TSchema extends ImplicitFieldSchema>(tree: TreeView<TSchema> | (ReadableField<TSchema> & TreeNode), editor: AsynchronousEditor): (code: string) => Promise<void>;
+export interface Context<TSchema extends ImplicitFieldSchema> {
+    create: Record<string, (input: FactoryContentObject) => TreeNode>;
+    is: Record<string, <T extends TreeNode>(input: T) => input is T>;
+    isArray(value: unknown): boolean;
+    isMap(value: unknown): boolean;
+    key(child: TreeNode): string | number;
+    parent(child: TreeNode): TreeNode | undefined;
+    root: ReadableField<TSchema>;
+}
 
 // @alpha
-export function bindEditorImpl<TSchema extends ImplicitFieldSchema>(tree: TreeView<TSchema> | (ReadableField<TSchema> & TreeNode), editor: SynchronousEditor): (code: string) => void;
+export function createContext<TSchema extends ImplicitFieldSchema>(tree: ViewOrTree<TSchema>): Context<TSchema>;
 
 // @alpha
-export function buildFunc<const Return extends z.ZodTypeAny, const Args extends readonly Arg[], const Rest extends z.ZodTypeAny | null = null>(def: {
-    description?: string;
-    returns: Return;
-    rest?: Rest;
-}, ...args: Args): FunctionDef<Args, Return, Rest>;
+export function createTreeAgent<TSchema extends ImplicitFieldSchema>(model: SharedTreeChatModel, tree: ViewOrTree<TSchema>, options?: TreeAgentOptions<TSchema>): TreeAgent;
 
-// @alpha
-export type Ctor<T = any> = new (...args: any[]) => T;
-
-// @alpha
-export const defaultEditor: AsynchronousEditor;
+export { Ctor }
 
 // @alpha
 export interface EditResult {
@@ -45,37 +42,31 @@ export interface EditResult {
 }
 
 // @alpha
-export interface ExposedMethods {
-    // (undocumented)
-    expose<const K extends string & keyof MethodKeys<InstanceType<S>>, S extends BindableSchema & Ctor<{
-        [P in K]: Infer<Z>;
-    }> & IExposedMethods, Z extends FunctionDef<any, any, any>>(schema: S, methodName: K, zodFunction: Z): void;
-    instanceOf<T extends TreeNodeSchemaClass>(schema: T): z.ZodType<InstanceType<T>, z.ZodTypeDef, InstanceType<T>>;
+export function executeSemanticEditing<TSchema extends ImplicitFieldSchema>(model: SharedTreeChatModel, tree: ViewOrTree<TSchema>, prompt: string, options?: ExecuteSemanticEditingOptions<TSchema>): Promise<string>;
+
+// @alpha
+export interface ExecuteSemanticEditingOptions<TSchema extends ImplicitFieldSchema> {
+    domainHints?: string;
+    editor?: SynchronousEditor<TSchema> | AsynchronousEditor<TSchema>;
+    logger?: Logger;
+    maximumSequentialEdits?: number;
 }
 
-// @alpha
-export const exposeMethodsSymbol: unique symbol;
+export { ExposedMethods }
 
-// @alpha
-export interface FunctionDef<Args extends readonly Arg[], Return extends z.ZodTypeAny, Rest extends z.ZodTypeAny | null = null> {
-    // (undocumented)
-    args: Args;
-    // (undocumented)
-    description?: string;
-    // (undocumented)
-    rest?: Rest;
-    // (undocumented)
-    returns: Return;
-}
+export { ExposedProperties }
 
-// @alpha
-export interface IExposedMethods {
-    // (undocumented)
-    [exposeMethodsSymbol](methods: ExposedMethods): void;
-}
+export { exposeMethodsSymbol }
 
-// @alpha
-export type Infer<T> = T extends FunctionDef<infer Args, infer Return, infer Rest> ? z.infer<z.ZodFunction<z.ZodTuple<ArgsTuple<Args>, Rest>, Return>> : never;
+export { exposePropertiesSymbol }
+
+export { FunctionDef }
+
+export { IExposedMethods }
+
+export { IExposedProperties }
+
+export { isTypeFactoryType }
 
 // @alpha
 export const llmDefault: unique symbol;
@@ -85,28 +76,41 @@ export interface Logger {
     log(message: string): void;
 }
 
-// @alpha
-export type MethodKeys<T> = {
-    [K in keyof T]: T[K] extends (...args: any[]) => any ? K : never;
-};
+export { MethodKeys }
 
 // @alpha
-export interface SemanticAgentOptions {
+export class PropertyDef {
+    constructor(
+    name: string,
+    description: string | undefined,
+    schema: TypeFactoryType_2,
+    readOnly: boolean);
+    readonly description: string | undefined;
+    readonly name: string;
+    readonly readOnly: boolean;
+    readonly schema: TypeFactoryType_2;
+}
+
+// @alpha
+export interface SemanticAgentOptions<TSchema extends ImplicitFieldSchema> {
     domainHints?: string;
-    editor?: SynchronousEditor | AsynchronousEditor;
+    editor?: SynchronousEditor<TSchema> | AsynchronousEditor<TSchema>;
     logger?: Logger;
     maximumSequentialEdits?: number;
 }
 
 // @alpha
 export interface SharedTreeChatModel {
+    // @deprecated
     appendContext?(text: string): void;
     editToolName?: string;
+    invoke?(history: readonly TreeAgentChatMessage[]): Promise<TreeAgentChatResponse>;
     name?: string;
-    query(message: SharedTreeChatQuery): Promise<string>;
+    // @deprecated
+    query?(message: SharedTreeChatQuery): Promise<string>;
 }
 
-// @alpha
+// @alpha @deprecated
 export interface SharedTreeChatQuery {
     edit(js: string): Promise<EditResult>;
     text: string;
@@ -114,14 +118,143 @@ export interface SharedTreeChatQuery {
 
 // @alpha @sealed
 export class SharedTreeSemanticAgent<TSchema extends ImplicitFieldSchema> {
-    constructor(client: SharedTreeChatModel, tree: TreeView<TSchema> | (ReadableField<TSchema> & TreeNode), options?: Readonly<SemanticAgentOptions> | undefined);
+    constructor(client: SharedTreeChatModel, tree: ViewOrTree<TSchema>, options?: Readonly<SemanticAgentOptions<TSchema>> | undefined);
     query(userPrompt: string): Promise<string>;
 }
 
 // @alpha
-export type SynchronousEditor = (context: Record<string, unknown>, code: string) => void;
+export type SynchronousEditor<TSchema extends ImplicitFieldSchema> = (tree: ViewOrTree<TSchema>, code: string) => void;
 
 // @alpha
-export type TreeView<TRoot extends ImplicitFieldSchema | UnsafeUnknownSchema> = Pick<TreeViewAlpha<TRoot>, "root" | "fork" | "merge" | "rebaseOnto" | "schema" | "events"> & TreeBranchAlpha;
+export interface TreeAgent {
+    dispose(): void;
+    message(prompt: string): Promise<string>;
+}
+
+// @alpha
+export interface TreeAgentAssistantMessage {
+    readonly content: string;
+    readonly role: "assistant";
+}
+
+// @alpha
+export type TreeAgentChatMessage = TreeAgentSystemMessage | TreeAgentUserMessage | TreeAgentAssistantMessage | TreeAgentToolCallMessage | TreeAgentToolResultMessage;
+
+// @alpha
+export type TreeAgentChatResponse = TreeAgentToolCallMessage | TreeAgentAssistantMessage;
+
+// @alpha
+export interface TreeAgentOptions<TSchema extends ImplicitFieldSchema> {
+    domainHints?: string;
+    editor?: SynchronousEditor<TSchema> | AsynchronousEditor<TSchema>;
+    logger?: Logger;
+    maximumSequentialEdits?: number;
+}
+
+// @alpha
+export interface TreeAgentSystemMessage {
+    readonly content: string;
+    readonly role: "system";
+}
+
+// @alpha
+export interface TreeAgentToolCallMessage {
+    readonly role: "tool_call";
+    readonly toolArgs: Record<string, unknown>;
+    readonly toolCallId?: string;
+    readonly toolName: string;
+}
+
+// @alpha
+export interface TreeAgentToolResultMessage {
+    readonly content: string;
+    readonly role: "tool_result";
+    readonly toolCallId?: string;
+}
+
+// @alpha
+export interface TreeAgentUserMessage {
+    readonly content: string;
+    readonly role: "user";
+}
+
+// @alpha
+export type TreeView<TRoot extends ImplicitFieldSchema> = Pick<TreeViewAlpha<TRoot>, "root" | "fork" | "merge" | "rebaseOnto" | "schema" | "events"> & TreeBranchAlpha;
+
+// @alpha
+export const typeFactory: {
+    instanceOf<T extends TreeNodeSchemaClass>(schema: T): TypeFactoryInstanceOf_2;
+    string(): TypeFactoryString_2;
+    number(): TypeFactoryNumber_2;
+    boolean(): TypeFactoryBoolean_2;
+    date(): TypeFactoryDate_2;
+    void(): TypeFactoryVoid_2;
+    undefined(): TypeFactoryUndefined_2;
+    null(): TypeFactoryNull_2;
+    unknown(): TypeFactoryUnknown_2;
+    array(element: TypeFactoryType_2): TypeFactoryArray_2;
+    promise(innerType: TypeFactoryType_2): TypeFactoryPromise_2;
+    object(shape: Record<string, TypeFactoryType_2>): TypeFactoryObject_2;
+    record(keyType: TypeFactoryType_2, valueType: TypeFactoryType_2): TypeFactoryRecord_2;
+    map(keyType: TypeFactoryType_2, valueType: TypeFactoryType_2): TypeFactoryMap_2;
+    tuple(items: readonly TypeFactoryType_2[], rest?: TypeFactoryType_2 | undefined): TypeFactoryTuple_2;
+    union(options: readonly TypeFactoryType_2[]): TypeFactoryUnion_2;
+    intersection(types: readonly TypeFactoryType_2[]): TypeFactoryIntersection_2;
+    literal(value: string | number | boolean): TypeFactoryLiteral_2;
+    optional(innerType: TypeFactoryType_2): TypeFactoryOptional_2;
+    readonly(innerType: TypeFactoryType_2): TypeFactoryReadonly_2;
+    function(parameters: readonly TypeFactoryFunctionParameter_2[], returnType: TypeFactoryType_2, restParameter?: TypeFactoryFunctionParameter_2 | undefined): TypeFactoryFunction_2;
+};
+
+export { TypeFactoryArray }
+
+export { TypeFactoryBoolean }
+
+export { TypeFactoryDate }
+
+export { TypeFactoryFunction }
+
+export { TypeFactoryFunctionParameter }
+
+export { TypeFactoryInstanceOf }
+
+export { TypeFactoryIntersection }
+
+export { TypeFactoryLiteral }
+
+export { TypeFactoryMap }
+
+export { TypeFactoryNull }
+
+export { TypeFactoryNumber }
+
+export { TypeFactoryObject }
+
+export { TypeFactoryOptional }
+
+export { TypeFactoryPromise }
+
+export { TypeFactoryReadonly }
+
+export { TypeFactoryRecord }
+
+export { TypeFactoryString }
+
+export { TypeFactoryTuple }
+
+export { TypeFactoryType }
+
+export { TypeFactoryTypeKind }
+
+export { TypeFactoryUndefined }
+
+export { TypeFactoryUnion }
+
+export { TypeFactoryUnknown }
+
+export { TypeFactoryVoid }
+
+// @alpha
+export type ViewOrTree<TSchema extends ImplicitFieldSchema> = TreeView<TSchema> | (ReadableField<TSchema> & TreeNode);
 
 ```

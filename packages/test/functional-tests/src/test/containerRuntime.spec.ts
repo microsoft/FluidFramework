@@ -15,17 +15,13 @@ import {
 	ICriticalContainerError,
 	IRuntime,
 } from "@fluidframework/container-definitions/internal";
-// eslint-disable-next-line import-x/no-internal-modules
 import { ConnectionManager } from "@fluidframework/container-loader/internal/test/connectionManager";
-// eslint-disable-next-line import-x/no-internal-modules
 import { IConnectionManagerFactoryArgs } from "@fluidframework/container-loader/internal/test/contracts";
-// eslint-disable-next-line import-x/no-internal-modules
 import { DeltaManager } from "@fluidframework/container-loader/internal/test/deltaManager";
 import {
 	ContainerMessageType,
 	loadContainerRuntime,
 } from "@fluidframework/container-runtime/internal";
-// eslint-disable-next-line import-x/no-internal-modules
 import { DeltaScheduler } from "@fluidframework/container-runtime/internal/test/deltaScheduler";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import { IClient } from "@fluidframework/driver-definitions";
@@ -101,6 +97,7 @@ describe("Container Runtime", () => {
 			for (let i = 0; i < count; i++) {
 				const message: Partial<ISequencedDocumentMessage> = {
 					clientId,
+					clientSequenceNumber: seq,
 					minimumSequenceNumber: 0,
 					sequenceNumber: seq++,
 					type: MessageType.Operation,
@@ -156,7 +153,7 @@ describe("Container Runtime", () => {
 					),
 			);
 
-			const mockProvideEntryPoint = async () => ({
+			const mockProvideEntryPoint = async (): Promise<{ myProp: string }> => ({
 				myProp: "myValue",
 			});
 			containerRuntime = await loadContainerRuntime({

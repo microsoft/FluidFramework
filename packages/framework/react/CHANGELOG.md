@@ -1,5 +1,62 @@
 # @fluidframework/react
 
+## 2.100.0
+
+### Minor Changes
+
+- Node 22 is now the minimum supported Node.js version ([#27116](https://github.com/microsoft/FluidFramework/pull/27116)) [e8214d29663](https://github.com/microsoft/FluidFramework/commit/e8214d29663f5ee98d737daed82506a25d8de8d0)
+
+  All Fluid Framework client packages now require Node.js 22 or later. This aligns with the standing Node upgrade policy as Node 20 reaches end-of-life on April 30, 2026.
+
+## 2.93.0
+
+Dependency updates only.
+
+## 2.92.0
+
+Dependency updates only.
+
+## 2.91.0
+
+Dependency updates only.
+
+## 2.90.0
+
+### Minor Changes
+
+- @fluidframework/react no longer supports CommonJS ([#26575](https://github.com/microsoft/FluidFramework/pull/26575)) [995c1e44aad](https://github.com/microsoft/FluidFramework/commit/995c1e44aad7368e4e59ac4ff3a7237280506cde)
+
+  CommonJS support has been removed from `@fluidframework/react`.
+  This package currently only has alpha APIs, so this opportunity was taken to simplify and modernize it while we still can.
+
+## 2.83.0
+
+Dependency updates only.
+
+## 2.82.0
+
+Dependency updates only.
+
+## 2.81.0
+
+Dependency updates only.
+
+## 2.80.0
+
+Dependency updates only.
+
+## 2.74.0
+
+Dependency updates only.
+
+## 2.73.0
+
+Dependency updates only.
+
+## 2.72.0
+
+Dependency updates only.
+
 ## 2.71.0
 
 Dependency updates only.
@@ -25,7 +82,6 @@ Dependency updates only.
   Now all the APIs are `@alpha`, which also amounts to making no guarantees but makes it possible to promote APIs to `@beta` in the future to offer some stability.
 
   To accommodate this change, all users of this package will need to adjust:
-
   - Package dependencies from `"@fluid-experimental/tree-react-api"` to `"@fluidframework/react"`.
   - Imports from `"@fluid-experimental/tree-react-api"` to `"@fluidframework/react/alpha"`.
 
@@ -222,7 +278,6 @@ Dependency updates only.
   The experimental tree data object in `tree-react-api` has been simplified in a way that is incompatible with its previous version, which used `SharedDirectory` at the root.
   The library now leverages a new data object that uses the `SharedTree` directly at the root.
   In addition to breaking compatibility with existing documents, these changes include some related simplifications to the APIs which are also breaking:
-
   - Removes the `key` property from the data object configuration.
     This key was used to inform where the SharedTree was parented beneath the root SharedDirectory, so it no longer serves a purpose.
   - Inlined the `ITreeDataObject` interface into `IReactTreeDataObject`.

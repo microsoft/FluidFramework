@@ -4,6 +4,7 @@
  */
 
 import type { ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
+import { LogLevel } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import { validateMessages } from "@fluidframework/driver-base/internal";
 import type {
@@ -18,7 +19,6 @@ import {
 	type ITelemetryLoggerExt,
 	PerformanceEvent,
 } from "@fluidframework/telemetry-utils/internal";
-
 import { v4 as uuid } from "uuid";
 
 import type { IDeltaStorageGetResponse, ISequencedDeltaOpMessage } from "./contracts.js";
@@ -247,13 +247,17 @@ export class OdspDeltaStorageWithCache implements IDocumentDeltaStorageService {
 
 		return streamObserver(stream, (result) => {
 			if (result.done && opsFromSnapshot + opsFromCache + opsFromStorage !== 0) {
-				this.logger.sendPerformanceEvent({
-					eventName: "CacheOpsRetrieved",
-					opsFromSnapshot,
-					opsFromCache,
-					opsFromStorage,
-					reason: fetchReason,
-				});
+				this.logger.sendPerformanceEvent(
+					{
+						eventName: "CacheOpsRetrieved",
+						opsFromSnapshot,
+						opsFromCache,
+						opsFromStorage,
+						reason: fetchReason,
+					},
+					undefined, // error
+					LogLevel.info,
+				);
 			}
 		});
 	}

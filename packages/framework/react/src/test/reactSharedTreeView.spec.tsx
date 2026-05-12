@@ -11,7 +11,7 @@ import { SchemaFactory, TreeViewConfiguration } from "@fluidframework/tree";
 import { independentView } from "@fluidframework/tree/internal";
 import { render } from "@testing-library/react";
 import globalJsdom from "global-jsdom";
-import * as React from "react";
+import type { JSX } from "react";
 
 import type { PropTreeNode } from "../propNode.js";
 import { treeDataObject, TreeViewComponent } from "../reactSharedTreeView.js";
@@ -68,12 +68,12 @@ describe("reactSharedTreeView", () => {
 
 				class Item extends builder.object("Item", {}) {}
 
-				const View = ({ root }: { root: PropTreeNode<Item> }): React.JSX.Element => (
+				const View = ({ root }: { root: PropTreeNode<Item> }): JSX.Element => (
 					<span>View</span>
 				);
 
 				it("TreeViewComponent", () => {
-					const view = independentView(new TreeViewConfiguration({ schema: Item }), {});
+					const view = independentView(new TreeViewConfiguration({ schema: Item }));
 					const content = <TreeViewComponent viewComponent={View} tree={{ treeView: view }} />;
 					const rendered = render(content, { reactStrictMode });
 

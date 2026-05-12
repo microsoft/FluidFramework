@@ -10,9 +10,9 @@ import {
 	jsonableTreeFromFieldCursor,
 	type TreeChunk,
 } from "../../../feature-libraries/index.js";
-import { checkFieldTraversal } from "../../cursorTestSuite.js";
 import { numberSchema } from "../../../simple-tree/index.js";
 import { brand } from "../../../util/index.js";
+import { checkFieldTraversal } from "../../cursorTestSuite.js";
 
 export function numberSequenceField(length: number): JsonableTree[] {
 	const field: JsonableTree[] = [];
@@ -41,11 +41,9 @@ export function assertChunkCursorBatchEquals(
 export function validateChunkCursor(
 	chunk: TreeChunk,
 	expected: JsonableTree[],
-	expectedPath: FieldUpPath = {
-		field: rootFieldKey,
-		parent: undefined,
-	},
+	expectedPath?: FieldUpPath,
 ): void {
-	checkFieldTraversal(chunk.cursor(), expectedPath);
+	const path = expectedPath ?? { field: rootFieldKey, parent: undefined };
+	checkFieldTraversal(chunk.cursor(), path);
 	assertChunkCursorEquals(chunk, expected);
 }

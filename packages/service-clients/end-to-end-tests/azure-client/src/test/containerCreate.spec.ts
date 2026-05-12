@@ -26,7 +26,6 @@ import { SharedMap as SharedMapLegacy } from "@fluidframework/map-legacy";
 import { MockLogger, UsageError } from "@fluidframework/telemetry-utils/internal";
 import { timeoutPromise } from "@fluidframework/test-utils/internal";
 import { SharedTree } from "@fluidframework/tree/legacy";
-import type { AxiosResponse } from "axios";
 import type { SinonSandbox } from "sinon";
 import { createSandbox } from "sinon";
 
@@ -96,7 +95,7 @@ for (const testOpts of testMatrix) {
 			let containerId: string;
 			let container: IFluidContainer;
 			if (isEphemeral) {
-				const containerResponse: AxiosResponse | undefined = await createContainerFromPayload(
+				const containerResponse = await createContainerFromPayload(
 					ephemeralSummaryTrees.canAttachContainer,
 					"test-user-id-1",
 					"test-user-name-1",
@@ -133,7 +132,7 @@ for (const testOpts of testMatrix) {
 			let containerId: string;
 			let container: IFluidContainer;
 			if (isEphemeral) {
-				const containerResponse: AxiosResponse | undefined = await createContainerFromPayload(
+				const containerResponse = await createContainerFromPayload(
 					ephemeralSummaryTrees.cannotAttachContainerTwice,
 					"test-user-id-1",
 					"test-user-name-1",
@@ -175,7 +174,7 @@ for (const testOpts of testMatrix) {
 			let containerId: string;
 			let newContainer: IFluidContainer;
 			if (isEphemeral) {
-				const containerResponse: AxiosResponse | undefined = await createContainerFromPayload(
+				const containerResponse = await createContainerFromPayload(
 					ephemeralSummaryTrees.retrieveExistingAFRContainer,
 					"test-user-id-1",
 					"test-user-name-1",

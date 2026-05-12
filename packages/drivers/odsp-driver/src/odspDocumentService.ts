@@ -172,6 +172,7 @@ export class OdspDocumentService
 	 * @returns returns the document storage service for sharepoint driver.
 	 */
 	public async connectToStorage(): Promise<IDocumentStorageService> {
+		// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- using ??= could change behavior if value is falsy
 		if (!this.storageManager) {
 			this.storageManager = new OdspDocumentStorageService(
 				this.odspResolvedUrl,
@@ -247,6 +248,7 @@ export class OdspDocumentService
 	 * @returns returns the document delta stream service for onedrive/sharepoint driver.
 	 */
 	public async connectToDeltaStream(client: IClient): Promise<IDocumentDeltaConnection> {
+		// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- using ??= could change behavior if value is falsy
 		if (this.socketModuleP === undefined) {
 			this.socketModuleP = this.getDelayLoadedDeltaStream();
 		}
@@ -335,7 +337,9 @@ export class OdspDocumentService
 				write: async (key: string, opsData: string): Promise<void> => {
 					return this.cache.persistedCache.put({ ...opsKey, key }, opsData);
 				},
-				read: async (key: string) => this.cache.persistedCache.get({ ...opsKey, key }),
+				read: async (key: string): Promise<string | undefined> =>
+					// typing workaround because this.cache.persistedCache.get returns `Promise<any>`
+					this.cache.persistedCache.get({ ...opsKey, key }) as Promise<string | undefined>,
 				remove: (): void => {
 					this.cache.persistedCache.removeEntries().catch(() => {});
 				},

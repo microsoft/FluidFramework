@@ -18,9 +18,9 @@ import { createTinyliciousDriver } from "./tinyliciousDriver.js";
  * and used for production.
  */
 export const createExampleDriver = async (
-	type: ExampleDriverService,
+	service: ExampleDriverService,
 ): Promise<ExampleDriver> => {
-	switch (type) {
+	switch (service) {
 		case "odsp": {
 			return createOdspDriver();
 		}
@@ -31,7 +31,7 @@ export const createExampleDriver = async (
 			return createLocalDriver();
 		}
 		default: {
-			throw new Error(`Unrecognized driver type: ${type}`);
+			throw new Error(`Unrecognized driver type: ${service}`);
 		}
 	}
 };

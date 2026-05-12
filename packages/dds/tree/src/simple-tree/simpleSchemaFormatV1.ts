@@ -3,6 +3,14 @@
  * Licensed under the MIT License.
  */
 
+/*
+ * This file contains a format for serializing the compatibility impacting subset of simple schema.
+
+ * This format can be used for both view and stored simple schema.
+ * This only includes all parts of the schema that impact compatibility according to SchemaCompatibilityTester.
+ * It may not include some details which impact maintenance of application enforced invariants (like persisted metadata or logic in view schema).
+ */
+
 import { Type, type ObjectOptions, type Static } from "@sinclair/typebox";
 
 const noAdditionalProps: ObjectOptions = { additionalProperties: false };
@@ -165,7 +173,7 @@ export const SimpleSchemaDefinitionsFormat = Type.Record(
 export type SimpleSchemaDefinitionsFormat = Static<typeof SimpleSchemaDefinitionsFormat>;
 
 /**
- * Persisted format for the entire tree schema in the simple schema format.
+ * Persisted format for the compatibility impacting subset of simple schema.
  * @see {@link SimpleTreeSchema}.
  */
 export const SimpleTreeSchemaFormat = Type.Object(

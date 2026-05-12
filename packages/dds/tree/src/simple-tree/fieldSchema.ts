@@ -28,12 +28,16 @@ import type {
 	TreeLeafValue,
 	InsertableTreeNodeFromImplicitAllowedTypes,
 	AllowedTypesFull,
+	SchemaUpgrade,
 } from "./core/index.js";
-import { normalizeAllowedTypes } from "./core/index.js";
-
-import type { SimpleAllowedTypeAttributes, SimpleFieldSchema } from "./simpleSchema.js";
-import type { UnsafeUnknownSchema } from "./unsafeUnknownSchema.js";
+import { AnnotatedAllowedTypesInternal, normalizeAllowedTypes } from "./core/index.js";
+import type {
+	SchemaType,
+	SimpleAllowedTypeAttributes,
+	SimpleFieldSchema,
+} from "./simpleSchema.js";
 import type { InsertableContent } from "./unhydratedFlexTreeFromInsertable.js";
+import type { UnsafeUnknownSchema } from "./unsafeUnknownSchema.js";
 
 /**
  * Kind of a field on an {@link TreeObjectNode}.
@@ -179,6 +183,11 @@ export interface FieldPropsAlpha<TCustomMetadata = unknown>
 	 * Sets {@link SimpleFieldSchema.persistedMetadata}.
 	 */
 	readonly persistedMetadata?: JsonCompatibleReadOnlyObject | undefined;
+
+	/**
+	 * If defined, indicates that this field is a {@link SchemaStaticsAlpha.stagedOptional | staged optional} field.
+	 */
+	readonly stagedOptionalUpgrade?: SchemaUpgrade;
 }
 
 /**
@@ -269,11 +278,26 @@ export function createFieldSchema<
 	Kind extends FieldKind,
 	Types extends ImplicitAllowedTypes,
 	TCustomMetadata = unknown,
+>(kind: Kind, annotatedTypes: Types): FieldSchemaAlpha<Kind, Types, TCustomMetadata>;
+export function createFieldSchema<
+	Kind extends FieldKind,
+	Types extends ImplicitAllowedTypes,
+	TCustomMetadata = unknown,
+	TProps extends FieldProps<TCustomMetadata> = FieldProps<TCustomMetadata>,
+>(
+	kind: Kind,
+	annotatedTypes: Types,
+	props: TProps,
+): FieldSchemaAlpha<Kind, Types, TCustomMetadata, TProps>;
+export function createFieldSchema<
+	Kind extends FieldKind,
+	Types extends ImplicitAllowedTypes,
+	TCustomMetadata = unknown,
 >(
 	kind: Kind,
 	annotatedTypes: Types,
 	props?: FieldProps<TCustomMetadata>,
-): FieldSchemaAlpha<Kind, Types, TCustomMetadata> {
+): FieldSchemaAlpha<Kind, Types, TCustomMetadata, FieldProps<TCustomMetadata> | undefined> {
 	return createFieldSchemaPrivate(kind, annotatedTypes, props);
 }
 
@@ -288,7 +312,7 @@ let createFieldSchemaPrivate: <
 	kind: Kind,
 	annotatedTypes: Types,
 	props?: FieldProps<TCustomMetadata>,
-) => FieldSchemaAlpha<Kind, Types, TCustomMetadata>;
+) => FieldSchemaAlpha<Kind, Types, TCustomMetadata, FieldProps<TCustomMetadata> | undefined>;
 
 /**
  * All policy for a specific field,
@@ -381,14 +405,21 @@ export class FieldSchemaAlpha<
 		Kind extends FieldKind = FieldKind,
 		Types extends ImplicitAllowedTypes = ImplicitAllowedTypes,
 		TCustomMetadata = unknown,
+		TProps extends FieldPropsAlpha<TCustomMetadata> | undefined =
+			| FieldPropsAlpha<TCustomMetadata>
+			| undefined,
 	>
 	extends FieldSchema<Kind, Types, TCustomMetadata>
-	implements SimpleFieldSchema
+	implements SimpleFieldSchema<SchemaType.View>
 {
-	private readonly propsAlpha: FieldPropsAlpha<TCustomMetadata> | undefined;
+	private readonly propsAlpha: TProps;
 
 	public get persistedMetadata(): JsonCompatibleReadOnlyObject | undefined {
 		return this.propsAlpha?.persistedMetadata;
+	}
+
+	public get isStagedOptional(): false | SchemaUpgrade {
+		return this.propsAlpha?.stagedOptionalUpgrade ?? false;
 	}
 
 	static {
@@ -400,7 +431,13 @@ export class FieldSchemaAlpha<
 			kind: Kind2,
 			annotatedAllowedTypes: Types2,
 			props?: FieldPropsAlpha<TCustomMetadata2>,
-		) => new FieldSchemaAlpha(kind, annotatedAllowedTypes, props);
+		) =>
+			// TCustomMetadata2 requires type assertion due to limitations with dependent type parameters
+			new FieldSchemaAlpha(kind, annotatedAllowedTypes, props) as unknown as FieldSchemaAlpha<
+				Kind2,
+				Types2,
+				TCustomMetadata2
+			>;
 	}
 
 	/**
@@ -412,17 +449,11 @@ export class FieldSchemaAlpha<
 		return this.allowedTypesFull.evaluateIdentifiers();
 	}
 
-	public get simpleAllowedTypes(): ReadonlyMap<string, SimpleAllowedTypeAttributes> {
-		const types = this.allowedTypesFull.evaluate().types;
-		const info = new Map<string, SimpleAllowedTypeAttributes>();
-
-		for (const type of types) {
-			info.set(type.type.identifier, {
-				isStaged: type.metadata.stagedSchemaUpgrade !== undefined,
-			});
-		}
-
-		return info;
+	public get simpleAllowedTypes(): ReadonlyMap<
+		string,
+		SimpleAllowedTypeAttributes<SchemaType.View>
+	> {
+		return AnnotatedAllowedTypesInternal.evaluateSimpleAllowedTypes(this.allowedTypesFull);
 	}
 
 	protected constructor(
@@ -435,7 +466,7 @@ export class FieldSchemaAlpha<
 
 		const normalizedTypes = normalizeAllowedTypes(types);
 		this.allowedTypesFull = normalizedTypes;
-		this.propsAlpha = props;
+		this.propsAlpha = props as TProps;
 	}
 }
 

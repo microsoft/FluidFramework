@@ -75,6 +75,7 @@ export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeB
     createDetachedDataStore(pkg: readonly string[], loadingGroupId?: string): IFluidDataStoreContextDetached;
     // (undocumented)
     readonly disposed: boolean;
+    enterStagingMode(): StageControls;
     generateDocumentUniqueId(): number | string;
     getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
     getAliasedDataStoreEntryPoint(alias: string): Promise<IFluidHandle<FluidObject> | undefined>;
@@ -84,6 +85,7 @@ export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeB
         snapshotTree: ISnapshotTree;
         sequenceNumber: number;
     }>;
+    readonly inStagingMode: boolean;
     orderSequentially(callback: () => void): void;
     submitSignal: (type: string, content: unknown, targetClientId?: string) => void;
     // (undocumented)
@@ -99,6 +101,7 @@ export interface IContainerRuntimeBaseEvents extends IEvent {
     (event: "signal", listener: (message: IInboundSignalMessage, local: boolean) => void): any;
     // (undocumented)
     (event: "dispose", listener: () => void): any;
+    (event: "stagingModeChanged", listener: (stagingModeInfo: StagingModeChangedEvent) => void): any;
 }
 
 // @beta @legacy
@@ -135,7 +138,7 @@ export interface IFluidDataStoreChannel extends IDisposable {
     processSignal(message: IInboundSignalMessage, local: boolean): void;
     // (undocumented)
     request(request: IRequest): Promise<IResponse>;
-    reSubmit(type: string, content: any, localOpMetadata: unknown, squash?: boolean): void;
+    reSubmit(type: string, content: any, localOpMetadata: unknown, squash: boolean): void;
     rollback?(type: string, content: any, localOpMetadata: unknown): void;
     // (undocumented)
     setAttachState(attachState: AttachState.Attaching | AttachState.Attached): void;
@@ -144,7 +147,7 @@ export interface IFluidDataStoreChannel extends IDisposable {
     updateUsedRoutes(usedRoutes: string[]): void;
 }
 
-// @beta @legacy
+// @beta @sealed @legacy
 export interface IFluidDataStoreContext extends IFluidParentContext {
     // (undocumented)
     readonly baseSnapshot: ISnapshotTree | undefined;
@@ -159,7 +162,7 @@ export interface IFluidDataStoreContext extends IFluidParentContext {
     readonly packagePath: PackagePath;
 }
 
-// @beta @legacy (undocumented)
+// @beta @sealed @legacy (undocumented)
 export interface IFluidDataStoreContextDetached extends IFluidDataStoreContext {
     attachRuntime(factory: IProvideFluidDataStoreFactory, dataStoreRuntime: IFluidDataStoreChannel): Promise<IDataStore>;
 }
@@ -190,7 +193,7 @@ export interface IFluidDataStoreRegistry extends IProvideFluidDataStoreRegistry 
     getSync?(name: string): FluidDataStoreRegistryEntry | undefined;
 }
 
-// @beta @legacy
+// @beta @sealed @legacy
 export interface IFluidParentContext extends IProvideFluidHandleContext, Partial<IProvideFluidDataStoreRegistry> {
     addedGCOutboundRoute(fromPath: string, toPath: string, messageTimestampMs?: number): void;
     readonly attachState: AttachState;
@@ -224,7 +227,7 @@ export interface IFluidParentContext extends IProvideFluidHandleContext, Partial
     readonly isReadOnly?: () => boolean;
     readonly loadingGroupId?: string;
     makeLocallyVisible(): void;
-    readonly minVersionForCollab?: MinimumVersionForCollab;
+    readonly minVersionForCollab: MinimumVersionForCollab;
     // (undocumented)
     readonly options: Record<string | number, any>;
     readonly scope: FluidObject;
@@ -388,7 +391,7 @@ export interface LocalAttributionKey {
     type: "local";
 }
 
-// @beta @legacy
+// @beta @input
 export type MinimumVersionForCollab = `${1 | 2}.${bigint}.${bigint}` | `${1 | 2}.${bigint}.${bigint}-${string}`;
 
 // @beta @legacy
@@ -411,6 +414,20 @@ export interface OpAttributionKey {
 
 // @beta @legacy
 export type PackagePath = readonly string[];
+
+// @beta @sealed @legacy
+export interface StageControls {
+    readonly commitChanges: () => void;
+    readonly discardChanges: () => void;
+}
+
+// @beta @legacy
+export type StagingModeChangedEvent = {
+    readonly inStagingMode: true;
+} | {
+    readonly inStagingMode: false;
+    readonly commit: boolean;
+};
 
 // @beta @legacy (undocumented)
 export type SummarizeInternalFn = (fullTree: boolean, trackState: boolean, telemetryContext?: ITelemetryContext, incrementalSummaryContext?: IExperimentalIncrementalSummaryContext) => Promise<ISummarizeInternalResult>;

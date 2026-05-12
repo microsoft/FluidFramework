@@ -11,8 +11,8 @@ export { allowsValue, assertAllowedValue, isTreeValue } from "./valueUtilities.j
 
 export {
 	ForestSummarizer,
-	getCodecTreeForForestFormat,
-	type ForestFormatVersion,
+	forestCodecBuilder,
+	ForestFormatVersion,
 } from "./forest-summary/index.js";
 export {
 	cursorForMapTreeField,
@@ -29,11 +29,7 @@ export {
 export { buildForest } from "./object-forest/index.js";
 export {
 	SchemaSummarizer,
-	encodeTreeSchema,
-	makeSchemaCodec,
-	makeSchemaCodecs,
-	getCodecTreeForSchemaFormat,
-	clientVersionToSchemaVersion,
+	schemaCodecBuilder,
 } from "./schema-index/index.js";
 export {
 	stackTreeNodeCursor,
@@ -50,9 +46,13 @@ export {
 	jsonableTreeFromFieldCursor,
 	jsonableTreeFromForest,
 } from "./treeTextCursor.js";
+export {
+	buildNodeComparator,
+	type NodeComparator,
+} from "./cursorComparator.js";
 
-// Split this up into separate import and export for compatibility with API-Extractor.
 import * as SequenceField from "./sequence-field/index.js";
+// eslint-disable-next-line unicorn/prefer-export-from -- fixing requires `export * as` (breaks API-Extractor) or named exports (changes public API)
 export { SequenceField };
 
 export {
@@ -81,16 +81,18 @@ export {
 	genericFieldKind,
 	type HasFieldChanges,
 	type NodeExistsConstraint,
-	FieldKindWithEditor,
 	ModularChangeFamily,
 	type RelevantRemovedRootsFromChild,
-	EncodedModularChangeset,
+	EncodedModularChangesetV1,
+	EncodedModularChangesetV2,
 	updateRefreshers,
 	type NodeId,
 	type FieldChangeEncodingContext,
 	type FieldKindConfiguration,
 	type FieldKindConfigurationEntry,
 	isNeverTree,
+	DefaultRevisionReplacer,
+	ModularChangeFormatVersion,
 } from "./modular-schema/index.js";
 
 export { mapRootChanges } from "./deltaUtils.js";
@@ -104,10 +106,9 @@ export {
 	defaultChunkPolicy,
 	type FieldBatch,
 	type FieldBatchCodec,
-	type FieldBatchFormatVersion,
-	getCodecTreeForFieldBatchFormat,
+	FieldBatchFormatVersion,
 	makeTreeChunker,
-	makeFieldBatchCodec,
+	fieldBatchCodecBuilder,
 	type FieldBatchEncodingContext,
 	emptyChunk,
 	combineChunks,
@@ -128,11 +129,6 @@ export {
 
 export {
 	FieldKinds,
-	type Required,
-	type Optional,
-	type Sequence,
-	type Identifier,
-	type Forbidden,
 	type DefaultChangeset,
 	DefaultChangeFamily,
 	DefaultEditBuilder,
@@ -145,13 +141,15 @@ export {
 	fieldKindConfigurations,
 	intoDelta,
 	relevantRemovedRoots,
+	getCodecTreeForModularChangeFormat,
+} from "./default-schema/index.js";
+
+export {
 	SchemaValidationError,
 	isNodeInSchema,
 	isFieldInSchema,
 	throwOutOfSchema,
-	getCodecTreeForModularChangeFormat,
-	type ModularChangeFormatVersion,
-} from "./default-schema/index.js";
+} from "./schemaChecker.js";
 
 export {
 	type FlexTreeOptionalField,
@@ -188,11 +186,7 @@ export {
 	type Observer,
 } from "./flex-tree/index.js";
 
-export {
-	TreeCompressionStrategy,
-	TreeCompressionStrategyExtended,
-	type TreeCompressionStrategyPrivate,
-} from "./treeCompressionUtils.js";
+export { TreeCompressionStrategy } from "./treeCompressionUtils.js";
 
 export { valueSchemaAllows } from "./valueUtilities.js";
 
@@ -200,9 +194,8 @@ export { DetachedFieldIndexSummarizer } from "./detachedFieldIndexSummarizer.js"
 
 export {
 	type SchemaChange,
-	makeSchemaChangeCodecs,
+	makeSchemaChangeCodec,
 	EncodedSchemaChange,
-	getCodecTreeForSchemaChangeFormat,
 } from "./schema-edits/index.js";
 
 export { makeMitigatedChangeFamily } from "./mitigatedChangeFamily.js";
@@ -212,6 +205,12 @@ export {
 	AnchorTreeIndex,
 	hasElement,
 	type TreeIndex,
-	type TreeIndexKey,
 	type TreeIndexNodes,
 } from "./indexing/index.js";
+
+export {
+	type ChangeAtomIdBTree,
+	newChangeAtomIdBTree,
+	getFromChangeAtomIdMap,
+	setInChangeAtomIdMap,
+} from "./changeAtomIdBTree.js";

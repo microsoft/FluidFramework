@@ -24,7 +24,6 @@ import {
 	type ITelemetryLoggerExt,
 	loggerToMonitoringContext,
 } from "@fluidframework/telemetry-utils/internal";
-
 import type { Socket } from "socket.io-client";
 import { v4 as uuid } from "uuid";
 
@@ -392,7 +391,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 		documentId: string,
 		logger: ITelemetryLoggerExt,
 	): SocketReference {
-		// eslint-disable-next-line unicorn/no-array-callback-reference, unicorn/no-array-method-this-argument
+		// eslint-disable-next-line unicorn/no-array-method-this-argument
 		const existingSocketReference = SocketReference.find(key, logger);
 		if (existingSocketReference) {
 			return existingSocketReference;
@@ -750,7 +749,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 	public get disposed(): boolean {
 		if (!(this._disposed || this.socket.connected)) {
 			// Send error event if this connection is not yet disposed after socket is disconnected for 15s.
-			// eslint-disable-next-line unicorn/no-lonely-if
+			// eslint-disable-next-line unicorn/no-lonely-if, @typescript-eslint/prefer-nullish-coalescing -- using ??= could change behavior if value is falsy
 			if (this.connectionNotYetDisposedTimeout === undefined) {
 				this.connectionNotYetDisposedTimeout = setTimeout(() => {
 					if (!this._disposed) {

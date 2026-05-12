@@ -5,6 +5,9 @@
 
 import { strict as assert, fail } from "node:assert";
 
+import type { IIdCompressor } from "@fluidframework/id-compressor";
+import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
+
 import type { JsonableTree } from "../../../../core/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import type { CounterFilter } from "../../../../feature-libraries/chunked-forest/codec/chunkCodecUtilities.js";
@@ -19,21 +22,19 @@ import type {
 	NodeEncoder,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/compressedEncode.js";
-import {
-	type EncodedFieldBatch,
+import type {
+	EncodedFieldBatchV1OrV2,
 	FieldBatchFormatVersion,
 	// eslint-disable-next-line import-x/no-internal-modules
-} from "../../../../feature-libraries/chunked-forest/codec/format.js";
+} from "../../../../feature-libraries/chunked-forest/codec/format/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import type { IncrementalDecoder } from "../../../../feature-libraries/chunked-forest/codec/index.js";
 import {
 	cursorForJsonableTreeField,
 	cursorForJsonableTreeNode,
 } from "../../../../feature-libraries/index.js";
-import { assertChunkCursorBatchEquals } from "../fieldCursorTestUtilities.js";
-import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
 import { testIdCompressor } from "../../../utils.js";
-import type { IIdCompressor } from "@fluidframework/id-compressor";
+import { assertChunkCursorBatchEquals } from "../fieldCursorTestUtilities.js";
 
 export function checkNodeEncode(
 	nodeEncoder: NodeEncoder,
@@ -46,7 +47,7 @@ export function checkNodeEncode(
 	nodeEncoder.encodeNode(cursor, context, buffer);
 
 	// Check round-trip
-	checkDecode([buffer], [[tree]], undefined, incrementalDecoder);
+	checkDecode([buffer], [[tree]], context.version, undefined, incrementalDecoder);
 
 	return buffer.slice(1);
 }
@@ -63,7 +64,7 @@ export function checkFieldEncode(
 	fieldEncoder.encodeField(cursor, context, buffer);
 
 	// Check round-trip
-	checkDecode([buffer], [tree], idCompressor, incrementalDecoder);
+	checkDecode([buffer], [tree], context.version, idCompressor, incrementalDecoder);
 
 	return buffer.slice(1);
 }
@@ -71,12 +72,13 @@ export function checkFieldEncode(
 function checkDecode(
 	buffer: BufferFormat[],
 	tree: JsonableTree[][],
+	version: FieldBatchFormatVersion,
 	idCompressor?: IIdCompressor,
 	incrementalDecoder?: IncrementalDecoder,
 ): void {
 	// Check round-trips with identifiers inline and out of line
-	testDecode(buffer, tree, () => false, idCompressor, incrementalDecoder);
-	testDecode(buffer, tree, () => true, idCompressor, incrementalDecoder);
+	testDecode(buffer, tree, () => false, version, idCompressor, incrementalDecoder);
+	testDecode(buffer, tree, () => true, version, idCompressor, incrementalDecoder);
 }
 
 /**
@@ -90,11 +92,12 @@ function testDecode(
 	buffer: BufferFormat[],
 	expectedTree: JsonableTree[][],
 	identifierFilter: CounterFilter<string>,
+	version: FieldBatchFormatVersion,
 	idCompressor?: IIdCompressor,
 	incrementalDecoder?: IncrementalDecoder,
-): EncodedFieldBatch {
+): EncodedFieldBatchV1OrV2 {
 	const chunk = updateShapesAndIdentifiersEncoding(
-		FieldBatchFormatVersion.v1,
+		version,
 		cloneArrays(buffer),
 		identifierFilter,
 	);
@@ -104,14 +107,14 @@ function testDecode(
 	// Check decode
 	const result = decode(
 		chunk,
-		idCompressor !== undefined
+		idCompressor === undefined
 			? {
-					idCompressor,
-					originatorId: idCompressor.localSessionId,
-				}
-			: {
 					idCompressor: testIdCompressor,
 					originatorId: testIdCompressor.localSessionId,
+				}
+			: {
+					idCompressor,
+					originatorId: idCompressor.localSessionId,
 				},
 		incrementalDecoder,
 	);
@@ -135,20 +138,20 @@ function testDecode(
 	{
 		assertJsonish(chunk, new Set());
 		const json = JSON.stringify(chunk);
-		const parsed = JSON.parse(json);
+		const parsed = JSON.parse(json) as typeof chunk;
 		// can't check this due to undefined fields
 		// assert.deepEqual(parsed, chunk);
 		// Instead check that it works properly:
 		const parsedResult = decode(
 			parsed,
-			idCompressor !== undefined
+			idCompressor === undefined
 				? {
-						idCompressor,
-						originatorId: idCompressor.localSessionId,
-					}
-				: {
 						idCompressor: testIdCompressor,
 						originatorId: testIdCompressor.localSessionId,
+					}
+				: {
+						idCompressor,
+						originatorId: idCompressor.localSessionId,
 					},
 			incrementalDecoder,
 		);
@@ -166,14 +169,16 @@ function testDecode(
  */
 function assertJsonish(data: unknown, stack: Set<unknown>): void {
 	switch (typeof data) {
-		case "number":
+		case "number": {
 			assert(Number.isFinite(data));
 			assert(!Object.is(data, -0));
 			return;
+		}
 		case "string":
 		// TODO: could test that string is valid unicode here.
-		case "boolean":
+		case "boolean": {
 			return;
+		}
 		case "object": {
 			if (data === null) {
 				return;
@@ -193,7 +198,7 @@ function assertJsonish(data: unknown, stack: Set<unknown>): void {
 
 				for (const key of Reflect.ownKeys(data)) {
 					assert(typeof key === "string");
-					const value = Reflect.get(data, key);
+					const value: unknown = Reflect.get(data, key);
 					if (value !== undefined) {
 						// TODO: could check for feature detection pattern, used for IFluidHandle
 						assertJsonish(value, stack);
@@ -204,7 +209,8 @@ function assertJsonish(data: unknown, stack: Set<unknown>): void {
 				stack.delete(data);
 			}
 		}
-		default:
+		default: {
 			fail();
+		}
 	}
 }

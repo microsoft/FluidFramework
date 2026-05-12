@@ -45,6 +45,7 @@ export class PendingLocalStateStore<TKey> {
 	readonly #pendingStates = new Map<TKey, IPendingContainerState>();
 	readonly #savedOps: Record<number, ISequencedDocumentMessage> = {};
 	readonly #blobs: Record<string, string> = {};
+	readonly #attachmentBlobs: Record<string, string> = {};
 	readonly #loadingGroups: Record<string, SerializedSnapshotInfo> = {};
 
 	/**
@@ -92,10 +93,14 @@ export class PendingLocalStateStore<TKey> {
 	 */
 	set(key: TKey, pendingLocalState: string): this {
 		const state = getAttachedContainerStateFromSerializedContainer(pendingLocalState);
-		const { savedOps, snapshotBlobs, loadedGroupIdSnapshots, url } = state;
+		const { savedOps, snapshotBlobs, attachmentBlobContents, loadedGroupIdSnapshots, url } =
+			state;
 
+		// Normalize URL by removing trailing slash for comparison
+		const normalizedUrl = url.replace(/\/$/, "");
+		const normalizedFirstUrl = this.#firstUrl?.replace(/\/$/, "");
 		this.#firstUrl ??= url;
-		if (this.#firstUrl !== url) {
+		if (normalizedFirstUrl !== undefined && normalizedFirstUrl !== normalizedUrl) {
 			throw new UsageError("PendingLocalStateStore can only be used with a single container.");
 		}
 
@@ -104,6 +109,11 @@ export class PendingLocalStateStore<TKey> {
 		}
 		for (const [id, blob] of Object.entries(snapshotBlobs)) {
 			snapshotBlobs[id] = this.#blobs[id] ??= blob;
+		}
+		if (attachmentBlobContents !== undefined) {
+			for (const [id, blob] of Object.entries(attachmentBlobContents)) {
+				attachmentBlobContents[id] = this.#attachmentBlobs[id] ??= blob;
+			}
 		}
 		if (loadedGroupIdSnapshots !== undefined) {
 			for (const [id, lg] of Object.entries(loadedGroupIdSnapshots)) {

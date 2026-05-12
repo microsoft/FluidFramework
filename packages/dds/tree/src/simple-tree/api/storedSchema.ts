@@ -4,20 +4,15 @@
  */
 
 import type { MinimumVersionForCollab } from "@fluidframework/runtime-definitions/internal";
-import { FluidClientVersion, type ICodecOptions } from "../../codec/index.js";
-import { SchemaFormatVersion } from "../../core/index.js";
-import { encodeTreeSchema, makeSchemaCodec } from "../../feature-libraries/index.js";
-import {
-	clientVersionToSchemaVersion,
-	type FormatV1,
-	// eslint-disable-next-line import-x/no-internal-modules
-} from "../../feature-libraries/schema-index/index.js";
-import { brand, type JsonCompatible } from "../../util/index.js";
+
+import { FormatValidatorNoOp, type ICodecOptions } from "../../codec/index.js";
+import { schemaCodecBuilder } from "../../feature-libraries/index.js";
+import type { JsonCompatible } from "../../util/index.js";
 import type { SchemaUpgrade } from "../core/index.js";
 import { normalizeFieldSchema, type ImplicitFieldSchema } from "../fieldSchema.js";
 import { toStoredSchema } from "../toStoredSchema.js";
-import { TreeViewConfigurationAlpha } from "./configuration.js";
 
+import { TreeViewConfigurationAlpha } from "./configuration.js";
 import { SchemaCompatibilityTester } from "./schemaCompatibilityTester.js";
 import type { SchemaCompatibilityStatus } from "./tree.js";
 
@@ -58,9 +53,15 @@ export function extractPersistedSchema(
 	minVersionForCollab: MinimumVersionForCollab,
 	includeStaged: (upgrade: SchemaUpgrade) => boolean,
 ): JsonCompatible {
-	const stored = toStoredSchema(schema, { includeStaged });
-	const schemaWriteVersion = clientVersionToSchemaVersion(minVersionForCollab);
-	return encodeTreeSchema(stored, schemaWriteVersion);
+	const stored = toStoredSchema(schema, {
+		includeStaged,
+		includeStagedOptional: includeStaged,
+	});
+	const codec = schemaCodecBuilder.build({
+		minVersionForCollab,
+		jsonValidator: FormatValidatorNoOp,
+	});
+	return codec.encode(stored) as JsonCompatible;
 }
 
 /**
@@ -98,13 +99,8 @@ export function comparePersistedSchema(
 	view: ImplicitFieldSchema,
 	options: ICodecOptions,
 ): Omit<SchemaCompatibilityStatus, "canInitialize"> {
-	// Any version can be passed down to makeSchemaCodec here.
-	// We only use the decode part, which always dispatches to the correct codec based on the version in the data, not the version passed to `makeSchemaCodec`.
-	const schemaCodec = makeSchemaCodec(
-		{ ...options, minVersionForCollab: FluidClientVersion.v2_0 },
-		brand(SchemaFormatVersion.v1),
-	);
-	const stored = schemaCodec.decode(persisted as FormatV1);
+	const schemaCodec = schemaCodecBuilder.buildDecoder(options);
+	const stored = schemaCodec.decode(persisted);
 	const config = new TreeViewConfigurationAlpha({
 		schema: normalizeFieldSchema(view),
 	});

@@ -7,6 +7,8 @@ import { strict as assert } from "assert";
 
 import { describeCompat } from "@fluid-private/test-version-utils";
 import { IContainer } from "@fluidframework/container-definitions/internal";
+import type { ISharedDirectory } from "@fluidframework/map/internal";
+import type { IFluidDataStoreContext } from "@fluidframework/runtime-definitions/internal";
 import {
 	ITestContainerConfig,
 	ITestObjectProvider,
@@ -19,11 +21,11 @@ import { pkgVersion } from "../packageVersion.js";
 
 describeCompat("Audience correctness", "FullCompat", (getTestObjectProvider, apis) => {
 	class TestDataObject extends apis.dataRuntime.DataObject {
-		public get _root() {
+		public get _root(): ISharedDirectory {
 			return this.root;
 		}
 
-		public get _context() {
+		public get _context(): IFluidDataStoreContext {
 			return this.context;
 		}
 	}
@@ -42,17 +44,23 @@ describeCompat("Audience correctness", "FullCompat", (getTestObjectProvider, api
 		provider.loadTestContainer(testContainerConfig);
 
 	/** Function to wait for a client with the given clientId to be added to the audience of the given container. */
-	async function waitForClientAdd(container: IContainer, clientId: string, errorMsg: string) {
+	async function waitForClientAdd(
+		container: IContainer,
+		clientId: string,
+		errorMsg: string,
+	): Promise<void> {
 		if (container.audience.getMember(clientId) === undefined) {
 			return timeoutPromise(
 				(resolve) => {
-					const listener = (newClientId: string) => {
+					const listener = (newClientId: string): void => {
 						if (newClientId === clientId) {
 							container.audience.off("addMember", listener);
 							resolve();
 						}
 					};
-					container.audience.on("addMember", (newClientId: string) => listener(newClientId));
+					container.audience.on("addMember", (newClientId: string): void =>
+						listener(newClientId),
+					);
 				},
 				// Wait for 2 seconds to get the client in audience. This wait is needed for a client to get added to its
 				// own audience and 2 seconds should be enough time. It it takes longer than this, we might need to
@@ -68,17 +76,17 @@ describeCompat("Audience correctness", "FullCompat", (getTestObjectProvider, api
 		container: IContainer,
 		clientId: string,
 		errorMsg: string,
-	) {
+	): Promise<void> {
 		if (container.audience.getMember(clientId) !== undefined) {
 			return timeoutPromise(
 				(resolve) => {
-					const listener = (newClientId: string) => {
+					const listener = (newClientId: string): void => {
 						if (newClientId === clientId) {
 							container.audience.off("removeMember", listener);
 							resolve();
 						}
 					};
-					container.audience.on("removeMember", (newClientId: string) =>
+					container.audience.on("removeMember", (newClientId: string): void =>
 						listener(newClientId),
 					);
 				},
@@ -242,7 +250,7 @@ describeCompat("Audience correctness", "FullCompat", (getTestObjectProvider, api
 		assert(oldId === container.clientId);
 
 		let newClientId: string | undefined;
-		audience.on("selfChanged", (_old, newValue) => {
+		audience.on("selfChanged", (_old, newValue): void => {
 			newClientId = newValue.clientId;
 			assert(newClientId !== undefined);
 			assert(newValue.client === audience.getMember(newClientId));

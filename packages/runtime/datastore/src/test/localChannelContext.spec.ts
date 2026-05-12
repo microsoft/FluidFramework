@@ -8,6 +8,7 @@ import { strict as assert } from "node:assert";
 import type { IChannel } from "@fluidframework/datastore-definitions/internal";
 import type { ISnapshotTree } from "@fluidframework/driver-definitions/internal";
 import type { IFluidDataStoreContext } from "@fluidframework/runtime-definitions/internal";
+import { extractTelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 import {
 	MockFluidDataStoreContext,
 	validateAssertionError,
@@ -50,13 +51,13 @@ describe("LocalChannelContext Tests", () => {
 				dataStoreRuntime,
 				dataStoreContext,
 				dataStoreContext.storage,
-				dataStoreContext.baseLogger,
+				extractTelemetryLoggerExt(dataStoreContext.baseLogger),
 				() => {},
 				(s: string) => {},
 			);
 		assert.throws(
 			codeBlock,
-			(e: Error) => validateAssertionError(e, "Channel context ID cannot contain slashes"),
+			validateAssertionError("Channel context ID cannot contain slashes"),
 			"Expected exception was not thrown",
 		);
 	});
@@ -71,14 +72,14 @@ describe("LocalChannelContext Tests", () => {
 				dataStoreRuntime,
 				dataStoreContext,
 				dataStoreContext.storage,
-				dataStoreContext.baseLogger,
+				extractTelemetryLoggerExt(dataStoreContext.baseLogger),
 				(content, localOpMetadata) => {},
 				(s: string) => {},
 				undefined as unknown as ISnapshotTree,
 			);
 		assert.throws(
 			codeBlock,
-			(e: Error) => validateAssertionError(e, "Channel context ID cannot contain slashes"),
+			validateAssertionError("Channel context ID cannot contain slashes"),
 			"Expected exception was not thrown",
 		);
 	});

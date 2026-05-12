@@ -1,46 +1,51 @@
 {
-  "type": "test.table.Table",
+  "type": "com.fluidframework.tableV2<test>.TableRoot",
   "fields": {
-    "rows": {
-      "type": "test.table.Table.rows",
-      "fields": [
-        {
-          "type": "test.table.Row",
-          "fields": {
-            "id": "row-0",
-            "cells": {
-              "type": "test.table.Row.cells",
+    "": {
+      "type": "com.fluidframework.tableV2<test>.Table",
+      "fields": {
+        "rows": {
+          "type": "com.fluidframework.tableV2<test>.Table.rows",
+          "fields": [
+            {
+              "type": "com.fluidframework.tableV2<test>.Row",
               "fields": {
-                "column-0": {
-                  "type": "test.table-cell",
+                "id": "row-0",
+                "cells": {
+                  "type": "com.fluidframework.tableV2<test>.Row.cells",
                   "fields": {
-                    "value": "Hello World!"
+                    "column-0": {
+                      "type": "test.table-cell",
+                      "fields": {
+                        "value": "Hello World!"
+                      }
+                    }
                   }
+                },
+                "props": {
+                  "type": "test.table-row-props",
+                  "fields": {}
                 }
               }
-            },
-            "props": {
-              "type": "test.table-row-props",
-              "fields": {}
             }
-          }
-        }
-      ]
-    },
-    "columns": {
-      "type": "test.table.Table.columns",
-      "fields": [
-        {
-          "type": "test.table.Column",
-          "fields": {
-            "id": "column-0",
-            "props": {
-              "type": "test.table-column-props",
-              "fields": {}
+          ]
+        },
+        "columns": {
+          "type": "com.fluidframework.tableV2<test>.Table.columns",
+          "fields": [
+            {
+              "type": "com.fluidframework.tableV2<test>.Column",
+              "fields": {
+                "id": "column-0",
+                "props": {
+                  "type": "test.table-column-props",
+                  "fields": {}
+                }
+              }
             }
-          }
+          ]
         }
-      ]
+      }
     }
   }
 }

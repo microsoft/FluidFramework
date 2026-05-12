@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
+import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
+import type { TelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 
 /**
  * Extract and return the w3c data.
@@ -12,7 +12,19 @@ import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
  * @param initiatorType - type of the network call
  * @internal
  */
-export function getW3CData(url: string, initiatorType: string) {
+export function getW3CData(
+	url: string,
+	initiatorType: string,
+): {
+	dnsLookupTime: number | undefined;
+	w3cStartTime: number | undefined;
+	redirectTime: number | undefined;
+	tcpHandshakeTime: number | undefined;
+	secureConnectionTime: number | undefined;
+	responseNetworkTime: number | undefined;
+	fetchStartToResponseEndTime: number | undefined;
+	reqStartToResponseEndTime: number | undefined;
+} {
 	// From: https://developer.mozilla.org/en-US/docs/Web/API/PerformanceResourceTiming
 	// fetchStart: immediately before the browser starts to fetch the resource.
 	// requestStart: immediately before the browser starts requesting the resource from the server
@@ -99,23 +111,25 @@ export async function promiseRaceWithWinner<T>(
 	promises: Promise<T>[],
 ): Promise<{ index: number; value: T }> {
 	return new Promise((resolve, reject) => {
-		promises.forEach((p, index) => {
-			p.then((v) => resolve({ index, value: v })).catch(reject);
-		});
+		for (const [index, p] of promises.entries()) {
+			p.then((v): void => resolve({ index, value: v })).catch(reject);
+		}
 	});
 }
 
 /**
+ * Validates that sequenced messages are contiguous and in the expected range.
+ *
  * @internal
  */
 export function validateMessages(
 	reason: string,
 	messages: ISequencedDocumentMessage[],
 	from: number,
-	logger: ITelemetryLoggerExt,
+	logger: TelemetryLoggerExt,
 	strict: boolean = true,
-) {
-	if (messages.length !== 0) {
+): void {
+	if (messages.length > 0) {
 		const start = messages[0].sequenceNumber;
 		const length = messages.length;
 		const last = messages[length - 1].sequenceNumber;

@@ -41,7 +41,6 @@ import {
 	type TelemetryContext,
 } from "@fluidframework/runtime-utils/internal";
 import {
-	type ITelemetryLoggerExt,
 	DataProcessingError,
 	EventEmitterWithErrorHandling,
 	type MonitoringContext,
@@ -52,7 +51,10 @@ import {
 	type ICustomData,
 	type IFluidErrorBase,
 	LoggingError,
+	extractTelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
+// eslint-disable-next-line import-x/no-internal-modules -- Needed to avoid specialized /internal ITelemetryLoggerExt
+import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/legacy";
 import { v4 as uuid } from "uuid";
 
 import { GCHandleVisitor } from "./gcHandleVisitor.js";
@@ -162,7 +164,7 @@ export abstract class SharedObjectCore<
 
 		this.handle = new SharedObjectHandle(this, id, runtime);
 
-		this.logger = createChildLogger({
+		const internalLogger = createChildLogger({
 			logger: runtime.logger,
 			properties: {
 				all: {
@@ -173,7 +175,8 @@ export abstract class SharedObjectCore<
 				},
 			},
 		});
-		this.mc = loggerToMonitoringContext(this.logger);
+		this.logger = internalLogger;
+		this.mc = loggerToMonitoringContext(internalLogger);
 
 		const { opProcessingHelper, callbacksHelper } = this.setUpSampledTelemetryHelpers();
 		this.opProcessingHelper = opProcessingHelper;
@@ -206,7 +209,7 @@ export abstract class SharedObjectCore<
 				eventName: "ddsOpProcessing",
 				category: "performance",
 			},
-			this.logger,
+			extractTelemetryLoggerExt(this.logger),
 			this.mc.config.getNumber("Fluid.SharedObject.OpProcessingTelemetrySampling") ?? 1000,
 			true,
 			new Map<string, ITelemetryBaseProperties>([
@@ -219,7 +222,7 @@ export abstract class SharedObjectCore<
 				eventName: "ddsEventCallbacks",
 				category: "performance",
 			},
-			this.logger,
+			extractTelemetryLoggerExt(this.logger),
 			this.mc.config.getNumber("Fluid.SharedObject.DdsCallbacksTelemetrySampling") ?? 1000,
 			true,
 		);
@@ -238,6 +241,7 @@ export abstract class SharedObjectCore<
 	 * @param error - error object that is thrown whenever an attempt is made to modify this object
 	 */
 	private closeWithError(error: IFluidErrorBase | undefined): void {
+		// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- using ??= could change behavior if value is falsy
 		if (this.closeError === undefined) {
 			this.closeError = error;
 		}
@@ -395,28 +399,24 @@ export abstract class SharedObjectCore<
 		return;
 	}
 
-	/* eslint-disable jsdoc/check-indentation */
 	/**
-	 * Derived classes must override this to do custom processing on a 'bunch' of remote messages.
+	 * Apply a 'bunch' of sequenced ops to this shared object.
 	 * @remarks
-	 * A 'bunch' is a group of messages that have the following properties:
-	 * - They are all part of the same grouped batch, which entails:
-	 *   - They are contiguous in sequencing order.
-	 *   - They are all from the same client.
-	 *   - They are all based on the same reference sequence number.
-	 *   - They are not interleaved with messages from other clients.
-	 * - They are not interleaved with messages from other DDS in the container.
-	 * Derived classes should override this if they need to do custom processing on a 'bunch' of remote messages.
-	 * @param messageCollection - The collection of messages to process.
+	 * See {@link @fluidframework/runtime-definitions#IRuntimeMessageCollection} for what a "bunch" is.
 	 *
+	 * These ops have been sequenced by the service and now have a finalized ordering.
+	 * They may be local or remote ops, but they cannot be ops that are still pending acknowledgement from the service.
+	 *
+	 * @param messageCollection - The 'bunch' of sequenced ops to apply to this shared object.
+	 * @privateRemarks
+	 * TODO:Performance: AB#59783: Allowing this to process more messages at once (more than the current definition of 'bunch') could improve performance of clients which fall behind,
+	 * which is one of the most important performance sensitive scenarios.
 	 */
-	/* eslint-enable jsdoc/check-indentation */
 	protected abstract processMessagesCore(messagesCollection: IRuntimeMessageCollection): void;
 
 	/**
 	 * Called when the object has disconnected from the delta stream.
 	 */
-
 	protected abstract onDisconnect(): void;
 
 	/**
@@ -547,7 +547,7 @@ export abstract class SharedObjectCore<
 			setConnectionState: (connected: boolean) => {
 				this.setConnectionState(connected);
 			},
-			reSubmit: (content: unknown, localOpMetadata: unknown, squash?: boolean) => {
+			reSubmit: (content: unknown, localOpMetadata: unknown, squash: boolean) => {
 				this.reSubmit(content, localOpMetadata, squash);
 			},
 			applyStashedOp: (content: unknown): void => {
@@ -655,13 +655,11 @@ export abstract class SharedObjectCore<
 	 * reconnection.
 	 * @param content - The content of the original message.
 	 * @param localOpMetadata - The local metadata associated with the original message.
-	 * @param squash - Optional. If `true`, the message will be resubmitted in a squashed form. If `undefined` or `false`,
-	 * the legacy behavior (no squashing) will be used. Defaults to `false` for backward compatibility.
+	 * @param squash - If `true`, the message will be resubmitted in a squashed form. If `false`,
+	 * the legacy behavior (no squashing) will be used.
 	 */
-	private reSubmit(content: unknown, localOpMetadata: unknown, squash?: boolean): void {
-		// Back-compat: squash argument may not be provided by container-runtime layer.
-		// Default to previous behavior (no squash).
-		if (squash ?? false) {
+	private reSubmit(content: unknown, localOpMetadata: unknown, squash: boolean): void {
+		if (squash) {
 			this.reSubmitSquashed(content, localOpMetadata);
 		} else {
 			this.reSubmitCore(content, localOpMetadata);

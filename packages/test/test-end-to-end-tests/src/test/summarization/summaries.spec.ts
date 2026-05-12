@@ -45,7 +45,8 @@ import { SinonSandbox, createSandbox } from "sinon";
 
 import { TestPersistedCache } from "../../testPersistedCache.js";
 
-const flushPromises = async () => new Promise((resolve) => process.nextTick(resolve));
+const flushPromises = async (): Promise<void> =>
+	new Promise((resolve) => process.nextTick(resolve));
 const testContainerConfig: ITestContainerConfig = {
 	runtimeOptions: {
 		summaryOptions: {
@@ -134,7 +135,9 @@ describeCompat("Summaries", "NoCompat", (getTestObjectProvider, apis) => {
 		try {
 			negResult = undefined;
 			negResult = summarizer.summarizeOnDemand({ reason: "negative test" });
-		} catch (reason) {}
+		} catch (reason) {
+			// Ignore the error
+		}
 		assert(
 			negResult === undefined,
 			"Should not have attempted to summarize while summarizing",
@@ -386,9 +389,9 @@ describeCompat("Summaries", "NoCompat", (getTestObjectProvider, apis) => {
 		await assert.doesNotReject(summarizeNow(summarizer), "Summarize failed");
 	});
 
-	async function getNackPromise(container: IContainer) {
+	async function getNackPromise(container: IContainer): Promise<void> {
 		return timeoutPromise((resolve, reject) => {
-			const callback = (_reason, error) => {
+			const callback = (_reason, error): void => {
 				try {
 					assert.strictEqual(error?.statusCode, 429);
 					assert.strictEqual(
@@ -537,7 +540,7 @@ describeCompat("Summaries 2", "NoCompat", (getTestObjectProvider) => {
 
 	const getTestFn =
 		(injectFailure: boolean = false) =>
-		async () => {
+		async (): Promise<void> => {
 			const mockLogger = new MockLogger();
 			const container = await provider.makeTestContainer({
 				loaderProps: { logger: mockLogger },
@@ -689,7 +692,10 @@ describeCompat("SingleCommit Summaries Tests", "NoCompat", (getTestObjectProvide
 			// Second summary should be discarded
 			const containerRuntime = (summarizer2 as any).runtime as ContainerRuntime;
 			let uploadSummaryUploaderFunc = containerRuntime.storage.uploadSummaryWithContext;
-			const func = async (summary: ISummaryTree, context: ISummaryContext) => {
+			const func = async (
+				summary: ISummaryTree,
+				context: ISummaryContext,
+			): Promise<string> => {
 				uploadSummaryUploaderFunc = uploadSummaryUploaderFunc.bind(containerRuntime.storage);
 				const response = await uploadSummaryUploaderFunc(summary, context);
 				// Close summarizer so that it does not submit SummaryOp
@@ -833,7 +839,10 @@ describeCompat("SingleCommit Summaries Tests", "NoCompat", (getTestObjectProvide
 			// Second summary should be discarded
 			const containerRuntime = (summarizer2 as any).runtime as ContainerRuntime;
 			let uploadSummaryUploaderFunc = containerRuntime.storage.uploadSummaryWithContext;
-			const func = async (summary: ISummaryTree, context: ISummaryContext) => {
+			const func = async (
+				summary: ISummaryTree,
+				context: ISummaryContext,
+			): Promise<string> => {
 				uploadSummaryUploaderFunc = uploadSummaryUploaderFunc.bind(containerRuntime.storage);
 				const response = await uploadSummaryUploaderFunc(summary, context);
 				summary2Handle = response;

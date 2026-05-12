@@ -5,8 +5,28 @@
 
 import { unreachableCase } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
+
 import { ValueSchema } from "../../core/index.js";
 import { copyProperty, hasSingle, type Mutable } from "../../util/index.js";
+import { NodeKind, type TreeNodeSchema } from "../core/index.js";
+import { FieldKind } from "../fieldSchema.js";
+import { LeafNodeSchema } from "../leafNodeSchema.js";
+import {
+	ArrayNodeSchema,
+	isMapNodeSchema,
+	isRecordNodeSchema,
+	ObjectNodeSchema,
+} from "../node-kinds/index.js";
+import type {
+	SimpleArrayNodeSchema,
+	SimpleLeafNodeSchema,
+	SimpleMapNodeSchema,
+	SimpleRecordNodeSchema,
+} from "../simpleSchema.js";
+import type { TreeSchema } from "../treeSchema.js";
+
+import { KeyEncodingOptions } from "./customTree.js";
+import type { TreeSchemaEncodingOptions } from "./getJsonSchema.js";
 import type {
 	JsonArrayNodeSchema,
 	JsonFieldSchema,
@@ -20,24 +40,6 @@ import type {
 	JsonLeafSchemaType,
 	JsonRecordNodeSchema,
 } from "./jsonSchema.js";
-import { FieldKind } from "../fieldSchema.js";
-import type {
-	SimpleArrayNodeSchema,
-	SimpleLeafNodeSchema,
-	SimpleMapNodeSchema,
-	SimpleRecordNodeSchema,
-} from "../simpleSchema.js";
-import { NodeKind, type TreeNodeSchema } from "../core/index.js";
-import type { TreeSchema } from "./configuration.js";
-import type { TreeSchemaEncodingOptions } from "./getJsonSchema.js";
-import {
-	ArrayNodeSchema,
-	isMapNodeSchema,
-	isRecordNodeSchema,
-	ObjectNodeSchema,
-} from "../node-kinds/index.js";
-import { LeafNodeSchema } from "../leafNodeSchema.js";
-import { KeyEncodingOptions } from "./customTree.js";
 
 /**
  * Generates a JSON Schema representation from a simple tree schema.
@@ -110,9 +112,9 @@ function convertArrayNodeSchema(schema: SimpleArrayNodeSchema): JsonArrayNodeSch
 	const allowedTypesIdentifiers: ReadonlySet<string> = new Set(
 		schema.simpleAllowedTypes.keys(),
 	);
-	allowedTypesIdentifiers.forEach((type) => {
+	for (const type of allowedTypesIdentifiers) {
 		allowedTypes.push(createSchemaRef(type));
-	});
+	}
 
 	const items: JsonFieldSchema = hasSingle(allowedTypes)
 		? allowedTypes[0]
@@ -132,22 +134,28 @@ function convertArrayNodeSchema(schema: SimpleArrayNodeSchema): JsonArrayNodeSch
 function convertLeafNodeSchema(schema: SimpleLeafNodeSchema): JsonLeafNodeSchema {
 	let type: JsonLeafSchemaType;
 	switch (schema.leafKind) {
-		case ValueSchema.String:
+		case ValueSchema.String: {
 			type = "string";
 			break;
-		case ValueSchema.Number:
+		}
+		case ValueSchema.Number: {
 			type = "number";
 			break;
-		case ValueSchema.Boolean:
+		}
+		case ValueSchema.Boolean: {
 			type = "boolean";
 			break;
-		case ValueSchema.Null:
+		}
+		case ValueSchema.Null: {
 			type = "null";
 			break;
-		case ValueSchema.FluidHandle:
+		}
+		case ValueSchema.FluidHandle: {
 			throw new UsageError("Fluid handles are not supported via JSON Schema.");
-		default:
+		}
+		default: {
 			unreachableCase(schema.leafKind);
+		}
 	}
 
 	return {
@@ -181,13 +189,11 @@ export function convertObjectNodeSchema(
 		copyProperty(fieldSchema.metadata, "description", output);
 		properties[key] = output;
 
-		if (fieldSchema.kind !== FieldKind.Optional) {
-			if (
-				options.requireFieldsWithDefaults ||
-				fieldSchema.props?.defaultProvider === undefined
-			) {
-				required.push(key);
-			}
+		if (
+			fieldSchema.kind !== FieldKind.Optional &&
+			(options.requireFieldsWithDefaults || fieldSchema.props?.defaultProvider === undefined)
+		) {
+			required.push(key);
 		}
 	}
 
@@ -212,9 +218,9 @@ function convertRecordLikeNodeSchema(
 	const allowedTypesIdentifiers: ReadonlySet<string> = new Set(
 		schema.simpleAllowedTypes.keys(),
 	);
-	allowedTypesIdentifiers.forEach((type) => {
+	for (const type of allowedTypesIdentifiers) {
 		allowedTypes.push(createSchemaRef(type));
-	});
+	}
 
 	const output = {
 		type: "object",

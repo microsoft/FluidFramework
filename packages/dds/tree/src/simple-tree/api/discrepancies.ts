@@ -21,6 +21,7 @@ import {
 	type TreeTypeSet,
 	type ValueSchema,
 } from "../../core/index.js";
+import { FieldKinds } from "../../feature-libraries/index.js";
 import { brand } from "../../util/index.js";
 import {
 	NodeKind,
@@ -29,6 +30,13 @@ import {
 	type TreeNodeSchema,
 } from "../core/index.js";
 import {
+	createFieldSchema,
+	FieldKind,
+	FieldSchemaAlpha,
+	type FieldSchema,
+} from "../fieldSchema.js";
+import { LeafNodeSchema } from "../leafNodeSchema.js";
+import {
 	isArrayNodeSchema,
 	isMapNodeSchema,
 	isObjectNodeSchema,
@@ -36,16 +44,9 @@ import {
 	type ObjectNodeSchemaPrivate,
 } from "../node-kinds/index.js";
 import { convertFieldKind } from "../toStoredSchema.js";
-import {
-	createFieldSchema,
-	FieldKind,
-	FieldSchemaAlpha,
-	type FieldSchema,
-} from "../fieldSchema.js";
-import { LeafNodeSchema } from "../leafNodeSchema.js";
-import type { TreeSchema } from "./configuration.js";
+import type { TreeSchema } from "../treeSchema.js";
+
 import { tryStoredSchemaAsArray } from "./customTree.js";
-import { FieldKinds } from "../../feature-libraries/index.js";
 
 /**
  * Discriminated union (keyed on `mismatch`) of discrepancies between a view and stored schema which
@@ -154,16 +155,20 @@ function doesNodeKindMatchStoredNodeKind(
 	storedType: SchemaFactoryNodeKind,
 ): boolean {
 	switch (viewKind) {
-		case NodeKind.Leaf:
+		case NodeKind.Leaf: {
 			return storedType === LeafNodeStoredSchema;
+		}
 		case NodeKind.Array:
-		case NodeKind.Object:
+		case NodeKind.Object: {
 			return storedType === ObjectNodeStoredSchema;
+		}
 		case NodeKind.Map:
-		case NodeKind.Record:
+		case NodeKind.Record: {
 			return storedType === MapNodeStoredSchema;
-		default:
+		}
+		default: {
 			unreachableCase(viewKind);
+		}
 	}
 }
 
@@ -291,8 +296,9 @@ function* getNodeDiscrepancies(
 			}
 			break;
 		}
-		default:
+		default: {
 			break;
+		}
 	}
 }
 
@@ -357,7 +363,12 @@ function* getFieldDiscrepancies(
 		fail(0xbef /* A conversion from a FieldKind to a FlexFieldKind should exist */);
 
 	// This checks if the field kind in the view schema is not compatible with the stored schema.
-	if (viewKind.identifier !== stored.kind) {
+	// A staged optional field (optional in the view) is compatible with a required stored field
+	// during the rollout period — suppress the kind discrepancy in that case.
+	if (
+		viewKind.identifier !== stored.kind &&
+		!(view.isStagedOptional !== false && stored.kind === FieldKinds.required.identifier)
+	) {
 		yield {
 			identifier,
 			fieldKey,
@@ -457,18 +468,19 @@ function* computeObjectNodeDiscrepancies(
 		}
 
 		// If the stored schema has a field that's not in the view schema
-		if (!viewKeys.has(fieldKey)) {
-			// When the application has opted into it, we allow viewing documents which have additional
-			// optional fields in the stored schema that are not present in the view schema.
-			if (!view.allowUnknownOptionalFields || schema.kind !== FieldKinds.optional.identifier) {
-				yield {
-					identifier,
-					fieldKey,
-					mismatch: "fieldKind",
-					view: storedEmptyFieldSchema.kind,
-					stored: schema.kind,
-				} satisfies FieldKindDiscrepancy;
-			}
+		// When the application has opted into it, we allow viewing documents which have additional
+		// optional fields in the stored schema that are not present in the view schema.
+		if (
+			!viewKeys.has(fieldKey) &&
+			(!view.allowUnknownOptionalFields || schema.kind !== FieldKinds.optional.identifier)
+		) {
+			yield {
+				identifier,
+				fieldKey,
+				mismatch: "fieldKind",
+				view: storedEmptyFieldSchema.kind,
+				stored: schema.kind,
+			} satisfies FieldKindDiscrepancy;
 		}
 	}
 }

@@ -1,15 +1,16 @@
 {
 	// File path is already set in .mocharc.cjs, so this should not be required,
 	// but something seems to be overriding that path, and this is needed to make it work.
-	// Also for unknown (but likely related reasons) this cannot be just "dist/test" which is used in the config.
+	// Also for unknown (but likely related reasons) this cannot be just "lib/test" which is used in the config.
 	// This is not limited to "spec.js" so that benchmarks are included (which will be run in correctness mode).
-	"mochaExplorer.files": ["dist/test/**/*.*js"],
-	// "pruneFiles" is disabled because it causesd "source-map-support/register" to give `Unknown file extension ".ts"` errors.
+	"mochaExplorer.files": ["lib/test/**/*.*js"],
+	// "pruneFiles" is disabled because it breaks some imports.
 	// "mochaExplorer.pruneFiles": true,
-	"mochaExplorer.require": [
-		"node_modules/@fluid-internal/mocha-test-setup/dist/index.js",
-		"source-map-support/register",
-	],
+	// Parallel testing disabled because of AB#59690.
+	// "mochaExplorer.parallel": true,
+	// We have moderately high test setup overhead, so tons of jobs doesn't work well.
+	// Less than 4 got slower results, and more did not offer any significant gains.
+	"mochaExplorer.jobs": 4,
 	"mochaExplorer.configFile": ".mocharc.cjs",
 	"mochaExplorer.timeout": 999999,
 	// This extension appears to invoke mocha programmatically, meaning that the enablement of this option in the common
@@ -35,11 +36,13 @@
 		"revertibles",
 		"rushstack",
 		"Stringifier",
+		"subclassable",
 		"summarizable",
 		"summarizables",
 		"typebox",
 		"typeparam",
 		"unannotate",
+		"unbrand",
 		"undoable",
 		"unhydrated",
 		"unioned",

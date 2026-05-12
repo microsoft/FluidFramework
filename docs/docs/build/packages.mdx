@@ -3,29 +3,42 @@ title: Packages
 sidebar_position: 9
 ---
 
-The Fluid Framework is a multi-layered system consisting of dozens of individual npm packages. Most developers will only
-need two or three of these packages for typical Fluid development: The `fluid-framework` package, which contains the
-public API for the Fluid Framework, and a service-specific client package, such as the
-`@fluidframework/tinylicious-client` package.
+The Fluid Framework is a multi-layered system consisting of dozens of individual npm packages.
+Most developers will only need two or three of these packages for typical Fluid development:
+- The [fluid-framework][] package, which contains the public API for the Fluid Framework
+- A service-specific client package, such as the [@fluidframework/azure-client](../api/azure-client/index.md).
 
 ## Primary API: fluid-framework
 
-The `fluid-framework` package consists primarily of two portions: the [FluidContainer][] object and a selection of
+The [fluid-framework][] package consists primarily of two portions: the [FluidContainer][] object and a selection of
 distributed data structures (DDSes).
 
 ### FluidContainer
 
-The [FluidContainer][] object is the one of the object types returned by calls to `createContainer()` and
-`getContainer()` on the service clients such as [AzureClient][]. It includes functionality to retrieve the Fluid data
-contained within itself, as well as to inspect the state of the collaboration session connection.
+The [FluidContainer][] object is one of the object types returned by calls to `createContainer()` and `getContainer()` on the [service clients](../deployment/service-options.mdx) such as [AzureClient](../deployment/azure-fluid-relay.mdx).
+It includes functionality to retrieve the Fluid data contained within itself, as well as to inspect the state of the collaboration session connection.
 
-### Shared object packages
+### Distributed Data Structures (DDSes)
 
-You'll use one or more shared objects in your container to model your collaborative data. The `fluid-framework` package includes
-three data structures that cover a broad range of scenarios:
+You'll use one or more DDSes in your container to model your collaborative data.
+The [fluid-framework][] package includes a few such data structures that cover a broad range of scenarios:
 
-1. [SharedMap](../data-structures/map.mdx), a map-like data structure for storing key/value pair data.
-2. [SharedString](../data-structures/string.md), a data structure for string data.
+- [SharedTree](../data-structures/tree/index.mdx): a collaborative tree data structure for building complex, hierarchical data models.
+	:::tip
+	This is the DDS we recommend for most new applications.
+	:::
+- [SharedString](../data-structures/string.md): a data structure for collaborative text data.
+	:::tip
+	This DDS can be used when live, collaborative text editing is required.
+	`SharedTree` supports text content, but does not yet support many rich collaborative text editing features.
+
+	For scenarios where collaborative text editing is required, we recommend using `SharedString` _with_ `SharedTree` via [handles](../data-structures/tree/node-types.mdx#leaf-nodes).
+	:::
+- [SharedMap](../data-structures/map.mdx): a map-like data structure for storing key/value pair data.
+	:::warning
+	We do not recommend this DDS for new applications. `SharedTree` is a more powerful and flexible alternative that can easily model key/value pair data.
+	:::
+
 
 ## Package scopes
 
@@ -36,9 +49,14 @@ Fluid Framework packages are published under one of the following npm scopes:
 -   @fluid-internal
 -   @fluid-tools
 
-In addition to the scoped packages, two unscoped packages are published: the [fluid-framework][] package, described earlier, and the `tinylicious` package, which contains a minimal Fluid server. For more information, see [Tinylicious](../testing/tinylicious.mdx).
+In addition to the scoped packages, two unscoped packages are published: the [fluid-framework][] package, described earlier, and the `tinylicious` package, which contains a minimal Fluid server.
+For more information, see [Tinylicious](../testing/tinylicious.mdx).
 
 Unless you are contributing to the Fluid Framework, you should only need the unscoped packages and packages from the **@fluidframework** scope.
 You can [read more about the scopes and their intent][scopes] in the Fluid Framework wiki.
 
+
+{/* Links */}
+[FluidContainer]: ./containers.mdx
+[fluid-framework]: ../api/fluid-framework/index.md
 [scopes]: https://github.com/microsoft/FluidFramework/wiki/npm-package-scopes

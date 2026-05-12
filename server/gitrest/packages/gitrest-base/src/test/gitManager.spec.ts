@@ -11,7 +11,7 @@ import {
 	SystemErrors,
 } from "../utils";
 import { NullExternalStorageManager } from "../externalStorageManager";
-import sizeof from "object-sizeof";
+import { sizeof } from "../utils";
 
 /**
  * Get a string that cannot be compressed by zlib.

@@ -6,32 +6,31 @@
 import { Flags } from "@oclif/core";
 import * as semver from "semver";
 
-// eslint-disable-next-line import/no-deprecated
-import { MonoRepoKind } from "./library/index.js";
+// eslint-disable-next-line import-x/no-deprecated
+import { MonoRepoKind } from "./library/context.js";
 
 /**
  * An iterator that returns only the Enum values of MonoRepoKind.
  * @deprecated should switch to ReleaseGroup.  Currently the only difference is "azure" not in ReleaseGroup.
  */
-// eslint-disable-next-line import/no-deprecated
+// eslint-disable-next-line import-x/no-deprecated
 function* supportedMonoRepoValues(): IterableIterator<MonoRepoKind> {
-	// eslint-disable-next-line import/no-deprecated
+	// eslint-disable-next-line import-x/no-deprecated
 	for (const [, flag] of Object.entries(MonoRepoKind)) {
 		yield flag;
 	}
 }
 
+import type { ReleaseGroupName } from "@fluid-tools/build-infrastructure";
 import {
-	type VersionBumpType,
-	type VersionScheme,
 	isVersionBumpType,
 	isVersionBumpTypeExtended,
 	isVersionScheme,
+	type VersionBumpType,
+	type VersionScheme,
 } from "@fluid-tools/version-tools";
-
-import type { ReleaseGroupName } from "@fluid-tools/build-infrastructure";
-import type { DependencyUpdateType } from "./library/index.js";
-import { type ReleaseGroup, isReleaseGroup } from "./releaseGroups.js";
+import type { DependencyUpdateType } from "./library/bump.js";
+import { isReleaseGroup, type ReleaseGroup } from "./releaseGroups.js";
 
 /**
  * A re-usable CLI flag to parse release groups.
@@ -97,7 +96,7 @@ export const semverFlag = Flags.custom<semver.SemVer, { loose?: boolean }>({
 	description:
 		"A semantic versioning (semver) version string. Values are verified to be valid semvers during flag parsing.",
 	parse: async (input, _, opts) => {
-		const parsed = semver.parse(input, opts.loose);
+		const parsed = semver.parse(input, opts.loose ?? false);
 		if (parsed === null) {
 			throw new Error(`Invalid semver: ${input}`);
 		}

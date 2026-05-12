@@ -4,9 +4,8 @@
  */
 
 import { strict as assert } from "node:assert";
-
-import { expect } from "chai";
 import * as chai from "chai";
+import { expect } from "chai";
 import assertArrays from "chai-arrays";
 import { describe, it } from "mocha";
 import * as semver from "semver";
@@ -88,7 +87,7 @@ describe("loadBuildProject", () => {
 			const buildTools = repo.workspaces.get("build-tools" as WorkspaceName);
 			expect(buildTools).to.not.be.undefined;
 			expect(buildTools?.packages.length).to.equal(
-				6,
+				5,
 				"build-tools workspace has the wrong number of packages",
 			);
 			expect(buildTools?.releaseGroups.size).to.equal(

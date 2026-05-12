@@ -5,6 +5,6 @@
 
 import { SharedMap } from "@fluidframework/map/internal";
 
-export function apisToBundle() {
+export function apisToBundle(): void {
 	SharedMap.getFactory();
 }

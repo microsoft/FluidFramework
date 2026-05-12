@@ -39,7 +39,7 @@ describeCompat("LocalLoader", "NoCompat", (getTestObjectProvider, apis) => {
 	class TestDataObject extends DataObject {
 		public static readonly type = "@fluid-example/test-dataObject";
 
-		public static getFactory() {
+		public static getFactory(): IFluidDataStoreFactory {
 			return TestDataObject.factory;
 		}
 
@@ -71,16 +71,16 @@ describeCompat("LocalLoader", "NoCompat", (getTestObjectProvider, apis) => {
 		/**
 		 * Increments the counter value by 1.
 		 */
-		public increment() {
+		public increment(): void {
 			this.counter.increment(1);
 		}
 
-		protected async initializingFirstTime() {
+		protected async initializingFirstTime(): Promise<void> {
 			const counter = SharedCounter.create(this.runtime);
 			this.root.set(counterKey, counter.handle);
 		}
 
-		protected async hasInitialized() {
+		protected async hasInitialized(): Promise<void> {
 			const counterHandle = this.root.get<IFluidHandle<SharedCounter>>(counterKey);
 			assert(counterHandle);
 			this.counter = await counterHandle.get();

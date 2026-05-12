@@ -55,7 +55,7 @@ describeCompat(
 			getRawConfig: (name: string): ConfigTypes => settings[name],
 		});
 
-		const mapsAreEqual = (a: ISharedMap, b: ISharedMap) =>
+		const mapsAreEqual = (a: ISharedMap, b: ISharedMap): boolean =>
 			a.size === b.size && [...a.entries()].every(([key, value]) => b.get(key) === value);
 
 		beforeEach("getTestObjectProvider", async () => {
@@ -65,7 +65,7 @@ describeCompat(
 		const setupContainers = async (
 			containerConfig: ITestContainerConfig,
 			featureGates: Record<string, ConfigTypes> = {},
-		) => {
+		): Promise<void> => {
 			const configWithFeatureGates = {
 				...containerConfig,
 				loaderProps: { configProvider: configProvider(featureGates) },

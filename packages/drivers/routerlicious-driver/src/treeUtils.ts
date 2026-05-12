@@ -5,10 +5,11 @@
 
 import { IsoBuffer } from "@fluid-internal/client-utils";
 import { assert } from "@fluidframework/core-utils/internal";
-import { ISummaryTree, SummaryObject, SummaryType } from "@fluidframework/driver-definitions";
-import { ISnapshotTree } from "@fluidframework/driver-definitions/internal";
+import type { ISummaryTree, SummaryObject } from "@fluidframework/driver-definitions";
+import { SummaryType } from "@fluidframework/driver-definitions";
+import type { ISnapshotTree } from "@fluidframework/driver-definitions/internal";
 
-import { INormalizedWholeSnapshot } from "./contracts.js";
+import type { INormalizedWholeSnapshot } from "./contracts.js";
 
 /**
  * Summary tree assembler props
@@ -77,7 +78,7 @@ export class SummaryTreeAssembler {
 	/**
 	 * Add attachment to summary
 	 */
-	public addAttachment(id: string) {
+	public addAttachment(id: string): void {
 		this.summaryTree[this.attachmentCounter++] = { id, type: SummaryType.Attachment };
 	}
 }
@@ -108,7 +109,11 @@ export function convertSnapshotAndBlobsToSummaryTree(
 	return assembler.summary;
 }
 
-export function evalBlobsAndTrees(snapshot: INormalizedWholeSnapshot) {
+export function evalBlobsAndTrees(snapshot: INormalizedWholeSnapshot): {
+	trees: number;
+	numBlobs: number;
+	encodedBlobsSize: number;
+} {
 	const trees = countTreesInSnapshotTree(snapshot.snapshotTree);
 	const numBlobs = snapshot.blobs.size;
 	let encodedBlobsSize = 0;
@@ -118,7 +123,7 @@ export function evalBlobsAndTrees(snapshot: INormalizedWholeSnapshot) {
 	return { trees, numBlobs, encodedBlobsSize };
 }
 
-export function validateBlobsAndTrees(snapshot: ISnapshotTree) {
+export function validateBlobsAndTrees(snapshot: ISnapshotTree): void {
 	assert(
 		snapshot.trees !== undefined,
 		0x5d0 /* Returned r11s snapshot is malformed. No trees! */,

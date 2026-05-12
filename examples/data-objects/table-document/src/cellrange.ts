@@ -9,7 +9,7 @@ import { ReferencePosition, SequenceInterval } from "@fluidframework/sequence/le
 const rangeExpr = /([A-Za-z]+)(\d+):([A-Za-z]+)(\d+)/;
 
 // Parses an Excel-like column name to the corresponding 0-based index (e.g., 'A' -> 0)
-export function colNameToIndex(colName: string) {
+export function colNameToIndex(colName: string): number {
 	return (
 		[...colName]
 			.map((letter) => letter.toUpperCase().charCodeAt(0) - 64) // 64 -> A=1, B=2, etc.
@@ -17,11 +17,12 @@ export function colNameToIndex(colName: string) {
 	); // 1-indexed -> 0-indexed
 }
 
-// Convert a 0-based column index into an Excel-like column name (e.g., 0 -> 'A')
 /**
+ * Converts a 0-based column index into an Excel-like column name (e.g., 0 -\> 'A').
+ *
  * @internal
  */
-export function colIndexToName(colIndex: number) {
+export function colIndexToName(colIndex: number): string {
 	let name = "";
 
 	let i = colIndex;
@@ -35,9 +36,16 @@ export function colIndexToName(colIndex: number) {
 }
 
 /**
+ * Parses a range string into row and column coordinates.
+ *
  * @internal
  */
-export function parseRange(range: string) {
+export function parseRange(range: string): {
+	minRow: number;
+	minCol: number;
+	maxRow: number;
+	maxCol: number;
+} {
 	const matches = rangeExpr.exec(range);
 	const minCol = colNameToIndex(matches[1]);
 	const minRow = parseInt(matches[2], 10) - 1; // 1-indexed -> 0-indexed
@@ -55,7 +63,7 @@ export class CellRange {
 		assert(!!interval, "CellInterval created with bad interval!");
 	}
 
-	public getRange() {
+	public getRange(): { row: number; col: number; numRows: number; numCols: number } {
 		const { row, col } = this.resolve(this.interval.start);
 		const { row: maxRow, col: maxCol } = this.resolve(this.interval.end);
 
@@ -65,7 +73,7 @@ export class CellRange {
 		return { row, col, numRows, numCols };
 	}
 
-	public forEachRowMajor(callback: (row: number, col: number) => boolean) {
+	public forEachRowMajor(callback: (row: number, col: number) => boolean): void {
 		const r = this.getRange();
 		for (let row = r.row, numRows = r.numRows; numRows > 0; row++, numRows--) {
 			for (let col = r.col, numCols = r.numCols; numCols > 0; col++, numCols--) {
@@ -76,7 +84,7 @@ export class CellRange {
 		}
 	}
 
-	public forEachColMajor(callback: (row: number, col: number) => boolean) {
+	public forEachColMajor(callback: (row: number, col: number) => boolean): void {
 		const r = this.getRange();
 		for (let col = r.col, numCols = r.numCols; numCols > 0; col++, numCols--) {
 			for (let row = r.row, numRows = r.numRows; numRows > 0; row++, numRows--) {

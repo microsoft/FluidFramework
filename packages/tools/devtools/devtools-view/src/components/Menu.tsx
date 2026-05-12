@@ -41,12 +41,19 @@ import {
 	GetContainerState,
 	handleIncomingMessage,
 } from "@fluidframework/devtools-core/internal";
-import React from "react";
+import {
+	type KeyboardEvent,
+	type PropsWithChildren,
+	type ReactElement,
+	useEffect,
+	useState,
+} from "react";
 
 import { useMessageRelay } from "../MessageRelayContext.js";
 import { useLogger } from "../TelemetryUtils.js";
 
 import { Waiting } from "./Waiting.js";
+import { ScreenReaderAnnouncement } from "./utility-components/index.js";
 
 const useMenuStyles = makeStyles({
 	root: {
@@ -174,9 +181,10 @@ const getContainerListMessage = GetContainerList.createMessage();
 /**
  * A refresh button to retrieve the latest list of containers.
  */
-function RefreshButton(): React.ReactElement {
+function RefreshButton(): ReactElement {
 	const messageRelay = useMessageRelay();
 	const usageLogger = useLogger();
+	const [statusMessage, setStatusMessage] = useState("");
 
 	const transparentButtonStyle = {
 		backgroundColor: "transparent",
@@ -188,28 +196,34 @@ function RefreshButton(): React.ReactElement {
 		// Query for list of Containers
 		messageRelay.postMessage(getContainerListMessage);
 		usageLogger?.sendTelemetryEvent({ eventName: "ContainerRefreshButtonClicked" });
+		setStatusMessage("Containers list refreshed");
+		// Clear the message after a delay so subsequent clicks trigger a new announcement
+		setTimeout(() => setStatusMessage(""), 1000);
 	}
 
 	return (
-		<Tooltip content="Refresh Containers list" relationship="label">
-			<Button
-				icon={<ArrowSync16Regular />}
-				style={transparentButtonStyle}
-				onClick={handleRefreshClick}
-				aria-label="Refresh Containers list"
-			></Button>
-		</Tooltip>
+		<>
+			<Tooltip content="Refresh Containers list" relationship="label">
+				<Button
+					icon={<ArrowSync16Regular />}
+					style={transparentButtonStyle}
+					onClick={handleRefreshClick}
+					aria-label="Refresh Containers list"
+				></Button>
+			</Tooltip>
+			<ScreenReaderAnnouncement message={statusMessage} />
+		</>
 	);
 }
 
 /**
  * Props for {@link MenuSection}
  */
-export type MenuSectionProps = React.PropsWithChildren<{
+export type MenuSectionProps = PropsWithChildren<{
 	/**
 	 * Section header.
 	 */
-	header: React.ReactElement;
+	header: ReactElement;
 }>;
 
 const useMenuSectionStyles = makeStyles({
@@ -225,7 +239,7 @@ const useMenuSectionStyles = makeStyles({
 /**
  * Generic component for a section of the menu.
  */
-export function MenuSection(props: MenuSectionProps): React.ReactElement {
+export function MenuSection(props: MenuSectionProps): ReactElement {
 	const { header, children } = props;
 
 	const styles = useMenuSectionStyles();
@@ -250,7 +264,7 @@ export interface MenuSectionLabelHeaderProps {
 	/**
 	 * The icon to display in the header of the menu section.
 	 */
-	icon?: React.ReactElement;
+	icon?: ReactElement;
 }
 
 const useMenuSectionLabelHeaderStyles = makeStyles({
@@ -265,9 +279,7 @@ const useMenuSectionLabelHeaderStyles = makeStyles({
 /**
  * Simple menu section header with a label.
  */
-export function MenuSectionLabelHeader(
-	props: MenuSectionLabelHeaderProps,
-): React.ReactElement {
+export function MenuSectionLabelHeader(props: MenuSectionLabelHeaderProps): ReactElement {
 	const { label, icon } = props;
 	const styles = useMenuSectionLabelHeaderStyles();
 
@@ -324,14 +336,12 @@ const useMenuSectionButtonHeaderStyles = makeStyles({
 /**
  * Menu section header that behaves like a button.
  */
-export function MenuSectionButtonHeader(
-	props: MenuSectionButtonHeaderProps,
-): React.ReactElement {
+export function MenuSectionButtonHeader(props: MenuSectionButtonHeaderProps): ReactElement {
 	const { label, icon, onClick, altText, isActive } = props;
 	const styles = useMenuSectionButtonHeaderStyles();
 	const style = mergeClasses(styles.root, isActive ? styles.active : styles.inactive);
 
-	const handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>): void => {
+	const handleKeyDown = (event: KeyboardEvent<HTMLDivElement>): void => {
 		if ((event.key === "Enter" || event.key === " ") && onClick) {
 			onClick();
 		}
@@ -362,7 +372,7 @@ export interface MenuItemProps {
 	/**
 	 * Icon to display next to the container name based on its state.
 	 */
-	readonly stateIcon: React.ReactElement | undefined;
+	readonly stateIcon: ReactElement | undefined;
 
 	/**
 	 * Whether the container or container runtime has recent changes.
@@ -493,10 +503,10 @@ const useMenuItemStyles = makeStyles({
 /**
  * Generic component for a menu item (under a section).
  */
-export function MenuItem(props: MenuItemProps): React.ReactElement {
+export function MenuItem(props: MenuItemProps): ReactElement {
 	const { isActive, onClick, text, stateIcon, hasChanges, onRemove } = props;
 
-	const handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>): void => {
+	const handleKeyDown = (event: KeyboardEvent<HTMLDivElement>): void => {
 		if (event.key === "Enter" || event.key === " ") {
 			onClick(event);
 		}
@@ -600,7 +610,7 @@ interface ConnectionStateIconProps {
  * Displays an icon with tooltip for the given connection state.
  * Returns undefined if the connection state doesn't have a corresponding icon.
  */
-function ConnectionStateIcon(props: ConnectionStateIconProps): React.ReactElement | undefined {
+function ConnectionStateIcon(props: ConnectionStateIconProps): ReactElement | undefined {
 	const { connectionState } = props;
 
 	switch (connectionState) {
@@ -657,7 +667,7 @@ interface AttachStateIconProps {
  * Displays an icon with tooltip for the given attach state.
  * Returns undefined if the attach state doesn't have a corresponding icon.
  */
-function AttachStateIcon(props: AttachStateIconProps): React.ReactElement | undefined {
+function AttachStateIcon(props: AttachStateIconProps): ReactElement | undefined {
 	const { attachState } = props;
 
 	switch (attachState) {
@@ -724,22 +734,20 @@ interface ContainersMenuSectionProps {
  * @remarks Displays a spinner while the Container list is being loaded (if the list is undefined),
  * and displays a note when there are no registered Containers (if the list is empty).
  */
-function ContainersMenuSection(props: ContainersMenuSectionProps): React.ReactElement {
+function ContainersMenuSection(props: ContainersMenuSectionProps): ReactElement {
 	const { containers, selectContainer, currentContainerSelection, onRemoveContainer } = props;
 
 	const messageRelay = useMessageRelay();
 	const styles = useMenuItemStyles();
-	const [containerStates, setContainerStates] = React.useState<
+	const [containerStates, setContainerStates] = useState<
 		Map<ContainerKey, ContainerStateMetadata>
 	>(new Map());
-	const [containersWithChanges, setContainersWithChanges] = React.useState<Set<string>>(
-		new Set(),
-	);
-	const [changeIndicatorTimers, setChangeIndicatorTimers] = React.useState<
+	const [containersWithChanges, setContainersWithChanges] = useState<Set<string>>(new Set());
+	const [changeIndicatorTimers, setChangeIndicatorTimers] = useState<
 		Map<string, ReturnType<typeof setTimeout>>
 	>(new Map());
 
-	React.useEffect(() => {
+	useEffect(() => {
 		if (containers === undefined) {
 			return;
 		}
@@ -796,7 +804,7 @@ function ContainersMenuSection(props: ContainersMenuSectionProps): React.ReactEl
 		};
 	}, [changeIndicatorTimers, containers, messageRelay]);
 
-	let containerSectionInnerView: React.ReactElement;
+	let containerSectionInnerView: ReactElement;
 	if (containers === undefined) {
 		containerSectionInnerView = <Waiting label="Fetching Container list" />;
 	} else if (containers.length === 0) {
@@ -808,7 +816,7 @@ function ContainersMenuSection(props: ContainersMenuSectionProps): React.ReactEl
 				{containers.map((containerKey: string) => {
 					const state = containerStates.get(containerKey);
 
-					let stateIcons: React.ReactElement[] = [];
+					let stateIcons: ReactElement[] = [];
 
 					if (state) {
 						// Check disposed state first - if closed, only show dispose icon
@@ -891,7 +899,7 @@ function ContainersMenuSection(props: ContainersMenuSectionProps): React.ReactEl
 /**
  * Menu component for {@link DevtoolsView}.
  */
-export function Menu(props: MenuProps): React.ReactElement {
+export function Menu(props: MenuProps): ReactElement {
 	const { currentSelection, setSelection, supportedFeatures, containers, onRemoveContainer } =
 		props;
 	const usageLogger = useLogger();
@@ -938,7 +946,7 @@ export function Menu(props: MenuProps): React.ReactElement {
 		});
 	}
 
-	const menuSections: React.ReactElement[] = [];
+	const menuSections: ReactElement[] = [];
 
 	menuSections.push(
 		<MenuSection

@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+/* eslint-disable @typescript-eslint/no-base-to-string */
+
 import { strict as assert } from "node:assert";
 
 import type { IMatrixConsumer } from "@tiny-calc/nano";
@@ -166,7 +168,7 @@ export class SharedMatrixOracle {
 							currentValue,
 							`Conflict mismatch at [${row},${col}]:
 					 expected winner=${currentValue},
-					 actual=${actual},
+					 actual=${actual}, // eslint-disable-line @typescript-eslint/no-base-to-string
 					 loser=${conflictingValue} with cellValue=${cellValue}`,
 						);
 					}

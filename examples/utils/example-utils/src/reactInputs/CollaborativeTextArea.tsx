@@ -3,9 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import React, { useEffect, useRef, useState } from "react";
-
 import {
+	type CSSProperties,
+	type FC,
+	type FormEvent,
+	useEffect,
+	useRef,
+	useState,
+} from "react";
+
+import type {
 	ISharedStringHelperTextChangedEventArgs,
 	SharedStringHelper,
 } from "../SharedStringHelper.js";
@@ -33,14 +40,14 @@ export interface ICollaborativeTextAreaProps {
 	spellCheck?: boolean;
 
 	className?: string;
-	style?: React.CSSProperties;
+	style?: CSSProperties;
 }
 
 /**
  * Given a {@link SharedStringHelper}, will produce a collaborative text area element.
  * @internal
  */
-export const CollaborativeTextArea: React.FC<ICollaborativeTextAreaProps> = (
+export const CollaborativeTextArea: FC<ICollaborativeTextAreaProps> = (
 	props: ICollaborativeTextAreaProps,
 ) => {
 	const { sharedStringHelper, readOnly, spellCheck, className, style } = props;
@@ -56,7 +63,7 @@ export const CollaborativeTextArea: React.FC<ICollaborativeTextAreaProps> = (
 	 * 1. Store the text and selection state in React
 	 * 2. Store the text state in the SharedString
 	 */
-	const handleChange = (ev: React.FormEvent<HTMLTextAreaElement>) => {
+	const handleChange = (ev: FormEvent<HTMLTextAreaElement>): void => {
 		// First get and stash the new textarea state
 		if (!textareaRef.current) {
 			throw new Error("Handling change without current textarea ref?");
@@ -81,12 +88,12 @@ export const CollaborativeTextArea: React.FC<ICollaborativeTextAreaProps> = (
 		// This is also a bad assumption, in the undo case.
 		const isTextInserted = newCaretPosition - oldSelectionStart > 0;
 		if (isTextInserted) {
-			const insertedText = newText.substring(oldSelectionStart, newCaretPosition);
+			const insertedText = newText.slice(oldSelectionStart, newCaretPosition);
 			const isTextReplaced = oldSelectionEnd - oldSelectionStart > 0;
-			if (!isTextReplaced) {
-				sharedStringHelper.insertText(insertedText, oldSelectionStart);
-			} else {
+			if (isTextReplaced) {
 				sharedStringHelper.replaceText(insertedText, oldSelectionStart, oldSelectionEnd);
+			} else {
+				sharedStringHelper.insertText(insertedText, oldSelectionStart);
 			}
 		} else {
 			// Text was removed
@@ -98,7 +105,7 @@ export const CollaborativeTextArea: React.FC<ICollaborativeTextAreaProps> = (
 	/**
 	 * Set the selection in the DOM textarea itself (updating the UI).
 	 */
-	const setTextareaSelection = (newStart: number, newEnd: number) => {
+	const setTextareaSelection = (newStart: number, newEnd: number): void => {
 		if (!textareaRef.current) {
 			throw new Error("Trying to set selection without current textarea ref?");
 		}
@@ -111,7 +118,7 @@ export const CollaborativeTextArea: React.FC<ICollaborativeTextAreaProps> = (
 	/**
 	 * Take the current selection from the DOM textarea and store it in our React ref.
 	 */
-	const storeSelectionInReact = () => {
+	const storeSelectionInReact = (): void => {
 		if (!textareaRef.current) {
 			throw new Error("Trying to remember selection without current textarea ref?");
 		}
@@ -133,7 +140,7 @@ export const CollaborativeTextArea: React.FC<ICollaborativeTextAreaProps> = (
 		 * 2. If the change came from a remote source, it may have moved our selection.
 		 * Compute it, update the textarea, and store it in React
 		 */
-		const handleTextChanged = (event: ISharedStringHelperTextChangedEventArgs) => {
+		const handleTextChanged = (event: ISharedStringHelperTextChangedEventArgs): void => {
 			const newText = sharedStringHelper.getText();
 			setText(newText);
 

@@ -56,7 +56,7 @@ export class SharedTreeUndoRedoHandler {
 	 * Attach a shared tree to this handler. Each edit from the tree will invoke `this.stackManager`'s
 	 * {@link IUndoConsumer.pushToCurrentOperation} method with an associated {@link IRevertible}.
 	 */
-	public attachTree(tree: SharedTree) {
+	public attachTree(tree: SharedTree): void {
 		tree.on(SharedTreeEvent.EditCommitted, this.treeDeltaHandler);
 	}
 
@@ -64,11 +64,11 @@ export class SharedTreeUndoRedoHandler {
 	 * Detach a shared tree from this handler. Edits from the tree will no longer cause `this.stackManager`'s
 	 * {@link IUndoConsumer.pushToCurrentOperation} to be called.
 	 */
-	public detachTree(tree: SharedTree) {
+	public detachTree(tree: SharedTree): void {
 		tree.off(SharedTreeEvent.EditCommitted, this.treeDeltaHandler);
 	}
 
-	private readonly treeDeltaHandler = (eventArguments: EditCommittedEventArguments) => {
+	private readonly treeDeltaHandler = (eventArguments: EditCommittedEventArguments): void => {
 		const { editId, local, tree } = eventArguments;
 
 		if (local) {
@@ -94,11 +94,11 @@ export class SharedTreeRevertible implements IRevertible {
 		private readonly tree: SharedTree
 	) {}
 
-	public revert() {
+	public revert(): void {
 		this.tree.revert(this.editId);
 	}
 
-	public discard() {
+	public discard(): void {
 		return;
 	}
 }

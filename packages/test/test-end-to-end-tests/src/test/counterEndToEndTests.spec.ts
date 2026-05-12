@@ -79,7 +79,7 @@ describeCompat("SharedCounter", "FullCompat", (getTestObjectProvider, apis) => {
 		await provider.ensureSynchronized();
 	});
 
-	function verifyCounterValue(counter: ISharedCounter, expectedValue, index: number) {
+	function verifyCounterValue(counter: ISharedCounter, expectedValue, index: number): void {
 		const userValue = counter.value;
 		assert.equal(
 			userValue,
@@ -88,7 +88,7 @@ describeCompat("SharedCounter", "FullCompat", (getTestObjectProvider, apis) => {
 		);
 	}
 
-	function verifyCounterValues(value1, value2, value3) {
+	function verifyCounterValues(value1, value2, value3): void {
 		verifyCounterValue(sharedCounter1, value1, 1);
 		verifyCounterValue(sharedCounter2, value2, 2);
 		verifyCounterValue(sharedCounter3, value3, 3);
