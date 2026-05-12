@@ -61,10 +61,7 @@ describe("azureDevops/pipelineCommands", () => {
 		});
 
 		it("formats an error command", () => {
-			assert.equal(
-				formatLogIssue("error", "boom"),
-				"##vso[task.logissue type=error]boom",
-			);
+			assert.equal(formatLogIssue("error", "boom"), "##vso[task.logissue type=error]boom");
 		});
 
 		it("escapes reserved characters in the message", () => {
