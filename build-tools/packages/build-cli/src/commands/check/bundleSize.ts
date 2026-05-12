@@ -9,6 +9,7 @@ import {
 	type BundleComparison,
 	bundlesContainNoChanges,
 	getAzureDevopsApi,
+	resolveBaselineRef,
 } from "../../library/bundleSizeDiff/index.js";
 
 import { BaseCommand } from "../../library/commands/base.js";
@@ -38,7 +39,7 @@ type CheckBundleSizeResult =
 
 export default class CheckBundleSize extends BaseCommand<typeof CheckBundleSize> {
 	static readonly description =
-		`Compare the locally-collected bundle reports against the CI build of the merge-base commit (the commit on the target branch the local branch is based on) and print the diff. Prints a human-readable summary by default; pass --json for the structured result.`;
+		`Compare the locally-collected bundle reports against the CI build of the merge-base commit and print the diff. By default, the baseline is auto-detected as \`<canonical-remote>/main\` where \`<canonical-remote>\` is whichever remote points at \`microsoft/FluidFramework\`; pass \`--baseline\` to override. Prints a human-readable summary by default; pass --json for the structured result.`;
 
 	static readonly enableJsonFlag = true;
 
@@ -48,16 +49,21 @@ export default class CheckBundleSize extends BaseCommand<typeof CheckBundleSize>
 			default: defaultLocalReportPath,
 			required: false,
 		}),
-		targetBranch: Flags.string({
-			description: "Name of the target branch to compute the baseline from.",
-			default: "main",
+		baseline: Flags.string({
+			description:
+				"Ref to compare against (e.g. 'upstream/main', 'origin/release/2.x', or a commit SHA). Skips auto-detection of the canonical remote. The baseline commit is `git merge-base <baseline> HEAD`.",
 			required: false,
 		}),
 		...BaseCommand.flags,
 	} as const;
 
 	public async run(): Promise<CheckBundleSizeResult> {
-		const { localReportPath, targetBranch } = this.flags;
+		const { localReportPath, baseline } = this.flags;
+
+		const baselineRef = baseline ?? resolveBaselineRef();
+		if (baseline !== undefined) {
+			this.log(`Using explicit baseline ref ${baseline}.`);
+		}
 
 		// Anonymous reads work for the public ADO project. Authenticated access isn't
 		// needed at the scale this command operates at; rate-limit concerns belong to
@@ -67,7 +73,7 @@ export default class CheckBundleSize extends BaseCommand<typeof CheckBundleSize>
 			adoConstants,
 			adoApi,
 			localReportPath,
-			targetBranch,
+			baselineRef,
 		);
 		const comparisonResult = await sizeComparator.getSizeComparison();
 
