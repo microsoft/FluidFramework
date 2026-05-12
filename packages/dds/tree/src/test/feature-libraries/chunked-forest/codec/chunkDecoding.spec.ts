@@ -7,10 +7,7 @@ import { strict as assert } from "node:assert";
 
 import { compareArrays } from "@fluidframework/core-utils/internal";
 import type { SessionId } from "@fluidframework/id-compressor";
-import {
-	createIdCompressor,
-	createSessionId,
-} from "@fluidframework/id-compressor/internal";
+import { createIdCompressor, createSessionId } from "@fluidframework/id-compressor/internal";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 
 import type { TreeNodeSchemaIdentifier, TreeValue } from "../../../../core/index.js";
@@ -183,7 +180,8 @@ describe("chunkDecoding", () => {
 				// Error message thrown by chunkDecoding.readValue when it detects a
 				// non-finalized op-space id during a summary load and healing is not
 				// available. See `chunkDecoding.ts`.
-				const nonFinalizedDuringSummaryError = /Encountered a non-finalized op-space identifier while loading a summary./;
+				const nonFinalizedDuringSummaryError =
+					/Encountered a non-finalized op-space identifier while loading a summary./;
 
 				it("throws when the heal flag is not enabled", () => {
 					const { opSpaceId, originatorId } = makeUnresolvableOpSpaceId();
