@@ -5,7 +5,7 @@
 ---
 Fix a SharedTree document corruption bug
 
-A SharedTree bug which could corrupt documents has been fixed (corrupted documents will no longer be written at summarization time).
+A SharedTree bug which could corrupt documents when attaching them to containers has been fixed.
 See `healUnresolvableIdentifiersOnDecode` on `configuredSharedTreeBetaLegacy` for a potential mitigation path for documents that were already corrupted by this bug.
 
 #### Who is affected
