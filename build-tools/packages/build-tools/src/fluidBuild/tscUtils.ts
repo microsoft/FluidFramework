@@ -215,7 +215,9 @@ export interface TscUtil<TSTypes extends tsTypes = tsTypes> {
 	) => string | undefined;
 	readConfigFile: (path: string) => unknown;
 	filterIncrementalOptions: typeof filterIncrementalOptions;
-	convertOptionPaths: typeof convertOptionPaths;
+	convertOptionPaths: typeof convertOptionPaths<
+		ReturnType<TSTypes["parseCommandLine"]>["options"]
+	>;
 	getCanonicalFileName: (x: string) => string;
 	getSourceFileVersion: (buffer: Buffer) => string;
 	/**
