@@ -175,25 +175,12 @@ describe("nodeShape", () => {
 			assert.deepEqual(encodedChunk, ["value", "v", [6]]);
 		});
 
-		// Mirrors the decode-side heal-on-load tests in `chunkDecoding.spec.ts`.
-		// When encoding for a summary, identifier values whose op-space form is
-		// negative (a session-local id that the writer's id-compressor has not yet
-		// finalized) are emitted as their stable UUID instead, so the persisted
-		// blob remains decodable after the writer's session state is stripped.
-		describe("SpecialField.Identifier with isSummary", () => {
+		describe("Node with identifier", () => {
 			function makeIdentifierShape(): NodeShapeBasedEncoder {
-				return new NodeShapeBasedEncoder(
-					brand("id"),
-					SpecialField.Identifier,
-					[],
-					undefined,
-				);
+				return new NodeShapeBasedEncoder(brand("id"), SpecialField.Identifier, [], undefined);
 			}
 
-			function makeContext(
-				idCompressor: IIdCompressor,
-				isSummary: boolean,
-			): EncoderContext {
+			function makeContext(idCompressor: IIdCompressor, isSummary: boolean): EncoderContext {
 				return new EncoderContext(
 					() => fail(),
 					() => fail(),
@@ -223,6 +210,11 @@ describe("nodeShape", () => {
 				assert((buffer[0] as number) < 0);
 			});
 
+			// Unlike ops, summaries do not inherently have the context of who originated a negative ID.
+			// Attaching a SharedTree to an already attached container can encode a forest containing identifiers
+			// that are not yet finalized. In such cases, the encoder should either emit the stable UUID or otherwise
+			// guarantee the correct originator ID is part of the summary. This test enforces the former behavior;
+			// if the lattert is implemented it would be reasonable to rework it.
 			it("emits the stable UUID for a non-finalized id when isSummary=true", () => {
 				const idCompressor = createIdCompressor(createSessionId());
 				const sessionSpaceId = idCompressor.generateCompressedId();
@@ -264,9 +256,7 @@ describe("nodeShape", () => {
 				// cannot recompress it, so the encoder falls through to the
 				// pass-through path that emits the original string.
 				const otherCompressor = createIdCompressor(createSessionId());
-				const unknownUuid = otherCompressor.decompress(
-					otherCompressor.generateCompressedId(),
-				);
+				const unknownUuid = otherCompressor.decompress(otherCompressor.generateCompressedId());
 				for (const isSummary of [false, true]) {
 					const buffer = checkNodeEncode(
 						makeIdentifierShape(),
