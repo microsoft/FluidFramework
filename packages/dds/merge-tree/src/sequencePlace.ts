@@ -53,11 +53,15 @@ export enum Side {
 }
 
 /**
- * The {@link Side} that a `SequencePlace` resolves to when no side is
- * explicitly provided — e.g. a plain numeric position, or `"start"`/`"end"`.
- * Exported so callers that need to detect "the caller didn't specify a side"
- * (such as serialized op replay) can compare against this without hardcoding
- * `Side.Before`.
+ * The {@link Side} a bare numeric `SequencePlace` resolves to when no side is
+ * explicitly provided. Exported so callers that need to detect "the caller
+ * didn't specify a side" (such as serialized op replay) can compare against
+ * this without hardcoding `Side.Before`.
+ *
+ * Note: this only governs the bare-numeric case. The `"start"` and `"end"`
+ * literals are normalized by {@link normalizePlace} with their own
+ * conventions (`"start"` → `Side.After`, `"end"` → `Side.Before`) and are
+ * unrelated to `defaultSide`.
  * @internal
  */
 export const defaultSide = Side.Before;
