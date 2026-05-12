@@ -160,11 +160,15 @@ const frozenDocumentStorageServiceHandler = (): never => {
 };
 
 class FrozenDocumentStorageService implements IDocumentStorageService, IDisposable {
-	// Rejecters for any in-flight `createBlob` calls that are currently hanging. The writable-
-	// frozen `createBlob` returns a never-resolving promise so the BlobManager keeps the blob
-	// in `uploading` state (see comment above `createBlob` field below). We need a way to
-	// cancel those on disposal so BlobManager can release its references and we don't leak.
-	private readonly pendingCreateBlobRejecters = new Set<(error: Error) => void>();
+	// Single deferred shared by every in-flight `createBlob` call. The writable-frozen
+	// `createBlob` returns this promise so the BlobManager keeps the blob in `uploading`
+	// state (see comment in the constructor). Rejecting the deferred on disposal fans the
+	// rejection out to every awaiter at once — and to any future `createBlob` calls too,
+	// since they receive the already-rejected promise.
+	private readonly disposalDeferred: {
+		readonly promise: Promise<never>;
+		readonly reject: (error: Error) => void;
+	};
 
 	private _disposed = false;
 	public get disposed(): boolean {
@@ -175,6 +179,16 @@ class FrozenDocumentStorageService implements IDocumentStorageService, IDisposab
 		readOnly: boolean,
 		private readonly documentStorageService?: IDocumentStorageService,
 	) {
+		let rejectFn!: (error: Error) => void;
+		const promise = new Promise<never>((_, reject) => {
+			rejectFn = reject;
+		});
+		// Attach a no-op catch so node doesn't log an unhandled-rejection warning when
+		// dispose runs before any caller has awaited the promise. Callers awaiting the
+		// original promise still observe the rejection.
+		promise.catch(() => {});
+		this.disposalDeferred = { promise, reject: rejectFn };
+
 		// In the writable-frozen path, `createBlob` returns a never-resolving promise instead
 		// of throwing. This keeps the BlobManager's `localBlobCache` entry in the `uploading`
 		// state: `getPendingBlobs` downgrades `uploading` blobs to `localOnly` in pending
@@ -185,14 +199,7 @@ class FrozenDocumentStorageService implements IDocumentStorageService, IDisposab
 		// accruing pending state.
 		this.createBlob = readOnly
 			? frozenDocumentStorageServiceHandler
-			: async () =>
-					new Promise<never>((_, reject) => {
-						if (this._disposed) {
-							reject(new Error("FrozenDocumentStorageService is disposed"));
-							return;
-						}
-						this.pendingCreateBlobRejecters.add(reject);
-					});
+			: async () => this.disposalDeferred.promise;
 	}
 
 	getSnapshotTree = frozenDocumentStorageServiceHandler;
@@ -210,11 +217,9 @@ class FrozenDocumentStorageService implements IDocumentStorageService, IDisposab
 			return;
 		}
 		this._disposed = true;
-		const disposeError = error ?? new Error("FrozenDocumentStorageService is disposed");
-		for (const reject of this.pendingCreateBlobRejecters) {
-			reject(disposeError);
-		}
-		this.pendingCreateBlobRejecters.clear();
+		this.disposalDeferred.reject(
+			error ?? new Error("FrozenDocumentStorageService is disposed"),
+		);
 	}
 }
 
