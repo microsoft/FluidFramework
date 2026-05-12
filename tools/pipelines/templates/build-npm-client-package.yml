@@ -603,16 +603,6 @@ extends:
                       sbomEnabled: false
                       publishLocation: pipeline
 
-                    # The artifactName is a public-facing pipeline contract; downstream consumers
-                    # download it by name. Any rename here requires updating those consumers in lockstep.
-                    - output: pipelineArtifact
-                      displayName: Publish Artifacts - bundle-size-diff
-                      condition: and( succeeded(), eq(variables['Build.Reason'], 'PullRequest') )
-                      targetPath: $(Build.ArtifactStagingDirectory)/bundleSizeDiff
-                      artifactName: bundleSizeDiff
-                      sbomEnabled: false
-                      publishLocation: pipeline
-
                 - ${{ if or(eq(parameters.publishDocs, true), eq(parameters.taskBuildDocs, true)) }}:
                     - output: pipelineArtifact
                       displayName: Publish Artifact - _api-extractor-temp
