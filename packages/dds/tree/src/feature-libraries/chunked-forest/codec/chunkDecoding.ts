@@ -38,7 +38,8 @@ import {
 	decode as genericDecode,
 	readStreamIdentifier,
 } from "./chunkDecodingGeneric.js";
-import type { IncrementalDecoder } from "./codecs.js";
+// eslint-disable-next-line @typescript-eslint/no-unused-vars -- Referenced by doc comments
+import type { FieldBatchEncodingContext, IncrementalDecoder } from "./codecs.js";
 import {
 	type EncodedAnyShape,
 	type EncodedChunkShapeV1OrV2,
@@ -61,13 +62,13 @@ export interface IdDecodingContext {
 	 */
 	originatorId: SessionId;
 	/**
-	 * See {@link FieldBatchEncodingContext.isSummary}.
+	 * {@inheritdoc FieldBatchEncodingContext.isSummary}
 	 */
 	isSummary: boolean;
 	/**
-	 * See {@link FieldBatchEncodingContext.healUnresolvableIdsOnDecode}.
+	 * See {@link FieldBatchEncodingContext.healUnresolvableIdentifiersOnDecode}.
 	 */
-	healUnresolvableIdsOnDecode?: boolean;
+	healUnresolvableIdentifiersOnDecode?: boolean;
 	/**
 	 * See {@link FieldBatchEncodingContext.sharedObjectId}.
 	 */
@@ -75,10 +76,10 @@ export interface IdDecodingContext {
 }
 
 /**
- * Arbitrary namespace for the "heal an unresolvable identifier into a stable UUID"
+ * Random v4 UUID generated as a namespace for the "heal an unresolvable identifier into a stable UUID"
  * path in {@link readValue}. This scheme requires consensus across all clients to function.
  */
-const healingNamespace = "1b671a64-40d5-491e-99b0-da01ff1f3341";
+const healingNamespace = "f8a89df3-6882-400f-b913-4c1f6f0157bd";
 
 /**
  * Decode `chunk` into a TreeChunk.
@@ -150,9 +151,12 @@ export function readValue(
 				return streamValue;
 			}
 			const idCompressor = idDecodingContext.idCompressor;
+			// OpSpaceCompressedIds are negative, and require a session-id to compute their value.
+			// Due to a bug, we have some special casing for them (see below).
+			// TODO: isFinalId should probably be exported from id-compressor and that could be used to do the narrowing here.
 			if (idDecodingContext.isSummary === true && streamValue < 0) {
 				if (
-					idDecodingContext.healUnresolvableIdsOnDecode === true &&
+					idDecodingContext.healUnresolvableIdentifiersOnDecode === true &&
 					idDecodingContext.sharedObjectId !== undefined
 				) {
 					// Documents written before the encode-side fix for non-finalized identifier
@@ -162,16 +166,16 @@ export function readValue(
 					// stable UUID so all readers of the same blob agree on the resulting value.
 					//
 					// The heal path is intentionally restricted to summary loads — an
-					// unresolvable id encountered while applying an op should still surface as
+					// unresolvable ID encountered while applying an op should still surface as
 					// an error, since it indicates a real bug rather than a recoverable state.
 					return uuidV5(
 						`${idDecodingContext.sharedObjectId}|${streamValue}`,
 						healingNamespace,
 					);
 				}
-				// See `SharedTreeOptionsBeta.healUnresolvableIdsOnDecode` for details on this error.
+				// See `SharedTreeOptionsBeta.healUnresolvableIdentifiersOnDecode` for details on this error.
 				throw new Error(
-					"Encountered a non-finalized op-space identifier while loading a summary.",
+					"Summary could not be loaded due incorrectly encoded identifier. See SharedTreeOptionsBeta.healUnresolvableIdentifiersOnDecode for mitigation.",
 				);
 			}
 			return idCompressor.decompress(

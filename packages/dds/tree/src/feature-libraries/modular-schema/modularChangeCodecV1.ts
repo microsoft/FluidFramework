@@ -355,7 +355,7 @@ export function decodeDetachedNodes(
 		originatorId: context.originatorId,
 		idCompressor: context.idCompressor,
 		isSummary: context.isSummary,
-		healUnresolvableIdsOnDecode: context.healUnresolvableIdsOnDecode,
+		healUnresolvableIdentifiersOnDecode: context.healUnresolvableIdentifiersOnDecode,
 		sharedObjectId: context.sharedObjectId,
 	});
 	const getChunk = (index: number): TreeChunk => {

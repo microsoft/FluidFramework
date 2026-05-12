@@ -598,7 +598,7 @@ type ScopedSchemaName<TScope extends string | undefined, TName extends number | 
 
 // @beta @input
 export interface SharedTreeOptionsBeta extends ForestOptions, Partial<CodecWriteOptionsBeta> {
-    readonly healUnresolvableIdsOnDecode?: boolean;
+    readonly healUnresolvableIdentifiersOnDecode?: boolean;
 }
 
 // @public @sealed @system

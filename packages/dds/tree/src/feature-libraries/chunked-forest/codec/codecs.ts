@@ -121,13 +121,16 @@ export interface FieldBatchEncodingContext {
 	 * Off by default. Used only to recover documents whose attach summary was
 	 * written with non-finalized op-space IDs before the encode-side fix
 	 * shipped. Only takes effect when `isSummary` is also `true`.
-	 * See {@link SharedTreeOptionsBeta.healUnresolvableIdsOnDecode}.
+	 * See {@link SharedTreeOptionsBeta.healUnresolvableIdentifiersOnDecode}.
 	 */
-	readonly healUnresolvableIdsOnDecode?: boolean;
+	readonly healUnresolvableIdentifiersOnDecode?: boolean;
 	/**
 	 * The SharedTree's shared-object id, used as input to the deterministic
-	 * UUID derivation when `healUnresolvableIdsOnDecode` triggers. Required
+	 * UUID derivation when `healUnresolvableIdentifiersOnDecode` triggers. Required
 	 * for that path; ignored otherwise.
+	 * @remarks
+	 * This allows us to ensure that multiple attaches,
+	 * in the same or different documents, with the same session offsets, get different UUIDs.
 	 */
 	readonly sharedObjectId?: string;
 }
@@ -217,7 +220,7 @@ function makeFieldBatchCodecForVersion(
 					idCompressor: context.idCompressor,
 					originatorId: context.originatorId,
 					isSummary: context.isSummary,
-					healUnresolvableIdsOnDecode: context.healUnresolvableIdsOnDecode,
+					healUnresolvableIdentifiersOnDecode: context.healUnresolvableIdentifiersOnDecode,
 					sharedObjectId: context.sharedObjectId,
 				},
 				context.incrementalEncoderDecoder,

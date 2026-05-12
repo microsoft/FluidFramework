@@ -53,6 +53,20 @@ export enum Side {
 }
 
 /**
+ * The {@link Side} a bare numeric `SequencePlace` resolves to when no side is
+ * explicitly provided. Exported so callers that need to detect "the caller
+ * didn't specify a side" (such as serialized op replay) can compare against
+ * this without hardcoding `Side.Before`.
+ *
+ * Note: this only governs the bare-numeric case. The `"start"` and `"end"`
+ * literals are normalized by `normalizePlace` with their own conventions
+ * (`"start"` → `Side.After`, `"end"` → `Side.Before`) and are unrelated to
+ * `defaultSide`.
+ * @internal
+ */
+export const defaultSide = Side.Before;
+
+/**
  * Returns the position and side of the start and end of a sequence.
  *
  * @legacy @beta
@@ -70,8 +84,8 @@ export function endpointPosAndSide(
 		typeof start === "number" || start === "start" || start === "end";
 	const endIsPlainEndpoint = typeof end === "number" || end === "start" || end === "end";
 
-	const startSide = startIsPlainEndpoint ? Side.Before : start?.side;
-	const endSide = endIsPlainEndpoint ? Side.Before : end?.side;
+	const startSide = startIsPlainEndpoint ? defaultSide : start?.side;
+	const endSide = endIsPlainEndpoint ? defaultSide : end?.side;
 
 	const startPos = startIsPlainEndpoint ? start : start?.pos;
 	const endPos = endIsPlainEndpoint ? end : end?.pos;
@@ -89,7 +103,7 @@ export function endpointPosAndSide(
  */
 export function normalizePlace(place: SequencePlace): InteriorSequencePlace {
 	if (typeof place === "number") {
-		return { pos: place, side: Side.Before };
+		return { pos: place, side: defaultSide };
 	}
 	if (place === "start") {
 		return { pos: -1, side: Side.After };

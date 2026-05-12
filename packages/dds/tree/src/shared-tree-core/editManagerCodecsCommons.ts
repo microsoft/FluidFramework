@@ -35,9 +35,9 @@ export interface EditManagerEncodingContext {
 	 */
 	readonly isSummary: boolean;
 	/**
-	 * See {@link ChangeEncodingContext.healUnresolvableIdsOnDecode}.
+	 * See {@link ChangeEncodingContext.healUnresolvableIdentifiersOnDecode}.
 	 */
-	readonly healUnresolvableIdsOnDecode?: boolean;
+	readonly healUnresolvableIdentifiersOnDecode?: boolean;
 	/**
 	 * See {@link ChangeEncodingContext.sharedObjectId}.
 	 */
@@ -207,7 +207,7 @@ export function decodeSharedBranch<TChangeset>(
 					idCompressor: context.idCompressor,
 					revision: undefined,
 					isSummary: context.isSummary,
-					healUnresolvableIdsOnDecode: context.healUnresolvableIdsOnDecode,
+					healUnresolvableIdentifiersOnDecode: context.healUnresolvableIdentifiersOnDecode,
 					sharedObjectId: context.sharedObjectId,
 				}),
 		),
@@ -232,7 +232,8 @@ export function decodeSharedBranch<TChangeset>(
 								idCompressor: context.idCompressor,
 								revision: undefined,
 								isSummary: context.isSummary,
-								healUnresolvableIdsOnDecode: context.healUnresolvableIdsOnDecode,
+								healUnresolvableIdentifiersOnDecode:
+									context.healUnresolvableIdentifiersOnDecode,
 								sharedObjectId: context.sharedObjectId,
 							},
 						),

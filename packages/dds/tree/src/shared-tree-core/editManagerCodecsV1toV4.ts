@@ -26,7 +26,7 @@ export interface EditManagerEncodingContext {
 	idCompressor: IIdCompressor;
 	readonly schema?: SchemaAndPolicy;
 	readonly isSummary: boolean;
-	readonly healUnresolvableIdsOnDecode?: boolean;
+	readonly healUnresolvableIdentifiersOnDecode?: boolean;
 	readonly sharedObjectId?: string;
 }
 
