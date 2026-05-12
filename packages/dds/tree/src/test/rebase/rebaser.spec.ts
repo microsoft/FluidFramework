@@ -44,6 +44,10 @@ export class DummyChangeRebaser implements ChangeRebaser<typeof dummyChange> {
 	public changeRevision(): typeof dummyChange {
 		return {};
 	}
+
+	public squash(): typeof dummyChange {
+		return {};
+	}
 }
 
 describe("rebaser", () => {

@@ -1,3 +1,4 @@
+@fluid-private/version-compat-tests
 @fluid-private/test-version-utils
 @fluid-private/test-pairwise-generator
 @fluid-private/test-end-to-end-tests

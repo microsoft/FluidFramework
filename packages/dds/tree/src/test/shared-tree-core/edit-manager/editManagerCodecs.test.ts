@@ -218,6 +218,7 @@ export function testCodec(): void {
 			EditManagerFormatVersion.v3,
 			EditManagerFormatVersion.v4,
 			EditManagerFormatVersion.v6,
+			EditManagerFormatVersion.vDetachedRoots,
 		]);
 		makeDiscontinuedEncodingTestSuite(family, [
 			EditManagerFormatVersion.v1,

@@ -214,12 +214,15 @@ export function resolveOptions(options: SharedTreeOptions): SharedTreeOptionsInt
 }
 
 function resolveFormatOptions(options: SharedTreeOptions): SharedTreeOptionsInternal {
-	const enableSharedBranches = options.enableSharedBranches ?? false;
-
-	if (enableSharedBranches) {
+	if (options.enableSharedBranches === true && options.enableDetachedRootEditing === true) {
+		throw new UsageError("enableDetachRootEditing cannot be used with enableSharedBranches.");
+	}
+	if (options.enableSharedBranches === true) {
 		return sharedBranchesOptions;
 	}
-
+	if (options.enableDetachedRootEditing === true) {
+		return detachRootEditingOptions;
+	}
 	return {};
 }
 
@@ -227,6 +230,14 @@ const sharedBranchesOptions: SharedTreeOptionsInternal = {
 	writeVersionOverrides: new Map<string, FormatVersion>([
 		[editManagerCodecName, EditManagerFormatVersion.vSharedBranches],
 		[messageCodecName, MessageFormatVersion.vSharedBranches],
+	]),
+	allowPossiblyIncompatibleWriteVersionOverrides: true,
+};
+
+const detachRootEditingOptions: SharedTreeOptionsInternal = {
+	writeVersionOverrides: new Map<string, FormatVersion>([
+		[editManagerCodecName, EditManagerFormatVersion.vDetachedRoots],
+		[messageCodecName, MessageFormatVersion.vDetachedRoots],
 	]),
 	allowPossiblyIncompatibleWriteVersionOverrides: true,
 };

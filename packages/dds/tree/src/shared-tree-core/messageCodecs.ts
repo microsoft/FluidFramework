@@ -24,6 +24,7 @@ import type {
 	RevisionTag,
 	SchemaAndPolicy,
 } from "../core/index.js";
+import { brand } from "../util/index.js";
 
 import { makeV1ToV4CodecWithVersion } from "./messageCodecV1ToV4.js";
 import { makeSharedBranchesCodecWithVersion } from "./messageCodecVSharedBranches.js";
@@ -43,12 +44,31 @@ export const messageCodecName = "Message";
 /**
  * Options for constructing a message codec, see {@link makeMessageCodecBuilder}.
  */
+export function messageFormatVersionSelectorForSharedBranches(
+	clientVersion: MinimumVersionForCollab,
+): MessageFormatVersion {
+	return brand(MessageFormatVersion.vSharedBranches);
+}
+
+/**
+ * Returns the version that should be used for testing detached root editing.
+ */
+export function messageFormatVersionSelectorForDetachedRootEditing(
+	clientVersion: MinimumVersionForCollab,
+): MessageFormatVersion {
+	return brand(MessageFormatVersion.vDetachedRoots);
+}
+
+/**
+ * Options for constructing a message codec, see {@link makeMessageCodecBuilder}.
+ */
 interface MessageCodecBuilderOptions<TChangeset> extends ICodecOptions {
 	/** Codecs for encoding changesets. */
 	changeCodecs: ICodecFamily<TChangeset, ChangeEncodingContext>;
 	/** Maps each MessageFormatVersion to the corresponding changeset format version. */
 	dependentChangeFormatVersion: DependentFormatVersion<MessageFormatVersion>;
 	/** Codec for encoding revision tags within changesets. */
+
 	revisionTagCodec: IJsonCodec<
 		RevisionTag,
 		EncodedRevisionTag,
@@ -125,6 +145,18 @@ export function makeMessageCodecBuilder<TChangeset>(): ClientVersionDispatchingC
 					),
 					options.revisionTagCodec,
 					MessageFormatVersion.vSharedBranches,
+				),
+		},
+		{
+			minVersionForCollab: undefined,
+			formatVersion: MessageFormatVersion.vDetachedRoots,
+			codec: (options: MessageCodecBuilderOptions<TChangeset>) =>
+				makeV1ToV4CodecWithVersion(
+					options.changeCodecs.resolve(
+						options.dependentChangeFormatVersion.lookup(MessageFormatVersion.vDetachedRoots),
+					),
+					options.revisionTagCodec,
+					MessageFormatVersion.vDetachedRoots,
 				),
 		},
 	];

@@ -79,7 +79,6 @@ export class RangeMap<K, V> {
 
 		return results;
 	}
-
 	/**
 	 * Retrieves the value for some prefix of the query range.
 	 *
@@ -196,6 +195,14 @@ export class RangeMap<K, V> {
 		const cloned = new RangeMap<K, V>(this.offsetKey, this.subtractKeys, this.offsetValue);
 		cloned.tree = this.tree.clone();
 		return cloned;
+	}
+
+	public mapEntries(mapKey: (key: K) => K, mapValue: (value: V) => V): RangeMap<K, V> {
+		const result = new RangeMap<K, V>(this.offsetKey, this.subtractKeys, this.offsetValue);
+		for (const entry of this.entries()) {
+			result.set(mapKey(entry.start), entry.length, mapValue(entry.value));
+		}
+		return result;
 	}
 
 	/**
@@ -342,4 +349,12 @@ function subtractIntegers<K extends number>(a: K, b: K): number {
 
 function defaultValueOffsetFn<T>(value: T, offset: number): T {
 	return value;
+}
+
+export function areAdjacentIntegerRanges(
+	firstStart: number,
+	firstLength: number,
+	secondStart: number,
+): boolean {
+	return firstStart + firstLength === secondStart;
 }

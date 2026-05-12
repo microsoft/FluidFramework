@@ -35,7 +35,8 @@ export function makeV1ToV4CodecWithVersion<TChangeset>(
 		| typeof MessageFormatVersion.v2
 		| typeof MessageFormatVersion.v3
 		| typeof MessageFormatVersion.v4
-		| typeof MessageFormatVersion.v6,
+		| typeof MessageFormatVersion.v6
+		| typeof MessageFormatVersion.vDetachedRoots,
 ): CodecAndSchema<DecodedMessage<TChangeset>, MessageEncodingContext> {
 	const schema = Message(changeCodec.encodedSchema ?? JsonCompatibleReadOnlySchema);
 	return {

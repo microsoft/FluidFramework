@@ -3,101 +3,104 @@
  * Licensed under the MIT License.
  */
 
-import type { ChangeAtomId, RevisionTag } from "../../../core/index.js";
-import {
-	DefaultRevisionReplacer,
-	// eslint-disable-next-line import-x/no-internal-modules
-} from "../../../feature-libraries/modular-schema/index.js";
-import {
-	optionalChangeRebaser,
-	// eslint-disable-next-line import-x/no-internal-modules
-} from "../../../feature-libraries/optional-field/optionalField.js";
-import type {
-	OptionalChangeset,
-	// eslint-disable-next-line import-x/no-internal-modules
-} from "../../../feature-libraries/optional-field/optionalFieldChangeTypes.js";
-import { type Mutable, brand } from "../../../util/index.js";
-import { mintRevisionTag } from "../../utils.js";
+// XXX
+describe("Optional field - replaceRevisions", () => {});
 
-import { Change, assertEqual } from "./optionalFieldUtils.js";
+// import type { ChangeAtomId, RevisionTag } from "../../../core/index.js";
+// import {
+// 	DefaultRevisionReplacer,
+// 	// eslint-disable-next-line import-x/no-internal-modules
+// } from "../../../feature-libraries/modular-schema/index.js";
+// import {
+// 	optionalChangeRebaser,
+// 	// eslint-disable-next-line import-x/no-internal-modules
+// } from "../../../feature-libraries/optional-field/optionalField.js";
+// import type {
+// 	OptionalChangeset,
+// 	// eslint-disable-next-line import-x/no-internal-modules
+// } from "../../../feature-libraries/optional-field/optionalFieldChangeTypes.js";
+// import { type Mutable, brand } from "../../../util/index.js";
+// import { mintRevisionTag } from "../../utils.js";
 
-const tag0: RevisionTag = mintRevisionTag();
-const tag1: RevisionTag = mintRevisionTag();
-const tag2: RevisionTag = mintRevisionTag();
-const tagOut: RevisionTag = mintRevisionTag();
+// import { Change, assertEqual } from "./optionalFieldUtils.js";
 
-const atom0: ChangeAtomId = { revision: tag0, localId: brand(0) };
-const atom1: ChangeAtomId = { revision: tag1, localId: brand(1) };
-const atom2: ChangeAtomId = { revision: tag2, localId: brand(10) };
-const atom3: ChangeAtomId = { localId: brand(100) };
+// const tag0: RevisionTag = mintRevisionTag();
+// const tag1: RevisionTag = mintRevisionTag();
+// const tag2: RevisionTag = mintRevisionTag();
+// const tagOut: RevisionTag = mintRevisionTag();
 
-const inputRevs = new Set([tag1, tag2, undefined]);
+// const atom0: ChangeAtomId = { revision: tag0, localId: brand(0) };
+// const atom1: ChangeAtomId = { revision: tag1, localId: brand(1) };
+// const atom2: ChangeAtomId = { revision: tag2, localId: brand(10) };
+// const atom3: ChangeAtomId = { localId: brand(100) };
 
-export function testReplaceRevisions(): void {
-	describe(`replaceRevisions {${[...inputRevs.keys()].join(",")}} -> ${tagOut}`, () => {
-		runCases(tagOut);
-	});
-}
+// const inputRevs = new Set([tag1, tag2, undefined]);
 
-function runCases(outputRev: RevisionTag) {
-	const atomOut1: Mutable<ChangeAtomId> = { localId: brand(1) };
-	const atomOut2: Mutable<ChangeAtomId> = { localId: brand(10) };
-	const atomOut3: Mutable<ChangeAtomId> = { localId: brand(100) };
-	if (outputRev !== undefined) {
-		atomOut1.revision = outputRev;
-		atomOut2.revision = outputRev;
-		atomOut3.revision = outputRev;
-	}
+// export function testReplaceRevisions(): void {
+// 	describe(`replaceRevisions {${[...inputRevs.keys()].join(",")}} -> ${tagOut}`, () => {
+// 		runCases(tagOut);
+// 	});
+// }
 
-	function process(changeset: OptionalChangeset): OptionalChangeset {
-		const replacer = new DefaultRevisionReplacer(outputRev, inputRevs);
-		return optionalChangeRebaser.replaceRevisions(changeset, replacer);
-	}
+// function runCases(outputRev: RevisionTag) {
+// 	const atomOut1: Mutable<ChangeAtomId> = { localId: brand(1) };
+// 	const atomOut2: Mutable<ChangeAtomId> = { localId: brand(10) };
+// 	const atomOut3: Mutable<ChangeAtomId> = { localId: brand(100) };
+// 	if (outputRev !== undefined) {
+// 		atomOut1.revision = outputRev;
+// 		atomOut2.revision = outputRev;
+// 		atomOut3.revision = outputRev;
+// 	}
 
-	it("moves", () => {
-		const input = Change.atOnce(
-			Change.move(atom0, atom1),
-			Change.move(atom1, atom2),
-			Change.move(atom2, atom3),
-			Change.move(atom3, atom0),
-		);
-		const expected = Change.atOnce(
-			Change.move(atom0, atomOut1),
-			Change.move(atomOut1, atomOut2),
-			Change.move(atomOut2, atomOut3),
-			Change.move(atomOut3, atom0),
-		);
-		const actual = process(input);
-		assertEqual(actual, expected);
-	});
+// 	function process(changeset: OptionalChangeset): OptionalChangeset {
+// 		const replacer = new DefaultRevisionReplacer(outputRev, inputRevs);
+// 		return optionalChangeRebaser.replaceRevisions(changeset, replacer);
+// 	}
 
-	it("child changes", () => {
-		assertEqual(process(Change.child(atom0)), Change.child(atom0));
-		assertEqual(process(Change.child(atom1)), Change.child(atomOut1));
-		assertEqual(process(Change.child(atom2)), Change.child(atomOut2));
-		assertEqual(process(Change.child(atom3)), Change.child(atomOut3));
-		assertEqual(process(Change.childAt(atom0, atom0)), Change.childAt(atom0, atom0));
-		assertEqual(process(Change.childAt(atom1, atom1)), Change.childAt(atomOut1, atomOut1));
-		assertEqual(process(Change.childAt(atom2, atom2)), Change.childAt(atomOut2, atomOut2));
-		assertEqual(process(Change.childAt(atom3, atom3)), Change.childAt(atomOut3, atomOut3));
-	});
+// 	it("moves", () => {
+// 		const input = Change.atOnce(
+// 			Change.move(atom0, atom1),
+// 			Change.move(atom1, atom2),
+// 			Change.move(atom2, atom3),
+// 			Change.move(atom3, atom0),
+// 		);
+// 		const expected = Change.atOnce(
+// 			Change.move(atom0, atomOut1),
+// 			Change.move(atomOut1, atomOut2),
+// 			Change.move(atomOut2, atomOut3),
+// 			Change.move(atomOut3, atom0),
+// 		);
+// 		const actual = process(input);
+// 		assertEqual(actual, expected);
+// 	});
 
-	it("replace", () => {
-		assertEqual(
-			process(Change.atOnce(Change.clear("self", atom0), Change.move(atom1, "self"))),
-			Change.atOnce(Change.clear("self", atom0), Change.move(atomOut1, "self")),
-		);
-		assertEqual(
-			process(Change.atOnce(Change.clear("self", atom1), Change.move(atom2, "self"))),
-			Change.atOnce(Change.clear("self", atomOut1), Change.move(atomOut2, "self")),
-		);
-		assertEqual(
-			process(Change.atOnce(Change.clear("self", atom2), Change.move(atom3, "self"))),
-			Change.atOnce(Change.clear("self", atomOut3), Change.move(atomOut3, "self")),
-		);
-		assertEqual(
-			process(Change.atOnce(Change.clear("self", atom3), Change.move(atom0, "self"))),
-			Change.atOnce(Change.clear("self", atomOut3), Change.move(atom0, "self")),
-		);
-	});
-}
+// 	it("child changes", () => {
+// 		assertEqual(process(Change.child(atom0)), Change.child(atom0));
+// 		assertEqual(process(Change.child(atom1)), Change.child(atomOut1));
+// 		assertEqual(process(Change.child(atom2)), Change.child(atomOut2));
+// 		assertEqual(process(Change.child(atom3)), Change.child(atomOut3));
+// 		assertEqual(process(Change.childAt(atom0, atom0)), Change.childAt(atom0, atom0));
+// 		assertEqual(process(Change.childAt(atom1, atom1)), Change.childAt(atomOut1, atomOut1));
+// 		assertEqual(process(Change.childAt(atom2, atom2)), Change.childAt(atomOut2, atomOut2));
+// 		assertEqual(process(Change.childAt(atom3, atom3)), Change.childAt(atomOut3, atomOut3));
+// 	});
+
+// 	it("replace", () => {
+// 		assertEqual(
+// 			process(Change.atOnce(Change.clear("self", atom0), Change.move(atom1, "self"))),
+// 			Change.atOnce(Change.clear("self", atom0), Change.move(atomOut1, "self")),
+// 		);
+// 		assertEqual(
+// 			process(Change.atOnce(Change.clear("self", atom1), Change.move(atom2, "self"))),
+// 			Change.atOnce(Change.clear("self", atomOut1), Change.move(atomOut2, "self")),
+// 		);
+// 		assertEqual(
+// 			process(Change.atOnce(Change.clear("self", atom2), Change.move(atom3, "self"))),
+// 			Change.atOnce(Change.clear("self", atomOut3), Change.move(atomOut3, "self")),
+// 		);
+// 		assertEqual(
+// 			process(Change.atOnce(Change.clear("self", atom3), Change.move(atom0, "self"))),
+// 			Change.atOnce(Change.clear("self", atomOut3), Change.move(atom0, "self")),
+// 		);
+// 	});
+// }

@@ -6,8 +6,12 @@
 import type { SessionId } from "@fluidframework/id-compressor";
 
 import { withSchemaValidation } from "../../../codec/index.js";
+import { newChangeAtomIdTransform } from "../../../core/index.js";
 import { FormatValidatorBasic } from "../../../external-utilities/index.js";
-import type { FieldChangeEncodingContext } from "../../../feature-libraries/index.js";
+import {
+	newChangeAtomIdBTree,
+	type FieldChangeEncodingContext,
+} from "../../../feature-libraries/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { sequenceFieldChangeCodecFactory } from "../../../feature-libraries/sequence-field/sequenceFieldCodecs.js";
 // eslint-disable-next-line import-x/no-internal-modules
@@ -41,7 +45,32 @@ const encodedTag2 = testRevisionTagCodec.encode(tag2);
 const context: FieldChangeEncodingContext = {
 	baseContext,
 	encodeNode: (node) => TestNodeId.encode(node, baseContext),
+	getInputRootId: (id, count) => ({ start: id, value: id, length: count }),
+	getOutputRootId: (id, count) => ({ start: id, value: id, length: count }),
+	getFirstRenameId: (id, count) => ({
+		start: id,
+		value: undefined,
+		length: count,
+	}),
+	isAttachId: (id, count) => ({
+		start: id,
+		value: false,
+		length: count,
+	}),
+	isDetachId: (id, count) => ({
+		start: id,
+		value: false,
+		length: count,
+	}),
 	decodeNode: (node) => TestNodeId.decode(node, baseContext),
+	rootNodeChanges: newChangeAtomIdBTree(),
+	rootRenames: newChangeAtomIdTransform(),
+	decodeRootNodeChange: () => {},
+	decodeRootRename: () => {},
+	decodeMoveAndDetach: () => {},
+	generateId: () => ({
+		localId: brand(0),
+	}),
 };
 
 const changes = TestNodeId.create({ localId: brand(2) }, TestChange.mint([], 1));
