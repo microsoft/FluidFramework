@@ -7,6 +7,7 @@ export { FluidObjectHandle } from "./fluidHandle.js";
 export {
 	DataStoreMessageType,
 	FluidDataStoreRuntime,
+	type IClaimMessage,
 	type ISharedObjectRegistry,
 	type LocalFluidDataStoreRuntimeMessage,
 	mixinRequestHandler,

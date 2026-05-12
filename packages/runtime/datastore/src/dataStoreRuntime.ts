@@ -3,7 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { TypedEventEmitter, type ILayerCompatDetails } from "@fluid-internal/client-utils";
+import {
+	TypedEventEmitter,
+	type ILayerCompatDetails,
+	bufferToString,
+} from "@fluid-internal/client-utils";
 import { AttachState, type IAudience } from "@fluidframework/container-definitions";
 import type { IDeltaManager } from "@fluidframework/container-definitions/internal";
 import type {
@@ -29,6 +33,7 @@ import type {
 	IFluidDataStoreRuntime,
 	IFluidDataStoreRuntimeEvents,
 	IDeltaManagerErased,
+	ClaimResult,
 } from "@fluidframework/datastore-definitions/internal";
 import {
 	type IClientDetails,
@@ -67,7 +72,11 @@ import {
 	currentSummarizeStepPropertyName,
 } from "@fluidframework/runtime-definitions/internal";
 import {
+	encodeHandleForSerialization,
 	GCDataBuilder,
+	isSerializedHandle,
+	isFluidHandle,
+	RemoteFluidObjectHandle,
 	RequestParser,
 	SummaryTreeBuilder,
 	addBlobToSummary,
@@ -136,6 +145,33 @@ export enum DataStoreMessageType {
 	// Creates a new channel
 	Attach = "attach",
 	ChannelOp = "op",
+	// Submits a first-writer-wins claim entry on the data store.
+	Claim = "claim",
+}
+
+/**
+ * Wire format for a {@link DataStoreMessageType.Claim} op.
+ * The `value` is the JSON-serializable claim value with embedded handles
+ * already encoded as serialized handle markers.
+ * @internal
+ */
+export interface IClaimMessage {
+	key: string;
+	value: unknown;
+}
+
+/**
+ * Well-known summary blob name used to persist sequenced claims for a data
+ * store. Sibling of channel subtrees in the data store's summary.
+ */
+const claimsBlobName = ".claims";
+
+/**
+ * Persisted format of the claims blob. Only sequenced entries are written;
+ * the winner-vs-loser distinction is local state and is not persisted.
+ */
+interface IClaimsBlobContent {
+	entries: [string, unknown][];
 }
 
 /**
@@ -147,7 +183,8 @@ export enum DataStoreMessageType {
  */
 export type LocalFluidDataStoreRuntimeMessage =
 	| { type: DataStoreMessageType.ChannelOp; content: IEnvelope }
-	| { type: DataStoreMessageType.Attach; content: IAttachMessage };
+	| { type: DataStoreMessageType.Attach; content: IAttachMessage }
+	| { type: DataStoreMessageType.Claim; content: IClaimMessage };
 
 /**
  * @legacy @beta
@@ -227,6 +264,84 @@ function isURL(str: string): boolean {
 		return true;
 	} catch {
 		return false;
+	}
+}
+
+/**
+ * Recursively walks a claim value, replacing any embedded
+ * {@link @fluidframework/core-interfaces#IFluidHandle} with its serialized
+ * form, and binding the handle to the data store runtime so its graph is
+ * attached.
+ */
+function encodeHandlesInClaimValue(
+	value: unknown,
+	bind: (handle: IFluidHandle) => void,
+): unknown {
+	if (value === null || value === undefined) {
+		return value;
+	}
+	if (isFluidHandle(value)) {
+		bind(value);
+		return encodeHandleForSerialization(toFluidHandleInternal(value));
+	}
+	if (Array.isArray(value)) {
+		return value.map((item) => encodeHandlesInClaimValue(item, bind));
+	}
+	if (typeof value === "object") {
+		const result: Record<string, unknown> = {};
+		for (const [k, v] of Object.entries(value as Record<string, unknown>)) {
+			result[k] = encodeHandlesInClaimValue(v, bind);
+		}
+		return result;
+	}
+	return value;
+}
+
+/**
+ * Recursively walks an encoded claim value, replacing every
+ * {@link ISerializedHandle} with a {@link RemoteFluidObjectHandle} bound to
+ * the supplied route context.
+ */
+function decodeHandlesInClaimValue(
+	value: unknown,
+	routeContext: IFluidHandleContext,
+): unknown {
+	if (value === null || value === undefined || typeof value !== "object") {
+		return value;
+	}
+	if (isSerializedHandle(value)) {
+		return new RemoteFluidObjectHandle(value.url, routeContext, value.payloadPending === true);
+	}
+	if (Array.isArray(value)) {
+		return value.map((item) => decodeHandlesInClaimValue(item, routeContext));
+	}
+	const result: Record<string, unknown> = {};
+	for (const [k, v] of Object.entries(value as Record<string, unknown>)) {
+		result[k] = decodeHandlesInClaimValue(v, routeContext);
+	}
+	return result;
+}
+
+/**
+ * Walks an encoded claim value and collects all handle URLs (outbound GC
+ * routes contributed by the claim).
+ */
+function collectClaimHandleRoutes(value: unknown, routes: string[]): void {
+	if (value === null || value === undefined || typeof value !== "object") {
+		return;
+	}
+	if (isSerializedHandle(value)) {
+		routes.push(value.url);
+		return;
+	}
+	if (Array.isArray(value)) {
+		for (const item of value) {
+			collectClaimHandleRoutes(item, routes);
+		}
+		return;
+	}
+	for (const v of Object.values(value as Record<string, unknown>)) {
+		collectClaimHandleRoutes(v, routes);
 	}
 }
 
@@ -340,6 +455,45 @@ export class FluidDataStoreRuntime
 	// A list of handles that are bound when the data store is not visible. We have to make them visible when the data
 	// store becomes visible.
 	private readonly pendingHandlesToMakeVisible: Set<IFluidHandleInternal> = new Set();
+
+	/**
+	 * Authoritative claim entries that have been sequenced. Values are stored
+	 * in their encoded form (handles already replaced with serialized handle
+	 * markers). Decoded on demand via `getClaim` / `claims`.
+	 */
+	private readonly sequencedClaims = new Map<string, unknown>();
+
+	/**
+	 * Keys for which this client's op was the one that won the race for a
+	 * claim. Used to disambiguate `"Success"` vs `"AlreadyClaimed"` for
+	 * repeat calls. This is purely local state and is not persisted in
+	 * summaries (the loading client was, by definition, not the writer).
+	 */
+	private readonly wonClaims = new Set<string>();
+
+	/**
+	 * Outstanding `trySetClaim` calls that have submitted an op and are
+	 * waiting for it to be sequenced. Keyed by claim key.
+	 */
+	private readonly pendingClaims = new Map<string, Deferred<ClaimResult>>();
+
+	/**
+	 * Promise that resolves once `sequencedClaims` has been hydrated from
+	 * the base snapshot (or immediately, if there is no base snapshot).
+	 */
+	private readonly claimsLoadP: Promise<void> | undefined;
+
+	/**
+	 * `true` once `sequencedClaims` has been hydrated from the base
+	 * snapshot. Used to gate sync claim accessors.
+	 */
+	private claimsLoaded = false;
+
+	/**
+	 * Buffer of inbound Claim ops that arrived before `claimsLoaded`
+	 * became `true`. Drained in arrival order once load completes.
+	 */
+	private readonly bufferedClaimOps: { content: IClaimMessage; local: boolean }[] = [];
 
 	public readonly id: string;
 
@@ -543,6 +697,14 @@ export class FluidDataStoreRuntime
 			this.mc.config.getNumber("Fluid.Telemetry.LocalChangesTelemetryCount") ?? 10;
 
 		this.minVersionForCollab = this.dataStoreContext.minVersionForCollab;
+
+		// Kick off the (possibly-async) load of the persisted .claims blob.
+		// Inbound Claim ops that arrive before this completes are buffered and
+		// drained in arrival order; sync claim accessors return the empty
+		// state until the load resolves.
+		this.claimsLoadP = this.loadClaimsFromSnapshot().catch((error) => {
+			this.mc.logger.sendErrorEvent({ eventName: "ClaimsLoadFailed" }, error);
+		});
 	}
 
 	/**
@@ -569,8 +731,159 @@ export class FluidDataStoreRuntime
 		}
 		this._disposed = true;
 
+		// Resolve any outstanding claim attempts as "AlreadyClaimed" so callers
+		// don't hang on a disposed runtime. (We choose resolution over
+		// rejection to make caller error handling simpler — the caller can
+		// distinguish via a subsequent `hasClaim` check if needed.)
+		for (const [, deferred] of this.pendingClaims) {
+			deferred.resolve("AlreadyClaimed");
+		}
+		this.pendingClaims.clear();
+
 		this.emit("dispose");
 		this.removeAllListeners();
+	}
+
+	// ----------------------------------------------------------------------
+	// Claims (first-writer-wins, data-store-scoped key/value entries).
+	// ----------------------------------------------------------------------
+
+	private get claimsEnabled(): boolean {
+		return this.policies.enableDataStoreClaims === true;
+	}
+
+	private async loadClaimsFromSnapshot(): Promise<void> {
+		const snapshot = this.dataStoreContext.baseSnapshot;
+		const blobId = snapshot?.blobs[claimsBlobName];
+		if (blobId !== undefined) {
+			const blob = await this.dataStoreContext.storage.readBlob(blobId);
+			const text = bufferToString(blob, "utf8");
+			const parsed = JSON.parse(text) as IClaimsBlobContent;
+			for (const [k, v] of parsed.entries) {
+				if (!this.sequencedClaims.has(k)) {
+					this.sequencedClaims.set(k, v);
+				}
+			}
+		}
+		this.claimsLoaded = true;
+		// Drain buffered ops in arrival order.
+		const buffered = this.bufferedClaimOps.splice(0, this.bufferedClaimOps.length);
+		for (const { content, local } of buffered) {
+			this.applyClaimOp(content, local);
+		}
+	}
+
+	private async ensureClaimsLoaded(): Promise<void> {
+		if (this.claimsLoaded) {
+			return;
+		}
+		await this.claimsLoadP;
+	}
+
+	/**
+	 * Apply a sequenced Claim op. First-writer-wins:
+	 * - If the key is already in `sequencedClaims`, ignore the op. If the
+	 * op was local, the deferred resolves to `"AlreadyClaimed"`.
+	 * - Otherwise, write into `sequencedClaims`. If the op was local,
+	 * record this client as the winner and resolve to `"Success"`.
+	 */
+	private applyClaimOp(content: IClaimMessage, local: boolean): void {
+		const { key, value } = content;
+		const winner = !this.sequencedClaims.has(key);
+		if (winner) {
+			this.sequencedClaims.set(key, value);
+			if (local) {
+				this.wonClaims.add(key);
+			}
+		}
+		if (local) {
+			const deferred = this.pendingClaims.get(key);
+			if (deferred !== undefined) {
+				this.pendingClaims.delete(key);
+				deferred.resolve(winner ? "Success" : "AlreadyClaimed");
+			}
+		}
+	}
+
+	/**
+	 * {@inheritDoc @fluidframework/datastore-definitions#IFluidDataStoreRuntime.trySetClaim}
+	 */
+	public async trySetClaim(key: string, value: unknown): Promise<ClaimResult> {
+		this.verifyNotClosed();
+		if (!this.claimsEnabled) {
+			throw new UsageError(
+				"DataStore claims are not enabled. Set the `enableDataStoreClaims` policy on the data store runtime to opt in.",
+			);
+		}
+		if (this.inStagingMode) {
+			throw new UsageError(
+				"trySetClaim is not supported while the container is in staging mode.",
+			);
+		}
+		if (typeof key !== "string" || key.length === 0) {
+			throw new UsageError("Claim key must be a non-empty string.");
+		}
+
+		await this.ensureClaimsLoaded();
+
+		// Encode handles in `value` and bind them to this runtime's graph.
+		const encoded = encodeHandlesInClaimValue(value, (h) => this.bind(h));
+
+		// Already-sequenced winner / loser disambiguation.
+		if (this.sequencedClaims.has(key)) {
+			return this.wonClaims.has(key) ? "Success" : "AlreadyClaimed";
+		}
+
+		// Detached: write directly without an op (will be persisted by
+		// getAttachSummary).
+		if (!this.isAttached) {
+			this.sequencedClaims.set(key, encoded);
+			this.wonClaims.add(key);
+			return "Success";
+		}
+
+		// If a local attempt for this key is already in flight, await its
+		// outcome.
+		const existing = this.pendingClaims.get(key);
+		if (existing !== undefined) {
+			return existing.promise;
+		}
+
+		const deferred = new Deferred<ClaimResult>();
+		this.pendingClaims.set(key, deferred);
+		this.submit({
+			type: DataStoreMessageType.Claim,
+			content: { key, value: encoded },
+		});
+		return deferred.promise;
+	}
+
+	/**
+	 * {@inheritDoc @fluidframework/datastore-definitions#IFluidDataStoreRuntime.getClaim}
+	 */
+	public getClaim(key: string): unknown | undefined {
+		if (!this.sequencedClaims.has(key)) {
+			return undefined;
+		}
+		return decodeHandlesInClaimValue(this.sequencedClaims.get(key), this.routeContext);
+	}
+
+	/**
+	 * {@inheritDoc @fluidframework/datastore-definitions#IFluidDataStoreRuntime.hasClaim}
+	 */
+	public hasClaim(key: string): boolean {
+		return this.sequencedClaims.has(key);
+	}
+
+	/**
+	 * {@inheritDoc @fluidframework/datastore-definitions#IFluidDataStoreRuntime.claims}
+	 */
+	public get claims(): ReadonlyMap<string, unknown> {
+		const decoded = new Map<string, unknown>();
+		for (const [k, v] of this.sequencedClaims) {
+			decoded.set(k, decodeHandlesInClaimValue(v, this.routeContext));
+		}
+		return decoded;
 	}
 
 	public async resolveHandle(request: IRequest): Promise<IResponse> {
@@ -1014,6 +1327,17 @@ export class FluidDataStoreRuntime
 					this.processAttachMessages(messageCollection);
 					break;
 				}
+				case DataStoreMessageType.Claim: {
+					for (const { contents } of messagesContent) {
+						const claimMessage = contents as IClaimMessage;
+						if (this.claimsLoaded) {
+							this.applyClaimOp(claimMessage, local);
+						} else {
+							this.bufferedClaimOps.push({ content: claimMessage, local });
+						}
+					}
+					break;
+				}
 				default:
 			}
 		} catch (error) {
@@ -1057,6 +1381,11 @@ export class FluidDataStoreRuntime
 		for (const [contextId] of this.contexts) {
 			outboundRoutes.push(`${this.absolutePath}/${contextId}`);
 		}
+		// Include any handle routes embedded in sequenced claim values so GC
+		// keeps their referents alive.
+		for (const value of this.sequencedClaims.values()) {
+			collectClaimHandleRoutes(value, outboundRoutes);
+		}
 		return outboundRoutes;
 	}
 
@@ -1093,7 +1422,25 @@ export class FluidDataStoreRuntime
 				summaryBuilder.addWithStats(contextId, contextSummary);
 			},
 		);
+		this.addClaimsBlob(summaryBuilder);
 		return summaryBuilder.getSummaryTree();
+	}
+
+	/**
+	 * Writes the persisted `.claims` blob into the supplied summary builder
+	 * if there are any sequenced claims. The blob stores only sequenced
+	 * entries — the local winner-vs-loser distinction (`wonClaims`) is
+	 * per-client state and is intentionally not persisted (the loading
+	 * client cannot have been the writer).
+	 */
+	private addClaimsBlob(summaryBuilder: SummaryTreeBuilder): void {
+		if (this.sequencedClaims.size === 0) {
+			return;
+		}
+		const content: IClaimsBlobContent = {
+			entries: [...this.sequencedClaims.entries()],
+		};
+		summaryBuilder.addBlob(claimsBlobName, JSON.stringify(content));
 	}
 
 	/**
@@ -1178,6 +1525,7 @@ export class FluidDataStoreRuntime
 			},
 		);
 
+		this.addClaimsBlob(summaryBuilder);
 		return summaryBuilder.getSummaryTree();
 	}
 
@@ -1384,6 +1732,14 @@ export class FluidDataStoreRuntime
 				this.submit({ type, content }, localOpMetadata);
 				break;
 			}
+			case DataStoreMessageType.Claim: {
+				// Resubmit the claim op verbatim. The race-resolution in
+				// applyClaimOp correctly distinguishes Success vs
+				// AlreadyClaimed once the resubmitted op is sequenced.
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+				this.submit({ type, content }, localOpMetadata);
+				break;
+			}
 			default: {
 				unreachableCase(type);
 			}
@@ -1484,6 +1840,17 @@ export class FluidDataStoreRuntime
 					assert(!!channelContext, 0x184 /* "There should be a channel context for the op" */);
 					await channelContext.getChannel();
 					return channelContext.applyStashedOp(envelope.contents);
+				}
+				case DataStoreMessageType.Claim: {
+					// Replay a stashed claim op locally: re-register the
+					// pending deferred (it will be resolved once the op is
+					// sequenced or resubmitted on reconnect).
+					// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+					const claimMessage = content.content as IClaimMessage;
+					if (!this.pendingClaims.has(claimMessage.key)) {
+						this.pendingClaims.set(claimMessage.key, new Deferred<ClaimResult>());
+					}
+					return;
 				}
 				default: {
 					unreachableCase(type);
