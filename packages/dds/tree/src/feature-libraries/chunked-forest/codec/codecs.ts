@@ -128,6 +128,9 @@ export interface FieldBatchEncodingContext {
 	 * The SharedTree's shared-object id, used as input to the deterministic
 	 * UUID derivation when `healUnresolvableIdentifiersOnDecode` triggers. Required
 	 * for that path; ignored otherwise.
+	 * @remarks
+	 * This allows us to ensure that multiple attaches,
+	 * in the same or different documents, with the same session offsets, get different UUIDs.
 	 */
 	readonly sharedObjectId?: string;
 }
