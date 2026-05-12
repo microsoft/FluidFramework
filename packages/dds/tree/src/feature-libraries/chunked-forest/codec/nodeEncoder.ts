@@ -78,13 +78,11 @@ export class NodeShapeBasedEncoder
 				const sessionSpaceCompressedId = context.idCompressor.tryRecompress(cursor.value);
 				if (sessionSpaceCompressedId !== undefined) {
 					const opSpaceId = context.idCompressor.normalizeToOpSpace(sessionSpaceCompressedId);
-					// When encoding for a summary, a negative op-space id is a
-					// non-finalized session-local id. Persisting it would be
-					// unresolvable to readers loading from this summary after the
-					// writer's id-compressor session state is stripped. Emit the
-					// stable UUID directly so the persisted form does not depend on
-					// the writer's session being preserved. Mirrors the analogous
-					// fallback in `MajorCodec` for the detached-field-index v2 codec.
+					// Summaries can only contain finalized op-space ids unless they also include the originator's session id somewhere.
+					// This is not the case for forest summaries at the time of writing, so non-finalized ids are instead written using
+					// their long form.
+					// A scenario where such ids can appear in the summary is in the attach summary of a tree being attached to an already-attached container.
+					// TODO: isFinalId should probably be exported from id-compressor and that could be used to do the narrowing here.
 					if (context.isSummary && opSpaceId < 0) {
 						return context.idCompressor.decompress(sessionSpaceCompressedId);
 					}

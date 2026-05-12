@@ -26,7 +26,8 @@ import {
 	Shape as ShapeGeneric,
 	updateShapesAndIdentifiersEncoding,
 } from "./chunkEncodingGeneric.js";
-import type { IncrementalEncoder } from "./codecs.js";
+// eslint-disable-next-line @typescript-eslint/no-unused-vars -- Referenced by doc comments
+import type { FieldBatchEncodingContext, IncrementalEncoder } from "./codecs.js";
 import type { FieldBatch } from "./fieldBatch.js";
 import {
 	type EncodedAnyShape,
@@ -536,13 +537,6 @@ export class EncoderContext implements NodeEncodeBuilder, FieldEncodeBuilder {
 		public readonly incrementalEncoder: IncrementalEncoder | undefined,
 		public readonly version: FieldBatchFormatVersion,
 		/**
-		 * `true` when encoding to a summary blob.
-		 * @remarks
-		 * Used to gate encode-time recovery behavior — in particular, emitting
-		 * stable UUIDs in place of non-finalized op-space identifier ids so that
-		 * the resulting summary remains decodable after the writer's id-compressor
-		 * session state is stripped.
-		 *
 		 * See {@link FieldBatchEncodingContext.isSummary}.
 		 */
 		public readonly isSummary: boolean,
