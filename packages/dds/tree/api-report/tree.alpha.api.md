@@ -1248,7 +1248,7 @@ export interface SharedTreeOptions extends SharedTreeOptionsBeta, Partial<CodecW
 
 // @beta @input
 export interface SharedTreeOptionsBeta extends ForestOptions, Partial<CodecWriteOptionsBeta> {
-    readonly healUnresolvableIdsOnDecode?: boolean;
+    readonly healUnresolvableIdentifiersOnDecode?: boolean;
 }
 
 // @alpha @sealed

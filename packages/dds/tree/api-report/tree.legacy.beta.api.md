@@ -610,7 +610,7 @@ export const SharedTreeFactoryType = "https://graph.microsoft.com/types/tree";
 
 // @beta @input
 export interface SharedTreeOptionsBeta extends ForestOptions, Partial<CodecWriteOptionsBeta> {
-    readonly healUnresolvableIdsOnDecode?: boolean;
+    readonly healUnresolvableIdentifiersOnDecode?: boolean;
 }
 
 // @public @sealed @system

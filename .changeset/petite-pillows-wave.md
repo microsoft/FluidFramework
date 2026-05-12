@@ -13,5 +13,5 @@ Enabling this option carries some risk, see documentation on the interface itsel
 
 #### Who is affected
 
-Only applications whose SharedTree schema uses `identifier` fields, where the SharedTree was attached to a container that was already attached, are at risk.
-Documents that meet those conditions and now fail to load can be recovered by setting `healUnresolvableIdsOnDecode: true`.
+Only SharedTrees attached to a container that was already attached can be impacted.
+Furthermore, this bug only occurs when the attached tree contains [`identifier`](https://fluidframework.com/docs/api/tree/schemafactory-class#identifier-property) fields which contain implicitly generated default values.

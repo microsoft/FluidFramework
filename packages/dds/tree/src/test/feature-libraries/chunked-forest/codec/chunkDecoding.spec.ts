@@ -156,7 +156,7 @@ describe("chunkDecoding", () => {
 				assert.equal(stream.offset, 1);
 			});
 
-			describe("healUnresolvableIdsOnDecode", () => {
+			describe("healUnresolvableIdentifiersOnDecode", () => {
 				/**
 				 * Mints an op-space ID that is unresolvable by `testIdCompressor`:
 				 * generated in a fresh foreign compressor whose session is unknown
@@ -203,7 +203,7 @@ describe("chunkDecoding", () => {
 						idCompressor: testIdCompressor,
 						originatorId,
 						isSummary: true,
-						healUnresolvableIdsOnDecode: true,
+						healUnresolvableIdentifiersOnDecode: true,
 						sharedObjectId: "doc-a",
 					};
 					const result = readValue(makeStream(opSpaceId), SpecialField.Identifier, ctx);
@@ -221,7 +221,7 @@ describe("chunkDecoding", () => {
 							idCompressor: testIdCompressor,
 							originatorId,
 							isSummary: true,
-							healUnresolvableIdsOnDecode: true,
+							healUnresolvableIdentifiersOnDecode: true,
 							sharedObjectId: "doc-a",
 						});
 					assert.equal(heal(), heal());
@@ -234,7 +234,7 @@ describe("chunkDecoding", () => {
 							idCompressor: testIdCompressor,
 							originatorId,
 							isSummary: true,
-							healUnresolvableIdsOnDecode: true,
+							healUnresolvableIdentifiersOnDecode: true,
 							sharedObjectId,
 						});
 					assert.notEqual(heal("doc-a"), heal("doc-b"));
@@ -255,7 +255,7 @@ describe("chunkDecoding", () => {
 							idCompressor: testIdCompressor,
 							originatorId: foreignSession,
 							isSummary: true,
-							healUnresolvableIdsOnDecode: true,
+							healUnresolvableIdentifiersOnDecode: true,
 							sharedObjectId: "doc-a",
 						});
 					assert.notEqual(heal(opSpaceA), heal(opSpaceB));
@@ -267,7 +267,7 @@ describe("chunkDecoding", () => {
 						idCompressor: testIdCompressor,
 						originatorId,
 						isSummary: false,
-						healUnresolvableIdsOnDecode: true,
+						healUnresolvableIdentifiersOnDecode: true,
 						sharedObjectId: "doc-a",
 					};
 					// Not a summary, so chunkDecoding's non-finalized-id branch does not
@@ -290,7 +290,7 @@ describe("chunkDecoding", () => {
 						idCompressor: testIdCompressor,
 						originatorId: testIdCompressor.localSessionId,
 						isSummary: true,
-						healUnresolvableIdsOnDecode: true,
+						healUnresolvableIdentifiersOnDecode: true,
 						sharedObjectId: "doc-a",
 					});
 					assert.equal(result, expected);

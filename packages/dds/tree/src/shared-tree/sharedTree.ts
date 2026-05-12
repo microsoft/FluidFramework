@@ -249,7 +249,7 @@ export class SharedTreeKernel
 			// ForestSummarizer is the only consumer of this context, and it
 			// only invokes the codec in summary encode / load paths.
 			isSummary: true,
-			healUnresolvableIdsOnDecode: options.healUnresolvableIdsOnDecode,
+			healUnresolvableIdentifiersOnDecode: options.healUnresolvableIdentifiersOnDecode,
 			sharedObjectId: sharedObject.id,
 		};
 		const forestSummarizer = new ForestSummarizer(
@@ -581,8 +581,7 @@ export interface SharedTreeOptionsBeta extends ForestOptions, Partial<CodecWrite
 	 * id-compressor cannot resolve produces a deterministic stable UUID (a "healed"
 	 * ID) instead of throwing.
 	 *
-	 * @remarks
-	 * Defaults to `false`.
+	 * @defaultValue `false`
 	 *
 	 * The intended use is recovering documents whose attach summary was persisted
 	 * with non-finalized op-space IDs (a SharedTree-attaches-to-already-attached-container
@@ -600,7 +599,7 @@ export interface SharedTreeOptionsBeta extends ForestOptions, Partial<CodecWrite
 	 * This mitigation is also not perfect as the client that originated the non-finalized
 	 * short ID will not apply the same "healing" and will continue to use the original ID.
 	 */
-	readonly healUnresolvableIdsOnDecode?: boolean;
+	readonly healUnresolvableIdentifiersOnDecode?: boolean;
 }
 
 /**
@@ -755,7 +754,7 @@ export const defaultSharedTreeOptions: Required<SharedTreeOptionsInternal> = {
 	disposeForksAfterTransaction: true,
 	shouldEncodeIncrementally: defaultIncrementalEncodingPolicy,
 	enableSharedBranches: false,
-	healUnresolvableIdsOnDecode: false,
+	healUnresolvableIdentifiersOnDecode: false,
 	writeVersionOverrides: new Map(),
 	allowPossiblyIncompatibleWriteVersionOverrides: false,
 };

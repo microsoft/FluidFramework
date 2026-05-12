@@ -85,8 +85,8 @@ export class EditManagerSummarizer<TChangeset>
 		private readonly idCompressor: IIdCompressor,
 		minVersionForCollab: MinimumVersionForCollab,
 		private readonly schemaAndPolicy?: SchemaAndPolicy,
-		/** See {@link EditManagerEncodingContext.healUnresolvableIdsOnDecode}. */
-		private readonly healUnresolvableIdsOnDecode?: boolean,
+		/** See {@link EditManagerEncodingContext.healUnresolvableIdentifiersOnDecode}. */
+		private readonly healUnresolvableIdentifiersOnDecode?: boolean,
 		/** See {@link EditManagerEncodingContext.sharedObjectId}. */
 		private readonly sharedObjectId?: string,
 	) {
@@ -111,7 +111,7 @@ export class EditManagerSummarizer<TChangeset>
 			idCompressor: this.idCompressor,
 			schema: this.schemaAndPolicy,
 			isSummary: true,
-			healUnresolvableIdsOnDecode: this.healUnresolvableIdsOnDecode,
+			healUnresolvableIdentifiersOnDecode: this.healUnresolvableIdentifiersOnDecode,
 			sharedObjectId: this.sharedObjectId,
 		};
 		const jsonCompatible = this.codec.encode(this.editManager.getSummaryData(), context);
@@ -137,7 +137,7 @@ export class EditManagerSummarizer<TChangeset>
 		const data = this.codec.decode(summary, {
 			idCompressor: this.idCompressor,
 			isSummary: true,
-			healUnresolvableIdsOnDecode: this.healUnresolvableIdsOnDecode,
+			healUnresolvableIdentifiersOnDecode: this.healUnresolvableIdentifiersOnDecode,
 			sharedObjectId: this.sharedObjectId,
 		});
 		this.editManager.loadSummaryData(data);

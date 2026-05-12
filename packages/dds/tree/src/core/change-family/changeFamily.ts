@@ -39,13 +39,13 @@ export interface ChangeEncodingContext {
 	/**
 	 * If `true`, identifier values that the local id-compressor cannot resolve
 	 * during decode are healed into deterministic stable UUIDs instead of
-	 * throwing. See `FieldBatchEncodingContext.healUnresolvableIdsOnDecode`.
+	 * throwing. See `FieldBatchEncodingContext.healUnresolvableIdentifiersOnDecode`.
 	 * Only takes effect when `isSummary` is also `true`.
 	 */
-	readonly healUnresolvableIdsOnDecode?: boolean;
+	readonly healUnresolvableIdentifiersOnDecode?: boolean;
 	/**
 	 * The SharedTree's shared-object id, used as input to the deterministic
-	 * UUID derivation when {@link healUnresolvableIdsOnDecode} triggers.
+	 * UUID derivation when {@link healUnresolvableIdentifiersOnDecode} triggers.
 	 */
 	readonly sharedObjectId?: string;
 }

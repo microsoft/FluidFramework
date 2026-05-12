@@ -66,9 +66,9 @@ export interface IdDecodingContext {
 	 */
 	isSummary: boolean;
 	/**
-	 * See {@link FieldBatchEncodingContext.healUnresolvableIdsOnDecode}.
+	 * See {@link FieldBatchEncodingContext.healUnresolvableIdentifiersOnDecode}.
 	 */
-	healUnresolvableIdsOnDecode?: boolean;
+	healUnresolvableIdentifiersOnDecode?: boolean;
 	/**
 	 * See {@link FieldBatchEncodingContext.sharedObjectId}.
 	 */
@@ -153,7 +153,7 @@ export function readValue(
 			const idCompressor = idDecodingContext.idCompressor;
 			if (idDecodingContext.isSummary === true && streamValue < 0) {
 				if (
-					idDecodingContext.healUnresolvableIdsOnDecode === true &&
+					idDecodingContext.healUnresolvableIdentifiersOnDecode === true &&
 					idDecodingContext.sharedObjectId !== undefined
 				) {
 					// Documents written before the encode-side fix for non-finalized identifier
@@ -170,7 +170,7 @@ export function readValue(
 						healingNamespace,
 					);
 				}
-				// See `SharedTreeOptionsBeta.healUnresolvableIdsOnDecode` for details on this error.
+				// See `SharedTreeOptionsBeta.healUnresolvableIdentifiersOnDecode` for details on this error.
 				throw new Error(
 					"Encountered a non-finalized op-space identifier while loading a summary.",
 				);

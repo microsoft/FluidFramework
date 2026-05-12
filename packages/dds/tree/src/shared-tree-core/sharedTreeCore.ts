@@ -75,9 +75,9 @@ export interface ClonableSchemaAndPolicy extends SchemaAndPolicy {
 
 export interface SharedTreeCoreOptionsInternal extends CodecWriteOptions {
 	/**
-	 * See {@link SharedTreeOptionsBeta.healUnresolvableIdsOnDecode}.
+	 * See {@link SharedTreeOptionsBeta.healUnresolvableIdentifiersOnDecode}.
 	 */
-	readonly healUnresolvableIdsOnDecode?: boolean;
+	readonly healUnresolvableIdentifiersOnDecode?: boolean;
 }
 
 export interface EnrichmentConfig<TChange> {
@@ -197,7 +197,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 				this.idCompressor,
 				options.minVersionForCollab,
 				this.schemaAndPolicy,
-				options.healUnresolvableIdsOnDecode,
+				options.healUnresolvableIdentifiersOnDecode,
 				sharedObject.id,
 			),
 			...summarizables,
