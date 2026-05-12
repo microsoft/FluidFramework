@@ -1,3 +1,6 @@
+
+packages:
+  - '*'
 # This file is scaffolded by scripts/updateCompatVersions.ts.
 # The security settings below are intentional — do not relax them.
 minimumReleaseAge: 1440
@@ -11,9 +14,12 @@ minimumReleaseAgeExclude:
   - "@fluid-private/*"
   - "@fluid-tools/*"
   - "fluid-framework"
+overrides:
+  axios@<1: ^0.31.1
+  axios@>=1 <2: ^1.15.2
+  jsrsasign@<12: ^11.1.1
+  serialize-javascript@>=6 <7: ^7.0.5
+  uuid@>=11 <12: ^11.1.1
 
 # See: https://github.com/orgs/pnpm/discussions/11084
 trustPolicy: off
-
-packages:
-  - '*'
