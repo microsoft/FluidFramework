@@ -62,9 +62,7 @@ interface BundleSizeDiffError {
 	error: string;
 }
 
-export default class GenerateBundleSizeDiff extends BaseCommand<
-	typeof GenerateBundleSizeDiff
-> {
+export default class CheckBundleSize extends BaseCommand<typeof CheckBundleSize> {
 	static readonly description =
 		`Compare the PR's locally-collected bundle reports against the CI build of the merge-base commit (the commit on the target branch the PR is based on) and write the outcome as one of two structured files in the output directory: result.json on success, error.json on failure.`;
 

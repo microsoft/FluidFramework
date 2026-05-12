@@ -4,6 +4,7 @@
 Check commands are used to verify repo state, apply policy, etc.
 
 * [`flub check buildVersion`](#flub-check-buildversion)
+* [`flub check bundleSize`](#flub-check-bundlesize)
 * [`flub check changeset`](#flub-check-changeset)
 * [`flub check latestVersions VERSION PACKAGE_OR_RELEASE_GROUP`](#flub-check-latestversions-version-package_or_release_group)
 * [`flub check layers`](#flub-check-layers)
@@ -65,6 +66,34 @@ DESCRIPTION
 ```
 
 _See code: [src/commands/check/buildVersion.ts](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/src/commands/check/buildVersion.ts)_
+
+## `flub check bundleSize`
+
+Compare the PR's locally-collected bundle reports against the CI build of the merge-base commit (the commit on the target branch the PR is based on) and write the outcome as one of two structured files in the output directory: result.json on success, error.json on failure.
+
+```
+USAGE
+  $ flub check bundleSize [--json] [-v | --quiet] [--localReportPath <value>] [--outputDir <value>]
+
+FLAGS
+  --localReportPath=<value>  [default: ./artifacts/bundleAnalyzerJson] Path to the locally-collected bundle reports for
+                             the PR (as produced by `flub generate bundleStats`).
+  --outputDir=<value>        [default: ./artifacts/bundleSizeDiff] Directory to write result.json or error.json into.
+
+LOGGING FLAGS
+  -v, --verbose  Enable verbose logging.
+      --quiet    Disable all logging.
+
+GLOBAL FLAGS
+  --json  Format output as json.
+
+DESCRIPTION
+  Compare the PR's locally-collected bundle reports against the CI build of the merge-base commit (the commit on the
+  target branch the PR is based on) and write the outcome as one of two structured files in the output directory:
+  result.json on success, error.json on failure.
+```
+
+_See code: [src/commands/check/bundleSize.ts](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/src/commands/check/bundleSize.ts)_
 
 ## `flub check changeset`
 
