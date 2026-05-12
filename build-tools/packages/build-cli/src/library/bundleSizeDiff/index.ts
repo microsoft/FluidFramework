@@ -25,9 +25,7 @@ export {
 export { bundlesContainNoChanges, compareBundles } from "./compareBundles.js";
 export {
 	GetBuildOptions,
-	findCanonicalRemote,
 	getAllFilesInDirectory,
-	getBaselineCommit,
 	getBuilds,
 	resolveBaselineRef,
 } from "./utilities/index.js";

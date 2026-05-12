@@ -14,48 +14,164 @@ export function getBaselineCommit(baselineRef: string): string {
 }
 
 /**
- * Pick the remote that points at the canonical `microsoft/FluidFramework`
- * repository, if one exists. Returns `{ name, url }` or `undefined`.
+ * Resolved tip for a canonical remote candidate. `tip` is `undefined` when the
+ * `<name>/main` ref doesn't exist locally (e.g. the remote has never been fetched),
+ * in which case the candidate is ineligible for the freshness comparison.
+ */
+interface CanonicalCandidate {
+	name: string;
+	url: string;
+	ref: string;
+	tip: string | undefined;
+}
+
+/**
+ * Lists remotes that point at the canonical `microsoft/FluidFramework`
+ * repository. Returns an empty array if none match.
  *
  * Match is case-insensitive and tolerant of a trailing `.git`, covering both
  * HTTPS (`https://github.com/microsoft/FluidFramework[.git]`) and SSH
  * (`git@github.com:microsoft/FluidFramework[.git]`) remote URL forms.
  */
-export function findCanonicalRemote(): { name: string; url: string } | undefined {
-	const output = execSync(`git remote -v`).toString();
-	// Each line looks like: "origin\thttps://github.com/microsoft/FluidFramework.git (fetch)"
+function findCanonicalRemotes(): { name: string; url: string }[] {
+	// Reads remote URLs straight from git config rather than scraping
+	// `git remote -v` (which is human-formatted and duplicates each remote).
+	// `--all` returns every match (otherwise `--regexp` returns only the first);
+	// `--show-names` includes the key so we can extract the remote name.
+	const output = execSync(
+		`git config get --all --show-names --regexp '^remote\\..*\\.url$'`,
+	).toString();
+	const line = /^remote\.(.+)\.url\s+(.+)$/;
 	const canonical = /(^|[/:])microsoft\/fluidframework(\.git)?$/i;
-	for (const line of output.split("\n")) {
-		const [name, rest] = line.split("\t");
-		if (name === undefined || rest === undefined) continue;
-		const url = rest.split(" ")[0];
-		if (url !== undefined && canonical.test(url)) {
-			return { name, url };
+	const matches: { name: string; url: string }[] = [];
+	for (const raw of output.split("\n")) {
+		const match = line.exec(raw);
+		if (match === null) continue;
+		const [, name, url] = match;
+		if (canonical.test(url)) {
+			matches.push({ name, url });
 		}
 	}
-	return undefined;
+	return matches;
 }
 
 /**
- * Resolve which ref to use as the baseline for bundle comparison. If a remote
- * pointing at `microsoft/FluidFramework` is found, use `<that-remote>/main`;
- * otherwise fall back to `origin/main`. Logs the selection (and any fallback)
- * so the user can verify what's being compared against.
+ * Resolve the tip commit of a ref, or `undefined` if it doesn't exist locally.
+ */
+function resolveTip(ref: string): string | undefined {
+	try {
+		return execSync(`git rev-parse --verify ${ref}`, {
+			// ignore stdin + stderr; capture stdout
+			stdio: ["ignore", "pipe", "ignore"],
+		})
+			.toString()
+			.trim();
+	} catch {
+		return undefined;
+	}
+}
+
+/**
+ * Test whether `ancestor` is an ancestor of `descendant` in the commit DAG.
+ * A commit is its own ancestor. Returns `false` if either ref can't be resolved.
+ */
+function isAncestor(ancestor: string, descendant: string): boolean {
+	try {
+		execSync(`git merge-base --is-ancestor ${ancestor} ${descendant}`, {
+			// only care about exit code
+			stdio: "ignore",
+		});
+		return true;
+	} catch {
+		return false;
+	}
+}
+
+/**
+ * Among candidates with resolvable tips, return those whose tip is not a
+ * strict ancestor of any other candidate's tip — i.e. the freshest tips.
+ * Equal tips are not considered ancestors of each other for this purpose;
+ * a single linear history produces exactly one winner, divergent histories
+ * produce multiple.
+ */
+function pickFreshest(eligible: CanonicalCandidate[]): CanonicalCandidate[] {
+	return eligible.filter(
+		(a) =>
+			!eligible.some(
+				(b) => a !== b && a.tip !== b.tip && isAncestor(a.tip ?? "", b.tip ?? ""),
+			),
+	);
+}
+
+/**
+ * Resolve which ref to use as the baseline for bundle comparison.
  *
+ * - 0 canonical remotes → fall back to `origin/main`.
+ * - 1 canonical remote → use `<that-remote>/main`.
+ * - N canonical remotes → pick the one whose `<name>/main` tip is the freshest
+ *   (not a strict ancestor of any other candidate's tip). Candidates whose
+ *   `<name>/main` doesn't exist locally are dropped. Ties (identical tips or
+ *   divergent histories) resolve to the first candidate.
+ *
+ * Logs the selection so the user can verify what's being compared against.
  * Callers needing an explicit override should bypass this and pass their ref
  * directly to {@link getBaselineCommit}.
  */
 export function resolveBaselineRef(): string {
-	const canonical = findCanonicalRemote();
-	if (canonical !== undefined) {
-		const ref = `${canonical.name}/main`;
-		console.log(`Using baseline ref ${ref} (remote ${canonical.name} → ${canonical.url}).`);
+	const canonicals = findCanonicalRemotes();
+
+	if (canonicals.length === 0) {
+		const fallback = `origin/main`;
+		console.log(
+			`No remote found pointing at microsoft/FluidFramework; falling back to ${fallback}. ` +
+				`Pass --baseline <ref> to override.`,
+		);
+		return fallback;
+	}
+
+	if (canonicals.length === 1) {
+		const only = canonicals[0];
+		const ref = `${only.name}/main`;
+		console.log(`Using baseline ref ${ref} (remote ${only.name} → ${only.url}).`);
 		return ref;
 	}
-	const fallback = `origin/main`;
-	console.log(
-		`No remote found pointing at microsoft/FluidFramework; falling back to ${fallback}. ` +
-			`Pass --baseline <ref> to override.`,
-	);
-	return fallback;
+
+	const candidates: CanonicalCandidate[] = canonicals.map((r) => {
+		const ref = `${r.name}/main`;
+		return { name: r.name, url: r.url, ref, tip: resolveTip(ref) };
+	});
+	const eligible = candidates.filter((c) => c.tip !== undefined);
+
+	if (eligible.length === 0) {
+		// All candidates exist as remotes but none have a locally-tracked main.
+		// Fall back to the first candidate's ref; merge-base will surface the real error.
+		const fallback = candidates[0].ref;
+		console.log(
+			`Multiple remotes point at microsoft/FluidFramework but none have ${eligible
+				.map((c) => c.ref)
+				.join(", ")} fetched locally; falling back to ${fallback}. Pass --baseline <ref> to override.`,
+		);
+		return fallback;
+	}
+
+	const freshest = pickFreshest(eligible);
+	const selected = freshest[0];
+
+	console.log(`Multiple remotes point at microsoft/FluidFramework:`);
+	for (const c of candidates) {
+		if (c.tip === undefined) {
+			console.log(`  ${c.ref} — not fetched locally; skipped`);
+			continue;
+		}
+		const isSelected = c === selected;
+		const isFreshest = freshest.includes(c);
+		const marker = isSelected
+			? " ← selected (freshest)"
+			: isFreshest
+				? " (also freshest; tie-broken by config order)"
+				: ` (ancestor of ${selected.ref})`;
+		console.log(`  ${c.ref} → ${c.tip.slice(0, 10)}${marker}`);
+	}
+
+	return selected.ref;
 }
