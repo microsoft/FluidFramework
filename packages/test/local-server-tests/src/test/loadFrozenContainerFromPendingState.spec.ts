@@ -854,18 +854,6 @@ describe("loadFrozenContainerFromPendingState", () => {
 			);
 		});
 
-		// 0x173 (`replayPendingStates called twice for same clientId!`) regression coverage
-		// for the writable-frozen path lives in the focused unit test
-		// `frozenServices.spec.ts → "hands out distinct WritableFrozenDeltaStream instances
-		// with distinct clientIds on subsequent connects"`. An attempt to exercise the
-		// mitigation end-to-end via `IContainer.disconnect()` + `connect()` does not actually
-		// rotate the live connection on a writable-frozen container within a bounded wait
-		// (clientId stays pinned for >10s after disconnect/connect), so an integration test
-		// gated on that observable would either be vacuous or flaky. The unit test directly
-		// asserts that each successive `FrozenDocumentService.connectToDeltaStream()` returns
-		// a fresh `frozen-delta-stream/<uuid>` clientId — which is the contract the 0x173
-		// mitigation depends on.
-
 		it("captures writes batched across timer/microtask boundaries", async () => {
 			const { container, ITestFluidObject, urlResolver, codeLoader, documentServiceFactory } =
 				await initialize();

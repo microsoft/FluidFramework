@@ -90,6 +90,10 @@ class FrozenDocumentService
 	extends TypedEventEmitter<IDocumentServiceEvents>
 	implements IDocumentService
 {
+	// Tracks every storage instance handed out by `connectToStorage` so `dispose()` can cascade
+	// disposal to each one (rejecting their hanging `createBlob` deferreds). A Set rather than
+	// a single field because `IDocumentService.connectToStorage` is a public API that can be
+	// called more than once — we cannot assume the Container holds a single instance.
 	private readonly storageServices = new Set<FrozenDocumentStorageService>();
 
 	constructor(
@@ -212,14 +216,15 @@ class FrozenDocumentStorageService implements IDocumentStorageService, IDisposab
 	uploadSummaryWithContext = frozenDocumentStorageServiceHandler;
 	downloadSummary = frozenDocumentStorageServiceHandler;
 
-	public dispose(error?: Error): void {
+	public dispose(): void {
 		if (this._disposed) {
 			return;
 		}
 		this._disposed = true;
-		this.disposalDeferred.reject(
-			error ?? new Error("FrozenDocumentStorageService is disposed"),
-		);
+		// Don't propagate any caller-supplied error here. `IDocumentService.dispose` already
+		// logs the Container's error path; the createBlob deferred's consumer (BlobManager)
+		// only needs the "this storage is going away" signal — not a chain of error causes.
+		this.disposalDeferred.reject(new Error("FrozenDocumentStorageService is disposed"));
 	}
 }
 
