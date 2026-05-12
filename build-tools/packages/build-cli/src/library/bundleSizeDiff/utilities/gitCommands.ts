@@ -111,17 +111,15 @@ function pickFreshest(candidates: CanonicalCandidate[]): CanonicalCandidate[] {
  * `undefined` when no usable canonical remote is configured — callers decide
  * the fallback policy.
  *
- * - 0 canonical remotes → return `undefined`.
- * - 1 canonical remote → return its name.
- * - N canonical remotes → return the one whose `<name>/<branch>` tip is the
- *   freshest (not a strict ancestor of any other candidate's tip). Candidates
- *   whose `<name>/<branch>` doesn't exist locally are dropped. Ties (identical
- *   tips or divergent histories) resolve to the first candidate in config order.
- *   If every candidate was dropped, return `undefined` — we'd just be picking
- *   an unusable ref, and the caller's fallback (or a clear merge-base error)
- *   is more honest.
+ * The returned remote is always one whose `<name>/<branch>` resolves locally;
+ * remotes that don't are dropped from consideration. When multiple candidates
+ * remain, pick the one whose tip is not a strict ancestor of any other's.
+ * Ties (identical tips or divergent histories) resolve to the first candidate
+ * in config order. Returns `undefined` if no candidate survives the local-tip
+ * filter.
  *
- * Logs the selection so the user can verify what's being compared against.
+ * Logs the discovered remotes (and which one was selected, when ambiguous) so
+ * the user can verify what's being compared against.
  */
 export function pickCanonicalRemote(branch: string): string | undefined {
 	const canonicals = findCanonicalRemotes();
@@ -131,27 +129,21 @@ export function pickCanonicalRemote(branch: string): string | undefined {
 		return undefined;
 	}
 
-	if (canonicals.length === 1) {
-		const only = canonicals[0];
-		console.log(`Canonical remote: ${only.name} (${only.url}).`);
-		return only.name;
-	}
-
 	const candidates: CanonicalCandidate[] = [];
 	const skipped: string[] = [];
-	for (const r of canonicals) {
-		const ref = `${r.name}/${branch}`;
+	for (const remote of canonicals) {
+		const ref = `${remote.name}/${branch}`;
 		const tip = resolveTip(ref);
 		if (tip === undefined) {
 			skipped.push(ref);
 		} else {
-			candidates.push({ name: r.name, ref, tip });
+			candidates.push({ name: remote.name, ref, tip });
 		}
 	}
 
 	if (candidates.length === 0) {
 		console.log(
-			`Multiple remotes point at microsoft/FluidFramework but none of [${skipped.join(
+			`Found remote(s) pointing at microsoft/FluidFramework but none of [${skipped.join(
 				", ",
 			)}] are fetched locally.`,
 		);
@@ -161,18 +153,18 @@ export function pickCanonicalRemote(branch: string): string | undefined {
 	const freshest = pickFreshest(candidates);
 	const selected = freshest[0];
 
-	console.log(`Multiple remotes point at microsoft/FluidFramework:`);
+	console.log(`Remotes pointing at microsoft/FluidFramework:`);
 	for (const ref of skipped) {
 		console.log(`  ${ref} — not fetched locally; skipped`);
 	}
-	for (const c of candidates) {
+	for (const candidate of candidates) {
 		const marker =
-			c === selected
+			candidate === selected
 				? " ← selected (freshest)"
-				: freshest.includes(c)
+				: freshest.includes(candidate)
 					? " (also freshest; tie-broken by config order)"
 					: ` (ancestor of ${selected.ref})`;
-		console.log(`  ${c.ref} → ${c.tip.slice(0, 10)}${marker}`);
+		console.log(`  ${candidate.ref} → ${candidate.tip.slice(0, 10)}${marker}`);
 	}
 
 	return selected.name;
