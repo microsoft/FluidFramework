@@ -25,6 +25,7 @@ import {
 	reservedRangeLabelsKey,
 	Side,
 	SequencePlace,
+	defaultSide,
 	endpointPosAndSide,
 	type ISegmentInternal,
 	createLocalReconnectingPerspective,
@@ -123,12 +124,6 @@ function compressInterval(interval: ISerializedInterval): CompressedSerializedIn
 
 	return base;
 }
-
-// The side that an endpoint resolves to when none is specified — see
-// endpointPosAndSide in merge-tree, which produces this for a plain numeric
-// position. Used to fill in serialized ops written by older clients (no
-// startSide/endSide field) and to detect that a serialized side is redundant.
-const defaultSide = Side.Before;
 
 export function toSequencePlace(
 	pos: number | "start" | "end",

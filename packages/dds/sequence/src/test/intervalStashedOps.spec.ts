@@ -306,5 +306,35 @@ describe("Interval Stashed Ops on client ", () => {
 				);
 			});
 		});
+
+		describe("stickiness gate", () => {
+			// Symmetric negative-guard: a genuinely sticky serialized op must
+			// still trip assertStickinessEnabled when the target has the flag off.
+			// Guards against a future "always strip sides on replay" simplification
+			// silently weakening the feature gate.
+			it("sticky serialized op replayed against intervalStickinessEnabled=false throws", () => {
+				const source = createSharedString(true);
+				const target = createSharedString(false);
+				source.insertText(0, "hello world");
+				target.insertText(0, "hello world");
+
+				const sourceCollection = source.getIntervalCollection(label);
+				const sticky = sourceCollection.add({
+					start: "start",
+					end: { pos: 5, side: Side.After },
+				}) as SequenceIntervalClass;
+				target.getIntervalCollection(label);
+
+				assert.throws(
+					() =>
+						target["applyStashedOp"]({
+							key: label,
+							type: "act",
+							value: { opName: IntervalOpType.ADD, value: sticky.serialize() },
+						} satisfies IMapOperation),
+					/intervalStickinessEnabled/,
+				);
+			});
+		});
 	});
 });
