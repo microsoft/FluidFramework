@@ -14,15 +14,14 @@ export function getBaselineCommit(baselineRef: string): string {
 }
 
 /**
- * Resolved tip for a canonical remote candidate. `tip` is `undefined` when the
- * `<name>/main` ref doesn't exist locally (e.g. the remote has never been fetched),
- * in which case the candidate is ineligible for the freshness comparison.
+ * A canonical-remote ref paired with its locally-resolved tip commit. Only
+ * refs that resolve are eligible; missing tips disqualify the entry upstream
+ * before it reaches the freshness comparison.
  */
 interface CanonicalCandidate {
 	name: string;
-	url: string;
 	ref: string;
-	tip: string | undefined;
+	tip: string;
 }
 
 /**
@@ -88,25 +87,22 @@ function isAncestor(ancestor: string, descendant: string): boolean {
 }
 
 /**
- * Among candidates with resolved tips, return those whose tip is the freshest
- * — i.e. not a strict ancestor of any other candidate's tip. A single line of
- * history produces exactly one winner; equal tips don't dominate each other,
- * and truly divergent histories (rare for `main`) produce multiple winners.
- *
- * Precondition: every candidate has a defined `tip`.
+ * From a set of candidates, return those whose tip is the freshest — i.e. not
+ * a strict ancestor of any other candidate's tip. A single line of history
+ * produces exactly one winner; equal tips don't dominate each other, and
+ * truly divergent histories (rare for `main`) produce multiple winners.
  */
-function pickFreshest(eligible: CanonicalCandidate[]): CanonicalCandidate[] {
+function pickFreshest(candidates: CanonicalCandidate[]): CanonicalCandidate[] {
 	function hasStrictlyNewerPeer(candidate: CanonicalCandidate): boolean {
-		const candidateTip = candidate.tip!;
-		return eligible.some((other) => {
+		return candidates.some((other) => {
 			if (other === candidate) return false;
-			if (other.tip === candidateTip) return false; // ties don't dominate
+			if (other.tip === candidate.tip) return false; // ties don't dominate
 			// candidate's tip reachable from other's tip → other is strictly newer
-			return isAncestor(candidateTip, other.tip!);
+			return isAncestor(candidate.tip, other.tip);
 		});
 	}
 
-	return eligible.filter((candidate) => !hasStrictlyNewerPeer(candidate));
+	return candidates.filter((candidate) => !hasStrictlyNewerPeer(candidate));
 }
 
 /**
@@ -142,40 +138,44 @@ export function resolveBaselineRef(): string {
 		return ref;
 	}
 
-	const candidates: CanonicalCandidate[] = canonicals.map((r) => {
+	const candidates: CanonicalCandidate[] = [];
+	const skipped: string[] = [];
+	for (const r of canonicals) {
 		const ref = `${r.name}/main`;
-		return { name: r.name, url: r.url, ref, tip: resolveTip(ref) };
-	});
-	const eligible = candidates.filter((c) => c.tip !== undefined);
+		const tip = resolveTip(ref);
+		if (tip === undefined) {
+			skipped.push(ref);
+		} else {
+			candidates.push({ name: r.name, ref, tip });
+		}
+	}
 
-	if (eligible.length === 0) {
-		// All candidates exist as remotes but none have a locally-tracked main.
-		// Fall back to the first candidate's ref; merge-base will surface the real error.
-		const fallback = candidates[0].ref;
+	if (candidates.length === 0) {
+		// All canonical remotes exist but none have a locally-tracked main.
+		// Fall back to the first remote's ref; merge-base will surface the real error.
+		const fallback = `${canonicals[0].name}/main`;
 		console.log(
-			`Multiple remotes point at microsoft/FluidFramework but none have ${eligible
-				.map((c) => c.ref)
-				.join(", ")} fetched locally; falling back to ${fallback}. Pass --baseline <ref> to override.`,
+			`Multiple remotes point at microsoft/FluidFramework but none of [${skipped.join(
+				", ",
+			)}] are fetched locally; falling back to ${fallback}. Pass --baseline <ref> to override.`,
 		);
 		return fallback;
 	}
 
-	const freshest = pickFreshest(eligible);
+	const freshest = pickFreshest(candidates);
 	const selected = freshest[0];
 
 	console.log(`Multiple remotes point at microsoft/FluidFramework:`);
+	for (const ref of skipped) {
+		console.log(`  ${ref} — not fetched locally; skipped`);
+	}
 	for (const c of candidates) {
-		if (c.tip === undefined) {
-			console.log(`  ${c.ref} — not fetched locally; skipped`);
-			continue;
-		}
-		const isSelected = c === selected;
-		const isFreshest = freshest.includes(c);
-		const marker = isSelected
-			? " ← selected (freshest)"
-			: isFreshest
-				? " (also freshest; tie-broken by config order)"
-				: ` (ancestor of ${selected.ref})`;
+		const marker =
+			c === selected
+				? " ← selected (freshest)"
+				: freshest.includes(c)
+					? " (also freshest; tie-broken by config order)"
+					: ` (ancestor of ${selected.ref})`;
 		console.log(`  ${c.ref} → ${c.tip.slice(0, 10)}${marker}`);
 	}
 
