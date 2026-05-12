@@ -1009,7 +1009,7 @@ export const SharedTree: SharedObjectKind<ITree>;
 
 // @beta @input
 export interface SharedTreeOptionsBeta extends ForestOptions, Partial<CodecWriteOptionsBeta> {
-    readonly healUnresolvableIdsOnDecode?: boolean;
+    readonly healUnresolvableIdentifiersOnDecode?: boolean;
 }
 
 // @public @sealed @system

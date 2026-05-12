@@ -79,7 +79,7 @@ export interface IdDecodingContext {
  * Arbitrary namespace for the "heal an unresolvable identifier into a stable UUID"
  * path in {@link readValue}. This scheme requires consensus across all clients to function.
  */
-const healingNamespace = "1b671a64-40d5-491e-99b0-da01ff1f3341";
+const healingNamespace = "f8a89df3-6882-400f-b913-4c1f6f0157bd";
 
 /**
  * Decode `chunk` into a TreeChunk.

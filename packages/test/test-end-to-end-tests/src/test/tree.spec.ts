@@ -103,7 +103,7 @@ class TreeOwningDataObject extends DataObject {
 }
 
 const SharedTree = configuredSharedTreeBetaLegacy({
-	healUnresolvableIdsOnDecode: true,
+	healUnresolvableIdentifiersOnDecode: true,
 });
 
 const treeOwningFactory = new DataObjectFactory({
