@@ -77,7 +77,18 @@ export class NodeShapeBasedEncoder
 			if (isStableId(cursor.value)) {
 				const sessionSpaceCompressedId = context.idCompressor.tryRecompress(cursor.value);
 				if (sessionSpaceCompressedId !== undefined) {
-					return context.idCompressor.normalizeToOpSpace(sessionSpaceCompressedId);
+					const opSpaceId = context.idCompressor.normalizeToOpSpace(sessionSpaceCompressedId);
+					// When encoding for a summary, a negative op-space id is a
+					// non-finalized session-local id. Persisting it would be
+					// unresolvable to readers loading from this summary after the
+					// writer's id-compressor session state is stripped. Emit the
+					// stable UUID directly so the persisted form does not depend on
+					// the writer's session being preserved. Mirrors the analogous
+					// fallback in `MajorCodec` for the detached-field-index v2 codec.
+					if (context.isSummary && opSpaceId < 0) {
+						return context.idCompressor.decompress(sessionSpaceCompressedId);
+					}
+					return opSpaceId;
 				}
 			}
 		}
