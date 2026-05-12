@@ -171,7 +171,7 @@ export function readValue(
 				}
 				// See `SharedTreeOptionsBeta.healUnresolvableIdsOnDecode` for details on this error.
 				throw new Error(
-					'Encountered a non-finalized op-space identifier while loading a summary.',
+					"Encountered a non-finalized op-space identifier while loading a summary.",
 				);
 			}
 			return idCompressor.decompress(

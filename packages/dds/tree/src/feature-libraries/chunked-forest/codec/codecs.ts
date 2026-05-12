@@ -120,8 +120,8 @@ export interface FieldBatchEncodingContext {
 	 * @remarks
 	 * Off by default. Used only to recover documents whose attach summary was
 	 * written with non-finalized op-space IDs before the encode-side fix
-	 * (commit d43d50d7563) shipped. Only takes effect when `isSummary` is
-	 * also `true`. See {@link SharedTreeOptionsBeta.healUnresolvableIdsOnDecode}.
+	 * shipped. Only takes effect when `isSummary` is also `true`.
+	 * See {@link SharedTreeOptionsBeta.healUnresolvableIdsOnDecode}.
 	 */
 	readonly healUnresolvableIdsOnDecode?: boolean;
 	/**

@@ -184,8 +184,9 @@ describe("chunkDecoding", () => {
 				// Error message thrown by chunkDecoding.readValue when it detects a
 				// non-finalized op-space id during a summary load and healing is not
 				// available. See `chunkDecoding.ts`.
-				const nonFinalizedDuringSummaryError =
-					new Error('Encountered a non-finalized op-space identifier while loading a summary.');
+				const nonFinalizedDuringSummaryError = new Error(
+					"Encountered a non-finalized op-space identifier while loading a summary.",
+				);
 
 				it("throws when the heal flag is not enabled", () => {
 					const { opSpaceId, originatorId } = makeUnresolvableOpSpaceId();
@@ -212,7 +213,10 @@ describe("chunkDecoding", () => {
 					};
 					const result = readValue(makeStream(opSpaceId), SpecialField.Identifier, ctx);
 					assert.equal(typeof result, "string");
-					assert.match(result as string, /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i);
+					assert.match(
+						result as string,
+						/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i,
+					);
 				});
 
 				it("produces the same UUID for the same (sharedObjectId, opSpaceId) inputs", () => {
