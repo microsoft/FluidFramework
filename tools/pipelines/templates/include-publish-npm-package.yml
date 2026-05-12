@@ -23,46 +23,43 @@ stages:
 - stage: publish_npm_internal_test
   dependsOn: build
   displayName: Publish Internal Test Packages
-  condition: and(succeeded(), eq(${{ parameters.testBuild }}, true))
+  condition: and(succeeded(), eq(${{ parameters.testBuild }}, false))
+  variables:
+  - group: ado-feeds
   jobs:
-  - template: include-publish-npm-package-deployment.yml
+  - template: /tools/pipelines/templates/include-publish-npm-package-deployment.yml@self
     parameters:
+      feedUrl: $(ado-feeds-test) # Comes from the ado-feeds variable group
       feedKind: internal-test
-      feedUrl: $(ado-feeds-test)
       environment: test-package-build-feed
       pool: ${{ parameters.pool }}
-      packageManagerInstallCommand: 'pnpm i --frozen-lockfile'
-      packageManager: pnpm
-      release: ${{ parameters.release }}
 
 - stage: publish_npm_internal
   dependsOn: build
   displayName: Publish Internal Packages
   condition: and(succeeded(), eq(${{ parameters.testBuild }}, false))
+  variables:
+  - group: ado-feeds
   jobs:
-  - template: include-publish-npm-package-deployment.yml
+  - template: /tools/pipelines/templates/include-publish-npm-package-deployment.yml@self
     parameters:
       feedUrl: $(ado-feeds-build)
       feedKind: internal-build
       environment: package-build-feed
       pool: ${{ parameters.pool }}
-      packageManagerInstallCommand: 'pnpm i --frozen-lockfile'
-      packageManager: pnpm
-      release: ${{ parameters.release }}
 
 - stage: publish_npm_official
   dependsOn: build
   displayName: Publish Official Packages
   condition: and(succeeded(), or(eq('${{ parameters.release }}', 'release'), eq('${{ parameters.release }}', 'prerelease')))
+  variables:
+  - group: ado-feeds
   jobs:
-  - template: include-publish-npm-package-deployment.yml
+  - template: /tools/pipelines/templates/include-publish-npm-package-deployment.yml@self
     parameters:
       feedKind: public
       feedUrl: https://registry.npmjs.org
       environment: package-npmjs-feed
       pool: ${{ parameters.pool }}
-      packageManagerInstallCommand: 'pnpm i --frozen-lockfile'
       customEndPoint: npmjs
       tagName: ${{ parameters.tagName }}
-      packageManager: pnpm
-      release: ${{ parameters.release }}
