@@ -27,7 +27,7 @@ import {
 	TreeViewConfiguration,
 	type TreeView,
 } from "@fluidframework/tree";
-import { SharedTree } from "@fluidframework/tree/internal";
+import { configuredSharedTreeBetaLegacy } from "@fluidframework/tree/legacy";
 
 const sf = new SchemaFactory("idCompressorDetachedDataStoreTest");
 class Root extends sf.object("Root", {
@@ -102,13 +102,17 @@ class TreeOwningDataObject extends DataObject {
 	}
 }
 
+const SharedTree = configuredSharedTreeBetaLegacy({
+	healUnresolvableIdsOnDecode: true,
+});
+
 const treeOwningFactory = new DataObjectFactory({
 	type: TreeOwningDataObject.Name,
 	ctor: TreeOwningDataObject,
 	sharedObjects: [SharedTree.getFactory()],
 });
 
-describeCompat.noCompat(
+describeCompat(
 	"SharedTree in a data store created detached and attached via op",
 	"NoCompat",
 	(getTestObjectProvider) => {
@@ -133,7 +137,7 @@ describeCompat.noCompat(
 			},
 		);
 
-		it.only("Summarizer creates the data store from the attach op summary and a new container can load and edit the tree", async () => {
+		it("Summarizer creates the data store from the attach op summary and a new container can load and edit the tree", async () => {
 			// 1. Create a container with an attached default data store.
 			const container1 = await provider.createContainer(runtimeFactory);
 			const defaultDataObject = (await container1.getEntryPoint()) as DefaultDataObject;
