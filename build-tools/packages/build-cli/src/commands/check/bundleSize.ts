@@ -9,7 +9,7 @@ import {
 	type BundleComparison,
 	bundlesContainNoChanges,
 	getAzureDevopsApi,
-	resolveBaselineRef,
+	pickCanonicalRemote,
 } from "../../library/bundleSizeDiff/index.js";
 
 import { BaseCommand } from "../../library/commands/base.js";
@@ -60,9 +60,17 @@ export default class CheckBundleSize extends BaseCommand<typeof CheckBundleSize>
 	public async run(): Promise<CheckBundleSizeResult> {
 		const { localReportPath, baseline } = this.flags;
 
-		const baselineRef = baseline ?? resolveBaselineRef();
+		// Auto-detect against `main` on the canonical remote. Users targeting a
+		// different branch (or pinning to a SHA) pass `--baseline <ref>`.
+		const branch = "main";
+		let baselineRef: string;
 		if (baseline !== undefined) {
+			baselineRef = baseline;
 			this.log(`Using explicit baseline ref ${baseline}.`);
+		} else {
+			const remote = pickCanonicalRemote(branch) ?? "origin";
+			baselineRef = `${remote}/${branch}`;
+			this.log(`Using baseline ref ${baselineRef}. Pass --baseline <ref> to override.`);
 		}
 
 		// Anonymous reads work for the public ADO project. Authenticated access isn't

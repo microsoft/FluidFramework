@@ -27,5 +27,5 @@ export {
 	GetBuildOptions,
 	getAllFilesInDirectory,
 	getBuilds,
-	resolveBaselineRef,
+	pickCanonicalRemote,
 } from "./utilities/index.js";

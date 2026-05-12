@@ -106,42 +106,41 @@ function pickFreshest(candidates: CanonicalCandidate[]): CanonicalCandidate[] {
 }
 
 /**
- * Resolve which ref to use as the baseline for bundle comparison.
+ * Pick the canonical remote (one pointing at `microsoft/FluidFramework`) whose
+ * `<name>/<branch>` is freshest locally, and return its name. Returns
+ * `undefined` when no usable canonical remote is configured — callers decide
+ * the fallback policy.
  *
- * - 0 canonical remotes → fall back to `origin/main`.
- * - 1 canonical remote → use `<that-remote>/main`.
- * - N canonical remotes → pick the one whose `<name>/main` tip is the freshest
- *   (not a strict ancestor of any other candidate's tip). Candidates whose
- *   `<name>/main` doesn't exist locally are dropped. Ties (identical tips or
- *   divergent histories) resolve to the first candidate.
+ * - 0 canonical remotes → return `undefined`.
+ * - 1 canonical remote → return its name.
+ * - N canonical remotes → return the one whose `<name>/<branch>` tip is the
+ *   freshest (not a strict ancestor of any other candidate's tip). Candidates
+ *   whose `<name>/<branch>` doesn't exist locally are dropped. Ties (identical
+ *   tips or divergent histories) resolve to the first candidate in config order.
+ *   If every candidate was dropped, return `undefined` — we'd just be picking
+ *   an unusable ref, and the caller's fallback (or a clear merge-base error)
+ *   is more honest.
  *
  * Logs the selection so the user can verify what's being compared against.
- * Callers needing an explicit override should bypass this and pass their ref
- * directly to {@link getBaselineCommit}.
  */
-export function resolveBaselineRef(): string {
+export function pickCanonicalRemote(branch: string): string | undefined {
 	const canonicals = findCanonicalRemotes();
 
 	if (canonicals.length === 0) {
-		const fallback = `origin/main`;
-		console.log(
-			`No remote found pointing at microsoft/FluidFramework; falling back to ${fallback}. ` +
-				`Pass --baseline <ref> to override.`,
-		);
-		return fallback;
+		console.log(`No remote found pointing at microsoft/FluidFramework.`);
+		return undefined;
 	}
 
 	if (canonicals.length === 1) {
 		const only = canonicals[0];
-		const ref = `${only.name}/main`;
-		console.log(`Using baseline ref ${ref} (remote ${only.name} → ${only.url}).`);
-		return ref;
+		console.log(`Canonical remote: ${only.name} (${only.url}).`);
+		return only.name;
 	}
 
 	const candidates: CanonicalCandidate[] = [];
 	const skipped: string[] = [];
 	for (const r of canonicals) {
-		const ref = `${r.name}/main`;
+		const ref = `${r.name}/${branch}`;
 		const tip = resolveTip(ref);
 		if (tip === undefined) {
 			skipped.push(ref);
@@ -151,15 +150,12 @@ export function resolveBaselineRef(): string {
 	}
 
 	if (candidates.length === 0) {
-		// All canonical remotes exist but none have a locally-tracked main.
-		// Fall back to the first remote's ref; merge-base will surface the real error.
-		const fallback = `${canonicals[0].name}/main`;
 		console.log(
 			`Multiple remotes point at microsoft/FluidFramework but none of [${skipped.join(
 				", ",
-			)}] are fetched locally; falling back to ${fallback}. Pass --baseline <ref> to override.`,
+			)}] are fetched locally.`,
 		);
-		return fallback;
+		return undefined;
 	}
 
 	const freshest = pickFreshest(candidates);
@@ -179,5 +175,5 @@ export function resolveBaselineRef(): string {
 		console.log(`  ${c.ref} → ${c.tip.slice(0, 10)}${marker}`);
 	}
 
-	return selected.ref;
+	return selected.name;
 }
