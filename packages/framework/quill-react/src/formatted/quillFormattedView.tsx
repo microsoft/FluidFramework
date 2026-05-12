@@ -34,15 +34,12 @@ import { runGuarded } from "../shared/index.js";
 
 import {
 	clipboardFormatMatcher,
-	defaultFont,
-	defaultSize,
 	formatToFullQuillAttributes,
 	formatToQuillAttributes,
 	lineTagToQuillAttributes,
 	parseLineTag,
 	quillAttributesToFormat,
 	quillAttributesToPartial,
-	sizeToQuillAttribute,
 } from "./quillAttributeUtils.js";
 
 // Re-export the public attribute helpers so the existing public surface of this module is preserved.
@@ -56,7 +53,6 @@ export {
 // Workaround for quill-delta's export style not working well with node16 module resolution.
 type Delta = DeltaPackage.default;
 type QuillDeltaOp = DeltaPackage.Op;
-type QuillAttributeMap = DeltaPackage.AttributeMap;
 const Delta = DeltaPackage.default;
 
 /**
