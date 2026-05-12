@@ -592,12 +592,14 @@ extends:
                     # Parallel artifact for analyzer.json. Kept separate from
                     # bundleAnalysis so the FF-internal telemetry handler (which walks
                     # every .json file under that artifact) doesn't pick this up.
-                    # Only published on non-PR (CI) builds so it can serve as the baseline
-                    # that PR builds compare against; PRs read their own analyzer.json
-                    # from artifacts/bundleAnalyzerJson locally and don't need to publish it.
+                    # Published on PR runs so the future GH-Actions diff workflow can
+                    # consume the PR-side input. Also published on non-PR runs of this
+                    # pipeline, though the canonical baseline source today is the
+                    # dedicated `Build - Client bundle size artifacts` pipeline; using
+                    # this output as a baseline source is a future consideration.
                     - output: pipelineArtifact
                       displayName: Publish Artifacts - bundle-analyzer-json
-                      condition: and( succeeded(), ne(variables['Build.Reason'], 'PullRequest') )
+                      condition: succeeded()
                       targetPath: $(Build.ArtifactStagingDirectory)/bundleAnalyzerJson
                       artifactName: bundleAnalyzerJson
                       sbomEnabled: false
