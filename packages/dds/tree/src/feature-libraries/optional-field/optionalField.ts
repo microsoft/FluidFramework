@@ -14,10 +14,11 @@ import {
 	type RevisionReplacer,
 	type RevisionTag,
 	areEqualChangeAtomIdOpts,
+	areEqualChangeAtomIds,
 	forbiddenFieldKindIdentifier,
 	makeChangeAtomId,
 } from "../../core/index.js";
-import type { IdAllocator, Mutable } from "../../util/index.js";
+import type { IdAllocator, Mutable, RangeQueryResult } from "../../util/index.js";
 import { nodeIdFromChangeAtom } from "../deltaUtils.js";
 import {
 	optionalIdentifier,
@@ -102,25 +103,14 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 		_genId: IdAllocator,
 		nodeManager: RebaseNodeManager,
 		_metadata: RebaseRevisionMetadata,
-		rebaseVersion: RebaseVersion,
 	): OptionalChangeset => {
 		const rebased: Mutable<OptionalChangeset> = {};
 
 		const rebasedChild = rebaseChild(newChange.childChange, overChange.childChange);
 		const overDetach = getEffectiveDetachId(overChange);
 
-		// Clients on rebase version 1 do not support node targeting detaches in optional fields, except in the case of pins.
-		// Composition ignores rebase version, and so will create and have to handle
-		// node detaches even when we are supporting collaboration with older clients.
-		// So in rebase version 1 we must rebase node detach (unless it is part of a pin) as if it were a clear.
-		const hasNodeDetachTreatedAsClear =
-			rebaseVersion < 2 &&
-			newChange.nodeDetach !== undefined &&
-			!nodeManager.doesNewAttachNodes(newChange.nodeDetach, 1).value;
-
 		if (overDetach !== undefined) {
-			const nodeDetach = hasNodeDetachTreatedAsClear ? undefined : newChange.nodeDetach;
-			nodeManager.rebaseOverDetach(overDetach, 1, nodeDetach, rebasedChild);
+			nodeManager.rebaseOverDetach(overDetach, 1, newChange.nodeDetach, rebasedChild);
 		}
 
 		const overAttach = overChange.valueReplace?.src;
@@ -150,20 +140,7 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 			}
 		}
 
-		if (hasNodeDetachTreatedAsClear && overDetach !== undefined) {
-			// In order to emulate the rebasing behavior of older clients,
-			// we convert the node detach to a clear.
-			const valueReplace: Mutable<Replace> = {
-				dst: newChange.nodeDetach,
-				isEmpty: overAttach === undefined,
-			};
-
-			if (newChange.valueReplace?.src !== undefined) {
-				valueReplace.src = newChange.valueReplace.src;
-			}
-
-			rebased.valueReplace = valueReplace;
-		} else if (newChange.valueReplace !== undefined) {
+		if (newChange.valueReplace !== undefined) {
 			const isEmpty =
 				overDetach !== undefined || overAttach !== undefined
 					? overAttach === undefined
@@ -527,10 +504,39 @@ export const optionalChangeHandler: FieldChangeHandler<
 		change.nodeDetach === undefined,
 
 	getNestedChanges,
+	squash,
 
 	createEmpty: () => ({}),
 	getCrossFieldKeys,
 };
+
+function squash(
+	change: OptionalChangeset,
+	rebaseVersion: RebaseVersion,
+	getInputRootId: (id: ChangeAtomId, count: number) => RangeQueryResult<ChangeAtomId>,
+): OptionalChangeset {
+	if (
+		rebaseVersion < 2 &&
+		change.nodeDetach !== undefined &&
+		(change.valueReplace?.src === undefined ||
+			!areEqualChangeAtomIds(
+				getInputRootId(change.valueReplace.src, 1).value,
+				change.nodeDetach,
+			))
+	) {
+		const squashed = { ...change };
+		delete squashed.nodeDetach;
+		const replace: Mutable<Replace> = { isEmpty: false, dst: change.nodeDetach };
+		if (change.valueReplace?.src !== undefined) {
+			replace.src = change.valueReplace.src;
+		}
+
+		squashed.valueReplace = replace;
+		return squashed;
+	}
+
+	return change;
+}
 
 function getCrossFieldKeys(change: OptionalChangeset): CrossFieldKeyRange[] {
 	const keys: CrossFieldKeyRange[] = [];

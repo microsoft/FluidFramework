@@ -10,7 +10,7 @@ import { sequenceFieldChangeCodecFactory } from "./sequenceFieldCodecs.js";
 import { type SequenceFieldEditor, sequenceFieldEditor } from "./sequenceFieldEditor.js";
 import { sequenceFieldToDelta } from "./sequenceFieldToDelta.js";
 import type { Changeset } from "./types.js";
-import { createEmpty, getCrossFieldKeys, getNestedChanges, isEmpty } from "./utils.js";
+import { createEmpty, getCrossFieldKeys, getNestedChanges, isEmpty, squash } from "./utils.js";
 
 export type SequenceFieldChangeHandler = FieldChangeHandler<Changeset, SequenceFieldEditor>;
 
@@ -23,4 +23,5 @@ export const sequenceFieldChangeHandler: SequenceFieldChangeHandler = {
 	getNestedChanges,
 	createEmpty,
 	getCrossFieldKeys,
+	squash,
 };

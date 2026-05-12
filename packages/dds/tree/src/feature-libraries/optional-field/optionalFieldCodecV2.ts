@@ -3,11 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { assert, fail } from "@fluidframework/core-utils/internal";
+import { assert } from "@fluidframework/core-utils/internal";
 import type { TAnySchema } from "@sinclair/typebox";
 
 import type { IJsonCodec, JsonCodecPart } from "../../codec/index.js";
 import {
+	areEqualChangeAtomIdOpts,
 	areEqualChangeAtomIds,
 	type ChangeAtomId,
 	type ChangeEncodingContext,
@@ -68,22 +69,21 @@ export function makeOptionalFieldCodec(
 		encode: (change: OptionalChangeset, context: FieldChangeEncodingContext) => {
 			const encoded: EncodedOptionalChangeset<TAnySchema> = {};
 
-			if (change.valueReplace !== undefined || change.nodeDetach !== undefined) {
-				// If the value replace is undefined, then there must be a node detach, implying that the field is not empty.
-				const isEmpty = change.valueReplace?.isEmpty ?? false;
+			assert(
+				change.nodeDetach === undefined ||
+					areEqualChangeAtomIdOpts(
+						context.getOutputRootId(change.nodeDetach, 1).value ?? change.nodeDetach,
+						change.valueReplace?.src,
+					),
+				"Node-targeting detaches are not supported in this codec version, unless they are part of a pin",
+			);
+
+			if (change.valueReplace !== undefined) {
 				const srcRegister = getSrcRegister(change, context);
 
-				// If this is a not a pin, we treat nodeDetach as if it were the clear ID.
-				const dst =
-					srcRegister === "self"
-						? (change.valueReplace?.dst ?? fail("Value replace should be defined for a pin"))
-						: (change.nodeDetach ??
-							change.valueReplace?.dst ??
-							fail("Either the value replace or node detach should be defined"));
-
 				encoded.r = {
-					e: isEmpty,
-					d: changeAtomIdCodec.encode(dst, context.baseContext),
+					e: change.valueReplace.isEmpty,
+					d: changeAtomIdCodec.encode(change.valueReplace.dst, context.baseContext),
 				};
 
 				if (srcRegister !== undefined) {

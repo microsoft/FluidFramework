@@ -68,6 +68,10 @@ export function getNestedChanges(change: Changeset): NestedChangesIndices {
 	return output;
 }
 
+export function squash(change: Changeset): Changeset {
+	return change;
+}
+
 export function isNewAttach(mark: Mark, revision?: RevisionTag): boolean {
 	return isNewAttachEffect(mark, mark.cellId, revision);
 }

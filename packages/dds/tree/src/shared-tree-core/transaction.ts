@@ -356,7 +356,7 @@ export class SquashingTransactionStack<
 									);
 								}
 								// Squash all the new commits on the transaction branch into a new commit on the original branch
-								const squash = rebaser.compose(transactionSteps);
+								const squash = rebaser.squash(rebaser.compose(transactionSteps));
 
 								if (targetPath.length === 0) {
 									// No changes were made on the original branch since the transaction began

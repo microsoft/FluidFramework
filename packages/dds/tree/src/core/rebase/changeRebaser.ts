@@ -97,6 +97,8 @@ export interface ChangeRebaser<TChangeset> {
 		ignoreNoChangeViolation?: boolean,
 	): TChangeset;
 
+	squash(change: TChangeset): TChangeset;
+
 	/**
 	 * Retrieves the set of revisions associated with the given change.
 	 */

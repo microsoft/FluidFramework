@@ -125,7 +125,6 @@ describe("GenericField", () => {
 				fakeIdAllocator,
 				failRebaseManager,
 				revisionMetadata,
-				1,
 			);
 			assert.deepEqual(actual, expected);
 		});
@@ -150,7 +149,6 @@ describe("GenericField", () => {
 				fakeIdAllocator,
 				failRebaseManager,
 				revisionMetadata,
-				1,
 			);
 			assert.deepEqual(actual, expected);
 		});

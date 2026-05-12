@@ -1364,6 +1364,9 @@ export class TreeCheckout implements ITreeCheckout {
 			);
 		}
 
+		// Squashing ensures that the undo is compatible with oldest support client versions.
+		change = tagChange(this.changeFamily.rebaser.squash(change.change), revisionForInvert);
+
 		this.#transaction.activeBranch.apply(
 			change,
 			kind === CommitKind.Default || kind === CommitKind.Redo

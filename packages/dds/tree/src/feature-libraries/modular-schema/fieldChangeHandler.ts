@@ -76,6 +76,12 @@ export interface FieldChangeHandler<
 	getCrossFieldKeys(change: TChangeset): CrossFieldKeyRange[];
 
 	createEmpty(): TChangeset;
+
+	squash(
+		change: TChangeset,
+		rebaseVersion: RebaseVersion,
+		getInputRootId: (id: ChangeAtomId, count: number) => RangeQueryResult<ChangeAtomId>,
+	): TChangeset;
 }
 
 export interface FieldChangeRebaser<TChangeset> {
@@ -120,7 +126,6 @@ export interface FieldChangeRebaser<TChangeset> {
 		genId: IdAllocator,
 		nodeManager: RebaseNodeManager,
 		revisionMetadata: RebaseRevisionMetadata,
-		rebaseVersion: RebaseVersion,
 	): TChangeset;
 
 	/**

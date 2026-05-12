@@ -110,6 +110,7 @@ export const valueHandler = {
 	getNestedChanges: (change) => [],
 	createEmpty: () => 0,
 	getCrossFieldKeys: (_change) => [],
+	squash: (change) => change,
 } satisfies FieldChangeHandler<ValueChangeset>;
 
 export const valueField = new FlexFieldKind(

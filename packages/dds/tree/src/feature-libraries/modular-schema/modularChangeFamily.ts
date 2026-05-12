@@ -1254,7 +1254,6 @@ export class ModularChangeFamily
 			genId,
 			new RebaseNodeManagerI(crossFieldTable, fieldId),
 			metadata,
-			crossFieldTable.rebaseVersion,
 		);
 
 		const rebasedFieldChange: FieldChange = {
@@ -1379,7 +1378,6 @@ export class ModularChangeFamily
 				genId,
 				new RebaseNodeManagerI(crossFieldTable, context.fieldId, allowInval),
 				rebaseMetadata,
-				crossFieldTable.rebaseVersion,
 			),
 		);
 	}
@@ -1581,7 +1579,6 @@ export class ModularChangeFamily
 				genId,
 				manager,
 				revisionMetadata,
-				crossFieldTable.rebaseVersion,
 			);
 
 			const rebasedFieldChange: FieldChange = {
@@ -1924,6 +1921,68 @@ export class ModularChangeFamily
 		return aggregated;
 	}
 
+	public squash(change: ModularChangeset): ModularChangeset {
+		const getInputRootId = (id: ChangeAtomId, count: number): RangeQueryResult<ChangeAtomId> =>
+			firstDetachIdFromAttachId(change.rootNodes, id, count);
+
+		return {
+			...change,
+			fieldChanges: this.squashFieldChanges(
+				change.fieldChanges,
+				change.rebaseVersion,
+				getInputRootId,
+			),
+			nodeChanges: brand(
+				change.nodeChanges.mapValues((nodeChange) =>
+					this.squashNodeChangeset(nodeChange, change.rebaseVersion, getInputRootId),
+				),
+			),
+		};
+	}
+
+	private squashFieldChanges(
+		change: FieldChangeMap,
+		rebaseVersion: RebaseVersion,
+		getInputRootId: (id: ChangeAtomId, count: number) => RangeQueryResult<ChangeAtomId>,
+	): FieldChangeMap {
+		const updated: FieldChangeMap = new Map();
+		for (const [field, fieldChange] of change.entries()) {
+			updated.set(field, this.squashFieldChange(fieldChange, rebaseVersion, getInputRootId));
+		}
+
+		return updated;
+	}
+
+	private squashFieldChange(
+		change: FieldChange,
+		rebaseVersion: RebaseVersion,
+		getInputRootId: (id: ChangeAtomId, count: number) => RangeQueryResult<ChangeAtomId>,
+	): FieldChange {
+		const squashedChange = this.getChangeHandler(change.fieldKind).squash(
+			change.change,
+			rebaseVersion,
+			getInputRootId,
+		);
+		return { ...change, change: brand(squashedChange) };
+	}
+
+	private squashNodeChangeset(
+		change: NodeChangeset,
+		rebaseVersion: RebaseVersion,
+		getInputRootId: (id: ChangeAtomId, count: number) => RangeQueryResult<ChangeAtomId>,
+	): NodeChangeset {
+		return change.fieldChanges === undefined
+			? change
+			: {
+					...change,
+					fieldChanges: this.squashFieldChanges(
+						change.fieldChanges,
+						rebaseVersion,
+						getInputRootId,
+					),
+				};
+	}
+
 	public changeRevision(
 		change: ModularChangeset,
 		replacer: RevisionReplacer,
@@ -1973,6 +2032,10 @@ export class ModularChangeFamily
 		updated.revisions = [{ revision: replacer.updatedRevision }];
 
 		return updated;
+	}
+
+	private getChangeHandler(fieldKind: FieldKindIdentifier): FieldChangeHandler<unknown> {
+		return getChangeHandler(this.fieldKinds, fieldKind);
 	}
 
 	private replaceNodeChangesetRevisions(
