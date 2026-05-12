@@ -67,10 +67,10 @@ export function getChangedSinceRef<P extends IPackage>(buildProject: IBuildProje
 export function getFiles(git: SimpleGit, directory: string): Promise<string[]>;
 
 // @public
-export function getMergeBaseRemote(git: SimpleGit, branch: string, remote?: string, localRef?: string, onDeepen?: (message: string) => void): Promise<string>;
+export function getMergeBaseRemote(git: SimpleGit, branch: string, remote?: string, localRef?: string, onStatus?: (message: string) => void): Promise<string>;
 
 // @public
-export function getPackageDirsAtRef(git: SimpleGit, ref?: string): Promise<Set<string>>;
+export function getPackageDirs(git: SimpleGit, ref?: string): Promise<Set<string>>;
 
 // @public
 export function getRemote(git: SimpleGit, partialUrl: string | undefined): Promise<string | undefined>;

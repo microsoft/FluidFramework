@@ -34,7 +34,7 @@ export {
 	getChangedSinceRef,
 	getFiles,
 	getMergeBaseRemote,
-	getPackageDirsAtRef,
+	getPackageDirs,
 	getRemote,
 	isFileInPackageDir,
 	listPackageJsonPaths,

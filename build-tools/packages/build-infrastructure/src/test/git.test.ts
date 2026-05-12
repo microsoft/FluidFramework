@@ -20,7 +20,7 @@ import {
 	getChangedSinceRef,
 	getFiles,
 	getMergeBaseRemote,
-	getPackageDirsAtRef,
+	getPackageDirs,
 	getRemote,
 	isFileInPackageDir,
 	listPackageJsonPaths,
@@ -239,11 +239,12 @@ function makeGitMock(options: {
 describe("getMergeBaseRemote", () => {
 	it("deepens shallow clone and retries when merge-base is missing", async () => {
 		const fetchCalls: string[][] = [];
-		const onDeepenMessages: string[] = [];
+		const statusMessages: string[] = [];
 		const mock = makeGitMock({
 			rawResponses: [
 				// First merge-base attempt fails (e.g. shallow clone too shallow).
-				() => {
+				(args) => {
+					expect(args).to.deep.equal(["merge-base", "refs/remotes/origin/main", "HEAD"]);
 					throw new Error("fatal: Not a valid object name");
 				},
 				// rev-parse --is-shallow-repository
@@ -263,24 +264,30 @@ describe("getMergeBaseRemote", () => {
 		});
 
 		const sha = await getMergeBaseRemote(mock, "main", "origin", "HEAD", (msg) =>
-			onDeepenMessages.push(msg),
+			statusMessages.push(msg),
 		);
 
 		expect(sha).to.equal("abc123");
 		// First fetch is the initial `git.fetch([remote])`; second is the deepen.
 		expect(fetchCalls).to.deep.equal([["origin"], ["--deepen", "1000", "origin", "main"]]);
-		expect(onDeepenMessages).to.have.lengthOf(1);
-		expect(onDeepenMessages[0]).to.match(/deepening and retrying/);
+		expect(statusMessages).to.have.lengthOf(1);
+		expect(statusMessages[0]).to.match(/deepening and retrying/);
 	});
 
 	it("rethrows the original error when the repo is not shallow", async () => {
 		const original = new Error("fatal: Not a valid object name");
 		const mock = makeGitMock({
 			rawResponses: [
-				() => {
+				// merge-base refs/remotes/origin/main HEAD
+				(args) => {
+					expect(args).to.deep.equal(["merge-base", "refs/remotes/origin/main", "HEAD"]);
 					throw original;
 				},
-				() => "false\n",
+				// rev-parse --is-shallow-repository
+				(args) => {
+					expect(args).to.deep.equal(["rev-parse", "--is-shallow-repository"]);
+					return "false\n";
+				},
 			],
 		});
 
@@ -295,14 +302,14 @@ describe("getMergeBaseRemote", () => {
 	it("rethrows the original error when no remote is provided", async () => {
 		const original = new Error("fatal: Not a valid object name");
 		const fetchCalls: string[][] = [];
+		const statusMessages: string[] = [];
 		const mock = makeGitMock({
 			rawResponses: [
-				() => {
+				// merge-base main HEAD
+				(args) => {
+					expect(args).to.deep.equal(["merge-base", "main", "HEAD"]);
 					throw original;
 				},
-				// rev-parse --is-shallow-repository is still consulted, but with no remote we
-				// must rethrow regardless.
-				() => "true\n",
 			],
 			onFetch: (args) => {
 				fetchCalls.push([...args]);
@@ -310,12 +317,16 @@ describe("getMergeBaseRemote", () => {
 		});
 
 		try {
-			await getMergeBaseRemote(mock, "main");
+			await getMergeBaseRemote(mock, "main", undefined, "HEAD", (msg) =>
+				statusMessages.push(msg),
+			);
 			expect.fail("expected getMergeBaseRemote to throw");
 		} catch (err) {
 			expect(err).to.equal(original);
 		}
 		expect(fetchCalls).to.deep.equal([]);
+		expect(statusMessages).to.have.lengthOf(1);
+		expect(statusMessages[0]).to.match(/no remote was provided/);
 	});
 });
 
@@ -323,6 +334,7 @@ describe("listPackageJsonPaths", () => {
 	it("filters ls-files output to only package.json entries (no ref)", async () => {
 		const mock = makeGitMock({
 			rawResponses: [
+				// ls-files
 				(args) => {
 					expect(args).to.deep.equal(["ls-files"]);
 					return [
@@ -347,6 +359,7 @@ describe("listPackageJsonPaths", () => {
 	it("filters ls-tree output to only package.json entries (with ref)", async () => {
 		const mock = makeGitMock({
 			rawResponses: [
+				// ls-tree -r --name-only abc123
 				(args) => {
 					expect(args).to.deep.equal(["ls-tree", "-r", "--name-only", "abc123"]);
 					return [
@@ -365,13 +378,16 @@ describe("listPackageJsonPaths", () => {
 	it("excludes paths that merely end with .json or contain package.json as a substring", async () => {
 		const mock = makeGitMock({
 			rawResponses: [
-				() =>
-					[
+				// ls-files
+				(args) => {
+					expect(args).to.deep.equal(["ls-files"]);
+					return [
 						"not-a-package.json.bak",
 						"package.jsonc",
 						"docs/package.json.md",
 						"packages/foo/package.json",
-					].join("\n"),
+					].join("\n");
+				},
 			],
 		});
 
@@ -380,18 +396,24 @@ describe("listPackageJsonPaths", () => {
 	});
 });
 
-describe("getPackageDirsAtRef", () => {
-	it("returns dirnames of all package.json paths and excludes the repo root", async () => {
+describe("getPackageDirs", () => {
+	it("returns dirnames of all package.json paths and excludes only the repo root", async () => {
 		const mock = makeGitMock({
 			rawResponses: [
-				() =>
-					["package.json", "packages/foo/package.json", "packages/bar/package.json"].join(
-						"\n",
-					),
+				// ls-files
+				(args) => {
+					expect(args).to.deep.equal(["ls-files"]);
+					return [
+						"package.json",
+						"packages/foo/package.json",
+						"packages/bar/package.json",
+						"server/package.json",
+					].join("\n");
+				},
 			],
 		});
 
-		const result = await getPackageDirsAtRef(mock);
-		expect([...result].sort()).to.deep.equal(["packages/bar", "packages/foo"]);
+		const result = await getPackageDirs(mock);
+		expect([...result].sort()).to.deep.equal(["packages/bar", "packages/foo", "server"]);
 	});
 });
