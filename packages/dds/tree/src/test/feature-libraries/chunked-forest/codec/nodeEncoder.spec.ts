@@ -214,7 +214,7 @@ describe("nodeShape", () => {
 			// Attaching a SharedTree to an already attached container can encode a forest containing identifiers
 			// that are not yet finalized. In such cases, the encoder should either emit the stable UUID or otherwise
 			// guarantee the correct originator ID is part of the summary. This test enforces the former behavior;
-			// if the lattert is implemented it would be reasonable to rework it.
+			// if the latter is implemented it would be reasonable to rework it.
 			it("emits the stable UUID for a non-finalized id when isSummary=true", () => {
 				const idCompressor = createIdCompressor(createSessionId());
 				const sessionSpaceId = idCompressor.generateCompressedId();

@@ -106,7 +106,7 @@ const SharedTree = configuredSharedTreeBetaLegacy({
 	// This is the default value. Before the write-side fix for "Summarizer creates the data store from the attach op summary and can summarize"
 	// was shipped, setting this to "true" also provided some verification that the read-side mitigation for the bug worked. The e2e test no longer
 	// covers this case (unit tests do), but the test still helps prevent regressions for the scenario.
-	healUnresolvableIdsOnDecode: false,
+	healUnresolvableIdentifiersOnDecode: false,
 });
 
 const treeOwningFactory = new DataObjectFactory({
