@@ -58,11 +58,12 @@ export class ADOSizeComparator {
 		 */
 		private readonly localReportPath: string,
 		/**
-		 * Ref to compare against. The baseline commit is computed as
-		 * `git merge-base <baselineRef> HEAD`, so this may be any argument
-		 * `git merge-base` accepts (remote branch, local branch, SHA, tag, …).
+		 * Target ref — the ref a PR would be opened against. The baseline commit
+		 * is computed as `git merge-base <targetRef> HEAD`, so this may be any
+		 * argument `git merge-base` accepts (remote branch, local branch, SHA,
+		 * tag, …).
 		 */
-		private readonly baselineRef: string,
+		private readonly targetRef: string,
 	) {}
 
 	/**
@@ -78,7 +79,7 @@ export class ADOSizeComparator {
 		// commit value in the synthesized error variant.
 		let baselineCommit: string | undefined;
 		try {
-			baselineCommit = getBaselineCommit(this.baselineRef);
+			baselineCommit = getBaselineCommit(this.targetRef);
 			console.log(`The baseline commit for this PR is ${baselineCommit}`);
 
 			const recentBuilds = await getBuilds(this.adoApi, {
