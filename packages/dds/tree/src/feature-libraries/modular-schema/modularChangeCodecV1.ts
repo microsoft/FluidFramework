@@ -330,6 +330,7 @@ export function encodeDetachedNodes(
 					schema: context.schema,
 					originatorId: context.originatorId,
 					idCompressor: context.idCompressor,
+					isSummary: context.isSummary,
 				}),
 			};
 }
@@ -353,6 +354,7 @@ export function decodeDetachedNodes(
 		encodeType: chunkCompressionStrategy,
 		originatorId: context.originatorId,
 		idCompressor: context.idCompressor,
+		isSummary: context.isSummary,
 		healUnresolvableIdsOnDecode: context.healUnresolvableIdsOnDecode,
 		sharedObjectId: context.sharedObjectId,
 	});

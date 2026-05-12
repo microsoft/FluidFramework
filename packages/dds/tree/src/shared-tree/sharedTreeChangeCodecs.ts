@@ -194,6 +194,7 @@ function makeSharedTreeChangeCodec(
 								schema: schemaAndPolicy,
 								idCompressor: context.idCompressor,
 								revision: context.revision,
+								isSummary: context.isSummary,
 							}),
 						});
 					} else if (decodedChange.type === "schema") {

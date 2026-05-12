@@ -92,6 +92,7 @@ function makeLoggingDecoder(log: string[], chunk: TreeChunk, message?: string): 
 const idDecodingContext = {
 	idCompressor: testIdCompressor,
 	originatorId: testIdCompressor.localSessionId,
+	isSummary: false,
 };
 
 describe("chunkDecoding", () => {

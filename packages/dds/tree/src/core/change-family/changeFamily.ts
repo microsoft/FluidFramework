@@ -26,9 +26,21 @@ export interface ChangeEncodingContext {
 	readonly idCompressor: IIdCompressor;
 	readonly schema?: SchemaAndPolicy;
 	/**
+	 * `true` when this context is encoding to or decoding from a summary blob.
+	 * `false` when this context is for an op (or any other non-summary path,
+	 * including utility encoders that aren't tied to persistence).
+	 *
+	 * @remarks
+	 * Used to gate decode-time recovery behavior — for example, healing of
+	 * unresolvable identifier IDs — that should only run when loading a
+	 * (possibly broken) attach-summary blob, never when applying ops.
+	 */
+	readonly isSummary: boolean;
+	/**
 	 * If `true`, identifier values that the local id-compressor cannot resolve
 	 * during decode are healed into deterministic stable UUIDs instead of
 	 * throwing. See `FieldBatchEncodingContext.healUnresolvableIdsOnDecode`.
+	 * Only takes effect when `isSummary` is also `true`.
 	 */
 	readonly healUnresolvableIdsOnDecode?: boolean;
 	/**

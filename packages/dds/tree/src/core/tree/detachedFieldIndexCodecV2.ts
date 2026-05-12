@@ -49,6 +49,8 @@ class MajorCodec implements IJsonCodec<Major> {
 			originatorId: this.revisionTagCodec.localSessionId,
 			idCompressor: this.idCompressor,
 			revision: undefined,
+			// DetachedFieldIndex codecs are only used by the summarizer.
+			isSummary: true,
 		});
 	}
 }

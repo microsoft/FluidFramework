@@ -61,6 +61,10 @@ export interface IdDecodingContext {
 	 */
 	originatorId: SessionId;
 	/**
+	 * See {@link FieldBatchEncodingContext.isSummary}.
+	 */
+	isSummary: boolean;
+	/**
 	 * See {@link FieldBatchEncodingContext.healUnresolvableIdsOnDecode}.
 	 */
 	healUnresolvableIdsOnDecode?: boolean;
@@ -157,12 +161,17 @@ export function readValue(
 				);
 			} catch (error) {
 				// Documents written before the encode-side fix for non-finalized identifier
-				// values (commit d43d50d7563) can persist negative op-space IDs that are no
+				// values can persist negative op-space IDs that are no
 				// longer resolvable once the originating session's local state has been
-				// stripped (attach-summary blobs reused as handles). When the heal-on-decode
-				// option is on, synthesize a deterministic stable UUID so all readers of
-				// the same blob agree on the resulting value.
+				// stripped (attach-summary blobs reused as handles). When loading such a
+				// summary with the heal-on-decode option on, synthesize a deterministic
+				// stable UUID so all readers of the same blob agree on the resulting value.
+				//
+				// The heal path is intentionally restricted to summary loads — an
+				// unresolvable id encountered while applying an op should still surface as
+				// an error, since it indicates a real bug rather than a recoverable state.
 				if (
+					idDecodingContext.isSummary === true &&
 					idDecodingContext.healUnresolvableIdsOnDecode === true &&
 					idDecodingContext.sharedObjectId !== undefined
 				) {

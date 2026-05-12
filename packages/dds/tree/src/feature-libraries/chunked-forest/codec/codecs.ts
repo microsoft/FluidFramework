@@ -107,6 +107,12 @@ export interface FieldBatchEncodingContext {
 	 */
 	readonly incrementalEncoderDecoder?: IncrementalEncoderDecoder;
 	/**
+	 * `true` when encoding to or decoding from a summary blob. `false` for
+	 * op-stream encode/decode paths and for utility encoders that are not
+	 * tied to a persisted document. Healing behavior is gated on this flag.
+	 */
+	readonly isSummary: boolean;
+	/**
 	 * If `true`, when an op-space compressed ID encountered while decoding
 	 * cannot be resolved by the local id-compressor (e.g. the attach-summary
 	 * blob's originator session state was stripped), a deterministic stable
@@ -114,8 +120,8 @@ export interface FieldBatchEncodingContext {
 	 * @remarks
 	 * Off by default. Used only to recover documents whose attach summary was
 	 * written with non-finalized op-space IDs before the encode-side fix
-	 * (commit d43d50d7563) shipped. See
-	 * {@link SharedTreeOptionsBeta.healUnresolvableIdsOnDecode}.
+	 * (commit d43d50d7563) shipped. Only takes effect when `isSummary` is
+	 * also `true`. See {@link SharedTreeOptionsBeta.healUnresolvableIdsOnDecode}.
 	 */
 	readonly healUnresolvableIdsOnDecode?: boolean;
 	/**
@@ -208,6 +214,7 @@ function makeFieldBatchCodecForVersion(
 				{
 					idCompressor: context.idCompressor,
 					originatorId: context.originatorId,
+					isSummary: context.isSummary,
 					healUnresolvableIdsOnDecode: context.healUnresolvableIdsOnDecode,
 					sharedObjectId: context.sharedObjectId,
 				},

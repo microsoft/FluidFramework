@@ -110,6 +110,7 @@ export class EditManagerSummarizer<TChangeset>
 		const context: EditManagerEncodingContext = {
 			idCompressor: this.idCompressor,
 			schema: this.schemaAndPolicy,
+			isSummary: true,
 			healUnresolvableIdsOnDecode: this.healUnresolvableIdsOnDecode,
 			sharedObjectId: this.sharedObjectId,
 		};
@@ -135,6 +136,7 @@ export class EditManagerSummarizer<TChangeset>
 		const summary = parse(bufferToString(schemaBuffer, "utf8")) as JsonCompatibleReadOnly;
 		const data = this.codec.decode(summary, {
 			idCompressor: this.idCompressor,
+			isSummary: true,
 			healUnresolvableIdsOnDecode: this.healUnresolvableIdsOnDecode,
 			sharedObjectId: this.sharedObjectId,
 		});

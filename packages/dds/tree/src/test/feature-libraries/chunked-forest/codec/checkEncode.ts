@@ -111,10 +111,12 @@ function testDecode(
 			? {
 					idCompressor: testIdCompressor,
 					originatorId: testIdCompressor.localSessionId,
+					isSummary: false,
 				}
 			: {
 					idCompressor,
 					originatorId: idCompressor.localSessionId,
+					isSummary: false,
 				},
 		incrementalDecoder,
 	);
@@ -148,10 +150,12 @@ function testDecode(
 				? {
 						idCompressor: testIdCompressor,
 						originatorId: testIdCompressor.localSessionId,
+						isSummary: false,
 					}
 				: {
 						idCompressor,
 						originatorId: idCompressor.localSessionId,
+						isSummary: false,
 					},
 			incrementalDecoder,
 		);

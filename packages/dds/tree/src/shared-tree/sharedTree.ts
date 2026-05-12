@@ -246,6 +246,9 @@ export class SharedTreeKernel
 			encodeType: options.treeEncodeType,
 			originatorId: idCompressor.localSessionId,
 			idCompressor,
+			// ForestSummarizer is the only consumer of this context, and it
+			// only invokes the codec in summary encode / load paths.
+			isSummary: true,
 			healUnresolvableIdsOnDecode: options.healUnresolvableIdsOnDecode,
 			sharedObjectId: sharedObject.id,
 		};
