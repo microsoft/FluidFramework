@@ -1372,7 +1372,9 @@ export type SharedStringSegment = TextSegment | Marker;
 export const SharedTree: SharedObjectKind<ITree>;
 
 // @beta @input
-export type SharedTreeOptionsBeta = ForestOptions & Partial<CodecWriteOptionsBeta>;
+export interface SharedTreeOptionsBeta extends ForestOptions, Partial<CodecWriteOptionsBeta> {
+    readonly healUnresolvableIdentifiersOnDecode?: boolean;
+}
 
 export { Side }
 

@@ -106,6 +106,33 @@ export interface FieldBatchEncodingContext {
 	 * This will be defined if incremental encoding is supported and enabled.
 	 */
 	readonly incrementalEncoderDecoder?: IncrementalEncoderDecoder;
+	/**
+	 * `true` when encoding to or decoding from a summary blob. `false` for
+	 * op-stream encode/decode paths and for utility encoders that are not
+	 * tied to a persisted document. Healing behavior is gated on this flag.
+	 */
+	readonly isSummary: boolean;
+	/**
+	 * If `true`, when an op-space compressed ID encountered while decoding
+	 * cannot be resolved by the local id-compressor (e.g. the attach-summary
+	 * blob's originator session state was stripped), a deterministic stable
+	 * UUID derived from `sharedObjectId` is returned instead of throwing.
+	 * @remarks
+	 * Off by default. Used only to recover documents whose attach summary was
+	 * written with non-finalized op-space IDs before the encode-side fix
+	 * shipped. Only takes effect when `isSummary` is also `true`.
+	 * See {@link SharedTreeOptionsBeta.healUnresolvableIdentifiersOnDecode}.
+	 */
+	readonly healUnresolvableIdentifiersOnDecode?: boolean;
+	/**
+	 * The SharedTree's shared-object id, used as input to the deterministic
+	 * UUID derivation when `healUnresolvableIdentifiersOnDecode` triggers. Required
+	 * for that path; ignored otherwise.
+	 * @remarks
+	 * This allows us to ensure that multiple attaches,
+	 * in the same or different documents, with the same session offsets, get different UUIDs.
+	 */
+	readonly sharedObjectId?: string;
 }
 /**
  * @remarks
@@ -190,6 +217,9 @@ function makeFieldBatchCodecForVersion(
 				{
 					idCompressor: context.idCompressor,
 					originatorId: context.originatorId,
+					isSummary: context.isSummary,
+					healUnresolvableIdentifiersOnDecode: context.healUnresolvableIdentifiersOnDecode,
+					sharedObjectId: context.sharedObjectId,
 				},
 				context.incrementalEncoderDecoder,
 			).map((chunk) => chunk.cursor());

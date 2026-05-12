@@ -127,6 +127,7 @@ function makeFieldBatchCodec(
 					return decode(data, {
 						idCompressor: fieldBatchContext.idCompressor,
 						originatorId: fieldBatchContext.originatorId,
+						isSummary: false,
 					}).map((chunk) => chunk.cursor());
 				},
 				schema: format,
@@ -169,11 +170,13 @@ describe("compressedEncode", () => {
 						encodeType: TreeCompressionStrategy.Compressed,
 						idCompressor: testIdCompressor,
 						originatorId: testIdCompressor.localSessionId,
+						isSummary: false,
 					});
 					const decoded = codec.decode(result, {
 						encodeType: TreeCompressionStrategy.Compressed,
 						idCompressor: testIdCompressor,
 						originatorId: testIdCompressor.localSessionId,
+						isSummary: false,
 					});
 					const decodedJson = decoded.map(jsonableTreeFromFieldCursor);
 					assert.deepEqual([[jsonable]], decodedJson);
@@ -211,6 +214,7 @@ describe("compressedEncode", () => {
 				const decoded = readValue(stream, shape, {
 					idCompressor: testIdCompressor,
 					originatorId: testIdCompressor.localSessionId,
+					isSummary: false,
 				});
 				assert(stream.offset === stream.data.length);
 				assert.deepEqual(decoded, value);
