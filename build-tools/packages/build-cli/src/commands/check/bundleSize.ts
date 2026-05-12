@@ -53,19 +53,16 @@ export default class CheckBundleSize extends BaseCommand<typeof CheckBundleSize>
 			default: "main",
 			required: false,
 		}),
-		adoApiToken: Flags.string({
-			description:
-				"ADO PAT for accessing the baseline build. When absent, anonymous reads are used (suitable for fork PR builds where $(System.AccessToken) isn't populated).",
-			env: "ADO_API_TOKEN",
-			required: false,
-		}),
 		...BaseCommand.flags,
 	} as const;
 
 	public async run(): Promise<CheckBundleSizeResult> {
-		const { adoApiToken, localReportPath, targetBranch } = this.flags;
+		const { localReportPath, targetBranch } = this.flags;
 
-		const adoApi = getAzureDevopsApi(adoApiToken, adoConstants.orgUrl);
+		// Anonymous reads work for the public ADO project. Authenticated access isn't
+		// needed at the scale this command operates at; rate-limit concerns belong to
+		// any future automated consumer (which authenticates at the library layer).
+		const adoApi = getAzureDevopsApi(undefined, adoConstants.orgUrl);
 		const sizeComparator = new ADOSizeComparator(
 			adoConstants,
 			adoApi,

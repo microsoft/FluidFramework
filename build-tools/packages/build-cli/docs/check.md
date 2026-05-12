@@ -73,12 +73,9 @@ Compare the locally-collected bundle reports against the CI build of the merge-b
 
 ```
 USAGE
-  $ flub check bundleSize [--json] [-v | --quiet] [--localReportPath <value>] [--targetBranch <value>] [--adoApiToken
-    <value>]
+  $ flub check bundleSize [--json] [-v | --quiet] [--localReportPath <value>] [--targetBranch <value>]
 
 FLAGS
-  --adoApiToken=<value>      [env: ADO_API_TOKEN] ADO PAT for accessing the baseline build. When absent, anonymous reads
-                             are used (suitable for fork PR builds where $(System.AccessToken) isn't populated).
   --localReportPath=<value>  [default: ./artifacts/bundleAnalyzerJson] Path to the locally-collected bundle reports (as
                              produced by `flub generate bundleStats`).
   --targetBranch=<value>     [default: main] Name of the target branch to compute the baseline from.
