@@ -28,7 +28,7 @@ describe("azureDevops/pipelineCommands", () => {
 		});
 
 		it("escapes reserved characters in the value", () => {
-			// `;` and `]` and `%` and CR/LF must be escaped in the data portion.
+			// `%` and CR/LF (but not `;` and `]`) must be escaped in the data portion.
 			assert.equal(
 				formatSetVariable("myVar", "a;b]c%d\re\nf"),
 				"##vso[task.setvariable variable=myVar]a;b]c%25d%0De%0Af",
