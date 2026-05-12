@@ -136,8 +136,11 @@ describeCompat(
 				},
 			},
 		);
-
-		it("Summarizer creates the data store from the attach op summary and a new container can load and edit the tree", async () => {
+		// This test reproduces a bug with SharedTree's encoding/decoding. Non-finalized op-space IDs can legitimately appear
+		// in attach summaries. At the time of writing, SharedTree encoded the short ID but failed to include originator data
+		// in the same summary (so that remote clients can decompress with respect to the actual client that generated the ID).
+		// The attempt to summarize therefore failed on attempting to decode the non-finalized ID.
+		it("Summarizer creates the data store from the attach op summary and can summarize", async () => {
 			// 1. Create a container with an attached default data store.
 			const container1 = await provider.createContainer(runtimeFactory);
 			const defaultDataObject = (await container1.getEntryPoint()) as DefaultDataObject;
@@ -155,14 +158,12 @@ describeCompat(
 			//    that carries the data store's initial summary (including the
 			//    SharedTree summary, which encodes the local ids).
 			defaultDataObject.storeHandle("treeDataStore", treeDataStore.IFluidHandle);
-			// Keep the IDataStore reference reachable so it isn't GC'd.
-			// void treeDataStore;
 
 			await provider.ensureSynchronized();
 
 			// 4. Create a summarizer (which loads the data store from the
 			//    attach op's summary) and run an on-demand summary.
-			// This fails with `Unknown op space ID`.
+			// Originallly, would fail with `Unknown op space ID` in ID compressor.
 			const { summarizer } = await createSummarizerFromFactory(
 				provider,
 				container1,

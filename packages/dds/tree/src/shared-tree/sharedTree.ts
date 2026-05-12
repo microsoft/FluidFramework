@@ -577,9 +577,9 @@ export function getCodecTreeForSharedTreeFormat(
  */
 export interface SharedTreeOptionsBeta extends ForestOptions, Partial<CodecWriteOptionsBeta> {
 	/**
-	 * When `true`, an attempt to decode a persisted compressed ID that the local
+	 * When `true`, an attempt to decode a non-finalized compressed ID that the local
 	 * id-compressor cannot resolve produces a deterministic stable UUID (a "healed"
-	 * revision tag) instead of throwing.
+	 * ID) instead of throwing.
 	 *
 	 * @remarks
 	 * Defaults to `false`.
@@ -590,12 +590,15 @@ export interface SharedTreeOptionsBeta extends ForestOptions, Partial<CodecWrite
 	 * session state is stripped. With this flag enabled, unresolvable IDs are replaced
 	 * at decode time with stable UUIDs derived deterministically from the originator
 	 * session id and the unresolvable op-space integer, so every reader of the same
-	 * blob agrees on the resulting in-memory tag. Healed tags are written back out
-	 * at the next summary in their stable UUID form, so the inconsistency does not
-	 * need to be re-healed on every load.
+	 * blob (other than the originator) agrees on the resulting in-memory id.
+	 * Healed ids are written back out at the next summary in their stable UUID form,
+	 * so the inconsistency does not need to be re-healed on every load.
 	 *
 	 * Off by default because enabling it for documents that are not actually corrupt
 	 * would mask genuine bugs that otherwise surface as decode failures.
+	 *
+	 * This mitigation is also not perfect as the client that originated the non-finalized
+	 * short ID will not apply the same "healing" and will continue to use the original ID.
 	 */
 	readonly healUnresolvableIdsOnDecode?: boolean;
 }
