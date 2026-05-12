@@ -436,7 +436,6 @@ export interface ILoader extends Partial<IProvideLoader> {
 export type ILoaderOptions = {
     cache?: boolean;
     client?: IClient;
-    enableOfflineLoad?: boolean;
     provideScopeLoader?: boolean;
     maxClientLeaveWaitTime?: number;
 };

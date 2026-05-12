@@ -611,11 +611,6 @@ export type ILoaderOptions = {
 	client?: IClient;
 
 	/**
-	 * @deprecated Do not use.
-	 */
-	enableOfflineLoad?: boolean;
-
-	/**
 	 * Provide the current Loader through the scope object when creating Containers. It is added
 	 * as the `ILoader` property, and will overwrite an existing property of the same name on the
 	 * scope. Useful for when the host wants to provide the current Loader's functionality to
