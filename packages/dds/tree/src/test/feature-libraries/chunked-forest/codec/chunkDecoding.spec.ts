@@ -6,6 +6,12 @@
 import { strict as assert } from "node:assert";
 
 import { compareArrays } from "@fluidframework/core-utils/internal";
+import type { SessionId } from "@fluidframework/id-compressor";
+import {
+	createIdCompressor,
+	createSessionId,
+	isStableId,
+} from "@fluidframework/id-compressor/internal";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 
 import type { TreeNodeSchemaIdentifier, TreeValue } from "../../../../core/index.js";
@@ -18,6 +24,7 @@ import {
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/chunkCodecUtilities.js";
 import {
+	type IdDecodingContext,
 	InlineArrayDecoder,
 	IncrementalChunkDecoder,
 	NestedArrayDecoder,
@@ -151,6 +158,144 @@ describe("chunkDecoding", () => {
 				const stream: StreamCursor = { data: [compressedId], offset: 0 };
 				assert.equal(readValue(stream, SpecialField.Identifier, idDecodingContext), stableId);
 				assert.equal(stream.offset, 1);
+			});
+
+			describe("healUnresolvableIdsOnDecode", () => {
+				/**
+				 * Mints an op-space ID that is unresolvable by `testIdCompressor`:
+				 * generated in a fresh foreign compressor whose session is unknown
+				 * to `testIdCompressor`, so `normalizeToSessionSpace` will throw.
+				 */
+				function makeUnresolvableOpSpaceId(): {
+					opSpaceId: number;
+					originatorId: SessionId;
+				} {
+					const foreignSession = createSessionId();
+					const foreignCompressor = createIdCompressor(foreignSession);
+					const sessionSpaceId = foreignCompressor.generateCompressedId();
+					const opSpaceId = foreignCompressor.normalizeToOpSpace(sessionSpaceId);
+					return { opSpaceId, originatorId: foreignSession };
+				}
+
+				function makeStream(opSpaceId: number): StreamCursor {
+					return { data: [opSpaceId], offset: 0 };
+				}
+
+				// Error message thrown by chunkDecoding.readValue when it detects a
+				// non-finalized op-space id during a summary load and healing is not
+				// available. See `chunkDecoding.ts`.
+				const nonFinalizedDuringSummaryError =
+					new Error('Encountered a non-finalized op-space identifier while loading a summary.');
+
+				it("throws when the heal flag is not enabled", () => {
+					const { opSpaceId, originatorId } = makeUnresolvableOpSpaceId();
+					const ctx: IdDecodingContext = {
+						idCompressor: testIdCompressor,
+						originatorId,
+						isSummary: true,
+						sharedObjectId: "doc-a",
+					};
+					assert.throws(
+						() => readValue(makeStream(opSpaceId), SpecialField.Identifier, ctx),
+						nonFinalizedDuringSummaryError,
+					);
+				});
+
+				it("heals to a stable UUID when enabled during a summary load", () => {
+					const { opSpaceId, originatorId } = makeUnresolvableOpSpaceId();
+					const ctx: IdDecodingContext = {
+						idCompressor: testIdCompressor,
+						originatorId,
+						isSummary: true,
+						healUnresolvableIdsOnDecode: true,
+						sharedObjectId: "doc-a",
+					};
+					const result = readValue(makeStream(opSpaceId), SpecialField.Identifier, ctx);
+					assert.equal(typeof result, "string");
+					assert.match(result as string, /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i);
+				});
+
+				it("produces the same UUID for the same (sharedObjectId, opSpaceId) inputs", () => {
+					const { opSpaceId, originatorId } = makeUnresolvableOpSpaceId();
+					const heal = (): unknown =>
+						readValue(makeStream(opSpaceId), SpecialField.Identifier, {
+							idCompressor: testIdCompressor,
+							originatorId,
+							isSummary: true,
+							healUnresolvableIdsOnDecode: true,
+							sharedObjectId: "doc-a",
+						});
+					assert.equal(heal(), heal());
+				});
+
+				it("produces different UUIDs for different sharedObjectIds", () => {
+					const { opSpaceId, originatorId } = makeUnresolvableOpSpaceId();
+					const heal = (sharedObjectId: string): unknown =>
+						readValue(makeStream(opSpaceId), SpecialField.Identifier, {
+							idCompressor: testIdCompressor,
+							originatorId,
+							isSummary: true,
+							healUnresolvableIdsOnDecode: true,
+							sharedObjectId,
+						});
+					assert.notEqual(heal("doc-a"), heal("doc-b"));
+				});
+
+				it("produces different UUIDs for different op-space ids", () => {
+					const foreignSession = createSessionId();
+					const foreignCompressor = createIdCompressor(foreignSession);
+					const opSpaceA = foreignCompressor.normalizeToOpSpace(
+						foreignCompressor.generateCompressedId(),
+					);
+					const opSpaceB = foreignCompressor.normalizeToOpSpace(
+						foreignCompressor.generateCompressedId(),
+					);
+					assert.notEqual(opSpaceA, opSpaceB);
+					const heal = (opSpaceId: number): unknown =>
+						readValue(makeStream(opSpaceId), SpecialField.Identifier, {
+							idCompressor: testIdCompressor,
+							originatorId: foreignSession,
+							isSummary: true,
+							healUnresolvableIdsOnDecode: true,
+							sharedObjectId: "doc-a",
+						});
+					assert.notEqual(heal(opSpaceA), heal(opSpaceB));
+				});
+
+				it("does not heal during op decode (isSummary === false)", () => {
+					const { opSpaceId, originatorId } = makeUnresolvableOpSpaceId();
+					const ctx: IdDecodingContext = {
+						idCompressor: testIdCompressor,
+						originatorId,
+						isSummary: false,
+						healUnresolvableIdsOnDecode: true,
+						sharedObjectId: "doc-a",
+					};
+					// Not a summary, so chunkDecoding's non-finalized-id branch does not
+					// fire; the id-compressor's own resolution failure is the symptom.
+					// Match the *type* of failure rather than its specific message, since
+					// the id-compressor's wording varies across the scenarios that hit it.
+					assert.throws(
+						() => readValue(makeStream(opSpaceId), SpecialField.Identifier, ctx),
+						(err: unknown) => err instanceof Error,
+					);
+				});
+
+				it("returns the normally-resolved value when the id is resolvable, even with heal enabled", () => {
+					// `testIdCompressor` knows about its own session, so this id is
+					// resolvable and should never take the heal path.
+					const compressedId = testIdCompressor.generateCompressedId();
+					const opSpaceId = testIdCompressor.normalizeToOpSpace(compressedId);
+					const expected = testIdCompressor.decompress(compressedId);
+					const result = readValue(makeStream(opSpaceId), SpecialField.Identifier, {
+						idCompressor: testIdCompressor,
+						originatorId: testIdCompressor.localSessionId,
+						isSummary: true,
+						healUnresolvableIdsOnDecode: true,
+						sharedObjectId: "doc-a",
+					});
+					assert.equal(result, expected);
+				});
 			});
 		});
 	});

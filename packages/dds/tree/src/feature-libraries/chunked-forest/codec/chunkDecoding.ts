@@ -75,10 +75,8 @@ export interface IdDecodingContext {
 }
 
 /**
- * Fixed v5 namespace for the "heal an unresolvable identifier into a stable
- * UUID" path in {@link readValue}. Any randomly-generated v4 UUID would work;
- * the value is baked in so synthesized identifiers are stable across versions
- * of this codec.
+ * Arbitrary namespace for the "heal an unresolvable identifier into a stable UUID"
+ * path in {@link readValue}. This scheme requires consensus across all clients to function.
  */
 const healingNamespace = "1b671a64-40d5-491e-99b0-da01ff1f3341";
 
@@ -152,36 +150,36 @@ export function readValue(
 				return streamValue;
 			}
 			const idCompressor = idDecodingContext.idCompressor;
-			try {
-				return idCompressor.decompress(
-					idCompressor.normalizeToSessionSpace(
-						streamValue as OpSpaceCompressedId,
-						idDecodingContext.originatorId,
-					),
-				);
-			} catch (error) {
-				// Documents written before the encode-side fix for non-finalized identifier
-				// values can persist negative op-space IDs that are no
-				// longer resolvable once the originating session's local state has been
-				// stripped (attach-summary blobs reused as handles). When loading such a
-				// summary with the heal-on-decode option on, synthesize a deterministic
-				// stable UUID so all readers of the same blob agree on the resulting value.
-				//
-				// The heal path is intentionally restricted to summary loads — an
-				// unresolvable id encountered while applying an op should still surface as
-				// an error, since it indicates a real bug rather than a recoverable state.
+			if (idDecodingContext.isSummary === true && streamValue < 0) {
 				if (
-					idDecodingContext.isSummary === true &&
 					idDecodingContext.healUnresolvableIdsOnDecode === true &&
 					idDecodingContext.sharedObjectId !== undefined
 				) {
+					// Documents written before the encode-side fix for non-finalized identifier
+					// values can persist negative op-space IDs that are no
+					// longer resolvable once the originating session's local state has been stripped.
+					// When loading such a summary with the heal-on-decode option on, synthesize a deterministic
+					// stable UUID so all readers of the same blob agree on the resulting value.
+					//
+					// The heal path is intentionally restricted to summary loads — an
+					// unresolvable id encountered while applying an op should still surface as
+					// an error, since it indicates a real bug rather than a recoverable state.
 					return uuidV5(
 						`${idDecodingContext.sharedObjectId}|${streamValue}`,
 						healingNamespace,
 					);
 				}
-				throw error;
+				// See `SharedTreeOptionsBeta.healUnresolvableIdsOnDecode` for details on this error.
+				throw new Error(
+					'Encountered a non-finalized op-space identifier while loading a summary.',
+				);
 			}
+			return idCompressor.decompress(
+				idCompressor.normalizeToSessionSpace(
+					streamValue as OpSpaceCompressedId,
+					idDecodingContext.originatorId,
+				),
+			);
 		} else {
 			// EncodedCounter case:
 			unreachableCase(shape, "decoding values as deltas is not yet supported");
