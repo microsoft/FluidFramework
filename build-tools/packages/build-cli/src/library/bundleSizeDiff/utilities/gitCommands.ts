@@ -88,19 +88,25 @@ function isAncestor(ancestor: string, descendant: string): boolean {
 }
 
 /**
- * Among candidates with resolvable tips, return those whose tip is not a
- * strict ancestor of any other candidate's tip — i.e. the freshest tips.
- * Equal tips are not considered ancestors of each other for this purpose;
- * a single linear history produces exactly one winner, divergent histories
- * produce multiple.
+ * Among candidates with resolved tips, return those whose tip is the freshest
+ * — i.e. not a strict ancestor of any other candidate's tip. A single line of
+ * history produces exactly one winner; equal tips don't dominate each other,
+ * and truly divergent histories (rare for `main`) produce multiple winners.
+ *
+ * Precondition: every candidate has a defined `tip`.
  */
 function pickFreshest(eligible: CanonicalCandidate[]): CanonicalCandidate[] {
-	return eligible.filter(
-		(a) =>
-			!eligible.some(
-				(b) => a !== b && a.tip !== b.tip && isAncestor(a.tip ?? "", b.tip ?? ""),
-			),
-	);
+	function hasStrictlyNewerPeer(candidate: CanonicalCandidate): boolean {
+		const candidateTip = candidate.tip!;
+		return eligible.some((other) => {
+			if (other === candidate) return false;
+			if (other.tip === candidateTip) return false; // ties don't dominate
+			// candidate's tip reachable from other's tip → other is strictly newer
+			return isAncestor(candidateTip, other.tip!);
+		});
+	}
+
+	return eligible.filter((candidate) => !hasStrictlyNewerPeer(candidate));
 }
 
 /**
