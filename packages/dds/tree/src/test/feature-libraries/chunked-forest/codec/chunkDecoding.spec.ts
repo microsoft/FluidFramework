@@ -208,10 +208,7 @@ describe("chunkDecoding", () => {
 					};
 					const result = readValue(makeStream(opSpaceId), SpecialField.Identifier, ctx);
 					assert.equal(typeof result, "string");
-					assert.match(
-						result as string,
-						/^[\da-f]{8}-[\da-f]{4}-[1-5][\da-f]{3}-[89ab][\da-f]{3}-[\da-f]{12}$/i,
-					);
+					assert.equal(result as string, "d5d534e7-5e2c-53c3-b26c-9fd81e6fbc37");
 				});
 
 				it("produces the same UUID for the same (sharedObjectId, opSpaceId) inputs", () => {

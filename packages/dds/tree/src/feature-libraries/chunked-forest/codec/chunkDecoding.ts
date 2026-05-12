@@ -76,7 +76,7 @@ export interface IdDecodingContext {
 }
 
 /**
- * Arbitrary namespace for the "heal an unresolvable identifier into a stable UUID"
+ * Random v4 UUID generated as a namespace for the "heal an unresolvable identifier into a stable UUID"
  * path in {@link readValue}. This scheme requires consensus across all clients to function.
  */
 const healingNamespace = "f8a89df3-6882-400f-b913-4c1f6f0157bd";
@@ -151,6 +151,9 @@ export function readValue(
 				return streamValue;
 			}
 			const idCompressor = idDecodingContext.idCompressor;
+			// OpSpaceCompressedIds are negative, and require a session-id to compute their value.
+			// Due to a bug, we have some special casing for them (see below).
+			// TODO: isFinalId should probably be exported from id-compressor and that could be used to do the narrowing here.
 			if (idDecodingContext.isSummary === true && streamValue < 0) {
 				if (
 					idDecodingContext.healUnresolvableIdentifiersOnDecode === true &&
@@ -172,7 +175,7 @@ export function readValue(
 				}
 				// See `SharedTreeOptionsBeta.healUnresolvableIdentifiersOnDecode` for details on this error.
 				throw new Error(
-					"Encountered a non-finalized op-space identifier while loading a summary.",
+					"Summary could not be loaded due incorrectly encoded identifier. See SharedTreeOptionsBeta.healUnresolvableIdentifiersOnDecode for mitigation.",
 				);
 			}
 			return idCompressor.decompress(
