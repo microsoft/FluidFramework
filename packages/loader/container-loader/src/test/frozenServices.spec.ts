@@ -233,9 +233,15 @@ describe("FrozenDocumentService disposal", () => {
 		const innerService = {
 			resolvedUrl: fakeUrl,
 			policies: {},
-			connectToStorage: async () => ({}) as never,
-			connectToDeltaStorage: async () => ({}) as never,
-			connectToDeltaStream: async () => ({}) as never,
+			connectToStorage: async () => {
+				throw new Error("not used in this test");
+			},
+			connectToDeltaStorage: async () => {
+				throw new Error("not used in this test");
+			},
+			connectToDeltaStream: async () => {
+				throw new Error("not used in this test");
+			},
 			dispose: (error?: unknown) => {
 				innerDisposeError = error ?? "no-error";
 			},
