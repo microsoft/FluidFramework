@@ -3,7 +3,32 @@
 
 Publish commands are used to publish packages to an npm registry.
 
+* [`flub publish bundleStats`](#flub-publish-bundlestats)
 * [`flub publish tarballs`](#flub-publish-tarballs)
+
+## `flub publish bundleStats`
+
+Generate a report from input bundle stats collected through the collect bundleStats command.
+
+```
+USAGE
+  $ flub publish bundleStats [-v | --quiet] [--dangerfile <value>]
+
+FLAGS
+  --dangerfile=<value>  Path to dangerfile
+
+LOGGING FLAGS
+  -v, --verbose  Enable verbose logging.
+      --quiet    Disable all logging.
+
+DESCRIPTION
+  Generate a report from input bundle stats collected through the collect bundleStats command.
+
+ALIASES
+  $ flub run bundleStats
+```
+
+_See code: [src/commands/publish/bundleStats.ts](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/src/commands/publish/bundleStats.ts)_
 
 ## `flub publish tarballs`
 

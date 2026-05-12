@@ -242,11 +242,12 @@ function createTscUtil(tsLib: typeof ts): TscUtil {
 				}
 				// Map parseBuildCommand result to ParsedCommandLine shape so
 				// callers can check options.build and use fileNames for projects.
-				return {
+				const result: ts.ParsedCommandLine = {
 					options: { build: true },
 					fileNames: buildResult.projects,
 					errors: [],
-				} as ts.ParsedCommandLine;
+				};
+				return result;
 			}
 
 			let filteredArgs = slicedArgs;
