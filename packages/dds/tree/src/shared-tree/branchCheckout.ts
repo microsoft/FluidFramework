@@ -19,9 +19,16 @@ import type {
 	TreeStoredSchemaRepository,
 } from "../core/index.js";
 import type { SharedTreeBranch } from "../shared-tree-core/index.js";
+import type {
+	ImplicitFieldSchema,
+	TreeBranchAlpha,
+	TreeViewAlpha,
+	TreeViewConfiguration,
+} from "../simple-tree/index.js";
 import type { Breakable } from "../util/index.js";
 import { disposeSymbol } from "../util/index.js";
 
+import { SchematizingSimpleTreeView } from "./schematizingTreeView.js";
 import type { SharedTreeChange } from "./sharedTreeChangeTypes.js";
 import type { SharedTreeEditBuilder } from "./sharedTreeEditBuilder.js";
 import { TreeCheckout } from "./treeCheckout.js";
@@ -40,11 +47,24 @@ const branchCheckoutMap = new WeakMap<
 >();
 
 /**
+ * Maps a *source* {@link SharedTreeBranch} (i.e. the `mainBranch` of a view's checkout) to the
+ * lazily-created {@link BranchCheckout} that {@link getBranch} forked from it.
+ *
+ * @remarks
+ * Distinct from {@link branchCheckoutMap}: that map answers "which `BranchCheckout` wraps *this*
+ * branch?" — keyed by the wrapped branch. This one answers "which `BranchCheckout` did `getBranch`
+ * previously hand out for *this view's* branch?" — keyed by the parent branch. Keeping them
+ * separate preserves the semantics of {@link getBranchCheckout} while giving `getBranch` a stable
+ * idempotent answer per view.
+ */
+const lazyBranchForViewMap = new WeakMap<
+	SharedTreeBranch<SharedTreeEditBuilder, SharedTreeChange>,
+	BranchCheckout
+>();
+
+/**
  * Returns the live {@link BranchCheckout} bound to the given branch, or `undefined` if none exists
  * (the branch was never wrapped in a `BranchCheckout`, or its `BranchCheckout` has been disposed).
- *
- * @internal
- * @alpha
  */
 export function getBranchCheckout(
 	branch: SharedTreeBranch<SharedTreeEditBuilder, SharedTreeChange>,
@@ -66,8 +86,6 @@ export function getBranchCheckout(
  * Disposing the parent of a {@link forkAsBranchCheckout} does not dispose the child, and vice versa;
  * merging is explicit via {@link TreeCheckout.merge}.
  *
- * @internal
- * @alpha
  */
 export class BranchCheckout extends TreeCheckout {
 	public constructor(
@@ -108,6 +126,13 @@ export class BranchCheckout extends TreeCheckout {
 		return this.forkWith(BranchCheckout);
 	}
 
+	// A `BranchCheckout` is viewless by construction, so the `TreeViewAlpha` type predicate is always false.
+	public override hasRootSchema<TSchema extends ImplicitFieldSchema>(
+		_schema: TSchema,
+	): this is TreeViewAlpha<TSchema> {
+		return false;
+	}
+
 	/**
 	 * Always throws — `BranchCheckout` is permanently bound to its branch.
 	 *
@@ -141,9 +166,58 @@ export class BranchCheckout extends TreeCheckout {
  * The returned `BranchCheckout` is independent: edits do not affect {@link parent}, merging back must be explicit,
  * and disposing either side does not dispose the other.
  *
- * @internal
- * @alpha
+ * Package-internal helper backing the public {@link getBranch} entry point. Not part of the
+ * public alpha surface — consumers should call {@link getBranch} instead.
  */
 export function forkAsBranchCheckout(parent: TreeCheckout): BranchCheckout {
 	return parent.forkWith(BranchCheckout);
+}
+
+/**
+ * Returns the branch bound to the given view, forking one from the view's checkout
+ * if no live branch is currently registered for it.
+ *
+ * @remarks
+ * Idempotent per view: successive calls on the same view return the same {@link TreeBranchAlpha}
+ * instance until that instance is disposed. Two lookup paths are tried in order:
+ *
+ * 1. If a `BranchCheckout` is already registered for the view's `mainBranch` (e.g. the view was
+ * itself built via {@link getViewOfBranch}), that instance is returned.
+ * 2. Otherwise, if a previous `getBranch` call already lazy-forked a `BranchCheckout` for this
+ * view's `mainBranch` and that instance is still live, it is returned.
+ * 3. Otherwise, a fresh `BranchCheckout` is forked via `forkAsBranchCheckout` and recorded
+ * against the view's `mainBranch` for future calls.
+ *
+ * @alpha
+ */
+export function getBranch(view: TreeViewAlpha<ImplicitFieldSchema>): TreeBranchAlpha {
+	assert(view instanceof SchematizingSimpleTreeView, "Unexpected branch implementation");
+	const viewBranch = view.checkout.mainBranch;
+	// Path 1: the view is itself built directly on a registered BranchCheckout.
+	let branch = getBranchCheckout(viewBranch);
+	if (branch !== undefined) {
+		return branch;
+	}
+	// Path 2: a previous `getBranch` call already lazy-forked one; reuse it if still live.
+	const cached = lazyBranchForViewMap.get(viewBranch);
+	if (cached !== undefined && !cached.disposed) {
+		return cached;
+	}
+	// Path 3: lazy-fork and record under the view's mainBranch so future calls are idempotent.
+	branch = forkAsBranchCheckout(view.checkout);
+	lazyBranchForViewMap.set(viewBranch, branch);
+	return branch;
+}
+
+/**
+ * Returns a view of the given branch using the provided schema configuration.
+ *
+ * @alpha
+ */
+export function getViewOfBranch<TSchema extends ImplicitFieldSchema>(
+	branch: TreeBranchAlpha,
+	config: TreeViewConfiguration<TSchema>,
+): TreeViewAlpha<TSchema> {
+	assert(branch instanceof BranchCheckout, "Unexpected branch implementation");
+	return branch.viewWith(config);
 }

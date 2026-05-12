@@ -84,6 +84,8 @@ export {
 	ForestTypeOptimized,
 	ForestTypeExpensiveDebug,
 	ForestTypeReference,
+	getBranch,
+	getViewOfBranch,
 } from "./shared-tree/index.js";
 
 export {

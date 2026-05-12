@@ -27,7 +27,9 @@ import {
 	TreeCheckout,
 	type ITreeCheckout,
 	createTreeCheckout,
+	getViewOfBranch,
 	type SharedTreeChange,
+	forkAsBranchCheckout,
 } from "../../shared-tree/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { SchematizingSimpleTreeView } from "../../shared-tree/schematizingTreeView.js";
@@ -41,6 +43,8 @@ import {
 	type InsertableTreeFieldFromImplicitField,
 	type TransactionResult,
 	type TreeBranch,
+	type TreeBranchAlpha,
+	type TreeViewAlpha,
 } from "../../simple-tree/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { stringSchema } from "../../simple-tree/leafNodeSchema.js";
@@ -1870,6 +1874,7 @@ function itView<
 		view: SchematizingSimpleTreeView<TRootSchema>;
 		tree: ITreeCheckout;
 		logger: IMockLoggerExt;
+		getViewOfTree: (tree: TreeBranchAlpha) => TreeViewAlpha<TRootSchema>;
 	}) => void,
 	options: {
 		initialContent: { schema: TRootSchema; initialTree: T };
@@ -1882,6 +1887,7 @@ function itView(
 		view: SchematizingSimpleTreeView<typeof rootArray>;
 		tree: ITreeCheckout;
 		logger: IMockLoggerExt;
+		getViewOfTree: (tree: TreeBranchAlpha) => TreeViewAlpha<typeof rootArray>;
 	}) => void,
 	options?: {
 		skip?: true;
@@ -1896,6 +1902,7 @@ function itView<
 		view: SchematizingSimpleTreeView<TRootSchema>;
 		tree: ITreeCheckout;
 		logger: IMockLoggerExt;
+		getViewOfTree: (tree: TreeBranchAlpha) => TreeViewAlpha<TRootSchema>;
 	}) => void,
 	options: {
 		initialContent?: { schema: TRootSchema; initialTree: T };
@@ -1911,30 +1918,33 @@ function itView<
 			tree: ITreeCheckout;
 			logger: IMockLoggerExt;
 		},
+		viewFn: (
+			branch: TreeBranchAlpha,
+			config: TreeViewConfiguration<TRootSchema>,
+		) => TreeViewAlpha<TRootSchema>,
 	): void {
 		if (options.initialContent) {
 			const { logger } = new TestTreeProviderLite();
-			const { view, tree } = makeViewFromConfig(
-				new TreeViewConfiguration({
-					schema: options.initialContent.schema,
-					enableSchemaValidation,
-				}),
-			);
+			const config = new TreeViewConfiguration({
+				schema: options.initialContent.schema,
+				enableSchemaValidation,
+			});
+			const made = makeViewFromConfig(config);
+			const { view, tree } = made;
 			view.initialize(options.initialContent.initialTree);
-			thunk({ view, tree, logger });
+			thunk({ view, tree, logger, getViewOfTree: (branch) => viewFn(branch, config) });
 		} else {
+			const config = new TreeViewConfiguration({
+				schema: rootArray,
+				enableSchemaValidation,
+			});
 			const { view, tree, logger } = (
 				makeViewFromConfig as unknown as (config: TreeViewConfiguration<typeof rootArray>) => {
 					view: SchematizingSimpleTreeView<typeof rootArray>;
 					tree: ITreeCheckout;
 					logger: IMockLoggerExt;
 				}
-			)(
-				new TreeViewConfiguration({
-					schema: rootArray,
-					enableSchemaValidation,
-				}),
-			);
+			)(config);
 			view.initialize([]);
 			// down cast here is safe due to overload protections
 			(
@@ -1942,8 +1952,20 @@ function itView<
 					view: SchematizingSimpleTreeView<typeof rootArray>;
 					tree: ITreeCheckout;
 					logger: IMockLoggerExt;
+					getViewOfTree: (branch: TreeBranchAlpha) => TreeViewAlpha<typeof rootArray>;
 				}) => void
-			)({ view, tree, logger });
+			)({
+				view,
+				tree,
+				logger,
+				getViewOfTree: (branch) =>
+					(
+						viewFn as unknown as (
+							branch: TreeBranchAlpha,
+							config: TreeViewConfiguration<typeof rootArray>,
+						) => TreeViewAlpha<typeof rootArray>
+					)(branch, config),
+			});
 		}
 	}
 
@@ -1988,33 +2010,123 @@ function itView<
 		}
 	}
 
-	itFunction(`${title} (root view)`, () => {
-		const provider = new TestTreeProviderLite();
-		const [tree] = provider.trees;
-		const branch = tree.kernel.checkout;
-		callWithView(fn, (config) => ({
-			view: tree.kernel.viewWith(config),
-			tree: branch,
-			logger: provider.logger,
-		}));
-	});
+	/**
+	 * View-construction strategies. Each strategy produces a (view, tree, logger) tuple and a
+	 * `getView` function for materializing additional views from a branch. Iterating these
+	 * cross-products every `itView` test over both `TreeCheckout` and `BranchCheckout` setups,
+	 * so coverage of the new BranchCheckout class mirrors the existing TreeCheckout coverage.
+	 */
+	const treeCheckoutViewWith = (b: TreeBranchAlpha, c: TreeViewConfiguration<TRootSchema>) =>
+		(b as unknown as ITreeCheckout).viewWith(c) as TreeViewAlpha<TRootSchema>;
 
-	itFunction(`${title} (reference view)`, () => {
-		callWithView(fn, (config) => makeReferenceView(config, false));
-	});
+	const strategies: readonly {
+		name: string;
+		setup: () => {
+			makeView: (config: TreeViewConfiguration<TRootSchema>) => {
+				view: SchematizingSimpleTreeView<TRootSchema>;
+				tree: ITreeCheckout;
+				logger: IMockLoggerExt;
+			};
+			getView: (
+				branch: TreeBranchAlpha,
+				config: TreeViewConfiguration<TRootSchema>,
+			) => TreeViewAlpha<TRootSchema>;
+		};
+	}[] = [
+		{
+			name: "root view",
+			setup: () => {
+				const provider = new TestTreeProviderLite();
+				const [tree] = provider.trees;
+				const branch = tree.kernel.checkout;
+				return {
+					makeView: (config) => ({
+						view: tree.kernel.viewWith(config),
+						tree: branch,
+						logger: provider.logger,
+					}),
+					getView: treeCheckoutViewWith,
+				};
+			},
+		},
+		{
+			name: "reference view",
+			setup: () => ({
+				makeView: (config) => makeReferenceView(config, false),
+				getView: treeCheckoutViewWith,
+			}),
+		},
+		{
+			name: "forked view (TreeCheckout)",
+			setup: () => {
+				const provider = new TestTreeProviderLite();
+				const [tree] = provider.trees;
+				const branch = tree.kernel.checkout.fork();
+				return {
+					makeView: (config) => {
+						const view = branch.viewWith(config);
+						assert(view instanceof SchematizingSimpleTreeView);
+						return { view, tree: branch, logger: provider.logger };
+					},
+					getView: treeCheckoutViewWith,
+				};
+			},
+		},
+		{
+			name: "forked view (BranchCheckout)",
+			setup: () => {
+				const provider = new TestTreeProviderLite();
+				const [tree] = provider.trees;
+				const branch = forkAsBranchCheckout(tree.kernel.checkout);
+				return {
+					makeView: (config) => {
+						const view = getViewOfBranch(branch, config);
+						assert(view instanceof SchematizingSimpleTreeView);
+						return { view, tree: branch, logger: provider.logger };
+					},
+					getView: getViewOfBranch,
+				};
+			},
+		},
+		{
+			name: "reference forked view (TreeCheckout)",
+			setup: () => ({
+				makeView: (config) => makeReferenceView(config, true),
+				getView: treeCheckoutViewWith,
+			}),
+		},
+		{
+			name: "reference forked view (BranchCheckout)",
+			setup: () => {
+				const logger = createMockLoggerExt();
+				const schema = new TreeStoredSchemaRepository();
+				const referenceCheckout = createTreeCheckout(
+					testIdCompressor,
+					mintRevisionTag,
+					testRevisionTagCodec,
+					{
+						forest: buildTestForest({ additionalAsserts: true, schema }),
+						schema,
+						logger,
+					},
+				);
+				const branch = forkAsBranchCheckout(referenceCheckout);
+				return {
+					makeView: (config) => {
+						const view = getViewOfBranch(branch, config);
+						assert(view instanceof SchematizingSimpleTreeView);
+						return { view, tree: branch, logger };
+					},
+					getView: getViewOfBranch,
+				};
+			},
+		},
+	];
 
-	itFunction(`${title} (forked view)`, () => {
-		const provider = new TestTreeProviderLite();
-		const [tree] = provider.trees;
-		const branch = tree.kernel.checkout.fork();
-		callWithView(fn, (config) => {
-			const view = branch.viewWith(config);
-			assert(view instanceof SchematizingSimpleTreeView);
-			return { view, tree: branch, logger: provider.logger };
+	for (const strategy of strategies) {
+		itFunction(`${title} (${strategy.name})`, () => {
+			const { makeView, getView: getViewOfTree } = strategy.setup();
+			callWithView(fn, makeView, getViewOfTree);
 		});
-	});
-
-	itFunction(`${title} (reference forked view)`, () => {
-		callWithView(fn, (config) => makeReferenceView(config, true));
-	});
+	}
 }

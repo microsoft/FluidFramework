@@ -11,7 +11,9 @@ import {
 	BranchCheckout,
 	TreeCheckout,
 	forkAsBranchCheckout,
+	getBranch,
 	getBranchCheckout,
+	getViewOfBranch,
 } from "../../shared-tree/index.js";
 import { SchemaFactory, TreeViewConfiguration } from "../../simple-tree/index.js";
 import { getView } from "../utils.js";
@@ -107,10 +109,10 @@ describe("BranchCheckout", () => {
 	});
 
 	describe("viewless", () => {
-		it("can materialize a view on demand via viewWith", () => {
+		it("can materialize a view on demand via getViewOfBranch", () => {
 			const view = makeView();
 			const branchCheckout = forkAsBranchCheckout(view.checkout);
-			const branchView = branchCheckout.viewWith(config);
+			const branchView = getViewOfBranch(branchCheckout, config);
 			assert.strictEqual(branchView.root.x, 0);
 		});
 
@@ -118,8 +120,8 @@ describe("BranchCheckout", () => {
 			const view = makeView();
 			const a = forkAsBranchCheckout(view.checkout);
 			const b = forkAsBranchCheckout(view.checkout);
-			const viewA = a.viewWith(config);
-			const viewB = b.viewWith(config);
+			const viewA = getViewOfBranch(a, config);
+			const viewB = getViewOfBranch(b, config);
 			assert.notStrictEqual(a.forest, b.forest);
 			viewA.root.x = 1;
 			viewB.root.x = 2;
@@ -166,9 +168,9 @@ describe("BranchCheckout", () => {
 			assert.strictEqual(getBranchCheckout(parent.mainBranch), parent);
 
 			// Edits on the child are invisible to the parent (and to the original view).
-			const childView = child.viewWith(config);
+			const childView = getViewOfBranch(child, config);
 			childView.root.x = 11;
-			const parentView = parent.viewWith(config);
+			const parentView = getViewOfBranch(parent, config);
 			assert.strictEqual(parentView.root.x, 0);
 			assert.strictEqual(view.root.x, 0);
 			assert.strictEqual(childView.root.x, 11);
@@ -179,7 +181,7 @@ describe("BranchCheckout", () => {
 		it("edits on the BranchCheckout do not affect the parent view", () => {
 			const view = makeView();
 			const branchCheckout = forkAsBranchCheckout(view.checkout);
-			const branchView = branchCheckout.viewWith(config);
+			const branchView = getViewOfBranch(branchCheckout, config);
 			branchView.root.x = 42;
 			assert.strictEqual(branchView.root.x, 42);
 			assert.strictEqual(view.root.x, 0);
@@ -188,7 +190,7 @@ describe("BranchCheckout", () => {
 		it("a BranchCheckout can be merged back into the parent view", () => {
 			const view = makeView();
 			const branchCheckout = forkAsBranchCheckout(view.checkout);
-			const branchView = branchCheckout.viewWith(config);
+			const branchView = getViewOfBranch(branchCheckout, config);
 			branchView.root.x = 7;
 			view.merge(branchView);
 			assert.strictEqual(view.root.x, 7);
@@ -227,11 +229,98 @@ describe("BranchCheckout", () => {
 			const view = makeView();
 			const branchCheckout = forkAsBranchCheckout(view.checkout);
 			const branch = branchCheckout.mainBranch;
-			const branchView = branchCheckout.viewWith(config);
+			const branchView = getViewOfBranch(branchCheckout, config);
 			branchView.root.x = 9;
 			view.merge(branchView);
 			assert.strictEqual(branchCheckout.disposed, true);
 			assert.strictEqual(getBranchCheckout(branch), undefined);
+		});
+	});
+
+	describe("getViewOfBranch", () => {
+		it("returns a view bound to the given BranchCheckout", () => {
+			// Two views built from the same BranchCheckout observe the same underlying state:
+			// an edit on one is visible through the other.
+			const view = makeView();
+			const branchCheckout = forkAsBranchCheckout(view.checkout);
+			const branchViewA = getViewOfBranch(branchCheckout, config);
+			branchViewA.root.x = 99;
+			branchViewA.dispose();
+			const branchViewB = getViewOfBranch(branchCheckout, config);
+			assert.strictEqual(branchViewB.root.x, 99);
+			// And the parent view is unaffected.
+			assert.strictEqual(view.root.x, 0);
+		});
+
+		it("throws when passed a non-BranchCheckout TreeCheckout", () => {
+			// `getViewOfBranch` asserts that the branch is a `BranchCheckout`; passing the main
+			// (non-branch) checkout — which is a plain `TreeCheckout` — should fail fast.
+			const view = makeView();
+			assert.throws(() => getViewOfBranch(view.checkout, config));
+		});
+	});
+
+	describe("getBranch", () => {
+		it("lazily forks a new BranchCheckout when none is registered for the view", () => {
+			// A fresh view has no BranchCheckout registered for its mainBranch — `getBranch` must
+			// create one via `forkAsBranchCheckout` and register it in the canonical map.
+			const view = makeView();
+			assert.strictEqual(getBranchCheckout(view.checkout.mainBranch), undefined);
+			const branch = getBranch(view);
+			assert.ok(branch instanceof BranchCheckout);
+			// The new branch is registered under its own mainBranch, not the parent view's.
+			assert.strictEqual(getBranchCheckout(branch.mainBranch), branch);
+			// Edits on the new branch don't bleed into the parent view (proves it's a fork, not the parent itself).
+			const branchView = getViewOfBranch(branch, config);
+			branchView.root.x = 5;
+			assert.strictEqual(branchView.root.x, 5);
+			assert.strictEqual(view.root.x, 0);
+		});
+
+		it("returns the existing BranchCheckout when one is already registered", () => {
+			// If a BranchCheckout was previously created over the view's mainBranch, `getBranch`
+			// must return that same instance rather than forking another one.
+			const view = makeView();
+			const registeredBranch = forkAsBranchCheckout(view.checkout);
+			// `forkAsBranchCheckout` creates a *child* BranchCheckout — its mainBranch is the child branch,
+			// not the parent view's. To exercise the cached path, look up the branch via its own view.
+			const childView = getViewOfBranch(registeredBranch, config);
+			assert.strictEqual(
+				getBranch(childView as unknown as Parameters<typeof getBranch>[0]),
+				registeredBranch,
+			);
+		});
+
+		it("throws when passed a non-SchematizingSimpleTreeView", () => {
+			// `getBranch` asserts that the view is a `SchematizingSimpleTreeView`; any other
+			// `TreeViewAlpha` implementation must fail fast.
+			assert.throws(() =>
+				// Cast away types to feed an unrelated object — the runtime assert is what we're testing.
+				getBranch({} as unknown as Parameters<typeof getBranch>[0]),
+			);
+		});
+
+		it("returns the same TreeBranchAlpha across repeated calls on a fresh view", () => {
+			// Idempotence: once `getBranch` has lazy-forked a `BranchCheckout` for a view, the next
+			// call on the same view must return the same instance — even though the view's
+			// `mainBranch` itself was never registered in the canonical map.
+			const view = makeView();
+			const first = getBranch(view);
+			const second = getBranch(view);
+			assert.strictEqual(first, second);
+		});
+
+		it("forks a fresh BranchCheckout if the previously cached one was disposed", () => {
+			// Disposal of the cached fork must not pin a dead instance; the next call should
+			// recover by minting a new BranchCheckout.
+			const view = makeView();
+			const first = getBranch(view);
+			assert.ok(first instanceof BranchCheckout);
+			first.dispose();
+			const second = getBranch(view);
+			assert.notStrictEqual(second, first);
+			assert.ok(second instanceof BranchCheckout);
+			assert.strictEqual(second.disposed, false);
 		});
 	});
 });
