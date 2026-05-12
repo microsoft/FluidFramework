@@ -9,12 +9,11 @@ import {
 	type BundleComparison,
 	bundlesContainNoChanges,
 	getAzureDevopsApi,
-	pickCanonicalRemote,
+	pickFreshestCanonicalRemote,
 } from "../../library/bundleSizeDiff/index.js";
 
 import { BaseCommand } from "../../library/commands/base.js";
 
-// ADO constants for the baseline build source.
 // Must match the "public" project + build-bundle-size-artifacts.yml (definitionId 48).
 const adoConstants = {
 	orgUrl: "https://dev.azure.com/fluidframework",
@@ -23,14 +22,12 @@ const adoConstants = {
 	artifactName: "bundleAnalyzerJson",
 } as const;
 
-// Default path to the PR's locally-collected analyzer.json files.
-// Matches where `flub generate bundleStats` (invoked via `npm run bundle-analysis:collect`) writes.
+// Where `flub generate bundleStats` (via `npm run bundle-analysis:collect`) writes.
 const defaultLocalReportPath = "./artifacts/bundleAnalyzerJson";
 
 /**
- * Discriminated result returned to JSON callers (`--json`). Default invocations
- * print a human-readable summary to stdout; the return value is what `--json`
- * serializes.
+ * Result serialized to stdout by `--json`. Default invocations print a
+ * human-readable summary instead.
  */
 type CheckBundleSizeResult =
 	| { kind: "no-changes"; baselineCommit: string }
@@ -60,22 +57,20 @@ export default class CheckBundleSize extends BaseCommand<typeof CheckBundleSize>
 	public async run(): Promise<CheckBundleSizeResult> {
 		const { localReportPath, target } = this.flags;
 
-		// Auto-detect against `main` on the canonical remote. Users targeting a
-		// different branch (or pinning to a SHA) pass `--target <ref>`.
+		// Auto-detect targets `main` on the canonical remote; `--target <ref>` overrides.
 		const branch = "main";
 		let targetRef: string;
 		if (target !== undefined) {
 			targetRef = target;
 			this.log(`Using explicit target ref ${target}.`);
 		} else {
-			const remote = pickCanonicalRemote(branch) ?? "origin";
+			const remote = pickFreshestCanonicalRemote(branch) ?? "origin";
 			targetRef = `${remote}/${branch}`;
 			this.log(`Using target ref ${targetRef}. Pass --target <ref> to override.`);
 		}
 
-		// Anonymous reads work for the public ADO project. Authenticated access isn't
-		// needed at the scale this command operates at; rate-limit concerns belong to
-		// any future automated consumer (which authenticates at the library layer).
+		// Anonymous reads work for the public ADO project at this command's scale;
+		// automated consumers authenticate at the library layer.
 		const adoApi = getAzureDevopsApi(undefined, adoConstants.orgUrl);
 		const sizeComparator = new ADOSizeComparator(
 			adoConstants,

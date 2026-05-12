@@ -27,5 +27,5 @@ export {
 	GetBuildOptions,
 	getAllFilesInDirectory,
 	getBuilds,
-	pickCanonicalRemote,
+	pickFreshestCanonicalRemote,
 } from "./utilities/index.js";

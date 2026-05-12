@@ -59,9 +59,8 @@ export class ADOSizeComparator {
 		private readonly localReportPath: string,
 		/**
 		 * Target ref — the ref a PR would be opened against. The baseline commit
-		 * is computed as `git merge-base <targetRef> HEAD`, so this may be any
-		 * argument `git merge-base` accepts (remote branch, local branch, SHA,
-		 * tag, …).
+		 * is `git merge-base <targetRef> HEAD`, so this accepts any argument
+		 * `git merge-base` does.
 		 */
 		private readonly targetRef: string,
 	) {}

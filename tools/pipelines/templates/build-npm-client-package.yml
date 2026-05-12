@@ -416,10 +416,9 @@ extends:
                       sourceFolder: '$(Pipeline.Workspace)/${{ parameters.buildDirectory }}/artifacts/bundleAnalysis'
                       targetFolder: $(Build.ArtifactStagingDirectory)/bundleAnalysis
 
-                  # bundleAnalyzerJson is a parallel artifact carrying analyzer.json.
-                  # It's separate from the bundleAnalysis artifact so the FF-internal
-                  # telemetry handler — which walks every .json under bundleAnalysis —
-                  # doesn't trip over a file whose shape it doesn't recognize.
+                  # bundleAnalyzerJson is a parallel artifact for analyzer.json — kept
+                  # separate from bundleAnalysis so the FF-internal telemetry handler
+                  # (which walks every .json under that artifact) doesn't trip over it.
                   - task: CopyFiles@2
                     displayName: Copy bundle analyzer JSON files to artifact staging directory
                     inputs:
@@ -544,14 +543,10 @@ extends:
                       sbomEnabled: false
                       publishLocation: pipeline
 
-                    # Parallel artifact for analyzer.json. Kept separate from
-                    # bundleAnalysis so the FF-internal telemetry handler (which walks
-                    # every .json file under that artifact) doesn't pick this up.
-                    # Published on PR runs so the future GH-Actions diff workflow can
-                    # consume the PR-side input. Also published on non-PR runs of this
-                    # pipeline, though the canonical baseline source today is the
-                    # dedicated `Build - Client bundle size artifacts` pipeline; using
-                    # this output as a baseline source is a future consideration.
+                    # PR runs feed the future GH-Actions diff workflow. Non-PR runs are
+                    # currently redundant with the dedicated `Build - Client bundle size
+                    # artifacts` pipeline (today's canonical baseline source); kept for
+                    # now as a possible future baseline source.
                     - output: pipelineArtifact
                       displayName: Publish Artifacts - bundle-analyzer-json
                       condition: succeeded()

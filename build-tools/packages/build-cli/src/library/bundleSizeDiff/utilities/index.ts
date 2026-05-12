@@ -5,4 +5,4 @@
 
 export { getAllFilesInDirectory } from "./getAllFilesInDirectory.js";
 export { GetBuildOptions, getBuilds } from "./getBuilds.js";
-export { getBaselineCommit, pickCanonicalRemote } from "./gitCommands.js";
+export { getBaselineCommit, pickFreshestCanonicalRemote } from "./gitCommands.js";

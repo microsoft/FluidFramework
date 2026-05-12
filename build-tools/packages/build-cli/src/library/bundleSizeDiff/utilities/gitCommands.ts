@@ -16,9 +16,7 @@ export function getBaselineCommit(baselineRef: string): string {
 }
 
 /**
- * A canonical-remote ref paired with its locally-resolved tip commit. Only
- * refs that resolve are eligible; missing tips disqualify the entry upstream
- * before it reaches the freshness comparison.
+ * A canonical-remote ref paired with its locally-resolved tip commit.
  */
 interface CanonicalCandidate {
 	name: string;
@@ -38,10 +36,9 @@ interface CanonicalCandidate {
  * none match.
  */
 function findCanonicalRemotes(): { name: string; url: string }[] {
-	// Reads remote URLs straight from git config rather than scraping
-	// `git remote -v` (which is human-formatted and duplicates each remote).
-	// `--all` returns every match (otherwise `--regexp` returns only the first);
-	// `--show-names` includes the key so we can extract the remote name.
+	// Read every `remote.<name>.url` config entry. `--all` returns every match
+	// (otherwise `--regexp` returns only the first); `--show-names` includes
+	// the key so the remote name can be extracted.
 	const output = execSync(
 		`git config get --all --show-names --regexp '^remote\\..*\\.url$'`,
 	).toString();
@@ -122,19 +119,14 @@ function pickFreshest(candidates: CanonicalCandidate[]): CanonicalCandidate[] {
  * Pick the canonical remote (one pointing at `microsoft/FluidFramework`) whose
  * `<name>/<branch>` is freshest locally.
  *
- * Remotes whose `<name>/<branch>` doesn't resolve locally are dropped from
- * consideration. When multiple candidates remain, pick the one whose tip is
- * not a strict ancestor of any other's. Ties (identical tips or divergent
- * histories) resolve to the first candidate in config order.
- *
- * Logs the discovered remotes (and which one was selected, when ambiguous) so
- * the user can verify what's being compared against.
+ * Remotes whose `<name>/<branch>` doesn't resolve locally are dropped. Among
+ * the rest, pick the tip that isn't a strict ancestor of any other's; ties
+ * (identical or divergent tips) resolve to the first candidate in config order.
  *
  * @returns The selected remote's name, or `undefined` if no canonical remote is
- * configured or none have a locally-resolvable `<name>/<branch>`. Callers
- * decide the fallback policy in the `undefined` case.
+ * configured or none have a locally-resolvable `<name>/<branch>`.
  */
-export function pickCanonicalRemote(branch: string): string | undefined {
+export function pickFreshestCanonicalRemote(branch: string): string | undefined {
 	const canonicals = findCanonicalRemotes();
 
 	if (canonicals.length === 0) {
