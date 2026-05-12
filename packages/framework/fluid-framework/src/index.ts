@@ -70,7 +70,7 @@ export type {
 	FluidReadonlyMap,
 } from "@fluidframework/core-interfaces/internal";
 
-// This is a beta API, but core-utils doesn't have a beta entry point so its imported from "internal".
+// This is a beta API, but core-utils doesn't have a beta entry point so it's imported from "internal".
 export { onAssertionFailure } from "@fluidframework/core-utils/internal";
 
 export type { isFluidHandle } from "@fluidframework/runtime-utils";

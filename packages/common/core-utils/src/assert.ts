@@ -98,7 +98,7 @@ const firstChanceAssertionHandler = new Set<(error: Error) => void>();
  * This does not replace the need for error handling elsewhere since errors (even bugs in Fluid) can cause other kinds of exceptions which this cannot run the callback for.
  * @example
  * ```ts
- * import { onAssertionFailure } from "fluid-framework/alpha";
+ * import { onAssertionFailure } from "fluid-framework/beta";
  *
  * let firstAssertion: Error | undefined;
  *
