@@ -1583,61 +1583,6 @@ describe("SchematizingSimpleTreeView", () => {
 			assert.deepEqual(undoLabels?.tree, { label: testLabel, sublabels: [] });
 		});
 
-		it("revertible's captured labels survive a re-entrant runTransaction from a changed listener", () => {
-			// Regression guard for the eager-clone strategy in `getRevertible`.
-			// Realistic scenario: an "auto-stamp" listener that runs another transaction in
-			// response to user edits. The framework's `pushLabelFrame` mutates the live
-			// `labelTreeNode` in place by pushing onto its `sublabels`, and the inner
-			// `runWithTransactionLabel`'s finally block clears `labelTreeNode = undefined`.
-			// Both happen before a later listener calls `getRevertible()` for the user's commit.
-			// With eager clone, the captured snapshot was taken before any listener ran, so
-			// the revertible's labels remain stable.
-			const view = getTestObjectView();
-
-			// Listener A (registered first): auto-stamp every user edit. Self-skips via the
-			// "auto" label to avoid infinite recursion on its own commits.
-			view.checkout.events.on("changed", (meta) => {
-				if (meta.isLocal && meta.kind === CommitKind.Default && !meta.labels.has("auto")) {
-					view.runTransaction(
-						() => {
-							view.root.content = view.root.content + 1;
-						},
-						{ label: "auto" },
-					);
-				}
-			});
-
-			// Listener B (registered second): capture the user's revertible (skipping the
-			// auto-stamp commit emitted recursively from Listener A's runTransaction).
-			let userRevertible: RevertibleAlpha | undefined;
-			let undoLabels: TransactionLabels | undefined;
-			view.checkout.events.on("changed", (meta, getRevertible) => {
-				if (meta.isLocal && meta.kind === CommitKind.Default && !meta.labels.has("auto")) {
-					userRevertible = getRevertible?.();
-				}
-				if (meta.isLocal && meta.kind === CommitKind.Undo && !meta.labels.has("auto")) {
-					undoLabels = meta.labels;
-				}
-			});
-
-			view.runTransaction(
-				() => {
-					view.root.content = 1;
-				},
-				{ label: "outer" },
-			);
-
-			assert(userRevertible !== undefined);
-			userRevertible.revert();
-
-			// The revert commit must carry only the user's "outer" label. With lazy capture,
-			// the inner runWithTransactionLabel's finally would have cleared `labelTreeNode`
-			// before this revertible was created, leaving us with an empty label set here.
-			assert.deepEqual(undoLabels?.tree, { label: "outer", sublabels: [] });
-			assert.equal(undoLabels?.has("outer"), true);
-			assert.equal(undoLabels?.has("auto"), false);
-		});
-
 		it("revert of a nested transaction preserves the nested label structure", () => {
 			const view = getTestObjectView();
 

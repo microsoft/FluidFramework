@@ -728,9 +728,8 @@ export class TreeCheckout implements ITreeCheckout {
 				const { change, revision } = commit;
 
 				// Snapshot the label tree for this commit before any listener runs, so the captured
-				// value is stable against in-place mutations to `this.labelTreeNode` (e.g. by a
-				// re-entrant `runTransaction` from a listener) or to `metadata.labels.tree`
-				// (which aliases the same object).
+				// value is stable against mutations to `metadata.labels.tree` (which aliases the
+				// live `labelTreeNode`).
 				const commitLabelTree =
 					this.labelTreeNode === undefined ? undefined : cloneLabelTree(this.labelTreeNode);
 
@@ -1031,7 +1030,7 @@ export class TreeCheckout implements ITreeCheckout {
 	 * @param checkout - The {@link TreeCheckout} instance this revertible belongs to.
 	 * @param onRevertibleDisposed - Callback function that will be called when the revertible is disposed.
 	 * @param labelTree - The {@link LabelTree} (if any) active when the original commit was produced.
-	 * The revert commit inherits these labels so that hosts can scope undo/redo by transaction label.
+	 * The revert commit inherits these labels so that commits and their reverts can be associated.
 	 * @returns A {@link RevertibleAlpha} object.
 	 */
 	private createRevertible(
@@ -1400,8 +1399,8 @@ export class TreeCheckout implements ITreeCheckout {
 		}
 
 		// Install the original commit's label tree so the revert commit's metadata inherits
-		// the same labels — letting hosts scope undo/redo by label. Reusing the captured tree
-		// (rather than wrapping it) ensures revert-of-revert does not introduce new nesting.
+		// the same labels. Reusing the captured tree (rather than wrapping it) ensures
+		// revert-of-revert does not introduce new nesting.
 		const previousLabelTreeNode = this.labelTreeNode;
 		this.labelTreeNode = labelTree;
 		try {
@@ -1412,8 +1411,6 @@ export class TreeCheckout implements ITreeCheckout {
 					: CommitKind.Redo,
 			);
 		} finally {
-			// Restore rather than clear: a revert triggered from inside another labeled
-			// transaction's changed event must not wipe that outer commit's label state.
 			this.labelTreeNode = previousLabelTreeNode;
 		}
 
