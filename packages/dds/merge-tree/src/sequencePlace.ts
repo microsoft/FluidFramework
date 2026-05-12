@@ -59,9 +59,9 @@ export enum Side {
  * this without hardcoding `Side.Before`.
  *
  * Note: this only governs the bare-numeric case. The `"start"` and `"end"`
- * literals are normalized by {@link normalizePlace} with their own
- * conventions (`"start"` → `Side.After`, `"end"` → `Side.Before`) and are
- * unrelated to `defaultSide`.
+ * literals are normalized by `normalizePlace` with their own conventions
+ * (`"start"` → `Side.After`, `"end"` → `Side.Before`) and are unrelated to
+ * `defaultSide`.
  * @internal
  */
 export const defaultSide = Side.Before;
