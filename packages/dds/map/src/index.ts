@@ -25,6 +25,7 @@ export type {
 	ISharedMapEvents,
 	IValueChanged,
 } from "./interfaces.js";
+export type { ClaimResult, IClaimable } from "./claims.js";
 export { SharedMap } from "./mapFactory.js";
 export { SharedDirectory } from "./directoryFactory.js";
 

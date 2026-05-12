@@ -14,6 +14,8 @@ import type {
 	ISharedObjectEvents,
 } from "@fluidframework/shared-object-base/internal";
 
+import type { ClaimResult } from "./claims.js";
+
 /**
  * Type of "valueChanged" event parameter.
  * @sealed
@@ -311,6 +313,27 @@ export interface ISharedDirectory
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	[Symbol.iterator](): IterableIterator<[string, any]>;
 	readonly [Symbol.toStringTag]: string;
+
+	/**
+	 * Attempt to publish `value` under `key` as a singleton on the root of this
+	 * {@link ISharedDirectory}, with first-writer-wins semantics.
+	 *
+	 * @remarks
+	 * - Only callable on the root directory; calling on a subdirectory throws a `UsageError`.
+	 * - Requires the runtime option `enableDdsClaims === true`; otherwise throws a `UsageError`.
+	 * - Once a key has been claimed, subsequent `set`/`delete`/`clear` for that key are no-ops
+	 * and the claim cannot be removed.
+	 * - `value` may be any JSON-serializable value, including `IFluidHandle`s.
+	 */
+	trySetClaim(key: string, value: unknown): Promise<ClaimResult>;
+
+	/**
+	 * Returns whether the given key has been sequenced as claimed on the root.
+	 *
+	 * @returns `true` if `key` has been sequenced as claimed on the root of this
+	 * {@link ISharedDirectory}.
+	 */
+	isClaimed(key: string): boolean;
 }
 
 /**
