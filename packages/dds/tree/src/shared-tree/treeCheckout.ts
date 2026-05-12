@@ -635,16 +635,6 @@ export class TreeCheckout implements ITreeCheckout {
 			// Only clear the label tree when the outermost transaction has completed.
 			// Inner transactions' commits don't fire the "changed" event, so the label tree
 			// must remain intact until the outermost commit reads it.
-			//
-			// TODO: clear `labelTreeNode` before the changed event is emitted rather than here
-			// in the finally. As-is, a `changed` listener that calls `runTransaction` re-entrantly
-			// will see `labelTreeNode` still set and `pushLabelFrame` will mutate the just-closed
-			// outer tree by pushing the new label as a sublabel — even though the two transactions
-			// are logically independent (the outer has already committed, `transaction.size === 0`
-			// when the inner starts). This conflates the inner transaction's labels with the
-			// outer's, breaking label-scoped undo/redo: e.g. an "auto-stamp" listener pattern
-			// would cause its commits to inherit the user's editor label. Moving the clear before
-			// emit lets re-entrant `pushLabelFrame` create a fresh root for the inner transaction.
 			if (this.transaction.size === 0) {
 				this.labelTreeNode = undefined;
 				this.mostRecentlyClosedLabelNode = undefined;
