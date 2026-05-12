@@ -4,6 +4,9 @@
 
 ```ts
 
+// @beta @legacy
+export type ClaimResult = "Success" | "AlreadyClaimed";
+
 // @beta @sealed @legacy
 export class DirectoryFactory implements IChannelFactory<ISharedDirectory> {
     static readonly Attributes: IChannelAttributes;
@@ -12,6 +15,13 @@ export class DirectoryFactory implements IChannelFactory<ISharedDirectory> {
     load(runtime: IFluidDataStoreRuntime, id: string, services: IChannelServices, attributes: IChannelAttributes): Promise<ISharedDirectory>;
     static readonly Type = "https://graph.microsoft.com/types/directory";
     get type(): string;
+}
+
+// @beta @legacy
+export interface IClaimable<V = unknown> {
+    // (undocumented)
+    isClaimed(key: string): boolean;
+    trySetClaim(key: string, value: V): Promise<ClaimResult>;
 }
 
 // @beta @deprecated @legacy
@@ -53,6 +63,7 @@ export interface IDirectoryEvents extends IEvent {
 // @beta @deprecated @legacy
 export interface IDirectoryNewStorageFormat {
     blobs: string[];
+    claims?: [string, ISerializableValue][];
     content: IDirectoryDataObject;
 }
 
@@ -73,6 +84,8 @@ export interface ISharedDirectory extends ISharedObject<ISharedDirectoryEvents &
     [Symbol.iterator](): IterableIterator<[string, any]>;
     // (undocumented)
     readonly [Symbol.toStringTag]: string;
+    isClaimed(key: string): boolean;
+    trySetClaim(key: string, value: unknown): Promise<ClaimResult>;
 }
 
 // @beta @sealed @legacy

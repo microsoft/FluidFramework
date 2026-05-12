@@ -7,7 +7,7 @@
 /* eslint-disable @typescript-eslint/prefer-nullish-coalescing, @typescript-eslint/prefer-optional-chain */
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
+import { assert, Deferred, unreachableCase } from "@fluidframework/core-utils/internal";
 import type {
 	IChannelAttributes,
 	IFluidDataStoreRuntime,
@@ -38,6 +38,7 @@ import {
 } from "@fluidframework/telemetry-utils/internal";
 import path from "path-browserify";
 
+import type { ClaimResult } from "./claims.js";
 import type {
 	IDirectory,
 	IDirectoryEvents,
@@ -208,9 +209,38 @@ export type IDirectorySubDirectoryOperation =
 	| IDirectoryDeleteSubDirectoryOperation;
 
 /**
+ * Operation indicating a first-writer-wins claim should be set for a key on the
+ * SharedDirectory root.
+ *
+ * @remarks Claims live at the SharedDirectory level (not per-subdirectory) so the op
+ * carries no `path`.
+ */
+export interface IDirectoryClaimOperation {
+	/**
+	 * String identifier of the operation type.
+	 */
+	type: "claim";
+
+	/**
+	 * Key being claimed.
+	 */
+	key: string;
+
+	/**
+	 * Value to bind to the key. Always a Plain `ISerializableValue` so handles get
+	 * encoded using the shared serializer.
+	 */
+	// eslint-disable-next-line import-x/no-deprecated
+	value: ISerializableValue;
+}
+
+/**
  * Any operation on a directory.
  */
-export type IDirectoryOperation = IDirectoryStorageOperation | IDirectorySubDirectoryOperation;
+export type IDirectoryOperation =
+	| IDirectoryStorageOperation
+	| IDirectorySubDirectoryOperation
+	| IDirectoryClaimOperation;
 
 interface PendingKeySet {
 	type: "set";
@@ -339,6 +369,16 @@ export interface IDirectoryNewStorageFormat {
 	 * Storage content representing directory data that was not serialized.
 	 */
 	content: IDirectoryDataObject;
+
+	/**
+	 * Sequenced root-level claims, as `[key, encodedValue]` tuples.
+	 *
+	 * @remarks
+	 * Optional for back-compat: snapshots written before claim support is enabled
+	 * omit this field, and the loader treats it as empty.
+	 */
+	// eslint-disable-next-line import-x/no-deprecated
+	claims?: [string, ISerializableValue][];
 }
 
 /**
@@ -439,6 +479,32 @@ export class SharedDirectory
 	private readonly messageHandlers = new Map<string, IDirectoryMessageHandler>();
 
 	/**
+	 * Sequenced claim values, keyed by claim key. A key present in this map has been
+	 * sequenced as claimed by some client; the value is the in-memory (decoded) claim
+	 * value. Read-back via {@link SharedDirectory.get} on the root.
+	 */
+	private readonly sequencedClaimedValues = new Map<string, unknown>();
+
+	/**
+	 * Keys this client locally won via a sequenced claim op. Used to make repeated
+	 * `trySetClaim` calls from the original winner resolve to `"Success"` (rather than
+	 * `"AlreadyClaimed"`). Not persisted in summary; on reload no client is the winner
+	 * of pre-existing claims (so all rehydrated claims look like loser-on-retry).
+	 */
+	private readonly wonClaims = new Set<string>();
+
+	/**
+	 * Pending in-flight claim deferreds, keyed by claim key. Resolved when the
+	 * corresponding claim op (or a competing winner) is sequenced. The `value` is
+	 * cached so that on local processing we can use the original in-memory reference
+	 * rather than a value that has round-tripped through the runtime serializer.
+	 */
+	private readonly pendingClaims = new Map<
+		string,
+		{ deferred: Deferred<ClaimResult>; value: unknown }
+	>();
+
+	/**
 	 * Constructs a new shared directory. If the object is non-local an id and service interfaces will
 	 * be provided.
 	 * @param id - String identifier for the SharedDirectory
@@ -470,6 +536,9 @@ export class SharedDirectory
 	// TODO: Use `unknown` instead (breaking change).
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	public get<T = any>(key: string): T | undefined {
+		if (this.sequencedClaimedValues.has(key)) {
+			return this.sequencedClaimedValues.get(key) as T | undefined;
+		}
 		return this.root.get<T>(key);
 	}
 
@@ -477,11 +546,19 @@ export class SharedDirectory
 	 * {@inheritDoc IDirectory.set}
 	 */
 	public set<T = unknown>(key: string, value: T): this {
+		if (this.sequencedClaimedValues.has(key)) {
+			throw new UsageError(`Cannot set key "${key}": it has been claimed and is immutable.`);
+		}
 		this.root.set(key, value);
 		return this;
 	}
 
 	public dispose(error?: Error): void {
+		// Resolve any pending claim deferreds so callers don't hang.
+		for (const [key, pending] of this.pendingClaims) {
+			pending.deferred.resolve("AlreadyClaimed");
+			this.pendingClaims.delete(key);
+		}
 		this.root.dispose(error);
 	}
 
@@ -495,14 +572,90 @@ export class SharedDirectory
 	 * @returns True if the key existed and was deleted, false if it did not exist
 	 */
 	public delete(key: string): boolean {
+		if (this.sequencedClaimedValues.has(key)) {
+			throw new UsageError(
+				`Cannot delete key "${key}": it has been claimed and is immutable.`,
+			);
+		}
 		return this.root.delete(key);
 	}
 
 	/**
-	 * Deletes all keys from within this IDirectory.
+	 * Deletes all non-claimed keys from within this IDirectory.
+	 *
+	 * @remarks Claimed keys at the root survive `clear()`.
 	 */
 	public clear(): void {
+		// Claims are sequenced state and survive a clear; the underlying root.clear()
+		// only operates on the root subdirectory's storage and is unaffected.
 		this.root.clear();
+	}
+
+	/**
+	 * Returns whether the given key has been sequenced as claimed on the root.
+	 *
+	 * @returns `true` if `key` has been sequenced as claimed on the root.
+	 */
+	public isClaimed(key: string): boolean {
+		return this.sequencedClaimedValues.has(key);
+	}
+
+	/**
+	 * Attempt to publish `value` under `key` as a singleton on the root, with
+	 * first-writer-wins semantics. See {@link ISharedDirectory.trySetClaim}.
+	 */
+	public async trySetClaim(key: string, value: unknown): Promise<ClaimResult> {
+		if (this.runtime.options?.enableDdsClaims !== true) {
+			throw new UsageError(
+				"SharedDirectory.trySetClaim requires runtime option enableDdsClaims=true.",
+			);
+		}
+		if (key === undefined || key === null) {
+			throw new UsageError("Undefined and null claim keys are not supported");
+		}
+
+		// Already-sequenced claim → resolve based on whether *this* client won it.
+		if (this.sequencedClaimedValues.has(key)) {
+			return this.wonClaims.has(key) ? "Success" : "AlreadyClaimed";
+		}
+
+		// Detached: synchronously install the claim into sequenced state and persist
+		// it via the attach summary.
+		if (!this.isAttached()) {
+			this.applyClaimLocally(key, value, /* won */ true);
+			return "Success";
+		}
+
+		// If we already have a pending claim for this key, return its deferred so the
+		// caller awaits the same outcome.
+		const existing = this.pendingClaims.get(key);
+		if (existing !== undefined) {
+			return existing.deferred.promise;
+		}
+
+		const deferred = new Deferred<ClaimResult>();
+		this.pendingClaims.set(key, { deferred, value });
+
+		const op: IDirectoryClaimOperation = {
+			type: "claim",
+			key,
+			// Match the wire format used by IDirectorySetOperation: pass the value raw
+			// inside a Plain ISerializableValue. Handles are encoded by the runtime's
+			// shared serializer when the op contents are stringified.
+			value: { type: ValueType[ValueType.Plain], value },
+		};
+		this.submitLocalMessage(op);
+		return deferred.promise;
+	}
+
+	/**
+	 * Apply a sequenced claim to local in-memory state.
+	 */
+	private applyClaimLocally(key: string, value: unknown, won: boolean): void {
+		this.sequencedClaimedValues.set(key, value);
+		if (won) {
+			this.wonClaims.add(key);
+		}
 	}
 
 	/**
@@ -709,6 +862,20 @@ export class SharedDirectory
 			for (const blobContent of blobContents) {
 				this.populate(blobContent as IDirectoryDataObject);
 			}
+			// Claims are optional for back-compat: snapshots written before claim support
+			// was enabled simply omit this field.
+			if (Array.isArray(newFormat.claims)) {
+				for (const [key, serializable] of newFormat.claims) {
+					const parsedSerializable = parseHandles(
+						serializable,
+						this.serializer,
+						// eslint-disable-next-line import-x/no-deprecated
+					) as ISerializableValue;
+					migrateIfSharedSerializable(parsedSerializable, this.serializer, this.handle);
+					// On load no client is the winner of pre-existing claims.
+					this.applyClaimLocally(key, parsedSerializable.value, /* won */ false);
+				}
+			}
 		} else {
 			// Old storage format
 			this.populate(data as IDirectoryDataObject);
@@ -827,6 +994,15 @@ export class SharedDirectory
 		localOpMetadata: DirectoryLocalOpMetadata,
 	): void {
 		const op: IDirectoryOperation = content as IDirectoryOperation;
+		if (op.type === "claim") {
+			const pending = this.pendingClaims.get(op.key);
+			if (pending !== undefined) {
+				this.pendingClaims.delete(op.key);
+				// Local op was rolled back before being sequenced; treat as a lost claim.
+				pending.deferred.resolve("AlreadyClaimed");
+			}
+			return;
+		}
 		const subdir = this.getWorkingDirectory(op.path) as SubDirectory | undefined;
 		if (subdir) {
 			subdir.rollback(op, localOpMetadata);
@@ -879,6 +1055,10 @@ export class SharedDirectory
 				localOpMetadata: EditLocalOpMetadata | undefined,
 				clientSequenceNumber: number,
 			) => {
+				// Drop deletes for claimed root-level keys.
+				if (op.path === posix.sep && this.sequencedClaimedValues.has(op.key)) {
+					return;
+				}
 				const subdir = this.getSequencedWorkingDirectory(op.path) as SubDirectory | undefined;
 				if (subdir !== undefined && !subdir?.disposed) {
 					subdir.processDeleteMessage(msgEnvelope, op, local, localOpMetadata);
@@ -899,6 +1079,10 @@ export class SharedDirectory
 				localOpMetadata: EditLocalOpMetadata | undefined,
 				clientSequenceNumber: number,
 			) => {
+				// Drop sets for claimed root-level keys.
+				if (op.path === posix.sep && this.sequencedClaimedValues.has(op.key)) {
+					return;
+				}
 				const subdir = this.getSequencedWorkingDirectory(op.path) as SubDirectory | undefined;
 				if (subdir !== undefined && !subdir?.disposed) {
 					migrateIfSharedSerializable(op.value, this.serializer, this.handle);
@@ -910,6 +1094,36 @@ export class SharedDirectory
 				const targetSubdir = localOpMetadata.subdir;
 				if (!targetSubdir.disposed) {
 					targetSubdir.resubmitKeyMessage(op, localOpMetadata);
+				}
+			},
+		});
+
+		this.messageHandlers.set("claim", {
+			process: (
+				_msgEnvelope: ISequencedMessageEnvelope,
+				op: IDirectoryClaimOperation,
+				local: boolean,
+				_localOpMetadata: DirectoryLocalOpMetadata | undefined,
+				_clientSequenceNumber: number,
+			) => {
+				const alreadyClaimed = this.sequencedClaimedValues.has(op.key);
+				const pending = this.pendingClaims.get(op.key);
+				if (!alreadyClaimed) {
+					migrateIfSharedSerializable(op.value, this.serializer, this.handle);
+					// For local ops, prefer the cached original value (matches the
+					// pattern used for set ops, which use pending data for `local`).
+					const decoded: unknown =
+						local && pending !== undefined ? pending.value : op.value.value;
+					this.applyClaimLocally(op.key, decoded, /* won */ local);
+				}
+				if (pending !== undefined) {
+					this.pendingClaims.delete(op.key);
+					pending.deferred.resolve(local && !alreadyClaimed ? "Success" : "AlreadyClaimed");
+				}
+			},
+			resubmit: (op: IDirectoryClaimOperation) => {
+				if (this.pendingClaims.has(op.key)) {
+					this.submitLocalMessage(op);
 				}
 			},
 		});
@@ -984,6 +1198,14 @@ export class SharedDirectory
 	 */
 	protected applyStashedOp(op: unknown): void {
 		const directoryOp = op as IDirectoryOperation;
+		if (directoryOp.type === "claim") {
+			migrateIfSharedSerializable(directoryOp.value, this.serializer, this.handle);
+			// Best-effort stashed-op replay: re-issue the claim attempt.
+			this.trySetClaim(directoryOp.key, directoryOp.value.value).catch(() => {
+				/* swallow — stashed op replay is best-effort */
+			});
+			return;
+		}
 		const dir = this.getWorkingDirectory(directoryOp.path);
 		switch (directoryOp.type) {
 			case "clear": {
@@ -1075,6 +1297,21 @@ export class SharedDirectory
 			blobs,
 			content,
 		};
+		if (this.sequencedClaimedValues.size > 0) {
+			// eslint-disable-next-line import-x/no-deprecated
+			const claims: [string, ISerializableValue][] = [];
+			for (const [key, value] of this.sequencedClaimedValues) {
+				const encoded = serializeValue(value, serializer, this.handle);
+				claims.push([
+					key,
+					{
+						type: encoded.type,
+						value: encoded.value && (JSON.parse(encoded.value) as object),
+					},
+				]);
+			}
+			newFormat.claims = claims;
+		}
 		builder.addBlob(snapshotFileName, JSON.stringify(newFormat));
 
 		return builder.getSummaryTree();
