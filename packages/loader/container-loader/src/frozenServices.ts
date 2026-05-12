@@ -90,6 +90,8 @@ class FrozenDocumentService
 	extends TypedEventEmitter<IDocumentServiceEvents>
 	implements IDocumentService
 {
+	private readonly storageServices = new Set<FrozenDocumentStorageService>();
+
 	constructor(
 		public readonly resolvedUrl: IResolvedUrl,
 		private readonly readOnly: boolean,
@@ -113,7 +115,12 @@ class FrozenDocumentService
 
 	public readonly policies: IDocumentServicePolicies;
 	async connectToStorage(): Promise<IDocumentStorageService> {
-		return new FrozenDocumentStorageService(await this.documentService?.connectToStorage());
+		const storage = new FrozenDocumentStorageService(
+			this.readOnly,
+			await this.documentService?.connectToStorage(),
+		);
+		this.storageServices.add(storage);
+		return storage;
 	}
 	async connectToDeltaStorage(): Promise<IDocumentDeltaStorageService> {
 		return frozenDocumentDeltaStorageService;
@@ -136,24 +143,79 @@ class FrozenDocumentService
 		// FrozenDeltaStreamBase prevents pendingStateManager 0x173 on replay across reconnects.
 		return new WritableFrozenDeltaStream();
 	}
-	dispose(): void {}
+	dispose(_error?: unknown): void {
+		// Cascade disposal to each storage instance so any hanging `createBlob` promises (the
+		// writable-frozen pending-blob mechanism) reject and the BlobManager can release its
+		// references. Without this, hung promises remain held by BlobManager closures for the
+		// lifetime of the process.
+		for (const storage of this.storageServices) {
+			storage.dispose();
+		}
+		this.storageServices.clear();
+	}
 }
 
 const frozenDocumentStorageServiceHandler = (): never => {
 	throw new Error("Operations are not supported on the FrozenDocumentStorageService.");
 };
-class FrozenDocumentStorageService implements IDocumentStorageService {
-	constructor(private readonly documentStorageService?: IDocumentStorageService) {}
+
+class FrozenDocumentStorageService implements IDocumentStorageService, IDisposable {
+	// Rejecters for any in-flight `createBlob` calls that are currently hanging. The writable-
+	// frozen `createBlob` returns a never-resolving promise so the BlobManager keeps the blob
+	// in `uploading` state (see comment above `createBlob` field below). We need a way to
+	// cancel those on disposal so BlobManager can release its references and we don't leak.
+	private readonly pendingCreateBlobRejecters = new Set<(error: Error) => void>();
+
+	private _disposed = false;
+	public get disposed(): boolean {
+		return this._disposed;
+	}
+
+	constructor(
+		readOnly: boolean,
+		private readonly documentStorageService?: IDocumentStorageService,
+	) {
+		// In the writable-frozen path, `createBlob` returns a never-resolving promise instead
+		// of throwing. This keeps the BlobManager's `localBlobCache` entry in the `uploading`
+		// state: `getPendingBlobs` downgrades `uploading` blobs to `localOnly` in pending
+		// state, so the blob survives `getPendingLocalState`. A subsequent live load runs
+		// `sharePendingBlobs`, which re-enters `uploadAndAttach` against the real storage to
+		// complete the upload. Throwing here would instead delete the cache entry (in
+		// `uploadAndAttach`'s catch handler) and lose the blob — defeating the whole point of
+		// accruing pending state.
+		this.createBlob = readOnly
+			? frozenDocumentStorageServiceHandler
+			: async () =>
+					new Promise<never>((_, reject) => {
+						if (this._disposed) {
+							reject(new Error("FrozenDocumentStorageService is disposed"));
+							return;
+						}
+						this.pendingCreateBlobRejecters.add(reject);
+					});
+	}
 
 	getSnapshotTree = frozenDocumentStorageServiceHandler;
 	getSnapshot = frozenDocumentStorageServiceHandler;
 	getVersions = frozenDocumentStorageServiceHandler;
-	createBlob = frozenDocumentStorageServiceHandler;
+	createBlob: IDocumentStorageService["createBlob"];
 	readBlob =
 		this.documentStorageService?.readBlob.bind(this.documentStorageService) ??
 		frozenDocumentStorageServiceHandler;
 	uploadSummaryWithContext = frozenDocumentStorageServiceHandler;
 	downloadSummary = frozenDocumentStorageServiceHandler;
+
+	public dispose(error?: Error): void {
+		if (this._disposed) {
+			return;
+		}
+		this._disposed = true;
+		const disposeError = error ?? new Error("FrozenDocumentStorageService is disposed");
+		for (const reject of this.pendingCreateBlobRejecters) {
+			reject(disposeError);
+		}
+		this.pendingCreateBlobRejecters.clear();
+	}
 }
 
 const frozenDocumentDeltaStorageService: IDocumentDeltaStorageService = {

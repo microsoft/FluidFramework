@@ -165,3 +165,60 @@ describe("FrozenDocumentService.connectToDeltaStream", () => {
 		assert.strictEqual(second.initialClients[0]?.clientId, second.clientId);
 	});
 });
+
+describe("FrozenDocumentService disposal", () => {
+	it("dispose() rejects in-flight createBlob promises on writable-frozen storage", async () => {
+		// The writable-frozen `createBlob` returns a never-resolving promise so the
+		// BlobManager keeps the blob in `uploading` state and `getPendingBlobs` captures it
+		// in pending state. Without disposal cancelling those hangs, the BlobManager's
+		// `.then`/`.catch` handlers retain references to the rejecter for the lifetime of
+		// the process. FrozenDocumentService.dispose() must cascade to each storage instance
+		// and reject the pending promises.
+		const factory = new FrozenDocumentServiceFactory(false);
+		const service = await factory.createDocumentService(fakeUrl);
+		const storage = await service.connectToStorage();
+		assert(storage.createBlob !== undefined, "Expected createBlob to be defined");
+
+		const blob = new Uint8Array([1, 2, 3]).buffer;
+		const inFlight = storage.createBlob(blob);
+
+		// Promise.race against a microtask-flush sentinel proves the createBlob promise is
+		// hanging (not resolved/rejected) before disposal.
+		const sentinel = Symbol("not-settled");
+		const racedBeforeDispose = await Promise.race([
+			inFlight.then(
+				() => "resolved" as const,
+				() => "rejected" as const,
+			),
+			Promise.resolve(sentinel),
+		]);
+		assert.strictEqual(
+			racedBeforeDispose,
+			sentinel,
+			"Expected createBlob to hang before dispose() is called",
+		);
+
+		service.dispose();
+
+		await assert.rejects(
+			inFlight,
+			(error: Error) => error.message === "FrozenDocumentStorageService is disposed",
+			"Expected in-flight createBlob to reject when FrozenDocumentService is disposed",
+		);
+	});
+
+	it("createBlob calls after disposal reject immediately on writable-frozen storage", async () => {
+		const factory = new FrozenDocumentServiceFactory(false);
+		const service = await factory.createDocumentService(fakeUrl);
+		const storage = await service.connectToStorage();
+		assert(storage.createBlob !== undefined, "Expected createBlob to be defined");
+
+		service.dispose();
+
+		await assert.rejects(
+			storage.createBlob(new Uint8Array([1]).buffer),
+			(error: Error) => error.message === "FrozenDocumentStorageService is disposed",
+			"Expected createBlob after dispose to reject synchronously",
+		);
+	});
+});

@@ -6,15 +6,20 @@
 import { strict as assert } from "assert";
 
 import { bufferToString, stringToBuffer } from "@fluid-internal/client-utils";
+import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct/internal";
 import {
 	asLegacyAlpha,
 	createDetachedContainer,
 	createFrozenDocumentServiceFactory,
+	loadExistingContainer,
 	loadFrozenContainerFromPendingState,
 	type ContainerAlpha,
 	type ILoaderProps,
 } from "@fluidframework/container-loader/internal";
-import type { FluidObject } from "@fluidframework/core-interfaces/internal";
+import type {
+	FluidObject,
+	ILocalFluidHandle,
+} from "@fluidframework/core-interfaces/internal";
 import type {
 	LocalDocumentServiceFactory,
 	LocalResolver,
@@ -26,6 +31,7 @@ import {
 	type ILocalDeltaConnectionServer,
 } from "@fluidframework/server-local-server";
 import {
+	TestFluidObjectFactory,
 	timeoutPromise,
 	type ITestFluidObject,
 	type LocalCodeLoader,
@@ -41,7 +47,9 @@ const toComparableArray = (dir: ISharedMap): [string, unknown][] =>
 	]);
 
 // initialize loader and create a container function
-const initialize = async (): Promise<{
+const initialize = async (options?: {
+	createBlobPayloadPending?: true;
+}): Promise<{
 	container: ContainerAlpha;
 	ITestFluidObject: ITestFluidObject;
 	urlResolver: LocalResolver;
@@ -52,9 +60,33 @@ const initialize = async (): Promise<{
 }> => {
 	const deltaConnectionServer = LocalDeltaConnectionServer.create();
 
+	// Only pass a custom runtimeFactory when we need non-default runtime options; otherwise
+	// fall through to createLoader's default so we don't perturb the existing tests above.
+	const runtimeFactory =
+		options?.createBlobPayloadPending === undefined
+			? undefined
+			: (() => {
+					const defaultDataStoreFactory = new TestFluidObjectFactory(
+						[["map", SharedMap.getFactory()]],
+						"default",
+					);
+					return new ContainerRuntimeFactoryWithDefaultDataStore({
+						defaultFactory: defaultDataStoreFactory,
+						registryEntries: [
+							[defaultDataStoreFactory.type, Promise.resolve(defaultDataStoreFactory)],
+						],
+						runtimeOptions: {
+							// createBlobPayloadPending requires explicitSchemaControl.
+							explicitSchemaControl: true,
+							createBlobPayloadPending: options.createBlobPayloadPending,
+						},
+					});
+				})();
+
 	const { urlResolver, codeDetails, codeLoader, loaderProps, documentServiceFactory } =
 		createLoader({
 			deltaConnectionServer,
+			...(runtimeFactory === undefined ? {} : { runtimeFactory }),
 		});
 
 	const container = asLegacyAlpha(
@@ -972,4 +1004,215 @@ describe("loadFrozenContainerFromPendingState", () => {
 			);
 		});
 	});
+
+	// Blob behavior under both `createBlobPayloadPending` runtime modes:
+	//   - undefined (legacy): `uploadBlob` awaits storage.createBlob before returning a handle.
+	//   - true (pending-payload): `uploadBlob` returns a handle synchronously; storage.createBlob
+	//     runs as a background task triggered by attachGraph.
+	// The frozen storage service (`FrozenDocumentStorageService`) delegates `readBlob` to the
+	// inner storage but throws on `createBlob`. Both modes are covered for the readonly and
+	// writable frozen-load shapes to pin the storage contract under both blob lifecycles.
+	for (const createBlobPayloadPending of [undefined, true] as const) {
+		describe(`blob handling (createBlobPayloadPending: ${createBlobPayloadPending})`, () => {
+			it("readonly frozen container reads blobs captured in pending state", async () => {
+				const { container, ITestFluidObject, urlResolver, codeLoader, documentServiceFactory } =
+					await initialize({ createBlobPayloadPending });
+				await container.attach(urlResolver.createCreateNewRequest("test"));
+
+				const blobHandle = await ITestFluidObject.runtime.uploadBlob(
+					stringToBuffer("readonly-blob", "utf-8"),
+				);
+				ITestFluidObject.root.set("blobId", blobHandle);
+
+				// Ensure outbound ops (including BlobAttach) are acked before snapshotting
+				// pending state, so the frozen container's inner storage can resolve the blob.
+				if (container.isDirty) {
+					await timeoutPromise((resolve) => container.once("saved", () => resolve()));
+				}
+
+				const url = await container.getAbsoluteUrl("");
+				assert(url !== undefined, "Expected container to provide a valid absolute URL");
+				const pendingLocalState = await container.getPendingLocalState();
+
+				const frozenContainer = await loadFrozenContainerFromPendingState({
+					codeLoader,
+					documentServiceFactory,
+					urlResolver,
+					request: { url },
+					pendingLocalState,
+				});
+				assert.strictEqual(
+					frozenContainer.readOnlyInfo.readonly,
+					true,
+					"Expected default frozen container to report readonly === true",
+				);
+				const frozenEntryPoint: FluidObject<TestFluidObject> =
+					await frozenContainer.getEntryPoint();
+				assert(frozenEntryPoint.ITestFluidObject !== undefined);
+
+				const retrieved = await frozenEntryPoint.ITestFluidObject.root.get("blobId").get();
+				assert.strictEqual(
+					bufferToString(retrieved, "utf-8"),
+					"readonly-blob",
+					"Expected readonly frozen container to read the blob captured in pending state",
+				);
+			});
+
+			it("writable frozen container reads blobs captured in pending state", async () => {
+				const { container, ITestFluidObject, urlResolver, codeLoader, documentServiceFactory } =
+					await initialize({ createBlobPayloadPending });
+				await container.attach(urlResolver.createCreateNewRequest("test"));
+
+				const blobHandle = await ITestFluidObject.runtime.uploadBlob(
+					stringToBuffer("writable-blob", "utf-8"),
+				);
+				ITestFluidObject.root.set("blobId", blobHandle);
+
+				if (container.isDirty) {
+					await timeoutPromise((resolve) => container.once("saved", () => resolve()));
+				}
+
+				const url = await container.getAbsoluteUrl("");
+				assert(url !== undefined, "Expected container to provide a valid absolute URL");
+				const pendingLocalState = await container.getPendingLocalState();
+
+				const frozenContainer = await loadFrozenContainerFromPendingState({
+					codeLoader,
+					documentServiceFactory,
+					urlResolver,
+					request: { url },
+					pendingLocalState,
+					readOnly: false,
+				});
+				assert.strictEqual(
+					frozenContainer.readOnlyInfo.readonly,
+					false,
+					"Expected writable frozen container to report readonly === false",
+				);
+				const frozenEntryPoint: FluidObject<TestFluidObject> =
+					await frozenContainer.getEntryPoint();
+				assert(frozenEntryPoint.ITestFluidObject !== undefined);
+
+				const retrieved = await frozenEntryPoint.ITestFluidObject.root.get("blobId").get();
+				assert.strictEqual(
+					bufferToString(retrieved, "utf-8"),
+					"writable-blob",
+					"Expected writable frozen container to read the blob captured in pending state",
+				);
+			});
+
+			it("uploadBlob on a writable frozen container is captured in pending state for later upload", async () => {
+				// Adding a blob in writable-frozen mode must accrue in pending state rather than
+				// publishing to storage. `FrozenDocumentStorageService.createBlob` hangs (never
+				// resolves) on the writable path: the BlobManager keeps the blob in `uploading`
+				// state in `localBlobCache`, `getPendingBlobs` downgrades it to `localOnly` in
+				// pending state, and a subsequent live load runs `sharePendingBlobs` to complete
+				// the upload against real storage.
+				//
+				// Only pending-payload mode (`createBlobPayloadPending: true`) is fully usable
+				// here. In legacy mode `uploadBlob` awaits the (hanging) storage call and never
+				// returns — so callers cannot get the handle to write into a DDS, and we just
+				// verify the hang is non-fatal and that the container stays open.
+				const { container, urlResolver, codeLoader, documentServiceFactory, loaderProps } =
+					await initialize({ createBlobPayloadPending });
+				await container.attach(urlResolver.createCreateNewRequest("test"));
+
+				const url = await container.getAbsoluteUrl("");
+				assert(url !== undefined, "Expected container to provide a valid absolute URL");
+				const pendingLocalState = await container.getPendingLocalState();
+
+				const frozenContainer = asLegacyAlpha(
+					await loadFrozenContainerFromPendingState({
+						codeLoader,
+						documentServiceFactory,
+						urlResolver,
+						request: { url },
+						pendingLocalState,
+						readOnly: false,
+					}),
+				);
+				const frozenEntryPoint: FluidObject<TestFluidObject> =
+					await frozenContainer.getEntryPoint();
+				assert(frozenEntryPoint.ITestFluidObject !== undefined);
+				const frozenFluidObject = frozenEntryPoint.ITestFluidObject;
+
+				const blobContents = "freshly-added-on-frozen";
+				const newBlob = stringToBuffer(blobContents, "utf-8");
+
+				if (createBlobPayloadPending === undefined) {
+					// Legacy: uploadBlob awaits storage.createBlob, which hangs. Verify the
+					// promise has not settled after a microtask/macrotask flush — the contract
+					// here is "no rejection, no container close", not "blob is usable".
+					let settled: "resolved" | "rejected" | undefined;
+					frozenFluidObject.runtime.uploadBlob(newBlob).then(
+						() => (settled = "resolved"),
+						() => (settled = "rejected"),
+					);
+					await new Promise<void>((resolve) => setTimeout(resolve, 25));
+					assert.strictEqual(
+						settled,
+						undefined,
+						"Expected legacy uploadBlob on writable-frozen to hang (no resolution/rejection)",
+					);
+					assert.strictEqual(
+						frozenContainer.closed,
+						false,
+						"Expected writable frozen container to remain open during a hanging upload",
+					);
+					return;
+				}
+
+				// Pending-payload: uploadBlob returns a handle synchronously. The blob is locally
+				// readable from the runtime's localBlobCache; the storage upload kicked off by
+				// attachGraph hangs against FrozenDocumentStorageService, so the blob stays
+				// `uploading` and is captured by getPendingBlobs as `localOnly`.
+				const handle = (await frozenFluidObject.runtime.uploadBlob(
+					newBlob,
+				)) as ILocalFluidHandle<ArrayBufferLike>;
+				assert.strictEqual(
+					bufferToString(await handle.get(), "utf-8"),
+					blobContents,
+					"Expected handle.get() to return the local copy of the blob",
+				);
+
+				// Attach the handle so attachGraph runs and the blob is recorded as pending.
+				frozenFluidObject.root.set("frozenBlob", handle);
+
+				const layeredPending = await frozenContainer.getPendingLocalState();
+				assert.notStrictEqual(
+					layeredPending,
+					pendingLocalState,
+					"Expected pending state to capture the newly-added blob",
+				);
+
+				// Load a live (non-frozen) container with the layered pending state. The
+				// BlobManager will call sharePendingBlobs on the real storage and complete the
+				// upload — proving the blob really did accrue across the frozen boundary.
+				const liveContainer = await loadExistingContainer({
+					...loaderProps,
+					request: { url },
+					pendingLocalState: layeredPending,
+				});
+				const liveEntryPoint: FluidObject<TestFluidObject> =
+					await liveContainer.getEntryPoint();
+				assert(liveEntryPoint.ITestFluidObject !== undefined);
+
+				const liveHandle = liveEntryPoint.ITestFluidObject.root.get(
+					"frozenBlob",
+				) as ILocalFluidHandle<ArrayBufferLike>;
+				assert(liveHandle !== undefined, "Expected live container to see the blob handle");
+				assert.strictEqual(
+					bufferToString(await liveHandle.get(), "utf-8"),
+					blobContents,
+					"Expected live container to read the previously-frozen blob",
+				);
+
+				assert.strictEqual(
+					frozenContainer.closed,
+					false,
+					"Expected writable frozen container to remain open after handing the blob off",
+				);
+			});
+		});
+	}
 });
