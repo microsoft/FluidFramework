@@ -69,16 +69,19 @@ _See code: [src/commands/check/buildVersion.ts](https://github.com/microsoft/Flu
 
 ## `flub check bundleSize`
 
-Compare the PR's locally-collected bundle reports against the CI build of the merge-base commit (the commit on the target branch the PR is based on) and write the outcome as one of two structured files in the output directory: result.json on success, error.json on failure.
+Compare the locally-collected bundle reports against the CI build of the merge-base commit (the commit on the target branch the local branch is based on) and print the diff. Prints a human-readable summary by default; pass --json for the structured result.
 
 ```
 USAGE
-  $ flub check bundleSize [--json] [-v | --quiet] [--localReportPath <value>] [--outputDir <value>]
+  $ flub check bundleSize [--json] [-v | --quiet] [--localReportPath <value>] [--targetBranch <value>] [--adoApiToken
+    <value>]
 
 FLAGS
-  --localReportPath=<value>  [default: ./artifacts/bundleAnalyzerJson] Path to the locally-collected bundle reports for
-                             the PR (as produced by `flub generate bundleStats`).
-  --outputDir=<value>        [default: ./artifacts/bundleSizeDiff] Directory to write result.json or error.json into.
+  --adoApiToken=<value>      [env: ADO_API_TOKEN] ADO PAT for accessing the baseline build. When absent, anonymous reads
+                             are used (suitable for fork PR builds where $(System.AccessToken) isn't populated).
+  --localReportPath=<value>  [default: ./artifacts/bundleAnalyzerJson] Path to the locally-collected bundle reports (as
+                             produced by `flub generate bundleStats`).
+  --targetBranch=<value>     [default: main] Name of the target branch to compute the baseline from.
 
 LOGGING FLAGS
   -v, --verbose  Enable verbose logging.
@@ -88,9 +91,9 @@ GLOBAL FLAGS
   --json  Format output as json.
 
 DESCRIPTION
-  Compare the PR's locally-collected bundle reports against the CI build of the merge-base commit (the commit on the
-  target branch the PR is based on) and write the outcome as one of two structured files in the output directory:
-  result.json on success, error.json on failure.
+  Compare the locally-collected bundle reports against the CI build of the merge-base commit (the commit on the target
+  branch the local branch is based on) and print the diff. Prints a human-readable summary by default; pass --json for
+  the structured result.
 ```
 
 _See code: [src/commands/check/bundleSize.ts](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/src/commands/check/bundleSize.ts)_
