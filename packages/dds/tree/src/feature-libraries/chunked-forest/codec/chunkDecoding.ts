@@ -38,7 +38,8 @@ import {
 	decode as genericDecode,
 	readStreamIdentifier,
 } from "./chunkDecodingGeneric.js";
-import type { IncrementalDecoder } from "./codecs.js";
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+import type { FieldBatchEncodingContext, IncrementalDecoder } from "./codecs.js";
 import {
 	type EncodedAnyShape,
 	type EncodedChunkShapeV1OrV2,
@@ -61,7 +62,7 @@ export interface IdDecodingContext {
 	 */
 	originatorId: SessionId;
 	/**
-	 * See {@link FieldBatchEncodingContext.isSummary}.
+	 * {@inheritdoc FieldBatchEncodingContext.isSummary}
 	 */
 	isSummary: boolean;
 	/**
@@ -162,7 +163,7 @@ export function readValue(
 					// stable UUID so all readers of the same blob agree on the resulting value.
 					//
 					// The heal path is intentionally restricted to summary loads — an
-					// unresolvable id encountered while applying an op should still surface as
+					// unresolvable ID encountered while applying an op should still surface as
 					// an error, since it indicates a real bug rather than a recoverable state.
 					return uuidV5(
 						`${idDecodingContext.sharedObjectId}|${streamValue}`,
