@@ -6,8 +6,10 @@
 import { execSync } from "node:child_process";
 
 /**
- * Returns the merge-base of `HEAD` and the given ref. The ref may be any
+ * Compute the merge-base of `HEAD` and the given ref. The ref may be any
  * argument `git merge-base` accepts (remote branch, local branch, SHA, tag, …).
+ *
+ * @returns The merge-base commit SHA.
  */
 export function getBaselineCommit(baselineRef: string): string {
 	return execSync(`git merge-base ${baselineRef} HEAD`).toString().trim();
@@ -25,12 +27,15 @@ interface CanonicalCandidate {
 }
 
 /**
- * Lists remotes that point at the canonical `microsoft/FluidFramework`
- * repository. Returns an empty array if none match.
+ * List remotes that point at the canonical `microsoft/FluidFramework`
+ * repository.
  *
  * Match is case-insensitive and tolerant of a trailing `.git`, covering both
  * HTTPS (`https://github.com/microsoft/FluidFramework[.git]`) and SSH
  * (`git@github.com:microsoft/FluidFramework[.git]`) remote URL forms.
+ *
+ * @returns The matching remotes in `.git/config` order, or an empty array if
+ * none match.
  */
 function findCanonicalRemotes(): { name: string; url: string }[] {
 	// Reads remote URLs straight from git config rather than scraping
@@ -55,7 +60,10 @@ function findCanonicalRemotes(): { name: string; url: string }[] {
 }
 
 /**
- * Resolve the tip commit of a ref, or `undefined` if it doesn't exist locally.
+ * Resolve the tip commit of a ref.
+ *
+ * @returns The commit SHA the ref points at, or `undefined` if the ref doesn't
+ * exist locally.
  */
 function resolveTip(ref: string): string | undefined {
 	try {
@@ -72,7 +80,10 @@ function resolveTip(ref: string): string | undefined {
 
 /**
  * Test whether `ancestor` is an ancestor of `descendant` in the commit DAG.
- * A commit is its own ancestor. Returns `false` if either ref can't be resolved.
+ * A commit is its own ancestor.
+ *
+ * @returns `true` if `ancestor` is reachable from `descendant`, `false`
+ * otherwise — including when either ref can't be resolved.
  */
 function isAncestor(ancestor: string, descendant: string): boolean {
 	try {
@@ -87,10 +98,12 @@ function isAncestor(ancestor: string, descendant: string): boolean {
 }
 
 /**
- * From a set of candidates, return those whose tip is the freshest — i.e. not
- * a strict ancestor of any other candidate's tip. A single line of history
- * produces exactly one winner; equal tips don't dominate each other, and
- * truly divergent histories (rare for `main`) produce multiple winners.
+ * From a set of candidates, find those whose tip is the freshest — i.e. not a
+ * strict ancestor of any other candidate's tip.
+ *
+ * @returns The freshest candidates. A single line of history produces exactly
+ * one winner; equal tips don't dominate each other, and truly divergent
+ * histories (rare for `main`) produce multiple winners.
  */
 function pickFreshest(candidates: CanonicalCandidate[]): CanonicalCandidate[] {
 	function hasStrictlyNewerPeer(candidate: CanonicalCandidate): boolean {
@@ -107,19 +120,19 @@ function pickFreshest(candidates: CanonicalCandidate[]): CanonicalCandidate[] {
 
 /**
  * Pick the canonical remote (one pointing at `microsoft/FluidFramework`) whose
- * `<name>/<branch>` is freshest locally, and return its name. Returns
- * `undefined` when no usable canonical remote is configured — callers decide
- * the fallback policy.
+ * `<name>/<branch>` is freshest locally.
  *
- * The returned remote is always one whose `<name>/<branch>` resolves locally;
- * remotes that don't are dropped from consideration. When multiple candidates
- * remain, pick the one whose tip is not a strict ancestor of any other's.
- * Ties (identical tips or divergent histories) resolve to the first candidate
- * in config order. Returns `undefined` if no candidate survives the local-tip
- * filter.
+ * Remotes whose `<name>/<branch>` doesn't resolve locally are dropped from
+ * consideration. When multiple candidates remain, pick the one whose tip is
+ * not a strict ancestor of any other's. Ties (identical tips or divergent
+ * histories) resolve to the first candidate in config order.
  *
  * Logs the discovered remotes (and which one was selected, when ambiguous) so
  * the user can verify what's being compared against.
+ *
+ * @returns The selected remote's name, or `undefined` if no canonical remote is
+ * configured or none have a locally-resolvable `<name>/<branch>`. Callers
+ * decide the fallback policy in the `undefined` case.
  */
 export function pickCanonicalRemote(branch: string): string | undefined {
 	const canonicals = findCanonicalRemotes();
