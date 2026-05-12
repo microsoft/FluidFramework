@@ -8,6 +8,8 @@ import { strict as assert } from "node:assert";
 import type {
 	IClient,
 	IDocumentMessage,
+	IDocumentService,
+	IDocumentServiceFactory,
 	INack,
 	IResolvedUrl,
 } from "@fluidframework/driver-definitions/internal";
@@ -219,6 +221,46 @@ describe("FrozenDocumentService disposal", () => {
 			storage.createBlob(new Uint8Array([1]).buffer),
 			(error: Error) => error.message === "FrozenDocumentStorageService is disposed",
 			"Expected createBlob after dispose to reject synchronously",
+		);
+	});
+
+	it("dispose() cascades to the wrapped inner IDocumentService", async () => {
+		// FrozenDocumentService owns the inner service it wraps (created by the wrapping
+		// factory, never exposed to callers). The IDocumentService.dispose contract says
+		// dispose is called by the storage consumer when done with storage; for the wrapped
+		// frozen variant, that means FrozenDocumentService.dispose must forward.
+		let innerDisposeError: unknown = "not-called";
+		const innerService = {
+			resolvedUrl: fakeUrl,
+			policies: {},
+			connectToStorage: async () => ({}) as never,
+			connectToDeltaStorage: async () => ({}) as never,
+			connectToDeltaStream: async () => ({}) as never,
+			dispose: (error?: unknown) => {
+				innerDisposeError = error ?? "no-error";
+			},
+			on: () => innerService,
+			off: () => innerService,
+			once: () => innerService,
+		} as unknown as IDocumentService;
+
+		const innerFactory: IDocumentServiceFactory = {
+			createDocumentService: async () => innerService,
+			createContainer: async () => {
+				throw new Error("not used in this test");
+			},
+		};
+
+		const factory = new FrozenDocumentServiceFactory(false, innerFactory);
+		const service = await factory.createDocumentService(fakeUrl);
+
+		const sentinelError = new Error("teardown reason");
+		service.dispose(sentinelError);
+
+		assert.strictEqual(
+			innerDisposeError,
+			sentinelError,
+			"Expected FrozenDocumentService.dispose to forward the error to the wrapped inner service",
 		);
 	});
 });

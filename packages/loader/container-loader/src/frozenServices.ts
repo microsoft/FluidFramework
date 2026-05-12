@@ -147,7 +147,7 @@ class FrozenDocumentService
 		// FrozenDeltaStreamBase prevents pendingStateManager 0x173 on replay across reconnects.
 		return new WritableFrozenDeltaStream();
 	}
-	dispose(_error?: unknown): void {
+	dispose(error?: unknown): void {
 		// Cascade disposal to each storage instance so any hanging `createBlob` promises (the
 		// writable-frozen pending-blob mechanism) reject and the BlobManager can release its
 		// references. Without this, hung promises remain held by BlobManager closures for the
@@ -156,6 +156,11 @@ class FrozenDocumentService
 			storage.dispose();
 		}
 		this.storageServices.clear();
+		// Forward disposal to the wrapped service. We own its lifetime (it was created for us
+		// by the wrapping factory and is never exposed to callers), so the contract from
+		// `IDocumentService.dispose` ("called by storage consumer when done with storage")
+		// applies here.
+		this.documentService?.dispose(error);
 	}
 }
 
