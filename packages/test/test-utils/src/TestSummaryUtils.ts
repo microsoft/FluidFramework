@@ -9,7 +9,6 @@ import {
 	LoaderHeader,
 } from "@fluidframework/container-definitions/internal";
 import {
-	// eslint-disable-next-line import-x/no-deprecated
 	IOnDemandSummarizeOptions,
 	ISummarizer,
 	ISummaryRuntimeOptions,
@@ -63,7 +62,9 @@ async function getSummarizerBackCompat(container: IContainer): Promise<ISummariz
 	return response.value as ISummarizer;
 }
 
-/** @internal */
+/**
+ * @internal
+ */
 export async function createSummarizerCore(
 	container: IContainer,
 	loader: IHostLoader,

@@ -5,19 +5,19 @@
 
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { type Package, getResolvedFluidRoot } from "@fluidframework/build-tools";
-import { expect } from "chai";
+import { getResolvedFluidRoot, type Package } from "@fluidframework/build-tools";
 import * as chai from "chai";
+import { expect } from "chai";
 import assertArrays from "chai-arrays";
 import {
 	AllPackagesSelectionCriteria,
+	filterPackages,
 	type PackageFilterOptions,
 	type PackageSelectionCriteria,
-	filterPackages,
 	selectAndFilterPackages,
 	selectPackagesFromContext,
 } from "../filter.js";
-import { Context } from "../library/index.js";
+import { Context } from "../library/context.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -57,7 +57,6 @@ describe("filterPackages", () => {
 			"@fluid-tools/build-cli",
 			"@fluid-tools/build-infrastructure",
 			"@fluidframework/build-tools",
-			"@fluidframework/bundle-size-tools",
 			"@fluid-tools/version-tools",
 		]);
 	});
@@ -90,7 +89,6 @@ describe("filterPackages", () => {
 			"@fluid-tools/build-cli",
 			"@fluid-tools/build-infrastructure",
 			"@fluidframework/build-tools",
-			"@fluidframework/bundle-size-tools",
 			"@fluid-tools/version-tools",
 		]);
 	});
@@ -135,10 +133,7 @@ describe("filterPackages", () => {
 		};
 		const actual = await filterPackages(packages, filters);
 		const names = actual.map((p) => p.name);
-		expect(names).to.be.equalTo([
-			"@fluidframework/build-tools",
-			"@fluidframework/bundle-size-tools",
-		]);
+		expect(names).to.be.equalTo(["@fluidframework/build-tools"]);
 	});
 });
 
@@ -159,7 +154,6 @@ describe("selectAndFilterPackages", () => {
 			"@fluid-tools/build-cli",
 			"@fluid-tools/build-infrastructure",
 			"@fluidframework/build-tools",
-			"@fluidframework/bundle-size-tools",
 			"@fluid-tools/version-tools",
 		]);
 	});
@@ -216,7 +210,6 @@ describe("selectAndFilterPackages", () => {
 			"@fluid-tools/build-cli",
 			"@fluid-tools/build-infrastructure",
 			"@fluidframework/build-tools",
-			"@fluidframework/bundle-size-tools",
 			"@fluid-tools/version-tools",
 		]);
 	});
@@ -317,7 +310,6 @@ describe("selectAndFilterPackages", () => {
 			"@fluid-tools/build-cli",
 			"@fluid-tools/build-infrastructure",
 			"@fluidframework/build-tools",
-			"@fluidframework/bundle-size-tools",
 			"@fluid-tools/version-tools",
 		]);
 	});
@@ -365,10 +357,7 @@ describe("selectAndFilterPackages", () => {
 		const { filtered } = await selectAndFilterPackages(context, selectionOptions, filters);
 		const names = filtered.map((p) => p.name);
 
-		expect(names).to.be.equalTo([
-			"@fluidframework/build-tools",
-			"@fluidframework/bundle-size-tools",
-		]);
+		expect(names).to.be.equalTo(["@fluidframework/build-tools"]);
 	});
 
 	it("multiple selection flags", async () => {

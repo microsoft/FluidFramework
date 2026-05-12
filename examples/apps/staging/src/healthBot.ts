@@ -21,7 +21,7 @@ type GroceryListPOJO = GroceryListItemPOJO[];
 export const NETWORK_askHealthBotForSuggestions = async (
 	groceryListString: string,
 ): Promise<string> => {
-	const parsedGroceryList: GroceryListPOJO = JSON.parse(groceryListString);
+	const parsedGroceryList = JSON.parse(groceryListString) as GroceryListPOJO;
 	const improvedGroceryList: GroceryListPOJO = parsedGroceryList.filter(
 		(item) => item.name.localeCompare("chocolate", "en", { sensitivity: "base" }) !== 0,
 	);

@@ -22,7 +22,7 @@ class TinyliciousService {
 	public readonly documentServiceFactory: IDocumentServiceFactory;
 	public readonly urlResolver: IUrlResolver;
 
-	constructor(tinyliciousPort?: number) {
+	constructor() {
 		const tokenProvider = createInsecureTinyliciousTestTokenProvider();
 		this.urlResolver = createInsecureTinyliciousTestUrlResolver();
 		this.documentServiceFactory = createRouterliciousDocumentServiceFactory(tokenProvider);

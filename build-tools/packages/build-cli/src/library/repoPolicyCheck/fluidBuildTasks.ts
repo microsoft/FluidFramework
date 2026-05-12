@@ -11,12 +11,12 @@ import {
 } from "@fluid-tools/build-infrastructure";
 import {
 	FluidRepo,
-	type Package,
-	type PackageJson,
-	TscUtils,
 	getFluidBuildConfig,
 	getTaskDefinitions,
 	normalizeGlobalTaskDefinitions,
+	type Package,
+	type PackageJson,
+	TscUtils,
 } from "@fluidframework/build-tools";
 import * as semver from "semver";
 import type { TsConfigJson } from "type-fest";
@@ -57,9 +57,9 @@ interface ESLintInstance {
  * Requires ESLint 8.57.0+ which introduced the loadESLint API.
  */
 interface ESLintModuleType {
-	loadESLint: (opts?: { cwd?: string }) => Promise<
-		new (instanceOpts?: { cwd?: string }) => ESLintInstance
-	>;
+	loadESLint: (opts?: {
+		cwd?: string;
+	}) => Promise<new (instanceOpts?: { cwd?: string }) => ESLintInstance>;
 }
 
 /**
@@ -632,6 +632,52 @@ function patchTaskDeps(
 	}
 }
 
+/**
+ * Filter function used in {@link getTscCommandDependencies} to determine whether
+ * a dependency should be excluded from the list of possible build predecessors.
+ * Returns `true` to ignore (exclude) the dependency, `false` to include it.
+ *
+ * `workspace:` references are never ignored (always a real local build dep).
+ * Cross-group and unknown packages are always ignored.
+ * For plain semver ranges in the same group the dep is included only when the
+ * dep's current version satisfies the range.
+ */
+export function shouldIgnoreBuildDependency(
+	depSpec: { name: string; version: string },
+	packageMap: ReadonlyMap<string, { group: string; version: string }>,
+	curPkgGroup: string | undefined,
+): boolean {
+	// Never ignore workspace linked dependencies
+	if (depSpec.version.includes("workspace:")) {
+		return false;
+	}
+	// Historically, a semantic version check was also considered sufficient
+	// to indicate a possible dependency. This was probably the case for lerna
+	// managed repo. The check is preserved here, but only allowed when the
+	// packages are within the same release group.
+	// Note: packages may be symlinked across workspace boundaries and in those
+	// situations, it is up to the user to build in the correct order. To enact
+	// a full repo ordering, support would be needed to recognize tooling
+	// dependencies used to run scripts apart from compile time dependencies,
+	// especially since the module type is irrelevant for execution dependencies.
+	const depPackage = packageMap.get(depSpec.name);
+	if (depPackage === undefined) {
+		// Not known to repo, can be ignored.
+		return true;
+	}
+	if (depPackage.group !== curPkgGroup) {
+		return true;
+	}
+	// catalog: references are version pins for external or cross-workspace packages.
+	// Same-group packages always use the workspace: protocol, so a catalog: reference
+	// is almost certainly not a build dependency.
+	// Ignore it rather than passing an invalid comparator to semver.
+	if (depSpec.version.startsWith("catalog:")) {
+		return true;
+	}
+	return !semver.satisfies(depPackage.version, depSpec.version);
+}
+
 function getTscCommandDependencies(
 	packageDir: string,
 	json: Readonly<PackageJson>,
@@ -695,32 +741,8 @@ function getTscCommandDependencies(
 		packageMap,
 		json.name,
 		script,
-		// ignore filter function
-		(depSpec: { name: string; version: string }) => {
-			// Never ignore workspace linked dependencies
-			if (depSpec.version.includes("workspace:")) {
-				return false;
-			}
-			// Historically, a semantic version check was also considered sufficient
-			// to indicate a possible dependency. This was probably the case for lerna
-			// managed repo. The check is preserved here, but only allowed when the
-			// packages are within the same release group.
-			// Note: packages may be symlinked across workspace boundaries and in those
-			// situations, it is up to the user to build in the correct order. To enact
-			// a full repo ordering, support would be needed to recognize tooling
-			// dependencies used to run scripts apart from compile time dependencies,
-			// especially since the module type is irrelevant for execution dependencies.
-			const depPackage = packageMap.get(depSpec.name);
-			if (depPackage === undefined) {
-				// Not known to repo, can be ignored.
-				return true;
-			}
-			if (depPackage.group !== curPkgRepoGroup) {
-				return true;
-			}
-			const satisfied = semver.satisfies(depPackage.version, depSpec.version);
-			return !satisfied;
-		},
+		// ignore filter function — see shouldIgnoreBuildDependency for logic details
+		(depSpec) => shouldIgnoreBuildDependency(depSpec, packageMap, curPkgRepoGroup),
 	);
 
 	// eslint-disable-next-line unicorn/prefer-spread

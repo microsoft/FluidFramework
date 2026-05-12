@@ -31,7 +31,6 @@ describe("List", () => {
 		return result;
 	}
 
-	// eslint-disable-next-line @fluid-internal/fluid/no-markdown-links-in-jsdoc -- false positive AB#51719
 	/** Creates test case titles that resemble function calls:`<array>.[name](..args..) -> <expected>` */
 	function prettyCall(
 		name: string,
@@ -208,7 +207,7 @@ describe("List", () => {
 				// via 'deepEquals' by 'test1()'.
 				return {
 					hasConcatSpreadable: Reflect.has(subject, Symbol.isConcatSpreadable),
-					isConcatSpreadable: Reflect.get(subject, Symbol.isConcatSpreadable),
+					isConcatSpreadable: Reflect.get(subject, Symbol.isConcatSpreadable) as unknown,
 				};
 			});
 		});
@@ -392,7 +391,7 @@ describe("List", () => {
 					// Wraps the callback function to log the values of 'this', 'value', and 'index',
 					// which are expected to be identical between a true JS array and our array-like subject.
 					const logCalls = (expectedArrayParam: readonly string[], log: unknown[][]) => {
-						return function (...args: any[]) {
+						return function (...args: unknown[]) {
 							const result = callback(...args);
 
 							// Other than the 'array' parameter, the arguments should be identical.  To make

@@ -5,6 +5,8 @@
 
 import { strict as assert } from "node:assert";
 
+import { deepFreeze } from "@fluidframework/test-runtime-utils/internal";
+
 import type { ChangeAtomId } from "../../../core/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import type { Mark } from "../../../feature-libraries/sequence-field/types.js";
@@ -16,8 +18,8 @@ import {
 } from "../../../feature-libraries/sequence-field/utils.js";
 import { brand } from "../../../util/index.js";
 import { testIdCompressor } from "../../utils.js";
+
 import { generatePopulatedMarks } from "./populatedMarks.js";
-import { deepFreeze } from "@fluidframework/test-runtime-utils/internal";
 
 const vestigialEndpoint: ChangeAtomId = {
 	revision: testIdCompressor.generateCompressedId(),

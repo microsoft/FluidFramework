@@ -3,9 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { type AsyncPriorityQueue, priorityQueue } from "async";
-
 import * as assert from "assert";
+import { type AsyncPriorityQueue, priorityQueue } from "async";
 import registerDebug from "debug";
 import type { Package } from "../../common/npmPackage";
 import type { BuildContext } from "../buildContext";
@@ -32,6 +31,7 @@ export abstract class Task {
 		return priorityQueue(async (taskExec: TaskExec) => {
 			const waitTime = (Date.now() - taskExec.queueTime) / 1000;
 			const task = taskExec.task;
+			task.lastQueueWaitTime = waitTime;
 			task.node.context.taskStats.leafQueueWaitTimeTotal += waitTime;
 			traceTaskExecWait(`${task.nameColored}: waited in queue ${waitTime}s`);
 			taskExec.resolve(await task.exec());

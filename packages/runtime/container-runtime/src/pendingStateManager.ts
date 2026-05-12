@@ -85,10 +85,6 @@ export interface IPendingMessage {
 		 */
 		length: number;
 		/**
-		 * If true, don't compare batchID of incoming batches to this. e.g. ID Allocation Batch IDs should be ignored
-		 */
-		ignoreBatchId?: boolean;
-		/**
 		 * If true, this batch is staged and should not actually be submitted on replayPendingStates.
 		 */
 		staged: boolean;
@@ -335,7 +331,9 @@ export class PendingStateManager implements IDisposable {
 		return this.pendingMessagesCount !== 0;
 	}
 
-	public getLocalState(snapshotSequenceNumber?: number): IPendingLocalState {
+	public getLocalState(snapshotSequenceNumber?: number): {
+		pending: IPendingLocalState;
+	} {
 		assert(
 			this.initialMessages.isEmpty(),
 			0x2e9 /* "Must call getLocalState() after applying initial states" */,
@@ -359,10 +357,12 @@ export class PendingStateManager implements IDisposable {
 			}
 		}
 		return {
-			pendingStates: [
-				...newSavedOps,
-				...this.pendingMessages.toArray().map((message) => toSerializableForm(message)),
-			],
+			pending: {
+				pendingStates: [
+					...newSavedOps,
+					...this.pendingMessages.toArray().map((message) => toSerializableForm(message)),
+				],
+			},
 		};
 	}
 
@@ -403,13 +403,11 @@ export class PendingStateManager implements IDisposable {
 	 * @param clientSequenceNumber - The CSN of the first message in the batch,
 	 * or undefined if the batch was not yet sent (e.g. by the time we flushed we lost the connection)
 	 * @param staged - Indicates whether batch is staged (not to be submitted while runtime is in Staging Mode)
-	 * @param ignoreBatchId - Whether to ignore the batchId in the batchStartInfo
 	 */
 	public onFlushBatch(
 		batch: LocalBatchMessage[] | [LocalEmptyBatchPlaceholder],
 		clientSequenceNumber: number | undefined,
 		staged: boolean,
-		ignoreBatchId?: boolean,
 	): void {
 		// clientId and batchStartCsn are used for generating the batchId so we can detect container forks
 		// where this batch was submitted by two different clients rehydrating from the same local state.
@@ -427,7 +425,7 @@ export class PendingStateManager implements IDisposable {
 			clientId !== undefined,
 			0xa33 /* clientId (from stateHandler) could only be undefined if we've never connected, but we have a CSN so we know that's not the case */,
 		);
-
+		const batchInfo = { clientId, batchStartCsn, length: batch.length, staged };
 		for (const message of batch) {
 			const {
 				runtimeOp,
@@ -438,12 +436,11 @@ export class PendingStateManager implements IDisposable {
 			const pendingMessage: IPendingMessage = {
 				type: "message",
 				referenceSequenceNumber,
-				content: serializeOp(runtimeOp),
+				content: serializeOp(runtimeOp).content,
 				runtimeOp,
 				localOpMetadata,
 				opMetadata,
-				// Note: We only will read this off the first message, but put it on all for simplicity
-				batchInfo: { clientId, batchStartCsn, length: batch.length, ignoreBatchId, staged },
+				batchInfo,
 			};
 			this.pendingMessages.push(pendingMessage);
 		}
@@ -509,23 +506,14 @@ export class PendingStateManager implements IDisposable {
 	 * @returns whether the batch IDs match
 	 */
 	private remoteBatchMatchesPendingBatch(remoteBatchStart: BatchStartInfo): boolean {
-		// Find the first pending message that uses Batch ID, to compare to the incoming remote batch.
-		// If there is no such message, then the incoming remote batch doesn't have a match here and we can return.
-		const firstIndexUsingBatchId = Array.from({
-			length: this.pendingMessages.length,
-		}).findIndex((_, i) => this.pendingMessages.get(i)?.batchInfo.ignoreBatchId !== true);
-		const pendingMessageUsingBatchId =
-			firstIndexUsingBatchId === -1
-				? undefined
-				: this.pendingMessages.get(firstIndexUsingBatchId);
-
-		if (pendingMessageUsingBatchId === undefined) {
+		const pendingMessage = this.pendingMessages.peekFront();
+		if (pendingMessage === undefined) {
 			return false;
 		}
 
 		// We must compare the effective batch IDs, since one of these ops
 		// may have been the original, not resubmitted, so wouldn't have its batch ID stamped yet.
-		const pendingBatchId = getEffectiveBatchId(pendingMessageUsingBatchId);
+		const pendingBatchId = getEffectiveBatchId(pendingMessage);
 		const inboundBatchId = getEffectiveBatchId(remoteBatchStart);
 
 		return pendingBatchId === inboundBatchId;
@@ -747,8 +735,12 @@ export class PendingStateManager implements IDisposable {
 	 * Called when the Container's connection state changes. If the Container gets connected, it replays all the pending
 	 * states in its queue. This includes triggering resubmission of unacked ops.
 	 * ! Note: successfully resubmitting an op that has been successfully sequenced is not possible due to checks in the ConnectionStateHandler (Loader layer)
+	 *
+	 * @returns The unique batch infos for all batches that were replayed.
 	 */
-	public replayPendingStates(options?: ReplayPendingStateOptions): void {
+	public replayPendingStates(
+		options?: ReplayPendingStateOptions,
+	): IPendingMessage["batchInfo"][] {
 		const { committingStagedBatches, squash } = {
 			...defaultReplayPendingStatesOptions,
 			...options,
@@ -775,6 +767,7 @@ export class PendingStateManager implements IDisposable {
 
 		const initialPendingMessagesCount = this.pendingMessages.length;
 		let remainingPendingMessagesCount = this.pendingMessages.length;
+		const replayedBatchSet = new Set<IPendingMessage["batchInfo"]>();
 
 		let seenStagedBatch = false;
 
@@ -802,16 +795,14 @@ export class PendingStateManager implements IDisposable {
 			assert(batchMetadataFlag !== false, 0x41b /* We cannot process batches in chunks */);
 
 			// The next message starts a batch (possibly single-message), and we'll need its batchId.
-			const batchId =
-				pendingMessage.batchInfo.ignoreBatchId === true
-					? undefined
-					: getEffectiveBatchId(pendingMessage);
+			const batchId = getEffectiveBatchId(pendingMessage);
 
 			const staged = pendingMessage.batchInfo.staged;
 
 			if (asEmptyBatchLocalOpMetadata(pendingMessage.localOpMetadata)?.emptyBatch === true) {
 				// Resubmit no messages, with the batchId. Will result in another empty batch marker.
 				this.stateHandler.reSubmitBatch([], { batchId, staged, squash });
+				replayedBatchSet.add(pendingMessage.batchInfo);
 				continue;
 			}
 
@@ -838,6 +829,7 @@ export class PendingStateManager implements IDisposable {
 					],
 					{ batchId, staged, squash },
 				);
+				replayedBatchSet.add(pendingMessage.batchInfo);
 				continue;
 			}
 			// else: batchMetadataFlag === true  (It's a typical multi-message batch)
@@ -877,6 +869,7 @@ export class PendingStateManager implements IDisposable {
 			}
 
 			this.stateHandler.reSubmitBatch(batch, { batchId, staged, squash });
+			replayedBatchSet.add(pendingMessage.batchInfo);
 		}
 
 		if (!committingStagedBatches) {
@@ -894,6 +887,8 @@ export class PendingStateManager implements IDisposable {
 				clientId: this.stateHandler.clientId(),
 			});
 		}
+
+		return [...replayedBatchSet];
 	}
 
 	/**
@@ -904,11 +899,13 @@ export class PendingStateManager implements IDisposable {
 			// callback will only be given staged messages with a valid runtime op (i.e. not empty batch and not an initial message with only serialized content)
 			stagedMessage: IPendingMessage & { runtimeOp: LocalContainerRuntimeMessage },
 		) => void,
-	): void {
+	): IPendingMessage["batchInfo"][] {
+		const batchSet = new Set<IPendingMessage["batchInfo"]>();
 		while (!this.pendingMessages.isEmpty()) {
 			const stagedMessage = this.pendingMessages.peekBack();
 			if (stagedMessage?.batchInfo.staged === true) {
 				this.pendingMessages.pop();
+				batchSet.add(stagedMessage.batchInfo);
 
 				if (hasTypicalRuntimeOp(stagedMessage)) {
 					callback(stagedMessage);
@@ -921,6 +918,7 @@ export class PendingStateManager implements IDisposable {
 			this.pendingMessages.toArray().every((m) => m.batchInfo.staged !== true),
 			0xb89 /* Shouldn't be any more staged messages */,
 		);
+		return [...batchSet];
 	}
 }
 

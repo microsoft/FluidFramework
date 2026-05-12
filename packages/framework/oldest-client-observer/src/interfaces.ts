@@ -39,7 +39,7 @@ export interface IOldestClientObservable
 }
 
 /**
- * Events emitted by {@link IOldestClientObservable}.
+ * Events emitted by {@link IOldestClientObserver}.
  * @legacy
  * @beta
  */

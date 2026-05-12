@@ -416,9 +416,6 @@ export class OdspDelayLoadedDeltaStream {
 		const disableJoinSessionRefresh = this.mc.config.getBoolean(
 			"Fluid.Driver.Odsp.disableJoinSessionRefresh",
 		);
-		const setSensitivityLabelHeader = this.mc.config.getBoolean(
-			"Fluid.Driver.Odsp.setSensitivityLabelHeader",
-		);
 		const executeFetch = async (): Promise<{
 			entryTime: number;
 			joinSessionResponse: ISocketStorageDiscovery;
@@ -433,7 +430,6 @@ export class OdspDelayLoadedDeltaStream {
 				requestSocketToken,
 				options,
 				disableJoinSessionRefresh,
-				setSensitivityLabelHeader,
 				isRefreshingJoinSession,
 				displayName,
 			);
@@ -512,8 +508,11 @@ export class OdspDelayLoadedDeltaStream {
 	private emitSensitivityLabelUpdateEvent(
 		sensitivityLabelsInfo: ISensitivityLabelsInfo,
 	): void {
-		const createdTimestamp = Date.parse(sensitivityLabelsInfo.timestamp);
-		assert(createdTimestamp > 0, 0x8e0 /* time should be positive */);
+		const createdTimestamp = sensitivityLabelsInfo.timestamp;
+		assert(
+			typeof createdTimestamp === "number" && createdTimestamp > 0,
+			0x8e0 /* time should be a positive number */,
+		);
 		if (createdTimestamp > this.labelUpdateTimestamp) {
 			this.labelUpdateTimestamp = createdTimestamp;
 			this.metadataUpdateHandler({

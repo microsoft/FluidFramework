@@ -6,25 +6,27 @@
 /* eslint-disable no-bitwise */
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import { IEvent } from "@fluidframework/core-interfaces";
+import type { IEvent } from "@fluidframework/core-interfaces";
 import {
 	assert,
 	DoublyLinkedList,
 	unreachableCase,
 	type ListNode,
 } from "@fluidframework/core-utils/internal";
-import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
-import {
+import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
+import type {
 	Client,
 	ISegment,
 	LocalReferencePosition,
 	PropertySet,
+	SequencePlace,
+} from "@fluidframework/merge-tree/internal";
+import {
 	ReferenceType,
 	getSlideToSegoff,
 	refTypeIncludesFlag,
 	reservedRangeLabelsKey,
 	Side,
-	SequencePlace,
 	defaultSide,
 	endpointPosAndSide,
 	type ISegmentInternal,
@@ -34,12 +36,12 @@ import {
 import { LoggingError, UsageError } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
-import {
+import type {
+	IIntervalCollectionTypeOperationValue,
+	IntervalAddLocalMetadata,
+	IntervalChangeLocalMetadata,
 	IntervalMessageLocalMetadata,
 	SequenceOptions,
-	type IIntervalCollectionTypeOperationValue,
-	type IntervalAddLocalMetadata,
-	type IntervalChangeLocalMetadata,
 } from "./intervalCollectionMapInterfaces.js";
 import {
 	createIdIntervalIndex,
@@ -50,18 +52,21 @@ import {
 	type ISequenceOverlappingIntervalsIndex,
 	type SequenceIntervalIndex,
 } from "./intervalIndex/index.js";
-import {
+import type {
 	CompressedSerializedInterval,
 	ISerializedInterval,
-	IntervalStickiness,
-	IntervalType,
 	SequenceInterval,
 	SequenceIntervalClass,
 	SerializedIntervalDelta,
+} from "./intervals/index.js";
+import {
+	IntervalStickiness,
+	IntervalType,
 	createPositionReferenceFromSegoff,
 	createSequenceInterval,
 	getSerializedProperties,
 } from "./intervals/index.js";
+import type { ISharedSegmentSequence } from "./sequence.js";
 
 export type ISerializedIntervalCollectionV1 = ISerializedInterval[];
 
@@ -72,8 +77,8 @@ export interface ISerializedIntervalCollectionV2 {
 }
 
 function sidesFromStickiness(stickiness: IntervalStickiness) {
-	const startSide = (stickiness & IntervalStickiness.START) !== 0 ? Side.After : Side.Before;
-	const endSide = (stickiness & IntervalStickiness.END) !== 0 ? Side.Before : Side.After;
+	const startSide = (stickiness & IntervalStickiness.START) === 0 ? Side.Before : Side.After;
+	const endSide = (stickiness & IntervalStickiness.END) === 0 ? Side.After : Side.Before;
 
 	return { startSide, endSide };
 }
@@ -146,6 +151,7 @@ export class LocalIntervalCollection {
 	private readonly indexes: Set<SequenceIntervalIndex>;
 
 	constructor(
+		sequence: ISharedSegmentSequence<any>,
 		private readonly client: Client,
 		private readonly label: string,
 		private readonly options: Partial<SequenceOptions>,
@@ -155,9 +161,9 @@ export class LocalIntervalCollection {
 			previousInterval: SequenceIntervalClass,
 		) => void,
 	) {
-		this.overlappingIntervalsIndex = new OverlappingIntervalsIndex(client);
+		this.overlappingIntervalsIndex = new OverlappingIntervalsIndex(sequence);
 		this.idIntervalIndex = createIdIntervalIndex();
-		this.endIntervalIndex = new EndpointIndex(client);
+		this.endIntervalIndex = new EndpointIndex(sequence);
 		this.indexes = new Set([
 			this.overlappingIntervalsIndex,
 			this.idIntervalIndex,
@@ -852,8 +858,9 @@ export class IntervalCollection
 				}
 				break;
 			}
-			default:
+			default: {
 				unreachableCase(type);
+			}
 		}
 	}
 
@@ -902,8 +909,9 @@ export class IntervalCollection
 				);
 				break;
 			}
-			default:
+			default: {
 				unreachableCase(opName);
+			}
 		}
 		const pending = clearEmptyPendingEntry(this.pending, id);
 
@@ -970,8 +978,9 @@ export class IntervalCollection
 				this.removeIntervalById(id);
 				break;
 			}
-			default:
+			default: {
 				throw new Error("unknown ops should not be stashed");
+			}
 		}
 	}
 
@@ -1040,7 +1049,7 @@ export class IntervalCollection
 		return { start, end };
 	}
 
-	public attachGraph(client: Client, label: string) {
+	public attachGraph(sequence: ISharedSegmentSequence<any>, client: Client, label: string) {
 		if (this.attached) {
 			throw new LoggingError("Only supports one Sequence attach");
 		}
@@ -1064,6 +1073,7 @@ export class IntervalCollection
 		}
 
 		this.localCollection = new LocalIntervalCollection(
+			sequence,
 			client,
 			label,
 			this.options,
@@ -1677,10 +1687,8 @@ export class IntervalCollection
 			op,
 		);
 
-		if (interval) {
-			if (this.onDeserialize) {
-				this.onDeserialize(interval);
-			}
+		if (interval && this.onDeserialize) {
+			this.onDeserialize(interval);
 		}
 
 		this.emit("addInterval", interval, local, op);
@@ -1722,7 +1730,7 @@ export class IntervalCollection
 	}
 
 	/**
-	 * @returns an iterator over all intervals in this collection.
+	 * Creates an iterator over all intervals in this collection.
 	 */
 	public [Symbol.iterator](): IntervalCollectionIterator {
 		const iterator = new IntervalCollectionIterator(this);

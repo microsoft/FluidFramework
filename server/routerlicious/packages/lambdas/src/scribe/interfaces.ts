@@ -9,7 +9,13 @@ import type {
 	ISequencedDocumentAugmentedMessage,
 	ISequencedDocumentMessage,
 } from "@fluidframework/protocol-definitions";
-import type { IScribe, ISequencedOperationMessage } from "@fluidframework/server-services-core";
+import type { IGitManager } from "@fluidframework/server-services-client";
+import type {
+	ICollection,
+	IDeltaService,
+	IScribe,
+	ISequencedOperationMessage,
+} from "@fluidframework/server-services-core";
 
 /**
  * @internal
@@ -89,4 +95,18 @@ export interface ICheckpointManager {
 	): Promise<void>;
 
 	delete(sequenceNumber: number, lte: boolean): Promise<void>;
+}
+
+export interface ISummaryWriterFactory {
+	create(
+		tenantId: string,
+		documentId: string,
+		gitManager: IGitManager,
+		deltaManager: IDeltaService,
+		messageCollection: ICollection<ISequencedOperationMessage>,
+		enableWholeSummaryUpload: boolean,
+		lastSummaryMessages: ISequencedDocumentMessage[],
+		getDeltasViaAlfred: boolean,
+		maxLogtailLength: number,
+	): ISummaryWriter;
 }

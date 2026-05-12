@@ -4,7 +4,6 @@
  */
 
 import type { IFluidContainer } from "fluid-framework";
-import React from "react";
 import ReactDOM from "react-dom";
 
 import { containerSchema, createFluidData, loadFluidData } from "./fluid.js";

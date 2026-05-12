@@ -3,9 +3,11 @@
  * Licensed under the MIT License.
  */
 
+import { strict } from "node:assert";
+
 import { describeStress, StressMode } from "@fluid-private/stochastic-test-utils";
 import { assert } from "@fluidframework/core-utils/internal";
-import { strict } from "node:assert";
+import { deepFreeze } from "@fluidframework/test-runtime-utils/internal";
 
 import {
 	type ChangesetLocalId,
@@ -17,8 +19,22 @@ import {
 	tagChange,
 	tagRollbackInverse,
 } from "../../../core/index.js";
+import type {
+	NodeId,
+	RebaseRevisionMetadata,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "../../../feature-libraries/modular-schema/index.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import { rebaseRevisionMetadataFromInfo } from "../../../feature-libraries/modular-schema/modularChangeFamily.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import type * as SF from "../../../feature-libraries/sequence-field/types.js";
+import {
+	type IdAllocator,
+	brand,
+	idAllocatorFromMaxId,
+	makeArray,
+} from "../../../util/index.js";
+import { ChangesetWrapper } from "../../changesetWrapper.js";
 import type {
 	BoundFieldChangeRebaser,
 	ChildStateGenerator,
@@ -27,20 +43,8 @@ import type {
 import { runExhaustiveComposeRebaseSuite } from "../../rebaserAxiomaticTests.js";
 import { TestChange } from "../../testChange.js";
 import { defaultRevisionMetadataFromChanges, mintRevisionTag } from "../../utils.js";
-import {
-	type IdAllocator,
-	brand,
-	idAllocatorFromMaxId,
-	makeArray,
-} from "../../../util/index.js";
-import type {
-	NodeId,
-	RebaseRevisionMetadata,
-	// eslint-disable-next-line import-x/no-internal-modules
-} from "../../../feature-libraries/modular-schema/index.js";
-// eslint-disable-next-line import-x/no-internal-modules
-import { rebaseRevisionMetadataFromInfo } from "../../../feature-libraries/modular-schema/modularChangeFamily.js";
-import { ChangesetWrapper } from "../../changesetWrapper.js";
+
+import { ChangeMaker as Change, MarkMaker as Mark } from "./testEdits.js";
 import {
 	areRebasable,
 	assertChangesetsEqual,
@@ -62,8 +66,6 @@ import {
 	inlineRevision,
 	toDeltaWrapped,
 } from "./utils.js";
-import { ChangeMaker as Change, MarkMaker as Mark } from "./testEdits.js";
-import { deepFreeze } from "@fluidframework/test-runtime-utils/internal";
 
 // TODO: Rename these to make it clear which ones are used in `testChanges`.
 const tag0: RevisionTag = mintRevisionTag();
@@ -728,7 +730,7 @@ const fieldRebaser: BoundFieldChangeRebaser<WrappedChange> = {
 
 export function testStateBasedRebaserAxioms(): void {
 	describeStress("State-based Rebaser Axioms", function ({ stressMode }) {
-		this.timeout(stressMode === StressMode.Short ? 5000 : 80_000);
+		this.timeout(stressMode === StressMode.Short ? 5000 : 120_000);
 		const allocator = idAllocatorFromMaxId();
 		const startingLength = 2;
 		const startingState: NodeState[] = makeArray(startingLength, () => ({

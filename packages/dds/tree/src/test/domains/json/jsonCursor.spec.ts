@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { cursorToJsonObject, singleJsonCursor } from "../../json/index.js";
 import type { JsonCompatible } from "../../../util/index.js";
 import { testSpecializedCursor } from "../../cursorTestSuite.js";
+import { cursorToJsonObject, singleJsonCursor } from "../../json/index.js";
 
 const testCases: readonly [string, readonly JsonCompatible[]][] = [
 	["null", [null]],

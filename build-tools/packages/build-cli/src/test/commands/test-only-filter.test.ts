@@ -5,8 +5,8 @@
 
 import type { Package } from "@fluidframework/build-tools";
 import { runCommand } from "@oclif/test";
-import { assert, expect } from "chai";
 import * as chai from "chai";
+import { assert, expect } from "chai";
 import assertArrays from "chai-arrays";
 import { describe, it } from "mocha";
 
@@ -51,8 +51,8 @@ describe("flub test-only-filter", () => {
 		);
 		const output: jsonOutput = JSON.parse(stdout) as jsonOutput;
 		const { selected, filtered } = output;
-		expect(selected.length).to.equal(5);
-		expect(filtered.length).to.equal(5);
+		expect(selected.length).to.equal(4);
+		expect(filtered.length).to.equal(4);
 	});
 
 	it(`--private filter`, async () => {

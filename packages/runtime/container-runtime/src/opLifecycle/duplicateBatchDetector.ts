@@ -10,13 +10,18 @@ import { getEffectiveBatchId } from "./batchManager.js";
 import type { BatchStartInfo } from "./remoteMessageProcessor.js";
 
 /**
- * This class tracks recent batchIds we've seen, and checks incoming batches for duplicates.
+ * Detects duplicate batches that can arise from the "parallel fork" scenario:
+ * Container 1 is serialized, and Containers 2 and 3 are rehydrated from that state.
+ * They both catch up and (re)connect in parallel (at the same time), submitting the same local state,
+ * sharing the same batchId and sequence number.
+ *
+ * For "serial fork" detection scenarios see PendingStateManager.
  */
 export class DuplicateBatchDetector {
 	/**
-	 * All batchIds we've seen recently enough (based on MSN) that we need to watch for duplicates
+	 * Map from batchId to sequenceNumber
 	 */
-	private readonly batchIdsAll = new Set<string>();
+	private readonly seqNumByBatchId = new Map<string, number>();
 
 	/**
 	 * We map from sequenceNumber to batchId to find which ones we can stop tracking as MSN advances
@@ -24,14 +29,25 @@ export class DuplicateBatchDetector {
 	private readonly batchIdsBySeqNum = new Map<number, string>();
 
 	/**
+	 * Number of inbound batches processed since the last summary. Reset by getRecentBatchInfoForSummary.
+	 */
+	private processedBatchCount = 0;
+
+	/**
+	 * Largest tracked-batch count observed since the last summary. Reset by getRecentBatchInfoForSummary.
+	 */
+	private peakTrackedBatchCount = 0;
+
+	/**
 	 * Initialize from snapshot data if provided - otherwise initialize empty
 	 */
 	constructor(batchIdsFromSnapshot: [number, string][] | undefined) {
 		if (batchIdsFromSnapshot) {
-			this.batchIdsBySeqNum = new Map(batchIdsFromSnapshot);
-			for (const batchId of this.batchIdsBySeqNum.values()) {
-				this.batchIdsAll.add(batchId);
+			for (const [seqNum, batchId] of batchIdsFromSnapshot) {
+				this.batchIdsBySeqNum.set(seqNum, batchId);
+				this.seqNumByBatchId.set(batchId, seqNum);
 			}
+			this.peakTrackedBatchCount = this.batchIdsBySeqNum.size;
 		}
 	}
 
@@ -45,6 +61,7 @@ export class DuplicateBatchDetector {
 		batchStart: BatchStartInfo,
 	): { duplicate: true; otherSequenceNumber: number } | { duplicate: false } {
 		const { sequenceNumber, minimumSequenceNumber } = batchStart.keyMessage;
+		this.processedBatchCount++;
 
 		// Glance at this batch's MSN. Any batchIds we're tracking with a lower sequence number are now safe to forget.
 		// Why? Because any other client holding the same batch locally would have seen the earlier batch and closed before submitting its duplicate.
@@ -56,26 +73,28 @@ export class DuplicateBatchDetector {
 		// (the original batch should roundtrip WAY before another container could rehydrate, connect, and resubmit)
 		const batchId = getEffectiveBatchId(batchStart);
 
-		// Check this batch against the tracked batchIds to see if it's a duplicate
-		if (this.batchIdsAll.has(batchId)) {
-			for (const [otherSequenceNumber, otherBatchId] of this.batchIdsBySeqNum.entries()) {
-				if (otherBatchId === batchId) {
-					return {
-						duplicate: true,
-						otherSequenceNumber,
-					};
-				}
-			}
-			assert(false, 0xa34 /* Should have found the batchId in batchIdBySeqNum map */);
+		// O(1) duplicate check + get otherSequenceNumber in one lookup
+		const otherSequenceNumber = this.seqNumByBatchId.get(batchId);
+		if (otherSequenceNumber !== undefined) {
+			assert(
+				this.batchIdsBySeqNum.get(otherSequenceNumber) === batchId,
+				0xce0 /* batchIdToSeqNum and seqNumToBatchId should be in sync for duplicate */,
+			);
+			return { duplicate: true, otherSequenceNumber };
 		}
 
 		// Now we know it's not a duplicate, so add it to the tracked batchIds and return.
 		assert(
 			!this.batchIdsBySeqNum.has(sequenceNumber),
-			0xa35 /* batchIdsAll and batchIdsBySeqNum should be in sync */,
+			0xce1 /* seqNumToBatchId and batchIdToSeqNum should be in sync */,
 		);
+
+		// Add new batch
 		this.batchIdsBySeqNum.set(sequenceNumber, batchId);
-		this.batchIdsAll.add(batchId);
+		this.seqNumByBatchId.set(batchId, sequenceNumber);
+		if (this.batchIdsBySeqNum.size > this.peakTrackedBatchCount) {
+			this.peakTrackedBatchCount = this.batchIdsBySeqNum.size;
+		}
 
 		return { duplicate: false };
 	}
@@ -88,7 +107,9 @@ export class DuplicateBatchDetector {
 		for (const [sequenceNumber, batchId] of this.batchIdsBySeqNum) {
 			if (sequenceNumber < msn) {
 				this.batchIdsBySeqNum.delete(sequenceNumber);
-				this.batchIdsAll.delete(batchId);
+				this.seqNumByBatchId.delete(batchId);
+			} else {
+				break;
 			}
 		}
 	}
@@ -102,15 +123,21 @@ export class DuplicateBatchDetector {
 	public getRecentBatchInfoForSummary(
 		telemetryContext?: ITelemetryContext,
 	): [number, string][] | undefined {
+		if (telemetryContext !== undefined) {
+			const prefix = "fluid_DuplicateBatchDetector_";
+			telemetryContext.set(prefix, "recentBatchCount", this.batchIdsBySeqNum.size);
+			telemetryContext.set(prefix, "peakRecentBatchCount", this.peakTrackedBatchCount);
+			telemetryContext.set(prefix, "processedBatchCount", this.processedBatchCount);
+		}
+
+		// Reset per-window perf counters so each summary covers only the activity since the
+		// previous one. Peak resets to the current size (the floor for the next window).
+		this.processedBatchCount = 0;
+		this.peakTrackedBatchCount = this.batchIdsBySeqNum.size;
+
 		if (this.batchIdsBySeqNum.size === 0) {
 			return undefined;
 		}
-
-		telemetryContext?.set(
-			"fluid_DuplicateBatchDetector_",
-			"recentBatchCount",
-			this.batchIdsBySeqNum.size,
-		);
 
 		return [...this.batchIdsBySeqNum.entries()];
 	}

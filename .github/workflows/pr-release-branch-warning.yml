@@ -22,7 +22,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       # release notes: https://github.com/actions/checkout/releases/tag/v6.0.0
-      - uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # ratchet:actions/checkout@v6
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # ratchet:actions/checkout@v6
         with:
           persist-credentials: false
           submodules: false

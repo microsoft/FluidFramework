@@ -6,7 +6,7 @@
 import { Tooltip, makeStyles, tokens } from "@fluentui/react-components";
 import { Info20Regular } from "@fluentui/react-icons";
 import type { VisualChildNode } from "@fluidframework/devtools-core/internal";
-import React from "react";
+import { type ReactElement, useContext } from "react";
 
 import { ThemeContext, ThemeOption } from "../../ThemeHelper.js";
 
@@ -27,7 +27,7 @@ export interface TreeHeaderProps extends HasLabel {
 	/**
 	 * Inline value to display alongside the metadata.
 	 */
-	inlineValue?: React.ReactElement | string;
+	inlineValue?: ReactElement | string;
 
 	/**
 	 * Visual Tree data rendered in the tooltip.
@@ -54,9 +54,9 @@ const getStyles = makeStyles({
 /**
  * Renders the header of the item.
  */
-export function TreeHeader(props: TreeHeaderProps): React.ReactElement {
+export function TreeHeader(props: TreeHeaderProps): ReactElement {
 	const { label, nodeTypeMetadata, inlineValue, metadata, tooltipContents } = props;
-	const { themeInfo } = React.useContext(ThemeContext);
+	const { themeInfo } = useContext(ThemeContext);
 
 	const styles = getStyles();
 

@@ -22,6 +22,9 @@ export class SharedSummaryBlockFactory implements IChannelFactory<ISharedSummary
 	/**
 	 * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory."type"}
 	 */
+	// New type string, to be activated once the migration has been fully shipped dark and is safe to flip.
+	// See LegacyTypeAwareRegistry in packages/runtime/datastore/src/dataStoreRuntime.ts.
+	// public static readonly Type = "shared-summary-block";
 	public static readonly Type = "https://graph.microsoft.com/types/shared-summary-block";
 
 	/**

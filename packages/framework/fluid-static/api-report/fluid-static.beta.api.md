@@ -17,6 +17,9 @@ export interface ContainerSchema {
 }
 
 // @public
+export const getPresence: (fluidContainer: IFluidContainer) => Presence;
+
+// @public
 export interface IConnection {
     readonly id: string;
     readonly mode: "write" | "read";

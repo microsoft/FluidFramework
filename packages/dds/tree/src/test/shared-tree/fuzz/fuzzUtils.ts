@@ -8,10 +8,12 @@ import { join as pathJoin } from "node:path";
 
 import { makeRandom } from "@fluid-private/stochastic-test-utils";
 import type { FuzzSerializedIdCompressor } from "@fluid-private/test-dds-utils";
+import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import type { IIdCompressor, SessionId } from "@fluidframework/id-compressor";
 import {
 	createIdCompressor,
 	deserializeIdCompressor,
+	toIdCompressorWithCore,
 	type IIdCompressorCore,
 } from "@fluidframework/id-compressor/internal";
 
@@ -25,13 +27,16 @@ import {
 	forEachNodeInSubtree,
 	moveToDetachedField,
 } from "../../../core/index.js";
+import { FormatValidatorBasic } from "../../../external-utilities/index.js";
 import type {
 	ITreeCheckout,
 	SchematizingSimpleTreeView,
 	TreeCheckout,
 } from "../../../shared-tree/index.js";
-import { testSrcPath } from "../../testSrcPath.cjs";
-import { expectEqualPaths, SharedTreeTestFactory } from "../../utils.js";
+import type {
+	SharedTreeOptionsInternal,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "../../../shared-tree/sharedTree.js";
 import {
 	SchemaFactory,
 	TreeViewConfiguration,
@@ -40,15 +45,11 @@ import {
 	type ViewableTree,
 	type NodeBuilderData,
 } from "../../../simple-tree/index.js";
-import type { IFluidHandle } from "@fluidframework/core-interfaces";
-
-import type {
-	SharedTreeOptionsInternal,
-	// eslint-disable-next-line import-x/no-internal-modules
-} from "../../../shared-tree/sharedTree.js";
-import { FormatValidatorBasic } from "../../../external-utilities/index.js";
-import type { FuzzView } from "./fuzzEditGenerators.js";
 import type { ISharedTree } from "../../../treeFactory.js";
+import { testSrcPath } from "../../testSrcPath.cjs";
+import { expectEqualPaths, SharedTreeTestFactory } from "../../utils.js";
+
+import type { FuzzView } from "./fuzzEditGenerators.js";
 
 const builder = new SchemaFactory("treeFuzz");
 export class GUIDNode extends builder.object("GuidNode" as string, {
@@ -256,11 +257,13 @@ export const createOrDeserializeCompressor = (
 	sessionId: SessionId,
 	summary?: FuzzSerializedIdCompressor,
 ): IIdCompressor & IIdCompressorCore => {
-	return summary === undefined
-		? createIdCompressor(sessionId)
-		: summary.withSession
-			? deserializeIdCompressor(summary.serializedCompressor)
-			: deserializeIdCompressor(summary.serializedCompressor, sessionId);
+	return toIdCompressorWithCore(
+		summary === undefined
+			? createIdCompressor(sessionId)
+			: summary.withSession
+				? deserializeIdCompressor(summary.serializedCompressor)
+				: deserializeIdCompressor(summary.serializedCompressor, sessionId),
+	);
 };
 
 export const deterministicIdCompressorFactory: (

@@ -8,8 +8,8 @@ import type { Machine } from "jssm";
 import chalk from "picocolors";
 
 import { testModeFlag } from "./flags.js";
-import type { StateHandler } from "./handlers/index.js";
-import { BaseCommand } from "./library/index.js";
+import type { StateHandler } from "./handlers/stateHandlers.js";
+import { BaseCommand } from "./library/commands/base.js";
 
 /**
  * A base CLI command that uses an internal state machine to govern its behavior. Subclasses must provide a state

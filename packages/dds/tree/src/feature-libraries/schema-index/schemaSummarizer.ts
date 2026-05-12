@@ -130,7 +130,7 @@ export class SchemaSummarizer
 			0x3da /* there should not already be stored schema when loading stored schema */,
 		);
 
-		const schemaString = bufferToString(schemaBuffer, "utf-8");
+		const schemaString = bufferToString(schemaBuffer, "utf8");
 		// Currently no Fluid handles are used, so just use JSON.parse.
 		const decoded = this.codec.decode(JSON.parse(schemaString));
 		this.schema.apply(decoded);

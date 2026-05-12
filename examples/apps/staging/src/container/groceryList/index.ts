@@ -4,7 +4,7 @@
  */
 
 export { GroceryListFactory } from "./groceryList.js";
-export {
+export type {
 	IGroceryItem,
 	IGroceryList,
 	IGroceryListEvents,

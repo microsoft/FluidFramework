@@ -10,7 +10,9 @@ import { readFile } from "node:fs/promises";
 import { Flags } from "@oclif/core";
 import * as JSON5 from "json5";
 import { type ImportDeclaration, ModuleKind, Project, type SourceFile } from "ts-morph";
-import { ApiLevel, BaseCommand, getApiExports, isKnownApiLevel } from "../../library/index.js";
+import { ApiLevel, isKnownApiLevel } from "../../library/apiLevel.js";
+import { BaseCommand } from "../../library/commands/base.js";
+import { getApiExports } from "../../library/typescriptApi.js";
 import type { CommandLogger } from "../../logging.js";
 
 const maxConcurrency = 4;
@@ -668,7 +670,7 @@ class ApiLevelReader {
 		}
 		this.log.verbose(`Loading ${packageName} API data from ${internalSource.getFilePath()}`);
 
-		const exports = getApiExports(internalSource);
+		const exports = getApiExports(internalSource, "warnForMissing", this.log);
 		for (const name of exports.unknown.keys()) {
 			// Suppress any warning for EventEmitter as this export is currently a special case.
 			// See AB#7377 for replacement status upon which this can be removed.

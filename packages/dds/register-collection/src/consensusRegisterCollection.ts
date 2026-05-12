@@ -5,29 +5,29 @@
 
 import { bufferToString, createEmitter } from "@fluid-internal/client-utils";
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
-import {
+import type {
 	IChannelAttributes,
 	IFluidDataStoreRuntime,
 	IChannelStorageService,
 } from "@fluidframework/datastore-definitions/internal";
 import { MessageType } from "@fluidframework/driver-definitions/internal";
-import {
+import type {
 	ISummaryTreeWithStats,
 	IRuntimeMessageCollection,
 	IRuntimeMessagesContent,
 	ISequencedMessageEnvelope,
 } from "@fluidframework/runtime-definitions/internal";
+import type { IFluidSerializer } from "@fluidframework/shared-object-base/internal";
 import {
-	IFluidSerializer,
 	SharedObject,
 	createSingleBlobSummary,
 } from "@fluidframework/shared-object-base/internal";
 
-import {
+import type {
 	IConsensusRegisterCollection,
 	IConsensusRegisterCollectionEvents,
-	ReadPolicy,
 } from "./interfaces.js";
+import { ReadPolicy } from "./interfaces.js";
 
 interface ILocalData<T> {
 	// Atomic version
@@ -122,6 +122,7 @@ interface IConsensusRegisterCollectionInternalEvents {
 
 /**
  * {@inheritDoc IConsensusRegisterCollection}
+ * @deprecated Use {@link IConsensusRegisterCollection} for typing and {@link ConsensusRegisterCollectionFactory} to create instances. This implementation class will be removed in a future release.
  * @legacy @beta
  */
 export class ConsensusRegisterCollection<T>
@@ -247,9 +248,9 @@ export class ConsensusRegisterCollection<T>
 
 	protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats {
 		const dataObj: { [key: string]: ILocalData<T> } = {};
-		this.data.forEach((v, k) => {
+		for (const [k, v] of this.data.entries()) {
 			dataObj[k] = v;
-		});
+		}
 
 		return createSingleBlobSummary(snapshotFileName, this.stringify(dataObj, serializer));
 	}
@@ -274,10 +275,7 @@ export class ConsensusRegisterCollection<T>
 
 	protected onDisconnect(): void {}
 
-	/**
-	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.processMessagesCore}
-	 */
-	protected processMessagesCore(messagesCollection: IRuntimeMessageCollection): void {
+	protected override processMessagesCore(messagesCollection: IRuntimeMessageCollection): void {
 		const { envelope, local, messagesContent } = messagesCollection;
 		for (const messageContent of messagesContent) {
 			this.processMessage(envelope, messageContent, local);
@@ -331,8 +329,9 @@ export class ConsensusRegisterCollection<T>
 					}
 					break;
 				}
-				default:
+				default: {
 					unreachableCase(op.type);
+				}
 			}
 		}
 	}
@@ -432,7 +431,12 @@ export class ConsensusRegisterCollection<T>
 		this.internalEvents.emit("pendingMessageRollback", localOpMetadata);
 	}
 
-	protected applyStashedOp(): void {
-		// empty implementation
+	protected applyStashedOp(content: unknown): void {
+		const op = content as IIncomingRegisterOperation<T>;
+		assert(op.type === "write", 0xccc /* Only write ops should be stashed */);
+		// Submit the original op (preserving its refSeq) so we can match the ACK
+		// when it arrives during remote op processing.
+		const pendingMessageId = this.nextPendingMessageId++;
+		this.submitLocalMessage(op, pendingMessageId);
 	}
 }

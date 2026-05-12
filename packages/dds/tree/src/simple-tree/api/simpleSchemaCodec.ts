@@ -3,8 +3,19 @@
  * Licensed under the MIT License.
  */
 
-import { objectToMap, type JsonCompatibleReadOnly } from "../../util/index.js";
 import { unreachableCase, transformMapValues } from "@fluidframework/core-utils/internal";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
+
+import {
+	DiscriminatedUnionDispatcher,
+	extractJsonValidator,
+	FormatValidatorNoOp,
+	type FormatValidator,
+} from "../../codec/index.js";
+import type { ValueSchema } from "../../core/index.js";
+import { objectToMap, type JsonCompatibleReadOnly } from "../../util/index.js";
+import { createSchemaUpgrade, NodeKind, SchemaUpgrade } from "../core/index.js";
+import type { FieldKind } from "../fieldSchema.js";
 import type {
 	SimpleAllowedTypeAttributes,
 	SimpleArrayNodeSchema,
@@ -17,17 +28,7 @@ import type {
 	SimpleRecordNodeSchema,
 	SimpleTreeSchema,
 } from "../simpleSchema.js";
-import { createSchemaUpgrade, NodeKind, SchemaUpgrade } from "../core/index.js";
-import type { FieldKind } from "../fieldSchema.js";
-import type { ValueSchema } from "../../core/index.js";
-import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import * as Format from "../simpleSchemaFormatV1.js";
-import {
-	DiscriminatedUnionDispatcher,
-	extractJsonValidator,
-	FormatValidatorNoOp,
-	type FormatValidator,
-} from "../../codec/index.js";
 
 /**
  * Encodes the compatibility impacting subset of simple schema (view or stored) into a serializable format.

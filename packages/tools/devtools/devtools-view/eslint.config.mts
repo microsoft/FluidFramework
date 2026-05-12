@@ -4,7 +4,7 @@
  */
 
 import type { Linter } from "eslint";
-import { strict } from "../../../../common/build/eslint-config-fluid/flat.mts";
+import { strict } from "@fluidframework/eslint-config-fluid/flat.mts";
 
 const config: Linter.Config[] = [
 	...strict,
@@ -50,6 +50,9 @@ const config: Linter.Config[] = [
 		},
 	},
 	{
+		// Override @typescript-eslint/parser to use explicit project list instead of projectService.
+		// Tests use tsconfig.jest.json instead of the standard src/test/tsconfig.json naming,
+		// so typescript-eslint's projectService can't auto-discover the test configuration.
 		files: ["**/*.ts", "**/*.tsx", "**/*.mts", "**/*.cts"],
 		languageOptions: {
 			parserOptions: {

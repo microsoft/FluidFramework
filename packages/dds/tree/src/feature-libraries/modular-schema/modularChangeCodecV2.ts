@@ -6,24 +6,25 @@
 import {
 	type ICodecOptions,
 	type IJsonCodec,
+	type JsonCodecPart,
 	withSchemaValidation,
 } from "../../codec/index.js";
 import type {
 	ChangeEncodingContext,
-	EncodedRevisionTag,
 	RevisionTag,
+	RevisionTagSchema,
 } from "../../core/index.js";
 import type { FieldBatchCodec } from "../chunked-forest/index.js";
 import { TreeCompressionStrategy } from "../treeCompressionUtils.js";
 
 import type { FieldKindConfiguration } from "./fieldKindConfiguration.js";
-import { EncodedModularChangesetV2 } from "./modularChangeFormatV2.js";
-import type { ModularChangeset } from "./modularChangeTypes.js";
 import {
 	encodeChange,
 	decodeChange,
 	getFieldChangesetCodecs,
 } from "./modularChangeCodecV1.js";
+import { EncodedModularChangesetV2 } from "./modularChangeFormatV2.js";
+import type { ModularChangeset } from "./modularChangeTypes.js";
 
 type ModularChangeCodec = IJsonCodec<
 	ModularChangeset,
@@ -34,10 +35,9 @@ type ModularChangeCodec = IJsonCodec<
 
 export function makeModularChangeCodecV2(
 	fieldKinds: FieldKindConfiguration,
-	revisionTagCodec: IJsonCodec<
+	revisionTagCodec: JsonCodecPart<
 		RevisionTag,
-		EncodedRevisionTag,
-		EncodedRevisionTag,
+		typeof RevisionTagSchema,
 		ChangeEncodingContext
 	>,
 	fieldsCodec: FieldBatchCodec,

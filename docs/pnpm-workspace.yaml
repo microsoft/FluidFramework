@@ -25,4 +25,10 @@ minimumReleaseAge: 1440
 resolutionMode: highest
 blockExoticSubdeps: true
 trustPolicy: no-downgrade
+# List of packages known to be safe but for whatever reason were published at a date after another version of the same
+# package (including later major versions) which had better provenance information.
+# ALWAYS REVIEW CAREFULLY BEFORE ADDING SOMETHING TO THIS LIST.
+trustPolicyExclude:
+  - 'chokidar@4.0.3'
+  - 'semver@6.3.1 || 5.7.2'
 strictDepBuilds: true

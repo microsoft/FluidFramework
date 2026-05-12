@@ -1,18 +1,18 @@
 {
-  "type": "com.fluidframework.table<test>.TableRoot",
+  "type": "com.fluidframework.tableV2<test>.TableRoot",
   "fields": {
     "": {
-      "type": "com.fluidframework.table<test>.Table",
+      "type": "com.fluidframework.tableV2<test>.Table",
       "fields": {
         "rows": {
-          "type": "com.fluidframework.table<test>.Table.rows",
+          "type": "com.fluidframework.tableV2<test>.Table.rows",
           "fields": [
             {
-              "type": "com.fluidframework.table<test>.Row",
+              "type": "com.fluidframework.tableV2<test>.Row",
               "fields": {
                 "id": "row-0",
                 "cells": {
-                  "type": "com.fluidframework.table<test>.Row.cells",
+                  "type": "com.fluidframework.tableV2<test>.Row.cells",
                   "fields": {
                     "column-0": {
                       "type": "test.table-cell",
@@ -31,10 +31,10 @@
           ]
         },
         "columns": {
-          "type": "com.fluidframework.table<test>.Table.columns",
+          "type": "com.fluidframework.tableV2<test>.Table.columns",
           "fields": [
             {
-              "type": "com.fluidframework.table<test>.Column",
+              "type": "com.fluidframework.tableV2<test>.Column",
               "fields": {
                 "id": "column-0",
                 "props": {

@@ -7,7 +7,7 @@ import type {
 	ISameContainerMigratableModel,
 	SameContainerMigrationState,
 } from "@fluid-example/example-utils";
-import React, { useEffect, useState } from "react";
+import { type FC, useEffect, useState } from "react";
 
 import type { IInventoryListAppModel } from "../modelInterfaces.js";
 
@@ -17,7 +17,7 @@ export interface IDebugViewProps {
 	readonly getUrlForContainerId?: (containerId: string) => string;
 }
 
-export const DebugView: React.FC<IDebugViewProps> = (props: IDebugViewProps) => {
+export const DebugView: FC<IDebugViewProps> = (props: IDebugViewProps) => {
 	const { model, summarizeOnDemand, getUrlForContainerId } = props;
 
 	return (
@@ -38,7 +38,7 @@ interface IMigrationStatusViewProps {
 	readonly getUrlForContainerId?: (containerId: string) => string;
 }
 
-const MigrationStatusView: React.FC<IMigrationStatusViewProps> = (
+const MigrationStatusView: FC<IMigrationStatusViewProps> = (
 	props: IMigrationStatusViewProps,
 ) => {
 	const { model } = props;
@@ -110,7 +110,7 @@ interface IControlsViewProps {
 	readonly addItem: (name: string, quantity: number) => void;
 }
 
-const ControlsView: React.FC<IControlsViewProps> = (props: IControlsViewProps) => {
+const ControlsView: FC<IControlsViewProps> = (props: IControlsViewProps) => {
 	const { proposeVersion, summarizeOnDemand, addItem } = props;
 
 	const addSampleItems = (): void => {

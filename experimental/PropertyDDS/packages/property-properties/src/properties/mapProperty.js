@@ -271,9 +271,11 @@ export class MapProperty extends IndexedCollectionBaseProperty {
 	/**
 	 * Removes the entry with the given key from the map
 	 *
+	 * Note: If the key does not exist, a warning is logged and no error is thrown.
+	 * This is intentional to support idempotent operations in collaborative editing scenarios.
+	 *
 	 * @param {string} in_key - The key of the entry to remove from the map
-	 * @throws If trying to remove an entry that does not exist
-	 * @return {*} the item removed
+	 * @return {*} the item removed, or undefined if the key does not exist
 	 */
 	remove(in_key) {
 		var item = this.get(in_key);

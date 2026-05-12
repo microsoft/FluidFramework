@@ -10,7 +10,8 @@ import { Flags } from "@oclif/core";
 import { format as prettier } from "prettier";
 
 import { releaseGroupFlag } from "../../flags.js";
-import { BaseCommand, DEFAULT_CHANGESET_PATH, loadChangesets } from "../../library/index.js";
+import { DEFAULT_CHANGESET_PATH, loadChangesets } from "../../library/changesets.js";
+import { BaseCommand } from "../../library/commands/base.js";
 
 const DEFAULT_FILE = "UPCOMING.md";
 

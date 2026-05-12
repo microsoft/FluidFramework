@@ -6,9 +6,10 @@
 		"biomejs.biome",
 		"dbaeumer.vscode-eslint",
 		"esbenp.prettier-vscode",
+		"MAI-EngineeringSystems.mai-ai-telemetry",
 		"ms-azure-devops.azure-pipelines",
-		"xyc.vscode-mdx-preview",
 		"unifiedjs.vscode-mdx",
+		"xyc.vscode-mdx-preview",
 	],
 	// List of extensions recommended by VS Code that should not be recommended for users of this workspace.
 	"unwantedRecommendations": [],

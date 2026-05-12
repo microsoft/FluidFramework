@@ -13,10 +13,6 @@ parameters:
 - name: artifactPath
   type: string
 
-- name: publishFlags
-  type: string
-  default:
-
 - name: customEndPoint
   type: string
   default:
