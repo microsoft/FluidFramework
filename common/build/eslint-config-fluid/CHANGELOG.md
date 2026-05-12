@@ -13,6 +13,7 @@ The `import-x/order` rule has been disabled. Prefer using formatting tools like 
 ### Breaking: ESLint 8 legacy configs no longer exported
 
 This package now uses ESLint flat config format exclusively. The legacy `.eslintrc` format is no longer supported.
+The package root now exports the named flat and server configs directly from `@fluidframework/eslint-config-fluid`.
 
 **Requirements:**
 
@@ -28,10 +29,10 @@ Replace your `.eslintrc.cjs`:
 module.exports = { extends: ["@fluidframework/eslint-config-fluid/strict"] };
 ```
 
-With `eslint.config.mjs`:
+With `eslint.config.mts`:
 
 ```javascript
-// NEW - eslint.config.mjs
+// NEW - eslint.config.mts
 import { strict } from "@fluidframework/eslint-config-fluid";
 export default [...strict];
 ```

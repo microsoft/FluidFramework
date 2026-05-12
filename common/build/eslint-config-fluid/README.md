@@ -11,13 +11,16 @@ This package uses ESLint's flat config format exclusively. Legacy `.eslintrc` fo
 
 ## Usage
 
-Import the desired configuration and spread it into your `eslint.config.mjs`:
+Import the desired configuration and spread it into your `eslint.config.mts`:
 
 ```javascript
-// eslint.config.mjs
+// eslint.config.mts
 import { strict } from "@fluidframework/eslint-config-fluid";
 export default [...strict];
 ```
+
+The package root exports the standard flat and server configs. For specialized cases, explicit subpaths are also available:
+`@fluidframework/eslint-config-fluid/flat.mts` and `@fluidframework/eslint-config-fluid/server.mts`.
 
 ### ESLint 8.21+ Users
 
@@ -70,7 +73,7 @@ This structure ensures:
 
 ### Recommended
 
-The standard config for use in Fluid Framework libraries. This is the default export.
+The standard named config for use in Fluid Framework libraries.
 
 ```javascript
 import { recommended } from "@fluidframework/eslint-config-fluid";
@@ -97,15 +100,6 @@ A version of the "strict" config that disables rules covered by Biome's "recomme
 ```javascript
 import { strictBiome } from "@fluidframework/eslint-config-fluid";
 export default [...strictBiome];
-```
-
-### Minimal-Deprecated
-
-A lighter config that serves as the base for recommended and strict. Not recommended for general use.
-
-```javascript
-import { minimalDeprecated } from "@fluidframework/eslint-config-fluid";
-export default [...minimalDeprecated];
 ```
 
 ## Changing the lint config

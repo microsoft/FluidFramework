@@ -10,7 +10,12 @@
 	},
 	"license": "MIT",
 	"author": "Microsoft and contributors",
-	"main": "index.js",
+	"main": "./index.mts",
+	"exports": {
+		".": "./index.mts",
+		"./flat.mts": "./flat.mts",
+		"./server.mts": "./server.mts"
+	},
 	"scripts": {
 		"build": "npm run print-configs && npm run prettier",
 		"build:readme:disabled": "markdown-magic --files \"**/*.md\"",
