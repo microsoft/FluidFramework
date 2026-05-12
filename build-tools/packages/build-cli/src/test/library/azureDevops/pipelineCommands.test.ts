@@ -7,22 +7,22 @@ import { assert } from "chai";
 import { describe, it } from "mocha";
 
 import {
-	formatLogIssue,
-	formatSetVariable,
+	generateLogIssueString,
+	generateSetVariableString,
 } from "../../../library/azureDevops/pipelineCommands.js";
 
 describe("azureDevops/pipelineCommands", () => {
-	describe("formatSetVariable", () => {
+	describe("generateSetVariableString", () => {
 		it("formats a basic setvariable command", () => {
 			assert.equal(
-				formatSetVariable("myVar", "hello"),
+				generateSetVariableString("myVar", "hello"),
 				"##vso[task.setvariable variable=myVar]hello",
 			);
 		});
 
 		it("includes isOutput=true when requested", () => {
 			assert.equal(
-				formatSetVariable("myVar", "hello", { isOutput: true }),
+				generateSetVariableString("myVar", "hello", { isOutput: true }),
 				"##vso[task.setvariable variable=myVar;isOutput=true]hello",
 			);
 		});
@@ -30,14 +30,14 @@ describe("azureDevops/pipelineCommands", () => {
 		it("escapes reserved characters in the value", () => {
 			// `%` and CR/LF (but not `;` and `]`) must be escaped in the data portion.
 			assert.equal(
-				formatSetVariable("myVar", "a;b]c%d\re\nf"),
+				generateSetVariableString("myVar", "a;b]c%d\re\nf"),
 				"##vso[task.setvariable variable=myVar]a;b]c%25d%0De%0Af",
 			);
 		});
 
 		it("escapes reserved characters in the name", () => {
 			assert.equal(
-				formatSetVariable("a;b]c%d\re\nf", "v"),
+				generateSetVariableString("a;b]c%d\re\nf", "v"),
 				"##vso[task.setvariable variable=a%3Bb%5Dc%25d%0De%0Af]v",
 			);
 		});
@@ -46,27 +46,30 @@ describe("azureDevops/pipelineCommands", () => {
 			// pnpm filters can contain `...` and other punctuation; ensure they survive.
 			const filter = "...{packages/foo}^...";
 			assert.equal(
-				formatSetVariable("scopedPnpmFilter", filter, { isOutput: true }),
+				generateSetVariableString("scopedPnpmFilter", filter, { isOutput: true }),
 				`##vso[task.setvariable variable=scopedPnpmFilter;isOutput=true]${filter}`,
 			);
 		});
 	});
 
-	describe("formatLogIssue", () => {
+	describe("generateLogIssueString", () => {
 		it("formats a warning command", () => {
 			assert.equal(
-				formatLogIssue("warning", "something happened"),
+				generateLogIssueString("warning", "something happened"),
 				"##vso[task.logissue type=warning]something happened",
 			);
 		});
 
 		it("formats an error command", () => {
-			assert.equal(formatLogIssue("error", "boom"), "##vso[task.logissue type=error]boom");
+			assert.equal(
+				generateLogIssueString("error", "boom"),
+				"##vso[task.logissue type=error]boom",
+			);
 		});
 
 		it("escapes reserved characters in the message", () => {
 			assert.equal(
-				formatLogIssue("warning", "line1\nline2 with ] and % and \r"),
+				generateLogIssueString("warning", "line1\nline2 with ] and % and \r"),
 				"##vso[task.logissue type=warning]line1%0Aline2 with ] and %25 and %0D",
 			);
 		});

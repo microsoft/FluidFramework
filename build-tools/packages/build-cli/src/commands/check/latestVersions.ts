@@ -4,7 +4,7 @@
  */
 
 import { findPackageOrReleaseGroup, packageOrReleaseGroupArg, semverArg } from "../../args.js";
-import { formatSetVariable } from "../../library/azureDevops/pipelineCommands.js";
+import { generateSetVariableString } from "../../library/azureDevops/pipelineCommands.js";
 import { BaseCommand } from "../../library/commands/base.js";
 import { isLatestInMajor } from "../../library/latestVersions.js";
 
@@ -53,9 +53,11 @@ export default class LatestVersionsCommand extends BaseCommand<typeof LatestVers
 			this.log(
 				`Version ${versionInput.version} is the latest version for major version ${result.majorVersion}`,
 			);
-			this.log(formatSetVariable("shouldDeploy", "true", { isOutput: true }));
+			this.log(generateSetVariableString("shouldDeploy", "true", { isOutput: true }));
 			this.log(
-				formatSetVariable("majorVersion", String(result.majorVersion), { isOutput: true }),
+				generateSetVariableString("majorVersion", String(result.majorVersion), {
+					isOutput: true,
+				}),
 			);
 			return;
 		}
@@ -64,9 +66,11 @@ export default class LatestVersionsCommand extends BaseCommand<typeof LatestVers
 			this.log(
 				`##[warning]skipping deployment stage. input version ${versionInput.version} does not match the latest version ${result.latestVersion}`,
 			);
-			this.log(formatSetVariable("shouldDeploy", "false", { isOutput: true }));
+			this.log(generateSetVariableString("shouldDeploy", "false", { isOutput: true }));
 			this.log(
-				formatSetVariable("majorVersion", String(result.majorVersion), { isOutput: true }),
+				generateSetVariableString("majorVersion", String(result.majorVersion), {
+					isOutput: true,
+				}),
 			);
 			return;
 		}
@@ -74,9 +78,11 @@ export default class LatestVersionsCommand extends BaseCommand<typeof LatestVers
 		this.log(
 			`##[warning]No major version found corresponding to input version ${versionInput.version}`,
 		);
-		this.log(formatSetVariable("shouldDeploy", "false", { isOutput: true }));
+		this.log(generateSetVariableString("shouldDeploy", "false", { isOutput: true }));
 		this.log(
-			formatSetVariable("majorVersion", String(result.majorVersion), { isOutput: true }),
+			generateSetVariableString("majorVersion", String(result.majorVersion), {
+				isOutput: true,
+			}),
 		);
 	}
 }

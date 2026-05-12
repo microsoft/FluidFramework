@@ -38,7 +38,7 @@ function escapeData(value: string): string {
 	return value.replace(/%/g, "%25").replace(/\r/g, "%0D").replace(/\n/g, "%0A");
 }
 
-/** Options for {@link formatSetVariable}. */
+/** Options for {@link generateSetVariableString}. */
 export interface SetVariableOptions {
 	/**
 	 * When `true`, marks the variable as an output variable (`isOutput=true`) so it can be
@@ -50,12 +50,13 @@ export interface SetVariableOptions {
 }
 
 /**
- * Formats a `##vso[task.setvariable ...]` pipeline command that sets a pipeline variable.
+ * Generates a `##vso[task.setvariable ...]` pipeline command string that sets a pipeline
+ * variable.
  *
  * Reserved characters in `name` and `value` are escaped per Azure Pipelines logging command
  * rules so that values containing `;`, `]`, `%`, or newlines do not corrupt the command.
  */
-export function formatSetVariable(
+export function generateSetVariableString(
 	name: string,
 	value: string,
 	options: SetVariableOptions = {},
@@ -69,11 +70,11 @@ export function formatSetVariable(
 export type LogIssueLevel = "warning" | "error";
 
 /**
- * Formats a `##vso[task.logissue ...]` pipeline command that surfaces a warning or error in the
- * Azure DevOps build summary.
+ * Generates a `##vso[task.logissue ...]` pipeline command string that surfaces a warning or error
+ * in the Azure DevOps build summary.
  *
  * Reserved characters in `message` are escaped per Azure Pipelines logging command rules.
  */
-export function formatLogIssue(level: LogIssueLevel, message: string): string {
+export function generateLogIssueString(level: LogIssueLevel, message: string): string {
 	return `##vso[task.logissue type=${level}]${escapeData(message)}`;
 }

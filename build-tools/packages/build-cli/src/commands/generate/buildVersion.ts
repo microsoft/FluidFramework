@@ -8,7 +8,7 @@ import { getIsLatest, getSimpleVersion } from "@fluid-tools/version-tools";
 import { Flags } from "@oclif/core";
 
 import { semverFlag } from "../../flags.js";
-import { formatSetVariable } from "../../library/azureDevops/pipelineCommands.js";
+import { generateSetVariableString } from "../../library/azureDevops/pipelineCommands.js";
 import { BaseCommand } from "../../library/commands/base.js";
 
 /**
@@ -139,7 +139,7 @@ export default class GenerateBuildVersionCommand extends BaseCommand<
 				? `${simpleVersion}-test-${alphabetaTypePrefix}`
 				: `${simpleVersion}-test`;
 			this.log(`codeVersion=${codeVersion}`);
-			this.log(formatSetVariable("codeVersion", codeVersion, { isOutput: true }));
+			this.log(generateSetVariableString("codeVersion", codeVersion, { isOutput: true }));
 		}
 
 		if (isAlphaOrBetaTypes) {
@@ -155,13 +155,13 @@ export default class GenerateBuildVersionCommand extends BaseCommand<
 		}
 
 		this.log(`version=${version}`);
-		this.log(formatSetVariable("version", version, { isOutput: true }));
+		this.log(generateSetVariableString("version", version, { isOutput: true }));
 
 		if (flags.tag !== undefined) {
 			const isLatest = getIsLatest(flags.tag, version, tags, shouldIncludeInternalVersions);
 			this.log(`isLatest=${isLatest}`);
 			if (isRelease && isLatest === true) {
-				this.log(formatSetVariable("isLatest", String(isLatest), { isOutput: true }));
+				this.log(generateSetVariableString("isLatest", String(isLatest), { isOutput: true }));
 			}
 		}
 	}
