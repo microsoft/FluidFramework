@@ -103,7 +103,10 @@ class TreeOwningDataObject extends DataObject {
 }
 
 const SharedTree = configuredSharedTreeBetaLegacy({
-	healUnresolvableIdsOnDecode: true,
+	// This is the default value. Before the write-side fix for "Summarizer creates the data store from the attach op summary and can summarize"
+	// was shipped, setting this to "true" also provided some verification that the read-side mitigation for the bug worked. The e2e test no longer
+	// covers this case (unit tests do), but the test still helps prevent regressions for the scenario.
+	healUnresolvableIdsOnDecode: false,
 });
 
 const treeOwningFactory = new DataObjectFactory({
@@ -140,6 +143,7 @@ describeCompat(
 		// in attach summaries. At the time of writing, SharedTree encoded the short ID but failed to include originator data
 		// in the same summary (so that remote clients can decompress with respect to the actual client that generated the ID).
 		// The attempt to summarize therefore failed on attempting to decode the non-finalized ID.
+		// SharedTree has since been fixed to avoid writing non-finalized IDs in attach summaries.
 		it("Summarizer creates the data store from the attach op summary and can summarize", async () => {
 			// 1. Create a container with an attached default data store.
 			const container1 = await provider.createContainer(runtimeFactory);
