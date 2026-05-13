@@ -145,19 +145,20 @@ export interface IRuntimeStateHandler {
 /**
  * Optional hooks invoked at the boundaries of the stashed-op apply lifecycle.
  *
- * - `onBeforeFirstStashedOpApply` fires synchronously from the PSM constructor
- *   when stashed state is present (i.e. `initialMessages` is non-empty at
- *   construction). At that moment `isApplyingStashedOps` is already `true`,
- *   so observers see the new state.
- * - `onAfterStashedOpsApplied` fires synchronously the first time
- *   `initialMessages` drains during `applyStashedOpsAt`, immediately after
- *   `isApplyingStashedOps` flips to `false`.
+ * `onBeforeFirstStashedOpApply` fires synchronously from the PSM constructor
+ * when stashed state is present (i.e. `initialMessages` is non-empty at
+ * construction). At that moment `isApplyingStashedOps` is already `true`, so
+ * observers see the new state.
+ *
+ * `onAfterStashedOpsApplied` fires synchronously the first time
+ * `initialMessages` drains during `applyStashedOpsAt`, immediately after
+ * `isApplyingStashedOps` flips to `false`.
  *
  * Both hooks fire at most once per PSM lifetime.
  *
  * Hooks are synchronous: the open hook must fire from a constructor, and the
- * close hook fires from a `finally` block where async behavior would complicate
- * error propagation.
+ * close hook fires from a `finally` block where async behavior would
+ * complicate error propagation.
  */
 export interface PendingStateManagerHooks {
 	onBeforeFirstStashedOpApply?: () => void;
@@ -391,33 +392,29 @@ export class PendingStateManager implements IDisposable {
 	private readonly logger: ITelemetryLoggerExt;
 
 	/**
-	 * One-way lifecycle of the stashed-op apply window:
-	 *   "notStarted" → "applying" → "ended"
+	 * One-way lifecycle of the stashed-op apply window: `notStarted` → `applying` → `ended`.
 	 *
-	 * Transitions are explicit and irreversible:
-	 *   - "notStarted" → "applying" in the constructor when stashed state is
-	 *     present (i.e. `initialMessages` is non-empty at construction). The
-	 *     open is eager so the runtime is readonly from the moment any DDS
-	 *     could possibly observe it.
-	 *   - "applying" → "ended" the first time {@link applyStashedOpsAt} drains
-	 *     `initialMessages`. After that, local edits are safe — they queue
-	 *     FIFO behind any remaining `pendingMessages`, preserving server-side
-	 *     ordering.
+	 * Transitions are explicit and irreversible. `notStarted` → `applying` happens in the
+	 * constructor when stashed state is present (i.e. `initialMessages` is non-empty at
+	 * construction). The open is eager so the runtime is readonly from the moment any DDS
+	 * could possibly observe it. `applying` → `ended` happens the first time
+	 * {@link applyStashedOpsAt} drains `initialMessages`. After that, local edits are safe —
+	 * they queue FIFO behind any remaining `pendingMessages`, preserving server-side ordering.
 	 *
-	 * The window never reopens. After "ended", subsequent `applyStashedOpsAt`
-	 * calls (e.g. from late `notifyOpReplay`s) early-return at the empty guard.
+	 * The window never reopens. After `ended`, subsequent `applyStashedOpsAt` calls (e.g.
+	 * from late `notifyOpReplay`s) early-return at the empty guard.
 	 *
-	 * `pendingMessages` state is intentionally NOT part of the close condition.
-	 * Those entries are drained transparently by {@link replayPendingStates}
-	 * on connect via resubmit (each pop is matched by a fresh push), so the
-	 * queue size is conserved across resubmit and DDSes can't distinguish a
-	 * resubmit-ack from a normal ack. Holding the window open through resubmit
-	 * would force resubmits to run while the runtime is readonly, which is the
-	 * inverse of what we want ("never resubmit during apply stashed ops").
+	 * `pendingMessages` state is intentionally NOT part of the close condition. Those
+	 * entries are drained transparently by {@link replayPendingStates} on connect via
+	 * resubmit (each pop is matched by a fresh push), so the queue size is conserved across
+	 * resubmit and DDSes can't distinguish a resubmit-ack from a normal ack. Holding the
+	 * window open through resubmit would force resubmits to run while the runtime is
+	 * readonly, which is the inverse of what we want ("never resubmit during apply stashed
+	 * ops").
 	 *
-	 * An apply error leaves the lifecycle at "applying" because the queue
-	 * isn't drained. That's fine: an error here is fatal for the load, the
-	 * container is unusable, and there's no state to restore.
+	 * An apply error leaves the lifecycle at `applying` because the queue isn't drained.
+	 * That's fine: an error here is fatal for the load, the container is unusable, and
+	 * there's no state to restore.
 	 */
 	private _applyLifecycle: "notStarted" | "applying" | "ended" = "notStarted";
 	public get isApplyingStashedOps(): boolean {
