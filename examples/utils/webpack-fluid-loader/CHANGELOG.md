@@ -1,5 +1,9 @@
 # @fluid-example/webpack-fluid-loader
 
+## 2.101.0
+
+Dependency updates only.
+
 ## 2.100.0
 
 Dependency updates only.

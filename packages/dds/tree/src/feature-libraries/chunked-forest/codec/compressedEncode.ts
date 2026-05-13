@@ -26,7 +26,8 @@ import {
 	Shape as ShapeGeneric,
 	updateShapesAndIdentifiersEncoding,
 } from "./chunkEncodingGeneric.js";
-import type { IncrementalEncoder } from "./codecs.js";
+// eslint-disable-next-line @typescript-eslint/no-unused-vars -- Referenced by doc comments
+import type { FieldBatchEncodingContext, IncrementalEncoder } from "./codecs.js";
 import type { FieldBatch } from "./fieldBatch.js";
 import {
 	type EncodedAnyShape,
@@ -535,6 +536,10 @@ export class EncoderContext implements NodeEncodeBuilder, FieldEncodeBuilder {
 		 */
 		public readonly incrementalEncoder: IncrementalEncoder | undefined,
 		public readonly version: FieldBatchFormatVersion,
+		/**
+		 * See {@link FieldBatchEncodingContext.isSummary}.
+		 */
+		public readonly isSummary: boolean,
 	) {}
 
 	public nodeEncoderFromSchema(schemaName: TreeNodeSchemaIdentifier): NodeEncoder {

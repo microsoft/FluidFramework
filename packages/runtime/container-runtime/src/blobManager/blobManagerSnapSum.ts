@@ -18,6 +18,9 @@ export interface IBlobManagerLoadInfo {
 	redirectTable?: [string, string][];
 }
 
+/**
+ * @internal
+ */
 export const redirectTableBlobName = ".redirectTable";
 
 /**

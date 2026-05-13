@@ -47,6 +47,7 @@ stages:
       poolBuild: Large-eastus2
       testPackage: ${{ variables.testPackage }}
       artifactBuildId: $(resources.pipeline.client.runID)
+      fluidFrameworkSourceVersion: $(resources.pipeline.client.sourceCommit)
       timeoutInMinutes: 120
       testCommand: start:odsp
       skipTestResultPublishing: true
@@ -64,6 +65,7 @@ stages:
       poolBuild: Large-eastus2
       testPackage: ${{ variables.testPackage }}
       artifactBuildId: $(resources.pipeline.client.runID)
+      fluidFrameworkSourceVersion: $(resources.pipeline.client.sourceCommit)
       timeoutInMinutes: 120
       testCommand: start:odspdf
       skipTestResultPublishing: true
@@ -80,6 +82,7 @@ stages:
       poolBuild: Large-eastus2
       testPackage: ${{ variables.testPackage }}
       artifactBuildId: $(resources.pipeline.client.runID)
+      fluidFrameworkSourceVersion: $(resources.pipeline.client.sourceCommit)
       timeoutInMinutes: 120
       testCommand: start:t9s
       skipTestResultPublishing: true
@@ -99,6 +102,7 @@ stages:
       poolBuild: Large-eastus2
       testPackage: ${{ variables.testPackage }}
       artifactBuildId: $(resources.pipeline.client.runID)
+      fluidFrameworkSourceVersion: $(resources.pipeline.client.sourceCommit)
       timeoutInMinutes: 120
       testCommand: start:frs
       lockBehavior: sequential
@@ -119,6 +123,7 @@ stages:
       poolBuild: Large-eastus2
       testPackage: ${{ variables.testPackage }}
       artifactBuildId: $(resources.pipeline.client.runID)
+      fluidFrameworkSourceVersion: $(resources.pipeline.client.sourceCommit)
       timeoutInMinutes: 120
       testCommand: start:frs:canary
       lockBehavior: sequential
