@@ -24,6 +24,7 @@ describe("RevisionTagCodec", () => {
 		assert.deepEqual(encoded, rootRevisionTag);
 		const decoded = codec.decode(encoded, {
 			originatorId: localCompressor.localSessionId,
+			isSummary: false,
 			revision: undefined,
 			idCompressor: testIdCompressor,
 		});
@@ -31,6 +32,7 @@ describe("RevisionTagCodec", () => {
 		const remoteEncoded = new RevisionTagCodec(remoteCompressor).encode(rootRevisionTag);
 		const decodedFromRemote = codec.decode(remoteEncoded, {
 			originatorId: remoteCompressor.localSessionId,
+			isSummary: false,
 			revision: undefined,
 			idCompressor: testIdCompressor,
 		});
@@ -55,6 +57,7 @@ describe("RevisionTagCodec", () => {
 			localId,
 			localCodec.decode(localEncoded, {
 				originatorId: localSession,
+				isSummary: false,
 				revision: undefined,
 				idCompressor: testIdCompressor,
 			}),
@@ -64,6 +67,7 @@ describe("RevisionTagCodec", () => {
 		assert.throws(() =>
 			remoteCodec.decode(localEncoded, {
 				originatorId: localSession,
+				isSummary: false,
 				revision: undefined,
 				idCompressor: testIdCompressor,
 			}),
@@ -77,6 +81,7 @@ describe("RevisionTagCodec", () => {
 		localEncoded = localCodec.encode(localId);
 		const remoteDecoded = remoteCodec.decode(localEncoded, {
 			originatorId: localSession,
+			isSummary: false,
 			revision: undefined,
 			idCompressor: testIdCompressor,
 		});
@@ -89,6 +94,7 @@ describe("RevisionTagCodec", () => {
 			localEncoded,
 			remoteCodec.decode(localEncoded, {
 				originatorId: localSession,
+				isSummary: false,
 				revision: undefined,
 				idCompressor: testIdCompressor,
 			}),
@@ -98,6 +104,7 @@ describe("RevisionTagCodec", () => {
 			localId,
 			localCodec.decode(remoteEncoded, {
 				originatorId: remoteSession,
+				isSummary: false,
 				revision: undefined,
 				idCompressor: testIdCompressor,
 			}),
