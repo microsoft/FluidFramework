@@ -856,31 +856,23 @@ describe("Pending State Manager", () => {
 			});
 
 			it("eagerly enters apply window in constructor when stashed state present", () => {
-				let beforeCount = 0;
 				let afterCount = 0;
 				const psm = new PendingStateManager(
 					stateHandler(),
 					{ pendingStates: [stashedMessage(10, 1)] },
 					logger,
-					{
-						onBeforeFirstStashedOpApply: () => beforeCount++,
-						onAfterStashedOpsApplied: () => afterCount++,
-					},
+					{ onAfterStashedOpsApplied: () => afterCount++ },
 				);
 				assert.strictEqual(psm.isApplyingStashedOps, true);
-				assert.strictEqual(beforeCount, 1);
 				assert.strictEqual(afterCount, 0);
 			});
 
 			it("does not enter apply window when no stashed state", () => {
-				let beforeCount = 0;
 				let afterCount = 0;
 				const psm = new PendingStateManager(stateHandler(), undefined, logger, {
-					onBeforeFirstStashedOpApply: () => beforeCount++,
 					onAfterStashedOpsApplied: () => afterCount++,
 				});
 				assert.strictEqual(psm.isApplyingStashedOps, false);
-				assert.strictEqual(beforeCount, 0);
 				assert.strictEqual(afterCount, 0);
 			});
 

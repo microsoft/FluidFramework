@@ -1600,10 +1600,12 @@ describe("Runtime", () => {
 
 		describe("Submit during stashed-op apply", () => {
 			let containerRuntime: ContainerRuntime;
+			let mockLogger: MockLogger;
 
-			beforeEach(async () => {
+			async function createRuntime(settings: Record<string, ConfigTypes> = {}): Promise<void> {
+				mockLogger = new MockLogger();
 				const { runtime } = await ContainerRuntime.loadRuntime2({
-					context: getMockContext() as IContainerContext,
+					context: getMockContext({ logger: mockLogger, settings }) as IContainerContext,
 					registry: new FluidDataStoreRegistry([]),
 					existing: false,
 					requestHandler: undefined,
@@ -1611,7 +1613,7 @@ describe("Runtime", () => {
 					provideEntryPoint: mockProvideEntryPoint,
 				});
 				containerRuntime = runtime;
-			});
+			}
 
 			function setApplyingStashedOps(isApplying: boolean): void {
 				const psm = (
@@ -1623,7 +1625,24 @@ describe("Runtime", () => {
 				});
 			}
 
-			it("throws a fatal usage error from submitMessage", () => {
+			function submitBlobAttach(): void {
+				// Mirrors `sendBlobAttachMessage` in ContainerRuntime; submit() is private.
+				(
+					containerRuntime as unknown as {
+						submit: (
+							message: { type: ContainerMessageType; contents: unknown },
+							localOpMetadata: unknown,
+							metadata: { localId: string; blobId: string },
+						) => void;
+					}
+				).submit({ type: ContainerMessageType.BlobAttach, contents: undefined }, undefined, {
+					localId: "local-1",
+					blobId: "blob-1",
+				});
+			}
+
+			it("throws a fatal usage error from submitMessage", async () => {
+				await createRuntime();
 				setApplyingStashedOps(true);
 				assert.throws(
 					() => submitDataStoreOp(containerRuntime, "1", testDataStoreMessage),
@@ -1633,11 +1652,55 @@ describe("Runtime", () => {
 				);
 			});
 
-			it("does not throw when the apply window is closed", () => {
+			it("does not throw when the apply window is closed", async () => {
+				await createRuntime();
 				setApplyingStashedOps(false);
 				assert.doesNotThrow(() =>
 					submitDataStoreOp(containerRuntime, "1", testDataStoreMessage),
 				);
+			});
+
+			it("does not throw for BlobAttach during apply (allowlisted)", async () => {
+				await createRuntime();
+				setApplyingStashedOps(true);
+				assert.doesNotThrow(() => submitBlobAttach());
+			});
+
+			it("kill switch suppresses throw and logs error event", async () => {
+				await createRuntime({
+					"Fluid.ContainerRuntime.DisableSubmitDuringStashedApplyThrow": true,
+				});
+				setApplyingStashedOps(true);
+				assert.doesNotThrow(() =>
+					submitDataStoreOp(containerRuntime, "1", testDataStoreMessage),
+				);
+				mockLogger.assertMatchAny([
+					{
+						eventName: "ContainerRuntime:SubmitDuringStashedOpApply",
+						category: "error",
+						messageType: ContainerMessageType.FluidDataStoreOp,
+					},
+				]);
+			});
+
+			it("replayPendingStates is a no-op during apply", async () => {
+				await createRuntime();
+				setApplyingStashedOps(true);
+				const psm = (
+					containerRuntime as unknown as { pendingStateManager: PendingStateManager }
+				).pendingStateManager;
+				let psmReplayCalls = 0;
+				psm.replayPendingStates = ((): IPendingMessage["batchInfo"][] => {
+					psmReplayCalls++;
+					return [];
+				}) as PendingStateManager["replayPendingStates"];
+				// Force `shouldSendOps()` to return true so the only gate left is the apply check.
+				(containerRuntime as unknown as { shouldSendOps: () => boolean }).shouldSendOps =
+					(): boolean => true;
+				(
+					containerRuntime as unknown as { replayPendingStates: () => void }
+				).replayPendingStates();
+				assert.strictEqual(psmReplayCalls, 0);
 			});
 		});
 

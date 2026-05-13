@@ -1855,21 +1855,13 @@ export class ContainerRuntime
 			pendingRuntimeState?.pending,
 			this.baseLogger,
 			{
-				// PSM has flipped `isApplyingStashedOps` to true; `isReadOnly()`
-				// now returns true. Fan out the new readonly state to data stores
-				// so DDSes see it during stashed-op replay and skip submits that
-				// would race the replay (e.g. realize-time writes that should not
-				// produce new ops). Fires synchronously from the PSM constructor
-				// — `notifyReadOnlyState` tolerates `channelCollection` being
-				// undefined since it isn't constructed until later in this
-				// constructor; data stores will pick up the readonly state from
-				// `isReadOnly()` when they're first asked.
-				onBeforeFirstStashedOpApply: () => {
-					this.notifyReadOnlyState();
-				},
-				// PSM has cleared the flag; `isReadOnly()` now reflects the
-				// network-readonly state again. Fan out so DDSes know they can
-				// submit once more.
+				// PSM has cleared `isApplyingStashedOps`; `isReadOnly()` now
+				// reflects the network-readonly state again. Fan out so DDSes
+				// know they can submit once more. No open hook is needed —
+				// the apply window opens before `channelCollection` exists,
+				// so a fanout there would be a no-op; data stores instead
+				// pick up the initial readonly state from `isReadOnly()`
+				// when they're first asked.
 				onAfterStashedOpsApplied: () => {
 					this.notifyReadOnlyState();
 				},
@@ -2828,6 +2820,17 @@ export class ContainerRuntime
 	private replayPendingStates(): void {
 		// We need to be able to send ops to replay states
 		if (!this.shouldSendOps()) {
+			return;
+		}
+
+		// Never resubmit during the stashed-op apply window. The PSM design
+		// invariant ("never resubmit during apply stashed ops") is enforced
+		// here so that a connection-state transition mid-partial-drain cannot
+		// drive `reSubmit` into `submit()` — which would otherwise be caught
+		// by the readonly/apply guard. The window will close on the next
+		// successful `applyStashedOpsAt` drain; whichever connection edge
+		// follows will re-run replay normally.
+		if (this.pendingStateManager.isApplyingStashedOps) {
 			return;
 		}
 
@@ -4863,10 +4866,35 @@ export class ContainerRuntime
 		// check here (rather than at flush) because outbox flushes are
 		// deferred and the apply window could close before the offending op
 		// reaches the pending queue.
-		if (this.pendingStateManager.isApplyingStashedOps) {
-			throw new UsageError("Local op submitted during stashed-op apply window", {
+		//
+		// Allowlist: `BlobAttach` and `IdAllocation` are runtime-internal
+		// op types that may legitimately fire during apply. `BlobAttach`
+		// is produced by `sharePendingBlobs`, which is invoked from
+		// `loadRuntime2` before `applyStashedOpsAt` resolves. `IdAllocation`
+		// is asserted to bypass `submit()` entirely (see the assert below),
+		// but is allowlisted here defensively in case that contract shifts.
+		//
+		// Kill switch: when `DisableSubmitDuringStashedApplyThrow` is enabled,
+		// we still construct and surface the error event to telemetry, but
+		// do not throw — leaves an off-switch if a first- or third-party
+		// DDS in production quietly bypasses the readonly gate.
+		if (
+			this.pendingStateManager.isApplyingStashedOps &&
+			containerRuntimeMessage.type !== ContainerMessageType.BlobAttach &&
+			containerRuntimeMessage.type !== ContainerMessageType.IdAllocation
+		) {
+			const error = new UsageError("Local op submitted during stashed-op apply window", {
 				messageType: containerRuntimeMessage.type,
 			});
+			if (
+				this.mc.config.getBoolean(
+					"Fluid.ContainerRuntime.DisableSubmitDuringStashedApplyThrow",
+				) === true
+			) {
+				this.mc.logger.sendErrorEvent({ eventName: "SubmitDuringStashedOpApply" }, error);
+			} else {
+				throw error;
+			}
 		}
 
 		// There should be no ops in detached container state!

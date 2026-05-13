@@ -143,25 +143,22 @@ export interface IRuntimeStateHandler {
 }
 
 /**
- * Optional hooks invoked at the boundaries of the stashed-op apply lifecycle.
- *
- * `onBeforeFirstStashedOpApply` fires synchronously from the PSM constructor
- * when stashed state is present (i.e. `initialMessages` is non-empty at
- * construction). At that moment `isApplyingStashedOps` is already `true`, so
- * observers see the new state.
+ * Optional hooks invoked at the close of the stashed-op apply lifecycle.
  *
  * `onAfterStashedOpsApplied` fires synchronously the first time
  * `initialMessages` drains during `applyStashedOpsAt`, immediately after
- * `isApplyingStashedOps` flips to `false`.
+ * `isApplyingStashedOps` flips to `false`. Fires at most once per PSM lifetime.
  *
- * Both hooks fire at most once per PSM lifetime.
- *
- * Hooks are synchronous: the open hook must fire from a constructor, and the
- * close hook fires from a `finally` block where async behavior would
+ * Synchronous: fires from a `finally` block where async behavior would
  * complicate error propagation.
+ *
+ * No corresponding open hook is exposed. The apply window is opened eagerly
+ * in the PSM constructor, but at that point `ContainerRuntime` has not yet
+ * wired up the downstream observers (`channelCollection` is undefined), so a
+ * fanout fired from the constructor would be a no-op. Consumers that care
+ * about the open transition can read `isApplyingStashedOps` directly.
  */
 export interface PendingStateManagerHooks {
-	onBeforeFirstStashedOpApply?: () => void;
 	onAfterStashedOpsApplied?: () => void;
 }
 
@@ -435,13 +432,14 @@ export class PendingStateManager implements IDisposable {
 			this.initialMessages.push(...stashedLocalState.pendingStates);
 		}
 		// Open the apply window eagerly if there is any stashed work. The
-		// runtime fans this out to readonly state so DDSes don't submit while
-		// we're replaying stashed ops. If a hook throws, we let it propagate to
-		// the caller of `new PendingStateManager` — at construction time there
-		// is no apply state to unwind.
+		// runtime is readonly while `isApplyingStashedOps` is true (see
+		// `ContainerRuntime.isReadOnly`); compliant DDSes consult `readOnly`
+		// at realize time and skip submits. No fanout fires here — downstream
+		// observers (`channelCollection`) are not yet constructed at this
+		// point in the runtime constructor, and the first real readonly read
+		// happens after the constructor returns.
 		if (!this.initialMessages.isEmpty()) {
 			this._applyLifecycle = "applying";
-			this.hooks.onBeforeFirstStashedOpApply?.();
 		}
 	}
 
