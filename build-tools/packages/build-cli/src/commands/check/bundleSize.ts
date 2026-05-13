@@ -4,11 +4,11 @@
  */
 
 import { Flags } from "@oclif/core";
+import { getAzureDevopsApi } from "../../library/azureDevops/getAzureDevopsApi.js";
 import {
 	ADOSizeComparator,
 	type BundleComparison,
 	bundlesContainNoChanges,
-	getAzureDevopsApi,
 	pickFreshestCanonicalRemote,
 } from "../../library/bundleSize/index.js";
 

@@ -11,7 +11,6 @@ export {
 	getAnalyzerJsonFromContents,
 	getAnalyzerJsonFromFileSystem,
 	getAnalyzerPathsFromFileSystem,
-	getAzureDevopsApi,
 	getBundleSummariesFromAnalyzer,
 	IADOConstants,
 	SizeComparison,

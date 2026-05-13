@@ -15,7 +15,7 @@ import {
 	BuildResult,
 	BuildStatus,
 } from "azure-devops-node-api/interfaces/BuildInterfaces.js";
-import { getAzureDevopsApi } from "../bundleSize/index.js";
+import { getAzureDevopsApi } from "../azureDevops/getAzureDevopsApi.js";
 import type { AdoBuildRecord, AdoTimeline, BuildPerfMode } from "./types.js";
 
 /**
