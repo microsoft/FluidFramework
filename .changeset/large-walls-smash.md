@@ -18,4 +18,4 @@ The following exports from `@fluidframework/container-loader` are now reachable 
 - `captureFullContainerState`
 - `createFrozenDocumentServiceFactory`
 
-Signatures and runtime behavior are unchanged.
+Runtime behavior is unchanged.
