@@ -54,15 +54,14 @@ import {
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/compressedEncode.js";
 import {
-	type EncodedChunkShape,
-	EncodedFieldBatch,
+	type EncodedChunkShapeV1,
 	EncodedFieldBatchV1,
 	EncodedFieldBatchV2,
+	type EncodedFieldBatchV1OrV2,
 	type EncodedValueShape,
 	FieldBatchFormatVersion,
-	validVersions,
 	// eslint-disable-next-line import-x/no-internal-modules
-} from "../../../../feature-libraries/chunked-forest/codec/format.js";
+} from "../../../../feature-libraries/chunked-forest/codec/format/index.js";
 import type {
 	ChunkReferenceId,
 	IncrementalDecoder,
@@ -84,6 +83,7 @@ import {
 	defaultIncrementalEncodingPolicy,
 	fieldKinds,
 	jsonableTreeFromFieldCursor,
+	fieldBatchCodecBuilder,
 } from "../../../../feature-libraries/index.js";
 import { type JsonCompatibleReadOnly, brand } from "../../../../util/index.js";
 import { testTrees as schemalessTestTrees } from "../../../cursorTestSuite.js";
@@ -113,17 +113,21 @@ function makeFieldBatchCodec(
 			minVersionForCollab: lowestMinVersionForCollab,
 			formatVersion: version,
 			codec: {
-				encode: (data: FieldBatch, context: FieldBatchEncodingContext): EncodedFieldBatch => {
+				encode: (
+					data: FieldBatch,
+					context: FieldBatchEncodingContext,
+				): EncodedFieldBatchV1OrV2 => {
 					return compressedEncode(data, encoderContext);
 				},
 				decode: (
-					data: EncodedFieldBatchV1 | EncodedFieldBatchV2,
+					data: EncodedFieldBatchV1OrV2,
 					fieldBatchContext: FieldBatchEncodingContext,
 				): FieldBatch => {
 					// TODO: consider checking data is in schema.
 					return decode(data, {
 						idCompressor: fieldBatchContext.idCompressor,
 						originatorId: fieldBatchContext.originatorId,
+						isSummary: false,
 					}).map((chunk) => chunk.cursor());
 				},
 				schema: format,
@@ -138,7 +142,7 @@ const fieldBatchVersion = brand<FieldBatchFormatVersion>(FieldBatchFormatVersion
 describe("compressedEncode", () => {
 	// This is a good smoke test for compressedEncode,
 	// but also provides good coverage of anyNodeEncoder, anyFieldEncoder as well as AnyShape which they are built on.
-	for (const version of validVersions) {
+	for (const version of fieldBatchCodecBuilder.registry.map((entry) => entry.formatVersion)) {
 		describe(`schemaless test trees FieldBatchFormatVersion V${version}`, () => {
 			useSnapshotDirectory(`chunked-forest-compressed-schemaless/V${version}`);
 			for (const [name, jsonable] of schemalessTestTrees) {
@@ -155,6 +159,7 @@ describe("compressedEncode", () => {
 						testIdCompressor,
 						undefined /* incrementalEncoder */,
 						brand(version),
+						false /* isSummary */,
 					);
 					const codec = makeFieldBatchCodec(
 						{ jsonValidator: FormatValidatorBasic },
@@ -166,11 +171,13 @@ describe("compressedEncode", () => {
 						encodeType: TreeCompressionStrategy.Compressed,
 						idCompressor: testIdCompressor,
 						originatorId: testIdCompressor.localSessionId,
+						isSummary: false,
 					});
 					const decoded = codec.decode(result, {
 						encodeType: TreeCompressionStrategy.Compressed,
 						idCompressor: testIdCompressor,
 						originatorId: testIdCompressor.localSessionId,
+						isSummary: false,
 					});
 					const decodedJson = decoded.map(jsonableTreeFromFieldCursor);
 					assert.deepEqual([[jsonable]], decodedJson);
@@ -188,17 +195,18 @@ describe("compressedEncode", () => {
 	const mockHandle = new MockHandle("x");
 
 	describe("encodeValue", () => {
-		const testValues: [string, Value, EncodedValueShape, BufferFormat<EncodedChunkShape>][] = [
-			["none", undefined, false, []],
-			["optional none", undefined, undefined, [false]],
-			["optional some", 5, undefined, [true, 5]],
-			["handle", mockHandle, undefined, [true, mockHandle]],
-			["required", false, true, [false]],
-			["constant", 5, [5], []],
-		];
+		const testValues: [string, Value, EncodedValueShape, BufferFormat<EncodedChunkShapeV1>][] =
+			[
+				["none", undefined, false, []],
+				["optional none", undefined, undefined, [false]],
+				["optional some", 5, undefined, [true, 5]],
+				["handle", mockHandle, undefined, [true, mockHandle]],
+				["required", false, true, [false]],
+				["constant", 5, [5], []],
+			];
 		for (const [name, value, shape, encoded] of testValues) {
 			it(name, () => {
-				const buffer: BufferFormat<EncodedChunkShape> = [];
+				const buffer: BufferFormat<EncodedChunkShapeV1> = [];
 				encodeValue(value, shape, buffer);
 				assert.deepEqual(buffer, encoded);
 				const processed = updateShapesAndIdentifiersEncoding(fieldBatchVersion, [buffer]);
@@ -207,6 +215,7 @@ describe("compressedEncode", () => {
 				const decoded = readValue(stream, shape, {
 					idCompressor: testIdCompressor,
 					originatorId: testIdCompressor.localSessionId,
+					isSummary: false,
 				});
 				assert(stream.offset === stream.data.length);
 				assert.deepEqual(decoded, value);
@@ -222,6 +231,7 @@ describe("compressedEncode", () => {
 			testIdCompressor,
 			undefined /* incrementalEncoder */,
 			fieldBatchVersion,
+			false /* isSummary */,
 		);
 		const buffer = checkNodeEncode(anyNodeEncoder, context, { type: brand("foo") });
 		assert.deepEqual(buffer, [anyNodeShape, new IdentifierToken("foo"), false, []]);
@@ -236,6 +246,7 @@ describe("compressedEncode", () => {
 				testIdCompressor,
 				undefined /* incrementalEncoder */,
 				fieldBatchVersion,
+				false /* isSummary */,
 			);
 			const buffer = checkFieldEncode(InlineArrayEncoder.empty, context, []);
 			assert(compareArrays(buffer, []));
@@ -249,6 +260,7 @@ describe("compressedEncode", () => {
 				testIdCompressor,
 				undefined /* incrementalEncoder */,
 				fieldBatchVersion,
+				false /* isSummary */,
 			);
 			const shape = new InlineArrayEncoder(1, asNodesEncoder(onlyTypeShape));
 			const buffer = checkFieldEncode(shape, context, [{ type: brand("foo") }]);
@@ -263,6 +275,7 @@ describe("compressedEncode", () => {
 				testIdCompressor,
 				undefined /* incrementalEncoder */,
 				fieldBatchVersion,
+				false /* isSummary */,
 			);
 			const shape = new InlineArrayEncoder(2, asNodesEncoder(onlyTypeShape));
 			const buffer = checkFieldEncode(shape, context, [
@@ -280,6 +293,7 @@ describe("compressedEncode", () => {
 				testIdCompressor,
 				undefined /* incrementalEncoder */,
 				fieldBatchVersion,
+				false /* isSummary */,
 			);
 			const shapeInner = new InlineArrayEncoder(2, asNodesEncoder(onlyTypeShape));
 			const shapeOuter = new InlineArrayEncoder(2, shapeInner);
@@ -307,6 +321,7 @@ describe("compressedEncode", () => {
 				testIdCompressor,
 				undefined /* incrementalEncoder */,
 				fieldBatchVersion,
+				false /* isSummary */,
 			);
 			const buffer = checkFieldEncode(new NestedArrayEncoder(onlyTypeShape), context, []);
 			assert.deepEqual(buffer, [0]);
@@ -320,6 +335,7 @@ describe("compressedEncode", () => {
 				testIdCompressor,
 				undefined /* incrementalEncoder */,
 				fieldBatchVersion,
+				false /* isSummary */,
 			);
 			const shape = new NestedArrayEncoder(onlyTypeShape);
 			const buffer = checkFieldEncode(shape, context, [{ type: brand("foo") }]);
@@ -334,6 +350,7 @@ describe("compressedEncode", () => {
 				testIdCompressor,
 				undefined /* incrementalEncoder */,
 				fieldBatchVersion,
+				false /* isSummary */,
 			);
 			const shape = new NestedArrayEncoder(onlyTypeShape);
 			const buffer = checkFieldEncode(shape, context, [
@@ -352,6 +369,7 @@ describe("compressedEncode", () => {
 				testIdCompressor,
 				undefined /* incrementalEncoder */,
 				fieldBatchVersion,
+				false /* isSummary */,
 			);
 			const buffer = checkFieldEncode(new NestedArrayEncoder(constantFooShape), context, [
 				{ type: brand("foo") },
@@ -367,6 +385,7 @@ describe("compressedEncode", () => {
 				testIdCompressor,
 				undefined /* incrementalEncoder */,
 				fieldBatchVersion,
+				false /* isSummary */,
 			);
 			const buffer = checkFieldEncode(new NestedArrayEncoder(constantFooShape), context, [
 				{ type: brand("foo") },
@@ -386,6 +405,7 @@ describe("compressedEncode", () => {
 				testIdCompressor,
 				undefined /* incrementalEncoder */,
 				fieldBatchVersion,
+				false /* isSummary */,
 			);
 			const buffer = checkFieldEncode(anyFieldEncoder, context, []);
 			// For size purposes, this should remain true
@@ -407,6 +427,7 @@ describe("compressedEncode", () => {
 				testIdCompressor,
 				undefined /* incrementalEncoder */,
 				fieldBatchVersion,
+				false /* isSummary */,
 			);
 			const buffer = checkFieldEncode(anyFieldEncoder, context, [{ type: brand("foo") }]);
 			// Should use anyNodeEncoder, which will lookup the shape from context:
@@ -421,6 +442,7 @@ describe("compressedEncode", () => {
 				testIdCompressor,
 				undefined /* incrementalEncoder */,
 				fieldBatchVersion,
+				false /* isSummary */,
 			);
 			const buffer = checkFieldEncode(anyFieldEncoder, context, [
 				{ type: brand("foo") },
@@ -470,6 +492,7 @@ describe("compressedEncode", () => {
 				testIdCompressor,
 				createMockIncrementalEncoder([]),
 				fieldBatchVersion,
+				false /* isSummary */,
 			);
 
 			const buffer = checkFieldEncode(incrementalFieldEncoder, context, []);
@@ -491,6 +514,7 @@ describe("compressedEncode", () => {
 				testIdCompressor,
 				createMockIncrementalEncoder(referenceIds),
 				fieldBatchVersion,
+				false /* isSummary */,
 			);
 
 			const buffer = checkFieldEncode(
@@ -512,6 +536,7 @@ describe("compressedEncode", () => {
 				testIdCompressor,
 				undefined /* incrementalEncoder */,
 				fieldBatchVersion,
+				false /* isSummary */,
 			);
 
 			assert.throws(() => {
@@ -534,6 +559,7 @@ describe("compressedEncode", () => {
 				testIdCompressor,
 				createMockIncrementalEncoder([]),
 				brand(FieldBatchFormatVersion.v1),
+				false /* isSummary */,
 			);
 
 			assert.throws(

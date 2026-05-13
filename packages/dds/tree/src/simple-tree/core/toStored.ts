@@ -15,6 +15,14 @@ export interface StoredFromViewSchemaGenerationOptions {
 	 * Due to caching, the behavior of this function must be pure.
 	 */
 	includeStaged(upgrade: SchemaUpgrade): boolean;
+
+	/**
+	 * Determines whether to treat a {@link SchemaFactoryAlpha.stagedOptional | staged optional} field as optional
+	 * (rather than required) in the resulting stored schema.
+	 * @remarks
+	 * Due to caching, the behavior of this function must be pure.
+	 */
+	includeStagedOptional(upgrade: SchemaUpgrade): boolean;
 }
 
 /**

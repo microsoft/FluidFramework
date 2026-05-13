@@ -23,11 +23,16 @@ import {
 } from "../../../../feature-libraries/index.js";
 import { ajvValidator } from "../../../codec/index.js";
 import { testTrees } from "../../../cursorTestSuite.js";
+import { snapshotCodecFormats, useSnapshotDirectory } from "../../../snapshots/index.js";
 import { testIdCompressor } from "../../../utils.js";
 
 describe("fieldBatchCodecBuilder", () => {
 	// Use the first simple test tree from the test suite
 	const [, simpleTestData] = testTrees[0];
+	useSnapshotDirectory("codecFormats");
+	it("snapshot of supported codec formats", () => {
+		snapshotCodecFormats(fieldBatchCodecBuilder, {});
+	});
 
 	describe("version mapping", () => {
 		it("uses v1 format for FluidClientVersion.v2_0", () => {
@@ -40,6 +45,7 @@ describe("fieldBatchCodecBuilder", () => {
 			const context = {
 				encodeType: TreeCompressionStrategy.Uncompressed,
 				originatorId: testIdCompressor.localSessionId,
+				isSummary: false,
 				idCompressor: testIdCompressor,
 			};
 
@@ -58,6 +64,7 @@ describe("fieldBatchCodecBuilder", () => {
 			const context = {
 				encodeType: TreeCompressionStrategy.Uncompressed,
 				originatorId: testIdCompressor.localSessionId,
+				isSummary: false,
 				idCompressor: testIdCompressor,
 			};
 
@@ -79,6 +86,7 @@ describe("fieldBatchCodecBuilder", () => {
 			const context = {
 				encodeType: TreeCompressionStrategy.Uncompressed,
 				originatorId: testIdCompressor.localSessionId,
+				isSummary: false,
 				idCompressor: testIdCompressor,
 			};
 
@@ -103,6 +111,7 @@ describe("fieldBatchCodecBuilder", () => {
 			const context = {
 				encodeType: TreeCompressionStrategy.CompressedIncremental,
 				originatorId: testIdCompressor.localSessionId,
+				isSummary: false,
 				idCompressor: testIdCompressor,
 			};
 
@@ -119,6 +128,7 @@ describe("fieldBatchCodecBuilder", () => {
 			const context = {
 				encodeType: TreeCompressionStrategy.CompressedIncremental,
 				originatorId: testIdCompressor.localSessionId,
+				isSummary: false,
 				idCompressor: testIdCompressor,
 			};
 
@@ -140,6 +150,7 @@ describe("fieldBatchCodecBuilder", () => {
 			const context = {
 				encodeType: TreeCompressionStrategy.Uncompressed,
 				originatorId: testIdCompressor.localSessionId,
+				isSummary: false,
 				idCompressor: testIdCompressor,
 			};
 
@@ -159,6 +170,7 @@ describe("fieldBatchCodecBuilder", () => {
 			const context = {
 				encodeType: TreeCompressionStrategy.Uncompressed,
 				originatorId: testIdCompressor.localSessionId,
+				isSummary: false,
 				idCompressor: testIdCompressor,
 			};
 

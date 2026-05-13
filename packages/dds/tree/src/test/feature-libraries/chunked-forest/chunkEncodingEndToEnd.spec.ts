@@ -37,7 +37,7 @@ import { ChunkedForest } from "../../../feature-libraries/chunked-forest/chunked
 // eslint-disable-next-line import-x/no-internal-modules
 import { decode } from "../../../feature-libraries/chunked-forest/codec/chunkDecoding.js";
 import type {
-	EncodedFieldBatch,
+	EncodedFieldBatchV1OrV2,
 	FieldBatchEncodingContext,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/chunked-forest/index.js";
@@ -104,6 +104,7 @@ const context: FieldBatchEncodingContext = {
 	encodeType: TreeCompressionStrategy.Compressed,
 	idCompressor,
 	originatorId: idCompressor.localSessionId,
+	isSummary: false,
 	schema: { schema: jsonSequenceRootSchema, policy: defaultSchemaPolicy },
 };
 
@@ -122,6 +123,7 @@ function getIdentifierEncodingContext(id: string) {
 		encodeType: TreeCompressionStrategy.Compressed,
 		idCompressor: testIdCompressor,
 		originatorId: testIdCompressor.localSessionId,
+		isSummary: false,
 		schema: {
 			schema: flexSchema,
 			policy: defaultSchemaPolicy,
@@ -208,10 +210,14 @@ describe("End to end chunked encoding", () => {
 
 		// This function is declared in the test to have access to the original uniform chunk for comparison.
 		function stringify(content: unknown) {
-			const insertedChunk = decode((content as FormatCommon).fields as EncodedFieldBatch, {
-				idCompressor,
-				originatorId: idCompressor.localSessionId,
-			});
+			const insertedChunk = decode(
+				(content as FormatCommon).fields as EncodedFieldBatchV1OrV2,
+				{
+					idCompressor,
+					originatorId: idCompressor.localSessionId,
+					isSummary: false,
+				},
+			);
 			assert.equal(insertedChunk, chunk);
 			assert(chunk.isShared());
 			return JSON.stringify(content);
@@ -241,10 +247,14 @@ describe("End to end chunked encoding", () => {
 
 		// This function is declared in the test to have access to the original uniform chunk for comparison.
 		function stringify(content: unknown) {
-			const insertedChunk = decode((content as FormatCommon).fields as EncodedFieldBatch, {
-				idCompressor,
-				originatorId: idCompressor.localSessionId,
-			});
+			const insertedChunk = decode(
+				(content as FormatCommon).fields as EncodedFieldBatchV1OrV2,
+				{
+					idCompressor,
+					originatorId: idCompressor.localSessionId,
+					isSummary: false,
+				},
+			);
 			assert.equal(insertedChunk, chunk);
 			assert(chunk.isShared());
 			return JSON.stringify(content);

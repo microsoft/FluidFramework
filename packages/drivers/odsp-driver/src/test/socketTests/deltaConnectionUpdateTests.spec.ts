@@ -11,10 +11,9 @@ import type {
 	ISensitivityLabel,
 	ISocketStorageDiscovery,
 } from "@fluidframework/odsp-driver-definitions/internal";
-import {
-	type ITelemetryLoggerExt,
-	MockLogger,
-} from "@fluidframework/telemetry-utils/internal";
+import type { TelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
+import { MockLogger } from "@fluidframework/telemetry-utils/internal";
+import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/legacy";
 import { type SinonFakeTimers, type SinonStub, stub, useFakeTimers } from "sinon";
 import type { Socket } from "socket.io-client";
 
@@ -43,7 +42,7 @@ describe("DeltaConnectionMetadata update tests", () => {
 		user: { id: "userId" },
 	};
 
-	let logger: ITelemetryLoggerExt;
+	let logger: TelemetryLoggerExt & ITelemetryLoggerExt;
 	const siteUrl = "https://microsoft.sharepoint-df.com/siteUrl";
 	const driveId = "driveId";
 	const itemId = "itemId";

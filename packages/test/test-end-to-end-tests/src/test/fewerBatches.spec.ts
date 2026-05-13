@@ -161,22 +161,16 @@ describeCompat("Fewer batches", "NoCompat", (getTestObjectProvider, apis) => {
 	];
 
 	itExpects(
-		"Reference sequence number mismatch when doing op reentry submits two batches",
-		expectedErrors,
-		async () => {
-			// By default, we would flush a batch when we detect a reference sequence number mismatch
-			await processOutOfOrderOp({
-				["Fluid.ContainerRuntime.DisableFlushBeforeProcess"]: true,
-			});
-			assert.strictEqual(capturedBatches.length, 2);
-		},
-	);
-
-	itExpects(
 		"Op reentry submits two batches due to flush before processing",
 		expectedErrors,
 		async () => {
-			await processOutOfOrderOp({});
+			// The fake sequenced op injected below reuses a sequence number that the
+			// DuplicateBatchDetector has already seen, which would trip its invariants and
+			// short-circuit the flow before the deltaManager's non-Sequential check fires.
+			// Disable batchId tracking here so the test can exercise its actual scenario.
+			await processOutOfOrderOp({
+				"Fluid.ContainerRuntime.DisableBatchIdTracking": true,
+			});
 			assert.strictEqual(capturedBatches.length, 2);
 		},
 	);

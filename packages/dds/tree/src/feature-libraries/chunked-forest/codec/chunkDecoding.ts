@@ -9,6 +9,7 @@ import type {
 	OpSpaceCompressedId,
 	SessionId,
 } from "@fluidframework/id-compressor";
+import { v5 as uuidV5 } from "uuid";
 
 import { DiscriminatedUnionDispatcher } from "../../../codec/index.js";
 import type {
@@ -37,19 +38,22 @@ import {
 	decode as genericDecode,
 	readStreamIdentifier,
 } from "./chunkDecodingGeneric.js";
-import type { IncrementalDecoder } from "./codecs.js";
+// eslint-disable-next-line @typescript-eslint/no-unused-vars -- Referenced by doc comments
+import type { FieldBatchEncodingContext, IncrementalDecoder } from "./codecs.js";
 import {
 	type EncodedAnyShape,
-	type EncodedChunkShape,
-	type EncodedFieldBatch,
+	type EncodedChunkShapeV1OrV2,
+	type EncodedChunkShapeV2,
+	type EncodedFieldBatchV1OrV2,
+	type EncodedFieldBatchV2,
 	type EncodedIncrementalChunkShape,
 	type EncodedInlineArrayShape,
 	type EncodedNestedArrayShape,
 	type EncodedNodeShape,
 	type EncodedValueShape,
-	FieldBatchFormatVersion,
 	SpecialField,
-} from "./format.js";
+	supportsIncrementalEncoding,
+} from "./format/index.js";
 
 export interface IdDecodingContext {
 	idCompressor: IIdCompressor;
@@ -57,13 +61,32 @@ export interface IdDecodingContext {
 	 * The creator of any local Ids to be decoded.
 	 */
 	originatorId: SessionId;
+	/**
+	 * {@inheritdoc FieldBatchEncodingContext.isSummary}
+	 */
+	isSummary: boolean;
+	/**
+	 * See {@link FieldBatchEncodingContext.healUnresolvableIdentifiersOnDecode}.
+	 */
+	healUnresolvableIdentifiersOnDecode?: boolean;
+	/**
+	 * See {@link FieldBatchEncodingContext.sharedObjectId}.
+	 */
+	sharedObjectId?: string;
 }
+
+/**
+ * Random v4 UUID generated as a namespace for the "heal an unresolvable identifier into a stable UUID"
+ * path in {@link readValue}. This scheme requires consensus across all clients to function.
+ */
+const healingNamespace = "f8a89df3-6882-400f-b913-4c1f6f0157bd";
+
 /**
  * Decode `chunk` into a TreeChunk.
  */
 export function decode(
-	chunk: EncodedFieldBatch,
-	idDecodingContext: { idCompressor: IIdCompressor; originatorId: SessionId },
+	chunk: EncodedFieldBatchV1OrV2,
+	idDecodingContext: IdDecodingContext,
 	incrementalDecoder?: IncrementalDecoder,
 ): TreeChunk[] {
 	return genericDecode(
@@ -75,8 +98,8 @@ export function decode(
 }
 
 const decoderLibrary = new DiscriminatedUnionDispatcher<
-	EncodedChunkShape,
-	[context: DecoderContext<EncodedChunkShape>],
+	EncodedChunkShapeV1OrV2,
+	[context: DecoderContext<EncodedChunkShapeV1OrV2>],
 	ChunkDecoder
 >({
 	a(shape: EncodedNestedArrayShape, context): ChunkDecoder {
@@ -91,8 +114,11 @@ const decoderLibrary = new DiscriminatedUnionDispatcher<
 	d(shape: EncodedAnyShape): ChunkDecoder {
 		return anyDecoder;
 	},
-	e(shape: EncodedIncrementalChunkShape, cache): ChunkDecoder {
-		return new IncrementalChunkDecoder(cache);
+	e(
+		shape: EncodedIncrementalChunkShape,
+		context: DecoderContext<EncodedChunkShapeV2>,
+	): ChunkDecoder {
+		return new IncrementalChunkDecoder(context);
 	},
 });
 
@@ -121,15 +147,43 @@ export function readValue(
 				typeof streamValue === "number" || typeof streamValue === "string",
 				0x997 /* identifier must be string or number. */,
 			);
+			if (typeof streamValue === "string") {
+				return streamValue;
+			}
 			const idCompressor = idDecodingContext.idCompressor;
-			return typeof streamValue === "number"
-				? idCompressor.decompress(
-						idCompressor.normalizeToSessionSpace(
-							streamValue as OpSpaceCompressedId,
-							idDecodingContext.originatorId,
-						),
-					)
-				: streamValue;
+			// OpSpaceCompressedIds are negative, and require a session-id to compute their value.
+			// Due to a bug, we have some special casing for them (see below).
+			// TODO: isFinalId should probably be exported from id-compressor and that could be used to do the narrowing here.
+			if (idDecodingContext.isSummary === true && streamValue < 0) {
+				if (
+					idDecodingContext.healUnresolvableIdentifiersOnDecode === true &&
+					idDecodingContext.sharedObjectId !== undefined
+				) {
+					// Documents written before the encode-side fix for non-finalized identifier
+					// values can persist negative op-space IDs that are no
+					// longer resolvable once the originating session's local state has been stripped.
+					// When loading such a summary with the heal-on-decode option on, synthesize a deterministic
+					// stable UUID so all readers of the same blob agree on the resulting value.
+					//
+					// The heal path is intentionally restricted to summary loads — an
+					// unresolvable ID encountered while applying an op should still surface as
+					// an error, since it indicates a real bug rather than a recoverable state.
+					return uuidV5(
+						`${idDecodingContext.sharedObjectId}|${streamValue}`,
+						healingNamespace,
+					);
+				}
+				// See `SharedTreeOptionsBeta.healUnresolvableIdentifiersOnDecode` for details on this error.
+				throw new Error(
+					"Summary could not be loaded due incorrectly encoded identifier. See SharedTreeOptionsBeta.healUnresolvableIdentifiersOnDecode for mitigation.",
+				);
+			}
+			return idCompressor.decompress(
+				idCompressor.normalizeToSessionSpace(
+					streamValue as OpSpaceCompressedId,
+					idDecodingContext.originatorId,
+				),
+			);
 		} else {
 			// EncodedCounter case:
 			unreachableCase(shape, "decoding values as deltas is not yet supported");
@@ -242,16 +296,16 @@ export class InlineArrayDecoder implements ChunkDecoder {
  * Decoder for {@link EncodedIncrementalChunkShape}s.
  */
 export class IncrementalChunkDecoder implements ChunkDecoder {
-	public constructor(private readonly context: DecoderContext<EncodedChunkShape>) {}
+	public constructor(private readonly context: DecoderContext<EncodedChunkShapeV2>) {}
 	public decode(_: readonly ChunkDecoder[], stream: StreamCursor): TreeChunk {
 		assert(
 			this.context.incrementalDecoder !== undefined,
 			0xc27 /* incremental decoder not available for incremental field decoding */,
 		);
 
-		const chunkDecoder = (batch: EncodedFieldBatch): TreeChunk => {
+		const chunkDecoder = (batch: EncodedFieldBatchV2): TreeChunk => {
 			assert(
-				batch.version >= FieldBatchFormatVersion.v2,
+				supportsIncrementalEncoding(batch.version),
 				0xc9f /* Unsupported FieldBatchFormatVersion for incremental chunks; must be v2 or higher */,
 			);
 			const context = new DecoderContext(
@@ -292,10 +346,10 @@ type BasicFieldDecoder = (
 ) => [FieldKey, TreeChunk];
 
 /**
- * Get a decoder for fields of a provided (via `shape` and `context`) {@link EncodedChunkShape}.
+ * Get a decoder for fields of a provided (via `shape` and `context`).
  */
 function fieldDecoder(
-	context: DecoderContext<EncodedChunkShape>,
+	context: DecoderContext<EncodedChunkShapeV1OrV2>,
 	key: FieldKey,
 	shape: number,
 ): BasicFieldDecoder {
@@ -314,7 +368,7 @@ export class NodeDecoder implements ChunkDecoder {
 	private readonly fieldDecoders: readonly BasicFieldDecoder[];
 	public constructor(
 		private readonly shape: EncodedNodeShape,
-		private readonly context: DecoderContext<EncodedChunkShape>,
+		private readonly context: DecoderContext<EncodedChunkShapeV1OrV2>,
 	) {
 		this.type = shape.type === undefined ? undefined : context.identifier(shape.type);
 

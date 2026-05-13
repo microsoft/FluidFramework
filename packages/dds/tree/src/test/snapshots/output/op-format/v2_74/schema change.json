@@ -6,24 +6,28 @@
       {
         "schema": {
           "new": {
-            "version": 1,
+            "version": 2,
             "nodes": {
               "com.fluidframework.leaf.number": {
-                "leaf": 0
+                "kind": {
+                  "leaf": 0
+                }
               },
               "snapshots.Point": {
-                "object": {
-                  "x": {
-                    "kind": "Value",
-                    "types": [
-                      "com.fluidframework.leaf.number"
-                    ]
-                  },
-                  "y": {
-                    "kind": "Value",
-                    "types": [
-                      "com.fluidframework.leaf.number"
-                    ]
+                "kind": {
+                  "object": {
+                    "x": {
+                      "kind": "Value",
+                      "types": [
+                        "com.fluidframework.leaf.number"
+                      ]
+                    },
+                    "y": {
+                      "kind": "Value",
+                      "types": [
+                        "com.fluidframework.leaf.number"
+                      ]
+                    }
                   }
                 }
               }
@@ -36,7 +40,7 @@
             }
           },
           "old": {
-            "version": 1,
+            "version": 2,
             "nodes": {},
             "root": {
               "kind": "Forbidden",
@@ -113,24 +117,28 @@
       {
         "schema": {
           "new": {
-            "version": 1,
+            "version": 2,
             "nodes": {
               "com.fluidframework.leaf.number": {
-                "leaf": 0
+                "kind": {
+                  "leaf": 0
+                }
               },
               "snapshots.Point": {
-                "object": {
-                  "x": {
-                    "kind": "Value",
-                    "types": [
-                      "com.fluidframework.leaf.number"
-                    ]
-                  },
-                  "y": {
-                    "kind": "Value",
-                    "types": [
-                      "com.fluidframework.leaf.number"
-                    ]
+                "kind": {
+                  "object": {
+                    "x": {
+                      "kind": "Value",
+                      "types": [
+                        "com.fluidframework.leaf.number"
+                      ]
+                    },
+                    "y": {
+                      "kind": "Value",
+                      "types": [
+                        "com.fluidframework.leaf.number"
+                      ]
+                    }
                   }
                 }
               }
@@ -143,24 +151,28 @@
             }
           },
           "old": {
-            "version": 1,
+            "version": 2,
             "nodes": {
               "com.fluidframework.leaf.number": {
-                "leaf": 0
+                "kind": {
+                  "leaf": 0
+                }
               },
               "snapshots.Point": {
-                "object": {
-                  "x": {
-                    "kind": "Value",
-                    "types": [
-                      "com.fluidframework.leaf.number"
-                    ]
-                  },
-                  "y": {
-                    "kind": "Value",
-                    "types": [
-                      "com.fluidframework.leaf.number"
-                    ]
+                "kind": {
+                  "object": {
+                    "x": {
+                      "kind": "Value",
+                      "types": [
+                        "com.fluidframework.leaf.number"
+                      ]
+                    },
+                    "y": {
+                      "kind": "Value",
+                      "types": [
+                        "com.fluidframework.leaf.number"
+                      ]
+                    }
                   }
                 }
               }

@@ -309,8 +309,9 @@ describe("Test Int64Property", function () {
 				true,
 			);
 
-			var initialChangeset = initialChangeset.getSerializedChangeSet().Int64.intProperty;
-			expect(initialChangeset).to.deep.equal(
+			var initialChangesetSerialized =
+				initialChangeset.getSerializedChangeSet().Int64.intProperty;
+			expect(initialChangesetSerialized).to.deep.equal(
 				testProperty.serialize({ dirtyOnly: false }).Int64.intProperty,
 			);
 

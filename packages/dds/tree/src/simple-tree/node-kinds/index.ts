@@ -5,6 +5,7 @@
 
 export {
 	type ArrayNodeCustomizableSchema,
+	type ArrayNodeCustomizableSchemaAlpha,
 	type ArrayNodePojoEmulationSchema,
 	ArrayNodeSchema,
 	arraySchema,
@@ -12,6 +13,7 @@ export {
 	isArrayNodeSchema,
 	IterableTreeArrayContent,
 	TreeArrayNode,
+	type TreeArrayNodeAlpha,
 	type ReadonlyArrayNode,
 	type ArrayPlaceAnchor,
 	createArrayInsertionAnchor,
@@ -25,6 +27,7 @@ export {
 	MapNodeSchema,
 	mapSchema,
 	type TreeMapNode,
+	type TreeMapNodeAlpha,
 } from "./map/index.js";
 
 export {

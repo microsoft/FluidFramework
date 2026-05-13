@@ -3,6 +3,9 @@
  * Licensed under the MIT License.
  */
 
+import { promises as fs } from "node:fs";
+import * as path from "node:path";
+
 import * as sequenceDeprecated from "@fluid-experimental/sequence-deprecated";
 import { SparseMatrix } from "@fluid-experimental/sequence-deprecated";
 import { DriverApi } from "@fluid-private/test-drivers";
@@ -44,77 +47,21 @@ import * as semver from "semver";
 export type _fakeUsage = ISharedObjectKind<unknown>;
 
 import { CompatKind } from "./compatOptions.js";
+import {
+	containerRuntimePackageEntries,
+	dataRuntimePackageEntries,
+	driverPackageEntries,
+	loaderPackageEntries,
+} from "./compatPackageList.js";
+export type { PackageToInstall } from "./compatPackageList.js";
+import type { PackageToInstall } from "./compatPackageList.js";
 import { pkgVersion } from "./packageVersion.js";
 import {
 	checkInstalled,
-	ensureInstalled,
 	getRequestedVersion,
 	loadPackage,
 	versionHasMovedSparsedMatrix,
 } from "./versionUtils.js";
-
-/**
- * The details of a package to install for compatibility testing.
- */
-export interface PackageToInstall {
-	/** The name of the package to install. */
-	pkgName: string;
-	/**
-	 * The minimum version where the package should be installed.
-	 * If the requested version is lower than this, the package will not be installed. This enables certain level of
-	 * compatibility testing for packages which were not yet part of the Fluid Framework at certain versions.
-	 * Tests are responsible to not use APIs from packages which are not installed for the requested version.
-	 * For example, the "\@fluidframework/tree" package was only introduced in version 2.0.0, so for testing
-	 * versions prior to that, the package will not be installed and the test should skip testing these versions.
-	 */
-	minVersion: string;
-}
-
-// List of driver API packages to install.
-const driverPackageEntries: PackageToInstall[] = [
-	{ pkgName: "@fluidframework/local-driver", minVersion: "0.56.0" },
-	{ pkgName: "@fluidframework/odsp-driver", minVersion: "0.56.0" },
-	{ pkgName: "@fluidframework/routerlicious-driver", minVersion: "0.56.0" },
-];
-
-// List of loader API packages to install.
-const loaderPackageEntries: PackageToInstall[] = [
-	{ pkgName: "@fluidframework/container-loader", minVersion: "0.56.0" },
-];
-
-// List of container runtime API packages to install.
-const containerRuntimePackageEntries: PackageToInstall[] = [
-	{ pkgName: "@fluidframework/container-runtime", minVersion: "0.56.0" },
-	{ pkgName: "@fluidframework/aqueduct", minVersion: "0.56.0" },
-];
-
-// List of data runtime API packages to install.
-const dataRuntimePackageEntries: PackageToInstall[] = [
-	{ pkgName: "@fluidframework/aqueduct", minVersion: "0.56.0" },
-	{ pkgName: "@fluidframework/datastore", minVersion: "0.56.0" },
-	{ pkgName: "@fluidframework/test-utils", minVersion: "0.56.0" },
-	{ pkgName: "@fluidframework/cell", minVersion: "0.56.0" },
-	{ pkgName: "@fluidframework/counter", minVersion: "0.56.0" },
-	{ pkgName: "@fluidframework/map", minVersion: "0.56.0" },
-	{ pkgName: "@fluidframework/matrix", minVersion: "0.56.0" },
-	{ pkgName: "@fluidframework/ordered-collection", minVersion: "0.56.0" },
-	{ pkgName: "@fluidframework/register-collection", minVersion: "0.56.0" },
-	{ pkgName: "@fluidframework/sequence", minVersion: "0.56.0" },
-	{ pkgName: "@fluidframework/agent-scheduler", minVersion: "0.56.0" },
-	{ pkgName: "@fluidframework/tree", minVersion: "2.0.0" },
-];
-
-/**
- * The list of all the packages to install for compatibility testing.
- * If this list is changed, the {@link revision} in `versionUtils.ts`should be incremented to force re-installation. If
- * not, the pipelines that run the compatibility tests may fail as the packages may be fetched from the cache.
- */
-const packageListToInstall: PackageToInstall[] = [
-	...driverPackageEntries,
-	...loaderPackageEntries,
-	...containerRuntimePackageEntries,
-	...dataRuntimePackageEntries,
-];
 
 /**
  * @internal
@@ -125,31 +72,34 @@ export interface InstalledPackage {
 }
 
 /**
- * Ensures a specific package version is installed and returns its installation information.
+ * Loads all layer APIs for the requested version. The compat workspace is expected to be
+ * pre-installed via `pnpm install` (through the package `postinstall` hook).
+ *
+ * @returns
+ * A promise that resolves when the requested version is loaded and can be accessed synchronously
+ * using the getters for each layer's API (e.g. `getLoaderApi`)
  *
  * @internal
  */
-export const ensurePackageInstalled = async (
+export const ensureVersionLoaded = async (
 	baseVersion: string,
 	version: number | string,
-	force: boolean,
-): Promise<InstalledPackage | undefined> => {
-	const pkg = await ensureInstalled(
-		getRequestedVersion(baseVersion, version),
-		packageListToInstall,
-		force,
-	);
+): Promise<void> => {
+	const requestedStr = getRequestedVersion(baseVersion, version);
+	if (semver.satisfies(pkgVersion, requestedStr)) {
+		return;
+	}
+
 	await Promise.all([
 		loadContainerRuntime(baseVersion, version),
 		loadDataRuntime(baseVersion, version),
 		loadLoader(baseVersion, version),
 		loadDriver(baseVersion, version),
 	]);
-	return pkg;
 };
 
-// This module supports synchronous functions to import packages once their install has been completed.
-// Since dynamic import is async, we thus cache the modules based on their package version.
+// This module supports synchronous functions to import packages once their install has been
+// completed. Since dynamic import is async, we cache the modules by package version.
 const loaderCache = new Map<string, typeof LoaderApi>();
 const containerRuntimeCache = new Map<string, typeof ContainerRuntimeApi>();
 const dataRuntimeCache = new Map<string, typeof DataRuntimeApi>();
@@ -188,7 +138,6 @@ export const DataRuntimeApi = {
 	DataObjectFactory,
 	FluidDataStoreRuntime,
 	TestFluidObjectFactory,
-	// TODO: SharedTree is not included included here. Perhaps it should be added?
 	dds: {
 		SharedCell,
 		SharedCounter,
@@ -243,7 +192,7 @@ async function loadIfCompatible(
 ): Promise<any> {
 	// Check if the requested version satisfies the minVersion requirement
 	if (semver.gte(versionToInstall, pkgEntry.minVersion)) {
-		return loadPackage(modulePath, pkgEntry.pkgName);
+		return loadPackage(modulePath, pkgEntry.pkgName, pkgEntry.preferredEntrypoint);
 	}
 	return undefined;
 }
@@ -419,11 +368,20 @@ async function loadDriver(baseVersion: string, requested?: number | string): Pro
 			loadedPackages["@fluidframework/routerlicious-driver"],
 		];
 
-		// Load the "@fluidframework/server-local-server" package directly without checking for version compatibility.
-		// This is because the server packages have different versions that client packages and the versions requested
-		// do not apply to server packages.
+		// Load the "@fluidframework/server-local-server" package directly without checking for
+		// version compatibility. Server packages have different versioning from client packages.
+		// @fluidframework/server-local-server is not a direct dependency of the compat workspace,
+		// but it is a known dependency of @fluidframework/local-driver, so use that as the base path.
+		// The extra work here is done to handle the structure of pnpm's isolated node_module tree
+		// (as configured in `compat-workspaces/full/.npmrc` in this package).
+		// This pnpm blog post is a good illustration of that structure: https://pnpm.io/blog/2020/05/27/flat-node-modules-is-not-the-only-way
+		const localDriverDependenciesPath = await fs.realpath(
+			path.join(modulePath, "node_modules", "@fluidframework/local-driver"),
+		);
+		// Strip the trailing /node_modules/@fluidframework/local-driver to get to the path where server-local-server will also be available.
+		const localServerModulePath = path.join(localDriverDependenciesPath, "..", "..", "..");
 		const { LocalDeltaConnectionServer } = await loadPackage(
-			modulePath,
+			localServerModulePath,
 			"@fluidframework/server-local-server",
 		);
 

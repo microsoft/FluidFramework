@@ -51,6 +51,9 @@
 		"@eslint-community/eslint-comments/no-unused-enable": [
 			"error"
 		],
+		"@eslint-community/eslint-comments/require-description": [
+			"warn"
+		],
 		"@fluid-internal/fluid/no-file-path-links-in-jsdoc": [
 			"error"
 		],
@@ -1232,6 +1235,7 @@
 				"allow": [
 					"@fluidframework/*/internal{,/**}",
 					"@fluid-experimental/**",
+					"@fluid-internal/**",
 					"*/index.js"
 				]
 			}
@@ -1256,29 +1260,6 @@
 		],
 		"import-x/no-unused-modules": [
 			"error"
-		],
-		"import-x/order": [
-			"error",
-			{
-				"groups": [
-					"builtin",
-					"external",
-					"internal",
-					"parent",
-					"sibling",
-					"index"
-				],
-				"newlines-between": "always",
-				"alphabetize": {
-					"order": "asc",
-					"caseInsensitive": false,
-					"orderImportKind": "ignore"
-				},
-				"distinctGroup": true,
-				"sortTypesGroup": false,
-				"named": false,
-				"warnOnUnassignedImports": false
-			}
 		],
 		"indent": [
 			"off"
