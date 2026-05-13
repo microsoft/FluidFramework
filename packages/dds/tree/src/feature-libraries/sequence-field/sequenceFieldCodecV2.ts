@@ -464,13 +464,20 @@ function encodeRename(
 ): Encoded.MarkEffect {
 	assert(mark.cellId !== undefined, "Rename should target empty cell");
 
+	const renamedRootId = context.rootRenames.getFirst(mark.cellId, mark.count).value;
+
+	// This is true iff, in the input context, the renamed node has this cell as its detach location.
+	const isRenameOfInputRoot = renamedRootId !== undefined;
+
 	const inputRootId = context.getInputRootId(mark.idOverride, mark.count).value;
 
-	// XXX: Refactor and comment
+	// This is true iff, in the output context, the renamed node was last detached from this cell.
+	// This can be true even if the node is attached in the output context.
+	const isRenameOfOutputRoot = inputRootId !== undefined;
 	const isMoveInAndDetach =
-		!context.isAttachId(mark.idOverride, mark.count).value &&
-		(context.isDetachId(mark.idOverride, mark.count).value ||
-			(inputRootId !== undefined && !areEqualChangeAtomIds(inputRootId, mark.cellId)));
+		!isRenameOfInputRoot &&
+		isRenameOfOutputRoot &&
+		!context.isAttachId(mark.idOverride, mark.count).value;
 
 	if (isMoveInAndDetach) {
 		// These cells are the final detach location of moved nodes.
@@ -506,17 +513,13 @@ function encodeRename(
 		};
 	}
 
-	const renamedRootId = context.rootRenames.getFirst(mark.cellId, mark.count).value;
 	const isMoveOutAndAttach =
-		renamedRootId !== undefined && context.isAttachId(renamedRootId, mark.count).value;
+		isRenameOfInputRoot && context.isAttachId(renamedRootId, mark.count).value;
 
-	const isRenameOfRoot = renamedRootId !== undefined;
-
-	// If we are renaming a root, but the output ID is not `mark.idOverride`,
+	// If we are renaming the node in this cell, but the output ID is not `mark.idOverride`,
 	// then we must be moving the node to another cell.
-	// If it were left in this cell, the root's output ID would not match the cell's output ID.
 	const isMoveOutAndDetach =
-		isRenameOfRoot && !areEqualChangeAtomIds(renamedRootId, mark.idOverride);
+		isRenameOfInputRoot && !areEqualChangeAtomIds(renamedRootId, mark.idOverride);
 
 	if (isMoveOutAndAttach || isMoveOutAndDetach) {
 		// This mark represents a move of a node which was detached from this cell.
@@ -675,7 +678,6 @@ function encodeMarkEffectV2(
 			const rootInputId = context.getInputRootId(attachId, mark.count).value ?? attachId;
 			const isMove = context.isDetachId(rootInputId, mark.count).value;
 
-			// XXX: Can we just call this `isMoveIn`? It seems like this check is sufficient.
 			// If the input context ID for these nodes is not the cell ID,
 			// then these nodes are being moved from the location at which they were last detached.
 			const isInitialAttachLocation =
