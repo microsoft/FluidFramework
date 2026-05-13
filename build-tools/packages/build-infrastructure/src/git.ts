@@ -166,19 +166,19 @@ const packageJsonPathPattern = /(^|\/)package\.json$/;
 /**
  * Lists all `package.json` file paths tracked at the given ref, or in the git index when no
  * ref is provided. Paths use POSIX separators and are relative to the directory the given
- * `SimpleGit` instance was rooted at (i.e. they match the path format git itself prints —
+ * `SimpleGit` instance was rooted at (i.e. they match the path format git itself prints -
  * pass `simpleGit(repoRoot)` to get repo-relative paths).
  *
  * @param git - The git instance.
  * @param ref - Optional ref. When provided, uses `git ls-tree -r --name-only <ref>` to enumerate
  * tracked files at that historical snapshot. When omitted, uses `git ls-files`, which reflects
- * the **index** — not the on-disk working tree. This means:
+ * the **index** - not the on-disk working tree. This means:
  *
  * - Staged additions and staged deletions are reflected.
  * - Untracked files (e.g. a newly-created `package.json` that hasn't been `git add`'d) are not
- *   listed.
+ * listed.
  * - Files deleted from disk whose deletion has not been staged are still listed (the index
- *   still considers the file present).
+ * still considers the file present).
  *
  * For merge-base / CI usage the working tree is expected to be clean, so this distinction is
  * usually moot.
