@@ -11,8 +11,8 @@ import {
 	type ArtifactContents,
 	downloadArtifact,
 } from "../../azureDevops/downloadArtifact.js";
-import type { BundleComparison } from "../BundleBuddyTypes.js";
 import { compareBundles } from "../compareBundles.js";
+import type { BundleComparison } from "../types.js";
 import { getBaselineCommit, getBuilds } from "../utilities/index.js";
 import { getAnalyzerJsonFromContents } from "./AdoArtifactFileProvider.js";
 import type { IADOConstants } from "./Constants.js";

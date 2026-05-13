@@ -5,7 +5,7 @@
 
 import type { BundleAnalyzerPlugin } from "webpack-bundle-analyzer";
 
-import type { BundleMetricSet, BundleSummaries } from "../BundleBuddyTypes.js";
+import type { BundleMetricSet, BundleSummaries } from "../types.js";
 import type { BundleFileData } from "./getBundleFilePathsFromFolder.js";
 
 export interface GetBundleSummariesFromAnalyzerArgs {
