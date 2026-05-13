@@ -436,8 +436,13 @@ describe("Runtime", () => {
 				let batchBegin = 0;
 				let batchEnd = 0;
 				let callsToEnsure = 0;
+				// Empty-batch placeholder resubmit is part of the Offline Load feature
+				// (it preserves a forked container's view of the batchId), so this test
+				// needs to opt into it.
 				const { runtime: containerRuntime } = await ContainerRuntime.loadRuntime2({
-					context: getMockContext() as IContainerContext,
+					context: getMockContext({
+						settings: { "Fluid.Container.enableOfflineFull": true },
+					}) as IContainerContext,
 					registry: new FluidDataStoreRegistry([]),
 					existing: false,
 					runtimeOptions: {},
@@ -477,13 +482,14 @@ describe("Runtime", () => {
 				assert.strictEqual(containerRuntime.isDirty, false);
 			});
 
-			// BatchId tracking is on by default (TurnBased mode); the kill-switch suppresses stamping.
+			// BatchId tracking (and thus batchId stamping on resubmit) is enabled iff
+			// the Offline Load feature is opted into via Fluid.Container.enableOfflineFull.
 			for (const variant of [
-				{ name: "default (no settings)", settings: {}, expectStamped: true },
+				{ name: "default (no settings)", settings: {}, expectStamped: false },
 				{
-					name: "kill-switch active",
-					settings: { "Fluid.ContainerRuntime.DisableBatchIdTracking": true },
-					expectStamped: false,
+					name: "Offline Load enabled",
+					settings: { "Fluid.Container.enableOfflineFull": true },
+					expectStamped: true,
 				},
 			])
 				it(`Replaying ops should resend in correct order, with batch ID if applicable (${variant.name})`, async () => {
@@ -2357,13 +2363,14 @@ describe("Runtime", () => {
 		});
 
 		describe("Duplicate Batch Detection", () => {
-			// BatchId tracking is on by default (TurnBased); the kill-switch suppresses detection.
+			// BatchId tracking (and thus duplicate batch detection) is enabled iff the
+			// Offline Load feature is opted into via Fluid.Container.enableOfflineFull.
 			for (const variant of [
-				{ name: "default (no settings)", settings: {}, expectDetection: true },
+				{ name: "default (no settings)", settings: {}, expectDetection: false },
 				{
-					name: "kill-switch active",
-					settings: { "Fluid.ContainerRuntime.DisableBatchIdTracking": true },
-					expectDetection: false,
+					name: "Offline Load enabled",
+					settings: { "Fluid.Container.enableOfflineFull": true },
+					expectDetection: true,
 				},
 			]) {
 				it(`DuplicateBatchDetector reflects batch-id tracking enablement (${variant.name})`, async () => {
@@ -2413,7 +2420,7 @@ describe("Runtime", () => {
 				});
 			}
 
-			it("Default-on tracking is silently skipped in FlushMode.Immediate (no UsageError)", async () => {
+			it("Without Offline Load opt-in, no tracking happens in FlushMode.Immediate", async () => {
 				const { runtime: containerRuntime } = await ContainerRuntime.loadRuntime2({
 					context: getMockContext() as IContainerContext,
 					registry: new FluidDataStoreRegistry([]),
@@ -2424,7 +2431,8 @@ describe("Runtime", () => {
 					},
 					provideEntryPoint: mockProvideEntryPoint,
 				});
-				// Sending a duplicate batchId should not throw because tracking is inactive in Immediate mode.
+				// Sending a duplicate batchId should not throw because tracking is inactive without
+				// the Offline Load opt-in.
 				containerRuntime.process(
 					{
 						sequenceNumber: 123,
@@ -2474,10 +2482,7 @@ describe("Runtime", () => {
 				assert.strictEqual(containerErrors.length, 1);
 			});
 
-			// Regression: enabling default-on batchId tracking when grouped batching is disabled
-			// asserts 0xa00 in OpGroupingManager.createEmptyGroupedBatch the first time a resubmit
-			// produces an empty batch. Tracking must be silently skipped in that configuration.
-			it("Default-on tracking is silently skipped when grouped batching is disabled", async () => {
+			it("Without Offline Load opt-in, no tracking happens when grouped batching is disabled", async () => {
 				const { runtime: containerRuntime } = await ContainerRuntime.loadRuntime2({
 					context: getMockContext() as IContainerContext,
 					registry: new FluidDataStoreRegistry([]),
@@ -2488,8 +2493,8 @@ describe("Runtime", () => {
 					},
 					provideEntryPoint: mockProvideEntryPoint,
 				});
-				// Sending a duplicate batchId should not throw because tracking is inactive
-				// when grouped batching is off.
+				// Sending a duplicate batchId should not throw because tracking is inactive without
+				// the Offline Load opt-in (the grouped-batching-off setting is incidental).
 				containerRuntime.process(
 					{
 						sequenceNumber: 123,
@@ -2540,9 +2545,11 @@ describe("Runtime", () => {
 			});
 
 			it("Can roundtrip DuplicateBatchDetector state through summary/snapshot", async () => {
-				// Duplicate Batch Detection is on by default in TurnBased mode.
+				// Duplicate Batch Detection is enabled by opting into Offline Load.
 				const { runtime: containerRuntime } = await ContainerRuntime.loadRuntime2({
-					context: getMockContext() as IContainerContext,
+					context: getMockContext({
+						settings: { "Fluid.Container.enableOfflineFull": true },
+					}) as IContainerContext,
 					registry: new FluidDataStoreRegistry([]),
 					existing: false,
 					runtimeOptions: {
@@ -2574,6 +2581,7 @@ describe("Runtime", () => {
 				};
 				const { runtime: containerRuntime2 } = await ContainerRuntime.loadRuntime2({
 					context: getMockContext({
+						settings: { "Fluid.Container.enableOfflineFull": true },
 						baseSnapshot: {
 							trees: {},
 							blobs: { [recentBatchInfoBlobName]: "nonempty_id_ignored_by_mockStorage" },
