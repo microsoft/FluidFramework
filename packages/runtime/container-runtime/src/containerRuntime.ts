@@ -1361,11 +1361,12 @@ export class ContainerRuntime
 	}
 
 	public readonly isReadOnly = (): boolean =>
-		// `pendingStateManager` is assigned partway through the constructor;
-		// `baseLogger` is built earlier and stamps `isReadOnly` on error
-		// telemetry, so this can be called before the PSM exists. Optional
-		// chain keeps that window safe.
-		this.deltaManager.readOnlyInfo.readonly === true ||
+		// `_deltaManager` and `pendingStateManager` are both assigned partway
+		// through the constructor; `baseLogger` is built earlier and stamps
+		// `isReadOnly` on every error event (e.g. layer-compat failures
+		// during construction), so this can be called before either is
+		// assigned. Optional chains keep that window safe.
+		this._deltaManager?.readOnlyInfo.readonly === true ||
 		this.pendingStateManager?.isApplyingStashedOps === true;
 
 	/**
