@@ -36,17 +36,6 @@ export function sequenceFieldToDelta(
 			}
 		}
 		if (!areInputCellsEmpty(mark) && !areOutputCellsEmpty(mark)) {
-			// XXX: Can we get rid of this?
-			if (mark.type === "Attach" && mark.cellId === undefined) {
-				// The mark is a pin.
-				// Even though there is no observable effect on the document,
-				// we include it in the delta because there is a root rename associated with these nodes,
-				// and that rename would fail if we did not report a detach here.
-				const attachId = getAttachedRootId(mark);
-				deltaMark.attach = nodeIdFromChangeAtom(attachId);
-				deltaMark.detach = nodeIdFromChangeAtom(mark.detachId ?? attachId);
-			}
-
 			// Since each cell is associated with exactly one node,
 			// the cell starting end ending populated means the cell content has not changed.
 			deltaMarks.push(deltaMark);
