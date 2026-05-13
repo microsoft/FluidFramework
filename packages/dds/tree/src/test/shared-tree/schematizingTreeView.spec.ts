@@ -1550,6 +1550,43 @@ describe("SchematizingSimpleTreeView", () => {
 			assert.equal(events[1]?.labels.size, 0);
 		});
 
+		it("labelTreeNode is restored if revert apply throws", () => {
+			// Verify the finally in `revertRevertible` runs even when `apply` throws.
+			// If `labelTreeNode` weren't restored, the next labeled transaction would
+			// nest under the leftover state.
+			const view = getTestObjectView();
+
+			let revertible: RevertibleAlpha | undefined;
+			let lastLabel: unknown;
+			view.checkout.events.on("changed", (meta, getRevertible) => {
+				if (!meta.isLocal) return;
+				if (meta.kind === CommitKind.Default) {
+					revertible ??= getRevertible?.();
+					lastLabel = meta.label;
+				}
+				if (meta.kind === CommitKind.Undo) {
+					throw new Error("simulated revert failure");
+				}
+			});
+
+			view.runTransaction(
+				() => {
+					view.root.content = 1;
+				},
+				{ label: "first" },
+			);
+			assert(revertible !== undefined);
+			assert.throws(() => revertible?.revert());
+
+			view.runTransaction(
+				() => {
+					view.root.content = 2;
+				},
+				{ label: "second" },
+			);
+			assert.equal(lastLabel, "second");
+		});
+
 		it("cloned revertible inherits the original commit's labels", () => {
 			const sourceView = getTestObjectView();
 
