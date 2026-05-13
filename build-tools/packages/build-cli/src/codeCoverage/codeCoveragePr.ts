@@ -9,7 +9,7 @@ import {
 	getBuildArtifactForSpecificBuild,
 	type IBuildMetrics,
 } from "../library/azureDevops/getBaselineBuildMetrics.js";
-import { getAzureDevopsApi } from "../library/bundleSizeDiff/index.js";
+import { getAzureDevopsApi } from "../library/bundleSize/index.js";
 import type { CommandLogger } from "../logging.js";
 import { type CodeCoverageComparison, compareCodeCoverage } from "./compareCodeCoverage.js";
 import { getCoverageMetricsFromArtifact } from "./getCoverageMetrics.js";

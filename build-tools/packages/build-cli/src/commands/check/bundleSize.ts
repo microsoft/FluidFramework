@@ -10,7 +10,7 @@ import {
 	bundlesContainNoChanges,
 	getAzureDevopsApi,
 	pickFreshestCanonicalRemote,
-} from "../../library/bundleSizeDiff/index.js";
+} from "../../library/bundleSize/index.js";
 
 import { BaseCommand } from "../../library/commands/base.js";
 
