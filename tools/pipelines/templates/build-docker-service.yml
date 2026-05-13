@@ -64,7 +64,7 @@ parameters:
 
 - name: buildToolsVersionToInstall
   type: string
-  default: "^0.5.0"
+  default: "^0.55.0"
 
 # The semver range constraint to use for interdependencies; that is, dependencies on other packages within the release
 # group
