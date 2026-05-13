@@ -1,5 +1,22 @@
 # @fluidframework/container-definitions
 
+## 2.101.0
+
+### Minor Changes
+
+- GC timers are now cancelled when a container closes, not just when it is disposed ([#27130](https://github.com/microsoft/FluidFramework/pull/27130)) [86c0fffbf49](https://github.com/microsoft/FluidFramework/commit/86c0fffbf499981af297f018c7b570802ebdbeeb)
+
+  Adds an optional `close()` hook to `IRuntime` that `Container` calls on close.
+  `ContainerRuntime` implements it by cancelling all GC timers (session expiry and unreferenced-node timers)
+  without clearing tracked state.
+
+  This prevents the timers from causing memory leaks after a `Container` is closed but not disposed.
+  In Node.js environments this also prevents the timers from keeping the event loop alive until `dispose()`.
+  This can reduce the need for Mocha's --exit in tests which create containers which are closed but not disposed.
+
+  Disposing of closed containers is still recommended, but it is now less critical for avoiding timer-related hangs after close.
+  Disposal still helps clean up resources and can reduce the size of memory leaks if references to the container are leaked.
+
 ## 2.100.0
 
 ### Minor Changes

@@ -44,7 +44,7 @@ export {
 export { ExpectedEvents, ExpectsTest, itExpects } from "./itExpects.js";
 export {
 	CompatApis,
-	ensurePackageInstalled,
+	ensureVersionLoaded,
 	getContainerRuntimeApi,
 	getDataRuntimeApi,
 	getDriverApi,

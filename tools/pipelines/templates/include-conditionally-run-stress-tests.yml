@@ -30,6 +30,14 @@ parameters:
 - name: artifactBuildId
   type: string
 
+# A valid git ref to use for the microsoft/FluidFramework repository checkout (e.g. refs/heads/main, a commit SHA, tag, etc)
+# Pipelines that are triggered on completion of the "Build - client packages" pipeline should generally use
+# the same source commit as what was used for "Build - client packages". This is typically available via
+# `$(resources.pipeline.client.sourceCommit)` (where "client" is actually the name of the resource declared
+# in the current pipeline's root yaml file)
+- name: fluidFrameworkSourceVersion
+  type: string
+
 stages:
   - stage: CheckAffectedPaths
     displayName: Determine changed packages
@@ -73,6 +81,7 @@ stages:
         condition: eq(dependencies.CheckAffectedPaths.outputs['Job.Check${{ replace(package.testFileTarName, '-', '') }}.AffectedFilesModified'],'true')
         poolBuild: ${{ parameters.pool }}
         artifactBuildId: ${{ parameters.artifactBuildId }}
+        fluidFrameworkSourceVersion: ${{ parameters.fluidFrameworkSourceVersion }}
         testPackage: ${{ package.name }}
         timeoutInMinutes: 120
         testFileTarName: ${{ package.testFileTarName }}

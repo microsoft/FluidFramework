@@ -1,5 +1,13 @@
 # @fluidframework/odsp-driver
 
+## 2.101.0
+
+### Patch Changes
+
+- Remove fully-rolled-out `setSensitivityLabelHeaderPostFix` config gate ([#27261](https://github.com/microsoft/FluidFramework/pull/27261)) [69228c498d8](https://github.com/microsoft/FluidFramework/commit/69228c498d8ef491c565e64a1888e4c4ac71abd2)
+
+  The `Fluid.Driver.Odsp.setSensitivityLabelHeaderPostFix` config gate is fully rolled out, so it has been removed along with the now-dead conditional code path. The `Prefer: Return-Sensitivity-Labels` header is now always sent on join-session requests, matching the post-rollout production behavior. The `setSensitivityLabelHeader` property emitted on the `JoinSession` telemetry event has also been removed because it would always be `true`.
+
 ## 2.100.0
 
 ### Minor Changes

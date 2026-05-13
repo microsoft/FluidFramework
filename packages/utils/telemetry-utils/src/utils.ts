@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { ITelemetryBaseEvent } from "@fluidframework/core-interfaces";
+import type { ITelemetryBaseEvent, LogLevel } from "@fluidframework/core-interfaces";
 
 import { loggerToMonitoringContext } from "./config.js";
 import type {
@@ -66,7 +66,7 @@ export function createSampledLogger(
 		monitoringContext.config.getBoolean("Fluid.Telemetry.DisableSampling") ?? false;
 
 	const sampledLogger = {
-		send: (event: ITelemetryBaseEvent): void => {
+		send: (event: ITelemetryBaseEvent, logLevel?: LogLevel): void => {
 			// The sampler uses the following logic for sending events:
 			// 1. If isSamplingDisabled is true, then this means events should be unsampled. Therefore we send the event without any checks.
 			// 2. If isSamplingDisabled is false, then event should be sampled using the event sampler, if the sampler is not defined just send all events, other use the eventSampler.sample() method.
@@ -75,31 +75,39 @@ export function createSampledLogger(
 				if (isSamplingDisabled && (skipLoggingWhenSamplingIsDisabled ?? false)) {
 					return;
 				}
-				logger.send(event);
+				logger.send(event, logLevel);
 			}
 		},
-		sendTelemetryEvent: (event: ITelemetryGenericEventExt): void => {
+		sendTelemetryEvent: (
+			event: ITelemetryGenericEventExt,
+			error?: unknown,
+			logLevel?: typeof LogLevel.verbose | typeof LogLevel.info,
+		): void => {
 			if (isSamplingDisabled || eventSampler === undefined || eventSampler.sample()) {
 				if (isSamplingDisabled && (skipLoggingWhenSamplingIsDisabled ?? false)) {
 					return;
 				}
-				logger.sendTelemetryEvent(event);
+				logger.sendTelemetryEvent(event, error, logLevel);
 			}
 		},
-		sendErrorEvent: (event: ITelemetryGenericEventExt): void => {
+		sendErrorEvent: (event: ITelemetryGenericEventExt, error?: unknown): void => {
 			if (isSamplingDisabled || eventSampler === undefined || eventSampler.sample()) {
 				if (isSamplingDisabled && (skipLoggingWhenSamplingIsDisabled ?? false)) {
 					return;
 				}
-				logger.sendErrorEvent(event);
+				logger.sendErrorEvent(event, error);
 			}
 		},
-		sendPerformanceEvent: (event: ITelemetryGenericEventExt): void => {
+		sendPerformanceEvent: (
+			event: ITelemetryGenericEventExt,
+			error?: unknown,
+			logLevel?: typeof LogLevel.verbose | typeof LogLevel.info,
+		): void => {
 			if (isSamplingDisabled || eventSampler === undefined || eventSampler.sample()) {
 				if (isSamplingDisabled && (skipLoggingWhenSamplingIsDisabled ?? false)) {
 					return;
 				}
-				logger.sendPerformanceEvent(event);
+				logger.sendPerformanceEvent(event, error, logLevel);
 			}
 		},
 		isSamplingDisabled,

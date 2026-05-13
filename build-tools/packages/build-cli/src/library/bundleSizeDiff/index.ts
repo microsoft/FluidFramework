@@ -8,34 +8,24 @@ export {
 	BundleFileData,
 	GetBundleSummariesFromAnalyzerArgs,
 	getAnalyzerFilePathsFromFolder,
+	getAnalyzerJsonFromContents,
 	getAnalyzerJsonFromFileSystem,
-	getAnalyzerJsonFromZip,
 	getAnalyzerPathsFromFileSystem,
-	getAnalyzerPathsFromZipObject,
 	getAzureDevopsApi,
-	getBuildTagForCommit,
 	getBundleSummariesFromAnalyzer,
-	getZipObjectFromArtifact,
 	IADOConstants,
 	SizeComparison,
-} from "./ADO";
+} from "./ADO/index.js";
 export {
 	BundleComparison,
 	BundleMetric,
 	BundleMetricSet,
 	BundleSummaries,
-} from "./BundleBuddyTypes";
-export {
-	BannedModule,
-	BannedModulesPlugin,
-	BannedModulesPluginOptions,
-} from "./bannedModulesPlugin/bannedModulesPlugin";
-export { bundlesContainNoChanges, compareBundles } from "./compareBundles";
+} from "./BundleBuddyTypes.js";
+export { bundlesContainNoChanges, compareBundles } from "./compareBundles.js";
 export {
 	GetBuildOptions,
 	getAllFilesInDirectory,
 	getBaselineCommit,
 	getBuilds,
-	getPriorCommit,
-	unzipStream,
-} from "./utilities";
+} from "./utilities/index.js";
