@@ -19,7 +19,7 @@ export enum ConnectionState {
 export function createDetachedContainer(createDetachedContainerProps: ICreateDetachedContainerProps): Promise<IContainer>;
 
 // @beta @legacy
-export function createFrozenDocumentServiceFactory(factory?: IDocumentServiceFactory | Promise<IDocumentServiceFactory>): IDocumentServiceFactory;
+export function createFrozenDocumentServiceFactory(factory?: IDocumentServiceFactory | Promise<IDocumentServiceFactory>, readOnly?: boolean): IDocumentServiceFactory;
 
 // @beta @legacy (undocumented)
 export interface IBaseProtocolHandler {
@@ -109,6 +109,7 @@ export interface ILoadExistingContainerProps extends ICreateAndLoadContainerProp
 // @beta @legacy
 export interface ILoadFrozenContainerFromPendingStateProps extends ILoadExistingContainerProps {
     readonly pendingLocalState: string;
+    readonly readOnly?: boolean;
 }
 
 // @beta @legacy

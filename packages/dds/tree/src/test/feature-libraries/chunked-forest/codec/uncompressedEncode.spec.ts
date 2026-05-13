@@ -28,6 +28,7 @@ describe("uncompressedEncode", () => {
 				const context = {
 					encodeType: TreeCompressionStrategy.Uncompressed,
 					originatorId: testIdCompressor.localSessionId,
+					isSummary: false,
 					idCompressor: testIdCompressor,
 				};
 				const codec = fieldBatchCodecBuilder.build({

@@ -246,6 +246,34 @@ export interface ILoadFrozenContainerFromPendingStateProps
 	 * Pending local state to be applied to the container.
 	 */
 	readonly pendingLocalState: string;
+
+	/**
+	 * Controls whether the frozen container is surfaced as read-only.
+	 *
+	 * Defaults to `true`. When `true`, the container reports `readOnlyInfo.readonly === true`
+	 * with `storageOnly === true`, matching the historical behavior of frozen loads.
+	 *
+	 * When `false`, the container loads as writable so the runtime will accept DDS submissions.
+	 * The connection itself stays `Connected`: the connection manager recognizes the synthetic
+	 * frozen delta stream and drops outbound messages at the network layer, so no read→write
+	 * reconnect is attempted. Local DDS state continues to update via optimistic apply, and
+	 * submitted ops accumulate in the runtime's pending-state manager. Use this when callers
+	 * want to accrue and capture pending state without publishing it.
+	 *
+	 * @remarks
+	 * The flag uses negative polarity (`readOnly`) rather than a positive opt-in (`writable`)
+	 * to align with `IContainer.readOnlyInfo.readonly`, which is the established surface for
+	 * read/write state on a loaded container. A future positive-polarity option can layer on
+	 * top of this without breaking callers, but flipping the polarity now would split readers
+	 * between two conventions for the same concept.
+	 *
+	 * Subsystem behavior is unchanged from the read-only frozen path regardless of `readOnly`:
+	 * storage operations still throw (only `readBlob` is supported); summarizer / id-compressor
+	 * never fire because no acks arrive; the quorum is whatever was captured in pending state
+	 * and gains no members during the writable-frozen lifetime. The only behavioral delta is
+	 * that the runtime accepts DDS submissions and accumulates them in `pendingStateManager`.
+	 */
+	readonly readOnly?: boolean;
 }
 
 /**
@@ -258,7 +286,10 @@ export async function loadFrozenContainerFromPendingState(
 ): Promise<IContainer> {
 	return loadExistingContainer({
 		...props,
-		documentServiceFactory: createFrozenDocumentServiceFactory(props.documentServiceFactory),
+		documentServiceFactory: createFrozenDocumentServiceFactory(
+			props.documentServiceFactory,
+			props.readOnly,
+		),
 	});
 }
 

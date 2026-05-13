@@ -5,6 +5,13 @@
 
 import { strict as assert, fail } from "node:assert";
 
+import type { IIdCompressor } from "@fluidframework/id-compressor";
+import {
+	createIdCompressor,
+	createSessionId,
+	toIdCompressorWithCore,
+} from "@fluidframework/id-compressor/internal";
+
 import type { JsonableTree } from "../../../../core/index.js";
 import {
 	Counter,
@@ -20,6 +27,10 @@ import {
 	asFieldEncoder,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/compressedEncode.js";
+import {
+	SpecialField,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "../../../../feature-libraries/chunked-forest/codec/format/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { NodeShapeBasedEncoder } from "../../../../feature-libraries/chunked-forest/codec/nodeEncoder.js";
 // eslint-disable-next-line import-x/no-internal-modules
@@ -47,6 +58,7 @@ describe("nodeShape", () => {
 				testIdCompressor,
 				undefined /* incrementalEncoder */,
 				fieldBatchVersion,
+				false /* isSummary */,
 			);
 
 			const buffer = checkNodeEncode(shape, context, {
@@ -67,6 +79,7 @@ describe("nodeShape", () => {
 				testIdCompressor,
 				undefined /* incrementalEncoder */,
 				fieldBatchVersion,
+				false /* isSummary */,
 			);
 
 			const encodedChunk = checkNodeEncode(shape, context, {
@@ -84,6 +97,7 @@ describe("nodeShape", () => {
 				testIdCompressor,
 				undefined /* incrementalEncoder */,
 				fieldBatchVersion,
+				false /* isSummary */,
 			);
 
 			const fieldShapeLocal = context.nestedArrayEncoder(
@@ -122,6 +136,7 @@ describe("nodeShape", () => {
 				testIdCompressor,
 				undefined /* incrementalEncoder */,
 				fieldBatchVersion,
+				false /* isSummary */,
 			);
 
 			// Shape which encodes to nothing.
@@ -158,6 +173,99 @@ describe("nodeShape", () => {
 
 			const encodedChunk = checkNodeEncode(shape, context, tree);
 			assert.deepEqual(encodedChunk, ["value", "v", [6]]);
+		});
+
+		describe("Node with identifier", () => {
+			function makeIdentifierShape(): NodeShapeBasedEncoder {
+				return new NodeShapeBasedEncoder(brand("id"), SpecialField.Identifier, [], undefined);
+			}
+
+			function makeContext(idCompressor: IIdCompressor, isSummary: boolean): EncoderContext {
+				return new EncoderContext(
+					() => fail(),
+					() => fail(),
+					fieldKinds,
+					idCompressor,
+					undefined /* incrementalEncoder */,
+					fieldBatchVersion,
+					isSummary,
+				);
+			}
+
+			it("emits the negative op-space id for a non-finalized id when isSummary=false", () => {
+				const idCompressor = createIdCompressor(createSessionId());
+				const sessionSpaceId = idCompressor.generateCompressedId();
+				const stableUuid = idCompressor.decompress(sessionSpaceId);
+				assert(
+					idCompressor.normalizeToOpSpace(sessionSpaceId) < 0,
+					"freshly generated id should be in local (negative) op-space",
+				);
+				const buffer = checkNodeEncode(
+					makeIdentifierShape(),
+					makeContext(idCompressor, false),
+					{ type: brand("id"), value: stableUuid },
+				);
+				assert.equal(buffer.length, 1);
+				assert.equal(typeof buffer[0], "number");
+				assert((buffer[0] as number) < 0);
+			});
+
+			// Unlike ops, summaries do not inherently have the context of who originated a negative ID.
+			// Attaching a SharedTree to an already attached container can encode a forest containing identifiers
+			// that are not yet finalized. In such cases, the encoder should either emit the stable UUID or otherwise
+			// guarantee the correct originator ID is part of the summary. This test enforces the former behavior;
+			// if the latter is implemented it would be reasonable to rework it.
+			it("emits the stable UUID for a non-finalized id when isSummary=true", () => {
+				const idCompressor = createIdCompressor(createSessionId());
+				const sessionSpaceId = idCompressor.generateCompressedId();
+				const stableUuid = idCompressor.decompress(sessionSpaceId);
+				assert(
+					idCompressor.normalizeToOpSpace(sessionSpaceId) < 0,
+					"freshly generated id should be in local (negative) op-space",
+				);
+				const buffer = checkNodeEncode(
+					makeIdentifierShape(),
+					makeContext(idCompressor, true),
+					{ type: brand("id"), value: stableUuid },
+				);
+				assert.deepEqual(buffer, [stableUuid]);
+			});
+
+			it("still emits the op-space integer for a finalized id when isSummary=true", () => {
+				const idCompressor = createIdCompressor(createSessionId());
+				const sessionSpaceId = idCompressor.generateCompressedId();
+				const stableUuid = idCompressor.decompress(sessionSpaceId);
+				// Round-trip the creation range so the id has a cluster allocated.
+				const core = toIdCompressorWithCore(idCompressor);
+				core.finalizeCreationRange(core.takeNextCreationRange());
+				const opSpaceId = idCompressor.normalizeToOpSpace(sessionSpaceId);
+				assert(
+					opSpaceId >= 0,
+					"after finalization the id should be in finalized (non-negative) op-space",
+				);
+				const buffer = checkNodeEncode(
+					makeIdentifierShape(),
+					makeContext(idCompressor, true),
+					{ type: brand("id"), value: stableUuid },
+				);
+				assert.deepEqual(buffer, [opSpaceId]);
+			});
+
+			it("emits the original string for an unknown stable UUID regardless of isSummary", () => {
+				// A stable UUID minted in a different id-compressor — `idCompressor`
+				// cannot recompress it, so the encoder falls through to the
+				// pass-through path that emits the original string.
+				const otherCompressor = createIdCompressor(createSessionId());
+				const unknownUuid = otherCompressor.decompress(otherCompressor.generateCompressedId());
+				for (const isSummary of [false, true]) {
+					const buffer = checkNodeEncode(
+						makeIdentifierShape(),
+						makeContext(testIdCompressor, isSummary),
+						{ type: brand("id"), value: unknownUuid },
+					);
+					assert.deepEqual(buffer, [unknownUuid], `isSummary=${isSummary}`);
+				}
+			});
 		});
 	});
 });
