@@ -8,6 +8,7 @@ import type { OpSpaceCompressedId, SessionSpaceCompressedId } from "./types/inde
 /**
  * A compressed ID that is stable and unique within the scope of network of compressors (i.e. a document).
  * It can only be used/decompressed in the context of the originating document.
+ * @internal
  */
 export type FinalCompressedId = number & {
 	readonly FinalCompressedId: "5d83d1e2-98b7-4e4e-a889-54c855cfa73d";
