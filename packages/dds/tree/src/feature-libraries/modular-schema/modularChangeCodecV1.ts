@@ -52,7 +52,6 @@ import {
 import { TreeCompressionStrategy } from "../treeCompressionUtils.js";
 
 import type { FieldChangeEncodingContext, FieldChangeHandler } from "./fieldChangeHandler.js";
-import type { FlexFieldKind } from "./fieldKind.js";
 import type {
 	FieldKindConfiguration,
 	FieldKindConfigurationEntry,
@@ -65,7 +64,6 @@ import {
 	newFieldIdKeyBTree,
 	newRootTable,
 	normalizeFieldId,
-	validateChangeset,
 	type FieldIdKey,
 } from "./modularChangeFamily.js";
 import { EncodedModularChangesetV1 } from "./modularChangeFormatV1.js";
