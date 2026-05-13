@@ -39,9 +39,13 @@ function findCanonicalRemotes(): { name: string; url: string }[] {
 	// Read every `remote.<name>.url` config entry. `--all` returns every match
 	// (otherwise `--regexp` returns only the first); `--show-names` includes
 	// the key so the remote name can be extracted.
-	// The `git config get` subcommand requires git ≥ 2.46; fail fast with a
-	// targeted message if it isn't available rather than letting an unhandled
-	// child-process exception leak out.
+	// Exit codes from `git config get --regexp`:
+	//   0   = at least one match
+	//   1   = no matches (e.g. clone has no canonical remote configured)
+	//   any other = the subcommand itself failed — most likely git < 2.46
+	//               (`get` is not a recognized subcommand on older versions).
+	// Treat status 1 as a clean "no matches" and reserve the targeted "upgrade
+	// git" message for the actually-broken case.
 	let output: string;
 	try {
 		output = execFileSync(
@@ -50,6 +54,9 @@ function findCanonicalRemotes(): { name: string; url: string }[] {
 			{ stdio: ["ignore", "pipe", "pipe"] },
 		).toString();
 	} catch (error) {
+		if ((error as { status?: number }).status === 1) {
+			return [];
+		}
 		const detail = error instanceof Error ? error.message : String(error);
 		throw new Error(
 			`Failed to read remote URLs via \`git config get --regexp\` (introduced in git 2.46). ` +
