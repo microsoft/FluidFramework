@@ -90,6 +90,7 @@
   },
   "overrides": {
     "lodash": "^4.18.1",
-    "node-gyp": "^10"
+    "node-gyp": "^10",
+    "zookeeper": "^7.2.0"
   }
 }
