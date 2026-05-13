@@ -1597,6 +1597,48 @@ describe("Runtime", () => {
 				);
 			});
 		});
+
+		describe("Submit during stashed-op apply", () => {
+			let containerRuntime: ContainerRuntime;
+
+			beforeEach(async () => {
+				containerRuntime = await ContainerRuntime.loadRuntime2({
+					context: getMockContext() as IContainerContext,
+					registry: new FluidDataStoreRegistry([]),
+					existing: false,
+					requestHandler: undefined,
+					runtimeOptions: {},
+					provideEntryPoint: mockProvideEntryPoint,
+				});
+			});
+
+			function setApplyingStashedOps(isApplying: boolean): void {
+				const psm = (containerRuntime as unknown as { pendingStateManager: PendingStateManager })
+					.pendingStateManager;
+				Object.defineProperty(psm, "isApplyingStashedOps", {
+					configurable: true,
+					get: () => isApplying,
+				});
+			}
+
+			it("throws a fatal usage error from submitMessage", () => {
+				setApplyingStashedOps(true);
+				assert.throws(
+					() => submitDataStoreOp(containerRuntime, "1", testDataStoreMessage),
+					(error: IErrorBase) =>
+						error.errorType === ContainerErrorTypes.usageError &&
+						error.message === "Local op submitted during stashed-op apply window",
+				);
+			});
+
+			it("does not throw when the apply window is closed", () => {
+				setApplyingStashedOps(false);
+				assert.doesNotThrow(() =>
+					submitDataStoreOp(containerRuntime, "1", testDataStoreMessage),
+				);
+			});
+		});
+
 		describe("Supports mixin classes", () => {
 			it("new loadRuntime2 method works", async () => {
 				const makeMixin = <T>(

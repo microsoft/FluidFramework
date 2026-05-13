@@ -834,6 +834,106 @@ describe("Pending State Manager", () => {
 			assert.strictEqual(applyStashedOps.length, 0);
 			assert.strictEqual(pendingStateManager.pendingMessagesCount, 1);
 		});
+
+		describe("apply lifecycle", () => {
+			const stashedMessage = (refSeq: number, csn: number): IPendingMessage => ({
+				type: "message",
+				content: '{"type":"component"}',
+				referenceSequenceNumber: refSeq,
+				localOpMetadata: undefined,
+				opMetadata: undefined,
+				batchInfo: { clientId: "CLIENT_ID", batchStartCsn: csn, length: 1, staged: false },
+				runtimeOp: undefined,
+			});
+
+			const stateHandler = (): IRuntimeStateHandler => ({
+				applyStashedOp: async () => undefined,
+				clientId: () => "clientId",
+				connected: () => true,
+				reSubmitBatch: () => {},
+				isActiveConnection: () => false,
+				isAttached: () => true,
+			});
+
+			it("eagerly enters apply window in constructor when stashed state present", () => {
+				let beforeCount = 0;
+				let afterCount = 0;
+				const psm = new PendingStateManager(
+					stateHandler(),
+					{ pendingStates: [stashedMessage(10, 1)] },
+					logger,
+					{
+						onBeforeFirstStashedOpApply: () => beforeCount++,
+						onAfterStashedOpsApplied: () => afterCount++,
+					},
+				);
+				assert.strictEqual(psm.isApplyingStashedOps, true);
+				assert.strictEqual(beforeCount, 1);
+				assert.strictEqual(afterCount, 0);
+			});
+
+			it("does not enter apply window when no stashed state", () => {
+				let beforeCount = 0;
+				let afterCount = 0;
+				const psm = new PendingStateManager(stateHandler(), undefined, logger, {
+					onBeforeFirstStashedOpApply: () => beforeCount++,
+					onAfterStashedOpsApplied: () => afterCount++,
+				});
+				assert.strictEqual(psm.isApplyingStashedOps, false);
+				assert.strictEqual(beforeCount, 0);
+				assert.strictEqual(afterCount, 0);
+			});
+
+			it("closes apply window when initialMessages drains", async () => {
+				let afterCount = 0;
+				const psm = new PendingStateManager(
+					stateHandler(),
+					{ pendingStates: [stashedMessage(10, 1), stashedMessage(11, 2)] },
+					logger,
+					{ onAfterStashedOpsApplied: () => afterCount++ },
+				);
+				assert.strictEqual(psm.isApplyingStashedOps, true);
+				await psm.applyStashedOpsAt();
+				assert.strictEqual(psm.isApplyingStashedOps, false);
+				assert.strictEqual(afterCount, 1);
+			});
+
+			it("stays in apply window across partial drains", async () => {
+				let afterCount = 0;
+				const psm = new PendingStateManager(
+					stateHandler(),
+					{ pendingStates: [stashedMessage(10, 1), stashedMessage(11, 2)] },
+					logger,
+					{ onAfterStashedOpsApplied: () => afterCount++ },
+				) as unknown as PendingStateManager_WithPrivates;
+
+				await (psm as unknown as PendingStateManager).applyStashedOpsAt(10);
+				assert.strictEqual(psm.isApplyingStashedOps, true);
+				assert.strictEqual(afterCount, 0);
+				assert.strictEqual(psm.initialMessages.length, 1);
+
+				await (psm as unknown as PendingStateManager).applyStashedOpsAt(11);
+				assert.strictEqual(psm.isApplyingStashedOps, false);
+				assert.strictEqual(afterCount, 1);
+				assert.strictEqual(psm.initialMessages.length, 0);
+			});
+
+			it("close hook fires exactly once even with repeated applyStashedOpsAt calls", async () => {
+				let afterCount = 0;
+				const psm = new PendingStateManager(
+					stateHandler(),
+					{ pendingStates: [stashedMessage(10, 1)] },
+					logger,
+					{ onAfterStashedOpsApplied: () => afterCount++ },
+				);
+				await psm.applyStashedOpsAt();
+				await psm.applyStashedOpsAt();
+				await psm.applyStashedOpsAt(100);
+				assert.strictEqual(afterCount, 1);
+				assert.strictEqual(psm.isApplyingStashedOps, false);
+			});
+
+		});
 	});
 
 	describe("Pending messages state", () => {
@@ -930,18 +1030,24 @@ describe("Pending State Manager", () => {
 
 		it("has both pending messages and initial messages", () => {
 			const pendingStateManager = createPendingStateManager(forInitialMessages);
-			// let each message be its own batch
+			// Flushing while initialMessages is non-empty is a usage error (apply
+			// window is open), so push directly into the private pendingMessages
+			// queue to set up the dual-populated state under test.
 			for (const message of forFlushedMessages) {
-				pendingStateManager.onFlushBatch(
-					[
-						{
-							runtimeOp: message.runtimeOp,
-							referenceSequenceNumber: message.referenceSequenceNumber,
-						},
-					],
-					0,
-					false /* staged */,
-				);
+				pendingStateManager.pendingMessages.push({
+					type: "message",
+					content: '{"type":"component"}',
+					referenceSequenceNumber: message.referenceSequenceNumber,
+					localOpMetadata: undefined,
+					opMetadata: undefined,
+					batchInfo: {
+						clientId: "CLIENT_ID",
+						batchStartCsn: 0,
+						length: 1,
+						staged: false,
+					},
+					runtimeOp: message.runtimeOp,
+				});
 			}
 			assert.strictEqual(
 				pendingStateManager.hasPendingMessages(),

@@ -1360,7 +1360,9 @@ export class ContainerRuntime
 		return this._getAttachState();
 	}
 
-	public readonly isReadOnly = (): boolean => this.deltaManager.readOnlyInfo.readonly === true;
+	public readonly isReadOnly = (): boolean =>
+		this.deltaManager.readOnlyInfo.readonly === true ||
+		this.pendingStateManager.isApplyingStashedOps;
 
 	/**
 	 * Current session schema - defines what options are on & off.
@@ -1597,6 +1599,8 @@ export class ContainerRuntime
 
 	private readonly extensions = new Map<ContainerExtensionId, ExtensionEntry>();
 
+	public readonly baseLogger: ITelemetryBaseLogger;
+
 	/***/
 	protected constructor(
 		context: IContainerContext,
@@ -1610,7 +1614,7 @@ export class ContainerRuntime
 		private readonly runtimeOptions: Readonly<ContainerRuntimeOptionsInternal>,
 		private readonly containerScope: FluidObject,
 		// Create a custom ITelemetryBaseLogger to output telemetry events.
-		public readonly baseLogger: ITelemetryBaseLogger,
+		logger: ITelemetryBaseLogger,
 		existing: boolean,
 
 		blobManagerLoadInfo: IBlobManagerLoadInfo,
@@ -1663,14 +1667,19 @@ export class ContainerRuntime
 
 		this.isSnapshotInstanceOfISnapshot = snapshotWithContents !== undefined;
 
+		this.baseLogger = createChildLogger({
+			logger,
+			properties: {
+				error: {
+					inStagingMode: () => this.inStagingMode,
+					isApplyingStashedOps: () => this.pendingStateManager?.isApplyingStashedOps,
+					isReadOnly: () => this.isReadOnly(),
+				},
+			},
+		});
 		this.mc = createChildMonitoringContext({
 			logger: this.baseLogger,
 			namespace: "ContainerRuntime",
-			properties: {
-				all: {
-					inStagingMode: this.inStagingMode,
-				},
-			},
 		});
 
 		// Validate that the Loader is compatible with this Runtime.
@@ -1840,6 +1849,26 @@ export class ContainerRuntime
 			},
 			pendingRuntimeState?.pending,
 			this.baseLogger,
+			{
+				// PSM has flipped `isApplyingStashedOps` to true; `isReadOnly()`
+				// now returns true. Fan out the new readonly state to data stores
+				// so DDSes see it during stashed-op replay and skip submits that
+				// would race the replay (e.g. realize-time writes that should not
+				// produce new ops). Fires synchronously from the PSM constructor
+				// — `notifyReadOnlyState` tolerates `channelCollection` being
+				// undefined since it isn't constructed until later in this
+				// constructor; data stores will pick up the readonly state from
+				// `isReadOnly()` when they're first asked.
+				onBeforeFirstStashedOpApply: () => {
+					this.notifyReadOnlyState();
+				},
+				// PSM has cleared the flag; `isReadOnly()` now reflects the
+				// network-readonly state again. Fan out so DDSes know they can
+				// submit once more.
+				onAfterStashedOpsApplied: () => {
+					this.notifyReadOnlyState();
+				},
+			},
 		);
 
 		let outerDeltaManager: IDeltaManagerFull = this.innerDeltaManager;
@@ -2912,8 +2941,13 @@ export class ContainerRuntime
 		}
 	}
 
-	private readonly notifyReadOnlyState = (readonly: boolean): void =>
-		this.channelCollection.notifyReadOnlyState(readonly);
+	private readonly notifyReadOnlyState = (): void =>
+		// `channelCollection` may be undefined when invoked from the PSM's
+		// open hook, which fires from `new PendingStateManager(...)` earlier
+		// in this constructor than `channelCollection` is assigned. That's
+		// fine — DDSes created after this point will read the runtime's
+		// `isReadOnly()` aggregation and start out in the correct state.
+		this.channelCollection?.notifyReadOnlyState(this.isReadOnly());
 
 	public setConnectionState(canSendOps: boolean, clientId?: string): void {
 		this.setConnectionStateToConnectedOrDisconnected(canSendOps, clientId);
@@ -4813,6 +4847,22 @@ export class ContainerRuntime
 		metadata?: { localId: string; blobId?: string },
 	): void {
 		this.verifyNotClosed();
+
+		// Nothing should be submitting while we're replaying stashed ops.
+		// The runtime is readonly during the apply window (see
+		// `PendingStateManager._applyLifecycle`), so a compliant DDS skips
+		// submits. If we land here anyway, a DDS bypassed the readonly gate
+		// (e.g. a realize-time write that doesn't consult `readOnly`) and
+		// produced a local op that has no counterpart in the saved-op
+		// replay — we cannot reconcile the mismatch, so fail fatally. We
+		// check here (rather than at flush) because outbox flushes are
+		// deferred and the apply window could close before the offending op
+		// reaches the pending queue.
+		if (this.pendingStateManager.isApplyingStashedOps) {
+			throw new UsageError("Local op submitted during stashed-op apply window", {
+				messageType: containerRuntimeMessage.type,
+			});
+		}
 
 		// There should be no ops in detached container state!
 		assert(
