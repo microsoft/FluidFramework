@@ -397,12 +397,12 @@ describe("listPackageJsonPaths", () => {
 });
 
 describe("listPackageJsonPaths: staged deletion (local)", () => {
-	const git = simpleGit(process.cwd());
-	// A package.json that exists in the test repo and can be safely removed/restored in a test.
-	const targetPkgAbs = path.join(testRepoRoot, "packages/group3/pkg-g/package.json");
-	// `git ls-files`/`ls-tree` invoked from a subdirectory scope paths to that subdirectory, so
-	// compute the expected path relative to the process cwd (where simpleGit was rooted).
-	const targetPkgRel = path.relative(process.cwd(), targetPkgAbs).split(path.sep).join("/");
+	// Root simpleGit at testRepoRoot so git's output paths come back testRepo-relative; the
+	// underlying repo is still the main FF repo (testRepo is a directory inside it, not its
+	// own git repo), so `ls-files` / `ls-tree HEAD` work as usual.
+	const git = simpleGit(testRepoRoot);
+	const targetPkgRel = "packages/group3/pkg-g/package.json";
+	const targetPkgAbs = path.join(testRepoRoot, targetPkgRel);
 	const targetDir = path.posix.dirname(targetPkgRel);
 
 	beforeEach(async () => {
