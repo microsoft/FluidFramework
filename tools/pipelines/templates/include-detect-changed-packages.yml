@@ -1,0 +1,37 @@
+# Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+# Licensed under the MIT License.
+
+# Pipeline wrapper around `flub check changedPackages`.
+#
+# This template intentionally has no checkout or build-tools installation steps.
+# Callers own those prerequisites so this reusable template has no hidden side
+# effects:
+# - the repository must already be checked out at
+#   `$(Pipeline.Workspace)/${{ parameters.buildDirectory }}`;
+# - `flub` must already be available on PATH, usually via
+#   include-install-build-tools.yml;
+# - callers choose checkout depth/clean behavior. A shallow checkout is OK; the
+#   command deepens on demand when the merge-base is outside the current depth.
+#
+# Keep the task name `setChangedPackages`: downstream jobs read its ADO output
+# variables (`shouldRunTests` and `scopedPnpmFilter`) by that name.
+
+parameters:
+- name: buildDirectory
+  type: string
+
+- name: targetBranchName
+  type: string
+
+steps:
+  - task: Bash@3
+    name: setChangedPackages
+    displayName: Detect changed packages
+    env:
+      TARGET_BRANCH: ${{ parameters.targetBranchName }}
+    inputs:
+      targetType: inline
+      workingDirectory: '$(Pipeline.Workspace)/${{ parameters.buildDirectory }}'
+      script: |
+        set -eu -o pipefail
+        flub check changedPackages --targetBranch "${TARGET_BRANCH}"

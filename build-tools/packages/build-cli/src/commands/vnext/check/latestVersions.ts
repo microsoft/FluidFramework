@@ -6,6 +6,7 @@
 import { Flags } from "@oclif/core";
 
 import { releaseGroupNameFlag, semverFlag } from "../../../flags.js";
+import { formatSetVariable } from "../../../library/azureDevops/pipelineCommands.js";
 import { BaseCommandWithBuildProject } from "../../../library/commands/base.js";
 import { getVersionsFromTags } from "../../../library/git.js";
 import { isLatestInMajor } from "../../../library/latestVersions.js";
@@ -64,9 +65,9 @@ export default class LatestVersionsCommand extends BaseCommandWithBuildProject<
 			this.log(
 				`Version ${versionInput.version} is the latest version for major version ${result.majorVersion}`,
 			);
-			this.log(`##vso[task.setvariable variable=shouldDeploy;isoutput=true]true`);
+			this.log(formatSetVariable("shouldDeploy", "true", { isOutput: true }));
 			this.log(
-				`##vso[task.setvariable variable=majorVersion;isoutput=true]${result.majorVersion}`,
+				formatSetVariable("majorVersion", String(result.majorVersion), { isOutput: true }),
 			);
 			return;
 		}
@@ -75,9 +76,9 @@ export default class LatestVersionsCommand extends BaseCommandWithBuildProject<
 			this.log(
 				`##[warning]skipping deployment stage. input version ${versionInput.version} does not match the latest version ${result.latestVersion}`,
 			);
-			this.log(`##vso[task.setvariable variable=shouldDeploy;isoutput=true]false`);
+			this.log(formatSetVariable("shouldDeploy", "false", { isOutput: true }));
 			this.log(
-				`##vso[task.setvariable variable=majorVersion;isoutput=true]${result.majorVersion}`,
+				formatSetVariable("majorVersion", String(result.majorVersion), { isOutput: true }),
 			);
 			return;
 		}
@@ -85,9 +86,9 @@ export default class LatestVersionsCommand extends BaseCommandWithBuildProject<
 		this.log(
 			`##[warning]No major version found corresponding to input version ${versionInput.version}`,
 		);
-		this.log(`##vso[task.setvariable variable=shouldDeploy;isoutput=true]false`);
+		this.log(formatSetVariable("shouldDeploy", "false", { isOutput: true }));
 		this.log(
-			`##vso[task.setvariable variable=majorVersion;isoutput=true]${result.majorVersion}`,
+			formatSetVariable("majorVersion", String(result.majorVersion), { isOutput: true }),
 		);
 	}
 }

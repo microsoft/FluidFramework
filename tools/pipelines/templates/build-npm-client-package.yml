@@ -199,6 +199,40 @@ extends:
         displayName: Build Stage
         dependsOn: [] # this stage doesn't depend on preceding stage
         jobs:
+          # Detect packages changed by this PR; publishes output variables that
+          # scope downstream test jobs. Activated only for PR builds whose
+          # source branch name contains 'test/filtered-ci/' — a rollout opt-in
+          # to be broadened once the feature has soaked. See
+          # include-detect-changed-packages.yml for the full semantics.
+          - job: detect_changes
+            displayName: Detect changed packages
+            condition: >-
+              and(
+                eq(variables['Build.Reason'], 'PullRequest'),
+                contains(variables['System.PullRequest.SourceBranch'], 'test/filtered-ci/')
+              )
+            variables:
+              - name: targetBranchName
+                value: $(System.PullRequest.TargetBranch)
+            steps:
+              - checkout: self
+                path: $(FluidFrameworkDirectory)
+                clean: true
+                # Shallow clone; `flub check changedPackages` deepens on demand
+                # if the merge-base falls outside this depth. Most PRs
+                # merge-base within a few hundred commits.
+                fetchDepth: 200
+
+              - template: /tools/pipelines/templates/include-install-build-tools.yml@self
+                parameters:
+                  buildDirectory: ${{ parameters.buildDirectory }}
+                  buildToolsVersionToInstall: repo
+
+              - template: /tools/pipelines/templates/include-detect-changed-packages.yml@self
+                parameters:
+                  buildDirectory: ${{ parameters.buildDirectory }}
+                  targetBranchName: $(targetBranchName)
+
           # Job - Build
           - job: build
             displayName: Build
@@ -623,7 +657,13 @@ extends:
 
           - job: Coverage_tests
             displayName: "Coverage tests"
-            dependsOn: build
+            dependsOn:
+              - build
+              - detect_changes
+            # Skip when detect_changes explicitly returned shouldRunTests=false.
+            # Use `build.result` (not `succeeded()`) so a Skipped detect_changes
+            # on non-opt-in PR builds doesn't false-skip this job.
+            condition: and(in(dependencies.build.result, 'Succeeded', 'SucceededWithIssues'), ne(dependencies.detect_changes.outputs['setChangedPackages.shouldRunTests'], 'false'))
             variables:
               - ${{ if eq(variables['Build.Reason'], 'PullRequest') }}:
                 - name: targetBranchName
@@ -639,6 +679,9 @@ extends:
                 value: 'false'
               - name: COMMIT_SHA
                 value: $[ dependencies.build.outputs['setCommitSHA.COMMIT_SHA'] ]
+              # Empty when detect_changes was skipped — pnpm treats that as no filter.
+              - name: scopedPnpmFilter
+                value: $[ dependencies.detect_changes.outputs['setChangedPackages.scopedPnpmFilter'] ]
 
             steps:
               # Setup
@@ -691,6 +734,7 @@ extends:
                     taskTestStep: '${{ test.name }}'
                     buildDirectory: '${{ parameters.buildDirectory }}'
                     testCoverage: '${{ parameters.testCoverage }}'
+                    pnpmFilter: $(scopedPnpmFilter)
 
               - task: Npm@1
                 displayName: 'npm run test:copyresults'
@@ -788,7 +832,18 @@ extends:
           - ${{ each test in parameters.taskTest }}:
             - job: Test_${{ test.jobName }}
               displayName: "Run Task Test ${{ test.jobName }}"
-              dependsOn: build
+              dependsOn:
+                - build
+                - detect_changes
+              # Skip the job entirely when detect_changes explicitly concluded no
+              # packages were affected — saves agent allocation, checkout, and
+              # install on scoped PRs. Empty (detect_changes was skipped) still
+              # runs. See include-detect-changed-packages.yml for the invariants.
+              #
+              # We check `build.result` directly instead of using `succeeded()`
+              # because the latter treats a Skipped `detect_changes` dependency
+              # as non-success and false-skips this job on non-opt-in PR builds.
+              condition: and(in(dependencies.build.result, 'Succeeded', 'SucceededWithIssues'), ne(dependencies.detect_changes.outputs['setChangedPackages.shouldRunTests'], 'false'))
               variables:
                 - ${{ if eq(variables['Build.Reason'], 'PullRequest') }}:
                   - name: targetBranchName
@@ -804,6 +859,9 @@ extends:
                   value: 'false'
                 - name: COMMIT_SHA
                   value: $[ dependencies.build.outputs['setCommitSHA.COMMIT_SHA'] ]
+                # Empty when detect_changes was skipped — pnpm treats that as no filter.
+                - name: scopedPnpmFilter
+                  value: $[ dependencies.detect_changes.outputs['setChangedPackages.scopedPnpmFilter'] ]
               steps:
                 # Setup
                 - checkout: self
@@ -849,6 +907,7 @@ extends:
                     taskTestStep: '${{ test.name }}'
                     buildDirectory: '${{ parameters.buildDirectory }}'
                     testCoverage: 'false'
+                    pnpmFilter: $(scopedPnpmFilter)
 
                 - task: Npm@1
                   displayName: 'npm run test:copyresults'

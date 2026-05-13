@@ -4,6 +4,7 @@
 Check commands are used to verify repo state, apply policy, etc.
 
 * [`flub check buildVersion`](#flub-check-buildversion)
+* [`flub check changedPackages`](#flub-check-changedpackages)
 * [`flub check changeset`](#flub-check-changeset)
 * [`flub check latestVersions VERSION PACKAGE_OR_RELEASE_GROUP`](#flub-check-latestversions-version-package_or_release_group)
 * [`flub check layers`](#flub-check-layers)
@@ -65,6 +66,35 @@ DESCRIPTION
 ```
 
 _See code: [src/commands/check/buildVersion.ts](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/src/commands/check/buildVersion.ts)_
+
+## `flub check changedPackages`
+
+Computes Azure DevOps output variables used by pipelines to conditionally skip tests.
+
+```
+USAGE
+  $ flub check changedPackages [--json] [-v | --quiet] [--targetBranch <value>] [--searchPath <value>]
+
+FLAGS
+  --searchPath=<value>    Path used to locate the build project. Defaults to the current working directory.
+  --targetBranch=<value>  [env: TARGET_BRANCH] Target branch to compare against. Defaults to the TARGET_BRANCH
+                          environment variable.
+
+LOGGING FLAGS
+  -v, --verbose  Enable verbose logging.
+      --quiet    Disable all logging.
+
+GLOBAL FLAGS
+  --json  Format output as json.
+
+DESCRIPTION
+  Computes Azure DevOps output variables used by pipelines to conditionally skip tests.
+
+  Compares the current PR branch to the merge base with a target branch, then emits 'shouldRunTests' and
+  'scopedPnpmFilter' as Azure DevOps output variables. Unexpected errors conservatively fall back to a full test run.
+```
+
+_See code: [src/commands/check/changedPackages.ts](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/src/commands/check/changedPackages.ts)_
 
 ## `flub check changeset`
 

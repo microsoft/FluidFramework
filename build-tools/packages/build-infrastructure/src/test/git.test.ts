@@ -15,7 +15,13 @@ import { CleanOptions, simpleGit } from "simple-git";
 
 import { loadBuildProject } from "../buildProject.js";
 import { NotInGitRepository } from "../errors.js";
-import { findGitRootSync, getChangedSinceRef, getFiles, getRemote } from "../git.js";
+import {
+	findGitRootSync,
+	getChangedSinceRef,
+	getFiles,
+	getRemote,
+	isFileInPackageDir,
+} from "../git.js";
 import type { PackageJson } from "../types.js";
 
 import { packageRootPath, testRepoRoot } from "./init.js";
@@ -158,6 +164,38 @@ describe("getFiles", () => {
 				`${testRepoRoot}/second/pnpm-lock.yaml`,
 				`${testRepoRoot}/second/pnpm-workspace.yaml`,
 			].map((p) => path.relative(gitRoot, p)),
+		);
+	});
+});
+
+describe("isFileInPackageDir", () => {
+	const packageDirs = new Set(["packages/alive"]);
+
+	it("detects file inside known package dir", () => {
+		expect(isFileInPackageDir("packages/alive/src/x.ts", packageDirs)).to.equal(true);
+	});
+
+	it("walks up from deeply nested paths", () => {
+		expect(isFileInPackageDir("packages/alive/src/deep/nested/x.ts", packageDirs)).to.equal(
+			true,
+		);
+	});
+
+	it("returns false for root-only changes", () => {
+		expect(isFileInPackageDir("README.md", packageDirs)).to.equal(false);
+	});
+
+	it("returns false for unrelated sibling directory", () => {
+		expect(isFileInPackageDir("packages/other/src.ts", packageDirs)).to.equal(false);
+	});
+
+	it("returns false for empty input", () => {
+		expect(isFileInPackageDir("", packageDirs)).to.equal(false);
+	});
+
+	it("does not treat root pseudo-dir as a per-package hit", () => {
+		expect(isFileInPackageDir("some-root-file.md", new Set([".", "packages/alive"]))).to.equal(
+			false,
 		);
 	});
 });
