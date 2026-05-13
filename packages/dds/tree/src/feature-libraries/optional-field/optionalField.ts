@@ -76,12 +76,7 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 
 		if (change.valueReplace?.src !== undefined) {
 			const attachEntry = nodeManager.invertAttach(change.valueReplace.src, 1);
-			const detachIdForInverse = invertAttachId(
-				change.valueReplace.src,
-				revision,
-				isRollback,
-				undefined, // XXX: Check this
-			);
+			const detachIdForInverse = invertAttachId(change.valueReplace.src, revision, isRollback);
 
 			if (attachEntry.value !== undefined) {
 				inverted.childChange = attachEntry.value;
@@ -217,7 +212,7 @@ function compose(
 		nodeManager.composeAttachDetach(change1.valueReplace.src, detachId2, 1);
 	}
 
-	const composedDetach = composeNodeDetaches(change1, change2, nodeManager);
+	const composedDetach = composeNodeDetaches(change1, change2);
 	const composedReplace = composeReplaces(change1, change2);
 	const composedChildChange = getComposedChildChanges(
 		change1,
@@ -241,17 +236,16 @@ function compose(
 function composeNodeDetaches(
 	change1: OptionalChangeset,
 	change2: OptionalChangeset,
-	nodeManager: ComposeNodeManager,
 ): ChangeAtomId | undefined {
-	// XXX: If change1 detaches a node via a clear, and change2 renames that node (or detaches it after it is reattached by change1),
-	// Note that even if change2 detaches the node with a location-targeting detach (e.g. an optional field clear),
-	// the composition should still have a node-targeting detach.
-	// This is because change1 must attach the node in the location targeted by the detach,
-	// and rebasing does not affect attaches, although that could change if slice moves are implemented.
 	if (change1.nodeDetach !== undefined) {
 		return change1.nodeDetach;
 	}
 
+	// TODO: If change1 detaches a node via a clear, and change2 renames that node (or detaches it after it is reattached by change1),
+	// the composition should have a nodeDetach, as change2's detach will ensure that the node is detached
+	// Note this is true even if change2 detaches the node with a location-targeting detach (e.g. an optional field clear).
+	// This is because change1 must attach the node in the location targeted by the detach,
+	// and rebasing does not affect attaches, although that could change if slice moves are implemented.
 	return change1.valueReplace === undefined ? change2.nodeDetach : undefined;
 }
 
@@ -568,13 +562,8 @@ function invertAttachId(
 	attachId: ChangeAtomId,
 	revision: RevisionTag | undefined,
 	isRollback: boolean,
-	detachId: ChangeAtomId | undefined,
 ): ChangeAtomId {
-	if (!isRollback) {
-		return makeChangeAtomId(attachId.localId, revision);
-	}
-
-	return detachId ?? attachId;
+	return isRollback ? attachId : makeChangeAtomId(attachId.localId, revision);
 }
 
 interface Optional

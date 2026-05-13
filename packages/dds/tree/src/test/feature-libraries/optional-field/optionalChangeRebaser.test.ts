@@ -767,7 +767,7 @@ export function testRebaserAxioms(): void {
 					numberOfEditsToRebase: 2,
 					numberOfEditsToRebaseOver: stressMode === StressMode.Short ? 2 : 5,
 					numberOfEditsToVerifyAssociativity: stressMode === StressMode.Short ? 2 : 6,
-					groupSubSuites: false, // XXX
+					groupSubSuites: true,
 				},
 			);
 		});
