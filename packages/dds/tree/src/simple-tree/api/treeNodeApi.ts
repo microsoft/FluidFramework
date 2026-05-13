@@ -8,7 +8,7 @@ import { assert, oob, fail, unreachableCase } from "@fluidframework/core-utils/i
 import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
-import { EmptyKey, rootFieldKey, type DeltaMark } from "../../core/index.js";
+import { EmptyKey, rootFieldKey, type DeltaMark, type FieldKey } from "../../core/index.js";
 import { type TreeStatus, isTreeValue, FieldKinds } from "../../feature-libraries/index.js";
 import { extractFromOpaque } from "../../util/index.js";
 import {
@@ -55,7 +55,9 @@ export interface ArrayNodeRetainOp {
  * {@link TreeChangeEventsAlpha.treeChanged} on array nodes.
  *
  * Extends {@link ArrayNodeRetainOp} with a {@link ArrayNodeTreeChangedRetainOp.subtreeChanged}
- * flag that indicates whether any descendant of the retained element changed.
+ * flag that indicates whether any descendant of the retained element changed, and an optional
+ * {@link ArrayNodeTreeChangedRetainOp.changedProperties} set naming the element's own directly
+ * changed fields.
  * @sealed @alpha
  */
 export interface ArrayNodeTreeChangedRetainOp extends ArrayNodeRetainOp {
@@ -66,6 +68,20 @@ export interface ArrayNodeTreeChangedRetainOp extends ArrayNodeRetainOp {
 	 * Subscribe to `nodeChanged` or `treeChanged` on the element node itself for details.
 	 */
 	readonly subtreeChanged: boolean;
+
+	/**
+	 * The stored field keys of the element's own directly-changed fields, when the element
+	 * itself changed shallowly (equivalent to the element emitting `nodeChanged`).
+	 * @remarks
+	 * Defined only when the element's own fields changed directly (a field value was replaced,
+	 * or for map/array fields, entries were structurally modified). `undefined` when only deeper
+	 * descendants changed or when the element is unchanged.
+	 *
+	 * These are stored field keys, which match property keys for schemas without a custom
+	 * {@link FieldProps.key} mapping. For schemas with custom key mappings, use the
+	 * element node's own `nodeChanged` event to get property keys.
+	 */
+	readonly changedProperties?: ReadonlySet<string>;
 }
 
 /**
@@ -318,7 +334,45 @@ export const treeNodeApi: TreeNodeApi = {
 						(listener as (data: { readonly delta: typeof delta }) => void)({ delta });
 					});
 				}
-				return kernel.events.on("subtreeChangedAfterBatch", () => listener({}));
+				// For non-array nodes (object, map, record): provide changedProperties for shallow
+				// changes and undefined for deep-only changes.
+				// childrenChangedAfterBatch is always buffered before subtreeChangedAfterBatch for
+				// the same node in the same batch (anchorSet invariant: children events are pushed
+				// during field visits, subtree events during exitNode, which comes after). We capture
+				// the shallow changedFields here and carry it into the subtree event.
+				// Stable (non-alpha) listeners typed as () => void will silently ignore the payload.
+				const nodeSchema = kernel.schema;
+				let pendingChangedFields: ReadonlySet<FieldKey> | undefined;
+				const unsubChildren = kernel.events.on(
+					"childrenChangedAfterBatch",
+					({ changedFields }) => {
+						pendingChangedFields = changedFields;
+					},
+				);
+				const unsubSubtree = kernel.events.on("subtreeChangedAfterBatch", () => {
+					const fields = pendingChangedFields;
+					pendingChangedFields = undefined;
+					let changedProperties: ReadonlySet<string> | undefined;
+					if (fields !== undefined) {
+						changedProperties = isObjectNodeSchema(nodeSchema) ? new Set(
+								Array.from(
+									fields,
+									(field) =>
+										nodeSchema.storedKeyToPropertyKey.get(field) ??
+										fail(
+											"Could not find stored key in schema for treeChanged changedProperties",
+										),
+								),
+							) : fields;
+					}
+					(listener as (data: { changedProperties: typeof changedProperties }) => void)({
+						changedProperties,
+					});
+				});
+				return () => {
+					unsubChildren();
+					unsubSubtree();
+				};
 			}
 			default: {
 				throw new UsageError(`No event named ${JSON.stringify(eventName)}.`);
@@ -388,8 +442,9 @@ export function deltaMarksToArrayOps(marks: readonly DeltaMark[]): ArrayNodeDelt
  * {@link NodeChangedDataTreeDelta.delta} (delivered to {@link TreeChangeEventsAlpha.treeChanged}).
  *
  * Same conversion rules as {@link deltaMarksToArrayOps}, but retain ops additionally carry a
- * {@link ArrayNodeTreeChangedRetainOp.subtreeChanged} flag derived from whether the mark has
- * a `fields` property (indicating a descendant changed).
+ * {@link ArrayNodeTreeChangedRetainOp.subtreeChanged} flag and an optional
+ * {@link ArrayNodeTreeChangedRetainOp.changedProperties} set for elements whose own fields
+ * changed directly.
  *
  * @param marks - The low-level delta marks for the array's sequence field.
  *
@@ -410,14 +465,46 @@ export function deltaMarksToArrayOpsForTreeChanged(
 		} else if (mark.detach === undefined) {
 			// Retain: elements were not added or removed (but may have deep changes).
 			// When `fields` is set, `count` is guaranteed to be 1 (DeltaMark invariant).
-			ops.push({
-				type: "retain",
-				count: mark.count,
-				subtreeChanged: mark.fields !== undefined,
-			});
+			if (mark.fields === undefined) {
+				ops.push({ type: "retain", count: mark.count, subtreeChanged: false });
+			} else {
+				const changedProperties = computeDirectlyChangedProperties(mark.fields);
+				if (changedProperties === undefined) {
+					ops.push({ type: "retain", count: mark.count, subtreeChanged: true });
+				} else {
+					ops.push({
+						type: "retain",
+						count: mark.count,
+						subtreeChanged: true,
+						changedProperties,
+					});
+				}
+			}
 		}
 	}
 	return ops;
+}
+
+/**
+ * Returns the stored field keys of fields that had a direct (shallow) change —
+ * i.e., fields whose marks include at least one attach or detach operation.
+ * Fields with only nested (deep) changes are excluded.
+ * Returns `undefined` when no field had a direct change.
+ *
+ * @privateRemarks
+ * This mirrors the semantics of `changedProperties` in `nodeChanged`: only fields
+ * whose immediate value was structurally modified are reported.
+ */
+function computeDirectlyChangedProperties(
+	fields: NonNullable<DeltaMark["fields"]>,
+): ReadonlySet<string> | undefined {
+	const changed = new Set<string>();
+	for (const [key, fieldChanges] of fields) {
+		if (fieldChanges.marks.some((m) => m.attach !== undefined || m.detach !== undefined)) {
+			changed.add(key as string);
+		}
+	}
+	return changed.size > 0 ? changed : undefined;
 }
 
 /**

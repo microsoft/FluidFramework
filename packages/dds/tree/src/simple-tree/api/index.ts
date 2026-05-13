@@ -165,6 +165,7 @@ export {
 	type NodeChangedDataDelta,
 	type NodeChangedDataProperties,
 	type NodeChangedDataTreeDelta,
+	type NodeChangedDataTreeProperties,
 	type TreeChangeEventsAlpha,
 } from "./treeAlpha.js";
 export { createTreeIndex, type TreeIndexKey } from "./simpleTreeIndex.js";

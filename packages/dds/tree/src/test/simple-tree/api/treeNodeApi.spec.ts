@@ -2933,7 +2933,14 @@ describe("treeNodeApi", () => {
 						"nodeChanged should not fire for deep change",
 					);
 					assert.deepEqual(treeChangedDeltas, [
-						[{ type: "retain", count: 1, subtreeChanged: true }],
+						[
+							{
+								type: "retain",
+								count: 1,
+								subtreeChanged: true,
+								changedProperties: new Set(["v"]),
+							},
+						],
 					]);
 				});
 
@@ -3001,11 +3008,16 @@ describe("treeNodeApi", () => {
 							{ type: "remove", count: 1 },
 						],
 					]);
-					// treeChanged retain ops carry subtreeChanged reflecting deep changes.
+					// treeChanged retain ops carry subtreeChanged and changedProperties.
 					assert.deepEqual(treeChangedDeltas, [
 						[
 							{ type: "retain", count: 1, subtreeChanged: false },
-							{ type: "retain", count: 1, subtreeChanged: true },
+							{
+								type: "retain",
+								count: 1,
+								subtreeChanged: true,
+								changedProperties: new Set(["v"]),
+							},
 							{ type: "remove", count: 1 },
 						],
 					]);
@@ -3028,9 +3040,19 @@ describe("treeNodeApi", () => {
 
 					assert.deepEqual(treeChangedDeltas, [
 						[
-							{ type: "retain", count: 1, subtreeChanged: true },
+							{
+								type: "retain",
+								count: 1,
+								subtreeChanged: true,
+								changedProperties: new Set(["v"]),
+							},
 							{ type: "retain", count: 1, subtreeChanged: false },
-							{ type: "retain", count: 1, subtreeChanged: true },
+							{
+								type: "retain",
+								count: 1,
+								subtreeChanged: true,
+								changedProperties: new Set(["v"]),
+							},
 						],
 					]);
 				});
@@ -3153,27 +3175,73 @@ describe("treeNodeApi", () => {
 			});
 		});
 
-		it(`TreeAlpha.on 'treeChanged' on a non-array node falls through to base subtree behavior`, () => {
-			// Verifies that the alpha treeChanged override only applies to array nodes.
-			// For object/map/record nodes, TreeAlpha.on should behave identically to Tree.on.
+		describe(`TreeAlpha.on 'treeChanged' on non-array nodes`, () => {
 			const sfObj = new SchemaFactory("non-array-treeChanged");
 			class Inner extends sfObj.object("Inner", { v: sfObj.number }) {}
 			class Outer extends sfObj.object("Outer", { inner: Inner }) {}
 
-			const view = getView(new TreeViewConfiguration({ schema: Outer }));
-			view.initialize({ inner: { v: 1 } });
-			const root = view.root;
+			it(`fires once per batch and stable listeners still work`, () => {
+				const view = getView(new TreeViewConfiguration({ schema: Outer }));
+				view.initialize({ inner: { v: 1 } });
+				const root = view.root;
 
-			let baseFired = 0;
-			let alphaFired = 0;
-			Tree.on(root, "treeChanged", () => baseFired++);
-			TreeAlpha.on(root, "treeChanged", () => alphaFired++);
+				let baseFired = 0;
+				let alphaFired = 0;
+				Tree.on(root, "treeChanged", () => baseFired++);
+				TreeAlpha.on(root, "treeChanged", () => alphaFired++);
 
-			root.inner.v = 42;
+				root.inner.v = 42;
 
-			// Both subscriptions should fire exactly once for the subtree change.
-			assert.equal(baseFired, 1);
-			assert.equal(alphaFired, 1);
+				assert.equal(baseFired, 1);
+				assert.equal(alphaFired, 1);
+			});
+
+			it(`provides changedProperties when a shallow change occurs on this node`, () => {
+				const view = getView(new TreeViewConfiguration({ schema: Outer }));
+				view.initialize({ inner: { v: 1 } });
+				const root = view.root;
+
+				const payloads: { changedProperties: ReadonlySet<string> | undefined }[] = [];
+				TreeAlpha.on(root, "treeChanged", (data) => payloads.push(data));
+
+				// Replace "inner" with a new object — shallow change to root's own field.
+				root.inner = new Inner({ v: 99 });
+
+				assert.equal(payloads.length, 1);
+				assert.deepEqual(payloads[0].changedProperties, new Set(["inner"]));
+			});
+
+			it(`provides changedProperties as undefined when only a descendant changed`, () => {
+				const view = getView(new TreeViewConfiguration({ schema: Outer }));
+				view.initialize({ inner: { v: 1 } });
+				const root = view.root;
+
+				const payloads: { changedProperties: ReadonlySet<string> | undefined }[] = [];
+				TreeAlpha.on(root, "treeChanged", (data) => payloads.push(data));
+
+				// Modify a deep property — no shallow change on root.
+				root.inner.v = 42;
+
+				assert.equal(payloads.length, 1);
+				assert.equal(payloads[0].changedProperties, undefined);
+			});
+
+			it(`fires for both shallow and deep changes with correct changedProperties`, () => {
+				const view = getView(new TreeViewConfiguration({ schema: Outer }));
+				view.initialize({ inner: { v: 1 } });
+				const root = view.root;
+
+				const payloads: { changedProperties: ReadonlySet<string> | undefined }[] = [];
+				TreeAlpha.on(root, "treeChanged", (data) => payloads.push(data));
+
+				// Shallow change (root's own field changes) and deep change in separate transactions.
+				root.inner = new Inner({ v: 10 });
+				root.inner.v = 20;
+
+				assert.equal(payloads.length, 2);
+				assert.deepEqual(payloads[0].changedProperties, new Set(["inner"]));
+				assert.equal(payloads[1].changedProperties, undefined);
+			});
 		});
 
 		it(`'nodeChanged' uses property keys, not stored keys, for the list of changed properties`, () => {

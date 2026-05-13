@@ -103,6 +103,7 @@ export {
 	type NodeChangedDataDelta,
 	type NodeChangedDataProperties,
 	type NodeChangedDataTreeDelta,
+	type NodeChangedDataTreeProperties,
 	borrowCursorFromTreeNodeOrValue,
 	exportConcise,
 	importConcise,

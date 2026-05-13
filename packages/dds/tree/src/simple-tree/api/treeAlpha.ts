@@ -55,11 +55,38 @@ export interface NodeChangedDataDelta {
 }
 
 /**
+ * Data carried by the {@link TreeChangeEventsAlpha.treeChanged} event for object, map, and record nodes.
+ * @remarks
+ * `changedProperties` mirrors the same field in {@link NodeChangedDataProperties} but is
+ * `undefined` when `treeChanged` fires due to a change in a descendant rather than a direct
+ * change to this node's own fields.
+ * @sealed @alpha
+ */
+export interface NodeChangedDataTreeProperties<TNode extends TreeNode = TreeNode> {
+	/**
+	 * The properties of this node that changed directly, or `undefined` if only descendants
+	 * changed without a shallow change to this node itself.
+	 * @remarks
+	 * When defined, the set contains the same property keys that would appear in
+	 * {@link NodeChangedDataProperties.changedProperties} from a `nodeChanged` event on this node.
+	 */
+	readonly changedProperties:
+		| ReadonlySet<
+				TNode extends WithType<string, NodeKind.Object, infer TInfo>
+					? string & keyof TInfo
+					: string
+		  >
+		| undefined;
+}
+
+/**
  * Data carried by the {@link TreeChangeEventsAlpha.treeChanged} event for array nodes.
  * @remarks
  * Extends {@link NodeChangedDataDelta}: the retain ops in the delta additionally carry a
  * {@link ArrayNodeTreeChangedRetainOp.subtreeChanged} flag indicating whether any descendant
- * of the retained element changed.
+ * of the retained element changed, and an optional
+ * {@link ArrayNodeTreeChangedRetainOp.changedProperties} set for elements whose own fields
+ * changed directly.
  * @sealed @alpha
  */
 export interface NodeChangedDataTreeDelta {
@@ -94,13 +121,13 @@ export type NodeChangedDataAlpha<TNode extends TreeNode = TreeNode> =
 
 /**
  * Extension of {@link TreeChangeEvents} with a richer `nodeChanged` event and a
- * delta-carrying `treeChanged` event for array nodes.
+ * payload-carrying `treeChanged` event.
  * @remarks
  * Provides a `nodeChanged` event that includes a delta payload for array nodes and
  * requires `changedProperties` for object, map, and record nodes.
- * Also provides a `treeChanged` event that, for array nodes, carries a {@link NodeChangedDataDelta}
- * payload describing both shallow and deep changes.
- * For non-array nodes, the `treeChanged` signature is the same as the base event.
+ * Also provides a `treeChanged` event that carries:
+ * - For array nodes: a {@link NodeChangedDataTreeDelta} payload describing both shallow and deep changes.
+ * - For object, map, and record nodes: a {@link NodeChangedDataTreeProperties} payload with the directly-changed property names when a shallow change occurred, or `undefined` for the `changedProperties` field when only deeper descendants changed.
  *
  * Use via `TreeAlpha.on`.
  * @sealed @alpha
@@ -131,7 +158,8 @@ export interface TreeChangeEventsAlpha<TNode extends TreeNode = TreeNode>
 	 * shallow changes (insert, remove, move) and deep changes (e.g. a property of an element
 	 * changed). The event data carries a {@link NodeChangedDataTreeDelta.delta | delta} payload
 	 * describing what changed. The delta uses {@link ArrayNodeTreeChangedRetainOp.subtreeChanged}
-	 * to flag elements that have deep changes, without describing the details of those deep changes.
+	 * to flag elements that have deep changes; when an element's own properties changed directly,
+	 * {@link ArrayNodeTreeChangedRetainOp.changedProperties} names the affected stored field keys.
 	 * To inspect deep changes, subscribe to `nodeChanged` or `treeChanged` on the individual
 	 * element nodes.
 	 *
@@ -143,11 +171,16 @@ export interface TreeChangeEventsAlpha<TNode extends TreeNode = TreeNode>
 	 * Ancestor non-array nodes still receive the base (no-payload) `treeChanged` via normal
 	 * subtree propagation.
 	 *
-	 * For non-array nodes: same as the base {@link TreeChangeEvents.treeChanged}.
+	 * For object, map, and record nodes: the event data carries a
+	 * {@link NodeChangedDataTreeProperties.changedProperties | changedProperties} field.
+	 * It is defined (and non-empty) when this node's own properties changed shallowly,
+	 * and `undefined` when only deeper descendants changed.
 	 * @privateRemarks
 	 * This defines a property which is a function instead of using the method syntax to avoid function bi-variance issues with the input data to the callback.
 	 */
 	treeChanged: TNode extends WithType<string, NodeKind.Array>
 		? (data: NodeChangedDataTreeDelta) => void
-		: TreeChangeEventsBeta<TNode>["treeChanged"];
+		: TNode extends WithType<string, NodeKind.Map | NodeKind.Object | NodeKind.Record>
+			? (data: NodeChangedDataTreeProperties<TNode>) => void
+			: TreeChangeEventsBeta<TNode>["treeChanged"];
 }
