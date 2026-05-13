@@ -11,8 +11,8 @@ import { execSync } from "node:child_process";
  *
  * @returns The merge-base commit SHA.
  */
-export function getBaselineCommit(baselineRef: string): string {
-	return execSync(`git merge-base ${baselineRef} HEAD`).toString().trim();
+export function getMergeBaseWithHead(targetRef: string): string {
+	return execSync(`git merge-base ${targetRef} HEAD`).toString().trim();
 }
 
 /**

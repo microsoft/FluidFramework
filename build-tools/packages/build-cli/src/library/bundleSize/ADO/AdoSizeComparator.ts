@@ -13,7 +13,7 @@ import {
 } from "../../azureDevops/downloadArtifact.js";
 import { compareBundles } from "../compareBundles.js";
 import type { BundleComparison } from "../types.js";
-import { getBaselineCommit, getBuilds } from "../utilities/index.js";
+import { getBuilds, getMergeBaseWithHead } from "../utilities/index.js";
 import { getAnalyzerJsonFromContents } from "./AdoArtifactFileProvider.js";
 import type { IADOConstants } from "./Constants.js";
 import {
@@ -78,7 +78,7 @@ export class ADOSizeComparator {
 		// commit value in the synthesized error variant.
 		let baselineCommit: string | undefined;
 		try {
-			baselineCommit = getBaselineCommit(this.targetRef);
+			baselineCommit = getMergeBaseWithHead(this.targetRef);
 			console.log(`Baseline commit: ${baselineCommit}`);
 
 			const recentBuilds = await getBuilds(this.adoApi, {
