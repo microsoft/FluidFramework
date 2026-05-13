@@ -45,7 +45,7 @@ describeCompat("PAS Test", "NoCompat", () => {
 
 			// Every iteration of this benchmark will allocate lots of new SharedString instances
 			// The old ones from the previous iteration will no longer be reachable from the matrix after they are replaced,
-			// but are leaked in the container as Fluid's GC won't collecting them for a very long time (much longer than this test will run).
+			// but are leaked in the container as Fluid's GC won't collect them for a very long time (much longer than this test will run).
 			async run(): Promise<void> {
 				this.matrix.insertRows(0, rowSize);
 				this.matrix.insertCols(0, columnSize);
