@@ -930,17 +930,5 @@ export function decodeChange(
 		decoded.maxId = encodedChange.maxId;
 	}
 
-	// XXX: This is an expensive assert which should be removed before merging.
-	validateChangeset(decoded, fieldKindsFromConfiguration(fieldKinds));
 	return decoded;
-}
-
-function fieldKindsFromConfiguration(
-	configuration: FieldKindConfiguration,
-): ReadonlyMap<FieldKindIdentifier, FlexFieldKind> {
-	const map = new Map();
-	for (const [id, entry] of configuration.entries()) {
-		map.set(id, entry.kind);
-	}
-	return map;
 }

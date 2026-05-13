@@ -262,9 +262,6 @@ export class ModularChangeFamily
 		});
 
 		removeUnnecessaryDetachLocations(composed.rootNodes, composed.rebaseVersion);
-
-		// XXX: This is an expensive assert which should be disabled before merging.
-		validateChangeset(composed, this.fieldKinds);
 		return composed;
 	}
 
@@ -1146,8 +1143,6 @@ export class ModularChangeFamily
 			rebaseVersion,
 		});
 
-		// XXX: This is an expensive assert which should be disabled before merging.
-		validateChangeset(rebased, this.fieldKinds);
 		return rebased;
 	}
 
