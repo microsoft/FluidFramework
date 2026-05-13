@@ -184,9 +184,14 @@ export function applySpecialization(
 	};
 }
 
-// `undefined` means the override is absent (inherit from base); `null` is the explicit-clear
-// sentinel needed because JSON.stringify drops `undefined`-valued properties, making
-// property-presence indistinguishable from absent on the wire.
+/**
+ * Resolves an override against a base value.
+ *
+ * @param override - `undefined` means the override is absent (inherit from base); `null` is the
+ * explicit-clear sentinel needed because JSON.stringify drops `undefined`-valued properties, making
+ * property-presence indistinguishable from absent on the wire.
+ * @param baseValue - The value to inherit when the override is absent.
+ */
 function resolveOverride<T>(
 	// eslint-disable-next-line @rushstack/no-new-null
 	override: T | null | undefined,
