@@ -11,15 +11,17 @@ import {
 } from "@fluidframework/react/internal";
 import { TreeAlpha, FormattedTextAsTree } from "@fluidframework/tree/internal";
 export { FormattedTextAsTree } from "@fluidframework/tree/internal";
-import DeltaPackage from "quill-delta";
-import Quill, { type EmitterSource } from "quill-next";
+import Quill, {
+	Delta as DeltaRef,
+	type EmitterSource,
+	type Op as QuillDeltaOp,
+} from "quill-next";
 import { type FC, useEffect, useRef, useState } from "react";
 import * as ReactDOM from "react-dom";
 
-// Workaround for quill-delta's export style not working well with node16 module resolution.
-type Delta = DeltaPackage.default;
-type QuillDeltaOp = DeltaPackage.Op;
-const Delta = DeltaPackage.default;
+// Workaround for quill-next/delta-es's export style not working well with node16 module resolution.
+type Delta = DeltaRef.default;
+const Delta = DeltaRef as unknown as typeof DeltaRef.default;
 
 /**
  * Props for the FormattedMainView component.
@@ -430,7 +432,7 @@ const FormattedTextEditorView = withMemoizedTreeObservations(
 			//
 			// The typing here is very fragile: if no parameter types are given,
 			// the inference for this event is strongly typed, but the types are wrong (The wrong "Delta" type is provided).
-			// This is likely related to the node16 module resolution issues with quill-delta.
+			// This is likely related to the node16 module resolution issues with @quill-next/delta-es.
 			// If we break that inference by adding types, `any` is inferred for all of them, so incorrect types here would still compile.
 			const handleTextChange = (
 				delta: Delta,

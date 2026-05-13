@@ -11,7 +11,7 @@ import { TreeAlpha, type TreeViewAlpha } from "@fluidframework/tree/alpha";
 import { independentView, TextAsTree } from "@fluidframework/tree/internal";
 import { render } from "@testing-library/react";
 import globalJsdom from "global-jsdom";
-import DeltaPackage from "quill-delta";
+import { Delta as DeltaRef } from "quill-next";
 
 import {
 	clipboardFormatMatcher,
@@ -29,9 +29,9 @@ import {
 	// Allow import of files being tested
 } from "../plain/index.js";
 
-// Workaround for quill-delta's export style not working well with node16 module resolution.
-type Delta = DeltaPackage.default;
-const Delta = DeltaPackage.default;
+// See note in quillFormattedView.tsx for why this cast is needed.
+type Delta = DeltaRef.default;
+const Delta = DeltaRef as unknown as typeof DeltaRef.default;
 
 // Configuration for creating formatted text views
 const formattedTreeConfig = new TreeViewConfiguration({ schema: FormattedTextAsTree.Tree });
