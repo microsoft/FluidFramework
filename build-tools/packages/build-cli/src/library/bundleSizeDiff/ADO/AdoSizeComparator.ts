@@ -79,7 +79,7 @@ export class ADOSizeComparator {
 		let baselineCommit: string | undefined;
 		try {
 			baselineCommit = getBaselineCommit(this.targetRef);
-			console.log(`The baseline commit for this PR is ${baselineCommit}`);
+			console.log(`Baseline commit: ${baselineCommit}`);
 
 			const recentBuilds = await getBuilds(this.adoApi, {
 				project: this.adoConstants.projectName,
@@ -93,32 +93,38 @@ export class ADOSizeComparator {
 			);
 
 			if (baselineBuild === undefined) {
-				const error = `No CI build found for baseline commit ${baselineCommit}`;
-				console.log(error);
-				return { kind: "error", baselineCommit, error };
+				return {
+					kind: "error",
+					baselineCommit,
+					error: `No CI build found for baseline commit ${baselineCommit}`,
+				};
 			}
 
 			if (baselineBuild.id === undefined) {
-				const error = `Baseline build does not have a build id`;
-				console.log(error);
-				return { kind: "error", baselineCommit, error };
+				return {
+					kind: "error",
+					baselineCommit,
+					error: `Baseline build does not have a build id`,
+				};
 			}
 
 			if (baselineBuild.status !== BuildStatus.Completed) {
-				const error = "Baseline build for this PR has not yet completed.";
-				console.log(error);
-				return { kind: "error", baselineCommit, error };
+				return {
+					kind: "error",
+					baselineCommit,
+					error: "Baseline build for this commit has not yet completed.",
+				};
 			}
 
 			if (baselineBuild.result !== BuildResult.Succeeded) {
-				const error = "Baseline CI build failed, cannot generate bundle analysis at this time";
-				console.log(error);
-				return { kind: "error", baselineCommit, error };
+				return {
+					kind: "error",
+					baselineCommit,
+					error: "Baseline CI build failed, cannot generate bundle analysis at this time",
+				};
 			}
 
 			console.log(`Found baseline build with id: ${baselineBuild.id}`);
-			console.log(`projectName: ${this.adoConstants.projectName}`);
-			console.log(`artifactName: ${this.adoConstants.artifactName}`);
 
 			const baselineContents = await downloadArtifact(
 				this.adoApi,
@@ -126,28 +132,33 @@ export class ADOSizeComparator {
 				baselineBuild.id,
 				this.adoConstants.artifactName,
 			).catch((error) => {
+				// Preserve the underlying error/stack: it's useful diagnostic
+				// info that doesn't reach the synthesized error variant below.
 				console.log(`Error downloading artifact: ${error.message}`);
 				console.log(`Error stack: ${error.stack}`);
 				return undefined;
 			});
 
 			if (baselineContents === undefined) {
-				const error = "Baseline build did not publish bundle artifacts";
-				console.log(error);
-				return { kind: "error", baselineCommit, error };
+				return {
+					kind: "error",
+					baselineCommit,
+					error: "Baseline build did not publish bundle artifacts",
+				};
 			}
 
 			const comparison: BundleComparison[] =
 				await this.createComparisonFromContents(baselineContents);
-			console.log(JSON.stringify(comparison));
 
 			return { kind: "success", baselineCommit, comparison };
 		} catch (e) {
-			const error = `Unexpected failure during size comparison: ${
-				e instanceof Error ? e.message : String(e)
-			}`;
-			console.log(error);
-			return { kind: "error", baselineCommit, error };
+			return {
+				kind: "error",
+				baselineCommit,
+				error: `Unexpected failure during size comparison: ${
+					e instanceof Error ? e.message : String(e)
+				}`,
+			};
 		}
 	}
 
