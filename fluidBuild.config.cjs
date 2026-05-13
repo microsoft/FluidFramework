@@ -103,8 +103,22 @@ module.exports = {
 		// "tsc" would be nice to eliminate from here, but plenty of packages still focus
 		// on CommonJS.
 		"build:test": ["typetests:gen", "tsc", "api-extractor:commonjs", "api-extractor:esnext"],
-		"build:test:cjs": ["typetests:gen", "tsc", "api-extractor:commonjs"],
-		"build:test:esm": ["typetests:gen", "build:esnext", "api-extractor:esnext"],
+		"build:test:cjs": [
+			"typetests:gen",
+			"tsc",
+			"api-extractor:commonjs",
+			// depend on ancestor packages in case current package doesn't have production build (e.g. test-only packages)
+			"^tsc",
+			"^api-extractor:commonjs",
+		],
+		"build:test:esm": [
+			"typetests:gen",
+			"build:esnext",
+			"api-extractor:esnext",
+			// depend on ancestor packages in case current package doesn't have production build (e.g. test-only packages)
+			"^build:esnext",
+			"^api-extractor:esnext",
+		],
 		"api": {
 			dependsOn: [
 				"api-extractor:commonjs",
