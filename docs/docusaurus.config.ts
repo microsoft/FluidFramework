@@ -29,7 +29,9 @@ const typesenseSearchFields: [field: string, weight: number, allowedTypos: numbe
 ];
 const typesenseQueryBy = typesenseSearchFields.map(([field]) => field).join(",");
 const typesenseQueryByWeights = typesenseSearchFields.map(([, weight]) => weight).join(",");
-const typesenseAllowedTypos = typesenseSearchFields.map(([, , allowedTypos]) => allowedTypos).join(",");
+const typesenseAllowedTypos = typesenseSearchFields
+	.map(([, , allowedTypos]) => allowedTypos)
+	.join(",");
 
 const githubUrl = "https://github.com/microsoft/FluidFramework";
 const githubMainBranchUrl = `${githubUrl}/tree/main`;
