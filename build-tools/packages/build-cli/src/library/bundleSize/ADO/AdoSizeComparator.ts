@@ -42,7 +42,7 @@ export class ADOSizeComparator {
 	 * necessarily match the chain of commits, but typically will when the pipeline
 	 * only builds commits to main.
 	 */
-	private static readonly defaultBuildsToSearch = 20;
+	private static readonly defaultBuildsToSearch = 100;
 
 	constructor(
 		/**
