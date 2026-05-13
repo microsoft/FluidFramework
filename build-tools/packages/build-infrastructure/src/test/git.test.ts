@@ -396,6 +396,47 @@ describe("listPackageJsonPaths", () => {
 	});
 });
 
+describe("listPackageJsonPaths: staged deletion (local)", () => {
+	const git = simpleGit(process.cwd());
+	// A package.json that exists in the test repo and can be safely removed/restored in a test.
+	const targetPkgAbs = path.join(testRepoRoot, "packages/group3/pkg-g/package.json");
+	// `git ls-files`/`ls-tree` invoked from a subdirectory scope paths to that subdirectory, so
+	// compute the expected path relative to the process cwd (where simpleGit was rooted).
+	const targetPkgRel = path.relative(process.cwd(), targetPkgAbs).split(path.sep).join("/");
+	const targetDir = path.posix.dirname(targetPkgRel);
+
+	beforeEach(async () => {
+		// Stage the deletion of an existing tracked package.json.
+		await git.rm([targetPkgAbs]);
+	});
+
+	afterEach(async () => {
+		// Restore both the index entry and the working-tree file.
+		await git.reset(["HEAD", "--", targetPkgAbs]);
+		await git.checkout(["HEAD", "--", targetPkgAbs]);
+	});
+
+	it("excludes a staged-for-deletion package.json from the no-ref listing", async () => {
+		const paths = await listPackageJsonPaths(git);
+		expect(paths).to.not.include(targetPkgRel);
+	});
+
+	it("still lists the deleted package.json at HEAD", async () => {
+		const paths = await listPackageJsonPaths(git, "HEAD");
+		expect(paths).to.include(targetPkgRel);
+	});
+
+	it("excludes the staged-for-deletion package dir from getPackageDirs (no ref)", async () => {
+		const dirs = await getPackageDirs(git);
+		expect(dirs.has(targetDir)).to.equal(false);
+	});
+
+	it("still includes the package dir at HEAD", async () => {
+		const dirs = await getPackageDirs(git, "HEAD");
+		expect(dirs.has(targetDir)).to.equal(true);
+	});
+});
+
 describe("getPackageDirs", () => {
 	it("returns dirnames of all package.json paths and excludes only the repo root", async () => {
 		const mock = makeGitMock({

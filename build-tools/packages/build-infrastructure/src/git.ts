@@ -164,13 +164,24 @@ function filePathsToDirectories(files: string[]): string[] {
 const packageJsonPathPattern = /(^|\/)package\.json$/;
 
 /**
- * Lists all `package.json` file paths tracked at the given ref, or in the current working tree
- * when no ref is provided. Paths are repo-relative and use POSIX separators (as returned by git).
+ * Lists all `package.json` file paths tracked at the given ref, or in the git index when no
+ * ref is provided. Paths use POSIX separators and are relative to the directory the given
+ * `SimpleGit` instance was rooted at (i.e. they match the path format git itself prints —
+ * pass `simpleGit(repoRoot)` to get repo-relative paths).
  *
  * @param git - The git instance.
  * @param ref - Optional ref. When provided, uses `git ls-tree -r --name-only <ref>` to enumerate
- * tracked files at that historical snapshot. When omitted, uses `git ls-files` against the
- * current working tree.
+ * tracked files at that historical snapshot. When omitted, uses `git ls-files`, which reflects
+ * the **index** — not the on-disk working tree. This means:
+ *
+ * - Staged additions and staged deletions are reflected.
+ * - Untracked files (e.g. a newly-created `package.json` that hasn't been `git add`'d) are not
+ *   listed.
+ * - Files deleted from disk whose deletion has not been staged are still listed (the index
+ *   still considers the file present).
+ *
+ * For merge-base / CI usage the working tree is expected to be clean, so this distinction is
+ * usually moot.
  *
  * @privateRemarks
  * Both branches list every tracked file and then filter to `package.json` entries on the JS
@@ -188,8 +199,10 @@ export async function listPackageJsonPaths(git: SimpleGit, ref?: string): Promis
 }
 
 /**
- * Returns the set of repo-relative directories that contain a `package.json` at the given ref
- * (or in the current working tree when `ref` is omitted).
+ * Returns the set of directories that contain a `package.json` at the given ref (or in the git
+ * index when `ref` is omitted; see {@link listPackageJsonPaths} for the precise semantics of
+ * the no-ref case, and for the path format — paths are relative to the directory the given
+ * `SimpleGit` instance was rooted at).
  *
  * Useful for attributing changed files to packages when the set of packages may have changed
  * between two refs (e.g. packages added, removed, or moved between a merge base and HEAD).
