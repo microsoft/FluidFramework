@@ -1862,8 +1862,19 @@ export class ContainerRuntime
 				// so a fanout there would be a no-op; data stores instead
 				// pick up the initial readonly state from `isReadOnly()`
 				// when they're first asked.
+				//
+				// Also re-trigger replay: stashed entries that the apply loop
+				// pushed into `pendingMessages` need to be resubmitted, and
+				// any `setConnectionState(true)` edge that fired mid-apply
+				// was already consumed (the `replayPendingStates`
+				// apply-window early-return suppressed it).
+				// `replayPendingStates` self-gates on `shouldSendOps()`, and
+				// at this point `isApplyingStashedOps` is already `false`
+				// (PSM sets `_applyLifecycle = "ended"` before firing this
+				// hook), so the apply-window early-return won't fire either.
 				onAfterStashedOpsApplied: () => {
 					this.notifyReadOnlyState();
+					this.replayPendingStates();
 				},
 			},
 		);

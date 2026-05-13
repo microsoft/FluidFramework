@@ -1702,6 +1702,44 @@ describe("Runtime", () => {
 				).replayPendingStates();
 				assert.strictEqual(psmReplayCalls, 0);
 			});
+
+			it("close hook re-triggers replayPendingStates after apply drains", async () => {
+				await createRuntime();
+				const psm = (
+					containerRuntime as unknown as {
+						pendingStateManager: PendingStateManager;
+					}
+				).pendingStateManager;
+
+				// Seed an empty-batch stashed entry so the apply loop drains
+				// without invoking the real `applyStashedOp` handler.
+				const psmPrivate = psm as unknown as {
+					initialMessages: { push: (msg: IPendingMessage) => void };
+					_applyLifecycle: "notStarted" | "applying" | "ended";
+				};
+				const emptyBatchStashed = {
+					type: "message",
+					referenceSequenceNumber: 0,
+					content: JSON.stringify({ type: "groupedBatch", contents: [] }),
+				};
+				psmPrivate.initialMessages.push(emptyBatchStashed as IPendingMessage);
+				psmPrivate._applyLifecycle = "applying";
+
+				// Spy on the runtime's `replayPendingStates`; assert it fires
+				// from the close hook even when the PSM didn't see a
+				// connection-state edge during apply.
+				let runtimeReplayCalls = 0;
+				(
+					containerRuntime as unknown as { replayPendingStates: () => void }
+				).replayPendingStates = (): void => {
+					runtimeReplayCalls++;
+				};
+
+				await psm.applyStashedOpsAt();
+
+				assert.strictEqual(psm.isApplyingStashedOps, false);
+				assert.strictEqual(runtimeReplayCalls, 1);
+			});
 		});
 
 		describe("Supports mixin classes", () => {
