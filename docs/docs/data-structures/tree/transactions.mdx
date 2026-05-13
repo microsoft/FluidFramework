@@ -166,6 +166,17 @@ Constraints can be applied as preconditions to a transaction (or as precondition
 
 This is useful when the transaction's effect may be rendered undesirable by the effects of concurrent edits that are sequenced before the transaction.
 
+:::note
+
+Whether a given constraint in a transaction is violated is ultimately settled after the transaction is sequenced, that is, once it has been reconciled with all concurrent changes that were sequenced before it.
+The client on which the transaction is created optimistically applies the transaction locally before it is sequenced,
+and progressively updates its view to reflect the impact of concurrent changes sequenced before the transaction as that client learns of these changes.
+This means that, on the client where the transaction is created, the transaction may be applied then reverted on and off multiple times as the client learns of concurrent changes and re-evaluates the transaction's constraints.
+On other clients, the transaction's constraints are fully settled by the time the transaction is applied, so these clients will only ever experience the transaction in its final state.
+
+:::
+
+
 ### Specifying Constraints
 
 Constraints are specified via the `preconditions` field in the `params` argument to `runTransaction`, or returned from the transaction callback via the `preconditionsOnRevert` field:
@@ -232,14 +243,14 @@ This is the only constraint which can be applied via `Tree.runTransaction`.
 
 #### `noChange` (Alpha)
 
-Requires that the document is in the exact same state when the transaction is applied as it was when the transaction was created.
-If _any_ concurrent edit is sequenced before the transaction, the constraint is violated and the transaction is rolled back.
+Requires that the whole document (including its schema) is in the exact same state when the transaction is applied as it was when the transaction was created.
 
 :::note
 
-In some cases, SharedTree will attempt reapply transactions whose noChange constraint was violated.
-This happens when we detect that no visible change has occurred - eg, if an element was added and then removed, the add
-would violate noChange, but then with the remove happening directly after, we will unviolate the noChange constraint.
+In some cases, SharedTree will consider this constraint not to be violated if the concurrent edits that were made happen to cancel each other out.
+For example, if a node was inserted and then removed (possibly by undoing its insertion),
+then the `noChange` constraint in a transaction that is concurrent to these changes may not be considered violated once it has rebased over both changes.
+This is currently only the case for `noChange` constraints in reverts, but we generalize this behavior to all usages of the `noChange` constraint in the future.
 
 :::
 
