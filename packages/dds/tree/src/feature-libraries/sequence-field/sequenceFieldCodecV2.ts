@@ -475,8 +475,6 @@ function encodeRename(
 	if (isMoveInAndDetach) {
 		// These cells are the final detach location of moved nodes.
 		const encodedRevision = encodeRevision(mark.idOverride.revision);
-
-		// XXX: Splitting
 		const endpoint =
 			inputRootId === undefined
 				? undefined
@@ -592,9 +590,15 @@ function getLengthToSplitMark(mark: Mark, context: FieldChangeEncodingContext): 
 			break;
 		}
 		case "Rename": {
-			count = context.getInputRootId(mark.idOverride, count).length;
+			const inputRootIdEntry = context.getInputRootId(mark.idOverride, count);
+			count = inputRootIdEntry.length;
 			count = context.isAttachId(mark.idOverride, count).length;
 			count = context.isDetachId(mark.idOverride, count).length;
+			if (inputRootIdEntry.value !== undefined) {
+				count = context.isDetachId(inputRootIdEntry.value, count).length;
+				count = context.getFirstRenameId(inputRootIdEntry.value, count).length;
+			}
+
 			const cellId = mark.cellId ?? fail("Rename should have cell ID");
 			const renameEntry = context.rootRenames.getFirst(cellId, count);
 			count = renameEntry.length;
