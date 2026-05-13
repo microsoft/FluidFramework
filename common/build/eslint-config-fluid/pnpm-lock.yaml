@@ -29,10 +29,7 @@ importers:
         version: 4.5.0(eslint@9.39.4(jiti@2.6.1))
       '@eslint-react/eslint-plugin':
         specifier: ~2.13.0
-        version: 2.13.0(eslint@9.39.4(jiti@2.6.1))(typescript@5.4.5)
-      '@eslint/eslintrc':
-        specifier: ~3.3.5
-        version: 3.3.5
+        version: 2.13.0(eslint@9.39.2(jiti@2.6.1))(typescript@5.4.5)
       '@eslint/js':
         specifier: ~9.39.4
         version: 9.39.4
