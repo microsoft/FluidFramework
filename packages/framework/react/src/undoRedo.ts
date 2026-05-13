@@ -327,7 +327,10 @@ class UndoRedoManager implements UndoRedo {
 		kind: "undo" | "redo",
 		predicate: (entry: StackEntry) => boolean,
 	): void {
-		assert(this.#pendingOperation === undefined, 0xcf8 /* Unexpected pending operation during revert */);
+		assert(
+			this.#pendingOperation === undefined,
+			0xcf8 /* Unexpected pending operation during revert */,
+		);
 
 		const index = findLastIndex(stack, predicate);
 		if (index === -1) {
