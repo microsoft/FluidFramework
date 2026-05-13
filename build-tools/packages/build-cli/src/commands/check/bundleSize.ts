@@ -107,23 +107,26 @@ export default class CheckBundleSize extends BaseCommand<typeof CheckBundleSize>
 			return { kind: "no-changes", baselineCommit };
 		}
 
+		const fmt = (before: number, after: number, delta: number): string => {
+			const sign = delta > 0 ? "+" : "";
+			return `${before} -> ${after} (${sign}${delta})`;
+		};
+
 		this.log(`Bundle size changes vs baseline commit ${baselineCommit}:`);
 		for (const bundle of comparison) {
+			const changedMetrics = Object.entries(bundle.commonBundleMetrics).flatMap(
+				([metricName, { baseline, compare }]) => {
+					const parsedDelta = compare.parsedSize - baseline.parsedSize;
+					const gzipDelta = compare.gzipSize - baseline.gzipSize;
+					if (parsedDelta === 0 && gzipDelta === 0) return [];
+					return [
+						`    ${metricName}: parsed ${fmt(baseline.parsedSize, compare.parsedSize, parsedDelta)}, gzip ${fmt(baseline.gzipSize, compare.gzipSize, gzipDelta)}`,
+					];
+				},
+			);
+			if (changedMetrics.length === 0) continue;
 			this.log(`  ${bundle.bundleName}:`);
-			for (const [metricName, { baseline, compare }] of Object.entries(
-				bundle.commonBundleMetrics,
-			)) {
-				const parsedDelta = compare.parsedSize - baseline.parsedSize;
-				const gzipDelta = compare.gzipSize - baseline.gzipSize;
-				if (parsedDelta === 0 && gzipDelta === 0) continue;
-				const fmt = (before: number, after: number, delta: number): string => {
-					const sign = delta > 0 ? "+" : "";
-					return `${before} -> ${after} (${sign}${delta})`;
-				};
-				this.log(
-					`    ${metricName}: parsed ${fmt(baseline.parsedSize, compare.parsedSize, parsedDelta)}, gzip ${fmt(baseline.gzipSize, compare.gzipSize, gzipDelta)}`,
-				);
-			}
+			for (const line of changedMetrics) this.log(line);
 		}
 
 		return { kind: "changes", baselineCommit, comparison };
