@@ -27,6 +27,7 @@ import {
 	refTypeIncludesFlag,
 	reservedRangeLabelsKey,
 	Side,
+	defaultSide,
 	endpointPosAndSide,
 	type ISegmentInternal,
 	createLocalReconnectingPerspective,
@@ -945,21 +946,30 @@ export class IntervalCollection
 	public applyStashedOp(op: IIntervalCollectionTypeOperationValue): void {
 		const { opName, value } = op;
 		const { id, properties } = getSerializedProperties(value);
+		// Serialized ops always include startSide/endSide for future-proofing,
+		// but the original add()/change() call may have used plain numeric
+		// positions. Drop the side when it equals the default so the replayed
+		// call matches the original shape — otherwise assertStickinessEnabled
+		// would treat a plain-number interval as sticky. Stashed-op values
+		// can be deep-frozen by upstream layers (e.g. test mocks), so this is
+		// computed into locals rather than mutating value.
+		const startSide = value.startSide === defaultSide ? undefined : value.startSide;
+		const endSide = value.endSide === defaultSide ? undefined : value.endSide;
 		switch (opName) {
 			case "add": {
 				this.add({
 					id,
 					// Todo: we should improve typing so we know add ops always have start and end
-					start: toSequencePlace(value.start, value.startSide),
-					end: toSequencePlace(value.end, value.endSide),
+					start: toSequencePlace(value.start, startSide),
+					end: toSequencePlace(value.end, endSide),
 					props: properties,
 				});
 				break;
 			}
 			case "change": {
 				this.change(id, {
-					start: toOptionalSequencePlace(value.start, value.startSide),
-					end: toOptionalSequencePlace(value.end, value.endSide),
+					start: toOptionalSequencePlace(value.start, startSide),
+					end: toOptionalSequencePlace(value.end, endSide),
 					props: properties,
 				});
 				break;
@@ -1427,8 +1437,8 @@ export class IntervalCollection
 				const { start, end, startSide, endSide } = serializedInterval;
 				newInterval = intervalToChange.modify(
 					"",
-					toOptionalSequencePlace(start, startSide ?? Side.Before),
-					toOptionalSequencePlace(end, endSide ?? Side.Before),
+					toOptionalSequencePlace(start, startSide ?? defaultSide),
+					toOptionalSequencePlace(end, endSide ?? defaultSide),
 					op,
 				);
 				if (isLatestInterval) {
@@ -1671,8 +1681,8 @@ export class IntervalCollection
 
 		const interval: SequenceIntervalClass = this.localCollection.addInterval(
 			id,
-			toSequencePlace(serializedInterval.start, serializedInterval.startSide ?? Side.Before),
-			toSequencePlace(serializedInterval.end, serializedInterval.endSide ?? Side.Before),
+			toSequencePlace(serializedInterval.start, serializedInterval.startSide ?? defaultSide),
+			toSequencePlace(serializedInterval.end, serializedInterval.endSide ?? defaultSide),
 			properties,
 			op,
 		);
