@@ -11,17 +11,15 @@ import {
 } from "@fluidframework/react/internal";
 import { TreeAlpha, FormattedTextAsTree } from "@fluidframework/tree/internal";
 export { FormattedTextAsTree } from "@fluidframework/tree/internal";
-import Quill, {
-	Delta as DeltaRef,
-	type EmitterSource,
-	type Op as QuillDeltaOp,
-} from "quill-next";
+import DeltaPackage from "@quill-next/delta-es";
+import Quill, { type EmitterSource } from "quill-next";
 import { type FC, useEffect, useRef, useState } from "react";
 import * as ReactDOM from "react-dom";
 
-// Workaround for quill-next/delta-es's export style not working well with node16 module resolution.
-type Delta = DeltaRef.default;
-const Delta = DeltaRef as unknown as typeof DeltaRef.default;
+// Workaround for @quill-next/delta-es's export style not working well with node16 module resolution.
+type Delta = DeltaPackage.default;
+type QuillDeltaOp = DeltaPackage.Op;
+const Delta = DeltaPackage as unknown as typeof DeltaPackage.default;
 
 /**
  * Props for the FormattedMainView component.

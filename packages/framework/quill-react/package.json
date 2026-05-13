@@ -97,7 +97,7 @@
 	"dependencies": {
 		"@fluidframework/core-utils": "workspace:~",
 		"@fluidframework/tree": "workspace:~",
-		"quill-delta": "^5.1.0",
+		"@quill-next/delta-es": "^5.2.12",
 		"quill-next": "^2.2.4",
 		"react": "^18.3.1",
 		"react-dom": "^18.3.1"

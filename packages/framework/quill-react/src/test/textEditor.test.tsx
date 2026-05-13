@@ -9,9 +9,9 @@ import { toPropTreeNode, createUndoRedo, type UndoRedo } from "@fluidframework/r
 import { TreeViewConfiguration } from "@fluidframework/tree";
 import { TreeAlpha, type TreeViewAlpha } from "@fluidframework/tree/alpha";
 import { independentView, TextAsTree } from "@fluidframework/tree/internal";
+import DeltaPackage from "@quill-next/delta-es";
 import { render } from "@testing-library/react";
 import globalJsdom from "global-jsdom";
-import { Delta as DeltaRef } from "quill-next";
 
 import {
 	clipboardFormatMatcher,
@@ -30,8 +30,8 @@ import {
 } from "../plain/index.js";
 
 // See note in quillFormattedView.tsx for why this cast is needed.
-type Delta = DeltaRef.default;
-const Delta = DeltaRef as unknown as typeof DeltaRef.default;
+type Delta = DeltaPackage.default;
+const Delta = DeltaPackage as unknown as typeof DeltaPackage.default;
 
 // Configuration for creating formatted text views
 const formattedTreeConfig = new TreeViewConfiguration({ schema: FormattedTextAsTree.Tree });
