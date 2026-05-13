@@ -134,6 +134,7 @@ a diff to review as part of a PR -- just like we do with API reports for code ch
 | `build:readme:disabled` | `markdown-magic --files "**/*.md"` |
 | `clean` | `rimraf --glob dist "**/*.build.log"` |
 | `format` | `npm run prettier:fix` |
+| `generate-deprecated-rules` | `jiti scripts/generate-deprecated-rules.ts` |
 | `prettier` | `prettier --check .` |
 | `prettier:fix` | `prettier --write .` |
 | `print-configs` | `jiti scripts/print-configs.ts printed-configs` |
