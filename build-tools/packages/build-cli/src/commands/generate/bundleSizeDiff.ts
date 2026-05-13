@@ -108,10 +108,10 @@ export default class GenerateBundleSizeDiff extends BaseCommand<
 	public async run(): Promise<BundleSizeDiffResult | BundleSizeDiffError> {
 		const { adoApiToken, localReportPath, outputDir, prNumber, targetBranch } = this.flags;
 
-		const adoConnection = getAzureDevopsApi(adoApiToken, adoConstants.orgUrl);
+		const adoApi = getAzureDevopsApi(adoApiToken, adoConstants.orgUrl);
 		const sizeComparator = new ADOSizeComparator(
 			adoConstants,
-			adoConnection,
+			adoApi,
 			localReportPath,
 			targetBranch,
 		);

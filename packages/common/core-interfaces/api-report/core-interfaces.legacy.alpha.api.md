@@ -478,7 +478,9 @@ export type LogLevel = (typeof LogLevel)[keyof typeof LogLevel];
 
 // @public
 export interface LogLevelConst {
+    // @deprecated
     readonly default: 20;
+    // @deprecated
     readonly error: 30;
     readonly essential: 30;
     readonly info: 20;

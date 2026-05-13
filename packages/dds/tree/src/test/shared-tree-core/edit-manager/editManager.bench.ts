@@ -218,6 +218,11 @@ describe("EditManager - Bench", () => {
 					benchmarkIt({
 						type,
 						title: `Rebase edits from ${peerCount} peers each sending ${editsPerPeerCount} commits`,
+						// Occasionally exceeds the default 2s mocha timeout in correctness mode on
+						// slow CI agents (ICM 792323064 / 787811568).
+						// TODO:AB#72685: Speed up these tests and/or address cause of occasional slowdowns on CI,
+						// and remove (or at least reduce) this timeout override.
+						correctnessTimeoutMs: 5000,
 						...benchmarkDurationBatchless({
 							benchmarkFn: (state) => {
 								let running: boolean;

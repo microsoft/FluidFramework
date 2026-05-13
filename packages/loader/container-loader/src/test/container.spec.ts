@@ -9,7 +9,8 @@ import {
 	TypedEventEmitter,
 	type IProvideLayerCompatDetails,
 } from "@fluid-internal/client-utils";
-import { AttachState, type IAudience } from "@fluidframework/container-definitions";
+import type { IAudience } from "@fluidframework/container-definitions";
+import { AttachState } from "@fluidframework/container-definitions";
 import type {
 	ICriticalContainerError,
 	IContainer,

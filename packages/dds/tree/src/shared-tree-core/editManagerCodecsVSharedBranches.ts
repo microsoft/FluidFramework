@@ -29,6 +29,9 @@ import { EncodedEditManager } from "./editManagerFormatVSharedBranches.js";
 export interface EditManagerEncodingContext {
 	idCompressor: IIdCompressor;
 	readonly schema?: SchemaAndPolicy;
+	readonly isSummary: boolean;
+	readonly healUnresolvableIdentifiersOnDecode?: boolean;
+	readonly sharedObjectId?: string;
 }
 
 export function makeSharedBranchesCodecWithVersion<TChangeset>(

@@ -3,24 +3,24 @@
  * Licensed under the MIT License.
  */
 
+import { join } from "node:path";
 import type { WebApi } from "azure-devops-node-api";
 import { BuildResult, BuildStatus } from "azure-devops-node-api/interfaces/BuildInterfaces.js";
-import type JSZip from "jszip";
-import { join } from "path";
 
+import {
+	type ArtifactContents,
+	downloadArtifact,
+} from "../../azureDevops/downloadArtifact.js";
 import type { BundleComparison } from "../BundleBuddyTypes.js";
 import { compareBundles } from "../compareBundles.js";
 import { getBaselineCommit, getBuilds } from "../utilities/index.js";
-import {
-	getAnalyzerJsonFromZip,
-	getAnalyzerPathsFromZipObject,
-	getZipObjectFromArtifact,
-} from "./AdoArtifactFileProvider.js";
+import { getAnalyzerJsonFromContents } from "./AdoArtifactFileProvider.js";
 import type { IADOConstants } from "./Constants.js";
 import {
 	getAnalyzerJsonFromFileSystem,
 	getAnalyzerPathsFromFileSystem,
 } from "./FileSystemBundleFileProvider.js";
+import { getAnalyzerFilePathsFromFolder } from "./getBundleFilePathsFromFolder.js";
 import { getBundleSummariesFromAnalyzer } from "./getBundleSummaries.js";
 
 /**
@@ -52,7 +52,7 @@ export class ADOSizeComparator {
 		/**
 		 * The ADO connection to use to fetch baseline bundle info
 		 */
-		private readonly adoConnection: WebApi,
+		private readonly adoApi: WebApi,
 		/**
 		 * Path to existing local bundle size reports
 		 */
@@ -80,7 +80,7 @@ export class ADOSizeComparator {
 			baselineCommit = getBaselineCommit(this.targetBranch);
 			console.log(`The baseline commit for this PR is ${baselineCommit}`);
 
-			const recentBuilds = await getBuilds(this.adoConnection, {
+			const recentBuilds = await getBuilds(this.adoApi, {
 				project: this.adoConstants.projectName,
 				definitions: [this.adoConstants.ciBuildDefinitionId],
 				maxBuildsPerDefinition:
@@ -119,24 +119,25 @@ export class ADOSizeComparator {
 			console.log(`projectName: ${this.adoConstants.projectName}`);
 			console.log(`artifactName: ${this.adoConstants.artifactName}`);
 
-			const baselineZip = await getZipObjectFromArtifact(
-				this.adoConnection,
+			const baselineContents = await downloadArtifact(
+				this.adoApi,
 				this.adoConstants.projectName,
 				baselineBuild.id,
 				this.adoConstants.artifactName,
 			).catch((error) => {
-				console.log(`Error unzipping object from artifact: ${error.message}`);
+				console.log(`Error downloading artifact: ${error.message}`);
 				console.log(`Error stack: ${error.stack}`);
 				return undefined;
 			});
 
-			if (baselineZip === undefined) {
+			if (baselineContents === undefined) {
 				const error = "Baseline build did not publish bundle artifacts";
 				console.log(error);
 				return { kind: "error", baselineCommit, error };
 			}
 
-			const comparison: BundleComparison[] = await this.createComparisonFromZip(baselineZip);
+			const comparison: BundleComparison[] =
+				await this.createComparisonFromContents(baselineContents);
 			console.log(JSON.stringify(comparison));
 
 			return { kind: "success", baselineCommit, comparison };
@@ -149,19 +150,22 @@ export class ADOSizeComparator {
 		}
 	}
 
-	private async createComparisonFromZip(baselineZip: JSZip): Promise<BundleComparison[]> {
-		const baselineZipBundlePaths = getAnalyzerPathsFromZipObject(baselineZip);
+	private async createComparisonFromContents(
+		baselineContents: ArtifactContents,
+	): Promise<BundleComparison[]> {
+		const baselineBundlePaths = getAnalyzerFilePathsFromFolder(Object.keys(baselineContents));
 
 		const prBundleFileSystemPaths = await getAnalyzerPathsFromFileSystem(this.localReportPath);
 
 		const baselineSummaries = await getBundleSummariesFromAnalyzer({
-			bundlePaths: baselineZipBundlePaths,
-			getAnalyzerJson: (relativePath) => getAnalyzerJsonFromZip(baselineZip, relativePath),
+			bundlePaths: baselineBundlePaths,
+			getAnalyzerJson: async (relativePath) =>
+				getAnalyzerJsonFromContents(baselineContents, relativePath),
 		});
 
 		const prSummaries = await getBundleSummariesFromAnalyzer({
 			bundlePaths: prBundleFileSystemPaths,
-			getAnalyzerJson: (relativePath) =>
+			getAnalyzerJson: async (relativePath) =>
 				getAnalyzerJsonFromFileSystem(join(this.localReportPath, relativePath)),
 		});
 

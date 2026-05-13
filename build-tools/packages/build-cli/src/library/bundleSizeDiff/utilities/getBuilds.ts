@@ -23,11 +23,8 @@ export interface GetBuildOptions {
 /**
  * A wrapper around the terrible API signature for ADO getBuilds
  */
-export async function getBuilds(
-	adoConnection: WebApi,
-	options: GetBuildOptions,
-): Promise<Build[]> {
-	const buildApi = await adoConnection.getBuildApi();
+export async function getBuilds(adoApi: WebApi, options: GetBuildOptions): Promise<Build[]> {
+	const buildApi = await adoApi.getBuildApi();
 
 	return buildApi.getBuilds(
 		options.project,
