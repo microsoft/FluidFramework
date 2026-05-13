@@ -1862,19 +1862,8 @@ export class ContainerRuntime
 				// so a fanout there would be a no-op; data stores instead
 				// pick up the initial readonly state from `isReadOnly()`
 				// when they're first asked.
-				//
-				// Also re-trigger replay: stashed entries that the apply loop
-				// pushed into `pendingMessages` need to be resubmitted, and
-				// any `setConnectionState(true)` edge that fired mid-apply
-				// was already consumed (the `replayPendingStates`
-				// apply-window early-return suppressed it).
-				// `replayPendingStates` self-gates on `shouldSendOps()`, and
-				// at this point `isApplyingStashedOps` is already `false`
-				// (PSM sets `_applyLifecycle = "ended"` before firing this
-				// hook), so the apply-window early-return won't fire either.
 				onAfterStashedOpsApplied: () => {
 					this.notifyReadOnlyState();
-					this.replayPendingStates();
 				},
 			},
 		);
@@ -2834,16 +2823,18 @@ export class ContainerRuntime
 			return;
 		}
 
-		// Never resubmit during the stashed-op apply window. The PSM design
-		// invariant ("never resubmit during apply stashed ops") is enforced
-		// here so that a connection-state transition mid-partial-drain cannot
-		// drive `reSubmit` into `submit()` — which would otherwise be caught
-		// by the readonly/apply guard. The window will close on the next
-		// successful `applyStashedOpsAt` drain; whichever connection edge
-		// follows will re-run replay normally.
-		if (this.pendingStateManager.isApplyingStashedOps) {
-			return;
-		}
+		// Invariant: the canSendOps edge in `setConnectionStateCore` — the
+		// only caller of this method — cannot fire while
+		// `applyStashedOpsAt` is in flight, because the loader awaits the
+		// apply before transitioning the runtime to a write-capable
+		// connection. If this assert ever fires, that contract has changed
+		// and the submit guard at `submit()` would catch a runtime-internal
+		// resubmit (`Rejoin`, `GC`, `FluidDataStoreOp`) for an op type
+		// outside the apply-window allowlist.
+		assert(
+			!this.pendingStateManager.isApplyingStashedOps,
+			"replayPendingStates must not be called during stashed-op apply window",
+		);
 
 		// Replaying is an internal operation and we don't want to generate noise while doing it.
 		// So temporarily disable dirty state change events, and save the old state.
