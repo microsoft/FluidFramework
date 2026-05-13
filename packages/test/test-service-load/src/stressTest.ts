@@ -105,6 +105,10 @@ export async function stressTest(
 			childArgs.push(`--driverEndpoint`, testDriver.endpointName);
 		}
 
+		if (testDriver.tenantName !== undefined) {
+			childArgs.push(`--driverTenantName`, testDriver.tenantName);
+		}
+
 		runnerArgs.push(childArgs);
 	}
 	console.log(runnerArgs.map((a) => a.join(" ")).join("\n"));

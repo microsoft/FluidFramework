@@ -41,6 +41,7 @@ export const createLogger = async (
 	dimensions: {
 		driverType: string;
 		driverEndpointName: string | undefined;
+		driverTenantName: string | undefined;
 		profile: string;
 		runId: number | undefined;
 	},

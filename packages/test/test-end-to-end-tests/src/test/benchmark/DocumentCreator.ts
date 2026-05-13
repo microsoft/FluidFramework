@@ -69,6 +69,7 @@ export function createDocument(props: IDocumentCreatorProps): IDocumentLoaderAnd
 				namespace: "FFEngineering",
 				driverType: props.provider.driver.type,
 				driverEndpointName: props.provider.driver.endpointName,
+				driverTenantName: props.provider.driver.tenantName,
 				testDocument: props.testName,
 				testDocumentType: props.documentType,
 				details: JSON.stringify(props.documentTypeInfo),
