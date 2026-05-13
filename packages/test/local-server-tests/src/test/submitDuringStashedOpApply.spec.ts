@@ -1,0 +1,152 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
+import { strict as assert } from "assert";
+
+import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct/internal";
+import {
+	asLegacyAlpha,
+	createDetachedContainer,
+	loadExistingContainer,
+} from "@fluidframework/container-loader/internal";
+import {
+	LocalDocumentServiceFactory,
+	LocalResolver,
+} from "@fluidframework/local-driver/internal";
+import { type ISharedMap, SharedMap } from "@fluidframework/map/internal";
+import type {
+	IFluidDataStoreChannel,
+	IFluidDataStoreContext,
+	IFluidDataStoreFactory,
+} from "@fluidframework/runtime-definitions/internal";
+import { LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
+import { LocalCodeLoader, TestFluidObjectFactory } from "@fluidframework/test-utils/internal";
+import type { ITestFluidObject } from "@fluidframework/test-utils/internal";
+
+/**
+ * Wraps an inner {@link IFluidDataStoreFactory} so that on `existing=true`
+ * loads the data store's two SharedMaps are eagerly realized, and a
+ * `valueChanged` listener is registered on the "primary" map that performs
+ * a follow-up `set` on the "secondary" map.
+ *
+ * Two maps are needed because the channel-level `stashedOpMd` capture in
+ * `ChannelDeltaConnection.submit` swallows any submit issued *on the same
+ * channel* while that channel's `applyStashedOp` is in flight. A submit
+ * targeting a *different* channel goes through the normal submit path —
+ * which is exactly the channel that's currently replaying a stashed op
+ * vs. an event-handler write that propagates to another map.
+ *
+ * This models a real-world bug pattern: app code subscribed to DDS
+ * change events that performs cascading edits across DDSes without
+ * consulting `readOnly`.
+ */
+class ReactingMapFactory implements IFluidDataStoreFactory {
+	public constructor(private readonly inner: IFluidDataStoreFactory) {}
+
+	public get IFluidDataStoreFactory(): IFluidDataStoreFactory {
+		return this;
+	}
+	public get type(): string {
+		return this.inner.type;
+	}
+
+	public async instantiateDataStore(
+		context: IFluidDataStoreContext,
+		existing: boolean,
+	): Promise<IFluidDataStoreChannel> {
+		const channel = await this.inner.instantiateDataStore(context, existing);
+		if (!existing) {
+			return channel;
+		}
+		// Eagerly realize both maps and wire up the cross-map listener.
+		// `IFluidDataStoreChannel` doesn't expose `getChannel`, but the
+		// concrete TestFluidObjectFactory runtime does.
+		const runtimeWithChannels = channel as IFluidDataStoreChannel & {
+			getChannel(id: string): Promise<unknown>;
+		};
+		const primary = (await runtimeWithChannels.getChannel("primary")) as ISharedMap;
+		const secondary = (await runtimeWithChannels.getChannel("secondary")) as ISharedMap;
+		primary.on("valueChanged", (changed) => {
+			secondary.set(`mirror:${changed.key}`, "cascaded-value");
+		});
+		return channel;
+	}
+}
+
+describe("Submit during stashed-op apply (end-to-end)", () => {
+	it("rejects load when a valueChanged listener does a cross-map edit during apply", async () => {
+		const deltaConnectionServer = LocalDeltaConnectionServer.create();
+		const documentServiceFactory = new LocalDocumentServiceFactory(deltaConnectionServer);
+		const urlResolver = new LocalResolver();
+		const codeDetails = { package: "test" };
+
+		// 1. Create the container with two named SharedMaps, attach, write,
+		//    disconnect, write offline, capture pending local state.
+		const goodFactory = new TestFluidObjectFactory(
+			[
+				["primary", SharedMap.getFactory()],
+				["secondary", SharedMap.getFactory()],
+			],
+			"default",
+		);
+		const goodRuntimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
+			defaultFactory: goodFactory,
+			registryEntries: [[goodFactory.type, Promise.resolve(goodFactory)]],
+		});
+		const goodCodeLoader = new LocalCodeLoader([[codeDetails, goodRuntimeFactory]]);
+
+		const container = asLegacyAlpha(
+			await createDetachedContainer({
+				codeDetails,
+				codeLoader: goodCodeLoader,
+				documentServiceFactory,
+				urlResolver,
+			}),
+		);
+
+		const initialObject = (await container.getEntryPoint()) as ITestFluidObject;
+		const primary = await initialObject.getSharedObject<ISharedMap>("primary");
+		primary.set("pre-attach", "value");
+
+		await container.attach(urlResolver.createCreateNewRequest("submit-during-apply"));
+		primary.set("attached", "value");
+
+		const url = await container.getAbsoluteUrl("");
+		assert(url !== undefined, "container should have a URL after attach");
+
+		container.disconnect();
+		primary.set("offline", "value");
+
+		const pendingLocalState = await container.getPendingLocalState();
+		container.close();
+
+		// 2. Build a separate loader that, on existing=true loads, wires up a
+		//    valueChanged listener on `primary` that performs a cascading set
+		//    on `secondary`.
+		const reactingFactory = new ReactingMapFactory(goodFactory);
+		const reactingRuntimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
+			defaultFactory: reactingFactory,
+			registryEntries: [[reactingFactory.type, Promise.resolve(reactingFactory)]],
+		});
+		const reactingCodeLoader = new LocalCodeLoader([[codeDetails, reactingRuntimeFactory]]);
+
+		// 3. The stashed `offline` op fires `valueChanged` on `primary` during
+		//    apply; the listener's `secondary.set` reaches the runtime's
+		//    submit guard (a different channel from the one in applyStashedOp,
+		//    so the channel-level stashedOpMd capture doesn't swallow it), and
+		//    the load rejects.
+		await assert.rejects(
+			loadExistingContainer({
+				codeLoader: reactingCodeLoader,
+				documentServiceFactory,
+				urlResolver,
+				request: { url },
+				pendingLocalState,
+			}),
+			(error: Error & { message?: string }) =>
+				error.message?.includes("Local op submitted during stashed-op apply window") === true,
+		);
+	});
+});
