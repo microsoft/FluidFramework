@@ -200,6 +200,8 @@ export async function loadContainer(
 		"Fluid.Container.summarizeProtocolTree2": true,
 		// This is to align with the snapshot tests which may upgrade GC Version before the default is changed.
 		"Fluid.GarbageCollection.GCVersionUpgradeToV4": false,
+		// manually enable offline full mode while this flag is still not true by default.
+		"Fluid.Container.enableOfflineFull": true,
 	};
 	const configProvider: IConfigProviderBase = {
 		getRawConfig: (name: string): ConfigTypes => settings[name],
