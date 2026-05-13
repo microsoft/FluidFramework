@@ -69,16 +69,19 @@ _See code: [src/commands/check/buildVersion.ts](https://github.com/microsoft/Flu
 
 ## `flub check bundleSize`
 
-Compare the locally-collected bundle reports against the CI build of the merge-base commit (the commit on the target branch the local branch is based on) and print the diff. Prints a human-readable summary by default; pass --json for the structured result.
+Compare the locally-collected bundle reports against the CI build of the merge-base commit (between HEAD and a target ref) and print the diff. By default, the target is auto-detected as `<canonical-remote>/main` where `<canonical-remote>` is whichever remote points at `microsoft/FluidFramework`; pass `--target` to override. Prints a human-readable summary by default; pass --json for the structured result.
 
 ```
 USAGE
-  $ flub check bundleSize [--json] [-v | --quiet] [--localReportPath <value>] [--targetBranch <value>]
+  $ flub check bundleSize [--json] [-v | --quiet] [--localReportPath <value>] [--target <value>]
 
 FLAGS
   --localReportPath=<value>  [default: ./artifacts/bundleAnalyzerJson] Path to the locally-collected bundle reports (as
                              produced by `flub generate bundleStats`).
-  --targetBranch=<value>     [default: main] Name of the target branch to compute the baseline from.
+  --target=<value>           Target ref — the ref you'd be PRing against. Typically `<remote>/<branch>` (e.g.
+                             'upstream/main', 'origin/release/2.x'), but accepts any ref `git merge-base` understands.
+                             Skips auto-detection of the canonical remote. The bundles aren't compared against this ref
+                             directly — the baseline commit is `git merge-base <target> HEAD`.
 
 LOGGING FLAGS
   -v, --verbose  Enable verbose logging.
@@ -88,9 +91,10 @@ GLOBAL FLAGS
   --json  Format output as json.
 
 DESCRIPTION
-  Compare the locally-collected bundle reports against the CI build of the merge-base commit (the commit on the target
-  branch the local branch is based on) and print the diff. Prints a human-readable summary by default; pass --json for
-  the structured result.
+  Compare the locally-collected bundle reports against the CI build of the merge-base commit (between HEAD and a target
+  ref) and print the diff. By default, the target is auto-detected as `<canonical-remote>/main` where
+  `<canonical-remote>` is whichever remote points at `microsoft/FluidFramework`; pass `--target` to override. Prints a
+  human-readable summary by default; pass --json for the structured result.
 ```
 
 _See code: [src/commands/check/bundleSize.ts](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/src/commands/check/bundleSize.ts)_
