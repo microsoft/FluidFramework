@@ -4876,10 +4876,11 @@ export class ContainerRuntime
 		// is asserted to bypass `submit()` entirely (see the assert below),
 		// but is allowlisted here defensively in case that contract shifts.
 		//
-		// Kill switch: when `DisableSubmitDuringStashedApplyThrow` is enabled,
-		// we still construct and surface the error event to telemetry, but
-		// do not throw — leaves an off-switch if a first- or third-party
-		// DDS in production quietly bypasses the readonly gate.
+		// Always surface the error event to telemetry on a bypass so we can
+		// attribute incidents regardless of the kill-switch state. The kill
+		// switch `DisableSubmitDuringStashedApplyThrow` only suppresses the
+		// throw + container close, leaving an off-switch if a first- or
+		// third-party DDS in production quietly bypasses the readonly gate.
 		if (
 			this.pendingStateManager.isApplyingStashedOps &&
 			containerRuntimeMessage.type !== ContainerMessageType.BlobAttach &&
@@ -4888,13 +4889,12 @@ export class ContainerRuntime
 			const error = new UsageError("Local op submitted during stashed-op apply window", {
 				messageType: containerRuntimeMessage.type,
 			});
+			this.mc.logger.sendErrorEvent({ eventName: "SubmitDuringStashedOpApply" }, error);
 			if (
 				this.mc.config.getBoolean(
 					"Fluid.ContainerRuntime.DisableSubmitDuringStashedApplyThrow",
-				) === true
+				) !== true
 			) {
-				this.mc.logger.sendErrorEvent({ eventName: "SubmitDuringStashedOpApply" }, error);
-			} else {
 				throw error;
 			}
 		}

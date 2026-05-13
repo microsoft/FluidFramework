@@ -1641,7 +1641,7 @@ describe("Runtime", () => {
 				});
 			}
 
-			it("throws a fatal usage error from submitMessage", async () => {
+			it("throws a fatal usage error from submitMessage and logs", async () => {
 				await createRuntime();
 				setApplyingStashedOps(true);
 				assert.throws(
@@ -1650,6 +1650,13 @@ describe("Runtime", () => {
 						error.errorType === ContainerErrorTypes.usageError &&
 						error.message === "Local op submitted during stashed-op apply window",
 				);
+				mockLogger.assertMatchAny([
+					{
+						eventName: "ContainerRuntime:SubmitDuringStashedOpApply",
+						category: "error",
+						messageType: ContainerMessageType.FluidDataStoreOp,
+					},
+				]);
 			});
 
 			it("does not throw when the apply window is closed", async () => {

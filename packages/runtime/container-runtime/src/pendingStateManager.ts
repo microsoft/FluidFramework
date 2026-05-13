@@ -519,71 +519,61 @@ export class PendingStateManager implements IDisposable {
 			return;
 		}
 
-		// The apply window was opened eagerly in the constructor when there
-		// was any stashed work. We close it on full successful drain only —
-		// `loopCompleted` distinguishes a clean exit from an apply error,
-		// since a message is shifted off `initialMessages` *before* it is
-		// applied, so on error `initialMessages.isEmpty()` would otherwise
-		// look like a successful drain. An apply error leaves the lifecycle
-		// at "applying"; the load is fatal so there's no recoverable state.
-		let loopCompleted = false;
-		try {
-			// apply stashed ops at sequence number
-			while (!this.initialMessages.isEmpty()) {
-				if (seqNum !== undefined) {
-					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-					const peekMessage = this.initialMessages.peekFront()!;
-					if (peekMessage.referenceSequenceNumber > seqNum) {
-						break; // nothing left to do at this sequence number
-					}
-					if (peekMessage.referenceSequenceNumber < seqNum) {
-						throw new Error("loaded from snapshot too recent to apply stashed ops");
-					}
-				}
+		// apply stashed ops at sequence number
+		while (!this.initialMessages.isEmpty()) {
+			if (seqNum !== undefined) {
 				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-				const nextMessage = this.initialMessages.shift()!;
-				// Nothing to apply if the message is an empty batch.
-				// We still need to track it for resubmission.
-				try {
-					if (isEmptyBatchPendingMessage(nextMessage)) {
-						nextMessage.localOpMetadata = {
-							emptyBatch: true,
-						} satisfies LocalEmptyBatchPlaceholder["localOpMetadata"]; // equivalent to applyStashedOp for empty batch
-						patchbatchInfo(nextMessage); // Back compat
-						this.pendingMessages.push(nextMessage);
-						continue;
-					}
-					// applyStashedOp will cause the DDS to behave as if it has sent the op but not actually send it
-					const localOpMetadata = await this.stateHandler.applyStashedOp(nextMessage.content);
-					if (this.stateHandler.isAttached()) {
-						nextMessage.localOpMetadata = localOpMetadata;
-						// NOTE: This runtimeOp has been roundtripped through string, which is technically lossy.
-						// e.g. At this point, handles are in their encoded form.
-						nextMessage.runtimeOp = JSON.parse(
-							nextMessage.content,
-						) as LocalContainerRuntimeMessage;
-						// then we push onto pendingMessages which will cause PendingStateManager to resubmit when we connect
-						patchbatchInfo(nextMessage); // Back compat
-						this.pendingMessages.push(nextMessage);
-					} else {
-						if (localOpMetadata !== undefined) {
-							throw new Error("Local Op Metadata must be undefined when not attached");
-						}
-					}
-				} catch (error) {
-					throw DataProcessingError.wrapIfUnrecognized(error, "applyStashedOp", nextMessage);
+				const peekMessage = this.initialMessages.peekFront()!;
+				if (peekMessage.referenceSequenceNumber > seqNum) {
+					break; // nothing left to do at this sequence number
+				}
+				if (peekMessage.referenceSequenceNumber < seqNum) {
+					throw new Error("loaded from snapshot too recent to apply stashed ops");
 				}
 			}
-			loopCompleted = true;
-		} finally {
-			if (
-				loopCompleted &&
-				this._applyLifecycle === "applying" &&
-				this.initialMessages.isEmpty()
-			) {
-				this._applyLifecycle = "ended";
-				this.hooks.onAfterStashedOpsApplied?.();
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			const nextMessage = this.initialMessages.shift()!;
+			// Nothing to apply if the message is an empty batch.
+			// We still need to track it for resubmission.
+			try {
+				if (isEmptyBatchPendingMessage(nextMessage)) {
+					nextMessage.localOpMetadata = {
+						emptyBatch: true,
+					} satisfies LocalEmptyBatchPlaceholder["localOpMetadata"]; // equivalent to applyStashedOp for empty batch
+					patchbatchInfo(nextMessage); // Back compat
+					this.pendingMessages.push(nextMessage);
+					continue;
+				}
+				// applyStashedOp will cause the DDS to behave as if it has sent the op but not actually send it
+				const localOpMetadata = await this.stateHandler.applyStashedOp(nextMessage.content);
+				if (this.stateHandler.isAttached()) {
+					nextMessage.localOpMetadata = localOpMetadata;
+					// NOTE: This runtimeOp has been roundtripped through string, which is technically lossy.
+					// e.g. At this point, handles are in their encoded form.
+					nextMessage.runtimeOp = JSON.parse(
+						nextMessage.content,
+					) as LocalContainerRuntimeMessage;
+					// then we push onto pendingMessages which will cause PendingStateManager to resubmit when we connect
+					patchbatchInfo(nextMessage); // Back compat
+					this.pendingMessages.push(nextMessage);
+				} else {
+					if (localOpMetadata !== undefined) {
+						throw new Error("Local Op Metadata must be undefined when not attached");
+					}
+				}
+			} catch (error) {
+				throw DataProcessingError.wrapIfUnrecognized(error, "applyStashedOp", nextMessage);
 			}
+		}
+
+		// The apply window was opened eagerly in the constructor when there
+		// was any stashed work. We close it on full successful drain only.
+		// If an apply throws above, control never reaches here and the
+		// lifecycle stays at "applying" — the load is fatal so there's no
+		// recoverable state.
+		if (this._applyLifecycle === "applying" && this.initialMessages.isEmpty()) {
+			this._applyLifecycle = "ended";
+			this.hooks.onAfterStashedOpsApplied?.();
 		}
 	}
 
