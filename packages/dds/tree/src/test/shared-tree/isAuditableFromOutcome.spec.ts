@@ -15,8 +15,6 @@ import {
 	type ModularChangeset,
 	fieldKinds,
 	type SchemaChange,
-	FieldBatchFormatVersion,
-	type FieldBatchCodec,
 } from "../../feature-libraries/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { isAuditableFromOutcome } from "../../shared-tree/isAuditableFromOutcome.js";
@@ -32,12 +30,6 @@ const codecOptions = {
 	jsonValidator: ajvValidator,
 	minVersionForCollab: currentVersion,
 } as const satisfies CodecWriteOptions;
-const fieldBatchCodec = {
-	encode: () => assert.fail("Unexpected encode"),
-	decode: () => assert.fail("Unexpected decode"),
-	writeVersion: FieldBatchFormatVersion.v2,
-} as const satisfies FieldBatchCodec;
-
 const modularFamily = new ModularChangeFamily(fieldKinds, failCodecFamily, codecOptions);
 const dataChanges: ModularChangeset[] = [];
 const editor = new DefaultEditBuilder(
