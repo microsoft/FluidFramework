@@ -3,5 +3,4 @@
  * Licensed under the MIT License.
  */
 
-export { A, b, c, InternalTypes, A as OtherA } from "./exports.js";
-export { A as OtherA2 } from "./exports.js";
+export { A, A as OtherA, A as OtherA2, b, c, InternalTypes } from "./exports.js";
