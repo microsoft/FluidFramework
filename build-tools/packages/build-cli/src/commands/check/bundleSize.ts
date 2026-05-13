@@ -113,11 +113,15 @@ export default class CheckBundleSize extends BaseCommand<typeof CheckBundleSize>
 			for (const [metricName, { baseline, compare }] of Object.entries(
 				bundle.commonBundleMetrics,
 			)) {
-				const delta = compare.parsedSize - baseline.parsedSize;
-				if (delta === 0) continue;
-				const sign = delta > 0 ? "+" : "";
+				const parsedDelta = compare.parsedSize - baseline.parsedSize;
+				const gzipDelta = compare.gzipSize - baseline.gzipSize;
+				if (parsedDelta === 0 && gzipDelta === 0) continue;
+				const fmt = (before: number, after: number, delta: number): string => {
+					const sign = delta > 0 ? "+" : "";
+					return `${before} -> ${after} (${sign}${delta})`;
+				};
 				this.log(
-					`    ${metricName}: ${baseline.parsedSize} -> ${compare.parsedSize} (${sign}${delta})`,
+					`    ${metricName}: parsed ${fmt(baseline.parsedSize, compare.parsedSize, parsedDelta)}, gzip ${fmt(baseline.gzipSize, compare.gzipSize, gzipDelta)}`,
 				);
 			}
 		}

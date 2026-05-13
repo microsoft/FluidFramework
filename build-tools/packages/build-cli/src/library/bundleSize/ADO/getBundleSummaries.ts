@@ -31,7 +31,10 @@ export async function getBundleSummariesFromAnalyzer(
 		const metrics: BundleMetricSet = new Map();
 		for (const entry of entries) {
 			if (entry.isAsset) {
-				metrics.set(entry.label, { parsedSize: entry.parsedSize });
+				metrics.set(entry.label, {
+					parsedSize: entry.parsedSize,
+					gzipSize: entry.gzipSize,
+				});
 			}
 		}
 

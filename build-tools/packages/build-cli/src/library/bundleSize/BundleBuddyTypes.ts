@@ -19,6 +19,7 @@ export type BundleMetricSet = Map<string, BundleMetric>;
  */
 export interface BundleMetric {
 	parsedSize: number;
+	gzipSize: number;
 }
 
 /**

@@ -54,7 +54,10 @@ export function bundlesContainNoChanges(comparisons: BundleComparison[]): boolea
 	for (const { commonBundleMetrics } of comparisons) {
 		const metrics = Object.values(commonBundleMetrics);
 		for (const { baseline, compare } of metrics) {
-			if (baseline.parsedSize !== compare.parsedSize) {
+			if (
+				baseline.parsedSize !== compare.parsedSize ||
+				baseline.gzipSize !== compare.gzipSize
+			) {
 				return false;
 			}
 		}
