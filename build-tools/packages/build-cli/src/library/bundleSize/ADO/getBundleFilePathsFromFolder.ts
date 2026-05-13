@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { sourcePackageFromAnalyzerPath } from "../sourcePackageFromAnalyzerPath.js";
-
 export interface BundleFileData {
 	bundleName: string;
 
@@ -13,22 +11,36 @@ export interface BundleFileData {
 	relativePathToConfigFile: string | undefined;
 }
 
+function getBundleNameFromPath(relativePath: string): string {
+	// Our artifacts are stored in the the format /<npm scope>/<package name>[/<bundle name>]/<file name>.
+	// We want to use the npm scope + package name as the bundle name.
+	// The regex here normalized the slashes in the path names.
+	const pathParts = relativePath.replace(/\\/g, "/").split("/");
+
+	if (pathParts.length < 3) {
+		throw Error(`Could not derive a bundle name from this path: ${relativePath}`);
+	}
+	pathParts.pop(); // Remove the filename
+
+	return pathParts.join("/");
+}
+
 /**
  * Filters the given paths down to `analyzer.json` files (one per source package),
- * pairing each with its source-package name.
+ * pairing each with its derived bundle name.
  */
 export function getAnalyzerFilePathsFromFolder(
 	relativePathsInFolder: string[],
 ): BundleFileData[] {
-	const results: BundleFileData[] = [];
-	for (const relativePath of relativePathsInFolder) {
-		const bundleName = sourcePackageFromAnalyzerPath(relativePath);
-		if (bundleName === undefined) continue;
-		results.push({
-			bundleName,
+	return relativePathsInFolder
+		.filter((relativePath) => {
+			// Normalize backslashes so the same logic handles both Windows and POSIX path separators.
+			const fileName = relativePath.replace(/\\/g, "/").split("/").pop();
+			return fileName === "analyzer.json";
+		})
+		.map((relativePath) => ({
+			bundleName: getBundleNameFromPath(relativePath),
 			relativePathToStatsFile: relativePath,
 			relativePathToConfigFile: undefined,
-		});
-	}
-	return results;
+		}));
 }
