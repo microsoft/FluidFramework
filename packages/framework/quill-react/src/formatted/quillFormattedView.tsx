@@ -11,8 +11,8 @@ import {
 } from "@fluidframework/react/internal";
 import { TreeAlpha, FormattedTextAsTree } from "@fluidframework/tree/internal";
 export { FormattedTextAsTree } from "@fluidframework/tree/internal";
-import Quill, { type EmitterSource } from "quill";
 import DeltaPackage from "quill-delta";
+import Quill, { type EmitterSource } from "quill-next";
 import { type FC, useEffect, useRef, useState } from "react";
 import * as ReactDOM from "react-dom";
 

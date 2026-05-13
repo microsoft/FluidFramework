@@ -3795,9 +3795,9 @@ importers:
       fluid-framework:
         specifier: workspace:~
         version: link:../../../packages/framework/fluid-framework
-      quill:
-        specifier: ^2.0.3
-        version: 2.0.3
+      quill-next:
+        specifier: ^2.2.4
+        version: 2.2.4
       react:
         specifier: ^18.3.1
         version: 18.3.1
@@ -11838,12 +11838,12 @@ importers:
       '@fluidframework/tree':
         specifier: workspace:~
         version: link:../../dds/tree
-      quill:
-        specifier: ^2.0.3
-        version: 2.0.3
       quill-delta:
         specifier: ^5.1.0
         version: 5.1.0
+      quill-next:
+        specifier: ^2.2.4
+        version: 2.2.4
       react:
         specifier: ^18.3.1
         version: 18.3.1
@@ -19722,6 +19722,10 @@ packages:
     engines: {node: '>=18'}
     hasBin: true
 
+  '@quill-next/delta-es@5.2.12':
+    resolution: {integrity: sha512-6Gz6kZ7vMoflDs70dLOO7hktE8JjaiYwQocCGH3ij/rSbnYIDhj8yF9jAjnBqDfG6R+P65NwsrApELtyNM5tBg==}
+    engines: {node: '>= 12.0.0'}
+
   '@rushstack/eslint-plugin@0.22.1':
     resolution: {integrity: sha512-j2bVPgddSBs0iPed2l40Ssa/bmKr6YkaI3jv7Z1fH2Zlu/RcpgFOZWH0ls8ZQEqaA63A3oRmVXxnmmX/7FJb8w==}
     peerDependencies:
@@ -25792,8 +25796,8 @@ packages:
     resolution: {integrity: sha512-X74oCeRI4/p0ucjb5Ma8adTXd9Scumz367kkMK5V/IatcX6A0vlgLgKbzXWy5nZmCGeNJm2oQX0d2Eqj+ZIlCA==}
     engines: {node: '>= 12.0.0'}
 
-  quill@2.0.3:
-    resolution: {integrity: sha512-xEYQBqfYx/sfb33VJiKnSJp8ehloavImQ2A6564GAbqG55PGw1dAWUn1MUbQB62t0azawUS2CZZhWCjO8gRvTw==}
+  quill-next@2.2.4:
+    resolution: {integrity: sha512-j8SK4AAr+PsKFSS0ywE5sxaHvHuKoDpbDMvbGhVnNBXCRNCODQMgqFvhh3J6FCr94WPu+2roFRapLMW7Qjlb+Q==}
     engines: {npm: '>=8.2.3'}
 
   random-js@2.1.0:
@@ -32678,6 +32682,11 @@ snapshots:
     transitivePeerDependencies:
       - bare-buffer
       - supports-color
+
+  '@quill-next/delta-es@5.2.12':
+    dependencies:
+      fast-diff: 1.3.0
+      lodash-es: 4.18.1
 
   '@rushstack/eslint-plugin@0.22.1(eslint@9.39.1(jiti@2.6.1))(typescript@5.4.5)':
     dependencies:
@@ -40094,12 +40103,12 @@ snapshots:
       lodash.clonedeep: 4.5.0
       lodash.isequal: 4.5.0
 
-  quill@2.0.3:
+  quill-next@2.2.4:
     dependencies:
+      '@quill-next/delta-es': 5.2.12
       eventemitter3: 5.0.1
       lodash-es: 4.18.1
       parchment: 3.0.0
-      quill-delta: 5.1.0
 
   random-js@2.1.0: {}
 

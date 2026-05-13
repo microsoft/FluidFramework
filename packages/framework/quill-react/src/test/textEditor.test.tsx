@@ -61,10 +61,6 @@ function createFormattedTreeViewWithEvents(
 // TODO add collaboration tests when rich formatting is supported using TestContainerRuntimeFactory from
 // @fluidframework/test-utils to test rich formatting data sync between multiple collaborators
 describe("textEditor", () => {
-	// Note: JSDOM is initialized once in mochaHooks.ts before Quill is imported,
-	// since Quill requires document at import time. See src/test/mochaHooks.ts.
-	// These tests reset up a clean DOM.
-
 	let cleanup: () => void;
 
 	// TODO: why does making this beforeEach/afterEach instead of before/after cause cleanup to crash?

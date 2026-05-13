@@ -9,6 +9,7 @@ import { strict as assert } from "node:assert";
 import { FormattedTextAsTree, type TreeViewAlpha } from "@fluidframework/tree/internal";
 import { render } from "@testing-library/react";
 import { TextAsTree, independentView } from "fluid-framework/alpha";
+import globalJsdom from "global-jsdom";
 
 import { App, TextEditorRoot, treeConfig } from "../app.js";
 
@@ -29,6 +30,16 @@ function createFormattedTreeView(initialValue = ""): TreeViewAlpha<typeof TextEd
 // TODO add collaboration tests when rich formatting is supported using TestContainerRuntimeFactory from
 // @fluidframework/test-utils to test rich formatting data sync between multiple collaborators
 describe("app", () => {
+	let cleanup: () => void;
+
+	before(() => {
+		cleanup = globalJsdom();
+	});
+
+	after(() => {
+		cleanup();
+	});
+
 	it("renders MainView", () => {
 		const content = (
 			<App
