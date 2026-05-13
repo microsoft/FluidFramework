@@ -933,6 +933,24 @@ describe("Pending State Manager", () => {
 				assert.strictEqual(psm.isApplyingStashedOps, false);
 			});
 
+			it("leaves lifecycle in 'applying' and does not fire close hook when the last apply throws", async () => {
+				let afterCount = 0;
+				const failingHandler: IRuntimeStateHandler = {
+					...stateHandler(),
+					applyStashedOp: async () => {
+						throw new Error("apply failed");
+					},
+				};
+				const psm = new PendingStateManager(
+					failingHandler,
+					{ pendingStates: [stashedMessage(10, 1)] },
+					logger,
+					{ onAfterStashedOpsApplied: () => afterCount++ },
+				);
+				await assert.rejects(psm.applyStashedOpsAt());
+				assert.strictEqual(psm.isApplyingStashedOps, true);
+				assert.strictEqual(afterCount, 0);
+			});
 		});
 	});
 

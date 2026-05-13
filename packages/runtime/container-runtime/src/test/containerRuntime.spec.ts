@@ -1602,7 +1602,7 @@ describe("Runtime", () => {
 			let containerRuntime: ContainerRuntime;
 
 			beforeEach(async () => {
-				containerRuntime = await ContainerRuntime.loadRuntime2({
+				const { runtime } = await ContainerRuntime.loadRuntime2({
 					context: getMockContext() as IContainerContext,
 					registry: new FluidDataStoreRegistry([]),
 					existing: false,
@@ -1610,11 +1610,13 @@ describe("Runtime", () => {
 					runtimeOptions: {},
 					provideEntryPoint: mockProvideEntryPoint,
 				});
+				containerRuntime = runtime;
 			});
 
 			function setApplyingStashedOps(isApplying: boolean): void {
-				const psm = (containerRuntime as unknown as { pendingStateManager: PendingStateManager })
-					.pendingStateManager;
+				const psm = (
+					containerRuntime as unknown as { pendingStateManager: PendingStateManager }
+				).pendingStateManager;
 				Object.defineProperty(psm, "isApplyingStashedOps", {
 					configurable: true,
 					get: () => isApplying,

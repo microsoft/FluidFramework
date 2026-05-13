@@ -525,9 +525,13 @@ export class PendingStateManager implements IDisposable {
 		}
 
 		// The apply window was opened eagerly in the constructor when there
-		// was any stashed work. We close it the first time we drain
-		// `initialMessages`. An apply error leaves the lifecycle at
-		// "applying"; the load is fatal so there's no recoverable state.
+		// was any stashed work. We close it on full successful drain only —
+		// `loopCompleted` distinguishes a clean exit from an apply error,
+		// since a message is shifted off `initialMessages` *before* it is
+		// applied, so on error `initialMessages.isEmpty()` would otherwise
+		// look like a successful drain. An apply error leaves the lifecycle
+		// at "applying"; the load is fatal so there's no recoverable state.
+		let loopCompleted = false;
 		try {
 			// apply stashed ops at sequence number
 			while (!this.initialMessages.isEmpty()) {
@@ -575,8 +579,13 @@ export class PendingStateManager implements IDisposable {
 					throw DataProcessingError.wrapIfUnrecognized(error, "applyStashedOp", nextMessage);
 				}
 			}
+			loopCompleted = true;
 		} finally {
-			if (this._applyLifecycle === "applying" && this.initialMessages.isEmpty()) {
+			if (
+				loopCompleted &&
+				this._applyLifecycle === "applying" &&
+				this.initialMessages.isEmpty()
+			) {
 				this._applyLifecycle = "ended";
 				this.hooks.onAfterStashedOpsApplied?.();
 			}
