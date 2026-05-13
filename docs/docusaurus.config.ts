@@ -21,7 +21,11 @@ const isTypesenseConfigured = TYPESENSE_HOST !== undefined && TYPESENSE_API_KEY 
 // Each entry is [field, weight, allowedTypos]. Order determines priority: first = highest ranked.
 // allowedTypos controls typo tolerance per field: 0 = exact match only, 1 = one typo allowed.
 const typesenseSearchFields: [field: string, weight: number, allowedTypos: number][] = [
+<<<<<<< HEAD
 	["hierarchy.lvl1", 20, 1],
+=======
+	["hierarchy.lvl1", 10, 1],
+>>>>>>> main
 	["hierarchy.lvl2", 5, 1],
 	["hierarchy.lvl3", 4, 1],
 	["hierarchy.lvl4", 3, 1],

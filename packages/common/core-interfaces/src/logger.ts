@@ -81,13 +81,15 @@ export interface LogLevelConst {
 
 	/**
 	 * Default LogLevel
-	 * @remarks Prefer {@link LogLevelConst.info | LogLevel.info} when selecting a level explicitly since this will be deprecated and removed in a future release.
+	 * @deprecated Prefer {@link LogLevelConst.info | LogLevel.info} when selecting a level explicitly to preserve prior treatment. Planned to be removed in 3.0.0.
+	 * @see {@link https://github.com/microsoft/FluidFramework/issues/26969 | Issue #26969} for removal tracking.
 	 */
 	readonly default: 20;
 
 	/**
 	 * To log errors.
-	 * @remarks Prefer {@link LogLevelConst.essential | LogLevel.essential} when selecting a level since this will be deprecated and removed in a future release.
+	 * @deprecated Prefer {@link LogLevelConst.essential | LogLevel.essential} when selecting a level. Planned to be removed in 3.0.0.
+	 * @see {@link https://github.com/microsoft/FluidFramework/issues/26969 | Issue #26969} for removal tracking.
 	 */
 	readonly error: 30;
 }
@@ -120,13 +122,13 @@ export interface ITelemetryBaseLogger {
 	/**
 	 * Log a telemetry event, if it meets the appropriate log-level threshold (see {@link ITelemetryBaseLogger.minLogLevel}).
 	 * @param event - The event to log.
-	 * @param logLevel - The log level of the event. Default: {@link LogLevelConst.default | LogLevel.default}.
+	 * @param logLevel - The log level of the event. If undefined, the logLevel should be treated as {@link LogLevelConst.essential | LogLevel.essential}.
 	 */
 	send(event: ITelemetryBaseEvent, logLevel?: LogLevel): void;
 
 	/**
 	 * Minimum log level to be logged.
-	 * @defaultValue {@link LogLevelConst.default | LogLevel.default}.
+	 * @defaultValue {@link LogLevelConst.info | LogLevel.info}.
 	 */
 	minLogLevel?: LogLevel;
 }
