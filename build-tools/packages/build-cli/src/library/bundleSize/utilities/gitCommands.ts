@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { execSync } from "node:child_process";
+import { execFileSync } from "node:child_process";
 
 /**
  * Compute the merge-base of `HEAD` and the given ref. The ref may be any
@@ -12,7 +12,7 @@ import { execSync } from "node:child_process";
  * @returns The merge-base commit SHA.
  */
 export function getMergeBaseWithHead(targetRef: string): string {
-	return execSync(`git merge-base ${targetRef} HEAD`).toString().trim();
+	return execFileSync("git", ["merge-base", targetRef, "HEAD"]).toString().trim();
 }
 
 /**
@@ -39,9 +39,24 @@ function findCanonicalRemotes(): { name: string; url: string }[] {
 	// Read every `remote.<name>.url` config entry. `--all` returns every match
 	// (otherwise `--regexp` returns only the first); `--show-names` includes
 	// the key so the remote name can be extracted.
-	const output = execSync(
-		`git config get --all --show-names --regexp '^remote\\..*\\.url$'`,
-	).toString();
+	// The `git config get` subcommand requires git ≥ 2.46; fail fast with a
+	// targeted message if it isn't available rather than letting an unhandled
+	// child-process exception leak out.
+	let output: string;
+	try {
+		output = execFileSync(
+			"git",
+			["config", "get", "--all", "--show-names", "--regexp", "^remote\\..*\\.url$"],
+			{ stdio: ["ignore", "pipe", "pipe"] },
+		).toString();
+	} catch (error) {
+		const detail = error instanceof Error ? error.message : String(error);
+		throw new Error(
+			`Failed to read remote URLs via \`git config get --regexp\` (introduced in git 2.46). ` +
+				`Upgrade git, or pass --target <ref> to skip remote auto-detection.\n` +
+				`Underlying error: ${detail}`,
+		);
+	}
 	const line = /^remote\.(.+)\.url\s+(.+)$/;
 	const canonical = /(^|[/:])microsoft\/fluidframework(\.git)?$/i;
 	const matches: { name: string; url: string }[] = [];
@@ -64,7 +79,7 @@ function findCanonicalRemotes(): { name: string; url: string }[] {
  */
 function resolveTip(ref: string): string | undefined {
 	try {
-		return execSync(`git rev-parse --verify ${ref}`, {
+		return execFileSync("git", ["rev-parse", "--verify", ref], {
 			// ignore stdin + stderr; capture stdout
 			stdio: ["ignore", "pipe", "ignore"],
 		})
@@ -84,7 +99,7 @@ function resolveTip(ref: string): string | undefined {
  */
 function isAncestor(ancestor: string, descendant: string): boolean {
 	try {
-		execSync(`git merge-base --is-ancestor ${ancestor} ${descendant}`, {
+		execFileSync("git", ["merge-base", "--is-ancestor", ancestor, descendant], {
 			// only care about exit code
 			stdio: "ignore",
 		});
