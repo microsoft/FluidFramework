@@ -431,8 +431,8 @@ export interface ISharedMapEvents extends ISharedObjectEvents {
  * @legacy @beta
  */
 export interface ISharedMap
-	// TODO: Use `unknown` instead (breaking change).
 	extends ISharedObject<ISharedMapEvents>,
+		// TODO: Use `unknown` instead (breaking change).
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		Map<string, any> {
 	/**
