@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
+import { assert, fail, unreachableCase } from "@fluidframework/core-utils/internal";
 
 import {
 	areEqualChangeAtomIds,
@@ -132,6 +132,10 @@ class RebaseQueue {
 
 			if (mark.type === "Rename") {
 				count = moveEffects.getNewRenameForBaseRename(mark.idOverride, count).length;
+				count = moveEffects.getBaseRename(
+					mark.cellId ?? fail("Rename mark should have cell ID"),
+					count,
+				).length;
 			}
 
 			return mark.cellId === undefined
@@ -392,8 +396,6 @@ function separateEffectsForMove(
 
 			const baseDetachId = getDetachedRootId(baseMark);
 			const outputCellId = getDetachOutputCellId(baseMark);
-
-			// XXX: Handle mark splitting.
 			const baseRootOutputId =
 				nodeManager.getBaseRename(baseDetachId, baseMark.count).value ?? baseDetachId;
 
