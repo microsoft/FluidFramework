@@ -1936,5 +1936,6 @@ export const shortCodeMap = {
 	"0xcf4": "must not be above root",
 	"0xcf5": "Unexpected indexOfChunkStack.length",
 	"0xcf6": "Unexpected indexWithinChunkStack.length",
-	"0xcf7": "Parent chunk not found in latest summary tracking"
+	"0xcf7": "Parent chunk not found in latest summary tracking",
+	"0xcf8": "Unexpected pending operation during revert"
 };
