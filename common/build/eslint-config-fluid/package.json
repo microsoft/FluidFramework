@@ -10,7 +10,12 @@
 	},
 	"license": "MIT",
 	"author": "Microsoft and contributors",
-	"main": "index.js",
+	"exports": {
+		".": "./index.mts",
+		"./flat.mts": "./flat.mts",
+		"./server.mts": "./server.mts"
+	},
+	"main": "./index.mts",
 	"scripts": {
 		"build": "npm run print-configs && npm run prettier",
 		"build:readme:disabled": "markdown-magic --files \"**/*.md\"",
@@ -25,7 +30,6 @@
 	"dependencies": {
 		"@eslint-community/eslint-plugin-eslint-comments": "~4.5.0",
 		"@eslint-react/eslint-plugin": "~2.13.0",
-		"@eslint/eslintrc": "~3.3.3",
 		"@eslint/js": "~9.39.2",
 		"@fluid-internal/eslint-plugin-fluid": "^0.4.1",
 		"@rushstack/eslint-plugin": "~0.22.1",

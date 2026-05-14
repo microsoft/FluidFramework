@@ -10,6 +10,7 @@ import type {
 	IConfigProviderBase,
 	ITelemetryBaseEvent,
 } from "@fluidframework/core-interfaces";
+import { LogLevel } from "@fluidframework/core-interfaces";
 import type { InternalCoreInterfacesUtilityTypes } from "@fluidframework/core-interfaces/internal";
 
 import type { ITelemetryLoggerExt as ITelemetryLoggerExtInternal } from "@fluidframework/telemetry-utils/internal";
@@ -359,6 +360,75 @@ describe("Sampling", () => {
 				true,
 			);
 		}
+	});
+
+	describe("logLevel forwarding", () => {
+		function createCapturingLogger(): {
+			logger: TelemetryLoggerExt;
+			captures: { method: string; logLevel: LogLevel | undefined }[];
+		} {
+			const captures: { method: string; logLevel: LogLevel | undefined }[] = [];
+			const logger: TelemetryLoggerExt = {
+				send: (_event, logLevel): void => {
+					captures.push({ method: "send", logLevel });
+				},
+				sendTelemetryEvent: (_event, _error, logLevel): void => {
+					captures.push({ method: "sendTelemetryEvent", logLevel });
+				},
+				sendErrorEvent: (_event, _error): void => {
+					captures.push({ method: "sendErrorEvent", logLevel: undefined });
+				},
+				sendPerformanceEvent: (_event, _error, logLevel): void => {
+					captures.push({ method: "sendPerformanceEvent", logLevel });
+				},
+			};
+			const wrapped = mixinMonitoringContext(logger, {
+				getRawConfig: (): ConfigTypes => undefined,
+			}).logger;
+			return { logger: wrapped, captures };
+		}
+
+		it("Forwards explicit logLevel through `sendTelemetryEvent` to the wrapped logger", () => {
+			const { logger, captures } = createCapturingLogger();
+			const sampled = createSampledLogger(logger);
+
+			sampled.sendTelemetryEvent({ eventName: "x" }, undefined, LogLevel.verbose);
+
+			assert.deepStrictEqual(captures, [
+				{ method: "sendTelemetryEvent", logLevel: LogLevel.verbose },
+			]);
+		});
+
+		it("Forwards explicit logLevel through `sendPerformanceEvent` to the wrapped logger", () => {
+			const { logger, captures } = createCapturingLogger();
+			const sampled = createSampledLogger(logger);
+
+			sampled.sendPerformanceEvent({ eventName: "x" }, undefined, LogLevel.info);
+
+			assert.deepStrictEqual(captures, [
+				{ method: "sendPerformanceEvent", logLevel: LogLevel.info },
+			]);
+		});
+
+		it("Forwards explicit logLevel through `send` to the wrapped logger", () => {
+			const { logger, captures } = createCapturingLogger();
+			const sampled = createSampledLogger(logger);
+
+			sampled.send({ category: "generic", eventName: "x" }, LogLevel.verbose);
+
+			assert.deepStrictEqual(captures, [{ method: "send", logLevel: LogLevel.verbose }]);
+		});
+
+		it("Forwards undefined logLevel when caller omits it", () => {
+			const { logger, captures } = createCapturingLogger();
+			const sampled = createSampledLogger(logger);
+
+			sampled.sendTelemetryEvent({ eventName: "x" });
+
+			assert.deepStrictEqual(captures, [
+				{ method: "sendTelemetryEvent", logLevel: undefined },
+			]);
+		});
 	});
 });
 
