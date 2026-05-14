@@ -204,6 +204,7 @@ describe("GenericField", () => {
 	describe("Encoding", () => {
 		const baseContext = {
 			originatorId: "session1" as SessionId,
+			isSummary: false,
 			revision: undefined,
 			idCompressor: testIdCompressor,
 		};

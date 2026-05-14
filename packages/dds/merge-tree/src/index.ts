@@ -127,6 +127,7 @@ export {
 	type InteriorSequencePlace,
 	Side,
 	type SequencePlace,
+	defaultSide,
 	endpointPosAndSide,
 } from "./sequencePlace.js";
 export { SortedSet } from "./sortedSet.js";

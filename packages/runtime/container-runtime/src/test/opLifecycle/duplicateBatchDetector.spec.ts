@@ -217,13 +217,11 @@ describe("DuplicateBatchDetector", () => {
 			detector.processInboundBatch(inboundBatch1);
 			detector.processInboundBatch(inboundBatch2);
 
-			let setCalled = 0;
+			const telemetrySets = new Map<string, unknown>();
 			const telemetryContext = {
 				set: (key: string, subKey: string, value: unknown) => {
-					++setCalled;
 					assert.equal(key, "fluid_DuplicateBatchDetector_");
-					assert.equal(subKey, "recentBatchCount");
-					assert.equal(value, 2);
+					telemetrySets.set(subKey, value);
 				},
 			} satisfies Partial<ITelemetryContext> as ITelemetryContext;
 
@@ -237,7 +235,57 @@ describe("DuplicateBatchDetector", () => {
 				],
 				"Incorrect recentBatchInfo",
 			);
-			assert.equal(setCalled, 1, "Expected telemetryContext.set to be called once");
+			assert.equal(telemetrySets.get("recentBatchCount"), 2);
+			assert.equal(telemetrySets.get("peakRecentBatchCount"), 2);
+			assert.equal(telemetrySets.get("processedBatchCount"), 2);
+		});
+
+		it("Per-window perf counters reset after each summary", () => {
+			detector.processInboundBatch(
+				makeBatch({
+					sequenceNumber: seqNum++, // 1
+					minimumSequenceNumber: 0,
+					batchId: "batch1",
+				}),
+			);
+			detector.processInboundBatch(
+				makeBatch({
+					sequenceNumber: seqNum++, // 2
+					minimumSequenceNumber: 0,
+					batchId: "batch2",
+				}),
+			);
+
+			const firstWindow = new Map<string, unknown>();
+			detector.getRecentBatchInfoForSummary({
+				set: (_key: string, subKey: string, value: unknown) => {
+					firstWindow.set(subKey, value);
+				},
+			} satisfies Partial<ITelemetryContext> as ITelemetryContext);
+			assert.equal(firstWindow.get("processedBatchCount"), 2);
+			assert.equal(firstWindow.get("peakRecentBatchCount"), 2);
+
+			// Process one more batch; MSN advances enough to drop both prior entries.
+			detector.processInboundBatch(
+				makeBatch({
+					sequenceNumber: seqNum++, // 3
+					minimumSequenceNumber: 3,
+					batchId: "batch3",
+				}),
+			);
+
+			const secondWindow = new Map<string, unknown>();
+			detector.getRecentBatchInfoForSummary({
+				set: (_key: string, subKey: string, value: unknown) => {
+					secondWindow.set(subKey, value);
+				},
+			} satisfies Partial<ITelemetryContext> as ITelemetryContext);
+			// Only one batch processed since the prior summary.
+			assert.equal(secondWindow.get("processedBatchCount"), 1);
+			// Peak in this window starts at the size carried over from the prior window (2)
+			// — peak only ever grows during a window. Current size after cleanup is 1.
+			assert.equal(secondWindow.get("peakRecentBatchCount"), 2);
+			assert.equal(secondWindow.get("recentBatchCount"), 1);
 		});
 	});
 });

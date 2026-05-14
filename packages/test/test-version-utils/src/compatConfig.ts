@@ -22,8 +22,8 @@ import {
 	odspEndpointName,
 } from "./compatOptions.js";
 import { pkgVersion } from "./packageVersion.js";
-import { ensurePackageInstalled } from "./testApi.js";
-import { getRequestedVersion, resolveVersion } from "./versionUtils.js";
+import { ensureVersionLoaded } from "./testApi.js";
+import { getRequestedVersion, resolveRangeViaRegistry } from "./versionUtils.js";
 
 /**
  * Represents a previous major release of a package based on the provided delta. For example, if the base version is 2.X and
@@ -62,7 +62,7 @@ export interface CompatConfig {
 	loadVersion?: string;
 }
 
-export const oldestCompatibleVersion = resolveVersion("2.0.0-internal.5.4.2", false);
+export const oldestCompatibleVersion = resolveRangeViaRegistry("2.0.0-internal.5.4.2");
 
 /**
  * The default versions to be used for generating configurations for layer compat testing.
@@ -514,16 +514,15 @@ export async function mochaGlobalSetup(): Promise<void> {
 		return;
 	}
 
-	// Load all versioned packages concurrently. The compat workspace is pre-installed via
-	// pnpm install (postinstall hook), so no install step is needed here.
+	// Load all versioned packages concurrently.
 	const versions = new Set(configs.map((value) => value.compatVersion));
-	const ensureInstalledP = Array.from(versions.values()).map(async (value) => {
+	const loadPromises = Array.from(versions.values()).map(async (value) => {
 		const version = testBaseVersion(value);
-		return ensurePackageInstalled(version, value);
+		return ensureVersionLoaded(version, value);
 	});
 
 	let error: unknown;
-	for (const p of ensureInstalledP) {
+	for (const p of loadPromises) {
 		try {
 			await p;
 		} catch (e) {
