@@ -6,7 +6,8 @@
 import { strict as assert } from "assert";
 
 import { describeCompat } from "@fluid-private/test-version-utils";
-import { type IContainer, IHostLoader } from "@fluidframework/container-definitions/internal";
+import { IHostLoader } from "@fluidframework/container-definitions/internal";
+import { asLegacyAlpha, ContainerAlpha } from "@fluidframework/container-loader/internal";
 import { DefaultSummaryConfiguration } from "@fluidframework/container-runtime/internal";
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
 import { toDeltaManagerInternal } from "@fluidframework/runtime-utils/internal";
@@ -88,7 +89,7 @@ describeCompat(
 		};
 
 		let provider: ITestObjectProvider;
-		let container1: IContainer;
+		let container1: ContainerAlpha;
 		let sharedString1: SharedString;
 		let sharedString2: SharedString;
 		let dataObject1: ITestFluidObject;
@@ -100,7 +101,7 @@ describeCompat(
 
 		beforeEach(async () => {
 			provider = getTestObjectProvider();
-			container1 = await provider.makeTestContainer(testContainerConfig);
+			container1 = asLegacyAlpha(await provider.makeTestContainer(testContainerConfig));
 			dataObject1 = await getContainerEntryPointBackCompat<ITestFluidObject>(container1);
 			sharedString1 = await dataObject1.getSharedObject<SharedString>(stringId);
 			sharedString1.insertText(0, "hello world");
@@ -115,7 +116,9 @@ describeCompat(
 
 			// pending ops stuff from e2e tests - make a new container, pause op processing,
 			// make a change, close the container, then resume op processing and reload container
-			const container: IContainer = await provider.loadTestContainer(testContainerConfig);
+			const container: ContainerAlpha = asLegacyAlpha(
+				await provider.loadTestContainer(testContainerConfig),
+			);
 			await waitForContainerConnection(container);
 			const dataStore = (await container.getEntryPoint()) as ITestFluidObject;
 
@@ -140,7 +143,7 @@ describeCompat(
 			provider.opProcessingController.resumeProcessing();
 			assert.ok(pendingState);
 
-			container1 = await provider.loadTestContainer(testContainerConfig);
+			container1 = asLegacyAlpha(await provider.loadTestContainer(testContainerConfig));
 			await waitForContainerConnection(container1);
 			dataObject1 = await getContainerEntryPointBackCompat<ITestFluidObject>(container1);
 			sharedString1 = await dataObject1.getSharedObject<SharedString>(stringId);

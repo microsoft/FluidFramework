@@ -4,7 +4,10 @@
 
 ```ts
 
-// @beta @legacy
+// @alpha @legacy
+export function asLegacyAlpha(base: IContainer): ContainerAlpha;
+
+// @alpha @legacy
 export function captureFullContainerState(input: ICaptureFullContainerStateProps): Promise<string>;
 
 // @public
@@ -15,10 +18,15 @@ export enum ConnectionState {
     EstablishingConnection = 3
 }
 
+// @alpha @sealed @legacy
+export interface ContainerAlpha extends IContainer {
+    getPendingLocalState(): Promise<string>;
+}
+
 // @beta @legacy
 export function createDetachedContainer(createDetachedContainerProps: ICreateDetachedContainerProps): Promise<IContainer>;
 
-// @beta @legacy
+// @alpha @legacy
 export function createFrozenDocumentServiceFactory(factory?: IDocumentServiceFactory | Promise<IDocumentServiceFactory>, readOnly?: boolean): IDocumentServiceFactory;
 
 // @beta @legacy (undocumented)
@@ -39,7 +47,7 @@ export interface IBaseProtocolHandler {
     snapshot(): IQuorumSnapshot;
 }
 
-// @beta @legacy
+// @alpha @legacy
 export interface ICaptureFullContainerStateProps {
     readonly documentServiceFactory: IDocumentServiceFactory;
     readonly logger?: ITelemetryBaseLogger | undefined;
@@ -106,7 +114,7 @@ export interface ILoadExistingContainerProps extends ICreateAndLoadContainerProp
     readonly request: IRequest;
 }
 
-// @beta @legacy
+// @alpha @legacy
 export interface ILoadFrozenContainerFromPendingStateProps extends ILoadExistingContainerProps {
     readonly pendingLocalState: string;
     readonly readOnly?: boolean;
@@ -182,7 +190,7 @@ export class Loader implements IHostLoader {
 // @beta @legacy
 export function loadExistingContainer(loadExistingContainerProps: ILoadExistingContainerProps): Promise<IContainer>;
 
-// @beta @legacy
+// @alpha @legacy
 export function loadFrozenContainerFromPendingState(props: ILoadFrozenContainerFromPendingStateProps): Promise<IContainer>;
 
 // @alpha @legacy
@@ -207,7 +215,7 @@ export interface OnDemandSummaryResults {
     readonly summarySubmitted: boolean;
 }
 
-// @beta @legacy
+// @alpha @legacy
 export class PendingLocalStateStore<TKey> {
     [Symbol.iterator](): Iterator<[TKey, string]>;
     clear(): void;

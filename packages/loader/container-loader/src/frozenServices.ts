@@ -50,7 +50,7 @@ import type { IConnectionStateChangeReason } from "./contracts.js";
  * manager, which is exactly the state needed to capture pending local state. Use `false` when
  * callers want to accrue and capture pending state without publishing it.
  * @returns A factory that produces frozen document services.
- * @legacy @beta
+ * @legacy @alpha
  */
 export function createFrozenDocumentServiceFactory(
 	factory?: IDocumentServiceFactory | Promise<IDocumentServiceFactory>,

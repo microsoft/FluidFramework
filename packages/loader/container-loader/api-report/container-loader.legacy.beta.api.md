@@ -4,9 +4,6 @@
 
 ```ts
 
-// @beta @legacy
-export function captureFullContainerState(input: ICaptureFullContainerStateProps): Promise<string>;
-
 // @public
 export enum ConnectionState {
     CatchingUp = 1,
@@ -17,9 +14,6 @@ export enum ConnectionState {
 
 // @beta @legacy
 export function createDetachedContainer(createDetachedContainerProps: ICreateDetachedContainerProps): Promise<IContainer>;
-
-// @beta @legacy
-export function createFrozenDocumentServiceFactory(factory?: IDocumentServiceFactory | Promise<IDocumentServiceFactory>, readOnly?: boolean): IDocumentServiceFactory;
 
 // @beta @legacy (undocumented)
 export interface IBaseProtocolHandler {
@@ -37,14 +31,6 @@ export interface IBaseProtocolHandler {
     setConnectionState(connected: boolean, clientId: string | undefined): any;
     // (undocumented)
     snapshot(): IQuorumSnapshot;
-}
-
-// @beta @legacy
-export interface ICaptureFullContainerStateProps {
-    readonly documentServiceFactory: IDocumentServiceFactory;
-    readonly logger?: ITelemetryBaseLogger | undefined;
-    readonly request: IRequest;
-    readonly urlResolver: IUrlResolver;
 }
 
 // @beta @deprecated @legacy (undocumented)
@@ -104,12 +90,6 @@ export interface ILoaderServices {
 export interface ILoadExistingContainerProps extends ICreateAndLoadContainerProps {
     readonly pendingLocalState?: string | undefined;
     readonly request: IRequest;
-}
-
-// @beta @legacy
-export interface ILoadFrozenContainerFromPendingStateProps extends ILoadExistingContainerProps {
-    readonly pendingLocalState: string;
-    readonly readOnly?: boolean;
 }
 
 // @beta @legacy
@@ -178,22 +158,6 @@ export class Loader implements IHostLoader {
 
 // @beta @legacy
 export function loadExistingContainer(loadExistingContainerProps: ILoadExistingContainerProps): Promise<IContainer>;
-
-// @beta @legacy
-export function loadFrozenContainerFromPendingState(props: ILoadFrozenContainerFromPendingStateProps): Promise<IContainer>;
-
-// @beta @legacy
-export class PendingLocalStateStore<TKey> {
-    [Symbol.iterator](): Iterator<[TKey, string]>;
-    clear(): void;
-    delete(key: TKey): boolean;
-    entries(): Iterator<[TKey, string]>;
-    get(key: TKey): string | undefined;
-    has(key: TKey): boolean;
-    keys(): IterableIterator<TKey>;
-    set(key: TKey, pendingLocalState: string): this;
-    get size(): number;
-}
 
 // @beta @legacy
 export type ProtocolHandlerBuilder = (attributes: IDocumentAttributes, snapshot: IQuorumSnapshot, sendProposal: (key: string, value: any) => number) => IProtocolHandler;

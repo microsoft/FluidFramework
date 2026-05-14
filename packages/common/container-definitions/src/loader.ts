@@ -468,8 +468,11 @@ export interface IContainer extends IEventProvider<IContainerEvents> {
 	 * WARNING: misuse of this API can result in duplicate op submission and potential
 	 * document corruption. The blob returned MUST be discarded if and when this container
 	 * emits a "connected" event.
+	 *
+	 * Optional during this minor release to preserve forward-compatibility for external
+	 * implementers of `IContainer`. A future breaking release will make this member required.
 	 */
-	getPendingLocalState(): Promise<string>;
+	getPendingLocalState?(): Promise<string>;
 
 	/**
 	 * Get an absolute URL for a provided container-relative request URL.

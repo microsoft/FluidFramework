@@ -6,7 +6,7 @@
 import { strict as assert } from "node:assert";
 
 import { AttachState } from "@fluidframework/container-definitions";
-import type { IContainer } from "@fluidframework/container-definitions/internal";
+import { asLegacyAlpha, type ContainerAlpha } from "@fluidframework/container-loader/internal";
 import type { IChannel } from "@fluidframework/datastore-definitions/internal";
 import { SummaryType } from "@fluidframework/driver-definitions";
 import { createIdCompressor } from "@fluidframework/id-compressor/internal";
@@ -1964,7 +1964,7 @@ describe("SharedTree", () => {
 			view1.initialize(["a"]);
 			await provider.ensureSynchronized();
 
-			const pausedContainer: IContainer = provider.containers[0];
+			const pausedContainer: ContainerAlpha = asLegacyAlpha(provider.containers[0]);
 			const url = (await pausedContainer.getAbsoluteUrl("")) ?? assert.fail("didn't get url");
 			const pausedTree = view1;
 			await provider.opProcessingController.pauseProcessing(pausedContainer);
@@ -2363,7 +2363,7 @@ describe("SharedTree", () => {
 		it("can apply and resubmit stashed schema ops", async () => {
 			const provider = await TestTreeProvider.create(2);
 
-			const pausedContainer: IContainer = provider.containers[0];
+			const pausedContainer: ContainerAlpha = asLegacyAlpha(provider.containers[0]);
 			const url = (await pausedContainer.getAbsoluteUrl("")) ?? assert.fail("didn't get url");
 			const pausedTree = provider.trees[0];
 			await provider.opProcessingController.pauseProcessing(pausedContainer);

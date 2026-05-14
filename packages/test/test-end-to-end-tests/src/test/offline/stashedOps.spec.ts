@@ -14,7 +14,8 @@ import {
 	LoaderHeader,
 	type ILoaderHeader,
 } from "@fluidframework/container-definitions/internal";
-import { ConnectionState } from "@fluidframework/container-loader/internal";
+import { ConnectionState } from "@fluidframework/container-loader";
+import { asLegacyAlpha, ContainerAlpha } from "@fluidframework/container-loader/internal";
 import {
 	CompressionAlgorithms,
 	DefaultSummaryConfiguration,
@@ -213,7 +214,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 	let provider: ITestObjectProvider;
 	let url;
 	let loader: IHostLoader;
-	let container1: IContainer;
+	let container1: ContainerAlpha;
 	let map1: ISharedMap;
 	let signal1: ISharedSignal<string>;
 	let string1: SharedString;
@@ -226,10 +227,12 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 	beforeEach("setup", async () => {
 		provider = getTestObjectProvider();
 		loader = provider.makeTestLoader(testContainerConfig);
-		container1 = await createAndAttachContainer(
-			provider.defaultCodeDetails,
-			loader,
-			provider.driver.createCreateNewRequest(provider.documentId),
+		container1 = asLegacyAlpha(
+			await createAndAttachContainer(
+				provider.defaultCodeDetails,
+				loader,
+				provider.driver.createCreateNewRequest(provider.documentId),
+			),
 		);
 		provider.updateDocumentId(container1.resolvedUrl);
 		url = await container1.getAbsoluteUrl("");
@@ -1224,7 +1227,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 
 	it("handles stashed ops for local DDS", async function () {
 		const newCounterId = "newCounter";
-		const container = await provider.loadTestContainer(testContainerConfig);
+		const container = asLegacyAlpha(await provider.loadTestContainer(testContainerConfig));
 		const defaultDataStore = (await container.getEntryPoint()) as ITestFluidObject;
 
 		await provider.opProcessingController.pauseProcessing(container);
@@ -1266,7 +1269,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 	});
 
 	it("handles stashed ops created on top of sequenced local ops", async function () {
-		const container = await provider.loadTestContainer(testContainerConfig);
+		const container = asLegacyAlpha(await provider.loadTestContainer(testContainerConfig));
 		const defaultDataStore = (await container.getEntryPoint()) as ITestFluidObject;
 		const string = await defaultDataStore.getSharedObject<SharedString>(stringId);
 
@@ -1325,7 +1328,9 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		"waits for previous container's leave message",
 		[{ eventName: "fluid:telemetry:Container:connectedStateRejected" }],
 		async () => {
-			const container: IContainer = await provider.loadTestContainer(testContainerConfig);
+			const container: ContainerAlpha = asLegacyAlpha(
+				await provider.loadTestContainer(testContainerConfig),
+			);
 			const dataStore = (await container.getEntryPoint()) as ITestFluidObject;
 			// Force to write mode to get a leave message
 			dataStore.root.set("forceWrite", true);
@@ -1540,7 +1545,9 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 				},
 			);
 
-			const container2: IContainer = await loader.resolve({ url }, pendingOps);
+			const container2: ContainerAlpha = asLegacyAlpha(
+				await loader.resolve({ url }, pendingOps),
+			);
 			const dataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
 			const map2 = await dataStore2.getSharedObject<ISharedMap>(mapId);
 			await waitForContainerConnection(container2);
@@ -1959,8 +1966,8 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 
 	it("works for detached container", async function () {
 		const loader2 = provider.makeTestLoader(testContainerConfig);
-		const detachedContainer: IContainer = await loader2.createDetachedContainer(
-			provider.defaultCodeDetails,
+		const detachedContainer: ContainerAlpha = asLegacyAlpha(
+			await loader2.createDetachedContainer(provider.defaultCodeDetails),
 		);
 		const dataStore = (await detachedContainer.getEntryPoint()) as ITestFluidObject;
 		const map = await dataStore.getSharedObject<ISharedMap>(mapId);
@@ -1991,8 +1998,9 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 
 		const summary = detachedContainer.serialize();
 		detachedContainer.close();
-		const rehydratedContainer: IContainer =
-			await loader2.rehydrateDetachedContainerFromSnapshot(summary);
+		const rehydratedContainer: ContainerAlpha = asLegacyAlpha(
+			await loader2.rehydrateDetachedContainerFromSnapshot(summary),
+		);
 		const dataStore2 = (await rehydratedContainer.getEntryPoint()) as ITestFluidObject;
 		const map2 = await dataStore2.getSharedObject<ISharedMap>(mapId);
 		map2.set(testKey2, testValue);
@@ -2014,7 +2022,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 	});
 
 	it("get pending state without close resends ops", async () => {
-		const container = await provider.loadTestContainer(testContainerConfig);
+		const container = asLegacyAlpha(await provider.loadTestContainer(testContainerConfig));
 
 		// pause outgoing ops so we can detect dropped stashed changes
 		await toIDeltaManagerFull(container.deltaManager).outbound.pause();
@@ -2060,7 +2068,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 	});
 
 	it("repeated getPendingLocalState across multiple connections doesn't duplicate ops", async () => {
-		const container = await provider.loadTestContainer(testContainerConfig);
+		const container = asLegacyAlpha(await provider.loadTestContainer(testContainerConfig));
 
 		let pendingState;
 		let pendingStateP;
@@ -2461,10 +2469,12 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 	it("handles stashed ops with reference sequence number of 0", async function () {
 		const provider2 = getTestObjectProvider();
 		const loader2 = provider2.makeTestLoader(testContainerConfig);
-		const container: IContainer = await createAndAttachContainer(
-			provider2.defaultCodeDetails,
-			loader2,
-			provider2.driver.createCreateNewRequest(createDocumentId()),
+		const container: ContainerAlpha = asLegacyAlpha(
+			await createAndAttachContainer(
+				provider2.defaultCodeDetails,
+				loader2,
+				provider2.driver.createCreateNewRequest(createDocumentId()),
+			),
 		);
 
 		await provider2.ensureSynchronized();
