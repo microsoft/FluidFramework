@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-tools/build-cli",
-	"version": "0.65.0",
+	"version": "0.66.0",
 	"description": "Build tools for the Fluid Framework",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -89,21 +89,20 @@
 		"@fluid-tools/build-infrastructure": "workspace:~",
 		"@fluid-tools/version-tools": "workspace:~",
 		"@fluidframework/build-tools": "workspace:~",
-		"@fluidframework/bundle-size-tools": "workspace:~",
+		"@github/copilot-sdk": "^0.2.2",
 		"@inquirer/prompts": "^8.0.1",
-		"@microsoft/api-extractor": "^7.55.1",
-		"@oclif/core": "^4.8.0",
-		"@oclif/plugin-autocomplete": "^3.2.39",
-		"@oclif/plugin-commands": "^4.1.38",
-		"@oclif/plugin-help": "^6.2.36",
-		"@oclif/plugin-not-found": "^3.2.73",
+		"@microsoft/api-extractor": "^7.58.1",
+		"@oclif/core": "^4.10.5",
+		"@oclif/plugin-autocomplete": "^3.2.45",
+		"@oclif/plugin-commands": "^4.1.45",
+		"@oclif/plugin-help": "^6.2.43",
+		"@oclif/plugin-not-found": "^3.2.80",
 		"@octokit/core": "^7.0.6",
 		"@octokit/rest": "^22.0.1",
 		"@rushstack/node-core-library": "^5.19.0",
 		"async": "^3.2.6",
 		"azure-devops-node-api": "^11.2.0",
 		"change-case": "^5.4.4",
-		"danger": "^13.0.5",
 		"date-fns": "^3.6.0",
 		"debug": "^4.4.3",
 		"ejs": "^3.1.10",
@@ -117,7 +116,6 @@
 		"issue-parser": "^7.0.1",
 		"json5": "^2.2.3",
 		"jssm": "^5.104.2",
-		"jszip": "^3.10.1",
 		"latest-version": "^9.0.0",
 		"lilconfig": "^3.1.3",
 		"mdast": "^3.0.0",
@@ -125,7 +123,7 @@
 		"mdast-util-to-string": "^4.0.0",
 		"minimatch": "^10.1.1",
 		"npm-check-updates": "^17.1.18",
-		"oclif": "^4.22.50",
+		"oclif": "^4.23.0",
 		"picocolors": "^1.1.1",
 		"prettier": "~3.2.5",
 		"prompts": "^2.4.2",
@@ -143,7 +141,7 @@
 		"sort-package-json": "1.57.0",
 		"strip-ansi": "^7.1.2",
 		"table": "^6.9.0",
-		"ts-morph": "^22.0.0",
+		"ts-morph": "^27.0.2",
 		"unist-util-visit": "^5.0.0",
 		"xml2js": "^0.6.2",
 		"yaml": "^2.8.1"
@@ -151,7 +149,7 @@
 	"devDependencies": {
 		"@biomejs/biome": "~2.4.5",
 		"@fluidframework/build-common": "^2.0.3",
-		"@oclif/test": "^4.1.15",
+		"@oclif/test": "^4.1.18",
 		"@types/async": "^3.2.25",
 		"@types/chai": "^5.2.3",
 		"@types/chai-arrays": "^2.0.3",
@@ -168,6 +166,7 @@
 		"@types/semver": "^7.7.1",
 		"@types/sort-json": "^2.0.3",
 		"@types/unist": "^3.0.3",
+		"@types/webpack-bundle-analyzer": "^4.7.0",
 		"@types/xml2js": "^0.4.14",
 		"c8": "^10.1.3",
 		"chai": "^6.2.1",
@@ -183,7 +182,7 @@
 		"ts-node": "^10.9.2",
 		"tslib": "^2.8.1",
 		"type-fest": "^2.19.0",
-		"typescript": "~5.4.5"
+		"typescript": "~5.9.3"
 	},
 	"engines": {
 		"node": ">=22.22.2"
@@ -225,6 +224,9 @@
 		"repositoryPrefix": "<%- repo %>/blob/main/build-tools/packages/build-cli/<%- commandPath %>",
 		"topicSeparator": " ",
 		"topics": {
+			"ai": {
+				"description": "AI-powered assistant for launching the right AI agent."
+			},
 			"build-perf": {
 				"description": "Build performance observability commands for collecting, processing, and analyzing build metrics."
 			},

@@ -47,7 +47,7 @@ export function checkNodeEncode(
 	nodeEncoder.encodeNode(cursor, context, buffer);
 
 	// Check round-trip
-	checkDecode([buffer], [[tree]], context.version, undefined, incrementalDecoder);
+	checkDecode([buffer], [[tree]], context.version, context.idCompressor, incrementalDecoder);
 
 	return buffer.slice(1);
 }
@@ -111,10 +111,12 @@ function testDecode(
 			? {
 					idCompressor: testIdCompressor,
 					originatorId: testIdCompressor.localSessionId,
+					isSummary: false,
 				}
 			: {
 					idCompressor,
 					originatorId: idCompressor.localSessionId,
+					isSummary: false,
 				},
 		incrementalDecoder,
 	);
@@ -148,10 +150,12 @@ function testDecode(
 				? {
 						idCompressor: testIdCompressor,
 						originatorId: testIdCompressor.localSessionId,
+						isSummary: false,
 					}
 				: {
 						idCompressor,
 						originatorId: idCompressor.localSessionId,
+						isSummary: false,
 					},
 			incrementalDecoder,
 		);

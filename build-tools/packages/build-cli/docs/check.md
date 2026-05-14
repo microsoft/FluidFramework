@@ -9,6 +9,7 @@ Check commands are used to verify repo state, apply policy, etc.
 * [`flub check layers`](#flub-check-layers)
 * [`flub check policy`](#flub-check-policy)
 * [`flub check prApproval`](#flub-check-prapproval)
+* [`flub check trustPolicy`](#flub-check-trustpolicy)
 
 ## `flub check buildVersion`
 
@@ -210,3 +211,35 @@ DESCRIPTION
 ```
 
 _See code: [src/commands/check/prApproval.ts](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/src/commands/check/prApproval.ts)_
+
+## `flub check trustPolicy`
+
+Audits the repo's lockfile against pnpm's `no-downgrade` trust policy.
+
+```
+USAGE
+  $ flub check trustPolicy [--json] [-v | --quiet] [--keep] [--path <value>] [--tempDir <value>]
+
+FLAGS
+  --keep             Do not delete the scratch workspace after running.
+  --path=<value>     Path inside the workspace to audit. The most specific workspace (e.g. a release group like
+                     `server/routerlicious` rather than the repo root) containing this path is used. Defaults to the
+                     current working directory.
+  --tempDir=<value>  Scratch workspace directory (default: <workspace>/.trust-audit-temp).
+
+LOGGING FLAGS
+  -v, --verbose  Enable verbose logging.
+      --quiet    Disable all logging.
+
+GLOBAL FLAGS
+  --json  Format output as json.
+
+DESCRIPTION
+  Audits the repo's lockfile against pnpm's `no-downgrade` trust policy.
+
+  Materializes a scratch workspace under `.trust-audit-temp/` containing one leaf project per pinned dependency, then
+  runs `pnpm install --trust-policy no-downgrade` and iteratively excludes each violation until pnpm either succeeds or
+  stops surfacing new violations. Reports the full list of trust-downgrade violations.
+```
+
+_See code: [src/commands/check/trustPolicy.ts](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/src/commands/check/trustPolicy.ts)_

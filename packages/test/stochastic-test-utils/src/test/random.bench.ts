@@ -3,99 +3,57 @@
  * Licensed under the MIT License.
  */
 
-import { BenchmarkType, benchmark } from "@fluid-tools/benchmark";
+import { benchmarkDuration, benchmarkIt } from "@fluid-tools/benchmark";
 import { MersenneTwister19937, integer, real } from "random-js";
 
 import { makeRandom } from "../random.js";
 import { XSadd } from "../xsadd.js";
 
-let next: () => number;
+const mtEngine = MersenneTwister19937.autoSeed();
 
-benchmark({
-	type: BenchmarkType.Measurement,
+benchmarkIt({
 	title: "'random-js': raw MT19937 (uint32)",
-	before: () => {
-		const engine = MersenneTwister19937.autoSeed();
-		next = () => engine.next();
-	},
-	benchmarkFn: () => next(),
+	...benchmarkDuration({ benchmarkFn: () => mtEngine.next() }),
 });
 
-benchmark({
-	type: BenchmarkType.Measurement,
+benchmarkIt({
 	title: "'random-js': integer (ideal)",
-	before: () => {
-		const engine = MersenneTwister19937.autoSeed();
-		next = () => integer(0, 1)(engine);
-	},
-	benchmarkFn: () => next(),
+	...benchmarkDuration({ benchmarkFn: () => integer(0, 1)(mtEngine) }),
 });
 
-benchmark({
-	type: BenchmarkType.Measurement,
+benchmarkIt({
 	title: "'random-js': integer (pathological)",
-	before: () => {
-		const engine = MersenneTwister19937.autoSeed();
-		next = () => integer(0, 2 ** 52)(engine);
-	},
-	benchmarkFn: () => next(),
+	...benchmarkDuration({ benchmarkFn: () => integer(0, 2 ** 52)(mtEngine) }),
 });
 
-benchmark({
-	type: BenchmarkType.Measurement,
+benchmarkIt({
 	title: "'random-js': real",
-	before: () => {
-		const engine = MersenneTwister19937.autoSeed();
-		next = () => real(0, 1)(engine);
-	},
-	benchmarkFn: () => next(),
+	...benchmarkDuration({ benchmarkFn: () => real(0, 1)(mtEngine) }),
 });
 
-benchmark({
-	type: BenchmarkType.Measurement,
+benchmarkIt({
 	title: "Stochastic: raw XSadd (uint32)",
-	before: () => {
-		next = new XSadd().uint32;
-	},
-	benchmarkFn: () => next(),
+	...benchmarkDuration({ benchmarkFn: new XSadd().uint32 }),
 });
 
-benchmark({
-	type: BenchmarkType.Measurement,
+const stochastic = makeRandom();
+
+benchmarkIt({
 	title: "Stochastic: integer (ideal)",
-	before: () => {
-		const random = makeRandom();
-		next = () => random.integer(0, 1);
-	},
-	benchmarkFn: () => next(),
+	...benchmarkDuration({ benchmarkFn: () => stochastic.integer(0, 1) }),
 });
 
-benchmark({
-	type: BenchmarkType.Measurement,
+benchmarkIt({
 	title: "Stochastic: integer (pathological)",
-	before: () => {
-		const random = makeRandom();
-		next = () => random.integer(0, 2 ** 52);
-	},
-	benchmarkFn: () => next(),
+	...benchmarkDuration({ benchmarkFn: () => stochastic.integer(0, 2 ** 52) }),
 });
 
-benchmark({
-	type: BenchmarkType.Measurement,
+benchmarkIt({
 	title: "Stochastic: real",
-	before: () => {
-		const random = makeRandom();
-		next = () => random.real(0, 1);
-	},
-	benchmarkFn: () => next(),
+	...benchmarkDuration({ benchmarkFn: () => stochastic.real(0, 1) }),
 });
 
-benchmark({
-	type: BenchmarkType.Measurement,
+benchmarkIt({
 	title: "Stochastic: normal",
-	before: () => {
-		const random = makeRandom();
-		next = () => random.normal();
-	},
-	benchmarkFn: () => next(),
+	...benchmarkDuration({ benchmarkFn: () => stochastic.normal() }),
 });

@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/build-tools",
-	"version": "0.65.0",
+	"version": "0.66.0",
 	"description": "Fluid Build tools",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -63,7 +63,8 @@
 		"sort-package-json": "1.57.0",
 		"ts-deepmerge": "^7.0.3",
 		"type-fest": "^2.19.0",
-		"typescript": "~5.4.5",
+		"typescript-5.4": "npm:typescript@~5.4.5",
+		"typescript-5.9": "npm:typescript@~5.9.3",
 		"yaml": "^2.8.1"
 	},
 	"devDependencies": {
@@ -79,7 +80,8 @@
 		"@types/semver": "^7.7.1",
 		"eslint": "~9.39.2",
 		"json-schema-to-typescript": "^15.0.4",
-		"mocha": "^11.7.5"
+		"mocha": "^11.7.5",
+		"typescript": "~5.9.3"
 	},
 	"engines": {
 		"node": ">=22.22.2"

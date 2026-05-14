@@ -66,6 +66,7 @@ export {
 	createCustomizedFluidFrameworkScopedFactory,
 } from "./schemaCreationUtilities.js";
 export {
+	deltaMarksToArrayOps,
 	getIdentifierFromNode,
 	getPropertyKeyFromStoredKey,
 	getStoredKey,
@@ -158,9 +159,12 @@ export {
 	type ArrayNodeInsertOp,
 	type ArrayNodeRemoveOp,
 	type ArrayNodeRetainOp,
+	type ArrayNodeTreeChangedDeltaOp,
+	type ArrayNodeTreeChangedRetainOp,
 	type NodeChangedDataAlpha,
 	type NodeChangedDataDelta,
 	type NodeChangedDataProperties,
+	type NodeChangedDataTreeDelta,
 	type TreeChangeEventsAlpha,
 } from "./treeAlpha.js";
 export { createTreeIndex, type TreeIndexKey } from "./simpleTreeIndex.js";

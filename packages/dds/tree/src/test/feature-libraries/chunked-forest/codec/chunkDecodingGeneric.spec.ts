@@ -121,6 +121,7 @@ const rootDecoder: ChunkDecoder = {
 const idDecodingContext = {
 	idCompressor: testIdCompressor,
 	originatorId: testIdCompressor.localSessionId,
+	isSummary: false,
 };
 
 describe("chunkDecodingGeneric", () => {

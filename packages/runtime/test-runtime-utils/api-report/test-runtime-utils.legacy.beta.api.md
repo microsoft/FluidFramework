@@ -337,7 +337,7 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
     // (undocumented)
     readonly id: string;
     // (undocumented)
-    idCompressor: IIdCompressorCore & IIdCompressor;
+    idCompressor: IIdCompressor;
     // (undocumented)
     IFluidDataStoreRegistry: IFluidDataStoreRegistry;
     // (undocumented)
@@ -382,10 +382,12 @@ export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDat
         entryPoint?: IFluidHandle<FluidObject>;
         id?: string;
         logger?: ITelemetryBaseLogger;
-        idCompressor?: IIdCompressor & IIdCompressorCore;
+        idCompressor?: IIdCompressor;
         attachState?: AttachState;
         registry?: readonly IChannelFactory[];
         minVersionForCollab?: MinimumVersionForCollab;
+        inStagingMode?: boolean;
+        isDirty?: boolean;
     });
     // (undocumented)
     get absolutePath(): string;
@@ -448,13 +450,17 @@ export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDat
     // (undocumented)
     readonly id: string;
     // (undocumented)
-    idCompressor: (IIdCompressor & IIdCompressorCore) | undefined;
+    idCompressor: IIdCompressor | undefined;
     // (undocumented)
     get IFluidHandleContext(): IFluidHandleContext;
     // (undocumented)
     ILayerCompatDetails?: unknown;
     // (undocumented)
+    readonly inStagingMode: boolean;
+    // (undocumented)
     get isAttached(): boolean;
+    // (undocumented)
+    readonly isDirty: boolean;
     // (undocumented)
     readonly isReadOnly: () => boolean;
     // (undocumented)
