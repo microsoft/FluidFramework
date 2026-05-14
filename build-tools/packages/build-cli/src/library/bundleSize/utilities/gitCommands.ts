@@ -82,7 +82,8 @@ function findCanonicalRemotes(): { name: string; url: string }[] {
  * Resolve the tip commit of a ref.
  *
  * @returns The commit SHA the ref points at, or `undefined` if the ref doesn't
- * exist locally.
+ * exist locally. Re-throws on any other failure (e.g. git binary missing,
+ * repo corruption).
  */
 function resolveTip(ref: string): string | undefined {
 	try {
@@ -92,8 +93,12 @@ function resolveTip(ref: string): string | undefined {
 		})
 			.toString()
 			.trim();
-	} catch {
-		return undefined;
+	} catch (error) {
+		// `git rev-parse --verify` exits with 128 when the ref can't be resolved.
+		if ((error as { status?: number }).status === 128) {
+			return undefined;
+		}
+		throw error;
 	}
 }
 
@@ -101,8 +106,9 @@ function resolveTip(ref: string): string | undefined {
  * Test whether `ancestor` is an ancestor of `descendant` in the commit DAG.
  * A commit is its own ancestor.
  *
- * @returns `true` if `ancestor` is reachable from `descendant`, `false`
- * otherwise — including when either ref can't be resolved.
+ * @returns `true` if `ancestor` is reachable from `descendant`, `false` if not.
+ * Re-throws on any other failure (e.g. either commit not in the local object
+ * store, repo corruption).
  */
 function isAncestor(ancestor: string, descendant: string): boolean {
 	try {
@@ -111,8 +117,13 @@ function isAncestor(ancestor: string, descendant: string): boolean {
 			stdio: "ignore",
 		});
 		return true;
-	} catch {
-		return false;
+	} catch (error) {
+		// `git merge-base --is-ancestor` exits 0 (true), 1 (false), or 128 / other
+		// for real errors. Treat only status 1 as the legitimate "not ancestor".
+		if ((error as { status?: number }).status === 1) {
+			return false;
+		}
+		throw error;
 	}
 }
 
@@ -160,7 +171,18 @@ export function pickFreshestCanonicalRemote(branch: string): string | undefined 
 	const skipped: string[] = [];
 	for (const remote of canonicals) {
 		const ref = `${remote.name}/${branch}`;
-		const tip = resolveTip(ref);
+		let tip: string | undefined;
+		try {
+			tip = resolveTip(ref);
+		} catch (error) {
+			// Don't let an unexpected git failure for one remote kill the whole
+			// selection — log to stderr and treat the candidate as skipped so
+			// the other remotes still get a chance to be picked.
+			const detail = error instanceof Error ? error.message : String(error);
+			console.error(`  ${ref} — unexpected error resolving tip; skipped (${detail})`);
+			skipped.push(ref);
+			continue;
+		}
 		if (tip === undefined) {
 			skipped.push(ref);
 		} else {
@@ -177,7 +199,19 @@ export function pickFreshestCanonicalRemote(branch: string): string | undefined 
 		return undefined;
 	}
 
-	const freshest = pickFreshest(candidates);
+	let freshest: CanonicalCandidate[];
+	try {
+		freshest = pickFreshest(candidates);
+	} catch (error) {
+		// Tip-vs-tip comparison hit an unexpected failure (e.g. corrupt repo).
+		// Fall back to the first candidate so we still produce *a* baseline
+		// instead of crashing the whole command.
+		const detail = error instanceof Error ? error.message : String(error);
+		console.error(
+			`Unexpected error comparing tips; falling back to first candidate (${detail})`,
+		);
+		freshest = [candidates[0]];
+	}
 	const selected = freshest[0];
 
 	console.log(`Remotes pointing at microsoft/FluidFramework:`);
