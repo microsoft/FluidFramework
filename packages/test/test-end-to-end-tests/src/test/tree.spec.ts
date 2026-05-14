@@ -170,11 +170,7 @@ describeCompat(
 				registryEntries,
 			);
 			await provider.ensureSynchronized();
-			let summaryInfo: SummaryInfo | undefined;
-			await assert.doesNotReject(async () => {
-				summaryInfo = await summarizeNow(summarizer, "afterDetachedAttach");
-			});
-			assert(summaryInfo !== undefined);
+			await assert.doesNotReject(async () => summarizeNow(summarizer, "afterDetachedAttach"));
 		});
 	},
 );
