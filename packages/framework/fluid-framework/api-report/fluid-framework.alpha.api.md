@@ -601,7 +601,7 @@ export type FormatVersion = number | string | undefined;
 export function generateSchemaFromSimpleSchema(simple: SimpleTreeSchema): TreeSchema;
 
 // @alpha
-export function getBranch(view: TreeViewAlpha<ImplicitFieldSchema>): TreeBranchAlpha;
+export function getBranch<TSchema extends ImplicitFieldSchema | UnsafeUnknownSchema>(view: TreeViewAlpha<TSchema>): TreeBranchAlpha;
 
 // @alpha
 export function getJsonSchema(schema: ImplicitAllowedTypes, options: Required<TreeSchemaEncodingOptions>): JsonTreeSchema;

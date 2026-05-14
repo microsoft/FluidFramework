@@ -498,6 +498,21 @@ export class TreeCheckout implements ITreeCheckout {
 	readonly #events = createEmitter<CheckoutEvents>();
 	public events: Listenable<CheckoutEvents> = this.#events;
 
+	/**
+	 * Whether this checkout should be disposed automatically when its (last) view is disposed.
+	 *
+	 * @remarks
+	 * Default behavior: non-shared branches are 1:1 with views, so disposing the view also disposes the checkout.
+	 * Shared branches must persist past any view, so they opt out.
+	 *
+	 * Subclasses may override to opt out — e.g. {@link BranchCheckout}, which is permanently bound to its branch
+	 * and may have multiple views created via `viewWith` over its lifetime, returns `false` so that disposing one
+	 * view does not invalidate the branch for other callers.
+	 */
+	public get disposeWithView(): boolean {
+		return !this.isSharedBranch;
+	}
+
 	public constructor(
 		branch: SharedTreeBranch<SharedTreeEditBuilder, SharedTreeChange>,
 		/** True if and only if this checkout is for a branch which is persisted and shared with other clients. */

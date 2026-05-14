@@ -285,10 +285,7 @@ describe("BranchCheckout", () => {
 			// `forkAsBranchCheckout` creates a *child* BranchCheckout — its mainBranch is the child branch,
 			// not the parent view's. To exercise the cached path, look up the branch via its own view.
 			const childView = getViewOfBranch(registeredBranch, config);
-			assert.strictEqual(
-				getBranch(childView as unknown as Parameters<typeof getBranch>[0]),
-				registeredBranch,
-			);
+			assert.strictEqual(getBranch(childView), registeredBranch);
 		});
 
 		it("throws when passed a non-SchematizingSimpleTreeView", () => {
@@ -321,6 +318,40 @@ describe("BranchCheckout", () => {
 			assert.notStrictEqual(second, first);
 			assert.ok(second instanceof BranchCheckout);
 			assert.strictEqual(second.disposed, false);
+		});
+
+		it("the new BranchCheckout after merge auto-dispose starts from the post-merge state", () => {
+			// Regression guard: after a merge that auto-disposes the cached BranchCheckout, the
+			// next `getBranch` call must lazy-fork from the *current* checkout state, not from a
+			// stale snapshot.
+			const view = makeView();
+			const branch1 = getBranch(view);
+			const branch1View = getViewOfBranch(branch1, config);
+			branch1View.root.x = 7;
+			view.merge(branch1View);
+			assert.strictEqual(view.root.x, 7);
+			assert.strictEqual(branch1.disposed, true);
+			const branch2 = getBranch(view);
+			assert.notStrictEqual(branch2, branch1);
+			const branch2View = getViewOfBranch(branch2, config);
+			assert.strictEqual(branch2View.root.x, 7);
+		});
+	});
+
+	describe("getViewOfBranch lifecycle", () => {
+		it("disposing a view created via getViewOfBranch does not dispose the BranchCheckout", () => {
+			// Regression guard: a BranchCheckout may have multiple views created over its lifetime,
+			// so disposing one view must not tear down the underlying branch (the default 1:1
+			// view/checkout auto-dispose contract is opt-out for BranchCheckout via `disposeWithView`).
+			const view = makeView();
+			const branch = forkAsBranchCheckout(view.checkout);
+			const v1 = getViewOfBranch(branch, config);
+			v1.root.x = 3;
+			v1.dispose();
+			assert.strictEqual(branch.disposed, false);
+			// And a second view sees the prior edits.
+			const v2 = getViewOfBranch(branch, config);
+			assert.strictEqual(v2.root.x, 3);
 		});
 	});
 });

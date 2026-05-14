@@ -25,6 +25,7 @@ import { FieldKinds, MockNodeIdentifierManager } from "../../feature-libraries/i
 import {
 	Tree,
 	TreeCheckout,
+	BranchCheckout,
 	type ITreeCheckout,
 	createTreeCheckout,
 	getViewOfBranch,
@@ -848,6 +849,14 @@ describe("sharedTreeView", () => {
 			const treeBranch = tree.fork();
 			const viewBranch = treeBranch.viewWith(view.config);
 			viewBranch.dispose();
+			// For checkouts that are 1:1 with their view (plain `TreeCheckout` forks), disposing the view
+			// also disposes the underlying branch. `BranchCheckout` opts out of this contract via
+			// `disposeWithView` so a single branch can back multiple views over its lifetime; in that
+			// case, the branch must be disposed explicitly.
+			if (treeBranch instanceof BranchCheckout) {
+				assert.equal(treeBranch.disposed, false);
+				treeBranch.dispose();
+			}
 			assert.equal(treeBranch.disposed, true);
 		});
 

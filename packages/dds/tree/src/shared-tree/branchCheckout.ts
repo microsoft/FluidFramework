@@ -24,6 +24,7 @@ import type {
 	TreeBranchAlpha,
 	TreeViewAlpha,
 	TreeViewConfiguration,
+	UnsafeUnknownSchema,
 } from "../simple-tree/index.js";
 import type { Breakable } from "../util/index.js";
 import { disposeSymbol } from "../util/index.js";
@@ -126,6 +127,16 @@ export class BranchCheckout extends TreeCheckout {
 		return this.forkWith(BranchCheckout);
 	}
 
+	/**
+	 * A `BranchCheckout` is permanently bound to its branch and may have multiple views created
+	 * over its lifetime via `viewWith` (e.g. through {@link getViewOfBranch}). Disposing one of
+	 * those views must not invalidate the branch for other callers, so we opt out of the
+	 * 1:1 view/checkout auto-dispose contract that `TreeCheckout` defaults to for non-shared branches.
+	 */
+	public override get disposeWithView(): boolean {
+		return false;
+	}
+
 	// A `BranchCheckout` is viewless by construction, so the `TreeViewAlpha` type predicate is always false.
 	public override hasRootSchema<TSchema extends ImplicitFieldSchema>(
 		_schema: TSchema,
@@ -190,7 +201,9 @@ export function forkAsBranchCheckout(parent: TreeCheckout): BranchCheckout {
  *
  * @alpha
  */
-export function getBranch(view: TreeViewAlpha<ImplicitFieldSchema>): TreeBranchAlpha {
+export function getBranch<TSchema extends ImplicitFieldSchema | UnsafeUnknownSchema>(
+	view: TreeViewAlpha<TSchema>,
+): TreeBranchAlpha {
 	assert(view instanceof SchematizingSimpleTreeView, "Unexpected branch implementation");
 	const viewBranch = view.checkout.mainBranch;
 	// Path 1: the view is itself built directly on a registered BranchCheckout.
