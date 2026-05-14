@@ -39,7 +39,8 @@ export const generatePendingState = async (
 	send: false | true | "afterReconnect",
 	cb: SharedObjCallback = (): void => undefined,
 ): Promise<string> => {
-	const container: IContainer = await testObjectProvider.loadTestContainer(testContainerConfig);
+	const container: IContainer =
+		await testObjectProvider.loadTestContainer(testContainerConfig);
 	await waitForContainerConnection(container);
 	const dataStore = (await container.getEntryPoint()) as ITestFluidObject;
 

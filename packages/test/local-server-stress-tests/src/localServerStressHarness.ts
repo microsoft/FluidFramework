@@ -494,10 +494,7 @@ function mixinAddRemoveClient<TOperation extends BaseOperation>(
 			// the state against the source container
 			removed.container.disconnect();
 
-			assert(
-				removed.container.getPendingLocalState !== undefined,
-				"Missing method!",
-			);
+			assert(removed.container.getPendingLocalState !== undefined, "Missing method!");
 			const pendingLocalState = await removed.container.getPendingLocalState();
 			pendingLocalStateStore.set(removed.tag, pendingLocalState);
 
