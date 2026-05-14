@@ -34,9 +34,8 @@ import type { ITestFluidObject } from "@fluidframework/test-utils/internal";
  * handler can either land at the wrong moment in the op stream or be
  * silently dropped. If a cascading write is unavoidable, the handler
  * MUST gate on both:
- *   1. `IFluidDataStoreRuntime.isReadOnly()` — surfaced as `true`
- *      during stashed-op replay so well-behaved handlers can opt out.
- *      The `"readonly"` event is the corresponding signal.
+ *   1. `IFluidDataStoreRuntime.isReadOnly()` — when `true`, the handler
+ *      must not submit edits. The `"readonly"` event is the live signal.
  *   2. `IFluidDataStoreRuntime.activeLocalOperationActivity` — when set
  *      (`"applyStashed"` or `"rollback"`), the runtime itself is
  *      driving the change, not the user, and the handler should not
