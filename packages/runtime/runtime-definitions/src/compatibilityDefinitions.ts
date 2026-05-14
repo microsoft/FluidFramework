@@ -20,6 +20,11 @@
  * Since this uses the semver notion of "greater" (which might not actually mean a later release, or supporting more features), care must be taken with how this is used.
  * See remarks for {@link @fluidframework/runtime-utils#MinimumMinorSemanticVersion} for more details.
  *
+ * This scheme assumes a single version is always enough to communicate compatibility, which requires that compatibility is strictly increasing across releases.
+ * If this is violated (for example, a subset of incompatible features from 3.x is back-ported to 2.x, or compatibility depends on a patch thats not in the next minor's first release),
+ * a more complex scheme may be needed;
+ * one can be added if/when needed since it would be opt-in and thus non-breaking.
+ *
  * Since this type is marked with `@input`, it can be generalized to allow more cases in the future as a non-breaking change.
  *
  * TODO: before stabilizing this further, some restrictions should be considered (since once stabilized, this can be relaxed, but not more constrained).
