@@ -15,13 +15,14 @@ import {
 } from "@fluid-tools/benchmark";
 import type { Suite, Test } from "mocha";
 
+// eslint-disable-next-line import-x/no-internal-modules
+import { iterationSettings } from "./memory/utils.js";
 import {
 	Column,
 	Row,
 	type TableBenchmarkOptions,
 	createTableTree,
 } from "./tablePerformanceTestUtilities.js";
-import { iterationSettings } from "./memory/utils.js";
 import { configureBenchmarkHooks } from "./utils.js";
 
 interface BenchmarkConfig extends TableBenchmarkOptions {
