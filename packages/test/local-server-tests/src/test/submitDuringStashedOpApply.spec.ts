@@ -129,8 +129,6 @@ describe("Submit during stashed-op apply (end-to-end)", () => {
 		const { loaderProps: reactingLoaderProps } = createLoader({
 			deltaConnectionServer,
 			defaultDataStoreFactory: new ReactingMapFactory(goodFactory),
-			urlResolver,
-			documentServiceFactory: goodLoaderProps.documentServiceFactory,
 		});
 
 		// 3. The stashed `offline` op fires `valueChanged` on `primary` during
