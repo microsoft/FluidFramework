@@ -63,7 +63,11 @@ import {
 	ReconnectMode,
 } from "./contracts.js";
 import { DeltaQueue } from "./deltaQueue.js";
-import { FrozenDeltaStream, isFrozenDeltaStreamConnection } from "./frozenServices.js";
+import {
+	FrozenDeltaStream,
+	isFrozenDeltaStreamConnection,
+	isWritableFrozenDeltaStreamConnection,
+} from "./frozenServices.js";
 import { SignalType } from "./protocol.js";
 import { isDeltaStreamConnectionForbiddenError } from "./utils.js";
 
@@ -582,9 +586,9 @@ export class ConnectionManager implements IConnectionManager {
 					LogLevel.verbose,
 				);
 				if (isDeltaStreamConnectionForbiddenError(origError)) {
-					connection = new FrozenDeltaStream(origError.storageOnlyReason, {
-						text: origError.message,
-						error: origError,
+					connection = new FrozenDeltaStream({
+						storageOnlyReason: origError.storageOnlyReason,
+						readonlyConnectionReason: { text: origError.message, error: origError },
 					});
 					requestedMode = "read";
 					break;
@@ -592,11 +596,10 @@ export class ConnectionManager implements IConnectionManager {
 					isFluidError(origError) &&
 					origError.errorType === DriverErrorTypes.outOfStorageError
 				) {
-					// If we get out of storage error from calling joinsession, then use the NoDeltaStream object so
+					// If we get out of storage error from calling joinsession, then use the FrozenDeltaStream object so
 					// that user can at least load the container.
-					connection = new FrozenDeltaStream(undefined, {
-						text: origError.message,
-						error: origError,
+					connection = new FrozenDeltaStream({
+						readonlyConnectionReason: { text: origError.message, error: origError },
 					});
 					requestedMode = "read";
 					break;
@@ -1089,6 +1092,25 @@ export class ConnectionManager implements IConnectionManager {
 
 	public sendMessages(messages: IDocumentMessage[]): void {
 		assert(this.connected, 0x2b4 /* "not connected on sending ops!" */);
+		// WritableFrozenDeltaStream short-circuit: writable-frozen containers
+		// (`loadFrozenContainerFromPendingState({ readOnly: false })`) attach a
+		// WritableFrozenDeltaStream as the live connection. Its `mode` is "read" (advertising
+		// "write" would imply quorum membership we cannot honor), so a runtime submit
+		// would otherwise fall into the read-mode reconnect branch below. That branch
+		// schedules `reconnect("write")`, which under `ReconnectMode.Never`
+		// (`allowReconnect: false`) calls `closeHandler` and closes the container — the
+		// opposite of what writable-frozen wants. Drop the messages here: the runtime's
+		// outbox keeps them in `pendingStateManager` so `getPendingLocalState()` can
+		// capture them, which is the entire point of the writable-frozen flow.
+		//
+		// Match only the writable variant (a sibling class, not a subclass) so the read-only
+		// `FrozenDeltaStream` retains its `submit` 403-nack tripwire — a stray submit on a
+		// storage-only frozen connection signals an upstream invariant break and should
+		// remain observable. The read-only variant shouldn't reach here in normal flow anyway
+		// (its `storageOnly` policy keeps the runtime from submitting).
+		if (isWritableFrozenDeltaStreamConnection(this.connection)) {
+			return;
+		}
 		// If connection is "read" or implicit "read" (got leave op for "write" connection),
 		// then op can't make it through - we will get a nack if op is sent.
 		// We can short-circuit this process.

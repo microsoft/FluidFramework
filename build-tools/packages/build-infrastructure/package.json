@@ -76,7 +76,7 @@
 		"simple-git": "^3.32.3",
 		"sort-package-json": "1.57.0",
 		"type-fest": "^2.19.0",
-		"typescript": "~5.4.5"
+		"typescript": "~5.9.3"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "~2.4.5",
