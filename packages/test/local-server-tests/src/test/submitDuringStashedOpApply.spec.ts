@@ -26,21 +26,30 @@ import { LocalCodeLoader, TestFluidObjectFactory } from "@fluidframework/test-ut
 import type { ITestFluidObject } from "@fluidframework/test-utils/internal";
 
 /**
- * Wraps an inner {@link IFluidDataStoreFactory} so that on `existing=true`
- * loads the data store's two SharedMaps are eagerly realized, and a
- * `valueChanged` listener is registered on the "primary" map that performs
- * a follow-up `set` on the "secondary" map.
+ * NOTE — anti-pattern under test, do not copy.
  *
- * Two maps are needed because the channel-level `stashedOpMd` capture in
- * `ChannelDeltaConnection.submit` swallows any submit issued *on the same
- * channel* while that channel's `applyStashedOp` is in flight. A submit
- * targeting a *different* channel goes through the normal submit path —
- * which is exactly the channel that's currently replaying a stashed op
- * vs. an event-handler write that propagates to another map.
+ * Submitting ops from inside DDS op-event handlers is bad practice and
+ * should be avoided. Op events fire during op processing (including
+ * stashed-op replay and rollback), and a cascading write inside the
+ * handler can either land at the wrong moment in the op stream or be
+ * silently dropped. If a cascading write is unavoidable, the handler
+ * MUST gate on both:
+ *   1. `IContainer.readOnlyInfo.readonly` (or `ContainerRuntime.isReadOnly()`)
+ *      — surfaced as `true` during stashed-op replay so well-behaved
+ *      handlers can opt out.
+ *   2. `IFluidDataStoreRuntime.activeLocalOperationActivity` — when set
+ *      (`"applyStashed"` or `"rollback"`), the runtime itself is
+ *      driving the change, not the user, and the handler should not
+ *      react with new ops.
  *
- * This models a real-world bug pattern: app code subscribed to DDS
- * change events that performs cascading edits across DDSes without
- * consulting `readOnly`.
+ * This factory deliberately omits both gates so the load rejects with
+ * the expected `UsageError`. Two SharedMaps are needed because the
+ * channel-level `stashedOpMd` capture in `ChannelDeltaConnection.submit`
+ * swallows any submit issued *on the same channel* while that channel's
+ * `applyStashedOp` is in flight. A submit targeting a *different*
+ * channel goes through the normal submit path — which is exactly the
+ * "event handler on map A writes to map B" shape that reaches the
+ * runtime guard in production.
  */
 class ReactingMapFactory implements IFluidDataStoreFactory {
 	public constructor(private readonly inner: IFluidDataStoreFactory) {}
