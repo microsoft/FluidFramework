@@ -8,8 +8,9 @@ import { strict as assert } from "assert";
 import { describeCompat, type ITestDataObject } from "@fluid-private/test-version-utils";
 import type { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
 import {
-	type ITestObjectProvider,
 	ITestContainerConfig,
+	getRequiredPendingLocalState,
+	type ITestObjectProvider,
 } from "@fluidframework/test-utils/internal";
 
 const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
@@ -55,7 +56,7 @@ describeCompat(
 			mainObject._root.set("4", "4");
 
 			// Generate pending state
-			const pendingState = await container.getPendingLocalState?.();
+			const pendingState = await getRequiredPendingLocalState(container);
 			container.close();
 
 			// Load from the pending state

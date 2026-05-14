@@ -53,6 +53,7 @@ import {
 	TestContainerRuntimeFactory,
 	TestFluidObjectFactory,
 	TestObjectProvider,
+	getRequiredPendingLocalState,
 	timeoutPromise,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
@@ -332,8 +333,7 @@ describeCompat("Container", "NoCompat", (getTestObjectProvider) => {
 		);
 
 		const container: IContainer = await localTestObjectProvider.makeTestContainer();
-		assert(container.getPendingLocalState !== undefined, "Missing method!");
-		const pendingString = await container.getPendingLocalState();
+		const pendingString = await getRequiredPendingLocalState(container);
 		container.close();
 		assert.ok(pendingString);
 		const pendingLocalState: { url?: string } = JSON.parse(pendingString);

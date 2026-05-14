@@ -23,10 +23,11 @@ import type { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-inte
 import type { IChannel } from "@fluidframework/datastore-definitions/internal";
 import type { ISharedDirectory } from "@fluidframework/map/internal";
 import {
-	type ITestObjectProvider,
-	toIDeltaManagerFull,
 	createSummarizerFromFactory,
+	getRequiredPendingLocalState,
 	summarizeNow,
+	toIDeltaManagerFull,
+	type ITestObjectProvider,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
 import { ITree, SchemaFactory, TreeViewConfiguration } from "@fluidframework/tree";
@@ -286,8 +287,7 @@ describeCompat("Stamped v2 ops", "NoCompat", (getTestObjectProvider, apis) => {
 		updateQuantity(legacyTree1, 3);
 		updateQuantity(legacyTree1, 4);
 		updateQuantity(legacyTree1, 5);
-		assert(container1.getPendingLocalState !== undefined, "Missing method!");
-		const pendingState = await container1.getPendingLocalState();
+		const pendingState = await getRequiredPendingLocalState(container1);
 		container1.close();
 		assert(pendingState !== undefined, "Pending state should be defined");
 
@@ -324,8 +324,7 @@ describeCompat("Stamped v2 ops", "NoCompat", (getTestObjectProvider, apis) => {
 		node1.quantity = 3;
 		node1.quantity = 4;
 		node1.quantity = 5;
-		assert(container1.getPendingLocalState !== undefined, "Missing method!");
-		const pendingState = await container1.getPendingLocalState();
+		const pendingState = await getRequiredPendingLocalState(container1);
 		container1.close();
 		assert(pendingState !== undefined, "Pending state should be defined");
 
@@ -385,8 +384,7 @@ describeCompat("Stamped v2 ops", "NoCompat", (getTestObjectProvider, apis) => {
 		node2.quantity = 3;
 		node2.quantity = 4;
 		node2.quantity = 5;
-		assert(container2.getPendingLocalState !== undefined, "Missing method!");
-		const pendingState = await container2.getPendingLocalState();
+		const pendingState = await getRequiredPendingLocalState(container2);
 		container2.close();
 		assert(pendingState !== undefined, "Pending state should be defined");
 
@@ -425,8 +423,7 @@ describeCompat("Stamped v2 ops", "NoCompat", (getTestObjectProvider, apis) => {
 		updateQuantity(legacyTree1, 3);
 		updateQuantity(legacyTree1, 4);
 		updateQuantity(legacyTree1, 5);
-		assert(container1.getPendingLocalState !== undefined, "Missing method!");
-		const pendingState = await container1.getPendingLocalState();
+		const pendingState = await getRequiredPendingLocalState(container1);
 		container1.close();
 		assert(pendingState !== undefined, "Pending state should be defined");
 		shim2.submitMigrateOp();
@@ -487,8 +484,7 @@ describeCompat("Stamped v2 ops", "NoCompat", (getTestObjectProvider, apis) => {
 		await toIDeltaManagerFull(container1.deltaManager).outbound.pause();
 
 		shim1.submitMigrateOp();
-		assert(container1.getPendingLocalState !== undefined, "Missing method!");
-		const pendingState = await container1.getPendingLocalState();
+		const pendingState = await getRequiredPendingLocalState(container1);
 		container1.close();
 		assert(pendingState !== undefined, "Pending state should be defined");
 		updateQuantity(legacyTree2, 1);

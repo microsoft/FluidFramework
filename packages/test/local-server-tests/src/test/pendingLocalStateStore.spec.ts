@@ -17,7 +17,7 @@ import {
 } from "@fluidframework/container-loader/internal";
 import type { LocalResolver } from "@fluidframework/local-driver/internal";
 import { LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
-import { ITestFluidObject } from "@fluidframework/test-utils/internal";
+import { ITestFluidObject, getRequiredPendingLocalState } from "@fluidframework/test-utils/internal";
 
 import { createLoader } from "../utils.js";
 
@@ -81,14 +81,12 @@ describe("PendingLocalStateStore End-to-End Tests", () => {
 			testFluidObject.root.set("offline-key1", "offline-value1");
 
 			// Get pending state and store it
-			assert(container.getPendingLocalState !== undefined, "Missing method!");
-			const pendingState = await container.getPendingLocalState();
+			const pendingState = await getRequiredPendingLocalState(container);
 			store.set("session1", pendingState);
 
 			// Add more offline data (simulating continued offline work)
 			testFluidObject.root.set("offline-key2", "offline-value2");
-			assert(container.getPendingLocalState !== undefined, "Missing method!");
-			const pendingState2 = await container.getPendingLocalState();
+			const pendingState2 = await getRequiredPendingLocalState(container);
 			store.set("session2", pendingState2);
 
 			// Verify store contains both states (should deduplicate to same URL)
@@ -165,8 +163,7 @@ describe("PendingLocalStateStore End-to-End Tests", () => {
 			}
 
 			// Get first pending state
-			assert(container.getPendingLocalState !== undefined, "Missing method!");
-			const pendingState1 = await container.getPendingLocalState();
+			const pendingState1 = await getRequiredPendingLocalState(container);
 			store.set("dedup-session1", pendingState1);
 
 			// Add more operations (some overlapping)
@@ -175,8 +172,7 @@ describe("PendingLocalStateStore End-to-End Tests", () => {
 			}
 
 			// Get second pending state
-			assert(container.getPendingLocalState !== undefined, "Missing method!");
-			const pendingState2 = await container.getPendingLocalState();
+			const pendingState2 = await getRequiredPendingLocalState(container);
 			store.set("dedup-session2", pendingState2);
 
 			// Verify store performs deduplication
@@ -235,8 +231,7 @@ describe("PendingLocalStateStore End-to-End Tests", () => {
 				testFluidObject.root.set(`container-${i}-key`, `container-${i}-value`);
 				testFluidObject.root.set(`offline-key-${i}`, `offline-value-${i}`);
 
-				assert(container.getPendingLocalState !== undefined, "Missing method!");
-				const pendingState = await container.getPendingLocalState();
+				const pendingState = await getRequiredPendingLocalState(container);
 				store.set(`session-${i}`, pendingState);
 			}
 

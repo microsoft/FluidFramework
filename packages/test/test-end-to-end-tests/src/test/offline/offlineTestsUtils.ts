@@ -16,11 +16,12 @@ import type {
 } from "@fluidframework/driver-definitions/internal";
 import { toDeltaManagerInternal } from "@fluidframework/runtime-utils/internal";
 import {
-	type ITestFluidObject,
+	getRequiredPendingLocalState,
+	toIDeltaManagerFull,
 	type ITestContainerConfig,
+	type ITestFluidObject,
 	type ITestObjectProvider,
 	waitForContainerConnection,
-	toIDeltaManagerFull,
 } from "@fluidframework/test-utils/internal";
 
 import { wrapObjectAndOverride } from "../../mocking.js";
@@ -58,20 +59,19 @@ export const generatePendingState = async (
 
 	await cb(container, dataStore);
 
-	assert(container.getPendingLocalState !== undefined, "Missing method!");
 	let pendingState: string | undefined;
 	if (send === true) {
-		pendingState = await container.getPendingLocalState();
+		pendingState = await getRequiredPendingLocalState(container);
 		await testObjectProvider.ensureSynchronized(); // Note: This will resume processing to get synchronized
 		container.close();
 	} else if (send === "afterReconnect") {
-		pendingState = await container.getPendingLocalState();
+		pendingState = await getRequiredPendingLocalState(container);
 		container.disconnect();
 		container.connect();
 		await testObjectProvider.ensureSynchronized(); // Note: This will have a different clientId than in pendingState
 		container.close();
 	} else {
-		pendingState = await container.getPendingLocalState();
+		pendingState = await getRequiredPendingLocalState(container);
 		container.close();
 	}
 

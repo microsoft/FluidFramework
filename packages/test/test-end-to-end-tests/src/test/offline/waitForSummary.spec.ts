@@ -23,16 +23,17 @@ import type {
 } from "@fluidframework/core-interfaces";
 import type { ISharedMap } from "@fluidframework/map/internal";
 import {
-	type ITestObjectProvider,
-	type ITestContainerConfig,
-	createSummarizer,
-	summarizeNow,
-	type ChannelFactoryRegistry,
-	createAndAttachContainer,
 	DataObjectFactoryType,
-	type ITestFluidObject,
-	waitForContainerConnection,
+	createAndAttachContainer,
+	createSummarizer,
+	getRequiredPendingLocalState,
+	summarizeNow,
 	timeoutAwait,
+	type ChannelFactoryRegistry,
+	type ITestContainerConfig,
+	type ITestFluidObject,
+	type ITestObjectProvider,
+	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
 import { SchemaFactory, ITree, TreeViewConfiguration } from "@fluidframework/tree";
 import { SharedTree } from "@fluidframework/tree/internal";
@@ -260,8 +261,7 @@ describeCompat(
 				const map2 = await getMap(dataStore2);
 				// generate ops with RSN === summary SN
 				map2.set("2", "2");
-				assert(container2.getPendingLocalState !== undefined, "Missing method!");
-				const stashBlob = await container2.getPendingLocalState();
+				const stashBlob = await getRequiredPendingLocalState(container2);
 				container2.close();
 				assert(stashBlob);
 				const pendingState = JSON.parse(stashBlob);

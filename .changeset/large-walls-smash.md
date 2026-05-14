@@ -10,4 +10,6 @@ The member is optional during this minor release so external implementers of `IC
 
 The `ContainerAlpha` interface and `asLegacyAlpha` helper in `@fluidframework/container-loader` continue to expose this functionality at `@legacy @alpha` for callers that prefer the typed-required shape.
 
+Lifecycle: misuse of this API can result in duplicate op submission and potential document corruption. The blob returned MUST be discarded if and when the container emits a `"connected"` event — any subsequent rehydrate from that blob would submit the same ops a second time. The container must also be neither closed nor disposed when calling; otherwise the call throws `UsageError`.
+
 Runtime behavior is unchanged.

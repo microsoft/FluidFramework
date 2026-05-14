@@ -18,14 +18,15 @@ import type {
 import { Deferred } from "@fluidframework/core-utils/internal";
 import { SharedMap, type ISharedMap } from "@fluidframework/map/internal";
 import {
-	ITestFluidObject,
-	timeoutPromise,
 	DataObjectFactoryType,
+	ITestFluidObject,
 	createAndAttachContainer,
+	getRequiredPendingLocalState,
 	timeoutAwait,
-	waitForContainerConnection,
+	timeoutPromise,
 	type ChannelFactoryRegistry,
 	type ITestObjectProvider,
+	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
 
 import { wrapObjectAndOverride } from "../../mocking.js";
@@ -213,8 +214,7 @@ describeCompat("Refresh snapshot lifecycle", "NoCompat", (getTestObjectProvider,
 				await provider.ensureSynchronized(container);
 			}
 
-			assert(container1.getPendingLocalState !== undefined, "Missing method!");
-			const pendingOps = await container1.getPendingLocalState();
+			const pendingOps = await getRequiredPendingLocalState(container1);
 			container1.close();
 			assert.ok(pendingOps);
 
@@ -278,8 +278,7 @@ describeCompat("Refresh snapshot lifecycle", "NoCompat", (getTestObjectProvider,
 				groupIdDataObject2.root.set(`${j}`, j++);
 			}
 
-			assert(container2.getPendingLocalState !== undefined, "Missing method!");
-			const pendingOps2 = await container2.getPendingLocalState();
+			const pendingOps2 = await getRequiredPendingLocalState(container2);
 			container2.close();
 			// first container which loads from a snapshot with groupId
 			const container3: IContainer = await loader.resolve({ url }, pendingOps2);
@@ -298,8 +297,7 @@ describeCompat("Refresh snapshot lifecycle", "NoCompat", (getTestObjectProvider,
 			map3.set(`${i}`, i++);
 			groupIdDataObject3.root.set(`${j}`, j++);
 
-			assert(container3.getPendingLocalState !== undefined, "Missing method!");
-			const pendingOps3 = await container3.getPendingLocalState();
+			const pendingOps3 = await getRequiredPendingLocalState(container3);
 			container3.close();
 			// container created just for validation.
 			const container4: IContainer = await loader.resolve({ url }, pendingOps3);

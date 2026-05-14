@@ -20,8 +20,9 @@ import {
 	ITestContainerConfig,
 	ITestFluidObject,
 	ITestObjectProvider,
-	toIDeltaManagerFull,
 	getContainerEntryPointBackCompat,
+	getRequiredPendingLocalState,
+	toIDeltaManagerFull,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
 
@@ -135,7 +136,7 @@ describeCompat(
 			const collection = sharedString.getIntervalCollection(collectionId);
 			collection.change(id, { start: 3, end: 8 });
 
-			const pendingState: string | undefined = await container.getPendingLocalState?.();
+			const pendingState = await getRequiredPendingLocalState(container);
 			container.close();
 			provider.opProcessingController.resumeProcessing();
 			assert.ok(pendingState);

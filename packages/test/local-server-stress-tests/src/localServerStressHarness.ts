@@ -67,8 +67,9 @@ import {
 } from "@fluidframework/telemetry-utils/internal";
 import {
 	LocalCodeLoader,
-	timeoutPromise,
+	getRequiredPendingLocalState,
 	timeoutAwait,
+	timeoutPromise,
 } from "@fluidframework/test-utils/internal";
 
 import { saveFluidOps } from "./baseModel.js";
@@ -494,8 +495,7 @@ function mixinAddRemoveClient<TOperation extends BaseOperation>(
 			// the state against the source container
 			removed.container.disconnect();
 
-			assert(removed.container.getPendingLocalState !== undefined, "Missing method!");
-			const pendingLocalState = await removed.container.getPendingLocalState();
+			const pendingLocalState = await getRequiredPendingLocalState(removed.container);
 			pendingLocalStateStore.set(removed.tag, pendingLocalState);
 
 			const url = await removed.container.getAbsoluteUrl("");

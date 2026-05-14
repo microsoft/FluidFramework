@@ -13,10 +13,11 @@ import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import type { ISnapshot } from "@fluidframework/driver-definitions/internal";
 import type { ISharedDirectory } from "@fluidframework/map/internal";
 import {
-	type ITestObjectProvider,
-	createTestConfigProvider,
 	createSummarizerFromFactory,
+	createTestConfigProvider,
+	getRequiredPendingLocalState,
 	summarizeNow,
+	type ITestObjectProvider,
 } from "@fluidframework/test-utils/internal";
 
 import { TestPersistedCache } from "../../testPersistedCache.js";
@@ -141,8 +142,7 @@ describeCompat("GroupId offline", "NoCompat", (getTestObjectProvider, apis) => {
 		dataObjectB._root.set("B", "B");
 
 		// Get Pending state and close
-		assert(container.getPendingLocalState !== undefined, "Missing method!");
-		const pendingState = await container.getPendingLocalState();
+		const pendingState = await getRequiredPendingLocalState(container);
 		container.close();
 
 		// Load from the pending state
@@ -231,8 +231,7 @@ describeCompat("GroupId offline", "NoCompat", (getTestObjectProvider, apis) => {
 		dataObjectA2._root.set("A2", "A2");
 
 		// Get Pending state and close
-		assert(container2.getPendingLocalState !== undefined, "Missing method!");
-		const pendingState = await container2.getPendingLocalState();
+		const pendingState = await getRequiredPendingLocalState(container2);
 		container2.close();
 
 		// Load from the pending state
@@ -356,8 +355,7 @@ describeCompat("GroupId offline", "NoCompat", (getTestObjectProvider, apis) => {
 		dataObjectB2._root.set("B2", "B2");
 
 		// Get Pending state and close
-		assert(container2.getPendingLocalState !== undefined, "Missing method!");
-		const pendingState = await container2.getPendingLocalState();
+		const pendingState = await getRequiredPendingLocalState(container2);
 		container2.close();
 
 		// Load from the pending state

@@ -463,7 +463,12 @@ export interface IContainer extends IEventProvider<IContainerEvents> {
 	 * `@fluidframework/container-loader`).
 	 *
 	 * @remarks
-	 * The container must be attached. For detached containers use {@link IContainer.serialize}.
+	 * `IContainer` has three attach states (detached, attaching, attached); `getPendingLocalState`
+	 * is the attached-state capture API. For detached or attaching containers, use
+	 * {@link IContainer.serialize}.
+	 *
+	 * The container's {@link IContainer.closed} property must be false and the container must not
+	 * be {@link IContainer.disposed}; otherwise the implementation throws `UsageError`.
 	 *
 	 * WARNING: misuse of this API can result in duplicate op submission and potential
 	 * document corruption. The blob returned MUST be discarded if and when this container

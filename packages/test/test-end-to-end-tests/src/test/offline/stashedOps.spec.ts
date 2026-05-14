@@ -63,10 +63,11 @@ import {
 	ITestObjectProvider,
 	createAndAttachContainer,
 	createDocumentId,
-	timeoutPromise,
-	waitForContainerConnection,
+	getRequiredPendingLocalState,
 	timeoutAwait,
+	timeoutPromise,
 	toIDeltaManagerFull,
+	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
 import { SchemaFactory, ITree, TreeViewConfiguration } from "@fluidframework/tree";
 import { SharedTree } from "@fluidframework/tree/internal";
@@ -1248,8 +1249,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 				// of how small this window is.
 				if (JSON.stringify(op).includes("attach")) {
 					(container as any).processRemoteMessage = (message) => null;
-					assert(container.getPendingLocalState !== undefined, "Missing method!");
-					const pendingStateP = container.getPendingLocalState();
+					const pendingStateP = getRequiredPendingLocalState(container);
 					container.close();
 					assert.ok(pendingStateP);
 					resolve(pendingStateP);
@@ -1291,8 +1291,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 				if (op.clientId === container.clientId) {
 					// hacky; but we need to make sure we don't process further ops
 					(container as any).processRemoteMessage = (message) => null;
-					assert(container.getPendingLocalState !== undefined, "Missing method!");
-					const pendingStateP = container.getPendingLocalState();
+					const pendingStateP = getRequiredPendingLocalState(container);
 					container.close();
 					assert.ok(pendingStateP);
 					resolve(pendingStateP);
@@ -1344,8 +1343,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 
 			[...Array(lots).keys()].map((i) => dataStore.root.set(`test op #${i}`, i));
 
-			assert(container.getPendingLocalState !== undefined, "Missing method!");
-			const pendingState = await container.getPendingLocalState();
+			const pendingState = await getRequiredPendingLocalState(container);
 
 			const container2 = await loader.resolve({ url }, pendingState);
 
@@ -1487,8 +1485,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		[...Array(lots).keys()].map((i) => map2.set((i + lots).toString(), i + lots));
 
 		// get stashed ops from this container without connecting.  Superset of pendingOps
-		assert(container2.getPendingLocalState !== undefined, "Missing method!");
-		const morePendingOps = await container2.getPendingLocalState();
+		const morePendingOps = await getRequiredPendingLocalState(container2);
 		container2.close();
 
 		const { container: container3, connect: connect3 } = await loadContainerOffline(
@@ -1573,8 +1570,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 			assert(deltaManagerFull.outbound.paused);
 			[...Array(lots).keys()].map((i) => map2.set((i + lots).toString(), i + lots));
 
-			assert(container2.getPendingLocalState !== undefined, "Missing method!");
-			const morePendingOps = await container2.getPendingLocalState();
+			const morePendingOps = await getRequiredPendingLocalState(container2);
 			assert.ok(morePendingOps);
 
 			const container3 = await loader.resolve({ url }, morePendingOps);
@@ -1704,8 +1700,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 
 		const handle = await dataStore.runtime.uploadBlob(stringToBuffer("blob contents", "utf8"));
 		map.set("blob handle", handle);
-		assert(container1.getPendingLocalState !== undefined, "Missing method!");
-		const pendingState = await container1.getPendingLocalState();
+		const pendingState = await getRequiredPendingLocalState(container1);
 		container1.close();
 
 		// In practice, the upload that was triggered by setting the handle in the map probably didn't complete before
@@ -1764,8 +1759,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		map.set("blob handle 1", handle1);
 		map.set("blob handle 2", handle2);
 		map.set("blob handle 3", handle3);
-		assert(container1.getPendingLocalState !== undefined, "Missing method!");
-		const pendingState = await container1.getPendingLocalState();
+		const pendingState = await getRequiredPendingLocalState(container1);
 		container1.close();
 
 		// In practice, the uploads triggered by setting the handles in the map probably didn't complete before
@@ -1818,8 +1812,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 			stringToBuffer("blob contents 1", "utf8"),
 		);
 		map.set("blob handle 1", handle);
-		assert(container.container.getPendingLocalState !== undefined, "Missing method!");
-		const pendingState = await container.container.getPendingLocalState();
+		const pendingState = await getRequiredPendingLocalState(container.container);
 		container.container.close();
 
 		// Second container loads offline with the pending state
@@ -1871,8 +1864,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 			stringToBuffer("blob contents 1", "utf8"),
 		);
 		map.set("blob handle 1", handle);
-		assert(container.container.getPendingLocalState !== undefined, "Missing method!");
-		const pendingState = await container.container.getPendingLocalState();
+		const pendingState = await getRequiredPendingLocalState(container.container);
 		container.container.close();
 
 		// Second container loads with the pending state
@@ -1978,8 +1970,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		await detachedContainer.attach(
 			provider.driver.createCreateNewRequest(provider.documentId),
 		);
-		assert(detachedContainer.getPendingLocalState !== undefined, "Missing method!");
-		const pendingOps = await detachedContainer.getPendingLocalState();
+		const pendingOps = await getRequiredPendingLocalState(detachedContainer);
 		detachedContainer.close();
 
 		const url2 = await detachedContainer.getAbsoluteUrl("");
@@ -2010,8 +2001,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		await rehydratedContainer.attach(
 			provider.driver.createCreateNewRequest(provider.documentId),
 		);
-		assert(rehydratedContainer.getPendingLocalState !== undefined, "Missing method!");
-		const pendingOps = await rehydratedContainer.getPendingLocalState();
+		const pendingOps = await getRequiredPendingLocalState(rehydratedContainer);
 		rehydratedContainer.close();
 
 		const url2 = await rehydratedContainer.getAbsoluteUrl("");
@@ -2040,8 +2030,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 			pendingStateP = await new Promise<string>((resolve) => {
 				container.once("connected", (clientId: string) => resolve(clientId));
 			}).then(async (clientId: string) => {
-				assert(container.getPendingLocalState !== undefined, "Missing method!");
-				pendingState = await container.getPendingLocalState();
+				pendingState = await getRequiredPendingLocalState(container);
 				assert(typeof pendingState === "string");
 
 				// the pending data in the stash blob may not have changed, but the clientId should match our new
@@ -2086,8 +2075,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 			pendingStateP = await new Promise<string>((resolve) => {
 				container.once("connected", (clientId: string) => resolve(clientId));
 			}).then(async (clientId: string) => {
-				assert(container.getPendingLocalState !== undefined, "Missing method!");
-				pendingState = await container.getPendingLocalState();
+				pendingState = await getRequiredPendingLocalState(container);
 				assert(typeof pendingState === "string");
 
 				// the pending data in the stash blob may not have changed, but the clientId should match our new
@@ -2488,8 +2476,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		const dataStore = (await container.getEntryPoint()) as ITestFluidObject;
 		const map = await dataStore.getSharedObject<ISharedMap>(mapId);
 		map.set(testKey, testValue);
-		assert(container.getPendingLocalState !== undefined, "Missing method!");
-		const pendingOps = await container.getPendingLocalState();
+		const pendingOps = await getRequiredPendingLocalState(container);
 		container.close();
 		assert.ok(pendingOps);
 		// make sure we got stashed ops with refseqnum === 0, otherwise we are not testing the scenario we want to

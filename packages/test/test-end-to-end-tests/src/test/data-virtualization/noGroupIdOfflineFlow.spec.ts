@@ -12,7 +12,10 @@ import type { IContainerRuntime } from "@fluidframework/container-runtime-defini
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import { SharedCounter } from "@fluidframework/counter/internal";
 import type { ISharedDirectory } from "@fluidframework/map/internal";
-import type { ITestObjectProvider } from "@fluidframework/test-utils/internal";
+import {
+	getRequiredPendingLocalState,
+	type ITestObjectProvider,
+} from "@fluidframework/test-utils/internal";
 
 describeCompat("Offline Attach Ops", "NoCompat", (getTestObjectProvider, apis) => {
 	const { DataObjectFactory, DataObject } = apis.dataRuntime;
@@ -78,8 +81,7 @@ describeCompat("Offline Attach Ops", "NoCompat", (getTestObjectProvider, apis) =
 		const childObject = await dataObjectFactory.createInstance(mainObject.containerRuntime);
 		mainObject._root.set("testObject2", childObject.handle);
 
-		assert(container.getPendingLocalState !== undefined, "Missing method!");
-		const serializedState = await container.getPendingLocalState();
+		const serializedState = await getRequiredPendingLocalState(container);
 		container.close();
 		assert(serializedState !== undefined, "serializedState should not be undefined");
 

@@ -28,6 +28,7 @@ import {
 	TestFluidObjectFactory,
 	TestObjectProvider,
 	createAndAttachContainer,
+	getRequiredPendingLocalState,
 } from '@fluidframework/test-utils/internal';
 import { expect } from 'chai';
 import { v5 as uuidv5 } from 'uuid';
@@ -691,8 +692,7 @@ export async function withContainerOffline<TReturn>(
 	await provider.ensureSynchronized();
 	await provider.opProcessingController.pauseProcessing(container);
 	const actionReturn = action();
-	const pendingLocalState = await container.getPendingLocalState?.();
+	const pendingLocalState = await getRequiredPendingLocalState(container);
 	container.close();
-	assert(pendingLocalState !== undefined, 0x726 /* pendingLocalState should be defined */);
 	return { actionReturn, pendingLocalState };
 }

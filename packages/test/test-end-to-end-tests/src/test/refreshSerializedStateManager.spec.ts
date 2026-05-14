@@ -21,13 +21,14 @@ import type { ISharedMap } from "@fluidframework/map/internal";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 import {
 	ChannelFactoryRegistry,
-	ITestFluidObject,
 	DataObjectFactoryType,
+	ITestFluidObject,
 	createAndAttachContainer,
 	createDocumentId,
-	waitForContainerConnection,
-	timeoutPromise,
+	getRequiredPendingLocalState,
 	timeoutAwait,
+	timeoutPromise,
+	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
 
 import { wrapObjectAndOverride } from "../mocking.js";
@@ -120,8 +121,7 @@ describeCompat("Snapshot refresh at loading", "NoCompat", (getTestObjectProvider
 		const map = await dataStore.getSharedObject<ISharedMap>(mapId);
 		map.set(testKey, testValue);
 		await waitForSummary(container);
-		assert(container.getPendingLocalState !== undefined, "Missing method!");
-		const pendingOps = await container.getPendingLocalState();
+		const pendingOps = await getRequiredPendingLocalState(container);
 		container.close();
 		assert.ok(pendingOps);
 		// make sure we got stashed ops with seqnum === 0,
@@ -131,8 +131,7 @@ describeCompat("Snapshot refresh at loading", "NoCompat", (getTestObjectProvider
 		await timeoutAwait(getLatestSnapshotInfoP.promise, {
 			errorMsg: "Timeout on waiting for getLatestSnapshotInfo",
 		});
-		assert(container1.getPendingLocalState !== undefined, "Missing method!");
-		const pendingOps2 = await container1.getPendingLocalState();
+		const pendingOps2 = await getRequiredPendingLocalState(container1);
 		container1.close();
 		const container2: IContainer = await loader.resolve({ url }, pendingOps2);
 		const dataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
@@ -199,8 +198,7 @@ describeCompat("Snapshot refresh at loading", "NoCompat", (getTestObjectProvider
 		await timeoutAwait(getLatestSnapshotInfoP.promise, {
 			errorMsg: "Timeout on waiting for getLatestSnapshotInfo",
 		});
-		assert(container.getPendingLocalState !== undefined, "Missing method!");
-		const pendingOps = await container.getPendingLocalState();
+		const pendingOps = await getRequiredPendingLocalState(container);
 		container.close();
 		assert.ok(pendingOps);
 
@@ -261,8 +259,7 @@ describeCompat("Snapshot refresh at loading", "NoCompat", (getTestObjectProvider
 		const map = await dataStore.getSharedObject<ISharedMap>(mapId);
 		map.set(testKey, testValue);
 		// not waiting for summary to reuse the stashed snapshot for new loaded containers
-		assert(container.getPendingLocalState !== undefined, "Missing method!");
-		const pendingOps = await container.getPendingLocalState();
+		const pendingOps = await getRequiredPendingLocalState(container);
 		container.close();
 		assert.ok(pendingOps);
 		// make sure we got stashed ops with seqnum === 0,
@@ -272,8 +269,7 @@ describeCompat("Snapshot refresh at loading", "NoCompat", (getTestObjectProvider
 		await timeoutAwait(getLatestSnapshotInfoP.promise, {
 			errorMsg: "Timeout on waiting for getLatestSnapshotInfo",
 		});
-		assert(container1.getPendingLocalState !== undefined, "Missing method!");
-		const pendingOps2 = await container1.getPendingLocalState();
+		const pendingOps2 = await getRequiredPendingLocalState(container1);
 		container1.close();
 		const container2: IContainer = await loader.resolve({ url }, pendingOps2);
 		const dataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
