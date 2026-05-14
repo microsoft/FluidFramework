@@ -586,8 +586,8 @@ export function chunkRange(
  * chunk at the returned index.
  *
  * @remarks
- * Chunks whose top level length exceeds {@link ChunkPolicy.uniformChunkNodeCountDynamicTargetMax}
- * are bisected at the midpoint and the loop descends into whichever half contains `nodeIndex`.
+ * When splitting chunks, large chunks are split evenly so that repeated calls to this method (or similar operations)
+ * avoid poor worst-case behavior. See {@link ChunkPolicy.uniformChunkNodeCountDynamicTargetMax} for details.
  *
  * @param chunks - The array of {@link TreeChunk}s for the field to split. Mutated in place.
  * @param nodeIndex - The index of the node to split at. Must be in `[0, totalNodes]`, where
@@ -596,8 +596,7 @@ export function chunkRange(
  * @param policy - The {@link ChunkCompressor} to use when splitting chunks and re-chunking each side
  * of the split via {@link chunkRange}.
  *
- * @returns The index of the chunk in `chunks` that begins at `nodeIndex`, or `chunks.length` when
- * `nodeIndex === totalNodes`.
+ * @returns The index in `chunks` (after medications made by this function) where if a chunk were inserted at that index its first top level node would have index `nodeIndex` when treating `chunks` as a field.
  */
 export function splitFieldAtIndex(
 	chunks: TreeChunk[],
@@ -615,10 +614,15 @@ export function splitFieldAtIndex(
 		const chunk = chunks[chunkIndex] ?? oob();
 		const total = chunk.topLevelLength;
 		if (remaining >= total) {
+			// nodeIndex is not in this chunk, so move forward one chunk and continue.
 			remaining -= total;
 			chunkIndex++;
 			continue;
 		}
+
+		// nodeIndex falls within this chunk, so split the chunk.
+		// This does not move the chunkIndex forward: the next iteration might need to split again at the same index.
+		//
 		// For chunks above the bisect threshold, cut at the midpoint and let the loop descend
 		// into whichever half holds nodeIndex. The other half is left untouched.
 		const splitPoint = total > bisectThreshold ? Math.floor(total / 2) : remaining;
