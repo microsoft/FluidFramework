@@ -5,16 +5,11 @@
 
 import { strict as assert } from "assert";
 
-import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct/internal";
 import {
 	asLegacyAlpha,
 	createDetachedContainer,
 	loadExistingContainer,
 } from "@fluidframework/container-loader/internal";
-import {
-	LocalDocumentServiceFactory,
-	LocalResolver,
-} from "@fluidframework/local-driver/internal";
 import { type ISharedMap, SharedMap } from "@fluidframework/map/internal";
 import type {
 	IFluidDataStoreChannel,
@@ -22,8 +17,10 @@ import type {
 	IFluidDataStoreFactory,
 } from "@fluidframework/runtime-definitions/internal";
 import { LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
-import { LocalCodeLoader, TestFluidObjectFactory } from "@fluidframework/test-utils/internal";
+import { TestFluidObjectFactory } from "@fluidframework/test-utils/internal";
 import type { ITestFluidObject } from "@fluidframework/test-utils/internal";
+
+import { createLoader } from "../utils.js";
 
 /**
  * NOTE — anti-pattern under test, do not copy.
@@ -86,9 +83,6 @@ class ReactingMapFactory implements IFluidDataStoreFactory {
 describe("Submit during stashed-op apply (end-to-end)", () => {
 	it("rejects load when a valueChanged listener does a cross-map edit during apply", async () => {
 		const deltaConnectionServer = LocalDeltaConnectionServer.create();
-		const documentServiceFactory = new LocalDocumentServiceFactory(deltaConnectionServer);
-		const urlResolver = new LocalResolver();
-		const codeDetails = { package: "test" };
 
 		// 1. Create the container with two named SharedMaps, attach, write,
 		//    disconnect, write offline, capture pending local state.
@@ -99,19 +93,17 @@ describe("Submit during stashed-op apply (end-to-end)", () => {
 			],
 			"default",
 		);
-		const goodRuntimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
-			defaultFactory: goodFactory,
-			registryEntries: [[goodFactory.type, Promise.resolve(goodFactory)]],
+		const {
+			codeDetails,
+			loaderProps: goodLoaderProps,
+			urlResolver,
+		} = createLoader({
+			deltaConnectionServer,
+			defaultDataStoreFactory: goodFactory,
 		});
-		const goodCodeLoader = new LocalCodeLoader([[codeDetails, goodRuntimeFactory]]);
 
 		const container = asLegacyAlpha(
-			await createDetachedContainer({
-				codeDetails,
-				codeLoader: goodCodeLoader,
-				documentServiceFactory,
-				urlResolver,
-			}),
+			await createDetachedContainer({ codeDetails, ...goodLoaderProps }),
 		);
 
 		const initialObject = (await container.getEntryPoint()) as ITestFluidObject;
@@ -132,13 +124,14 @@ describe("Submit during stashed-op apply (end-to-end)", () => {
 
 		// 2. Build a separate loader that, on existing=true loads, wires up a
 		//    valueChanged listener on `primary` that performs a cascading set
-		//    on `secondary`.
-		const reactingFactory = new ReactingMapFactory(goodFactory);
-		const reactingRuntimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
-			defaultFactory: reactingFactory,
-			registryEntries: [[reactingFactory.type, Promise.resolve(reactingFactory)]],
+		//    on `secondary`. Share the resolver and driver so the URL produced
+		//    above resolves on the new loader.
+		const { loaderProps: reactingLoaderProps } = createLoader({
+			deltaConnectionServer,
+			defaultDataStoreFactory: new ReactingMapFactory(goodFactory),
+			urlResolver,
+			documentServiceFactory: goodLoaderProps.documentServiceFactory,
 		});
-		const reactingCodeLoader = new LocalCodeLoader([[codeDetails, reactingRuntimeFactory]]);
 
 		// 3. The stashed `offline` op fires `valueChanged` on `primary` during
 		//    apply; the listener's `secondary.set` reaches the runtime's
@@ -147,9 +140,7 @@ describe("Submit during stashed-op apply (end-to-end)", () => {
 		//    the load rejects.
 		await assert.rejects(
 			loadExistingContainer({
-				codeLoader: reactingCodeLoader,
-				documentServiceFactory,
-				urlResolver,
+				...reactingLoaderProps,
 				request: { url },
 				pendingLocalState,
 			}),
