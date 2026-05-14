@@ -100,7 +100,7 @@ export async function getDataStoreEntryPointBackCompat<T>(dataStore: IDataStore)
 }
 
 /**
- * Calls {@link IContainer.getPendingLocalState} and asserts the method is implemented.
+ * Calls `container.getPendingLocalState()` and asserts the method is implemented.
  *
  * @remarks
  * `getPendingLocalState` is currently optional on `IContainer` for forward-compat with external
