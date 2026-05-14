@@ -35,6 +35,12 @@ dev() {
 	agency claude --profile nori --mcp 'ado --org fluidframework' --mcp 'workiq' --mcp 'enghub' "$@" -- --model opus
 }
 
+dev-copilot() {
+	_ensure_agency || return 1
+	repoverlay switch --copy nori
+	agency copilot --profile nori --mcp 'ado --org fluidframework' --mcp 'workiq' --mcp 'enghub' "$@" -- --model opus
+}
+
 copilot() {
 	_ensure_agency || return 1
 	{ repoverlay remove --all 2>/dev/null; true; }

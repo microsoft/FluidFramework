@@ -16,7 +16,7 @@ import { type AliasProposal, runAiSession } from "../library/ai/copilotSession.j
 import { BaseCommand } from "../library/commands/base.js";
 
 const FALLBACK_MODEL = "claude-haiku-4.5";
-export const SUPPORTED_ALIASES = ["claude", "dev", "copilot", "oce", "ai-reset"] as const;
+export const SUPPORTED_ALIASES = ["claude", "dev", "dev-copilot", "copilot", "oce", "ai-reset"] as const;
 
 export default class AiCommand extends BaseCommand<typeof AiCommand> {
 	static readonly description =
