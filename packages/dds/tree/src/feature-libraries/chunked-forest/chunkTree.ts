@@ -581,22 +581,22 @@ export function chunkRange(
 }
 
 /**
- * Walks the `chunks` array of a field and splits a chunk if needed so that the node at the given
- * index sits on a chunk boundary. After the call, the node at `nodeIndex` is the first node of the
- * chunk at the returned index.
+ * Walks the `chunks` array of a field and splits a chunk if needed so that `nodeIndex` sits on
+ * a chunk boundary. After the call, inserting a chunk at the returned index would place its
+ * first top-level node at index `nodeIndex` when treating `chunks` as a field.
  *
  * @remarks
  * When splitting chunks, large chunks are split evenly so that repeated calls to this method (or similar operations)
  * avoid poor worst-case behavior. See {@link ChunkPolicy.uniformChunkNodeCountDynamicTargetMax} for details.
  *
  * @param chunks - The array of {@link TreeChunk}s for the field to split. Mutated in place.
- * @param nodeIndex - The index of the node to split at. Must be in `[0, totalNodes]`, where
- * `totalNodes` is the sum of {@link TreeChunk.topLevelLength} across all chunks. `nodeIndex === totalNodes`
- * is allowed as a splice point (e.g. attaching at the end of a chunk array).
+ * @param nodeIndex - The index to split at, measured in top-level nodes within the field.
+ * Must be in `[0, totalNodes]`, where `totalNodes` is the sum of {@link TreeChunk.topLevelLength}
+ * across all chunks.
  * @param policy - The {@link ChunkCompressor} to use when splitting chunks and re-chunking each side
  * of the split via {@link chunkRange}.
  *
- * @returns The index in `chunks` (after medications made by this function) where if a chunk were inserted at that index its first top level node would have index `nodeIndex` when treating `chunks` as a field.
+ * @returns The index in `chunks` (after modifications made by this function) where if a chunk were inserted at that index its first top level node would have index `nodeIndex` when treating `chunks` as a field.
  */
 export function splitFieldAtIndex(
 	chunks: TreeChunk[],
@@ -635,9 +635,6 @@ export function splitFieldAtIndex(
 		// The spliced-out slot held a ref to the original chunk. The two new chunks come with
 		// their own refs from chunkRange, so the slot's ref to the original needs to be released.
 		chunk.referenceRemoved();
-		if (splitPoint === remaining) {
-			return chunkIndex + before.length;
-		}
 	}
 	assert(remaining === 0, "nodeIndex exceeds total node count in field");
 	return chunks.length;
