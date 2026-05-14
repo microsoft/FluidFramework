@@ -17,6 +17,7 @@ import {
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import { FluidClientVersion, type FormatVersion } from "./codec/index.js";
+import { detachedFieldIndexCodecName, DetachedFieldIndexFormatVersion } from "./core/index.js";
 import {
 	SharedTreeKernel,
 	type ITreePrivate,
@@ -227,6 +228,7 @@ const sharedBranchesOptions: SharedTreeOptionsInternal = {
 	writeVersionOverrides: new Map<string, FormatVersion>([
 		[editManagerCodecName, EditManagerFormatVersion.vSharedBranches],
 		[messageCodecName, MessageFormatVersion.vSharedBranches],
+		[detachedFieldIndexCodecName, DetachedFieldIndexFormatVersion.v2],
 	]),
 	allowPossiblyIncompatibleWriteVersionOverrides: true,
 };
