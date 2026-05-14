@@ -21,7 +21,6 @@ import {
 	createContainerRuntimeFactoryWithDefaultDataStore,
 	createSummarizerFromFactory,
 	summarizeNow,
-	type SummaryInfo,
 } from "@fluidframework/test-utils/internal";
 import { SchemaFactory, TreeViewConfiguration, type TreeView } from "@fluidframework/tree";
 import { configuredSharedTreeBetaLegacy } from "@fluidframework/tree/legacy";
@@ -122,7 +121,7 @@ describeCompat(
 				runtimeOptions: {
 					// SharedTree requires the runtime id compressor.
 					enableRuntimeIdCompressor: "on",
-					// Disbale summaries for regular clients so they don't interfere with on demand summaries.
+					// Disable summaries for regular clients so they don't interfere with on demand summaries.
 					summaryOptions: {
 						summaryConfigOverrides: {
 							state: "disabled",
@@ -170,7 +169,7 @@ describeCompat(
 				registryEntries,
 			);
 			await provider.ensureSynchronized();
-			await assert.doesNotReject(async () => summarizeNow(summarizer, "afterDetachedAttach"));
+			await summarizeNow(summarizer, "afterDetachedAttach");
 		});
 	},
 );
