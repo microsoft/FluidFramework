@@ -1421,25 +1421,41 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		);
 	});
 
-	it("fails when session time expires using stashed time", async function () {
-		const pendingOps = await generatePendingState(
-			testContainerConfig,
-			provider,
-			false, // Don't send ops from first container instance before closing
-			async (c, d) => {
-				const map = await d.getSharedObject<ISharedMap>(mapId);
-				[...Array(lots).keys()].map((i) => map.set(i.toString(), i));
+	itExpects(
+		"fails when session time expires using stashed time",
+		[
+			{
+				eventName: "fluid:telemetry:Container:ContainerClose",
+				error: "Client session expired.",
 			},
-		);
-		const pendingState = JSON.parse(pendingOps);
-		assert.ok(pendingState.pendingRuntimeState.sessionExpiryTimerStarted);
-		pendingState.pendingRuntimeState.sessionExpiryTimerStarted = 1;
-		const pendingOps2 = JSON.stringify(pendingState);
-		await assert.rejects(
-			async () => loader.resolve({ url }, pendingOps2),
-			/Client session expired./,
-		);
-	});
+		],
+		async () => {
+			const pendingOps = await generatePendingState(
+				testContainerConfig,
+				provider,
+				false, // Don't send ops from first container instance before closing
+				async (c, d) => {
+					const map = await d.getSharedObject<ISharedMap>(mapId);
+					[...Array(lots).keys()].map((i) => map.set(i.toString(), i));
+				},
+			);
+			const pendingState = JSON.parse(pendingOps);
+			assert.ok(pendingState.pendingRuntimeState.sessionExpiryTimerStarted);
+			pendingState.pendingRuntimeState.sessionExpiryTimerStarted = 1;
+			const pendingOps2 = JSON.stringify(pendingState);
+			await assert.rejects(
+				async () => loader.resolve({ url }, pendingOps2),
+				/Client session expired./,
+			);
+			// ContainerDispose fires asynchronously: the container's `closed` event rejects
+			// the outer promise (allowing assert.rejects to resolve) before the inner
+			// container.load() promise chain settles and calls container.dispose(). Yield
+			// to the macrotask queue so all pending microtasks — including the remainder of
+			// instantiateRuntime and the .then(_, error) handler that calls dispose — run
+			// before itExpects checks for the ContainerDispose event.
+			await new Promise<void>((resolve) => setTimeout(resolve));
+		},
+	);
 
 	it("can make changes offline and stash them", async function () {
 		const pendingOps = await generatePendingState(
@@ -2262,8 +2278,7 @@ describeCompat(
 					async (c, d) => {
 						const counter = await d.getSharedObject<SharedCounter>(counterId);
 						// Include an ID Allocation op to get coverage of the special logic around these ops as well
-						// AB#26984: Actually don't, because the ID Compressor is hitting "Ranges finalized out of order" for this test
-						// getIdCompressor(counter)?.generateCompressedId();
+						getIdCompressor(counter)?.generateCompressedId();
 						counter.increment(incrementValue);
 					},
 				);

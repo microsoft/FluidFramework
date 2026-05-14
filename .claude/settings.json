@@ -1,0 +1,40 @@
+{
+	"permissions": {
+		"defaultMode": "auto"
+	},
+	"skipAutoPermissionPrompt": true,
+	"hooks": {
+		"PreToolUse": [
+			{
+				"matcher": "Bash",
+				"hooks": [
+					{
+						"type": "command",
+						"if": "Bash(git push*)",
+						"command": "printf '{\"hookSpecificOutput\":{\"hookEventName\":\"PreToolUse\",\"additionalContext\":\"Before pushing: if ci-readiness-check has NOT been run this session, you MUST either (a) run it now by loading .claude/skills/ci-readiness-check/SKILL.md and following its checklist, or (b) explicitly tell the user you are skipping it and why before proceeding. Silent skips are not allowed.\"}}'",
+						"statusMessage": "Checking CI readiness..."
+					},
+					{
+						"type": "command",
+						"if": "Bash(gh pr create*)",
+						"command": "printf '{\"hookSpecificOutput\":{\"hookEventName\":\"PreToolUse\",\"additionalContext\":\"Before creating this PR, load and follow the fluid-pr-guide skill for title and body conventions.\"}}'"
+					}
+				]
+			}
+		]
+	},
+	"sandbox": {
+		"enabled": true,
+		"enableWeakerNestedSandbox": true,
+		"allowedNetworkHosts": [
+			"api.github.com",
+			"registry.npmjs.org",
+			"developer.mozilla.org",
+			"www.typescriptlang.org",
+			"nodejs.org",
+			"www.npmjs.com",
+			"fluidframework.com",
+			"stackoverflow.com"
+		]
+	}
+}

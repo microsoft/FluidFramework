@@ -59,6 +59,7 @@ import {
 	type ReadOnlyDetachedFieldIndex,
 	makeAnonChange,
 	type TaggedChange,
+	deltaFieldMapHasVisibleChanges,
 } from "../core/index.js";
 import {
 	type FieldBatchCodec,
@@ -749,6 +750,7 @@ export class TreeCheckout implements ITreeCheckout {
 							idCompressor: this.idCompressor,
 							originatorId: this.idCompressor.localSessionId,
 							revision,
+							isSummary: false,
 						};
 						const encodedChange = this.changeFamily.codecs.resolve(4).encode(change, context);
 
@@ -819,6 +821,7 @@ export class TreeCheckout implements ITreeCheckout {
 			idCompressor: this.idCompressor,
 			originatorId: this.idCompressor.localSessionId,
 			revision,
+			isSummary: false,
 		};
 		const decodedChange = this.changeFamily.codecs.resolve(4).decode(change, context);
 		// Apply the change to the branch, but _not_ the `activeBranch` - we do not support squashing serialized commits in a transaction.
@@ -1339,6 +1342,17 @@ export class TreeCheckout implements ITreeCheckout {
 		const headCommit = this.#transaction.activeBranch.getHead();
 		// Rebase the inverted change onto any commits that occurred after the undoable commits.
 		if (commitToRevert !== headCommit) {
+			// The inverse may be rebased over newer commits which (despite being present in the history)
+			// have no net effect on the document state (e.g. an edit plus its undo).
+			// In that case, a no-change constraint should not be violated during rebase.
+			const diff = diffHistories(
+				this.changeFamily.rebaser,
+				commitToRevert,
+				headCommit,
+				this.mintRevisionTag,
+			);
+			const ignoreNoChangeViolation = !sharedTreeChangeHasVisibleChanges(diff);
+
 			change = tagChange(
 				rebaseChange(
 					this.changeFamily.rebaser,
@@ -1346,6 +1360,7 @@ export class TreeCheckout implements ITreeCheckout {
 					commitToRevert,
 					headCommit,
 					this.mintRevisionTag,
+					ignoreNoChangeViolation,
 				).change,
 				revisionForInvert,
 			);
@@ -1709,4 +1724,24 @@ function isSerializedChange(value: unknown): value is SerializedChange {
 		isStableId(change.originatorId) &&
 		change.change !== undefined
 	);
+}
+
+/**
+ * Enumerates through a shared tree change, looking for schema change and field changes that result in visible changes to the tree (e.g. an insert, move, delete).
+ * This function also considers changes to detached roots to be visible changes, but not renames of roots or builds of new roots.
+ *
+ * @param change - The change to analyze.
+ * @returns True if the change contains any schema changes or any field changes that result in visible changes to the tree, false otherwise.
+ */
+function sharedTreeChangeHasVisibleChanges(change: SharedTreeChange): boolean {
+	for (const inner of change.changes) {
+		if (inner.type === "schema") {
+			return true;
+		}
+		const delta = intoDelta(tagChange(inner.innerChange, undefined));
+		if (deltaFieldMapHasVisibleChanges(delta.fields)) {
+			return true;
+		}
+	}
+	return false;
 }

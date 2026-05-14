@@ -1,5 +1,21 @@
 # @fluid-example/bubblebench-common
 
+## 2.101.0
+
+Dependency updates only.
+
+## 2.100.0
+
+Dependency updates only.
+
+## 2.93.0
+
+Dependency updates only.
+
+## 2.92.0
+
+Dependency updates only.
+
 ## 2.91.0
 
 Dependency updates only.

@@ -43,6 +43,7 @@ stages:
   - template: /tools/pipelines/templates/include-conditionally-run-stress-tests.yml@self
     parameters:
       artifactBuildId: $(resources.pipeline.client.runID)
+      fluidFrameworkSourceVersion: $(resources.pipeline.client.sourceCommit)
       packages:
         - name: "@fluidframework/sequence"
           affectedPaths:

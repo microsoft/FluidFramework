@@ -34,13 +34,14 @@
 		"prettier": "~3.0.3",
 		"typescript": "~4.5.5"
 	},
-	"packageManager": "pnpm@10.18.3+sha512.bbd16e6d7286fd7e01f6b3c0b3c932cda2965c06a908328f74663f10a9aea51f1129eea615134bf992831b009eabe167ecb7008b597f40ff9bc75946aadfb08d",
+	"packageManager": "pnpm@10.33.0+sha512.10568bb4a6afb58c9eb3630da90cc9516417abebd3fabbe6739f0ae795728da1491e9db5a544c76ad8eb7570f5c4bb3d6c637b2cb41bfdcdb47fa823c8649319",
 	"pnpm": {
 		"onlyBuiltDependencies": ["unrs-resolver"],
 		"commentsOverrides": [
 			"qs: overridden to ^6.15.0 to resolve a known vulnerability in older versions.",
 			"js-yaml: overridden to fix CVE-2025-64718 (prototype pollution via merge keys).",
-			"minimatch: overridden to patched versions to resolve known security vulnerabilities across all major version ranges."
+			"minimatch: overridden to patched versions to resolve known security vulnerabilities across all major version ranges.",
+			"picomatch: overridden to patched versions to resolve a known security vulnerability."
 		],
 		"overrides": {
 			"js-yaml": "^4.1.1",
@@ -51,7 +52,9 @@
 			"minimatch@>=7 <8": "^7.4.9",
 			"minimatch@>=8 <9": "^8.0.7",
 			"minimatch@>=9 <10": "^9.0.9",
-			"minimatch@>=10 <11": "^10.2.4"
+			"minimatch@>=10 <11": "^10.2.4",
+			"picomatch@>=2 <3": "^2.3.2",
+			"picomatch@>=4 <5": "^4.0.4"
 		}
 	}
 }

@@ -98,6 +98,18 @@ describe("SchemaFactory Recursive methods", () => {
 				allowUnused<requireAssignableTo<typeof arrayOfAnnotated, typeof fieldArray>>();
 			}
 		});
+
+		describe("stagedOptionalRecursive", () => {
+			const field = SchemaFactoryAlpha.stagedOptional(SchemaFactoryAlpha.number);
+
+			const fieldRecursive = SchemaFactoryAlpha.stagedOptionalRecursive(
+				SchemaFactoryAlpha.number,
+			);
+
+			{
+				allowUnused<requireTrue<areSafelyAssignable<typeof field, typeof fieldRecursive>>>();
+			}
+		});
 	});
 
 	describe("objectRecursive", () => {

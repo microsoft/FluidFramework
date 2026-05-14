@@ -51,6 +51,7 @@ export type KeyFinder<TKey> = (tree: ITreeSubscriptionCursor) => TKey;
  * calling {@link keys} will not include any keys that are stored in the index but only map to detached nodes.
  */
 export class AnchorTreeIndex<TKey, TValue> implements TreeIndex<TKey, TValue> {
+	public readonly [Symbol.toStringTag] = "AnchorTreeIndex";
 	public disposed = false;
 	/**
 	 * Caches {@link KeyFinder}s for each schema definition. If a schema maps to null, it does not
@@ -273,7 +274,10 @@ export class AnchorTreeIndex<TKey, TValue> implements TreeIndex<TKey, TValue> {
 	public *allEntries(): IterableIterator<[TKey, TValue]> {
 		this.checkNotDisposed();
 		for (const [key, nodes] of this.keyToNodes.entries()) {
-			assert(hasElement(nodes), "expected at least one node for each key in the index");
+			assert(
+				hasElement(nodes),
+				0xce9 /* expected at least one node for each key in the index */,
+			);
 			const value = this.getValue(nodes);
 			if (value !== undefined) {
 				yield [key, value];

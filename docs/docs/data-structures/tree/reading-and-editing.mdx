@@ -69,7 +69,7 @@ Optional properties can be cleared by assigning `undefined` to them.
 proposal.text = undefined;
 ```
 
-Note that if the new value is a node (as opposed to a primitive), then its [status](./nodes.mdx#treestatus) must be `TreeStatus.New`,
+Note that if the new value is a node (as opposed to a primitive), then its [status](../../api/fluid-framework/treestatus-enum) must be `TreeStatus.New`,
 In other words, it is not possible to set a node that has already been inserted in the tree in the past, even if that node has since been removed.
 
 ## Map Node APIs
@@ -126,7 +126,7 @@ set(key: string, value: T)
 The `set()` method sets/changes the value of the item with the specified key. If the key is not present, the item is added to the map. Note the following:
 
 -   The `T` can be any type that conforms to the map node's schema. For example, if the schema was defined with `class MyMap extends sf.map([sf.number, sf.string]);`, then `T` could be `number` or `string`.
--   If the `value` argument is a node (as opposed to a primitive), then its [status](./nodes.mdx#treestatus) must be `TreeStatus.New`,
+-   If the `value` argument is a node (as opposed to a primitive), then its [status](../../api/fluid-framework/treestatus-enum) must be `TreeStatus.New`,
     In other words, it is not possible to set a node that has already been inserted in the tree in the past, even if that node has since been removed.
 -   If multiple clients set the same key simultaneously, the key gets the value set by the last edit to apply. For the meaning of "simultaneously", see [Types of distributed data structures](../overview.mdx).
 
@@ -161,7 +161,7 @@ Array nodes have three methods that insert items into the array.
 Note the following:
 
 -   In all of the following, the `T` can be any type that conforms to the array node's schema. For example, if the schema was defined with `class MyArray extends sf.array([sf.number, sf.string]);`, then `T` could be `number` or `string`.
--   Inserted values that are nodes (as opposed to a primitive), must have a [status](./nodes.mdx#treestatus) equal `TreeStatus.New`.
+-   Inserted values that are nodes (as opposed to a primitive), must have a [status](../../api/fluid-framework/treestatus-enum) equal `TreeStatus.New`.
     In other words, it is not possible to set a node that has already been inserted in the tree in the past, even if that node has since been removed.
 
 ```typescript
@@ -212,7 +212,7 @@ Note the following about these methods:
 
 -   If multiple clients simultaneously move an item, then that item will be moved to the destination indicated by the move of the client whose edit is ordered last.
 -   A moved item may be removed as a result of a simultaneous remove operation from another client. For example, if one client moves items 3-5, and another client simultaneously removes items 4 and 5, then, if the remove operation is ordered last, items 4 and 5 are removed from their destination by the remove operation. If the move operation is ordered last, then all three items will be moved to the destination.
--   Moved items that are nodes (as opposed to a primitives), must have a [status](./nodes.mdx#treestatus) equal `TreeStatus.InDocument`.
+-   Moved items that are nodes (as opposed to a primitives), must have a [status](../../api/fluid-framework/treestatus-enum) equal `TreeStatus.InDocument`.
 -   We also expose variations of these methods for moving a single item.
 
 For the meaning of "simultaneously", see [Types of distributed data structures](../overview.mdx).

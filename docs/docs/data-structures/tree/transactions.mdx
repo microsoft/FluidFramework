@@ -235,6 +235,14 @@ This is the only constraint which can be applied via `Tree.runTransaction`.
 Requires that the document is in the exact same state when the transaction is applied as it was when the transaction was created.
 If _any_ concurrent edit is sequenced before the transaction, the constraint is violated and the transaction is rolled back.
 
+:::note
+
+In some cases, SharedTree will attempt reapply transactions whose noChange constraint was violated.
+This happens when we detect that no visible change has occurred - eg, if an element was added and then removed, the add
+would violate noChange, but then with the remove happening directly after, we will unviolate the noChange constraint.
+
+:::
+
 ```typescript
 view.runTransaction(
     () => {

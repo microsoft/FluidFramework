@@ -77,7 +77,15 @@ export class NodeShapeBasedEncoder
 			if (isStableId(cursor.value)) {
 				const sessionSpaceCompressedId = context.idCompressor.tryRecompress(cursor.value);
 				if (sessionSpaceCompressedId !== undefined) {
-					return context.idCompressor.normalizeToOpSpace(sessionSpaceCompressedId);
+					const opSpaceId = context.idCompressor.normalizeToOpSpace(sessionSpaceCompressedId);
+					// Summaries can only contain finalized op-space ids unless they also include the originator's session id somewhere.
+					// This is not the case for forest summaries at the time of writing, so non-finalized ids are instead written using
+					// their long form (by falling through to the original cursor value).
+					// A scenario where such ids can appear in the summary is in the attach summary of a tree being attached to an already-attached container.
+					// TODO: isFinalId should probably be exported from id-compressor and that could be used to do the narrowing here.
+					if (!context.isSummary || opSpaceId >= 0) {
+						return opSpaceId;
+					}
 				}
 			}
 		}

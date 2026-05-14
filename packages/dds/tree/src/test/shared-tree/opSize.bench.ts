@@ -5,18 +5,8 @@
 
 import { strict as assert, fail } from "node:assert";
 
-import {
-	BenchmarkType,
-	benchmarkCustom,
-	isInPerformanceTestingMode,
-} from "@fluid-tools/benchmark";
+import { BenchmarkMode, benchmarkIt, currentBenchmarkMode } from "@fluid-tools/benchmark";
 import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
-import { createIdCompressor } from "@fluidframework/id-compressor/internal";
-import {
-	MockContainerRuntimeFactory,
-	MockFluidDataStoreRuntime,
-	MockStorage,
-} from "@fluidframework/test-runtime-utils/internal";
 
 import type { Value } from "../../core/index.js";
 import { Tree, type ITreePrivate } from "../../shared-tree/index.js";
@@ -27,8 +17,14 @@ import {
 	type ITree,
 	type TreeView,
 } from "../../simple-tree/index.js";
-import { type JsonCompatibleReadOnly, getOrAddEmptyToMap } from "../../util/index.js";
-import { DefaultTestSharedTreeKind } from "../utils.js";
+import { getOrAddEmptyToMap } from "../../util/index.js";
+
+import {
+	createConnectedTree,
+	getOperationsStats,
+	opStatsToCollectedData,
+	registerOpListener,
+} from "./opBenchmarkUtilities.js";
 
 // Notes:
 // 1. Within this file "percentile" is commonly used, and seems to refer to a portion (0 to 1) or some maximum size.
@@ -47,23 +43,6 @@ class Child extends schemaFactory.object("Test:Opsize-Bench-Child", {
 }) {}
 class Parent extends schemaFactory.array("Test:Opsize-Bench-Root", Child) {}
 
-/**
- * Create a default attached tree for op submission
- */
-function createConnectedTree(): ITreePrivate {
-	const containerRuntimeFactory = new MockContainerRuntimeFactory();
-	const dataStoreRuntime = new MockFluidDataStoreRuntime({
-		idCompressor: createIdCompressor(),
-	});
-	containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
-	const tree = DefaultTestSharedTreeKind.getFactory().create(dataStoreRuntime, "tree");
-	tree.connect({
-		deltaConnection: dataStoreRuntime.createDeltaConnection(),
-		objectStorage: new MockStorage(),
-	});
-	return tree;
-}
-
 const config = new TreeViewConfiguration({
 	schema: Parent,
 	preventAmbiguity: true,
@@ -80,10 +59,6 @@ function initializeTestTree(
 	const view = tree.viewWith(config);
 	view.initialize(state);
 	return view;
-}
-
-function utf8Length(data: JsonCompatibleReadOnly): number {
-	return new TextEncoder().encode(JSON.stringify(data)).length;
 }
 
 /**
@@ -232,7 +207,7 @@ const MAX_SUCCESSFUL_OP_BYTE_SIZES = {
 		[TransactionStyle.Individual]: {
 			nodeCounts: {
 				// Edit benchmarks use 1/10 of the actual max sizes outside of perf mode because it takes so long to execute.
-				"100": isInPerformanceTestingMode ? 800000 : 80000,
+				"100": currentBenchmarkMode === BenchmarkMode.Performance ? 800000 : 80000,
 			},
 		},
 		[TransactionStyle.Single]: {
@@ -291,40 +266,6 @@ describe("Op Size", () => {
 	let currentBenchmarkName = "";
 	const currentTestOps: ISequencedDocumentMessage[] = [];
 
-	interface ITreeWithSubmitLocalMessage {
-		submitLocalMessage: (content: unknown, localOpMetadata?: unknown) => void;
-	}
-
-	function registerOpListener(
-		tree: ITreePrivate,
-		resultArray: ISequencedDocumentMessage[],
-	): void {
-		// TODO: better way to hook this up. Needs to detect local ops exactly once.
-		const treeInternal = tree as unknown as ITreeWithSubmitLocalMessage;
-		const oldSubmitLocalMessage = treeInternal.submitLocalMessage.bind(tree);
-		function submitLocalMessage(content: unknown, localOpMetadata?: unknown): void {
-			resultArray.push(content as ISequencedDocumentMessage);
-			oldSubmitLocalMessage(content, localOpMetadata);
-		}
-		treeInternal.submitLocalMessage = submitLocalMessage;
-	}
-
-	const getOperationsStats = (
-		operations: ISequencedDocumentMessage[],
-	): Record<string, number> => {
-		const lengths = operations.map((operation) =>
-			utf8Length(operation as unknown as JsonCompatibleReadOnly),
-		);
-		const totalOpBytes = lengths.reduce((a, b) => a + b, 0);
-		const maxOpSizeBytes = Math.max(...lengths);
-
-		return {
-			"Total Op Size (Bytes)": totalOpBytes,
-			"Max Op Size (Bytes)": maxOpSizeBytes,
-			"Total Ops:": operations.length,
-		};
-	};
-
 	const initializeOpDataCollection = (tree: ITreePrivate) => {
 		currentTestOps.length = 0;
 		registerOpListener(tree, currentTestOps);
@@ -381,16 +322,11 @@ describe("Op Size", () => {
 		for (const { description, style, extraDescription } of styles) {
 			describe(description, () => {
 				for (const { percentile, word } of sizes) {
-					benchmarkCustom({
-						only: false,
-						type: BenchmarkType.Measurement,
+					benchmarkIt({
 						title: `${BENCHMARK_NODE_COUNT} ${word} nodes in ${extraDescription}`,
-						run: async (reporter) => {
+						run: async () => {
 							benchmarkOps(style, percentile);
-							const opStats = getOperationsStats(currentTestOps);
-							for (const key of Object.keys(opStats)) {
-								reporter.addMeasurement(key, opStats[key]);
-							}
+							return opStatsToCollectedData(getOperationsStats(currentTestOps));
 						},
 					});
 				}
@@ -425,16 +361,11 @@ describe("Op Size", () => {
 							? extraDescription
 							: `1 transactions containing 1 removal of ${BENCHMARK_NODE_COUNT} nodes`
 					}`;
-					benchmarkCustom({
-						only: false,
-						type: BenchmarkType.Measurement,
+					benchmarkIt({
 						title,
-						run: async (reporter) => {
+						run: async () => {
 							benchmarkOps(style, percentile);
-							const opStats = getOperationsStats(currentTestOps);
-							for (const key of Object.keys(opStats)) {
-								reporter.addMeasurement(key, opStats[key]);
-							}
+							return opStatsToCollectedData(getOperationsStats(currentTestOps));
 						},
 					});
 				}
@@ -469,16 +400,11 @@ describe("Op Size", () => {
 					const title = `${BENCHMARK_NODE_COUNT} ${word} changes in ${extraDescription} containing ${
 						style === TransactionStyle.Individual ? "1 edit" : `${BENCHMARK_NODE_COUNT} edits`
 					}`;
-					benchmarkCustom({
-						only: false,
-						type: BenchmarkType.Measurement,
+					benchmarkIt({
 						title,
-						run: async (reporter) => {
+						run: async () => {
 							benchmarkOps(style, percentile);
-							const opStats = getOperationsStats(currentTestOps);
-							for (const key of Object.keys(opStats)) {
-								reporter.addMeasurement(key, opStats[key]);
-							}
+							return opStatsToCollectedData(getOperationsStats(currentTestOps));
 						},
 					});
 				}

@@ -31,6 +31,7 @@ export abstract class Task {
 		return priorityQueue(async (taskExec: TaskExec) => {
 			const waitTime = (Date.now() - taskExec.queueTime) / 1000;
 			const task = taskExec.task;
+			task.lastQueueWaitTime = waitTime;
 			task.node.context.taskStats.leafQueueWaitTimeTotal += waitTime;
 			traceTaskExecWait(`${task.nameColored}: waited in queue ${waitTime}s`);
 			taskExec.resolve(await task.exec());

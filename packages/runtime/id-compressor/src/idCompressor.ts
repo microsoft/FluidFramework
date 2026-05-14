@@ -6,11 +6,14 @@
 import { bufferToString, stringToBuffer } from "@fluid-internal/client-utils";
 import type { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
+import type { TelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 import {
-	type ITelemetryLoggerExt,
 	LoggingError,
 	createChildLogger,
+	extractTelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
+// eslint-disable-next-line import-x/no-internal-modules -- Needed to avoid specialized /internal ITelemetryLoggerExt
+import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/legacy";
 
 import { FinalSpace } from "./finalSpace.js";
 import {
@@ -127,7 +130,7 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 
 	public constructor(
 		localSessionIdOrDeserialized: SessionId | Sessions,
-		private readonly logger: ITelemetryLoggerExt | undefined,
+		private readonly logger: TelemetryLoggerExt | undefined,
 	) {
 		if (typeof localSessionIdOrDeserialized === "string") {
 			this.localSessionId = localSessionIdOrDeserialized;
@@ -255,7 +258,7 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 	public resetUnfinalizedCreationRange(): void {
 		assert(
 			!this.ongoingGhostSession,
-			"IdCompressor should not be operated normally when in a ghost session",
+			0xcec /* IdCompressor should not be operated normally when in a ghost session */,
 		);
 
 		const lastLocalCluster = this.localSession.getLastCluster();
@@ -620,13 +623,13 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 		params:
 			| {
 					serialized: SerializedIdCompressorWithOngoingSession;
-					logger?: ITelemetryLoggerExt | undefined;
+					logger?: TelemetryLoggerExt | undefined;
 					newSessionId?: never;
 			  }
 			| {
 					serialized: SerializedIdCompressorWithNoSession;
 					newSessionId: SessionId;
-					logger?: ITelemetryLoggerExt | undefined;
+					logger?: TelemetryLoggerExt | undefined;
 			  },
 	): IdCompressor {
 		const { serialized, newSessionId, logger } = params;
@@ -653,7 +656,7 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 	static deserialize2_0(
 		index: Index,
 		sessionId: SessionId | undefined,
-		logger: ITelemetryLoggerExt | undefined,
+		logger: TelemetryLoggerExt | undefined,
 	): IdCompressor {
 		const hasLocalState = readBoolean(index);
 		const sessionCount = readNumber(index);
@@ -736,20 +739,20 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 
 /**
  * Create a new {@link IIdCompressor}.
+ *
  * @legacy @beta
  */
-export function createIdCompressor(
-	logger?: ITelemetryBaseLogger,
-): IIdCompressor & IIdCompressorCore;
+export function createIdCompressor(logger?: ITelemetryBaseLogger): IIdCompressor;
 /**
  * Create a new {@link IIdCompressor}.
  * @param sessionId - The seed ID for the compressor.
+ *
  * @legacy @beta
  */
 export function createIdCompressor(
 	sessionId: SessionId,
 	logger?: ITelemetryBaseLogger,
-): IIdCompressor & IIdCompressorCore;
+): IIdCompressor;
 export function createIdCompressor(
 	sessionIdOrLogger?: SessionId | ITelemetryBaseLogger,
 	loggerOrUndefined?: ITelemetryBaseLogger,
@@ -776,21 +779,23 @@ export function createIdCompressor(
 
 /**
  * Deserializes the supplied state into an ID compressor.
+ *
  * @legacy @beta
  */
 export function deserializeIdCompressor(
 	serialized: SerializedIdCompressorWithOngoingSession,
 	logger?: ITelemetryLoggerExt,
-): IIdCompressor & IIdCompressorCore;
+): IIdCompressor;
 /**
  * Deserializes the supplied state into an ID compressor.
+ *
  * @legacy @beta
  */
 export function deserializeIdCompressor(
 	serialized: SerializedIdCompressorWithNoSession,
 	newSessionId: SessionId,
 	logger?: ITelemetryLoggerExt,
-): IIdCompressor & IIdCompressorCore;
+): IIdCompressor;
 export function deserializeIdCompressor(
 	serialized: SerializedIdCompressor | SerializedIdCompressorWithNoSession,
 	sessionIdOrLogger: SessionId | ITelemetryLoggerExt | undefined,
@@ -799,7 +804,7 @@ export function deserializeIdCompressor(
 	if (typeof sessionIdOrLogger === "string") {
 		return IdCompressor.deserialize({
 			serialized: serialized as SerializedIdCompressorWithNoSession,
-			logger: loggerOrUndefined,
+			logger: extractTelemetryLoggerExt<{ PossiblyUndefined: true }>(loggerOrUndefined),
 			newSessionId: sessionIdOrLogger,
 		});
 	}
@@ -810,6 +815,61 @@ export function deserializeIdCompressor(
 	);
 	return IdCompressor.deserialize({
 		serialized: serialized as SerializedIdCompressorWithOngoingSession,
-		logger: sessionIdOrLogger,
+		logger: extractTelemetryLoggerExt<{ PossiblyUndefined: true }>(sessionIdOrLogger),
 	});
+}
+
+/**
+ * Serializes an ID compressor.
+ * @param compressor - The compressor to serialize.
+ * @param withSession - If true, the serialized state will include local session
+ * state (for stashing). If false, only finalized state is included (for summaries).
+ * @legacy @beta
+ */
+export function serializeIdCompressor(
+	compressor: IIdCompressor,
+	withSession: true,
+): SerializedIdCompressorWithOngoingSession;
+/**
+ * Serializes an ID compressor.
+ * @param compressor - The compressor to serialize.
+ * @param withSession - If true, the serialized state will include local session
+ * state (for stashing). If false, only finalized state is included (for summaries).
+ * @legacy @beta
+ */
+export function serializeIdCompressor(
+	compressor: IIdCompressor,
+	withSession: false,
+): SerializedIdCompressorWithNoSession;
+export function serializeIdCompressor(
+	compressor: IIdCompressor,
+	withSession: boolean,
+): SerializedIdCompressorWithOngoingSession | SerializedIdCompressorWithNoSession {
+	const core = toIdCompressorWithCore(compressor);
+	return withSession ? core.serialize(true) : core.serialize(false);
+}
+
+/**
+ * Casts an {@link IIdCompressor} to include {@link IIdCompressorCore}.
+ *
+ * @remarks
+ * Compressors returned by `createIdCompressor` and `deserializeIdCompressor`
+ * always implement both {@link IIdCompressor} and {@link IIdCompressorCore}, but their
+ * public return type is narrowed to {@link IIdCompressor}. Internal consumers that
+ * need access to core compressor operations (serialization, range management, etc.)
+ * use this function to recover the {@link IIdCompressorCore} surface.
+ *
+ * @param compressor - A compressor created by `createIdCompressor` or
+ * `deserializeIdCompressor`.
+ * @returns The same compressor, typed to include {@link IIdCompressorCore}.
+ * @internal
+ */
+export function toIdCompressorWithCore(
+	compressor: IIdCompressor,
+): IIdCompressor & IIdCompressorCore {
+	assert(
+		"serialize" in compressor,
+		0xced /* Expected compressor to implement IIdCompressorCore */,
+	);
+	return compressor as IIdCompressor & IIdCompressorCore;
 }
