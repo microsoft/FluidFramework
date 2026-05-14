@@ -8,7 +8,8 @@
  * @remarks
  * A string in SemVer format indicating a specific version of the Fluid Framework client package, or the special case of {@link @fluidframework/runtime-utils#defaultMinVersionForCollab}.
  *
- * When specifying a given `MinimumVersionForCollab`, collaboration with any client with a version of Fluid Framework client packages that is greater is supported.
+ * Collaboration with other clients is only supported when all Fluid Framework client packages used by the client have a version that is greater than or equal
+ * to the specified `MinimumVersionForCollab`.
  *
  * Must be at least {@link @fluidframework/runtime-utils#lowestMinVersionForCollab} and cannot exceed the version of any Fluid Framework client package in use by the local client.
  *
