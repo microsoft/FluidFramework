@@ -149,7 +149,6 @@ describeCompat("Refresh snapshot lifecycle", "NoCompat", (getTestObjectProvider,
 						},
 					}),
 					configProvider: configProvider({
-						"Fluid.Container.enableOfflineSnapshotRefresh": true,
 						"Fluid.Container.UseLoadingGroupIdForSnapshotFetch":
 							testConfig.useLoadingGroupIdForSnapshotFetch,
 						"Fluid.Container.snapshotRefreshTimeoutMs": snapshotRefreshTimeoutMs,

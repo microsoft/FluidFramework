@@ -19,6 +19,7 @@ import type {
 	IDeltaManagerEvents,
 	ReadOnlyInfo,
 } from "@fluidframework/container-definitions/internal";
+import type { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
 import type { IClient } from "@fluidframework/driver-definitions";
 import type {
 	IDocumentServiceFactory,
@@ -30,11 +31,13 @@ import {
 	GenericError,
 	MockLogger,
 	createChildLogger,
+	loggerToMonitoringContext,
+	mixinMonitoringContext,
 } from "@fluidframework/telemetry-utils/internal";
 
 import { Audience } from "../audience.js";
 import { ConnectionState } from "../connectionState.js";
-import { Container, waitContainerToCatchUp } from "../container.js";
+import { Container, isOfflineLoadEnabled, waitContainerToCatchUp } from "../container.js";
 import { ProtocolHandler } from "../protocol.js";
 
 import { AbsentProperty, failProxy, failSometimeProxy } from "./failProxy.js";
@@ -201,6 +204,68 @@ describe("Container close/dispose telemetry", () => {
 			disposeEvent.containerAttachState,
 			AttachState.Detached,
 			"ContainerDispose should log containerAttachState for a never-attached container",
+		);
+	});
+});
+
+describe("isOfflineLoadEnabled", () => {
+	const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
+		getRawConfig: (name: string): ConfigTypes => settings[name],
+	});
+	const config = (
+		settings: Record<string, ConfigTypes>,
+	): ReturnType<typeof loggerToMonitoringContext>["config"] =>
+		loggerToMonitoringContext(
+			mixinMonitoringContext(new MockLogger(), configProvider(settings)).logger,
+		).config;
+
+	it("is enabled by default for interactive clients with no overrides", () => {
+		assert.strictEqual(isOfflineLoadEnabled(true, {}, config({})), true);
+	});
+
+	it("is disabled when the client is not interactive", () => {
+		assert.strictEqual(isOfflineLoadEnabled(false, {}, config({})), false);
+	});
+
+	it("is disabled when options.enableOfflineLoad is false", () => {
+		assert.strictEqual(
+			isOfflineLoadEnabled(true, { enableOfflineLoad: false }, config({})),
+			false,
+		);
+	});
+
+	it("is disabled when Fluid.Container.disableOfflineFull is true", () => {
+		assert.strictEqual(
+			isOfflineLoadEnabled(true, {}, config({ "Fluid.Container.disableOfflineFull": true })),
+			false,
+		);
+	});
+
+	it("honors legacy Fluid.Container.enableOfflineLoad === false as a deprecation alias", () => {
+		assert.strictEqual(
+			isOfflineLoadEnabled(true, {}, config({ "Fluid.Container.enableOfflineLoad": false })),
+			false,
+		);
+	});
+
+	it("honors legacy Fluid.Container.enableOfflineFull === false as a deprecation alias", () => {
+		assert.strictEqual(
+			isOfflineLoadEnabled(true, {}, config({ "Fluid.Container.enableOfflineFull": false })),
+			false,
+		);
+	});
+
+	it("ignores legacy keys set to true (they are no-ops, not opt-ins)", () => {
+		assert.strictEqual(
+			isOfflineLoadEnabled(
+				true,
+				{},
+				config({
+					"Fluid.Container.enableOfflineLoad": true,
+					"Fluid.Container.enableOfflineFull": true,
+				}),
+			),
+			true,
 		);
 	});
 });

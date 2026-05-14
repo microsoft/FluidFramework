@@ -167,9 +167,9 @@ describeCompat("Fewer batches", "NoCompat", (getTestObjectProvider, apis) => {
 			// The fake sequenced op injected below reuses a sequence number that the
 			// DuplicateBatchDetector has already seen, which would trip its invariants and
 			// short-circuit the flow before the deltaManager's non-Sequential check fires.
-			// Disable batchId tracking here so the test can exercise its actual scenario.
+			// Disable offline (which gates batchId tracking) so the test can exercise its actual scenario.
 			await processOutOfOrderOp({
-				"Fluid.ContainerRuntime.DisableBatchIdTracking": true,
+				"Fluid.Container.disableOfflineFull": true,
 			});
 			assert.strictEqual(capturedBatches.length, 2);
 		},

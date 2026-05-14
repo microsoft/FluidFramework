@@ -103,11 +103,6 @@ describeCompat("Flushing ops", "NoCompat", (getTestObjectProvider, apis) => {
 	let testContainerConfig: ITestContainerConfig = {
 		fluidDataObjectType: DataObjectFactoryType.Test,
 		registry,
-		loaderProps: {
-			configProvider: configProvider({
-				"Fluid.Container.enableOfflineFull": true,
-			}),
-		},
 	};
 
 	let provider: ITestObjectProvider;
@@ -160,17 +155,18 @@ describeCompat("Flushing ops", "NoCompat", (getTestObjectProvider, apis) => {
 	}
 
 	itExpects(
-		"Can't set up a container with Immediate Mode and Offline Load",
+		"Immediate Mode with default-on Offline silently degrades batch-id tracking and emits telemetry",
 		[
 			{
-				eventName: "fluid:telemetry:Container:ContainerClose",
-				error: "Offline mode is only supported in turn-based mode",
+				eventName: "fluid:telemetry:ContainerRuntime:OfflineBatchIdTrackingDegraded",
+				reason: "NotTurnBased",
 			},
 		],
 		async () => {
-			await assert.rejects(
-				setupContainers({ flushMode: FlushMode.Immediate }),
-				"Offline load is not supported with Immediate mode",
+			await setupContainers({ flushMode: FlushMode.Immediate });
+			assert(
+				container1 !== undefined && !container1.closed,
+				"Container should set up successfully in Immediate mode (silent degradation)",
 			);
 		},
 	);

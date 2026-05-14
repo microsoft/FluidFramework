@@ -83,6 +83,7 @@ import {
 	type CombinedAppAndProtocolSummary,
 } from "@fluidframework/driver-utils/internal";
 import {
+	type IConfigProvider,
 	type TelemetryEventCategory,
 	type TelemetryLoggerExt,
 	EventEmitterWithErrorHandling,
@@ -308,6 +309,36 @@ const getCodeProposal = (quorum: IQuorumProposals): unknown =>
 	quorum.get("code") ?? quorum.get("code2");
 
 const summarizerClientType = "summarizer";
+
+/**
+ * Computes whether offline load should be enabled for a Container.
+ *
+ * Off when the client is non-interactive, `options.enableOfflineLoad === false`,
+ * `Fluid.Container.disableOfflineFull === true`, or one of the legacy keys
+ * `Fluid.Container.enableOfflineLoad` / `Fluid.Container.enableOfflineFull` is set to `false`.
+ * The legacy `=== false` paths are honored as a one-release deprecation alias.
+ *
+ * @internal
+ */
+export function isOfflineLoadEnabled(
+	isInteractiveClient: boolean,
+	options: Pick<ILoaderOptions, "enableOfflineLoad">,
+	config: IConfigProvider,
+): boolean {
+	if (!isInteractiveClient || options.enableOfflineLoad === false) {
+		return false;
+	}
+	if (config.getBoolean("Fluid.Container.disableOfflineFull") === true) {
+		return false;
+	}
+	if (
+		config.getBoolean("Fluid.Container.enableOfflineLoad") === false ||
+		config.getBoolean("Fluid.Container.enableOfflineFull") === false
+	) {
+		return false;
+	}
+	return true;
+}
 
 interface IContainerLifecycleEvents extends IEvent {
 	(event: "runtimeInstantiated", listener: () => void): void;
@@ -961,11 +992,11 @@ export class Container
 			enableSummarizeProtocolTree,
 		);
 
-		const offlineLoadEnabled =
-			this.isInteractiveClient &&
-			(this.mc.config.getBoolean("Fluid.Container.enableOfflineLoad") ??
-				this.mc.config.getBoolean("Fluid.Container.enableOfflineFull") ??
-				options.enableOfflineLoad !== false);
+		const offlineLoadEnabled = isOfflineLoadEnabled(
+			this.isInteractiveClient,
+			options,
+			this.mc.config,
+		);
 		this.serializedStateManager = new SerializedStateManager(
 			this.subLogger,
 			this.storageAdapter,

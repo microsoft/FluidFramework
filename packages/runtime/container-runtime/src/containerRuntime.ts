@@ -1891,32 +1891,25 @@ export class ContainerRuntime
 			runtimeOptions.stagingModeAutoFlushThreshold ??
 			defaultStagingModeAutoFlushThreshold;
 		// BatchId tracking powers DuplicateBatchDetector (catching forked-container duplicates)
-		// and is also a prerequisite for the Offline Load feature. It is enabled by default
-		// when both TurnBased flush mode and grouped batching are active; the kill-switch
-		// below allows disabling it without a code change if a regression is observed.
-		// Grouped batching is required because resubmits can produce empty batches that must
-		// still be sent on the wire as a placeholder grouped batch to preserve their batchId
-		// (see OpGroupingManager.createEmptyGroupedBatch / outbox.flushEmptyBatch).
-		// Offline Load requires both prerequisites, so a consumer that opts into it without
-		// them gets an explicit UsageError rather than silent degradation.
-		const offlineLoadRequested =
-			this.mc.config.getBoolean("Fluid.Container.enableOfflineFull") === true;
-		const disableBatchIdTracking =
+		// and is also a prerequisite for the Offline Load feature. Offline is on by default;
+		// the disableOfflineFull kill-switch turns off all offline capabilities. Tracking still
+		// requires TurnBased flush mode and grouped batching, so it silently degrades when those
+		// prerequisites are missing. Grouped batching is required because resubmits can produce
+		// empty batches that must still be sent on the wire as a placeholder grouped batch to
+		// preserve their batchId (see OpGroupingManager.createEmptyGroupedBatch /
+		// outbox.flushEmptyBatch).
+		// `disableOfflineFull` is the supported kill-switch. The legacy `enableOfflineFull === false`
+		// (mirroring the loader-side deprecation alias in `isOfflineLoadEnabled`) and
+		// `Fluid.ContainerRuntime.DisableBatchIdTracking === true` (the prior runtime-side kill) are
+		// honored as deprecation aliases for one release so hosts that hold them defensively don't
+		// silently flip to tracking-on after upgrade.
+		const offlineDisabled =
+			this.mc.config.getBoolean("Fluid.Container.disableOfflineFull") === true ||
+			this.mc.config.getBoolean("Fluid.Container.enableOfflineFull") === false ||
 			this.mc.config.getBoolean("Fluid.ContainerRuntime.DisableBatchIdTracking") === true;
 
-		if (offlineLoadRequested && this._flushMode !== FlushMode.TurnBased) {
-			const error = new UsageError("Offline mode is only supported in turn-based mode");
-			this.closeFn(error);
-			throw error;
-		}
-		if (offlineLoadRequested && !this.groupedBatchingEnabled) {
-			const error = new UsageError("Offline mode requires grouped batching to be enabled");
-			this.closeFn(error);
-			throw error;
-		}
-
 		this.batchIdTrackingEnabled =
-			!disableBatchIdTracking &&
+			!offlineDisabled &&
 			this._flushMode === FlushMode.TurnBased &&
 			this.groupedBatchingEnabled;
 
@@ -1924,6 +1917,22 @@ export class ContainerRuntime
 		// collab window. Skip allocating it when batchId tracking is off.
 		if (this.batchIdTrackingEnabled) {
 			this.duplicateBatchDetector = new DuplicateBatchDetector(recentBatchInfo);
+		} else if (!offlineDisabled) {
+			// Offline is requested but a prerequisite is missing — emit one event so the silent
+			// degradation is observable. Skipped when the user explicitly disabled offline.
+			const reasons: string[] = [];
+			if (this._flushMode !== FlushMode.TurnBased) {
+				reasons.push("NotTurnBased");
+			}
+			if (!this.groupedBatchingEnabled) {
+				reasons.push("GroupedBatchingDisabled");
+			}
+			this.mc.logger.sendTelemetryEvent({
+				eventName: "OfflineBatchIdTrackingDegraded",
+				reason: reasons.join(","),
+				flushMode: this._flushMode,
+				groupedBatchingEnabled: this.groupedBatchingEnabled,
+			});
 		}
 
 		if (context.attachState === AttachState.Attached) {

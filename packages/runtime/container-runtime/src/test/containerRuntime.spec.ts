@@ -477,12 +477,12 @@ describe("Runtime", () => {
 				assert.strictEqual(containerRuntime.isDirty, false);
 			});
 
-			// BatchId tracking is on by default (TurnBased mode); the kill-switch suppresses stamping.
+			// BatchId tracking is on by default (TurnBased mode); disableOfflineFull suppresses stamping.
 			for (const variant of [
 				{ name: "default (no settings)", settings: {}, expectStamped: true },
 				{
-					name: "kill-switch active",
-					settings: { "Fluid.ContainerRuntime.DisableBatchIdTracking": true },
+					name: "offline disabled",
+					settings: { "Fluid.Container.disableOfflineFull": true },
 					expectStamped: false,
 				},
 			])
@@ -549,6 +549,43 @@ describe("Runtime", () => {
 						assert(submittedOps[1].metadata?.batchId === undefined, "Expected no batchId (1)");
 					}
 				});
+
+			// Regression for assert 0xa00 in OpGroupingManager.createEmptyGroupedBatch.
+			// When batchId tracking is on with grouped batching off, a resubmit can stamp a
+			// batchId onto an empty batch and the outbox sends it via createEmptyGroupedBatch,
+			// hitting the assert. The gate `batchIdTrackingEnabled && groupedBatchingEnabled`
+			// prevents the stamp. The previous `UsageError` safety-net that closed the container
+			// in this configuration has been removed (offline now silently degrades), so this
+			// regression test is the primary guarantee that the empty-batch path is unreachable.
+			it("Resubmit must not stamp a batchId when grouped batching is disabled", async () => {
+				const { runtime } = await ContainerRuntime.loadRuntime2({
+					context: getMockContext() as IContainerContext,
+					registry: new FluidDataStoreRegistry([]),
+					existing: false,
+					runtimeOptions: { enableGroupedBatching: false },
+					provideEntryPoint: mockProvideEntryPoint,
+				});
+				const containerRuntime = runtime as unknown as ContainerRuntime_WithPrivates;
+
+				stubChannelCollection(containerRuntime);
+
+				changeConnectionState(containerRuntime, false, mockClientId);
+
+				submitDataStoreOp(containerRuntime, "1", testDataStoreMessage);
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
+				(containerRuntime as any).flush();
+
+				submitDataStoreOp(containerRuntime, "2", testDataStoreMessage);
+				changeConnectionState(containerRuntime, true, mockClientId);
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
+				(containerRuntime as any).flush();
+
+				assert.strictEqual(submittedOps.length, 2);
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+				assert.strictEqual(submittedOps[0].metadata?.batchId, undefined);
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+				assert.strictEqual(submittedOps[1].metadata?.batchId, undefined);
+			});
 
 			// NOTE: This test is examining a case that only occurs with an old Loader that doesn't tell ContainerRuntime when processing system ops.
 			// In other words, when the MockDeltaManager bumps its lastSequenceNumber, ContainerRuntime.process would be called in the current code, but not with legacy loader.
@@ -2357,12 +2394,12 @@ describe("Runtime", () => {
 		});
 
 		describe("Duplicate Batch Detection", () => {
-			// BatchId tracking is on by default (TurnBased); the kill-switch suppresses detection.
+			// BatchId tracking is on by default (TurnBased); disableOfflineFull suppresses detection.
 			for (const variant of [
 				{ name: "default (no settings)", settings: {}, expectDetection: true },
 				{
-					name: "kill-switch active",
-					settings: { "Fluid.ContainerRuntime.DisableBatchIdTracking": true },
+					name: "offline disabled",
+					settings: { "Fluid.Container.disableOfflineFull": true },
 					expectDetection: false,
 				},
 			]) {
@@ -2447,33 +2484,6 @@ describe("Runtime", () => {
 				);
 			});
 
-			it("Offline Load opt-in still errors in FlushMode.Immediate (back-compat)", async () => {
-				const containerErrors: ICriticalContainerError[] = [];
-				const context = {
-					...getMockContext({
-						settings: {
-							"Fluid.Container.enableOfflineFull": true,
-						},
-					}),
-					closeFn: (error?: ICriticalContainerError): void => {
-						if (error !== undefined) {
-							containerErrors.push(error);
-						}
-					},
-				};
-				await assert.rejects(
-					ContainerRuntime.loadRuntime2({
-						context: context as IContainerContext,
-						registry: new FluidDataStoreRegistry([]),
-						existing: false,
-						runtimeOptions: { flushMode: FlushMode.Immediate },
-						provideEntryPoint: mockProvideEntryPoint,
-					}),
-					(error: Error) => error instanceof UsageError,
-				);
-				assert.strictEqual(containerErrors.length, 1);
-			});
-
 			// Regression: enabling default-on batchId tracking when grouped batching is disabled
 			// asserts 0xa00 in OpGroupingManager.createEmptyGroupedBatch the first time a resubmit
 			// produces an empty batch. Tracking must be silently skipped in that configuration.
@@ -2512,31 +2522,182 @@ describe("Runtime", () => {
 				);
 			});
 
-			it("Offline Load opt-in errors when grouped batching is disabled", async () => {
-				const containerErrors: ICriticalContainerError[] = [];
-				const context = {
-					...getMockContext({
-						settings: {
-							"Fluid.Container.enableOfflineFull": true,
-						},
-					}),
-					closeFn: (error?: ICriticalContainerError): void => {
-						if (error !== undefined) {
-							containerErrors.push(error);
-						}
-					},
-				};
-				await assert.rejects(
-					ContainerRuntime.loadRuntime2({
-						context: context as IContainerContext,
+			describe("OfflineBatchIdTrackingDegraded telemetry", () => {
+				it("emits with reason=NotTurnBased when FlushMode.Immediate is configured", async () => {
+					const logger = new MockLogger();
+					await ContainerRuntime.loadRuntime2({
+						context: getMockContext({ logger }) as IContainerContext,
 						registry: new FluidDataStoreRegistry([]),
 						existing: false,
-						runtimeOptions: { enableGroupedBatching: false },
+						runtimeOptions: {
+							flushMode: FlushMode.Immediate,
+							enableRuntimeIdCompressor: "on",
+						},
 						provideEntryPoint: mockProvideEntryPoint,
-					}),
-					(error: Error) => error instanceof UsageError,
-				);
-				assert.strictEqual(containerErrors.length, 1);
+					});
+
+					logger.assertMatchAny([
+						{
+							eventName: "ContainerRuntime:OfflineBatchIdTrackingDegraded",
+							category: "generic",
+							reason: "NotTurnBased",
+							flushMode: FlushMode.Immediate,
+							groupedBatchingEnabled: true,
+						},
+					]);
+				});
+
+				it("emits with reason=GroupedBatchingDisabled when grouped batching is off", async () => {
+					const logger = new MockLogger();
+					await ContainerRuntime.loadRuntime2({
+						context: getMockContext({ logger }) as IContainerContext,
+						registry: new FluidDataStoreRegistry([]),
+						existing: false,
+						runtimeOptions: {
+							enableGroupedBatching: false,
+							enableRuntimeIdCompressor: "on",
+						},
+						provideEntryPoint: mockProvideEntryPoint,
+					});
+
+					logger.assertMatchAny([
+						{
+							eventName: "ContainerRuntime:OfflineBatchIdTrackingDegraded",
+							category: "generic",
+							reason: "GroupedBatchingDisabled",
+							flushMode: FlushMode.TurnBased,
+							groupedBatchingEnabled: false,
+						},
+					]);
+				});
+
+				it("does not emit on the happy path (TurnBased + grouped batching)", async () => {
+					const logger = new MockLogger();
+					await ContainerRuntime.loadRuntime2({
+						context: getMockContext({ logger }) as IContainerContext,
+						registry: new FluidDataStoreRegistry([]),
+						existing: false,
+						runtimeOptions: {
+							enableRuntimeIdCompressor: "on",
+						},
+						provideEntryPoint: mockProvideEntryPoint,
+					});
+
+					logger.assertMatchNone([
+						{ eventName: "ContainerRuntime:OfflineBatchIdTrackingDegraded" },
+					]);
+				});
+
+				it("does not emit when disableOfflineFull is set, even if prerequisites are missing", async () => {
+					const logger = new MockLogger();
+					await ContainerRuntime.loadRuntime2({
+						context: getMockContext({
+							logger,
+							settings: { "Fluid.Container.disableOfflineFull": true },
+						}) as IContainerContext,
+						registry: new FluidDataStoreRegistry([]),
+						existing: false,
+						runtimeOptions: {
+							flushMode: FlushMode.Immediate,
+							enableRuntimeIdCompressor: "on",
+						},
+						provideEntryPoint: mockProvideEntryPoint,
+					});
+
+					logger.assertMatchNone([
+						{ eventName: "ContainerRuntime:OfflineBatchIdTrackingDegraded" },
+					]);
+				});
+			});
+
+			// Legacy deprecation aliases that the runtime gate must honor symmetrically with the
+			// loader-side `isOfflineLoadEnabled` (see container.ts). Without these, a host with
+			// the legacy keys deployed defensively lands in a partially-degraded state.
+			describe("Legacy deprecation aliases for batch-id tracking", () => {
+				it("honors Fluid.Container.enableOfflineFull === false (turns tracking off)", async () => {
+					const { runtime: containerRuntime } = await ContainerRuntime.loadRuntime2({
+						context: getMockContext({
+							settings: { "Fluid.Container.enableOfflineFull": false },
+						}) as IContainerContext,
+						registry: new FluidDataStoreRegistry([]),
+						existing: false,
+						runtimeOptions: { enableRuntimeIdCompressor: "on" },
+						provideEntryPoint: mockProvideEntryPoint,
+					});
+					// Tracking off => DuplicateBatchDetector not allocated => duplicate batchIds do not throw.
+					containerRuntime.process(
+						{
+							sequenceNumber: 123,
+							type: MessageType.Operation,
+							contents: { type: ContainerMessageType.Rejoin, contents: undefined },
+							metadata: { batchId: "batchId1" },
+						} satisfies Partial<ISequencedDocumentMessage> as ISequencedDocumentMessage,
+						false,
+					);
+					assert.doesNotThrow(() =>
+						containerRuntime.process(
+							{
+								sequenceNumber: 234,
+								type: MessageType.Operation,
+								contents: { type: ContainerMessageType.Rejoin, contents: undefined },
+								metadata: { batchId: "batchId1" },
+							} satisfies Partial<ISequencedDocumentMessage> as ISequencedDocumentMessage,
+							false,
+						),
+					);
+				});
+
+				it("honors Fluid.ContainerRuntime.DisableBatchIdTracking === true (turns tracking off)", async () => {
+					const { runtime: containerRuntime } = await ContainerRuntime.loadRuntime2({
+						context: getMockContext({
+							settings: { "Fluid.ContainerRuntime.DisableBatchIdTracking": true },
+						}) as IContainerContext,
+						registry: new FluidDataStoreRegistry([]),
+						existing: false,
+						runtimeOptions: { enableRuntimeIdCompressor: "on" },
+						provideEntryPoint: mockProvideEntryPoint,
+					});
+					containerRuntime.process(
+						{
+							sequenceNumber: 123,
+							type: MessageType.Operation,
+							contents: { type: ContainerMessageType.Rejoin, contents: undefined },
+							metadata: { batchId: "batchId1" },
+						} satisfies Partial<ISequencedDocumentMessage> as ISequencedDocumentMessage,
+						false,
+					);
+					assert.doesNotThrow(() =>
+						containerRuntime.process(
+							{
+								sequenceNumber: 234,
+								type: MessageType.Operation,
+								contents: { type: ContainerMessageType.Rejoin, contents: undefined },
+								metadata: { batchId: "batchId1" },
+							} satisfies Partial<ISequencedDocumentMessage> as ISequencedDocumentMessage,
+							false,
+						),
+					);
+				});
+
+				it("does not emit OfflineBatchIdTrackingDegraded when a legacy alias intentionally disables tracking", async () => {
+					const logger = new MockLogger();
+					await ContainerRuntime.loadRuntime2({
+						context: getMockContext({
+							logger,
+							settings: { "Fluid.Container.enableOfflineFull": false },
+						}) as IContainerContext,
+						registry: new FluidDataStoreRegistry([]),
+						existing: false,
+						runtimeOptions: {
+							flushMode: FlushMode.Immediate,
+							enableRuntimeIdCompressor: "on",
+						},
+						provideEntryPoint: mockProvideEntryPoint,
+					});
+					logger.assertMatchNone([
+						{ eventName: "ContainerRuntime:OfflineBatchIdTrackingDegraded" },
+					]);
+				});
 			});
 
 			it("Can roundtrip DuplicateBatchDetector state through summary/snapshot", async () => {
