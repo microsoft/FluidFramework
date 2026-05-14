@@ -173,7 +173,9 @@ Error: BreakFoo`;
 
 			let invoked = false;
 			assert.throws(
-				async () =>
+				// Checking the exception is thrown synchronously requires suppressing this warning.
+				// eslint-disable-next-line @typescript-eslint/promise-function-async
+				() =>
 					foo.breaker.run(async () => {
 						invoked = true;
 						return 1;
