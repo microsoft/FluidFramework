@@ -30,13 +30,12 @@ import { createLoader } from "../utils.js";
  * stashed-op replay and rollback), and a cascading write inside the
  * handler can either land at the wrong moment in the op stream or be
  * silently dropped. If a cascading write is unavoidable, the handler
- * MUST gate on both:
- *   1. `IFluidDataStoreRuntime.isReadOnly()` — when `true`, the handler
- *      must not submit edits. The `"readonly"` event is the live signal.
- *   2. `IFluidDataStoreRuntime.activeLocalOperationActivity` — when set
- *      (`"applyStashed"` or `"rollback"`), the runtime itself is
- *      driving the change, not the user, and the handler should not
- *      react with new ops.
+ * MUST gate on both `IFluidDataStoreRuntime.isReadOnly()` (when `true`,
+ * the handler must not submit edits; the `"readonly"` event is the live
+ * signal) and `IFluidDataStoreRuntime.activeLocalOperationActivity`
+ * (when set to `"applyStashed"` or `"rollback"`, the runtime itself is
+ * driving the change, not the user, and the handler should not react
+ * with new ops).
  *
  * This factory deliberately omits both gates so the load rejects with
  * the expected `UsageError`. Two SharedMaps are needed because the
