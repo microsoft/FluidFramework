@@ -24,7 +24,7 @@ concurrency:
 jobs:
   dispatch:
     name: "Dispatch fleet"
-    if: github.event.label.name == 'fleet-review'
+    if: github.event.action == 'labeled' && github.event.label.name == 'fleet-review'
     runs-on: ubuntu-latest
     steps:
       - name: Save dispatch params

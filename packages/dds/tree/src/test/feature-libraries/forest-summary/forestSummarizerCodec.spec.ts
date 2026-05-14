@@ -58,6 +58,7 @@ const fieldBatchCodecCurrent = fieldBatchCodecBuilder.build(codecOptionsCurrent)
 const context = {
 	encodeType: TreeCompressionStrategy.Uncompressed,
 	originatorId: testIdCompressor.localSessionId,
+	isSummary: false,
 	idCompressor: testIdCompressor,
 };
 

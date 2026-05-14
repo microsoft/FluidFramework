@@ -1070,6 +1070,7 @@ export class Container
 
 				this.connectionStateHandler.dispose();
 				this.serializedStateManager.dispose();
+				this._runtime?.close?.();
 			} catch (newError) {
 				this.mc.logger.sendErrorEvent({ eventName: "ContainerCloseException" }, newError);
 			}
