@@ -954,6 +954,8 @@ export const TreeAlpha: TreeAlpha = {
 			idCompressor,
 			originatorId: idCompressor.localSessionId, // TODO: Why is this needed?
 			schema: { schema: storedSchema, policy: defaultSchemaPolicy },
+			// Not a summary blob — this is `TreeAlpha`'s ad-hoc encoder.
+			isSummary: false,
 		};
 		const result = codec.encode(batch, context);
 		// TODO: codecs should better track which ones can contain handles, and which cannot. When done properly, casts like this can be removed.

@@ -23,6 +23,8 @@ onlyBuiltDependencies:
 
 # Supply chain security settings - see /DEV.md for documentation
 minimumReleaseAge: 1440
+minimumReleaseAgeExclude:
+  - "@fluidframework/*" # Exclude all @fluidframework scoped packages from the minimumReleaseAge check, because they are published internally and oftentimes we need to update immediately after a previous internal release
 resolutionMode: highest
 blockExoticSubdeps: true
 trustPolicy: no-downgrade

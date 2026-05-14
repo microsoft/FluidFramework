@@ -58,4 +58,5 @@ steps:
   retryCountOnTaskFailure: 10
   inputs:
     targetType: 'inline'
+    workingDirectory: ${{ parameters.destPackageLocation }}
     script: 'pnpm install --no-frozen-lockfile'

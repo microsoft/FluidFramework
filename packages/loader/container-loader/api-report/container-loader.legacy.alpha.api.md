@@ -7,6 +7,9 @@
 // @alpha @legacy
 export function asLegacyAlpha(base: IContainer): ContainerAlpha;
 
+// @alpha @legacy
+export function captureFullContainerState(input: ICaptureFullContainerStateProps): Promise<string>;
+
 // @public
 export enum ConnectionState {
     CatchingUp = 1,
@@ -24,7 +27,7 @@ export interface ContainerAlpha extends IContainer {
 export function createDetachedContainer(createDetachedContainerProps: ICreateDetachedContainerProps): Promise<IContainer>;
 
 // @alpha @legacy
-export function createFrozenDocumentServiceFactory(factory?: IDocumentServiceFactory | Promise<IDocumentServiceFactory>): IDocumentServiceFactory;
+export function createFrozenDocumentServiceFactory(factory?: IDocumentServiceFactory | Promise<IDocumentServiceFactory>, readOnly?: boolean): IDocumentServiceFactory;
 
 // @beta @legacy (undocumented)
 export interface IBaseProtocolHandler {
@@ -42,6 +45,14 @@ export interface IBaseProtocolHandler {
     setConnectionState(connected: boolean, clientId: string | undefined): any;
     // (undocumented)
     snapshot(): IQuorumSnapshot;
+}
+
+// @alpha @legacy
+export interface ICaptureFullContainerStateProps {
+    readonly documentServiceFactory: IDocumentServiceFactory;
+    readonly logger?: ITelemetryBaseLogger | undefined;
+    readonly request: IRequest;
+    readonly urlResolver: IUrlResolver;
 }
 
 // @beta @deprecated @legacy (undocumented)
@@ -106,6 +117,7 @@ export interface ILoadExistingContainerProps extends ICreateAndLoadContainerProp
 // @alpha @legacy
 export interface ILoadFrozenContainerFromPendingStateProps extends ILoadExistingContainerProps {
     readonly pendingLocalState: string;
+    readonly readOnly?: boolean;
 }
 
 // @alpha @legacy

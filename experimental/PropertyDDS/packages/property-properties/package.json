@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-experimental/property-properties",
-	"version": "2.100.0",
+	"version": "2.102.0",
 	"description": "definitions of properties",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -69,7 +69,7 @@
 		"@fluid-experimental/property-common": "workspace:~",
 		"ajv": "^8.17.1",
 		"async": "^3.2.2",
-		"lodash": "^4.17.21",
+		"lodash": "^4.18.1",
 		"semver": "^7.7.1",
 		"traverse": "0.6.6",
 		"underscore": "^1.13.6"
@@ -79,6 +79,7 @@
 		"@fluid-internal/mocha-test-setup": "workspace:~",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "catalog:buildTools",
+		"@types/chai": "^4.0.0",
 		"@types/mocha": "^10.0.10",
 		"@types/node": "catalog:types",
 		"@types/sinon": "^17.0.3",
