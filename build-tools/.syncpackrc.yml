@@ -116,6 +116,7 @@ semverGroups:
       - "less"
       - "prettier"
       - "typescript"
+      - "typescript-*"
       - "vue"
       - "webpack-dev-server"
     packages:

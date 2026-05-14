@@ -18,18 +18,20 @@ const TYPESENSE_API_KEY = process.env.TYPESENSE_API_KEY;
 
 const isTypesenseConfigured = TYPESENSE_HOST !== undefined && TYPESENSE_API_KEY !== undefined;
 
-// Each entry is [field, weight, numTypos]. Order determines priority: first = highest ranked.
-const typesenseSearchFields: [field: string, weight: number, numTypos: number][] = [
-	["hierarchy.lvl1", 6, 1],
+// Each entry is [field, weight, allowedTypos]. Order determines priority: first = highest ranked.
+// allowedTypos controls typo tolerance per field: 0 = exact match only, 1 = one typo allowed.
+const typesenseSearchFields: [field: string, weight: number, allowedTypos: number][] = [
+	["hierarchy.lvl1", 20, 1],
 	["hierarchy.lvl2", 5, 1],
 	["hierarchy.lvl3", 4, 1],
 	["hierarchy.lvl4", 3, 1],
 	["hierarchy.lvl5", 2, 1],
-	["content", 1, 0],
 ];
 const typesenseQueryBy = typesenseSearchFields.map(([field]) => field).join(",");
 const typesenseQueryByWeights = typesenseSearchFields.map(([, weight]) => weight).join(",");
-const typesenseNumTypos = typesenseSearchFields.map(([, , typos]) => typos).join(",");
+const typesenseAllowedTypos = typesenseSearchFields
+	.map(([, , allowedTypos]) => allowedTypos)
+	.join(",");
 
 const githubUrl = "https://github.com/microsoft/FluidFramework";
 const githubMainBranchUrl = `${githubUrl}/tree/main`;
@@ -203,12 +205,13 @@ const config: Config = {
 					apiKey: TYPESENSE_API_KEY,
 				},
 				contextualSearch: true,
-				additionalSearchParameters: {
+				typesenseSearchParameters: {
 					query_by: typesenseQueryBy,
 					query_by_weights: typesenseQueryByWeights,
-					sort_by: "_text_match:desc",
+					sort_by: "_text_match(buckets:10):desc,item_priority:desc",
 					prioritize_exact_match: true,
-					num_typos: typesenseNumTypos,
+					prioritize_token_position: true,
+					num_typos: typesenseAllowedTypos,
 				},
 			},
 		}),

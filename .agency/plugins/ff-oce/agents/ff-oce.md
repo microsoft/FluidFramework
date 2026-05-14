@@ -1,42 +1,6 @@
 ---
 name: ff-oce
 description: 'Assists engineers on the Fluid Framework Client OCE rotation.'
-mcp-servers:
-  ado:
-    type: local
-    command: agency
-    args: ["mcp", "ado", "--organization", "fluidframework"]
-    tools: ["*"]
-  ado-office:
-    type: local
-    command: agency
-    args: ["mcp", "ado", "--organization", "office"]
-    tools: ["*"]
-  enghub:
-    type: local
-    command: agency
-    args: ["mcp", "enghub"]
-    tools: ["*"]
-  icm:
-    type: local
-    command: agency
-    args: ["mcp", "icm"]
-    tools: ["*"]
-  kusto:
-    type: local
-    command: agency
-    args: ["mcp", "kusto", "--service-uri", "https://kusto.aria.microsoft.com/"]
-    tools: ["*"]
-  teams:
-    type: local
-    command: agency
-    args: ["mcp", "teams"]
-    tools: ["*"]
-  workiq:
-    type: local
-    command: agency
-    args: ["mcp", "workiq"]
-    tools: ["*"]
 ---
 
 # Fluid Framework On-Call Engineer (OCE) Agent

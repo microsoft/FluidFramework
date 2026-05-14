@@ -33,6 +33,7 @@ const tag1 = mintRevisionTag();
 const tag2 = mintRevisionTag();
 const baseContext = {
 	originatorId: "session1" as SessionId,
+	isSummary: false,
 	revision: tag1,
 	idCompressor: testIdCompressor,
 };
