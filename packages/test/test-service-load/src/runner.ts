@@ -12,7 +12,6 @@ import { makeRandom } from "@fluid-private/stochastic-test-utils";
 import { IContainer, LoaderHeader } from "@fluidframework/container-definitions/internal";
 import { ConnectionState } from "@fluidframework/container-loader";
 import {
-	asLegacyAlpha,
 	loadExistingContainer,
 	type ILoaderProps,
 } from "@fluidframework/container-loader/internal";
@@ -555,7 +554,7 @@ async function scheduleOffline(
 					random.real() < stashPercent
 				) {
 					printStatus(runConfig, "closing offline container!");
-					const pendingState = await asLegacyAlpha(container).getPendingLocalState();
+					const pendingState = await container.getPendingLocalState?.();
 					container.close();
 					return pendingState;
 				}

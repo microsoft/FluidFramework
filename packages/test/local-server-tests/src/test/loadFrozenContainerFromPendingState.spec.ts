@@ -7,13 +7,12 @@ import { strict as assert } from "assert";
 
 import { bufferToString, stringToBuffer } from "@fluid-internal/client-utils";
 import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct/internal";
+import type { IContainer } from "@fluidframework/container-definitions/internal";
 import {
-	asLegacyAlpha,
 	createDetachedContainer,
 	createFrozenDocumentServiceFactory,
 	loadExistingContainer,
 	loadFrozenContainerFromPendingState,
-	type ContainerAlpha,
 	type ILoaderProps,
 } from "@fluidframework/container-loader/internal";
 import type { FluidObject, ILocalFluidHandle } from "@fluidframework/core-interfaces/internal";
@@ -47,7 +46,7 @@ const toComparableArray = (dir: ISharedMap): [string, unknown][] =>
 const initialize = async (options?: {
 	createBlobPayloadPending?: true;
 }): Promise<{
-	container: ContainerAlpha;
+	container: IContainer;
 	ITestFluidObject: ITestFluidObject;
 	urlResolver: LocalResolver;
 	codeLoader: LocalCodeLoader;
@@ -86,12 +85,10 @@ const initialize = async (options?: {
 			...(runtimeFactory === undefined ? {} : { runtimeFactory }),
 		});
 
-	const container = asLegacyAlpha(
-		await createDetachedContainer({
-			codeDetails,
-			...loaderProps,
-		}),
-	);
+	const container = await createDetachedContainer({
+		codeDetails,
+		...loaderProps,
+	});
 	const { ITestFluidObject }: FluidObject<TestFluidObject> =
 		(await container.getEntryPoint()) ?? {};
 	assert(
@@ -133,6 +130,7 @@ describe("loadFrozenContainerFromPendingState", () => {
 			ITestFluidObject.root.set(`disconnected-${i}`, i);
 		}
 
+		assert(container.getPendingLocalState !== undefined, "Missing method!");
 		const pendingLocalState = await container.getPendingLocalState();
 
 		const frozenContainer = await loadFrozenContainerFromPendingState({
@@ -202,6 +200,7 @@ describe("loadFrozenContainerFromPendingState", () => {
 			url !== undefined,
 			"Expected container to provide a valid absolute URL, but got undefined",
 		);
+		assert(container.getPendingLocalState !== undefined, "Missing method!");
 		const pendingLocalState = await container.getPendingLocalState();
 
 		const frozenContainer = await loadFrozenContainerFromPendingState({
@@ -246,6 +245,7 @@ describe("loadFrozenContainerFromPendingState", () => {
 			url !== undefined,
 			"Expected container to provide a valid absolute URL, but got undefined",
 		);
+		assert(container.getPendingLocalState !== undefined, "Missing method!");
 		const pendingLocalState = await container.getPendingLocalState();
 
 		const frozenContainer = await loadFrozenContainerFromPendingState({
@@ -285,6 +285,7 @@ describe("loadFrozenContainerFromPendingState", () => {
 			url !== undefined,
 			"Expected container to provide a valid absolute URL, but got undefined",
 		);
+		assert(container.getPendingLocalState !== undefined, "Missing method!");
 		const pendingLocalState = await container.getPendingLocalState();
 
 		const frozenContainer = await loadFrozenContainerFromPendingState({
@@ -325,6 +326,7 @@ describe("loadFrozenContainerFromPendingState", () => {
 			url !== undefined,
 			"Expected container to provide a valid absolute URL, but got undefined",
 		);
+		assert(container.getPendingLocalState !== undefined, "Missing method!");
 		const pendingLocalState = await container.getPendingLocalState();
 
 		const frozenContainer = await loadFrozenContainerFromPendingState({
@@ -362,6 +364,7 @@ describe("loadFrozenContainerFromPendingState", () => {
 			ITestFluidObject.root.set("seed", "value");
 			const url = await container.getAbsoluteUrl("");
 			assert(url !== undefined, "Expected container to provide a valid absolute URL");
+			assert(container.getPendingLocalState !== undefined, "Missing method!");
 			const pendingLocalState = await container.getPendingLocalState();
 
 			const frozenContainer = await loadFrozenContainerFromPendingState({
@@ -397,6 +400,7 @@ describe("loadFrozenContainerFromPendingState", () => {
 			ITestFluidObject.root.set("seed", "value");
 			const url = await container.getAbsoluteUrl("");
 			assert(url !== undefined, "Expected container to provide a valid absolute URL");
+			assert(container.getPendingLocalState !== undefined, "Missing method!");
 			const pendingLocalState = await container.getPendingLocalState();
 
 			const frozenContainer = await loadFrozenContainerFromPendingState({
@@ -449,6 +453,7 @@ describe("loadFrozenContainerFromPendingState", () => {
 			if (container.isDirty) {
 				await timeoutPromise((resolve) => container.once("saved", () => resolve()));
 			}
+			assert(container.getPendingLocalState !== undefined, "Missing method!");
 			const pendingLocalState = await container.getPendingLocalState();
 
 			const frozenContainer = await loadFrozenContainerFromPendingState({
@@ -489,6 +494,7 @@ describe("loadFrozenContainerFromPendingState", () => {
 			ITestFluidObject.root.set("seed", "value");
 			const url = await container.getAbsoluteUrl("");
 			assert(url !== undefined, "Expected container to provide a valid absolute URL");
+			assert(container.getPendingLocalState !== undefined, "Missing method!");
 			const pendingLocalState = await container.getPendingLocalState();
 
 			const frozenContainer = await loadFrozenContainerFromPendingState({
@@ -530,18 +536,17 @@ describe("loadFrozenContainerFromPendingState", () => {
 			if (container.isDirty) {
 				await timeoutPromise((resolve) => container.once("saved", () => resolve()));
 			}
+			assert(container.getPendingLocalState !== undefined, "Missing method!");
 			const initialPending = await container.getPendingLocalState();
 
-			const frozenContainer = asLegacyAlpha(
-				await loadFrozenContainerFromPendingState({
-					codeLoader,
-					documentServiceFactory,
-					urlResolver,
-					request: { url },
-					pendingLocalState: initialPending,
-					readOnly: false,
-				}),
-			);
+			const frozenContainer = await loadFrozenContainerFromPendingState({
+				codeLoader,
+				documentServiceFactory,
+				urlResolver,
+				request: { url },
+				pendingLocalState: initialPending,
+				readOnly: false,
+			});
 			const frozenEntryPoint: FluidObject<TestFluidObject> =
 				await frozenContainer.getEntryPoint();
 			assert(
@@ -555,6 +560,7 @@ describe("loadFrozenContainerFromPendingState", () => {
 
 			// Capture pending state from the writable-frozen container — the load-bearing
 			// invariant: edits made post-load must round-trip through getPendingLocalState().
+			assert(frozenContainer.getPendingLocalState !== undefined, "Missing method!");
 			const layeredPending = await frozenContainer.getPendingLocalState();
 			assert.notStrictEqual(
 				layeredPending,
@@ -599,6 +605,7 @@ describe("loadFrozenContainerFromPendingState", () => {
 			ITestFluidObject.root.set("seed", "value");
 			const url = await container.getAbsoluteUrl("");
 			assert(url !== undefined, "Expected container to provide a valid absolute URL");
+			assert(container.getPendingLocalState !== undefined, "Missing method!");
 			const pendingLocalState = await container.getPendingLocalState();
 
 			// Pre-wrap with readOnly: true (the default), then ask loadFrozenContainerFromPendingState
@@ -631,23 +638,22 @@ describe("loadFrozenContainerFromPendingState", () => {
 			if (container.isDirty) {
 				await timeoutPromise((resolve) => container.once("saved", () => resolve()));
 			}
+			assert(container.getPendingLocalState !== undefined, "Missing method!");
 			const initialPending = await container.getPendingLocalState();
 
 			// allowReconnect: false makes Container.connectToDeltaStream force mode = "write" on
 			// the very first connect. Without first-vs-subsequent tracking in FrozenDocumentService,
 			// that initial connect would be intercepted by the upgrade-hang path and the load
 			// would never complete.
-			const frozenContainer = asLegacyAlpha(
-				await loadFrozenContainerFromPendingState({
-					codeLoader,
-					documentServiceFactory,
-					urlResolver,
-					request: { url },
-					pendingLocalState: initialPending,
-					readOnly: false,
-					allowReconnect: false,
-				}),
-			);
+			const frozenContainer = await loadFrozenContainerFromPendingState({
+				codeLoader,
+				documentServiceFactory,
+				urlResolver,
+				request: { url },
+				pendingLocalState: initialPending,
+				readOnly: false,
+				allowReconnect: false,
+			});
 
 			assert.strictEqual(
 				frozenContainer.readOnlyInfo.readonly,
@@ -690,6 +696,7 @@ describe("loadFrozenContainerFromPendingState", () => {
 			}
 
 			// Pending state must capture all layered edits.
+			assert(frozenContainer.getPendingLocalState !== undefined, "Missing method!");
 			const layeredPending = await frozenContainer.getPendingLocalState();
 			assert.notStrictEqual(
 				layeredPending,
@@ -725,24 +732,23 @@ describe("loadFrozenContainerFromPendingState", () => {
 			if (container.isDirty) {
 				await timeoutPromise((resolve) => container.once("saved", () => resolve()));
 			}
+			assert(container.getPendingLocalState !== undefined, "Missing method!");
 			const initialPending = await container.getPendingLocalState();
 
 			// Non-interactive client also forces mode = "write" on the first connect — same path
 			// in Container.connectToDeltaStream as allowReconnect: false. Different forcing
 			// condition, identical observed behavior at the FrozenDocumentService boundary.
-			const frozenContainer = asLegacyAlpha(
-				await loadFrozenContainerFromPendingState({
-					codeLoader,
-					documentServiceFactory,
-					urlResolver,
-					request: { url },
-					pendingLocalState: initialPending,
-					readOnly: false,
-					clientDetailsOverride: {
-						capabilities: { interactive: false },
-					},
-				}),
-			);
+			const frozenContainer = await loadFrozenContainerFromPendingState({
+				codeLoader,
+				documentServiceFactory,
+				urlResolver,
+				request: { url },
+				pendingLocalState: initialPending,
+				readOnly: false,
+				clientDetailsOverride: {
+					capabilities: { interactive: false },
+				},
+			});
 
 			assert.strictEqual(
 				frozenContainer.readOnlyInfo.readonly,
@@ -765,6 +771,7 @@ describe("loadFrozenContainerFromPendingState", () => {
 				frozenEntryPoint.ITestFluidObject.root.set(`nonInteractive-${i}`, i);
 			}
 
+			assert(frozenContainer.getPendingLocalState !== undefined, "Missing method!");
 			const layeredPending = await frozenContainer.getPendingLocalState();
 			assert.notStrictEqual(
 				layeredPending,
@@ -783,6 +790,7 @@ describe("loadFrozenContainerFromPendingState", () => {
 			if (container.isDirty) {
 				await timeoutPromise((resolve) => container.once("saved", () => resolve()));
 			}
+			assert(container.getPendingLocalState !== undefined, "Missing method!");
 			const pendingLocalState = await container.getPendingLocalState();
 
 			const frozenContainer = await loadFrozenContainerFromPendingState({
@@ -823,6 +831,7 @@ describe("loadFrozenContainerFromPendingState", () => {
 			if (container.isDirty) {
 				await timeoutPromise((resolve) => container.once("saved", () => resolve()));
 			}
+			assert(container.getPendingLocalState !== undefined, "Missing method!");
 			const pendingLocalState = await container.getPendingLocalState();
 
 			const frozenContainer = await loadFrozenContainerFromPendingState({
@@ -864,18 +873,17 @@ describe("loadFrozenContainerFromPendingState", () => {
 			if (container.isDirty) {
 				await timeoutPromise((resolve) => container.once("saved", () => resolve()));
 			}
+			assert(container.getPendingLocalState !== undefined, "Missing method!");
 			const initialPending = await container.getPendingLocalState();
 
-			const frozenContainer = asLegacyAlpha(
-				await loadFrozenContainerFromPendingState({
-					codeLoader,
-					documentServiceFactory,
-					urlResolver,
-					request: { url },
-					pendingLocalState: initialPending,
-					readOnly: false,
-				}),
-			);
+			const frozenContainer = await loadFrozenContainerFromPendingState({
+				codeLoader,
+				documentServiceFactory,
+				urlResolver,
+				request: { url },
+				pendingLocalState: initialPending,
+				readOnly: false,
+			});
 			const frozenEntryPoint: FluidObject<TestFluidObject> =
 				await frozenContainer.getEntryPoint();
 			assert(
@@ -909,6 +917,7 @@ describe("loadFrozenContainerFromPendingState", () => {
 			// Both batches should round-trip through getPendingLocalState — proving the
 			// writable-frozen container continues to capture pending state across timer
 			// boundaries.
+			assert(frozenContainer.getPendingLocalState !== undefined, "Missing method!");
 			const layeredPending = await frozenContainer.getPendingLocalState();
 			const secondFrozen = await loadFrozenContainerFromPendingState({
 				codeLoader,
@@ -954,6 +963,7 @@ describe("loadFrozenContainerFromPendingState", () => {
 			if (container.isDirty) {
 				await timeoutPromise((resolve) => container.once("saved", () => resolve()));
 			}
+			assert(container.getPendingLocalState !== undefined, "Missing method!");
 			const pendingLocalState = await container.getPendingLocalState();
 
 			const frozenContainer = await loadFrozenContainerFromPendingState({
@@ -1022,6 +1032,7 @@ describe("loadFrozenContainerFromPendingState", () => {
 
 				const url = await container.getAbsoluteUrl("");
 				assert(url !== undefined, "Expected container to provide a valid absolute URL");
+				assert(container.getPendingLocalState !== undefined, "Missing method!");
 				const pendingLocalState = await container.getPendingLocalState();
 
 				const frozenContainer = await loadFrozenContainerFromPendingState({
@@ -1069,6 +1080,7 @@ describe("loadFrozenContainerFromPendingState", () => {
 
 				const url = await container.getAbsoluteUrl("");
 				assert(url !== undefined, "Expected container to provide a valid absolute URL");
+				assert(container.getPendingLocalState !== undefined, "Missing method!");
 				const pendingLocalState = await container.getPendingLocalState();
 
 				const frozenContainer = await loadFrozenContainerFromPendingState({
@@ -1114,18 +1126,17 @@ describe("loadFrozenContainerFromPendingState", () => {
 
 				const url = await container.getAbsoluteUrl("");
 				assert(url !== undefined, "Expected container to provide a valid absolute URL");
+				assert(container.getPendingLocalState !== undefined, "Missing method!");
 				const pendingLocalState = await container.getPendingLocalState();
 
-				const frozenContainer = asLegacyAlpha(
-					await loadFrozenContainerFromPendingState({
-						codeLoader,
-						documentServiceFactory,
-						urlResolver,
-						request: { url },
-						pendingLocalState,
-						readOnly: false,
-					}),
-				);
+				const frozenContainer = await loadFrozenContainerFromPendingState({
+					codeLoader,
+					documentServiceFactory,
+					urlResolver,
+					request: { url },
+					pendingLocalState,
+					readOnly: false,
+				});
 				const frozenEntryPoint: FluidObject<TestFluidObject> =
 					await frozenContainer.getEntryPoint();
 				assert(frozenEntryPoint.ITestFluidObject !== undefined);
@@ -1173,6 +1184,7 @@ describe("loadFrozenContainerFromPendingState", () => {
 				// Attach the handle so attachGraph runs and the blob is recorded as pending.
 				frozenFluidObject.root.set("frozenBlob", handle);
 
+				assert(frozenContainer.getPendingLocalState !== undefined, "Missing method!");
 				const layeredPending = await frozenContainer.getPendingLocalState();
 				assert.notStrictEqual(
 					layeredPending,

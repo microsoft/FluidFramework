@@ -6,7 +6,6 @@
 import { strict as assert } from "assert";
 
 import type { IContainer } from "@fluidframework/container-definitions/internal";
-import { asLegacyAlpha, type ContainerAlpha } from "@fluidframework/container-loader/internal";
 import type { IRequest } from "@fluidframework/core-interfaces";
 import { Deferred } from "@fluidframework/core-utils/internal";
 import type {
@@ -40,9 +39,7 @@ export const generatePendingState = async (
 	send: false | true | "afterReconnect",
 	cb: SharedObjCallback = (): void => undefined,
 ): Promise<string> => {
-	const container: ContainerAlpha = asLegacyAlpha(
-		await testObjectProvider.loadTestContainer(testContainerConfig),
-	);
+	const container: IContainer = await testObjectProvider.loadTestContainer(testContainerConfig);
 	await waitForContainerConnection(container);
 	const dataStore = (await container.getEntryPoint()) as ITestFluidObject;
 
@@ -60,6 +57,7 @@ export const generatePendingState = async (
 
 	await cb(container, dataStore);
 
+	assert(container.getPendingLocalState !== undefined, "Missing method!");
 	let pendingState: string | undefined;
 	if (send === true) {
 		pendingState = await container.getPendingLocalState();
@@ -97,7 +95,7 @@ export async function loadContainerOffline(
 	testObjectProvider: ITestObjectProvider,
 	request: IRequest,
 	pendingLocalState?: string,
-): Promise<{ container: ContainerAlpha; connect: () => void }> {
+): Promise<{ container: IContainer; connect: () => void }> {
 	const p = new Deferred();
 	// This documentServiceFactory will wait for the promise p to resolve before connecting to the service
 	const documentServiceFactory = wrapObjectAndOverride<IDocumentServiceFactory>(
@@ -131,16 +129,10 @@ export async function loadContainerOffline(
 		],
 		{ ...testContainerConfig.loaderProps, documentServiceFactory },
 	);
-	const container = asLegacyAlpha(
-		await loader.resolve(
-			request,
-			pendingLocalState ??
-				(await generatePendingState(
-					testContainerConfig,
-					testObjectProvider,
-					false /* send */,
-				)),
-		),
+	const container = await loader.resolve(
+		request,
+		pendingLocalState ??
+			(await generatePendingState(testContainerConfig, testObjectProvider, false /* send */)),
 	);
 	return { container, connect: (): void => p.resolve(undefined) };
 }

@@ -20,9 +20,7 @@ import {
 	LoaderHeader,
 } from "@fluidframework/container-definitions/internal";
 import {
-	asLegacyAlpha,
 	ConnectionState,
-	type ContainerAlpha,
 	type ILoaderProps,
 	Loader,
 	waitContainerToCatchUp,
@@ -333,9 +331,8 @@ describeCompat("Container", "NoCompat", (getTestObjectProvider) => {
 			runtimeFactory,
 		);
 
-		const container: ContainerAlpha = asLegacyAlpha(
-			await localTestObjectProvider.makeTestContainer(),
-		);
+		const container: IContainer = await localTestObjectProvider.makeTestContainer();
+		assert(container.getPendingLocalState !== undefined, "Missing method!");
 		const pendingString = await container.getPendingLocalState();
 		container.close();
 		assert.ok(pendingString);
