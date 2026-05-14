@@ -1601,11 +1601,21 @@ describe("Runtime", () => {
 		describe("Submit during stashed-op apply", () => {
 			let containerRuntime: ContainerRuntime;
 			let mockLogger: MockLogger;
+			let containerErrors: ICriticalContainerError[];
 
 			async function createRuntime(settings: Record<string, ConfigTypes> = {}): Promise<void> {
 				mockLogger = new MockLogger();
+				containerErrors = [];
+				const context = {
+					...getMockContext({ logger: mockLogger, settings }),
+					closeFn: (error?: ICriticalContainerError): void => {
+						if (error !== undefined) {
+							containerErrors.push(error);
+						}
+					},
+				};
 				const { runtime } = await ContainerRuntime.loadRuntime2({
-					context: getMockContext({ logger: mockLogger, settings }) as IContainerContext,
+					context: context as IContainerContext,
 					registry: new FluidDataStoreRegistry([]),
 					existing: false,
 					requestHandler: undefined,
@@ -1641,7 +1651,7 @@ describe("Runtime", () => {
 				});
 			}
 
-			it("throws a fatal usage error from submitMessage and logs", async () => {
+			it("throws, logs, and closes the container on submit during apply", async () => {
 				await createRuntime();
 				setApplyingStashedOps(true);
 				assert.throws(
@@ -1657,6 +1667,16 @@ describe("Runtime", () => {
 						messageType: ContainerMessageType.FluidDataStoreOp,
 					},
 				]);
+				assert.strictEqual(
+					containerErrors.length,
+					1,
+					"closeFn should have been invoked exactly once",
+				);
+				assert.strictEqual(
+					containerErrors[0].errorType,
+					ContainerErrorTypes.usageError,
+					"closeFn should have received the UsageError",
+				);
 			});
 
 			it("does not throw when the apply window is closed", async () => {

@@ -4895,6 +4895,11 @@ export class ContainerRuntime
 					"Fluid.ContainerRuntime.DisableSubmitDuringStashedApplyThrow",
 				) !== true
 			) {
+				// Close the container before throwing so the "throw + close"
+				// contract is enforced by this code path rather than by
+				// whichever caller happens to wrap the throw in `.catch(closeFn)`.
+				// `closeFn` is idempotent; a caller that also closes won't double-close.
+				this.closeFn(error);
 				throw error;
 			}
 		}
