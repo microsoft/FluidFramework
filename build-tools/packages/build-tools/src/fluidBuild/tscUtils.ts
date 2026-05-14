@@ -259,18 +259,8 @@ function createTscUtil<TSTypes extends tsTypes>(tsLib: TSTypes): TscUtil<TSTypes
 			// In TS <5.9, parseCommandLine() also accepted `-b`, but 5.9 removed
 			// that. Use isBuildCommand/parseBuildCommand when available (TS 5.9+),
 			// otherwise fall back to parseCommandLine which handles it.
-			const isBuildCommand = (tsLib as any).isBuildCommand as
-				| ((args: string[]) => boolean)
-				| undefined;
-			const parseBuildCommand = (tsLib as any).parseBuildCommand as
-				| ((args: string[]) => {
-						buildOptions: any;
-						projects: string[];
-						errors: ts.Diagnostic[];
-				  })
-				| undefined;
-			if (isBuildCommand?.(slicedArgs) && parseBuildCommand) {
-				const buildResult = parseBuildCommand(slicedArgs);
+			if ("isBuildCommand" in tsLib && tsLib.isBuildCommand(slicedArgs)) {
+				const buildResult = tsLib.parseBuildCommand(slicedArgs);
 				if (buildResult.errors.length) {
 					console.error(
 						`Error parsing tsc build command: ${command} (split into ${JSON.stringify(slicedArgs)}).`,
@@ -282,12 +272,12 @@ function createTscUtil<TSTypes extends tsTypes>(tsLib: TSTypes): TscUtil<TSTypes
 				}
 				// Map parseBuildCommand result to ParsedCommandLine shape so
 				// callers can check options.build and use fileNames for projects.
-				const result: ts.ParsedCommandLine = {
+				const result = {
 					options: { build: true },
 					fileNames: buildResult.projects,
 					errors: [],
-				};
-				return result;
+				} satisfies ts54Types.ParsedCommandLine satisfies ts59Types.ParsedCommandLine;
+				return result as ReturnType<TSTypes["parseCommandLine"]>;
 			}
 
 			let filteredArgs = slicedArgs;
