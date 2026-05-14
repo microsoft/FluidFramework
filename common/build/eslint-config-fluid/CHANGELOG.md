@@ -10,6 +10,47 @@ Node 22 is now the minimum supported Node.js version. This aligns with the stand
 
 The `import-x/order` rule has been disabled. Prefer using formatting tools like Biome to handle import sorting.
 
+### Breaking: ESLint 8 legacy configs no longer exported
+
+This package now uses ESLint flat config format exclusively. The legacy `.eslintrc` format is no longer supported.
+The package root now exports the named flat and server configs directly from `@fluidframework/eslint-config-fluid`.
+
+**Requirements:**
+
+- ESLint 9 (recommended), or
+- ESLint 8.21+ with `ESLINT_USE_FLAT_CONFIG=true` environment variable
+
+**Migration:**
+
+Replace your `.eslintrc.cjs`:
+
+```javascript
+// OLD - .eslintrc.cjs (no longer supported)
+module.exports = { extends: ["@fluidframework/eslint-config-fluid/strict"] };
+```
+
+With `eslint.config.mts`:
+
+```javascript
+// NEW - eslint.config.mts
+import { strict } from "@fluidframework/eslint-config-fluid";
+export default [...strict];
+```
+
+For ESLint 8.21+ users, set the environment variable:
+
+```bash
+ESLINT_USE_FLAT_CONFIG=true eslint .
+```
+
+**Removed files:**
+
+- `base.js`, `minimal-deprecated.js`, `recommended.js`, `strict.js`, `strict-biome.js`, `index.js`
+
+**Removed dependency:**
+
+- `@eslint/eslintrc` (FlatCompat no longer needed)
+
 ## [10.0.0](https://github.com/microsoft/FluidFramework/releases/tag/eslint-config-fluid_v10.0.0)
 
 ### eslint-plugin-react replaced by @eslint-react/eslint-plugin
