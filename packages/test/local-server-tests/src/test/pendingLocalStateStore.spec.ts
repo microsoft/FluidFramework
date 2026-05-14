@@ -17,7 +17,10 @@ import {
 } from "@fluidframework/container-loader/internal";
 import type { LocalResolver } from "@fluidframework/local-driver/internal";
 import { LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
-import { ITestFluidObject, getRequiredPendingLocalState } from "@fluidframework/test-utils/internal";
+import {
+	ITestFluidObject,
+	getRequiredPendingLocalState,
+} from "@fluidframework/test-utils/internal";
 
 import { createLoader } from "../utils.js";
 
