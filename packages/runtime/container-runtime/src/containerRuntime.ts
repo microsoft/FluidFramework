@@ -4869,12 +4869,12 @@ export class ContainerRuntime
 		// deferred and the apply window could close before the offending op
 		// reaches the pending queue.
 		//
-		// Allowlist: `BlobAttach` and `IdAllocation` are runtime-internal
-		// op types that may legitimately fire during apply. `BlobAttach`
-		// is produced by `sharePendingBlobs`, which is invoked from
-		// `loadRuntime2` before `applyStashedOpsAt` resolves. `IdAllocation`
-		// is asserted to bypass `submit()` entirely (see the assert below),
-		// but is allowlisted here defensively in case that contract shifts.
+		// Allowlist: `BlobAttach` is a runtime-internal op type that may
+		// legitimately fire during apply — produced by `sharePendingBlobs`,
+		// which is invoked from `loadRuntime2` before `applyStashedOpsAt`
+		// resolves. `IdAllocation` is not in this allowlist because the
+		// assert at 0x9a5 below enforces that it never reaches `submit()`
+		// at all; treating that assert as the single source of truth.
 		//
 		// Always surface the error event to telemetry on a bypass so we can
 		// attribute incidents regardless of the kill-switch state. The kill
@@ -4883,8 +4883,7 @@ export class ContainerRuntime
 		// third-party DDS in production quietly bypasses the readonly gate.
 		if (
 			this.pendingStateManager.isApplyingStashedOps &&
-			containerRuntimeMessage.type !== ContainerMessageType.BlobAttach &&
-			containerRuntimeMessage.type !== ContainerMessageType.IdAllocation
+			containerRuntimeMessage.type !== ContainerMessageType.BlobAttach
 		) {
 			const error = new UsageError("Local op submitted during stashed-op apply window", {
 				messageType: containerRuntimeMessage.type,
