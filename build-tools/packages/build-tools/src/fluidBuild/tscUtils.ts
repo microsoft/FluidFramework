@@ -5,13 +5,11 @@
 
 import * as fs from "fs";
 import * as path from "path";
-import * as ts from "typescript";
+import type * as ts54Types from "typescript-5.4";
+import type * as ts59Types from "typescript-5.9";
 import { sha256 } from "./hash";
 
-const defaultTscUtil = createTscUtil(ts);
-export const parseCommandLine = defaultTscUtil.parseCommandLine;
-export const findConfigFile = defaultTscUtil.findConfigFile;
-export const readConfigFile = defaultTscUtil.readConfigFile;
+type tsTypes = typeof ts54Types | typeof ts59Types;
 
 /**
  * Matches fluid-tsc command start.
@@ -102,11 +100,13 @@ function filterIncrementalOptions(options: any): Record<string, unknown> {
 	return newOptions;
 }
 
-function convertOptionPaths(
-	options: ts.CompilerOptions,
+function convertOptionPaths<
+	TCompilerOptions extends ts54Types.CompilerOptions | ts59Types.CompilerOptions,
+>(
+	options: TCompilerOptions,
 	base: string,
 	convert: (base: string, path: string) => string,
-): ts.CompilerOptions {
+): TCompilerOptions {
 	// Shallow clone 'CompilerOptions' before modifying.
 	const result = { ...options };
 
@@ -145,14 +145,14 @@ function toLowerCase(x: string): string {
 // eslint-disable-next-line no-useless-escape
 const fileNameLowerCaseRegExp = /[^\u0130\u0131\u00DFa-z0-9\\/:\-_\. ]+/g;
 
-function createGetCanonicalFileName(tsLib: typeof ts): (x: string) => string {
+function createGetCanonicalFileName(tsLib: tsTypes): (x: string) => string {
 	return tsLib.sys.useCaseSensitiveFileNames
 		? (x: string): string => x
 		: (x: string): string =>
 				fileNameLowerCaseRegExp.test(x) ? x.replace(fileNameLowerCaseRegExp, toLowerCase) : x;
 }
 
-function createGetSourceFileVersion(tsLib: typeof ts): (buffer: Buffer) => string {
+function createGetSourceFileVersion(tsLib: tsTypes): (buffer: Buffer) => string {
 	// The TypeScript compiler performs some light preprocessing of the source file
 	// text before calculating the file hashes that appear in *.tsbuildinfo.
 	//
@@ -186,26 +186,66 @@ function createGetSourceFileVersion(tsLib: typeof ts): (buffer: Buffer) => strin
 }
 
 /**
+ * Convert a union of types to an intersection of types.
+ *
+ * @privateRemarks
+ * First an always true extends clause is used (T extends T) to distribute T
+ * into to a union of types contravariant over each member of the T union.
+ * Then the constraint on the type parameter in this new context is inferred,
+ * giving the intersection.
+ *
+ * See {@link https://www.typescriptlang.org/docs/handbook/release-notes/typescript-2-8.html#distributive-conditional-types|Distributive conditional types}
+ * and {@link https://www.typescriptlang.org/docs/handbook/release-notes/typescript-2-8.html#type-inference-in-conditional-types|Inference in conditional types} in TS Handbook for more details and examples.
+ */
+export type UnionToIntersection<T> = (T extends T ? (k: T) => unknown : never) extends (
+	k: infer U,
+) => unknown
+	? U
+	: never;
+
+/**
  * TypeScript compiler utilities created for a specific TypeScript library instance.
  */
-export interface TscUtil {
-	tsLib: typeof ts;
-	parseCommandLine: (command: string) => ts.ParsedCommandLine | undefined;
+export interface TscUtil<TSTypes extends tsTypes = tsTypes> {
+	tsLib: TSTypes;
+	parseCommandLine: (command: string) => ReturnType<TSTypes["parseCommandLine"]> | undefined;
 	findConfigFile: (
 		directory: string,
-		parsedCommand: ts.ParsedCommandLine | undefined,
+		parsedCommand: ReturnType<TSTypes["parseCommandLine"]> | undefined,
 	) => string | undefined;
 	readConfigFile: (path: string) => unknown;
 	filterIncrementalOptions: typeof filterIncrementalOptions;
-	convertOptionPaths: typeof convertOptionPaths;
+	convertOptionPaths: typeof convertOptionPaths<
+		ReturnType<TSTypes["parseCommandLine"]>["options"]
+	>;
 	getCanonicalFileName: (x: string) => string;
 	getSourceFileVersion: (buffer: Buffer) => string;
+	/**
+	 * Cast helper for generic use context that always targets a single TypeScript version.
+	 *
+	 * @remarks
+	 * options value give should always originate from the version that will consume the output.
+	 *
+	 * @param options Options specific to certain version of TypeScript
+	 * @returns Casted version of options that can be given to any TypeScript and therefore also to the specific version.
+	 */
+	castOptionsUnionToIntersection: (
+		options: ReturnType<TSTypes["parseCommandLine"]>["options"],
+	) => UnionToIntersection<ReturnType<TSTypes["parseCommandLine"]>["options"]>;
+	/**
+	 * Cast helper to most basic version of TypeScript (oldest supported)
+	 * @param ts Any of the supported typescript modules
+	 * @returns Most basic version of typescript
+	 */
+	baseTs: (ts: TSTypes) => typeof ts54Types;
 }
 
-function createTscUtil(tsLib: typeof ts): TscUtil {
+function createTscUtil<TSTypes extends tsTypes>(tsLib: TSTypes): TscUtil<TSTypes> {
 	return {
 		tsLib,
-		parseCommandLine: (command: string): ts.ParsedCommandLine | undefined => {
+		parseCommandLine: (
+			command: string,
+		): ReturnType<TSTypes["parseCommandLine"]> | undefined => {
 			// TODO: parse the command line for real, split space for now.
 			// In case of fluid-tsc, replace those parts with 'tsc' before split.
 			const args = command.replace(fluidTscRegEx, "tsc").split(" ");
@@ -269,12 +309,12 @@ function createTscUtil(tsLib: typeof ts): TscUtil {
 				return undefined;
 			}
 
-			return parsedCommand;
+			return parsedCommand as ReturnType<TSTypes["parseCommandLine"]>;
 		},
 
 		findConfigFile: (
 			directory: string,
-			parsedCommand: ts.ParsedCommandLine | undefined,
+			parsedCommand: ReturnType<TSTypes["parseCommandLine"]> | undefined,
 		): string | undefined => {
 			let tsConfigFullPath: string | undefined;
 			const project = parsedCommand?.options.project;
@@ -312,6 +352,13 @@ function createTscUtil(tsLib: typeof ts): TscUtil {
 		convertOptionPaths,
 		getCanonicalFileName: createGetCanonicalFileName(tsLib),
 		getSourceFileVersion: createGetSourceFileVersion(tsLib),
+		castOptionsUnionToIntersection: (
+			options: ReturnType<TSTypes["parseCommandLine"]>["options"],
+		) =>
+			options as unknown as UnionToIntersection<
+				ReturnType<TSTypes["parseCommandLine"]>["options"]
+			>,
+		baseTs: (ts: TSTypes) => ts as typeof ts54Types,
 	};
 }
 
@@ -333,7 +380,7 @@ export function getTscUtils(path: string): TscUtil {
 		}
 
 		// eslint-disable-next-line @typescript-eslint/no-var-requires
-		const tsLib: typeof ts = require(tsPath);
+		const tsLib: tsTypes = require(tsPath);
 		const tscUtil = createTscUtil(tsLib);
 		tscUtilPathCache.set(path, tscUtil);
 		tscUtilLibPathCache.set(tsPath, tscUtil);

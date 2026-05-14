@@ -224,18 +224,18 @@ export abstract class TelemetryLogger implements TelemetryLoggerExt {
 	 *
 	 * @param event - the event to send
 	 * @param error - optional error object to log
-	 * @param logLevel - optional level of the log. It category of event is set as error,
-	 * then the logLevel will be upgraded to be an error.
+	 * @param logLevel - optional level of the log. If the event's category is `error`,
+	 * the logLevel will be upgraded to {@link @fluidframework/core-interfaces#LogLevelConst.essential | LogLevel.essential}.
 	 */
 	public sendTelemetryEvent(
 		event: ITelemetryGenericEventExt,
 		error?: unknown,
-		logLevel: typeof LogLevel.verbose | typeof LogLevel.default = LogLevel.default,
+		logLevel?: typeof LogLevel.verbose | typeof LogLevel.info,
 	): void {
 		this.sendTelemetryEventCore(
 			{ ...event, category: event.category ?? "generic" },
 			error,
-			event.category === "error" ? LogLevel.error : logLevel,
+			event.category === "error" ? LogLevel.essential : (logLevel ?? LogLevel.essential),
 		);
 	}
 
@@ -244,12 +244,12 @@ export abstract class TelemetryLogger implements TelemetryLoggerExt {
 	 *
 	 * @param event - the event to send
 	 * @param error - optional error object to log
-	 * @param logLevel - optional level of the log.
+	 * @param logLevel - level of the log.
 	 */
-	protected sendTelemetryEventCore(
+	private sendTelemetryEventCore(
 		event: ITelemetryGenericEventExt & { category: TelemetryEventCategory },
-		error?: unknown,
-		logLevel?: LogLevel,
+		error: unknown,
+		logLevel: LogLevel,
 	): void {
 		const newEvent = convertToBaseEvent(event);
 		if (error !== undefined) {
@@ -280,7 +280,7 @@ export abstract class TelemetryLogger implements TelemetryLoggerExt {
 				category: "error",
 			},
 			error,
-			LogLevel.error,
+			LogLevel.essential,
 		);
 	}
 
@@ -289,13 +289,13 @@ export abstract class TelemetryLogger implements TelemetryLoggerExt {
 	 *
 	 * @param event - Event to send
 	 * @param error - optional error object to log
-	 * @param logLevel - optional level of the log. It category of event is set as error,
-	 * then the logLevel will be upgraded to be an error.
+	 * @param logLevel - optional level of the log. If the event's category is `error`,
+	 * the logLevel will be upgraded to {@link @fluidframework/core-interfaces#LogLevelConst.essential | LogLevel.essential}.
 	 */
 	public sendPerformanceEvent(
 		event: ITelemetryPerformanceEventExt,
 		error?: unknown,
-		logLevel: typeof LogLevel.verbose | typeof LogLevel.default = LogLevel.default,
+		logLevel?: typeof LogLevel.verbose | typeof LogLevel.info,
 	): void {
 		const perfEvent = {
 			...event,
@@ -305,7 +305,7 @@ export abstract class TelemetryLogger implements TelemetryLoggerExt {
 		this.sendTelemetryEventCore(
 			perfEvent,
 			error,
-			perfEvent.category === "error" ? LogLevel.error : logLevel,
+			perfEvent.category === "error" ? LogLevel.essential : (logLevel ?? LogLevel.essential),
 		);
 	}
 
@@ -518,8 +518,8 @@ export class ChildLogger extends TelemetryLogger {
 	}
 
 	private shouldFilterOutEvent(event: ITelemetryBaseEvent, logLevel?: LogLevel): boolean {
-		const eventLogLevel = logLevel ?? LogLevel.default;
-		const configLogLevel = this.baseLogger.minLogLevel ?? LogLevel.default;
+		const eventLogLevel = logLevel ?? LogLevel.essential;
+		const configLogLevel = this.baseLogger.minLogLevel ?? LogLevel.info;
 		// Filter out in case event log level is below what is wanted in config.
 		return eventLogLevel < configLogLevel;
 	}
@@ -533,7 +533,7 @@ export class ChildLogger extends TelemetryLogger {
 		if (this.shouldFilterOutEvent(event, logLevel)) {
 			return;
 		}
-		this.baseLogger.send(this.prepareEvent(event), logLevel);
+		this.baseLogger.send(this.prepareEvent(event), logLevel ?? LogLevel.essential);
 	}
 }
 
@@ -618,7 +618,7 @@ export class MultiSinkLogger extends TelemetryLogger {
 
 		super(namespace, realProperties);
 		this.loggers = loggers;
-		this._minLogLevelOfAllLoggers = LogLevel.default;
+		this._minLogLevelOfAllLoggers = LogLevel.info;
 		this.calculateMinLogLevel();
 	}
 
@@ -630,7 +630,7 @@ export class MultiSinkLogger extends TelemetryLogger {
 		if (this.loggers.length > 0) {
 			const logLevels: LogLevel[] = [];
 			for (const logger of this.loggers) {
-				logLevels.push(logger.minLogLevel ?? LogLevel.default);
+				logLevels.push(logger.minLogLevel ?? LogLevel.info);
 			}
 			this._minLogLevelOfAllLoggers = Math.min(...logLevels) as LogLevel;
 		}
@@ -653,10 +653,10 @@ export class MultiSinkLogger extends TelemetryLogger {
 	 *
 	 * @param event - the event to send to all the registered logger
 	 */
-	public send(event: ITelemetryBaseEvent): void {
+	public send(event: ITelemetryBaseEvent, logLevel?: LogLevel): void {
 		const newEvent = this.prepareEvent(event);
 		for (const logger of this.loggers) {
-			logger.send(newEvent);
+			logger.send(newEvent, logLevel ?? LogLevel.essential);
 		}
 	}
 }
@@ -693,6 +693,7 @@ export class PerformanceEvent {
 	 * @param emitLogs - should this instance emit logs. If set to false, logs will not be emitted to the logger,
 	 * but measurements will still be performed and any specified markers will be generated.
 	 * @param logLevel - optional {@link LogLevel} for events emitted by this performance event.
+	 * If unspecified, {@link @fluidframework/core-interfaces#LogLevelConst.essential | LogLevel.essential} will be used.
 	 * @returns An instance of {@link PerformanceEvent}
 	 */
 	public static start(
@@ -700,7 +701,7 @@ export class PerformanceEvent {
 		event: ITelemetryGenericEventExt,
 		markers?: IPerformanceEventMarkers,
 		emitLogs: boolean = true,
-		logLevel?: typeof LogLevel.verbose | typeof LogLevel.default,
+		logLevel?: typeof LogLevel.verbose | typeof LogLevel.info,
 	): PerformanceEvent {
 		return new PerformanceEvent(
 			extractTelemetryLoggerExt(logger),
@@ -720,6 +721,7 @@ export class PerformanceEvent {
 	 * @param sampleThreshold - events with the same name and category will be sent to the logger
 	 * only when we hit this many executions of the task. If unspecified, all events will be sent.
 	 * @param logLevel - optional {@link LogLevel} for events emitted by this performance event.
+	 * If unspecified, {@link @fluidframework/core-interfaces#LogLevelConst.essential | LogLevel.essential} will be used.
 	 * @returns The results of the executed task
 	 *
 	 * @remarks Note that if the "same" event (category + eventName) would be emitted by different
@@ -733,7 +735,7 @@ export class PerformanceEvent {
 		callback: (event: PerformanceEvent) => T,
 		markers?: IPerformanceEventMarkers,
 		sampleThreshold: number = 1,
-		logLevel?: typeof LogLevel.verbose | typeof LogLevel.default,
+		logLevel?: typeof LogLevel.verbose | typeof LogLevel.info,
 	): T {
 		const perfEvent = PerformanceEvent.start(
 			logger,
@@ -762,6 +764,7 @@ export class PerformanceEvent {
 	 * @param sampleThreshold - events with the same name and category will be sent to the logger
 	 * only when we hit this many executions of the task. If unspecified, all events will be sent.
 	 * @param logLevel - optional {@link LogLevel} for events emitted by this performance event.
+	 * If unspecified, {@link @fluidframework/core-interfaces#LogLevelConst.essential | LogLevel.essential} will be used.
 	 * @returns The results of the executed task
 	 *
 	 * @remarks Note that if the "same" event (category + eventName) would be emitted by different
@@ -775,7 +778,7 @@ export class PerformanceEvent {
 		callback: (event: PerformanceEvent) => Promise<T>,
 		markers?: IPerformanceEventMarkers,
 		sampleThreshold: number = 1,
-		logLevel?: typeof LogLevel.verbose | typeof LogLevel.default,
+		logLevel?: typeof LogLevel.verbose | typeof LogLevel.info,
 	): Promise<T> {
 		const perfEvent = PerformanceEvent.start(
 			logger,
@@ -802,12 +805,12 @@ export class PerformanceEvent {
 	private readonly startTime = performanceNow();
 	private startMark?: string;
 
-	protected constructor(
+	private constructor(
 		private readonly logger: TelemetryLoggerExt,
 		event: ITelemetryGenericEventExt,
 		private readonly markers: IPerformanceEventMarkers = { end: true, cancel: "generic" },
 		private readonly emitLogs: boolean = true,
-		private readonly logLevel?: typeof LogLevel.verbose | typeof LogLevel.default,
+		private readonly logLevel: typeof LogLevel.verbose | typeof LogLevel.info | undefined,
 	) {
 		this.event = { ...event };
 		if (this.markers.start) {
