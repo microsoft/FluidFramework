@@ -173,7 +173,7 @@ Error: BreakFoo`;
 
 			let invoked = false;
 			assert.throws(
-				() =>
+				async () =>
 					foo.breaker.run(async () => {
 						invoked = true;
 						return 1;
