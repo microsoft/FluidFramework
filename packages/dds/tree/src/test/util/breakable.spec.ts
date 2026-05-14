@@ -115,13 +115,10 @@ Error: BreakFoo`;
 
 		it("rejection breaks the breakable with the thrown error", async () => {
 			const foo = new Foo();
-			await assert.rejects(
-				foo.canBreakAsync(1, Promise.resolve()),
-				(error: Error) => {
-					assert.equal(error, breakError);
-					return true;
-				},
-			);
+			await assert.rejects(foo.canBreakAsync(1, Promise.resolve()), (error: Error) => {
+				assert.equal(error, breakError);
+				return true;
+			});
 
 			// Subsequent sync use should throw a UsageError citing the original break error.
 			assert.throws(() => foo.read(1), validateUsageError(message));
