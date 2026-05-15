@@ -4,14 +4,17 @@
  */
 
 import { Flags } from "@oclif/core";
+
+import { getArtifactForCommit } from "../../library/azureDevops/getArtifactForCommit.js";
 import { getAzureDevopsApi } from "../../library/azureDevops/getAzureDevopsApi.js";
 import {
-	ADOSizeComparator,
-	type BundleComparison,
-	bundlesContainNoChanges,
+	compareJsonReportsByPackage,
+	extractAnalyzerJsonsFromArtifact,
+	getMergeBaseWithHead,
+	type PackageComparison,
 	pickFreshestCanonicalRemote,
+	readAnalyzerJsonsFromFileSystem,
 } from "../../library/bundleSize/index.js";
-
 import { BaseCommand } from "../../library/commands/base.js";
 
 // Must match the "public" project + build-bundle-size-artifacts.yml (definitionId 48).
@@ -31,7 +34,7 @@ const defaultLocalReportPath = "./artifacts/bundleAnalyzerJson";
  */
 type CheckBundleSizeResult =
 	| { kind: "no-changes"; baselineCommit: string }
-	| { kind: "changes"; baselineCommit: string; comparison: BundleComparison[] }
+	| { kind: "changes"; baselineCommit: string; comparison: PackageComparison }
 	| { kind: "error"; baselineCommit: string | undefined; error: string };
 
 export default class CheckBundleSize extends BaseCommand<typeof CheckBundleSize> {
@@ -69,65 +72,77 @@ export default class CheckBundleSize extends BaseCommand<typeof CheckBundleSize>
 			this.log(`Using target ref ${targetRef}. Pass --target <ref> to override.`);
 		}
 
+		const baselineCommit = getMergeBaseWithHead(targetRef);
+		this.log(`Baseline commit: ${baselineCommit}`);
+
 		// Anonymous reads work for the public ADO project at this command's scale;
 		// automated consumers authenticate at the library layer.
 		const adoApi = getAzureDevopsApi(undefined, adoConstants.orgUrl);
-		const sizeComparator = new ADOSizeComparator(
-			adoConstants,
+		const artifactResult = await getArtifactForCommit({
 			adoApi,
-			localReportPath,
-			targetRef,
-		);
-		const comparisonResult = await sizeComparator.getSizeComparison();
+			artifactName: adoConstants.artifactName,
+			commit: baselineCommit,
+			definitionId: adoConstants.ciBuildDefinitionId,
+			project: adoConstants.projectName,
+		});
 
-		if (comparisonResult.kind === "error") {
-			this.warning(comparisonResult.error);
-			return {
-				kind: "error",
-				baselineCommit: comparisonResult.baselineCommit,
-				error: comparisonResult.error,
-			};
+		if (artifactResult.kind === "error") {
+			this.warning(artifactResult.error);
+			return { kind: "error", baselineCommit, error: artifactResult.error };
 		}
 
-		if (comparisonResult.comparison.length === 0) {
+		const [baselineJsons, prJsons] = await Promise.all([
+			Promise.resolve(extractAnalyzerJsonsFromArtifact(artifactResult.contents)),
+			readAnalyzerJsonsFromFileSystem(localReportPath),
+		]);
+
+		if (baselineJsons.size === 0 && prJsons.size === 0) {
 			const message =
 				"No bundles to compare — baseline artifact or local bundle reports are empty.";
 			this.warning(message);
-			return {
-				kind: "error",
-				baselineCommit: comparisonResult.baselineCommit,
-				error: message,
-			};
+			return { kind: "error", baselineCommit, error: message };
 		}
 
-		const { baselineCommit, comparison } = comparisonResult;
+		const comparison = compareJsonReportsByPackage(baselineJsons, prJsons);
 
-		if (bundlesContainNoChanges(comparison)) {
-			this.log(`No bundle size changes vs baseline commit ${baselineCommit}.`);
-			return { kind: "no-changes", baselineCommit };
-		}
-
-		const fmt = (before: number, after: number, delta: number): string => {
+		const fmt = (before: number, after: number): string => {
+			const delta = after - before;
 			const sign = delta > 0 ? "+" : "";
 			return `${before} -> ${after} (${sign}${delta})`;
 		};
 
-		this.log(`Bundle size changes vs baseline commit ${baselineCommit}:`);
-		for (const bundle of comparison) {
-			const changedMetrics = Object.entries(bundle.commonBundleMetrics).flatMap(
-				([metricName, { baseline, compare }]) => {
-					const parsedDelta = compare.parsedSize - baseline.parsedSize;
-					const gzipDelta = compare.gzipSize - baseline.gzipSize;
-					if (parsedDelta === 0 && gzipDelta === 0) return [];
-					return [
-						`    ${metricName}: parsed ${fmt(baseline.parsedSize, compare.parsedSize, parsedDelta)}, gzip ${fmt(baseline.gzipSize, compare.gzipSize, gzipDelta)}`,
-					];
-				},
-			);
-			if (changedMetrics.length === 0) continue;
-			this.log(`  ${bundle.bundleName}:`);
-			for (const line of changedMetrics) this.log(line);
+		const changeLines: string[] = [];
+		for (const [sourcePackage, bundles] of Object.entries(comparison)) {
+			const bundleLines: string[] = [];
+			for (const [bundleName, { base, compare }] of Object.entries(bundles)) {
+				if (base === undefined && compare !== undefined) {
+					bundleLines.push(
+						`    ${bundleName}: added (parsed ${compare.parsedSize}, gzip ${compare.gzipSize})`,
+					);
+				} else if (compare === undefined && base !== undefined) {
+					bundleLines.push(
+						`    ${bundleName}: removed (was parsed ${base.parsedSize}, gzip ${base.gzipSize})`,
+					);
+				} else if (base !== undefined && compare !== undefined) {
+					const parsedChanged = base.parsedSize !== compare.parsedSize;
+					const gzipChanged = base.gzipSize !== compare.gzipSize;
+					if (!parsedChanged && !gzipChanged) continue;
+					bundleLines.push(
+						`    ${bundleName}: parsed ${fmt(base.parsedSize, compare.parsedSize)}, gzip ${fmt(base.gzipSize, compare.gzipSize)}`,
+					);
+				}
+			}
+			if (bundleLines.length === 0) continue;
+			changeLines.push(`  ${sourcePackage}:`, ...bundleLines);
 		}
+
+		if (changeLines.length === 0) {
+			this.log(`No bundle size changes vs baseline commit ${baselineCommit}.`);
+			return { kind: "no-changes", baselineCommit };
+		}
+
+		this.log(`Bundle size changes vs baseline commit ${baselineCommit}:`);
+		for (const line of changeLines) this.log(line);
 
 		return { kind: "changes", baselineCommit, comparison };
 	}
