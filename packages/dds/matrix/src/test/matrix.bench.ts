@@ -218,13 +218,13 @@ function runMemoryBenchmark({
 }
 
 type BenchmarkOptions =
-	| (ExecutionTimeBenchmarkConfig & { mode: "execution-time" })
+	| (ExecutionTimeBenchmarkConfig & { mode: "execution time" })
 	| (MemoryBenchmarkConfig & { mode: "memory" });
 
 function runBenchmark(options: BenchmarkOptions): Test {
 	const mode = options.mode;
 	switch (mode) {
-		case "execution-time": {
+		case "execution time": {
 			return runExecutionTimeBenchmark(options);
 		}
 		case "memory": {
@@ -245,8 +245,8 @@ function runBenchmark(options: BenchmarkOptions): Test {
  * to ensure consistency and comparability between the two implementations.
  */
 describe("Matrix Benchmarks", () => {
-	for (const mode of ["execution-time", "memory"] as const) {
-		describe(`${mode} benchmarks`, () => {
+	for (const mode of ["execution time", "memory"] as const) {
+		describe(mode, () => {
 			// The value to be set in the cells of the matrix.
 			const initialCellValue = "cellValue";
 

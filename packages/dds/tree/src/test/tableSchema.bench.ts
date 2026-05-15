@@ -26,7 +26,7 @@ import {
 import { configureBenchmarkHooks } from "./utils.js";
 
 interface BenchmarkConfig extends TableBenchmarkOptions {
-	readonly mode: "memory" | "execution-time";
+	readonly mode: "memory" | "execution time";
 	readonly maxBenchmarkDurationSeconds: number;
 }
 
@@ -41,7 +41,7 @@ function runBenchmark({
 	afterOperation,
 }: BenchmarkConfig): Test {
 	// eslint-disable-next-line unicorn/prefer-ternary -- The code is easier to read as-is.
-	if (mode === "execution-time") {
+	if (mode === "execution time") {
 		return benchmarkIt({
 			title,
 			...benchmarkDurationBatchless({
@@ -98,8 +98,8 @@ function runBenchmark({
  * TODO: AB#71782: Investigate why these tests are so slow / possibly contain cross-test contamination and address those issue, then re-enable these tests.
  */
 describe.skip("TableSchema Benchmarks", () => {
-	for (const mode of ["execution-time", "memory"] as const) {
-		describe(`SharedTree table APIs ${mode === "execution-time" ? "execution time" : "memory usage"}`, () => {
+	for (const mode of ["execution time", "memory"] as const) {
+		describe(mode, () => {
 			if (mode === "memory") {
 				// configureBenchmarkHooks adjusts tests to run in a more production type mode.
 				// This is not as important for memory tests as duration tests,
