@@ -17,14 +17,6 @@ import {
 import { BaseCommand } from "../../library/commands/base.js";
 import { pickFreshestRemote } from "../../library/git/pickFreshestRemote.js";
 
-// Must match the "public" project + build-bundle-size-artifacts.yml (definitionId 48).
-const adoConstants = {
-	orgUrl: "https://dev.azure.com/fluidframework",
-	projectName: "public",
-	ciBuildDefinitionId: 48,
-	artifactName: "bundleAnalyzerJson",
-} as const;
-
 // Where `flub generate bundleStats` (via `npm run bundle-analysis:collect`) writes.
 const defaultLocalReportPath = "./artifacts/bundleAnalyzerJson";
 
@@ -124,15 +116,17 @@ export default class CheckBundleSize extends BaseCommand<typeof CheckBundleSize>
 			.trim();
 		this.log(`Baseline commit: ${baselineCommit}`);
 
-		// Anonymous reads work for the public ADO project at this command's scale;
-		// automated consumers authenticate at the library layer.
-		const adoApi = getAzureDevopsApi(undefined, adoConstants.orgUrl);
+		// Public ADO project — anonymous reads are fine at this command's scale.
+		const adoApi = getAzureDevopsApi(undefined, "https://dev.azure.com/fluidframework");
 		const artifactContents = await getArtifactForCommit({
 			adoApi,
-			artifactName: adoConstants.artifactName,
+			// Published by the `Build - Client bundle size artifacts` pipeline.
+			artifactName: "bundleAnalyzerJson",
 			commit: baselineCommit,
-			definitionId: adoConstants.ciBuildDefinitionId,
-			project: adoConstants.projectName,
+			// `Build - Client bundle size artifacts` in the `public` project.
+			// Source-of-truth: tools/pipelines/build-bundle-size-artifacts.yml.
+			definitionId: 48,
+			project: "public",
 		});
 
 		const baselineJsons = extractAnalyzerJsonsFromArtifact(artifactContents);
