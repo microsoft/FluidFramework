@@ -385,4 +385,35 @@ describe("SharedDirectory squash on resubmit (storage)", () => {
 			assert.notEqual(change.newValue, "secret");
 		}
 	});
+
+	it("drops staged storage ops on a subdirectory that is also pending-deleted in staging", () => {
+		// Pre-create the subdirectory so the staging-mode set has a target. The pre-staging
+		// createSubDirectory ACK lands before staging begins.
+		dir1.createSubDirectory("sub");
+		containerRuntimeFactory.processAllMessages();
+		peerValueChanges = [];
+
+		containerRuntime1.connected = false;
+		// In staging: write a secret into the subdirectory, then delete the whole subdirectory.
+		// The delete subsumes the set — the value must not reach the wire on commit.
+		const sub = dir1.getSubDirectory("sub");
+		assert(sub !== undefined);
+		sub.set("k", "secret");
+		dir1.deleteSubDirectory("sub");
+		reconnectAndSquash(containerRuntime1, dataStoreRuntime1);
+		containerRuntimeFactory.processAllMessages();
+
+		assert.equal(
+			dir2.getSubDirectory("sub"),
+			undefined,
+			"subdirectory should be removed on peer",
+		);
+		for (const change of peerValueChanges) {
+			assert.notEqual(
+				change.newValue,
+				"secret",
+				"staged value on a pending-deleted subdir must not leak",
+			);
+		}
+	});
 });

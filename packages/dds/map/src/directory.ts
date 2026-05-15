@@ -695,14 +695,20 @@ export class SharedDirectory
 	}
 
 	/**
-	 * Per-op squash for staged storage ops: ask the owning subdirectory whether a later staged
-	 * op subsumes this one; if so it's dropped (and its tracking spliced out), otherwise we fall
-	 * through to the normal resubmit path.
+	 * Per-op squash for staged storage ops: ask the owning subdirectory whether a later
+	 * pending change subsumes this one. Subsumption covers two cases:
 	 *
-	 * Subdirectory create/delete ops aren't squashed here — they fall through to the existing
-	 * resubmit logic, which already drops ops whose pending tracking has been cleaned up. They
-	 * carry no user-supplied content, so squashing them is a future optimization rather than a
-	 * data-leak concern.
+	 * - Another storage op on the same key that supersedes this one (handled by
+	 * {@link SubDirectory.dropIfSubsumedByLaterStorageOp}'s walk over `pendingStorageData`).
+	 * - A pending `deleteSubDirectory` (or a sequenced delete that disposed the subdirectory)
+	 * on this subdirectory or any ancestor — every storage op on it is then doomed and must
+	 * not reach the wire, even though `_disposed` remains `false` for a pending-only delete.
+	 * The subdir-reachability check inside `dropIfSubsumedByLaterStorageOp` catches this via
+	 * `getWorkingDirectory(absolutePath) === undefined`.
+	 *
+	 * Subdirectory create/delete ops themselves still fall through to the normal resubmit
+	 * path; squashing those is a future optimization, but the subdir-reachability rule above
+	 * already protects against the storage-op-on-pending-deleted-subdir data-leak case.
 	 */
 	protected override reSubmitSquashed(
 		content: unknown,
@@ -711,14 +717,7 @@ export class SharedDirectory
 		const message = content as IDirectoryOperation;
 		if (message.type === "set" || message.type === "delete" || message.type === "clear") {
 			const storageMetadata = localOpMetadata as StorageLocalOpMetadata;
-			const subdir = storageMetadata.subdir;
-			// Mirror the guard in the message handlers: storage ops on a disposed (deleted)
-			// subdirectory must not be re-emitted. Drop them silently — the subdir's final
-			// state is "deleted", so its storage ops have no observable effect.
-			if (subdir.disposed) {
-				return;
-			}
-			if (subdir.dropIfSubsumedByLaterStorageOp(localOpMetadata)) {
+			if (storageMetadata.subdir.dropIfSubsumedByLaterStorageOp(localOpMetadata)) {
 				return;
 			}
 		}
@@ -2328,6 +2327,12 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 	 * resubmitted normally.
 	 */
 	public dropIfSubsumedByLaterStorageOp(metadata: unknown): boolean {
+		// If this subdirectory is disposed or no longer reachable in the optimistic view
+		// (i.e. a pending or sequenced deleteSubDirectory has removed it from the tree), any
+		// storage op on it is subsumed by that delete — its value must not reach the wire.
+		// `isNotDisposedAndReachable` consults `getWorkingDirectory(absolutePath)`, which
+		// already accounts for pending-delete visibility on any ancestor.
+		const subdirRemoved = !this.isNotDisposedAndReachable();
 		for (let i = 0; i < this.pendingStorageData.length; i++) {
 			const entry = this.pendingStorageData[i];
 			assert(
@@ -2342,7 +2347,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 					entry.type === "clear" || entry.type === "delete",
 					0xc97 /* standalone pending entry must be clear or delete */,
 				);
-				if (this.isStandaloneStorageEntrySubsumed(entry, i)) {
+				if (subdirRemoved || this.isStandaloneStorageEntrySubsumed(entry, i)) {
 					this.pendingStorageData.splice(i, 1);
 					return true;
 				}
@@ -2351,7 +2356,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 			if (entry.type === "lifetime") {
 				const keySetIdx = entry.keySets.indexOf(metadata as PendingKeySet);
 				if (keySetIdx !== -1) {
-					if (this.isStorageKeySetSubsumed(entry, keySetIdx, i)) {
+					if (subdirRemoved || this.isStorageKeySetSubsumed(entry, keySetIdx, i)) {
 						entry.keySets.splice(keySetIdx, 1);
 						if (entry.keySets.length === 0) {
 							this.pendingStorageData.splice(i, 1);
