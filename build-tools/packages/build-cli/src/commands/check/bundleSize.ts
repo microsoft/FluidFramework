@@ -37,6 +37,47 @@ type CheckBundleSizeResult =
 	| { kind: "changes"; baselineCommit: string; comparison: PackageComparison }
 	| { kind: "error"; baselineCommit: string | undefined; error: string };
 
+/**
+ * Render a {@link PackageComparison} as a flat list of human-readable lines.
+ * Skips packages whose bundles all have zero deltas.
+ *
+ * @returns The rendered lines, or an empty array when nothing changed across
+ * the whole comparison.
+ */
+function formatComparison(comparison: PackageComparison): string[] {
+	const fmt = (before: number, after: number): string => {
+		const delta = after - before;
+		const sign = delta > 0 ? "+" : "";
+		return `${before} -> ${after} (${sign}${delta})`;
+	};
+
+	const lines: string[] = [];
+	for (const [sourcePackage, bundles] of Object.entries(comparison)) {
+		const bundleLines: string[] = [];
+		for (const [bundleName, { base, compare }] of Object.entries(bundles)) {
+			if (base === undefined && compare !== undefined) {
+				bundleLines.push(
+					`    ${bundleName}: added (parsed ${compare.parsedSize}, gzip ${compare.gzipSize})`,
+				);
+			} else if (compare === undefined && base !== undefined) {
+				bundleLines.push(
+					`    ${bundleName}: removed (was parsed ${base.parsedSize}, gzip ${base.gzipSize})`,
+				);
+			} else if (base !== undefined && compare !== undefined) {
+				const parsedChanged = base.parsedSize !== compare.parsedSize;
+				const gzipChanged = base.gzipSize !== compare.gzipSize;
+				if (!parsedChanged && !gzipChanged) continue;
+				bundleLines.push(
+					`    ${bundleName}: parsed ${fmt(base.parsedSize, compare.parsedSize)}, gzip ${fmt(base.gzipSize, compare.gzipSize)}`,
+				);
+			}
+		}
+		if (bundleLines.length === 0) continue;
+		lines.push(`  ${sourcePackage}:`, ...bundleLines);
+	}
+	return lines;
+}
+
 export default class CheckBundleSize extends BaseCommand<typeof CheckBundleSize> {
 	static readonly description =
 		`Compare the locally-collected bundle reports against the CI build of the merge-base commit (between HEAD and a target ref) and print the diff. By default, the target is auto-detected as \`<canonical-remote>/main\` where \`<canonical-remote>\` is whichever remote points at \`microsoft/FluidFramework\`; pass \`--target\` to override. Prints a human-readable summary by default; pass --json for the structured result.`;
@@ -106,37 +147,7 @@ export default class CheckBundleSize extends BaseCommand<typeof CheckBundleSize>
 			}
 
 			const comparison = compareJsonReportsByPackage(baselineJsons, prJsons);
-
-			const fmt = (before: number, after: number): string => {
-				const delta = after - before;
-				const sign = delta > 0 ? "+" : "";
-				return `${before} -> ${after} (${sign}${delta})`;
-			};
-
-			const changeLines: string[] = [];
-			for (const [sourcePackage, bundles] of Object.entries(comparison)) {
-				const bundleLines: string[] = [];
-				for (const [bundleName, { base, compare }] of Object.entries(bundles)) {
-					if (base === undefined && compare !== undefined) {
-						bundleLines.push(
-							`    ${bundleName}: added (parsed ${compare.parsedSize}, gzip ${compare.gzipSize})`,
-						);
-					} else if (compare === undefined && base !== undefined) {
-						bundleLines.push(
-							`    ${bundleName}: removed (was parsed ${base.parsedSize}, gzip ${base.gzipSize})`,
-						);
-					} else if (base !== undefined && compare !== undefined) {
-						const parsedChanged = base.parsedSize !== compare.parsedSize;
-						const gzipChanged = base.gzipSize !== compare.gzipSize;
-						if (!parsedChanged && !gzipChanged) continue;
-						bundleLines.push(
-							`    ${bundleName}: parsed ${fmt(base.parsedSize, compare.parsedSize)}, gzip ${fmt(base.gzipSize, compare.gzipSize)}`,
-						);
-					}
-				}
-				if (bundleLines.length === 0) continue;
-				changeLines.push(`  ${sourcePackage}:`, ...bundleLines);
-			}
+			const changeLines = formatComparison(comparison);
 
 			if (changeLines.length === 0) {
 				this.log(`No bundle size changes vs baseline commit ${baselineCommit}.`);
