@@ -9,6 +9,6 @@ export {
 	IsoBuffer,
 	stringToBuffer,
 	Uint8ArrayToString,
-} from "./bufferBrowser";
-export { gitHashFile, hashFile } from "./hashFileBrowser";
-export { performance } from "./performanceIsomorphic";
+} from "./bufferBrowser.js";
+export { gitHashFile, hashFile } from "./hashFileBrowser.js";
+export { performance } from "./performanceIsomorphic.js";

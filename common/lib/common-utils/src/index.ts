@@ -9,12 +9,12 @@
  * @packageDocumentation
  */
 
-export { assert } from "./assert";
-export { fromBase64ToUtf8, fromUtf8ToBase64, toUtf8 } from "./base64Encoding";
-export { Uint8ArrayToArrayBuffer } from "./bufferShared";
-export { delay } from "./delay";
-export { doIfNotDisposed, type IDisposable } from "./disposal";
-export { Heap, type IComparer, type IHeapNode, NumberComparer } from "./heap";
+export { assert } from "./assert.js";
+export { fromBase64ToUtf8, fromUtf8ToBase64, toUtf8 } from "./base64Encoding.js";
+export { Uint8ArrayToArrayBuffer } from "./bufferShared.js";
+export { delay } from "./delay.js";
+export { doIfNotDisposed, type IDisposable } from "./disposal.js";
+export { Heap, type IComparer, type IHeapNode, NumberComparer } from "./heap.js";
 /**
  * NOTE: This export is remapped to export from "./indexBrowser" in browser environments via package.json.
  * Because the two files don't have fully isomorphic exports, using named exports for the full API surface
@@ -24,14 +24,14 @@ export { Heap, type IComparer, type IHeapNode, NumberComparer } from "./heap";
  * desired.
  */
 // eslint-disable-next-line no-restricted-syntax
-export * from "./indexNode";
-export { Lazy } from "./lazy";
-export type { IsomorphicPerformance } from "./performanceIsomorphic";
-export { PromiseCache, type PromiseCacheExpiry, type PromiseCacheOptions } from "./promiseCache";
-export { Deferred, LazyPromise } from "./promises";
-export { type IRange, type IRangeTrackerSnapshot, RangeTracker } from "./rangeTracker";
-export { RateLimiter } from "./rateLimiter";
-export { safelyParseJSON } from "./safeParser";
+export * from "./indexNode.js";
+export { Lazy } from "./lazy.js";
+export type { IsomorphicPerformance } from "./performanceIsomorphic.js";
+export { PromiseCache, type PromiseCacheExpiry, type PromiseCacheOptions } from "./promiseCache.js";
+export { Deferred, LazyPromise } from "./promises.js";
+export { type IRange, type IRangeTrackerSnapshot, RangeTracker } from "./rangeTracker.js";
+export { RateLimiter } from "./rateLimiter.js";
+export { safelyParseJSON } from "./safeParser.js";
 export {
 	type IPromiseTimer,
 	type IPromiseTimerResult,
@@ -39,8 +39,8 @@ export {
 	PromiseTimer,
 	setLongTimeout,
 	Timer,
-} from "./timer";
-export { type ITraceEvent, Trace } from "./trace";
+} from "./timer.js";
+export { type ITraceEvent, Trace } from "./trace.js";
 export {
 	type EventEmitterEventType,
 	type IEvent,
@@ -51,5 +51,5 @@ export {
 	type TransformedEvent,
 	TypedEventEmitter,
 	type TypedEventTransform,
-} from "./typedEventEmitter";
-export { unreachableCase } from "./unreachable";
+} from "./typedEventEmitter.js";
+export { unreachableCase } from "./unreachable.js";

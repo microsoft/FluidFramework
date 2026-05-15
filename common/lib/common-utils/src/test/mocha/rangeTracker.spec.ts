@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 
-import { RangeTracker } from "../..";
+import { RangeTracker } from "../../index.js";
 
 describe("Routerlicious", () => {
 	describe("Shared", () => {
