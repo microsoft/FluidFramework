@@ -184,9 +184,6 @@ module.exports = {
 		"format:prettier": [],
 		"prettier": [],
 		"prettier:fix": [],
-		// TODO: ensure webpack dependencies are correct and minimal, ideally just depending
-		// on "^api-extractor:esnext", "^build:esnext". Or distribute these setting to the
-		// individual packages that need them instead of having poor config in the root config.
 		"webpack": ["^api-extractor:esnext", "^build:esnext"],
 		"webpack:profile": ["^api-extractor:esnext", "^build:esnext"],
 		"clean": {
