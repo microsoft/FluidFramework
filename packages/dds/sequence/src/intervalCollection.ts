@@ -11,6 +11,7 @@ import {
 	assert,
 	DoublyLinkedList,
 	unreachableCase,
+	walkList,
 	type ListNode,
 } from "@fluidframework/core-utils/internal";
 import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
@@ -929,18 +930,94 @@ export class IntervalCollection
 
 		const localOpMetadata = removeMetadataFromPendingChanges(maybeMetadata);
 
+		// Squash filtering on the property channel: an ADD or CHANGE that's later subsumed by
+		// a DELETE for the same interval is dropped entirely; per-key property overrides by
+		// later staged ADD/CHANGE on the same interval are stripped from this op.
+		let workingValue = value;
+		if (squash && (opName === "add" || opName === "change")) {
+			const { id } = getSerializedProperties(value);
+			if (this.hasLaterDeleteForInterval(id, localOpMetadata.localSeq)) {
+				clearEmptyPendingEntry(this.pending, id);
+				return;
+			}
+			workingValue = this.filterPropertiesForSquash(value, id, localOpMetadata.localSeq);
+		}
+
 		const rebasedValue =
 			localOpMetadata.endpointChangesNode === undefined
-				? value
-				: this.rebaseLocalInterval(value, localOpMetadata, squash);
+				? workingValue
+				: this.rebaseLocalInterval(workingValue, localOpMetadata, squash);
 
 		if (rebasedValue === undefined) {
-			const { id } = getSerializedProperties(value);
+			const { id } = getSerializedProperties(workingValue);
 			clearEmptyPendingEntry(this.pending, id);
 			return;
 		}
 
 		this.submitDelta({ opName, value: rebasedValue as any }, localOpMetadata);
+	}
+
+	private hasLaterDeleteForInterval(id: string, localSeq: number): boolean {
+		const pending = this.pending[id];
+		if (pending === undefined) {
+			return false;
+		}
+		let found = false;
+		walkList(pending.local, (node) => {
+			if (node.data.localSeq > localSeq && node.data.type === "delete") {
+				found = true;
+				return false;
+			}
+		});
+		return found;
+	}
+
+	private collectLaterPropertyKeysForInterval(id: string, localSeq: number): Set<string> {
+		const keys = new Set<string>();
+		const pending = this.pending[id];
+		if (pending === undefined) {
+			return keys;
+		}
+		walkList(pending.local, (node) => {
+			const md = node.data;
+			if (
+				md.localSeq > localSeq &&
+				(md.type === "add" || md.type === "change") &&
+				md.propertyKeys !== undefined
+			) {
+				for (const k of md.propertyKeys) {
+					keys.add(k);
+				}
+			}
+		});
+		return keys;
+	}
+
+	private filterPropertiesForSquash<T extends SerializedIntervalDelta | ISerializedInterval>(
+		value: T,
+		id: string,
+		localSeq: number,
+	): T {
+		if (value.properties === undefined) {
+			return value;
+		}
+		const laterKeys = this.collectLaterPropertyKeysForInterval(id, localSeq);
+		if (laterKeys.size === 0) {
+			return value;
+		}
+		const filtered: PropertySet = {};
+		let kept = 0;
+		for (const key of Object.keys(value.properties)) {
+			if (!laterKeys.has(key)) {
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+				filtered[key] = value.properties[key];
+				kept++;
+			}
+		}
+		return {
+			...value,
+			properties: kept === 0 ? undefined : filtered,
+		};
 	}
 
 	public applyStashedOp(op: IIntervalCollectionTypeOperationValue): void {
@@ -1225,6 +1302,7 @@ export class IntervalCollection
 						type: "add",
 						localSeq,
 						interval,
+						propertyKeys: props === undefined ? undefined : new Set(Object.keys(props)),
 					},
 				);
 			}
@@ -1353,6 +1431,7 @@ export class IntervalCollection
 					type: "change",
 					localSeq,
 					interval: newInterval ?? interval,
+					propertyKeys: props === undefined ? undefined : new Set(Object.keys(props)),
 				};
 
 				this.submitDelta(

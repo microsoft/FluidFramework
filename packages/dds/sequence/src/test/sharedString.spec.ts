@@ -901,6 +901,79 @@ describe("SharedString", () => {
 					);
 				}
 			});
+
+			it("drops a staged interval add subsumed by a later staged delete", async () => {
+				sharedString.insertText(0, "hello world");
+				containerRuntimeFactory.processAllMessages();
+
+				const collection1 = sharedString.getIntervalCollection("test");
+				const collection2 = sharedString2.getIntervalCollection("test");
+
+				const peerSeenProps: unknown[] = [];
+				collection2.on("addInterval", (addedInterval) => {
+					if (addedInterval.properties?.color !== undefined) {
+						peerSeenProps.push(addedInterval.properties.color);
+					}
+				});
+				collection2.on("propertyChanged", (_interval, propsDeltas) => {
+					if (propsDeltas?.color !== undefined) {
+						peerSeenProps.push(propsDeltas.color);
+					}
+				});
+
+				containerRuntime1.connected = false;
+				const interval = collection1.add({
+					start: 0,
+					end: 5,
+					props: { color: "secret-color" },
+				});
+				collection1.removeIntervalById(interval.getIntervalId());
+				reconnectAndSquash(containerRuntime1, dataStoreRuntime1);
+				containerRuntimeFactory.processAllMessages();
+
+				for (const value of peerSeenProps) {
+					assert.notEqual(value, "secret-color", "secret interval prop must not leak");
+				}
+			});
+
+			it("drops a staged interval change's property value overridden by a later staged change", async () => {
+				sharedString.insertText(0, "hello world");
+				containerRuntimeFactory.processAllMessages();
+
+				const collection1 = sharedString.getIntervalCollection("test");
+				const collection2 = sharedString2.getIntervalCollection("test");
+
+				const baseInterval = collection1.add({
+					start: 0,
+					end: 5,
+					props: { color: "base" },
+				});
+				const baseId = baseInterval.getIntervalId();
+				containerRuntimeFactory.processAllMessages();
+
+				const peerSeenColors: unknown[] = [];
+				collection2.on("propertyChanged", (_interval, propsDeltas) => {
+					if (propsDeltas?.color !== undefined) {
+						peerSeenColors.push(propsDeltas.color);
+					}
+				});
+
+				containerRuntime1.connected = false;
+				collection1.change(baseId, { props: { color: "secret-color" } });
+				collection1.change(baseId, { props: { color: "public-color" } });
+				reconnectAndSquash(containerRuntime1, dataStoreRuntime1);
+				containerRuntimeFactory.processAllMessages();
+
+				const interval2 = collection2.getIntervalById(baseId);
+				assert.equal(interval2?.properties?.color, "public-color");
+				for (const value of peerSeenColors) {
+					assert.notEqual(
+						value,
+						"secret-color",
+						"intermediate interval prop must not leak through squash",
+					);
+				}
+			});
 		});
 	});
 
