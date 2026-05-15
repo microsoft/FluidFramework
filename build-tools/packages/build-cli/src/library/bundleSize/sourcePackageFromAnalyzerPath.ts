@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-const analyzerJsonFileName = "analyzer.json";
+const analyzerJsonSuffix = "/analyzer.json";
 
 /**
  * If `relativePath` looks like `<sourcePackage>/analyzer.json` (nested layout —
@@ -14,9 +14,8 @@ const analyzerJsonFileName = "analyzer.json";
  * POSIX path separators.
  */
 export function sourcePackageFromAnalyzerPath(relativePath: string): string | undefined {
-	const pathParts = relativePath.replace(/\\/g, "/").split("/");
-	if (pathParts.at(-1) !== analyzerJsonFileName) return undefined;
-	pathParts.pop();
-	if (pathParts.length === 0) return undefined;
-	return pathParts.join("/");
+	const normalized = relativePath.replace(/\\/g, "/");
+	if (!normalized.endsWith(analyzerJsonSuffix)) return undefined;
+	const sourcePackage = normalized.slice(0, -analyzerJsonSuffix.length);
+	return sourcePackage.length === 0 ? undefined : sourcePackage;
 }
