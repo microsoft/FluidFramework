@@ -127,24 +127,6 @@ describe.skip("TableSchema Benchmarks", () => {
 			: // When not measuring perf, use a single smaller data size so the tests run faster.
 				[3];
 
-	// IMPORTANT: variables scoped to the test suite are a big problem for memory-profiling tests
-	// because they won't be out of scope when we garbage-collect between runs of the same test,
-	// and that will skew measurements. Tests should allocate all the memory they need using local
-	// variables scoped to the test function itself, so several iterations of a given test can
-	// measure from the same baseline (as much as possible).
-
-	beforeEach(async () => {
-		// CAREFUL: usually beforeEach/afterEach hooks are used to initialize or interact with variables
-		// whose scope is the encompassing test suite, but that's a problem for memory-profiling tests.
-		// See the comment at the top of the test suite for more details.
-	});
-
-	afterEach(() => {
-		// CAREFUL: usually beforeEach/afterEach hooks are used to initialize or interact with variables
-		// whose scope is the encompassing test suite, but that's a problem for memory-profiling tests.
-		// See the comment at the top of the test suite for more details.
-	});
-
 	let maxBenchmarkDurationSeconds: number;
 
 	for (const tableSize of tableSizes) {
