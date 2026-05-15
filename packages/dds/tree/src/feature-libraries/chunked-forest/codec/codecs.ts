@@ -152,6 +152,7 @@ function makeFieldBatchCodecForVersion(
 		fieldBatch: FieldBatch,
 		idCompressor: IIdCompressor,
 		incrementalEncoder: IncrementalEncoder | undefined,
+		isSummary: boolean,
 	) => EncodedFieldBatchV1OrV2,
 	encodedFieldBatchType: TSchema,
 ): CodecAndSchema<FieldBatch, FieldBatchEncodingContext> {
@@ -194,6 +195,7 @@ function makeFieldBatchCodecForVersion(
 							data,
 							context.idCompressor,
 							incrementalEncoder,
+							context.isSummary,
 						);
 					}
 

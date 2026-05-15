@@ -115,6 +115,7 @@ describe("schemaBasedEncoding", () => {
 				testIdCompressor,
 				undefined /* incrementalEncoder */,
 				fieldBatchVersion,
+				false /* isSummary */,
 			);
 			const log: string[] = [];
 			const fieldEncoder = getFieldEncoder(
@@ -146,6 +147,7 @@ describe("schemaBasedEncoding", () => {
 				testIdCompressor,
 				undefined /* incrementalEncoder */,
 				fieldBatchVersion,
+				false /* isSummary */,
 			);
 			const log: string[] = [];
 			const fieldEncoder = getFieldEncoder(
@@ -173,6 +175,7 @@ describe("schemaBasedEncoding", () => {
 				testIdCompressor,
 				undefined /* incrementalEncoder */,
 				fieldBatchVersion,
+				false /* isSummary */,
 			);
 			const log: string[] = [];
 			const fieldEncoder = getFieldEncoder(
@@ -214,6 +217,7 @@ describe("schemaBasedEncoding", () => {
 				testIdCompressor,
 				undefined /* incrementalEncoder */,
 				fieldBatchVersion,
+				false /* isSummary */,
 			);
 			const log: string[] = [];
 
@@ -254,6 +258,7 @@ describe("schemaBasedEncoding", () => {
 				testIdCompressor,
 				undefined /* incrementalEncoder */,
 				fieldBatchVersion,
+				false /* isSummary */,
 			);
 			const nodeEncoder = getNodeEncoder(
 				{ fieldEncoderFromSchema: () => fail() },
@@ -274,6 +279,7 @@ describe("schemaBasedEncoding", () => {
 				testIdCompressor,
 				undefined /* incrementalEncoder */,
 				fieldBatchVersion,
+				false /* isSummary */,
 			);
 			const log: TreeFieldStoredSchema[] = [];
 			const nodeEncoder = getNodeEncoder(
@@ -314,6 +320,7 @@ describe("schemaBasedEncoding", () => {
 				testIdCompressor,
 				undefined /* incrementalEncoder */,
 				fieldBatchVersion,
+				false /* isSummary */,
 			);
 			const log: TreeFieldStoredSchema[] = [];
 			const nodeEncoder = getNodeEncoder(
@@ -385,6 +392,7 @@ describe("schemaBasedEncoding", () => {
 				testIdCompressor,
 				mockIncrementalEncoder,
 				brand(FieldBatchFormatVersion.v2), // Use v2 or higher for incremental encoding support
+				false /* isSummary */,
 			);
 
 			const log: TreeFieldStoredSchema[] = [];
@@ -432,6 +440,7 @@ describe("schemaBasedEncoding", () => {
 			testIdCompressor,
 			undefined /* incrementalEncoder */,
 			fieldBatchVersion,
+			false /* isSummary */,
 		);
 		const nodeEncoder = context.nodeEncoderFromSchema(brand(RecursiveType.identifier));
 		const bufferEmpty = checkNodeEncode(nodeEncoder, context, {
@@ -463,6 +472,7 @@ describe("schemaBasedEncoding", () => {
 						idCompressor,
 						undefined /* incrementalEncoder */,
 						brand(version),
+						false /* isSummary */,
 					);
 					checkFieldEncode(anyFieldEncoder, context, tree, idCompressor);
 

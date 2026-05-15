@@ -36,7 +36,6 @@ import {
 	type DeltaDetachedNodeId,
 } from "../../core/index.js";
 import {
-	assertValidRange,
 	brand,
 	getLast,
 	getOrAddEmptyToMap,
@@ -45,7 +44,14 @@ import {
 } from "../../util/index.js";
 
 import { BasicChunk, BasicChunkCursor, type SiblingsOrKey } from "./basicChunk.js";
-import { type IChunker, basicChunkTree, chunkField, chunkTree } from "./chunkTree.js";
+import {
+	type ChunkCompressor,
+	type IChunker,
+	basicChunkTree,
+	chunkField,
+	chunkTree,
+	splitFieldAtIndex,
+} from "./chunkTree.js";
 
 function makeRoot(): BasicChunk {
 	return new BasicChunk(aboveRootPlaceholder, new Map());
@@ -173,8 +179,12 @@ export class ChunkedForest implements IEditableForest {
 
 				const parent = this.getParent();
 				const destinationField = getOrAddEmptyToMap(parent.mutableChunk.fields, parent.key);
+				const destinationChunkIndex = splitFieldAtIndex(destinationField, destination, {
+					policy: this.forest.chunker,
+					idCompressor: this.forest.idCompressor,
+				});
 				// TODO: this will fail for very large moves due to argument limits.
-				destinationField.splice(destination, 0, ...sourceField);
+				destinationField.splice(destinationChunkIndex, 0, ...sourceField);
 			},
 			/**
 			 * Detaches the range from the current field and transfers it to the given destination if any.
@@ -193,9 +203,19 @@ export class ChunkedForest implements IEditableForest {
 				this.forest.#events.emit("beforeChange");
 				const parent = this.getParent();
 				const sourceField = parent.mutableChunk.fields.get(parent.key) ?? [];
+				assert(source.start <= source.end, "detach range start must not exceed end");
 
-				assertValidRange(source, sourceField);
-				const newField = sourceField.splice(source.start, source.end - source.start);
+				const policy: ChunkCompressor = {
+					policy: this.forest.chunker,
+					idCompressor: this.forest.idCompressor,
+				};
+				// Split start first: splitting end later only expands chunks at positions >= startChunkIndex,
+				// which leaves startChunkIndex valid. The reverse order would shift endChunkIndex when
+				// source.start and source.end land in different chunks.
+				// Performance: It's practical to have a variant of splitFieldAtIndex which can split at multiple locations in a single pass if the performance of this becomes worth optimizing.
+				const startChunkIndex = splitFieldAtIndex(sourceField, source.start, policy);
+				const endChunkIndex = splitFieldAtIndex(sourceField, source.end, policy);
+				const newField = sourceField.splice(startChunkIndex, endChunkIndex - startChunkIndex);
 
 				if (destination === undefined) {
 					for (const child of newField) {

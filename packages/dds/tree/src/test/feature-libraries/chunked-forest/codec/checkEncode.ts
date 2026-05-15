@@ -47,7 +47,7 @@ export function checkNodeEncode(
 	nodeEncoder.encodeNode(cursor, context, buffer);
 
 	// Check round-trip
-	checkDecode([buffer], [[tree]], context.version, undefined, incrementalDecoder);
+	checkDecode([buffer], [[tree]], context.version, context.idCompressor, incrementalDecoder);
 
 	return buffer.slice(1);
 }
