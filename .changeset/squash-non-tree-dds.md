@@ -19,7 +19,7 @@ The model is uniform across DDSes: the runtime walks staged pending changes olde
 
 Per-DDS treatment:
 
-- `SharedCell`, `SharedMap`, `SharedDirectory`, `SharedMatrix`: subsumption-aware squash drops superseded ops (per-cell / per-key LWW; for `clear` and `delete`, a later clear or a later op on the same key subsumes).
+- `SharedCell`, `SharedMap`, `SharedDirectory`, `SharedMatrix`: subsumption-aware squash drops superseded ops (per-cell / per-key LWW; for `clear` and `delete`, a later clear or a later op on the same key subsumes). For `SharedDirectory` subdirectory lifecycle ops, a staged `createSubDirectory(name) + deleteSubDirectory(name)` pair is also dropped so user-supplied subdirectory names don't leak when the pair nets to no-op.
 - `SharedCounter`, `SharedTaskManager`: identity squash — increments and volunteer/abandon ops carry intent that is not subsumable by a later staged op of the same shape.
 - `SharedSequence` and intervals: unchanged — squash was already wired end-to-end via merge-tree's `regeneratePendingOp(squash)`.
 - `Ink`, `ConsensusRegisterCollection`, `ConsensusOrderedCollection`, `PactMap`, legacy `SharedArray`, legacy `SharedSignal`: identity squash with documented rationale. These DDSes have append-only, order-preserving, or consensus-bound semantics where collapsing pending ops would change observable behavior.

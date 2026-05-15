@@ -386,6 +386,83 @@ describe("SharedDirectory squash on resubmit (storage)", () => {
 		}
 	});
 
+	it("drops a staged createSubDirectory + deleteSubDirectory pair so the subdir name doesn't leak", () => {
+		// The subdir name itself is user-supplied content (e.g. a user id or tenant slug).
+		// A staged create+delete pair on a name that didn't exist pre-staging nets to no-op
+		// and must not transmit the name on commit.
+		const peerSubdirCreatedNames: string[] = [];
+		const peerSubdirDeletedNames: string[] = [];
+		dir2.on("subDirectoryCreated", (name, local) => {
+			if (!local) peerSubdirCreatedNames.push(name);
+		});
+		dir2.on("subDirectoryDeleted", (name, local) => {
+			if (!local) peerSubdirDeletedNames.push(name);
+		});
+
+		containerRuntime1.connected = false;
+		dir1.createSubDirectory("secret-id");
+		dir1.deleteSubDirectory("secret-id");
+		reconnectAndSquash(containerRuntime1, dataStoreRuntime1);
+		containerRuntimeFactory.processAllMessages();
+
+		assert.equal(dir2.getSubDirectory("secret-id"), undefined);
+		assert.deepEqual(
+			peerSubdirCreatedNames,
+			[],
+			"createSubDirectory must not reach the peer when paired with a staged delete",
+		);
+		assert.deepEqual(
+			peerSubdirDeletedNames,
+			[],
+			"deleteSubDirectory must not reach the peer when paired with a staged create",
+		);
+	});
+
+	it("keeps the final create when staged ops are create+delete+create on the same name", () => {
+		const peerSubdirCreatedNames: string[] = [];
+		dir2.on("subDirectoryCreated", (name, local) => {
+			if (!local) peerSubdirCreatedNames.push(name);
+		});
+
+		containerRuntime1.connected = false;
+		dir1.createSubDirectory("x");
+		dir1.deleteSubDirectory("x");
+		dir1.createSubDirectory("x");
+		reconnectAndSquash(containerRuntime1, dataStoreRuntime1);
+		containerRuntimeFactory.processAllMessages();
+
+		assert.notEqual(dir2.getSubDirectory("x"), undefined, "final create should land on peer");
+		assert.deepEqual(
+			peerSubdirCreatedNames,
+			["x"],
+			"peer should observe exactly one createSubDirectory event",
+		);
+	});
+
+	it("preserves a delete of a pre-existing subdirectory (no leak, no false subsumption)", () => {
+		// Pre-create + ACK so "pre-existing" exists on the peer.
+		dir1.createSubDirectory("pre");
+		containerRuntimeFactory.processAllMessages();
+		assert.notEqual(dir2.getSubDirectory("pre"), undefined);
+
+		const peerSubdirDeletedNames: string[] = [];
+		dir2.on("subDirectoryDeleted", (name, local) => {
+			if (!local) peerSubdirDeletedNames.push(name);
+		});
+
+		containerRuntime1.connected = false;
+		dir1.deleteSubDirectory("pre");
+		reconnectAndSquash(containerRuntime1, dataStoreRuntime1);
+		containerRuntimeFactory.processAllMessages();
+
+		assert.equal(dir2.getSubDirectory("pre"), undefined);
+		assert.deepEqual(
+			peerSubdirDeletedNames,
+			["pre"],
+			"delete of pre-existing subdir must emit",
+		);
+	});
+
 	it("drops staged storage ops on a subdirectory that is also pending-deleted in staging", () => {
 		// Pre-create the subdirectory so the staging-mode set has a target. The pre-staging
 		// createSubDirectory ACK lands before staging begins.

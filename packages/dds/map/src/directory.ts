@@ -701,20 +701,17 @@ export class SharedDirectory
 	}
 
 	/**
-	 * Per-op squash for staged storage ops: ask the owning subdirectory whether a later
-	 * pending change subsumes this one. Subsumption covers two cases:
+	 * Per-op squash. Three subsumption channels:
 	 *
-	 * - Another storage op on the same key that supersedes this one (handled by
-	 * {@link SubDirectory.dropIfSubsumedByLaterStorageOp}'s walk over `pendingStorageData`).
-	 * - A pending `deleteSubDirectory` (or a sequenced delete that disposed the subdirectory)
-	 * on this subdirectory or any ancestor — every storage op on it is then doomed and must
-	 * not reach the wire, even though `_disposed` remains `false` for a pending-only delete.
-	 * The subdir-reachability check inside `dropIfSubsumedByLaterStorageOp` catches this via
-	 * `getWorkingDirectory(absolutePath) === undefined`.
-	 *
-	 * Subdirectory create/delete ops themselves still fall through to the normal resubmit
-	 * path; squashing those is a future optimization, but the subdir-reachability rule above
-	 * already protects against the storage-op-on-pending-deleted-subdir data-leak case.
+	 * - Storage ops (set/delete/clear): another storage op on the same key that supersedes
+	 * this one (handled by {@link SubDirectory.dropIfSubsumedByLaterStorageOp}).
+	 * - Storage ops on a pending-deleted-or-disposed subdir: the same helper splices any
+	 * storage op whose owning subdir is no longer reachable in the optimistic view.
+	 * - Subdir lifecycle ops (createSubDirectory / deleteSubDirectory): a staged
+	 * `createSubDirectory(name)` immediately followed (in any order, with no surviving
+	 * delete in between) by a `deleteSubDirectory(name)` cancels out, so neither op
+	 * reaches the wire — this is the path that keeps user-supplied subdirectory names off
+	 * the wire when the pair nets to no-op.
 	 */
 	protected override reSubmitSquashed(
 		content: unknown,
@@ -724,6 +721,16 @@ export class SharedDirectory
 		if (message.type === "set" || message.type === "delete" || message.type === "clear") {
 			const storageMetadata = localOpMetadata as StorageLocalOpMetadata;
 			if (storageMetadata.subdir.dropIfSubsumedByLaterStorageOp(localOpMetadata)) {
+				return;
+			}
+		} else if (
+			message.type === "createSubDirectory" ||
+			message.type === "deleteSubDirectory"
+		) {
+			const subdirMetadata = localOpMetadata as SubDirLocalOpMetadata;
+			if (
+				subdirMetadata.parentSubdir.dropIfSubsumedSubdirOp(message.subdirName, message.type)
+			) {
 				return;
 			}
 		}
@@ -2487,6 +2494,70 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 	 * @param op - The operation
 	 * @param localOpMetadata - metadata submitted with the op originally
 	 */
+	/**
+	 * Decide whether a staged subdirectory lifecycle op (createSubDirectory or
+	 * deleteSubDirectory) on this parent should be dropped from the squash output. The
+	 * goal is to prevent user-supplied `subdirName` strings from reaching the wire when
+	 * the staging-session ops cancel out.
+	 *
+	 * Rule (handles the only leak case; conservative elsewhere):
+	 *
+	 * - A staged `createSubDirectory(name)` is subsumed if any later pending op for the
+	 * same name exists. If the subsumer is a `deleteSubDirectory(name)`, both entries
+	 * are spliced so the matching delete call also drops itself. If the subsumer is
+	 * another `createSubDirectory(name)`, only this earlier create is spliced.
+	 * - A staged `deleteSubDirectory(name)` whose entry is already gone (spliced by the
+	 * paired create) drops itself.
+	 * - All other delete cases (pre-existing subdir being deleted) fall through to the
+	 * normal resubmit path — the name was already on the wire pre-staging, so there's
+	 * no new leak.
+	 */
+	public dropIfSubsumedSubdirOp(
+		subdirName: string,
+		opType: "createSubDirectory" | "deleteSubDirectory",
+	): boolean {
+		if (opType === "createSubDirectory") {
+			const createIdx = this.pendingSubDirectoryData.findIndex(
+				(e) => e.subdirName === subdirName && e.type === "createSubDirectory",
+			);
+			if (createIdx === -1) {
+				// Already spliced by a prior call's pair handling.
+				return true;
+			}
+			for (let i = createIdx + 1; i < this.pendingSubDirectoryData.length; i++) {
+				const later = this.pendingSubDirectoryData[i];
+				if (later === undefined || later.subdirName !== subdirName) {
+					continue;
+				}
+				if (later.type === "deleteSubDirectory") {
+					// Create+delete pair nets to no-op. Splice both — the later delete's
+					// matching call will then see its entry is gone and drop itself.
+					this.pendingSubDirectoryData.splice(i, 1);
+					this.pendingSubDirectoryData.splice(createIdx, 1);
+				} else {
+					// A later createSubDirectory for the same name supersedes this one (rare;
+					// requires an intervening delete to have been ACKed mid-staging). Splice
+					// only this earlier create.
+					this.pendingSubDirectoryData.splice(createIdx, 1);
+				}
+				return true;
+			}
+			return false;
+		}
+		// deleteSubDirectory
+		const deleteIdx = this.pendingSubDirectoryData.findIndex(
+			(e) => e.subdirName === subdirName && e.type === "deleteSubDirectory",
+		);
+		if (deleteIdx === -1) {
+			// Already spliced as part of a create+delete pair handled earlier in this batch.
+			return true;
+		}
+		// Otherwise the delete corresponds to a pre-existing subdir (or another scenario where
+		// the user genuinely wants the delete to reach the wire). The name was already on the
+		// wire pre-staging, so no new leak — let reSubmitCore handle it.
+		return false;
+	}
+
 	public resubmitSubDirectoryMessage(
 		op: IDirectorySubDirectoryOperation,
 		localOpMetadata: SubDirLocalOpMetadata,
