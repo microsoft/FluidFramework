@@ -523,6 +523,23 @@ export class SharedArrayClass<T extends SerializableTypeForSharedArray>
 	protected onDisconnect(): void {}
 
 	/**
+	 * SharedArray is a legacy DDS ("not intended for use in new code"); the implementation tracks
+	 * pending state via internal counters on entries plus a skip list, and a true per-entry squash
+	 * (collapsing an inserted-then-deleted entry to no wire ops) would require nontrivial rework
+	 * to map between the runtime's per-op resubmit calls and that internal state.
+	 *
+	 * We therefore use the identity transform here: each pending op is replayed via reSubmitCore.
+	 *
+	 * Known limitation: an `insertEntry` op carries the user-supplied entry value. If a value
+	 * containing sensitive content is inserted and then deleted within a single staging session,
+	 * the value will still appear on the wire on commit (the insert op is replayed before the
+	 * delete). Callers who need leak-free staging behavior should prefer SharedTree or SharedMap.
+	 */
+	protected override reSubmitSquashed(content: unknown, localOpMetadata: unknown): void {
+		this.reSubmitCore(content, localOpMetadata);
+	}
+
+	/**
 	 * Tracks the doubly linked skip list for the given entry to identify local pending counter attribute.
 	 * It signifies if a local pending operation exists for the payload/value being tracked in the skip list
 	 *

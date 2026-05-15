@@ -5,7 +5,11 @@
 
 import { strict as assert } from "node:assert";
 
-import { type IGCTestProvider, runGCTests } from "@fluid-private/test-dds-utils";
+import {
+	type IGCTestProvider,
+	reconnectAndSquash,
+	runGCTests,
+} from "@fluid-private/test-dds-utils";
 import { AttachState } from "@fluidframework/container-definitions";
 import {
 	MockContainerRuntimeFactory,
@@ -485,6 +489,116 @@ describe("Cell", () => {
 			// Verify that the deleted value is processed by both clients.
 			assert.equal(cell1.get(), undefined, "The first client did not process the delete");
 			assert.equal(cell2.get(), undefined, "The second client did not process the delete");
+		});
+	});
+
+	describe("Squash on resubmit", () => {
+		let containerRuntimeFactory: MockContainerRuntimeFactoryForReconnection;
+		let dataStoreRuntime1: MockFluidDataStoreRuntime;
+		let containerRuntime1: MockContainerRuntimeForReconnection;
+		let cell1: ISharedCell;
+		let cell2: ISharedCell;
+		let peerObservations: { event: "valueChanged" | "delete"; value: unknown }[];
+
+		function createCellForSquash(id: string): {
+			cell: ISharedCell;
+			dataStoreRuntime: MockFluidDataStoreRuntime;
+			containerRuntime: MockContainerRuntimeForReconnection;
+		} {
+			const dataStoreRuntime = new MockFluidDataStoreRuntime();
+			const containerRuntime =
+				containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
+			const services = {
+				deltaConnection: dataStoreRuntime.createDeltaConnection(),
+				objectStorage: new MockStorage(),
+			};
+			const cell = new SharedCell(id, dataStoreRuntime, CellFactory.Attributes);
+			cell.connect(services);
+			return { cell, dataStoreRuntime, containerRuntime };
+		}
+
+		beforeEach("createCellsForSquash", () => {
+			containerRuntimeFactory = new MockContainerRuntimeFactoryForReconnection();
+			const response1 = createCellForSquash("cell1");
+			cell1 = response1.cell;
+			dataStoreRuntime1 = response1.dataStoreRuntime;
+			containerRuntime1 = response1.containerRuntime;
+			const response2 = createCellForSquash("cell2");
+			cell2 = response2.cell;
+			peerObservations = [];
+			cell2.on("valueChanged", (value) =>
+				peerObservations.push({ event: "valueChanged", value }),
+			);
+			cell2.on("delete", () => peerObservations.push({ event: "delete", value: undefined }));
+		});
+
+		it("drops intermediate set when a later delete supersedes it", () => {
+			const secret = "SSN: 123-45-6789";
+			containerRuntime1.connected = false;
+			cell1.set(secret);
+			cell1.delete();
+			reconnectAndSquash(containerRuntime1, dataStoreRuntime1);
+			containerRuntimeFactory.processAllMessages();
+
+			assert.equal(cell1.get(), undefined, "cell1 final state should be empty");
+			assert.equal(cell2.get(), undefined, "cell2 final state should be empty");
+			assert.deepEqual(
+				peerObservations,
+				[{ event: "delete", value: undefined }],
+				"peer must only see the final delete; intermediate set must not leak",
+			);
+			for (const observation of peerObservations) {
+				assert.notEqual(
+					observation.value,
+					secret,
+					"secret value must never appear on the wire",
+				);
+			}
+		});
+
+		it("drops intermediate sets when a later set supersedes them", () => {
+			const secret = "secret-intermediate";
+			const finalValue = "final-value";
+			containerRuntime1.connected = false;
+			cell1.set(secret);
+			cell1.set(finalValue);
+			reconnectAndSquash(containerRuntime1, dataStoreRuntime1);
+			containerRuntimeFactory.processAllMessages();
+
+			assert.equal(cell1.get(), finalValue);
+			assert.equal(cell2.get(), finalValue);
+			assert.deepEqual(
+				peerObservations,
+				[{ event: "valueChanged", value: finalValue }],
+				"peer should see exactly one set carrying the final value",
+			);
+		});
+
+		it("squashes a long pending chain to the final state only", () => {
+			containerRuntime1.connected = false;
+			cell1.set("a");
+			cell1.set("b");
+			cell1.delete();
+			cell1.set("c");
+			cell1.delete();
+			cell1.set("d");
+			reconnectAndSquash(containerRuntime1, dataStoreRuntime1);
+			containerRuntimeFactory.processAllMessages();
+
+			assert.equal(cell1.get(), "d");
+			assert.equal(cell2.get(), "d");
+			assert.equal(peerObservations.length, 1);
+			assert.deepEqual(peerObservations[0], { event: "valueChanged", value: "d" });
+		});
+
+		it("passes through a single pending op unchanged", () => {
+			containerRuntime1.connected = false;
+			cell1.set("only");
+			reconnectAndSquash(containerRuntime1, dataStoreRuntime1);
+			containerRuntimeFactory.processAllMessages();
+
+			assert.equal(cell2.get(), "only");
+			assert.deepEqual(peerObservations, [{ event: "valueChanged", value: "only" }]);
 		});
 	});
 

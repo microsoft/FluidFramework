@@ -275,6 +275,19 @@ export class ConsensusRegisterCollection<T>
 	protected onDisconnect(): void {}
 
 	/**
+	 * ConsensusRegisterCollection writes participate in server-side consensus and the version
+	 * history is exposed via readVersions(). Collapsing pending writes would change observable
+	 * semantics, so squash on resubmit is intentionally the identity transform (replay each
+	 * pending write in order via reSubmitCore).
+	 *
+	 * If callers need staging-mode-like behavior with no intermediate version exposure, they
+	 * should hold writes locally and apply only the final value when committing.
+	 */
+	protected override reSubmitSquashed(content: unknown, localOpMetadata: unknown): void {
+		this.reSubmitCore(content, localOpMetadata);
+	}
+
+	/**
 	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.processMessagesCore}
 	 */
 	protected processMessagesCore(messagesCollection: IRuntimeMessageCollection): void {

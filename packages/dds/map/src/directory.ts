@@ -695,6 +695,36 @@ export class SharedDirectory
 	}
 
 	/**
+	 * Squash storage ops (set/delete/clear) on a per-subdirectory basis: for each subdirectory,
+	 * the first batch call rewrites pendingStorageData via {@link SubDirectory.squashPendingStorage};
+	 * subsequent calls referencing stale metadata are dropped.
+	 *
+	 * Subdirectory create/delete ops are not squashed here — they fall through to the existing
+	 * resubmit logic, which already drops ops whose pending tracking has been cleaned up.
+	 * They carry no user-supplied content, so squashing them is a future-work optimization rather
+	 * than a data-leak concern.
+	 */
+	protected override reSubmitSquashed(
+		content: unknown,
+		localOpMetadata: DirectoryLocalOpMetadata,
+	): void {
+		const message = content as IDirectoryOperation;
+		if (message.type === "set" || message.type === "delete" || message.type === "clear") {
+			const storageMetadata = localOpMetadata as StorageLocalOpMetadata;
+			const subdir = storageMetadata.subdir;
+			// Mirror the guard in the message handlers: storage ops on a disposed (deleted)
+			// subdirectory must not be re-emitted. Drop them silently — the subdir's final
+			// state is "deleted", so its storage ops have no observable effect.
+			if (subdir.disposed) {
+				return;
+			}
+			subdir.squashPendingStorageForBatch(localOpMetadata);
+			return;
+		}
+		this.reSubmitCore(content, localOpMetadata);
+	}
+
+	/**
 	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.loadCore}
 	 */
 	protected async loadCore(storage: IChannelStorageService): Promise<void> {
@@ -2294,6 +2324,173 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 	): void {
 		this.throwIfDisposed();
 		this.directory.submitDirectoryMessage(op, localOpMetadata);
+	}
+
+	/**
+	 * Squash the staging-mode slice of this subdirectory's pendingStorageData starting from the
+	 * entry containing the given metadata. Pre-staging entries are preserved untouched, including
+	 * pre-staging keySets within a lifetime that straddles the boundary. Mirrors
+	 * {@link MapKernel.squashPendingDataForBatch}: per-key LWW, with redundant clears collapsed
+	 * and deletes that follow a clear suppressed.
+	 *
+	 * Emits replacement ops via submitClearMessage/submitKeyMessage. Returns true if the squash
+	 * ran, false if the given metadata is no longer in pendingStorageData (already squashed
+	 * earlier in this batch).
+	 */
+	public squashPendingStorageForBatch(firstStagingMetadata: unknown): boolean {
+		// Locate the boundary. The first staging metadata may be a standalone entry
+		// (clear/delete) or a keySet inside a lifetime that also contains pre-staging keySets.
+		let mixedLifetimeIdx = -1;
+		let mixedKeySetIdx = -1;
+		let entryStartIdx = -1;
+		for (let i = 0; i < this.pendingStorageData.length; i++) {
+			const entry = this.pendingStorageData[i];
+			assert(
+				entry !== undefined,
+				0xc94 /* pendingStorageData entry must exist within bounds */,
+			);
+			if (entry === firstStagingMetadata) {
+				entryStartIdx = i;
+				break;
+			}
+			if (entry.type === "lifetime") {
+				const keySetIdx = entry.keySets.indexOf(firstStagingMetadata as PendingKeySet);
+				if (keySetIdx !== -1) {
+					mixedLifetimeIdx = i;
+					mixedKeySetIdx = keySetIdx;
+					entryStartIdx = i + 1;
+					break;
+				}
+			}
+		}
+		if (entryStartIdx === -1) {
+			return false;
+		}
+
+		// Find the last clear in the staging slice (everything from entryStartIdx onward).
+		let lastClearIdx = -1;
+		for (let i = entryStartIdx; i < this.pendingStorageData.length; i++) {
+			if (this.pendingStorageData[i]?.type === "clear") {
+				lastClearIdx = i;
+			}
+		}
+
+		// Compute the final per-key state from the staging slice. The mixed lifetime's staging
+		// suffix (if any and not nullified by a later clear) contributes its last keySet's value.
+		// Walk in chronological order so later entries overwrite earlier ones (LWW).
+		const finalKeyOps = new Map<
+			string,
+			{ readonly type: "set"; readonly value: unknown } | { readonly type: "delete" }
+		>();
+		if (mixedLifetimeIdx !== -1 && lastClearIdx === -1) {
+			const mixedLifetime = this.pendingStorageData[mixedLifetimeIdx];
+			assert(
+				mixedLifetime?.type === "lifetime",
+				0xc97 /* mixedLifetimeIdx must point at a lifetime */,
+			);
+			const latestStagingKeySet = mixedLifetime.keySets[mixedLifetime.keySets.length - 1];
+			assert(
+				latestStagingKeySet !== undefined,
+				0xc98 /* mixed lifetime must have at least one staging keySet */,
+			);
+			finalKeyOps.set(mixedLifetime.key, {
+				type: "set",
+				value: latestStagingKeySet.value,
+			});
+		}
+		const scanStart = Math.max(entryStartIdx, lastClearIdx + 1);
+		for (let i = scanStart; i < this.pendingStorageData.length; i++) {
+			const entry = this.pendingStorageData[i];
+			assert(
+				entry !== undefined,
+				0xc95 /* pendingStorageData entry must exist within bounds */,
+			);
+			if (entry.type === "delete") {
+				finalKeyOps.set(entry.key, { type: "delete" });
+			} else if (entry.type === "lifetime") {
+				const latestKeySet = entry.keySets[entry.keySets.length - 1];
+				assert(latestKeySet !== undefined, 0xc96 /* lifetime must have at least one keySet */);
+				finalKeyOps.set(entry.key, { type: "set", value: latestKeySet.value });
+			}
+		}
+
+		// Now mutate. Truncate the mixed lifetime to its pre-staging prefix (if any), then drop
+		// the pure-staging entries.
+		let truncationLength = entryStartIdx;
+		if (mixedLifetimeIdx !== -1) {
+			const mixedLifetime = this.pendingStorageData[mixedLifetimeIdx];
+			assert(
+				mixedLifetime?.type === "lifetime",
+				0xc99 /* mixedLifetimeIdx must point at a lifetime */,
+			);
+			mixedLifetime.keySets.length = mixedKeySetIdx;
+			if (mixedLifetime.keySets.length === 0) {
+				// Entire lifetime was staging; remove it so it doesn't appear in iteration as
+				// an empty-keySets entry. Entries after it shift down by one.
+				this.pendingStorageData.splice(mixedLifetimeIdx, 1);
+				truncationLength -= 1;
+			}
+		}
+		this.pendingStorageData.length = truncationLength;
+
+		const hadClear = lastClearIdx >= 0;
+		if (hadClear) {
+			const newPendingClear: PendingClear = {
+				type: "clear",
+				path: this.absolutePath,
+				subdir: this,
+			};
+			this.pendingStorageData.push(newPendingClear);
+			const clearOp: IDirectoryClearOperation = {
+				type: "clear",
+				path: this.absolutePath,
+			};
+			this.submitClearMessage(clearOp, newPendingClear);
+		}
+
+		for (const [key, finalOp] of finalKeyOps) {
+			if (finalOp.type === "delete") {
+				if (hadClear) {
+					continue;
+				}
+				const newPendingDelete: PendingKeyDelete = {
+					type: "delete",
+					path: this.absolutePath,
+					key,
+					subdir: this,
+				};
+				this.pendingStorageData.push(newPendingDelete);
+				const deleteOp: IDirectoryDeleteOperation = {
+					type: "delete",
+					key,
+					path: this.absolutePath,
+				};
+				this.submitKeyMessage(deleteOp, newPendingDelete);
+			} else {
+				const newPendingKeySet: PendingKeySet = {
+					type: "set",
+					path: this.absolutePath,
+					value: finalOp.value,
+					subdir: this,
+				};
+				const newPendingLifetime: PendingKeyLifetime = {
+					type: "lifetime",
+					path: this.absolutePath,
+					key,
+					keySets: [newPendingKeySet],
+					subdir: this,
+				};
+				this.pendingStorageData.push(newPendingLifetime);
+				const setOp: IDirectorySetOperation = {
+					type: "set",
+					key,
+					path: this.absolutePath,
+					value: { type: ValueType[ValueType.Plain], value: finalOp.value },
+				};
+				this.submitKeyMessage(setOp, newPendingKeySet);
+			}
+		}
+		return true;
 	}
 
 	/**

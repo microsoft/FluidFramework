@@ -305,6 +305,17 @@ export class ConsensusOrderedCollection<T = any>
 	}
 
 	/**
+	 * ConsensusOrderedCollection ops (add / acquire / complete / release) participate in a
+	 * server-ordered queue. Collapsing pending ops would change the queue's observable state
+	 * (e.g. an add+acquire pair is meaningfully different from no ops at all, since the queue
+	 * positions are externally observable). Squash on resubmit is therefore the identity
+	 * transform — each pending op is replayed in order via reSubmitCore.
+	 */
+	protected override reSubmitSquashed(content: unknown, localOpMetadata: unknown): void {
+		this.reSubmitCore(content, localOpMetadata);
+	}
+
+	/**
 	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.processMessagesCore}
 	 */
 	protected processMessagesCore(messagesCollection: IRuntimeMessageCollection): void {

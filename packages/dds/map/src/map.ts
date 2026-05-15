@@ -279,6 +279,17 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
 	}
 
 	/**
+	 * On the first call of a squash batch, replace the staging-mode slice of the kernel's pending
+	 * op stream with a minimal per-key set of ops (LWW, with redundant clears collapsed). Entries
+	 * before the staging slice (pre-staging, still in flight) are preserved untouched. Subsequent
+	 * calls in the same batch reference metadata that has been removed from pendingData and are
+	 * skipped, ensuring the squashed set is emitted exactly once.
+	 */
+	protected override reSubmitSquashed(content: unknown, localOpMetadata: unknown): void {
+		this.kernel.squashPendingDataForBatch(localOpMetadata);
+	}
+
+	/**
 	 * {@inheritDoc @fluidframework/shared-object-base#SharedObjectCore.applyStashedOp}
 	 */
 	protected applyStashedOp(content: unknown): void {

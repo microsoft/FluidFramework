@@ -20,6 +20,13 @@ export function makeUnreachableCodePathProxy<T extends object>(name: string): T 
 	});
 }
 
+/**
+ * Reconnects the given containerRuntime while forcing each `reSubmit` call to use `squash=true`.
+ * Used by tests that need to exercise a DDS's squash codepath end-to-end without the runtime-level
+ * staging-mode APIs being plumbed through the mocks.
+ *
+ * @internal
+ */
 export function reconnectAndSquash(
 	containerRuntime: MockContainerRuntimeForReconnection,
 	dataStoreRuntime: MockFluidDataStoreRuntime,

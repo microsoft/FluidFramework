@@ -673,6 +673,21 @@ export class TaskManagerClass
 	}
 
 	/**
+	 * TaskManager's reSubmitCore already collapses volunteer+abandon pairs (it was designed for
+	 * the disconnect case, where the server drops the client from queues). The same collapse is
+	 * the correct squash for staging-mode commit: redundant pending ops are not re-emitted, and
+	 * a still-pending volunteer is re-emitted to express the final intent.
+	 *
+	 * One known limitation: an in-staging abandon for a task the client previously volunteered
+	 * to (pre-staging) is not propagated by this path, because reSubmitCore assumes the server
+	 * has already removed the client from the queue. TaskManager's queue position is inherently
+	 * tied to live connection state, so this is consistent with its overall design.
+	 */
+	protected override reSubmitSquashed(content: unknown, localOpMetadata: unknown): void {
+		this.reSubmitCore(content, localOpMetadata as number);
+	}
+
+	/**
 	 * Override resubmit core to avoid resubmission on reconnect.  On disconnect we accept our removal from the
 	 * queues, and leave it up to the user to decide whether they want to attempt to re-enter a queue on reconnect.
 	 * However, we do need to update latestPendingOps to account for the ops we will no longer be processing.
