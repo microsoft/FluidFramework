@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import cloneDeep from "lodash.clonedeep";
-
 import { assert } from "./assert.js";
 
 /**
@@ -76,7 +74,7 @@ export class RangeTracker {
 			this.lastPrimary = primary;
 			this.lastSecondary = secondary;
 		} else {
-			this.ranges = cloneDeep(primary.ranges);
+			this.ranges = structuredClone(primary.ranges);
 			this.lastPrimary = primary.lastPrimary;
 			this.lastSecondary = primary.lastSecondary;
 		}
@@ -89,7 +87,7 @@ export class RangeTracker {
 		return {
 			lastPrimary: this.lastPrimary,
 			lastSecondary: this.lastSecondary,
-			ranges: cloneDeep(this.ranges),
+			ranges: structuredClone(this.ranges),
 		};
 	}
 
