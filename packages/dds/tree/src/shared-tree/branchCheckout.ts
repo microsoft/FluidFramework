@@ -78,7 +78,7 @@ export function getBranchCheckout(
  *
  * @remarks
  * Unlike {@link TreeCheckout}, a `BranchCheckout` cannot be retargeted to a different branch via `switchBranch` —
- * calling it always throws a {@link UsageError}.
+ * calling it always throws a `UsageError`.
  *
  * It is "viewless" in the sense that no {@link SchematizingSimpleTreeView} is attached at construction time —
  * a view can still be materialized on demand via the inherited `viewWith`.
@@ -150,7 +150,7 @@ export class BranchCheckout extends TreeCheckout {
 	 * @remarks
 	 * The parameter is preserved (and ignored) so this override is signature-compatible with
 	 * {@link TreeCheckout.switchBranch}: substituting a `BranchCheckout` where a `TreeCheckout` is expected
-	 * is type-safe, and the call still fails fast at runtime with a {@link UsageError}.
+	 * is type-safe, and the call still fails fast at runtime with a `UsageError`.
 	 */
 	public override switchBranch(
 		_branch: SharedTreeBranch<SharedTreeEditBuilder, SharedTreeChange>,
@@ -201,7 +201,7 @@ export function forkAsBranchCheckout(parent: TreeCheckout): BranchCheckout {
  *
  * @typeParam TSchema - The schema type of the tree view.
  * @param view - A {@link TreeViewAlpha} returned by the Fluid Framework. External implementations
- * are not supported and will cause a {@link UsageError} to be thrown.
+ * are not supported and will cause a `UsageError` to be thrown.
  *
  * @alpha
  */
@@ -234,7 +234,7 @@ export function getBranch<TSchema extends ImplicitFieldSchema | UnsafeUnknownSch
  * Returns a view of the given branch using the provided schema configuration.
  *
  * @typeParam TSchema - The schema type of the tree view.
- * @param branch - A branch returned by {@link getBranch}. Passing any other object will throw a {@link UsageError} at runtime.
+ * @param branch - A branch returned by {@link getBranch}. Passing any other object will throw a `UsageError` at runtime.
  * @param config - The schema configuration to use for the view.
  *
  * @alpha
