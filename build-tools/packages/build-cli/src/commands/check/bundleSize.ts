@@ -32,9 +32,10 @@ const defaultLocalReportPath = "./artifacts/bundleAnalyzerJson";
  * Result serialized to stdout by `--json`. Default invocations print a
  * human-readable summary instead.
  */
-type CheckBundleSizeResult =
-	| { kind: "no-changes"; baselineCommit: string }
-	| { kind: "changes"; baselineCommit: string; comparison: PackageComparison };
+interface CheckBundleSizeResult {
+	baselineCommit: string;
+	comparison: PackageComparison;
+}
 
 /**
  * Render a {@link PackageComparison} as a flat list of human-readable lines.
@@ -148,12 +149,11 @@ export default class CheckBundleSize extends BaseCommand<typeof CheckBundleSize>
 
 		if (changeLines.length === 0) {
 			this.log(`No bundle size changes vs baseline commit ${baselineCommit}.`);
-			return { kind: "no-changes", baselineCommit };
+		} else {
+			this.log(`Bundle size changes vs baseline commit ${baselineCommit}:`);
+			for (const line of changeLines) this.log(line);
 		}
 
-		this.log(`Bundle size changes vs baseline commit ${baselineCommit}:`);
-		for (const line of changeLines) this.log(line);
-
-		return { kind: "changes", baselineCommit, comparison };
+		return { baselineCommit, comparison };
 	}
 }
