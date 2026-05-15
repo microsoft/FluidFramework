@@ -1,7 +1,8 @@
+# Compat workspace configuration for full-version test matrices.
 
 packages:
   - '*'
-# This file is scaffolded by scripts/updateCompatVersions.ts.
+
 # The security settings below are intentional — do not relax them.
 minimumReleaseAge: 1440
 
