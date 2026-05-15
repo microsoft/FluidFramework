@@ -1360,7 +1360,14 @@ export class ContainerRuntime
 		return this._getAttachState();
 	}
 
-	public readonly isReadOnly = (): boolean => this.deltaManager.readOnlyInfo.readonly === true;
+	public readonly isReadOnly = (): boolean =>
+		// `_deltaManager` and `pendingStateManager` are both assigned partway
+		// through the constructor; `baseLogger` is built earlier and stamps
+		// `isReadOnly` on every error event (e.g. layer-compat failures
+		// during construction), so this can be called before either is
+		// assigned. Optional chains keep that window safe.
+		this._deltaManager?.readOnlyInfo.readonly === true ||
+		this.pendingStateManager?.isApplyingStashedOps === true;
 
 	/**
 	 * Current session schema - defines what options are on & off.
@@ -1597,6 +1604,8 @@ export class ContainerRuntime
 
 	private readonly extensions = new Map<ContainerExtensionId, ExtensionEntry>();
 
+	public readonly baseLogger: ITelemetryBaseLogger;
+
 	/***/
 	protected constructor(
 		context: IContainerContext,
@@ -1610,7 +1619,7 @@ export class ContainerRuntime
 		private readonly runtimeOptions: Readonly<ContainerRuntimeOptionsInternal>,
 		private readonly containerScope: FluidObject,
 		// Create a custom ITelemetryBaseLogger to output telemetry events.
-		public readonly baseLogger: ITelemetryBaseLogger,
+		logger: ITelemetryBaseLogger,
 		existing: boolean,
 
 		blobManagerLoadInfo: IBlobManagerLoadInfo,
@@ -1663,14 +1672,19 @@ export class ContainerRuntime
 
 		this.isSnapshotInstanceOfISnapshot = snapshotWithContents !== undefined;
 
+		this.baseLogger = createChildLogger({
+			logger,
+			properties: {
+				error: {
+					inStagingMode: () => this.inStagingMode,
+					isApplyingStashedOps: () => this.pendingStateManager?.isApplyingStashedOps,
+					isReadOnly: () => this.isReadOnly(),
+				},
+			},
+		});
 		this.mc = createChildMonitoringContext({
 			logger: this.baseLogger,
 			namespace: "ContainerRuntime",
-			properties: {
-				all: {
-					inStagingMode: this.inStagingMode,
-				},
-			},
 		});
 
 		// Validate that the Loader is compatible with this Runtime.
@@ -1840,6 +1854,18 @@ export class ContainerRuntime
 			},
 			pendingRuntimeState?.pending,
 			this.baseLogger,
+			{
+				// PSM has cleared `isApplyingStashedOps`; `isReadOnly()` now
+				// reflects the network-readonly state again. Fan out so DDSes
+				// know they can submit once more. No open hook is needed —
+				// the apply window opens before `channelCollection` exists,
+				// so a fanout there would be a no-op; data stores instead
+				// pick up the initial readonly state from `isReadOnly()`
+				// when they're first asked.
+				onAfterStashedOpsApplied: () => {
+					this.notifyReadOnlyState();
+				},
+			},
 		);
 
 		let outerDeltaManager: IDeltaManagerFull = this.innerDeltaManager;
@@ -2797,6 +2823,19 @@ export class ContainerRuntime
 			return;
 		}
 
+		// Invariant: the canSendOps edge in `setConnectionStateCore` — the
+		// only caller of this method — cannot fire while
+		// `applyStashedOpsAt` is in flight, because the loader awaits the
+		// apply before transitioning the runtime to a write-capable
+		// connection. If this assert ever fires, that contract has changed
+		// and the submit guard at `submit()` would catch a runtime-internal
+		// resubmit (`Rejoin`, `GC`, `FluidDataStoreOp`) for an op type
+		// outside the apply-window allowlist.
+		assert(
+			!this.pendingStateManager.isApplyingStashedOps,
+			"replayPendingStates must not be called during stashed-op apply window",
+		);
+
 		// Replaying is an internal operation and we don't want to generate noise while doing it.
 		// So temporarily disable dirty state change events, and save the old state.
 		// When we're done, we'll emit the event if the state changed.
@@ -2912,8 +2951,13 @@ export class ContainerRuntime
 		}
 	}
 
-	private readonly notifyReadOnlyState = (readonly: boolean): void =>
-		this.channelCollection.notifyReadOnlyState(readonly);
+	private readonly notifyReadOnlyState = (): void =>
+		// `channelCollection` may be undefined when invoked from the PSM's
+		// open hook, which fires from `new PendingStateManager(...)` earlier
+		// in this constructor than `channelCollection` is assigned. That's
+		// fine — DDSes created after this point will read the runtime's
+		// `isReadOnly()` aggregation and start out in the correct state.
+		this.channelCollection?.notifyReadOnlyState(this.isReadOnly());
 
 	public setConnectionState(canSendOps: boolean, clientId?: string): void {
 		this.setConnectionStateToConnectedOrDisconnected(canSendOps, clientId);
@@ -4813,6 +4857,51 @@ export class ContainerRuntime
 		metadata?: { localId: string; blobId?: string },
 	): void {
 		this.verifyNotClosed();
+
+		// Nothing should be submitting while we're replaying stashed ops.
+		// The runtime is readonly during the apply window (see
+		// `PendingStateManager._applyLifecycle`), so a compliant DDS skips
+		// submits. If we land here anyway, a DDS bypassed the readonly gate
+		// (e.g. a realize-time write that doesn't consult `readOnly`) and
+		// produced a local op that has no counterpart in the saved-op
+		// replay — we cannot reconcile the mismatch, so fail fatally. We
+		// check here (rather than at flush) because outbox flushes are
+		// deferred and the apply window could close before the offending op
+		// reaches the pending queue.
+		//
+		// Allowlist: `BlobAttach` is a runtime-internal op type that may
+		// legitimately fire during apply — produced by `sharePendingBlobs`,
+		// which is invoked from `loadRuntime2` before `applyStashedOpsAt`
+		// resolves. `IdAllocation` is not in this allowlist because the
+		// assert at 0x9a5 below enforces that it never reaches `submit()`
+		// at all; treating that assert as the single source of truth.
+		//
+		// Always surface the error event to telemetry on a bypass so we can
+		// attribute incidents regardless of the kill-switch state. The kill
+		// switch `DisableSubmitDuringStashedApplyThrow` only suppresses the
+		// throw + container close, leaving an off-switch if a first- or
+		// third-party DDS in production quietly bypasses the readonly gate.
+		if (
+			this.pendingStateManager.isApplyingStashedOps &&
+			containerRuntimeMessage.type !== ContainerMessageType.BlobAttach
+		) {
+			const error = new UsageError("Local op submitted during stashed-op apply window", {
+				messageType: containerRuntimeMessage.type,
+			});
+			this.mc.logger.sendErrorEvent({ eventName: "SubmitDuringStashedOpApply" }, error);
+			if (
+				this.mc.config.getBoolean(
+					"Fluid.ContainerRuntime.DisableSubmitDuringStashedApplyThrow",
+				) !== true
+			) {
+				// Close the container before throwing so the "throw + close"
+				// contract is enforced by this code path rather than by
+				// whichever caller happens to wrap the throw in `.catch(closeFn)`.
+				// `closeFn` is idempotent; a caller that also closes won't double-close.
+				this.closeFn(error);
+				throw error;
+			}
+		}
 
 		// There should be no ops in detached container state!
 		assert(

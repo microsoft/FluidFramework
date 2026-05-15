@@ -1597,6 +1597,120 @@ describe("Runtime", () => {
 				);
 			});
 		});
+
+		describe("Submit during stashed-op apply", () => {
+			let containerRuntime: ContainerRuntime;
+			let mockLogger: MockLogger;
+			let containerErrors: ICriticalContainerError[];
+
+			async function createRuntime(settings: Record<string, ConfigTypes> = {}): Promise<void> {
+				mockLogger = new MockLogger();
+				containerErrors = [];
+				const context = {
+					...getMockContext({ logger: mockLogger, settings }),
+					closeFn: (error?: ICriticalContainerError): void => {
+						if (error !== undefined) {
+							containerErrors.push(error);
+						}
+					},
+				};
+				const { runtime } = await ContainerRuntime.loadRuntime2({
+					context: context as IContainerContext,
+					registry: new FluidDataStoreRegistry([]),
+					existing: false,
+					requestHandler: undefined,
+					runtimeOptions: {},
+					provideEntryPoint: mockProvideEntryPoint,
+				});
+				containerRuntime = runtime;
+			}
+
+			function setApplyingStashedOps(isApplying: boolean): void {
+				const psm = (
+					containerRuntime as unknown as { pendingStateManager: PendingStateManager }
+				).pendingStateManager;
+				Object.defineProperty(psm, "isApplyingStashedOps", {
+					configurable: true,
+					get: () => isApplying,
+				});
+			}
+
+			function submitBlobAttach(): void {
+				// Mirrors `sendBlobAttachMessage` in ContainerRuntime; submit() is private.
+				(
+					containerRuntime as unknown as {
+						submit: (
+							message: { type: ContainerMessageType; contents: unknown },
+							localOpMetadata: unknown,
+							metadata: { localId: string; blobId: string },
+						) => void;
+					}
+				).submit({ type: ContainerMessageType.BlobAttach, contents: undefined }, undefined, {
+					localId: "local-1",
+					blobId: "blob-1",
+				});
+			}
+
+			it("throws, logs, and closes the container on submit during apply", async () => {
+				await createRuntime();
+				setApplyingStashedOps(true);
+				assert.throws(
+					() => submitDataStoreOp(containerRuntime, "1", testDataStoreMessage),
+					(error: IErrorBase) =>
+						error.errorType === ContainerErrorTypes.usageError &&
+						error.message === "Local op submitted during stashed-op apply window",
+				);
+				mockLogger.assertMatchAny([
+					{
+						eventName: "ContainerRuntime:SubmitDuringStashedOpApply",
+						category: "error",
+						messageType: ContainerMessageType.FluidDataStoreOp,
+					},
+				]);
+				assert.strictEqual(
+					containerErrors.length,
+					1,
+					"closeFn should have been invoked exactly once",
+				);
+				assert.strictEqual(
+					containerErrors[0].errorType,
+					ContainerErrorTypes.usageError,
+					"closeFn should have received the UsageError",
+				);
+			});
+
+			it("does not throw when the apply window is closed", async () => {
+				await createRuntime();
+				setApplyingStashedOps(false);
+				assert.doesNotThrow(() =>
+					submitDataStoreOp(containerRuntime, "1", testDataStoreMessage),
+				);
+			});
+
+			it("does not throw for BlobAttach during apply (allowlisted)", async () => {
+				await createRuntime();
+				setApplyingStashedOps(true);
+				assert.doesNotThrow(() => submitBlobAttach());
+			});
+
+			it("kill switch suppresses throw and logs error event", async () => {
+				await createRuntime({
+					"Fluid.ContainerRuntime.DisableSubmitDuringStashedApplyThrow": true,
+				});
+				setApplyingStashedOps(true);
+				assert.doesNotThrow(() =>
+					submitDataStoreOp(containerRuntime, "1", testDataStoreMessage),
+				);
+				mockLogger.assertMatchAny([
+					{
+						eventName: "ContainerRuntime:SubmitDuringStashedOpApply",
+						category: "error",
+						messageType: ContainerMessageType.FluidDataStoreOp,
+					},
+				]);
+			});
+		});
+
 		describe("Supports mixin classes", () => {
 			it("new loadRuntime2 method works", async () => {
 				const makeMixin = <T>(
