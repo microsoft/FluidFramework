@@ -18,7 +18,7 @@ import type { LocalResolver } from "@fluidframework/local-driver/internal";
 import { LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import { ITestFluidObject } from "@fluidframework/test-utils/internal";
 
-import { createLoader } from "../utils.js";
+import { createLoader } from "./utils.js";
 
 describe("PendingLocalStateStore End-to-End Tests", () => {
 	/**

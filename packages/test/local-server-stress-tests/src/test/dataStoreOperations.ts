@@ -5,7 +5,7 @@
 
 import { assert } from "@fluidframework/core-utils/internal";
 
-import type { Client } from "./localServerStressHarness";
+import type { Client } from "./localServerStressHarness.js";
 
 export const validateAllDataStoresSaved = async (...clients: Client[]): Promise<void> => {
 	for (const client of clients) {

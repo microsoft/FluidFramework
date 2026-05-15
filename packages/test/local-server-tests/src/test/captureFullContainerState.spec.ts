@@ -34,7 +34,7 @@ import {
 	type TestFluidObject,
 } from "@fluidframework/test-utils/internal";
 
-import { createLoader } from "../utils.js";
+import { createLoader } from "./utils.js";
 
 const toComparableArray = (map: ISharedMap): [string, unknown][] =>
 	[...map.entries()].map(([key, value]) => [
