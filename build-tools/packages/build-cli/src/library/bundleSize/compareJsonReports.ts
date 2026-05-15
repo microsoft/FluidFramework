@@ -5,7 +5,12 @@
 
 import type { BundleAnalyzerPlugin } from "webpack-bundle-analyzer";
 
-import type { BundleData, BundlesComparison } from "./types.js";
+import type {
+	AnalyzerJsonByPackage,
+	BundleData,
+	BundlesComparison,
+	PackageComparison,
+} from "./types.js";
 
 /**
  * Filter `report` to its asset entries and key their size data by asset name.
@@ -35,7 +40,7 @@ function jsonReportToBundleSizes(
  * Bundles present only in one side encode added/removed via field presence
  * (see {@link BundlesComparison}).
  */
-export function compareJsonReports(
+function compareJsonReports(
 	base: BundleAnalyzerPlugin.JsonReport | undefined,
 	compare: BundleAnalyzerPlugin.JsonReport | undefined,
 ): BundlesComparison {
@@ -55,4 +60,25 @@ export function compareJsonReports(
 	}
 
 	return bundles;
+}
+
+/**
+ * Compare per-package `JsonReport`s for two snapshots and produce a
+ * {@link PackageComparison}. Iterates the union of source packages so packages
+ * present only on one side are represented (their `compareJsonReports` call
+ * treats the absent side as empty).
+ */
+export function compareJsonReportsByPackage(
+	base: AnalyzerJsonByPackage,
+	compare: AnalyzerJsonByPackage,
+): PackageComparison {
+	const allPackages = new Set<string>([...base.keys(), ...compare.keys()]);
+	const result: PackageComparison = {};
+	for (const sourcePackage of allPackages) {
+		result[sourcePackage] = compareJsonReports(
+			base.get(sourcePackage),
+			compare.get(sourcePackage),
+		);
+	}
+	return result;
 }

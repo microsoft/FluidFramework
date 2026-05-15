@@ -3,8 +3,7 @@
  * Licensed under the MIT License.
  */
 
-export { compareJsonReports } from "./compareJsonReports.js";
-export { compareJsonReportsByPackage } from "./compareJsonReportsByPackage.js";
+export { compareJsonReportsByPackage } from "./compareJsonReports.js";
 export { extractAnalyzerJsonsFromArtifact } from "./extractAnalyzerJsonsFromArtifact.js";
 export { readAnalyzerJsonsFromFileSystem } from "./readAnalyzerJsonsFromFileSystem.js";
 export { sourcePackageFromAnalyzerPath } from "./sourcePackageFromAnalyzerPath.js";
