@@ -358,7 +358,7 @@ export class FluidDataStoreRuntime
 	private readonly raceEntries = new Map<string, RaceEntry>();
 
 	/**
-	 * Loser channel id -> winner channel id. Channel ops addressed to any
+	 * Loser channel id -\> winner channel id. Channel ops addressed to any
 	 * loser channel id are dropped deterministically by every client.
 	 *
 	 * Persisted in the `.races` summary blob (see TODO in `summarize`) so that
@@ -719,6 +719,22 @@ export class FluidDataStoreRuntime
 		this.identifyLocalChangeInSummarizer("DDSCreatedInSummarizer", id, type);
 	}
 
+	/**
+	 * {@inheritDoc @fluidframework/datastore-definitions#IFluidDataStoreRuntime.createChannel}
+	 */
+	public createChannel(id: string | undefined, type: string): IChannel;
+	/**
+	 * Race-id overload — see the
+	 * {@link @fluidframework/datastore-definitions#IFluidDataStoreRuntime.createChannel}
+	 * interface declaration for full semantics.
+	 *
+	 * @alpha
+	 */
+	public createChannel(
+		raceId: string,
+		type: string,
+		raceOptions: { onLost?: OnRaceLost },
+	): IChannel;
 	public createChannel(
 		idArg: string | undefined,
 		type: string,
@@ -814,7 +830,7 @@ export class FluidDataStoreRuntime
 	}
 
 	/**
-	 * Reverse lookup: channel id -> race id, used when constructing outbound
+	 * Reverse lookup: channel id -\> race id, used when constructing outbound
 	 * attach messages to know if a raceId field should be included.
 	 */
 	private getRaceIdForChannel(channelId: string): string | undefined {
@@ -849,7 +865,7 @@ export class FluidDataStoreRuntime
 	}
 
 	/**
-	 * Serialize the loser->winner redirect table for inclusion in summaries.
+	 * Serialize the loser-\>winner redirect table for inclusion in summaries.
 	 * Returns undefined if there's nothing to persist (keeps summaries small
 	 * and avoids touching back-compat for data stores that never race).
 	 */

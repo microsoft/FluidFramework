@@ -68,6 +68,8 @@ export enum FlushMode {
 // @beta @legacy
 export interface IAttachMessage {
     id: string;
+    // @alpha
+    raceId?: string;
     snapshot: ITree;
     type: string;
 }
