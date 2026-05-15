@@ -41,6 +41,7 @@ function encodeDigest(hashArray: Uint8Array, encoding: "hex" | "base64"): string
  * @returns The hash of the content of the buffer.
  *
  * @deprecated Moved to the `@fluidframework-internal/client-utils` package.
+ * @internal
  */
 export async function hashFile(
 	file: IsoBuffer,
@@ -72,6 +73,7 @@ export async function hashFile(
  * @returns The sha1 hash of the content of the buffer with the `blob` prefix and size
  *
  * @deprecated Moved to the `@fluidframework-internal/client-utils` package.
+ * @internal
  */
 export async function gitHashFile(file: IsoBuffer): Promise<string> {
 	const size = file.byteLength;
