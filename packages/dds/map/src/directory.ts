@@ -2341,12 +2341,15 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 	 * resubmitted normally.
 	 */
 	public dropIfSubsumedByLaterStorageOp(metadata: unknown): boolean {
-		// If this subdirectory is disposed or no longer reachable in the optimistic view
-		// (i.e. a pending or sequenced deleteSubDirectory has removed it from the tree), any
-		// storage op on it is subsumed by that delete — its value must not reach the wire.
-		// `isNotDisposedAndReachable` consults `getWorkingDirectory(absolutePath)`, which
-		// already accounts for pending-delete visibility on any ancestor.
-		const subdirRemoved = !this.isNotDisposedAndReachable();
+		// Identity-based reachability check: this op was queued against THIS specific
+		// SubDirectory instance. If the path no longer resolves to this exact instance —
+		// because a pending or sequenced delete removed it, or because the staging-mode
+		// squash already dropped its create+delete pair, or because another client's
+		// concurrent create has taken over the name with a different instance — the op
+		// must be dropped. Resubmitting it would land the value on the wrong subdir
+		// (e.g. a concurrently-sequenced one with the same path) and diverge clients.
+		const subdirRemoved =
+			this.disposed || this.directory.getWorkingDirectory(this.absolutePath) !== this;
 		const m = metadata as StorageLocalOpMetadata;
 		if (m.type === "set") {
 			// Fast path: PendingKeySet carries a back-pointer to its containing lifetime, so the
