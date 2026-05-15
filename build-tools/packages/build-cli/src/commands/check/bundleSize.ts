@@ -34,8 +34,7 @@ const defaultLocalReportPath = "./artifacts/bundleAnalyzerJson";
  */
 type CheckBundleSizeResult =
 	| { kind: "no-changes"; baselineCommit: string }
-	| { kind: "changes"; baselineCommit: string; comparison: PackageComparison }
-	| { kind: "error"; baselineCommit: string | undefined; error: string };
+	| { kind: "changes"; baselineCommit: string; comparison: PackageComparison };
 
 /**
  * Render a {@link PackageComparison} as a flat list of human-readable lines.
@@ -99,69 +98,66 @@ export default class CheckBundleSize extends BaseCommand<typeof CheckBundleSize>
 	} as const;
 
 	public async run(): Promise<CheckBundleSizeResult> {
-		try {
-			const { localReportPath, target } = this.flags;
+		const { localReportPath, target } = this.flags;
 
-			// Auto-detect targets `main` on the canonical remote; `--target <ref>` overrides.
-			const branch = "main";
-			const canonicalUrl = /(^|[/:])microsoft\/fluidframework(\.git)?$/i;
-			let targetRef: string;
-			if (target !== undefined) {
-				targetRef = target;
-				this.log(`Using explicit target ref ${target}.`);
-			} else {
-				const remote = pickFreshestRemote(branch, (url) => canonicalUrl.test(url)) ?? "origin";
-				targetRef = `${remote}/${branch}`;
-				this.log(`Using target ref ${targetRef}. Pass --target <ref> to override.`);
+		// Auto-detect targets `main` on the canonical remote; `--target <ref>` overrides.
+		const branch = "main";
+		const canonicalUrl = /(^|[/:])microsoft\/fluidframework(\.git)?$/i;
+		let targetRef: string;
+		if (target !== undefined) {
+			targetRef = target;
+			this.log(`Using explicit target ref ${target}.`);
+		} else {
+			const remote = pickFreshestRemote(branch, (url) => canonicalUrl.test(url));
+			if (remote === undefined) {
+				this.error(
+					"Could not auto-detect a canonical remote. Add a remote pointing at microsoft/FluidFramework, or pass --target <ref> to override.",
+				);
 			}
-
-			const baselineCommit = execFileSync("git", ["merge-base", targetRef, "HEAD"])
-				.toString()
-				.trim();
-			this.log(`Baseline commit: ${baselineCommit}`);
-
-			// Anonymous reads work for the public ADO project at this command's scale;
-			// automated consumers authenticate at the library layer.
-			const adoApi = getAzureDevopsApi(undefined, adoConstants.orgUrl);
-			const artifactResult = await getArtifactForCommit({
-				adoApi,
-				artifactName: adoConstants.artifactName,
-				commit: baselineCommit,
-				definitionId: adoConstants.ciBuildDefinitionId,
-				project: adoConstants.projectName,
-			});
-
-			if (artifactResult.kind === "error") {
-				this.warning(artifactResult.error);
-				return { kind: "error", baselineCommit, error: artifactResult.error };
-			}
-
-			const baselineJsons = extractAnalyzerJsonsFromArtifact(artifactResult.contents);
-			const prJsons = await readAnalyzerJsonsFromFileSystem(localReportPath);
-
-			if (baselineJsons.size === 0 && prJsons.size === 0) {
-				const message =
-					"No bundles to compare — baseline artifact and local bundle reports are both empty.";
-				this.warning(message);
-				return { kind: "error", baselineCommit, error: message };
-			}
-
-			const comparison = compareJsonReportsByPackage(baselineJsons, prJsons);
-			const changeLines = formatComparison(comparison);
-
-			if (changeLines.length === 0) {
-				this.log(`No bundle size changes vs baseline commit ${baselineCommit}.`);
-				return { kind: "no-changes", baselineCommit };
-			}
-
-			this.log(`Bundle size changes vs baseline commit ${baselineCommit}:`);
-			for (const line of changeLines) this.log(line);
-
-			return { kind: "changes", baselineCommit, comparison };
-		} catch (e) {
-			const error = `Unexpected failure: ${e instanceof Error ? e.message : String(e)}`;
-			this.warning(error);
-			return { kind: "error", baselineCommit: undefined, error };
+			targetRef = `${remote}/${branch}`;
+			this.log(`Using target ref ${targetRef}. Pass --target <ref> to override.`);
 		}
+
+		const baselineCommit = execFileSync("git", ["merge-base", targetRef, "HEAD"])
+			.toString()
+			.trim();
+		this.log(`Baseline commit: ${baselineCommit}`);
+
+		// Anonymous reads work for the public ADO project at this command's scale;
+		// automated consumers authenticate at the library layer.
+		const adoApi = getAzureDevopsApi(undefined, adoConstants.orgUrl);
+		const artifactResult = await getArtifactForCommit({
+			adoApi,
+			artifactName: adoConstants.artifactName,
+			commit: baselineCommit,
+			definitionId: adoConstants.ciBuildDefinitionId,
+			project: adoConstants.projectName,
+		});
+
+		if (artifactResult.kind === "error") {
+			this.error(artifactResult.error);
+		}
+
+		const baselineJsons = extractAnalyzerJsonsFromArtifact(artifactResult.contents);
+		const prJsons = await readAnalyzerJsonsFromFileSystem(localReportPath);
+
+		if (baselineJsons.size === 0 && prJsons.size === 0) {
+			this.error(
+				"No bundles to compare — baseline artifact and local bundle reports are both empty.",
+			);
+		}
+
+		const comparison = compareJsonReportsByPackage(baselineJsons, prJsons);
+		const changeLines = formatComparison(comparison);
+
+		if (changeLines.length === 0) {
+			this.log(`No bundle size changes vs baseline commit ${baselineCommit}.`);
+			return { kind: "no-changes", baselineCommit };
+		}
+
+		this.log(`Bundle size changes vs baseline commit ${baselineCommit}:`);
+		for (const line of changeLines) this.log(line);
+
+		return { kind: "changes", baselineCommit, comparison };
 	}
 }
