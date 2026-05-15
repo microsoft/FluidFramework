@@ -94,7 +94,7 @@ function runBenchmark({
  * If you modify or add tests here, consider updating the corresponding SharedMatrix benchmarks as well
  * to ensure consistency and comparability between the two implementations.
  */
-export function runBenchmarkTestSuite(mode: "memory" | "execution-time"): Suite {
+function runBenchmarkTestSuite(mode: "memory" | "execution-time"): Suite {
 	return describe(`SharedTree table APIs ${mode === "execution-time" ? "execution time" : "memory usage"}`, () => {
 		if (mode === "memory") {
 			// configureBenchmarkHooks adjusts tests to run in a more production type mode.
@@ -1071,3 +1071,9 @@ export function runBenchmarkTestSuite(mode: "memory" | "execution-time"): Suite 
 		}
 	});
 }
+
+// TODO: AB#71782: Investigate why these tests are so slow / possibly contain cross-test contamination and address those issue, then re-enable these tests.
+describe.skip("TableSchema Benchmarks", () => {
+	runBenchmarkTestSuite("execution-time");
+	runBenchmarkTestSuite("memory");
+});
