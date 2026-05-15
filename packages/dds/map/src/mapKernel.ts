@@ -581,134 +581,113 @@ export class MapKernel {
 	}
 
 	/**
-	 * Squash the staging-mode slice of pendingData starting from the entry containing the given
-	 * metadata. Pre-staging entries are preserved untouched, including pre-staging keySets within
-	 * a lifetime that straddles the boundary. Drops superseded sets/deletes (per-key LWW) and
-	 * collapses redundant clears so intermediate values (e.g. an inserted-then-deleted secret)
-	 * are never sent on the wire.
+	 * Per-op squash decision for a single staged pending change. Locates the change's metadata
+	 * in pendingData, asks whether a later pending change subsumes it, and either drops it
+	 * (splicing the tracking out of pendingData, similar to a targeted rollback) or resubmits
+	 * it unchanged.
 	 *
-	 * Emits replacement ops via the runtime's submitMessage callback so they take the place of
-	 * the original staged batch in the outgoing queue. Returns true if the squash ran, false if
-	 * the given metadata is no longer in pendingData (already squashed earlier in this batch).
+	 * Subsumption rules:
+	 *
+	 * - A `clear` is subsumed by any later `clear`.
+	 * - A `delete` for key `k` is subsumed by any later `clear`, `delete` for `k`, or
+	 * `lifetime` for `k`.
+	 * - A `set` for key `k` (a keySet inside a lifetime) is subsumed by any later keySet in the
+	 * same lifetime, or by any later `clear`, `delete` for `k`, or `lifetime` for `k`.
+	 *
+	 * @returns True if the op was handled (dropped or resubmitted), false if no handler is
+	 * registered for the op type.
 	 */
-	public squashPendingDataForBatch(firstStagingMetadata: unknown): boolean {
-		// Locate the boundary. The first staging metadata may be a standalone entry
-		// (clear/delete) or a keySet inside a lifetime that also contains pre-staging keySets.
-		let mixedLifetimeIdx = -1;
-		let mixedKeySetIdx = -1;
-		let entryStartIdx = -1;
+	public tryResubmitSquashedMessage(op: IMapOperation, localOpMetadata: unknown): boolean {
+		const handler = this.messageHandlers.get(op.type);
+		if (handler === undefined) {
+			return false;
+		}
+		if (this.dropIfSubsumed(localOpMetadata)) {
+			return true;
+		}
+		handler.resubmit(op, localOpMetadata as PendingLocalOpMetadata);
+		return true;
+	}
+
+	/**
+	 * If the pending op identified by `metadata` is subsumed by a later pending op in
+	 * `pendingData`, splice its tracking out of pendingData and return true. Otherwise return
+	 * false and leave pendingData untouched.
+	 *
+	 * Removing the tracking is necessary because the runtime drops the op from its own pending
+	 * queue when we choose not to resubmit; without the cleanup, the kernel would later try to
+	 * match an ACK that will never arrive.
+	 */
+	private dropIfSubsumed(metadata: unknown): boolean {
 		for (let i = 0; i < this.pendingData.length; i++) {
 			const entry = this.pendingData[i];
 			assert(entry !== undefined, "pendingData entry must exist within bounds");
-			if (entry === firstStagingMetadata) {
-				entryStartIdx = i;
-				break;
+			if (entry === metadata) {
+				// A keyset metadata is never a pendingData entry itself — only PendingClear and
+				// PendingKeyDelete are stored standalone in pendingData. (PendingKeySet is nested
+				// inside a PendingKeyLifetime; see the lifetime branch below.)
+				assert(
+					entry.type === "clear" || entry.type === "delete",
+					"standalone pending entry must be clear or delete",
+				);
+				if (this.isStandaloneEntrySubsumed(entry, i)) {
+					this.pendingData.splice(i, 1);
+					return true;
+				}
+				return false;
 			}
 			if (entry.type === "lifetime") {
-				const keySetIdx = entry.keySets.indexOf(firstStagingMetadata as PendingKeySet);
+				const keySetIdx = entry.keySets.indexOf(metadata as PendingKeySet);
 				if (keySetIdx !== -1) {
-					mixedLifetimeIdx = i;
-					mixedKeySetIdx = keySetIdx;
-					entryStartIdx = i + 1;
-					break;
+					if (this.isKeySetSubsumed(entry, keySetIdx, i)) {
+						entry.keySets.splice(keySetIdx, 1);
+						if (entry.keySets.length === 0) {
+							this.pendingData.splice(i, 1);
+						}
+						return true;
+					}
+					return false;
 				}
 			}
 		}
-		if (entryStartIdx === -1) {
-			return false;
-		}
+		return false;
+	}
 
-		// Find the last clear in the staging slice (everything from entryStartIdx onward).
-		let lastClearIdx = -1;
-		for (let i = entryStartIdx; i < this.pendingData.length; i++) {
-			if (this.pendingData[i]?.type === "clear") {
-				lastClearIdx = i;
+	private isStandaloneEntrySubsumed(
+		entry: PendingClear | PendingKeyDelete,
+		entryIdx: number,
+	): boolean {
+		for (let j = entryIdx + 1; j < this.pendingData.length; j++) {
+			const later = this.pendingData[j];
+			assert(later !== undefined, "pendingData entry must exist within bounds");
+			if (later.type === "clear") {
+				return true;
+			}
+			if (entry.type === "delete" && later.key === entry.key) {
+				return true;
 			}
 		}
+		return false;
+	}
 
-		// Compute the final per-key state from the staging slice. The mixed lifetime's staging
-		// suffix (if any and not nullified by a later clear) contributes its last keySet's value.
-		// Walk in chronological order so later entries overwrite earlier ones (LWW).
-		const finalKeyOps = new Map<
-			string,
-			{ readonly type: "set"; readonly value: ILocalValue } | { readonly type: "delete" }
-		>();
-		if (mixedLifetimeIdx !== -1 && lastClearIdx === -1) {
-			const mixedLifetime = this.pendingData[mixedLifetimeIdx];
-			assert(mixedLifetime?.type === "lifetime", "mixedLifetimeIdx must point at a lifetime");
-			const latestStagingKeySet = mixedLifetime.keySets[mixedLifetime.keySets.length - 1];
-			assert(
-				latestStagingKeySet !== undefined,
-				"mixed lifetime must have at least one staging keySet",
-			);
-			finalKeyOps.set(mixedLifetime.key, {
-				type: "set",
-				value: latestStagingKeySet.value,
-			});
+	private isKeySetSubsumed(
+		lifetime: PendingKeyLifetime,
+		keySetIdx: number,
+		lifetimeIdx: number,
+	): boolean {
+		// A later keySet in the same lifetime always subsumes (same key, same logical region).
+		if (keySetIdx < lifetime.keySets.length - 1) {
+			return true;
 		}
-		const scanStart = Math.max(entryStartIdx, lastClearIdx + 1);
-		for (let i = scanStart; i < this.pendingData.length; i++) {
-			const entry = this.pendingData[i];
-			assert(entry !== undefined, "pendingData entry must exist within bounds");
-			if (entry.type === "delete") {
-				finalKeyOps.set(entry.key, { type: "delete" });
-			} else if (entry.type === "lifetime") {
-				const latestKeySet = entry.keySets[entry.keySets.length - 1];
-				assert(latestKeySet !== undefined, "Lifetime must have at least one keySet");
-				finalKeyOps.set(entry.key, { type: "set", value: latestKeySet.value });
+		// Otherwise, any later pendingData entry that affects this key subsumes.
+		for (let j = lifetimeIdx + 1; j < this.pendingData.length; j++) {
+			const later = this.pendingData[j];
+			assert(later !== undefined, "pendingData entry must exist within bounds");
+			if (later.type === "clear" || later.key === lifetime.key) {
+				return true;
 			}
 		}
-
-		// Now mutate. Truncate the mixed lifetime to its pre-staging prefix (if any), then drop
-		// the pure-staging entries.
-		let truncationLength = entryStartIdx;
-		if (mixedLifetimeIdx !== -1) {
-			const mixedLifetime = this.pendingData[mixedLifetimeIdx];
-			assert(mixedLifetime?.type === "lifetime", "mixedLifetimeIdx must point at a lifetime");
-			mixedLifetime.keySets.length = mixedKeySetIdx;
-			if (mixedLifetime.keySets.length === 0) {
-				// Entire lifetime was staging; remove it so it doesn't appear in iteration as
-				// an empty-keySets entry. Entries after it shift down by one.
-				this.pendingData.splice(mixedLifetimeIdx, 1);
-				truncationLength -= 1;
-			}
-		}
-		this.pendingData.length = truncationLength;
-
-		const hadClear = lastClearIdx >= 0;
-		if (hadClear) {
-			const newPendingClear: PendingClear = { type: "clear" };
-			this.pendingData.push(newPendingClear);
-			const clearOp: IMapClearOperation = { type: "clear" };
-			this.submitMessage(clearOp, newPendingClear);
-		}
-
-		for (const [key, finalOp] of finalKeyOps) {
-			if (finalOp.type === "delete") {
-				if (hadClear) {
-					continue;
-				}
-				const newPendingDelete: PendingKeyDelete = { type: "delete", key };
-				this.pendingData.push(newPendingDelete);
-				const deleteOp: IMapDeleteOperation = { type: "delete", key };
-				this.submitMessage(deleteOp, newPendingDelete);
-			} else {
-				const newPendingKeySet: PendingKeySet = { type: "set", value: finalOp.value };
-				const newPendingLifetime: PendingKeyLifetime = {
-					type: "lifetime",
-					key,
-					keySets: [newPendingKeySet],
-				};
-				this.pendingData.push(newPendingLifetime);
-				const setOp: IMapSetOperation = {
-					key,
-					type: "set",
-					value: { type: ValueType[ValueType.Plain], value: finalOp.value.value },
-				};
-				this.submitMessage(setOp, newPendingKeySet);
-			}
-		}
-		return true;
+		return false;
 	}
 
 	public tryApplyStashedOp(op: IMapOperation): void {

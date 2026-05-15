@@ -206,6 +206,42 @@ describe("SharedMap squash on resubmit", () => {
 			[{ key: "only", newValue: "value" }],
 		);
 	});
+
+	it("preserves a pre-staging set still in flight when a staging set on a different key is squashed", () => {
+		// Submit a pre-staging set on key "a" while connected so it's in flight at the runtime
+		// layer but not yet ACKed when we disconnect.
+		map1.set("a", "pre");
+		containerRuntime1.connected = false;
+		// Staging-mode edits on a different key plus a self-subsumption pair on "a".
+		map1.set("b", "secret-b");
+		map1.set("b", "final-b");
+		reconnectAndSquash(containerRuntime1, dataStoreRuntime1);
+		containerRuntimeFactory.processAllMessages();
+
+		assert.equal(map2.get("a"), "pre", "pre-staging set must still be delivered");
+		assert.equal(map2.get("b"), "final-b");
+		for (const change of peerChanges) {
+			assert.notEqual(change.newValue, "secret-b", "intermediate staging value must not leak");
+		}
+	});
+
+	it("preserves a pre-staging set when a staging set on the same key is squashed against itself", () => {
+		// Pre-staging set on "k". Mixed-lifetime case: the pre-staging keySet and staging keySets
+		// share one PendingKeyLifetime in the kernel.
+		map1.set("k", "pre");
+		containerRuntime1.connected = false;
+		map1.set("k", "secret");
+		map1.set("k", "final");
+		reconnectAndSquash(containerRuntime1, dataStoreRuntime1);
+		containerRuntimeFactory.processAllMessages();
+
+		// The pre-staging "pre" is sent then overwritten by the staging "final" (which subsumed
+		// "secret"). Peer's final view is "final"; "secret" never appears in a peer event.
+		assert.equal(map2.get("k"), "final");
+		for (const change of peerChanges) {
+			assert.notEqual(change.newValue, "secret");
+		}
+	});
 });
 
 describe("SharedDirectory squash on resubmit (storage)", () => {
@@ -332,5 +368,21 @@ describe("SharedDirectory squash on resubmit (storage)", () => {
 		assert.equal(dir2.get("only"), "value");
 		assert.equal(peerValueChanges.length, 1);
 		assert.equal(peerValueChanges[0]?.newValue, "value");
+	});
+
+	it("preserves a pre-staging set still in flight when a staging set on the same key is squashed", () => {
+		// Mixed-lifetime case: pre-staging keySet and staging keySets share one
+		// PendingKeyLifetime in the kernel.
+		dir1.set("k", "pre");
+		containerRuntime1.connected = false;
+		dir1.set("k", "secret");
+		dir1.set("k", "final");
+		reconnectAndSquash(containerRuntime1, dataStoreRuntime1);
+		containerRuntimeFactory.processAllMessages();
+
+		assert.equal(dir2.get("k"), "final");
+		for (const change of peerValueChanges) {
+			assert.notEqual(change.newValue, "secret");
+		}
 	});
 });

@@ -338,7 +338,11 @@ describe("SharedCounter", () => {
 			});
 		});
 
-		it("combines multiple pending increments into a single op", () => {
+		// Counter increments are commutative and not subsumable — each pending increment carries
+		// the user's explicit intent. Squash is the identity transform: every staged increment is
+		// resubmitted unchanged, just like a regular reSubmit.
+
+		it("resubmits each staged increment unchanged", () => {
 			containerRuntime1.connected = false;
 			counter1.increment(5);
 			counter1.increment(3);
@@ -346,25 +350,24 @@ describe("SharedCounter", () => {
 			reconnectAndSquash(containerRuntime1, dataStoreRuntime1);
 			containerRuntimeFactory.processAllMessages();
 
-			assert.equal(counter1.value, 7, "local value should equal sum of pending increments");
-			assert.equal(counter2.value, 7, "peer value should converge to summed total");
-			assert.deepEqual(peerIncrements, [7], "peer should observe one combined increment");
+			assert.equal(counter1.value, 7);
+			assert.equal(counter2.value, 7);
+			assert.deepEqual(peerIncrements, [5, 3, -1]);
 		});
 
-		it("emits no op when pending increments sum to zero", () => {
+		it("preserves pre-staging increments still in flight at squash time", () => {
+			// Submit a pre-staging increment while connected (so it's in flight at the runtime
+			// layer but not yet ACKed when we disconnect).
+			counter1.increment(2);
 			containerRuntime1.connected = false;
-			counter1.increment(10);
-			counter1.increment(-10);
+			counter1.increment(5);
+			counter1.increment(-1);
 			reconnectAndSquash(containerRuntime1, dataStoreRuntime1);
 			containerRuntimeFactory.processAllMessages();
 
-			assert.equal(counter1.value, 0);
-			assert.equal(counter2.value, 0);
-			assert.deepEqual(
-				peerIncrements,
-				[],
-				"peer should observe nothing when net delta is zero",
-			);
+			assert.equal(counter1.value, 6);
+			assert.equal(counter2.value, 6);
+			assert.deepEqual(peerIncrements, [2, 5, -1]);
 		});
 
 		it("passes through a single pending increment unchanged", () => {

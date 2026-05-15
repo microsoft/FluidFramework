@@ -211,35 +211,13 @@ export class SharedCounter
 	}
 
 	/**
-	 * Counter increments are commutative and additive, so a batch of pending increments can be collapsed
-	 * into a single increment of the summed amount. We emit the combined op on the first reSubmitSquashed
-	 * call (which corresponds to the head of the pending queue) and drop the rest. If the net increment
-	 * is zero, no op is emitted at all.
+	 * Counter increments are commutative and additive — each pending increment carries the user's
+	 * intent to add that amount to the counter. No increment is "subsumed" by a later one (a later
+	 * `+3` doesn't cancel an earlier `+5`), so the squash on resubmit is the identity transform:
+	 * each pending increment is resubmitted unchanged.
 	 */
 	protected override reSubmitSquashed(content: unknown, localOpMetadata: unknown): void {
-		assertIsIncrementOp(content);
-		assert(typeof localOpMetadata === "number", "localOpMetadata should be a number");
-		const head = this.pendingOps[0];
-		if (head === undefined || head.messageId !== localOpMetadata) {
-			// Already handled in an earlier reSubmitSquashed call for this batch.
-			return;
-		}
-		const total = this.pendingOps.reduce((sum, op) => sum + op.incrementAmount, 0);
-		this.pendingOps.length = 0;
-		if (total === 0) {
-			return;
-		}
-		const newMessageId = this.nextPendingMessageId++;
-		this.pendingOps.push({
-			type: "increment",
-			incrementAmount: total,
-			messageId: newMessageId,
-		});
-		const combinedOp: IIncrementOperation = {
-			type: "increment",
-			incrementAmount: total,
-		};
-		this.submitLocalMessage(combinedOp, newMessageId);
+		this.reSubmitCore(content, localOpMetadata);
 	}
 
 	/**
