@@ -56,6 +56,22 @@ export interface IAttachMessage {
 	 * Initial snapshot of the document (contains ownership)
 	 */
 	snapshot: ITree;
+
+	/**
+	 * Optional identifier used to converge a "race" between multiple clients
+	 * concurrently creating a channel that should resolve to a single instance.
+	 *
+	 * When present, all clients deterministically accept the first attach
+	 * message observed for a given `raceId` and drop subsequent attach messages
+	 * with the same `raceId`. Channel ops addressed to a losing channel id are
+	 * also dropped. See `IFluidDataStoreRuntime.createChannel`'s race overload.
+	 *
+	 * This field is only written when the document schema indicates that all
+	 * collaborators understand it; older clients in mixed sessions never see it.
+	 *
+	 * @alpha
+	 */
+	raceId?: string;
 }
 
 /**

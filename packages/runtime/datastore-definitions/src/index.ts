@@ -23,6 +23,7 @@ export type {
 	IFluidDataStoreRuntimeAlpha,
 	IFluidDataStoreRuntimeEvents,
 	IFluidDataStoreRuntimeInternalConfig,
+	OnRaceLost,
 	IDeltaManagerErased,
 } from "./dataStoreRuntime.js";
 export type {
