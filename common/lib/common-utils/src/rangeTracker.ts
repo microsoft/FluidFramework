@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { cloneDeep } from "lodash";
+import cloneDeep from "lodash.clonedeep";
 
 import { assert } from "./assert.js";
 
