@@ -25,6 +25,7 @@ import {
 	MockFluidDataStoreContext,
 	validateAssertionError,
 } from "@fluidframework/test-runtime-utils/internal";
+import { VisibilityState } from "@fluidframework/runtime-definitions/internal";
 import sinon from "sinon";
 
 import {
@@ -225,6 +226,57 @@ describe("FluidDataStoreRuntime Tests", () => {
 			(await dataStoreRuntime.entryPoint?.get()) === myObj,
 			"entryPoint was not initialized",
 		);
+	});
+
+	describe("createChannel race overload", () => {
+		function makeAttachedRuntime(): FluidDataStoreRuntime {
+			dataStoreContext.containerRuntime = {
+				inStagingMode: false,
+			} as unknown as IContainerRuntimeBase;
+			const rt = createRuntime(dataStoreContext, sharedObjectRegistry);
+			// Force globally-visible state so the race overload is allowed.
+			(rt as unknown as { visibilityState: VisibilityState }).visibilityState =
+				VisibilityState.GloballyVisible;
+			return rt;
+		}
+
+		it("rejects when data store is detached", () => {
+			const rt = createRuntime(dataStoreContext, sharedObjectRegistry);
+			assert.throws(
+				() => rt.createChannel("race-1", "SomeType", {}),
+				(e: IErrorBase) =>
+					e.errorType === ContainerErrorTypes.usageError &&
+					/detached/.test(e.message),
+			);
+		});
+
+		it("mints a channel id derived from the race id", () => {
+			const rt = makeAttachedRuntime();
+			const channel = rt.createChannel("my-race", "SomeType", {});
+			assert(
+				channel.id.startsWith("my-race#"),
+				`channel id ${channel.id} should start with "my-race#"`,
+			);
+		});
+
+		it("rejects duplicate race id from the same client", () => {
+			const rt = makeAttachedRuntime();
+			rt.createChannel("dup-race", "SomeType", {});
+			assert.throws(
+				() => rt.createChannel("dup-race", "SomeType", {}),
+				(e: IErrorBase) =>
+					e.errorType === ContainerErrorTypes.usageError &&
+					/already created a racing channel/.test(e.message),
+			);
+		});
+
+		it("rejects empty race id", () => {
+			const rt = makeAttachedRuntime();
+			assert.throws(
+				() => rt.createChannel("", "SomeType", {}),
+				(e: IErrorBase) => e.errorType === ContainerErrorTypes.usageError,
+			);
+		});
 	});
 });
 
