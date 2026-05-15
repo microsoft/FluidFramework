@@ -1,10 +1,11 @@
 {
-	"extends": "@fluidframework/build-common/ts-common-config.json",
+	"extends": "../../../common/build/build-common/tsconfig.node16.json",
 	"compilerOptions": {
-		"composite": true,
 		"rootDir": "./src",
-		"outDir": "./dist",
-		"baseUrl": ".",
+		"outDir": "./lib",
+		// This package is deprecated; relax the stricter semver-ts checks rather than rewrite the source.
+		"exactOptionalPropertyTypes": false,
+		"noUncheckedIndexedAccess": false,
 	},
 	"include": ["src/**/*"],
 	"exclude": ["src/test/**/*"],

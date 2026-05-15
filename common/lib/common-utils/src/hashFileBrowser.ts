@@ -55,7 +55,7 @@ export async function hashFile(
 	if (crypto.subtle === undefined) {
 		return import(
 			/* webpackChunkName: "FluidFramework-HashFallback" */
-			"./hashFileNode"
+			"./hashFileNode.js"
 		).then(async (m) => m.hashFile(file, algorithm, hashEncoding));
 	}
 

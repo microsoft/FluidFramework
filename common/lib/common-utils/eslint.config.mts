@@ -29,7 +29,13 @@ export default tseslint.config(
 		},
 		languageOptions: {
 			parserOptions: {
-				projectService: true,
+				projectService: false,
+				project: [
+					"./tsconfig.json",
+					"./src/test/mocha/tsconfig.json",
+					"./src/test/jest/tsconfig.cjs.json",
+					"./src/test/types/tsconfig.json",
+				],
 				tsconfigRootDir: import.meta.dirname,
 			},
 		},
