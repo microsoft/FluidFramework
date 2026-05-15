@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { execFileSync } from "node:child_process";
 import { Flags } from "@oclif/core";
 
 import { getArtifactForCommit } from "../../library/azureDevops/getArtifactForCommit.js";
@@ -14,7 +15,7 @@ import {
 	readAnalyzerJsonsFromFileSystem,
 } from "../../library/bundleSize/index.js";
 import { BaseCommand } from "../../library/commands/base.js";
-import { getMergeBaseWithHead, pickFreshestRemote } from "../../library/git/gitCommands.js";
+import { pickFreshestRemote } from "../../library/git/pickFreshestRemote.js";
 
 // Must match the "public" project + build-bundle-size-artifacts.yml (definitionId 48).
 const adoConstants = {
@@ -72,7 +73,9 @@ export default class CheckBundleSize extends BaseCommand<typeof CheckBundleSize>
 			this.log(`Using target ref ${targetRef}. Pass --target <ref> to override.`);
 		}
 
-		const baselineCommit = getMergeBaseWithHead(targetRef);
+		const baselineCommit = execFileSync("git", ["merge-base", targetRef, "HEAD"])
+			.toString()
+			.trim();
 		this.log(`Baseline commit: ${baselineCommit}`);
 
 		// Anonymous reads work for the public ADO project at this command's scale;

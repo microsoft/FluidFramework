@@ -6,16 +6,6 @@
 import { execFileSync } from "node:child_process";
 
 /**
- * Compute the merge-base of `HEAD` and the given ref. The ref may be any
- * argument `git merge-base` accepts (remote branch, local branch, SHA, tag, …).
- *
- * @returns The merge-base commit SHA.
- */
-export function getMergeBaseWithHead(targetRef: string): string {
-	return execFileSync("git", ["merge-base", targetRef, "HEAD"]).toString().trim();
-}
-
-/**
  * A remote ref paired with its locally-resolved tip commit.
  */
 interface RemoteCandidate {
