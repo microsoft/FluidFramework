@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { BundleComparison, BundleSummaries } from "./BundleBuddyTypes.js";
+import type { BundleComparison, BundleSummaries } from "./types.js";
 
 /**
  * Compares all the bundle summaries for a "baseline" and a "compare" bundle.
@@ -54,7 +54,10 @@ export function bundlesContainNoChanges(comparisons: BundleComparison[]): boolea
 	for (const { commonBundleMetrics } of comparisons) {
 		const metrics = Object.values(commonBundleMetrics);
 		for (const { baseline, compare } of metrics) {
-			if (baseline.parsedSize !== compare.parsedSize) {
+			if (
+				baseline.parsedSize !== compare.parsedSize ||
+				baseline.gzipSize !== compare.gzipSize
+			) {
 				return false;
 			}
 		}

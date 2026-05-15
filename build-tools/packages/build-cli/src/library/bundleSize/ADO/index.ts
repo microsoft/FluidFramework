@@ -10,7 +10,6 @@ export {
 	getAnalyzerJsonFromFileSystem,
 	getAnalyzerPathsFromFileSystem,
 } from "./FileSystemBundleFileProvider.js";
-export { getAzureDevopsApi } from "./getAzureDevopsApi.js";
 export {
 	BundleFileData,
 	getAnalyzerFilePathsFromFolder,

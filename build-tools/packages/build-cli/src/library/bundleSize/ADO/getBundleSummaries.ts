@@ -5,7 +5,7 @@
 
 import type { BundleAnalyzerPlugin } from "webpack-bundle-analyzer";
 
-import type { BundleMetricSet, BundleSummaries } from "../BundleBuddyTypes.js";
+import type { BundleMetricSet, BundleSummaries } from "../types.js";
 import type { BundleFileData } from "./getBundleFilePathsFromFolder.js";
 
 export interface GetBundleSummariesFromAnalyzerArgs {
@@ -31,7 +31,10 @@ export async function getBundleSummariesFromAnalyzer(
 		const metrics: BundleMetricSet = new Map();
 		for (const entry of entries) {
 			if (entry.isAsset) {
-				metrics.set(entry.label, { parsedSize: entry.parsedSize });
+				metrics.set(entry.label, {
+					parsedSize: entry.parsedSize,
+					gzipSize: entry.gzipSize,
+				});
 			}
 		}
 
