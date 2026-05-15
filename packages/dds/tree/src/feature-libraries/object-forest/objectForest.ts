@@ -50,10 +50,10 @@ import {
 	type WithBreakable,
 } from "../../util/index.js";
 import { chunkField, defaultChunkPolicy } from "../chunked-forest/index.js";
-import { cursorForMapTreeNode, mapTreeFromCursor } from "../mapTreeCursor.js";
-import { type CursorWithNode, SynchronousCursor } from "../treeCursorUtils.js";
 import { defaultSchemaPolicy, FieldKinds } from "../default-schema/index.js";
+import { cursorForMapTreeNode, mapTreeFromCursor } from "../mapTreeCursor.js";
 import { isFieldInSchema, throwOutOfSchema } from "../schemaChecker.js";
+import { type CursorWithNode, SynchronousCursor } from "../treeCursorUtils.js";
 
 /** A `MapTree` with mutable fields */
 interface MutableMapTree extends MapTree {
@@ -120,8 +120,14 @@ export class ObjectForest implements IEditableForest, WithBreakable {
 		return this.roots.fields.size === 0;
 	}
 
-	public clone(schema: TreeStoredSchemaSubscription, anchors: AnchorSet): ObjectForest {
-		return new ObjectForest(this.breaker, schema, anchors, this.additionalAsserts, this.roots);
+	public clone(schema: TreeStoredSchemaSubscription, breaker?: Breakable): ObjectForest {
+		return new ObjectForest(
+			breaker ?? this.breaker,
+			schema,
+			undefined,
+			this.additionalAsserts,
+			this.roots,
+		);
 	}
 
 	public chunkField(cursor: ITreeCursorSynchronous): TreeChunk[] {

@@ -6,6 +6,10 @@
 import { createEmitter } from "@fluid-internal/client-utils";
 import type { Listenable } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
+import type {
+	OpSpaceCompressedId,
+	SessionSpaceCompressedId,
+} from "@fluidframework/id-compressor";
 import { type TelemetryEventBatcher, measure } from "@fluidframework/telemetry-utils/internal";
 
 import {
@@ -24,10 +28,6 @@ import {
 	type RebaseStatsWithDuration,
 } from "../core/index.js";
 import { hasSome, defineLazyCachedProperty } from "../util/index.js";
-import type {
-	OpSpaceCompressedId,
-	SessionSpaceCompressedId,
-} from "@fluidframework/id-compressor";
 
 export type BranchId = SessionSpaceCompressedId | "main";
 export type EncodedBranchId = OpSpaceCompressedId;

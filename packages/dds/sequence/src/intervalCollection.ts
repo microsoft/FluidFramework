@@ -6,25 +6,28 @@
 /* eslint-disable no-bitwise */
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import { IEvent } from "@fluidframework/core-interfaces";
+import type { IEvent } from "@fluidframework/core-interfaces";
 import {
 	assert,
 	DoublyLinkedList,
 	unreachableCase,
 	type ListNode,
 } from "@fluidframework/core-utils/internal";
-import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
-import {
+import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
+import type {
 	Client,
 	ISegment,
 	LocalReferencePosition,
 	PropertySet,
+	SequencePlace,
+} from "@fluidframework/merge-tree/internal";
+import {
 	ReferenceType,
 	getSlideToSegoff,
 	refTypeIncludesFlag,
 	reservedRangeLabelsKey,
 	Side,
-	SequencePlace,
+	defaultSide,
 	endpointPosAndSide,
 	type ISegmentInternal,
 	createLocalReconnectingPerspective,
@@ -33,12 +36,12 @@ import {
 import { LoggingError, UsageError } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
-import {
+import type {
+	IIntervalCollectionTypeOperationValue,
+	IntervalAddLocalMetadata,
+	IntervalChangeLocalMetadata,
 	IntervalMessageLocalMetadata,
 	SequenceOptions,
-	type IIntervalCollectionTypeOperationValue,
-	type IntervalAddLocalMetadata,
-	type IntervalChangeLocalMetadata,
 } from "./intervalCollectionMapInterfaces.js";
 import {
 	createIdIntervalIndex,
@@ -49,18 +52,21 @@ import {
 	type ISequenceOverlappingIntervalsIndex,
 	type SequenceIntervalIndex,
 } from "./intervalIndex/index.js";
-import {
+import type {
 	CompressedSerializedInterval,
 	ISerializedInterval,
-	IntervalStickiness,
-	IntervalType,
 	SequenceInterval,
 	SequenceIntervalClass,
 	SerializedIntervalDelta,
+} from "./intervals/index.js";
+import {
+	IntervalStickiness,
+	IntervalType,
 	createPositionReferenceFromSegoff,
 	createSequenceInterval,
 	getSerializedProperties,
 } from "./intervals/index.js";
+import type { ISharedSegmentSequence } from "./sequence.js";
 
 export type ISerializedIntervalCollectionV1 = ISerializedInterval[];
 
@@ -71,8 +77,8 @@ export interface ISerializedIntervalCollectionV2 {
 }
 
 function sidesFromStickiness(stickiness: IntervalStickiness) {
-	const startSide = (stickiness & IntervalStickiness.START) !== 0 ? Side.After : Side.Before;
-	const endSide = (stickiness & IntervalStickiness.END) !== 0 ? Side.Before : Side.After;
+	const startSide = (stickiness & IntervalStickiness.START) === 0 ? Side.Before : Side.After;
+	const endSide = (stickiness & IntervalStickiness.END) === 0 ? Side.After : Side.Before;
 
 	return { startSide, endSide };
 }
@@ -145,6 +151,7 @@ export class LocalIntervalCollection {
 	private readonly indexes: Set<SequenceIntervalIndex>;
 
 	constructor(
+		sequence: ISharedSegmentSequence<any>,
 		private readonly client: Client,
 		private readonly label: string,
 		private readonly options: Partial<SequenceOptions>,
@@ -154,9 +161,9 @@ export class LocalIntervalCollection {
 			previousInterval: SequenceIntervalClass,
 		) => void,
 	) {
-		this.overlappingIntervalsIndex = new OverlappingIntervalsIndex(client);
+		this.overlappingIntervalsIndex = new OverlappingIntervalsIndex(sequence);
 		this.idIntervalIndex = createIdIntervalIndex();
-		this.endIntervalIndex = new EndpointIndex(client);
+		this.endIntervalIndex = new EndpointIndex(sequence);
 		this.indexes = new Set([
 			this.overlappingIntervalsIndex,
 			this.idIntervalIndex,
@@ -851,8 +858,9 @@ export class IntervalCollection
 				}
 				break;
 			}
-			default:
+			default: {
 				unreachableCase(type);
+			}
 		}
 	}
 
@@ -901,8 +909,9 @@ export class IntervalCollection
 				);
 				break;
 			}
-			default:
+			default: {
 				unreachableCase(opName);
+			}
 		}
 		const pending = clearEmptyPendingEntry(this.pending, id);
 
@@ -937,21 +946,30 @@ export class IntervalCollection
 	public applyStashedOp(op: IIntervalCollectionTypeOperationValue): void {
 		const { opName, value } = op;
 		const { id, properties } = getSerializedProperties(value);
+		// Serialized ops always include startSide/endSide for future-proofing,
+		// but the original add()/change() call may have used plain numeric
+		// positions. Drop the side when it equals the default so the replayed
+		// call matches the original shape — otherwise assertStickinessEnabled
+		// would treat a plain-number interval as sticky. Stashed-op values
+		// can be deep-frozen by upstream layers (e.g. test mocks), so this is
+		// computed into locals rather than mutating value.
+		const startSide = value.startSide === defaultSide ? undefined : value.startSide;
+		const endSide = value.endSide === defaultSide ? undefined : value.endSide;
 		switch (opName) {
 			case "add": {
 				this.add({
 					id,
 					// Todo: we should improve typing so we know add ops always have start and end
-					start: toSequencePlace(value.start, value.startSide),
-					end: toSequencePlace(value.end, value.endSide),
+					start: toSequencePlace(value.start, startSide),
+					end: toSequencePlace(value.end, endSide),
 					props: properties,
 				});
 				break;
 			}
 			case "change": {
 				this.change(id, {
-					start: toOptionalSequencePlace(value.start, value.startSide),
-					end: toOptionalSequencePlace(value.end, value.endSide),
+					start: toOptionalSequencePlace(value.start, startSide),
+					end: toOptionalSequencePlace(value.end, endSide),
 					props: properties,
 				});
 				break;
@@ -960,8 +978,9 @@ export class IntervalCollection
 				this.removeIntervalById(id);
 				break;
 			}
-			default:
+			default: {
 				throw new Error("unknown ops should not be stashed");
+			}
 		}
 	}
 
@@ -1030,7 +1049,7 @@ export class IntervalCollection
 		return { start, end };
 	}
 
-	public attachGraph(client: Client, label: string) {
+	public attachGraph(sequence: ISharedSegmentSequence<any>, client: Client, label: string) {
 		if (this.attached) {
 			throw new LoggingError("Only supports one Sequence attach");
 		}
@@ -1054,6 +1073,7 @@ export class IntervalCollection
 		}
 
 		this.localCollection = new LocalIntervalCollection(
+			sequence,
 			client,
 			label,
 			this.options,
@@ -1417,8 +1437,8 @@ export class IntervalCollection
 				const { start, end, startSide, endSide } = serializedInterval;
 				newInterval = intervalToChange.modify(
 					"",
-					toOptionalSequencePlace(start, startSide ?? Side.Before),
-					toOptionalSequencePlace(end, endSide ?? Side.Before),
+					toOptionalSequencePlace(start, startSide ?? defaultSide),
+					toOptionalSequencePlace(end, endSide ?? defaultSide),
 					op,
 				);
 				if (isLatestInterval) {
@@ -1661,16 +1681,14 @@ export class IntervalCollection
 
 		const interval: SequenceIntervalClass = this.localCollection.addInterval(
 			id,
-			toSequencePlace(serializedInterval.start, serializedInterval.startSide ?? Side.Before),
-			toSequencePlace(serializedInterval.end, serializedInterval.endSide ?? Side.Before),
+			toSequencePlace(serializedInterval.start, serializedInterval.startSide ?? defaultSide),
+			toSequencePlace(serializedInterval.end, serializedInterval.endSide ?? defaultSide),
 			properties,
 			op,
 		);
 
-		if (interval) {
-			if (this.onDeserialize) {
-				this.onDeserialize(interval);
-			}
+		if (interval && this.onDeserialize) {
+			this.onDeserialize(interval);
 		}
 
 		this.emit("addInterval", interval, local, op);
@@ -1712,7 +1730,7 @@ export class IntervalCollection
 	}
 
 	/**
-	 * @returns an iterator over all intervals in this collection.
+	 * Creates an iterator over all intervals in this collection.
 	 */
 	public [Symbol.iterator](): IntervalCollectionIterator {
 		const iterator = new IntervalCollectionIterator(this);

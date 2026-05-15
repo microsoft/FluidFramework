@@ -102,6 +102,7 @@ async function main(): Promise<void> {
 	print({ name: "Total", total, docTotal, percent: (docTotal / total) * 100 });
 }
 
+// eslint-disable-next-line unicorn/prefer-top-level-await -- This is a script entry point
 main().catch((e) => {
 	console.error("ERROR: unexpected error", JSON.stringify(e, undefined, 2));
 	if (e.stack) {

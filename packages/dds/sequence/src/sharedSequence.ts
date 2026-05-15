@@ -4,17 +4,13 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
-import {
+import type {
 	IChannelAttributes,
 	IFluidDataStoreRuntime,
 	Serializable,
 } from "@fluidframework/datastore-definitions/internal";
-import {
-	BaseSegment,
-	IJSONSegment,
-	ISegment,
-	PropertySet,
-} from "@fluidframework/merge-tree/internal";
+import type { IJSONSegment, ISegment, PropertySet } from "@fluidframework/merge-tree/internal";
+import { BaseSegment } from "@fluidframework/merge-tree/internal";
 
 import { SharedSegmentSequence } from "./sequence.js";
 
@@ -129,6 +125,8 @@ export class SharedSequence<T> extends SharedSegmentSequence<SubSequence<T>> {
 	}
 
 	/**
+	 * Inserts items at the specified position in the sequence.
+	 *
 	 * @param pos - The position to insert the items at.
 	 * @param items - The items to insert.
 	 * @param props - Optional. Properties to set on the inserted items.
@@ -139,6 +137,8 @@ export class SharedSequence<T> extends SharedSegmentSequence<SubSequence<T>> {
 	}
 
 	/**
+	 * Removes items from the sequence in the specified range.
+	 *
 	 * @param start - The inclusive start of the range to remove
 	 * @param end - The exclusive end of the range to remove
 	 */

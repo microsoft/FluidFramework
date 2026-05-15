@@ -12,7 +12,9 @@ import execa from "execa";
 import { Gunzip } from "fflate";
 import globby from "globby";
 import latestVersion from "latest-version";
-import { BaseCommand, getTarballName, readLines } from "../../library/index.js";
+import { BaseCommand } from "../../library/commands/base.js";
+import { getTarballName } from "../../library/package.js";
+import { readLines } from "../../library/text.js";
 
 interface TarballMetadata {
 	name: string;
@@ -178,12 +180,13 @@ async function extractPackageJsonFromTarball(
 	let unzipped: Uint8Array;
 
 	{
-		// eslint-disable-next-line no-return-assign -- assigning the chunk to unzipped is intentional
-		const gunzip = new Gunzip((chunk: Uint8Array) => (unzipped = chunk));
+		const gunzip = new Gunzip((chunk: Uint8Array) => {
+			unzipped = chunk;
+		});
 		gunzip.push(tarball, /* final */ true);
 	}
 	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-	const data = untar(unzipped!);
+	const data = untar(unzipped!.buffer as ArrayBuffer);
 	// eslint-disable-next-line unicorn/prefer-string-slice -- substring is clearer than slice in this case
 	const prefix = data[0].filename.substring(0, data[0].filename.indexOf("/") + 1);
 	const packageJsonText = data.find((f) => f.filename === `${prefix}package.json`)?.fileData;

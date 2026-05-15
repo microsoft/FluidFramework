@@ -4,10 +4,17 @@
  */
 
 import type { Linter } from "eslint";
-import { minimalDeprecated } from "../../../common/build/eslint-config-fluid/flat.mts";
+import { recommended } from "@fluidframework/eslint-config-fluid/flat.mts";
 
 const config: Linter.Config[] = [
-	...minimalDeprecated,
+	...recommended,
+	{
+		rules: {
+			"@typescript-eslint/no-explicit-any": "off",
+			"unicorn/no-array-for-each": "off",
+			"unicorn/prefer-node-protocol": "off",
+		},
+	},
 	{
 		files: ["*.spec.ts", "src/test/**"],
 		rules: {

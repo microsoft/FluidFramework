@@ -4,45 +4,32 @@
  */
 
 import type { Linter } from "eslint";
-import { strict } from "../../../common/build/eslint-config-fluid/flat.mts";
+import { strict } from "@fluidframework/eslint-config-fluid/flat.mts";
 
 const config: Linter.Config[] = [
 	...strict,
 	{
 		rules: {
 			"@typescript-eslint/consistent-indexed-object-style": "off",
+		},
+	},
+	{
+		files: ["**/*.ts"],
+		rules: {
 			"import-x/no-internal-modules": [
 				"error",
 				{
-					"allow": [
+					allow: [
+						// Within Fluid Framework allow import of '/internal' from other FF packages.
+						// Note that `/internal/test**` is still restricted (disallowed) but uses
+						// customCondition of "allow-ff-test-exports" for enforcement.
 						"@fluidframework/*/internal{,/**}",
-						"*/index.js",
-						"@fluidframework/presence/alpha",
-						"@fluidframework/presence/beta",
+
+						// Internal packages may structure their exports arbitrarily, so allow any imports from them.
+						"@fluid-internal/**",
 					],
 				},
 			],
-		},
-	},
-	{
-		files: ["*.spec.ts", "src/test/**"],
-		rules: {
-			"@fluid-internal/fluid/no-unchecked-record-access": "warn",
-			"import-x/no-nodejs-modules": [
-				"error",
-				{
-					"allow": ["node:assert"],
-				},
-			],
-		},
-	},
-	{
-		files: ["**/*.ts", "**/*.tsx", "**/*.mts", "**/*.cts"],
-		languageOptions: {
-			parserOptions: {
-				projectService: false,
-				project: ["./tsconfig.main.json", "./tsconfig.json", "./src/test/tsconfig.json"],
-			},
 		},
 	},
 ];

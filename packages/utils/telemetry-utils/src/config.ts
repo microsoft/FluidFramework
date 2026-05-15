@@ -8,10 +8,11 @@ import type {
 	IConfigProviderBase,
 	ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
+import { LogLevel } from "@fluidframework/core-interfaces";
 import { Lazy } from "@fluidframework/core-utils/internal";
 
 import { createChildLogger, tagCodeArtifacts } from "./logger.js";
-import type { ITelemetryLoggerExt } from "./telemetryTypes.js";
+import type { ITelemetryLoggerExt, TelemetryLoggerExt } from "./telemetryTypes.js";
 
 /**
  * Explicitly typed interface for reading configurations.
@@ -246,14 +247,17 @@ export class CachedConfigProvider implements IConfigProvider {
 				const parsed = stronglyTypedParse(provider?.getRawConfig(name));
 				if (parsed !== undefined) {
 					this.configCache.set(name, parsed);
-					this.logger?.send({
-						category: "generic",
-						eventName: "ConfigRead",
-						...tagCodeArtifacts({
-							configName: name,
-							configValue: JSON.stringify(parsed),
-						}),
-					});
+					this.logger?.send(
+						{
+							category: "generic",
+							eventName: "ConfigRead",
+							...tagCodeArtifacts({
+								configName: name,
+								configValue: JSON.stringify(parsed),
+							}),
+						},
+						LogLevel.info,
+					);
 					return parsed;
 				}
 			}
@@ -269,9 +273,13 @@ export class CachedConfigProvider implements IConfigProvider {
  *
  * @internal
  */
-export interface MonitoringContext<L extends ITelemetryBaseLogger = ITelemetryLoggerExt> {
+export interface MonitoringContext<L extends ITelemetryBaseLogger = TelemetryLoggerExt> {
 	config: IConfigProvider;
-	logger: L;
+	// Since this is an internal context, assume that any external logger type
+	// (`ITelemetryLoggerExt`) is just the internal `TelemetryLoggerExt` type.
+	// `extractTelemetryLoggerExt` can be used to extract the internal type, but
+	// we'll just "cast" it here.
+	logger: L extends ITelemetryLoggerExt ? TelemetryLoggerExt : L;
 }
 
 /**
@@ -280,9 +288,9 @@ export interface MonitoringContext<L extends ITelemetryBaseLogger = ITelemetryLo
  *
  * @internal
  */
-export function loggerIsMonitoringContext<
-	L extends ITelemetryBaseLogger = ITelemetryLoggerExt,
->(obj: L): obj is L & MonitoringContext<L> {
+export function loggerIsMonitoringContext<L extends ITelemetryBaseLogger = TelemetryLoggerExt>(
+	obj: L,
+): obj is L & MonitoringContext<L> {
 	const maybeConfig = obj as Partial<MonitoringContext<L>> | undefined;
 	return isConfigProviderBase(maybeConfig?.config) && maybeConfig?.logger !== undefined;
 }
@@ -292,9 +300,9 @@ export function loggerIsMonitoringContext<
  *
  * @internal
  */
-export function loggerToMonitoringContext<
-	L extends ITelemetryBaseLogger = ITelemetryLoggerExt,
->(logger: L): MonitoringContext<L> {
+export function loggerToMonitoringContext<L extends ITelemetryBaseLogger = TelemetryLoggerExt>(
+	logger: L,
+): MonitoringContext<L> {
 	if (loggerIsMonitoringContext<L>(logger)) {
 		return logger;
 	}
@@ -312,7 +320,7 @@ export function loggerToMonitoringContext<
  *
  * @internal
  */
-export function mixinMonitoringContext<L extends ITelemetryBaseLogger = ITelemetryLoggerExt>(
+export function mixinMonitoringContext<L extends ITelemetryBaseLogger = TelemetryLoggerExt>(
 	logger: L,
 	...configs: (IConfigProviderBase | undefined)[]
 ): MonitoringContext<L> {
@@ -329,7 +337,9 @@ export function mixinMonitoringContext<L extends ITelemetryBaseLogger = ITelemet
 	 */
 	const mc: L & Partial<MonitoringContext<L>> = logger;
 	mc.config = new CachedConfigProvider(logger, ...configs);
-	mc.logger = logger;
+	// Cast is similar to `extractTelemetryLoggerExt` but preserves other
+	// logger types rather than just returning `TelemetryLoggerExt`.
+	mc.logger = logger as L extends ITelemetryLoggerExt ? TelemetryLoggerExt : L;
 	return mc as MonitoringContext<L>;
 }
 

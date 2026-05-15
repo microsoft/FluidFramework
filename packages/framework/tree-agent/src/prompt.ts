@@ -8,11 +8,21 @@ import { NodeKind, Tree, TreeNode } from "@fluidframework/tree";
 import type { ImplicitFieldSchema, TreeMapNode } from "@fluidframework/tree";
 import type { ReadableField } from "@fluidframework/tree/alpha";
 import { getSimpleSchema } from "@fluidframework/tree/alpha";
-import { normalizeFieldSchema } from "@fluidframework/tree/internal";
+import { normalizeFieldSchema, ValueSchema } from "@fluidframework/tree/internal";
 
 import type { Subtree } from "./subtree.js";
 import { generateEditTypesForPrompt } from "./typeGeneration.js";
-import { getFriendlyName, communize, findSchemas } from "./utils.js";
+import {
+	IdentifierCollisionResolver,
+	getFriendlyName,
+	communize,
+	findSchemas,
+} from "./utils.js";
+
+/**
+ * The type name used for handles in generated TypeScript.
+ */
+export const fluidHandleTypeName = "_OpaqueHandle";
 
 /**
  * Produces a "system" prompt for the tree agent, based on the provided subtree.
@@ -28,17 +38,23 @@ export function getPrompt(args: {
 	const mapInterfaceName = "TreeMap";
 	// Inspect the schema to determine what kinds of nodes are possible - this will affect how much information we need to include in the prompt.
 	const rootTypes = [...normalizeFieldSchema(schema).allowedTypeSet];
-	const rootTypeUnion = `${rootTypes.map((t) => getFriendlyName(t)).join(" | ")}`;
+	const allSchemas = findSchemas(schema);
+	const resolver = new IdentifierCollisionResolver();
+	for (const schemaNode of allSchemas) {
+		resolver.resolve(schemaNode);
+	}
+
+	const rootTypeUnion = `${rootTypes.map((t) => resolver.resolve(t) ?? getFriendlyName(t)).join(" | ")}`;
 	let nodeTypeUnion: string | undefined;
 	let hasArrays = false;
 	let hasMaps = false;
+	let hasFluidHandles = false;
 	let exampleObjectName: string | undefined;
-	for (const s of findSchemas(schema)) {
+	for (const s of allSchemas) {
 		if (s.kind !== NodeKind.Leaf) {
+			const friendlyName = resolver.resolve(s);
 			nodeTypeUnion =
-				nodeTypeUnion === undefined
-					? getFriendlyName(s)
-					: `${nodeTypeUnion} | ${getFriendlyName(s)}`;
+				nodeTypeUnion === undefined ? friendlyName : `${nodeTypeUnion} | ${friendlyName}`;
 		}
 
 		switch (s.kind) {
@@ -51,18 +67,30 @@ export function getPrompt(args: {
 				break;
 			}
 			case NodeKind.Object: {
-				exampleObjectName ??= getFriendlyName(s);
+				exampleObjectName ??= resolver.resolve(s);
+				break;
+			}
+			case NodeKind.Leaf: {
+				hasFluidHandles ||= s.info === ValueSchema.FluidHandle;
 				break;
 			}
 			// No default
 		}
 	}
 
-	const stringified = stringifyTree(field);
 	const { schemaText: typescriptSchemaTypes, hasHelperMethods } = generateEditTypesForPrompt(
 		schema,
 		getSimpleSchema(schema),
 	);
+	const fluidHandleType = hasFluidHandles
+		? `/**
+ * Opaque handle type representing a reference to a Fluid object.
+ * This type should not be constructed by generated code.
+ */
+type ${fluidHandleTypeName} = unknown;
+
+`
+		: "";
 	const exampleTypeName =
 		nodeTypeUnion === undefined
 			? undefined
@@ -274,7 +302,7 @@ Finally, double check that the edits would accomplish the user's request (if it 
 The JSON tree adheres to the following Typescript schema:
 
 \`\`\`typescript
-${typescriptSchemaTypes}
+${fluidHandleType}${typescriptSchemaTypes}
 \`\`\`
 
 If the user asks you a question about the tree, you should inspect the state of the tree and answer the question.
@@ -287,10 +315,10 @@ ${
 		? ""
 		: `\nThe application supplied the following additional instructions: ${domainHints}`
 }
-The current state of \`context.root\` (a \`${field === undefined ? "undefined" : getFriendlyName(Tree.schema(field))}\`) is:
+The current state of \`context.root\` (a \`${field === undefined ? "undefined" : resolver.resolve(Tree.schema(field))}\`) is:
 
 \`\`\`JSON
-${stringified}
+${stringifyTree(field, resolver)}
 \`\`\``;
 	return prompt;
 }
@@ -299,7 +327,11 @@ ${stringified}
  * Serializes tree data e.g. to include in a prompt or message.
  * @remarks This includes some extra metadata to make it easier to understand the structure of the tree.
  */
-export function stringifyTree(tree: ReadableField<ImplicitFieldSchema>): string {
+export function stringifyTree(
+	tree: ReadableField<ImplicitFieldSchema>,
+	collisionResolver?: IdentifierCollisionResolver,
+): string {
+	const resolver = collisionResolver ?? new IdentifierCollisionResolver();
 	const typeReplacementKey = "_e944da5a5fd04ea2b8b2eb6109e089ed";
 	const indexReplacementKey = "_27bb216b474d45e6aaee14d1ec267b96";
 	const mapReplacementKey = "_a0d98d22a1c644539f07828d3f064d71";
@@ -312,8 +344,9 @@ export function stringifyTree(tree: ReadableField<ImplicitFieldSchema>): string 
 				const schema = Tree.schema(node);
 				switch (schema.kind) {
 					case NodeKind.Object: {
+						const friendlyName = resolver.resolve(schema);
 						return {
-							[typeReplacementKey]: getFriendlyName(schema),
+							[typeReplacementKey]: friendlyName,
 							[indexReplacementKey]: index,
 							...node,
 						};
@@ -353,15 +386,15 @@ export function stringifyTree(tree: ReadableField<ImplicitFieldSchema>): string 
  * @privateRemarks TODO: How do we keep this in sync with the actual `TreeArrayNode` docs if/when those docs change?
  */
 function getTreeArrayNodeDocumentation(typeName: string): string {
-	return `/** A special type of array which implements 'readonly T[]' (i.e. it supports all read-only JS array methods) and provides custom array mutation APIs. */
-export interface ${typeName}<T> extends ReadonlyArray<T> {
+	return `/** A special type of array which implements 'readonly TRead[]' (i.e. it supports all read-only JS array methods) and provides custom array mutation APIs. When the array has staged types, TRead includes staged types (for reading) while TWrite is restricted to non-staged types (for writing). */
+export interface ${typeName}<TRead, TWrite = TRead> extends ReadonlyArray<TRead> {
 	/**
 	 * Inserts new item(s) at a specified location.
 	 * @param index - The index at which to insert \`value\`.
 	 * @param value - The content to insert.
 	 * @throws Throws if \`index\` is not in the range [0, \`array.length\`).
 	 */
-	insertAt(index: number, ...value: readonly T[]): void;
+	insertAt(index: number, ...value: readonly TWrite[]): void;
 
 	/**
 	 * Removes the item at the specified location.
@@ -428,7 +461,7 @@ export interface ${typeName}<T> extends ReadonlyArray<T> {
 	 * @throws Throws if any of the source index is not in the range [0, \`array.length\`),
 	 * or if the index is not in the range [0, \`array.length\`].
 	 */
-	moveToIndex(destinationGap: number, sourceIndex: number, source?: ${typeName}<T>): void;
+	moveToIndex(destinationGap: number, sourceIndex: number, source?: ${typeName}<TRead, TWrite>): void;
 
 	/**
 	 * Moves the specified items to the desired location within the array.
@@ -477,7 +510,7 @@ export interface ${typeName}<T> extends ReadonlyArray<T> {
 		destinationGap: number,
 		sourceStart: number,
 		sourceEnd: number,
-		source?: ${typeName}<T>,
+		source?: ${typeName}<TRead, TWrite>,
 	): void;
 }`;
 }
@@ -490,8 +523,9 @@ export interface ${typeName}<T> extends ReadonlyArray<T> {
 function getTreeMapNodeDocumentation(typeName: string): string {
 	return `/**
  * A map of string keys to tree objects.
+ * When the map has staged types, TRead includes staged types (for reading) while TWrite is restricted to non-staged types (for writing).
  */
-export interface ${typeName}<T> extends ReadonlyMap<string, T> {
+export interface ${typeName}<TRead, TWrite = TRead> extends ReadonlyMap<string, TRead> {
 	/**
 	 * Adds or updates an entry in the map with a specified \`key\` and a \`value\`.
 	 *
@@ -501,7 +535,7 @@ export interface ${typeName}<T> extends ReadonlyMap<string, T> {
 	 * @remarks
 	 * Setting the value at a key to \`undefined\` is equivalent to calling {@link ${typeName}.delete} with that key.
 	 */
-	set(key: string, value: T | undefined): void;
+	set(key: string, value: TWrite | undefined): void;
 
 	/**
 	 * Removes the specified element from this map by its \`key\`.
@@ -530,7 +564,7 @@ export interface ${typeName}<T> extends ReadonlyMap<string, T> {
 	 * Note: no guarantees are made regarding the order of the values returned.
 	 * If your usage scenario depends on consistent ordering, you will need to sort these yourself.
 	 */
-	values(): IterableIterator<T>;
+	values(): IterableIterator<TRead>;
 
 	/**
 	 * Returns an iterable of key/value pairs for every entry in the map.
@@ -539,7 +573,7 @@ export interface ${typeName}<T> extends ReadonlyMap<string, T> {
 	 * Note: no guarantees are made regarding the order of the entries returned.
 	 * If your usage scenario depends on consistent ordering, you will need to sort these yourself.
 	 */
-	entries(): IterableIterator<[string, T]>;
+	entries(): IterableIterator<[string, TRead]>;
 
 	/**
 	 * Executes the provided function once per each key/value pair in this map.
@@ -550,9 +584,9 @@ export interface ${typeName}<T> extends ReadonlyMap<string, T> {
 	 */
 	forEach(
 		callbackfn: (
-			value: T,
+			value: TRead,
 			key: string,
-			map: ReadonlyMap<string, T>,
+			map: ReadonlyMap<string, TRead>,
 		) => void,
 		thisArg?: any,
 	): void;

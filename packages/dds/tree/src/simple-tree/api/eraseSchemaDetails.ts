@@ -121,3 +121,63 @@ export function eraseSchemaDetailsSubclassable<TNode, ExtraSchemaProperties = un
 	> {
 	return (schema) => schema as never;
 }
+
+/**
+ * The type of an erased schema.
+ * @remarks
+ * Provides an {@link https://www.typescriptlang.org/tsconfig/#isolatedDeclarations | isolatedDeclarations}
+ * compatible way to explicitly type the return value from {@link eraseSchemaDetails}.
+ * @example
+ * ```typescript
+ * export const Square: SquareSchema & ErasedSchema<Square> = eraseSchemaDetails<Square, SquareSchema>()(SquareInternal);
+ * export type Square = ErasedNode<SquareNode, "com.example.Demo">;
+ * ```
+ * @alpha
+ */
+export type ErasedSchema<NodeType extends TreeNode> = TreeNodeSchema<
+	NodeType extends WithType<infer Identifier> ? Identifier : string,
+	NodeKind,
+	NodeType,
+	never,
+	false
+>;
+
+/**
+ * The type of an erased schema's node.
+ * @remarks
+ * Provides a way to concisely and explicitly type the node type for a schema returned from {@link eraseSchemaDetails}.
+ * @example
+ * ```typescript
+ * export const Square: SquareSchema & ErasedSchema<Square> = eraseSchemaDetails<Square, SquareSchema>()(SquareInternal);
+ * export type Square = ErasedNode<SquareNode, "com.example.Demo">;
+ * ```
+ * @alpha
+ */
+export type ErasedNode<TExtra, Identifier extends string> = TExtra &
+	TreeNode &
+	WithType<Identifier>;
+
+/**
+ * The type of a subclassable erased schema.
+ * @remarks
+ * Provides an {@link https://www.typescriptlang.org/tsconfig/#isolatedDeclarations | isolatedDeclarations}
+ * compatible way to explicitly type the return value from {@link eraseSchemaDetailsSubclassable}.
+ * @example
+ * ```typescript
+ * export const SquareSubclassable: SquareSchema &
+ * 	ErasedSchemaSubclassable<SquareNode, "com.example.Demo"> = eraseSchemaDetailsSubclassable<
+ * 	Square,
+ * 	SquareSchema
+ * >()(SquareInternal);
+ *
+ * class SquareSubclass extends SquareSubclassable {}
+ * ```
+ * @alpha
+ */
+export type ErasedSchemaSubclassable<TExtra, Identifier extends string> = TreeNodeSchemaClass<
+	Identifier,
+	NodeKind,
+	ErasedNode<TExtra, Identifier>,
+	never,
+	false
+>;

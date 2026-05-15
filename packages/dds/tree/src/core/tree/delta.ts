@@ -196,10 +196,12 @@ export interface DetachedNodeRename {
 	readonly newId: DetachedNodeId;
 }
 
-/**
- * Represents a list of changes to the nodes in the field.
- * The index of each mark within the range of nodes, before
- * applying any of the changes, is not represented explicitly.
- * It corresponds to the sum of `mark.count` values for all previous marks for which `isAttachMark(mark)` is false.
- */
-export type FieldChanges = readonly Mark[];
+export interface FieldChanges {
+	/**
+	 * Represents a list of changes to the nodes in the field.
+	 * The index of each mark within the range of nodes, before
+	 * applying any of the changes, is not represented explicitly.
+	 * It corresponds to the sum of `mark.count` values for all previous marks for which `isAttachMark(mark)` is false.
+	 */
+	readonly marks: readonly Mark[];
+}

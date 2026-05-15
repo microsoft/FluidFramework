@@ -8,7 +8,6 @@ export {
 	fieldKinds,
 	fieldKindConfigurations,
 	getCodecTreeForModularChangeFormat,
-	type ModularChangeFormatVersion,
 	defaultSchemaPolicy,
 } from "./defaultFieldKinds.js";
 

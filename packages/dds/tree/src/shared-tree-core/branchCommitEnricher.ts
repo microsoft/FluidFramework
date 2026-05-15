@@ -4,9 +4,11 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
+
 import type { GraphCommit } from "../core/index.js";
-import type { ChangeEnricher } from "./changeEnricher.js";
 import { hasSome } from "../util/index.js";
+
+import type { ChangeEnricher } from "./changeEnricher.js";
 
 /**
  * Utility for enriching commits from a {@link Branch} before these commits are applied and submitted.

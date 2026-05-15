@@ -2,11 +2,12 @@
 
 ## Dependencies
 
-This document tracks dependencies that cannot be upgraded to their latest major versions due to technical limitations.
+This document tracks dependencies that are specially managed for technical reasons.
 
 ### Dependencies Blocked from Major Version Upgrades
 
-The following dependencies are pinned to older major versions because newer versions are incompatible with the current CommonJS-based codebase. Most of these packages have migrated to ESM-only in their latest versions.
+The following dependencies are pinned to older major versions because newer versions may be incompatible with the current CommonJS-based codebase. Most of these packages have migrated to ESM-only in their latest versions and compatibility with "module-sync" has not been investigated.
+Migrating to ESM is recommended resolution.
 
 #### ESM-Only Dependencies (Cannot upgrade until build-tools migrates to ESM)
 
@@ -92,41 +93,46 @@ The following dependencies are pinned to older major versions because newer vers
     - Solution: pnpm override `@types/glob>@types/minimatch@~5.1.2` only affects the @types/glob dependency chain
     - Note: Targeted override allows rest of codebase to use modern minimatch/types while maintaining compatibility for glob types
 
-13. **typescript** - Pinned to `~5.4.5`
-    - Latest: `~5.7.x`
-    - Issue: Version 5.9+ has stricter type checking that exposes issues with @octokit dependencies
-    - Error: `Cannot find name 'ErrorOptions'`
-    - Used in: `build-cli` (devDependency)
-
-14. **ts-morph** - Pinned to `^22.x`
-    - Latest: `^27.x`
-    - Issue: Version 27+ requires newer TypeScript lib types
-    - Error: `Cannot find name 'MapIterator'`
-    - Used in: `build-cli`
-
-15. **azure-devops-node-api** - Pinned to `^11.x`
+13. **azure-devops-node-api** - Pinned to `^11.x`
     - Latest: `^15.x`
     - Issue: Version 15 has incompatible type definitions and breaks bundle size analysis tools
     - Error: `Types have separate declarations of a private property` and `Type is missing properties`
-    - Used in: `build-cli`, `bundle-size-tools`
+    - Used in: `build-cli`
     - Note: Pinned at `^11.2.0` to maintain compatibility; upgrade blocked until type issues resolved
 
 #### API/Structure Breaking Changes
 
-16. **eslint** - Pinned to `~8.57.0`
-    - Latest: `~9.x`
-    - Issue: Version 9 uses flat config system incompatible with existing configuration
-    - Error: `ESLint configuration is invalid: Unexpected top-level property "__esModule"`
-    - Used in: `build-cli` (devDependency)
+14. **eslint** - Upgraded to `^9.x` ✅
+    - Latest: `^9.x`
+    - Previously pinned to `~8.57.0` due to flat config migration required
+    - **Note**: Successfully migrated to ESLint 9 flat config system
 
-17. **eslint-config-oclif** - Pinned to `^5.x`
-    - Latest: `^6.x`
-    - Issue: Version 6 requires ESLint 9
-    - Used in: `build-cli`, `version-tools` (devDependency)
+15. **eslint-config-oclif** - Removed ✅
+    - Previously used `eslint-config-oclif@^5.x` and `eslint-config-oclif-typescript@^3.x`
+    - **Note**: Permanently removed. The oclif ESLint configs don't provide oclif-specific rules—they're general Node.js/TypeScript style configs (XO-based) that conflict with `@fluidframework/eslint-config-fluid`. The v6 config redefines the `@typescript-eslint` plugin causing ESLint errors.
+    - Oclif-specific overrides (default exports, etc.) are handled in per-package `eslint.config.mts` files.
 
-18. **npm-check-updates** - Pinned to `^16.x`
+16. **npm-check-updates** - Pinned to `^16.x`
     - Latest: `^19.x`
     - Highest compatible: `^16.x` (v17+ changed internal module structure)
     - Issue: Version 17+ changed internal module structure and removed exported types
     - Error: `Cannot find module 'npm-check-updates/build/src/types/IndexType.js'` and type errors
     - Used in: `build-cli`
+
+### `build-cli` sets skipLibCheck for `vscode-jsonrpc`
+
+`vscode-jsonrpc` (transitive dep via `@github/copilot-sdk`) uses `IterableIterator` in its `LinkedMap` types, which is incompatible with TS 5.6+'s `MapIterator`.
+See https://github.com/microsoft/vscode-languageserver-node/issues/1590 tracking the issue.
+Fix will be in `vscode-jsonrpc` 9.0.0 which has not been released as of 2026-05-10.
+
+### Linked Dependency: ESLint Config
+
+The `@fluidframework/eslint-config-fluid` package is referenced using `link:../common/build/eslint-config-fluid` because the package exists in the root FluidFramework workspace but build-tools is a separate pnpm workspace. When using `link:` protocol, transitive dependencies are **not** automatically installed.
+
+To work around this limitation, the root `package.json` includes a `postinstall` script that runs `pnpm install` inside the linked eslint-config-fluid directory, ensuring its dependencies are available:
+
+```json
+"postinstall": "pnpm install --dir ../common/build/eslint-config-fluid"
+```
+
+This approach keeps the dependency list clean while ensuring all ESLint plugins and parsers required by the shared config are installed. Once `eslint-config-fluid` is published to npm and consumed via a normal version specifier instead of `link:`, this postinstall hook can be removed.

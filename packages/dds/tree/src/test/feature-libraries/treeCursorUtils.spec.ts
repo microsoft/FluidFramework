@@ -24,9 +24,9 @@ import {
 } from "../../feature-libraries/treeCursorUtils.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { adapter } from "../../feature-libraries/treeTextCursor.js";
+import { numberSchema } from "../../simple-tree/index.js";
 import { brand } from "../../util/index.js";
 import { expectEqualFieldPaths, expectEqualPaths } from "../utils.js";
-import { numberSchema } from "../../simple-tree/index.js";
 
 describe("treeCursorUtils", () => {
 	const root: UpPath = {

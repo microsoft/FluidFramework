@@ -31,8 +31,6 @@ describeCompat("PAS Test", "NoCompat", () => {
 	const rowSize = 6;
 	const columnSize = 5;
 
-	before(async () => {});
-
 	/**
 	 * The PerformanceTestWrapper class includes 2 functionalities:
 	 * 1) Store any objects that should not be garbage collected during the benchmark execution (specific for memory tests).
@@ -40,12 +38,15 @@ describeCompat("PAS Test", "NoCompat", () => {
 	 * a. Benchmark Time tests: {@link https://benchmarkjs.com/docs#options} or  {@link BenchmarkOptions}
 	 * b. Benchmark Memory tests: {@link MemoryTestObjectProps}
 	 */
-	benchmarkAll(
-		"Create Table Matrix With SharedStrings",
-		new (class PerformanceTestWrapper implements IBenchmarkParameters {
+	benchmarkAll("Create Table Matrix With SharedStrings", () => {
+		return new (class PerformanceTestWrapper implements IBenchmarkParameters {
 			containerRuntimeFactory = new MockContainerRuntimeFactory();
 			matrix = createLocalMatrix("matrix1", dataStoreRuntime);
 
+			// Every iteration of this benchmark will allocate lots of new SharedString instances
+			// The old ones from the previous iteration will no longer be reachable from the matrix after they are replaced,
+			// but are leaked in the container as Fluid's GC won't collect them for a very long time (much longer than this test will run).
+			// This behavior is undesired and should be fixed if practical.
 			async run(): Promise<void> {
 				this.matrix.insertRows(0, rowSize);
 				this.matrix.insertCols(0, columnSize);
@@ -58,9 +59,6 @@ describeCompat("PAS Test", "NoCompat", () => {
 					}
 				}
 			}
-			async before(): Promise<void> {}
-			beforeIteration(): void {}
-			async after(): Promise<void> {}
-		})(),
-	);
+		})();
+	});
 });

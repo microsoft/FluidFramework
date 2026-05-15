@@ -28,10 +28,9 @@ import type {
 } from "@fluidframework/core-interfaces/internal";
 import type { SessionSpaceCompressedId } from "@fluidframework/id-compressor/internal";
 import { SharedMap } from "@fluidframework/map/internal";
-import {
-	asLegacyAlpha,
-	type IContainerRuntimeBase,
-	type StageControlsInternal,
+import type {
+	IContainerRuntimeBase,
+	StageControlsInternal,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	encodeHandleForSerialization,
@@ -59,7 +58,7 @@ class DataObjectWithStagingMode extends DataObject {
 			? -1
 			: DataObjectWithStagingMode.instanceCount++;
 
-	private readonly containerRuntimeExp = asLegacyAlpha(this.context.containerRuntime);
+	private readonly containerRuntimeExp = this.context.containerRuntime;
 	get DataObjectWithStagingMode(): this {
 		return this;
 	}
@@ -396,7 +395,7 @@ function assertNotConsistent(
 }
 
 /**
- * @returns Whether the given client has received an edit from some client (including itself) with the given prefix.
+ * Whether the given client has received an edit from some client (including itself) with the given prefix.
  */
 function hasEdit(client: Client, prefix: string): boolean {
 	return Object.keys(client.dataObject.enumerateDataSynchronous()).some((k) =>

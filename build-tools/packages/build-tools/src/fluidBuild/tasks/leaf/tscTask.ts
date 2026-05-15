@@ -4,15 +4,19 @@
  */
 
 import * as assert from "node:assert";
-import { type BigIntStats, type Stats, existsSync, lstatSync } from "node:fs";
+import { type BigIntStats, existsSync, lstatSync, type Stats } from "node:fs";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import isEqual from "lodash.isequal";
-import type * as tsTypes from "typescript";
+import type * as ts54Types from "typescript-5.4";
+import type * as ts59Types from "typescript-5.9";
 
-import { type TscUtil, getTscUtils } from "../../tscUtils";
+import { getTscUtils, type TscUtil } from "../../tscUtils";
 import { getInstalledPackageVersion } from "../taskUtils";
 import { LeafTask, LeafWithDoneFileTask } from "./leafTask";
+
+type tsTypes = typeof ts54Types | typeof ts59Types;
+type tsParsedCommandLine = ts54Types.ParsedCommandLine | ts59Types.ParsedCommandLine;
 
 interface ITsBuildInfo {
 	program: {
@@ -30,7 +34,7 @@ interface ITsBuildInfo {
 export class TscTask extends LeafTask {
 	private _tsBuildInfoFullPath: string | undefined;
 	private _tsBuildInfo: ITsBuildInfo | undefined;
-	private _tsConfig: tsTypes.ParsedCommandLine | undefined;
+	private _tsConfig: tsParsedCommandLine | undefined;
 	private _tsConfigFullPath: string | undefined;
 	private _projectReference: TscTask | undefined;
 	private _sourceStats: (Stats | BigIntStats)[] | undefined;
@@ -222,7 +226,7 @@ export class TscTask extends LeafTask {
 		return this.checkTsConfig(tsBuildInfoFileDirectory, tsBuildInfo, config);
 	}
 
-	private remapSrcDeclFile(fullPath: string, config: tsTypes.ParsedCommandLine): string {
+	private remapSrcDeclFile(fullPath: string, config: tsParsedCommandLine): string {
 		if (!this._sourceStats) {
 			this._sourceStats = config ? config.fileNames.map((v) => lstatSync(v)) : [];
 		}
@@ -239,7 +243,7 @@ export class TscTask extends LeafTask {
 	private checkTsConfig(
 		tsBuildInfoFileDirectory: string,
 		tsBuildInfo: ITsBuildInfo,
-		options: tsTypes.ParsedCommandLine,
+		options: tsParsedCommandLine,
 	): boolean {
 		const configFileFullPath = this.configFileFullPath;
 		if (!configFileFullPath) {
@@ -272,7 +276,7 @@ export class TscTask extends LeafTask {
 		return true;
 	}
 
-	private readTsConfig(): tsTypes.ParsedCommandLine | undefined {
+	private readTsConfig(): tsParsedCommandLine | undefined {
 		if (this._tsConfig == undefined) {
 			const parsedCommand = this.parsedCommandLine;
 			if (!parsedCommand) {
@@ -305,7 +309,7 @@ export class TscTask extends LeafTask {
 				config,
 				ts.sys,
 				configDir,
-				commandOptions,
+				tscUtils.castOptionsUnionToIntersection(commandOptions),
 				configFileFullPath,
 			);
 
@@ -337,7 +341,7 @@ export class TscTask extends LeafTask {
 		return this._tsConfigFullPath;
 	}
 
-	private get parsedCommandLine(): tsTypes.ParsedCommandLine | undefined {
+	private get parsedCommandLine(): tsParsedCommandLine | undefined {
 		const parsedCommand = this.getTscUtils().parseCommandLine(this.command);
 		if (!parsedCommand) {
 			this.traceError(`ts fail to parse command line ${this.command}`);
@@ -387,7 +391,7 @@ export class TscTask extends LeafTask {
 	}
 
 	private remapOutFile(
-		options: tsTypes.ParsedCommandLine,
+		options: tsParsedCommandLine,
 		directory: string,
 		fileName: string,
 	): string {
@@ -470,8 +474,24 @@ export class TscTask extends LeafTask {
 
 // Base class for tasks that are dependent on a tsc compile
 export abstract class TscDependentTask extends LeafWithDoneFileTask {
+	private _configFileFullPaths: string[] | undefined;
+
 	protected get recheckLeafIsUpToDate(): boolean {
 		return true;
+	}
+
+	/**
+	 * All config files to track: task-specific configs plus any additional config files from the task definition.
+	 */
+	protected get configFileFullPaths(): string[] {
+		if (this._configFileFullPaths === undefined) {
+			this._configFileFullPaths = [
+				...this.taskSpecificConfigFiles,
+				...this.additionalConfigFiles,
+			];
+		}
+
+		return this._configFileFullPaths;
 	}
 
 	protected async getDoneFileContent(): Promise<string | undefined> {
@@ -516,6 +536,15 @@ export abstract class TscDependentTask extends LeafWithDoneFileTask {
 			return undefined;
 		}
 	}
-	protected abstract get configFileFullPaths(): string[];
+
+	/**
+	 * Config files specific to this task type (e.g., .eslintrc for eslint, package.json for generate-entrypoints).
+	 *
+	 * @remarks
+	 * Ideally, implementations should include any parent or extended configs (e.g., configs referenced
+	 * via `extends`). Some task implementations (like biome) do this, but others (like eslint) currently
+	 * only track the local config file.
+	 */
+	protected abstract get taskSpecificConfigFiles(): string[];
 	protected abstract getToolVersion(): Promise<string>;
 }

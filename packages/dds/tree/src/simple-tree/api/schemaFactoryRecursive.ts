@@ -13,8 +13,8 @@ import type {
 	InsertableTreeNodeFromImplicitAllowedTypes,
 	TreeNodeSchemaClass,
 } from "../core/index.js";
-import type { InsertableObjectFromSchemaRecord } from "../node-kinds/index.js";
 import type { ImplicitFieldSchema } from "../fieldSchema.js";
+import type { InsertableObjectFromSchemaRecord } from "../node-kinds/index.js";
 
 /**
  * Compile time check for validity of a recursive schema.

@@ -16,7 +16,6 @@ import {
 } from "@fluidframework/fluid-static/internal";
 import { createChildLogger } from "@fluidframework/telemetry-utils/legacy";
 import type { IFluidContainer } from "fluid-framework";
-import React from "react";
 // eslint-disable-next-line import-x/no-internal-modules -- This is the pattern prescribed by React
 import { createRoot } from "react-dom/client";
 

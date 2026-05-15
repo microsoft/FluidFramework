@@ -66,7 +66,6 @@ export { StackyIterator } from "./stackyIterator.js";
 export {
 	asMutable,
 	balancedReduce,
-	clone,
 	compareSets,
 	getOrAddEmptyToMap,
 	getOrCreate,
@@ -89,14 +88,15 @@ export {
 	objectToMap,
 	invertMap,
 	oneFromIterable,
-	type Named,
-	compareNamed,
 	disposeSymbol,
 	type IDisposable,
 	capitalize,
 	assertValidRangeIndices,
 	transformObjectMap,
+	compareNumbers,
+	comparePartialNumbers,
 	compareStrings,
+	comparePartialStrings,
 	find,
 	count,
 	getLast,
@@ -153,7 +153,12 @@ export {
 	breakingClass,
 } from "./breakable.js";
 
-export { type TupleBTree, newTupleBTree, mergeTupleBTrees } from "./bTreeUtils.js";
+export {
+	type TupleBTree,
+	newTupleBTree,
+	mergeTupleBTrees,
+	createTupleComparator,
+} from "./bTreeUtils.js";
 
 export { cloneWithReplacements } from "./cloneWithReplacements.js";
 

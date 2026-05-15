@@ -10,8 +10,8 @@ import {
 } from "@fluid-internal/client-utils";
 import { assert } from "@fluidframework/core-utils/internal";
 import { getW3CData, promiseRaceWithWinner } from "@fluidframework/driver-base/internal";
-import { ISummaryHandle, ISummaryTree } from "@fluidframework/driver-definitions";
-import {
+import type { ISummaryHandle, ISummaryTree } from "@fluidframework/driver-definitions";
+import type {
 	IDocumentStorageService,
 	IDocumentStorageServicePolicies,
 	ISummaryContext,
@@ -19,20 +19,23 @@ import {
 	ISnapshotTree,
 	IVersion,
 } from "@fluidframework/driver-definitions/internal";
-import {
+import type {
 	ITelemetryLoggerExt,
 	MonitoringContext,
+} from "@fluidframework/telemetry-utils/internal";
+import {
 	PerformanceEvent,
 	createChildMonitoringContext,
 } from "@fluidframework/telemetry-utils/internal";
 
-import { ICache, InMemoryCache } from "./cache.js";
-import { INormalizedWholeSnapshot, IWholeFlatSnapshot } from "./contracts.js";
-import { GitManager } from "./gitManager.js";
-import { IRouterliciousDriverPolicies } from "./policies.js";
+import type { ICache } from "./cache.js";
+import { InMemoryCache } from "./cache.js";
+import type { INormalizedWholeSnapshot, IWholeFlatSnapshot } from "./contracts.js";
+import type { GitManager } from "./gitManager.js";
+import type { IRouterliciousDriverPolicies } from "./policies.js";
 import { convertWholeFlatSnapshotToSnapshotTreeAndBlobs } from "./r11sSnapshotParser.js";
-import { IR11sResponse } from "./restWrapper.js";
-import { ISummaryUploadManager } from "./storageContracts.js";
+import type { IR11sResponse } from "./restWrapper.js";
+import type { ISummaryUploadManager } from "./storageContracts.js";
 import {
 	convertSnapshotAndBlobsToSummaryTree,
 	evalBlobsAndTrees,
@@ -100,9 +103,9 @@ export class WholeSummaryDocumentStorageService implements IDocumentStorageServi
 						this.getCacheKey(latestSnapshotId),
 					);
 
-					const networkSnapshotP = !this.driverPolicies?.enableDiscovery
-						? this.fetchSnapshotTree(latestSnapshotId, false, "getVersions")
-						: this.fetchSnapshotTree(latestSnapshotId, true, "getVersions");
+					const networkSnapshotP = this.driverPolicies?.enableDiscovery
+						? this.fetchSnapshotTree(latestSnapshotId, true, "getVersions")
+						: this.fetchSnapshotTree(latestSnapshotId, false, "getVersions");
 
 					const promiseRaceWinner = await promiseRaceWithWinner([
 						cachedSnapshotP.catch(() => undefined),
@@ -356,10 +359,10 @@ export class WholeSummaryDocumentStorageService implements IDocumentStorageServi
 
 	private async updateBlobsCache(blobs: Map<string, ArrayBuffer>): Promise<void> {
 		const blobCachePutPs: Promise<void>[] = [];
-		blobs.forEach((value, id) => {
+		for (const [id, value] of blobs.entries()) {
 			const cacheKey = this.getCacheKey(id);
 			blobCachePutPs.push(this.blobCache.put(cacheKey, value));
-		});
+		}
 		await Promise.all(blobCachePutPs);
 	}
 

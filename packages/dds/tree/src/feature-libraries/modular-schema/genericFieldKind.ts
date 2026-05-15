@@ -13,6 +13,7 @@ import {
 	Multiplicity,
 	type RevisionReplacer,
 } from "../../core/index.js";
+import { brandConst } from "../../util/index.js";
 
 import type {
 	FieldChangeDelta,
@@ -24,11 +25,10 @@ import type {
 	RelevantRemovedRootsFromChild,
 	ToDelta,
 } from "./fieldChangeHandler.js";
+import { FlexFieldKind } from "./fieldKind.js";
 import { makeGenericChangeCodec } from "./genericFieldKindCodecs.js";
 import { newGenericChangeset, type GenericChangeset } from "./genericFieldKindTypes.js";
 import type { NodeId } from "./modularChangeTypes.js";
-import { FlexFieldKind } from "./fieldKind.js";
-import { brandConst } from "../../util/index.js";
 
 /**
  * {@link FieldChangeHandler} implementation for {@link GenericChangeset}.
@@ -60,7 +60,7 @@ export const genericChangeHandler: FieldChangeHandler<GenericChangeset> = {
 			markList.push({ count: 1, fields: deltaFromChild(nodeChange) });
 			nodeIndex += 1;
 		}
-		return { local: markList };
+		return { local: { marks: markList } };
 	},
 	relevantRemovedRoots,
 	isEmpty: (change: GenericChangeset): boolean => change.length === 0,
@@ -97,7 +97,6 @@ function rebaseGenericChange(
 	const rebased: GenericChangeset = new BTree();
 	let nextIndex = 0;
 
-	// eslint-disable-next-line no-constant-condition
 	while (true) {
 		const newEntry = change.getPairOrNextHigher(nextIndex);
 		const baseEntry = over.getPairOrNextHigher(nextIndex);

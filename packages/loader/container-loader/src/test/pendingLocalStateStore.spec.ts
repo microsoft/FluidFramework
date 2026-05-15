@@ -238,6 +238,30 @@ describe("PendingLocalStateStore", () => {
 				"Expected UsageError for different URLs",
 			);
 		});
+
+		it("should accept URLs that differ only by trailing slash", () => {
+			const store = new PendingLocalStateStore<string>();
+			const stateWithTrailingSlash = createMockContainerState("http://test.com/doc/");
+			const stateWithoutTrailingSlash = createMockContainerState("http://test.com/doc");
+
+			// Should not throw - URLs should be normalized and treated as equal
+			store.set("key1", JSON.stringify(stateWithTrailingSlash));
+			store.set("key2", JSON.stringify(stateWithoutTrailingSlash));
+
+			assert.strictEqual(store.size, 2);
+		});
+
+		it("should accept URLs when first has no trailing slash and second has trailing slash", () => {
+			const store = new PendingLocalStateStore<string>();
+			const stateWithoutTrailingSlash = createMockContainerState("http://test.com/doc");
+			const stateWithTrailingSlash = createMockContainerState("http://test.com/doc/");
+
+			// Should not throw - URLs should be normalized and treated as equal
+			store.set("key1", JSON.stringify(stateWithoutTrailingSlash));
+			store.set("key2", JSON.stringify(stateWithTrailingSlash));
+
+			assert.strictEqual(store.size, 2);
+		});
 	});
 
 	describe("ops deduplication", () => {

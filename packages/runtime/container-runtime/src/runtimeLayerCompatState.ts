@@ -5,6 +5,7 @@
 
 import {
 	generation,
+	LayerCompatibilityPolicyWindowMonths,
 	type ILayerCompatDetails,
 	type ILayerCompatSupportRequirements,
 } from "@fluid-internal/client-utils";
@@ -59,10 +60,15 @@ export const runtimeCompatDetailsForLoader: ILayerCompatDetails = {
  */
 export const loaderSupportRequirementsForRuntime: ILayerCompatSupportRequirements = {
 	/**
-	 * Minimum generation that Loader must be at to be compatible with Runtime. Note that 0 is used here so
-	 * that Loader layers before the introduction of the layer compatibility enforcement are compatible.
+	 * Minimum generation that Loader must be at to be compatible with this Runtime. This is calculated
+	 * based on the LayerCompatibilityPolicyWindowMonths.RuntimeLoader value which defines how many months old can
+	 * the Loader layer be compared to the Runtime layer for them to still be considered compatible.
+	 * The minimum valid generation value is 0.
 	 */
-	minSupportedGeneration: 0,
+	minSupportedGeneration: Math.max(
+		0,
+		runtimeCoreCompatDetails.generation - LayerCompatibilityPolicyWindowMonths.RuntimeLoader,
+	),
 	/**
 	 * The features that the Loader must support to be compatible with Runtime.
 	 */
@@ -87,10 +93,16 @@ export const runtimeCompatDetailsForDataStore: ILayerCompatDetails = {
  */
 export const dataStoreSupportRequirementsForRuntime: ILayerCompatSupportRequirements = {
 	/**
-	 * Minimum generation that DataStore must be at to be compatible with Runtime. Note that 0 is used here so
-	 * that DataStore layers before the introduction of the layer compatibility enforcement are compatible.
+	 * Minimum generation that DataStore must be at to be compatible with this Runtime. This is calculated
+	 * based on the LayerCompatibilityPolicyWindowMonths.RuntimeDataStore value which defines how many months old can
+	 * the DataStore layer be compared to the Runtime layer for them to still be considered compatible.
+	 * The minimum valid generation value is 0.
 	 */
-	minSupportedGeneration: 0,
+	minSupportedGeneration: Math.max(
+		0,
+		runtimeCoreCompatDetails.generation -
+			LayerCompatibilityPolicyWindowMonths.RuntimeDataStore,
+	),
 	/**
 	 * The features that the DataStore must support to be compatible with Runtime.
 	 */

@@ -5,7 +5,7 @@
 
 import { SessionStorageModelLoader, StaticCodeLoader } from "@fluid-example/example-utils";
 
-import React from "react";
+import { createElement } from "react";
 import ReactDOM from "react-dom";
 
 import {
@@ -44,7 +44,7 @@ async function createContainerAndRenderInElement(element: HTMLElement): Promise<
 
 	// Render it
 	ReactDOM.render(
-		React.createElement(DataObjectGridAppView, {
+		createElement(DataObjectGridAppView, {
 			model: model.dataObjectGrid,
 			getDirectUrl: (itemId: string) => `?item=${itemId}#${id}`,
 		}),

@@ -2,27 +2,16 @@ You are a helpful assistant collaborating with the user on a document. The docum
 The JSON tree adheres to the following Typescript schema:
 
 ```typescript
-// A test map - Note: this map has custom user-defined properties directly on it.
-type TestMap = Map<string, number> & {
-    // Readonly map metadata
-    readonly metadata: Readonly<Record<string, string | number>>;
-};
-
-interface TestArrayItem {
-    value: number;
-    readonly metadata: {
-        id: string;
-        tags: string[];
-    };
-    // Formats the number value with optional configuration
-    formatValue(radix: number, formatter?: (n: number) => string): Promise<string>;
-}
-
-type TestArray = TestArrayItem[];
+/**
+ * Opaque handle type representing a reference to a Fluid object.
+ * This type should not be constructed by generated code.
+ */
+type _OpaqueHandle = unknown;
 
 interface Obj {
     map: TestMap;
     array: TestArray;
+    handle?: _OpaqueHandle;
     // Processes map data with a date range, filter function, and optional configuration
     processData(startDate: Date, endDate?: Date, filter: (value: number) => boolean, options?: {
         mode: ("sync" | "async");
@@ -36,6 +25,24 @@ interface Obj {
         });
         items: TestArrayItem[];
     }>;
+}
+
+// A test map - Note: this map has custom user-defined properties directly on it.
+type TestMap = Map<string, number> & {
+    // Readonly map metadata
+    readonly metadata: Readonly<Record<string, string | number>>;
+};
+
+type TestArray = TreeArray<(TestArrayItem | string), TestArrayItem>;
+
+interface TestArrayItem {
+    value: number;
+    readonly metadata: {
+        id: string;
+        tags: string[];
+    };
+    // Formats the number value with optional configuration
+    formatValue(radix: number, formatter?: (n: number) => string): Promise<string>;
 }
 
 ```
@@ -158,15 +165,15 @@ However, write operations (e.g. index assignment, `push`, `pop`, `splice`, etc.)
 Instead, you must use the methods on the following interface to mutate the array:
 
 ```typescript
-/** A special type of array which implements 'readonly T[]' (i.e. it supports all read-only JS array methods) and provides custom array mutation APIs. */
-export interface TreeArray<T> extends ReadonlyArray<T> {
+/** A special type of array which implements 'readonly TRead[]' (i.e. it supports all read-only JS array methods) and provides custom array mutation APIs. When the array has staged types, TRead includes staged types (for reading) while TWrite is restricted to non-staged types (for writing). */
+export interface TreeArray<TRead, TWrite = TRead> extends ReadonlyArray<TRead> {
 	/**
 	 * Inserts new item(s) at a specified location.
 	 * @param index - The index at which to insert `value`.
 	 * @param value - The content to insert.
 	 * @throws Throws if `index` is not in the range [0, `array.length`).
 	 */
-	insertAt(index: number, ...value: readonly T[]): void;
+	insertAt(index: number, ...value: readonly TWrite[]): void;
 
 	/**
 	 * Removes the item at the specified location.
@@ -233,7 +240,7 @@ export interface TreeArray<T> extends ReadonlyArray<T> {
 	 * @throws Throws if any of the source index is not in the range [0, `array.length`),
 	 * or if the index is not in the range [0, `array.length`].
 	 */
-	moveToIndex(destinationGap: number, sourceIndex: number, source?: TreeArray<T>): void;
+	moveToIndex(destinationGap: number, sourceIndex: number, source?: TreeArray<TRead, TWrite>): void;
 
 	/**
 	 * Moves the specified items to the desired location within the array.
@@ -282,7 +289,7 @@ export interface TreeArray<T> extends ReadonlyArray<T> {
 		destinationGap: number,
 		sourceStart: number,
 		sourceEnd: number,
-		source?: TreeArray<T>,
+		source?: TreeArray<TRead, TWrite>,
 	): void;
 }
 ```
@@ -301,8 +308,9 @@ Instead, you must use the methods on the following interface to mutate the map:
 ```typescript
 /**
  * A map of string keys to tree objects.
+ * When the map has staged types, TRead includes staged types (for reading) while TWrite is restricted to non-staged types (for writing).
  */
-export interface TreeMap<T> extends ReadonlyMap<string, T> {
+export interface TreeMap<TRead, TWrite = TRead> extends ReadonlyMap<string, TRead> {
 	/**
 	 * Adds or updates an entry in the map with a specified `key` and a `value`.
 	 *
@@ -312,7 +320,7 @@ export interface TreeMap<T> extends ReadonlyMap<string, T> {
 	 * @remarks
 	 * Setting the value at a key to `undefined` is equivalent to calling {@link TreeMap.delete} with that key.
 	 */
-	set(key: string, value: T | undefined): void;
+	set(key: string, value: TWrite | undefined): void;
 
 	/**
 	 * Removes the specified element from this map by its `key`.
@@ -341,7 +349,7 @@ export interface TreeMap<T> extends ReadonlyMap<string, T> {
 	 * Note: no guarantees are made regarding the order of the values returned.
 	 * If your usage scenario depends on consistent ordering, you will need to sort these yourself.
 	 */
-	values(): IterableIterator<T>;
+	values(): IterableIterator<TRead>;
 
 	/**
 	 * Returns an iterable of key/value pairs for every entry in the map.
@@ -350,7 +358,7 @@ export interface TreeMap<T> extends ReadonlyMap<string, T> {
 	 * Note: no guarantees are made regarding the order of the entries returned.
 	 * If your usage scenario depends on consistent ordering, you will need to sort these yourself.
 	 */
-	entries(): IterableIterator<[string, T]>;
+	entries(): IterableIterator<[string, TRead]>;
 
 	/**
 	 * Executes the provided function once per each key/value pair in this map.
@@ -361,9 +369,9 @@ export interface TreeMap<T> extends ReadonlyMap<string, T> {
 	 */
 	forEach(
 		callbackfn: (
-			value: T,
+			value: TRead,
 			key: string,
-			map: ReadonlyMap<string, T>,
+			map: ReadonlyMap<string, TRead>,
 		) => void,
 		thisArg?: any,
 	): void;

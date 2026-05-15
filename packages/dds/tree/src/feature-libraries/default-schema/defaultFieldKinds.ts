@@ -5,12 +5,14 @@
 
 import { fail } from "@fluidframework/core-utils/internal";
 
+import type { CodecTree } from "../../codec/index.js";
 import {
 	type DeltaDetachedNodeId,
 	type FieldKindIdentifier,
 	forbiddenFieldKindIdentifier,
 	Multiplicity,
 } from "../../core/index.js";
+import { identifierFieldIdentifier } from "../fieldKindIdentifiers.js";
 import {
 	type FieldChangeDelta,
 	type FieldChangeHandler,
@@ -19,16 +21,14 @@ import {
 	type FieldKindConfigurationEntry,
 	FlexFieldKind,
 	type FullSchemaPolicy,
+	ModularChangeFormatVersion,
 	type ToDelta,
 	referenceFreeFieldChangeRebaser,
 } from "../modular-schema/index.js";
 import { optional, required } from "../optional-field/index.js";
+import { sequence } from "../sequence-field/index.js";
 
 import { noChangeCodecFamily } from "./noChangeCodecs.js";
-import type { CodecTree } from "../../codec/index.js";
-import { brand, type Brand } from "../../util/index.js";
-import { identifierFieldIdentifier } from "../fieldKindIdentifiers.js";
-import { sequence } from "../sequence-field/index.js";
 
 /**
  * ChangeHandler that only handles no-op / identity changes.
@@ -107,9 +107,9 @@ export const forbidden: Forbidden = new FlexFieldKind(
 export const fieldKindConfigurations: ReadonlyMap<
 	ModularChangeFormatVersion,
 	FieldKindConfiguration
-> = new Map([
+> = new Map<ModularChangeFormatVersion, FieldKindConfiguration>([
 	[
-		brand(3),
+		ModularChangeFormatVersion.v3,
 		new Map<FieldKindIdentifier, FieldKindConfigurationEntry>([
 			[required.identifier, { kind: required, formatVersion: 2 }],
 			[optional.identifier, { kind: optional, formatVersion: 2 }],
@@ -119,7 +119,7 @@ export const fieldKindConfigurations: ReadonlyMap<
 		]),
 	],
 	[
-		brand(4),
+		ModularChangeFormatVersion.v4,
 		new Map<FieldKindIdentifier, FieldKindConfigurationEntry>([
 			[required.identifier, { kind: required, formatVersion: 2 }],
 			[optional.identifier, { kind: optional, formatVersion: 2 }],
@@ -129,7 +129,7 @@ export const fieldKindConfigurations: ReadonlyMap<
 		]),
 	],
 	[
-		brand(5),
+		ModularChangeFormatVersion.v5,
 		new Map<FieldKindIdentifier, FieldKindConfigurationEntry>([
 			[required.identifier, { kind: required, formatVersion: 2 }],
 			[optional.identifier, { kind: optional, formatVersion: 2 }],
@@ -140,7 +140,6 @@ export const fieldKindConfigurations: ReadonlyMap<
 	],
 ]);
 
-export type ModularChangeFormatVersion = Brand<3 | 4 | 5, "ModularChangeFormatVersion">;
 export function getCodecTreeForModularChangeFormat(
 	version: ModularChangeFormatVersion,
 ): CodecTree {

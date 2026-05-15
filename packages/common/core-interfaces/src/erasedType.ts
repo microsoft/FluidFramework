@@ -13,13 +13,30 @@
  * allowing code outside of a package to have a reference/handle to something in the package in a type safe way without the package having to publicly export the types of the object.
  * This should not be confused with the more specific IFluidHandle which is also named after this design pattern.
  *
+ * As this is a class and not just an interface, to match derived types, the
+ * declarations for any two derivatives must come from the same source - the
+ * same package version. If a type must cross package boundaries, as may be the
+ * case for cross layer types, the derived type should pick a specific version
+ * of core-interfaces to import ErasedType from. Exact versions are best, but
+ * as security best practice, use ~ specification. Consumers are expected to
+ * use a package manager that will produce consistency over minor patches.
+ * A change in version should be considered a breaking change.
+ *
  * Recommended usage is to use `interface` instead of `type` so tooling (such as tsc and refactoring tools)
  * uses the type name instead of expanding it.
  *
  * @example
+ * package.json:
+ * ```json
+ *   "dependencies": {
+ *     "@fluidframework/erased-type-v1": "npm:@fluidframework/core-interfaces@~2.0.0"
+ *   }
+ * ```
+ * source.ts:
  * ```typescript
+ * import { ErasedType as ErasedTypeV1 } from "@fluidframework/erased-type-v1";
  * // public sealed type
- * export interface ErasedMyType extends ErasedType<"myPackage.MyType"> {}
+ * export interface ErasedMyType extends ErasedTypeV1<"myPackage.MyType"> {}
  * // internal type
  * export interface MyType {
  * 	example: number;
@@ -35,6 +52,7 @@
  *
  * Do not use this class with `instanceof`: this will always be false at runtime,
  * but the compiler may think it's true in some cases.
+ *
  * @privateRemarks
  * For this pattern to work well it needs to be difficult for a user of the erased type to
  * implicitly use something other than a instance received from the package as an instance of the erased type in type safe code.
@@ -57,7 +75,7 @@
  * @sealed
  * @public
  */
-export abstract class ErasedType<out Name = unknown> {
+export declare abstract class ErasedType<out Name = unknown> {
 	/**
 	 * Compile time only marker to make type checking more strict.
 	 * This method will not exist at runtime and accessing it is invalid.
@@ -70,31 +88,34 @@ export abstract class ErasedType<out Name = unknown> {
 	/**
 	 * This class should never exist at runtime, so make it un-constructable.
 	 */
-	private constructor() {}
+	private constructor();
 
 	/**
 	 * Since this class is a compile time only type brand, `instanceof` will never work with it.
-	 * This `Symbol.hasInstance` implementation ensures that `instanceof` will error if used,
-	 * and in TypeScript 5.3 and newer will produce a compile time error if used.
+	 * This `Symbol.hasInstance` declaration (no definition) ensures that `instanceof` will
+	 * produce `ReferenceError` if used at runtime. And in TypeScript 5.3 and newer will produce
+	 * a compile time error if used.
 	 */
-	public static [Symbol.hasInstance](value: never): value is never {
-		throw new Error(
-			"ErasedType is a compile time type brand not a real class that can be used with `instanceof` at runtime.",
-		);
-	}
+	public static [Symbol.hasInstance](value: never): value is never;
 }
 
 /**
  * Used to mark a `@sealed` interface in a strongly typed way to prevent external implementations.
+ *
  * @remarks
  * This is an alternative to {@link ErasedType} which is more ergonomic to implement in the case where the implementation can extend `ErasedTypeImplementation`.
  *
  * Users of interfaces extending this should never refer to anything about this class:
  * migrating the type branding to another mechanism, like {@link ErasedType} should be considered a non-breaking change.
+ *
+ * @see {@link ErasedType} for version compatibility notes.
+ *
  * @privateRemarks
  * Implement interfaces which extend this by sub-classing {@link ErasedTypeImplementation}.
  *
  * This class should only be a `type` package export, preventing users from extending it directly.
+ * But since {@link ErasedTypeImplementation} does extend it, an implementation
+ * of the constructor must be provided, unlike {@link ErasedType}.
  *
  * Since {@link ErasedTypeImplementation} is exported as `@internal`, this restricts implementations of the sealed interfaces to users of `@internal` APIs, which should be anything within this release group.
  * Any finer grained restrictions can be done as documentation, but not type enforced.

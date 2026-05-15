@@ -16,8 +16,8 @@ import {
 	parsePackageSelectionFlags,
 	selectAndFilterPackages,
 } from "./filter.js";
-import { type PackageSelectionDefault, filterFlags, selectionFlags } from "./flags.js";
-import { BaseCommand } from "./library/index.js";
+import { filterFlags, type PackageSelectionDefault, selectionFlags } from "./flags.js";
+import { BaseCommand } from "./library/commands/base.js";
 
 /**
  * Commands that run operations per project.

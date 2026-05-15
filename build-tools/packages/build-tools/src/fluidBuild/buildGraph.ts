@@ -3,29 +3,29 @@
  * Licensed under the MIT License.
  */
 
+import * as assert from "assert";
 import type { AsyncPriorityQueue } from "async";
+import registerDebug from "debug";
 import chalk from "picocolors";
 import { Spinner } from "picospinner";
 import * as semver from "semver";
-
-import * as assert from "assert";
-import registerDebug from "debug";
 import type { GitRepo } from "../common/gitRepo";
 import { defaultLogger } from "../common/logging";
 import type { Package } from "../common/npmPackage";
 import type { Timer } from "../common/timer";
 import type { BuildContext } from "./buildContext";
+import { BuildMetrics } from "./buildMetrics";
 import { BuildResult, summarizeBuildResult } from "./buildResult";
 import { FileHashCache } from "./fileHashCache";
 import type { IFluidBuildConfig } from "./fluidBuildConfig";
 import {
+	getDefaultTaskDefinition,
+	getTaskDefinitions,
+	normalizeGlobalTaskDefinitions,
 	type TaskDefinition,
 	type TaskDefinitions,
 	type TaskDefinitionsOnDisk,
 	type TaskFileDependencies,
-	getDefaultTaskDefinition,
-	getTaskDefinitions,
-	normalizeGlobalTaskDefinitions,
 } from "./fluidTaskDefinitions";
 import { options } from "./options";
 import { Task, type TaskExec } from "./tasks/task";
@@ -49,6 +49,7 @@ class TaskStats {
 class BuildGraphContext implements BuildContext {
 	public readonly fileHashCache = new FileHashCache();
 	public readonly taskStats = new TaskStats();
+	public readonly buildMetrics = new BuildMetrics();
 	public readonly failedTaskLines: string[] = [];
 	public readonly fluidBuildConfig: IFluidBuildConfig;
 	public readonly repoRoot: string;
@@ -144,6 +145,13 @@ export class BuildPackage {
 			};
 		}
 		return undefined;
+	}
+
+	/**
+	 * Get additional config files specified in the task definition for incremental tracking.
+	 */
+	public getAdditionalConfigFiles(taskName: string): readonly string[] {
+		return this.getTaskDefinition(taskName)?.files?.additionalConfigFiles ?? [];
 	}
 
 	private createTask(taskName: string, pendingInitDep: Task[]): Task | undefined {
@@ -574,6 +582,10 @@ export class BuildGraph {
 		} finally {
 			this.context.workerPool?.reset();
 		}
+	}
+
+	public get buildMetrics(): BuildMetrics {
+		return this.context.buildMetrics;
 	}
 
 	public get numSkippedTasks(): number {

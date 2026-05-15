@@ -18,10 +18,11 @@ import {
 } from "../../../feature-libraries/optional-field/optionalFieldCodecs.js";
 import { brand } from "../../../util/index.js";
 import { takeJsonSnapshot, useSnapshotDirectory } from "../../snapshots/index.js";
-import { TestNodeId } from "../../testNodeId.js";
-import { Change } from "./optionalFieldUtils.js";
 import { TestChange } from "../../testChange.js";
+import { TestNodeId } from "../../testNodeId.js";
 import { createSnapshotCompressor, testIdCompressor } from "../../utils.js";
+
+import { Change } from "./optionalFieldUtils.js";
 
 function generateTestChangesets(
 	idCompressor: IIdCompressor,
@@ -69,6 +70,7 @@ export function testSnapshots(): void {
 
 		const baseContext = {
 			originatorId: snapshotCompressor.localSessionId,
+			isSummary: false,
 			revision: undefined,
 			idCompressor: testIdCompressor,
 		};
@@ -80,7 +82,7 @@ export function testSnapshots(): void {
 				const codec = family.resolve(version);
 				for (const { name, change } of changesets) {
 					it(name, () => {
-						const encoded = codec.json.encode(change, {
+						const encoded = codec.encode(change, {
 							baseContext,
 							encodeNode: (node) => TestNodeId.encode(node, baseContext),
 							decodeNode: (node) => TestNodeId.decode(node, baseContext),
