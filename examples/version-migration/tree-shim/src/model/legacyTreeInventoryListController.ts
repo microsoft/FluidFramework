@@ -4,11 +4,11 @@
  */
 
 import { EventEmitter } from "@fluid-example/example-utils";
+import type { ISharedTree } from "@fluid-experimental/tree";
 import {
 	BuildNode,
 	Change,
 	EagerCheckout,
-	SharedTree as LegacySharedTree,
 	StablePlace,
 	StableRange,
 	TraitLabel,
@@ -69,7 +69,7 @@ export class LegacyTreeInventoryItem
 }
 
 export class LegacyTreeInventoryListController extends EventEmitter implements IInventoryList {
-	public static initializeTree(tree: LegacySharedTree): void {
+	public static initializeTree(tree: ISharedTree): void {
 		const inventoryNode: BuildNode = {
 			definition: "inventory",
 			traits: {
@@ -126,7 +126,7 @@ export class LegacyTreeInventoryListController extends EventEmitter implements I
 
 	private readonly _inventoryItems = new Map<string, LegacyTreeInventoryItem>();
 
-	public constructor(private readonly _tree: LegacySharedTree) {
+	public constructor(private readonly _tree: ISharedTree) {
 		super();
 		// We must use a checkout in order to get "viewChange" events - it doesn't change any of the rest of our usage though.
 		const checkout = new EagerCheckout(this._tree);
