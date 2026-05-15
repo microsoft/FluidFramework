@@ -130,15 +130,15 @@ export default class CheckBundleSize extends BaseCommand<typeof CheckBundleSize>
 		});
 
 		const baselineJsons = extractAnalyzerJsonsFromArtifact(artifactContents);
-		const prJsons = await readAnalyzerJsonsFromFileSystem(localReportPath);
+		const compareJsons = await readAnalyzerJsonsFromFileSystem(localReportPath);
 
-		if (baselineJsons.size === 0 && prJsons.size === 0) {
+		if (baselineJsons.size === 0 && compareJsons.size === 0) {
 			this.error(
 				"No bundles to compare — baseline artifact and local bundle reports are both empty.",
 			);
 		}
 
-		const comparison = compareJsonReportsByPackage(baselineJsons, prJsons);
+		const comparison = compareJsonReportsByPackage(baselineJsons, compareJsons);
 		const changeLines = formatComparison(comparison);
 
 		if (changeLines.length === 0) {
