@@ -6,6 +6,9 @@
 /**
  * This library contains common utility functions and classes used by the Fluid Framework.
  *
+ * @deprecated This package is deprecated. Its functionality has moved to the
+ * `@fluid-internal/client-utils` package; consumers should migrate there.
+ *
  * @packageDocumentation
  */
 
