@@ -47,44 +47,30 @@ async function getRecentBuilds(
 }
 
 /**
- * Looks up the build for `commit` in `builds` and validates that it has an id,
- * is completed, and succeeded. Returns the build id on success, or a
- * human-readable error explaining why no usable build was found.
+ * Find the build for `commit` in `builds` and validate that it has an id,
+ * is completed, and succeeded.
+ *
+ * @returns The build id. Throws with a human-readable message when no usable
+ * build is found.
  */
-function findBuildIdForCommit(
-	builds: Build[],
-	commit: string,
-): { kind: "found"; buildId: number } | { kind: "error"; error: string } {
+function findBuildIdForCommit(builds: Build[], commit: string): number {
 	const build = builds.find((b) => b.sourceVersion === commit);
 
 	if (build === undefined) {
-		return { kind: "error", error: `No build found for commit ${commit}` };
+		throw new Error(`No build found for commit ${commit}`);
 	}
-
 	if (build.id === undefined) {
-		return { kind: "error", error: `Build for commit ${commit} does not have a build id` };
+		throw new Error(`Build for commit ${commit} does not have a build id`);
 	}
-
 	if (build.status !== BuildStatus.Completed) {
-		return { kind: "error", error: `Build for commit ${commit} has not yet completed.` };
+		throw new Error(`Build for commit ${commit} has not yet completed.`);
 	}
-
 	if (build.result !== BuildResult.Succeeded) {
-		return {
-			kind: "error",
-			error: `Build for commit ${commit} did not succeed.`,
-		};
+		throw new Error(`Build for commit ${commit} did not succeed.`);
 	}
 
-	return { kind: "found", buildId: build.id };
+	return build.id;
 }
-
-/**
- * Result of looking up an artifact for a target commit on an ADO pipeline.
- */
-export type ArtifactForCommitResult =
-	| { kind: "found"; contents: ArtifactContents }
-	| { kind: "error"; error: string };
 
 export interface GetArtifactForCommitArgs {
 	/** A connection to the ADO API. */
@@ -101,34 +87,25 @@ export interface GetArtifactForCommitArgs {
 
 /**
  * Look up the build for `commit` on the given ADO pipeline and return the
- * contents of one of its artifacts. Returns a discriminated union: on success,
- * the artifact's {@link ArtifactContents}; on failure, a human-readable error
- * string covering missing/incomplete/failed builds and missing artifacts.
+ * contents of one of its artifacts.
+ *
+ * @returns The artifact's {@link ArtifactContents}. Throws with a
+ * human-readable message when no usable build is found (missing, incomplete,
+ * failed) or the artifact can't be downloaded.
  */
 export async function getArtifactForCommit(
 	args: GetArtifactForCommitArgs,
-): Promise<ArtifactForCommitResult> {
+): Promise<ArtifactContents> {
 	const { adoApi, artifactName, commit, definitionId, project } = args;
 
 	const builds = await getRecentBuilds(adoApi, project, definitionId);
-
-	const buildLookup = findBuildIdForCommit(builds, commit);
-	if (buildLookup.kind === "error") {
-		return buildLookup;
-	}
+	const buildId = findBuildIdForCommit(builds, commit);
 
 	try {
-		const contents = await downloadArtifact(
-			adoApi,
-			project,
-			buildLookup.buildId,
-			artifactName,
-		);
-		return { kind: "found", contents };
+		return await downloadArtifact(adoApi, project, buildId, artifactName);
 	} catch (e) {
-		return {
-			kind: "error",
-			error: `Build for commit ${commit} did not publish artifact "${artifactName}": ${e instanceof Error ? e.message : String(e)}`,
-		};
+		throw new Error(`Could not download artifact "${artifactName}" for commit ${commit}`, {
+			cause: e,
+		});
 	}
 }

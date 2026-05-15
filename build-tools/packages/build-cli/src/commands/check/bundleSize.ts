@@ -126,7 +126,7 @@ export default class CheckBundleSize extends BaseCommand<typeof CheckBundleSize>
 		// Anonymous reads work for the public ADO project at this command's scale;
 		// automated consumers authenticate at the library layer.
 		const adoApi = getAzureDevopsApi(undefined, adoConstants.orgUrl);
-		const artifactResult = await getArtifactForCommit({
+		const artifactContents = await getArtifactForCommit({
 			adoApi,
 			artifactName: adoConstants.artifactName,
 			commit: baselineCommit,
@@ -134,11 +134,7 @@ export default class CheckBundleSize extends BaseCommand<typeof CheckBundleSize>
 			project: adoConstants.projectName,
 		});
 
-		if (artifactResult.kind === "error") {
-			this.error(artifactResult.error);
-		}
-
-		const baselineJsons = extractAnalyzerJsonsFromArtifact(artifactResult.contents);
+		const baselineJsons = extractAnalyzerJsonsFromArtifact(artifactContents);
 		const prJsons = await readAnalyzerJsonsFromFileSystem(localReportPath);
 
 		if (baselineJsons.size === 0 && prJsons.size === 0) {
