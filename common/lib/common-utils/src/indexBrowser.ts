@@ -10,7 +10,7 @@
  */
 
 export { assert } from "./assert.js";
-export { fromBase64ToUtf8, fromUtf8ToBase64, toUtf8 } from "./base64Encoding.js";
+export { fromBase64ToUtf8, fromUtf8ToBase64, toUtf8 } from "./base64EncodingBrowser.js";
 export {
 	bufferToString,
 	isArrayBuffer,
