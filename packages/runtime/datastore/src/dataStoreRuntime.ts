@@ -43,7 +43,7 @@ import type {
 	ISnapshotTree,
 	ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
-import { buildSnapshotTree } from "@fluidframework/driver-utils/internal";
+import { buildSnapshotTree, readAndParse } from "@fluidframework/driver-utils/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 import {
 	type ISummaryTreeWithStats,
@@ -158,6 +158,12 @@ export interface ISharedObjectRegistry {
 	// is async or we need a new API to split the synchronous vs. asynchronous creation.
 	get(name: string): IChannelFactory | undefined;
 }
+
+/**
+ * Blob key under which the data store runtime stores its race-id loser->winner
+ * redirect table in summaries.
+ */
+const racesBlobKey = ".races";
 
 /**
  * The common URL prefix used by legacy DDS type strings.
@@ -533,6 +539,18 @@ export class FluidDataStoreRuntime
 			}
 		}
 
+		// Race-id v1: rehydrate the loser->winner redirect table from summary.
+		// Until this async read completes, ops addressed to historical loser
+		// channel ids may transiently be applied. In practice this matters only
+		// for sessions where (a) a prior race resolved and (b) late ops to the
+		// loser are still being received — both rare. A follow-up will gate
+		// op processing on this load completing.
+		if (tree?.blobs?.[racesBlobKey] !== undefined) {
+			void this.hydrateRacesFromSummary(tree).catch((error) => {
+				this.logger.sendErrorEvent({ eventName: "RaceSummaryLoadFailed" }, error);
+			});
+		}
+
 		this.entryPoint = new FluidObjectHandle<FluidObject>(
 			new LazyPromise(async () => provideEntryPoint(this)),
 			"",
@@ -806,6 +824,44 @@ export class FluidDataStoreRuntime
 			}
 		}
 		return undefined;
+	}
+
+	/**
+	 * Read the `.races` summary blob and rehydrate the `loserToWinner` map.
+	 * See constructor for the v1 caveat that this is best-effort.
+	 */
+	private async hydrateRacesFromSummary(tree: ISnapshotTree): Promise<void> {
+		const blobId = tree.blobs[racesBlobKey];
+		if (blobId === undefined) {
+			return;
+		}
+		const payload = await readAndParse<{ loserToWinner: [string, string][] }>(
+			this.dataStoreContext.storage,
+			blobId,
+		);
+		if (payload?.loserToWinner !== undefined) {
+			for (const [loser, winner] of payload.loserToWinner) {
+				if (!this.loserToWinner.has(loser)) {
+					this.loserToWinner.set(loser, winner);
+				}
+			}
+		}
+	}
+
+	/**
+	 * Serialize the loser->winner redirect table for inclusion in summaries.
+	 * Returns undefined if there's nothing to persist (keeps summaries small
+	 * and avoids touching back-compat for data stores that never race).
+	 */
+	private serializeRaces(): string | undefined {
+		if (this.loserToWinner.size === 0) {
+			return undefined;
+		}
+		const entries: [string, string][] = [];
+		for (const [loser, winner] of this.loserToWinner) {
+			entries.push([loser, winner]);
+		}
+		return JSON.stringify({ loserToWinner: entries });
 	}
 
 	private createChannelContext(channel: IChannel): void {
@@ -1312,6 +1368,10 @@ export class FluidDataStoreRuntime
 				summaryBuilder.addWithStats(contextId, contextSummary);
 			},
 		);
+		const racesPayload = this.serializeRaces();
+		if (racesPayload !== undefined) {
+			summaryBuilder.addBlob(racesBlobKey, racesPayload);
+		}
 		return summaryBuilder.getSummaryTree();
 	}
 
