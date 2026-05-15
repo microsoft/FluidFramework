@@ -10,12 +10,11 @@ import { getAzureDevopsApi } from "../../library/azureDevops/getAzureDevopsApi.j
 import {
 	compareJsonReportsByPackage,
 	extractAnalyzerJsonsFromArtifact,
-	getMergeBaseWithHead,
 	type PackageComparison,
-	pickFreshestCanonicalRemote,
 	readAnalyzerJsonsFromFileSystem,
 } from "../../library/bundleSize/index.js";
 import { BaseCommand } from "../../library/commands/base.js";
+import { getMergeBaseWithHead, pickFreshestRemote } from "../../library/git/gitCommands.js";
 
 // Must match the "public" project + build-bundle-size-artifacts.yml (definitionId 48).
 const adoConstants = {
@@ -62,12 +61,13 @@ export default class CheckBundleSize extends BaseCommand<typeof CheckBundleSize>
 
 		// Auto-detect targets `main` on the canonical remote; `--target <ref>` overrides.
 		const branch = "main";
+		const canonicalUrl = /(^|[/:])microsoft\/fluidframework(\.git)?$/i;
 		let targetRef: string;
 		if (target !== undefined) {
 			targetRef = target;
 			this.log(`Using explicit target ref ${target}.`);
 		} else {
-			const remote = pickFreshestCanonicalRemote(branch) ?? "origin";
+			const remote = pickFreshestRemote(branch, (url) => canonicalUrl.test(url)) ?? "origin";
 			targetRef = `${remote}/${branch}`;
 			this.log(`Using target ref ${targetRef}. Pass --target <ref> to override.`);
 		}

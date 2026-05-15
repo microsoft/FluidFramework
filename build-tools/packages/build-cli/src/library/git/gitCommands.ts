@@ -16,32 +16,27 @@ export function getMergeBaseWithHead(targetRef: string): string {
 }
 
 /**
- * A canonical-remote ref paired with its locally-resolved tip commit.
+ * A remote ref paired with its locally-resolved tip commit.
  */
-interface CanonicalCandidate {
+interface RemoteCandidate {
 	name: string;
 	ref: string;
 	tip: string;
 }
 
 /**
- * List remotes that point at the canonical `microsoft/FluidFramework`
- * repository.
+ * List every remote configured in the local git repo.
  *
- * Match is case-insensitive and tolerant of a trailing `.git`, covering both
- * HTTPS (`https://github.com/microsoft/FluidFramework[.git]`) and SSH
- * (`git@github.com:microsoft/FluidFramework[.git]`) remote URL forms.
- *
- * @returns The matching remotes in `.git/config` order, or an empty array if
- * none match.
+ * @returns The configured remotes in `.git/config` order, or an empty array if
+ * none are configured.
  */
-function findCanonicalRemotes(): { name: string; url: string }[] {
+function listRemotes(): { name: string; url: string }[] {
 	// Read every `remote.<name>.url` config entry. `--all` returns every match
 	// (otherwise `--regexp` returns only the first); `--show-names` includes
 	// the key so the remote name can be extracted.
 	// Exit codes from `git config get --regexp`:
 	//   0   = at least one match
-	//   1   = no matches (e.g. clone has no canonical remote configured)
+	//   1   = no matches (e.g. clone has no remotes configured)
 	//   any other = the subcommand itself failed — most likely git < 2.46
 	//               (`get` is not a recognized subcommand on older versions).
 	// Treat status 1 as a clean "no matches" and reserve the targeted "upgrade
@@ -60,22 +55,19 @@ function findCanonicalRemotes(): { name: string; url: string }[] {
 		const detail = error instanceof Error ? error.message : String(error);
 		throw new Error(
 			`Failed to read remote URLs via \`git config get --regexp\` (introduced in git 2.46). ` +
-				`Upgrade git, or pass --target <ref> to skip remote auto-detection.\n` +
+				`Upgrade git to enable remote auto-detection.\n` +
 				`Underlying error: ${detail}`,
 		);
 	}
 	const line = /^remote\.(.+)\.url\s+(.+)$/;
-	const canonical = /(^|[/:])microsoft\/fluidframework(\.git)?$/i;
-	const matches: { name: string; url: string }[] = [];
+	const remotes: { name: string; url: string }[] = [];
 	for (const raw of output.split("\n")) {
 		const match = line.exec(raw);
 		if (match === null) continue;
 		const [, name, url] = match;
-		if (canonical.test(url)) {
-			matches.push({ name, url });
-		}
+		remotes.push({ name, url });
 	}
-	return matches;
+	return remotes;
 }
 
 /**
@@ -135,8 +127,8 @@ function isAncestor(ancestor: string, descendant: string): boolean {
  * one winner; equal tips don't dominate each other, and truly divergent
  * histories (rare for `main`) produce multiple winners.
  */
-function pickFreshest(candidates: CanonicalCandidate[]): CanonicalCandidate[] {
-	function hasStrictlyNewerPeer(candidate: CanonicalCandidate): boolean {
+function pickFreshest(candidates: RemoteCandidate[]): RemoteCandidate[] {
+	function hasStrictlyNewerPeer(candidate: RemoteCandidate): boolean {
 		return candidates.some((other) => {
 			if (other === candidate) return false;
 			if (other.tip === candidate.tip) return false; // ties don't dominate
@@ -149,27 +141,29 @@ function pickFreshest(candidates: CanonicalCandidate[]): CanonicalCandidate[] {
 }
 
 /**
- * Pick the canonical remote (one pointing at `microsoft/FluidFramework`) whose
- * `<name>/<branch>` is freshest locally.
+ * From the remotes configured in the local repo whose URL matches `filter`,
+ * pick the one whose `<name>/<branch>` is freshest locally.
  *
  * Remotes whose `<name>/<branch>` doesn't resolve locally are dropped. Among
  * the rest, pick the tip that isn't a strict ancestor of any other's; ties
  * (identical or divergent tips) resolve to the first candidate in config order.
  *
- * @returns The selected remote's name, or `undefined` if no canonical remote is
- * configured or none have a locally-resolvable `<name>/<branch>`.
+ * @returns The selected remote's name, or `undefined` if no remote matches
+ * `filter` or none have a locally-resolvable `<name>/<branch>`.
  */
-export function pickFreshestCanonicalRemote(branch: string): string | undefined {
-	const canonicals = findCanonicalRemotes();
+export function pickFreshestRemote(
+	branch: string,
+	filter: (url: string) => boolean,
+): string | undefined {
+	const eligible = listRemotes().filter((r) => filter(r.url));
 
-	if (canonicals.length === 0) {
-		console.log(`No remote found pointing at microsoft/FluidFramework.`);
+	if (eligible.length === 0) {
 		return undefined;
 	}
 
-	const candidates: CanonicalCandidate[] = [];
+	const candidates: RemoteCandidate[] = [];
 	const skipped: string[] = [];
-	for (const remote of canonicals) {
+	for (const remote of eligible) {
 		const ref = `${remote.name}/${branch}`;
 		let tip: string | undefined;
 		try {
@@ -191,15 +185,11 @@ export function pickFreshestCanonicalRemote(branch: string): string | undefined 
 	}
 
 	if (candidates.length === 0) {
-		console.log(
-			`Found remote(s) pointing at microsoft/FluidFramework but none of [${skipped.join(
-				", ",
-			)}] are fetched locally.`,
-		);
+		console.log(`No eligible remote has [${skipped.join(", ")}] fetched locally.`);
 		return undefined;
 	}
 
-	let freshest: CanonicalCandidate[];
+	let freshest: RemoteCandidate[];
 	try {
 		freshest = pickFreshest(candidates);
 	} catch (error) {
@@ -214,7 +204,7 @@ export function pickFreshestCanonicalRemote(branch: string): string | undefined 
 	}
 	const selected = freshest[0];
 
-	console.log(`Remotes pointing at microsoft/FluidFramework:`);
+	console.log(`Eligible remotes:`);
 	for (const ref of skipped) {
 		console.log(`  ${ref} — not fetched locally; skipped`);
 	}

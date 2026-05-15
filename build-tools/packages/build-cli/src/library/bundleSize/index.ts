@@ -14,4 +14,3 @@ export {
 	BundlesComparison,
 	PackageComparison,
 } from "./types.js";
-export { getMergeBaseWithHead, pickFreshestCanonicalRemote } from "./utilities/index.js";
