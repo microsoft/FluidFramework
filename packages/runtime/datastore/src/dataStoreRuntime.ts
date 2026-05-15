@@ -29,6 +29,7 @@ import type {
 	IFluidDataStoreRuntime,
 	IFluidDataStoreRuntimeEvents,
 	IDeltaManagerErased,
+	OnRaceLost,
 } from "@fluidframework/datastore-definitions/internal";
 import {
 	type IClientDetails,
@@ -250,6 +251,12 @@ function initializePendingOpCount(): { value: number } {
 	};
 }
 
+interface RaceEntry {
+	localChannelId: string;
+	onLost?: OnRaceLost;
+	status: "racing" | "resolved";
+}
+
 /**
  * Base data store class
  * @legacy @beta
@@ -331,6 +338,27 @@ export class FluidDataStoreRuntime
 
 	private readonly contexts = new Map<string, IChannelContext>();
 	private readonly pendingAttach = new Set<string>();
+
+	/**
+	 * Tracks locally-initiated channel "races" by race id. Used to resolve
+	 * concurrent createChannel calls deterministically across clients.
+	 *
+	 * See `createChannel`'s race overload.
+	 *
+	 * @remarks
+	 * v1 design note: this is in-memory only. On reload, the resolution state
+	 * is reconstructed from `loserToWinner` (rehydrated from summary).
+	 */
+	private readonly raceEntries = new Map<string, RaceEntry>();
+
+	/**
+	 * Loser channel id -> winner channel id. Channel ops addressed to any
+	 * loser channel id are dropped deterministically by every client.
+	 *
+	 * Persisted in the `.races` summary blob (see TODO in `summarize`) so that
+	 * mid-session joiners drop late ops to historical losers.
+	 */
+	private readonly loserToWinner = new Map<string, string>();
 
 	private readonly deferredAttached = new Deferred<void>();
 	private readonly localChannelContextQueue = new Map<string, LocalChannelContextBase>();
@@ -673,10 +701,45 @@ export class FluidDataStoreRuntime
 		this.identifyLocalChangeInSummarizer("DDSCreatedInSummarizer", id, type);
 	}
 
-	public createChannel(idArg: string | undefined, type: string): IChannel {
+	public createChannel(
+		idArg: string | undefined,
+		type: string,
+		raceOptions?: { onLost?: OnRaceLost },
+	): IChannel {
 		let id: string;
+		const raceId: string | undefined = raceOptions !== undefined ? idArg : undefined;
 
-		if (idArg === undefined) {
+		if (raceOptions !== undefined) {
+			// Race overload: idArg is the race id, not the channel id. Each
+			// racing client mints its own channel id; the race id is the
+			// shared convergence key.
+			if (idArg === undefined || idArg.length === 0) {
+				throw new UsageError(
+					"createChannel race overload requires a non-empty raceId as the first argument",
+				);
+			}
+			// Detached / staging-mode races are not supported in v1 — the
+			// race-resolution mechanism is rooted in attach-op sequencing,
+			// which only happens once the data store is globally visible.
+			if (this.visibilityState !== VisibilityState.GloballyVisible) {
+				throw new UsageError(
+					"createChannel race overload is not supported while the data store is detached",
+				);
+			}
+			if (this.inStagingMode) {
+				throw new UsageError(
+					"createChannel race overload is not supported in staging mode",
+				);
+			}
+			if (this.raceEntries.has(raceId!)) {
+				throw new UsageError(
+					`createChannel race overload: this client has already created a racing channel for raceId "${raceId}"`,
+				);
+			}
+			// Mint a locally-unique channel id derived from raceId for
+			// readability. The runtime treats this as an opaque unique id.
+			id = `${raceId}#${uuid()}`;
+		} else if (idArg === undefined) {
 			/**
 			 * Return uuid if short-ids are explicitly disabled via feature flags.
 			 */
@@ -717,9 +780,32 @@ export class FluidDataStoreRuntime
 
 		const channel = factory.create(this, id);
 		this.createChannelContext(channel);
+		if (raceId !== undefined) {
+			const entry: RaceEntry = {
+				localChannelId: id,
+				status: "racing",
+			};
+			if (raceOptions?.onLost !== undefined) {
+				entry.onLost = raceOptions.onLost;
+			}
+			this.raceEntries.set(raceId, entry);
+		}
 		// Channels (DDS) should not be created in summarizer client.
 		this.identifyLocalChangeInSummarizer("DDSCreatedInSummarizer", id, type);
 		return channel;
+	}
+
+	/**
+	 * Reverse lookup: channel id -> race id, used when constructing outbound
+	 * attach messages to know if a raceId field should be included.
+	 */
+	private getRaceIdForChannel(channelId: string): string | undefined {
+		for (const [raceId, entry] of this.raceEntries) {
+			if (entry.localChannelId === channelId && entry.status === "racing") {
+				return raceId;
+			}
+		}
+		return undefined;
 	}
 
 	private createChannelContext(channel: IChannel): void {
@@ -921,6 +1007,15 @@ export class FluidDataStoreRuntime
 				return;
 			}
 
+			// Race-loser drop: if the target channel id is a known loser of a
+			// resolved race, drop the bunch. This is the deterministic part —
+			// every client computes the same drop because loserToWinner is
+			// derived from the deterministic attach-op sequence order.
+			if (this.loserToWinner.has(currentAddress)) {
+				currentMessagesContent = [];
+				return;
+			}
+
 			// process the last set of channel ops
 			const channelContext = this.contexts.get(currentAddress);
 			assert(!!channelContext, 0xa6b /* Channel context not found */);
@@ -958,6 +1053,130 @@ export class FluidDataStoreRuntime
 		for (const { contents } of messagesContent) {
 			const attachMessage = contents as IAttachMessage;
 			const id = attachMessage.id;
+			const raceId = attachMessage.raceId;
+
+			// Race resolution: when an attach message carries a raceId, the
+			// first such message wins deterministically across all clients;
+			// subsequent attaches with the same raceId are dropped, and channel
+			// ops to the losing channel ids are dropped via loserToWinner.
+			if (raceId !== undefined) {
+				const existingEntry = this.raceEntries.get(raceId);
+				const winnerChannelId = id;
+
+				if (existingEntry !== undefined && existingEntry.status === "resolved") {
+					// This race already resolved on this client. Drop the message —
+					// it's a late/duplicate attach for an already-decided race.
+					// Skip GC processing and skip remote-context creation.
+					if (local) {
+						this.pendingAttach.delete(id);
+					}
+					continue;
+				}
+
+				if (existingEntry !== undefined && existingEntry.localChannelId !== id) {
+					// We were racing locally and we LOST. The incoming attach
+					// is the winner.
+					const loserChannelId = existingEntry.localChannelId;
+					const loserContext = this.contexts.get(loserChannelId);
+					this.loserToWinner.set(loserChannelId, winnerChannelId);
+					existingEntry.status = "resolved";
+
+					// Remove the loser context so subsequent ops are not routed.
+					this.contexts.delete(loserChannelId);
+					this.notBoundedChannelContextSet.delete(loserChannelId);
+					this.localChannelContextQueue.delete(loserChannelId);
+					if (local) {
+						this.pendingAttach.delete(loserChannelId);
+					}
+
+					// Schedule onLost asynchronously — must NOT block op processing.
+					const onLost = existingEntry.onLost;
+					if (loserContext !== undefined) {
+						queueMicrotask(() => {
+							try {
+								if (onLost !== undefined) {
+									// We need a public IChannel handle to the loser. The
+									// loser context exposes getChannel() lazily; we surface
+									// it best-effort. If unavailable, telemetry only.
+									loserContext
+										.getChannel()
+										.then((loserChannel) => onLost(loserChannel, winnerChannelId))
+										.catch((error) => {
+											this.logger.sendErrorEvent(
+												{
+													eventName: "RaceLostCallbackFailed",
+													raceId,
+													loserChannelId,
+													winnerChannelId,
+												},
+												error,
+											);
+										});
+								} else {
+									this.logger.sendTelemetryEvent({
+										eventName: "RaceLostNoCallback",
+										category: "generic",
+										raceId,
+										loserChannelId,
+										winnerChannelId,
+									});
+								}
+							} catch (error) {
+								this.logger.sendErrorEvent(
+									{
+										eventName: "RaceLostCallbackFailed",
+										raceId,
+										loserChannelId,
+										winnerChannelId,
+									},
+									error,
+								);
+							}
+						});
+					}
+
+					// Fall through to create the remote context for the winner
+					// (the winner's id is different from ours, so the standard
+					// !this.contexts.has(id) assertion below will pass).
+				} else if (existingEntry !== undefined && existingEntry.localChannelId === id) {
+					// We were racing locally and we WON. Mark resolved; the
+					// existing local context is the one and only attached context.
+					existingEntry.status = "resolved";
+					this.emit("raceResolved", {
+						raceId,
+						winnerChannelId,
+						loserChannelIds: [],
+					});
+					if (local) {
+						assert(
+							this.pendingAttach.delete(id),
+							0xff01 /* "Unexpected attach (local) channel OP for race winner" */,
+						);
+					}
+					// No GC processing for this attach is needed beyond the local
+					// channel's existing GC; the channel was already created
+					// locally. Fall through to skip remote-context creation by
+					// continuing.
+					continue;
+				} else {
+					// We were not racing locally — this is a foreign attach
+					// for a race id we never participated in. Treat as a normal
+					// remote attach by the winner.
+					this.raceEntries.set(raceId, {
+						localChannelId: winnerChannelId,
+						status: "resolved",
+					});
+				}
+
+				this.emit("raceResolved", {
+					raceId,
+					winnerChannelId,
+					loserChannelIds:
+						existingEntry !== undefined && existingEntry.localChannelId !== id
+							? [existingEntry.localChannelId]
+							: [],
+				});
+			}
 
 			// We need to process the GC Data for both local and remote attach messages
 			processAttachMessageGCData(attachMessage.snapshot, (nodeId, toPath) => {
@@ -1307,10 +1526,12 @@ export class FluidDataStoreRuntime
 		// Attach message needs the summary in ITree format. Convert the ISummaryTree into an ITree.
 		const snapshot = convertSummaryTreeToITree(summarizeResult.summary);
 
+		const raceId = this.getRaceIdForChannel(channel.id);
 		const message: IAttachMessage = {
 			id: channel.id,
 			snapshot,
 			type: channel.attributes.type,
+			...(raceId !== undefined ? { raceId } : {}),
 		};
 		this.pendingAttach.add(channel.id);
 		this.submit({ type: DataStoreMessageType.Attach, content: message });
