@@ -94,14 +94,12 @@ export default class CheckBundleSize extends BaseCommand<typeof CheckBundleSize>
 			return { kind: "error", baselineCommit, error: artifactResult.error };
 		}
 
-		const [baselineJsons, prJsons] = await Promise.all([
-			Promise.resolve(extractAnalyzerJsonsFromArtifact(artifactResult.contents)),
-			readAnalyzerJsonsFromFileSystem(localReportPath),
-		]);
+		const baselineJsons = extractAnalyzerJsonsFromArtifact(artifactResult.contents);
+		const prJsons = await readAnalyzerJsonsFromFileSystem(localReportPath);
 
 		if (baselineJsons.size === 0 && prJsons.size === 0) {
 			const message =
-				"No bundles to compare — baseline artifact or local bundle reports are empty.";
+				"No bundles to compare — baseline artifact and local bundle reports are both empty.";
 			this.warning(message);
 			return { kind: "error", baselineCommit, error: message };
 		}
