@@ -217,6 +217,12 @@ interface PendingKeySet {
 	path: string;
 	value: unknown;
 	subdir: SubDirectory;
+	/**
+	 * Back-pointer to the {@link PendingKeyLifetime} that contains this keySet. Lets the
+	 * squash path locate the containing lifetime in O(1) given just the keySet metadata,
+	 * avoiding an O(K) `keysets.indexOf` scan inside the resubmit loop.
+	 */
+	lifetime: PendingKeyLifetime;
 }
 
 interface PendingKeyDelete {
@@ -1286,6 +1292,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 			path: this.absolutePath,
 			value,
 			subdir: this,
+			lifetime: latestPendingEntry,
 		};
 		latestPendingEntry.keySets.push(pendingKeySet);
 
@@ -2333,39 +2340,47 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 		// `isNotDisposedAndReachable` consults `getWorkingDirectory(absolutePath)`, which
 		// already accounts for pending-delete visibility on any ancestor.
 		const subdirRemoved = !this.isNotDisposedAndReachable();
-		for (let i = 0; i < this.pendingStorageData.length; i++) {
-			const entry = this.pendingStorageData[i];
-			assert(
-				entry !== undefined,
-				0xc94 /* pendingStorageData entry must exist within bounds */,
-			);
-			if (entry === metadata) {
-				// A keyset metadata is never a pendingStorageData entry itself — only PendingClear
-				// and PendingKeyDelete are stored standalone. (PendingKeySet lives inside a
-				// PendingKeyLifetime; see the lifetime branch below.)
+		const m = metadata as StorageLocalOpMetadata;
+		if (m.type === "set") {
+			// Fast path: PendingKeySet carries a back-pointer to its containing lifetime, so the
+			// tip check is O(1) (no scan of pendingStorageData and no O(K) keysets.indexOf).
+			const lifetime = m.lifetime;
+			const lastKeySet = lifetime.keySets[lifetime.keySets.length - 1];
+			if (subdirRemoved || lastKeySet !== m) {
+				const keySetIdx = lifetime.keySets.indexOf(m);
 				assert(
-					entry.type === "clear" || entry.type === "delete",
-					0xc97 /* standalone pending entry must be clear or delete */,
+					keySetIdx !== -1,
+					0xc98 /* keySet must be present in its back-pointed lifetime */,
 				);
-				if (subdirRemoved || this.isStandaloneStorageEntrySubsumed(entry, i)) {
-					this.pendingStorageData.splice(i, 1);
-					return true;
-				}
-				return false;
-			}
-			if (entry.type === "lifetime") {
-				const keySetIdx = entry.keySets.indexOf(metadata as PendingKeySet);
-				if (keySetIdx !== -1) {
-					if (subdirRemoved || this.isStorageKeySetSubsumed(entry, keySetIdx, i)) {
-						entry.keySets.splice(keySetIdx, 1);
-						if (entry.keySets.length === 0) {
-							this.pendingStorageData.splice(i, 1);
-						}
-						return true;
+				lifetime.keySets.splice(keySetIdx, 1);
+				if (lifetime.keySets.length === 0) {
+					const emptyLifetimeIdx = this.pendingStorageData.indexOf(lifetime);
+					if (emptyLifetimeIdx !== -1) {
+						this.pendingStorageData.splice(emptyLifetimeIdx, 1);
 					}
-					return false;
 				}
+				return true;
 			}
+			// Tip case: need pendingStorageData order to check for later entries.
+			const lifetimeIdx = this.pendingStorageData.indexOf(lifetime);
+			assert(lifetimeIdx !== -1, 0xc99 /* lifetime must be present in pendingStorageData */);
+			if (this.isStorageKeySetSubsumed(lifetime, lifetime.keySets.length - 1, lifetimeIdx)) {
+				lifetime.keySets.length -= 1;
+				if (lifetime.keySets.length === 0) {
+					this.pendingStorageData.splice(lifetimeIdx, 1);
+				}
+				return true;
+			}
+			return false;
+		}
+		// Standalone clear or delete.
+		const entryIdx = this.pendingStorageData.indexOf(m);
+		if (entryIdx === -1) {
+			return false;
+		}
+		if (subdirRemoved || this.isStandaloneStorageEntrySubsumed(m, entryIdx)) {
+			this.pendingStorageData.splice(entryIdx, 1);
+			return true;
 		}
 		return false;
 	}

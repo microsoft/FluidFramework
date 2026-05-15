@@ -74,6 +74,12 @@ export type IMapDataObjectSerialized = Record<string, ISerializedValue>;
 interface PendingKeySet {
 	type: "set";
 	value: ILocalValue;
+	/**
+	 * Back-pointer to the {@link PendingKeyLifetime} that contains this keySet. Lets the
+	 * squash path locate the containing lifetime in O(1) given just the keySet metadata,
+	 * avoiding an O(K) `keysets.indexOf` scan inside the resubmit loop.
+	 */
+	lifetime: PendingKeyLifetime;
 }
 
 interface PendingKeyDelete {
@@ -425,6 +431,7 @@ export class MapKernel {
 		const pendingKeySet: PendingKeySet = {
 			type: "set",
 			value: localValue,
+			lifetime: latestPendingEntry,
 		};
 		latestPendingEntry.keySets.push(pendingKeySet);
 
@@ -619,36 +626,42 @@ export class MapKernel {
 	 * match an ACK that will never arrive.
 	 */
 	private dropIfSubsumed(metadata: unknown): boolean {
-		for (let i = 0; i < this.pendingData.length; i++) {
-			const entry = this.pendingData[i];
-			assert(entry !== undefined, "pendingData entry must exist within bounds");
-			if (entry === metadata) {
-				// A keyset metadata is never a pendingData entry itself — only PendingClear and
-				// PendingKeyDelete are stored standalone in pendingData. (PendingKeySet is nested
-				// inside a PendingKeyLifetime; see the lifetime branch below.)
-				assert(
-					entry.type === "clear" || entry.type === "delete",
-					"standalone pending entry must be clear or delete",
-				);
-				if (this.isStandaloneEntrySubsumed(entry, i)) {
-					this.pendingData.splice(i, 1);
-					return true;
-				}
-				return false;
+		const m = metadata as PendingLocalOpMetadata;
+		if (m.type === "set") {
+			// Fast path: PendingKeySet carries a back-pointer to its containing lifetime, so the
+			// tip check is O(1) (no scan of pendingData and no O(K) keysets.indexOf).
+			const lifetime = m.lifetime;
+			const lastKeySet = lifetime.keySets[lifetime.keySets.length - 1];
+			if (lastKeySet !== m) {
+				// Not the lifetime's tip — strictly subsumed by a later keySet on this key.
+				const keySetIdx = lifetime.keySets.indexOf(m);
+				assert(keySetIdx !== -1, "keySet must be present in its back-pointed lifetime");
+				lifetime.keySets.splice(keySetIdx, 1);
+				return true;
 			}
-			if (entry.type === "lifetime") {
-				const keySetIdx = entry.keySets.indexOf(metadata as PendingKeySet);
-				if (keySetIdx !== -1) {
-					if (this.isKeySetSubsumed(entry, keySetIdx, i)) {
-						entry.keySets.splice(keySetIdx, 1);
-						if (entry.keySets.length === 0) {
-							this.pendingData.splice(i, 1);
-						}
-						return true;
-					}
-					return false;
+			// Tip case: need pendingData order to check for later entries on this key (delete,
+			// clear, or another lifetime). The lifetime's position is still found by linear scan,
+			// but only when the cheap tip check above didn't decide it.
+			const lifetimeIdx = this.pendingData.indexOf(lifetime);
+			assert(lifetimeIdx !== -1, "lifetime must be present in pendingData");
+			if (this.isKeySetSubsumed(lifetime, lifetime.keySets.length - 1, lifetimeIdx)) {
+				lifetime.keySets.length -= 1;
+				if (lifetime.keySets.length === 0) {
+					this.pendingData.splice(lifetimeIdx, 1);
 				}
+				return true;
 			}
+			return false;
+		}
+		// Standalone clear or delete — these *are* pendingData entries, so indexOf gives the
+		// position directly without scanning lifetime keysets.
+		const entryIdx = this.pendingData.indexOf(m);
+		if (entryIdx === -1) {
+			return false;
+		}
+		if (this.isStandaloneEntrySubsumed(m, entryIdx)) {
+			this.pendingData.splice(entryIdx, 1);
+			return true;
 		}
 		return false;
 	}
