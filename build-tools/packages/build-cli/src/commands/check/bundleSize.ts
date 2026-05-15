@@ -17,7 +17,7 @@ import {
 import { BaseCommand } from "../../library/commands/base.js";
 import { pickFreshestRemote } from "../../library/git/pickFreshestRemote.js";
 
-// Where `flub generate bundleStats` (via `npm run bundle-analysis:collect`) writes.
+// Where `flub generate bundleStats` (via `pnpm bundle-analysis:collect`) writes.
 const defaultLocalReportPath = "./artifacts/bundleAnalyzerJson";
 
 /**
@@ -111,9 +111,21 @@ export default class CheckBundleSize extends BaseCommand<typeof CheckBundleSize>
 			this.log(`Using target ref ${targetRef}. Pass --target <ref> to override.`);
 		}
 
-		const baselineCommit = execFileSync("git", ["merge-base", targetRef, "HEAD"])
-			.toString()
-			.trim();
+		let baselineCommit: string;
+		try {
+			baselineCommit = execFileSync("git", ["merge-base", targetRef, "HEAD"], {
+				stdio: ["ignore", "pipe", "pipe"],
+			})
+				.toString()
+				.trim();
+		} catch (e) {
+			const stderr = (e as { stderr?: Buffer }).stderr?.toString().trim();
+			this.error(
+				`Could not determine merge-base for ref "${targetRef}". Ensure it is fetched locally, or pass --target <ref> to override.${
+					stderr ? `\n${stderr}` : ""
+				}`,
+			);
+		}
 		this.log(`Baseline commit: ${baselineCommit}`);
 
 		// Public ADO project — anonymous reads are fine at this command's scale.

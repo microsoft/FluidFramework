@@ -37,11 +37,25 @@ async function getAllFilesInDirectory(
 /**
  * Walks `rootPath`, finds every `analyzer.json` file, parses it, and keys the
  * results by source package.
+ *
+ * Throws with a contextual message when `rootPath` doesn't exist — that's the
+ * common path for a user who hasn't yet run `npm run bundle-analysis:collect`.
  */
 export async function readAnalyzerJsonsFromFileSystem(
 	rootPath: string,
 ): Promise<AnalyzerJsonByPackage> {
-	const allPaths = await getAllFilesInDirectory(rootPath);
+	let allPaths: string[];
+	try {
+		allPaths = await getAllFilesInDirectory(rootPath);
+	} catch (e) {
+		if ((e as NodeJS.ErrnoException).code === "ENOENT") {
+			throw new Error(
+				`Local bundle report directory not found at "${rootPath}". Run \`pnpm bundle-analysis:collect\` to generate it.`,
+				{ cause: e },
+			);
+		}
+		throw e;
+	}
 	const result: AnalyzerJsonByPackage = new Map();
 	const reads: Promise<void>[] = [];
 	for (const relativePath of allPaths) {
