@@ -471,8 +471,11 @@ export interface IContainer extends IEventProvider<IContainerEvents> {
 	 * be {@link IContainer.disposed}; otherwise the implementation throws `UsageError`.
 	 *
 	 * WARNING: misuse of this API can result in duplicate op submission and potential
-	 * document corruption. The blob returned MUST be discarded if and when this container
-	 * emits a "connected" event.
+	 * document corruption. To prevent container forking, callers must:
+	 *
+	 * - Regenerate the serialization on every reconnect and replace any previously stored copy.
+	 * - Wait until the original container has been closed before rehydrating from its serialized state.
+	 * - Never rehydrate more than one container from the same serialization.
 	 *
 	 * Optional during this minor release to preserve forward-compatibility for external
 	 * implementers of `IContainer`. A future breaking release will make this member required.
@@ -577,6 +580,16 @@ export interface ILoader extends Partial<IProvideLoader> {
 	 *
 	 * An analogy for this is resolve is a DNS resolve of a Fluid container. Request then executes
 	 * a request against the server found from the resolve step.
+	 *
+	 * When `pendingLocalState` is provided, the resolved container is rehydrated from a blob
+	 * previously produced by {@link IContainer.getPendingLocalState}.
+	 *
+	 * WARNING: misuse of `pendingLocalState` can result in duplicate op submission and potential
+	 * document corruption. To prevent container forking, callers must:
+	 *
+	 * - Pass the most recent blob produced for that container and discard any older serializations.
+	 * - Ensure the original container has been closed before rehydrating from its serialized state.
+	 * - Never rehydrate more than one container from the same blob.
 	 */
 	resolve(request: IRequest, pendingLocalState?: string): Promise<IContainer>;
 }
