@@ -178,6 +178,14 @@ export interface IDirectoryCreateSubDirectoryOperation {
 	 * Name of the new subdirectory.
 	 */
 	subdirName: string;
+
+	/**
+	 * Optional ordering hint: name of the sibling subdirectory to position the new subdirectory after.
+	 * When absent, the new subdirectory is appended at the end (existing behavior). When present, the
+	 * hint is resolved at stamp time against the parent's sequenced subdirectories; if the named anchor
+	 * does not exist at stamp time, the new subdirectory is appended (fallback).
+	 */
+	afterSubdirName?: string;
 }
 
 /**
@@ -270,6 +278,23 @@ interface PendingSubDirectoryDelete {
 type PendingSubDirectoryEntry = PendingSubDirectoryCreate | PendingSubDirectoryDelete;
 
 /**
+ * Persisted ordering-hint information: the anchor chain captured at the time a subdirectory was
+ * inserted via createSubDirectoryOrderedAfter. Used to reconstruct iteration order on snapshot load.
+ *
+ * @deprecated This interface will no longer be exported in the future(AB#8004).
+ *
+ * @legacy @beta
+ */
+export interface IAfterParentInfo {
+	/** Sequence number of the anchor at the moment this insert was stamped. */
+	csn: number;
+	/** Client sequence number of the anchor at the moment this insert was stamped, when known. */
+	ccsn?: number;
+	/** The anchor's own afterParent, when the anchor was itself inserted via an ordering hint. */
+	afterParent?: IAfterParentInfo;
+}
+
+/**
  * Create info for the subdirectory.
  *
  * @deprecated This interface will no longer be exported in the future(AB#8004).
@@ -286,6 +311,12 @@ export interface ICreateInfo {
 	 * clientids of the clients which created this sub directory.
 	 */
 	ccIds: string[];
+
+	/**
+	 * If this subdirectory was created via {@link IDirectory.createSubDirectoryOrderedAfter}, the anchor
+	 * chain captured at stamp time. Absent for plain createSubDirectory entries.
+	 */
+	afterParent?: IAfterParentInfo;
 }
 
 /**
@@ -342,41 +373,73 @@ export interface IDirectoryNewStorageFormat {
 }
 
 /**
- * The comparator essentially performs the following procedure to determine the order of subdirectory creation:
- * 1. If subdirectory A has a non-negative 'seq' and subdirectory B has a negative 'seq', subdirectory A is always placed first due to
- * the policy that acknowledged subdirectories precede locally created ones that have not been committed yet.
+ * Compares two SequenceData values considering only their own seq/clientSeq fields
+ * (ignoring afterParent). Ordering rules:
  *
- * 2. When both subdirectories A and B have a non-negative 'seq', they are compared as follows:
- * - If A and B have different 'seq', they are ordered based on 'seq', and the one with the lower 'seq' will be positioned ahead. Notably this rule
- * should not be applied in the directory ordering, since the lowest 'seq' is -1, when the directory is created locally but not acknowledged yet.
- * - In the case where A and B have equal 'seq', the one with the lower 'clientSeq' will be positioned ahead. This scenario occurs when grouped
- * batching is enabled, and a lower 'clientSeq' indicates that it was processed earlier after the batch was ungrouped.
+ * 1. Acknowledged subdirectories (seq \>= 0) always precede locally-created-but-not-yet-acknowledged
+ * ones (seq = -1).
  *
- * 3. When both subdirectories A and B have a negative 'seq', they are compared as follows:
- * - If A and B have different 'seq', the one with lower 'seq' will be positioned ahead, which indicates the corresponding creation message was
- * acknowledged by the server earlier.
- * - If A and B have equal 'seq', the one with lower 'clientSeq' will be placed at the front. This scenario suggests that both subdirectories A
- * and B were created locally and not acknowledged yet, with the one possessing the lower 'clientSeq' being created earlier.
+ * 2. Within acknowledged, the lower seq is positioned first. When seqs are equal, the lower
+ * clientSeq is positioned first (grouped batching scenario, where lower clientSeq indicates earlier
+ * processing within the ungrouped batch).
  *
- * 4. A 'seq' value of zero indicates that the subdirectory was created in detached state, and it is considered acknowledged for the
- * purpose of ordering.
+ * 3. Within the unacknowledged group, lower seq is positioned first for consistency, and ties break
+ * by lower clientSeq (indicates locally-earlier creation).
+ *
+ * 4. A seq of zero indicates the subdirectory was created in detached state, considered
+ * acknowledged for ordering.
+ */
+function compareOwnSeqData(a: SequenceData, b: SequenceData): number {
+	const aAckd = isAcknowledgedOrDetached(a);
+	const bAckd = isAcknowledgedOrDetached(b);
+	if (aAckd !== bAckd) {
+		return aAckd ? -1 : 1;
+	}
+	if (a.seq !== b.seq) {
+		return a.seq - b.seq;
+	}
+	const aClientSeq = a.clientSeq ?? 0;
+	const bClientSeq = b.clientSeq ?? 0;
+	return aClientSeq - bClientSeq;
+}
+
+/**
+ * Compares two SequenceData values for ordering. Handles the optional afterParent hint:
+ * a subdirectory with afterParent sorts immediately after the anchor the afterParent points at,
+ * and among multiple inserts after the same anchor, the later-stamped one sorts earlier (closer to
+ * the anchor), mirroring the behavior of concurrent insertions at the same character position in
+ * SharedString.
+ *
+ * See packages/dds/map/docs/ordering-hints-requirements.md §4 for observable behavior, and
+ * packages/dds/map/docs/ordering-hints-implementation-plan.md §3 for the derivation of this rule.
  */
 const seqDataComparator = (a: SequenceData, b: SequenceData): number => {
-	if (isAcknowledgedOrDetached(a)) {
-		if (isAcknowledgedOrDetached(b)) {
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			return a.seq === b.seq ? a.clientSeq! - b.clientSeq! : a.seq - b.seq;
-		} else {
-			return -1;
+	if (a.afterParent !== undefined && b.afterParent !== undefined) {
+		const parentCmp = seqDataComparator(a.afterParent, b.afterParent);
+		if (parentCmp !== 0) {
+			return parentCmp;
 		}
-	} else {
-		if (isAcknowledgedOrDetached(b)) {
-			return 1;
-		} else {
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			return a.seq === b.seq ? a.clientSeq! - b.clientSeq! : a.seq - b.seq;
-		}
+		// Same anchor chain: later-stamped sorts earlier. Invert the own-seq comparison.
+		return -compareOwnSeqData(a, b);
 	}
+	if (a.afterParent !== undefined) {
+		// a has an anchor, b does not. Compare b against a's anchor.
+		const cmp = seqDataComparator(a.afterParent, b);
+		if (cmp !== 0) {
+			return cmp;
+		}
+		// a's anchor sorts at the same position as b → a sorts immediately after b.
+		return 1;
+	}
+	if (b.afterParent !== undefined) {
+		const cmp = seqDataComparator(a, b.afterParent);
+		if (cmp !== 0) {
+			return cmp;
+		}
+		// b's anchor sorts at the same position as a → b sorts immediately after a.
+		return -1;
+	}
+	return compareOwnSeqData(a, b);
 };
 
 function isAcknowledgedOrDetached(seqData: SequenceData): boolean {
@@ -384,11 +447,52 @@ function isAcknowledgedOrDetached(seqData: SequenceData): boolean {
 }
 
 /**
- * The combination of sequence numebr and client sequence number of a subdirectory
+ * The combination of sequence number and client sequence number of a subdirectory, plus an optional
+ * anchor chain for subdirectories created via {@link IDirectory.createSubDirectoryOrderedAfter}.
  */
 interface SequenceData {
 	seq: number;
 	clientSeq?: number;
+	/**
+	 * When set, this subdirectory was positioned via an ordering hint; the afterParent is a copy of
+	 * the anchor's SequenceData captured at stamp time. Used by {@link seqDataComparator} to place
+	 * the subdirectory immediately after the anchor in iteration order.
+	 */
+	afterParent?: SequenceData;
+}
+
+/**
+ * Shallow-clone a SequenceData. The afterParent reference is shared, which is safe because
+ * afterParent values are treated as immutable copies captured at stamp time.
+ */
+function cloneSeqData(s: SequenceData): SequenceData {
+	return { seq: s.seq, clientSeq: s.clientSeq, afterParent: s.afterParent };
+}
+
+/**
+ * Convert a SequenceData's afterParent chain to the persisted IAfterParentInfo form.
+ */
+function sequenceDataToAfterParentInfo(s: SequenceData): IAfterParentInfo {
+	return {
+		csn: s.seq,
+		ccsn: s.clientSeq,
+		afterParent:
+			s.afterParent === undefined ? undefined : sequenceDataToAfterParentInfo(s.afterParent),
+	};
+}
+
+/**
+ * Reconstruct a SequenceData from a persisted IAfterParentInfo chain.
+ */
+function afterParentInfoToSequenceData(info: IAfterParentInfo): SequenceData {
+	return {
+		seq: info.csn,
+		clientSeq: info.ccsn,
+		afterParent:
+			info.afterParent === undefined
+				? undefined
+				: afterParentInfoToSequenceData(info.afterParent),
+	};
 }
 
 /**
@@ -585,6 +689,16 @@ export class SharedDirectory
 	}
 
 	/**
+	 * {@inheritDoc IDirectory.createSubDirectoryOrderedAfter}
+	 */
+	public createSubDirectoryOrderedAfter(
+		newSubdirName: string,
+		afterSubdirName: string,
+	): IDirectory {
+		return this.root.createSubDirectoryOrderedAfter(newSubdirName, afterSubdirName);
+	}
+
+	/**
 	 * {@inheritDoc IDirectory.getSubDirectory}
 	 */
 	public getSubDirectory(subdirName: string): IDirectory | undefined {
@@ -747,6 +861,9 @@ export class SharedDirectory
 							let fakeClientSeq = tempSeqNums.get(createInfo.csn) as number;
 							seqData = { seq: createInfo.csn, clientSeq: fakeClientSeq };
 							tempSeqNums.set(createInfo.csn, ++fakeClientSeq);
+							if (createInfo.afterParent !== undefined) {
+								seqData.afterParent = afterParentInfoToSequenceData(createInfo.afterParent);
+							}
 						} else {
 							/**
 							 * 1. If csn is -1, then initialize it with 0, otherwise we will never process ops for this
@@ -1289,9 +1406,33 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 	}
 
 	/**
+	 * {@inheritDoc IDirectory.createSubDirectoryOrderedAfter}
+	 */
+	public createSubDirectoryOrderedAfter(
+		newSubdirName: string,
+		afterSubdirName: string,
+	): IDirectory {
+		return this.createSubDirectoryCore(newSubdirName, afterSubdirName);
+	}
+
+	/**
 	 * {@inheritDoc IDirectory.createSubDirectory}
 	 */
 	public createSubDirectory(subdirName: string): IDirectory {
+		return this.createSubDirectoryCore(subdirName, undefined);
+	}
+
+	/**
+	 * Shared implementation for {@link SubDirectory.createSubDirectory} and
+	 * {@link SubDirectory.createSubDirectoryOrderedAfter}. When `afterSubdirName` is provided and a
+	 * sibling with that name is visible locally, the new subdirectory's SequenceData carries an
+	 * afterParent pointing at that sibling so it sorts immediately after it. The hint is re-resolved
+	 * against sequenced state at stamp time in {@link processCreateSubDirectoryMessage}.
+	 */
+	private createSubDirectoryCore(
+		subdirName: string,
+		afterSubdirName: string | undefined,
+	): IDirectory {
 		this.throwIfDisposed();
 		// Undefined/null subdirectory names can't be serialized to JSON in the manner we currently snapshot.
 		if (subdirName === undefined || subdirName === null) {
@@ -1308,6 +1449,13 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 		const isNewSubDirectory = subDir === undefined;
 
 		if (subDir === undefined) {
+			// Resolve the ordering hint against local visible state for optimistic positioning.
+			if (afterSubdirName !== undefined) {
+				const anchor = this.getOptimisticSubDirectory(afterSubdirName);
+				if (anchor !== undefined) {
+					seqData.afterParent = cloneSeqData(anchor.seqData);
+				}
+			}
 			// If we do not have optimistically have this subdirectory yet, we should create a new one
 			const absolutePath = posix.join(this.absolutePath, subdirName);
 			subDir = new SubDirectory(
@@ -1344,6 +1492,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 					subdirName,
 					path: this.absolutePath,
 					type: "createSubDirectory",
+					...(afterSubdirName === undefined ? {} : { afterSubdirName }),
 				};
 				this.submitCreateSubDirectoryMessage(op);
 			} else {
@@ -2096,6 +2245,18 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 		}
 		assertNonNullClientId(msgEnvelope.clientId);
 
+		// Resolve the ordering hint against authoritative sequenced state at stamp time. The anchor
+		// lookup intentionally ignores pending (not-yet-stamped) siblings and disposed entries. If
+		// the anchor is missing at stamp time, the hint falls back to append (stampedAfterParent
+		// stays undefined). See requirements spec §4.4.
+		let stampedAfterParent: SequenceData | undefined;
+		if (op.afterSubdirName !== undefined) {
+			const anchor = this._sequencedSubdirectories.get(op.afterSubdirName);
+			if (anchor !== undefined && !anchor.disposed) {
+				stampedAfterParent = cloneSeqData(anchor.seqData);
+			}
+		}
+
 		let subDir: SubDirectory | undefined;
 		if (local) {
 			const pendingEntryIndex = this.pendingSubDirectoryData.findIndex(
@@ -2113,7 +2274,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 			if (existingSubdir !== undefined) {
 				// If the subdirectory already exists, we don't need to create it again.
 				// This can happen if remote clients also create the same subdir and we processed
-				// that message first.
+				// that message first. The already-sequenced entry's positioning wins (§4.3).
 				return;
 			}
 
@@ -2121,13 +2282,20 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 				this.undisposeSubdirectoryTree(subDir);
 			}
 
+			// Replace the local-view afterParent (captured at call time) with the stamp-time
+			// authoritative value. See requirements spec §4.8.
+			subDir.seqData.afterParent = stampedAfterParent;
 			this._sequencedSubdirectories.set(op.subdirName, subDir);
 		} else {
 			subDir = this.getOptimisticSubDirectory(op.subdirName, true);
 			if (subDir === undefined) {
 				const absolutePath = posix.join(this.absolutePath, op.subdirName);
 				subDir = new SubDirectory(
-					{ seq: msgEnvelope.sequenceNumber, clientSeq: clientSequenceNumber },
+					{
+						seq: msgEnvelope.sequenceNumber,
+						clientSeq: clientSequenceNumber,
+						afterParent: stampedAfterParent,
+					},
 					new Set([msgEnvelope.clientId]),
 					this.directory,
 					this.runtime,
@@ -2156,7 +2324,8 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 		}
 
 		// Ensure correct seqData. This can be necessary if in scenarios where a subdir was created, deleted, and
-		// then later recreated.
+		// then later recreated. When updating seq/clientSeq from a still-pending state, also apply the
+		// stamp-time afterParent for the same reason.
 		if (
 			this.seqData.seq !== -1 &&
 			this.seqData.seq <= msgEnvelope.sequenceNumber &&
@@ -2164,6 +2333,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 		) {
 			subDir.seqData.seq = msgEnvelope.sequenceNumber;
 			subDir.seqData.clientSeq = clientSequenceNumber;
+			subDir.seqData.afterParent = stampedAfterParent;
 		}
 	}
 
@@ -2405,6 +2575,9 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 			csn: this.seqData.seq,
 			ccIds: [...this.clientIds],
 		};
+		if (this.seqData.afterParent !== undefined) {
+			createInfo.afterParent = sequenceDataToAfterParentInfo(this.seqData.afterParent);
+		}
 		return createInfo;
 	}
 
