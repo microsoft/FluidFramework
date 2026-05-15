@@ -144,9 +144,14 @@ export default class CheckBundleSize extends BaseCommand<typeof CheckBundleSize>
 		const baselineJsons = extractAnalyzerJsonsFromArtifact(artifactContents);
 		const compareJsons = await readAnalyzerJsonsFromFileSystem(localReportPath);
 
-		if (baselineJsons.size === 0 && compareJsons.size === 0) {
+		if (baselineJsons.size === 0) {
 			this.error(
-				"No bundles to compare — baseline artifact and local bundle reports are both empty.",
+				`Baseline artifact contains no analyzer.json files for commit ${baselineCommit}.`,
+			);
+		}
+		if (compareJsons.size === 0) {
+			this.error(
+				`Local bundle report directory "${localReportPath}" exists but contains no analyzer.json files. Run \`pnpm bundle-analysis:collect\` to populate it.`,
 			);
 		}
 
