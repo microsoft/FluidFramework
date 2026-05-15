@@ -199,12 +199,20 @@ export function forkAsBranchCheckout(parent: TreeCheckout): BranchCheckout {
  * 3. Otherwise, a fresh `BranchCheckout` is forked via `forkAsBranchCheckout` and recorded
  * against the view's `mainBranch` for future calls.
  *
+ * @typeParam TSchema - The schema type of the tree view.
+ * @param view - A {@link TreeViewAlpha} returned by the Fluid Framework. External implementations
+ * are not supported and will cause a {@link UsageError} to be thrown.
+ *
  * @alpha
  */
 export function getBranch<TSchema extends ImplicitFieldSchema | UnsafeUnknownSchema>(
 	view: TreeViewAlpha<TSchema>,
 ): TreeBranchAlpha {
-	assert(view instanceof SchematizingSimpleTreeView, "Unexpected branch implementation");
+	if (!(view instanceof SchematizingSimpleTreeView)) {
+		throw new UsageError(
+			"The `view` argument to `getBranch` must be a view returned by the Fluid Framework — external implementations are not supported.",
+		);
+	}
 	const viewBranch = view.checkout.mainBranch;
 	// Path 1: the view is itself built directly on a registered BranchCheckout.
 	let branch = getBranchCheckout(viewBranch);
@@ -225,12 +233,20 @@ export function getBranch<TSchema extends ImplicitFieldSchema | UnsafeUnknownSch
 /**
  * Returns a view of the given branch using the provided schema configuration.
  *
+ * @typeParam TSchema - The schema type of the tree view.
+ * @param branch - A branch returned by {@link getBranch}. Passing any other object will throw a {@link UsageError} at runtime.
+ * @param config - The schema configuration to use for the view.
+ *
  * @alpha
  */
 export function getViewOfBranch<TSchema extends ImplicitFieldSchema>(
 	branch: TreeBranchAlpha,
 	config: TreeViewConfiguration<TSchema>,
 ): TreeViewAlpha<TSchema> {
-	assert(branch instanceof BranchCheckout, "Unexpected branch implementation");
+	if (!(branch instanceof BranchCheckout)) {
+		throw new UsageError(
+			"The `branch` argument to `getViewOfBranch` must be a `TreeBranchAlpha` returned by `getBranch`.",
+		);
+	}
 	return branch.viewWith(config);
 }
