@@ -58,93 +58,99 @@ export default class CheckBundleSize extends BaseCommand<typeof CheckBundleSize>
 	} as const;
 
 	public async run(): Promise<CheckBundleSizeResult> {
-		const { localReportPath, target } = this.flags;
+		try {
+			const { localReportPath, target } = this.flags;
 
-		// Auto-detect targets `main` on the canonical remote; `--target <ref>` overrides.
-		const branch = "main";
-		const canonicalUrl = /(^|[/:])microsoft\/fluidframework(\.git)?$/i;
-		let targetRef: string;
-		if (target !== undefined) {
-			targetRef = target;
-			this.log(`Using explicit target ref ${target}.`);
-		} else {
-			const remote = pickFreshestRemote(branch, (url) => canonicalUrl.test(url)) ?? "origin";
-			targetRef = `${remote}/${branch}`;
-			this.log(`Using target ref ${targetRef}. Pass --target <ref> to override.`);
-		}
-
-		const baselineCommit = execFileSync("git", ["merge-base", targetRef, "HEAD"])
-			.toString()
-			.trim();
-		this.log(`Baseline commit: ${baselineCommit}`);
-
-		// Anonymous reads work for the public ADO project at this command's scale;
-		// automated consumers authenticate at the library layer.
-		const adoApi = getAzureDevopsApi(undefined, adoConstants.orgUrl);
-		const artifactResult = await getArtifactForCommit({
-			adoApi,
-			artifactName: adoConstants.artifactName,
-			commit: baselineCommit,
-			definitionId: adoConstants.ciBuildDefinitionId,
-			project: adoConstants.projectName,
-		});
-
-		if (artifactResult.kind === "error") {
-			this.warning(artifactResult.error);
-			return { kind: "error", baselineCommit, error: artifactResult.error };
-		}
-
-		const baselineJsons = extractAnalyzerJsonsFromArtifact(artifactResult.contents);
-		const prJsons = await readAnalyzerJsonsFromFileSystem(localReportPath);
-
-		if (baselineJsons.size === 0 && prJsons.size === 0) {
-			const message =
-				"No bundles to compare — baseline artifact and local bundle reports are both empty.";
-			this.warning(message);
-			return { kind: "error", baselineCommit, error: message };
-		}
-
-		const comparison = compareJsonReportsByPackage(baselineJsons, prJsons);
-
-		const fmt = (before: number, after: number): string => {
-			const delta = after - before;
-			const sign = delta > 0 ? "+" : "";
-			return `${before} -> ${after} (${sign}${delta})`;
-		};
-
-		const changeLines: string[] = [];
-		for (const [sourcePackage, bundles] of Object.entries(comparison)) {
-			const bundleLines: string[] = [];
-			for (const [bundleName, { base, compare }] of Object.entries(bundles)) {
-				if (base === undefined && compare !== undefined) {
-					bundleLines.push(
-						`    ${bundleName}: added (parsed ${compare.parsedSize}, gzip ${compare.gzipSize})`,
-					);
-				} else if (compare === undefined && base !== undefined) {
-					bundleLines.push(
-						`    ${bundleName}: removed (was parsed ${base.parsedSize}, gzip ${base.gzipSize})`,
-					);
-				} else if (base !== undefined && compare !== undefined) {
-					const parsedChanged = base.parsedSize !== compare.parsedSize;
-					const gzipChanged = base.gzipSize !== compare.gzipSize;
-					if (!parsedChanged && !gzipChanged) continue;
-					bundleLines.push(
-						`    ${bundleName}: parsed ${fmt(base.parsedSize, compare.parsedSize)}, gzip ${fmt(base.gzipSize, compare.gzipSize)}`,
-					);
-				}
+			// Auto-detect targets `main` on the canonical remote; `--target <ref>` overrides.
+			const branch = "main";
+			const canonicalUrl = /(^|[/:])microsoft\/fluidframework(\.git)?$/i;
+			let targetRef: string;
+			if (target !== undefined) {
+				targetRef = target;
+				this.log(`Using explicit target ref ${target}.`);
+			} else {
+				const remote = pickFreshestRemote(branch, (url) => canonicalUrl.test(url)) ?? "origin";
+				targetRef = `${remote}/${branch}`;
+				this.log(`Using target ref ${targetRef}. Pass --target <ref> to override.`);
 			}
-			if (bundleLines.length === 0) continue;
-			changeLines.push(`  ${sourcePackage}:`, ...bundleLines);
+
+			const baselineCommit = execFileSync("git", ["merge-base", targetRef, "HEAD"])
+				.toString()
+				.trim();
+			this.log(`Baseline commit: ${baselineCommit}`);
+
+			// Anonymous reads work for the public ADO project at this command's scale;
+			// automated consumers authenticate at the library layer.
+			const adoApi = getAzureDevopsApi(undefined, adoConstants.orgUrl);
+			const artifactResult = await getArtifactForCommit({
+				adoApi,
+				artifactName: adoConstants.artifactName,
+				commit: baselineCommit,
+				definitionId: adoConstants.ciBuildDefinitionId,
+				project: adoConstants.projectName,
+			});
+
+			if (artifactResult.kind === "error") {
+				this.warning(artifactResult.error);
+				return { kind: "error", baselineCommit, error: artifactResult.error };
+			}
+
+			const baselineJsons = extractAnalyzerJsonsFromArtifact(artifactResult.contents);
+			const prJsons = await readAnalyzerJsonsFromFileSystem(localReportPath);
+
+			if (baselineJsons.size === 0 && prJsons.size === 0) {
+				const message =
+					"No bundles to compare — baseline artifact and local bundle reports are both empty.";
+				this.warning(message);
+				return { kind: "error", baselineCommit, error: message };
+			}
+
+			const comparison = compareJsonReportsByPackage(baselineJsons, prJsons);
+
+			const fmt = (before: number, after: number): string => {
+				const delta = after - before;
+				const sign = delta > 0 ? "+" : "";
+				return `${before} -> ${after} (${sign}${delta})`;
+			};
+
+			const changeLines: string[] = [];
+			for (const [sourcePackage, bundles] of Object.entries(comparison)) {
+				const bundleLines: string[] = [];
+				for (const [bundleName, { base, compare }] of Object.entries(bundles)) {
+					if (base === undefined && compare !== undefined) {
+						bundleLines.push(
+							`    ${bundleName}: added (parsed ${compare.parsedSize}, gzip ${compare.gzipSize})`,
+						);
+					} else if (compare === undefined && base !== undefined) {
+						bundleLines.push(
+							`    ${bundleName}: removed (was parsed ${base.parsedSize}, gzip ${base.gzipSize})`,
+						);
+					} else if (base !== undefined && compare !== undefined) {
+						const parsedChanged = base.parsedSize !== compare.parsedSize;
+						const gzipChanged = base.gzipSize !== compare.gzipSize;
+						if (!parsedChanged && !gzipChanged) continue;
+						bundleLines.push(
+							`    ${bundleName}: parsed ${fmt(base.parsedSize, compare.parsedSize)}, gzip ${fmt(base.gzipSize, compare.gzipSize)}`,
+						);
+					}
+				}
+				if (bundleLines.length === 0) continue;
+				changeLines.push(`  ${sourcePackage}:`, ...bundleLines);
+			}
+
+			if (changeLines.length === 0) {
+				this.log(`No bundle size changes vs baseline commit ${baselineCommit}.`);
+				return { kind: "no-changes", baselineCommit };
+			}
+
+			this.log(`Bundle size changes vs baseline commit ${baselineCommit}:`);
+			for (const line of changeLines) this.log(line);
+
+			return { kind: "changes", baselineCommit, comparison };
+		} catch (e) {
+			const error = `Unexpected failure: ${e instanceof Error ? e.message : String(e)}`;
+			this.warning(error);
+			return { kind: "error", baselineCommit: undefined, error };
 		}
-
-		if (changeLines.length === 0) {
-			this.log(`No bundle size changes vs baseline commit ${baselineCommit}.`);
-			return { kind: "no-changes", baselineCommit };
-		}
-
-		this.log(`Bundle size changes vs baseline commit ${baselineCommit}:`);
-		for (const line of changeLines) this.log(line);
-
-		return { kind: "changes", baselineCommit, comparison };
 	}
 }
