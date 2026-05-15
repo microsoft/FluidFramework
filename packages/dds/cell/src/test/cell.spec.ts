@@ -600,6 +600,24 @@ describe("Cell", () => {
 			assert.equal(cell2.get(), "only");
 			assert.deepEqual(peerObservations, [{ event: "valueChanged", value: "only" }]);
 		});
+
+		it("preserves a pre-staging set still in flight when a staging set is squashed", () => {
+			// Submit a pre-staging set while connected so it's in flight at the runtime layer
+			// but not yet ACKed when we disconnect. The staging-mode set + delete should leave
+			// the pre-staging value to land normally, and "secret" must never reach the peer.
+			cell1.set("pre");
+			containerRuntime1.connected = false;
+			cell1.set("secret");
+			cell1.delete();
+			reconnectAndSquash(containerRuntime1, dataStoreRuntime1);
+			containerRuntimeFactory.processAllMessages();
+
+			assert.equal(cell1.get(), undefined);
+			assert.equal(cell2.get(), undefined);
+			for (const observation of peerObservations) {
+				assert.notEqual(observation.value, "secret", "staged secret must not leak");
+			}
+		});
 	});
 
 	describe("Garbage Collection", () => {

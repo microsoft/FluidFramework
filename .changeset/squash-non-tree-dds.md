@@ -25,3 +25,11 @@ Per-DDS treatment:
 - `Ink`, `ConsensusRegisterCollection`, `ConsensusOrderedCollection`, `PactMap`, legacy `SharedArray`, legacy `SharedSignal`: identity squash with documented rationale. These DDSes have append-only, order-preserving, or consensus-bound semantics where collapsing pending ops would change observable behavior.
 
 Together this removes the dependency on the `Fluid.SharedObject.AllowStagingModeWithoutSquashing` config flag fallback for the listed DDSes.
+
+Known limitations (documented in code; not addressed in this changeset):
+
+- `ConsensusOrderedCollection.add` carries a serialized user value; an `add(secret) → acquire → complete` chain inside a staging session still transmits the `add` op on commit.
+- `ConsensusRegisterCollection` writes participate in `readVersions()` history; collapsing pending writes would alter observable semantics, so intermediate writes during staging remain visible.
+- `Ink` and legacy `SharedSignal` ops carry user-supplied pen / metadata; staging-mode notifications are intentionally transmitted on commit.
+- legacy `SharedArray.insertEntry` carries the entry value; an insert-then-delete within a staging session still leaks the value.
+- `SharedSequence`/`SharedString` segment and interval **properties** are not squashed by merge-tree even when the containing op is — `annotateRange(..., {foo: "secret"}) → annotateRange(..., {foo: "public"})` still ships the secret value. Squash already handles inserted-then-removed segment **text** and interval-endpoint changes correctly; the property channel is a known gap, tracked for a future change.
