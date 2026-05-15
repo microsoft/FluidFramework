@@ -5,6 +5,7 @@
 
 import { strict as assert } from "node:assert";
 
+import { reconnectAndSquash } from "@fluid-private/test-dds-utils";
 import { AttachState } from "@fluidframework/container-definitions";
 import { IChannelServices } from "@fluidframework/datastore-definitions/internal";
 import { ISummaryTree } from "@fluidframework/driver-definitions";
@@ -838,6 +839,68 @@ describe("SharedString", () => {
 
 			// Verify that the changes were correctly received by the second SharedString
 			assert.equal(sharedString2.getText(), "hello friend");
+		});
+
+		describe("squash property channel", () => {
+			it("drops a staged annotate value overridden by a later staged annotate on the same range", async () => {
+				// Pre-existing text so we can annotate over it.
+				sharedString.insertText(0, "hello world");
+				containerRuntimeFactory.processAllMessages();
+				assert.equal(sharedString2.getText(), "hello world");
+
+				// Capture every property value the peer ever sees applied to the segment at pos 0.
+				const peerSeenColors: unknown[] = [];
+				sharedString2.on("sequenceDelta", (event) => {
+					if (!event.isLocal) {
+						for (const range of event.ranges) {
+							if (range.segment.properties?.color !== undefined) {
+								peerSeenColors.push(range.segment.properties.color);
+							}
+						}
+					}
+				});
+
+				// Disconnect, annotate twice with overlapping keys, reconnect with squash.
+				containerRuntime1.connected = false;
+				sharedString.annotateRange(0, 5, { color: "secret-color" });
+				sharedString.annotateRange(0, 5, { color: "public-color" });
+				reconnectAndSquash(containerRuntime1, dataStoreRuntime1);
+				containerRuntimeFactory.processAllMessages();
+
+				assert.equal(sharedString2.getPropertiesAtPosition(0)?.color, "public-color");
+				for (const value of peerSeenColors) {
+					assert.notEqual(value, "secret-color", "secret color must not leak through squash");
+				}
+			});
+
+			it("drops a staged insert's property value overridden by a later staged annotate", async () => {
+				// Capture every property value the peer ever sees on the inserted segment.
+				const peerSeenColors: unknown[] = [];
+				sharedString2.on("sequenceDelta", (event) => {
+					if (!event.isLocal) {
+						for (const range of event.ranges) {
+							if (range.segment.properties?.color !== undefined) {
+								peerSeenColors.push(range.segment.properties.color);
+							}
+						}
+					}
+				});
+
+				containerRuntime1.connected = false;
+				sharedString.insertText(0, "x", { color: "secret-color" });
+				sharedString.annotateRange(0, 1, { color: "public-color" });
+				reconnectAndSquash(containerRuntime1, dataStoreRuntime1);
+				containerRuntimeFactory.processAllMessages();
+
+				assert.equal(sharedString2.getPropertiesAtPosition(0)?.color, "public-color");
+				for (const value of peerSeenColors) {
+					assert.notEqual(
+						value,
+						"secret-color",
+						"secret color on insert must not leak through squash",
+					);
+				}
+			});
 		});
 	});
 

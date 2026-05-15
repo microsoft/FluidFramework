@@ -1183,18 +1183,48 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 					// unless the remove was local, in which case the annotate must have come
 					// before the remove
 					if (!isRemovedAndAcked(segment)) {
-						newOp =
-							resetOp.props === undefined
-								? createAdjustRangeOp(
-										segmentPosition,
-										segmentPosition + segment.cachedLength,
-										resetOp.adjust,
-									)
-								: createAnnotateRangeOp(
-										segmentPosition,
-										segmentPosition + segment.cachedLength,
-										resetOp.props,
-									);
+						if (
+							squash &&
+							resetOp.props !== undefined &&
+							segment.segmentGroups !== undefined &&
+							segmentGroup.localSeq !== undefined
+						) {
+							// Property-level squash: filter out keys overridden by a later staged
+							// annotate on this segment. If every key is overridden, drop the op
+							// entirely so the older value never reaches the wire.
+							const laterKeys = segment.segmentGroups.keysAnnotatedLaterThan(
+								segmentGroup.localSeq,
+							);
+							const filteredProps: PropertySet = {};
+							let kept = 0;
+							for (const key of Object.keys(resetOp.props)) {
+								if (!laterKeys.has(key)) {
+									// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+									filteredProps[key] = resetOp.props[key];
+									kept++;
+								}
+							}
+							if (kept > 0) {
+								newOp = createAnnotateRangeOp(
+									segmentPosition,
+									segmentPosition + segment.cachedLength,
+									filteredProps,
+								);
+							}
+						} else {
+							newOp =
+								resetOp.props === undefined
+									? createAdjustRangeOp(
+											segmentPosition,
+											segmentPosition + segment.cachedLength,
+											resetOp.adjust,
+										)
+									: createAnnotateRangeOp(
+											segmentPosition,
+											segmentPosition + segment.cachedLength,
+											resetOp.props,
+										);
+						}
 					}
 					break;
 				}
@@ -1244,11 +1274,31 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 					}
 
 					const segInsertOp: ISegment = segment.clone();
-					const opProps =
+					const opProps: PropertySet | undefined =
 						isObject(resetOp.seg) && "props" in resetOp.seg && isObject(resetOp.seg.props)
 							? { ...resetOp.seg.props }
 							: undefined;
-					segInsertOp.properties = opProps;
+					if (
+						squash &&
+						opProps !== undefined &&
+						segment.segmentGroups !== undefined &&
+						segmentGroup.localSeq !== undefined
+					) {
+						// Property-level squash: drop keys later overwritten by a staged annotate.
+						// The segment text itself stays (we're emitting the insert), but the
+						// per-key values it carries are filtered so superseded values never leak.
+						const laterKeys = segment.segmentGroups.keysAnnotatedLaterThan(
+							segmentGroup.localSeq,
+						);
+						if (laterKeys.size > 0) {
+							for (const key of laterKeys) {
+								// eslint-disable-next-line @typescript-eslint/no-dynamic-delete
+								delete opProps[key];
+							}
+						}
+					}
+					segInsertOp.properties =
+						opProps !== undefined && Object.keys(opProps).length === 0 ? undefined : opProps;
 					newOp = createInsertSegmentOp(segmentPosition, segInsertOp);
 					break;
 				}
