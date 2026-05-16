@@ -61,6 +61,7 @@ interface SharedArrayPendingOp<T> {
 	readonly targetEntryId?: string;
 }
 
+
 /**
  * Represents a shared array that allows communication between distributed clients.
  *
@@ -100,6 +101,17 @@ export class SharedArrayClass<T extends SerializableTypeForSharedArray>
 	 * Push on submit / `applyStashedOp`; shift on local ack; splice on squash-drop.
 	 */
 	private readonly pendingOps: SharedArrayPendingOp<T>[] = [];
+
+	/**
+	 * Lazily-computed plan for the current resubmit batch. Identifies the set of
+	 * pendingOps to drop together (so insertAfter dependency chains are preserved)
+	 * and the insertAfter rewrites needed for non-dropped dependents. Invalidated on
+	 * any pendingOps mutation outside the squash path (submit / local-ack).
+	 */
+	private cachedSquashPlan?: {
+		drops: Set<SharedArrayPendingOp<T>>;
+		rewrites: Map<SharedArrayPendingOp<T>, string | undefined>;
+	};
 
 	/**
 	 * Create a new shared array
@@ -561,12 +573,28 @@ export class SharedArrayClass<T extends SerializableTypeForSharedArray>
 	 */
 	protected override reSubmitSquashed(content: unknown, localOpMetadata: unknown): void {
 		const pendingOp = localOpMetadata as SharedArrayPendingOp<T>;
-		if (!this.pendingOps.includes(pendingOp)) {
-			// Spliced by a prior insert-chain drop in this squash pass.
+		this.cachedSquashPlan ??= this.computeSquashPlan();
+		const { drops, rewrites } = this.cachedSquashPlan;
+		if (drops.has(pendingOp)) {
+			const idx = this.pendingOps.indexOf(pendingOp);
+			if (idx !== -1) {
+				this.pendingOps.splice(idx, 1);
+			}
 			return;
 		}
-		if (pendingOp.type === OperationType.insertEntry && this.tryDropInsertChain(pendingOp)) {
-			return;
+		if (rewrites.has(pendingOp)) {
+			const newInsertAfter = rewrites.get(pendingOp);
+			const op = content as ISharedArrayOperation<T>;
+			if (
+				op.type === OperationType.insertEntry ||
+				op.type === OperationType.moveEntry
+			) {
+				this.reSubmitCore(
+					{ ...op, insertAfterEntryId: newInsertAfter },
+					localOpMetadata,
+				);
+				return;
+			}
 		}
 		this.reSubmitCore(content, localOpMetadata);
 	}
@@ -579,6 +607,7 @@ export class SharedArrayClass<T extends SerializableTypeForSharedArray>
 	private submitArrayOp(op: ISharedArrayOperation<T>): void {
 		const pendingOp = this.buildPendingOp(op);
 		this.pendingOps.push(pendingOp);
+		this.cachedSquashPlan = undefined;
 		this.submitLocalMessage(op, pendingOp);
 	}
 
@@ -605,20 +634,107 @@ export class SharedArrayClass<T extends SerializableTypeForSharedArray>
 	}
 
 	/**
-	 * Walk pendingOps forward from a staged `insertEntry` and determine whether the entry's
-	 * chain (insert plus subsequent moves) ends in a deleted state. If so, splice every op
-	 * in the chain out of `pendingOps` and return true. If the chain ends live, or if a
-	 * `toggleMove` complicates the chain, leave pendingOps unchanged and return false.
+	 * Compute the squash plan for the current pendingOps state. Two passes:
+	 * pass 1 identifies each insertEntry chain (insert + moves + terminal
+	 * delete/toggle); chains that terminate in a deleted state contribute their
+	 * ops to `drops` and their entryIds to `droppedEntries`. Pass 2 computes
+	 * insertAfter rewrites for non-dropped insert/move ops whose
+	 * `insertAfterEntryId` references a dropped entry, by walking sharedArray
+	 * backward to the nearest non-dropped entry.
 	 */
-	private tryDropInsertChain(insertOp: SharedArrayPendingOp<T>): boolean {
+	private computeSquashPlan(): {
+		drops: Set<SharedArrayPendingOp<T>>;
+		rewrites: Map<SharedArrayPendingOp<T>, string | undefined>;
+	} {
+		const drops = new Set<SharedArrayPendingOp<T>>();
+		const droppedEntries = new Set<string>();
+		const claimed = new Set<SharedArrayPendingOp<T>>();
+
+		for (const op of this.pendingOps) {
+			if (op.type !== OperationType.insertEntry || claimed.has(op)) {
+				continue;
+			}
+			const chain = this.walkInsertChain(op);
+			if (chain === undefined) {
+				continue;
+			}
+			for (const chainOp of chain.ops) {
+				drops.add(chainOp);
+				claimed.add(chainOp);
+			}
+			for (const entry of chain.entries) {
+				droppedEntries.add(entry);
+			}
+		}
+
+		const rewrites = new Map<SharedArrayPendingOp<T>, string | undefined>();
+		if (droppedEntries.size > 0) {
+			for (const pendingOp of this.pendingOps) {
+				if (drops.has(pendingOp)) {
+					continue;
+				}
+				const op = pendingOp.op;
+				if (
+					op.type !== OperationType.insertEntry &&
+					op.type !== OperationType.moveEntry
+				) {
+					continue;
+				}
+				if (
+					op.insertAfterEntryId === undefined ||
+					!droppedEntries.has(op.insertAfterEntryId)
+				) {
+					continue;
+				}
+				rewrites.set(
+					pendingOp,
+					this.resolveRewriteTarget(pendingOp.entryId, droppedEntries),
+				);
+			}
+		}
+		return { drops, rewrites };
+	}
+
+	/**
+	 * Walk sharedArray backward from the given entry's position to find the nearest
+	 * non-dropped entryId. Returns undefined if none exists (rewrite anchors to front).
+	 */
+	private resolveRewriteTarget(
+		entryId: string,
+		droppedEntries: Set<string>,
+	): string | undefined {
+		const idx = this.findIndexOfEntryId(entryId);
+		if (idx <= 0) {
+			return undefined;
+		}
+		for (let i = idx - 1; i >= 0; i--) {
+			const entry = this.sharedArray[i];
+			if (entry !== undefined && !droppedEntries.has(entry.entryId)) {
+				return entry.entryId;
+			}
+		}
+		return undefined;
+	}
+
+	/**
+	 * Walk forward from the given insertEntry collecting its chain — insert + any
+	 * `moveEntry` hops + a terminating `deleteEntry` or deleting `toggle`. Returns
+	 * the chain ops and entryIds touched if the chain ends in a deleted state;
+	 * undefined otherwise. Ignores forward dependencies; rewrite handling lives in
+	 * the caller.
+	 */
+	private walkInsertChain(
+		insertOp: SharedArrayPendingOp<T>,
+	): { ops: SharedArrayPendingOp<T>[]; entries: Set<string> } | undefined {
 		const startIdx = this.pendingOps.indexOf(insertOp);
 		if (startIdx === -1) {
-			return false;
+			return undefined;
 		}
 
 		let currentEntry = insertOp.entryId;
 		let isCurrentlyDeleted = false;
-		const chainIndices: number[] = [startIdx];
+		const ops: SharedArrayPendingOp<T>[] = [insertOp];
+		const entries = new Set<string>([currentEntry]);
 
 		for (let i = startIdx + 1; i < this.pendingOps.length; i++) {
 			const candidate = this.pendingOps[i];
@@ -629,41 +745,32 @@ export class SharedArrayClass<T extends SerializableTypeForSharedArray>
 				continue;
 			}
 			if (candidate.type === OperationType.deleteEntry && sourceMatches) {
-				chainIndices.push(i);
+				ops.push(candidate);
 				isCurrentlyDeleted = true;
 				continue;
 			}
 			if (candidate.type === OperationType.toggle && sourceMatches) {
-				chainIndices.push(i);
+				ops.push(candidate);
 				isCurrentlyDeleted = (candidate.op as IToggleOperation).isDeleted;
 				continue;
 			}
 			if (candidate.type === OperationType.moveEntry && sourceMatches) {
-				chainIndices.push(i);
+				ops.push(candidate);
 				assert(
 					candidate.targetEntryId !== undefined,
 					0xcfa /* moveEntry pendingOp has target */,
 				);
 				currentEntry = candidate.targetEntryId;
+				entries.add(currentEntry);
 				isCurrentlyDeleted = false;
 				continue;
 			}
-			// toggleMove or a move with target=currentEntry can rewire chain endpoints in
-			// ways that aren't safe to second-guess here; bail out and resubmit verbatim.
-			return false;
+			// toggleMove or a move-into-chain rewires the skip list in ways the walker
+			// can't safely compose; bail.
+			return undefined;
 		}
 
-		if (!isCurrentlyDeleted) {
-			return false;
-		}
-
-		// Splice in reverse order so earlier indices remain valid.
-		for (let j = chainIndices.length - 1; j >= 0; j--) {
-			const idx = chainIndices[j];
-			assert(idx !== undefined, 0xcfb /* chainIndices entry defined */);
-			this.pendingOps.splice(idx, 1);
-		}
-		return true;
+		return isCurrentlyDeleted ? { ops, entries } : undefined;
 	}
 
 	/**
@@ -767,6 +874,7 @@ export class SharedArrayClass<T extends SerializableTypeForSharedArray>
 				// entries out earlier in {@link reSubmitSquashed}, so the shifted entry
 				// here always matches the op being acked.
 				this.pendingOps.shift();
+				this.cachedSquashPlan = undefined;
 			} else {
 				this.emitValueChangedEvent(op, local);
 			}
