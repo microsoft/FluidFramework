@@ -114,6 +114,15 @@ export class SharedArrayClass<T extends SerializableTypeForSharedArray>
 	};
 
 	/**
+	 * Entries whose creation op was dropped by a prior squash batch and therefore
+	 * never reached peers. Lives across staging cycles: a later cycle that needs to
+	 * rewrite an `insertAfterEntryId` must skip these when picking a wire-valid
+	 * predecessor, because they remain in {@link sharedArray} as deleted entries
+	 * but are not visible to any peer.
+	 */
+	private readonly wireBlacklist = new Set<string>();
+
+	/**
 	 * Create a new shared array
 	 *
 	 * @param runtime - data store runtime the new shared array belongs to
@@ -664,12 +673,16 @@ export class SharedArrayClass<T extends SerializableTypeForSharedArray>
 			}
 			for (const entry of chain.entries) {
 				droppedEntries.add(entry);
+				this.wireBlacklist.add(entry);
 			}
 		}
 
 		const rewrites = new Map<SharedArrayPendingOp<T>, string | undefined>();
 		if (droppedEntries.size > 0) {
-			for (const pendingOp of this.pendingOps) {
+			const entryBirthIdx = this.buildEntryBirthIndexMap();
+			for (let pIdx = 0; pIdx < this.pendingOps.length; pIdx++) {
+				const pendingOp = this.pendingOps[pIdx];
+				assert(pendingOp !== undefined, 0xcfd /* pendingOps index in range */);
 				if (drops.has(pendingOp)) {
 					continue;
 				}
@@ -682,13 +695,16 @@ export class SharedArrayClass<T extends SerializableTypeForSharedArray>
 				}
 				if (
 					op.insertAfterEntryId === undefined ||
-					!droppedEntries.has(op.insertAfterEntryId)
+					(!droppedEntries.has(op.insertAfterEntryId) &&
+						!this.wireBlacklist.has(op.insertAfterEntryId))
 				) {
 					continue;
 				}
+				const anchorEntryId =
+					op.type === OperationType.moveEntry ? op.changedToEntryId : pendingOp.entryId;
 				rewrites.set(
 					pendingOp,
-					this.resolveRewriteTarget(pendingOp.entryId, droppedEntries),
+					this.resolveRewriteTarget(anchorEntryId, pIdx, droppedEntries, entryBirthIdx),
 				);
 			}
 		}
@@ -696,22 +712,65 @@ export class SharedArrayClass<T extends SerializableTypeForSharedArray>
 	}
 
 	/**
+	 * Map from entryId to the pendingOps index where that entry is created
+	 * (insertEntry or moveEntry's target). Entries not in the map are pre-staging
+	 * acked entries that are already on the wire.
+	 */
+	private buildEntryBirthIndexMap(): Map<string, number> {
+		const map = new Map<string, number>();
+		for (let i = 0; i < this.pendingOps.length; i++) {
+			const p = this.pendingOps[i];
+			assert(p !== undefined, 0xcfe /* pendingOps index in range */);
+			if (p.type === OperationType.insertEntry) {
+				map.set(p.entryId, i);
+			} else if (
+				p.type === OperationType.moveEntry &&
+				p.targetEntryId !== undefined
+			) {
+				map.set(p.targetEntryId, i);
+			}
+		}
+		return map;
+	}
+
+	/**
 	 * Walk sharedArray backward from the given entry's position to find the nearest
-	 * non-dropped entryId. Returns undefined if none exists (rewrite anchors to front).
+	 * entry that will be on the wire when the rewritten op is submitted. A candidate
+	 * qualifies when it is not in `droppedEntries`, not in `wireBlacklist`, and is
+	 * either acked pre-staging (not in `entryBirthIdx`) or born earlier than this
+	 * op in the same squash batch. Returns undefined when no qualifying predecessor
+	 * exists, which means the rewrite anchors to the front.
 	 */
 	private resolveRewriteTarget(
-		entryId: string,
+		anchorEntryId: string,
+		opPendingIdx: number,
 		droppedEntries: Set<string>,
+		entryBirthIdx: Map<string, number>,
 	): string | undefined {
-		const idx = this.findIndexOfEntryId(entryId);
+		const idx = this.findIndexOfEntryId(anchorEntryId);
 		if (idx <= 0) {
 			return undefined;
 		}
 		for (let i = idx - 1; i >= 0; i--) {
 			const entry = this.sharedArray[i];
-			if (entry !== undefined && !droppedEntries.has(entry.entryId)) {
-				return entry.entryId;
+			if (entry === undefined) {
+				continue;
 			}
+			if (droppedEntries.has(entry.entryId)) {
+				continue;
+			}
+			if (this.wireBlacklist.has(entry.entryId)) {
+				// Dropped by an earlier squash batch — sharedArray still has the (deleted)
+				// entry locally, but it never reached peers.
+				continue;
+			}
+			const birthIdx = entryBirthIdx.get(entry.entryId);
+			if (birthIdx !== undefined && birthIdx >= opPendingIdx) {
+				// Predecessor's wire op is submitted later than this one; not yet on
+				// the wire at the time of submission.
+				continue;
+			}
+			return entry.entryId;
 		}
 		return undefined;
 	}

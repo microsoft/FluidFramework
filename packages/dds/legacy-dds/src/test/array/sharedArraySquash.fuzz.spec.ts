@@ -245,14 +245,7 @@ const squashModel: SquashFuzzModel<SquashFactory, SquashOperation> = {
 };
 
 describe("SharedArray squash fuzz", () => {
-	// Known-failing seeds exercise edge cases not yet covered by the SharedArray
-	// squash code (most involve multi-stage interactions or chains whose forward
-	// dependents can't be losslessly rewritten). Tracked separately; clearing this
-	// list is a follow-up.
-	const knownFailingSeeds = [
-		0, 3, 4, 8, 15, 20, 21, 22, 23, 24, 27, 31, 35, 38, 39, 42, 45, 46, 47,
-	];
-	createSquashFuzzSuite.skip(...knownFailingSeeds)(squashModel, {
+	createSquashFuzzSuite(squashModel, {
 		validationStrategy: { type: "fixedInterval", interval: 10 },
 		reconnectProbability: 0,
 		numberOfClients: 1,
