@@ -47,6 +47,21 @@ import { SharedArrayRevertible } from "./sharedArrayRevertible.js";
 const snapshotFileName = "header";
 
 /**
+ * Per-op pending state used by the squash-on-resubmit path. The same object is the
+ * `localOpMetadata` passed to `submitLocalMessage`, which lets us splice an entry out
+ * of {@link SharedArrayClass.pendingOps} when a later staged op subsumes it.
+ *
+ * - `entryId` is the op's primary entry (source for moves/toggleMoves).
+ * - `targetEntryId` is the destination for moves/toggleMoves; undefined otherwise.
+ */
+interface SharedArrayPendingOp<T> {
+	readonly op: ISharedArrayOperation<T>;
+	readonly type: OperationType;
+	readonly entryId: string;
+	readonly targetEntryId?: string;
+}
+
+/**
  * Represents a shared array that allows communication between distributed clients.
  *
  * @internal
@@ -76,6 +91,15 @@ export class SharedArrayClass<T extends SerializableTypeForSharedArray>
 	 * We should not rollback to life an entry that was deleted by remote clients.
 	 */
 	private readonly remoteDeleteWithLocalPendingDelete: Set<string> = new Set<string>();
+
+	/**
+	 * FIFO of in-flight local ops. The `localOpMetadata` passed to each `submitLocalMessage`
+	 * call is the same object stored here, so {@link reSubmitSquashed} can splice an entry
+	 * out when a later staged op subsumes it.
+	 *
+	 * Push on submit / `applyStashedOp`; shift on local ack; splice on squash-drop.
+	 */
+	private readonly pendingOps: SharedArrayPendingOp<T>[] = [];
 
 	/**
 	 * Create a new shared array
@@ -220,7 +244,7 @@ export class SharedArrayClass<T extends SerializableTypeForSharedArray>
 			return;
 		}
 
-		this.submitLocalMessage(op);
+		this.submitArrayOp(op);
 	}
 
 	public delete(index: number): void {
@@ -247,7 +271,7 @@ export class SharedArrayClass<T extends SerializableTypeForSharedArray>
 			return;
 		}
 
-		this.submitLocalMessage(op);
+		this.submitArrayOp(op);
 	}
 
 	public rearrangeToFront(values: T[]): void {
@@ -324,7 +348,7 @@ export class SharedArrayClass<T extends SerializableTypeForSharedArray>
 			return;
 		}
 
-		this.submitLocalMessage(op);
+		this.submitArrayOp(op);
 	}
 
 	/**
@@ -360,7 +384,7 @@ export class SharedArrayClass<T extends SerializableTypeForSharedArray>
 			return;
 		}
 
-		this.submitLocalMessage(op);
+		this.submitArrayOp(op);
 	}
 	/**
 	 * Method to do undo/redo of move operation. All entries of the same payload/value are stored
@@ -398,7 +422,7 @@ export class SharedArrayClass<T extends SerializableTypeForSharedArray>
 			return;
 		}
 
-		this.submitLocalMessage(op);
+		this.submitArrayOp(op);
 	}
 
 	public rollback(op: unknown, _localOpMetadata: unknown): void {
@@ -523,20 +547,126 @@ export class SharedArrayClass<T extends SerializableTypeForSharedArray>
 	protected onDisconnect(): void {}
 
 	/**
-	 * SharedArray is a legacy DDS ("not intended for use in new code"); the implementation tracks
-	 * pending state via internal counters on entries plus a skip list, and a true per-entry squash
-	 * (collapsing an inserted-then-deleted entry to no wire ops) would require nontrivial rework
-	 * to map between the runtime's per-op resubmit calls and that internal state.
+	 * Per-op squash. The only op that carries user content is `insertEntry` (its `value`); the
+	 * others reference entryIds. So the subsumption walk starts at each staged `insertEntry`
+	 * and follows the chain forward through `moveEntry` (which re-homes the entry's value
+	 * under a new entryId) until the chain terminates. If the chain's final state is "deleted"
+	 * — via `deleteEntry` or `toggle(isDeleted=true)` — the entire chain is dropped (including
+	 * the insert that carried the value). If the chain remains live, or if a `toggleMove`
+	 * intervenes (which can resurrect an earlier link in unpredictable ways), the chain is
+	 * resubmitted unchanged.
 	 *
-	 * We therefore use the identity transform here: each pending op is replayed via reSubmitCore.
-	 *
-	 * Known limitation: an `insertEntry` op carries the user-supplied entry value. If a value
-	 * containing sensitive content is inserted and then deleted within a single staging session,
-	 * the value will still appear on the wire on commit (the insert op is replayed before the
-	 * delete). Callers who need leak-free staging behavior should prefer SharedTree or SharedMap.
+	 * Dropped ops are spliced from {@link pendingOps} in this pass; later `reSubmitSquashed`
+	 * calls for those same ops short-circuit via the membership check.
 	 */
 	protected override reSubmitSquashed(content: unknown, localOpMetadata: unknown): void {
+		const pendingOp = localOpMetadata as SharedArrayPendingOp<T>;
+		if (!this.pendingOps.includes(pendingOp)) {
+			// Spliced by a prior insert-chain drop in this squash pass.
+			return;
+		}
+		if (
+			pendingOp.type === OperationType.insertEntry &&
+			this.tryDropInsertChain(pendingOp)
+		) {
+			return;
+		}
 		this.reSubmitCore(content, localOpMetadata);
+	}
+
+	/**
+	 * Push a pending-op record and submit the op with that record as `localOpMetadata`.
+	 * The record is consumed FIFO on local ack (see {@link processMessage}) and may be
+	 * spliced out earlier by a squash decision (see {@link reSubmitSquashed}).
+	 */
+	private submitArrayOp(op: ISharedArrayOperation<T>): void {
+		const pendingOp = this.buildPendingOp(op);
+		this.pendingOps.push(pendingOp);
+		this.submitLocalMessage(op, pendingOp);
+	}
+
+	private buildPendingOp(op: ISharedArrayOperation<T>): SharedArrayPendingOp<T> {
+		switch (op.type) {
+			case OperationType.insertEntry:
+			case OperationType.deleteEntry:
+			case OperationType.toggle: {
+				return { op, type: op.type, entryId: op.entryId };
+			}
+			case OperationType.moveEntry:
+			case OperationType.toggleMove: {
+				return {
+					op,
+					type: op.type,
+					entryId: op.entryId,
+					targetEntryId: op.changedToEntryId,
+				};
+			}
+			default: {
+				unreachableCase(op);
+			}
+		}
+	}
+
+	/**
+	 * Walk pendingOps forward from a staged `insertEntry` and determine whether the entry's
+	 * chain (insert plus subsequent moves) ends in a deleted state. If so, splice every op
+	 * in the chain out of `pendingOps` and return true. If the chain ends live, or if a
+	 * `toggleMove` complicates the chain, leave pendingOps unchanged and return false.
+	 */
+	private tryDropInsertChain(insertOp: SharedArrayPendingOp<T>): boolean {
+		const startIdx = this.pendingOps.indexOf(insertOp);
+		if (startIdx === -1) {
+			return false;
+		}
+
+		let currentEntry = insertOp.entryId;
+		let isCurrentlyDeleted = false;
+		const chainIndices: number[] = [startIdx];
+
+		for (let i = startIdx + 1; i < this.pendingOps.length; i++) {
+			const candidate = this.pendingOps[i];
+			assert(candidate !== undefined, 0xcf9 /* pendingOps index in range */);
+			const sourceMatches = candidate.entryId === currentEntry;
+			const targetMatches = candidate.targetEntryId === currentEntry;
+			if (!sourceMatches && !targetMatches) {
+				continue;
+			}
+			if (candidate.type === OperationType.deleteEntry && sourceMatches) {
+				chainIndices.push(i);
+				isCurrentlyDeleted = true;
+				continue;
+			}
+			if (candidate.type === OperationType.toggle && sourceMatches) {
+				chainIndices.push(i);
+				isCurrentlyDeleted = (candidate.op as IToggleOperation).isDeleted;
+				continue;
+			}
+			if (candidate.type === OperationType.moveEntry && sourceMatches) {
+				chainIndices.push(i);
+				assert(
+					candidate.targetEntryId !== undefined,
+					0xcfa /* moveEntry pendingOp has target */,
+				);
+				currentEntry = candidate.targetEntryId;
+				isCurrentlyDeleted = false;
+				continue;
+			}
+			// toggleMove or a move with target=currentEntry can rewire chain endpoints in
+			// ways that aren't safe to second-guess here; bail out and resubmit verbatim.
+			return false;
+		}
+
+		if (!isCurrentlyDeleted) {
+			return false;
+		}
+
+		// Splice in reverse order so earlier indices remain valid.
+		for (let j = chainIndices.length - 1; j >= 0; j--) {
+			const idx = chainIndices[j];
+			assert(idx !== undefined, 0xcfb /* chainIndices entry defined */);
+			this.pendingOps.splice(idx, 1);
+		}
+		return true;
 	}
 
 	/**
@@ -635,7 +765,12 @@ export class SharedArrayClass<T extends SerializableTypeForSharedArray>
 					throw new Error("Unknown operation");
 				}
 			}
-			if (!local) {
+			if (local) {
+				// Pending ops are FIFO-consumed on local ack. Squash-drops splice their
+				// entries out earlier in {@link reSubmitSquashed}, so the shifted entry
+				// here always matches the op being acked.
+				this.pendingOps.shift();
+			} else {
 				this.emitValueChangedEvent(op, local);
 			}
 		}
@@ -1041,6 +1176,6 @@ export class SharedArrayClass<T extends SerializableTypeForSharedArray>
 				unreachableCase(op);
 			}
 		}
-		this.submitLocalMessage(op);
+		this.submitArrayOp(op);
 	}
 }

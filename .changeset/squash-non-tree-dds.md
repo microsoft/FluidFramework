@@ -26,7 +26,8 @@ Per-DDS treatment:
 - `SharedSequence` text and endpoints: unchanged — squash was already wired end-to-end via merge-tree's `regeneratePendingOp(squash)`.
 - `SharedSequence` / `SharedString` segment properties: merge-tree's `resetPendingDeltaToOps` now filters ANNOTATE `props` and INSERT `seg.properties` against keys touched by later staged annotates on the same segment. If every key is overridden the op is dropped entirely.
 - `SharedSequence` interval properties: `IntervalCollection.resubmitMessage` now filters ADD / CHANGE `value.properties` against keys touched by later staged ADD/CHANGE ops on the same interval, and drops an ADD/CHANGE entirely when a later DELETE on the same interval subsumes it.
-- `Ink`, `ConsensusRegisterCollection`, `ConsensusOrderedCollection`, `PactMap`, legacy `SharedArray`, legacy `SharedSignal`: identity squash with documented rationale. These DDSes have append-only, order-preserving, or consensus-bound semantics where collapsing pending ops would change observable behavior.
+- legacy `SharedArray`: subsumption-aware squash drops a staged `insertEntry` (with its user-supplied `value`) when a later staged `deleteEntry`, deleting `toggle`, or move chain ending in either subsumes it; intervening `toggleMove` ops disable the optimization and the chain is resubmitted unchanged.
+- `Ink`, `ConsensusRegisterCollection`, `ConsensusOrderedCollection`, `PactMap`, legacy `SharedSignal`: identity squash with documented rationale. These DDSes have append-only, order-preserving, or consensus-bound semantics where collapsing pending ops would change observable behavior.
 
 Together this removes the dependency on the `Fluid.SharedObject.AllowStagingModeWithoutSquashing` config flag fallback for the listed DDSes.
 
@@ -35,4 +36,3 @@ Known limitations (documented in code; not addressed in this changeset):
 - `ConsensusOrderedCollection.add` carries a serialized user value; an `add(secret) → acquire → complete` chain inside a staging session still transmits the `add` op on commit.
 - `ConsensusRegisterCollection` writes participate in `readVersions()` history; collapsing pending writes would alter observable semantics, so intermediate writes during staging remain visible.
 - `Ink` and legacy `SharedSignal` ops carry user-supplied pen / metadata; staging-mode notifications are intentionally transmitted on commit.
-- legacy `SharedArray.insertEntry` carries the entry value; an insert-then-delete within a staging session still leaks the value.
