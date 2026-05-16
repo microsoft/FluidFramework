@@ -41,9 +41,13 @@ import path from "path-browserify";
 import type {
 	IDirectory,
 	IDirectoryEvents,
+	IDirectorySortKeyChanged,
+	IDirectorySubDirectorySortKeyChanged,
 	IDirectoryValueChanged,
 	ISharedDirectory,
 	ISharedDirectoryEvents,
+	ISortKeyChanged,
+	ISubDirectorySortKeyChanged,
 	IValueChanged,
 } from "./interfaces.js";
 import type {
@@ -156,9 +160,37 @@ export interface IDirectoryClearOperation {
 }
 
 /**
+ * Operation indicating a key's sort key should be set (or cleared).
+ */
+export interface IDirectorySetSortKeyOperation {
+	/**
+	 * String identifier of the operation type.
+	 */
+	type: "setSortKey";
+
+	/**
+	 * Directory key whose sort key is being modified.
+	 */
+	key: string;
+
+	/**
+	 * Absolute path of the directory where the modified key is located.
+	 */
+	path: string;
+
+	/**
+	 * New sort key value. Absent (`undefined`) indicates the sort key is being cleared.
+	 */
+	sortKey?: string;
+}
+
+/**
  * An operation on one or more of the keys within a directory.
  */
-export type IDirectoryStorageOperation = IDirectoryKeyOperation | IDirectoryClearOperation;
+export type IDirectoryStorageOperation =
+	| IDirectoryKeyOperation
+	| IDirectoryClearOperation
+	| IDirectorySetSortKeyOperation;
 
 /**
  * Operation indicating a subdirectory should be created.
@@ -201,11 +233,37 @@ export interface IDirectoryDeleteSubDirectoryOperation {
 }
 
 /**
+ * Operation indicating a child subdirectory's sort key should be set (or cleared).
+ */
+export interface IDirectorySetSubDirectorySortKeyOperation {
+	/**
+	 * String identifier of the operation type.
+	 */
+	type: "setSubDirectorySortKey";
+
+	/**
+	 * Absolute path of the parent directory that contains the child subdirectory.
+	 */
+	path: string;
+
+	/**
+	 * Name of the child subdirectory whose sort key is being modified.
+	 */
+	subdirName: string;
+
+	/**
+	 * New sort key value. Absent (`undefined`) indicates the sort key is being cleared.
+	 */
+	sortKey?: string;
+}
+
+/**
  * An operation on the subdirectories within a directory.
  */
 export type IDirectorySubDirectoryOperation =
 	| IDirectoryCreateSubDirectoryOperation
-	| IDirectoryDeleteSubDirectoryOperation;
+	| IDirectoryDeleteSubDirectoryOperation
+	| IDirectorySetSubDirectorySortKeyOperation;
 
 /**
  * Any operation on a directory.
@@ -270,6 +328,28 @@ interface PendingSubDirectoryDelete {
 type PendingSubDirectoryEntry = PendingSubDirectoryCreate | PendingSubDirectoryDelete;
 
 /**
+ * Represents a pending local set (or clear) of a key's sort key.
+ */
+interface PendingSortKeySet {
+	type: "setSortKey";
+	path: string;
+	key: string;
+	sortKey: string | undefined;
+	subdir: SubDirectory;
+}
+
+/**
+ * Represents a pending local set (or clear) of a child subdirectory's sort key.
+ */
+interface PendingSubDirectorySortKeySet {
+	type: "setSubDirectorySortKey";
+	path: string;
+	subdirName: string;
+	sortKey: string | undefined;
+	subdir: SubDirectory;
+}
+
+/**
  * Create info for the subdirectory.
  *
  * @deprecated This interface will no longer be exported in the future(AB#8004).
@@ -320,6 +400,16 @@ export interface IDirectoryDataObject {
 	 * than the state before this change.
 	 */
 	ci?: ICreateInfo;
+
+	/**
+	 * Sort keys for keys in this subdirectory (absent if no sort keys are set).
+	 */
+	sortKeys?: Record<string, string>;
+
+	/**
+	 * Sort keys for child subdirectories of this subdirectory (absent if no sort keys are set).
+	 */
+	subdirectorySortKeys?: Record<string, string>;
 }
 
 /**
@@ -462,6 +552,15 @@ export class SharedDirectory
 		this.root.on("subDirectoryDeleted", (relativePath: string, local: boolean) => {
 			this.emit("subDirectoryDeleted", relativePath, local, this);
 		});
+		this.root.on("containedSortKeyChanged", (changed: ISortKeyChanged, local: boolean) => {
+			this.emit("containedSortKeyChanged", changed, local, this);
+		});
+		this.root.on(
+			"containedSubDirectorySortKeyChanged",
+			(changed: ISubDirectorySortKeyChanged, local: boolean) => {
+				this.emit("containedSubDirectorySortKeyChanged", changed, local, this);
+			},
+		);
 	}
 
 	/**
@@ -610,6 +709,52 @@ export class SharedDirectory
 	 */
 	public subdirectories(): IterableIterator<[string, IDirectory]> {
 		return this.root.subdirectories();
+	}
+
+	/**
+	 * {@inheritDoc IDirectory.setSortKey}
+	 */
+	public setSortKey(key: string, sortKey: string | undefined): void {
+		this.root.setSortKey(key, sortKey);
+	}
+
+	/**
+	 * {@inheritDoc IDirectory.setSubDirectorySortKey}
+	 */
+	public setSubDirectorySortKey(subdirName: string, sortKey: string | undefined): void {
+		this.root.setSubDirectorySortKey(subdirName, sortKey);
+	}
+
+	/**
+	 * {@inheritDoc IDirectory.keysByOrder}
+	 */
+	public keysByOrder(): IterableIterator<string> {
+		return this.root.keysByOrder();
+	}
+
+	/**
+	 * {@inheritDoc IDirectory.valuesByOrder}
+	 */
+	// TODO: Use `unknown` instead (breaking change).
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	public valuesByOrder(): IterableIterator<any> {
+		return this.root.valuesByOrder();
+	}
+
+	/**
+	 * {@inheritDoc IDirectory.entriesByOrder}
+	 */
+	// TODO: Use `unknown` instead (breaking change).
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	public entriesByOrder(): IterableIterator<[string, any]> {
+		return this.root.entriesByOrder();
+	}
+
+	/**
+	 * {@inheritDoc IDirectory.subdirectoriesByOrder}
+	 */
+	public subdirectoriesByOrder(): IterableIterator<[string, IDirectory]> {
+		return this.root.subdirectoriesByOrder();
 	}
 
 	/**
@@ -784,6 +929,19 @@ export class SharedDirectory
 					) as ISerializableValue;
 					migrateIfSharedSerializable(parsedSerializable, this.serializer, this.handle);
 					currentSubDir.populateStorage(key, parsedSerializable.value);
+				}
+			}
+
+			if (currentSubDirObject.sortKeys) {
+				for (const [key, sortKey] of Object.entries(currentSubDirObject.sortKeys)) {
+					currentSubDir.populateSortKey(key, sortKey);
+				}
+			}
+			if (currentSubDirObject.subdirectorySortKeys) {
+				for (const [subdirName, sortKey] of Object.entries(
+					currentSubDirObject.subdirectorySortKeys,
+				)) {
+					currentSubDir.populateSubDirectorySortKey(subdirName, sortKey);
 				}
 			}
 		}
@@ -977,6 +1135,51 @@ export class SharedDirectory
 				}
 			},
 		});
+
+		this.messageHandlers.set("setSortKey", {
+			process: (
+				msgEnvelope: ISequencedMessageEnvelope,
+				op: IDirectorySetSortKeyOperation,
+				local: boolean,
+				localOpMetadata: PendingSortKeySet | undefined,
+				clientSequenceNumber: number,
+			) => {
+				const subdir = this.getSequencedWorkingDirectory(op.path) as SubDirectory | undefined;
+				if (subdir !== undefined && !subdir?.disposed) {
+					subdir.processSetSortKeyMessage(msgEnvelope, op, local, localOpMetadata);
+				}
+			},
+			resubmit: (op: IDirectorySetSortKeyOperation, localOpMetadata: PendingSortKeySet) => {
+				const targetSubdir = localOpMetadata.subdir;
+				if (!targetSubdir.disposed) {
+					targetSubdir.resubmitSortKeyMessage(op, localOpMetadata);
+				}
+			},
+		});
+
+		this.messageHandlers.set("setSubDirectorySortKey", {
+			process: (
+				msgEnvelope: ISequencedMessageEnvelope,
+				op: IDirectorySetSubDirectorySortKeyOperation,
+				local: boolean,
+				localOpMetadata: PendingSubDirectorySortKeySet | undefined,
+				clientSequenceNumber: number,
+			) => {
+				const subdir = this.getSequencedWorkingDirectory(op.path) as SubDirectory | undefined;
+				if (subdir !== undefined && !subdir?.disposed) {
+					subdir.processSetSubDirectorySortKeyMessage(msgEnvelope, op, local, localOpMetadata);
+				}
+			},
+			resubmit: (
+				op: IDirectorySetSubDirectorySortKeyOperation,
+				localOpMetadata: PendingSubDirectorySortKeySet,
+			) => {
+				const targetSubdir = localOpMetadata.subdir;
+				if (!targetSubdir.disposed) {
+					targetSubdir.resubmitSubDirectorySortKeyMessage(op, localOpMetadata);
+				}
+			},
+		});
 	}
 
 	/**
@@ -1005,6 +1208,14 @@ export class SharedDirectory
 			case "set": {
 				migrateIfSharedSerializable(directoryOp.value, this.serializer, this.handle);
 				dir?.set(directoryOp.key, directoryOp.value.value);
+				break;
+			}
+			case "setSortKey": {
+				dir?.setSortKey(directoryOp.key, directoryOp.sortKey);
+				break;
+			}
+			case "setSubDirectorySortKey": {
+				dir?.setSubDirectorySortKey(directoryOp.subdirName, directoryOp.sortKey);
 				break;
 			}
 			default: {
@@ -1061,6 +1272,16 @@ export class SharedDirectory
 				}
 			}
 
+			const serializableSortKeys = currentSubDir.getSerializableSortKeys();
+			if (serializableSortKeys !== undefined) {
+				currentSubDirObject.sortKeys = serializableSortKeys;
+			}
+			const serializableSubDirectorySortKeys =
+				currentSubDir.getSerializableSubDirectorySortKeys();
+			if (serializableSubDirectorySortKeys !== undefined) {
+				currentSubDirObject.subdirectorySortKeys = serializableSubDirectorySortKeys;
+			}
+
 			for (const [subdirName, subdir] of currentSubDir.subdirectories()) {
 				if (!currentSubDirObject.subdirectories) {
 					currentSubDirObject.subdirectories = {};
@@ -1103,11 +1324,87 @@ type StorageLocalOpMetadata = EditLocalOpMetadata | ClearLocalOpMetadata;
 /**
  * Types of local op metadata.
  */
-export type DirectoryLocalOpMetadata = StorageLocalOpMetadata | SubDirLocalOpMetadata;
+export type DirectoryLocalOpMetadata =
+	| StorageLocalOpMetadata
+	| SubDirLocalOpMetadata
+	| PendingSortKeySet
+	| PendingSubDirectorySortKeySet;
 
 // eslint-disable-next-line @rushstack/no-new-null
 function assertNonNullClientId(clientId: string | null): asserts clientId is string {
 	assert(clientId !== null, 0x6af /* client id should never be null */);
+}
+
+/**
+ * Overlay a list of pending sort-key sets onto a sequenced sort-key map, producing the
+ * currently-visible (optimistic) sort-key map. A pending entry with `sortKey === undefined` clears.
+ */
+function collectOptimisticSortKeys<T extends { sortKey: string | undefined }>(
+	sequenced: ReadonlyMap<string, string>,
+	pending: readonly T[],
+	nameOf: (entry: T) => string,
+): Map<string, string> {
+	const result = new Map(sequenced);
+	for (const entry of pending) {
+		const name = nameOf(entry);
+		if (entry.sortKey === undefined) {
+			result.delete(name);
+		} else {
+			result.set(name, entry.sortKey);
+		}
+	}
+	return result;
+}
+
+/**
+ * Convert a sort-key map to the snapshot `Record<string, string>` representation, or `undefined`
+ * when empty so that snapshots written by pre-feature code round-trip unchanged.
+ */
+function sortKeysToRecord(
+	sortKeys: ReadonlyMap<string, string>,
+): Record<string, string> | undefined {
+	if (sortKeys.size === 0) {
+		return undefined;
+	}
+	const result: Record<string, string> = {};
+	for (const [name, sortKey] of sortKeys.entries()) {
+		result[name] = sortKey;
+	}
+	return result;
+}
+
+/**
+ * Partition a default-ordered sequence of items into sort-keyed items (lex order of sort key, with ties
+ * broken by default-order position) followed by unkeyed items (in default-order position). Items whose
+ * name is not in `sortKeys` fall into the unkeyed bucket.
+ */
+function orderBySortKey<T>(
+	defaultOrder: readonly T[],
+	nameOf: (item: T) => string,
+	sortKeys: ReadonlyMap<string, string>,
+): T[] {
+	const sortKeyed: T[] = [];
+	const unkeyed: T[] = [];
+	for (const item of defaultOrder) {
+		if (sortKeys.has(nameOf(item))) {
+			sortKeyed.push(item);
+		} else {
+			unkeyed.push(item);
+		}
+	}
+	// Stable sort preserves default-order position as the tiebreaker.
+	sortKeyed.sort((a, b) => {
+		const sa = sortKeys.get(nameOf(a)) as string;
+		const sb = sortKeys.get(nameOf(b)) as string;
+		if (sa < sb) {
+			return -1;
+		}
+		if (sa > sb) {
+			return 1;
+		}
+		return 0;
+	});
+	return [...sortKeyed, ...unkeyed];
 }
 
 /**
@@ -1282,6 +1579,136 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 	}
 
 	/**
+	 * {@inheritDoc IDirectory.setSortKey}
+	 */
+	public setSortKey(key: string, sortKey: string | undefined): void {
+		this.throwIfDisposed();
+		const previousSortKey = this.getOptimisticSortKey(key);
+
+		if (!this.directory.isAttached()) {
+			if (sortKey === undefined) {
+				this.sequencedSortKeys.delete(key);
+			} else {
+				this.sequencedSortKeys.set(key, sortKey);
+			}
+			this.emitSortKeyChanged(key, sortKey, previousSortKey, true);
+			return;
+		}
+
+		const pendingEntry: PendingSortKeySet = {
+			type: "setSortKey",
+			path: this.absolutePath,
+			key,
+			sortKey,
+			subdir: this,
+		};
+		this.pendingSortKeyData.push(pendingEntry);
+
+		const op: IDirectorySetSortKeyOperation = {
+			type: "setSortKey",
+			path: this.absolutePath,
+			key,
+			...(sortKey === undefined ? {} : { sortKey }),
+		};
+		this.directory.submitDirectoryMessage(op, pendingEntry);
+		this.emitSortKeyChanged(key, sortKey, previousSortKey, true);
+	}
+
+	/**
+	 * {@inheritDoc IDirectory.setSubDirectorySortKey}
+	 */
+	public setSubDirectorySortKey(subdirName: string, sortKey: string | undefined): void {
+		this.throwIfDisposed();
+		const previousSortKey = this.getOptimisticSubDirectorySortKey(subdirName);
+
+		if (!this.directory.isAttached()) {
+			if (sortKey === undefined) {
+				this.sequencedSubDirectorySortKeys.delete(subdirName);
+			} else {
+				this.sequencedSubDirectorySortKeys.set(subdirName, sortKey);
+			}
+			this.emitSubDirectorySortKeyChanged(subdirName, sortKey, previousSortKey, true);
+			return;
+		}
+
+		const pendingEntry: PendingSubDirectorySortKeySet = {
+			type: "setSubDirectorySortKey",
+			path: this.absolutePath,
+			subdirName,
+			sortKey,
+			subdir: this,
+		};
+		this.pendingSubDirectorySortKeyData.push(pendingEntry);
+
+		const op: IDirectorySetSubDirectorySortKeyOperation = {
+			type: "setSubDirectorySortKey",
+			path: this.absolutePath,
+			subdirName,
+			...(sortKey === undefined ? {} : { sortKey }),
+		};
+		this.directory.submitDirectoryMessage(op, pendingEntry);
+		this.emitSubDirectorySortKeyChanged(subdirName, sortKey, previousSortKey, true);
+	}
+
+	/**
+	 * {@inheritDoc IDirectory.keysByOrder}
+	 */
+	public keysByOrder(): IterableIterator<string> {
+		this.throwIfDisposed();
+		const ordered = this.computeOrderedEntries();
+		const next = (): IteratorResult<string> => {
+			const result = ordered.next();
+			if (result.done === true) {
+				return { value: undefined, done: true };
+			}
+			return { value: result.value[0], done: false };
+		};
+		return {
+			next,
+			[Symbol.iterator](): IterableIterator<string> {
+				return this;
+			},
+		};
+	}
+
+	/**
+	 * {@inheritDoc IDirectory.valuesByOrder}
+	 */
+	public valuesByOrder(): IterableIterator<unknown> {
+		this.throwIfDisposed();
+		const ordered = this.computeOrderedEntries();
+		const next = (): IteratorResult<unknown> => {
+			const result = ordered.next();
+			if (result.done === true) {
+				return { value: undefined, done: true };
+			}
+			return { value: result.value[1], done: false };
+		};
+		return {
+			next,
+			[Symbol.iterator](): IterableIterator<unknown> {
+				return this;
+			},
+		};
+	}
+
+	/**
+	 * {@inheritDoc IDirectory.entriesByOrder}
+	 */
+	public entriesByOrder(): IterableIterator<[string, unknown]> {
+		this.throwIfDisposed();
+		return this.computeOrderedEntries();
+	}
+
+	/**
+	 * {@inheritDoc IDirectory.subdirectoriesByOrder}
+	 */
+	public subdirectoriesByOrder(): IterableIterator<[string, IDirectory]> {
+		this.throwIfDisposed();
+		return this.computeOrderedSubdirectories();
+	}
+
+	/**
 	 * {@inheritDoc IDirectory.countSubDirectory}
 	 */
 	public countSubDirectory(): number {
@@ -1400,6 +1827,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 			const successfullyRemoved = this._sequencedSubdirectories.delete(subdirName);
 			// Only emit if we actually deleted something.
 			if (successfullyRemoved) {
+				this.sequencedSubDirectorySortKeys.delete(subdirName);
 				this.disposeSubDirectoryTree(previousValue);
 				this.emit("subDirectoryDeleted", subdirName, true, this);
 			}
@@ -1503,6 +1931,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 
 		if (!this.directory.isAttached()) {
 			const successfullyRemoved = this.sequencedStorageData.delete(key);
+			this.sequencedSortKeys.delete(key);
 			// Only emit if we actually deleted something.
 			if (
 				this.isNotDisposedAndReachable() &&
@@ -1565,6 +1994,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 
 		if (!this.directory.isAttached()) {
 			this.sequencedStorageData.clear();
+			this.sequencedSortKeys.clear();
 			this.directory.emit("clear", true, this.directory);
 			this.directory.emit("cleared", this.absolutePath, true, this.directory);
 			return;
@@ -1710,6 +2140,28 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 	 * with the _sequencedSubdirectories to compute optimistic values.
 	 */
 	private readonly pendingSubDirectoryData: PendingSubDirectoryEntry[] = [];
+
+	/**
+	 * Sequenced (acknowledged) sort keys for each key in this subdirectory.
+	 */
+	private readonly sequencedSortKeys = new Map<string, string>();
+
+	/**
+	 * Pending local sort-key set operations, in submit order. Each entry is also used as the
+	 * `localOpMetadata` when the op is submitted, so pending entries are matched by reference identity
+	 * at ack and rollback time.
+	 */
+	private readonly pendingSortKeyData: PendingSortKeySet[] = [];
+
+	/**
+	 * Sequenced (acknowledged) sort keys for each child subdirectory of this subdirectory.
+	 */
+	private readonly sequencedSubDirectorySortKeys = new Map<string, string>();
+
+	/**
+	 * Pending local subdirectory-sort-key set operations, in submit order.
+	 */
+	private readonly pendingSubDirectorySortKeyData: PendingSubDirectorySortKeySet[] = [];
 
 	/**
 	 * An internal iterator that iterates over the entries in the directory.
@@ -1884,6 +2336,114 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 	}
 
 	/**
+	 * Compute the optimistic (locally-visible) sort key for a key. Pending sets override sequenced values.
+	 */
+	private getOptimisticSortKey(key: string): string | undefined {
+		const latestPending = findLast(this.pendingSortKeyData, (entry) => entry.key === key);
+		if (latestPending !== undefined) {
+			return latestPending.sortKey;
+		}
+		return this.sequencedSortKeys.get(key);
+	}
+
+	/**
+	 * Compute the optimistic (locally-visible) sort key for a child subdirectory.
+	 */
+	private getOptimisticSubDirectorySortKey(subdirName: string): string | undefined {
+		const latestPending = findLast(
+			this.pendingSubDirectorySortKeyData,
+			(entry) => entry.subdirName === subdirName,
+		);
+		if (latestPending !== undefined) {
+			return latestPending.sortKey;
+		}
+		return this.sequencedSubDirectorySortKeys.get(subdirName);
+	}
+
+	/**
+	 * Collect optimistic sort keys for all currently-visible keys. Keys without a sort key are omitted.
+	 */
+	private collectOptimisticSortKeys(): Map<string, string> {
+		return collectOptimisticSortKeys(
+			this.sequencedSortKeys,
+			this.pendingSortKeyData,
+			(entry) => entry.key,
+		);
+	}
+
+	/**
+	 * Collect optimistic sort keys for all currently-visible child subdirectories.
+	 */
+	private collectOptimisticSubDirectorySortKeys(): Map<string, string> {
+		return collectOptimisticSortKeys(
+			this.sequencedSubDirectorySortKeys,
+			this.pendingSubDirectorySortKeyData,
+			(entry) => entry.subdirName,
+		);
+	}
+
+	/**
+	 * Iterate the directory's keys in sort-key order. Sort-keyed entries come first in lex order (ties broken
+	 * by default iteration order); unkeyed entries follow in default iteration order.
+	 */
+	private computeOrderedEntries(): IterableIterator<[string, unknown]> {
+		const sortKeys = this.collectOptimisticSortKeys();
+		const defaultOrder: [string, unknown][] = [...this.internalIterator()];
+		return orderBySortKey(defaultOrder, (entry) => entry[0], sortKeys)[Symbol.iterator]();
+	}
+
+	/**
+	 * Iterate the directory's child subdirectories in subdirectory-sort-key order.
+	 */
+	private computeOrderedSubdirectories(): IterableIterator<[string, IDirectory]> {
+		const sortKeys = this.collectOptimisticSubDirectorySortKeys();
+		const defaultOrder: [string, IDirectory][] = [...this.subdirectories()];
+		return orderBySortKey(defaultOrder, (entry) => entry[0], sortKeys)[Symbol.iterator]();
+	}
+
+	private emitSortKeyChanged(
+		key: string,
+		sortKey: string | undefined,
+		previousSortKey: string | undefined,
+		local: boolean,
+	): void {
+		const directoryChanged: IDirectorySortKeyChanged = {
+			key,
+			sortKey,
+			previousSortKey,
+			path: this.absolutePath,
+		};
+		this.directory.emit("sortKeyChanged", directoryChanged, local, this.directory);
+		const containedChanged: ISortKeyChanged = {
+			key,
+			sortKey,
+			previousSortKey,
+		};
+		this.emit("containedSortKeyChanged", containedChanged, local, this);
+	}
+
+	private emitSubDirectorySortKeyChanged(
+		subdirName: string,
+		sortKey: string | undefined,
+		previousSortKey: string | undefined,
+		local: boolean,
+	): void {
+		const directoryChanged: IDirectorySubDirectorySortKeyChanged = {
+			subdirName,
+			sortKey,
+			previousSortKey,
+			path: this.absolutePath,
+		};
+		this.directory.emit("subDirectorySortKeyChanged", directoryChanged, local, this.directory);
+		const containedChanged: ISubDirectorySortKeyChanged = {
+			subdirName,
+			sortKey,
+			previousSortKey,
+		};
+		this.emit("containedSubDirectorySortKeyChanged", containedChanged, local, this);
+	}
+
+	/**
 	 * Process a clear operation.
 	 * @param msgEnvelope - The envelope of the message from the server to apply.
 	 * @param op - The op to process
@@ -1906,6 +2466,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 
 		if (local) {
 			this.sequencedStorageData.clear();
+			this.sequencedSortKeys.clear();
 			const pendingClear = this.pendingStorageData.shift();
 			assert(
 				pendingClear !== undefined &&
@@ -1923,6 +2484,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 				}
 			}
 			this.sequencedStorageData.clear();
+			this.sequencedSortKeys.clear();
 
 			// Only emit for remote ops, we would have already emitted for local ops. Only emit if there
 			// is no optimistically-applied local pending clear that would supersede this remote clear.
@@ -1986,9 +2548,11 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 			);
 			this.pendingStorageData.splice(pendingEntryIndex, 1);
 			this.sequencedStorageData.delete(op.key);
+			this.sequencedSortKeys.delete(op.key);
 		} else {
 			const previousValue: unknown = this.sequencedStorageData.get(op.key);
 			this.sequencedStorageData.delete(op.key);
+			this.sequencedSortKeys.delete(op.key);
 			// Suppress the event if local changes would cause the incoming change to be invisible optimistically.
 			if (
 				this.isNotDisposedAndReachable() &&
@@ -2214,6 +2778,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 		}
 
 		this._sequencedSubdirectories.delete(op.subdirName);
+		this.sequencedSubDirectorySortKeys.delete(op.subdirName);
 		this.disposeSubDirectoryTree(previousValue);
 
 		if (local) {
@@ -2237,6 +2802,134 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 			if (pendingEntry === undefined) {
 				this.emit("subDirectoryDeleted", op.subdirName, local, this);
 			}
+		}
+	}
+
+	/**
+	 * Process a setSortKey operation.
+	 */
+	public processSetSortKeyMessage(
+		msgEnvelope: ISequencedMessageEnvelope,
+		op: IDirectorySetSortKeyOperation,
+		local: boolean,
+		localOpMetadata: PendingSortKeySet | undefined,
+	): void {
+		this.throwIfDisposed();
+		if (
+			!this.isMessageForCurrentInstanceOfSubDirectory(msgEnvelope, localOpMetadata?.subdir)
+		) {
+			return;
+		}
+
+		const newSortKey = op.sortKey;
+
+		if (local) {
+			assert(localOpMetadata !== undefined, 0xc82 /* local op metadata should be defined */);
+			const pendingEntryIndex = this.pendingSortKeyData.indexOf(localOpMetadata);
+			assert(
+				pendingEntryIndex !== -1,
+				0xc80 /* Got a local setSortKey message we weren't expecting */,
+			);
+			this.pendingSortKeyData.splice(pendingEntryIndex, 1);
+			if (newSortKey === undefined) {
+				this.sequencedSortKeys.delete(op.key);
+			} else {
+				this.sequencedSortKeys.set(op.key, newSortKey);
+			}
+		} else {
+			const previousSequencedSortKey = this.sequencedSortKeys.get(op.key);
+			if (newSortKey === undefined) {
+				this.sequencedSortKeys.delete(op.key);
+			} else {
+				this.sequencedSortKeys.set(op.key, newSortKey);
+			}
+
+			// Suppress the event if a local pending sort-key set for this key would eclipse it.
+			if (
+				this.isNotDisposedAndReachable() &&
+				!this.pendingSortKeyData.some((entry) => entry.key === op.key)
+			) {
+				this.emitSortKeyChanged(op.key, newSortKey, previousSequencedSortKey, false);
+			}
+		}
+	}
+
+	/**
+	 * Process a setSubDirectorySortKey operation.
+	 */
+	public processSetSubDirectorySortKeyMessage(
+		msgEnvelope: ISequencedMessageEnvelope,
+		op: IDirectorySetSubDirectorySortKeyOperation,
+		local: boolean,
+		localOpMetadata: PendingSubDirectorySortKeySet | undefined,
+	): void {
+		this.throwIfDisposed();
+		if (
+			!this.isMessageForCurrentInstanceOfSubDirectory(msgEnvelope, localOpMetadata?.subdir)
+		) {
+			return;
+		}
+
+		const newSortKey = op.sortKey;
+
+		if (local) {
+			assert(localOpMetadata !== undefined, 0xc83 /* local op metadata should be defined */);
+			const pendingEntryIndex = this.pendingSubDirectorySortKeyData.indexOf(localOpMetadata);
+			assert(
+				pendingEntryIndex !== -1,
+				0xc81 /* Got a local setSubDirectorySortKey message we weren't expecting */,
+			);
+			this.pendingSubDirectorySortKeyData.splice(pendingEntryIndex, 1);
+			if (newSortKey === undefined) {
+				this.sequencedSubDirectorySortKeys.delete(op.subdirName);
+			} else {
+				this.sequencedSubDirectorySortKeys.set(op.subdirName, newSortKey);
+			}
+		} else {
+			const previousSequencedSortKey = this.sequencedSubDirectorySortKeys.get(op.subdirName);
+			if (newSortKey === undefined) {
+				this.sequencedSubDirectorySortKeys.delete(op.subdirName);
+			} else {
+				this.sequencedSubDirectorySortKeys.set(op.subdirName, newSortKey);
+			}
+
+			if (
+				this.isNotDisposedAndReachable() &&
+				!this.pendingSubDirectorySortKeyData.some(
+					(entry) => entry.subdirName === op.subdirName,
+				)
+			) {
+				this.emitSubDirectorySortKeyChanged(
+					op.subdirName,
+					newSortKey,
+					previousSequencedSortKey,
+					false,
+				);
+			}
+		}
+	}
+
+	/**
+	 * Resubmit a setSortKey operation.
+	 */
+	public resubmitSortKeyMessage(
+		op: IDirectorySetSortKeyOperation,
+		localOpMetadata: PendingSortKeySet,
+	): void {
+		if (this.pendingSortKeyData.includes(localOpMetadata)) {
+			this.directory.submitDirectoryMessage(op, localOpMetadata);
+		}
+	}
+
+	/**
+	 * Resubmit a setSubDirectorySortKey operation.
+	 */
+	public resubmitSubDirectorySortKeyMessage(
+		op: IDirectorySetSubDirectorySortKeyOperation,
+		localOpMetadata: PendingSubDirectorySortKeySet,
+	): void {
+		if (this.pendingSubDirectorySortKeyData.includes(localOpMetadata)) {
+			this.directory.submitDirectoryMessage(op, localOpMetadata);
 		}
 	}
 
@@ -2409,6 +3102,39 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 	}
 
 	/**
+	 * Get serialized sort keys for this subdirectory. Returns `undefined` when no sort keys are set, so that
+	 * snapshots written by pre-feature code round-trip unchanged.
+	 */
+	public getSerializableSortKeys(): Record<string, string> | undefined {
+		this.throwIfDisposed();
+		return sortKeysToRecord(this.sequencedSortKeys);
+	}
+
+	/**
+	 * Get serialized subdirectory sort keys for this subdirectory. Returns `undefined` when no sort keys are set.
+	 */
+	public getSerializableSubDirectorySortKeys(): Record<string, string> | undefined {
+		this.throwIfDisposed();
+		return sortKeysToRecord(this.sequencedSubDirectorySortKeys);
+	}
+
+	/**
+	 * Populate a key's sort key from a snapshot.
+	 */
+	public populateSortKey(key: string, sortKey: string): void {
+		this.throwIfDisposed();
+		this.sequencedSortKeys.set(key, sortKey);
+	}
+
+	/**
+	 * Populate a child subdirectory's sort key from a snapshot.
+	 */
+	public populateSubDirectorySortKey(subdirName: string, sortKey: string): void {
+		this.throwIfDisposed();
+		this.sequencedSubDirectorySortKeys.set(subdirName, sortKey);
+	}
+
+	/**
 	 * Populate a key value in this subdirectory's storage, to be used when loading from snapshot.
 	 * @param key - The key to populate
 	 * @param localValue - The local value to populate into it
@@ -2550,6 +3276,32 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 
 			this.pendingSubDirectoryData.splice(pendingEntryIndex, 1);
 			this.emit("subDirectoryDeleted", subdirName, true, this);
+		} else if (directoryOp.type === "setSortKey" && localOpMetadata.type === "setSortKey") {
+			const pendingEntryIndex = this.pendingSortKeyData.indexOf(localOpMetadata);
+			if (pendingEntryIndex === -1) {
+				return;
+			}
+			const rolledBackValue = localOpMetadata.sortKey;
+			this.pendingSortKeyData.splice(pendingEntryIndex, 1);
+			const restoredSortKey = this.getOptimisticSortKey(directoryOp.key);
+			this.emitSortKeyChanged(directoryOp.key, restoredSortKey, rolledBackValue, true);
+		} else if (
+			directoryOp.type === "setSubDirectorySortKey" &&
+			localOpMetadata.type === "setSubDirectorySortKey"
+		) {
+			const pendingEntryIndex = this.pendingSubDirectorySortKeyData.indexOf(localOpMetadata);
+			if (pendingEntryIndex === -1) {
+				return;
+			}
+			const rolledBackValue = localOpMetadata.sortKey;
+			this.pendingSubDirectorySortKeyData.splice(pendingEntryIndex, 1);
+			const restoredSortKey = this.getOptimisticSubDirectorySortKey(directoryOp.subdirName);
+			this.emitSubDirectorySortKeyChanged(
+				directoryOp.subdirName,
+				restoredSortKey,
+				rolledBackValue,
+				true,
+			);
 		} else if (
 			directoryOp.type === "deleteSubDirectory" &&
 			localOpMetadata.type === "deleteSubDir"
@@ -2719,6 +3471,8 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 		this.seqData.seq = -1;
 		this.seqData.clientSeq = -1;
 		this.sequencedStorageData.clear();
+		this.sequencedSortKeys.clear();
+		this.sequencedSubDirectorySortKeys.clear();
 		this._sequencedSubdirectories.clear();
 		this.clientIds.clear();
 		this.clientIds.add(this.runtime.clientId ?? "detached");

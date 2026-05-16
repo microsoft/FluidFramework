@@ -44,6 +44,8 @@ describe("SharedDirectory fuzz Create/Delete concentrated", () => {
 		deleteKeyWeight: 0,
 		createSubDirWeight: 2,
 		deleteSubDirWeight: 2,
+		setSortKeyWeight: 0,
+		setSubDirectorySortKeyWeight: 2,
 		maxSubDirectoryChild: 2,
 		subDirectoryNamePool: ["dir1", "dir2"],
 		validateInterval: dirDefaultOptions.validateInterval,

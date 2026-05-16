@@ -34,12 +34,18 @@ export interface IDirectory extends Map<string, any>, IEventProvider<IDirectoryE
     countSubDirectory?(): number;
     createSubDirectory(subdirName: string): IDirectory;
     deleteSubDirectory(subdirName: string): boolean;
+    entriesByOrder(): IterableIterator<[string, any]>;
     get<T = any>(key: string): T | undefined;
     getSubDirectory(subdirName: string): IDirectory | undefined;
     getWorkingDirectory(relativePath: string): IDirectory | undefined;
     hasSubDirectory(subdirName: string): boolean;
+    keysByOrder(): IterableIterator<string>;
     set<T = unknown>(key: string, value: T): this;
+    setSortKey(key: string, sortKey: string | undefined): void;
+    setSubDirectorySortKey(subdirName: string, sortKey: string | undefined): void;
     subdirectories(): IterableIterator<[string, IDirectory]>;
+    subdirectoriesByOrder(): IterableIterator<[string, IDirectory]>;
+    valuesByOrder(): IterableIterator<any>;
 }
 
 // @beta @sealed @legacy
@@ -49,8 +55,10 @@ export interface IDirectoryBeta extends Omit<IDirectory, Exclude<keyof Map<strin
 // @beta @deprecated @legacy
 export interface IDirectoryDataObject {
     ci?: ICreateInfo;
+    sortKeys?: Record<string, string>;
     storage?: Record<string, ISerializableValue>;
     subdirectories?: Record<string, IDirectoryDataObject>;
+    subdirectorySortKeys?: Record<string, string>;
 }
 
 // @public @sealed @legacy
@@ -60,12 +68,24 @@ export interface IDirectoryEvents extends IEvent {
     (event: "subDirectoryDeleted", listener: (path: string, local: boolean, target: IEventThisPlaceHolder) => void): any;
     (event: "disposed", listener: (target: IEventThisPlaceHolder) => void): any;
     (event: "undisposed", listener: (target: IEventThisPlaceHolder) => void): any;
+    (event: "containedSortKeyChanged", listener: (changed: ISortKeyChanged, local: boolean, target: IEventThisPlaceHolder) => void): any;
+    (event: "containedSubDirectorySortKeyChanged", listener: (changed: ISubDirectorySortKeyChanged, local: boolean, target: IEventThisPlaceHolder) => void): any;
 }
 
 // @beta @deprecated @legacy
 export interface IDirectoryNewStorageFormat {
     blobs: string[];
     content: IDirectoryDataObject;
+}
+
+// @public @sealed @legacy
+export interface IDirectorySortKeyChanged extends ISortKeyChanged {
+    readonly path: string;
+}
+
+// @public @sealed @legacy
+export interface IDirectorySubDirectorySortKeyChanged extends ISubDirectorySortKeyChanged {
+    readonly path: string;
 }
 
 // @public @sealed @legacy
@@ -95,6 +115,8 @@ export interface ISharedDirectoryEvents extends ISharedObjectEvents {
     (event: "cleared", listener: (path: string, local: boolean, target: IEventThisPlaceHolder) => void): any;
     (event: "subDirectoryCreated", listener: (path: string, local: boolean, target: IEventThisPlaceHolder) => void): any;
     (event: "subDirectoryDeleted", listener: (path: string, local: boolean, target: IEventThisPlaceHolder) => void): any;
+    (event: "sortKeyChanged", listener: (changed: IDirectorySortKeyChanged, local: boolean, target: IEventThisPlaceHolder) => void): any;
+    (event: "subDirectorySortKeyChanged", listener: (changed: IDirectorySubDirectorySortKeyChanged, local: boolean, target: IEventThisPlaceHolder) => void): any;
 }
 
 // @beta @sealed @legacy
@@ -111,6 +133,20 @@ export interface ISharedMapBeta extends Omit<ISharedMap, Exclude<keyof Map<strin
 export interface ISharedMapEvents extends ISharedObjectEvents {
     (event: "valueChanged", listener: (changed: IValueChanged, local: boolean, target: IEventThisPlaceHolder) => void): any;
     (event: "clear", listener: (local: boolean, target: IEventThisPlaceHolder) => void): any;
+}
+
+// @public @sealed @legacy
+export interface ISortKeyChanged {
+    readonly key: string;
+    readonly previousSortKey: string | undefined;
+    readonly sortKey: string | undefined;
+}
+
+// @public @sealed @legacy
+export interface ISubDirectorySortKeyChanged {
+    readonly previousSortKey: string | undefined;
+    readonly sortKey: string | undefined;
+    readonly subdirName: string;
 }
 
 // @public @sealed @legacy

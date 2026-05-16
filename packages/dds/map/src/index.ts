@@ -20,12 +20,16 @@ export type {
 	IDirectory,
 	IDirectoryBeta,
 	IDirectoryEvents,
+	IDirectorySortKeyChanged,
+	IDirectorySubDirectorySortKeyChanged,
 	IDirectoryValueChanged,
 	ISharedDirectory,
 	ISharedDirectoryEvents,
 	ISharedMap,
 	ISharedMapBeta,
 	ISharedMapEvents,
+	ISortKeyChanged,
+	ISubDirectorySortKeyChanged,
 	IValueChanged,
 } from "./interfaces.js";
 export { SharedMap } from "./mapFactory.js";
