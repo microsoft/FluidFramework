@@ -58,14 +58,11 @@ type FuzzState = SquashFuzzTestState<SharedMatrixFactory>;
 
 function isPoisonedHandle(value: unknown): boolean {
 	return (
-		isFluidHandle(value) &&
-		(value as unknown as { poisoned?: unknown }).poisoned === true
+		isFluidHandle(value) && (value as unknown as { poisoned?: unknown }).poisoned === true
 	);
 }
 
-function findFirstPoisoned(
-	channel: SharedMatrix,
-): { row: number; col: number } | undefined {
+function findFirstPoisoned(channel: SharedMatrix): { row: number; col: number } | undefined {
 	for (let row = 0; row < channel.rowCount; row++) {
 		for (let col = 0; col < channel.colCount; col++) {
 			if (isPoisonedHandle(channel.getCell(row, col))) {

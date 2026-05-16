@@ -77,8 +77,7 @@ const subdirPool = ["s0", "s1", "s2"];
 
 function isPoisonedHandle(value: unknown): boolean {
 	return (
-		isFluidHandle(value) &&
-		(value as unknown as { poisoned?: unknown }).poisoned === true
+		isFluidHandle(value) && (value as unknown as { poisoned?: unknown }).poisoned === true
 	);
 }
 
@@ -151,9 +150,7 @@ function makeGenerator(): (state: FuzzState) => Promise<SquashOp | typeof done> 
 	]);
 }
 
-function findFirstPoisoned(
-	dir: IDirectory,
-): { path: string; key: string } | undefined {
+function findFirstPoisoned(dir: IDirectory): { path: string; key: string } | undefined {
 	for (const [key, value] of dir.entries()) {
 		if (isPoisonedHandle(value)) {
 			return { path: dir.absolutePath, key };

@@ -54,8 +54,7 @@ const keyPool = ["k0", "k1", "k2", "k3"];
 
 function isPoisonedHandle(value: unknown): boolean {
 	return (
-		isFluidHandle(value) &&
-		(value as unknown as { poisoned?: unknown }).poisoned === true
+		isFluidHandle(value) && (value as unknown as { poisoned?: unknown }).poisoned === true
 	);
 }
 
@@ -129,7 +128,9 @@ function reducer(state: FuzzState, op: SquashOperation): void {
 	}
 }
 
-function validatePoisonedContentRemoved(client: { channel: ReturnType<MapFactory["create"]> }): void {
+function validatePoisonedContentRemoved(client: {
+	channel: ReturnType<MapFactory["create"]>;
+}): void {
 	for (const [key, value] of client.channel.entries()) {
 		assert(
 			!isPoisonedHandle(value),
