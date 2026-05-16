@@ -154,8 +154,17 @@ export function createResponseError(
 export function dataStoreLoadTelemetryProps(
 	context: IFluidDataStoreContext,
 ): ITelemetryPropertiesExt {
+	// `packagePath` is typed as always defined, but its implementation asserts on the package being
+	// set — and during early load-failure paths (e.g. realize() rejecting before pkg is read) it
+	// can throw. Swallow that so error decoration never replaces the underlying error.
+	let fullPackageName: string | undefined;
+	try {
+		fullPackageName = context.packagePath.join("/");
+	} catch {
+		// `packagePath` is unset during early failures; leave fullPackageName undefined.
+	}
 	return tagCodeArtifacts({
-		fullPackageName: context.packagePath.join("/"),
+		fullPackageName,
 		fluidDataStoreId: context.id,
 	});
 }
