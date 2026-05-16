@@ -5,7 +5,10 @@
 
 export { compareJsonReportsByPackage } from "./compareJsonReports.js";
 export { extractAnalyzerJsonsFromArtifact } from "./extractAnalyzerJsonsFromArtifact.js";
-export { readAnalyzerJsonsFromFileSystem } from "./readAnalyzerJsonsFromFileSystem.js";
+export {
+	checkLocalBundleAnalysisExists,
+	readAnalyzerJsonsFromFileSystem,
+} from "./readAnalyzerJsonsFromFileSystem.js";
 export { sourcePackageFromAnalyzerPath } from "./sourcePackageFromAnalyzerPath.js";
 export {
 	AnalyzerJsonByPackage,
