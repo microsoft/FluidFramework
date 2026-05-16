@@ -1,0 +1,34 @@
+# Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+# Licensed under the MIT License.
+
+# Pipeline wrapper around scripts/detect_changed_packages.mjs. The Node ESM
+# module owns the decision logic and its own doc comment; see that file for
+# output-variable semantics, safe-fallback policy, and full-run patterns.
+# Node built-ins only, so no install step is needed here.
+
+parameters:
+- name: buildDirectory
+  type: string
+
+- name: targetBranchName
+  type: string
+
+steps:
+  - checkout: self
+    path: $(FluidFrameworkDirectory)
+    clean: true
+    # Shallow clone; the script deepens on demand if the merge-base falls
+    # outside this depth. Most PRs merge-base within a few hundred commits.
+    fetchDepth: 200
+
+  - task: Bash@3
+    name: setChangedPackages
+    displayName: Detect changed packages
+    env:
+      TARGET_BRANCH: ${{ parameters.targetBranchName }}
+    inputs:
+      targetType: inline
+      workingDirectory: '$(Pipeline.Workspace)/${{ parameters.buildDirectory }}'
+      script: |
+        set -eu -o pipefail
+        node scripts/detect_changed_packages.mjs
