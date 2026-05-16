@@ -78,6 +78,7 @@ import {
 	exceptionToResponse,
 	generateHandleContextPath,
 	processAttachMessageGCData,
+	dataStoreLoadTelemetryProps,
 	toFluidHandleInternal,
 	unpackChildNodesUsedRoutes,
 	toDeltaManagerErased,
@@ -513,10 +514,7 @@ export class FluidDataStoreRuntime
 						"entryPointInitialization",
 					);
 					errorWrapped.addTelemetryProperties(
-						tagCodeArtifacts({
-							fullPackageName: this.dataStoreContext.packagePath.join("/"),
-							fluidDataStoreId: this.id,
-						}),
+						dataStoreLoadTelemetryProps(this.dataStoreContext),
 					);
 					this.mc.logger.sendErrorEvent(
 						{ eventName: "EntryPointInitializationFailure" },

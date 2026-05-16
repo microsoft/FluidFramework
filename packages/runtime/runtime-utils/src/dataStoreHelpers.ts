@@ -12,8 +12,13 @@ import type {
 import type {
 	ContainerRuntimeBaseAlpha,
 	IContainerRuntimeBase,
+	IFluidDataStoreContext,
 } from "@fluidframework/runtime-definitions/internal";
-import { generateErrorWithStack } from "@fluidframework/telemetry-utils/internal";
+import {
+	generateErrorWithStack,
+	tagCodeArtifacts,
+	type ITelemetryPropertiesExt,
+} from "@fluidframework/telemetry-utils/internal";
 
 interface IResponseException extends Error {
 	errorFromRequestFluidObject: true;
@@ -138,6 +143,21 @@ export function createResponseError(
 		},
 		headers,
 	};
+}
+
+/**
+ * Returns the canonical set of code-artifact-tagged telemetry properties identifying a data store.
+ * Use this anywhere a data store identity needs to appear in telemetry, so all such logs use
+ * consistent property names.
+ * @internal
+ */
+export function dataStoreLoadTelemetryProps(
+	context: IFluidDataStoreContext,
+): ITelemetryPropertiesExt {
+	return tagCodeArtifacts({
+		fullPackageName: context.packagePath.join("/"),
+		fluidDataStoreId: context.id,
+	});
 }
 
 /**
