@@ -565,10 +565,7 @@ export class SharedArrayClass<T extends SerializableTypeForSharedArray>
 			// Spliced by a prior insert-chain drop in this squash pass.
 			return;
 		}
-		if (
-			pendingOp.type === OperationType.insertEntry &&
-			this.tryDropInsertChain(pendingOp)
-		) {
+		if (pendingOp.type === OperationType.insertEntry && this.tryDropInsertChain(pendingOp)) {
 			return;
 		}
 		this.reSubmitCore(content, localOpMetadata);

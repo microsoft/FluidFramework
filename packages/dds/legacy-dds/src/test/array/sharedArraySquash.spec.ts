@@ -33,8 +33,7 @@ describe("SharedArray squash on resubmit", () => {
 	} {
 		const dataStoreRuntime = new MockFluidDataStoreRuntime();
 		dataStoreRuntime.local = false;
-		const containerRuntime =
-			containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
+		const containerRuntime = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
 		const services = {
 			deltaConnection: containerRuntime.createDeltaConnection(),
 			objectStorage: new MockStorage(),
