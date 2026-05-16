@@ -47,29 +47,51 @@ async function getRecentBuilds(
 }
 
 /**
- * Find the build for `commit` in `builds` and validate that it has an id,
- * is completed, and succeeded.
+ * Find a usable build for `commit` in `builds` — one with an id, status
+ * Completed, and result Succeeded. A commit can have more than one ADO build
+ * (manual re-run, partial-success retry, …), so scan all matches rather than
+ * locking onto the first one ADO returned.
  *
  * @returns The build id. Throws with a human-readable message when no usable
- * build is found.
+ * build is found, prioritizing "not yet completed" over "did not succeed"
+ * since retrying later might help.
  */
 function findBuildIdForCommit(builds: Build[], commit: string): number {
-	const build = builds.find((b) => b.sourceVersion === commit);
+	const candidates = builds.filter((b) => b.sourceVersion === commit);
 
-	if (build === undefined) {
+	if (candidates.length === 0) {
 		throw new Error(`No build found for commit ${commit}`);
 	}
-	if (build.id === undefined) {
-		throw new Error(`Build for commit ${commit} does not have a build id`);
-	}
-	if (build.status !== BuildStatus.Completed) {
-		throw new Error(`Build for commit ${commit} has not yet completed.`);
-	}
-	if (build.result !== BuildResult.Succeeded) {
-		throw new Error(`Build for commit ${commit} did not succeed.`);
+
+	const usable = candidates.find(
+		(b): b is Build & { id: number } =>
+			b.id !== undefined &&
+			b.status === BuildStatus.Completed &&
+			b.result === BuildResult.Succeeded,
+	);
+	if (usable !== undefined) {
+		return usable.id;
 	}
 
-	return build.id;
+	// No usable found — report the most actionable state across the candidates.
+	// "Actively running" gets priority since the user might just need to wait;
+	// Cancelling is *not* in that bucket because it's heading toward Canceled.
+	const isActivelyRunning = (b: Build): boolean =>
+		b.status === BuildStatus.NotStarted ||
+		b.status === BuildStatus.InProgress ||
+		b.status === BuildStatus.Postponed;
+	if (candidates.some(isActivelyRunning)) {
+		throw new Error(
+			`Found an in-progress build for commit ${commit}; none have succeeded yet.`,
+		);
+	}
+	if (candidates.some((b) => b.result !== BuildResult.Succeeded)) {
+		throw new Error(`All builds for commit ${commit} have completed but none succeeded.`);
+	}
+	// Reaching here means every candidate is Completed + Succeeded but missing
+	// an `id` — an ADO state anomaly that shouldn't happen in practice, but the
+	// `id` field is typed `number | undefined` so we surface it explicitly.
+	throw new Error(`No build for commit ${commit} has a usable build id.`);
 }
 
 export interface GetArtifactForCommitArgs {
