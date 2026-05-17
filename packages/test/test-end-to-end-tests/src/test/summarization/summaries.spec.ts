@@ -296,7 +296,16 @@ describeCompat("Summaries", "NoCompat", (getTestObjectProvider, apis) => {
 		);
 	});
 
-	it("full initialization of data object should not happen by default", async () => {
+	itExpects(
+		"full initialization of data object should not happen by default",
+		[
+			{
+				eventName:
+					"fluid:telemetry:FluidDataStoreRuntime:EntryPointInitializationFailure",
+				error: "Non interactive/summarizer client's data object should not be initialized",
+			},
+		],
+		async () => {
 		const dataStoreFactory1 = new DataObjectFactory({
 			type: "@fluid-example/test-dataStore1",
 			ctor: TestDataObject1,
@@ -349,7 +358,8 @@ describeCompat("Summaries", "NoCompat", (getTestObjectProvider, apis) => {
 			container2.getEntryPoint(),
 			"Initial creation of container and data store should succeed.",
 		);
-	});
+		},
+	);
 
 	/**
 	 * This test validates that the first summary for a container by the first summarizer client does not violate
