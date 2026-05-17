@@ -76,6 +76,7 @@ export interface IChannelContext {
 export interface ChannelServiceEndpoints {
 	deltaConnection: ChannelDeltaConnection;
 	objectStorage: ChannelStorageService;
+	loadingFromPendingState?: boolean;
 }
 
 export function createChannelServiceEndpoints(
@@ -87,6 +88,7 @@ export function createChannelServiceEndpoints(
 	logger: ITelemetryLoggerExt,
 	tree?: ISnapshotTree,
 	extraBlobs?: Map<string, ArrayBufferLike>,
+	loadingFromPendingState?: boolean,
 ): ChannelServiceEndpoints {
 	const deltaConnection = new ChannelDeltaConnection(
 		connected,
@@ -99,6 +101,7 @@ export function createChannelServiceEndpoints(
 	return {
 		deltaConnection,
 		objectStorage,
+		...(loadingFromPendingState !== undefined && { loadingFromPendingState }),
 	};
 }
 

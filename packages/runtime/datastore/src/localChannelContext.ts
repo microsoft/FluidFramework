@@ -57,7 +57,7 @@ export abstract class LocalChannelContextBase implements IChannelContext {
 		assert(!this.id.includes("/"), 0x30f /* Channel context ID cannot contain slashes */);
 	}
 
-	protected get isGloballyVisible(): boolean {
+	public get isGloballyVisible(): boolean {
 		return this.globallyVisible;
 	}
 
@@ -220,6 +220,7 @@ export class RehydratedLocalChannelContext extends LocalChannelContextBase {
 		dirtyFn: (address: string) => void,
 		private readonly snapshotTree: ISnapshotTree,
 		extraBlob?: Map<string, ArrayBufferLike>,
+		private readonly loadingFromPendingState?: boolean,
 	) {
 		super(
 			id,
@@ -244,6 +245,7 @@ export class RehydratedLocalChannelContext extends LocalChannelContextBase {
 					logger,
 					clonedSnapshotTree,
 					blobMap,
+					this.loadingFromPendingState,
 				);
 			}),
 			new LazyPromise<IChannel>(async () => {
