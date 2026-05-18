@@ -61,7 +61,6 @@ interface SharedArrayPendingOp<T> {
 	readonly targetEntryId?: string;
 }
 
-
 /**
  * Represents a shared array that allows communication between distributed clients.
  *
@@ -594,14 +593,8 @@ export class SharedArrayClass<T extends SerializableTypeForSharedArray>
 		if (rewrites.has(pendingOp)) {
 			const newInsertAfter = rewrites.get(pendingOp);
 			const op = content as ISharedArrayOperation<T>;
-			if (
-				op.type === OperationType.insertEntry ||
-				op.type === OperationType.moveEntry
-			) {
-				this.reSubmitCore(
-					{ ...op, insertAfterEntryId: newInsertAfter },
-					localOpMetadata,
-				);
+			if (op.type === OperationType.insertEntry || op.type === OperationType.moveEntry) {
+				this.reSubmitCore({ ...op, insertAfterEntryId: newInsertAfter }, localOpMetadata);
 				return;
 			}
 		}
@@ -687,10 +680,7 @@ export class SharedArrayClass<T extends SerializableTypeForSharedArray>
 					continue;
 				}
 				const op = pendingOp.op;
-				if (
-					op.type !== OperationType.insertEntry &&
-					op.type !== OperationType.moveEntry
-				) {
+				if (op.type !== OperationType.insertEntry && op.type !== OperationType.moveEntry) {
 					continue;
 				}
 				if (
@@ -723,10 +713,7 @@ export class SharedArrayClass<T extends SerializableTypeForSharedArray>
 			assert(p !== undefined, 0xcfe /* pendingOps index in range */);
 			if (p.type === OperationType.insertEntry) {
 				map.set(p.entryId, i);
-			} else if (
-				p.type === OperationType.moveEntry &&
-				p.targetEntryId !== undefined
-			) {
+			} else if (p.type === OperationType.moveEntry && p.targetEntryId !== undefined) {
 				map.set(p.targetEntryId, i);
 			}
 		}

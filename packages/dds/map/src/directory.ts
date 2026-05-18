@@ -2360,7 +2360,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 				const keySetIdx = lifetime.keySets.indexOf(m);
 				assert(
 					keySetIdx !== -1,
-					0xc98 /* keySet must be present in its back-pointed lifetime */,
+					0xcfc /* keySet must be present in its back-pointed lifetime */,
 				);
 				lifetime.keySets.splice(keySetIdx, 1);
 				if (lifetime.keySets.length === 0) {
@@ -2373,7 +2373,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 			}
 			// Tip case: need pendingStorageData order to check for later entries.
 			const lifetimeIdx = this.pendingStorageData.indexOf(lifetime);
-			assert(lifetimeIdx !== -1, 0xc99 /* lifetime must be present in pendingStorageData */);
+			assert(lifetimeIdx !== -1, 0xd00 /* lifetime must be present in pendingStorageData */);
 			if (this.isStorageKeySetSubsumed(lifetime, lifetime.keySets.length - 1, lifetimeIdx)) {
 				lifetime.keySets.length -= 1;
 				if (lifetime.keySets.length === 0) {
@@ -2403,7 +2403,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 			const later = this.pendingStorageData[j];
 			assert(
 				later !== undefined,
-				0xc95 /* pendingStorageData entry must exist within bounds */,
+				0xcff /* pendingStorageData entry must exist within bounds */,
 			);
 			if (later.type === "clear") {
 				return true;
@@ -2429,7 +2429,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 			const later = this.pendingStorageData[j];
 			assert(
 				later !== undefined,
-				0xc96 /* pendingStorageData entry must exist within bounds */,
+				0xcfb /* pendingStorageData entry must exist within bounds */,
 			);
 			if (later.type === "clear" || later.key === lifetime.key) {
 				return true;

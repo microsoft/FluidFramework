@@ -346,7 +346,7 @@ export class SharedCell<T = any>
 			this.submitLocalMessage(content, localOpMetadata);
 		} else {
 			const index = this.pendingMessageIds.indexOf(cellOpMetadata.pendingMessageId);
-			assert(index !== -1, "Pending message id missing from queue during squash");
+			assert(index !== -1, 0xd01 /* Pending message id missing from queue during squash */);
 			this.pendingMessageIds.splice(index, 1);
 		}
 	}

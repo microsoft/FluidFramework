@@ -635,7 +635,7 @@ export class MapKernel {
 			if (lastKeySet !== m) {
 				// Not the lifetime's tip — strictly subsumed by a later keySet on this key.
 				const keySetIdx = lifetime.keySets.indexOf(m);
-				assert(keySetIdx !== -1, "keySet must be present in its back-pointed lifetime");
+				assert(keySetIdx !== -1, 0xd02 /* keySet must be present in its back-pointed lifetime */);
 				lifetime.keySets.splice(keySetIdx, 1);
 				return true;
 			}
@@ -643,7 +643,7 @@ export class MapKernel {
 			// clear, or another lifetime). The lifetime's position is still found by linear scan,
 			// but only when the cheap tip check above didn't decide it.
 			const lifetimeIdx = this.pendingData.indexOf(lifetime);
-			assert(lifetimeIdx !== -1, "lifetime must be present in pendingData");
+			assert(lifetimeIdx !== -1, 0xd03 /* lifetime must be present in pendingData */);
 			if (this.isKeySetSubsumed(lifetime, lifetime.keySets.length - 1, lifetimeIdx)) {
 				lifetime.keySets.length -= 1;
 				if (lifetime.keySets.length === 0) {
@@ -672,7 +672,7 @@ export class MapKernel {
 	): boolean {
 		for (let j = entryIdx + 1; j < this.pendingData.length; j++) {
 			const later = this.pendingData[j];
-			assert(later !== undefined, "pendingData entry must exist within bounds");
+			assert(later !== undefined, 0xd04 /* pendingData entry must exist within bounds */);
 			if (later.type === "clear") {
 				return true;
 			}
@@ -695,7 +695,7 @@ export class MapKernel {
 		// Otherwise, any later pendingData entry that affects this key subsumes.
 		for (let j = lifetimeIdx + 1; j < this.pendingData.length; j++) {
 			const later = this.pendingData[j];
-			assert(later !== undefined, "pendingData entry must exist within bounds");
+			assert(later !== undefined, 0xd05 /* pendingData entry must exist within bounds */);
 			if (later.type === "clear" || later.key === lifetime.key) {
 				return true;
 			}

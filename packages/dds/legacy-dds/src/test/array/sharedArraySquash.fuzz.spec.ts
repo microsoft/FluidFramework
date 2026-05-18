@@ -58,7 +58,9 @@ type TrackablePoisonedSharedArray = ISharedArray<PoisonValue> & {
 	poisonedEntryIds: Set<string>;
 };
 
-function isTrackable(channel: ISharedArray<PoisonValue>): channel is TrackablePoisonedSharedArray {
+function isTrackable(
+	channel: ISharedArray<PoisonValue>,
+): channel is TrackablePoisonedSharedArray {
 	return (channel as TrackablePoisonedSharedArray).poisonedEntryIds !== undefined;
 }
 
@@ -116,7 +118,9 @@ eventEmitterForFuzzHarness.on("clientCreate", (client) => {
 function makeSquashGenerator(): (
 	state: SquashFuzzTestState<SquashFactory>,
 ) => Promise<SquashOperation | typeof done> {
-	const insertOp = async (state: SquashFuzzTestState<SquashFactory>): Promise<InsertString> => ({
+	const insertOp = async (
+		state: SquashFuzzTestState<SquashFactory>,
+	): Promise<InsertString> => ({
 		type: "insertString",
 		index: state.random.integer(0, Math.max(0, state.client.channel.get().length)),
 		value: state.random.string(state.random.integer(1, 5)),
@@ -134,7 +138,9 @@ function makeSquashGenerator(): (
 		index: state.random.integer(0, Math.max(0, state.client.channel.get().length - 1)),
 	});
 
-	const moveEntryOp = async (state: SquashFuzzTestState<SquashFactory>): Promise<MoveEntry> => {
+	const moveEntryOp = async (
+		state: SquashFuzzTestState<SquashFactory>,
+	): Promise<MoveEntry> => {
 		const len = state.client.channel.get().length;
 		return {
 			type: "moveEntry",
@@ -174,10 +180,7 @@ function makeExitingStagingModeGenerator(): Generator<
 	};
 }
 
-function squashReducer(
-	state: SquashFuzzTestState<SquashFactory>,
-	op: SquashOperation,
-): void {
+function squashReducer(state: SquashFuzzTestState<SquashFactory>, op: SquashOperation): void {
 	const { client } = state;
 	assert(isTrackable(client.channel), "channel must be set up via clientCreate emitter");
 	switch (op.type) {
@@ -188,9 +191,7 @@ function squashReducer(
 		case "addPoisonedHandle": {
 			const handle = state.random.poisonedHandle();
 			const before = new Set<string>();
-			const captureEntryId = (
-				eventOp: { type: number; entryId?: string },
-			): void => {
+			const captureEntryId = (eventOp: { type: number; entryId?: string }): void => {
 				if (eventOp.type === OperationType.insertEntry && eventOp.entryId !== undefined) {
 					before.add(eventOp.entryId);
 				}
@@ -220,9 +221,7 @@ function squashReducer(
 	}
 }
 
-function validatePoisonedContentRemoved(client: {
-	channel: ISharedArray<PoisonValue>;
-}): void {
+function validatePoisonedContentRemoved(client: { channel: ISharedArray<PoisonValue> }): void {
 	const values = client.channel.get();
 	for (let i = 0; i < values.length; i++) {
 		assert(
