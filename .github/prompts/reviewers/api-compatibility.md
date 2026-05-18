@@ -95,8 +95,11 @@ If you find NO high-confidence issues:
 
 ## Instructions
 
-1. Read the PR diff from `pr-diff.patch` in the current directory
-2. Check if any `*.api.md` files changed: `git diff --name-only origin/$BASE_REF...HEAD -- '*.api.md'` — if so, give those packages extra scrutiny
-3. For files that export public APIs, read the full file and any related `index.ts` barrel exports
-4. Apply the high-confidence gate to every finding before including it
-5. Write your review to `review-api-compatibility.json`
+Important: Do not request or run shell/Git commands; all review context available to you has been precomputed by the workflow.
+
+1. Read the prepared PR diff from `pr-diff.patch` in the current directory
+2. Read `changed-files.txt` when you need the complete changed-file list
+3. Read `api-report-files.txt` to see whether any `*.api.md` files changed. If the file is non-empty, give those packages extra scrutiny.
+4. For files that export public APIs, read the full file and any related `index.ts` barrel exports
+5. Apply the high-confidence gate to every finding before including it
+6. Write your review to `review-api-compatibility.json`

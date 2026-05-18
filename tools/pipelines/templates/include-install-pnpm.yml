@@ -31,6 +31,17 @@ parameters:
   type: string
   default: $(ado-feeds-primary-registry)
 
+# An optional extra segment appended to the pnpm store cache key (separated by |).
+# Note that Azure pipelines interpret unquoted cache keys as files rather than literal strings. E.g. the following specification:
+#
+# additionalCacheKey: 'foo | "bar"'
+#
+# will use the hashed contents of the file "foo" (hashing nothing if that file does not exist) as well as the string "bar".
+# Use this parameter if the set of dependencies to be installed may be be better distinguished using files other than the root pnpm-lock.
+- name: additionalCacheKey
+  type: string
+  default: ''
+
 steps:
 - ${{ if eq(parameters.enableCache, true) }}:
   - task: Cache@2
@@ -43,7 +54,10 @@ steps:
     inputs:
       # Caches are already scoped to individual pipelines, so no need to include the release group name or tag
       # in the cache key
-      key: '"pnpm-store" | "$(Agent.OS)" | $(Pipeline.Workspace)/${{ parameters.buildDirectory }}/pnpm-lock.yaml'
+      ${{ if ne(parameters.additionalCacheKey, '') }}:
+        key: '"pnpm-store" | "$(Agent.OS)" | $(Pipeline.Workspace)/${{ parameters.buildDirectory }}/pnpm-lock.yaml | ${{ parameters.additionalCacheKey }}'
+      ${{ else }}:
+        key: '"pnpm-store" | "$(Agent.OS)" | $(Pipeline.Workspace)/${{ parameters.buildDirectory }}/pnpm-lock.yaml'
       path: ${{ parameters.pnpmStorePath }}
       restoreKeys: |
         "pnpm-store" | "$(Agent.OS)"
