@@ -10,7 +10,7 @@
   },
   "license": "MIT",
   "author": "Microsoft and contributors",
-    "scripts": {
+  "scripts": {
     "preinstall": "node ../../../../../scripts/only-pnpm.cjs"
   }
 }
