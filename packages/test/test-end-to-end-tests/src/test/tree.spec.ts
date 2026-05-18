@@ -21,9 +21,11 @@ import {
 	createContainerRuntimeFactoryWithDefaultDataStore,
 	createSummarizerFromFactory,
 	summarizeNow,
+	type ContainerRuntimeFactoryWithDefaultDataStoreProps,
 } from "@fluidframework/test-utils/internal";
 import { SchemaFactory, TreeViewConfiguration, type TreeView } from "@fluidframework/tree";
-import { configuredSharedTreeBetaLegacy } from "@fluidframework/tree/legacy";
+import type { ITree, ITreeAlpha } from "@fluidframework/tree/alpha";
+import { configuredSharedTree } from "@fluidframework/tree/internal";
 
 /**
  * Default data store; provides a root SharedDirectory where a handle to the
@@ -53,11 +55,12 @@ class Root extends sf.object("Root", {
 
 const treeConfig = new TreeViewConfiguration({ schema: Root });
 
-const SharedTree = configuredSharedTreeBetaLegacy({
+const SharedTree = configuredSharedTree({
 	// This is the default value. Before the write-side fix for "Summarizer creates the data store from the attach op summary and can summarize"
 	// was shipped, setting this to "true" also provided some verification that the read-side mitigation for the bug worked. The e2e test no longer
 	// covers this case (unit tests do), but the test still helps prevent regressions for the scenario.
 	healUnresolvableIdentifiersOnDecode: false,
+	enableSharedBranches: true,
 });
 
 /**
@@ -71,6 +74,12 @@ class TreeOwningDataObject extends DataObject {
 	public static readonly Name = "TreeOwningDataObject";
 
 	#treeView: TreeView<typeof Root> | undefined;
+	#tree: ITree | undefined;
+
+	public get tree(): ITree {
+		assert(this.#tree !== undefined, "tree has not been initialized");
+		return this.#tree;
+	}
 
 	public get treeView(): TreeView<typeof Root> {
 		assert(this.#treeView !== undefined, "treeView has not been initialized");
@@ -88,6 +97,7 @@ class TreeOwningDataObject extends DataObject {
 		// observed yet.
 		const view = tree.viewWith(treeConfig);
 		view.initialize({});
+		this.#tree = tree;
 		this.#treeView = view;
 	}
 }
@@ -103,8 +113,23 @@ const registryEntries: NamedFluidDataStoreRegistryEntries = [
 	[treeOwningFactory.type, Promise.resolve(treeOwningFactory)],
 ];
 
+const runtimeProps: ContainerRuntimeFactoryWithDefaultDataStoreProps = {
+	defaultFactory,
+	registryEntries,
+	runtimeOptions: {
+		// SharedTree requires the runtime id compressor.
+		enableRuntimeIdCompressor: "on",
+		// Disable summaries for regular clients so they don't interfere with on demand summaries.
+		summaryOptions: {
+			summaryConfigOverrides: {
+				state: "disabled",
+			},
+		},
+	},
+};
+
 describeCompat(
-	"SharedTree in a data store created detached and attached via op",
+	"SharedTree with identifier in a data store created detached and attached via op",
 	"NoCompat",
 	(getTestObjectProvider) => {
 		let provider: ITestObjectProvider;
@@ -115,20 +140,7 @@ describeCompat(
 
 		const runtimeFactory = createContainerRuntimeFactoryWithDefaultDataStore(
 			ContainerRuntimeFactoryWithDefaultDataStore,
-			{
-				defaultFactory,
-				registryEntries,
-				runtimeOptions: {
-					// SharedTree requires the runtime id compressor.
-					enableRuntimeIdCompressor: "on",
-					// Disable summaries for regular clients so they don't interfere with on demand summaries.
-					summaryOptions: {
-						summaryConfigOverrides: {
-							state: "disabled",
-						},
-					},
-				},
-			},
+			runtimeProps,
 		);
 		// This test reproduces a bug with SharedTree's encoding/decoding. Non-finalized op-space IDs can legitimately appear
 		// in attach summaries. At the time of writing, SharedTree encoded the short ID but failed to include originator data
@@ -159,14 +171,80 @@ describeCompat(
 
 			// 4. Create a summarizer (which loads the data store from the
 			//    attach op's summary) and run an on-demand summary.
-			// Originallly, would fail with `Unknown op space ID` in ID compressor.
+			// Originally, would fail with `Unknown op space ID` in ID compressor.
 			const { summarizer } = await createSummarizerFromFactory(
 				provider,
 				container1,
 				defaultFactory,
 				undefined /* summaryVersion */,
 				ContainerRuntimeFactoryWithDefaultDataStore,
-				registryEntries,
+				[
+					[defaultFactory.type, Promise.resolve(defaultFactory)],
+					[treeOwningFactory.type, Promise.resolve(treeOwningFactory)],
+				],
+			);
+			await provider.ensureSynchronized();
+			await summarizeNow(summarizer, "afterDetachedAttach");
+		});
+	},
+);
+
+describeCompat(
+	"SharedTree with shared branches in a data store created detached and attached via op",
+	"NoCompat",
+	(getTestObjectProvider) => {
+		let provider: ITestObjectProvider;
+
+		beforeEach("getTestObjectProvider", () => {
+			provider = getTestObjectProvider();
+		});
+
+		const runtimeFactory = createContainerRuntimeFactoryWithDefaultDataStore(
+			ContainerRuntimeFactoryWithDefaultDataStore,
+			runtimeProps,
+		);
+		// This test exercises a scenario where SharedTree's EditManager is forced to encode/decode non-finalized short IDs.
+		it("Summarizer creates the data store from the attach op summary and can summarize", async () => {
+			// 1. Create a container with an attached default data store.
+			const container1 = await provider.createContainer(runtimeFactory);
+			const defaultDataObject = (await container1.getEntryPoint()) as DefaultDataObject;
+
+			// 2. Create the data store *detached*. The factory uses
+			//    `createDetachedDataStore` + `attachRuntime` internally, and
+			//    the data object's `initializingFirstTime` (which creates and
+			//    initializes the SharedTree) runs while the data store is
+			//    still detached.
+			const treeDataStore = await treeOwningFactory.createInstance(
+				defaultDataObject.containerRuntime,
+			);
+
+			(treeDataStore.tree as ITreeAlpha).createSharedBranch();
+
+			// This change will generate a commit which will be assigned a non-finalized short ID.
+			// The creation of a shared branch above will prevent the EditManager from trimming information about this commit from the attach summary.
+			treeDataStore.treeView.root = {};
+
+			// 3. Attach the data store by referencing its handle from
+			//    the (attached) default data store. This produces an attach op
+			//    that carries the data store's initial summary (including the
+			//    SharedTree summary, which encodes the local ids).
+			defaultDataObject._root.set("treeDataStore", treeDataStore.IFluidHandle);
+
+			await provider.ensureSynchronized();
+
+			// 4. Create a summarizer (which loads the data store from the
+			//    attach op's summary) and run an on-demand summary.
+			// This should succeed so long as the non-finalized short ID was decoded with the correct originator ID.
+			const { summarizer } = await createSummarizerFromFactory(
+				provider,
+				container1,
+				defaultFactory,
+				undefined /* summaryVersion */,
+				ContainerRuntimeFactoryWithDefaultDataStore,
+				[
+					[defaultFactory.type, Promise.resolve(defaultFactory)],
+					[treeOwningFactory.type, Promise.resolve(treeOwningFactory)],
+				],
 			);
 			await provider.ensureSynchronized();
 			await summarizeNow(summarizer, "afterDetachedAttach");

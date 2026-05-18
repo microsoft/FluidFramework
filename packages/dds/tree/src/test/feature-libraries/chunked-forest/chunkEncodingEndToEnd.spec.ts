@@ -141,6 +141,7 @@ describe("End to end chunked encoding", () => {
 			Number.POSITIVE_INFINITY,
 			Number.POSITIVE_INFINITY,
 			defaultChunkPolicy.uniformChunkNodeCount,
+			defaultChunkPolicy.uniformChunkNodeCountDynamicTargetMax,
 			(type: TreeNodeSchemaIdentifier, shapes: Map<TreeNodeSchemaIdentifier, ShapeInfo>) =>
 				tryShapeFromNodeSchema(
 					{

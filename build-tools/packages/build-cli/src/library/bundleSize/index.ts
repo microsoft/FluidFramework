@@ -11,21 +11,20 @@ export {
 	getAnalyzerJsonFromContents,
 	getAnalyzerJsonFromFileSystem,
 	getAnalyzerPathsFromFileSystem,
-	getAzureDevopsApi,
 	getBundleSummariesFromAnalyzer,
 	IADOConstants,
 	SizeComparison,
 } from "./ADO/index.js";
+export { bundlesContainNoChanges, compareBundles } from "./compareBundles.js";
 export {
 	BundleComparison,
 	BundleMetric,
 	BundleMetricSet,
 	BundleSummaries,
-} from "./BundleBuddyTypes.js";
-export { bundlesContainNoChanges, compareBundles } from "./compareBundles.js";
+} from "./types.js";
 export {
 	GetBuildOptions,
 	getAllFilesInDirectory,
-	getBaselineCommit,
 	getBuilds,
+	pickFreshestCanonicalRemote,
 } from "./utilities/index.js";
