@@ -208,7 +208,6 @@ export const baseRules = {
 	"@typescript-eslint/explicit-member-accessibility": "off",
 	"@typescript-eslint/member-ordering": "off",
 	"@typescript-eslint/no-use-before-define": "off",
-	"@typescript-eslint/typedef": "off",
 
 	/**
 	 * Disabled because we want to encourage documenting different events separately.
@@ -319,39 +318,18 @@ export const baseRules = {
 	// #region eslint core rules
 
 	"arrow-body-style": "off",
-	"arrow-parens": ["error", "always"],
 	"camelcase": "off", // Superseded by @typescript-eslint/naming-convention
-	"brace-style": "off", // Superseded by @typescript-eslint/brace-style
 	"capitalized-comments": "off",
-	"comma-dangle": "off", // Superseded by @typescript-eslint/comma-dangle
-	"comma-spacing": "off", // Superseded by @typescript-eslint/comma-spacing
 	"complexity": "off",
 	"constructor-super": "error",
 	"curly": "error",
 	"default-case": "error",
 	"dot-notation": "off", // Superseded by @typescript-eslint/dot-notation
-	"eol-last": "error",
 	"eqeqeq": ["error", "smart"],
-	"func-call-spacing": "off", // Superseded by @typescript-eslint/func-call-spacing
 	"guard-for-in": "error",
 	"id-match": "error",
-	"linebreak-style": "off",
-	"keyword-spacing": "off", // Superseded by @typescript-eslint/keyword-spacing
 	"max-classes-per-file": "off",
-	/**
-	 * Disabled as it conflicts with biome formatting.
-	 */
-	"max-len": [
-		"off",
-		{
-			ignoreRegExpLiterals: false,
-			ignoreStrings: false,
-			code: 120,
-		},
-	],
 	"max-lines": "off",
-	"new-parens": "error",
-	"newline-per-chained-call": "off",
 	"no-bitwise": "error",
 	"no-caller": "error",
 	"no-cond-assign": "error",
@@ -362,21 +340,12 @@ export const baseRules = {
 	"no-duplicate-imports": "off", // Doesn't work with TypeScript
 	"no-empty": "error",
 	"no-eval": "error",
-	"no-extra-semi": "off", // Superseded by @typescript-eslint/no-extra-semi
 	"no-fallthrough": "off",
 	"no-invalid-regexp": "error",
 	"no-invalid-this": "off", // Superseded by @typescript-eslint/no-invalid-this
 	"no-irregular-whitespace": "error",
 	"no-magic-numbers": "off", // Superseded by @typescript-eslint/no-magic-numbers
 	"no-multi-str": "off",
-	"no-multiple-empty-lines": [
-		"error",
-		{
-			max: 1,
-			maxBOF: 0,
-			maxEOF: 0,
-		},
-	],
 	"no-nested-ternary": "off", // Superseded by unicorn/no-nested-ternary
 	"no-new-func": "error",
 	"no-new-wrappers": "error",
@@ -399,7 +368,6 @@ export const baseRules = {
 	"no-sparse-arrays": "error",
 	"no-template-curly-in-string": "error",
 	"no-throw-literal": "off", // Superseded by @typescript-eslint/only-throw-error
-	"no-trailing-spaces": "error",
 	"no-undef-init": "error",
 	"no-underscore-dangle": "off",
 	"no-unsafe-finally": "error",
@@ -408,44 +376,15 @@ export const baseRules = {
 	"no-unused-vars": "off", // Superseded by @typescript-eslint/no-unused-vars
 	"no-var": "error",
 	"no-void": "warn",
-	"no-whitespace-before-property": "error",
-	"object-curly-spacing": "off", // Superseded by @typescript-eslint/object-curly-spacing
 	"object-shorthand": "error",
 	"one-var": ["error", "never"],
-	"padded-blocks": ["error", "never"],
-	"padding-line-between-statements": [
-		"off",
-		{
-			blankLine: "always",
-			prev: "*",
-			next: "return",
-		},
-	],
 	"prefer-arrow-callback": "error",
 	"prefer-const": "error",
 	"prefer-object-spread": "error",
 	"prefer-promise-reject-errors": "error",
 	"prefer-template": "error",
-	"quote-props": ["error", "consistent-as-needed"],
-	"quotes": "off", // Superseded by @typescript-eslint/quotes
 	"radix": "error",
 	"require-await": "off", // Superseded by @typescript-eslint/require-await
-	"semi": "off", // Superseded by @typescript-eslint/semi
-	"semi-spacing": "error",
-	"space-before-blocks": "error",
-	"space-before-function-paren": "off", // Superseded by @typescript-eslint/space-before-function-paren
-	"space-infix-ops": "off", // Superseded by @typescript-eslint/space-infix-ops
-	"space-in-parens": ["error", "never"],
-	"spaced-comment": [
-		"error",
-		"always",
-		{
-			block: {
-				markers: ["!"],
-				balanced: true,
-			},
-		},
-	],
 	"require-atomic-updates": "warn",
 	"use-isnan": "error",
 	"valid-typeof": "error",
