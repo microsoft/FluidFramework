@@ -25,16 +25,21 @@ packages:
 
 # Supply chain security settings - see /DEV.md for documentation
 minimumReleaseAge: 1440
+
 minimumReleaseAgeExclude: [
   # Temporary exceptions go here as needed.
 ]
+
 resolutionMode: highest
+
 blockExoticSubdeps: true
+
 # See: https://github.com/orgs/pnpm/discussions/11084 for some discussion.
 # Enabling no-downgrade requires every transitive trust-policy violation to either be remediated
 # at the source or excluded below with a documented rationale. Run `flub check trustPolicy` to
 # surface current violations.
 trustPolicy: no-downgrade
+
 trustPolicyExclude:
   # axios@0.30.3 is the last legitimate 0.30.x release (published 2026-02-18). The trust
   # downgrade fires because 0.30.x was published via direct CLI rather than the OIDC/GitHub
@@ -76,6 +81,7 @@ trustPolicyExclude:
   # Same publisher (undici project lead). Type-only package (.d.ts shipped from undici
   # repo); provenance attestation was lost on a subsequent 6.x release.
   - "undici-types@6.21.0"
+
 strictDepBuilds: true
 
 catalogs:
@@ -92,6 +98,7 @@ catalogs:
   # Type definitions
   types:
     "@types/node": "~22.19.17"
+
 overrides:
   # biome is overridden to make review of the upgrade easier. This can be removed once merged.
   '@biomejs/biome': ~2.4.5
@@ -154,6 +161,7 @@ overrides:
   # langsmith is overridden to ^0.5.15 to resolve a known security vulnerability.
   # The consumer declares ^0.3.x so the override is needed to cross the minor version boundary.
   langsmith: ^0.5.15
+
 peerDependencyRules:
   # The react-split-pane package used by devtools-view has a peer dependency on React 16, but it doesn't
   # seem to be maintained and it works fine with React 18. TODO: AB#18876
@@ -172,26 +180,36 @@ peerDependencyRules:
     # oclif includes some AWS-related features, but we don't use them, so we ignore @aws-sdk peer
     # dependencies.
     - '@aws-sdk/*'
+
 patchedDependencies:
   '@microsoft/api-extractor@7.58.1': patches/@microsoft__api-extractor@7.58.1.patch
+
 engineStrict: true
+
 frozenLockfile: true
+
 strictPeerDependencies: true
+
 linkWorkspacePackages: true
+
 # Disable pnpm update notifications since we use corepack to install package managers
 updateNotifier: false
+
 # Use the number of cores on the machine by default.
 workspaceConcurrency: 0
+
 # pnpm 11 enabled this check by default, which runs a frozen-lockfile install before every `pnpm run <script>`.
 # That breaks CI flows that modifies versions via `flub bump` then runs script like `pnpm run format`.
 # We may want to enable this in the future, but doing so requires changes to the pipelines, so we restore the pnpm 10 defaults for now.
 verifyDepsBeforeRun: false
+
 # Hoist these dependencies to the root workspace
 publicHoistPattern:
   - '@arethetypeswrong/cli'
   # ['*eslint*', '*prettier*'] is the default, so we add those as well
   - '*eslint*'
   - '*prettier*'
+
 allowBuilds:
   '@azure/msal-node-extensions': true
   '@azure/msal-node-runtime': true
