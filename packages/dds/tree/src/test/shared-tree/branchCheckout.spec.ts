@@ -354,4 +354,116 @@ describe("BranchCheckout", () => {
 			assert.strictEqual(v2.root.x, 3);
 		});
 	});
+
+	// These tests verify that the WeakMaps in branchCheckout.ts (notably `branchCheckoutMap`,
+	// which is keyed by `SharedTreeBranch`) do not pin disposed branches in memory: once a
+	// Verifies that disposed branches are garbage collected (WeakMaps don't pin them).
+	// Uses two-async-major-GC pattern from packages/framework/react/src/test/useObservation.spec.tsx.
+	describe("WeakMap GC", () => {
+		/**
+		 * Runs up to two major async GCs, breaking early once `predicate` returns true.
+		 *
+		 * @remarks
+		 * Mirrors the pattern in `useObservation.spec.tsx`: forcing two async major GCs in a row
+		 * is the most robust way found to trigger `WeakRef`/finalizer cleanup in Node.
+		 */
+		async function forceGcUntil(predicate: () => boolean): Promise<void> {
+			assert(global.gc, "Tests require --expose-gc (set via the shared mocha config).");
+			for (let index = 0; index < 2; index++) {
+				await global.gc({ type: "major", execution: "async" });
+				if (predicate()) {
+					return;
+				}
+			}
+		}
+
+		it("disposed BranchCheckout (and its branch) are eligible for GC — branchCheckoutMap does not pin", async () => {
+			// Build everything inside an IIFE so the only references that escape into the test's
+			// frame are `WeakRef`s. Without this, a stray local (e.g. `const checkout = ...`)
+			// would keep the value strongly reachable across the await and the GC could not
+			// collect it even if the WeakMap is genuinely weak.
+			const view = makeView();
+			const { branchRef, checkoutRef } = ((): {
+				branchRef: WeakRef<object>;
+				checkoutRef: WeakRef<BranchCheckout>;
+			} => {
+				const checkout = forkAsBranchCheckout(view.checkout);
+				const branch = checkout.mainBranch;
+				// Sanity: while alive, the canonical map resolves to this instance.
+				assert.strictEqual(getBranchCheckout(branch), checkout);
+				checkout.dispose();
+				// `dispose` removes the entry from `branchCheckoutMap`. Without that, the WeakMap
+				// would still not *pin* `branch`, but `getBranchCheckout(branch)` would return a
+				// disposed instance — which is the bug the explicit delete in `[disposeSymbol]`
+				// exists to prevent.
+				assert.strictEqual(getBranchCheckout(branch), undefined);
+				return {
+					branchRef: new WeakRef(branch),
+					checkoutRef: new WeakRef(checkout),
+				};
+			})();
+
+			await forceGcUntil(
+				() => branchRef.deref() === undefined && checkoutRef.deref() === undefined,
+			);
+
+			assert.strictEqual(
+				checkoutRef.deref(),
+				undefined,
+				"BranchCheckout was retained after dispose — something is holding a strong ref to a disposed instance.",
+			);
+			assert.strictEqual(
+				branchRef.deref(),
+				undefined,
+				"SharedTreeBranch was retained after its BranchCheckout was disposed — branchCheckoutMap or another structure is pinning it.",
+			);
+		});
+
+		it("disposed BranchCheckout obtained via getBranch is eligible for GC", async () => {
+			// `getBranch` lazy-forks a `BranchCheckout` and records it in both `branchCheckoutMap`
+			// (keyed by the child's mainBranch) and `lazyBranchForViewMap` (keyed by the parent view's
+			// mainBranch). After disposal, the child instance must still be collectable even though
+			// the parent view — and therefore the `lazyBranchForViewMap` *key* — remains alive.
+			// (The cached value in `lazyBranchForViewMap` is overwritten / re-checked via `.disposed`
+			// on the next `getBranch` call; here we verify that simply dropping the user-facing
+			// reference after dispose is enough for the engine to collect the child.)
+			const view = makeView();
+			const { branchRef, checkoutRef } = ((): {
+				branchRef: WeakRef<object>;
+				checkoutRef: WeakRef<BranchCheckout>;
+			} => {
+				const lazy = getBranch(view);
+				assert.ok(lazy instanceof BranchCheckout);
+				const childBranch = lazy.mainBranch;
+				assert.strictEqual(getBranchCheckout(childBranch), lazy);
+				lazy.dispose();
+				assert.strictEqual(getBranchCheckout(childBranch), undefined);
+				// Trigger the lazy-map's "cached but disposed → re-fork" path so the disposed
+				// instance is no longer the cached value either. Without this, the entry in
+				// `lazyBranchForViewMap` would still hold a strong reference to the disposed
+				// `lazy` instance until the parent view's mainBranch is itself collected.
+				const replacement = getBranch(view);
+				assert.notStrictEqual(replacement, lazy);
+				return {
+					branchRef: new WeakRef(childBranch),
+					checkoutRef: new WeakRef(lazy),
+				};
+			})();
+
+			await forceGcUntil(
+				() => branchRef.deref() === undefined && checkoutRef.deref() === undefined,
+			);
+
+			assert.strictEqual(
+				checkoutRef.deref(),
+				undefined,
+				"Lazy BranchCheckout from getBranch was retained after dispose + replacement.",
+			);
+			assert.strictEqual(
+				branchRef.deref(),
+				undefined,
+				"Underlying branch of a disposed lazy BranchCheckout was retained.",
+			);
+		});
+	});
 });
