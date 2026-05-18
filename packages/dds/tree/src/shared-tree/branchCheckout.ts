@@ -24,7 +24,6 @@ import type {
 	TreeBranchAlpha,
 	TreeViewAlpha,
 	TreeViewConfiguration,
-	UnsafeUnknownSchema,
 } from "../simple-tree/index.js";
 import type { Breakable } from "../util/index.js";
 import { disposeSymbol } from "../util/index.js";
@@ -185,29 +184,42 @@ export function forkAsBranchCheckout(parent: TreeCheckout): BranchCheckout {
 }
 
 /**
- * Returns the branch bound to the given view, forking one from the view's checkout
- * if no live branch is currently registered for it.
+ * Returns the branch currently bound to the given view.
  *
  * @remarks
- * Idempotent per view: successive calls on the same view return the same {@link TreeBranchAlpha}
- * instance until that instance is disposed. Two lookup paths are tried in order:
+ * Repeated calls with the same view typically return the same {@link TreeBranchAlpha} instance,
+ * but this is not guaranteed: for example, while the view is participating in a transaction
+ * its underlying branch may differ from the one observed outside the transaction, and a future
+ * change that retargets a view to another branch would likewise cause a different instance to be
+ * returned.
+ *
+ * @typeParam TSchema - The schema type of the tree view. Required only to satisfy the invariance
+ * of {@link TreeViewAlpha}; the schema is not otherwise used and the return type does not depend on it.
+ * @param view - A {@link TreeViewAlpha} returned by the Fluid Framework. External implementations
+ * are not supported and will cause a `UsageError` to be thrown.
+ *
+ * @privateRemarks
+ * When this API is stabilized it should likely surface as a property of `TreeView` rather than a
+ * free function. Keeping it as a free function for now keeps coupling low while the underlying
+ * branch/view model is still evolving.
+ *
+ * Implementation detail: the "branch" returned here is a lazily-created {@link BranchCheckout}
+ * forked from the view's checkout. Two lookup paths are tried before forking, in order:
  *
  * 1. If a `BranchCheckout` is already registered for the view's `mainBranch` (e.g. the view was
  * itself built via {@link getViewOfBranch}), that instance is returned.
  * 2. Otherwise, if a previous `getBranch` call already lazy-forked a `BranchCheckout` for this
  * view's `mainBranch` and that instance is still live, it is returned.
- * 3. Otherwise, a fresh `BranchCheckout` is forked via `forkAsBranchCheckout` and recorded
+ * 3. Otherwise, a fresh `BranchCheckout` is forked via {@link forkAsBranchCheckout} and recorded
  * against the view's `mainBranch` for future calls.
  *
- * @typeParam TSchema - The schema type of the tree view.
- * @param view - A {@link TreeViewAlpha} returned by the Fluid Framework. External implementations
- * are not supported and will cause a `UsageError` to be thrown.
+ * Open design question: when should the lazily-forked branch be disposed? A live `BranchCheckout`
+ * has ongoing cost (it keeps a forest up to date), so the lifetime semantics need to be revisited
+ * before this graduates from `@alpha`.
  *
  * @alpha
  */
-export function getBranch<TSchema extends ImplicitFieldSchema | UnsafeUnknownSchema>(
-	view: TreeViewAlpha<TSchema>,
-): TreeBranchAlpha {
+export function getBranch(view: TreeBranchAlpha): TreeBranchAlpha {
 	if (!(view instanceof SchematizingSimpleTreeView)) {
 		throw new UsageError(
 			"The `view` argument to `getBranch` must be a view returned by the Fluid Framework — external implementations are not supported.",
