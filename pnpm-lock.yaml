@@ -27,7 +27,6 @@ catalogs:
       version: 10.1.8
 
 overrides:
-  '@biomejs/biome': ~2.4.5
   '@types/node': ~22.19.17
   diff@>=3 <4: ^4.0.4
   diff@>=5 <6: ^5.2.2
