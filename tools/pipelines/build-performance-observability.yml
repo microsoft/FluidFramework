@@ -101,10 +101,6 @@ extends:
         - template: /tools/pipelines/templates/include-install-pnpm.yml@self
           parameters:
             buildDirectory: ${{ variables.FluidFrameworkDirectory }}
-            # This pipeline runs on a 1ES pool that blocks egress to https://registry.npmjs.org/,
-            # which corepack requires to fetch pnpm. Install pnpm from the authenticated ADO feed
-            # via `npm install -g` instead.
-            useCorepack: false
 
         - task: Bash@3
           displayName: Install root dependencies
