@@ -42,6 +42,20 @@ parameters:
   type: string
   default: ''
 
+# When true (default), pnpm is installed via corepack using the version declared in package.json's
+# "packageManager" field. Corepack fetches pnpm directly from https://registry.npmjs.org/ and does
+# not honor an alternate npm registry (see
+# https://github.com/nodejs/corepack/blob/bc13d40037d0b1bfd386e260ae741f55505b5c7c/sources/npmRegistryUtils.ts#L32),
+# so this requires the agent to have outbound network access to the public npm registry.
+#
+# Set to false on agent pools that block egress to registry.npmjs.org (e.g. some restricted 1ES
+# pools). In that mode pnpm is installed via `npm install -g pnpm@<version>` against the configured
+# (authenticated) primaryRegistry instead — the same version pinned in package.json's
+# "packageManager" field is used.
+- name: useCorepack
+  type: boolean
+  default: true
+
 steps:
 - ${{ if eq(parameters.enableCache, true) }}:
   - task: Cache@2
@@ -62,46 +76,75 @@ steps:
       restoreKeys: |
         "pnpm-store" | "$(Agent.OS)"
 
+# Seed the userconfig .npmrc with the primary registry. This propagates to subsequent tasks so
+# that npmAuthenticate (below) and any later pnpm/npm invocation in the job reuse the same file.
 - task: Bash@3
-  displayName: Install and configure pnpm
+  displayName: Configure npm registry
   # The previous task (cache restoration) can timeout, which is classified as canceled, but since it's just cache
   # restoration, we want to continue even if it timed out.
   condition: or(succeeded(), canceled())
   inputs:
     targetType: 'inline'
     workingDirectory: '$(Pipeline.Workspace)/${{ parameters.buildDirectory }}'
-    # workspace-concurrency 0 means use use the CPU core count. This is better than the default (4) for larger agents.
     script: |
       set -eu -o pipefail
       echo "Using node $(node --version)"
-      sudo corepack enable
-      echo "Using pnpm $(pnpm -v)"
-      # This ensures all subsequent tasks in this job will use the pnpm configuration set here.
       echo "##vso[task.setvariable variable=NPM_CONFIG_USERCONFIG]$NPM_CONFIG_USERCONFIG"
-      echo "Pnpm user config location: $(pnpm config get userconfig)"
-      pnpm config set store-dir ${{ parameters.pnpmStorePath }}
-      echo "Pnpm store: ${{ parameters.pnpmStorePath }}"
-      echo "Primary registry: ${NPM_REGISTRY}"
-      pnpm config set -g workspace-concurrency 0
-      pnpm config set registry "${NPM_REGISTRY}"
-      if [ ${NPM_REGISTRY} == "https://registry.npmjs.org/" ]; then
+      echo "registry=${NPM_REGISTRY}" > "$NPM_CONFIG_USERCONFIG"
+      if [ "${NPM_REGISTRY}" == "https://registry.npmjs.org/" ]; then
         echo "##vso[task.setvariable variable=registryType]public"
       else
         echo "##vso[task.setvariable variable=registryType]private"
       fi
   env:
     NPM_REGISTRY: ${{ parameters.primaryRegistry }}
-    NPM_CONFIG_USERCONFIG: ${{ parameters.userNpmrcPath}}
-    # We should leverage the primary npm registry to install pnpm as well. However, ADO artifacts feeds do not implement
-    # the full npm registry API including a route that corepack uses to get package metadata--the version route here:
-    # https://github.com/nodejs/corepack/blob/bc13d40037d0b1bfd386e260ae741f55505b5c7c/sources/npmRegistryUtils.ts#L32
-    # Thus installing pnpm from an ADO feed using corepack is not possible at time of writing.
-    # COREPACK_NPM_REGISTRY: ${{ parameters.primaryRegistry }}
+    NPM_CONFIG_USERCONFIG: ${{ parameters.userNpmrcPath }}
 
-# Authenticate to npm feed if required
+# Authenticate to the npm feed if required. Runs before pnpm install so that, when useCorepack
+# is false, `npm install -g pnpm@<version>` can fetch pnpm itself from the authenticated feed.
 - task: npmAuthenticate@0
   displayName: 'Npm authenticate'
   condition: and(succeeded(), eq(variables['registryType'], 'private'))
   retryCountOnTaskFailure: 1
   inputs:
     workingFile: ${{ parameters.userNpmrcPath }}
+
+# Install pnpm. Only this step differs between the corepack and npm-install paths; the
+# surrounding registry/auth/config steps are shared.
+- ${{ if eq(parameters.useCorepack, true) }}:
+  - task: Bash@3
+    displayName: Install pnpm (corepack)
+    inputs:
+      targetType: 'inline'
+      workingDirectory: '$(Pipeline.Workspace)/${{ parameters.buildDirectory }}'
+      script: |
+        set -eu -o pipefail
+        sudo corepack enable
+        echo "Using pnpm $(pnpm -v)"
+- ${{ else }}:
+  - task: Bash@3
+    displayName: Install pnpm (npm install -g)
+    inputs:
+      targetType: 'inline'
+      workingDirectory: '$(Pipeline.Workspace)/${{ parameters.buildDirectory }}'
+      script: |
+        set -eu -o pipefail
+        # Parse the pnpm version pinned in package.json's "packageManager" field
+        # (e.g. "pnpm@10.33.0+sha512..." -> "pnpm@10.33.0").
+        PNPM_VERSION=$(node -e "const p=require('./package.json');console.log(p.packageManager.split('+')[0])")
+        npm install -g "$PNPM_VERSION" --userconfig "${{ parameters.userNpmrcPath }}"
+        echo "Using pnpm $(pnpm -v)"
+
+# Configure pnpm: store directory, and use the CPU core count for workspace concurrency (better
+# than the default of 4 for larger agents).
+- task: Bash@3
+  displayName: Configure pnpm
+  inputs:
+    targetType: 'inline'
+    workingDirectory: '$(Pipeline.Workspace)/${{ parameters.buildDirectory }}'
+    script: |
+      set -eu -o pipefail
+      echo "Pnpm user config location: $(pnpm config get userconfig)"
+      pnpm config set store-dir ${{ parameters.pnpmStorePath }}
+      echo "Pnpm store: ${{ parameters.pnpmStorePath }}"
+      pnpm config set -g workspace-concurrency 0
