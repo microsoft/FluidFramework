@@ -254,8 +254,11 @@ function contentOpsToQuillDelta(
  * Exported for unit testing.
  * @internal
  */
-export function applyQuillDeltaToTree(root: FormattedTextAsTree.Tree, delta: Delta): void {
-	const branch = TreeAlpha.branch(root);
+export function applyQuillDeltaToTree(
+	root: FormattedTextAsTree.Tree,
+	delta: Delta,
+	label?: unknown,
+): void {
 	const applyDelta = (): void => {
 		// Snapshot of root.fullString() that we incrementally maintain in lockstep with the
 		// tree mutations below, so we can resolve UTF-16 positions without re-reading the tree
@@ -357,12 +360,17 @@ export function applyQuillDeltaToTree(root: FormattedTextAsTree.Tree, delta: Del
 			}
 		}
 	};
-	if (branch === undefined) {
+	// Route through `TreeAlpha.context().runTransaction` so the optional label travels
+	// onto the resulting commit. This is what lets the editor's scoped undo/redo find
+	// these commits — unlabeled commits would only show up in the global undo stack.
+	// Mirrors the plain text view's transaction pattern (`quillView.tsx` / `plainTextView.tsx`).
+	const context = TreeAlpha.context(root);
+	if (context.isBranch()) {
+		context.runTransaction(applyDelta, label === undefined ? undefined : { label });
+	} else {
 		// If this node does not have a corresponding branch, then it is unhydrated.
 		// Apply edits directly without a transaction.
 		applyDelta();
-	} else {
-		branch.runTransaction(applyDelta);
 	}
 }
 
@@ -510,7 +518,9 @@ const FormattedTextEditorView = forwardRef<
 		const handleTextChange = (delta: Delta, _oldDelta: Delta, source: EmitterSource): void => {
 			if (source !== "user") return;
 			runGuarded(isUpdating, () => {
-				applyQuillDeltaToTree(root, delta);
+				// Pass `editLabelRef.current` so the resulting commit is labeled and reachable
+				// from this editor's scoped undo/redo (rather than only the global undo stack).
+				applyQuillDeltaToTree(root, delta, editLabelRef.current);
 			});
 		};
 
