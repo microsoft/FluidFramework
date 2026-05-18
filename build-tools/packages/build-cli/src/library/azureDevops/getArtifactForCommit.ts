@@ -85,12 +85,13 @@ function findBuildIdForCommit(builds: Build[], commit: string): number {
 			`Found an in-progress build for commit ${commit}; none have succeeded yet.`,
 		);
 	}
-	if (candidates.some((b) => b.result !== BuildResult.Succeeded)) {
+	if (candidates.every((b) => b.result !== BuildResult.Succeeded)) {
 		throw new Error(`All builds for commit ${commit} have completed but none succeeded.`);
 	}
-	// Reaching here means every candidate is Completed + Succeeded but missing
-	// an `id` — an ADO state anomaly that shouldn't happen in practice, but the
-	// `id` field is typed `number | undefined` so we surface it explicitly.
+	// Reaching here means at least one candidate Succeeded but is missing an
+	// `id` (possibly alongside other failed candidates) — an ADO state anomaly
+	// that shouldn't happen in practice, but the `id` field is typed
+	// `number | undefined` so we surface it explicitly.
 	throw new Error(`No build for commit ${commit} has a usable build id.`);
 }
 
