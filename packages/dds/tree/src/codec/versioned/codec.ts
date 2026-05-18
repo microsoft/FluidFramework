@@ -293,7 +293,7 @@ export class VersionDispatchingCodecBuilder<
 	>[];
 
 	/**
-	 * Use {@link ClientVersionDispatchingCodecBuilder.build} to create an instance of this class.
+	 * Use {@link VersionDispatchingCodecBuilder.build} to create an instance of this class.
 	 * @remarks
 	 * Inputs to this are assumed to be constants in the code controlled by the developers of this package,
 	 * and constructed at least once during tests.
