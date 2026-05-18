@@ -1455,13 +1455,13 @@ export class ContainerRuntime
 	private readonly _flushMode: FlushMode;
 	private readonly stagingModeAutoFlushThreshold: number;
 	/**
-	 * BatchId tracking is needed whenever there's a possibility of a "forked Container",
-	 * where the same local state is pending in two different running Containers, each of
-	 * which is trying to ensure it's persisted.
-	 * "Offline Load" from serialized pending state is one such scenario since two Containers
-	 * could load from the same serialized pending state.
+	 * Whether the "Offline Load" feature is opted into via Fluid.Container.enableOfflineFull.
+	 * This gates batchId stamping on resubmit and DuplicateBatchDetector, both of which are
+	 * only meaningful when "forked Container" scenarios are possible (i.e. when the same
+	 * local state is pending in two different running Containers loaded from the same
+	 * serialized pending state).
 	 */
-	private readonly batchIdTrackingEnabled: boolean;
+	private readonly offlineEnabled: boolean;
 	private flushScheduled = false;
 
 	private canSendOps: boolean;
@@ -1890,39 +1890,28 @@ export class ContainerRuntime
 			this.mc.config.getNumber("Fluid.ContainerRuntime.StagingModeAutoFlushThreshold") ??
 			runtimeOptions.stagingModeAutoFlushThreshold ??
 			defaultStagingModeAutoFlushThreshold;
-		// BatchId tracking powers DuplicateBatchDetector (catching forked-container duplicates)
-		// and is also a prerequisite for the Offline Load feature. It is enabled by default
-		// when both TurnBased flush mode and grouped batching are active; the kill-switch
-		// below allows disabling it without a code change if a regression is observed.
-		// Grouped batching is required because resubmits can produce empty batches that must
-		// still be sent on the wire as a placeholder grouped batch to preserve their batchId
-		// (see OpGroupingManager.createEmptyGroupedBatch / outbox.flushEmptyBatch).
-		// Offline Load requires both prerequisites, so a consumer that opts into it without
-		// them gets an explicit UsageError rather than silent degradation.
-		const offlineLoadRequested =
+		// Offline Load requires both TurnBased flush mode and grouped batching; grouped
+		// batching matters because resubmits can produce empty batches that must still be
+		// sent as a placeholder grouped batch to preserve their batchId (see
+		// OpGroupingManager.createEmptyGroupedBatch / outbox.flushEmptyBatch).
+		this.offlineEnabled =
 			this.mc.config.getBoolean("Fluid.Container.enableOfflineFull") === true;
-		const disableBatchIdTracking =
-			this.mc.config.getBoolean("Fluid.ContainerRuntime.DisableBatchIdTracking") === true;
 
-		if (offlineLoadRequested && this._flushMode !== FlushMode.TurnBased) {
+		if (this.offlineEnabled && this._flushMode !== FlushMode.TurnBased) {
 			const error = new UsageError("Offline mode is only supported in turn-based mode");
 			this.closeFn(error);
 			throw error;
 		}
-		if (offlineLoadRequested && !this.groupedBatchingEnabled) {
+		if (this.offlineEnabled && !this.groupedBatchingEnabled) {
 			const error = new UsageError("Offline mode requires grouped batching to be enabled");
 			this.closeFn(error);
 			throw error;
 		}
 
-		this.batchIdTrackingEnabled =
-			!disableBatchIdTracking &&
-			this._flushMode === FlushMode.TurnBased &&
-			this.groupedBatchingEnabled;
-
 		// DuplicateBatchDetector maintains a cache of all batchIds/sequenceNumbers within the
-		// collab window. Skip allocating it when batchId tracking is off.
-		if (this.batchIdTrackingEnabled) {
+		// collab window. It is only needed in the Offline Load scenario (catching forked-
+		// container duplicates), so skip allocating it otherwise.
+		if (this.offlineEnabled) {
 			this.duplicateBatchDetector = new DuplicateBatchDetector(recentBatchInfo);
 		}
 
@@ -4995,7 +4984,7 @@ export class ContainerRuntime
 		const resubmitInfo = {
 			// Only include Batch ID if "Offline Load" feature is enabled
 			// It's only needed to identify batches across container forks arising from misuse of offline load.
-			batchId: this.batchIdTrackingEnabled ? batchId : undefined,
+			batchId: this.offlineEnabled ? batchId : undefined,
 			staged,
 		};
 
