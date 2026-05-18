@@ -100,10 +100,8 @@ stages:
           path: $(FluidFrameworkDirectory)
           submodules: false
           clean: true
-
-        - template: /tools/pipelines/templates/include-install-build-tools.yml@self
-          parameters:
-            buildDirectory: $(Pipeline.Workspace)/$(FluidFrameworkDirectory)
+          fetchDepth: 1
+          fetchTags: false
         - task: Bash@3
           name: SetVersion
           displayName: 'Set Build Version'
@@ -168,6 +166,8 @@ stages:
         - checkout: self
           submodules: false
           clean: true
+          fetchDepth: 1
+          fetchTags: false
 
         - template: /tools/pipelines/templates/include-use-node-version.yml@self
 
@@ -226,6 +226,8 @@ stages:
         - checkout: self
           submodules: false
           clean: true
+          fetchDepth: 1
+          fetchTags: false
 
         - template: /tools/pipelines/templates/include-use-node-version.yml@self
 
@@ -293,6 +295,8 @@ stages:
           path: $(FluidFrameworkDirectory)
           submodules: false
           clean: true
+          fetchDepth: 1
+          fetchTags: false
 
         - template: /tools/pipelines/templates/include-use-node-version.yml@self
 
@@ -345,6 +349,8 @@ stages:
         - checkout: self
           submodules: false
           clean: true
+          fetchDepth: 1
+          fetchTags: false
 
         - task: DownloadPipelineArtifact@2
           displayName: 'Copy fluidframework-docs to "build" folder'
