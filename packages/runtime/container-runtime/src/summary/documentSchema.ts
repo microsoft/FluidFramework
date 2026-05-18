@@ -322,10 +322,13 @@ interface IRetiredFeatureEntry {
  * Retired features participate in the normal merge / schema-change-op flow exactly like
  * non-retired features — the only difference is that their values are hardcoded.
  */
-const retiredDocumentSchemaFeatures = {} satisfies Record<string, IRetiredFeatureEntry> & {
+const retiredDocumentSchemaFeatures = {
+	// Note: There are currently no retired retired features. To retire a feature, remove it from IDocumentSchemaFeatures
+	// and documentSchemaSupportedConfigs and add an entry here, e.g.:
+	//   featureFoo: { handler: new TrueOrUndefined(), value: true },
+} satisfies Record<string, IRetiredFeatureEntry> & {
 	// This ensures that retiredDocumentSchemaFeatures and IDocumentSchemaFeatures are mutually exclusive.
 	[K in keyof IDocumentSchemaFeatures]?: never;
-	// Note: There are currently no retired features.
 };
 
 /**
