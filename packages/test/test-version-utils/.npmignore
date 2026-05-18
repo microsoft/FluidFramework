@@ -8,3 +8,5 @@ lib/test
 # Default .npmignore rules only include the root node_modules.
 # Adding an explicit rule here ensures we don't publish the compat_workspace's node_modules.
 **/node_modules
+# Preserve the .npmrc file in compat-workspaces/full so that its settings apply to the postinstall script in test-version-utils
+!compat-workspaces/full/.npmrc
