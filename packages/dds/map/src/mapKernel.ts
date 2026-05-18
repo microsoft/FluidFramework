@@ -635,7 +635,10 @@ export class MapKernel {
 			if (lastKeySet !== m) {
 				// Not the lifetime's tip — strictly subsumed by a later keySet on this key.
 				const keySetIdx = lifetime.keySets.indexOf(m);
-				assert(keySetIdx !== -1, 0xd02 /* keySet must be present in its back-pointed lifetime */);
+				assert(
+					keySetIdx !== -1,
+					0xd02 /* keySet must be present in its back-pointed lifetime */,
+				);
 				lifetime.keySets.splice(keySetIdx, 1);
 				return true;
 			}
