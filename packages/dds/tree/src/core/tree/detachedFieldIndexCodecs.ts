@@ -22,8 +22,13 @@ type BuildData = ICodecOptions & {
 	readonly idCompressor: IIdCompressor;
 };
 
+/**
+ * Codec name used to identify the detachedFieldIndex codec, see {@link detachedFieldIndexCodecBuilder}.
+ */
+export const detachedFieldIndexCodecName = "DetachedFieldIndex";
+
 export const detachedFieldIndexCodecBuilder = ClientVersionDispatchingCodecBuilder.build(
-	"DetachedFieldIndex",
+	detachedFieldIndexCodecName,
 	[
 		{
 			minVersionForCollab: lowestMinVersionForCollab,

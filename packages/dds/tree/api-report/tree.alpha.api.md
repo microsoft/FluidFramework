@@ -1247,7 +1247,9 @@ export interface SharedTreeOptions extends SharedTreeOptionsBeta, Partial<CodecW
 }
 
 // @beta @input
-export type SharedTreeOptionsBeta = ForestOptions & Partial<CodecWriteOptionsBeta>;
+export interface SharedTreeOptionsBeta extends ForestOptions, Partial<CodecWriteOptionsBeta> {
+    readonly healUnresolvableIdentifiersOnDecode?: boolean;
+}
 
 // @alpha @sealed
 export interface SimpleAllowedTypeAttributes<out Type extends SchemaType = SchemaType> {

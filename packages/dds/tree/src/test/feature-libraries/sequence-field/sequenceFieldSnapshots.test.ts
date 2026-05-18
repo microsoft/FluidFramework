@@ -19,6 +19,7 @@ export function testSnapshots(): void {
 		const compressor = createSnapshotCompressor();
 		const baseContext = {
 			originatorId: compressor.localSessionId,
+			isSummary: false,
 			revision: undefined,
 			idCompressor: testIdCompressor,
 		};
