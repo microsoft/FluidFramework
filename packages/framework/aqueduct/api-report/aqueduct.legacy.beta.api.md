@@ -57,7 +57,7 @@ export abstract class DataObject<I extends DataObjectTypes = DataObjectTypes> ex
     protected hasClaim(key: string): boolean;
     initializeInternal(existing: boolean): Promise<void>;
     protected get root(): ISharedDirectory;
-    protected trySetClaim(key: string, value: unknown): Promise<ClaimResult>;
+    protected trySetClaim(key: string, value: unknown): IClaimAttempt;
 }
 
 // @beta @legacy

@@ -51,6 +51,14 @@ export interface IChannelStorageService {
 }
 
 // @beta @legacy
+export type IClaimAttempt = {
+    readonly status: "Success" | "AlreadyClaimed";
+} | {
+    readonly status: "Pending";
+    readonly result: Promise<ClaimResult>;
+};
+
+// @beta @legacy
 export interface IDeltaConnection {
     attach(handler: IDeltaHandler): void;
     // (undocumented)
@@ -110,7 +118,7 @@ export interface IFluidDataStoreRuntime extends IEventProvider<IFluidDataStoreRu
     // (undocumented)
     readonly rootRoutingContext: IFluidHandleContext;
     submitSignal: (type: string, content: unknown, targetClientId?: string) => void;
-    trySetClaim?(key: string, value: unknown): Promise<ClaimResult>;
+    trySetClaim?(key: string, value: unknown): IClaimAttempt;
     uploadBlob(blob: ArrayBufferLike, signal?: AbortSignal): Promise<IFluidHandle<ArrayBufferLike>>;
     waitAttached(): Promise<void>;
 }

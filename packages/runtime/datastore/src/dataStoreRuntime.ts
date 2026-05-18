@@ -34,6 +34,7 @@ import type {
 	IFluidDataStoreRuntimeEvents,
 	IDeltaManagerErased,
 	ClaimResult,
+	IClaimAttempt,
 } from "@fluidframework/datastore-definitions/internal";
 import {
 	type IClientDetails,
@@ -731,12 +732,16 @@ export class FluidDataStoreRuntime
 		}
 		this._disposed = true;
 
-		// Resolve any outstanding claim attempts as "AlreadyClaimed" so callers
-		// don't hang on a disposed runtime. (We choose resolution over
-		// rejection to make caller error handling simpler — the caller can
-		// distinguish via a subsequent `hasClaim` check if needed.)
+		// Reject any outstanding claim attempts so callers don't hang on a
+		// disposed runtime. The local op was never sequenced, so resolving
+		// as `"AlreadyClaimed"` would be misleading. Rejection lets the
+		// caller distinguish "this attempt did not complete" from a
+		// sequenced loss.
+		const disposeError = new UsageError(
+			"Data store runtime was disposed before the claim was sequenced.",
+		);
 		for (const [, deferred] of this.pendingClaims) {
-			deferred.resolve("AlreadyClaimed");
+			deferred.reject(disposeError);
 		}
 		this.pendingClaims.clear();
 
@@ -773,12 +778,9 @@ export class FluidDataStoreRuntime
 		}
 	}
 
-	private async ensureClaimsLoaded(): Promise<void> {
-		if (this.claimsLoaded) {
-			return;
-		}
-		await this.claimsLoadP;
-	}
+	// (Previously `ensureClaimsLoaded` was used by `trySetClaim`; the
+	// rewrite consults `claimsLoaded` / `claimsLoadP` directly to enable
+	// synchronous status reporting.)
 
 	/**
 	 * Apply a sequenced Claim op. First-writer-wins:
@@ -808,7 +810,7 @@ export class FluidDataStoreRuntime
 	/**
 	 * {@inheritDoc @fluidframework/datastore-definitions#IFluidDataStoreRuntime.trySetClaim}
 	 */
-	public async trySetClaim(key: string, value: unknown): Promise<ClaimResult> {
+	public trySetClaim(key: string, value: unknown): IClaimAttempt {
 		this.verifyNotClosed();
 		if (!this.claimsEnabled) {
 			throw new UsageError(
@@ -824,38 +826,77 @@ export class FluidDataStoreRuntime
 			throw new UsageError("Claim key must be a non-empty string.");
 		}
 
-		await this.ensureClaimsLoaded();
-
-		// Encode handles in `value` and bind them to this runtime's graph.
+		// Encode handles eagerly so handle binding happens synchronously
+		// (matching the previous behavior). The encoded form is what we
+		// store in `sequencedClaims` and what we send on the wire.
 		const encoded = encodeHandlesInClaimValue(value, (h) => this.bind(h));
 
+		// Fast path: claim state is already hydrated from snapshot, so we
+		// can determine the immediate status synchronously.
+		if (this.claimsLoaded) {
+			return this.trySetClaimLoaded(key, encoded);
+		}
+
+		// Slow path: claim state is still loading. We cannot determine the
+		// immediate status, so report `"Pending"` and chain the actual
+		// attempt off the load completion.
+		const result = (async (): Promise<ClaimResult> => {
+			await this.claimsLoadP;
+			if (this._disposed) {
+				throw new UsageError(
+					"Data store runtime was disposed before the claim was sequenced.",
+				);
+			}
+			if (!this.claimsLoaded) {
+				// Load failed (the error was logged from the load wrapper).
+				// We cannot safely declare a winner, so surface this to the
+				// caller as a rejection.
+				throw new UsageError(
+					"Claim state failed to load from the base snapshot; cannot determine claim outcome.",
+				);
+			}
+			const attempt = this.trySetClaimLoaded(key, encoded);
+			return attempt.status === "Pending" ? attempt.result : attempt.status;
+		})();
+		return { status: "Pending", result };
+	}
+
+	/**
+	 * Implements {@link trySetClaim} for the case where claim state has
+	 * already been hydrated from the base snapshot. `encodedValue` is the
+	 * caller's value with any embedded handles already encoded and bound.
+	 */
+	private trySetClaimLoaded(key: string, encodedValue: unknown): IClaimAttempt {
 		// Already-sequenced winner / loser disambiguation.
 		if (this.sequencedClaims.has(key)) {
-			return this.wonClaims.has(key) ? "Success" : "AlreadyClaimed";
+			return { status: this.wonClaims.has(key) ? "Success" : "AlreadyClaimed" };
 		}
 
 		// Detached: write directly without an op (will be persisted by
 		// getAttachSummary).
 		if (!this.isAttached) {
-			this.sequencedClaims.set(key, encoded);
+			this.sequencedClaims.set(key, encodedValue);
 			this.wonClaims.add(key);
-			return "Success";
+			return { status: "Success" };
 		}
 
-		// If a local attempt for this key is already in flight, await its
-		// outcome.
+		// If a local attempt for this key is already in flight, return its
+		// existing deferred so all callers see the same outcome.
 		const existing = this.pendingClaims.get(key);
 		if (existing !== undefined) {
-			return existing.promise;
+			return { status: "Pending", result: existing.promise };
 		}
 
 		const deferred = new Deferred<ClaimResult>();
 		this.pendingClaims.set(key, deferred);
 		this.submit({
 			type: DataStoreMessageType.Claim,
-			content: { key, value: encoded },
+			content: { key, value: encodedValue },
 		});
-		return deferred.promise;
+		// The op has been submitted to the outbox but is not yet sequenced
+		// (and we may not even be connected). Status is `"Pending"` until
+		// the op (or a competing remote op) is sequenced.
+		return { status: "Pending", result: deferred.promise };
 	}
 
 	/**

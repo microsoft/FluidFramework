@@ -51,8 +51,7 @@ export type IDeltaManagerErased =
 	ErasedType<"@fluidframework/container-definitions.IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>">;
 
 /**
- * Result of attempting to set a claim on a data store via
- * {@link IFluidDataStoreRuntime.trySetClaim}.
+ * Final, sequenced outcome of a claim attempt.
  *
  * - `"Success"` - this client owns the claim for the given key.
  * - `"AlreadyClaimed"` - another client has already claimed the key; the
@@ -61,6 +60,41 @@ export type IDeltaManagerErased =
  * @legacy @beta
  */
 export type ClaimResult = "Success" | "AlreadyClaimed";
+
+/**
+ * The synchronous handle returned by
+ * {@link IFluidDataStoreRuntime.trySetClaim}.
+ *
+ * The shape is a discriminated union on {@link IClaimAttempt.status}:
+ *
+ * - When `status` is `"Success"` or `"AlreadyClaimed"`, the outcome is
+ * already known locally (detached, or the key was previously
+ * sequenced); no further work is required.
+ * - When `status` is `"Pending"`, the outcome cannot be determined
+ * locally yet — for example, the client is attached but disconnected,
+ * the op has been submitted but not yet sequenced, or claim state is
+ * still being hydrated from the base snapshot. In that case,
+ * {@link IClaimAttempt.result} resolves to the eventual sequenced
+ * {@link ClaimResult}, or rejects if the runtime is disposed before the
+ * attempt is sequenced.
+ *
+ * Callers can branch on `status` synchronously for race / fallback
+ * logic without ever creating a promise on the terminal paths.
+ * @legacy @beta
+ */
+export type IClaimAttempt =
+	| {
+			readonly status: "Success" | "AlreadyClaimed";
+	  }
+	| {
+			readonly status: "Pending";
+			/**
+			 * Resolves to the final sequenced {@link ClaimResult} once the
+			 * op (this client's or another's) is sequenced. Rejects if the
+			 * runtime is disposed before the attempt is sequenced.
+			 */
+			readonly result: Promise<ClaimResult>;
+	  };
 
 /**
  * Represents the runtime for the data store. Contains helper functions/state of the data store.
@@ -232,18 +266,28 @@ export interface IFluidDataStoreRuntime
 	 * summary blobs and contribute to garbage-collection routes from this data
 	 * store.
 	 *
-	 * The returned promise resolves to `"Success"` for the client whose op was
-	 * sequenced first for the key, and `"AlreadyClaimed"` for every other
-	 * client. A repeated call from the winning client returns `"Success"`.
+	 * Returns synchronously with an {@link IClaimAttempt} describing the
+	 * outcome. When the outcome is known locally — the key was already
+	 * sequenced, or the data store is detached — `status` is `"Success"`
+	 * or `"AlreadyClaimed"` and there is nothing to await. Otherwise
+	 * `status` is `"Pending"` and {@link IClaimAttempt.result} resolves
+	 * to the eventual sequenced {@link ClaimResult} (`"Success"` for the
+	 * client whose op is sequenced first for the key, and
+	 * `"AlreadyClaimed"` for every other client).
+	 *
+	 * Local ops are automatically resubmitted by the runtime across
+	 * reconnects, so the result promise will eventually resolve once the
+	 * client reconnects — unless the runtime is disposed first, in which
+	 * case the result promise rejects.
 	 *
 	 * Optional. Implementations that do not support claims will not provide
 	 * this method.
 	 *
 	 * @param key - The claim key.
 	 * @param value - The claim value (JSON-serializable; may include handles).
-	 * @returns A promise that resolves to the {@link ClaimResult}.
+	 * @returns An {@link IClaimAttempt} discriminated on `status`.
 	 */
-	trySetClaim?(key: string, value: unknown): Promise<ClaimResult>;
+	trySetClaim?(key: string, value: unknown): IClaimAttempt;
 
 	/**
 	 * Returns the value of a previously-claimed key, with embedded handles

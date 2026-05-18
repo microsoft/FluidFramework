@@ -3,7 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import type { ClaimResult } from "@fluidframework/datastore-definitions/internal";
+import type {
+	ClaimResult,
+	IClaimAttempt,
+} from "@fluidframework/datastore-definitions/internal";
 import {
 	type ISharedDirectory,
 	MapFactory,
@@ -60,21 +63,30 @@ export abstract class DataObject<
 	}
 
 	/**
-	 * Attempts to set a first-writer-wins claim on this data store. The
-	 * promise resolves to `"Success"` if this client won the race for the
-	 * key, or `"AlreadyClaimed"` if another client (including a previous
-	 * incarnation of the same client) won. See {@link DataObject} class
-	 * remarks for when to use a claim vs. writing to
-	 * {@link DataObject.root | root}.
+	 * Attempts to set a first-writer-wins claim on this data store.
+	 *
+	 * Returns synchronously with an {@link IClaimAttempt} describing the
+	 * immediate state. Its {@link IClaimAttempt.status} is `"Success"` or
+	 * `"AlreadyClaimed"` when the outcome is already known locally
+	 * (detached, or the key was previously sequenced), and `"Pending"`
+	 * otherwise (e.g. while disconnected, while the op is in flight, or
+	 * while claim state is still being loaded from the base snapshot).
+	 * Callers can branch on the status immediately for race / fallback
+	 * logic and await {@link IClaimAttempt.result} to observe the final
+	 * sequenced outcome.
+	 *
+	 * See {@link DataObject} class remarks for when to use a claim vs.
+	 * writing to {@link DataObject.root | root}.
 	 *
 	 * @param key - The claim key (non-empty string).
 	 * @param value - The JSON-serializable value to claim. May contain
 	 * {@link @fluidframework/core-interfaces#IFluidHandle} instances; these
 	 * are encoded the same way as handles in summary blobs and contribute
 	 * outbound routes to garbage collection.
-	 * @returns A promise that resolves to `"Success"` or `"AlreadyClaimed"`.
+	 * @returns An {@link IClaimAttempt} carrying the immediate status and
+	 * a promise for the eventual sequenced {@link ClaimResult}.
 	 */
-	protected async trySetClaim(key: string, value: unknown): Promise<ClaimResult> {
+	protected trySetClaim(key: string, value: unknown): IClaimAttempt {
 		if (this.runtime.trySetClaim === undefined) {
 			throw new UsageError(
 				"The data store runtime does not support claims. Enable the `enableDataStoreClaims` policy on the data store runtime to use this API.",

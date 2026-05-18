@@ -11,6 +11,10 @@ import { ContainerErrorTypes } from "@fluidframework/container-definitions/inter
 import type { IErrorBase, IFluidHandle } from "@fluidframework/core-interfaces";
 import { fluidHandleSymbol } from "@fluidframework/core-interfaces";
 import type { IFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
+import type {
+	ClaimResult,
+	IClaimAttempt,
+} from "@fluidframework/datastore-definitions/internal";
 import { SummaryType } from "@fluidframework/driver-definitions";
 import type { ISnapshotTree } from "@fluidframework/driver-definitions/internal";
 import type {
@@ -145,17 +149,29 @@ async function popClaim(submitted: SubmittedOp[]): Promise<IClaimMessage> {
 	return op.content as IClaimMessage;
 }
 
+/**
+ * Resolve a claim attempt to its terminal {@link ClaimResult} regardless of
+ * whether it landed on a synchronous (Success/AlreadyClaimed) or asynchronous
+ * (Pending) branch of the discriminated union.
+ */
+async function awaitResult(attempt: IClaimAttempt | undefined): Promise<ClaimResult> {
+	assert(attempt !== undefined, "Expected a claim attempt");
+	return attempt.status === "Pending" ? attempt.result : attempt.status;
+}
+
 describe("FluidDataStoreRuntime claims", () => {
 	it("single-client claim resolves to Success and is exposed via getClaim/hasClaim/claims", async () => {
 		const { context, submitted } = makeContext();
 		const runtime = createRuntime(context);
 
-		const promise = runtime.trySetClaim?.("k", "v");
-		assert(promise !== undefined);
+		const attempt = runtime.trySetClaim?.("k", "v");
+		assert(attempt !== undefined);
+		// Attached + op not yet sequenced -> immediate status is "Pending".
+		assert(attempt.status === "Pending");
 		// The op was submitted; round-trip it back as a local ack.
 		const claim = await popClaim(submitted);
 		runtime.processMessages(makeClaimAck(claim, true));
-		assert.strictEqual(await promise, "Success");
+		assert.strictEqual(await attempt.result, "Success");
 		assert.strictEqual(runtime.hasClaim?.("k"), true);
 		assert.strictEqual(runtime.getClaim?.("k"), "v");
 		assert.deepStrictEqual([...(runtime.claims?.entries() ?? [])], [["k", "v"]]);
@@ -172,6 +188,8 @@ describe("FluidDataStoreRuntime claims", () => {
 		const pA = runtimeA.trySetClaim?.("k", "A");
 		const pB = runtimeB.trySetClaim?.("k", "B");
 		assert(pA !== undefined && pB !== undefined);
+		assert.strictEqual(pA.status, "Pending");
+		assert.strictEqual(pB.status, "Pending");
 
 		const aOp = await popClaim(subA);
 		const bOp = await popClaim(subB);
@@ -183,8 +201,8 @@ describe("FluidDataStoreRuntime claims", () => {
 		runtimeB.processMessages(makeClaimAck(aOp, false));
 		runtimeB.processMessages(makeClaimAck(bOp, true));
 
-		assert.strictEqual(await pA, "Success");
-		assert.strictEqual(await pB, "AlreadyClaimed");
+		assert.strictEqual(await awaitResult(pA), "Success");
+		assert.strictEqual(await awaitResult(pB), "AlreadyClaimed");
 		assert.strictEqual(runtimeA.getClaim?.("k"), "A");
 		assert.strictEqual(runtimeB.getClaim?.("k"), "A");
 	});
@@ -196,11 +214,12 @@ describe("FluidDataStoreRuntime claims", () => {
 		const p1 = runtime.trySetClaim?.("k", "v1");
 		const op1 = await popClaim(submitted);
 		runtime.processMessages(makeClaimAck(op1, true));
-		assert.strictEqual(await p1, "Success");
+		assert.strictEqual(await awaitResult(p1), "Success");
 
-		// Repeat with different value -> still Success, original value retained.
+		// Repeat with different value -> still Success synchronously; the
+		// terminal-status branch carries no promise to await.
 		const p2 = runtime.trySetClaim?.("k", "v2");
-		assert.strictEqual(await p2, "Success");
+		assert.strictEqual(p2?.status, "Success");
 		assert.strictEqual(runtime.getClaim?.("k"), "v1");
 	});
 
@@ -218,17 +237,20 @@ describe("FluidDataStoreRuntime claims", () => {
 		runtimeA.processMessages(makeClaimAck(bOp, false));
 		runtimeB.processMessages(makeClaimAck(aOp, false));
 		runtimeB.processMessages(makeClaimAck(bOp, true));
-		assert.strictEqual(await pA, "Success");
-		assert.strictEqual(await pB, "AlreadyClaimed");
+		assert.strictEqual(await awaitResult(pA), "Success");
+		assert.strictEqual(await awaitResult(pB), "AlreadyClaimed");
 
-		// Loser tries again with the same (key, value): still AlreadyClaimed.
-		assert.strictEqual(await runtimeB.trySetClaim?.("k", "shared"), "AlreadyClaimed");
+		// Loser tries again with the same (key, value): still AlreadyClaimed
+		// synchronously — no op submitted, no promise to await.
+		const retry = runtimeB.trySetClaim?.("k", "shared");
+		assert.strictEqual(retry?.status, "AlreadyClaimed");
 	});
 
-	it("detached set resolves Success synchronously and is persisted via getAttachSummary", async () => {
+	it("detached set resolves Success synchronously and is persisted via getAttachSummary", () => {
 		const { context } = makeContext({ attachState: AttachState.Detached });
 		const runtime = createRuntime(context);
-		assert.strictEqual(await runtime.trySetClaim?.("k", "v"), "Success");
+		const attempt = runtime.trySetClaim?.("k", "v");
+		assert.strictEqual(attempt?.status, "Success");
 		assert.strictEqual(runtime.hasClaim?.("k"), true);
 
 		// Make the runtime locally visible so getAttachSummary works.
@@ -242,7 +264,7 @@ describe("FluidDataStoreRuntime claims", () => {
 	it("after detached set + attach, a remote op for the same key resolves AlreadyClaimed", async () => {
 		const { context, submitted } = makeContext({ attachState: AttachState.Detached });
 		const runtime = createRuntime(context);
-		assert.strictEqual(await runtime.trySetClaim?.("k", "winner"), "Success");
+		assert.strictEqual(runtime.trySetClaim?.("k", "winner")?.status, "Success");
 
 		// Simulate becoming attached.
 		runtime.setAttachState(AttachState.Attaching);
@@ -262,7 +284,7 @@ describe("FluidDataStoreRuntime claims", () => {
 		const p = runtime.trySetClaim?.("k", { foo: handle });
 		const op = await popClaim(submitted);
 		runtime.processMessages(makeClaimAck(op, true));
-		assert.strictEqual(await p, "Success");
+		assert.strictEqual(await awaitResult(p), "Success");
 		const gcData = await runtime.getGCData();
 		assert(gcData.gcNodes["/"] !== undefined);
 		assert(
@@ -277,6 +299,7 @@ describe("FluidDataStoreRuntime claims", () => {
 
 		// Start a claim attempt locally.
 		const pLocal = runtime.trySetClaim?.("k", "local");
+		assert.strictEqual(pLocal?.status, "Pending");
 		const localOp = await popClaim(submitted);
 
 		// A remote winner is sequenced first.
@@ -295,15 +318,15 @@ describe("FluidDataStoreRuntime claims", () => {
 		const resubmitted = await popClaim(submitted);
 		runtime.processMessages(makeClaimAck(resubmitted, true));
 
-		assert.strictEqual(await pLocal, "AlreadyClaimed");
+		assert.strictEqual(await awaitResult(pLocal), "AlreadyClaimed");
 		assert.strictEqual(runtime.getClaim?.("k"), "remote");
 	});
 
-	it("feature flag off: trySetClaim throws a UsageError", async () => {
+	it("feature flag off: trySetClaim throws a UsageError", () => {
 		const { context } = makeContext();
 		const runtime = createRuntime(context, { enableDataStoreClaims: false });
-		await assert.rejects(
-			async () => runtime.trySetClaim?.("k", "v"),
+		assert.throws(
+			() => runtime.trySetClaim?.("k", "v"),
 			(e: IErrorBase) =>
 				e.errorType === ContainerErrorTypes.usageError &&
 				e.message.includes("DataStore claims are not enabled"),
@@ -333,11 +356,11 @@ describe("FluidDataStoreRuntime claims", () => {
 		const { context } = makeContext({ baseSnapshot, blobs });
 		const runtime = createRuntime(context);
 
-		// Force the load to complete by awaiting trySetClaim (which awaits the load).
-		// (Using a key that doesn't exist; we expect the op to be submitted, but we
-		//  don't process it — we just want the load to drain.)
+		// Claim state hasn't been loaded yet -> immediate status is "Pending"
+		// even though we'd otherwise be a fast-path "AlreadyClaimed" on key "a".
 		const setP = runtime.trySetClaim?.("c", "valueC");
-		// Allow microtasks to run.
+		assert.strictEqual(setP?.status, "Pending");
+		// Allow microtasks to run so the load completes.
 		await Promise.resolve();
 		await Promise.resolve();
 
@@ -347,17 +370,20 @@ describe("FluidDataStoreRuntime claims", () => {
 		const decoded = runtime.getClaim?.("b") as { absolutePath: string };
 		assert.strictEqual(decoded.absolutePath, "/x/y");
 
-		// Don't leave the open setP unhandled - just await it later. We attach
-		// a no-op handler so any rejection is observed.
-		setP?.catch(() => undefined);
+		// Don't leave the open setP unhandled - just attach a no-op handler so
+		// any rejection is observed. setP is "Pending" while claim state is
+		// still loading.
+		if (setP?.status === "Pending") {
+			setP.result.catch(() => undefined);
+		}
 	});
 
-	it("staging mode: trySetClaim throws", async () => {
+	it("staging mode: trySetClaim throws", () => {
 		const { context } = makeContext();
 		(context.containerRuntime as unknown as { inStagingMode: boolean }).inStagingMode = true;
 		const runtime = createRuntime(context);
-		await assert.rejects(
-			async () => runtime.trySetClaim?.("k", "v"),
+		assert.throws(
+			() => runtime.trySetClaim?.("k", "v"),
 			(e: IErrorBase) =>
 				e.errorType === ContainerErrorTypes.usageError && e.message.includes("staging"),
 		);
@@ -368,7 +394,7 @@ describe("FluidDataStoreRuntime claims", () => {
 		const runtime = createRuntime(context);
 		const p = runtime.trySetClaim?.("k", "v");
 		runtime.processMessages(makeClaimAck(await popClaim(submitted), true));
-		await p;
+		await awaitResult(p);
 
 		const summary = await runtime.summarize(true, false);
 		assert(summary.summary.type === SummaryType.Tree);
@@ -382,13 +408,54 @@ describe("FluidDataStoreRuntime claims", () => {
 		assert.deepStrictEqual(parsed.entries, [["k", "v"]]);
 	});
 
-	it("dispose resolves outstanding pending claims as AlreadyClaimed", async () => {
+	it("dispose rejects outstanding pending claim result promises", async () => {
 		const { context } = makeContext();
 		const runtime = createRuntime(context);
 		const p = runtime.trySetClaim?.("k", "v");
+		assert(p !== undefined);
+		assert(p.status === "Pending");
 		await flush();
 		runtime.dispose();
-		assert.strictEqual(await p, "AlreadyClaimed");
+		await assert.rejects(
+			async () => p.result,
+			(e: IErrorBase) =>
+				e.errorType === ContainerErrorTypes.usageError && e.message.includes("disposed"),
+		);
+	});
+
+	it("offline: trySetClaim returns Pending synchronously and the result promise stays unresolved until the op is sequenced", async () => {
+		// We can't directly toggle "connected" on the mock context, but the
+		// shape of the API guarantees that for any attached client whose op
+		// has not yet been sequenced (the disconnected case included), the
+		// immediate status is "Pending" and the consumer can immediately
+		// race or fall back.
+		const { context, submitted } = makeContext();
+		const runtime = createRuntime(context);
+
+		const attempt = runtime.trySetClaim?.("k", "v");
+		assert(attempt !== undefined);
+		assert(attempt.status === "Pending");
+
+		// Until we round-trip the op, the result promise is unresolved.
+		// Pre-attach a state-tracking listener so we can verify it isn't
+		// resolved prematurely.
+		let resolved = false;
+		attempt.result.then(
+			() => {
+				resolved = true;
+			},
+			() => {
+				resolved = true;
+			},
+		);
+		await flush();
+		assert.strictEqual(resolved, false, "result must not resolve before the op is sequenced");
+
+		// Sequence the op (as if we'd just reconnected and the resubmitter
+		// drained the outbox).
+		const claim = await popClaim(submitted);
+		runtime.processMessages(makeClaimAck(claim, true));
+		assert.strictEqual(await attempt.result, "Success");
 	});
 
 	// Reference imported types so they aren't flagged as unused.

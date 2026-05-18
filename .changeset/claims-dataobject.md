@@ -15,9 +15,22 @@ observe `"AlreadyClaimed"` and can branch their logic accordingly.
 
 New API surface (all `@legacy` `@beta`):
 
-- `ClaimResult = "Success" | "AlreadyClaimed"`.
-- `IFluidDataStoreRuntime.trySetClaim(key, value)`, `getClaim(key)`,
-  `hasClaim(key)`, and `claims` (a read-only iterator).
+- `ClaimResult = "Success" | "AlreadyClaimed"` — terminal sequenced
+  outcome of a claim attempt.
+- `IClaimAttempt` — the synchronous return shape of `trySetClaim`. It is
+  a discriminated union on `status`:
+  - `{ status: "Success" | "AlreadyClaimed" }` when the outcome is
+    already known locally (detached, or the key was previously
+    sequenced). There is nothing to await.
+  - `{ status: "Pending"; result: Promise<ClaimResult> }` when the
+    outcome can't be determined locally yet — for example, the client
+    is attached but disconnected, the op has been submitted but not
+    yet sequenced, or claim state is still being hydrated from the
+    base snapshot. The `result` promise resolves to the final
+    sequenced `ClaimResult`, or rejects if the runtime is disposed
+    before the attempt is sequenced.
+- `IFluidDataStoreRuntime.trySetClaim(key, value): IClaimAttempt`,
+  `getClaim(key)`, `hasClaim(key)`, and `claims` (a read-only iterator).
 - `IFluidDataStorePolicies.enableDataStoreClaims` opt-in flag (defaults to
   off; set to `true` on the data store runtime to enable the API).
 - `DataObject.trySetClaim`, `getClaim`, `hasClaim` convenience helpers that
