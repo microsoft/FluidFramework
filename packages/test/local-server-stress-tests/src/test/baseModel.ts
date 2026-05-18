@@ -247,7 +247,10 @@ export function makeGenerator<T extends BaseOperation>(
 	};
 }
 
-const srcResultsPath = path.join(path.dirname(fileURLToPath(import.meta.url)), "../../src/test/results");
+const srcResultsPath = path.join(
+	path.dirname(fileURLToPath(import.meta.url)),
+	"../../src/test/results",
+);
 export const saveFailures = { directory: srcResultsPath };
 export const saveSuccesses = { directory: srcResultsPath };
 export const saveFluidOps = { directory: srcResultsPath };
