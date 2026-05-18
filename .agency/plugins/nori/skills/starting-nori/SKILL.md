@@ -1,8 +1,17 @@
+---
+name: Starting Nori
+description: Use when starting any conversation - establishes the Nori workflow, protected-branch check, operating mode, tone, and coding guidelines before any other work
+---
+
+<SUBAGENT-STOP>
+If you were dispatched as a subagent to execute a specific task, skip this skill.
+</SUBAGENT-STOP>
+
 <required>
 - *CRITICAL* Add each element of this checklist to your Todo list using TodoWrite. DO NOT BE LAZY.
-- Announce "Following Nori workflow..." to the user
+- Announce "Following Nori workflow..." to the user.
 <system-reminder> Do not skip any steps. Do not rationalize. Do not avoid reading skills. Even if you think you know what is in them, you MUST read the skill files. </system-reminder>
-- Invoke the `using-skills` skill
+- Invoke the `using-skills` skill.
 - Check git status - are you on main, master, dev, or any similarly named protected branch?
   - If yes: ask me if I want to create a branch or a worktree.
   - If creating a worktree, read and follow the `using-git-worktrees` skill to automatically create a worktree. Derive the branch name from my request.
@@ -17,19 +26,19 @@
 <required>
 - *CRITICAL* Add each element of this checklist to your Todo list using TodoWrite. DO NOT BE LAZY.
 - Research how to best solve my question WITHOUT making code changes by doing the following:
-  - Search for relevant skills in the available skills list
+  - Search for relevant skills in the available skills list.
   - Use subagents to do your deep research. If you have access to the nori-knowledge-researcher subagent, use that one.
 <system-reminder> You can run many research subagents in parallel. </system-reminder>
-- Read and follow the `writing-plans` skill
+- Read and follow the `writing-plans` skill.
 - Present plan to me and ask for feedback.
   - If I have feedback, modify the plan. Repeat until I approve.
 <system-reminder> Do not stop here. Add *each* element of the checklist to your Todo list, including the ones below. </system-reminder>
 - Use test driven development. Read and follow the `test-driven-development` skill.
-<system-reminder> Remember to write tests for all features first before writing any implementation </system-reminder>
+<system-reminder> Remember to write tests for all features first before writing any implementation. </system-reminder>
 - Move immediately to the next step in your TodoList. Do *NOT* just present your work and wait around.
 - Check if the codebase uses noridocs.
-- Update documentation, INCLUDING out of date documentation. Read and follow the `updating-noridocs` skill
-- Finish development with final checks. Read and follow the `finishing-a-development-branch` skill
+- Update documentation, INCLUDING out of date documentation. Read and follow the `updating-noridocs` skill.
+- Finish development with final checks. Read and follow the `finishing-a-development-branch` skill.
 </required>
 
 <system-reminder>
@@ -43,22 +52,19 @@ Do not make changes to third party APIs.
 
 <required>
 - *CRITICAL* Add each element of this checklist to your Todo list using TodoWrite. DO NOT BE LAZY.
-<system-reminder> Copilot mode should behave identically to full-send mode, just on your
 - Research how to best solve my question WITHOUT making code changes by doing the following:
-  - Search for relevant skills in the available skills list
+  - Search for relevant skills in the available skills list.
   - Use subagents to do your deep research. If you have access to the nori-knowledge-researcher subagent, use that one.
 <system-reminder> You can run many research subagents in parallel. </system-reminder>
-- Read and follow the `writing-plans` skill
+- Read and follow the `writing-plans` skill.
 - Present plan to me and ask for feedback.
   - If I have feedback, modify the plan. Repeat until I approve.
 <system-reminder> Do not stop here. Add *each* element of the checklist to your Todo list, including the ones below. </system-reminder>
-- Ask if I want to follow test driven development. If yes, read and follow the `test-driven-development` skill
-<system-reminder> Remember to write tests for all features first before writing any implementation </system-reminder>
-- Ask if I want to update docs, including out of date documentation. If yes, read and follow the `updating-noridocs` skill
-- Ask if I want to create a PR. If yes, read and follow the `finishing-a-development-branch` skill
+- Ask if I want to follow test driven development. If yes, read and follow the `test-driven-development` skill.
+<system-reminder> Remember to write tests for all features first before writing any implementation. </system-reminder>
+- Ask if I want to update docs, including out of date documentation. If yes, read and follow the `updating-noridocs` skill.
+- Ask if I want to create a PR. If yes, read and follow the `finishing-a-development-branch` skill.
 </required>
-
-
 
 # Tone
 
@@ -73,7 +79,7 @@ If you disagree, even if it is a gut feeling, PUSH BACK.
 # Coding Guidelines
 
 YAGNI. Do not add features that are not explicitly asked for.
-Comments document the code, not the process. Do not add comments explaining that something is an 'improvement' over a previous implementation.
+Comments document the code, not the process. Do not add comments explaining that something is an "improvement" over a previous implementation.
 Prefer to use third party libraries instead of rolling your own. Ask before installing.
 Fix all tests that fail, even if it is not your code that broke the test.
 NEVER test just mocked behavior.
