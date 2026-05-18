@@ -64,7 +64,13 @@ parameters:
 
 - name: buildToolsVersionToInstall
   type: string
-  default: "^0.5.0"
+  default: "^0.55.0"
+
+# The semver range constraint to use for interdependencies; that is, dependencies on other packages within the release
+# group
+- name: interdependencyRange
+  type: string
+  default: "^"
 
 trigger: none
 
@@ -201,9 +207,9 @@ stages:
 
     # for npm ci in component detection and set version
     - task: UseNode@1
-      displayName: Use Node 18.17.1
+      displayName: Use Node 20.15.1
       inputs:
-        version: 18.17.1
+        version: 20.15.1
 
     - task: Npm@1
       displayName: Install npm 10
@@ -227,6 +233,7 @@ stages:
           buildNumberInPatch: ${{ parameters.buildNumberInPatch }}
           buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
           tagName: ${{ parameters.tagName }}
+          interdependencyRange: ${{ parameters.interdependencyRange }}
     - ${{ if eq(parameters.setVersion, false) }}:
       - task: Bash@3
         name: SetVersion

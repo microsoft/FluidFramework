@@ -89,6 +89,8 @@
     "typescript": "~4.5.5"
   },
   "overrides": {
-    "lodash": "^4.18.1"
+    "lodash": "^4.18.1",
+    "node-gyp": "^10",
+    "zookeeper": "^7.2.0"
   }
 }
