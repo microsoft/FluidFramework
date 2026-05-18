@@ -18,19 +18,19 @@
     },
     {
       "file": "scripts/codespace-setup/agent-aliases.sh",
-      "line": 8,
+      "line": 26,
       "title": "Claude Aliases",
       "description": "These aliases launch Claude Code via agency:\n\n- **`claude`** - Normal Claude Code\n- **`dev`** - Claude Code with the Nori profile\n\nBoth aliases use `agency claude` under the hood, which ensures consistent configuration and context."
     },
     {
       "file": "scripts/codespace-setup/agent-aliases.sh",
-      "line": 37,
+      "line": 41,
       "title": "Copilot Aliases",
       "description": "These aliases launch GitHub Copilot:\n\n- **`copilot`** — Standard GitHub Copilot\n- **`oce`** — On-Call Engineer workflow (switches to ff-oce agent)"
     },
     {
       "file": "scripts/codespace-setup/agent-aliases.sh",
-      "line": 49,
+      "line": 24,
       "title": "Starting Agents",
       "description": "Use `dev` for Nori-guided feature work, `claude` for general Claude Code sessions, `copilot` for standard GitHub Copilot, and `oce` for On-Call Engineer workflows."
     },
