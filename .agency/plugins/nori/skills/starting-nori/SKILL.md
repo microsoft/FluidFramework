@@ -1,6 +1,6 @@
 ---
-name: Starting Nori
-description: Use when starting any conversation - establishes the Nori workflow, protected-branch check, operating mode, tone, and coding guidelines before any other work
+name: starting-nori
+description: ALWAYS load this skill if it is not already loaded, for ANY user query or conversation - establishes the Nori workflow, protected-branch check, operating mode, tone, and coding guidelines before any other work
 ---
 
 <SUBAGENT-STOP>
