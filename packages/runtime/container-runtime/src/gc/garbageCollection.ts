@@ -10,17 +10,20 @@ import type { ISnapshotTree } from "@fluidframework/driver-definitions/internal"
 import {
 	type IGarbageCollectionDetailsBase,
 	type ISummarizeResult,
+	type ISummaryTreeWithStats,
 	gcTreeKey,
 	type IGarbageCollectionData,
 	type ITelemetryContext,
 } from "@fluidframework/runtime-definitions/internal";
 import {
+	addSummarizeResultToSummary,
 	createResponseError,
 	responseToException,
 } from "@fluidframework/runtime-utils/internal";
 import {
 	type ITelemetryLoggerExt,
 	DataProcessingError,
+	LoggingError,
 	type MonitoringContext,
 	PerformanceEvent,
 	createChildLogger,
@@ -32,6 +35,12 @@ import { blobManagerBasePath } from "../blobManager/index.js";
 import { TombstoneResponseHeaderKey } from "../containerRuntime.js";
 import { ClientSessionExpiredError } from "../error.js";
 import { ContainerMessageType, type ContainerRuntimeGCMessage } from "../messageTypes.js";
+import type {
+	InboundRuntimeMessageFor,
+	IRuntimeFeature,
+	LocalRuntimeMessageFor,
+	RuntimeMessagesContentFor,
+} from "../runtimeFeature.js";
 import type { IRefreshSummaryResult } from "../summary/index.js";
 
 import { generateGCConfigs } from "./gcConfigs.js";
@@ -92,7 +101,9 @@ import {
  *  NodeId = "dds1"	 NodeId = "dds2"
  * ```
  */
-export class GarbageCollector implements IGarbageCollector {
+export class GarbageCollector
+	implements IGarbageCollector, IRuntimeFeature<ContainerMessageType.GC>
+{
 	public static create(createParams: IGarbageCollectorCreateParams): IGarbageCollector {
 		return new GarbageCollector(createParams);
 	}
@@ -1185,6 +1196,54 @@ export class GarbageCollector implements IGarbageCollector {
 			tracker.stopTracking();
 		}
 		this.unreferencedNodesState.clear();
+	}
+
+	// === IRuntimeFeature ===
+	// `setConnectionState` and `initializeBaseState` (via the onLoadFromSnapshot
+	// alias below) are existing methods that satisfy IRuntimeFeature directly.
+
+	public async onLoadFromSnapshot(): Promise<void> {
+		await this.initializeBaseState();
+	}
+
+	public contributeSummary(
+		summaryTree: ISummaryTreeWithStats,
+		fullTree: boolean,
+		trackState: boolean,
+		telemetryContext?: ITelemetryContext,
+	): void {
+		const gcSummary = this.summarize(fullTree, trackState, telemetryContext);
+		if (gcSummary !== undefined) {
+			addSummarizeResultToSummary(summaryTree, gcTreeKey, gcSummary);
+		}
+	}
+
+	public readonly supportedOps = [ContainerMessageType.GC] as const;
+
+	public handleOp(
+		message: InboundRuntimeMessageFor<ContainerMessageType.GC>,
+		messagesContent: RuntimeMessagesContentFor<ContainerMessageType.GC>[],
+		local: boolean,
+	): void {
+		const contents = messagesContent.map((c) => c.contents);
+		this.processMessages(contents, message.timestamp, local);
+	}
+
+	public applyStashedOp(): { result: unknown } {
+		// GC ops are only sent by the summarizer, which never stashes ops.
+		throw new LoggingError("GC op not expected to be stashed in summarizer");
+	}
+
+	public reSubmitOp(message: LocalRuntimeMessageFor<ContainerMessageType.GC>): void {
+		this.submitMessage(message);
+	}
+
+	public rollbackStagedOp(message: LocalRuntimeMessageFor<ContainerMessageType.GC>): void {
+		// Just drop, but log — only TombstoneLoaded is expected here.
+		this.mc.logger.sendErrorEvent({
+			eventName: "GC_OpDiscarded",
+			details: { subType: message.contents.type },
+		});
 	}
 
 	/**

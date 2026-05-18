@@ -4,7 +4,14 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
-import type { ITelemetryContext } from "@fluidframework/runtime-definitions/internal";
+import type {
+	ISummaryTreeWithStats,
+	ITelemetryContext,
+} from "@fluidframework/runtime-definitions/internal";
+import { addBlobToSummary } from "@fluidframework/runtime-utils/internal";
+
+import type { IRuntimeFeature } from "../runtimeFeature.js";
+import { recentBatchInfoBlobName } from "../summary/index.js";
 
 import { getEffectiveBatchId } from "./batchManager.js";
 import type { BatchStartInfo } from "./remoteMessageProcessor.js";
@@ -17,7 +24,7 @@ import type { BatchStartInfo } from "./remoteMessageProcessor.js";
  *
  * For "serial fork" detection scenarios see PendingStateManager.
  */
-export class DuplicateBatchDetector {
+export class DuplicateBatchDetector implements IRuntimeFeature<never> {
 	/**
 	 * Map from batchId to sequenceNumber
 	 */
@@ -140,5 +147,17 @@ export class DuplicateBatchDetector {
 		}
 
 		return [...this.batchIdsBySeqNum.entries()];
+	}
+
+	public contributeSummary(
+		summaryTree: ISummaryTreeWithStats,
+		_fullTree: boolean,
+		_trackState: boolean,
+		telemetryContext?: ITelemetryContext,
+	): void {
+		const recentBatchInfo = this.getRecentBatchInfoForSummary(telemetryContext);
+		if (recentBatchInfo !== undefined) {
+			addBlobToSummary(summaryTree, recentBatchInfoBlobName, JSON.stringify(recentBatchInfo));
+		}
 	}
 }

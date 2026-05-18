@@ -32,6 +32,7 @@ import type {
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	FluidHandleBase,
+	addSummarizeResultToSummary,
 	createResponseError,
 	generateHandleContextPath,
 	responseToException,
@@ -44,9 +45,17 @@ import {
 } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
+import { ContainerMessageType } from "../messageTypes.js";
 import { isBlobMetadata } from "../metadata.js";
+import type {
+	InboundRuntimeMessageFor,
+	IRuntimeFeature,
+	LocalRuntimeMessageFor,
+	RuntimeMessagesContentFor,
+} from "../runtimeFeature.js";
 
 import {
+	blobsTreeName,
 	summarizeBlobManagerState,
 	toRedirectTable,
 	type IBlobManagerLoadInfo,
@@ -234,7 +243,7 @@ const createAbortError = (): LoggingError => new LoggingError("uploadBlob aborte
  */
 export const blobManagerBasePath = "_blobs";
 
-export class BlobManager {
+export class BlobManager implements IRuntimeFeature<ContainerMessageType.BlobAttach> {
 	private readonly mc: MonitoringContext;
 
 	private readonly internalEvents = createEmitter<IBlobManagerInternalEvents>();
@@ -777,6 +786,40 @@ export class BlobManager {
 
 	public summarize(telemetryContext?: ITelemetryContext): ISummaryTreeWithStats {
 		return summarizeBlobManagerState(this.redirectTable);
+	}
+
+	// === IRuntimeFeature ===
+
+	public contributeSummary(summaryTree: ISummaryTreeWithStats): void {
+		const summary = this.summarize();
+		// Some storage (like git) doesn't allow empty trees, so omit when empty.
+		// The blob manager handles the missing tree at load time.
+		if (Object.keys(summary.summary.tree).length > 0) {
+			addSummarizeResultToSummary(summaryTree, blobsTreeName, summary);
+		}
+	}
+
+	public readonly supportedOps = [ContainerMessageType.BlobAttach] as const;
+
+	public handleOp(
+		message: InboundRuntimeMessageFor<ContainerMessageType.BlobAttach>,
+		_messagesContent: RuntimeMessagesContentFor<ContainerMessageType.BlobAttach>[],
+		local: boolean,
+	): void {
+		this.processBlobAttachMessage(message, local);
+	}
+
+	public applyStashedOp(): { result: unknown } {
+		// Stashed BlobAttach ops are intentionally dropped — pendingBlobs covers the data.
+		return { result: undefined };
+	}
+
+	public reSubmitOp(
+		_message: LocalRuntimeMessageFor<ContainerMessageType.BlobAttach>,
+		_localOpMetadata: unknown,
+		opMetadata: unknown,
+	): void {
+		this.reSubmit(opMetadata as Record<string, unknown> | undefined);
 	}
 
 	/**

@@ -23,12 +23,30 @@ export type { ICompressionRuntimeOptions } from "./compressionDefinitions.js";
 export { CompressionAlgorithms, disabledCompressionConfig } from "./compressionDefinitions.js";
 export type {
 	ContainerRuntimeAliasMessage,
+	ContainerRuntimeBlobAttachMessage,
+	ContainerRuntimeChunkedOpMessage,
 	ContainerRuntimeDataStoreOpMessage,
+	ContainerRuntimeGCMessage,
+	ContainerRuntimeIdAllocationMessage,
+	ContainerRuntimeRejoinMessage,
+	InboundContainerRuntimeAttachMessage,
+	InboundContainerRuntimeDocumentSchemaMessage,
+	InboundContainerRuntimeMessage,
+	InboundSequencedContainerRuntimeMessage,
+	LocalContainerRuntimeMessage,
 	OutboundContainerRuntimeAttachMessage,
+	OutboundContainerRuntimeDocumentSchemaMessage,
 	TypedContainerRuntimeMessage,
 	UnknownContainerRuntimeMessage,
 } from "./messageTypes.js";
 export { ContainerMessageType } from "./messageTypes.js";
+export type {
+	AnyRuntimeOpType,
+	InboundRuntimeMessageFor,
+	IRuntimeFeature,
+	LocalRuntimeMessageFor,
+	RuntimeMessagesContentFor,
+} from "./runtimeFeature.js";
 export type { IBlobManagerLoadInfo } from "./blobManager/index.js";
 export {
 	blobManagerBasePath,
@@ -44,13 +62,17 @@ export {
 } from "./channelCollection.js";
 export {
 	GCNodeType,
+	type GarbageCollectionMessage,
+	GarbageCollectionMessageType,
 	type IGCMetadata,
 	type GCFeatureMatrix,
 	type GCVersion,
 	type IGarbageCollectionRuntime,
 	type IGCRuntimeOptions,
 	type IMarkPhaseStats,
+	type ISweepMessage,
 	type ISweepPhaseStats,
+	type ITombstoneLoadedMessage,
 	type IGCNodeUpdatedProps,
 	type IGCStats,
 } from "./gc/index.js";

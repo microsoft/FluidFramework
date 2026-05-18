@@ -90,19 +90,25 @@ describe("Pending State Manager", () => {
 	const sandbox = Sinon.createSandbox();
 	function getStateHandlerStub(): StubbedRuntimeStateHandler {
 		const stubs: StubbedRuntimeStateHandler = {
-			applyStashedOp: sandbox.stub(),
 			clientId: sandbox.stub(),
 			connected: sandbox.stub(),
 			reSubmitBatch: sandbox.stub(),
 			isActiveConnection: sandbox.stub(),
 			isAttached: sandbox.stub(),
+			closeFn: sandbox.stub(),
 		};
-		stubs.applyStashedOp.resolves(undefined);
 		stubs.clientId.returns("clientId");
 		stubs.connected.returns(true);
 		stubs.isActiveConnection.returns(true);
 		stubs.isAttached.returns(true);
 		return stubs;
+	}
+	function getFeatureStub(): {
+		applyStashedOp: Sinon.SinonStub<[unknown], Promise<{ result: unknown } | undefined>>;
+	} {
+		const stub = sandbox.stub<[unknown], Promise<{ result: unknown } | undefined>>();
+		stub.resolves({ result: undefined });
+		return { applyStashedOp: stub };
 	}
 	const mockLogger = new MockLogger();
 	const logger = createChildLogger({ logger: mockLogger });
@@ -114,6 +120,7 @@ describe("Pending State Manager", () => {
 	): PendingStateManager_WithPrivates {
 		return new PendingStateManager(
 			stubs,
+			getFeatureStub(),
 			stashedLocalState,
 			logger,
 		) as unknown as PendingStateManager_WithPrivates;
@@ -223,14 +230,17 @@ describe("Pending State Manager", () => {
 		beforeEach(async () => {
 			pendingStateManager = new PendingStateManager(
 				{
-					applyStashedOp: () => {
-						throw new Error("test error");
-					},
 					clientId: () => "oldClientId",
 					connected: () => true,
 					reSubmitBatch: () => {},
 					isActiveConnection: () => false,
 					isAttached: () => true,
+					closeFn: () => {},
+				},
+				{
+					applyStashedOp: () => {
+						throw new Error("test error");
+					},
 				},
 				undefined /* initialLocalState */,
 				logger,
@@ -714,13 +724,14 @@ describe("Pending State Manager", () => {
 		): PendingStateManager_WithPrivates {
 			return new PendingStateManager(
 				{
-					applyStashedOp: async () => undefined,
 					clientId: () => "CLIENT_ID",
 					connected: () => true,
 					reSubmitBatch: () => {},
 					isActiveConnection: () => false,
 					isAttached: () => true,
+					closeFn: () => {},
 				},
+				{ applyStashedOp: async () => ({ result: undefined }) },
 				pendingStates ? { pendingStates } : undefined,
 				logger,
 			) as unknown as PendingStateManager_WithPrivates;
@@ -761,7 +772,7 @@ describe("Pending State Manager", () => {
 
 	describe("applyStashedOpsAt", () => {
 		it("applyStashedOpsAt", async () => {
-			const applyStashedOps: string[] = [];
+			const applyStashedOps: unknown[] = [];
 			const messages: IPendingMessage[] = [
 				{
 					type: "message",
@@ -785,12 +796,18 @@ describe("Pending State Manager", () => {
 
 			const pendingStateManager = new PendingStateManager(
 				{
-					applyStashedOp: async (content) => applyStashedOps.push(content),
 					clientId: () => "clientId",
 					connected: () => true,
 					reSubmitBatch: () => {},
 					isActiveConnection: () => false,
 					isAttached: () => true,
+					closeFn: () => {},
+				},
+				{
+					applyStashedOp: async (stashedOp) => {
+						applyStashedOps.push(stashedOp);
+						return { result: undefined };
+					},
 				},
 				{ pendingStates: messages },
 				logger,
@@ -803,13 +820,14 @@ describe("Pending State Manager", () => {
 		it("applyStashedOpsAt for empty batch", async () => {
 			const oldPsm = new PendingStateManager(
 				{
-					applyStashedOp: async () => undefined,
 					clientId: () => "1",
 					connected: () => true,
 					reSubmitBatch: () => {},
 					isActiveConnection: () => false,
 					isAttached: () => true,
+					closeFn: () => {},
 				},
+				{ applyStashedOp: async () => ({ result: undefined }) },
 				undefined /* initialLocalState */,
 				logger,
 			);
@@ -817,15 +835,21 @@ describe("Pending State Manager", () => {
 			oldPsm.onFlushEmptyBatch(placeholderMessage, 0, false /* staged */);
 			const localStateWithEmptyBatch = oldPsm.getLocalState(0).pending;
 
-			const applyStashedOps: string[] = [];
+			const applyStashedOps: unknown[] = [];
 			const pendingStateManager = new PendingStateManager(
 				{
-					applyStashedOp: async (content) => applyStashedOps.push(content),
 					clientId: () => "clientId",
 					connected: () => true,
 					reSubmitBatch: () => {},
 					isActiveConnection: () => false,
 					isAttached: () => true,
+					closeFn: () => {},
+				},
+				{
+					applyStashedOp: async (stashedOp) => {
+						applyStashedOps.push(stashedOp);
+						return { result: undefined };
+					},
 				},
 				localStateWithEmptyBatch,
 				logger,
@@ -861,13 +885,14 @@ describe("Pending State Manager", () => {
 		): PendingStateManager_WithPrivates {
 			return new PendingStateManager(
 				{
-					applyStashedOp: async () => undefined,
 					clientId: () => "CLIENT_ID",
 					connected: () => true,
 					reSubmitBatch: () => {},
 					isActiveConnection: () => false,
 					isAttached: () => true,
+					closeFn: () => {},
 				},
+				{ applyStashedOp: async () => ({ result: undefined }) },
 				pendingStates ? { pendingStates } : undefined,
 				logger,
 			) as unknown as PendingStateManager_WithPrivates;
@@ -1007,13 +1032,14 @@ describe("Pending State Manager", () => {
 		): PendingStateManager {
 			return new PendingStateManager(
 				{
-					applyStashedOp: async () => undefined,
 					clientId: () => "123",
 					connected: () => true,
 					reSubmitBatch: () => {},
 					isActiveConnection: () => false,
 					isAttached: () => true,
+					closeFn: () => {},
 				},
+				{ applyStashedOp: async () => ({ result: undefined }) },
 				pendingStates ? { pendingStates } : undefined /* initialLocalState */,
 				logger,
 			);
@@ -1081,13 +1107,14 @@ describe("Pending State Manager", () => {
 		): PendingStateManager_WithPrivates {
 			const psm: PendingStateManager_WithPrivates = new PendingStateManager(
 				{
-					applyStashedOp: async () => undefined,
 					clientId: () => "CLIENT_ID",
 					connected: () => true,
 					reSubmitBatch: () => {},
 					isActiveConnection: () => false,
 					isAttached: () => true,
+					closeFn: () => {},
 				},
+				{ applyStashedOp: async () => ({ result: undefined }) },
 				{ pendingStates: initialMessages },
 				logger,
 			) as unknown as PendingStateManager_WithPrivates;

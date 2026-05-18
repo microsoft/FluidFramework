@@ -9,6 +9,8 @@ import type {
 	TelemetryEventPropertyTypeExt,
 } from "@fluidframework/telemetry-utils/internal";
 
+import type { IRuntimeFeature } from "./runtimeFeature.js";
+
 const defaultTelemetrySignalSampleCount = 100;
 
 /**
@@ -61,7 +63,7 @@ interface ISignalTelemetryTracking {
 	minimumTrackingSignalSequenceNumber: number | undefined;
 }
 
-export class SignalTelemetryManager {
+export class SignalTelemetryManager implements IRuntimeFeature<never> {
 	private readonly signalTracking: ISignalTelemetryTracking = {
 		totalSignalsSentInLatencyWindow: 0,
 		signalsLost: 0,
@@ -78,6 +80,19 @@ export class SignalTelemetryManager {
 	 * allow collection of data around the roundtrip of signal messages.
 	 */
 	private broadcastSignalSequenceNumber: number = 0;
+
+	private wasCanSendOps = false;
+
+	/**
+	 * IRuntimeFeature: reset signal tracking each time the runtime
+	 * transitions from "cannot send ops" → "can send ops" (i.e. (re)connect).
+	 */
+	public setConnectionState(canSendOps: boolean): void {
+		if (canSendOps && !this.wasCanSendOps) {
+			this.resetTracking();
+		}
+		this.wasCanSendOps = canSendOps;
+	}
 
 	/**
 	 * Resets the signal tracking state in the {@link SignalTelemetryManager}.
