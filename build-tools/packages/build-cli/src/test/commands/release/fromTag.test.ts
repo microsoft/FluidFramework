@@ -75,7 +75,7 @@ describe("flub release fromTag", () => {
 			} else {
 				// Skip real git test by default, as it requires specific tags to be present in the local repo, which may not be the case in all environments.
 				// Disable this skip if you want to test against the actual git repo and tags.
-				// this.skip();
+				this.skip();
 				const { stdout } = await runCommand(["release:fromTag", tag, "--json"], {
 					root: import.meta.url,
 				});
