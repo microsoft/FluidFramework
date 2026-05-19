@@ -113,4 +113,5 @@ steps:
       echo "Pnpm user config location: $(pnpm config get userconfig)"
       pnpm config set store-dir ${{ parameters.pnpmStorePath }}
       echo "Pnpm store: ${{ parameters.pnpmStorePath }}"
+      # workspace-concurrency 0 means use the CPU core count. This is better than the default (4) for larger agents.
       pnpm config set -g workspace-concurrency 0
