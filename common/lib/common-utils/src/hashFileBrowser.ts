@@ -5,7 +5,7 @@
 
 import * as base64js from "base64-js";
 
-import { IsoBuffer } from "./bufferBrowser";
+import { IsoBuffer } from "./bufferBrowser.js";
 
 async function digestBuffer(file: IsoBuffer, algorithm: "SHA-1" | "SHA-256"): Promise<Uint8Array> {
 	const hash = await crypto.subtle.digest(algorithm, file);
@@ -41,6 +41,7 @@ function encodeDigest(hashArray: Uint8Array, encoding: "hex" | "base64"): string
  * @returns The hash of the content of the buffer.
  *
  * @deprecated Moved to the `@fluidframework-internal/client-utils` package.
+ * @internal
  */
 export async function hashFile(
 	file: IsoBuffer,
@@ -55,7 +56,7 @@ export async function hashFile(
 	if (crypto.subtle === undefined) {
 		return import(
 			/* webpackChunkName: "FluidFramework-HashFallback" */
-			"./hashFileNode"
+			"./hashFileNode.js"
 		).then(async (m) => m.hashFile(file, algorithm, hashEncoding));
 	}
 
@@ -72,6 +73,7 @@ export async function hashFile(
  * @returns The sha1 hash of the content of the buffer with the `blob` prefix and size
  *
  * @deprecated Moved to the `@fluidframework-internal/client-utils` package.
+ * @internal
  */
 export async function gitHashFile(file: IsoBuffer): Promise<string> {
 	const size = file.byteLength;

@@ -3,7 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { IsoBuffer } from "./indexNode";
+// Browser implementation of the base64 encoding helpers. Aside from the
+// import statement below, this file should be identical to base64EncodingNode.ts.
+
+import { IsoBuffer } from "./bufferBrowser.js";
 
 /**
  * Converts the provided {@link https://en.wikipedia.org/wiki/Base64 | base64}-encoded string

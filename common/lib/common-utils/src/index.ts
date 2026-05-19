@@ -6,50 +6,14 @@
 /**
  * This library contains common utility functions and classes used by the Fluid Framework.
  *
+ * @deprecated This package is deprecated. Its functionality has moved to the
+ * `@fluid-internal/client-utils` package; consumers should migrate there.
+ *
  * @packageDocumentation
  */
 
-export { assert } from "./assert";
-export { fromBase64ToUtf8, fromUtf8ToBase64, toUtf8 } from "./base64Encoding";
-export { Uint8ArrayToArrayBuffer } from "./bufferShared";
-export { delay } from "./delay";
-export { doIfNotDisposed, type IDisposable } from "./disposal";
-export { Heap, type IComparer, type IHeapNode, NumberComparer } from "./heap";
-/**
- * NOTE: This export is remapped to export from "./indexBrowser" in browser environments via package.json.
- * Because the two files don't have fully isomorphic exports, using named exports for the full API surface
- * is problematic if that named export includes values not in their intersection.
- *
- * In a future breaking change of common-utils, we could use a named export for their intersection if we
- * desired.
- */
+// THIS FILE IS NOT ACTUALLY USED (see indexBrowser.ts and indexNode.ts for that).
+// It's only here so type-test-generator doesn't fail, until we update it to support packages that don't have an
+// index.ts file.
 // eslint-disable-next-line no-restricted-syntax
-export * from "./indexNode";
-export { Lazy } from "./lazy";
-export type { IsomorphicPerformance } from "./performanceIsomorphic";
-export { PromiseCache, type PromiseCacheExpiry, type PromiseCacheOptions } from "./promiseCache";
-export { Deferred, LazyPromise } from "./promises";
-export { type IRange, type IRangeTrackerSnapshot, RangeTracker } from "./rangeTracker";
-export { RateLimiter } from "./rateLimiter";
-export { safelyParseJSON } from "./safeParser";
-export {
-	type IPromiseTimer,
-	type IPromiseTimerResult,
-	type ITimer,
-	PromiseTimer,
-	setLongTimeout,
-	Timer,
-} from "./timer";
-export { type ITraceEvent, Trace } from "./trace";
-export {
-	type EventEmitterEventType,
-	type IEvent,
-	type IEventProvider,
-	type IEventThisPlaceHolder,
-	type IEventTransformer,
-	type ReplaceIEventThisPlaceHolder,
-	type TransformedEvent,
-	TypedEventEmitter,
-	type TypedEventTransform,
-} from "./typedEventEmitter";
-export { unreachableCase } from "./unreachable";
+export * from "./indexNode.js";
