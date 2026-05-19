@@ -1,5 +1,5 @@
 ---
-name: Updating Noridocs
+name: updating-noridocs
 description: Use this when you have finished making code changes and you are ready to update the documentation based on those changes.
 ---
 

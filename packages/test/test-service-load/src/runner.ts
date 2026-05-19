@@ -12,7 +12,6 @@ import { makeRandom } from "@fluid-private/stochastic-test-utils";
 import { IContainer, LoaderHeader } from "@fluidframework/container-definitions/internal";
 import { ConnectionState } from "@fluidframework/container-loader";
 import {
-	asLegacyAlpha,
 	loadExistingContainer,
 	type ILoaderProps,
 } from "@fluidframework/container-loader/internal";
@@ -23,6 +22,7 @@ import { IDocumentServiceFactory } from "@fluidframework/driver-definitions/inte
 import { getRetryDelayFromError } from "@fluidframework/driver-utils/internal";
 import { IInboundSignalMessage } from "@fluidframework/runtime-definitions/internal";
 import { GenericError, ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
+import { getRequiredPendingLocalState } from "@fluidframework/test-utils/internal";
 import commander from "commander";
 
 import { createLogger } from "./FileLogger.js";
@@ -555,7 +555,7 @@ async function scheduleOffline(
 					random.real() < stashPercent
 				) {
 					printStatus(runConfig, "closing offline container!");
-					const pendingState = await asLegacyAlpha(container).getPendingLocalState();
+					const pendingState = await getRequiredPendingLocalState(container);
 					container.close();
 					return pendingState;
 				}
