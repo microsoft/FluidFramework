@@ -244,6 +244,8 @@ describe("pipeline-trigger-paths", () => {
 
 		it("reports an unresolved reference for variable-interpolated paths", () => {
 			const reader = makeReader({
+				// ADO pipeline variable interpolation syntax intentionally uses ${{ }}, not a JS template literal.
+				// eslint-disable-next-line no-template-curly-in-string
 				[root]: "extends:\n  template: ${{ variables.fooTemplate }}@self\n",
 			});
 
