@@ -936,6 +936,91 @@ describe("SharedString", () => {
 				}
 			});
 
+			it("does not leak the property bag of a staged interval add+delete pair on the wire", async () => {
+				// The ackDelete path on peers only consumes the interval id, so a property leak
+				// on a paired add+delete is invisible to peer events — capture the raw wire ops
+				// to assert the secret property never goes out.
+				sharedString.insertText(0, "hello world");
+				containerRuntimeFactory.processAllMessages();
+
+				const collection1 = sharedString.getIntervalCollection("test");
+
+				const wireOps: unknown[] = [];
+				const originalPushMessage =
+					containerRuntimeFactory.pushMessage.bind(containerRuntimeFactory);
+				containerRuntimeFactory.pushMessage = (msg) => {
+					wireOps.push(JSON.parse(JSON.stringify(msg)));
+					originalPushMessage(msg);
+				};
+				try {
+					containerRuntime1.connected = false;
+					const interval = collection1.add({
+						start: 0,
+						end: 5,
+						props: { color: "secret-color" },
+					});
+					collection1.removeIntervalById(interval.getIntervalId());
+					reconnectAndSquash(containerRuntime1, dataStoreRuntime1);
+					containerRuntimeFactory.processAllMessages();
+				} finally {
+					containerRuntimeFactory.pushMessage = originalPushMessage;
+				}
+
+				const stringified = JSON.stringify(wireOps);
+				assert.equal(
+					stringified.includes("secret-color"),
+					false,
+					"secret interval prop must not appear in any wire op payload",
+				);
+			});
+
+			it("scrubs the property bag from a staged delete of a pre-existing interval", async () => {
+				// A delete of a pre-existing (sequenced) interval is needed on the wire so peers
+				// remove the interval, but ackDelete identifies it by id; the serialized payload's
+				// property bag carries the live interval's full bag (including any staged-only
+				// values) and must be scrubbed.
+				sharedString.insertText(0, "hello world");
+				containerRuntimeFactory.processAllMessages();
+				const collection1 = sharedString.getIntervalCollection("test");
+				const collection2 = sharedString2.getIntervalCollection("test");
+				const baseInterval = collection1.add({
+					start: 0,
+					end: 5,
+					props: { color: "public-base" },
+				});
+				const baseId = baseInterval.getIntervalId();
+				containerRuntimeFactory.processAllMessages();
+				assert.notEqual(collection2.getIntervalById(baseId), undefined);
+
+				const wireOps: unknown[] = [];
+				const originalPushMessage =
+					containerRuntimeFactory.pushMessage.bind(containerRuntimeFactory);
+				containerRuntimeFactory.pushMessage = (msg) => {
+					wireOps.push(JSON.parse(JSON.stringify(msg)));
+					originalPushMessage(msg);
+				};
+				try {
+					containerRuntime1.connected = false;
+					collection1.removeIntervalById(baseId);
+					reconnectAndSquash(containerRuntime1, dataStoreRuntime1);
+					containerRuntimeFactory.processAllMessages();
+				} finally {
+					containerRuntimeFactory.pushMessage = originalPushMessage;
+				}
+
+				assert.equal(
+					collection2.getIntervalById(baseId),
+					undefined,
+					"delete should still reach the peer",
+				);
+				const stringified = JSON.stringify(wireOps);
+				assert.equal(
+					stringified.includes("public-base"),
+					false,
+					"pre-existing interval's properties must not ride out on the staged delete payload",
+				);
+			});
+
 			it("drops a staged interval change's property value overridden by a later staged change", async () => {
 				sharedString.insertText(0, "hello world");
 				containerRuntimeFactory.processAllMessages();

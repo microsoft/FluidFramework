@@ -5,7 +5,7 @@
 
 import { strict as assert } from "node:assert";
 
-import { reconnectAndSquash } from "@fluid-private/test-dds-utils";
+import { enterStagingMode, reconnectAndSquash } from "@fluid-private/test-dds-utils";
 import type { IChannelFactory } from "@fluidframework/datastore-definitions/internal";
 import {
 	MockContainerRuntimeFactoryForReconnection,
@@ -159,5 +159,29 @@ describe("SharedArray squash on resubmit", () => {
 				assert.notEqual(op.value, "secret", "staged secret must not leak");
 			}
 		}
+	});
+
+	it("delivers a staged delete of a pre-staging insert still in flight", () => {
+		// The pre-staging insert is submitted while connected (so it's in the runtime's
+		// pending queue, not yet ACKed) and the staged delete targets that same entry.
+		// computeSquashPlan must not consider the pre-staging insert as a chain root —
+		// otherwise the chain walker pulls the staged delete into drops, splices it from
+		// pendingOps, and the peer keeps the entry while the local view shows it deleted.
+		sharedArray1.insert(0, "pre-staging");
+		enterStagingMode(containerRuntime1);
+		sharedArray1.delete(0);
+		reconnectAndSquash(containerRuntime1, dataStoreRuntime1);
+		containerRuntimeFactory.processAllMessages();
+
+		assert.deepEqual(
+			[...sharedArray1.get()],
+			[],
+			"local view should reflect the staged delete",
+		);
+		assert.deepEqual(
+			[...sharedArray2.get()],
+			[],
+			"peer should observe the staged delete and end up with an empty array",
+		);
 	});
 });

@@ -732,6 +732,35 @@ function hasEndpointChanges(
 }
 
 /**
+ * Strip everything from the property bag of a delete op's payload except the keys peers
+ * use to identify the target interval (the reserved `intervalId` key — read by
+ * `getSerializedProperties` — and `reservedRangeLabelsKey`). {@link
+ * IntervalCollection.ackDelete} only consumes the id, so the rest of the bag — user-
+ * supplied properties on the live interval at the time of the staged delete — is
+ * redundant on the wire and must not ride out.
+ */
+function stripUserPropertiesFromDeletePayload<
+	T extends SerializedIntervalDelta | ISerializedInterval,
+>(value: T): T {
+	if (value.properties === undefined) {
+		return value;
+	}
+	const onlyIdentity: PropertySet = {};
+	const intervalId = value.properties.intervalId;
+	if (intervalId !== undefined) {
+		onlyIdentity.intervalId = intervalId;
+	}
+	const labels = value.properties[reservedRangeLabelsKey];
+	if (labels !== undefined) {
+		onlyIdentity[reservedRangeLabelsKey] = labels;
+	}
+	return {
+		...value,
+		properties: Object.keys(onlyIdentity).length === 0 ? undefined : onlyIdentity,
+	};
+}
+
+/**
  * {@inheritdoc IIntervalCollection}
  */
 export class IntervalCollection
@@ -932,15 +961,29 @@ export class IntervalCollection
 
 		// Squash filtering on the property channel: an ADD or CHANGE that's later subsumed by
 		// a DELETE for the same interval is dropped entirely; per-key property overrides by
-		// later staged ADD/CHANGE on the same interval are stripped from this op.
+		// later staged ADD/CHANGE on the same interval are stripped from this op; a DELETE
+		// either drops entirely (if its interval was added in the same staging batch and so
+		// never reached peers) or strips its property bag (ackDelete identifies the interval
+		// by id; the serialized payload's properties carry the live interval's full bag and
+		// would leak any user-supplied values).
 		let workingValue = value;
-		if (squash && (opName === "add" || opName === "change")) {
+		if (squash) {
 			const { id } = getSerializedProperties(value);
-			if (this.hasLaterDeleteForInterval(id, localOpMetadata.localSeq)) {
-				clearEmptyPendingEntry(this.pending, id);
-				return;
+			if (opName === "add" || opName === "change") {
+				if (this.hasLaterDeleteForInterval(id, localOpMetadata.localSeq)) {
+					clearEmptyPendingEntry(this.pending, id);
+					return;
+				}
+				workingValue = this.filterPropertiesForSquash(value, id, localOpMetadata.localSeq);
+			} else {
+				if (this.hasEarlierAddForInterval(id, localOpMetadata.localSeq)) {
+					// The interval was created within this staging batch — its paired add has
+					// already been dropped above, so peers never saw it. Skip the delete too.
+					clearEmptyPendingEntry(this.pending, id);
+					return;
+				}
+				workingValue = stripUserPropertiesFromDeletePayload(value);
 			}
-			workingValue = this.filterPropertiesForSquash(value, id, localOpMetadata.localSeq);
 		}
 
 		const rebasedValue =
@@ -965,6 +1008,21 @@ export class IntervalCollection
 		let found = false;
 		walkList(pending.local, (node) => {
 			if (node.data.localSeq > localSeq && node.data.type === "delete") {
+				found = true;
+				return false;
+			}
+		});
+		return found;
+	}
+
+	private hasEarlierAddForInterval(id: string, localSeq: number): boolean {
+		const pending = this.pending[id];
+		if (pending === undefined) {
+			return false;
+		}
+		let found = false;
+		walkList(pending.local, (node) => {
+			if (node.data.localSeq < localSeq && node.data.type === "add") {
 				found = true;
 				return false;
 			}

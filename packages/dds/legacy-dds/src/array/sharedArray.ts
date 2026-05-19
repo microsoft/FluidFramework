@@ -113,6 +113,18 @@ export class SharedArrayClass<T extends SerializableTypeForSharedArray>
 	};
 
 	/**
+	 * Lowest pendingOps index seen so far by {@link reSubmitSquashed} in the current
+	 * resubmit batch. Anything below this index is a pre-staging op (already on the wire
+	 * before staging began) that must not be considered as a chain root by
+	 * {@link computeSquashPlan} — dropping its chain would silently retract an op the
+	 * peer has already observed (or will observe via the runtime's pre-staging resubmit).
+	 *
+	 * Reset whenever pendingOps mutates outside the squash path so the next batch
+	 * recomputes from scratch.
+	 */
+	private stagingBoundaryIdx?: number;
+
+	/**
 	 * Entries whose creation op was dropped by a prior squash batch and therefore
 	 * never reached peers. Lives across staging cycles: a later cycle that needs to
 	 * rewrite an `insertAfterEntryId` must skip these when picking a wire-valid
@@ -581,7 +593,15 @@ export class SharedArrayClass<T extends SerializableTypeForSharedArray>
 	 */
 	protected override reSubmitSquashed(content: unknown, localOpMetadata: unknown): void {
 		const pendingOp = localOpMetadata as SharedArrayPendingOp<T>;
-		this.cachedSquashPlan ??= this.computeSquashPlan();
+		if (this.stagingBoundaryIdx === undefined) {
+			// First staged op in this resubmit batch — anchor the staging boundary at its
+			// position so chain walking from earlier (pre-staging) inserts can't pull a
+			// staged delete into a drop set and silently corrupt state.
+			const idx = this.pendingOps.indexOf(pendingOp);
+			this.stagingBoundaryIdx = idx === -1 ? this.pendingOps.length : idx;
+			this.cachedSquashPlan = undefined;
+		}
+		this.cachedSquashPlan ??= this.computeSquashPlan(this.stagingBoundaryIdx);
 		const { drops, rewrites } = this.cachedSquashPlan;
 		if (drops.has(pendingOp)) {
 			const idx = this.pendingOps.indexOf(pendingOp);
@@ -610,6 +630,7 @@ export class SharedArrayClass<T extends SerializableTypeForSharedArray>
 		const pendingOp = this.buildPendingOp(op);
 		this.pendingOps.push(pendingOp);
 		this.cachedSquashPlan = undefined;
+		this.stagingBoundaryIdx = undefined;
 		this.submitLocalMessage(op, pendingOp);
 	}
 
@@ -644,7 +665,7 @@ export class SharedArrayClass<T extends SerializableTypeForSharedArray>
 	 * `insertAfterEntryId` references a dropped entry, by walking sharedArray
 	 * backward to the nearest non-dropped entry.
 	 */
-	private computeSquashPlan(): {
+	private computeSquashPlan(stagingBoundaryIdx: number = 0): {
 		drops: Set<SharedArrayPendingOp<T>>;
 		rewrites: Map<SharedArrayPendingOp<T>, string | undefined>;
 	} {
@@ -652,8 +673,14 @@ export class SharedArrayClass<T extends SerializableTypeForSharedArray>
 		const droppedEntries = new Set<string>();
 		const claimed = new Set<SharedArrayPendingOp<T>>();
 
-		for (const op of this.pendingOps) {
+		for (let opIdx = 0; opIdx < this.pendingOps.length; opIdx++) {
+			const op = this.pendingOps[opIdx];
+			assert(op !== undefined, "pendingOps index in range");
 			if (op.type !== OperationType.insertEntry || claimed.has(op)) {
+				continue;
+			}
+			if (opIdx < stagingBoundaryIdx) {
+				// Pre-staging insert — already on the wire, can't be retracted via squash.
 				continue;
 			}
 			const chain = this.walkInsertChain(op);
@@ -921,6 +948,7 @@ export class SharedArrayClass<T extends SerializableTypeForSharedArray>
 				// here always matches the op being acked.
 				this.pendingOps.shift();
 				this.cachedSquashPlan = undefined;
+				this.stagingBoundaryIdx = undefined;
 			} else {
 				this.emitValueChangedEvent(op, local);
 			}
