@@ -12,11 +12,21 @@ export type ITinyliciousAudience = IServiceAudience<TinyliciousMember>;
 // @public @sealed
 export class TinyliciousClient {
     constructor(properties?: TinyliciousClientProps);
-    createContainer<TContainerSchema extends ContainerSchema>(containerSchema: TContainerSchema, compatibilityMode: MinimumVersionForCollab | CompatibilityMode): Promise<{
+    createContainer<TContainerSchema extends ContainerSchema>(containerSchema: TContainerSchema, minVersionForCollab: MinimumVersionForCollab): Promise<{
         container: IFluidContainer<TContainerSchema>;
         services: TinyliciousContainerServices;
     }>;
-    getContainer<TContainerSchema extends ContainerSchema>(id: string, containerSchema: TContainerSchema, compatibilityMode: MinimumVersionForCollab | CompatibilityMode): Promise<{
+    // @deprecated
+    createContainer<TContainerSchema extends ContainerSchema>(containerSchema: TContainerSchema, compatibilityMode: CompatibilityMode): Promise<{
+        container: IFluidContainer<TContainerSchema>;
+        services: TinyliciousContainerServices;
+    }>;
+    getContainer<TContainerSchema extends ContainerSchema>(id: string, containerSchema: TContainerSchema, minVersionForCollab: MinimumVersionForCollab): Promise<{
+        container: IFluidContainer<TContainerSchema>;
+        services: TinyliciousContainerServices;
+    }>;
+    // @deprecated
+    getContainer<TContainerSchema extends ContainerSchema>(id: string, containerSchema: TContainerSchema, compatibilityMode: CompatibilityMode): Promise<{
         container: IFluidContainer<TContainerSchema>;
         services: TinyliciousContainerServices;
     }>;
