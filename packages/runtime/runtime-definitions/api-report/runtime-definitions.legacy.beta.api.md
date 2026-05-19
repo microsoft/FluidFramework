@@ -102,6 +102,8 @@ export interface IContainerRuntimeBaseEvents extends IEvent {
     // (undocumented)
     (event: "dispose", listener: () => void): any;
     (event: "stagingModeChanged", listener: (stagingModeInfo: StagingModeChangedEvent) => void): any;
+    (event: "pendingStateApplyStart", listener: () => void): any;
+    (event: "pendingStateApplyEnd", listener: () => void): any;
 }
 
 // @beta @legacy

@@ -66,6 +66,19 @@ export interface IPendingMessage {
 	 */
 	sequenceNumber?: number;
 	/**
+	 * Set to true by `applyStashedOpsAt` when a rehydrated message is marked staged
+	 * because the host entered staging mode in the `pendingStateApplyStart` handler
+	 * and the message had no ack at capture time (`sequenceNumber === undefined`).
+	 *
+	 * Distinguishes "delayed ack may arrive from a previous-session submission" (this
+	 * field true) from "user-staged in the current session, will never be acked"
+	 * (this field undefined/false). Used by `onLocalBatchBegin` to clear the staged
+	 * flag instead of asserting when an ack arrives for a still-staged front message.
+	 *
+	 * Cleared when the staged flag is cleared (by ack arrival, commit, or discard).
+	 */
+	stagedFromStashedRehydration?: boolean;
+	/**
 	 * Info about the batch this pending message belongs to, for validation and for computing the batchId on reconnect
 	 * We don't include batchId itself to avoid redundancy, because that's stamped on opMetadata above
 	 */
@@ -140,6 +153,47 @@ export interface IRuntimeStateHandler {
 	): void;
 	isActiveConnection: () => boolean;
 	isAttached: () => boolean;
+	/**
+	 * Returns true if the runtime is currently in staging mode. Consulted while
+	 * replaying stashed ops so unacked replayed ops inherit the staging-mode flag
+	 * if a pre-apply observer entered staging mode (e.g. via the
+	 * `pendingStateApplyStart` event).
+	 */
+	isInStagingMode: () => boolean;
+}
+
+/**
+ * Optional one-shot hooks invoked around the stashed-op replay window in
+ * {@link PendingStateManager.applyStashedOpsAt}. The window opens on the first
+ * eligible call within a load (stashed ops present, front message's
+ * `referenceSequenceNumber` ≤ requested `seqNum`) and closes once `initialMessages`
+ * is fully drained. `applyStashedOpsAt` may be invoked multiple times per load
+ * (once at boot plus once per saved-op replay) — each hook fires exactly once
+ * per load, not per call. Awaited; observers can perform async work (e.g.
+ * materializing an entrypoint, fanning out a readonly state change) at exact
+ * moments during load.
+ *
+ * Contract: when a hook runs, {@link PendingStateManager.isApplyingStashedOps}
+ * reflects the state *during* its phase — true inside `onBeforeFirstStashedOpApply`,
+ * false inside `onAfterStashedOpsApplied`. Hooks are paired:
+ * `onAfterStashedOpsApplied` only fires when `onBeforeFirstStashedOpApply` fired.
+ *
+ * Throws from hooks are wrapped as `DataProcessingError` with
+ * `codePath: "applyStashedOpsHook"` consistent with the per-message replay path.
+ */
+export interface PendingStateManagerHooks {
+	/**
+	 * Invoked exactly once per load, just before the first eligible stashed op is
+	 * replayed. Awaited. Not invoked when no stashed op will be applied (empty
+	 * `initialMessages` or every message filtered by `seqNum`).
+	 */
+	onBeforeFirstStashedOpApply?: () => Promise<void>;
+	/**
+	 * Invoked exactly once per load, just after `initialMessages` has fully drained
+	 * (including via the apply-loop's finally block on error). Awaited. Only fires
+	 * when `onBeforeFirstStashedOpApply` fired earlier in the same load.
+	 */
+	onAfterStashedOpsApplied?: () => Promise<void>;
 }
 
 function isEmptyBatchPendingMessage(message: IPendingMessageFromStash): boolean {
@@ -368,12 +422,36 @@ export class PendingStateManager implements IDisposable {
 
 	private readonly logger: ITelemetryLoggerExt;
 
+	/**
+	 * True while {@link applyStashedOpsAt} is replaying stashed ops. Contributes to the
+	 * runtime's readonly state during the apply window so consumers don't generate fresh
+	 * local ops that would race the replay. Acts as a one-shot latch across multiple
+	 * `applyStashedOpsAt` calls within a single load: opens on the first eligible call,
+	 * closes when `initialMessages` is fully drained.
+	 */
+	private _isApplyingStashedOps = false;
+	public get isApplyingStashedOps(): boolean {
+		return this._isApplyingStashedOps;
+	}
+
+	/**
+	 * Decided once at the apply window's open: stage un-acked rehydrated ops only when
+	 * the host entered staging mode AND every un-acked stashed op's runtime-op type is
+	 * stageable. Persists across multiple `applyStashedOpsAt` calls so subsequent calls
+	 * apply the same decision without re-scanning.
+	 */
+	private _stageRehydratedOps = false;
+
+	private readonly hooks: PendingStateManagerHooks;
+
 	constructor(
 		private readonly stateHandler: IRuntimeStateHandler,
 		stashedLocalState: IPendingLocalState | undefined,
 		logger: ITelemetryBaseLogger,
+		hooks: PendingStateManagerHooks = {},
 	) {
 		this.logger = createChildLogger({ logger });
+		this.hooks = hooks;
 		if (stashedLocalState?.pendingStates) {
 			this.initialMessages.push(...stashedLocalState.pendingStates);
 		}
@@ -451,51 +529,173 @@ export class PendingStateManager implements IDisposable {
 	 * @param seqNum - Sequence number at which to apply ops. Will apply all ops if seqNum is undefined.
 	 */
 	public async applyStashedOpsAt(seqNum?: number): Promise<void> {
-		// apply stashed ops at sequence number
-		while (!this.initialMessages.isEmpty()) {
-			if (seqNum !== undefined) {
-				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-				const peekMessage = this.initialMessages.peekFront()!;
-				if (peekMessage.referenceSequenceNumber > seqNum) {
-					break; // nothing left to do at this sequence number
-				}
-				if (peekMessage.referenceSequenceNumber < seqNum) {
-					throw new Error("loaded from snapshot too recent to apply stashed ops");
-				}
-			}
+		if (this.initialMessages.isEmpty()) {
+			return;
+		}
+
+		// Eligibility check: confirm at least one stashed op will actually be applied
+		// this call before opening the apply window. Without this, a later call (e.g.
+		// from notifyOpReplay after a saved-op replay) whose front message has a
+		// referenceSequenceNumber > seqNum would still fire hooks with no op in between.
+		if (seqNum !== undefined) {
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			const nextMessage = this.initialMessages.shift()!;
-			// Nothing to apply if the message is an empty batch.
-			// We still need to track it for resubmission.
-			try {
-				if (isEmptyBatchPendingMessage(nextMessage)) {
-					nextMessage.localOpMetadata = {
-						emptyBatch: true,
-					} satisfies LocalEmptyBatchPlaceholder["localOpMetadata"]; // equivalent to applyStashedOp for empty batch
-					patchbatchInfo(nextMessage); // Back compat
-					this.pendingMessages.push(nextMessage);
-					continue;
+			const peekMessage = this.initialMessages.peekFront()!;
+			if (peekMessage.referenceSequenceNumber > seqNum) {
+				return;
+			}
+			// referenceSequenceNumber < seqNum is an error; let the loop's strict
+			// check handle it so the apply window's finally still runs.
+		}
+
+		// Open the apply window once per load. `applyStashedOpsAt` is invoked at
+		// load and again per saved-op replay during boot (`notifyOpReplay`), but
+		// the hooks/window must fire exactly once per load — listeners may call
+		// `enterStagingMode()` in the start handler and a re-fire would trip
+		// "Already in staging mode". Latch on `_isApplyingStashedOps` so subsequent
+		// eligible calls within the same load skip the open and reuse the
+		// staging-decision made on the first eligible call.
+		const openingApplyWindow = !this._isApplyingStashedOps;
+
+		// Capture errors so we can rethrow them outside the finally block. Throwing
+		// inside finally would trip no-unsafe-finally and could mask the original
+		// failure. We track:
+		//  - `applyError`: error from the pre-apply hook or the apply loop itself.
+		//    Wins priority over after-hook errors (it describes the actual data
+		//    failure); after-hook error is silently dropped if both occur.
+		//  - `afterHookError`: error from the after-apply hook only.
+		let applyError: unknown;
+		let afterHookError: unknown;
+		try {
+			if (openingApplyWindow) {
+				// Set the flag before invoking the pre-apply hook so observers (e.g.
+				// the runtime's isReadOnly() aggregation) reflect the apply window
+				// from the moment the hook runs.
+				this._isApplyingStashedOps = true;
+				try {
+					await this.hooks.onBeforeFirstStashedOpApply?.();
+				} catch (error) {
+					// Hook errors are stashed-op-apply failures: classify as data
+					// processing. Throw inside the outer try so finally runs and
+					// closes the apply window.
+					throw DataProcessingError.wrapIfUnrecognized(
+						error,
+						"applyStashedOpsHook",
+						undefined,
+					);
 				}
-				// applyStashedOp will cause the DDS to behave as if it has sent the op but not actually send it
-				const localOpMetadata = await this.stateHandler.applyStashedOp(nextMessage.content);
-				if (this.stateHandler.isAttached()) {
-					nextMessage.localOpMetadata = localOpMetadata;
-					// NOTE: This runtimeOp has been roundtripped through string, which is technically lossy.
-					// e.g. At this point, handles are in their encoded form.
-					nextMessage.runtimeOp = JSON.parse(
-						nextMessage.content,
-					) as LocalContainerRuntimeMessage;
-					// then we push onto pendingMessages which will cause PendingStateManager to resubmit when we connect
-					patchbatchInfo(nextMessage); // Back compat
-					this.pendingMessages.push(nextMessage);
-				} else {
-					if (localOpMetadata !== undefined) {
-						throw new Error("Local Op Metadata must be undefined when not attached");
+
+				// Stage every un-acked rehydrated op when the host entered staging
+				// mode in the start handler, regardless of runtime-op type. The
+				// ordinary `submit()` path rejects staged ops of types like Attach
+				// / Alias / BlobAttach / IdAllocation / Rejoin, but rehydrated
+				// staged ops do *not* go through that path on (re)connect — they
+				// sit in the queue (see `replayPendingStates`) until the host
+				// commits or discards. On commit the staged flag is cleared before
+				// resubmit so all types pass the check. On discard, the runtime
+				// dispatches to type-specific rollback handlers that "hide" or
+				// drop the local effect; a wake-up path resurrects hidden state
+				// when a remote op for the same target arrives.
+				this._stageRehydratedOps = this.stateHandler.isInStagingMode();
+			}
+
+			// apply stashed ops at sequence number
+			while (!this.initialMessages.isEmpty()) {
+				if (seqNum !== undefined) {
+					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+					const peekMessage = this.initialMessages.peekFront()!;
+					if (peekMessage.referenceSequenceNumber > seqNum) {
+						break; // nothing left to do at this sequence number
+					}
+					if (peekMessage.referenceSequenceNumber < seqNum) {
+						throw new Error("loaded from snapshot too recent to apply stashed ops");
 					}
 				}
-			} catch (error) {
-				throw DataProcessingError.wrapIfUnrecognized(error, "applyStashedOp", nextMessage);
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				const nextMessage = this.initialMessages.shift()!;
+				// Nothing to apply if the message is an empty batch.
+				// We still need to track it for resubmission.
+				try {
+					if (isEmptyBatchPendingMessage(nextMessage)) {
+						nextMessage.localOpMetadata = {
+							emptyBatch: true,
+						} satisfies LocalEmptyBatchPlaceholder["localOpMetadata"]; // equivalent to applyStashedOp for empty batch
+						patchbatchInfo(nextMessage); // Back compat
+						// Mark empty-batch placeholders staged on the same conditions as
+						// real ops. Otherwise an unacked placeholder at the tail of a
+						// staged-rehydrated queue would trip 0xb89 in popStagedBatches:
+						// the LIFO walk stops at the non-staged placeholder, then the
+						// trailing assert sees earlier staged messages still in queue.
+						if (this._stageRehydratedOps && nextMessage.sequenceNumber === undefined) {
+							nextMessage.batchInfo.staged = true;
+							nextMessage.stagedFromStashedRehydration = true;
+						}
+						this.pendingMessages.push(nextMessage);
+						continue;
+					}
+					// applyStashedOp will cause the DDS to behave as if it has sent the op but not actually send it
+					const localOpMetadata = await this.stateHandler.applyStashedOp(nextMessage.content);
+					if (this.stateHandler.isAttached()) {
+						nextMessage.localOpMetadata = localOpMetadata;
+						// NOTE: This runtimeOp has been roundtripped through string, which is technically lossy.
+						// e.g. At this point, handles are in their encoded form.
+						nextMessage.runtimeOp = JSON.parse(
+							nextMessage.content,
+						) as LocalContainerRuntimeMessage;
+						// then we push onto pendingMessages which will cause PendingStateManager to resubmit when we connect
+						patchbatchInfo(nextMessage); // Back compat
+						// Stage un-acked rehydrated ops when the upfront scan determined it
+						// was safe (all un-acked types are stageable). Acked ops keep their
+						// original flag — the server already has them, and `getLocalState`
+						// serializes savedOps before pendingMessages, preserving the queue
+						// invariant that non-staged messages come before staged ones.
+						if (this._stageRehydratedOps && nextMessage.sequenceNumber === undefined) {
+							nextMessage.batchInfo.staged = true;
+							nextMessage.stagedFromStashedRehydration = true;
+						}
+						this.pendingMessages.push(nextMessage);
+					} else {
+						if (localOpMetadata !== undefined) {
+							throw new Error("Local Op Metadata must be undefined when not attached");
+						}
+					}
+				} catch (error) {
+					throw DataProcessingError.wrapIfUnrecognized(error, "applyStashedOp", nextMessage);
+				}
 			}
+		} catch (error) {
+			applyError = error;
+		} finally {
+			// Close the apply window when the queue has drained OR an error is
+			// propagating. Closing on error guarantees the runtime doesn't stay
+			// permanently readonly and that `pendingStateApplyEnd` fires for any
+			// host that received a `pendingStateApplyStart`. In the normal multi-
+			// call path (no error, queue not yet drained), this branch is skipped
+			// so the latch persists across `applyStashedOpsAt` invocations.
+			const closing =
+				this._isApplyingStashedOps &&
+				(this.initialMessages.isEmpty() || applyError !== undefined);
+			if (closing) {
+				this._isApplyingStashedOps = false;
+				try {
+					await this.hooks.onAfterStashedOpsApplied?.();
+				} catch (error) {
+					afterHookError = error;
+				}
+			}
+		}
+		if (applyError !== undefined) {
+			// Wrap through DataProcessingError so the lint's only-throw-error rule
+			// is satisfied; raw values from the catch are typed `unknown`. Wrapping
+			// is a no-op for already-classified errors (DataProcessingError /
+			// LoggingError), so this preserves the original error type.
+			throw DataProcessingError.wrapIfUnrecognized(applyError, "applyStashedOps", undefined);
+		}
+		if (afterHookError !== undefined) {
+			throw DataProcessingError.wrapIfUnrecognized(
+				afterHookError,
+				"applyStashedOpsHook",
+				undefined,
+			);
 		}
 	}
 
@@ -609,6 +809,15 @@ export class PendingStateManager implements IDisposable {
 		);
 
 		pendingMessage.sequenceNumber = sequenceNumber;
+		// Clear staging flags on every ack'd message, not just the batch front.
+		// `onLocalBatchBegin` only touches `peekFront()`, and after JSON rehydration
+		// each message has its own `batchInfo` instance, so tail messages of a
+		// multi-message rehydrated batch could otherwise carry the flags into
+		// `savedOps` → re-stash → permanent skip in `replayPendingStates`.
+		if (pendingMessage.stagedFromStashedRehydration === true) {
+			pendingMessage.stagedFromStashedRehydration = false;
+			pendingMessage.batchInfo.staged = false;
+		}
 		this.savedOps.push(toSerializableForm(pendingMessage));
 
 		this.pendingMessages.shift();
@@ -680,10 +889,21 @@ export class PendingStateManager implements IDisposable {
 			pendingMessage !== undefined,
 			0xa21 /* No pending message found as we start processing this remote batch */,
 		);
-		assert(
-			!pendingMessage.batchInfo.staged,
-			0xb85 /* Pending state mismatch, ack came in but next pending message is staged */,
-		);
+		if (pendingMessage.batchInfo.staged) {
+			// User-staged ops in this session never go to the wire, so an ack arriving
+			// for one indicates a real desync. The exception is a rehydrated op that the
+			// host marked staged at apply time: the previous session may have sent it
+			// before stash, and the server's ack is now arriving (possibly delayed). In
+			// that case, the change is real on the server — clear the staged flag and
+			// let the ack process normally. The DDS already has the local change applied
+			// via `applyStashedOp`, so no further state mutation is needed.
+			assert(
+				pendingMessage.stagedFromStashedRehydration === true,
+				0xb85 /* Pending state mismatch, ack came in but next pending message is staged */,
+			);
+			pendingMessage.batchInfo.staged = false;
+			pendingMessage.stagedFromStashedRehydration = false;
+		}
 
 		// If this batch became empty on resubmit, batch.messages will be empty (but keyMessage is always set)
 		// and the next pending message should be an empty batch marker.
@@ -789,6 +1009,22 @@ export class PendingStateManager implements IDisposable {
 
 				seenStagedBatch = true;
 				pendingMessage.batchInfo.staged = false; // Clear staged flag so we can submit
+				pendingMessage.stagedFromStashedRehydration = false;
+			} else if (
+				pendingMessage.batchInfo.staged === true &&
+				pendingMessage.stagedFromStashedRehydration === true
+			) {
+				// Rehydrated ops staged at apply time stay in the queue until the
+				// host explicitly commits or discards. Skip them on the normal
+				// (non-committing) replay path so they don't go to the wire and
+				// don't trip `submit()`'s stage-only-stageable-types assertion
+				// (`0xbba`) for runtime-op types like Attach / Alias / BlobAttach.
+				// Both flags are required so a stale-ack-cleared message (where
+				// `batchInfo.staged` was reset but `stagedFromStashedRehydration`
+				// wasn't, before processNextPendingMessage's per-message cleanup)
+				// doesn't get stuck on this skip path.
+				this.pendingMessages.push(pendingMessage);
+				continue;
 			}
 
 			const batchMetadataFlag = asBatchMetadata(pendingMessage.opMetadata)?.batch;

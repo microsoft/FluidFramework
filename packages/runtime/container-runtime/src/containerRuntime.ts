@@ -854,7 +854,7 @@ const defaultMaxConsecutiveReconnects = 7;
  * These are the ONLY message types that are allowed to be submitted while in staging mode
  * (Does not apply to pre-StagingMode batches that are resubmitted, those are not considered to be staged)
  */
-function canStageMessageOfType(
+export function canStageMessageOfType(
 	type: LocalContainerRuntimeMessage["type"],
 ): type is
 	| ContainerMessageType.FluidDataStoreOp
@@ -1296,14 +1296,20 @@ export class ContainerRuntime
 			recentBatchInfo,
 		);
 
-		runtime.sharePendingBlobs();
-
 		// Initialize the base state of the runtime before it's returned.
 		await runtime.initializeBaseState(context.loader);
 
 		// Apply stashed ops with a reference sequence number equal to the sequence number of the snapshot,
 		// or zero. This must be done before Container replays saved ops.
 		await runtime.pendingStateManager.applyStashedOpsAt(runtimeSequenceNumber ?? 0);
+
+		// Pending-blob sharing may submit a `BlobAttach` op, which is a local
+		// edit. Defer until after the apply window closes so the host's
+		// `pendingStateApplyStart` review window (during which `isReadOnly()`
+		// returns true) actually blocks all outbound edits — the blob path
+		// can't be gated by `isReadOnly()` directly because `canStartSharing`
+		// is connection-bound, not readonly-bound.
+		runtime.sharePendingBlobs();
 
 		return { runtime };
 	}
@@ -1360,7 +1366,9 @@ export class ContainerRuntime
 		return this._getAttachState();
 	}
 
-	public readonly isReadOnly = (): boolean => this.deltaManager.readOnlyInfo.readonly === true;
+	public readonly isReadOnly = (): boolean =>
+		this.deltaManager.readOnlyInfo.readonly === true ||
+		this.pendingStateManager.isApplyingStashedOps;
 
 	/**
 	 * Current session schema - defines what options are on & off.
@@ -1829,6 +1837,11 @@ export class ContainerRuntime
 		);
 
 		const pendingRuntimeState = pendingLocalState as IPendingRuntimeState | undefined;
+		// Tracks whether the public `pendingStateApplyStart` event was emitted on
+		// this load so the After hook never fires an orphan End. The Start emit
+		// happens after `await this.entryPoint`, which can reject and throw before
+		// the emit; PSM still runs the After hook on its cleanup path.
+		let pendingStateApplyStartEmitted = false;
 		this.pendingStateManager = new PendingStateManager(
 			{
 				applyStashedOp: this.applyStashedOp.bind(this),
@@ -1837,9 +1850,38 @@ export class ContainerRuntime
 				reSubmitBatch: this.reSubmitBatch.bind(this),
 				isActiveConnection: () => this.innerDeltaManager.active,
 				isAttached: () => this.attachState !== AttachState.Detached,
+				isInStagingMode: () => this.inStagingMode,
 			},
 			pendingRuntimeState?.pending,
 			this.baseLogger,
+			{
+				// PSM has just set its isApplyingStashedOps flag; isReadOnly() now returns true.
+				// Fan out the new readonly state to data stores so DDSes see it during replay,
+				// then materialize the entry point so it can subscribe to pendingStateApplyStart
+				// before we emit it (typical pattern: the entry point's lifecycle hook calls
+				// `enterStagingMode()` so replayed ops are marked staged for review). Eager
+				// materialization on this path is consistent with `applyStashedOp` itself,
+				// which can realize data stores during replay; pending state is a new feature
+				// without entrenched consumers, so the new lifecycle is unconditional.
+				onBeforeFirstStashedOpApply: async () => {
+					this.notifyReadOnlyState();
+					await this.entryPoint;
+					this.emit("pendingStateApplyStart");
+					pendingStateApplyStartEmitted = true;
+				},
+				// PSM has cleared its flag; isReadOnly() reflects the network-readonly state again.
+				// Emit the end signal first so listeners observe the final state of the apply
+				// window, then fan out the post-apply readonly state. Skip End if Start was
+				// never emitted (e.g. entry-point rejection in the start hook) — End is
+				// documented to pair with Start.
+				onAfterStashedOpsApplied: async () => {
+					if (pendingStateApplyStartEmitted) {
+						this.emit("pendingStateApplyEnd");
+						pendingStateApplyStartEmitted = false;
+					}
+					this.notifyReadOnlyState();
+				},
+			},
 		);
 
 		let outerDeltaManager: IDeltaManagerFull = this.innerDeltaManager;
@@ -2912,8 +2954,8 @@ export class ContainerRuntime
 		}
 	}
 
-	private readonly notifyReadOnlyState = (readonly: boolean): void =>
-		this.channelCollection.notifyReadOnlyState(readonly);
+	private readonly notifyReadOnlyState = (): void =>
+		this.channelCollection.notifyReadOnlyState(this.isReadOnly());
 
 	public setConnectionState(canSendOps: boolean, clientId?: string): void {
 		this.setConnectionStateToConnectedOrDisconnected(canSendOps, clientId);
@@ -3645,7 +3687,11 @@ export class ContainerRuntime
 					try {
 						checkpoint.rollback((message: LocalBatchMessage) =>
 							// These changes are staged since we entered staging mode above
-							this.rollbackStagedChange(message.runtimeOp, message.localOpMetadata),
+							this.rollbackStagedChange(
+								message.runtimeOp,
+								message.localOpMetadata,
+								message.metadata,
+							),
 						);
 						this.updateDocumentDirtyState();
 						stageControls?.discardChanges();
@@ -3785,8 +3831,8 @@ export class ContainerRuntime
 				exitStagingMode(() => {
 					// Pop all staged batches from the PSM and roll them back in LIFO order
 					const batchInfos = this.pendingStateManager.popStagedBatches(
-						({ runtimeOp, localOpMetadata }) => {
-							this.rollbackStagedChange(runtimeOp, localOpMetadata);
+						({ runtimeOp, localOpMetadata, opMetadata }) => {
+							this.rollbackStagedChange(runtimeOp, localOpMetadata, opMetadata);
 						},
 					);
 					this.updateDocumentDirtyState();
@@ -5108,9 +5154,8 @@ export class ContainerRuntime
 	private rollbackStagedChange(
 		{ type, contents }: LocalContainerRuntimeMessage,
 		localOpMetadata: unknown,
+		opMetadata: Record<string, unknown> | undefined,
 	): void {
-		assert(canStageMessageOfType(type), 0xbbc /* Unexpected message type to be rolled back */);
-
 		switch (type) {
 			case ContainerMessageType.FluidDataStoreOp: {
 				// For operations, call rollbackDataStoreOp which will find the right store
@@ -5134,8 +5179,58 @@ export class ContainerRuntime
 				this.documentsSchemaController.pendingOpNotAcked();
 				break;
 			}
+			// The following types only reach this rollback path via rehydrated
+			// pending state (host opted into staging-on-rehydration in the
+			// `pendingStateApplyStart` handler). In live staging mode they're
+			// rejected upstream by `canStageMessageOfType`.
+			//
+			// LIFO rollback ordering guarantees that any DDS ops that referenced
+			// these targets have already been popped before we get here, so
+			// "hiding" or dropping the local effect is safe — nothing else in
+			// the staged queue references them.
+			case ContainerMessageType.Attach: {
+				// Mark the data store hidden locally. Realize-on-demand handles
+				// re-surfacing it if a remote op (or a delayed ack of the
+				// previous-session attach) routes to its internalId.
+				this.channelCollection.rollbackAttach(contents);
+				break;
+			}
+			case ContainerMessageType.Alias: {
+				// Drop the local alias mapping. The underlying data store stays
+				// addressable by internalId; the alias is re-established if a
+				// remote Alias op arrives.
+				this.channelCollection.rollbackAlias(contents);
+				break;
+			}
+			case ContainerMessageType.BlobAttach: {
+				// Drop from the blob manager's pending list. Blob identity
+				// (`{ localId, blobId }`) is carried as message-level
+				// `opMetadata` (see `BlobManager.processBlobAttachMessage`),
+				// not `localOpMetadata` (which is `undefined` for stashed
+				// BlobAttach replays). Storage-resolved handles still work
+				// for acked blobs; un-acked blobs become unresolvable.
+				this.blobManager.rollbackAttach(opMetadata);
+				break;
+			}
+			case ContainerMessageType.IdAllocation: {
+				// Per the resubmit policy at containerRuntime.ts (see reSubmit's
+				// IdAllocation case): allocation ops are never resubmitted —
+				// they regenerate fresh. Rollback drops the queued op with no
+				// state to undo. IDs that were minted into channels by this
+				// allocation were referenced only by ops popped first via LIFO.
+				break;
+			}
+			case ContainerMessageType.Rejoin: {
+				// Connect-time signaling. Should not appear in stashed pending
+				// state in practice; if it does, dropping is correct.
+				break;
+			}
 			default: {
-				unreachableCase(type);
+				// ChunkedOp / Unknown — same defensive close-on-error treatment
+				// reSubmit uses for unrecognized types (containerRuntime.ts:5104).
+				const error = getUnknownMessageTypeError(type, "rollbackStagedChange" /* codePath */);
+				this.closeFn(error);
+				throw error;
 			}
 		}
 	}
@@ -5348,24 +5443,33 @@ export class ContainerRuntime
 	 */
 	public sharePendingBlobs = (): void => {
 		new Promise<void>((resolve) => {
-			// eslint-disable-next-line unicorn/consistent-function-scoping
 			const canStartSharing = (): boolean =>
-				this.connected && this.deltaManager.readOnlyInfo.readonly !== true;
+				this.connected &&
+				this.deltaManager.readOnlyInfo.readonly !== true &&
+				// Staging mode rejects `BlobAttach` at submit time
+				// (`canStageMessageOfType` allow-list excludes it). If a host
+				// entered staging mode in the `pendingStateApplyStart` handler,
+				// we must wait until the host commits or discards before
+				// firing `sendBlobAttachMessage` — otherwise the synchronous
+				// attach attempt would close the container.
+				!this.inStagingMode;
 
 			if (canStartSharing()) {
 				resolve();
 				return;
 			}
 
-			const checkCanShare = (readonly: boolean): void => {
+			const checkCanShare = (): void => {
 				if (canStartSharing()) {
 					this.deltaManager.off("readonly", checkCanShare);
 					this.off("connected", checkCanShare);
+					this.off("stagingModeChanged", checkCanShare);
 					resolve();
 				}
 			};
 			this.deltaManager.on("readonly", checkCanShare);
 			this.on("connected", checkCanShare);
+			this.on("stagingModeChanged", checkCanShare);
 		})
 			.then(this.blobManager.sharePendingBlobs)
 			// It may not be necessary to close the container on failures - this should just mean there's
