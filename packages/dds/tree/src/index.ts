@@ -278,6 +278,8 @@ export {
 	type NodeInDocumentConstraint,
 	type NoChangeConstraint,
 	type RunTransactionParams,
+	type RunTransactionAsyncParams,
+	type RunTransactionSyncParams,
 	type VoidTransactionCallbackStatus,
 	type TransactionCallbackStatus,
 	type TransactionResult,
