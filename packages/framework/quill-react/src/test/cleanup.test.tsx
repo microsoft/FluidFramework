@@ -11,7 +11,7 @@ import { independentView } from "@fluidframework/tree/alpha";
 import { FormattedTextAsTree, TextAsTree } from "@fluidframework/tree/internal";
 import { cleanup as rtlCleanup, render } from "@testing-library/react";
 import globalJsdom from "global-jsdom";
-import Quill from "quill";
+import Quill from "quill-next";
 import { StrictMode } from "react";
 
 import { FormattedMainView } from "../formatted/index.js";
