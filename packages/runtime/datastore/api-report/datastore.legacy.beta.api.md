@@ -36,8 +36,7 @@ export class FluidDataStoreRuntime extends TypedEventEmitter<IFluidDataStoreRunt
     get clientId(): string | undefined;
     // (undocumented)
     get connected(): boolean;
-    // (undocumented)
-    createChannel(idArg: string | undefined, type: string): IChannel;
+    createChannel(id: string | undefined, type: string): IChannel;
     // (undocumented)
     get deltaManager(): IDeltaManagerErased;
     // (undocumented)

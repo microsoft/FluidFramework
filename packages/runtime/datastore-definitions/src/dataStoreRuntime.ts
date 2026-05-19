@@ -25,6 +25,22 @@ import type {
 import type { IChannel } from "./channel.js";
 
 /**
+ * Callback invoked on the losing client after a channel-creation "race"
+ * resolves. The runtime schedules this asynchronously after the current op
+ * processing step; it does not block op processing.
+ *
+ * @param loser - The local channel that lost the race. This channel's context
+ * has been removed from the runtime; the consumer should stop using it after
+ * this callback returns. The callback should read any state from `loser` and
+ * apply it to the winner via `runtime.getChannel(winnerChannelId)`.
+ * @param winnerChannelId - The id of the winning channel. Use
+ * `IFluidDataStoreRuntime.getChannel` to obtain a handle to it.
+ *
+ * @alpha
+ */
+export type OnRaceLost = (loser: IChannel, winnerChannelId: string) => void;
+
+/**
  * Events emitted by {@link IFluidDataStoreRuntime}.
  * @legacy @beta
  */
@@ -41,6 +57,21 @@ export interface IFluidDataStoreRuntimeEvents extends IEvent {
 	 * The isReadOnly param will express the new readonly state.
 	 */
 	(event: "readonly", listener: (isReadOnly: boolean) => void);
+
+	/**
+	 * Fired after a "race" between concurrent channel creations resolves
+	 * deterministically across all clients. See `createChannel`'s race overload.
+	 *
+	 * @alpha
+	 */
+	(
+		event: "raceResolved",
+		listener: (info: {
+			raceId: string;
+			winnerChannelId: string;
+			loserChannelIds: readonly string[];
+		}) => void,
+	);
 }
 
 /**
@@ -108,6 +139,45 @@ export interface IFluidDataStoreRuntime
 	 * @param type - Type of the channel.
 	 */
 	createChannel(id: string | undefined, type: string): IChannel;
+
+	/**
+	 * Creates a new channel that participates in a first-attach-wins "race"
+	 * with concurrent creations on other clients.
+	 *
+	 * @remarks
+	 * All clients calling this overload with the same `raceId` converge on a
+	 * single attached channel: the first attach op sequenced for a given
+	 * `raceId` wins, and every other client's locally-created channel becomes
+	 * a "loser" whose subsequent ops are dropped deterministically by every
+	 * client. The losing client may register an `onLost` callback to merge
+	 * its local state into the winner.
+	 *
+	 * Each racing client receives its own locally-unique channel id; only the
+	 * `raceId` is shared across clients. Use `IChannel.id` on the returned
+	 * channel for local routing.
+	 *
+	 * Throws a `UsageError` if:
+	 * - The document schema has not enabled the race-id channel-create feature.
+	 * - The data store is detached or in staging mode.
+	 * - This client has already created a racing channel with the same `raceId`.
+	 *
+	 * `onLost` is invoked asynchronously (after the current op processing
+	 * step) on the losing client; it does not block op processing. If `onLost`
+	 * is not provided and this client loses, the loser context is silently
+	 * removed and a telemetry event is fired.
+	 *
+	 * @param raceId - Identifier shared across racing clients.
+	 * @param type - Type of the channel.
+	 * @param raceOptions - Race semantics opt-in. Presence of this argument
+	 * marks the call as a race participant.
+	 *
+	 * @alpha
+	 */
+	createChannel(
+		raceId: string,
+		type: string,
+		raceOptions: { onLost?: OnRaceLost },
+	): IChannel;
 
 	/**
 	 * Adds an existing channel to the data store.

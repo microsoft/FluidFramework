@@ -81,6 +81,10 @@ export interface IFluidDataStoreRuntime extends IEventProvider<IFluidDataStoreRu
     // (undocumented)
     readonly connected: boolean;
     createChannel(id: string | undefined, type: string): IChannel;
+    // @alpha
+    createChannel(raceId: string, type: string, raceOptions: {
+        onLost?: OnRaceLost;
+    }): IChannel;
     // (undocumented)
     readonly deltaManager: IDeltaManagerErased;
     readonly entryPoint: IFluidHandle<FluidObject>;
@@ -130,6 +134,12 @@ export interface IFluidDataStoreRuntimeEvents extends IEvent {
     (event: "connected", listener: (clientId: string) => void): any;
     // (undocumented)
     (event: "readonly", listener: (isReadOnly: boolean) => void): any;
+    // @alpha
+    (event: "raceResolved", listener: (info: {
+        raceId: string;
+        winnerChannelId: string;
+        loserChannelIds: readonly string[];
+    }) => void): any;
 }
 
 // @beta @legacy (undocumented)
@@ -145,6 +155,9 @@ export type Jsonable<T, TReplaced = never> = boolean extends (T extends never ? 
 
 // @beta @legacy
 export type JsonableTypeWith<T> = undefined | null | boolean | number | string | T | Internal_InterfaceOfJsonableTypesWith<T> | ArrayLike<JsonableTypeWith<T>>;
+
+// @alpha
+export type OnRaceLost = (loser: IChannel, winnerChannelId: string) => void;
 
 // @beta @legacy
 export type Serializable<T> = Jsonable<T, IFluidHandle>;
