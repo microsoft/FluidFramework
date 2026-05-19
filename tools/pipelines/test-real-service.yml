@@ -38,6 +38,11 @@ resources:
 variables:
 - template: /tools/pipelines/templates/include-vars-telemetry-generator.yml@self
 - group: prague-key-vault
+# Note: we tried to centralize the use of the 'container-registry-info' variable group (i.e. put it
+# inside templates we depend on) but ran into issues because if it exists in stage-level variables
+# instead of root-level pipeline variables, the value for the ACR service connection name passed
+# to Docker tasks isn't available before ADO performs checks for that task.
+- group: container-registry-info
 - name: testPackage
   value: "@fluid-private/test-end-to-end-tests"
   readonly: true
@@ -101,8 +106,6 @@ stages:
       continueOnError: true
       timeoutInMinutes: 360
       testCommand: test:realsvc:r11s:docker
-      stageVariables:
-        - group: container-registry-info
       splitTestVariants:
         - name: Non-compat
           flags: --compatVersion=0

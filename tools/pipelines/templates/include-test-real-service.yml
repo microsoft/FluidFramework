@@ -263,7 +263,7 @@ stages:
           - task: Docker@2
             displayName: 'Login to container registry'
             inputs:
-              containerRegistry: 'Fluid Container Registry'
+              containerRegistry: $(containerRegistryConnection)
               command: 'login'
           - task: DockerCompose@1
             displayName: 'Start routerlicious environment in docker'
@@ -274,7 +274,7 @@ stages:
               dockerComposeCommand: 'up -d --wait'
               projectName: 'routerlicious'
             env:
-              REGISTRY_URL: fluidcr.azurecr.io/build
+              REGISTRY_URL: $(containerRegistryUrl)/build
               ALFRED_IMAGE_TAG: ${{ parameters.alfredImageTag }}
               HISTORIAN_IMAGE_TAG: ${{ parameters.historianImageTag }}
               GITREST_IMAGE_TAG: ${{ parameters.gitrestImageTag }}
