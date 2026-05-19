@@ -149,13 +149,13 @@ The client which encoded this data likely specified an "minVersionForCollab" val
 			interface DecodeContext {
 				decodeOffset: number;
 			}
-			interface VC {
+			interface Encoded {
 				version: 1;
 				value: number;
 			}
 			const contextualCodec: CodecAndSchema<number, EncodeContext, DecodeContext> = {
-				encode: (x, ctx) => ({ version: 1, value: x + ctx.encodeOffset }),
-				decode: (data, ctx) => (data as unknown as VC).value + ctx.decodeOffset,
+				encode: (value, context) => ({ version: 1, value: value + context.encodeOffset }),
+				decode: (data, context) => (data as unknown as Encoded).value + context.decodeOffset,
 				schema: Versioned,
 			};
 			const contextualBuilder = VersionDispatchingCodecBuilder.build("Contextual", [
