@@ -14104,6 +14104,9 @@ importers:
       '@fluidframework/odsp-driver-definitions':
         specifier: workspace:~
         version: link:../../drivers/odsp-driver-definitions
+      '@fluidframework/runtime-definitions':
+        specifier: workspace:~
+        version: link:../../runtime/runtime-definitions
       '@fluidframework/telemetry-utils':
         specifier: workspace:~
         version: link:../../utils/telemetry-utils

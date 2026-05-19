@@ -34,6 +34,7 @@ import {
 	isOdspResolvedUrl,
 } from "@fluidframework/odsp-driver/internal";
 import type { OdspResourceTokenFetchOptions } from "@fluidframework/odsp-driver-definitions/internal";
+import type { MinimumVersionForCollab } from "@fluidframework/runtime-definitions";
 import { wrapConfigProviderWithDefaults } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
@@ -111,13 +112,41 @@ export class OdspClient {
 		this.configProvider = wrapConfigProvider(properties.configProvider);
 	}
 
+	/**
+	 * Creates a new detached container instance backed by ODSP.
+	 * @param containerSchema - Container schema for the new container.
+	 * @param minVersionForCollab - Minimum Fluid Framework version required for collaboration, as a
+	 * `MinimumVersionForCollab` semver string (e.g. `"2.0.0"`).
+	 * @returns New detached container instance along with associated services.
+	 */
+	public async createContainer<T extends ContainerSchema>(
+		containerSchema: T,
+		minVersionForCollab: MinimumVersionForCollab,
+	): Promise<{
+		container: IOdspFluidContainer<T>;
+		services: IOdspContainerServices;
+	}>;
+	/**
+	 * Creates a new detached container instance backed by ODSP.
+	 * @param containerSchema - Container schema for the new container.
+	 * @returns New detached container instance along with associated services.
+	 * @deprecated Pass a `MinimumVersionForCollab` semver string (e.g. `"2.0.0"`) as a second argument.
+	 * The previous behavior was equivalent to passing `"2.0.0"`.
+	 */
 	public async createContainer<T extends ContainerSchema>(
 		containerSchema: T,
 	): Promise<{
 		container: IOdspFluidContainer<T>;
 		services: IOdspContainerServices;
+	}>;
+	public async createContainer<T extends ContainerSchema>(
+		containerSchema: T,
+		minVersionForCollab: MinimumVersionForCollab = "2.0.0",
+	): Promise<{
+		container: IOdspFluidContainer<T>;
+		services: IOdspContainerServices;
 	}> {
-		const loaderProps = this.getLoaderProps(containerSchema);
+		const loaderProps = this.getLoaderProps(containerSchema, minVersionForCollab);
 
 		const container = await createDetachedContainer({
 			...loaderProps,
@@ -137,14 +166,46 @@ export class OdspClient {
 		return { container: fluidContainer, services };
 	}
 
+	/**
+	 * Accesses an existing container by its unique ID in ODSP.
+	 * @param id - Unique ID of the container in ODSP.
+	 * @param containerSchema - Container schema used to access data objects in the container.
+	 * @param minVersionForCollab - Minimum Fluid Framework version required for collaboration, as a
+	 * `MinimumVersionForCollab` semver string (e.g. `"2.0.0"`).
+	 * @returns Existing container instance along with associated services.
+	 */
+	public async getContainer<T extends ContainerSchema>(
+		id: string,
+		containerSchema: T,
+		minVersionForCollab: MinimumVersionForCollab,
+	): Promise<{
+		container: IOdspFluidContainer<T>;
+		services: IOdspContainerServices;
+	}>;
+	/**
+	 * Accesses an existing container by its unique ID in ODSP.
+	 * @param id - Unique ID of the container in ODSP.
+	 * @param containerSchema - Container schema used to access data objects in the container.
+	 * @returns Existing container instance along with associated services.
+	 * @deprecated Pass a `MinimumVersionForCollab` semver string (e.g. `"2.0.0"`) as a third argument.
+	 * The previous behavior was equivalent to passing `"2.0.0"`.
+	 */
 	public async getContainer<T extends ContainerSchema>(
 		id: string,
 		containerSchema: T,
 	): Promise<{
 		container: IOdspFluidContainer<T>;
 		services: IOdspContainerServices;
+	}>;
+	public async getContainer<T extends ContainerSchema>(
+		id: string,
+		containerSchema: T,
+		minVersionForCollab: MinimumVersionForCollab = "2.0.0",
+	): Promise<{
+		container: IOdspFluidContainer<T>;
+		services: IOdspContainerServices;
 	}> {
-		const loaderProps = this.getLoaderProps(containerSchema);
+		const loaderProps = this.getLoaderProps(containerSchema, minVersionForCollab);
 		const url = createOdspUrl({
 			siteUrl: this.connectionConfig.siteUrl,
 			driveId: this.connectionConfig.driveId,
@@ -163,10 +224,13 @@ export class OdspClient {
 		return { container: fluidContainer, services };
 	}
 
-	private getLoaderProps(schema: ContainerSchema): ILoaderProps {
+	private getLoaderProps(
+		schema: ContainerSchema,
+		minVersionForCollab: MinimumVersionForCollab,
+	): ILoaderProps {
 		const runtimeFactory = createDOProviderContainerRuntimeFactory({
 			schema,
-			compatibilityMode: "2.0.0",
+			compatibilityMode: minVersionForCollab,
 		});
 		const load = async (): Promise<IFluidModuleWithDetails> => {
 			return {
