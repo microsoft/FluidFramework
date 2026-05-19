@@ -121,13 +121,11 @@ function makeVersionedValidatedCodec<
  */
 export function makeDiscontinuedCodecAndSchema<
 	TDecoded,
-	TEncodeContext,
 	TFormatVersion extends FormatVersion = FormatVersion,
-	TDecodeContext = TEncodeContext,
 >(
 	discontinuedVersion: TFormatVersion,
 	discontinuedSince: SemanticVersion,
-): CodecVersion<TDecoded, TEncodeContext, TFormatVersion, ICodecOptions, TDecodeContext> {
+): CodecVersion<TDecoded, unknown, TFormatVersion, ICodecOptions, unknown> {
 	return {
 		minVersionForCollab: undefined,
 		formatVersion: discontinuedVersion,
