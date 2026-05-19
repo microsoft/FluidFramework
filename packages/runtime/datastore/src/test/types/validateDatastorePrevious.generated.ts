@@ -88,6 +88,7 @@ declare type old_as_current_for_Enum_DataStoreMessageType = requireAssignableTo<
  * typeValidation.broken:
  * "Enum_DataStoreMessageType": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Enum_DataStoreMessageType = requireAssignableTo<TypeOnly<current.DataStoreMessageType>, TypeOnly<old.DataStoreMessageType>>
 
 /*

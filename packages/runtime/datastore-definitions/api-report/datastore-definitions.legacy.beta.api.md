@@ -5,6 +5,9 @@
 ```ts
 
 // @beta @legacy
+export type ClaimResult = "Success" | "AlreadyClaimed";
+
+// @beta @legacy
 export interface IChannel extends IFluidLoadable {
     // (undocumented)
     readonly attributes: IChannelAttributes;
@@ -48,6 +51,14 @@ export interface IChannelStorageService {
 }
 
 // @beta @legacy
+export type IClaimAttempt = {
+    readonly status: "Success" | "AlreadyClaimed";
+} | {
+    readonly status: "Pending";
+    readonly result: Promise<ClaimResult>;
+};
+
+// @beta @legacy
 export interface IDeltaConnection {
     attach(handler: IDeltaHandler): void;
     // (undocumented)
@@ -76,6 +87,7 @@ export interface IFluidDataStoreRuntime extends IEventProvider<IFluidDataStoreRu
     bindChannel(channel: IChannel): void;
     // (undocumented)
     readonly channelsRoutingContext: IFluidHandleContext;
+    readonly claims?: ReadonlyMap<string, unknown>;
     // (undocumented)
     readonly clientId: string | undefined;
     // (undocumented)
@@ -86,7 +98,9 @@ export interface IFluidDataStoreRuntime extends IEventProvider<IFluidDataStoreRu
     readonly entryPoint: IFluidHandle<FluidObject>;
     getAudience(): IAudience;
     getChannel(id: string): Promise<IChannel>;
+    getClaim?(key: string): unknown;
     getQuorum(): IQuorumClients;
+    hasClaim?(key: string): boolean;
     // (undocumented)
     readonly id: string;
     readonly idCompressor: IIdCompressor | undefined;
@@ -104,6 +118,7 @@ export interface IFluidDataStoreRuntime extends IEventProvider<IFluidDataStoreRu
     // (undocumented)
     readonly rootRoutingContext: IFluidHandleContext;
     submitSignal: (type: string, content: unknown, targetClientId?: string) => void;
+    trySetClaim?(key: string, value: unknown): IClaimAttempt;
     uploadBlob(blob: ArrayBufferLike, signal?: AbortSignal): Promise<IFluidHandle<ArrayBufferLike>>;
     waitAttached(): Promise<void>;
 }

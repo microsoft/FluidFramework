@@ -9,7 +9,9 @@ export enum DataStoreMessageType {
     // (undocumented)
     Attach = "attach",
     // (undocumented)
-    ChannelOp = "op"
+    ChannelOp = "op",
+    // (undocumented)
+    Claim = "claim"
 }
 
 // @beta @legacy
@@ -30,6 +32,7 @@ export class FluidDataStoreRuntime extends TypedEventEmitter<IFluidDataStoreRunt
     bindChannel(channel: IChannel): void;
     // (undocumented)
     get channelsRoutingContext(): this;
+    get claims(): ReadonlyMap<string, unknown>;
     // (undocumented)
     get clientDetails(): IClientDetails;
     // (undocumented)
@@ -54,9 +57,11 @@ export class FluidDataStoreRuntime extends TypedEventEmitter<IFluidDataStoreRunt
     getAudience(): IAudience;
     // (undocumented)
     getChannel(id: string): Promise<IChannel>;
+    getClaim(key: string): unknown | undefined;
     getGCData(fullGC?: boolean): Promise<IGarbageCollectionData>;
     // (undocumented)
     getQuorum(): IQuorumClients;
+    hasClaim(key: string): boolean;
     // (undocumented)
     readonly id: string;
     // (undocumented)
@@ -99,6 +104,7 @@ export class FluidDataStoreRuntime extends TypedEventEmitter<IFluidDataStoreRunt
     setConnectionState(connected: boolean, clientId?: string): void;
     submitSignal(type: string, content: unknown, targetClientId?: string): void;
     summarize(fullTree?: boolean, trackState?: boolean, telemetryContext?: ITelemetryContext): Promise<ISummaryTreeWithStats>;
+    trySetClaim(key: string, value: unknown): IClaimAttempt;
     updateUsedRoutes(usedRoutes: string[]): void;
     // (undocumented)
     uploadBlob(blob: ArrayBufferLike, signal?: AbortSignal): Promise<IFluidHandle<ArrayBufferLike>>;
