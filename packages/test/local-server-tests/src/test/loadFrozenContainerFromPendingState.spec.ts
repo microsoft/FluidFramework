@@ -7,13 +7,12 @@ import { strict as assert } from "assert";
 
 import { bufferToString, stringToBuffer } from "@fluid-internal/client-utils";
 import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct/internal";
+import type { IContainer } from "@fluidframework/container-definitions/internal";
 import {
-	asLegacyAlpha,
 	createDetachedContainer,
 	createFrozenDocumentServiceFactory,
 	loadExistingContainer,
 	loadFrozenContainerFromPendingState,
-	type ContainerAlpha,
 	type ILoaderProps,
 } from "@fluidframework/container-loader/internal";
 import type { FluidObject, ILocalFluidHandle } from "@fluidframework/core-interfaces/internal";
@@ -29,6 +28,7 @@ import {
 } from "@fluidframework/server-local-server";
 import {
 	TestFluidObjectFactory,
+	getRequiredPendingLocalState,
 	timeoutPromise,
 	type ITestFluidObject,
 	type LocalCodeLoader,
@@ -47,7 +47,7 @@ const toComparableArray = (dir: ISharedMap): [string, unknown][] =>
 const initialize = async (options?: {
 	createBlobPayloadPending?: true;
 }): Promise<{
-	container: ContainerAlpha;
+	container: IContainer;
 	ITestFluidObject: ITestFluidObject;
 	urlResolver: LocalResolver;
 	codeLoader: LocalCodeLoader;
@@ -86,12 +86,10 @@ const initialize = async (options?: {
 			...(runtimeFactory === undefined ? {} : { runtimeFactory }),
 		});
 
-	const container = asLegacyAlpha(
-		await createDetachedContainer({
-			codeDetails,
-			...loaderProps,
-		}),
-	);
+	const container = await createDetachedContainer({
+		codeDetails,
+		...loaderProps,
+	});
 	const { ITestFluidObject }: FluidObject<TestFluidObject> =
 		(await container.getEntryPoint()) ?? {};
 	assert(
@@ -133,7 +131,7 @@ describe("loadFrozenContainerFromPendingState", () => {
 			ITestFluidObject.root.set(`disconnected-${i}`, i);
 		}
 
-		const pendingLocalState = await container.getPendingLocalState();
+		const pendingLocalState = await getRequiredPendingLocalState(container);
 
 		const frozenContainer = await loadFrozenContainerFromPendingState({
 			codeLoader,
@@ -202,7 +200,7 @@ describe("loadFrozenContainerFromPendingState", () => {
 			url !== undefined,
 			"Expected container to provide a valid absolute URL, but got undefined",
 		);
-		const pendingLocalState = await container.getPendingLocalState();
+		const pendingLocalState = await getRequiredPendingLocalState(container);
 
 		const frozenContainer = await loadFrozenContainerFromPendingState({
 			codeLoader,
@@ -246,7 +244,7 @@ describe("loadFrozenContainerFromPendingState", () => {
 			url !== undefined,
 			"Expected container to provide a valid absolute URL, but got undefined",
 		);
-		const pendingLocalState = await container.getPendingLocalState();
+		const pendingLocalState = await getRequiredPendingLocalState(container);
 
 		const frozenContainer = await loadFrozenContainerFromPendingState({
 			codeLoader,
@@ -285,7 +283,7 @@ describe("loadFrozenContainerFromPendingState", () => {
 			url !== undefined,
 			"Expected container to provide a valid absolute URL, but got undefined",
 		);
-		const pendingLocalState = await container.getPendingLocalState();
+		const pendingLocalState = await getRequiredPendingLocalState(container);
 
 		const frozenContainer = await loadFrozenContainerFromPendingState({
 			codeLoader,
@@ -325,7 +323,7 @@ describe("loadFrozenContainerFromPendingState", () => {
 			url !== undefined,
 			"Expected container to provide a valid absolute URL, but got undefined",
 		);
-		const pendingLocalState = await container.getPendingLocalState();
+		const pendingLocalState = await getRequiredPendingLocalState(container);
 
 		const frozenContainer = await loadFrozenContainerFromPendingState({
 			codeLoader,
@@ -362,7 +360,7 @@ describe("loadFrozenContainerFromPendingState", () => {
 			ITestFluidObject.root.set("seed", "value");
 			const url = await container.getAbsoluteUrl("");
 			assert(url !== undefined, "Expected container to provide a valid absolute URL");
-			const pendingLocalState = await container.getPendingLocalState();
+			const pendingLocalState = await getRequiredPendingLocalState(container);
 
 			const frozenContainer = await loadFrozenContainerFromPendingState({
 				codeLoader,
@@ -397,7 +395,7 @@ describe("loadFrozenContainerFromPendingState", () => {
 			ITestFluidObject.root.set("seed", "value");
 			const url = await container.getAbsoluteUrl("");
 			assert(url !== undefined, "Expected container to provide a valid absolute URL");
-			const pendingLocalState = await container.getPendingLocalState();
+			const pendingLocalState = await getRequiredPendingLocalState(container);
 
 			const frozenContainer = await loadFrozenContainerFromPendingState({
 				codeLoader,
@@ -449,7 +447,7 @@ describe("loadFrozenContainerFromPendingState", () => {
 			if (container.isDirty) {
 				await timeoutPromise((resolve) => container.once("saved", () => resolve()));
 			}
-			const pendingLocalState = await container.getPendingLocalState();
+			const pendingLocalState = await getRequiredPendingLocalState(container);
 
 			const frozenContainer = await loadFrozenContainerFromPendingState({
 				codeLoader,
@@ -489,7 +487,7 @@ describe("loadFrozenContainerFromPendingState", () => {
 			ITestFluidObject.root.set("seed", "value");
 			const url = await container.getAbsoluteUrl("");
 			assert(url !== undefined, "Expected container to provide a valid absolute URL");
-			const pendingLocalState = await container.getPendingLocalState();
+			const pendingLocalState = await getRequiredPendingLocalState(container);
 
 			const frozenContainer = await loadFrozenContainerFromPendingState({
 				codeLoader,
@@ -530,18 +528,16 @@ describe("loadFrozenContainerFromPendingState", () => {
 			if (container.isDirty) {
 				await timeoutPromise((resolve) => container.once("saved", () => resolve()));
 			}
-			const initialPending = await container.getPendingLocalState();
+			const initialPending = await getRequiredPendingLocalState(container);
 
-			const frozenContainer = asLegacyAlpha(
-				await loadFrozenContainerFromPendingState({
-					codeLoader,
-					documentServiceFactory,
-					urlResolver,
-					request: { url },
-					pendingLocalState: initialPending,
-					readOnly: false,
-				}),
-			);
+			const frozenContainer = await loadFrozenContainerFromPendingState({
+				codeLoader,
+				documentServiceFactory,
+				urlResolver,
+				request: { url },
+				pendingLocalState: initialPending,
+				readOnly: false,
+			});
 			const frozenEntryPoint: FluidObject<TestFluidObject> =
 				await frozenContainer.getEntryPoint();
 			assert(
@@ -555,7 +551,7 @@ describe("loadFrozenContainerFromPendingState", () => {
 
 			// Capture pending state from the writable-frozen container — the load-bearing
 			// invariant: edits made post-load must round-trip through getPendingLocalState().
-			const layeredPending = await frozenContainer.getPendingLocalState();
+			const layeredPending = await getRequiredPendingLocalState(frozenContainer);
 			assert.notStrictEqual(
 				layeredPending,
 				initialPending,
@@ -599,7 +595,7 @@ describe("loadFrozenContainerFromPendingState", () => {
 			ITestFluidObject.root.set("seed", "value");
 			const url = await container.getAbsoluteUrl("");
 			assert(url !== undefined, "Expected container to provide a valid absolute URL");
-			const pendingLocalState = await container.getPendingLocalState();
+			const pendingLocalState = await getRequiredPendingLocalState(container);
 
 			// Pre-wrap with readOnly: true (the default), then ask loadFrozenContainerFromPendingState
 			// for readOnly: false. The most recent intent should win — without the rewrap-on-mismatch
@@ -631,23 +627,21 @@ describe("loadFrozenContainerFromPendingState", () => {
 			if (container.isDirty) {
 				await timeoutPromise((resolve) => container.once("saved", () => resolve()));
 			}
-			const initialPending = await container.getPendingLocalState();
+			const initialPending = await getRequiredPendingLocalState(container);
 
 			// allowReconnect: false makes Container.connectToDeltaStream force mode = "write" on
 			// the very first connect. Without first-vs-subsequent tracking in FrozenDocumentService,
 			// that initial connect would be intercepted by the upgrade-hang path and the load
 			// would never complete.
-			const frozenContainer = asLegacyAlpha(
-				await loadFrozenContainerFromPendingState({
-					codeLoader,
-					documentServiceFactory,
-					urlResolver,
-					request: { url },
-					pendingLocalState: initialPending,
-					readOnly: false,
-					allowReconnect: false,
-				}),
-			);
+			const frozenContainer = await loadFrozenContainerFromPendingState({
+				codeLoader,
+				documentServiceFactory,
+				urlResolver,
+				request: { url },
+				pendingLocalState: initialPending,
+				readOnly: false,
+				allowReconnect: false,
+			});
 
 			assert.strictEqual(
 				frozenContainer.readOnlyInfo.readonly,
@@ -690,7 +684,7 @@ describe("loadFrozenContainerFromPendingState", () => {
 			}
 
 			// Pending state must capture all layered edits.
-			const layeredPending = await frozenContainer.getPendingLocalState();
+			const layeredPending = await getRequiredPendingLocalState(frozenContainer);
 			assert.notStrictEqual(
 				layeredPending,
 				initialPending,
@@ -725,24 +719,22 @@ describe("loadFrozenContainerFromPendingState", () => {
 			if (container.isDirty) {
 				await timeoutPromise((resolve) => container.once("saved", () => resolve()));
 			}
-			const initialPending = await container.getPendingLocalState();
+			const initialPending = await getRequiredPendingLocalState(container);
 
 			// Non-interactive client also forces mode = "write" on the first connect — same path
 			// in Container.connectToDeltaStream as allowReconnect: false. Different forcing
 			// condition, identical observed behavior at the FrozenDocumentService boundary.
-			const frozenContainer = asLegacyAlpha(
-				await loadFrozenContainerFromPendingState({
-					codeLoader,
-					documentServiceFactory,
-					urlResolver,
-					request: { url },
-					pendingLocalState: initialPending,
-					readOnly: false,
-					clientDetailsOverride: {
-						capabilities: { interactive: false },
-					},
-				}),
-			);
+			const frozenContainer = await loadFrozenContainerFromPendingState({
+				codeLoader,
+				documentServiceFactory,
+				urlResolver,
+				request: { url },
+				pendingLocalState: initialPending,
+				readOnly: false,
+				clientDetailsOverride: {
+					capabilities: { interactive: false },
+				},
+			});
 
 			assert.strictEqual(
 				frozenContainer.readOnlyInfo.readonly,
@@ -765,7 +757,7 @@ describe("loadFrozenContainerFromPendingState", () => {
 				frozenEntryPoint.ITestFluidObject.root.set(`nonInteractive-${i}`, i);
 			}
 
-			const layeredPending = await frozenContainer.getPendingLocalState();
+			const layeredPending = await getRequiredPendingLocalState(frozenContainer);
 			assert.notStrictEqual(
 				layeredPending,
 				initialPending,
@@ -783,7 +775,7 @@ describe("loadFrozenContainerFromPendingState", () => {
 			if (container.isDirty) {
 				await timeoutPromise((resolve) => container.once("saved", () => resolve()));
 			}
-			const pendingLocalState = await container.getPendingLocalState();
+			const pendingLocalState = await getRequiredPendingLocalState(container);
 
 			const frozenContainer = await loadFrozenContainerFromPendingState({
 				codeLoader,
@@ -823,7 +815,7 @@ describe("loadFrozenContainerFromPendingState", () => {
 			if (container.isDirty) {
 				await timeoutPromise((resolve) => container.once("saved", () => resolve()));
 			}
-			const pendingLocalState = await container.getPendingLocalState();
+			const pendingLocalState = await getRequiredPendingLocalState(container);
 
 			const frozenContainer = await loadFrozenContainerFromPendingState({
 				codeLoader,
@@ -864,18 +856,16 @@ describe("loadFrozenContainerFromPendingState", () => {
 			if (container.isDirty) {
 				await timeoutPromise((resolve) => container.once("saved", () => resolve()));
 			}
-			const initialPending = await container.getPendingLocalState();
+			const initialPending = await getRequiredPendingLocalState(container);
 
-			const frozenContainer = asLegacyAlpha(
-				await loadFrozenContainerFromPendingState({
-					codeLoader,
-					documentServiceFactory,
-					urlResolver,
-					request: { url },
-					pendingLocalState: initialPending,
-					readOnly: false,
-				}),
-			);
+			const frozenContainer = await loadFrozenContainerFromPendingState({
+				codeLoader,
+				documentServiceFactory,
+				urlResolver,
+				request: { url },
+				pendingLocalState: initialPending,
+				readOnly: false,
+			});
 			const frozenEntryPoint: FluidObject<TestFluidObject> =
 				await frozenContainer.getEntryPoint();
 			assert(
@@ -909,7 +899,7 @@ describe("loadFrozenContainerFromPendingState", () => {
 			// Both batches should round-trip through getPendingLocalState — proving the
 			// writable-frozen container continues to capture pending state across timer
 			// boundaries.
-			const layeredPending = await frozenContainer.getPendingLocalState();
+			const layeredPending = await getRequiredPendingLocalState(frozenContainer);
 			const secondFrozen = await loadFrozenContainerFromPendingState({
 				codeLoader,
 				documentServiceFactory,
@@ -954,7 +944,7 @@ describe("loadFrozenContainerFromPendingState", () => {
 			if (container.isDirty) {
 				await timeoutPromise((resolve) => container.once("saved", () => resolve()));
 			}
-			const pendingLocalState = await container.getPendingLocalState();
+			const pendingLocalState = await getRequiredPendingLocalState(container);
 
 			const frozenContainer = await loadFrozenContainerFromPendingState({
 				codeLoader,
@@ -1022,7 +1012,7 @@ describe("loadFrozenContainerFromPendingState", () => {
 
 				const url = await container.getAbsoluteUrl("");
 				assert(url !== undefined, "Expected container to provide a valid absolute URL");
-				const pendingLocalState = await container.getPendingLocalState();
+				const pendingLocalState = await getRequiredPendingLocalState(container);
 
 				const frozenContainer = await loadFrozenContainerFromPendingState({
 					codeLoader,
@@ -1069,7 +1059,7 @@ describe("loadFrozenContainerFromPendingState", () => {
 
 				const url = await container.getAbsoluteUrl("");
 				assert(url !== undefined, "Expected container to provide a valid absolute URL");
-				const pendingLocalState = await container.getPendingLocalState();
+				const pendingLocalState = await getRequiredPendingLocalState(container);
 
 				const frozenContainer = await loadFrozenContainerFromPendingState({
 					codeLoader,
@@ -1114,18 +1104,16 @@ describe("loadFrozenContainerFromPendingState", () => {
 
 				const url = await container.getAbsoluteUrl("");
 				assert(url !== undefined, "Expected container to provide a valid absolute URL");
-				const pendingLocalState = await container.getPendingLocalState();
+				const pendingLocalState = await getRequiredPendingLocalState(container);
 
-				const frozenContainer = asLegacyAlpha(
-					await loadFrozenContainerFromPendingState({
-						codeLoader,
-						documentServiceFactory,
-						urlResolver,
-						request: { url },
-						pendingLocalState,
-						readOnly: false,
-					}),
-				);
+				const frozenContainer = await loadFrozenContainerFromPendingState({
+					codeLoader,
+					documentServiceFactory,
+					urlResolver,
+					request: { url },
+					pendingLocalState,
+					readOnly: false,
+				});
 				const frozenEntryPoint: FluidObject<TestFluidObject> =
 					await frozenContainer.getEntryPoint();
 				assert(frozenEntryPoint.ITestFluidObject !== undefined);
@@ -1173,7 +1161,7 @@ describe("loadFrozenContainerFromPendingState", () => {
 				// Attach the handle so attachGraph runs and the blob is recorded as pending.
 				frozenFluidObject.root.set("frozenBlob", handle);
 
-				const layeredPending = await frozenContainer.getPendingLocalState();
+				const layeredPending = await getRequiredPendingLocalState(frozenContainer);
 				assert.notStrictEqual(
 					layeredPending,
 					pendingLocalState,

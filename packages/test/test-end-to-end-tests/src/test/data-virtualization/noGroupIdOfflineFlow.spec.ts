@@ -6,13 +6,16 @@
 import { strict as assert } from "assert";
 
 import { describeCompat } from "@fluid-private/test-version-utils";
-import { asLegacyAlpha, type ContainerAlpha } from "@fluidframework/container-loader/internal";
+import type { IContainer } from "@fluidframework/container-definitions/internal";
 import type { IContainerRuntimeOptions } from "@fluidframework/container-runtime/internal";
 import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import { SharedCounter } from "@fluidframework/counter/internal";
 import type { ISharedDirectory } from "@fluidframework/map/internal";
-import type { ITestObjectProvider } from "@fluidframework/test-utils/internal";
+import {
+	getRequiredPendingLocalState,
+	type ITestObjectProvider,
+} from "@fluidframework/test-utils/internal";
 
 describeCompat("Offline Attach Ops", "NoCompat", (getTestObjectProvider, apis) => {
 	const { DataObjectFactory, DataObject } = apis.dataRuntime;
@@ -69,9 +72,7 @@ describeCompat("Offline Attach Ops", "NoCompat", (getTestObjectProvider, apis) =
 	});
 
 	it("Can create loadingGroupId", async () => {
-		const container: ContainerAlpha = asLegacyAlpha(
-			await provider.createContainer(runtimeFactory),
-		);
+		const container: IContainer = await provider.createContainer(runtimeFactory);
 		const mainObject = (await container.getEntryPoint()) as TestDataObject;
 
 		// Disconnect and create child object attached stashed ops
@@ -80,7 +81,7 @@ describeCompat("Offline Attach Ops", "NoCompat", (getTestObjectProvider, apis) =
 		const childObject = await dataObjectFactory.createInstance(mainObject.containerRuntime);
 		mainObject._root.set("testObject2", childObject.handle);
 
-		const serializedState = await container.getPendingLocalState();
+		const serializedState = await getRequiredPendingLocalState(container);
 		container.close();
 		assert(serializedState !== undefined, "serializedState should not be undefined");
 

@@ -6,13 +6,12 @@
 import { strict as assert } from "assert";
 
 import { bufferToString, stringToBuffer } from "@fluid-internal/client-utils";
+import type { IContainer } from "@fluidframework/container-definitions/internal";
 import {
 	captureFullContainerState,
 	createDetachedContainer,
 	extractBlobAttachReferences,
 	loadFrozenContainerFromPendingState,
-	asLegacyAlpha,
-	type ContainerAlpha,
 } from "@fluidframework/container-loader/internal";
 import type { FluidObject } from "@fluidframework/core-interfaces/internal";
 import type {
@@ -84,7 +83,7 @@ function makeFactoryWithFailingReadBlob(
 }
 
 const initialize = async (): Promise<{
-	container: ContainerAlpha;
+	container: IContainer;
 	testFluidObject: ITestFluidObject;
 	urlResolver: LocalResolver;
 	codeLoader: LocalCodeLoader;
@@ -94,9 +93,7 @@ const initialize = async (): Promise<{
 	const { urlResolver, codeDetails, codeLoader, loaderProps, documentServiceFactory } =
 		createLoader({ deltaConnectionServer });
 
-	const container = asLegacyAlpha(
-		await createDetachedContainer({ codeDetails, ...loaderProps }),
-	);
+	const container = await createDetachedContainer({ codeDetails, ...loaderProps });
 	const entryPoint: FluidObject<TestFluidObject> = (await container.getEntryPoint()) ?? {};
 	assert(
 		entryPoint.ITestFluidObject !== undefined,
