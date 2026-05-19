@@ -57,7 +57,7 @@ async function start(): Promise<void> {
 	if (createNew) {
 		// The client will create a new detached container using the schema
 		// A detached container will enable the app to modify the container before attaching it to the client
-		({ container } = await client.createContainer(todoListContainerSchema, "2"));
+		({ container } = await client.createContainer(todoListContainerSchema, "2.0.0"));
 		// Initialize our models so they are ready for use with our controllers
 		appModel = await initializeAppForNewContainer(container);
 
@@ -71,7 +71,7 @@ async function start(): Promise<void> {
 		containerId = location.hash.slice(1);
 		// Use the unique container ID to fetch the container created earlier.  It will already be connected to the
 		// collaboration session.
-		({ container } = await client.getContainer(containerId, todoListContainerSchema, "2"));
+		({ container } = await client.getContainer(containerId, todoListContainerSchema, "2.0.0"));
 		appModel = loadAppFromExistingContainer(container);
 	}
 

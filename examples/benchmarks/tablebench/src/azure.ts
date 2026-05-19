@@ -42,7 +42,7 @@ export async function initFluid(): Promise<{ view: TreeView<typeof Table> }> {
 		const { tree } = container.initialObjects;
 		view = tree.viewWith(config);
 	} else {
-		({ container } = await client.createContainer(containerSchema, "2"));
+		({ container } = await client.createContainer(containerSchema, "2.0.0"));
 		const { tree } = container.initialObjects;
 		view = tree.viewWith(config);
 		view.initialize(generateTable(10000));
