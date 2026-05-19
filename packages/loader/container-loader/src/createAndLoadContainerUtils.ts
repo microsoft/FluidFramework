@@ -16,9 +16,11 @@ import type {
 	IRequest,
 	ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
+import type { AllOrNone } from "@fluidframework/core-interfaces/internal";
 import type { IClientDetails } from "@fluidframework/driver-definitions";
 import type {
 	IDocumentServiceFactory,
+	IResolvedUrl,
 	ISequencedDocumentMessage,
 	ISnapshot,
 	ISnapshotTree,
@@ -59,7 +61,11 @@ import type {
 	OnDemandSummaryResults,
 	SummarizeOnDemandResults,
 } from "./summarizerResultTypes.js";
-import { getDocumentAttributes } from "./utils.js";
+import {
+	getAttachedContainerStateFromSerializedContainer,
+	getDocumentAttributes,
+	tryParseCompatibleResolvedUrl,
+} from "./utils.js";
 
 interface OnDemandSummarizeResultsPromises {
 	readonly summarySubmitted: Promise<SummarizeOnDemandResults["summarySubmitted"]>;
@@ -238,10 +244,40 @@ export async function loadExistingContainer(
 
 /**
  * Properties required to load a frozen container from pending state.
+ *
+ * Two forms are supported and selected by the presence of the driver-wiring
+ * fields. **Online** form supplies `request`, `urlResolver`, and
+ * `documentServiceFactory`; the supplied factory is wrapped in a frozen
+ * factory and the resolver is used to re-resolve the request URL just as with
+ * {@link loadExistingContainer}. **Offline** form omits all three driver
+ * fields; the captured URL stored in `pendingLocalState` is used to
+ * synthesize a resolved URL, no real driver is contacted, and
+ * `IContainer.getAbsoluteUrl` throws on the returned container because the
+ * resolver's external URL format is unknown without a real `IUrlResolver`.
+ *
+ * **Offline form precondition.** With no driver wiring there is no live
+ * storage to read attachment blobs from, so any blob the runtime dereferences
+ * during load must already be inlined into `pendingLocalState`. The pending
+ * state must therefore be produced by {@link captureFullContainerState}
+ * (which inlines all referenced attachment blobs) rather than
+ * `IContainer.getPendingLocalState` / `getRequiredPendingLocalState` (which
+ * do not). If the runtime needs an attachment blob that is not inlined, the
+ * load fails with `UsageError` from the synthesized storage service.
+ *
+ * The offline form supports `readOnly: false` for the same capture-and-relay
+ * use case as the online form: local DDS submissions accrue in the runtime's
+ * pending-state manager and can be captured via `getPendingLocalState` for
+ * a later online replay. Nothing is published from an offline container.
+ *
+ * Mixing the two forms (some driver fields supplied, others omitted) is a
+ * compile-time error courtesy of the `AllOrNone` modifier from
+ * `@fluidframework/core-interfaces`.
  * @legacy @alpha
  */
-export interface ILoadFrozenContainerFromPendingStateProps
-	extends ILoadExistingContainerProps {
+export type ILoadFrozenContainerFromPendingStateProps = Omit<
+	ILoadExistingContainerProps,
+	"request" | "urlResolver" | "documentServiceFactory" | "pendingLocalState"
+> & {
 	/**
 	 * Pending local state to be applied to the container.
 	 */
@@ -274,7 +310,11 @@ export interface ILoadFrozenContainerFromPendingStateProps
 	 * that the runtime accepts DDS submissions and accumulates them in `pendingStateManager`.
 	 */
 	readonly readOnly?: boolean;
-}
+} & AllOrNone<{
+		readonly request: IRequest;
+		readonly urlResolver: IUrlResolver;
+		readonly documentServiceFactory: IDocumentServiceFactory;
+	}>;
 
 /**
  * Loads a frozen container from pending local state.
@@ -284,11 +324,73 @@ export interface ILoadFrozenContainerFromPendingStateProps
 export async function loadFrozenContainerFromPendingState(
 	props: ILoadFrozenContainerFromPendingStateProps,
 ): Promise<IContainer> {
+	const { request, urlResolver, documentServiceFactory, readOnly, pendingLocalState } = props;
+
+	if (
+		request === undefined ||
+		urlResolver === undefined ||
+		documentServiceFactory === undefined
+	) {
+		if (
+			request !== undefined ||
+			urlResolver !== undefined ||
+			documentServiceFactory !== undefined
+		) {
+			throw new UsageError(
+				"loadFrozenContainerFromPendingState: request, urlResolver, and documentServiceFactory must all be provided or all omitted",
+			);
+		}
+
+		// Offline: synthesize the driver wiring from the URL captured in pending state.
+		// The container's load pipeline is reused unchanged — the synthesized resolver
+		// returns a resolved URL whose `url` equals `pendingLocalState.url`, so the
+		// identity guard in `Loader.resolveCore` is trivially satisfied.
+		const pending = getAttachedContainerStateFromSerializedContainer(pendingLocalState);
+		const parsed = tryParseCompatibleResolvedUrl(pending.url);
+		if (parsed === undefined) {
+			throw new UsageError(
+				`loadFrozenContainerFromPendingState: pending state URL is not in a parseable form (${pending.url})`,
+			);
+		}
+		const synthesizedResolvedUrl: IResolvedUrl = {
+			type: "fluid",
+			id: parsed.id,
+			url: pending.url,
+			// `tokens` and `endpoints` are empty because no real driver is contacted; the
+			// frozen factory never reads them. A future offline mode that needs them would
+			// require carrying them in the pending-state format.
+			tokens: {},
+			endpoints: {},
+		};
+		const synthesizedUrlResolver: IUrlResolver = {
+			// The argument is ignored: in offline mode the only URL in the system is the
+			// one captured in pending state. Any request is mapped to the same resolved URL.
+			resolve: async () => synthesizedResolvedUrl,
+			// External (request-form) URLs cannot be reconstructed from the captured
+			// resolved URL alone, so we cannot honor `getAbsoluteUrl`. Surface the misuse
+			// loudly rather than fabricate a string in the wrong format.
+			getAbsoluteUrl: async () => {
+				throw new UsageError(
+					"IContainer.getAbsoluteUrl is not supported on a container loaded offline from pending state. Supply request/urlResolver/documentServiceFactory at load time to enable it.",
+				);
+			},
+		};
+		return loadExistingContainer({
+			...props,
+			// `request.url` carries the resolved-form URL here. Nothing downstream
+			// inspects it between this entry point and the synthesized resolver above.
+			request: { url: pending.url, headers: {} },
+			urlResolver: synthesizedUrlResolver,
+			documentServiceFactory: createFrozenDocumentServiceFactory(undefined, readOnly),
+		});
+	}
+
+	// Online: wrap the caller-supplied factory so the live driver only serves blob reads.
 	return loadExistingContainer({
 		...props,
 		documentServiceFactory: createFrozenDocumentServiceFactory(
-			props.documentServiceFactory,
-			props.readOnly,
+			documentServiceFactory,
+			readOnly,
 		),
 	});
 }
