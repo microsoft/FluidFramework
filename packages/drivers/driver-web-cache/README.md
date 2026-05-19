@@ -88,6 +88,38 @@ existing entry belongs to a different partition (consistent with the semantics o
 returns `true` if the new value was written and `false` if the predicate rejected the write or an
 error occurred.
 
+## Cross-instance change notifications (`onChange`)
+
+`FluidCache` broadcasts cache mutations over a `BroadcastChannel`, so other `FluidCache` instances
+in the same browsing context (typically other tabs of the same origin) can observe changes made
+elsewhere. Subscribe with `onChange`:
+
+```typescript
+const unsubscribe = fluidCache.onChange((event) => {
+	if (event.op === "removeFile") {
+		// All entries for this file were dropped by some other tab.
+	} else {
+		// event.op is "put" or "remove"; event.partitionKey matches this cache's partition.
+	}
+});
+// Later:
+unsubscribe();
+```
+
+Per-entry `put` and `remove` events are filtered by partition key (you only receive events whose
+`partitionKey` matches this cache's). `removeFile` events are delivered unconditionally because
+`removeEntries` drops rows regardless of partition.
+
+Note: `BroadcastChannel` does not echo a message back to the instance that posted it, so writes
+performed by *this* `FluidCache` do not invoke its own listeners — only other instances do.
+
+When the cache is no longer needed (e.g. user signs out, page unloads), call `fluidCache.dispose()`
+to close the `BroadcastChannel` and any open IndexedDB connection. `dispose` is idempotent; calling
+`onChange` after `dispose` throws a `UsageError`.
+
+If `BroadcastChannel` is not available in the runtime, `onChange` becomes a no-op subscription and
+writes simply don't broadcast.
+
 ## Clearing cache entries
 
 Whenever any Fluid content is loaded with the web cache enabled, a task is scheduled to clear out all "stale" cache

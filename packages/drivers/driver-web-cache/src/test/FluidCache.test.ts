@@ -9,7 +9,7 @@ import type { ICacheEntry } from "@fluidframework/driver-definitions/internal";
 import { getKeyForCacheEntry } from "@fluidframework/driver-utils/internal";
 import { openDB } from "idb";
 
-import { FluidCache } from "../FluidCache.js";
+import { FluidCache, type FluidCacheChangeEvent } from "../FluidCache.js";
 import {
 	FluidDriverCacheDBName,
 	FluidDriverObjectStoreName,
@@ -83,12 +83,7 @@ for (const immediateClose of [true, false]) {
 
 		afterEach(() => {
 			for (const cache of [fluidCache, ...extraCaches.splice(0)]) {
-				if (cache !== undefined) {
-					// eslint-disable-next-line @typescript-eslint/dot-notation -- Access to private property for testing purposes
-					clearTimeout(cache["dbCloseTimer"]);
-					// eslint-disable-next-line @typescript-eslint/dot-notation -- Access to private property for testing purposes
-					cache["db"]?.close();
-				}
+				cache?.dispose();
 			}
 		});
 
@@ -432,6 +427,188 @@ for (const immediateClose of [true, false]) {
 				// and the final state must reflect the higher revision regardless of order.
 				assert.ok(wroteHigh || wroteLow);
 				assert.deepEqual(await fluidCache.get(cacheEntry), { rev: 2 });
+			});
+		});
+
+		describe("onChange notifications", () => {
+			// Flush BroadcastChannel message delivery (Node delivers asynchronously via the
+			// microtask/IO queues). A single setImmediate is sufficient because the channel
+			// posts via the event loop and we just need to yield once.
+			const flushBroadcast = async (): Promise<void> =>
+				new Promise<void>((resolve) => setImmediate(resolve));
+
+			it("delivers put events to other instances in the same partition", async () => {
+				fluidCache = getFluidCache();
+				const otherCache = getFluidCache();
+				extraCaches.push(otherCache);
+
+				const received: FluidCacheChangeEvent[] = [];
+				otherCache.onChange((event) => received.push(event));
+
+				const cacheEntry = getMockCacheEntry("notifyPut");
+				await fluidCache.put(cacheEntry, { hello: "world" });
+				await flushBroadcast();
+
+				assert.deepEqual(received, [
+					{
+						op: "put",
+						partitionKey: mockPartitionKey,
+						fileId: "myDocument",
+						type: "snapshot",
+						cacheItemId: "notifyPut",
+					},
+				]);
+			});
+
+			it("does not fire on the same instance that posted the event", async () => {
+				fluidCache = getFluidCache();
+
+				const received: FluidCacheChangeEvent[] = [];
+				fluidCache.onChange((event) => received.push(event));
+
+				await fluidCache.put(getMockCacheEntry("selfNotify"), { x: 1 });
+				await flushBroadcast();
+
+				assert.deepEqual(received, []);
+			});
+
+			it("filters put/remove events by partition key", async () => {
+				fluidCache = getFluidCache({ partitionKey: "partitionA" });
+				const partitionBCache = getFluidCache({ partitionKey: "partitionB" });
+				extraCaches.push(partitionBCache);
+
+				const aReceived: FluidCacheChangeEvent[] = [];
+				const bReceived: FluidCacheChangeEvent[] = [];
+				fluidCache.onChange((event) => aReceived.push(event));
+				partitionBCache.onChange((event) => bReceived.push(event));
+
+				// A writes — only an "A-partition" listener on a different instance should see it.
+				// fluidCache is the writer, so it doesn't see its own event (BC default).
+				// partitionBCache is in a different partition, so it must filter the event out.
+				await fluidCache.put(getMockCacheEntry("xPartition"), { v: 1 });
+				await flushBroadcast();
+
+				assert.deepEqual(aReceived, []);
+				assert.deepEqual(bReceived, []);
+
+				// Add a third A-partition cache to receive the event.
+				const aReceiver = getFluidCache({ partitionKey: "partitionA" });
+				extraCaches.push(aReceiver);
+				const aReceiverEvents: FluidCacheChangeEvent[] = [];
+				aReceiver.onChange((event) => aReceiverEvents.push(event));
+
+				await fluidCache.put(getMockCacheEntry("xPartition2"), { v: 2 });
+				await flushBroadcast();
+
+				assert.deepEqual(aReceiverEvents, [
+					{
+						op: "put",
+						partitionKey: "partitionA",
+						fileId: "myDocument",
+						type: "snapshot",
+						cacheItemId: "xPartition2",
+					},
+				]);
+				// B still doesn't receive A-partition events.
+				assert.deepEqual(bReceived, []);
+			});
+
+			it("delivers removeFile events to all listeners regardless of partition", async () => {
+				fluidCache = getFluidCache({ partitionKey: "partitionA" });
+				const partitionBCache = getFluidCache({ partitionKey: "partitionB" });
+				extraCaches.push(partitionBCache);
+
+				const bReceived: FluidCacheChangeEvent[] = [];
+				partitionBCache.onChange((event) => bReceived.push(event));
+
+				const cacheEntry = getMockCacheEntry("forFileRemoval");
+				await fluidCache.put(cacheEntry, { v: 1 });
+				await fluidCache.removeEntries(cacheEntry.file);
+				await flushBroadcast();
+
+				assert.ok(
+					bReceived.some((e) => e.op === "removeFile" && e.fileId === cacheEntry.file.docId),
+					`expected removeFile event for ${cacheEntry.file.docId}, got ${JSON.stringify(bReceived)}`,
+				);
+			});
+
+			it("fires a remove event for removeEntry", async () => {
+				fluidCache = getFluidCache();
+				const otherCache = getFluidCache();
+				extraCaches.push(otherCache);
+
+				const received: FluidCacheChangeEvent[] = [];
+				otherCache.onChange((event) => received.push(event));
+
+				const cacheEntry = getMockCacheEntry("removeOne");
+				await fluidCache.put(cacheEntry, { v: 1 });
+				await fluidCache.removeEntry(cacheEntry);
+				await flushBroadcast();
+
+				assert.ok(
+					received.some(
+						(e) =>
+							e.op === "remove" &&
+							e.partitionKey === mockPartitionKey &&
+							e.cacheItemId === "removeOne",
+					),
+					`expected a remove event for "removeOne", got ${JSON.stringify(received)}`,
+				);
+			});
+
+			it("fires a put event on successful putIf and nothing on a rejected putIf", async () => {
+				fluidCache = getFluidCache();
+				const otherCache = getFluidCache();
+				extraCaches.push(otherCache);
+
+				const received: FluidCacheChangeEvent[] = [];
+				otherCache.onChange((event) => received.push(event));
+
+				const cacheEntry = getMockCacheEntry("putIfNotify");
+
+				const wroteFirst = await fluidCache.putIf(cacheEntry, { rev: 1 }, () => true);
+				assert.strictEqual(wroteFirst, true);
+
+				const wroteSecond = await fluidCache.putIf(cacheEntry, { rev: 2 }, () => false);
+				assert.strictEqual(wroteSecond, false);
+
+				await flushBroadcast();
+
+				// Exactly one put event for the successful write — no event for the rejected one.
+				const putsForKey = received.filter(
+					(e) => e.op === "put" && e.cacheItemId === "putIfNotify",
+				);
+				assert.strictEqual(putsForKey.length, 1);
+			});
+
+			it("stops delivering events after the unsubscribe function is invoked", async () => {
+				fluidCache = getFluidCache();
+				const otherCache = getFluidCache();
+				extraCaches.push(otherCache);
+
+				const received: FluidCacheChangeEvent[] = [];
+				const unsubscribe = otherCache.onChange((event) => received.push(event));
+
+				await fluidCache.put(getMockCacheEntry("beforeUnsub"), { v: 1 });
+				await flushBroadcast();
+				const countBefore = received.length;
+
+				unsubscribe();
+
+				await fluidCache.put(getMockCacheEntry("afterUnsub"), { v: 2 });
+				await flushBroadcast();
+
+				assert.strictEqual(received.length, countBefore);
+			});
+
+			it("throws UsageError when onChange is called after dispose", async () => {
+				fluidCache = getFluidCache();
+				fluidCache.dispose();
+
+				assert.throws(
+					() => fluidCache.onChange(() => {}),
+					(error: Error) => /disposed/i.test(error.message),
+				);
 			});
 		});
 	});

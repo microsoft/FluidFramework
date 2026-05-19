@@ -70,6 +70,48 @@ export interface FluidCacheConfig {
 }
 
 /**
+ * Notification posted by a `FluidCache` instance when it mutates the underlying IndexedDB.
+ * Other `FluidCache` instances bound to the same browsing context (e.g. other tabs)
+ * receive these events through {@link FluidCache.onChange}.
+ *
+ * @legacy @beta
+ */
+export type FluidCacheChangeEvent =
+	| {
+			/**
+			 * A single entry was inserted, updated, or removed.
+			 * - `put` is fired when `put` or a successful `putIf` writes a value.
+			 * - `remove` is fired when `removeEntry` deletes an entry.
+			 *
+			 * Listeners only receive `put`/`remove` events whose `partitionKey` matches
+			 * the partition key of the receiving `FluidCache` instance, consistent with
+			 * the semantics of `get`.
+			 */
+			readonly op: "put" | "remove";
+			// eslint-disable-next-line @rushstack/no-new-null
+			readonly partitionKey: string | null;
+			readonly fileId: string;
+			readonly type: string;
+			readonly cacheItemId: string;
+	  }
+	| {
+			/**
+			 * All entries for a document were removed via `removeEntries`. This operation
+			 * deletes rows regardless of their partition key, so the event itself carries
+			 * no partition information and is delivered to all listeners.
+			 */
+			readonly op: "removeFile";
+			readonly fileId: string;
+	  };
+
+/**
+ * Name of the `BroadcastChannel` used to deliver cache-change notifications between
+ * `FluidCache` instances. A single channel is used for the entire driver cache; partition
+ * scoping is applied by the receiving listener.
+ */
+const FluidCacheBroadcastChannelName = "fluid-driver-cache";
+
+/**
  * A cache that can be used by the Fluid ODSP driver to cache data for faster performance.
  * @legacy @beta
  */
@@ -84,6 +126,10 @@ export class FluidCache implements IPersistedCache {
 	private db: IDBPDatabase<FluidCacheDBSchema> | undefined;
 	private dbCloseTimer: ReturnType<typeof setTimeout> | undefined;
 	private dbReuseCount: number = -1;
+
+	private readonly broadcastChannel: BroadcastChannel | undefined;
+	private readonly changeListeners = new Set<(event: FluidCacheChangeEvent) => void>();
+	private disposed = false;
 
 	constructor(config: FluidCacheConfig) {
 		const { logger, partitionKey, maxCacheItemAge, closeDbAfterMs } = config;
@@ -168,6 +214,96 @@ export class FluidCache implements IPersistedCache {
 				db?.close();
 			}
 		});
+
+		// Wire up cross-instance change notifications via BroadcastChannel. The channel is
+		// always created (when supported) so writes from this instance reach other tabs,
+		// even when no local listeners are registered yet. If `BroadcastChannel` is not
+		// available (e.g. older environments), notifications silently degrade to a no-op.
+		if (typeof BroadcastChannel !== "undefined") {
+			this.broadcastChannel = new BroadcastChannel(FluidCacheBroadcastChannelName);
+			this.broadcastChannel.addEventListener("message", (messageEvent: MessageEvent) => {
+				this.dispatchChangeEvent(messageEvent.data as FluidCacheChangeEvent);
+			});
+			// In Node, BroadcastChannel keeps the event loop alive until closed. Calling
+			// `unref` (when available) lets test processes and short-lived scripts exit
+			// even if a FluidCache instance was never disposed.
+			(this.broadcastChannel as unknown as { unref?: () => void }).unref?.();
+		}
+	}
+
+	/**
+	 * Subscribe to cache-change notifications posted by other `FluidCache` instances
+	 * (typically in other browser tabs sharing this origin's IndexedDB).
+	 *
+	 * Listeners are invoked with a {@link FluidCacheChangeEvent}. Per-entry `put` and
+	 * `remove` events are filtered to the partition key of this `FluidCache`, matching
+	 * the partition semantics of `get`. `removeFile` events are delivered unconditionally
+	 * because `removeEntries` deletes rows regardless of partition.
+	 *
+	 * Note: `BroadcastChannel` does not echo a message back to the instance that posted
+	 * it, so writes performed by *this* `FluidCache` do not trigger its own listeners.
+	 * Other `FluidCache` instances (including ones in the same tab) will receive them.
+	 *
+	 * @returns a function that unregisters the listener. Idempotent.
+	 */
+	public onChange(listener: (event: FluidCacheChangeEvent) => void): () => void {
+		if (this.disposed) {
+			throw new UsageError("Cannot subscribe to a disposed FluidCache");
+		}
+		this.changeListeners.add(listener);
+		return () => {
+			this.changeListeners.delete(listener);
+		};
+	}
+
+	/**
+	 * Tear down resources held by the cache: the `BroadcastChannel` used for change
+	 * notifications, any open IndexedDB connection, and the close timer. After dispose,
+	 * `onChange` will throw and other methods are unsafe to call.
+	 *
+	 * Calling `dispose` more than once is a no-op.
+	 */
+	public dispose(): void {
+		if (this.disposed) {
+			return;
+		}
+		this.disposed = true;
+		this.changeListeners.clear();
+		this.broadcastChannel?.close();
+		clearTimeout(this.dbCloseTimer);
+		this.dbCloseTimer = undefined;
+		this.db?.close();
+		this.db = undefined;
+	}
+
+	private dispatchChangeEvent(event: FluidCacheChangeEvent): void {
+		// `put` and `remove` are partition-scoped; `removeFile` is delivered to all listeners
+		// because it has no associated partition (see FluidCacheChangeEvent docs).
+		if (event.op !== "removeFile" && event.partitionKey !== this.partitionKey) {
+			return;
+		}
+		for (const listener of this.changeListeners) {
+			try {
+				listener(event);
+			} catch (error: any) {
+				this.logger.sendErrorEvent(
+					{ eventName: FluidCacheErrorEvent.FluidCacheChangeListenerError, pkgVersion },
+					error,
+				);
+			}
+		}
+	}
+
+	private broadcast(event: FluidCacheChangeEvent): void {
+		// Post to other instances first; failures in postMessage shouldn't surface to callers.
+		try {
+			this.broadcastChannel?.postMessage(event);
+		} catch (error: any) {
+			this.logger.sendErrorEvent(
+				{ eventName: FluidCacheErrorEvent.FluidCacheBroadcastError, pkgVersion },
+				error,
+			);
+		}
 	}
 
 	private async openDb(): Promise<IDBPDatabase<FluidCacheDBSchema>> {
@@ -218,6 +354,7 @@ export class FluidCache implements IPersistedCache {
 
 	public async removeEntries(file: IFileEntry): Promise<void> {
 		let db: IDBPDatabase<FluidCacheDBSchema> | undefined;
+		let removed = false;
 		try {
 			db = await this.openDb();
 
@@ -228,6 +365,7 @@ export class FluidCache implements IPersistedCache {
 
 			await Promise.all(keysToDelete.map(async (key) => transaction.store.delete(key)));
 			await transaction.done;
+			removed = keysToDelete.length > 0;
 		} catch (error: any) {
 			this.logger.sendErrorEvent(
 				{
@@ -239,15 +377,20 @@ export class FluidCache implements IPersistedCache {
 		} finally {
 			this.closeDb(db);
 		}
+		if (removed) {
+			this.broadcast({ op: "removeFile", fileId: file.docId });
+		}
 	}
 
 	public async removeEntry(entry: ICacheEntry): Promise<void> {
 		let db: IDBPDatabase<FluidCacheDBSchema> | undefined;
+		let removed = false;
 		try {
 			db = await this.openDb();
 
 			const key = getKeyForCacheEntry(entry);
 			await db.delete(FluidDriverObjectStoreName, key);
+			removed = true;
 		} catch (error: any) {
 			this.logger.sendErrorEvent(
 				{
@@ -258,6 +401,15 @@ export class FluidCache implements IPersistedCache {
 			);
 		} finally {
 			this.closeDb(db);
+		}
+		if (removed) {
+			this.broadcast({
+				op: "remove",
+				partitionKey: this.partitionKey,
+				fileId: entry.file.docId,
+				type: entry.type,
+				cacheItemId: entry.key,
+			});
 		}
 	}
 
@@ -331,6 +483,7 @@ export class FluidCache implements IPersistedCache {
 
 	public async put(entry: ICacheEntry, value: any): Promise<void> {
 		let db: IDBPDatabase<FluidCacheDBSchema> | undefined;
+		let wrote = false;
 		try {
 			db = await this.openDb();
 
@@ -339,6 +492,7 @@ export class FluidCache implements IPersistedCache {
 				this.buildRecord(entry, value),
 				getKeyForCacheEntry(entry),
 			);
+			wrote = true;
 			this.closeDb(db);
 		} catch (error: any) {
 			// We can fail to open the db for a variety of reasons,
@@ -349,6 +503,15 @@ export class FluidCache implements IPersistedCache {
 			);
 		} finally {
 			this.closeDb(db);
+		}
+		if (wrote) {
+			this.broadcast({
+				op: "put",
+				partitionKey: this.partitionKey,
+				fileId: entry.file.docId,
+				type: entry.type,
+				cacheItemId: entry.key,
+			});
 		}
 	}
 
@@ -378,6 +541,7 @@ export class FluidCache implements IPersistedCache {
 		shouldWrite: (existing: unknown, proposed: unknown) => boolean,
 	): Promise<boolean> {
 		let db: IDBPDatabase<FluidCacheDBSchema> | undefined;
+		let wrote = false;
 		try {
 			db = await this.openDb();
 
@@ -397,7 +561,7 @@ export class FluidCache implements IPersistedCache {
 
 			await transaction.store.put(this.buildRecord(entry, value), key);
 			await transaction.done;
-			return true;
+			wrote = true;
 		} catch (error: any) {
 			this.logger.sendErrorEvent(
 				{ eventName: FluidCacheErrorEvent.FluidCachePutError, pkgVersion },
@@ -407,6 +571,16 @@ export class FluidCache implements IPersistedCache {
 		} finally {
 			this.closeDb(db);
 		}
+		if (wrote) {
+			this.broadcast({
+				op: "put",
+				partitionKey: this.partitionKey,
+				fileId: entry.file.docId,
+				type: entry.type,
+				cacheItemId: entry.key,
+			});
+		}
+		return wrote;
 	}
 
 	private buildRecord(
