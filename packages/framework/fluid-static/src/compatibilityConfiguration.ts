@@ -29,8 +29,12 @@ const minVersionForCollabToDefaultRuntimeOptions: Record<
 };
 
 /**
- * Determines default runtime options for the given minVersionForCollab.
+ * Returns the fluid-static-specific runtime option overrides for the given `minVersionForCollab`.
  *
+ * @remarks
+ * The bulk of runtime defaults for a given `minVersionForCollab` are selected by container-runtime
+ * (via `getMinVersionForCollabDefaults`). This function only contributes the additional overrides
+ * that fluid-static needs to layer on top of those defaults.
  * @internal
  */
 export function defaultRuntimeOptionsForMinVersion(
