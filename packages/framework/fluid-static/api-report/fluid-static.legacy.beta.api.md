@@ -22,7 +22,6 @@ export function createTreeContainerRuntimeFactory(props: {
     readonly compatibilityMode: MinimumVersionForCollab | CompatibilityMode;
     readonly rootDataStoreRegistry?: IFluidDataStoreRegistry;
     readonly runtimeOptionOverrides?: Partial<IContainerRuntimeOptions>;
-    readonly minVersionForCollabOverride?: MinimumVersionForCollab;
 }): IRuntimeFactory;
 
 // @public

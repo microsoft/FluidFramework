@@ -226,23 +226,8 @@ export function createTreeContainerRuntimeFactory(props: {
 	 * If not provided, only the default options for the given compatibilityMode will be used.
 	 */
 	readonly runtimeOptionOverrides?: Partial<IContainerRuntimeOptions>;
-	/**
-	 * Optional override for minimum version for collab.
-	 * If not provided, the default for the given compatibilityMode will be used.
-	 * @remarks
-	 * This is useful when runtime options are overridden and change the minimum version for collab.
-	 *
-	 * @deprecated Pass a {@link @fluidframework/runtime-definitions#MinimumVersionForCollab}
-	 * semver string directly via `compatibilityMode` instead.
-	 */
-	readonly minVersionForCollabOverride?: MinimumVersionForCollab;
 }): IRuntimeFactory {
-	const {
-		minVersionForCollabOverride,
-		rootDataStoreRegistry,
-		runtimeOptionOverrides,
-		schema,
-	} = props;
+	const { rootDataStoreRegistry, runtimeOptionOverrides, schema } = props;
 	const minVersionForCollab = resolveCompatibilityModeToMinVersionForCollab(
 		props.compatibilityMode,
 	);
@@ -254,7 +239,7 @@ export function createTreeContainerRuntimeFactory(props: {
 		new TreeRootDataObjectFactory(sharedObjects, registry),
 		{
 			runtimeOptions: runtimeOptionOverrides,
-			minVersionForCollab: minVersionForCollabOverride ?? minVersionForCollab,
+			minVersionForCollab,
 		},
 	);
 }
