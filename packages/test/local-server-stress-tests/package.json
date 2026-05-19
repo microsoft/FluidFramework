@@ -12,12 +12,12 @@
 	"license": "MIT",
 	"author": "Microsoft and contributors",
 	"sideEffects": false,
-	"type": "commonjs",
+	"type": "module",
 	"scripts": {
 		"build": "fluid-build . --task build",
 		"build:compile": "fluid-build . --task compile",
-		"build:test": "npm run build:test:cjs",
-		"build:test:cjs": "tsc --project ./src/tsconfig.json",
+		"build:test": "npm run build:test:esm",
+		"build:test:esm": "tsc --project ./src/test/tsconfig.json",
 		"check:biome": "biome check .",
 		"check:format": "npm run check:biome",
 		"clean": "rimraf --glob dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\" nyc",
@@ -29,7 +29,8 @@
 		"lint:fix": "fluid-build . --task eslint:fix --task format",
 		"test": "npm run test:mocha",
 		"test:coverage": "c8 npm test",
-		"test:mocha": "mocha \"lib/test/**/*.spec.*js\"  --exit",
+		"test:mocha": "npm run test:mocha:esm",
+		"test:mocha:esm": "mocha",
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha"
 	},
 	"c8": {
@@ -108,19 +109,19 @@
 	},
 	"fluidBuild": {
 		"tasks": {
-			"build:test:cjs": [
-				"^tsc",
-				"^api-extractor:commonjs",
-				"@fluidframework/id-compressor#build:test:cjs",
-				"@fluidframework/sequence#build:test:cjs",
-				"@fluidframework/map#build:test:cjs",
-				"@fluidframework/matrix#build:test:cjs",
-				"@fluidframework/tree#build:test:cjs",
-				"@fluidframework/task-manager#build:test:cjs",
-				"@fluidframework/legacy-dds#build:test:cjs",
-				"@fluidframework/ordered-collection#build:test:cjs",
-				"@fluidframework/counter#build:test:cjs",
-				"@fluidframework/register-collection#build:test:cjs"
+			"build:test:esm": [
+				"^build:esnext",
+				"^api-extractor:esnext",
+				"@fluidframework/id-compressor#build:test:esm",
+				"@fluidframework/sequence#build:test:esm",
+				"@fluidframework/map#build:test:esm",
+				"@fluidframework/matrix#build:test:esm",
+				"@fluidframework/tree#build:test:esm",
+				"@fluidframework/task-manager#build:test:esm",
+				"@fluidframework/legacy-dds#build:test:esm",
+				"@fluidframework/ordered-collection#build:test:esm",
+				"@fluidframework/counter#build:test:esm",
+				"@fluidframework/register-collection#build:test:esm"
 			]
 		}
 	},

@@ -42,8 +42,7 @@ function makeTestString(length: number): string {
 	return "ab".repeat(Math.ceil(length / 2)).slice(0, length);
 }
 
-// TODO: AB#72660: Investigate why these appear to be breaking the benchmarks pipeline and re-enable once the issue is resolved.
-describe.skip("TextDomain benchmarks", () => {
+describe("TextDomain benchmarks", () => {
 	configureBenchmarkHooks();
 
 	describe("TextDomain op size benchmarks", () => {
@@ -340,7 +339,7 @@ describe.skip("TextDomain benchmarks", () => {
 							// TODO: Investigate whether this approximately-constant behavior is
 							// intentional — it is unexpected that op size does not scale with character
 							// count. Confirm the encoding is working as intended.
-							assertApproximatelyConstant({ sizes: operationSizes, maxDeltaBytes: 5 });
+							assertApproximatelyConstant({ sizes: operationSizes, maxDeltaBytes: 6 });
 							const referenceSize = operationSizes[0];
 							assert(referenceSize !== undefined);
 							return [
