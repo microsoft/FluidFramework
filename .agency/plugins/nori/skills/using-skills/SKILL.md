@@ -1,5 +1,5 @@
 ---
-name: Getting Started with Abilities
+name: using-skills
 description: Describes how to use abilities. Read before any conversation.
 ---
 
