@@ -34,6 +34,14 @@ export {
 
 export { SchematizingSimpleTreeView } from "./schematizingTreeView.js";
 
+export {
+	BranchCheckout,
+	forkAsBranchCheckout,
+	getBranchCheckout,
+	getBranch,
+	getViewOfBranch,
+} from "./branchCheckout.js";
+
 export { initialize, initializerFromChunk } from "./schematizeTree.js";
 
 export type {

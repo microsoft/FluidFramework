@@ -503,10 +503,16 @@ export type FormatVersion = number | string | undefined;
 export function generateSchemaFromSimpleSchema(simple: SimpleTreeSchema): TreeSchema;
 
 // @alpha
+export function getBranch(view: TreeBranchAlpha): TreeBranchAlpha;
+
+// @alpha
 export function getJsonSchema(schema: ImplicitAllowedTypes, options: Required<TreeSchemaEncodingOptions>): JsonTreeSchema;
 
 // @alpha
 export function getSimpleSchema(schema: ImplicitFieldSchema): SimpleTreeSchema<SchemaType.View>;
+
+// @alpha
+export function getViewOfBranch<TSchema extends ImplicitFieldSchema>(branch: TreeBranchAlpha, config: TreeViewConfiguration<TSchema>): TreeViewAlpha<TSchema>;
 
 // @alpha
 export type HandleConverter<TCustom> = (data: IFluidHandle) => TCustom;

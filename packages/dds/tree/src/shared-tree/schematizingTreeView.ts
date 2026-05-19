@@ -471,8 +471,11 @@ export class SchematizingSimpleTreeView<
 		this.checkout.forest.anchors.slots.delete(ViewSlot);
 		this.currentCompatibility = undefined;
 		this.onDispose?.();
-		if (!this.checkout.isSharedBranch && !this.checkout.disposed) {
-			// All non-shared branches are 1:1 with views, so if a user manually disposes a view, we should also dispose the checkout/branch.
+		if (this.checkout.disposeWithView && !this.checkout.disposed) {
+			// Checkouts that are 1:1 with views (e.g. non-shared, non-BranchCheckout) are also disposed
+			// when the view is disposed. Multi-view checkouts (BranchCheckout, shared branches) opt out
+			// via `disposeWithView` so that disposing one view does not invalidate the checkout for
+			// other callers.
 			this.checkout.dispose();
 		}
 	}
