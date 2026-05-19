@@ -14,20 +14,12 @@
 	"type": "module",
 	"exports": {
 		".": {
-			"default": {
-				"types": "./lib/index.d.ts",
-				"default": "./lib/index.js"
-			}
+			"default": "./lib/index.js"
 		},
 		"./policy": {
-			"default": {
-				"types": "./lib/library/repoPolicyCheck/index.d.ts",
-				"default": "./lib/library/repoPolicyCheck/index.js"
-			}
+			"default": "./lib/library/repoPolicyCheck/index.js"
 		}
 	},
-	"main": "lib/index.js",
-	"types": "lib/index.d.ts",
 	"bin": {
 		"flub": "./bin/run.js"
 	},
@@ -43,10 +35,9 @@
 		"build:copy": "copyfiles -u 1 \"src/**/*.fsl\" \"src/test/**/fixtures/**/*\" \"src/library/buildPerf/templates/*\" lib",
 		"build:diagrams": "jssm-viz -i \"./src/machines/*.fsl\"",
 		"build:docs": "api-extractor run --local",
-		"build:esnext": "tsc",
 		"build:manifest": "oclif manifest",
 		"build:readme": "oclif readme --version 0.0.0 --multi",
-		"build:test:esm": "tsc --project ./src/test/tsconfig.json",
+		"build:test": "tsc --project ./src/test/tsconfig.json",
 		"check:biome": "biome check .",
 		"check:format": "npm run check:biome",
 		"ci:build:docs": "api-extractor run",
@@ -62,7 +53,8 @@
 		"postpack": "npm run clean:manifest",
 		"test": "npm run test:mocha",
 		"test:coverage": "c8 npm run test",
-		"test:mocha": "mocha --forbid-only"
+		"test:mocha": "mocha --forbid-only",
+		"tsc": "tsc"
 	},
 	"c8": {
 		"all": true,
