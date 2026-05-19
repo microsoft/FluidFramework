@@ -142,6 +142,39 @@ The client which encoded this data likely specified an "minVersionForCollab" val
 			);
 		});
 
+		it("distinct encode and decode context types", () => {
+			interface EncodeContext {
+				encodeOffset: number;
+			}
+			interface DecodeContext {
+				decodeOffset: number;
+			}
+			interface VC {
+				version: 1;
+				value: number;
+			}
+			const contextualCodec: CodecAndSchema<number, EncodeContext, DecodeContext> = {
+				encode: (x, ctx) => ({ version: 1, value: x + ctx.encodeOffset }),
+				decode: (data, ctx) => (data as unknown as VC).value + ctx.decodeOffset,
+				schema: Versioned,
+			};
+			const contextualBuilder = VersionDispatchingCodecBuilder.build("Contextual", [
+				{
+					minVersionForCollab: lowestMinVersionForCollab,
+					formatVersion: 1,
+					codec: contextualCodec,
+				},
+			]);
+			const codec = contextualBuilder.build({
+				minVersionForCollab: "2.0.0",
+				jsonValidator: FormatValidatorBasic,
+			});
+
+			const encoded = codec.encode(5, { encodeOffset: 10 });
+			assert.deepEqual(encoded, { version: 1, value: 15 });
+			assert.equal(codec.decode(encoded, { decodeOffset: -10 }), 5);
+		});
+
 		it("good builds", () => {
 			VersionDispatchingCodecBuilder.build("Test", [
 				{
