@@ -24,12 +24,24 @@ export interface IntervalAddLocalMetadata {
 	localSeq: number;
 	endpointChangesNode?: ListNode<IntervalAddLocalMetadata | IntervalChangeLocalMetadata>;
 	interval: SequenceIntervalClass;
+	/**
+	 * Property keys this op submitted. Used by the squash resubmit path to detect later
+	 * pending ops on the same interval that overrode these keys, so the older values can
+	 * be filtered out before the op is re-emitted on commit.
+	 */
+	propertyKeys?: ReadonlySet<string>;
 }
 export interface IntervalChangeLocalMetadata {
 	type: typeof IntervalDeltaOpType.CHANGE;
 	localSeq: number;
 	endpointChangesNode?: ListNode<IntervalChangeLocalMetadata | IntervalChangeLocalMetadata>;
 	interval: SequenceIntervalClass;
+	/**
+	 * Property keys this op submitted. Used by the squash resubmit path to detect later
+	 * pending ops on the same interval that overrode these keys, so the older values can
+	 * be filtered out before the op is re-emitted on commit.
+	 */
+	propertyKeys?: ReadonlySet<string>;
 }
 export interface IntervalDeleteLocalMetadata {
 	type: typeof IntervalDeltaOpType.DELETE;

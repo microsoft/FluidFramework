@@ -279,6 +279,15 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
 	}
 
 	/**
+	 * Per-op squash: for each staged pending op the runtime hands us, either drop it (if a later
+	 * pending op subsumes it — same key set/deleted later, or covered by a later clear) or
+	 * resubmit it unchanged. Pre-staging ops in flight are never touched.
+	 */
+	protected override reSubmitSquashed(content: unknown, localOpMetadata: unknown): void {
+		this.kernel.tryResubmitSquashedMessage(content as IMapOperation, localOpMetadata);
+	}
+
+	/**
 	 * {@inheritDoc @fluidframework/shared-object-base#SharedObjectCore.applyStashedOp}
 	 */
 	protected applyStashedOp(content: unknown): void {

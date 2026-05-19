@@ -107,7 +107,9 @@
 	"devDependencies": {
 		"@arethetypeswrong/cli": "^0.18.2",
 		"@biomejs/biome": "~2.4.5",
+		"@fluid-internal/client-utils": "workspace:~",
 		"@fluid-internal/mocha-test-setup": "workspace:~",
+		"@fluid-private/stochastic-test-utils": "workspace:~",
 		"@fluid-private/test-dds-utils": "workspace:~",
 		"@fluid-tools/build-cli": "catalog:buildTools",
 		"@fluidframework/build-common": "^2.0.3",
@@ -115,6 +117,7 @@
 		"@fluidframework/cell-previous": "npm:@fluidframework/cell@2.92.0",
 		"@fluidframework/container-definitions": "workspace:~",
 		"@fluidframework/eslint-config-fluid": "catalog:eslint",
+		"@fluidframework/runtime-utils": "workspace:~",
 		"@fluidframework/test-runtime-utils": "workspace:~",
 		"@microsoft/api-extractor": "7.58.1",
 		"@types/mocha": "^10.0.10",

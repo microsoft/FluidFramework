@@ -132,6 +132,18 @@ export class SharedSignalClass<T extends SerializableTypeForSharedSignal = any>
 	 */
 	protected onDisconnect(): void {}
 
+	/**
+	 * Signals are fire-and-forget notifications. Each pending notify represents an intentional
+	 * user event and is never superseded by a later op. Squash is therefore the identity transform.
+	 *
+	 * Caveat for staging mode: a notify made during staging will be transmitted on commit. Callers
+	 * who use signals to carry sensitive metadata should avoid notifying inside a staging session
+	 * unless the metadata is intended to be transmitted.
+	 */
+	protected override reSubmitSquashed(content: unknown, localOpMetadata: unknown): void {
+		this.reSubmitCore(content, localOpMetadata);
+	}
+
 	protected override processMessagesCore(messagesCollection: IRuntimeMessageCollection): void {
 		const { envelope, local, messagesContent } = messagesCollection;
 		for (const messageContent of messagesContent) {

@@ -48,6 +48,42 @@ export class SegmentGroupCollection {
 		walkList(this.segmentGroups, (sg) => segmentGroups.enqueueOnCopy(sg.data, this.segment));
 	}
 
+	/**
+	 * Returns the set of property keys touched by annotate ops on this segment with a `localSeq`
+	 * strictly greater than the given `localSeq`. Used by the squash resubmit path to filter
+	 * out keys that have been overridden by later staged annotates — those values must not be
+	 * carried on the wire by the older op.
+	 *
+	 * For each later segment-group that contains this segment, the per-segment entry in
+	 * `previousProps` records the property values that were in effect before the annotate
+	 * applied; its keys are therefore the keys the annotate touched.
+	 */
+	public keysAnnotatedLaterThan(localSeq: number): Set<string> {
+		const keys = new Set<string>();
+		walkList(this.segmentGroups, (node) => {
+			const group = node.data;
+			if (
+				group.localSeq === undefined ||
+				group.localSeq <= localSeq ||
+				group.previousProps === undefined
+			) {
+				return;
+			}
+			const idx = group.segments.indexOf(this.segment);
+			if (idx < 0) {
+				return;
+			}
+			const props = group.previousProps[idx];
+			if (props === undefined) {
+				return;
+			}
+			for (const k of Object.keys(props)) {
+				keys.add(k);
+			}
+		});
+		return keys;
+	}
+
 	private enqueueOnCopy(segmentGroup: SegmentGroup, sourceSegment: ISegmentLeaf): void {
 		this.enqueue(segmentGroup);
 		if (segmentGroup.previousProps) {

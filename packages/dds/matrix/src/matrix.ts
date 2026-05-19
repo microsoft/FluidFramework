@@ -820,7 +820,24 @@ export class SharedMatrix<T = any>
 		return client.findReconnectionPosition(segment, localSeq) + offset;
 	}
 
+	/**
+	 * Per-cell LWW squash: a pending setCell that has been overwritten by a later setCell for the
+	 * same cell is dropped (its value never reaches the wire). Row/column vector ops pass
+	 * `squash=true` to merge-tree's regeneratePendingOp so the merge-tree-internal squash applies.
+	 */
+	protected override reSubmitSquashed(incoming: unknown, localOpMetadata: unknown): void {
+		this.reSubmitInternal(incoming, localOpMetadata, true);
+	}
+
 	protected reSubmitCore(incoming: unknown, localOpMetadata: unknown): void {
+		this.reSubmitInternal(incoming, localOpMetadata, false);
+	}
+
+	private reSubmitInternal(
+		incoming: unknown,
+		localOpMetadata: unknown,
+		squash: boolean,
+	): void {
 		const originalRefSeq = this.inFlightRefSeqs.shift();
 		assert(
 			originalRefSeq !== undefined,
@@ -846,8 +863,15 @@ export class SharedMatrix<T = any>
 			assert(local !== undefined, 0xba5 /* local operation must have a pending array */);
 			const localSeqIndex = local.findIndex((p) => p.localSeq === localSeq);
 			assert(localSeqIndex >= 0, 0xba6 /* local operation must have a pending entry */);
+			// In squash mode, only emit the latest pending set per cell. Earlier sets for the same
+			// cell are superseded and their values must never reach the wire.
+			const isLatestPendingSetForCell = localSeqIndex === local.length - 1;
 			const [change] = local.splice(localSeqIndex, 1);
 			assert(change.localSeq === localSeq, 0xba7 /* must match */);
+
+			if (squash && !isLatestPendingSetForCell) {
+				return;
+			}
 
 			if (
 				row !== undefined &&
@@ -868,13 +892,13 @@ export class SharedMatrix<T = any>
 			switch (content.target) {
 				case SnapshotPath.cols: {
 					this.submitColMessage(
-						this.cols.regeneratePendingOp(content, localOpMetadata, false),
+						this.cols.regeneratePendingOp(content, localOpMetadata, squash),
 					);
 					break;
 				}
 				case SnapshotPath.rows: {
 					this.submitRowMessage(
-						this.rows.regeneratePendingOp(content, localOpMetadata, false),
+						this.rows.regeneratePendingOp(content, localOpMetadata, squash),
 					);
 					break;
 				}

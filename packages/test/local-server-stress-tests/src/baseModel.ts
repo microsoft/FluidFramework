@@ -62,7 +62,8 @@ const orderSequentiallyReducer = async (
 
 export const reducer = combineReducersAsync<StressOperations, LocalServerStressState>({
 	enterStagingMode: async (state, op) => state.client.entryPoint.enterStagingMode(),
-	exitStagingMode: async (state, op) => state.client.entryPoint.exitStagingMode(op.commit),
+	exitStagingMode: async (state, op) =>
+		state.client.entryPoint.exitStagingMode(op.commit, op.squash),
 	createDataStore: async (state, op) => {
 		const { handle } = await state.datastore.createDataStore(op.tag, op.asChild);
 		if (op.storeHandle) {
@@ -194,6 +195,9 @@ export function makeGenerator<T extends BaseOperation>(
 			async ({ random }) => ({
 				type: "exitStagingMode",
 				commit: random.bool(),
+				// Exercise the squash codepath on roughly half of committing exits. Discard exits
+				// ignore this flag, so randomizing unconditionally is fine.
+				squash: random.bool(),
 			}),
 			25,
 			(state) =>

@@ -5,6 +5,7 @@
 
 import { strict as assert } from "node:assert";
 
+import { reconnectAndSquash } from "@fluid-private/test-dds-utils";
 import { AttachState } from "@fluidframework/container-definitions";
 import { IChannelServices } from "@fluidframework/datastore-definitions/internal";
 import { ISummaryTree } from "@fluidframework/driver-definitions";
@@ -838,6 +839,226 @@ describe("SharedString", () => {
 
 			// Verify that the changes were correctly received by the second SharedString
 			assert.equal(sharedString2.getText(), "hello friend");
+		});
+
+		describe("squash property channel", () => {
+			it("drops a staged annotate value overridden by a later staged annotate on the same range", async () => {
+				// Pre-existing text so we can annotate over it.
+				sharedString.insertText(0, "hello world");
+				containerRuntimeFactory.processAllMessages();
+				assert.equal(sharedString2.getText(), "hello world");
+
+				// Capture every property value the peer ever sees applied to the segment at pos 0.
+				const peerSeenColors: unknown[] = [];
+				sharedString2.on("sequenceDelta", (event) => {
+					if (!event.isLocal) {
+						for (const range of event.ranges) {
+							if (range.segment.properties?.color !== undefined) {
+								peerSeenColors.push(range.segment.properties.color);
+							}
+						}
+					}
+				});
+
+				// Disconnect, annotate twice with overlapping keys, reconnect with squash.
+				containerRuntime1.connected = false;
+				sharedString.annotateRange(0, 5, { color: "secret-color" });
+				sharedString.annotateRange(0, 5, { color: "public-color" });
+				reconnectAndSquash(containerRuntime1, dataStoreRuntime1);
+				containerRuntimeFactory.processAllMessages();
+
+				assert.equal(sharedString2.getPropertiesAtPosition(0)?.color, "public-color");
+				for (const value of peerSeenColors) {
+					assert.notEqual(value, "secret-color", "secret color must not leak through squash");
+				}
+			});
+
+			it("drops a staged insert's property value overridden by a later staged annotate", async () => {
+				// Capture every property value the peer ever sees on the inserted segment.
+				const peerSeenColors: unknown[] = [];
+				sharedString2.on("sequenceDelta", (event) => {
+					if (!event.isLocal) {
+						for (const range of event.ranges) {
+							if (range.segment.properties?.color !== undefined) {
+								peerSeenColors.push(range.segment.properties.color);
+							}
+						}
+					}
+				});
+
+				containerRuntime1.connected = false;
+				sharedString.insertText(0, "x", { color: "secret-color" });
+				sharedString.annotateRange(0, 1, { color: "public-color" });
+				reconnectAndSquash(containerRuntime1, dataStoreRuntime1);
+				containerRuntimeFactory.processAllMessages();
+
+				assert.equal(sharedString2.getPropertiesAtPosition(0)?.color, "public-color");
+				for (const value of peerSeenColors) {
+					assert.notEqual(
+						value,
+						"secret-color",
+						"secret color on insert must not leak through squash",
+					);
+				}
+			});
+
+			it("drops a staged interval add subsumed by a later staged delete", async () => {
+				sharedString.insertText(0, "hello world");
+				containerRuntimeFactory.processAllMessages();
+
+				const collection1 = sharedString.getIntervalCollection("test");
+				const collection2 = sharedString2.getIntervalCollection("test");
+
+				const peerSeenProps: unknown[] = [];
+				collection2.on("addInterval", (addedInterval) => {
+					if (addedInterval.properties?.color !== undefined) {
+						peerSeenProps.push(addedInterval.properties.color);
+					}
+				});
+				collection2.on("propertyChanged", (_interval, propsDeltas) => {
+					if (propsDeltas?.color !== undefined) {
+						peerSeenProps.push(propsDeltas.color);
+					}
+				});
+
+				containerRuntime1.connected = false;
+				const interval = collection1.add({
+					start: 0,
+					end: 5,
+					props: { color: "secret-color" },
+				});
+				collection1.removeIntervalById(interval.getIntervalId());
+				reconnectAndSquash(containerRuntime1, dataStoreRuntime1);
+				containerRuntimeFactory.processAllMessages();
+
+				for (const value of peerSeenProps) {
+					assert.notEqual(value, "secret-color", "secret interval prop must not leak");
+				}
+			});
+
+			it("does not leak the property bag of a staged interval add+delete pair on the wire", async () => {
+				// The ackDelete path on peers only consumes the interval id, so a property leak
+				// on a paired add+delete is invisible to peer events — capture the raw wire ops
+				// to assert the secret property never goes out.
+				sharedString.insertText(0, "hello world");
+				containerRuntimeFactory.processAllMessages();
+
+				const collection1 = sharedString.getIntervalCollection("test");
+
+				const wireOps: unknown[] = [];
+				const originalPushMessage =
+					containerRuntimeFactory.pushMessage.bind(containerRuntimeFactory);
+				containerRuntimeFactory.pushMessage = (msg) => {
+					wireOps.push(JSON.parse(JSON.stringify(msg)));
+					originalPushMessage(msg);
+				};
+				try {
+					containerRuntime1.connected = false;
+					const interval = collection1.add({
+						start: 0,
+						end: 5,
+						props: { color: "secret-color" },
+					});
+					collection1.removeIntervalById(interval.getIntervalId());
+					reconnectAndSquash(containerRuntime1, dataStoreRuntime1);
+					containerRuntimeFactory.processAllMessages();
+				} finally {
+					containerRuntimeFactory.pushMessage = originalPushMessage;
+				}
+
+				const stringified = JSON.stringify(wireOps);
+				assert.equal(
+					stringified.includes("secret-color"),
+					false,
+					"secret interval prop must not appear in any wire op payload",
+				);
+			});
+
+			it("scrubs the property bag from a staged delete of a pre-existing interval", async () => {
+				// A delete of a pre-existing (sequenced) interval is needed on the wire so peers
+				// remove the interval, but ackDelete identifies it by id; the serialized payload's
+				// property bag carries the live interval's full bag (including any staged-only
+				// values) and must be scrubbed.
+				sharedString.insertText(0, "hello world");
+				containerRuntimeFactory.processAllMessages();
+				const collection1 = sharedString.getIntervalCollection("test");
+				const collection2 = sharedString2.getIntervalCollection("test");
+				const baseInterval = collection1.add({
+					start: 0,
+					end: 5,
+					props: { color: "public-base" },
+				});
+				const baseId = baseInterval.getIntervalId();
+				containerRuntimeFactory.processAllMessages();
+				assert.notEqual(collection2.getIntervalById(baseId), undefined);
+
+				const wireOps: unknown[] = [];
+				const originalPushMessage =
+					containerRuntimeFactory.pushMessage.bind(containerRuntimeFactory);
+				containerRuntimeFactory.pushMessage = (msg) => {
+					wireOps.push(JSON.parse(JSON.stringify(msg)));
+					originalPushMessage(msg);
+				};
+				try {
+					containerRuntime1.connected = false;
+					collection1.removeIntervalById(baseId);
+					reconnectAndSquash(containerRuntime1, dataStoreRuntime1);
+					containerRuntimeFactory.processAllMessages();
+				} finally {
+					containerRuntimeFactory.pushMessage = originalPushMessage;
+				}
+
+				assert.equal(
+					collection2.getIntervalById(baseId),
+					undefined,
+					"delete should still reach the peer",
+				);
+				const stringified = JSON.stringify(wireOps);
+				assert.equal(
+					stringified.includes("public-base"),
+					false,
+					"pre-existing interval's properties must not ride out on the staged delete payload",
+				);
+			});
+
+			it("drops a staged interval change's property value overridden by a later staged change", async () => {
+				sharedString.insertText(0, "hello world");
+				containerRuntimeFactory.processAllMessages();
+
+				const collection1 = sharedString.getIntervalCollection("test");
+				const collection2 = sharedString2.getIntervalCollection("test");
+
+				const baseInterval = collection1.add({
+					start: 0,
+					end: 5,
+					props: { color: "base" },
+				});
+				const baseId = baseInterval.getIntervalId();
+				containerRuntimeFactory.processAllMessages();
+
+				const peerSeenColors: unknown[] = [];
+				collection2.on("propertyChanged", (_interval, propsDeltas) => {
+					if (propsDeltas?.color !== undefined) {
+						peerSeenColors.push(propsDeltas.color);
+					}
+				});
+
+				containerRuntime1.connected = false;
+				collection1.change(baseId, { props: { color: "secret-color" } });
+				collection1.change(baseId, { props: { color: "public-color" } });
+				reconnectAndSquash(containerRuntime1, dataStoreRuntime1);
+				containerRuntimeFactory.processAllMessages();
+
+				const interval2 = collection2.getIntervalById(baseId);
+				assert.equal(interval2?.properties?.color, "public-color");
+				for (const value of peerSeenColors) {
+					assert.notEqual(
+						value,
+						"secret-color",
+						"intermediate interval prop must not leak through squash",
+					);
+				}
+			});
 		});
 	});
 

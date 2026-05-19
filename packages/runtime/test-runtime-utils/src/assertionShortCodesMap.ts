@@ -1937,5 +1937,20 @@ export const shortCodeMap = {
 	"0xcf5": "Unexpected indexOfChunkStack.length",
 	"0xcf6": "Unexpected indexWithinChunkStack.length",
 	"0xcf7": "Parent chunk not found in latest summary tracking",
-	"0xcf8": "Unexpected pending operation during revert"
+	"0xcf8": "Unexpected pending operation during revert",
+	"0xcf9": "pendingOps index in range",
+	"0xcfa": "moveEntry pendingOp has target",
+	"0xcfb": "pendingStorageData entry must exist within bounds",
+	"0xcfc": "keySet must be present in its back-pointed lifetime",
+	"0xcfd": "pendingOps index in range",
+	"0xcfe": "pendingOps index in range",
+	"0xcff": "pendingStorageData entry must exist within bounds",
+	"0xd00": "lifetime must be present in pendingStorageData",
+	"0xd01": "Pending message id missing from queue during squash",
+	"0xd02": "keySet must be present in its back-pointed lifetime",
+	"0xd03": "lifetime must be present in pendingData",
+	"0xd04": "pendingData entry must exist within bounds",
+	"0xd05": "pendingData entry must exist within bounds",
+	"0xd06": "detach range start must not exceed end",
+	"0xd07": "nodeIndex exceeds total node count in field"
 };

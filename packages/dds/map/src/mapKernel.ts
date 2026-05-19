@@ -74,6 +74,12 @@ export type IMapDataObjectSerialized = Record<string, ISerializedValue>;
 interface PendingKeySet {
 	type: "set";
 	value: ILocalValue;
+	/**
+	 * Back-pointer to the {@link PendingKeyLifetime} that contains this keySet. Lets the
+	 * squash path locate the containing lifetime in O(1) given just the keySet metadata,
+	 * avoiding an O(K) `keysets.indexOf` scan inside the resubmit loop.
+	 */
+	lifetime: PendingKeyLifetime;
 }
 
 interface PendingKeyDelete {
@@ -425,6 +431,7 @@ export class MapKernel {
 		const pendingKeySet: PendingKeySet = {
 			type: "set",
 			value: localValue,
+			lifetime: latestPendingEntry,
 		};
 		latestPendingEntry.keySets.push(pendingKeySet);
 
@@ -578,6 +585,125 @@ export class MapKernel {
 		}
 		handler.resubmit(op, localOpMetadata as PendingLocalOpMetadata);
 		return true;
+	}
+
+	/**
+	 * Per-op squash decision for a single staged pending change. Locates the change's metadata
+	 * in pendingData, asks whether a later pending change subsumes it, and either drops it
+	 * (splicing the tracking out of pendingData, similar to a targeted rollback) or resubmits
+	 * it unchanged.
+	 *
+	 * Subsumption rules:
+	 *
+	 * - A `clear` is subsumed by any later `clear`.
+	 * - A `delete` for key `k` is subsumed by any later `clear`, `delete` for `k`, or
+	 * `lifetime` for `k`.
+	 * - A `set` for key `k` (a keySet inside a lifetime) is subsumed by any later keySet in the
+	 * same lifetime, or by any later `clear`, `delete` for `k`, or `lifetime` for `k`.
+	 *
+	 * @returns True if the op was handled (dropped or resubmitted), false if no handler is
+	 * registered for the op type.
+	 */
+	public tryResubmitSquashedMessage(op: IMapOperation, localOpMetadata: unknown): boolean {
+		const handler = this.messageHandlers.get(op.type);
+		if (handler === undefined) {
+			return false;
+		}
+		if (this.dropIfSubsumed(localOpMetadata)) {
+			return true;
+		}
+		handler.resubmit(op, localOpMetadata as PendingLocalOpMetadata);
+		return true;
+	}
+
+	/**
+	 * If the pending op identified by `metadata` is subsumed by a later pending op in
+	 * `pendingData`, splice its tracking out of pendingData and return true. Otherwise return
+	 * false and leave pendingData untouched.
+	 *
+	 * Removing the tracking is necessary because the runtime drops the op from its own pending
+	 * queue when we choose not to resubmit; without the cleanup, the kernel would later try to
+	 * match an ACK that will never arrive.
+	 */
+	private dropIfSubsumed(metadata: unknown): boolean {
+		const m = metadata as PendingLocalOpMetadata;
+		if (m.type === "set") {
+			// Fast path: PendingKeySet carries a back-pointer to its containing lifetime, so the
+			// tip check is O(1) (no scan of pendingData and no O(K) keysets.indexOf).
+			const lifetime = m.lifetime;
+			const lastKeySet = lifetime.keySets[lifetime.keySets.length - 1];
+			if (lastKeySet !== m) {
+				// Not the lifetime's tip — strictly subsumed by a later keySet on this key.
+				const keySetIdx = lifetime.keySets.indexOf(m);
+				assert(
+					keySetIdx !== -1,
+					0xd02 /* keySet must be present in its back-pointed lifetime */,
+				);
+				lifetime.keySets.splice(keySetIdx, 1);
+				return true;
+			}
+			// Tip case: need pendingData order to check for later entries on this key (delete,
+			// clear, or another lifetime). The lifetime's position is still found by linear scan,
+			// but only when the cheap tip check above didn't decide it.
+			const lifetimeIdx = this.pendingData.indexOf(lifetime);
+			assert(lifetimeIdx !== -1, 0xd03 /* lifetime must be present in pendingData */);
+			if (this.isKeySetSubsumed(lifetime, lifetime.keySets.length - 1, lifetimeIdx)) {
+				lifetime.keySets.length -= 1;
+				if (lifetime.keySets.length === 0) {
+					this.pendingData.splice(lifetimeIdx, 1);
+				}
+				return true;
+			}
+			return false;
+		}
+		// Standalone clear or delete — these *are* pendingData entries, so indexOf gives the
+		// position directly without scanning lifetime keysets.
+		const entryIdx = this.pendingData.indexOf(m);
+		if (entryIdx === -1) {
+			return false;
+		}
+		if (this.isStandaloneEntrySubsumed(m, entryIdx)) {
+			this.pendingData.splice(entryIdx, 1);
+			return true;
+		}
+		return false;
+	}
+
+	private isStandaloneEntrySubsumed(
+		entry: PendingClear | PendingKeyDelete,
+		entryIdx: number,
+	): boolean {
+		for (let j = entryIdx + 1; j < this.pendingData.length; j++) {
+			const later = this.pendingData[j];
+			assert(later !== undefined, 0xd04 /* pendingData entry must exist within bounds */);
+			if (later.type === "clear") {
+				return true;
+			}
+			if (entry.type === "delete" && later.key === entry.key) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	private isKeySetSubsumed(
+		lifetime: PendingKeyLifetime,
+		keySetIdx: number,
+		lifetimeIdx: number,
+	): boolean {
+		// A later keySet in the same lifetime always subsumes (same key, same logical region).
+		if (keySetIdx < lifetime.keySets.length - 1) {
+			return true;
+		}
+		// Otherwise, any later pendingData entry that affects this key subsumes.
+		for (let j = lifetimeIdx + 1; j < this.pendingData.length; j++) {
+			const later = this.pendingData[j];
+			assert(later !== undefined, 0xd05 /* pendingData entry must exist within bounds */);
+			if (later.type === "clear" || later.key === lifetime.key) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	public tryApplyStashedOp(op: IMapOperation): void {

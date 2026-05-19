@@ -26,7 +26,7 @@ import type { IChannel } from "@fluidframework/datastore-definitions/internal";
 // Valid export as per package.json export map
 import { modifyClusterSize } from "@fluidframework/id-compressor/internal/test-utils";
 import { ISharedMap, SharedMap } from "@fluidframework/map/internal";
-import type { StageControls } from "@fluidframework/runtime-definitions/internal";
+import type { StageControlsInternal } from "@fluidframework/runtime-definitions/internal";
 import { RuntimeHeaders, toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
 import { timeoutAwait } from "@fluidframework/test-utils/internal";
 
@@ -59,6 +59,12 @@ export interface EnterStagingMode {
 export interface ExitStagingMode {
 	type: "exitStagingMode";
 	commit: boolean;
+	/**
+	 * Only meaningful when `commit` is true. When true, the runtime squashes intermediate
+	 * state out of the resubmitted ops so values inserted and then removed during the
+	 * staging session don't reach the wire.
+	 */
+	squash: boolean;
 }
 
 export type StressDataObjectOperations =
@@ -331,14 +337,17 @@ export class DefaultStressDataObject extends StressDataObject {
 		this._locallyCreatedObjects.push(obj);
 	}
 
-	private stageControls: StageControls | undefined;
+	private stageControls: StageControlsInternal | undefined;
 	private readonly containerRuntimeExp = this.context.containerRuntime;
 	public enterStagingMode(): void {
 		assert(
 			this.containerRuntimeExp.enterStagingMode !== undefined,
 			"enterStagingMode must be defined",
 		);
-		this.stageControls = this.containerRuntimeExp.enterStagingMode();
+		// IContainerRuntimeBase.enterStagingMode is typed as returning StageControls (beta);
+		// the actual returned object is the internal variant which carries the squash option
+		// on commitChanges.
+		this.stageControls = this.containerRuntimeExp.enterStagingMode() as StageControlsInternal;
 	}
 
 	public inStagingMode(): boolean {
@@ -349,10 +358,10 @@ export class DefaultStressDataObject extends StressDataObject {
 		return this.containerRuntimeExp.inStagingMode;
 	}
 
-	public exitStagingMode(commit: boolean): void {
+	public exitStagingMode(commit: boolean, squash: boolean = false): void {
 		assert(this.stageControls !== undefined, "must have staging mode controls");
 		if (commit) {
-			this.stageControls.commitChanges();
+			this.stageControls.commitChanges({ squash });
 		} else {
 			this.stageControls.discardChanges();
 		}

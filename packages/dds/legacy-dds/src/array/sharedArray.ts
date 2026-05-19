@@ -47,6 +47,21 @@ import { SharedArrayRevertible } from "./sharedArrayRevertible.js";
 const snapshotFileName = "header";
 
 /**
+ * Per-op pending state used by the squash-on-resubmit path. The same object is the
+ * `localOpMetadata` passed to `submitLocalMessage`, which lets us splice an entry out
+ * of {@link SharedArrayClass.pendingOps} when a later staged op subsumes it.
+ *
+ * - `entryId` is the op's primary entry (source for moves/toggleMoves).
+ * - `targetEntryId` is the destination for moves/toggleMoves; undefined otherwise.
+ */
+interface SharedArrayPendingOp<T> {
+	readonly op: ISharedArrayOperation<T>;
+	readonly type: OperationType;
+	readonly entryId: string;
+	readonly targetEntryId?: string;
+}
+
+/**
  * Represents a shared array that allows communication between distributed clients.
  *
  * @internal
@@ -76,6 +91,47 @@ export class SharedArrayClass<T extends SerializableTypeForSharedArray>
 	 * We should not rollback to life an entry that was deleted by remote clients.
 	 */
 	private readonly remoteDeleteWithLocalPendingDelete: Set<string> = new Set<string>();
+
+	/**
+	 * FIFO of in-flight local ops. The `localOpMetadata` passed to each `submitLocalMessage`
+	 * call is the same object stored here, so {@link reSubmitSquashed} can splice an entry
+	 * out when a later staged op subsumes it.
+	 *
+	 * Push on submit / `applyStashedOp`; shift on local ack; splice on squash-drop.
+	 */
+	private readonly pendingOps: SharedArrayPendingOp<T>[] = [];
+
+	/**
+	 * Lazily-computed plan for the current resubmit batch. Identifies the set of
+	 * pendingOps to drop together (so insertAfter dependency chains are preserved)
+	 * and the insertAfter rewrites needed for non-dropped dependents. Invalidated on
+	 * any pendingOps mutation outside the squash path (submit / local-ack).
+	 */
+	private cachedSquashPlan?: {
+		drops: Set<SharedArrayPendingOp<T>>;
+		rewrites: Map<SharedArrayPendingOp<T>, string | undefined>;
+	};
+
+	/**
+	 * Lowest pendingOps index seen so far by {@link reSubmitSquashed} in the current
+	 * resubmit batch. Anything below this index is a pre-staging op (already on the wire
+	 * before staging began) that must not be considered as a chain root by
+	 * {@link computeSquashPlan} — dropping its chain would silently retract an op the
+	 * peer has already observed (or will observe via the runtime's pre-staging resubmit).
+	 *
+	 * Reset whenever pendingOps mutates outside the squash path so the next batch
+	 * recomputes from scratch.
+	 */
+	private stagingBoundaryIdx?: number;
+
+	/**
+	 * Entries whose creation op was dropped by a prior squash batch and therefore
+	 * never reached peers. Lives across staging cycles: a later cycle that needs to
+	 * rewrite an `insertAfterEntryId` must skip these when picking a wire-valid
+	 * predecessor, because they remain in {@link sharedArray} as deleted entries
+	 * but are not visible to any peer.
+	 */
+	private readonly wireBlacklist = new Set<string>();
 
 	/**
 	 * Create a new shared array
@@ -220,7 +276,7 @@ export class SharedArrayClass<T extends SerializableTypeForSharedArray>
 			return;
 		}
 
-		this.submitLocalMessage(op);
+		this.submitArrayOp(op);
 	}
 
 	public delete(index: number): void {
@@ -247,7 +303,7 @@ export class SharedArrayClass<T extends SerializableTypeForSharedArray>
 			return;
 		}
 
-		this.submitLocalMessage(op);
+		this.submitArrayOp(op);
 	}
 
 	public rearrangeToFront(values: T[]): void {
@@ -324,7 +380,7 @@ export class SharedArrayClass<T extends SerializableTypeForSharedArray>
 			return;
 		}
 
-		this.submitLocalMessage(op);
+		this.submitArrayOp(op);
 	}
 
 	/**
@@ -360,7 +416,7 @@ export class SharedArrayClass<T extends SerializableTypeForSharedArray>
 			return;
 		}
 
-		this.submitLocalMessage(op);
+		this.submitArrayOp(op);
 	}
 	/**
 	 * Method to do undo/redo of move operation. All entries of the same payload/value are stored
@@ -398,7 +454,7 @@ export class SharedArrayClass<T extends SerializableTypeForSharedArray>
 			return;
 		}
 
-		this.submitLocalMessage(op);
+		this.submitArrayOp(op);
 	}
 
 	public rollback(op: unknown, _localOpMetadata: unknown): void {
@@ -523,6 +579,274 @@ export class SharedArrayClass<T extends SerializableTypeForSharedArray>
 	protected onDisconnect(): void {}
 
 	/**
+	 * Per-op squash. The only op that carries user content is `insertEntry` (its `value`); the
+	 * others reference entryIds. So the subsumption walk starts at each staged `insertEntry`
+	 * and follows the chain forward through `moveEntry` (which re-homes the entry's value
+	 * under a new entryId) until the chain terminates. If the chain's final state is "deleted"
+	 * — via `deleteEntry` or `toggle(isDeleted=true)` — the entire chain is dropped (including
+	 * the insert that carried the value). If the chain remains live, or if a `toggleMove`
+	 * intervenes (which can resurrect an earlier link in unpredictable ways), the chain is
+	 * resubmitted unchanged.
+	 *
+	 * Dropped ops are spliced from {@link pendingOps} in this pass; later `reSubmitSquashed`
+	 * calls for those same ops short-circuit via the membership check.
+	 */
+	protected override reSubmitSquashed(content: unknown, localOpMetadata: unknown): void {
+		const pendingOp = localOpMetadata as SharedArrayPendingOp<T>;
+		if (this.stagingBoundaryIdx === undefined) {
+			// First staged op in this resubmit batch — anchor the staging boundary at its
+			// position so chain walking from earlier (pre-staging) inserts can't pull a
+			// staged delete into a drop set and silently corrupt state.
+			const idx = this.pendingOps.indexOf(pendingOp);
+			this.stagingBoundaryIdx = idx === -1 ? this.pendingOps.length : idx;
+			this.cachedSquashPlan = undefined;
+		}
+		this.cachedSquashPlan ??= this.computeSquashPlan(this.stagingBoundaryIdx);
+		const { drops, rewrites } = this.cachedSquashPlan;
+		if (drops.has(pendingOp)) {
+			const idx = this.pendingOps.indexOf(pendingOp);
+			if (idx !== -1) {
+				this.pendingOps.splice(idx, 1);
+			}
+			return;
+		}
+		if (rewrites.has(pendingOp)) {
+			const newInsertAfter = rewrites.get(pendingOp);
+			const op = content as ISharedArrayOperation<T>;
+			if (op.type === OperationType.insertEntry || op.type === OperationType.moveEntry) {
+				this.reSubmitCore({ ...op, insertAfterEntryId: newInsertAfter }, localOpMetadata);
+				return;
+			}
+		}
+		this.reSubmitCore(content, localOpMetadata);
+	}
+
+	/**
+	 * Push a pending-op record and submit the op with that record as `localOpMetadata`.
+	 * The record is consumed FIFO on local ack (see {@link processMessage}) and may be
+	 * spliced out earlier by a squash decision (see {@link reSubmitSquashed}).
+	 */
+	private submitArrayOp(op: ISharedArrayOperation<T>): void {
+		const pendingOp = this.buildPendingOp(op);
+		this.pendingOps.push(pendingOp);
+		this.cachedSquashPlan = undefined;
+		this.stagingBoundaryIdx = undefined;
+		this.submitLocalMessage(op, pendingOp);
+	}
+
+	private buildPendingOp(op: ISharedArrayOperation<T>): SharedArrayPendingOp<T> {
+		switch (op.type) {
+			case OperationType.insertEntry:
+			case OperationType.deleteEntry:
+			case OperationType.toggle: {
+				return { op, type: op.type, entryId: op.entryId };
+			}
+			case OperationType.moveEntry:
+			case OperationType.toggleMove: {
+				return {
+					op,
+					type: op.type,
+					entryId: op.entryId,
+					targetEntryId: op.changedToEntryId,
+				};
+			}
+			default: {
+				unreachableCase(op);
+			}
+		}
+	}
+
+	/**
+	 * Compute the squash plan for the current pendingOps state. Two passes:
+	 * pass 1 identifies each insertEntry chain (insert + moves + terminal
+	 * delete/toggle); chains that terminate in a deleted state contribute their
+	 * ops to `drops` and their entryIds to `droppedEntries`. Pass 2 computes
+	 * insertAfter rewrites for non-dropped insert/move ops whose
+	 * `insertAfterEntryId` references a dropped entry, by walking sharedArray
+	 * backward to the nearest non-dropped entry.
+	 */
+	private computeSquashPlan(stagingBoundaryIdx: number = 0): {
+		drops: Set<SharedArrayPendingOp<T>>;
+		rewrites: Map<SharedArrayPendingOp<T>, string | undefined>;
+	} {
+		const drops = new Set<SharedArrayPendingOp<T>>();
+		const droppedEntries = new Set<string>();
+		const claimed = new Set<SharedArrayPendingOp<T>>();
+
+		for (let opIdx = 0; opIdx < this.pendingOps.length; opIdx++) {
+			const op = this.pendingOps[opIdx];
+			assert(op !== undefined, "pendingOps index in range");
+			if (op.type !== OperationType.insertEntry || claimed.has(op)) {
+				continue;
+			}
+			if (opIdx < stagingBoundaryIdx) {
+				// Pre-staging insert — already on the wire, can't be retracted via squash.
+				continue;
+			}
+			const chain = this.walkInsertChain(op);
+			if (chain === undefined) {
+				continue;
+			}
+			for (const chainOp of chain.ops) {
+				drops.add(chainOp);
+				claimed.add(chainOp);
+			}
+			for (const entry of chain.entries) {
+				droppedEntries.add(entry);
+				this.wireBlacklist.add(entry);
+			}
+		}
+
+		const rewrites = new Map<SharedArrayPendingOp<T>, string | undefined>();
+		if (droppedEntries.size > 0) {
+			const entryBirthIdx = this.buildEntryBirthIndexMap();
+			for (let pIdx = 0; pIdx < this.pendingOps.length; pIdx++) {
+				const pendingOp = this.pendingOps[pIdx];
+				assert(pendingOp !== undefined, 0xcfd /* pendingOps index in range */);
+				if (drops.has(pendingOp)) {
+					continue;
+				}
+				const op = pendingOp.op;
+				if (op.type !== OperationType.insertEntry && op.type !== OperationType.moveEntry) {
+					continue;
+				}
+				if (
+					op.insertAfterEntryId === undefined ||
+					(!droppedEntries.has(op.insertAfterEntryId) &&
+						!this.wireBlacklist.has(op.insertAfterEntryId))
+				) {
+					continue;
+				}
+				const anchorEntryId =
+					op.type === OperationType.moveEntry ? op.changedToEntryId : pendingOp.entryId;
+				rewrites.set(
+					pendingOp,
+					this.resolveRewriteTarget(anchorEntryId, pIdx, droppedEntries, entryBirthIdx),
+				);
+			}
+		}
+		return { drops, rewrites };
+	}
+
+	/**
+	 * Map from entryId to the pendingOps index where that entry is created
+	 * (insertEntry or moveEntry's target). Entries not in the map are pre-staging
+	 * acked entries that are already on the wire.
+	 */
+	private buildEntryBirthIndexMap(): Map<string, number> {
+		const map = new Map<string, number>();
+		for (let i = 0; i < this.pendingOps.length; i++) {
+			const p = this.pendingOps[i];
+			assert(p !== undefined, 0xcfe /* pendingOps index in range */);
+			if (p.type === OperationType.insertEntry) {
+				map.set(p.entryId, i);
+			} else if (p.type === OperationType.moveEntry && p.targetEntryId !== undefined) {
+				map.set(p.targetEntryId, i);
+			}
+		}
+		return map;
+	}
+
+	/**
+	 * Walk sharedArray backward from the given entry's position to find the nearest
+	 * entry that will be on the wire when the rewritten op is submitted. A candidate
+	 * qualifies when it is not in `droppedEntries`, not in `wireBlacklist`, and is
+	 * either acked pre-staging (not in `entryBirthIdx`) or born earlier than this
+	 * op in the same squash batch. Returns undefined when no qualifying predecessor
+	 * exists, which means the rewrite anchors to the front.
+	 */
+	private resolveRewriteTarget(
+		anchorEntryId: string,
+		opPendingIdx: number,
+		droppedEntries: Set<string>,
+		entryBirthIdx: Map<string, number>,
+	): string | undefined {
+		const idx = this.findIndexOfEntryId(anchorEntryId);
+		if (idx <= 0) {
+			return undefined;
+		}
+		for (let i = idx - 1; i >= 0; i--) {
+			const entry = this.sharedArray[i];
+			if (entry === undefined) {
+				continue;
+			}
+			if (droppedEntries.has(entry.entryId)) {
+				continue;
+			}
+			if (this.wireBlacklist.has(entry.entryId)) {
+				// Dropped by an earlier squash batch — sharedArray still has the (deleted)
+				// entry locally, but it never reached peers.
+				continue;
+			}
+			const birthIdx = entryBirthIdx.get(entry.entryId);
+			if (birthIdx !== undefined && birthIdx >= opPendingIdx) {
+				// Predecessor's wire op is submitted later than this one; not yet on
+				// the wire at the time of submission.
+				continue;
+			}
+			return entry.entryId;
+		}
+		return undefined;
+	}
+
+	/**
+	 * Walk forward from the given insertEntry collecting its chain — insert + any
+	 * `moveEntry` hops + a terminating `deleteEntry` or deleting `toggle`. Returns
+	 * the chain ops and entryIds touched if the chain ends in a deleted state;
+	 * undefined otherwise. Ignores forward dependencies; rewrite handling lives in
+	 * the caller.
+	 */
+	private walkInsertChain(
+		insertOp: SharedArrayPendingOp<T>,
+	): { ops: SharedArrayPendingOp<T>[]; entries: Set<string> } | undefined {
+		const startIdx = this.pendingOps.indexOf(insertOp);
+		if (startIdx === -1) {
+			return undefined;
+		}
+
+		let currentEntry = insertOp.entryId;
+		let isCurrentlyDeleted = false;
+		const ops: SharedArrayPendingOp<T>[] = [insertOp];
+		const entries = new Set<string>([currentEntry]);
+
+		for (let i = startIdx + 1; i < this.pendingOps.length; i++) {
+			const candidate = this.pendingOps[i];
+			assert(candidate !== undefined, 0xcf9 /* pendingOps index in range */);
+			const sourceMatches = candidate.entryId === currentEntry;
+			const targetMatches = candidate.targetEntryId === currentEntry;
+			if (!sourceMatches && !targetMatches) {
+				continue;
+			}
+			if (candidate.type === OperationType.deleteEntry && sourceMatches) {
+				ops.push(candidate);
+				isCurrentlyDeleted = true;
+				continue;
+			}
+			if (candidate.type === OperationType.toggle && sourceMatches) {
+				ops.push(candidate);
+				isCurrentlyDeleted = (candidate.op as IToggleOperation).isDeleted;
+				continue;
+			}
+			if (candidate.type === OperationType.moveEntry && sourceMatches) {
+				ops.push(candidate);
+				assert(
+					candidate.targetEntryId !== undefined,
+					0xcfa /* moveEntry pendingOp has target */,
+				);
+				currentEntry = candidate.targetEntryId;
+				entries.add(currentEntry);
+				isCurrentlyDeleted = false;
+				continue;
+			}
+			// toggleMove or a move-into-chain rewires the skip list in ways the walker
+			// can't safely compose; bail.
+			return undefined;
+		}
+
+		return isCurrentlyDeleted ? { ops, entries } : undefined;
+	}
+
+	/**
 	 * Tracks the doubly linked skip list for the given entry to identify local pending counter attribute.
 	 * It signifies if a local pending operation exists for the payload/value being tracked in the skip list
 	 *
@@ -618,7 +942,14 @@ export class SharedArrayClass<T extends SerializableTypeForSharedArray>
 					throw new Error("Unknown operation");
 				}
 			}
-			if (!local) {
+			if (local) {
+				// Pending ops are FIFO-consumed on local ack. Squash-drops splice their
+				// entries out earlier in {@link reSubmitSquashed}, so the shifted entry
+				// here always matches the op being acked.
+				this.pendingOps.shift();
+				this.cachedSquashPlan = undefined;
+				this.stagingBoundaryIdx = undefined;
+			} else {
 				this.emitValueChangedEvent(op, local);
 			}
 		}
@@ -1024,6 +1355,6 @@ export class SharedArrayClass<T extends SerializableTypeForSharedArray>
 				unreachableCase(op);
 			}
 		}
-		this.submitLocalMessage(op);
+		this.submitArrayOp(op);
 	}
 }

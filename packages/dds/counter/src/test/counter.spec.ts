@@ -5,6 +5,7 @@
 
 import { strict as assert } from "node:assert";
 
+import { enterStagingMode, reconnectAndSquash } from "@fluid-private/test-dds-utils";
 import { AttachState } from "@fluidframework/container-definitions";
 import type { IChannelFactory } from "@fluidframework/datastore-definitions/internal";
 import {
@@ -303,6 +304,80 @@ describe("SharedCounter", () => {
 			// Verify that the value is incremented in both the clients.
 			assert.equal(testCounter.value, -20, "Value not incremented in first client");
 			assert.equal(testCounter2.value, -20, "Value not incremented in second client");
+		});
+	});
+
+	describe("SharedCounter squash on resubmit", () => {
+		let containerRuntimeFactory: MockContainerRuntimeFactoryForReconnection;
+		let containerRuntime1: MockContainerRuntimeForReconnection;
+		let dataStoreRuntime1: MockFluidDataStoreRuntime;
+		let counter1: ISharedCounter;
+		let counter2: ISharedCounter;
+		let peerIncrements: number[];
+
+		beforeEach("createCountersForSquash", () => {
+			containerRuntimeFactory = new MockContainerRuntimeFactoryForReconnection();
+			dataStoreRuntime1 = new MockFluidDataStoreRuntime();
+			containerRuntime1 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
+			counter1 = factory.create(dataStoreRuntime1, "c1") as ISharedCounter;
+			counter1.connect({
+				deltaConnection: dataStoreRuntime1.createDeltaConnection(),
+				objectStorage: new MockStorage(),
+			});
+			const dsr2 = new MockFluidDataStoreRuntime();
+			containerRuntimeFactory.createContainerRuntime(dsr2);
+			counter2 = factory.create(dsr2, "c2") as ISharedCounter;
+			counter2.connect({
+				deltaConnection: dsr2.createDeltaConnection(),
+				objectStorage: new MockStorage(),
+			});
+
+			peerIncrements = [];
+			counter2.on("incremented", (delta: number) => {
+				peerIncrements.push(delta);
+			});
+		});
+
+		// Counter increments are commutative and not subsumable — each pending increment carries
+		// the user's explicit intent. Squash is the identity transform: every staged increment is
+		// resubmitted unchanged, just like a regular reSubmit.
+
+		it("resubmits each staged increment unchanged", () => {
+			containerRuntime1.connected = false;
+			counter1.increment(5);
+			counter1.increment(3);
+			counter1.increment(-1);
+			reconnectAndSquash(containerRuntime1, dataStoreRuntime1);
+			containerRuntimeFactory.processAllMessages();
+
+			assert.equal(counter1.value, 7);
+			assert.equal(counter2.value, 7);
+			assert.deepEqual(peerIncrements, [5, 3, -1]);
+		});
+
+		it("preserves pre-staging increments still in flight at squash time", () => {
+			// Submit a pre-staging increment while connected (so it's in flight at the runtime
+			// layer but not yet ACKed when we disconnect).
+			counter1.increment(2);
+			enterStagingMode(containerRuntime1);
+			counter1.increment(5);
+			counter1.increment(-1);
+			reconnectAndSquash(containerRuntime1, dataStoreRuntime1);
+			containerRuntimeFactory.processAllMessages();
+
+			assert.equal(counter1.value, 6);
+			assert.equal(counter2.value, 6);
+			assert.deepEqual(peerIncrements, [2, 5, -1]);
+		});
+
+		it("passes through a single pending increment unchanged", () => {
+			containerRuntime1.connected = false;
+			counter1.increment(42);
+			reconnectAndSquash(containerRuntime1, dataStoreRuntime1);
+			containerRuntimeFactory.processAllMessages();
+
+			assert.equal(counter2.value, 42);
+			assert.deepEqual(peerIncrements, [42]);
 		});
 	});
 

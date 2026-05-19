@@ -7903,9 +7903,15 @@ importers:
       '@biomejs/biome':
         specifier: ~2.4.5
         version: 2.4.5
+      '@fluid-internal/client-utils':
+        specifier: workspace:~
+        version: link:../../common/client-utils
       '@fluid-internal/mocha-test-setup':
         specifier: workspace:~
         version: link:../../test/mocha-test-setup
+      '@fluid-private/stochastic-test-utils':
+        specifier: workspace:~
+        version: link:../../test/stochastic-test-utils
       '@fluid-private/test-dds-utils':
         specifier: workspace:~
         version: link:../test-dds-utils
@@ -7927,6 +7933,9 @@ importers:
       '@fluidframework/eslint-config-fluid':
         specifier: catalog:eslint
         version: 9.0.0(@typescript-eslint/utils@8.56.1(eslint@9.39.1(jiti@2.6.1))(typescript@5.4.5))(eslint@9.39.1(jiti@2.6.1))(typescript@5.4.5)
+      '@fluidframework/runtime-utils':
+        specifier: workspace:~
+        version: link:../../runtime/runtime-utils
       '@fluidframework/test-runtime-utils':
         specifier: workspace:~
         version: link:../../runtime/test-runtime-utils
