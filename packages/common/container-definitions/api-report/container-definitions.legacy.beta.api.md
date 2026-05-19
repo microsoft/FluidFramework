@@ -202,6 +202,7 @@ export interface IContainerContext {
     pendingLocalState?: unknown;
     // (undocumented)
     readonly quorum: IQuorumClients;
+    readonly resolvedUrl?: IResolvedUrl | undefined;
     readonly scope: FluidObject;
     // @system
     readonly signalAudience?: IAudience;
