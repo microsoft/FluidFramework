@@ -30,8 +30,7 @@ import { pkgVersion } from "./packageVersion.js";
  *
  * @internal
  */
-export const defaultMinVersionForCollab =
-	"2.0.0-defaults" as const satisfies MinimumVersionForCollab;
+export const defaultMinVersionForCollab = "2.0.0" as const satisfies MinimumVersionForCollab;
 
 /**
  * We don't want allow a version before the major public release of the LTS version.
@@ -44,7 +43,7 @@ export const defaultMinVersionForCollab =
  *
  * @internal
  */
-export const lowestMinVersionForCollab = "1.0.0" as const satisfies MinimumVersionForCollab;
+export const lowestMinVersionForCollab = "2.0.0" as const satisfies MinimumVersionForCollab;
 
 /**
  * String in a valid semver format specifying bottom of a minor version
