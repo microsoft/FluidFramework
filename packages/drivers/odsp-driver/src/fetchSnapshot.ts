@@ -4,6 +4,7 @@
  */
 
 import { fromUtf8ToBase64 } from "@fluid-internal/client-utils";
+import { LogLevel } from "@fluidframework/core-interfaces/internal";
 import { assert } from "@fluidframework/core-utils/internal";
 import { getW3CData } from "@fluidframework/driver-base/internal";
 import {
@@ -348,264 +349,271 @@ async function fetchLatestSnapshotCore(
 			}
 		}
 		// This event measures only successful cases of getLatest call (no tokens, no retries).
-		return PerformanceEvent.timedExecAsync(logger, perfEvent, async (event) => {
-			let controller: AbortController | undefined;
-			let fetchTimeout: ReturnType<typeof setTimeout> | undefined;
-			if (snapshotOptions?.timeout !== undefined) {
-				controller = new AbortController();
-				fetchTimeout = setTimeout(() => controller!.abort(), snapshotOptions.timeout);
-			}
-
-			const [response, fetchTime] = await measureP(async () =>
-				snapshotDownloader(
-					odspResolvedUrl,
-					getAuthHeader,
-					tokenFetchOptions,
-					loadingGroupIds,
-					snapshotOptions,
-					controller,
-				),
-			).finally(() => {
-				// Clear the fetchTimeout once the response is fetched.
-				if (fetchTimeout !== undefined) {
-					clearTimeout(fetchTimeout);
-					fetchTimeout = undefined;
+		return PerformanceEvent.timedExecAsync(
+			logger,
+			perfEvent,
+			async (event) => {
+				let controller: AbortController | undefined;
+				let fetchTimeout: ReturnType<typeof setTimeout> | undefined;
+				if (snapshotOptions?.timeout !== undefined) {
+					controller = new AbortController();
+					fetchTimeout = setTimeout(() => controller!.abort(), snapshotOptions.timeout);
 				}
-			});
 
-			const odspResponse = response.odspResponse;
-			const contentType = odspResponse.headers.get("content-type");
-
-			const propsToLog: DriverErrorTelemetryProps = {
-				...odspResponse.propsToLog,
-				contentType,
-				accept: response.requestHeaders.accept,
-				driverVersion: pkgVersion,
-			};
-
-			let parsedSnapshotContents: IOdspResponse<ISnapshotContentsWithProps> | undefined;
-			let contentTypeToRead: string | undefined;
-			if (contentType?.includes("application/ms-fluid")) {
-				contentTypeToRead = "application/ms-fluid";
-			} else if (contentType?.includes("application/json")) {
-				contentTypeToRead = "application/json";
-			}
-
-			let parseTime: number;
-			let receiveContentTime: number;
-			try {
-				switch (contentTypeToRead) {
-					case "application/json": {
-						let text: string;
-						[text, receiveContentTime] = await measureP(async () =>
-							odspResponse.content
-								.text()
-								.then((res) => {
-									if (res.length === 0) {
-										throwOdspNetworkError(
-											"Response from browser is empty",
-											fetchIncorrectResponse,
-											odspResponse.content, // response
-											undefined, // response text
-											propsToLog,
-										);
-									}
-									return res;
-								})
-								.catch((error) =>
-									// Parsing can fail and message could contain full request URI, including
-									// tokens, etc. So do not log error object itself.
-									throwOdspNetworkError(
-										"Error while parsing fetch response",
-										fetchIncorrectResponse,
-										odspResponse.content, // response
-										undefined, // response text
-										propsToLog,
-									),
-								),
-						);
-						propsToLog.bodySize = text.length;
-						let content: IOdspSnapshot;
-						[content, parseTime] = measure(() => JSON.parse(text) as IOdspSnapshot);
-						validateBlobsAndTrees(content);
-						const snapshotContents: ISnapshot =
-							convertOdspSnapshotToSnapshotTreeAndBlobs(content);
-						parsedSnapshotContents = {
-							...odspResponse,
-							content: {
-								...snapshotContents,
-								telemetryProps: {},
-							},
-						};
-						break;
+				const [response, fetchTime] = await measureP(async () =>
+					snapshotDownloader(
+						odspResolvedUrl,
+						getAuthHeader,
+						tokenFetchOptions,
+						loadingGroupIds,
+						snapshotOptions,
+						controller,
+					),
+				).finally(() => {
+					// Clear the fetchTimeout once the response is fetched.
+					if (fetchTimeout !== undefined) {
+						clearTimeout(fetchTimeout);
+						fetchTimeout = undefined;
 					}
-					case "application/ms-fluid": {
-						let content: ArrayBuffer;
-						[content, receiveContentTime] = await measureP(async () =>
-							odspResponse.content
-								.arrayBuffer()
-								.then((res) => {
-									if (res.byteLength === 0) {
+				});
+
+				const odspResponse = response.odspResponse;
+				const contentType = odspResponse.headers.get("content-type");
+
+				const propsToLog: DriverErrorTelemetryProps = {
+					...odspResponse.propsToLog,
+					contentType,
+					accept: response.requestHeaders.accept,
+					driverVersion: pkgVersion,
+				};
+
+				let parsedSnapshotContents: IOdspResponse<ISnapshotContentsWithProps> | undefined;
+				let contentTypeToRead: string | undefined;
+				if (contentType?.includes("application/ms-fluid")) {
+					contentTypeToRead = "application/ms-fluid";
+				} else if (contentType?.includes("application/json")) {
+					contentTypeToRead = "application/json";
+				}
+
+				let parseTime: number;
+				let receiveContentTime: number;
+				try {
+					switch (contentTypeToRead) {
+						case "application/json": {
+							let text: string;
+							[text, receiveContentTime] = await measureP(async () =>
+								odspResponse.content
+									.text()
+									.then((res) => {
+										if (res.length === 0) {
+											throwOdspNetworkError(
+												"Response from browser is empty",
+												fetchIncorrectResponse,
+												odspResponse.content, // response
+												undefined, // response text
+												propsToLog,
+											);
+										}
+										return res;
+									})
+									.catch((error) =>
+										// Parsing can fail and message could contain full request URI, including
+										// tokens, etc. So do not log error object itself.
 										throwOdspNetworkError(
-											"Response from browser is empty",
+											"Error while parsing fetch response",
 											fetchIncorrectResponse,
 											odspResponse.content, // response
 											undefined, // response text
 											propsToLog,
-										);
-									}
-									return res;
-								})
-								.catch((error) =>
-									// Parsing can fail and message could contain full request URI, including
-									// tokens, etc. So do not log error object itself.
-									throwOdspNetworkError(
-										"Error while parsing fetch response",
-										fetchIncorrectResponse,
-										odspResponse.content, // response
-										undefined, // response text
-										propsToLog,
+										),
 									),
-								),
-						);
-						propsToLog.bodySize = content.byteLength;
-						let snapshotContents: ISnapshotContentsWithProps;
-						[snapshotContents, parseTime] = measure(() =>
-							parseCompactSnapshotResponse(new Uint8Array(content), logger),
-						);
-						if (
-							snapshotContents.snapshotTree.trees === undefined ||
-							snapshotContents.snapshotTree.blobs === undefined
-						) {
+							);
+							propsToLog.bodySize = text.length;
+							let content: IOdspSnapshot;
+							[content, parseTime] = measure(() => JSON.parse(text) as IOdspSnapshot);
+							validateBlobsAndTrees(content);
+							const snapshotContents: ISnapshot =
+								convertOdspSnapshotToSnapshotTreeAndBlobs(content);
+							parsedSnapshotContents = {
+								...odspResponse,
+								content: {
+									...snapshotContents,
+									telemetryProps: {},
+								},
+							};
+							break;
+						}
+						case "application/ms-fluid": {
+							let content: ArrayBuffer;
+							[content, receiveContentTime] = await measureP(async () =>
+								odspResponse.content
+									.arrayBuffer()
+									.then((res) => {
+										if (res.byteLength === 0) {
+											throwOdspNetworkError(
+												"Response from browser is empty",
+												fetchIncorrectResponse,
+												odspResponse.content, // response
+												undefined, // response text
+												propsToLog,
+											);
+										}
+										return res;
+									})
+									.catch((error) =>
+										// Parsing can fail and message could contain full request URI, including
+										// tokens, etc. So do not log error object itself.
+										throwOdspNetworkError(
+											"Error while parsing fetch response",
+											fetchIncorrectResponse,
+											odspResponse.content, // response
+											undefined, // response text
+											propsToLog,
+										),
+									),
+							);
+							propsToLog.bodySize = content.byteLength;
+							let snapshotContents: ISnapshotContentsWithProps;
+							[snapshotContents, parseTime] = measure(() =>
+								parseCompactSnapshotResponse(new Uint8Array(content), logger),
+							);
+							if (
+								snapshotContents.snapshotTree.trees === undefined ||
+								snapshotContents.snapshotTree.blobs === undefined
+							) {
+								throw new NonRetryableError(
+									"Returned odsp snapshot is malformed. No trees or blobs!",
+									OdspErrorTypes.incorrectServerResponse,
+									propsToLog,
+								);
+							}
+
+							const props = snapshotContents.telemetryProps;
+							const slowTreeParseCodePaths = props.slowTreeStructureCount ?? 0;
+							const slowBlobParseCodePaths = props.slowBlobStructureCount ?? 0;
+							const treeStructureCountWithGroupId = props.treeStructureCountWithGroupId ?? 0;
+							// As trees with groupId go through normal parsing, so exclude them.
+							if (
+								slowTreeParseCodePaths - treeStructureCountWithGroupId > 10 ||
+								slowBlobParseCodePaths > 10
+							) {
+								logger.sendErrorEvent({
+									eventName: "SlowSnapshotParseCodePaths",
+									slowTreeStructureCount: slowTreeParseCodePaths,
+									slowBlobStructureCount: slowBlobParseCodePaths,
+									treeStructureCountWithGroupId,
+								});
+							}
+							parsedSnapshotContents = { ...odspResponse, content: snapshotContents };
+							break;
+						}
+						default: {
 							throw new NonRetryableError(
-								"Returned odsp snapshot is malformed. No trees or blobs!",
+								"Unknown snapshot content type",
 								OdspErrorTypes.incorrectServerResponse,
 								propsToLog,
 							);
 						}
-
-						const props = snapshotContents.telemetryProps;
-						const slowTreeParseCodePaths = props.slowTreeStructureCount ?? 0;
-						const slowBlobParseCodePaths = props.slowBlobStructureCount ?? 0;
-						const treeStructureCountWithGroupId = props.treeStructureCountWithGroupId ?? 0;
-						// As trees with groupId go through normal parsing, so exclude them.
-						if (
-							slowTreeParseCodePaths - treeStructureCountWithGroupId > 10 ||
-							slowBlobParseCodePaths > 10
-						) {
-							logger.sendErrorEvent({
-								eventName: "SlowSnapshotParseCodePaths",
-								slowTreeStructureCount: slowTreeParseCodePaths,
-								slowBlobStructureCount: slowBlobParseCodePaths,
-								treeStructureCountWithGroupId,
-							});
-						}
-						parsedSnapshotContents = { ...odspResponse, content: snapshotContents };
-						break;
 					}
-					default: {
-						throw new NonRetryableError(
-							"Unknown snapshot content type",
-							OdspErrorTypes.incorrectServerResponse,
-							propsToLog,
-						);
+				} catch (error) {
+					if (isFluidError(error)) {
+						error.addTelemetryProperties(propsToLog);
+						throw error;
 					}
+					const enhancedError = wrapError(
+						error,
+						(errorMessage) =>
+							new NonRetryableError(
+								`Error parsing snapshot response: ${errorMessage}`,
+								OdspErrorTypes.genericError,
+								propsToLog,
+							),
+					);
+					throw enhancedError;
 				}
-			} catch (error) {
-				if (isFluidError(error)) {
-					error.addTelemetryProperties(propsToLog);
-					throw error;
+
+				assert(parsedSnapshotContents !== undefined, 0x312 /* snapshot should be parsed */);
+				const snapshot = parsedSnapshotContents.content;
+
+				// There are some scenarios in ODSP where we cannot cache, trees/latest will explicitly tell us when we
+				// cannot cache using an HTTP response header. Only cache snapshot if it is not for a loading group.
+				const canCache =
+					odspResponse.headers.get("disablebrowsercachingofusercontent") !== "true" &&
+					!fetchSnapshotForLoadingGroup;
+				const sequenceNumber: number = snapshot.sequenceNumber ?? 0;
+				const seqNumberFromOps =
+					snapshot.ops && snapshot.ops.length > 0
+						? snapshot.ops[0].sequenceNumber - 1
+						: undefined;
+
+				if (
+					!Number.isInteger(sequenceNumber) ||
+					(seqNumberFromOps !== undefined && seqNumberFromOps !== sequenceNumber)
+				) {
+					logger.sendErrorEvent({
+						eventName: "fetchSnapshotError",
+						sequenceNumber,
+						seqNumberFromOps,
+					});
+					snapshot.sequenceNumber = undefined;
+				} else if (canCache) {
+					const fluidEpoch = odspResponse.headers.get("x-fluid-epoch");
+					assert(fluidEpoch !== undefined, 0x1e6 /* "Epoch  should be present in response" */);
+					const value: ISnapshotCachedEntry2 = {
+						...snapshot,
+						cacheEntryTime: Date.now(),
+					};
+					const valueWithEpoch: IVersionedValueWithEpoch = {
+						value,
+						fluidEpoch,
+						version: persistedCacheValueVersion,
+					};
+					// eslint-disable-next-line @typescript-eslint/no-floating-promises
+					putInCache(valueWithEpoch);
 				}
-				const enhancedError = wrapError(
-					error,
-					(errorMessage) =>
-						new NonRetryableError(
-							`Error parsing snapshot response: ${errorMessage}`,
-							OdspErrorTypes.genericError,
-							propsToLog,
-						),
-				);
-				throw enhancedError;
-			}
 
-			assert(parsedSnapshotContents !== undefined, 0x312 /* snapshot should be parsed */);
-			const snapshot = parsedSnapshotContents.content;
-
-			// There are some scenarios in ODSP where we cannot cache, trees/latest will explicitly tell us when we
-			// cannot cache using an HTTP response header. Only cache snapshot if it is not for a loading group.
-			const canCache =
-				odspResponse.headers.get("disablebrowsercachingofusercontent") !== "true" &&
-				!fetchSnapshotForLoadingGroup;
-			const sequenceNumber: number = snapshot.sequenceNumber ?? 0;
-			const seqNumberFromOps =
-				snapshot.ops && snapshot.ops.length > 0
-					? snapshot.ops[0].sequenceNumber - 1
-					: undefined;
-
-			if (
-				!Number.isInteger(sequenceNumber) ||
-				(seqNumberFromOps !== undefined && seqNumberFromOps !== sequenceNumber)
-			) {
-				logger.sendErrorEvent({
-					eventName: "fetchSnapshotError",
+				event.end({
+					// trees, leafTrees, blobNodes, encodedBlobsSize,
+					// blobNodes - blobs tells us (roughly) how many blobs are deduped by service.
+					...getTreeStats(snapshot),
+					blobs: snapshot.blobContents?.size ?? 0,
 					sequenceNumber,
-					seqNumberFromOps,
+					ops: snapshot.ops?.length ?? 0,
+					fetchSnapshotForLoadingGroup,
+					useLegacyFlowWithoutGroups:
+						useLegacyFlowWithoutGroupsForSnapshotFetch(loadingGroupIds),
+					userOps: snapshot.ops?.filter((op) => isRuntimeMessage(op)).length ?? 0,
+					fileVersion,
+					// Measures time to make fetch call. Should be similar to
+					// fetchStartToResponseEndTime - receiveContentTime, i.e. it looks like it's time till first byte /
+					// end of response headers
+					fetchTime,
+					// time it takes client to parse payload. Same payload as in "SnapshotParse" event, here for
+					// easier analyzes.
+					parseTime,
+					// Time it takes to receive content (text of buffer) from Response object.
+					// This time likely is very closely correlated with networkTime, i.e. time it takes to receive
+					// actual content (starting measuring from first bite / end of response header)
+					receiveContentTime,
+					...getW3CData(response.requestUrl, "fetch"),
+					// Sharing link telemetry regarding sharing link redeem status and performance. Ex: FRL; dur=100,
+					// Azure Fluid Relay service; desc=S, FRP; desc=False. Here, FRL is the duration taken for redeem,
+					// Azure Fluid Relay service is the redeem status (S means success), and FRP is a flag to indicate
+					// if the permission has changed.
+					sltelemetry: odspResponse.headers.get("x-fluid-sltelemetry"),
+					// All other props
+					...propsToLog,
+					// Various perf counters and measures collected by binary parsing code:
+					// slowTreeStructureCount, slowBlobStructureCount, durationStructure, durationStrings,
+					// durationSnapshotTree, durationBlobs, etc.
+					...parsedSnapshotContents.content.telemetryProps,
 				});
-				snapshot.sequenceNumber = undefined;
-			} else if (canCache) {
-				const fluidEpoch = odspResponse.headers.get("x-fluid-epoch");
-				assert(fluidEpoch !== undefined, 0x1e6 /* "Epoch  should be present in response" */);
-				const value: ISnapshotCachedEntry2 = {
-					...snapshot,
-					cacheEntryTime: Date.now(),
-				};
-				const valueWithEpoch: IVersionedValueWithEpoch = {
-					value,
-					fluidEpoch,
-					version: persistedCacheValueVersion,
-				};
-				// eslint-disable-next-line @typescript-eslint/no-floating-promises
-				putInCache(valueWithEpoch);
-			}
-
-			event.end({
-				// trees, leafTrees, blobNodes, encodedBlobsSize,
-				// blobNodes - blobs tells us (roughly) how many blobs are deduped by service.
-				...getTreeStats(snapshot),
-				blobs: snapshot.blobContents?.size ?? 0,
-				sequenceNumber,
-				ops: snapshot.ops?.length ?? 0,
-				fetchSnapshotForLoadingGroup,
-				useLegacyFlowWithoutGroups:
-					useLegacyFlowWithoutGroupsForSnapshotFetch(loadingGroupIds),
-				userOps: snapshot.ops?.filter((op) => isRuntimeMessage(op)).length ?? 0,
-				fileVersion,
-				// Measures time to make fetch call. Should be similar to
-				// fetchStartToResponseEndTime - receiveContentTime, i.e. it looks like it's time till first byte /
-				// end of response headers
-				fetchTime,
-				// time it takes client to parse payload. Same payload as in "SnapshotParse" event, here for
-				// easier analyzes.
-				parseTime,
-				// Time it takes to receive content (text of buffer) from Response object.
-				// This time likely is very closely correlated with networkTime, i.e. time it takes to receive
-				// actual content (starting measuring from first bite / end of response header)
-				receiveContentTime,
-				...getW3CData(response.requestUrl, "fetch"),
-				// Sharing link telemetry regarding sharing link redeem status and performance. Ex: FRL; dur=100,
-				// Azure Fluid Relay service; desc=S, FRP; desc=False. Here, FRL is the duration taken for redeem,
-				// Azure Fluid Relay service is the redeem status (S means success), and FRP is a flag to indicate
-				// if the permission has changed.
-				sltelemetry: odspResponse.headers.get("x-fluid-sltelemetry"),
-				// All other props
-				...propsToLog,
-				// Various perf counters and measures collected by binary parsing code:
-				// slowTreeStructureCount, slowBlobStructureCount, durationStructure, durationStrings,
-				// durationSnapshotTree, durationBlobs, etc.
-				...parsedSnapshotContents.content.telemetryProps,
-			});
-			return snapshot;
-		}).catch((error) => {
+				return snapshot;
+			},
+			undefined, // markers
+			undefined, // sampleThreshold
+			LogLevel.info,
+		).catch((error) => {
 			// We hit these errors in stress tests, under load
 			// It's useful to try one more time in such case.
 			if (
@@ -791,7 +799,11 @@ export const downloadSnapshot = mockify(
 			"downloadSnapshot",
 		);
 		assert(authHeader !== null, 0x1e5 /* "Storage token should not be null" */);
-		logger?.sendTelemetryEvent({ eventName: "SnapshotAuthHeaderObtained" });
+		logger?.sendTelemetryEvent(
+			{ eventName: "SnapshotAuthHeaderObtained" },
+			undefined, // error
+			LogLevel.info,
+		);
 		const { body, headers } = getFormBodyAndHeaders(odspResolvedUrl, authHeader, header);
 		const fetchOptions = {
 			body,

@@ -15,6 +15,7 @@ import type {
 	IFluidHandleInternal,
 	ISignalEnvelope,
 } from "@fluidframework/core-interfaces/internal";
+import { LogLevel } from "@fluidframework/core-interfaces/internal";
 import { assert, Lazy, LazyPromise } from "@fluidframework/core-utils/internal";
 import { FluidObjectHandle } from "@fluidframework/datastore/internal";
 import type {
@@ -469,16 +470,20 @@ export class ChannelCollection
 			// Allows longitudinal tracking of various state (e.g. foundGCData), and some sampled details
 			if (this.shouldSendAttachLog) {
 				this.shouldSendAttachLog = false;
-				this.mc.logger.sendTelemetryEvent({
-					eventName: "dataStoreAttachMessage_sampled",
-					...tagCodeArtifacts({ id: attachMessage.id, pkg: attachMessage.type }),
-					details: {
-						local,
-						snapshot: !!attachMessage.snapshot,
-						foundGCData,
+				this.mc.logger.sendTelemetryEvent(
+					{
+						eventName: "dataStoreAttachMessage_sampled",
+						...tagCodeArtifacts({ id: attachMessage.id, pkg: attachMessage.type }),
+						details: {
+							local,
+							snapshot: !!attachMessage.snapshot,
+							foundGCData,
+						},
+						...extractSafePropertiesFromMessage(envelope),
 					},
-					...extractSafePropertiesFromMessage(envelope),
-				});
+					undefined, // error
+					LogLevel.info,
+				);
 			}
 
 			// The local object has already been attached

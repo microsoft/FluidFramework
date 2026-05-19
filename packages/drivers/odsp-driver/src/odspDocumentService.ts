@@ -4,6 +4,7 @@
  */
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
+import { LogLevel } from "@fluidframework/core-interfaces/internal";
 import { assert } from "@fluidframework/core-utils/internal";
 import type { IClient } from "@fluidframework/driver-definitions";
 import type {
@@ -277,7 +278,11 @@ export class OdspDocumentService
 			/* webpackChunkName: "socketModule" */ "./odspDelayLoadedDeltaStream.js"
 		)
 			.then((m) => {
-				this.mc.logger.sendTelemetryEvent({ eventName: "SocketModuleLoaded" });
+				this.mc.logger.sendTelemetryEvent(
+					{ eventName: "SocketModuleLoaded" },
+					undefined, // error
+					LogLevel.info,
+				);
 				return m;
 			})
 			.catch((error) => {
