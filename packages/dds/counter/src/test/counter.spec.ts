@@ -5,7 +5,7 @@
 
 import { strict as assert } from "node:assert";
 
-import { reconnectAndSquash } from "@fluid-private/test-dds-utils";
+import { enterStagingMode, reconnectAndSquash } from "@fluid-private/test-dds-utils";
 import { AttachState } from "@fluidframework/container-definitions";
 import type { IChannelFactory } from "@fluidframework/datastore-definitions/internal";
 import {
@@ -359,7 +359,7 @@ describe("SharedCounter", () => {
 			// Submit a pre-staging increment while connected (so it's in flight at the runtime
 			// layer but not yet ACKed when we disconnect).
 			counter1.increment(2);
-			containerRuntime1.connected = false;
+			enterStagingMode(containerRuntime1);
 			counter1.increment(5);
 			counter1.increment(-1);
 			reconnectAndSquash(containerRuntime1, dataStoreRuntime1);

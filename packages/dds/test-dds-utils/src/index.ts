@@ -35,4 +35,4 @@ export {
 export type { ISnapshotSuite } from "./ddsSnapshotHarness.js";
 export { createSnapshotSuite } from "./ddsSnapshotHarness.js";
 export type { Client, FuzzSerializedIdCompressor } from "./clientLoading.js";
-export { reconnectAndSquash } from "./utils.js";
+export { enterStagingMode, reconnectAndSquash } from "./utils.js";

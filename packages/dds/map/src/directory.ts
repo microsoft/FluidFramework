@@ -728,9 +728,7 @@ export class SharedDirectory
 			message.type === "deleteSubDirectory"
 		) {
 			const subdirMetadata = localOpMetadata as SubDirLocalOpMetadata;
-			if (
-				subdirMetadata.parentSubdir.dropIfSubsumedSubdirOp(message.subdirName, message.type)
-			) {
+			if (subdirMetadata.parentSubdir.dropIfSubsumedSubdirOp(subdirMetadata)) {
 				return;
 			}
 		}
@@ -1127,12 +1125,25 @@ export class SharedDirectory
 interface ICreateSubDirLocalOpMetadata {
 	type: "createSubDir";
 	parentSubdir: SubDirectory;
+	/**
+	 * Back-pointer to the {@link PendingSubDirectoryCreate} entry in
+	 * `parentSubdir.pendingSubDirectoryData` this metadata originated from. Lets squash and
+	 * resubmit identify the exact entry by reference rather than name+type, which is
+	 * ambiguous when multiple same-name lifecycle ops are pending (e.g. delete→create→delete).
+	 */
+	pendingEntry: PendingSubDirectoryCreate;
 }
 
 interface IDeleteSubDirLocalOpMetadata {
 	type: "deleteSubDir";
 	subDirectory: SubDirectory | undefined;
 	parentSubdir: SubDirectory;
+	/**
+	 * Back-pointer to the {@link PendingSubDirectoryDelete} entry in
+	 * `parentSubdir.pendingSubDirectoryData` this metadata originated from. See
+	 * {@link ICreateSubDirLocalOpMetadata.pendingEntry}.
+	 */
+	pendingEntry: PendingSubDirectoryDelete;
 }
 
 type SubDirLocalOpMetadata = ICreateSubDirLocalOpMetadata | IDeleteSubDirLocalOpMetadata;
@@ -1389,7 +1400,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 					path: this.absolutePath,
 					type: "createSubDirectory",
 				};
-				this.submitCreateSubDirectoryMessage(op);
+				this.submitCreateSubDirectoryMessage(op, pendingSubDirectoryCreate);
 			} else {
 				// If we are detached, don't submit the op and directly commit
 				// the subdir to _sequencedSubdirectories.
@@ -1466,7 +1477,11 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 			type: "deleteSubDirectory",
 			path: this.absolutePath,
 		};
-		this.submitDeleteSubDirectoryMessage(op, previousOptimisticSubDirectory);
+		this.submitDeleteSubDirectoryMessage(
+			op,
+			previousOptimisticSubDirectory,
+			pendingSubdirDelete,
+		);
 		this.emit("subDirectoryDeleted", subdirName, true, this);
 		// We don't want to fully dispose the subdir tree since this is only a pending
 		// local delete. Instead we will only emit the dispose event to reflect the
@@ -2467,10 +2482,14 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 	 * Submit a create subdirectory operation.
 	 * @param op - The operation
 	 */
-	private submitCreateSubDirectoryMessage(op: IDirectorySubDirectoryOperation): void {
+	private submitCreateSubDirectoryMessage(
+		op: IDirectorySubDirectoryOperation,
+		pendingEntry: PendingSubDirectoryCreate,
+	): void {
 		const localOpMetadata: ICreateSubDirLocalOpMetadata = {
 			type: "createSubDir",
 			parentSubdir: this,
+			pendingEntry,
 		};
 		this.directory.submitDirectoryMessage(op, localOpMetadata);
 	}
@@ -2483,81 +2502,71 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 	private submitDeleteSubDirectoryMessage(
 		op: IDirectorySubDirectoryOperation,
 		subDir: SubDirectory,
+		pendingEntry: PendingSubDirectoryDelete,
 	): void {
 		const localOpMetadata: IDeleteSubDirLocalOpMetadata = {
 			type: "deleteSubDir",
 			subDirectory: subDir,
 			parentSubdir: this,
+			pendingEntry,
 		};
 		this.directory.submitDirectoryMessage(op, localOpMetadata);
 	}
 
 	/**
-	 * Submit a subdirectory operation again
-	 * @param op - The operation
-	 * @param localOpMetadata - metadata submitted with the op originally
-	 */
-	/**
-	 * Decide whether a staged subdirectory lifecycle op (createSubDirectory or
-	 * deleteSubDirectory) on this parent should be dropped from the squash output. The
-	 * goal is to prevent user-supplied `subdirName` strings from reaching the wire when
-	 * the staging-session ops cancel out.
+	 * Decide whether a staged subdirectory lifecycle op should be dropped from the squash
+	 * output. The goal is to prevent user-supplied `subdirName` strings from reaching the
+	 * wire when the staging-session ops cancel out — i.e. when a `createSubDirectory(name)`
+	 * is immediately followed (in pendingSubDirectoryData) by a `deleteSubDirectory(name)`.
 	 *
-	 * Rule (handles the only leak case; conservative elsewhere):
+	 * Reference-identity over the originating pendingEntry is load-bearing: name+type alone
+	 * mis-pairs same-name lifecycle cycles like `delete→create→delete` and can splice a
+	 * pre-staging in-flight entry instead of the staged sibling. Callers pass the metadata
+	 * the runtime handed back; the back-pointer to the originating pendingSubDirectoryData
+	 * entry resolves which op is being squashed without ambiguity.
 	 *
-	 * - A staged `createSubDirectory(name)` is subsumed if any later pending op for the
-	 * same name exists. If the subsumer is a `deleteSubDirectory(name)`, both entries
-	 * are spliced so the matching delete call also drops itself. If the subsumer is
-	 * another `createSubDirectory(name)`, only this earlier create is spliced.
-	 * - A staged `deleteSubDirectory(name)` whose entry is already gone (spliced by the
-	 * paired create) drops itself.
-	 * - All other delete cases (pre-existing subdir being deleted) fall through to the
-	 * normal resubmit path — the name was already on the wire pre-staging, so there's
-	 * no new leak.
+	 * Subsumption rule (per-op, mirroring `MapKernel.dropIfSubsumed`):
+	 *
+	 * - For a staged `createSubDirectory(name)`: walk forward from its entry. If the first
+	 * later same-name entry is a `deleteSubDirectory(name)`, the create+delete pair nets
+	 * to no-op; splice both so neither op reaches the wire and the matching delete call
+	 * sees its entry gone.
+	 * - For a staged `deleteSubDirectory(name)`: stand. It either targets a pre-existing
+	 * subdir (no leak — the name was on the wire pre-staging) or was already spliced as
+	 * part of a paired create (handled below).
+	 * - For either op type: if the pendingEntry is no longer in pendingSubDirectoryData, it
+	 * was spliced by an earlier squash decision; drop.
 	 */
-	public dropIfSubsumedSubdirOp(
-		subdirName: string,
-		opType: "createSubDirectory" | "deleteSubDirectory",
-	): boolean {
-		if (opType === "createSubDirectory") {
-			const createIdx = this.pendingSubDirectoryData.findIndex(
-				(e) => e.subdirName === subdirName && e.type === "createSubDirectory",
-			);
-			if (createIdx === -1) {
-				// Already spliced by a prior call's pair handling.
-				return true;
-			}
-			for (let i = createIdx + 1; i < this.pendingSubDirectoryData.length; i++) {
-				const later = this.pendingSubDirectoryData[i];
-				if (later === undefined || later.subdirName !== subdirName) {
-					continue;
-				}
-				if (later.type === "deleteSubDirectory") {
-					// Create+delete pair nets to no-op. Splice both — the later delete's
-					// matching call will then see its entry is gone and drop itself.
-					this.pendingSubDirectoryData.splice(i, 1);
-					this.pendingSubDirectoryData.splice(createIdx, 1);
-				} else {
-					// A later createSubDirectory for the same name supersedes this one (rare;
-					// requires an intervening delete to have been ACKed mid-staging). Splice
-					// only this earlier create.
-					this.pendingSubDirectoryData.splice(createIdx, 1);
-				}
-				return true;
-			}
-			return false;
-		}
-		// deleteSubDirectory
-		const deleteIdx = this.pendingSubDirectoryData.findIndex(
-			(e) => e.subdirName === subdirName && e.type === "deleteSubDirectory",
-		);
-		if (deleteIdx === -1) {
-			// Already spliced as part of a create+delete pair handled earlier in this batch.
+	public dropIfSubsumedSubdirOp(localOpMetadata: SubDirLocalOpMetadata): boolean {
+		const pendingEntry = localOpMetadata.pendingEntry;
+		const entryIdx = this.pendingSubDirectoryData.indexOf(pendingEntry);
+		if (entryIdx === -1) {
+			// Already spliced by a prior paired-create decision in this squash batch.
 			return true;
 		}
-		// Otherwise the delete corresponds to a pre-existing subdir (or another scenario where
-		// the user genuinely wants the delete to reach the wire). The name was already on the
-		// wire pre-staging, so no new leak — let reSubmitCore handle it.
+		if (pendingEntry.type !== "createSubDirectory") {
+			// deleteSubDirectory stands. Only paired-create can subsume it (handled above by
+			// finding the entry already spliced).
+			return false;
+		}
+		// Look for the first later entry on the same name. If it's a delete, the pair cancels.
+		for (let i = entryIdx + 1; i < this.pendingSubDirectoryData.length; i++) {
+			const later = this.pendingSubDirectoryData[i];
+			assert(later !== undefined, "pendingSubDirectoryData entry must exist within bounds");
+			if (later.subdirName !== pendingEntry.subdirName) {
+				continue;
+			}
+			if (later.type === "deleteSubDirectory") {
+				// Splice the later delete first to keep the create's index stable.
+				this.pendingSubDirectoryData.splice(i, 1);
+				this.pendingSubDirectoryData.splice(entryIdx, 1);
+				return true;
+			}
+			// A same-name `createSubDirectory` later would require an intervening delete, but
+			// that delete would have appeared first in this loop. Reaching here means the data
+			// model has been violated.
+			assert(false, "createSubDirectory cannot follow createSubDirectory without a delete");
+		}
 		return false;
 	}
 
@@ -2565,38 +2574,29 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 		op: IDirectorySubDirectoryOperation,
 		localOpMetadata: SubDirLocalOpMetadata,
 	): void {
-		// Only submit the op, if we have record for it, otherwise it is possible that the older instance
-		// is already deleted, in which case we don't need to submit the op.
+		// Identify the originating pending entry by reference so we never confuse same-name
+		// lifecycle ops (e.g. delete→create→delete) with each other. If the entry has been
+		// spliced (ACKed or dropped via squash), there's nothing to resubmit.
+		if (!this.pendingSubDirectoryData.includes(localOpMetadata.pendingEntry)) {
+			return;
+		}
 		if (localOpMetadata.type === "createSubDir") {
-			// For create operations, look specifically for createSubDirectory entries
-			const pendingEntry = findLast(
-				this.pendingSubDirectoryData,
-				(entry) => entry.subdirName === op.subdirName && entry.type === "createSubDirectory",
-			);
-			if (pendingEntry !== undefined) {
-				assert(
-					pendingEntry.type === "createSubDirectory",
-					0xc33 /* pending entry should be createSubDirectory */,
-				);
-				// We should add the client id, since when reconnecting it can have a different client id.
-				pendingEntry.subdir.clientIds.add(this.runtime.clientId ?? "detached");
-				// We also need to undelete the subdirectory tree if it was previously deleted
-				this.undisposeSubdirectoryTree(pendingEntry.subdir);
-				this.submitCreateSubDirectoryMessage(op);
-			}
-		} else if (localOpMetadata.type === "deleteSubDir") {
+			const pendingEntry = localOpMetadata.pendingEntry;
+			// We should add the client id, since when reconnecting it can have a different client id.
+			pendingEntry.subdir.clientIds.add(this.runtime.clientId ?? "detached");
+			// We also need to undelete the subdirectory tree if it was previously deleted
+			this.undisposeSubdirectoryTree(pendingEntry.subdir);
+			this.submitCreateSubDirectoryMessage(op, pendingEntry);
+		} else {
 			assert(
 				localOpMetadata.subDirectory !== undefined,
 				0xc34 /* Subdirectory should exist */,
 			);
-			// For delete operations, look specifically for deleteSubDirectory entries
-			const pendingEntry = findLast(
-				this.pendingSubDirectoryData,
-				(entry) => entry.subdirName === op.subdirName && entry.type === "deleteSubDirectory",
+			this.submitDeleteSubDirectoryMessage(
+				op,
+				localOpMetadata.subDirectory,
+				localOpMetadata.pendingEntry,
 			);
-			if (pendingEntry !== undefined) {
-				this.submitDeleteSubDirectoryMessage(op, localOpMetadata.subDirectory);
-			}
 		}
 	}
 

@@ -6,6 +6,7 @@
 import { strict as assert } from "node:assert";
 
 import {
+	enterStagingMode,
 	type IGCTestProvider,
 	reconnectAndSquash,
 	runGCTests,
@@ -606,7 +607,7 @@ describe("Cell", () => {
 			// but not yet ACKed when we disconnect. The staging-mode set + delete should leave
 			// the pre-staging value to land normally, and "secret" must never reach the peer.
 			cell1.set("pre");
-			containerRuntime1.connected = false;
+			enterStagingMode(containerRuntime1);
 			cell1.set("secret");
 			cell1.delete();
 			reconnectAndSquash(containerRuntime1, dataStoreRuntime1);
@@ -614,6 +615,14 @@ describe("Cell", () => {
 
 			assert.equal(cell1.get(), undefined);
 			assert.equal(cell2.get(), undefined);
+			const sawPre = peerObservations.some(
+				(observation) => observation.event === "valueChanged" && observation.value === "pre",
+			);
+			assert.equal(
+				sawPre,
+				true,
+				"pre-staging set must land on the peer when only the staged ops are squashed",
+			);
 			for (const observation of peerObservations) {
 				assert.notEqual(observation.value, "secret", "staged secret must not leak");
 			}

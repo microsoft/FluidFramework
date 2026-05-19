@@ -5,7 +5,7 @@
 
 import { strict as assert } from "node:assert";
 
-import { reconnectAndSquash } from "@fluid-private/test-dds-utils";
+import { enterStagingMode, reconnectAndSquash } from "@fluid-private/test-dds-utils";
 import {
 	MockContainerRuntimeFactoryForReconnection,
 	type MockContainerRuntimeForReconnection,
@@ -211,7 +211,7 @@ describe("SharedMap squash on resubmit", () => {
 		// Submit a pre-staging set on key "a" while connected so it's in flight at the runtime
 		// layer but not yet ACKed when we disconnect.
 		map1.set("a", "pre");
-		containerRuntime1.connected = false;
+		enterStagingMode(containerRuntime1);
 		// Staging-mode edits on a different key plus a self-subsumption pair on "a".
 		map1.set("b", "secret-b");
 		map1.set("b", "final-b");
@@ -229,7 +229,7 @@ describe("SharedMap squash on resubmit", () => {
 		// Pre-staging set on "k". Mixed-lifetime case: the pre-staging keySet and staging keySets
 		// share one PendingKeyLifetime in the kernel.
 		map1.set("k", "pre");
-		containerRuntime1.connected = false;
+		enterStagingMode(containerRuntime1);
 		map1.set("k", "secret");
 		map1.set("k", "final");
 		reconnectAndSquash(containerRuntime1, dataStoreRuntime1);
@@ -238,6 +238,14 @@ describe("SharedMap squash on resubmit", () => {
 		// The pre-staging "pre" is sent then overwritten by the staging "final" (which subsumed
 		// "secret"). Peer's final view is "final"; "secret" never appears in a peer event.
 		assert.equal(map2.get("k"), "final");
+		const sawPre = peerChanges.some(
+			(change) => change.key === "k" && change.newValue === "pre",
+		);
+		assert.equal(
+			sawPre,
+			true,
+			"pre-staging set on the same key must land before the staged squash result",
+		);
 		for (const change of peerChanges) {
 			assert.notEqual(change.newValue, "secret");
 		}
@@ -492,5 +500,79 @@ describe("SharedDirectory squash on resubmit (storage)", () => {
 				"staged value on a pending-deleted subdir must not leak",
 			);
 		}
+	});
+
+	it("squashes staged delete→create→delete on a pre-existing subdir to a single delete", () => {
+		// Pre-create the subdir and let it ACK so it's "pre-existing" on both clients.
+		dir1.createSubDirectory("x");
+		containerRuntimeFactory.processAllMessages();
+		assert.notEqual(dir2.getSubDirectory("x"), undefined);
+
+		const peerSubdirCreatedNames: string[] = [];
+		const peerSubdirDeletedNames: string[] = [];
+		dir2.on("subDirectoryCreated", (name, local) => {
+			if (!local) peerSubdirCreatedNames.push(name);
+		});
+		dir2.on("subDirectoryDeleted", (name, local) => {
+			if (!local) peerSubdirDeletedNames.push(name);
+		});
+
+		// Without reference identity, the inner create would pair with the later delete and
+		// leave the first delete unsplicable in pendingSubDirectoryData, causing a duplicate
+		// delete on the wire and a 0xc31 assert on ACK.
+		containerRuntime1.connected = false;
+		dir1.deleteSubDirectory("x");
+		dir1.createSubDirectory("x");
+		dir1.deleteSubDirectory("x");
+		reconnectAndSquash(containerRuntime1, dataStoreRuntime1);
+		containerRuntimeFactory.processAllMessages();
+
+		assert.equal(dir2.getSubDirectory("x"), undefined, "subdir should be deleted on peer");
+		assert.deepEqual(
+			peerSubdirCreatedNames,
+			[],
+			"the inner staged create must not reach the peer (it paired with the final delete)",
+		);
+		assert.deepEqual(
+			peerSubdirDeletedNames,
+			["x"],
+			"peer should observe exactly one deleteSubDirectory event",
+		);
+	});
+
+	it("preserves a pre-staging createSubDirectory in flight when staged delete+create on the same name is squashed", () => {
+		// Pre-staging op still in flight at the runtime layer. The pre-staging create's
+		// PendingSubDirectoryCreate entry must never be spliced by the staged squash logic —
+		// only the staged entries are eligible. Without reference identity, the staged create's
+		// findIndex-by-name would return the pre-staging entry and incorrectly pair it with the
+		// staged delete, dropping the staged create from the wire and asserting 0xc33 on the
+		// pre-staging ACK.
+		const peerEvents: string[] = [];
+		dir2.on("subDirectoryCreated", (name, local) => {
+			if (!local) peerEvents.push(`created:${name}`);
+		});
+		dir2.on("subDirectoryDeleted", (name, local) => {
+			if (!local) peerEvents.push(`deleted:${name}`);
+		});
+
+		dir1.createSubDirectory("y");
+		enterStagingMode(containerRuntime1);
+		dir1.deleteSubDirectory("y");
+		dir1.createSubDirectory("y");
+		reconnectAndSquash(containerRuntime1, dataStoreRuntime1);
+		containerRuntimeFactory.processAllMessages();
+
+		assert.notEqual(
+			dir2.getSubDirectory("y"),
+			undefined,
+			"the staged create should land on the peer",
+		);
+		// The peer sees the pre-staging create, the staged delete that cancels it, and the
+		// staged re-create — three events in order.
+		assert.deepEqual(
+			peerEvents,
+			["created:y", "deleted:y", "created:y"],
+			"peer should observe pre-staging create, staged delete, then staged re-create",
+		);
 	});
 });
