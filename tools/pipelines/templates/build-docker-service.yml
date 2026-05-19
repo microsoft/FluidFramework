@@ -200,6 +200,8 @@ extends:
           clean: true
           lfs: false
           submodules: false
+          fetchDepth: 1
+          fetchTags: false
 
         - task: Bash@3
           displayName: Parameters
