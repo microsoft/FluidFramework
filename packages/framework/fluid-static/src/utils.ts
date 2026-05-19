@@ -20,6 +20,7 @@ import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import { SharedTreeFactoryType } from "@fluidframework/tree/internal";
 
 import type {
+	// eslint-disable-next-line import-x/no-deprecated
 	CompatibilityMode,
 	ContainerSchema,
 	LoadableObjectKind,
@@ -147,12 +148,24 @@ export function makeFluidObject<
 }
 
 /**
- * Maps CompatibilityMode to a semver valid string that can be passed to the container runtime.
+ * Resolves the `compatibilityMode` input — either a `MinimumVersionForCollab`
+ * semver string or a legacy `CompatibilityMode` value — into a precise
+ * `MinimumVersionForCollab`.
+ *
+ * TODO: This can be removed when the deprecated CompatibilityMode is removed - AB#73679
+ *
+ * @internal
  */
-export const compatibilityModeToMinVersionForCollab = {
-	"1": "1.0.0",
-	"2": "2.0.0",
-} as const satisfies Record<CompatibilityMode, MinimumVersionForCollab>;
+export function resolveCompatibilityModeToMinVersionForCollab(
+	// eslint-disable-next-line import-x/no-deprecated
+	compatibilityMode: MinimumVersionForCollab | CompatibilityMode,
+): MinimumVersionForCollab {
+	return compatibilityMode === "1"
+		? "1.0.0"
+		: compatibilityMode === "2"
+			? "2.0.0"
+			: compatibilityMode;
+}
 
 /**
  * Determines if the provided schema is a valid tree-based container schema.

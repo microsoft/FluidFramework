@@ -31,8 +31,9 @@ import type {
 } from "@fluidframework/runtime-definitions/internal";
 import type { SharedObjectKind } from "@fluidframework/shared-object-base/internal";
 
-import { compatibilityModeRuntimeOptions } from "./compatibilityConfiguration.js";
+import { defaultRuntimeOptionsForMinVersion } from "./compatibilityConfiguration.js";
 import type {
+	// eslint-disable-next-line import-x/no-deprecated
 	CompatibilityMode,
 	IRootDataObject,
 	IStaticEntryPoint,
@@ -41,13 +42,13 @@ import type {
 	TreeContainerSchema,
 } from "./types.js";
 import {
-	compatibilityModeToMinVersionForCollab,
 	createDataObject,
 	createSharedObject,
 	isDataObjectKind,
 	isSharedObjectKind,
 	makeFluidObject,
 	parseDataObjectsFromSharedObjects,
+	resolveCompatibilityModeToMinVersionForCollab,
 } from "./utils.js";
 
 /**
@@ -135,23 +136,20 @@ class TreeContainerRuntimeFactory extends BaseContainerRuntimeFactory {
 	readonly #treeRootDataObjectFactory: TreeDataObjectFactory<TreeRootDataObject>;
 
 	public constructor(
-		compatibilityMode: CompatibilityMode,
 		treeRootDataObjectFactory: TreeDataObjectFactory<TreeRootDataObject>,
-		overrides?: Partial<{
-			runtimeOptions: Partial<IContainerRuntimeOptions>;
+		config: {
 			minVersionForCollab: MinimumVersionForCollab;
-		}>,
+			runtimeOptions?: Partial<IContainerRuntimeOptions>;
+		},
 	) {
 		super({
 			registryEntries: [treeRootDataObjectFactory.registryEntry],
 			runtimeOptions: {
-				...compatibilityModeRuntimeOptions[compatibilityMode],
-				...overrides?.runtimeOptions,
+				...defaultRuntimeOptionsForMinVersion(config.minVersionForCollab),
+				...config.runtimeOptions,
 			},
 			provideEntryPoint,
-			minVersionForCollab:
-				overrides?.minVersionForCollab ??
-				compatibilityModeToMinVersionForCollab[compatibilityMode],
+			minVersionForCollab: config.minVersionForCollab,
 		});
 		this.#treeRootDataObjectFactory = treeRootDataObjectFactory;
 	}
@@ -211,9 +209,13 @@ export function createTreeContainerRuntimeFactory(props: {
 	readonly schema: TreeContainerSchema;
 
 	/**
-	 * See {@link CompatibilityMode} and compatibilityModeRuntimeOptions for more details.
+	 * Minimum Fluid Framework version required for collaboration. Accepts a
+	 * {@link @fluidframework/runtime-definitions#MinimumVersionForCollab} semver string;
+	 * the legacy {@link CompatibilityMode} values `"1"` and `"2"` are **deprecated**
+	 * equivalents of `"1.0.0"` and `"2.0.0"`.
 	 */
-	readonly compatibilityMode: CompatibilityMode;
+	// eslint-disable-next-line import-x/no-deprecated
+	readonly compatibilityMode: MinimumVersionForCollab | CompatibilityMode;
 	/**
 	 * Optional registry of data stores to pass to the DataObject factory.
 	 * If not provided, one will be created based on the schema.
@@ -224,31 +226,20 @@ export function createTreeContainerRuntimeFactory(props: {
 	 * If not provided, only the default options for the given compatibilityMode will be used.
 	 */
 	readonly runtimeOptionOverrides?: Partial<IContainerRuntimeOptions>;
-	/**
-	 * Optional override for minimum version for collab.
-	 * If not provided, the default for the given compatibilityMode will be used.
-	 * @remarks
-	 * This is useful when runtime options are overridden and change the minimum version for collab.
-	 */
-	readonly minVersionForCollabOverride?: MinimumVersionForCollab;
 }): IRuntimeFactory {
-	const {
-		compatibilityMode,
-		minVersionForCollabOverride,
-		rootDataStoreRegistry,
-		runtimeOptionOverrides,
-		schema,
-	} = props;
+	const { rootDataStoreRegistry, runtimeOptionOverrides, schema } = props;
+	const minVersionForCollab = resolveCompatibilityModeToMinVersionForCollab(
+		props.compatibilityMode,
+	);
 
 	const [registryEntries, sharedObjects] = parseDataObjectsFromSharedObjects(schema);
 	const registry = rootDataStoreRegistry ?? new FluidDataStoreRegistry(registryEntries);
 
 	return new TreeContainerRuntimeFactory(
-		compatibilityMode,
 		new TreeRootDataObjectFactory(sharedObjects, registry),
 		{
 			runtimeOptions: runtimeOptionOverrides,
-			minVersionForCollab: minVersionForCollabOverride,
+			minVersionForCollab,
 		},
 	);
 }
