@@ -75,6 +75,7 @@ import { channelsTreeName } from "@fluidframework/runtime-definitions/internal";
 import {
 	addBlobToSummary,
 	isSnapshotFetchRequiredForLoadingGroupId,
+	dataStoreLoadTelemetryProps,
 } from "@fluidframework/runtime-utils/internal";
 import {
 	DataProcessingError,
@@ -587,12 +588,7 @@ export abstract class FluidDataStoreContext
 					error,
 					"realizeFluidDataStoreContext",
 				);
-				errorWrapped.addTelemetryProperties(
-					tagCodeArtifacts({
-						fullPackageName: this.pkg?.join("/"),
-						fluidDataStoreId: this.id,
-					}),
-				);
+				errorWrapped.addTelemetryProperties(dataStoreLoadTelemetryProps(this));
 				this.mc.logger.sendErrorEvent({ eventName: "RealizeError" }, errorWrapped);
 				throw errorWrapped;
 			});

@@ -78,6 +78,7 @@ import {
 	exceptionToResponse,
 	generateHandleContextPath,
 	processAttachMessageGCData,
+	dataStoreLoadTelemetryProps,
 	toFluidHandleInternal,
 	unpackChildNodesUsedRoutes,
 	toDeltaManagerErased,
@@ -506,7 +507,22 @@ export class FluidDataStoreRuntime
 		}
 
 		this.entryPoint = new FluidObjectHandle<FluidObject>(
-			new LazyPromise(async () => provideEntryPoint(this)),
+			new LazyPromise(async () =>
+				provideEntryPoint(this).catch((error) => {
+					const errorWrapped = DataProcessingError.wrapIfUnrecognized(
+						error,
+						"entryPointInitialization",
+					);
+					errorWrapped.addTelemetryProperties(
+						dataStoreLoadTelemetryProps(this.dataStoreContext),
+					);
+					this.mc.logger.sendErrorEvent(
+						{ eventName: "EntryPointInitializationFailure" },
+						errorWrapped,
+					);
+					throw errorWrapped;
+				}),
+			),
 			"",
 			this.objectsRoutingContext,
 		);

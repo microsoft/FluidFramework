@@ -12,8 +12,13 @@ import type {
 import type {
 	ContainerRuntimeBaseAlpha,
 	IContainerRuntimeBase,
+	IFluidDataStoreContext,
 } from "@fluidframework/runtime-definitions/internal";
-import { generateErrorWithStack } from "@fluidframework/telemetry-utils/internal";
+import {
+	generateErrorWithStack,
+	tagCodeArtifacts,
+	type ITelemetryPropertiesExt,
+} from "@fluidframework/telemetry-utils/internal";
 
 interface IResponseException extends Error {
 	errorFromRequestFluidObject: true;
@@ -138,6 +143,30 @@ export function createResponseError(
 		},
 		headers,
 	};
+}
+
+/**
+ * Returns the canonical set of code-artifact-tagged telemetry properties identifying a data store.
+ * Use this anywhere a data store identity needs to appear in telemetry, so all such logs use
+ * consistent property names.
+ * @internal
+ */
+export function dataStoreLoadTelemetryProps(
+	context: IFluidDataStoreContext,
+): ITelemetryPropertiesExt {
+	// `packagePath` is typed as always defined, but its implementation asserts on the package being
+	// set — and during early load-failure paths (e.g. realize() rejecting before pkg is read) it
+	// can throw. Swallow that so error decoration never replaces the underlying error.
+	let fullPackageName: string | undefined;
+	try {
+		fullPackageName = context.packagePath.join("/");
+	} catch {
+		// `packagePath` is unset during early failures; leave fullPackageName undefined.
+	}
+	return tagCodeArtifacts({
+		fullPackageName,
+		fluidDataStoreId: context.id,
+	});
 }
 
 /**
