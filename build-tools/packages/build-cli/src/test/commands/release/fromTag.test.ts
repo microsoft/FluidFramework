@@ -15,8 +15,8 @@ import FromTagCommand from "../../../commands/release/fromTag.js";
 chai.use(assertArrays);
 
 describe("flub release fromTag", () => {
-	// Test both against a mocked got repo, and the real one.
-	// The real case, is skipped by default to avoid test failures in environments where the git repo is not present of the tags are not checked out.
+	// Test both against a mocked git repo and the real one.
+	// The real case is skipped by default to avoid test failures in environments where the git repo is not present or the tags are not checked out.
 	for (const mock of [true, false]) {
 		// When mocking the git repo, pick a tag that does not (and will never) exist, to ensure mocking works.
 		const tagOffset = mock ? 50 : 0;
