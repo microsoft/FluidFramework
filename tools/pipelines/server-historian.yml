@@ -107,7 +107,14 @@ extends:
     # We need to install only the root dependencies; historian has native deps that don't install in CI since we use
     # Docker to do the actual build in CI. We need the root dependencies so setting package versions works.
     packageManagerInstallCommand: 'pnpm install --workspace-root'
-    additionalBuildArguments: --build-context root=$(Pipeline.Workspace)/${{ variables.FluidFrameworkDirectory }}
+    # The first build-context is needed because the Dockerfile copies files from the repo root.
+    # The second build-arg overrides the default docker.io registry in the Dockerfile to pull the base
+    # image from our internal mirror, since 1ES network isolation policies (CfsClean/CfsClean2) block
+    # egress to registry-1.docker.io from our build pool. containerRegistryUrl comes from the
+    # container-registry-info variable group. See tools/pipelines/README.md.
+    additionalBuildArguments: >-
+      --build-context root=$(Pipeline.Workspace)/${{ variables.FluidFrameworkDirectory }}
+      --build-arg BASE_IMAGE_REGISTRY=$(containerRegistryUrl)/mirror/docker
     packageManager: pnpm
     test: test
     tagName: historian

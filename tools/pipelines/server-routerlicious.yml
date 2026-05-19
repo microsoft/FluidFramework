@@ -143,5 +143,12 @@ extends:
     - prettier
     - check:versions
     - generate:packageList
-    additionalBuildArguments: --build-context root=$(Pipeline.Workspace)/${{ variables.FluidFrameworkDirectory }}
+    # The first build-context is needed because the Dockerfile copies files from the repo root.
+    # The second build-arg overrides the default docker.io registry in the Dockerfile to pull the base
+    # image from our internal mirror, since 1ES network isolation policies (CfsClean/CfsClean2) block
+    # egress to registry-1.docker.io from our build pool. containerRegistryUrl comes from the
+    # container-registry-info variable group. See tools/pipelines/README.md.
+    additionalBuildArguments: >-
+      --build-context root=$(Pipeline.Workspace)/${{ variables.FluidFrameworkDirectory }}
+      --build-arg BASE_IMAGE_REGISTRY=$(containerRegistryUrl)/mirror/docker
     enableDockerImagePull: false

@@ -88,7 +88,8 @@ extends:
     setVersion: false
     enableDockerImagePull: false
     tagName: gitssh
-    # Override the default Docker Hub registry in the Dockerfile to pull the base image from MCR's
-    # Docker Hub mirror instead, since 1ES network isolation policies (CfsClean/CfsClean2) block
-    # egress to registry-1.docker.io from our build pool. See AB#73353 for the broader migration.
-    additionalBuildArguments: --build-arg BASE_IMAGE_REGISTRY=mcr.microsoft.com/mirror/docker
+    # Override the default docker.io registry in the Dockerfile to pull the base image from our
+    # internal mirror, since 1ES network isolation policies (CfsClean/CfsClean2) block egress to
+    # registry-1.docker.io from our build pool. containerRegistryUrl comes from the
+    # container-registry-info variable group. See tools/pipelines/README.md.
+    additionalBuildArguments: --build-arg BASE_IMAGE_REGISTRY=$(containerRegistryUrl)/mirror/docker
