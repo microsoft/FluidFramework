@@ -1198,4 +1198,100 @@ describe("loadFrozenContainerFromPendingState", () => {
 			});
 		});
 	}
+
+	describe("offline (no driver wiring)", () => {
+		it("loads from pending state without request, urlResolver, or documentServiceFactory", async () => {
+			const { container, ITestFluidObject, urlResolver, codeLoader } = await initialize();
+
+			await container.attach(urlResolver.createCreateNewRequest("test"));
+			for (let i = 0; i < 5; i++) {
+				ITestFluidObject.root.set(`attached-${i}`, i);
+			}
+			if (container.isDirty) {
+				await timeoutPromise((resolve) => container.once("saved", () => resolve()));
+			}
+			container.disconnect();
+			for (let i = 0; i < 3; i++) {
+				ITestFluidObject.root.set(`disconnected-${i}`, i);
+			}
+
+			const pendingLocalState = await getRequiredPendingLocalState(container);
+
+			// No request, urlResolver, or documentServiceFactory supplied — fully offline.
+			const frozenContainer = await loadFrozenContainerFromPendingState({
+				codeLoader,
+				pendingLocalState,
+			});
+
+			assert.strictEqual(
+				frozenContainer.readOnlyInfo.readonly,
+				true,
+				"Expected offline frozen container to be readonly",
+			);
+			assert.strictEqual(
+				frozenContainer.readOnlyInfo.storageOnly,
+				true,
+				"Expected offline frozen container to be storage-only",
+			);
+
+			const frozenEntryPoint: FluidObject<TestFluidObject> =
+				await frozenContainer.getEntryPoint();
+			assert(
+				frozenEntryPoint.ITestFluidObject !== undefined,
+				"Expected offline frozen container entrypoint to be a valid TestFluidObject",
+			);
+			assert.deepEqual(
+				toComparableArray(frozenEntryPoint.ITestFluidObject.root),
+				toComparableArray(ITestFluidObject.root),
+				"Expected offline frozen container's data to match the source container's pending state",
+			);
+		});
+
+		it("throws from IContainer.getAbsoluteUrl on an offline-loaded container", async () => {
+			const { container, ITestFluidObject, urlResolver, codeLoader } = await initialize();
+
+			await container.attach(urlResolver.createCreateNewRequest("test"));
+			ITestFluidObject.root.set("k", "v");
+			if (container.isDirty) {
+				await timeoutPromise((resolve) => container.once("saved", () => resolve()));
+			}
+			container.disconnect();
+			const pendingLocalState = await getRequiredPendingLocalState(container);
+
+			const frozenContainer = await loadFrozenContainerFromPendingState({
+				codeLoader,
+				pendingLocalState,
+			});
+
+			await assert.rejects(
+				async () => frozenContainer.getAbsoluteUrl(""),
+				/getAbsoluteUrl is not supported/,
+				"Expected getAbsoluteUrl on an offline-loaded container to throw",
+			);
+		});
+
+		it("rejects mixing offline and online props (only urlResolver supplied)", async () => {
+			const { container, ITestFluidObject, urlResolver, codeLoader } = await initialize();
+
+			await container.attach(urlResolver.createCreateNewRequest("test"));
+			ITestFluidObject.root.set("k", "v");
+			if (container.isDirty) {
+				await timeoutPromise((resolve) => container.once("saved", () => resolve()));
+			}
+			container.disconnect();
+			const pendingLocalState = await getRequiredPendingLocalState(container);
+
+			await assert.rejects(
+				async () =>
+					loadFrozenContainerFromPendingState({
+						codeLoader,
+						pendingLocalState,
+						// Cast around the discriminated-union type to verify the runtime guard.
+						...({ urlResolver } as Record<string, unknown>),
+					} as Parameters<typeof loadFrozenContainerFromPendingState>[0]),
+				/must all be provided or all omitted/,
+				"Expected mixed driver wiring to throw a usage error",
+			);
+		});
+	});
 });

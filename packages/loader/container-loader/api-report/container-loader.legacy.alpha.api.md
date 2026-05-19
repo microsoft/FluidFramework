@@ -5,6 +5,11 @@
 ```ts
 
 // @alpha @legacy
+export type AllOrNothing<T> = T | {
+    [K in keyof T]?: never;
+};
+
+// @alpha @legacy
 export function asLegacyAlpha(base: IContainer): ContainerAlpha;
 
 // @alpha @legacy
@@ -115,10 +120,14 @@ export interface ILoadExistingContainerProps extends ICreateAndLoadContainerProp
 }
 
 // @alpha @legacy
-export interface ILoadFrozenContainerFromPendingStateProps extends ILoadExistingContainerProps {
+export type ILoadFrozenContainerFromPendingStateProps = Omit<ILoadExistingContainerProps, "request" | "urlResolver" | "documentServiceFactory" | "pendingLocalState"> & {
     readonly pendingLocalState: string;
     readonly readOnly?: boolean;
-}
+} & AllOrNothing<{
+    readonly request: IRequest;
+    readonly urlResolver: IUrlResolver;
+    readonly documentServiceFactory: IDocumentServiceFactory;
+}>;
 
 // @alpha @legacy
 export type ILoadSummarizerContainerProps = Omit<ILoadExistingContainerProps, "pendingLocalState">;

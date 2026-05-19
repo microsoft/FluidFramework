@@ -20,6 +20,7 @@ export {
 	type ILoadSummarizerContainerProps,
 	type IRehydrateDetachedContainerProps,
 	type ILoadFrozenContainerFromPendingStateProps,
+	type AllOrNothing,
 } from "./createAndLoadContainerUtils.js";
 export type {
 	LoadSummarizerSummaryResult,
