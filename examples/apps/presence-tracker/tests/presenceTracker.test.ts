@@ -3,23 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { Browser, Page } from "puppeteer";
-import { launch } from "puppeteer";
-
-import { globals } from "../jest.config.cjs";
-
-const initializeBrowser = async () => {
-	const browser = await launch({
-		// https://github.com/puppeteer/puppeteer/blob/master/docs/troubleshooting.md#setting-up-chrome-linux-sandbox
-		args: ["--no-sandbox", "--disable-setuid-sandbox"],
-		// output browser console to cmd line
-		dumpio: process.env.FLUID_TEST_VERBOSE !== undefined,
-		// Use chrome-headless-shell because that's what the CI pipeline installs; see AB#7150.
-		headless: "shell",
-	});
-
-	return browser;
-};
+import { test, expect, type BrowserContext, type Page } from "@playwright/test";
 
 /* Disabled for common window["foo"] access. */
 /* eslint-disable @typescript-eslint/dot-notation */
@@ -39,12 +23,12 @@ const loadPresenceTrackerApp = async (page: Page, url: string): Promise<string> 
 	}
 
 	// Be extra careful using check for hash expectation
-	const targetUrl = new URL(url);
+	const targetUrl = new URL(url, page.url());
 	const idMatch = targetUrl.hash.slice(1);
 	const waitFunction = idMatch
-		? (hash: string) => window["fluidContainerId"] === hash
-		: () => (window["fluidContainerId"] ?? "") !== "";
-	await page.waitForFunction(waitFunction, { timeout: 1500 }, idMatch).catch(async () => {
+		? (_hash: string) => window["fluidContainerId"] === _hash
+		: (_hash: string) => (window["fluidContainerId"] ?? "") !== "";
+	await page.waitForFunction(waitFunction, idMatch, { timeout: 1500 }).catch(async () => {
 		const after = await page.evaluate(() => `${window["fluidContainerId"]}`);
 		throw new Error(
 			`failed waiting for app load to id ${idMatch ? idMatch : '!== ""'} (after timeout=${after})`,
@@ -57,43 +41,51 @@ const loadPresenceTrackerApp = async (page: Page, url: string): Promise<string> 
 /* eslint-enable @typescript-eslint/dot-notation */
 
 // Most tests are passing when tinylicious is running. Those that aren't are individually skipped.
-describe("presence-tracker", () => {
+test.describe("presence-tracker", () => {
+	test.describe.configure({ mode: "serial" });
+
+	let page: Page;
 	let session1id: string;
 
-	beforeAll(async () => {
+	test.beforeAll(async ({ browser }) => {
 		// Wait for the page to load first before running any tests giving a more generous timeout
 		// so this time isn't attributed to the first test.
-		await loadPresenceTrackerApp(page, globals.PATH);
-	}, 45000);
-
-	beforeEach(async () => {
-		session1id = await loadPresenceTrackerApp(page, globals.PATH);
+		page = await browser.newPage();
+		await loadPresenceTrackerApp(page, "/");
 	});
 
-	afterEach(() => {
+	test.afterAll(async () => {
+		await page.close();
+	});
+
+	test.beforeEach(async () => {
+		session1id = await loadPresenceTrackerApp(page, "/");
+	});
+
+	test.afterEach(() => {
 		session1id = "session1id needs reloaded";
 	});
 
-	describe("Single client", () => {
-		it("Document is connected", async () => {
+	test.describe("Single client", () => {
+		test("Document is connected", async () => {
 			// Page's url should be updated to have document id
-			expect(page.url()).not.toEqual(globals.PATH);
+			expect(page.url()).toContain("#");
 			await page.waitForFunction(() => document.isConnected);
 		});
 
-		it("Focus content element exists", async () => {
+		test("Focus content element exists", async () => {
 			await page.waitForFunction(() => document.getElementById("focus-content"));
 		});
 
-		it("Focus div exists", async () => {
+		test("Focus div exists", async () => {
 			await page.waitForFunction(() => document.getElementById("focus-div"));
 		});
 
-		it("Mouse position element exists", async () => {
+		test("Mouse position element exists", async () => {
 			await page.waitForFunction(() => document.getElementById("mouse-position"));
 		});
 
-		it("Current user has focus", async () => {
+		test("Current user has focus", async () => {
 			const elementHandle = await page.waitForFunction(() =>
 				document.getElementById("focus-div"),
 			);
@@ -104,7 +96,7 @@ describe("presence-tracker", () => {
 			expect(innerHTML).toMatch(/^[^<]+ has focus/);
 		});
 
-		it("First client shows single client connected", async () => {
+		test("First client shows single client connected", async () => {
 			// eslint-disable-next-line @typescript-eslint/dot-notation, @typescript-eslint/no-unsafe-return
 			const attendeeCount = await page.evaluate(() => window["fluidSessionAttendeeCount"]);
 			expect(attendeeCount).toBe(1);
@@ -126,51 +118,51 @@ describe("presence-tracker", () => {
 		});
 	});
 
-	describe("Multiple clients", () => {
-		let browser2: Browser;
+	test.describe("Multiple clients", () => {
+		let context2: BrowserContext;
 		let page2: Page;
 		let session2id: string;
 
-		beforeAll(async () => {
-			// Create a second browser instance.
-			browser2 = await initializeBrowser();
-			page2 = await browser2.newPage();
-			// Prime the second browser instance under long timeout.
+		test.beforeAll(async ({ browser }) => {
+			// Create a second browser context.
+			context2 = await browser.newContext();
+			page2 = await context2.newPage();
+			// Prime the second browser context under long timeout.
 			// Use the "default" path to ensure an instance of app. At this
 			// point `page.url()` is effectively random, unlike in beforeEach.
-			await loadPresenceTrackerApp(page2, globals.PATH);
-		}, 45000);
+			await loadPresenceTrackerApp(page2, "/");
+		});
 
-		beforeEach(async () => {
+		test.afterAll(async () => {
+			await context2.close();
+		});
+
+		test.beforeEach(async () => {
 			// Page's url should be updated to have document id
-			expect(page.url()).not.toEqual(globals.PATH);
+			expect(page.url()).toContain("#");
 			session2id = await loadPresenceTrackerApp(page2, page.url());
 			// Both browser instances should be pointing to the same URL now.
 			expect(page2.url()).toEqual(page.url());
 		});
 
-		afterEach(() => {
+		test.afterEach(() => {
 			session2id = "session2id needs reloaded";
 		});
 
-		afterAll(async () => {
-			await browser2.close();
-		});
-
-		it("Second user can join", async () => {
+		test("Second user can join", async () => {
 			// Both browser instances should be pointing to the same URL now.
 			expect(page2.url()).toEqual(page.url());
 			await page2.waitForFunction(() => document.isConnected);
 		});
 
 		async function waitForAttendeeState(
-			page: Page,
+			targetPage: Page,
 			expected: Record<string, string>,
 			timeoutErrorMessage: string,
 		) {
 			/* Disabled for common window["foo"] access. */
 			/* eslint-disable @typescript-eslint/dot-notation */
-			await page
+			await targetPage
 				.waitForFunction(
 					(expectation) =>
 						(
@@ -178,11 +170,11 @@ describe("presence-tracker", () => {
 								expected: Record<string, string>,
 							) => boolean
 						)(expectation),
-					{ timeout: 300 },
 					expected,
+					{ timeout: 300 },
 				)
 				.catch(async () => {
-					const attendeeData = await page.evaluate(() => ({
+					const attendeeData = await targetPage.evaluate(() => ({
 						attendeeCount: `${window["fluidSessionAttendeeCount"]}`,
 						attendees: window["fluidSessionAttendees"] ?? {},
 						attendeeConnectedCalled: `${window["fluidattendeeConnectedCalled"]}`,
@@ -193,7 +185,7 @@ describe("presence-tracker", () => {
 			/* eslint-enable @typescript-eslint/dot-notation */
 		}
 
-		it("Second client shows two clients connected", async () => {
+		test("Second client shows two clients connected", async () => {
 			await waitForAttendeeState(
 				page2,
 				{
@@ -221,7 +213,7 @@ describe("presence-tracker", () => {
 			expect(clientListHtml).toMatch(session1id);
 		});
 
-		it("First client shows two clients connected", async () => {
+		test("First client shows two clients connected", async () => {
 			await waitForAttendeeState(
 				page,
 				{
@@ -232,7 +224,7 @@ describe("presence-tracker", () => {
 			);
 		});
 
-		it("First client shows one client connected when second client leaves", async () => {
+		test("First client shows one client connected when second client leaves", async () => {
 			// Setup
 			await waitForAttendeeState(
 				page,
@@ -247,10 +239,9 @@ describe("presence-tracker", () => {
 
 			// Navigate the second client away.
 			const response = await page2.goto("about:blank", { waitUntil: "load" });
-			// Loosely verify that a navigation happened. Puppeteer docs note:
-			//    "Navigation to about:blank or navigation to the same URL with a different hash will succeed and
-			//    return null."
-			expect(response).toBe(null);
+			// Loosely verify that a navigation happened. Playwright docs note that
+			// navigation to about:blank returns null.
+			expect(response).toBeNull();
 
 			// Verify
 
@@ -265,7 +256,7 @@ describe("presence-tracker", () => {
 		});
 
 		// TODO: AB#28502: presence-tracker example multi-client test should not be skipped
-		it.skip("First client shows two clients connected in UI", async () => {
+		test.skip("First client shows two clients connected in UI", async () => {
 			await waitForAttendeeState(
 				page,
 				{
@@ -296,7 +287,7 @@ describe("presence-tracker", () => {
 		// This test should not be enabled without the prior test being enabled as it
 		// may have false positives. It has also been demonstrated to fail occasionally.
 		// Occasional failures are likely due to same issue impact the prior "in UI" test.
-		it.skip("First client shows one client connected in UI when second client leaves", async () => {
+		test.skip("First client shows one client connected in UI when second client leaves", async () => {
 			// Setup
 			await waitForAttendeeState(
 				page,
@@ -310,11 +301,10 @@ describe("presence-tracker", () => {
 			// Act
 
 			// Navigate the second client away.
-			const response = await page2.goto("about:blank", { waitUntil: "load" });
-			// Loosely verify that a navigation happened. Puppeteer docs note:
-			//    "Navigation to about:blank or navigation to the same URL with a different hash will succeed and
-			//    return null."
-			expect(response).toBe(null);
+			const response2 = await page2.goto("about:blank", { waitUntil: "load" });
+			// Loosely verify that a navigation happened. Playwright docs note that
+			// navigation to about:blank returns null.
+			expect(response2).toBeNull();
 
 			// Verify
 

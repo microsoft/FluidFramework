@@ -4,10 +4,12 @@
  */
 
 import { retryWithEventualValue } from "@fluidframework/test-utils/internal";
-import { globals } from "../jest.config.cjs";
+import { expect, test, type Page } from "@playwright/test";
 
-describe("ToDo", () => {
-	const getItemUrl = async (index: number) =>
+/* eslint-disable @typescript-eslint/dot-notation */
+
+test.describe("ToDo", () => {
+	const getItemUrl = async (page: Page, index: number) =>
 		retryWithEventualValue(
 			() =>
 				page.evaluate((i: number) => {
@@ -25,23 +27,16 @@ describe("ToDo", () => {
 			"not propagated" /* defaultValue */,
 		);
 
-	beforeAll(async () => {
-		// Wait for the page to load first before running any tests
-		// so this time isn't attributed to the first test
-		await page.goto(globals.PATH, { waitUntil: "load", timeout: 0 });
-		await page.waitForFunction(() => window["fluidStarted"]);
-	}, 45000);
-
-	beforeEach(async () => {
-		await page.goto(globals.PATH, { waitUntil: "load" });
+	test.beforeEach(async ({ page }) => {
+		await page.goto("/", { waitUntil: "load" });
 		await page.waitForFunction(() => window["fluidStarted"]);
 	});
 
-	test("TodoItems can be added", async () => {
-		await expect(page).toFill("input[name=itemName]", "TodoItem1");
-		await expect(page).toClick("button[name=createItem]");
-		await expect(page).toFill("input[name=itemName]", "TodoItem2");
-		await expect(page).toClick("button[name=createItem]");
+	test("TodoItems can be added", async ({ page }) => {
+		await page.locator("input[name=itemName]").first().fill("TodoItem1");
+		await page.locator("button[name=createItem]").first().click();
+		await page.locator("input[name=itemName]").first().fill("TodoItem2");
+		await page.locator("button[name=createItem]").first().click();
 
 		const result = await page.evaluate(() => {
 			let itemLists = document.body.querySelectorAll(".todo-item-list");
@@ -52,13 +47,13 @@ describe("ToDo", () => {
 		expect(result).toBeTruthy();
 	});
 
-	test("TodoItem has detailed text", async () => {
+	test("TodoItem has detailed text", async ({ page }) => {
 		// Add item
-		await expect(page).toFill("input[name=itemName]", "ToDoDetails");
-		await expect(page).toClick("button[name=createItem]");
+		await page.locator("input[name=itemName]").first().fill("ToDoDetails");
+		await page.locator("button[name=createItem]").first().click();
 
 		// Expand details
-		await expect(page).toClick("button[name=toggleDetailsVisible]");
+		await page.locator("button[name=toggleDetailsVisible]").first().click();
 
 		// Check details exist
 		const foundDetails = await page.evaluate(() => {
@@ -68,7 +63,7 @@ describe("ToDo", () => {
 		expect(foundDetails).toBeTruthy();
 
 		// Hide details and check they disappear
-		await expect(page).toClick("button[name=toggleDetailsVisible]");
+		await page.locator("button[name=toggleDetailsVisible]").first().click();
 		const hiddenDetails = await page.evaluate(() => {
 			const details = document.querySelector("textarea");
 			return details === null || details === undefined;
@@ -76,13 +71,13 @@ describe("ToDo", () => {
 		expect(hiddenDetails).toBeTruthy();
 	});
 
-	test("TodoItem routing", async () => {
-		await expect(page).toFill("input[name=itemName]", "ToDoItem1");
-		await expect(page).toClick("button[name=createItem]");
-		await expect(page).toFill("input[name=itemName]", "ToDoItem2");
-		await expect(page).toClick("button[name=createItem]");
+	test("TodoItem routing", async ({ page }) => {
+		await page.locator("input[name=itemName]").first().fill("ToDoItem1");
+		await page.locator("button[name=createItem]").first().click();
+		await page.locator("input[name=itemName]").first().fill("ToDoItem2");
+		await page.locator("button[name=createItem]").first().click();
 
-		const itemUrl = await getItemUrl(0);
+		const itemUrl = await getItemUrl(page, 0);
 		await page.goto(itemUrl, { waitUntil: "load" });
 		await page.waitForFunction(() => window["fluidStarted"]);
 		const result = await page.evaluate(() => {

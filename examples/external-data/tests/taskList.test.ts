@@ -3,25 +3,17 @@
  * Licensed under the MIT License.
  */
 
-import { globals } from "../jest.config.cjs";
+import { test } from "@playwright/test";
 
-describe("taskList", () => {
-	beforeAll(async () => {
-		// Wait for the page to load first before running any tests
-		// so this time isn't attributed to the first test
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access
-		await page.goto(globals.PATH, { waitUntil: "load", timeout: 0 });
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/dot-notation
-		await page.waitForFunction(() => window["fluidStarted"]);
-	}, 45_000);
-	beforeEach(async () => {
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access
-		await page.goto(globals.PATH, { waitUntil: "load", timeout: 0 });
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/dot-notation
-		await page.waitForFunction(() => window["fluidStarted"]);
+test.describe("taskList", () => {
+	test.beforeEach(async ({ page }) => {
+		await page.goto("/", { waitUntil: "load" });
+		await page.waitForFunction(
+			() => (window as unknown as { fluidStarted: unknown }).fluidStarted,
+		);
 	});
 
-	it.skip("loads and there's an input", async () => {
+	test.skip("loads and there's an input", async ({ page }) => {
 		// Validate the input shows up
 		await page.waitForSelector("input");
 	});

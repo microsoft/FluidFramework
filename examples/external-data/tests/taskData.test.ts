@@ -3,14 +3,16 @@
  * Licensed under the MIT License.
  */
 
+import { expect, test } from "@playwright/test";
+
 import { type ITaskData, assertValidTaskData } from "../src/model-interface/index.js";
 
 /**
  * {@link ITaskData} unit tests.
  */
-describe("ITaskData", () => {
-	describe("assertValidTaskData", () => {
-		it("Parses valid task data", () => {
+test.describe("ITaskData", () => {
+	test.describe("assertValidTaskData", () => {
+		test("Parses valid task data", () => {
 			const input: ITaskData = {
 				42: {
 					name: "The meaning of life",
@@ -20,7 +22,7 @@ describe("ITaskData", () => {
 			expect(() => assertValidTaskData(input)).not.toThrow();
 		});
 
-		it("Throws on invalid task data", () => {
+		test("Throws on invalid task data", () => {
 			const input = "42:Determine meaning of life:37";
 			expect(() => assertValidTaskData(input)).toThrow();
 		});

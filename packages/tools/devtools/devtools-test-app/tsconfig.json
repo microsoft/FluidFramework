@@ -1,12 +1,11 @@
 {
 	"extends": "../../../../common/build/build-common/tsconfig.node16.json",
 	"compilerOptions": {
-		"rootDir": "src",
 		"outDir": "./lib",
-		"types": ["jest", "puppeteer", "jest-environment-puppeteer"],
+		"types": ["node"],
 		"skipLibCheck": true,
 		"noUncheckedIndexedAccess": false,
 		"exactOptionalPropertyTypes": false,
 	},
-	"include": ["src/**/*"],
+	"include": ["src/**/*", "playwright.config.ts"],
 }

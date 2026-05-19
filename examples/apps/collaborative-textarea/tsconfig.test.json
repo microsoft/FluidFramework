@@ -1,0 +1,10 @@
+{
+	"extends": "../../../common/build/build-common/tsconfig.node16.json",
+	"compilerOptions": {
+		"noEmit": true,
+		"types": ["react", "react-dom", "node"],
+		"noUncheckedIndexedAccess": false,
+		"exactOptionalPropertyTypes": false,
+	},
+	"include": ["src/**/*", "tests/**/*", "playwright.config.ts"],
+}

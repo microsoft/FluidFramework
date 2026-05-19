@@ -2,10 +2,9 @@
 	"extends": "../../../../common/build/build-common/tsconfig.node16.json",
 	"exclude": ["dist", "lib", "node_modules"],
 	"compilerOptions": {
-		"rootDir": "./src",
 		"outDir": "./lib",
-		"types": ["react", "jest", "puppeteer", "jest-environment-puppeteer", "expect-puppeteer"],
+		"types": ["react", "node"],
 		"exactOptionalPropertyTypes": false,
 	},
-	"include": ["src/**/*"],
+	"include": ["src/**/*", "tests/**/*", "playwright.config.ts"],
 }

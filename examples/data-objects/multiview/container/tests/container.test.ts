@@ -4,22 +4,19 @@
  */
 
 import { strict as assert } from "assert";
-import { globals } from "../jest.config.cjs";
+import { test } from "@playwright/test";
 
-describe("CoordinateContainerRuntimeFactory", () => {
-	beforeAll(async () => {
-		// Wait for the page to load first before running any tests
-		// so this time isn't attributed to the first test
-		await page.goto(globals.PATH, { waitUntil: "load", timeout: 0 });
-		await page.waitForFunction(() => window["fluidStarted"]);
-	}, 45000);
+/* eslint-disable @typescript-eslint/dot-notation */
 
-	beforeEach(async () => {
-		await page.goto(globals.PATH, { waitUntil: "load" });
+test.describe("CoordinateContainerRuntimeFactory", () => {
+	test.beforeEach(async ({ page }) => {
+		await page.goto("/", { waitUntil: "load" });
 		await page.waitForFunction(() => window["fluidStarted"]);
 	});
 
-	it("The page loads and the expected number of slider controls are present", async () => {
+	test("The page loads and the expected number of slider controls are present", async ({
+		page,
+	}) => {
 		const numSliders = await page.evaluate(() => {
 			return document.querySelectorAll("input[type=range]").length;
 		});
