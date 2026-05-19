@@ -11680,6 +11680,9 @@ importers:
       '@biomejs/biome':
         specifier: ~2.4.5
         version: 2.4.5
+      '@fluid-internal/presence-definitions-previous':
+        specifier: npm:@fluid-internal/presence-definitions@2.101.0
+        version: '@fluid-internal/presence-definitions@2.101.0'
       '@fluid-tools/build-cli':
         specifier: catalog:buildTools
         version: 0.65.0(@types/node@22.19.17)(encoding@0.1.13)(webpack-cli@5.1.4)
@@ -18417,6 +18420,9 @@ packages:
       '@types/react': '>=16.8.0 <19.0.0'
       react: '>=16.8.0 <19.0.0'
 
+  '@fluid-internal/client-utils@2.101.0':
+    resolution: {integrity: sha512-S6DBp2dV63rAh+aqupAMLxM/QdmHF50i1rn7r7ljFWQOgE9ZiDNKmf971Hd9rTAYbSw5OQ25DOfKExRNs3tEYg==}
+
   '@fluid-internal/client-utils@2.92.0':
     resolution: {integrity: sha512-H6mX0O9W9btPw0CzWUDesBe7LJ7c/vgQaX7Dr0cT6T81mEf4fxNlEQzwSzG718sbaukJkmWE517ad5JjiPfc4Q==}
 
@@ -18424,6 +18430,9 @@ packages:
     resolution: {integrity: sha512-JTFmMtNDJ+pR0Z0jvreXgq2GymqcCSD0InclRQfimEJ4KzIwdHCPHCmODlll1FG/Qp852baMYgdKHHD4qqRP/w==}
     peerDependencies:
       eslint: ^8.57.0 || ^9.37.0
+
+  '@fluid-internal/presence-definitions@2.101.0':
+    resolution: {integrity: sha512-VcviU1Db9rrMwaa5Yc9EpiRb7eCK/T+kY5QB9wQD1L0seN3OdSVJaPv2e/F6JYy61uEnG9xAdwDiplTwjWsDFw==}
 
   '@fluid-internal/test-driver-definitions@2.92.0':
     resolution: {integrity: sha512-/BTqacAi5H/lTkA1FucENdZLvM8AKPjLZSGIJq8k2ZzbL567aqWjNJ7hN6SH1B9DQ0bcl9Ztn1SQ60F5X3f7wg==}
@@ -18526,8 +18535,14 @@ packages:
   '@fluidframework/core-interfaces@1.4.0':
     resolution: {integrity: sha512-PDIglmsa9BgFh7Xhfs32KA3Q34/arTVHF4m3M0IuAByP4z8Oi2lVuNENZnBEk+IJMcrUhUDk5Q9LH8KGfoAw+Q==}
 
+  '@fluidframework/core-interfaces@2.101.0':
+    resolution: {integrity: sha512-IiXDdB348COUdPImPisEu2W/14dHTOoA8j5ep8pSePkX471Iw1j5DZ65fgxoIPK9K9EfYIAqxAFuQtyOuWRrIQ==}
+
   '@fluidframework/core-interfaces@2.92.0':
     resolution: {integrity: sha512-2atCoVLG4aGRntSBivsK5yf8R9E5o5Py4aMuUtySZy0yVldMBH52KemL3w7oSdZJr9PwJt6Ee3gI5eKCL79iYw==}
+
+  '@fluidframework/core-utils@2.101.0':
+    resolution: {integrity: sha512-7izNfAyaKStIZRHkxHE+EPu66Jpq7q+koTv+vVq2fA3uezQJozAbqB/PEGO/0pw+NqTcoGLcGwQipM4e4T0wMg==}
 
   '@fluidframework/core-utils@2.92.0':
     resolution: {integrity: sha512-1kc+Y4Ml94nf3/MrnA5i7szPo3FwD1XICuzIVaOXpgypdbBX2NitzX8LqKyd8kK9yU1bPuzjDo3tEYT0iIXpMQ==}
@@ -18565,6 +18580,9 @@ packages:
   '@fluidframework/driver-definitions@1.4.0':
     resolution: {integrity: sha512-ay6Wwl8zGS64fjDsdh2iOeKiVVxT57Opeqjp6DqSglnnJi6AkSfYVoOVlMZ5+vJTfYJN3N4ptjrP/i3Mao9zPA==}
 
+  '@fluidframework/driver-definitions@2.101.0':
+    resolution: {integrity: sha512-KfAkijaC69oOGT3Gr3AbsrUO5YNA/yZoV5HU/K8U/Gf5tpN5Y6ny6ztlJoh7RuxjbSL9C1AE3/Tmovfyk8q0zw==}
+
   '@fluidframework/driver-definitions@2.92.0':
     resolution: {integrity: sha512-Nl40SWPwjbfk0lq1Acw173eVs5f2WLDrKsaY12pBBLyfHtiZq8NMocaqNBV+Fa2a6hrmdghoV61/R143Q/YgHw==}
 
@@ -18601,6 +18619,9 @@ packages:
 
   '@fluidframework/gitresources@7.0.1':
     resolution: {integrity: sha512-sFEdPL46Hz/xuP51nwT19JubSeb3fBBrNQXwnRLCcmaX+fXdxg7rkyVLTgue0swgdJ73Oh98eTYpxplkq+FSJA==}
+
+  '@fluidframework/id-compressor@2.101.0':
+    resolution: {integrity: sha512-1vp3Gc8R+6Gt/hFgp+DZ8Xkk9Iup5RZhOzaagsyncy7vr84v0FmRRsAOAbyDSz56KlW7ZTqxaDbsurh1mADoPA==}
 
   '@fluidframework/id-compressor@2.92.0':
     resolution: {integrity: sha512-hn7fjDxosKE6OBKZ7439BcoBE11AzVv/RRPBbY7Y06R039gb7ZP6+2xpxb8G2Nzhs57SCG4B4x1RIYk4IP8BSA==}
@@ -18739,6 +18760,9 @@ packages:
 
   '@fluidframework/telemetry-utils@1.4.0':
     resolution: {integrity: sha512-WXG1ThL+WJLGdBtUGlCPPlIrHxqnc+zy+YHrYtqFnlIp+75W3W+YApR5dyP1uCfvapISoBPo0htK3WNIiyj8Rw==}
+
+  '@fluidframework/telemetry-utils@2.101.0':
+    resolution: {integrity: sha512-UvG9xLx4x0oAQcGrTm/8UNQkcq6E0oVuU7LAdij5AYqIkbJBUW6N9mfmMBQzxFzo7mTcDJmfyl1551TxLcHPOA==}
 
   '@fluidframework/telemetry-utils@2.92.0':
     resolution: {integrity: sha512-CgQ1W80kN3cgU4Fowiu/r5yEU6uumY8bPXn5zvHhzDYqQVGO+sCzqMFnz2VlB3mD4U4AUyDf1ujRbuYUjVQBZQ==}
@@ -29803,6 +29827,16 @@ snapshots:
       react: 18.3.1
       tslib: 2.8.1
 
+  '@fluid-internal/client-utils@2.101.0':
+    dependencies:
+      '@fluidframework/core-interfaces': 2.101.0
+      '@fluidframework/core-utils': 2.101.0
+      '@types/events_pkg': '@types/events@3.0.3'
+      base64-js: 1.5.1
+      buffer: 6.0.3
+      events_pkg: events@3.3.0
+      sha.js: 2.4.12
+
   '@fluid-internal/client-utils@2.92.0':
     dependencies:
       '@fluidframework/core-interfaces': 2.92.0
@@ -29834,6 +29868,13 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
       - typescript
+
+  '@fluid-internal/presence-definitions@2.101.0':
+    dependencies:
+      '@fluidframework/core-interfaces': 2.101.0
+      '@fluidframework/id-compressor': 2.101.0
+    transitivePeerDependencies:
+      - supports-color
 
   '@fluid-internal/test-driver-definitions@2.92.0':
     dependencies:
@@ -30303,7 +30344,11 @@ snapshots:
 
   '@fluidframework/core-interfaces@1.4.0': {}
 
+  '@fluidframework/core-interfaces@2.101.0': {}
+
   '@fluidframework/core-interfaces@2.92.0': {}
+
+  '@fluidframework/core-utils@2.101.0': {}
 
   '@fluidframework/core-utils@2.92.0': {}
 
@@ -30448,6 +30493,10 @@ snapshots:
       '@fluidframework/common-definitions': 0.20.1
       '@fluidframework/core-interfaces': 1.4.0
       '@fluidframework/protocol-definitions': 0.1028.2000
+
+  '@fluidframework/driver-definitions@2.101.0':
+    dependencies:
+      '@fluidframework/core-interfaces': 2.101.0
 
   '@fluidframework/driver-definitions@2.92.0':
     dependencies:
@@ -30631,6 +30680,17 @@ snapshots:
   '@fluidframework/gitresources@0.1036.5002': {}
 
   '@fluidframework/gitresources@7.0.1': {}
+
+  '@fluidframework/id-compressor@2.101.0':
+    dependencies:
+      '@fluid-internal/client-utils': 2.101.0
+      '@fluidframework/core-interfaces': 2.101.0
+      '@fluidframework/core-utils': 2.101.0
+      '@fluidframework/telemetry-utils': 2.101.0
+      '@tylerbu/sorted-btree-es6': 2.1.1
+      uuid: 11.1.0
+    transitivePeerDependencies:
+      - supports-color
 
   '@fluidframework/id-compressor@2.92.0':
     dependencies:
@@ -31282,6 +31342,17 @@ snapshots:
       debug: 4.4.3(supports-color@8.1.1)
       events: 3.3.0
       uuid: 8.3.2
+    transitivePeerDependencies:
+      - supports-color
+
+  '@fluidframework/telemetry-utils@2.101.0':
+    dependencies:
+      '@fluid-internal/client-utils': 2.101.0
+      '@fluidframework/core-interfaces': 2.101.0
+      '@fluidframework/core-utils': 2.101.0
+      '@fluidframework/driver-definitions': 2.101.0
+      debug: 4.4.3(supports-color@8.1.1)
+      uuid: 11.1.0
     transitivePeerDependencies:
       - supports-color
 
