@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-example/webpack-fluid-loader",
-	"version": "2.101.0",
+	"version": "2.102.0",
 	"private": true,
 	"description": "Fluid object loader for webpack-dev-server",
 	"homepage": "https://fluidframework.com",
@@ -95,7 +95,7 @@
 		"@fluidframework/odsp-driver-definitions": "workspace:~",
 		"@fluidframework/routerlicious-driver": "workspace:~",
 		"@fluidframework/runtime-utils": "workspace:~",
-		"@fluidframework/server-local-server": "^7.0.0",
+		"@fluidframework/server-local-server": "^7.0.1",
 		"@fluidframework/telemetry-utils": "workspace:~",
 		"@fluidframework/test-runtime-utils": "workspace:~",
 		"@fluidframework/tool-utils": "workspace:~",
