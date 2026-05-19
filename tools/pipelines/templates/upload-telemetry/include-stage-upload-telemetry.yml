@@ -42,6 +42,8 @@ stages:
     steps:
     - checkout: ff_pipeline_host
       path: $(FFPipelineHostDirectory)
+      fetchDepth: 1
+      fetchTags: false
 
     - template: /tools/pipelines/templates/include-use-node-version.yml@self
 
