@@ -8,6 +8,8 @@ import type { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-inte
 import type { IMember } from "@fluidframework/fluid-static";
 import type { ISharedMap, IValueChanged } from "@fluidframework/map/legacy";
 
+export { pkgVersion } from "../packageVersion.js";
+
 export const waitForMember = async (
 	audience: IAzureAudience,
 	id: string,

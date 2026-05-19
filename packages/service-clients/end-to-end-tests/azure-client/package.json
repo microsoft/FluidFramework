@@ -15,6 +15,7 @@
 	"scripts": {
 		"build": "fluid-build . --task build",
 		"build:compile": "fluid-build . --task compile",
+		"build:genver": "gen-version",
 		"build:test": "tsc --project ./src/test/tsconfig.json",
 		"check:biome": "biome check .",
 		"check:format": "npm run check:biome",

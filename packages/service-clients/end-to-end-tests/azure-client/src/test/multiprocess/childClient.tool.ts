@@ -31,6 +31,7 @@ import { timeoutPromise } from "@fluidframework/test-utils/internal";
 
 import { createAzureTokenProvider } from "../AzureTokenFactory.js";
 import { TestDataObject } from "../TestDataObject.js";
+import { pkgVersion } from "../utils.js";
 
 import type {
 	MessageFromChild as MessageToParent,
@@ -145,13 +146,13 @@ const getOrCreateContainer = async (params: {
 	});
 	let services: AzureContainerServices;
 	if (containerId === undefined) {
-		({ container, services } = await client.createContainer(containerSchema, "2.0.0"));
+		({ container, services } = await client.createContainer(containerSchema, pkgVersion));
 		containerId = await container.attach();
 	} else {
 		({ container, services } = await client.getContainer(
 			containerId,
 			containerSchema,
-			"2.0.0",
+			pkgVersion,
 		));
 	}
 	container.on("disconnected", onDisconnected);

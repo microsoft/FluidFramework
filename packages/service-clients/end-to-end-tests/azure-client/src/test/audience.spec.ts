@@ -19,7 +19,7 @@ import {
 	ScopeType,
 } from "./AzureClientFactory.js";
 import * as ephemeralSummaryTrees from "./ephemeralSummaryTrees.js";
-import { configProvider, waitForMember, getTestMatrix } from "./utils.js";
+import { configProvider, waitForMember, getTestMatrix, pkgVersion } from "./utils.js";
 
 const testMatrix = getTestMatrix();
 for (const testOpts of testMatrix) {
@@ -54,9 +54,9 @@ for (const testOpts of testMatrix) {
 					"test-user-name-1",
 				);
 				containerId = getContainerIdFromPayloadResponse(containerResponse);
-				({ container, services } = await client.getContainer(containerId, schema, "2.0.0"));
+				({ container, services } = await client.getContainer(containerId, schema, pkgVersion));
 			} else {
-				({ container, services } = await client.createContainer(schema, "2.0.0"));
+				({ container, services } = await client.createContainer(schema, pkgVersion));
 				containerId = await container.attach();
 			}
 
@@ -99,9 +99,9 @@ for (const testOpts of testMatrix) {
 					"test-user-name-1",
 				);
 				containerId = getContainerIdFromPayloadResponse(containerResponse);
-				({ container, services } = await client.getContainer(containerId, schema, "2.0.0"));
+				({ container, services } = await client.getContainer(containerId, schema, pkgVersion));
 			} else {
-				({ container, services } = await client.createContainer(schema, "2.0.0"));
+				({ container, services } = await client.createContainer(schema, pkgVersion));
 				containerId = await container.attach();
 			}
 
@@ -134,7 +134,7 @@ for (const testOpts of testMatrix) {
 			const { services: servicesGet } = await client2.getContainer(
 				containerId,
 				schema,
-				"2.0.0",
+				pkgVersion,
 			);
 
 			/* This is a workaround for a known bug, we should have one member (self) upon container connection */
@@ -167,9 +167,9 @@ for (const testOpts of testMatrix) {
 					"test-user-name-1",
 				);
 				containerId = getContainerIdFromPayloadResponse(containerResponse);
-				({ container } = await client.getContainer(containerId, schema, "2.0.0"));
+				({ container } = await client.getContainer(containerId, schema, pkgVersion));
 			} else {
-				({ container } = await client.createContainer(schema, "2.0.0"));
+				({ container } = await client.createContainer(schema, pkgVersion));
 				containerId = await container.attach();
 			}
 
@@ -191,7 +191,7 @@ for (const testOpts of testMatrix) {
 			const { services: servicesGet } = await client2.getContainer(
 				containerId,
 				schema,
-				"2.0.0",
+				pkgVersion,
 			);
 
 			/* This is a workaround for a known bug, we should have one member (self) upon container connection */
@@ -230,9 +230,9 @@ for (const testOpts of testMatrix) {
 					"test-user-name-1",
 				);
 				containerId = getContainerIdFromPayloadResponse(containerResponse);
-				({ container, services } = await client.getContainer(containerId, schema, "2.0.0"));
+				({ container, services } = await client.getContainer(containerId, schema, pkgVersion));
 			} else {
-				({ container, services } = await client.createContainer(schema, "2.0.0"));
+				({ container, services } = await client.createContainer(schema, pkgVersion));
 				containerId = await container.attach();
 			}
 
@@ -262,7 +262,7 @@ for (const testOpts of testMatrix) {
 				[ScopeType.DocRead],
 			);
 			const { container: partnerContainer, services: partnerServices } =
-				await partnerClient.getContainer(containerId, schema, "2.0.0");
+				await partnerClient.getContainer(containerId, schema, pkgVersion);
 
 			if (partnerContainer.connectionState !== ConnectionState.Connected) {
 				await timeoutPromise(
@@ -339,9 +339,9 @@ for (const testOpts of testMatrix) {
 					"test-user-name-1",
 				);
 				containerId = getContainerIdFromPayloadResponse(containerResponse);
-				({ container } = await client.getContainer(containerId, schema, "2.0.0"));
+				({ container } = await client.getContainer(containerId, schema, pkgVersion));
 			} else {
-				({ container } = await client.createContainer(schema, "2.0.0"));
+				({ container } = await client.createContainer(schema, pkgVersion));
 				containerId = await container.attach();
 			}
 
@@ -360,7 +360,7 @@ for (const testOpts of testMatrix) {
 				[ScopeType.DocRead],
 			);
 			const { container: partnerContainer, services: partnerServices } =
-				await partnerClient.getContainer(containerId, schema, "2.0.0");
+				await partnerClient.getContainer(containerId, schema, pkgVersion);
 
 			if (partnerContainer.connectionState !== ConnectionState.Connected) {
 				await timeoutPromise(
@@ -406,7 +406,7 @@ for (const testOpts of testMatrix) {
 				[ScopeType.DocRead],
 			);
 			const { container: partnerContainer2, services: partnerServices2 } =
-				await partnerClient2.getContainer(containerId, schema, "2.0.0");
+				await partnerClient2.getContainer(containerId, schema, pkgVersion);
 
 			if (partnerContainer2.connectionState !== ConnectionState.Connected) {
 				await timeoutPromise(

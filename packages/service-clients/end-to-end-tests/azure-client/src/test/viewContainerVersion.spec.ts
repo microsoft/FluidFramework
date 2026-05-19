@@ -17,7 +17,7 @@ import {
 	getContainerIdFromPayloadResponse,
 } from "./AzureClientFactory.js";
 import * as ephemeralSummaryTrees from "./ephemeralSummaryTrees.js";
-import { getTestMatrix } from "./utils.js";
+import { getTestMatrix, pkgVersion } from "./utils.js";
 
 const testMatrix = getTestMatrix();
 for (const testOpts of testMatrix) {
@@ -63,9 +63,9 @@ for (const testOpts of testMatrix) {
 					"test-user-name-1",
 				);
 				containerId = getContainerIdFromPayloadResponse(containerResponse);
-				({ container } = await client.getContainer(containerId, schema, "2.0.0"));
+				({ container } = await client.getContainer(containerId, schema, pkgVersion));
 			} else {
-				({ container } = await client.createContainer(schema, "2.0.0"));
+				({ container } = await client.createContainer(schema, pkgVersion));
 				containerId = await container.attach();
 			}
 
@@ -126,7 +126,7 @@ for (const testOpts of testMatrix) {
 				);
 				containerId = getContainerIdFromPayloadResponse(containerResponse);
 			} else {
-				({ container } = await client.createContainer(schema, "2.0.0"));
+				({ container } = await client.createContainer(schema, pkgVersion));
 				containerId = await container.attach();
 
 				if (container.connectionState !== ConnectionState.Connected) {
@@ -143,7 +143,7 @@ for (const testOpts of testMatrix) {
 				containerId,
 				schema,
 				versions[0],
-				"2.0.0",
+				pkgVersion,
 			);
 			await assert.doesNotReject(viewContainerVersionAttempt);
 			const { container: containerView } = await viewContainerVersionAttempt;
@@ -169,10 +169,10 @@ for (const testOpts of testMatrix) {
 					"test-user-name-1",
 				);
 				containerId = getContainerIdFromPayloadResponse(containerResponse);
-				({ container } = await client.getContainer(containerId, schema, "2.0.0"));
+				({ container } = await client.getContainer(containerId, schema, pkgVersion));
 				map1 = container.initialObjects.map1 as SharedMap;
 			} else {
-				({ container } = await client.createContainer(schema, "2.0.0"));
+				({ container } = await client.createContainer(schema, pkgVersion));
 
 				map1 = container.initialObjects.map1 as SharedMap;
 				map1.set(testKey, expectedValue);
@@ -197,7 +197,7 @@ for (const testOpts of testMatrix) {
 				containerId,
 				schema,
 				versions[versions.length - 1],
-				"2.0.0",
+				pkgVersion,
 			);
 			await assert.doesNotReject(viewContainerVersionAttempt);
 			const { container: containerView } = await viewContainerVersionAttempt;
@@ -216,7 +216,7 @@ for (const testOpts of testMatrix) {
 				{
 					id: "whatever",
 				},
-				"2.0.0",
+				pkgVersion,
 			);
 			const errorFn = (error: Error): boolean => {
 				assert.notStrictEqual(error.message, undefined, "Azure Client error is undefined");
