@@ -152,7 +152,7 @@ export function makeFluidObject<
  * semver string or a legacy {@link CompatibilityMode} value — into a precise
  * {@link MinimumVersionForCollab}.
  *
- * TODO: This can be removed when the deprecated CompatibilityMode is removed.
+ * TODO: This can be removed when the deprecated CompatibilityMode is removed - AB#73679
  *
  * @internal
  */
