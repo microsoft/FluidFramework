@@ -312,5 +312,127 @@ for (const immediateClose of [true, false]) {
 			const result = await fluidCache.get(cacheEntry);
 			assert.strictEqual(result, undefined);
 		});
+
+		describe("putIf", () => {
+			it("writes when the predicate returns true and the entry is absent", async () => {
+				fluidCache = getFluidCache();
+
+				const cacheEntry = getMockCacheEntry("casNew");
+				const proposed = { rev: 1 };
+
+				const seen: { existing: unknown; proposed: unknown }[] = [];
+				const wrote = await fluidCache.putIf(cacheEntry, proposed, (existing, prop) => {
+					seen.push({ existing, proposed: prop });
+					return true;
+				});
+
+				assert.strictEqual(wrote, true);
+				assert.deepEqual(seen, [{ existing: undefined, proposed }]);
+				assert.deepEqual(await fluidCache.get(cacheEntry), proposed);
+			});
+
+			it("passes the existing cached value to the predicate", async () => {
+				fluidCache = getFluidCache();
+
+				const cacheEntry = getMockCacheEntry("casExisting");
+				const initial = { rev: 1 };
+				const proposed = { rev: 2 };
+
+				await fluidCache.put(cacheEntry, initial);
+
+				let observedExisting: unknown;
+				let observedProposed: unknown;
+				const wrote = await fluidCache.putIf(cacheEntry, proposed, (existing, prop) => {
+					observedExisting = existing;
+					observedProposed = prop;
+					return true;
+				});
+
+				assert.strictEqual(wrote, true);
+				assert.deepEqual(observedExisting, initial);
+				assert.deepEqual(observedProposed, proposed);
+				assert.deepEqual(await fluidCache.get(cacheEntry), proposed);
+			});
+
+			it("does not overwrite when the predicate returns false", async () => {
+				fluidCache = getFluidCache();
+
+				const cacheEntry = getMockCacheEntry("casReject");
+				const initial = { rev: 1 };
+				const proposed = { rev: 2 };
+
+				await fluidCache.put(cacheEntry, initial);
+
+				const wrote = await fluidCache.putIf(cacheEntry, proposed, () => false);
+
+				assert.strictEqual(wrote, false);
+				assert.deepEqual(await fluidCache.get(cacheEntry), initial);
+			});
+
+			it("treats cross-partition existing entries as absent", async () => {
+				fluidCache = getFluidCache({ partitionKey: "partitionA" });
+
+				const cacheEntry = getMockCacheEntry("casCrossPartition");
+				const otherPartitionValue = { rev: 99, from: "B" };
+				const proposed = { rev: 1, from: "A" };
+
+				const partitionBCache = getFluidCache({ partitionKey: "partitionB" });
+				extraCaches.push(partitionBCache);
+				await partitionBCache.put(cacheEntry, otherPartitionValue);
+
+				let observedExisting: unknown = "sentinel";
+				const wrote = await fluidCache.putIf(cacheEntry, proposed, (existing) => {
+					observedExisting = existing;
+					return true;
+				});
+
+				assert.strictEqual(wrote, true);
+				assert.strictEqual(observedExisting, undefined);
+				assert.deepEqual(await fluidCache.get(cacheEntry), proposed);
+			});
+
+			it("returns false and does not write when the predicate throws", async () => {
+				fluidCache = getFluidCache();
+
+				const cacheEntry = getMockCacheEntry("casThrow");
+				const initial = { rev: 1 };
+
+				await fluidCache.put(cacheEntry, initial);
+
+				const wrote = await fluidCache.putIf(cacheEntry, { rev: 2 }, () => {
+					throw new Error("predicate failure");
+				});
+
+				assert.strictEqual(wrote, false);
+				assert.deepEqual(await fluidCache.get(cacheEntry), initial);
+			});
+
+			it("resolves concurrent putIf races deterministically via the predicate", async () => {
+				// Two FluidCache instances racing to write to the same key, where each
+				// only writes if it has a higher revision than what is currently cached.
+				// The higher-revision writer must win regardless of scheduling order.
+				fluidCache = getFluidCache();
+				const otherCache = getFluidCache();
+				extraCaches.push(otherCache);
+
+				const cacheEntry = getMockCacheEntry("casRace");
+
+				const writeIfNewer = async (cache: FluidCache, rev: number): Promise<boolean> =>
+					cache.putIf(cacheEntry, { rev }, (existing) => {
+						const existingRev = (existing as { rev?: number } | undefined)?.rev ?? -1;
+						return rev > existingRev;
+					});
+
+				const [wroteHigh, wroteLow] = await Promise.all([
+					writeIfNewer(fluidCache, 2),
+					writeIfNewer(otherCache, 1),
+				]);
+
+				// At least one of the two writes must succeed (the very first one),
+				// and the final state must reflect the higher revision regardless of order.
+				assert.ok(wroteHigh || wroteLow);
+				assert.deepEqual(await fluidCache.get(cacheEntry), { rev: 2 });
+			});
+		});
 	});
 }

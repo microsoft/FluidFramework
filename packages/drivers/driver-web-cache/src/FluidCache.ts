@@ -334,19 +334,9 @@ export class FluidCache implements IPersistedCache {
 		try {
 			db = await this.openDb();
 
-			const currentTime = Date.now();
-
 			await db.put(
 				FluidDriverObjectStoreName,
-				{
-					cachedObject: value,
-					fileId: entry.file.docId,
-					type: entry.type,
-					cacheItemId: entry.key,
-					partitionKey: this.partitionKey,
-					createdTimeMs: currentTime,
-					lastAccessTimeMs: currentTime,
-				},
+				this.buildRecord(entry, value),
 				getKeyForCacheEntry(entry),
 			);
 			this.closeDb(db);
@@ -360,5 +350,78 @@ export class FluidCache implements IPersistedCache {
 		} finally {
 			this.closeDb(db);
 		}
+	}
+
+	/**
+	 * Conditionally writes `value` if `shouldWrite` returns true.
+	 *
+	 * The existing entry is read and (if `shouldWrite` returns true) the new entry is
+	 * written inside a single IndexedDB `readwrite` transaction. This provides
+	 * compare-and-swap semantics for callers sharing the same underlying IndexedDB
+	 * instance (e.g. multiple browser tabs racing to persist pending state).
+	 *
+	 * @param entry - cache entry; identifies the file and the key within that file.
+	 * @param value - the proposed JSON-serializable value to write if `shouldWrite` returns true.
+	 * @param shouldWrite - synchronous predicate invoked with `(existing, proposed)`.
+	 * `existing` is the currently-cached value, or `undefined` if no entry exists for the key
+	 * or the existing entry belongs to a different partition (consistent with `get`).
+	 * `proposed` is the same `value` argument, provided so the predicate can be self-contained.
+	 *
+	 * The predicate must be synchronous: IndexedDB transactions auto-close on any non-IDB
+	 * await, which would silently break the atomicity that makes the compare-and-swap correct.
+	 * @returns `true` if the new value was written; `false` if the predicate rejected the write
+	 * or an error occurred. Errors are logged and not thrown, matching the behavior of `put`.
+	 */
+	public async putIf(
+		entry: ICacheEntry,
+		value: unknown,
+		shouldWrite: (existing: unknown, proposed: unknown) => boolean,
+	): Promise<boolean> {
+		let db: IDBPDatabase<FluidCacheDBSchema> | undefined;
+		try {
+			db = await this.openDb();
+
+			const key = getKeyForCacheEntry(entry);
+			const transaction = db.transaction(FluidDriverObjectStoreName, "readwrite");
+			const existing = await transaction.store.get(key);
+			// Surface the cached value to the predicate only when the existing entry
+			// matches our partition. Cross-partition entries are treated as absent,
+			// consistent with the semantics of `get`.
+			const existingValue =
+				existing?.partitionKey === this.partitionKey ? existing.cachedObject : undefined;
+
+			if (!shouldWrite(existingValue, value)) {
+				await transaction.done;
+				return false;
+			}
+
+			await transaction.store.put(this.buildRecord(entry, value), key);
+			await transaction.done;
+			return true;
+		} catch (error: any) {
+			this.logger.sendErrorEvent(
+				{ eventName: FluidCacheErrorEvent.FluidCachePutError, pkgVersion },
+				error,
+			);
+			return false;
+		} finally {
+			this.closeDb(db);
+		}
+	}
+
+	private buildRecord(
+		entry: ICacheEntry,
+		value: unknown,
+	): FluidCacheDBSchema[typeof FluidDriverObjectStoreName]["value"] {
+		const currentTime = Date.now();
+		return {
+			cachedObject: value,
+			fileId: entry.file.docId,
+			type: entry.type,
+			cacheItemId: entry.key,
+			partitionKey: this.partitionKey,
+			createdTimeMs: currentTime,
+			lastAccessTimeMs: currentTime,
+		};
 	}
 }

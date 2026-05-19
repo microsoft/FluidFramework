@@ -66,6 +66,28 @@ new FluidCache({
     for a cache entry to be used. This flag does not control when cached content is deleted since different scenarios and
     applications may have different staleness thresholds for the same data.
 
+## Conditional writes (`putIf`)
+
+`FluidCache` exposes a `putIf` method that performs a compare-and-swap write. The currently-cached value
+is read and (if the caller-supplied predicate returns `true`) the new value is written inside a single
+IndexedDB `readwrite` transaction, giving conditional-write semantics across consumers sharing the same
+underlying IndexedDB instance (e.g. multiple browser tabs racing to persist offline pending state).
+
+```typescript
+const wrote = await fluidCache.putIf(entry, proposed, (existing, prop) => {
+	// `existing` is `undefined` if no entry exists for this key in this partition.
+	const existingRev = (existing as { rev?: number } | undefined)?.rev ?? -1;
+	return (prop as { rev: number }).rev > existingRev;
+});
+```
+
+The `shouldWrite` predicate must be synchronous — IndexedDB transactions auto-close on any non-IDB
+await, which would silently break the atomicity that makes the compare-and-swap correct. The predicate
+is invoked with `(existing, proposed)`; `existing` is `undefined` when no entry exists or when the
+existing entry belongs to a different partition (consistent with the semantics of `get`). The call
+returns `true` if the new value was written and `false` if the predicate rejected the write or an
+error occurred.
+
 ## Clearing cache entries
 
 Whenever any Fluid content is loaded with the web cache enabled, a task is scheduled to clear out all "stale" cache
