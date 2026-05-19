@@ -11397,9 +11397,6 @@ importers:
       eslint:
         specifier: catalog:eslint
         version: 9.39.1(jiti@2.6.1)
-      fluid-framework-previous:
-        specifier: npm:fluid-framework@2.92.0
-        version: fluid-framework@2.92.0
       jiti:
         specifier: ^2.6.1
         version: 2.6.1
@@ -11683,9 +11680,6 @@ importers:
       '@biomejs/biome':
         specifier: ~2.4.5
         version: 2.4.5
-      '@fluid-internal/presence-definitions-previous':
-        specifier: npm:@fluidframework/presence@2.92.0
-        version: '@fluidframework/presence@2.92.0'
       '@fluid-tools/build-cli':
         specifier: catalog:buildTools
         version: 0.65.0(@types/node@22.19.17)(encoding@0.1.13)(webpack-cli@5.1.4)
@@ -18641,9 +18635,6 @@ packages:
   '@fluidframework/ordered-collection@2.92.0':
     resolution: {integrity: sha512-UmBSR3XdbNIlFf54spWzdjjdugNlS91KnHf/uit4EE1g0e9iIBO9Daq2dRn9EaR+ZMafYRhFPptqXQqvlKHTww==}
 
-  '@fluidframework/presence@2.92.0':
-    resolution: {integrity: sha512-UREOHTxPN0ecX29YdZUx5ItTydBXH8YPENx/r9kH/5a0IF3/cNzwdY/L+QIYRwYp13zOnagvahvrwXOkaBioiQ==}
-
   '@fluidframework/protocol-base@0.1036.5002':
     resolution: {integrity: sha512-mlI9okyLeSusGx7qU32NDJ4GJptSzVo3V6tPDhphPIOPtyOVTBuL4EQRFYdceoSLHlxEdVnQprwhyoRiMNw7Kw==}
 
@@ -22837,9 +22828,6 @@ packages:
 
   flatted@3.3.3:
     resolution: {integrity: sha512-GX+ysw4PBCz0PzosHDepZGANEuFCMLrnRTiEy9McGjmkCQYwRq4A/X786G/fjM/+OjsWSU1ZrY5qyARZmO/uwg==}
-
-  fluid-framework@2.92.0:
-    resolution: {integrity: sha512-IcuqYFFZn5w9v58U9uF34KWdUcrZLXEmNIYfKQ+6Tf2z1Uv1hrRJC4dSeeyS8yjDD+E7aGLVfIeMWywCUz0pJw==}
 
   fn.name@1.1.0:
     resolution: {integrity: sha512-GRnmB5gPyJpAhTQdSZTSp9uaPSvl09KoYcMQtsB9rQoOmzs9dH6ffeccH+Z+cv6P68Hu5bC6JjRh4Ah/mHSNRw==}
@@ -30810,20 +30798,6 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@fluidframework/presence@2.92.0':
-    dependencies:
-      '@fluid-internal/client-utils': 2.92.0
-      '@fluidframework/container-definitions': 2.92.0
-      '@fluidframework/container-runtime-definitions': 2.92.0
-      '@fluidframework/core-interfaces': 2.92.0
-      '@fluidframework/core-utils': 2.92.0
-      '@fluidframework/fluid-static': 2.92.0
-      '@fluidframework/id-compressor': 2.92.0
-      '@fluidframework/runtime-definitions': 2.92.0
-      '@fluidframework/telemetry-utils': 2.92.0
-    transitivePeerDependencies:
-      - supports-color
-
   '@fluidframework/protocol-base@0.1036.5002':
     dependencies:
       '@fluidframework/common-utils': 0.32.2
@@ -36422,22 +36396,6 @@ snapshots:
   flat@5.0.2: {}
 
   flatted@3.3.3: {}
-
-  fluid-framework@2.92.0:
-    dependencies:
-      '@fluidframework/container-definitions': 2.92.0
-      '@fluidframework/container-loader': 2.92.0
-      '@fluidframework/core-interfaces': 2.92.0
-      '@fluidframework/core-utils': 2.92.0
-      '@fluidframework/driver-definitions': 2.92.0
-      '@fluidframework/fluid-static': 2.92.0
-      '@fluidframework/map': 2.92.0
-      '@fluidframework/runtime-utils': 2.92.0
-      '@fluidframework/sequence': 2.92.0
-      '@fluidframework/shared-object-base': 2.92.0
-      '@fluidframework/tree': 2.92.0
-    transitivePeerDependencies:
-      - supports-color
 
   fn.name@1.1.0: {}
 
