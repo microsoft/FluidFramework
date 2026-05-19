@@ -334,6 +334,10 @@ module.exports = {
 		],
 		// Exclusion per handler
 		handlerExclusions: {
+			"pipeline-trigger-paths": [
+				// Not immediately obvious if this needs the missing trigger section
+				"tools/pipelines/publish-api-model-artifact.yml",
+			],
 			"fluid-build-tasks-eslint": [
 				// This policy needs to be rethought in light of eslint 9. Disabling everywhere in the meantime.
 				".*",
