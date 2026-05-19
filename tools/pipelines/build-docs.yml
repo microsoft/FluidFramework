@@ -102,6 +102,10 @@ stages:
           clean: true
           fetchDepth: 1
           fetchTags: false
+
+        - template: /tools/pipelines/templates/include-install-build-tools.yml@self
+          parameters:
+            buildDirectory: $(Pipeline.Workspace)/$(FluidFrameworkDirectory)
         - task: Bash@3
           name: SetVersion
           displayName: 'Set Build Version'
