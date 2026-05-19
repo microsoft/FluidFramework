@@ -80,12 +80,7 @@ jobs:
                 echo "Creating package.json with npm overrides"
 
                 # Manual overrides - add new entries here as needed, using same syntax supported by the pnpm overrides field
-                # - fflate: 0.8.3 changed the streaming Gunzip callback semantics in a way that breaks the
-                #   flub publish tarballs command. Pin to 0.8.2 here so the previously-published flub keeps
-                #   working when installed in this lockfile-less environment. Safe to drop once the
-                #   buildTools-resource artifact has been refreshed with a flub that no longer depends on
-                #   fflate's streaming Gunzip for tarball extraction.
-                manual_overrides='{"fflate":"0.8.2"}'
+                manual_overrides='{}'
                 # Build overrides for local tarballs so interdependencies resolve correctly
                 tarball_overrides='{}'
                 for tgz in *.tgz; do
