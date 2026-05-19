@@ -148,9 +148,9 @@ export function makeFluidObject<
 }
 
 /**
- * Resolves the `compatibilityMode` input — either a {@link MinimumVersionForCollab}
- * semver string or a legacy {@link CompatibilityMode} value — into a precise
- * {@link MinimumVersionForCollab}.
+ * Resolves the `compatibilityMode` input — either a `MinimumVersionForCollab`
+ * semver string or a legacy `CompatibilityMode` value — into a precise
+ * `MinimumVersionForCollab`.
  *
  * TODO: This can be removed when the deprecated CompatibilityMode is removed - AB#73679
  *

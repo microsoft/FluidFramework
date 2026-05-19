@@ -29,6 +29,7 @@ import {
 	createDOProviderContainerRuntimeFactory,
 	createFluidContainer,
 	createServiceAudience,
+	resolveCompatibilityModeToMinVersionForCollab,
 } from "@fluidframework/fluid-static/internal";
 import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver/internal";
 import type { MinimumVersionForCollab } from "@fluidframework/runtime-definitions";
@@ -109,7 +110,10 @@ export class TinyliciousClient {
 		container: IFluidContainer<TContainerSchema>;
 		services: TinyliciousContainerServices;
 	}> {
-		const loaderProps = this.getLoaderProps(containerSchema, compatibilityMode);
+		const loaderProps = this.getLoaderProps(
+			containerSchema,
+			resolveCompatibilityModeToMinVersionForCollab(compatibilityMode),
+		);
 
 		// We're not actually using the code proposal (our code loader always loads the same module
 		// regardless of the proposal), but the Container will only give us a NullRuntime if there's
@@ -189,7 +193,10 @@ export class TinyliciousClient {
 		container: IFluidContainer<TContainerSchema>;
 		services: TinyliciousContainerServices;
 	}> {
-		const loaderProps = this.getLoaderProps(containerSchema, compatibilityMode);
+		const loaderProps = this.getLoaderProps(
+			containerSchema,
+			resolveCompatibilityModeToMinVersionForCollab(compatibilityMode),
+		);
 		const container = await loadExistingContainer({ ...loaderProps, request: { url: id } });
 		const fluidContainer = await createFluidContainer<TContainerSchema>({
 			container,
@@ -210,12 +217,11 @@ export class TinyliciousClient {
 
 	private getLoaderProps(
 		schema: ContainerSchema,
-		// eslint-disable-next-line import-x/no-deprecated
-		compatibilityMode: MinimumVersionForCollab | CompatibilityMode,
+		minVersionForCollab: MinimumVersionForCollab,
 	): ILoaderProps {
 		const containerRuntimeFactory = createDOProviderContainerRuntimeFactory({
 			schema,
-			compatibilityMode,
+			compatibilityMode: minVersionForCollab,
 		});
 		const load = async (): Promise<IFluidModuleWithDetails> => {
 			return {

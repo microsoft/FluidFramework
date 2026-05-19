@@ -36,6 +36,7 @@ import {
 	createDOProviderContainerRuntimeFactory,
 	createFluidContainer,
 	createServiceAudience,
+	resolveCompatibilityModeToMinVersionForCollab,
 } from "@fluidframework/fluid-static/internal";
 import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver/internal";
 import type { MinimumVersionForCollab } from "@fluidframework/runtime-definitions";
@@ -102,8 +103,7 @@ export class AzureClient {
 		compatibilityMode,
 	}: {
 		schema: ContainerSchema;
-		// eslint-disable-next-line import-x/no-deprecated
-		compatibilityMode: MinimumVersionForCollab | CompatibilityMode;
+		compatibilityMode: MinimumVersionForCollab;
 	}) => IRuntimeFactory;
 
 	/**
@@ -380,7 +380,10 @@ export class AzureClient {
 		// eslint-disable-next-line import-x/no-deprecated
 		compatibilityMode: MinimumVersionForCollab | CompatibilityMode,
 	): ILoaderProps {
-		const factoryArguments = { schema, compatibilityMode };
+		const factoryArguments = {
+			schema,
+			compatibilityMode: resolveCompatibilityModeToMinVersionForCollab(compatibilityMode),
+		};
 		const runtimeFactory = this.createContainerRuntimeFactory
 			? this.createContainerRuntimeFactory(factoryArguments)
 			: createDOProviderContainerRuntimeFactory(factoryArguments);
