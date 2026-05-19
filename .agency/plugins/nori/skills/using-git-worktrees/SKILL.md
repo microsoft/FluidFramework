@@ -1,5 +1,5 @@
 ---
-name: Using Git Worktrees
+name: using-git-worktrees
 description: Use this whenever you need to create an isolated workspace.
 ---
 

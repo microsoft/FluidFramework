@@ -1,5 +1,5 @@
 ---
-name: Building UI/UX
+name: building-ui-ux
 description: Use when implementing user interfaces or user experiences - guides through exploration of design variations, frontend setup, iteration, and proper integration
 ---
 
