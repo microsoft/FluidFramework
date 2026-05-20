@@ -4,14 +4,15 @@
  */
 
 import { strict as assert } from "node:assert";
+
+import type { IChannel } from "@fluidframework/datastore-definitions/internal";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
 
 import { FormatValidatorBasic } from "../../external-utilities/index.js";
-import { getBranch, type SharedTreeOptions, Tree } from "../../shared-tree/index.js";
-import { createSnapshotCompressor, TestTreeProviderLite } from "../utils.js";
+import { type SharedTreeOptions, Tree } from "../../shared-tree/index.js";
 import { SchemaFactory, TreeViewConfiguration } from "../../simple-tree/index.js";
 import { configuredSharedTree, type ISharedTree } from "../../treeFactory.js";
-import type { IChannel } from "@fluidframework/datastore-definitions/internal";
+import { createSnapshotCompressor, TestTreeProviderLite } from "../utils.js";
 
 const enableSchemaValidation = true;
 
@@ -25,7 +26,7 @@ export interface TestTree {
 }
 
 // TODO: The generated test trees should eventually be updated to use the chunked-forest.
-export function generateTestTrees(options: SharedTreeOptions) {
+export function generateTestTrees(options: SharedTreeOptions): TestTree[] {
 	const factoryOptions: SharedTreeOptions = {
 		jsonValidator: FormatValidatorBasic,
 		...options,
@@ -203,8 +204,8 @@ export function generateTestTrees(options: SharedTreeOptions) {
 				view1.initialize([]);
 				provider.synchronizeMessages();
 
-				const branch1 = getBranch(tree1);
-				const tree2 = branch1.branch();
+				const branch1 = view1.checkout;
+				const tree2 = branch1.fork();
 				const view2 = tree2.viewWith(view1.config);
 				view1.root.insertAt(0, "y");
 				tree2.rebaseOnto(branch1);
@@ -222,7 +223,7 @@ export function generateTestTrees(options: SharedTreeOptions) {
 				assert.deepEqual(view1.root, ["x", "y", "a", "b", "c"]);
 				assert.deepEqual(view1.root, view2.root);
 
-				const tree3 = branch1.branch();
+				const tree3 = branch1.fork();
 				const view3 = tree3.viewWith(view1.config);
 				view1.root.insertAt(0, "z");
 				view3.root.insertAt(1, "d", "e");

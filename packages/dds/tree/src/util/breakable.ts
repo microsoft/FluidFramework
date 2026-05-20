@@ -29,13 +29,14 @@ export class Breakable {
 	 * @remarks
 	 * Can use {@link throwIfBroken} to apply this to a method.
 	 */
-	public use(): void {
+	public use(
+		message: (brokenBy: Error) => string = (brokenBy) =>
+			`Invalid use of ${this.name} after it was put into an invalid state by another error.\nOriginal Error:\n${brokenBy}`,
+	): void {
 		if (this.brokenBy !== undefined) {
-			const error = new UsageError(
-				`Invalid use of ${this.name} after it was put into an invalid state by another error.\nOriginal Error:\n${this.brokenBy}`,
-			);
+			const error = new UsageError(message(this.brokenBy));
 
-			// This "cause" field is added in ES2022, but using if even without that built in support, it is still helpful.
+			// This "cause" field is added in ES2022, but using it even without that built in support, it is still helpful.
 			// See https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Error/cause
 			// TODO: remove this cast when targeting ES2022 lib or later.
 			(error as { cause?: unknown }).cause =
@@ -80,11 +81,31 @@ export class Breakable {
 	 * Like {@link Breakable.use}, this also throws if already broken.
 	 * Any exceptions this catches are re-thrown.
 	 * Can use {@link breakingMethod} to apply this to a method.
+	 *
+	 * If `breaker` returns a Promise, the breakable is also broken if that Promise rejects, and the broken state is rechecked when it resolves:
+	 * if the breakable was put into a broken state during the async operation (by some other code path), the resolved value is discarded and the returned Promise rejects with a {@link UsageError}.
+	 *
+	 * This does not serialize concurrent runs: a synchronous run invoked while an async run is in flight will execute immediately, and is only blocked if the breakable is already broken.
+	 * Detection of an async result uses `instanceof Promise`, so custom Promise-like objects and Promises from other realms will be treated as synchronous results.
 	 */
 	public run<TResult>(breaker: () => TResult): TResult {
 		this.use();
 		try {
-			return breaker();
+			const result = breaker();
+			if (result instanceof Promise) {
+				return result.then(
+					(value: Awaited<TResult>) => {
+						// If broken while process was running: this will throw instead of returning the value.
+						this.use(
+							(brokenBy) =>
+								`${this.name} was put into a broken state during an async operation.\nOriginal Error:\n${brokenBy}`,
+						);
+						return value;
+					},
+					(error: unknown) => this.rethrowCaught(error),
+				) as TResult;
+			}
+			return result;
 		} catch (error: unknown) {
 			this.rethrowCaught(error);
 		}
@@ -215,7 +236,7 @@ export function breakingClass<Target extends abstract new (...args: any[]) => Wi
 	// Avoiding wrapping the constructor also avoids messing up the displayed name in the debugger.
 	const doNotWrap: Set<string | symbol> = new Set(["constructor"]);
 
-	let prototype: object | null = target.prototype;
+	let prototype: object | null = target.prototype as object;
 	while (prototype !== null) {
 		for (const key of Reflect.ownKeys(prototype)) {
 			if (!doNotWrap.has(key)) {
@@ -228,7 +249,8 @@ export function breakingClass<Target extends abstract new (...args: any[]) => Wi
 					!isBreaker(descriptor.value)
 				) {
 					// This does not affect the original class, see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/getOwnPropertyDescriptor
-					descriptor.value = breakingMethod(descriptor.value);
+					const method = descriptor.value as (...args: unknown[]) => unknown;
+					descriptor.value = breakingMethod(method);
 					Object.defineProperty(DecoratedBreakable.prototype, key, descriptor);
 				}
 			}

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import React from "react";
+import { useEffect } from "react";
 
 import "@site/src/css/legacyDiceRollerSample.css";
 
@@ -17,7 +17,7 @@ import "@site/src/css/legacyDiceRollerSample.css";
  * Newer docs should use the {@link MockDiceRollerSample} component instead.
  */
 export function LegacyDiceRollerSample(): JSX.Element {
-	React.useEffect(() => {
+	useEffect(() => {
 		const script = document.createElement("script");
 		script.src = `https://storage.fluidframework.com/static/js/dice-roller.2021-09-24.js`;
 		script.async = true;

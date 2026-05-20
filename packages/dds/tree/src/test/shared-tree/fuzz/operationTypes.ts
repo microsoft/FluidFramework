@@ -3,9 +3,10 @@
  * Licensed under the MIT License.
  */
 
+import type { IFluidHandle } from "@fluidframework/core-interfaces";
+
 import type { FieldKey } from "../../../core/index.js";
 import type { DownPath } from "../../../feature-libraries/index.js";
-import type { IFluidHandle } from "@fluidframework/core-interfaces";
 
 export type Operation = TreeOperation | Synchronize;
 

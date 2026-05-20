@@ -7,9 +7,10 @@ import type { BuildContext } from "../../buildContext.js";
 import type { BuildPackage } from "../../buildGraph.js";
 import {
 	type DeclarativeTask,
-	type GitIgnoreSetting,
 	gitignoreDefaultValue,
+	replaceRepoRootTokens,
 } from "../../fluidBuildConfig.js";
+import type { GitIgnoreSetting } from "../../fluidTaskDefinitions.js";
 import { LeafWithGlobInputOutputDoneFileTask } from "./leafTask.js";
 
 export class DeclarativeLeafTask extends LeafWithGlobInputOutputDoneFileTask {
@@ -39,10 +40,10 @@ export class DeclarativeLeafTask extends LeafWithGlobInputOutputDoneFileTask {
 	}
 
 	protected async getInputGlobs(): Promise<readonly string[]> {
-		return this.taskDefinition.inputGlobs;
+		return replaceRepoRootTokens(this.taskDefinition.inputGlobs, this.node.context.repoRoot);
 	}
 
 	protected async getOutputGlobs(): Promise<readonly string[]> {
-		return this.taskDefinition.outputGlobs;
+		return replaceRepoRootTokens(this.taskDefinition.outputGlobs, this.node.context.repoRoot);
 	}
 }

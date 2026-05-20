@@ -17,7 +17,7 @@ import type { TreeChunk } from "../chunked-forest/index.js";
 
 import type { CrossFieldTarget } from "./crossFieldQueries.js";
 
-export interface ModularChangeset extends HasFieldChanges {
+export interface ModularChangeset extends Readonly<HasFieldChanges> {
 	/**
 	 * The numerically highest `ChangesetLocalId` used in this changeset.
 	 * If undefined then this changeset contains no IDs.
@@ -101,8 +101,8 @@ export interface CrossFieldKey extends ChangeAtomId {
 }
 
 export interface CrossFieldKeyRange {
-	key: CrossFieldKey;
-	count: number;
+	readonly key: CrossFieldKey;
+	readonly count: number;
 }
 
 export interface FieldId {
@@ -140,7 +140,7 @@ export interface HasFieldChanges {
 export type FieldChangeMap = Map<FieldKey, FieldChange>;
 
 export interface FieldChange {
-	fieldKind: FieldKindIdentifier;
+	readonly fieldKind: FieldKindIdentifier;
 	change: FieldChangeset;
 }
 

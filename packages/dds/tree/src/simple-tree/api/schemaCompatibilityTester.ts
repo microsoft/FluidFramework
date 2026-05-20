@@ -5,11 +5,11 @@
 
 import type { TreeStoredSchema } from "../../core/index.js";
 import { allowsRepoSuperset, defaultSchemaPolicy } from "../../feature-libraries/index.js";
-
-import type { SchemaCompatibilityStatus } from "./tree.js";
-import { getDiscrepanciesInAllowedContent } from "./discrepancies.js";
 import { toUpgradeSchema } from "../toStoredSchema.js";
 import type { TreeSchema } from "../treeSchema.js";
+
+import { getDiscrepanciesInAllowedContent } from "./discrepancies.js";
+import type { SchemaCompatibilityStatus } from "./tree.js";
 
 /**
  * A collection of View information for schema

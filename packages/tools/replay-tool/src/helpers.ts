@@ -69,6 +69,8 @@ export function getNormalizedFileSnapshot(snapshot: IFileSnapshot): IFileSnapsho
 }
 
 /**
+ * Compares a snapshot against a reference snapshot file and reports any differences.
+ *
  * @internal
  */
 export function compareWithReferenceSnapshot(
@@ -127,6 +129,8 @@ export function compareWithReferenceSnapshot(
 }
 
 /**
+ * Loads a Fluid container using the provided document service factory and configuration.
+ *
  * @internal
  */
 export async function loadContainer(
@@ -216,6 +220,8 @@ export async function loadContainer(
 }
 
 /**
+ * Generates and uploads a summary for the given container.
+ *
  * @internal
  */
 export async function uploadSummary(container: IContainer): Promise<string> {

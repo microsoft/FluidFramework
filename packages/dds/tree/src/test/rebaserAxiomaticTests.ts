@@ -80,7 +80,7 @@ export function runExhaustiveComposeRebaseSuite<TContent, TChangeset>(
 	generateChildStates: ChildStateGenerator<TContent, TChangeset>,
 	fieldRebaser: BoundFieldChangeRebaser<TChangeset>,
 	options?: ExhaustiveSuiteOptions,
-) {
+): void {
 	const assertDeepEqual = getDefaultedEqualityAssert(fieldRebaser);
 	const definedOptions = { ...defaultSuiteOptions, ...options };
 

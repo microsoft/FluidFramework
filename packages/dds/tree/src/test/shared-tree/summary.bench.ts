@@ -8,12 +8,12 @@ import { strict as assert } from "node:assert";
 import { IsoBuffer } from "@fluid-internal/client-utils";
 import {
 	BenchmarkType,
-	benchmarkCustom,
-	benchmark,
-	type IMeasurementReporter,
+	benchmarkDuration,
+	benchmarkIt,
+	ValueType,
+	type CollectedData,
 } from "@fluid-tools/benchmark";
 import type { IChannelServices } from "@fluidframework/datastore-definitions/internal";
-import type { ITree } from "@fluidframework/driver-definitions/internal";
 import type { ISummaryTree } from "@fluidframework/driver-definitions";
 import { convertSummaryTreeToITree } from "@fluidframework/runtime-utils/internal";
 import {
@@ -22,8 +22,8 @@ import {
 	MockStorage,
 } from "@fluidframework/test-runtime-utils/internal";
 
-import { TestTreeProviderLite, configureBenchmarkHooks, testIdCompressor } from "../utils.js";
 import { TreeViewConfiguration, type ImplicitFieldSchema } from "../../simple-tree/index.js";
+import { configuredSharedTree } from "../../treeFactory.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import type { TreeSimpleContentTyped } from "../feature-libraries/flex-tree/utils.js";
 import {
@@ -32,7 +32,7 @@ import {
 	makeJsWideTreeWithEndValue,
 	WideRoot,
 } from "../scalableTestTrees.js";
-import { configuredSharedTree } from "../../treeFactory.js";
+import { TestTreeProviderLite, configureBenchmarkHooks, testIdCompressor } from "../utils.js";
 
 // TODO: these tests currently only cover tree content.
 // It might make sense to extend them to cover complex collaboration windows.
@@ -65,44 +65,47 @@ describe("Summary benchmarks", () => {
 
 		function processSummary(
 			summaryTree: ISummaryTree,
-			reporter: IMeasurementReporter,
 			minLength: number,
 			maxLength: number,
-		) {
+		): CollectedData {
 			const summaryString = JSON.stringify(summaryTree);
 			const summarySize = IsoBuffer.from(summaryString).byteLength;
-			reporter.addMeasurement("summarySize", summarySize);
 			assert(summarySize > minLength);
 			assert(summarySize < maxLength);
+			return [
+				{
+					name: "summarySize",
+					value: summarySize,
+					units: "bytes",
+					type: ValueType.SmallerIsBetter,
+					significance: "Primary",
+				},
+			];
 		}
 
 		for (const [numberOfNodes, minLength, maxLength] of nodesCountWide) {
-			benchmarkCustom({
-				only: false,
-				type: BenchmarkType.Measurement,
+			benchmarkIt({
 				title: `a wide tree with ${numberOfNodes} nodes.`,
-				run: async (reporter) => {
+				run: async () => {
 					const summaryTree = getSummaryTree({
 						initialTree: makeJsWideTreeWithEndValue(numberOfNodes, 1),
 						schema: WideRoot,
 					});
-					processSummary(summaryTree, reporter, minLength, maxLength);
+					return processSummary(summaryTree, minLength, maxLength);
 				},
 			});
 		}
 		for (const [numberOfNodes, minLength, maxLength] of nodesCountDeep) {
-			benchmarkCustom({
-				only: false,
-				type: BenchmarkType.Measurement,
+			benchmarkIt({
 				title: `a deep tree with ${numberOfNodes} nodes.`,
-				run: async (reporter) => {
+				run: async () => {
 					const summaryTree = getSummaryTree({
 						// Types do not allow implicitly constructing recursive types, so cast is required.
 						// TODO: Find a better alternative.
 						initialTree: makeJsDeepTree(numberOfNodes, 1) as LinkedList,
 						schema: LinkedList,
 					});
-					processSummary(summaryTree, reporter, minLength, maxLength);
+					return processSummary(summaryTree, minLength, maxLength);
 				},
 			});
 		}
@@ -114,27 +117,28 @@ describe("Summary benchmarks", () => {
 			content: TreeSimpleContentTyped<T>,
 			type: BenchmarkType,
 		) {
-			let summaryTree: ITree;
 			const factory = configuredSharedTree({}).getFactory();
-			benchmark({
+			benchmarkIt({
 				title,
 				type,
-				before: () => {
-					summaryTree = convertSummaryTreeToITree(getSummaryTree(content));
-				},
-				benchmarkFnAsync: async () => {
-					const services: IChannelServices = {
-						deltaConnection: new MockDeltaConnection(
-							() => 0,
-							() => {},
-						),
-						objectStorage: new MockStorage(summaryTree),
-					};
-					const datastoreRuntime = new MockFluidDataStoreRuntime({
-						idCompressor: testIdCompressor,
-					});
-					await factory.load(datastoreRuntime, "test", services, factory.attributes);
-				},
+				...benchmarkDuration({
+					benchmarkFnCustom: async (state) => {
+						const summaryTree = convertSummaryTreeToITree(getSummaryTree(content));
+						await state.timeAllBatchesAsync(async () => {
+							const services: IChannelServices = {
+								deltaConnection: new MockDeltaConnection(
+									() => 0,
+									() => {},
+								),
+								objectStorage: new MockStorage(summaryTree),
+							};
+							const datastoreRuntime = new MockFluidDataStoreRuntime({
+								idCompressor: testIdCompressor,
+							});
+							await factory.load(datastoreRuntime, "test", services, factory.attributes);
+						});
+					},
+				}),
 			});
 		}
 
@@ -144,7 +148,7 @@ describe("Summary benchmarks", () => {
 			[100, BenchmarkType.Measurement],
 		]) {
 			runSummaryBenchmark(
-				`a deep tree with ${nodeCount} nodes}`,
+				`a deep tree with ${nodeCount} nodes`,
 				{
 					// Types do not allow implicitly constructing recursive types, so cast is required.
 					// TODO: Find a better alternative.
@@ -160,7 +164,7 @@ describe("Summary benchmarks", () => {
 			[100, BenchmarkType.Measurement],
 		]) {
 			runSummaryBenchmark(
-				`a wide tree with ${nodeCount} nodes}`,
+				`a wide tree with ${nodeCount} nodes`,
 				{
 					initialTree: makeJsWideTreeWithEndValue(nodeCount, 1),
 					schema: WideRoot,

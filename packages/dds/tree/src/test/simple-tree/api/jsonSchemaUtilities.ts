@@ -6,6 +6,7 @@
 // Based on ESM workaround from https://github.com/ajv-validator/ajv/issues/2047#issuecomment-1241470041 .
 // In ESM, this gets the module, in cjs, it gets the default export which is the Ajv class.
 import ajvModuleOrClass from "ajv";
+
 import type { JsonTreeSchema } from "../../../simple-tree/index.js";
 
 // The first case here covers the esm mode, and the second the cjs one.

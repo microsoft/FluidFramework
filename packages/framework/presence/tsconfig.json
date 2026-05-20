@@ -1,24 +1,17 @@
 {
-	// This is not the common tsconfig file for this package.
-	// It is a special version to handle improper handling of exactOptionalPropertyTypes
-	// in upstream packages (mainly merge-tree and container-runtime) required via
-	// fluid-static (for isInternalFluidContainer).
-	// These dependencies can go away once getPresence.ts is removed from the package.
-	// Ideally, tsconfig.main.json would be the tsconfig.json, but there are plenty of
-	// tools including api-extractor that would need reconfigured to use that pattern.
-	//
-	// This splitting of src into multiple tsconfig files is likely the cause of
-	// assert-tagging not handling asserts in the code included via /tsconfig.main.json.
-	"extends": "./tsconfig.main.json",
-	"include": ["src/getPresence.ts", "src/index.ts"],
-	"exclude": [],
+	"extends": "../../../common/build/build-common/tsconfig.node16.json",
+	"include": ["src/**/*"],
+	"exclude": ["src/test/**/*"],
 	"compilerOptions": {
+		"rootDir": "./src",
+		"outDir": "./lib",
+		"noImplicitAny": true,
+		"noImplicitOverride": true,
+		// `skipLibCheck` set to handle improper handling of exactOptionalPropertyTypes
+		// in upstream packages (mainly merge-tree and container-runtime) required via
+		// fluid-static (for isInternalFluidContainer).
 		// Could alternatively build with exactOptionalPropertyTypes: false.
+		// This can go away once getPresence.ts is removed from the package.
 		"skipLibCheck": true,
 	},
-	"references": [
-		{
-			"path": "./tsconfig.main.json",
-		},
-	],
 }

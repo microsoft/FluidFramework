@@ -29,7 +29,7 @@ export class WorkerPool {
 		private readonly memoryUsageLimit: number,
 	) {}
 
-	private getThreadWorker() {
+	private getThreadWorker(): Worker {
 		let worker: Worker | undefined = this.threadWorkerPool.pop();
 		if (!worker) {
 			worker = new Worker(`${__dirname}/worker.js`, { stdout: true, stderr: true });
@@ -37,7 +37,7 @@ export class WorkerPool {
 		return worker;
 	}
 
-	private getProcessWorker() {
+	private getProcessWorker(): ChildProcess {
 		let worker: ChildProcess | undefined = this.processWorkerPool.pop();
 		if (!worker) {
 			worker = fork(
@@ -60,14 +60,14 @@ export class WorkerPool {
 			object: EventEmitter | Readable,
 			event: string,
 			handler: any,
-		) => {
+		): void => {
 			object.on(event, handler);
 			cleanup.push(() => object.off(event, handler));
 		};
 		const setupWorker = (
 			worker: Worker | ChildProcess,
 			res: (value: WorkerExecResultWithOutput) => void,
-		) => {
+		): void => {
 			let stdout = "";
 			let stderr = "";
 
@@ -98,7 +98,7 @@ export class WorkerPool {
 			} else {
 				const worker = this.getProcessWorker();
 				const res = await new Promise<WorkerExecResultWithOutput>((res, rej) => {
-					const setupErrorListener = (event: string) => {
+					const setupErrorListener = (event: string): void => {
 						installTemporaryListener(worker, event, () => {
 							rej(new Error(`Worker ${event}`));
 						});
@@ -146,7 +146,7 @@ export class WorkerPool {
 		}
 	}
 
-	public reset() {
+	public reset(): void {
 		this.threadWorkerPool.forEach((worker) => {
 			worker.terminate();
 		});

@@ -385,6 +385,7 @@ export async function fluidFetchSnapshot(
 		if (version === undefined) {
 			console.log("No snapshot tree");
 		} else {
+			// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- intentional behavior
 			if (blobsToDump === undefined) {
 				blobsToDump = await fetchBlobsFromVersion(storage, version);
 			}

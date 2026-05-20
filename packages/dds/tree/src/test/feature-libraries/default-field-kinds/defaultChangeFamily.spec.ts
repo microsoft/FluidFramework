@@ -27,6 +27,9 @@ import {
 	intoDelta,
 	jsonableTreeFromCursor,
 } from "../../../feature-libraries/index.js";
+import { FluidClientVersion, FormatValidatorBasic } from "../../../index.js";
+import { JsonAsTree } from "../../../jsonDomainSchema.js";
+import { numberSchema, stringSchema } from "../../../simple-tree/index.js";
 import { brand } from "../../../util/index.js";
 import {
 	assertDeltaEqual,
@@ -37,10 +40,7 @@ import {
 	testIdCompressor,
 	testRevisionTagCodec,
 } from "../../utils.js";
-import { JsonAsTree } from "../../../jsonDomainSchema.js";
-import { numberSchema, stringSchema } from "../../../simple-tree/index.js";
 import { initializeForest } from "../initializeForest.js";
-import { FluidClientVersion, FormatValidatorBasic } from "../../../index.js";
 
 const codecOptions = {
 	jsonValidator: FormatValidatorBasic,

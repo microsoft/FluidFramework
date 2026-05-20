@@ -191,7 +191,7 @@ export function sequenceFieldToDelta(
 	}
 	const delta: Mutable<FieldChangeDelta> = {};
 	if (local.length > 0) {
-		delta.local = local;
+		delta.local = { marks: local };
 	}
 	if (global.length > 0) {
 		delta.global = global;

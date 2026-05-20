@@ -123,7 +123,7 @@ export function generateCitmJson(
 	keyspaceMultiplier: number = 1,
 	maxSizeInBytes: number,
 	seed = 1,
-) {
+): CitmCatalog {
 	const random = makeRandom(seed);
 	const baseIdNumber = random.integer(100000000, 300000000);
 	let idNumberCounter = baseIdNumber;
@@ -248,7 +248,7 @@ export function generateCitmJson(
 
 	// 9. Create venueNames property
 	// (In the original JSON this always shows up as a static object.)
-	const venueNames = { PLEYEL_PLEYEL: "Salle Pleyel" };
+	const venueNames = { PLEYEL_PLEYEL: "Salle Pleyel" } as const;
 
 	// 10. Create each event object
 	const events: Record<string, Event> = {};

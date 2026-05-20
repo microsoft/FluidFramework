@@ -18,7 +18,9 @@ import {
 	identifierFieldKindIdentifier,
 	type SchemaPolicy,
 } from "../../../core/index.js";
+import { brand, oneFromIterable } from "../../../util/index.js";
 
+import type { IncrementalEncoder } from "./codecs.js";
 import {
 	EncoderContext,
 	type FieldEncoder,
@@ -32,17 +34,15 @@ import {
 } from "./compressedEncode.js";
 import type { FieldBatch } from "./fieldBatch.js";
 import {
-	type EncodedFieldBatch,
 	type EncodedFieldBatchV1,
+	type EncodedFieldBatchV1OrV2,
 	type EncodedFieldBatchV2,
 	type EncodedValueShape,
 	FieldBatchFormatVersion,
 	SpecialField,
-} from "./format.js";
-import type { IncrementalEncoder } from "./codecs.js";
-import { NodeShapeBasedEncoder } from "./nodeEncoder.js";
+} from "./format/index.js";
 import { defaultIncrementalEncodingPolicy } from "./incrementalEncodingPolicy.js";
-import { brand, oneFromIterable } from "../../../util/index.js";
+import { NodeShapeBasedEncoder } from "./nodeEncoder.js";
 
 /**
  * Encode data from `fieldBatch` in into an `EncodedChunk` using {@link FieldBatchFormatVersion.v1}.
@@ -54,15 +54,20 @@ export function schemaCompressedEncodeV1(
 	policy: SchemaPolicy,
 	fieldBatch: FieldBatch,
 	idCompressor: IIdCompressor,
+	_incrementalEncoder: IncrementalEncoder | undefined,
+	isSummary: boolean,
 ): EncodedFieldBatchV1 {
-	return schemaCompressedEncode(
+	const encoded: EncodedFieldBatchV1OrV2 = schemaCompressedEncode(
 		schema,
 		policy,
 		fieldBatch,
 		idCompressor,
 		undefined /* incrementalEncoder */,
 		brand(FieldBatchFormatVersion.v1),
+		isSummary,
 	);
+	// Since incrementalEncoder was not provided, no V2 features should be used, and this cast should be safe.
+	return encoded as EncodedFieldBatchV1;
 }
 
 /**
@@ -76,6 +81,7 @@ export function schemaCompressedEncodeV2(
 	fieldBatch: FieldBatch,
 	idCompressor: IIdCompressor,
 	incrementalEncoder: IncrementalEncoder | undefined,
+	isSummary: boolean,
 ): EncodedFieldBatchV2 {
 	return schemaCompressedEncode(
 		schema,
@@ -84,6 +90,7 @@ export function schemaCompressedEncodeV2(
 		idCompressor,
 		incrementalEncoder,
 		brand(FieldBatchFormatVersion.v2),
+		isSummary,
 	);
 }
 
@@ -104,10 +111,11 @@ function schemaCompressedEncode(
 	idCompressor: IIdCompressor,
 	incrementalEncoder: IncrementalEncoder | undefined,
 	version: FieldBatchFormatVersion,
-): EncodedFieldBatch {
+	isSummary: boolean,
+): EncodedFieldBatchV1OrV2 {
 	return compressedEncode(
 		fieldBatch,
-		buildContext(schema, policy, idCompressor, incrementalEncoder, version),
+		buildContext(schema, policy, idCompressor, incrementalEncoder, version, isSummary),
 	);
 }
 
@@ -117,6 +125,7 @@ export function buildContext(
 	idCompressor: IIdCompressor,
 	incrementalEncoder: IncrementalEncoder | undefined,
 	version: FieldBatchFormatVersion,
+	isSummary: boolean,
 ): EncoderContext {
 	const context: EncoderContext = new EncoderContext(
 		(fieldBuilder: FieldEncodeBuilder, schemaName: TreeNodeSchemaIdentifier) =>
@@ -127,6 +136,7 @@ export function buildContext(
 		idCompressor,
 		incrementalEncoder,
 		version,
+		isSummary,
 	);
 	return context;
 }

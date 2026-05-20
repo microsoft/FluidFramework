@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import { IRequest } from "@fluidframework/core-interfaces";
 import { DriverHeader, IResolvedUrl } from "@fluidframework/driver-definitions/internal";

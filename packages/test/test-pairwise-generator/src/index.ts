@@ -77,6 +77,8 @@ function applyPairToPartial<T extends Record<string, any>>(
 }
 
 /**
+ * Generates test options using pairwise combinations of all property values from the options matrix.
+ *
  * @internal
  */
 export function generatePairwiseOptions<T extends Record<string, any>>(

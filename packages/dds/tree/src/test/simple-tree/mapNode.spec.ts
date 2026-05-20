@@ -5,11 +5,12 @@
 
 import { strict as assert } from "node:assert";
 
-import { SchemaFactory, type NodeFromSchema } from "../../simple-tree/index.js";
-import { describeHydration } from "./utils.js";
 import { Tree } from "../../shared-tree/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { isTreeNode } from "../../simple-tree/core/index.js";
+import { SchemaFactory, type NodeFromSchema } from "../../simple-tree/index.js";
+
+import { describeHydration } from "./utils.js";
 
 const schemaFactory = new SchemaFactory("Test");
 
@@ -62,7 +63,7 @@ describeHydration(
 					assert.equal(child, 1);
 					assert.equal(map, node);
 				}
-				// eslint-disable-next-line unicorn/no-array-for-each -- Testing thisArg binding behavior
+				// eslint-disable-next-line unicorn/no-array-for-each, unicorn/no-array-method-this-argument -- Testing thisArg binding behavior
 				node.forEach(callback, thisArg);
 				assert.deepEqual(log, ["b"]);
 			});
@@ -169,11 +170,12 @@ describeHydration(
 		it("forEach (bound)", () => {
 			const root = init(schema, initialTree);
 			const result: [string, string][] = [];
-			// eslint-disable-next-line unicorn/no-array-for-each -- Testing thisArg binding behavior
+			/* eslint-disable unicorn/no-array-for-each, unicorn/no-array-method-this-argument -- Testing thisArg binding behavior */
 			root.map.forEach(function (this: typeof result, v, k, m) {
 				this.push([k, v]); // Accessing `result` via `this` to ensure that `thisArg` is respected
 				assert.equal(m, root.map);
 			}, result);
+			/* eslint-enable unicorn/no-array-for-each, unicorn/no-array-method-this-argument */
 
 			assert.deepEqual(result, [
 				["foo", "Hello"],

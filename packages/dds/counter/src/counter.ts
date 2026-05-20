@@ -148,10 +148,7 @@ export class SharedCounter
 	 */
 	protected onDisconnect(): void {}
 
-	/**
-	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.processMessagesCore}
-	 */
-	protected processMessagesCore(messagesCollection: IRuntimeMessageCollection): void {
+	protected override processMessagesCore(messagesCollection: IRuntimeMessageCollection): void {
 		const { envelope, local, messagesContent } = messagesCollection;
 		for (const messageContent of messagesContent) {
 			this.processMessage(envelope, messageContent, local);
@@ -175,6 +172,7 @@ export class SharedCounter
 				const messageId = messageContent.localOpMetadata;
 				assert(typeof messageId === "number", 0xc8e /* localOpMetadata should be a number */);
 				assert(
+					// eslint-disable-next-line @typescript-eslint/prefer-optional-chain -- using ?. could change behavior
 					pendingOp !== undefined &&
 						pendingOp.messageId === messageId &&
 						pendingOp.type === op.type &&
@@ -221,6 +219,7 @@ export class SharedCounter
 		);
 		const pendingOp = this.pendingOps.pop();
 		assert(
+			// eslint-disable-next-line @typescript-eslint/prefer-optional-chain -- using ?. could change behavior
 			pendingOp !== undefined &&
 				pendingOp.messageId === localOpMetadata &&
 				pendingOp.type === content.type &&

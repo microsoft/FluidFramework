@@ -14,15 +14,15 @@ import {
 	updatePackageJsonFile,
 	updatePackageJsonFileAsync,
 } from "@fluid-tools/build-infrastructure";
-import { type PackageJson, getApiExtractorConfigFilePath } from "@fluidframework/build-tools";
+import { getApiExtractorConfigFilePath, type PackageJson } from "@fluidframework/build-tools";
 import { writeJson } from "fs-extra/esm";
 import JSON5 from "json5";
-import replace from "replace-in-file";
+import { replaceInFileSync } from "replace-in-file";
 import sortPackageJson from "sort-package-json";
 import {
+	getFlubConfig,
 	type PackageNamePolicyConfig,
 	type ScriptRequirement,
-	getFlubConfig,
 } from "../../config.js";
 import { Repository } from "../git.js";
 import { queryTypesResolutionPathsFromPackageExports } from "../packageExports.js";
@@ -987,7 +987,7 @@ export const handlers: Handler[] = [
 				);
 			}
 			if (readmeInfo.title !== packageName) {
-				replace.sync({
+				replaceInFileSync({
 					files: readmeInfo.filePath,
 					from: /^(.*)/,
 					to: expectedTitle,

@@ -197,7 +197,6 @@ export class FlowDocument extends DataObject {
 	}
 
 	public async getComponentFromMarker(marker: Marker): Promise<unknown> {
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 		return marker.properties.handle.get();
 	}
 

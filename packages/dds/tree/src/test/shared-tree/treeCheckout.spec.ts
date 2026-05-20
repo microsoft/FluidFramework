@@ -11,26 +11,40 @@ import {
 } from "@fluidframework/telemetry-utils/internal";
 import { validateUsageError } from "@fluidframework/test-runtime-utils/internal";
 
+import { asAlpha } from "../../api.js";
 import {
 	type Revertible,
 	rootFieldKey,
 	RevertibleStatus,
 	CommitKind,
 	EmptyKey,
-	type RevertibleFactory,
 	type NormalizedFieldUpPath,
 	TreeStoredSchemaRepository,
 } from "../../core/index.js";
 import { FieldKinds, MockNodeIdentifierManager } from "../../feature-libraries/index.js";
 import {
-	getBranch,
 	Tree,
 	TreeCheckout,
 	type ITreeCheckout,
-	type ITreeCheckoutFork,
-	type BranchableTree,
 	createTreeCheckout,
+	type SharedTreeChange,
 } from "../../shared-tree/index.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import { SchematizingSimpleTreeView } from "../../shared-tree/schematizingTreeView.js";
+import {
+	getInnerNode,
+	SchemaFactory,
+	toUpgradeSchema,
+	TreeViewConfiguration,
+	type ImplicitFieldSchema,
+	type InsertableField,
+	type InsertableTreeFieldFromImplicitField,
+	type TransactionResult,
+	type TreeBranch,
+} from "../../simple-tree/index.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import { stringSchema } from "../../simple-tree/leafNodeSchema.js";
+import { brand } from "../../util/index.js";
 import {
 	TestTreeProviderLite,
 	buildTestForest,
@@ -43,22 +57,6 @@ import {
 	testRevisionTagCodec,
 	viewCheckout,
 } from "../utils.js";
-import { brand } from "../../util/index.js";
-// eslint-disable-next-line import-x/no-internal-modules
-import { SchematizingSimpleTreeView } from "../../shared-tree/schematizingTreeView.js";
-import {
-	getInnerNode,
-	SchemaFactory,
-	toUpgradeSchema,
-	TreeViewConfiguration,
-	type ImplicitFieldSchema,
-	type InsertableField,
-	type InsertableTreeFieldFromImplicitField,
-	type TreeBranch,
-} from "../../simple-tree/index.js";
-// eslint-disable-next-line import-x/no-internal-modules
-import { stringSchema } from "../../simple-tree/leafNodeSchema.js";
-import { asAlpha } from "../../api.js";
 
 const rootField: NormalizedFieldUpPath = {
 	parent: undefined,
@@ -200,8 +198,8 @@ describe("sharedTreeView", () => {
 				const checkout = provider.trees[0].kernel.checkout;
 
 				const log: string[] = [];
-				const unsubscribe = checkout.events.on("changed", (data, getRevertible) =>
-					log.push(getRevertible === undefined ? "not-revertible" : "revertible"),
+				const unsubscribe = checkout.events.on("changed", ({ getRevertible }) =>
+					log.push(getRevertible?.() === undefined ? "not-revertible" : "revertible"),
 				);
 
 				assert.deepEqual(log, []);
@@ -226,7 +224,7 @@ describe("sharedTreeView", () => {
 			"can fork and apply edits without affecting the parent",
 			({ view: parentView, tree: parentTree }) => {
 				parentView.root.insertAtStart("parent");
-				const childTree = parentTree.branch();
+				const childTree = parentTree.fork();
 				const childView = childTree.viewWith(parentView.config);
 				childView.root.insertAtStart("child");
 				assert.deepEqual([...parentView.root], ["parent"]);
@@ -237,7 +235,7 @@ describe("sharedTreeView", () => {
 		itView(
 			"can apply edits without affecting a fork",
 			({ view: parentView, tree: parentTree }) => {
-				const childTree = parentTree.branch();
+				const childTree = parentTree.fork();
 				const childView = childTree.viewWith(parentView.config);
 				assert.equal(parentView.root[0], undefined);
 				assert.equal(childView.root[0], undefined);
@@ -248,7 +246,7 @@ describe("sharedTreeView", () => {
 		);
 
 		itView("can merge changes into a parent", ({ view: parentView, tree: parentTree }) => {
-			const childTree = parentTree.branch();
+			const childTree = parentTree.fork();
 			const childView = childTree.viewWith(parentView.config);
 			childView.root.insertAtStart("view");
 			parentTree.merge(childTree);
@@ -256,7 +254,7 @@ describe("sharedTreeView", () => {
 		});
 
 		itView("can rebase over a parent view", ({ view: parentView, tree: parentTree }) => {
-			const childTree = parentTree.branch();
+			const childTree = parentTree.fork();
 			const childView = childTree.viewWith(parentView.config);
 			parentView.root.insertAtStart("root");
 			assert.equal(childView.root[0], undefined);
@@ -265,10 +263,10 @@ describe("sharedTreeView", () => {
 		});
 
 		itView("can rebase over a child view", ({ view, tree }) => {
-			const parentTree = tree.branch();
+			const parentTree = tree.fork();
 			const parentView = parentTree.viewWith(view.config);
 			parentView.root.insertAtStart("P1");
-			const childTree = parentTree.branch();
+			const childTree = parentTree.fork();
 			const childView = childTree.viewWith(view.config);
 			parentView.root.insertAtStart("P2");
 			childView.root.insertAtStart("C1");
@@ -278,11 +276,11 @@ describe("sharedTreeView", () => {
 		});
 
 		itView("merge changes through multiple views", ({ view: viewA, tree: treeA }) => {
-			const treeB = treeA.branch();
+			const treeB = treeA.fork();
 			const viewB = treeB.viewWith(viewA.config);
-			const treeC = treeB.branch();
+			const treeC = treeB.fork();
 			const viewC = treeC.viewWith(viewA.config);
-			const treeD = treeC.branch();
+			const treeD = treeC.fork();
 			const viewD = treeD.viewWith(viewA.config);
 			viewD.root.insertAtStart("view");
 			treeC.merge(treeD);
@@ -296,11 +294,11 @@ describe("sharedTreeView", () => {
 		itView(
 			"merge correctly when multiple ancestors are mutated",
 			({ view: viewA, tree: treeA }) => {
-				const treeB = treeA.branch();
+				const treeB = treeA.fork();
 				const viewB = treeB.viewWith(viewA.config);
-				const treeC = treeB.branch();
+				const treeC = treeB.fork();
 				const viewC = treeC.viewWith(viewA.config);
-				const treeD = treeC.branch();
+				const treeD = treeC.fork();
 				const viewD = treeD.viewWith(viewA.config);
 				viewB.root.insertAtStart("B");
 				viewC.root.insertAtStart("C");
@@ -314,10 +312,10 @@ describe("sharedTreeView", () => {
 		);
 
 		itView("can merge a parent view into a child", ({ view, tree }) => {
-			const parentTree = tree.branch();
+			const parentTree = tree.fork();
 			const parentView = parentTree.viewWith(view.config);
 			parentView.root.insertAtStart("P1");
-			const childTree = parentTree.branch();
+			const childTree = parentTree.fork();
 			const childView = childTree.viewWith(view.config);
 			parentView.root.insertAtStart("P2");
 			childView.root.insertAtStart("C1");
@@ -327,11 +325,11 @@ describe("sharedTreeView", () => {
 		});
 
 		itView("can perform a complicated merge scenario", ({ view: viewA, tree: treeA }) => {
-			const treeB = treeA.branch();
+			const treeB = treeA.fork();
 			const viewB = treeB.viewWith(viewA.config);
-			const treeC = treeB.branch();
+			const treeC = treeB.fork();
 			const viewC = treeC.viewWith(viewA.config);
-			const treeD = treeC.branch();
+			const treeD = treeC.fork();
 			const viewD = treeD.viewWith(viewA.config);
 			viewB.root.insertAtStart("A1");
 			viewC.root.insertAtStart("B1");
@@ -341,7 +339,7 @@ describe("sharedTreeView", () => {
 			viewB.root.insertAtStart("A2");
 			viewC.root.insertAtStart("B2");
 			treeB.merge(treeC);
-			const treeE = treeB.branch();
+			const treeE = treeB.fork();
 			const viewE = treeE.viewWith(viewA.config);
 			viewB.root.insertAtStart("A3");
 			treeE.rebaseOnto(treeB);
@@ -397,7 +395,7 @@ describe("sharedTreeView", () => {
 				cursor.firstNode();
 				const anchor = cursor.buildAnchor();
 				cursor.clear();
-				const childTree = parentTree.branch();
+				const childTree = parentTree.fork();
 				const childView = childTree.viewWith(parentView.config);
 				childView.root.insertAtStart("B");
 				parentTree.merge(childTree);
@@ -421,7 +419,7 @@ describe("sharedTreeView", () => {
 				cursor.firstNode();
 				const anchor = cursor.buildAnchor();
 				cursor.clear();
-				const childTree = parentTree.branch();
+				const childTree = parentTree.fork();
 				const childView = childTree.viewWith(parentView.config);
 				parentView.root.insertAtStart("P");
 				childView.root.insertAtStart("B");
@@ -454,7 +452,7 @@ describe("sharedTreeView", () => {
 		});
 
 		itView("can be mutated after merging", ({ view: parentView, tree: parentTree }) => {
-			const childTree = parentTree.branch();
+			const childTree = parentTree.fork();
 			const childView = childTree.viewWith(parentView.config);
 			childView.root.insertAtStart("A");
 			parentTree.merge(childTree, false);
@@ -466,7 +464,7 @@ describe("sharedTreeView", () => {
 		});
 
 		itView("can rebase after merging", ({ view: parentView, tree: parentTree }) => {
-			const childTree = parentTree.branch();
+			const childTree = parentTree.fork();
 			const childView = childTree.viewWith(parentView.config);
 			childView.root.insertAtStart("A");
 			parentTree.merge(childTree, false);
@@ -477,7 +475,7 @@ describe("sharedTreeView", () => {
 
 		itView("can be read after merging", ({ view: parentView, tree: parentTree }) => {
 			parentView.root.insertAtStart("root");
-			const childTree = parentTree.branch();
+			const childTree = parentTree.fork();
 			const childView = childTree.viewWith(parentView.config);
 			parentTree.merge(childTree, false);
 			assert.equal(childView.root[0], "root");
@@ -496,7 +494,7 @@ describe("sharedTreeView", () => {
 				}
 
 				assert.equal(getSchema(parentView.checkout), "schemaA");
-				const childTree = parentTree.branch();
+				const childTree = parentTree.fork();
 				const childView = childTree.viewWith(new TreeViewConfiguration({ schema: schemaB }));
 				childView.upgradeSchema();
 				assert.equal(getSchema(parentView.checkout), "schemaA");
@@ -514,7 +512,7 @@ describe("sharedTreeView", () => {
 		it("submit edits to Fluid when merging into the root view", () => {
 			const sf = new SchemaFactory("edits submitted schema");
 			const provider = new TestTreeProviderLite(2);
-			const branch1 = getBranch(provider.trees[0]);
+			const branch1 = provider.trees[0].kernel.checkout;
 			const view1 = provider.trees[0].kernel.viewWith(
 				new TreeViewConfiguration({
 					schema: sf.array(sf.string),
@@ -529,8 +527,8 @@ describe("sharedTreeView", () => {
 					enableSchemaValidation,
 				}),
 			);
-			const baseTree = branch1.branch();
-			const tree = baseTree.branch();
+			const baseTree = branch1.fork();
+			const tree = baseTree.fork();
 			const view = tree.viewWith(view1.config);
 			// Modify the view, but tree2 should remain unchanged until the edit merges all the way up
 			view.root.insertAtStart("42");
@@ -548,7 +546,7 @@ describe("sharedTreeView", () => {
 			const sf = new SchemaFactory("no squash commits schema");
 			const provider = new TestTreeProviderLite(2);
 			const tree1 = provider.trees[0];
-			const branch1 = getBranch(tree1);
+			const branch1 = tree1.kernel.checkout;
 			const view1 = tree1.kernel.viewWith(
 				new TreeViewConfiguration({
 					schema: sf.array(sf.string),
@@ -559,8 +557,8 @@ describe("sharedTreeView", () => {
 			provider.synchronizeMessages();
 			let opsReceived = 0;
 			provider.trees[1].on("op", () => (opsReceived += 1));
-			const baseBranch = branch1.branch();
-			const tree = baseBranch.branch();
+			const baseBranch = branch1.fork();
+			const tree = baseBranch.fork();
 			const view = tree.viewWith(view1.config);
 			view.root.insertAtStart("A");
 			view.root.insertAtStart("B");
@@ -658,17 +656,17 @@ describe("sharedTreeView", () => {
 			Tree.runTransaction(view, () => {
 				view.root.insertAtEnd("42");
 				assert.throws(
-					() => tree.branch(),
+					() => tree.fork(),
 					validateUsageError("A view cannot be forked while it has a pending transaction."),
 				);
 			});
-			tree.branch();
+			tree.fork();
 		});
 
 		itView(
 			"rejects merges while a transaction is in progress on the target view",
 			({ view, tree }) => {
-				const treeBranch = tree.branch();
+				const treeBranch = tree.fork();
 				const viewBranch = treeBranch.viewWith(view.config);
 				viewBranch.root.insertAtEnd("42");
 
@@ -686,7 +684,7 @@ describe("sharedTreeView", () => {
 		itView(
 			"rejects merges while a transaction is in progress on the source view",
 			({ view, tree }) => {
-				const treeBranch = tree.branch();
+				const treeBranch = tree.fork();
 				const viewBranch = treeBranch.viewWith(view.config);
 				view.root.insertAtEnd("42");
 				viewBranch.root.insertAtEnd("43");
@@ -706,7 +704,7 @@ describe("sharedTreeView", () => {
 		itView(
 			"rejects rebases while a transaction is in progress on the source view",
 			({ view, tree }) => {
-				const treeBranch = tree.branch();
+				const treeBranch = tree.fork();
 				const viewBranch = treeBranch.viewWith(view.config);
 				view.root.insertAtEnd("42");
 
@@ -724,7 +722,7 @@ describe("sharedTreeView", () => {
 		itView(
 			"rejects rebases while a transaction is in progress on the target view",
 			({ view, tree }) => {
-				const treeBranch = tree.branch();
+				const treeBranch = tree.fork();
 				const viewBranch = treeBranch.viewWith(view.config);
 				view.root.insertAtEnd("42");
 				viewBranch.root.insertAtEnd("43");
@@ -742,7 +740,7 @@ describe("sharedTreeView", () => {
 		);
 
 		itView("do not affect pre-existing forks", ({ view, tree }) => {
-			const treeBranch = tree.branch();
+			const treeBranch = tree.fork();
 			const viewBranch = treeBranch.viewWith(view.config);
 			view.root.insertAtEnd("A");
 			Tree.runTransaction(viewBranch, () => {
@@ -772,28 +770,85 @@ describe("sharedTreeView", () => {
 		});
 
 		itView("statuses are reported correctly", ({ view }) => {
-			assert.equal(view.checkout.transaction.isInProgress(), false);
-			view.checkout.transaction.start();
-			assert.equal(view.checkout.transaction.isInProgress(), true);
-			view.checkout.transaction.start();
-			assert.equal(view.checkout.transaction.isInProgress(), true);
-			view.checkout.transaction.commit();
-			assert.equal(view.checkout.transaction.isInProgress(), true);
-			view.checkout.transaction.abort();
-			assert.equal(view.checkout.transaction.isInProgress(), false);
+			assert.equal(view.checkout.transaction.size, 0);
+			view.runTransaction(() => {
+				assert.equal(view.checkout.transaction.size, 1);
+				view.runTransaction(() => {
+					assert.equal(view.checkout.transaction.size, 2);
+				});
+				assert.equal(view.checkout.transaction.size, 1);
+				return { rollback: true };
+			});
+			assert.equal(view.checkout.transaction.size, 0);
+		});
+
+		it("rejects async transactions within existing transactions", async () => {
+			const provider = new TestTreeProviderLite(1);
+			const config = new TreeViewConfiguration({ schema: rootArray, enableSchemaValidation });
+			const view = provider.trees[0].kernel.viewWith(config);
+			view.initialize([]);
+
+			let transactionPromise: Promise<TransactionResult> | undefined;
+			const expectedError = validateUsageError(
+				/An asynchronous transaction cannot be started while another transaction is already in progress/,
+			);
+
+			// Synchronous -> Asynchronous
+			assert.throws(
+				() =>
+					view.runTransaction(() => {
+						transactionPromise = view.runTransactionAsync(async () => {});
+					}),
+				expectedError,
+			);
+
+			await assert.rejects(
+				transactionPromise ?? assert.fail("Expected transactionPromise to be assigned"),
+				expectedError,
+			);
+
+			// Asynchronous -> Asynchronous
+			await assert.rejects(
+				async () =>
+					view.runTransactionAsync(async () => {
+						transactionPromise = view.runTransactionAsync(async () => {});
+					}),
+				expectedError,
+			);
+
+			await assert.rejects(
+				transactionPromise ?? assert.fail("Expected transactionPromise to be assigned"),
+				expectedError,
+			);
+		});
+
+		it("handles synchronous transactions within async transactions", async () => {
+			const provider = new TestTreeProviderLite(1);
+			const config = new TreeViewConfiguration({ schema: rootArray, enableSchemaValidation });
+			const view = provider.trees[0].kernel.viewWith(config);
+			view.initialize([]);
+
+			await view.runTransactionAsync(async () => {
+				view.root.insertAtEnd("A");
+				view.runTransaction(() => {
+					view.root.insertAtEnd("B");
+				});
+			});
+
+			assert.deepEqual(view.root, ["A", "B"]);
 		});
 	});
 
 	describe("disposal", () => {
 		itView("forks can be disposed", ({ view, tree }) => {
-			const treeBranch = tree.branch();
+			const treeBranch = tree.fork();
 			const viewBranch = treeBranch.viewWith(view.config);
 			viewBranch.dispose();
 			assert.equal(treeBranch.disposed, true);
 		});
 
 		itView("disposed forks cannot be edited or double-disposed", ({ view, tree }) => {
-			const treeBranch = tree.branch();
+			const treeBranch = tree.fork();
 			const viewBranch = treeBranch.viewWith(view.config);
 			treeBranch.dispose();
 			assert.throws(() => treeBranch.dispose());
@@ -898,14 +953,14 @@ describe("sharedTreeView", () => {
 			const oldSchema = sf1.array(sf1.string);
 			const oldSchemaConfig = { schema: oldSchema, enableSchemaValidation };
 			const tree1 = provider.trees[0];
-			const branch1 = getBranch(tree1);
+			const branch1 = tree1.kernel.checkout;
 			const view1 = tree1.kernel.viewWith(new TreeViewConfiguration(oldSchemaConfig));
 			view1.initialize(["A", "B", "C"]);
 
 			// Fork the main branch with new schema.
 			const sf2 = new SchemaFactory("schema1");
 			const newSchema = [sf2.array(sf2.string), sf2.array([sf2.string, sf2.number])];
-			const branch2 = branch1.branch();
+			const branch2 = branch1.fork();
 			const view2 = branch2.viewWith(
 				new TreeViewConfiguration({ schema: newSchema, enableSchemaValidation }),
 			);
@@ -949,7 +1004,7 @@ describe("sharedTreeView", () => {
 			// Get the checkout of the parent branch and fork it before disposing it. The branch is disposed
 			// so that a new view can be created from it with a new schema.
 			const checkout1 = view1.checkout;
-			const checkout2 = view1.checkout.branch();
+			const checkout2 = view1.checkout.fork();
 			view1.dispose();
 
 			// Create a new schema - schema2.
@@ -982,7 +1037,7 @@ describe("sharedTreeView", () => {
 			expectSchemaEqual(toUpgradeSchema(schema3), view3.checkout.storedSchema);
 
 			// Rebase view3 onto view2.
-			(view3.checkout as ITreeCheckoutFork).rebaseOnto(view2.checkout);
+			view3.checkout.rebaseOnto(view2.checkout);
 
 			// All changes on view3 should be dropped but the schema change and edit in view2 should be preserved.
 			expectSchemaEqual(toUpgradeSchema(schema2), view2.checkout.storedSchema);
@@ -993,9 +1048,9 @@ describe("sharedTreeView", () => {
 	describe("revertibles", () => {
 		itView("can be generated for changes made to the local branch", ({ view }) => {
 			const revertiblesCreated: Revertible[] = [];
-			const unsubscribe = view.events.on("changed", (_, getRevertible) => {
-				assert(getRevertible !== undefined, "commit should be revertible");
-				const revertible = getRevertible();
+			const unsubscribe = view.events.on("changed", ({ getRevertible }) => {
+				const revertible = getRevertible?.();
+				assert(revertible !== undefined, "commit should be revertible");
 				assert.equal(revertible.status, RevertibleStatus.Valid);
 				revertiblesCreated.push(revertible);
 			});
@@ -1021,9 +1076,9 @@ describe("sharedTreeView", () => {
 			({ view }) => {
 				const revertiblesCreated: Revertible[] = [];
 
-				const unsubscribe = view.events.on("changed", (_, getRevertible) => {
-					assert(getRevertible !== undefined, "commit should be revertible");
-					const revertible = getRevertible(onRevertibleDisposed);
+				const unsubscribe = view.events.on("changed", ({ getRevertible }) => {
+					const revertible = getRevertible?.(onRevertibleDisposed);
+					assert(revertible !== undefined, "commit should be revertible");
 					assert.equal(revertible.status, RevertibleStatus.Valid);
 					revertiblesCreated.push(revertible);
 				});
@@ -1059,8 +1114,8 @@ describe("sharedTreeView", () => {
 		itView(
 			"revertibles cannot be acquired outside of the changed event callback",
 			({ view }) => {
-				let acquireRevertible: RevertibleFactory | undefined;
-				const unsubscribe = view.events.on("changed", (_, getRevertible) => {
+				let acquireRevertible: (() => void) | undefined;
+				const unsubscribe = view.events.on("changed", ({ getRevertible }) => {
 					assert(getRevertible !== undefined, "commit should be revertible");
 					acquireRevertible = getRevertible;
 				});
@@ -1074,15 +1129,13 @@ describe("sharedTreeView", () => {
 
 		itView("revertibles cannot be acquired more than once", ({ view }) => {
 			const revertiblesCreated: Revertible[] = [];
-			const unsubscribe1 = view.events.on("changed", (_, getRevertible) => {
-				assert(getRevertible !== undefined, "commit should be revertible");
-				const revertible = getRevertible();
-				assert.equal(revertible.status, RevertibleStatus.Valid);
+			const unsubscribe1 = view.events.on("changed", ({ getRevertible }) => {
+				const revertible = getRevertible?.();
+				assert.equal(revertible?.status, RevertibleStatus.Valid);
 				revertiblesCreated.push(revertible);
 			});
-			const unsubscribe2 = view.events.on("changed", (_, getRevertible) => {
-				assert(getRevertible !== undefined, "commit should be revertible");
-				assert.throws(() => getRevertible());
+			const unsubscribe2 = view.events.on("changed", ({ getRevertible }) => {
+				assert.throws(() => getRevertible?.());
 			});
 
 			view.root.insertAtStart("A");
@@ -1092,9 +1145,9 @@ describe("sharedTreeView", () => {
 
 		itView("disposed revertibles cannot be released or reverted", ({ view }) => {
 			const revertiblesCreated: Revertible[] = [];
-			const unsubscribe = view.events.on("changed", (_, getRevertible) => {
-				assert(getRevertible !== undefined, "commit should be revertible");
-				const r = getRevertible();
+			const unsubscribe = view.events.on("changed", ({ getRevertible }) => {
+				const r = getRevertible?.();
+				assert(r !== undefined, "commit should be revertible");
 				assert.equal(r.status, RevertibleStatus.Valid);
 				revertiblesCreated.push(r);
 			});
@@ -1117,10 +1170,9 @@ describe("sharedTreeView", () => {
 		itView("changed events have the correct commit kinds", ({ view }) => {
 			const revertiblesCreated: Revertible[] = [];
 			const commitKinds: CommitKind[] = [];
-			const unsubscribe = view.events.on("changed", ({ kind }, getRevertible) => {
-				assert(getRevertible !== undefined, "commit should be revertible");
-				const revertible = getRevertible();
-				assert.equal(revertible.status, RevertibleStatus.Valid);
+			const unsubscribe = view.events.on("changed", ({ kind, getRevertible }) => {
+				const revertible = getRevertible?.();
+				assert(revertible !== undefined, "commit should be revertible");
 				revertiblesCreated.push(revertible);
 				commitKinds.push(kind);
 			});
@@ -1135,12 +1187,12 @@ describe("sharedTreeView", () => {
 		});
 
 		itView("disposing of a view also disposes of its revertibles", ({ view, tree }) => {
-			const treeBranch = tree.branch();
+			const treeBranch = tree.fork();
 			const viewBranch = asAlpha(treeBranch.viewWith(view.config));
 			const revertiblesCreated: Revertible[] = [];
-			const unsubscribe = viewBranch.events.on("changed", (_, getRevertible) => {
-				assert(getRevertible !== undefined, "commit should be revertible");
-				const r = getRevertible(onRevertibleDisposed);
+			const unsubscribe = viewBranch.events.on("changed", ({ getRevertible }) => {
+				const r = getRevertible?.(onRevertibleDisposed);
+				assert(r !== undefined, "commit should be revertible");
 				assert.equal(r.status, RevertibleStatus.Valid);
 				revertiblesCreated.push(r);
 			});
@@ -1166,7 +1218,7 @@ describe("sharedTreeView", () => {
 		});
 
 		itView("can be reverted after rebasing", ({ view, tree }) => {
-			const treeBranch = tree.branch();
+			const treeBranch = tree.fork();
 			const viewBranch = asAlpha(treeBranch.viewWith(view.config));
 			viewBranch.root.insertAtStart("A");
 
@@ -1192,9 +1244,10 @@ describe("sharedTreeView", () => {
 		for (const ageToTest of [0, 1, 5]) {
 			itView(`Telemetry logs track reversion age (${ageToTest})`, ({ view, logger }) => {
 				let revertible: Revertible | undefined;
-				const unsubscribe = view.events.on("changed", (_, getRevertible) => {
+				const unsubscribe = view.events.on("changed", ({ getRevertible }) => {
 					assert(getRevertible !== undefined, "Expected commit to be revertible.");
 					// Only save off the first revertible, as it's the only one we'll use.
+					// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- using ??= could change behavior if value is falsy
 					if (revertible === undefined) {
 						revertible = getRevertible();
 					}
@@ -1284,14 +1337,14 @@ describe("sharedTreeView", () => {
 			let revertible: Revertible | undefined;
 			expectErrorDuringEdit({
 				setup: (view) => {
-					const unsubscribe = view.events.on("changed", (_, getRevertible) => {
+					const unsubscribe = view.events.on("changed", ({ getRevertible }) => {
 						revertible = getRevertible?.();
 					});
 					view.root.number = 4;
 					unsubscribe();
 					assert(revertible !== undefined, "Expected revertible to be created.");
 				},
-				duringEdit: (view) => revertible?.revert(),
+				duringEdit: () => revertible?.revert(),
 				error: "Reverting a commit is forbidden during a nodeChanged or treeChanged event",
 			});
 		});
@@ -1303,6 +1356,496 @@ describe("sharedTreeView", () => {
 				duringEdit: (view) => view.dispose(),
 				error: "Disposing a view is forbidden during a nodeChanged or treeChanged event",
 			});
+		});
+	});
+
+	describe("Enrichment", () => {
+		const sf = new SchemaFactory("Enrichment Schema");
+		class Node extends sf.object("Node", { id: sf.string }) {}
+		const NodeArray = sf.array(Node);
+
+		function setup(initialContent: InsertableField<typeof NodeArray>) {
+			const provider = new TestTreeProviderLite(2);
+			const config = new TreeViewConfiguration({ schema: NodeArray, enableSchemaValidation });
+			const view1 = provider.trees[0].kernel.viewWith(config);
+			const view2 = provider.trees[1].kernel.viewWith(config);
+			view1.initialize(initialContent);
+			provider.synchronizeMessages();
+			const view1Revertibles: Revertible[] = [];
+			view1.events.on("changed", (_, getRevertible) => {
+				if (getRevertible !== undefined) {
+					view1Revertibles.push(getRevertible());
+				}
+			});
+			return { provider, view1, view1Revertibles, view2 };
+		}
+
+		function assertEnrichmentCount(enriched: SharedTreeChange, expectedCount: number) {
+			assert.equal(enriched.changes[0].type, "data");
+			assert.equal(enriched.changes[0].innerChange.refreshers?.size ?? 0, expectedCount);
+		}
+
+		it("can provide an enricher for a transaction-less edit that is about to be applied", () => {
+			const { view1, view1Revertibles } = setup([{ id: "A" }]);
+			view1.root.removeAt(0);
+
+			let callCount = 0;
+			view1.checkout.mainBranch.events.on("beforeChange", (change) => {
+				callCount += 1;
+				assert.equal(change.type, "append");
+				assert.equal(change.newCommits.length, 1);
+				const commit = change.newCommits[0];
+				view1.checkout.resetEnrichmentStats();
+				const enriched = view1.checkout.enrich(commit.parent ?? assert.fail(), [commit]);
+				assertEnrichmentCount(enriched[0], 1);
+				assert.deepEqual(view1.checkout.getEnrichmentStats(), {
+					batches: 1,
+					diffs: 0,
+					commitsEnriched: 1,
+					refreshers: 1,
+					forks: 0,
+					applied: 0,
+				});
+			});
+
+			assert.equal(view1Revertibles.length, 1);
+			view1Revertibles[0].revert();
+			assert.equal(callCount, 1);
+		});
+
+		it("can provide an enricher for a transaction-less edit that has just been applied", () => {
+			const { view1, view1Revertibles } = setup([{ id: "A" }]);
+			view1.root.removeAt(0);
+
+			let callCount = 0;
+			view1.checkout.mainBranch.events.on("afterChange", (change) => {
+				callCount += 1;
+				assert.equal(change.type, "append");
+				assert.equal(change.newCommits.length, 1);
+				const commit = change.newCommits[0];
+				view1.checkout.resetEnrichmentStats();
+				const enriched = view1.checkout.enrich(commit.parent ?? assert.fail(), [commit]);
+				assertEnrichmentCount(enriched[0], 1);
+				assert.deepEqual(view1.checkout.getEnrichmentStats(), {
+					batches: 1,
+					diffs: 1,
+					commitsEnriched: 1,
+					refreshers: 1,
+					forks: 1,
+					applied: 1,
+				});
+			});
+
+			assert.equal(view1Revertibles.length, 1);
+			view1Revertibles[0].revert();
+			assert.equal(callCount, 1);
+		});
+
+		it("can provide an enricher for merged edits that are about to be applied", () => {
+			const { view1 } = setup([{ id: "A" }, { id: "B" }, { id: "C" }]);
+			const branch = view1.fork();
+
+			view1.root.removeAt(2);
+			view1.root.removeAt(0);
+
+			branch.root[0].id = "a"; // Will require a refresher
+			branch.root[1].id = "b";
+			branch.root[2].id = "c"; // Will require a refresher
+
+			let callCount = 0;
+			view1.checkout.mainBranch.events.on("beforeChange", (change) => {
+				callCount += 1;
+				assert.equal(change.type, "append");
+				assert.equal(change.newCommits.length, 3);
+				view1.checkout.resetEnrichmentStats();
+				const enriched = view1.checkout.enrich(
+					change.newCommits[0].parent ?? assert.fail(),
+					change.newCommits,
+				);
+				assertEnrichmentCount(enriched[0], 1);
+				assertEnrichmentCount(enriched[1], 0);
+				assertEnrichmentCount(enriched[2], 1);
+				assert.deepEqual(view1.checkout.getEnrichmentStats(), {
+					batches: 1,
+					diffs: 0,
+					commitsEnriched: 3,
+					refreshers: 2,
+					forks: 1,
+					applied: 2,
+				});
+			});
+
+			view1.merge(branch);
+			assert.equal(callCount, 1);
+		});
+
+		it("can provide an enricher for merged edits that have just been applied", () => {
+			const { view1 } = setup([{ id: "A" }, { id: "B" }, { id: "C" }]);
+			const branch = view1.fork();
+
+			view1.root.removeAt(2);
+			view1.root.removeAt(0);
+
+			branch.root[0].id = "a"; // Will require a refresher
+			branch.root[1].id = "b";
+			branch.root[2].id = "c"; // Will require a refresher
+
+			let callCount = 0;
+			view1.checkout.mainBranch.events.on("afterChange", (change) => {
+				callCount += 1;
+				assert.equal(change.type, "append");
+				assert.equal(change.newCommits.length, 3);
+				view1.checkout.resetEnrichmentStats();
+				const enriched = view1.checkout.enrich(
+					change.newCommits[0].parent ?? assert.fail(),
+					change.newCommits,
+				);
+				assertEnrichmentCount(enriched[0], 1);
+				assertEnrichmentCount(enriched[1], 0);
+				assertEnrichmentCount(enriched[2], 1);
+				assert.deepEqual(view1.checkout.getEnrichmentStats(), {
+					batches: 1,
+					diffs: 1,
+					commitsEnriched: 3,
+					refreshers: 2,
+					forks: 1,
+					applied: 3,
+				});
+			});
+
+			view1.merge(branch);
+			assert.equal(callCount, 1);
+		});
+
+		it("can provide an enricher for a synchronous transaction that is about to be applied", () => {
+			const { view1, view1Revertibles } = setup([{ id: "A" }]);
+			view1.root.removeAt(0);
+
+			let callCount = 0;
+			view1.checkout.mainBranch.events.on("beforeChange", (change) => {
+				callCount += 1;
+				assert.equal(change.type, "append");
+				assert.equal(change.newCommits.length, 1);
+				const commit = change.newCommits[0];
+				view1.checkout.resetEnrichmentStats();
+				const enriched = view1.checkout.enrich(commit.parent ?? assert.fail(), [commit]);
+				assertEnrichmentCount(enriched[0], 0);
+				assert.deepEqual(view1.checkout.getEnrichmentStats(), {
+					batches: 1,
+					diffs: 0,
+					commitsEnriched: 1,
+					refreshers: 0,
+					forks: 0,
+					applied: 0,
+				});
+			});
+
+			assert.equal(view1Revertibles.length, 1);
+			view1.runTransaction(() => {
+				// There is currently no operation that can be done in a transaction that would lead to a refresher being needed on a transaction commit
+				// TODO AD#57584: Use such an operation here when one is available
+				view1.root.insertAtEnd({ id: "B" });
+				view1.root.insertAtEnd({ id: "C" });
+			});
+			assert.equal(callCount, 1);
+		});
+
+		it("can provide an enricher a for synchronous transaction that has just been applied", () => {
+			const { view1, view1Revertibles } = setup([{ id: "A" }]);
+			view1.root.removeAt(0);
+
+			let callCount = 0;
+			view1.checkout.mainBranch.events.on("afterChange", (change) => {
+				callCount += 1;
+				assert.equal(change.type, "append");
+				assert.equal(change.newCommits.length, 1);
+				const commit = change.newCommits[0];
+				view1.checkout.resetEnrichmentStats();
+				const enriched = view1.checkout.enrich(commit.parent ?? assert.fail(), [commit]);
+				assertEnrichmentCount(enriched[0], 0);
+				assert.deepEqual(view1.checkout.getEnrichmentStats(), {
+					batches: 1,
+					diffs: 0,
+					commitsEnriched: 1,
+					refreshers: 0,
+					forks: 0,
+					applied: 0,
+				});
+			});
+
+			assert.equal(view1Revertibles.length, 1);
+			view1.runTransaction(() => {
+				// There is currently no operation that can be done in a transaction that would lead to a refresher being needed on a transaction commit
+				// TODO AD#57584: Use such an operation here when one is available
+				view1.root.insertAtEnd({ id: "B" });
+				view1.root.insertAtEnd({ id: "C" });
+			});
+			assert.equal(callCount, 1);
+		});
+
+		it("can provide an enricher for an edit applied long ago", () => {
+			const { view1, view1Revertibles } = setup([{ id: "A" }]);
+			view1.root.removeAt(0);
+			view1Revertibles[0].revert();
+			const revertCommit = view1.checkout.mainBranch.getHead();
+			view1.root.insertAtEnd({ id: "B" });
+			view1.root.insertAtEnd({ id: "C" });
+
+			view1.checkout.resetEnrichmentStats();
+			const enriched = view1.checkout.enrich(revertCommit.parent ?? assert.fail(), [
+				revertCommit,
+			]);
+			assertEnrichmentCount(enriched[0], 1);
+			assert.deepEqual(view1.checkout.getEnrichmentStats(), {
+				batches: 1,
+				diffs: 1,
+				commitsEnriched: 1,
+				refreshers: 1,
+				forks: 1,
+				applied: 1,
+			});
+		});
+
+		it("can provide an enricher for an async unrebased transaction that is about to be applied", async () => {
+			const { view1, view1Revertibles } = setup([{ id: "A" }]);
+			view1.root.removeAt(0);
+
+			let callCount = 0;
+			view1.checkout.mainBranch.events.on("beforeChange", (change) => {
+				callCount += 1;
+				assert.equal(change.type, "append");
+				assert.equal(change.newCommits.length, 1);
+				const commit = change.newCommits[0];
+				view1.checkout.resetEnrichmentStats();
+				const enriched = view1.checkout.enrich(commit.parent ?? assert.fail(), [commit]);
+				assertEnrichmentCount(enriched[0], 0);
+				assert.deepEqual(view1.checkout.getEnrichmentStats(), {
+					batches: 1,
+					diffs: 0,
+					commitsEnriched: 1,
+					refreshers: 0,
+					forks: 0,
+					applied: 0,
+				});
+			});
+
+			assert.equal(view1Revertibles.length, 1);
+			await view1.runTransactionAsync(async () => {
+				// There is currently no operation that can be done in a transaction that would lead to a refresher being needed on a transaction commit
+				// TODO AD#57584: Use such an operation here when one is available
+				view1.root.insertAtEnd({ id: "B" });
+				view1.root.insertAtEnd({ id: "C" });
+			});
+			assert.equal(callCount, 1);
+		});
+
+		it("can provide an enricher for an async unrebased transaction that has just been applied", async () => {
+			const { view1, view1Revertibles } = setup([{ id: "A" }]);
+			view1.root.removeAt(0);
+
+			let callCount = 0;
+			view1.checkout.mainBranch.events.on("afterChange", (change) => {
+				callCount += 1;
+				assert.equal(change.type, "append");
+				assert.equal(change.newCommits.length, 1);
+				const commit = change.newCommits[0];
+				view1.checkout.resetEnrichmentStats();
+				const enriched = view1.checkout.enrich(commit.parent ?? assert.fail(), [commit]);
+				assertEnrichmentCount(enriched[0], 0);
+				assert.deepEqual(view1.checkout.getEnrichmentStats(), {
+					batches: 1,
+					diffs: 0,
+					commitsEnriched: 1,
+					refreshers: 0,
+					forks: 0,
+					applied: 0,
+				});
+			});
+
+			assert.equal(view1Revertibles.length, 1);
+			await view1.runTransactionAsync(async () => {
+				// There is currently no operation that can be done in a transaction that would lead to a refresher being needed on a transaction commit
+				// TODO AD#57584: Use such an operation here when one is available
+				view1.root.insertAtEnd({ id: "B" });
+				view1.root.insertAtEnd({ id: "C" });
+			});
+			assert.equal(callCount, 1);
+		});
+
+		it("can provide an enricher for an async rebased transaction that is about to be applied", async () => {
+			const { provider, view1, view2 } = setup([{ id: "A" }, { id: "B" }, { id: "C" }]);
+			view2.root.removeAt(2);
+			view2.root.removeAt(0);
+
+			let callCount = 0;
+			await view1.runTransactionAsync(async () => {
+				view1.root[0].id = "a"; // Will require a refresher
+				view1.root[1].id = "b";
+				provider.synchronizeMessages();
+				view1.root[2].id = "c"; // Will require a refresher
+
+				view1.checkout.mainBranch.events.on("beforeChange", (change) => {
+					callCount += 1;
+					assert.equal(change.type, "append");
+					assert.equal(change.newCommits.length, 1);
+					const commit = change.newCommits[0];
+					view1.checkout.resetEnrichmentStats();
+					const enriched = view1.checkout.enrich(commit.parent ?? assert.fail(), [commit]);
+					assertEnrichmentCount(enriched[0], 2);
+					assert.deepEqual(view1.checkout.getEnrichmentStats(), {
+						batches: 1,
+						diffs: 1,
+						commitsEnriched: 1,
+						refreshers: 2,
+						forks: 1,
+						applied: 1,
+					});
+				});
+			});
+			assert.equal(callCount, 1);
+		});
+
+		it("can provide an enricher for an async rebased transaction that has just been applied", async () => {
+			const { provider, view1, view2 } = setup([{ id: "A" }, { id: "B" }, { id: "C" }]);
+			view2.root.removeAt(2);
+			view2.root.removeAt(0);
+
+			let callCount = 0;
+			await view1.runTransactionAsync(async () => {
+				view1.root[0].id = "a"; // Will require a refresher
+				view1.root[1].id = "b";
+				provider.synchronizeMessages();
+				view1.root[2].id = "c"; // Will require a refresher
+
+				view1.checkout.mainBranch.events.on("afterChange", (change) => {
+					callCount += 1;
+					assert.equal(change.type, "append");
+					assert.equal(change.newCommits.length, 1);
+					const commit = change.newCommits[0];
+					view1.checkout.resetEnrichmentStats();
+					const enriched = view1.checkout.enrich(commit.parent ?? assert.fail(), [commit]);
+					assertEnrichmentCount(enriched[0], 2);
+					assert.deepEqual(view1.checkout.getEnrichmentStats(), {
+						batches: 1,
+						diffs: 1,
+						commitsEnriched: 1,
+						refreshers: 2,
+						forks: 1,
+						applied: 1,
+					});
+				});
+			});
+			assert.equal(callCount, 1);
+		});
+
+		it("delays diff computation if no refresher is needed", () => {
+			const { view1 } = setup([]);
+			view1.root.insertAtEnd({ id: "A" });
+			const commit = view1.checkout.mainBranch.getHead();
+			view1.root.insertAtEnd({ id: "B" });
+			view1.root.insertAtEnd({ id: "C" });
+
+			view1.checkout.resetEnrichmentStats();
+			view1.checkout.enrich(commit.parent ?? assert.fail(), [commit]);
+			assert.deepEqual(view1.checkout.getEnrichmentStats(), {
+				batches: 1,
+				diffs: 0,
+				commitsEnriched: 1,
+				refreshers: 0,
+				forks: 0,
+				applied: 0,
+			});
+		});
+
+		it("delays apply changes if no refresher is needed", () => {
+			const { view1 } = setup([]);
+			const start = view1.checkout.mainBranch.getHead();
+			view1.root.insertAtEnd({ id: "A" });
+			const commit1 = view1.checkout.mainBranch.getHead();
+			view1.root.insertAtEnd({ id: "B" });
+			const commit2 = view1.checkout.mainBranch.getHead();
+			view1.root.insertAtEnd({ id: "C" });
+			const commit3 = view1.checkout.mainBranch.getHead();
+
+			view1.checkout.resetEnrichmentStats();
+			view1.checkout.enrich(start, [commit1, commit2, commit3]);
+			assert.deepEqual(view1.checkout.getEnrichmentStats(), {
+				batches: 1,
+				diffs: 0,
+				commitsEnriched: 3,
+				refreshers: 0,
+				forks: 0,
+				applied: 0,
+			});
+		});
+	});
+
+	describe("fork breaker isolation", () => {
+		const sf = new SchemaFactory("fork isolation test schema");
+		const config = new TreeViewConfiguration({ schema: sf.number });
+
+		it("fork has a distinct breaker from its parent", () => {
+			const view = getView(config);
+			view.initialize(5);
+			const fork = view.fork();
+			assert.notEqual(view.checkout.breaker, fork.checkout.breaker);
+			fork.dispose();
+		});
+
+		it("breaking a fork does not break its parent", () => {
+			const view = getView(config);
+			view.initialize(5);
+			const fork = view.fork();
+
+			// Break the fork by calling initialize() on an already-initialized tree.
+			assert.throws(
+				() => fork.initialize(10),
+				validateUsageError("Tree cannot be initialized more than once."),
+			);
+
+			// Fork should now be broken.
+			assert.throws(() => fork.root, validateUsageError(/invalid state/));
+
+			// Parent should still be usable.
+			assert.equal(view.root, 5);
+		});
+
+		it("breaking a fork does not break sibling forks", () => {
+			const view = getView(config);
+			view.initialize(5);
+			const fork1 = view.fork();
+			const fork2 = view.fork();
+
+			// Break fork1.
+			assert.throws(
+				() => fork1.initialize(10),
+				validateUsageError("Tree cannot be initialized more than once."),
+			);
+			assert.throws(() => fork1.root, validateUsageError(/invalid state/));
+
+			// Sibling fork should still be usable.
+			assert.equal(fork2.root, 5);
+			fork2.dispose();
+		});
+
+		it("breaking a transitive fork does not break its ancestors", () => {
+			const view = getView(config);
+			view.initialize(5);
+			const fork1 = view.fork();
+			const fork2 = fork1.checkout.fork().viewWith(config);
+
+			// Break the transitive fork.
+			assert.throws(
+				() => fork2.initialize(10),
+				validateUsageError("Tree cannot be initialized more than once."),
+			);
+			assert.throws(() => fork2.root, validateUsageError(/invalid state/));
+
+			// fork1 should still be usable.
+			assert.equal(fork1.root, 5);
+			// view should still be usable.
+			assert.equal(view.root, 5);
+			fork1.dispose();
 		});
 	});
 });
@@ -1325,7 +1868,7 @@ function itView<
 	title: string,
 	fn: (args: {
 		view: SchematizingSimpleTreeView<TRootSchema>;
-		tree: BranchableTree;
+		tree: ITreeCheckout;
 		logger: IMockLoggerExt;
 	}) => void,
 	options: {
@@ -1337,7 +1880,7 @@ function itView(
 	title: string,
 	fn: (args: {
 		view: SchematizingSimpleTreeView<typeof rootArray>;
-		tree: BranchableTree;
+		tree: ITreeCheckout;
 		logger: IMockLoggerExt;
 	}) => void,
 	options?: {
@@ -1351,7 +1894,7 @@ function itView<
 	title: string,
 	fn: (args: {
 		view: SchematizingSimpleTreeView<TRootSchema>;
-		tree: BranchableTree;
+		tree: ITreeCheckout;
 		logger: IMockLoggerExt;
 	}) => void,
 	options: {
@@ -1365,7 +1908,7 @@ function itView<
 		thunk: typeof fn,
 		makeViewFromConfig: (config: TreeViewConfiguration<TRootSchema>) => {
 			view: SchematizingSimpleTreeView<TRootSchema>;
-			tree: BranchableTree;
+			tree: ITreeCheckout;
 			logger: IMockLoggerExt;
 		},
 	): void {
@@ -1383,7 +1926,7 @@ function itView<
 			const { view, tree, logger } = (
 				makeViewFromConfig as unknown as (config: TreeViewConfiguration<typeof rootArray>) => {
 					view: SchematizingSimpleTreeView<typeof rootArray>;
-					tree: BranchableTree;
+					tree: ITreeCheckout;
 					logger: IMockLoggerExt;
 				}
 			)(
@@ -1397,7 +1940,7 @@ function itView<
 			(
 				thunk as unknown as (args: {
 					view: SchematizingSimpleTreeView<typeof rootArray>;
-					tree: BranchableTree;
+					tree: ITreeCheckout;
 					logger: IMockLoggerExt;
 				}) => void
 			)({ view, tree, logger });
@@ -1409,7 +1952,7 @@ function itView<
 		fork: boolean,
 	): {
 		view: SchematizingSimpleTreeView<TRootSchema>;
-		tree: BranchableTree;
+		tree: ITreeCheckout;
 		logger: IMockLoggerExt;
 	} {
 		const logger = createMockLoggerExt();
@@ -1432,14 +1975,14 @@ function itView<
 		);
 
 		if (fork) {
-			const treeBranch = getBranch(view).branch();
+			const treeBranch = view.checkout.fork();
 			const viewBranch = treeBranch.viewWith(view.config);
 			assert(viewBranch instanceof SchematizingSimpleTreeView);
 			return { view: viewBranch, tree: treeBranch, logger };
 		} else {
 			return {
 				view,
-				tree: getBranch(view),
+				tree: view.checkout,
 				logger,
 			};
 		}
@@ -1448,7 +1991,7 @@ function itView<
 	itFunction(`${title} (root view)`, () => {
 		const provider = new TestTreeProviderLite();
 		const [tree] = provider.trees;
-		const branch = getBranch(tree);
+		const branch = tree.kernel.checkout;
 		callWithView(fn, (config) => ({
 			view: tree.kernel.viewWith(config),
 			tree: branch,
@@ -1463,7 +2006,7 @@ function itView<
 	itFunction(`${title} (forked view)`, () => {
 		const provider = new TestTreeProviderLite();
 		const [tree] = provider.trees;
-		const branch = getBranch(tree).branch();
+		const branch = tree.kernel.checkout.fork();
 		callWithView(fn, (config) => {
 			const view = branch.viewWith(config);
 			assert(view instanceof SchematizingSimpleTreeView);

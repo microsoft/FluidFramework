@@ -28,6 +28,7 @@ export class PrefetchDocumentStorageService extends DocumentStorageServiceProxy 
 		}
 	}
 
+	// eslint-disable-next-line @rushstack/no-new-null -- TODO: use `undefined` instead
 	public async getSnapshotTree(version?: IVersion): Promise<ISnapshotTree | null> {
 		const p = this.internalStorageService.getSnapshotTree(version);
 		if (this.prefetchEnabled) {
@@ -67,12 +68,13 @@ export class PrefetchDocumentStorageService extends DocumentStorageServiceProxy 
 			// 2. Prevent unhandled rejection warning for fire-and-forget prefetch
 			// Note: Callers who await the cached promise will still see the rejection
 			prefetchedBlobPFromStorage.catch((error) => {
-				if (canRetryOnError(error)) {
-					// Only clear cache if our promise is still the cached one
-					// (avoids race condition with concurrent requests)
-					if (this.prefetchCache.get(blobId) === prefetchedBlobPFromStorage) {
-						this.prefetchCache.delete(blobId);
-					}
+				// Only clear cache if our promise is still the cached one
+				// (avoids race condition with concurrent requests)
+				if (
+					canRetryOnError(error) &&
+					this.prefetchCache.get(blobId) === prefetchedBlobPFromStorage
+				) {
+					this.prefetchCache.delete(blobId);
 				}
 			});
 			this.prefetchCache.set(blobId, prefetchedBlobPFromStorage);
@@ -86,6 +88,10 @@ export class PrefetchDocumentStorageService extends DocumentStorageServiceProxy 
 		this.prefetchTreeCore(tree, secondary);
 
 		for (const blob of secondary) {
+			// Skip if already cached (avoids unnecessary async overhead)
+			if (this.prefetchCache.has(blob)) {
+				continue;
+			}
 			// Fire-and-forget prefetch. The .catch() prevents unhandled rejection
 			// since cachedRead is async and returns a separate promise chain.
 			this.cachedRead(blob).catch(() => {});
@@ -95,15 +101,14 @@ export class PrefetchDocumentStorageService extends DocumentStorageServiceProxy 
 	private prefetchTreeCore(tree: ISnapshotTree, secondary: string[]): void {
 		for (const [blobKey, blob] of Object.entries(tree.blobs)) {
 			if (blobKey.startsWith(".") || blobKey === "header" || blobKey.startsWith("quorum")) {
-				if (blob !== null) {
+				// Skip if already cached (avoids unnecessary async overhead)
+				if (blob !== null && !this.prefetchCache.has(blob)) {
 					// Fire-and-forget prefetch. The .catch() prevents unhandled rejection
 					// since cachedRead is async and returns a separate promise chain.
 					this.cachedRead(blob).catch(() => {});
 				}
-			} else if (!blobKey.startsWith("deltas")) {
-				if (blob !== null) {
-					secondary.push(blob);
-				}
+			} else if (!blobKey.startsWith("deltas") && blob !== null) {
+				secondary.push(blob);
 			}
 		}
 

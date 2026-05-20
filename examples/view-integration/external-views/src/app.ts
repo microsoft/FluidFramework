@@ -79,10 +79,21 @@ if (location.hash.length === 0) {
 const diceRoller = (await container.getEntryPoint()) as IDiceRoller;
 
 // Render view
-const appDiv = document.querySelector("#app") as HTMLDivElement;
+const appDiv = document.createElement("div");
+document.body.append(appDiv);
 const appRoot = createRoot(appDiv);
 appRoot.render(createElement(DiceRollerView, { diceRoller }));
 
 // Update url and tab title
 location.hash = id;
 document.title = id;
+
+// For testing purposes, we expose a way to load an additional instance of the container in the same page
+globalThis.loadAdditionalContainer = async () => {
+	return loadExistingContainer({
+		request: await createLoadExistingRequest(id),
+		urlResolver,
+		documentServiceFactory,
+		codeLoader,
+	});
+};

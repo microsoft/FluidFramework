@@ -18,7 +18,7 @@ import {
 import { reservedRangeLabelsKey } from "@fluidframework/sequence/internal";
 import { ReferenceType, SharedString } from "@fluidframework/sequence/legacy";
 import { EditorView } from "prosemirror-view";
-import React, { useEffect, useRef } from "react";
+import { type FC, useEffect, useRef } from "react";
 
 import { nodeTypeKey, stackTypeBegin, stackTypeEnd, stackTypeKey } from "./fluidBridge.js";
 import { FluidCollabManager, IProvideRichTextEditor } from "./fluidCollabManager.js";
@@ -169,6 +169,7 @@ class ProseMirrorView {
 			elm.appendChild(this.content!);
 		}
 
+		// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- intentional behavior
 		if (!this.editorView) {
 			this.editorView = this.collabManager.setupEditor(this.textArea);
 		}
@@ -184,9 +185,11 @@ export interface IProseMirrorReactViewProps {
 }
 
 /**
+ * React component that renders a ProseMirror editor with collaborative features.
+ *
  * @internal
  */
-export const ProseMirrorReactView: React.FC<IProseMirrorReactViewProps> = (
+export const ProseMirrorReactView: FC<IProseMirrorReactViewProps> = (
 	props: IProseMirrorReactViewProps,
 ) => {
 	const { collabManager } = props;

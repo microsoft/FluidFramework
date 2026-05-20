@@ -3,18 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import { IRequest } from "@fluidframework/core-interfaces";
+import type { IRequest } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
-import {
-	DriverHeader,
-	IResolvedUrl,
-	IUrlResolver,
-	ScopeType,
-} from "@fluidframework/driver-definitions/internal";
+import type { IResolvedUrl, IUrlResolver } from "@fluidframework/driver-definitions/internal";
+import { DriverHeader, ScopeType } from "@fluidframework/driver-definitions/internal";
 
 import { generateToken } from "./auth.js";
 
 /**
+ * Creates an {@link @fluidframework/core-interfaces#IRequest} for creating a new document with the local resolver.
+ *
  * @legacy @beta
  */
 export function createLocalResolverCreateNewRequest(documentId: string): IRequest {
@@ -46,7 +44,7 @@ export class LocalResolver implements IUrlResolver {
 	 */
 	public async resolve(request: IRequest): Promise<IResolvedUrl> {
 		const parsedUrl = new URL(request.url);
-		const fullPath = `${parsedUrl.pathname.substr(1)}${parsedUrl.search}`;
+		const fullPath = `${parsedUrl.pathname.slice(1)}${parsedUrl.search}`;
 		// TODO Why are we non null asserting here
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		const documentId = fullPath.split("/")[0]!;
@@ -72,19 +70,21 @@ export class LocalResolver implements IUrlResolver {
 	): Promise<string> {
 		let url = relativeUrl;
 		if (url.startsWith("/")) {
-			url = url.substr(1);
+			url = url.slice(1);
 		}
 		const parsedUrl = new URL(resolvedUrl.url);
 		if (parsedUrl.pathname === null) {
 			throw new Error("Url should contain tenant and docId!!");
 		}
-		const [, , documentId] = parsedUrl.pathname.split("/");
+		const documentId = parsedUrl.pathname.split("/")[2];
 		assert(
 			!!documentId,
 			0x09a /* "'documentId' must be a defined, non-zero length string." */,
 		);
 
-		return `http://localhost:3000/${documentId}/${url}`;
+		return url
+			? `http://localhost:3000/${documentId}/${url}`
+			: `http://localhost:3000/${documentId}`;
 	}
 
 	public createCreateNewRequest(documentId: string): IRequest {

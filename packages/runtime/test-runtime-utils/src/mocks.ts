@@ -48,9 +48,10 @@ import {
 	type ISnapshotTree,
 } from "@fluidframework/driver-definitions/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
-import type {
-	IIdCompressorCore,
-	IdCreationRange,
+import {
+	createIdCompressor,
+	toIdCompressorWithCore,
+	type IdCreationRange,
 } from "@fluidframework/id-compressor/internal";
 import {
 	ISummaryTreeWithStats,
@@ -64,6 +65,7 @@ import {
 	type MinimumVersionForCollab,
 } from "@fluidframework/runtime-definitions/internal";
 import {
+	defaultMinVersionForCollab,
 	getNormalizedObjectStoragePathParts,
 	mergeStats,
 	toDeltaManagerErased,
@@ -241,6 +243,8 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
 	}
 
 	/**
+	 * Creates a {@link MockDeltaConnection} for this container runtime.
+	 *
 	 * @deprecated use the associated datastore to create the delta connection
 	 */
 	public createDeltaConnection(): MockDeltaConnection {
@@ -254,7 +258,7 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
 			this.dataStoreRuntime.idCompressor !== undefined,
 			"Shouldn't try to finalize IdRanges without an IdCompressor",
 		);
-		this.dataStoreRuntime.idCompressor.finalizeCreationRange(range);
+		toIdCompressorWithCore(this.dataStoreRuntime.idCompressor).finalizeCreationRange(range);
 	}
 
 	// This enables manual control over flush mode, allowing operations like rollback to be executed in a controlled environment.
@@ -451,7 +455,10 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
 	}
 
 	private generateIdAllocationOp(): IInternalMockRuntimeMessage | undefined {
-		const idRange = this.dataStoreRuntime.idCompressor?.takeNextCreationRange();
+		const idRange =
+			this.dataStoreRuntime.idCompressor === undefined
+				? undefined
+				: toIdCompressorWithCore(this.dataStoreRuntime.idCompressor).takeNextCreationRange();
 		if (idRange?.ids !== undefined) {
 			const allocationOp: IMockContainerRuntimeIdAllocationMessage = {
 				type: "idAllocation",
@@ -575,7 +582,7 @@ export class MockContainerRuntimeFactory {
 	}
 
 	/**
-	 * @returns a minimum sequence number for all connected clients.
+	 * Gets the minimum sequence number for all connected clients.
 	 */
 	public getMinSeq(): number {
 		let minimumSequenceNumber: number | undefined;
@@ -866,10 +873,12 @@ export class MockFluidDataStoreRuntime
 		entryPoint?: IFluidHandle<FluidObject>;
 		id?: string;
 		logger?: ITelemetryBaseLogger;
-		idCompressor?: IIdCompressor & IIdCompressorCore;
+		idCompressor?: IIdCompressor;
 		attachState?: AttachState;
 		registry?: readonly IChannelFactory[];
 		minVersionForCollab?: MinimumVersionForCollab;
+		inStagingMode?: boolean;
+		isDirty?: boolean;
 	}) {
 		super();
 		this.clientId = overrides?.clientId ?? uuid();
@@ -885,7 +894,7 @@ export class MockFluidDataStoreRuntime
 			childLoggerProps.logger = logger;
 		}
 		this.logger = createChildLogger(childLoggerProps);
-		this.idCompressor = overrides?.idCompressor;
+		this.idCompressor = overrides?.idCompressor ?? createIdCompressor();
 		this._attachState = overrides?.attachState ?? AttachState.Attached;
 
 		const registry = overrides?.registry;
@@ -893,7 +902,9 @@ export class MockFluidDataStoreRuntime
 			this.registry = new Map(registry.map((factory) => [factory.type, factory]));
 		}
 
-		this.minVersionForCollab = overrides?.minVersionForCollab;
+		this.minVersionForCollab = overrides?.minVersionForCollab ?? defaultMinVersionForCollab;
+		this.inStagingMode = overrides?.inStagingMode ?? false;
+		this.isDirty = overrides?.isDirty ?? false;
 	}
 
 	private readonly: boolean = false;
@@ -904,7 +915,7 @@ export class MockFluidDataStoreRuntime
 	/**
 	 * @see IFluidDataStoreRuntimeInternalConfig.minVersionForCollab
 	 */
-	public readonly minVersionForCollab: MinimumVersionForCollab | undefined;
+	public readonly minVersionForCollab: MinimumVersionForCollab;
 
 	public get IFluidHandleContext(): IFluidHandleContext {
 		return this;
@@ -919,6 +930,8 @@ export class MockFluidDataStoreRuntime
 		return this;
 	}
 
+	public readonly inStagingMode: boolean;
+	public readonly isDirty: boolean;
 	public readonly documentId: string = undefined as any;
 	public readonly id: string;
 	public readonly existing: boolean = undefined as any;
@@ -935,7 +948,7 @@ export class MockFluidDataStoreRuntime
 	public quorum = new MockQuorumClients();
 	private readonly audience = new MockAudience();
 	public containerRuntime?: MockContainerRuntime;
-	public idCompressor: (IIdCompressor & IIdCompressorCore) | undefined;
+	public idCompressor: IIdCompressor | undefined;
 	private readonly deltaConnections: MockDeltaConnection[] = [];
 	private readonly registry?: ReadonlyMap<string, IChannelFactory>;
 
@@ -954,6 +967,8 @@ export class MockFluidDataStoreRuntime
 	}
 
 	/**
+	 * Whether the data store is local (not attached).
+	 *
 	 * @deprecated Use `attachState` instead
 	 *
 	 * @privateRemarks Also remove the setter when this is removed. setters don't get their own doc tags.
@@ -975,7 +990,13 @@ export class MockFluidDataStoreRuntime
 	}
 
 	public dispose(): void {
+		if (this._disposed) {
+			return;
+		}
+
 		this._disposed = true;
+		this.emit("dispose");
+		this.removeAllListeners();
 	}
 
 	public async getChannel(id: string): Promise<IChannel> {

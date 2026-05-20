@@ -30,6 +30,7 @@ import {
 	type SessionSpaceCompressedId,
 	type StableId,
 	createIdCompressor,
+	toIdCompressorWithCore,
 } from "../index.js";
 import { SessionSpaceNormalizer } from "../sessionSpaceNormalizer.js";
 import { assertIsSessionId, createSessionId, localIdFromGenCount } from "../utilities.js";
@@ -538,6 +539,7 @@ export class IdCompressorTestNetwork {
 				assert(range.sessionId === compressor.localSessionId);
 				if (range.ids !== undefined) {
 					// initialize firstGenCount if not set
+					// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- using ??= could change behavior if value is falsy
 					if (firstGenCount === undefined) {
 						firstGenCount = range.ids.firstGenCount;
 					}
@@ -1086,5 +1088,5 @@ export function createAlwaysFinalizedIdCompressor(
 	const compressor = createIdCompressor(random.uuid4() as SessionId, logger);
 	// Permanently put the compressor in a ghost session
 	(compressor as IdCompressor).startGhostSession(sessionId);
-	return compressor;
+	return toIdCompressorWithCore(compressor);
 }

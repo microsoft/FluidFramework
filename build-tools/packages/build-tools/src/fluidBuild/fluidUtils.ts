@@ -9,12 +9,8 @@ import { realpath } from "node:fs/promises";
 import * as path from "node:path";
 import { getPackages } from "@manypkg/get-packages";
 import registerDebug from "debug";
-import { findUp } from "find-up";
 import fsExtra from "fs-extra";
 import { lilconfigSync } from "lilconfig";
-
-// fs-extra doesn't provide named exports for ESM, so we destructure from default
-const { readJson } = fsExtra;
 
 import { defaultLogger } from "../common/logging.js";
 import { commonOptions } from "./commonOptions.js";
@@ -24,9 +20,14 @@ import {
 	type IFluidBuildConfig,
 } from "./fluidBuildConfig.js";
 
+const { readJson } = fsExtra;
+
+// switch to regular import once building ESM
+const findUp = import("find-up");
+
 const traceInit = registerDebug("fluid-build:init");
 
-async function isFluidRootPackage(dir: string) {
+async function isFluidRootPackage(dir: string): Promise<boolean> {
 	const filename = path.join(dir, "package.json");
 	if (!existsSync(filename)) {
 		traceInit(`InferRoot: package.json not found`);
@@ -41,8 +42,8 @@ async function isFluidRootPackage(dir: string) {
 	return false;
 }
 
-async function inferRoot(buildRoot: boolean) {
-	const config = await findUp("fluidBuild.config.cjs", {
+async function inferRoot(buildRoot: boolean): Promise<string | undefined> {
+	const config = await (await findUp).findUp("fluidBuild.config.cjs", {
 		cwd: process.cwd(),
 		type: "file",
 	});
@@ -90,7 +91,7 @@ async function inferRoot(buildRoot: boolean) {
 	return undefined;
 }
 
-async function inferFluidRoot(buildRoot: boolean) {
+async function inferFluidRoot(buildRoot: boolean): Promise<string | undefined> {
 	const rootDir = await inferRoot(buildRoot);
 	if (rootDir === undefined) {
 		return undefined;
@@ -100,7 +101,7 @@ async function inferFluidRoot(buildRoot: boolean) {
 	return buildRoot || (await isFluidRootPackage(rootDir)) ? rootDir : undefined;
 }
 
-export async function getResolvedFluidRoot(buildRoot = false) {
+export async function getResolvedFluidRoot(buildRoot = false): Promise<string> {
 	let checkFluidRoot = true;
 	let root = commonOptions.root;
 	if (root) {

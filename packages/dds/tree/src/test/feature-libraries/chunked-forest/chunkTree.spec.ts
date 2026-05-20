@@ -10,6 +10,7 @@ import {
 	EmptyKey,
 	type FieldKey,
 	type JsonableTree,
+	TreeStoredSchemaRepository,
 	type TreeNodeSchemaIdentifier,
 	type Value,
 	mapCursorField,
@@ -29,7 +30,9 @@ import {
 	combineChunks,
 	defaultChunkPolicy,
 	insertValues,
+	makeTreeChunker,
 	polymorphic,
+	splitFieldAtIndex,
 	tryShapeFromFieldSchema,
 	tryShapeFromNodeSchema,
 	uniformChunkFromCursor,
@@ -41,6 +44,7 @@ import { emptyChunk } from "../../../feature-libraries/chunked-forest/emptyChunk
 import { SequenceChunk } from "../../../feature-libraries/chunked-forest/sequenceChunk.js";
 import {
 	TreeShape,
+	UniformChunk,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/chunked-forest/uniformChunk.js";
 import {
@@ -52,10 +56,7 @@ import {
 	jsonableTreeFromCursor,
 	jsonableTreeFromFieldCursor,
 } from "../../../feature-libraries/index.js";
-import { brand } from "../../../util/index.js";
-
-import { assertChunkCursorEquals, numberSequenceField } from "./fieldCursorTestUtilities.js";
-import { polygonTree, testData } from "./uniformChunkTestData.js";
+import { JsonAsTree } from "../../../jsonDomainSchema.js";
 import {
 	incrementalEncodingPolicyForAllowedTypes,
 	incrementalSummaryHint,
@@ -67,9 +68,12 @@ import {
 	toInitialSchema,
 	TreeViewConfigurationAlpha,
 } from "../../../simple-tree/index.js";
+import { brand } from "../../../util/index.js";
 import { fieldJsonCursor, singleJsonCursor } from "../../json/index.js";
 import { testIdCompressor } from "../../utils.js";
-import { JsonAsTree } from "../../../jsonDomainSchema.js";
+
+import { assertChunkCursorEquals, numberSequenceField } from "./fieldCursorTestUtilities.js";
+import { polygonTree, testData } from "./uniformChunkTestData.js";
 
 const builder = new SchemaFactory("chunkTree");
 const empty = builder.object("empty", {});
@@ -104,6 +108,52 @@ describe("chunkTree", () => {
 				assert.deepEqual(values, chunk.values);
 			});
 		}
+
+		it("does not compress string values when shape does not have mayContainCompressedIds", () => {
+			// Simulate a string leaf whose shape does not opt into compressed ids
+			// (e.g. a plain string field in a string | number union).
+			// Even if the string value is a valid stable id and an idCompressor is provided,
+			// insertValues must leave it as a string.
+			const stableId = testIdCompressor.decompress(testIdCompressor.generateCompressedId());
+			const stringShapeNoCompress = new TreeShape(
+				brand(stringSchema.identifier),
+				true,
+				[],
+				false,
+			);
+
+			const values: Value[] = [];
+			const cursor = cursorForJsonableTreeNode({
+				type: brand(stringSchema.identifier),
+				value: stableId,
+			});
+			insertValues(cursor, stringShapeNoCompress, values, testIdCompressor);
+			// The value must remain the original string, not a compressed numeric id.
+			assert.equal(values.length, 1);
+			assert.equal(typeof values[0], "string");
+			assert.equal(values[0], stableId);
+		});
+
+		it("compresses string values when shape has mayContainCompressedIds", () => {
+			const compressedId = testIdCompressor.generateCompressedId();
+			const stableId = testIdCompressor.decompress(compressedId);
+			const stringShapeCompress = new TreeShape(
+				brand(stringSchema.identifier),
+				true,
+				[],
+				true,
+			);
+
+			const values: Value[] = [];
+			const cursor = cursorForJsonableTreeNode({
+				type: brand(stringSchema.identifier),
+				value: stableId,
+			});
+			insertValues(cursor, stringShapeCompress, values, testIdCompressor);
+			// The value must be compressed to the numeric id.
+			assert.equal(values.length, 1);
+			assert.equal(values[0], compressedId);
+		});
 	});
 
 	describe("uniformChunkFromCursor", () => {
@@ -235,6 +285,7 @@ describe("chunkTree", () => {
 				sequenceChunkSplitThreshold: 2,
 				sequenceChunkInlineThreshold: Number.POSITIVE_INFINITY,
 				uniformChunkNodeCount: 0,
+				uniformChunkNodeCountDynamicTargetMax: 0,
 				shapeFromSchema: () => polymorphic,
 			};
 
@@ -284,6 +335,7 @@ describe("chunkTree", () => {
 						sequenceChunkSplitThreshold: threshold,
 						sequenceChunkInlineThreshold: Number.POSITIVE_INFINITY,
 						uniformChunkNodeCount: 0,
+						uniformChunkNodeCountDynamicTargetMax: 0,
 						shapeFromSchema: () => polymorphic,
 					};
 					const field = numberSequenceField(fieldLength);
@@ -394,6 +446,7 @@ describe("chunkTree", () => {
 				sequenceChunkSplitThreshold: 2,
 				sequenceChunkInlineThreshold: Number.POSITIVE_INFINITY,
 				uniformChunkNodeCount: 0,
+				uniformChunkNodeCountDynamicTargetMax: 0,
 				shapeFromSchema: () => polymorphic,
 			};
 
@@ -479,6 +532,7 @@ describe("chunkTree", () => {
 				sequenceChunkSplitThreshold: 2,
 				sequenceChunkInlineThreshold: Number.POSITIVE_INFINITY,
 				uniformChunkNodeCount: 0,
+				uniformChunkNodeCountDynamicTargetMax: 0,
 				shapeFromSchema: () => polymorphic,
 			};
 
@@ -707,6 +761,115 @@ describe("chunkTree", () => {
 				fieldSchemaWithContext,
 			);
 			assert(infoNonIncremental !== undefined);
+		});
+	});
+
+	describe("splitFieldAtIndex", () => {
+		const numberType: TreeNodeSchemaIdentifier = brand(numberSchema.identifier);
+		const numberShape = new TreeShape(numberType, true, []);
+
+		// Schema-aware default chunker so chunkRange (used by splitFieldAtIndex) can
+		// rebuild each half of a split uniform chunk as a uniform chunk.
+		const forestSchema = new TreeStoredSchemaRepository(toInitialSchema(builder.number));
+		const chunker = makeTreeChunker(
+			forestSchema,
+			defaultSchemaPolicy,
+			defaultIncrementalEncodingPolicy,
+		);
+		const compressor = { policy: chunker, idCompressor: undefined };
+
+		function assertChunksUnchanged(chunks: TreeChunk[], snapshot: readonly TreeChunk[]): void {
+			assert.equal(chunks.length, snapshot.length);
+			for (let i = 0; i < snapshot.length; i++) {
+				assert.equal(chunks[i], snapshot[i]);
+			}
+		}
+
+		function assertChunksUnshared(chunks: readonly TreeChunk[]): void {
+			for (const chunk of chunks) {
+				assert.equal(chunk.isShared(), false);
+			}
+		}
+
+		it("splits a uniform chunk sandwiched between basic chunks at a middle index", () => {
+			// Build a field containing three chunks:
+			// [basic(1 node), uniform(5 nodes), basic(1 node)] -> total 7 nodes, global indices 0..6
+			// The uniform chunk occupies global indices 1..5, and its middle node is global index 3.
+			const leadingBasic = new BasicChunk(numberType, new Map(), 0);
+			const uniform = new UniformChunk(numberShape.withTopLevelLength(5), [1, 2, 3, 4, 5]);
+			const trailingBasic = new BasicChunk(numberType, new Map(), 6);
+			const chunks: TreeChunk[] = [leadingBasic, uniform, trailingBasic];
+
+			// Hold an extra ref to the uniform chunk so we can inspect its refcount after the
+			// split (without it, referenceRemoved would drive the refcount to 0 and reuse risks
+			// observing a destroyed object).
+			uniform.referenceAdded();
+
+			const boundaryIndex = splitFieldAtIndex(chunks, 3, compressor);
+
+			// The chunks preceding boundaryIndex must hold exactly the first 3 nodes,
+			// i.e. the split landed on the requested node boundary.
+			let nodesBeforeBoundary = 0;
+			for (let i = 0; i < boundaryIndex; i++) {
+				nodesBeforeBoundary += chunks[i].topLevelLength;
+			}
+			assert.equal(nodesBeforeBoundary, 3);
+
+			// The chunk at boundaryIndex starts with the node that was at global index 3.
+			const boundaryCursor = chunks[boundaryIndex].cursor();
+			boundaryCursor.firstNode();
+			assert.deepEqual(jsonableTreeFromCursor(boundaryCursor), {
+				type: numberSchema.identifier,
+				value: 3,
+			});
+
+			// Each resulting chunk should be the sole owner of its slot.
+			assertChunksUnshared(chunks);
+			// The original uniform chunk's array-slot ref was released; only our test ref remains.
+			assert.equal(uniform.isShared(), false);
+			uniform.referenceRemoved();
+		});
+
+		it("does not mutate the array when the index falls on an existing chunk boundary", () => {
+			// Index 1 lands on the boundary between the BasicChunk and the UniformChunk,
+			// so splitFieldAtIndex should return without touching the array.
+			const chunks: TreeChunk[] = [
+				new BasicChunk(numberType, new Map(), 0),
+				new UniformChunk(numberShape.withTopLevelLength(3), [1, 2, 3]),
+			];
+			const snapshot = [...chunks];
+
+			const boundaryIndex = splitFieldAtIndex(chunks, 1, compressor);
+
+			assert.equal(boundaryIndex, 1);
+			assertChunksUnchanged(chunks, snapshot);
+			assertChunksUnshared(chunks);
+		});
+
+		it("returns chunks.length when the index equals the total node count", () => {
+			// Splicing at the end of the array (e.g. attach appended to the end of a field)
+			// is a valid splice point that should not mutate any chunk.
+			const chunks: TreeChunk[] = [
+				new BasicChunk(numberType, new Map(), 0),
+				new UniformChunk(numberShape.withTopLevelLength(3), [1, 2, 3]),
+			];
+			const snapshot = [...chunks];
+
+			const boundaryIndex = splitFieldAtIndex(chunks, 4, compressor);
+
+			assert.equal(boundaryIndex, chunks.length);
+			assertChunksUnchanged(chunks, snapshot);
+			assertChunksUnshared(chunks);
+		});
+
+		it("returns 0 for an empty chunks array at index 0", () => {
+			// Covers both the empty-array case and the index-0 early-return path.
+			const chunks: TreeChunk[] = [];
+
+			const boundaryIndex = splitFieldAtIndex(chunks, 0, compressor);
+
+			assert.equal(boundaryIndex, 0);
+			assert.equal(chunks.length, 0);
 		});
 	});
 });

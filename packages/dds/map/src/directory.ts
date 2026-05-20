@@ -3,6 +3,9 @@
  * Licensed under the MIT License.
  */
 
+// TODO: Fix prefer-nullish-coalescing and prefer-optional-chain lint violations
+/* eslint-disable @typescript-eslint/prefer-nullish-coalescing, @typescript-eslint/prefer-optional-chain */
+
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import type {
@@ -24,14 +27,14 @@ import type { IFluidSerializer } from "@fluidframework/shared-object-base/intern
 import {
 	SharedObject,
 	ValueType,
-	bindHandles,
 	parseHandles,
 } from "@fluidframework/shared-object-base/internal";
 import {
 	createChildMonitoringContext,
-	type ITelemetryLoggerExt,
+	extractTelemetryLoggerExt,
 	type MonitoringContext,
 	UsageError,
+	type TelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
 import path from "path-browserify";
 
@@ -427,7 +430,7 @@ export class SharedDirectory
 		this.runtime,
 		this.serializer,
 		posix.sep,
-		this.logger,
+		extractTelemetryLoggerExt(this.logger),
 	);
 
 	/**
@@ -764,7 +767,7 @@ export class SharedDirectory
 							this.runtime,
 							this.serializer,
 							posix.join(currentSubDir.absolutePath, subdirName),
-							this.logger,
+							extractTelemetryLoggerExt(this.logger),
 						);
 						currentSubDir.populateSubDirectory(subdirName, newSubDir);
 					}
@@ -786,9 +789,6 @@ export class SharedDirectory
 		}
 	}
 
-	/**
-	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.processMessagesCore}
-	 */
 	protected override processMessagesCore(messagesCollection: IRuntimeMessageCollection): void {
 		const { envelope, local, messagesContent } = messagesCollection;
 		for (const messageContent of messagesContent) {
@@ -1155,7 +1155,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 		private readonly runtime: IFluidDataStoreRuntime,
 		private readonly serializer: IFluidSerializer,
 		public readonly absolutePath: string,
-		logger: ITelemetryLoggerExt,
+		logger: TelemetryLoggerExt,
 	) {
 		super();
 		this.mc = createChildMonitoringContext({ logger, namespace: "Directory" });
@@ -1211,14 +1211,6 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 			throw new Error("Undefined and null keys are not supported");
 		}
 		const previousOptimisticLocalValue = this.getOptimisticValue(key);
-
-		const detachedBind =
-			this.mc.config.getBoolean("Fluid.Directory.AllowDetachedResolve") ?? false;
-		if (detachedBind) {
-			// Create a local value and serialize it.
-			// AB#47081: This will be removed once we can validate that it is no longer needed.
-			bindHandles(value, this.directory.handle);
-		}
 
 		// If we are not attached, don't submit the op.
 		if (!this.directory.isAttached()) {

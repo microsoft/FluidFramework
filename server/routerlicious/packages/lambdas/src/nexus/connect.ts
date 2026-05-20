@@ -324,7 +324,7 @@ function checkThrottle(tenantId: string, { throttlers, logger }: INexusLambdaDep
 		logger,
 	);
 	if (throttleErrorPerCluster) {
-		// eslint-disable-next-line @typescript-eslint/no-throw-literal
+		// eslint-disable-next-line @typescript-eslint/only-throw-error
 		throw throttleErrorPerCluster;
 	}
 	const throttleErrorPerTenant = checkThrottleAndUsage(
@@ -334,7 +334,7 @@ function checkThrottle(tenantId: string, { throttlers, logger }: INexusLambdaDep
 		logger,
 	);
 	if (throttleErrorPerTenant) {
-		// eslint-disable-next-line @typescript-eslint/no-throw-literal
+		// eslint-disable-next-line @typescript-eslint/only-throw-error
 		throw throttleErrorPerTenant;
 	}
 }

@@ -6,7 +6,7 @@
 import { strict as assert } from "assert";
 
 import { describeCompat } from "@fluid-private/test-version-utils";
-import { asLegacyAlpha, ContainerAlpha } from "@fluidframework/container-loader/internal";
+import type { IContainer } from "@fluidframework/container-definitions/internal";
 import {
 	DefaultSummaryConfiguration,
 	type IContainerRuntimeOptions,
@@ -21,13 +21,14 @@ import type { ISharedMap } from "@fluidframework/map/internal";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 import {
 	ChannelFactoryRegistry,
-	ITestFluidObject,
 	DataObjectFactoryType,
+	ITestFluidObject,
 	createAndAttachContainer,
 	createDocumentId,
-	waitForContainerConnection,
-	timeoutPromise,
+	getRequiredPendingLocalState,
 	timeoutAwait,
+	timeoutPromise,
+	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
 
 import { wrapObjectAndOverride } from "../mocking.js";
@@ -107,12 +108,10 @@ describeCompat("Snapshot refresh at loading", "NoCompat", (getTestObjectProvider
 			},
 		};
 		const loader = provider.makeTestLoader(testContainerConfig);
-		const container: ContainerAlpha = asLegacyAlpha(
-			await createAndAttachContainer(
-				provider.defaultCodeDetails,
-				loader,
-				provider.driver.createCreateNewRequest(createDocumentId()),
-			),
+		const container: IContainer = await createAndAttachContainer(
+			provider.defaultCodeDetails,
+			loader,
+			provider.driver.createCreateNewRequest(createDocumentId()),
 		);
 
 		const url = await container.getAbsoluteUrl("");
@@ -122,23 +121,19 @@ describeCompat("Snapshot refresh at loading", "NoCompat", (getTestObjectProvider
 		const map = await dataStore.getSharedObject<ISharedMap>(mapId);
 		map.set(testKey, testValue);
 		await waitForSummary(container);
-		const pendingOps = await container.getPendingLocalState();
+		const pendingOps = await getRequiredPendingLocalState(container);
 		container.close();
 		assert.ok(pendingOps);
 		// make sure we got stashed ops with seqnum === 0,
 		assert(/sequenceNumber[^\w,}]*0/.test(pendingOps));
 
-		const container1: ContainerAlpha = asLegacyAlpha(
-			await loader.resolve({ url }, pendingOps),
-		);
+		const container1: IContainer = await loader.resolve({ url }, pendingOps);
 		await timeoutAwait(getLatestSnapshotInfoP.promise, {
 			errorMsg: "Timeout on waiting for getLatestSnapshotInfo",
 		});
-		const pendingOps2 = await container1.getPendingLocalState();
+		const pendingOps2 = await getRequiredPendingLocalState(container1);
 		container1.close();
-		const container2: ContainerAlpha = asLegacyAlpha(
-			await loader.resolve({ url }, pendingOps2),
-		);
+		const container2: IContainer = await loader.resolve({ url }, pendingOps2);
 		const dataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
 		const map2 = await dataStore2.getSharedObject<ISharedMap>(mapId);
 		await waitForContainerConnection(container2, true);
@@ -149,7 +144,12 @@ describeCompat("Snapshot refresh at loading", "NoCompat", (getTestObjectProvider
 	it("snapshot was refreshed after some time", async function () {
 		const provider = getTestObjectProvider();
 		// TODO: This test is consistently failing when ran against AFR. See ADO:7893
-		if (provider.driver.type === "routerlicious" && provider.driver.endpointName === "frs") {
+		// For tinylicious failures, see AB#57757.
+		if (
+			(provider.driver.type === "routerlicious" && provider.driver.endpointName === "frs") ||
+			provider.driver.type === "t9s" ||
+			provider.driver.type === "tinylicious"
+		) {
 			this.skip();
 		}
 		const getLatestSnapshotInfoP = new Deferred<void>();
@@ -181,12 +181,10 @@ describeCompat("Snapshot refresh at loading", "NoCompat", (getTestObjectProvider
 			},
 		};
 		const loader = provider.makeTestLoader(testContainerConfig);
-		const container: ContainerAlpha = asLegacyAlpha(
-			await createAndAttachContainer(
-				provider.defaultCodeDetails,
-				loader,
-				provider.driver.createCreateNewRequest(createDocumentId()),
-			),
+		const container: IContainer = await createAndAttachContainer(
+			provider.defaultCodeDetails,
+			loader,
+			provider.driver.createCreateNewRequest(createDocumentId()),
 		);
 
 		const url = await container.getAbsoluteUrl("");
@@ -200,13 +198,11 @@ describeCompat("Snapshot refresh at loading", "NoCompat", (getTestObjectProvider
 		await timeoutAwait(getLatestSnapshotInfoP.promise, {
 			errorMsg: "Timeout on waiting for getLatestSnapshotInfo",
 		});
-		const pendingOps = await container.getPendingLocalState();
+		const pendingOps = await getRequiredPendingLocalState(container);
 		container.close();
 		assert.ok(pendingOps);
 
-		const container2: ContainerAlpha = asLegacyAlpha(
-			await loader.resolve({ url }, pendingOps),
-		);
+		const container2: IContainer = await loader.resolve({ url }, pendingOps);
 		const dataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
 		const map2 = await dataStore2.getSharedObject<ISharedMap>(mapId);
 		await waitForContainerConnection(container2, true);
@@ -250,12 +246,10 @@ describeCompat("Snapshot refresh at loading", "NoCompat", (getTestObjectProvider
 			},
 		};
 		const loader = provider.makeTestLoader(testContainerConfig);
-		const container: ContainerAlpha = asLegacyAlpha(
-			await createAndAttachContainer(
-				provider.defaultCodeDetails,
-				loader,
-				provider.driver.createCreateNewRequest(createDocumentId()),
-			),
+		const container: IContainer = await createAndAttachContainer(
+			provider.defaultCodeDetails,
+			loader,
+			provider.driver.createCreateNewRequest(createDocumentId()),
 		);
 
 		const url = await container.getAbsoluteUrl("");
@@ -265,23 +259,19 @@ describeCompat("Snapshot refresh at loading", "NoCompat", (getTestObjectProvider
 		const map = await dataStore.getSharedObject<ISharedMap>(mapId);
 		map.set(testKey, testValue);
 		// not waiting for summary to reuse the stashed snapshot for new loaded containers
-		const pendingOps = await container.getPendingLocalState();
+		const pendingOps = await getRequiredPendingLocalState(container);
 		container.close();
 		assert.ok(pendingOps);
 		// make sure we got stashed ops with seqnum === 0,
 		assert(/sequenceNumber[^\w,}]*0/.test(pendingOps));
 
-		const container1: ContainerAlpha = asLegacyAlpha(
-			await loader.resolve({ url }, pendingOps),
-		);
+		const container1: IContainer = await loader.resolve({ url }, pendingOps);
 		await timeoutAwait(getLatestSnapshotInfoP.promise, {
 			errorMsg: "Timeout on waiting for getLatestSnapshotInfo",
 		});
-		const pendingOps2 = await container1.getPendingLocalState();
+		const pendingOps2 = await getRequiredPendingLocalState(container1);
 		container1.close();
-		const container2: ContainerAlpha = asLegacyAlpha(
-			await loader.resolve({ url }, pendingOps2),
-		);
+		const container2: IContainer = await loader.resolve({ url }, pendingOps2);
 		const dataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
 		const map2 = await dataStore2.getSharedObject<ISharedMap>(mapId);
 		await waitForContainerConnection(container2, true);

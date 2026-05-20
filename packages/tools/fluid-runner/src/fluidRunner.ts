@@ -15,6 +15,8 @@ import { parseBundleAndExportFile } from "./parseBundleAndExportFile.js";
 import { validateCommandLineArgs } from "./utils.js";
 
 /**
+ * Entry point for the Fluid runner CLI tool that exports ODSP snapshots.
+ *
  * @param fluidFileConverter - needs to be provided if "codeLoaderBundle" is not and vice versa
  * @internal
  */

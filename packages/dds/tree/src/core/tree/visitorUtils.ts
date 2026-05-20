@@ -149,6 +149,11 @@ export function combineVisitors(visitors: readonly CombinableVisitor[]): Combine
 				v.exitField(...args);
 			}
 		},
+		fieldMarks: (marks) => {
+			for (const v of allVisitors) {
+				v.fieldMarks?.(marks);
+			}
+		},
 	};
 }
 
@@ -174,6 +179,8 @@ export interface AnnouncedVisitor extends DeltaVisitor {
 	): void;
 }
 
+const noOp = (): void => {};
+
 /**
  * Creates an announced visitor with only the provided functions and uses a no op for the rest.
  * This is provided to make some of the delta visitor definitions cleaner.
@@ -181,7 +188,6 @@ export interface AnnouncedVisitor extends DeltaVisitor {
 export function createAnnouncedVisitor(
 	visitorFunctions: Partial<AnnouncedVisitor>,
 ): AnnouncedVisitor {
-	const noOp = (): void => {};
 	return {
 		type: "Announced",
 		free: visitorFunctions.free ?? noOp,

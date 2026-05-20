@@ -7,7 +7,7 @@ import { strict as assert } from "assert";
 
 import { generatePairwiseOptions } from "@fluid-private/test-pairwise-generator";
 import { describeCompat } from "@fluid-private/test-version-utils";
-import { asLegacyAlpha, type ContainerAlpha } from "@fluidframework/container-loader/internal";
+import type { IContainer } from "@fluidframework/container-definitions/internal";
 import { DefaultSummaryConfiguration } from "@fluidframework/container-runtime/internal";
 import type {
 	IFluidHandle,
@@ -18,14 +18,15 @@ import type {
 import { Deferred } from "@fluidframework/core-utils/internal";
 import { SharedMap, type ISharedMap } from "@fluidframework/map/internal";
 import {
-	ITestFluidObject,
-	timeoutPromise,
 	DataObjectFactoryType,
+	ITestFluidObject,
 	createAndAttachContainer,
+	getRequiredPendingLocalState,
 	timeoutAwait,
-	waitForContainerConnection,
+	timeoutPromise,
 	type ChannelFactoryRegistry,
 	type ITestObjectProvider,
+	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
 
 import { wrapObjectAndOverride } from "../../mocking.js";
@@ -47,13 +48,15 @@ const testConfigs = generatePairwiseOptions({
 	timeoutRefreshInLoadedContainer: [true, false],
 });
 
+const timeoutMs = 100;
+const realServiceTimeoutMs = 1000;
+
 describeCompat("Refresh snapshot lifecycle", "NoCompat", (getTestObjectProvider, apis) => {
 	const mapId = "map";
 	const registry: ChannelFactoryRegistry = [[mapId, SharedMap.getFactory()]];
 	const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
 		getRawConfig: (name: string): ConfigTypes => settings[name],
 	});
-	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type -- TODO: Add explicit return type
 	const runtimeOptions = (idCompressorEnabled) => {
 		return {
 			summaryOptions: {
@@ -108,14 +111,11 @@ describeCompat("Refresh snapshot lifecycle", "NoCompat", (getTestObjectProvider,
 	};
 
 	for (const testConfig of testConfigs) {
-		it.skip(`Snapshot refresh life cycle: ${JSON.stringify(
+		it(`Snapshot refresh life cycle: ${JSON.stringify(
 			testConfig ?? "undefined",
 		)}`, async () => {
 			const provider: ITestObjectProvider = getTestObjectProvider();
-			if (
-				testConfig.useLoadingGroupIdForSnapshotFetch === true &&
-				provider.driver.type !== "local"
-			) {
+			if (provider.driver.type !== "local") {
 				return;
 			}
 			let snapshotRefreshTimeoutMs;
@@ -127,8 +127,8 @@ describeCompat("Refresh snapshot lifecycle", "NoCompat", (getTestObjectProvider,
 					provider.driver.type === "local" ||
 					provider.driver.type === "t9s" ||
 					provider.driver.type === "tinylicious"
-						? 100
-						: 1000;
+						? timeoutMs
+						: realServiceTimeoutMs;
 			}
 			const getLatestSnapshotInfoP = new Deferred<void>();
 			const testContainerConfig = {
@@ -175,9 +175,7 @@ describeCompat("Refresh snapshot lifecycle", "NoCompat", (getTestObjectProvider,
 			map.set(`${i}`, i++);
 			// first container that will be stashed. It could have saved, pending or remote ops
 			// at the moment of stashing.
-			const container1: ContainerAlpha = asLegacyAlpha(
-				await provider.loadTestContainer(testContainerConfig),
-			);
+			const container1: IContainer = await provider.loadTestContainer(testContainerConfig);
 			await waitForContainerConnection(container1);
 			const dataStore1 = (await container1.getEntryPoint()) as ITestFluidObject;
 			const map1 = await dataStore1.getSharedObject<ISharedMap>(mapId);
@@ -189,15 +187,15 @@ describeCompat("Refresh snapshot lifecycle", "NoCompat", (getTestObjectProvider,
 
 			if (testConfig.savedOps) {
 				for (let k = 0; k < 10; k++) {
-					map.set(`${i}`, i++);
-					groupIdDataObject.root.set(`${j}`, j++);
+					map1.set(`${i}`, i++);
+					groupIdDataObject1.root.set(`${j}`, j++);
 				}
 				await waitForSummary(container1);
 				if (testConfig.timeoutRefreshInOriginalContainer) {
 					await timeoutPromise((resolve) => {
 						setTimeout(() => {
 							resolve();
-						}, 105);
+						}, snapshotRefreshTimeoutMs + 10);
 					});
 				}
 				await provider.ensureSynchronized();
@@ -216,19 +214,21 @@ describeCompat("Refresh snapshot lifecycle", "NoCompat", (getTestObjectProvider,
 				await provider.ensureSynchronized(container);
 			}
 
-			const pendingOps = await container1.getPendingLocalState();
+			const pendingOps = await getRequiredPendingLocalState(container1);
 			container1.close();
 			assert.ok(pendingOps);
 
 			if (testConfig.summaryWhileOffline) {
-				map.set(`${i}`, i++);
+				for (let k = 0; k < 10; k++) {
+					map.set(`${i}`, i++);
+				}
 				await waitForSummary(container);
 			}
 
 			// container loaded from previous pending state. The snapshot should refresh
 			// in case a summary has already happened. Such snapshot could be the first one to
 			// have a data store with groupId
-			let container2: ContainerAlpha;
+			let container2: IContainer;
 			if (testConfig.loadOffline) {
 				const offlineObject = await loadContainerOffline(
 					testContainerConfig,
@@ -238,7 +238,7 @@ describeCompat("Refresh snapshot lifecycle", "NoCompat", (getTestObjectProvider,
 				);
 				container2 = offlineObject.container;
 			} else {
-				container2 = asLegacyAlpha(await loader.resolve({ url }, pendingOps));
+				container2 = await loader.resolve({ url }, pendingOps);
 			}
 			const dataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
 			const map2 = await dataStore2.getSharedObject<ISharedMap>(mapId);
@@ -254,7 +254,7 @@ describeCompat("Refresh snapshot lifecycle", "NoCompat", (getTestObjectProvider,
 					await timeoutPromise((resolve) => {
 						setTimeout(() => {
 							resolve();
-						}, 105);
+						}, snapshotRefreshTimeoutMs + 10);
 					});
 				}
 			}
@@ -278,12 +278,10 @@ describeCompat("Refresh snapshot lifecycle", "NoCompat", (getTestObjectProvider,
 				groupIdDataObject2.root.set(`${j}`, j++);
 			}
 
-			const pendingOps2 = await container2.getPendingLocalState();
+			const pendingOps2 = await getRequiredPendingLocalState(container2);
 			container2.close();
 			// first container which loads from a snapshot with groupId
-			const container3: ContainerAlpha = asLegacyAlpha(
-				await loader.resolve({ url }, pendingOps2),
-			);
+			const container3: IContainer = await loader.resolve({ url }, pendingOps2);
 			const dataStore3 = (await container3.getEntryPoint()) as ITestFluidObject;
 			const map3 = await dataStore3.getSharedObject<ISharedMap>(mapId);
 			const groupIdDataObject3 = await getDataStoreWithGroupId(dataStore3, groupId);
@@ -299,12 +297,10 @@ describeCompat("Refresh snapshot lifecycle", "NoCompat", (getTestObjectProvider,
 			map3.set(`${i}`, i++);
 			groupIdDataObject3.root.set(`${j}`, j++);
 
-			const pendingOps3 = await container3.getPendingLocalState();
+			const pendingOps3 = await getRequiredPendingLocalState(container3);
 			container3.close();
 			// container created just for validation.
-			const container4: ContainerAlpha = asLegacyAlpha(
-				await loader.resolve({ url }, pendingOps3),
-			);
+			const container4: IContainer = await loader.resolve({ url }, pendingOps3);
 			const dataStore4 = (await container4.getEntryPoint()) as ITestFluidObject;
 			const map4 = await dataStore4.getSharedObject<ISharedMap>(mapId);
 			const groupIdDataObject4 = await getDataStoreWithGroupId(dataStore4, groupId);

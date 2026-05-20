@@ -3,13 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { createRequire } from "node:module";
-import * as path from "path";
 import type * as ApiExtractorModule from "@microsoft/api-extractor";
+import * as path from "path";
 import { getApiExtractorConfigFilePath } from "../taskUtils.js";
 import type { WorkerExecResult, WorkerMessage } from "./worker.js";
-
-const require = createRequire(import.meta.url);
 
 /**
  * Worker for running API Extractor.

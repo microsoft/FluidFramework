@@ -7,9 +7,9 @@ import { lilconfigSync } from "lilconfig";
 
 import {
 	type IPackage,
+	isIPackage,
 	type PackageName,
 	type ReleaseGroupName,
-	isIPackage,
 } from "./types.js";
 
 /**

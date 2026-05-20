@@ -23,7 +23,8 @@ import type {
 	IRuntimeMessageCollection,
 	MinimumVersionForCollab,
 } from "@fluidframework/runtime-definitions/internal";
-import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
+import type { TelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
+import { extractTelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 
 import type { IFluidSerializer } from "./serializer.js";
 import {
@@ -133,24 +134,28 @@ class SharedObjectFromKernel<
 	) {
 		super(id, runtime, attributes, telemetryContextPrefix);
 
+		// This cast is needed since IFluidDataStoreRuntimeInternalConfig does not extend IFluidDataStoreRuntime directly. This pattern
+		// allows us to avoid breaking changes to IFluidDataStoreRuntime by hiding internal members in a separate interface, but comes
+		// at the cost of less compile-time enforcement. For example, if the runtime did not implement `minVersionForCollab` and the
+		// member was still optional (e.g., during the deprecation window where backwards-compatibility is maintained), the compiler
+		// would emit an error.
+		const minVersionForCollab: MinimumVersionForCollab | undefined = (
+			runtime as IFluidDataStoreRuntimeInternalConfig
+		).minVersionForCollab;
+
+		assert(minVersionForCollab !== undefined, 0xcee /* minVersionForCollab must be defined */);
+
 		this.#kernelArgs = {
 			sharedObject: this,
 			serializer: this.serializer,
 			submitLocalMessage: (op, localOpMetadata) =>
 				this.submitLocalMessage(op, localOpMetadata),
 			eventEmitter: this,
-			logger: this.logger,
+			logger: extractTelemetryLoggerExt(this.logger),
 			idCompressor: runtime.idCompressor,
 			lastSequenceNumber: () => this.deltaManager.lastSequenceNumber,
 			initialSequenceNumber: this.deltaManager.initialSequenceNumber,
-
-			// This cast is needed since IFluidDataStoreRuntimeInternalConfig does not extend IFluidDataStoreRuntime directly. This pattern
-			// allows us to avoid breaking changes to IFluidDataStoreRuntime by hiding internal members in a separate interface, but comes
-			// at the cost of less compile-time enforcement. For example, if the runtime did not implement `minVersionForCollab` and the
-			// member was still optional (e.g., during the deprecation window where backwards-compatibility is maintained), the compiler
-			// would emit an error.
-			minVersionForCollab: (runtime as IFluidDataStoreRuntimeInternalConfig)
-				.minVersionForCollab,
+			minVersionForCollab,
 		};
 	}
 
@@ -287,7 +292,7 @@ export interface KernelArgs {
 	/**
 	 * {@inheritdoc SharedObjectCore.logger}
 	 */
-	readonly logger: ITelemetryLoggerExt;
+	readonly logger: TelemetryLoggerExt;
 	/**
 	 * {@inheritdoc @fluidframework/datastore-definitions#IFluidDataStoreRuntime.idCompressor}
 	 */
@@ -305,7 +310,7 @@ export interface KernelArgs {
 	 * compatible set of feature flags and formats can be enabled in the SharedObject implementation.
 	 * See {@link @fluidframework/container-runtime#LoadContainerRuntimeParams.minVersionForCollab} for more details.
 	 */
-	readonly minVersionForCollab: MinimumVersionForCollab | undefined;
+	readonly minVersionForCollab: MinimumVersionForCollab;
 }
 
 /**
