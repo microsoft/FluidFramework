@@ -69,35 +69,6 @@ export function getNormalizedFileSnapshot(snapshot: IFileSnapshot): IFileSnapsho
 }
 
 /**
- * Replaces all `packageVersion` values inside JSON-encoded blob contents with a stable
- * placeholder, so snapshots produced by different runtime versions can be compared without
- * failing solely on the embedded version string.
- *
- * @example
- *
- * Before replace:
- *
- * ```
- * "{\"type\":\"https://graph.microsoft.com/types/map\",\"packageVersion\":\"0.28.0-214\"}"
- * ```
- *
- * After replace:
- *
- * ```
- * "{\"type\":\"https://graph.microsoft.com/types/map\",\"packageVersion\":\"X\"}"
- * ```
- *
- * @internal
- */
-export function normalizePackageVersions(snapshot: IFileSnapshot): IFileSnapshot {
-	const packageVersionRegex = /\\"packageversion\\":\\"[^"]+\\"/gi;
-	const packageVersionPlaceholder = '\\"packageVersion\\":\\"X\\"';
-	return JSON.parse(
-		stringify(snapshot, { space: 2 }).replace(packageVersionRegex, packageVersionPlaceholder),
-	) as IFileSnapshot;
-}
-
-/**
  * Compares a snapshot against a reference snapshot file and reports any differences.
  *
  * @internal
@@ -114,9 +85,39 @@ export function compareWithReferenceSnapshot(
 	);
 	const referenceSnapshot = JSON.parse(referenceSnapshotString);
 
-	const normalizedSnapshot = normalizePackageVersions(getNormalizedFileSnapshot(snapshot));
-	const normalizedReferenceSnapshot = normalizePackageVersions(
-		getNormalizedFileSnapshot(referenceSnapshot),
+	/**
+	 * The packageVersion of the snapshot could be different from the reference snapshot. Replace all package
+	 * package versions with X before we compare them.
+	 *
+	 * @example
+	 *
+	 * This is how it will look:
+	 * Before replace:
+	 *
+	 * ```
+	 * "{\"type\":\"https://graph.microsoft.com/types/map\",\"packageVersion\":\"0.28.0-214\"}"
+	 * ```
+	 *
+	 * After replace:
+	 *
+	 * ```
+	 * "{\"type\":\"https://graph.microsoft.com/types/map\",\"packageVersion\":\"X\"}"
+	 * ```
+	 */
+	const packageVersionRegex = /\\"packageversion\\":\\"[^"]+\\"/gi;
+	const packageVersionPlaceholder = '\\"packageVersion\\":\\"X\\"';
+
+	const normalizedSnapshot = JSON.parse(
+		stringify(getNormalizedFileSnapshot(snapshot), { space: 2 }).replace(
+			packageVersionRegex,
+			packageVersionPlaceholder,
+		),
+	);
+	const normalizedReferenceSnapshot = JSON.parse(
+		stringify(getNormalizedFileSnapshot(referenceSnapshot), { space: 2 }).replace(
+			packageVersionRegex,
+			packageVersionPlaceholder,
+		),
 	);
 
 	// Put the assert in a try catch block, so that we can report errors, if any.

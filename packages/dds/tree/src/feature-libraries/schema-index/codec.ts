@@ -6,10 +6,7 @@
 import { fail } from "@fluidframework/core-utils/internal";
 import { lowestMinVersionForCollab } from "@fluidframework/runtime-utils/internal";
 
-import {
-	ClientVersionDispatchingCodecBuilder,
-	FluidClientVersion,
-} from "../../codec/index.js";
+import { VersionDispatchingCodecBuilder, FluidClientVersion } from "../../codec/index.js";
 import {
 	SchemaFormatVersion,
 	type TreeNodeSchemaIdentifier,
@@ -100,7 +97,7 @@ function decodeV2(f: FormatV2): TreeStoredSchema {
 /**
  * Creates a codec which performs synchronous monolithic encoding of schema content.
  */
-export const schemaCodecBuilder = ClientVersionDispatchingCodecBuilder.build("Schema", [
+export const schemaCodecBuilder = VersionDispatchingCodecBuilder.build("Schema", [
 	{
 		minVersionForCollab: lowestMinVersionForCollab,
 		formatVersion: SchemaFormatVersion.v1,
