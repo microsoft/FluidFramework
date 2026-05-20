@@ -40,8 +40,7 @@ trigger:
   branches:
     include:
     - main
-    - next
-    - lts
+    - release/*
   paths:
     include:
     - server/gitrest
@@ -62,8 +61,6 @@ pr:
   branches:
     include:
     - main
-    - next
-    - lts
     - release/*
   paths:
     include:
