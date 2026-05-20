@@ -36,7 +36,7 @@ import {
 	getContainerIdFromPayloadResponse,
 } from "./AzureClientFactory.js";
 import * as ephemeralSummaryTrees from "./ephemeralSummaryTrees.js";
-import { getTestMatrix, mapWait, pkgVersion } from "./utils.js";
+import { getTestMatrix, mapWait, currentVersion } from "./utils.js";
 
 const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
 	getRawConfig: (name: string): ConfigTypes => settings[name],
@@ -73,7 +73,7 @@ for (const testOpts of testMatrix) {
 			if (isEphemeral) {
 				this.skip();
 			}
-			const { container } = await client.createContainer(schema, pkgVersion);
+			const { container } = await client.createContainer(schema, currentVersion);
 			assert.strictEqual(
 				container.attachState,
 				AttachState.Detached,
@@ -101,9 +101,9 @@ for (const testOpts of testMatrix) {
 					"test-user-name-1",
 				);
 				containerId = getContainerIdFromPayloadResponse(containerResponse);
-				({ container } = await client.getContainer(containerId, schema, pkgVersion));
+				({ container } = await client.getContainer(containerId, schema, currentVersion));
 			} else {
-				({ container } = await client.createContainer(schema, pkgVersion));
+				({ container } = await client.createContainer(schema, currentVersion));
 				containerId = await container.attach();
 			}
 
@@ -138,9 +138,9 @@ for (const testOpts of testMatrix) {
 					"test-user-name-1",
 				);
 				containerId = getContainerIdFromPayloadResponse(containerResponse);
-				({ container } = await client.getContainer(containerId, schema, pkgVersion));
+				({ container } = await client.getContainer(containerId, schema, currentVersion));
 			} else {
-				({ container } = await client.createContainer(schema, pkgVersion));
+				({ container } = await client.createContainer(schema, currentVersion));
 				containerId = await container.attach();
 			}
 
@@ -181,7 +181,7 @@ for (const testOpts of testMatrix) {
 				);
 				containerId = getContainerIdFromPayloadResponse(containerResponse);
 			} else {
-				({ container: newContainer } = await client.createContainer(schema, pkgVersion));
+				({ container: newContainer } = await client.createContainer(schema, currentVersion));
 				containerId = await newContainer.attach();
 
 				if (newContainer.connectionState !== ConnectionState.Connected) {
@@ -192,7 +192,7 @@ for (const testOpts of testMatrix) {
 				}
 			}
 
-			const resources = client.getContainer(containerId, schema, pkgVersion);
+			const resources = client.getContainer(containerId, schema, currentVersion);
 			await assert.doesNotReject(
 				resources,
 				() => true,
@@ -210,7 +210,11 @@ for (const testOpts of testMatrix) {
 		it("cannot load improperly created container (cannot load a non-existent container)", async () => {
 			const consoleErrorFn = console.error;
 			console.error = (): void => {};
-			const containerAndServicesP = client.getContainer("containerConfig", schema, pkgVersion);
+			const containerAndServicesP = client.getContainer(
+				"containerConfig",
+				schema,
+				currentVersion,
+			);
 
 			const errorFn = (error: Error): boolean => {
 				assert.notStrictEqual(error.message, undefined, "Azure Client error is undefined");
@@ -266,7 +270,7 @@ for (const testOpts of testMatrix) {
 			if (isEphemeral) {
 				this.skip();
 			}
-			await client.createContainer(schema, pkgVersion);
+			await client.createContainer(schema, currentVersion);
 			const event = mockLogger.events.find((e) => e.eventName.endsWith("ContainerLoadStats"));
 			assert(event !== undefined, "ContainerLoadStats event should exist");
 			const featureGates = event.featureGates as string;
@@ -706,7 +710,7 @@ describe("Container create in tree-only mode", () => {
 				tree: SharedTree,
 			},
 		};
-		const { container } = await client.createContainer(schema, pkgVersion);
+		const { container } = await client.createContainer(schema, currentVersion);
 
 		assert(SharedTree.is(container.initialObjects.tree));
 	});
@@ -721,7 +725,7 @@ describe("Container create in tree-only mode", () => {
 		};
 
 		await assert.rejects(
-			client.createContainer(schema, pkgVersion),
+			client.createContainer(schema, currentVersion),
 			(error: unknown) => {
 				assert(error instanceof UsageError);
 				assert.strictEqual(error.message, invalidSchemaErrorMessage);

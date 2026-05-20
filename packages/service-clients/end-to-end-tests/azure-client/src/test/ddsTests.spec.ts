@@ -19,7 +19,7 @@ import {
 } from "./AzureClientFactory.js";
 import { CounterTestDataObject, TestDataObject } from "./TestDataObject.js";
 import * as ephemeralSummaryTrees from "./ephemeralSummaryTrees.js";
-import { getTestMatrix, mapWait, pkgVersion } from "./utils.js";
+import { getTestMatrix, mapWait, currentVersion } from "./utils.js";
 
 const testMatrix = getTestMatrix();
 for (const testOpts of testMatrix) {
@@ -57,10 +57,10 @@ for (const testOpts of testMatrix) {
 				({ container: newContainer } = await client.getContainer(
 					containerId,
 					schema,
-					pkgVersion,
+					currentVersion,
 				));
 			} else {
-				({ container: newContainer } = await client.createContainer(schema, pkgVersion));
+				({ container: newContainer } = await client.createContainer(schema, currentVersion));
 				containerId = await newContainer.attach();
 			}
 
@@ -71,7 +71,7 @@ for (const testOpts of testMatrix) {
 				});
 			}
 
-			const resources = client.getContainer(containerId, schema, pkgVersion);
+			const resources = client.getContainer(containerId, schema, currentVersion);
 			await assert.doesNotReject(
 				resources,
 				() => true,
@@ -101,9 +101,9 @@ for (const testOpts of testMatrix) {
 					"test-user-name-1",
 				);
 				containerId = getContainerIdFromPayloadResponse(containerResponse);
-				({ container } = await client.getContainer(containerId, schema, pkgVersion));
+				({ container } = await client.getContainer(containerId, schema, currentVersion));
 			} else {
-				({ container } = await client.createContainer(schema, pkgVersion));
+				({ container } = await client.createContainer(schema, currentVersion));
 				containerId = await container.attach();
 			}
 
@@ -122,7 +122,7 @@ for (const testOpts of testMatrix) {
 			const { container: containerGet } = await client.getContainer(
 				containerId,
 				schema,
-				pkgVersion,
+				currentVersion,
 			);
 			const map1Get = containerGet.initialObjects.map1;
 			const valueGet: string | undefined = await mapWait(map1Get, "new-key");
@@ -150,9 +150,9 @@ for (const testOpts of testMatrix) {
 					"test-user-name-1",
 				);
 				containerId = getContainerIdFromPayloadResponse(containerResponse);
-				({ container } = await client.getContainer(containerId, doSchema, pkgVersion));
+				({ container } = await client.getContainer(containerId, doSchema, currentVersion));
 			} else {
-				({ container } = await client.createContainer(doSchema, pkgVersion));
+				({ container } = await client.createContainer(doSchema, currentVersion));
 				containerId = await container.attach();
 			}
 
@@ -176,7 +176,7 @@ for (const testOpts of testMatrix) {
 			const { container: containerGet } = await client.getContainer(
 				containerId,
 				doSchema,
-				pkgVersion,
+				currentVersion,
 			);
 			const initialObjectsGet = containerGet.initialObjects;
 			assert(
@@ -213,9 +213,9 @@ for (const testOpts of testMatrix) {
 					"test-user-name-1",
 				);
 				containerId = getContainerIdFromPayloadResponse(containerResponse);
-				({ container } = await client.getContainer(containerId, doSchema, pkgVersion));
+				({ container } = await client.getContainer(containerId, doSchema, currentVersion));
 			} else {
-				({ container } = await client.createContainer(doSchema, pkgVersion));
+				({ container } = await client.createContainer(doSchema, currentVersion));
 				containerId = await container.attach();
 			}
 
@@ -243,7 +243,7 @@ for (const testOpts of testMatrix) {
 			const { container: containerGet } = await client.getContainer(
 				containerId,
 				doSchema,
-				pkgVersion,
+				currentVersion,
 			);
 			const initialObjectsGet = containerGet.initialObjects;
 			assert(
@@ -282,7 +282,7 @@ for (const testOpts of testMatrix) {
 				);
 				containerId = getContainerIdFromPayloadResponse(containerResponse);
 			} else {
-				({ container } = await client.createContainer(doSchema, pkgVersion));
+				({ container } = await client.createContainer(doSchema, currentVersion));
 
 				const initialObjectsCreate = container.initialObjects;
 				const mdo2 = initialObjectsCreate.mdo2 as CounterTestDataObject;
@@ -305,7 +305,7 @@ for (const testOpts of testMatrix) {
 			const { container: containerGet } = await client.getContainer(
 				containerId,
 				doSchema,
-				pkgVersion,
+				currentVersion,
 			);
 			const initialObjectsGet = containerGet.initialObjects;
 			const mdo2get = initialObjectsGet.mdo2 as CounterTestDataObject;
@@ -341,9 +341,13 @@ for (const testOpts of testMatrix) {
 					"test-user-name-1",
 				);
 				containerId = getContainerIdFromPayloadResponse(containerResponse);
-				({ container } = await client.getContainer(containerId, dynamicSchema, pkgVersion));
+				({ container } = await client.getContainer(
+					containerId,
+					dynamicSchema,
+					currentVersion,
+				));
 			} else {
-				({ container } = await client.createContainer(dynamicSchema, pkgVersion));
+				({ container } = await client.createContainer(dynamicSchema, currentVersion));
 				containerId = await container.attach();
 			}
 

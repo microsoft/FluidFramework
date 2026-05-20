@@ -19,7 +19,7 @@ import {
 } from "./AzureClientFactory.js";
 import { SignalerTestDataObject } from "./TestDataObject.js";
 import * as ephemeralSummaryTrees from "./ephemeralSummaryTrees.js";
-import { configProvider, getTestMatrix, pkgVersion } from "./utils.js";
+import { configProvider, getTestMatrix, currentVersion } from "./utils.js";
 
 interface UserIdAndName {
 	readonly id: string;
@@ -111,15 +111,19 @@ for (const testOpts of testMatrix) {
 					({ container, services } = await client.getContainer(
 						containerId,
 						schema,
-						pkgVersion,
+						currentVersion,
 					));
 				} else {
-					({ container, services } = await client.createContainer(schema, pkgVersion));
+					({ container, services } = await client.createContainer(schema, currentVersion));
 					containerId = await container.attach();
 				}
 			} else {
 				containerId = id;
-				({ container, services } = await client.getContainer(containerId, schema, pkgVersion));
+				({ container, services } = await client.getContainer(
+					containerId,
+					schema,
+					currentVersion,
+				));
 			}
 
 			if (container.connectionState !== ConnectionState.Connected) {
