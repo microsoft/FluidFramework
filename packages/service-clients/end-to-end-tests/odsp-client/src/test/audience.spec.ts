@@ -13,6 +13,8 @@ import { SharedMap } from "@fluidframework/map/internal";
 import type { OdspClient } from "@fluidframework/odsp-client/internal";
 import { timeoutPromise } from "@fluidframework/test-utils/internal";
 
+import { pkgVersion } from "../packageVersion.js";
+
 import { createOdspClient, getCredentials } from "./OdspClientFactory.js";
 import { waitForMember } from "./utils.js";
 
@@ -45,7 +47,7 @@ describe("Fluid audience", () => {
 	 * Expected behavior: container should have a single member upon creation.
 	 */
 	it("can find original member", async () => {
-		const { container, services } = await client.createContainer(schema);
+		const { container, services } = await client.createContainer(schema, pkgVersion);
 		const itemId = await container.attach();
 
 		if (container.connectionState !== ConnectionState.Connected) {
@@ -79,7 +81,7 @@ describe("Fluid audience", () => {
 	 * Note: This test is currently skipped because the web app examples indicate the audience is functioning properly. AB#6425
 	 */
 	it.skip("can find partner member", async () => {
-		const { container, services } = await client.createContainer(schema);
+		const { container, services } = await client.createContainer(schema, pkgVersion);
 		const itemId = await container.attach();
 
 		if (container.connectionState !== ConnectionState.Connected) {
@@ -108,7 +110,7 @@ describe("Fluid audience", () => {
 				"Fluid.Container.ForceWriteConnection": true,
 			}),
 		);
-		const { services: servicesGet } = await client2.getContainer(itemId, schema);
+		const { services: servicesGet } = await client2.getContainer(itemId, schema, pkgVersion);
 
 		/* This is a workaround for a known bug, we should have one member (self) upon container connection */
 		const partner = await waitForMember(servicesGet.audience, client2Creds.email);
@@ -133,7 +135,7 @@ describe("Fluid audience", () => {
 	 * Note: This test is currently skipped because the web app examples indicate the audience is functioning properly. AB#6425
 	 */
 	it.skip("can observe member leaving", async () => {
-		const { container } = await client.createContainer(schema);
+		const { container } = await client.createContainer(schema, pkgVersion);
 		const itemId = await container.attach();
 
 		if (container.connectionState !== ConnectionState.Connected) {
@@ -151,7 +153,7 @@ describe("Fluid audience", () => {
 				"Fluid.Container.ForceWriteConnection": true,
 			}),
 		);
-		const { services: servicesGet } = await client2.getContainer(itemId, schema);
+		const { services: servicesGet } = await client2.getContainer(itemId, schema, pkgVersion);
 
 		/* This is a workaround for a known bug, we should have one member (self) upon container connection */
 		const partner = await waitForMember(servicesGet.audience, client2Creds.email);
