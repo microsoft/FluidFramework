@@ -508,6 +508,83 @@ describe("FluidDataStoreRuntime Tests", () => {
 				);
 			});
 		});
+
+		describe("handle resolution after race loss", () => {
+			// Option B (loser-aware resolution): handles minted for a racing
+			// channel encode the local channel id. After a loss, the loser id
+			// is no longer in `contexts`, but `loserToWinner` maps it to the
+			// winner. The runtime's request()/getChannel() paths must follow
+			// the redirect so handles bound before resolution still resolve.
+
+			function installLoserAndWinner(
+				rt: FluidDataStoreRuntime,
+				loserId: string,
+				winnerId: string,
+				winnerChannel: IChannel,
+			): void {
+				const internals = rt as unknown as {
+					loserToWinner: Map<string, string>;
+					contexts: Map<
+						string,
+						{ getChannel: () => Promise<IChannel> }
+					>;
+				};
+				internals.loserToWinner.set(loserId, winnerId);
+				// Simulate the winner's remote channel context created during
+				// the inbound attach fall-through (see processAttachMessages).
+				internals.contexts.set(winnerId, {
+					getChannel: async () => winnerChannel,
+				});
+			}
+
+			it("request(loserId) redirects to winner context", async () => {
+				const rt = makeAttachedRuntime();
+				const winnerChannel = {
+					id: "winner-id",
+				} as unknown as IChannel;
+				installLoserAndWinner(rt, "loser-id", "winner-id", winnerChannel);
+				const response = await rt.request({ url: "loser-id" });
+				assert.strictEqual(response.status, 200);
+				assert.strictEqual(response.value, winnerChannel);
+			});
+
+			it("getChannel(loserId) redirects to winner context", async () => {
+				const rt = makeAttachedRuntime();
+				const winnerChannel = {
+					id: "winner-id",
+				} as unknown as IChannel;
+				installLoserAndWinner(rt, "loser-id", "winner-id", winnerChannel);
+				const resolved = await rt.getChannel("loser-id");
+				assert.strictEqual(resolved, winnerChannel);
+			});
+
+			it("request(id) returns the local context when id is not a loser", async () => {
+				const rt = makeAttachedRuntime();
+				const channel = rt.createChannel("local-race", "SomeType", {});
+				// Pre-resolution: the local channel is still in contexts under
+				// its own id; no loserToWinner entry exists yet.
+				const response = await rt.request({ url: channel.id });
+				assert.strictEqual(response.status, 200);
+				// Returned value is the local channel from the registry.
+				assert.strictEqual(
+					(response.value as IChannel).id,
+					channel.id,
+					"should return the local presumptive-winner channel pre-resolution",
+				);
+			});
+
+			it("redirect survives multiple lookups (idempotent)", async () => {
+				const rt = makeAttachedRuntime();
+				const winnerChannel = {
+					id: "winner-id",
+				} as unknown as IChannel;
+				installLoserAndWinner(rt, "loser-id", "winner-id", winnerChannel);
+				const first = await rt.request({ url: "loser-id" });
+				const second = await rt.request({ url: "loser-id" });
+				assert.strictEqual(first.value, winnerChannel);
+				assert.strictEqual(second.value, winnerChannel);
+			});
+		});
 	});
 });
 

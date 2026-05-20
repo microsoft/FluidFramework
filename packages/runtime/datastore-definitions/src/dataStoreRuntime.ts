@@ -185,6 +185,15 @@ export interface IFluidDataStoreRuntime
 	 * is not provided and this client loses, the loser context is silently
 	 * removed and a telemetry event is fired.
 	 *
+	 * Handles bound before resolution: the channel returned by this overload
+	 * exposes a handle whose serialized URL encodes the local (potentially-
+	 * losing) channel id. Storing this handle in another DDS before the race
+	 * resolves is safe: the runtime's request/handle-resolution path follows
+	 * the loser→winner redirect transparently after a loss, so every client
+	 * resolving the handle gets the winning channel. The local `onLost`
+	 * callback is still the correct place to migrate any cached references
+	 * (e.g., values read off the local channel object before resolution).
+	 *
 	 * @param raceId - Identifier shared across racing clients.
 	 * @param type - Type of the channel.
 	 * @param raceOptions - Race semantics opt-in. Presence of this argument

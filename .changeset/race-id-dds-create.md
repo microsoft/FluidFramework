@@ -16,8 +16,13 @@ API surface (alpha):
 
 Resolution semantics: the first attach op for a given `raceId` (per the sequenced order) wins. Subsequent attaches with the same `raceId`, and any channel ops addressed to loser channel ids, are dropped on every client deterministically. Loser->winner redirects are persisted in a `.races` summary blob.
 
+Handle resolution after race loss:
+- The runtime's `request()` and `getChannel()` paths now consult the `loserToWinner` redirect table before looking up a context. Handles minted for a racing channel encode the local (potentially-losing) channel id; after a loss, those handles transparently resolve to the winning channel on every client. This allows apps to bind a racing channel's handle into another DDS before the race resolves without risk of broken references after a loss.
+- Pre-resolution, a locally-minted handle resolves to the local presumptive-winner channel as today. Apps should still use the `onLost` callback to migrate any cached references (e.g., values read directly from the local channel object) onto the winner.
+- Out of scope: race-id-keyed handles (a public URL form that does not encode the local id) and full loser-aware GC are tracked as follow-ups.
+
 v1 limitations (tracked as follow-ups):
-- Race-id handles, optimistic handle storage, data-store-level races, public `IChannel.dispose()`, and async `onLost` are out of scope.
+- Race-id-keyed handles, data-store-level races, public `IChannel.dispose()`, and async `onLost` are out of scope.
 - The summary redirect table is rehydrated asynchronously on load; ops to historical losers may transiently be applied during the load window.
 
 Detached-state and staging-mode support:

@@ -661,8 +661,25 @@ export class FluidDataStoreRuntime
 			}
 
 			if (id !== undefined) {
+				// Race-id resolution: if `id` is a known loser, redirect to the
+				// winner. Handles minted for a racing channel encode the local
+				// (potentially-losing) channel id; resolving them must transparently
+				// follow the loser→winner redirect so handles bound before the race
+				// resolved continue to work after this client loses, and so handles
+				// deserialized by other clients (which only have the loserToWinner
+				// map, not the loser's channel context) resolve to the winner. See
+				// Part 4 of the race-id-dds-create design.
+				const resolvedId = this.loserToWinner.get(id) ?? id;
+				if (resolvedId !== id) {
+					this.logger.sendTelemetryEvent({
+						eventName: "RaceHandleRedirected",
+						category: "generic",
+						loserChannelId: id,
+						winnerChannelId: resolvedId,
+					});
+				}
 				// Check for a data type reference first
-				const context = this.contexts.get(id);
+				const context = this.contexts.get(resolvedId);
 				if (context !== undefined && parser.isLeaf(1)) {
 					try {
 						const channel = await context.getChannel();
@@ -686,7 +703,11 @@ export class FluidDataStoreRuntime
 	public async getChannel(id: string): Promise<IChannel> {
 		this.verifyNotClosed();
 
-		const context = this.contexts.get(id);
+		// Follow the loser→winner redirect so callers holding a stale loser id
+		// transparently get the winning channel after race resolution. Matches
+		// the redirect in request().
+		const resolvedId = this.loserToWinner.get(id) ?? id;
+		const context = this.contexts.get(resolvedId);
 		if (context === undefined) {
 			throw new LoggingError("Channel does not exist");
 		}
