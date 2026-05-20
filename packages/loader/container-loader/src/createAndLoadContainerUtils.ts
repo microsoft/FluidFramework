@@ -17,6 +17,7 @@ import type {
 	ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
 import type { AllOrNone } from "@fluidframework/core-interfaces/internal";
+import { validateAllOrNone } from "@fluidframework/core-utils/internal";
 import type { IClientDetails } from "@fluidframework/driver-definitions";
 import type {
 	IDocumentServiceFactory,
@@ -84,22 +85,16 @@ interface SummarizerLike {
 }
 
 /**
- * Properties necessary for creating and loading a container.
+ * Host-level container loader properties — the code loader plus all the
+ * optional policy / observability fields that aren't tied to driver wiring.
+ *
+ * Extracted as a reusable building block so other props types (create,
+ * rehydrate, load, frozen-load) can compose it without duplicating the
+ * optional-fields surface.
+ *
  * @legacy @beta
  */
-export interface ICreateAndLoadContainerProps {
-	/**
-	 * The url resolver used by the loader for resolving external urls
-	 * into Fluid urls such that the container specified by the
-	 * external url can be loaded.
-	 */
-	readonly urlResolver: IUrlResolver;
-	/**
-	 * The document service factory take the Fluid url provided
-	 * by the resolved url and constructs all the necessary services
-	 * for communication with the container's server.
-	 */
-	readonly documentServiceFactory: IDocumentServiceFactory;
+export interface IContainerHostProps {
 	/**
 	 * The code loader handles loading the necessary code
 	 * for running a container once it is loaded.
@@ -144,6 +139,57 @@ export interface ICreateAndLoadContainerProps {
 	 */
 	readonly clientDetailsOverride?: IClientDetails | undefined;
 }
+
+/**
+ * The driver-services pair — `urlResolver` plus `documentServiceFactory` —
+ * required to wire a container to a real driver at create or load time.
+ *
+ * Extracted as a reusable building block so the `request` field can be
+ * added on top for load-time props (see {@link IContainerLoadDriverProps})
+ * while create-time props that don't carry a request can compose just this
+ * pair.
+ *
+ * @legacy @beta
+ */
+export interface IContainerDriverServices {
+	/**
+	 * The url resolver used by the loader for resolving external urls
+	 * into Fluid urls such that the container specified by the
+	 * external url can be loaded.
+	 */
+	readonly urlResolver: IUrlResolver;
+	/**
+	 * The document service factory take the Fluid url provided
+	 * by the resolved url and constructs all the necessary services
+	 * for communication with the container's server.
+	 */
+	readonly documentServiceFactory: IDocumentServiceFactory;
+}
+
+/**
+ * The load-time driver wiring trio — `request`, `urlResolver`, and
+ * `documentServiceFactory` together.
+ *
+ * Reused as the all-or-nothing group for entry points (e.g. the frozen-load
+ * entry point) that accept either a full driver wiring (online form) or none
+ * of it (offline form). See `AllOrNone` in `@fluidframework/core-interfaces`.
+ *
+ * @legacy @beta
+ */
+export interface IContainerLoadDriverProps extends IContainerDriverServices {
+	/**
+	 * The request to resolve the container.
+	 */
+	readonly request: IRequest;
+}
+
+/**
+ * Properties necessary for creating and loading a container.
+ * @legacy @beta
+ */
+export interface ICreateAndLoadContainerProps
+	extends IContainerHostProps,
+		IContainerDriverServices {}
 
 /**
  * Props used to load a container.
@@ -283,10 +329,7 @@ export async function loadExistingContainer(
  * `@fluidframework/core-interfaces`.
  * @legacy @alpha
  */
-export type ILoadFrozenContainerFromPendingStateProps = Omit<
-	ILoadExistingContainerProps,
-	"request" | "urlResolver" | "documentServiceFactory" | "pendingLocalState"
-> & {
+export type ILoadFrozenContainerFromPendingStateProps = IContainerHostProps & {
 	/**
 	 * Pending local state to be applied to the container.
 	 */
@@ -319,11 +362,7 @@ export type ILoadFrozenContainerFromPendingStateProps = Omit<
 	 * that the runtime accepts DDS submissions and accumulates them in `pendingStateManager`.
 	 */
 	readonly readOnly?: boolean;
-} & AllOrNone<{
-		readonly request: IRequest;
-		readonly urlResolver: IUrlResolver;
-		readonly documentServiceFactory: IDocumentServiceFactory;
-	}>;
+} & AllOrNone<IContainerLoadDriverProps>;
 
 /**
  * Loads a frozen container from pending local state.
@@ -333,23 +372,21 @@ export type ILoadFrozenContainerFromPendingStateProps = Omit<
 export async function loadFrozenContainerFromPendingState(
 	props: ILoadFrozenContainerFromPendingStateProps,
 ): Promise<IContainer> {
-	const { request, urlResolver, documentServiceFactory, readOnly, pendingLocalState } = props;
+	const { readOnly, pendingLocalState } = props;
 
-	if (
-		request === undefined ||
-		urlResolver === undefined ||
-		documentServiceFactory === undefined
-	) {
-		if (
-			request !== undefined ||
-			urlResolver !== undefined ||
-			documentServiceFactory !== undefined
-		) {
-			throw new UsageError(
-				"loadFrozenContainerFromPendingState: request, urlResolver, and documentServiceFactory must all be provided or all omitted",
-			);
-		}
+	const driverWiring = validateAllOrNone<IContainerLoadDriverProps>(props, [
+		"request",
+		"urlResolver",
+		"documentServiceFactory",
+	]);
 
+	if (driverWiring === "mixed") {
+		throw new UsageError(
+			"loadFrozenContainerFromPendingState: request, urlResolver, and documentServiceFactory must all be provided or all omitted",
+		);
+	}
+
+	if (driverWiring === "none") {
 		// Offline: synthesize the driver wiring from the URL captured in pending state.
 		// The container's load pipeline is reused unchanged — the synthesized resolver
 		// returns a resolved URL whose `url` equals `pendingLocalState.url`, so the
@@ -395,10 +432,13 @@ export async function loadFrozenContainerFromPendingState(
 	}
 
 	// Online: wrap the caller-supplied factory so the live driver only serves blob reads.
+	// `driverWiring === "all"` narrows `props` to the form that carries the driver fields.
+	const onlineProps = props as ILoadFrozenContainerFromPendingStateProps &
+		IContainerLoadDriverProps;
 	return loadExistingContainer({
-		...props,
+		...onlineProps,
 		documentServiceFactory: createFrozenDocumentServiceFactory(
-			documentServiceFactory,
+			onlineProps.documentServiceFactory,
 			readOnly,
 		),
 	});

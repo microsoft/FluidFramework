@@ -39,17 +39,30 @@ export interface ICodeDetailsLoader extends Partial<IProvideFluidCodeDetailsComp
 }
 
 // @beta @legacy
-export interface ICreateAndLoadContainerProps {
+export interface IContainerDriverServices {
+    readonly documentServiceFactory: IDocumentServiceFactory;
+    readonly urlResolver: IUrlResolver;
+}
+
+// @beta @legacy
+export interface IContainerHostProps {
     readonly allowReconnect?: boolean | undefined;
     readonly clientDetailsOverride?: IClientDetails | undefined;
     readonly codeLoader: ICodeDetailsLoader_2;
     readonly configProvider?: IConfigProviderBase | undefined;
-    readonly documentServiceFactory: IDocumentServiceFactory;
     readonly logger?: ITelemetryBaseLogger | undefined;
     readonly options?: IContainerPolicies | undefined;
     readonly protocolHandlerBuilder?: ProtocolHandlerBuilder | undefined;
     readonly scope?: FluidObject | undefined;
-    readonly urlResolver: IUrlResolver;
+}
+
+// @beta @legacy
+export interface IContainerLoadDriverProps extends IContainerDriverServices {
+    readonly request: IRequest;
+}
+
+// @beta @legacy
+export interface ICreateAndLoadContainerProps extends IContainerHostProps, IContainerDriverServices {
 }
 
 // @beta @legacy

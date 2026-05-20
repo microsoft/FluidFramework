@@ -1297,7 +1297,7 @@ describe("loadFrozenContainerFromPendingState", () => {
 			await assert.rejects(
 				async () =>
 					loadFrozenContainerFromPendingState(
-						mixedProps as Parameters<typeof loadFrozenContainerFromPendingState>[0],
+						mixedProps as unknown as Parameters<typeof loadFrozenContainerFromPendingState>[0],
 					),
 				/must all be provided or all omitted/,
 				"Expected mixed driver wiring to throw a usage error",

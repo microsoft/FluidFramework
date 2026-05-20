@@ -61,17 +61,30 @@ export interface ICodeDetailsLoader extends Partial<IProvideFluidCodeDetailsComp
 }
 
 // @beta @legacy
-export interface ICreateAndLoadContainerProps {
+export interface IContainerDriverServices {
+    readonly documentServiceFactory: IDocumentServiceFactory;
+    readonly urlResolver: IUrlResolver;
+}
+
+// @beta @legacy
+export interface IContainerHostProps {
     readonly allowReconnect?: boolean | undefined;
     readonly clientDetailsOverride?: IClientDetails | undefined;
     readonly codeLoader: ICodeDetailsLoader_2;
     readonly configProvider?: IConfigProviderBase | undefined;
-    readonly documentServiceFactory: IDocumentServiceFactory;
     readonly logger?: ITelemetryBaseLogger | undefined;
     readonly options?: IContainerPolicies | undefined;
     readonly protocolHandlerBuilder?: ProtocolHandlerBuilder | undefined;
     readonly scope?: FluidObject | undefined;
-    readonly urlResolver: IUrlResolver;
+}
+
+// @beta @legacy
+export interface IContainerLoadDriverProps extends IContainerDriverServices {
+    readonly request: IRequest;
+}
+
+// @beta @legacy
+export interface ICreateAndLoadContainerProps extends IContainerHostProps, IContainerDriverServices {
 }
 
 // @beta @legacy
@@ -115,14 +128,10 @@ export interface ILoadExistingContainerProps extends ICreateAndLoadContainerProp
 }
 
 // @alpha @legacy
-export type ILoadFrozenContainerFromPendingStateProps = Omit<ILoadExistingContainerProps, "request" | "urlResolver" | "documentServiceFactory" | "pendingLocalState"> & {
+export type ILoadFrozenContainerFromPendingStateProps = IContainerHostProps & {
     readonly pendingLocalState: string;
     readonly readOnly?: boolean;
-} & AllOrNone<{
-    readonly request: IRequest;
-    readonly urlResolver: IUrlResolver;
-    readonly documentServiceFactory: IDocumentServiceFactory;
-}>;
+} & AllOrNone<IContainerLoadDriverProps>;
 
 // @alpha @legacy
 export type ILoadSummarizerContainerProps = Omit<ILoadExistingContainerProps, "pendingLocalState">;
