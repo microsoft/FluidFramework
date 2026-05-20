@@ -156,10 +156,29 @@ export interface IFluidDataStoreRuntime
 	 * `raceId` is shared across clients. Use `IChannel.id` on the returned
 	 * channel for local routing.
 	 *
+	 * Supported across all attach and staging states:
+	 * - **Globally visible data store**: the standard case — the runtime
+	 *   submits an attach op carrying `raceId`; the first such attach
+	 *   sequenced for that `raceId` wins.
+	 * - **Detached or locally-visible data store**: the channel is recorded
+	 *   locally and embedded in the data store's attach summary alongside a
+	 *   `.races` mapping. Peers loading the summary register the raceId as
+	 *   already resolved in this client's favor. The `raceResolved` event is
+	 *   deferred until the data store becomes globally visible.
+	 * - **Staging mode**: the attach op is buffered locally. On
+	 *   `commitChanges`, normal attach-op resolution applies (this client
+	 *   may still lose to a concurrent winner sequenced during the staging
+	 *   window). On `discardChanges`, the staged channel is dropped and the
+	 *   `raceId` may be reused.
+	 *
 	 * Throws a `UsageError` if:
 	 * - The document schema has not enabled the race-id channel-create feature.
-	 * - The data store is detached or in staging mode.
 	 * - This client has already created a racing channel with the same `raceId`.
+	 * - The `raceId` is already resolved on this client (for example, a
+	 *   winner was loaded from a summary). The caller should obtain the
+	 *   winner via `getChannel`.
+	 * - The data store is in staging mode and its `readonlyInStagingMode`
+	 *   policy is set.
 	 *
 	 * `onLost` is invoked asynchronously (after the current op processing
 	 * step) on the losing client; it does not block op processing. If `onLost`

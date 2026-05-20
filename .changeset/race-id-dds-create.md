@@ -18,5 +18,9 @@ Resolution semantics: the first attach op for a given `raceId` (per the sequence
 
 v1 limitations (tracked as follow-ups):
 - Race-id handles, optimistic handle storage, data-store-level races, public `IChannel.dispose()`, and async `onLost` are out of scope.
-- The race overload is rejected while the data store is detached or in staging mode.
 - The summary redirect table is rehydrated asynchronously on load; ops to historical losers may transiently be applied during the load window.
+
+Detached-state and staging-mode support:
+- **Detached / locally-visible**: `createChannel(raceId, …)` records the channel locally. When the data store becomes globally visible, the channel is embedded in the attach summary alongside a `.races` blob that records it as the resolved winner for `raceId` from this client's perspective. Peers loading the summary register the resolution; subsequent attach ops with the same `raceId` are treated as losers and their channel ops are dropped via `loserToWinner`. The `raceResolved` event is deferred until the data store becomes globally visible.
+- **Staging mode**: `createChannel(raceId, …)` records the channel in a `staged` state; the attach op is buffered by the `PendingStateManager`. On `commitChanges` the attach flows through normal submit and the standard inbound resolver applies. On `discardChanges` (via `rollback`) the staged race entry and channel context are removed and the `raceId` becomes reusable. The overload is rejected only if the data store's `readonlyInStagingMode` policy is set.
+- Attempting `createChannel(raceId, …)` for a `raceId` already known to be resolved on this client throws `UsageError`; the caller should obtain the winner via `getChannel`.

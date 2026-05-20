@@ -260,7 +260,23 @@ function initializePendingOpCount(): { value: number } {
 interface RaceEntry {
 	localChannelId: string;
 	onLost?: OnRaceLost;
-	status: "racing" | "resolved";
+	/**
+	 * Lifecycle:
+	 * - `pre-attach`: the data store is not yet globally visible. The channel
+	 *   exists locally and will be embedded in the data store's attach summary
+	 *   (no separate attach op is or will be submitted for it). Promoted to
+	 *   `resolved` when the data store transitions to globally visible, because
+	 *   at that point the channel is the canonical entry for this raceId from
+	 *   this client's perspective.
+	 * - `staged`: the data store is globally visible but the container is in
+	 *   staging mode, so the attach op is buffered locally and has not been
+	 *   sent. May transition to `racing` on commit, or be removed entirely on
+	 *   discard (rollback).
+	 * - `racing`: the attach op has been (or will be) submitted to the ordering
+	 *   service. Resolution is pending the first sequenced attach for `raceId`.
+	 * - `resolved`: a winner has been decided for this `raceId`.
+	 */
+	status: "pre-attach" | "staged" | "racing" | "resolved";
 }
 
 /**
@@ -752,22 +768,38 @@ export class FluidDataStoreRuntime
 					"createChannel race overload requires a non-empty raceId as the first argument",
 				);
 			}
-			// Detached / staging-mode races are not supported in v1 — the
-			// race-resolution mechanism is rooted in attach-op sequencing,
-			// which only happens once the data store is globally visible.
-			if (this.visibilityState !== VisibilityState.GloballyVisible) {
+			// Detached / staging-mode races (Part 1 / Part 2).
+			//
+			// Detached / locally-visible: the channel is recorded as
+			// `pre-attach` and will be embedded in the data store's attach
+			// summary when the data store becomes globally visible.
+			//
+			// Staging mode: the channel is recorded as `staged`; the attach op
+			// is buffered by the PendingStateManager. On commit it flows
+			// through normal submit and is promoted to `racing` once inbound
+			// processing observes it. On discard, the attach op is rolled back
+			// via `rollback()`, which removes the staged RaceEntry and its
+			// local channel context.
+			//
+			// If the data store has opted into a read-only appearance during
+			// staging via `readonlyInStagingMode`, treat `createChannel` as a
+			// mutation and reject it consistently with that policy.
+			if (this.inStagingMode && this.policies.readonlyInStagingMode) {
 				throw new UsageError(
-					"createChannel race overload is not supported while the data store is detached",
+					"createChannel race overload is not supported while the data store is read-only in staging mode",
 				);
 			}
-			if (this.inStagingMode) {
+			const existingRaceEntry = this.raceEntries.get(raceId!);
+			if (existingRaceEntry !== undefined) {
+				// A race for this id is either in progress locally, or has
+				// already been resolved (e.g., loaded from a summary that
+				// already contains a winner). In both cases, force the caller
+				// to either pick a different raceId or use `getChannel` to
+				// acquire the winner.
 				throw new UsageError(
-					"createChannel race overload is not supported in staging mode",
-				);
-			}
-			if (this.raceEntries.has(raceId!)) {
-				throw new UsageError(
-					`createChannel race overload: this client has already created a racing channel for raceId "${raceId}"`,
+					existingRaceEntry.status === "resolved"
+						? `createChannel race overload: raceId "${raceId}" is already resolved; call getChannel("${existingRaceEntry.localChannelId}") instead`
+						: `createChannel race overload: this client has already created a racing channel for raceId "${raceId}"`,
 				);
 			}
 			// Mint a locally-unique channel id derived from raceId for
@@ -815,9 +847,17 @@ export class FluidDataStoreRuntime
 		const channel = factory.create(this, id);
 		this.createChannelContext(channel);
 		if (raceId !== undefined) {
+			let initialStatus: RaceEntry["status"];
+			if (this.visibilityState !== VisibilityState.GloballyVisible) {
+				initialStatus = "pre-attach";
+			} else if (this.inStagingMode) {
+				initialStatus = "staged";
+			} else {
+				initialStatus = "racing";
+			}
 			const entry: RaceEntry = {
 				localChannelId: id,
-				status: "racing",
+				status: initialStatus,
 			};
 			if (raceOptions?.onLost !== undefined) {
 				entry.onLost = raceOptions.onLost;
@@ -832,10 +872,18 @@ export class FluidDataStoreRuntime
 	/**
 	 * Reverse lookup: channel id -\> race id, used when constructing outbound
 	 * attach messages to know if a raceId field should be included.
+	 *
+	 * Returns the raceId for entries in either `staged` (attach op buffered by
+	 * staging mode, not yet sent) or `racing` (attach op submitted, awaiting
+	 * sequencing) status. Entries in `resolved` status do not need the raceId
+	 * field re-emitted; the resolution has already been recorded.
 	 */
 	private getRaceIdForChannel(channelId: string): string | undefined {
 		for (const [raceId, entry] of this.raceEntries) {
-			if (entry.localChannelId === channelId && entry.status === "racing") {
+			if (
+				entry.localChannelId === channelId &&
+				(entry.status === "racing" || entry.status === "staged")
+			) {
 				return raceId;
 			}
 		}
@@ -851,10 +899,19 @@ export class FluidDataStoreRuntime
 		if (blobId === undefined) {
 			return;
 		}
-		const payload = await readAndParse<{ loserToWinner: [string, string][] }>(
-			this.dataStoreContext.storage,
-			blobId,
-		);
+		const payload = await readAndParse<{
+			loserToWinner?: [string, string][];
+			// `resolved`: race ids whose winner channel is part of this data
+			// store's summary tree. Seeded into `raceEntries` so that
+			// subsequent inbound attach ops or local createChannel calls for
+			// the same raceId resolve as losers.
+			//
+			// Originally named `pending` in the design plan; persisted as
+			// `resolved` on the wire to reflect that, from a summary reader's
+			// perspective, the race for these entries is already decided —
+			// the winner is the channel embedded in this summary.
+			resolved?: [string, string][];
+		}>(this.dataStoreContext.storage, blobId);
 		if (payload?.loserToWinner !== undefined) {
 			for (const [loser, winner] of payload.loserToWinner) {
 				if (!this.loserToWinner.has(loser)) {
@@ -862,22 +919,73 @@ export class FluidDataStoreRuntime
 				}
 			}
 		}
+		if (payload?.resolved !== undefined) {
+			for (const [channelId, raceId] of payload.resolved) {
+				if (!this.raceEntries.has(raceId)) {
+					this.raceEntries.set(raceId, {
+						localChannelId: channelId,
+						status: "resolved",
+					});
+				}
+			}
+		}
 	}
 
 	/**
-	 * Serialize the loser-\>winner redirect table for inclusion in summaries.
-	 * Returns undefined if there's nothing to persist (keeps summaries small
-	 * and avoids touching back-compat for data stores that never race).
+	 * Serialize the loser-\>winner redirect table and the resolved race-id
+	 * mapping for inclusion in summaries.
+	 *
+	 * `loserToWinner` ensures channel ops addressed to historical losers are
+	 * dropped by every client deterministically.
+	 *
+	 * `resolved` records the channel id chosen as the winner for each
+	 * locally-known raceId. This is used so peers loading the data store
+	 * summary (which carries the winner channel embedded as ordinary content)
+	 * can register the raceId without ever observing the original attach op.
+	 * It covers two cases:
+	 *  - Pre-attach winners: channels created via the race overload while the
+	 *    data store was not yet globally visible. They never produced a
+	 *    standalone attach op; the summary is the only carrier.
+	 *  - Post-attach winners: channels whose race resolved via attach-op
+	 *    sequencing. Re-recording them is redundant for live peers (they have
+	 *    the raceId in their own raceEntries) but is essential for mid-session
+	 *    joiners loading from a summary instead of replaying attach ops.
+	 *
+	 * Returns undefined if there is nothing to persist.
 	 */
 	private serializeRaces(): string | undefined {
-		if (this.loserToWinner.size === 0) {
+		if (this.loserToWinner.size === 0 && this.raceEntries.size === 0) {
 			return undefined;
 		}
-		const entries: [string, string][] = [];
+		const loserToWinnerEntries: [string, string][] = [];
 		for (const [loser, winner] of this.loserToWinner) {
-			entries.push([loser, winner]);
+			loserToWinnerEntries.push([loser, winner]);
 		}
-		return JSON.stringify({ loserToWinner: entries });
+		const resolvedEntries: [string, string][] = [];
+		for (const [raceId, entry] of this.raceEntries) {
+			// Persist entries whose channel is part of the summary tree:
+			// - `resolved`: race already decided; the winner is the local channel.
+			// - `pre-attach`: pre-globally-visible race; the local channel is
+			//   the only candidate and is being included in this attach
+			//   summary, so from the loader's perspective the race is decided.
+			// "racing" / "staged" are transient (attach op in flight or buffered);
+			// they will resolve via the inbound attach-op path and do not need
+			// to be carried in the summary.
+			if (entry.status === "resolved" || entry.status === "pre-attach") {
+				resolvedEntries.push([entry.localChannelId, raceId]);
+			}
+		}
+		const payload: { loserToWinner?: [string, string][]; resolved?: [string, string][] } = {};
+		if (loserToWinnerEntries.length > 0) {
+			payload.loserToWinner = loserToWinnerEntries;
+		}
+		if (resolvedEntries.length > 0) {
+			payload.resolved = resolvedEntries;
+		}
+		if (Object.keys(payload).length === 0) {
+			return undefined;
+		}
+		return JSON.stringify(payload);
 	}
 
 	private createChannelContext(channel: IChannel): void {
@@ -1139,6 +1247,28 @@ export class FluidDataStoreRuntime
 					// This race already resolved on this client. Drop the message —
 					// it's a late/duplicate attach for an already-decided race.
 					// Skip GC processing and skip remote-context creation.
+					if (existingEntry.localChannelId !== id) {
+						// The incoming attach is a loser. Record the redirect
+						// so any subsequent channel ops addressed to this
+						// loser id are dropped by every client (Part 1 case:
+						// a peer raced against a channel already resolved via
+						// summary load).
+						if (!this.loserToWinner.has(id)) {
+							this.loserToWinner.set(id, existingEntry.localChannelId);
+						}
+						this.logger.sendTelemetryEvent({
+							eventName: "RaceResolvedOnSummaryLoad",
+							category: "generic",
+							raceId,
+							winnerChannelId: existingEntry.localChannelId,
+							loserChannelId: id,
+						});
+						this.emit("raceResolved", {
+							raceId,
+							winnerChannelId: existingEntry.localChannelId,
+							loserChannelIds: [id],
+						});
+					}
 					if (local) {
 						this.pendingAttach.delete(id);
 					}
@@ -1213,7 +1343,19 @@ export class FluidDataStoreRuntime
 				} else if (existingEntry !== undefined && existingEntry.localChannelId === id) {
 					// We were racing locally and we WON. Mark resolved; the
 					// existing local context is the one and only attached context.
+					const priorStatus = existingEntry.status;
 					existingEntry.status = "resolved";
+					if (priorStatus === "staged") {
+						// Promotion from staged → resolved indicates that the
+						// staging-mode commit flushed the buffered attach op
+						// and it was sequenced as the winner.
+						this.logger.sendTelemetryEvent({
+							eventName: "RaceStagedCommitted",
+							category: "generic",
+							raceId,
+							winnerChannelId,
+						});
+					}
 					this.emit("raceResolved", {
 						raceId,
 						winnerChannelId,
@@ -1473,6 +1615,16 @@ export class FluidDataStoreRuntime
 			},
 		);
 
+		// Include the race-id mapping so peers loading this attach summary can
+		// register the locally-created race channels as already-resolved.
+		// Without this, a peer loading the summary would not see the raceId
+		// on any channel and a later local createChannel(sameRaceId) call on
+		// the peer would not be intercepted.
+		const racesPayload = this.serializeRaces();
+		if (racesPayload !== undefined) {
+			summaryBuilder.addBlob(racesBlobKey, racesPayload);
+		}
+
 		return summaryBuilder.getSummaryTree();
 	}
 
@@ -1727,6 +1879,41 @@ export class FluidDataStoreRuntime
 					channelContext.rollback(envelope.contents, localOpMetadata);
 					break;
 				}
+				case DataStoreMessageType.Attach: {
+					// Race-only rollback path for Attach messages: the only
+					// supported scenario is discarding a channel that was
+					// created via the race overload while in staging mode. The
+					// entry will be in `staged` status with localChannelId
+					// matching the attach message id. Any other Attach
+					// rollback remains unsupported.
+					const attachMessage = content as IAttachMessage;
+					const channelId = attachMessage.id;
+					let stagedRaceId: string | undefined;
+					for (const [raceId, entry] of this.raceEntries) {
+						if (
+							entry.localChannelId === channelId &&
+							entry.status === "staged"
+						) {
+							stagedRaceId = raceId;
+							break;
+						}
+					}
+					if (stagedRaceId === undefined) {
+						throw new LoggingError(`Can't rollback ${type} message`);
+					}
+					this.raceEntries.delete(stagedRaceId);
+					this.contexts.delete(channelId);
+					this.notBoundedChannelContextSet.delete(channelId);
+					this.localChannelContextQueue.delete(channelId);
+					this.pendingAttach.delete(channelId);
+					this.logger.sendTelemetryEvent({
+						eventName: "RaceStagedDiscarded",
+						category: "generic",
+						raceId: stagedRaceId,
+						channelId,
+					});
+					break;
+				}
 				default: {
 					throw new LoggingError(`Can't rollback ${type} message`);
 				}
@@ -1884,6 +2071,27 @@ export class FluidDataStoreRuntime
 					channel.makeVisible();
 				}
 				this.localChannelContextQueue.clear();
+
+				// Promote any `pre-attach` race entries: at this point the
+				// data store's attach summary has been (or is being) shipped
+				// to the ordering service with these channels embedded, and
+				// the `.races` blob within that summary lists them as
+				// resolved. From this client's perspective the race is
+				// decided in favor of its own channel.
+				//
+				// `raceResolved` is intentionally deferred until this moment;
+				// firing it while the data store was not yet globally visible
+				// would be misleading because no global resolution had occurred.
+				for (const [raceId, entry] of this.raceEntries) {
+					if (entry.status === "pre-attach") {
+						entry.status = "resolved";
+						this.emit("raceResolved", {
+							raceId,
+							winnerChannelId: entry.localChannelId,
+							loserChannelIds: [],
+						});
+					}
+				}
 
 				// This promise resolution will be moved to attached event once we fix the scheduler.
 				this.deferredAttached.resolve();

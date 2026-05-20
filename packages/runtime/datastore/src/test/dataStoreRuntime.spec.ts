@@ -5,6 +5,7 @@
 
 import { strict as assert } from "node:assert";
 
+import { AttachState } from "@fluidframework/container-definitions";
 import { ContainerErrorTypes } from "@fluidframework/container-definitions/internal";
 import type { FluidObject, IErrorBase } from "@fluidframework/core-interfaces";
 import type {
@@ -240,13 +241,24 @@ describe("FluidDataStoreRuntime Tests", () => {
 			return rt;
 		}
 
-		it("rejects when data store is detached", () => {
+		it("succeeds while data store is detached (records pre-attach entry)", () => {
 			const rt = createRuntime(dataStoreContext, sharedObjectRegistry);
-			assert.throws(
-				() => rt.createChannel("race-1", "SomeType", {}),
-				(e: IErrorBase) =>
-					e.errorType === ContainerErrorTypes.usageError &&
-					/detached/.test(e.message),
+			const channel = rt.createChannel("detached-race", "SomeType", {});
+			assert(
+				channel.id.startsWith("detached-race#"),
+				`channel id ${channel.id} should start with "detached-race#"`,
+			);
+			const raceEntries = (
+				rt as unknown as {
+					raceEntries: Map<string, { localChannelId: string; status: string }>;
+				}
+			).raceEntries;
+			const entry = raceEntries.get("detached-race");
+			assert(entry !== undefined, "race entry should exist");
+			assert.strictEqual(
+				entry.status,
+				"pre-attach",
+				"race entry should be in pre-attach status while detached",
 			);
 		});
 
@@ -276,6 +288,225 @@ describe("FluidDataStoreRuntime Tests", () => {
 				() => rt.createChannel("", "SomeType", {}),
 				(e: IErrorBase) => e.errorType === ContainerErrorTypes.usageError,
 			);
+		});
+
+		describe("detached state", () => {
+			it("getAttachSummary includes .races blob with pre-attach entries", () => {
+				const rt = createRuntime(dataStoreContext, sharedObjectRegistry);
+				const channel = rt.createChannel("preattach-race", "SomeType", {});
+				// getAttachSummary asserts the data store is LocallyVisible.
+				// Production transitions there via makeVisibleAndAttachGraph,
+				// which routes through the mock context (unimplemented). For a
+				// unit test of the summary content, poke the state directly.
+				(rt as unknown as { visibilityState: VisibilityState }).visibilityState =
+					VisibilityState.LocallyVisible;
+				const summary = (
+					rt as unknown as {
+						getAttachSummary: () => {
+							summary: {
+								type: SummaryType;
+								tree: Record<
+									string,
+									{ type: SummaryType; content?: string }
+								>;
+							};
+						};
+					}
+				).getAttachSummary();
+				assert.strictEqual(summary.summary.type, SummaryType.Tree);
+				const racesEntry = summary.summary.tree[".races"];
+				assert(
+					racesEntry !== undefined,
+					"getAttachSummary should include a .races blob",
+				);
+				assert.strictEqual(racesEntry.type, SummaryType.Blob);
+				const payload = JSON.parse(racesEntry.content as string) as {
+					resolved?: [string, string][];
+				};
+				assert(
+					payload.resolved !== undefined &&
+						payload.resolved.some(
+							([cid, rid]) => cid === channel.id && rid === "preattach-race",
+						),
+					"resolved entry should record the pre-attach channel",
+				);
+			});
+
+			it("setAttachState(Attaching) promotes pre-attach to resolved and fires raceResolved", () => {
+				const rt = createRuntime(dataStoreContext, sharedObjectRegistry);
+				const channel = rt.createChannel("promote-race", "SomeType", {});
+				const events: Array<{ raceId: string; winnerChannelId: string }> = [];
+				rt.on("raceResolved", (info) =>
+					events.push({
+						raceId: info.raceId,
+						winnerChannelId: info.winnerChannelId,
+					}),
+				);
+				// Drive the data store through locally-visible → globally-visible.
+				// Bypass makeVisibleAndAttachGraph (the mock context's
+				// makeLocallyVisible is unimplemented) by setting the state
+				// directly. setAttachState(Attaching) also calls attachGraph
+				// internally — short-circuit it by also setting attachState's
+				// expected precondition.
+				(rt as unknown as { visibilityState: VisibilityState }).visibilityState =
+					VisibilityState.LocallyVisible;
+				rt.setAttachState(AttachState.Attaching);
+				assert.deepStrictEqual(events, [
+					{ raceId: "promote-race", winnerChannelId: channel.id },
+				]);
+				const raceEntries = (
+					rt as unknown as {
+						raceEntries: Map<string, { status: string }>;
+					}
+				).raceEntries;
+				assert.strictEqual(
+					raceEntries.get("promote-race")?.status,
+					"resolved",
+					"pre-attach entry should be promoted to resolved",
+				);
+			});
+
+			it("createChannel throws 'already resolved' when raceId is known-resolved on load", () => {
+				const rt = createRuntime(dataStoreContext, sharedObjectRegistry);
+				// Simulate a summary-hydrated resolved entry.
+				const raceEntries = (
+					rt as unknown as {
+						raceEntries: Map<
+							string,
+							{ localChannelId: string; status: string }
+						>;
+					}
+				).raceEntries;
+				raceEntries.set("loaded-race", {
+					localChannelId: "winner-id",
+					status: "resolved",
+				});
+				assert.throws(
+					() => rt.createChannel("loaded-race", "SomeType", {}),
+					(e: IErrorBase) =>
+						e.errorType === ContainerErrorTypes.usageError &&
+						/already resolved/.test(e.message) &&
+						/winner-id/.test(e.message),
+				);
+			});
+		});
+
+		describe("staging mode", () => {
+			function makeStagingRuntime(
+				options: { readonlyInStagingMode?: boolean } = {},
+			): FluidDataStoreRuntime_ForTesting {
+				dataStoreContext.containerRuntime = {
+					inStagingMode: true,
+				} as unknown as IContainerRuntimeBase;
+				const rt = new FluidDataStoreRuntime(
+					dataStoreContext,
+					sharedObjectRegistry,
+					/* existing */ false,
+					async (dsRt) => dsRt,
+					options.readonlyInStagingMode === true
+						? { readonlyInStagingMode: true }
+						: undefined,
+				) as unknown as FluidDataStoreRuntime_ForTesting;
+				(rt as unknown as { visibilityState: VisibilityState }).visibilityState =
+					VisibilityState.GloballyVisible;
+				return rt;
+			}
+
+			it("allows createChannel in staging mode and channel is usable locally", () => {
+				const rt = makeStagingRuntime();
+				const channel = rt.createChannel("staged-race", "SomeType", {});
+				assert(
+					channel.id.startsWith("staged-race#"),
+					`channel id ${channel.id} should start with "staged-race#"`,
+				);
+				const raceEntries = (
+					rt as unknown as {
+						raceEntries: Map<string, { localChannelId: string; status: string }>;
+					}
+				).raceEntries;
+				const entry = raceEntries.get("staged-race");
+				assert(entry !== undefined, "race entry should exist");
+				assert.strictEqual(
+					entry.status,
+					"staged",
+					"race entry should be in staged status",
+				);
+			});
+
+			it("rejects when readonlyInStagingMode policy + staging mode", () => {
+				const rt = makeStagingRuntime({ readonlyInStagingMode: true });
+				assert.throws(
+					() => rt.createChannel("ro-race", "SomeType", {}),
+					(e: IErrorBase) =>
+						e.errorType === ContainerErrorTypes.usageError &&
+						/read-only in staging mode/.test(e.message),
+				);
+			});
+
+			it("rollback of the staged attach removes the race entry and channel context", () => {
+				const rt = makeStagingRuntime();
+				const channel = rt.createChannel("discard-race", "SomeType", {});
+				const channelId = channel.id;
+				const internals = rt as unknown as {
+					contexts: Map<string, unknown>;
+					raceEntries: Map<string, unknown>;
+					rollback: (
+						type: DataStoreMessageType,
+						content: unknown,
+						localOpMetadata: unknown,
+					) => void;
+					// pendingOpCount has a `value` number — we bump it so the
+					// decrement inside rollback() doesn't drive it negative
+					// (the production submit() bumps it for real ops).
+					pendingOpCount: { value: number };
+				};
+				internals.pendingOpCount.value += 1;
+				internals.rollback(
+					DataStoreMessageType.Attach,
+					{ id: channelId, type: "SomeType", snapshot: { entries: [] } },
+					undefined,
+				);
+				assert.strictEqual(
+					internals.raceEntries.has("discard-race"),
+					false,
+					"race entry should be removed after rollback",
+				);
+				assert.strictEqual(
+					internals.contexts.has(channelId),
+					false,
+					"channel context should be removed after rollback",
+				);
+				// After discard, the same raceId may be reused.
+				assert.doesNotThrow(() =>
+					rt.createChannel("discard-race", "SomeType", {}),
+				);
+			});
+
+			it("rollback throws for a non-race Attach (race-only path)", () => {
+				const rt = makeStagingRuntime();
+				const internals = rt as unknown as {
+					rollback: (
+						type: DataStoreMessageType,
+						content: unknown,
+						localOpMetadata: unknown,
+					) => void;
+					pendingOpCount: { value: number };
+				};
+				internals.pendingOpCount.value += 1;
+				assert.throws(
+					() =>
+						internals.rollback(
+							DataStoreMessageType.Attach,
+							{
+								id: "not-a-race-channel",
+								type: "SomeType",
+								snapshot: { entries: [] },
+							},
+							undefined,
+						),
+					/Can't rollback/,
+				);
+			});
 		});
 	});
 });
