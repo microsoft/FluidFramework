@@ -8,12 +8,13 @@ import type { MinimumVersionForCollab } from "@fluidframework/runtime-definition
 import { gte } from "semver-ts";
 
 /**
- * The `minVersionForCollab` determines the set of runtime options to use.
- * For a 1.x `minVersionForCollab` we support full interop with true 1.x clients.
- * For a 2.x `minVersionForCollab` we only support interop with 2.x clients.
+ * Fluid-static-specific runtime option overrides keyed by `minVersionForCollab`.
  *
- * @privateRemarks The purpose of this map is to use a different set of defaults
- * than what the runtime normally uses based on a given `minVersionForCollab` (e.g. `enableRuntimeIdCompressor` below).)
+ * @remarks
+ * These are layered on top of the runtime defaults that container-runtime selects from
+ * `minVersionForCollab` (via `getMinVersionForCollabDefaults`). Only options that
+ * fluid-static needs to set differently from those defaults belong here
+ * (e.g. enableRuntimeIdCompressor to support SharedTree).
  */
 const minVersionForCollabToDefaultRuntimeOptions: Record<
 	"1" | "2",
