@@ -1332,8 +1332,11 @@ export class TreeCheckout implements ITreeCheckout {
 		const commitToRevert = revertibleBranch.getHead();
 		const revisionForInvert = this.mintRevisionTag();
 
+		// Squashing ensures that the undo is compatible with oldest support client versions.
 		let change = tagChange(
-			this.changeFamily.rebaser.invert(commitToRevert, false, revisionForInvert),
+			this.changeFamily.rebaser.squash(
+				this.changeFamily.rebaser.invert(commitToRevert, false, revisionForInvert),
+			),
 			revisionForInvert,
 		);
 
@@ -1363,9 +1366,6 @@ export class TreeCheckout implements ITreeCheckout {
 				revisionForInvert,
 			);
 		}
-
-		// Squashing ensures that the undo is compatible with oldest support client versions.
-		change = tagChange(this.changeFamily.rebaser.squash(change.change), revisionForInvert);
 
 		this.#transaction.activeBranch.apply(
 			change,

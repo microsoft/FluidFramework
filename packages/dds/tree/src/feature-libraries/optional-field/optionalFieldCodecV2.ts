@@ -81,9 +81,13 @@ export function makeOptionalFieldCodec(
 			if (change.valueReplace !== undefined) {
 				const srcRegister = getSrcRegister(change, context);
 
+				// We inline any rename into the detach, as older clients do not support detach and rename.
+				const dstOutputId =
+					context.getOutputRootId(change.valueReplace.dst, 1).value ?? change.valueReplace.dst;
+
 				encoded.r = {
 					e: change.valueReplace.isEmpty,
-					d: changeAtomIdCodec.encode(change.valueReplace.dst, context.baseContext),
+					d: changeAtomIdCodec.encode(dstOutputId, context.baseContext),
 				};
 
 				if (srcRegister !== undefined) {
@@ -117,6 +121,13 @@ export function makeOptionalFieldCodec(
 				value: newId,
 				length: count,
 			} of context.rootRenames.entries()) {
+				if (
+					areEqualChangeAtomIdOpts(oldId, change.valueReplace?.dst) ||
+					areEqualChangeAtomIdOpts(newId, change.valueReplace?.src)
+				) {
+					// This rename will be inlined into the encoded replace.
+					continue;
+				}
 				assert(count === 1, "Unexpected range rename in optional field");
 				encodedMoves.push([
 					changeAtomIdCodec.encode(oldId, context.baseContext),
@@ -144,15 +155,15 @@ export function makeOptionalFieldCodec(
 				};
 				if (encoded.r.s !== undefined) {
 					const register = registerIdCodec.decode(encoded.r.s, context.baseContext);
+					// An attach should have a detach, but since a detach ID cannot be encoded in this format, we generate one here.
+					// Note that this is safe as long as we assume that this change will not be rebased over a move to a sequence field.
+					// The ID of an attach and accompanying detach/rename is arbitrary, except in sequence field where
+					// the ID of the detach becomes a cell ID which may be referenced by other changes.
+					replace.src = context.generateId();
 					if (register === "self") {
-						// Note that this is safe as long as we assume that this change will not be rebased
-						// over a move to a sequence field.
-						// The ID of an attach and accompanying detach/rename is arbitrary, except in sequence field where
-						// the ID of the detach becomes a cell ID which may be referenced by other changes.
-						replace.src = context.generateId();
 						decoded.nodeDetach = replace.src;
 					} else {
-						replace.src = register;
+						context.decodeRootRename(register, replace.src, 1, false);
 					}
 				}
 				decoded.valueReplace = replace;
@@ -195,11 +206,10 @@ function getSrcRegister(
 	}
 
 	if (change.nodeDetach !== undefined) {
-		const attachId = context.getOutputRootId(change.nodeDetach, 1).value ?? change.nodeDetach;
-		if (areEqualChangeAtomIds(attachId, change.valueReplace.src)) {
-			return "self";
-		}
+		// Node detach is only supported when it is part of a pin.
+		return "self";
 	}
 
-	return change.valueReplace.src;
+	// We inline the rename into the attach, as older clients do not support rename and attach.
+	return context.getInputRootId(change.valueReplace.src, 1).value ?? change.valueReplace.src;
 }
