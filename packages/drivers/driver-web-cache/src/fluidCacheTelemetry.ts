@@ -15,6 +15,8 @@ export const enum FluidCacheErrorEvent {
 	"FluidCachePutError" = "FluidCachePutError",
 	"FluidCacheUpdateUsageError" = "FluidCacheUpdateUsageError",
 	"FluidCacheDeleteOldDbError" = "FluidCacheDeleteOldDbError",
+	"FluidCacheBroadcastError" = "FluidCacheBroadcastError",
+	"FluidCacheChangeListenerError" = "FluidCacheChangeListenerError",
 }
 
 export const enum FluidCacheEventSubCategories {

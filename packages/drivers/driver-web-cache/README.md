@@ -66,6 +66,66 @@ new FluidCache({
     for a cache entry to be used. This flag does not control when cached content is deleted since different scenarios and
     applications may have different staleness thresholds for the same data.
 
+## Conditional writes (`putIf`)
+
+`FluidCache` exposes a `putIf` method that performs a compare-and-swap write. The currently-cached value
+is read and (if the caller-supplied predicate returns `true`) the new value is written inside a single
+IndexedDB `readwrite` transaction, giving conditional-write semantics across consumers sharing the same
+underlying IndexedDB instance (e.g. multiple browser tabs racing to persist offline pending state).
+
+```typescript
+const wrote = await fluidCache.putIf(entry, proposed, (existing, prop) => {
+	// `existing` is `undefined` if no entry exists for this key in this partition.
+	const existingRev = (existing as { rev?: number } | undefined)?.rev ?? -1;
+	return (prop as { rev: number }).rev > existingRev;
+});
+```
+
+The `shouldWrite` predicate must be synchronous — IndexedDB transactions auto-close on any non-IDB
+await, which would silently break the atomicity that makes the compare-and-swap correct. The predicate
+is invoked with `(existing, proposed)`; `existing` is `undefined` when the cached row would be invisible
+to `get` — that is, no entry exists for the key, the existing entry belongs to a different partition,
+or the existing entry is older than `maxCacheItemAge`. When the predicate returns `true`, the write
+always proceeds and atomically replaces whatever row sits at the key, including cross-partition or
+stale rows the predicate saw as `undefined` (matching the unconditional overwrite behavior of `put`).
+The call returns `true` if the new value was written and `false` if the predicate rejected the write
+or an error occurred.
+
+## Cross-instance change notifications (`onChange`)
+
+`FluidCache` broadcasts cache mutations over a `BroadcastChannel`, so other `FluidCache` instances
+in the same browsing context (typically other tabs of the same origin) can observe changes made
+elsewhere. Subscribe with `onChange`:
+
+```typescript
+const unsubscribe = fluidCache.onChange((event) => {
+	if (event.op === "removeFile") {
+		// All entries for this file were dropped by some other tab.
+	} else {
+		// event.op is "put" or "remove"; event.partitionKey matches this cache's partition.
+	}
+});
+// Later:
+unsubscribe();
+```
+
+Per-entry `put` and `remove` events are filtered by partition key (you only receive events whose
+`partitionKey` matches this cache's). `removeFile` events are delivered unconditionally because
+`removeEntries` drops rows regardless of partition.
+
+Note: `BroadcastChannel` does not echo a message back to the instance that posted it, so writes
+performed by *this* `FluidCache` do not invoke its own listeners — only other instances do.
+
+When the cache is no longer needed (e.g. user signs out, page unloads), call `fluidCache.dispose()`
+to close the `BroadcastChannel` and any open IndexedDB connection. `dispose` is idempotent. After
+`dispose` returns, every other public method (`get`, `put`, `putIf`, `removeEntry`, `removeEntries`,
+`onChange`) throws a `UsageError`. Operations that were already in flight when `dispose` was called
+also reject with a `UsageError`, and the underlying IndexedDB connection is not lazily reopened by
+any such in-flight call.
+
+If `BroadcastChannel` is not available in the runtime, `onChange` becomes a no-op subscription and
+writes simply don't broadcast.
+
 ## Clearing cache entries
 
 Whenever any Fluid content is loaded with the web cache enabled, a task is scheduled to clear out all "stale" cache
