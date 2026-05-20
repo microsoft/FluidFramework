@@ -872,8 +872,7 @@ describe("IdCompressor", () => {
 				compressor.finalizeCreationRange(compressor.takeNextCreationRange());
 				const opSpaceId = compressor.normalizeToOpSpace(localId);
 				assert(isFinalId(opSpaceId));
-				const sessionSpaceId =
-					compressor.tryNormalizeToSessionSpaceWithoutSession(opSpaceId);
+				const sessionSpaceId = compressor.tryNormalizeToSessionSpaceWithoutSession(opSpaceId);
 				// Round-trips through normalizeToSessionSpace with the local session,
 				// proving the value is correct.
 				assert.equal(
@@ -898,10 +897,7 @@ describe("IdCompressor", () => {
 				// Without the originator the result equals the with-originator normalization.
 				assert.equal(
 					result,
-					compressor2.normalizeToSessionSpace(
-						remoteOpSpaceId,
-						compressor1.localSessionId,
-					),
+					compressor2.normalizeToSessionSpace(remoteOpSpaceId, compressor1.localSessionId),
 				);
 			});
 
