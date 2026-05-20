@@ -226,11 +226,32 @@ export function createTreeContainerRuntimeFactory(props: {
 	 * If not provided, only the default options for the given compatibilityMode will be used.
 	 */
 	readonly runtimeOptionOverrides?: Partial<IContainerRuntimeOptions>;
+	/**
+	 * Optional override for minimum version for collaboration. Only consulted when
+	 * `compatibilityMode` is a legacy {@link CompatibilityMode} value (`"1"` or `"2"`);
+	 * if `compatibilityMode` is a {@link @fluidframework/runtime-definitions#MinimumVersionForCollab}
+	 * semver string, that value is used directly and this override is ignored.
+	 *
+	 * @deprecated Pass a {@link @fluidframework/runtime-definitions#MinimumVersionForCollab}
+	 * semver string directly via `compatibilityMode` instead.
+	 */
+	readonly minVersionForCollabOverride?: MinimumVersionForCollab;
 }): IRuntimeFactory {
-	const { rootDataStoreRegistry, runtimeOptionOverrides, schema } = props;
-	const minVersionForCollab = resolveCompatibilityModeToMinVersionForCollab(
-		props.compatibilityMode,
-	);
+	const {
+		compatibilityMode,
+		minVersionForCollabOverride,
+		rootDataStoreRegistry,
+		runtimeOptionOverrides,
+		schema,
+	} = props;
+	// When `compatibilityMode` is a semver string, it fully specifies `minVersionForCollab` and
+	// the deprecated override is ignored. Otherwise, the override takes precedence over the
+	// legacy `CompatibilityMode` mapping.
+	const minVersionForCollab: MinimumVersionForCollab =
+		compatibilityMode !== "1" && compatibilityMode !== "2"
+			? compatibilityMode
+			: (minVersionForCollabOverride ??
+				resolveCompatibilityModeToMinVersionForCollab(compatibilityMode));
 
 	const [registryEntries, sharedObjects] = parseDataObjectsFromSharedObjects(schema);
 	const registry = rootDataStoreRegistry ?? new FluidDataStoreRegistry(registryEntries);

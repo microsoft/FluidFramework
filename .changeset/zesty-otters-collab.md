@@ -3,27 +3,22 @@
 "fluid-framework": minor
 "__section": legacy
 ---
-`createTreeContainerRuntimeFactory` no longer accepts `minVersionForCollabOverride`
+createTreeContainerRuntimeFactory accepts a MinimumVersionForCollab semver and deprecates minVersionForCollabOverride
 
-The `minVersionForCollabOverride` property on the `props` argument of `createTreeContainerRuntimeFactory` has been removed.
-
-Pass a [`MinimumVersionForCollab`](https://fluidframework.com/docs/api/runtime-definitions/minimumversionforcollab-typealias) semver string (for example `"2.10.0"`) directly via the `compatibilityMode` property instead. `compatibilityMode` now accepts either a `MinimumVersionForCollab` semver string or the existing (deprecated) `CompatibilityMode` values `"1"` / `"2"`.
-
-Before:
+The `compatibilityMode` property on `createTreeContainerRuntimeFactory` now accepts a [`MinimumVersionForCollab`](https://fluidframework.com/docs/api/runtime-definitions/minimumversionforcollab-typealias) semver string in addition to the legacy [`CompatibilityMode`](https://fluidframework.com/docs/api/fluid-static/compatibilitymode-typealias) values `"1"` and `"2"`.
+When a semver is provided, `minVersionForCollabOverride` (now deprecated) is ignored.
 
 ```ts
+// Before
 createTreeContainerRuntimeFactory({
-    schema,
+    // ...
     compatibilityMode: "2",
     minVersionForCollabOverride: "2.10.0",
 });
-```
 
-After:
-
-```ts
+// After
 createTreeContainerRuntimeFactory({
-    schema,
+    // ...
     compatibilityMode: "2.10.0",
 });
 ```
