@@ -720,6 +720,37 @@ for (const immediateClose of [true, false]) {
 					"a disposed FluidCache must not broadcast change events after teardown",
 				);
 			});
+
+			it("putIf rejects with UsageError when dispose runs mid-flight and the predicate would reject", async () => {
+				fluidCache = getFluidCache();
+				const cacheEntry = getMockCacheEntry("postDisposePutIfReject");
+
+				// Predicate that would normally cause `putIf` to cooperatively return
+				// `false`. With dispose racing the in-flight transaction, the contract
+				// requires `UsageError` so the caller can distinguish "predicate
+				// rejected" from "cache was disposed mid-flight".
+				const pending = fluidCache.putIf(cacheEntry, { rev: 1 }, () => false);
+				fluidCache.dispose();
+
+				await assert.rejects(async () => pending, disposedMatcher);
+			});
+
+			it("get rejects with UsageError when dispose runs mid-flight", async () => {
+				// Seed a value with a separate cache so there is something to read,
+				// then start a `get` on a fresh cache and dispose synchronously to
+				// race the in-flight IDB read. The read success path must reject
+				// rather than silently surface the cached value.
+				const seed = getFluidCache();
+				extraCaches.push(seed);
+				const cacheEntry = getMockCacheEntry("postDisposeGetInflight");
+				await seed.put(cacheEntry, { rev: 1 });
+
+				fluidCache = getFluidCache();
+				const pending = fluidCache.get(cacheEntry);
+				fluidCache.dispose();
+
+				await assert.rejects(async () => pending, disposedMatcher);
+			});
 		});
 
 		describe("putIf staleness", () => {

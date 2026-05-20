@@ -506,6 +506,11 @@ export class FluidCache implements IPersistedCache {
 			db = await this.openDb();
 			const dbOpenPerf = performance.now() - dbOpenStartTime;
 			const value = await db.get(FluidDriverObjectStoreName, key);
+			// Dispose may have landed during `await db.get(...)`. Reject before
+			// surfacing the cached value so the read success path observes the
+			// disposed state cleanly, matching the post-await guard on the write
+			// methods and the existing catch-block guard below.
+			this.throwIfDisposed();
 
 			if (!value) {
 				this.closeDb(db);
@@ -640,6 +645,11 @@ export class FluidCache implements IPersistedCache {
 
 			if (!shouldWrite(existingValue, value)) {
 				await transaction.done;
+				// Dispose may have landed during `await transaction.done`. Reject before
+				// returning the cooperative `false` so an awaiting caller cannot
+				// confuse "predicate rejected the write" with "cache was disposed
+				// mid-flight" — matching the post-await guard on the success branch.
+				this.throwIfDisposed();
 				return false;
 			}
 
