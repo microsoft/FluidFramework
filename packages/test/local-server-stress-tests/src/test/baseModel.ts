@@ -4,6 +4,7 @@
  */
 
 import * as path from "node:path";
+import { fileURLToPath } from "node:url";
 
 import {
 	type AsyncGenerator,
@@ -24,13 +25,12 @@ import {
 	loadAllHandles,
 	type DDSModelOp,
 	type OrderSequentially,
-} from "./ddsOperations";
-import { _dirname } from "./dirname.cjs";
+} from "./ddsOperations.js";
 import {
 	createWeightedAsyncGeneratorWithDynamicWeights,
 	type DynamicAsyncWeights,
 } from "./dynamicWeightGenerator.js";
-import type { LocalServerStressState } from "./localServerStressHarness";
+import type { LocalServerStressState } from "./localServerStressHarness.js";
 import type { StressDataObjectOperations } from "./stressDataObject.js";
 
 export type StressOperations = StressDataObjectOperations | DDSModelOp | OrderSequentially;
@@ -246,9 +246,14 @@ export function makeGenerator<T extends BaseOperation>(
 		return op;
 	};
 }
-export const saveFailures = { directory: path.join(_dirname, "../src/test/results") };
-export const saveSuccesses = { directory: path.join(_dirname, "../src/test/results") };
-export const saveFluidOps = { directory: path.join(_dirname, "../src/test/results") };
+
+const srcResultsPath = path.join(
+	path.dirname(fileURLToPath(import.meta.url)),
+	"../../src/test/results",
+);
+export const saveFailures = { directory: srcResultsPath };
+export const saveSuccesses = { directory: srcResultsPath };
+export const saveFluidOps = { directory: srcResultsPath };
 
 export const ddsModelMinimizers: MinimizationTransform<BaseOperation>[] = [
 	...ddsModelMap.entries(),

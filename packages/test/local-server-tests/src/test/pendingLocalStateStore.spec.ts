@@ -22,7 +22,7 @@ import {
 	getRequiredPendingLocalState,
 } from "@fluidframework/test-utils/internal";
 
-import { createLoader } from "../utils.js";
+import { createLoader } from "./utils.js";
 
 describe("PendingLocalStateStore End-to-End Tests", () => {
 	/**

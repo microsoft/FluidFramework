@@ -94,6 +94,15 @@
 		"sinon": "^18.0.1",
 		"typescript": "~5.4.5"
 	},
+	"fluidBuild": {
+		"_tasks_comment": "This package does not have a proper ESM build. All consumers depend on CommonJS. So building CommonJS when ESM is requested ensures the CommonJS expectation is satisfied.",
+		"tasks": {
+			"build:esnext": [
+				"...",
+				"tsc"
+			]
+		}
+	},
 	"typeValidation": {
 		"disabled": true
 	}
