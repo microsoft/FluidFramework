@@ -13,6 +13,8 @@ import {
 	TreeStoredSchemaRepository,
 	rootFieldKey,
 } from "../../../core/index.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import { BasicChunk } from "../../../feature-libraries/chunked-forest/basicChunk.js";
 import {
 	Chunker,
 	type IChunker,
@@ -236,6 +238,74 @@ describe("ChunkedForest", () => {
 				}
 			}
 			assert.deepEqual(values, [0, 1, 99, 2, 3, 4]);
+		});
+
+		it("bisects a large uniform chunk when attaching inside it", () => {
+			// 25-node uniform chunk at root with bisect threshold = 5. Attaching at node index 6
+			// forces splitFieldAtIndex to descend via the bisect path: 25 > 5 → cut at 12;
+			// 12 > 5 → cut at 6; the resulting 6-node chunk is at-or-below threshold so the
+			// final cut lands exactly on the boundary. Net effect: the chunk holding the target
+			// index is bisected, the other halves are left untouched.
+			const forestSchema = new TreeStoredSchemaRepository(
+				toInitialSchema(SchemaFactory.number),
+			);
+			const customChunker = new Chunker(
+				forestSchema,
+				defaultSchemaPolicy,
+				Number.POSITIVE_INFINITY,
+				Number.POSITIVE_INFINITY,
+				25 /* uniformChunkNodeCount */,
+				5 /* uniformChunkNodeCountDynamicTargetMax */,
+				(type, shapes) =>
+					tryShapeFromNodeSchema(
+						{
+							schema: forestSchema,
+							policy: defaultSchemaPolicy,
+							shouldEncodeIncrementally: defaultIncrementalEncodingPolicy,
+							shapes,
+						},
+						type,
+					),
+			);
+			const forest = buildChunkedForest(customChunker);
+			const initialValues = Array.from({ length: 25 }, (_, i) => i);
+			forest.roots.fields.set(rootFieldKey, [
+				new UniformChunk(numberShape.withTopLevelLength(25), initialValues),
+			]);
+
+			// Stage a single-node source chunk in the detached field to attach at index 6.
+			const source = new UniformChunk(numberShape.withTopLevelLength(1), [99]);
+			forest.roots.fields.set(detachedKey, [source]);
+
+			const visitor = forest.acquireVisitor();
+			visitor.enterField(rootFieldKey);
+			visitor.attach(detachedKey, 1, 6);
+			visitor.exitField(rootFieldKey);
+			visitor.free();
+
+			// Source detached field is consumed.
+			assert.equal(forest.roots.fields.get(detachedKey), undefined);
+
+			const updated = forest.roots.fields.get(rootFieldKey);
+			assert(updated !== undefined);
+
+			// Recursive bisect produces [6, 6, 13]; the attach splices source(1) at index 1.
+			// The 13-node tail is the half NOT containing the split index, so it stays intact.
+			assert.deepEqual(
+				updated.map((c) => c.topLevelLength),
+				[6, 1, 6, 13],
+			);
+			assert.equal(nodeCount(updated), 26);
+
+			const values: unknown[] = [];
+			for (const chunk of updated) {
+				const cursor = chunk.cursor();
+				for (let hasNode = cursor.firstNode(); hasNode; hasNode = cursor.nextNode()) {
+					values.push(cursor.value);
+				}
+			}
+			const expected = [...initialValues.slice(0, 6), 99, ...initialValues.slice(6)];
+			assert.deepEqual(values, expected);
 		});
 	});
 });
