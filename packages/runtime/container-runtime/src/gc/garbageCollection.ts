@@ -840,18 +840,18 @@ export class GarbageCollector implements IGarbageCollector {
 		const gcDataSuperSet = concatGarbageCollectionData(previousGCData, currentGCData);
 		const newOutboundRoutesSinceLastRun: string[] = [];
 		for (const [sourceNodeId, outboundRoutes] of this.newReferencesSinceLastRun) {
-			if (gcDataSuperSet.gcNodes[sourceNodeId] === undefined) {
+			const target: string[] | undefined = gcDataSuperSet.gcNodes[sourceNodeId];
+			if (target === undefined) {
 				gcDataSuperSet.gcNodes[sourceNodeId] = outboundRoutes;
 			} else {
 				// Avoid `push(...outboundRoutes)`: spreading a large array into a variadic call
 				// can exceed the engine's argument-count limit and throw RangeError.
-				// TODO: Fix this violation and remove the disable
-				// eslint-disable-next-line @fluid-internal/fluid/no-unchecked-record-access
-				const target = gcDataSuperSet.gcNodes[sourceNodeId];
 				for (const route of outboundRoutes) {
 					target.push(route);
 				}
 			}
+			// Avoid `push(...outboundRoutes)`: spreading a large array into a variadic call
+			// can exceed the engine's argument-count limit and throw RangeError.
 			for (const route of outboundRoutes) {
 				newOutboundRoutesSinceLastRun.push(route);
 			}

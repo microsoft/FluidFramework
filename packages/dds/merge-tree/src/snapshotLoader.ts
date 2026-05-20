@@ -135,8 +135,6 @@ export class SnapshotLoader {
 				// out ok since none of these values end up being used. (specifically, the 'firstRemovedSeq' is fake
 				// for all values other than the actual first remove).
 				// This issue only affects V1 summaries, as the strategy in snapshotlegacy avoids storing merge info directly.
-				// Avoid spreading into push: a large array could exceed the engine's
-				// argument-count limit and throw RangeError.
 				for (const id of spec.removedClientIds) {
 					removes.push({
 						type: "setRemove",
