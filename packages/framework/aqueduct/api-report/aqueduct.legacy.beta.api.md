@@ -52,12 +52,9 @@ export interface ContainerRuntimeFactoryWithDefaultDataStoreProps {
 
 // @beta @legacy
 export abstract class DataObject<I extends DataObjectTypes = DataObjectTypes> extends PureDataObject<I> {
-    protected getClaim(key: string): unknown;
     protected getUninitializedErrorString(item: string): string;
-    protected hasClaim(key: string): boolean;
     initializeInternal(existing: boolean): Promise<void>;
     protected get root(): ISharedDirectory;
-    protected trySetClaim(key: string, value: unknown): IClaimAttempt;
 }
 
 // @beta @legacy

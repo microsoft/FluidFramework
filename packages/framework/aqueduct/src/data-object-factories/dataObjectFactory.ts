@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { SharedClaims, SharedClaimsFactory } from "@fluidframework/claims-dds/internal";
 import type { FluidDataStoreRuntime } from "@fluidframework/datastore/internal";
 import type { IChannelFactory } from "@fluidframework/datastore-definitions/internal";
 import {
@@ -82,6 +83,12 @@ export class DataObjectFactory<
 		if (!sharedObjects.some((factory) => factory.type === MapFactory.Type)) {
 			// User did not register for map
 			sharedObjects.push(SharedMap.getFactory());
+		}
+
+		// Auto-install the SharedClaims channel that powers the
+		// `trySetClaim` / `getClaim` / `hasClaim` helpers on `DataObject`.
+		if (!sharedObjects.some((factory) => factory.type === SharedClaimsFactory.Type)) {
+			sharedObjects.push(SharedClaims.getFactory());
 		}
 
 		super(newProps);

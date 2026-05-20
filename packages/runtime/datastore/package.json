@@ -160,9 +160,6 @@
 		"broken": {
 			"Class_FluidDataStoreRuntime": {
 				"forwardCompat": false
-			},
-			"Enum_DataStoreMessageType": {
-				"backCompat": false
 			}
 		},
 		"entrypoint": "legacy"

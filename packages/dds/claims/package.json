@@ -1,12 +1,12 @@
 {
-	"name": "@fluidframework/aqueduct",
+	"name": "@fluidframework/claims-dds",
 	"version": "2.101.0",
-	"description": "A set of implementations for Fluid Framework interfaces.",
+	"description": "First-writer-wins Claims DDS",
 	"homepage": "https://fluidframework.com",
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/microsoft/FluidFramework.git",
-		"directory": "packages/framework/aqueduct"
+		"directory": "packages/dds/claims"
 	},
 	"license": "MIT",
 	"author": "Microsoft and contributors",
@@ -58,6 +58,7 @@
 		"build:compile": "fluid-build . --task compile",
 		"build:docs": "api-extractor run --local",
 		"build:esnext": "tsc --project ./tsconfig.json",
+		"build:genver": "gen-version",
 		"build:test": "npm run build:test:esm && npm run build:test:cjs",
 		"build:test:cjs": "fluid-tsc commonjs --project ./src/test/tsconfig.cjs.json",
 		"build:test:esm": "tsc --project ./src/test/tsconfig.json",
@@ -88,7 +89,7 @@
 		"test:mocha:esm": "mocha",
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
 		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ../../../common/build/build-common/src/cjs/package.json ./dist",
-		"typetests:gen": "flub generate typetests --dir . -v"
+		"typetests:gen": "echo no-op (no previous version)"
 	},
 	"c8": {
 		"all": true,
@@ -113,33 +114,25 @@
 		"temp-directory": "nyc/.nyc_output"
 	},
 	"dependencies": {
-		"@fluid-internal/client-utils": "workspace:~",
-		"@fluidframework/container-definitions": "workspace:~",
-		"@fluidframework/container-runtime": "workspace:~",
-		"@fluidframework/claims-dds": "workspace:~",
-		"@fluidframework/container-runtime-definitions": "workspace:~",
 		"@fluidframework/core-interfaces": "workspace:~",
 		"@fluidframework/core-utils": "workspace:~",
-		"@fluidframework/datastore": "workspace:~",
 		"@fluidframework/datastore-definitions": "workspace:~",
-		"@fluidframework/map": "workspace:~",
-		"@fluidframework/request-handler": "workspace:~",
+		"@fluidframework/driver-definitions": "workspace:~",
+		"@fluidframework/driver-utils": "workspace:~",
 		"@fluidframework/runtime-definitions": "workspace:~",
-		"@fluidframework/runtime-utils": "workspace:~",
 		"@fluidframework/shared-object-base": "workspace:~",
-		"@fluidframework/synthesize": "workspace:~",
-		"@fluidframework/telemetry-utils": "workspace:~",
-		"@fluidframework/tree": "workspace:~"
+		"@fluidframework/telemetry-utils": "workspace:~"
 	},
 	"devDependencies": {
 		"@arethetypeswrong/cli": "^0.18.2",
 		"@biomejs/biome": "~2.4.5",
 		"@fluid-internal/mocha-test-setup": "workspace:~",
 		"@fluid-tools/build-cli": "catalog:buildTools",
-		"@fluidframework/aqueduct-previous": "npm:@fluidframework/aqueduct@2.92.0",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "catalog:buildTools",
+		"@fluidframework/container-definitions": "workspace:~",
 		"@fluidframework/eslint-config-fluid": "catalog:eslint",
+		"@fluidframework/test-runtime-utils": "workspace:~",
 		"@microsoft/api-extractor": "7.58.1",
 		"@types/mocha": "^10.0.10",
 		"@types/node": "catalog:types",
@@ -155,14 +148,8 @@
 		"typescript": "~5.4.5"
 	},
 	"typeValidation": {
-		"broken": {
-			"Interface_IDataObjectProps": {
-				"forwardCompat": false
-			},
-			"Interface_DataObjectFactoryProps": {
-				"forwardCompat": false
-			}
-		},
+		"broken": {},
+		"disabled": true,
 		"entrypoint": "legacy"
 	}
 }

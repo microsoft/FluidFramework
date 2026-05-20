@@ -3,16 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import type {
-	ClaimResult,
-	IClaimAttempt,
-} from "@fluidframework/datastore-definitions/internal";
+import type { IClaimAttempt, ISharedClaims } from "@fluidframework/claims-dds/internal";
+import { SharedClaims } from "@fluidframework/claims-dds/internal";
 import {
 	type ISharedDirectory,
 	MapFactory,
 	SharedDirectory,
 } from "@fluidframework/map/internal";
-import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import { PureDataObject } from "./pureDataObject.js";
 import type { DataObjectTypes } from "./types.js";
@@ -26,19 +23,17 @@ import type { DataObjectTypes } from "./types.js";
  * will automatically be registered.
  *
  * @remarks
- * In addition to the {@link DataObject.root | root directory}, `DataObject`
- * also exposes a first-writer-wins **claims** API:
- * {@link DataObject.trySetClaim}, {@link DataObject.getClaim}, and
- * {@link DataObject.hasClaim}. Use a claim instead of `root.set` when you
- * need to wire up a singleton entry (typically a handle to a child DDS or
- * data store) and want first-writer-wins semantics — once a claim is
- * sequenced it can never be overwritten by another client. By contrast,
- * `root.set` (and other DDS writes) use last-writer-wins semantics, so two
- * clients racing to populate the same key will silently overwrite each
- * other.
- *
- * Claims require the underlying data store runtime to have the
- * `enableDataStoreClaims` policy enabled.
+ * In addition to the {@link DataObject.root | root directory}, every
+ * `DataObject` is automatically primed with a
+ * {@link @fluidframework/claims-dds#SharedClaims | SharedClaims} channel
+ * exposed through the {@link DataObject.trySetClaim},
+ * {@link DataObject.getClaim}, and {@link DataObject.hasClaim} helpers.
+ * Use a claim instead of `root.set` when you need to wire up a singleton
+ * entry (typically a handle to a child DDS or data store) and want
+ * first-writer-wins semantics — once a claim is sequenced it can never be
+ * overwritten by another client. By contrast, `root.set` (and other DDS
+ * writes) use last-writer-wins semantics, so two clients racing to
+ * populate the same key will silently overwrite each other.
  *
  * @typeParam I - The optional input types used to strongly type the data object
  * @legacy
@@ -48,7 +43,9 @@ export abstract class DataObject<
 	I extends DataObjectTypes = DataObjectTypes,
 > extends PureDataObject<I> {
 	private internalRoot: ISharedDirectory | undefined;
+	private internalClaims: ISharedClaims | undefined;
 	private readonly rootDirectoryId = "root";
+	private readonly claimsChannelId = "claims";
 
 	/**
 	 * The root directory will either be ready or will return an error. If an error is thrown
@@ -63,14 +60,13 @@ export abstract class DataObject<
 	}
 
 	/**
-	 * Attempts to set a first-writer-wins claim on this data store.
+	 * Attempts to set a first-writer-wins claim on this data object.
 	 *
 	 * Returns synchronously with an {@link IClaimAttempt} describing the
 	 * immediate state. Its {@link IClaimAttempt.status} is `"Success"` or
 	 * `"AlreadyClaimed"` when the outcome is already known locally
 	 * (detached, or the key was previously sequenced), and `"Pending"`
-	 * otherwise (e.g. while disconnected, while the op is in flight, or
-	 * while claim state is still being loaded from the base snapshot).
+	 * otherwise (e.g. while disconnected or while the op is in flight).
 	 * Callers can branch on the status immediately for race / fallback
 	 * logic and await {@link IClaimAttempt.result} to observe the final
 	 * sequenced outcome.
@@ -81,33 +77,41 @@ export abstract class DataObject<
 	 * @param key - The claim key (non-empty string).
 	 * @param value - The JSON-serializable value to claim. May contain
 	 * {@link @fluidframework/core-interfaces#IFluidHandle} instances; these
-	 * are encoded the same way as handles in summary blobs and contribute
-	 * outbound routes to garbage collection.
+	 * are encoded the same way as handles in any other DDS value and
+	 * contribute outbound routes to garbage collection.
 	 * @returns An {@link IClaimAttempt} carrying the immediate status and
-	 * a promise for the eventual sequenced {@link ClaimResult}.
+	 * a promise for the eventual sequenced result.
+	 *
+	 * @internal
 	 */
 	protected trySetClaim(key: string, value: unknown): IClaimAttempt {
-		if (this.runtime.trySetClaim === undefined) {
-			throw new UsageError(
-				"The data store runtime does not support claims. Enable the `enableDataStoreClaims` policy on the data store runtime to use this API.",
-			);
-		}
-		return this.runtime.trySetClaim(key, value);
+		return this.getClaims().trySetClaim(key, value);
 	}
 
 	/**
 	 * Returns the value of a previously-claimed key, or `undefined` if the
 	 * key has not been claimed. Embedded handles are decoded.
+	 *
+	 * @internal
 	 */
 	protected getClaim(key: string): unknown {
-		return this.runtime.getClaim?.(key);
+		return this.getClaims().getClaim(key);
 	}
 
 	/**
 	 * Returns `true` if a claim has been sequenced for the given key.
+	 *
+	 * @internal
 	 */
 	protected hasClaim(key: string): boolean {
-		return this.runtime.hasClaim?.(key) ?? false;
+		return this.getClaims().hasClaim(key);
+	}
+
+	private getClaims(): ISharedClaims {
+		if (!this.internalClaims) {
+			throw new Error(this.getUninitializedErrorString(`claims`));
+		}
+		return this.internalClaims;
 	}
 
 	/**
@@ -132,10 +136,31 @@ export abstract class DataObject<
 						"Legacy document, SharedMap is masquerading as SharedDirectory in DataObject",
 				});
 			}
+
+			// The claims channel is added by this version of DataObject; legacy
+			// documents (created before this change) will not have it. Try to
+			// load it, and fall back to creating it locally so older documents
+			// can still use the claim helpers in-process. The locally-created
+			// channel will be persisted on the next summary and become visible
+			// to other clients with this version of DataObject.
+			try {
+				this.internalClaims = (await this.runtime.getChannel(
+					this.claimsChannelId,
+				)) as unknown as ISharedClaims;
+			} catch {
+				const created = SharedClaims.create(this.runtime, this.claimsChannelId);
+				created.bindToContext();
+				this.internalClaims = created;
+			}
 		} else {
 			// Create a root directory and register it before calling initializingFirstTime
 			this.internalRoot = SharedDirectory.create(this.runtime, this.rootDirectoryId);
 			this.internalRoot.bindToContext();
+
+			// Create and register the auto-installed claims channel.
+			const claims = SharedClaims.create(this.runtime, this.claimsChannelId);
+			claims.bindToContext();
+			this.internalClaims = claims;
 		}
 
 		await super.initializeInternal(existing);

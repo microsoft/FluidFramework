@@ -1,20 +1,38 @@
 ---
-"@fluidframework/datastore-definitions": minor
-"@fluidframework/datastore": minor
-"@fluidframework/runtime-definitions": minor
+"@fluidframework/claims-dds": minor
 "@fluidframework/aqueduct": minor
 "__section": feature
 ---
-Add first-writer-wins claims to data store runtime and DataObject
+Add first-writer-wins claims to DataObject via a new internal SharedClaims DDS
 
-This adds a new "claim" primitive to `IFluidDataStoreRuntime` and `DataObject`
-that lets a data store publish first-writer-wins key/value entries. A claim
-is conceptually a small piece of immutable per-data-store state where the
-first client to write a given key wins; concurrent writers from other clients
-observe `"AlreadyClaimed"` and can branch their logic accordingly.
+This adds a new "claim" primitive for partner scenarios that need to wire up
+singleton entries (typically a handle to a child DDS or data store) with
+first-writer-wins semantics, rather than the last-writer-wins semantics of
+writing to a `SharedMap` / `SharedDirectory`.
 
-New API surface (all `@legacy` `@beta`):
+The feature ships as:
 
+- **New package** `@fluidframework/claims-dds` exporting `SharedClaims`,
+  a small DDS that stores immutable, first-writer-wins key/value entries.
+  The entire public surface of this package is `@internal` — it is
+  intended to be consumed only through the `DataObject` helpers below,
+  not directly. Each key can be set at most once for the lifetime of the
+  document; the first sequenced op wins and every subsequent attempt —
+  local or remote — observes `"AlreadyClaimed"`. Values are
+  JSON-serializable and may contain `IFluidHandle` instances, which are
+  encoded the standard way and contribute outbound routes to garbage
+  collection.
+
+- **Auto-installation on `DataObject`**: every `DataObject` is now primed
+  with a `SharedClaims` channel (id `claims`) alongside `root`. The new
+  helpers `DataObject.trySetClaim`, `DataObject.getClaim`, and
+  `DataObject.hasClaim` (all `@internal`) delegate to that channel. The
+  `DataObjectFactory` automatically registers `SharedClaimsFactory` (no
+  consumer action required).
+
+Internal API surface:
+
+- `SharedClaims`, `SharedClaimsFactory`, `ISharedClaims`, `ISharedClaimsEvents`.
 - `ClaimResult = "Success" | "AlreadyClaimed"` — terminal sequenced
   outcome of a claim attempt.
 - `IClaimAttempt` — the synchronous return shape of `trySetClaim`. It is
@@ -24,24 +42,22 @@ New API surface (all `@legacy` `@beta`):
     sequenced). There is nothing to await.
   - `{ status: "Pending"; result: Promise<ClaimResult> }` when the
     outcome can't be determined locally yet — for example, the client
-    is attached but disconnected, the op has been submitted but not
-    yet sequenced, or claim state is still being hydrated from the
-    base snapshot. The `result` promise resolves to the final
+    is attached but disconnected, or the op has been submitted but not
+    yet sequenced. The `result` promise resolves to the final
     sequenced `ClaimResult`, or rejects if the runtime is disposed
-    before the attempt is sequenced.
-- `IFluidDataStoreRuntime.trySetClaim(key, value): IClaimAttempt`,
-  `getClaim(key)`, `hasClaim(key)`, and `claims` (a read-only iterator).
-- `IFluidDataStorePolicies.enableDataStoreClaims` opt-in flag (defaults to
-  off; set to `true` on the data store runtime to enable the API).
-- `DataObject.trySetClaim`, `getClaim`, `hasClaim` convenience helpers that
-  forward to the runtime.
-
-Claim values may contain `IFluidHandle` instances; these are encoded the same
-way as handles in summary blobs and contribute outbound routes to garbage
-collection. Claims are persisted via a `.claims` summary blob on the data
-store and rehydrated on subsequent loads.
+    (or the attempt is discarded with staged changes) before the
+    attempt is sequenced.
+- `DataObject.trySetClaim`, `getClaim`, `hasClaim` convenience helpers
+  forwarding to the auto-installed `SharedClaims` channel.
 
 Use a claim (rather than writing to `DataObject.root`) when you specifically
 need first-writer-wins semantics — for example, when multiple clients race
 to designate themselves as the owner of a particular role within the data
 store and only one should succeed.
+
+Compatibility: documents created or opened by code that has this change
+will gain a new `claims` channel inside every `DataObject`. Older clients
+that open such documents will see the channel as an unknown DDS type and
+won't be able to interact with claims, but the rest of the data object
+continues to work normally. No new top-level op type is introduced — the
+new channel uses ordinary DDS ops.
