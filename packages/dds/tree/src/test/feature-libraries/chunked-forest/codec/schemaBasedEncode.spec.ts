@@ -469,6 +469,7 @@ describe("schemaBasedEncoding", () => {
 					const fieldBatchContext: FieldBatchEncodingContext = {
 						encodeType: TreeCompressionStrategy.Compressed,
 						originatorId: testIdCompressor.localSessionId,
+						isSummary: false,
 						schema: { schema: storedSchema, policy: defaultSchemaPolicy },
 						idCompressor,
 					};

@@ -330,6 +330,7 @@ export function encodeDetachedNodes(
 					schema: context.schema,
 					originatorId: context.originatorId,
 					idCompressor: context.idCompressor,
+					isSummary: context.isSummary,
 				}),
 			};
 }
@@ -353,6 +354,9 @@ export function decodeDetachedNodes(
 		encodeType: chunkCompressionStrategy,
 		originatorId: context.originatorId,
 		idCompressor: context.idCompressor,
+		isSummary: context.isSummary,
+		healUnresolvableIdentifiersOnDecode: context.healUnresolvableIdentifiersOnDecode,
+		sharedObjectId: context.sharedObjectId,
 	});
 	const getChunk = (index: number): TreeChunk => {
 		assert(index < chunks.length, 0x898 /* out of bounds index for build chunk */);

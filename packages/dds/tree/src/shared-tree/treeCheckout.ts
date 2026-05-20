@@ -750,6 +750,7 @@ export class TreeCheckout implements ITreeCheckout {
 							idCompressor: this.idCompressor,
 							originatorId: this.idCompressor.localSessionId,
 							revision,
+							isSummary: false,
 						};
 						const encodedChange = this.changeFamily.codecs.resolve(4).encode(change, context);
 
@@ -820,6 +821,7 @@ export class TreeCheckout implements ITreeCheckout {
 			idCompressor: this.idCompressor,
 			originatorId: this.idCompressor.localSessionId,
 			revision,
+			isSummary: false,
 		};
 		const decodedChange = this.changeFamily.codecs.resolve(4).decode(change, context);
 		// Apply the change to the branch, but _not_ the `activeBranch` - we do not support squashing serialized commits in a transaction.
