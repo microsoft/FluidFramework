@@ -5,7 +5,6 @@
 
 import { strict as assert } from "node:assert";
 
-import type { Off } from "@fluidframework/core-interfaces";
 import {
 	BenchmarkType,
 	benchmarkDuration,
@@ -13,14 +12,15 @@ import {
 	benchmarkMemoryUse,
 	memoryAddedBy,
 } from "@fluid-tools/benchmark";
+import type { Off } from "@fluidframework/core-interfaces";
 
-import { SchemaFactory, type TreeNode } from "../../simple-tree/index.js";
 import { Tree } from "../../shared-tree/index.js";
+import { SchemaFactory, type TreeNode } from "../../simple-tree/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { iterationSettings } from "../memory/utils.js";
 import { configureBenchmarkHooks } from "../utils.js";
 
-import { hydrate } from "./utils.js";
+import { describeHydration, hydrate } from "./utils.js";
 
 /**
  * Benchmark suite for `Tree.on` event registration and emission.
@@ -47,8 +47,6 @@ describe("Tree event benchmarks", () => {
 		hydrate(ObjectRoot, { a: 0, b: 0, c: "", inner: { x: 0, y: 0 } });
 	const makeUnhydratedObject = (): ObjectRoot =>
 		new ObjectRoot({ a: 0, b: 0, c: "", inner: new Inner({ x: 0, y: 0 }) });
-	const makeArray = (): NumberArray => hydrate(NumberArray, [0, 1, 2, 3, 4]);
-	const makeMap = (): StringMap => hydrate(StringMap, new Map([["k0", "v0"]]));
 
 	// A no-op listener that is shared across iterations so that we don't measure
 	// listener-creation cost.
@@ -57,67 +55,50 @@ describe("Tree event benchmarks", () => {
 
 	// #region Registration (sub + unsub round-trip) — CPU
 
-	describe("Tree.on subscribe + unsubscribe round-trip (hydrated)", () => {
+	describeHydration("Tree.on subscribe + unsubscribe round-trip", (init) => {
 		interface Scenario {
 			readonly title: string;
-			readonly eventName: "nodeChanged" | "treeChanged";
 			readonly makeNode: () => TreeNode;
 		}
 		const scenarios: readonly Scenario[] = [
-			{ title: "object nodeChanged", eventName: "nodeChanged", makeNode: makeObject },
-			{ title: "object treeChanged", eventName: "treeChanged", makeNode: makeObject },
-			{ title: "array nodeChanged", eventName: "nodeChanged", makeNode: makeArray },
-			{ title: "array treeChanged", eventName: "treeChanged", makeNode: makeArray },
-			{ title: "map nodeChanged", eventName: "nodeChanged", makeNode: makeMap },
-			{ title: "map treeChanged", eventName: "treeChanged", makeNode: makeMap },
+			{
+				title: "object",
+				makeNode: () =>
+					init(ObjectRoot, {
+						a: 0,
+						b: 0,
+						c: "",
+						inner: new Inner({ x: 0, y: 0 }),
+					}),
+			},
+			{
+				title: "array",
+				makeNode: () => init(NumberArray, [0, 1, 2, 3, 4]),
+			},
+			{
+				title: "map",
+				makeNode: () => init(StringMap, new Map([["k0", "v0"]])),
+			},
 		];
 
-		for (const { title, eventName, makeNode } of scenarios) {
-			benchmarkIt({
-				type: BenchmarkType.Measurement,
-				title,
-				...benchmarkDuration({
-					benchmarkFnCustom: async (state) => {
-						const node = makeNode();
-						const listener =
-							eventName === "nodeChanged" ? noopNodeChanged : noopTreeChanged;
-						state.timeAllBatches(() => {
-							const off = Tree.on(node, eventName, listener);
-							off();
-						});
-					},
-				}),
-			});
+		for (const { title, makeNode } of scenarios) {
+			for (const eventName of ["nodeChanged", "treeChanged"] as const) {
+				const listener = eventName === "nodeChanged" ? noopNodeChanged : noopTreeChanged;
+				benchmarkIt({
+					type: BenchmarkType.Measurement,
+					title: `${title} ${eventName}`,
+					...benchmarkDuration({
+						benchmarkFnCustom: async (state) => {
+							const node = makeNode();
+							state.timeAllBatches(() => {
+								const off = Tree.on(node, eventName, listener);
+								off();
+							});
+						},
+					}),
+				});
+			}
 		}
-	});
-
-	describe("Tree.on subscribe + unsubscribe round-trip (unhydrated)", () => {
-		benchmarkIt({
-			type: BenchmarkType.Measurement,
-			title: "object nodeChanged",
-			...benchmarkDuration({
-				benchmarkFnCustom: async (state) => {
-					const node = makeUnhydratedObject();
-					state.timeAllBatches(() => {
-						const off = Tree.on(node, "nodeChanged", noopNodeChanged);
-						off();
-					});
-				},
-			}),
-		});
-		benchmarkIt({
-			type: BenchmarkType.Measurement,
-			title: "object treeChanged",
-			...benchmarkDuration({
-				benchmarkFnCustom: async (state) => {
-					const node = makeUnhydratedObject();
-					state.timeAllBatches(() => {
-						const off = Tree.on(node, "treeChanged", noopTreeChanged);
-						off();
-					});
-				},
-			}),
-		});
 	});
 
 	// #endregion
