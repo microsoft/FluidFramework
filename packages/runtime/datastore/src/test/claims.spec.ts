@@ -378,15 +378,112 @@ describe("FluidDataStoreRuntime claims", () => {
 		}
 	});
 
-	it("staging mode: trySetClaim throws", () => {
-		const { context } = makeContext();
-		(context.containerRuntime as unknown as { inStagingMode: boolean }).inStagingMode = true;
+	it("staging mode: trySetClaim submits the op and reports Pending", async () => {
+		const { context, submitted } = makeContext();
+		(context.containerRuntime as unknown as { inStagingMode: boolean }).inStagingMode =
+			true;
 		const runtime = createRuntime(context);
-		assert.throws(
-			() => runtime.trySetClaim?.("k", "v"),
-			(e: IErrorBase) =>
-				e.errorType === ContainerErrorTypes.usageError && e.message.includes("staging"),
+		const attempt = runtime.trySetClaim?.("k", "v");
+		assert(attempt !== undefined);
+		assert.strictEqual(attempt.status, "Pending");
+		// The op flows through the normal submit path; once staging is
+		// committed and the op is sequenced, the deferred will resolve.
+		const op = await popClaim(submitted);
+		runtime.processMessages(makeClaimAck(op, true));
+		assert.strictEqual(await attempt.result, "Success");
+	});
+
+	it("staging mode: already-won keys still resolve synchronously", async () => {
+		const { context, submitted } = makeContext();
+		const runtime = createRuntime(context);
+		const first = runtime.trySetClaim?.("k", "v");
+		runtime.processMessages(makeClaimAck(await popClaim(submitted), true));
+		assert.strictEqual(await awaitResult(first), "Success");
+
+		(context.containerRuntime as unknown as { inStagingMode: boolean }).inStagingMode =
+			true;
+		const retry = runtime.trySetClaim?.("k", "v2");
+		assert.strictEqual(retry?.status, "Success");
+		assert.strictEqual(submitted.length, 0);
+	});
+
+	it("staging mode: keys already claimed by another client resolve synchronously to AlreadyClaimed", () => {
+		const { context, submitted } = makeContext();
+		const runtime = createRuntime(context);
+		// Remote winner sequenced before staging begins.
+		runtime.processMessages(makeClaimAck({ key: "k", value: "remote" }, false));
+
+		(context.containerRuntime as unknown as { inStagingMode: boolean }).inStagingMode =
+			true;
+		const attempt = runtime.trySetClaim?.("k", "local");
+		assert.strictEqual(attempt?.status, "AlreadyClaimed");
+		assert.strictEqual(submitted.length, 0);
+	});
+
+	it("staging mode: discardChanges rejects the pending result and leaves state untouched", async () => {
+		const { context, submitted } = makeContext();
+		(context.containerRuntime as unknown as { inStagingMode: boolean }).inStagingMode =
+			true;
+		const runtime = createRuntime(context);
+		const attempt = runtime.trySetClaim?.("k", "v");
+		assert(attempt !== undefined && attempt.status === "Pending");
+		const op = await popClaim(submitted);
+
+		// Simulate the container runtime rolling back the staged op.
+		runtime.rollback?.(
+			DataStoreMessageType.Claim,
+			op as unknown as Record<string, unknown>,
+			undefined,
 		);
+
+		await assert.rejects(
+			attempt.result,
+			(e: IErrorBase) =>
+				e.errorType === ContainerErrorTypes.usageError &&
+				e.message.includes("discarded"),
+		);
+		// State must not have been mutated speculatively by the staged op.
+		assert.strictEqual(runtime.hasClaim?.("k"), false);
+		assert.strictEqual(runtime.getClaim?.("k"), undefined);
+
+		// A fresh attempt after rollback works normally.
+		(context.containerRuntime as unknown as { inStagingMode: boolean }).inStagingMode =
+			false;
+		const retry = runtime.trySetClaim?.("k", "v2");
+		assert(retry?.status === "Pending");
+		runtime.processMessages(makeClaimAck(await popClaim(submitted), true));
+		assert.strictEqual(await retry.result, "Success");
+		assert.strictEqual(runtime.getClaim?.("k"), "v2");
+	});
+
+	it("staging mode: a remote winner sequenced before commit makes the staged claim resolve to AlreadyClaimed", async () => {
+		const { context, submitted } = makeContext();
+		(context.containerRuntime as unknown as { inStagingMode: boolean }).inStagingMode =
+			true;
+		const runtime = createRuntime(context);
+		const attempt = runtime.trySetClaim?.("k", "local");
+		assert(attempt?.status === "Pending");
+		const localOp = await popClaim(submitted);
+
+		// While we're still staged, a remote claim is sequenced.
+		runtime.processMessages(makeClaimAck({ key: "k", value: "remote" }, false));
+
+		// Commit: container runtime resubmits the staged op; on sequencing,
+		// applyClaimOp sees the key is already claimed and resolves the
+		// deferred to AlreadyClaimed.
+		(context.containerRuntime as unknown as { inStagingMode: boolean }).inStagingMode =
+			false;
+		runtime.reSubmit(
+			DataStoreMessageType.Claim,
+			localOp as unknown as Record<string, unknown>,
+			undefined,
+			/* squash */ true,
+		);
+		const resubmitted = await popClaim(submitted);
+		runtime.processMessages(makeClaimAck(resubmitted, true));
+
+		assert.strictEqual(await attempt.result, "AlreadyClaimed");
+		assert.strictEqual(runtime.getClaim?.("k"), "remote");
 	});
 
 	it("summary includes the .claims blob with sequenced entries", async () => {

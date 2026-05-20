@@ -817,11 +817,6 @@ export class FluidDataStoreRuntime
 				"DataStore claims are not enabled. Set the `enableDataStoreClaims` policy on the data store runtime to opt in.",
 			);
 		}
-		if (this.inStagingMode) {
-			throw new UsageError(
-				"trySetClaim is not supported while the container is in staging mode.",
-			);
-		}
 		if (typeof key !== "string" || key.length === 0) {
 			throw new UsageError("Claim key must be a non-empty string.");
 		}
@@ -1777,6 +1772,10 @@ export class FluidDataStoreRuntime
 				// Resubmit the claim op verbatim. The race-resolution in
 				// applyClaimOp correctly distinguishes Success vs
 				// AlreadyClaimed once the resubmitted op is sequenced.
+				// `squash` is intentionally ignored: a claim op carries its
+				// full intent and is not coalescable with anything else, so
+				// squashed resubmits (e.g. on commitChanges out of staging
+				// mode) are sent verbatim.
 				// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 				this.submit({ type, content }, localOpMetadata);
 				break;
@@ -1825,6 +1824,25 @@ export class FluidDataStoreRuntime
 					assert(!!channelContext, 0x2ed /* "There should be a channel context for the op" */);
 
 					channelContext.rollback(envelope.contents, localOpMetadata);
+					break;
+				}
+				case DataStoreMessageType.Claim: {
+					// A staged claim op is being discarded. The op never reached
+					// the sequencer, so `applyClaimOp` has not run for it and
+					// `sequencedClaims` / `wonClaims` were never touched.
+					// All we need to do is reject the in-flight Deferred so the
+					// caller's `result` promise resolves (rather than hanging
+					// forever waiting for a sequence number that will never come).
+					const claimMessage = content as IClaimMessage;
+					const deferred = this.pendingClaims.get(claimMessage.key);
+					if (deferred !== undefined) {
+						this.pendingClaims.delete(claimMessage.key);
+						deferred.reject(
+							new UsageError(
+								"Claim attempt was discarded with staged changes.",
+							),
+						);
+					}
 					break;
 				}
 				default: {

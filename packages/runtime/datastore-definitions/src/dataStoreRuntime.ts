@@ -280,6 +280,17 @@ export interface IFluidDataStoreRuntime
 	 * client reconnects — unless the runtime is disposed first, in which
 	 * case the result promise rejects.
 	 *
+	 * While the container is in
+	 * {@link @fluidframework/runtime-definitions#IContainerRuntimeBase.enterStagingMode | staging mode},
+	 * a new claim attempt for a not-yet-sequenced key returns `"Pending"`
+	 * but the underlying op is held locally and cannot be sequenced until
+	 * staging is committed. If the staged changes are discarded, the
+	 * result promise rejects. If they are committed, the result promise
+	 * resolves once the op is sequenced. Synchronous outcomes
+	 * (`"Success"` for already-won keys, `"AlreadyClaimed"` for keys
+	 * already sequenced by another client) are unaffected by staging
+	 * mode.
+	 *
 	 * Optional. Implementations that do not support claims will not provide
 	 * this method.
 	 *
