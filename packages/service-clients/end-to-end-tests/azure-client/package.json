@@ -113,7 +113,8 @@
 			"build:test": [
 				"^api-extractor:esnext",
 				"^build:esnext",
-				"^tsc"
+				"^tsc",
+				"build:genver"
 			]
 		}
 	},
