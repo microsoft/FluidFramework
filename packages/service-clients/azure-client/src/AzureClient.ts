@@ -222,7 +222,7 @@ export class AzureClient {
 	 * @param containerSchema - Container schema used to access data objects in the container.
 	 * @param compatibilityMode - Legacy {@link @fluidframework/fluid-static#CompatibilityMode} value.
 	 * @returns Existing container instance along with associated services.
-	 * @deprecated Pass a `MinimumVersionForCollab` semver string (e.g. `"2.0.0"`) instead. The legacy
+	 * @deprecated Pass a `MinimumVersionForCollab` SemVer string (e.g. `"2.0.0"`) instead. The legacy
 	 * values `"1"` and `"2"` correspond to `"1.0.0"` and `"2.0.0"` respectively.
 	 */
 	public async getContainer<TContainerSchema extends ContainerSchema>(

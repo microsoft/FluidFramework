@@ -76,7 +76,7 @@ export class TinyliciousClient {
 	 * Creates a new detached container instance in Tinylicious server.
 	 * @param containerSchema - Container schema for the new container.
 	 * @param minVersionForCollab - Minimum framework version required for collaboration, as a
-	 * `MinimumVersionForCollab` semver string (e.g. `"1.0.0"`, `"2.0.0"`).
+	 * `MinimumVersionForCollab` SemVer string (e.g. `"1.0.0"`, `"2.0.0"`).
 	 * @returns New detached container instance along with associated services.
 	 */
 	public async createContainer<TContainerSchema extends ContainerSchema>(
@@ -91,7 +91,7 @@ export class TinyliciousClient {
 	 * @param containerSchema - Container schema for the new container.
 	 * @param compatibilityMode - Legacy {@link @fluidframework/fluid-static#CompatibilityMode} value.
 	 * @returns New detached container instance along with associated services.
-	 * @deprecated Pass a `MinimumVersionForCollab` semver string (e.g. `"2.0.0"`) instead. The legacy
+	 * @deprecated Pass a `MinimumVersionForCollab` SemVer string (e.g. `"2.0.0"`) instead. The legacy
 	 * values `"1"` and `"2"` correspond to `"1.0.0"` and `"2.0.0"` respectively.
 	 */
 	public async createContainer<TContainerSchema extends ContainerSchema>(
@@ -155,7 +155,7 @@ export class TinyliciousClient {
 	 * @param id - Unique ID of the container.
 	 * @param containerSchema - Container schema used to access data objects in the container.
 	 * @param minVersionForCollab - Minimum Fluid Framework version required for collaboration, as a
-	 * `MinimumVersionForCollab` semver string (e.g. `"1.0.0"`, `"2.0.0"`).
+	 * `MinimumVersionForCollab` SemVer string (e.g. `"1.0.0"`, `"2.0.0"`).
 	 * @returns Existing container instance along with associated services.
 	 */
 	public async getContainer<TContainerSchema extends ContainerSchema>(
@@ -172,7 +172,7 @@ export class TinyliciousClient {
 	 * @param containerSchema - Container schema used to access data objects in the container.
 	 * @param compatibilityMode - Legacy {@link @fluidframework/fluid-static#CompatibilityMode} value.
 	 * @returns Existing container instance along with associated services.
-	 * @deprecated Pass a `MinimumVersionForCollab` semver string (e.g. `"2.0.0"`) instead. The legacy
+	 * @deprecated Pass a `MinimumVersionForCollab` SemVer string (e.g. `"2.0.0"`) instead. The legacy
 	 * values `"1"` and `"2"` correspond to `"1.0.0"` and `"2.0.0"` respectively.
 	 */
 	public async getContainer<TContainerSchema extends ContainerSchema>(

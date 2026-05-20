@@ -116,7 +116,7 @@ export class OdspClient {
 	 * Creates a new detached container instance backed by ODSP.
 	 * @param containerSchema - Container schema for the new container.
 	 * @param minVersionForCollab - Minimum Fluid Framework version required for collaboration, as a
-	 * `MinimumVersionForCollab` semver string (e.g. `"2.100.0"`). Prefer the current Fluid Framework
+	 * `MinimumVersionForCollab` SemVer string (e.g. `"2.100.0"`). Prefer the current Fluid Framework
 	 * version so the container opts into the latest defaults.
 	 * @returns New detached container instance along with associated services.
 	 */
@@ -132,7 +132,7 @@ export class OdspClient {
 	 * Creates a new detached container instance backed by ODSP.
 	 * @param containerSchema - Container schema for the new container.
 	 * @returns New detached container instance along with associated services.
-	 * @deprecated Pass a `MinimumVersionForCollab` semver string (e.g. `"2.0.0"`) as a second argument.
+	 * @deprecated Pass a `MinimumVersionForCollab` SemVer string (e.g. `"2.0.0"`) as a second argument.
 	 * The previous behavior was equivalent to passing `"2.0.0"`.
 	 */
 	public async createContainer<T extends ContainerSchema>(
@@ -173,7 +173,7 @@ export class OdspClient {
 	 * @param id - Unique ID of the container in ODSP.
 	 * @param containerSchema - Container schema used to access data objects in the container.
 	 * @param minVersionForCollab - Minimum Fluid Framework version required for collaboration, as a
-	 * `MinimumVersionForCollab` semver string (e.g. `"2.100.0"`). Prefer the current Fluid Framework
+	 * `MinimumVersionForCollab` SemVer string (e.g. `"2.100.0"`). Prefer the current Fluid Framework
 	 * version so the container opts into the latest defaults.
 	 * @returns Existing container instance along with associated services.
 	 */
@@ -190,7 +190,7 @@ export class OdspClient {
 	 * @param id - Unique ID of the container in ODSP.
 	 * @param containerSchema - Container schema used to access data objects in the container.
 	 * @returns Existing container instance along with associated services.
-	 * @deprecated Pass a `MinimumVersionForCollab` semver string (e.g. `"2.0.0"`) as a third argument.
+	 * @deprecated Pass a `MinimumVersionForCollab` SemVer string (e.g. `"2.0.0"`) as a third argument.
 	 * The previous behavior was equivalent to passing `"2.0.0"`.
 	 */
 	public async getContainer<T extends ContainerSchema>(

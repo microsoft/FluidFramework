@@ -109,7 +109,7 @@ compat internally (see
 #### Configuring Cross-Client Compatibility (Declarative Model)
 
 If you are using a service client (i.e. `AzureClient` or `OdspClient`), cross-client compatibility is
-configured by passing a `minVersionForCollab` semver string when creating or loading a container:
+configured by passing a `minVersionForCollab` SemVer string when creating or loading a container:
 
 ```typescript
 // Creating a new container
