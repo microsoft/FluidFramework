@@ -597,24 +597,25 @@ class KernelEventBuffer implements Listenable<KernelEvents> {
 		fieldMarks: ReadonlyMap<FieldKey, readonly DeltaMark[]>,
 	): void {
 		if (bufferScopeDepth > 0) {
+			const currentBufferFrame = this.#current;
 			for (const fieldKey of changedFields) {
-				this.#current.childrenChangedBuffer.add(fieldKey);
+				currentBufferFrame.childrenChangedBuffer.add(fieldKey);
 			}
 			for (const [key, marks] of fieldMarks) {
-				if (this.#current.invalidatedFieldMarkKeys.has(key)) {
+				if (currentBufferFrame.invalidatedFieldMarkKeys.has(key)) {
 					// Already permanently invalidated by an earlier collision; ignore this batch too.
 					// TODO: Once the eventing stack is rewritten to walk the composed delta at flush
 					// time, this collision path will be unreachable and can be removed entirely.
 					continue;
 				}
-				if (this.#current.fieldMarksBuffer.has(key)) {
+				if (currentBufferFrame.fieldMarksBuffer.has(key)) {
 					// A second batch of marks arrived for the same field before the buffer was flushed.
 					// We have no delta composition logic, so permanently invalidate this field so that
 					// any further batches are also discarded rather than incorrectly surfaced.
-					this.#current.fieldMarksBuffer.delete(key);
-					this.#current.invalidatedFieldMarkKeys.add(key);
+					currentBufferFrame.fieldMarksBuffer.delete(key);
+					currentBufferFrame.invalidatedFieldMarkKeys.add(key);
 				} else {
-					this.#current.fieldMarksBuffer.set(key, marks);
+					currentBufferFrame.fieldMarksBuffer.set(key, marks);
 				}
 			}
 		} else {
