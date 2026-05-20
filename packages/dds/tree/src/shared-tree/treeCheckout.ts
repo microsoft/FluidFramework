@@ -1314,9 +1314,10 @@ export class TreeCheckout implements ITreeCheckout {
 	}
 
 	/**
-	 * Silent-idempotent disposal: performs the actual cleanup work and is safe to call from contexts
-	 * where throwing is undesirable (notably `FinalizationRegistry` callbacks — see
-	 * `branchCheckout.ts`). Subsequent calls are no-ops.
+	 * Silent-idempotent disposal: performs the actual cleanup work without throwing on repeat
+	 * calls. Intended for contexts (such as `FinalizationRegistry` callbacks) where throwing is
+	 * undesirable — currently reserved for that purpose; no in-tree caller invokes it from a
+	 * finalizer today. Subsequent calls are no-ops.
 	 *
 	 * @remarks
 	 * Public `dispose()` / `[disposeSymbol]()` keep their throw-on-double-dispose semantics by routing

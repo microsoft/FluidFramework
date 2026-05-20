@@ -269,8 +269,9 @@ export class BranchCheckout extends TreeCheckout {
 		// — notably the merge auto-dispose at `treeCheckout.ts` — call `checkout[disposeSymbol]()`
 		// directly. Hooking the symbol catches every disposal route.
 		super[disposeSymbol]();
-		// Only reached if super did not throw (e.g. double-dispose).
-		// Removing the entry here keeps `getBranchCheckout` from ever returning a disposed instance.
+		// `super[disposeSymbol]()` throws via `checkNotDisposed` on a repeat dispose, so this code
+		// only runs on the first successful disposal. Removing the entry here keeps
+		// `getBranchCheckout` from ever returning a disposed instance.
 		branchCheckoutMap.delete(this.mainBranch);
 
 		// Cancel the finalization callback: explicit dispose already covered cleanup, and we don't
