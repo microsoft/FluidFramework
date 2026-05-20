@@ -99,10 +99,11 @@ elsewhere. Subscribe with `onChange`:
 
 ```typescript
 const unsubscribe = fluidCache.onChange((event) => {
-	if (event.op === "removeFile") {
+	if (event.type === "removeFile") {
 		// All entries for this file were dropped by some other tab.
 	} else {
-		// event.op is "put" or "remove"; event.partitionKey matches this cache's partition.
+		// event.type is "put" or "remove"; event.partitionKey matches this cache's partition.
+		// event.entryType carries the cache entry's category (for example "snapshot").
 	}
 });
 // Later:
@@ -124,7 +125,8 @@ also reject with a `UsageError`, and the underlying IndexedDB connection is not 
 any such in-flight call.
 
 If `BroadcastChannel` is not available in the runtime, `onChange` becomes a no-op subscription and
-writes simply don't broadcast.
+writes simply don't broadcast. The constructor emits a one-shot `FluidCacheBroadcastChannelUnavailable`
+telemetry event in that case so hosts can detect the degraded mode.
 
 ## Clearing cache entries
 

@@ -87,11 +87,17 @@ export type FluidCacheChangeEvent =
 			 * the partition key of the receiving `FluidCache` instance, consistent with
 			 * the semantics of `get`.
 			 */
-			readonly op: "put" | "remove";
+			readonly type: "put" | "remove";
 			// eslint-disable-next-line @rushstack/no-new-null
 			readonly partitionKey: string | null;
 			readonly fileId: string;
-			readonly type: string;
+			/**
+			 * The cache entry's category — i.e. the `type` field of the `ICacheEntry`
+			 * passed to `put`/`putIf`/`removeEntry` (for example `"snapshot"`). Distinct
+			 * from the union discriminator `type` above — this field carries the
+			 * consumer-supplied category of the cached object.
+			 */
+			readonly entryType: string;
 			readonly cacheItemId: string;
 	  }
 	| {
@@ -100,7 +106,7 @@ export type FluidCacheChangeEvent =
 			 * deletes rows regardless of their partition key, so the event itself carries
 			 * no partition information and is delivered to all listeners.
 			 */
-			readonly op: "removeFile";
+			readonly type: "removeFile";
 			readonly fileId: string;
 	  };
 
@@ -108,8 +114,13 @@ export type FluidCacheChangeEvent =
  * Name of the `BroadcastChannel` used to deliver cache-change notifications between
  * `FluidCache` instances. A single channel is used for the entire driver cache; partition
  * scoping is applied by the receiving listener.
+ *
+ * The trailing GUID is a fixed namespace suffix (not generated per-instance) so that
+ * every `FluidCache` in the same browsing context connects to the same channel while
+ * remaining unlikely to collide with channels used by unrelated host code.
  */
-const FluidCacheBroadcastChannelName = "fluid-driver-cache";
+const FluidCacheBroadcastChannelName =
+	"fluid-driver-cache:b3e4f5a6-7c8d-49e0-a1b2-c3d4e5f6a7b8";
 
 /**
  * A cache that can be used by the Fluid ODSP driver to cache data for faster performance.
@@ -240,16 +251,19 @@ export class FluidCache implements IPersistedCache {
 		// Wire up cross-instance change notifications via BroadcastChannel. The channel is
 		// always created (when supported) so writes from this instance reach other tabs,
 		// even when no local listeners are registered yet. If `BroadcastChannel` is not
-		// available (e.g. older environments), notifications silently degrade to a no-op.
-		if (typeof BroadcastChannel !== "undefined") {
+		// available (e.g. older environments), notifications silently degrade to a no-op
+		// and we emit a one-shot telemetry event so hosts can detect the degraded state.
+		if (typeof BroadcastChannel === "undefined") {
+			this.logger.sendTelemetryEvent({
+				eventName: FluidCacheGenericEvent.FluidCacheBroadcastChannelUnavailable,
+				subCategory: FluidCacheEventSubCategories.FluidCache,
+				pkgVersion,
+			});
+		} else {
 			this.broadcastChannel = new BroadcastChannel(FluidCacheBroadcastChannelName);
 			this.broadcastChannel.addEventListener("message", (messageEvent: MessageEvent) => {
 				this.dispatchChangeEvent(messageEvent.data as FluidCacheChangeEvent);
 			});
-			// In Node, BroadcastChannel keeps the event loop alive until closed. Calling
-			// `unref` (when available) lets test processes and short-lived scripts exit
-			// even if a FluidCache instance was never disposed.
-			(this.broadcastChannel as unknown as { unref?: () => void }).unref?.();
 		}
 	}
 
@@ -269,9 +283,7 @@ export class FluidCache implements IPersistedCache {
 	 * @returns a function that unregisters the listener. Idempotent.
 	 */
 	public onChange(listener: (event: FluidCacheChangeEvent) => void): () => void {
-		if (this.disposed) {
-			throw new UsageError("Cannot subscribe to a disposed FluidCache");
-		}
+		this.throwIfDisposed();
 		this.changeListeners.add(listener);
 		return () => {
 			this.changeListeners.delete(listener);
@@ -303,8 +315,17 @@ export class FluidCache implements IPersistedCache {
 		this.db = undefined;
 	}
 
-	private throwIfDisposed(): void {
+	/**
+	 * Throws if the cache has been disposed.
+	 *
+	 * Accepts an optional `cleanup` callback that runs *before* the throw when the
+	 * cache is disposed. Use it to release locally-owned resources (e.g. an
+	 * just-acquired IDB connection) that were obtained after the most recent
+	 * disposed-check and would otherwise leak when this method throws.
+	 */
+	private throwIfDisposed(cleanup?: () => void): void {
 		if (this.disposed) {
+			cleanup?.();
 			throw new UsageError("FluidCache is disposed");
 		}
 	}
@@ -312,7 +333,7 @@ export class FluidCache implements IPersistedCache {
 	private dispatchChangeEvent(event: FluidCacheChangeEvent): void {
 		// `put` and `remove` are partition-scoped; `removeFile` is delivered to all listeners
 		// because it has no associated partition (see FluidCacheChangeEvent docs).
-		if (event.op !== "removeFile" && event.partitionKey !== this.partitionKey) {
+		if (event.type !== "removeFile" && event.partitionKey !== this.partitionKey) {
 			return;
 		}
 		for (const listener of this.changeListeners) {
@@ -350,10 +371,7 @@ export class FluidCache implements IPersistedCache {
 			const dbInstance = await getFluidCacheIndexedDbInstance(this.logger);
 			// Dispose may have run while we awaited the IDB open. Close the just-acquired
 			// connection and reject so callers do not silently operate on a disposed cache.
-			if (this.disposed) {
-				dbInstance.close();
-				throw new UsageError("FluidCache was disposed during openDb");
-			}
+			this.throwIfDisposed(() => dbInstance.close());
 			return dbInstance;
 		}
 		if (this.db === undefined) {
@@ -361,10 +379,7 @@ export class FluidCache implements IPersistedCache {
 			// Dispose may have run while we awaited the IDB open. Close the just-acquired
 			// connection and reject so we never resurrect the DB or arm a fresh close
 			// timer past dispose.
-			if (this.disposed) {
-				dbInstance.close();
-				throw new UsageError("FluidCache was disposed during openDb");
-			}
+			this.throwIfDisposed(() => dbInstance.close());
 			if (this.db === undefined) {
 				// Reset the counter on first open.
 				this.dbReuseCount = -1;
@@ -425,9 +440,10 @@ export class FluidCache implements IPersistedCache {
 			this.throwIfDisposed();
 			removed = keysToDelete.length > 0;
 		} catch (error: any) {
-			// If dispose ran during the operation, surface that to the caller instead of
-			// silently swallowing the failure, matching the post-dispose throw contract.
-			this.throwIfDisposed();
+			// Log the original IDB error *before* checking for dispose so the
+			// diagnostic survives the dispose-race path (otherwise `throwIfDisposed`
+			// would throw a `UsageError` before `sendErrorEvent` ran and the IDB
+			// failure would be silently lost).
 			this.logger.sendErrorEvent(
 				{
 					eventName: FluidCacheErrorEvent.FluidCacheDeleteOldEntriesError,
@@ -435,11 +451,14 @@ export class FluidCache implements IPersistedCache {
 				},
 				error,
 			);
+			// If dispose ran during the operation, surface that to the caller instead of
+			// silently swallowing the failure, matching the post-dispose throw contract.
+			this.throwIfDisposed();
 		} finally {
 			this.closeDb(db);
 		}
 		if (removed) {
-			this.broadcast({ op: "removeFile", fileId: file.docId });
+			this.broadcast({ type: "removeFile", fileId: file.docId });
 		}
 	}
 
@@ -455,7 +474,8 @@ export class FluidCache implements IPersistedCache {
 			this.throwIfDisposed();
 			removed = true;
 		} catch (error: any) {
-			this.throwIfDisposed();
+			// Log the original IDB error before potentially throwing `UsageError` so
+			// the diagnostic survives the dispose-race path.
 			this.logger.sendErrorEvent(
 				{
 					eventName: FluidCacheErrorEvent.FluidCacheDeleteSingleEntryError,
@@ -463,15 +483,16 @@ export class FluidCache implements IPersistedCache {
 				},
 				error,
 			);
+			this.throwIfDisposed();
 		} finally {
 			this.closeDb(db);
 		}
 		if (removed) {
 			this.broadcast({
-				op: "remove",
+				type: "remove",
 				partitionKey: this.partitionKey,
 				fileId: entry.file.docId,
-				type: entry.type,
+				entryType: entry.type,
 				cacheItemId: entry.key,
 			});
 		}
@@ -540,15 +561,18 @@ export class FluidCache implements IPersistedCache {
 			this.closeDb(db);
 			return { ...value, dbOpenPerf };
 		} catch (error: any) {
-			// If dispose ran during the operation, surface that to the caller instead of
-			// silently returning undefined, matching the post-dispose throw contract.
-			this.throwIfDisposed();
-			// We can fail to open the db for a variety of reasons,
-			// such as the database version having upgraded underneath us. Return undefined in this case
+			// Log the original IDB error first so the diagnostic survives even when
+			// dispose ran during the operation and `throwIfDisposed` re-throws a
+			// `UsageError`. We can fail to open the db for a variety of reasons
+			// (e.g. the database version having upgraded underneath us), so we
+			// still want the original failure visible in telemetry.
 			this.logger.sendErrorEvent(
 				{ eventName: FluidCacheErrorEvent.FluidCacheGetError, pkgVersion },
 				error,
 			);
+			// If dispose ran during the operation, surface that to the caller instead of
+			// silently returning undefined, matching the post-dispose throw contract.
+			this.throwIfDisposed();
 			this.closeDb(db);
 			return undefined;
 		}
@@ -573,22 +597,24 @@ export class FluidCache implements IPersistedCache {
 			wrote = true;
 			this.closeDb(db);
 		} catch (error: any) {
-			this.throwIfDisposed();
-			// We can fail to open the db for a variety of reasons,
-			// such as the database version having upgraded underneath us
+			// Log the original IDB error first so the diagnostic survives even when
+			// dispose ran during the operation and `throwIfDisposed` re-throws a
+			// `UsageError` (we can fail to open the db for a variety of reasons,
+			// such as the database version having upgraded underneath us).
 			this.logger.sendErrorEvent(
 				{ eventName: FluidCacheErrorEvent.FluidCachePutError, pkgVersion },
 				error,
 			);
+			this.throwIfDisposed();
 		} finally {
 			this.closeDb(db);
 		}
 		if (wrote) {
 			this.broadcast({
-				op: "put",
+				type: "put",
 				partitionKey: this.partitionKey,
 				fileId: entry.file.docId,
-				type: entry.type,
+				entryType: entry.type,
 				cacheItemId: entry.key,
 			});
 		}
@@ -601,6 +627,13 @@ export class FluidCache implements IPersistedCache {
 	 * written inside a single IndexedDB `readwrite` transaction. This provides
 	 * compare-and-swap semantics for callers sharing the same underlying IndexedDB
 	 * instance (e.g. multiple browser tabs racing to persist pending state).
+	 *
+	 * @remarks
+	 * The implementation uses `transaction.store.get` + `transaction.store.put` rather
+	 * than an IDB cursor. Both run inside the same `readwrite` transaction, so the
+	 * atomicity guarantee is identical, and the get/put pair is materially simpler
+	 * to reason about for a single-key compare-and-swap. A cursor would be the right
+	 * tool if we needed to iterate or range-scan; for a known key we don't.
 	 *
 	 * @param entry - cache entry; identifies the file and the key within that file.
 	 * @param value - the proposed JSON-serializable value to write if `shouldWrite` returns true.
@@ -617,6 +650,10 @@ export class FluidCache implements IPersistedCache {
 	 *
 	 * The predicate must be synchronous: IndexedDB transactions auto-close on any non-IDB
 	 * await, which would silently break the atomicity that makes the compare-and-swap correct.
+	 * Exceptions thrown by the predicate are logged under the dedicated
+	 * `FluidCachePutIfPredicateError` telemetry event (distinct from IDB write errors)
+	 * and surfaced to the caller as a `false` return value, after aborting the transaction
+	 * so the existing row is preserved.
 	 * @returns `true` if the new value was written; `false` if the predicate rejected the write
 	 * or an error occurred. Errors are logged and not thrown, matching the behavior of `put`.
 	 */
@@ -643,7 +680,32 @@ export class FluidCache implements IPersistedCache {
 				Date.now() - existing.createdTimeMs <= this.maxCacheItemAge;
 			const existingValue = existingVisible ? existing?.cachedObject : undefined;
 
-			if (!shouldWrite(existingValue, value)) {
+			// Invoke the predicate in its own try/catch so a host-supplied callback
+			// throwing does not get logged under `FluidCachePutError` (which is for
+			// IDB-write failures). On predicate throw we abort the transaction so the
+			// existing row is preserved, log under the predicate-specific event, and
+			// return `false` (matching the documented "errors are logged, not thrown"
+			// contract).
+			let predicateResult: boolean;
+			try {
+				predicateResult = shouldWrite(existingValue, value);
+			} catch (predicateError: any) {
+				transaction.abort();
+				// Await transaction settlement; aborting causes `transaction.done` to
+				// reject, which we swallow because the predicate error is the real cause.
+				await transaction.done.catch(() => {});
+				this.logger.sendErrorEvent(
+					{
+						eventName: FluidCacheErrorEvent.FluidCachePutIfPredicateError,
+						pkgVersion,
+					},
+					predicateError,
+				);
+				this.throwIfDisposed();
+				return false;
+			}
+
+			if (!predicateResult) {
 				await transaction.done;
 				// Dispose may have landed during `await transaction.done`. Reject before
 				// returning the cooperative `false` so an awaiting caller cannot
@@ -661,21 +723,23 @@ export class FluidCache implements IPersistedCache {
 			this.throwIfDisposed();
 			wrote = true;
 		} catch (error: any) {
-			this.throwIfDisposed();
+			// Log the original IDB error before potentially throwing `UsageError` so
+			// the diagnostic survives the dispose-race path.
 			this.logger.sendErrorEvent(
 				{ eventName: FluidCacheErrorEvent.FluidCachePutError, pkgVersion },
 				error,
 			);
+			this.throwIfDisposed();
 			return false;
 		} finally {
 			this.closeDb(db);
 		}
 		if (wrote) {
 			this.broadcast({
-				op: "put",
+				type: "put",
 				partitionKey: this.partitionKey,
 				fileId: entry.file.docId,
-				type: entry.type,
+				entryType: entry.type,
 				cacheItemId: entry.key,
 			});
 		}

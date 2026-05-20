@@ -25,13 +25,13 @@ export class FluidCache implements IPersistedCache {
 
 // @beta @legacy
 export type FluidCacheChangeEvent = {
-    readonly op: "put" | "remove";
+    readonly type: "put" | "remove";
     readonly partitionKey: string | null;
     readonly fileId: string;
-    readonly type: string;
+    readonly entryType: string;
     readonly cacheItemId: string;
 } | {
-    readonly op: "removeFile";
+    readonly type: "removeFile";
     readonly fileId: string;
 };
 

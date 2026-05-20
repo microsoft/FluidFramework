@@ -451,10 +451,10 @@ for (const immediateClose of [true, false]) {
 
 				assert.deepEqual(received, [
 					{
-						op: "put",
+						type: "put",
 						partitionKey: mockPartitionKey,
 						fileId: "myDocument",
-						type: "snapshot",
+						entryType: "snapshot",
 						cacheItemId: "notifyPut",
 					},
 				]);
@@ -502,10 +502,10 @@ for (const immediateClose of [true, false]) {
 
 				assert.deepEqual(aReceiverEvents, [
 					{
-						op: "put",
+						type: "put",
 						partitionKey: "partitionA",
 						fileId: "myDocument",
-						type: "snapshot",
+						entryType: "snapshot",
 						cacheItemId: "xPartition2",
 					},
 				]);
@@ -527,7 +527,7 @@ for (const immediateClose of [true, false]) {
 				await flushBroadcast();
 
 				assert.ok(
-					bReceived.some((e) => e.op === "removeFile" && e.fileId === cacheEntry.file.docId),
+					bReceived.some((e) => e.type === "removeFile" && e.fileId === cacheEntry.file.docId),
 					`expected removeFile event for ${cacheEntry.file.docId}, got ${JSON.stringify(bReceived)}`,
 				);
 			});
@@ -548,7 +548,7 @@ for (const immediateClose of [true, false]) {
 				assert.ok(
 					received.some(
 						(e) =>
-							e.op === "remove" &&
+							e.type === "remove" &&
 							e.partitionKey === mockPartitionKey &&
 							e.cacheItemId === "removeOne",
 					),
@@ -576,7 +576,7 @@ for (const immediateClose of [true, false]) {
 
 				// Exactly one put event for the successful write — no event for the rejected one.
 				const putsForKey = received.filter(
-					(e) => e.op === "put" && e.cacheItemId === "putIfNotify",
+					(e) => e.type === "put" && e.cacheItemId === "putIfNotify",
 				);
 				assert.strictEqual(putsForKey.length, 1);
 			});
@@ -712,7 +712,7 @@ for (const immediateClose of [true, false]) {
 				await new Promise<void>((resolve) => setImmediate(resolve));
 
 				const leakedPuts = received.filter(
-					(e) => e.op === "put" && e.cacheItemId === "postDisposeNoBroadcast",
+					(e) => e.type === "put" && e.cacheItemId === "postDisposeNoBroadcast",
 				);
 				assert.deepEqual(
 					leakedPuts,

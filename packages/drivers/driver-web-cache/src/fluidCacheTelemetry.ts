@@ -6,6 +6,7 @@
 export const enum FluidCacheGenericEvent {
 	"FluidCacheStorageInfo" = "FluidCacheStorageInfo",
 	"FluidCachePartitionKeyMismatch" = "FluidCachePartitionKeyMismatch",
+	"FluidCacheBroadcastChannelUnavailable" = "FluidCacheBroadcastChannelUnavailable",
 }
 
 export const enum FluidCacheErrorEvent {
@@ -13,6 +14,7 @@ export const enum FluidCacheErrorEvent {
 	"FluidCacheDeleteSingleEntryError" = "FluidCacheDeleteSingleEntryError",
 	"FluidCacheGetError" = "FluidCacheGetError",
 	"FluidCachePutError" = "FluidCachePutError",
+	"FluidCachePutIfPredicateError" = "FluidCachePutIfPredicateError",
 	"FluidCacheUpdateUsageError" = "FluidCacheUpdateUsageError",
 	"FluidCacheDeleteOldDbError" = "FluidCacheDeleteOldDbError",
 	"FluidCacheBroadcastError" = "FluidCacheBroadcastError",
