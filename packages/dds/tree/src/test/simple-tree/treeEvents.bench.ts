@@ -207,12 +207,35 @@ describe("Tree event benchmarks", () => {
 							offs.push(Tree.on(node, "nodeChanged", () => {}));
 						}
 						state.timeAllBatches(() => {
-							// Mutating a property emits nodeChanged synchronously
-							// (the internal childrenChangedAfterBatch event fires after
-							// the change is applied).
 							node.a = node.a + 1;
 						});
-						for (const off of offs) off();
+						for (const off of offs) {
+							off();
+						}
+					},
+				}),
+			});
+		}
+	});
+
+	describeHydration("Tree.on emission cost (object treeChanged, subtree edit)", (init) => {
+		for (const numListeners of [1, 10, 100]) {
+			benchmarkIt({
+				type: BenchmarkType.Measurement,
+				title: `emit with ${numListeners} listeners`,
+				...benchmarkDuration({
+					benchmarkFnCustom: async (state) => {
+						const node = init(ObjectRoot, createObjectRootContent());
+						const offs: Off[] = [];
+						for (let i = 0; i < numListeners; i++) {
+							offs.push(Tree.on(node, "treeChanged", () => {}));
+						}
+						state.timeAllBatches(() => {
+							node.inner.x = node.inner.x + 1;
+						});
+						for (const off of offs) {
+							off();
+						}
 					},
 				}),
 			});
