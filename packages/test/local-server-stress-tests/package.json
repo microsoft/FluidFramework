@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-internal/local-server-stress-tests",
-	"version": "2.100.0",
+	"version": "2.102.0",
 	"private": true,
 	"description": "Stress tests that can only run against the local server",
 	"homepage": "https://fluidframework.com",
@@ -12,11 +12,12 @@
 	"license": "MIT",
 	"author": "Microsoft and contributors",
 	"sideEffects": false,
-	"type": "commonjs",
+	"type": "module",
 	"scripts": {
 		"build": "fluid-build . --task build",
 		"build:compile": "fluid-build . --task compile",
-		"build:test": "tsc --project ./src/tsconfig.json",
+		"build:test": "npm run build:test:esm",
+		"build:test:esm": "tsc --project ./src/test/tsconfig.json",
 		"check:biome": "biome check .",
 		"check:format": "npm run check:biome",
 		"clean": "rimraf --glob dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\" nyc",
@@ -28,7 +29,8 @@
 		"lint:fix": "fluid-build . --task eslint:fix --task format",
 		"test": "npm run test:mocha",
 		"test:coverage": "c8 npm test",
-		"test:mocha": "mocha \"lib/test/**/*.spec.*js\"  --exit",
+		"test:mocha": "npm run test:mocha:esm",
+		"test:mocha:esm": "mocha",
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha"
 	},
 	"c8": {
@@ -84,7 +86,7 @@
 		"@fluidframework/runtime-definitions": "workspace:~",
 		"@fluidframework/runtime-utils": "workspace:~",
 		"@fluidframework/sequence": "workspace:~",
-		"@fluidframework/server-local-server": "^7.0.0",
+		"@fluidframework/server-local-server": "^7.0.1",
 		"@fluidframework/task-manager": "workspace:~",
 		"@fluidframework/telemetry-utils": "workspace:~",
 		"@fluidframework/test-utils": "workspace:~",
@@ -107,19 +109,19 @@
 	},
 	"fluidBuild": {
 		"tasks": {
-			"build:test": [
-				"^tsc",
-				"^api-extractor:commonjs",
-				"@fluidframework/id-compressor#build:test",
-				"@fluidframework/sequence#build:test",
-				"@fluidframework/map#build:test",
-				"@fluidframework/matrix#build:test",
-				"@fluidframework/tree#build:test",
-				"@fluidframework/task-manager#build:test",
-				"@fluidframework/legacy-dds#build:test",
-				"@fluidframework/ordered-collection#build:test",
-				"@fluidframework/counter#build:test",
-				"@fluidframework/register-collection#build:test"
+			"build:test:esm": [
+				"^build:esnext",
+				"^api-extractor:esnext",
+				"@fluidframework/id-compressor#build:test:esm",
+				"@fluidframework/sequence#build:test:esm",
+				"@fluidframework/map#build:test:esm",
+				"@fluidframework/matrix#build:test:esm",
+				"@fluidframework/tree#build:test:esm",
+				"@fluidframework/task-manager#build:test:esm",
+				"@fluidframework/legacy-dds#build:test:esm",
+				"@fluidframework/ordered-collection#build:test:esm",
+				"@fluidframework/counter#build:test:esm",
+				"@fluidframework/register-collection#build:test:esm"
 			]
 		}
 	},

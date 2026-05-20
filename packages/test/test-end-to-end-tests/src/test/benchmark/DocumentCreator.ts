@@ -5,13 +5,13 @@
 
 import { DocumentType, DocumentTypeInfo } from "@fluid-private/test-version-utils";
 import {
-	type BenchmarkTimer,
+	BenchmarkMode,
 	MemoryUseCallbacks,
 	Phase,
 	benchmarkDuration,
 	benchmarkIt,
 	benchmarkMemoryUse,
-	isInPerformanceTestingMode,
+	currentBenchmarkMode,
 } from "@fluid-tools/benchmark";
 import { IContainer } from "@fluidframework/container-definitions/internal";
 import { ISummarizer } from "@fluidframework/container-runtime/internal";
@@ -123,7 +123,7 @@ export function benchmarkAll<T extends IBenchmarkParameters>(
 	// so we need to provide suitable timeouts for both cases here.
 	// As some of these tests do lot of operations to rather large data sets,
 	// they are quite slow and need long timeouts.
-	const timeout = isInPerformanceTestingMode ? 1_000_000 : 20_000;
+	const timeout = currentBenchmarkMode === BenchmarkMode.Performance ? 1_000_000 : 20_000;
 
 	{
 		const obj = createObj();
@@ -151,21 +151,12 @@ export function benchmarkAll<T extends IBenchmarkParameters>(
 		benchmarkIt({
 			title,
 			...benchmarkDuration({
-				benchmarkFnCustom: async <T1>(state: BenchmarkTimer<T1>) => {
+				benchmarkFnCustom: async (state) => {
 					await obj.before?.();
-					let duration: number;
-					do {
-						const before = state.timer.now();
-						await obj.run();
-						const after = state.timer.now();
-						duration = state.timer.toSeconds(before, after);
-						// Collect data
-					} while (state.recordBatch(duration));
+					await state.timeAllBatchesAsync(async () => obj.run());
 				},
-				// Force batch size to be always 1
-				minBatchDurationSeconds: 0,
 				...(obj.minSampleCount !== undefined ? { minBatchCount: obj.minSampleCount } : {}),
-				// No need to warm up
+				// Skip initial phases since some of these benchmarks are very slow and we just want a single run timed.
 				startPhase: Phase.CollectData,
 			}),
 		}).timeout(timeout);

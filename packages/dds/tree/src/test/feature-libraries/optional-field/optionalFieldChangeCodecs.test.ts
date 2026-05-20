@@ -77,6 +77,7 @@ export function testCodecs(): void {
 	describe("Codecs", () => {
 		const baseContext = {
 			originatorId: "session1" as SessionId,
+			isSummary: false,
 			revision: undefined,
 			idCompressor: testIdCompressor,
 		};

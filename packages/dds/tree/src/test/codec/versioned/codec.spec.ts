@@ -14,7 +14,7 @@ import {
 
 import { FluidClientVersion, Versioned } from "../../../codec/index.js";
 import {
-	ClientVersionDispatchingCodecBuilder,
+	VersionDispatchingCodecBuilder,
 	type CodecAndSchema,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../codec/versioned/codec.js";
@@ -22,7 +22,7 @@ import { FormatValidatorBasic } from "../../../external-utilities/index.js";
 import { pkgVersion } from "../../../packageVersion.js";
 
 describe("versioned Codecs", () => {
-	describe("ClientVersionDispatchingCodecBuilder", () => {
+	describe("VersionDispatchingCodecBuilder", () => {
 		interface V1 {
 			version: 1;
 			value1: number;
@@ -51,7 +51,7 @@ describe("versioned Codecs", () => {
 			schema: Versioned,
 		};
 
-		const builder = ClientVersionDispatchingCodecBuilder.build("Test", [
+		const builder = VersionDispatchingCodecBuilder.build("Test", [
 			{
 				minVersionForCollab: lowestMinVersionForCollab,
 				formatVersion: 1,
@@ -143,7 +143,7 @@ The client which encoded this data likely specified an "minVersionForCollab" val
 		});
 
 		it("good builds", () => {
-			ClientVersionDispatchingCodecBuilder.build("Test", [
+			VersionDispatchingCodecBuilder.build("Test", [
 				{
 					minVersionForCollab: lowestMinVersionForCollab,
 					formatVersion: 1,
@@ -177,7 +177,7 @@ The client which encoded this data likely specified an "minVersionForCollab" val
 			if (nonProductionConditionalsIncluded()) {
 				assert.throws(
 					() =>
-						ClientVersionDispatchingCodecBuilder.build("Test", [
+						VersionDispatchingCodecBuilder.build("Test", [
 							{
 								minVersionForCollab: lowestMinVersionForCollab,
 								formatVersion: "1",
@@ -191,7 +191,7 @@ The client which encoded this data likely specified an "minVersionForCollab" val
 
 				assert.throws(
 					() =>
-						ClientVersionDispatchingCodecBuilder.build("Test", [
+						VersionDispatchingCodecBuilder.build("Test", [
 							{
 								minVersionForCollab: undefined,
 								formatVersion: 1,
@@ -205,7 +205,7 @@ The client which encoded this data likely specified an "minVersionForCollab" val
 
 				assert.throws(
 					() =>
-						ClientVersionDispatchingCodecBuilder.build("Test", [
+						VersionDispatchingCodecBuilder.build("Test", [
 							{
 								minVersionForCollab: lowestMinVersionForCollab,
 								formatVersion: 1,
@@ -224,7 +224,7 @@ The client which encoded this data likely specified an "minVersionForCollab" val
 
 				assert.throws(
 					() =>
-						ClientVersionDispatchingCodecBuilder.build("Test", [
+						VersionDispatchingCodecBuilder.build("Test", [
 							{
 								minVersionForCollab: lowestMinVersionForCollab,
 								formatVersion: 1,
