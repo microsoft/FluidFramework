@@ -7,8 +7,8 @@
 		// ES2022 code can do more things with schema classes than es2020 code, including hit the defineProperty hook in our proxies.
 		// To be able to test that this works properly (including that ArrayNodes give their improved errors), these tests target ES2022.
 		"target": "ES2022",
-		// ES2021 needed for WeakRef in GC-eligibility tests (see branchCheckout.spec.ts).
-		"lib": ["ES2021", "DOM", "DOM.Iterable"],
+		// ES2022 lib needed for WeakRef in GC-eligibility tests (see branchCheckout.spec.ts).
+		"lib": ["ES2022", "DOM", "DOM.Iterable"],
 		"rootDir": "./",
 		"outDir": "../../lib/test",
 		"types": ["node", "mocha"],

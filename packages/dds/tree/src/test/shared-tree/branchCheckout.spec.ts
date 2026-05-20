@@ -356,10 +356,9 @@ describe("BranchCheckout", () => {
 		});
 	});
 
-	// These tests verify that the WeakMaps in branchCheckout.ts (notably `branchCheckoutMap`,
-	// which is keyed by `SharedTreeBranch`) do not pin disposed branches in memory: once a
-	// Verifies that disposed branches are garbage collected (WeakMaps don't pin them).
-	// Uses two-async-major-GC pattern from packages/framework/react/src/test/useObservation.spec.tsx.
+	// Verifies that the WeakMaps in branchCheckout.ts (notably `branchCheckoutMap`, which is
+	// keyed by `SharedTreeBranch`) do not pin disposed branches in memory.
+	// Uses the two-async-major-GC pattern from packages/framework/react/src/test/useObservation.spec.tsx.
 	describe("WeakMap GC", () => {
 		/**
 		 * Runs up to two major async GCs, breaking early once `predicate` returns true.
