@@ -28,7 +28,7 @@ export interface IOdspTokenProvider {
 // @beta @sealed
 export class OdspClient {
     constructor(properties: OdspClientProps);
-    createContainer<T extends ContainerSchema>(containerSchema: T, minVersionForCollab: MinimumVersionForCollab): Promise<{
+    createContainer<T extends ContainerSchema>(containerSchema: T, minVersionForCollab: Exclude<MinimumVersionForCollab, `1.${string}`>): Promise<{
         container: IOdspFluidContainer<T>;
         services: OdspContainerServices;
     }>;
@@ -37,7 +37,7 @@ export class OdspClient {
         container: IOdspFluidContainer<T>;
         services: OdspContainerServices;
     }>;
-    getContainer<T extends ContainerSchema>(id: string, containerSchema: T, minVersionForCollab: MinimumVersionForCollab): Promise<{
+    getContainer<T extends ContainerSchema>(id: string, containerSchema: T, minVersionForCollab: Exclude<MinimumVersionForCollab, `1.${string}`>): Promise<{
         container: IOdspFluidContainer<T>;
         services: OdspContainerServices;
     }>;

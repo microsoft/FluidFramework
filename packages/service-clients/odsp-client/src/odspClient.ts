@@ -121,7 +121,8 @@ export class OdspClient {
 	 */
 	public async createContainer<T extends ContainerSchema>(
 		containerSchema: T,
-		minVersionForCollab: MinimumVersionForCollab,
+		// OdspClient does not support 1.x clients, so we exclude it from the accepted `minVersionForCollab` values.
+		minVersionForCollab: Exclude<MinimumVersionForCollab, `1.${string}`>,
 	): Promise<{
 		container: IOdspFluidContainer<T>;
 		services: IOdspContainerServices;
@@ -141,7 +142,7 @@ export class OdspClient {
 	}>;
 	public async createContainer<T extends ContainerSchema>(
 		containerSchema: T,
-		minVersionForCollab: MinimumVersionForCollab = "2.0.0",
+		minVersionForCollab: Exclude<MinimumVersionForCollab, `1.${string}`> = "2.0.0",
 	): Promise<{
 		container: IOdspFluidContainer<T>;
 		services: IOdspContainerServices;
@@ -177,7 +178,7 @@ export class OdspClient {
 	public async getContainer<T extends ContainerSchema>(
 		id: string,
 		containerSchema: T,
-		minVersionForCollab: MinimumVersionForCollab,
+		minVersionForCollab: Exclude<MinimumVersionForCollab, `1.${string}`>,
 	): Promise<{
 		container: IOdspFluidContainer<T>;
 		services: IOdspContainerServices;
@@ -200,7 +201,7 @@ export class OdspClient {
 	public async getContainer<T extends ContainerSchema>(
 		id: string,
 		containerSchema: T,
-		minVersionForCollab: MinimumVersionForCollab = "2.0.0",
+		minVersionForCollab: Exclude<MinimumVersionForCollab, `1.${string}`> = "2.0.0",
 	): Promise<{
 		container: IOdspFluidContainer<T>;
 		services: IOdspContainerServices;
@@ -226,7 +227,7 @@ export class OdspClient {
 
 	private getLoaderProps(
 		schema: ContainerSchema,
-		minVersionForCollab: MinimumVersionForCollab,
+		minVersionForCollab: Exclude<MinimumVersionForCollab, `1.${string}`>,
 	): ILoaderProps {
 		const runtimeFactory = createDOProviderContainerRuntimeFactory({
 			schema,
