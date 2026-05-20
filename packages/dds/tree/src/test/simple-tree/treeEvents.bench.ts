@@ -139,7 +139,7 @@ describe("Tree event benchmarks", () => {
 				...benchmarkDuration({
 					benchmarkFnCustom: async (state) => {
 						const node = makeObject();
-						const offs: Off[] = new Array<Off>(n);
+						const offs: Off[] = Array.from({length: n});
 						state.timeAllBatches(() => {
 							for (let i = 0; i < n; i++) {
 								offs[i] = Tree.on(node, "nodeChanged", noopNodeChanged);
@@ -181,7 +181,7 @@ describe("Tree event benchmarks", () => {
 				title: `new NumberArray with ${n} elements`,
 				...benchmarkDuration({
 					benchmarkFnCustom: async (state) => {
-						const seed: number[] = new Array(n).fill(0);
+						const seed: number[] = Array.from<number>({length: n}).fill(0);
 						state.timeAllBatches(() => {
 							const node = new NumberArray(seed);
 							assert(node.length === n);
