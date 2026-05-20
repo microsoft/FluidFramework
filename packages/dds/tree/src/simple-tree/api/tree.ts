@@ -36,7 +36,7 @@ import type { UnsafeUnknownSchema } from "../unsafeUnknownSchema.js";
 
 import type { TreeViewConfiguration } from "./configuration.js";
 import type {
-	RunTransactionAsyncParams,
+	RunTransactionParams,
 	RunTransactionSyncParams,
 	TransactionCallbackStatus,
 	TransactionResult,
@@ -238,13 +238,13 @@ export interface TreeContextAlpha {
 	 */
 	runTransactionAsync<TValue>(
 		transaction: () => Promise<WithValue<TValue>>,
-		params?: RunTransactionAsyncParams,
+		params?: RunTransactionParams,
 	): Promise<TransactionResultExt<TValue, TValue>>;
 
 	/** An overload of {@link TreeContextAlpha.(runTransactionAsync:1) | runTransactionAsync } which does not return a value. */
 	runTransactionAsync(
 		transaction: () => Promise<void>,
-		params?: RunTransactionAsyncParams,
+		params?: RunTransactionParams,
 	): Promise<TransactionResult>;
 
 	/**
@@ -323,7 +323,7 @@ export interface TreeBranchAlpha extends TreeBranch, TreeContextAlpha {
 
 	runTransactionAsync<TSuccessValue, TFailureValue>(
 		transaction: () => Promise<TransactionCallbackStatus<TSuccessValue, TFailureValue>>,
-		params?: RunTransactionAsyncParams,
+		params?: RunTransactionParams,
 	): Promise<TransactionResultExt<TSuccessValue, TFailureValue>>;
 
 	/**
@@ -331,7 +331,7 @@ export interface TreeBranchAlpha extends TreeBranch, TreeContextAlpha {
 	 */
 	runTransactionAsync(
 		transaction: () => Promise<VoidTransactionCallbackStatus | void>,
-		params?: RunTransactionAsyncParams,
+		params?: RunTransactionParams,
 	): Promise<TransactionResult>;
 
 	/**

@@ -150,13 +150,6 @@ export interface RunTransactionParams {
 }
 
 /**
- * The parameters for the asynchronous {@link RunTransaction | runTransaction} API.
- * @input
- * @alpha
- */
-export interface RunTransactionAsyncParams extends RunTransactionParams {}
-
-/**
  * The parameters for the synchronous {@link RunTransaction | runTransaction} API.
  * @input
  * @alpha

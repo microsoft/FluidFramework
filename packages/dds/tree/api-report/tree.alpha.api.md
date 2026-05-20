@@ -1074,10 +1074,6 @@ export interface RunTransaction {
 }
 
 // @alpha @input
-export interface RunTransactionAsyncParams extends RunTransactionParams {
-}
-
-// @alpha @input
 export interface RunTransactionParams {
     readonly label?: unknown;
     readonly preconditions?: readonly TransactionConstraintAlpha[];
@@ -1752,8 +1748,8 @@ export interface TreeBranchAlpha extends TreeBranch, TreeContextAlpha {
     hasRootSchema<TSchema extends ImplicitFieldSchema>(schema: TSchema): this is TreeViewAlpha<TSchema>;
     runTransaction<TSuccessValue, TFailureValue>(transaction: () => TransactionCallbackStatus<TSuccessValue, TFailureValue>, params?: RunTransactionSyncParams): TransactionResultExt<TSuccessValue, TFailureValue>;
     runTransaction(transaction: () => VoidTransactionCallbackStatus | void, params?: RunTransactionSyncParams): TransactionResult;
-    runTransactionAsync<TSuccessValue, TFailureValue>(transaction: () => Promise<TransactionCallbackStatus<TSuccessValue, TFailureValue>>, params?: RunTransactionAsyncParams): Promise<TransactionResultExt<TSuccessValue, TFailureValue>>;
-    runTransactionAsync(transaction: () => Promise<VoidTransactionCallbackStatus | void>, params?: RunTransactionAsyncParams): Promise<TransactionResult>;
+    runTransactionAsync<TSuccessValue, TFailureValue>(transaction: () => Promise<TransactionCallbackStatus<TSuccessValue, TFailureValue>>, params?: RunTransactionParams): Promise<TransactionResultExt<TSuccessValue, TFailureValue>>;
+    runTransactionAsync(transaction: () => Promise<VoidTransactionCallbackStatus | void>, params?: RunTransactionParams): Promise<TransactionResult>;
 }
 
 // @alpha @sealed
@@ -1790,8 +1786,8 @@ export interface TreeContextAlpha {
     isBranch(): this is TreeBranchAlpha;
     runTransaction<TValue>(transaction: () => WithValue<TValue>, params?: RunTransactionSyncParams): TransactionResultExt<TValue, TValue>;
     runTransaction(transaction: () => void, params?: RunTransactionSyncParams): TransactionResult;
-    runTransactionAsync<TValue>(transaction: () => Promise<WithValue<TValue>>, params?: RunTransactionAsyncParams): Promise<TransactionResultExt<TValue, TValue>>;
-    runTransactionAsync(transaction: () => Promise<void>, params?: RunTransactionAsyncParams): Promise<TransactionResult>;
+    runTransactionAsync<TValue>(transaction: () => Promise<WithValue<TValue>>, params?: RunTransactionParams): Promise<TransactionResultExt<TValue, TValue>>;
+    runTransactionAsync(transaction: () => Promise<void>, params?: RunTransactionParams): Promise<TransactionResult>;
 }
 
 // @beta @input

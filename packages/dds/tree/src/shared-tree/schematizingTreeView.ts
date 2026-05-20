@@ -45,7 +45,7 @@ import {
 	type TransactionCallbackStatus,
 	type TransactionResult,
 	type TransactionResultExt,
-	type RunTransactionAsyncParams,
+	type RunTransactionParams,
 	type RunTransactionSyncParams,
 	HydratedContext,
 	SimpleContextSlot,
@@ -293,11 +293,11 @@ export class SchematizingSimpleTreeView<
 
 	public runTransactionAsync<TSuccessValue, TFailureValue>(
 		transaction: () => Promise<TransactionCallbackStatus<TSuccessValue, TFailureValue>>,
-		params?: RunTransactionAsyncParams,
+		params?: RunTransactionParams,
 	): Promise<TransactionResultExt<TSuccessValue, TFailureValue>>;
 	public runTransactionAsync(
 		transaction: () => Promise<VoidTransactionCallbackStatus | void>,
-		params?: RunTransactionAsyncParams,
+		params?: RunTransactionParams,
 	): Promise<TransactionResult>;
 	public async runTransactionAsync<TSuccessValue, TFailureValue>(
 		transaction: () => Promise<
@@ -305,7 +305,7 @@ export class SchematizingSimpleTreeView<
 			| VoidTransactionCallbackStatus
 			| void
 		>,
-		params: RunTransactionAsyncParams | undefined,
+		params: RunTransactionParams | undefined,
 	): Promise<TransactionResultExt<TSuccessValue, TFailureValue> | TransactionResult> {
 		this.ensureUndisposed();
 		if (this.checkout.transaction.size > 0) {
