@@ -24,13 +24,6 @@ import { hydrate } from "./utils.js";
 
 /**
  * Benchmark suite for `Tree.on` event registration and emission.
- *
- * Focus is on the registration path (cost per `Tree.on` call). A few emission
- * benchmarks are included because several proposed optimisations also affect
- * per-emission cost.
- *
- * See [docs/wip/tree-event-perf-todos.md](../../../../docs/wip/tree-event-perf-todos.md)
- * for the list of optimisations being evaluated.
  */
 describe("Tree event benchmarks", () => {
 	configureBenchmarkHooks();
@@ -58,8 +51,7 @@ describe("Tree event benchmarks", () => {
 	const makeMap = (): StringMap => hydrate(StringMap, new Map([["k0", "v0"]]));
 
 	// A no-op listener that is shared across iterations so that we don't measure
-	// listener-creation cost. Tree.on internally wraps this, so re-using the same
-	// reference is safe (each Tree.on call allocates a fresh internal wrapper).
+	// listener-creation cost.
 	const noopNodeChanged = (): void => {};
 	const noopTreeChanged = (): void => {};
 
