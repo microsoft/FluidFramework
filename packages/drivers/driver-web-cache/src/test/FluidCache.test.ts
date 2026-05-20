@@ -689,6 +689,37 @@ for (const immediateClose of [true, false]) {
 				// any lingering open connections from the disposed cache.
 				await replacement.get(cacheEntry);
 			});
+
+			it("does not broadcast a change event when dispose runs mid-flight", async () => {
+				const observer = getFluidCache();
+				extraCaches.push(observer);
+
+				const received: FluidCacheChangeEvent[] = [];
+				observer.onChange((event) => received.push(event));
+
+				fluidCache = getFluidCache();
+				const cacheEntry = getMockCacheEntry("postDisposeNoBroadcast");
+
+				// Start the write, then dispose synchronously. Whether the openDb race
+				// fires first or the post-write `throwIfDisposed` does, the contract is
+				// the same: the call rejects with `UsageError` and no change event is
+				// posted to other instances.
+				const pending = fluidCache.put(cacheEntry, { rev: 1 });
+				fluidCache.dispose();
+				await assert.rejects(async () => pending, disposedMatcher);
+
+				// Allow any (incorrectly emitted) broadcast to deliver before asserting.
+				await new Promise<void>((resolve) => setImmediate(resolve));
+
+				const leakedPuts = received.filter(
+					(e) => e.op === "put" && e.cacheItemId === "postDisposeNoBroadcast",
+				);
+				assert.deepEqual(
+					leakedPuts,
+					[],
+					"a disposed FluidCache must not broadcast change events after teardown",
+				);
+			});
 		});
 
 		describe("putIf staleness", () => {

@@ -161,11 +161,20 @@ export class FluidCache implements IPersistedCache {
 		}
 
 		scheduleIdleTask(async () => {
+			// If the cache was disposed before this idle callback runs, skip the work and
+			// any associated telemetry — the host has indicated they no longer want this
+			// cache observing or touching IndexedDB.
+			if (this.disposed) {
+				return;
+			}
 			// Log how much storage space is currently being used by indexed db.
 			// NOTE: This API is not supported in all browsers and it doesn't let you see the size of a specific DB.
 			// Exception added when eslint rule was added, this should be revisited when modifying this code
 			if (navigator.storage?.estimate) {
 				const estimate = await navigator.storage.estimate();
+				if (this.disposed) {
+					return;
+				}
 
 				// Some browsers have a usageDetails property that will tell you
 				// more detailed information on how the storage is being used
@@ -187,11 +196,21 @@ export class FluidCache implements IPersistedCache {
 		});
 
 		scheduleIdleTask(async () => {
+			// Honor the dispose contract: if the host disposed the cache before this idle
+			// cleanup callback ran, do not open a fresh IndexedDB connection or perform any
+			// maintenance writes. This idle task calls `getFluidCacheIndexedDbInstance`
+			// directly rather than `openDb()`, so it needs its own disposed guard.
+			if (this.disposed) {
+				return;
+			}
 			let db: IDBPDatabase<FluidCacheDBSchema> | undefined;
 
 			// Delete entries that have not been accessed recently to clean up space
 			try {
 				db = await getFluidCacheIndexedDbInstance(this.logger);
+				if (this.disposed) {
+					return;
+				}
 
 				const transaction = db.transaction(FluidDriverObjectStoreName, "readwrite");
 				const index = transaction.store.index("createdTimeMs");
@@ -199,6 +218,9 @@ export class FluidCache implements IPersistedCache {
 				const keysToDelete = await index.getAllKeys(
 					IDBKeyRange.upperBound(Date.now() - this.maxCacheItemAge),
 				);
+				if (this.disposed) {
+					return;
+				}
 
 				await Promise.all(keysToDelete.map(async (key) => transaction.store.delete(key)));
 				await transaction.done;
@@ -306,6 +328,11 @@ export class FluidCache implements IPersistedCache {
 	}
 
 	private broadcast(event: FluidCacheChangeEvent): void {
+		// Never emit a change event after the cache has been disposed: `broadcastChannel`
+		// is closed in `dispose()` and `postMessage` would otherwise throw on every call.
+		if (this.disposed) {
+			return;
+		}
 		// Post to other instances first; failures in postMessage shouldn't surface to callers.
 		try {
 			this.broadcastChannel?.postMessage(event);
@@ -392,6 +419,10 @@ export class FluidCache implements IPersistedCache {
 
 			await Promise.all(keysToDelete.map(async (key) => transaction.store.delete(key)));
 			await transaction.done;
+			// Dispose may have landed during one of the awaits above. Reject before
+			// reporting success or broadcasting so the caller observes the disposed
+			// state cleanly and no `removeFile` event escapes after teardown.
+			this.throwIfDisposed();
 			removed = keysToDelete.length > 0;
 		} catch (error: any) {
 			// If dispose ran during the operation, surface that to the caller instead of
@@ -421,6 +452,7 @@ export class FluidCache implements IPersistedCache {
 
 			const key = getKeyForCacheEntry(entry);
 			await db.delete(FluidDriverObjectStoreName, key);
+			this.throwIfDisposed();
 			removed = true;
 		} catch (error: any) {
 			this.throwIfDisposed();
@@ -529,6 +561,10 @@ export class FluidCache implements IPersistedCache {
 				this.buildRecord(entry, value),
 				getKeyForCacheEntry(entry),
 			);
+			// Dispose may have landed during `await db.put(...)`. Reject before reporting
+			// success or broadcasting so the caller observes the disposed state cleanly
+			// and no `put` event escapes after teardown.
+			this.throwIfDisposed();
 			wrote = true;
 			this.closeDb(db);
 		} catch (error: any) {
@@ -609,6 +645,10 @@ export class FluidCache implements IPersistedCache {
 
 			await transaction.store.put(this.buildRecord(entry, value), key);
 			await transaction.done;
+			// Dispose may have landed during the awaits above. Reject before reporting
+			// success or broadcasting so the caller observes the disposed state cleanly
+			// and no `put` event escapes after teardown.
+			this.throwIfDisposed();
 			wrote = true;
 		} catch (error: any) {
 			this.throwIfDisposed();
