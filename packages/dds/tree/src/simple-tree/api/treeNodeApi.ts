@@ -221,6 +221,14 @@ export interface TreeNodeApi {
 }
 
 /**
+ * Per-schema cache memoising whether an object schema declares any property-key
+ * overrides (i.e. a field where `storedKey !== propertyKey`). Used by `Tree.on`
+ * to short-circuit the `changedFields → changedProperties` translation on
+ * `nodeChanged` when no overrides exist.
+ */
+const objectSchemaHasKeyOverrideCache = new WeakMap<object, boolean>();
+
+/**
  * {@inheritDoc TreeNodeApi}
  */
 export const treeNodeApi: TreeNodeApi = {
@@ -263,12 +271,35 @@ export const treeNodeApi: TreeNodeApi = {
 			case "nodeChanged": {
 				const nodeSchema = kernel.schema;
 				if (isObjectNodeSchema(nodeSchema)) {
+					// If the schema has no property-key overrides (i.e. storedKey === propertyKey
+					// for every field), the translation from `changedFields` to `changedProperties`
+					// is the identity. Detect once per schema (cached) and forward the source set
+					// directly on every emission, avoiding a per-emission `Array.from` + `new Set`.
+					// In schemas that DO declare `key` overrides, fall back to building the
+					// translated set.
+					const storedKeyMap = nodeSchema.storedKeyToPropertyKey;
+					let hasKeyOverride = objectSchemaHasKeyOverrideCache.get(nodeSchema);
+					if (hasKeyOverride === undefined) {
+						hasKeyOverride = false;
+						for (const [storedKey, propertyKey] of storedKeyMap) {
+							if (storedKey !== propertyKey) {
+								hasKeyOverride = true;
+								break;
+							}
+						}
+						objectSchemaHasKeyOverrideCache.set(nodeSchema, hasKeyOverride);
+					}
+					if (!hasKeyOverride) {
+						return kernel.events.on("childrenChangedAfterBatch", ({ changedFields }) => {
+							listener({ changedProperties: changedFields });
+						});
+					}
 					return kernel.events.on("childrenChangedAfterBatch", ({ changedFields }) => {
 						const changedProperties = new Set(
 							Array.from(
 								changedFields,
 								(field) =>
-									nodeSchema.storedKeyToPropertyKey.get(field) ??
+									storedKeyMap.get(field) ??
 									fail(0xb36 /* Could not find stored key in schema. */),
 							),
 						);
