@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-example/table-tree",
-	"version": "2.100.1",
+	"version": "2.100.2",
 	"private": true,
 	"description": "Simple table example app.",
 	"homepage": "https://fluidframework.com",
