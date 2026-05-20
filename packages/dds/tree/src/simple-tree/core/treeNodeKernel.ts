@@ -5,6 +5,7 @@
 
 import { createEmitter } from "@fluid-internal/client-utils";
 import type { HasListeners, Listenable, Off } from "@fluidframework/core-interfaces/internal";
+
 import {
 	assert,
 	fail,
@@ -120,14 +121,20 @@ export class TreeNodeKernel {
 	#hydrationState: HydrationState;
 
 	/**
-	 * Events registered before hydration.
+	 * Per-kernel event buffer.
 	 * @remarks
-	 * Since these are usually not used, they are allocated lazily as an optimization.
-	 * The laziness also avoids extra forwarding overhead for events from this kernel's anchor node and also avoids registering for events that are unneeded.
-	 * This means optimizations like skipping processing data in subtrees where no subtreeChanged events are subscribed to would be able to work,
-	 * since the kernel does not unconditionally subscribe to those events (like a design which simply forwards all events would).
+	 * Allocated lazily on first access to {@link TreeNodeKernel.events}.
+	 * The vast majority of nodes never subscribe to any events, so deferring this allocation
+	 * (and the associated source-listener bookkeeping) saves both time and memory.
 	 */
-	readonly #eventBuffer: KernelEventBuffer;
+	#eventBuffer: KernelEventBuffer | undefined = undefined;
+
+	/**
+	 * The current event source (innerNode.events when unhydrated, anchorNode.events when hydrated).
+	 * Tracked separately from {@link #eventBuffer} so a buffer can be lazily constructed without
+	 * having to plumb the source through {@link TreeNodeKernel.events}.
+	 */
+	#eventSource: Listenable<KernelEvents> & HasListeners<KernelEvents>;
 
 	/**
 	 * Create a TreeNodeKernel which can be looked up with {@link getKernel}.
@@ -158,11 +165,11 @@ export class TreeNodeKernel {
 				innerNode,
 			};
 
-			this.#eventBuffer = new KernelEventBuffer(innerNode.events);
+			this.#eventSource = innerNode.events;
 		} else {
 			// Hydrated case
 			this.#hydrationState = this.createHydratedState(innerNode);
-			this.#eventBuffer = new KernelEventBuffer(innerNode.anchorNode.events);
+			this.#eventSource = innerNode.anchorNode.events;
 		}
 	}
 
@@ -189,9 +196,12 @@ export class TreeNodeKernel {
 		assert(!isHydrated(this.#hydrationState), 0xa2b /* hydration should only happen once */);
 
 		this.#hydrationState = this.createHydratedState(inner);
+		this.#eventSource = inner.anchorNode.events;
 
-		// Lazily migrate existing event listeners to the anchor node
-		this.#eventBuffer.migrateEventSource(inner.anchorNode.events);
+		// If a buffer was already created (i.e. there are existing listeners), migrate it to
+		// the new source. Otherwise there is nothing to migrate; the next .events access will
+		// pick up the new source directly.
+		this.#eventBuffer?.migrateEventSource(inner.anchorNode.events);
 	}
 
 	private createHydratedState(innerNode: HydratedFlexTreeNode): HydratedState {
@@ -233,7 +243,12 @@ export class TreeNodeKernel {
 	}
 
 	public get events(): Listenable<KernelEvents> {
-		return this.#eventBuffer;
+		let buffer = this.#eventBuffer;
+		if (buffer === undefined) {
+			buffer = new KernelEventBuffer(this.#eventSource);
+			this.#eventBuffer = buffer;
+		}
+		return buffer;
 	}
 
 	public dispose(): void {
@@ -244,7 +259,7 @@ export class TreeNodeKernel {
 				off();
 			}
 		}
-		this.#eventBuffer.dispose();
+		this.#eventBuffer?.dispose();
 		// TODO: go to the context and remove myself from withAnchors
 	}
 
@@ -327,29 +342,44 @@ export function withBufferedTreeEvents(callback: () => void): void {
 			callback();
 		} finally {
 			bufferTreeEvents = false;
-			flushEventsEmitter.emit("flush");
+			flushPendingBuffers();
 		}
 	}
 }
 
 /**
- * Event emitter to notify subscribers when tree events buffered due to {@link withBufferedTreeEvents} should be flushed.
+ * Set of {@link KernelEventBuffer}s that have buffered at least one event during the current
+ * {@link withBufferedTreeEvents} window and therefore need to be flushed when buffering ends.
+ *
+ * @remarks
+ * This shared registry replaces the previous design in which each {@link KernelEventBuffer}
+ * subscribed to a global flush event emitter at construction time. With many tree nodes that
+ * design produced O(nodes) subscriptions and per-node closure allocations even when no events
+ * had been buffered. With the set-based design, only buffers that actually accumulated state
+ * during a buffering window pay the flush cost, and per-kernel construction is allocation-free
+ * with respect to the flush mechanism.
  */
-const flushEventsEmitter = createEmitter<{
-	flush: () => void;
-}>();
+const pendingFlushBuffers = new Set<KernelEventBuffer>();
+
+function flushPendingBuffers(): void {
+	if (pendingFlushBuffers.size === 0) {
+		return;
+	}
+	// Snapshot first so that any reentrant changes do not affect iteration.
+	const toFlush = Array.from(pendingFlushBuffers);
+	pendingFlushBuffers.clear();
+	for (const buffer of toFlush) {
+		buffer.flush();
+	}
+}
 
 /**
  * Event emitter for {@link TreeNodeKernel}, which optionally buffers events based on {@link bufferTreeEvents}.
- * @remarks Listens to {@link flushEventsEmitter} to know when to flush any buffered events.
+ * @remarks Registers itself in {@link pendingFlushBuffers} whenever it buffers an event so that it
+ * will be flushed when the surrounding {@link withBufferedTreeEvents} window ends.
  */
 class KernelEventBuffer implements Listenable<KernelEvents> {
 	#disposed: boolean = false;
-
-	/**
-	 * Listen to {@link flushEventsEmitter} to know when to flush buffered events.
-	 */
-	readonly #disposeOnFlushListener = flushEventsEmitter.on("flush", this.flush.bind(this));
 
 	readonly #events = createEmitter<KernelEvents>();
 
@@ -507,6 +537,7 @@ class KernelEventBuffer implements Listenable<KernelEvents> {
 					this.#fieldMarksBuffer.set(key, marks);
 				}
 			}
+			pendingFlushBuffers.add(this);
 		} else {
 			this.#events.emit("childrenChangedAfterBatch", { changedFields, fieldMarks });
 		}
@@ -515,6 +546,7 @@ class KernelEventBuffer implements Listenable<KernelEvents> {
 	#handleSubtreeChangedAfterBatch(): void {
 		if (bufferTreeEvents) {
 			this.#subTreeChangedBuffer = true;
+			pendingFlushBuffers.add(this);
 		} else {
 			this.#events.emit("subtreeChangedAfterBatch");
 		}
@@ -556,7 +588,10 @@ class KernelEventBuffer implements Listenable<KernelEvents> {
 			0xc52 /* Buffered kernel events should have been flushed before disposing. */,
 		);
 
-		this.#disposeOnFlushListener();
+		// Defensive: in the unusual case where we are disposed while registered for flush
+		// (e.g. dispose-during-flush), make sure we are not left in the global set.
+		pendingFlushBuffers.delete(this);
+
 		for (const off of this.#disposeSourceListeners.values()) {
 			off();
 		}
