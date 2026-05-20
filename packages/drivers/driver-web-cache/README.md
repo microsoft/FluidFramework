@@ -83,10 +83,13 @@ const wrote = await fluidCache.putIf(entry, proposed, (existing, prop) => {
 
 The `shouldWrite` predicate must be synchronous — IndexedDB transactions auto-close on any non-IDB
 await, which would silently break the atomicity that makes the compare-and-swap correct. The predicate
-is invoked with `(existing, proposed)`; `existing` is `undefined` when no entry exists or when the
-existing entry belongs to a different partition (consistent with the semantics of `get`). The call
-returns `true` if the new value was written and `false` if the predicate rejected the write or an
-error occurred.
+is invoked with `(existing, proposed)`; `existing` is `undefined` when the cached row would be invisible
+to `get` — that is, no entry exists for the key, the existing entry belongs to a different partition,
+or the existing entry is older than `maxCacheItemAge`. When the predicate returns `true`, the write
+always proceeds and atomically replaces whatever row sits at the key, including cross-partition or
+stale rows the predicate saw as `undefined` (matching the unconditional overwrite behavior of `put`).
+The call returns `true` if the new value was written and `false` if the predicate rejected the write
+or an error occurred.
 
 ## Cross-instance change notifications (`onChange`)
 
@@ -114,8 +117,11 @@ Note: `BroadcastChannel` does not echo a message back to the instance that poste
 performed by *this* `FluidCache` do not invoke its own listeners — only other instances do.
 
 When the cache is no longer needed (e.g. user signs out, page unloads), call `fluidCache.dispose()`
-to close the `BroadcastChannel` and any open IndexedDB connection. `dispose` is idempotent; calling
-`onChange` after `dispose` throws a `UsageError`.
+to close the `BroadcastChannel` and any open IndexedDB connection. `dispose` is idempotent. After
+`dispose` returns, every other public method (`get`, `put`, `putIf`, `removeEntry`, `removeEntries`,
+`onChange`) throws a `UsageError`. Operations that were already in flight when `dispose` was called
+also reject with a `UsageError`, and the underlying IndexedDB connection is not lazily reopened by
+any such in-flight call.
 
 If `BroadcastChannel` is not available in the runtime, `onChange` becomes a no-op subscription and
 writes simply don't broadcast.

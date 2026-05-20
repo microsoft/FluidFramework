@@ -611,5 +611,120 @@ for (const immediateClose of [true, false]) {
 				);
 			});
 		});
+
+		describe("post-dispose contract", () => {
+			const disposedMatcher = (error: Error): boolean => /disposed/i.test(error.message);
+
+			it("get throws UsageError after dispose", async () => {
+				fluidCache = getFluidCache();
+				const cacheEntry = getMockCacheEntry("postDisposeGet");
+				await fluidCache.put(cacheEntry, { rev: 1 });
+				fluidCache.dispose();
+
+				await assert.rejects(async () => fluidCache.get(cacheEntry), disposedMatcher);
+			});
+
+			it("put throws UsageError after dispose", async () => {
+				fluidCache = getFluidCache();
+				fluidCache.dispose();
+
+				const cacheEntry = getMockCacheEntry("postDisposePut");
+				await assert.rejects(
+					async () => fluidCache.put(cacheEntry, { rev: 1 }),
+					disposedMatcher,
+				);
+			});
+
+			it("putIf throws UsageError after dispose", async () => {
+				fluidCache = getFluidCache();
+				fluidCache.dispose();
+
+				const cacheEntry = getMockCacheEntry("postDisposePutIf");
+				await assert.rejects(
+					async () => fluidCache.putIf(cacheEntry, { rev: 1 }, () => true),
+					disposedMatcher,
+				);
+			});
+
+			it("removeEntry throws UsageError after dispose", async () => {
+				fluidCache = getFluidCache();
+				const cacheEntry = getMockCacheEntry("postDisposeRemoveEntry");
+				await fluidCache.put(cacheEntry, { rev: 1 });
+				fluidCache.dispose();
+
+				await assert.rejects(async () => fluidCache.removeEntry(cacheEntry), disposedMatcher);
+			});
+
+			it("removeEntries throws UsageError after dispose", async () => {
+				fluidCache = getFluidCache();
+				const cacheEntry = getMockCacheEntry("postDisposeRemoveEntries");
+				await fluidCache.put(cacheEntry, { rev: 1 });
+				fluidCache.dispose();
+
+				await assert.rejects(
+					async () => fluidCache.removeEntries(cacheEntry.file),
+					disposedMatcher,
+				);
+			});
+
+			it("does not resurrect the DB when dispose runs during an in-flight put", async () => {
+				fluidCache = getFluidCache();
+				const cacheEntry = getMockCacheEntry("postDisposeInflight");
+
+				const pending = fluidCache.put(cacheEntry, { rev: 1 });
+				// Synchronously dispose while the put is still awaiting openDb.
+				fluidCache.dispose();
+
+				// The in-flight put must reject rather than complete silently and leave
+				// a resurrected DB connection behind.
+				await assert.rejects(async () => pending, disposedMatcher);
+
+				// A subsequent call must also throw (already covered above), and the
+				// previously-persisted state from before dispose must still be readable
+				// from a freshly-constructed FluidCache.
+				const replacement = getFluidCache();
+				extraCaches.push(replacement);
+				// We don't assert on what the in-flight put persisted (it may or may not
+				// have committed before openDb threw), but a fresh instance must not see
+				// any lingering open connections from the disposed cache.
+				await replacement.get(cacheEntry);
+			});
+		});
+
+		describe("putIf staleness", () => {
+			it("treats existing entries older than maxCacheItemAge as absent", async () => {
+				const resetDateMock = setupDateMock(0);
+				try {
+					const maxAge = 5 * 60 * 1000;
+					fluidCache = new FluidCache({
+						partitionKey: mockPartitionKey,
+						maxCacheItemAge: maxAge,
+						closeDbAfterMs: immediateClose ? 0 : 100,
+					});
+
+					const cacheEntry = getMockCacheEntry("putIfStale");
+					await fluidCache.put(cacheEntry, { rev: 1 });
+
+					// Advance well past maxCacheItemAge so the existing row is "stale"
+					// under the same rules `get` applies.
+					DateMock.mockTimeMs += maxAge * 2;
+
+					let observedExisting: unknown = "sentinel";
+					const wrote = await fluidCache.putIf(cacheEntry, { rev: 2 }, (existing) => {
+						observedExisting = existing;
+						return true;
+					});
+
+					assert.strictEqual(wrote, true);
+					assert.strictEqual(
+						observedExisting,
+						undefined,
+						"stale existing entries should be reported to the predicate as undefined",
+					);
+				} finally {
+					resetDateMock();
+				}
+			});
+		});
 	});
 }

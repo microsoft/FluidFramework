@@ -26,4 +26,4 @@ Notification semantics:
 - `BroadcastChannel` does not echo a message back to the instance that posted it, so a write performed by this `FluidCache` does not invoke its own listeners — other instances (including ones in the same tab) do.
 - If `BroadcastChannel` is unavailable in the runtime, `onChange` becomes a no-op subscription and writes simply do not broadcast.
 
-The cache now also exposes a `dispose()` method, which closes the `BroadcastChannel`, the open IndexedDB connection, and the close timer. `dispose` is idempotent. Calling `onChange` after `dispose` throws a `UsageError`.
+The cache now also exposes a `dispose()` method, which closes the `BroadcastChannel`, the open IndexedDB connection, and the close timer. `dispose` is idempotent. After `dispose` returns, every other public method (`get`, `put`, `putIf`, `removeEntry`, `removeEntries`, `onChange`) throws a `UsageError`. Operations that were already in flight when `dispose` was called also reject with a `UsageError`, and the underlying IndexedDB connection is not lazily reopened by any such in-flight call.

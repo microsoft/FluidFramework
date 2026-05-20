@@ -258,8 +258,13 @@ export class FluidCache implements IPersistedCache {
 
 	/**
 	 * Tear down resources held by the cache: the `BroadcastChannel` used for change
-	 * notifications, any open IndexedDB connection, and the close timer. After dispose,
-	 * `onChange` will throw and other methods are unsafe to call.
+	 * notifications, any open IndexedDB connection, and the close timer.
+	 *
+	 * After `dispose` returns, every other public method (`get`, `put`, `putIf`,
+	 * `removeEntry`, `removeEntries`, `onChange`) throws a `UsageError`. Operations
+	 * that were already in flight when `dispose` was called also reject with a
+	 * `UsageError`, and crucially, the IndexedDB connection is *not* lazily
+	 * reopened by such an in-flight call.
 	 *
 	 * Calling `dispose` more than once is a no-op.
 	 */
@@ -274,6 +279,12 @@ export class FluidCache implements IPersistedCache {
 		this.dbCloseTimer = undefined;
 		this.db?.close();
 		this.db = undefined;
+	}
+
+	private throwIfDisposed(): void {
+		if (this.disposed) {
+			throw new UsageError("FluidCache is disposed");
+		}
 	}
 
 	private dispatchChangeEvent(event: FluidCacheChangeEvent): void {
@@ -307,11 +318,26 @@ export class FluidCache implements IPersistedCache {
 	}
 
 	private async openDb(): Promise<IDBPDatabase<FluidCacheDBSchema>> {
+		this.throwIfDisposed();
 		if (this.closeDbImmediately) {
-			return getFluidCacheIndexedDbInstance(this.logger);
+			const dbInstance = await getFluidCacheIndexedDbInstance(this.logger);
+			// Dispose may have run while we awaited the IDB open. Close the just-acquired
+			// connection and reject so callers do not silently operate on a disposed cache.
+			if (this.disposed) {
+				dbInstance.close();
+				throw new UsageError("FluidCache was disposed during openDb");
+			}
+			return dbInstance;
 		}
 		if (this.db === undefined) {
 			const dbInstance = await getFluidCacheIndexedDbInstance(this.logger);
+			// Dispose may have run while we awaited the IDB open. Close the just-acquired
+			// connection and reject so we never resurrect the DB or arm a fresh close
+			// timer past dispose.
+			if (this.disposed) {
+				dbInstance.close();
+				throw new UsageError("FluidCache was disposed during openDb");
+			}
 			if (this.db === undefined) {
 				// Reset the counter on first open.
 				this.dbReuseCount = -1;
@@ -353,6 +379,7 @@ export class FluidCache implements IPersistedCache {
 	}
 
 	public async removeEntries(file: IFileEntry): Promise<void> {
+		this.throwIfDisposed();
 		let db: IDBPDatabase<FluidCacheDBSchema> | undefined;
 		let removed = false;
 		try {
@@ -367,6 +394,9 @@ export class FluidCache implements IPersistedCache {
 			await transaction.done;
 			removed = keysToDelete.length > 0;
 		} catch (error: any) {
+			// If dispose ran during the operation, surface that to the caller instead of
+			// silently swallowing the failure, matching the post-dispose throw contract.
+			this.throwIfDisposed();
 			this.logger.sendErrorEvent(
 				{
 					eventName: FluidCacheErrorEvent.FluidCacheDeleteOldEntriesError,
@@ -383,6 +413,7 @@ export class FluidCache implements IPersistedCache {
 	}
 
 	public async removeEntry(entry: ICacheEntry): Promise<void> {
+		this.throwIfDisposed();
 		let db: IDBPDatabase<FluidCacheDBSchema> | undefined;
 		let removed = false;
 		try {
@@ -392,6 +423,7 @@ export class FluidCache implements IPersistedCache {
 			await db.delete(FluidDriverObjectStoreName, key);
 			removed = true;
 		} catch (error: any) {
+			this.throwIfDisposed();
 			this.logger.sendErrorEvent(
 				{
 					eventName: FluidCacheErrorEvent.FluidCacheDeleteSingleEntryError,
@@ -414,6 +446,7 @@ export class FluidCache implements IPersistedCache {
 	}
 
 	public async get(cacheEntry: ICacheEntry): Promise<any> {
+		this.throwIfDisposed();
 		const startTime = performance.now();
 
 		const cachedItem = await this.getItemFromCache(cacheEntry);
@@ -470,6 +503,9 @@ export class FluidCache implements IPersistedCache {
 			this.closeDb(db);
 			return { ...value, dbOpenPerf };
 		} catch (error: any) {
+			// If dispose ran during the operation, surface that to the caller instead of
+			// silently returning undefined, matching the post-dispose throw contract.
+			this.throwIfDisposed();
 			// We can fail to open the db for a variety of reasons,
 			// such as the database version having upgraded underneath us. Return undefined in this case
 			this.logger.sendErrorEvent(
@@ -482,6 +518,7 @@ export class FluidCache implements IPersistedCache {
 	}
 
 	public async put(entry: ICacheEntry, value: any): Promise<void> {
+		this.throwIfDisposed();
 		let db: IDBPDatabase<FluidCacheDBSchema> | undefined;
 		let wrote = false;
 		try {
@@ -495,6 +532,7 @@ export class FluidCache implements IPersistedCache {
 			wrote = true;
 			this.closeDb(db);
 		} catch (error: any) {
+			this.throwIfDisposed();
 			// We can fail to open the db for a variety of reasons,
 			// such as the database version having upgraded underneath us
 			this.logger.sendErrorEvent(
@@ -526,9 +564,15 @@ export class FluidCache implements IPersistedCache {
 	 * @param entry - cache entry; identifies the file and the key within that file.
 	 * @param value - the proposed JSON-serializable value to write if `shouldWrite` returns true.
 	 * @param shouldWrite - synchronous predicate invoked with `(existing, proposed)`.
-	 * `existing` is the currently-cached value, or `undefined` if no entry exists for the key
-	 * or the existing entry belongs to a different partition (consistent with `get`).
+	 * `existing` is the currently-cached value, or `undefined` when the cached row is invisible
+	 * under the same rules `get` applies: no entry exists for the key, the existing entry
+	 * belongs to a different partition, or the existing entry is older than `maxCacheItemAge`.
 	 * `proposed` is the same `value` argument, provided so the predicate can be self-contained.
+	 *
+	 * Note that when the predicate returns `true`, the write always proceeds and atomically
+	 * replaces whatever row exists at the key, *including* cross-partition or stale rows that
+	 * the predicate saw as `undefined`. This matches the unconditional overwrite behavior of
+	 * `put`. Callers who must preserve cross-partition rows should not use `putIf`.
 	 *
 	 * The predicate must be synchronous: IndexedDB transactions auto-close on any non-IDB
 	 * await, which would silently break the atomicity that makes the compare-and-swap correct.
@@ -540,6 +584,7 @@ export class FluidCache implements IPersistedCache {
 		value: unknown,
 		shouldWrite: (existing: unknown, proposed: unknown) => boolean,
 	): Promise<boolean> {
+		this.throwIfDisposed();
 		let db: IDBPDatabase<FluidCacheDBSchema> | undefined;
 		let wrote = false;
 		try {
@@ -548,11 +593,14 @@ export class FluidCache implements IPersistedCache {
 			const key = getKeyForCacheEntry(entry);
 			const transaction = db.transaction(FluidDriverObjectStoreName, "readwrite");
 			const existing = await transaction.store.get(key);
-			// Surface the cached value to the predicate only when the existing entry
-			// matches our partition. Cross-partition entries are treated as absent,
-			// consistent with the semantics of `get`.
-			const existingValue =
-				existing?.partitionKey === this.partitionKey ? existing.cachedObject : undefined;
+			// Surface the cached value to the predicate only when the existing entry is
+			// visible under the same rules `get` applies: same partition and not older
+			// than `maxCacheItemAge`. Cross-partition and stale entries are treated as
+			// absent so the predicate sees the same view it would under `get`+`put`.
+			const existingVisible =
+				existing?.partitionKey === this.partitionKey &&
+				Date.now() - existing.createdTimeMs <= this.maxCacheItemAge;
+			const existingValue = existingVisible ? existing?.cachedObject : undefined;
 
 			if (!shouldWrite(existingValue, value)) {
 				await transaction.done;
@@ -563,6 +611,7 @@ export class FluidCache implements IPersistedCache {
 			await transaction.done;
 			wrote = true;
 		} catch (error: any) {
+			this.throwIfDisposed();
 			this.logger.sendErrorEvent(
 				{ eventName: FluidCacheErrorEvent.FluidCachePutError, pkgVersion },
 				error,
