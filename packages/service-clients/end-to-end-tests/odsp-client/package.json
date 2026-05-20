@@ -16,7 +16,8 @@
 		"build": "fluid-build . --task build",
 		"build:compile": "fluid-build . --task compile",
 		"build:genver": "gen-version",
-		"build:test": "tsc --project ./src/test/tsconfig.json",
+		"build:test": "npm run build:test:esm",
+		"build:test:esm": "tsc --project ./src/test/tsconfig.json",
 		"check:biome": "biome check .",
 		"check:format": "npm run check:biome",
 		"clean": "rimraf --glob dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\" nyc",
@@ -93,10 +94,9 @@
 	},
 	"fluidBuild": {
 		"tasks": {
-			"build:test": [
+			"build:test:esm": [
 				"^api-extractor:esnext",
 				"^build:esnext",
-				"^tsc",
 				"build:genver"
 			]
 		}
