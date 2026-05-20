@@ -173,8 +173,9 @@ export interface CodecWriteOptions extends ICodecOptions, CodecWriteOptionsBeta 
 }
 
 /**
- * `TContext` allows passing context to the codec which may configure how data is encoded/decoded.
- * This parameter is typically used for:
+ * `TEncodeContext` and `TDecodeContext` allow passing context to the codec which may configure how data is encoded/decoded.
+ * `TDecodeContext` defaults to `TEncodeContext`; specify them separately when encode and decode need different context (for example, when encoding uses heuristics that are unneeded when decoding).
+ * These parameters are typically used for:
  * - Codecs which can pick from multiple encoding options, and imbue the encoded data with information about which option was used.
  * The caller of such a codec can provide context about which encoding choice to make as part of the `encode` call without creating
  * additional codecs. Note that this pattern can always be implemented by having the caller create multiple codecs and selecting the

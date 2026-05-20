@@ -293,8 +293,9 @@ function normalizeCodecVersion<
  * Produced by {@link VersionDispatchingCodecBuilder.build}.
  *
  * @typeParam TDecoded - The in memory (not encoded) format.
- * @typeParam TContext - Context type passed to encode/decode operations.
+ * @typeParam TEncodeContext - Context type passed to encode operations.
  * @typeParam TFormatVersion - The type of format version identifiers used by this codec.
+ * @typeParam TDecodeContext - Context type passed to decode operations. Defaults to `TEncodeContext`.
  */
 export interface VersionDispatchingCodec<
 	TDecoded,
