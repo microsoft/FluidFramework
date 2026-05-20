@@ -6,8 +6,8 @@
 import { existsSync } from "node:fs";
 import { readdir, readFile } from "node:fs/promises";
 import { pathToFileURL } from "node:url";
-import * as path from "path";
 import createIgnore from "ignore";
+import * as path from "path";
 import { glob as tinyglobbyGlob } from "tinyglobby";
 
 import type { PackageJson } from "../../common/npmPackage";
@@ -395,7 +395,9 @@ async function readGitignoreRuleSets(dir: string): Promise<GitignoreRuleSet[]> {
 			parentDir === normalizedDir ? [] : await readGitignoreRuleSets(parentDir);
 		const currentRuleSet = await readGitignoreRuleSet(normalizedDir);
 		const ruleSets =
-			currentRuleSet === undefined ? inheritedRuleSets : [...inheritedRuleSets, currentRuleSet];
+			currentRuleSet === undefined
+				? inheritedRuleSets
+				: [...inheritedRuleSets, currentRuleSet];
 		gitignoreRuleSetsCache.set(normalizedDir, ruleSets);
 		return ruleSets;
 	})();

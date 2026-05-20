@@ -128,7 +128,9 @@ async function readGitignoreRuleSets(dir: string): Promise<GitignoreRuleSet[]> {
 			parentDir === normalizedDir ? [] : await readGitignoreRuleSets(parentDir);
 		const currentRuleSet = await readGitignoreRuleSet(normalizedDir);
 		const ruleSets =
-			currentRuleSet === undefined ? inheritedRuleSets : [...inheritedRuleSets, currentRuleSet];
+			currentRuleSet === undefined
+				? inheritedRuleSets
+				: [...inheritedRuleSets, currentRuleSet];
 		gitignoreRuleSetsCache.set(normalizedDir, ruleSets);
 		return ruleSets;
 	})();

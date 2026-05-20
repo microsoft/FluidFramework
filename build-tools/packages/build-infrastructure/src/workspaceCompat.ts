@@ -7,9 +7,6 @@ import { existsSync } from "node:fs";
 import path from "node:path";
 
 import { globSync } from "tinyglobby";
-
-import { filterByGitignoreSync } from "./gitignore.js";
-
 import type {
 	// eslint-disable-next-line import-x/no-deprecated -- back-compat code
 	IFluidBuildDir,
@@ -18,6 +15,7 @@ import type {
 	ReleaseGroupDefinition,
 	WorkspaceDefinition,
 } from "./config.js";
+import { filterByGitignoreSync } from "./gitignore.js";
 import type { IBuildProject, IWorkspace, WorkspaceName } from "./types.js";
 import { Workspace } from "./workspace.js";
 

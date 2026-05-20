@@ -39,6 +39,14 @@ export {
 	isFileInPackageDir,
 	listPackageJsonPaths,
 } from "./git.js";
+export type { GlobWithGitignoreOptions } from "./gitignore.js";
+export {
+	clearGitignoreRuleSetsCache,
+	filterByGitignore,
+	filterByGitignoreSync,
+	globWithGitignore,
+	toPosixPath,
+} from "./gitignore.js";
 export { PackageBase } from "./package.js";
 export { updatePackageJsonFile, updatePackageJsonFileAsync } from "./packageJsonUtils.js";
 export { createPackageManager } from "./packageManagers.js";
@@ -61,11 +69,3 @@ export type {
 } from "./types.js";
 export { isIPackage, isIReleaseGroup } from "./types.js";
 export { setVersion } from "./versions.js";
-export {
-	clearGitignoreRuleSetsCache,
-	filterByGitignore,
-	filterByGitignoreSync,
-	globWithGitignore,
-	toPosixPath,
-} from "./gitignore.js";
-export type { GlobWithGitignoreOptions } from "./gitignore.js";

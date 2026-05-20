@@ -4,11 +4,11 @@
  */
 
 import { strict as assert } from "node:assert";
+import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
-import { mkdtemp, mkdir, rm, writeFile } from "node:fs/promises";
 
-import { describe, it, beforeEach, afterEach } from "mocha";
+import { afterEach, beforeEach, describe, it } from "mocha";
 import { globSync } from "tinyglobby";
 
 import {
@@ -34,7 +34,10 @@ describe("gitignore utilities", () => {
 			path.join(nestedDir, "nested-ignored.ts"),
 			"export const nestedIgnored = true;\n",
 		);
-		await writeFile(path.join(nestedDir, "nested-kept.ts"), "export const nestedKept = true;\n");
+		await writeFile(
+			path.join(nestedDir, "nested-kept.ts"),
+			"export const nestedKept = true;\n",
+		);
 
 		clearGitignoreRuleSetsCache();
 	});
@@ -60,7 +63,10 @@ describe("gitignore utilities", () => {
 		const filtered = filterByGitignoreSync(allFiles, tempDir);
 		const relativePaths = filtered.map((file) => path.relative(tempDir, file)).sort();
 
-		assert.deepEqual(relativePaths, ["root-kept.ts", "z-root.ts", "a-nested/nested-kept.ts"].sort());
+		assert.deepEqual(
+			relativePaths,
+			["root-kept.ts", "z-root.ts", "a-nested/nested-kept.ts"].sort(),
+		);
 	});
 
 	it("preserves root-before-nested traversal order", async () => {

@@ -262,7 +262,10 @@ describe("globWithGitignore (LeafTask file enumeration)", () => {
 		// Create a nested directory with its own .gitignore
 		await mkdir(nestedGitIgnoredDir, { recursive: true });
 		await writeFile(nestedGitignoreFile, "ignoredByNested.ts\n");
-		await writeFile(nestedGitIgnoredFile, "// This file should be ignored by nested .gitignore\n");
+		await writeFile(
+			nestedGitIgnoredFile,
+			"// This file should be ignored by nested .gitignore\n",
+		);
 		await writeFile(nestedGitKeptFile, "// This file should be kept by nested .gitignore\n");
 	});
 
