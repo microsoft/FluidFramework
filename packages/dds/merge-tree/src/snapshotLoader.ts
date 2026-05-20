@@ -135,16 +135,15 @@ export class SnapshotLoader {
 				// out ok since none of these values end up being used. (specifically, the 'firstRemovedSeq' is fake
 				// for all values other than the actual first remove).
 				// This issue only affects V1 summaries, as the strategy in snapshotlegacy avoids storing merge info directly.
-				removes.push(
-					...spec.removedClientIds.map(
-						(id) =>
-							({
-								type: "setRemove",
-								seq: firstRemovedSeq,
-								clientId: this.client.getOrAddShortClientId(id),
-							}) as const,
-					),
-				);
+				// Avoid spreading into push: a large array could exceed the engine's
+				// argument-count limit and throw RangeError.
+				for (const id of spec.removedClientIds) {
+					removes.push({
+						type: "setRemove",
+						seq: firstRemovedSeq,
+						clientId: this.client.getOrAddShortClientId(id),
+					} as const);
+				}
 			}
 			if (spec.movedSeq !== undefined) {
 				assert(
@@ -156,16 +155,15 @@ export class SnapshotLoader {
 					0xb5f /* Expected same length for client ids and seqs */,
 				);
 
-				removes.push(
-					...spec.movedClientIds.map(
-						(id, i) =>
-							({
-								type: "sliceRemove",
-								seq: spec.movedSeqs![i],
-								clientId: this.client.getOrAddShortClientId(id),
-							}) as const,
-					),
-				);
+				// Avoid spreading into push: a large array could exceed the engine's
+				// argument-count limit and throw RangeError.
+				for (let i = 0; i < spec.movedClientIds.length; i++) {
+					removes.push({
+						type: "sliceRemove",
+						seq: spec.movedSeqs[i],
+						clientId: this.client.getOrAddShortClientId(spec.movedClientIds[i]),
+					} as const);
+				}
 			}
 
 			if (removes.length > 0) {
@@ -258,7 +256,11 @@ export class SnapshotLoader {
 			const newSegs = chunk.segments.map((element) => this.specToSegment(element));
 			this.extractAttribution(newSegs, chunk);
 			chunksWithAttribution += chunk.attribution === undefined ? 0 : 1;
-			segs.push(...newSegs);
+			// Avoid `push(...newSegs)`: spreading a large array into a variadic call
+			// can exceed the engine's argument-count limit and throw RangeError.
+			for (const seg of newSegs) {
+				segs.push(seg);
+			}
 		}
 
 		assert(
