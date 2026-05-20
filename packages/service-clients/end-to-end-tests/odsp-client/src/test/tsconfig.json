@@ -1,5 +1,8 @@
 {
 	"extends": "../../../../../../common/build/build-common/tsconfig.test.node16.json",
+	// This deviates from the standard test tsconfig pattern to accommodate `gen-version`, which emits
+	// `src/packageVersion.ts` one directory above the test sources. We widen `rootDir` (and adjust
+	// `outDir` to match) and explicitly include the generated file so it compiles alongside the tests.
 	"compilerOptions": {
 		"rootDir": "../",
 		"outDir": "../../lib",
