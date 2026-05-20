@@ -445,8 +445,8 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 				});
 				return retrievedSnapshot;
 			},
-			undefined,
-			undefined,
+			undefined, // markers
+			undefined, // sampleThreshold
 			LogLevel.info,
 		);
 
