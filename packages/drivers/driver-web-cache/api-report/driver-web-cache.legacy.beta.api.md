@@ -11,9 +11,9 @@ export function deleteFluidCacheIndexDbInstance(deleteDBCallbacks?: DeleteDBCall
 export class FluidCache implements IPersistedCache {
     constructor(config: FluidCacheConfig);
     dispose(): void;
+    get events(): Listenable<FluidCacheEvents>;
     // (undocumented)
     get(cacheEntry: ICacheEntry): Promise<any>;
-    onChange(listener: (event: FluidCacheChangeEvent) => void): () => void;
     // (undocumented)
     put(entry: ICacheEntry, value: any): Promise<void>;
     putIf(entry: ICacheEntry, value: unknown, shouldWrite: (existing: unknown, proposed: unknown) => boolean): Promise<boolean>;
@@ -41,6 +41,12 @@ export interface FluidCacheConfig {
     logger?: ITelemetryBaseLogger;
     maxCacheItemAge: number;
     partitionKey: string | null;
+}
+
+// @beta @legacy
+export interface FluidCacheEvents {
+    // (undocumented)
+    change: (event: FluidCacheChangeEvent) => void;
 }
 
 // (No @packageDocumentation comment for this package)

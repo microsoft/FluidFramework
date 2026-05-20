@@ -430,7 +430,7 @@ for (const immediateClose of [true, false]) {
 			});
 		});
 
-		describe("onChange notifications", () => {
+		describe("change event notifications", () => {
 			// Flush BroadcastChannel message delivery (Node delivers asynchronously via the
 			// microtask/IO queues). A single setImmediate is sufficient because the channel
 			// posts via the event loop and we just need to yield once.
@@ -443,7 +443,7 @@ for (const immediateClose of [true, false]) {
 				extraCaches.push(otherCache);
 
 				const received: FluidCacheChangeEvent[] = [];
-				otherCache.onChange((event) => received.push(event));
+				otherCache.events.on("change", (event) => received.push(event));
 
 				const cacheEntry = getMockCacheEntry("notifyPut");
 				await fluidCache.put(cacheEntry, { hello: "world" });
@@ -464,7 +464,7 @@ for (const immediateClose of [true, false]) {
 				fluidCache = getFluidCache();
 
 				const received: FluidCacheChangeEvent[] = [];
-				fluidCache.onChange((event) => received.push(event));
+				fluidCache.events.on("change", (event) => received.push(event));
 
 				await fluidCache.put(getMockCacheEntry("selfNotify"), { x: 1 });
 				await flushBroadcast();
@@ -479,8 +479,8 @@ for (const immediateClose of [true, false]) {
 
 				const aReceived: FluidCacheChangeEvent[] = [];
 				const bReceived: FluidCacheChangeEvent[] = [];
-				fluidCache.onChange((event) => aReceived.push(event));
-				partitionBCache.onChange((event) => bReceived.push(event));
+				fluidCache.events.on("change", (event) => aReceived.push(event));
+				partitionBCache.events.on("change", (event) => bReceived.push(event));
 
 				// A writes — only an "A-partition" listener on a different instance should see it.
 				// fluidCache is the writer, so it doesn't see its own event (BC default).
@@ -495,7 +495,7 @@ for (const immediateClose of [true, false]) {
 				const aReceiver = getFluidCache({ partitionKey: "partitionA" });
 				extraCaches.push(aReceiver);
 				const aReceiverEvents: FluidCacheChangeEvent[] = [];
-				aReceiver.onChange((event) => aReceiverEvents.push(event));
+				aReceiver.events.on("change", (event) => aReceiverEvents.push(event));
 
 				await fluidCache.put(getMockCacheEntry("xPartition2"), { v: 2 });
 				await flushBroadcast();
@@ -519,7 +519,7 @@ for (const immediateClose of [true, false]) {
 				extraCaches.push(partitionBCache);
 
 				const bReceived: FluidCacheChangeEvent[] = [];
-				partitionBCache.onChange((event) => bReceived.push(event));
+				partitionBCache.events.on("change", (event) => bReceived.push(event));
 
 				const cacheEntry = getMockCacheEntry("forFileRemoval");
 				await fluidCache.put(cacheEntry, { v: 1 });
@@ -538,7 +538,7 @@ for (const immediateClose of [true, false]) {
 				extraCaches.push(otherCache);
 
 				const received: FluidCacheChangeEvent[] = [];
-				otherCache.onChange((event) => received.push(event));
+				otherCache.events.on("change", (event) => received.push(event));
 
 				const cacheEntry = getMockCacheEntry("removeOne");
 				await fluidCache.put(cacheEntry, { v: 1 });
@@ -562,7 +562,7 @@ for (const immediateClose of [true, false]) {
 				extraCaches.push(otherCache);
 
 				const received: FluidCacheChangeEvent[] = [];
-				otherCache.onChange((event) => received.push(event));
+				otherCache.events.on("change", (event) => received.push(event));
 
 				const cacheEntry = getMockCacheEntry("putIfNotify");
 
@@ -587,7 +587,7 @@ for (const immediateClose of [true, false]) {
 				extraCaches.push(otherCache);
 
 				const received: FluidCacheChangeEvent[] = [];
-				const unsubscribe = otherCache.onChange((event) => received.push(event));
+				const unsubscribe = otherCache.events.on("change", (event) => received.push(event));
 
 				await fluidCache.put(getMockCacheEntry("beforeUnsub"), { v: 1 });
 				await flushBroadcast();
@@ -601,14 +601,21 @@ for (const immediateClose of [true, false]) {
 				assert.strictEqual(received.length, countBefore);
 			});
 
-			it("throws UsageError when onChange is called after dispose", async () => {
+			it("does not fire change events on a disposed cache", async () => {
 				fluidCache = getFluidCache();
-				fluidCache.dispose();
+				const observerCache = getFluidCache();
+				extraCaches.push(observerCache);
 
-				assert.throws(
-					() => fluidCache.onChange(() => {}),
-					(error: Error) => /disposed/i.test(error.message),
-				);
+				const received: FluidCacheChangeEvent[] = [];
+				observerCache.events.on("change", (event) => received.push(event));
+
+				// Subscription remains valid on a disposed cache, but should never fire.
+				observerCache.dispose();
+
+				await fluidCache.put(getMockCacheEntry("postDisposeObserver"), { v: 1 });
+				await flushBroadcast();
+
+				assert.deepEqual(received, []);
 			});
 		});
 
@@ -695,7 +702,7 @@ for (const immediateClose of [true, false]) {
 				extraCaches.push(observer);
 
 				const received: FluidCacheChangeEvent[] = [];
-				observer.onChange((event) => received.push(event));
+				observer.events.on("change", (event) => received.push(event));
 
 				fluidCache = getFluidCache();
 				const cacheEntry = getMockCacheEntry("postDisposeNoBroadcast");

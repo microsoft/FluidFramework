@@ -7,5 +7,6 @@ export {
 	FluidCache,
 	type FluidCacheConfig,
 	type FluidCacheChangeEvent,
+	type FluidCacheEvents,
 } from "./FluidCache.js";
 export { deleteFluidCacheIndexDbInstance } from "./FluidCacheIndexedDb.js";

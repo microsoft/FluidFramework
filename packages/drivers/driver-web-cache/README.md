@@ -91,14 +91,15 @@ stale rows the predicate saw as `undefined` (matching the unconditional overwrit
 The call returns `true` if the new value was written and `false` if the predicate rejected the write
 or an error occurred.
 
-## Cross-instance change notifications (`onChange`)
+## Cross-instance change notifications (`events`)
 
 `FluidCache` broadcasts cache mutations over a `BroadcastChannel`, so other `FluidCache` instances
 in the same browsing context (typically other tabs of the same origin) can observe changes made
-elsewhere. Subscribe with `onChange`:
+elsewhere. Subscribe through the `events` property, which is a standard Fluid Framework
+[`Listenable`](https://fluidframework.com/docs/api/core-interfaces/listenable-interface):
 
 ```typescript
-const unsubscribe = fluidCache.onChange((event) => {
+const unsubscribe = fluidCache.events.on("change", (event) => {
 	if (event.type === "removeFile") {
 		// All entries for this file were dropped by some other tab.
 	} else {
@@ -119,14 +120,16 @@ performed by *this* `FluidCache` do not invoke its own listeners — only other 
 
 When the cache is no longer needed (e.g. user signs out, page unloads), call `fluidCache.dispose()`
 to close the `BroadcastChannel` and any open IndexedDB connection. `dispose` is idempotent. After
-`dispose` returns, every other public method (`get`, `put`, `putIf`, `removeEntry`, `removeEntries`,
-`onChange`) throws a `UsageError`. Operations that were already in flight when `dispose` was called
-also reject with a `UsageError`, and the underlying IndexedDB connection is not lazily reopened by
-any such in-flight call.
+`dispose` returns, every other public method (`get`, `put`, `putIf`, `removeEntry`,
+`removeEntries`) throws a `UsageError`. Operations that were already in flight when `dispose` was
+called also reject with a `UsageError`, and the underlying IndexedDB connection is not lazily
+reopened by any such in-flight call. Subscribing to `events` after `dispose` is permitted, but no
+events will fire.
 
-If `BroadcastChannel` is not available in the runtime, `onChange` becomes a no-op subscription and
-writes simply don't broadcast. The constructor emits a one-shot `FluidCacheBroadcastChannelUnavailable`
-telemetry event in that case so hosts can detect the degraded mode.
+If `BroadcastChannel` is not available in the runtime, the `events` subscription becomes a no-op
+and writes simply don't broadcast. The constructor emits a one-shot
+`FluidCacheBroadcastChannelUnavailable` telemetry event in that case so hosts can detect the
+degraded mode.
 
 ## Clearing cache entries
 

@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import type { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+import { createEmitter } from "@fluid-internal/client-utils";
+import type { ITelemetryBaseLogger, Listenable } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import type {
 	IPersistedCache,
@@ -72,7 +73,7 @@ export interface FluidCacheConfig {
 /**
  * Notification posted by a `FluidCache` instance when it mutates the underlying IndexedDB.
  * Other `FluidCache` instances bound to the same browsing context (e.g. other tabs)
- * receive these events through {@link FluidCache.onChange}.
+ * receive these events through {@link FluidCache.events}.
  *
  * @legacy @beta
  */
@@ -111,6 +112,17 @@ export type FluidCacheChangeEvent =
 	  };
 
 /**
+ * The set of events fired by a {@link FluidCache} instance. Currently a single
+ * `change` event delivers cache mutations posted by *other* `FluidCache` instances
+ * in the same browsing context (e.g. other tabs); see {@link FluidCacheChangeEvent}.
+ *
+ * @legacy @beta
+ */
+export interface FluidCacheEvents {
+	change: (event: FluidCacheChangeEvent) => void;
+}
+
+/**
  * Name of the `BroadcastChannel` used to deliver cache-change notifications between
  * `FluidCache` instances. A single channel is used for the entire driver cache; partition
  * scoping is applied by the receiving listener.
@@ -139,7 +151,7 @@ export class FluidCache implements IPersistedCache {
 	private dbReuseCount: number = -1;
 
 	private readonly broadcastChannel: BroadcastChannel | undefined;
-	private readonly changeListeners = new Set<(event: FluidCacheChangeEvent) => void>();
+	readonly #events = createEmitter<FluidCacheEvents>();
 	private disposed = false;
 
 	constructor(config: FluidCacheConfig) {
@@ -268,26 +280,24 @@ export class FluidCache implements IPersistedCache {
 	}
 
 	/**
-	 * Subscribe to cache-change notifications posted by other `FluidCache` instances
-	 * (typically in other browser tabs sharing this origin's IndexedDB).
+	 * Listenable surface for cache-change notifications posted by other `FluidCache`
+	 * instances (typically in other browser tabs sharing this origin's IndexedDB).
 	 *
-	 * Listeners are invoked with a {@link FluidCacheChangeEvent}. Per-entry `put` and
-	 * `remove` events are filtered to the partition key of this `FluidCache`, matching
-	 * the partition semantics of `get`. `removeFile` events are delivered unconditionally
-	 * because `removeEntries` deletes rows regardless of partition.
+	 * Subscribe via `cache.events.on("change", listener)`; the returned `Off` function
+	 * unregisters the listener (idempotent). Per-entry `put` and `remove` events are
+	 * filtered to the partition key of this `FluidCache`, matching the partition
+	 * semantics of `get`. `removeFile` events are delivered unconditionally because
+	 * `removeEntries` deletes rows regardless of partition.
 	 *
 	 * Note: `BroadcastChannel` does not echo a message back to the instance that posted
 	 * it, so writes performed by *this* `FluidCache` do not trigger its own listeners.
 	 * Other `FluidCache` instances (including ones in the same tab) will receive them.
 	 *
-	 * @returns a function that unregisters the listener. Idempotent.
+	 * After `dispose` returns, no further events will fire; subscribing to a disposed
+	 * cache is permitted but the listener will never be invoked.
 	 */
-	public onChange(listener: (event: FluidCacheChangeEvent) => void): () => void {
-		this.throwIfDisposed();
-		this.changeListeners.add(listener);
-		return () => {
-			this.changeListeners.delete(listener);
-		};
+	public get events(): Listenable<FluidCacheEvents> {
+		return this.#events;
 	}
 
 	/**
@@ -295,7 +305,7 @@ export class FluidCache implements IPersistedCache {
 	 * notifications, any open IndexedDB connection, and the close timer.
 	 *
 	 * After `dispose` returns, every other public method (`get`, `put`, `putIf`,
-	 * `removeEntry`, `removeEntries`, `onChange`) throws a `UsageError`. Operations
+	 * `removeEntry`, `removeEntries`) throws a `UsageError`. Operations
 	 * that were already in flight when `dispose` was called also reject with a
 	 * `UsageError`, and crucially, the IndexedDB connection is *not* lazily
 	 * reopened by such an in-flight call.
@@ -307,7 +317,6 @@ export class FluidCache implements IPersistedCache {
 			return;
 		}
 		this.disposed = true;
-		this.changeListeners.clear();
 		this.broadcastChannel?.close();
 		clearTimeout(this.dbCloseTimer);
 		this.dbCloseTimer = undefined;
@@ -336,16 +345,7 @@ export class FluidCache implements IPersistedCache {
 		if (event.type !== "removeFile" && event.partitionKey !== this.partitionKey) {
 			return;
 		}
-		for (const listener of this.changeListeners) {
-			try {
-				listener(event);
-			} catch (error: any) {
-				this.logger.sendErrorEvent(
-					{ eventName: FluidCacheErrorEvent.FluidCacheChangeListenerError, pkgVersion },
-					error,
-				);
-			}
-		}
+		this.#events.emit("change", event);
 	}
 
 	private broadcast(event: FluidCacheChangeEvent): void {
