@@ -35,6 +35,21 @@ steps:
     workingFile: $(Pipeline.Workspace)/pack/${{ parameters.artifactPath }}/.npmrc
     customEndPoint: ${{ parameters.customEndPoint }}
 - task: Bash@3
+  displayName: Verify npm auth for ${{ parameters.artifactPath }}
+  condition: and(succeeded(), eq('${{ parameters.feedKind }}', 'public'))
+  inputs:
+    targetType: 'inline'
+    workingDirectory: $(Pipeline.Workspace)/pack/${{ parameters.artifactPath }}
+    script: |
+      set -eu -o pipefail
+      # Fail fast if the service connection token can't authenticate to the
+      # target registry. Without this, an expired/revoked token surfaces as
+      # a misleading "404 Not Found - PUT" from npm during publish.
+      if ! npm whoami --registry=${{ parameters.feedUrl }}; then
+        echo "##[error]npm whoami failed against ${{ parameters.feedUrl }}. The service connection token (${{ parameters.customEndPoint }}) is likely expired, revoked, or misconfigured."
+        exit 1
+      fi
+- task: Bash@3
   displayName: Publish Packages for ${{ parameters.artifactPath }}
   inputs:
     targetType: 'inline'
