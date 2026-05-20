@@ -633,7 +633,7 @@ class KernelEventBuffer implements Listenable<KernelEvents> {
 
 	/**
 	 * Begin a buffering scope. A fresh empty frame is pushed onto the stack and becomes the live
-	 * (current) frame; any outer scope's frame remains beneath, untouched.
+	 * (current) frame; any outer scope's frame remains beneath, untouched until this frame is popped.
 	 */
 	public pushBufferFrame(): void {
 		this.#assertNotDisposed();
