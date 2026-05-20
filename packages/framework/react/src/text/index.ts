@@ -4,12 +4,8 @@
  */
 
 export {
-	FormattedMainView,
-	type FormattedMainViewProps,
-	type FormattedEditorHandle,
-} from "./formatted/index.js";
-export {
 	PlainTextMainView,
-	QuillMainView as PlainQuillView,
-	type MainViewProps as PlainMainViewProps,
+	type PlainTextMainViewProps,
+	syncTextToTree,
 } from "./plain/index.js";
+export type { TextEditorProps } from "./textEditorProps.js";

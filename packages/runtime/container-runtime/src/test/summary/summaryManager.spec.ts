@@ -73,6 +73,8 @@ describe("Summary Manager", () => {
 	const mockRuntime = new MockRuntime(mockDeltaManager);
 	let summaryManager: SummaryManager;
 	let runningSummarizer: RunningSummarizer;
+	let testMinOpsForLastSummaryAttemptOverride: number | undefined;
+	let testMaxAckWaitTimeOverride: number | undefined;
 	// let runCount: number;
 	const summarizerClientId = "test";
 
@@ -135,6 +137,7 @@ describe("Summary Manager", () => {
 		public state: "notStarted" | "running" | "stopped" = "notStarted";
 		public readonly stopDeferred = new Deferred<string | undefined>();
 		public readonly runDeferred = new Deferred<void>();
+		public testStopReason: string | undefined;
 
 		constructor() {
 			super();
@@ -148,6 +151,7 @@ describe("Summary Manager", () => {
 		}
 		public close() {}
 		public stop(reason?: string): void {
+			this.testStopReason = reason;
 			this.stopDeferred.resolve(reason);
 		}
 		public async run(onBehalfOf: string): Promise<SummarizerStopReason> {
@@ -161,6 +165,12 @@ describe("Summary Manager", () => {
 					...{
 						initialSummarizerDelayMs: 0,
 					},
+					...(testMinOpsForLastSummaryAttemptOverride === undefined
+						? {}
+						: { minOpsForLastSummaryAttempt: testMinOpsForLastSummaryAttemptOverride }),
+					...(testMaxAckWaitTimeOverride === undefined
+						? {}
+						: { maxAckWaitTime: testMaxAckWaitTimeOverride }),
 				},
 				// submitSummaryCallback
 				async (options) => {
@@ -179,6 +189,11 @@ describe("Summary Manager", () => {
 				(reason) => {},
 				mockRuntime as unknown as ISummarizerRuntime,
 			);
+			runningSummarizer.on("summarize", (...args) => {
+				// Forward event
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
+				this.emit("summarize" as any, ...args);
+			});
 			await Promise.all([this.stopDeferred.promise, this.runDeferred.promise]);
 			await runningSummarizer.waitStop(true);
 			this.state = "stopped";
@@ -274,6 +289,11 @@ describe("Summary Manager", () => {
 		connectedState.removeAllListeners();
 		throttler.delayMs = 0;
 		mockDeltaManager.lastSequenceNumber = 0;
+		testMinOpsForLastSummaryAttemptOverride = undefined;
+		testMaxAckWaitTimeOverride = undefined;
+		if (summarizer !== undefined) {
+			summarizer.testStopReason = undefined;
+		}
 		requestCalls = 0;
 		clock.reset();
 
@@ -500,6 +520,45 @@ describe("Summary Manager", () => {
 			connectedState.disconnect();
 			await flushPromises();
 			assertState(SummaryManagerState.Stopping, "Should be stopping");
+		});
+
+		it("Should honor pending stop requested before summarizer is created", async () => {
+			testMinOpsForLastSummaryAttemptOverride = 0;
+			testMaxAckWaitTimeOverride = 1;
+			throttler.delayMs = 0;
+			createSummaryManager({
+				opsToBypassInitialDelay: 0,
+				connected: true,
+			});
+			const summarizeEvents: { isLastSummary?: boolean }[] = [];
+			summaryManager.on("summarize", (event) => {
+				summarizeEvents.push(event as { isLastSummary?: boolean });
+			});
+			clientElection.electClient(thisClientId);
+			await flushPromises();
+			assertState(SummaryManagerState.Running, "Summarizer should be starting");
+			assertRequests(1, "Should request summarizer");
+
+			// Request stop before createSummarizerFn resolves.
+			connectedState.disconnect();
+			await flushPromises();
+			assertState(SummaryManagerState.Stopping, "Should be stopping after disconnect");
+
+			completeSummarizerRequest();
+			await flushPromises();
+			assert.strictEqual(
+				summarizer.testStopReason,
+				"parentNotConnected",
+				"Should replay parent stop reason to late-created summarizer",
+			);
+
+			summarizer.runDeferred.resolve();
+			clock.tick(1);
+			await flushPromises();
+			assert(
+				summarizeEvents.some((event) => event.isLastSummary === true),
+				"Should emit summarize event with isLastSummary=true",
+			);
 		});
 
 		it("Should wait for throttler delay before starting summarizer", async () => {

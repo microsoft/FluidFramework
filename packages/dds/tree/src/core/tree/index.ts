@@ -29,6 +29,7 @@ export {
 	inCursorNode,
 	CursorMarker,
 	isCursor,
+	forEachNodeSubsequence,
 } from "./cursor.js";
 export type {
 	ProtoNodes,
@@ -107,6 +108,9 @@ export {
 	makeDetachedNodeId,
 	offsetDetachId,
 	emptyDelta,
+	areDetachedNodeIdsEqual,
+	deltaFieldMapHasVisibleChanges,
+	deltaFieldChangesHaveVisibleChanges,
 } from "./deltaUtil.js";
 
 export {
@@ -123,7 +127,10 @@ export {
 	type ReadOnlyDetachedFieldIndex,
 } from "./detachedFieldIndex.js";
 
-export { detachedFieldIndexCodecBuilder } from "./detachedFieldIndexCodecs.js";
+export {
+	detachedFieldIndexCodecName,
+	detachedFieldIndexCodecBuilder,
+} from "./detachedFieldIndexCodecs.js";
 export { DetachedFieldIndexFormatVersion } from "./detachedFieldIndexFormatCommon.js";
 export { type FormatV1 } from "./detachedFieldIndexFormatV1.js";
 

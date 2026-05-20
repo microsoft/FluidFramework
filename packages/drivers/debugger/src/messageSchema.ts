@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { Schema } from "jsonschema";
+import type { Schema } from "jsonschema";
 
 export const joinContentsSchema = {
 	type: "null",

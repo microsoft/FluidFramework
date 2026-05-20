@@ -10,8 +10,6 @@ import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import type { TreeValue } from "../../core/index.js";
-// This import is required for intellisense in @link doc comments on mouseover in VSCode.
-// eslint-disable-next-line unused-imports/no-unused-imports, @typescript-eslint/no-unused-vars
 import type { FlexTreeHydratedContextMinimal } from "../../feature-libraries/index.js";
 import {
 	type JsonCompatibleReadOnlyObject,
@@ -263,7 +261,7 @@ export const SchemaFactory_base = classWithStatics(schemaStaticsPublic);
  *
  * 1. Declaration: `class X extends schemaFactory.object("x", {}) {}`
  *
- * 2. Allows adding "local" (non-persisted) members: Yes. Members (including methods) can be added to the class.
+ * 2. Allows adding "local" (non-persisted) members: additional members (including methods) can be added to the class.
  *
  * 3. Prototype: The user-defined class.
  *
@@ -283,7 +281,7 @@ export const SchemaFactory_base = classWithStatics(schemaStaticsPublic);
  *
  * 1. Declaration: `const X = schemaFactory.object("x", {}); type X = NodeFromSchema<typeof X>;`
  *
- * 2. Allows adding "local" (non-persisted) members: No. Attempting to set non-field members will result in an error.
+ * 2. Does not allow adding "local" (non-persisted) members: attempting to set non-field members will result in an error.
  *
  * 3. Prototype: `Object.prototype`, `Map.prototype`, or `Array.prototype` depending on node kind.
  *
@@ -322,7 +320,7 @@ export const SchemaFactory_base = classWithStatics(schemaStaticsPublic);
  * Note: the comparison between the customizable and POJO modes is not done in a table because TSDoc does not currently have support for embedded markdown.
  *
  * @see {@link SchemaFactoryAlpha}
- *
+ * @see {@link SchemaFactoryBeta}
  * @sealed @public
  */
 export class SchemaFactory<

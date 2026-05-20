@@ -45,13 +45,10 @@ export {
 	withMemoizedTreeObservations,
 } from "./useTree.js";
 export { objectIdNumber } from "./simpleIdentifier.js";
-
 export {
-	FormattedMainView,
+	syncTextToTree,
 	PlainTextMainView,
-	PlainQuillView,
-	type FormattedMainViewProps,
-	type PlainMainViewProps,
-	type FormattedEditorHandle,
+	type PlainTextMainViewProps,
+	type TextEditorProps,
 } from "./text/index.js";
-export { UndoRedoStacks, type UndoRedo } from "./undoRedo.js";
+export { createUndoRedo, type UndoRedo } from "./undoRedo.js";

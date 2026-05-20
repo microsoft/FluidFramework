@@ -4,7 +4,7 @@
  */
 
 import type { Linter } from "eslint";
-import { recommended } from "../../../common/build/eslint-config-fluid/flat.mts";
+import { recommended } from "@fluidframework/eslint-config-fluid/flat.mts";
 
 const config: Linter.Config[] = [
 	...recommended,
@@ -12,11 +12,8 @@ const config: Linter.Config[] = [
 		rules: {
 			"@fluid-internal/fluid/no-unchecked-record-access": "warn",
 			"@rushstack/no-new-null": "off",
-			"@typescript-eslint/consistent-type-exports": "off",
-			"@typescript-eslint/consistent-type-imports": "off",
 			"@typescript-eslint/strict-boolean-expressions": "off",
 			"unicorn/no-null": "off",
-			"unicorn/prefer-date-now": "off",
 		},
 	},
 ];

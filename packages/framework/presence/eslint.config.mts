@@ -4,7 +4,7 @@
  */
 
 import type { Linter } from "eslint";
-import { strict } from "../../../common/build/eslint-config-fluid/flat.mts";
+import { strict } from "@fluidframework/eslint-config-fluid/flat.mts";
 
 const config: Linter.Config[] = [
 	...strict,
@@ -29,21 +29,21 @@ const config: Linter.Config[] = [
 			],
 		},
 	},
-
-	// Rules only for test files
 	{
-		files: ["*.spec.ts", "src/test/**"],
+		files: ["**/*.ts"],
 		rules: {
-			"@typescript-eslint/no-explicit-any": "error",
-
-			// TODO: There are several violations, mostly in test code. Set to warn to enable cleanup while unblocking lint upgrades.
-			"@fluid-internal/fluid/no-unchecked-record-access": "warn",
-
-			// Test files are run in node only so additional node libraries can be used.
-			"import-x/no-nodejs-modules": [
+			"import-x/no-internal-modules": [
 				"error",
 				{
-					allow: ["node:assert"],
+					allow: [
+						// Within Fluid Framework allow import of '/internal' from other FF packages.
+						// Note that `/internal/test**` is still restricted (disallowed) but uses
+						// customCondition of "allow-ff-test-exports" for enforcement.
+						"@fluidframework/*/internal{,/**}",
+
+						// Internal packages may structure their exports arbitrarily, so allow any imports from them.
+						"@fluid-internal/**",
+					],
 				},
 			],
 		},

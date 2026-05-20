@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-example/migration-tools",
-	"version": "2.92.0",
+	"version": "2.102.0",
 	"private": true,
 	"description": "Tools for migrating data",
 	"homepage": "https://fluidframework.com",
@@ -71,12 +71,8 @@
 		"@fluidframework/datastore": "workspace:~",
 		"@fluidframework/datastore-definitions": "workspace:~",
 		"@fluidframework/driver-definitions": "workspace:~",
-		"@fluidframework/local-driver": "workspace:~",
 		"@fluidframework/register-collection": "workspace:~",
-		"@fluidframework/routerlicious-driver": "workspace:~",
 		"@fluidframework/runtime-definitions": "workspace:~",
-		"@fluidframework/server-local-server": "^7.0.0",
-		"@fluidframework/tinylicious-driver": "workspace:~",
 		"uuid": "^11.1.0"
 	},
 	"devDependencies": {
@@ -85,11 +81,11 @@
 		"@fluid-tools/build-cli": "catalog:buildTools",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "catalog:buildTools",
-		"@fluidframework/eslint-config-fluid": "workspace:~",
-		"@microsoft/api-extractor": "7.52.11",
+		"@fluidframework/eslint-config-fluid": "catalog:eslint",
+		"@microsoft/api-extractor": "7.58.1",
 		"concurrently": "^9.2.1",
 		"copyfiles": "^2.4.1",
-		"eslint": "~9.39.1",
+		"eslint": "catalog:eslint",
 		"jiti": "^2.6.1",
 		"rimraf": "^6.1.3",
 		"typescript": "~5.4.5"

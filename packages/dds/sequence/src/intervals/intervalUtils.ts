@@ -5,7 +5,8 @@
 
 /* eslint-disable no-bitwise */
 
-import { PropertySet, SlidingPreference, Side } from "@fluidframework/merge-tree/internal";
+import type { PropertySet } from "@fluidframework/merge-tree/internal";
+import { SlidingPreference, Side } from "@fluidframework/merge-tree/internal";
 
 /**
  * Basic interval abstraction

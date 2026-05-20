@@ -4,7 +4,7 @@
  */
 
 import type { Linter } from "eslint";
-import { recommended } from "../../../common/build/eslint-config-fluid/flat.mts";
+import { recommended } from "@fluidframework/eslint-config-fluid/flat.mts";
 
 const config: Linter.Config[] = [
 	...recommended,
@@ -12,8 +12,6 @@ const config: Linter.Config[] = [
 		rules: {
 			"@fluid-internal/fluid/no-unchecked-record-access": "warn",
 			"@rushstack/no-new-null": "off",
-			"@typescript-eslint/consistent-type-exports": "off",
-			"@typescript-eslint/consistent-type-imports": "off",
 			"@typescript-eslint/explicit-module-boundary-types": "off",
 			"@typescript-eslint/no-explicit-any": "off",
 			"@typescript-eslint/no-non-null-assertion": "off",
@@ -27,22 +25,13 @@ const config: Linter.Config[] = [
 			// Disabled because the rule is crashing on this package - AB#51780
 			"@typescript-eslint/unbound-method": "off",
 			"require-atomic-updates": "off",
-			"unicorn/explicit-length-check": "off",
-			"unicorn/new-for-builtins": "off",
 			"unicorn/no-array-for-each": "off",
 			"unicorn/no-array-method-this-argument": "off",
 			"unicorn/no-await-expression-member": "off",
-			"unicorn/no-negated-condition": "off",
 			"unicorn/no-null": "off",
 			"unicorn/no-this-assignment": "off",
-			"unicorn/prefer-date-now": "off",
-			"unicorn/prefer-export-from": "off",
 			"unicorn/prefer-logical-operator-over-ternary": "off",
-			"unicorn/prefer-node-protocol": "off",
-			"unicorn/prefer-spread": "off",
-			"unicorn/switch-case-braces": "off",
 			"unicorn/text-encoding-identifier-case": "off",
-			"unicorn/throw-new-error": "off",
 		},
 	},
 ];
