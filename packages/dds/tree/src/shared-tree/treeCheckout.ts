@@ -1310,6 +1310,22 @@ export class TreeCheckout implements ITreeCheckout {
 		this.checkNotDisposed(
 			"The branch has already been disposed and cannot be disposed again.",
 		);
+		this.disposeOnce();
+	}
+
+	/**
+	 * Silent-idempotent disposal: performs the actual cleanup work and is safe to call from contexts
+	 * where throwing is undesirable (notably `FinalizationRegistry` callbacks — see
+	 * `branchCheckout.ts`). Subsequent calls are no-ops.
+	 *
+	 * @remarks
+	 * Public `dispose()` / `[disposeSymbol]()` keep their throw-on-double-dispose semantics by routing
+	 * through {@link checkNotDisposed} before invoking this method.
+	 */
+	protected disposeOnce(): void {
+		if (this.disposed) {
+			return;
+		}
 		this.disposed = true;
 		this.#transaction.branch.dispose();
 		this.#transaction.dispose();

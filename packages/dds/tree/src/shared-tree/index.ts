@@ -40,6 +40,7 @@ export {
 	getBranchCheckout,
 	getBranch,
 	getViewOfBranch,
+	setBranchCheckoutFinalizationCallback,
 } from "./branchCheckout.js";
 
 export { initialize, initializerFromChunk } from "./schematizeTree.js";

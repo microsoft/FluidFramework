@@ -14,6 +14,7 @@ import {
 	getBranch,
 	getBranchCheckout,
 	getViewOfBranch,
+	setBranchCheckoutFinalizationCallback,
 } from "../../shared-tree/index.js";
 import { SchemaFactory, TreeViewConfiguration } from "../../simple-tree/index.js";
 import { getView } from "../utils.js";
@@ -424,9 +425,8 @@ describe("BranchCheckout", () => {
 			// (keyed by the child's mainBranch) and `lazyBranchForViewMap` (keyed by the parent view's
 			// mainBranch). After disposal, the child instance must still be collectable even though
 			// the parent view — and therefore the `lazyBranchForViewMap` *key* — remains alive.
-			// (The cached value in `lazyBranchForViewMap` is overwritten / re-checked via `.disposed`
-			// on the next `getBranch` call; here we verify that simply dropping the user-facing
-			// reference after dispose is enough for the engine to collect the child.)
+			// Both maps now store `WeakRef<BranchCheckout>` values, so neither pins the child
+			// across GC.
 			const view = makeView();
 			const { branchRef, checkoutRef } = ((): {
 				branchRef: WeakRef<object>;
@@ -438,12 +438,6 @@ describe("BranchCheckout", () => {
 				assert.strictEqual(getBranchCheckout(childBranch), lazy);
 				lazy.dispose();
 				assert.strictEqual(getBranchCheckout(childBranch), undefined);
-				// Trigger the lazy-map's "cached but disposed → re-fork" path so the disposed
-				// instance is no longer the cached value either. Without this, the entry in
-				// `lazyBranchForViewMap` would still hold a strong reference to the disposed
-				// `lazy` instance until the parent view's mainBranch is itself collected.
-				const replacement = getBranch(view);
-				assert.notStrictEqual(replacement, lazy);
 				return {
 					branchRef: new WeakRef(childBranch),
 					checkoutRef: new WeakRef(lazy),
@@ -457,12 +451,126 @@ describe("BranchCheckout", () => {
 			assert.strictEqual(
 				checkoutRef.deref(),
 				undefined,
-				"Lazy BranchCheckout from getBranch was retained after dispose + replacement.",
+				"Lazy BranchCheckout from getBranch was retained after dispose.",
 			);
 			assert.strictEqual(
 				branchRef.deref(),
 				undefined,
 				"Underlying branch of a disposed lazy BranchCheckout was retained.",
+			);
+		});
+
+		it("undisposed BranchCheckout is eligible for GC once caller drops it (auto-dispose path)", async () => {
+			// The whole point of detaching the branchTrimmer in the BranchCheckout constructor and
+			// using WeakRef-valued maps: when the caller drops their reference WITHOUT calling
+			// dispose, the BranchCheckout must still become unreachable. Before these changes the
+			// EditManager's branchTrimmer pinned the branch (and transitively the checkout) for the
+			// SharedTree's lifetime, so this would have hung indefinitely.
+			const view = makeView();
+			const { branchRef, checkoutRef } = ((): {
+				branchRef: WeakRef<object>;
+				checkoutRef: WeakRef<BranchCheckout>;
+			} => {
+				const checkout = forkAsBranchCheckout(view.checkout);
+				return {
+					branchRef: new WeakRef(checkout.mainBranch),
+					checkoutRef: new WeakRef(checkout),
+				};
+			})();
+
+			await forceGcUntil(
+				() => branchRef.deref() === undefined && checkoutRef.deref() === undefined,
+			);
+
+			assert.strictEqual(
+				checkoutRef.deref(),
+				undefined,
+				"Undisposed BranchCheckout was retained after caller dropped its reference — something (likely the branchTrimmer subscription) is still pinning it.",
+			);
+			assert.strictEqual(
+				branchRef.deref(),
+				undefined,
+				"Undisposed BranchCheckout's branch was retained after the checkout was dropped.",
+			);
+		});
+
+		it("undisposed BranchCheckout from getBranch is eligible for GC, and a fresh getBranch returns a new instance", async () => {
+			const view = makeView();
+			const { checkoutRef } = ((): { checkoutRef: WeakRef<BranchCheckout> } => {
+				const lazy = getBranch(view);
+				assert.ok(lazy instanceof BranchCheckout);
+				return { checkoutRef: new WeakRef(lazy) };
+			})();
+
+			await forceGcUntil(() => checkoutRef.deref() === undefined);
+
+			assert.strictEqual(
+				checkoutRef.deref(),
+				undefined,
+				"Lazy BranchCheckout from getBranch was retained after caller dropped it.",
+			);
+
+			// After the original lazy instance is collected, a new `getBranch(view)` must produce a
+			// fresh BranchCheckout (the lazy cache's WeakRef now derefs to undefined).
+			const replacement = getBranch(view);
+			assert.ok(replacement instanceof BranchCheckout);
+		});
+
+		it("finalization callback fires for an undisposed BranchCheckout that is GC'd", async () => {
+			// Verify the FinalizationRegistry observability hook fires. The callback must close over
+			// *nothing* that reaches the BranchCheckout — using a plain mutable flag in this scope
+			// is safe because the test function's local does not transitively retain the checkout.
+			let finalized = false;
+			const view = makeView();
+			const checkoutRef: WeakRef<BranchCheckout> = ((): WeakRef<BranchCheckout> => {
+				const checkout = forkAsBranchCheckout(view.checkout);
+				const installed = setBranchCheckoutFinalizationCallback(checkout, () => {
+					finalized = true;
+				});
+				assert.strictEqual(installed, true);
+				return new WeakRef(checkout);
+			})();
+
+			await forceGcUntil(() => checkoutRef.deref() === undefined && finalized);
+
+			assert.strictEqual(
+				checkoutRef.deref(),
+				undefined,
+				"BranchCheckout was retained — finalization callback can't fire.",
+			);
+			assert.strictEqual(
+				finalized,
+				true,
+				"Finalization callback did not fire after BranchCheckout was collected.",
+			);
+		});
+
+		it("explicit dispose unregisters the finalization callback", async () => {
+			// After explicit dispose, the finalization callback must NOT fire even if the
+			// BranchCheckout is subsequently collected — unregister(this) in [disposeSymbol] is
+			// what guarantees this.
+			let finalized = false;
+			const view = makeView();
+			const checkoutRef: WeakRef<BranchCheckout> = ((): WeakRef<BranchCheckout> => {
+				const checkout = forkAsBranchCheckout(view.checkout);
+				setBranchCheckoutFinalizationCallback(checkout, () => {
+					finalized = true;
+				});
+				checkout.dispose();
+				return new WeakRef(checkout);
+			})();
+
+			await forceGcUntil(() => checkoutRef.deref() === undefined);
+
+			assert.strictEqual(
+				checkoutRef.deref(),
+				undefined,
+				"Disposed BranchCheckout was retained.",
+			);
+			assert.strictEqual(
+				finalized,
+				false,
+				"Finalization callback fired after explicit dispose — unregister did not run.",
 			);
 		});
 	});

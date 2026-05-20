@@ -38,12 +38,16 @@ import { TreeCheckout } from "./treeCheckout.js";
  *
  * @remarks
  * Keyed weakly by branch so the entry is collected once the branch is unreachable.
+ * Values are also weak ({@link WeakRef}) so that an independently-retained branch does not pin its
+ * {@link BranchCheckout} — required for the {@link FinalizationRegistry}-driven auto-disposal of
+ * `BranchCheckout`s to be observable.
+ *
  * The {@link BranchCheckout} constructor populates this on creation; {@link BranchCheckout.dispose}
  * removes it so {@link getBranchCheckout} never returns a disposed instance.
  */
 const branchCheckoutMap = new WeakMap<
 	SharedTreeBranch<SharedTreeEditBuilder, SharedTreeChange>,
-	BranchCheckout
+	WeakRef<BranchCheckout>
 >();
 
 /**
@@ -56,20 +60,108 @@ const branchCheckoutMap = new WeakMap<
  * previously hand out for *this view's* branch?" — keyed by the parent branch. Keeping them
  * separate preserves the semantics of {@link getBranchCheckout} while giving `getBranch` a stable
  * idempotent answer per view.
+ *
+ * Values are {@link WeakRef} so a lazily-forked `BranchCheckout` whose only retainer is this cache
+ * can be garbage-collected when no caller holds it. This is the linchpin of the sharing semantics:
+ * shared callers of `getBranch` get the same instance, and the instance only becomes finalizable
+ * once *every* caller drops it.
  */
 const lazyBranchForViewMap = new WeakMap<
 	SharedTreeBranch<SharedTreeEditBuilder, SharedTreeChange>,
-	BranchCheckout
+	WeakRef<BranchCheckout>
 >();
 
 /**
+ * Per-{@link BranchCheckout} state passed to the {@link FinalizationRegistry} callback.
+ *
+ * @remarks
+ * **Heap-snapshot tip:** named class so leaks of finalization state show up clearly.
+ *
+ * **Critical invariant:** instances must not transitively reference the `BranchCheckout` they were
+ * registered for. If they did, the registry's strong hold on this object would pin the checkout
+ * and the finalizer would never fire — the same trap solved by `SubscriptionsWrapper` in
+ * `packages/framework/react/src/useObservation.ts`.
+ *
+ * The state intentionally holds **no** references to the checkout's resources (transaction, forest,
+ * events, views, revertibles, ...). All those resources are part of a self-cycle with the
+ * `BranchCheckout` itself; once nothing external retains the checkout, the JS GC collects the whole
+ * cycle in one pass. The finalizer is therefore observational — it signals "the checkout was
+ * collected" without performing any active cleanup.
+ */
+class BranchCheckoutFinalizationState {
+	/**
+	 * Optional callback invoked once when the registered `BranchCheckout` becomes unreachable
+	 * without having been explicitly disposed. Cleared after firing.
+	 *
+	 * @remarks
+	 * The callback must not close over the `BranchCheckout` or anything that reaches it — doing so
+	 * would prevent the finalizer from ever firing. Intended for testing and (future) telemetry.
+	 */
+	public onFinalized: (() => void) | undefined;
+}
+
+/**
+ * Side-table mapping each `BranchCheckout` to its finalization state, so external code (tests,
+ * future telemetry hooks) can install an {@link BranchCheckoutFinalizationState.onFinalized}
+ * callback without exposing private fields. Weakly keyed so this table does not retain checkouts.
+ */
+const branchCheckoutFinalizationStates = new WeakMap<
+	BranchCheckout,
+	BranchCheckoutFinalizationState
+>();
+
+/**
+ * Registry that fires its callback when a `BranchCheckout` becomes unreachable.
+ *
+ * @remarks
+ * The held value is a {@link BranchCheckoutFinalizationState} which by design holds no path back
+ * to the checkout. The unregister token is the checkout itself; explicit dispose calls
+ * `branchCheckoutFinalizationRegistry.unregister(this)` to avoid a spurious callback firing later.
+ *
+ * Modeled on `finalizationRegistry` in `packages/framework/react/src/useObservation.ts`.
+ */
+const branchCheckoutFinalizationRegistry =
+	new FinalizationRegistry<BranchCheckoutFinalizationState>((state) => {
+		const callback = state.onFinalized;
+		state.onFinalized = undefined;
+		callback?.();
+	});
+
+/**
+ * Install a callback to be invoked once when the given `BranchCheckout` is garbage-collected
+ * *without* having been explicitly disposed.
+ *
+ * @remarks
+ * Primarily a test seam: the test must verify finalization happened without holding a strong
+ * reference to the `BranchCheckout`. The supplied callback must not close over the
+ * `BranchCheckout` or anything that reaches it — doing so would prevent finalization.
+ *
+ * Returns `false` if no finalization state is registered for the given checkout (e.g. already
+ * disposed and unregistered), `true` otherwise.
+ *
+ * @internal
+ */
+export function setBranchCheckoutFinalizationCallback(
+	checkout: BranchCheckout,
+	callback: (() => void) | undefined,
+): boolean {
+	const state = branchCheckoutFinalizationStates.get(checkout);
+	if (state === undefined) {
+		return false;
+	}
+	state.onFinalized = callback;
+	return true;
+}
+
+/**
  * Returns the live {@link BranchCheckout} bound to the given branch, or `undefined` if none exists
- * (the branch was never wrapped in a `BranchCheckout`, or its `BranchCheckout` has been disposed).
+ * (the branch was never wrapped in a `BranchCheckout`, the `BranchCheckout` has been disposed, or
+ * the `BranchCheckout` has been garbage-collected after losing all external references).
  */
 export function getBranchCheckout(
 	branch: SharedTreeBranch<SharedTreeEditBuilder, SharedTreeChange>,
 ): BranchCheckout | undefined {
-	return branchCheckoutMap.get(branch);
+	return branchCheckoutMap.get(branch)?.deref();
 }
 
 /**
@@ -119,7 +211,22 @@ export class BranchCheckout extends TreeCheckout {
 			breaker,
 			disposeForksAfterTransaction,
 		);
-		branchCheckoutMap.set(branch, this);
+		// A BranchCheckout is local-only (asserted above) and its lifetime is bounded by the
+		// holder, not by the SharedTree. Detach from the long-lived branchTrimmer so the branch
+		// (and transitively this checkout) is not strongly retained by the EditManager's event
+		// emitter — without this, garbage collection of an unreachable BranchCheckout is impossible
+		// while the SharedTree lives. The trade-off is that this branch no longer receives
+		// `ancestryTrimmed` events to incrementally release repair data; that data is released when
+		// the BranchCheckout is disposed or garbage-collected.
+		branch.detachTrimmer();
+		branchCheckoutMap.set(branch, new WeakRef(this));
+
+		// Register for finalization-based observability. The held value is a fresh state object
+		// with no path back to `this` (see BranchCheckoutFinalizationState's doc); the unregister
+		// token is `this` so explicit dispose can deterministically cancel the callback.
+		const finalizationState = new BranchCheckoutFinalizationState();
+		branchCheckoutFinalizationStates.set(this, finalizationState);
+		branchCheckoutFinalizationRegistry.register(this, finalizationState, this);
 	}
 
 	public override fork(): BranchCheckout {
@@ -165,6 +272,15 @@ export class BranchCheckout extends TreeCheckout {
 		// Only reached if super did not throw (e.g. double-dispose).
 		// Removing the entry here keeps `getBranchCheckout` from ever returning a disposed instance.
 		branchCheckoutMap.delete(this.mainBranch);
+
+		// Cancel the finalization callback: explicit dispose already covered cleanup, and we don't
+		// want a spurious "finalized" signal firing later. unregister is safe regardless of whether
+		// the state callback was ever installed.
+		const finalizationState = branchCheckoutFinalizationStates.get(this);
+		if (finalizationState !== undefined) {
+			finalizationState.onFinalized = undefined;
+		}
+		branchCheckoutFinalizationRegistry.unregister(this);
 	}
 }
 
@@ -232,13 +348,13 @@ export function getBranch(view: TreeBranchAlpha): TreeBranchAlpha {
 		return branch;
 	}
 	// Path 2: a previous `getBranch` call already lazy-forked one; reuse it if still live.
-	const cached = lazyBranchForViewMap.get(viewBranch);
+	const cached = lazyBranchForViewMap.get(viewBranch)?.deref();
 	if (cached !== undefined && !cached.disposed) {
 		return cached;
 	}
 	// Path 3: lazy-fork and record under the view's mainBranch so future calls are idempotent.
 	branch = forkAsBranchCheckout(view.checkout);
-	lazyBranchForViewMap.set(viewBranch, branch);
+	lazyBranchForViewMap.set(viewBranch, new WeakRef(branch));
 	return branch;
 }
 

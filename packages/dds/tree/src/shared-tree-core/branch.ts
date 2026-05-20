@@ -112,7 +112,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> {
 	public readonly events: Listenable<SharedTreeBranchEvents<TEditor, TChange>> = this.#events;
 	public readonly editor: TEditor;
 	private disposed = false;
-	private readonly unsubscribeBranchTrimmer?: () => void;
+	private unsubscribeBranchTrimmer?: () => void;
 	/**
 	 * Construct a new branch.
 	 * @param head - the head of the branch
@@ -370,9 +370,28 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> {
 		}
 
 		this.unsubscribeBranchTrimmer?.();
+		this.unsubscribeBranchTrimmer = undefined;
 
 		this.disposed = true;
 		this.#events.emit("dispose");
+	}
+
+	/**
+	 * Detach this branch from its `branchTrimmer`, if any.
+	 *
+	 * @remarks
+	 * After calling this, the branch no longer receives `ancestryTrimmed` events. This is intended
+	 * for branches whose lifetime is bounded by their holder (e.g. {@link BranchCheckout}'s
+	 * underlying branch) rather than by the SharedTree: without this, the trimmer's
+	 * "ancestryTrimmed" listener closure strongly retains the branch (and transitively the
+	 * checkout) for the SharedTree's lifetime, preventing garbage collection when the holder drops
+	 * its reference. Calling this trades incremental repair-data cleanup for GC eligibility.
+	 *
+	 * Idempotent. Safe to call before {@link dispose}.
+	 */
+	public detachTrimmer(): void {
+		this.unsubscribeBranchTrimmer?.();
+		this.unsubscribeBranchTrimmer = undefined;
 	}
 
 	private assertNotDisposed(): void {
