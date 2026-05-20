@@ -142,7 +142,7 @@ export class AzureClient {
 	 * (normally not explicitly specified.)
 	 * @param containerSchema - Container schema for the new container.
 	 * @param minVersionForCollab - Minimum Fluid Framework version required for collaboration, as a
-	 * SemVer string (e.g. `"1.0.0"`, `"2.0.0"`).
+	 * SemVer string (e.g. `"1.0.0"`, `"2.100.0"`). Prefer the current Fluid Framework version so the container opts into the latest defaults.
 	 * @returns New detached container instance along with associated services.
 	 */
 	public async createContainer<const TContainerSchema extends ContainerSchema>(
@@ -203,7 +203,7 @@ export class AzureClient {
 	 * @param id - Unique ID of the container in Azure Fluid Relay.
 	 * @param containerSchema - Container schema used to access data objects in the container.
 	 * @param minVersionForCollab - Minimum framework version required for collaboration, as a
-	 * SemVer string (e.g. `"1.0.0"`, `"2.0.0"`).
+	 * SemVer string (e.g. `"1.0.0"`, `"2.100.0"`). Prefer the current Fluid Framework version so the container opts into the latest defaults.
 	 * @returns Existing container instance along with associated services.
 	 */
 	public async getContainer<TContainerSchema extends ContainerSchema>(
@@ -271,7 +271,7 @@ export class AzureClient {
 	 * @param containerSchema - Container schema used to access data objects in the container.
 	 * @param version - Unique version of the source container in Azure Fluid Relay.
 	 * @param minVersionForCollab - Minimum framework version required for collaboration, as a
-	 * SemVer string (e.g. `"1.0.0"`, `"2.0.0"`).
+	 * SemVer string (e.g. `"1.0.0"`, `"2.100.0"`). Prefer the current Fluid Framework version so the container opts into the latest defaults.
 	 * @returns Loaded container instance at the specified version.
 	 */
 	public async viewContainerVersion<TContainerSchema extends ContainerSchema>(

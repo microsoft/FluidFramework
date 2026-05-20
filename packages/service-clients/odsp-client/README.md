@@ -104,7 +104,7 @@ const containerSchema = {
 	],
 };
 const odspClient = new OdspClient(clientProps);
-const { container, services } = await odspClient.createContainer(containerSchema, "2.0.0");
+const { container, services } = await odspClient.createContainer(containerSchema, "2.100.0");
 
 const itemId = await container.attach();
 ```
@@ -117,7 +117,7 @@ Using the `OdspClient` class the developer can create and get Fluid containers. 
 import { OdspClient } from "@fluidframework/odsp-client";
 
 const odspClient = new OdspClient(props);
-const { container, services } = await odspClient.getContainer("_unique-itemId_", schema, "2.0.0");
+const { container, services } = await odspClient.getContainer("_unique-itemId_", schema, "2.100.0");
 ```
 
 ## Using initial objects
@@ -137,7 +137,7 @@ const schema = {
 };
 
 // Fetch back the container that had been created earlier with the same itemId and schema
-const { container, services } = await OdspClient.getContainer("_unique-itemId_", schema, "2.0.0");
+const { container, services } = await OdspClient.getContainer("_unique-itemId_", schema, "2.100.0");
 
 // Get our list of initial objects that we had defined in the schema. initialObjects here will have the same signature
 const initialObjects = container.initialObjects;
