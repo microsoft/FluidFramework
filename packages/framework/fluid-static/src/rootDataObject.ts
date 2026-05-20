@@ -258,7 +258,7 @@ class DOProviderContainerRuntimeFactory extends BaseContainerRuntimeFactory {
 	 *
 	 * @param schema - The schema for the container
 	 * @param rootDataObjectFactory - A factory that can construct the root data object.
-	 * @param config - Resolved minimum version for collab (required) and optional runtime option overrides.
+	 * @param config - Resolved minimum version for collaboration (required) and optional runtime option overrides.
 	 */
 	public constructor(
 		schema: ContainerSchema,
