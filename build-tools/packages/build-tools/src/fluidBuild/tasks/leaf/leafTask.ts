@@ -523,7 +523,7 @@ export abstract class LeafWithDoneFileTask extends LeafTask {
 		} catch (error) {
 			this._isIncremental = false;
 			console.warn(
-				`${this.node.pkg.nameColored}: warning: unable to write ${doneFileFullPath}\n error: ${error}`,
+				`${this.node.pkg.nameColored}: warning: unable to generate or write done file ${doneFileFullPath}\n error: ${error}`,
 			);
 		}
 	}
@@ -549,7 +549,7 @@ export abstract class LeafWithDoneFileTask extends LeafTask {
 				);
 			}
 		} catch {
-			this.traceTrigger(`unable to read compare file: ${doneFileFullPath}`);
+			this.traceTrigger(`unable to generate or read compare file: ${doneFileFullPath}`);
 		}
 		return false;
 	}
