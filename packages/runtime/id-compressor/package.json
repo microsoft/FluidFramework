@@ -166,6 +166,9 @@
 			"Interface_IIdCompressorCore": {
 				"forwardCompat": false,
 				"backCompat": false
+			},
+			"Interface_IIdCompressor": {
+				"forwardCompat": false
 			}
 		},
 		"entrypoint": "legacy"

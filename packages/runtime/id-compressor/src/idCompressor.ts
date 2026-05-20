@@ -412,10 +412,9 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 		}
 	}
 
-	public normalizeToSessionSpace(
+	public tryNormalizeToSessionSpaceWithoutSession(
 		id: OpSpaceCompressedId,
-		originSessionId: SessionId,
-	): SessionSpaceCompressedId {
+	): SessionSpaceCompressedId | undefined {
 		if (isFinalId(id)) {
 			const containingCluster = this.localSession.getClusterByAllocatedFinal(id);
 			if (containingCluster === undefined) {
@@ -436,6 +435,16 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 				}
 			}
 		} else {
+			return undefined;
+		}
+	}
+
+	public normalizeToSessionSpace(
+		id: OpSpaceCompressedId,
+		originSessionId: SessionId,
+	): SessionSpaceCompressedId {
+		const normalizedWithoutSession = this.tryNormalizeToSessionSpaceWithoutSession(id);
+		if (normalizedWithoutSession === undefined) {
 			const localToNormalize = id as unknown as LocalCompressedId;
 			if (originSessionId === this.localSessionId) {
 				if (this.normalizer.contains(localToNormalize)) {
@@ -456,6 +465,8 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 				}
 				return correspondingFinal as unknown as SessionSpaceCompressedId;
 			}
+		} else {
+			return normalizedWithoutSession;
 		}
 	}
 
