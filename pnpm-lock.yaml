@@ -27,7 +27,6 @@ catalogs:
       version: 10.1.8
 
 overrides:
-  '@biomejs/biome': ~2.4.5
   '@types/node': ~22.19.17
   diff@>=3 <4: ^4.0.4
   diff@>=5 <6: ^5.2.2
@@ -11398,6 +11397,9 @@ importers:
       eslint:
         specifier: catalog:eslint
         version: 9.39.1(jiti@2.6.1)
+      fluid-framework-previous:
+        specifier: npm:fluid-framework@2.101.0
+        version: fluid-framework@2.101.0
       jiti:
         specifier: ^2.6.1
         version: 2.6.1
@@ -11681,6 +11683,9 @@ importers:
       '@biomejs/biome':
         specifier: ~2.4.5
         version: 2.4.5
+      '@fluid-internal/presence-definitions-previous':
+        specifier: npm:@fluid-internal/presence-definitions@2.101.0
+        version: '@fluid-internal/presence-definitions@2.101.0'
       '@fluid-tools/build-cli':
         specifier: catalog:buildTools
         version: 0.65.0(@types/node@22.19.17)(encoding@0.1.13)(webpack-cli@5.1.4)
@@ -22838,6 +22843,9 @@ packages:
 
   flatted@3.3.3:
     resolution: {integrity: sha512-GX+ysw4PBCz0PzosHDepZGANEuFCMLrnRTiEy9McGjmkCQYwRq4A/X786G/fjM/+OjsWSU1ZrY5qyARZmO/uwg==}
+
+  fluid-framework@2.101.0:
+    resolution: {integrity: sha512-1JNjNzLC1x1zdZYIUzDkzDVFFUyfd6h+3rj6Hai1+DiQlwDH/4TsgxvdHRvWNFerLDAVisbK/XUDkU1nWOMhMQ==}
 
   fn.name@1.1.0:
     resolution: {integrity: sha512-GRnmB5gPyJpAhTQdSZTSp9uaPSvl09KoYcMQtsB9rQoOmzs9dH6ffeccH+Z+cv6P68Hu5bC6JjRh4Ah/mHSNRw==}
@@ -36425,6 +36433,22 @@ snapshots:
   flat@5.0.2: {}
 
   flatted@3.3.3: {}
+
+  fluid-framework@2.101.0:
+    dependencies:
+      '@fluidframework/container-definitions': 2.101.0
+      '@fluidframework/container-loader': 2.101.0
+      '@fluidframework/core-interfaces': 2.101.0
+      '@fluidframework/core-utils': 2.101.0
+      '@fluidframework/driver-definitions': 2.101.0
+      '@fluidframework/fluid-static': 2.101.0
+      '@fluidframework/map': 2.101.0
+      '@fluidframework/runtime-utils': 2.101.0
+      '@fluidframework/sequence': 2.101.0
+      '@fluidframework/shared-object-base': 2.101.0
+      '@fluidframework/tree': 2.101.0
+    transitivePeerDependencies:
+      - supports-color
 
   fn.name@1.1.0: {}
 
