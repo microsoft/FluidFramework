@@ -58,8 +58,9 @@ stages:
       poolBuild: Large-eastus2 # Need Large pool for full-compat matrix
       testPackage: ${{ variables.testPackage }}
       artifactBuildId: $(resources.pipeline.client.runID)
+      fluidFrameworkSourceVersion: $(resources.pipeline.client.sourceCommit)
       testCommand: test:realsvc:local:report:full
-      cacheCompatVersionsInstalls: true
+
       uploadTestPassRateTelemetry: true
       pipelineIdentifierForTelemetry: ${{ variables.pipelineIdentifierForTelemetry }}
       env:
@@ -74,8 +75,9 @@ stages:
       poolBuild: Large-eastus2 # Need Large pool for full-compat matrix
       testPackage: ${{ variables.testPackage }}
       artifactBuildId: $(resources.pipeline.client.runID)
+      fluidFrameworkSourceVersion: $(resources.pipeline.client.sourceCommit)
       testCommand: test:realsvc:tinylicious:report:full
-      cacheCompatVersionsInstalls: true
+
       # TODO: AB#8968 tracks figuring out the root cause of the extended delay, and restoring this timeout to 90m or less
       timeoutInMinutes: 120
       uploadTestPassRateTelemetry: true
@@ -95,6 +97,7 @@ stages:
       poolBuild: Large-eastus2 # Need Large pool for full-compat matrix
       testPackage: ${{ variables.testPackage }}
       artifactBuildId: $(resources.pipeline.client.runID)
+      fluidFrameworkSourceVersion: $(resources.pipeline.client.sourceCommit)
       continueOnError: true
       timeoutInMinutes: 360
       testCommand: test:realsvc:r11s:docker
@@ -109,7 +112,7 @@ stages:
           flags: --compatVersion=OCV
         - name: Cross-Client
           flags: --compatVersion=CROSS_CLIENT
-      cacheCompatVersionsInstalls: true
+
       uploadTestPassRateTelemetry: true
       pipelineIdentifierForTelemetry: ${{ variables.pipelineIdentifierForTelemetry }}
 
@@ -134,6 +137,7 @@ stages:
       poolBuild: Small-eastus2
       testPackage: ${{ variables.testPackage }}
       artifactBuildId: $(resources.pipeline.client.runID)
+      fluidFrameworkSourceVersion: $(resources.pipeline.client.sourceCommit)
       timeoutInMinutes: 360
       continueOnError: true
       testCommand: test:realsvc:frs:report
@@ -150,7 +154,7 @@ stages:
           flags: --compatVersion=OCV
         - name: Cross-Client
           flags: --compatVersion=CROSS_CLIENT
-      cacheCompatVersionsInstalls: true
+
       uploadTestPassRateTelemetry: true
       pipelineIdentifierForTelemetry: ${{ variables.pipelineIdentifierForTelemetry }}
       env:
@@ -167,6 +171,7 @@ stages:
       poolBuild: Small-eastus2
       testPackage: ${{ variables.testPackage }}
       artifactBuildId: $(resources.pipeline.client.runID)
+      fluidFrameworkSourceVersion: $(resources.pipeline.client.sourceCommit)
       timeoutInMinutes: 360
       continueOnError: true
       testCommand: test:realsvc:odsp:report
@@ -182,7 +187,7 @@ stages:
         # Tests N-2 to LTS+3 back compat for loader + driver
         - name: N-2ToLTS+1-back-compat
           flags: --compatVersion=V2_INT_3 --tenantIndex=3
-      cacheCompatVersionsInstalls: true
+
       uploadTestPassRateTelemetry: true
       pipelineIdentifierForTelemetry: ${{ variables.pipelineIdentifierForTelemetry }}
       env:

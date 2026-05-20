@@ -104,6 +104,7 @@ export interface Titled {
 export interface BenchmarkDescription {
 	/**
 	 * The kind of benchmark.
+	 * @defaultValue {@link BenchmarkType.Measurement}
 	 */
 	readonly type?: BenchmarkType;
 
@@ -132,19 +133,6 @@ export interface BenchmarkFunction {
 	 * @param timer - A high-resolution timer that can be used to measure durations if needed.
 	 */
 	readonly run: <TimeStamp>(timer: Timer<TimeStamp>) => CollectedData | Promise<CollectedData>;
-}
-
-/**
- * Interface representing the intent to support mocha `only`-type functionality. Mocha test utilities which take
- * an options object extending this interface should use the corresponding `it.only` or `describe.only` variants.
- * @public
- * @input
- */
-export interface MochaExclusiveOptions {
-	/**
-	 * When true, `mocha`-provided functions use their `.only` counterparts to restrict the run to this test.
-	 */
-	readonly only?: boolean;
 }
 
 /**
@@ -184,10 +172,48 @@ export function qualifiedTitle(
  * If the tests are run in a separate process and do not receive the arguments given to the parent,
  * as is done with Mocha's parallel mode,
  * the environment variable must be used instead of the flag.
+ *
+ * @deprecated Use {@link currentBenchmarkMode} instead to determine the current benchmark mode.
  * @public
  */
 export const isInPerformanceTestingMode =
 	process.argv.includes("--perfMode") || getEnvFlag("FLUID_TEST_PERF_MODE");
+
+/**
+ * The mode in which a benchmark can be run.
+ * @remarks
+ * See {@link currentBenchmarkMode} for the current mode in which benchmarks are being run.
+ *
+ * When in {@link BenchmarkMode.Correctness} mode, performance tests should be run as correctness tests,
+ * and will be adjusted to run quickly (e.g., smaller iteration counts or data sizes).
+ * When in {@link BenchmarkMode.Performance} mode, benchmarks are run and output data.
+ * @public
+ */
+export enum BenchmarkMode {
+	/**
+	 * Benchmarks will be run as correctness tests,
+	 * and thus will be adjusted to run quickly (e.g., smaller iteration counts or data sizes).
+	 */
+	Correctness = "correctness",
+	/**
+	 * Benchmarks will be run as performance tests and output performance data.
+	 * A benchmark specific test reporter is typically used to collect this data.
+	 */
+	Performance = "performance",
+}
+
+/**
+ * The current {@link BenchmarkMode}, determined at process startup.
+ * @remarks
+ * Use the `--perfMode` flag or set `FLUID_TEST_PERF_MODE` environment variable to either "1" or "true" (case insensitive) to enable {@link BenchmarkMode.Performance} mode.
+ * If the tests are run in a separate process and do not receive the arguments given to the parent,
+ * as is done with Mocha's parallel mode,
+ * the environment variable must be used instead of the flag.
+ * @public
+ */
+export const currentBenchmarkMode: BenchmarkMode = isInPerformanceTestingMode
+	? BenchmarkMode.Performance
+	: BenchmarkMode.Correctness;
 
 /**
  * Check for an environment variables flag.
@@ -225,12 +251,7 @@ export const userCategoriesSplitter = ":ff-cat:";
  * @public
  * @input
  */
-export interface BenchmarkOptions
-	extends Titled,
-		BenchmarkDescription,
-		MochaExclusiveOptions,
-		BenchmarkFunction {}
-
+export interface BenchmarkOptions extends Titled, BenchmarkDescription, BenchmarkFunction {}
 /**
  * Tags used to mark tests.
  */

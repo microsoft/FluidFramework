@@ -7,7 +7,7 @@ import { strict as assert } from "node:assert";
 import type { ChildProcess } from "node:child_process";
 import inspector from "node:inspector";
 
-import type { AttendeeId } from "@fluidframework/presence/beta";
+import type { AttendeeId } from "@fluidframework/presence";
 import { timeoutAwait, timeoutPromise } from "@fluidframework/test-utils/internal";
 
 import type { MessageFromChild } from "./messageTypes.js";

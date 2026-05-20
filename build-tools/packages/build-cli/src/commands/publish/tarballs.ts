@@ -5,11 +5,11 @@
 
 import { readFile } from "node:fs/promises";
 import path from "node:path";
+import { gunzipSync } from "node:zlib";
 import { untar } from "@andrewbranch/untar.js";
 import type { Logger, PackageJson } from "@fluidframework/build-tools";
 import { Flags } from "@oclif/core";
 import execa from "execa";
-import { Gunzip } from "fflate";
 import latestVersion from "latest-version";
 import { glob } from "tinyglobby";
 import { BaseCommand } from "../../library/commands/base.js";
@@ -176,16 +176,11 @@ async function extractPackageJsonFromTarball(
 ): Promise<Readonly<PackageJson>> {
 	const tarball = new Uint8Array(await readFile(tarballPath));
 
-	// Use streaming API to work around https://github.com/101arrowz/fflate/issues/207
-	let unzipped: Uint8Array;
-
-	{
-		// eslint-disable-next-line no-return-assign -- assigning the chunk to unzipped is intentional
-		const gunzip = new Gunzip((chunk: Uint8Array) => (unzipped = chunk));
-		gunzip.push(tarball, /* final */ true);
-	}
-	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-	const data = untar(unzipped!);
+	// gunzipSync returns a Node Buffer that may be a view onto a pooled ArrayBuffer larger
+	// than the decoded data. Wrap in a new Uint8Array to get an exactly-sized ArrayBuffer
+	// that's safe to pass to untar.
+	const unzipped = new Uint8Array(gunzipSync(tarball));
+	const data = untar(unzipped.buffer);
 	// eslint-disable-next-line unicorn/prefer-string-slice -- substring is clearer than slice in this case
 	const prefix = data[0].filename.substring(0, data[0].filename.indexOf("/") + 1);
 	const packageJsonText = data.find((f) => f.filename === `${prefix}package.json`)?.fileData;

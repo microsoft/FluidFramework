@@ -104,6 +104,7 @@ const context: FieldBatchEncodingContext = {
 	encodeType: TreeCompressionStrategy.Compressed,
 	idCompressor,
 	originatorId: idCompressor.localSessionId,
+	isSummary: false,
 	schema: { schema: jsonSequenceRootSchema, policy: defaultSchemaPolicy },
 };
 
@@ -122,6 +123,7 @@ function getIdentifierEncodingContext(id: string) {
 		encodeType: TreeCompressionStrategy.Compressed,
 		idCompressor: testIdCompressor,
 		originatorId: testIdCompressor.localSessionId,
+		isSummary: false,
 		schema: {
 			schema: flexSchema,
 			policy: defaultSchemaPolicy,
@@ -139,6 +141,7 @@ describe("End to end chunked encoding", () => {
 			Number.POSITIVE_INFINITY,
 			Number.POSITIVE_INFINITY,
 			defaultChunkPolicy.uniformChunkNodeCount,
+			defaultChunkPolicy.uniformChunkNodeCountDynamicTargetMax,
 			(type: TreeNodeSchemaIdentifier, shapes: Map<TreeNodeSchemaIdentifier, ShapeInfo>) =>
 				tryShapeFromNodeSchema(
 					{
@@ -213,6 +216,7 @@ describe("End to end chunked encoding", () => {
 				{
 					idCompressor,
 					originatorId: idCompressor.localSessionId,
+					isSummary: false,
 				},
 			);
 			assert.equal(insertedChunk, chunk);
@@ -249,6 +253,7 @@ describe("End to end chunked encoding", () => {
 				{
 					idCompressor,
 					originatorId: idCompressor.localSessionId,
+					isSummary: false,
 				},
 			);
 			assert.equal(insertedChunk, chunk);

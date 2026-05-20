@@ -9,6 +9,8 @@ import type {
 	OpSpaceCompressedId,
 	SessionId,
 } from "@fluidframework/id-compressor";
+import { isFinalId } from "@fluidframework/id-compressor/internal";
+import { v5 as uuidV5 } from "uuid";
 
 import { DiscriminatedUnionDispatcher } from "../../../codec/index.js";
 import type {
@@ -37,7 +39,8 @@ import {
 	decode as genericDecode,
 	readStreamIdentifier,
 } from "./chunkDecodingGeneric.js";
-import type { IncrementalDecoder } from "./codecs.js";
+// eslint-disable-next-line @typescript-eslint/no-unused-vars -- Referenced by doc comments
+import type { FieldBatchEncodingContext, IncrementalDecoder } from "./codecs.js";
 import {
 	type EncodedAnyShape,
 	type EncodedChunkShapeV1OrV2,
@@ -49,8 +52,8 @@ import {
 	type EncodedNestedArrayShape,
 	type EncodedNodeShape,
 	type EncodedValueShape,
-	FieldBatchFormatVersion,
 	SpecialField,
+	supportsIncrementalEncoding,
 } from "./format/index.js";
 
 export interface IdDecodingContext {
@@ -59,13 +62,32 @@ export interface IdDecodingContext {
 	 * The creator of any local Ids to be decoded.
 	 */
 	originatorId: SessionId;
+	/**
+	 * {@inheritdoc FieldBatchEncodingContext.isSummary}
+	 */
+	isSummary: boolean;
+	/**
+	 * See {@link FieldBatchEncodingContext.healUnresolvableIdentifiersOnDecode}.
+	 */
+	healUnresolvableIdentifiersOnDecode?: boolean;
+	/**
+	 * See {@link FieldBatchEncodingContext.sharedObjectId}.
+	 */
+	sharedObjectId?: string;
 }
+
+/**
+ * Random v4 UUID generated as a namespace for the "heal an unresolvable identifier into a stable UUID"
+ * path in {@link readValue}. This scheme requires consensus across all clients to function.
+ */
+const healingNamespace = "f8a89df3-6882-400f-b913-4c1f6f0157bd";
+
 /**
  * Decode `chunk` into a TreeChunk.
  */
 export function decode(
 	chunk: EncodedFieldBatchV1OrV2,
-	idDecodingContext: { idCompressor: IIdCompressor; originatorId: SessionId },
+	idDecodingContext: IdDecodingContext,
 	incrementalDecoder?: IncrementalDecoder,
 ): TreeChunk[] {
 	return genericDecode(
@@ -126,15 +148,45 @@ export function readValue(
 				typeof streamValue === "number" || typeof streamValue === "string",
 				0x997 /* identifier must be string or number. */,
 			);
+			if (typeof streamValue === "string") {
+				return streamValue;
+			}
 			const idCompressor = idDecodingContext.idCompressor;
-			return typeof streamValue === "number"
-				? idCompressor.decompress(
-						idCompressor.normalizeToSessionSpace(
-							streamValue as OpSpaceCompressedId,
-							idDecodingContext.originatorId,
-						),
-					)
-				: streamValue;
+			// OpSpaceCompressedIds are negative, and require a session-id to compute their value.
+			// Due to a bug, we have some special casing for them (see below).
+			if (
+				idDecodingContext.isSummary === true &&
+				!isFinalId(streamValue as OpSpaceCompressedId)
+			) {
+				if (
+					idDecodingContext.healUnresolvableIdentifiersOnDecode === true &&
+					idDecodingContext.sharedObjectId !== undefined
+				) {
+					// Documents written before the encode-side fix for non-finalized identifier
+					// values can persist negative op-space IDs that are no
+					// longer resolvable once the originating session's local state has been stripped.
+					// When loading such a summary with the heal-on-decode option on, synthesize a deterministic
+					// stable UUID so all readers of the same blob agree on the resulting value.
+					//
+					// The heal path is intentionally restricted to summary loads — an
+					// unresolvable ID encountered while applying an op should still surface as
+					// an error, since it indicates a real bug rather than a recoverable state.
+					return uuidV5(
+						`${idDecodingContext.sharedObjectId}|${streamValue}`,
+						healingNamespace,
+					);
+				}
+				// See `SharedTreeOptionsBeta.healUnresolvableIdentifiersOnDecode` for details on this error.
+				throw new Error(
+					"Summary could not be loaded due incorrectly encoded identifier. See SharedTreeOptionsBeta.healUnresolvableIdentifiersOnDecode for mitigation.",
+				);
+			}
+			return idCompressor.decompress(
+				idCompressor.normalizeToSessionSpace(
+					streamValue as OpSpaceCompressedId,
+					idDecodingContext.originatorId,
+				),
+			);
 		} else {
 			// EncodedCounter case:
 			unreachableCase(shape, "decoding values as deltas is not yet supported");
@@ -256,7 +308,7 @@ export class IncrementalChunkDecoder implements ChunkDecoder {
 
 		const chunkDecoder = (batch: EncodedFieldBatchV2): TreeChunk => {
 			assert(
-				batch.version >= FieldBatchFormatVersion.v2,
+				supportsIncrementalEncoding(batch.version),
 				0xc9f /* Unsupported FieldBatchFormatVersion for incremental chunks; must be v2 or higher */,
 			);
 			const context = new DecoderContext(

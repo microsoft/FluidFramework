@@ -16,6 +16,8 @@ import {
 	CheckNoLocalChanges,
 	CheckNoPolicyViolations,
 	CheckNoUntaggedAsserts,
+	CheckResult,
+	CheckResultFailure,
 } from "../../library/releasePrepChecks.js";
 
 /**
@@ -68,15 +70,25 @@ export class ReleasePrepareCommand extends BaseCommand<typeof ReleasePrepareComm
 
 		this.logHr();
 		for (const [name, check] of allChecks) {
+			this.info(chalk.gray(`Running check: ${name}`));
 			// eslint-disable-next-line no-await-in-loop -- the checks are supposed to run serially
-			const checkResult = await check(context, pkgOrReleaseGroup);
-			const checkPassed = checkResult === undefined;
-			const icon = checkPassed
-				? chalk.bgGreen(chalk.black(" ✔︎ "))
-				: chalk.bgRed(chalk.white(" ✖︎ "));
+			let checkResult: CheckResult;
+			try {
+				checkResult = await check(context, pkgOrReleaseGroup);
+			} catch (err: unknown) {
+				checkResult = {
+					message: `Uncaught error when running check: ${(err as Error).message}`,
+					fatal: true,
+				} satisfies CheckResultFailure;
+			}
+			const icon =
+				checkResult === undefined
+					? chalk.bgGreen(chalk.black(" ✔︎ "))
+					: chalk.bgRed(chalk.white(" ✖︎ "));
 
-			this.log(`${icon} ${checkPassed ? name : chalk.red(checkResult.message)}`);
-			if (!checkPassed) {
+			this.log(`${icon} ${name}`);
+			if (checkResult !== undefined) {
+				this.logIndent(chalk.red(`  ${checkResult.message}`), 6);
 				if (checkResult.fixCommand !== undefined) {
 					this.logIndent(
 						`${chalk.yellow(`Possible fix command:`)} ${chalk.yellow(

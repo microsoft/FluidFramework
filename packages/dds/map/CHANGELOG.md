@@ -1,5 +1,39 @@
 # @fluidframework/map
 
+## 2.101.0
+
+### Minor Changes
+
+- Add legacy beta map compatibility interfaces ([#27240](https://github.com/microsoft/FluidFramework/pull/27240)) [b765c6af343](https://github.com/microsoft/FluidFramework/commit/b765c6af34359d2500523483c6916feeef947a7a)
+
+  New legacy beta map interfaces make it possible to type legacy map-like DDS APIs against Fluid's stable map abstraction while preserving the legacy DDS `get` and `set` APIs.
+
+  ```typescript
+  import type {
+    FluidMapLegacy,
+    IDirectoryBeta,
+    ISharedMapBeta,
+  } from "@fluidframework/map/legacy";
+
+  declare const directory: IDirectoryBeta;
+  declare const sharedMap: ISharedMapBeta;
+
+  const directoryMap: FluidMapLegacy<string, unknown> = directory;
+  const sharedMapAsLegacyMap: FluidMapLegacy<string, unknown> = sharedMap;
+  ```
+
+## 2.100.0
+
+### Minor Changes
+
+- Node 22 is now the minimum supported Node.js version ([#27116](https://github.com/microsoft/FluidFramework/pull/27116)) [e8214d29663](https://github.com/microsoft/FluidFramework/commit/e8214d29663f5ee98d737daed82506a25d8de8d0)
+
+  All Fluid Framework client packages now require Node.js 22 or later. This aligns with the standing Node upgrade policy as Node 20 reaches end-of-life on April 30, 2026.
+
+## 2.93.0
+
+Dependency updates only.
+
 ## 2.92.0
 
 Dependency updates only.

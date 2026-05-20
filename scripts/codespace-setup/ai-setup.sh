@@ -38,4 +38,35 @@ elif [ -f /etc/zshrc ] && ! sudo grep -qxF 'source /usr/local/lib/agent-aliases.
   echo "source /usr/local/lib/agent-aliases.sh" | sudo tee -a /etc/zshrc > /dev/null
 fi
 
+# Install welcome notice so it displays in every interactive terminal session,
+# using the same shell-init strategy as agent-aliases above.
+sudo install -Dm644 "$SCRIPT_DIR/../../.devcontainer/ai-agent/first-run-notice.txt" /usr/local/etc/fluid-welcome-notice.txt
+sudo install -Dm644 "$SCRIPT_DIR/welcome-notice.sh" /usr/local/lib/welcome-notice.sh
+
+sudo ln -sf /usr/local/lib/welcome-notice.sh /etc/profile.d/welcome-notice.sh
+
+if [ -d /etc/bash/bashrc.d ]; then
+  sudo ln -sf /usr/local/lib/welcome-notice.sh /etc/bash/bashrc.d/welcome-notice.sh
+elif ! sudo grep -qxF 'source /usr/local/lib/welcome-notice.sh' /etc/bash.bashrc 2>/dev/null; then
+  echo "source /usr/local/lib/welcome-notice.sh" | sudo tee -a /etc/bash.bashrc > /dev/null
+fi
+
+if [ -d /etc/zsh/zshrc.d ]; then
+  sudo ln -sf /usr/local/lib/welcome-notice.sh /etc/zsh/zshrc.d/welcome-notice.sh
+elif [ -f /etc/zsh/zshrc ] && ! sudo grep -qxF 'source /usr/local/lib/welcome-notice.sh' /etc/zsh/zshrc 2>/dev/null; then
+  echo "source /usr/local/lib/welcome-notice.sh" | sudo tee -a /etc/zsh/zshrc > /dev/null
+elif [ -f /etc/zshrc ] && ! sudo grep -qxF 'source /usr/local/lib/welcome-notice.sh' /etc/zshrc 2>/dev/null; then
+  echo "source /usr/local/lib/welcome-notice.sh" | sudo tee -a /etc/zshrc > /dev/null
+fi
+
 bash "$SCRIPT_DIR/playwright-setup.sh"
+
+# Set the default GitHub repository for `gh` so that `gh pr create` (and other
+# repo-scoped commands) work without prompting. This is per-user config stored
+# in $HOME, so it must run at postCreate (not in the image build).
+# The fork of FluidFramework is the working remote; the upstream microsoft/FluidFramework
+# is the canonical PR target. Tolerate failure (e.g., `gh` not yet authenticated).
+if command -v gh >/dev/null 2>&1; then
+  gh repo set-default microsoft/FluidFramework 2>/dev/null || \
+    echo "Note: 'gh repo set-default' did not run (gh may not be authenticated yet). Run it manually if needed."
+fi

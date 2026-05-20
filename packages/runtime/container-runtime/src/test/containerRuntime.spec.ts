@@ -53,6 +53,7 @@ import type {
 	ISequencedMessageEnvelope,
 	ITelemetryContext,
 	ISummarizeInternalResult,
+	StagingModeChangedEvent,
 } from "@fluidframework/runtime-definitions/internal";
 import { FlushMode } from "@fluidframework/runtime-definitions/internal";
 import { defaultMinVersionForCollab } from "@fluidframework/runtime-utils/internal";
@@ -649,21 +650,41 @@ describe("Runtime", () => {
 				await Promise.resolve();
 
 				// Generate another ID and submit a data store op referencing it.
-				// This triggers submitIdAllocationOpIfNeeded → takeNextCreationRange.
+				// At flush time, the JIT generateIdAllocationOp callback calls takeNextCreationRange.
 				// Because the unfinalized range was released during replay, both IDs
 				// are included in the resulting allocation range.
 				const id2 = compressor.generateCompressedId();
 				submitDataStoreOp(containerRuntime, "someDS", genTestDataStoreMessage({ id: id2 }));
 
-				// Let the Outbox flush so we can check submittedOps length
+				// Let the Outbox flush so we can check submittedOps length.
+				// With JIT ID allocation, the ID alloc op is prepended to the main batch,
+				// which gets grouped into a single grouped batch op.
 				await Promise.resolve();
-				assert.strictEqual(submittedOps.length, 2, "Expected 1 ID Allocation + 1 data op");
+				assert.strictEqual(
+					submittedOps.length,
+					1,
+					"Expected 1 grouped batch (containing ID Allocation + data op)",
+				);
+
+				// The grouped batch contains the ID allocation as its first inner message.
+				// Extract the ID allocation range from it to finalize.
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any -- test-only: extracting untyped grouped batch contents
+				const groupedContents = submittedOps[0].contents;
+				assert(
+					Array.isArray(groupedContents),
+					"Expected grouped batch contents to be an array",
+				);
+				assert.strictEqual(
+					groupedContents.length,
+					2,
+					"Expected 2 inner messages in grouped batch",
+				);
 
 				// Simulate processing the ID Allocation ack — finalize the range.
 				// Without the call to resetUnfinalizedCreationRange in replayPendingStates,
 				// this results in a "Ranges finalized out of order" error.
-				// eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access
-				compressor.finalizeCreationRange(submittedOps[0].contents);
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access -- test-only: extracting untyped grouped batch contents
+				compressor.finalizeCreationRange(groupedContents[0].contents.contents);
 
 				// Both IDs should now be finalized (positive final IDs in op space).
 				// Without resetUnfinalizedCreationRange, id1 would remain a local-only
@@ -4757,12 +4778,10 @@ describe("Runtime", () => {
 				});
 
 				it("IdAllocation + reconnect while in staging mode does not hit coherency check", async () => {
-					// This is the highest-risk scenario from Mark's test plan.
-					// The fix in b4e1fd1dd25 added scheduleFlush() after submitIdAllocationOpIfNeeded
-					// during replayPendingStates. With threshold suppression, that scheduleFlush()
-					// returns early if in staging mode and under threshold. But the "op" handler
-					// calls flush() directly, so the IdAllocation op still gets flushed before
-					// new ops with different refSeqs are submitted.
+					// With JIT ID allocation, the ID alloc op is generated at flush time
+					// (via generateIdAllocationOp callback), so it naturally gets the correct refSeq.
+					// The "op" handler calls flush() directly, so the IdAllocation op still gets
+					// flushed before new ops with different refSeqs are submitted.
 
 					// Start disconnected so we can trigger IdAllocation on reconnect
 					mockContext = getMockContext({ connected: false }) as IContainerContext;
@@ -4953,6 +4972,211 @@ describe("Runtime", () => {
 					"Staged op should be submitted after commitChanges",
 				);
 				runtime.dispose();
+			});
+
+			describe("stagingModeChanged event", () => {
+				it("emits with { inStagingMode: true } on enter, and inStagingMode is true when handler runs", () => {
+					const events: StagingModeChangedEvent[] = [];
+					const inStagingModeAtEventTime: boolean[] = [];
+
+					containerRuntime.on("stagingModeChanged", (e) => {
+						events.push(e);
+						inStagingModeAtEventTime.push(containerRuntime.inStagingMode);
+					});
+
+					containerRuntime.enterStagingMode();
+
+					assert.equal(events.length, 1, "Expected exactly one event on enter");
+					assert.deepEqual(
+						events[0],
+						{ inStagingMode: true },
+						"Event payload should be { inStagingMode: true }",
+					);
+					assert.equal(
+						inStagingModeAtEventTime[0],
+						true,
+						"inStagingMode should be true when the enter event fires",
+					);
+				});
+
+				it("emits with { inStagingMode: false, commit: true } on commitChanges, and inStagingMode is false when handler runs", () => {
+					stubChannelCollection(containerRuntime);
+					const events: StagingModeChangedEvent[] = [];
+					const inStagingModeAtEventTime: boolean[] = [];
+
+					containerRuntime.on("stagingModeChanged", (e) => {
+						events.push(e);
+						inStagingModeAtEventTime.push(containerRuntime.inStagingMode);
+					});
+
+					const controls = containerRuntime.enterStagingMode();
+					controls.commitChanges();
+
+					assert.equal(events.length, 2, "Expected enter + commit events");
+					assert.deepEqual(
+						events[1],
+						{ inStagingMode: false, commit: true },
+						"Commit event payload should be { inStagingMode: false, commit: true }",
+					);
+					assert.equal(
+						inStagingModeAtEventTime[1],
+						false,
+						"inStagingMode should be false when the commit event fires",
+					);
+				});
+
+				it("emits with { inStagingMode: false, commit: false } on discardChanges, and inStagingMode is false when handler runs", () => {
+					stubChannelCollection(containerRuntime);
+					const events: StagingModeChangedEvent[] = [];
+					const inStagingModeAtEventTime: boolean[] = [];
+
+					containerRuntime.on("stagingModeChanged", (e) => {
+						events.push(e);
+						inStagingModeAtEventTime.push(containerRuntime.inStagingMode);
+					});
+
+					const controls = containerRuntime.enterStagingMode();
+					controls.discardChanges();
+
+					assert.equal(events.length, 2, "Expected enter + discard events");
+					assert.deepEqual(
+						events[1],
+						{ inStagingMode: false, commit: false },
+						"Discard event payload should be { inStagingMode: false, commit: false }",
+					);
+					assert.equal(
+						inStagingModeAtEventTime[1],
+						false,
+						"inStagingMode should be false when the discard event fires",
+					);
+				});
+
+				it("does not fire when orderSequentially uses staging mode internally (EnableRollback=true)", async () => {
+					// orderSequentially with EnableRollback calls enterStagingModeCore(silent=true)
+					// internally. The stagingModeChanged event should NOT be emitted.
+					const context = getMockContext({
+						settings: { "Fluid.ContainerRuntime.EnableRollback": true },
+					}) as IContainerContext;
+					const { runtime: rawRuntime } = await ContainerRuntime.loadRuntime2({
+						context,
+						registry: new FluidDataStoreRegistry([]),
+						existing: false,
+						runtimeOptions: {},
+						provideEntryPoint: mockProvideEntryPoint,
+					});
+					const runtime = rawRuntime as unknown as ContainerRuntime_WithPrivates;
+					stubChannelCollection(runtime);
+					submittedOps.length = 0;
+
+					const events: StagingModeChangedEvent[] = [];
+					runtime.on("stagingModeChanged", (e) => events.push(e));
+
+					// internally enters staging mode then commits
+					runtime.orderSequentially(() => {
+						submitDataStoreOp(runtime, "1", genTestDataStoreMessage("op1"));
+					});
+
+					assert.equal(
+						events.length,
+						0,
+						"stagingModeChanged should NOT fire for successful orderSequentially",
+					);
+
+					// internally enters staging mode then rolls back
+					assert.throws(() =>
+						runtime.orderSequentially(() => {
+							throw new Error("test error");
+						}),
+					);
+
+					assert.equal(
+						events.length,
+						0,
+						"stagingModeChanged should NOT fire when orderSequentially rolls back",
+					);
+
+					runtime.dispose();
+				});
+
+				it("still fires for explicit enterStagingMode() when EnableRollback=true", async () => {
+					// Sanity-check that the silent flag only suppresses orderSequentially's
+					// internal usage — direct calls to enterStagingMode() still emit normally.
+					const context = getMockContext({
+						settings: { "Fluid.ContainerRuntime.EnableRollback": true },
+					}) as IContainerContext;
+					const { runtime: rawRuntime } = await ContainerRuntime.loadRuntime2({
+						context,
+						registry: new FluidDataStoreRegistry([]),
+						existing: false,
+						runtimeOptions: {},
+						provideEntryPoint: mockProvideEntryPoint,
+					});
+					const runtime = rawRuntime as unknown as ContainerRuntime_WithPrivates;
+					stubChannelCollection(runtime);
+					submittedOps.length = 0;
+
+					const events: StagingModeChangedEvent[] = [];
+					runtime.on("stagingModeChanged", (e) => events.push(e));
+
+					const controls = runtime.enterStagingMode();
+					controls.commitChanges();
+
+					assert.equal(
+						events.length,
+						2,
+						"Expected enter + commit events for explicit staging",
+					);
+					assert.deepEqual(events[0], { inStagingMode: true }, "Enter event");
+					assert.deepEqual(events[1], { inStagingMode: false, commit: true }, "Commit event");
+
+					runtime.dispose();
+				});
+
+				it("throws UsageError when calling commitChanges on stale controls after discard", () => {
+					stubChannelCollection(containerRuntime);
+					const controls = containerRuntime.enterStagingMode();
+					controls.discardChanges();
+
+					assert.throws(
+						() => controls.commitChanges(),
+						(error: IErrorBase) =>
+							error.errorType === ContainerErrorTypes.usageError &&
+							error.message === "Not in staging mode",
+						"Calling commitChanges on stale controls should throw UsageError",
+					);
+				});
+
+				it("throws UsageError when calling discardChanges on old controls after re-entering staging mode", () => {
+					stubChannelCollection(containerRuntime);
+					const oldControls = containerRuntime.enterStagingMode();
+					oldControls.discardChanges();
+
+					// Enter staging mode again — new controls
+					containerRuntime.enterStagingMode();
+
+					assert.throws(
+						() => oldControls.discardChanges(),
+						(error: IErrorBase) =>
+							error.errorType === ContainerErrorTypes.usageError &&
+							error.message === "Not in staging mode",
+						"Calling discardChanges on old controls should throw UsageError",
+					);
+				});
+				it("does not emit exit event when container is disposed while in staging mode", () => {
+					const events: StagingModeChangedEvent[] = [];
+					containerRuntime.on("stagingModeChanged", (e) => events.push(e));
+
+					containerRuntime.enterStagingMode();
+					assert.equal(events.length, 1, "Expected enter event");
+
+					containerRuntime.dispose();
+
+					assert.equal(
+						events.length,
+						1,
+						"No exit event should fire on dispose — only the original enter event",
+					);
+				});
 			});
 		});
 	});

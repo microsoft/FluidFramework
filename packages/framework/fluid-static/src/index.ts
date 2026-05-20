@@ -17,6 +17,7 @@ export {
 	type IFluidContainerInternal,
 	type InitialObjects,
 } from "./fluidContainer.js";
+export { getPresence, getPresenceAlpha } from "./getPresence.js";
 export { createDOProviderContainerRuntimeFactory } from "./rootDataObject.js";
 export { createServiceAudience } from "./serviceAudience.js";
 export { createTreeContainerRuntimeFactory } from "./treeRootDataObject.js";

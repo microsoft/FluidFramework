@@ -1,20 +1,21 @@
 # Getting Started with AI-Enabled Codespace
 
-This codespace is pre-configured for AI-agent-assisted development of the Fluid Framework. It includes [agency](https://aka.ms/agency), [repoverlay](https://github.com/tylerbutler/repoverlay), GitHub CLI, and SSH access.
+This codespace is pre-configured for AI-agent-assisted development of the Fluid Framework. It includes [agency](https://aka.ms/agency), GitHub CLI, and SSH access.
 
 > For full documentation, see the [AI-enabled Codespace wiki page](https://github.com/microsoft/FluidFramework/wiki/AI%E2%80%90enabled-Codespace).
 
 ## First-time Setup
 
-After creating a new AI-enabled Codespace, expect up to a dozen authentication prompts. This is excessive but anticipated — continue clicking through each prompt until they conclude.
+Agency is installed automatically the first time you run `dev`, `claude`, or any agent alias - watch for a browser authentication popup.
+If automatic installation fails, you can install agency manually via `pnpm install:agency`.
 
-Agency **must** be installed manually after the Codespace starts:
+> [!NOTE]
+> Agency installation is supported in **VS Code** (desktop or SSH).
+> It may not work in a browser-based Codespace because the OAuth redirect requires a local browser and authentication may not complete correctly.
 
-```bash
-pnpm install:agency
-```
-
-Then open a **new terminal** for the agent aliases to be available.
+> [!TIP]
+> After creating a new AI-enabled Codespace you may be prompted to authenticate several times.
+> It may seem excessive, but is expected - just keep clicking through each prompt until they stop.
 
 ## Quick Start
 
@@ -30,6 +31,10 @@ pnpm build
 pnpm fluid-build .
 ```
 
+## Not sure which agent to use?
+
+Run `start` — an interactive assistant that asks what you want to do and launches the right agent for you.
+
 ## AI Agent Aliases
 
 These aliases are available in all terminal sessions (after installing agency):
@@ -38,49 +43,34 @@ These aliases are available in all terminal sessions (after installing agency):
 
 | Alias | Command | Purpose |
 |---|---|---|
-| `claude` | `repoverlay switch ff-claude && agency claude` | Default Claude Code model |
-| `haiku` | `repoverlay switch ff-claude && agency claude -- --model haiku` | Fastest, cheapest option |
-| `sonnet` | `repoverlay switch ff-claude && agency claude -- --model sonnet` | Balanced capabilities |
-| `opus` | `repoverlay switch ff-claude && agency claude -- --model opus` | Most capable model |
-| `nori` | `repoverlay switch nori && agency claude` | Switch to nori overlay and launch Claude |
+| `dev` | `agency claude --profile nori ... -- --model opus` | Launch Claude optimized for feature work and debugging |
+| `claude` | `agency claude ... -- --model opus` | General purpose Claude Code agent |
 
 ### Copilot
 
 | Alias | Command | Purpose |
 |---|---|---|
 | `copilot` | `agency copilot` | Standard GitHub Copilot |
-| `copilot-ado` | `agency copilot --mcp 'ado --org fluidframework'` | Azure DevOps integration |
-| `copilot-kusto` | `agency copilot --mcp 'kusto ...'` | Telemetry queries |
-| `copilot-oce` | `repoverlay switch ff-oce && copilot -- --agent ff-oce` | On-Call Engineer workflows |
-| `copilot-work` | `agency copilot --mcp 'workiq'` | WorkIQ integration |
+| `oce` | `agency copilot --profile ff-oce -- --agent ff-oce:ff-oce` | On-Call Engineer workflows |
 
-### Utility
+### Custom MCP Servers
 
-| Alias | Command | Purpose |
-|---|---|---|
-| `ai-reset` | `repoverlay remove --all` | Remove all repoverlay overlays and reset to clean state |
-
-## Connecting via SSH
-
-Access a running AI-enabled Codespace from your local terminal:
+The built-in aliases include at least ADO, WorkIQ, and EngHub MCP servers.
+You can also launch an agent with your own combination of MCP servers using the `--mcp` flag.
+Stack as many as you need (and watch for browser authentication popups).
 
 ```bash
-gh codespace ssh
+# Copilot with the Kusto MCP server
+copilot --mcp 'kusto --service-uri https://kusto.aria.microsoft.com'
+
+# Claude with an additional MCP server
+claude --mcp 'sharepoint'
 ```
 
-This enables running AI agents locally while the Codespace provides computing power and repository context.
+> [!IMPORTANT]
+> The **Kusto** MCP server must only be used with **Copilot**, not Claude, for compliance reasons.
 
-## What's Different from Standard?
-
-| Addition | Purpose |
-|---|---|
-| Agency CLI | Run AI agents (Claude, GitHub Copilot) from terminal |
-| Repoverlay | Overlay system for context files (agents, skills) |
-| GitHub CLI (`gh`) | Pre-installed for PR workflows and SSH access |
-| SSH daemon | Enables `gh codespace ssh` connections |
-| ADO Codespaces Auth | Authenticate to Azure DevOps |
-| Agent aliases | Shell shortcuts for common AI commands |
-| Higher compute | 32 CPUs / 64 GB RAM (vs 16 CPUs for Standard) |
+> Run `agency mcp --help` to see all available MCP servers and their options.
 
 ## More Information
 
