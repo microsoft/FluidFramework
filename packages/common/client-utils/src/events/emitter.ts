@@ -146,6 +146,31 @@ export class CustomEventEmitter<TListeners extends Listeners<TListeners>>
 		return () => this.off(eventName, listener);
 	}
 
+	/**
+	 * Like {@link CustomEventEmitter.on}, but skips the duplicate-listener check.
+	 *
+	 * @remarks
+	 * `on` rejects a listener that is already registered to defend against accidental
+	 * double-registration by callers. That guard is dead weight when the caller is
+	 * internal code that constructs a fresh listener for every call (e.g. forwarder
+	 * closures or per-call wrapper functions), where the listener identity is by
+	 * construction unique. Use this variant in those paths to avoid the extra
+	 * `Set.has` and string-coercion on each registration.
+	 *
+	 * If the listener is somehow registered twice via this method, it will be added
+	 * once (Set semantics) but the resulting `Off` will still correctly unsubscribe it.
+	 *
+	 * @internal
+	 */
+	public onUnchecked<K extends keyof Listeners<TListeners>>(
+		eventName: K,
+		listener: TListeners[K],
+	): Off {
+		const listeners = getOrCreate(this.listeners, eventName, () => new Set());
+		listeners.add(listener);
+		return () => this.off(eventName, listener);
+	}
+
 	public off<K extends keyof Listeners<TListeners>>(
 		eventName: K,
 		listener: TListeners[K],
@@ -223,6 +248,17 @@ class ComposableEventEmitter<TListeners extends Listeners<TListeners>>
  */
 export function createEmitter<TListeners extends object>(
 	noListeners?: NoListenersCallback<TListeners>,
-): Listenable<TListeners> & IEmitter<TListeners> & HasListeners<TListeners> {
+): Listenable<TListeners> &
+	IEmitter<TListeners> &
+	HasListeners<TListeners> & {
+		/**
+		 * Like {@link Listenable.on}, but skips the duplicate-listener check.
+		 *
+		 * @remarks See {@link CustomEventEmitter.onUnchecked}. Intended for internal
+		 * code that registers fresh listener identities every call (forwarders,
+		 * per-call wrappers).
+		 */
+		onUnchecked<K extends keyof Listeners<TListeners>>(eventName: K, listener: TListeners[K]): Off;
+	} {
 	return new ComposableEventEmitter<TListeners>(noListeners);
 }

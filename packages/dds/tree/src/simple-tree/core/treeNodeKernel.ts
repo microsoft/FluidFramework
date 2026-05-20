@@ -445,7 +445,7 @@ class KernelEventBuffer implements Listenable<KernelEvents> {
 			this.#disposeSourceListeners.set(eventName, off);
 		}
 
-		this.#events.on(eventName, listener);
+		this.#events.onUnchecked(eventName, listener);
 		return () => this.off(eventName, listener);
 	}
 
