@@ -264,6 +264,15 @@ export async function loadExistingContainer(
  * do not). If the runtime needs an attachment blob that is not inlined, the
  * load fails with `UsageError` from the synthesized storage service.
  *
+ * **URL shape requirement.** In the offline form the captured
+ * `pendingLocalState.url` is the only URL available; it is parsed in place of
+ * a real `IUrlResolver.resolve()` call, so it must satisfy
+ * {@link tryParseCompatibleResolvedUrl}'s contract — a resolved URL of shape
+ * `protocol://<string>/.../..?<querystring>`. This is the format that
+ * Fluid-shipped drivers emit; drivers that emit a non-standard resolved-URL
+ * shape will surface as a `UsageError` at load time. The online form has no
+ * such constraint because the supplied resolver controls URL parsing.
+ *
  * The offline form supports `readOnly: false` for the same capture-and-relay
  * use case as the online form: local DDS submissions accrue in the runtime's
  * pending-state manager and can be captured via `getPendingLocalState` for

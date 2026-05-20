@@ -1364,6 +1364,86 @@ describe("loadFrozenContainerFromPendingState", () => {
 			);
 		});
 
+		// Capture-and-relay round-trip through a writable-offline load. The
+		// offline form's JSDoc explicitly supports `readOnly: false` for this
+		// use case: local DDS submissions accrue in the runtime's pending-state
+		// manager and are recoverable via `getPendingLocalState` for a later
+		// online replay. The online counterpart is "captures local writes in
+		// getPendingLocalState() and round-trips through a second frozen load"
+		// in the `readOnly: false` describe block — this is the same contract
+		// without any driver wiring on either load. Locks in the invariant
+		// that the synthesized offline driver wiring does not interfere with
+		// the runtime's pending-state accumulation.
+		it("captures local writes in getPendingLocalState() and round-trips through a second offline frozen load with readOnly: false", async () => {
+			const { container, ITestFluidObject, urlResolver, codeLoader } = await initialize();
+			await container.attach(urlResolver.createCreateNewRequest("test"));
+			ITestFluidObject.root.set("seed", "value");
+			if (container.isDirty) {
+				await timeoutPromise((resolve) => container.once("saved", () => resolve()));
+			}
+			container.disconnect();
+			const initialPending = await getRequiredPendingLocalState(container);
+
+			// First offline writable load — accept local writes with no driver wiring.
+			const frozenContainer = await loadFrozenContainerFromPendingState({
+				codeLoader,
+				pendingLocalState: initialPending,
+				readOnly: false,
+			});
+			assert.strictEqual(
+				frozenContainer.readOnlyInfo.readonly,
+				false,
+				"Expected writable offline frozen container to report readonly === false",
+			);
+			const frozenEntryPoint: FluidObject<TestFluidObject> =
+				await frozenContainer.getEntryPoint();
+			assert(
+				frozenEntryPoint.ITestFluidObject !== undefined,
+				"Expected writable offline frozen container entrypoint to be a valid TestFluidObject",
+			);
+
+			for (let i = 0; i < 5; i++) {
+				frozenEntryPoint.ITestFluidObject.root.set(`pending-${i}`, i);
+			}
+
+			// Capture pending state from the writable-offline container. The
+			// load-bearing invariant: edits made post-load must round-trip
+			// through getPendingLocalState() even when the underlying driver
+			// wiring is fully synthesized.
+			const layeredPending = await getRequiredPendingLocalState(frozenContainer);
+			assert.notStrictEqual(
+				layeredPending,
+				initialPending,
+				"Expected getPendingLocalState() to capture additional ops from the writable offline frozen container",
+			);
+
+			// Second offline writable load from the layered pending state —
+			// still no driver wiring. The layered edits must be visible.
+			const secondFrozen = await loadFrozenContainerFromPendingState({
+				codeLoader,
+				pendingLocalState: layeredPending,
+				readOnly: false,
+			});
+			const secondEntryPoint: FluidObject<TestFluidObject> =
+				await secondFrozen.getEntryPoint();
+			assert(
+				secondEntryPoint.ITestFluidObject !== undefined,
+				"Expected second offline frozen entrypoint to be a valid TestFluidObject",
+			);
+			for (let i = 0; i < 5; i++) {
+				assert.strictEqual(
+					secondEntryPoint.ITestFluidObject.root.get(`pending-${i}`),
+					i,
+					`Expected pending-${i} from layered pending state to be visible in second offline frozen load`,
+				);
+			}
+			assert.strictEqual(
+				secondEntryPoint.ITestFluidObject.root.get("seed"),
+				"value",
+				"Expected seed from original snapshot to remain visible in second offline frozen load",
+			);
+		});
+
 		// Negative counterpart for the inlined-blob precondition is at the
 		// storage-layer unit-test level (frozenServices.spec.ts): when no
 		// inner factory is provided and the runtime ultimately calls
