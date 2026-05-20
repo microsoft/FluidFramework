@@ -55,9 +55,7 @@ describe("Tree event benchmarks", () => {
 	const noopNodeChanged = (): void => {};
 	const noopTreeChanged = (): void => {};
 
-	// -------------------------------------------------------------------------
-	// Registration (sub + unsub round-trip) — CPU
-	// -------------------------------------------------------------------------
+	// #region Registration (sub + unsub round-trip) — CPU
 
 	describe("Tree.on subscribe + unsubscribe round-trip (hydrated)", () => {
 		interface Scenario {
@@ -122,10 +120,9 @@ describe("Tree event benchmarks", () => {
 		});
 	});
 
-	// -------------------------------------------------------------------------
-	// First-listener vs N-th listener cost (hydrated object)
-	// -------------------------------------------------------------------------
+	// #endregion
 
+	// First-listener vs N-th listener cost (hydrated object)
 	describe("Tree.on N-th listener cost (hydrated object nodeChanged)", () => {
 		for (const preexisting of [0, 1, 10, 100]) {
 			benchmarkIt({
@@ -151,11 +148,8 @@ describe("Tree event benchmarks", () => {
 		}
 	});
 
-	// -------------------------------------------------------------------------
-	// Bulk N subscribes then N unsubscribes — measures amortised per-call cost
+	// Bulk N subscribes then N unsubscribes — measures amortized per-call cost
 	// without the unsubscribe being interleaved between subscribes.
-	// -------------------------------------------------------------------------
-
 	describe("Tree.on bulk subscribe + bulk unsubscribe (hydrated object nodeChanged)", () => {
 		for (const n of [1, 10, 100]) {
 			benchmarkIt({
@@ -179,11 +173,8 @@ describe("Tree event benchmarks", () => {
 		}
 	});
 
-	// -------------------------------------------------------------------------
 	// Kernel construction cost — relevant to the "lazy buffer" proposal which
 	// affects per-node overhead even before any listener is attached.
-	// -------------------------------------------------------------------------
-
 	describe("Kernel construction (unhydrated object node)", () => {
 		benchmarkIt({
 			type: BenchmarkType.Measurement,
@@ -220,11 +211,8 @@ describe("Tree event benchmarks", () => {
 		}
 	});
 
-	// -------------------------------------------------------------------------
 	// Emission cost — relevant to A (shared dispatcher), F (storedKey
 	// short-circuit), and D (subscription sharing).
-	// -------------------------------------------------------------------------
-
 	describe("Tree.on emission cost (hydrated object nodeChanged)", () => {
 		for (const numListeners of [1, 10, 100]) {
 			benchmarkIt({
