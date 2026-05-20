@@ -17,7 +17,7 @@ const loadPresenceTrackerApp = async (page: Page, url: string): Promise<string> 
 	const loadResponse = await page.goto(url, { waitUntil: "load" });
 	// A null response indicates a navigation to the same URL with a different hash
 	// and is not an actual page load (or resetting of state). In this case, we
-	// need to force reload the page. https://pptr.dev/api/puppeteer.page.goto#remarks
+	// need to force reload the page. See Playwright's Page.goto docs for the same behavior.
 	if (loadResponse === null) {
 		await page.reload({ waitUntil: "load" });
 	}

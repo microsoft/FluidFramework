@@ -156,7 +156,7 @@ test.describe("separate-container migration", () => {
 			const migrationP = page.evaluate(async () => {
 				for (const container of window["containers"] as IContainer[]) {
 					// Since we expect this to run before the button click below, nothing should have migrated.
-					// However, we are getting flaky errors and want to rule out the possibility that the puppeteer interaction
+					// However, we are getting flaky errors and want to rule out the possibility that the browser-side interaction
 					// is somehow permitting these to occur out of order.  Throwing here will cause the returned migrationP
 					// promise to immediately reject.
 					if (container.getSpecifiedCodeDetails()?.package !== "one") {
