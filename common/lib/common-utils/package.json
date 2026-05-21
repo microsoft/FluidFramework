@@ -196,7 +196,7 @@
 				"build:esnext"
 			],
 			"build:test:types": [
-				"build:esnext"
+				"tsc"
 			],
 			"ci:build:api-reports:browser:current": [
 				"build:exports:browser"
