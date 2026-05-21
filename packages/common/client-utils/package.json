@@ -181,13 +181,6 @@
 	},
 	"fluidBuild": {
 		"tasks": {
-			"eslint": [
-				"tsc",
-				"build:esnext",
-				"build:test:mocha:esm",
-				"build:test:jest",
-				"build:test:types"
-			],
 			"build:api-reports:browser:current": [
 				"build:exports:browser"
 			],
