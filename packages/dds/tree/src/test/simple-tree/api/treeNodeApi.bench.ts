@@ -108,7 +108,9 @@ describe("Tree node API benchmarks", () => {
 									const off = Tree.on(node, "nodeChanged", noopNodeChanged);
 									off();
 								});
-								for (const off of preOffs) off();
+								for (const off of preOffs) {
+									off();
+								}
 							},
 						}),
 					});
