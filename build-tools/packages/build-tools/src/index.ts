@@ -21,7 +21,7 @@ export type {
 	requireAssignableTo,
 	SkipUniqueSymbols,
 	TypeOnly,
-} from "./common/typeCompatibility";
+} from "./common/typeCompatibility.cjs";
 export { getTypeTestPreviousPackageDetails } from "./common/typeTests";
 export { type IFluidBuildConfig } from "./fluidBuild/fluidBuildConfig";
 export { type IFluidCompatibilityMetadata } from "./fluidBuild/fluidCompatMetadata";
