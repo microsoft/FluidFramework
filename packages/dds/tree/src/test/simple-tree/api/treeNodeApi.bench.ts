@@ -245,26 +245,22 @@ describe("Tree node API benchmarks", () => {
 				for (const eventName of ["nodeChanged", "treeChanged"] as const) {
 					benchmarkIt({
 						type: BenchmarkType.Measurement,
-						title: `${eventName} x ${10}`,
+						title: eventName,
 						...benchmarkMemoryUse({
 							...iterationSettings,
 							...memoryAddedBy({
 								setup: () => {
 									const node = createUnhydratedObject();
-									return { node, offs: [] as Off[] };
+									return { node, off: undefined as Off | undefined };
 								},
 								modify: (state) => {
 									const listener =
 										eventName === "nodeChanged" ? noopNodeChanged : noopTreeChanged;
-									for (let i = 0; i < 10; i++) {
-										state.offs.push(Tree.on(state.node, eventName, listener));
-									}
+									state.off = Tree.on(state.node, eventName, listener);
 								},
 								after: (state) => {
-									for (const off of state.offs) {
-										off();
-									}
-									state.offs.length = 0;
+									state.off?.();
+									state.off = undefined;
 								},
 							}),
 						}),
