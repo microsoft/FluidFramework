@@ -150,6 +150,115 @@ describe("withBufferedTreeEvents", () => {
 		});
 		assert.equal(eventCounter, 1); // Only a single event should have been raised.
 	});
+
+	describe("nested calls", () => {
+		// Helper: build a fresh logged subject for each test.
+		function makeSubject(): {
+			obj: MyObject;
+			log: string[];
+		} {
+			const obj = new MyObject({ foo: "init", bar: true });
+			const log: string[] = [];
+			TreeBeta.on(obj, "nodeChanged", ({ changedProperties }) => {
+				log.push(`nodeChanged: ${JSON.stringify([...changedProperties.keys()].sort())}`);
+			});
+			return { obj, log };
+		}
+
+		it("outer commit + inner commit: all events flushed once", () => {
+			const { obj, log } = makeSubject();
+			withBufferedTreeEvents(() => {
+				obj.foo = "outer";
+				withBufferedTreeEvents(() => {
+					obj.baz = 5;
+				});
+			});
+			assert.deepEqual(log, ['nodeChanged: ["baz","foo"]']);
+		});
+
+		it("outer commit + inner discard: only outer's events fire", () => {
+			const { obj, log } = makeSubject();
+			withBufferedTreeEvents(() => {
+				obj.foo = "outer";
+				withBufferedTreeEvents(() => {
+					obj.baz = 5;
+					return true;
+				});
+			});
+			// Inner contribution (baz) must be dropped; outer's foo must fire.
+			assert.deepEqual(log, ['nodeChanged: ["foo"]']);
+		});
+
+		it("outer discard + inner commit: nothing fires", () => {
+			const { obj, log } = makeSubject();
+			withBufferedTreeEvents(() => {
+				obj.foo = "outer";
+				withBufferedTreeEvents(() => {
+					obj.baz = 5;
+				});
+				return true;
+			});
+			assert.deepEqual(log, []);
+		});
+
+		it("outer discard + inner discard: nothing fires", () => {
+			const { obj, log } = makeSubject();
+			withBufferedTreeEvents(() => {
+				obj.foo = "outer";
+				withBufferedTreeEvents(() => {
+					obj.baz = 5;
+					return true;
+				});
+				return true;
+			});
+			assert.deepEqual(log, []);
+		});
+
+		it("three levels — outer commit + middle discard + innermost commit: only outer's events fire", () => {
+			const { obj, log } = makeSubject();
+			withBufferedTreeEvents(() => {
+				obj.foo = "outer";
+				withBufferedTreeEvents(() => {
+					// Middle scope contributes "bar" via the innermost.
+					withBufferedTreeEvents(() => {
+						obj.bar = false;
+					});
+					return true;
+				});
+			});
+			// Innermost merged "bar" into the middle scope, which then discarded.
+			// Only outer's "foo" should fire.
+			assert.deepEqual(log, ['nodeChanged: ["foo"]']);
+		});
+
+		it("late-joining buffer: a buffer first touched mid-inner is correctly discarded with the inner", () => {
+			const { obj: outerObj, log: outerLog } = makeSubject();
+			// A second subject whose buffer doesn't get touched until inside the inner scope.
+			let lateLog: string[] | undefined;
+			let lateObj: MyObject | undefined;
+			withBufferedTreeEvents(() => {
+				outerObj.foo = "outer";
+				withBufferedTreeEvents(() => {
+					// Construct + subscribe + edit entirely inside the inner scope.
+					lateObj = new MyObject({ foo: "late", bar: true });
+					lateLog = [];
+					TreeBeta.on(lateObj, "nodeChanged", ({ changedProperties }) => {
+						assert(lateLog !== undefined, "lateLog should be defined when event fires");
+						lateLog.push(
+							`nodeChanged: ${JSON.stringify([...changedProperties.keys()].sort())}`,
+						);
+					});
+					lateObj.baz = 9;
+					return true;
+				});
+			});
+			// outerObj's outer-scope edit should still fire.
+			assert.deepEqual(outerLog, ['nodeChanged: ["foo"]']);
+			// lateObj was created and edited entirely inside the discarded inner scope —
+			// no events should surface from it.
+			assert.deepEqual(lateLog, []);
+		});
+	});
 });
 
 describe("array node delta in nodeChanged", () => {
