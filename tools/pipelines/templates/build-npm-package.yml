@@ -32,13 +32,6 @@ parameters:
   default:
   - ci:test
 
-# A list of directories (under the buildDirectory) to run the PublishTestResults task on in separate steps.
-# Used to avoid the force merge limit of 100 result files.
-- name: testResultDirs
-  type: object
-  default:
-  - nyc
-
 - name: taskBundleAnalysis
   type: boolean
   default: false
@@ -254,7 +247,6 @@ extends:
                       PublishDocs=${{ parameters.publishDocs }}
                       Test=${{ convertToJson(parameters.taskTest) }}
                       TestCoverage=${{ parameters.testCoverage }}
-                      TestResultDirs=${{ convertToJson(parameters.testResultDirs) }}
 
                     Variables:
                       consistentSourcesDirectory=$(consistentSourcesDirectory)
@@ -448,10 +440,14 @@ extends:
 
 
                   # Process test result, include publishing and logging
-                  - template: /tools/pipelines/templates/include-process-test-results.yml@self
-                    parameters:
-                      buildDirectory: '${{ parameters.buildDirectory }}'
-                      testResultDirs: '${{ parameters.testResultDirs }}'
+                  - task: PublishTestResults@2
+                    displayName: Publish Test Results
+                    inputs:
+                      testResultsFormat: 'JUnit'
+                      testResultsFiles: '**/*junit-report.xml'
+                      searchFolder: $(Pipeline.Workspace)/${{ parameters.buildDirectory }}/nyc
+                      mergeTestResults: false
+                    condition: and(succeededOrFailed(), eq(variables['startTest'], 'true'))
 
               # Pack
               - ${{ if ne(parameters.taskPack, false) }}:
@@ -504,11 +500,9 @@ extends:
                       sourceFolder: '$(Pipeline.Workspace)/${{ parameters.buildDirectory }}/artifacts/bundleAnalysis'
                       targetFolder: $(Build.ArtifactStagingDirectory)/bundleAnalysis
 
-                  # bundleAnalyzerJson is a parallel artifact carrying analyzer.json
-                  # (consumed by `flub generate bundleSizeDiff`). It's separate from the
-                  # bundleAnalysis artifact so the FF-internal telemetry handler — which
-                  # walks every .json under bundleAnalysis — doesn't trip over a file
-                  # whose shape it doesn't recognize.
+                  # bundleAnalyzerJson is a parallel artifact for analyzer.json — kept
+                  # separate from bundleAnalysis so the FF-internal telemetry handler
+                  # (which walks every .json under that artifact) doesn't trip over it.
                   - task: CopyFiles@2
                     displayName: Copy bundle analyzer JSON files to artifact staging directory
                     inputs:

@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/sequence",
-	"version": "2.101.0",
+	"version": "2.102.0",
 	"description": "Distributed sequence",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -187,9 +187,13 @@
 	},
 	"fluidBuild": {
 		"tasks": {
-			"build:test": [
+			"build:test:cjs": [
 				"...",
-				"@fluidframework/merge-tree#build:test"
+				"@fluidframework/merge-tree#build:test:cjs"
+			],
+			"build:test:esm": [
+				"...",
+				"@fluidframework/merge-tree#build:test:esm"
 			]
 		}
 	},
