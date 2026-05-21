@@ -39,14 +39,6 @@ export {
 	isFileInPackageDir,
 	listPackageJsonPaths,
 } from "./git.js";
-export type { GlobWithGitignoreOptions } from "./gitignore.js";
-export {
-	clearGitignoreCache,
-	filterByGitignore,
-	filterByGitignoreSync,
-	globWithGitignore,
-	toPosixPath,
-} from "./gitignore.js";
 export { PackageBase } from "./package.js";
 export { updatePackageJsonFile, updatePackageJsonFileAsync } from "./packageJsonUtils.js";
 export { createPackageManager } from "./packageManagers.js";
