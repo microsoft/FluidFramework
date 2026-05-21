@@ -88,9 +88,7 @@ export class DuplicateBatchDetector {
 	 *
 	 * @remarks We also use the minimumSequenceNumber to clear out old batchIds that are no longer at risk for duplicates.
 	 */
-	public processInboundBatch(
-		batchStart: BatchStartInfo,
-	):
+	public processInboundBatch(batchStart: BatchStartInfo):
 		| {
 				duplicate: true;
 				otherSequenceNumber: number;
