@@ -303,9 +303,16 @@ type KernelEvents = Pick<AnchorEvents, (typeof kernelEvents)[number]>;
 // #region TreeNodeEventBuffer
 
 /**
- * Whether or not events from {@link TreeNodeKernel} should be buffered instead of emitted immediately.
+ * Number of active {@link withBufferedTreeEvents} scopes (counting nesting). Zero means no
+ * buffering scope is active — events from {@link TreeNodeKernel} are emitted immediately.
+ * Non-zero means events are buffered into the live frame of each {@link KernelEventBuffer}'s stack.
+ *
+ * @remarks
+ * Every {@link KernelEventBuffer} maintains a {@link KernelEventBuffer.#bufferStack | bufferStack}
+ * whose depth equals this counter (from the buffer's construction onward), so that popping the
+ * last frame of a buffer's stack coincides exactly with the outermost scope ending.
  */
-let bufferTreeEvents: boolean = false;
+let bufferScopeDepth: number = 0;
 
 /**
  * Call the provided callback with {@link TreeNode}s' events paused until after the callback's completion.
@@ -316,40 +323,150 @@ let bufferTreeEvents: boolean = false;
  * @remarks
  * Note: this should be used with caution. User application behaviors are implicitly coupled to event timing.
  * Disrupting this timing can lead to unexpected behavior.
+ *
+ * Nested calls each manage their own buffering scope: each scope's events are merged into the
+ * surrounding scope on success or discarded independently if its callback signals discard.
+ *
+ * @param callback - Function to invoke while events are buffered.
+ * Return `true` to discard the events buffered during this call (e.g. when work is being rolled back);
+ * return `false`/nothing to keep them.
+ * If the callback throws, buffered events are kept.
  */
-export function withBufferedTreeEvents(callback: () => void): void {
-	if (bufferTreeEvents) {
-		// Already buffering - just run the callback
-		callback();
-	} else {
-		bufferTreeEvents = true;
-		try {
-			callback();
-		} finally {
-			bufferTreeEvents = false;
-			flushEventsEmitter.emit("flush");
-		}
+export function withBufferedTreeEvents(callback: () => boolean | void): void {
+	bufferScopeDepth++;
+	flushEventsEmitter.emit("pushBufferFrame");
+	let discard = false;
+	try {
+		discard = callback() === true;
+	} finally {
+		bufferScopeDepth--;
+		flushEventsEmitter.emit("popBufferFrame", discard);
 	}
 }
 
 /**
- * Event emitter to notify subscribers when tree events buffered due to {@link withBufferedTreeEvents} should be flushed.
+ * Event emitter to notify subscribers about tree-event buffer lifecycle:
+ * {@link withBufferedTreeEvents} signals frame pushes and pops here. Push and pop fire for every
+ * scope (outermost and nested alike); the buffer's `popBufferFrame` handler decides whether the popped
+ * frame's events should be merged into an outer scope, kept for a later bubble-up, or emitted to
+ * listeners (when the popped frame was the outermost one).
  */
 const flushEventsEmitter = createEmitter<{
-	flush: () => void;
+	/** A buffering scope started; push a fresh frame onto the stack to track its events. */
+	pushBufferFrame: () => void;
+	/**
+	 * A buffering scope ended.
+	 * @param discardBufferedEvents - If true, drop the top frame entirely. If false, the buffer
+	 * either merges the top into the frame beneath, emits the events (if this is the outermost
+	 * scope), or keeps the frame on the stack to bubble up (if the buffer was late-joining).
+	 */
+	popBufferFrame: (discardBufferedEvents: boolean) => void;
 }>();
 
 /**
- * Event emitter for {@link TreeNodeKernel}, which optionally buffers events based on {@link bufferTreeEvents}.
- * @remarks Listens to {@link flushEventsEmitter} to know when to flush any buffered events.
+ * One frame of {@link KernelEventBuffer}'s scope stack. The top of the stack is the live state
+ * for the current (innermost) {@link withBufferedTreeEvents} scope; deeper entries are saved
+ * outer-scope states waiting to be restored when their corresponding nested call ends.
+ */
+interface BufferFrame {
+	/**
+	 * Fields that have changed since events were paused. On flush, this set is delivered as the
+	 * `changedFields` of a single `childrenChangedAfterBatch` event.
+	 */
+	childrenChangedBuffer: Set<FieldKey>;
+	/**
+	 * Field marks accumulated since events were paused. Emitted alongside `childrenChangedBuffer`
+	 * on flush.
+	 */
+	fieldMarksBuffer: Map<FieldKey, readonly DeltaMark[]>;
+	/**
+	 * Fields whose marks have been permanently invalidated within the current buffer window due
+	 * to two or more separate delta batches touching the same field. Once a key is in this set
+	 * it must never be re-added to the marks buffer, even if a third (or later) batch arrives
+	 * for that field.
+	 */
+	invalidatedFieldMarkKeys: Set<FieldKey>;
+	/**
+	 * Whether the subtree has changed since events were paused. On flush, a single
+	 * `subtreeChangedAfterBatch` event is emitted if and only if this is true.
+	 */
+	subTreeChangedBuffer: boolean;
+}
+
+/** Allocate a fresh empty {@link BufferFrame}. */
+function createEmptyBufferFrame(): BufferFrame {
+	return {
+		childrenChangedBuffer: new Set(),
+		fieldMarksBuffer: new Map(),
+		invalidatedFieldMarkKeys: new Set(),
+		subTreeChangedBuffer: false,
+	};
+}
+
+/**
+ * Merge `source`'s contents into `target` using the same collision rules as
+ * `KernelEventBuffer.#handleChildrenChangedAfterBatch`: if a field appears in both frames,
+ * its marks are permanently invalidated in `target`.
+ */
+function mergeBufferFrameInto(target: BufferFrame, source: BufferFrame): void {
+	for (const key of source.childrenChangedBuffer) {
+		target.childrenChangedBuffer.add(key);
+	}
+	for (const [key, marks] of source.fieldMarksBuffer) {
+		if (target.invalidatedFieldMarkKeys.has(key)) {
+			continue;
+		}
+		if (target.fieldMarksBuffer.has(key)) {
+			target.fieldMarksBuffer.delete(key);
+			target.invalidatedFieldMarkKeys.add(key);
+		} else {
+			target.fieldMarksBuffer.set(key, marks);
+		}
+	}
+	for (const key of source.invalidatedFieldMarkKeys) {
+		target.fieldMarksBuffer.delete(key);
+		target.invalidatedFieldMarkKeys.add(key);
+	}
+	if (source.subTreeChangedBuffer) {
+		target.subTreeChangedBuffer = true;
+	}
+}
+
+/**
+ * Event emitter for {@link TreeNodeKernel}, which optionally buffers events based on
+ * {@link bufferScopeDepth} (zero means emit immediately; non-zero means buffer).
+ * @remarks Listens to {@link flushEventsEmitter} to know when to push/pop frames around
+ * {@link withBufferedTreeEvents} calls.
  */
 class KernelEventBuffer implements Listenable<KernelEvents> {
 	#disposed: boolean = false;
 
 	/**
-	 * Listen to {@link flushEventsEmitter} to know when to flush buffered events.
+	 * Listen to {@link flushEventsEmitter} so this buffer can track the scope stack created by
+	 * {@link withBufferedTreeEvents} calls.
 	 */
-	readonly #disposeOnFlushListener = flushEventsEmitter.on("flush", this.flush.bind(this));
+	readonly #disposeOnPushBufferFrameListener = flushEventsEmitter.on(
+		"pushBufferFrame",
+		this.pushBufferFrame.bind(this),
+	);
+	readonly #disposeOnPopBufferFrameListener = flushEventsEmitter.on(
+		"popBufferFrame",
+		this.popBufferFrame.bind(this),
+	);
+
+	/**
+	 * Stack of buffer frames, one per active {@link withBufferedTreeEvents} scope. The top frame
+	 * is the live state for the current (innermost) scope; entries below are outer-scope states.
+	 *
+	 * @remarks
+	 * Invariant: `#bufferStack.length === bufferScopeDepth` from this buffer's construction onward.
+	 * Maintained by (a) the constructor, which pre-loads one frame per currently-active scope;
+	 * (b) {@link KernelEventBuffer.pushBufferFrame | pushBufferFrame}, which adds a frame in
+	 * lockstep with each `bufferScopeDepth++`; and (c) {@link KernelEventBuffer.popBufferFrame | popBufferFrame},
+	 * which removes a frame in lockstep with each `bufferScopeDepth--`. As a result, this buffer's
+	 * "outermost frame ending" coincides exactly with `bufferScopeDepth` reaching zero.
+	 */
+	readonly #bufferStack: BufferFrame[] = [];
 
 	readonly #events = createEmitter<KernelEvents>();
 
@@ -357,32 +474,17 @@ class KernelEventBuffer implements Listenable<KernelEvents> {
 	readonly #disposeSourceListeners: Map<keyof KernelEvents, Off> = new Map();
 
 	/**
-	 * Buffer of fields that have changed since events were paused.
-	 * When events are flushed, a single {@link AnchorEvents.childrenChangedAfterBatch} event will be emitted
-	 * containing the accumulated set of changed fields.
+	 * Live (top-of-stack) buffer state. See {@link BufferFrame} for per-field semantics.
+	 *
+	 * @remarks
+	 * Only valid to access while {@link bufferScopeDepth} is non-zero. The stack's
+	 * length-equals-depth invariant guarantees this getter never has to allocate.
 	 */
-	readonly #childrenChangedBuffer: Set<FieldKey> = new Set();
-
-	/**
-	 * Buffer of field marks accumulated since events were paused.
-	 * Emitted alongside the buffered changed-fields set when flushed.
-	 */
-	readonly #fieldMarksBuffer: Map<FieldKey, readonly DeltaMark[]> = new Map();
-
-	/**
-	 * Fields whose marks have been permanently invalidated within the current buffer window due to
-	 * two or more separate delta batches touching the same field.
-	 * Once a key is in this set it must never be re-added to the marks buffer, even if
-	 * a third (or later) batch arrives for that field.
-	 */
-	readonly #invalidatedFieldMarkKeys: Set<FieldKey> = new Set();
-
-	/**
-	 * Whether or not the subtree has changed since events were paused.
-	 * When events are flushed, a single {@link AnchorEvents.subTreeChanged} event will be emitted if and only
-	 * if the subtree has changed.
-	 */
-	#subTreeChangedBuffer: boolean = false;
+	get #current(): BufferFrame {
+		// eslint-disable-next-line unicorn/prefer-at -- Array.at requires ES2022, which this package does not target.
+		const top = this.#bufferStack[this.#bufferStack.length - 1];
+		return top ?? fail("buffer stack is empty while buffering is active");
+	}
 
 	public constructor(
 		/**
@@ -393,6 +495,14 @@ class KernelEventBuffer implements Listenable<KernelEvents> {
 		eventSource: Listenable<KernelEvents> & HasListeners<KernelEvents>,
 	) {
 		this.#eventSource = eventSource;
+		// Buffers constructed mid-scope never observed the surrounding `pushBufferFrame`
+		// event(s). Pre-load the stack with one frame per active scope so this buffer's stack
+		// depth matches {@link bufferScopeDepth} and stays in lockstep with all other buffers.
+		// Empty frames here are correct: this buffer wasn't around to receive events for any of
+		// those scopes' prior work; only events that arrive from now on will populate the top.
+		for (let i = 0; i < bufferScopeDepth; i++) {
+			this.#bufferStack.push(createEmptyBufferFrame());
+		}
 	}
 
 	/**
@@ -446,7 +556,10 @@ class KernelEventBuffer implements Listenable<KernelEvents> {
 		}
 
 		this.#events.onUnchecked(eventName, listener);
-		return () => this.off(eventName, listener);
+		// Return a bound method instead of an arrow closure. A bound function captures
+		// (target, thisArg, ...boundArgs) in a fixed shape that V8 can optimize more
+		// uniformly than a closure that captures its lexical context.
+		return this.off.bind(this, eventName, listener);
 	}
 
 	public off(eventName: keyof KernelEvents, listener: KernelEvents[typeof eventName]): void {
@@ -486,25 +599,26 @@ class KernelEventBuffer implements Listenable<KernelEvents> {
 		changedFields: ReadonlySet<FieldKey>,
 		fieldMarks: ReadonlyMap<FieldKey, readonly DeltaMark[]>,
 	): void {
-		if (bufferTreeEvents) {
+		if (bufferScopeDepth > 0) {
+			const currentBufferFrame = this.#current;
 			for (const fieldKey of changedFields) {
-				this.#childrenChangedBuffer.add(fieldKey);
+				currentBufferFrame.childrenChangedBuffer.add(fieldKey);
 			}
 			for (const [key, marks] of fieldMarks) {
-				if (this.#invalidatedFieldMarkKeys.has(key)) {
+				if (currentBufferFrame.invalidatedFieldMarkKeys.has(key)) {
 					// Already permanently invalidated by an earlier collision; ignore this batch too.
 					// TODO: Once the eventing stack is rewritten to walk the composed delta at flush
 					// time, this collision path will be unreachable and can be removed entirely.
 					continue;
 				}
-				if (this.#fieldMarksBuffer.has(key)) {
+				if (currentBufferFrame.fieldMarksBuffer.has(key)) {
 					// A second batch of marks arrived for the same field before the buffer was flushed.
 					// We have no delta composition logic, so permanently invalidate this field so that
 					// any further batches are also discarded rather than incorrectly surfaced.
-					this.#fieldMarksBuffer.delete(key);
-					this.#invalidatedFieldMarkKeys.add(key);
+					currentBufferFrame.fieldMarksBuffer.delete(key);
+					currentBufferFrame.invalidatedFieldMarkKeys.add(key);
 				} else {
-					this.#fieldMarksBuffer.set(key, marks);
+					currentBufferFrame.fieldMarksBuffer.set(key, marks);
 				}
 			}
 		} else {
@@ -513,32 +627,61 @@ class KernelEventBuffer implements Listenable<KernelEvents> {
 	}
 
 	#handleSubtreeChangedAfterBatch(): void {
-		if (bufferTreeEvents) {
-			this.#subTreeChangedBuffer = true;
+		if (bufferScopeDepth > 0) {
+			this.#current.subTreeChangedBuffer = true;
 		} else {
 			this.#events.emit("subtreeChangedAfterBatch");
 		}
 	}
 
 	/**
-	 * Flushes any events buffered due to {@link withBufferedTreeEvents}.
+	 * Begin a buffering scope. A fresh empty frame is pushed onto the stack and becomes the live
+	 * (current) frame; any outer scope's frame remains beneath, untouched until this frame is popped.
 	 */
-	public flush(): void {
+	public pushBufferFrame(): void {
 		this.#assertNotDisposed();
+		assert(
+			bufferScopeDepth > 0,
+			"bufferScopeDepth should be positive when pushing an events buffer frame",
+		);
+		this.#bufferStack.push(createEmptyBufferFrame());
+	}
 
-		if (this.#childrenChangedBuffer.size > 0) {
-			this.#events.emit("childrenChangedAfterBatch", {
-				changedFields: this.#childrenChangedBuffer,
-				fieldMarks: this.#fieldMarksBuffer,
-			});
-			this.#childrenChangedBuffer.clear();
-			this.#fieldMarksBuffer.clear();
-			this.#invalidatedFieldMarkKeys.clear();
+	/**
+	 * End a buffering scope.
+	 *
+	 * @param discardBufferedEvents - If true, drop the top frame entirely. If false, the top
+	 * frame's events either merge into the outer scope or are emitted to listeners.
+	 *
+	 * @remarks
+	 * Because every buffer's stack depth matches {@link bufferScopeDepth} at all times, popping
+	 * the last frame coincides exactly with the outermost {@link withBufferedTreeEvents} call
+	 * ending. Two cases:
+	 *
+	 * - **Nested** (stack still has more frames after the pop): for `!discardBufferedEvents`, merge the popped frame into the new top using the same collision rules as `#handleChildrenChangedAfterBatch`. For `discardBufferedEvents`, drop the popped frame.
+	 * - **Outermost** (stack is now empty): for `!discardBufferedEvents`, emit the accumulated events to listeners. For `discardBufferedEvents`, drop them.
+	 */
+	public popBufferFrame(discardBufferedEvents: boolean): void {
+		this.#assertNotDisposed();
+		const top =
+			this.#bufferStack.pop() ?? fail("Expected non-empty buffer stack in popBufferFrame.");
+		if (discardBufferedEvents) {
+			return;
 		}
-
-		if (this.#subTreeChangedBuffer) {
-			this.#events.emit("subtreeChangedAfterBatch");
-			this.#subTreeChangedBuffer = false;
+		if (this.#bufferStack.length > 0) {
+			// Nested pop: bubble the inner scope's events up into the outer (now-top) frame.
+			mergeBufferFrameInto(this.#current, top);
+		} else {
+			// Outermost pop: emit accumulated events.
+			if (top.childrenChangedBuffer.size > 0) {
+				this.#events.emit("childrenChangedAfterBatch", {
+					changedFields: top.childrenChangedBuffer,
+					fieldMarks: top.fieldMarksBuffer,
+				});
+			}
+			if (top.subTreeChangedBuffer) {
+				this.#events.emit("subtreeChangedAfterBatch");
+			}
 		}
 	}
 
@@ -552,20 +695,16 @@ class KernelEventBuffer implements Listenable<KernelEvents> {
 		}
 
 		assert(
-			this.#childrenChangedBuffer.size === 0 && !this.#subTreeChangedBuffer,
+			this.#bufferStack.length === 0,
 			0xc52 /* Buffered kernel events should have been flushed before disposing. */,
 		);
 
-		this.#disposeOnFlushListener();
+		this.#disposeOnPushBufferFrameListener();
+		this.#disposeOnPopBufferFrameListener();
 		for (const off of this.#disposeSourceListeners.values()) {
 			off();
 		}
 		this.#disposeSourceListeners.clear();
-
-		this.#childrenChangedBuffer.clear();
-		this.#fieldMarksBuffer.clear();
-		this.#invalidatedFieldMarkKeys.clear();
-		this.#subTreeChangedBuffer = false;
 
 		this.#disposed = true;
 	}
