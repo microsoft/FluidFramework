@@ -15,24 +15,12 @@
 	"exports": {
 		".": {
 			"node": {
-				"import": {
-					"types": "./lib/indexNode.d.ts",
-					"default": "./lib/indexNode.js"
-				},
-				"require": {
-					"types": "./dist/indexNode.d.ts",
-					"default": "./dist/indexNode.js"
-				}
+				"import": "./lib/indexNode.js",
+				"require": "./dist/indexNode.js"
 			},
 			"default": {
-				"import": {
-					"types": "./lib/indexBrowser.d.ts",
-					"default": "./lib/indexBrowser.js"
-				},
-				"require": {
-					"types": "./dist/indexBrowser.d.ts",
-					"default": "./dist/indexBrowser.js"
-				}
+				"import": "./lib/indexBrowser.js",
+				"require": "./dist/indexBrowser.js"
 			}
 		},
 		"./internal-api-report/current": {
