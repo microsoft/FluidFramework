@@ -182,15 +182,15 @@ describe("Tree node API benchmarks", () => {
 			});
 
 			describeHydration("Tree.on emission cost (object nodeChanged)", (init) => {
-				for (const numListeners of [1, 10, 100]) {
+				for (const listenerCount of [1, 10, 100]) {
 					benchmarkIt({
 						type: BenchmarkType.Measurement,
-						title: `emit with ${numListeners} listeners`,
+						title: `emit with ${listenerCount} listeners`,
 						...benchmarkDuration({
 							benchmarkFnCustom: async (state) => {
 								const node = init(ObjectRoot, createObjectRootContent());
 								const offs: Off[] = [];
-								for (let i = 0; i < numListeners; i++) {
+								for (let i = 0; i < listenerCount; i++) {
 									offs.push(Tree.on(node, "nodeChanged", () => {}));
 								}
 								state.timeAllBatches(() => {
@@ -206,15 +206,15 @@ describe("Tree node API benchmarks", () => {
 			});
 
 			describeHydration("Tree.on emission cost (object treeChanged, subtree edit)", (init) => {
-				for (const numListeners of [1, 10, 100]) {
+				for (const listenerCount of [1, 10, 100]) {
 					benchmarkIt({
 						type: BenchmarkType.Measurement,
-						title: `emit with ${numListeners} listeners`,
+						title: `emit with ${listenerCount} listeners`,
 						...benchmarkDuration({
 							benchmarkFnCustom: async (state) => {
 								const node = init(ObjectRoot, createObjectRootContent());
 								const offs: Off[] = [];
-								for (let i = 0; i < numListeners; i++) {
+								for (let i = 0; i < listenerCount; i++) {
 									offs.push(Tree.on(node, "treeChanged", () => {}));
 								}
 								state.timeAllBatches(() => {
