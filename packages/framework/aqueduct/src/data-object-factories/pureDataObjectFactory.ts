@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { SharedClaimsFactory } from "@fluidframework/claims-dds/internal";
 import { FluidDataStoreRegistry } from "@fluidframework/container-runtime/internal";
 import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import type { FluidObject, IRequest } from "@fluidframework/core-interfaces";
@@ -105,6 +106,7 @@ async function createDataObject<
 			return instance;
 		} /* provideEntryPoint */,
 		policies,
+		new SharedClaimsFactory() /* claimsFactory */,
 	);
 
 	// Create object right away.

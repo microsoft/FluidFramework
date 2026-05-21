@@ -235,6 +235,75 @@ const defaultPolicies: IFluidDataStorePolicies = {
 };
 
 /**
+ * Reserved channel id under which {@link FluidDataStoreRuntime} auto-installs a
+ * claims DDS instance on every data store, when a claims factory is injected
+ * via the runtime constructor. Begins with `_` so it cannot collide with any
+ * user-provided channel id (see
+ * {@link FluidDataStoreRuntime.validateChannelId}).
+ */
+const reservedClaimsChannelId = "_claims";
+
+/**
+ * Structural shape of the auto-installed claims DDS that
+ * {@link FluidDataStoreRuntime} consumes. Declared structurally so the
+ * runtime package does not need to depend on `@fluidframework/claims-dds`
+ * (which would introduce a cycle — `shared-object-base` already depends
+ * on `@fluidframework/datastore`).
+ *
+ * The concrete DDS — `SharedClaims` in `@fluidframework/claims-dds` —
+ * already satisfies this contract.
+ *
+ * @internal
+ */
+export interface ISharedClaimsLike {
+	trySetClaim(key: string, value: unknown): IClaimAttemptLike;
+	getClaim(key: string): unknown;
+	hasClaim(key: string): boolean;
+	readonly claims: ReadonlyMap<string, unknown>;
+	bindToContext(): void;
+}
+
+/**
+ * Structural shape of the value returned by
+ * {@link ISharedClaimsLike.trySetClaim}.
+ *
+ * @internal
+ */
+export type IClaimAttemptLike =
+	| { readonly status: "Success" | "AlreadyClaimed" }
+	| { readonly status: "Pending"; readonly result: Promise<"Success" | "AlreadyClaimed"> };
+
+/**
+ * Factory contract the runtime requires to host the claims channel.
+ * The runtime calls `factory.create` (for new data stores) and
+ * `factory.load` (for existing snapshots) under the reserved
+ * {@link reservedClaimsChannelId}.
+ *
+ * @internal
+ */
+export interface ISharedClaimsFactoryLike
+	extends IChannelFactory<ISharedClaimsLike> {}
+
+/**
+ * {@link ISharedObjectRegistry} wrapper that transparently injects an
+ * injected claims factory so the reserved channel can be loaded /
+ * created without the consumer having registered it explicitly.
+ */
+class ClaimsAwareRegistry implements ISharedObjectRegistry {
+	public constructor(
+		private readonly base: ISharedObjectRegistry,
+		private readonly claimsFactory: ISharedClaimsFactoryLike | undefined,
+	) {}
+
+	public get(name: string): IChannelFactory | undefined {
+		if (this.claimsFactory !== undefined && name === this.claimsFactory.type) {
+			return this.claimsFactory;
+		}
+		return this.base.get(name);
+	}
+}
+
+/**
  * Set up the boxed pendingOpCount value.
  */
 function initializePendingOpCount(): { value: number } {
@@ -402,16 +471,47 @@ export class FluidDataStoreRuntime
 	 * handle to this data store runtime will point to the object returned by this function. If this function is not
 	 * provided, the handle will be left undefined. This is here so we can start making handles a first-class citizen
 	 * and the primary way of interacting with some Fluid objects, and should be used if possible.
+	 * @param policies - Optional partial overrides for this runtime's policy bag.
 	 */
+	public constructor(
+		dataStoreContext: IFluidDataStoreContext,
+		sharedObjectRegistry: ISharedObjectRegistry,
+		existing: boolean,
+		provideEntryPoint: (runtime: IFluidDataStoreRuntime) => Promise<FluidObject>,
+		policies?: Partial<IFluidDataStorePolicies>,
+	);
+	/**
+	 * Internal-only overload that additionally accepts a claims factory. When
+	 * supplied, every data store hosted by this runtime is primed with a single
+	 * claims DDS instance under a reserved id (see
+	 * {@link FluidDataStoreRuntime.getClaims}). The factory is provided via
+	 * dependency injection (rather than imported directly by this package) to
+	 * avoid a circular dependency on `@fluidframework/claims-dds`, which itself
+	 * depends on `shared-object-base` → `datastore`.
+	 *
+	 * @internal
+	 */
+	public constructor(
+		dataStoreContext: IFluidDataStoreContext,
+		sharedObjectRegistry: ISharedObjectRegistry,
+		existing: boolean,
+		provideEntryPoint: (runtime: IFluidDataStoreRuntime) => Promise<FluidObject>,
+		policies: Partial<IFluidDataStorePolicies> | undefined,
+		claimsFactory: ISharedClaimsFactoryLike,
+	);
 	public constructor(
 		private readonly dataStoreContext: IFluidDataStoreContext,
 		sharedObjectRegistry: ISharedObjectRegistry,
 		existing: boolean,
 		provideEntryPoint: (runtime: IFluidDataStoreRuntime) => Promise<FluidObject>,
 		policies?: Partial<IFluidDataStorePolicies>,
+		private readonly claimsFactory?: ISharedClaimsFactoryLike,
 	) {
 		super();
-		this.sharedObjectRegistry = new LegacyTypeAwareRegistry(sharedObjectRegistry);
+		this.sharedObjectRegistry = new ClaimsAwareRegistry(
+			new LegacyTypeAwareRegistry(sharedObjectRegistry),
+			claimsFactory,
+		);
 
 		assert(
 			!dataStoreContext.id.includes("/"),
@@ -543,6 +643,119 @@ export class FluidDataStoreRuntime
 			this.mc.config.getNumber("Fluid.Telemetry.LocalChangesTelemetryCount") ?? 10;
 
 		this.minVersionForCollab = this.dataStoreContext.minVersionForCollab;
+
+		// Auto-install the reserved claims channel when a factory was injected.
+		// For new data stores we create + bind eagerly so trySetClaim works
+		// synchronously in detached mode (the underlying DDS resolves
+		// detached writes synchronously). For existing data stores the
+		// channel (if present in the snapshot) is already registered by the
+		// tree walk above and is loaded lazily via getClaims(). Legacy
+		// documents that predate this auto-installation get the channel
+		// created on first access; it persists on the next summary.
+		if (this.claimsFactory !== undefined && !existing) {
+			const claims = this.createReservedChannel(
+				reservedClaimsChannelId,
+				this.claimsFactory,
+			);
+			claims.bindToContext();
+			this.claimsLoad = Promise.resolve(claims);
+		}
+	}
+
+	/**
+	 * Internal helper that creates and registers a channel under a runtime-reserved
+	 * id (one that begins with `_` and would be rejected by
+	 * {@link FluidDataStoreRuntime.validateChannelId} on the public path).
+	 */
+	private createReservedChannel(
+		id: string,
+		factory: ISharedClaimsFactoryLike,
+	): ISharedClaimsLike {
+		assert(
+			!this.contexts.has(id),
+			0xfff /* createReservedChannel() with existing ID */,
+		);
+		const channel = factory.create(this, id);
+		this.createChannelContext(channel as unknown as IChannel);
+		return channel;
+	}
+
+	/**
+	 * Lazy load promise for the auto-installed claims channel under
+	 * {@link reservedClaimsChannelId}. Populated eagerly when creating a
+	 * new data store (with an injected claims factory), and on first
+	 * {@link getClaims} call for existing data stores.
+	 */
+	private claimsLoad: Promise<ISharedClaimsLike> | undefined;
+
+	/**
+	 * Returns the auto-installed claims channel for this data store, when a
+	 * claims factory was injected at construction. Every
+	 * {@link FluidDataStoreRuntime} so configured is primed with a single
+	 * claims channel under a reserved id; use it for first-writer-wins
+	 * state (e.g. role ownership) without writing to user-visible DDS
+	 * state.
+	 *
+	 * For documents that predate this auto-installation the channel is
+	 * created locally on first access and persisted on the next summary.
+	 *
+	 * @throws if no claims factory was injected via the constructor.
+	 *
+	 * @internal
+	 */
+	public async getClaims(): Promise<ISharedClaimsLike> {
+		if (this.claimsFactory === undefined) {
+			throw new Error(
+				"FluidDataStoreRuntime: no claims factory was injected; cannot host claims channel.",
+			);
+		}
+		if (this.claimsLoad === undefined) {
+			const factory = this.claimsFactory;
+			this.claimsLoad = (async (): Promise<ISharedClaimsLike> => {
+				if (this.contexts.has(reservedClaimsChannelId)) {
+					const channel = await this.getChannel(reservedClaimsChannelId);
+					return channel as unknown as ISharedClaimsLike;
+				}
+				// Legacy document without the auto-installed channel.
+				const created = this.createReservedChannel(reservedClaimsChannelId, factory);
+				created.bindToContext();
+				return created;
+			})();
+		}
+		return this.claimsLoad;
+	}
+
+	/**
+	 * Convenience wrapper around {@link getClaims} that delegates to
+	 * the underlying claims DDS's `trySetClaim`.
+	 *
+	 * @internal
+	 */
+	public async trySetClaim(key: string, value: unknown): Promise<IClaimAttemptLike> {
+		const claims = await this.getClaims();
+		return claims.trySetClaim(key, value);
+	}
+
+	/**
+	 * Convenience wrapper around {@link getClaims} that delegates to
+	 * the underlying claims DDS's `getClaim`.
+	 *
+	 * @internal
+	 */
+	public async getClaim(key: string): Promise<unknown> {
+		const claims = await this.getClaims();
+		return claims.getClaim(key);
+	}
+
+	/**
+	 * Convenience wrapper around {@link getClaims} that delegates to
+	 * the underlying claims DDS's `hasClaim`.
+	 *
+	 * @internal
+	 */
+	public async hasClaim(key: string): Promise<boolean> {
+		const claims = await this.getClaims();
+		return claims.hasClaim(key);
 	}
 
 	/**

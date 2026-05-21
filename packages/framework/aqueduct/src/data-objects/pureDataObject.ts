@@ -4,6 +4,7 @@
  */
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
+import type { IClaimAttempt } from "@fluidframework/claims-dds/internal";
 import type {
 	IEvent,
 	IFluidLoadable,
@@ -16,6 +17,7 @@ import type {
 	IProvideFluidHandle,
 } from "@fluidframework/core-interfaces/internal";
 import { assert } from "@fluidframework/core-utils/internal";
+import type { FluidDataStoreRuntime } from "@fluidframework/datastore/internal";
 import type { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions/internal";
 import type { IFluidDataStoreContext } from "@fluidframework/runtime-definitions/internal";
 import { create404Response } from "@fluidframework/runtime-utils/internal";
@@ -108,6 +110,53 @@ export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes
 		this.context = props.context;
 		this.providers = props.providers;
 		this.initProps = props.initProps;
+	}
+
+	/**
+	 * Attempts to set a first-writer-wins claim on this data store via the
+	 * runtime-hosted claims channel.
+	 *
+	 * Every `PureDataObject` is automatically primed (by
+	 * `PureDataObjectFactory`) with a claims DDS instance hosted by the
+	 * underlying {@link @fluidframework/datastore#FluidDataStoreRuntime}.
+	 * Use a claim when you need first-writer-wins semantics — once a
+	 * claim is sequenced it can never be overwritten by another client.
+	 * By contrast, last-writer-wins DDS writes (e.g. `SharedDirectory`)
+	 * let two clients racing to populate the same key silently overwrite
+	 * each other.
+	 *
+	 * @param key - The claim key (non-empty string).
+	 * @param value - The JSON-serializable value to claim. May contain
+	 * {@link @fluidframework/core-interfaces#IFluidHandle} instances; these
+	 * are encoded the same way as handles in any other DDS value and
+	 * contribute outbound routes to garbage collection.
+	 *
+	 * @internal
+	 */
+	protected async trySetClaim(key: string, value: unknown): Promise<IClaimAttempt> {
+		return (this.runtime as FluidDataStoreRuntime).trySetClaim(
+			key,
+			value,
+		) as Promise<IClaimAttempt>;
+	}
+
+	/**
+	 * Returns the value of a previously-claimed key, or `undefined` if the
+	 * key has not been claimed. Embedded handles are decoded.
+	 *
+	 * @internal
+	 */
+	protected async getClaim(key: string): Promise<unknown> {
+		return (this.runtime as FluidDataStoreRuntime).getClaim(key);
+	}
+
+	/**
+	 * Returns `true` if a claim has been sequenced for the given key.
+	 *
+	 * @internal
+	 */
+	protected async hasClaim(key: string): Promise<boolean> {
+		return (this.runtime as FluidDataStoreRuntime).hasClaim(key);
 	}
 
 	/**
