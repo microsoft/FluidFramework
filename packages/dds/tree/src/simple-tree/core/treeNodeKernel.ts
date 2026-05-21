@@ -121,13 +121,13 @@ export class TreeNodeKernel {
 
 	/**
 	 * Events registered before hydration.
+	 *
 	 * @remarks
-	 * Since these are usually not used, they are allocated lazily as an optimization.
-	 * The laziness also avoids extra forwarding overhead for events from this kernel's anchor node and also avoids registering for events that are unneeded.
-	 * This means optimizations like skipping processing data in subtrees where no subtreeChanged events are subscribed to would be able to work,
-	 * since the kernel does not unconditionally subscribe to those events (like a design which simply forwards all events would).
+	 * Allocated lazily on first access to {@link TreeNodeKernel.events}.
+	 * We expect the majority of nodes to never have event listeners registered, so
+	 * deferring construction avoids per-kernel allocations.
 	 */
-	readonly #eventBuffer: KernelEventBuffer;
+	#eventBuffer: KernelEventBuffer | undefined;
 
 	/**
 	 * Create a TreeNodeKernel which can be looked up with {@link getKernel}.
@@ -157,12 +157,9 @@ export class TreeNodeKernel {
 			this.#hydrationState = {
 				innerNode,
 			};
-
-			this.#eventBuffer = new KernelEventBuffer(innerNode.events);
 		} else {
 			// Hydrated case
 			this.#hydrationState = this.createHydratedState(innerNode);
-			this.#eventBuffer = new KernelEventBuffer(innerNode.anchorNode.events);
 		}
 	}
 
@@ -190,8 +187,10 @@ export class TreeNodeKernel {
 
 		this.#hydrationState = this.createHydratedState(inner);
 
-		// Lazily migrate existing event listeners to the anchor node
-		this.#eventBuffer.migrateEventSource(inner.anchorNode.events);
+		// Lazily migrate existing event listeners to the anchor node.
+		// If no one ever subscribed to this kernel's events, the buffer was never allocated
+		// and there is nothing to migrate.
+		this.#eventBuffer?.migrateEventSource(inner.anchorNode.events);
 	}
 
 	private createHydratedState(innerNode: HydratedFlexTreeNode): HydratedState {
@@ -233,6 +232,13 @@ export class TreeNodeKernel {
 	}
 
 	public get events(): Listenable<KernelEvents> {
+		// Allocate the buffer on first access. See {@link TreeNodeKernel.#eventBuffer} for rationale.
+		if (this.#eventBuffer === undefined) {
+			const eventSource = isHydrated(this.#hydrationState)
+				? this.#hydrationState.innerNode.anchorNode.events
+				: this.#hydrationState.innerNode.events;
+			this.#eventBuffer = new KernelEventBuffer(eventSource);
+		}
 		return this.#eventBuffer;
 	}
 
@@ -244,7 +250,7 @@ export class TreeNodeKernel {
 				off();
 			}
 		}
-		this.#eventBuffer.dispose();
+		this.#eventBuffer?.dispose();
 		// TODO: go to the context and remove myself from withAnchors
 	}
 
