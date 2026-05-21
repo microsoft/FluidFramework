@@ -546,6 +546,7 @@ class KernelEventBuffer implements Listenable<KernelEvents> {
 	}
 
 	public on(eventName: keyof KernelEvents, listener: KernelEvents[typeof eventName]): Off {
+		assert(!this.#disposed, "Cannot register events on a disposed node");
 		// Lazily bind event listeners to the source.
 		// If we do not have any existing listeners for this event, then we need to bind to the source.
 		if (!this.#events.hasListeners(eventName)) {
