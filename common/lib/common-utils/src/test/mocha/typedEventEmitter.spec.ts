@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 
-import { TypedEventEmitter } from "../../index.js";
+import { TypedEventEmitter } from "../../indexNode.js";
 import type { IErrorEvent } from "../../typedEventEmitter.js";
 
 describe("TypedEventEmitter", () => {

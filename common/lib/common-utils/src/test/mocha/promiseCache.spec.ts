@@ -7,7 +7,7 @@ import { strict as assert } from "assert";
 
 import { type SinonFakeTimers, useFakeTimers } from "sinon";
 
-import { PromiseCache } from "../../index.js";
+import { PromiseCache } from "../../indexNode.js";
 
 describe("PromiseCache", () => {
 	describe("Basic Cache Mechanism", () => {
