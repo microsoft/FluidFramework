@@ -10,8 +10,8 @@ import * as glob from "glob";
 import globby from "globby";
 import * as path from "path";
 
-import type { PackageJson } from "../../common/npmPackage";
-import { lookUpDirSync } from "../../common/utils";
+import type { PackageJson } from "../../common/npmPackage.js";
+import { lookUpDirSync } from "../../common/utils.js";
 
 export function getEsLintConfigFilePath(dir: string): string | undefined {
 	// ESLint 9 flat config files (checked first as they take precedence)
