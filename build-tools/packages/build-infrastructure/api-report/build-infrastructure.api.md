@@ -29,7 +29,7 @@ export interface BuildProjectLayout {
 }
 
 // @public
-export function clearGitignoreRuleSetsCache(): void;
+export function clearGitignoreCache(): void;
 
 // @public
 export function createPackageManager(name: PackageManagerName): IPackageManager;
@@ -270,7 +270,7 @@ export interface Reloadable {
 export function setVersion<J extends PackageJson>(packages: IPackage<J>[], version: SemVer): Promise<void>;
 
 // @public
-export function toPosixPath(s: string): string;
+export function toPosixPath(filePath: string): string;
 
 // @public
 export function updatePackageJsonFile<J extends PackageJson = PackageJson>(packagePath: string, packageTransformer: (json: J) => void): void;

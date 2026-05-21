@@ -13,8 +13,8 @@ import { glob as tinyglobbyGlob } from "tinyglobby";
 /**
  * Converts a path to use forward slashes (POSIX style).
  */
-export function toPosixPath(s: string): string {
-	return s.replace(/\\/g, "/");
+export function toPosixPath(filePath: string): string {
+	return filePath.replace(/\\/g, "/");
 }
 
 /**
@@ -33,7 +33,7 @@ interface GitignoreRuleSet {
  * Note: This cache is scoped to the module lifecycle. If .gitignore files
  * are modified while a process is running, the cached patterns may become
  * stale. Long-running processes that need to reflect .gitignore changes
- * should call {@link clearGitignoreRuleSetsCache} when appropriate.
+ * should call {@link clearGitignoreCache} when appropriate.
  */
 const gitignoreRuleSetsCache = new Map<string, GitignoreRuleSet[]>();
 const pendingGitignoreRuleSetsCache = new Map<string, Promise<GitignoreRuleSet[]>>();
@@ -43,8 +43,15 @@ const pendingGitignoreRuleSetsCache = new Map<string, Promise<GitignoreRuleSet[]
  *
  * This can be used by long-running processes (e.g. watch modes) that need to
  * pick up changes to .gitignore files without restarting the process.
+ *
+ * @remarks
+ * The cache is process-wide module state, so calling this function affects
+ * every in-process consumer of this package — including other tools that
+ * share the same Node.js process (e.g. monorepo build scripts, test
+ * runners that reuse workers, or watch-mode tools). Use with care in shared
+ * processes.
  */
-export function clearGitignoreRuleSetsCache(): void {
+export function clearGitignoreCache(): void {
 	gitignoreRuleSetsCache.clear();
 	pendingGitignoreRuleSetsCache.clear();
 }
@@ -201,20 +208,26 @@ function shouldIncludeFile(
 }
 
 /**
- * Filters an array of absolute file paths using gitignore rules.
+ * Filters an array of file paths using gitignore rules.
  * Reads .gitignore files from the filesystem hierarchy and applies them correctly
  * relative to each .gitignore file's directory.
+ *
+ * @remarks
+ * Relative paths in `files` are resolved against `cwd` before gitignore
+ * rules are applied. The returned array preserves the original input
+ * strings (not the resolved absolute paths) for entries that pass the filter.
  */
 export async function filterByGitignore(files: string[], cwd: string): Promise<string[]> {
 	const normalizedCwd = path.resolve(cwd);
 	const included = await Promise.all(
 		files.map(async (file) => {
-			if (!isPathWithinDirectory(file, normalizedCwd)) {
+			const resolvedFile = path.resolve(normalizedCwd, file);
+			if (!isPathWithinDirectory(resolvedFile, normalizedCwd)) {
 				return true;
 			}
 
-			const ruleSets = await readGitignoreRuleSets(path.dirname(file));
-			return shouldIncludeFile(file, normalizedCwd, ruleSets);
+			const ruleSets = await readGitignoreRuleSets(path.dirname(resolvedFile));
+			return shouldIncludeFile(resolvedFile, normalizedCwd, ruleSets);
 		}),
 	);
 
@@ -222,19 +235,25 @@ export async function filterByGitignore(files: string[], cwd: string): Promise<s
 }
 
 /**
- * Filters an array of absolute file paths using gitignore rules synchronously.
+ * Filters an array of file paths using gitignore rules synchronously.
  * Reads .gitignore files from the filesystem hierarchy and applies them correctly
  * relative to each .gitignore file's directory.
+ *
+ * @remarks
+ * Relative paths in `files` are resolved against `cwd` before gitignore
+ * rules are applied. The returned array preserves the original input
+ * strings (not the resolved absolute paths) for entries that pass the filter.
  */
 export function filterByGitignoreSync(files: string[], cwd: string): string[] {
 	const normalizedCwd = path.resolve(cwd);
 	return files.filter((file) => {
-		if (!isPathWithinDirectory(file, normalizedCwd)) {
+		const resolvedFile = path.resolve(normalizedCwd, file);
+		if (!isPathWithinDirectory(resolvedFile, normalizedCwd)) {
 			return true;
 		}
 
-		const ruleSets = readGitignoreRuleSetsSync(path.dirname(file));
-		return shouldIncludeFile(file, normalizedCwd, ruleSets);
+		const ruleSets = readGitignoreRuleSetsSync(path.dirname(resolvedFile));
+		return shouldIncludeFile(resolvedFile, normalizedCwd, ruleSets);
 	});
 }
 

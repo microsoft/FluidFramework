@@ -9,7 +9,7 @@ import { mkdir, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { afterEach, beforeEach } from "mocha";
 import {
-	clearGitignoreRuleSetsCache,
+	clearGitignoreCache,
 	globFn,
 	globWithGitignore,
 	toPosixPath,
@@ -248,7 +248,7 @@ describe("globWithGitignore (LeafTask file enumeration)", () => {
 	const nestedGitKeptFile = path.join(nestedGitIgnoredDir, "kept.ts");
 
 	beforeEach(async () => {
-		clearGitignoreRuleSetsCache();
+		clearGitignoreCache();
 
 		// Create gitignored directory and file for testing
 		await mkdir(gitIgnoredDir, { recursive: true });
@@ -274,7 +274,7 @@ describe("globWithGitignore (LeafTask file enumeration)", () => {
 		await rm(gitIgnoredDir, { recursive: true, force: true });
 		await rm(ignoredPatternFile, { force: true });
 		await rm(nestedGitIgnoredDir, { recursive: true, force: true });
-		clearGitignoreRuleSetsCache();
+		clearGitignoreCache();
 	});
 
 	it("includes gitignored files when gitignore option is false", async () => {
@@ -430,6 +430,35 @@ describe("globWithGitignore (LeafTask file enumeration)", () => {
 
 		assert(!relativePaths.includes("nested-gitignored/ignoredByNested.ts"));
 		assert(relativePaths.includes("nested-gitignored/kept.ts"));
+	});
+
+	it("re-includes files via nested negation patterns (unignored branch)", async () => {
+		// A nested directory whose .gitignore negates a pattern from a
+		// higher-level .gitignore (the testData root ignores *.ignored).
+		// Verifies the `unignored` re-inclusion branch in shouldIncludeFile.
+		const negationDir = path.join(globTestDataPath, "negation-test");
+		const negationGitignore = path.join(negationDir, ".gitignore");
+		const keepFile = path.join(negationDir, "important.ignored");
+		const dropFile = path.join(negationDir, "other.ignored");
+
+		try {
+			await mkdir(negationDir, { recursive: true });
+			await writeFile(negationGitignore, "!important.ignored\n");
+			await writeFile(keepFile, "kept by negation\n");
+			await writeFile(dropFile, "ignored by parent rule\n");
+
+			clearGitignoreCache();
+
+			const results = await globWithGitignore(["negation-test/*.ignored"], {
+				cwd: globTestDataPath,
+				gitignore: true,
+			});
+			const relativePaths = toRelativePaths(results);
+			assert.deepEqual(relativePaths, ["negation-test/important.ignored"]);
+		} finally {
+			await rm(negationDir, { recursive: true, force: true });
+			clearGitignoreCache();
+		}
 	});
 
 	it("includes descendant .gitignore matches when gitignore is false", async () => {

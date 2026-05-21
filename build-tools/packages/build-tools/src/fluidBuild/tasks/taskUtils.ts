@@ -104,8 +104,8 @@ export function getApiExtractorConfigFilePath(commandLine: string): string {
  * consumption from CommonJS, build-tools keeps a local copy so the gitignore logic
  * behaves the same in both packages.
  */
-export function toPosixPath(s: string): string {
-	return s.replace(/\\/g, "/");
+export function toPosixPath(filePath: string): string {
+	return filePath.replace(/\\/g, "/");
 }
 
 /**
@@ -290,12 +290,13 @@ async function filterByGitignore(files: string[], cwd: string): Promise<string[]
 	const normalizedCwd = path.resolve(cwd);
 	const included = await Promise.all(
 		files.map(async (file) => {
-			if (!isPathWithinDirectory(file, normalizedCwd)) {
+			const resolvedFile = path.resolve(normalizedCwd, file);
+			if (!isPathWithinDirectory(resolvedFile, normalizedCwd)) {
 				return true;
 			}
 
-			const ruleSets = await readGitignoreRuleSets(path.dirname(file));
-			return shouldIncludeFile(file, normalizedCwd, ruleSets);
+			const ruleSets = await readGitignoreRuleSets(path.dirname(resolvedFile));
+			return shouldIncludeFile(resolvedFile, normalizedCwd, ruleSets);
 		}),
 	);
 
@@ -318,7 +319,7 @@ type GitignoreRuleSet = {
  * Note: This cache is scoped to the module lifecycle. If .gitignore files
  * are modified while a process is running, the cached patterns may become
  * stale. Long-running processes that need to reflect .gitignore changes
- * should call {@link clearGitignoreRuleSetsCache} when appropriate.
+ * should call {@link clearGitignoreCache} when appropriate.
  */
 const gitignoreRuleSetsCache = new Map<string, GitignoreRuleSet[]>();
 const pendingGitignoreRuleSetsCache = new Map<string, Promise<GitignoreRuleSet[]>>();
@@ -328,8 +329,13 @@ const pendingGitignoreRuleSetsCache = new Map<string, Promise<GitignoreRuleSet[]
  *
  * This can be used by long-running processes (e.g. watch modes) that need to
  * pick up changes to .gitignore files without restarting the process.
+ *
+ * @remarks
+ * The cache is process-wide module state, so calling this function affects
+ * every in-process consumer — including other tools sharing the same Node
+ * process (e.g. monorepo build scripts, watch-mode tools).
  */
-export function clearGitignoreRuleSetsCache(): void {
+export function clearGitignoreCache(): void {
 	gitignoreRuleSetsCache.clear();
 	pendingGitignoreRuleSetsCache.clear();
 }

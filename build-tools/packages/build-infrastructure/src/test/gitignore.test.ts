@@ -12,7 +12,7 @@ import { afterEach, beforeEach, describe, it } from "mocha";
 import { globSync } from "tinyglobby";
 
 import {
-	clearGitignoreRuleSetsCache,
+	clearGitignoreCache,
 	filterByGitignoreSync,
 	globWithGitignore,
 } from "../gitignore.js";
@@ -39,11 +39,11 @@ describe("gitignore utilities", () => {
 			"export const nestedKept = true;\n",
 		);
 
-		clearGitignoreRuleSetsCache();
+		clearGitignoreCache();
 	});
 
 	afterEach(async () => {
-		clearGitignoreRuleSetsCache();
+		clearGitignoreCache();
 		await rm(tempDir, { recursive: true, force: true });
 	});
 
@@ -84,5 +84,46 @@ describe("gitignore utilities", () => {
 			lastRootIndex < firstNestedIndex,
 			`Expected root files to come before nested files, but got ${JSON.stringify(relativePaths)}`,
 		);
+	});
+
+	it("re-includes files via nested negation patterns (unignored branch)", async () => {
+		// Root .gitignore ignores all .log files; nested .gitignore un-ignores
+		// `important.log` only. Verifies the `unignored` re-inclusion path in
+		// shouldIncludeFile.
+		await writeFile(path.join(tempDir, ".gitignore"), "*.log\n");
+
+		const nestedDir = path.join(tempDir, "negation");
+		await mkdir(nestedDir, { recursive: true });
+		await writeFile(path.join(nestedDir, ".gitignore"), "!important.log\n");
+		await writeFile(path.join(nestedDir, "important.log"), "kept\n");
+		await writeFile(path.join(nestedDir, "other.log"), "ignored\n");
+
+		clearGitignoreCache();
+
+		const allFiles = globSync(["negation/*.log"], {
+			cwd: tempDir,
+			absolute: true,
+			onlyFiles: true,
+		});
+		const filtered = filterByGitignoreSync(allFiles, tempDir);
+		const relativePaths = filtered.map((file) => path.relative(tempDir, file)).sort();
+
+		assert.deepEqual(relativePaths, ["negation/important.log"]);
+	});
+
+	it("resolves relative file paths against cwd before filtering", () => {
+		// Pass relative paths (relative to tempDir) and verify gitignore rules
+		// still apply correctly.
+		const filtered = filterByGitignoreSync(
+			[
+				"root-ignored.ts",
+				"root-kept.ts",
+				"a-nested/nested-ignored.ts",
+				"a-nested/nested-kept.ts",
+			],
+			tempDir,
+		);
+
+		assert.deepEqual(filtered.sort(), ["a-nested/nested-kept.ts", "root-kept.ts"].sort());
 	});
 });

@@ -41,7 +41,7 @@ export {
 } from "./git.js";
 export type { GlobWithGitignoreOptions } from "./gitignore.js";
 export {
-	clearGitignoreRuleSetsCache,
+	clearGitignoreCache,
 	filterByGitignore,
 	filterByGitignoreSync,
 	globWithGitignore,
