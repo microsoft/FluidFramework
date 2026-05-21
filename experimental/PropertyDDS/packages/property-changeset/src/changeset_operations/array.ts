@@ -1561,14 +1561,26 @@ export namespace ChangeSetArrayFunctions {
 		let currentIndexOffset = 0;
 		let lastIteratorARemove;
 		const segment: OperationRangeRemove | OperationRangeInsert = {};
+		// Two-stage skip state for paired REMOVE+INSERT handling. When splitOverlapping's
+		// special case emits a paired INSERT early (because its position fell behind the
+		// advancing REMOVE), we record that INSERT's operation reference here. On the next
+		// advancement, we detect the iterator re-yielding that same INSERT (it was only
+		// peeked, not consumed) and call next() a second time to skip past it. This prevents
+		// the INSERT from being emitted twice in the output.
 		let skipIteratorBOperation;
 
+		// Skip-aware iterator advancement, mirroring advanceRebaseIteratorB in
+		// _rebaseArrayChangeSetForProperty (~20 lines below in this file).
+		// Stage 1: If the just-emitted segment matches the paired removeInsertOperation
+		//          (by reference equality), record it for skipping — do NOT advance yet.
+		// Stage 2: On the next call, advance normally. If the iterator yields the recorded
+		//          INSERT, advance again to skip past it. Then clear the skip state.
 		const advanceIteratorB = () => {
 			if (
-				(opB as any).removeInsertOperation &&
+				(opB as NoneNOPOperation).removeInsertOperation &&
 				segment.op !== undefined &&
 				skipIteratorBOperation === undefined &&
-				segment.op.operation === (opB as any).removeInsertOperation
+				segment.op.operation === (opB as NoneNOPOperation).removeInsertOperation
 			) {
 				skipIteratorBOperation = segment.op.operation;
 			} else {
@@ -1761,15 +1773,30 @@ export namespace ChangeSetArrayFunctions {
 
 		let currentIndexOffset = 0;
 		const segment: OperationRangeRemove | OperationRangeInsert = {};
+		// Two-stage skip state for paired REMOVE+INSERT handling. When splitOverlapping's
+		// special case emits a paired INSERT early (because its position fell behind the
+		// advancing REMOVE), we record that INSERT's operation reference here. On the next
+		// advancement, we detect the iterator re-yielding that same INSERT (it was only
+		// peeked, not consumed) and call next() a second time to skip past it. This prevents
+		// the INSERT from being emitted twice in the rebased output.
 		let skipIteratorBOperation;
+		// Reference to iteratorB's mutable operation descriptor — a shared object that is
+		// updated in-place each time iteratorB.next() is called.
 		const opB = iteratorB.opDescription;
 
+		// Skip-aware iterator advancement, mirroring advanceIteratorB in
+		// _performApplyAfterOnPropertyArray. The two closures capture different local scopes
+		// so they are intentionally kept separate rather than extracted into a shared helper.
+		// Stage 1: If the just-emitted segment matches the paired removeInsertOperation
+		//          (by reference equality), record it for skipping — do NOT advance yet.
+		// Stage 2: On the next call, advance normally. If the iterator yields the recorded
+		//          INSERT, advance again to skip past it. Then clear the skip state.
 		const advanceRebaseIteratorB = () => {
 			if (
-				(opB as any).removeInsertOperation &&
+				(opB as NoneNOPOperation).removeInsertOperation &&
 				segment.op !== undefined &&
 				skipIteratorBOperation === undefined &&
-				segment.op.operation === (opB as any).removeInsertOperation
+				segment.op.operation === (opB as NoneNOPOperation).removeInsertOperation
 			) {
 				skipIteratorBOperation = segment.op.operation;
 			} else {
