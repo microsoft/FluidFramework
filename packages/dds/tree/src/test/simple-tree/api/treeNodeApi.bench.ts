@@ -33,9 +33,6 @@ describe("Tree node API benchmarks", () => {
 		class NumberArray extends factory.array("NumberArray", factory.number) {}
 		class StringMap extends factory.map("StringMap", factory.string) {}
 
-		const createUnhydratedObject = (): ObjectRoot =>
-			new ObjectRoot({ a: 0, b: 0, c: "", inner: new Inner({ x: 0, y: 0 }) });
-
 		// No-op listeners that are shared across iterations so that we don't measure listener-creation cost.
 		const noopNodeChanged = (): void => {};
 		const noopTreeChanged = (): void => {};
