@@ -522,8 +522,9 @@ export abstract class LeafWithDoneFileTask extends LeafTask {
 			}
 		} catch (error) {
 			this._isIncremental = false;
+			const stack = error instanceof Error && error.stack ? `\n${error.stack}` : "";
 			console.warn(
-				`${this.node.pkg.nameColored}: warning: unable to write ${doneFileFullPath}\n error: ${error}`,
+				`${this.node.pkg.nameColored}: warning: unable to generate or write done file ${doneFileFullPath}\n error: ${error}${stack}`,
 			);
 		}
 	}
@@ -548,8 +549,16 @@ export abstract class LeafWithDoneFileTask extends LeafTask {
 					"unable to generate done file expected content (getDoneFileContent returned undefined)",
 				);
 			}
-		} catch {
-			this.traceTrigger(`unable to read compare file: ${doneFileFullPath}`);
+		} catch (error) {
+			// ENOENT on the done file is expected on the first run; don't spam the user.
+			const code = (error as NodeJS.ErrnoException | undefined)?.code;
+			if (code === "ENOENT") {
+				this.traceTrigger(`done file not found: ${doneFileFullPath}`);
+			} else {
+				this.traceTrigger(
+					`unable to read or generate compare file ${doneFileFullPath}: ${error}`,
+				);
+			}
 		}
 		return false;
 	}
@@ -706,7 +715,7 @@ export abstract class LeafWithFileStatDoneFileTask extends LeafWithDoneFileTask 
 		} catch (e: any) {
 			this.traceError(`error comparing file times: ${e.message}`);
 			this.traceTrigger("failed to get file stats");
-			return undefined;
+			throw e;
 		}
 	}
 
@@ -737,7 +746,7 @@ export abstract class LeafWithFileStatDoneFileTask extends LeafWithDoneFileTask 
 		} catch (e: any) {
 			this.traceError(`error calculating file hashes: ${e.message}`);
 			this.traceTrigger("failed to get file hash");
-			return undefined;
+			throw e;
 		}
 	}
 }
