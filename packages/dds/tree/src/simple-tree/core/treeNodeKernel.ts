@@ -234,6 +234,7 @@ export class TreeNodeKernel {
 	}
 
 	public get events(): Listenable<KernelEvents> {
+		assert(!this.disposed, "Cannot register events on a disposed node");
 		// Allocate the buffer on first access. See {@link TreeNodeKernel.#eventBuffer} for rationale.
 		if (this.#eventBuffer === undefined) {
 			const eventSource = isHydrated(this.#hydrationState)
@@ -548,7 +549,7 @@ class KernelEventBuffer implements Listenable<KernelEvents> {
 	}
 
 	public on(eventName: keyof KernelEvents, listener: KernelEvents[typeof eventName]): Off {
-		assert(!this.#disposed, "Cannot register events on a disposed node");
+		this.#assertNotDisposed();
 
 		// Lazily bind event listeners to the source.
 		// If we do not have any existing listeners for this event, then we need to bind to the source.
