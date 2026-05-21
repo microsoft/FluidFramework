@@ -187,7 +187,7 @@ describe("withBufferedTreeEvents", () => {
 		assert.equal(eventCounter, 1); // Only a single event should have been raised.
 	});
 
-	it("subscribe then unsubscribe inside a scope yields emits no events", () => {
+	it("subscribe then unsubscribe inside a scope emits no events", () => {
 		// A buffer that's been allocated lazily, then drained of listeners before the
 		// scope closes, must pop cleanly without emitting anything.
 		const obj = hydrate(MyObject, new MyObject({ foo: "init", bar: true }));
