@@ -695,11 +695,14 @@ describe("Container create in tree-only mode", () => {
 			undefined,
 			undefined,
 			undefined,
-			({ schema, compatibilityMode }) => {
+			({ schema, minVersionForCollaboration }) => {
 				if (!isTreeContainerSchema(schema)) {
 					throw new UsageError(invalidSchemaErrorMessage);
 				}
-				return createTreeContainerRuntimeFactory({ schema, compatibilityMode });
+				return createTreeContainerRuntimeFactory({
+					schema,
+					minVersionForCollaboration,
+				});
 			},
 		);
 	}

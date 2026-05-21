@@ -209,13 +209,46 @@ export function createTreeContainerRuntimeFactory(props: {
 	readonly schema: TreeContainerSchema;
 
 	/**
-	 * Minimum Fluid Framework version required for collaboration. Accepts a
-	 * {@link @fluidframework/runtime-definitions#MinimumVersionForCollab} SemVer string;
-	 * the legacy {@link CompatibilityMode} values `"1"` and `"2"` are **deprecated**
-	 * equivalents of `"1.0.0"` and `"2.0.0"`.
+	 * Minimum Fluid Framework version required for collaboration as a
+	 * {@link @fluidframework/runtime-definitions#MinimumVersionForCollab} SemVer string.
+	 */
+	readonly minVersionForCollaboration: MinimumVersionForCollab;
+	/**
+	 * Optional registry of data stores to pass to the DataObject factory.
+	 * If not provided, one will be created based on the schema.
+	 */
+	readonly rootDataStoreRegistry?: IFluidDataStoreRegistry;
+	/**
+	 * Optional overrides for the container runtime options.
+	 * If not provided, only the default options for the given minVersionForCollaboration will be used.
+	 */
+	readonly runtimeOptionOverrides?: Partial<IContainerRuntimeOptions>;
+}): IRuntimeFactory;
+
+/**
+ * Creates an {@link @fluidframework/aqueduct#IRuntimeFactory} which constructs containers
+ * with an entry point containing single tree-based root data object.
+ *
+ * @remarks
+ * The entry point is opaque to caller.
+ * The root data object's registry and shared objects are configured based on the provided
+ * SharedTree and optionally data store registry.
+ *
+ * @deprecated Pass `minVersionForCollaboration` directly instead of using `compatibilityMode`.
+ *
+ * @legacy @beta
+ */
+export function createTreeContainerRuntimeFactory(props: {
+	/**
+	 * The schema for the container.
+	 */
+	readonly schema: TreeContainerSchema;
+
+	/**
+	 * Legacy compatibility mode for the container.
 	 */
 	// eslint-disable-next-line import-x/no-deprecated
-	readonly compatibilityMode: MinimumVersionForCollab | CompatibilityMode;
+	readonly compatibilityMode: CompatibilityMode;
 	/**
 	 * Optional registry of data stores to pass to the DataObject factory.
 	 * If not provided, one will be created based on the schema.
@@ -227,31 +260,45 @@ export function createTreeContainerRuntimeFactory(props: {
 	 */
 	readonly runtimeOptionOverrides?: Partial<IContainerRuntimeOptions>;
 	/**
-	 * Optional override for minimum version for collaboration. Only consulted when
-	 * `compatibilityMode` is a legacy {@link CompatibilityMode} value (`"1"` or `"2"`);
-	 * if `compatibilityMode` is a {@link @fluidframework/runtime-definitions#MinimumVersionForCollab}
-	 * SemVer string, that value is used directly and this override is ignored.
-	 *
-	 * @deprecated Pass a {@link @fluidframework/runtime-definitions#MinimumVersionForCollab}
-	 * SemVer string directly via `compatibilityMode` instead.
+	 * Optional override for minimum version for collaboration.
+	 * @remarks
+	 * If not provided, the default for the given compatibilityMode will be used.
+	 * Rather than defining this, omit `compatibilityMode` and pass `minVersionForCollaboration` directly.
 	 */
+	readonly minVersionForCollabOverride?: MinimumVersionForCollab;
+}): IRuntimeFactory;
+
+// Implementation
+export function createTreeContainerRuntimeFactory(props: {
+	readonly schema: TreeContainerSchema;
+	// eslint-disable-next-line import-x/no-deprecated
+	readonly compatibilityMode?: CompatibilityMode;
+	readonly minVersionForCollaboration?: MinimumVersionForCollab;
+	readonly rootDataStoreRegistry?: IFluidDataStoreRegistry;
+	readonly runtimeOptionOverrides?: Partial<IContainerRuntimeOptions>;
 	readonly minVersionForCollabOverride?: MinimumVersionForCollab;
 }): IRuntimeFactory {
 	const {
 		compatibilityMode,
+		minVersionForCollaboration,
 		minVersionForCollabOverride,
 		rootDataStoreRegistry,
 		runtimeOptionOverrides,
 		schema,
 	} = props;
-	// When `compatibilityMode` is a SemVer string, it fully specifies `minVersionForCollab` and
-	// the deprecated override is ignored. Otherwise, the override takes precedence over the
-	// legacy `CompatibilityMode` mapping.
-	const minVersionForCollab: MinimumVersionForCollab =
-		compatibilityMode !== "1" && compatibilityMode !== "2"
-			? compatibilityMode
-			: (minVersionForCollabOverride ??
-				resolveCompatibilityModeToMinVersionForCollab(compatibilityMode));
+
+	let minVersionForCollab: MinimumVersionForCollab;
+	if (minVersionForCollaboration !== undefined) {
+		minVersionForCollab = minVersionForCollaboration;
+	} else if (compatibilityMode === undefined) {
+		throw new Error(
+			"Either minVersionForCollaboration or compatibilityMode (deprecated) must be provided.",
+		);
+	} else {
+		minVersionForCollab =
+			minVersionForCollabOverride ??
+			resolveCompatibilityModeToMinVersionForCollab(compatibilityMode);
+	}
 
 	const [registryEntries, sharedObjects] = parseDataObjectsFromSharedObjects(schema);
 	const registry = rootDataStoreRegistry ?? new FluidDataStoreRegistry(registryEntries);

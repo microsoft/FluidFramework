@@ -9,6 +9,7 @@ import { AzureClient } from "@fluidframework/azure-client";
 import type { AzureClientPropsInternal } from "@fluidframework/azure-client/internal";
 import { createDevtoolsLogger, initializeDevtools } from "@fluidframework/devtools/beta";
 import {
+	// eslint-disable-next-line import-x/no-deprecated -- not actually deprecated, eslint doesn't properly distinguish the overloads
 	createTreeContainerRuntimeFactory,
 	isTreeContainerSchema,
 	// TODO: Fix this once the tree-only mode API has been stabilized.
@@ -40,11 +41,12 @@ async function start(): Promise<void> {
 	const clientProps: AzureClientPropsInternal = {
 		connection: connectionConfig,
 		logger: devtoolsLogger,
-		createContainerRuntimeFactory: ({ schema, compatibilityMode }) => {
+		createContainerRuntimeFactory: ({ schema, minVersionForCollaboration }) => {
 			if (!isTreeContainerSchema(schema)) {
 				throw new Error("Invalid container schema");
 			}
-			return createTreeContainerRuntimeFactory({ schema, compatibilityMode });
+			// eslint-disable-next-line import-x/no-deprecated -- not actually deprecated, eslint doesn't properly distinguish the overloads
+			return createTreeContainerRuntimeFactory({ schema, minVersionForCollaboration });
 		},
 	};
 	const client = new AzureClient(clientProps);

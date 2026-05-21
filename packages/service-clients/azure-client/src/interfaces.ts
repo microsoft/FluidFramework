@@ -46,10 +46,10 @@ export interface AzureClientPropsInternal extends AzureClientProps {
 	 */
 	readonly createContainerRuntimeFactory?: ({
 		schema,
-		compatibilityMode,
+		minVersionForCollaboration,
 	}: {
 		schema: ContainerSchema;
-		compatibilityMode: MinimumVersionForCollab;
+		minVersionForCollaboration: MinimumVersionForCollab;
 	}) => IRuntimeFactory;
 }
 

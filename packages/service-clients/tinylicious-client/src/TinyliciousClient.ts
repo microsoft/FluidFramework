@@ -217,11 +217,11 @@ export class TinyliciousClient {
 
 	private getLoaderProps(
 		schema: ContainerSchema,
-		minVersionForCollab: MinimumVersionForCollab,
+		minVersionForCollaboration: MinimumVersionForCollab,
 	): ILoaderProps {
 		const containerRuntimeFactory = createDOProviderContainerRuntimeFactory({
 			schema,
-			compatibilityMode: minVersionForCollab,
+			minVersionForCollaboration,
 		});
 		const load = async (): Promise<IFluidModuleWithDetails> => {
 			return {

@@ -33,8 +33,6 @@ import type { SharedObjectKind } from "@fluidframework/shared-object-base/intern
 
 import { defaultRuntimeOptionsForMinVersion } from "./compatibilityConfiguration.js";
 import type {
-	// eslint-disable-next-line import-x/no-deprecated
-	CompatibilityMode,
 	ContainerSchema,
 	IRootDataObject,
 	IStaticEntryPoint,
@@ -49,7 +47,6 @@ import {
 	isSharedObjectKind,
 	makeFluidObject,
 	parseDataObjectsFromSharedObjects,
-	resolveCompatibilityModeToMinVersionForCollab,
 } from "./utils.js";
 
 /**
@@ -197,13 +194,10 @@ export function createDOProviderContainerRuntimeFactory(props: {
 	 */
 	schema: ContainerSchema;
 	/**
-	 * Minimum Fluid Framework version required for collaboration. Accepts a
-	 * {@link @fluidframework/runtime-definitions#MinimumVersionForCollab} SemVer string;
-	 * the legacy {@link CompatibilityMode} values `"1"` and `"2"` are **deprecated**
-	 * equivalents of `"1.0.0"` and `"2.0.0"`.
+	 * Minimum Fluid Framework version required for collaboration as a
+	 * {@link @fluidframework/runtime-definitions#MinimumVersionForCollab} SemVer string.
 	 */
-	// eslint-disable-next-line import-x/no-deprecated
-	compatibilityMode: MinimumVersionForCollab | CompatibilityMode;
+	minVersionForCollaboration: MinimumVersionForCollab;
 	/**
 	 * Optional registry of data stores to pass to the DataObject factory.
 	 * If not provided, one will be created based on the schema.
@@ -211,14 +205,12 @@ export function createDOProviderContainerRuntimeFactory(props: {
 	rootDataStoreRegistry?: IFluidDataStoreRegistry;
 	/**
 	 * Optional overrides for the container runtime options.
-	 * If not provided, only the default options for the given compatibilityMode will be used.
+	 * If not provided, only the default options for the given minVersionForCollaboration will be used.
 	 */
 	runtimeOptionOverrides?: Partial<IContainerRuntimeOptions>;
 }): IRuntimeFactory {
 	const { rootDataStoreRegistry, runtimeOptionOverrides, schema } = props;
-	const minVersionForCollab = resolveCompatibilityModeToMinVersionForCollab(
-		props.compatibilityMode,
-	);
+	const minVersionForCollab = props.minVersionForCollaboration;
 	const [registryEntries, sharedObjects] = parseDataObjectsFromSharedObjects(schema);
 	const registry = rootDataStoreRegistry ?? new FluidDataStoreRegistry(registryEntries);
 

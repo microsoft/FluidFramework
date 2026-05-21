@@ -100,10 +100,10 @@ export class AzureClient {
 
 	private readonly createContainerRuntimeFactory?: ({
 		schema,
-		compatibilityMode,
+		minVersionForCollaboration,
 	}: {
 		schema: ContainerSchema;
-		compatibilityMode: MinimumVersionForCollab;
+		minVersionForCollaboration: MinimumVersionForCollab;
 	}) => IRuntimeFactory;
 
 	/**
@@ -380,13 +380,16 @@ export class AzureClient {
 		// eslint-disable-next-line import-x/no-deprecated
 		compatibilityMode: MinimumVersionForCollab | CompatibilityMode,
 	): ILoaderProps {
-		const factoryArguments = {
-			schema,
-			compatibilityMode: resolveCompatibilityModeToMinVersionForCollab(compatibilityMode),
-		};
+		const minVersionForCollaboration = resolveCompatibilityModeToMinVersionForCollab(compatibilityMode);
 		const runtimeFactory = this.createContainerRuntimeFactory
-			? this.createContainerRuntimeFactory(factoryArguments)
-			: createDOProviderContainerRuntimeFactory(factoryArguments);
+			? this.createContainerRuntimeFactory({
+					schema,
+					minVersionForCollaboration,
+				})
+			: createDOProviderContainerRuntimeFactory({
+					schema,
+					minVersionForCollaboration,
+				});
 
 		const load = async (): Promise<IFluidModuleWithDetails> => {
 			return {
