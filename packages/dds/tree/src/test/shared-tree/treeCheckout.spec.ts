@@ -837,6 +837,249 @@ describe("sharedTreeView", () => {
 
 			assert.deepEqual(view.root, ["A", "B"]);
 		});
+
+		describe("deferEvents", () => {
+			itView("buffers nodeChanged events until the transaction commits", ({ view }) => {
+				const log: string[] = [];
+				Tree.on(view.root, "nodeChanged", () => log.push("nodeChanged"));
+
+				view.runTransaction(
+					() => {
+						view.root.insertAtEnd("A");
+						assert.deepEqual(log, [], "nodeChanged should not fire during the transaction");
+						view.root.insertAtEnd("B");
+						assert.deepEqual(log, [], "nodeChanged should not fire during the transaction");
+					},
+					{ deferEvents: true },
+				);
+
+				assert.deepEqual(log, ["nodeChanged"], "nodeChanged should fire once after commit");
+			});
+
+			itView(
+				"coalesces multiple nodeChanged events into one when deferEvents is true",
+				({ view }) => {
+					let nodeChangedCount = 0;
+					Tree.on(view.root, "nodeChanged", () => nodeChangedCount++);
+
+					// Without buffering, two inserts → two nodeChanged events.
+					// With buffering, they coalesce into one.
+					view.runTransaction(
+						() => {
+							view.root.insertAtEnd("A");
+							view.root.insertAtEnd("B");
+						},
+						{ deferEvents: true },
+					);
+
+					assert.equal(nodeChangedCount, 1);
+				},
+			);
+
+			itView(
+				"unbuffered rollback fires two nodeChanged events (edit then revert)",
+				({ view }) => {
+					// Baseline: without `deferEvents`, the insert and the abort each fire their
+					// own `nodeChanged` event — two events for a net-zero change.
+					const log: string[] = [];
+					Tree.on(view.root, "nodeChanged", () => log.push("nodeChanged"));
+
+					view.runTransaction(
+						() => {
+							view.root.insertAtEnd("A");
+							return { rollback: true };
+						},
+						{ deferEvents: false },
+					);
+
+					assert.deepEqual(view.root, []);
+					assert.deepEqual(log, ["nodeChanged", "nodeChanged"]);
+				},
+			);
+
+			itView("emits no nodeChanged events for a rolled-back transaction", ({ view }) => {
+				// Without buffering, a rolled-back transaction emits TWO events: one when the edit
+				// is applied and a second when the abort reverses it. With deferEvents both are
+				// captured by the buffer; because the tree ends in its starting state the
+				// runTransaction wrapper discards the buffer entirely instead of flushing it.
+				const log: string[] = [];
+				Tree.on(view.root, "nodeChanged", () => log.push("nodeChanged"));
+
+				view.runTransaction(
+					() => {
+						view.root.insertAtEnd("A");
+						return { rollback: true };
+					},
+					{ deferEvents: true },
+				);
+
+				assert.deepEqual(view.root, []);
+				assert.deepEqual(log, []);
+			});
+
+			itView(
+				"fires nodeChanged normally (unbuffered) when deferEvents is false",
+				({ view }) => {
+					const log: string[] = [];
+					Tree.on(view.root, "nodeChanged", () => log.push("nodeChanged"));
+
+					view.runTransaction(() => {
+						view.root.insertAtEnd("A");
+						view.root.insertAtEnd("B");
+					});
+
+					assert.deepEqual(log, ["nodeChanged", "nodeChanged"]);
+				},
+			);
+
+			itView(
+				"nested transactions: outer deferEvents coalesces events from inner transaction",
+				({ view }) => {
+					let nodeChangedCount = 0;
+					Tree.on(view.root, "nodeChanged", () => nodeChangedCount++);
+
+					view.runTransaction(
+						() => {
+							view.runTransaction(() => {
+								view.root.insertAtEnd("A");
+								view.root.insertAtEnd("B");
+							});
+							view.root.insertAtEnd("C");
+						},
+						{ deferEvents: true },
+					);
+
+					assert.equal(nodeChangedCount, 1);
+					assert.deepEqual(view.root, ["A", "B", "C"]);
+				},
+			);
+
+			// treeChanged tests — mirrors the nodeChanged tests above but for the subtree event.
+
+			itView("buffers treeChanged events until the transaction commits", ({ view }) => {
+				const log: string[] = [];
+				Tree.on(view.root, "treeChanged", () => log.push("treeChanged"));
+
+				view.runTransaction(
+					() => {
+						view.root.insertAtEnd("A");
+						assert.deepEqual(log, [], "treeChanged should not fire during the transaction");
+						view.root.insertAtEnd("B");
+						assert.deepEqual(log, [], "treeChanged should not fire during the transaction");
+					},
+					{ deferEvents: true },
+				);
+
+				assert.deepEqual(log, ["treeChanged"], "treeChanged should fire once after commit");
+			});
+
+			itView(
+				"coalesces multiple treeChanged events into one when deferEvents is true",
+				({ view }) => {
+					let treeChangedCount = 0;
+					Tree.on(view.root, "treeChanged", () => treeChangedCount++);
+
+					view.runTransaction(
+						() => {
+							view.root.insertAtEnd("A");
+							view.root.insertAtEnd("B");
+						},
+						{ deferEvents: true },
+					);
+
+					assert.equal(treeChangedCount, 1);
+				},
+			);
+
+			itView("emits no treeChanged events for a rolled-back transaction", ({ view }) => {
+				const log: string[] = [];
+				Tree.on(view.root, "treeChanged", () => log.push("treeChanged"));
+
+				view.runTransaction(
+					() => {
+						view.root.insertAtEnd("A");
+						return { rollback: true };
+					},
+					{ deferEvents: true },
+				);
+
+				assert.deepEqual(view.root, []);
+				assert.deepEqual(log, []);
+			});
+
+			// Nested-schema tests — verify treeChanged behavior that diverges from nodeChanged.
+			// For an object with a child array, modifying the child array fires:
+			//   - nodeChanged on the child array (direct change)
+			//   - treeChanged on the parent object (subtree change)
+			// but does NOT fire nodeChanged on the parent object (the "items" field was not reassigned).
+
+			const sfBE = new SchemaFactory("deferEvents treeChanged tests");
+			const BEItemsArray = sfBE.array("Items", sfBE.string);
+			const BERoot = sfBE.object("Root", { items: BEItemsArray });
+
+			itView(
+				"treeChanged on an ancestor node is buffered when a descendant changes",
+				({ view }) => {
+					const log: string[] = [];
+					const root = view.root;
+					// nodeChanged on the root object does NOT fire here because the "items" field
+					// is not reassigned; only the array's contents change.
+					Tree.on(root, "nodeChanged", () => log.push("nodeChanged"));
+					Tree.on(root, "treeChanged", () => log.push("treeChanged"));
+					Tree.on(root.items, "nodeChanged", () => log.push("items.nodeChanged"));
+
+					view.runTransaction(
+						() => {
+							root.items.insertAtEnd("A");
+							root.items.insertAtEnd("B");
+							assert.deepEqual(log, [], "no events should fire during the transaction");
+						},
+						{ deferEvents: true },
+					);
+
+					assert.deepEqual([...root.items], ["A", "B"]);
+					// items.nodeChanged fires once (two inserts coalesced).
+					// treeChanged fires once on root (subtree changed).
+					// nodeChanged does NOT fire on root (the "items" field was not reassigned).
+					assert.deepEqual(log, ["treeChanged", "items.nodeChanged"]);
+				},
+				{
+					initialContent: {
+						schema: BERoot,
+						initialTree: { items: [] },
+					},
+				},
+			);
+
+			itView(
+				"nodeChanged and treeChanged are both deferred to the same flush point",
+				({ view }) => {
+					const log: string[] = [];
+					const root = view.root;
+					Tree.on(root, "treeChanged", () => log.push("treeChanged"));
+					Tree.on(root.items, "nodeChanged", () => log.push("items.nodeChanged"));
+
+					view.runTransaction(
+						() => {
+							root.items.insertAtEnd("A");
+							assert.deepEqual(log, [], "no events should fire during the transaction");
+							root.items.insertAtEnd("B");
+							assert.deepEqual(log, [], "no events should fire during the transaction");
+						},
+						{ deferEvents: true },
+					);
+
+					// Both events fire (each exactly once) after the transaction, not during it.
+					assert.deepEqual(log, ["treeChanged", "items.nodeChanged"]);
+				},
+				{
+					initialContent: {
+						schema: BERoot,
+						initialTree: { items: [] },
+					},
+				},
+			);
+		});
 	});
 
 	describe("disposal", () => {
