@@ -9,7 +9,7 @@ import { freemem } from "node:os";
 import type { Readable } from "node:stream";
 import { Worker } from "node:worker_threads";
 
-import type { WorkerExecResult, WorkerMessage } from "./worker";
+import type { WorkerExecResult, WorkerMessage } from "./worker.js";
 
 export interface WorkerExecResultWithOutput extends WorkerExecResult {
 	stdout: string;
