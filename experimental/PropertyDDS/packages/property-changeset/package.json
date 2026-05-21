@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-experimental/property-changeset",
-	"version": "2.93.0",
+	"version": "2.102.0",
 	"description": "property changeset definitions and related functionalities",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -84,7 +84,7 @@
 		"ajv": "^8.17.1",
 		"ajv-keywords": "^5.1.0",
 		"async": "^3.2.2",
-		"lodash": "^4.17.21",
+		"lodash": "^4.18.1",
 		"semver": "^7.7.1",
 		"traverse": "0.6.6"
 	},
@@ -96,7 +96,7 @@
 		"@fluidframework/build-tools": "catalog:buildTools",
 		"@types/lodash": "^4.14.118",
 		"@types/mocha": "^10.0.10",
-		"@types/node": "~20.19.30",
+		"@types/node": "catalog:types",
 		"@types/semver": "^7.7.0",
 		"@types/sinon": "^17.0.3",
 		"c8": "^10.1.3",

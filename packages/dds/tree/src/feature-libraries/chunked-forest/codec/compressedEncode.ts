@@ -26,7 +26,8 @@ import {
 	Shape as ShapeGeneric,
 	updateShapesAndIdentifiersEncoding,
 } from "./chunkEncodingGeneric.js";
-import type { IncrementalEncoder } from "./codecs.js";
+// eslint-disable-next-line @typescript-eslint/no-unused-vars -- Referenced by doc comments
+import type { FieldBatchEncodingContext, IncrementalEncoder } from "./codecs.js";
 import type { FieldBatch } from "./fieldBatch.js";
 import {
 	type EncodedAnyShape,
@@ -36,8 +37,9 @@ import {
 	type EncodedFieldBatchV1OrV2,
 	type EncodedNestedArrayShape,
 	type EncodedValueShape,
-	FieldBatchFormatVersion,
+	type FieldBatchFormatVersion,
 	SpecialField,
+	supportsIncrementalEncoding,
 } from "./format/index.js";
 
 /**
@@ -461,7 +463,7 @@ export const incrementalFieldEncoder: FieldEncoder = {
 			0xc88 /* incremental encoder must be defined to use incrementalFieldEncoder */,
 		);
 		assert(
-			context.version >= FieldBatchFormatVersion.v2,
+			supportsIncrementalEncoding(context.version),
 			0xca1 /* Unsupported FieldBatchFormatVersion for incremental encoding; must be v2 or higher */,
 		);
 
@@ -534,6 +536,10 @@ export class EncoderContext implements NodeEncodeBuilder, FieldEncodeBuilder {
 		 */
 		public readonly incrementalEncoder: IncrementalEncoder | undefined,
 		public readonly version: FieldBatchFormatVersion,
+		/**
+		 * See {@link FieldBatchEncodingContext.isSummary}.
+		 */
+		public readonly isSummary: boolean,
 	) {}
 
 	public nodeEncoderFromSchema(schemaName: TreeNodeSchemaIdentifier): NodeEncoder {

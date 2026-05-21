@@ -122,7 +122,7 @@ export class CheckpointManager {
 	 */
 	public async flush(): Promise<void> {
 		if (this.lastCheckpoint) {
-			Lumberjack.info(`Checkpointing last recieved offset: ${this.lastCheckpoint.offset}`, {
+			Lumberjack.info(`Checkpointing last received offset: ${this.lastCheckpoint.offset}`, {
 				offset: this.lastCheckpoint.offset,
 				partition: this.lastCheckpoint.partition,
 			});

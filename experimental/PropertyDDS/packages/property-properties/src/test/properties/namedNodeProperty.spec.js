@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-/* globals assert */
+/* globals assert, expect */
 
 /**
  * @fileoverview In this file, we will test the map property object described in /src/properties/namedNodeProperty.js
@@ -13,7 +13,6 @@ const { isGUID } = require("@fluid-experimental/property-common").GuidUtils;
 
 const { PropertyFactory } = require("../..");
 const { ContainerProperty } = require("../..");
-const { NamedNodeProperty } = require("../../properties/namedNodeProperty");
 
 describe("NamedNodeProperty", function () {
 	before(function () {

@@ -5,20 +5,18 @@
 
 import { strict as assert } from "node:assert";
 
-import { toPropTreeNode, UndoRedoStacks } from "@fluidframework/react/internal";
-import { TreeViewConfiguration, type TreeView } from "@fluidframework/tree";
-import { TreeAlpha } from "@fluidframework/tree/alpha";
+import { toPropTreeNode, createUndoRedo, type UndoRedo } from "@fluidframework/react/internal";
+import { TreeViewConfiguration } from "@fluidframework/tree";
+import { TreeAlpha, type TreeViewAlpha } from "@fluidframework/tree/alpha";
 import { independentView, TextAsTree } from "@fluidframework/tree/internal";
 import { render } from "@testing-library/react";
 import globalJsdom from "global-jsdom";
 import DeltaPackage from "quill-delta";
-import { createRef } from "react";
 
 import {
 	clipboardFormatMatcher,
 	FormattedTextAsTree,
 	FormattedMainView,
-	type FormattedEditorHandle,
 	parseCssFontFamily,
 	parseCssFontSize,
 	parseLineTag,
@@ -54,7 +52,7 @@ function createFormattedTreeView(initialValue = ""): {
  */
 function createFormattedTreeViewWithEvents(
 	initialValue = "",
-): TreeView<typeof FormattedTextAsTree.Tree> {
+): TreeViewAlpha<typeof FormattedTextAsTree.Tree> {
 	const treeView = independentView(formattedTreeConfig);
 	treeView.initialize(FormattedTextAsTree.Tree.fromString(initialValue));
 	return treeView;
@@ -92,7 +90,10 @@ describe("textEditor", () => {
 						const content = <ViewComponent root={toPropTreeNode(text)} />;
 						const rendered = render(content, { reactStrictMode });
 
-						assert.match(rendered.baseElement.textContent ?? "", /Collaborative Text Editor/);
+						assert.ok(
+							rendered.container.querySelector(".ql-editor"),
+							"Quill editor should be present after mount",
+						);
 					});
 
 					it("renders MainView with initial text content", () => {
@@ -202,6 +203,51 @@ describe("textEditor", () => {
 				});
 			}
 		});
+
+		describe("toolbar", () => {
+			const mockLabel = Symbol("test");
+
+			for (const reactStrictMode of [false, true]) {
+				describe(`StrictMode: ${reactStrictMode}`, () => {
+					it("undo and redo buttons are disabled when undoRedo is not provided", () => {
+						const text = TextAsTree.Tree.fromString("");
+						const rendered = render(<QuillMainView root={toPropTreeNode(text)} />, {
+							reactStrictMode,
+						});
+
+						const undoButton = rendered.container.querySelector<HTMLButtonElement>(".ql-undo");
+						const redoButton = rendered.container.querySelector<HTMLButtonElement>(".ql-redo");
+						assert.ok(undoButton?.disabled === true, "Undo button should be disabled");
+						assert.ok(redoButton?.disabled === true, "Redo button should be disabled");
+					});
+
+					it("undo and redo buttons are enabled when undoRedo is provided", () => {
+						const mockUndoRedo: UndoRedo = {
+							undo: () => {},
+							redo: () => {},
+							canUndo: () => true,
+							canRedo: () => true,
+							dispose: () => {},
+						};
+
+						const text = TextAsTree.Tree.fromString("");
+						const rendered = render(
+							<QuillMainView
+								root={toPropTreeNode(text)}
+								undoRedo={mockUndoRedo}
+								editLabel={mockLabel}
+							/>,
+							{ reactStrictMode },
+						);
+
+						const undoButton = rendered.container.querySelector<HTMLButtonElement>(".ql-undo");
+						const redoButton = rendered.container.querySelector<HTMLButtonElement>(".ql-redo");
+						assert.equal(undoButton?.disabled, false, "Undo button should be enabled");
+						assert.equal(redoButton?.disabled, false, "Redo button should be enabled");
+					});
+				});
+			}
+		});
 	});
 
 	// Formatted text view tests - Initial view rendering (matching plain text test structure)
@@ -214,9 +260,13 @@ describe("textEditor", () => {
 						const content = <FormattedMainView root={toPropTreeNode(tree)} />;
 						const rendered = render(content, { reactStrictMode });
 
-						assert.match(
-							rendered.baseElement.textContent ?? "",
-							/Collaborative Formatted Text Editor/,
+						assert.ok(
+							rendered.container.querySelector(".ql-editor"),
+							"Quill editor should be present after mount",
+						);
+						assert.ok(
+							rendered.container.querySelector(".ql-toolbar"),
+							"Snow toolbar should be present after mount",
 						);
 					});
 
@@ -691,15 +741,8 @@ describe("textEditor", () => {
 					it("insert character, undo removes it, redo restores it", () => {
 						const treeView = createFormattedTreeViewWithEvents();
 						const text = treeView.root;
-						const undoRedo = new UndoRedoStacks(treeView.events);
-						const editorRef = createRef<FormattedEditorHandle>();
-						const content = (
-							<FormattedMainView
-								ref={editorRef}
-								root={toPropTreeNode(text)}
-								undoRedo={undoRedo}
-							/>
-						);
+						const manager = createUndoRedo(treeView);
+						const content = <FormattedMainView root={toPropTreeNode(text)} />;
 						const rendered = render(content, { reactStrictMode });
 
 						// Insert a character
@@ -708,13 +751,13 @@ describe("textEditor", () => {
 						assert.match(rendered.baseElement.textContent ?? "", /A/);
 
 						// Undo - character should be removed
-						editorRef.current?.undo();
+						manager.undo();
 						rendered.rerender(content);
 						assert(rendered.baseElement.textContent !== null);
 						assert.doesNotMatch(rendered.baseElement.textContent, /A/);
 
 						// Redo - character should be restored
-						editorRef.current?.redo();
+						manager.redo();
 						rendered.rerender(content);
 						assert.match(rendered.baseElement.textContent ?? "", /A/);
 					});
@@ -722,15 +765,8 @@ describe("textEditor", () => {
 					it("insert character, make bold, undo removes bold but keeps character", () => {
 						const treeView = createFormattedTreeViewWithEvents();
 						const text = treeView.root;
-						const undoRedo = new UndoRedoStacks(treeView.events);
-						const editorRef = createRef<FormattedEditorHandle>();
-						const content = (
-							<FormattedMainView
-								ref={editorRef}
-								root={toPropTreeNode(text)}
-								undoRedo={undoRedo}
-							/>
-						);
+						const manager = createUndoRedo(treeView);
+						const content = <FormattedMainView root={toPropTreeNode(text)} />;
 						const rendered = render(content, { reactStrictMode });
 
 						// Insert a character
@@ -748,7 +784,7 @@ describe("textEditor", () => {
 						);
 
 						// Undo - bold should be removed, character should remain
-						editorRef.current?.undo();
+						manager.undo();
 						rendered.rerender(content);
 						assert.match(rendered.baseElement.textContent ?? "", /B/);
 						assert.ok(
@@ -760,15 +796,8 @@ describe("textEditor", () => {
 					it("multiple operations in transaction undo together as one unit", () => {
 						const treeView = createFormattedTreeViewWithEvents();
 						const text = treeView.root;
-						const undoRedo = new UndoRedoStacks(treeView.events);
-						const editorRef = createRef<FormattedEditorHandle>();
-						const content = (
-							<FormattedMainView
-								ref={editorRef}
-								root={toPropTreeNode(text)}
-								undoRedo={undoRedo}
-							/>
-						);
+						const manager = createUndoRedo(treeView);
+						const content = <FormattedMainView root={toPropTreeNode(text)} />;
 						const rendered = render(content, { reactStrictMode });
 
 						// Two operations in one transaction
@@ -780,14 +809,14 @@ describe("textEditor", () => {
 						assert.match(rendered.baseElement.textContent ?? "", /AB/);
 
 						// Single undo should remove both characters
-						editorRef.current?.undo();
+						manager.undo();
 						rendered.rerender(content);
 						assert(rendered.baseElement.textContent !== null);
 						assert.doesNotMatch(rendered.baseElement.textContent, /A/);
 						assert.doesNotMatch(rendered.baseElement.textContent, /B/);
 
 						// Single redo should restore both characters
-						editorRef.current?.redo();
+						manager.redo();
 						rendered.rerender(content);
 						assert.match(rendered.baseElement.textContent ?? "", /AB/);
 					});
@@ -1056,6 +1085,51 @@ describe("textEditor", () => {
 				assert(lineOp !== undefined);
 				assert.equal("indent" in (lineOp.attributes ?? {}), false);
 			});
+		});
+
+		describe("toolbar", () => {
+			const mockLabel = Symbol("test");
+
+			for (const reactStrictMode of [false, true]) {
+				describe(`StrictMode: ${reactStrictMode}`, () => {
+					it("undo and redo buttons are disabled when undoRedo is not provided", () => {
+						const { tree } = createFormattedTreeView();
+						const rendered = render(<FormattedMainView root={toPropTreeNode(tree)} />, {
+							reactStrictMode,
+						});
+
+						const undoButton = rendered.container.querySelector<HTMLButtonElement>(".ql-undo");
+						const redoButton = rendered.container.querySelector<HTMLButtonElement>(".ql-redo");
+						assert.ok(undoButton?.disabled === true, "Undo button should be disabled");
+						assert.ok(redoButton?.disabled === true, "Redo button should be disabled");
+					});
+
+					it("undo and redo buttons are enabled when undoRedo is provided", () => {
+						const mockUndoRedo: UndoRedo = {
+							undo: () => {},
+							redo: () => {},
+							canUndo: () => true,
+							canRedo: () => true,
+							dispose: () => {},
+						};
+
+						const { tree } = createFormattedTreeView();
+						const rendered = render(
+							<FormattedMainView
+								root={toPropTreeNode(tree)}
+								undoRedo={mockUndoRedo}
+								editLabel={mockLabel}
+							/>,
+							{ reactStrictMode },
+						);
+
+						const undoButton = rendered.container.querySelector<HTMLButtonElement>(".ql-undo");
+						const redoButton = rendered.container.querySelector<HTMLButtonElement>(".ql-redo");
+						assert.equal(undoButton?.disabled, false, "Undo button should be enabled");
+						assert.equal(redoButton?.disabled, false, "Redo button should be enabled");
+					});
+				});
+			}
 		});
 	});
 });

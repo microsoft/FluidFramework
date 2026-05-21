@@ -11,13 +11,13 @@ import {
 	reducer,
 	saveFailures,
 	type StressOperations,
-} from "../baseModel.js";
-import { validateAllDataStoresSaved } from "../dataStoreOperations.js";
-import { validateConsistencyOfAllDDS } from "../ddsOperations";
+} from "./baseModel.js";
+import { validateAllDataStoresSaved } from "./dataStoreOperations.js";
+import { validateConsistencyOfAllDDS } from "./ddsOperations.js";
 import {
 	createLocalServerStressSuite,
 	LocalServerStressModel,
-} from "../localServerStressHarness";
+} from "./localServerStressHarness.js";
 
 describe("Local Server Stress", () => {
 	const model: LocalServerStressModel<StressOperations> = {

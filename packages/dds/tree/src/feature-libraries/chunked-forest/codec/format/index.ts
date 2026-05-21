@@ -20,6 +20,7 @@ export {
 	FieldBatchFormatVersion,
 	EncodedFieldBatchV1,
 	EncodedFieldBatchV2,
+	supportsIncrementalEncoding,
 	type EncodedFieldBatchV1OrV2,
 	type EncodedFieldBatchV1AndV2,
 	type EncodedChunkShapeV1OrV2,

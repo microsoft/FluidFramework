@@ -5,6 +5,7 @@
 
 import type { IDeltaManager } from "@fluidframework/container-definitions/internal";
 import type { ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
+import { LogLevel } from "@fluidframework/core-interfaces";
 import { assert, Timer } from "@fluidframework/core-utils/internal";
 import type { IClient, ISequencedClient } from "@fluidframework/driver-definitions";
 import type { IAnyDriverError } from "@fluidframework/driver-definitions/internal";
@@ -687,15 +688,19 @@ export class ConnectionStateHandler implements IConnectionStateHandler {
 				this.prevClientLeftTimer.restart();
 			} else {
 				// Adding this event temporarily so that we can get help debugging if something goes wrong.
-				this.handler.logger.sendTelemetryEvent({
-					eventName: "noWaitOnDisconnected",
-					details: JSON.stringify({
-						clientId: this._clientId,
-						inQuorum: currentClientInQuorum,
-						waitingForLeaveOp: this.waitingForLeaveOp,
-						hadOutstandingOps: this.handler.shouldClientJoinWrite(),
-					}),
-				});
+				this.handler.logger.sendTelemetryEvent(
+					{
+						eventName: "noWaitOnDisconnected",
+						details: JSON.stringify({
+							clientId: this._clientId,
+							inQuorum: currentClientInQuorum,
+							waitingForLeaveOp: this.waitingForLeaveOp,
+							hadOutstandingOps: this.handler.shouldClientJoinWrite(),
+						}),
+					},
+					undefined, // error
+					LogLevel.info,
+				);
 			}
 		}
 

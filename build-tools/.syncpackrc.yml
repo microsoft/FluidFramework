@@ -116,8 +116,17 @@ semverGroups:
       - "less"
       - "prettier"
       - "typescript"
+      - "typescript-*"
       - "vue"
       - "webpack-dev-server"
+    packages:
+      - "**"
+    range: "~"
+
+  # `@types` packages should often use `~` to avoid pulling in newer types with more features than the code they are the types for.
+  - label: "Must use tilde dependency ranges"
+    dependencies:
+      - "@types/node"
     packages:
       - "**"
     range: "~"
@@ -137,7 +146,6 @@ semverGroups:
       - "@fluid-tools/build-infrastructure"
       - "@fluid-tools/version-tools"
       - "@fluidframework/build-tools"
-      - "@fluidframework/bundle-size-tools"
       - "@fluidframework/build-tools-bin"
     packages:
       - "**"

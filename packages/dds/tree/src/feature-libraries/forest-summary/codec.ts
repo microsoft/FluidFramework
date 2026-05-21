@@ -7,9 +7,10 @@ import { assert, oob } from "@fluidframework/core-utils/internal";
 import { lowestMinVersionForCollab } from "@fluidframework/runtime-utils/internal";
 
 import {
-	ClientVersionDispatchingCodecBuilder,
+	VersionDispatchingCodecBuilder,
 	type CodecAndSchema,
 	type CodecWriteOptions,
+	type VersionDispatchingCodec,
 	FluidClientVersion,
 } from "../../codec/index.js";
 import type { FieldKey, ITreeCursorSynchronous } from "../../core/index.js";
@@ -24,7 +25,11 @@ import { ForestFormatVersion, FormatCommon } from "./formatCommon.js";
  * Uses field cursors
  */
 export type FieldSet = ReadonlyMap<FieldKey, ITreeCursorSynchronous>;
-export type ForestCodec = ReturnType<typeof forestCodecBuilder.build>;
+export type ForestCodec = VersionDispatchingCodec<
+	FieldSet,
+	FieldBatchEncodingContext,
+	ForestFormatVersion
+>;
 
 function makeForestSummarizerCodec(
 	options: CodecWriteOptions,
@@ -64,9 +69,9 @@ function makeForestSummarizerCodec(
 }
 
 /**
- * {@link ClientVersionDispatchingCodecBuilder} for forest summarizer codecs.
+ * {@link VersionDispatchingCodecBuilder} for forest summarizer codecs.
  */
-export const forestCodecBuilder = ClientVersionDispatchingCodecBuilder.build("Forest", [
+export const forestCodecBuilder = VersionDispatchingCodecBuilder.build("Forest", [
 	{
 		minVersionForCollab: lowestMinVersionForCollab,
 		formatVersion: ForestFormatVersion.v1,

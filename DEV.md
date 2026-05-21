@@ -155,6 +155,7 @@ All workspace `pnpm-workspace.yaml` files include security-hardening settings to
 | `resolutionMode` | highest | Use highest matching version (see explanation below) |
 | `blockExoticSubdeps` | true | Block transitive deps from using git/tarball sources |
 | `trustPolicy` | no-downgrade | Fail if package trust/verification level decreases |
+| `trustPolicyExclude` | [] | Packages excluded from `trustPolicy` enforcement (see note below) |
 | `strictDepBuilds` | true | Require explicit approval for dependency build scripts |
 
 ### Why `resolutionMode: highest` instead of `time-based`
@@ -171,6 +172,12 @@ However, with `resolutionMode: time-based`, the "anchor" time for a transitive d
 This behavior is desired. However, pnpm does NOT attempt downward resolution to find a version that works (e.g., 1.0.0). Instead, it throws an error with no automatic fallback.
 
 With `resolutionMode: highest`, we still get protection from `minimumReleaseAge: 1440`, which blocks any package published within the last 24 hours. This provides supply chain protection without the transitive dependency resolution issues.
+
+### Trust Policy Exclusions (`trustPolicyExclude`)
+
+`trustPolicyExclude` lists packages that are exempt from `trustPolicy: no-downgrade` enforcement. This is needed for packages that are known to be safe but were published at a date after another version of the same package (including later major versions) that had better provenance information — causing pnpm to incorrectly treat the newer version as a trust downgrade.
+
+**This list must be reviewed carefully before adding any entry.** Only add a package here after confirming it is safe and understanding why its publication order triggers the policy.
 
 ### Build Script Approval (`strictDepBuilds`)
 
@@ -210,10 +217,6 @@ This recursively marks all mount points as shared, allowing bwrap's bind mounts 
 
 Claude Code sets `TMPDIR=/tmp/claude` inside the sandbox, but doesn't create the directory itself. The sandbox allowlist permits writes to `/tmp/claude`, and the weaker sandbox bind-mounts the real `/tmp` into the namespace, so the directory just needs to exist on the host. Without it, any tool that resolves `TMPDIR` on startup (pnpm, node, etc.) crashes with `ENOENT`. The `postStartCommand` runs `mkdir -p /tmp/claude` to pre-create it. This is a workaround for a Claude Code bug ([anthropics/claude-code#21654](https://github.com/anthropics/claude-code/issues/21654)).
 
-### `enableWeakerNestedSandbox` ([Claude settings](.repoverlay/library/ff-claude/.claude/settings.json))
+### `enableWeakerNestedSandbox` ([Claude settings](.claude/settings.json))
 
 Even with the above flags, Docker still blocks mounting a fresh `/proc` filesystem inside a user namespace — a kernel-level restriction that `CAP_SYS_ADMIN` and AppArmor changes cannot override. Claude's full-strength sandbox requires this `/proc` mount. The `enableWeakerNestedSandbox` setting tells Claude to use a weaker sandbox variant that skips the `/proc` mount while still providing filesystem isolation via bwrap.
-
-### `--copy` flag for repoverlay ([`agent-aliases.sh`](scripts/codespace-setup/agent-aliases.sh))
-
-repoverlay defaults to applying overlays as symlinks (e.g., `.claude/settings.json` -> `.repoverlay/library/ff-claude/.claude/settings.json`). bwrap cannot follow symlinks when constructing its mount namespace — it bind-mounts individual paths, and a symlink at the source causes a "No such file or directory" error even when the target is within the same repo. The `--copy` flag in `agent-aliases.sh` forces repoverlay to copy files instead, avoiding this limitation.
