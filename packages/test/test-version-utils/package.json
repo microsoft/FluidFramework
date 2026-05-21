@@ -137,7 +137,12 @@
 		"webpack-cli": "^5.1.4"
 	},
 	"fluidBuild": {
+		"_tasks_comment": "build:esnext is configured to depend on tsc task as mocharc-common.cjs require()s ./dist/compatOptions.js at mocha runtime. Building CommonJS when ESM is requested ensures the CommonJS expectation is satisfied.",
 		"tasks": {
+			"build:esnext": [
+				"...",
+				"tsc"
+			],
 			"check:exports:index": [
 				"build:esnext"
 			]
