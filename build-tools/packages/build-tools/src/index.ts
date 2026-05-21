@@ -26,7 +26,6 @@ export { getTypeTestPreviousPackageDetails } from "./common/typeTests.js";
 export { type IFluidBuildConfig } from "./fluidBuild/fluidBuildConfig.js";
 export { type IFluidCompatibilityMetadata } from "./fluidBuild/fluidCompatMetadata.js";
 export { FluidRepo } from "./fluidBuild/fluidRepo.js";
-
 // For repo policy check
 export {
 	getTaskDefinitions,
