@@ -837,15 +837,29 @@ describe("chunkTree", () => {
 				uniformChunkNodeCountDynamicTargetMax: 2,
 				shapeFromSchema: (t): ShapeInfo => (t === numberType ? numberShape : polymorphic),
 			};
-			const bisectingCompressor = { policy: bisectingPolicy, idCompressor: undefined };
 
 			const values = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100];
 			const removalIndex = 3;
-			const chunks: TreeChunk[] = [
-				new UniformChunk(numberShape.withTopLevelLength(values.length), [...values]),
-			];
+			const fieldData: JsonableTree[] = values.map((value) => ({
+				type: numberType,
+				value,
+			}));
+			const cursor = cursorForJsonableTreeField(fieldData);
+			cursor.firstNode();
+			const chunks = chunkRange(
+				cursor,
+				{ policy: bisectingPolicy, idCompressor: undefined },
+				fieldData.length,
+				true,
+			);
+			assert.equal(chunks.length, 1);
+			assert(chunks[0] instanceof UniformChunk);
+			assert.equal(chunks[0].topLevelLength, values.length);
 
-			splitFieldAtIndex(chunks, removalIndex, bisectingCompressor);
+			splitFieldAtIndex(chunks, removalIndex, {
+				policy: bisectingPolicy,
+				idCompressor: undefined,
+			});
 
 			// splitFieldAtIndex correctly bisected the uniform chunk. Assumes no re-merging
 			assert.deepEqual(
