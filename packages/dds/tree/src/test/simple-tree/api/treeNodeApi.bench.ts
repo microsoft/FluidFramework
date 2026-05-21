@@ -5,19 +5,11 @@
 
 import { strict as assert } from "node:assert";
 
-import {
-	BenchmarkType,
-	benchmarkDuration,
-	benchmarkIt,
-	benchmarkMemoryUse,
-	memoryAddedBy,
-} from "@fluid-tools/benchmark";
+import { BenchmarkType, benchmarkDuration, benchmarkIt } from "@fluid-tools/benchmark";
 import type { Off } from "@fluidframework/core-interfaces";
 
 import { Tree } from "../../../shared-tree/index.js";
 import { SchemaFactory, type TreeNode } from "../../../simple-tree/index.js";
-// eslint-disable-next-line import-x/no-internal-modules
-import { iterationSettings } from "../../memory/utils.js";
 import { configureBenchmarkHooks } from "../../utils.js";
 import { describeHydration } from "../utils.js";
 
@@ -234,35 +226,6 @@ describe("Tree node API benchmarks", () => {
 									off();
 								}
 							},
-						}),
-					});
-				}
-			});
-		});
-
-		describe("Memory", () => {
-			describe("Per-subscription retained allocations (unhydrated object)", () => {
-				for (const eventName of ["nodeChanged", "treeChanged"] as const) {
-					benchmarkIt({
-						type: BenchmarkType.Measurement,
-						title: eventName,
-						...benchmarkMemoryUse({
-							...iterationSettings,
-							...memoryAddedBy({
-								setup: () => {
-									const node = createUnhydratedObject();
-									return { node, off: undefined as Off | undefined };
-								},
-								modify: (state) => {
-									const listener =
-										eventName === "nodeChanged" ? noopNodeChanged : noopTreeChanged;
-									state.off = Tree.on(state.node, eventName, listener);
-								},
-								after: (state) => {
-									state.off?.();
-									state.off = undefined;
-								},
-							}),
 						}),
 					});
 				}
