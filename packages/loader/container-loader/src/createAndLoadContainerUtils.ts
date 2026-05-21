@@ -185,6 +185,15 @@ export interface IContainerLoadDriverProps extends IContainerDriverServices {
 
 /**
  * Properties necessary for creating and loading a container.
+ *
+ * @deprecated
+ * Use the composable building blocks instead: extend
+ * {@link IContainerHostProps} for the code-loader / policy / observability
+ * surface and {@link IContainerDriverServices} for the
+ * `urlResolver` / `documentServiceFactory` pair, or compose them inline as
+ * `IContainerHostProps & IContainerDriverServices`. This interface is kept
+ * as an alias for back-compat and will be removed in a future release.
+ *
  * @legacy @beta
  */
 export interface ICreateAndLoadContainerProps
@@ -195,7 +204,9 @@ export interface ICreateAndLoadContainerProps
  * Props used to load a container.
  * @legacy @beta
  */
-export interface ILoadExistingContainerProps extends ICreateAndLoadContainerProps {
+export interface ILoadExistingContainerProps
+	extends IContainerHostProps,
+		IContainerDriverServices {
 	/**
 	 * The request to resolve the container.
 	 */
@@ -220,7 +231,9 @@ export type ILoadSummarizerContainerProps = Omit<
  * Props used to create a detached container.
  * @legacy @beta
  */
-export interface ICreateDetachedContainerProps extends ICreateAndLoadContainerProps {
+export interface ICreateDetachedContainerProps
+	extends IContainerHostProps,
+		IContainerDriverServices {
 	/**
 	 * The code details for the container to be created.
 	 */
@@ -231,7 +244,9 @@ export interface ICreateDetachedContainerProps extends ICreateAndLoadContainerPr
  * Props used to rehydrate a detached container.
  * @legacy @beta
  */
-export interface IRehydrateDetachedContainerProps extends ICreateAndLoadContainerProps {
+export interface IRehydrateDetachedContainerProps
+	extends IContainerHostProps,
+		IContainerDriverServices {
 	/**
 	 * The serialized state returned by calling serialize on another container
 	 */
@@ -398,9 +413,19 @@ export async function loadFrozenContainerFromPendingState(
 				`loadFrozenContainerFromPendingState: pending state URL is not in a parseable form (${pending.url})`,
 			);
 		}
+		// `tryParseCompatibleResolvedUrl` returns `parsed.id` as the first two
+		// path segments joined by `/` (i.e. `tenantId/docId`). Production
+		// resolvers populate `IResolvedUrl.id` with the single doc-id segment
+		// (see `localResolver.ts`, `insecureUrlResolver.ts`,
+		// `routerlicious-urlResolver/urlResolver.ts`, `odspDriverUrlResolver.ts`),
+		// so downstream consumers reading `IContainer.resolvedUrl.id` for
+		// telemetry / cache keys expect the single-segment shape. Take the
+		// trailing segment so offline-loaded containers match that contract.
+		const parsedIdSegments = parsed.id.split("/");
+		const synthesizedId = parsedIdSegments[parsedIdSegments.length - 1] ?? parsed.id;
 		const synthesizedResolvedUrl: IResolvedUrl = {
 			type: "fluid",
-			id: parsed.id,
+			id: synthesizedId,
 			url: pending.url,
 			// `tokens` and `endpoints` are empty because no real driver is contacted; the
 			// frozen factory never reads them. A future offline mode that needs them would

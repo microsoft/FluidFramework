@@ -61,12 +61,12 @@ export interface IContainerLoadDriverProps extends IContainerDriverServices {
     readonly request: IRequest;
 }
 
-// @beta @legacy
+// @beta @deprecated @legacy
 export interface ICreateAndLoadContainerProps extends IContainerHostProps, IContainerDriverServices {
 }
 
 // @beta @legacy
-export interface ICreateDetachedContainerProps extends ICreateAndLoadContainerProps {
+export interface ICreateDetachedContainerProps extends IContainerHostProps, IContainerDriverServices {
     readonly codeDetails: IFluidCodeDetails;
 }
 
@@ -100,7 +100,7 @@ export interface ILoaderServices {
 }
 
 // @beta @legacy
-export interface ILoadExistingContainerProps extends ICreateAndLoadContainerProps {
+export interface ILoadExistingContainerProps extends IContainerHostProps, IContainerDriverServices {
     readonly pendingLocalState?: string | undefined;
     readonly request: IRequest;
 }
@@ -132,7 +132,7 @@ export interface IQuorumSnapshot {
 }
 
 // @beta @legacy
-export interface IRehydrateDetachedContainerProps extends ICreateAndLoadContainerProps {
+export interface IRehydrateDetachedContainerProps extends IContainerHostProps, IContainerDriverServices {
     readonly serializedState: string;
 }
 

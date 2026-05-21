@@ -1235,6 +1235,19 @@ describe("loadFrozenContainerFromPendingState", () => {
 				"Expected offline frozen container to be storage-only",
 			);
 
+			// `IContainer.resolvedUrl.id` must match the single-doc-id-segment
+			// shape that production resolvers emit (see localResolver.ts:58,
+			// odspDriverUrlResolver.ts:167, etc.), so downstream consumers
+			// keyed on `resolvedUrl.id` for telemetry / cache keys can't tell
+			// online and offline loads apart by shape. The source container
+			// was attached to the local resolver with `createCreateNewRequest`
+			// for "test", so the expected single-segment id is "test".
+			assert.strictEqual(
+				frozenContainer.resolvedUrl?.id,
+				"test",
+				"Expected offline frozen container's resolvedUrl.id to be the single doc-id segment",
+			);
+
 			const frozenEntryPoint: FluidObject<TestFluidObject> =
 				await frozenContainer.getEntryPoint();
 			assert(
