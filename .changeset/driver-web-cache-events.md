@@ -4,7 +4,8 @@
 ---
 Add cross-instance change notifications to `FluidCache`
 
-`FluidCache` now broadcasts cache mutations to other `FluidCache` instances in the same browsing context (typically other browser tabs of the same origin) via a `BroadcastChannel`. Consumers can subscribe through the new `events` property, which is a standard Fluid Framework `Listenable`:
+`FluidCache` now broadcasts cache mutations to other `FluidCache` instances in the same browsing context (typically other browser tabs of the same origin) via a `BroadcastChannel`.
+Consumers can subscribe through the new `events` property, which is a standard Fluid Framework `Listenable`:
 
 ```ts
 const unsubscribe = fluidCache.events.on("change", (event) => {
@@ -21,9 +22,17 @@ unsubscribe();
 
 Notification semantics:
 
-- `put` and `remove` events are filtered by partition key — a listener only receives events whose `partitionKey` matches the partition key of its `FluidCache`, consistent with the semantics of `get`. The events fire from `put`, a successful `putIf`, and `removeEntry`.
+- `put` and `remove` events are filtered by partition key.
+A listener only receives events whose `partitionKey` matches the partition key of its `FluidCache`, consistent with the semantics of `get`.
+The events fire from `put`, a successful `putIf`, and `removeEntry`.
 - `removeFile` events fire from `removeEntries` and are delivered to every listener regardless of partition, because `removeEntries` drops rows regardless of partition.
-- `BroadcastChannel` does not echo a message back to the instance that posted it, so a write performed by this `FluidCache` does not invoke its own listeners — other instances (including ones in the same tab) do.
-- If `BroadcastChannel` is unavailable in the runtime, the `events` subscription becomes a no-op and writes simply do not broadcast. The constructor emits a one-shot `FluidCacheBroadcastChannelUnavailable` telemetry event in that case so hosts can detect the degraded mode.
+- `BroadcastChannel` does not echo a message back to the instance that posted it, so a write performed by this `FluidCache` does not invoke its own listeners.
+Other instances (including ones in the same tab) do.
+- If `BroadcastChannel` is unavailable in the runtime, the `events` subscription becomes a no-op and writes do not broadcast.
+The constructor emits a one-shot `FluidCacheBroadcastChannelUnavailable` telemetry event in that case so hosts can detect the degraded mode.
 
-The cache now also exposes a `dispose()` method, which closes the `BroadcastChannel`, the open IndexedDB connection, and the close timer. `dispose` is idempotent. After `dispose` returns, every other public method (`get`, `put`, `putIf`, `removeEntry`, `removeEntries`) throws a `UsageError`. Operations that were already in flight when `dispose` was called also reject with a `UsageError`, and the underlying IndexedDB connection is not lazily reopened by any such in-flight call. Subscribing through `events` on a disposed cache is permitted but no events will fire.
+The cache now also exposes a `dispose()` method, which closes the `BroadcastChannel`, the open IndexedDB connection, and the close timer.
+`dispose` is idempotent.
+After `dispose` returns, every other public method (`get`, `put`, `putIf`, `removeEntry`, `removeEntries`) throws a `UsageError`.
+Operations that were already in flight when `dispose` was called also reject with a `UsageError`, and the underlying IndexedDB connection is not lazily reopened by any such in-flight call.
+Subscribing through `events` on a disposed cache is permitted but no events will fire.

@@ -273,6 +273,11 @@ export class FluidCache implements IPersistedCache {
 			});
 		} else {
 			this.broadcastChannel = new BroadcastChannel(FluidCacheBroadcastChannelName);
+			// Don't keep the Node event loop alive on account of an idle cache. The web
+			// `BroadcastChannel` interface has no `unref`; Node's implementation does, and
+			// the cast is intentional. In browsers this is a no-op (the property is absent
+			// and the optional-chained call is skipped).
+			(this.broadcastChannel as unknown as { unref?: () => void }).unref?.();
 			this.broadcastChannel.addEventListener("message", (messageEvent: MessageEvent) => {
 				this.dispatchChangeEvent(messageEvent.data as FluidCacheChangeEvent);
 			});
@@ -466,13 +471,29 @@ export class FluidCache implements IPersistedCache {
 		this.throwIfDisposed();
 		let db: IDBPDatabase<FluidCacheDBSchema> | undefined;
 		let removed = false;
+		// Records the partition that owned the row immediately before deletion when it
+		// differs from this cache's partition. The IDB key omits partitionKey, so
+		// `removeEntry` can drop a row written by a different partition. That partition's
+		// listeners must be notified, otherwise their `get` would silently start
+		// returning `undefined` for a previously-present row.
+		let displacedPartitionKey: string | null | undefined;
 		try {
 			db = await this.openDb();
 
 			const key = getKeyForCacheEntry(entry);
-			await db.delete(FluidDriverObjectStoreName, key);
+			const transaction = db.transaction(FluidDriverObjectStoreName, "readwrite");
+			const existing = await transaction.store.get(key);
+			if (existing !== undefined) {
+				await transaction.store.delete(key);
+			}
+			await transaction.done;
 			this.throwIfDisposed();
-			removed = true;
+			if (existing !== undefined) {
+				removed = true;
+				if (existing.partitionKey !== this.partitionKey) {
+					displacedPartitionKey = existing.partitionKey;
+				}
+			}
 		} catch (error: any) {
 			// Log the original IDB error before potentially throwing `UsageError` so
 			// the diagnostic survives the dispose-race path.
@@ -488,6 +509,10 @@ export class FluidCache implements IPersistedCache {
 			this.closeDb(db);
 		}
 		if (removed) {
+			// Notify our own partition's listeners (in other tabs) that the entry was removed.
+			// When the row actually belonged to a different partition, the broadcast above is
+			// a no-op for other listeners (they filter on partitionKey), but the additional
+			// broadcast below tells the displaced partition that its row is gone.
 			this.broadcast({
 				type: "remove",
 				partitionKey: this.partitionKey,
@@ -495,6 +520,15 @@ export class FluidCache implements IPersistedCache {
 				entryType: entry.type,
 				cacheItemId: entry.key,
 			});
+			if (displacedPartitionKey !== undefined) {
+				this.broadcast({
+					type: "remove",
+					partitionKey: displacedPartitionKey,
+					fileId: entry.file.docId,
+					entryType: entry.type,
+					cacheItemId: entry.key,
+				});
+			}
 		}
 	}
 
@@ -582,15 +616,23 @@ export class FluidCache implements IPersistedCache {
 		this.throwIfDisposed();
 		let db: IDBPDatabase<FluidCacheDBSchema> | undefined;
 		let wrote = false;
+		// Records the partition that owned the row immediately before this write when
+		// it differs from this cache's partition. See `removeEntry` for the rationale —
+		// the IDB key omits partitionKey, so a `put` from partition A can displace a
+		// partition-B row, and B's listeners need to know its cached row is gone.
+		let displacedPartitionKey: string | null | undefined;
 		try {
 			db = await this.openDb();
 
-			await db.put(
-				FluidDriverObjectStoreName,
-				this.buildRecord(entry, value),
-				getKeyForCacheEntry(entry),
-			);
-			// Dispose may have landed during `await db.put(...)`. Reject before reporting
+			const key = getKeyForCacheEntry(entry);
+			const transaction = db.transaction(FluidDriverObjectStoreName, "readwrite");
+			const existing = await transaction.store.get(key);
+			if (existing !== undefined && existing.partitionKey !== this.partitionKey) {
+				displacedPartitionKey = existing.partitionKey;
+			}
+			await transaction.store.put(this.buildRecord(entry, value), key);
+			await transaction.done;
+			// Dispose may have landed during the awaits above. Reject before reporting
 			// success or broadcasting so the caller observes the disposed state cleanly
 			// and no `put` event escapes after teardown.
 			this.throwIfDisposed();
@@ -617,6 +659,17 @@ export class FluidCache implements IPersistedCache {
 				entryType: entry.type,
 				cacheItemId: entry.key,
 			});
+			if (displacedPartitionKey !== undefined) {
+				// The new row belongs to this partition. As far as the displaced
+				// partition is concerned, its row was removed.
+				this.broadcast({
+					type: "remove",
+					partitionKey: displacedPartitionKey,
+					fileId: entry.file.docId,
+					entryType: entry.type,
+					cacheItemId: entry.key,
+				});
+			}
 		}
 	}
 
@@ -665,6 +718,9 @@ export class FluidCache implements IPersistedCache {
 		this.throwIfDisposed();
 		let db: IDBPDatabase<FluidCacheDBSchema> | undefined;
 		let wrote = false;
+		// Records the partition that owned the row immediately before this write when
+		// it differs from this cache's partition (matching `put` / `removeEntry`).
+		let displacedPartitionKey: string | null | undefined;
 		try {
 			db = await this.openDb();
 
@@ -679,6 +735,9 @@ export class FluidCache implements IPersistedCache {
 				existing?.partitionKey === this.partitionKey &&
 				Date.now() - existing.createdTimeMs <= this.maxCacheItemAge;
 			const existingValue = existingVisible ? existing?.cachedObject : undefined;
+			if (existing !== undefined && existing.partitionKey !== this.partitionKey) {
+				displacedPartitionKey = existing.partitionKey;
+			}
 
 			// Invoke the predicate in its own try/catch so a host-supplied callback
 			// throwing does not get logged under `FluidCachePutError` (which is for
@@ -742,6 +801,17 @@ export class FluidCache implements IPersistedCache {
 				entryType: entry.type,
 				cacheItemId: entry.key,
 			});
+			if (displacedPartitionKey !== undefined) {
+				// The new row belongs to this partition. As far as the displaced
+				// partition is concerned, its row was removed.
+				this.broadcast({
+					type: "remove",
+					partitionKey: displacedPartitionKey,
+					fileId: entry.file.docId,
+					entryType: entry.type,
+					cacheItemId: entry.key,
+				});
+			}
 		}
 		return wrote;
 	}

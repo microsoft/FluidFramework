@@ -617,6 +617,121 @@ for (const immediateClose of [true, false]) {
 
 				assert.deepEqual(received, []);
 			});
+
+			it("notifies the displaced partition when put overwrites a cross-partition row", async () => {
+				// Partition A writes a row, then partition B writes to the *same* IDB key
+				// (the IDB key omits partitionKey). Partition A's listener must receive a
+				// `remove` event so its `get` doesn't silently return `undefined` for a
+				// row it previously cached.
+				const partitionACache = getFluidCache({ partitionKey: "partitionA" });
+				const partitionBWriter = getFluidCache({ partitionKey: "partitionB" });
+				const partitionAObserver = getFluidCache({ partitionKey: "partitionA" });
+				fluidCache = partitionACache;
+				extraCaches.push(partitionBWriter, partitionAObserver);
+
+				const aObserved: FluidCacheChangeEvent[] = [];
+				partitionAObserver.events.on("change", (event) => aObserved.push(event));
+
+				const cacheEntry = getMockCacheEntry("xPartitionPut");
+				await partitionACache.put(cacheEntry, { from: "A" });
+				await flushBroadcast();
+				aObserved.length = 0;
+
+				await partitionBWriter.put(cacheEntry, { from: "B" });
+				await flushBroadcast();
+
+				assert.deepEqual(aObserved, [
+					{
+						type: "remove",
+						partitionKey: "partitionA",
+						fileId: cacheEntry.file.docId,
+						entryType: cacheEntry.type,
+						cacheItemId: cacheEntry.key,
+					},
+				]);
+			});
+
+			it("notifies the displaced partition when putIf overwrites a cross-partition row", async () => {
+				const partitionACache = getFluidCache({ partitionKey: "partitionA" });
+				const partitionBWriter = getFluidCache({ partitionKey: "partitionB" });
+				const partitionAObserver = getFluidCache({ partitionKey: "partitionA" });
+				fluidCache = partitionACache;
+				extraCaches.push(partitionBWriter, partitionAObserver);
+
+				const aObserved: FluidCacheChangeEvent[] = [];
+				partitionAObserver.events.on("change", (event) => aObserved.push(event));
+
+				const cacheEntry = getMockCacheEntry("xPartitionPutIf");
+				await partitionACache.put(cacheEntry, { from: "A" });
+				await flushBroadcast();
+				aObserved.length = 0;
+
+				// Predicate sees `undefined` because the existing row belongs to a different
+				// partition; returning true overwrites it (matching the documented
+				// unconditional-overwrite policy of `putIf`).
+				const wrote = await partitionBWriter.putIf(cacheEntry, { from: "B" }, () => true);
+				assert.strictEqual(wrote, true);
+				await flushBroadcast();
+
+				assert.deepEqual(aObserved, [
+					{
+						type: "remove",
+						partitionKey: "partitionA",
+						fileId: cacheEntry.file.docId,
+						entryType: cacheEntry.type,
+						cacheItemId: cacheEntry.key,
+					},
+				]);
+			});
+
+			it("notifies the displaced partition when removeEntry drops a cross-partition row", async () => {
+				const partitionACache = getFluidCache({ partitionKey: "partitionA" });
+				const partitionBRemover = getFluidCache({ partitionKey: "partitionB" });
+				const partitionAObserver = getFluidCache({ partitionKey: "partitionA" });
+				fluidCache = partitionACache;
+				extraCaches.push(partitionBRemover, partitionAObserver);
+
+				const aObserved: FluidCacheChangeEvent[] = [];
+				partitionAObserver.events.on("change", (event) => aObserved.push(event));
+
+				const cacheEntry = getMockCacheEntry("xPartitionRemove");
+				await partitionACache.put(cacheEntry, { from: "A" });
+				await flushBroadcast();
+				aObserved.length = 0;
+
+				await partitionBRemover.removeEntry(cacheEntry);
+				await flushBroadcast();
+
+				// Partition A's listener sees a `remove` stamped with partition A's key,
+				// not partition B's. (The B-stamped event is also broadcast but A's
+				// listener filters it out.)
+				assert.deepEqual(aObserved, [
+					{
+						type: "remove",
+						partitionKey: "partitionA",
+						fileId: cacheEntry.file.docId,
+						entryType: cacheEntry.type,
+						cacheItemId: cacheEntry.key,
+					},
+				]);
+			});
+
+			it("does not broadcast remove when removeEntry runs against an empty key", async () => {
+				// Pre-fix behavior was to always broadcast on removeEntry, even when no
+				// row existed at the key. Verify the new behavior suppresses the spurious
+				// event so listeners don't react to a no-op delete.
+				fluidCache = getFluidCache();
+				const observerCache = getFluidCache();
+				extraCaches.push(observerCache);
+
+				const received: FluidCacheChangeEvent[] = [];
+				observerCache.events.on("change", (event) => received.push(event));
+
+				await fluidCache.removeEntry(getMockCacheEntry("neverWritten"));
+				await flushBroadcast();
+
+				assert.deepEqual(received, []);
+			});
 		});
 
 		describe("post-dispose contract", () => {
