@@ -12,26 +12,26 @@ import registerDebug from "debug";
 import * as path from "path";
 import chalk from "picocolors";
 
-import { defaultLogger } from "../../../common/logging";
+import { defaultLogger } from "../../../common/logging.js";
 import {
 	type ExecAsyncResult,
 	execAsync,
 	getExecutableFromCommand,
-} from "../../../common/utils";
-import type { BuildContext } from "../../buildContext";
-import type { BuildPackage } from "../../buildGraph";
-import type { Seconds } from "../../buildMetrics";
-import { TaskCacheOutcome } from "../../buildMetrics";
-import { BuildResult, summarizeBuildResult } from "../../buildResult";
+} from "../../../common/utils.js";
+import type { BuildContext } from "../../buildContext.js";
+import type { BuildPackage } from "../../buildGraph.js";
+import type { Seconds } from "../../buildMetrics.js";
+import { TaskCacheOutcome } from "../../buildMetrics.js";
+import { BuildResult, summarizeBuildResult } from "../../buildResult.js";
 import {
 	type GitIgnoreSettingValue,
 	gitignoreDefaultValue,
 	replaceRepoRootToken,
-} from "../../fluidBuildConfig";
-import type { GitIgnoreSetting } from "../../fluidTaskDefinitions";
-import { options } from "../../options";
-import { Task, type TaskExec } from "../task";
-import { globWithGitignore } from "../taskUtils";
+} from "../../fluidBuildConfig.js";
+import type { GitIgnoreSetting } from "../../fluidTaskDefinitions.js";
+import { options } from "../../options.js";
+import { Task, type TaskExec } from "../task.js";
+import { globWithGitignore } from "../taskUtils.js";
 
 const { log } = defaultLogger;
 const traceTaskTrigger = registerDebug("fluid-build:task:trigger");

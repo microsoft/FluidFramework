@@ -11,9 +11,9 @@ import isEqual from "lodash.isequal";
 import type * as ts54Types from "typescript-5.4";
 import type * as ts59Types from "typescript-5.9";
 
-import { getTscUtils, type TscUtil } from "../../tscUtils";
-import { getInstalledPackageVersion } from "../taskUtils";
-import { LeafTask, LeafWithDoneFileTask } from "./leafTask";
+import { getTscUtils, type TscUtil } from "../../tscUtils.js";
+import { getInstalledPackageVersion } from "../taskUtils.js";
+import { LeafTask, LeafWithDoneFileTask } from "./leafTask.js";
 
 type tsTypes = typeof ts54Types | typeof ts59Types;
 type tsParsedCommandLine = ts54Types.ParsedCommandLine | ts59Types.ParsedCommandLine;
