@@ -124,7 +124,7 @@ export class TreeNodeKernel {
 	 * Per-kernel event buffer.
 	 * @remarks
 	 * Allocated lazily on first access to {@link TreeNodeKernel.events}.
-	 * The vast majority of nodes never subscribe to any events, so deferring this allocation
+	 * We expect that the vast majority of nodes will never have associated event subscriptions, so deferring this allocation
 	 * (and the associated source-listener bookkeeping) saves both time and memory.
 	 */
 	#eventBuffer: KernelEventBuffer | undefined = undefined;
