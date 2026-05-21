@@ -13,8 +13,6 @@ import {
 	TreeStoredSchemaRepository,
 	rootFieldKey,
 } from "../../../core/index.js";
-// eslint-disable-next-line import-x/no-internal-modules
-import { BasicChunk } from "../../../feature-libraries/chunked-forest/basicChunk.js";
 import {
 	Chunker,
 	type IChunker,
