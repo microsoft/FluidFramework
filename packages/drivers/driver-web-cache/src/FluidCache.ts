@@ -445,10 +445,13 @@ export class FluidCache implements IPersistedCache {
 			this.throwIfDisposed();
 			removed = keysToDelete.length > 0;
 		} catch (error: any) {
-			// Log the original IDB error *before* checking for dispose so the
-			// diagnostic survives the dispose-race path (otherwise `throwIfDisposed`
-			// would throw a `UsageError` before `sendErrorEvent` ran and the IDB
-			// failure would be silently lost).
+			// If dispose ran during the operation, surface that to the caller as
+			// `UsageError` *without* logging an IDB-error telemetry event. The error
+			// we observe in this branch is the `UsageError` thrown by our own
+			// post-await `throwIfDisposed` — it is not an IDB delete failure, so
+			// logging it under `FluidCacheDeleteOldEntriesError` would mis-categorize
+			// the dispose race.
+			this.throwIfDisposed();
 			this.logger.sendErrorEvent(
 				{
 					eventName: FluidCacheErrorEvent.FluidCacheDeleteOldEntriesError,
@@ -456,9 +459,6 @@ export class FluidCache implements IPersistedCache {
 				},
 				error,
 			);
-			// If dispose ran during the operation, surface that to the caller instead of
-			// silently swallowing the failure, matching the post-dispose throw contract.
-			this.throwIfDisposed();
 		} finally {
 			this.closeDb(db);
 		}
@@ -495,8 +495,10 @@ export class FluidCache implements IPersistedCache {
 				}
 			}
 		} catch (error: any) {
-			// Log the original IDB error before potentially throwing `UsageError` so
-			// the diagnostic survives the dispose-race path.
+			// If dispose ran during the operation, surface that as `UsageError`
+			// without logging the dispose race as an IDB delete failure. See
+			// `removeEntries` for the rationale on this ordering.
+			this.throwIfDisposed();
 			this.logger.sendErrorEvent(
 				{
 					eventName: FluidCacheErrorEvent.FluidCacheDeleteSingleEntryError,
@@ -504,7 +506,6 @@ export class FluidCache implements IPersistedCache {
 				},
 				error,
 			);
-			this.throwIfDisposed();
 		} finally {
 			this.closeDb(db);
 		}
@@ -568,7 +569,6 @@ export class FluidCache implements IPersistedCache {
 			this.throwIfDisposed();
 
 			if (!value) {
-				this.closeDb(db);
 				return undefined;
 			}
 
@@ -580,7 +580,6 @@ export class FluidCache implements IPersistedCache {
 					pkgVersion,
 				});
 
-				this.closeDb(db);
 				return undefined;
 			}
 
@@ -588,27 +587,28 @@ export class FluidCache implements IPersistedCache {
 
 			// If too much time has passed since this cache entry was used, we will also return undefined
 			if (currentTime - value.createdTimeMs > this.maxCacheItemAge) {
-				this.closeDb(db);
 				return undefined;
 			}
 
-			this.closeDb(db);
 			return { ...value, dbOpenPerf };
 		} catch (error: any) {
-			// Log the original IDB error first so the diagnostic survives even when
-			// dispose ran during the operation and `throwIfDisposed` re-throws a
-			// `UsageError`. We can fail to open the db for a variety of reasons
-			// (e.g. the database version having upgraded underneath us), so we
-			// still want the original failure visible in telemetry.
+			// If dispose ran during the operation, surface that to the caller as
+			// `UsageError` *without* logging an IDB-error telemetry event. The error
+			// we observe in this branch is the `UsageError` thrown by our own
+			// post-await `throwIfDisposed` — it is not an IDB read failure, so logging
+			// it under `FluidCacheGetError` would mis-categorize the dispose race.
+			this.throwIfDisposed();
 			this.logger.sendErrorEvent(
 				{ eventName: FluidCacheErrorEvent.FluidCacheGetError, pkgVersion },
 				error,
 			);
-			// If dispose ran during the operation, surface that to the caller instead of
-			// silently returning undefined, matching the post-dispose throw contract.
-			this.throwIfDisposed();
-			this.closeDb(db);
 			return undefined;
+		} finally {
+			// Always close the per-call IDB connection (under `closeDbImmediately: true`,
+			// `openDb` returns a fresh handle per call). Without this `finally`, the
+			// catch arm's `throwIfDisposed` would short-circuit before `closeDb` ran,
+			// leaking the just-opened connection on every disposed-mid-`get` race.
+			this.closeDb(db);
 		}
 	}
 
@@ -639,15 +639,14 @@ export class FluidCache implements IPersistedCache {
 			wrote = true;
 			this.closeDb(db);
 		} catch (error: any) {
-			// Log the original IDB error first so the diagnostic survives even when
-			// dispose ran during the operation and `throwIfDisposed` re-throws a
-			// `UsageError` (we can fail to open the db for a variety of reasons,
-			// such as the database version having upgraded underneath us).
+			// If dispose ran during the operation, surface that as `UsageError`
+			// without logging the dispose race as an IDB put failure. See
+			// `removeEntries` for the rationale on this ordering.
+			this.throwIfDisposed();
 			this.logger.sendErrorEvent(
 				{ eventName: FluidCacheErrorEvent.FluidCachePutError, pkgVersion },
 				error,
 			);
-			this.throwIfDisposed();
 		} finally {
 			this.closeDb(db);
 		}
@@ -782,13 +781,14 @@ export class FluidCache implements IPersistedCache {
 			this.throwIfDisposed();
 			wrote = true;
 		} catch (error: any) {
-			// Log the original IDB error before potentially throwing `UsageError` so
-			// the diagnostic survives the dispose-race path.
+			// If dispose ran during the operation, surface that as `UsageError`
+			// without logging the dispose race as an IDB put failure. See
+			// `removeEntries` for the rationale on this ordering.
+			this.throwIfDisposed();
 			this.logger.sendErrorEvent(
 				{ eventName: FluidCacheErrorEvent.FluidCachePutError, pkgVersion },
 				error,
 			);
-			this.throwIfDisposed();
 			return false;
 		} finally {
 			this.closeDb(db);

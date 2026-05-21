@@ -873,6 +873,48 @@ for (const immediateClose of [true, false]) {
 
 				await assert.rejects(async () => pending, disposedMatcher);
 			});
+
+			it("get rejected mid-flight closes its IDB connection (no leak)", async function () {
+				// Regression test for a Tier-2 leak: when `closeDbImmediately` is true,
+				// every `get` opens a fresh per-call IDB connection that the cache must
+				// close itself. If the dispose-race catch arm re-throws before `closeDb`
+				// runs, the connection leaks. We detect the leak by attempting to
+				// `deleteDatabase` afterwards — fake-indexeddb fires `blocked` and never
+				// resolves when there are open connections.
+				if (!immediateClose) {
+					this.skip();
+				}
+				const seed = getFluidCache();
+				extraCaches.push(seed);
+				const cacheEntry = getMockCacheEntry("postDisposeGetLeak");
+				await seed.put(cacheEntry, { rev: 1 });
+				seed.dispose();
+				extraCaches.splice(0);
+
+				// Race dispose against a get several times so the leak (if any)
+				// accumulates and blocks deletion.
+				for (let i = 0; i < 5; i++) {
+					const cache = getFluidCache();
+					const pending = cache.get(cacheEntry);
+					cache.dispose();
+					await assert.rejects(async () => pending, disposedMatcher);
+				}
+
+				const deleted = await new Promise<"deleted" | "blocked">((resolve, reject) => {
+					const request = window.indexedDB.deleteDatabase(FluidDriverCacheDBName);
+					request.addEventListener("success", () => resolve("deleted"));
+					request.addEventListener("blocked", () => resolve("blocked"));
+					request.addEventListener("error", () => {
+						const err = request.error ?? new Error("deleteDatabase failed");
+						reject(err);
+					});
+				});
+				assert.strictEqual(
+					deleted,
+					"deleted",
+					"deleteDatabase fired `blocked` — a per-call IDB connection leaked through the dispose-race catch arm",
+				);
+			});
 		});
 
 		describe("putIf staleness", () => {
