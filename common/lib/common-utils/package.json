@@ -11,7 +11,7 @@
 	"license": "MIT",
 	"author": "Microsoft and contributors",
 	"sideEffects": false,
-	"type": "module",
+	"type": "commonjs",
 	"exports": {
 		".": {
 			"node": {
@@ -40,8 +40,8 @@
 			}
 		}
 	},
-	"main": "lib/indexBrowser.js",
-	"types": "lib/indexBrowser.d.ts",
+	"main": "dist/indexBrowser.js",
+	"types": "dist/indexBrowser.d.ts",
 	"scripts": {
 		"build": "fluid-build . --task build",
 		"build:api-reports": "concurrently \"npm:build:api-reports:browser:*\" && concurrently \"npm:build:api-reports:node:*\"",
@@ -52,14 +52,14 @@
 		"build:commonjs": "fluid-build . --task commonjs",
 		"build:compile": "fluid-build . --task compile",
 		"build:docs": "api-extractor run --local --config api-extractor/api-extractor-model-browser.json",
-		"build:esnext": "tsc --project ./tsconfig.json",
+		"build:esnext": "fluid-tsc module --project ./tsconfig.json && copyfiles -f ../../../common/build/build-common/src/esm/package.json ./lib",
 		"build:exports:browser": "flub generate entrypoints --outFileLegacyBeta legacy --outFilePrefix {@unscopedPackageName}.browser. --mainEntrypoint ./src/indexBrowser.ts --outDir ./lib",
 		"build:exports:node": "flub generate entrypoints --outFileLegacyBeta legacy --outFilePrefix {@unscopedPackageName}.node. --mainEntrypoint ./src/indexNode.ts --outDir ./lib",
 		"build:test": "concurrently npm:build:test:mocha npm:build:test:jest npm:build:test:types",
 		"build:test:jest": "fluid-tsc commonjs --project ./src/test/jest/tsconfig.cjs.json",
 		"build:test:mocha": "concurrently npm:build:test:mocha:esm npm:build:test:mocha:cjs",
 		"build:test:mocha:cjs": "fluid-tsc commonjs --project ./src/test/mocha/tsconfig.cjs.json",
-		"build:test:mocha:esm": "tsc --project ./src/test/mocha/tsconfig.json",
+		"build:test:mocha:esm": "fluid-tsc module --project ./src/test/mocha/tsconfig.json",
 		"build:test:types": "tsc --project ./src/test/types/tsconfig.json",
 		"check:are-the-types-wrong": "attw --pack . --exclude-entrypoints ./internal-api-report/current ./internal-api-report/legacy",
 		"check:exports": "concurrently \"npm:check:exports:*\"",
@@ -95,7 +95,7 @@
 		"test:mocha": "npm run test:mocha:esm && npm run test:mocha:cjs",
 		"test:mocha:cjs": "cross-env FLUID_TEST_MODULE_SYSTEM=CJS \"MOCHA_SPEC=dist/test/mocha/**/*.spec.*js\" mocha",
 		"test:mocha:esm": "cross-env \"MOCHA_SPEC=lib/test/mocha/**/*.spec.*js\" mocha",
-		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ../../../common/build/build-common/src/cjs/package.json ./dist",
+		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json",
 		"typetests:gen": "flub generate typetests --dir . -v"
 	},
 	"c8": {

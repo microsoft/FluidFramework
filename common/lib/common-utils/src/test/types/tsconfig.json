@@ -3,7 +3,7 @@
 	"exclude": ["dist", "node_modules"],
 	"compilerOptions": {
 		"rootDir": "./",
-		"outDir": "../../../lib/test/types",
+		"outDir": "../../../dist/test/types",
 	},
 	"include": ["./**/*"],
 	"references": [
