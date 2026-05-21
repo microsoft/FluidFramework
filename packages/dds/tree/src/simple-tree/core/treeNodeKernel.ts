@@ -556,7 +556,10 @@ class KernelEventBuffer implements Listenable<KernelEvents> {
 		}
 
 		this.#events.on(eventName, listener);
-		return () => this.off(eventName, listener);
+		// Return a bound method instead of an arrow closure. A bound function captures
+		// (target, thisArg, ...boundArgs) in a fixed shape that V8 can optimize more
+		// uniformly than a closure that captures its lexical context.
+		return this.off.bind(this, eventName, listener);
 	}
 
 	public off(eventName: keyof KernelEvents, listener: KernelEvents[typeof eventName]): void {
