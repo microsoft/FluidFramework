@@ -120,9 +120,11 @@ export class TreeNodeKernel {
 	#hydrationState: HydrationState;
 
 	/**
-	 * Events registered before hydration.
+	 * Handler for events listeners registered with the kernel.
 	 *
 	 * @remarks
+	 * Supports event buffering via {@link withBufferedEvents}.
+	 *
 	 * Allocated lazily on first access to {@link TreeNodeKernel.events}.
 	 * We expect the majority of nodes to never have event listeners registered, so
 	 * deferring construction avoids per-kernel allocations.
@@ -547,6 +549,7 @@ class KernelEventBuffer implements Listenable<KernelEvents> {
 
 	public on(eventName: keyof KernelEvents, listener: KernelEvents[typeof eventName]): Off {
 		assert(!this.#disposed, "Cannot register events on a disposed node");
+
 		// Lazily bind event listeners to the source.
 		// If we do not have any existing listeners for this event, then we need to bind to the source.
 		if (!this.#events.hasListeners(eventName)) {
