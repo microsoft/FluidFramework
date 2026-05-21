@@ -60,253 +60,214 @@ describe("Tree event benchmarks", () => {
 		inner: Inner;
 	} => ({ a: 0, b: 0, c: "", inner: new Inner({ x: 0, y: 0 }) });
 
-	// #region Registration (sub + unsub round-trip) — CPU
-
-	describeHydration("Tree.on subscribe + unsubscribe round-trip", (init) => {
-		interface Scenario {
-			readonly title: string;
-			readonly makeNode: () => TreeNode;
-		}
-		const scenarios: readonly Scenario[] = [
-			{
-				title: "object",
-				makeNode: () => init(ObjectRoot, createObjectRootContent()),
-			},
-			{
-				title: "array",
-				makeNode: () => init(NumberArray, [0, 1, 2, 3, 4]),
-			},
-			{
-				title: "map",
-				makeNode: () => init(StringMap, new Map([["k0", "v0"]])),
-			},
-		];
-
-		for (const { title, makeNode } of scenarios) {
-			for (const eventName of ["nodeChanged", "treeChanged"] as const) {
-				const listener = eventName === "nodeChanged" ? noopNodeChanged : noopTreeChanged;
-				benchmarkIt({
-					type: BenchmarkType.Measurement,
-					title: `${title} ${eventName}`,
-					...benchmarkDuration({
-						benchmarkFnCustom: async (state) => {
-							const node = makeNode();
-							state.timeAllBatches(() => {
-								const off = Tree.on(node, eventName, listener);
-								off();
-							});
-						},
-					}),
-				});
+	describe("Runtime", () => {
+		describeHydration("Tree.on subscribe + unsubscribe round-trip", (init) => {
+			interface Scenario {
+				readonly title: string;
+				readonly makeNode: () => TreeNode;
 			}
-		}
-	});
+			const scenarios: readonly Scenario[] = [
+				{
+					title: "object",
+					makeNode: () => init(ObjectRoot, createObjectRootContent()),
+				},
+				{
+					title: "array",
+					makeNode: () => init(NumberArray, [0, 1, 2, 3, 4]),
+				},
+				{
+					title: "map",
+					makeNode: () => init(StringMap, new Map([["k0", "v0"]])),
+				},
+			];
 
-	// #endregion
+			for (const { title, makeNode } of scenarios) {
+				for (const eventName of ["nodeChanged", "treeChanged"] as const) {
+					const listener = eventName === "nodeChanged" ? noopNodeChanged : noopTreeChanged;
+					benchmarkIt({
+						type: BenchmarkType.Measurement,
+						title: `${title} ${eventName}`,
+						...benchmarkDuration({
+							benchmarkFnCustom: async (state) => {
+								const node = makeNode();
+								state.timeAllBatches(() => {
+									const off = Tree.on(node, eventName, listener);
+									off();
+								});
+							},
+						}),
+					});
+				}
+			}
+		});
 
-	// First-listener vs N-th listener cost (object nodeChanged)
-	describeHydration("Tree.on N-th listener cost (object nodeChanged)", (init) => {
-		for (const preexisting of [0, 1, 10, 100]) {
-			benchmarkIt({
-				type: BenchmarkType.Measurement,
-				title: `with ${preexisting} pre-existing listeners`,
-				...benchmarkDuration({
-					benchmarkFnCustom: async (state) => {
-						const node = init(ObjectRoot, createObjectRootContent());
-						// Pre-attach listeners (each call uses a unique listener since
-						// Tree.on's internal wrapper deduplicates by identity).
-						const preOffs: Off[] = [];
-						for (let i = 0; i < preexisting; i++) {
-							preOffs.push(Tree.on(node, "nodeChanged", () => {}));
-						}
-						state.timeAllBatches(() => {
-							const off = Tree.on(node, "nodeChanged", noopNodeChanged);
-							off();
-						});
-						for (const off of preOffs) off();
-					},
-				}),
-			});
-		}
-	});
-
-	// Bulk N subscribes then N unsubscribes — measures amortized per-call cost
-	// without the unsubscribe being interleaved between subscribes.
-	describeHydration(
-		"Tree.on bulk subscribe + bulk unsubscribe (object nodeChanged)",
-		(init) => {
-			for (const n of [1, 10, 100]) {
+		// First-listener vs N-th listener cost (object nodeChanged)
+		describeHydration("Tree.on N-th listener cost (object nodeChanged)", (init) => {
+			for (const preexisting of [0, 1, 10, 100]) {
 				benchmarkIt({
 					type: BenchmarkType.Measurement,
-					title: `${n} subscribes + ${n} unsubscribes`,
+					title: `with ${preexisting} pre-existing listeners`,
 					...benchmarkDuration({
 						benchmarkFnCustom: async (state) => {
 							const node = init(ObjectRoot, createObjectRootContent());
-							const offs: Off[] = Array.from({ length: n });
+							// Pre-attach listeners (each call uses a unique listener since
+							// Tree.on's internal wrapper deduplicates by identity).
+							const preOffs: Off[] = [];
+							for (let i = 0; i < preexisting; i++) {
+								preOffs.push(Tree.on(node, "nodeChanged", () => {}));
+							}
 							state.timeAllBatches(() => {
-								for (let i = 0; i < n; i++) {
-									offs[i] = Tree.on(node, "nodeChanged", noopNodeChanged);
-								}
-								for (let i = 0; i < n; i++) {
-									offs[i]();
-								}
+								const off = Tree.on(node, "nodeChanged", noopNodeChanged);
+								off();
+							});
+							for (const off of preOffs) off();
+						},
+					}),
+				});
+			}
+		});
+
+		// Bulk N subscribes then N unsubscribes — measures amortized per-call cost
+		// without the unsubscribe being interleaved between subscribes.
+		describeHydration(
+			"Tree.on bulk subscribe + bulk unsubscribe (object nodeChanged)",
+			(init) => {
+				for (const n of [1, 10, 100]) {
+					benchmarkIt({
+						type: BenchmarkType.Measurement,
+						title: `${n} subscribes + ${n} unsubscribes`,
+						...benchmarkDuration({
+							benchmarkFnCustom: async (state) => {
+								const node = init(ObjectRoot, createObjectRootContent());
+								const offs: Off[] = Array.from({ length: n });
+								state.timeAllBatches(() => {
+									for (let i = 0; i < n; i++) {
+										offs[i] = Tree.on(node, "nodeChanged", noopNodeChanged);
+									}
+									for (let i = 0; i < n; i++) {
+										offs[i]();
+									}
+								});
+							},
+						}),
+					});
+				}
+			},
+		);
+
+		describe("Kernel construction (unhydrated object node)", () => {
+			benchmarkIt({
+				type: BenchmarkType.Measurement,
+				title: "new ObjectRoot() x 1",
+				...benchmarkDuration({
+					benchmarkFnCustom: async (state) => {
+						state.timeAllBatches(() => {
+							const node = new ObjectRoot({
+								a: 0,
+								b: 0,
+								c: "",
+								inner: new Inner({ x: 0, y: 0 }),
+							});
+							assert(node !== undefined);
+						});
+					},
+				}),
+			});
+
+			for (const n of [100, 1000]) {
+				benchmarkIt({
+					type: BenchmarkType.Measurement,
+					title: `new NumberArray with ${n} elements`,
+					...benchmarkDuration({
+						benchmarkFnCustom: async (state) => {
+							const seed: number[] = Array.from<number>({ length: n }).fill(0);
+							state.timeAllBatches(() => {
+								const node = new NumberArray(seed);
+								assert(node.length === n);
 							});
 						},
 					}),
 				});
 			}
-		},
-	);
-
-	describe("Kernel construction (unhydrated object node)", () => {
-		benchmarkIt({
-			type: BenchmarkType.Measurement,
-			title: "new ObjectRoot() x 1",
-			...benchmarkDuration({
-				benchmarkFnCustom: async (state) => {
-					state.timeAllBatches(() => {
-						const node = new ObjectRoot({
-							a: 0,
-							b: 0,
-							c: "",
-							inner: new Inner({ x: 0, y: 0 }),
-						});
-						assert(node !== undefined);
-					});
-				},
-			}),
 		});
 
-		for (const n of [100, 1000]) {
-			benchmarkIt({
-				type: BenchmarkType.Measurement,
-				title: `new NumberArray with ${n} elements`,
-				...benchmarkDuration({
-					benchmarkFnCustom: async (state) => {
-						const seed: number[] = Array.from<number>({ length: n }).fill(0);
-						state.timeAllBatches(() => {
-							const node = new NumberArray(seed);
-							assert(node.length === n);
-						});
-					},
-				}),
-			});
-		}
-	});
-
-	describeHydration("Tree.on emission cost (object nodeChanged)", (init) => {
-		for (const numListeners of [1, 10, 100]) {
-			benchmarkIt({
-				type: BenchmarkType.Measurement,
-				title: `emit with ${numListeners} listeners`,
-				...benchmarkDuration({
-					benchmarkFnCustom: async (state) => {
-						const node = init(ObjectRoot, createObjectRootContent());
-						const offs: Off[] = [];
-						for (let i = 0; i < numListeners; i++) {
-							offs.push(Tree.on(node, "nodeChanged", () => {}));
-						}
-						state.timeAllBatches(() => {
-							node.a = node.a + 1;
-						});
-						for (const off of offs) {
-							off();
-						}
-					},
-				}),
-			});
-		}
-	});
-
-	describeHydration("Tree.on emission cost (object treeChanged, subtree edit)", (init) => {
-		for (const numListeners of [1, 10, 100]) {
-			benchmarkIt({
-				type: BenchmarkType.Measurement,
-				title: `emit with ${numListeners} listeners`,
-				...benchmarkDuration({
-					benchmarkFnCustom: async (state) => {
-						const node = init(ObjectRoot, createObjectRootContent());
-						const offs: Off[] = [];
-						for (let i = 0; i < numListeners; i++) {
-							offs.push(Tree.on(node, "treeChanged", () => {}));
-						}
-						state.timeAllBatches(() => {
-							node.inner.x = node.inner.x + 1;
-						});
-						for (const off of offs) {
-							off();
-						}
-					},
-				}),
-			});
-		}
-	});
-
-	// -------------------------------------------------------------------------
-	// Memory benchmarks
-	//
-	// Only unhydrated benchmarks are included: hydrated trees would dominate the
-	// measurement with the cost of building a full SharedTree per iteration
-	// (~80 KiB and tens of seconds per iteration in practice). Per-node and
-	// per-subscription allocations can be observed clearly on unhydrated nodes,
-	// which is what proposals A, C, and H primarily affect.
-	// -------------------------------------------------------------------------
-
-	describe("Memory: unhydrated kernel construction", () => {
-		for (const n of [100, 1000]) {
-			benchmarkIt({
-				type: BenchmarkType.Measurement,
-				title: `${n} unhydrated ObjectRoot instances`,
-				...benchmarkMemoryUse({
-					...iterationSettings,
-					...memoryAddedBy({
-						setup: () => ({ nodes: [] as ObjectRoot[] }),
-						modify: (state) => {
-							for (let i = 0; i < n; i++) {
-								state.nodes.push(
-									new ObjectRoot({
-										a: 0,
-										b: 0,
-										c: "",
-										inner: new Inner({ x: 0, y: 0 }),
-									}),
-								);
+		describeHydration("Tree.on emission cost (object nodeChanged)", (init) => {
+			for (const numListeners of [1, 10, 100]) {
+				benchmarkIt({
+					type: BenchmarkType.Measurement,
+					title: `emit with ${numListeners} listeners`,
+					...benchmarkDuration({
+						benchmarkFnCustom: async (state) => {
+							const node = init(ObjectRoot, createObjectRootContent());
+							const offs: Off[] = [];
+							for (let i = 0; i < numListeners; i++) {
+								offs.push(Tree.on(node, "nodeChanged", () => {}));
+							}
+							state.timeAllBatches(() => {
+								node.a = node.a + 1;
+							});
+							for (const off of offs) {
+								off();
 							}
 						},
-						after: (state) => {
-							state.nodes.length = 0;
-						},
 					}),
-				}),
-			});
-		}
-	});
+				});
+			}
+		});
 
-	describe("Memory: per-subscription retained allocations (unhydrated object)", () => {
-		for (const eventName of ["nodeChanged", "treeChanged"] as const) {
-			benchmarkIt({
-				type: BenchmarkType.Measurement,
-				title: `${eventName} x 100`,
-				...benchmarkMemoryUse({
-					...iterationSettings,
-					...memoryAddedBy({
-						setup: () => {
-							const node = createUnhydratedObject();
-							return { node, offs: [] as Off[] };
-						},
-						modify: (state) => {
-							const listener = eventName === "nodeChanged" ? noopNodeChanged : noopTreeChanged;
-							for (let i = 0; i < 100; i++) {
-								state.offs.push(Tree.on(state.node, eventName, listener));
+		describeHydration("Tree.on emission cost (object treeChanged, subtree edit)", (init) => {
+			for (const numListeners of [1, 10, 100]) {
+				benchmarkIt({
+					type: BenchmarkType.Measurement,
+					title: `emit with ${numListeners} listeners`,
+					...benchmarkDuration({
+						benchmarkFnCustom: async (state) => {
+							const node = init(ObjectRoot, createObjectRootContent());
+							const offs: Off[] = [];
+							for (let i = 0; i < numListeners; i++) {
+								offs.push(Tree.on(node, "treeChanged", () => {}));
+							}
+							state.timeAllBatches(() => {
+								node.inner.x = node.inner.x + 1;
+							});
+							for (const off of offs) {
+								off();
 							}
 						},
-						after: (state) => {
-							for (const off of state.offs) off();
-							state.offs.length = 0;
-						},
 					}),
-				}),
-			});
-		}
+				});
+			}
+		});
+	});
+
+	describe("Memory", () => {
+		describe("Per-subscription retained allocations (unhydrated object)", () => {
+			for (const eventName of ["nodeChanged", "treeChanged"] as const) {
+				benchmarkIt({
+					type: BenchmarkType.Measurement,
+					title: `${eventName} x 100`,
+					...benchmarkMemoryUse({
+						...iterationSettings,
+						...memoryAddedBy({
+							setup: () => {
+								const node = createUnhydratedObject();
+								return { node, offs: [] as Off[] };
+							},
+							modify: (state) => {
+								const listener =
+									eventName === "nodeChanged" ? noopNodeChanged : noopTreeChanged;
+								for (let i = 0; i < 100; i++) {
+									state.offs.push(Tree.on(state.node, eventName, listener));
+								}
+							},
+							after: (state) => {
+								for (const off of state.offs) off();
+								state.offs.length = 0;
+							},
+						}),
+					}),
+				});
+			}
+		});
 	});
 });
