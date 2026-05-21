@@ -8,7 +8,7 @@ import type { MinimumVersionForCollab } from "@fluidframework/runtime-definition
 import { lowestMinVersionForCollab } from "@fluidframework/runtime-utils/internal";
 
 import {
-	ClientVersionDispatchingCodecBuilder,
+	VersionDispatchingCodecBuilder,
 	type CodecTree,
 	type CodecVersion,
 	type DependentFormatVersion,
@@ -58,9 +58,9 @@ interface MessageCodecBuilderOptions<TChangeset> extends ICodecOptions {
 }
 
 /**
- * Creates a {@link ClientVersionDispatchingCodecBuilder} for encoding/decoding messages.
+ * Creates a {@link VersionDispatchingCodecBuilder} for encoding/decoding messages.
  */
-export function makeMessageCodecBuilder<TChangeset>(): ClientVersionDispatchingCodecBuilder<
+export function makeMessageCodecBuilder<TChangeset>(): VersionDispatchingCodecBuilder<
 	MessageCodecBuilderOptions<TChangeset>,
 	DecodedMessage<TChangeset>,
 	MessageEncodingContext,
@@ -129,7 +129,7 @@ export function makeMessageCodecBuilder<TChangeset>(): ClientVersionDispatchingC
 		},
 	];
 
-	return ClientVersionDispatchingCodecBuilder.build(messageCodecName, versions);
+	return VersionDispatchingCodecBuilder.build(messageCodecName, versions);
 }
 
 export function getCodecTreeForMessageFormatWithChange(

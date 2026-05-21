@@ -40,8 +40,7 @@ trigger:
   branches:
     include:
     - main
-    - next
-    - lts
+    - release/*
   paths:
     include:
     - .prettierignore
@@ -65,8 +64,6 @@ pr:
   branches:
     include:
     - main
-    - next
-    - lts
     - release/*
   paths:
     include:

@@ -28,11 +28,17 @@ It is very useful to test changes in build-tools against the client release grou
 build-tools is limited, and manually testing locally with the client will expose obvious things like broken incremental
 builds, etc.
 
-The easiest way to test build-tools in client is to use pnpm overrides. You can use the following command from the root of the repo to update the
-root package.json and lockfile to link to the local version of build-tools:
+The easiest way to test build-tools in client is to use pnpm overrides. Add the following entries under the `overrides:`
+key in the repo root's `pnpm-workspace.yaml`, then refresh the lockfile:
+
+```yaml
+overrides:
+  # ... existing entries ...
+  "@fluidframework/build-tools": "link:./build-tools/packages/build-tools"
+  "@fluid-tools/build-cli": "link:./build-tools/packages/build-cli"
+```
 
 ```
-npm pkg set pnpm.overrides.@fluidframework/build-tools=link:./build-tools/packages/build-tools pnpm.overrides.@fluid-tools/build-cli=link:./build-tools/packages/build-cli
 pnpm i --no-frozen-lockfile
 ```
 

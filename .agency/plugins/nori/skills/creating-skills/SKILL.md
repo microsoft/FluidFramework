@@ -1,5 +1,5 @@
 ---
-name: Creating-Skills
+name: creating-skills
 description: Use when you need to create a new custom skill for a profile - guides through gathering requirements, creating directory structure, writing SKILL.md, and optionally adding bundled scripts
 ---
 

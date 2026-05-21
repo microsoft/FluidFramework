@@ -1,5 +1,5 @@
 ---
-name: Taking and Analyzing Screenshots
+name: using-screenshots
 description: Use this to capture screen context.
 ---
 
