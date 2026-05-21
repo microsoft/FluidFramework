@@ -245,7 +245,7 @@ describe("Tree event benchmarks", () => {
 			for (const eventName of ["nodeChanged", "treeChanged"] as const) {
 				benchmarkIt({
 					type: BenchmarkType.Measurement,
-					title: `${eventName} x 100`,
+					title: `${eventName} x 50`,
 					...benchmarkMemoryUse({
 						...iterationSettings,
 						...memoryAddedBy({
@@ -256,7 +256,7 @@ describe("Tree event benchmarks", () => {
 							modify: (state) => {
 								const listener =
 									eventName === "nodeChanged" ? noopNodeChanged : noopTreeChanged;
-								for (let i = 0; i < 100; i++) {
+								for (let i = 0; i < 50; i++) {
 									state.offs.push(Tree.on(state.node, eventName, listener));
 								}
 							},
