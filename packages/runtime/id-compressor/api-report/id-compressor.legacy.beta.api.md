@@ -32,7 +32,7 @@ export interface IdCreationRange {
     readonly sessionId: SessionId;
 }
 
-// @public
+// @public @sealed
 export interface IIdCompressor {
     decompress(id: SessionSpaceCompressedId): StableId;
     generateCompressedId(): SessionSpaceCompressedId;
