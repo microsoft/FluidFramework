@@ -16,9 +16,7 @@ import { describeHydration } from "../utils.js";
 describe("Tree node API benchmarks", () => {
 	configureBenchmarkHooks();
 
-	/**
-	 * Benchmark suite for `Tree.on` event registration and emission.
-	 */
+	// Benchmark suite for `Tree.on` event registration and emission.
 	describe("Tree event benchmarks", () => {
 		const factory = new SchemaFactory("treeEvents.bench");
 
@@ -38,13 +36,13 @@ describe("Tree node API benchmarks", () => {
 		const createUnhydratedObject = (): ObjectRoot =>
 			new ObjectRoot({ a: 0, b: 0, c: "", inner: new Inner({ x: 0, y: 0 }) });
 
-		// A no-op listener that is shared across iterations so that we don't measure
-		// listener-creation cost.
+		// No-op listeners that are shared across iterations so that we don't measure listener-creation cost.
 		const noopNodeChanged = (): void => {};
 		const noopTreeChanged = (): void => {};
 
-		// Canonical insertable shape for `ObjectRoot` used by most CPU benchmarks
-		// below.
+		/**
+		 * Canonical insertable shape for `ObjectRoot` used by most runtime benchmarks below.
+		 */
 		const createObjectRootContent = (): {
 			a: number;
 			b: number;
@@ -102,8 +100,6 @@ describe("Tree node API benchmarks", () => {
 						...benchmarkDuration({
 							benchmarkFnCustom: async (state) => {
 								const node = init(ObjectRoot, createObjectRootContent());
-								// Pre-attach listeners (each call uses a unique listener since
-								// Tree.on's internal wrapper deduplicates by identity).
 								const preOffs: Off[] = [];
 								for (let i = 0; i < preexisting; i++) {
 									preOffs.push(Tree.on(node, "nodeChanged", () => {}));
