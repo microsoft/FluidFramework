@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "node:assert";
-
 import { BenchmarkType, benchmarkDuration, benchmarkIt } from "@fluid-tools/benchmark";
 import type { Off } from "@fluidframework/core-interfaces";
 
@@ -88,7 +86,6 @@ describe("Tree node API benchmarks", () => {
 				}
 			});
 
-			// First-listener vs N-th listener cost (object nodeChanged)
 			describeHydration("Tree.on N-th listener cost (object nodeChanged)", (init) => {
 				for (const preexisting of [0, 1, 10, 100]) {
 					benchmarkIt({
@@ -114,8 +111,6 @@ describe("Tree node API benchmarks", () => {
 				}
 			});
 
-			// Bulk N subscribes then N unsubscribes — measures amortized per-call cost
-			// without the unsubscribe being interleaved between subscribes.
 			describeHydration(
 				"Tree.on bulk subscribe + bulk unsubscribe (object nodeChanged)",
 				(init) => {
@@ -141,42 +136,6 @@ describe("Tree node API benchmarks", () => {
 					}
 				},
 			);
-
-			describe("Kernel construction (unhydrated object node)", () => {
-				benchmarkIt({
-					type: BenchmarkType.Measurement,
-					title: "new ObjectRoot() x 1",
-					...benchmarkDuration({
-						benchmarkFnCustom: async (state) => {
-							state.timeAllBatches(() => {
-								const node = new ObjectRoot({
-									a: 0,
-									b: 0,
-									c: "",
-									inner: new Inner({ x: 0, y: 0 }),
-								});
-								assert(node !== undefined);
-							});
-						},
-					}),
-				});
-
-				for (const n of [100, 1000]) {
-					benchmarkIt({
-						type: BenchmarkType.Measurement,
-						title: `new NumberArray with ${n} elements`,
-						...benchmarkDuration({
-							benchmarkFnCustom: async (state) => {
-								const seed: number[] = Array.from<number>({ length: n }).fill(0);
-								state.timeAllBatches(() => {
-									const node = new NumberArray(seed);
-									assert(node.length === n);
-								});
-							},
-						}),
-					});
-				}
-			});
 
 			describeHydration("Tree.on emission cost (object nodeChanged)", (init) => {
 				for (const listenerCount of [1, 10, 100]) {
