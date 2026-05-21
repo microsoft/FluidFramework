@@ -12,7 +12,7 @@ import { IsoBuffer } from "./bufferNode.js";
  * Converts the provided {@link https://en.wikipedia.org/wiki/Base64 | base64}-encoded string
  * to {@link https://en.wikipedia.org/wiki/UTF-8 | utf-8}.
  *
- * @deprecated Moved to the `@fluidframework-internal/client-utils` package.
+ * @deprecated Moved to the `@fluid-internal/client-utils` package.
  * @internal
  */
 export const fromBase64ToUtf8 = (input: string): string =>
@@ -22,7 +22,7 @@ export const fromBase64ToUtf8 = (input: string): string =>
  * Converts the provided {@link https://en.wikipedia.org/wiki/UTF-8 | utf-8}-encoded string
  * to {@link https://en.wikipedia.org/wiki/Base64 | base64}.
  *
- * @deprecated Moved to the `@fluidframework-internal/client-utils` package.
+ * @deprecated Moved to the `@fluid-internal/client-utils` package.
  * @internal
  */
 export const fromUtf8ToBase64 = (input: string): string =>
@@ -34,7 +34,7 @@ export const fromUtf8ToBase64 = (input: string): string =>
  * @param input - The source string to convert.
  * @param encoding - The source string's encoding.
  *
- * @deprecated Moved to the `@fluidframework-internal/client-utils` package.
+ * @deprecated Moved to the `@fluid-internal/client-utils` package.
  * @internal
  */
 export const toUtf8 = (input: string, encoding: string): string => {

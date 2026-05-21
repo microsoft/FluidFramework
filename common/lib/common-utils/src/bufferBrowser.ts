@@ -14,7 +14,7 @@ import * as base64js from "base64-js";
  * supported, with "utf8" being default.
  * @returns The converted string.
  *
- * @deprecated Moved to the `@fluidframework-internal/client-utils` package.
+ * @deprecated Moved to the `@fluid-internal/client-utils` package.
  * @internal
  */
 export function Uint8ArrayToString(arr: Uint8Array, encoding?: string): string {
@@ -39,7 +39,7 @@ export function Uint8ArrayToString(arr: Uint8Array, encoding?: string): string {
  *
  * @param encoding - The input string's encoding.
  *
- * @deprecated Moved to the `@fluidframework-internal/client-utils` package.
+ * @deprecated Moved to the `@fluid-internal/client-utils` package.
  * @internal
  */
 export const stringToBuffer = (input: string, encoding: string): ArrayBufferLike =>
@@ -52,7 +52,7 @@ export const stringToBuffer = (input: string, encoding: string): ArrayBufferLike
  * @param encoding - output string's encoding
  * @returns the blob in string format
  *
- * @deprecated Moved to the `@fluidframework-internal/client-utils` package.
+ * @deprecated Moved to the `@fluid-internal/client-utils` package.
  * @internal
  */
 export const bufferToString = (blob: ArrayBufferLike, encoding: string): string =>
@@ -70,7 +70,7 @@ export const bufferToString = (blob: ArrayBufferLike, encoding: string): string 
  *
  * @param obj - The object to determine if it is an ArrayBuffer.
  *
- * @deprecated Moved to the `@fluidframework-internal/client-utils` package.
+ * @deprecated Moved to the `@fluid-internal/client-utils` package.
  * @internal
  */
 export function isArrayBuffer(obj: any): obj is ArrayBuffer {
@@ -89,7 +89,7 @@ export function isArrayBuffer(obj: any): obj is ArrayBuffer {
 /**
  * Minimal implementation of Buffer for our usages in the browser environment.
  *
- * @deprecated Moved to the `@fluidframework-internal/client-utils` package.
+ * @deprecated Moved to the `@fluid-internal/client-utils` package.
  * @internal
  */
 export class IsoBuffer extends Uint8Array {

@@ -18,7 +18,7 @@ import type { IsoBuffer } from "./bufferNode.js";
  * @param hashEncoding - The encoding of the returned hash, also artificially constrained.
  * @returns The hash of the content of the buffer.
  *
- * @deprecated Moved to the `@fluidframework-internal/client-utils` package.
+ * @deprecated Moved to the `@fluid-internal/client-utils` package.
  * @internal
  */
 export async function hashFile(
@@ -48,7 +48,7 @@ export async function hashFile(
  * @param file - The contents of the file in a buffer
  * @returns The sha1 hash of the content of the buffer with the `blob` prefix and size
  *
- * @deprecated Moved to the `@fluidframework-internal/client-utils` package.
+ * @deprecated Moved to the `@fluid-internal/client-utils` package.
  * @internal
  */
 export async function gitHashFile(file: IsoBuffer): Promise<string> {
