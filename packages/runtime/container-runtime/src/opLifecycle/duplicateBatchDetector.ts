@@ -14,10 +14,8 @@ import type { BatchStartInfo } from "./remoteMessageProcessor.js";
  * to help diagnose where the duplicate came from.
  *
  * @remarks `batchIdExplicit` distinguishes the two main duplicate-source scenarios:
- * - `true`: the batchId was stamped on the wire as explicit metadata, indicating a resubmit
- *   (PendingStateManager.replayPendingStates).
- * - `false`: the batchId was derived from the wire `clientId` and `batchStartCsn`, indicating a
- *   fresh, non-resubmit batch.
+ * - `true`: the batchId was stamped on the wire as explicit metadata, indicating a resubmit (PendingStateManager.replayPendingStates).
+ * - `false`: the batchId was derived from the wire `clientId` and `batchStartCsn`, indicating a fresh, non-resubmit batch.
  */
 export interface RecordedBatchInfo {
 	/**
