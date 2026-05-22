@@ -158,6 +158,18 @@ stages:
             packageManagerInstallCommand: pnpm install
             primaryRegistry: $(ado-feeds-ff-download-only)
 
+        # Pre-build test-version-utils so its CommonJS sibling (dist/compatOptions.js) exists when
+        # mocha loads .mocharc.cjs -> test-version-utils/mocharc-common.cjs at test time.
+        # TODO: remove once mocharc-common.cjs no longer requires its own CJS sibling at runtime.
+        - task: Bash@3
+          displayName: Pre-build test-version-utils CommonJS (perf-pipeline temp workaround)
+          inputs:
+            targetType: 'inline'
+            workingDirectory: $(Pipeline.Workspace)/$(FluidFrameworkDirectory)
+            script: |
+              set -eu -o pipefail
+              pnpm exec fluid-build packages/test/test-version-utils --task compile --worker
+
         # Build the workspace so compiled test code is available for benchmarks
         - task: Bash@3
           displayName: Build workspace
