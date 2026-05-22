@@ -100,6 +100,26 @@ export async function getDataStoreEntryPointBackCompat<T>(dataStore: IDataStore)
 }
 
 /**
+ * Calls `container.getPendingLocalState()` and asserts the method is implemented.
+ *
+ * @remarks
+ * `getPendingLocalState` is currently optional on `IContainer` for forward-compat with external
+ * implementers; the first-party `Container` always implements it. This helper centralises the
+ * existence check so test code does not duplicate `assert(... !== undefined, ...)` at every
+ * callsite. Once `getPendingLocalState` becomes required on `IContainer` this helper can be
+ * removed in favour of a direct call.
+ *
+ * @internal
+ */
+export async function getRequiredPendingLocalState(container: IContainer): Promise<string> {
+	assert(
+		container.getPendingLocalState !== undefined,
+		"IContainer.getPendingLocalState is not implemented by this container",
+	);
+	return container.getPendingLocalState();
+}
+
+/**
  * Casts a delta manager to its full interface type with inbound/outbound queues.
  *
  * @internal
