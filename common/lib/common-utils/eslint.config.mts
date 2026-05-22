@@ -19,7 +19,7 @@ const config: Linter.Config[] = [
 				project: [
 					"./tsconfig.json",
 					"./src/test/mocha/tsconfig.json",
-					"./src/test/jest/tsconfig.cjs.json",
+					"./src/test/jest/tsconfig.json",
 					"./src/test/types/tsconfig.json",
 				],
 			},

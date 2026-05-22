@@ -2,7 +2,7 @@
 	"extends": "../../../common/build/build-common/tsconfig.node16.json",
 	"compilerOptions": {
 		"rootDir": "./src",
-		"outDir": "./lib",
+		"outDir": "./dist",
 		// This package is deprecated; relax the stricter semver-ts checks rather than rewrite the source.
 		"exactOptionalPropertyTypes": false,
 		"noUncheckedIndexedAccess": false,
