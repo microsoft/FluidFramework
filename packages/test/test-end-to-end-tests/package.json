@@ -148,12 +148,13 @@
 		"typescript": "~5.4.5"
 	},
 	"fluidBuild": {
-		"_tasks_comment": "test-driver-definitions CJS build is required for ESM builds as test-driver-definitions is globally imported via TypeScript \"types\" module which only resolves CJS types (at least as of TS 5.4).",
+		"_tasks_comment": "test-driver-definitions CJS build is required for ESM builds as test-driver-definitions is globally imported via TypeScript \"types\" module which only resolves CJS types (at least as of TS 5.4). test-version-utils CJS build is required because mocharc-common.cjs requires ./dist/compatOptions.js which is produced by its tsc task.",
 		"tasks": {
 			"build:test:esm": [
 				"^build:esnext",
 				"build:genver",
-				"@fluid-internal/test-driver-definitions#tsc"
+				"@fluid-internal/test-driver-definitions#tsc",
+				"@fluid-private/test-version-utils#tsc"
 			]
 		}
 	},
