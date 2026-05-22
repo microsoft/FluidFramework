@@ -8,8 +8,8 @@ import { existsSync } from "node:fs";
 import { mkdir, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { afterEach, beforeEach } from "mocha";
-import { globFn, globWithGitignore, toPosixPath } from "../fluidBuild/tasks/taskUtils";
-import { testDataPath } from "./init";
+import { globFn, globWithGitignore, toPosixPath } from "../fluidBuild/tasks/taskUtils.js";
+import { testDataPath } from "./init.js";
 
 const globTestDataPath = path.resolve(testDataPath, "glob");
 

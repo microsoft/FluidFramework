@@ -5,12 +5,11 @@
 
 # The alpine base image is pulled from public Docker Hub by default so local builds and external
 # contributors get the canonical upstream image. Our CI pipeline overrides BASE_IMAGE_REGISTRY (via
-# additionalBuildArguments in tools/pipelines/server-gitssh.yml) to point at Microsoft Container
-# Registry's Docker Hub mirror, because 1ES network isolation policies (CfsClean/CfsClean2) block
-# egress to registry-1.docker.io from our build pool. The mirror is byte-for-byte identical to
-# docker.io/library, so the same manifest digest pin resolves correctly against either registry.
-# MCR's mirror is frozen at alpine 3.16; mirroring a supported alpine into our internal ACR is a
-# follow-up tracked by AB#73353.
+# additionalBuildArguments in tools/pipelines/server-gitssh.yml) to point at our internal mirror,
+# because 1ES network isolation policies (CfsClean/CfsClean2) block egress to registry-1.docker.io
+# from our build pool. The mirror is byte-for-byte identical to docker.io/library, so the same
+# manifest digest pin resolves correctly against either registry. See tools/pipelines/README.md for
+# how to maintain the mirror (upgrades, additions).
 ARG BASE_IMAGE_REGISTRY=docker.io
 FROM ${BASE_IMAGE_REGISTRY}/library/alpine:3.16@sha256:452e7292acee0ee16c332324d7de05fa2c99f9994ecc9f0779c602916a672ae4
 

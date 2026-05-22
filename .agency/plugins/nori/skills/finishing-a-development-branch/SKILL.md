@@ -1,5 +1,5 @@
 ---
-name: Finishing a Development Branch
+name: finishing-a-development-branch
 description: Use this when you have completed some feature implementation and have written passing tests, and you are ready to create a PR.
 ---
 
