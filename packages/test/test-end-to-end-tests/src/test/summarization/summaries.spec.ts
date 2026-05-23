@@ -324,7 +324,8 @@ describeCompat("Summaries", "NoCompat", (getTestObjectProvider, apis) => {
 				"Initial creation of container and data store should succeed.",
 			);
 
-			// Create a summarizer for the container and do a summary shouldn't throw.
+			// Create a summarizer for the container and do a summary.
+			// The DataStore is realized and loaded, but the entryPoint is not fully initialized so it shouldn't throw.
 			const createSummarizerResult = await createSummarizerFromFactory(
 				provider,
 				container1,
@@ -338,7 +339,8 @@ describeCompat("Summaries", "NoCompat", (getTestObjectProvider, apis) => {
 				"Summarizing should not throw",
 			);
 
-			// In summarizer, load the data store should fail.
+			// In summarizer, if we _force_ the data store to fully load, it should fail
+			// based on the test configuration.  This failure is accounted for in itExpects as well.
 			await assert.rejects(
 				async () => {
 					const runtime = (createSummarizerResult.summarizer as any)

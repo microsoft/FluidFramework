@@ -588,7 +588,9 @@ export abstract class FluidDataStoreContext
 					error,
 					"realizeFluidDataStoreContext",
 				);
-				errorWrapped.addTelemetryProperties(dataStoreLoadTelemetryProps(this));
+				errorWrapped.addTelemetryProperties(
+					dataStoreLoadTelemetryProps({ id: this.id, packagePath: this.pkg ?? [] }),
+				);
 				this.mc.logger.sendErrorEvent({ eventName: "RealizeError" }, errorWrapped);
 				throw errorWrapped;
 			});
