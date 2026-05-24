@@ -11,7 +11,7 @@ import {
 } from "@fluidframework/react/internal";
 import { TreeAlpha } from "@fluidframework/tree/internal";
 import type { TextAsTree } from "@fluidframework/tree/internal";
-import Quill from "quill";
+import Quill from "quill-next";
 import { type FC, useEffect, useRef, useState } from "react";
 import * as ReactDOM from "react-dom";
 
