@@ -589,10 +589,6 @@ export class ComposeQueue {
 	private dequeueBase(length: number = Number.POSITIVE_INFINITY): ComposeMarks {
 		const baseMark = this.baseMarks.dequeueUpTo(length);
 		const movedChanges = getMovedChangesFromMark(this.moveEffects, baseMark);
-		if (movedChanges !== undefined) {
-			this.moveEffects.onMoveIn(movedChanges);
-		}
-
 		const newMark = createNoopMark(baseMark.count, movedChanges, getOutputCellId(baseMark));
 		return { baseMark, newMark };
 	}
@@ -668,6 +664,7 @@ function getModifyAfter(
 	const effect = getMoveEffect(moveEffects, target, revision, id, 1);
 
 	if (effect.value?.modifyAfter !== undefined) {
+		moveEffects.onMoveIn(effect.value.modifyAfter);
 		return effect.value.modifyAfter;
 	}
 
