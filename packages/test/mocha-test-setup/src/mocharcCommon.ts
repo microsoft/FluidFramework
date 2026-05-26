@@ -129,9 +129,7 @@ export function getFluidTestMochaConfig(
 			);
 		}
 		const suiteName =
-			reportPrefix !== undefined
-				? `${packageJson.name} - ${reportPrefix}`
-				: packageJson.name;
+			reportPrefix !== undefined ? `${packageJson.name} - ${reportPrefix}` : packageJson.name;
 		config["reporter-options"] = [
 			`configFile=${path.join(
 				currentDir,
