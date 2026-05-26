@@ -182,8 +182,8 @@ importers:
         specifier: ^5.1.1
         version: 5.1.1
       fflate:
-        specifier: ^0.8.2
-        version: 0.8.2
+        specifier: ^0.8.3
+        version: 0.8.3
       fs-extra:
         specifier: ^11.3.2
         version: 11.3.2
@@ -3236,8 +3236,8 @@ packages:
       picomatch:
         optional: true
 
-  fflate@0.8.2:
-    resolution: {integrity: sha512-cPJU47OaAoCbg0pBvzsgpTPhmhqI5eJjh/JIu8tPj5q+T7iLvW/JAYUqmE7KOB4R1ZyEhzBaIQpQpardBF5z8A==}
+  fflate@0.8.3:
+    resolution: {integrity: sha512-tbZNuJrLwGUp3zshBtdy4W+ORxZuIh8a5ilyIEQDC5rY1f3U20JMry0Ll3WBzU58EZKsEuJFXhb5gwv8CsPvgA==}
 
   figures@2.0.0:
     resolution: {integrity: sha512-Oa2M9atig69ZkfwiApY8F2Yy+tzMbazyvqv21R0NsSC8floSOC09BbT1ITWAdoMGQvJ/aZnR1KMwdx9tvHnTNA==}
@@ -6363,7 +6363,7 @@ snapshots:
       date-fns: 3.6.0
       debug: 4.4.3(supports-color@8.1.1)
       execa: 5.1.1
-      fflate: 0.8.2
+      fflate: 0.8.3
       fs-extra: 11.3.2
       github-slugger: 2.0.0
       globby: 11.1.0
@@ -6496,7 +6496,7 @@ snapshots:
   '@fluidframework/bundle-size-tools@0.63.0':
     dependencies:
       azure-devops-node-api: 11.2.0
-      fflate: 0.8.2
+      fflate: 0.8.3
       jszip: 3.10.1
       msgpack-lite: 0.1.26
       typescript: 5.4.5
@@ -8942,7 +8942,7 @@ snapshots:
     optionalDependencies:
       picomatch: 4.0.4
 
-  fflate@0.8.2: {}
+  fflate@0.8.3: {}
 
   figures@2.0.0:
     dependencies:

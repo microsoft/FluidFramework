@@ -9,8 +9,9 @@ import { lowestMinVersionForCollab } from "@fluidframework/runtime-utils/interna
 import type { TSchema } from "@sinclair/typebox";
 
 import {
-	ClientVersionDispatchingCodecBuilder,
+	VersionDispatchingCodecBuilder,
 	type CodecAndSchema,
+	type VersionDispatchingCodec,
 	FluidClientVersion,
 } from "../../../codec/index.js";
 import {
@@ -138,7 +139,11 @@ export interface FieldBatchEncodingContext {
  * @remarks
  * Fields in this batch currently don't have field schema for the root, which limits optimizations.
  */
-export type FieldBatchCodec = ReturnType<typeof fieldBatchCodecBuilder.build>;
+export type FieldBatchCodec = VersionDispatchingCodec<
+	FieldBatch,
+	FieldBatchEncodingContext,
+	FieldBatchFormatVersion
+>;
 
 /**
  * Creates the encode/decode functions for a specific FieldBatch format version.
@@ -231,30 +236,27 @@ function makeFieldBatchCodecForVersion(
 }
 
 /**
- * {@link ClientVersionDispatchingCodecBuilder} for field batch codecs.
+ * {@link VersionDispatchingCodecBuilder} for field batch codecs.
  */
-export const fieldBatchCodecBuilder = ClientVersionDispatchingCodecBuilder.build(
-	"FieldBatch",
-	[
-		{
-			minVersionForCollab: lowestMinVersionForCollab,
-			formatVersion: FieldBatchFormatVersion.v1,
-			codec: makeFieldBatchCodecForVersion(
-				FieldBatchFormatVersion.v1,
-				uncompressedEncodeV1,
-				schemaCompressedEncodeV1,
-				EncodedFieldBatchV1,
-			),
-		},
-		{
-			minVersionForCollab: FluidClientVersion.v2_73,
-			formatVersion: FieldBatchFormatVersion.v2,
-			codec: makeFieldBatchCodecForVersion(
-				FieldBatchFormatVersion.v2,
-				uncompressedEncodeV2,
-				schemaCompressedEncodeV2,
-				EncodedFieldBatchV2,
-			),
-		},
-	],
-);
+export const fieldBatchCodecBuilder = VersionDispatchingCodecBuilder.build("FieldBatch", [
+	{
+		minVersionForCollab: lowestMinVersionForCollab,
+		formatVersion: FieldBatchFormatVersion.v1,
+		codec: makeFieldBatchCodecForVersion(
+			FieldBatchFormatVersion.v1,
+			uncompressedEncodeV1,
+			schemaCompressedEncodeV1,
+			EncodedFieldBatchV1,
+		),
+	},
+	{
+		minVersionForCollab: FluidClientVersion.v2_73,
+		formatVersion: FieldBatchFormatVersion.v2,
+		codec: makeFieldBatchCodecForVersion(
+			FieldBatchFormatVersion.v2,
+			uncompressedEncodeV2,
+			schemaCompressedEncodeV2,
+			EncodedFieldBatchV2,
+		),
+	},
+]);
