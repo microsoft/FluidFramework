@@ -50,6 +50,7 @@ import {
 	basicChunkTree,
 	chunkField,
 	chunkTree,
+	coalesceAroundSplice,
 	splitFieldAtIndex,
 } from "./chunkTree.js";
 
@@ -185,6 +186,12 @@ export class ChunkedForest implements IEditableForest {
 				});
 				// TODO: this will fail for very large moves due to argument limits.
 				destinationField.splice(destinationChunkIndex, 0, ...sourceField);
+				coalesceAroundSplice(
+					destinationField,
+					destinationChunkIndex,
+					sourceField.length,
+					this.forest.chunker,
+				);
 			},
 			/**
 			 * Detaches the range from the current field and transfers it to the given destination if any.
@@ -216,6 +223,7 @@ export class ChunkedForest implements IEditableForest {
 				const startChunkIndex = splitFieldAtIndex(sourceField, source.start, policy);
 				const endChunkIndex = splitFieldAtIndex(sourceField, source.end, policy);
 				const newField = sourceField.splice(startChunkIndex, endChunkIndex - startChunkIndex);
+				coalesceAroundSplice(sourceField, startChunkIndex, 0, this.forest.chunker);
 
 				if (destination === undefined) {
 					for (const child of newField) {

@@ -12,6 +12,7 @@ import {
 	type JsonableTree,
 	TreeStoredSchemaRepository,
 	type TreeNodeSchemaIdentifier,
+	type TreeValue,
 	type Value,
 	mapCursorField,
 	tryGetChunk,
@@ -27,6 +28,7 @@ import {
 	chunkField,
 	chunkFieldSingle,
 	chunkRange,
+	coalesceAroundSplice,
 	combineChunks,
 	defaultChunkPolicy,
 	insertValues,
@@ -68,7 +70,7 @@ import {
 	toInitialSchema,
 	TreeViewConfigurationAlpha,
 } from "../../../simple-tree/index.js";
-import { brand } from "../../../util/index.js";
+import { brand, makeArray } from "../../../util/index.js";
 import { fieldJsonCursor, singleJsonCursor } from "../../json/index.js";
 import { testIdCompressor } from "../../utils.js";
 
@@ -90,6 +92,20 @@ function expectEqual(a: ShapeInfo, b: ShapeInfo): void {
 		assert(b instanceof TreeShape);
 		assert(a.equals(b));
 		assert(b.equals(a));
+	}
+}
+
+/**
+ * Asserts that `chunks` is structurally identical to `snapshot` (same length, same element
+ * identities). Used by tests that need to confirm a function did not mutate the chunks array.
+ */
+function assertChunksUnchanged(
+	chunks: readonly TreeChunk[],
+	snapshot: readonly TreeChunk[],
+): void {
+	assert.equal(chunks.length, snapshot.length);
+	for (let i = 0; i < snapshot.length; i++) {
+		assert.equal(chunks[i], snapshot[i]);
 	}
 }
 
@@ -778,13 +794,6 @@ describe("chunkTree", () => {
 		);
 		const compressor = { policy: chunker, idCompressor: undefined };
 
-		function assertChunksUnchanged(chunks: TreeChunk[], snapshot: readonly TreeChunk[]): void {
-			assert.equal(chunks.length, snapshot.length);
-			for (let i = 0; i < snapshot.length; i++) {
-				assert.equal(chunks[i], snapshot[i]);
-			}
-		}
-
 		function assertChunksUnshared(chunks: readonly TreeChunk[]): void {
 			for (const chunk of chunks) {
 				assert.equal(chunk.isShared(), false);
@@ -870,6 +879,215 @@ describe("chunkTree", () => {
 
 			assert.equal(boundaryIndex, 0);
 			assert.equal(chunks.length, 0);
+		});
+	});
+
+	describe("coalesceAroundSplice", () => {
+		const numberType: TreeNodeSchemaIdentifier = brand(numberSchema.identifier);
+		const nullType: TreeNodeSchemaIdentifier = brand(nullSchema.identifier);
+		const numberShape = new TreeShape(numberType, true, []);
+		const nullShape = new TreeShape(nullType, false, []);
+
+		// Small per-chunk cap so tests can exercise the boundary easily; with a leaf shape
+		// (valuesPerTopLevelNode = 1) the cap is effectively the topLevelLength limit.
+		// Unused fields set to POSITIVE_INFINITY to make their irrelevance to coalescing explicit.
+		const policy: ChunkPolicy = {
+			sequenceChunkSplitThreshold: Number.POSITIVE_INFINITY,
+			sequenceChunkInlineThreshold: Number.POSITIVE_INFINITY,
+			uniformChunkNodeCount: Number.POSITIVE_INFINITY,
+			uniformChunkNodeCountDynamicTargetMax: 10,
+			shapeFromSchema: () => polymorphic,
+		};
+
+		function numbersChunk(values: readonly TreeValue[]): UniformChunk {
+			return new UniformChunk(numberShape.withTopLevelLength(values.length), [...values]);
+		}
+
+		function assertNumbersChunk(chunk: TreeChunk, expected: readonly TreeValue[]): void {
+			assert(chunk instanceof UniformChunk);
+			assert.equal(chunk.topLevelLength, expected.length);
+			assert.deepEqual(chunk.values, expected);
+		}
+
+		it("merges two adjacent same-shape UniformChunks after a mid-field insert", () => {
+			const field: TreeChunk[] = [numbersChunk([1, 2]), numbersChunk([3, 4])];
+			coalesceAroundSplice(field, 1, 1, policy);
+			assert.equal(field.length, 1);
+			assertNumbersChunk(field[0], [1, 2, 3, 4]);
+		});
+
+		it("does not merge chunks with different shape types", () => {
+			const field: TreeChunk[] = [
+				numbersChunk([1, 2]),
+				new UniformChunk(nullShape.withTopLevelLength(2), []),
+			];
+			const snapshot = [...field];
+			coalesceAroundSplice(field, 1, 1, policy);
+			assertChunksUnchanged(field, snapshot);
+		});
+
+		it("does not merge when either neighbor is not a UniformChunk", () => {
+			const basicLeft = new BasicChunk(numberType, new Map(), 99);
+			const leftBasicField: TreeChunk[] = [basicLeft, numbersChunk([1, 2])];
+			const leftSnapshot = [...leftBasicField];
+			coalesceAroundSplice(leftBasicField, 1, 1, policy);
+			assertChunksUnchanged(leftBasicField, leftSnapshot);
+
+			const basicRight = new BasicChunk(numberType, new Map(), 99);
+			const rightBasicField: TreeChunk[] = [numbersChunk([1, 2]), basicRight];
+			const rightSnapshot = [...rightBasicField];
+			coalesceAroundSplice(rightBasicField, 1, 1, policy);
+			assertChunksUnchanged(rightBasicField, rightSnapshot);
+		});
+
+		it("does not merge when combined topLevelLength exceeds the policy cap", () => {
+			// cap = 10, combined would be 11.
+			const field: TreeChunk[] = [
+				numbersChunk(makeArray(6, (i) => i)),
+				numbersChunk([6, 7, 8, 9, 10]),
+			];
+			const snapshot = [...field];
+			coalesceAroundSplice(field, 1, 1, policy);
+			assertChunksUnchanged(field, snapshot);
+		});
+
+		it("coalesces the seam left by a pure detach (insertedCount = 0)", () => {
+			// Simulates post-detach state: [left, right] where the middle range was removed.
+			const field: TreeChunk[] = [numbersChunk([1, 2]), numbersChunk([3, 4, 5])];
+			coalesceAroundSplice(field, 1, 0, policy);
+			assert.equal(field.length, 1);
+			assertNumbersChunk(field[0], [1, 2, 3, 4, 5]);
+		});
+
+		it("handles spliceStart = 0 (no left neighbor to check)", () => {
+			// Inserted chunks land at index 0; only the right-edge seam exists.
+			const field: TreeChunk[] = [numbersChunk([1]), numbersChunk([2, 3])];
+			coalesceAroundSplice(field, 0, 1, policy);
+			assert.equal(field.length, 1);
+			assertNumbersChunk(field[0], [1, 2, 3]);
+		});
+
+		it("does nothing when a pure detach occurs at index 0", () => {
+			// No left neighbor exists, so there's no seam to examine.
+			const field: TreeChunk[] = [numbersChunk([1]), numbersChunk([2])];
+			const snapshot = [...field];
+			coalesceAroundSplice(field, 0, 0, policy);
+			assertChunksUnchanged(field, snapshot);
+		});
+
+		it("merges across multiple inserted chunks in a single splice", () => {
+			// Splice inserted 3 same-shape chunks between existing left and right neighbors.
+			const field: TreeChunk[] = [
+				numbersChunk([1]),
+				numbersChunk([2]),
+				numbersChunk([3]),
+				numbersChunk([4]),
+				numbersChunk([5]),
+			];
+			coalesceAroundSplice(field, 1, 3, policy);
+			assert.equal(field.length, 1);
+			assertNumbersChunk(field[0], [1, 2, 3, 4, 5]);
+		});
+
+		it("uses TreeShape.equals as a fallback when shape identity differs", () => {
+			// Two distinct TreeShape instances for the same type. Reference identity fails,
+			// but .equals() returns true, so the merge should proceed.
+			const shapeA = new TreeShape(numberType, true, []);
+			const shapeB = new TreeShape(numberType, true, []);
+			assert(shapeA !== shapeB);
+			assert(shapeA.equals(shapeB));
+			const field: TreeChunk[] = [
+				new UniformChunk(shapeA.withTopLevelLength(1), [1]),
+				new UniformChunk(shapeB.withTopLevelLength(1), [2]),
+			];
+			coalesceAroundSplice(field, 1, 1, policy);
+			assert.equal(field.length, 1);
+			assertNumbersChunk(field[0], [1, 2]);
+		});
+
+		it("is a no-op for empty and single-chunk fields", () => {
+			const emptyField: TreeChunk[] = [];
+			coalesceAroundSplice(emptyField, 0, 0, policy);
+			assert.equal(emptyField.length, 0);
+
+			const singleField: TreeChunk[] = [numbersChunk([1, 2, 3])];
+			coalesceAroundSplice(singleField, 0, 1, policy);
+			assert.equal(singleField.length, 1);
+		});
+
+		it("releases the original chunks' refs when merging", () => {
+			// Hold extra refs so we can observe the field's refs being released without the
+			// chunks becoming unreachable.
+			const left = numbersChunk([1, 2]);
+			const right = numbersChunk([3, 4]);
+			left.referenceAdded();
+			right.referenceAdded();
+			const field: TreeChunk[] = [left, right];
+
+			coalesceAroundSplice(field, 1, 1, policy);
+
+			assert.equal(field.length, 1);
+			// Only our test refs remain; the field's refs were released by the merge.
+			assert.equal(left.isShared(), false);
+			assert.equal(right.isShared(), false);
+			left.referenceRemoved();
+			right.referenceRemoved();
+		});
+
+		it("preserves an idCompressor present on either side of the merge", () => {
+			// Strings with mayContainCompressedIds carry the idCompressor on the chunk.
+			const stringShape = new TreeShape(brand(stringSchema.identifier), true, [], true);
+			const compressedId = testIdCompressor.generateCompressedId();
+			const leftWithCompressor = new UniformChunk(
+				stringShape.withTopLevelLength(1),
+				[compressedId],
+				testIdCompressor,
+			);
+			const rightWithCompressor = new UniformChunk(
+				stringShape.withTopLevelLength(1),
+				[compressedId],
+				testIdCompressor,
+			);
+			const field: TreeChunk[] = [leftWithCompressor, rightWithCompressor];
+
+			coalesceAroundSplice(field, 1, 1, policy);
+
+			assert.equal(field.length, 1);
+			assert(field[0] instanceof UniformChunk);
+			assert.equal(field[0].idCompressor, testIdCompressor);
+		});
+
+		it("keeps chunk count bounded under repeated mid-field edits", () => {
+			// Steady-state stress: each round models one mid-field edit by splitting the field's
+			// first chunk in half, splicing a fresh same-shape chunk at the seam, and coalescing.
+			// This is the pattern attach/detach via splitFieldAtIndex + splice produces in
+			// practice. Without coalescing, the field would fragment unboundedly; with coalescing,
+			// it must stay within one chunk of the optimal partition for the per-chunk cap.
+			const cap = policy.uniformChunkNodeCountDynamicTargetMax;
+			let nextValue = cap;
+			const field: TreeChunk[] = [numbersChunk(makeArray(cap, (i) => i))];
+
+			for (let round = 0; round < 20; round++) {
+				const head = field[0];
+				assert(head instanceof UniformChunk);
+				const half = Math.floor(head.topLevelLength / 2);
+				field.splice(
+					0,
+					1,
+					numbersChunk(head.values.slice(0, half)),
+					numbersChunk([nextValue++]),
+					numbersChunk(head.values.slice(half)),
+				);
+				head.referenceRemoved();
+				coalesceAroundSplice(field, 1, 1, policy);
+
+				const total = field.reduce((n, c) => n + c.topLevelLength, 0);
+				const minChunks = Math.ceil(total / cap);
+				assert(
+					field.length <= minChunks + 1,
+					`round ${round}: expected <= ${minChunks + 1} chunks, got ${field.length}`,
+				);
+			}
 		});
 	});
 });

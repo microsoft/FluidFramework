@@ -428,8 +428,8 @@ export interface ChunkPolicy {
 	 * is split exactly. This bounds N splits inside an M-sized chunk at the cost of producing a
 	 * few extra intermediate chunks.
 	 *
-	 * Future merge/extend logic for adjacent small chunks could use the same value as the
-	 * upper bound it tries to stay under, so dynamic chunk sizes settle around this target.
+	 * Also caps chunks merged by {@link coalesceAroundSplice}, so dynamic chunk sizes
+	 * settle around this target.
 	 *
 	 * Independent of {@link ChunkPolicy.uniformChunkNodeCount}, which only bounds the size of
 	 * chunks produced by the initial chunking pass.
@@ -638,6 +638,84 @@ export function splitFieldAtIndex(
 	}
 	assert(remaining === 0, "nodeIndex exceeds total node count in field");
 	return chunks.length;
+}
+
+/**
+ * Keeps a field's chunks from accumulating same-shape fragments across repeated edits.
+ *
+ * @remarks
+ * Merges adjacent {@link UniformChunk}s of matching shape along the seams a splice could have
+ * created. Acts as the inverse of {@link splitFieldAtIndex}: without it, repeated mid-field
+ * attach/detach against the same field would leave it permanently fragmented into ever-smaller
+ * adjacent chunks. Cost is proportional to `insertedCount`.
+ *
+ * @privateRemarks
+ * Caps merged chunks at {@link ChunkPolicy.uniformChunkNodeCountDynamicTargetMax}, matching the
+ * bisect threshold used by {@link splitFieldAtIndex} so split-and-coalesce pairs don't oscillate.
+ *
+ * @param field - The field's chunks array, modified in place.
+ * @param spliceStart - The index passed to the originating `splice` call.
+ * @param insertedCount - The number of chunks the splice inserted (0 for a pure detach).
+ * @param policy - The {@link ChunkPolicy} supplying the per-chunk cap.
+ */
+export function coalesceAroundSplice(
+	field: TreeChunk[],
+	spliceStart: number,
+	insertedCount: number,
+	policy: ChunkPolicy,
+): void {
+	// Seams the splice may have introduced:
+	//  - pure detach (insertedCount === 0): one seam at spliceStart - 1.
+	//  - attach of K: K + 1 seams, from spliceStart - 1 through spliceStart + K - 1.
+	// The `i < windowEnd` bound covers both.
+	let i = Math.max(0, spliceStart - 1);
+	let windowEnd = spliceStart + insertedCount;
+	while (i < field.length - 1 && i < windowEnd) {
+		if (tryMergeAt(field, i, policy)) {
+			// field[i] and field[i + 1] collapsed into one: the window shrinks by one, and the
+			// new field[i + 1] is an unseen neighbor that should be retested without advancing.
+			windowEnd--;
+		} else {
+			i++;
+		}
+	}
+}
+
+/**
+ * Attempts to merge `field[i]` and `field[i + 1]` into a single {@link UniformChunk}. Skips if
+ * either is not a {@link UniformChunk}, the shapes differ, or the combined topLevelLength would
+ * exceed {@link ChunkPolicy.uniformChunkNodeCountDynamicTargetMax}.
+ *
+ * @returns `true` if the merge occurred (and `field` was mutated), `false` otherwise.
+ */
+function tryMergeAt(field: TreeChunk[], i: number, policy: ChunkPolicy): boolean {
+	const left = field[i];
+	const right = field[i + 1];
+	if (!(left instanceof UniformChunk) || !(right instanceof UniformChunk)) {
+		return false;
+	}
+
+	const leftTreeShape = left.shape.treeShape;
+	const rightTreeShape = right.shape.treeShape;
+	// Identity is the fast path (chunkers cache shapes); equals() is the fallback.
+	if (leftTreeShape !== rightTreeShape && !leftTreeShape.equals(rightTreeShape)) {
+		return false;
+	}
+
+	const combinedTopLevel = left.topLevelLength + right.topLevelLength;
+	if (combinedTopLevel > policy.uniformChunkNodeCountDynamicTargetMax) {
+		return false;
+	}
+
+	const merged = new UniformChunk(
+		leftTreeShape.withTopLevelLength(combinedTopLevel),
+		[...left.values, ...right.values],
+		left.idCompressor ?? right.idCompressor,
+	);
+	field.splice(i, 2, merged);
+	left.referenceRemoved();
+	right.referenceRemoved();
+	return true;
 }
 
 /**

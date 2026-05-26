@@ -237,5 +237,45 @@ describe("ChunkedForest", () => {
 			}
 			assert.deepEqual(values, [0, 1, 99, 2, 3, 4]);
 		});
+
+		it("coalesces same-shape neighbors left adjacent by a mid-chunk detach", () => {
+			// Without coalescing, splitFieldAtIndex's bisection would leave the field as
+			// [UC(2), UC(2)] after detaching index 2. coalesceAroundSplice merges those
+			// same-shape neighbors back into a single UC(4).
+			const forest = setupForest();
+
+			const visitor = forest.acquireVisitor();
+			visitor.enterField(rootFieldKey);
+			visitor.detach({ start: 2, end: 3 }, detachedKey, detachedId, false);
+			visitor.exitField(rootFieldKey);
+			visitor.free();
+
+			const remaining = forest.roots.fields.get(rootFieldKey);
+			assert(remaining !== undefined);
+			assert.equal(remaining.length, 1);
+			assert(remaining[0] instanceof UniformChunk);
+			assert.equal(remaining[0].topLevelLength, 4);
+		});
+
+		it("coalesces an inserted same-shape chunk with its neighbors", () => {
+			// Without coalescing, the field would be [UC(2), UC(1), UC(3)] after inserting at
+			// index 2. All three share the number shape and combined size (6) is under the cap,
+			// so both seams merge into a single UC(6).
+			const forest = setupForest();
+			const source = new UniformChunk(numberShape.withTopLevelLength(1), [99]);
+			forest.roots.fields.set(detachedKey, [source]);
+
+			const visitor = forest.acquireVisitor();
+			visitor.enterField(rootFieldKey);
+			visitor.attach(detachedKey, 1, 2);
+			visitor.exitField(rootFieldKey);
+			visitor.free();
+
+			const updated = forest.roots.fields.get(rootFieldKey);
+			assert(updated !== undefined);
+			assert.equal(updated.length, 1);
+			assert(updated[0] instanceof UniformChunk);
+			assert.equal(updated[0].topLevelLength, 6);
+		});
 	});
 });
