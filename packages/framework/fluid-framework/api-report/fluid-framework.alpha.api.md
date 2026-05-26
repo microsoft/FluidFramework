@@ -1365,7 +1365,7 @@ export interface ObservationResults<TResult> {
 // @public
 export type Off = () => void;
 
-// @alpha
+// @beta
 export function onAssertionFailure(handler: (error: Error) => void): () => void;
 
 // @alpha
