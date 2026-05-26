@@ -1279,7 +1279,7 @@ describe("loadFrozenContainerFromPendingState", () => {
 
 			await assert.rejects(
 				async () => frozenContainer.getAbsoluteUrl(""),
-				/getAbsoluteUrl is not supported/,
+				/getAbsoluteUrl requires/,
 				"Expected getAbsoluteUrl on an offline-loaded container to throw",
 			);
 		});

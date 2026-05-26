@@ -441,7 +441,7 @@ export async function loadFrozenContainerFromPendingState(
 			// loudly rather than fabricate a string in the wrong format.
 			getAbsoluteUrl: async () => {
 				throw new UsageError(
-					`IContainer.getAbsoluteUrl is not supported on a container loaded offline from pending state. Supply ${driverPropKeys.join("/")} at load time to enable it.`,
+					`${fnName}: getAbsoluteUrl requires ${driverPropKeys.join("/")}`,
 				);
 			},
 		};
