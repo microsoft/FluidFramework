@@ -173,8 +173,9 @@ export interface CodecWriteOptions extends ICodecOptions, CodecWriteOptionsBeta 
 }
 
 /**
- * `TContext` allows passing context to the codec which may configure how data is encoded/decoded.
- * This parameter is typically used for:
+ * `TEncodeContext` and `TDecodeContext` allow passing context to the codec which may configure how data is encoded/decoded.
+ * `TDecodeContext` defaults to `TEncodeContext`; specify them separately when encode and decode need different context (for example, when encoding uses heuristics that are unneeded when decoding).
+ * These parameters are typically used for:
  * - Codecs which can pick from multiple encoding options, and imbue the encoded data with information about which option was used.
  * The caller of such a codec can provide context about which encoding choice to make as part of the `encode` call without creating
  * additional codecs. Note that this pattern can always be implemented by having the caller create multiple codecs and selecting the
@@ -196,9 +197,10 @@ export interface IJsonCodec<
 	TDecoded,
 	TEncoded = JsonCompatibleReadOnly,
 	TValidate = TEncoded,
-	TContext = void,
-> extends IEncoder<TDecoded, TEncoded, TContext>,
-		IDecoder<TDecoded, TValidate, TContext> {
+	TEncodeContext = void,
+	TDecodeContext = TEncodeContext,
+> extends IEncoder<TDecoded, TEncoded, TEncodeContext>,
+		IDecoder<TDecoded, TValidate, TDecodeContext> {
 	encodedSchema?: TAnySchema;
 }
 
@@ -211,9 +213,13 @@ export interface IJsonCodec<
  *
  * This portion of a codec is not responsible for managing versioning or validation of the data against the schema.
  */
-export interface JsonCodecPart<TDecoded, TEncodedSchema extends TAnySchema, TContext = void>
-	extends IEncoder<TDecoded, Static<TEncodedSchema>, TContext>,
-		IDecoder<TDecoded, Static<TEncodedSchema>, TContext> {
+export interface JsonCodecPart<
+	TDecoded,
+	TEncodedSchema extends TAnySchema,
+	TEncodeContext = void,
+	TDecodeContext = TEncodeContext,
+> extends IEncoder<TDecoded, Static<TEncodedSchema>, TEncodeContext>,
+		IDecoder<TDecoded, Static<TEncodedSchema>, TDecodeContext> {
 	/**
 	 * TypeBox schema which describes the encoded format for this chunk of data.
 	 * @remarks
@@ -230,11 +236,18 @@ export function eraseEncodedType<
 	TDecoded,
 	TEncoded = JsonCompatibleReadOnly,
 	TValidate = TEncoded,
-	TContext = void,
+	TEncodeContext = void,
+	TDecodeContext = TEncodeContext,
 >(
-	codec: IJsonCodec<TDecoded, TEncoded, TValidate, TContext>,
-): IJsonCodec<TDecoded, TValidate, TValidate, TContext> {
-	return codec as unknown as IJsonCodec<TDecoded, TValidate, TValidate, TContext>;
+	codec: IJsonCodec<TDecoded, TEncoded, TValidate, TEncodeContext, TDecodeContext>,
+): IJsonCodec<TDecoded, TValidate, TValidate, TEncodeContext, TDecodeContext> {
+	return codec as unknown as IJsonCodec<
+		TDecoded,
+		TValidate,
+		TValidate,
+		TEncodeContext,
+		TDecodeContext
+	>;
 }
 
 /**
@@ -246,11 +259,15 @@ export function eraseEncodedType<
  * allows avoiding some duplicate work at encode/decode time, since the vast majority of document usage will not
  * involve mixed format versions.
  *
- * @privateRemarks This interface currently assumes all codecs in a family require the same encode/decode context,
- * which isn't necessarily true.
- * This may need to be relaxed in the future.
+ * @privateRemarks
+ * Encode and decode can be parameterized independently — the encode-side context type need not equal the decode-side context type.
+ * `TDecodeContext` defaults to `TEncodeContext` so callers that share a single context shape (the common case) don't need to specify it.
  */
-export interface ICodecFamily<TDecoded, TContext = void> {
+export interface ICodecFamily<
+	TDecoded,
+	TEncodeContext = void,
+	TDecodeContext = TEncodeContext,
+> {
 	/**
 	 * @returns a codec that can be used to encode and decode data in the specified format.
 	 * @throws if the format version is not supported by this family.
@@ -260,7 +277,13 @@ export interface ICodecFamily<TDecoded, TContext = void> {
 	 */
 	resolve(
 		formatVersion: FormatVersion,
-	): IJsonCodec<TDecoded, JsonCompatibleReadOnly, JsonCompatibleReadOnly, TContext>;
+	): IJsonCodec<
+		TDecoded,
+		JsonCompatibleReadOnly,
+		JsonCompatibleReadOnly,
+		TEncodeContext,
+		TDecodeContext
+	>;
 
 	/**
 	 * @returns an iterable of all format versions supported by this family.
@@ -338,17 +361,29 @@ export const DependentFormatVersion = {
 /**
  * Creates a codec family from a registry of codecs.
  */
-export function makeCodecFamily<TDecoded, TContext>(
+export function makeCodecFamily<TDecoded, TEncodeContext, TDecodeContext = TEncodeContext>(
 	registry: Iterable<
 		[
 			formatVersion: FormatVersion,
-			codec: IJsonCodec<TDecoded, JsonCompatibleReadOnly, JsonCompatibleReadOnly, TContext>,
+			codec: IJsonCodec<
+				TDecoded,
+				JsonCompatibleReadOnly,
+				JsonCompatibleReadOnly,
+				TEncodeContext,
+				TDecodeContext
+			>,
 		]
 	>,
-): ICodecFamily<TDecoded, TContext> {
+): ICodecFamily<TDecoded, TEncodeContext, TDecodeContext> {
 	const codecs: Map<
 		FormatVersion,
-		IJsonCodec<TDecoded, JsonCompatibleReadOnly, JsonCompatibleReadOnly, TContext>
+		IJsonCodec<
+			TDecoded,
+			JsonCompatibleReadOnly,
+			JsonCompatibleReadOnly,
+			TEncodeContext,
+			TDecodeContext
+		>
 	> = new Map();
 	for (const [formatVersion, codec] of registry) {
 		if (codecs.has(formatVersion)) {
@@ -360,7 +395,13 @@ export function makeCodecFamily<TDecoded, TContext>(
 	return {
 		resolve(
 			formatVersion: FormatVersion,
-		): IJsonCodec<TDecoded, JsonCompatibleReadOnly, JsonCompatibleReadOnly, TContext> {
+		): IJsonCodec<
+			TDecoded,
+			JsonCompatibleReadOnly,
+			JsonCompatibleReadOnly,
+			TEncodeContext,
+			TDecodeContext
+		> {
 			const codec = codecs.get(formatVersion);
 			assert(codec !== undefined, 0x5e6 /* Requested codec for unsupported format. */);
 			return codec;
@@ -388,32 +429,39 @@ export const unitCodec: IJsonCodec<
  * Wraps a codec with JSON schema validation for its encoded type.
  * @returns An {@link IJsonCodec} which validates the data it encodes and decodes matches the provided schema.
  * @remarks
- * Eventually all codecs should use the same pattern implemented by ClientVersionDispatchingCodecBuilder, resulting in that having the only use of this API.
+ * Eventually all codecs should use the same pattern implemented by VersionDispatchingCodecBuilder, resulting in that having the only use of this API.
  */
 export function withSchemaValidation<
 	TInMemoryFormat,
 	EncodedSchema extends TSchema,
 	TEncodedFormat,
 	TValidate,
-	TContext,
+	TEncodeContext,
+	TDecodeContext = TEncodeContext,
 >(
 	schema: EncodedSchema,
-	codec: IJsonCodec<TInMemoryFormat, TEncodedFormat, TValidate, TContext>,
+	codec: IJsonCodec<
+		TInMemoryFormat,
+		TEncodedFormat,
+		TValidate,
+		TEncodeContext,
+		TDecodeContext
+	>,
 	validator?: JsonValidator | FormatValidator,
-): IJsonCodec<TInMemoryFormat, TEncodedFormat, TValidate, TContext> {
+): IJsonCodec<TInMemoryFormat, TEncodedFormat, TValidate, TEncodeContext, TDecodeContext> {
 	if (!validator) {
 		return codec;
 	}
 	const compiledFormat = extractJsonValidator(validator).compile(schema);
 	return {
-		encode: (obj: TInMemoryFormat, context: TContext): TEncodedFormat => {
+		encode: (obj: TInMemoryFormat, context: TEncodeContext): TEncodedFormat => {
 			const encoded = codec.encode(obj, context);
 			if (!compiledFormat.check(encoded)) {
 				fail(0xac0 /* Encoded data should validate */);
 			}
 			return encoded;
 		},
-		decode: (encoded: TValidate, context: TContext): TInMemoryFormat => {
+		decode: (encoded: TValidate, context: TDecodeContext): TInMemoryFormat => {
 			if (!compiledFormat.check(encoded)) {
 				fail(0xac1 /* Data being decoded should validate */);
 			}
