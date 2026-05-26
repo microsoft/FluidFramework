@@ -406,6 +406,64 @@ for (const immediateClose of [true, false]) {
 				assert.deepEqual(await fluidCache.get(cacheEntry), proposed);
 			});
 
+			it("set(undefined) removes the existing entry atomically", async () => {
+				fluidCache = getFluidCache();
+
+				const cacheEntry = getMockCacheEntry("updateSetUndefined");
+				await fluidCache.put(cacheEntry, { rev: 1 });
+
+				const wrote = await fluidCache.update(cacheEntry, (existing, set) => {
+					// Updater sees the existing value, decides to delete.
+					assert.deepEqual(existing, { rev: 1 });
+					set(undefined);
+				});
+
+				assert.strictEqual(wrote, true);
+				assert.strictEqual(await fluidCache.get(cacheEntry), undefined);
+
+				// The row should be gone from IDB, not just stored as undefined —
+				// verify by reading the raw IDB record.
+				const db = await getFluidCacheIndexedDbInstance();
+				const raw = await db.get(FluidDriverObjectStoreName, getKeyForCacheEntry(cacheEntry));
+				db.close();
+				assert.strictEqual(raw, undefined);
+			});
+
+			it("set(undefined) on an absent key is a no-op write that still returns true", async () => {
+				// `set` was called, so the contract says return `true` even though
+				// nothing actually changed at the key.
+				fluidCache = getFluidCache();
+
+				const cacheEntry = getMockCacheEntry("updateSetUndefinedAbsent");
+				const wrote = await fluidCache.update(cacheEntry, (_existing, set) => {
+					set(undefined);
+				});
+
+				assert.strictEqual(wrote, true);
+				assert.strictEqual(await fluidCache.get(cacheEntry), undefined);
+			});
+
+			it("set(undefined) deletes cross-partition rows under the partition's update", async () => {
+				// `update` already documents that `set` atomically replaces whatever
+				// sits at the key, including cross-partition rows. Same applies to
+				// the delete form.
+				fluidCache = getFluidCache({ partitionKey: "partitionA" });
+
+				const cacheEntry = getMockCacheEntry("updateSetUndefinedCrossPartition");
+				const partitionBCache = getFluidCache({ partitionKey: "partitionB" });
+				extraCaches.push(partitionBCache);
+				await partitionBCache.put(cacheEntry, { from: "B" });
+
+				const wrote = await fluidCache.update(cacheEntry, (_existing, set) => {
+					set(undefined);
+				});
+
+				assert.strictEqual(wrote, true);
+				// Both partitions now see the row as absent.
+				assert.strictEqual(await fluidCache.get(cacheEntry), undefined);
+				assert.strictEqual(await partitionBCache.get(cacheEntry), undefined);
+			});
+
 			it("returns false and does not write when the updater throws", async () => {
 				fluidCache = getFluidCache();
 

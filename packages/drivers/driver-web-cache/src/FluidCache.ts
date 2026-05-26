@@ -388,16 +388,22 @@ export class FluidCache implements IPersistedCache {
 	 * structured clone, with the same value requirements as {@link FluidCache.put} —
 	 * not restricted to JSON-serializable values.
 	 *
+	 * Calling `set(undefined)` removes the row at the key (equivalent to
+	 * {@link FluidCache.removeEntry} inside the same atomic transaction). `get`
+	 * already collapses "no entry" and "entry stored as undefined" into the same
+	 * observable result, so the delete-on-undefined semantics gives callers an
+	 * atomic conditional-delete without ambiguity for any meaningful use case.
+	 *
 	 * `set` must be called synchronously from within `updater`: IndexedDB transactions
 	 * auto-close on any non-IDB await, which would silently break the atomicity that
 	 * makes the update correct. Calling `set` after `updater` has returned throws a
 	 * `UsageError` at the call site so the misuse is visible rather than silently
 	 * lost. If `updater` calls `set` more than once, the last value wins.
 	 *
-	 * When `set` is called, the write atomically replaces whatever row exists at the
-	 * key, including cross-partition or stale rows that the updater saw as `undefined`.
-	 * This matches the unconditional overwrite behavior of `put`. Callers that must
-	 * preserve cross-partition rows should not use `update`.
+	 * When `set` is called, the write (or delete) atomically replaces whatever row
+	 * exists at the key, including cross-partition or stale rows that the updater
+	 * saw as `undefined`. This matches the unconditional overwrite behavior of
+	 * `put`. Callers that must preserve cross-partition rows should not use `update`.
 	 *
 	 * Exceptions thrown by `updater` are logged under the dedicated
 	 * `FluidCacheUpdateCallbackError` telemetry event (distinct from IDB write errors)
@@ -476,19 +482,28 @@ export class FluidCache implements IPersistedCache {
 				return false;
 			}
 
-			const currentTime = Date.now();
-			await transaction.store.put(
-				{
-					cachedObject: valueToWrite,
-					fileId: entry.file.docId,
-					type: entry.type,
-					cacheItemId: entry.key,
-					partitionKey: this.partitionKey,
-					createdTimeMs: currentTime,
-					lastAccessTimeMs: currentTime,
-				},
-				key,
-			);
+			// `set(undefined)` is treated as a delete: there is no useful distinction
+			// between "no entry" and "entry stored as undefined" (both surface as
+			// `undefined` from `get`), so we expose this as an atomic conditional-delete
+			// rather than persisting an undefined-valued row that would otherwise
+			// occupy IDB until maintenance reaped it.
+			if (valueToWrite === undefined) {
+				await transaction.store.delete(key);
+			} else {
+				const currentTime = Date.now();
+				await transaction.store.put(
+					{
+						cachedObject: valueToWrite,
+						fileId: entry.file.docId,
+						type: entry.type,
+						cacheItemId: entry.key,
+						partitionKey: this.partitionKey,
+						createdTimeMs: currentTime,
+						lastAccessTimeMs: currentTime,
+					},
+					key,
+				);
+			}
 			await transaction.done;
 			return true;
 		} catch (error: any) {

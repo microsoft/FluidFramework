@@ -94,6 +94,11 @@ row would be invisible to `get` — that is, no entry exists for the key, the ex
 a different partition, or the existing entry is older than `maxCacheItemAge`. To commit a write, call
 `set(value)`; to leave the cache untouched, return without calling `set`.
 
+Calling `set(undefined)` removes the row at the key (equivalent to `removeEntry` inside the same
+atomic transaction). `get` already collapses "no entry" and "entry stored as undefined" into the same
+observable result, so the delete-on-undefined semantics gives callers an atomic conditional-delete
+without ambiguity for any meaningful use case.
+
 Both the updater body and the `set` call must run synchronously: IndexedDB transactions auto-close on
 any non-IDB await, which would silently break the atomicity that makes the update correct. Calling
 `set` after the updater has returned throws a `UsageError` so that misuse (e.g. invoking `set` from a
@@ -101,12 +106,13 @@ any non-IDB await, which would silently break the atomicity that makes the updat
 last value wins. If the updater throws — including after calling `set` — the transaction is aborted
 and the existing row is preserved.
 
-When `set` is called, the write atomically replaces whatever row exists at the key, including
-cross-partition or stale rows the updater saw as `undefined` (matching the unconditional overwrite
-behavior of `put`). Callers that must preserve cross-partition rows should not use `update`.
+When `set` is called, the write (or delete) atomically replaces whatever row exists at the key,
+including cross-partition or stale rows the updater saw as `undefined` (matching the unconditional
+overwrite behavior of `put`). Callers that must preserve cross-partition rows should not use
+`update`.
 
-`update` returns `true` if `set` was called and the write committed, and `false` if the updater
-returned without calling `set`, threw, or an IDB error occurred.
+`update` returns `true` if `set` was called and the write (or delete) committed, and `false` if the
+updater returned without calling `set`, threw, or an IDB error occurred.
 
 ## Clearing cache entries
 
