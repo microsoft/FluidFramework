@@ -4,7 +4,7 @@
  */
 
 import type { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
-import { assert } from "@fluidframework/core-utils/internal";
+import { assert, isPromiseLike } from "@fluidframework/core-utils/internal";
 import type {
 	IPersistedCache,
 	IFileEntry,
@@ -394,11 +394,14 @@ export class FluidCache implements IPersistedCache {
 	 * observable result, so the delete-on-undefined semantics gives callers an
 	 * atomic conditional-delete without ambiguity for any meaningful use case.
 	 *
-	 * `set` must be called synchronously from within `updater`: IndexedDB transactions
-	 * auto-close on any non-IDB await, which would silently break the atomicity that
-	 * makes the update correct. Calling `set` after `updater` has returned throws a
-	 * `UsageError` at the call site so the misuse is visible rather than silently
-	 * lost. If `updater` calls `set` more than once, the last value wins.
+	 * The updater itself must be synchronous and `set` must be called from within it.
+	 * IndexedDB transactions auto-close on any non-IDB await, which would silently
+	 * break the atomicity that makes the update correct. Two guards make misuse
+	 * loud rather than silent: calling `set` after `updater` has returned throws a
+	 * `UsageError` at the call site; returning a thenable (e.g. an `async` updater)
+	 * is detected after `updater` returns, aborts the transaction, and is logged
+	 * under `FluidCacheUpdateCallbackError`. If `updater` calls `set` more than
+	 * once, the last value wins.
 	 *
 	 * When `set` is called, the write (or delete) atomically replaces whatever row
 	 * exists at the key, including cross-partition or stale rows that the updater
@@ -410,6 +413,14 @@ export class FluidCache implements IPersistedCache {
 	 * and surfaced to the caller as a `false` return value, after aborting the
 	 * transaction so the existing row is preserved — even if `set` was called before
 	 * the throw.
+	 *
+	 * Compare-and-set callers: a `false` return collapses three distinct outcomes —
+	 * the updater returned without calling `set`, the updater threw (including the
+	 * async-updater misuse case above), and the IDB write itself failed. Callers
+	 * that need to distinguish these must consult telemetry: updater-side failures
+	 * are logged under `FluidCacheUpdateCallbackError`; IDB-write failures are
+	 * logged under `FluidCachePutError`. A lost compare-and-set race (the updater
+	 * returned without calling `set`) is not logged.
 	 * @returns `true` if `updater` called `set` and the write committed; `false` if
 	 * `updater` returned without calling `set`, threw, or an IDB error occurred. IDB
 	 * errors are logged and not thrown, matching the behavior of `put`.
@@ -459,7 +470,20 @@ export class FluidCache implements IPersistedCache {
 			// log under the updater-specific event, and return `false` (matching the
 			// documented "errors are logged, not thrown" contract).
 			try {
-				updater(existingValue, set);
+				const updaterResult = updater(existingValue, set);
+				updaterReturned = true;
+				// Reject async updaters: TypeScript structurally accepts
+				// `async (...) => Promise<void>` for the declared `() => void` parameter
+				// type, but an async updater that calls `set` synchronously and then
+				// awaits would let the IDB write commit before its eventual rejection
+				// surfaced — contradicting the "throw aborts the transaction" contract.
+				// Detect a thenable return and treat it as misuse symmetric with the
+				// late-`set` guard.
+				if (isPromiseLike(updaterResult)) {
+					throw new UsageError(
+						"FluidCache.update: updater must be synchronous (returned a thenable)",
+					);
+				}
 			} catch (updaterError: any) {
 				updaterReturned = true;
 				transaction.abort();
@@ -475,7 +499,6 @@ export class FluidCache implements IPersistedCache {
 				);
 				return false;
 			}
-			updaterReturned = true;
 
 			if (!setCalled) {
 				await transaction.done;

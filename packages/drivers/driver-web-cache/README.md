@@ -99,12 +99,15 @@ atomic transaction). `get` already collapses "no entry" and "entry stored as und
 observable result, so the delete-on-undefined semantics gives callers an atomic conditional-delete
 without ambiguity for any meaningful use case.
 
-Both the updater body and the `set` call must run synchronously: IndexedDB transactions auto-close on
-any non-IDB await, which would silently break the atomicity that makes the update correct. Calling
-`set` after the updater has returned throws a `UsageError` so that misuse (e.g. invoking `set` from a
-`setTimeout`) is visible rather than silently lost. If the updater calls `set` more than once, the
-last value wins. If the updater throws — including after calling `set` — the transaction is aborted
-and the existing row is preserved.
+The updater itself must be synchronous and `set` must be called from within it. IndexedDB
+transactions auto-close on any non-IDB await, which would silently break the atomicity that makes
+the update correct. Two guards make misuse loud rather than silent: calling `set` after the updater
+has returned throws a `UsageError` at the call site (so deferred-`set` patterns like invoking it
+from a `setTimeout` fail noisily); returning a thenable — for example, declaring the updater
+`async` — is detected after the updater returns, aborts the transaction, and is logged under
+`FluidCacheUpdateCallbackError`. If the updater calls `set` more than once, the last value wins.
+If the updater throws — including after calling `set` — the transaction is aborted and the existing
+row is preserved.
 
 When `set` is called, the write (or delete) atomically replaces whatever row exists at the key,
 including cross-partition or stale rows the updater saw as `undefined` (matching the unconditional
@@ -113,6 +116,12 @@ overwrite behavior of `put`). Callers that must preserve cross-partition rows sh
 
 `update` returns `true` if `set` was called and the write (or delete) committed, and `false` if the
 updater returned without calling `set`, threw, or an IDB error occurred.
+
+**Compare-and-set callers:** the `false` return collapses three distinct outcomes — the updater
+returned without calling `set` (a lost race), the updater threw (including the async-updater misuse
+case), and the IDB write itself failed. Callers that need to distinguish these must consult
+telemetry: updater-side failures log under `FluidCacheUpdateCallbackError`; IDB-write failures log
+under `FluidCachePutError`. A lost compare-and-set race is not logged.
 
 ## Clearing cache entries
 

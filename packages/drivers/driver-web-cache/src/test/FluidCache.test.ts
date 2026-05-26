@@ -480,6 +480,55 @@ for (const immediateClose of [true, false]) {
 				assert.deepEqual(await fluidCache.get(cacheEntry), initial);
 			});
 
+			it("rejects an async updater that calls set then awaits and throws", async () => {
+				// An async updater is structurally allowed by the typed signature
+				// (`() => void` accepts `async () => Promise<void>`), but would
+				// otherwise let the synchronous `set` commit a write before the
+				// eventual rejection surfaced. Guard against this misuse: detect a
+				// thenable return after the updater returns, abort the transaction,
+				// and return false. The eventual async rejection is orphaned by
+				// design — the updater contract requires sync.
+				fluidCache = getFluidCache();
+
+				const cacheEntry = getMockCacheEntry("updateAsyncSetThenThrow");
+				const initial = { rev: 1 };
+				await fluidCache.put(cacheEntry, initial);
+
+				const wrote = await fluidCache.update(
+					cacheEntry,
+					// eslint-disable-next-line @typescript-eslint/no-misused-promises
+					(async (_existing, set) => {
+						set({ rev: 99 });
+						await Promise.resolve();
+						throw new Error("async after-set failure");
+					}) as unknown as (existing: unknown, set: (value: unknown) => void) => void,
+				);
+
+				assert.strictEqual(wrote, false);
+				assert.deepEqual(await fluidCache.get(cacheEntry), initial);
+			});
+
+			it("rejects an async updater that returns a promise without throwing", async () => {
+				// Even a non-throwing async updater is misuse — the contract is sync.
+				// `set` may have been called before the awaited microtask; we still
+				// must not commit, because the updater is structurally telling us
+				// it intended to do more work after returning.
+				fluidCache = getFluidCache();
+
+				const cacheEntry = getMockCacheEntry("updateAsyncNoThrow");
+
+				const wrote = await fluidCache.update(
+					cacheEntry,
+					// eslint-disable-next-line @typescript-eslint/no-misused-promises
+					(async (_existing, set) => {
+						set({ rev: 1 });
+					}) as unknown as (existing: unknown, set: (value: unknown) => void) => void,
+				);
+
+				assert.strictEqual(wrote, false);
+				assert.strictEqual(await fluidCache.get(cacheEntry), undefined);
+			});
+
 			it("does not write when the updater calls set then throws", async () => {
 				// Throw-after-set should still abort: the updater's intent is ambiguous
 				// and preserving the existing row is the safer default.
