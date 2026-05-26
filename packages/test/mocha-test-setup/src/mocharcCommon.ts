@@ -5,7 +5,6 @@
 
 import { readFileSync } from "node:fs";
 import path from "node:path";
-import { fileURLToPath } from "node:url";
 
 /**
  * Mocha configuration object returned by {@link getFluidTestMochaConfig}.
@@ -18,6 +17,7 @@ export interface FluidTestMochaConfig {
 	ignore: string[];
 	"node-option": string[];
 	spec: string;
+	exit?: boolean;
 	timeout?: number | string;
 	fgrep?: string[];
 	reporter?: string;
@@ -25,8 +25,6 @@ export interface FluidTestMochaConfig {
 	"reporter-options"?: string[];
 	"forbid-only"?: boolean;
 }
-
-const currentDir = path.dirname(fileURLToPath(import.meta.url));
 
 /**
  * Get the mocha configuration for running tests using the conventions followed in the Fluid Framework repository.
@@ -132,7 +130,7 @@ export function getFluidTestMochaConfig(
 			reportPrefix !== undefined ? `${packageJson.name} - ${reportPrefix}` : packageJson.name;
 		config["reporter-options"] = [
 			`configFile=${path.join(
-				currentDir,
+				import.meta.dirname,
 				"..",
 				"test-config.json",
 			)},cmrOutput=xunit+output+${outputFilePrefix}:xunit+suiteName+${suiteName}`,
