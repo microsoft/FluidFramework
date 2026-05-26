@@ -19,7 +19,15 @@ import { assert } from "@fluidframework/core-utils/internal";
 import type { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions/internal";
 import type { IFluidDataStoreContext } from "@fluidframework/runtime-definitions/internal";
 import { create404Response } from "@fluidframework/runtime-utils/internal";
+import type { ISharedClaims } from "@fluidframework/shared-claims/internal";
+import { SharedClaimsKind } from "@fluidframework/shared-claims/internal";
 import type { AsyncFluidObjectProvider } from "@fluidframework/synthesize/internal";
+import {
+	UsageError,
+	loggerToMonitoringContext,
+} from "@fluidframework/telemetry-utils/internal";
+
+import type { ClaimResult } from "../claimTypes.js";
 
 import type { DataObjectTypes, IDataObjectProps } from "./types.js";
 
@@ -58,6 +66,17 @@ export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes
 	protected readonly providers: AsyncFluidObjectProvider<I["OptionalProviders"]>;
 
 	protected initProps?: I["InitialState"];
+
+	/**
+	 * The well-known channel ID used for the internal SharedClaims DDS.
+	 * Uses a reserved name to avoid collisions with user-created channels.
+	 */
+	private static readonly claimsChannelId = "__claims__";
+
+	/**
+	 * Internal SharedClaims instance, initialized during initializeInternal.
+	 */
+	private internalClaims: ISharedClaims | undefined;
 
 	/**
 	 * Internal implementation detail.
@@ -144,6 +163,30 @@ export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes
 	 * responsible for ensuring this is only invoked once.
 	 */
 	public async initializeInternal(existing: boolean): Promise<void> {
+		if (existing) {
+			// Always try to load the claims channel for existing data objects,
+			// regardless of the feature gate.
+			try {
+				this.internalClaims = (await this.runtime.getChannel(
+					PureDataObject.claimsChannelId,
+				)) as unknown as ISharedClaims;
+			} catch {
+				// Channel doesn't exist — this is a legacy data object.
+				// Claims will not be available; trySetClaim will throw UsageError.
+			}
+		} else {
+			// Only create the claims channel for new data objects when the feature gate is enabled.
+			const mc = loggerToMonitoringContext(this.runtime.logger);
+			if (mc.config.getBoolean("Fluid.PureDataObject.EnableClaims") === true) {
+				const claims = SharedClaimsKind.create(
+					this.runtime,
+					PureDataObject.claimsChannelId,
+				);
+				claims.bindToContext();
+				this.internalClaims = claims;
+			}
+		}
+
 		await this.preInitialize();
 		if (existing) {
 			assert(
@@ -183,4 +226,37 @@ export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes
 	 * Called every time the data store is initialized after create or existing.
 	 */
 	protected async hasInitialized(): Promise<void> {}
+
+	/**
+	 * Attempts to claim a key with the given value using first-writer-wins semantics.
+	 *
+	 * @remarks
+	 * This method leverages an internal SharedClaims DDS that is created during
+	 * initialization of each PureDataObject. The result indicates whether the claim
+	 * is pending server acknowledgement, already accepted, or already claimed by another client.
+	 *
+	 * @param key - The claim key to reserve.
+	 * @param value - The value to associate with the claim.
+	 * @returns The claim result.
+	 * @throws Will throw a UsageError if the container is not attached and connected.
+	 */
+	public trySetClaim?(key: string, value: unknown): ClaimResult {
+		if (this.internalClaims === undefined) {
+			throw new UsageError(
+				"trySetClaim is not available on this data object. It was created before claims support was added. " +
+					"Only data objects created after claims support is enabled will have claims functionality.",
+			);
+		}
+		return this.internalClaims.trySetClaim(key, value);
+	}
+
+	/**
+	 * Gets the current claimed value for a key, or `undefined` if the key has not been claimed.
+	 *
+	 * @param key - The claim key to look up.
+	 * @returns The claimed value, or `undefined` if unclaimed.
+	 */
+	public getClaim?(key: string): unknown | undefined {
+		return this.internalClaims?.getClaim(key);
+	}
 }

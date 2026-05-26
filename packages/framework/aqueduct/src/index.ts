@@ -33,6 +33,7 @@ export {
 	TreeDataObject,
 	createDataObjectKind,
 } from "./data-objects/index.js";
+export type { ClaimResult, ClaimConfirmation } from "./claimTypes.js";
 export {
 	BaseContainerRuntimeFactory,
 	type BaseContainerRuntimeFactoryProps,
