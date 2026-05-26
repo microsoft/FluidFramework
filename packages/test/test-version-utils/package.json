@@ -17,7 +17,7 @@
 			"import": "./lib/index.js"
 		},
 		"./mocharc-common": {
-			"default": "./lib/mocharcCommon.js"
+			"import": "./lib/mocharcCommon.js"
 		}
 	},
 	"scripts": {
@@ -28,7 +28,7 @@
 		"build:genver": "gen-version",
 		"build:test": "npm run build:test:esm",
 		"build:test:esm": "tsc --project ./src/test/tsconfig.json",
-		"check:are-the-types-wrong": "attw --pack . --exclude-entrypoints ./mocharc-common",
+		"check:are-the-types-wrong": "attw --pack . --profile esm-only",
 		"check:biome": "biome check .",
 		"check:exports": "concurrently \"npm:check:exports:*\"",
 		"check:exports:bundle-release-tags": "api-extractor run --config api-extractor/api-extractor-lint-bundle.json",

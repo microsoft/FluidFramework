@@ -3,12 +3,9 @@
  * Licensed under the MIT License.
  */
 
-"use strict";
+import { getFluidTestMochaConfigWithCompat } from "@fluid-private/test-version-utils/mocharc-common";
 
-const packageDir = __dirname;
-const {
-	getFluidTestMochaConfigWithCompat,
-} = require("@fluid-private/test-version-utils/mocharc-common");
+const packageDir = import.meta.dirname;
 const config = getFluidTestMochaConfigWithCompat(packageDir);
 
 // TODO: figure out why this package needs the --exit flag, tests might not be cleaning up correctly after themselves.
@@ -58,4 +55,4 @@ if (runningAgainstInternalRouterliciousCluster) {
 
 // TODO: ADO#34589: These tests leak memory and sometimes crash on CI. This is a workaround to increase the memory limit.
 config["node-option"] = [...config["node-option"], "max-old-space-size=8000"];
-module.exports = config;
+export default config;
