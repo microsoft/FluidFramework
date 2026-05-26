@@ -9,7 +9,6 @@ import type { TAnySchema } from "@sinclair/typebox";
 import type { IJsonCodec, JsonCodecPart } from "../../codec/index.js";
 import {
 	areEqualChangeAtomIdOpts,
-	areEqualChangeAtomIds,
 	type ChangeAtomId,
 	type ChangeEncodingContext,
 	type EncodedChangeAtomId,

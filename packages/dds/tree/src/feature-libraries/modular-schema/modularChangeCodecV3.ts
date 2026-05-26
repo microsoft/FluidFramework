@@ -29,8 +29,6 @@ import {
 	type IdAllocator,
 	type JsonCompatibleReadOnly,
 	type Mutable,
-	type RangeQueryResult,
-	type TupleBTree,
 } from "../../util/index.js";
 import {
 	newChangeAtomIdBTree,
@@ -52,14 +50,7 @@ import {
 	getFieldChangesetCodecs,
 	makeFieldEncodingContextFactory,
 } from "./modularChangeCodecV1.js";
-import {
-	addNodeRename,
-	getFirstAttachField,
-	getFirstDetachField,
-	newFieldIdKeyBTree,
-	newRootTable,
-	type FieldIdKey,
-} from "./modularChangeFamily.js";
+import { addNodeRename, newRootTable } from "./modularChangeFamily.js";
 import type {
 	EncodedFieldChange,
 	EncodedFieldChangeMap,
@@ -280,7 +271,6 @@ export function makeModularChangeCodecV3(
 		encodedChange: EncodedNodeChangeset,
 		id: NodeId,
 		decodedCrossFieldKeys: CrossFieldKeyTable,
-		decodedRootTable: RootNodeTable,
 		context: ChangeEncodingContext,
 		decodeNode: NodeDecoder,
 		idAllocator: IdAllocator,
@@ -306,12 +296,6 @@ export function makeModularChangeCodecV3(
 		return decodedChange;
 	}
 
-	type ChangeAtomMappingQuery = (
-		id: ChangeAtomId,
-		count: number,
-	) => RangeQueryResult<ChangeAtomId | undefined>;
-
-	type ChangeAtomIdRangeQuery = (id: ChangeAtomId, count: number) => RangeQueryResult<boolean>;
 	type NodeEncoder = (nodeId: NodeId) => EncodedNodeChangeset;
 	type NodeDecoder = (encoded: EncodedNodeChangeset, fieldId: NodeLocation) => NodeId;
 
@@ -403,7 +387,6 @@ export function makeModularChangeCodecV3(
 			const nodeChanges: ChangeAtomIdBTree<NodeChangeset> = newChangeAtomIdBTree();
 			const nodeToParent: ChangeAtomIdBTree<NodeLocation> = newChangeAtomIdBTree();
 			const crossFieldKeys: CrossFieldKeyTable = newCrossFieldRangeTable();
-			const rootNodes = newRootTable();
 
 			const decodeNode: NodeDecoder = (
 				encodedNode: EncodedNodeChangeset,
@@ -418,7 +401,6 @@ export function makeModularChangeCodecV3(
 					encodedNode,
 					nodeId,
 					crossFieldKeys,
-					rootNodes,
 					context,
 					decodeNode,
 					idAllocator,
@@ -515,54 +497,4 @@ function getChangeHandler(
 	const handler = fieldKinds.get(fieldKind)?.kind.changeHandler;
 	assert(handler !== undefined, 0x9c1 /* Unknown field kind */);
 	return handler;
-}
-
-function getFieldToRoots(rootTable: RootNodeTable): FieldRootMap {
-	const fieldToRoots: FieldRootMap = newFieldIdKeyBTree();
-	for (const [[revision, localId], nodeId] of rootTable.nodeChanges.entries()) {
-		const detachId: ChangeAtomId = { revision, localId };
-		const fieldId = rootTable.detachLocations.getFirst(detachId, 1).value;
-		if (fieldId !== undefined) {
-			setInChangeAtomIdMap(
-				getOrAddInFieldRootMap(fieldToRoots, fieldId).nodeChanges,
-				detachId,
-				nodeId,
-			);
-		}
-	}
-
-	for (const entry of rootTable.oldToNewId.entries()) {
-		const fieldId = rootTable.detachLocations.getFirst(entry.start, 1).value;
-		if (fieldId !== undefined) {
-			getOrAddInFieldRootMap(fieldToRoots, fieldId).renames.set(
-				entry.start,
-				entry.length,
-				entry.value,
-			);
-		}
-	}
-
-	return fieldToRoots;
-}
-
-function getOrAddInFieldRootMap(map: FieldRootMap, fieldId: FieldId): FieldRootChanges {
-	const key: FieldIdKey = [fieldId.nodeId?.revision, fieldId.nodeId?.localId, fieldId.field];
-	const rootChanges = map.get(key);
-	if (rootChanges !== undefined) {
-		return rootChanges;
-	}
-
-	const newRootChanges: FieldRootChanges = {
-		nodeChanges: newChangeAtomIdBTree(),
-		renames: newChangeAtomIdTransform(),
-	};
-	map.set(key, newRootChanges);
-	return newRootChanges;
-}
-
-type FieldRootMap = TupleBTree<FieldIdKey, FieldRootChanges>;
-
-interface FieldRootChanges {
-	readonly nodeChanges: ChangeAtomIdBTree<NodeId>;
-	readonly renames: ChangeAtomIdRangeMap<ChangeAtomId>;
 }
