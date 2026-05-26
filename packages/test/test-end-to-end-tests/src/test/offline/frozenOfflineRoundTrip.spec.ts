@@ -72,6 +72,17 @@ describeCompat(
 		let container1: IContainer;
 		let map1: ISharedMap;
 
+		// captureFullContainerState requires IDocumentStorageService.getSnapshot, which
+		// is only implemented by the ODSP and local drivers. Tinylicious / routerlicious
+		// throw "getSnapshot api should exist on internal storage" before the test body
+		// can even run, so skip there.
+		before(function () {
+			const driverType = getTestObjectProvider().driver.type;
+			if (driverType !== "local" && driverType !== "odsp") {
+				this.skip();
+			}
+		});
+
 		beforeEach("setup", async () => {
 			provider = getTestObjectProvider();
 			loader = provider.makeTestLoader(testContainerConfig);
