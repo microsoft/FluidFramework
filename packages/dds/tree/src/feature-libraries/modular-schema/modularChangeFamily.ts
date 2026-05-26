@@ -2963,15 +2963,11 @@ class InvertNodeManagerI implements InvertNodeManager {
 		private readonly fieldId: FieldId,
 	) {}
 
-	// XXX: Renmove `newAttachId` parameter.
 	public invertDetach(
 		detachId: ChangeAtomId,
 		count: number,
 		nodeChange: NodeId | undefined,
-		newAttachId: ChangeAtomId,
 	): void {
-		assert(areEqualChangeAtomIds(newAttachId, this.getInvertedMoveId(detachId)), "XXX");
-
 		let countProcessed = count;
 		const attachIdEntry = firstAttachIdFromDetachId(
 			this.table.change.rootNodes,
@@ -3006,6 +3002,7 @@ class InvertNodeManagerI implements InvertNodeManager {
 			}
 		}
 
+		const newAttachId = this.getInvertedMoveId(detachId);
 		const newDetachId = this.getInvertedMoveId(attachIdEntry.value);
 		for (const entry of doesChangeAttachNodes(
 			this.table.change.crossFieldKeys,
@@ -3113,7 +3110,7 @@ class InvertNodeManagerI implements InvertNodeManager {
 		return result;
 	}
 
-	private getInvertedMoveId(id: ChangeAtomId): ChangeAtomId {
+	public getInvertedMoveId(id: ChangeAtomId): ChangeAtomId {
 		return this.table.isRollback
 			? id
 			: { revision: this.table.invertRevision, localId: id.localId };

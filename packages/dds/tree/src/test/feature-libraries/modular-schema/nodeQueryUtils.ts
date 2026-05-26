@@ -16,6 +16,7 @@ const failingDelegate = (): never => assert.fail("Should not be called");
 export const failInvertManager: InvertNodeManager = {
 	invertDetach: failingDelegate,
 	invertAttach: failingDelegate,
+	getInvertedMoveId: failingDelegate,
 };
 
 export const failRebaseManager: RebaseNodeManager = {

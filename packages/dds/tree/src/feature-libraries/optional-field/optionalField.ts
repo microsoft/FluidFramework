@@ -65,7 +65,7 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 				? detachId
 				: makeChangeAtomId(detachId.localId, revision);
 
-			nodeManager.invertDetach(detachId, 1, change.childChange, attachIdForInverse);
+			nodeManager.invertDetach(detachId, 1, change.childChange);
 
 			inverted.valueReplace = {
 				isEmpty: change.valueReplace?.src === undefined,

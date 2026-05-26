@@ -807,6 +807,10 @@ function newInvertManager(): TestInvertManager {
 		invertAttach(attachId: ChangeAtomId, count: number): RangeQueryResult<NodeId | undefined> {
 			throw new Error("Function not implemented.");
 		},
+
+		getInvertedMoveId(id: ChangeAtomId): ChangeAtomId {
+			throw new Error("Function not implemented.");
+		},
 	};
 
 	return manager;

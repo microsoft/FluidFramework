@@ -45,27 +45,25 @@ export interface InvertNodeManager {
 	 *
 	 * This must be called for each detach in the field kind when rolling-back or reverting a detach.
 	 * This implies that all detaches in the field must be inverted.
+	 * The inverted field change must contain an attach using `this.getInvertedMoveId(detachId)` as its ID.
 	 * @param detachId - The ID of the detach to invert.
 	 * @param count - The number of nodes being detached.
 	 * @param nodeChanges - The node changes to transfer.
-	 * @param newAttachId - The ID that the nodes will be attached with in the inverted changeset of this field.
 	 */
-	invertDetach(
-		detachId: ChangeAtomId,
-		count: number,
-		nodeChanges: NodeId | undefined,
-		newAttachId: ChangeAtomId,
-	): void;
+	invertDetach(detachId: ChangeAtomId, count: number, nodeChanges: NodeId | undefined): void;
 
 	/**
 	 * Gets the node changes associated with the node being attached in input changeset.
 	 *
 	 * This must be called for each attach in the field kind when rolling-back or reverting a attach.
 	 * This implies that all attaches in the field must be inverted.
+	 * The inverted field change must contain a detach using `this.getInvertedMoveId(attachId)` as its ID.
 	 * @param attachId - The ID of the attach to invert.
 	 * @param count - The number of nodes being attached.
 	 */
 	invertAttach(attachId: ChangeAtomId, count: number): RangeQueryResult<NodeId | undefined>;
+
+	getInvertedMoveId(id: ChangeAtomId): ChangeAtomId;
 }
 
 export interface ComposeNodeManager {

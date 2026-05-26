@@ -25,6 +25,7 @@ import {
 import {
 	areEqualCellIds,
 	getAttachedRootId,
+	getDetachedRootId,
 	getInputCellId,
 	getOutputCellId,
 	isImpactful,
@@ -115,20 +116,16 @@ function invertMark(
 			const outputId = getOutputCellId(mark);
 			const inputId = getInputCellId(mark);
 			assert(inputId === undefined, "Unexpected detach of detached node");
-			const attachId = { revision: isRollback ? mark.revision : revision, localId: mark.id };
-			crossFieldManager.invertDetach(
-				{ revision: mark.revision, localId: mark.id },
-				mark.count,
-				mark.changes,
-				attachId,
-			);
+			const detachId = getDetachedRootId(mark);
+			const attachId = crossFieldManager.getInvertedMoveId(detachId);
+			crossFieldManager.invertDetach(detachId, mark.count, mark.changes);
 
 			const inverse: Mark = {
 				type: "Attach",
-				id: mark.id,
-				cellId: outputId,
 				count: mark.count,
+				cellId: outputId,
 				revision: attachId.revision,
+				id: attachId.localId,
 			};
 			return [inverse];
 		}
