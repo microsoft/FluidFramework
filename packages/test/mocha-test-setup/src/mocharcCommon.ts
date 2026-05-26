@@ -3,11 +3,8 @@
  * Licensed under the MIT License.
  */
 
-// eslint-disable-next-line import-x/no-nodejs-modules
 import { readFileSync } from "node:fs";
-// eslint-disable-next-line import-x/no-nodejs-modules
 import path from "node:path";
-// eslint-disable-next-line import-x/no-nodejs-modules
 import { fileURLToPath } from "node:url";
 
 /**
