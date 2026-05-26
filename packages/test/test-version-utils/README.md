@@ -22,7 +22,8 @@ exports to get the versioned Fluid APIs.
 
 ## Use requirements
 
-To use provided mocha configuration generation, Node v22.18 or later is required.
+To use provided mocha configuration generation, Node v22.22.2 or later is required.
+<!-- Only 22.18 is actually required, but `syncpack lint` is unhappy with 22.18.0. -->
 
 ## Versioned combination test generation
 

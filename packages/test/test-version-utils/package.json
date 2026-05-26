@@ -137,7 +137,7 @@
 		"webpack-cli": "^5.1.4"
 	},
 	"engines": {
-		"node": ">=22.18.0"
+		"node": ">=22.22.2"
 	},
 	"fluidBuild": {
 		"tasks": {
