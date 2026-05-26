@@ -25,21 +25,13 @@ function createConnectedSharedClaims(
 		objectStorage: new MockStorage(),
 	};
 
-	const sharedClaims = new SharedClaims(
-		id,
-		dataStoreRuntime,
-		SharedClaimsFactory.Attributes,
-	);
+	const sharedClaims = new SharedClaims(id, dataStoreRuntime, SharedClaimsFactory.Attributes);
 	sharedClaims.connect(services);
 	return sharedClaims;
 }
 
 const createLocalSharedClaims = (id: string): SharedClaims =>
-	new SharedClaims(
-		id,
-		new MockFluidDataStoreRuntime(),
-		SharedClaimsFactory.Attributes,
-	);
+	new SharedClaims(id, new MockFluidDataStoreRuntime(), SharedClaimsFactory.Attributes);
 
 describe("SharedClaims", () => {
 	describe("Local (detached) state", () => {

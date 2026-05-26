@@ -23,7 +23,12 @@ import {
 } from "@fluidframework/shared-object-base/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
-import type { ClaimConfirmation, ClaimResult, ISharedClaims, ISharedClaimsEvents } from "./interfaces.js";
+import type {
+	ClaimConfirmation,
+	ClaimResult,
+	ISharedClaims,
+	ISharedClaimsEvents,
+} from "./interfaces.js";
 
 /**
  * Op format for SharedClaims operations.
@@ -135,7 +140,10 @@ export class SharedClaims<T = unknown>
 
 	protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats {
 		const entries = [...this.claims.entries()];
-		return createSingleBlobSummary(snapshotFileName, serializer.stringify(entries, this.handle));
+		return createSingleBlobSummary(
+			snapshotFileName,
+			serializer.stringify(entries, this.handle),
+		);
 	}
 
 	protected async loadCore(storage: IChannelStorageService): Promise<void> {

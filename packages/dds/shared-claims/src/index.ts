@@ -3,6 +3,11 @@
  * Licensed under the MIT License.
  */
 
-export type { ISharedClaims, ISharedClaimsEvents, ClaimResult, ClaimConfirmation } from "./interfaces.js";
+export type {
+	ISharedClaims,
+	ISharedClaimsEvents,
+	ClaimResult,
+	ClaimConfirmation,
+} from "./interfaces.js";
 export { SharedClaimsKind, SharedClaimsFactory } from "./sharedClaimsFactory.js";
 export { SharedClaims } from "./sharedClaims.js";

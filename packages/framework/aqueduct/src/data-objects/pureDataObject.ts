@@ -41,7 +41,10 @@ import type { DataObjectTypes, IDataObjectProps } from "./types.js";
  * @typeParam I - The optional input types used to strongly type the data object
  * @legacy @beta
  */
-export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes>
+export abstract class PureDataObject<
+		I extends DataObjectTypes = DataObjectTypes,
+		TClaimValue = unknown,
+	>
 	extends TypedEventEmitter<I["Events"] & IEvent>
 	// eslint-disable-next-line import-x/no-deprecated
 	implements IFluidLoadable, IProvideFluidHandle
@@ -76,7 +79,7 @@ export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes
 	/**
 	 * Internal SharedClaims instance, initialized during initializeInternal.
 	 */
-	private internalClaims: ISharedClaims | undefined;
+	private internalClaims: ISharedClaims<TClaimValue> | undefined;
 
 	/**
 	 * Internal implementation detail.
@@ -169,7 +172,7 @@ export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes
 			try {
 				this.internalClaims = (await this.runtime.getChannel(
 					PureDataObject.claimsChannelId,
-				)) as unknown as ISharedClaims;
+				)) as unknown as ISharedClaims<TClaimValue>;
 			} catch {
 				// Channel doesn't exist — this is a legacy data object.
 				// Claims will not be available; trySetClaim will throw UsageError.
@@ -178,12 +181,9 @@ export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes
 			// Only create the claims channel for new data objects when the feature gate is enabled.
 			const mc = loggerToMonitoringContext(this.runtime.logger);
 			if (mc.config.getBoolean("Fluid.PureDataObject.EnableClaims") === true) {
-				const claims = SharedClaimsKind.create(
-					this.runtime,
-					PureDataObject.claimsChannelId,
-				);
+				const claims = SharedClaimsKind.create(this.runtime, PureDataObject.claimsChannelId);
 				claims.bindToContext();
-				this.internalClaims = claims;
+				this.internalClaims = claims as unknown as ISharedClaims<TClaimValue>;
 			}
 		}
 
@@ -240,7 +240,7 @@ export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes
 	 * @returns The claim result.
 	 * @throws Will throw a UsageError if the container is not attached and connected.
 	 */
-	public trySetClaim?(key: string, value: unknown): ClaimResult {
+	public trySetClaim?(key: string, value: TClaimValue): ClaimResult<TClaimValue> {
 		if (this.internalClaims === undefined) {
 			throw new UsageError(
 				"trySetClaim is not available on this data object. It was created before claims support was added. " +
@@ -256,7 +256,7 @@ export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes
 	 * @param key - The claim key to look up.
 	 * @returns The claimed value, or `undefined` if unclaimed.
 	 */
-	public getClaim?(key: string): unknown | undefined {
+	public getClaim?(key: string): TClaimValue | undefined {
 		return this.internalClaims?.getClaim(key);
 	}
 }
