@@ -440,9 +440,7 @@ export async function loadFrozenContainerFromPendingState(
 			// resolved URL alone, so we cannot honor `getAbsoluteUrl`. Surface the misuse
 			// loudly rather than fabricate a string in the wrong format.
 			getAbsoluteUrl: async () => {
-				throw new UsageError(
-					`${fnName}: getAbsoluteUrl requires ${driverPropKeys.join("/")}`,
-				);
+				throw new UsageError(`${fnName}: getAbsoluteUrl requires ${driverPropKeys.join("/")}`);
 			},
 		};
 		return loadExistingContainer({
