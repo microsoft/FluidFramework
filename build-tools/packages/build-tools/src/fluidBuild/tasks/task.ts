@@ -6,12 +6,12 @@
 import * as assert from "assert";
 import { type AsyncPriorityQueue, priorityQueue } from "async";
 import registerDebug from "debug";
-import type { Package } from "../../common/npmPackage";
-import type { BuildContext } from "../buildContext";
-import type { BuildPackage } from "../buildGraph";
-import { BuildResult } from "../buildResult";
-import { options } from "../options";
-import type { LeafTask } from "./leaf/leafTask";
+import type { Package } from "../../common/npmPackage.js";
+import type { BuildContext } from "../buildContext.js";
+import type { BuildPackage } from "../buildGraph.js";
+import { BuildResult } from "../buildResult.js";
+import { options } from "../options.js";
+import type { LeafTask } from "./leaf/leafTask.js";
 
 const traceTaskInit = registerDebug("fluid-build:task:init");
 const traceTaskExec = registerDebug("fluid-build:task:exec");

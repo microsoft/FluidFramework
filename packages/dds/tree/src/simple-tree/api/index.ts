@@ -184,6 +184,7 @@ export {
 	type NodeInDocumentConstraint,
 	type NoChangeConstraint,
 	type RunTransactionParams,
+	type RunTransactionSyncParams,
 	type VoidTransactionCallbackStatus,
 	type TransactionCallbackStatus,
 	type TransactionResult,

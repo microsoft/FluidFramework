@@ -38,6 +38,10 @@ resources:
 variables:
 - template: /tools/pipelines/templates/include-vars-telemetry-generator.yml@self
 - group: prague-key-vault
+# Loaded at the root level rather than as stageVariables inside include-test-real-service.yml so
+# that $(containerRegistryConnection) is available before ADO performs service-connection pre-checks
+# on the Docker login task (the value is otherwise treated as a literal connection name).
+- group: container-registry-info
 - name: testPackage
   value: "@fluid-private/test-end-to-end-tests"
   readonly: true
@@ -101,8 +105,6 @@ stages:
       continueOnError: true
       timeoutInMinutes: 360
       testCommand: test:realsvc:r11s:docker
-      stageVariables:
-        - group: container-registry-info
       splitTestVariants:
         - name: Non-compat
           flags: --compatVersion=0
