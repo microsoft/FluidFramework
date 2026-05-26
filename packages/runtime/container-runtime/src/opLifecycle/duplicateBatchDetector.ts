@@ -82,7 +82,7 @@ export class DuplicateBatchDetector {
 	/**
 	 * Records this batch's batchId, and checks if it's a duplicate of a batch we've already seen.
 	 * If it's a duplicate, also return the sequence number of the other batch (and identifying info,
-	 * if the other batch was seen at runtime rather than loaded from snapshot) for logging.
+	 * if the other batch was seen during this container session rather than loaded from snapshot) for logging.
 	 *
 	 * @remarks We also use the minimumSequenceNumber to clear out old batchIds that are no longer at risk for duplicates.
 	 */
@@ -127,16 +127,13 @@ export class DuplicateBatchDetector {
 		);
 
 		// Add new batch. Record identifying info so we can report it if a future duplicate matches us.
-		const info: RecordedBatchInfo | undefined =
-			batchStart.clientId === undefined || batchStart.batchStartCsn === undefined
-				? undefined
-				: {
-						clientId: batchStart.clientId,
-						batchStartCsn: batchStart.batchStartCsn,
-						// True iff the wire carried explicit batchId metadata (resubmit path).
-						// False indicates the batchId was derived from clientId + batchStartCsn (fresh submit).
-						batchIdExplicit: batchStart.batchId !== undefined,
-					};
+		const info: RecordedBatchInfo | undefined = {
+			clientId: batchStart.clientId,
+			batchStartCsn: batchStart.batchStartCsn,
+			// True iff the wire carried explicit batchId metadata (resubmit path).
+			// False indicates the batchId was derived from clientId + batchStartCsn (fresh submit).
+			batchIdExplicit: batchStart.batchId !== undefined,
+		};
 		this.batchesBySeqNum.set(sequenceNumber, { batchId, info });
 		this.seqNumByBatchId.set(batchId, sequenceNumber);
 
@@ -177,8 +174,9 @@ export class DuplicateBatchDetector {
 			this.batchesBySeqNum.size,
 		);
 
-		return [...this.batchesBySeqNum.entries()].map(
-			([seqNum, recorded]) => [seqNum, recorded.batchId] as [number, string],
-		);
+		return [...this.batchesBySeqNum.entries()].map(([seqNum, recorded]) => [
+			seqNum,
+			recorded.batchId,
+		]);
 	}
 }
