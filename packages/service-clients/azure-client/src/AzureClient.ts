@@ -380,7 +380,8 @@ export class AzureClient {
 		// eslint-disable-next-line import-x/no-deprecated
 		compatibilityMode: MinimumVersionForCollab | CompatibilityMode,
 	): ILoaderProps {
-		const minVersionForCollaboration = resolveCompatibilityModeToMinVersionForCollab(compatibilityMode);
+		const minVersionForCollaboration =
+			resolveCompatibilityModeToMinVersionForCollab(compatibilityMode);
 		const runtimeFactory = this.createContainerRuntimeFactory
 			? this.createContainerRuntimeFactory({
 					schema,

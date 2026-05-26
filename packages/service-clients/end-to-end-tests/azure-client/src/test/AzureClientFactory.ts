@@ -20,9 +20,7 @@ import {
 import type { IRuntimeFactory } from "@fluidframework/container-definitions/legacy";
 import type { IConfigProviderBase } from "@fluidframework/core-interfaces";
 import { ScopeType } from "@fluidframework/driver-definitions/legacy";
-import type {
-	ContainerSchema,
-} from "@fluidframework/fluid-static";
+import type { ContainerSchema } from "@fluidframework/fluid-static";
 import type { MinimumVersionForCollab } from "@fluidframework/runtime-definitions";
 import {
 	type MockLogger,
