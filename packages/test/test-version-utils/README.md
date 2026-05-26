@@ -20,6 +20,10 @@ exports to get the versioned Fluid APIs.
 
 <!-- AUTO-GENERATED-CONTENT:END -->
 
+## Use requirements
+
+To use provided mocha configuration generation, Node v22.18 or later is required.
+
 ## Versioned combination test generation
 
 ### Layer version combinations

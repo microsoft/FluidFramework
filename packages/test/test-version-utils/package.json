@@ -12,6 +12,9 @@
 	"author": "Microsoft and contributors",
 	"sideEffects": false,
 	"type": "module",
+	"engines": {
+		"node": ">=22.18.0"
+	},
 	"exports": {
 		".": {
 			"types": "./lib/index.d.ts",
