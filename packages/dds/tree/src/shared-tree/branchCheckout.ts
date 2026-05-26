@@ -310,8 +310,6 @@ export function forkAsBranchCheckout(parent: TreeCheckout): BranchCheckout {
  * change that retargets a view to another branch would likewise cause a different instance to be
  * returned.
  *
- * @typeParam TSchema - The schema type of the tree view. Required only to satisfy the invariance
- * of {@link TreeViewAlpha}; the schema is not otherwise used and the return type does not depend on it.
  * @param view - A {@link TreeViewAlpha} returned by the Fluid Framework. External implementations
  * are not supported and will cause a `UsageError` to be thrown.
  *
