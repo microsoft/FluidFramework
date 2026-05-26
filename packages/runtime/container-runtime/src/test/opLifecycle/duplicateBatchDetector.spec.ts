@@ -114,20 +114,26 @@ describe("DuplicateBatchDetector", () => {
 			sequenceNumber: seqNum++, // 1
 			minimumSequenceNumber: 0,
 			batchId: "batch1",
+			clientId: "client1",
+			batchStartCsn: 10,
 		});
 		const inboundBatch2 = makeBatch({
 			sequenceNumber: seqNum++, // 2
 			minimumSequenceNumber: 0,
 			batchId: "batch1",
+			clientId: "client2",
+			batchStartCsn: 20,
 		});
 		detector.processInboundBatch(inboundBatch1);
 		const result = detector.processInboundBatch(inboundBatch2);
-		// Both inbound batches were created via the test helper with no clientId/batchStartCsn,
-		// so the recorded info is `undefined`.
 		assert.deepEqual(result, {
 			duplicate: true,
 			otherSequenceNumber: 1,
-			otherBatchInfo: undefined,
+			otherBatchInfo: {
+				clientId: "client1",
+				batchStartCsn: 10,
+				batchIdExplicit: true,
+			},
 		});
 	});
 
@@ -136,6 +142,8 @@ describe("DuplicateBatchDetector", () => {
 			sequenceNumber: seqNum++, // 1
 			minimumSequenceNumber: 0,
 			batchId: "clientId_[33]",
+			clientId: "resubmitter",
+			batchStartCsn: 99,
 		});
 		const inboundBatch2 = makeBatch({
 			sequenceNumber: seqNum++, // 2
@@ -145,12 +153,14 @@ describe("DuplicateBatchDetector", () => {
 		});
 		detector.processInboundBatch(inboundBatch1);
 		const result = detector.processInboundBatch(inboundBatch2);
-		// The original (inboundBatch1) was recorded without clientId/batchStartCsn (test helper),
-		// so its recorded info is `undefined`.
 		assert.deepEqual(result, {
 			duplicate: true,
 			otherSequenceNumber: 1,
-			otherBatchInfo: undefined,
+			otherBatchInfo: {
+				clientId: "resubmitter",
+				batchStartCsn: 99,
+				batchIdExplicit: true,
+			},
 		});
 	});
 
