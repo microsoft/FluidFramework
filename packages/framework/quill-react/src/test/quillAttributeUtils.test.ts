@@ -99,6 +99,7 @@ describe("quillAttributeUtils", () => {
 
 		it("returns the default for unrecognized values", () => {
 			assert.equal(parseSize(undefined), defaultSize);
+			// eslint-disable-next-line unicorn/no-null
 			assert.equal(parseSize(null), defaultSize);
 			assert.equal(parseSize("notasize"), defaultSize);
 			assert.equal(parseSize({}), defaultSize);
