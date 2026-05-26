@@ -379,6 +379,8 @@ export type ILoadFrozenContainerFromPendingStateProps = IContainerHostProps & {
 	readonly readOnly?: boolean;
 } & AllOrNone<IContainerLoadDriverProps>;
 
+const driverPropKeys = ["request", "urlResolver", "documentServiceFactory"] as const;
+
 /**
  * Loads a frozen container from pending local state.
  * @param props - Properties required to load a frozen container from pending state.
@@ -387,17 +389,14 @@ export type ILoadFrozenContainerFromPendingStateProps = IContainerHostProps & {
 export async function loadFrozenContainerFromPendingState(
 	props: ILoadFrozenContainerFromPendingStateProps,
 ): Promise<IContainer> {
+	const fnName = loadFrozenContainerFromPendingState.name;
 	const { readOnly, pendingLocalState } = props;
 
-	const driverWiring = validateAllOrNone<IContainerLoadDriverProps>(props, [
-		"request",
-		"urlResolver",
-		"documentServiceFactory",
-	]);
+	const driverWiring = validateAllOrNone<IContainerLoadDriverProps>(props, driverPropKeys);
 
 	if (driverWiring === "mixed") {
 		throw new UsageError(
-			"loadFrozenContainerFromPendingState: request, urlResolver, and documentServiceFactory must all be provided or all omitted",
+			`${fnName}: ${driverPropKeys.join(", ")} must all be provided or all omitted`,
 		);
 	}
 
@@ -410,7 +409,7 @@ export async function loadFrozenContainerFromPendingState(
 		const parsed = tryParseCompatibleResolvedUrl(pending.url);
 		if (parsed === undefined) {
 			throw new UsageError(
-				`loadFrozenContainerFromPendingState: pending state URL is not in a parseable form (${pending.url})`,
+				`${fnName}: pending state URL is not in a parseable form (${pending.url})`,
 			);
 		}
 		// `tryParseCompatibleResolvedUrl` returns `parsed.id` as the first two
@@ -442,7 +441,7 @@ export async function loadFrozenContainerFromPendingState(
 			// loudly rather than fabricate a string in the wrong format.
 			getAbsoluteUrl: async () => {
 				throw new UsageError(
-					"IContainer.getAbsoluteUrl is not supported on a container loaded offline from pending state. Supply request/urlResolver/documentServiceFactory at load time to enable it.",
+					`IContainer.getAbsoluteUrl is not supported on a container loaded offline from pending state. Supply ${driverPropKeys.join("/")} at load time to enable it.`,
 				);
 			},
 		};
