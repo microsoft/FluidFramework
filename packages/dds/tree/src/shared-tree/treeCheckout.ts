@@ -891,7 +891,7 @@ export class TreeCheckout implements ITreeCheckout {
 		// Starting a transaction during a nodeChanged/treeChanged event is forbidden for the same
 		// reason direct edits are: it would push a label frame and (typically) commit edits while
 		// the tree's invariants are mid-flight. Without this guard, nested transactions started
-		// from a listener leak label frames into the running outer transaction's label tree
+		// from a listener leak label frames into the running outer transaction's label tree.
 		this.editLock.checkUnlocked("Running a transaction");
 		if (isAsync && this.transaction.size > 0) {
 			throw new UsageError(

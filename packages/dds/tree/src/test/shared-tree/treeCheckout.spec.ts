@@ -1300,7 +1300,10 @@ describe("sharedTreeView", () => {
 				args.duringEdit(view);
 			});
 
-			assert.throws(() => (view.root.number = 0), new RegExp(args.error));
+			assert.throws(
+				() => (view.root.number = 0),
+				validateUsageError(new RegExp(args.error)),
+			);
 		}
 
 		it("edit the tree", () => {
@@ -1426,7 +1429,7 @@ describe("sharedTreeView", () => {
 			// Subsequent operations should all throw with the broken-state message.
 			assert.throws(
 				() => (view.root.number = 5),
-				validateUsageError(/invalid state/),
+				validateUsageError(/Invalid use of .* after it was put into an invalid state/),
 				"direct edit after listener throw should be blocked",
 			);
 			assert.throws(
@@ -1434,7 +1437,7 @@ describe("sharedTreeView", () => {
 					view.runTransaction(() => {
 						view.root.number = 6;
 					}),
-				validateUsageError(/invalid state/),
+				validateUsageError(/Invalid use of .* after it was put into an invalid state/),
 				"runTransaction after listener throw should be blocked",
 			);
 		});
