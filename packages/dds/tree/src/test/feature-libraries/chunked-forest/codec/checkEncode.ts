@@ -14,6 +14,8 @@ import type { CounterFilter } from "../../../../feature-libraries/chunked-forest
 // eslint-disable-next-line import-x/no-internal-modules
 import { decode } from "../../../../feature-libraries/chunked-forest/codec/chunkDecoding.js";
 // eslint-disable-next-line import-x/no-internal-modules
+import { FieldBatchDecodingContext } from "../../../../feature-libraries/chunked-forest/codec/codecs.js";
+// eslint-disable-next-line import-x/no-internal-modules
 import { updateShapesAndIdentifiersEncoding } from "../../../../feature-libraries/chunked-forest/codec/chunkEncodingGeneric.js";
 import type {
 	BufferFormat,
@@ -108,16 +110,14 @@ function testDecode(
 	const result = decode(
 		chunk,
 		idCompressor === undefined
-			? {
+			? FieldBatchDecodingContext.forOp({
 					idCompressor: testIdCompressor,
 					originatorId: testIdCompressor.localSessionId,
-					isSummary: false,
-				}
-			: {
+				})
+			: FieldBatchDecodingContext.forOp({
 					idCompressor,
 					originatorId: idCompressor.localSessionId,
-					isSummary: false,
-				},
+				}),
 		incrementalDecoder,
 	);
 	assertChunkCursorBatchEquals(result, expectedTree);
@@ -147,16 +147,14 @@ function testDecode(
 		const parsedResult = decode(
 			parsed,
 			idCompressor === undefined
-				? {
+				? FieldBatchDecodingContext.forOp({
 						idCompressor: testIdCompressor,
 						originatorId: testIdCompressor.localSessionId,
-						isSummary: false,
-					}
-				: {
+					})
+				: FieldBatchDecodingContext.forOp({
 						idCompressor,
 						originatorId: idCompressor.localSessionId,
-						isSummary: false,
-					},
+					}),
 			incrementalDecoder,
 		);
 		assert.deepEqual(parsedResult, result);

@@ -952,7 +952,6 @@ export const TreeAlpha: TreeAlpha = {
 		const context: FieldBatchEncodingContext = {
 			encodeType: TreeCompressionStrategy.Compressed,
 			idCompressor,
-			originatorId: idCompressor.localSessionId, // TODO: Why is this needed?
 			schema: { schema: storedSchema, policy: defaultSchemaPolicy },
 			// Not a summary blob — this is `TreeAlpha`'s ad-hoc encoder.
 			isSummary: false,

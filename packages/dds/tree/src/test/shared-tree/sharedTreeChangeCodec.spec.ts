@@ -22,6 +22,7 @@ import type {
 } from "../../feature-libraries/chunked-forest/index.js";
 import {
 	type FieldBatch,
+	type FieldBatchDecodingContext,
 	type FieldBatchEncodingContext,
 	FieldBatchFormatVersion,
 	FieldKinds,
@@ -117,12 +118,11 @@ describe("sharedTreeChangeCodec", () => {
 			},
 			decode: (
 				data: EncodedFieldBatchV1OrV2,
-				context: FieldBatchEncodingContext,
+				context: FieldBatchDecodingContext,
 			): FieldBatch => {
 				return decode(data, {
 					idCompressor: context.idCompressor,
-					originatorId: context.originatorId,
-					isSummary: false,
+					resolveEncodedId: context.resolveEncodedId,
 				}).map((chunk) => chunk.cursor());
 			},
 			writeVersion: FieldBatchFormatVersion.v2,

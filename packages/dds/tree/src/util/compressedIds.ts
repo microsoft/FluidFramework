@@ -78,44 +78,48 @@ export function tryDecodeEncodedIdWithoutSession(
 }
 
 /**
+ * Configuration for the heal-on-decode workaround. The internal counterpart of
+ * the user-facing {@link SharedTreeOptionsBeta.healUnresolvableIdentifiersOnDecode}
+ * option — see that option for the user-facing rationale and trade-offs.
+ *
+ * Carried by decode-side contexts (`ChangeEncodingContext.healing`,
+ * `EditManagerEncodingContext.healing`, etc.) when the workaround is enabled.
+ * Presence enables healing; `undefined` opts out. There is no separate boolean,
+ * which makes it impossible to enable healing without supplying the namespace
+ * input.
+ */
+export interface IdentifierHealingConfig {
+	/**
+	 * The SharedTree's shared-object id, used as the v5 namespace input so
+	 * healed UUIDs are unique across attaches of different documents with the
+	 * same session offsets.
+	 */
+	readonly sharedObjectId: string;
+}
+
+/**
  * Decode an op-space compressed id without a session.
  *
- * If the id is finalized it is returned as a session-space id (final ids are
- * invariant across the two spaces). If it is a non-final op-space id, the
- * behavior depends on `options.enableHealingWorkaround`:
- *
- * - When enabled, synthesizes a deterministic UUIDv5 from `options.sharedObjectId`
- * so that all clients loading the same blob agree on the resulting value.
- * This UUID is *not* a `StableId` (which must be a v4 UUID) — it is a
- * v5 UUID, but is still a valid `string` identifier value. The `string` arm of
- * the return type covers this case.
- *
- * - When disabled, throws.
+ * Finalized ids are returned as session-space ids (final ids are invariant
+ * across the two spaces). Non-final ids are healed via {@link IdentifierHealingConfig}
+ * if provided, or cause the resolver to throw otherwise. A healed result is a
+ * deterministic v5 UUID string — *not* a `StableId`, since that brand requires
+ * v4, but still a valid identifier value; the `string` arm of the return type
+ * covers this case.
  */
 export function forceDecodeEncodedIdWithoutSession(
 	id: OpSpaceCompressedId,
 	idCompressor: IIdCompressor,
-	options:
-		| {
-				readonly enableHealingWorkaround: true;
-				readonly sharedObjectId: string;
-		  }
-		| { readonly enableHealingWorkaround: false; readonly sharedObjectId?: string },
+	healing: IdentifierHealingConfig | undefined,
 ): SessionSpaceCompressedId | string {
-	// `tryDecodeEncodedIdWithoutSession` handles the finalized-id case.
 	const decoded = tryDecodeEncodedIdWithoutSession(id, idCompressor);
 	if (decoded !== undefined) {
 		return decoded;
 	}
-	// Only reached when `id` is a non-final op-space compressed id.
-	if (options.enableHealingWorkaround) {
-		// Documents written before the encode-side fix for non-finalized identifier
-		// values can persist negative op-space ids that are no longer resolvable
-		// once the originating session's local state has been stripped. Synthesize
-		// a deterministic v5 UUID so all readers of the same blob agree.
-		return uuidV5(`${options.sharedObjectId}|${id}`, healingNamespace);
+	// `id` is a non-final op-space compressed id.
+	if (healing !== undefined) {
+		return uuidV5(`${healing.sharedObjectId}|${id}`, healingNamespace);
 	}
-	// See `SharedTreeOptionsBeta.healUnresolvableIdentifiersOnDecode` for details on this error.
 	throw new Error(
 		"Summary could not be loaded due incorrectly encoded identifier. See SharedTreeOptionsBeta.healUnresolvableIdentifiersOnDecode for mitigation.",
 	);

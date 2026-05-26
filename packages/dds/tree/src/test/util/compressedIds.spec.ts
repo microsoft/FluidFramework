@@ -118,19 +118,18 @@ describe("compressedIds", () => {
 		it("returns a session-space id for a finalized op-space id", () => {
 			const compressedId = testIdCompressor.generateCompressedId();
 			const opSpaceId = testIdCompressor.normalizeToOpSpace(compressedId);
-			const result = forceDecodeEncodedIdWithoutSession(opSpaceId, testIdCompressor, {
-				enableHealingWorkaround: false,
-			});
+			const result = forceDecodeEncodedIdWithoutSession(
+				opSpaceId,
+				testIdCompressor,
+				undefined,
+			);
 			assert.equal(result, compressedId);
 		});
 
 		it("throws on a non-final op-space id when healing is disabled", () => {
 			const { opSpaceId } = makeUnresolvableOpSpaceId();
 			assert.throws(
-				() =>
-					forceDecodeEncodedIdWithoutSession(opSpaceId, testIdCompressor, {
-						enableHealingWorkaround: false,
-					}),
+				() => forceDecodeEncodedIdWithoutSession(opSpaceId, testIdCompressor, undefined),
 				/Summary could not be loaded due incorrectly encoded identifier/,
 			);
 		});
@@ -138,7 +137,6 @@ describe("compressedIds", () => {
 		it("synthesizes a deterministic UUIDv5 on a non-final op-space id when healing is enabled", () => {
 			const { opSpaceId } = makeUnresolvableOpSpaceId();
 			const result = forceDecodeEncodedIdWithoutSession(opSpaceId, testIdCompressor, {
-				enableHealingWorkaround: true,
 				sharedObjectId,
 			});
 			assert.equal(typeof result, "string");
@@ -151,7 +149,6 @@ describe("compressedIds", () => {
 			const { opSpaceId } = makeUnresolvableOpSpaceId();
 			const heal = (): unknown =>
 				forceDecodeEncodedIdWithoutSession(opSpaceId, testIdCompressor, {
-					enableHealingWorkaround: true,
 					sharedObjectId,
 				});
 			assert.equal(heal(), heal());
@@ -161,7 +158,6 @@ describe("compressedIds", () => {
 			const { opSpaceId } = makeUnresolvableOpSpaceId();
 			const heal = (sid: string): unknown =>
 				forceDecodeEncodedIdWithoutSession(opSpaceId, testIdCompressor, {
-					enableHealingWorkaround: true,
 					sharedObjectId: sid,
 				});
 			assert.notEqual(heal("doc-a"), heal("doc-b"));
@@ -178,10 +174,7 @@ describe("compressedIds", () => {
 			);
 			assert.notEqual(opSpaceA, opSpaceB);
 			const heal = (id: OpSpaceCompressedId): unknown =>
-				forceDecodeEncodedIdWithoutSession(id, testIdCompressor, {
-					enableHealingWorkaround: true,
-					sharedObjectId,
-				});
+				forceDecodeEncodedIdWithoutSession(id, testIdCompressor, { sharedObjectId });
 			assert.notEqual(heal(opSpaceA), heal(opSpaceB));
 		});
 
@@ -189,23 +182,11 @@ describe("compressedIds", () => {
 			const compressedId = testIdCompressor.generateCompressedId();
 			const opSpaceId = testIdCompressor.normalizeToOpSpace(compressedId);
 			const result = forceDecodeEncodedIdWithoutSession(opSpaceId, testIdCompressor, {
-				enableHealingWorkaround: true,
 				sharedObjectId,
 			});
 			// The id is final, so the result is a session-space id (numeric), not a v5 UUID string.
 			assert.equal(result, compressedId);
 			assert.equal(typeof result, "number");
-		});
-
-		it("accepts the discriminated-union shape with no sharedObjectId when healing is disabled", () => {
-			// The options union allows `sharedObjectId` to be omitted when
-			// `enableHealingWorkaround: false`, since it is unused in that branch.
-			const compressedId = testIdCompressor.generateCompressedId();
-			const opSpaceId = testIdCompressor.normalizeToOpSpace(compressedId);
-			const result = forceDecodeEncodedIdWithoutSession(opSpaceId, testIdCompressor, {
-				enableHealingWorkaround: false,
-			});
-			assert.equal(result, compressedId);
 		});
 	});
 
@@ -249,7 +230,7 @@ describe("compressedIds", () => {
 			const d: SessionSpaceCompressedId | string = forceDecodeEncodedIdWithoutSession(
 				opSpaceId,
 				testIdCompressor,
-				{ enableHealingWorkaround: false },
+				undefined,
 			);
 			const e: string = decompressIdentifierIfNeeded(compressedId, testIdCompressor);
 			assert(a !== undefined);

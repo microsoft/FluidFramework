@@ -7,7 +7,6 @@ import { assert, unreachableCase, oob } from "@fluidframework/core-utils/interna
 import type {
 	IIdCompressor,
 	OpSpaceCompressedId,
-	SessionId,
 	SessionSpaceCompressedId,
 } from "@fluidframework/id-compressor";
 
@@ -18,12 +17,7 @@ import type {
 	Value,
 	TreeChunk,
 } from "../../../core/index.js";
-import {
-	assertValidIndex,
-	brand,
-	decompressIdentifierIfNeeded,
-	forceDecodeEncodedIdWithoutSession,
-} from "../../../util/index.js";
+import { assertValidIndex, brand, decompressIdentifierIfNeeded } from "../../../util/index.js";
 import { BasicChunk } from "../basicChunk.js";
 import { emptyChunk } from "../emptyChunk.js";
 import { SequenceChunk } from "../sequenceChunk.js";
@@ -43,8 +37,7 @@ import {
 	decode as genericDecode,
 	readStreamIdentifier,
 } from "./chunkDecodingGeneric.js";
-// eslint-disable-next-line @typescript-eslint/no-unused-vars -- Referenced by doc comments
-import type { FieldBatchEncodingContext, IncrementalDecoder } from "./codecs.js";
+import type { IncrementalDecoder } from "./codecs.js";
 import {
 	type EncodedAnyShape,
 	type EncodedChunkShapeV1OrV2,
@@ -63,21 +56,12 @@ import {
 export interface IdDecodingContext {
 	idCompressor: IIdCompressor;
 	/**
-	 * The creator of any local Ids to be decoded.
+	 * Resolves an encoded op-space identifier to either a session-space id
+	 * (which the codec then decompresses) or a string (which passes through
+	 * unchanged). See {@link FieldBatchDecodingContext.forOp} and
+	 * {@link FieldBatchDecodingContext.forSummary} for the standard constructions.
 	 */
-	originatorId: SessionId;
-	/**
-	 * {@inheritdoc FieldBatchEncodingContext.isSummary}
-	 */
-	isSummary: boolean;
-	/**
-	 * See {@link FieldBatchEncodingContext.healUnresolvableIdentifiersOnDecode}.
-	 */
-	healUnresolvableIdentifiersOnDecode?: boolean;
-	/**
-	 * See {@link FieldBatchEncodingContext.sharedObjectId}.
-	 */
-	sharedObjectId?: string;
+	resolveEncodedId: (id: OpSpaceCompressedId) => SessionSpaceCompressedId | string;
 }
 
 /**
@@ -146,33 +130,16 @@ export function readValue(
 				typeof streamValue === "number" || typeof streamValue === "string",
 				0x997 /* identifier must be string or number. */,
 			);
-			const idCompressor = idDecodingContext.idCompressor;
-
-			// As a mitigation for a bug in Fluid Framework Client Versions < 2.101.0:
-			// Documents written before the encode-side fix for non-finalized identifier
-			// values can persist negative op-space IDs that are no
-			// longer resolvable once the originating session's local state has been stripped.
-			// When loading such a summary with the heal-on-decode option on, synthesize a deterministic
-			// stable UUID so all readers of the same blob agree on the resulting value.
-			//
-			// The heal path is intentionally restricted to summary loads — an
-			// unresolvable ID encountered while applying an op should still surface as
-			// an error, since it indicates a real bug rather than a recoverable state.
+			// Strings (StableId UUIDs, heal-synthesized v5 UUIDs, or arbitrary user
+			// identifier strings) are already in the stored form and pass through.
+			// Op-space compressed ids are resolved by the caller-supplied
+			// `resolveEncodedId`, which encapsulates the originator lookup, finalized-id
+			// normalization, and (for the forest summarizer's heal path) UUIDv5 synthesis.
 			const sessionIdOrString: SessionSpaceCompressedId | string =
 				typeof streamValue === "string"
 					? streamValue
-					: forceDecodeEncodedIdWithoutSession(
-							streamValue as OpSpaceCompressedId,
-							idCompressor,
-							{
-								enableHealingWorkaround:
-									idDecodingContext.isSummary === true &&
-									idDecodingContext.healUnresolvableIdentifiersOnDecode === true &&
-									idDecodingContext.sharedObjectId !== undefined,
-								sharedObjectId: idDecodingContext.sharedObjectId ?? "",
-							},
-						);
-			return decompressIdentifierIfNeeded(sessionIdOrString, idCompressor);
+					: idDecodingContext.resolveEncodedId(streamValue as OpSpaceCompressedId);
+			return decompressIdentifierIfNeeded(sessionIdOrString, idDecodingContext.idCompressor);
 		} else {
 			// EncodedCounter case:
 			unreachableCase(shape, "decoding values as deltas is not yet supported");

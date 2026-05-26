@@ -167,6 +167,7 @@ export { readAndParseSnapshotBlob } from "./readSnapshotBlob.js";
 export {
 	type OriginatorlessEncodedId,
 	type OriginatorDependentEncodedId,
+	type IdentifierHealingConfig,
 	decodeOriginatorlessEncodedId,
 	decodeEncodedIdWithOriginator,
 	tryDecodeEncodedIdWithoutSession,

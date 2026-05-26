@@ -84,7 +84,11 @@ import {
 	RecursiveType,
 	testTrees,
 } from "../../../testTrees.js";
-import { assertIsSessionId, testIdCompressor } from "../../../utils.js";
+import {
+	assertIsSessionId,
+	makeTestFieldBatchContexts,
+	testIdCompressor,
+} from "../../../utils.js";
 
 import { checkFieldEncode, checkNodeEncode } from "./checkEncode.js";
 
@@ -476,13 +480,12 @@ describe("schemaBasedEncoding", () => {
 					);
 					checkFieldEncode(anyFieldEncoder, context, tree, idCompressor);
 
-					const fieldBatchContext: FieldBatchEncodingContext = {
-						encodeType: TreeCompressionStrategy.Compressed,
-						originatorId: testIdCompressor.localSessionId,
-						isSummary: false,
-						schema: { schema: storedSchema, policy: defaultSchemaPolicy },
-						idCompressor,
-					};
+					const { encode: fieldBatchEncodeContext, decode: fieldBatchDecodeContext } =
+						makeTestFieldBatchContexts({
+							encodeType: TreeCompressionStrategy.Compressed,
+							schema: { schema: storedSchema, policy: defaultSchemaPolicy },
+							idCompressor,
+						});
 					const idCompressorCore = toIdCompressorWithCore(idCompressor);
 					idCompressorCore.finalizeCreationRange(idCompressorCore.takeNextCreationRange());
 					const codec = fieldBatchCodecBuilder.build({
@@ -491,8 +494,11 @@ describe("schemaBasedEncoding", () => {
 					});
 					// End to end test
 					// rootFieldSchema is not being used in encoding, so we currently have some limitations. Schema based optimizations for root case don't trigger.
-					const encoded = codec.encode([cursorForJsonableTreeField(tree)], fieldBatchContext);
-					const result = codec.decode(encoded, fieldBatchContext);
+					const encoded = codec.encode(
+						[cursorForJsonableTreeField(tree)],
+						fieldBatchEncodeContext,
+					);
+					const result = codec.decode(encoded, fieldBatchDecodeContext);
 					const resultTree = result.map(jsonableTreeFromFieldCursor);
 					assert.deepEqual(resultTree, [tree]);
 

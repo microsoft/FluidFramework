@@ -19,9 +19,7 @@ import {
 import {
 	createNodeIdentifierManager,
 	fieldBatchCodecBuilder,
-	type FieldBatchEncodingContext,
-	defaultSchemaPolicy,
-	TreeCompressionStrategy,
+	FieldBatchDecodingContext,
 	defaultIncrementalEncodingPolicy,
 	schemaCodecBuilder,
 } from "../feature-libraries/index.js";
@@ -233,14 +231,15 @@ export function createIndependentTreeAlpha<const TSchema extends ImplicitFieldSc
 		const fieldBatchCodec = fieldBatchCodecBuilder.buildDecoder(options);
 		const newSchema = schemaCodec.decode(options.content.schema);
 
-		const context: FieldBatchEncodingContext = {
-			encodeType: TreeCompressionStrategy.Compressed,
+		// Step 4b will tighten the encode side of TreeAlpha.importCompressed /
+		// independentView so the payload only contains finalized ids, then this
+		// can move to `forSummary` (originatorless). For now we pass `forOp`
+		// with `localSessionId` to preserve current behavior (a known bug — the
+		// originator is fake; see docs/plan.md Step 4b).
+		const context = FieldBatchDecodingContext.forOp({
 			idCompressor,
-			originatorId: idCompressor.localSessionId, // Is this right? If so, why is is needed?
-			schema: { schema: newSchema, policy: defaultSchemaPolicy },
-			// Not a summary blob — this is a synthetic decode of inline content.
-			isSummary: false,
-		};
+			originatorId: idCompressor.localSessionId,
+		});
 		const fieldCursors = fieldBatchCodec.decode(
 			options.content.tree as JsonCompatibleReadOnly,
 			context,
