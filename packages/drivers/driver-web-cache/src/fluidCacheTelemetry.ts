@@ -13,7 +13,7 @@ export const enum FluidCacheErrorEvent {
 	"FluidCacheDeleteSingleEntryError" = "FluidCacheDeleteSingleEntryError",
 	"FluidCacheGetError" = "FluidCacheGetError",
 	"FluidCachePutError" = "FluidCachePutError",
-	"FluidCachePutIfPredicateError" = "FluidCachePutIfPredicateError",
+	"FluidCacheUpdateCallbackError" = "FluidCacheUpdateCallbackError",
 	"FluidCacheUpdateUsageError" = "FluidCacheUpdateUsageError",
 	"FluidCacheDeleteOldDbError" = "FluidCacheDeleteOldDbError",
 }

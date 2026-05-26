@@ -313,57 +313,72 @@ for (const immediateClose of [true, false]) {
 			assert.strictEqual(result, undefined);
 		});
 
-		describe("putIf", () => {
-			it("writes when the predicate returns true and the entry is absent", async () => {
+		describe("update", () => {
+			it("writes when the updater calls set with the entry absent", async () => {
 				fluidCache = getFluidCache();
 
-				const cacheEntry = getMockCacheEntry("casNew");
+				const cacheEntry = getMockCacheEntry("updateNew");
 				const proposed = { rev: 1 };
 
-				const seen: { existing: unknown; proposed: unknown }[] = [];
-				const wrote = await fluidCache.putIf(cacheEntry, proposed, (existing, prop) => {
-					seen.push({ existing, proposed: prop });
-					return true;
+				const seen: unknown[] = [];
+				const wrote = await fluidCache.update(cacheEntry, (existing, set) => {
+					seen.push(existing);
+					set(proposed);
 				});
 
 				assert.strictEqual(wrote, true);
-				assert.deepEqual(seen, [{ existing: undefined, proposed }]);
+				assert.deepEqual(seen, [undefined]);
 				assert.deepEqual(await fluidCache.get(cacheEntry), proposed);
 			});
 
-			it("passes the existing cached value to the predicate", async () => {
+			it("passes the existing cached value to the updater", async () => {
 				fluidCache = getFluidCache();
 
-				const cacheEntry = getMockCacheEntry("casExisting");
+				const cacheEntry = getMockCacheEntry("updateExisting");
 				const initial = { rev: 1 };
 				const proposed = { rev: 2 };
 
 				await fluidCache.put(cacheEntry, initial);
 
 				let observedExisting: unknown;
-				let observedProposed: unknown;
-				const wrote = await fluidCache.putIf(cacheEntry, proposed, (existing, prop) => {
+				const wrote = await fluidCache.update(cacheEntry, (existing, set) => {
 					observedExisting = existing;
-					observedProposed = prop;
-					return true;
+					set(proposed);
 				});
 
 				assert.strictEqual(wrote, true);
 				assert.deepEqual(observedExisting, initial);
-				assert.deepEqual(observedProposed, proposed);
 				assert.deepEqual(await fluidCache.get(cacheEntry), proposed);
 			});
 
-			it("does not overwrite when the predicate returns false", async () => {
+			it("supports read-modify-write derived from the existing value", async () => {
+				// The motivating case for the callback shape: deriving the new value
+				// from the existing one inside the atomic transaction.
 				fluidCache = getFluidCache();
 
-				const cacheEntry = getMockCacheEntry("casReject");
+				const cacheEntry = getMockCacheEntry("updateRmw");
+				await fluidCache.put(cacheEntry, { count: 1 });
+
+				const wrote = await fluidCache.update(cacheEntry, (existing, set) => {
+					const prev = (existing as { count: number } | undefined)?.count ?? 0;
+					set({ count: prev + 1 });
+				});
+
+				assert.strictEqual(wrote, true);
+				assert.deepEqual(await fluidCache.get(cacheEntry), { count: 2 });
+			});
+
+			it("does not overwrite when the updater returns without calling set", async () => {
+				fluidCache = getFluidCache();
+
+				const cacheEntry = getMockCacheEntry("updateNoSet");
 				const initial = { rev: 1 };
-				const proposed = { rev: 2 };
 
 				await fluidCache.put(cacheEntry, initial);
 
-				const wrote = await fluidCache.putIf(cacheEntry, proposed, () => false);
+				const wrote = await fluidCache.update(cacheEntry, () => {
+					// updater inspects existing but chooses not to write
+				});
 
 				assert.strictEqual(wrote, false);
 				assert.deepEqual(await fluidCache.get(cacheEntry), initial);
@@ -372,7 +387,7 @@ for (const immediateClose of [true, false]) {
 			it("treats cross-partition existing entries as absent", async () => {
 				fluidCache = getFluidCache({ partitionKey: "partitionA" });
 
-				const cacheEntry = getMockCacheEntry("casCrossPartition");
+				const cacheEntry = getMockCacheEntry("updateCrossPartition");
 				const otherPartitionValue = { rev: 99, from: "B" };
 				const proposed = { rev: 1, from: "A" };
 
@@ -381,9 +396,9 @@ for (const immediateClose of [true, false]) {
 				await partitionBCache.put(cacheEntry, otherPartitionValue);
 
 				let observedExisting: unknown = "sentinel";
-				const wrote = await fluidCache.putIf(cacheEntry, proposed, (existing) => {
+				const wrote = await fluidCache.update(cacheEntry, (existing, set) => {
 					observedExisting = existing;
-					return true;
+					set(proposed);
 				});
 
 				assert.strictEqual(wrote, true);
@@ -391,23 +406,74 @@ for (const immediateClose of [true, false]) {
 				assert.deepEqual(await fluidCache.get(cacheEntry), proposed);
 			});
 
-			it("returns false and does not write when the predicate throws", async () => {
+			it("returns false and does not write when the updater throws", async () => {
 				fluidCache = getFluidCache();
 
-				const cacheEntry = getMockCacheEntry("casThrow");
+				const cacheEntry = getMockCacheEntry("updateThrow");
 				const initial = { rev: 1 };
 
 				await fluidCache.put(cacheEntry, initial);
 
-				const wrote = await fluidCache.putIf(cacheEntry, { rev: 2 }, () => {
-					throw new Error("predicate failure");
+				const wrote = await fluidCache.update(cacheEntry, () => {
+					throw new Error("updater failure");
 				});
 
 				assert.strictEqual(wrote, false);
 				assert.deepEqual(await fluidCache.get(cacheEntry), initial);
 			});
 
-			it("resolves concurrent putIf races deterministically via the predicate", async () => {
+			it("does not write when the updater calls set then throws", async () => {
+				// Throw-after-set should still abort: the updater's intent is ambiguous
+				// and preserving the existing row is the safer default.
+				fluidCache = getFluidCache();
+
+				const cacheEntry = getMockCacheEntry("updateSetThenThrow");
+				const initial = { rev: 1 };
+
+				await fluidCache.put(cacheEntry, initial);
+
+				const wrote = await fluidCache.update(cacheEntry, (_existing, set) => {
+					set({ rev: 99 });
+					throw new Error("after-set failure");
+				});
+
+				assert.strictEqual(wrote, false);
+				assert.deepEqual(await fluidCache.get(cacheEntry), initial);
+			});
+
+			it("multi-set: last value wins", async () => {
+				fluidCache = getFluidCache();
+
+				const cacheEntry = getMockCacheEntry("updateMultiSet");
+
+				const wrote = await fluidCache.update(cacheEntry, (_existing, set) => {
+					set({ rev: 1 });
+					set({ rev: 2 });
+					set({ rev: 3 });
+				});
+
+				assert.strictEqual(wrote, true);
+				assert.deepEqual(await fluidCache.get(cacheEntry), { rev: 3 });
+			});
+
+			it("set called after the updater returned throws UsageError", async () => {
+				fluidCache = getFluidCache();
+
+				const cacheEntry = getMockCacheEntry("updateLateSet");
+
+				let capturedSet: ((value: unknown) => void) | undefined;
+				const wrote = await fluidCache.update(cacheEntry, (_existing, set) => {
+					capturedSet = set;
+				});
+
+				assert.strictEqual(wrote, false);
+				assert.ok(capturedSet !== undefined);
+				assert.throws(() => capturedSet?.({ rev: 1 }), /set called after updater returned/);
+				// And the cache is still untouched.
+				assert.strictEqual(await fluidCache.get(cacheEntry), undefined);
+			});
+
+			it("resolves concurrent update races deterministically via the updater", async () => {
 				// Two FluidCache instances racing to write to the same key, where each
 				// only writes if it has a higher revision than what is currently cached.
 				// The higher-revision writer must win regardless of scheduling order.
@@ -415,12 +481,14 @@ for (const immediateClose of [true, false]) {
 				const otherCache = getFluidCache();
 				extraCaches.push(otherCache);
 
-				const cacheEntry = getMockCacheEntry("casRace");
+				const cacheEntry = getMockCacheEntry("updateRace");
 
 				const writeIfNewer = async (cache: FluidCache, rev: number): Promise<boolean> =>
-					cache.putIf(cacheEntry, { rev }, (existing) => {
+					cache.update(cacheEntry, (existing, set) => {
 						const existingRev = (existing as { rev?: number } | undefined)?.rev ?? -1;
-						return rev > existingRev;
+						if (rev > existingRev) {
+							set({ rev });
+						}
 					});
 
 				const [wroteHigh, wroteLow] = await Promise.all([
@@ -444,7 +512,7 @@ for (const immediateClose of [true, false]) {
 						closeDbAfterMs: immediateClose ? 0 : 100,
 					});
 
-					const cacheEntry = getMockCacheEntry("putIfStale");
+					const cacheEntry = getMockCacheEntry("updateStale");
 					await fluidCache.put(cacheEntry, { rev: 1 });
 
 					// Advance well past maxCacheItemAge so the existing row is "stale"
@@ -452,16 +520,16 @@ for (const immediateClose of [true, false]) {
 					DateMock.mockTimeMs += maxAge * 2;
 
 					let observedExisting: unknown = "sentinel";
-					const wrote = await fluidCache.putIf(cacheEntry, { rev: 2 }, (existing) => {
+					const wrote = await fluidCache.update(cacheEntry, (existing, set) => {
 						observedExisting = existing;
-						return true;
+						set({ rev: 2 });
 					});
 
 					assert.strictEqual(wrote, true);
 					assert.strictEqual(
 						observedExisting,
 						undefined,
-						"stale existing entries should be reported to the predicate as undefined",
+						"stale existing entries should be reported to the updater as undefined",
 					);
 				} finally {
 					resetDateMock();

@@ -66,30 +66,47 @@ new FluidCache({
     for a cache entry to be used. This flag does not control when cached content is deleted since different scenarios and
     applications may have different staleness thresholds for the same data.
 
-## Conditional writes (`putIf`)
+## Atomic updates (`update`)
 
-`FluidCache` exposes a `putIf` method that performs a compare-and-swap write. The currently-cached value
-is read and (if the caller-supplied predicate returns `true`) the new value is written inside a single
-IndexedDB `readwrite` transaction, giving conditional-write semantics across consumers sharing the same
+`FluidCache` exposes an `update` method that performs an atomic read-modify-write. The currently-cached
+value is read and the updater callback decides whether — and what — to write, inside a single IndexedDB
+`readwrite` transaction. This gives consistent update semantics across consumers sharing the same
 underlying IndexedDB instance (e.g. multiple browser tabs racing to persist offline pending state).
 
 ```typescript
-const wrote = await fluidCache.putIf(entry, proposed, (existing, prop) => {
-	// `existing` is `undefined` if no entry exists for this key in this partition.
+// Conditional overwrite (active tab wins): only write if our revision is higher.
+const wrote = await fluidCache.update(entry, (existing, set) => {
 	const existingRev = (existing as { rev?: number } | undefined)?.rev ?? -1;
-	return (prop as { rev: number }).rev > existingRev;
+	if (mine.rev > existingRev) {
+		set(mine);
+	}
+});
+
+// Read-modify-write: increment a counter atomically.
+await fluidCache.update(entry, (existing, set) => {
+	const prev = (existing as { count: number } | undefined)?.count ?? 0;
+	set({ count: prev + 1 });
 });
 ```
 
-The `shouldWrite` predicate must be synchronous — IndexedDB transactions auto-close on any non-IDB
-await, which would silently break the atomicity that makes the compare-and-swap correct. The predicate
-is invoked with `(existing, proposed)`; `existing` is `undefined` when the cached row would be invisible
-to `get` — that is, no entry exists for the key, the existing entry belongs to a different partition,
-or the existing entry is older than `maxCacheItemAge`. When the predicate returns `true`, the write
-always proceeds and atomically replaces whatever row sits at the key, including cross-partition or
-stale rows the predicate saw as `undefined` (matching the unconditional overwrite behavior of `put`).
-The call returns `true` if the new value was written and `false` if the predicate rejected the write
-or an error occurred.
+The `updater` callback is invoked with `(existing, set)`. `existing` is `undefined` when the cached
+row would be invisible to `get` — that is, no entry exists for the key, the existing entry belongs to
+a different partition, or the existing entry is older than `maxCacheItemAge`. To commit a write, call
+`set(value)`; to leave the cache untouched, return without calling `set`.
+
+Both the updater body and the `set` call must run synchronously: IndexedDB transactions auto-close on
+any non-IDB await, which would silently break the atomicity that makes the update correct. Calling
+`set` after the updater has returned throws a `UsageError` so that misuse (e.g. invoking `set` from a
+`setTimeout`) is visible rather than silently lost. If the updater calls `set` more than once, the
+last value wins. If the updater throws — including after calling `set` — the transaction is aborted
+and the existing row is preserved.
+
+When `set` is called, the write atomically replaces whatever row exists at the key, including
+cross-partition or stale rows the updater saw as `undefined` (matching the unconditional overwrite
+behavior of `put`). Callers that must preserve cross-partition rows should not use `update`.
+
+`update` returns `true` if `set` was called and the write committed, and `false` if the updater
+returned without calling `set`, threw, or an IDB error occurred.
 
 ## Clearing cache entries
 

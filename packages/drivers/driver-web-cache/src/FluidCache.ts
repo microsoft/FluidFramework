@@ -363,46 +363,54 @@ export class FluidCache implements IPersistedCache {
 	}
 
 	/**
-	 * Conditionally writes `value` if `shouldWrite` returns true.
-	 *
-	 * The existing entry is read and (if `shouldWrite` returns true) the new entry is
-	 * written inside a single IndexedDB `readwrite` transaction. This provides
-	 * compare-and-swap semantics for callers sharing the same underlying IndexedDB
-	 * instance (e.g. multiple browser tabs racing to persist pending state).
+	 * Atomically reads the existing cached entry, hands it to `updater`, and writes a
+	 * new value iff `updater` calls the supplied `set` callback. The read and the
+	 * conditional write happen inside a single IndexedDB `readwrite` transaction, so
+	 * the decision sees a consistent view across consumers sharing the same underlying
+	 * IndexedDB instance (for example, multiple browser tabs racing to persist pending
+	 * state).
 	 *
 	 * @remarks
 	 * The implementation uses `transaction.store.get` + `transaction.store.put` rather
 	 * than an IDB cursor. Both run inside the same `readwrite` transaction, so the
 	 * atomicity guarantee is identical, and the get/put pair is materially simpler
-	 * to reason about for a single-key compare-and-swap. A cursor would be the right
-	 * tool if we needed to iterate or range-scan; for a known key we don't.
+	 * to reason about for a single-key update. A cursor would be the right tool if we
+	 * needed to iterate or range-scan; for a known key we don't.
 	 *
 	 * @param entry - cache entry; identifies the file and the key within that file.
-	 * @param value - the proposed JSON-serializable value to write if `shouldWrite` returns true.
-	 * @param shouldWrite - synchronous predicate invoked with `(existing, proposed)`.
-	 * `existing` is the currently-cached value, or `undefined` when the cached row is invisible
-	 * under the same rules `get` applies: no entry exists for the key, the existing entry
-	 * belongs to a different partition, or the existing entry is older than `maxCacheItemAge`.
-	 * `proposed` is the same `value` argument, provided so the predicate can be self-contained.
+	 * @param updater - synchronous callback invoked with `(existing, set)`.
+	 * `existing` is the currently-cached value, or `undefined` when the cached row is
+	 * invisible under the same rules `get` applies: no entry exists for the key, the
+	 * existing entry belongs to a different partition, or the existing entry is older
+	 * than `maxCacheItemAge`. The updater can derive the new value from `existing`
+	 * (read-modify-write) or ignore it entirely. To commit a write, call `set(value)`;
+	 * to leave the cache untouched, return without calling `set`. Stored via IndexedDB
+	 * structured clone, with the same value requirements as {@link FluidCache.put} —
+	 * not restricted to JSON-serializable values.
 	 *
-	 * Note that when the predicate returns `true`, the write always proceeds and atomically
-	 * replaces whatever row exists at the key, *including* cross-partition or stale rows that
-	 * the predicate saw as `undefined`. This matches the unconditional overwrite behavior of
-	 * `put`. Callers who must preserve cross-partition rows should not use `putIf`.
+	 * `set` must be called synchronously from within `updater`: IndexedDB transactions
+	 * auto-close on any non-IDB await, which would silently break the atomicity that
+	 * makes the update correct. Calling `set` after `updater` has returned throws a
+	 * `UsageError` at the call site so the misuse is visible rather than silently
+	 * lost. If `updater` calls `set` more than once, the last value wins.
 	 *
-	 * The predicate must be synchronous: IndexedDB transactions auto-close on any non-IDB
-	 * await, which would silently break the atomicity that makes the compare-and-swap correct.
-	 * Exceptions thrown by the predicate are logged under the dedicated
-	 * `FluidCachePutIfPredicateError` telemetry event (distinct from IDB write errors)
-	 * and surfaced to the caller as a `false` return value, after aborting the transaction
-	 * so the existing row is preserved.
-	 * @returns `true` if the new value was written; `false` if the predicate rejected the write
-	 * or an error occurred. Errors are logged and not thrown, matching the behavior of `put`.
+	 * When `set` is called, the write atomically replaces whatever row exists at the
+	 * key, including cross-partition or stale rows that the updater saw as `undefined`.
+	 * This matches the unconditional overwrite behavior of `put`. Callers that must
+	 * preserve cross-partition rows should not use `update`.
+	 *
+	 * Exceptions thrown by `updater` are logged under the dedicated
+	 * `FluidCacheUpdateCallbackError` telemetry event (distinct from IDB write errors)
+	 * and surfaced to the caller as a `false` return value, after aborting the
+	 * transaction so the existing row is preserved — even if `set` was called before
+	 * the throw.
+	 * @returns `true` if `updater` called `set` and the write committed; `false` if
+	 * `updater` returned without calling `set`, threw, or an IDB error occurred. IDB
+	 * errors are logged and not thrown, matching the behavior of `put`.
 	 */
-	public async putIf(
+	public async update(
 		entry: ICacheEntry,
-		value: unknown,
-		shouldWrite: (existing: unknown, proposed: unknown) => boolean,
+		updater: (existing: unknown, set: (value: unknown) => void) => void,
 	): Promise<boolean> {
 		let db: IDBPDatabase<FluidCacheDBSchema> | undefined;
 		try {
@@ -411,40 +419,59 @@ export class FluidCache implements IPersistedCache {
 			const key = getKeyForCacheEntry(entry);
 			const transaction = db.transaction(FluidDriverObjectStoreName, "readwrite");
 			const existing = await transaction.store.get(key);
-			// Surface the cached value to the predicate only when the existing entry is
+			// Surface the cached value to the updater only when the existing entry is
 			// visible under the same rules `get` applies: same partition and not older
 			// than `maxCacheItemAge`. Cross-partition and stale entries are treated as
-			// absent so the predicate sees the same view it would under `get`+`put`.
+			// absent so the updater sees the same view it would under `get`+`put`.
 			const existingVisible =
 				existing?.partitionKey === this.partitionKey &&
 				Date.now() - existing.createdTimeMs <= this.maxCacheItemAge;
 			const existingValue = existingVisible ? existing?.cachedObject : undefined;
 
-			// Invoke the predicate in its own try/catch so a host-supplied callback
+			// `set` is a synchronous-only commit signal. We capture the last-supplied
+			// value (multi-call: last wins) and a "called" flag so the value being set
+			// to `undefined` still counts as a write. After `updater` returns we flip
+			// `updaterReturned` to true; any subsequent `set` call throws a `UsageError`
+			// at that call site so callers who try to defer the commit (e.g. from a
+			// `setTimeout`) see the misuse rather than silently writing into a closed
+			// transaction.
+			let valueToWrite: unknown;
+			let setCalled = false;
+			let updaterReturned = false;
+			const set = (value: unknown): void => {
+				if (updaterReturned) {
+					throw new UsageError("FluidCache.update: set called after updater returned");
+				}
+				valueToWrite = value;
+				setCalled = true;
+			};
+
+			// Invoke the updater in its own try/catch so a host-supplied callback
 			// throwing does not get logged under `FluidCachePutError` (which is for
-			// IDB-write failures). On predicate throw we abort the transaction so the
-			// existing row is preserved, log under the predicate-specific event, and
-			// return `false` (matching the documented "errors are logged, not thrown"
-			// contract).
-			let predicateResult: boolean;
+			// IDB-write failures). On updater throw we abort the transaction so the
+			// existing row is preserved — even if `set` was called before the throw —
+			// log under the updater-specific event, and return `false` (matching the
+			// documented "errors are logged, not thrown" contract).
 			try {
-				predicateResult = shouldWrite(existingValue, value);
-			} catch (predicateError: any) {
+				updater(existingValue, set);
+			} catch (updaterError: any) {
+				updaterReturned = true;
 				transaction.abort();
 				// Await transaction settlement; aborting causes `transaction.done` to
-				// reject, which we swallow because the predicate error is the real cause.
+				// reject, which we swallow because the updater error is the real cause.
 				await transaction.done.catch(() => {});
 				this.logger.sendErrorEvent(
 					{
-						eventName: FluidCacheErrorEvent.FluidCachePutIfPredicateError,
+						eventName: FluidCacheErrorEvent.FluidCacheUpdateCallbackError,
 						pkgVersion,
 					},
-					predicateError,
+					updaterError,
 				);
 				return false;
 			}
+			updaterReturned = true;
 
-			if (!predicateResult) {
+			if (!setCalled) {
 				await transaction.done;
 				return false;
 			}
@@ -452,7 +479,7 @@ export class FluidCache implements IPersistedCache {
 			const currentTime = Date.now();
 			await transaction.store.put(
 				{
-					cachedObject: value,
+					cachedObject: valueToWrite,
 					fileId: entry.file.docId,
 					type: entry.type,
 					cacheItemId: entry.key,

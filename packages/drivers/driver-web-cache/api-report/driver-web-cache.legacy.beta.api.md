@@ -14,11 +14,11 @@ export class FluidCache implements IPersistedCache {
     get(cacheEntry: ICacheEntry): Promise<any>;
     // (undocumented)
     put(entry: ICacheEntry, value: any): Promise<void>;
-    putIf(entry: ICacheEntry, value: unknown, shouldWrite: (existing: unknown, proposed: unknown) => boolean): Promise<boolean>;
     // (undocumented)
     removeEntries(file: IFileEntry): Promise<void>;
     // (undocumented)
     removeEntry(entry: ICacheEntry): Promise<void>;
+    update(entry: ICacheEntry, updater: (existing: unknown, set: (value: unknown) => void) => void): Promise<boolean>;
 }
 
 // @beta @legacy (undocumented)
