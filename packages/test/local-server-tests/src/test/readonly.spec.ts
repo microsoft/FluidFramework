@@ -21,7 +21,7 @@ import { SharedMap, ISharedMap } from "@fluidframework/map/internal";
 import type { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions/internal";
 import { LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 
-import { createLoader } from "../utils.js";
+import { createLoader } from "./utils.js";
 
 const mapFactory = SharedMap.getFactory();
 const sharedObjectRegistry = new Map<string, IChannelFactory>([[mapFactory.type, mapFactory]]);
