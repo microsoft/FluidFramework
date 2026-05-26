@@ -91,46 +91,6 @@ stale rows the predicate saw as `undefined` (matching the unconditional overwrit
 The call returns `true` if the new value was written and `false` if the predicate rejected the write
 or an error occurred.
 
-## Cross-instance change notifications (`events`)
-
-`FluidCache` broadcasts cache mutations over a `BroadcastChannel`, so other `FluidCache` instances
-in the same browsing context (typically other tabs of the same origin) can observe changes made
-elsewhere. Subscribe through the `events` property, which is a standard Fluid Framework
-[`Listenable`](https://fluidframework.com/docs/api/core-interfaces/listenable-interface):
-
-```typescript
-const unsubscribe = fluidCache.events.on("change", (event) => {
-	if (event.type === "removeFile") {
-		// All entries for this file were dropped by some other tab.
-	} else {
-		// event.type is "put" or "remove"; event.partitionKey matches this cache's partition.
-		// event.entryType carries the cache entry's category (for example "snapshot").
-	}
-});
-// Later:
-unsubscribe();
-```
-
-Per-entry `put` and `remove` events are filtered by partition key (you only receive events whose
-`partitionKey` matches this cache's). `removeFile` events are delivered unconditionally because
-`removeEntries` drops rows regardless of partition.
-
-Note: `BroadcastChannel` does not echo a message back to the instance that posted it, so writes
-performed by *this* `FluidCache` do not invoke its own listeners — only other instances do.
-
-When the cache is no longer needed (e.g. user signs out, page unloads), call `fluidCache.dispose()`
-to close the `BroadcastChannel` and any open IndexedDB connection. `dispose` is idempotent. After
-`dispose` returns, every other public method (`get`, `put`, `putIf`, `removeEntry`,
-`removeEntries`) throws a `UsageError`. Operations that were already in flight when `dispose` was
-called also reject with a `UsageError`, and the underlying IndexedDB connection is not lazily
-reopened by any such in-flight call. Subscribing to `events` after `dispose` is permitted, but no
-events will fire.
-
-If `BroadcastChannel` is not available in the runtime, the `events` subscription becomes a no-op
-and writes simply don't broadcast. The constructor emits a one-shot
-`FluidCacheBroadcastChannelUnavailable` telemetry event in that case so hosts can detect the
-degraded mode.
-
 ## Clearing cache entries
 
 Whenever any Fluid content is loaded with the web cache enabled, a task is scheduled to clear out all "stale" cache

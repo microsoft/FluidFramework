@@ -9810,9 +9810,6 @@ importers:
 
   packages/drivers/driver-web-cache:
     dependencies:
-      '@fluid-internal/client-utils':
-        specifier: workspace:~
-        version: link:../../common/client-utils
       '@fluidframework/core-interfaces':
         specifier: workspace:~
         version: link:../../common/core-interfaces

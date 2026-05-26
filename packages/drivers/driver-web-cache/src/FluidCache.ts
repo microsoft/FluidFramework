@@ -3,8 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { createEmitter } from "@fluid-internal/client-utils";
-import type { ITelemetryBaseLogger, Listenable } from "@fluidframework/core-interfaces";
+import type { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import type {
 	IPersistedCache,
@@ -71,70 +70,6 @@ export interface FluidCacheConfig {
 }
 
 /**
- * Notification posted by a `FluidCache` instance when it mutates the underlying IndexedDB.
- * Other `FluidCache` instances bound to the same browsing context (e.g. other tabs)
- * receive these events through {@link FluidCache.events}.
- *
- * @legacy @beta
- */
-export type FluidCacheChangeEvent =
-	| {
-			/**
-			 * A single entry was inserted, updated, or removed.
-			 * - `put` is fired when `put` or a successful `putIf` writes a value.
-			 * - `remove` is fired when `removeEntry` deletes an entry.
-			 *
-			 * Listeners only receive `put`/`remove` events whose `partitionKey` matches
-			 * the partition key of the receiving `FluidCache` instance, consistent with
-			 * the semantics of `get`.
-			 */
-			readonly type: "put" | "remove";
-			// eslint-disable-next-line @rushstack/no-new-null
-			readonly partitionKey: string | null;
-			readonly fileId: string;
-			/**
-			 * The cache entry's category — i.e. the `type` field of the `ICacheEntry`
-			 * passed to `put`/`putIf`/`removeEntry` (for example `"snapshot"`). Distinct
-			 * from the union discriminator `type` above — this field carries the
-			 * consumer-supplied category of the cached object.
-			 */
-			readonly entryType: string;
-			readonly cacheItemId: string;
-	  }
-	| {
-			/**
-			 * All entries for a document were removed via `removeEntries`. This operation
-			 * deletes rows regardless of their partition key, so the event itself carries
-			 * no partition information and is delivered to all listeners.
-			 */
-			readonly type: "removeFile";
-			readonly fileId: string;
-	  };
-
-/**
- * The set of events fired by a {@link FluidCache} instance. Currently a single
- * `change` event delivers cache mutations posted by *other* `FluidCache` instances
- * in the same browsing context (e.g. other tabs); see {@link FluidCacheChangeEvent}.
- *
- * @legacy @beta
- */
-export interface FluidCacheEvents {
-	change: (event: FluidCacheChangeEvent) => void;
-}
-
-/**
- * Name of the `BroadcastChannel` used to deliver cache-change notifications between
- * `FluidCache` instances. A single channel is used for the entire driver cache; partition
- * scoping is applied by the receiving listener.
- *
- * The trailing GUID is a fixed namespace suffix (not generated per-instance) so that
- * every `FluidCache` in the same browsing context connects to the same channel while
- * remaining unlikely to collide with channels used by unrelated host code.
- */
-const FluidCacheBroadcastChannelName =
-	"fluid-driver-cache:b3e4f5a6-7c8d-49e0-a1b2-c3d4e5f6a7b8";
-
-/**
  * A cache that can be used by the Fluid ODSP driver to cache data for faster performance.
  * @legacy @beta
  */
@@ -149,10 +84,6 @@ export class FluidCache implements IPersistedCache {
 	private db: IDBPDatabase<FluidCacheDBSchema> | undefined;
 	private dbCloseTimer: ReturnType<typeof setTimeout> | undefined;
 	private dbReuseCount: number = -1;
-
-	private readonly broadcastChannel: BroadcastChannel | undefined;
-	readonly #events = createEmitter<FluidCacheEvents>();
-	private disposed = false;
 
 	constructor(config: FluidCacheConfig) {
 		const { logger, partitionKey, maxCacheItemAge, closeDbAfterMs } = config;
@@ -184,20 +115,11 @@ export class FluidCache implements IPersistedCache {
 		}
 
 		scheduleIdleTask(async () => {
-			// If the cache was disposed before this idle callback runs, skip the work and
-			// any associated telemetry — the host has indicated they no longer want this
-			// cache observing or touching IndexedDB.
-			if (this.disposed) {
-				return;
-			}
 			// Log how much storage space is currently being used by indexed db.
 			// NOTE: This API is not supported in all browsers and it doesn't let you see the size of a specific DB.
 			// Exception added when eslint rule was added, this should be revisited when modifying this code
 			if (navigator.storage?.estimate) {
 				const estimate = await navigator.storage.estimate();
-				if (this.disposed) {
-					return;
-				}
 
 				// Some browsers have a usageDetails property that will tell you
 				// more detailed information on how the storage is being used
@@ -219,21 +141,11 @@ export class FluidCache implements IPersistedCache {
 		});
 
 		scheduleIdleTask(async () => {
-			// Honor the dispose contract: if the host disposed the cache before this idle
-			// cleanup callback ran, do not open a fresh IndexedDB connection or perform any
-			// maintenance writes. This idle task calls `getFluidCacheIndexedDbInstance`
-			// directly rather than `openDb()`, so it needs its own disposed guard.
-			if (this.disposed) {
-				return;
-			}
 			let db: IDBPDatabase<FluidCacheDBSchema> | undefined;
 
 			// Delete entries that have not been accessed recently to clean up space
 			try {
 				db = await getFluidCacheIndexedDbInstance(this.logger);
-				if (this.disposed) {
-					return;
-				}
 
 				const transaction = db.transaction(FluidDriverObjectStoreName, "readwrite");
 				const index = transaction.store.index("createdTimeMs");
@@ -241,9 +153,6 @@ export class FluidCache implements IPersistedCache {
 				const keysToDelete = await index.getAllKeys(
 					IDBKeyRange.upperBound(Date.now() - this.maxCacheItemAge),
 				);
-				if (this.disposed) {
-					return;
-				}
 
 				await Promise.all(keysToDelete.map(async (key) => transaction.store.delete(key)));
 				await transaction.done;
@@ -259,132 +168,14 @@ export class FluidCache implements IPersistedCache {
 				db?.close();
 			}
 		});
-
-		// Wire up cross-instance change notifications via BroadcastChannel. The channel is
-		// always created (when supported) so writes from this instance reach other tabs,
-		// even when no local listeners are registered yet. If `BroadcastChannel` is not
-		// available (e.g. older environments), notifications silently degrade to a no-op
-		// and we emit a one-shot telemetry event so hosts can detect the degraded state.
-		if (typeof BroadcastChannel === "undefined") {
-			this.logger.sendTelemetryEvent({
-				eventName: FluidCacheGenericEvent.FluidCacheBroadcastChannelUnavailable,
-				subCategory: FluidCacheEventSubCategories.FluidCache,
-				pkgVersion,
-			});
-		} else {
-			this.broadcastChannel = new BroadcastChannel(FluidCacheBroadcastChannelName);
-			// Don't keep the Node event loop alive on account of an idle cache. The web
-			// `BroadcastChannel` interface has no `unref`; Node's implementation does, and
-			// the cast is intentional. In browsers this is a no-op (the property is absent
-			// and the optional-chained call is skipped).
-			(this.broadcastChannel as unknown as { unref?: () => void }).unref?.();
-			this.broadcastChannel.addEventListener("message", (messageEvent: MessageEvent) => {
-				this.dispatchChangeEvent(messageEvent.data as FluidCacheChangeEvent);
-			});
-		}
-	}
-
-	/**
-	 * Listenable surface for cache-change notifications posted by other `FluidCache`
-	 * instances (typically in other browser tabs sharing this origin's IndexedDB).
-	 *
-	 * Subscribe via `cache.events.on("change", listener)`; the returned `Off` function
-	 * unregisters the listener (idempotent). Per-entry `put` and `remove` events are
-	 * filtered to the partition key of this `FluidCache`, matching the partition
-	 * semantics of `get`. `removeFile` events are delivered unconditionally because
-	 * `removeEntries` deletes rows regardless of partition.
-	 *
-	 * Note: `BroadcastChannel` does not echo a message back to the instance that posted
-	 * it, so writes performed by *this* `FluidCache` do not trigger its own listeners.
-	 * Other `FluidCache` instances (including ones in the same tab) will receive them.
-	 *
-	 * After `dispose` returns, no further events will fire; subscribing to a disposed
-	 * cache is permitted but the listener will never be invoked.
-	 */
-	public get events(): Listenable<FluidCacheEvents> {
-		return this.#events;
-	}
-
-	/**
-	 * Tear down resources held by the cache: the `BroadcastChannel` used for change
-	 * notifications, any open IndexedDB connection, and the close timer.
-	 *
-	 * After `dispose` returns, every other public method (`get`, `put`, `putIf`,
-	 * `removeEntry`, `removeEntries`) throws a `UsageError`. Operations
-	 * that were already in flight when `dispose` was called also reject with a
-	 * `UsageError`, and crucially, the IndexedDB connection is *not* lazily
-	 * reopened by such an in-flight call.
-	 *
-	 * Calling `dispose` more than once is a no-op.
-	 */
-	public dispose(): void {
-		if (this.disposed) {
-			return;
-		}
-		this.disposed = true;
-		this.broadcastChannel?.close();
-		clearTimeout(this.dbCloseTimer);
-		this.dbCloseTimer = undefined;
-		this.db?.close();
-		this.db = undefined;
-	}
-
-	/**
-	 * Throws if the cache has been disposed.
-	 *
-	 * Accepts an optional `cleanup` callback that runs *before* the throw when the
-	 * cache is disposed. Use it to release locally-owned resources (e.g. an
-	 * just-acquired IDB connection) that were obtained after the most recent
-	 * disposed-check and would otherwise leak when this method throws.
-	 */
-	private throwIfDisposed(cleanup?: () => void): void {
-		if (this.disposed) {
-			cleanup?.();
-			throw new UsageError("FluidCache is disposed");
-		}
-	}
-
-	private dispatchChangeEvent(event: FluidCacheChangeEvent): void {
-		// `put` and `remove` are partition-scoped; `removeFile` is delivered to all listeners
-		// because it has no associated partition (see FluidCacheChangeEvent docs).
-		if (event.type !== "removeFile" && event.partitionKey !== this.partitionKey) {
-			return;
-		}
-		this.#events.emit("change", event);
-	}
-
-	private broadcast(event: FluidCacheChangeEvent): void {
-		// Never emit a change event after the cache has been disposed: `broadcastChannel`
-		// is closed in `dispose()` and `postMessage` would otherwise throw on every call.
-		if (this.disposed) {
-			return;
-		}
-		// Post to other instances first; failures in postMessage shouldn't surface to callers.
-		try {
-			this.broadcastChannel?.postMessage(event);
-		} catch (error: any) {
-			this.logger.sendErrorEvent(
-				{ eventName: FluidCacheErrorEvent.FluidCacheBroadcastError, pkgVersion },
-				error,
-			);
-		}
 	}
 
 	private async openDb(): Promise<IDBPDatabase<FluidCacheDBSchema>> {
-		this.throwIfDisposed();
 		if (this.closeDbImmediately) {
-			const dbInstance = await getFluidCacheIndexedDbInstance(this.logger);
-			// Dispose may have run while we awaited the IDB open. Close the just-acquired
-			// connection and reject so callers do not silently operate on a disposed cache.
-			this.throwIfDisposed(() => dbInstance.close());
-			return dbInstance;
+			return getFluidCacheIndexedDbInstance(this.logger);
 		}
 		if (this.db === undefined) {
 			const dbInstance = await getFluidCacheIndexedDbInstance(this.logger);
-			// Dispose may have run while we awaited the IDB open. Close the just-acquired
-			// connection and reject so we never resurrect the DB or arm a fresh close
-			// timer past dispose.
-			this.throwIfDisposed(() => dbInstance.close());
 			if (this.db === undefined) {
 				// Reset the counter on first open.
 				this.dbReuseCount = -1;
@@ -426,9 +217,7 @@ export class FluidCache implements IPersistedCache {
 	}
 
 	public async removeEntries(file: IFileEntry): Promise<void> {
-		this.throwIfDisposed();
 		let db: IDBPDatabase<FluidCacheDBSchema> | undefined;
-		let removed = false;
 		try {
 			db = await this.openDb();
 
@@ -439,19 +228,7 @@ export class FluidCache implements IPersistedCache {
 
 			await Promise.all(keysToDelete.map(async (key) => transaction.store.delete(key)));
 			await transaction.done;
-			// Dispose may have landed during one of the awaits above. Reject before
-			// reporting success or broadcasting so the caller observes the disposed
-			// state cleanly and no `removeFile` event escapes after teardown.
-			this.throwIfDisposed();
-			removed = keysToDelete.length > 0;
 		} catch (error: any) {
-			// If dispose ran during the operation, surface that to the caller as
-			// `UsageError` *without* logging an IDB-error telemetry event. The error
-			// we observe in this branch is the `UsageError` thrown by our own
-			// post-await `throwIfDisposed` — it is not an IDB delete failure, so
-			// logging it under `FluidCacheDeleteOldEntriesError` would mis-categorize
-			// the dispose race.
-			this.throwIfDisposed();
 			this.logger.sendErrorEvent(
 				{
 					eventName: FluidCacheErrorEvent.FluidCacheDeleteOldEntriesError,
@@ -462,43 +239,16 @@ export class FluidCache implements IPersistedCache {
 		} finally {
 			this.closeDb(db);
 		}
-		if (removed) {
-			this.broadcast({ type: "removeFile", fileId: file.docId });
-		}
 	}
 
 	public async removeEntry(entry: ICacheEntry): Promise<void> {
-		this.throwIfDisposed();
 		let db: IDBPDatabase<FluidCacheDBSchema> | undefined;
-		let removed = false;
-		// Records the partition that owned the row immediately before deletion when it
-		// differs from this cache's partition. The IDB key omits partitionKey, so
-		// `removeEntry` can drop a row written by a different partition. That partition's
-		// listeners must be notified, otherwise their `get` would silently start
-		// returning `undefined` for a previously-present row.
-		let displacedPartitionKey: string | null | undefined;
 		try {
 			db = await this.openDb();
 
 			const key = getKeyForCacheEntry(entry);
-			const transaction = db.transaction(FluidDriverObjectStoreName, "readwrite");
-			const existing = await transaction.store.get(key);
-			if (existing !== undefined) {
-				await transaction.store.delete(key);
-			}
-			await transaction.done;
-			this.throwIfDisposed();
-			if (existing !== undefined) {
-				removed = true;
-				if (existing.partitionKey !== this.partitionKey) {
-					displacedPartitionKey = existing.partitionKey;
-				}
-			}
+			await db.delete(FluidDriverObjectStoreName, key);
 		} catch (error: any) {
-			// If dispose ran during the operation, surface that as `UsageError`
-			// without logging the dispose race as an IDB delete failure. See
-			// `removeEntries` for the rationale on this ordering.
-			this.throwIfDisposed();
 			this.logger.sendErrorEvent(
 				{
 					eventName: FluidCacheErrorEvent.FluidCacheDeleteSingleEntryError,
@@ -509,32 +259,9 @@ export class FluidCache implements IPersistedCache {
 		} finally {
 			this.closeDb(db);
 		}
-		if (removed) {
-			// Notify our own partition's listeners (in other tabs) that the entry was removed.
-			// When the row actually belonged to a different partition, the broadcast above is
-			// a no-op for other listeners (they filter on partitionKey), but the additional
-			// broadcast below tells the displaced partition that its row is gone.
-			this.broadcast({
-				type: "remove",
-				partitionKey: this.partitionKey,
-				fileId: entry.file.docId,
-				entryType: entry.type,
-				cacheItemId: entry.key,
-			});
-			if (displacedPartitionKey !== undefined) {
-				this.broadcast({
-					type: "remove",
-					partitionKey: displacedPartitionKey,
-					fileId: entry.file.docId,
-					entryType: entry.type,
-					cacheItemId: entry.key,
-				});
-			}
-		}
 	}
 
 	public async get(cacheEntry: ICacheEntry): Promise<any> {
-		this.throwIfDisposed();
 		const startTime = performance.now();
 
 		const cachedItem = await this.getItemFromCache(cacheEntry);
@@ -562,13 +289,9 @@ export class FluidCache implements IPersistedCache {
 			db = await this.openDb();
 			const dbOpenPerf = performance.now() - dbOpenStartTime;
 			const value = await db.get(FluidDriverObjectStoreName, key);
-			// Dispose may have landed during `await db.get(...)`. Reject before
-			// surfacing the cached value so the read success path observes the
-			// disposed state cleanly, matching the post-await guard on the write
-			// methods and the existing catch-block guard below.
-			this.throwIfDisposed();
 
 			if (!value) {
+				this.closeDb(db);
 				return undefined;
 			}
 
@@ -580,6 +303,7 @@ export class FluidCache implements IPersistedCache {
 					pkgVersion,
 				});
 
+				this.closeDb(db);
 				return undefined;
 			}
 
@@ -587,88 +311,54 @@ export class FluidCache implements IPersistedCache {
 
 			// If too much time has passed since this cache entry was used, we will also return undefined
 			if (currentTime - value.createdTimeMs > this.maxCacheItemAge) {
+				this.closeDb(db);
 				return undefined;
 			}
 
+			this.closeDb(db);
 			return { ...value, dbOpenPerf };
 		} catch (error: any) {
-			// If dispose ran during the operation, surface that to the caller as
-			// `UsageError` *without* logging an IDB-error telemetry event. The error
-			// we observe in this branch is the `UsageError` thrown by our own
-			// post-await `throwIfDisposed` — it is not an IDB read failure, so logging
-			// it under `FluidCacheGetError` would mis-categorize the dispose race.
-			this.throwIfDisposed();
+			// We can fail to open the db for a variety of reasons,
+			// such as the database version having upgraded underneath us. Return undefined in this case
 			this.logger.sendErrorEvent(
 				{ eventName: FluidCacheErrorEvent.FluidCacheGetError, pkgVersion },
 				error,
 			);
-			return undefined;
-		} finally {
-			// Always close the per-call IDB connection (under `closeDbImmediately: true`,
-			// `openDb` returns a fresh handle per call). Without this `finally`, the
-			// catch arm's `throwIfDisposed` would short-circuit before `closeDb` ran,
-			// leaking the just-opened connection on every disposed-mid-`get` race.
 			this.closeDb(db);
+			return undefined;
 		}
 	}
 
 	public async put(entry: ICacheEntry, value: any): Promise<void> {
-		this.throwIfDisposed();
 		let db: IDBPDatabase<FluidCacheDBSchema> | undefined;
-		let wrote = false;
-		// Records the partition that owned the row immediately before this write when
-		// it differs from this cache's partition. See `removeEntry` for the rationale —
-		// the IDB key omits partitionKey, so a `put` from partition A can displace a
-		// partition-B row, and B's listeners need to know its cached row is gone.
-		let displacedPartitionKey: string | null | undefined;
 		try {
 			db = await this.openDb();
 
-			const key = getKeyForCacheEntry(entry);
-			const transaction = db.transaction(FluidDriverObjectStoreName, "readwrite");
-			const existing = await transaction.store.get(key);
-			if (existing !== undefined && existing.partitionKey !== this.partitionKey) {
-				displacedPartitionKey = existing.partitionKey;
-			}
-			await transaction.store.put(this.buildRecord(entry, value), key);
-			await transaction.done;
-			// Dispose may have landed during the awaits above. Reject before reporting
-			// success or broadcasting so the caller observes the disposed state cleanly
-			// and no `put` event escapes after teardown.
-			this.throwIfDisposed();
-			wrote = true;
+			const currentTime = Date.now();
+
+			await db.put(
+				FluidDriverObjectStoreName,
+				{
+					cachedObject: value,
+					fileId: entry.file.docId,
+					type: entry.type,
+					cacheItemId: entry.key,
+					partitionKey: this.partitionKey,
+					createdTimeMs: currentTime,
+					lastAccessTimeMs: currentTime,
+				},
+				getKeyForCacheEntry(entry),
+			);
 			this.closeDb(db);
 		} catch (error: any) {
-			// If dispose ran during the operation, surface that as `UsageError`
-			// without logging the dispose race as an IDB put failure. See
-			// `removeEntries` for the rationale on this ordering.
-			this.throwIfDisposed();
+			// We can fail to open the db for a variety of reasons,
+			// such as the database version having upgraded underneath us
 			this.logger.sendErrorEvent(
 				{ eventName: FluidCacheErrorEvent.FluidCachePutError, pkgVersion },
 				error,
 			);
 		} finally {
 			this.closeDb(db);
-		}
-		if (wrote) {
-			this.broadcast({
-				type: "put",
-				partitionKey: this.partitionKey,
-				fileId: entry.file.docId,
-				entryType: entry.type,
-				cacheItemId: entry.key,
-			});
-			if (displacedPartitionKey !== undefined) {
-				// The new row belongs to this partition. As far as the displaced
-				// partition is concerned, its row was removed.
-				this.broadcast({
-					type: "remove",
-					partitionKey: displacedPartitionKey,
-					fileId: entry.file.docId,
-					entryType: entry.type,
-					cacheItemId: entry.key,
-				});
-			}
 		}
 	}
 
@@ -714,12 +404,7 @@ export class FluidCache implements IPersistedCache {
 		value: unknown,
 		shouldWrite: (existing: unknown, proposed: unknown) => boolean,
 	): Promise<boolean> {
-		this.throwIfDisposed();
 		let db: IDBPDatabase<FluidCacheDBSchema> | undefined;
-		let wrote = false;
-		// Records the partition that owned the row immediately before this write when
-		// it differs from this cache's partition (matching `put` / `removeEntry`).
-		let displacedPartitionKey: string | null | undefined;
 		try {
 			db = await this.openDb();
 
@@ -734,9 +419,6 @@ export class FluidCache implements IPersistedCache {
 				existing?.partitionKey === this.partitionKey &&
 				Date.now() - existing.createdTimeMs <= this.maxCacheItemAge;
 			const existingValue = existingVisible ? existing?.cachedObject : undefined;
-			if (existing !== undefined && existing.partitionKey !== this.partitionKey) {
-				displacedPartitionKey = existing.partitionKey;
-			}
 
 			// Invoke the predicate in its own try/catch so a host-supplied callback
 			// throwing does not get logged under `FluidCachePutError` (which is for
@@ -759,32 +441,30 @@ export class FluidCache implements IPersistedCache {
 					},
 					predicateError,
 				);
-				this.throwIfDisposed();
 				return false;
 			}
 
 			if (!predicateResult) {
 				await transaction.done;
-				// Dispose may have landed during `await transaction.done`. Reject before
-				// returning the cooperative `false` so an awaiting caller cannot
-				// confuse "predicate rejected the write" with "cache was disposed
-				// mid-flight" — matching the post-await guard on the success branch.
-				this.throwIfDisposed();
 				return false;
 			}
 
-			await transaction.store.put(this.buildRecord(entry, value), key);
+			const currentTime = Date.now();
+			await transaction.store.put(
+				{
+					cachedObject: value,
+					fileId: entry.file.docId,
+					type: entry.type,
+					cacheItemId: entry.key,
+					partitionKey: this.partitionKey,
+					createdTimeMs: currentTime,
+					lastAccessTimeMs: currentTime,
+				},
+				key,
+			);
 			await transaction.done;
-			// Dispose may have landed during the awaits above. Reject before reporting
-			// success or broadcasting so the caller observes the disposed state cleanly
-			// and no `put` event escapes after teardown.
-			this.throwIfDisposed();
-			wrote = true;
+			return true;
 		} catch (error: any) {
-			// If dispose ran during the operation, surface that as `UsageError`
-			// without logging the dispose race as an IDB put failure. See
-			// `removeEntries` for the rationale on this ordering.
-			this.throwIfDisposed();
 			this.logger.sendErrorEvent(
 				{ eventName: FluidCacheErrorEvent.FluidCachePutError, pkgVersion },
 				error,
@@ -793,42 +473,5 @@ export class FluidCache implements IPersistedCache {
 		} finally {
 			this.closeDb(db);
 		}
-		if (wrote) {
-			this.broadcast({
-				type: "put",
-				partitionKey: this.partitionKey,
-				fileId: entry.file.docId,
-				entryType: entry.type,
-				cacheItemId: entry.key,
-			});
-			if (displacedPartitionKey !== undefined) {
-				// The new row belongs to this partition. As far as the displaced
-				// partition is concerned, its row was removed.
-				this.broadcast({
-					type: "remove",
-					partitionKey: displacedPartitionKey,
-					fileId: entry.file.docId,
-					entryType: entry.type,
-					cacheItemId: entry.key,
-				});
-			}
-		}
-		return wrote;
-	}
-
-	private buildRecord(
-		entry: ICacheEntry,
-		value: unknown,
-	): FluidCacheDBSchema[typeof FluidDriverObjectStoreName]["value"] {
-		const currentTime = Date.now();
-		return {
-			cachedObject: value,
-			fileId: entry.file.docId,
-			type: entry.type,
-			cacheItemId: entry.key,
-			partitionKey: this.partitionKey,
-			createdTimeMs: currentTime,
-			lastAccessTimeMs: currentTime,
-		};
 	}
 }

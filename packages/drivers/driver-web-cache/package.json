@@ -89,7 +89,6 @@
 		"typetests:gen": "flub generate typetests --dir . -v"
 	},
 	"dependencies": {
-		"@fluid-internal/client-utils": "workspace:~",
 		"@fluidframework/core-interfaces": "workspace:~",
 		"@fluidframework/core-utils": "workspace:~",
 		"@fluidframework/driver-definitions": "workspace:~",
