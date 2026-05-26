@@ -473,6 +473,7 @@ function handleNodeChanges(
 	moveEffects: MoveEffectTable,
 ): NodeId | undefined {
 	if (newMark.changes !== undefined) {
+		moveEffects.onMoveIn(newMark.changes);
 		const baseSource = getMoveIn(baseMark);
 
 		// TODO: Make sure composeChild is not called twice on the node changes.
@@ -664,7 +665,6 @@ function getModifyAfter(
 	const effect = getMoveEffect(moveEffects, target, revision, id, 1);
 
 	if (effect.value?.modifyAfter !== undefined) {
-		moveEffects.onMoveIn(effect.value.modifyAfter);
 		return effect.value.modifyAfter;
 	}
 
