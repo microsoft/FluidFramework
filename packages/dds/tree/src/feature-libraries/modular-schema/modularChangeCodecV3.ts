@@ -50,6 +50,7 @@ import {
 	encodeDetachedNodes,
 	encodeRevisionInfos,
 	getFieldChangesetCodecs,
+	makeFieldEncodingContextFactory,
 } from "./modularChangeCodecV1.js";
 import {
 	addNodeRename,
@@ -129,41 +130,17 @@ export function makeModularChangeCodecV3(
 	function encodeFieldChangesForJson(
 		change: FieldChangeMap,
 		parentId: NodeId | undefined,
-		fieldToRoots: FieldRootMap,
-		context: ChangeEncodingContext,
-		encodeNode: NodeEncoder,
-		getInputRootId: ChangeAtomMappingQuery,
-		getOutputRootId: ChangeAtomMappingQuery,
-		getFirstRenameId: ChangeAtomMappingQuery,
-		isAttachId: ChangeAtomIdRangeQuery,
-		isDetachId: ChangeAtomIdRangeQuery,
+		contextFactory: (fieldId: FieldId) => FieldChangeEncodingContext,
 	): EncodedFieldChangeMap {
 		const encodedFields: EncodedFieldChangeMap = [];
 
 		for (const [field, fieldChange] of change) {
 			const { codec, compiledSchema } = getFieldChangesetCodec(fieldChange.fieldKind);
-			const rootChanges = fieldToRoots.get([parentId?.revision, parentId?.localId, field]);
+			const encodedChange = codec.encode(
+				fieldChange.change,
+				contextFactory({ nodeId: parentId, field }),
+			);
 
-			const fieldContext: FieldChangeEncodingContext = {
-				baseContext: context,
-				rootNodeChanges: rootChanges?.nodeChanges ?? newChangeAtomIdBTree(),
-				rootRenames: rootChanges?.renames ?? newChangeAtomIdTransform(),
-
-				encodeNode,
-				getInputRootId,
-				getOutputRootId,
-				getFirstRenameId,
-				isAttachId,
-				isDetachId,
-
-				decodeNode: () => fail(0xb1e /* Should not decode nodes during field encoding */),
-				decodeRootNodeChange: () => fail("Should not be called during encoding"),
-				decodeRootRename: () => fail("Should not be called during encoding"),
-				decodeMoveAndDetach: () => fail("Should not be called during encoding"),
-				generateId: () => fail("Should not be called during encoding"),
-			};
-
-			const encodedChange = codec.encode(fieldChange.change, fieldContext);
 			if (compiledSchema !== undefined && !compiledSchema.check(encodedChange)) {
 				fail(0xb1f /* Encoded change didn't pass schema validation. */);
 			}
@@ -184,32 +161,14 @@ export function makeModularChangeCodecV3(
 	function encodeNodeChangesForJson(
 		change: NodeChangeset,
 		id: NodeId,
-		fieldToRoots: FieldRootMap,
-		context: ChangeEncodingContext,
-		encodeNode: NodeEncoder,
-		getInputDetachId: ChangeAtomMappingQuery,
-		getOutputDetachId: ChangeAtomMappingQuery,
-		getFirstRenameId: ChangeAtomMappingQuery,
-		isAttachId: ChangeAtomIdRangeQuery,
-		isDetachId: ChangeAtomIdRangeQuery,
+		contextFactory: (fieldId: FieldId) => FieldChangeEncodingContext,
 	): EncodedNodeChangeset {
 		const encodedChange: EncodedNodeChangeset = {};
 		// Note: revert constraints are ignored for now because they would only be needed if we supported reverting changes made by peers.
 		const { fieldChanges, nodeExistsConstraint } = change;
 
 		if (fieldChanges !== undefined) {
-			encodedChange.fieldChanges = encodeFieldChangesForJson(
-				fieldChanges,
-				id,
-				fieldToRoots,
-				context,
-				encodeNode,
-				getInputDetachId,
-				getOutputDetachId,
-				getFirstRenameId,
-				isAttachId,
-				isDetachId,
-			);
+			encodedChange.fieldChanges = encodeFieldChangesForJson(fieldChanges, id, contextFactory);
 		}
 
 		if (nodeExistsConstraint !== undefined) {
@@ -391,58 +350,14 @@ export function makeModularChangeCodecV3(
 
 	const modularChangeCodec: ModularChangeCodec = {
 		encode: (change, context) => {
-			const fieldToRoots = getFieldToRoots(change.rootNodes);
-
-			// XXX: Bundle FieldChangeEncodingContext utilities, and deduplicated with v1 codec.
-			const isAttachId = (id: ChangeAtomId, count: number): RangeQueryResult<boolean> => {
-				const attachEntry = getFirstAttachField(change.crossFieldKeys, id, count);
-				return { ...attachEntry, value: attachEntry.value !== undefined };
-			};
-
-			const isDetachId = (id: ChangeAtomId, count: number): RangeQueryResult<boolean> => {
-				const detachEntry = getFirstDetachField(change.crossFieldKeys, id, count);
-				const renameEntry = change.rootNodes.oldToNewId.getFirst(id, detachEntry.length);
-				const isDetach = (detachEntry.value ?? renameEntry.value) !== undefined;
-				return { value: isDetach, length: renameEntry.length };
-			};
-
-			const getInputDetachId = (
-				id: ChangeAtomId,
-				count: number,
-			): RangeQueryResult<ChangeAtomId | undefined> => {
-				return change.rootNodes.newToOldId.getFirst(id, count);
-			};
-
-			const getOutputDetachId = (
-				id: ChangeAtomId,
-				count: number,
-			): RangeQueryResult<ChangeAtomId | undefined> => {
-				return change.rootNodes.oldToNewId.getFirst(id, count);
-			};
-
-			const getFirstRenameId = (
-				id: ChangeAtomId,
-				count: number,
-			): RangeQueryResult<ChangeAtomId | undefined> =>
-				change.rootNodes.firstIntermediateRenames.getFirst(id, count);
-
 			const encodeNode = (nodeId: NodeId): EncodedNodeChangeset => {
 				// TODO: Handle node aliasing.
 				const node = change.nodeChanges.get([nodeId.revision, nodeId.localId]);
 				assert(node !== undefined, 0x92e /* Unknown node ID */);
-				return encodeNodeChangesForJson(
-					node,
-					nodeId,
-					fieldToRoots,
-					context,
-					encodeNode,
-					getInputDetachId,
-					getOutputDetachId,
-					getFirstRenameId,
-					isAttachId,
-					isDetachId,
-				);
+				return encodeNodeChangesForJson(node, nodeId, contextFactory);
 			};
+
+			const contextFactory = makeFieldEncodingContextFactory(change, context, encodeNode);
 
 			// Destroys only exist in rollback changesets, which are never sent.
 			assert(change.destroys === undefined, 0x899 /* Unexpected changeset with destroys */);
@@ -455,14 +370,7 @@ export function makeModularChangeCodecV3(
 				fieldChanges: encodeFieldChangesForJson(
 					change.fieldChanges,
 					undefined,
-					fieldToRoots,
-					context,
-					encodeNode,
-					getInputDetachId,
-					getOutputDetachId,
-					getFirstRenameId,
-					isAttachId,
-					isDetachId,
+					contextFactory,
 				),
 				rootNodes: encodeRootNodesForJson(change.rootNodes.nodeChanges, context, encodeNode),
 				nodeRenames: encodeRenamesForJson(change.rootNodes.oldToNewId, context),

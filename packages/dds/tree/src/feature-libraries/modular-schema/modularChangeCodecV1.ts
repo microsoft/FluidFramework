@@ -168,14 +168,7 @@ export function getFieldChangesetCodecs(
 function encodeFieldChangesForJson(
 	change: FieldChangeMap,
 	parentId: NodeId | undefined,
-	fieldToRoots: FieldRootMap,
-	context: ChangeEncodingContext,
-	encodeNode: NodeEncoder,
-	getInputRootId: ChangeAtomMappingQuery,
-	getOutputRootId: ChangeAtomMappingQuery,
-	getFirstRenameId: ChangeAtomMappingQuery,
-	isAttachId: ChangeAtomIdRangeQuery,
-	isDetachId: ChangeAtomIdRangeQuery,
+	contextFactory: (fieldId: FieldId) => FieldChangeEncodingContext,
 	fieldChangesetCodecs: FieldChangesetCodecs,
 ): EncodedFieldChangeMap {
 	const encodedFields: EncodedFieldChangeMap = [];
@@ -185,28 +178,11 @@ function encodeFieldChangesForJson(
 			fieldChange.fieldKind,
 			fieldChangesetCodecs,
 		);
-		const rootChanges = fieldToRoots.get([parentId?.revision, parentId?.localId, field]);
 
-		const fieldContext: FieldChangeEncodingContext = {
-			baseContext: context,
-			rootNodeChanges: rootChanges?.nodeChanges ?? newChangeAtomIdBTree(),
-			rootRenames: rootChanges?.renames ?? newChangeAtomIdTransform(),
-
-			encodeNode,
-			getInputRootId,
-			getOutputRootId,
-			getFirstRenameId,
-			isAttachId,
-			isDetachId,
-
-			decodeNode: () => fail(0xb1e /* Should not decode nodes during field encoding */),
-			decodeRootNodeChange: () => fail("Should not be called during encoding"),
-			decodeRootRename: () => fail("Should not be called during encoding"),
-			decodeMoveAndDetach: () => fail("Should not be called during encoding"),
-			generateId: () => fail("Should not be called during encoding"),
-		};
-
-		const encodedChange = codec.encode(fieldChange.change, fieldContext);
+		const encodedChange = codec.encode(
+			fieldChange.change,
+			contextFactory({ nodeId: parentId, field }),
+		);
 		if (compiledSchema !== undefined && !compiledSchema.check(encodedChange)) {
 			fail(0xb1f /* Encoded change didn't pass schema validation. */);
 		}
@@ -224,26 +200,13 @@ function encodeFieldChangesForJson(
 	return encodedFields;
 }
 
-type ChangeAtomMappingQuery = (
-	id: ChangeAtomId,
-	count: number,
-) => RangeQueryResult<ChangeAtomId | undefined>;
-
-type ChangeAtomIdRangeQuery = (id: ChangeAtomId, count: number) => RangeQueryResult<boolean>;
 type NodeEncoder = (nodeId: NodeId) => EncodedNodeChangeset;
 type NodeDecoder = (encoded: EncodedNodeChangeset, fieldId: NodeLocation) => NodeId;
 
 function encodeNodeChangesForJson(
 	change: NodeChangeset,
 	id: NodeId,
-	fieldToRoots: FieldRootMap,
-	context: ChangeEncodingContext,
-	encodeNode: NodeEncoder,
-	getInputRootId: ChangeAtomMappingQuery,
-	getOutputRootId: ChangeAtomMappingQuery,
-	getFirstRenameId: ChangeAtomMappingQuery,
-	isAttachId: ChangeAtomIdRangeQuery,
-	isDetachId: ChangeAtomIdRangeQuery,
+	contextFactory: (fieldId: FieldId) => FieldChangeEncodingContext,
 	fieldChangesetCodecs: FieldChangesetCodecs,
 ): EncodedNodeChangeset {
 	const encodedChange: EncodedNodeChangeset = {};
@@ -254,14 +217,7 @@ function encodeNodeChangesForJson(
 		encodedChange.fieldChanges = encodeFieldChangesForJson(
 			fieldChanges,
 			id,
-			fieldToRoots,
-			context,
-			encodeNode,
-			getInputRootId,
-			getOutputRootId,
-			getFirstRenameId,
-			isAttachId,
-			isDetachId,
+			contextFactory,
 			fieldChangesetCodecs,
 		);
 	}
@@ -550,59 +506,14 @@ export function encodeChange(
 	fieldsCodec: FieldBatchCodec,
 	chunkCompressionStrategy: TreeCompressionStrategy,
 ): EncodedModularChangesetV1 {
-	const fieldToRoots = getFieldToRoots(change.rootNodes, change.nodeAliases);
-	const isAttachId = (id: ChangeAtomId, count: number): RangeQueryResult<boolean> => {
-		const attachEntry = getFirstAttachField(change.crossFieldKeys, id, count);
-		return { ...attachEntry, value: attachEntry.value !== undefined };
-	};
-
-	const isDetachId = (id: ChangeAtomId, count: number): RangeQueryResult<boolean> => {
-		const detachEntry = getFirstDetachField(change.crossFieldKeys, id, count);
-		return { value: detachEntry.value !== undefined, length: detachEntry.length };
-	};
-
-	const getOldFromNewId = (
-		id: ChangeAtomId,
-		count: number,
-	): RangeQueryResult<ChangeAtomId | undefined> =>
-		change.rootNodes.newToOldId.getFirst(id, count);
-
-	const getNewFromOldId = (
-		id: ChangeAtomId,
-		count: number,
-	): RangeQueryResult<ChangeAtomId | undefined> =>
-		change.rootNodes.oldToNewId.getFirst(id, count);
-
-	const getFirstRenameId = (
-		id: ChangeAtomId,
-		count: number,
-	): RangeQueryResult<ChangeAtomId | undefined> => {
-		const entry = change.rootNodes.firstIntermediateRenames.getFirst(id, count);
-		if (entry.value !== undefined) {
-			return entry;
-		}
-
-		return change.rootNodes.oldToNewId.getFirst(id, entry.length);
-	};
-
 	const encodeNode = (nodeId: NodeId): EncodedNodeChangeset => {
 		// TODO: Handle node aliasing.
 		const node = change.nodeChanges.get([nodeId.revision, nodeId.localId]);
 		assert(node !== undefined, 0x92e /* Unknown node ID */);
-		return encodeNodeChangesForJson(
-			node,
-			nodeId,
-			fieldToRoots,
-			context,
-			encodeNode,
-			getOldFromNewId,
-			getNewFromOldId,
-			getFirstRenameId,
-			isAttachId,
-			isDetachId,
-			fieldChangesetCodecs,
-		);
+		return encodeNodeChangesForJson(node, nodeId, contextFactory, fieldChangesetCodecs);
 	};
+
+	const contextFactory = makeFieldEncodingContextFactory(change, context, encodeNode);
 
 	// Destroys only exist in rollback changesets, which are never sent.
 	assert(change.destroys === undefined, 0x899 /* Unexpected changeset with destroys */);
@@ -615,14 +526,7 @@ export function encodeChange(
 		changes: encodeFieldChangesForJson(
 			change.fieldChanges,
 			undefined,
-			fieldToRoots,
-			context,
-			encodeNode,
-			getOldFromNewId,
-			getNewFromOldId,
-			getFirstRenameId,
-			isAttachId,
-			isDetachId,
+			contextFactory,
 			fieldChangesetCodecs,
 		),
 		builds: encodeDetachedNodes(
@@ -643,6 +547,74 @@ export function encodeChange(
 	};
 
 	return encoded;
+}
+
+export function makeFieldEncodingContextFactory(
+	change: ModularChangeset,
+	context: ChangeEncodingContext,
+	encodeNode: NodeEncoder,
+): (fieldId: FieldId) => FieldChangeEncodingContext {
+	const fieldToRoots = getFieldToRoots(change.rootNodes, change.nodeAliases);
+	const isAttachId = (id: ChangeAtomId, count: number): RangeQueryResult<boolean> => {
+		const attachEntry = getFirstAttachField(change.crossFieldKeys, id, count);
+		return { ...attachEntry, value: attachEntry.value !== undefined };
+	};
+
+	const isDetachId = (id: ChangeAtomId, count: number): RangeQueryResult<boolean> => {
+		const detachEntry = getFirstDetachField(change.crossFieldKeys, id, count);
+		return { value: detachEntry.value !== undefined, length: detachEntry.length };
+	};
+
+	const getInputRootId = (
+		id: ChangeAtomId,
+		count: number,
+	): RangeQueryResult<ChangeAtomId | undefined> =>
+		change.rootNodes.newToOldId.getFirst(id, count);
+
+	const getOutputRootId = (
+		id: ChangeAtomId,
+		count: number,
+	): RangeQueryResult<ChangeAtomId | undefined> =>
+		change.rootNodes.oldToNewId.getFirst(id, count);
+
+	const getFirstRenameId = (
+		id: ChangeAtomId,
+		count: number,
+	): RangeQueryResult<ChangeAtomId | undefined> => {
+		const entry = change.rootNodes.firstIntermediateRenames.getFirst(id, count);
+		if (entry.value !== undefined) {
+			return entry;
+		}
+
+		return change.rootNodes.oldToNewId.getFirst(id, entry.length);
+	};
+
+	return (fieldId: FieldId): FieldChangeEncodingContext => {
+		const rootChanges = fieldToRoots.get([
+			fieldId.nodeId?.revision,
+			fieldId.nodeId?.localId,
+			fieldId.field,
+		]);
+
+		return {
+			baseContext: context,
+			rootNodeChanges: rootChanges?.nodeChanges ?? newChangeAtomIdBTree(),
+			rootRenames: rootChanges?.renames ?? newChangeAtomIdTransform(),
+
+			encodeNode,
+			getInputRootId,
+			getOutputRootId,
+			getFirstRenameId,
+			isAttachId,
+			isDetachId,
+
+			decodeNode: () => fail(0xb1e /* Should not decode nodes during field encoding */),
+			decodeRootNodeChange: () => fail("Should not be called during encoding"),
+			decodeRootRename: () => fail("Should not be called during encoding"),
+			decodeMoveAndDetach: () => fail("Should not be called during encoding"),
+			generateId: () => fail("Should not be called during encoding"),
+		};
+	};
 }
 
 export function encodeRevisionInfos(
