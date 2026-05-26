@@ -51,6 +51,7 @@ export type KeyFinder<TKey> = (tree: ITreeSubscriptionCursor) => TKey;
  * calling {@link keys} will not include any keys that are stored in the index but only map to detached nodes.
  */
 export class AnchorTreeIndex<TKey, TValue> implements TreeIndex<TKey, TValue> {
+	public readonly [Symbol.toStringTag] = "AnchorTreeIndex";
 	public disposed = false;
 	/**
 	 * Caches {@link KeyFinder}s for each schema definition. If a schema maps to null, it does not
@@ -60,6 +61,8 @@ export class AnchorTreeIndex<TKey, TValue> implements TreeIndex<TKey, TValue> {
 	private readonly keyFinders = new Map<TreeNodeSchemaIdentifier, KeyFinder<TKey> | null>();
 	/**
 	 * The actual index from keys to anchor nodes.
+	 * @remarks
+	 * Should not store empty values (and thus values should be a valid {@link TreeIndexNodes}).
 	 */
 	private readonly keyToNodes = new Map<TKey, AnchorNode[]>();
 	/**
@@ -271,7 +274,11 @@ export class AnchorTreeIndex<TKey, TValue> implements TreeIndex<TKey, TValue> {
 	public *allEntries(): IterableIterator<[TKey, TValue]> {
 		this.checkNotDisposed();
 		for (const [key, nodes] of this.keyToNodes.entries()) {
-			const value = this.getValue(nodes as unknown as TreeIndexNodes<AnchorNode>);
+			assert(
+				hasElement(nodes),
+				0xce9 /* expected at least one node for each key in the index */,
+			);
+			const value = this.getValue(nodes);
 			if (value !== undefined) {
 				yield [key, value];
 			}
@@ -420,13 +427,15 @@ export class AnchorTreeIndex<TKey, TValue> implements TreeIndex<TKey, TValue> {
 			indexedNodes !== undefined,
 			0xa90 /* destroyed anchor node should be tracked by index */,
 		);
-		const index = indexedNodes.indexOf(anchorNode);
-		assert(index !== -1, 0xa91 /* destroyed anchor node should be tracked by index */);
 		const newNodes = filterNodes(indexedNodes, (n) => n !== anchorNode);
-		if (newNodes !== undefined && newNodes.length > 0) {
-			this.keyToNodes.set(key, newNodes);
-		} else {
+		if (newNodes === undefined) {
 			this.keyToNodes.delete(key);
+		} else {
+			assert(
+				newNodes.length < indexedNodes.length,
+				0xa91 /* destroyed anchor node should be tracked by index */,
+			);
+			this.keyToNodes.set(key, newNodes);
 		}
 		this.nodeToKey.delete(anchorNode);
 		assert(
@@ -444,7 +453,7 @@ export class AnchorTreeIndex<TKey, TValue> implements TreeIndex<TKey, TValue> {
 			return nodeStatus === TreeStatus.InDocument;
 		});
 
-		if (attachedNodes !== undefined && hasElement(attachedNodes)) {
+		if (attachedNodes !== undefined) {
 			return this.getValue(attachedNodes);
 		}
 	}
@@ -456,11 +465,13 @@ export class AnchorTreeIndex<TKey, TValue> implements TreeIndex<TKey, TValue> {
 function filterNodes(
 	anchorNodes: readonly AnchorNode[] | undefined,
 	filter: (node: AnchorNode) => boolean,
-): AnchorNode[] | undefined {
+): (AnchorNode[] & TreeIndexNodes<AnchorNode>) | undefined {
 	if (anchorNodes !== undefined) {
-		return anchorNodes.filter(filter);
+		const filtered = anchorNodes.filter(filter);
+		if (hasElement(filtered)) {
+			return filtered;
+		}
 	}
-
 	return undefined;
 }
 

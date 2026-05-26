@@ -38,7 +38,7 @@ jobs:
       - name: Download metadata
         if: github.event_name == 'workflow_run'
         # release notes: https://github.com/dawidd6/action-download-artifact/releases/tag/v11
-        uses: dawidd6/action-download-artifact@ac66b43f0e6a346234dd65d4d0c8fbb31cb316e5 # ratchet:dawidd6/action-download-artifact@v11
+        uses: dawidd6/action-download-artifact@8305c0f1062bb0d184d09ef4493ecb9288447732 # ratchet:dawidd6/action-download-artifact@v20
         with:
           workflow: release-branches.yml
           run_id: ${{ github.event.workflow_run.id }}
@@ -80,7 +80,7 @@ jobs:
         id: workflow_dispatch_load_commit_sha
         if: github.event_name == 'workflow_dispatch'
         # release notes: https://github.com/actions/github-script/releases/tag/v8
-        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # ratchet:actions/github-script@v8
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # ratchet:actions/github-script@v9
         env:
           PR_NUMBER: ${{ steps.workflow_dispatch_load_pr.outputs.pr_num }}
         with:
@@ -115,7 +115,7 @@ jobs:
           context: Check PR approval
 
       # release notes: https://github.com/actions/checkout/releases/tag/v6.0.0
-      - uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # ratchet:actions/checkout@v6
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # ratchet:actions/checkout@v6
         with:
           # The default ref when triggered by the workflow_run event is the default branch -- main
           # This means the build-tools from the main branch will always be used.
@@ -124,10 +124,10 @@ jobs:
 
       # install and configure node, pnpm and the changeset tools
       # release notes: https://github.com/pnpm/action-setup/releases/tag/v4.2.0
-      - uses: pnpm/action-setup@41ff72655975bd51cab0327fa583b6e92b6d3061 # ratchet:pnpm/action-setup@v4
+      - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # ratchet:pnpm/action-setup@v5
 
       # release notes: https://github.com/actions/setup-node/releases/tag/v6.0.0
-      - uses: actions/setup-node@2028fbc5c25fe9cf00d9f06a71cc4710d4507903 # ratchet:actions/setup-node@v6
+      - uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # ratchet:actions/setup-node@v6
         with:
           node-version-file: .nvmrc
           cache: "pnpm"

@@ -7,6 +7,8 @@ import type { IIdCompressor, SessionId } from "@fluidframework/id-compressor";
 
 import type { ICodecFamily, IJsonCodec } from "../../codec/index.js";
 import type { SchemaAndPolicy } from "../../core/index.js";
+// eslint-disable-next-line @typescript-eslint/no-unused-vars -- Referenced by doc comments
+import type { FieldBatchEncodingContext } from "../../feature-libraries/index.js";
 import type { JsonCompatibleReadOnly } from "../../util/index.js";
 import type { ChangeRebaser, RevisionTag, TaggedChange } from "../rebase/index.js";
 
@@ -25,6 +27,29 @@ export interface ChangeEncodingContext {
 	readonly revision: RevisionTag | undefined;
 	readonly idCompressor: IIdCompressor;
 	readonly schema?: SchemaAndPolicy;
+	/**
+	 * `true` when this context is encoding to or decoding from a summary blob.
+	 * `false` when this context is for an op (or any other non-summary path,
+	 * including utility encoders that aren't tied to persistence).
+	 *
+	 * @remarks
+	 * Used to gate decode-time recovery behavior — for example, healing of
+	 * unresolvable identifier IDs — that should only run when loading a
+	 * (possibly broken) attach-summary blob, never when applying ops.
+	 */
+	readonly isSummary: boolean;
+	/**
+	 * If `true`, identifier values that the local id-compressor cannot resolve
+	 * during decode are healed into deterministic stable UUIDs instead of
+	 * throwing. See {@link FieldBatchEncodingContext.healUnresolvableIdentifiersOnDecode}.
+	 * Only takes effect when `isSummary` is also `true`.
+	 */
+	readonly healUnresolvableIdentifiersOnDecode?: boolean;
+	/**
+	 * The SharedTree's shared-object id, used as input to the deterministic
+	 * UUID derivation when {@link healUnresolvableIdentifiersOnDecode} triggers.
+	 */
+	readonly sharedObjectId?: string;
 }
 
 export type ChangeFamilyCodec<TChange> = IJsonCodec<

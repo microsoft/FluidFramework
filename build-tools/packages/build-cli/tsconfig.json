@@ -11,5 +11,10 @@
 		"target": "ES2022",
 		"noUncheckedIndexedAccess": false,
 		"exactOptionalPropertyTypes": false,
+		// vscode-jsonrpc (transitive dep via @github/copilot-sdk) uses IterableIterator in its
+		// LinkedMap types, which is incompatible with TS 5.6+'s MapIterator.
+		// See https://github.com/microsoft/vscode-languageserver-node/issues/1590 tracking the issue.
+		// Fix will be in vscode-jsonrpc 9.0.0 which has not been released as of 2026-05-10.
+		"skipLibCheck": true,
 	},
 }

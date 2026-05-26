@@ -78,7 +78,7 @@ trigger:
     - biome.jsonc
     - BREAKING.md
     - common/build/build-common
-    # TODO: Can be removed once eslint-config-fluid is removed from the client release group
+    # TODO: Can be removed once the dependency on the shared lint config is via an npm package instead of link:
     - common/build/eslint-config-fluid
     - ClientRequirements.md
     - CODE_OF_CONDUCT.md
@@ -100,7 +100,7 @@ trigger:
     - README.md
     - scripts/*
     - SECURITY.md
-    - syncpack.config.cjs
+    - .syncpackrc.yml
     # markdown-magic is part of the client release group
     - tools/markdown-magic/*
     - tools/pipelines/build-client.yml
@@ -114,9 +114,10 @@ trigger:
     - tools/pipelines/templates/include-publish-npm-package-steps.yml
     - tools/pipelines/templates/include-git-tag-steps.yml
     - tools/pipelines/templates/include-use-node-version.yml
-    - tools/pipelines/templates/include-process-test-results.yml
     - tools/pipelines/templates/include-policy-check.yml
+    - tools/pipelines/templates/include-vars-telemetry-generator.yml
     - tools/pipelines/templates/upload-dev-manifest.yml
+    - tools/pipelines/templates/upload-telemetry/*
 
 pr:
   branches:
@@ -145,7 +146,7 @@ pr:
     - biome.jsonc
     - BREAKING.md
     - common/build/build-common
-     # TODO: Can be removed once eslint-config-fluid is removed from the client release group
+    # TODO: Can be removed once the dependency on the shared lint config is via an npm package instead of link:
     - common/build/eslint-config-fluid
     - ClientRequirements.md
     - CODE_OF_CONDUCT.md
@@ -167,7 +168,7 @@ pr:
     - README.md
     - scripts/*
     - SECURITY.md
-    - syncpack.config.cjs
+    - .syncpackrc.yml
     # markdown-magic is part of the client release group
     - tools/markdown-magic/*
     - tools/pipelines/build-client.yml
@@ -178,8 +179,9 @@ pr:
     - tools/pipelines/templates/include-vars.yml
     - tools/pipelines/templates/include-install-pnpm.yml
     - tools/pipelines/templates/include-use-node-version.yml
-    - tools/pipelines/templates/include-process-test-results.yml
+    - tools/pipelines/templates/include-vars-telemetry-generator.yml
     - tools/pipelines/templates/upload-dev-manifest.yml
+    - tools/pipelines/templates/upload-telemetry/*
 
 variables:
   - template: /tools/pipelines/templates/include-vars.yml@self
@@ -198,7 +200,10 @@ extends:
     interdependencyRange: ${{ parameters.interdependencyRange }}
     packageManagerInstallCommand: 'pnpm i --frozen-lockfile'
     packageManager: pnpm
-    testCoverage: ${{ eq(variables['System.TeamProject'], 'public' ) }} # disabling code coverage for internal project since we don't use it
+    # Disabled: coverage performance regressed in Node 22 and further in Node 24, causing test timeouts
+    # that need mitigation before coverage can be reenabled.
+    # testCoverage: ${{ eq(variables['System.TeamProject'], 'public' ) }} # disabling code coverage for internal project since we don't use it
+    testCoverage: false
     reportCodeCoverageComparison: ${{ eq(variables['Build.Reason'], 'PullRequest') }}
     buildDirectory: ${{ variables.FluidFrameworkDirectory }}
     tagName: client
@@ -224,9 +229,5 @@ extends:
     coverageTests:
     - { name: "ci:test:mocha", jobName: "MochaTest" }
     - { name: "ci:test:realsvc:local", jobName: "RealsvcLocalTest" }
-    testResultDirs:
-    - nyc/examples
-    - nyc/experimental
-    - nyc/packages
     checks:
     - checks

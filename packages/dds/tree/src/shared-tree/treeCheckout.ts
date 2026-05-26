@@ -59,6 +59,7 @@ import {
 	type ReadOnlyDetachedFieldIndex,
 	makeAnonChange,
 	type TaggedChange,
+	deltaFieldMapHasVisibleChanges,
 } from "../core/index.js";
 import {
 	type FieldBatchCodec,
@@ -96,6 +97,7 @@ import {
 	type TransactionResult,
 	type TransactionResultExt,
 	type RunTransactionParams,
+	type RunTransactionSyncParams,
 	type TransactionConstraintAlpha,
 	type TreeViewAlpha,
 	getInnerNode,
@@ -103,6 +105,7 @@ import {
 	customFromCursorStored,
 	type CustomTreeValue,
 	type CustomTreeNode,
+	withBufferedTreeEvents,
 } from "../simple-tree/index.js";
 import {
 	Breakable,
@@ -131,6 +134,20 @@ function* collectTreeLabels(node: LabelTree): IterableIterator<unknown> {
 	for (const child of node.sublabels) {
 		yield* collectTreeLabels(child);
 	}
+}
+
+/**
+ * Deep-clones a {@link LabelTree} so the result is independent of the source.
+ * @remarks
+ * Used when capturing the label tree on a revertible so that subsequent mutations
+ * (by the framework or by external listeners reading {@link TransactionLabels.tree})
+ * cannot affect the labels the revertible will emit.
+ */
+function cloneLabelTree(tree: LabelTree): LabelTree {
+	return {
+		label: tree.label,
+		sublabels: tree.sublabels.map(cloneLabelTree),
+	};
 }
 
 /**
@@ -712,6 +729,12 @@ export class TreeCheckout implements ITreeCheckout {
 				const kind = event.type === "append" ? event.kind : CommitKind.Default;
 				const { change, revision } = commit;
 
+				// Snapshot the label tree for this commit before any listener runs, so the captured
+				// value is stable against mutations to `metadata.labels.tree` (which aliases the
+				// live `labelTreeNode`).
+				const commitLabelTree =
+					this.labelTreeNode === undefined ? undefined : cloneLabelTree(this.labelTreeNode);
+
 				const getRevertible = hasSchemaChange(change)
 					? undefined
 					: (onRevertibleDisposed?: (revertible: RevertibleAlpha) => void) => {
@@ -730,6 +753,7 @@ export class TreeCheckout implements ITreeCheckout {
 								kind,
 								this,
 								onRevertibleDisposed,
+								commitLabelTree,
 							);
 							this.revertibleCommitBranches.set(
 								revision,
@@ -749,6 +773,7 @@ export class TreeCheckout implements ITreeCheckout {
 							idCompressor: this.idCompressor,
 							originatorId: this.idCompressor.localSessionId,
 							revision,
+							isSummary: false,
 						};
 						const encodedChange = this.changeFamily.codecs.resolve(4).encode(change, context);
 
@@ -819,6 +844,7 @@ export class TreeCheckout implements ITreeCheckout {
 			idCompressor: this.idCompressor,
 			originatorId: this.idCompressor.localSessionId,
 			revision,
+			isSummary: false,
 		};
 		const decodedChange = this.changeFamily.codecs.resolve(4).decode(change, context);
 		// Apply the change to the branch, but _not_ the `activeBranch` - we do not support squashing serialized commits in a transaction.
@@ -844,11 +870,11 @@ export class TreeCheckout implements ITreeCheckout {
 
 	public runTransaction<TSuccessValue, TFailureValue>(
 		transaction: () => TransactionCallbackStatus<TSuccessValue, TFailureValue>,
-		params?: RunTransactionParams,
+		params?: RunTransactionSyncParams,
 	): TransactionResultExt<TSuccessValue, TFailureValue>;
 	public runTransaction(
 		transaction: () => VoidTransactionCallbackStatus | void,
-		params?: RunTransactionParams,
+		params?: RunTransactionSyncParams,
 	): TransactionResult;
 	@breakingMethod
 	public runTransaction<TSuccessValue, TFailureValue>(
@@ -856,11 +882,30 @@ export class TreeCheckout implements ITreeCheckout {
 			| TransactionCallbackStatus<TSuccessValue, TFailureValue>
 			| VoidTransactionCallbackStatus
 			| void,
-		params?: RunTransactionParams,
+		params?: RunTransactionSyncParams,
 	): TransactionResultExt<TSuccessValue, TFailureValue> | TransactionResult {
-		this.mountTransaction(params, false);
-		const transactionCallbackStatus = transaction();
-		return this.unmountTransaction(transactionCallbackStatus, params);
+		const transactionCore = ():
+			| TransactionResultExt<TSuccessValue, TFailureValue>
+			| TransactionResult => {
+			this.mountTransaction(params, false);
+			const transactionCallbackStatus = transaction();
+			return this.unmountTransaction(transactionCallbackStatus, params);
+		};
+		if (params?.deferEvents !== true) {
+			return transactionCore();
+		}
+
+		let result:
+			| TransactionResultExt<TSuccessValue, TFailureValue>
+			| TransactionResult
+			| undefined;
+		withBufferedTreeEvents(() => {
+			result = transactionCore();
+			// On rollback, the tree is restored to its starting state, so any buffered events
+			// represent net-zero changes and should not be surfaced to listeners.
+			return !result.success;
+		});
+		return result ?? fail("withBufferedTreeEvents should have invoked its callback");
 	}
 
 	public runTransactionAsync<TSuccessValue, TFailureValue>(
@@ -1007,6 +1052,8 @@ export class TreeCheckout implements ITreeCheckout {
 	 * @param kind - The {@link CommitKind} that produced this revertible (e.g., Default, Undo, Redo).
 	 * @param checkout - The {@link TreeCheckout} instance this revertible belongs to.
 	 * @param onRevertibleDisposed - Callback function that will be called when the revertible is disposed.
+	 * @param labelTree - The {@link LabelTree} (if any) active when the original commit was produced.
+	 * The revert commit inherits these labels so that commits and their reverts can be associated.
 	 * @returns A {@link RevertibleAlpha} object.
 	 */
 	private createRevertible(
@@ -1014,6 +1061,7 @@ export class TreeCheckout implements ITreeCheckout {
 		kind: CommitKind,
 		checkout: TreeCheckout,
 		onRevertibleDisposed: ((revertible: RevertibleAlpha) => void) | undefined,
+		labelTree: LabelTree | undefined,
 	): RevertibleAlpha {
 		const commitBranches = checkout.revertibleCommitBranches;
 
@@ -1029,7 +1077,7 @@ export class TreeCheckout implements ITreeCheckout {
 					throw new UsageError("Unable to revert a revertible that has been disposed.");
 				}
 
-				const revertMetrics = checkout.revertRevertible(revision, kind);
+				const revertMetrics = checkout.revertRevertible(revision, kind, labelTree);
 				checkout.logger?.sendTelemetryEvent({
 					eventName: TreeCheckout.revertTelemetryEventName,
 					...revertMetrics,
@@ -1059,7 +1107,13 @@ export class TreeCheckout implements ITreeCheckout {
 
 				targetCheckout.revertibleCommitBranches.set(revision, revertibleBranch.fork());
 
-				return this.createRevertible(revision, kind, targetCheckout, onRevertibleDisposed);
+				return this.createRevertible(
+					revision,
+					kind,
+					targetCheckout,
+					onRevertibleDisposed,
+					labelTree,
+				);
 			},
 			dispose: () => {
 				if (revertible.status === RevertibleStatus.Disposed) {
@@ -1320,7 +1374,11 @@ export class TreeCheckout implements ITreeCheckout {
 		this.revertibles.delete(revertible);
 	}
 
-	private revertRevertible(revision: RevisionTag, kind: CommitKind): RevertMetrics {
+	private revertRevertible(
+		revision: RevisionTag,
+		kind: CommitKind,
+		labelTree: LabelTree | undefined,
+	): RevertMetrics {
 		this.editLock.checkUnlocked("Reverting a commit");
 		if (this.transaction.size > 0) {
 			throw new UsageError("Undo is not yet supported during transactions.");
@@ -1339,6 +1397,17 @@ export class TreeCheckout implements ITreeCheckout {
 		const headCommit = this.#transaction.activeBranch.getHead();
 		// Rebase the inverted change onto any commits that occurred after the undoable commits.
 		if (commitToRevert !== headCommit) {
+			// The inverse may be rebased over newer commits which (despite being present in the history)
+			// have no net effect on the document state (e.g. an edit plus its undo).
+			// In that case, a no-change constraint should not be violated during rebase.
+			const diff = diffHistories(
+				this.changeFamily.rebaser,
+				commitToRevert,
+				headCommit,
+				this.mintRevisionTag,
+			);
+			const ignoreNoChangeViolation = !sharedTreeChangeHasVisibleChanges(diff);
+
 			change = tagChange(
 				rebaseChange(
 					this.changeFamily.rebaser,
@@ -1346,17 +1415,27 @@ export class TreeCheckout implements ITreeCheckout {
 					commitToRevert,
 					headCommit,
 					this.mintRevisionTag,
+					ignoreNoChangeViolation,
 				).change,
 				revisionForInvert,
 			);
 		}
 
-		this.#transaction.activeBranch.apply(
-			change,
-			kind === CommitKind.Default || kind === CommitKind.Redo
-				? CommitKind.Undo
-				: CommitKind.Redo,
-		);
+		// Install the original commit's label tree so the revert commit's metadata inherits
+		// the same labels. Reusing the captured tree (rather than wrapping it) ensures
+		// revert-of-revert does not introduce new nesting.
+		const previousLabelTreeNode = this.labelTreeNode;
+		this.labelTreeNode = labelTree;
+		try {
+			this.#transaction.activeBranch.apply(
+				change,
+				kind === CommitKind.Default || kind === CommitKind.Redo
+					? CommitKind.Undo
+					: CommitKind.Redo,
+			);
+		} finally {
+			this.labelTreeNode = previousLabelTreeNode;
+		}
 
 		// Derive some stats about the reversion to return to the caller.
 		let revertAge = 0;
@@ -1709,4 +1788,24 @@ function isSerializedChange(value: unknown): value is SerializedChange {
 		isStableId(change.originatorId) &&
 		change.change !== undefined
 	);
+}
+
+/**
+ * Enumerates through a shared tree change, looking for schema change and field changes that result in visible changes to the tree (e.g. an insert, move, delete).
+ * This function also considers changes to detached roots to be visible changes, but not renames of roots or builds of new roots.
+ *
+ * @param change - The change to analyze.
+ * @returns True if the change contains any schema changes or any field changes that result in visible changes to the tree, false otherwise.
+ */
+function sharedTreeChangeHasVisibleChanges(change: SharedTreeChange): boolean {
+	for (const inner of change.changes) {
+		if (inner.type === "schema") {
+			return true;
+		}
+		const delta = intoDelta(tagChange(inner.innerChange, undefined));
+		if (deltaFieldMapHasVisibleChanges(delta.fields)) {
+			return true;
+		}
+	}
+	return false;
 }

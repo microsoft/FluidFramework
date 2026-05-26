@@ -25,7 +25,7 @@ import {
 import {
 	EncodedFieldBatchGeneric,
 	// eslint-disable-next-line import-x/no-internal-modules
-} from "../../../../feature-libraries/chunked-forest/codec/formatGeneric.js";
+} from "../../../../feature-libraries/chunked-forest/codec/format/formatGeneric.js";
 import {
 	FieldBatchFormatVersion,
 	type TreeChunk,
@@ -121,6 +121,7 @@ const rootDecoder: ChunkDecoder = {
 const idDecodingContext = {
 	idCompressor: testIdCompressor,
 	originatorId: testIdCompressor.localSessionId,
+	isSummary: false,
 };
 
 describe("chunkDecodingGeneric", () => {

@@ -14,10 +14,10 @@ import {
 	getBiome2FormattedFilesFromDirectory,
 	getOrderedPatternsFromBiome2Config,
 	loadBiome2Config,
-} from "../common/biome2Config";
-import { GitRepo } from "../common/gitRepo";
-import { getResolvedFluidRoot } from "../fluidBuild/fluidUtils";
-import { testDataPath } from "./init";
+} from "../common/biome2Config.js";
+import { GitRepo } from "../common/gitRepo.js";
+import { getResolvedFluidRoot } from "../fluidBuild/fluidUtils.js";
+import { testDataPath } from "./init.js";
 
 describe("Biome 2.x config loading", () => {
 	describe("Biome2ConfigReader class", () => {

@@ -1613,14 +1613,14 @@ export namespace Utils {
 	 *
 	 * @param in_typeid - The typeid of the property to look for
 	 * @param in_changeSet - The ChangeSet to process
-	 * @param in_excludeTypeids - Exclude all typeids from the returned ChangeSet
+	 * @param in_excludeTypeids - If this is set to true, exclude all typeids from the returned ChangeSet
 	 * @returns Returns the applied operations to entries of the given typeid. The returned maps for insert and modify map paths to ChangeSets
 	 * @internal
 	 */
 	export function getChangesByType(
 		in_typeid: string,
 		in_changeSet: SerializedChangeSet,
-		in_excludeTypeids: boolean,
+		in_excludeTypeids?: boolean,
 	): { insert?: object; modify?: object } {
 		const result: SerializedChangeSet = {};
 
@@ -1664,13 +1664,13 @@ export namespace Utils {
 	 * @param in_path - The path to process
 	 * @param in_root - The root node to which the ChangeSet has been applied
 	 * @param in_changeSet - The ChangeSet to process
-	 * @param in_excludetypeids - Exclude all typeids from the returned ChangeSet
+	 * @param in_excludetypeids - If this is set to true, exclude all typeids from the returned ChangeSet
 	 * @throws if path is invalid.
 	 * @returns The changes that are applied to the given path.
 	 *
 	 * ```
 	 * <pre>
-	 * {insert: Object|undefined, modify: Object|undefined, remove: boolean|undefined}
+	 * {insert?: Object, modify?: Object, removed?: true}
 	 * </pre>
 	 * ```
 	 * @internal
@@ -1679,8 +1679,8 @@ export namespace Utils {
 		in_path: string,
 		in_root,
 		in_changeSet: SerializedChangeSet,
-		in_excludetypeids: boolean,
-	): object {
+		in_excludetypeids?: boolean,
+	): { insert?: object; modify?: object; removed?: true } {
 		// if we're asked for the root, just return the root (in a modify)
 		if (in_path === "") {
 			return { modify: in_changeSet };
@@ -1690,7 +1690,7 @@ export namespace Utils {
 		const pathSegments = PathHelper.tokenizePathString(in_path);
 
 		// Recursively traverse the ChangeSet and search for the path
-		const result: SerializedChangeSet = {};
+		const result: { insert?: object; modify?: object; removed?: true } = {};
 		Utils.traverseChangeSetRecursively(in_changeSet, {
 			preCallback(in_context) {
 				// We ignore the root

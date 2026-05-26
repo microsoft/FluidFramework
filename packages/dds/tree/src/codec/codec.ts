@@ -173,8 +173,9 @@ export interface CodecWriteOptions extends ICodecOptions, CodecWriteOptionsBeta 
 }
 
 /**
- * `TContext` allows passing context to the codec which may configure how data is encoded/decoded.
- * This parameter is typically used for:
+ * `TEncodeContext` and `TDecodeContext` allow passing context to the codec which may configure how data is encoded/decoded.
+ * `TDecodeContext` defaults to `TEncodeContext`; specify them separately when encode and decode need different context (for example, when encoding uses heuristics that are unneeded when decoding).
+ * These parameters are typically used for:
  * - Codecs which can pick from multiple encoding options, and imbue the encoded data with information about which option was used.
  * The caller of such a codec can provide context about which encoding choice to make as part of the `encode` call without creating
  * additional codecs. Note that this pattern can always be implemented by having the caller create multiple codecs and selecting the
@@ -196,10 +197,36 @@ export interface IJsonCodec<
 	TDecoded,
 	TEncoded = JsonCompatibleReadOnly,
 	TValidate = TEncoded,
-	TContext = void,
-> extends IEncoder<TDecoded, TEncoded, TContext>,
-		IDecoder<TDecoded, TValidate, TContext> {
+	TEncodeContext = void,
+	TDecodeContext = TEncodeContext,
+> extends IEncoder<TDecoded, TEncoded, TEncodeContext>,
+		IDecoder<TDecoded, TValidate, TDecodeContext> {
 	encodedSchema?: TAnySchema;
+}
+
+/**
+ * Part of a codec.
+ * @remarks
+ * Encode and decode logic and schema for some chunk of data.
+ * Can be composed into larger codecs, and eventually versioned at the top level using
+ * {@link VersionDispatchingCodecBuilder}.
+ *
+ * This portion of a codec is not responsible for managing versioning or validation of the data against the schema.
+ */
+export interface JsonCodecPart<
+	TDecoded,
+	TEncodedSchema extends TAnySchema,
+	TEncodeContext = void,
+	TDecodeContext = TEncodeContext,
+> extends IEncoder<TDecoded, Static<TEncodedSchema>, TEncodeContext>,
+		IDecoder<TDecoded, Static<TEncodedSchema>, TDecodeContext> {
+	/**
+	 * TypeBox schema which describes the encoded format for this chunk of data.
+	 * @remarks
+	 * The user of this codec can use this to build its own larger schema,
+	 * until eventually it is provided to the {@link VersionDispatchingCodecBuilder}.
+	 */
+	encodedSchema: TEncodedSchema;
 }
 
 /**
@@ -209,11 +236,18 @@ export function eraseEncodedType<
 	TDecoded,
 	TEncoded = JsonCompatibleReadOnly,
 	TValidate = TEncoded,
-	TContext = void,
+	TEncodeContext = void,
+	TDecodeContext = TEncodeContext,
 >(
-	codec: IJsonCodec<TDecoded, TEncoded, TValidate, TContext>,
-): IJsonCodec<TDecoded, TValidate, TValidate, TContext> {
-	return codec as unknown as IJsonCodec<TDecoded, TValidate, TValidate, TContext>;
+	codec: IJsonCodec<TDecoded, TEncoded, TValidate, TEncodeContext, TDecodeContext>,
+): IJsonCodec<TDecoded, TValidate, TValidate, TEncodeContext, TDecodeContext> {
+	return codec as unknown as IJsonCodec<
+		TDecoded,
+		TValidate,
+		TValidate,
+		TEncodeContext,
+		TDecodeContext
+	>;
 }
 
 /**
@@ -225,11 +259,15 @@ export function eraseEncodedType<
  * allows avoiding some duplicate work at encode/decode time, since the vast majority of document usage will not
  * involve mixed format versions.
  *
- * @privateRemarks This interface currently assumes all codecs in a family require the same encode/decode context,
- * which isn't necessarily true.
- * This may need to be relaxed in the future.
+ * @privateRemarks
+ * Encode and decode can be parameterized independently — the encode-side context type need not equal the decode-side context type.
+ * `TDecodeContext` defaults to `TEncodeContext` so callers that share a single context shape (the common case) don't need to specify it.
  */
-export interface ICodecFamily<TDecoded, TContext = void> {
+export interface ICodecFamily<
+	TDecoded,
+	TEncodeContext = void,
+	TDecodeContext = TEncodeContext,
+> {
 	/**
 	 * @returns a codec that can be used to encode and decode data in the specified format.
 	 * @throws if the format version is not supported by this family.
@@ -239,7 +277,13 @@ export interface ICodecFamily<TDecoded, TContext = void> {
 	 */
 	resolve(
 		formatVersion: FormatVersion,
-	): IJsonCodec<TDecoded, JsonCompatibleReadOnly, JsonCompatibleReadOnly, TContext>;
+	): IJsonCodec<
+		TDecoded,
+		JsonCompatibleReadOnly,
+		JsonCompatibleReadOnly,
+		TEncodeContext,
+		TDecodeContext
+	>;
 
 	/**
 	 * @returns an iterable of all format versions supported by this family.
@@ -317,17 +361,29 @@ export const DependentFormatVersion = {
 /**
  * Creates a codec family from a registry of codecs.
  */
-export function makeCodecFamily<TDecoded, TContext>(
+export function makeCodecFamily<TDecoded, TEncodeContext, TDecodeContext = TEncodeContext>(
 	registry: Iterable<
 		[
 			formatVersion: FormatVersion,
-			codec: IJsonCodec<TDecoded, JsonCompatibleReadOnly, JsonCompatibleReadOnly, TContext>,
+			codec: IJsonCodec<
+				TDecoded,
+				JsonCompatibleReadOnly,
+				JsonCompatibleReadOnly,
+				TEncodeContext,
+				TDecodeContext
+			>,
 		]
 	>,
-): ICodecFamily<TDecoded, TContext> {
+): ICodecFamily<TDecoded, TEncodeContext, TDecodeContext> {
 	const codecs: Map<
 		FormatVersion,
-		IJsonCodec<TDecoded, JsonCompatibleReadOnly, JsonCompatibleReadOnly, TContext>
+		IJsonCodec<
+			TDecoded,
+			JsonCompatibleReadOnly,
+			JsonCompatibleReadOnly,
+			TEncodeContext,
+			TDecodeContext
+		>
 	> = new Map();
 	for (const [formatVersion, codec] of registry) {
 		if (codecs.has(formatVersion)) {
@@ -339,7 +395,13 @@ export function makeCodecFamily<TDecoded, TContext>(
 	return {
 		resolve(
 			formatVersion: FormatVersion,
-		): IJsonCodec<TDecoded, JsonCompatibleReadOnly, JsonCompatibleReadOnly, TContext> {
+		): IJsonCodec<
+			TDecoded,
+			JsonCompatibleReadOnly,
+			JsonCompatibleReadOnly,
+			TEncodeContext,
+			TDecodeContext
+		> {
 			const codec = codecs.get(formatVersion);
 			assert(codec !== undefined, 0x5e6 /* Requested codec for unsupported format. */);
 			return codec;
@@ -367,96 +429,65 @@ export const unitCodec: IJsonCodec<
  * Wraps a codec with JSON schema validation for its encoded type.
  * @returns An {@link IJsonCodec} which validates the data it encodes and decodes matches the provided schema.
  * @remarks
- * Eventually all codecs should use the same pattern implemented by ClientVersionDispatchingCodecBuilder, resulting in that having the only use of this API.
+ * Eventually all codecs should use the same pattern implemented by VersionDispatchingCodecBuilder, resulting in that having the only use of this API.
  */
 export function withSchemaValidation<
 	TInMemoryFormat,
 	EncodedSchema extends TSchema,
 	TEncodedFormat,
 	TValidate,
-	TContext,
+	TEncodeContext,
+	TDecodeContext = TEncodeContext,
 >(
 	schema: EncodedSchema,
-	codec: IJsonCodec<TInMemoryFormat, TEncodedFormat, TValidate, TContext>,
+	codec: IJsonCodec<
+		TInMemoryFormat,
+		TEncodedFormat,
+		TValidate,
+		TEncodeContext,
+		TDecodeContext
+	>,
 	validator?: JsonValidator | FormatValidator,
-): IJsonCodec<TInMemoryFormat, TEncodedFormat, TValidate, TContext> {
+): IJsonCodec<TInMemoryFormat, TEncodedFormat, TValidate, TEncodeContext, TDecodeContext> {
 	if (!validator) {
 		return codec;
 	}
 	const compiledFormat = extractJsonValidator(validator).compile(schema);
 	return {
-		encode: (obj: TInMemoryFormat, context: TContext): TEncodedFormat => {
+		encode: (obj: TInMemoryFormat, context: TEncodeContext): TEncodedFormat => {
 			const encoded = codec.encode(obj, context);
 			if (!compiledFormat.check(encoded)) {
 				fail(0xac0 /* Encoded data should validate */);
 			}
 			return encoded;
 		},
-		decode: (encoded: TValidate, context: TContext): TInMemoryFormat => {
+		decode: (encoded: TValidate, context: TDecodeContext): TInMemoryFormat => {
 			if (!compiledFormat.check(encoded)) {
 				fail(0xac1 /* Data being decoded should validate */);
 			}
 			return codec.decode(encoded, context);
 		},
+		encodedSchema: schema,
 	};
 }
 
 /**
- * Versions of Fluid Framework client packages.
+ * Versions of Fluid Framework client packages, usable as a {@link @fluidframework/runtime-definitions#MinimumVersionForCollab}.
  * @remarks
- * Used to express compatibility requirements by indicating the oldest version with which compatibility must be maintained.
- *
- * When no compatibility-impacting change is made in a given version, the value associated with its enum entry may point to the older version which it's fully compatible with.
- * Note that this can change if a future version of the framework introduces an option to use something which is only supported at a particular version. In which case, the values of the enum may shift,
- * but the semantics of keys in this enum will not change.
- *
- * Do not depend on the value of this enums's entries: only depend on the keys (enum members) themselves.
- *
- * Some release may also be omitted if there is currently no need to express that specific version.
- * If the need arises, they might be added in the future.
+ * Versions with no notable impact may be omitted, and added later if needed.
  *
  * @privateRemarks
- * The entries in these enums should document the following:
- * - The user facing impact of opting into a particular version. This will help customers decide if they want to opt into
- * a new version. For example, document if there is an encoding efficiency improvement of oping into that version or newer.
- * - Any new data formats that are introduced in that version. This will help developers tell which data formats a given
- * version will write. For example, document if a new summary or encoding format is added in a version.
- * - Whether the above features or data formats introduced in a version are enabled by default or require the
- * {@link minVersionForCollab} option to be set to that particular version.
- *
- * Versions with no notable impact can be omitted.
- *
- * This scheme assumes a single version will always be enough to communicate compatibility.
- * For this to work, compatibility has to be strictly increasing.
- * If this is violated (for example a subset of incompatible features from 3.x that are not in 3.0 are back ported to 2.x),
- * a more complex scheme may be needed to allow safely opting into incompatible features in those cases:
- * such a system can be added if/when its needed since it will be opt in and thus non-breaking.
- *
- * TODO: this should likely be defined higher in the stack and specified when creating the container, possibly as part of its schema.
- * TODO: compatibility requirements for how this enum can and cannot be changed should be clarified when/if it's used across multiple layers in the stack.
- * For example, if needed, would adding more leading zeros to the minor version break things.
+ * Each entry should document:
+ * - The user-facing impact of opting into it (e.g. encoding efficiency improvements).
+ * - Any new data formats introduced in that version.
+ * - Whether those features/formats are enabled by default or require {@link MinimumVersionForCollab | minVersionForCollab} to be set accordingly.
  * @alpha
  */
 export const FluidClientVersion = {
 	/**
-	 * Fluid Framework Client 1.4 and newer.
-	 * @remarks
-	 * This opts into support for the 1.4 LTS branch.
-	 * @privateRemarks
-	 * As long as this code is in Tree, there is no reason to have this option as SharedTree did not exist in 1.4.
-	 */
-	// v1_4 = 1.004,
-
-	/**
 	 * Fluid Framework Client 2.0 and newer.
 	 */
 	v2_0: "2.0.0",
-
-	/** Fluid Framework Client 2.1 and newer. */
-	// If we think we might want to start allowing opting into something that landed in 2.1 (without opting into something newer),
-	// we could add an entry like this to allow users to indicate that they can be opted in once we are ready,
-	// then update it to "2.001" once we actually have the opt in working.
-	// v2_1 = v2_0,
 
 	/**
 	 * Fluid Framework Client 2.43 and newer.
@@ -529,9 +560,17 @@ export const FluidClientVersion = {
  */
 export const currentVersion: MinimumVersionForCollab = runtimeUtilsCleanedPackageVersion;
 
-export interface CodecTree {
+/**
+ * TODO:
+ * This needs to be documented.
+ * Its documentation should cover at least the following:
+ * - Is this used for anything other than testing.
+ * - What should be included as children. For example should it include versioned codecs which dispatch base on the min version for collaboration? If so, what version of them should be used?
+ * - What risks does having this mitigate?
+ */
+export interface CodecTree<TFormatVersion extends FormatVersion = FormatVersion> {
 	readonly name: string;
-	readonly version: FormatVersion;
+	readonly version: TFormatVersion;
 	readonly children?: readonly CodecTree[];
 }
 

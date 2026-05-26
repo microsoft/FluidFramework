@@ -3,10 +3,15 @@
 
 # DisableDockerDetector "No feasible secure solution for OSS repos yet"
 
-# Use the manifest digest's sha256 hash to ensure we are always using the same version of the base image.
-# That version of the base image must also be baked into the CI build agent by a repo maintainer.
-# This avoids throttling issues with Docker Hub by using an image baked into the pipeline build image.
-FROM node:20.19.0-bookworm-slim@sha256:990084211ea3d72132f286a038bf27e0f79b8cad532ae623b090f3486490e62e AS runnerbase
+# The node base image is pulled from public Docker Hub by default so local builds and external
+# contributors get the canonical upstream image. Our CI pipeline overrides BASE_IMAGE_REGISTRY (via
+# additionalBuildArguments in tools/pipelines/server-routerlicious.yml) to point at our internal
+# mirror, because 1ES network isolation policies (CfsClean/CfsClean2) block egress to
+# registry-1.docker.io from our build pool. The mirror is byte-for-byte identical to
+# docker.io/library, so the same manifest digest pin resolves correctly against either registry.
+# See tools/pipelines/README.md for how to maintain the mirror (upgrades, additions).
+ARG BASE_IMAGE_REGISTRY=docker.io
+FROM ${BASE_IMAGE_REGISTRY}/library/node:22.22.2-bookworm-slim@sha256:f3a68cf41a855d227d1b0ab832bed9749469ef38cf4f58182fb8c893bc462383 AS runnerbase
 
 ARG SETVERSION_VERSION=dev
 ENV SETVERSION_VERSION=$SETVERSION_VERSION
@@ -46,10 +51,6 @@ FROM runnerbase AS base
 # container, we thus copy just the package.json there to ensure this dependency is resolvable. This won't be persisted in the runner image anyway.
 WORKDIR $BUILD_ROOT
 COPY --from=root packages/tools/changelog-generator-wrapper/package.json packages/tools/changelog-generator-wrapper/
-
-# Copy the shared ESLint config package. Routerlicious has a link dependency on this package
-# (link:../../common/build/eslint-config-fluid) for ESLint flat config support.
-COPY --from=root common/build/eslint-config-fluid common/build/eslint-config-fluid/
 
 # Copy over and build the server. We use the same directory structure as outside of the docker container to ensure flub works smoothly.
 WORKDIR $ROUTERLICIOUS_ROOT

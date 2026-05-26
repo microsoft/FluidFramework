@@ -72,7 +72,8 @@ describe("workspaces", () => {
 			expect(actual?.[0]).to.include(": node_modules not installed in");
 		});
 
-		it("install succeeds", async () => {
+		it("install succeeds", async function () {
+			this.timeout(10_000);
 			await assert.doesNotReject(async () => {
 				await workspace?.install(false);
 			});

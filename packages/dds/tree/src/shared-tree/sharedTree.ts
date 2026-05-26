@@ -66,15 +66,15 @@ import {
 import { schemaCodecBuilder } from "../feature-libraries/index.js";
 import {
 	type BranchId,
-	clientVersionToEditManagerFormatVersion,
-	clientVersionToMessageFormatVersion,
 	type ClonableSchemaAndPolicy,
 	getCodecTreeForEditManagerFormatWithChange,
 	getCodecTreeForMessageFormatWithChange,
+	makeMessageCodecBuilder,
 	type SharedTreeCoreOptionsInternal,
 	MessageFormatVersion,
 	SharedTreeCore,
 	EditManagerFormatVersion,
+	makeEditManagerCodecBuilder,
 } from "../shared-tree-core/index.js";
 import {
 	type ImplicitFieldSchema,
@@ -246,6 +246,11 @@ export class SharedTreeKernel
 			encodeType: options.treeEncodeType,
 			originatorId: idCompressor.localSessionId,
 			idCompressor,
+			// ForestSummarizer is the only consumer of this context, and it
+			// only invokes the codec in summary encode / load paths.
+			isSummary: true,
+			healUnresolvableIdentifiersOnDecode: options.healUnresolvableIdentifiersOnDecode,
+			sharedObjectId: sharedObject.id,
 		};
 		const forestSummarizer = new ForestSummarizer(
 			forest,
@@ -532,17 +537,19 @@ export const changeFormatVersionForMessage = DependentFormatVersion.fromPairs<
 ]);
 
 function getCodecTreeForEditManagerFormat(clientVersion: MinimumVersionForCollab): CodecTree {
-	const change = changeFormatVersionForEditManager.lookup(
-		clientVersionToEditManagerFormatVersion(clientVersion),
-	);
+	const editManagerVersion = makeEditManagerCodecBuilder().getCodecTree(clientVersion).version;
+	const change = changeFormatVersionForEditManager.lookup(editManagerVersion);
 	const changeCodecTree = getCodecTreeForChangeFormat(change, clientVersion);
 	return getCodecTreeForEditManagerFormatWithChange(clientVersion, changeCodecTree);
 }
 
 function getCodecTreeForMessageFormat(clientVersion: MinimumVersionForCollab): CodecTree {
-	const change = changeFormatVersionForMessage.lookup(
-		clientVersionToMessageFormatVersion(clientVersion),
+	const messageVersion = makeMessageCodecBuilder().getCodecTree(clientVersion).version;
+	assert(
+		messageVersion !== undefined,
+		0xce3 /* Deprecated 'undefined' version shouldn't be selected */,
 	);
+	const change = changeFormatVersionForMessage.lookup(messageVersion);
 	const changeCodecTree = getCodecTreeForChangeFormat(change, clientVersion);
 	return getCodecTreeForMessageFormatWithChange(clientVersion, changeCodecTree);
 }
@@ -568,7 +575,41 @@ export function getCodecTreeForSharedTreeFormat(
  * Configuration options for SharedTree.
  * @beta @input
  */
-export type SharedTreeOptionsBeta = ForestOptions & Partial<CodecWriteOptionsBeta>;
+export interface SharedTreeOptionsBeta extends ForestOptions, Partial<CodecWriteOptionsBeta> {
+	/**
+	 * When `true`, when an improperly encoded identifier is encountered in a summary,
+	 * a new identifier will be generated instead of throwing an error.
+	 *
+	 * @defaultValue `false`
+	 *
+	 * @remarks
+	 * The intended use is recovering documents whose attach summary was persisted
+	 * with unresolvable node identifiers (a SharedTree-attaches-to-already-attached-container
+	 * scenario). Without this flag enabled, a client opening such a document will throw at summary load time.
+	 * With this flag enabled, unresolvable identifiers are replaced at decode time with stable UUIDs
+	 * derived deterministically from the data store id and the unresolvable op-space integer,
+	 * so every reader of the same blob (other than the originator) agrees on the resulting in-memory id.
+	 * Healed identifiers are written back out at the next summary in their stable UUID form,
+	 * so the inconsistency does not need to be re-healed on every load.
+	 *
+	 * Off by default because enabling it for documents that are not actually corrupt
+	 * would mask genuine bugs that otherwise surface as decode failures.
+	 *
+	 * This mitigation is also not perfect as the client that originated the non-finalized
+	 * will not apply the same "healing" and will continue to use the original identifier.
+	 * The difference in identifiers between the originating client and subsequent clients that load
+	 * the document is not ideal but generally benign to Fluid. However, it may have application-level
+	 * consequences (e.g. if the application stores the identifiers elsewhere, either in other parts of
+	 * Fluid data or externally). Applications should consider whether this risk is acceptable before
+	 * enabling this option.
+	 *
+	 * @privateRemarks
+	 * "Unresolvable" in the public-facing remarks corresponds to non-finalized short IDs persisted without
+	 * any corresponding context for their originating session. See id-compressor internal documentation
+	 * for more details.
+	 */
+	readonly healUnresolvableIdentifiersOnDecode?: boolean;
+}
 
 /**
  * Configuration options for SharedTree with alpha features.
@@ -721,9 +762,8 @@ export const defaultSharedTreeOptions: Required<SharedTreeOptionsInternal> = {
 	treeEncodeType: TreeCompressionStrategy.Compressed,
 	disposeForksAfterTransaction: true,
 	shouldEncodeIncrementally: defaultIncrementalEncodingPolicy,
-	editManagerFormatSelector: clientVersionToEditManagerFormatVersion,
-	messageFormatSelector: clientVersionToMessageFormatVersion,
 	enableSharedBranches: false,
+	healUnresolvableIdentifiersOnDecode: false,
 	writeVersionOverrides: new Map(),
 	allowPossiblyIncompatibleWriteVersionOverrides: false,
 };

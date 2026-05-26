@@ -1,5 +1,34 @@
 # @fluid-experimental/property-common
 
+## 2.101.0
+
+### Minor Changes
+
+- Correct some PropertyDDS "MSG" error constant entries ([#26971](https://github.com/microsoft/FluidFramework/pull/26971)) [7aec5f11ea9](https://github.com/microsoft/FluidFramework/commit/7aec5f11ea97542a820f5d851d11051acaf496c5)
+
+  Several error constants referenced in other PropertyDDS packages did not exist and would produce errors with "undefined" (literal) in error message string.
+  In the past:
+  - `OVERRIDEN_PROP_MUST_HAVE_SAME_CONTEXT_AS_BASE_TYPE` use was replaced by `OVERRIDEN_PROP_MUST_HAVE_SAME_FIELD_VALUES_AS_BASE_TYPE` (but never defined).
+  - `CANNOT_INSERT_UNKNOWN_PROPERTY`, `MISMATCHING_PROPERTY_TYPEID`, and `CANNOT_REMOVE_NON_OPTIONAL_PROP` uses were added without defining them.
+
+  Those all are now defined `MSG` properties.
+
+## 2.100.0
+
+### Minor Changes
+
+- Node 22 is now the minimum supported Node.js version ([#27116](https://github.com/microsoft/FluidFramework/pull/27116)) [e8214d29663](https://github.com/microsoft/FluidFramework/commit/e8214d29663f5ee98d737daed82506a25d8de8d0)
+
+  All Fluid Framework client packages now require Node.js 22 or later. This aligns with the standing Node upgrade policy as Node 20 reaches end-of-life on April 30, 2026.
+
+## 2.93.0
+
+Dependency updates only.
+
+## 2.92.0
+
+Dependency updates only.
+
 ## 2.91.0
 
 Dependency updates only.

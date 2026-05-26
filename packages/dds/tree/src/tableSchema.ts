@@ -7,14 +7,14 @@ import { fail } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import { EmptyKey } from "./core/index.js";
-import { TreeAlpha } from "./shared-tree/index.js";
-import type { SchemaFactoryBeta } from "./simple-tree/index.js";
+import { Tree, TreeAlpha } from "./shared-tree/index.js";
 import {
 	type FieldHasDefault,
 	type ImplicitAllowedTypes,
 	type InsertableObjectFromSchemaRecord,
 	type InsertableTreeNodeFromImplicitAllowedTypes,
 	type NodeKind,
+	type SchemaFactoryBeta,
 	type ScopedSchemaName,
 	TreeArrayNode,
 	type TreeNode,
@@ -32,8 +32,12 @@ import {
 	type TreeRecordNode,
 	objectSchema,
 	eraseSchemaDetailsSubclassable,
-	// eslint-disable-next-line @typescript-eslint/no-unused-vars, unused-imports/no-unused-imports -- This makes the API report slightly cleaner.
+	// #region Unused imports to make d.ts cleaner
+	/* eslint-disable unused-imports/no-unused-imports, @typescript-eslint/no-unused-vars */
 	TreeNodeSchemaCore,
+	FieldKind,
+	/* eslint-enable unused-imports/no-unused-imports, @typescript-eslint/no-unused-vars */
+	// #endregion
 	type TransactionConstraintAlpha,
 	createCustomizedFluidFrameworkScopedFactory,
 } from "./simple-tree/index.js";
@@ -792,7 +796,12 @@ export namespace System_TableSchema {
 
 							// First, remove all cells that correspond to each column from each row:
 							for (const column of columnsToRemove) {
-								this.#removeCells(column);
+								for (const row of this.table.rows) {
+									// TypeScript is unable to narrow the row type correctly here, hence the cast.
+									// See: https://github.com/microsoft/TypeScript/issues/52144
+									// eslint-disable-next-line @typescript-eslint/no-dynamic-delete -- This is currently how Record node entries are deleted.
+									delete (row as RowValueInternalType).cells[column.id];
+								}
 							}
 
 							// Second, remove the column nodes:
@@ -830,10 +839,8 @@ export namespace System_TableSchema {
 								for (const row of this.table.rows) {
 									// TypeScript is unable to narrow the row type correctly here, hence the cast.
 									// See: https://github.com/microsoft/TypeScript/issues/52144
-									this.removeCell({
-										column: columnToRemove,
-										row: row as RowValueType,
-									});
+									// eslint-disable-next-line @typescript-eslint/no-dynamic-delete -- This is currently how Record node entries are deleted.
+									delete (row as RowValueInternalType).cells[columnToRemove.id];
 								}
 
 								// We have already validated that all of the columns exist above, so this is safe.
@@ -930,7 +937,7 @@ export namespace System_TableSchema {
 
 				this.#applyEditsInBatch({
 					applyEdits: () => {
-						// eslint-disable-next-line @typescript-eslint/no-dynamic-delete
+						// eslint-disable-next-line @typescript-eslint/no-dynamic-delete -- This is currently how Record node entries are deleted.
 						delete row.cells[column.id];
 					},
 					// Relevant invariant: each cell corresponds to an existing row and column
@@ -938,30 +945,63 @@ export namespace System_TableSchema {
 					// Example scenario: Client A removes a cell, then Client B removes the column for that cell.
 					// If A's cell removal is later reverted, the cell would be restored but B's column removal means there's no column for it.
 					// This constraint on revert ensures the column still exists, ensuring restored cells correspond to existing columns.
-					preconditionsOnRevert: [
-						{
-							type: "nodeInDocument",
-							node: column,
-						},
-					],
+					preconditionsOnRevert: [{ type: "nodeInDocument", node: column }],
 				});
 
 				return cell;
 			}
 
+			// #region ID lookup caches
+
+			// Looking up rows/columns by string ID is a hot path (every getCell / setCell / etc. call goes
+			// through #tryGetRow or #tryGetColumn). Rather than scanning the arrays linearly on every call,
+			// we maintain lazily-built Maps from ID → node.
+			//
+			// Cache invalidation:
+			//   Each cache is marked stale (reset to `undefined`) by a `nodeChanged` listener registered on
+			//   the corresponding array node (this.table.rows / this.table.columns). `nodeChanged` fires on
+			//   an array node whenever an element is inserted, removed, or moved — exactly the set of
+			//   operations that could change which ID maps to which node. The event fires after the full
+			//   batch of edits has been applied (including remote edits received from collaborators), so the
+			//   cache is always rebuilt from a consistent, in-schema state.
+			//   TODO: Consider if we should do more fine-grained invalidation here. E.g. look at the specific deltas
+			//   returned by the `nodeChanged` event and only invalidate entries as needed.
+			//
+			// Listener lifetime:
+			//   The listener is registered exactly once per cache (guarded by the non-undefined check on the
+			//   stored unsubscribe callback).  Subsequent cache rebuilds after invalidation reuse the same
+			//   listener — no additional subscriptions accumulate.  The unsubscribe callback is stored so
+			//   that explicit cleanup is possible in the future if needed.
+
 			/**
-			 * Removes the cell corresponding with the specified column from each row in the table.
+			 * Cache from row ID → row node for O(1) lookups in {@link Table.#tryGetRow}.
+			 * `undefined` means the cache is stale and must be rebuilt before use.
 			 */
-			#removeCells(column: ColumnValueType): void {
-				for (const row of this.table.rows) {
-					// TypeScript is unable to narrow the row type correctly here, hence the cast.
-					// See: https://github.com/microsoft/TypeScript/issues/52144
-					this.removeCell({
-						column,
-						row: row as RowValueType,
-					});
-				}
-			}
+			#rowCache: Map<string, RowValueType> | undefined = undefined;
+
+			/**
+			 * Unsubscribe function for the `nodeChanged` listener on `this.table.rows`.
+			 * `undefined` means the listener has not yet been registered (first cache build is pending).
+			 * After the first build, this is always defined and the listener remains active for the
+			 * lifetime of the Table node.
+			 */
+			#rowCacheUnsubscribe: (() => void) | undefined = undefined;
+
+			/**
+			 * Cache from column ID → column node for O(1) lookups in {@link Table.#tryGetColumn}.
+			 * `undefined` means the cache is stale and must be rebuilt before use.
+			 */
+			#columnCache: Map<string, ColumnValueType> | undefined = undefined;
+
+			/**
+			 * Unsubscribe function for the `nodeChanged` listener on `this.table.columns`.
+			 * `undefined` means the listener has not yet been registered (first cache build is pending).
+			 * After the first build, this is always defined and the listener remains active for the
+			 * lifetime of the Table node.
+			 */
+			#columnCacheUnsubscribe: (() => void) | undefined = undefined;
+
+			// #endregion
 
 			/**
 			 * Applies the provided edits in a "batch".
@@ -1007,6 +1047,40 @@ export namespace System_TableSchema {
 			}
 
 			/**
+			 * Returns the column ID → column node cache, building and caching it first if stale.
+			 *
+			 * @remarks
+			 * The first time this is called, it builds the map from the current contents of
+			 * `this.table.columns` and registers a `nodeChanged` listener on that array.
+			 * The listener invalidates the cache (sets `#columnCache` to `undefined`) whenever
+			 * the column array is structurally modified (insert / remove / move), so every
+			 * subsequent call that follows a structural change automatically triggers a rebuild.
+			 * The listener is registered only once — it is not re-registered on cache rebuilds.
+			 */
+			#getColumnCache(): Map<string, ColumnValueType> {
+				let cache = this.#columnCache;
+				if (cache === undefined) {
+					cache = new Map<string, ColumnValueType>();
+					for (const column of this.table.columns) {
+						// TypeScript is unable to narrow array element types correctly here.
+						// See: https://github.com/microsoft/TypeScript/issues/52144
+						cache.set((column as ColumnValueType).id, column as ColumnValueType);
+					}
+					this.#columnCache = cache;
+
+					// Register the invalidation listener once. The `nodeChanged` event fires on the
+					// array node itself after any structural change (insert / remove / move), which is
+					// exactly the set of changes that can alter the ID → node mapping.
+					if (this.#columnCacheUnsubscribe === undefined) {
+						this.#columnCacheUnsubscribe = Tree.on(this.columns, "nodeChanged", () => {
+							this.#columnCache = undefined;
+						});
+					}
+				}
+				return cache;
+			}
+
+			/**
 			 * Attempts to resolve the provided Column node or ID to a Column node in the table.
 			 * Returns `undefined` if there is no match.
 			 * @remarks Searches for a match based strictly on the ID and returns that result.
@@ -1023,21 +1097,14 @@ export namespace System_TableSchema {
 					return this.table.columns[columnOrIdOrIndex] as ColumnValueType;
 				}
 
+				const columnCache = this.#getColumnCache();
 				if (typeof columnOrIdOrIndex === "string") {
-					const columnId = columnOrIdOrIndex;
-					// TypeScript is unable to narrow the types correctly here, hence the casts.
-					// See: https://github.com/microsoft/TypeScript/issues/52144
-					return this.table.columns.find((col) => (col as ColumnValueType).id === columnId) as
-						| ColumnValueType
-						| undefined;
+					return columnCache.get(columnOrIdOrIndex);
 				}
 
 				// If the user provided a node, ensure it actually exists in this table.
-				if (!this.table.columns.includes(columnOrIdOrIndex)) {
-					return undefined;
-				}
-
-				return columnOrIdOrIndex;
+				const cached = columnCache.get(columnOrIdOrIndex.id);
+				return cached === columnOrIdOrIndex ? columnOrIdOrIndex : undefined;
 			}
 
 			/**
@@ -1075,6 +1142,40 @@ export namespace System_TableSchema {
 			}
 
 			/**
+			 * Returns the row ID → row node cache, building and caching it first if stale.
+			 *
+			 * @remarks
+			 * The first time this is called, it builds the map from the current contents of
+			 * `this.table.rows` and registers a `nodeChanged` listener on that array.
+			 * The listener invalidates the cache (sets `#rowCache` to `undefined`) whenever
+			 * the row array is structurally modified (insert / remove / move), so every
+			 * subsequent call that follows a structural change automatically triggers a rebuild.
+			 * The listener is registered only once — it is not re-registered on cache rebuilds.
+			 */
+			#getRowCache(): Map<string, RowValueType> {
+				let cache = this.#rowCache;
+				if (cache === undefined) {
+					cache = new Map<string, RowValueType>();
+					for (const row of this.table.rows) {
+						// TypeScript is unable to narrow array element types correctly here.
+						// See: https://github.com/microsoft/TypeScript/issues/52144
+						cache.set((row as RowValueType).id, row as RowValueType);
+					}
+					this.#rowCache = cache;
+
+					// Register the invalidation listener once. The `nodeChanged` event fires on the
+					// array node itself after any structural change (insert / remove / move), which is
+					// exactly the set of changes that can alter the ID → node mapping.
+					if (this.#rowCacheUnsubscribe === undefined) {
+						this.#rowCacheUnsubscribe = Tree.on(this.rows, "nodeChanged", () => {
+							this.#rowCache = undefined;
+						});
+					}
+				}
+				return cache;
+			}
+
+			/**
 			 * Attempts to resolve the provided Row node or ID to a Row node in the table.
 			 * Returns `undefined` if there is no match.
 			 * @remarks Searches for a match based strictly on the ID and returns that result.
@@ -1089,21 +1190,14 @@ export namespace System_TableSchema {
 					return this.table.rows[rowOrIdOrIndex] as RowValueType;
 				}
 
+				const rowCache = this.#getRowCache();
 				if (typeof rowOrIdOrIndex === "string") {
-					const rowId = rowOrIdOrIndex;
-					// TypeScript is unable to narrow the types correctly here, hence the casts.
-					// See: https://github.com/microsoft/TypeScript/issues/52144
-					return this.table.rows.find((row) => (row as RowValueType).id === rowId) as
-						| RowValueType
-						| undefined;
+					return rowCache.get(rowOrIdOrIndex);
 				}
 
 				// If the user provided a node, ensure it actually exists in this table.
-				if (!this.table.rows.includes(rowOrIdOrIndex)) {
-					return undefined;
-				}
-
-				return rowOrIdOrIndex;
+				const cached = rowCache.get(rowOrIdOrIndex.id);
+				return cached === rowOrIdOrIndex ? rowOrIdOrIndex : undefined;
 			}
 
 			/**
@@ -1125,10 +1219,7 @@ export namespace System_TableSchema {
 			 * - A column with a duplicate ID is being inserted.
 			 */
 			#validateNewColumns(newColumns: readonly ColumnInsertableType[]): void {
-				return Table._validateNewColumns(
-					newColumns,
-					new Set(this.table.columns.map((column) => (column as ColumnValueType).id)),
-				);
+				return Table._validateNewColumns(newColumns, this.#getColumnCache());
 			}
 
 			/**
@@ -1138,11 +1229,7 @@ export namespace System_TableSchema {
 			 * - A row is being inserted that contains cells for columns that do not exist in the table.
 			 */
 			#validateNewRows(newRows: readonly RowInsertableType[]): void {
-				return Table._validateNewRows(
-					newRows,
-					new Set(this.table.rows.map((row) => (row as RowValueType).id)),
-					new Set(this.table.columns.map((column) => (column as ColumnValueType).id)),
-				);
+				return Table._validateNewRows(newRows, this.#getRowCache(), this.#getColumnCache());
 			}
 
 			/**
@@ -1152,7 +1239,7 @@ export namespace System_TableSchema {
 			 */
 			private static _validateNewColumns(
 				newColumns: Iterable<ColumnInsertableType>,
-				existingColumnIds: Set<string>,
+				existingColumnIds: { readonly has: (id: string) => boolean },
 			): void {
 				const newColumnIds = new Set<string>();
 				for (const newColumn of newColumns) {
@@ -1180,8 +1267,8 @@ export namespace System_TableSchema {
 			 */
 			private static _validateNewRows(
 				newRows: Iterable<RowInsertableType>,
-				existingRowIds: Set<string>,
-				columnIds: Set<string>,
+				existingRowIds: { readonly has: (id: string) => boolean },
+				columnIds: { readonly has: (id: string) => boolean },
 			): void {
 				const newRowIds = new Set<string>();
 				for (const newRow of newRows) {

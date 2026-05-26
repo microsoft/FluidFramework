@@ -1,0 +1,24 @@
+[profiles.ff-oce.mcps.builtins]
+enghub = true
+icm = true
+teams = true
+workiq = true
+
+[profiles.ff-oce.mcps.builtins.ado]
+type = "ado"
+organization = "fluidframework"
+
+[profiles.ff-oce.mcps.builtins.ado-office]
+type = "ado"
+organization = "office"
+
+[profiles.ff-oce.mcps.builtins.kusto]
+type = "kusto"
+service_uri = "https://kusto.aria.microsoft.com/"
+database = "Office Fluid"
+
+[profiles.ff-oce.plugins]
+default = ["local:./.agency/plugins/ff-oce"]
+
+[profiles.nori.plugins]
+default = ["local:./.agency/plugins/nori"]

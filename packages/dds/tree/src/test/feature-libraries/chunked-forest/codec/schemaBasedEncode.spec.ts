@@ -5,7 +5,10 @@
 
 import { strict as assert, fail } from "node:assert";
 
-import { createIdCompressor } from "@fluidframework/id-compressor/internal";
+import {
+	createIdCompressor,
+	toIdCompressorWithCore,
+} from "@fluidframework/id-compressor/internal";
 import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
 
 import { currentVersion } from "../../../../codec/index.js";
@@ -36,11 +39,10 @@ import {
 } from "../../../../feature-libraries/chunked-forest/codec/compressedEncode.js";
 import {
 	FieldBatchFormatVersion,
+	type EncodedFieldBatchV2,
 	SpecialField,
-	validVersions,
-	type EncodedFieldBatch,
 	// eslint-disable-next-line import-x/no-internal-modules
-} from "../../../../feature-libraries/chunked-forest/codec/format.js";
+} from "../../../../feature-libraries/chunked-forest/codec/format/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { NodeShapeBasedEncoder } from "../../../../feature-libraries/chunked-forest/codec/nodeEncoder.js";
 import {
@@ -113,6 +115,7 @@ describe("schemaBasedEncoding", () => {
 				testIdCompressor,
 				undefined /* incrementalEncoder */,
 				fieldBatchVersion,
+				false /* isSummary */,
 			);
 			const log: string[] = [];
 			const fieldEncoder = getFieldEncoder(
@@ -144,6 +147,7 @@ describe("schemaBasedEncoding", () => {
 				testIdCompressor,
 				undefined /* incrementalEncoder */,
 				fieldBatchVersion,
+				false /* isSummary */,
 			);
 			const log: string[] = [];
 			const fieldEncoder = getFieldEncoder(
@@ -171,6 +175,7 @@ describe("schemaBasedEncoding", () => {
 				testIdCompressor,
 				undefined /* incrementalEncoder */,
 				fieldBatchVersion,
+				false /* isSummary */,
 			);
 			const log: string[] = [];
 			const fieldEncoder = getFieldEncoder(
@@ -212,6 +217,7 @@ describe("schemaBasedEncoding", () => {
 				testIdCompressor,
 				undefined /* incrementalEncoder */,
 				fieldBatchVersion,
+				false /* isSummary */,
 			);
 			const log: string[] = [];
 
@@ -252,6 +258,7 @@ describe("schemaBasedEncoding", () => {
 				testIdCompressor,
 				undefined /* incrementalEncoder */,
 				fieldBatchVersion,
+				false /* isSummary */,
 			);
 			const nodeEncoder = getNodeEncoder(
 				{ fieldEncoderFromSchema: () => fail() },
@@ -272,6 +279,7 @@ describe("schemaBasedEncoding", () => {
 				testIdCompressor,
 				undefined /* incrementalEncoder */,
 				fieldBatchVersion,
+				false /* isSummary */,
 			);
 			const log: TreeFieldStoredSchema[] = [];
 			const nodeEncoder = getNodeEncoder(
@@ -312,6 +320,7 @@ describe("schemaBasedEncoding", () => {
 				testIdCompressor,
 				undefined /* incrementalEncoder */,
 				fieldBatchVersion,
+				false /* isSummary */,
 			);
 			const log: TreeFieldStoredSchema[] = [];
 			const nodeEncoder = getNodeEncoder(
@@ -361,7 +370,7 @@ describe("schemaBasedEncoding", () => {
 				),
 				encodeIncrementalField: (
 					cursor: ITreeCursorSynchronous,
-					chunkEncoder: (chunk: TreeChunk) => EncodedFieldBatch,
+					chunkEncoder: (chunk: TreeChunk) => EncodedFieldBatchV2,
 				): ChunkReferenceId[] => {
 					const fieldKey = cursor.getFieldKey();
 					assert(fieldKey === "incrementalField", "should only encode incremental fields");
@@ -383,6 +392,7 @@ describe("schemaBasedEncoding", () => {
 				testIdCompressor,
 				mockIncrementalEncoder,
 				brand(FieldBatchFormatVersion.v2), // Use v2 or higher for incremental encoding support
+				false /* isSummary */,
 			);
 
 			const log: TreeFieldStoredSchema[] = [];
@@ -430,6 +440,7 @@ describe("schemaBasedEncoding", () => {
 			testIdCompressor,
 			undefined /* incrementalEncoder */,
 			fieldBatchVersion,
+			false /* isSummary */,
 		);
 		const nodeEncoder = context.nodeEncoderFromSchema(brand(RecursiveType.identifier));
 		const bufferEmpty = checkNodeEncode(nodeEncoder, context, {
@@ -443,7 +454,7 @@ describe("schemaBasedEncoding", () => {
 		assert.deepEqual(bufferFull, [[0]]);
 	});
 
-	for (const version of validVersions) {
+	for (const version of fieldBatchCodecBuilder.registry.map((entry) => entry.formatVersion)) {
 		describe(`test trees FieldBatchFormatVersion V${version}`, () => {
 			useSnapshotDirectory(`chunked-forest-schema-compressed/V${version}`);
 			// TODO: test non size 1 batches
@@ -461,16 +472,19 @@ describe("schemaBasedEncoding", () => {
 						idCompressor,
 						undefined /* incrementalEncoder */,
 						brand(version),
+						false /* isSummary */,
 					);
 					checkFieldEncode(anyFieldEncoder, context, tree, idCompressor);
 
 					const fieldBatchContext: FieldBatchEncodingContext = {
 						encodeType: TreeCompressionStrategy.Compressed,
 						originatorId: testIdCompressor.localSessionId,
+						isSummary: false,
 						schema: { schema: storedSchema, policy: defaultSchemaPolicy },
 						idCompressor,
 					};
-					idCompressor.finalizeCreationRange(idCompressor.takeNextCreationRange());
+					const idCompressorCore = toIdCompressorWithCore(idCompressor);
+					idCompressorCore.finalizeCreationRange(idCompressorCore.takeNextCreationRange());
 					const codec = fieldBatchCodecBuilder.build({
 						jsonValidator: ajvValidator,
 						minVersionForCollab: currentVersion,

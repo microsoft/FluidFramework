@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 
-import { describeCompat } from "@fluid-private/test-version-utils";
+import { describeCompat, itExpects } from "@fluid-private/test-version-utils";
 import { IContainer } from "@fluidframework/container-definitions/internal";
 import {
 	CompressionAlgorithms,
@@ -159,12 +159,21 @@ describeCompat("Flushing ops", "NoCompat", (getTestObjectProvider, apis) => {
 		await provider.ensureSynchronized();
 	}
 
-	it("Can't set up a container with Immediate Mode and Offline Load", async () => {
-		await assert.rejects(
-			setupContainers({ flushMode: FlushMode.Immediate }),
-			"Offline load is not supported with Immediate mode",
-		);
-	});
+	itExpects(
+		"Can't set up a container with Immediate Mode and Offline Load",
+		[
+			{
+				eventName: "fluid:telemetry:Container:ContainerClose",
+				error: "Offline mode is only supported in turn-based mode",
+			},
+		],
+		async () => {
+			await assert.rejects(
+				setupContainers({ flushMode: FlushMode.Immediate }),
+				"Offline load is not supported with Immediate mode",
+			);
+		},
+	);
 
 	describe("Batch metadata verification when ops are flushed in batches", () => {
 		let dataObject1BatchMessages: ISequencedDocumentMessage[] = [];

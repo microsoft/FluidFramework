@@ -23,10 +23,10 @@ import type {
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/compressedEncode.js";
 import type {
-	EncodedFieldBatch,
+	EncodedFieldBatchV1OrV2,
 	FieldBatchFormatVersion,
 	// eslint-disable-next-line import-x/no-internal-modules
-} from "../../../../feature-libraries/chunked-forest/codec/format.js";
+} from "../../../../feature-libraries/chunked-forest/codec/format/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import type { IncrementalDecoder } from "../../../../feature-libraries/chunked-forest/codec/index.js";
 import {
@@ -47,7 +47,7 @@ export function checkNodeEncode(
 	nodeEncoder.encodeNode(cursor, context, buffer);
 
 	// Check round-trip
-	checkDecode([buffer], [[tree]], context.version, undefined, incrementalDecoder);
+	checkDecode([buffer], [[tree]], context.version, context.idCompressor, incrementalDecoder);
 
 	return buffer.slice(1);
 }
@@ -95,7 +95,7 @@ function testDecode(
 	version: FieldBatchFormatVersion,
 	idCompressor?: IIdCompressor,
 	incrementalDecoder?: IncrementalDecoder,
-): EncodedFieldBatch {
+): EncodedFieldBatchV1OrV2 {
 	const chunk = updateShapesAndIdentifiersEncoding(
 		version,
 		cloneArrays(buffer),
@@ -111,10 +111,12 @@ function testDecode(
 			? {
 					idCompressor: testIdCompressor,
 					originatorId: testIdCompressor.localSessionId,
+					isSummary: false,
 				}
 			: {
 					idCompressor,
 					originatorId: idCompressor.localSessionId,
+					isSummary: false,
 				},
 		incrementalDecoder,
 	);
@@ -148,10 +150,12 @@ function testDecode(
 				? {
 						idCompressor: testIdCompressor,
 						originatorId: testIdCompressor.localSessionId,
+						isSummary: false,
 					}
 				: {
 						idCompressor,
 						originatorId: idCompressor.localSessionId,
+						isSummary: false,
 					},
 			incrementalDecoder,
 		);

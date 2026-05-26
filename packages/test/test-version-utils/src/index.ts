@@ -31,12 +31,6 @@ export {
 	DocumentType,
 	DocumentTypeInfo,
 	DescribeE2EDocInfo,
-	BenchmarkType,
-	describeE2EDocsMemory,
-	describeE2EDocsRuntime,
-	describeE2EDocRun,
-	getCurrentBenchmarkType,
-	isMemoryTest,
 	DocumentMapInfo,
 	DocumentMultipleDataStoresInfo,
 	DocumentMatrixInfo,
@@ -50,7 +44,7 @@ export {
 export { ExpectedEvents, ExpectsTest, itExpects } from "./itExpects.js";
 export {
 	CompatApis,
-	ensurePackageInstalled,
+	ensureVersionLoaded,
 	getContainerRuntimeApi,
 	getDataRuntimeApi,
 	getDriverApi,

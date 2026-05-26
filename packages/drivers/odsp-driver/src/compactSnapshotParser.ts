@@ -9,7 +9,7 @@ import type {
 	ISnapshotTree,
 	ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
-import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
+import type { TelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 
 import { ReadBuffer } from "./ReadBufferUtils.js";
 import { measure } from "./odspUtils.js";
@@ -261,7 +261,7 @@ function readSnapshotSection(node: NodeTypes): {
  */
 export function parseCompactSnapshotResponse(
 	buffer: Uint8Array,
-	logger: ITelemetryLoggerExt,
+	logger: TelemetryLoggerExt,
 ): ISnapshotContentsWithProps {
 	const { builder, telemetryProps } = TreeBuilder.load(new ReadBuffer(buffer), logger);
 	assert(builder.length === 1, 0x219 /* "1 root should be there" */);
