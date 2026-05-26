@@ -3,8 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { BenchmarkType, benchmarkDuration, benchmarkIt } from "@fluid-tools/benchmark";
-import type { Off } from "@fluidframework/core-interfaces";
+import { benchmarkDuration, benchmarkIt } from "@fluid-tools/benchmark";
 
 import { Tree } from "../../../shared-tree/index.js";
 import { SchemaFactory, type TreeNode } from "../../../simple-tree/index.js";
