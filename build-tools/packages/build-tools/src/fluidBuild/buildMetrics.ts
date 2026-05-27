@@ -8,7 +8,7 @@ import { writeFile } from "node:fs/promises";
 import chalk from "picocolors";
 import type { Opaque } from "type-fest";
 
-import { defaultLogger } from "../common/logging";
+import { defaultLogger } from "../common/logging.js";
 
 const { log } = defaultLogger;
 

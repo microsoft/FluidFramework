@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { defaultLogger } from "../../common/logging";
-import { tsCompile } from "../tsCompile";
+import { defaultLogger } from "../../common/logging.js";
+import { tsCompile } from "../tsCompile.js";
 
 const { log, errorLog: error } = defaultLogger;
 

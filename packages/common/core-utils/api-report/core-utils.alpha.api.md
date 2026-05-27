@@ -10,7 +10,7 @@ export function emulateProductionBuild(enable?: boolean): void;
 // @alpha
 export function nonProductionConditionalsIncluded(): boolean;
 
-// @alpha
+// @beta
 export function onAssertionFailure(handler: (error: Error) => void): () => void;
 
 // (No @packageDocumentation comment for this package)
