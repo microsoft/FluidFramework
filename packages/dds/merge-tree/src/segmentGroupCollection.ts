@@ -51,28 +51,19 @@ export class SegmentGroupCollection {
 
 	/**
 	 * Returns the previousProps entry paired with this collection's segment within the given
-	 * segmentGroup, or undefined if the group has no previousProps or the segment is not a member.
-	 * Encapsulates the invariant that the i-th entry of `segmentGroup.previousProps` pairs with
-	 * the i-th entry of `segmentGroup.segments`.
+	 * segmentGroup, or undefined if the group has no previousProps or no entry exists for the segment.
 	 */
 	public previousPropsForSegment(segmentGroup: SegmentGroup): PropertySet | undefined {
-		if (segmentGroup.previousProps === undefined) {
-			return undefined;
-		}
-		const index = segmentGroup.segments.indexOf(this.segment);
-		if (index === -1) {
-			return undefined;
-		}
-		return segmentGroup.previousProps[index];
+		return segmentGroup.previousProps?.get(this.segment);
 	}
 
 	private enqueueOnCopy(segmentGroup: SegmentGroup, sourceSegment: ISegmentLeaf): void {
 		this.enqueue(segmentGroup);
 		if (segmentGroup.previousProps) {
-			// duplicate the previousProps for this segment
-			const index = segmentGroup.segments.indexOf(sourceSegment);
-			if (index !== -1) {
-				segmentGroup.previousProps.push(segmentGroup.previousProps[index]);
+			// duplicate the previousProps entry for the destination segment, keyed off the source's entry
+			const sourceProps = segmentGroup.previousProps.get(sourceSegment);
+			if (sourceProps !== undefined) {
+				segmentGroup.previousProps.set(this.segment, sourceProps);
 			}
 		}
 	}
