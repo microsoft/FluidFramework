@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
+import { DoublyLinkedList, assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import type {
 	Serializable,
 	IChannelAttributes,
@@ -47,6 +47,18 @@ import { SharedArrayRevertible } from "./sharedArrayRevertible.js";
 const snapshotFileName = "header";
 
 /**
+ * Per-op record kept in the FIFO {@link SharedArrayClass.pendingOps} ledger for each
+ * local in-flight op. Captures the op-shape data needed by downstream consumers
+ * (entryId for all ops, and targetEntryId for moves/toggleMoves).
+ */
+interface SharedArrayPendingOp<T> {
+	readonly op: ISharedArrayOperation<T>;
+	readonly type: OperationType;
+	readonly entryId: string;
+	readonly targetEntryId?: string;
+}
+
+/**
  * Represents a shared array that allows communication between distributed clients.
  *
  * @internal
@@ -76,6 +88,13 @@ export class SharedArrayClass<T extends SerializableTypeForSharedArray>
 	 * We should not rollback to life an entry that was deleted by remote clients.
 	 */
 	private readonly remoteDeleteWithLocalPendingDelete: Set<string> = new Set<string>();
+
+	/**
+	 * FIFO ledger of in-flight local ops. Each entry is pushed at submit time (or in
+	 * {@link applyStashedOp}) and shifted off in {@link processMessagesCore} when the
+	 * local ack arrives. Records the per-op shape needed by downstream consumers.
+	 */
+	private readonly pendingOps = new DoublyLinkedList<SharedArrayPendingOp<T>>();
 
 	/**
 	 * Create a new shared array
@@ -220,6 +239,7 @@ export class SharedArrayClass<T extends SerializableTypeForSharedArray>
 			return;
 		}
 
+		this.pendingOps.push(this.buildPendingOp(op));
 		this.submitLocalMessage(op);
 	}
 
@@ -247,6 +267,7 @@ export class SharedArrayClass<T extends SerializableTypeForSharedArray>
 			return;
 		}
 
+		this.pendingOps.push(this.buildPendingOp(op));
 		this.submitLocalMessage(op);
 	}
 
@@ -324,6 +345,7 @@ export class SharedArrayClass<T extends SerializableTypeForSharedArray>
 			return;
 		}
 
+		this.pendingOps.push(this.buildPendingOp(op));
 		this.submitLocalMessage(op);
 	}
 
@@ -360,6 +382,7 @@ export class SharedArrayClass<T extends SerializableTypeForSharedArray>
 			return;
 		}
 
+		this.pendingOps.push(this.buildPendingOp(op));
 		this.submitLocalMessage(op);
 	}
 	/**
@@ -398,6 +421,7 @@ export class SharedArrayClass<T extends SerializableTypeForSharedArray>
 			return;
 		}
 
+		this.pendingOps.push(this.buildPendingOp(op));
 		this.submitLocalMessage(op);
 	}
 
@@ -572,6 +596,31 @@ export class SharedArrayClass<T extends SerializableTypeForSharedArray>
 		return this.idToEntryMap.get(entryId) as SharedArrayEntry<T>;
 	}
 
+	/**
+	 * Normalize a local op into the FIFO ledger record stored in {@link pendingOps}.
+	 */
+	private buildPendingOp(op: ISharedArrayOperation<T>): SharedArrayPendingOp<T> {
+		switch (op.type) {
+			case OperationType.insertEntry:
+			case OperationType.deleteEntry:
+			case OperationType.toggle: {
+				return { op, type: op.type, entryId: op.entryId };
+			}
+			case OperationType.moveEntry:
+			case OperationType.toggleMove: {
+				return {
+					op,
+					type: op.type,
+					entryId: op.entryId,
+					targetEntryId: op.changedToEntryId,
+				};
+			}
+			default: {
+				unreachableCase(op);
+			}
+		}
+	}
+
 	protected override processMessagesCore(messagesCollection: IRuntimeMessageCollection): void {
 		const { envelope, local, messagesContent } = messagesCollection;
 		for (const messageContent of messagesContent) {
@@ -618,7 +667,14 @@ export class SharedArrayClass<T extends SerializableTypeForSharedArray>
 					throw new Error("Unknown operation");
 				}
 			}
-			if (!local) {
+			if (local) {
+				// FIFO consume: the head of pendingOps is the ack target.
+				const acked = this.pendingOps.shift()?.data;
+				assert(
+					acked !== undefined && acked.entryId === op.entryId,
+					"pendingOps head must match acked op entryId",
+				);
+			} else {
 				this.emitValueChangedEvent(op, local);
 			}
 		}
@@ -1024,6 +1080,7 @@ export class SharedArrayClass<T extends SerializableTypeForSharedArray>
 				unreachableCase(op);
 			}
 		}
+		this.pendingOps.push(this.buildPendingOp(op));
 		this.submitLocalMessage(op);
 	}
 }
