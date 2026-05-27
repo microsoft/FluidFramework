@@ -105,7 +105,6 @@ export {
 	tryGetChunk,
 	type ChunkedCursor,
 	DetachedFieldIndexFormatVersion,
-	detachedFieldIndexCodecName,
 	detachedFieldIndexCodecBuilder,
 	areDetachedNodeIdsEqual,
 	deltaFieldMapHasVisibleChanges,
