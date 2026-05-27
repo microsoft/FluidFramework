@@ -1225,6 +1225,7 @@ export class IntervalCollection
 						type: "add",
 						localSeq,
 						interval,
+						propertyKeys: props === undefined ? undefined : new Set(Object.keys(props)),
 					},
 				);
 			}
@@ -1353,6 +1354,7 @@ export class IntervalCollection
 					type: "change",
 					localSeq,
 					interval: newInterval ?? interval,
+					propertyKeys: props === undefined ? undefined : new Set(Object.keys(props)),
 				};
 
 				this.submitDelta(

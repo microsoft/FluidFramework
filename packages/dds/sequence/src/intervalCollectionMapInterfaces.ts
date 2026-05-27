@@ -24,12 +24,22 @@ export interface IntervalAddLocalMetadata {
 	localSeq: number;
 	endpointChangesNode?: ListNode<IntervalAddLocalMetadata | IntervalChangeLocalMetadata>;
 	interval: SequenceIntervalClass;
+	/**
+	 * Set of user-defined property keys carried by this op's properties bag; populated when the op was submitted
+	 * (used to enable future squash optimizations).
+	 */
+	propertyKeys?: ReadonlySet<string>;
 }
 export interface IntervalChangeLocalMetadata {
 	type: typeof IntervalDeltaOpType.CHANGE;
 	localSeq: number;
 	endpointChangesNode?: ListNode<IntervalChangeLocalMetadata | IntervalChangeLocalMetadata>;
 	interval: SequenceIntervalClass;
+	/**
+	 * Set of user-defined property keys carried by this op's properties bag; populated when the op was submitted
+	 * (used to enable future squash optimizations).
+	 */
+	propertyKeys?: ReadonlySet<string>;
 }
 export interface IntervalDeleteLocalMetadata {
 	type: typeof IntervalDeltaOpType.DELETE;
