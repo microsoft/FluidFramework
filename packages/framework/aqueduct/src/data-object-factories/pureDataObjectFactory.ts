@@ -29,7 +29,6 @@ import type {
 	NamedFluidDataStoreRegistryEntries,
 	NamedFluidDataStoreRegistryEntry,
 } from "@fluidframework/runtime-definitions/internal";
-import { ClaimsFactory } from "@fluidframework/shared-claims/internal";
 import type {
 	AsyncFluidObjectProvider,
 	FluidObjectSymbolProvider,
@@ -254,17 +253,10 @@ export class PureDataObjectFactory<
 		}
 		this.type = newProps.type;
 
-		// Auto-register Claims factory so PureDataObject can load the claims
-		// channel from existing data objects without consumers needing to register it.
-		const sharedObjects = [...(newProps.sharedObjects ?? [])];
-		if (!sharedObjects.some((factory) => factory.type === ClaimsFactory.Type)) {
-			sharedObjects.push(new ClaimsFactory());
-		}
-
 		this.createProps = {
 			ctor: newProps.ctor,
 			optionalProviders: newProps.optionalProviders ?? {},
-			sharedObjectRegistry: new Map(sharedObjects.map((ext) => [ext.type, ext])),
+			sharedObjectRegistry: new Map(newProps.sharedObjects?.map((ext) => [ext.type, ext])),
 			runtimeClassArg: newProps.runtimeClass ?? FluidDataStoreRuntime,
 			policies: newProps.policies,
 		};

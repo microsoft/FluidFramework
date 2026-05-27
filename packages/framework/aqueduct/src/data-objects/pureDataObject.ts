@@ -19,15 +19,7 @@ import { assert } from "@fluidframework/core-utils/internal";
 import type { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions/internal";
 import type { IFluidDataStoreContext } from "@fluidframework/runtime-definitions/internal";
 import { create404Response } from "@fluidframework/runtime-utils/internal";
-import type { IClaims } from "@fluidframework/shared-claims/internal";
-import { ClaimsKind } from "@fluidframework/shared-claims/internal";
 import type { AsyncFluidObjectProvider } from "@fluidframework/synthesize/internal";
-import {
-	UsageError,
-	loggerToMonitoringContext,
-} from "@fluidframework/telemetry-utils/internal";
-
-import type { ClaimResult } from "../claimTypes.js";
 
 import type { DataObjectTypes, IDataObjectProps } from "./types.js";
 
@@ -41,10 +33,7 @@ import type { DataObjectTypes, IDataObjectProps } from "./types.js";
  * @typeParam I - The optional input types used to strongly type the data object
  * @legacy @beta
  */
-export abstract class PureDataObject<
-		I extends DataObjectTypes = DataObjectTypes,
-		TClaimValue = unknown,
-	>
+export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes>
 	extends TypedEventEmitter<I["Events"] & IEvent>
 	// eslint-disable-next-line import-x/no-deprecated
 	implements IFluidLoadable, IProvideFluidHandle
@@ -69,17 +58,6 @@ export abstract class PureDataObject<
 	protected readonly providers: AsyncFluidObjectProvider<I["OptionalProviders"]>;
 
 	protected initProps?: I["InitialState"];
-
-	/**
-	 * The well-known channel ID used for the internal Claims DDS.
-	 * Uses a reserved name to avoid collisions with user-created channels.
-	 */
-	private static readonly claimsChannelId = "__claims__";
-
-	/**
-	 * Internal Claims instance, initialized during initializeInternal.
-	 */
-	private internalClaims: IClaims<TClaimValue> | undefined;
 
 	/**
 	 * Internal implementation detail.
@@ -166,32 +144,6 @@ export abstract class PureDataObject<
 	 * responsible for ensuring this is only invoked once.
 	 */
 	public async initializeInternal(existing: boolean): Promise<void> {
-		if (existing) {
-			// Always try to load the claims channel for existing data objects,
-			// regardless of the feature gate.
-			try {
-				this.internalClaims = (await this.runtime.getChannel(
-					PureDataObject.claimsChannelId,
-				)) as unknown as IClaims<TClaimValue>;
-			} catch (error: unknown) {
-				// Only suppress errors indicating the channel doesn't exist (legacy data objects).
-				// Rethrow unexpected errors (corrupt snapshot, missing factory, etc.).
-				if (error instanceof Error && error.message === "Channel does not exist") {
-					// Claims will not be available; trySetClaim will throw UsageError.
-				} else {
-					throw error;
-				}
-			}
-		} else {
-			// Only create the claims channel for new data objects when the feature gate is enabled.
-			const mc = loggerToMonitoringContext(this.runtime.logger);
-			if (mc.config.getBoolean("Fluid.PureDataObject.EnableClaims") === true) {
-				const claims = ClaimsKind.create(this.runtime, PureDataObject.claimsChannelId);
-				claims.bindToContext();
-				this.internalClaims = claims as unknown as IClaims<TClaimValue>;
-			}
-		}
-
 		await this.preInitialize();
 		if (existing) {
 			assert(
@@ -231,38 +183,4 @@ export abstract class PureDataObject<
 	 * Called every time the data store is initialized after create or existing.
 	 */
 	protected async hasInitialized(): Promise<void> {}
-
-	/**
-	 * Attempts to claim a key with the given value using first-writer-wins semantics.
-	 *
-	 * @remarks
-	 * This method leverages an internal Claims DDS that is created during
-	 * initialization of each PureDataObject. The result indicates whether the claim
-	 * is pending server acknowledgement, already accepted, or already claimed by another client.
-	 *
-	 * @param key - The claim key to reserve.
-	 * @param value - The value to associate with the claim.
-	 * @returns The claim result.
-	 * @throws Will throw a UsageError if the container is not attached and connected.
-	 */
-	public trySetClaim?(key: string, value: TClaimValue): ClaimResult<TClaimValue> {
-		if (this.internalClaims === undefined) {
-			throw new UsageError(
-				"trySetClaim is not available on this data object. " +
-					"Either the Fluid.PureDataObject.EnableClaims feature gate was not enabled when this object was created, " +
-					"or it was created before claims support was added.",
-			);
-		}
-		return this.internalClaims.trySetClaim(key, value);
-	}
-
-	/**
-	 * Gets the current claimed value for a key, or `undefined` if the key has not been claimed.
-	 *
-	 * @param key - The claim key to look up.
-	 * @returns The claimed value, or `undefined` if unclaimed.
-	 */
-	public getClaim?(key: string): TClaimValue | undefined {
-		return this.internalClaims?.getClaim(key);
-	}
 }

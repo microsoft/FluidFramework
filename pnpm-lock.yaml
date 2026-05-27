@@ -10881,9 +10881,6 @@ importers:
       '@fluidframework/runtime-utils':
         specifier: workspace:~
         version: link:../../runtime/runtime-utils
-      '@fluidframework/shared-claims':
-        specifier: workspace:~
-        version: link:../../dds/shared-claims
       '@fluidframework/shared-object-base':
         specifier: workspace:~
         version: link:../../dds/shared-object-base

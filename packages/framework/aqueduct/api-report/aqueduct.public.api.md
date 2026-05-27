@@ -4,27 +4,4 @@
 
 ```ts
 
-// @public
-export type ClaimConfirmation<T = unknown> = {
-    readonly status: "Accepted";
-    readonly currentValue: T;
-} | {
-    readonly status: "AlreadyClaimed";
-    readonly currentValue: T;
-} | {
-    readonly status: "Aborted";
-};
-
-// @public
-export type ClaimResult<T = unknown> = {
-    readonly status: "Accepted";
-    readonly currentValue: T;
-} | {
-    readonly status: "AlreadyClaimed";
-    readonly currentValue: T;
-} | {
-    readonly status: "Pending";
-    readonly promise: Promise<ClaimConfirmation<T>>;
-};
-
 ```

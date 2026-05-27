@@ -27,29 +27,6 @@ export interface BaseContainerRuntimeFactoryProps {
     runtimeOptions?: IContainerRuntimeOptions;
 }
 
-// @public
-export type ClaimConfirmation<T = unknown> = {
-    readonly status: "Accepted";
-    readonly currentValue: T;
-} | {
-    readonly status: "AlreadyClaimed";
-    readonly currentValue: T;
-} | {
-    readonly status: "Aborted";
-};
-
-// @public
-export type ClaimResult<T = unknown> = {
-    readonly status: "Accepted";
-    readonly currentValue: T;
-} | {
-    readonly status: "AlreadyClaimed";
-    readonly currentValue: T;
-} | {
-    readonly status: "Pending";
-    readonly promise: Promise<ClaimConfirmation<T>>;
-};
-
 // @beta @legacy
 export class ContainerRuntimeFactoryWithDefaultDataStore extends BaseContainerRuntimeFactory {
     constructor(props: ContainerRuntimeFactoryWithDefaultDataStoreProps);
@@ -117,11 +94,10 @@ export interface IDataObjectProps<I extends DataObjectTypes = DataObjectTypes> {
 }
 
 // @beta @legacy
-export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes, TClaimValue = unknown> extends TypedEventEmitter<I["Events"] & IEvent> implements IFluidLoadable, IProvideFluidHandle {
+export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes> extends TypedEventEmitter<I["Events"] & IEvent> implements IFluidLoadable, IProvideFluidHandle {
     constructor(props: IDataObjectProps<I>);
     protected readonly context: IFluidDataStoreContext;
     finishInitialization(existing: boolean): Promise<void>;
-    getClaim?(key: string): TClaimValue | undefined;
     // (undocumented)
     static getDataObject(runtime: IFluidDataStoreRuntime): Promise<PureDataObject>;
     get handle(): IFluidHandleInternal<this>;
@@ -140,7 +116,6 @@ export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes
     protected readonly providers: AsyncFluidObjectProvider<I["OptionalProviders"]>;
     request(req: IRequest): Promise<IResponse>;
     protected readonly runtime: IFluidDataStoreRuntime;
-    trySetClaim?(key: string, value: TClaimValue): ClaimResult<TClaimValue>;
 }
 
 // @beta @legacy
