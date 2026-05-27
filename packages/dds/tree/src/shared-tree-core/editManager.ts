@@ -425,6 +425,19 @@ export class EditManager<
 	}
 
 	/**
+	 * @returns the index of the local commit with the given revision in {@link getLocalCommits} for the given branch,
+	 * or `undefined` if no such commit exists.
+	 * @remarks O(1) alternative to scanning the array returned by {@link getLocalCommits}.
+	 */
+	public getLocalCommitIndexByRevision(
+		branchId: BranchId,
+		revision: RevisionTag,
+	): number | undefined {
+		const branch = this.getSharedBranch(branchId);
+		return branch.getLocalCommitIndexByRevision(revision);
+	}
+
+	/**
 	 * Gets the length of the longest branch maintained by this `EditManager`.
 	 * This may be the length of a peer branch or the local branch.
 	 *
@@ -677,6 +690,21 @@ class SharedBranch<TEditor extends ChangeFamilyEditor, TChangeset> {
 	private readonly localCommits: GraphCommit<TChangeset>[] = [];
 
 	/**
+	 * Side-map for O(1) revision -> {@link localCommits} index lookup.
+	 * @remarks
+	 * Stored values are "absolute" indices that are NOT affected by shifts off the front of {@link localCommits}.
+	 * The actual array index is computed as `value - localCommitsHeadOffset`.
+	 * This avoids having to update every entry in the map when a commit is sequenced (shifted) off the front.
+	 */
+	private readonly localCommitsByRevision = new Map<RevisionTag, number>();
+
+	/**
+	 * The number of commits that have been shifted off the front of {@link localCommits} since the last bulk rebuild.
+	 * Used together with {@link localCommitsByRevision} to translate absolute indices into current array indices.
+	 */
+	private localCommitsHeadOffset = 0;
+
+	/**
 	 * Records extra data associated with sequenced commits.
 	 * This does not include an entry for the {@link trunkBase}.
 	 */
@@ -709,6 +737,10 @@ class SharedBranch<TEditor extends ChangeFamilyEditor, TChangeset> {
 		this.localBranch.events.on("afterChange", (event) => {
 			if (event.type === "append") {
 				for (const commit of event.newCommits) {
+					this.localCommitsByRevision.set(
+						commit.revision,
+						this.localCommits.length + this.localCommitsHeadOffset,
+					);
 					this.localCommits.push(commit);
 				}
 			} else {
@@ -717,6 +749,11 @@ class SharedBranch<TEditor extends ChangeFamilyEditor, TChangeset> {
 					[this.localBranch.getHead(), this.localCommits],
 					this.trunk.getHead(),
 				);
+				this.localCommitsByRevision.clear();
+				this.localCommitsHeadOffset = 0;
+				for (let i = 0; i < this.localCommits.length; i += 1) {
+					this.localCommitsByRevision.set(this.localCommits[i].revision, i);
+				}
 			}
 		});
 	}
@@ -891,6 +928,18 @@ class SharedBranch<TEditor extends ChangeFamilyEditor, TChangeset> {
 	}
 
 	/**
+	 * @returns the index of the local commit with the given revision in {@link getLocalCommits}, or `undefined` if none exists.
+	 * @remarks This is an O(1) alternative to calling `findIndex` on the array returned by {@link getLocalCommits}.
+	 */
+	public getLocalCommitIndexByRevision(revision: RevisionTag): number | undefined {
+		const absoluteIndex = this.localCommitsByRevision.get(revision);
+		if (absoluteIndex === undefined) {
+			return undefined;
+		}
+		return absoluteIndex - this.localCommitsHeadOffset;
+	}
+
+	/**
 	 * Promote the oldest un-sequenced commit on the local branch to the head of the trunk.
 	 * @param sequenceId - The sequence id of the new trunk commit
 	 * @remarks This method is a performance optimization for the scenario where this client receives its own change back after sequencing.
@@ -918,6 +967,12 @@ class SharedBranch<TEditor extends ChangeFamilyEditor, TChangeset> {
 			firstLocalCommit !== undefined,
 			0x6b5 /* Received a sequenced change from the local session despite having no local changes */,
 		);
+		this.localCommitsByRevision.delete(firstLocalCommit.revision);
+		this.localCommitsHeadOffset += 1;
+		if (this.localCommits.length === 0) {
+			// Reset the offset when the array drains so it cannot grow unboundedly across sessions.
+			this.localCommitsHeadOffset = 0;
+		}
 
 		const prevSequenceId = this.getCommitSequenceId(this.trunk.getHead().revision);
 		this.pushGraphCommitToTrunk(sequenceId, firstLocalCommit, sessionId);

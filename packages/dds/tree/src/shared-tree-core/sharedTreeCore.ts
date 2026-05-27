@@ -555,8 +555,11 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 
 				const getLocalCommits = (): GraphCommit<TChange>[] => {
 					const localCommits = this.editManager.getLocalCommits(branchId);
-					const revisionIndex = localCommits.findIndex((c) => c.revision === revision);
-					assert(revisionIndex >= 0, 0xbdb /* revision must exist in local commits */);
+					const revisionIndex = this.editManager.getLocalCommitIndexByRevision(
+						branchId,
+						revision,
+					);
+					assert(revisionIndex !== undefined, 0xbdb /* revision must exist in local commits */);
 					return localCommits.slice(revisionIndex);
 				};
 
