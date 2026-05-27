@@ -21,7 +21,7 @@ import { Claims as ClaimsImpl } from "./sharedClaims.js";
  * @internal
  */
 export class ClaimsFactory implements IChannelFactory<IClaims> {
-	public static readonly Type = "https://graph.microsoft.com/types/shared-claims";
+	public static readonly Type = "https://graph.microsoft.com/types/claims";
 
 	public static readonly Attributes: IChannelAttributes = {
 		type: ClaimsFactory.Type,

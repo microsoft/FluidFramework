@@ -5,6 +5,7 @@
 
 import { done, type AsyncGenerator } from "@fluid-private/stochastic-test-utils";
 import { DDSFuzzModel, DDSFuzzTestState } from "@fluid-private/test-dds-utils";
+import { baseClaimsModel } from "@fluidframework/claims/internal/test";
 import { baseCounterModel } from "@fluidframework/counter/internal/test";
 import type { IChannelFactory } from "@fluidframework/datastore-definitions/internal";
 import { baseSharedArrayModel } from "@fluidframework/legacy-dds/internal/test";
@@ -16,7 +17,6 @@ import {
 	baseSharedStringModel,
 	baseIntervalModel,
 } from "@fluidframework/sequence/internal/test";
-import { baseClaimsModel } from "@fluidframework/shared-claims/internal/test";
 import { baseTaskManagerModel } from "@fluidframework/task-manager/internal/test";
 import { baseTreeModel } from "@fluidframework/tree/internal/test";
 

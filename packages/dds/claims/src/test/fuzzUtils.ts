@@ -21,8 +21,8 @@ import type {
 	DDSFuzzTestState,
 } from "@fluid-private/test-dds-utils";
 
+import { ClaimsFactory } from "../claimsFactory.js";
 import type { IClaims } from "../interfaces.js";
-import { ClaimsFactory } from "../sharedClaimsFactory.js";
 
 import { _dirname } from "./dirname.cjs";
 

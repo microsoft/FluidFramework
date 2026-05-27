@@ -1,12 +1,12 @@
 {
-	"name": "@fluidframework/shared-claims",
+	"name": "@fluidframework/claims",
 	"version": "2.102.0",
 	"description": "Distributed data structure for first-writer-wins claim management",
 	"homepage": "https://fluidframework.com",
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/microsoft/FluidFramework.git",
-		"directory": "packages/dds/shared-claims"
+		"directory": "packages/dds/claims"
 	},
 	"license": "MIT",
 	"author": "Microsoft and contributors",

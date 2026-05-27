@@ -9,5 +9,5 @@ export type {
 	ClaimResult,
 	ClaimConfirmation,
 } from "./interfaces.js";
-export { ClaimsKind, ClaimsFactory } from "./sharedClaimsFactory.js";
+export { ClaimsKind, ClaimsFactory } from "./claimsFactory.js";
 export { Claims } from "./sharedClaims.js";

@@ -11,8 +11,8 @@ import {
 	MockStorage,
 } from "@fluidframework/test-runtime-utils/internal";
 
+import { ClaimsFactory } from "../claimsFactory.js";
 import { Claims } from "../sharedClaims.js";
-import { ClaimsFactory } from "../sharedClaimsFactory.js";
 
 function createConnectedClaims(
 	id: string,
