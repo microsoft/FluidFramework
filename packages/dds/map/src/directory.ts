@@ -7,7 +7,12 @@
 /* eslint-disable @typescript-eslint/prefer-nullish-coalescing, @typescript-eslint/prefer-optional-chain */
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
+import {
+	assert,
+	DoublyLinkedList,
+	type ListNode,
+	unreachableCase,
+} from "@fluidframework/core-utils/internal";
 import type {
 	IChannelAttributes,
 	IFluidDataStoreRuntime,
@@ -1339,7 +1344,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 					subdirName,
 					subdir: subDir,
 				};
-				this.pendingSubDirectoryData.push(pendingSubDirectoryCreate);
+				this.pushPendingSubDirectoryEntry(pendingSubDirectoryCreate);
 				const op: IDirectoryCreateSubDirectoryOperation = {
 					subdirName,
 					path: this.absolutePath,
@@ -1415,7 +1420,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 			subdirName,
 			subdir: this,
 		};
-		this.pendingSubDirectoryData.push(pendingSubdirDelete);
+		this.pushPendingSubDirectoryEntry(pendingSubdirDelete);
 
 		const op: IDirectoryOperation = {
 			subdirName,
@@ -1448,15 +1453,11 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 				sequencedSubdirs.push([subdirName, optimisticSubdir]);
 			}
 		}
-		const pendingSubdirNames = [
-			...new Set(
-				this.pendingSubDirectoryData
-					.map((entry) => entry.subdirName)
-					.filter((subdirName) => !sequencedSubdirNames.has(subdirName)),
-			),
-		];
 		const pendingSubdirs: [string, SubDirectory][] = [];
-		for (const subdirName of pendingSubdirNames) {
+		for (const subdirName of this.pendingSubDirectoryByName.keys()) {
+			if (sequencedSubdirNames.has(subdirName)) {
+				continue;
+			}
 			const optimisticSubdir = this.getOptimisticSubDirectory(subdirName);
 			if (optimisticSubdir !== undefined) {
 				pendingSubdirs.push([subdirName, optimisticSubdir]);
@@ -1486,10 +1487,17 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 	 * @returns true if there is pending delete.
 	 */
 	public isSubDirectoryDeletePending(subDirName: string): boolean {
-		const lastPendingEntry = findLast(this.pendingSubDirectoryData, (entry) => {
-			return entry.subdirName === subDirName && entry.type === "deleteSubDirectory";
-		});
-		return lastPendingEntry !== undefined;
+		const list = this.pendingSubDirectoryByName.get(subDirName);
+		if (list === undefined) {
+			return false;
+		}
+		// Walk from the tail looking for the most recent delete entry.
+		for (let node = list.last; node !== undefined; node = node.prev) {
+			if (node.data.type === "deleteSubDirectory") {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	/**
@@ -1712,6 +1720,84 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 	private readonly pendingSubDirectoryData: PendingSubDirectoryEntry[] = [];
 
 	/**
+	 * Name-keyed side-map providing O(1) access to the ordered list of pending entries for a given
+	 * subdirectory name. This is maintained symmetrically with {@link pendingSubDirectoryData} at
+	 * every mutation so that hot-path lookups (findIndex/findLast/some over `subdirName`) can avoid
+	 * scanning the entire pending array.
+	 */
+	private readonly pendingSubDirectoryByName = new Map<
+		string,
+		DoublyLinkedList<PendingSubDirectoryEntry>
+	>();
+
+	/**
+	 * Append a pending subdirectory entry, updating both {@link pendingSubDirectoryData} and the
+	 * {@link pendingSubDirectoryByName} side-map.
+	 */
+	private pushPendingSubDirectoryEntry(entry: PendingSubDirectoryEntry): void {
+		this.pendingSubDirectoryData.push(entry);
+		let list = this.pendingSubDirectoryByName.get(entry.subdirName);
+		if (list === undefined) {
+			list = new DoublyLinkedList<PendingSubDirectoryEntry>();
+			this.pendingSubDirectoryByName.set(entry.subdirName, list);
+		}
+		list.push(entry);
+	}
+
+	/**
+	 * Find the most recent pending entry for the given subdirectory name with the given type, by
+	 * walking the per-name side-map list from the tail. Returns undefined if no such entry exists.
+	 */
+	private findLastPendingSubDirectoryEntry(
+		subdirName: string,
+		type: PendingSubDirectoryEntry["type"],
+	): PendingSubDirectoryEntry | undefined {
+		return this.findLastPendingSubDirectoryNode(subdirName, type)?.data;
+	}
+
+	/**
+	 * Like {@link findLastPendingSubDirectoryEntry}, but also returns the side-map list node so that
+	 * the caller can remove it in O(1) via {@link removePendingSubDirectoryEntry}.
+	 */
+	private findLastPendingSubDirectoryNode(
+		subdirName: string,
+		type: PendingSubDirectoryEntry["type"],
+	): ListNode<PendingSubDirectoryEntry> | undefined {
+		const list = this.pendingSubDirectoryByName.get(subdirName);
+		if (list === undefined) {
+			return undefined;
+		}
+		for (let node = list.last; node !== undefined; node = node.prev) {
+			if (node.data.type === type) {
+				return node;
+			}
+		}
+		return undefined;
+	}
+
+	/**
+	 * Remove a pending subdirectory entry from both {@link pendingSubDirectoryData} and the
+	 * {@link pendingSubDirectoryByName} side-map. The caller supplies the side-map node so removal
+	 * from the per-name list is O(1); removal from the flat array is unavoidably O(n).
+	 */
+	private removePendingSubDirectoryEntry(
+		entry: PendingSubDirectoryEntry,
+		node: ListNode<PendingSubDirectoryEntry>,
+	): void {
+		const flatIndex = this.pendingSubDirectoryData.indexOf(entry);
+		assert(
+			flatIndex !== -1,
+			"Pending subdirectory entry missing from pendingSubDirectoryData",
+		);
+		this.pendingSubDirectoryData.splice(flatIndex, 1);
+		node.remove();
+		const list = this.pendingSubDirectoryByName.get(entry.subdirName);
+		if (list !== undefined && list.empty) {
+			this.pendingSubDirectoryByName.delete(entry.subdirName);
+		}
+	}
+
+	/**
 	 * An internal iterator that iterates over the entries in the directory.
 	 */
 	private readonly internalIterator = (): IterableIterator<[string, unknown]> => {
@@ -1832,10 +1918,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 		subdirName: string,
 		getIfDisposed: boolean = false,
 	): SubDirectory | undefined => {
-		const latestPendingEntry = findLast(
-			this.pendingSubDirectoryData,
-			(entry) => entry.subdirName === subdirName,
-		);
+		const latestPendingEntry = this.pendingSubDirectoryByName.get(subdirName)?.last?.data;
 		let subdir: SubDirectory | undefined;
 		if (latestPendingEntry === undefined) {
 			subdir = this._sequencedSubdirectories.get(subdirName);
@@ -2098,15 +2181,15 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 
 		let subDir: SubDirectory | undefined;
 		if (local) {
-			const pendingEntryIndex = this.pendingSubDirectoryData.findIndex(
-				(entry) => entry.subdirName === op.subdirName,
-			);
-			const pendingEntry = this.pendingSubDirectoryData[pendingEntryIndex];
+			const pendingNode = this.pendingSubDirectoryByName.get(op.subdirName)?.first;
+			const pendingEntry = pendingNode?.data;
 			assert(
-				pendingEntry !== undefined && pendingEntry.type === "createSubDirectory",
+				pendingNode !== undefined &&
+					pendingEntry !== undefined &&
+					pendingEntry.type === "createSubDirectory",
 				0xc30 /* Got a local subdir create message we weren't expecting */,
 			);
-			this.pendingSubDirectoryData.splice(pendingEntryIndex, 1);
+			this.removePendingSubDirectoryEntry(pendingEntry, pendingNode);
 			subDir = pendingEntry.subdir;
 
 			const existingSubdir = this._sequencedSubdirectories.get(op.subdirName);
@@ -2148,7 +2231,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 
 			// Suppress the event if local changes would cause the incoming change to be invisible optimistically.
 			if (
-				!this.pendingSubDirectoryData.some((entry) => entry.subdirName === op.subdirName) &&
+				!this.pendingSubDirectoryByName.has(op.subdirName) &&
 				subDir.isNotDisposedAndReachable()
 			) {
 				this.emit("subDirectoryCreated", op.subdirName, local, this);
@@ -2198,17 +2281,16 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 			// This could happen if we already processed a remote delete op for
 			// the same subdirectory.
 			if (local) {
-				const pendingEntryIndex = this.pendingSubDirectoryData.findIndex(
-					(entry) => entry.subdirName === op.subdirName,
-				);
-				const pendingEntry = this.pendingSubDirectoryData[pendingEntryIndex];
+				const pendingNode = this.pendingSubDirectoryByName.get(op.subdirName)?.first;
+				const pendingEntry = pendingNode?.data;
 				assert(
-					pendingEntry !== undefined &&
+					pendingNode !== undefined &&
+						pendingEntry !== undefined &&
 						pendingEntry.type === "deleteSubDirectory" &&
 						pendingEntry.subdirName === op.subdirName,
 					0xc31 /* Got a local deleteSubDirectory message we weren't expecting */,
 				);
-				this.pendingSubDirectoryData.splice(pendingEntryIndex, 1);
+				this.removePendingSubDirectoryEntry(pendingEntry, pendingNode);
 			}
 			return;
 		}
@@ -2217,24 +2299,29 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 		this.disposeSubDirectoryTree(previousValue);
 
 		if (local) {
-			const pendingEntryIndex = this.pendingSubDirectoryData.findIndex(
-				(entry) => entry.subdirName === op.subdirName,
-			);
-			const pendingEntry = this.pendingSubDirectoryData[pendingEntryIndex];
+			const pendingNode = this.pendingSubDirectoryByName.get(op.subdirName)?.first;
+			const pendingEntry = pendingNode?.data;
 			assert(
-				pendingEntry !== undefined &&
+				pendingNode !== undefined &&
+					pendingEntry !== undefined &&
 					pendingEntry.type === "deleteSubDirectory" &&
 					pendingEntry.subdirName === op.subdirName,
 				0xc32 /* Got a local deleteSubDirectory message we weren't expecting */,
 			);
-			this.pendingSubDirectoryData.splice(pendingEntryIndex, 1);
+			this.removePendingSubDirectoryEntry(pendingEntry, pendingNode);
 		} else {
 			// Suppress the event if local changes would cause the incoming change to be invisible optimistically.
-			const pendingEntryIndex = this.pendingSubDirectoryData.findIndex(
-				(entry) => entry.subdirName === op.subdirName && entry.type === "deleteSubDirectory",
-			);
-			const pendingEntry = this.pendingSubDirectoryData[pendingEntryIndex];
-			if (pendingEntry === undefined) {
+			const list = this.pendingSubDirectoryByName.get(op.subdirName);
+			let hasPendingDelete = false;
+			if (list !== undefined) {
+				for (let node = list.first; node !== undefined; node = node.next) {
+					if (node.data.type === "deleteSubDirectory") {
+						hasPendingDelete = true;
+						break;
+					}
+				}
+			}
+			if (!hasPendingDelete) {
 				this.emit("subDirectoryDeleted", op.subdirName, local, this);
 			}
 		}
@@ -2352,9 +2439,9 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 		// is already deleted, in which case we don't need to submit the op.
 		if (localOpMetadata.type === "createSubDir") {
 			// For create operations, look specifically for createSubDirectory entries
-			const pendingEntry = findLast(
-				this.pendingSubDirectoryData,
-				(entry) => entry.subdirName === op.subdirName && entry.type === "createSubDirectory",
+			const pendingEntry = this.findLastPendingSubDirectoryEntry(
+				op.subdirName,
+				"createSubDirectory",
 			);
 			if (pendingEntry !== undefined) {
 				assert(
@@ -2373,9 +2460,9 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 				0xc34 /* Subdirectory should exist */,
 			);
 			// For delete operations, look specifically for deleteSubDirectory entries
-			const pendingEntry = findLast(
-				this.pendingSubDirectoryData,
-				(entry) => entry.subdirName === op.subdirName && entry.type === "deleteSubDirectory",
+			const pendingEntry = this.findLastPendingSubDirectoryEntry(
+				op.subdirName,
+				"deleteSubDirectory",
 			);
 			if (pendingEntry !== undefined) {
 				this.submitDeleteSubDirectoryMessage(op, localOpMetadata.subDirectory);
@@ -2526,17 +2613,17 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 		) {
 			const subdirName = directoryOp.subdirName;
 
-			const pendingEntryIndex = findLastIndex(
-				this.pendingSubDirectoryData,
-				(entry) => entry.type === "createSubDirectory" && entry.subdirName === subdirName,
+			const pendingNode = this.findLastPendingSubDirectoryNode(
+				subdirName,
+				"createSubDirectory",
 			);
-			const pendingEntry = this.pendingSubDirectoryData[pendingEntryIndex];
-			if (pendingEntry === undefined) {
+			if (pendingNode === undefined) {
 				// If we can't find a pending entry then it's likely we deleted and re-created this
 				// subdirectory from a remote delete subdir op. If that's the case then there is
 				// nothing to rollback since the pending data was removed with the subdirectory deletion.
 				return;
 			}
+			const pendingEntry = pendingNode.data;
 			assert(
 				pendingEntry.type === "createSubDirectory",
 				0xc71 /* Unexpected pending data for createSubDirectory op */,
@@ -2548,7 +2635,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 			// operation that references the same subdirectory.
 			this.emitDisposeForSubdirTree(pendingEntry.subdir);
 
-			this.pendingSubDirectoryData.splice(pendingEntryIndex, 1);
+			this.removePendingSubDirectoryEntry(pendingEntry, pendingNode);
 			this.emit("subDirectoryDeleted", subdirName, true, this);
 		} else if (
 			directoryOp.type === "deleteSubDirectory" &&
@@ -2556,22 +2643,22 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 		) {
 			const subdirName = directoryOp.subdirName;
 
-			const pendingEntryIndex = findLastIndex(
-				this.pendingSubDirectoryData,
-				(entry) => entry.type === "deleteSubDirectory" && entry.subdirName === subdirName,
+			const pendingNode = this.findLastPendingSubDirectoryNode(
+				subdirName,
+				"deleteSubDirectory",
 			);
-			const pendingEntry = this.pendingSubDirectoryData[pendingEntryIndex];
-			if (pendingEntry === undefined) {
+			if (pendingNode === undefined) {
 				// If we can't find a pending entry then it's likely we deleted and re-created this
 				// subdirectory from a remote delete subdir op. If that's the case then there is
 				// nothing to rollback since the pending data was removed with the subdirectory deletion.
 				return;
 			}
+			const pendingEntry = pendingNode.data;
 			assert(
 				pendingEntry.type === "deleteSubDirectory",
 				0xc72 /* Unexpected pending data for deleteSubDirectory op */,
 			);
-			this.pendingSubDirectoryData.splice(pendingEntryIndex, 1);
+			this.removePendingSubDirectoryEntry(pendingEntry, pendingNode);
 
 			// Restore the subdirectory
 			const subDirectoryToRestore = localOpMetadata.subDirectory;
@@ -2680,15 +2767,11 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 			}
 		}
 
-		const pendingSubdirNames = [
-			...new Set(
-				this.pendingSubDirectoryData
-					.map((entry) => entry.subdirName)
-					.filter((subdirName) => !sequencedSubdirNames.has(subdirName)),
-			),
-		];
 		const pendingSubdirs: [string, SubDirectory][] = [];
-		for (const subdirName of pendingSubdirNames) {
+		for (const subdirName of this.pendingSubDirectoryByName.keys()) {
+			if (sequencedSubdirNames.has(subdirName)) {
+				continue;
+			}
 			const optimisticSubdir = this.getOptimisticSubDirectory(subdirName, true);
 			if (optimisticSubdir !== undefined) {
 				pendingSubdirs.push([subdirName, optimisticSubdir]);
