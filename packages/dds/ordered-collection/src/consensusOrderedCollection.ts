@@ -309,6 +309,23 @@ export class ConsensusOrderedCollection<T = any>
 		}
 	}
 
+	/**
+	 * ConsensusOrderedCollection ops (add / acquire / complete / release) participate in a
+	 * server-ordered queue. Collapsing pending ops would change the queue's observable state
+	 * (e.g. an add+acquire pair is meaningfully different from no ops at all, since the queue
+	 * positions are externally observable). Squash on resubmit is therefore the identity
+	 * transform — each pending op is replayed in order via reSubmitCore.
+	 *
+	 * Known leak: `add` carries a serialized user value. A staging-mode sequence such as
+	 * `add(secret) -> acquire -> complete` (or `add(secret) -> acquire -> release`) still
+	 * transmits the `add` op on commit because identity squash replays it in order. Callers
+	 * that need leak-free staging behavior for queue values should hold the `add` locally
+	 * and only call `add` after committing the staging session.
+	 */
+	protected override reSubmitSquashed(content: unknown, localOpMetadata: unknown): void {
+		this.reSubmitCore(content, localOpMetadata);
+	}
+
 	protected override processMessagesCore(messagesCollection: IRuntimeMessageCollection): void {
 		const { envelope, local, messagesContent } = messagesCollection;
 		for (const messageContent of messagesContent) {
