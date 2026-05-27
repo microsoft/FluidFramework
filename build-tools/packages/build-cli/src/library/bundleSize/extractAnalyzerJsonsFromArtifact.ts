@@ -21,7 +21,15 @@ export function extractAnalyzerJsonsFromArtifact(
 		const sourcePackage = sourcePackageFromAnalyzerPath(relativePath);
 		if (sourcePackage === undefined) continue;
 		const text = Buffer.from(bytes).toString("utf8");
-		result.set(sourcePackage, JSON.parse(text) as BundleAnalyzerPlugin.JsonReport);
+		let parsed: BundleAnalyzerPlugin.JsonReport;
+		try {
+			parsed = JSON.parse(text) as BundleAnalyzerPlugin.JsonReport;
+		} catch (e) {
+			throw new Error(`Failed to parse analyzer.json at "${relativePath}" in artifact`, {
+				cause: e,
+			});
+		}
+		result.set(sourcePackage, parsed);
 	}
 	return result;
 }

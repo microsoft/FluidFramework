@@ -41,8 +41,15 @@ export async function readAnalyzerJsonsFromFileSystem(
 		globSync(analyzerJsonGlob, { cwd: rootPath }).map(async (relativePath) => {
 			const sourcePackage = sourcePackageFromAnalyzerPath(relativePath);
 			if (sourcePackage === undefined) return;
-			const text = await readFile(join(rootPath, relativePath), "utf8");
-			result.set(sourcePackage, JSON.parse(text) as BundleAnalyzerPlugin.JsonReport);
+			const fullPath = join(rootPath, relativePath);
+			const text = await readFile(fullPath, "utf8");
+			let parsed: BundleAnalyzerPlugin.JsonReport;
+			try {
+				parsed = JSON.parse(text) as BundleAnalyzerPlugin.JsonReport;
+			} catch (e) {
+				throw new Error(`Failed to parse analyzer.json at "${fullPath}"`, { cause: e });
+			}
+			result.set(sourcePackage, parsed);
 		}),
 	);
 	return result;
