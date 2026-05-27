@@ -524,10 +524,7 @@ export class SharedMatrix<T = any>
 		this.submitLocalMessage(op, metadata);
 		const pendingCell: PendingCellChanges<T> = this.pending.getCell(rowHandle, colHandle) ?? {
 			local: new DoublyLinkedList<{ localSeq: number; value: MatrixItem<T> }>(),
-			localByLocalSeq: new Map<
-				number,
-				ListNode<{ localSeq: number; value: MatrixItem<T> }>
-			>(),
+			localByLocalSeq: new Map<number, ListNode<{ localSeq: number; value: MatrixItem<T> }>>(),
 		};
 		const { first: node } = pendingCell.local.push({ localSeq, value });
 		pendingCell.localByLocalSeq.set(localSeq, node);
