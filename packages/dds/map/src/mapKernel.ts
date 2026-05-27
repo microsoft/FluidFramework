@@ -5,7 +5,11 @@
 
 import type { TypedEventEmitter } from "@fluid-internal/client-utils";
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
-import { DoublyLinkedList, assert, unreachableCase } from "@fluidframework/core-utils/internal";
+import {
+	DoublyLinkedList,
+	assert,
+	unreachableCase,
+} from "@fluidframework/core-utils/internal";
 import type { IFluidSerializer } from "@fluidframework/shared-object-base/internal";
 import { ValueType } from "@fluidframework/shared-object-base/internal";
 
@@ -425,7 +429,11 @@ export class MapKernel {
 			latestPendingEntry.type === "delete" ||
 			latestPendingEntry.type === "clear"
 		) {
-			latestPendingEntry = { type: "lifetime", key, keySets: new DoublyLinkedList<PendingKeySet>() };
+			latestPendingEntry = {
+				type: "lifetime",
+				key,
+				keySets: new DoublyLinkedList<PendingKeySet>(),
+			};
 			this.pendingData.push(latestPendingEntry);
 		}
 		const pendingKeySet: PendingKeySet = {
@@ -696,10 +704,7 @@ export class MapKernel {
 				pendingEntry !== undefined && pendingEntry.type === "delete",
 				0xbf3 /* Unexpected pending data for set/delete op */,
 			);
-			assert(
-				pendingEntry === typedLocalOpMetadata,
-				0xbf4 /* Unexpected delete rollback */,
-			);
+			assert(pendingEntry === typedLocalOpMetadata, 0xbf4 /* Unexpected delete rollback */);
 			this.pendingData.splice(pendingEntryIndex, 1);
 			// Only emit if rolling back the delete actually results in a value becoming visible.
 			if (this.getOptimisticLocalValue(mapOp.key) !== undefined) {
@@ -786,10 +791,7 @@ export class MapKernel {
 						"Got a local delete message we weren't expecting",
 					);
 					const pendingEntryIndex = this.pendingData.indexOf(localOpMetadata);
-					assert(
-						pendingEntryIndex !== -1,
-						"Local delete metadata not found in pending data",
-					);
+					assert(pendingEntryIndex !== -1, "Local delete metadata not found in pending data");
 					this.pendingData.splice(pendingEntryIndex, 1);
 
 					this.sequencedData.delete(key);

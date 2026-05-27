@@ -1447,7 +1447,11 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 			type: "deleteSubDirectory",
 			path: this.absolutePath,
 		};
-		this.submitDeleteSubDirectoryMessage(op, previousOptimisticSubDirectory, pendingSubdirDelete);
+		this.submitDeleteSubDirectoryMessage(
+			op,
+			previousOptimisticSubDirectory,
+			pendingSubdirDelete,
+		);
 		this.emit("subDirectoryDeleted", subdirName, true, this);
 		// We don't want to fully dispose the subdir tree since this is only a pending
 		// local delete. Instead we will only emit the dispose event to reflect the
