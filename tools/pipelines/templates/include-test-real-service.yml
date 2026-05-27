@@ -179,6 +179,8 @@ stages:
         - checkout: self
           path: $(FluidFrameworkDirectory)
           clean: true
+          fetchDepth: 1
+          fetchTags: false
 
         - bash: |
             git fetch --depth=1 origin $FF_SOURCE_VERSION
@@ -368,10 +370,12 @@ stages:
           displayName: '[test] ${{ parameters.testCommand }} ${{ variant.flags }}'
           continueOnError: ${{ parameters.continueOnError }}
           env:
-            # This allows node to resolve internal dependencies (such as @ff-internal/aria-logger) at test runtime.
-            NODE_PATH: $(Pipeline.Workspace)/$(FFPipelineHostDirectory)/node_modules
             ${{ each pair in parameters.env }}:
               ${{ pair.key }}: ${{ pair.value }}
+            # @ff-internal/aria-logger is installed under ff_pipeline_host's node_modules, which is
+            # outside the FluidFramework workspace where the test runs. ESM dynamic import() does not
+            # consult NODE_PATH or walk up to ff_pipeline_host, so pass an absolute path to the package.
+            FLUID_TEST_LOGGER_PKG_SPECIFIER: $(Pipeline.Workspace)/$(FFPipelineHostDirectory)/node_modules/@ff-internal/aria-logger
             # The ODSP tenant setup script (trips-setup --useFic) sets login__odsp__fic__test__users
             # and token__package__import__location as pipeline variables. The e2e test workload reads
             # those plus login__microsoft__clientId (sourced from prague-key-vault).
