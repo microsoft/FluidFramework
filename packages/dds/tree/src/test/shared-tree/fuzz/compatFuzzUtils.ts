@@ -98,7 +98,7 @@ const editGeneratorOpWeights: Partial<EditGeneratorOpWeights> = {
 	abort: 1,
 	fieldSelection: { optional: 1, required: 1, sequence: 3, recurse: 3 },
 	schema: 0,
-	nodeConstraint: 0, // XXX: Support node constraints.
+	nodeConstraint: 3,
 	fork: 1,
 	merge: 1,
 };
