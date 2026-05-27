@@ -596,8 +596,7 @@ class KernelEventBuffer implements Listenable<KernelEvents> {
 	 * producing last-touch iteration order at flush time. The underlying anchor set always
 	 * fires descendant events before ancestor events within each batch, so an ancestor's
 	 * buffer is touched after all of its descendants' buffers in every batch — and last-touch
-	 * ordering therefore yields descendant-before-ancestor emission. This matches the natural
-	 * single-batch ordering documented by `treeNodeApi.spec.ts > on > cross-node ordering`.
+	 * ordering therefore yields descendant-before-ancestor emission order.
 	 */
 	#frameForCurrentScope(): BufferFrame | undefined {
 		if (scopeStack.length === 0) {

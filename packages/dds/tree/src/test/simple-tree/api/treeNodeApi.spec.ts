@@ -2548,8 +2548,7 @@ describe("treeNodeApi", () => {
 		});
 
 		// The next block of tests pins down the cross-node ordering invariants of
-		// 'nodeChanged' and 'treeChanged' under normal (un-buffered) emission. These are the
-		// invariants buffered emission (`deferEvents` / `withBufferedTreeEvents`) should match.
+		// 'nodeChanged' and 'treeChanged' event emission.
 		//
 		// Summary of the invariants:
 		// 1. On a single node, 'nodeChanged' fires before 'treeChanged'.
