@@ -25,6 +25,7 @@ export class ConsensusRegisterCollectionClass<T> extends SharedObject<IConsensus
     read(key: string, readPolicy?: ReadPolicy): T | undefined;
     // (undocumented)
     readVersions(key: string): T[] | undefined;
+    protected reSubmitSquashed(content: unknown, localOpMetadata: unknown): void;
     // @sealed
     protected rollback(content: unknown, localOpMetadata: unknown): void;
     // (undocumented)
