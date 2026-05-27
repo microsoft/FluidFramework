@@ -297,7 +297,7 @@ stages:
             workingDirectory: $(Pipeline.Workspace)/$(FFPipelineHostDirectory)
             script: |
               set -eu -o pipefail
-              pnpm install
+              pnpm i --frozen-lockfile
 
         # Install FluidFramework dependencies from the committed lockfile.
         - task: Bash@3
