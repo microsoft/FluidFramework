@@ -3,7 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { DoublyLinkedList, assert, unreachableCase } from "@fluidframework/core-utils/internal";
+import {
+	DoublyLinkedList,
+	assert,
+	unreachableCase,
+} from "@fluidframework/core-utils/internal";
 import type {
 	Serializable,
 	IChannelAttributes,
@@ -1047,9 +1051,7 @@ export class SharedArrayClass<T extends SerializableTypeForSharedArray>
 			// behavior.
 			const insertAfterEntry = this.findEntryById(insertAfterEntryId);
 			index =
-				insertAfterEntry === undefined
-					? 0
-					: this.sharedArray.indexOf(insertAfterEntry) + 1;
+				insertAfterEntry === undefined ? 0 : this.sharedArray.indexOf(insertAfterEntry) + 1;
 		}
 		const newEntry = this.createNewEntry<SerializableTypeForSharedArray>(entryId, value);
 		newEntry.isAckPending = true;
