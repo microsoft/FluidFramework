@@ -1300,10 +1300,7 @@ describe("sharedTreeView", () => {
 				args.duringEdit(view);
 			});
 
-			assert.throws(
-				() => (view.root.number = 0),
-				validateUsageError(new RegExp(args.error)),
-			);
+			assert.throws(() => (view.root.number = 0), validateUsageError(new RegExp(args.error)));
 		}
 
 		it("edit the tree", () => {
