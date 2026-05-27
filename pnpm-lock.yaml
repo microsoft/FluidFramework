@@ -14602,6 +14602,9 @@ importers:
       '@fluidframework/server-local-server':
         specifier: ^7.0.1
         version: 7.0.1
+      '@fluidframework/shared-claims':
+        specifier: workspace:~
+        version: link:../../dds/shared-claims
       '@fluidframework/task-manager':
         specifier: workspace:~
         version: link:../../dds/task-manager

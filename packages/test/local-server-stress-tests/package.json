@@ -87,6 +87,7 @@
 		"@fluidframework/runtime-utils": "workspace:~",
 		"@fluidframework/sequence": "workspace:~",
 		"@fluidframework/server-local-server": "^7.0.1",
+		"@fluidframework/shared-claims": "workspace:~",
 		"@fluidframework/task-manager": "workspace:~",
 		"@fluidframework/telemetry-utils": "workspace:~",
 		"@fluidframework/test-utils": "workspace:~",
@@ -121,7 +122,8 @@
 				"@fluidframework/legacy-dds#build:test:esm",
 				"@fluidframework/ordered-collection#build:test:esm",
 				"@fluidframework/counter#build:test:esm",
-				"@fluidframework/register-collection#build:test:esm"
+				"@fluidframework/register-collection#build:test:esm",
+				"@fluidframework/shared-claims#build:test:esm"
 			]
 		}
 	},

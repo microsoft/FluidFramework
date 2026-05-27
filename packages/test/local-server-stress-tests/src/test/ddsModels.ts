@@ -16,6 +16,7 @@ import {
 	baseSharedStringModel,
 	baseIntervalModel,
 } from "@fluidframework/sequence/internal/test";
+import { baseClaimsModel } from "@fluidframework/shared-claims/internal/test";
 import { baseTaskManagerModel } from "@fluidframework/task-manager/internal/test";
 import { baseTreeModel } from "@fluidframework/tree/internal/test";
 
@@ -86,4 +87,5 @@ export const ddsModelMap = generateSubModelMap(
 	baseCounterModel,
 	baseRegisterCollectionModel,
 	baseConsensusOrderedCollectionModel,
+	baseClaimsModel,
 );
