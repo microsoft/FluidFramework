@@ -1270,11 +1270,19 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 			}
 
 			if (newOp) {
+				let newPreviousProps: WeakMap<ISegmentLeaf, PropertySet> | undefined;
+				if (segmentGroup.previousProps) {
+					const sourceProps = segmentGroup.previousProps.get(segment);
+					newPreviousProps = new WeakMap();
+					if (sourceProps !== undefined) {
+						newPreviousProps.set(segment, sourceProps);
+					}
+				}
 				const newSegmentGroup: SegmentGroup = {
 					segments: [],
 					localSeq: segmentGroup.localSeq,
 					refSeq: this.getCollabWindow().currentSeq,
-					previousProps: segmentGroup.previousProps?.slice(0),
+					previousProps: newPreviousProps,
 				};
 
 				segment.segmentGroups.enqueue(newSegmentGroup);

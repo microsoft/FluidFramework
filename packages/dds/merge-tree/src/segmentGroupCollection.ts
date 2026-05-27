@@ -51,10 +51,10 @@ export class SegmentGroupCollection {
 	private enqueueOnCopy(segmentGroup: SegmentGroup, sourceSegment: ISegmentLeaf): void {
 		this.enqueue(segmentGroup);
 		if (segmentGroup.previousProps) {
-			// duplicate the previousProps for this segment
-			const index = segmentGroup.segments.indexOf(sourceSegment);
-			if (index !== -1) {
-				segmentGroup.previousProps.push(segmentGroup.previousProps[index]);
+			// duplicate the previousProps entry for the destination segment, keyed off the source's entry
+			const sourceProps = segmentGroup.previousProps.get(sourceSegment);
+			if (sourceProps !== undefined) {
+				segmentGroup.previousProps.set(this.segment, sourceProps);
 			}
 		}
 	}
