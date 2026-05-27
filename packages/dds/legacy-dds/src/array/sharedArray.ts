@@ -635,6 +635,14 @@ export class SharedArrayClass<T extends SerializableTypeForSharedArray>
 			this.getEntryForId(entryId).isAckPending = false;
 		} else {
 			if (insertAfterEntryId !== undefined) {
+				// This call site still uses the index-returning helper because the
+				// result feeds `getInternalInsertIndexByIgnoringLocalPendingInserts`,
+				// which iterates `sharedArray` from a starting array position to skip
+				// over locally-pending inserts. Rewriting that helper in terms of an
+				// entry reference would require restructuring how local-pending state
+				// is tracked, which is out of scope for this change. Switching to
+				// `findEntryById` + `indexOf` here would not be an improvement since
+				// `indexOf` is itself O(n).
 				index = this.findIndexOfEntryId(insertAfterEntryId) + 1;
 			}
 			const newEntry = this.createNewEntry(entryId, value);
@@ -873,17 +881,30 @@ export class SharedArrayClass<T extends SerializableTypeForSharedArray>
 		return -1;
 	}
 
+	/**
+	 * O(1) lookup of an entry by its entryId via {@link idToEntryMap}.
+	 * Returns `undefined` if the id is `undefined` or not present in the map.
+	 *
+	 * Prefer this over {@link findIndexOfEntryId} whenever the caller only needs
+	 * the entry (and not its array position), since the map-based lookup avoids
+	 * the linear scan over `sharedArray`.
+	 */
+	private findEntryById(entryId: string | undefined): SharedArrayEntry<T> | undefined {
+		if (entryId === undefined) {
+			return undefined;
+		}
+		return this.idToEntryMap.get(entryId);
+	}
+
 	private prepareToMakeEntryIdLive(entry: SharedArrayEntry<T>): void {
-		const prevIndex = this.findIndexOfEntryId(entry.prevEntryId);
-		const nextIndex = this.findIndexOfEntryId(entry.nextEntryId);
-		if (prevIndex !== -1) {
-			const prevEntry = this.sharedArray[prevIndex];
-			assert(prevEntry !== undefined, 0xb97 /* Invalid index */);
+		// We only need the neighbor entries to mutate their prev/next pointers; the
+		// array index is irrelevant here, so use the O(1) map-based lookup.
+		const prevEntry = this.findEntryById(entry.prevEntryId);
+		const nextEntry = this.findEntryById(entry.nextEntryId);
+		if (prevEntry !== undefined) {
 			prevEntry.nextEntryId = entry.nextEntryId;
 		}
-		if (nextIndex !== -1) {
-			const nextEntry = this.sharedArray[nextIndex];
-			assert(nextEntry !== undefined, 0xb98 /* Invalid index */);
+		if (nextEntry !== undefined) {
 			nextEntry.prevEntryId = entry.prevEntryId;
 		}
 		entry.prevEntryId = undefined;
@@ -958,7 +979,17 @@ export class SharedArrayClass<T extends SerializableTypeForSharedArray>
 	): void {
 		let index = 0;
 		if (insertAfterEntryId !== undefined) {
-			index = this.findIndexOfEntryId(insertAfterEntryId) + 1;
+			// The map-based lookup is O(1); deriving the array index from the entry
+			// reference still requires `indexOf`, but that is unavoidable here since
+			// we need a position in `sharedArray` for splice insertion.
+			// If the entry is not present (matching the previous `findIndexOfEntryId`
+			// returning -1) we fall back to inserting at the front, preserving prior
+			// behavior.
+			const insertAfterEntry = this.findEntryById(insertAfterEntryId);
+			index =
+				insertAfterEntry === undefined
+					? 0
+					: this.sharedArray.indexOf(insertAfterEntry) + 1;
 		}
 		const newEntry = this.createNewEntry<SerializableTypeForSharedArray>(entryId, value);
 		newEntry.isAckPending = true;
