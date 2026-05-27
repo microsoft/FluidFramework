@@ -54,6 +54,13 @@ const config: Linter.Config[] = [
 		},
 	},
 	{
+		files: ["src/test/.mocharc.js"],
+		rules: {
+			"import-x/no-default-export": "off",
+			"import-x/no-internal-modules": "off",
+		},
+	},
+	{
 		// Override @typescript-eslint/parser to use explicit project list instead of projectService.
 		// This is a test-only package without a root tsconfig.json, so typescript-eslint's
 		// projectService can't auto-discover the project configuration.
