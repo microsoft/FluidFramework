@@ -15894,8 +15894,8 @@ importers:
         specifier: workspace:~
         version: link:../test-version-utils
       '@fluid-tools/benchmark':
-        specifier: ^0.58.0
-        version: 0.58.0
+        specifier: ^0.59.0
+        version: 0.59.0
       '@fluidframework/agent-scheduler':
         specifier: workspace:~
         version: link:../../framework/agent-scheduler
@@ -16021,7 +16021,7 @@ importers:
         version: 2.0.8
       tinylicious:
         specifier: ^7.0.0
-        version: 7.0.0
+        version: 7.0.1
       uuid:
         specifier: ^11.1.0
         version: 11.1.0
