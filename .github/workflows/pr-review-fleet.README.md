@@ -13,7 +13,7 @@ Four workflows compose the PR fleet review system:
 
 ## 1. `pr-review-auto-route.yml` — Sizer + Proposal
 
-- **Trigger:** `pull_request_target` on `opened` / `reopened` / `synchronize` (base branches `main`, `next`, `release/**`).
+- **Trigger:** `pull_request_target` on `opened` / `reopened` / `synchronize` (base branches `main`, `next`, `release/**/*`).
 - **Permissions:** `contents: read`, `pull-requests: write`.
 - **Context:** Runs from the **base branch** with a write token + secrets. Critical security invariant: never checks out the PR head; only diffs against it for stats (lines / files / packages). This is what makes it safe to use `pull_request_target` for fork PRs.
 - **What it does:** Computes a recommended fleet tier (1 / 3 / 5 reviewers) from thresholds on lines, files, and packages, then posts a **sticky comment** (`<!-- pr-review-confirm -->` marker) with pre-checked reviewer checkboxes and a "Start review" checkbox. On `synchronize` it carries forward prior toggles and short-circuits if "Start review" is already checked. Skips entirely if the `fleet-review` label is set (label flow takes precedence).
