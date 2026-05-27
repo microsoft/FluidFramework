@@ -8,11 +8,7 @@ import {
 	AttachState,
 	type ReadOnlyInfo,
 } from "@fluidframework/container-definitions/internal";
-import {
-	DoublyLinkedList,
-	type ListNode,
-	assert,
-} from "@fluidframework/core-utils/internal";
+import { DoublyLinkedList, type ListNode, assert } from "@fluidframework/core-utils/internal";
 import type {
 	IChannelAttributes,
 	IFluidDataStoreRuntime,
@@ -701,8 +697,7 @@ export class TaskManagerClass
 		const pendingOps = this.latestPendingOps.get(content.taskId);
 		assert(pendingOps !== undefined, 0xc42 /* No pending ops for task on resubmit attempt */);
 		const pendingOpNode = pendingOps.find(
-			(node) =>
-				node.data.messageId === localOpMetadata && node.data.type === content.type,
+			(node) => node.data.messageId === localOpMetadata && node.data.type === content.type,
 		);
 		assert(
 			pendingOpNode !== undefined,
@@ -853,10 +848,7 @@ export class TaskManagerClass
 		const realClientId = this.runtime.clientId;
 		for (const [taskId, clientQueue] of this.taskQueues) {
 			const clientNodes = this.taskQueueNodes.get(taskId);
-			assert(
-				clientNodes !== undefined,
-				"taskQueueNodes side map missing entry for taskId",
-			);
+			assert(clientNodes !== undefined, "taskQueueNodes side map missing entry for taskId");
 			const placeholderNode = clientNodes.get(placeholderClientId);
 			if (placeholderNode !== undefined) {
 				if (clientNodes.has(realClientId)) {
@@ -880,10 +872,7 @@ export class TaskManagerClass
 		const quorum = this.runtime.getQuorum();
 		for (const [taskId, clientQueue] of this.taskQueues) {
 			const clientNodes = this.taskQueueNodes.get(taskId);
-			assert(
-				clientNodes !== undefined,
-				"taskQueueNodes side map missing entry for taskId",
-			);
+			assert(clientNodes !== undefined, "taskQueueNodes side map missing entry for taskId");
 			let removed = false;
 			// Walk by collecting removable nodes first to avoid mutating during iteration.
 			const toRemove: ListNode<string>[] = [];
