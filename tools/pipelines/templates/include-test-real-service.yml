@@ -287,7 +287,8 @@ stages:
 
         # Install ff_pipeline_host dependencies (provides @ff-internal/aria-logger, trips-setup/cleanup, telemetry-generator).
         # These tools are internal and not part of the FluidFramework lockfile. The test process resolves
-        # @ff-internal/aria-logger via NODE_PATH (set on the test invocation below).
+        # @ff-internal/aria-logger after it is linked into $(FluidFrameworkDirectory)/node_modules below,
+        # using Node's standard module resolution from the test working directory.
         - task: Bash@3
           displayName: Install ff_pipeline_host dependencies
           retryCountOnTaskFailure: 4
