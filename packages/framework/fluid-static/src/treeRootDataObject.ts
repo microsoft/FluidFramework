@@ -232,7 +232,7 @@ export function createTreeContainerRuntimeFactory(props: {
  * @remarks
  * The entry point is opaque to caller.
  * The root data object's registry and shared objects are configured based on the provided
- * SharedTree and optionally data store registry.
+ * SharedTree and optional data store registry.
  *
  * @deprecated Pass `minVersionForCollaboration` directly instead of using `compatibilityMode`.
  *
