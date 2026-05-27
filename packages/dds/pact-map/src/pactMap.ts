@@ -368,6 +368,17 @@ export class PactMapClass<T = unknown>
 	protected onDisconnect(): void {}
 
 	/**
+	 * PactMap implements consensus over proposed values: each set is a proposal that must be
+	 * accepted by all connected clients at the time it was sequenced. Collapsing pending
+	 * proposals would change observable consensus semantics (and PactMap already drops a new
+	 * set early if there is an outstanding pending proposal for the same key, so the squash
+	 * surface is small in practice). Squash on resubmit is the identity transform.
+	 */
+	protected override reSubmitSquashed(content: unknown, localOpMetadata: unknown): void {
+		this.reSubmitCore(content, localOpMetadata);
+	}
+
+	/**
 	 * {@inheritDoc @fluidframework/shared-object-base#SharedObjectCore.reSubmitCore}
 	 */
 	protected reSubmitCore(content: unknown, localOpMetadata: unknown): void {
