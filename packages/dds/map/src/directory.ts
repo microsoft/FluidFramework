@@ -7,7 +7,7 @@
 /* eslint-disable @typescript-eslint/prefer-nullish-coalescing, @typescript-eslint/prefer-optional-chain */
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
+import { DoublyLinkedList, assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import type {
 	IChannelAttributes,
 	IFluidDataStoreRuntime,
@@ -241,11 +241,11 @@ interface PendingKeyLifetime {
 	key: string;
 	path: string;
 	/**
-	 * A non-empty array of pending key sets that occurred during this lifetime.  If the list
+	 * A non-empty list of pending key sets that occurred during this lifetime.  If the list
 	 * becomes empty (e.g. during processing or rollback), the lifetime no longer exists and
 	 * must be removed from the pending data.
 	 */
-	keySets: PendingKeySet[];
+	keySets: DoublyLinkedList<PendingKeySet>;
 	subdir: SubDirectory;
 }
 
@@ -1246,7 +1246,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 				type: "lifetime",
 				path: this.absolutePath,
 				key,
-				keySets: [],
+				keySets: new DoublyLinkedList<PendingKeySet>(),
 				subdir: this,
 			};
 			this.pendingStorageData.push(latestPendingEntry);
@@ -1757,7 +1757,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 					if (nextPendingEntryIndex > mostRecentDeleteOrClearIndex) {
 						const latestPendingValue =
 							// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-							nextPendingEntry.keySets[nextPendingEntry.keySets.length - 1]!;
+							nextPendingEntry.keySets.last!.data;
 						// Skip iterating if we would have would have already iterated it as part of the sequenced data.
 						// This is not a perfect check in the case the map has changed since the iterator was created
 						// (e.g. if a remote client added the same key in the meantime).
@@ -1799,7 +1799,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 		} else if (latestPendingEntry.type === "lifetime") {
 			const latestPendingSet =
 				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-				latestPendingEntry.keySets[latestPendingEntry.keySets.length - 1]!;
+				latestPendingEntry.keySets.last!.data;
 			return latestPendingSet.value;
 		} else {
 			// Delete or clear
@@ -2041,15 +2041,15 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 				pendingEntry !== undefined && pendingEntry.type === "lifetime",
 				0xc06 /* Couldn't match local set message to pending lifetime */,
 			);
-			const pendingKeySet = pendingEntry.keySets.shift();
+			const pendingKeySetNode = pendingEntry.keySets.shift();
 			assert(
-				pendingKeySet !== undefined && pendingKeySet === localOpMetadata,
+				pendingKeySetNode !== undefined && pendingKeySetNode.data === localOpMetadata,
 				0xc07 /* Got a local set message we weren't expecting */,
 			);
 			if (pendingEntry.keySets.length === 0) {
 				this.pendingStorageData.splice(pendingEntryIndex, 1);
 			}
-			this.sequencedStorageData.set(key, pendingKeySet.value);
+			this.sequencedStorageData.set(key, pendingKeySetNode.data.value);
 		} else {
 			// Get the previous value before setting the new value
 			const previousValue: unknown = this.sequencedStorageData.get(key);
@@ -2302,7 +2302,8 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 						entry.key === op.key &&
 						// We also check that the keySets include the localOpMetadata. It's possible we have new
 						// pending key sets that are not the op we are looking for.
-						entry.keySets.includes(localOpMetadata as PendingKeySet)
+						entry.keySets.find((node) => node.data === (localOpMetadata as PendingKeySet)) !==
+							undefined
 				: entry.type === "delete" && entry.key === op.key;
 		});
 		const pendingEntry = this.pendingStorageData[pendingEntryIndex];
@@ -2500,9 +2501,9 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 					this.emit("containedValueChanged", containedEvent, true, this);
 				}
 			} else if (pendingEntry.type === "lifetime") {
-				const pendingKeySet = pendingEntry.keySets.pop();
+				const pendingKeySetNode = pendingEntry.keySets.pop();
 				assert(
-					pendingKeySet !== undefined && pendingKeySet === localOpMetadata,
+					pendingKeySetNode !== undefined && pendingKeySetNode.data === localOpMetadata,
 					0xc0c /* Unexpected set rollback */,
 				);
 				if (pendingEntry.keySets.length === 0) {
@@ -2511,12 +2512,12 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 				const event: IDirectoryValueChanged = {
 					key: directoryOp.key,
 					path: this.absolutePath,
-					previousValue: pendingKeySet.value,
+					previousValue: pendingKeySetNode.data.value,
 				};
 				this.directory.emit("valueChanged", event, true, this.directory);
 				const containedEvent: IValueChanged = {
 					key: directoryOp.key,
-					previousValue: pendingKeySet.value,
+					previousValue: pendingKeySetNode.data.value,
 				};
 				this.emit("containedValueChanged", containedEvent, true, this);
 			}
