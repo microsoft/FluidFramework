@@ -6,6 +6,7 @@
 import { DoublyLinkedList, walkList } from "@fluidframework/core-utils/internal";
 
 import type { SegmentGroup, ISegmentLeaf } from "./mergeTreeNodes.js";
+import type { PropertySet } from "./properties.js";
 
 export class SegmentGroupCollection {
 	private readonly segmentGroups: DoublyLinkedList<SegmentGroup>;
@@ -46,6 +47,23 @@ export class SegmentGroupCollection {
 
 	public copyTo(segmentGroups: SegmentGroupCollection): void {
 		walkList(this.segmentGroups, (sg) => segmentGroups.enqueueOnCopy(sg.data, this.segment));
+	}
+
+	/**
+	 * Returns the previousProps entry paired with this collection's segment within the given
+	 * segmentGroup, or undefined if the group has no previousProps or the segment is not a member.
+	 * Encapsulates the invariant that the i-th entry of `segmentGroup.previousProps` pairs with
+	 * the i-th entry of `segmentGroup.segments`.
+	 */
+	public previousPropsForSegment(segmentGroup: SegmentGroup): PropertySet | undefined {
+		if (segmentGroup.previousProps === undefined) {
+			return undefined;
+		}
+		const index = segmentGroup.segments.indexOf(this.segment);
+		if (index === -1) {
+			return undefined;
+		}
+		return segmentGroup.previousProps[index];
 	}
 
 	private enqueueOnCopy(segmentGroup: SegmentGroup, sourceSegment: ISegmentLeaf): void {
