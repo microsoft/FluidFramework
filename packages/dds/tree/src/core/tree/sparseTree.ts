@@ -111,9 +111,8 @@ export class SparseNode<TData> implements UpPath {
 	public removeChild(child: SparseNode<TData>): void {
 		const key = child.parentField;
 		const field = this.children.get(key);
-		// TODO: should do more optimized search (ex: binary search or better) using child.parentIndex()
-		// Note that this is the index in the list of child paths, not the index within the field
-		const childIndex = field?.indexOf(child) ?? -1;
+		// Note that this is the index in the list of child paths, not the index within the field.
+		const childIndex = field === undefined ? -1 : binaryFindIndex(field, child.parentIndex);
 		assert(childIndex !== -1, 0x4a5 /* child must be parented to be removed */);
 		field?.splice(childIndex, 1);
 		if (field?.length === 0) {
@@ -143,6 +142,32 @@ export class SparseNode<TData> implements UpPath {
 		// eslint-disable-next-line unicorn/prefer-dom-node-remove -- Custom tree structure, not DOM
 		this.parentPath?.removeChild(this);
 	}
+}
+
+/**
+ * Find the array index of a child SparseNode by its parentIndex using a binary search.
+ * @param sorted - array of SparseNode's sorted by parentIndex.
+ * @param index - parentIndex being looked for.
+ * @returns array index of the child with the requested parentIndex, or -1 if not found.
+ */
+function binaryFindIndex<TData>(sorted: readonly SparseNode<TData>[], index: number): number {
+	// inclusive
+	let min = 0;
+	// exclusive
+	let max = sorted.length;
+
+	while (min !== max) {
+		const mid = Math.floor((min + max) / 2);
+		const found = sorted[mid]!.parentIndex;
+		if (found === index) {
+			return mid;
+		} else if (found > index) {
+			max = mid;
+		} else {
+			min = mid + 1;
+		}
+	}
+	return -1;
 }
 
 export function getDescendant<TData>(
