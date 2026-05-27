@@ -35,7 +35,7 @@ import {
 } from "../../../util/index.js";
 import { TreeCompressionStrategy } from "../../treeCompressionUtils.js";
 
-import { decode } from "./chunkDecoding.js";
+import { decode, type IdDecodingContext } from "./chunkDecoding.js";
 import type { FieldBatch } from "./fieldBatch.js";
 import {
 	EncodedFieldBatchV1,
@@ -148,7 +148,7 @@ export interface FieldBatchEncodingContext {
  * op-style and summary-style decoding is load-bearing (different invariants
  * apply, and bugs in this area are typically the result of conflating them).
  */
-export class FieldBatchDecodingContext {
+export class FieldBatchDecodingContext implements IdDecodingContext {
 	private constructor(
 		/**
 		 * Used internally to prevent the use of this decoder in incremental chunks if it has a session id which (which would be wrong in those chunks).
@@ -156,10 +156,11 @@ export class FieldBatchDecodingContext {
 		private readonly hasOriginatorSessionId: boolean,
 
 		public readonly idCompressor: IIdCompressor,
-		/** See {@link IdDecodingContext.resolveEncodedId}. */
+
 		public readonly resolveEncodedId: (
 			id: OpSpaceCompressedId,
 		) => SessionSpaceCompressedId | string,
+
 		/**
 		 * Decoder for incremental fields. Defined when the encoded batch contains
 		 * incremental chunks. Only populated on summary-style contexts; op-style

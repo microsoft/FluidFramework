@@ -120,10 +120,7 @@ describe("sharedTreeChangeCodec", () => {
 				data: EncodedFieldBatchV1OrV2,
 				context: FieldBatchDecodingContext,
 			): FieldBatch => {
-				return decode(data, {
-					idCompressor: context.idCompressor,
-					resolveEncodedId: context.resolveEncodedId,
-				}).map((chunk) => chunk.cursor());
+				return decode(data, context).map((chunk) => chunk.cursor());
 			},
 			writeVersion: FieldBatchFormatVersion.v2,
 		};

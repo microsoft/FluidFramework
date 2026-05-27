@@ -266,7 +266,7 @@ export interface IIdCompressor {
 	 * or throw if it detects that the final id is not valid in this compressor.
 	 *
 	 * Returns `undefined` if `id` is a non-final op-space ID — those are local to the
-	 * originating session and require its session id to resolve. Callers in which have the
+	 * originating session and require its session id to resolve. Callers which have the
 	 * originating session id should call {@link IIdCompressor.normalizeToSessionSpace} instead.
 	 *
 	 * @param id - The ID to normalize.
@@ -277,7 +277,7 @@ export interface IIdCompressor {
 	 *
 	 * @privateRemarks
 	 * Currently this is only used for data recovery in the case of lost session ids,
-	 * but it we could theoretically provide an API to determine if the session id is required when encoding data (some IDs were non-final):
+	 * but we could theoretically provide an API to determine if the session id is required when encoding data (some IDs were non-final):
 	 * in such a setup, this API, and/or a version of normalizeToSessionSpace where the session id is optional,
 	 * could be used for a regular non-recovery use-case.
 	 */

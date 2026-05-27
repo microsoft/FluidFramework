@@ -130,7 +130,7 @@ describe("compressedIds", () => {
 			const { opSpaceId } = makeUnresolvableOpSpaceId();
 			assert.throws(
 				() => forceDecodeEncodedIdWithoutSession(opSpaceId, testIdCompressor, undefined),
-				/Summary could not be loaded due incorrectly encoded identifier/,
+				/Summary could not be loaded due to an incorrectly encoded identifier/,
 			);
 		});
 

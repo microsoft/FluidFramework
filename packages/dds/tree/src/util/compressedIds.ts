@@ -121,7 +121,7 @@ export function forceDecodeEncodedIdWithoutSession(
 		return uuidV5(`${healing.sharedObjectId}|${id}`, healingNamespace);
 	}
 	throw new Error(
-		"Summary could not be loaded due incorrectly encoded identifier. See SharedTreeOptionsBeta.healUnresolvableIdentifiersOnDecode for mitigation.",
+		"Summary could not be loaded due to an incorrectly encoded identifier. See SharedTreeOptionsBeta.healUnresolvableIdentifiersOnDecode for mitigation.",
 	);
 }
 

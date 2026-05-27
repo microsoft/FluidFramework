@@ -53,15 +53,26 @@ import {
 	supportsIncrementalEncoding,
 } from "./format/index.js";
 
+/**
+ * Context for decoding identifiers.
+ * @remarks
+ * See {@link FieldBatchDecodingContext} for the production implementation of this.
+ */
 export interface IdDecodingContext {
-	idCompressor: IIdCompressor;
+	/**
+	 * Compressor which can decompress session-space identifiers from {@link resolveEncodedId} as needed.
+	 */
+	readonly idCompressor: IIdCompressor;
 	/**
 	 * Resolves an encoded op-space identifier to either a session-space id
-	 * (which the codec then decompresses) or a string (which passes through
-	 * unchanged). See {@link FieldBatchDecodingContext.forOp} and
-	 * {@link FieldBatchDecodingContext.forSummary} for the standard constructions.
+	 * (which {@link idCompressor} can decompress if needed)
+	 * or a string (which passes through unchanged).
+	 * @remarks
+	 * In contexts where non-final identifiers can't be supported (where no originator session is available),
+	 * if a non-final identifier is encountered, this may throw or perform a data healing workaround.
+	 * See {@link FieldBatchDecodingContext.forOp} and {@link FieldBatchDecodingContext.forSummary} for details.
 	 */
-	resolveEncodedId: (id: OpSpaceCompressedId) => SessionSpaceCompressedId | string;
+	readonly resolveEncodedId: (id: OpSpaceCompressedId) => SessionSpaceCompressedId | string;
 }
 
 /**
@@ -139,6 +150,10 @@ export function readValue(
 				typeof streamValue === "string"
 					? streamValue
 					: idDecodingContext.resolveEncodedId(streamValue as OpSpaceCompressedId);
+			// Performance:
+			// Currently, we just fully expand the identifier here rather than keeping it in the SessionSpaceCompressedId format.
+			// Avoiding this expansion, and keeping the in memory format using SessionSpaceCompressedId would be a good optimization for the future.
+			// Keeping this optimization possible is why we resolveEncodedId doesn't simply return a string.
 			return decompressIdentifierIfNeeded(sessionIdOrString, idDecodingContext.idCompressor);
 		} else {
 			// EncodedCounter case:
