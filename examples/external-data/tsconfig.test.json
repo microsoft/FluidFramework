@@ -1,0 +1,15 @@
+{
+	// Type-check-only project for the Playwright tests and playwright.config.ts.
+	// Because eslint here lints both `src` and `tests`, typescript-eslint's
+	// projectService needs a tsconfig that covers the test files — but they
+	// shouldn't participate in the package's emit (Playwright transpiles them at
+	// runtime). Hence noEmit: true, mirroring the pattern in collaborative-textarea.
+	"extends": "../../common/build/build-common/tsconfig.node16.json",
+	"compilerOptions": {
+		"noEmit": true,
+		"types": ["node", "react"],
+		"noUncheckedIndexedAccess": false,
+		"exactOptionalPropertyTypes": false,
+	},
+	"include": ["src/**/*", "tests/**/*", "playwright.config.ts"],
+}

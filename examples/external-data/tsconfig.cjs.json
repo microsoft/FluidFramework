@@ -4,7 +4,4 @@
 	"compilerOptions": {
 		"outDir": "./dist",
 	},
-	// playwright.config.ts uses import.meta which isn't allowed in CommonJS output;
-	// it's only consumed by Playwright's own runner and doesn't need a CJS build.
-	"exclude": ["playwright.config.ts"],
 }
