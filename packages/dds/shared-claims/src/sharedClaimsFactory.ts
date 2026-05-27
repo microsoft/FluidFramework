@@ -11,30 +11,30 @@ import type {
 } from "@fluidframework/datastore-definitions/internal";
 import { createSharedObjectKind } from "@fluidframework/shared-object-base/internal";
 
-import type { ISharedClaims } from "./interfaces.js";
+import type { IClaims } from "./interfaces.js";
 import { pkgVersion } from "./packageVersion.js";
-import { SharedClaims as SharedClaimsImpl } from "./sharedClaims.js";
+import { Claims as ClaimsImpl } from "./sharedClaims.js";
 
 /**
- * Factory for creating SharedClaims instances.
+ * Factory for creating Claims instances.
  *
  * @internal
  */
-export class SharedClaimsFactory implements IChannelFactory<ISharedClaims> {
+export class ClaimsFactory implements IChannelFactory<IClaims> {
 	public static readonly Type = "https://graph.microsoft.com/types/shared-claims";
 
 	public static readonly Attributes: IChannelAttributes = {
-		type: SharedClaimsFactory.Type,
+		type: ClaimsFactory.Type,
 		snapshotFormatVersion: "0.1",
 		packageVersion: pkgVersion,
 	};
 
 	public get type(): string {
-		return SharedClaimsFactory.Type;
+		return ClaimsFactory.Type;
 	}
 
 	public get attributes(): IChannelAttributes {
-		return SharedClaimsFactory.Attributes;
+		return ClaimsFactory.Attributes;
 	}
 
 	/**
@@ -45,14 +45,14 @@ export class SharedClaimsFactory implements IChannelFactory<ISharedClaims> {
 		id: string,
 		services: IChannelServices,
 		attributes: IChannelAttributes,
-	): Promise<ISharedClaims> {
-		const sharedClaims = new SharedClaimsImpl(id, runtime, attributes);
+	): Promise<IClaims> {
+		const sharedClaims = new ClaimsImpl(id, runtime, attributes);
 		await sharedClaims.load(services);
 		return sharedClaims;
 	}
 
-	public create(document: IFluidDataStoreRuntime, id: string): ISharedClaims {
-		const sharedClaims = new SharedClaimsImpl(id, document, this.attributes);
+	public create(document: IFluidDataStoreRuntime, id: string): IClaims {
+		const sharedClaims = new ClaimsImpl(id, document, this.attributes);
 		sharedClaims.initializeLocal();
 		return sharedClaims;
 	}
@@ -62,27 +62,33 @@ export class SharedClaimsFactory implements IChannelFactory<ISharedClaims> {
  * A distributed data structure providing first-writer-wins claim semantics.
  *
  * @remarks
- * SharedClaims acts as a scoped aliasing mechanism. Once a key is claimed, it cannot be
+ * Claims acts as a scoped aliasing mechanism. Once a key is claimed, it cannot be
  * overwritten. The `trySetClaim` method returns a promise that resolves after the op
  * roundtrips, indicating whether the claim was accepted or if another client claimed it first.
  *
  * ### Creation
  *
  * ```typescript
- * const claims = SharedClaims.create(this.runtime, id);
+ * const claims = Claims.create(this.runtime, id);
  * ```
  *
  * ### Usage
  *
  * ```typescript
- * const result = await claims.trySetClaim("singleton-component", componentHandle);
- * if (result.status === "accepted") {
- *     // This client successfully claimed the key.
- * } else if (result.status === "alreadyClaimed") {
+ * const result = claims.trySetClaim("singleton-component", componentHandle);
+ * if (result.status === "AlreadyClaimed") {
  *     // Another client already claimed it; use result.currentValue.
+ * } else if (result.status === "Pending") {
+ *     // Wait for the server to confirm the claim.
+ *     const confirmation = await result.promise;
+ *     if (confirmation.status === "Accepted") {
+ *         // This client successfully claimed the key.
+ *     } else if (confirmation.status === "AlreadyClaimed") {
+ *         // Another client claimed it first; use confirmation.currentValue.
+ *     }
  * }
  * ```
  *
  * @internal
  */
-export const SharedClaimsKind = createSharedObjectKind(SharedClaimsFactory);
+export const ClaimsKind = createSharedObjectKind(ClaimsFactory);

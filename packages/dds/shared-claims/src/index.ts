@@ -4,10 +4,10 @@
  */
 
 export type {
-	ISharedClaims,
-	ISharedClaimsEvents,
+	IClaims,
+	IClaimsEvents,
 	ClaimResult,
 	ClaimConfirmation,
 } from "./interfaces.js";
-export { SharedClaimsKind, SharedClaimsFactory } from "./sharedClaimsFactory.js";
-export { SharedClaims } from "./sharedClaims.js";
+export { ClaimsKind, ClaimsFactory } from "./sharedClaimsFactory.js";
+export { Claims } from "./sharedClaims.js";

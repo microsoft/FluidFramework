@@ -46,12 +46,12 @@ export type ClaimConfirmation<T = unknown> =
 export type ClaimResult<T = unknown> =
 	| {
 			/**
-			 * The key was already committed by a previous claim.
+			 * The claim was accepted synchronously (e.g., in detached or staging mode).
 			 */
 			readonly status: "Accepted";
 
 			/**
-			 * The committed value.
+			 * The accepted value.
 			 */
 			readonly currentValue: T;
 	  }

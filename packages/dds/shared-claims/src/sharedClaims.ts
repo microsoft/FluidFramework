@@ -23,20 +23,16 @@ import {
 } from "@fluidframework/shared-object-base/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
-import type {
-	ClaimConfirmation,
-	ClaimResult,
-	ISharedClaims,
-	ISharedClaimsEvents,
-} from "./interfaces.js";
+import type { ClaimConfirmation, ClaimResult, IClaims, IClaimsEvents } from "./interfaces.js";
 
 /**
- * Op format for SharedClaims operations.
+ * Op format for Claims operations.
  */
 interface IClaimOperation {
 	type: "claim";
 	key: string;
 	value: unknown;
+	expectedValue?: unknown;
 }
 
 /**
@@ -51,13 +47,10 @@ interface IPendingClaim<T> {
 const snapshotFileName = "header";
 
 /**
- * {@inheritDoc ISharedClaims}
+ * {@inheritDoc IClaims}
  * @internal
  */
-export class SharedClaims<T = unknown>
-	extends SharedObject<ISharedClaimsEvents<T>>
-	implements ISharedClaims<T>
-{
+export class Claims<T = unknown> extends SharedObject<IClaimsEvents<T>> implements IClaims<T> {
 	/**
 	 * Committed claims map — contains only acked, first-writer-wins values.
 	 */
@@ -70,7 +63,7 @@ export class SharedClaims<T = unknown>
 	private readonly pendingClaims = new Map<string, IPendingClaim<T>>();
 
 	/**
-	 * Constructs a new SharedClaims instance.
+	 * Constructs a new Claims instance.
 	 *
 	 * @param id - Channel ID.
 	 * @param runtime - The data store runtime this DDS belongs to.
@@ -86,31 +79,40 @@ export class SharedClaims<T = unknown>
 	}
 
 	/**
-	 * {@inheritDoc ISharedClaims.trySetClaim}
+	 * {@inheritDoc IClaims.trySetClaim}
 	 */
-	public trySetClaim(key: string, value: T): ClaimResult<T> {
+	public trySetClaim(key: string, value: T, expectedValue?: T): ClaimResult<T> {
 		// Guard: must be attached and connected.
 		if (!this.isAttached()) {
 			throw new UsageError(
-				"SharedClaims.trySetClaim cannot be called while the container is detached or in staging mode",
+				"Claims.trySetClaim cannot be called while the container is detached or in staging mode",
 			);
 		}
 		if (!this.runtime.connected) {
 			throw new UsageError(
-				"SharedClaims.trySetClaim cannot be called while the container is disconnected",
+				"Claims.trySetClaim cannot be called while the container is disconnected",
 			);
 		}
 
-		// If the key is already committed, return immediately.
-		const existingValue = this.claims.get(key);
-		if (existingValue !== undefined) {
-			return { status: "AlreadyClaimed", currentValue: existingValue };
+		// Check local state for fast-path rejection.
+		if (expectedValue === undefined) {
+			// Write-once: reject if key already exists.
+			if (this.claims.has(key)) {
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- guarded by .has()
+				return { status: "AlreadyClaimed", currentValue: this.claims.get(key)! };
+			}
+		} else {
+			// CAS: reject if key doesn't exist or current value doesn't match expected.
+			const currentValue = this.claims.get(key);
+			if (!this.claims.has(key) || currentValue !== expectedValue) {
+				return { status: "AlreadyClaimed", currentValue: currentValue as T };
+			}
 		}
 
 		// If there is already a pending local claim for this key, reject.
 		if (this.pendingClaims.has(key)) {
 			throw new UsageError(
-				`SharedClaims.trySetClaim: a claim for key "${key}" is already pending locally`,
+				`Claims.trySetClaim: a claim for key "${key}" is already pending locally`,
 			);
 		}
 
@@ -118,6 +120,7 @@ export class SharedClaims<T = unknown>
 			type: "claim",
 			key,
 			value,
+			expectedValue,
 		};
 
 		const promise = new Promise<ClaimConfirmation<T>>((resolve) => {
@@ -130,7 +133,7 @@ export class SharedClaims<T = unknown>
 	}
 
 	/**
-	 * {@inheritDoc ISharedClaims.getClaim}
+	 * {@inheritDoc IClaims.getClaim}
 	 */
 	public getClaim(key: string): T | undefined {
 		return this.claims.get(key);
@@ -175,27 +178,36 @@ export class SharedClaims<T = unknown>
 		if (messageEnvelope.type === MessageType.Operation) {
 			const op = messageContent.contents as IClaimOperation;
 
-			assert(op.type === "claim", "SharedClaims: unexpected op type");
+			assert(op.type === "claim", "Claims: unexpected op type");
 
-			// First-writer-wins: only the first claim for a key is accepted.
-			const isWinner = !this.claims.has(op.key);
-			if (isWinner) {
+			const isAccepted =
+				op.expectedValue === undefined
+					? !this.claims.has(op.key)
+					: this.claims.has(op.key) && this.claims.get(op.key) === op.expectedValue;
+
+			if (isAccepted) {
 				this.claims.set(op.key, op.value as T);
-				this.emit("claimed", op.key, op.value);
+				this.emit("claimed", op.key);
 			}
 
 			if (local) {
-				this.resolvePending(op.key, isWinner);
+				this.resolvePending(op.key, isAccepted);
 			}
 		}
 	}
 
 	/**
 	 * Resolves the deferred promise for a pending claim.
+	 *
+	 * @remarks
+	 * The pending entry may have a no-op resolve for stashed ops re-submitted
+	 * during rehydration, or may be absent in unexpected edge cases.
 	 */
 	private resolvePending(key: string, isWinner: boolean): void {
 		const pending = this.pendingClaims.get(key);
-		assert(pending !== undefined, "Expected a pending claim entry for local ack");
+		if (pending === undefined) {
+			return;
+		}
 		this.pendingClaims.delete(key);
 
 		if (isWinner) {
@@ -223,8 +235,11 @@ export class SharedClaims<T = unknown>
 	 * and won't be garbage-collected prematurely.
 	 */
 	protected override processGCDataCore(serializer: IFluidSerializer): void {
-		// Visit committed claims (same as summarizeCore).
-		this.summarizeCore(serializer);
+		// Visit committed claim values so their handles are tracked.
+		if (this.claims.size > 0) {
+			const committedValues = [...this.claims.values()];
+			serializer.stringify(committedValues, this.handle);
+		}
 
 		// Also visit pending local claim values so their handles are tracked.
 		if (this.pendingClaims.size > 0) {
@@ -238,9 +253,11 @@ export class SharedClaims<T = unknown>
 	 */
 	protected rollback(content: unknown, _localOpMetadata: unknown): void {
 		const op = content as IClaimOperation;
-		assert(op.type === "claim", "SharedClaims: unexpected op type in rollback");
+		assert(op.type === "claim", "Claims: unexpected op type in rollback");
 		const pending = this.pendingClaims.get(op.key);
-		assert(pending !== undefined, "Expected a pending claim entry for rollback");
+		if (pending === undefined) {
+			return;
+		}
 		this.pendingClaims.delete(op.key);
 		pending.resolve({ status: "Aborted" });
 	}
@@ -254,7 +271,11 @@ export class SharedClaims<T = unknown>
 
 	protected applyStashedOp(content: unknown): void {
 		const op = content as IClaimOperation;
-		assert(op.type === "claim", "SharedClaims: only claim ops should be stashed");
+		assert(op.type === "claim", "Claims: only claim ops should be stashed");
+		// Track stashed ops as pending so the key is guarded against duplicate
+		// trySetClaim calls and handles are visited by GC.
+		// No external caller awaits this promise, so resolve is a no-op.
+		this.pendingClaims.set(op.key, { value: op.value as T, resolve: () => {} });
 		this.submitLocalMessage(op);
 	}
 

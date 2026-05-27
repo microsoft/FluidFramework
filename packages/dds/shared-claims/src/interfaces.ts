@@ -44,19 +44,19 @@ export type ClaimConfirmation<T = unknown> =
 	  };
 
 /**
- * The result of a {@link ISharedClaims.trySetClaim} operation.
+ * The result of a {@link IClaims.trySetClaim} operation.
  *
  * @internal
  */
 export type ClaimResult<T = unknown> =
 	| {
 			/**
-			 * The key was already committed by a previous claim.
+			 * The claim was accepted synchronously (e.g., in detached or staging mode).
 			 */
 			readonly status: "Accepted";
 
 			/**
-			 * The committed value.
+			 * The accepted value.
 			 */
 			readonly currentValue: T;
 	  }
@@ -84,41 +84,49 @@ export type ClaimResult<T = unknown> =
 	  };
 
 /**
- * Events emitted by {@link ISharedClaims}.
+ * Events emitted by {@link IClaims}.
  *
  * @internal
  */
-export interface ISharedClaimsEvents<T = unknown> extends ISharedObjectEvents {
+export interface IClaimsEvents<T = unknown> extends ISharedObjectEvents {
 	/**
 	 * Notifies when a claim has been accepted for a key.
+	 * Use {@link IClaims.getClaim} to retrieve the committed value.
 	 */
-	(event: "claimed", listener: (key: string, value: T) => void): void;
+	(event: "claimed", listener: (key: string) => void): void;
 }
 
 /**
- * A distributed data structure providing first-writer-wins claim semantics.
+ * A distributed data structure providing first-writer-wins claim semantics
+ * with optional compare-and-swap (CAS) support.
  *
  * @remarks
- * SharedClaims acts as a scoped aliasing mechanism. Once a key is claimed, it cannot be
- * overwritten. The `trySetClaim` method returns a synchronous result indicating whether
- * the key is already claimed, or a pending status with a promise that resolves after the
- * op roundtrips.
+ * Claims acts as a scoped aliasing mechanism. The `trySetClaim` method provides
+ * write-once semantics by default — once a key is claimed, it cannot be overwritten.
+ * By passing an `expectedValue`, `trySetClaim` becomes a compare-and-swap operation
+ * that only updates the key if the current value matches the expected value.
  *
  * @internal
  */
-export interface ISharedClaims<T = unknown> extends ISharedObject<ISharedClaimsEvents<T>> {
+export interface IClaims<T = unknown> extends ISharedObject<IClaimsEvents<T>> {
 	/**
-	 * Attempts to claim a key with the given value. If the key is already claimed,
-	 * the existing value is returned synchronously. Otherwise, the claim op is submitted
-	 * and a "Pending" result is returned with a promise for the final outcome.
+	 * Attempts to claim a key with the given value using first-writer-wins semantics,
+	 * or updates an existing key using compare-and-swap (CAS) semantics.
 	 *
-	 * @param key - The claim key to reserve.
+	 * @remarks
+	 * When `expectedValue` is omitted, this performs a write-once claim — only succeeds
+	 * if the key does not already exist. When `expectedValue` is provided, this performs
+	 * a compare-and-swap — only succeeds if the current value matches `expectedValue`.
+	 *
+	 * @param key - The claim key to reserve or update.
 	 * @param value - The value to associate with the claim.
+	 * @param expectedValue - If provided, the current value must match this for the
+	 * operation to succeed (CAS semantics). If omitted, the key must not exist (write-once).
 	 * @returns The claim result — synchronous for known states, or "Pending" with a promise.
 	 * @throws Will throw a {@link @fluidframework/telemetry-utils#UsageError} if the
 	 * container is not attached and connected.
 	 */
-	trySetClaim(key: string, value: T): ClaimResult<T>;
+	trySetClaim(key: string, value: T, expectedValue?: T): ClaimResult<T>;
 
 	/**
 	 * Gets the current claimed value for a key, or `undefined` if the key has not been claimed.

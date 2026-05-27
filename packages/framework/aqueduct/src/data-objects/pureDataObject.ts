@@ -19,8 +19,8 @@ import { assert } from "@fluidframework/core-utils/internal";
 import type { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions/internal";
 import type { IFluidDataStoreContext } from "@fluidframework/runtime-definitions/internal";
 import { create404Response } from "@fluidframework/runtime-utils/internal";
-import type { ISharedClaims } from "@fluidframework/shared-claims/internal";
-import { SharedClaimsKind } from "@fluidframework/shared-claims/internal";
+import type { IClaims } from "@fluidframework/shared-claims/internal";
+import { ClaimsKind } from "@fluidframework/shared-claims/internal";
 import type { AsyncFluidObjectProvider } from "@fluidframework/synthesize/internal";
 import {
 	UsageError,
@@ -71,15 +71,15 @@ export abstract class PureDataObject<
 	protected initProps?: I["InitialState"];
 
 	/**
-	 * The well-known channel ID used for the internal SharedClaims DDS.
+	 * The well-known channel ID used for the internal Claims DDS.
 	 * Uses a reserved name to avoid collisions with user-created channels.
 	 */
 	private static readonly claimsChannelId = "__claims__";
 
 	/**
-	 * Internal SharedClaims instance, initialized during initializeInternal.
+	 * Internal Claims instance, initialized during initializeInternal.
 	 */
-	private internalClaims: ISharedClaims<TClaimValue> | undefined;
+	private internalClaims: IClaims<TClaimValue> | undefined;
 
 	/**
 	 * Internal implementation detail.
@@ -172,18 +172,23 @@ export abstract class PureDataObject<
 			try {
 				this.internalClaims = (await this.runtime.getChannel(
 					PureDataObject.claimsChannelId,
-				)) as unknown as ISharedClaims<TClaimValue>;
-			} catch {
-				// Channel doesn't exist — this is a legacy data object.
-				// Claims will not be available; trySetClaim will throw UsageError.
+				)) as unknown as IClaims<TClaimValue>;
+			} catch (error: unknown) {
+				// Only suppress errors indicating the channel doesn't exist (legacy data objects).
+				// Rethrow unexpected errors (corrupt snapshot, missing factory, etc.).
+				if (error instanceof Error && error.message === "Channel does not exist") {
+					// Claims will not be available; trySetClaim will throw UsageError.
+				} else {
+					throw error;
+				}
 			}
 		} else {
 			// Only create the claims channel for new data objects when the feature gate is enabled.
 			const mc = loggerToMonitoringContext(this.runtime.logger);
 			if (mc.config.getBoolean("Fluid.PureDataObject.EnableClaims") === true) {
-				const claims = SharedClaimsKind.create(this.runtime, PureDataObject.claimsChannelId);
+				const claims = ClaimsKind.create(this.runtime, PureDataObject.claimsChannelId);
 				claims.bindToContext();
-				this.internalClaims = claims as unknown as ISharedClaims<TClaimValue>;
+				this.internalClaims = claims as unknown as IClaims<TClaimValue>;
 			}
 		}
 
@@ -231,7 +236,7 @@ export abstract class PureDataObject<
 	 * Attempts to claim a key with the given value using first-writer-wins semantics.
 	 *
 	 * @remarks
-	 * This method leverages an internal SharedClaims DDS that is created during
+	 * This method leverages an internal Claims DDS that is created during
 	 * initialization of each PureDataObject. The result indicates whether the claim
 	 * is pending server acknowledgement, already accepted, or already claimed by another client.
 	 *
@@ -243,8 +248,9 @@ export abstract class PureDataObject<
 	public trySetClaim?(key: string, value: TClaimValue): ClaimResult<TClaimValue> {
 		if (this.internalClaims === undefined) {
 			throw new UsageError(
-				"trySetClaim is not available on this data object. It was created before claims support was added. " +
-					"Only data objects created after claims support is enabled will have claims functionality.",
+				"trySetClaim is not available on this data object. " +
+					"Either the Fluid.PureDataObject.EnableClaims feature gate was not enabled when this object was created, " +
+					"or it was created before claims support was added.",
 			);
 		}
 		return this.internalClaims.trySetClaim(key, value);
