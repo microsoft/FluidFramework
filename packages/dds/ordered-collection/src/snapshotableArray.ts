@@ -3,18 +3,24 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils/internal";
+import { assert, DoublyLinkedList } from "@fluidframework/core-utils/internal";
 
-export class SnapshotableArray<T> extends Array {
-	protected data: T[] = [];
+export class SnapshotableArray<T> {
+	protected data: DoublyLinkedList<T> = new DoublyLinkedList<T>();
 
 	public asArray(): T[] {
-		return this.data;
+		const result: T[] = [];
+		for (const node of this.data) {
+			result.push(node.data);
+		}
+		return result;
 	}
 
 	public async loadFrom(from: T[]): Promise<void> {
 		assert(this.data.length === 0, 0x06b /* "Loading snapshot into a non-empty collection" */);
-		this.data = from;
+		for (const value of from) {
+			this.data.push(value);
+		}
 	}
 
 	public size(): number {
