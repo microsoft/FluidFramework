@@ -7,6 +7,8 @@
 # 2. Be careful when using globs that end with "**". E.g. "packages/**". Doing so can include unexpected packages. This
 #    is especially true of packages for which we build ESM and CJS. Such packages sometimes have package.json files in
 #    their source or output directories during compilation.
+# 3. Most of these setting are important from a supply chain security perspective.
+#    Edit with care, and see /DEV.md and https://pnpm.io/settings for more information.
 
 blockExoticSubdeps: true
 
@@ -25,9 +27,9 @@ catalogs:
   types:
     "@types/node": "~22.19.17"
 
-# Supply chain security settings - see /DEV.md for documentation
+# Minimum age, in minutes, of dependencies before they can be installed.
+# See /DEV.md and https://pnpm.io/settings#minimumreleaseage more information.
 minimumReleaseAge: 1440
-
 minimumReleaseAgeExclude: [
   # Temporary exceptions go here as needed.
 ]
@@ -135,7 +137,6 @@ strictDepBuilds: true
 # at the source or excluded below with a documented rationale. Run `flub check trustPolicy` to
 # surface current violations.
 trustPolicy: no-downgrade
-
 trustPolicyExclude:
   # @octokit/endpoint@9.0.6 (published 2025-02-14, by octokitbot) — pipeline regression.
   # Prior trusted: @octokit/endpoint@10.1.3 (provenance, 2025-02-13, by octokitbot), with
