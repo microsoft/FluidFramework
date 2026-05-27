@@ -11,8 +11,8 @@ import {
 	MockStorage,
 } from "@fluidframework/test-runtime-utils/internal";
 
+import { Claims } from "../claims.js";
 import { ClaimsFactory } from "../claimsFactory.js";
-import { Claims } from "../sharedClaims.js";
 
 function createConnectedClaims(
 	id: string,
@@ -25,9 +25,9 @@ function createConnectedClaims(
 		objectStorage: new MockStorage(),
 	};
 
-	const sharedClaims = new Claims(id, dataStoreRuntime, ClaimsFactory.Attributes);
-	sharedClaims.connect(services);
-	return sharedClaims;
+	const claims = new Claims(id, dataStoreRuntime, ClaimsFactory.Attributes);
+	claims.connect(services);
+	return claims;
 }
 
 const createLocalClaims = (id: string): Claims =>
@@ -35,23 +35,23 @@ const createLocalClaims = (id: string): Claims =>
 
 describe("Claims", () => {
 	describe("Local (detached) state", () => {
-		let sharedClaims: Claims;
+		let claims: Claims;
 
 		beforeEach(() => {
-			sharedClaims = createLocalClaims("claims");
+			claims = createLocalClaims("claims");
 		});
 
 		it("Can create a Claims instance", () => {
-			assert(sharedClaims !== undefined, "Could not create Claims");
+			assert(claims !== undefined, "Could not create Claims");
 		});
 
 		it("getClaim returns undefined for unclaimed key", () => {
-			assert.strictEqual(sharedClaims.getClaim("foo"), undefined);
+			assert.strictEqual(claims.getClaim("foo"), undefined);
 		});
 
 		it("trySetClaim throws UsageError when detached", () => {
 			assert.throws(
-				() => sharedClaims.trySetClaim("key", "value"),
+				() => claims.trySetClaim("key", "value"),
 				(error: Error) => {
 					assert(error.message.includes("detached"), `Unexpected error: ${error.message}`);
 					return true;
@@ -61,20 +61,20 @@ describe("Claims", () => {
 	});
 
 	describe("Connected state, single client", () => {
-		let sharedClaims: Claims;
+		let claims: Claims;
 		let containerRuntimeFactory: MockContainerRuntimeFactory;
 
 		beforeEach(() => {
 			containerRuntimeFactory = new MockContainerRuntimeFactory();
-			sharedClaims = createConnectedClaims("claims", containerRuntimeFactory);
+			claims = createConnectedClaims("claims", containerRuntimeFactory);
 		});
 
 		it("Can create a connected Claims instance", () => {
-			assert(sharedClaims !== undefined, "Could not create Claims");
+			assert(claims !== undefined, "Could not create Claims");
 		});
 
 		it("Can claim a key and read it back", async () => {
-			const claimResult = sharedClaims.trySetClaim("myKey", "myValue");
+			const claimResult = claims.trySetClaim("myKey", "myValue");
 			assert.strictEqual(claimResult.status, "Pending");
 			assert(claimResult.status === "Pending");
 
@@ -84,18 +84,18 @@ describe("Claims", () => {
 			assert.strictEqual(confirmation.status, "Accepted");
 			assert(confirmation.status === "Accepted");
 			assert.strictEqual(confirmation.currentValue, "myValue");
-			assert.strictEqual(sharedClaims.getClaim("myKey"), "myValue");
+			assert.strictEqual(claims.getClaim("myKey"), "myValue");
 		});
 
 		it("Returns AlreadyClaimed when claiming an already-committed key", async () => {
 			// First claim
-			const firstResult = sharedClaims.trySetClaim("myKey", "firstValue");
+			const firstResult = claims.trySetClaim("myKey", "firstValue");
 			assert(firstResult.status === "Pending");
 			containerRuntimeFactory.processAllMessages();
 			await firstResult.promise;
 
 			// Second claim — should see it's already committed and return immediately
-			const result = sharedClaims.trySetClaim("myKey", "secondValue");
+			const result = claims.trySetClaim("myKey", "secondValue");
 			assert.strictEqual(result.status, "AlreadyClaimed");
 			assert(result.status === "AlreadyClaimed");
 			assert.strictEqual(result.currentValue, "firstValue");
@@ -103,26 +103,26 @@ describe("Claims", () => {
 
 		it("Emits 'claimed' event when claim is accepted", async () => {
 			let emittedKey: string | undefined;
-			sharedClaims.on("claimed", (key: string) => {
+			claims.on("claimed", (key: string) => {
 				emittedKey = key;
 			});
 
-			const claimResult = sharedClaims.trySetClaim("eventKey", "eventValue");
+			const claimResult = claims.trySetClaim("eventKey", "eventValue");
 			assert(claimResult.status === "Pending");
 			containerRuntimeFactory.processAllMessages();
 			await claimResult.promise;
 
 			assert.strictEqual(emittedKey, "eventKey");
 			// Value can be looked up from the DDS directly.
-			assert.strictEqual(sharedClaims.getClaim("eventKey"), "eventValue");
+			assert.strictEqual(claims.getClaim("eventKey"), "eventValue");
 		});
 
 		it("Rejects duplicate pending claim for the same key", async () => {
-			const firstResult = sharedClaims.trySetClaim("dupKey", "value1");
+			const firstResult = claims.trySetClaim("dupKey", "value1");
 			assert(firstResult.status === "Pending");
 
 			assert.throws(
-				() => sharedClaims.trySetClaim("dupKey", "value2"),
+				() => claims.trySetClaim("dupKey", "value2"),
 				(error: Error) => {
 					assert(
 						error.message.includes("already pending"),
@@ -227,16 +227,16 @@ describe("Claims", () => {
 	});
 
 	describe("Compare-and-swap (CAS)", () => {
-		let sharedClaims: Claims;
+		let claims: Claims;
 		let containerRuntimeFactory: MockContainerRuntimeFactory;
 
 		beforeEach(() => {
 			containerRuntimeFactory = new MockContainerRuntimeFactory();
-			sharedClaims = createConnectedClaims("claims", containerRuntimeFactory);
+			claims = createConnectedClaims("claims", containerRuntimeFactory);
 		});
 
 		it("CAS with expectedValue=undefined acts like write-once", async () => {
-			const result = sharedClaims.trySetClaim("casKey", "firstValue", undefined);
+			const result = claims.trySetClaim("casKey", "firstValue", undefined);
 			assert.strictEqual(result.status, "Pending");
 			assert(result.status === "Pending");
 
@@ -244,18 +244,18 @@ describe("Claims", () => {
 			const confirmation = await result.promise;
 
 			assert.strictEqual(confirmation.status, "Accepted");
-			assert.strictEqual(sharedClaims.getClaim("casKey"), "firstValue");
+			assert.strictEqual(claims.getClaim("casKey"), "firstValue");
 		});
 
 		it("CAS rejects when expectedValue doesn't match current", async () => {
 			// First, claim the key.
-			const firstResult = sharedClaims.trySetClaim("casKey", "firstValue");
+			const firstResult = claims.trySetClaim("casKey", "firstValue");
 			assert(firstResult.status === "Pending");
 			containerRuntimeFactory.processAllMessages();
 			await firstResult.promise;
 
 			// CAS with wrong expected value should fail immediately.
-			const result = sharedClaims.trySetClaim("casKey", "secondValue", "wrongValue");
+			const result = claims.trySetClaim("casKey", "secondValue", "wrongValue");
 			assert.strictEqual(result.status, "AlreadyClaimed");
 			assert(result.status === "AlreadyClaimed");
 			assert.strictEqual(result.currentValue, "firstValue");
@@ -263,13 +263,13 @@ describe("Claims", () => {
 
 		it("CAS succeeds when expectedValue matches current", async () => {
 			// First, claim the key.
-			const firstResult = sharedClaims.trySetClaim("casKey", "firstValue");
+			const firstResult = claims.trySetClaim("casKey", "firstValue");
 			assert(firstResult.status === "Pending");
 			containerRuntimeFactory.processAllMessages();
 			await firstResult.promise;
 
 			// CAS with correct expected value should succeed.
-			const result = sharedClaims.trySetClaim("casKey", "secondValue", "firstValue");
+			const result = claims.trySetClaim("casKey", "secondValue", "firstValue");
 			assert.strictEqual(result.status, "Pending");
 			assert(result.status === "Pending");
 
@@ -277,7 +277,7 @@ describe("Claims", () => {
 			const confirmation = await result.promise;
 
 			assert.strictEqual(confirmation.status, "Accepted");
-			assert.strictEqual(sharedClaims.getClaim("casKey"), "secondValue");
+			assert.strictEqual(claims.getClaim("casKey"), "secondValue");
 		});
 
 		it("Concurrent CAS: first writer wins", async () => {

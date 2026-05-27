@@ -11,9 +11,9 @@ import type {
 } from "@fluidframework/datastore-definitions/internal";
 import { createSharedObjectKind } from "@fluidframework/shared-object-base/internal";
 
+import { Claims as ClaimsImpl } from "./claims.js";
 import type { IClaims } from "./interfaces.js";
 import { pkgVersion } from "./packageVersion.js";
-import { Claims as ClaimsImpl } from "./sharedClaims.js";
 
 /**
  * Factory for creating Claims instances.
@@ -46,15 +46,15 @@ export class ClaimsFactory implements IChannelFactory<IClaims> {
 		services: IChannelServices,
 		attributes: IChannelAttributes,
 	): Promise<IClaims> {
-		const sharedClaims = new ClaimsImpl(id, runtime, attributes);
-		await sharedClaims.load(services);
-		return sharedClaims;
+		const claims = new ClaimsImpl(id, runtime, attributes);
+		await claims.load(services);
+		return claims;
 	}
 
 	public create(document: IFluidDataStoreRuntime, id: string): IClaims {
-		const sharedClaims = new ClaimsImpl(id, document, this.attributes);
-		sharedClaims.initializeLocal();
-		return sharedClaims;
+		const claims = new ClaimsImpl(id, document, this.attributes);
+		claims.initializeLocal();
+		return claims;
 	}
 }
 

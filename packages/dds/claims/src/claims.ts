@@ -74,7 +74,7 @@ export class Claims<T = unknown> extends SharedObject<IClaimsEvents<T>> implemen
 		runtime: IFluidDataStoreRuntime,
 		attributes: IChannelAttributes,
 	) {
-		super(id, runtime, attributes, "fluid_sharedClaims_");
+		super(id, runtime, attributes, "fluid_claims_");
 		this.runtime.on("dispose", () => this.abortAllPending());
 	}
 

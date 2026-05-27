@@ -10,4 +10,4 @@ export type {
 	ClaimConfirmation,
 } from "./interfaces.js";
 export { ClaimsKind, ClaimsFactory } from "./claimsFactory.js";
-export { Claims } from "./sharedClaims.js";
+export { Claims } from "./claims.js";
