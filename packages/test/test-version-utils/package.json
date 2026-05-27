@@ -136,9 +136,6 @@
 		"webpack": "^5.94.0",
 		"webpack-cli": "^5.1.4"
 	},
-	"engines": {
-		"node": ">=22.22.2"
-	},
 	"fluidBuild": {
 		"tasks": {
 			"check:exports:index": [
