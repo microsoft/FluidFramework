@@ -90,7 +90,7 @@ jobs:
                 # `flub publish tarballs`. Force-downgrade the fflate nested inside the globally-installed
                 # flub to 0.8.2 as a workaround.
                 npm explore --global @fluid-tools/build-cli -- npm install --no-save --no-package-lock fflate@0.8.2
-                npm explore --global @fluid-tools/build-cli -- node -e "const v=require('./node_modules/fflate/package.json').version; if (v !== '0.8.2') throw new Error('Expected fflate 0.8.2, got ' + v);"
+                npm ls -g fflate | grep -q "fflate@0.8.2" || { echo "##[error]fflate not pinned to 0.8.2 in flub install:"; npm ls -g fflate; exit 1; }
 
                 # This can be removed once all builds tools are moved to the build-cli library
                 npm install --global "@fluidframework/build-tools@${{ parameters.buildToolsVersionToInstall }}"
