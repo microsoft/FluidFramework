@@ -1084,12 +1084,25 @@ export class SharedDirectory
 interface ICreateSubDirLocalOpMetadata {
 	type: "createSubDir";
 	parentSubdir: SubDirectory;
+	/**
+	 * Back-pointer to the {@link PendingSubDirectoryCreate} entry in
+	 * `parentSubdir.pendingSubDirectoryData` this metadata originated from. Lets resubmit
+	 * identify the exact entry by reference rather than name+type, which is ambiguous when
+	 * multiple same-name lifecycle ops are pending (e.g. delete->create->delete).
+	 */
+	pendingEntry: PendingSubDirectoryCreate;
 }
 
 interface IDeleteSubDirLocalOpMetadata {
 	type: "deleteSubDir";
 	subDirectory: SubDirectory | undefined;
 	parentSubdir: SubDirectory;
+	/**
+	 * Back-pointer to the {@link PendingSubDirectoryDelete} entry in
+	 * `parentSubdir.pendingSubDirectoryData` this metadata originated from. See
+	 * {@link ICreateSubDirLocalOpMetadata.pendingEntry}.
+	 */
+	pendingEntry: PendingSubDirectoryDelete;
 }
 
 type SubDirLocalOpMetadata = ICreateSubDirLocalOpMetadata | IDeleteSubDirLocalOpMetadata;
@@ -1345,7 +1358,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 					path: this.absolutePath,
 					type: "createSubDirectory",
 				};
-				this.submitCreateSubDirectoryMessage(op);
+				this.submitCreateSubDirectoryMessage(op, pendingSubDirectoryCreate);
 			} else {
 				// If we are detached, don't submit the op and directly commit
 				// the subdir to _sequencedSubdirectories.
@@ -1422,7 +1435,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 			type: "deleteSubDirectory",
 			path: this.absolutePath,
 		};
-		this.submitDeleteSubDirectoryMessage(op, previousOptimisticSubDirectory);
+		this.submitDeleteSubDirectoryMessage(op, previousOptimisticSubDirectory, pendingSubdirDelete);
 		this.emit("subDirectoryDeleted", subdirName, true, this);
 		// We don't want to fully dispose the subdir tree since this is only a pending
 		// local delete. Instead we will only emit the dispose event to reflect the
@@ -2313,11 +2326,16 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 	/**
 	 * Submit a create subdirectory operation.
 	 * @param op - The operation
+	 * @param pendingEntry - The pending entry registered in `pendingSubDirectoryData` for this op
 	 */
-	private submitCreateSubDirectoryMessage(op: IDirectorySubDirectoryOperation): void {
+	private submitCreateSubDirectoryMessage(
+		op: IDirectorySubDirectoryOperation,
+		pendingEntry: PendingSubDirectoryCreate,
+	): void {
 		const localOpMetadata: ICreateSubDirLocalOpMetadata = {
 			type: "createSubDir",
 			parentSubdir: this,
+			pendingEntry,
 		};
 		this.directory.submitDirectoryMessage(op, localOpMetadata);
 	}
@@ -2326,15 +2344,18 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 	 * Submit a delete subdirectory operation.
 	 * @param op - The operation
 	 * @param subDir - Any subdirectory deleted by the op
+	 * @param pendingEntry - The pending entry registered in `pendingSubDirectoryData` for this op
 	 */
 	private submitDeleteSubDirectoryMessage(
 		op: IDirectorySubDirectoryOperation,
 		subDir: SubDirectory,
+		pendingEntry: PendingSubDirectoryDelete,
 	): void {
 		const localOpMetadata: IDeleteSubDirLocalOpMetadata = {
 			type: "deleteSubDir",
 			subDirectory: subDir,
 			parentSubdir: this,
+			pendingEntry,
 		};
 		this.directory.submitDirectoryMessage(op, localOpMetadata);
 	}
@@ -2348,38 +2369,29 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 		op: IDirectorySubDirectoryOperation,
 		localOpMetadata: SubDirLocalOpMetadata,
 	): void {
-		// Only submit the op, if we have record for it, otherwise it is possible that the older instance
-		// is already deleted, in which case we don't need to submit the op.
+		// Identify the originating pending entry by reference so we never confuse same-name
+		// lifecycle ops (e.g. delete->create->delete) with each other. If the entry has been
+		// spliced (consumed by a prior resubmit or rollback), there's nothing to resubmit.
+		if (!this.pendingSubDirectoryData.includes(localOpMetadata.pendingEntry)) {
+			return;
+		}
 		if (localOpMetadata.type === "createSubDir") {
-			// For create operations, look specifically for createSubDirectory entries
-			const pendingEntry = findLast(
-				this.pendingSubDirectoryData,
-				(entry) => entry.subdirName === op.subdirName && entry.type === "createSubDirectory",
-			);
-			if (pendingEntry !== undefined) {
-				assert(
-					pendingEntry.type === "createSubDirectory",
-					0xc33 /* pending entry should be createSubDirectory */,
-				);
-				// We should add the client id, since when reconnecting it can have a different client id.
-				pendingEntry.subdir.clientIds.add(this.runtime.clientId ?? "detached");
-				// We also need to undelete the subdirectory tree if it was previously deleted
-				this.undisposeSubdirectoryTree(pendingEntry.subdir);
-				this.submitCreateSubDirectoryMessage(op);
-			}
-		} else if (localOpMetadata.type === "deleteSubDir") {
+			const pendingEntry = localOpMetadata.pendingEntry;
+			// We should add the client id, since when reconnecting it can have a different client id.
+			pendingEntry.subdir.clientIds.add(this.runtime.clientId ?? "detached");
+			// We also need to undelete the subdirectory tree if it was previously deleted
+			this.undisposeSubdirectoryTree(pendingEntry.subdir);
+			this.submitCreateSubDirectoryMessage(op, pendingEntry);
+		} else {
 			assert(
 				localOpMetadata.subDirectory !== undefined,
 				0xc34 /* Subdirectory should exist */,
 			);
-			// For delete operations, look specifically for deleteSubDirectory entries
-			const pendingEntry = findLast(
-				this.pendingSubDirectoryData,
-				(entry) => entry.subdirName === op.subdirName && entry.type === "deleteSubDirectory",
+			this.submitDeleteSubDirectoryMessage(
+				op,
+				localOpMetadata.subDirectory,
+				localOpMetadata.pendingEntry,
 			);
-			if (pendingEntry !== undefined) {
-				this.submitDeleteSubDirectoryMessage(op, localOpMetadata.subDirectory);
-			}
 		}
 	}
 
