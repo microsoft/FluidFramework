@@ -31,9 +31,7 @@ import type {
 } from "@fluidframework/runtime-definitions/internal";
 import type { SharedObjectKind } from "@fluidframework/shared-object-base/internal";
 
-import { compatibilityModeRuntimeOptions } from "./compatibilityConfiguration.js";
 import type {
-	CompatibilityMode,
 	IRootDataObject,
 	IStaticEntryPoint,
 	LoadableObjectKind,
@@ -41,7 +39,6 @@ import type {
 	TreeContainerSchema,
 } from "./types.js";
 import {
-	compatibilityModeToMinVersionForCollab,
 	createDataObject,
 	createSharedObject,
 	isDataObjectKind,
@@ -135,7 +132,7 @@ class TreeContainerRuntimeFactory extends BaseContainerRuntimeFactory {
 	readonly #treeRootDataObjectFactory: TreeDataObjectFactory<TreeRootDataObject>;
 
 	public constructor(
-		compatibilityMode: CompatibilityMode,
+		minVersionForCollab: MinimumVersionForCollab,
 		treeRootDataObjectFactory: TreeDataObjectFactory<TreeRootDataObject>,
 		overrides?: Partial<{
 			runtimeOptions: Partial<IContainerRuntimeOptions>;
@@ -145,13 +142,11 @@ class TreeContainerRuntimeFactory extends BaseContainerRuntimeFactory {
 		super({
 			registryEntries: [treeRootDataObjectFactory.registryEntry],
 			runtimeOptions: {
-				...compatibilityModeRuntimeOptions[compatibilityMode],
+				enableRuntimeIdCompressor: "on",
 				...overrides?.runtimeOptions,
 			},
 			provideEntryPoint,
-			minVersionForCollab:
-				overrides?.minVersionForCollab ??
-				compatibilityModeToMinVersionForCollab[compatibilityMode],
+			minVersionForCollab,
 		});
 		this.#treeRootDataObjectFactory = treeRootDataObjectFactory;
 	}
@@ -211,9 +206,9 @@ export function createTreeContainerRuntimeFactory(props: {
 	readonly schema: TreeContainerSchema;
 
 	/**
-	 * See {@link CompatibilityMode} and compatibilityModeRuntimeOptions for more details.
+	 * Minimum version for collaboration.
 	 */
-	readonly compatibilityMode: CompatibilityMode;
+	readonly minVersionForCollab: MinimumVersionForCollab;
 	/**
 	 * Optional registry of data stores to pass to the DataObject factory.
 	 * If not provided, one will be created based on the schema.
@@ -221,34 +216,21 @@ export function createTreeContainerRuntimeFactory(props: {
 	readonly rootDataStoreRegistry?: IFluidDataStoreRegistry;
 	/**
 	 * Optional overrides for the container runtime options.
-	 * If not provided, only the default options for the given compatibilityMode will be used.
+	 * If not provided, only the default options for the given minVersionForCollab will be used.
 	 */
 	readonly runtimeOptionOverrides?: Partial<IContainerRuntimeOptions>;
-	/**
-	 * Optional override for minimum version for collab.
-	 * If not provided, the default for the given compatibilityMode will be used.
-	 * @remarks
-	 * This is useful when runtime options are overridden and change the minimum version for collab.
-	 */
-	readonly minVersionForCollabOverride?: MinimumVersionForCollab;
 }): IRuntimeFactory {
-	const {
-		compatibilityMode,
-		minVersionForCollabOverride,
-		rootDataStoreRegistry,
-		runtimeOptionOverrides,
-		schema,
-	} = props;
+	const { minVersionForCollab, rootDataStoreRegistry, runtimeOptionOverrides, schema } = props;
 
 	const [registryEntries, sharedObjects] = parseDataObjectsFromSharedObjects(schema);
 	const registry = rootDataStoreRegistry ?? new FluidDataStoreRegistry(registryEntries);
 
 	return new TreeContainerRuntimeFactory(
-		compatibilityMode,
+		minVersionForCollab,
 		new TreeRootDataObjectFactory(sharedObjects, registry),
 		{
 			runtimeOptions: runtimeOptionOverrides,
-			minVersionForCollab: minVersionForCollabOverride,
+			minVersionForCollab,
 		},
 	);
 }

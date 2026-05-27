@@ -15,10 +15,7 @@ import {
 	type ConfigValidationMap,
 } from "@fluidframework/runtime-utils/internal";
 
-import {
-	disabledCompressionConfig,
-	enabledCompressionConfig,
-} from "./compressionDefinitions.js";
+import { enabledCompressionConfig } from "./compressionDefinitions.js";
 import type { ContainerRuntimeOptionsInternal } from "./containerRuntime.js";
 
 /**
@@ -106,19 +103,17 @@ export type RuntimeOptionKeysThatRequireExplicitSchemaControl = keyof Omit<
 const runtimeOptionsAffectingDocSchemaConfigMap: ConfigMap<RuntimeOptionsAffectingDocSchema> =
 	{
 		enableGroupedBatching: {
-			"1.0.0": false,
-			"2.0.0-defaults": true,
+			"2.0.0": true,
 		},
 		compressionOptions: {
-			"1.0.0": disabledCompressionConfig,
-			"2.0.0-defaults": enabledCompressionConfig,
+			"2.0.0": enabledCompressionConfig,
 		},
 		enableRuntimeIdCompressor: {
 			// For IdCompressorMode, `undefined` represents a logical state (off).
 			// However, to satisfy the Required<> constraint while
 			// `exactOptionalPropertyTypes` is `false` (TODO: AB#8215), we need
 			// to have it defined, so we trick the type checker here.
-			"1.0.0": undefined,
+			"2.0.0": undefined,
 			// We do not yet want to enable idCompressor by default since it will
 			// increase bundle sizes, and not all customers will benefit from it.
 			// Therefore, we will require customers to explicitly enable it. We
@@ -126,7 +121,6 @@ const runtimeOptionsAffectingDocSchemaConfigMap: ConfigMap<RuntimeOptionsAffecti
 			// change in the future.
 		},
 		explicitSchemaControl: {
-			"1.0.0": false,
 			// This option's intention is to prevent 1.x clients from joining sessions
 			// when enabled. This is set to true when the minVersionForCollab is set
 			// to >=2.0.0 (explicitly). This is different than other 2.0 defaults
@@ -143,11 +137,10 @@ const runtimeOptionsAffectingDocSchemaConfigMap: ConfigMap<RuntimeOptionsAffecti
 			// Note: 1.x clients are compatible with TurnBased flushing, but here we elect to remain on Immediate flush mode
 			// as a work-around for inability to send batches larger than 1Mb. Immediate flushing keeps batches smaller as
 			// fewer messages will be included per flush.
-			"1.0.0": FlushMode.Immediate,
-			"2.0.0-defaults": FlushMode.TurnBased,
+			"2.0.0": FlushMode.TurnBased,
 		},
 		gcOptions: {
-			"1.0.0": {},
+			"2.0.0": {},
 			// Although sweep is supported in 2.x, it is disabled by default until minVersionForCollab>=3.0.0 to be extra safe.
 			// Note that enabling this is a significant change, that should likely be announced in the relevant version:
 			// It would be bad if this simple caused the enablement when when the current package version passed this point without anyone being aware.
@@ -160,9 +153,9 @@ const runtimeOptionsAffectingDocSchemaConfigMap: ConfigMap<RuntimeOptionsAffecti
 			// This feature is new and disabled by default. In the future we will enable it by default, but we have not
 			// closed on the version where that will happen yet.  Probably a .10 release since blob functionality is not
 			// exposed on the `@public` API surface.
-			"1.0.0": undefined,
+			"2.0.0": undefined,
 		},
-	};
+	} as const;
 
 /**
  * Keys of {@link ContainerRuntimeOptionsInternal} that require explicitSchemaControl to be enabled.
@@ -180,33 +173,19 @@ export const runtimeOptionKeysThatRequireExplicitSchemaControl = (
 // A lot of the information in this seems redundant with whats defined above. Might be nice to combine them somehow.
 const runtimeOptionsAffectingDocSchemaConfigValidationMap: ConfigValidationMap<RuntimeOptionsAffectingDocSchema> =
 	{
-		enableGroupedBatching: configValueToMinVersionForCollab([
-			[false, "1.0.0"],
-			[true, "2.0.0-defaults"],
-		]),
+		enableGroupedBatching: configValueToMinVersionForCollab([[true, "2.0.0"]]),
 		compressionOptions: configValueToMinVersionForCollab([
-			[{ ...disabledCompressionConfig }, "1.0.0"],
-			[{ ...enabledCompressionConfig }, "2.0.0-defaults"],
+			[{ ...enabledCompressionConfig }, "2.0.0"],
 		]),
 		enableRuntimeIdCompressor: configValueToMinVersionForCollab([
-			[undefined, "1.0.0"],
-			["on", "2.0.0-defaults"],
-			["delayed", "2.0.0-defaults"],
+			["on", "2.0.0"],
+			["delayed", "2.0.0"],
 		]),
-		explicitSchemaControl: configValueToMinVersionForCollab([
-			[false, "1.0.0"],
-			[true, "2.0.0-defaults"],
-		]),
-		flushMode: configValueToMinVersionForCollab([
-			[FlushMode.Immediate, "1.0.0"],
-			[FlushMode.TurnBased, "2.0.0-defaults"],
-		]),
-		gcOptions: configValueToMinVersionForCollab([
-			[{ enableGCSweep: undefined }, "1.0.0"],
-			[{ enableGCSweep: true }, "2.0.0-defaults"],
-		]),
+		explicitSchemaControl: configValueToMinVersionForCollab([[true, "2.0.0"]]),
+		flushMode: configValueToMinVersionForCollab([[FlushMode.TurnBased, "2.0.0"]]),
+		gcOptions: configValueToMinVersionForCollab([[{ enableGCSweep: true }, "2.0.0"]]),
 		createBlobPayloadPending: configValueToMinVersionForCollab([
-			[undefined, "1.0.0"],
+			[undefined, "2.0.0"],
 			[true, "2.40.0"],
 		]),
 	};

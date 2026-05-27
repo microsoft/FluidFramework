@@ -398,8 +398,8 @@ export interface LocalAttributionKey {
     type: "local";
 }
 
-// @beta @input
-export type MinimumVersionForCollab = `${1 | 2}.${bigint}.${bigint}` | `${1 | 2}.${bigint}.${bigint}-${string}`;
+// @public @input
+export type MinimumVersionForCollab = `${2 | 3}.${bigint}.${bigint}` | `${2 | 3}.${bigint}.${bigint}-${string}`;
 
 // @beta @legacy
 export type NamedFluidDataStoreRegistryEntries = Iterable<NamedFluidDataStoreRegistryEntry2>;

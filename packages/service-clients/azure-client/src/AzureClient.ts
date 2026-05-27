@@ -26,17 +26,14 @@ import type {
 	IUrlResolver,
 } from "@fluidframework/driver-definitions/internal";
 import { applyStorageCompression } from "@fluidframework/driver-utils/internal";
-import type {
-	ContainerSchema,
-	IFluidContainer,
-	CompatibilityMode,
-} from "@fluidframework/fluid-static";
+import type { ContainerSchema, IFluidContainer } from "@fluidframework/fluid-static";
 import {
 	createDOProviderContainerRuntimeFactory,
 	createFluidContainer,
 	createServiceAudience,
 } from "@fluidframework/fluid-static/internal";
 import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver/internal";
+import type { MinimumVersionForCollab } from "@fluidframework/runtime-definitions";
 import { wrapConfigProviderWithDefaults } from "@fluidframework/telemetry-utils/internal";
 
 import { createAzureAudienceMember } from "./AzureAudience.js";
@@ -97,10 +94,10 @@ export class AzureClient {
 
 	private readonly createContainerRuntimeFactory?: ({
 		schema,
-		compatibilityMode,
+		minVersionForCollab,
 	}: {
 		schema: ContainerSchema;
-		compatibilityMode: CompatibilityMode;
+		minVersionForCollab: MinimumVersionForCollab;
 	}) => IRuntimeFactory;
 
 	/**
@@ -143,7 +140,7 @@ export class AzureClient {
 	 */
 	public async createContainer<const TContainerSchema extends ContainerSchema>(
 		containerSchema: TContainerSchema,
-		compatibilityMode: CompatibilityMode,
+		compatibilityMode: MinimumVersionForCollab,
 	): Promise<{
 		container: IFluidContainer<TContainerSchema>;
 		services: AzureContainerServices;
@@ -178,7 +175,7 @@ export class AzureClient {
 	public async getContainer<TContainerSchema extends ContainerSchema>(
 		id: string,
 		containerSchema: TContainerSchema,
-		compatibilityMode: CompatibilityMode,
+		compatibilityMode: MinimumVersionForCollab,
 	): Promise<{
 		container: IFluidContainer<TContainerSchema>;
 		services: AzureContainerServices;
@@ -217,7 +214,7 @@ export class AzureClient {
 		id: string,
 		containerSchema: TContainerSchema,
 		version: AzureContainerVersion,
-		compatibilityMode: CompatibilityMode,
+		compatibilityMode: MinimumVersionForCollab,
 	): Promise<{
 		container: IFluidContainer<TContainerSchema>;
 	}> {
@@ -286,16 +283,16 @@ export class AzureClient {
 
 	private getLoaderProps(
 		schema: ContainerSchema,
-		compatibilityMode: CompatibilityMode,
+		minVersionForCollab: MinimumVersionForCollab,
 	): ILoaderProps {
 		const runtimeFactory = this.createContainerRuntimeFactory
 			? this.createContainerRuntimeFactory({
 					schema,
-					compatibilityMode,
+					minVersionForCollab,
 				})
 			: createDOProviderContainerRuntimeFactory({
 					schema,
-					compatibilityMode,
+					minVersionForCollab,
 				});
 
 		const load = async (): Promise<IFluidModuleWithDetails> => {

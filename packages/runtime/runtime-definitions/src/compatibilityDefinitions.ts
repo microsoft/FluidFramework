@@ -36,8 +36,8 @@
  * ```
  *
  * @input
- * @beta
+ * @public
  */
 export type MinimumVersionForCollab =
-	| `${1 | 2}.${bigint}.${bigint}`
-	| `${1 | 2}.${bigint}.${bigint}-${string}`;
+	| `${2 | 3}.${bigint}.${bigint}`
+	| `${2 | 3}.${bigint}.${bigint}-${string}`;
