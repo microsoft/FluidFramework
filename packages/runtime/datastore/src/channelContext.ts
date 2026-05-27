@@ -19,6 +19,7 @@ import type {
 	IFluidDataStoreContext,
 	ISummarizeResult,
 	IRuntimeMessageCollection,
+	IRuntimeResubmitMessageCollection,
 	IRuntimeStorageService,
 } from "@fluidframework/runtime-definitions/internal";
 import { addBlobToSummary } from "@fluidframework/runtime-utils/internal";
@@ -52,6 +53,12 @@ export interface IChannelContext {
 	): Promise<ISummarizeResult>;
 
 	reSubmit(content: unknown, localOpMetadata: unknown, squash: boolean): void;
+
+	/**
+	 * Resubmit a bunch of contiguous messages for this channel context in one call.
+	 * @param collection - The bunch of messages to resubmit, with a shared `squash` flag.
+	 */
+	reSubmitMessages(collection: IRuntimeResubmitMessageCollection): void;
 
 	applyStashedOp(content: unknown): unknown;
 

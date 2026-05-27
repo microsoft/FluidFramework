@@ -44,6 +44,7 @@ import type {
 	InboundAttachMessage,
 	IRuntimeMessageCollection,
 	IRuntimeMessagesContent,
+	IRuntimeResubmitMessage,
 	ISummarizeResult,
 	ISummaryTreeWithStats,
 	ITelemetryContext,
@@ -828,6 +829,63 @@ export class ChannelCollection
 		}
 		assert(!!context, 0x160 /* "There should be a store context for the op" */);
 		context.reSubmit(envelope.contents, localOpMetadata, squash);
+	};
+
+	/**
+	 * Resubmit a contiguous run of FluidDataStoreOp entries. Entries are bunched by
+	 * `(address, FluidDataStoreMessage.type)` and forwarded to each data store context in a single
+	 * {@link FluidDataStoreContext.reSubmitMessages} call per bunch — mirroring the inbound
+	 * {@link ChannelCollection.processChannelMessages} bunching pattern.
+	 */
+	public readonly reSubmitContainerMessages = (
+		entries: readonly {
+			envelope: IEnvelope<FluidDataStoreMessage>;
+			localOpMetadata: unknown;
+		}[],
+		squash: boolean,
+	): void => {
+		let currentAddress: string | undefined;
+		let currentType: string | undefined;
+		let currentMessages: IRuntimeResubmitMessage[] = [];
+
+		const flushCurrent = (): void => {
+			if (
+				currentAddress === undefined ||
+				currentType === undefined ||
+				currentMessages.length === 0
+			) {
+				return;
+			}
+			const context = this.contexts.get(currentAddress);
+			if (
+				this.checkAndLogIfDeleted(
+					currentAddress,
+					context,
+					"Changed",
+					"reSubmitContainerMessages",
+				)
+			) {
+				throw new DataCorruptionError("Context is deleted!", {
+					callSite: "reSubmitContainerMessages",
+					...tagCodeArtifacts({ id: currentAddress }),
+				});
+			}
+			assert(!!context, "There should be a store context for the op");
+			context.reSubmitMessages(currentType, { squash, messages: currentMessages });
+			currentMessages = [];
+		};
+
+		for (const { envelope, localOpMetadata } of entries) {
+			const { address } = envelope;
+			const { type: ddsType, content } = envelope.contents;
+			if (currentAddress !== address || currentType !== ddsType) {
+				flushCurrent();
+				currentAddress = address;
+				currentType = ddsType;
+			}
+			currentMessages.push({ contents: content, localOpMetadata });
+		}
+		flushCurrent();
 	};
 
 	public readonly rollbackDataStoreOp = (

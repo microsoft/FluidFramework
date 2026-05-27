@@ -17,6 +17,7 @@ import type {
 	ISummarizeResult,
 	IPendingMessagesState,
 	IRuntimeMessageCollection,
+	IRuntimeResubmitMessageCollection,
 	IRuntimeStorageService,
 } from "@fluidframework/runtime-definitions/internal";
 import {
@@ -114,6 +115,15 @@ export abstract class LocalChannelContextBase implements IChannelContext {
 			0x2d4 /* "Local channel must be globally visible when resubmitting op" */,
 		);
 		this.services.value.deltaConnection.reSubmit(content, localOpMetadata, squash);
+	}
+
+	public reSubmitMessages(collection: IRuntimeResubmitMessageCollection): void {
+		assert(this.isLoaded, "Channel should be loaded to resubmit ops");
+		assert(
+			this.globallyVisible,
+			"Local channel must be globally visible when resubmitting op",
+		);
+		this.services.value.deltaConnection.reSubmitMessages(collection);
 	}
 	public rollback(content: unknown, localOpMetadata: unknown): void {
 		assert(this.isLoaded, 0x2ee /* "Channel should be loaded to rollback ops" */);

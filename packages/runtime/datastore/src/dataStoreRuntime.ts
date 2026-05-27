@@ -59,6 +59,8 @@ import {
 	type IInboundSignalMessage,
 	type IRuntimeMessageCollection,
 	type IRuntimeMessagesContent,
+	type IRuntimeResubmitMessage,
+	type IRuntimeResubmitMessageCollection,
 	notifiesReadOnlyState,
 	encodeHandlesInContainerRuntime,
 	type IFluidDataStorePolicies,
@@ -1404,6 +1406,74 @@ export class FluidDataStoreRuntime
 				// For Attach messages, just submit them again.
 				// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- `content` needs typed better than `any`
 				this.submit({ type, content }, localOpMetadata);
+				break;
+			}
+			default: {
+				unreachableCase(type);
+			}
+		}
+	}
+
+	/**
+	 * Resubmit a bunch of messages of the same type. For ChannelOp bunches, contiguous entries
+	 * targeting the same channel address are forwarded to that channel's context as a single
+	 * bunched resubmit; address changes within the bunch flush the current sub-bunch.
+	 *
+	 * @privateRemarks
+	 * `type` parameter's type of `DataStoreMessageType` is a covariance exception over `string`
+	 * that `IFluidDataStoreChannel` specifies. See the existing {@link FluidDataStoreRuntime.reSubmit}
+	 * for context.
+	 */
+	public reSubmitMessages(
+		type: DataStoreMessageType,
+		collection: IRuntimeResubmitMessageCollection,
+	): void {
+		this.verifyNotClosed();
+
+		const { squash, messages } = collection;
+		// The ops being resubmitted will not be submitted as-is, so decrement the count. The
+		// downstream resubmit calls below may resubmit ops (which will re-increment) or not.
+		this.pendingOpCount.value -= messages.length;
+
+		switch (type) {
+			case DataStoreMessageType.ChannelOp: {
+				// Bunch contiguous entries by channel address and dispatch each sub-bunch in one call.
+				let currentAddress: string | undefined;
+				let currentMessages: IRuntimeResubmitMessage[] = [];
+
+				const flushCurrent = (): void => {
+					if (currentAddress === undefined || currentMessages.length === 0) {
+						return;
+					}
+					const channelContext = this.contexts.get(currentAddress);
+					assert(!!channelContext, "There should be a channel context for the op");
+					channelContext.reSubmitMessages({ squash, messages: currentMessages });
+					currentMessages = [];
+				};
+
+				for (const message of messages) {
+					const envelope = message.contents as IEnvelope;
+					if (currentAddress !== envelope.address) {
+						flushCurrent();
+						currentAddress = envelope.address;
+					}
+					currentMessages.push({
+						contents: envelope.contents,
+						localOpMetadata: message.localOpMetadata,
+					});
+				}
+				flushCurrent();
+				break;
+			}
+			case DataStoreMessageType.Attach: {
+				// Attach messages aren't meaningfully bunchable — resubmit each individually.
+				for (const message of messages) {
+					this.submit(
+						// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- mirrors `reSubmit`'s any-typed content
+						{ type, content: message.contents as IAttachMessage },
+						message.localOpMetadata,
+					);
+				}
 				break;
 			}
 			default: {

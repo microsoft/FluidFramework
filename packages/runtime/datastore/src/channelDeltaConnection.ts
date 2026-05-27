@@ -11,6 +11,8 @@ import type {
 import type {
 	IRuntimeMessageCollection,
 	IRuntimeMessagesContent,
+	IRuntimeResubmitMessage,
+	IRuntimeResubmitMessageCollection,
 } from "@fluidframework/runtime-definitions/internal";
 import { DataProcessingError } from "@fluidframework/telemetry-utils/internal";
 
@@ -121,6 +123,39 @@ export class ChannelDeltaConnection implements IDeltaConnection {
 		processWithStashedOpMetadataHandling(content, localOpMetadata, (contents, metadata) =>
 			this.handler.reSubmit(contents, metadata, squash),
 		);
+	}
+
+	public reSubmitMessages(collection: IRuntimeResubmitMessageCollection): void {
+		// Fan out any stashed-op metadata pairs into individual entries before dispatching the bunch,
+		// mirroring how processMessages expands messagesContent.
+		const flattened: IRuntimeResubmitMessage[] = [];
+		for (const { contents, localOpMetadata } of collection.messages) {
+			processWithStashedOpMetadataHandling(
+				contents,
+				localOpMetadata,
+				(expandedContents, expandedMetadata) => {
+					flattened.push({
+						contents: expandedContents,
+						localOpMetadata: expandedMetadata,
+					});
+				},
+			);
+		}
+
+		const expandedCollection: IRuntimeResubmitMessageCollection = {
+			squash: collection.squash,
+			messages: flattened,
+		};
+
+		if (this.handler.reSubmitMessages !== undefined) {
+			this.handler.reSubmitMessages(expandedCollection);
+			return;
+		}
+
+		// Fallback for handlers that haven't opted in to the bunched form.
+		for (const { contents, localOpMetadata } of expandedCollection.messages) {
+			this.handler.reSubmit(contents, localOpMetadata, expandedCollection.squash);
+		}
 	}
 
 	public rollback(content: unknown, localOpMetadata: unknown): void {

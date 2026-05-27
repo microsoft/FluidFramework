@@ -9,6 +9,7 @@ import type {
 	IExperimentalIncrementalSummaryContext,
 	IGarbageCollectionData,
 	IRuntimeMessageCollection,
+	IRuntimeResubmitMessageCollection,
 	ISummaryTreeWithStats,
 	ITelemetryContext,
 } from "@fluidframework/runtime-definitions/internal";
@@ -166,6 +167,19 @@ export interface IDeltaHandler {
 	// TODO: Use something other than `any` (breaking change)
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	reSubmit(message: any, localOpMetadata: unknown, squash?: boolean): void;
+
+	/**
+	 * Called when the runtime asks the client to resubmit a bunch of contiguous messages.
+	 * The bunched form of {@link IDeltaHandler.reSubmit}, mirroring the inbound
+	 * {@link IDeltaHandler.processMessages} shape so DDSes that benefit from processing a
+	 * contiguous run together can do so on resubmit.
+	 *
+	 * Optional: if not implemented, the runtime falls back to iterating the collection and
+	 * invoking {@link IDeltaHandler.reSubmit} per message.
+	 *
+	 * @param collection - The bunch of messages to resubmit, with a shared `squash` flag.
+	 */
+	reSubmitMessages?(collection: IRuntimeResubmitMessageCollection): void;
 
 	/**
 	 * Apply changes from an op just as if a local client has made the change,

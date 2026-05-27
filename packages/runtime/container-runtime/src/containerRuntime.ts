@@ -118,9 +118,11 @@ import type {
 	IGarbageCollectionData,
 	CreateChildSummarizerNodeParam,
 	IDataStore,
+	IEnvelope,
 	IFluidDataStoreContextDetached,
 	IFluidDataStoreRegistry,
 	IFluidParentContext,
+	FluidDataStoreMessage,
 	ISummarizeInternalResult,
 	InboundAttachMessage,
 	NamedFluidDataStoreRegistryEntries,
@@ -5030,9 +5032,36 @@ export class ContainerRuntime
 			: this.reSubmit.bind(this);
 
 		this.batchRunner.run(() => {
-			for (const message of batch) {
-				resubmitFn(message);
+			// Collect contiguous runs of FluidDataStoreOp entries and dispatch each run through
+			// the bunched path so the channel collection can group them by (address, ddsType) for
+			// efficient single-call resubmit at the DDS layer. Non-FluidDataStoreOp entries flush
+			// the current run and use the existing single-op path (squash-aware via resubmitFn).
+			let currentBunch: {
+				envelope: IEnvelope<FluidDataStoreMessage>;
+				localOpMetadata: unknown;
+			}[] = [];
+
+			const flushBunch = (): void => {
+				if (currentBunch.length === 0) {
+					return;
+				}
+				this.channelCollection.reSubmitContainerMessages(currentBunch, squash);
+				currentBunch = [];
+			};
+
+			for (const data of batch) {
+				const message = data.runtimeOp;
+				if (message.type === ContainerMessageType.FluidDataStoreOp) {
+					currentBunch.push({
+						envelope: message.contents,
+						localOpMetadata: data.localOpMetadata,
+					});
+				} else {
+					flushBunch();
+					resubmitFn(data);
+				}
 			}
+			flushBunch();
 		}, resubmitInfo);
 
 		this.flush(resubmitInfo);
