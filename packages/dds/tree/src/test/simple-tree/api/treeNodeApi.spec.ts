@@ -2603,11 +2603,7 @@ describe("treeNodeApi", () => {
 
 			view.root.items.insertAtEnd("A");
 
-			assert.deepEqual(log, [
-				"items.nodeChanged",
-				"items.treeChanged",
-				"root.treeChanged",
-			]);
+			assert.deepEqual(log, ["items.nodeChanged", "items.treeChanged", "root.treeChanged"]);
 		});
 
 		it(`cross-node ordering: edits to sibling subtrees in one batch fire in document order`, () => {

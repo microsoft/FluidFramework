@@ -623,7 +623,7 @@ class KernelEventBuffer implements Listenable<KernelEvents> {
 	): void {
 		const frame = this.#frameForCurrentScope();
 		if (frame === undefined) {
-				// If there is no active buffer frame, then we are not currently buffering events and should emit them immediately.,
+			// If there is no active buffer frame, then we are not currently buffering events and should emit them immediately.,
 			this.#events.emit("childrenChangedAfterBatch", { changedFields, fieldMarks });
 			return;
 		}
@@ -706,7 +706,8 @@ class KernelEventBuffer implements Listenable<KernelEvents> {
 				this.#bufferStack.push(createEmptyBufferFrame());
 			}
 			// eslint-disable-next-line unicorn/prefer-at -- Array.at requires ES2022.
-			const parentFrame = this.#bufferStack[this.#bufferStack.length - 1] ?? fail("missing parent frame");
+			const parentFrame =
+				this.#bufferStack[this.#bufferStack.length - 1] ?? fail("missing parent frame");
 			mergeBufferFrameInto(parentFrame, top);
 		}
 	}

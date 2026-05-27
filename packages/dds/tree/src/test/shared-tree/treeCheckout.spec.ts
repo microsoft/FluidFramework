@@ -1169,11 +1169,7 @@ describe("sharedTreeView", () => {
 					// emission. Across nodes, the resulting order matches the natural
 					// single-batch order from `treeNodeApi.spec.ts`: both descendants
 					// (in document order) before the ancestor.
-					assert.deepEqual(run(true), [
-						"a.nodeChanged",
-						"b.nodeChanged",
-						"root.treeChanged",
-					]);
+					assert.deepEqual(run(true), ["a.nodeChanged", "b.nodeChanged", "root.treeChanged"]);
 				},
 				{
 					initialContent: {
