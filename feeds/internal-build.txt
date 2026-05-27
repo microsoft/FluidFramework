@@ -62,7 +62,6 @@ fluid-framework
 @fluidframework/task-manager
 @fluidframework/shared-summary-block
 @fluidframework/shared-object-base
-@fluidframework/claims
 @fluidframework/sequence
 @fluidframework/register-collection
 @fluid-experimental/pact-map
