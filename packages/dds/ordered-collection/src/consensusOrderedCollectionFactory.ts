@@ -67,16 +67,16 @@ export class ConsensusQueueFactory implements IConsensusOrderedCollectionFactory
 }
 
 /**
- * {@inheritDoc ConsensusQueueClass}
+ * Shared object kind for queue-shaped ordered collections.
  * @legacy @beta
  */
 export const ConsensusQueue = createSharedObjectKind(ConsensusQueueFactory);
 
 /**
- * {@inheritDoc ConsensusQueueClass}
+ * {@inheritDoc IConsensusOrderedCollection}
  * @deprecated Use {@link IConsensusOrderedCollection} for typing instead. This type alias will be removed in a future release.
  * @legacy @beta
  */
 // TODO: #22835 Use undefined instead of any (breaking change)
-// eslint-disable-next-line @typescript-eslint/no-explicit-any, import-x/no-deprecated
-export type ConsensusQueue<T = any> = ConsensusQueueClass<T>;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type ConsensusQueue<T = any> = IConsensusOrderedCollection<T>;

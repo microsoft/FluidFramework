@@ -164,7 +164,18 @@
 		"typescript": "~5.4.5"
 	},
 	"typeValidation": {
-		"broken": {},
+		"broken": {
+			"Class_ConsensusQueueClass": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"TypeAlias_ConsensusQueue": {
+				"backCompat": false
+			},
+			"ClassStatics_ConsensusQueueClass": {
+				"backCompat": false
+			}
+		},
 		"entrypoint": "legacy"
 	}
 }
