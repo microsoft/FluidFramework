@@ -97,6 +97,13 @@ export interface ChangeRebaser<TChangeset> {
 		ignoreNoChangeViolation?: boolean,
 	): TChangeset;
 
+	/**
+	 * Returns a potentially simplified version of the input changeset.
+	 * Note that the returned changeset may have different rebasing behavior than the original.
+	 * This is intended to be used as a final step after producing a new changeset.
+	 * This also allows the ChangeRebaser an opportunity to replace any operations in the changeset
+	 * which are not backward compatible with older supported client versions.
+	 */
 	squash(change: TChangeset): TChangeset;
 
 	/**
