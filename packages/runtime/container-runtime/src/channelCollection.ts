@@ -44,7 +44,6 @@ import type {
 	InboundAttachMessage,
 	IRuntimeMessageCollection,
 	IRuntimeMessagesContent,
-	IRuntimeResubmitMessage,
 	ISummarizeResult,
 	ISummaryTreeWithStats,
 	ITelemetryContext,
@@ -67,6 +66,7 @@ import {
 	create404Response,
 	createResponseError,
 	encodeCompactIdToString,
+	forEachContiguousBunch,
 	isSerializedHandle,
 	processAttachMessageGCData,
 	responseToException,
@@ -844,48 +844,33 @@ export class ChannelCollection
 		}[],
 		squash: boolean,
 	): void => {
-		let currentAddress: string | undefined;
-		let currentType: string | undefined;
-		let currentMessages: IRuntimeResubmitMessage[] = [];
-
-		const flushCurrent = (): void => {
-			if (
-				currentAddress === undefined ||
-				currentType === undefined ||
-				currentMessages.length === 0
-			) {
-				return;
-			}
-			const context = this.contexts.get(currentAddress);
-			if (
-				this.checkAndLogIfDeleted(
-					currentAddress,
-					context,
-					"Changed",
-					"reSubmitContainerMessages",
-				)
-			) {
-				throw new DataCorruptionError("Context is deleted!", {
-					callSite: "reSubmitContainerMessages",
-					...tagCodeArtifacts({ id: currentAddress }),
-				});
-			}
-			assert(!!context, "There should be a store context for the op");
-			context.reSubmitMessages(currentType, { squash, messages: currentMessages });
-			currentMessages = [];
-		};
-
-		for (const { envelope, localOpMetadata } of entries) {
-			const { address } = envelope;
-			const { type: ddsType, content } = envelope.contents;
-			if (currentAddress !== address || currentType !== ddsType) {
-				flushCurrent();
-				currentAddress = address;
-				currentType = ddsType;
-			}
-			currentMessages.push({ contents: content, localOpMetadata });
-		}
-		flushCurrent();
+		forEachContiguousBunch(
+			entries,
+			(e) => ({ address: e.envelope.address, type: e.envelope.contents.type }),
+			(e) => ({
+				contents: e.envelope.contents.content,
+				localOpMetadata: e.localOpMetadata,
+			}),
+			(key, messages) => {
+				const context = this.contexts.get(key.address);
+				if (
+					this.checkAndLogIfDeleted(
+						key.address,
+						context,
+						"Changed",
+						"reSubmitContainerMessages",
+					)
+				) {
+					throw new DataCorruptionError("Context is deleted!", {
+						callSite: "reSubmitContainerMessages",
+						...tagCodeArtifacts({ id: key.address }),
+					});
+				}
+				assert(!!context, "There should be a store context for the op");
+				context.reSubmitMessages(key.type, { squash, messages });
+			},
+			(a, b) => a.address === b.address && a.type === b.type,
+		);
 	};
 
 	public readonly rollbackDataStoreOp = (
@@ -1013,31 +998,17 @@ export class ChannelCollection
 	 */
 	private processChannelMessages(messageCollection: IRuntimeMessageCollection): void {
 		const { envelope, messagesContent, local } = messageCollection;
-		let currentMessageState: { address: string; type: string } | undefined;
-		let currentMessagesContent: IRuntimeMessagesContent[] = [];
 
-		// Helper that sends the current bunch of messages to the data store. It validates that the data stores exists.
-		const sendBunchedMessages = (): void => {
-			// Current message state will be undefined for the first message in the list.
-			if (currentMessageState === undefined) {
-				return;
-			}
-			const currentContext = this.contexts.get(currentMessageState.address);
-			assert(!!currentContext, 0xa66 /* Context not found */);
+		// First pass: per-message validation, GC bookkeeping, and shape transform. Deleted-context
+		// messages are dropped here so they never reach a bunch. Non-deleted messages are collected
+		// with their (address, ddsType) bunch key for the second pass.
+		interface ChannelMessageItem {
+			address: string;
+			type: string;
+			content: IRuntimeMessagesContent;
+		}
+		const items: ChannelMessageItem[] = [];
 
-			currentContext.processMessages({
-				envelope: { ...envelope, type: currentMessageState.type },
-				messagesContent: currentMessagesContent,
-				local,
-			});
-			currentMessagesContent = [];
-		};
-
-		/**
-		 * Bunch contiguous messages for the same data store and send them together.
-		 * This is an optimization mainly for DDSes, where it can process a bunch of ops together. DDSes
-		 * like merge tree or shared tree can process ops more efficiently when they are bunched together.
-		 */
 		for (const { contents, ...restOfMessagesContent } of messagesContent) {
 			const contentsEnvelope = contents as IEnvelope<FluidDataStoreMessage>;
 			const address = contentsEnvelope.address;
@@ -1067,18 +1038,6 @@ export class ChannelCollection
 			}
 
 			const { type: contextType, content: contextContents } = contentsEnvelope.contents;
-			// If the address or type of the message changes while processing the message, send the current bunch.
-			if (
-				currentMessageState?.address !== address ||
-				currentMessageState?.type !== contextType
-			) {
-				sendBunchedMessages();
-			}
-			currentMessagesContent.push({
-				contents: contextContents,
-				...restOfMessagesContent,
-			});
-			currentMessageState = { address, type: contextType };
 
 			// Notify that a GC node for the data store changed. This is used to detect if a deleted data store is
 			// being used.
@@ -1092,11 +1051,32 @@ export class ChannelCollection
 			detectOutboundReferences(address, contextContents, (fromPath: string, toPath: string) =>
 				this.parentContext.addedGCOutboundRoute(fromPath, toPath, envelope.timestamp),
 			);
+
+			items.push({
+				address,
+				type: contextType,
+				content: { contents: contextContents, ...restOfMessagesContent },
+			});
 		}
 
-		// Process the last bunch of messages, if any. Note that there may not be any messages in case all of them are
-		// ignored because the data store is deleted.
-		sendBunchedMessages();
+		// Bunch contiguous messages for the same (address, ddsType) and send them together. This is an
+		// optimization mainly for DDSes, where merge-tree / shared-tree can process a bunch of ops together
+		// more efficiently than one at a time.
+		forEachContiguousBunch(
+			items,
+			(item) => ({ address: item.address, type: item.type }),
+			(item) => item.content,
+			(key, bunch) => {
+				const context = this.contexts.get(key.address);
+				assert(!!context, 0xa66 /* Context not found */);
+				context.processMessages({
+					envelope: { ...envelope, type: key.type },
+					messagesContent: bunch,
+					local,
+				});
+			},
+			(a, b) => a.address === b.address && a.type === b.type,
+		);
 	}
 
 	private async getDataStore(

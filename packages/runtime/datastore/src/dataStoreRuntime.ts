@@ -78,6 +78,7 @@ import {
 	create404Response,
 	createResponseError,
 	exceptionToResponse,
+	forEachContiguousBunch,
 	generateHandleContextPath,
 	processAttachMessageGCData,
 	dataStoreLoadTelemetryProps,
@@ -1438,31 +1439,19 @@ export class FluidDataStoreRuntime
 		switch (type) {
 			case DataStoreMessageType.ChannelOp: {
 				// Bunch contiguous entries by channel address and dispatch each sub-bunch in one call.
-				let currentAddress: string | undefined;
-				let currentMessages: IRuntimeResubmitMessage[] = [];
-
-				const flushCurrent = (): void => {
-					if (currentAddress === undefined || currentMessages.length === 0) {
-						return;
-					}
-					const channelContext = this.contexts.get(currentAddress);
-					assert(!!channelContext, "There should be a channel context for the op");
-					channelContext.reSubmitMessages({ squash, messages: currentMessages });
-					currentMessages = [];
-				};
-
-				for (const message of messages) {
-					const envelope = message.contents as IEnvelope;
-					if (currentAddress !== envelope.address) {
-						flushCurrent();
-						currentAddress = envelope.address;
-					}
-					currentMessages.push({
-						contents: envelope.contents,
+				forEachContiguousBunch(
+					messages,
+					(message) => (message.contents as IEnvelope).address,
+					(message): IRuntimeResubmitMessage => ({
+						contents: (message.contents as IEnvelope).contents,
 						localOpMetadata: message.localOpMetadata,
-					});
-				}
-				flushCurrent();
+					}),
+					(address, bunch) => {
+						const channelContext = this.contexts.get(address);
+						assert(!!channelContext, "There should be a channel context for the op");
+						channelContext.reSubmitMessages({ squash, messages: bunch });
+					},
+				);
 				break;
 			}
 			case DataStoreMessageType.Attach: {
