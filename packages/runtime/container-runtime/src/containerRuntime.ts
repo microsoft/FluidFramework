@@ -1897,7 +1897,8 @@ export class ContainerRuntime
 		// Grouped batching is required because resubmits can produce empty batches that must
 		// still be sent on the wire as a placeholder grouped batch to preserve their batchId
 		// (see OpGroupingManager.createEmptyGroupedBatch / outbox.flushEmptyBatch).
-		// Offline Load requires both prerequisites, so a consumer that opts into it without
+		// Offline Load requires all three prerequisites (TurnBased, grouped batching, and
+		// batchId tracking not killed by config), so a consumer that opts into it without
 		// them gets an explicit UsageError rather than silent degradation.
 		const offlineLoadRequested =
 			this.mc.config.getBoolean("Fluid.Container.enableOfflineFull") === true;
@@ -1911,6 +1912,13 @@ export class ContainerRuntime
 		}
 		if (offlineLoadRequested && !this.groupedBatchingEnabled) {
 			const error = new UsageError("Offline mode requires grouped batching to be enabled");
+			this.closeFn(error);
+			throw error;
+		}
+		if (offlineLoadRequested && disableBatchIdTracking) {
+			const error = new UsageError(
+				"Offline mode requires batchId tracking; remove Fluid.ContainerRuntime.DisableBatchIdTracking",
+			);
 			this.closeFn(error);
 			throw error;
 		}

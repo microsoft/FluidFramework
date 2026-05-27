@@ -2547,6 +2547,33 @@ describe("Runtime", () => {
 				assert.strictEqual(containerErrors.length, 1);
 			});
 
+			it("Offline Load opt-in errors when batchId tracking is disabled via kill-switch", async () => {
+				const containerErrors: ICriticalContainerError[] = [];
+				const context = {
+					...getMockContext({
+						settings: {
+							"Fluid.Container.enableOfflineFull": true,
+							"Fluid.ContainerRuntime.DisableBatchIdTracking": true,
+						},
+					}),
+					closeFn: (error?: ICriticalContainerError): void => {
+						if (error !== undefined) {
+							containerErrors.push(error);
+						}
+					},
+				};
+				await assert.rejects(
+					ContainerRuntime.loadRuntime2({
+						context: context as IContainerContext,
+						registry: new FluidDataStoreRegistry([]),
+						existing: false,
+						provideEntryPoint: mockProvideEntryPoint,
+					}),
+					(error: Error) => error instanceof UsageError,
+				);
+				assert.strictEqual(containerErrors.length, 1);
+			});
+
 			it("Can roundtrip DuplicateBatchDetector state through summary/snapshot", async () => {
 				// Duplicate Batch Detection is on by default in TurnBased mode.
 				const { runtime: containerRuntime } = await ContainerRuntime.loadRuntime2({
