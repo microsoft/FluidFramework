@@ -1937,5 +1937,6 @@ export const shortCodeMap = {
 	"0xcf5": "Unexpected indexOfChunkStack.length",
 	"0xcf6": "Unexpected indexWithinChunkStack.length",
 	"0xcf7": "Parent chunk not found in latest summary tracking",
-	"0xcf8": "Unexpected pending operation during revert"
+	"0xcf8": "detach range start must not exceed end",
+	"0xcf9": "nodeIndex exceeds total node count in field"
 };
