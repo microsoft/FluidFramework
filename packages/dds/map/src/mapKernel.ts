@@ -781,16 +781,14 @@ export class MapKernel {
 				const { key } = op;
 
 				if (local) {
-					const pendingEntryIndex = this.pendingData.findIndex(
-						(entry) => entry.type !== "clear" && entry.key === key,
-					);
-					const pendingEntry = this.pendingData[pendingEntryIndex];
 					assert(
-						// eslint-disable-next-line @typescript-eslint/prefer-optional-chain -- using ?. could change behavior
-						pendingEntry !== undefined &&
-							pendingEntry.type === "delete" &&
-							pendingEntry === localOpMetadata,
-						0xbf7 /* Got a local delete message we weren't expecting */,
+						localOpMetadata !== undefined && localOpMetadata.type === "delete",
+						"Got a local delete message we weren't expecting",
+					);
+					const pendingEntryIndex = this.pendingData.indexOf(localOpMetadata);
+					assert(
+						pendingEntryIndex !== -1,
+						"Local delete metadata not found in pending data",
 					);
 					this.pendingData.splice(pendingEntryIndex, 1);
 
@@ -822,21 +820,19 @@ export class MapKernel {
 				const { key, value } = op;
 
 				if (local) {
-					const pendingEntryIndex = this.pendingData.findIndex(
-						(entry) => entry.type !== "clear" && entry.key === key,
-					);
-					const pendingEntry = this.pendingData[pendingEntryIndex];
 					assert(
-						// eslint-disable-next-line @typescript-eslint/prefer-optional-chain -- using ?. could change behavior
-						pendingEntry !== undefined && pendingEntry.type === "lifetime",
-						0xbf8 /* Couldn't match local set message to pending lifetime */,
+						localOpMetadata !== undefined && localOpMetadata.type === "set",
+						"Got a local set message we weren't expecting",
 					);
+					// Locate the parent lifetime via the back-pointer on the PendingKeySet, avoiding a linear scan.
+					const pendingEntry = localOpMetadata.lifetime;
 					const pendingKeySet = pendingEntry.keySets.shift();
 					assert(
-						pendingKeySet !== undefined && pendingKeySet === localOpMetadata,
-						0xbf9 /* Got a local set message we weren't expecting */,
+						pendingKeySet === localOpMetadata,
+						"Got a local set message we weren't expecting",
 					);
 					if (pendingEntry.keySets.length === 0) {
+						const pendingEntryIndex = this.pendingData.indexOf(pendingEntry);
 						this.pendingData.splice(pendingEntryIndex, 1);
 					}
 

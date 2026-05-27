@@ -1994,15 +1994,14 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 			return;
 		}
 		if (local) {
-			const pendingEntryIndex = this.pendingStorageData.findIndex(
-				(entry) => entry.type !== "clear" && entry.key === op.key,
-			);
-			const pendingEntry = this.pendingStorageData[pendingEntryIndex];
 			assert(
-				pendingEntry !== undefined &&
-					pendingEntry.type === "delete" &&
-					pendingEntry.key === op.key,
-				0xc05 /* Got a local delete message we weren't expecting */,
+				localOpMetadata !== undefined && localOpMetadata.type === "delete",
+				"Got a local delete message we weren't expecting",
+			);
+			const pendingEntryIndex = this.pendingStorageData.indexOf(localOpMetadata);
+			assert(
+				pendingEntryIndex !== -1,
+				"Local delete metadata not found in pending storage data",
 			);
 			this.pendingStorageData.splice(pendingEntryIndex, 1);
 			this.sequencedStorageData.delete(op.key);
@@ -2053,20 +2052,19 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 		const { key } = op;
 
 		if (local) {
-			const pendingEntryIndex = this.pendingStorageData.findIndex(
-				(entry) => entry.type !== "clear" && entry.key === key,
-			);
-			const pendingEntry = this.pendingStorageData[pendingEntryIndex];
 			assert(
-				pendingEntry !== undefined && pendingEntry.type === "lifetime",
-				0xc06 /* Couldn't match local set message to pending lifetime */,
+				localOpMetadata !== undefined && localOpMetadata.type === "set",
+				"Got a local set message we weren't expecting",
 			);
+			// Locate the parent lifetime via the back-pointer on the PendingKeySet, avoiding a linear scan.
+			const pendingEntry = localOpMetadata.lifetime;
 			const pendingKeySet = pendingEntry.keySets.shift();
 			assert(
-				pendingKeySet !== undefined && pendingKeySet === localOpMetadata,
-				0xc07 /* Got a local set message we weren't expecting */,
+				pendingKeySet === localOpMetadata,
+				"Got a local set message we weren't expecting",
 			);
 			if (pendingEntry.keySets.length === 0) {
+				const pendingEntryIndex = this.pendingStorageData.indexOf(pendingEntry);
 				this.pendingStorageData.splice(pendingEntryIndex, 1);
 			}
 			this.sequencedStorageData.set(key, pendingKeySet.value);
