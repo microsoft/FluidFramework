@@ -58,7 +58,6 @@ trigger:
     - next
     - lts
     - release/*
-    - test/gc-stress
   paths:
     include:
     - .dockerignore

@@ -7,26 +7,17 @@ name: $(Build.BuildId)
 
 trigger: none
 pr: none
-schedules:
-- cron: "0 14 * * *" # Run every day at 7 am PST
-  displayName: Garbage Collection Daily Test Run
-  branches:
-    include:
-    - test/gc-stress
-  always: true
 
 resources:
   pipelines:
   - pipeline: client   # Name of the pipeline resource
     source: Build - client packages
-    branch: test/gc-stress # Default branch for manual/scheduled triggers if none is selected
     trigger:
       branches:
       - release/*
       - main
       - next
       - lts
-      - test/gc-stress
 
 variables:
 - group: prague-key-vault
