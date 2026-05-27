@@ -3162,11 +3162,26 @@ export class ContainerRuntime
 							eventName: "DuplicateBatch",
 							details: {
 								batchId: batchStart.batchId,
+								batchIdExplicit: batchStart.batchId !== undefined,
 								clientId: batchStart.clientId,
 								batchStartCsn: batchStart.batchStartCsn,
 								size: inboundResult.length,
 								duplicateBatchSequenceNumber: result.otherSequenceNumber,
+								// Identifying info for the ORIGINAL occurrence of this batch, so we can
+								// disambiguate the duplicate's source (e.g. resubmit vs fresh submit, same
+								// vs different wire clientId). Undefined fields indicate the original was
+								// loaded from a summary snapshot rather than seen at runtime.
+								otherClientId: result.otherBatchInfo?.clientId,
+								otherBatchStartCsn: result.otherBatchInfo?.batchStartCsn,
+								otherBatchIdExplicit: result.otherBatchInfo?.batchIdExplicit,
+								otherFromSnapshot: result.otherBatchInfo === undefined,
 								...extractSafePropertiesFromMessage(batchStart.keyMessage),
+								// For grouped batches, `keyMessage` is one of the sub-messages produced by
+								// `OpGroupingManager.ungroupOp`, which overwrites `clientSequenceNumber`
+								// with a synthetic counter (1, 2, 3, ...). Override with the real outer
+								// envelope's clientSequenceNumber so downstream telemetry doesn't get a
+								// misleading "fake csn" value.
+								messageClientSequenceNumber: batchStart.batchStartCsn,
 							},
 						},
 					);
