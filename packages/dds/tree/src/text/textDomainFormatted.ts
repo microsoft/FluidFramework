@@ -31,7 +31,11 @@ import type {
 } from "../simple-tree/index.js";
 import { brand, mapIterable, validateIndex, validateIndexRange } from "../util/index.js";
 
-import { charactersFromString, type TextAsTree } from "./textDomain.js";
+import {
+	charactersFromString,
+	processCharactersChangedDelta,
+	type TextAsTree,
+} from "./textDomain.js";
 
 const sf = new SchemaFactoryAlpha("com.fluidframework.text.formatted");
 
@@ -169,6 +173,15 @@ class TextNode
 			// If this node does not have a corresponding branch, then it is unhydrated.
 			// I.e., it is not part of a collaborative session yet.
 			// Therefore, we don't need to run the edits as a transaction.
+			// Note: for unhydrated nodes each atom edit fires a separate `treeChanged` event,
+			// so formatting N atoms will produce N callbacks on `onContentChanged` subscribers
+			// instead of the single callback that hydrated (transacted) edits produce.
+			// `withBufferedTreeEvents` is not a viable mitigation here: when more than one atom's
+			// `format` field changes within the same buffered scope, the kernel's per-field
+			// dedup logic discards the delta (see `treeNodeKernel.ts` `#fieldMarksBuffer`),
+			// which is worse for incremental consumers than N well-formed callbacks.
+			// Use `runTransaction` on a hydrated node (i.e. after inserting into the document)
+			// if batched events matter.
 			applyFormatting();
 		} else {
 			// Wrap all formatting operations in a single transaction for atomicity.
@@ -177,6 +190,43 @@ class TextNode
 			});
 		}
 	}
+	/**
+	 * Returns the character string at the given atom index, or `undefined` if out of bounds.
+	 * @remarks
+	 * Line atoms expand to `"\n"`; text atoms return their underlying code point(s).
+	 */
+	private getAtomCharacterAt(index: number): string | undefined {
+		const atom = this.content[index];
+		if (atom === undefined) return undefined;
+		return atom.content instanceof FormattedTextAsTree.StringLineAtom
+			? "\n"
+			: atom.content.content;
+	}
+
+	public onCharactersChanged(
+		callback: (ops: readonly TextAsTree.TextOp[] | undefined) => void,
+	): () => void {
+		return TreeAlpha.on(this.content, "nodeChanged", ({ delta }) =>
+			processCharactersChangedDelta(
+				delta,
+				(index) => this.getAtomCharacterAt(index),
+				callback,
+			),
+		);
+	}
+
+	public onContentChanged(
+		callback: (ops: readonly TextAsTree.TextOp[] | undefined) => void,
+	): () => void {
+		return TreeAlpha.on(this.content, "treeChanged", ({ delta }) =>
+			processCharactersChangedDelta(
+				delta,
+				(index) => this.getAtomCharacterAt(index),
+				callback,
+			),
+		);
+	}
+
 	public getUniformRun(startIndex: number, endIndex?: number): number {
 		return this.content.getUniformRun(startIndex, endIndex);
 	}
@@ -363,7 +413,7 @@ export namespace FormattedTextAsTree {
 		/**
 		 * The underlying text content of this atom.
 		 * @remarks
-		 * This is typically a single unicode codepoint, and thus may contain multiple utf-16 surrogate pair code units.
+		 * This is typically a single Unicode code point, and thus may contain multiple UTF-16 surrogate pair code units.
 		 * Using longer strings is still valid. For example, so users might store whole grapheme clusters here, or even longer sections of text.
 		 * Anything combined into a single atom will be treated atomically, and can not be partially selected or formatted.
 		 * Using larger atoms and splitting them as needed is NOT a recommended approach, since this will result in poor merge behavior for concurrent edits.
@@ -529,6 +579,27 @@ export namespace FormattedTextAsTree {
 		 * @param endIndex - Optional ending index (exclusive). Defaults to the end of the text.
 		 */
 		getString(startIndex: number, endIndex?: number): string;
+
+		/**
+		 * Subscribe to all content changes on this text node, including both shallow
+		 * changes (inserts/removes) and deep changes (formatting updates on existing characters).
+		 * @param callback - Called after each change with a sequence of {@link TextAsTree.TextOp}s describing what changed,
+		 * or `undefined` when a delta could not be computed (e.g. during a schema upgrade).
+		 * @returns A cleanup function that unsubscribes the callback when called.
+		 * @remarks
+		 * Unlike {@link TextAsTree.Members.onCharactersChanged} which only fires on
+		 * shallow changes (inserts and removes), this method also fires on deep changes —
+		 * formatting property updates on existing characters.
+		 * The {@link TextAsTree.TextRetainOp.formattingChanged} flag on retain ops
+		 * indicates which character ranges had formatting updates.
+		 *
+		 * All counts in the delivered ops are in Unicode code points, not UTF-16 code units.
+		 * For characters outside the Basic Multilingual Plane (e.g. emoji), one code point
+		 * corresponds to two UTF-16 code units — convert before using the counts as string indices.
+		 */
+		onContentChanged(
+			callback: (ops: readonly TextAsTree.TextOp[] | undefined) => void,
+		): () => void;
 	}
 
 	/**
