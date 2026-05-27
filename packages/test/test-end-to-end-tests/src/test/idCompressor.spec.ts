@@ -18,7 +18,7 @@ import {
 	IContainer,
 	type IFluidCodeDetails,
 } from "@fluidframework/container-definitions/internal";
-import { Loader } from "@fluidframework/container-loader/internal";
+import type { Loader } from "@fluidframework/container-loader/internal";
 import {
 	IContainerRuntimeOptions,
 	IdCompressorMode,

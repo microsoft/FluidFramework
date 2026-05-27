@@ -8,7 +8,7 @@ import { strict as assert } from "assert";
 import { describeCompat } from "@fluid-private/test-version-utils";
 import { benchmarkIt, benchmarkMemoryUse, memoryUseOfValue } from "@fluid-tools/benchmark";
 import { IFluidCodeDetails } from "@fluidframework/container-definitions/internal";
-import { ILoaderProps, Loader } from "@fluidframework/container-loader/internal";
+import type { ILoaderProps, Loader } from "@fluidframework/container-loader/internal";
 import { IResolvedUrl } from "@fluidframework/driver-definitions/internal";
 import {
 	ITestObjectProvider,
@@ -20,7 +20,8 @@ import { v4 as uuid } from "uuid";
 
 const codeDetails: IFluidCodeDetails = { package: "test" };
 
-describeCompat("Container - memory usage benchmarks", "NoCompat", (getTestObjectProvider) => {
+describeCompat("Container - memory usage benchmarks", "NoCompat", (getTestObjectProvider, apis) => {
+	const { Loader } = apis.loader;
 	let provider: ITestObjectProvider;
 	let loader: Loader;
 	let fileName: string;
