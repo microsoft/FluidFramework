@@ -8,7 +8,12 @@ import type {
 	IEventThisPlaceHolder,
 	IEventProvider,
 } from "@fluidframework/core-interfaces";
-import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
+import {
+	assert,
+	DoublyLinkedList,
+	type ListNode,
+	unreachableCase,
+} from "@fluidframework/core-utils/internal";
 import type {
 	IChannelAttributes,
 	IFluidDataStoreRuntime,
@@ -226,7 +231,12 @@ interface PendingCellChanges<T> {
 	/**
 	 * The local changes including the local seq, and the value set at that local seq.
 	 */
-	local: { localSeq: number; value: MatrixItem<T> }[];
+	local: DoublyLinkedList<{ localSeq: number; value: MatrixItem<T> }>;
+	/**
+	 * Side-map from localSeq to the corresponding node in `local`, enabling O(1) lookup
+	 * during reSubmit instead of a linear `findIndex` scan.
+	 */
+	localByLocalSeq: Map<number, ListNode<{ localSeq: number; value: MatrixItem<T> }>>;
 	/**
 	 * The latest consensus value across all clients.
 	 * this will either be a remote value or ack'd local
@@ -513,9 +523,14 @@ export class SharedMatrix<T = any>
 
 		this.submitLocalMessage(op, metadata);
 		const pendingCell: PendingCellChanges<T> = this.pending.getCell(rowHandle, colHandle) ?? {
-			local: [],
+			local: new DoublyLinkedList<{ localSeq: number; value: MatrixItem<T> }>(),
+			localByLocalSeq: new Map<
+				number,
+				ListNode<{ localSeq: number; value: MatrixItem<T> }>
+			>(),
 		};
-		pendingCell.local.push({ localSeq, value });
+		const { first: node } = pendingCell.local.push({ localSeq, value });
+		pendingCell.localByLocalSeq.set(localSeq, node);
 		this.pending.setCell(rowHandle, colHandle, pendingCell);
 		return pendingCell;
 	}
@@ -842,11 +857,13 @@ export class SharedMatrix<T = any>
 
 			const pendingCell = this.pending.getCell(rowHandle, colHandle);
 			assert(pendingCell !== undefined, 0xba4 /* local operation must have a pending array */);
-			const { local } = pendingCell;
+			const { local, localByLocalSeq } = pendingCell;
 			assert(local !== undefined, 0xba5 /* local operation must have a pending array */);
-			const localSeqIndex = local.findIndex((p) => p.localSeq === localSeq);
-			assert(localSeqIndex >= 0, 0xba6 /* local operation must have a pending entry */);
-			const [change] = local.splice(localSeqIndex, 1);
+			const node = localByLocalSeq.get(localSeq);
+			assert(node !== undefined, 0xba6 /* local operation must have a pending entry */);
+			const change = node.data;
+			local.remove(node);
+			localByLocalSeq.delete(localSeq);
 			assert(change.localSeq === localSeq, 0xba7 /* must match */);
 
 			if (
@@ -905,12 +922,14 @@ export class SharedMatrix<T = any>
 				const pendingCell = this.pending.getCell(setMetadata.rowHandle, setMetadata.colHandle);
 				assert(pendingCell !== undefined, 0xba9 /* must have pending */);
 
-				const change = pendingCell.local.pop();
+				const change = pendingCell.local.pop()?.data;
 				assert(change?.localSeq === setMetadata.localSeq, 0xbaa /* must have change */);
+				pendingCell.localByLocalSeq.delete(setMetadata.localSeq);
 
 				const previous =
 					pendingCell.local.length > 0
-						? pendingCell.local[pendingCell.local.length - 1].value
+						? // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+							pendingCell.local.last!.data.value
 						: pendingCell.consensus;
 
 				this.setCellCore(
@@ -1075,8 +1094,9 @@ export class SharedMatrix<T = any>
 					this.cols.removeLocalReferencePosition(colsRef);
 
 					const pendingCell = this.pending.getCell(rowHandle, colHandle);
-					const ackedChange = pendingCell?.local.shift();
+					const ackedChange = pendingCell?.local.shift()?.data;
 					assert(ackedChange?.localSeq === localSeq, 0xbab /* must match */);
+					pendingCell?.localByLocalSeq.delete(localSeq);
 					if (pendingCell?.local.length === 0) {
 						this.pending.setCell(rowHandle, colHandle, undefined);
 					}
