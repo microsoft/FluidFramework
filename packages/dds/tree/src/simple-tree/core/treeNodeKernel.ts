@@ -623,6 +623,7 @@ class KernelEventBuffer implements Listenable<KernelEvents> {
 	): void {
 		const frame = this.#frameForCurrentScope();
 		if (frame === undefined) {
+				// If there is no active buffer frame, then we are not currently buffering events and should emit them immediately.,
 			this.#events.emit("childrenChangedAfterBatch", { changedFields, fieldMarks });
 			return;
 		}
